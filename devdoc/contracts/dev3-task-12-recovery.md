@@ -10,7 +10,7 @@
 
 입력은 exclusive lease, 생성 때의 checksummed recovery profile, 검증한 FILEMAP/DWB·checkpoint 또는 base closure, epoch/WRITER chain, caller 소유 고정 workspace다. output은 모든 장벽을 통과한 READY owner 또는 원인·실패 장벽·소유 보존을 담은 오류다. partial recovery를 usable reader/writer로 반환하지 않는다.
 
-`D3-MODULE-ADOPTION-001` **D2 PROPOSED 반영안**의 첫 Row는 [plan4 owner의 확장](dev3-plan4-recovery-owner.md)과 [typed recovery action](dev3-module-boundaries.md#api-candidates)을 사용한다. C가 실제 선택/분석/replay/설치/공통 정리와 READY를 소유하고 A의 handler는 새 loser CLR 후보만 제공한다. C+B 단독 검증의 RejectInitialLosers는 최초 complete-prefix census에서 SystemPage를 포함한 Reserved와 Active/Aborting을 물리 변경 전에 거절한다. 이를 전체 제품 recovery의 loser 생략 옵션으로 사용하지 않는다. RAM-only stage 유실·actual durable CLR 보존·partial home REDO는 [정확 cut](dev3-module-consumers.md#fault-cuts)으로 각각 판정하며 거절 fixture의2PID와 정상3PID·재장애4PID의 보존 의무를 구분한다.
+`D3-MODULE-ADOPTION-001` **D2 ACCEPTED 결정**의 첫 Row는 [plan4 owner의 확장](dev3-plan4-recovery-owner.md)과 [typed recovery action](dev3-module-boundaries.md#api-candidates)을 사용한다. C가 실제 선택/분석/replay/설치/공통 정리와 READY를 소유하고 A의 handler는 새 loser CLR 후보만 제공한다. C+B 단독 검증의 RejectInitialLosers는 최초 complete-prefix census에서 SystemPage를 포함한 Reserved와 Active/Aborting을 물리 변경 전에 거절한다. 이를 전체 제품 recovery의 loser 생략 옵션으로 사용하지 않는다. RAM-only stage 유실·actual durable CLR 보존·partial home REDO는 [정확 cut](dev3-module-consumers.md#fault-cuts)으로 각각 판정하며 거절 fixture의2PID와 정상3PID·재장애4PID의 보존 의무를 구분한다.
 
 소스 WAL bytes는 수정하지 않는다. WAL 회수는 완전한 새 closure가 영속 인계된 뒤의 별도 unlink/dirsync다. home page는 redo/undo/DWB 규약에 따라 변경할 수 있으므로 DEV2의 source-page 불변 규칙을 그대로 적용하지 않는다.
 

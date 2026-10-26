@@ -1,5 +1,9 @@
 use super::*;
 use crate::storage::{
+    catalog_record::{
+        CatalogDefinition, CatalogDefinitionView, CatalogExpectation, CatalogHeader,
+        MAX_CATALOG_CELL_BYTES, decode_catalog_record, encode_catalog_record,
+    },
     key::{PhysicalKey, encode_physical_key},
     page::{FileId, PAGE_BYTES, PageHeader, PageIdentity, PageKind, PageLsn, PageRef},
     transaction_record::TxnRef,
@@ -12,7 +16,7 @@ use crate::{
     api::{DatabaseId, TableSpec},
     transaction::TxnId,
 };
-use foundation::identity::{CommitSeq, Generation, ObjectId};
+use foundation::identity::{CommitSeq, Generation, ObjectHandle, ObjectId, SchemaEpoch};
 
 // Frozen independent bytes generated before this candidate existed.
 const LITERALS: [&str; 16] = [
@@ -229,6 +233,330 @@ fn canonical(values: &[Value]) -> Vec<u8> {
         Ok(output.len())
     );
     output
+}
+
+// Catalog encoding supplies only schema input here. Row expectations remain the
+// independently frozen LITERALS; no Catalog or row storage authority is issued.
+fn catalog_schema_bytes(columns: &[Column]) -> Vec<u8> {
+    let spec = TableSpec {
+        name: "borrowed_row".into(),
+        columns: columns.to_vec(),
+    };
+    let identity = ObjectHandle {
+        object: ObjectId::new(31).unwrap(),
+        generation: generation(1),
+        schema_epoch: SchemaEpoch::new(1).unwrap(),
+    };
+    let record_version = version(true, false);
+    let header = CatalogHeader {
+        identity,
+        retired: false,
+        stamp: record_version.stamp,
+        logical: record_version.logical,
+        undo: None,
+        anchor: page_ref(),
+    };
+    let mut output = vec![0; MAX_CATALOG_CELL_BYTES];
+    let length = encode_catalog_record(
+        CatalogExpectation {
+            namespace: expected().namespace,
+            object: identity.object,
+        },
+        header,
+        CatalogDefinition::Table(&spec),
+        &mut output,
+    )
+    .unwrap();
+    output.truncate(length);
+    output
+}
+
+fn catalog_schema(bytes: &[u8]) -> RowSchemaInput<'_> {
+    let catalog = decode_catalog_record(
+        bytes,
+        CatalogExpectation {
+            namespace: expected().namespace,
+            object: ObjectId::new(31).unwrap(),
+        },
+    )
+    .unwrap();
+    let CatalogDefinitionView::Table(view) = catalog.definition() else {
+        panic!("expected table schema");
+    };
+    RowSchemaInput::Catalog(view)
+}
+
+#[test]
+fn borrowed_schema_and_values_match_independent_canonical_literals() {
+    for index in 0..10 {
+        let expected_bytes = literal(index);
+        let owned = values(index);
+        let columns = schema(&owned);
+        let input: Vec<_> = owned.iter().map(borrowed).collect();
+        let catalog_bytes = catalog_schema_bytes(&columns);
+        for schema in [
+            RowSchemaInput::Columns(&columns),
+            catalog_schema(&catalog_bytes),
+        ] {
+            assert_eq!(
+                canonical_row_len_borrowed(schema, &input),
+                Ok(expected_bytes.len())
+            );
+            let mut output = vec![0xa5; expected_bytes.len() + 9];
+            assert_eq!(
+                encode_canonical_row_borrowed(schema, &input, &mut output),
+                Ok(expected_bytes.len())
+            );
+            assert_eq!(&output[..expected_bytes.len()], expected_bytes);
+            assert_eq!(&output[expected_bytes.len()..], &[0xa5; 9]);
+            let view = decode_canonical_row_with_schema(&expected_bytes, schema).unwrap();
+            assert_eq!(view.as_bytes().as_ptr(), expected_bytes.as_ptr());
+            for (position, expected_value) in owned.iter().enumerate() {
+                assert_value(view.value(position).unwrap(), expected_value);
+            }
+        }
+        // The returned row view must not borrow the Catalog/schema buffer.
+        let view =
+            decode_canonical_row_with_schema(&expected_bytes, catalog_schema(&catalog_bytes))
+                .unwrap();
+        drop(catalog_bytes);
+        drop(columns);
+        assert_eq!(view.as_bytes(), expected_bytes);
+    }
+}
+
+#[test]
+fn borrowed_schema_errors_preserve_output_and_wire_error_precedence() {
+    let columns = [column(DataType::Bool, false, 0)];
+    let catalog_bytes = catalog_schema_bytes(&columns);
+    let oversized = vec![b'x'; MAX_VALUE_BYTES + 1];
+    for schema in [
+        RowSchemaInput::Columns(&columns),
+        catalog_schema(&catalog_bytes),
+    ] {
+        for (values, error) in [
+            (vec![], RowError::SchemaMismatch),
+            (
+                vec![ValueRef::Bool(true), ValueRef::Bool(false)],
+                RowError::SchemaMismatch,
+            ),
+            (vec![ValueRef::Null], RowError::SchemaMismatch),
+            (vec![ValueRef::Int64(1)], RowError::SchemaMismatch),
+            (vec![ValueRef::Binary(&oversized)], RowError::TooLarge),
+            (
+                vec![ValueRef::Utf8(std::str::from_utf8(&oversized).unwrap())],
+                RowError::TooLarge,
+            ),
+        ] {
+            let mut output = [0xa7; 64];
+            assert_eq!(canonical_row_len_borrowed(schema, &values), Err(error));
+            assert_eq!(
+                encode_canonical_row_borrowed(schema, &values, &mut output),
+                Err(error)
+            );
+            assert_eq!(output, [0xa7; 64]);
+        }
+        let bytes = literal(2);
+        for capacity in 0..bytes.len() {
+            let mut output = [0xa7; 6];
+            assert_eq!(
+                encode_canonical_row_borrowed(
+                    schema,
+                    &[ValueRef::Bool(true)],
+                    &mut output[..capacity]
+                ),
+                Err(RowError::NoSpace)
+            );
+            assert_eq!(output, [0xa7; 6]);
+        }
+        for malformed in [
+            hex("010000000102"),         // noncanonical Bool
+            hex("010000000301000000ff"), // invalid UTF-8 before mismatched type
+            hex("0100000001"),           // truncated Bool
+            hex("01000000010100"),       // trailing byte
+        ] {
+            assert_eq!(
+                decode_canonical_row_with_schema(&malformed, schema),
+                Err(RowError::Corrupt)
+            );
+        }
+        assert_eq!(
+            decode_canonical_row_with_schema(&literal(3), schema),
+            Err(RowError::SchemaMismatch)
+        );
+    }
+    for count in [0, 33] {
+        let columns: Vec<_> = (0..count)
+            .map(|index| column(DataType::Bool, true, index))
+            .collect();
+        let values = vec![ValueRef::Null; count];
+        let mut output = [0xa7; 64];
+        assert_eq!(
+            encode_canonical_row_borrowed(RowSchemaInput::Columns(&columns), &values, &mut output),
+            Err(RowError::InvalidInput)
+        );
+        assert_eq!(output, [0xa7; 64]);
+    }
+}
+
+#[test]
+fn borrowed_catalog_schema_preserves_row_record_literals_and_failures() {
+    for index in 10..14 {
+        let columns = fixture_columns(index);
+        let catalog_bytes = catalog_schema_bytes(&columns);
+        let schema = catalog_schema(&catalog_bytes);
+        let row_bytes = literal(if index == 10 { 9 } else { 0 });
+        let payload = match index {
+            10 | 11 => {
+                RowPayload::Inline(decode_canonical_row_with_schema(&row_bytes, schema).unwrap())
+            }
+            12 => RowPayload::Deleted,
+            13 => RowPayload::Overflow(OverflowHead::decode(&hex(HEAD)).unwrap()),
+            _ => unreachable!(),
+        };
+        let record_version = version(index == 11 || index == 13, index >= 12);
+        let bytes = literal(index);
+        let mut output = vec![0x93; bytes.len() + 7];
+        assert_eq!(
+            encode_row_record_with_schema(expected(), schema, record_version, payload, &mut output),
+            Ok(bytes.len())
+        );
+        assert_eq!(&output[..bytes.len()], bytes);
+        assert_eq!(&output[bytes.len()..], &[0x93; 7]);
+        for capacity in [0, bytes.len() - 1] {
+            let mut output = vec![0x93; bytes.len()];
+            assert_eq!(
+                encode_row_record_with_schema(
+                    expected(),
+                    schema,
+                    record_version,
+                    payload,
+                    &mut output[..capacity]
+                ),
+                Err(RowError::NoSpace)
+            );
+            assert!(output.iter().all(|byte| *byte == 0x93));
+        }
+        let wrong_identity = RecordExpectation {
+            row: row(259),
+            ..expected()
+        };
+        assert_eq!(
+            decode_row_record_with_schema(&bytes, wrong_identity, schema),
+            Err(RowError::IdentityMismatch)
+        );
+        let mut output = vec![0x93; bytes.len()];
+        assert_eq!(
+            encode_row_record_with_schema(
+                wrong_identity,
+                schema,
+                record_version,
+                payload,
+                &mut output
+            ),
+            Err(RowError::IdentityMismatch)
+        );
+        assert!(output.iter().all(|byte| *byte == 0x93));
+        let record = decode_row_record_with_schema(&bytes, expected(), schema).unwrap();
+        drop(catalog_bytes);
+        assert_eq!(record.version(), record_version);
+        assert_eq!(record.payload(), payload);
+    }
+    let nullable = [column(DataType::Bool, true, 0)];
+    let bytes = literal(0);
+    let row = decode_canonical_row(&bytes, &nullable).unwrap();
+    let nonnullable = [column(DataType::Bool, false, 0)];
+    let catalog_bytes = catalog_schema_bytes(&nonnullable);
+    let schema = catalog_schema(&catalog_bytes);
+    let mut output = [0x93; ROW_HEADER_BYTES + 5];
+    assert_eq!(
+        encode_row_record_with_schema(
+            expected(),
+            schema,
+            version(true, false),
+            RowPayload::Inline(row),
+            &mut output
+        ),
+        Err(RowError::SchemaMismatch)
+    );
+    assert_eq!(output, [0x93; ROW_HEADER_BYTES + 5]);
+    assert_eq!(
+        decode_row_record_with_schema(&literal(11), expected(), schema),
+        Err(RowError::SchemaMismatch)
+    );
+}
+
+#[test]
+fn borrowed_schema_keeps_value_row_and_inline_size_limits_distinct() {
+    let columns = [column(DataType::Binary, false, 0)];
+    let catalog_bytes = catalog_schema_bytes(&columns);
+    let schema = catalog_schema(&catalog_bytes);
+    for length in [INLINE_ROW_BYTES - 9, INLINE_ROW_BYTES - 8, MAX_VALUE_BYTES] {
+        let data = vec![0x5a; length];
+        let values = [ValueRef::Binary(&data)];
+        let mut output = vec![0; length + 9];
+        assert_eq!(canonical_row_len_borrowed(schema, &values), Ok(length + 9));
+        assert_eq!(
+            encode_canonical_row_borrowed(schema, &values, &mut output),
+            Ok(length + 9)
+        );
+        assert_eq!(&output[..5], &[1, 0, 0, 0, 4]);
+        assert_eq!(&output[5..9], &(length as u32).to_le_bytes());
+        assert_eq!(&output[9..], &data);
+        let row = decode_canonical_row_with_schema(&output, schema).unwrap();
+        let mut record = vec![0x2a; ROW_HEADER_BYTES + output.len()];
+        let actual = encode_row_record_with_schema(
+            expected(),
+            schema,
+            version(true, false),
+            RowPayload::Inline(row),
+            &mut record,
+        );
+        if output.len() <= INLINE_ROW_BYTES {
+            assert_eq!(actual, Ok(record.len()));
+        } else {
+            assert_eq!(actual, Err(RowError::TooLarge));
+            assert!(record.iter().all(|byte| *byte == 0x2a));
+        }
+    }
+    let columns = [
+        column(DataType::Binary, false, 0),
+        column(DataType::Binary, false, 1),
+    ];
+    let catalog_bytes = catalog_schema_bytes(&columns);
+    let schema = catalog_schema(&catalog_bytes);
+    let first = vec![0x17; MAX_VALUE_BYTES];
+    let second = vec![0x29; MAX_ROW_BYTES - MAX_VALUE_BYTES - 14];
+    assert_eq!(
+        canonical_row_len_borrowed(
+            schema,
+            &[ValueRef::Binary(&first), ValueRef::Binary(&second)]
+        ),
+        Ok(MAX_ROW_BYTES)
+    );
+    let larger = vec![0x29; second.len() + 1];
+    let mut output = [0xa7; 64];
+    assert_eq!(
+        encode_canonical_row_borrowed(
+            schema,
+            &[ValueRef::Binary(&first), ValueRef::Binary(&larger)],
+            &mut output
+        ),
+        Err(RowError::TooLarge)
+    );
+    assert_eq!(output, [0xa7; 64]);
+    let columns: Vec<_> = (0..MAX_ROW_COLUMNS)
+        .map(|index| column(DataType::Bool, true, index))
+        .collect();
+    let catalog_bytes = catalog_schema_bytes(&columns);
+    let values = [ValueRef::Null; MAX_ROW_COLUMNS];
+    let mut output = [0xa7; MAX_ROW_COLUMNS + 4];
+    assert_eq!(
+        encode_canonical_row_borrowed(catalog_schema(&catalog_bytes), &values, &mut output),
+        Ok(MAX_ROW_COLUMNS + 4)
+    );
+    assert_eq!(&output[..4], &[32, 0, 0, 0]);
+    assert!(output[4..].iter().all(|byte| *byte == 0));
 }
 
 #[test]

@@ -260,7 +260,7 @@ PF09의 최초 다중 거래 기준선은1/2/8/32 요청 × 독립 table/같은 
 <a id="module-row-isolation"></a>
 ## 모듈 전환 후보 — 첫 Row 거래의 격리 공급
 
-2026-10-26 · `D3-ROW-ISOLATION-001` · **D2 PROPOSED / M2 검토 중 / 제품·시험 NOT_RUN**. 담당 `/root`, API 연결 `/root/module_boundary_survey`, 독립 검토 `/root/module_handoff_review`. [선정한 Missing INSERT·조회](dev3-module-consumers.md#profile)에 §5.1의 기본 Serializable과 ReadCommitted를 실제 공급하는 제안이다. 일반 기존-key UPDATE/DELETE·index lock/wait-for는 제외되지만 기본 격리 의미는 제외하지 않는다. 구체 Rust 수명과 호출은 [원 경계 API](dev3-module-boundaries.md#api-candidates)에 둔다.
+2026-10-26 · `D3-ROW-ISOLATION-001` · **D2 ACCEPTED / M2 완료 / 제품·시험 NOT_RUN**. 담당 `/root`, API 연결 `/root/module_boundary_survey`, 독립 검토 `/root/module_handoff_review`. [선정한 Missing INSERT·조회](dev3-module-consumers.md#profile)에 §5.1의 기본 Serializable과 ReadCommitted를 실제 공급하기 위한 채택 계약이다. 일반 기존-key UPDATE/DELETE·index lock/wait-for는 제외되지만 기본 격리 의미는 제외하지 않는다. 구체 Rust 수명과 호출은 [원 경계 API](dev3-module-boundaries.md#api-candidates)에 둔다.
 
 ### 실제 소유와 RAM 배치
 
@@ -309,4 +309,4 @@ sealed transaction capsule이 원 origin·isolation slot/generation·actual acto
 
 선정 공급에는 같은 table absence→서로 다른 RowId INSERT의 두 Serializable 거래에서 두 번째 전체 abort, 서로 다른 table의 두 writer 성공, readonly transaction 종료 직전 관련 table/CREATE 변경 충돌, RC 같은 statement 안정·다음 statement 새q, 실패 statement 관측 집합 보존, CheckedTable 재사용과 stale origin/generation, status 설치→Q 공개 사이 reader, Row Commit이 catalog epoch를 올리지 않음, physical cleanup이 논리 epoch를 올리지 않음을 각각 포함한다. raw actor/RowId로 다른 actor의 CLR, compensated root의 terminal 전 free, durable 뒤 table slot 부족을 허용하는 mutant도 거절해야 한다. 정확 schedule·selector·독립 이력과 시간 한도는 [소비자 인수](dev3-module-consumers.md#acceptance)에 연결한다.
 
-대안인 DB 전역 Q 비교는 독립 table도 충돌시켜 제외했다. table별 disk epoch 추가는 이전 open 거래가 남지 않는 첫 범위에서 필요하지 않으므로 채택하지 않는다. 별도 전역 lock manager를 선행으로 만드는 대신 원 control·publication의 bounded 장부를 확장한다. 기존 §5.1의 의미는 대체하지 않으며 **수용 뒤 선정 scope의 공급 방식만 상세화**한다. 확장된 table 수·DROP/재사용·병렬 writer·기존-key 변경을 추가할 때 이 표현·slot 수·직렬화와 F05를 다시 검토한다. 독립 D2 수용·제품/source census·실제 시험은 아직 완료하지 않았다.
+대안인 DB 전역 Q 비교는 독립 table도 충돌시켜 제외했다. table별 disk epoch 추가는 이전 open 거래가 남지 않는 첫 범위에서 필요하지 않으므로 채택하지 않는다. 별도 전역 lock manager를 선행으로 만드는 대신 원 control·publication의 bounded 장부를 확장한다. 기존 §5.1의 의미는 대체하지 않으며 **선정 scope의 공급 방식만 상세화**한다. 확장된 table 수·DROP/재사용·병렬 writer·기존-key 변경을 추가할 때 이 표현·slot 수·직렬화와 F05를 다시 검토한다. [최종 독립 D2 검토](../evidence/module-independence-survey-20261026.md#final-design-review)를 수신해 채택했으며 제품/source census·실제 시험은 미완료다.

@@ -2,7 +2,7 @@
 
 2026-10-22 · **작업 상세 설계 / D2 상세화 수용 / 표현·모델의 기존 검증 보존 / 실제 mutable tree·행 거래 미완료**
 
-2026-10-26의 [첫 모듈 전환 statement/cursor F02](#module-statement-cursor)는 별도 D2 PROPOSED이며 기존 채택 범위와 구분한다.
+2026-10-26의 [첫 모듈 전환 statement/cursor F02](#module-statement-cursor)는 별도 D2 ACCEPTED이며 기존 제품 인수 범위와 구분한다.
 
 [공통 규칙](dev3-task-designs.md) · [개발 순서](../plans/dev3-implementation-plan.md#tree-undo-remaining) · [tree 소유 계약](disk-storage-design.md#tree) · [관측 행 버전](disk-storage-design.md#observed-row-version) · [변경 순서](disk-storage-design.md#mutation-protocol) · [참조 수명](disk-storage-design.md#undo-lifecycle)
 
@@ -254,15 +254,15 @@ batch 사이에는 page pointer/latch를 보존하지 않고 snapshot token·own
 작은 row·넓은 key·다중 index의 공간 기준선은 [표현 비용 산식](dev3-resource-bounds.md#representation-cost)에 둔다. 형식 축소나 압축을 이번 변경으로 채택하지 않는다.
 
 <a id="module-statement-cursor"></a>
-## 모듈 전환 후보 — statement·cursor의 F02
+## 모듈 전환 — statement·cursor의 F02
 
-2026-10-26 · `D3-ROW-CURSOR-001` · **D2 PROPOSED / M2 미완료**. 작성·계약 담당 `/root`. [모듈 전환](../plans/module-independence-plan.md)의 첫 INSERT와 snapshot point-read/cursor를 같은 공통 경계에서 개발하기 위한 제안이다. 기존 일반 tree/CRUD·두 격리 수준 계약을 완료하거나 대체하지 않는다. 적용 범위는 실제 CREATE table의 single RowLeaf(level0), canonical inline≤2048B, index0, 신규 RowId의 Missing INSERT다. multi-statement·한 statement 안의 여러 INSERT와 실패 statement/full abort는 이 범위에도 필요하다. SMO·occupied before·overflow·index 대상은 첫 효과 전에 Unsupported를 반환하며 실제 존재하는 제약을 무시하지 않는다.
+2026-10-26 · `D3-ROW-CURSOR-001` · **D2 ACCEPTED / M2 완료 / 제품·시험 NOT_RUN**. 작성·계약 담당 `/root`. [모듈 전환](../plans/module-independence-plan.md)의 첫 INSERT와 snapshot point-read/cursor를 같은 공통 경계에서 개발하는 채택 계약이다. [최종 독립 검토](../evidence/module-independence-survey-20261026.md#final-design-review)를 수신했다. 기존 일반 tree/CRUD·두 격리 수준 계약을 완료하거나 대체하지 않는다. 적용 범위는 실제 CREATE table의 single RowLeaf(level0), canonical inline≤2048B, index0, 신규 RowId의 Missing INSERT다. multi-statement·한 statement 안의 여러 INSERT와 실패 statement/full abort는 이 범위에도 필요하다. SMO·occupied before·overflow·index 대상은 첫 효과 전에 Unsupported를 반환하며 실제 존재하는 제약을 무시하지 않는다.
 
 ### 원 view와 mutation 권한
 
 공통 공급 C가 실제 transaction/statement owner와 snapshot을 결합하여 비복제 `RowStatementView`를 발급한다. view는 원 DB/timeline/open binding과 actual actor를 가진 sealed transaction capsule을 borrow하고 checked statement sequence·statement 상태·private revision을 보존한다. Serializable은 capsule이 소유한 transaction SnapshotGuard를 연속 borrow하고 ReadCommitted view만 statement의 새 guard를 소유한다. 정확한 read-set·종료 검증은 [격리 공급](dev3-task-10-concurrency.md#module-row-isolation)을 따른다. 숫자 token·q·TxnRef를 caller가 조립하는 생성자는 없다. 하나의 거래에는 한 active statement만 허용하고 같은 statement의 호출은 직렬화한다. 서로 다른 거래/reader의 원 admission·owner 정책은 유지한다. view는 원 live owner보다 오래 살 수 없고, cursor는 view를 borrow하므로 snapshot 수명을 연장하는 별도 registry를 만들지 않는다.
 
-mutation은 A의 후보와 C의 원 apply/transaction authority를 통해서만 수행한다. cursor가 immutable view를 borrow한 상태의 후속 own mutation은 C 내부의 checked revision 상태를 바꾸어 검출한다. view의 내부 상태는 caller에 공개하지 않으며 같은 statement를 여러 thread에서 동시에 변경 가능한 `Sync` handle로 제공하지 않는다. A가 revision을 직접 설정하거나 B가 별도 revision counter를 두지 않는다. 실제 Rust wrapper·lifetime과 source census는 M2 경계 명세에 연결하여 채택하고 M4에서 구현한다.
+mutation은 A의 후보와 C의 원 apply/transaction authority를 통해서만 수행한다. cursor가 immutable view를 borrow한 상태의 후속 own mutation은 C 내부의 checked revision 상태를 바꾸어 검출한다. view의 내부 상태는 caller에 공개하지 않으며 같은 statement를 여러 thread에서 동시에 변경 가능한 `Sync` handle로 제공하지 않는다. A가 revision을 직접 설정하거나 B가 별도 revision counter를 두지 않는다. 실제 Rust wrapper·lifetime과 source census는 채택한 M2 경계 명세에 연결하며 M4에서 구현·검산한다.
 
 | 사건 | statement·cursor 효과 |
 | --- | --- |
@@ -296,4 +296,4 @@ output는 caller-owned byte slice와 반환한 유효 길이로 다룬다. 실�
 
 이 첫 single-leaf scan은 한 page의 유한 cell 수 안에서 수행하고 candidate마다 취소를 확인한다. invisible 후보를 output row 수에 포함하지 않아 무한 scan이 되는 batch 설계를 채택하지 않는다. 일반 여러 leaf/Undo chain의 작업 budget·batch API는 별도 미공급 의무로 유지한다. literal row history에서 독립 계산한 순서·q별 visible 집합·own visibility·재시도 key를 oracle로 사용하고 제품의 visible 판정 함수를 expected에 재사용하지 않는다.
 
-필수 신규 인수는 point와 cursor의 같은 결과, old-q/new-q, own write와 revision 무효화, 이전 성공 statement 보존/실패 statement token 종료, OutputTooSmall/취소/FlushRequired 뒤 동일 visible 행 재개, stale generation/schema/open, 원 source capture 경합과 cleanup이다. 적용 가능한 T06-01/02/11/12·C10-10/13 및 DIR03의 실제 연결 사례로 배정한다. 선택 source·fixture·oracle·case와 D2 검토는 M2 소비자 명세에서 확정하며 문서 작성만으로 시험을 실행하거나 인수를 승격하지 않는다.
+필수 신규 인수는 point와 cursor의 같은 결과, old-q/new-q, own write와 revision 무효화, 이전 성공 statement 보존/실패 statement token 종료, OutputTooSmall/취소/FlushRequired 뒤 동일 visible 행 재개, stale generation/schema/open, 원 source capture 경합과 cleanup이다. 적용 가능한 T06-01/02/11/12·C10-10/13 및 DIR03의 실제 연결 사례로 배정한다. 선택 source·fixture·oracle·case는 독립 D2를 수신한 M2 소비자 명세에 동결했으며 문서 작성만으로 시험을 실행하거나 인수를 승격하지 않는다.

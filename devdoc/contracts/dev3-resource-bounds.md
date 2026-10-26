@@ -2,7 +2,7 @@
 
 2026-10-25 · **표현·수학적 회계 보강 / opcode별 수치 F05·실제 I/O 인수 미완료**
 
-2026-10-26의 [첫 Row Missing 모듈 전환 자원표](#row-missing-module-budget)는 D2 PROPOSED이며 기존 채택·실행 범위와 구분한다.
+2026-10-26의 [첫 Row Missing 모듈 전환 자원표](#row-missing-module-budget)는 D2 ACCEPTED이며 기존 source의 실행 범위와 구분한다.
 
 [자원 소유 계약](disk-storage-design.md#reserve-accounting) · [고정 profile](disk-storage-design.md#capacity-profile) · [최악 조건 인수](../plans/dev3-implementation-plan.md#resource-proof) · [병렬 소유](../implementation/dev3-implementation.md#wave-2)
 
@@ -124,15 +124,15 @@ r=64와 index8개·각K=64인 가득 찬 leaf 근사에서 `16384/65+8×16384/69
 PF09는 실제 allocated/reserved/retained bytes를 row·index·overflow·Undo·WAL·allocator/control별로 분리하고 이상적 leaf 산식과 차이를 설명한다. key가 변하지 않는 UPDATE의 index mutation 생략은 기존 계약을 유지한다. 압축·metadata 축소·형식 변경은 측정 후 별도 D2이며 이번에 채택하지 않는다.
 
 <a id="row-missing-module-budget"></a>
-## 모듈 전환 후보 — 첫 Row Missing의 자원 배정
+## 모듈 전환 — 첫 Row Missing의 자원 배정
 
-2026-10-26 · `D3-ROW-RESOURCE-001` · **D2 PROPOSED / M2 미완료 / runtime F05 NOT_RUN**. 작성·자원 담당 `/root`. [소비자 profile·opcode 산식](dev3-module-consumers.md#row-shape)의 single RowLeaf·inline·index0·Missing INSERT에 한정한다. 이 절은 새 source의 실제 생존량을 측정한 결과가 아니며, 제품 구현과 함께 검산할 설계 예약이다. 범위 밖 일반 CRUD/SMO·복구를 이 수치로 admission하지 않는다.
+2026-10-26 · `D3-ROW-RESOURCE-001` · **D2 ACCEPTED / M2 완료 / runtime F05 NOT_RUN**. 작성·자원 담당 `/root`. [최종 독립 검토](../evidence/module-independence-survey-20261026.md#final-design-review)를 수신해 설계 예약을 채택했다. [소비자 profile·opcode 산식](dev3-module-consumers.md#row-shape)의 single RowLeaf·inline·index0·Missing INSERT에 한정한다. 이 절은 새 source의 실제 생존량을 측정한 결과가 아니며, 제품 구현과 함께 검산할 설계 예약이다. 범위 밖 일반 CRUD/SMO·복구를 이 수치로 admission하지 않는다.
 
 ### page·private loan의 상계
 
 변경 page의 최대는 Forward/CLR/Prune의5개다. 실제 apply 집합에는 원 Root, 해당 RootJob page, Status, U, RowLeaf와 allocator·tableAnchor·TerminalJob page·previous H proof를 포함해 최대9개를 예약한다. 같은 physical identity는 원 pin 집합에서 중복 제거하되 의미 검산을 생략하지 않는다. RootJob 전체 metadata census는 고정 bank64행을 stream하고 모든 U page를 동시에 pin하지 않는다. 물리 target/H proof의 exact 준비·stage 수명은 경계 API의 검토 항목이다.
 
-first Row 전용 private backing 후보는 **425984B**이며 다음처럼 배분한다. 현재 Catalog 크기와 같다는 사실이 근거가 아니라, 이번 Row의 독립 상한이 이 고정 loan 안에 드는지를 기준으로 삼는다.
+first Row 전용 private backing은 **425984B**이며 다음처럼 배분한다. 현재 Catalog 크기와 같다는 사실이 근거가 아니라, 이번 Row의 독립 상한이 이 고정 loan 안에 드는지를 기준으로 삼는다.
 
 | 구간 | bytes | 소유·동시 생존 |
 | --- | ---: | --- |

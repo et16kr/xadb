@@ -51,7 +51,7 @@ Rust가 줄이는 것은 일부 수명·aliasing·data race 오류다. commit �
 [저장소 구성과 빌드 정책](../policies/repository-build-plan.md)은 DEV2의 초기 배치를 `xadb-engine` 내부 api/catalog/storage/transaction/publication/durable 모듈과 별도 `xadbtest-reference`·`xadbtest-engine-worker`로 정한다. 이는 crate 배치 결정이며 아래 원자성·수명·영속성 계약을 변경하지 않는다. 역할별 crate 분리는 독립 빌드 경계가 필요할 때 검토한다.
 
 <a id="module-transition"></a>
-**DEV3 첫 Row의 모듈 전환 반영안 — `D3-MODULE-ADOPTION-001`, D2 PROPOSED.** [공통 경계](dev3-module-boundaries.md#target-imports)는 같은 engine 안에서 물리 WAL과 semantic stage/install의 책임을 분리하고, 정상 원 owner·ledger·history·terminal 조립을 원 `plan4_pages::apply` 경계에 모은다. Catalog 및 두 Row 제품 본문은 각각 `storage::catalog`와 `storage::row::{insert,read}`가 소유하며 `storage::disk`의 제한 API만 수신한다. 이 배치는 신규 crate·전역 manager·두 번째 writer/pool을 요구하지 않는다. bootstrap의 legacy 내부 관계는 남는 범위로 기록한다.
+**DEV3 첫 Row의 모듈 전환 반영안 — `D3-MODULE-ADOPTION-001`, D2 ACCEPTED.** [공통 경계](dev3-module-boundaries.md#target-imports)는 같은 engine 안에서 물리 WAL과 semantic stage/install의 책임을 분리하고, 정상 원 owner·ledger·history·terminal 조립을 원 `plan4_pages::apply` 경계에 모은다. Catalog 및 두 Row 제품 본문은 각각 `storage::catalog`와 `storage::row::{insert,read}`가 소유하며 `storage::disk`의 제한 API만 수신한다. 이 배치는 신규 crate·전역 manager·두 번째 writer/pool을 요구하지 않는다. bootstrap의 legacy 내부 관계는 남는 범위로 기록한다.
 
 물리 WAL의 complete stage/durable 관측은 semantic 설치 권한과 구분한다. apply의 private producer가 actual source·actor·whole targets·exact requirement를 검산하여 설치/terminal 권한을 만들고, 소비자는 raw scalar나 decoded bytes로 그 증거를 만들 수 없다. 공통 코드가 A의 INSERT/CLR 후보 또는 B의 snapshot/cursor 본문을 대신 소유하지 않는다. 구체 API·수명·오류·자원과 실제 인수는 [경계](dev3-module-boundaries.md#api-candidates)와 [두 소비자](dev3-module-consumers.md)에 둔다. 아직 채택·구현·제품 단계 완료의 증거가 아니다.
 

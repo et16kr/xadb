@@ -1,19 +1,19 @@
 # DEV3 모듈 독립 개발을 위한 원 소유·소비 경계
 
-2026-10-26 · `D3-MODULE-BOUNDARIES-001` · **채택 상태 PROPOSED / 독립 D2 검토 수용·필수 수정0 / 제품 변경·컴파일·시험 NOT_RUN**
+2026-10-26 · `D3-MODULE-BOUNDARIES-001` · **D2 ACCEPTED / M2 완료 / M4 C0 borrowed codec 부분공급 / 공통 공급·제품 인수 미완료**
 
 [구조 전환 계획](../plans/module-independence-plan.md) · [M1 조사·기준선](../evidence/module-independence-survey-20261026.md) · [구현 계약](implementation-contracts.md) · [저장 정본](disk-storage-design.md) · [원 runtime/core](dev3-storage-session.md#private-runtime-core)
 
-조사 source는 `b7ce51d2b3ee62b5b8dbc0d9c852a17827d76bd9`다. 조사와 이 문서 작성은 `/root/module_boundary_survey`, 계약·통합과 문서 등록은 `/root`가 담당한다. 이 문서는 현재 소유와 목표 경계를 구별한 설계 후보다. §4–6은 동결을 요청하는 구체 설계 제안이다. 아래 경로·타입·signature는 실제 구현 또는 D2 수용 증거가 아니며, 새 경로를 build inventory에 등록하지 않는다. 기존 source별 PASS·FAIL·UNKNOWN·NOT_RUN과 DEV2/DEV3 미완료 상태를 유지한다.
+조사 source는 `b7ce51d2b3ee62b5b8dbc0d9c852a17827d76bd9`다. 조사와 이 문서 작성은 `/root/module_boundary_survey`, 계약·통합과 문서 등록은 `/root`가 담당한다. 이 문서는 현재 소유와 목표 경계를 구별한 채택 설계다. §4–6은 [최종 독립 D2 검토](../evidence/module-independence-survey-20261026.md#final-design-review)를 수신해 동결했다. 아래 경로·타입·signature의 채택은 실제 구현 증거가 아니며, 새 경로는 실제 구현할 때 build inventory에 등록한다. 기존 source별 PASS·FAIL·UNKNOWN·NOT_RUN과 DEV2/DEV3 미완료 상태를 유지한다.
 
 <a id="scope"></a>
 ## 1. 첫 전환 범위와 판단
 
-첫 소비 후보는 **A: first Row INSERT**, **B: snapshot row point-read/cursor**다. 두 기능은 원 저장 세션에서 생성·복구된 같은 table/row와 실제 snapshot을 사용한다. 현재 `row_record`와 tree edit의 byte 기능만으로 live INSERT나 snapshot row 조회가 공급됐다고 판단하지 않는다. A/B의 최종 범위·작업 ID·필수 인수는 [DEV3 작업 계획](../plans/dev3-implementation-plan.md#remaining-work) 및 M2의 소비자 작업 명세와 함께 확정해야 한다. RowId·statement·Row Forward/CLR 의미는 소비자 담당의 별도 소유 설계, source/ref handoff는 [Missing Row의 visibility 후보](dev3-visibility-retirement.md#row-missing-traversal), statement/cursor 수명은 [tree·row의 F02 후보](dev3-task-06-tree-rows.md#module-statement-cursor)를 따른다. 이 문서는 그 의미를 중복 정의하지 않는다.
+선정한 첫 소비자는 **A: first Row INSERT**, **B: snapshot row point-read/cursor**다. 두 기능은 원 저장 세션에서 생성·복구된 같은 table/row와 실제 snapshot을 사용한다. 현재 `row_record`와 tree edit의 byte 기능만으로 live INSERT나 snapshot row 조회가 공급됐다고 판단하지 않는다. A/B의 범위·작업 ID·필수 인수는 [DEV3 작업 계획](../plans/dev3-implementation-plan.md#remaining-work) 및 채택한 M2 소비자 작업 명세에 동결했다. RowId·statement·Row Forward/CLR 의미는 소비자 담당의 별도 소유 설계, source/ref handoff는 [Missing Row의 visibility 계약](dev3-visibility-retirement.md#row-missing-traversal), statement/cursor 수명은 [tree·row의 F02 계약](dev3-task-06-tree-rows.md#module-statement-cursor)을 따른다. 이 문서는 그 의미를 중복 정의하지 않는다.
 
 현재 단일 writer/File/slot/fence/pool 소유는 보존할 기반이다. 개선할 대상은 이 소유를 지키는 수단이 초기화 단계의 깊은 자손 모듈과 private 필드 접근에 묶인 부분, 물리 WAL이 Catalog Commit 의미를 수입하는 부분, 소비자 추가 때 반복되는 재노출·permit 등록이다. **원 owner의 책임 배치와 실제 제한 API를 바꾸고, 기존 Catalog가 그 API를 먼저 소비하게 한다.** 새 re-export facade나 파일 이동만으로 M4 공급 완료를 판정하지 않는다.
 
-첫 범위에서 일반 extent 성장·SMO·overflow·index·checkpoint/backup·전체 DEV3 모듈화를 선행으로 추가하지 않는다. 그렇다고 첫 INSERT의 RowId 발급, statement 실패, undo/CLR, terminal, 현재-build 복구를 생략하지 않는다. single RowLeaf·inline2048·index0·여러 statement의 구체 범위와 명시적 거절은 [소비자 명세](dev3-module-consumers.md#profile)의 제안이며 독립 D2 검토 수용과 최종 채택 상태를 구별한다.
+첫 범위에서 일반 extent 성장·SMO·overflow·index·checkpoint/backup·전체 DEV3 모듈화를 선행으로 추가하지 않는다. 그렇다고 첫 INSERT의 RowId 발급, statement 실패, undo/CLR, terminal, 현재-build 복구를 생략하지 않는다. single RowLeaf·inline2048·index0·여러 statement의 구체 범위와 명시적 거절은 [소비자 명세](dev3-module-consumers.md#profile)의 채택 범위이며 실제 제품 공급·인수와 구별한다.
 
 <a id="actual-ownership"></a>
 ## 2. 현재 상태 소유와 권한 인계
@@ -76,9 +76,9 @@ storage::wal_io
 `RowRecordView`, `UndoTargetKind::Row`, `LeafEditPlan`이 존재하는 사실은 Row stage·whole install·transaction chain·recovery 공급을 뜻하지 않는다. 순수 codec과 효과 owner의 의존은 실제 Row 공급이 확인되기 전 판단을 보류한다.
 
 <a id="target-imports"></a>
-## 4. 목표 책임·허용 import 그래프 제안
+## 4. 목표 책임·허용 import 그래프
 
-다음은 M2에서 동결할 **구체 제안**이며 D2 수용 결과가 아니다. 첫 이행은 legacy scope1의 초기화·복구 전체를 sibling으로 옮기지 않는다. `WalRuntime`, `InstalledStorageCore`, `MutableStorageOwner`, `Plan4Pages`의 원 소유와 초기화 조상은 유지한다. 대신 물리 WAL의 actual method, 정상 live owner·apply 조립, Catalog의 제품 본문을 서로 다른 책임으로 실제 이전한다. 깊은 legacy 내부 관계는 잔여로 명시하며 이 전환으로 저장 모듈 전체가 독립됐다고 주장하지 않는다.
+다음은 독립 D2 검토를 수신해 M2에서 동결한 **채택 설계**다. 첫 이행은 legacy scope1의 초기화·복구 전체를 sibling으로 옮기지 않는다. `WalRuntime`, `InstalledStorageCore`, `MutableStorageOwner`, `Plan4Pages`의 원 소유와 초기화 조상은 유지한다. 대신 물리 WAL의 actual method, 정상 live owner·apply 조립, Catalog의 제품 본문을 서로 다른 책임으로 실제 이전한다. 깊은 legacy 내부 관계는 잔여로 명시하며 이 전환으로 저장 모듈 전체가 독립됐다고 주장하지 않는다.
 
 ```text
 storage
@@ -168,9 +168,9 @@ session 안에 자신을 borrow하는 concurrency를 넣지 않는다. 외부 `P
 stage 전 actual Unchanged receipt만 원 intent를 취소할 수 있다. complete stage 뒤 오류·partial install·unwind는 원 fence/Abandoned와 obligation을 유지한다. Drop이 sync/commit/재bind/loan 초기화/성공 Abort를 수행하지 않는다. 재시작은 원 selected binding에서 새 owner를 만들고 READY를 통과한 뒤만 foreground port를 제공한다. old open의 statement/cursor는 새 owner에 승계하지 않는다.
 
 <a id="api-candidates"></a>
-## 6. M2 동결용 signature·수명 제안
+## 6. M2에서 동결한 signature·수명
 
-다음 signature의 타입은 구현 전 제안이다. `W: WriterNamespace`와 lifetime을 생략하여 C0에서 해결할 항목으로 남기지 않는다. `std::result::Result`를 `Result`로 표기하며 각 두 번째 인수가 실제 오류 타입이다. 기존 오류의 phase/cause/effect와 cleanup 우선순위는 유지하고 새 Row cause만 해당 owner 계약으로 추가한다. 내부에 쓰인 기존 타입은 현재 source의 실제 제네릭과 일치한다.
+다음 signature의 타입은 채택한 구현 계약이다. 실제 코드·compiler 결과를 대신하지 않는다. `W: WriterNamespace`와 lifetime을 생략하여 C0에서 해결할 항목으로 남기지 않는다. `std::result::Result`를 `Result`로 표기하며 각 두 번째 인수가 실제 오류 타입이다. 기존 오류의 phase/cause/effect와 cleanup 우선순위는 유지하고 새 Row cause만 해당 owner 계약으로 추가한다. 내부에 쓰인 기존 타입은 현재 source의 실제 제네릭과 일치한다.
 
 ### 6.1 원 owner와 제한 port
 
@@ -853,7 +853,9 @@ Insert input은 preflight가 검산한 canonical length/digest를, CLR input은 
 
 공통 pure codec `RowSchemaInput::{Columns(&[Column]),Catalog(TableDefinitionView)}`와 `&[ValueRef]` adapter를 C0 공급에 포함한다. 기존 소유형 함수도 동일 pure 규칙에 위임하고 format·오류·output/tail 보존을 바꾸지 않는다. 이름/값/columns를 heap에 복사하지 않는다. first Missing Undo는 actual Missing/payloadNone 경로에서 columns를 사용하지 않으므로 기존 encode/decode에 `&[]`를 전달하며, CLR의 current Row는 borrowed schema로 검산한다. occupied RowValue schema와 일반3pin은 이번 선행이 아니다.
 
-producer lane은 [확정 제안 private 분할](dev3-resource-bounds.md#row-missing-module-budget)의 동일 backing을 짧게 나눈다. C가 원 actual before/proof와 schema를 채운 후 source guards를 해제한 뒤만 A에게 빌려준다. loan을 반환하기 전 reader/version/append/registry latch는0이다.
+실제 C0 부분공급의 함수는 [row 표현의 borrowed 입력](dev3-row-format.md#borrowed-schema)에 등록했다. `canonical_row_len_borrowed`·`encode_canonical_row_borrowed`와 canonical/record의 `_with_schema` 진입점은 구현·선택6 검증·독립 코드 검토를 마쳤다. 위 producer context·lane·actual source adapter까지 공급됐다는 뜻은 아니다.
+
+producer lane은 [채택한 private 분할](dev3-resource-bounds.md#row-missing-module-budget)의 동일 backing을 짧게 나눈다. C가 원 actual before/proof와 schema를 채운 후 source guards를 해제한 뒤만 A에게 빌려준다. loan을 반환하기 전 reader/version/append/registry latch는0이다.
 
 ```rust
 pub(crate) struct RowProducerLane<'l> {
@@ -1072,7 +1074,7 @@ RejectInitialLosers는 final canonical allocator·원 ReservedInventory 관계�
 
 실패는 기존 `Plan4RecoveryFailure`에 원 acquired owner/loan을 보존하고 `phase=Analysis,cause=Unsupported,effect=CallerMustResolve`다. 이 gate는 physical reserve/REBASE/CancelReserved/AbortEnd보다 앞이므로 observation의 **database_effect=Unchanged, mutations=0, READY=0**을 별도로 요구한다. 원 lease/fence 실패 정책을 유지하며 같은 실패 owner를 WithRowClr로 바꿔 healthy 재시도하지 않는다. WithRowClr 재시도는 새 정상 acquire/analysis다. C+B의 live own-write fixture와 재시작 no-loser fixture는 다른 인수이며 이 gate가 live source 의미를 대체하지 않는다.
 
-정책 enum/admission·bounded census locals는 원 source census에 계수한다. gate 자체는 새 disk wire를 추가하지 않고 기존 allocator/ATT/Jobs/selected provenance를 검사하며, 새로운 Row format dispatch는 C4의 별도 수신이다. 실제 gate/legacy 차단/negative process 결과는 NOT_RUN이고 독립 D2 수용과 M4 공급이 필요하다.
+정책 enum/admission·bounded census locals는 원 source census에 계수한다. gate 자체는 새 disk wire를 추가하지 않고 기존 allocator/ATT/Jobs/selected provenance를 검사하며, 새로운 Row format dispatch는 C4의 별도 수신이다. 독립 D2 검토를 수신해 채택했으며 실제 gate/legacy 차단/negative process 결과는 NOT_RUN이다. M4 공급과 관련 인수는 남아 있다.
 
 <a id="caller-source-credit"></a>
 ### 6.8 장기 capsule/view/cursor의 bounded source credit
@@ -1128,7 +1130,7 @@ C는 공통 경계 구현 담당의 역할명이며 새 runtime owner가 아니�
 | C4 Row 의미의 실제 복구 수신 | 실제 source before/target/obligation 검산, Row frame replay/CLR target·잔여 예약·READY 인계. §6.7 action/task로 A CLR handler와 C의 CancelReserved/AbortEnd/committed maintenance를 분리하고 최초 canonical analysis policy gate를 공급. 독립 authored row corpus를 원 owner에 적용하는 제한 경로 | C3 및 Q01/Q04/Q05/Q06; A crash/reopen, B 단독 fixture | 일반 Row UPDATE/DELETE/SMO 및 전체 복구 재설계 제외. 형식이 바뀌면 fresh-fixture/현재-build 복구가 한 단위; 무검증 과거 binary downgrade 없음 |
 | C5 합류 adapter | 원 session의 A Commit 결과를 B가 같은/새 snapshot과 새 process recovery로 읽는 작은 조립 | 필요한 C1–C4, A/B 국소 구현 | 두 기능 본문을 통합 담당에게 이동하지 않음. 조립·fixture·해당 diff의 인수만 포함 |
 
-C0는 M2의 문서 후보만으로 완료되지 않는다. M3 수용 뒤 M4에서 최소 컴파일 경계가 실제 제공된 범위부터 A/B가 착수할 수 있다. C0의 계약 대역은 canonical row/schema 입력, finite logical Status/Undo 응답, explicit Busy/Capacity/Unsupported 같은 효과 없는 선택을 반환할 수 있다. 실제 `WalRequirement`, pin, snapshot/READY, install receipt, file effects를 제조할 수 없다. 대역으로 시험한 결과는 순수 기능 범위의 결과이며 C 수신 전 실제 저장·가시성·복구 성공으로 승격하지 않는다.
+현재 C0는 borrowed schema/value codec 부분공급을 진행했다. 선택6 검증 PASS와 부분공급의 독립 D1/D2 수용·필수 수정0은 [실행 증거](../evidence/module-independence-survey-20261026.md#c0-borrowed-codec)에 둔다. C0 전체·C1–C5 공급과 compiler/runtime·제품 인수는 미완료다. C0는 M2 문서 채택만으로 완료되지 않는다. M3 수용 뒤 M4에서 최소 컴파일 경계가 실제 제공된 범위부터 A/B가 착수할 수 있다. C0의 계약 대역은 canonical row/schema 입력, finite logical Status/Undo 응답, explicit Busy/Capacity/Unsupported 같은 효과 없는 선택을 반환할 수 있다. 실제 `WalRequirement`, pin, snapshot/READY, install receipt, file effects를 제조할 수 없다. 대역으로 시험한 결과는 순수 기능 범위의 결과이며 C 수신 전 실제 저장·가시성·복구 성공으로 승격하지 않는다.
 
 C의 미구현은 M2 종료를 무조건 막지 않는다. 그러나 필수 API·의미·담당·완료 인수가 미정이면 M2를 닫지 않는다. M4 전체 완료를 모든 A/B 구현의 공통 선행으로 두지 않고, C2를 받은 B와 C3를 받은 A의 독립 부분을 진행할 수 있게 배정한다.
 
@@ -1141,7 +1143,7 @@ C의 미구현은 M2 종료를 무조건 막지 않는다. 그러나 필수 API�
 | A first Row INSERT | schema/value 검산→새 RowId 요청·row key/record/leaf edit·Missing Undo 후보→statement 성공/실패·rollback/full abort 제품 흐름. 계획 `storage::row::insert` | C0 후보/오류 계약, C3 원 mutation/terminal, C4 replay/CLR·READY, C2의 필요한 검증된 table/read | B의 cursor 본문·fixture를 선행으로 요구하지 않음. pure producer/경계 오류는 C0부터, 실제 INSERT/Commit·실패 statement·abort·reopen은 C 수신 뒤 |
 | B snapshot point-read/cursor | key point/next/reseek, 실제 version·snapshot에 따른 선택, caller output/cursor 수명. 계획 `storage::row::read` | C0 read 계약, C2 original source→pin→Status/Undo/load, C4 실제 source fixture | A producer를 정답 생성기나 유일 fixture producer로 쓰지 않음. independently authored complete WAL/page corpus를 C4의 실제 owner 검산·replay로 복원. A와는 마지막 실제 합류에서 연결 |
 
-B fixture는 checksum/grammar decode만으로 live 권한을 얻지 않는다. C가 untrusted frame의 actual before·target·owner·obligation을 검산하고 원 선택/replay 또는 actual stage 경계에서만 권한을 발급한다. A는 같은 grammar를 생산하는 실제 기능을 별도로 구현한다. 독립 corpus와 actual C 연결을 구체화할 수 없으면 B의 착수·인수 인계가 미정이므로 M2 미완료다.
+B fixture는 checksum/grammar decode만으로 live 권한을 얻지 않는다. C가 untrusted frame의 actual before·target·owner·obligation을 검산하고 원 선택/replay 또는 actual stage 경계에서만 권한을 발급한다. A는 같은 grammar를 생산하는 실제 기능을 별도로 구현한다. 독립 corpus와 actual C 연결은 [채택한 fixture 계약](dev3-module-consumers.md#independent-fixtures)에 구체화했다. 구현에서 그 연결이 성립하지 않으면 원 결과를 보존하고 영향받는 M2 계약을 다시 검토한다.
 
 합류의 최소 관측 후보는 같은 기준에서 A가 별도 DML 거래로 INSERT/Commit한 row를 B가 새 snapshot에서 읽고, Commit 전 snapshot에서는 올바른 Missing/이전 값을 관측하는 것이다. 별도 process의 현재-build recovery 후 같은 RowId/value·Status/Undo 의무를 대조한다. cursor·point 두 경로, statement 실패·full abort, stale table/schema/generation, cancellation/cleanup의 정확 사례 수는 Q07에서 고정한다. root가 두 제품 기능의 전용 source·시작 기준·대기 원인·merge/의미 충돌을 기록한다.
 
@@ -1199,17 +1201,17 @@ source census는 기존/new owner와 view/Result/return carrier의 동시 생존
 <a id="open-questions"></a>
 ## 11. 설계 동결안과 후속 실제 의무
 
-Q01–Q08은 아래 상태로 독립 D2에 제출한다. 앞선 Q02/Q03 Catalog CREATE claim·producer getter와 Q05 최초 no-loser census 공백은 아래 구체 설계안으로 닫아 수용 검토에 제출한다. 이는 D2 수용이나 actual compiler/runtime 검증 완료가 아니다. **설계 제안·수용·구현·실행을 구별**하며, 미실행 compiler/source census/current-build recovery를 API 미정과 혼동하지 않는다. 차단 반례가 나오면 해당 설계를 다시 열고 양쪽 소비자에 같은 변경을 인계한다.
+Q01–Q08은 아래 설계로 독립 D2 검토를 수신해 채택했다. 앞선 Q02/Q03 Catalog CREATE claim·producer getter와 Q05 최초 no-loser census 공백은 아래 계약으로 해소했다. 이는 actual compiler/runtime 검증 완료가 아니다. **설계 제안·수용·구현·실행을 구별**하며, 미실행 compiler/source census/current-build recovery를 API 미정과 혼동하지 않는다. 차단 반례가 나오면 해당 설계를 다시 열고 양쪽 소비자에 같은 변경을 인계한다.
 
-| ID | 동결을 요청하는 설계안 | 담당·후속 실제 수신 의무 |
+| ID | 동결한 설계 계약 | 담당·후속 실제 수신 의무 |
 | --- | --- | --- |
-| Q01 | [issuer/profile/dispatch](dev3-module-consumers.md#format-dispatch)의 Root3 row high-water·Job3 RowMissingRoot·Profile3/base4/scope3, single leaf/inline2048/index0. 원 issuer의 checked successor와 취소 후 비재사용 | format/C/A; 독립 D2 byte/oracle 검토, C4 current-build dispatch와 fresh fixture. 과거 format 결과를 새 format PASS로 승격하지 않음 |
-| Q02 | §4–6의 original owner 이전·조상 private seal·full generic/lifetime·error/loan 인계와 Row consuming API. [Catalog CREATE claim](#catalog-claim-gap)은 원 registry atomic close+active key gate+disjoint flush lease, [producer 입력](#producer-input-api)은 exact getters/role/presence/control borrow로 설계 제출 | 경계/C; MBC00 compiler·MBC31 claim의 정상/실패/Cancel/Drop·C1 identity·C3 actual grant/terminal·Catalog 제품 수신. raw ctor/field 확대·facade-only 완료 금지. 실제 borrow/authority 검증은 M4 의무 |
+| Q01 | [issuer/profile/dispatch](dev3-module-consumers.md#format-dispatch)의 Root3 row high-water·Job3 RowMissingRoot·Profile3/base4/scope3, single leaf/inline2048/index0. 원 issuer의 checked successor와 취소 후 비재사용 | format/C/A; 실제 구현 byte/oracle의 독립 검토, C4 current-build dispatch와 fresh fixture. 과거 format 결과를 새 format PASS로 승격하지 않음 |
+| Q02 | §4–6의 original owner 이전·조상 private seal·full generic/lifetime·error/loan 인계와 Row consuming API. [Catalog CREATE claim](#catalog-claim-gap)은 원 registry atomic close+active key gate+disjoint flush lease, [producer 입력](#producer-input-api)은 exact getters/role/presence/control borrow로 동결 | 경계/C; MBC00 compiler·MBC31 claim의 정상/실패/Cancel/Drop·C1 identity·C3 actual grant/terminal·Catalog 제품 수신. raw ctor/field 확대·facade-only 완료 금지. 실제 borrow/authority 검증은 M4 의무 |
 | Q03 | 원 Owner의 guard별 재대여·Missing 2pin/8192 registry·Cell view/revision·caller Tx snapshot·RC 각 statement·자동 격리 set·읽기 전용 종료 validation. Catalog claim 동안 short operation Busy/같은 snapshot 재시도, 장기 reader/capsule 유지. 일반3pin/occupied before 제외 | C/B; [visibility](dev3-visibility-retirement.md#row-missing-traversal)·[statement/cursor](dev3-task-06-tree-rows.md#module-statement-cursor)·[격리](dev3-task-10-concurrency.md#module-row-isolation)와 MBC20/31·MCB/MCI 반례 수신 |
 | Q04 | [Row 상태/count](dev3-module-consumers.md#row-states)의 head/mark/CLR/debt와 §6.7 closed action. A는 live/recovery CLR 후보, C는 actual source/observer/effect·CancelReserved/AbortEnd/committed maintenance | C/A; MCA02/03과 MBC40의 head/count·재장애·같은 loan 반환. WithRowClr는 actual A handler 수신이며 handler stub로 READY를 만들지 않음 |
 | Q05 | [독립 fixture](dev3-module-consumers.md#independent-fixtures)의 actual binding+untrusted literal+same observer. [최초 policy gate](#row-recovery-policy)는 canonical 전체 검산 뒤 ReservedInventoryNone·Reserved root0·ATT Active/Aborting0를 physical/REBASE/cleanup 전에 요구 | B/C; MCB05-N01..06과 C4 gate/legacy 차단·기존 failure owner 보존. live own-write와 committed reopen 분리, 입력/ELF hash·상대 producer/fixture import0. decoded bytes로 source 권한 제조 금지 |
 | Q06 | [자원 정본](dev3-resource-bounds.md#row-missing-module-budget)의425984 private/9proof5after·5760 backing·49152 long·65536 동시 short 합·original flush, P_R와 FD/profile 상한. §6.8–6.9의 선예약/진행/회수 | resource/C; MBC10/40과 MCA05 actual census·admission. source 측정은 M4 의무, 초과 시 계약 재검토이며 한도 증액/숨김 금지 |
-| Q07 | §9 MBC00–40와 C5 수신의 정확 case 분모·입력/fault cut/oracle·30/180초·45/20분·출력/namespace 예산, [소비자 인수](dev3-module-consumers.md#acceptance)의 MCA/MCB/MCI 연결 | 인수/C/A/B; 실제 diff에 따라 개별 선택·NOT_RUN/FAIL/UNKNOWN 보존·완료한 무변경 case 반복0. 독립 D2 반례로 설계가 바뀌면 해당 case만 함께 수정하며 아직 명령/실행/PASS 없음 |
+| Q07 | §9 MBC00–40와 C5 수신의 정확 case 분모·입력/fault cut/oracle·30/180초·45/20분·출력/namespace 예산, [소비자 인수](dev3-module-consumers.md#acceptance)의 MCA/MCB/MCI 연결 | 인수/C/A/B; 실제 diff에 따라 개별 선택·NOT_RUN/FAIL/UNKNOWN 보존·완료한 무변경 case 반복0. 독립 D2 반례로 설계가 바뀌면 해당 case만 함께 수정. 각 case의 실제 source/실행 수신 전에는 PASS를 부여하지 않으며 C0 codec 선택 결과는 구현 색인과 별도 증거로 수신 |
 | Q08 | §7의 C0–C5 유한 공급·제외·되돌림, §8과 [소비자 분담](dev3-module-consumers.md#division)의 전용 source/fixture·C0 순수 대역/actual 수신 시점 | root/C/A/B; [M2 인계표](../plans/module-independence-plan.md#m2-handoff)의 담당/기준 source와 대기·충돌·합류 증거 등록. build inventory는 실제 구현 시 등록 |
 
-독립 검토자가 원 source와 정상/실패/복구 반례 및 소비자·자원 owner의 정합을 확인하여 **D2 검토 수용·필수 수정0**으로 판정했다. [검토 기록](../evidence/module-independence-survey-20261026.md#final-design-review)을 수신하며 이번 커밋의 채택 상태는 PROPOSED로 보존한다. 확정된 C의 미구현·미실행은 M4/M5 의무로 남으며 M2에서 제품 prototype·컴파일·시험을 수행할 이유가 되지 않는다.
+독립 검토자가 원 source와 정상/실패/복구 반례 및 소비자·자원 owner의 정합을 확인하여 **D2 검토 수용·필수 수정0**으로 판정했다. [검토 기록](../evidence/module-independence-survey-20261026.md#final-design-review)을 수신해 채택 상태를 ACCEPTED로 반영했으며 M2는 완료다. 확정된 C의 미구현·미실행은 M4/M5 의무로 남으며 M2에서 제품 prototype·컴파일·시험을 수행할 이유가 되지 않는다.

@@ -61,7 +61,7 @@
   "automated_overlap_checker": "NOT_IMPLEMENTED",
   "module_contract_handoff": {
     "decision_id": "D3-MODULE-ADOPTION-001",
-    "decision_status": "PROPOSED",
+    "decision_status": "ACCEPTED",
     "normative_ref": "parallel-development-policy.md#module-contract-handoff",
     "application_ref": "module-independence-plan.md#acceptance",
     "execution_status": "NOT_RUN",

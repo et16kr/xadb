@@ -36,7 +36,7 @@ ARIES의 WAL-before-page, pageLSN, analysis/redo/undo, redo-only 보상, fuzzy c
 
 기존 engine 안에서 storage는 page/heap-row-tree/index/allocator/buffer, transaction은 잠금·가시성·statement/undo·commit, durable은 WAL·flush 장벽·checkpoint·restart, catalog는 versioned 정의/객체 수명을 소유한다. platform 효과는 foundation port로 전달한다. 실제 구현 전 빈 소스 경로·crate를 추가하지 않는다.
 
-`D3-MODULE-ADOPTION-001` **D2 PROPOSED 반영안**은 이 의미 소유를 유지하면서 첫 Missing INSERT와 snapshot 조회/cursor의 [실제 모듈 경계](dev3-module-boundaries.md#target-imports)를 구체화한다. C는 원 pool/ledger/WAL·자동 read/write-set·source pin·checked apply/terminal/recovery를 공급하고 A/B는 각각 행 변경 후보/제품 흐름과 조회/순서 진행을 소유한다. 원 mutable ledger가 validation부터 installed epoch/Q 공개까지 Commit을 직렬화하며, Serializable transaction snapshot과 ReadCommitted statement snapshot은 [격리 owner](dev3-task-10-concurrency.md#module-row-isolation)를 따른다. 신규 RowId만으로 격리를 충족했다고 보지 않는다. 기존 engine API 전체 공급이나 SQL 인수를 이 한정 전환으로 완료하지 않는다.
+`D3-MODULE-ADOPTION-001` **D2 ACCEPTED 결정**은 이 의미 소유를 유지하면서 첫 Missing INSERT와 snapshot 조회/cursor의 [실제 모듈 경계](dev3-module-boundaries.md#target-imports)를 구체화한다. C는 원 pool/ledger/WAL·자동 read/write-set·source pin·checked apply/terminal/recovery를 공급하고 A/B는 각각 행 변경 후보/제품 흐름과 조회/순서 진행을 소유한다. 원 mutable ledger가 validation부터 installed epoch/Q 공개까지 Commit을 직렬화하며, Serializable transaction snapshot과 ReadCommitted statement snapshot은 [격리 owner](dev3-task-10-concurrency.md#module-row-isolation)를 따른다. 신규 RowId만으로 격리를 충족했다고 보지 않는다. 기존 engine API 전체 공급이나 SQL 인수를 이 한정 전환으로 완료하지 않는다.
 
 | 계획 API/개념 | 계약 |
 | --- | --- |

@@ -28,6 +28,15 @@ decoder는 입력을 전부 검산한 뒤 immutable bytes를 빌리는 `Canonica
 
 encoder는 `&[Value]`와 schema를 받고 전체 type/size/산술 및 output capacity를 최초 쓰기 전에 검사한다. 성공하면 사용한 prefix 길이를 반환하고 output의 나머지 tail을 보존한다. 모든 오류에서 전체 output은 byte 단위로 변하지 않는다. 128 KiB scratch나 heap Vec를 encoder 안에 숨기지 않는다.
 
+<a id="borrowed-schema"></a>
+### Catalog 스키마와 빌린 값의 공통 입력
+
+2026-10-26 [모듈 전환 C0](dev3-module-boundaries.md#producer-input-api)의 부분공급으로 `RowSchemaInput::{Columns(&[Column]), Catalog(TableDefinitionView)}`를 구현했다. `canonical_row_len_borrowed`·`encode_canonical_row_borrowed`는 `&[ValueRef]`를 받고, `decode_canonical_row_with_schema`·`encode_row_record_with_schema`·`decode_row_record_with_schema`는 같은 schema 입력을 사용한다. 기존 owned 진입점도 동일한 내부 검산·인코딩으로 위임하며 앞 절의 wire·크기 한도·오류 우선순위·output/tail 보존은 변하지 않는다.
+
+Catalog 입력은 이미 검산된 immutable definition bytes를 빌린다. column 이름이나 문자열/binary 값을 heap에 복사하지 않으며, 반환 row view는 row input만 빌리고 schema buffer의 수명을 연장하지 않는다. 이 값과 helper는 실제 table identity·pin·snapshot·저장 권한을 발급하지 않는다. canonical codec의128KiB 한도와 row record의 inline2048B 한도는 계속 구별하며, 첫 INSERT profile의2048B preflight는 후속 실제 소비 경계에서 적용한다.
+
+[선택6시험과 독립 코드 검토](../evidence/module-independence-survey-20261026.md#c0-borrowed-codec)는 이 부분공급에 한정한다. 전체 C0의 owner/port 타입·producer 관측값, C1–C5 실제 공급, 두 제품 기능·복구 인수는 미완료다.
+
 ## 2. 공통 version 의미
 
 row와 index payload는 다음 값들을 함께 담는다.

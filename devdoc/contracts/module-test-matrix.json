@@ -180,7 +180,7 @@
   "expected_external_effects_M1": "memory and owned bounded scratch only",
   "module_independence_adoption": {
     "decision_id": "D3-MODULE-ADOPTION-001",
-    "decision_status": "PROPOSED",
+    "decision_status": "ACCEPTED",
     "execution_status": "NOT_RUN",
     "phase_namespace": "module-independence M0-M5, distinct from this matrix's M1/M2/M3 test layers",
     "plan_ref": "module-independence-plan.md#acceptance",

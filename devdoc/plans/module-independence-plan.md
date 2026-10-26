@@ -1,6 +1,6 @@
 # XADB 모듈 독립 개발 구조 전환 작업 계획
 
-2026-10-26 · **작업 계획 D2 채택 / M0 기준선 확인·M1 한정 조사 완료 / M2·M3 반영안 독립 검토 수용·채택 상태 PROPOSED / 제품 구조 변경·병렬 인수 NOT_RUN**
+2026-10-26 · **D2 ACCEPTED / M0–M3 완료 / M4 C0 borrowed codec 부분공급 / C0 전체·C1–C5·M5 미완료 / 제품 인수 NOT_RUN**
 
 [개발 문서 진입점](../README.md) · [기존 병렬 정책](../policies/parallel-development-policy.md) · [저장소 배치](../policies/repository-build-plan.md) · [DEV3 작업 분해](dev3-implementation-plan.md#remaining-work) · [변경 코드 시험 지시](../../AGENTS.md)
 
@@ -11,7 +11,7 @@
 
 사용자는 초기부터 “모듈별로 구성하고, 병렬로 개발해도 충돌을 최소화”하기를 요구했다. 현재 평가를 확인한 뒤 현재 구조를 변경하고 이 목적대로 개발되도록 에이전트가 문서를 수정할 작업 계획서를 요청했다. 따라서 후속 문서 담당은 현 구조를 설명하거나 병렬 운영 안내만 추가하는 데 그치지 않고, **목표 구조·내부 API·소유 계약·개발 순서를 수정안으로 구체화**한다.
 
-이번 산출물은 그 문서 수정과 후속 구조 전환의 계획이다. 작성·리뷰만으로 진행 중인 다른 채팅·프로세스가 중지됐거나 소유 계약·제품 코드가 바뀐 것으로 기록하지 않는다. 현재 작업은 계획서와 탐색 색인의 작성·리뷰에 한정하며, M0–M3의 실제 소유 문서 정비와 M4–M5 제품 작업은 후속 실행 범위다.
+이번 산출물은 그 문서 수정과 후속 구조 전환의 계획이다. 작성·리뷰만으로 진행 중인 다른 채팅·프로세스가 중지됐거나 소유 계약·제품 코드가 바뀐 것으로 기록하지 않는다. 최초 계획 작성은 계획서와 탐색 색인의 작성·리뷰에 한정했다. 후속 전체 실행 지시에 따른 현재 상태는 [실행 추적](#execution)에 둔다. M0–M3를 완료했고 M4 C0의 borrowed codec 부분공급을 진행했으며 M4 전체·M5는 미완료다.
 
 우선 조사 범위는 DEV3의 WAL·페이지/버퍼·할당·거래/undo·복구·Catalog 연결이다. 실제 첫 전환 범위는 M2에서 선정하는 두 소비 기능과 그 기능에 필요한 공통 경계로 닫는다. foundation/platform·SQL·COMM은 이미 확보한 경계를 보존하면서 수신 계약에 영향이 있는 부분만 대조한다. 이후 단계도 영향을 받는 선행·인계 문구를 갱신하되, 전체 DBMS를 다시 설계하는 작업으로 확대하지 않는다.
 
@@ -67,7 +67,7 @@ M2 산출물에는 다음 두 그림을 각각 둔다: (a) 허용 Rust import/�
 <a id="m2-handoff"></a>
 ### M2 설계 인계의 구체 형식
 
-M2에서는 위 경계를 선정한 A/B의 실제 호출에 대입한다. 아래 항목은 기존 소유 계약·작업 기록의 해당 절에 작성하고 이 계획에서 연결한다. 같은 내용을 별도 문서마다 복제하거나 새 관리 도구를 만들지 않는다. 이 표는 후속 산출물의 작성 기준이며, 현재 A/B 선정이나 API 설계가 완료됐다는 기록이 아니다.
+M2에서는 위 경계를 선정한 A/B의 실제 호출에 대입한다. 아래 항목은 기존 소유 계약·작업 기록의 해당 절에 작성하고 이 계획에서 연결한다. 같은 내용을 별도 문서마다 복제하거나 새 관리 도구를 만들지 않는다. 이 표는 산출물의 작성 기준이다. A/B 선정과 API 설계의 실제 채택 상태·근거는 [실행 추적](#execution)과 [소유 문서 채택 결정](#m3-adoption)에 둔다.
 
 | 산출물 | M2에서 확정할 내용 | 검토자가 확인할 연결 |
 | --- | --- | --- |
@@ -256,21 +256,21 @@ PD01은 이 A/B 사례에 연결한다. PD02/PD03은 작업 중 실제 공통 �
 
 | 단계 | 현재 상태·근거 | 남은 종료 조건 |
 | --- | --- | --- |
-| M0 | [기준선 확인](../evidence/module-independence-survey-20261026.md#baseline), 별도 worktree 격리. 다른 세션 중지 없음 | M2/M3 채택 때 관련 diff 재확인·별도 검토 |
+| M0 | [기준선 확인](../evidence/module-independence-survey-20261026.md#baseline) 완료, 별도 worktree 격리. `66ddf61` 재개와 main `b7ce51d` 확인. 다른 세션 중지 없음 | 후속 합류 때 실제 관련 diff 재확인 |
 | M1 | [소유·의존 분류와 소비 후보](../evidence/module-independence-survey-20261026.md#survey)·[원 source 독립 검토](../evidence/module-independence-survey-20261026.md#review) 완료 | 선정 경계의 후속 관련 diff가 생기면 영향만 갱신 |
-| M2 | 설계안 독립 D2 수용·필수 수정0, 채택 상태 PROPOSED | 검토 기록을 수신한 최종 채택·동결 상태 반영 |
-| M3 | 소유 문서·운영/시험 JSON 반영안 독립 D2 수용·필수 수정0, 채택 상태 PROPOSED | M2와 함께 소유 계약·JSON의 채택 상태 반영 |
-| M4 | NOT_RUN | 동결한 공급 단위의 구조 변경·관련 선택 검증·검토 |
+| M2 | 완료·ACCEPTED. [최종 독립 D2](../evidence/module-independence-survey-20261026.md#final-design-review) 수용·필수 수정0을 수신해 API·소비자·유한 공급·인수 설계 동결 | M4/M5에서 새 반례 또는 계약 변경이 생기면 영향 행만 재검토 |
+| M3 | 완료·ACCEPTED. 소유 문서·운영/시험 JSON 채택 반영, MBC31 보완의 한정 재확인까지 독립 D2 수용·필수 수정0 | 구현에 따른 실제 공급 상태와 등록을 해당 diff에 맞춰 갱신 |
+| M4 | IN_PROGRESS. C0 borrowed schema/value codec 부분공급·선택6 검증 PASS, [부분공급 독립 D1/D2 수용·필수 수정0](../evidence/module-independence-survey-20261026.md#c0-borrowed-codec). C0 전체·C1–C5 공급과 제품 인수 미완료 | 동결한 공급 단위의 구조 변경·관련 선택 검증·검토 |
 | M5 | NOT_RUN | C+A/C+B의 실제 제품 병렬 구현·단독/합류 인수·MI01–06 |
 
 현재 편집 위치는 `/home/et16/.codex/worktrees/module-independence/xadb`, 출발 commit은 `b7ce51d2b3ee62b5b8dbc0d9c852a17827d76bd9`다. 이번 단계의 권한·소유·동시 작업·미확인 세션은 [조사 기록](../evidence/module-independence-survey-20261026.md)에 보존한다. 계획의 전체 목표는 M5 인수까지 유지하며 문서 정비만으로 완료하지 않는다.
 
-M2 초안은 [원 소유·소비 경계](../contracts/dev3-module-boundaries.md), [두 제품 소비자](../contracts/dev3-module-consumers.md), [Missing Row 참조 이동](../contracts/dev3-visibility-retirement.md#row-missing-traversal), [statement/cursor F02](../contracts/dev3-task-06-tree-rows.md#module-statement-cursor), [두 격리 수준의 공급](../contracts/dev3-task-10-concurrency.md#module-row-isolation), [자원 배정](../contracts/dev3-resource-bounds.md#row-missing-module-budget)에서 작성 중이다. 제안·한정 검토와 채택·구현 상태를 구별하며 새 경로는 아직 build inventory에 등록하지 않는다.
+채택한 M2 계약은 [원 소유·소비 경계](../contracts/dev3-module-boundaries.md), [두 제품 소비자](../contracts/dev3-module-consumers.md), [Missing Row 참조 이동](../contracts/dev3-visibility-retirement.md#row-missing-traversal), [statement/cursor F02](../contracts/dev3-task-06-tree-rows.md#module-statement-cursor), [두 격리 수준의 공급](../contracts/dev3-task-10-concurrency.md#module-row-isolation), [자원 배정](../contracts/dev3-resource-bounds.md#row-missing-module-budget)에 둔다. 최종 독립 검토와 M2/M3 채택을 수신했으며 실제 공급·인수와 구별한다. 새 경로는 실제 구현 시에만 build inventory에 등록한다.
 
 <a id="m3-adoption"></a>
-### D3-MODULE-ADOPTION-001 — 선정 경계의 소유 문서 반영안
+### D3-MODULE-ADOPTION-001 — 선정 경계의 소유 문서 채택
 
-2026-10-26 · **채택 상태 PROPOSED / M2·M3 독립 D2 검토 수용·필수 수정0 / 제품·시험 NOT_RUN**. 기준 `ae6fb6d`, 담당·계약·통합 `/root`, 독립 검토 `/root/module_handoff_review`. 사용자의 계획 실행 지시와 DP01의 기존 위임으로 작성했다. 이번 커밋은 보완안과 검토 결과를 저장하며, 소유 계약·JSON의 채택 상태 변경이나 제품 구현 완료를 뜻하지 않는다.
+2026-10-26 · **D2 ACCEPTED / M2·M3 완료 / M4 C0 borrowed codec 부분공급 / 공통 공급·제품 인수 미완료**. 검토 기준 `ae6fb6d`, 검토 결과 저장 commit `66ddf61`, 담당·계약·통합 `/root`, 독립 검토 `/root/module_handoff_review`. 사용자의 계획 실행 지시와 DP01의 기존 위임에 따라 [최종 독립 검토](../evidence/module-independence-survey-20261026.md#final-design-review)를 수신하고 소유 계약·JSON의 채택 상태를 반영했다. 당시 PROPOSED 중간 저장과 미해결 기록은 원 증거에 보존한다. 이번 채택은 실제 구현·compiler·runtime·native 인수 결과가 아니다.
 
 선택은 기존 실제 owner를 보존한 C0–C5 경계를 각 정본에 수신하고 두 제품 본문을 별도 담당에게 맡기는 것이다. 기존 구조를 그대로 둔 등록/rename만으로 끝내는 대안과 전체 저장 모듈을 한 번에 재작성하는 대안은 채택하지 않는다. D3-DIRECTION-002의 **국소 개선만 허용한 작업 순서 제한**과 AI 효율 계획의 **두 번째 역할을 준비 작업으로만 제한한 부분**만 선정 범위에서 대체한다. 첫 행 목표·원자성·격리·복구/자원·DEV2 미완료·S5·호환·과거 source 증거는 유지한다.
 
@@ -278,19 +278,19 @@ Root3/Job3/Profile3·Row scope3·base4는 이름 변경의 부수 효과가 아�
 
 | §6 소유 행 | 실제 반영 절 또는 미수정 근거 | 영향·검토·실행 상태 |
 | --- | --- | --- |
-| 병렬 정책·JSON | [계약 인계](../policies/parallel-development-policy.md#module-contract-handoff)와 관리 JSON의 module_contract_handoff | C0/C·제품 구현 중첩·첫 단독 source·MI01–06 수신; PROPOSED·PD01–03 NOT_RUN |
+| 병렬 정책·JSON | [계약 인계](../policies/parallel-development-policy.md#module-contract-handoff)와 관리 JSON의 module_contract_handoff | C0/C·제품 구현 중첩·첫 단독 source·MI01–06 수신; ACCEPTED·PD01–03 NOT_RUN |
 | 코딩 컨벤션·JSON | 미수정. 기존 §4–5가 공유 의미와 상위 조립, 최소 visibility, API 수명/오류 완결성을 이미 요구 | 새 파일 크기/trait/crate 규칙 없음; 실제 M4 diff에 적용 |
 | 저장소 배치·JSON | 미수정. 기존 engine 내부 역할·허용/실제/시험 의존 구별을 유지 | 신규 source 경로·fingerprint·export는 실제 M4 구현과 함께 등록 |
-| 구현 계약·disk 저장 | [구현 계약의 모듈 전환](../contracts/implementation-contracts.md#module-transition), [disk 책임/API](../contracts/disk-storage-design.md#ownership) | C의 actual 권한/효과와 A/B 제품 소유 구분; PROPOSED·미구현 |
-| 세션·WAL·Commit | [세션](../contracts/dev3-storage-session.md#consumer-driven-refinement)의 한정 대체/원 소유, [WAL I/O](../contracts/dev3-wal-io.md)의 물리/의미 분리, [continuation](../contracts/dev3-commit-continuation.md)의 exact receipt/whole PinSet | 원 W/File/slot/fence·lease·Drain·epoch/Q 순서 보존; PROPOSED |
+| 구현 계약·disk 저장 | [구현 계약의 모듈 전환](../contracts/implementation-contracts.md#module-transition), [disk 책임/API](../contracts/disk-storage-design.md#ownership) | C의 actual 권한/효과와 A/B 제품 소유 구분; ACCEPTED·actual 공급 미완료 |
+| 세션·WAL·Commit | [세션](../contracts/dev3-storage-session.md#consumer-driven-refinement)의 한정 대체/원 소유, [WAL I/O](../contracts/dev3-wal-io.md)의 물리/의미 분리, [continuation](../contracts/dev3-commit-continuation.md)의 exact receipt/whole PinSet | 원 W/File/slot/fence·lease·Drain·epoch/Q 순서 보존; ACCEPTED |
 | 해당 3.02–3.14 | [공급 설계도](../contracts/dev3-task-designs.md#dependency-map), 3.06 statement/cursor·3.09 CLR·3.10 격리·3.11 terminal·3.12 복구 및 참조/자원 owner | 기존 일반 allocation/index/checkpoint/회수 의무는 그대로. 직접 owner가 수신한 의미를 모든 task에 중복 정의하지 않음 |
 | CREATE·plan4 복구 | [CREATE](../contracts/dev3-catalog-create.md)의 기존 claim/flush lease, [복구 owner](../contracts/dev3-plan4-recovery-owner.md)의 최초 census·typed Row action | 실제 Catalog/Row 상태·오류 공급; 기존 source 결과는 새 API 검증 아님 |
-| DEV3 실행·공급 순서 | [한정 대체](dev3-implementation-plan.md#direction-refinement)·[A/B 배치](dev3-implementation-plan.md#parallel-execution-plan), 공급 설계도 | 두 제품 담당·공통 단일 작성·동시 구현2개 한도 보존; PROPOSED |
+| DEV3 실행·공급 순서 | [한정 대체](dev3-implementation-plan.md#direction-refinement)·[A/B 배치](dev3-implementation-plan.md#parallel-execution-plan), 공급 설계도 | 두 제품 담당·공통 단일 작성·동시 구현2개 한도 보존; ACCEPTED |
 | bottom-up·단계/완료 JSON | 미수정. 실제 하위 공급을 받은 통합·기능 인수, DEV2 partial·DEV3/S5 미완료와 최종 전수 예외가 이미 명확 | 내부 모듈 착수·M5를 새 단계 gate나 완료로 표시하지 않음 |
 | 시험 계획·모듈 목록 | [MBC/MCA/MCB/MCI 배정](dev3-test-plan.md#module-independence-tests)과 module-test-matrix.json | 실제 diff→case, 첫 C+A/C+B, 새 합류와 원 native/S5 의무; 실행 NOT_RUN |
 | DEV4 문서군 | 미수정. 기존 독립 frontend/model 착수와 실제 engine 뒤 Q1의 구분을 유지 | 아직 C의 내부 목표 API만 존재. DEV4 공개 공급/연결이 구현됐다는 변경 없음; 재개 시 실제 DEV3 공급 수신 |
 | AI 절차·예시·효율 계획 | [작업 절차](../policies/ai-development-method.md#section-8), [예시](../examples/task-contract.example.json)의 C0/C/단독/합류·validation, [효율 계획](dev3-ai-throughput-improvement.md)의 제품 병행 | 예시는 PROPOSAL_EXAMPLE_NOT_EXECUTED 유지. 원 소비자 수·실측 시간·효율 결과 변경0 |
 | AGENTS·진입점·색인 | 미수정. 현재 README에 구조 전환·M2/owner/인수 경로가 있고 새 두 계약은 폴더 README와 documents.json에 등록됨 | 신규 문서 ID/파일 없음. 기존 테스트·검토·push gate 유지 |
-| 구현 상태 | [구현 색인](../implementation/README.md)에 목표 구조 미구현을 표시 | 제품 diff0·실행 증거 승격0 |
+| 구현 상태 | [구현 색인](../implementation/README.md)에 C0 borrowed codec 부분공급·C0 전체/C1–C5/M5 미완료를 표시 | `66ddf61`까지 제품 diff0. 후속 C0 실제 diff·선택 인수는 별도 기록하며 과거 실행 증거 승격0 |
 
 별도 검토자는 최종 M2를 수용했고, M3의 module-test-matrix.json에서 누락된 MBC31을 추가한 뒤 해당 행을 한정 재확인하여 M3도 수용했다. 두 판정의 미해결 필수 수정은0이며 [검토 기록](../evidence/module-independence-survey-20261026.md#final-design-review)에 입력 identity와 범위를 보존한다. 구체 API가 actual source로 구현 불가능하거나 원 권한/격리/복구·자원을 약화하는 경우, 공통 의미 재개방이 A/B의 독립 착수를 막는 경우에 해당 행을 다시 검토한다. M4/M5의 compiler·runtime·native·source census와 MI01–06는 실제 구현 뒤의 미완료 의무다.

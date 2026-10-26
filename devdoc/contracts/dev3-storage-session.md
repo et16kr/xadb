@@ -306,7 +306,7 @@ DEV0/1/2의 중첩 command wrapper는 exclusive regular log에 stdout/stderr를 
 <a id="consumer-driven-refinement"></a>
 ### 실제 소비자에 필요한 국소 개선
 
-2026-10-26 `D3-MODULE-ADOPTION-001` **D2 PROPOSED 반영안**은 아래 D3-DIRECTION-002의 국소 개선만 허용하던 작업 순서 제한을 [선정한 C0–C5](dev3-module-boundaries.md#common-deliveries)의 모듈 전환 범위에서 대체한다. 채택 후에는 두 Row 소비자의 독립 개발을 위해 실제 owner/접근 경계를 먼저 정비할 수 있다. source의 전체 `wal_io` 재작성·일괄 rename·나머지 DEV3 기능을 선행으로 추가하는 결정은 아니다. 첫 행 목표와 아래 원 자원·상태·오류 보존 규칙은 유지한다.
+2026-10-26 `D3-MODULE-ADOPTION-001` **D2 ACCEPTED 결정**은 아래 D3-DIRECTION-002의 국소 개선만 허용하던 작업 순서 제한을 [선정한 C0–C5](dev3-module-boundaries.md#common-deliveries)의 모듈 전환 범위에서 대체한다. 두 Row 소비자의 독립 개발을 위해 실제 owner/접근 경계를 먼저 정비한다. source의 전체 `wal_io` 재작성·일괄 rename·나머지 DEV3 기능을 선행으로 추가하는 결정은 아니다. 첫 행 목표와 아래 원 자원·상태·오류 보존 규칙은 유지한다.
 
 목표 `DiskSession`은 기존 Plan4Pages/control/history/flush/visibility/recovery binding의 소유 이동이며 새 runtime을 생성하지 않는다. `split`은 같은 원 pool과 disjoint ledger/operation/flush 대여로 MutationPort·ReadPort·MaintenancePort를 만들고, 장기 transaction capsule은 원 visibility/isolation을 빌린다. Catalog 제품은 같은 제한 경계의 실제 claim·source·apply를 수신한다. 자세한 claim/수명·Drop·오류는 [경계 API](dev3-module-boundaries.md#api-candidates)를 단일 원문으로 삼으며 facade 재노출만으로 공급 완료를 판정하지 않는다.
 

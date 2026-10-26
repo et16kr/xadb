@@ -103,7 +103,7 @@
     "module_handoff": {
       "status": "UNRESOLVED_EXAMPLE",
       "policy_ref": "parallel-development-policy.md#module-contract-handoff",
-      "policy_decision_status": "PROPOSED",
+      "policy_decision_status": "ACCEPTED",
       "contract_baseline": null,
       "C0_compile_and_effect_free_inputs": null,
       "real_C_supply_units_and_receivers": [],

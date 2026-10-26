@@ -219,7 +219,7 @@ native 13DB는 새로 부풀린 전수 행렬이 아니라 기존 제한 단위�
 <a id="module-independence-tests"></a>
 ### 5.2 모듈 전환의 공급·단독·합류 인수
 
-`D3-MODULE-ADOPTION-001` **D2 PROPOSED / 구현·시험 NOT_RUN**. 정확 case/변형·입력·오류·시간 한도는 [공통 MBC inventory](../contracts/dev3-module-boundaries.md#validation)와 [소비자 MCA/MCB/MCI inventory](../contracts/dev3-module-consumers.md#acceptance)를 단일 원문으로 둔다. 이것은 실행 가능한 selector의 등록이나 기존 source 결과의 재분류가 아니다.
+`D3-MODULE-ADOPTION-001` **D2 ACCEPTED / 공통 공급·제품 인수 미완료 / 시험 NOT_RUN**. 정확 case/변형·입력·오류·시간 한도는 [공통 MBC inventory](../contracts/dev3-module-boundaries.md#validation)와 [소비자 MCA/MCB/MCI inventory](../contracts/dev3-module-consumers.md#acceptance)를 단일 원문으로 둔다. 이것은 실행 가능한 selector의 등록이나 기존 source 결과의 재분류가 아니다.
 
 | 배정 | 실제 변경과 최초 검증 source | 판정 경계 |
 | --- | --- | --- |

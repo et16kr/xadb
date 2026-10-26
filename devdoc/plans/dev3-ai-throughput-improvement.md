@@ -66,7 +66,7 @@ AI 개발 방법의 학습을 먼저 보고하려면 **중간 산출물의 이�
 
 공유 page/WAL/transaction 상태 전이는 한 통합 owner가 순서대로 반영한다. 동시에 진행할 수 있는 두 번째 작업은 독립 literal·fault recipe·compiler probe·reference 질문처럼 공유 상태를 수정하지 않는 준비로 고른다. 독립 검토자는 계약·부정 입력을 구현과 병행해 먼저 검토하고, 마지막에 실제 diff와 결과를 별도로 판정한다. 서로 다른 파일이어도 같은 상태 전이를 바꾸면 병렬 구현으로 세지 않는다. 작업별 source와 build/output 디렉터리를 격리해 DEV2·COMM의 동시 변경이 DEV3 증거에 섞인 부분을 명확히 한다. 이는 [기존 병렬 정책](dev3-implementation-plan.md#parallel-execution-plan)의 실제 적용 제안이며 인원만 늘려 속도가 오른다는 주장은 아니다.
 
-2026-10-26 `D3-MODULE-ADOPTION-001` **D2 PROPOSED 보완**은 위 두 번째 역할을 준비 작업으로만 제한하던 범위를 [모듈 전환의 A/B](module-independence-plan.md#acceptance)에 한해 대체한다. 실제 C0를 받은 두 담당은 INSERT와 snapshot 조회/cursor의 제품 본문을 겹치는 기간에 개발하고, C의 추가 공급은 별도로 수신한다. 공통 의미·권한 구현의 단일 담당과 독립 검토는 유지한다. 최초 C+A/C+B source와 실제 합류 인수, 대기·공유 조정·재작업 기록은 [병렬 정책 반영안](../policies/parallel-development-policy.md#module-contract-handoff)을 따른다. 기존 세 단위 실험의 결과나 소비자 수는 이 문서 보완으로 승격하지 않는다.
+2026-10-26 `D3-MODULE-ADOPTION-001` **D2 ACCEPTED 보완**은 위 두 번째 역할을 준비 작업으로만 제한하던 범위를 [모듈 전환의 A/B](module-independence-plan.md#acceptance)에 한해 대체한다. 실제 C0를 받은 두 담당은 INSERT와 snapshot 조회/cursor의 제품 본문을 겹치는 기간에 개발하고, C의 추가 공급은 별도로 수신한다. 공통 의미·권한 구현의 단일 담당과 독립 검토는 유지한다. 최초 C+A/C+B source와 실제 합류 인수, 대기·공유 조정·재작업 기록은 [병렬 정책 반영안](../policies/parallel-development-policy.md#module-contract-handoff)을 따른다. 기존 세 단위 실험의 결과나 소비자 수는 이 문서 보완으로 승격하지 않는다.
 
 ### 6. 모델 배정을 실제 결과로 조정한다
 

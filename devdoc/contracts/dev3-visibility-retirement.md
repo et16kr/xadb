@@ -2,7 +2,7 @@
 
 2026-10-25 · `D3-CATALOG-CREATE-001` 결합 D2 채택·구현 착수 수용 · [실제 소비 계약](dev3-catalog-create.md). 제품 효과·실행 인수 미완료.
 
-2026-10-26의 [첫 Row Missing 참조 이동](#row-missing-traversal)은 별도 D2 PROPOSED이며 기존 채택 범위와 구분한다.
+2026-10-26의 [첫 Row Missing 참조 이동](#row-missing-traversal)은 별도 D2 ACCEPTED이며 기존 Catalog 실행 범위와 구분한다.
 
 2026-10-25 · r0 · `/root/undo_design` · **결합 D2 채택 정본**. 제품/fixture 수정·시험 실행/commit 0. B1 공통 공급 `35c879e`의 실제 source를 읽었다. B1 PASS는 실제 Commit/publication/reader/aging 완료가 아니다. Root/Job wire는 root 및 다른 담당자의 정본을 따른다.
 
@@ -157,9 +157,9 @@ fn finish_applied(self /* RetirementIntent */,
 Catalog copy 최대4588B는 원 B private425984B loan의 tail `[409600,425984)`에 보존한다. 동기 resolver가 original Owner를 유지하며 load에는 disjoint prefix의 필요한 subloan만 제공한다. source latch를 놓은 뒤 loader가 copy를 덮지 못하도록 typed split으로 수명을 닫는다.
 
 <a id="row-missing-traversal"></a>
-## 8. 모듈 전환 후보 — 첫 Row Missing의 참조 이동
+## 8. 모듈 전환 — 첫 Row Missing의 참조 이동
 
-2026-10-26 · `D3-ROW-REFERENCES-001` · **D2 PROPOSED, M2 미완료**. 작성·계약 담당 `/root`. [모듈 전환 계획](../plans/module-independence-plan.md#m2-handoff)의 A/B에 필요한 후속 제안이며, 앞선 Catalog 채택·제품 인수를 변경한 기록이 아니다. 독립 검토·구현·실행은 미완료다. 적용 후보는 실제 CREATE가 만든 단일 RowLeaf의 신규 RowId·inline·Missing Undo INSERT와 이 행의 point-read/cursor, 그 거래의 statement/full rollback이다. occupied before·UPDATE/DELETE·overflow에는 적용하지 않는다.
+2026-10-26 · `D3-ROW-REFERENCES-001` · **D2 ACCEPTED / M2 완료 / 제품·시험 NOT_RUN**. 작성·계약 담당 `/root`. [모듈 전환 계획](../plans/module-independence-plan.md#m2-handoff)의 A/B에 필요한 채택 계약이며, 앞선 Catalog 제품 인수를 변경한 기록이 아니다. [최종 독립 검토](../evidence/module-independence-survey-20261026.md#final-design-review)를 수신했으며 구현·실행은 미완료다. 적용 범위는 실제 CREATE가 만든 단일 RowLeaf의 신규 RowId·inline·Missing Undo INSERT와 이 행의 point-read/cursor, 그 거래의 statement/full rollback이다. occupied before·UPDATE/DELETE·overflow에는 적용하지 않는다.
 
 ### 필요한 pin과 발급 원천
 
@@ -181,7 +181,7 @@ CLR의 H pin 선취득 실패는 current pin·원 head/next·미소비 rollback 
 
 ### 자원·미공급과 선택 인수
 
-이번 후보의 registry는 기존 snapshot68·reference66·admission32·retirement1, **8192B** loan을 유지한다. 새 Row source guard/copy/Result의 실제 type/source 비용과 loader·cursor 중첩 peak는 별도 F05에 포함해야 하며 기존 Catalog census를 새 Row의 PASS로 사용하지 않는다. Row/Undo2pin은 physical target pin 수와 다른 항이다. reader/rollback의 원 Owner 및 pool을 재대여하는 private operation을 유지하고 두 번째 registry나 전체 chain 목록을 만들지 않는다.
+이번 범위의 registry는 기존 snapshot68·reference66·admission32·retirement1, **8192B** loan을 유지한다. 새 Row source guard/copy/Result의 실제 type/source 비용과 loader·cursor 중첩 peak는 별도 F05에 포함해야 하며 기존 Catalog census를 새 Row의 PASS로 사용하지 않는다. Row/Undo2pin은 physical target pin 수와 다른 항이다. reader/rollback의 원 Owner 및 pool을 재대여하는 private operation을 유지하고 두 번째 registry나 전체 chain 목록을 만들지 않는다.
 
 일반 occupied Row before에서 currentU+beforeTxn+nextU의 세 pin이 필요한 경로는 미공급이다. 이를 지원할 때는 handoff graph와 lease/registry·metadata 회계를 별도 D2로 변경한다. 현재 두 행을 일반 CRUD 전체 상계로 승격하지 않는다. 참고 산식으로33 actor×3행을 그대로 채택하면 reference99행·총10832B이지만, 이 산식은 이번 공급 배정이나 실제 지원 한도가 아니다.
 

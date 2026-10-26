@@ -259,7 +259,7 @@ F05는 3.16까지 미루는 작업이 아니다. [opcode 자원 계산](#resourc
 <a id="direction-refinement"></a>
 #### D3-DIRECTION-002 — 첫 행 중심 실행과 개선 범위
 
-2026-10-26 `D3-MODULE-ADOPTION-001` **D2 PROPOSED 반영안**은 아래 결정 중 구조 개선을 소비자 연결의 국소 변경으로만 제한한 작업 순서를 [모듈 전환](module-independence-plan.md#execution)의 선정 범위에서 대체한다. C0–C5의 실제 책임·API와 두 Row 제품 기능을 먼저 설계하고 공통 공급 및 독립 구현으로 진행한다. 첫 행 완료 목표·원 권한/오류/자원·DEV2 미완료·변경 코드 시험·S5·호환 의무와 원 검토 기록은 대체하지 않는다. 전체 wal_io 재작성·index/DDL/SQL 전체의 선행 추가는 여전히 범위 밖이다. M2/M3 독립 D2 수용 전에는 이 반영안을 채택 또는 제품 공급으로 간주하지 않는다.
+2026-10-26 `D3-MODULE-ADOPTION-001` **D2 ACCEPTED 결정**은 아래 결정 중 구조 개선을 소비자 연결의 국소 변경으로만 제한한 작업 순서를 [모듈 전환](module-independence-plan.md#execution)의 선정 범위에서 대체한다. C0–C5의 실제 책임·API와 두 Row 제품 기능을 먼저 설계하고 공통 공급 및 독립 구현으로 진행한다. 첫 행 완료 목표·원 권한/오류/자원·DEV2 미완료·변경 코드 시험·S5·호환 의무와 원 검토 기록은 대체하지 않는다. 전체 wal_io 재작성·index/DDL/SQL 전체의 선행 추가는 여전히 범위 밖이다. [최종 독립 D2 수용](../evidence/module-independence-survey-20261026.md#final-design-review)을 수신해 선정 범위의 계약을 채택했다. C0 borrowed codec 부분공급을 진행했으며 공통 공급·제품 인수는 미완료다.
 
 [전체 방향 리뷰의 재점검](../evidence/xadb-direction-review-20261025.md#review-adoption)은 위 우선순위를 유지하고, 개선 후보를 아래 범위로 제한한다. 첫 행 연결은 [3.11 완료 조건](../contracts/dev3-task-11-commit.md#first-row-integration)에 따른 실제 engine 경로다. page 수명·guard·live undo·최소 tree·Catalog·commit·복구의 필요한 공급을 먼저 연결하며, SQL 앞단 전체나 나머지 index/DDL을 새로운 선행으로 추가하지 않는다.
 
@@ -280,7 +280,7 @@ F05는 3.16까지 미루는 작업이 아니다. [opcode 자원 계산](#resourc
 <a id="parallel-execution-plan"></a>
 #### 초기 병렬 배치의 기록과 후속 순차 통합
 
-모듈 전환의 **PROPOSED 후속 배치**는 [C0–C5](../contracts/dev3-module-boundaries.md#common-deliveries)·[A/B 분담](../contracts/dev3-module-consumers.md#division)을 따른다. 원 공통 의미·등록은 `/root`, INSERT 제품 본문은 `/root/module_consumer_survey`, snapshot 조회/cursor는 `/root/module_boundary_survey`, 독립 검토는 `/root/module_handoff_review`가 맡는다. C0 수신 후 A/B 본문을 실제로 병행하며 총괄의 공통 제품 편집은 아래 동시 구현2개 한도와 충돌하지 않도록 공급 단위별로 순서를 조정한다. 상대 제품을 포함하지 않는 C+A/C+B 첫 검증과 실제 합류를 구별한다. 아래 과거 literal/probe 역할을 이 신규 제품 A/B의 구현 완료로 세지 않는다.
+모듈 전환의 **ACCEPTED 후속 배치**는 [C0–C5](../contracts/dev3-module-boundaries.md#common-deliveries)·[A/B 분담](../contracts/dev3-module-consumers.md#division)을 따른다. 원 공통 의미·등록은 `/root`, INSERT 제품 본문은 `/root/module_consumer_survey`, snapshot 조회/cursor는 `/root/module_boundary_survey`, 독립 검토는 `/root/module_handoff_review`가 맡는다. C0 수신 후 A/B 본문을 실제로 병행하며 총괄의 공통 제품 편집은 아래 동시 구현2개 한도와 충돌하지 않도록 공급 단위별로 순서를 조정한다. 상대 제품을 포함하지 않는 C+A/C+B 첫 검증과 실제 합류를 구별한다. 아래 과거 literal/probe 역할을 이 신규 제품 A/B의 구현 완료로 세지 않는다.
 
 아래3.03.1 전용 역할표는 당시 계획을 보존한 것이다. 해당 제한 인수는 완료됐으므로 그대로 재배정하지 않는다. 후속 작업은 위 현재 우선순위의 실제 변경 경로에 맞춰 F07 담당·독립 검토를 새로 정한다.
 

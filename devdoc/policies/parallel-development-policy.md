@@ -53,7 +53,7 @@
 <a id="module-contract-handoff"></a>
 ### 모듈 계약을 받은 두 제품 기능의 개발
 
-2026-10-26 · `D3-MODULE-ADOPTION-001` 반영안 · **D2 PROPOSED / 실행 NOT_RUN**. [구조 전환](../plans/module-independence-plan.md#m2-handoff)의 첫 A/B에 적용할 운영 보완이며, 채택 전에는 기존 정책의 완료 증거가 아니다.
+2026-10-26 · `D3-MODULE-ADOPTION-001` · **D2 ACCEPTED / 절차 인수 NOT_RUN**. [최종 독립 검토](../evidence/module-independence-survey-20261026.md#final-design-review)를 수신해 채택한 [구조 전환](../plans/module-independence-plan.md#m2-handoff)의 첫 A/B 운영 보완이다. 정책 채택은 PD01–03의 실행 증거가 아니다.
 
 독립 개발은 서로 다른 제품 기능의 담당이 같은 동결 계약을 받아 상대 기능의 미완료 본문이나 비공개 필드 수정을 기다리지 않고 구현하는 것이다. 공통 의미의 변경은 계약 담당이 한 번 반영하고 기능 본문은 각 담당이 소유한다. 파일 분리·구현과 리뷰의 병행만으로 두 제품 기능의 독립 개발을 충족하지 않는다.
 

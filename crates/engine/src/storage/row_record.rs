@@ -4,6 +4,7 @@
 #![allow(dead_code)]
 
 use super::{
+    catalog_record::TableDefinitionView,
     overflow::{INLINE_ROW_BYTES, MAX_ROW_BYTES, OVERFLOW_HEAD_BYTES, OverflowHead},
     transaction_record::{LogicalRowVersion, VersionStamp},
     undo_ref::UndoRef,
@@ -40,16 +41,46 @@ pub(crate) enum ValueRef<'a> {
     Binary(&'a [u8]),
 }
 
-fn schema_valid(columns: &[Column]) -> Result<(), RowError> {
-    if !(1..=MAX_ROW_COLUMNS).contains(&columns.len()) {
-        return Err(RowError::InvalidInput);
-    }
-    Ok(())
+/// Schema metadata borrowed from caller columns or a validated Catalog record.
+/// Neither variant conveys a table handle, source pin or mutation authority.
+#[derive(Clone, Copy, Debug)]
+pub(crate) enum RowSchemaInput<'a> {
+    Columns(&'a [Column]),
+    Catalog(TableDefinitionView<'a>),
 }
 
-fn matches(column: &Column, value: ValueRef<'_>) -> bool {
-    match (column.data_type, value) {
-        (_, ValueRef::Null) => column.nullable,
+impl RowSchemaInput<'_> {
+    fn len(&self) -> usize {
+        match self {
+            Self::Columns(columns) => columns.len(),
+            Self::Catalog(table) => table.len(),
+        }
+    }
+
+    fn validate(&self) -> Result<(), RowError> {
+        if !(1..=MAX_ROW_COLUMNS).contains(&self.len()) {
+            return Err(RowError::InvalidInput);
+        }
+        Ok(())
+    }
+
+    fn column(&self, index: usize) -> Result<(DataType, bool), RowError> {
+        match self {
+            Self::Columns(columns) => {
+                let column = columns.get(index).ok_or(RowError::InvalidInput)?;
+                Ok((column.data_type, column.nullable))
+            }
+            Self::Catalog(table) => {
+                let column = table.column(index).map_err(|_| RowError::Corrupt)?;
+                Ok((column.data_type, column.nullable))
+            }
+        }
+    }
+}
+
+fn matches((data_type, nullable): (DataType, bool), value: ValueRef<'_>) -> bool {
+    match (data_type, value) {
+        (_, ValueRef::Null) => nullable,
         (DataType::Bool, ValueRef::Bool(_))
         | (DataType::Int64, ValueRef::Int64(_))
         | (DataType::Utf8, ValueRef::Utf8(_))
@@ -65,6 +96,30 @@ fn borrowed(value: &Value) -> ValueRef<'_> {
         Value::Int64(value) => ValueRef::Int64(*value),
         Value::Utf8(value) => ValueRef::Utf8(value),
         Value::Bytes(value) => ValueRef::Binary(value),
+    }
+}
+
+/// Keeps the owned API on the same validation and encoding path without an
+/// intermediate array of values or any cloned string/binary payloads.
+#[derive(Clone, Copy)]
+enum RowValuesInput<'a> {
+    Owned(&'a [Value]),
+    Borrowed(&'a [ValueRef<'a>]),
+}
+
+impl<'a> RowValuesInput<'a> {
+    fn len(&self) -> usize {
+        match self {
+            Self::Owned(values) => values.len(),
+            Self::Borrowed(values) => values.len(),
+        }
+    }
+
+    fn value(&self, index: usize) -> ValueRef<'a> {
+        match self {
+            Self::Owned(values) => borrowed(&values[index]),
+            Self::Borrowed(values) => values[index],
+        }
     }
 }
 
@@ -150,22 +205,48 @@ impl<'a> CanonicalRowView<'a> {
 }
 
 pub(crate) fn canonical_row_len(columns: &[Column], values: &[Value]) -> Result<usize, RowError> {
-    schema_valid(columns)?;
-    if columns.len() != values.len() {
+    canonical_row_input_len(
+        RowSchemaInput::Columns(columns),
+        RowValuesInput::Owned(values),
+    )
+}
+
+/// Validate borrowed values without materializing owned columns or values.
+/// Size and schema errors use the same precedence as the owned-value API.
+pub(crate) fn canonical_row_len_borrowed(
+    schema: RowSchemaInput<'_>,
+    values: &[ValueRef<'_>],
+) -> Result<usize, RowError> {
+    canonical_row_input_len(schema, RowValuesInput::Borrowed(values))
+}
+
+fn canonical_row_input_len(
+    schema: RowSchemaInput<'_>,
+    values: RowValuesInput<'_>,
+) -> Result<usize, RowError> {
+    schema.validate()?;
+    if schema.len() != values.len() {
         return Err(RowError::SchemaMismatch);
     }
     let mut total = 4_usize;
-    for (column, value) in columns.iter().zip(values) {
-        value.validate().map_err(|_| RowError::TooLarge)?;
-        if !matches(column, borrowed(value)) {
+    for index in 0..values.len() {
+        let value = values.value(index);
+        let payload_bytes = match value {
+            ValueRef::Utf8(value) => value.len(),
+            ValueRef::Binary(value) => value.len(),
+            _ => 0,
+        };
+        if payload_bytes > MAX_VALUE_BYTES {
+            return Err(RowError::TooLarge);
+        }
+        if !matches(schema.column(index)?, value) {
             return Err(RowError::SchemaMismatch);
         }
         let length = match value {
-            Value::Null => 1,
-            Value::Bool(_) => 2,
-            Value::Int64(_) => 9,
-            Value::Utf8(value) => 5 + value.len(),
-            Value::Bytes(value) => 5 + value.len(),
+            ValueRef::Null => 1,
+            ValueRef::Bool(_) => 2,
+            ValueRef::Int64(_) => 9,
+            ValueRef::Utf8(_) | ValueRef::Binary(_) => 5 + payload_bytes,
         };
         total = total.checked_add(length).ok_or(RowError::TooLarge)?;
         if total > MAX_ROW_BYTES {
@@ -181,36 +262,58 @@ pub(crate) fn encode_canonical_row(
     values: &[Value],
     output: &mut [u8],
 ) -> Result<usize, RowError> {
-    let total = canonical_row_len(columns, values)?;
+    encode_canonical_row_input(
+        RowSchemaInput::Columns(columns),
+        RowValuesInput::Owned(values),
+        output,
+    )
+}
+
+/// Borrowed equivalent of `encode_canonical_row`, including unchanged output on
+/// any error and unchanged tail on success. No storage authority is acquired.
+pub(crate) fn encode_canonical_row_borrowed(
+    schema: RowSchemaInput<'_>,
+    values: &[ValueRef<'_>],
+    output: &mut [u8],
+) -> Result<usize, RowError> {
+    encode_canonical_row_input(schema, RowValuesInput::Borrowed(values), output)
+}
+
+fn encode_canonical_row_input(
+    schema: RowSchemaInput<'_>,
+    values: RowValuesInput<'_>,
+    output: &mut [u8],
+) -> Result<usize, RowError> {
+    let total = canonical_row_input_len(schema, values)?;
     if output.len() < total {
         return Err(RowError::NoSpace);
     }
     put_u32(output, 0, values.len());
     let mut offset = 4;
-    for value in values {
-        match value {
-            Value::Null => {
+    for index in 0..values.len() {
+        match values.value(index) {
+            ValueRef::Null => {
                 output[offset] = 0;
                 offset += 1;
             }
-            Value::Bool(value) => {
+            ValueRef::Bool(value) => {
                 output[offset] = 1;
-                output[offset + 1] = u8::from(*value);
+                output[offset + 1] = u8::from(value);
                 offset += 2;
             }
-            Value::Int64(value) => {
+            ValueRef::Int64(value) => {
                 output[offset] = 2;
                 output[offset + 1..offset + 9].copy_from_slice(&value.to_le_bytes());
                 offset += 9;
             }
-            Value::Utf8(value) => {
+            ValueRef::Utf8(value) => {
                 let bytes = value.as_bytes();
                 output[offset] = 3;
                 put_u32(output, offset + 1, bytes.len());
                 output[offset + 5..offset + 5 + bytes.len()].copy_from_slice(bytes);
                 offset += 5 + bytes.len();
             }
-            Value::Bytes(bytes) => {
+            ValueRef::Binary(bytes) => {
                 output[offset] = 4;
                 put_u32(output, offset + 1, bytes.len());
                 output[offset + 5..offset + 5 + bytes.len()].copy_from_slice(bytes);
@@ -225,7 +328,15 @@ pub(crate) fn decode_canonical_row<'a>(
     input: &'a [u8],
     columns: &[Column],
 ) -> Result<CanonicalRowView<'a>, RowError> {
-    schema_valid(columns)?;
+    decode_canonical_row_with_schema(input, RowSchemaInput::Columns(columns))
+}
+
+/// The returned values borrow `input`, independently of the schema's lifetime.
+pub(crate) fn decode_canonical_row_with_schema<'a>(
+    input: &'a [u8],
+    schema: RowSchemaInput<'_>,
+) -> Result<CanonicalRowView<'a>, RowError> {
+    schema.validate()?;
     if input.len() > MAX_ROW_BYTES {
         return Err(RowError::TooLarge);
     }
@@ -236,15 +347,15 @@ pub(crate) fn decode_canonical_row<'a>(
     if !(1..=MAX_ROW_COLUMNS).contains(&count) {
         return Err(RowError::Corrupt);
     }
-    if count != columns.len() {
+    if count != schema.len() {
         return Err(RowError::SchemaMismatch);
     }
     let mut offsets = [0; MAX_ROW_COLUMNS + 1];
     let mut offset = 4;
     offsets[0] = offset as u32;
-    for (index, column) in columns.iter().enumerate() {
+    for index in 0..count {
         let (value, consumed) = parse_value(&input[offset..])?;
-        if !matches(column, value) {
+        if !matches(schema.column(index)?, value) {
             return Err(RowError::SchemaMismatch);
         }
         offset += consumed;
@@ -370,7 +481,25 @@ pub(crate) fn encode_row_record(
     payload: RowPayload<'_>,
     output: &mut [u8],
 ) -> Result<usize, RowError> {
-    schema_valid(columns)?;
+    encode_row_record_with_schema(
+        expected,
+        RowSchemaInput::Columns(columns),
+        version,
+        payload,
+        output,
+    )
+}
+
+/// Versioned row encoding using borrowed schema metadata. As with the owned
+/// schema entry point, every error leaves the caller's output unchanged.
+pub(crate) fn encode_row_record_with_schema(
+    expected: RecordExpectation,
+    schema: RowSchemaInput<'_>,
+    version: RecordVersion,
+    payload: RowPayload<'_>,
+    output: &mut [u8],
+) -> Result<usize, RowError> {
+    schema.validate()?;
     version.validate(expected)?;
     let mut header = [0; ROW_HEADER_BYTES];
     header[..4].copy_from_slice(b"XRW1");
@@ -387,7 +516,7 @@ pub(crate) fn encode_row_record(
             if row.bytes.len() > INLINE_ROW_BYTES {
                 return Err(RowError::TooLarge);
             }
-            decode_canonical_row(row.bytes, columns)?;
+            decode_canonical_row_with_schema(row.bytes, schema)?;
             header[7] = 1;
             row.bytes
         }
@@ -413,7 +542,17 @@ pub(crate) fn decode_row_record<'a>(
     expected: RecordExpectation,
     columns: &[Column],
 ) -> Result<RowRecordView<'a>, RowError> {
-    schema_valid(columns)?;
+    decode_row_record_with_schema(input, expected, RowSchemaInput::Columns(columns))
+}
+
+/// Validate a row record against Catalog metadata without retaining that
+/// metadata or producing a pin. Returned payloads borrow only `input`.
+pub(crate) fn decode_row_record_with_schema<'a>(
+    input: &'a [u8],
+    expected: RecordExpectation,
+    schema: RowSchemaInput<'_>,
+) -> Result<RowRecordView<'a>, RowError> {
+    schema.validate()?;
     if input.len() < ROW_HEADER_BYTES || &input[..4] != b"XRW1" {
         return Err(RowError::Corrupt);
     }
@@ -434,7 +573,7 @@ pub(crate) fn decode_row_record<'a>(
             if body.len() > INLINE_ROW_BYTES {
                 return Err(RowError::TooLarge);
             }
-            RowPayload::Inline(decode_canonical_row(body, columns)?)
+            RowPayload::Inline(decode_canonical_row_with_schema(body, schema)?)
         }
         (false, 2) => {
             RowPayload::Overflow(OverflowHead::decode(body).map_err(|_| RowError::Corrupt)?)
