@@ -1,6 +1,6 @@
 # 현재 구현
 
-2026-10-26 [모듈 독립 개발 전환](../plans/module-independence-plan.md#execution): M0–M3 완료, M2/M3 독립 D2 수용·필수 수정0으로 소유 계약·정책·시험 JSON을 **ACCEPTED**로 반영했다. M4 C0의 [borrowed codec](../evidence/module-independence-survey-20261026.md#c0-borrowed-codec)은 선택6 PASS·독립 D1/D2 수용이며, 후속 [생산자 관측·대여 타입](../evidence/module-independence-survey-20261026.md#c0-producer-types)은 compiler4 자동 PASS·수명 거절1 독립 수동 수용과 원 판정기 FAIL을 보존한다. 실제 context/lane 생성·source/권한 adapter는 미공급이다. **전체 C0·C1–C5 공급과 A INSERT·B snapshot 조회/cursor의 M5 제품·fixture 인수는 미완료**이며 과거 source별 결과를 승격하지 않는다.
+2026-10-26 [모듈 독립 개발 전환](../plans/module-independence-plan.md#execution): M0–M3 완료, M2/M3 독립 D2 수용·필수 수정0으로 소유 계약·정책·시험 JSON을 **ACCEPTED**로 반영했다. M4 C0의 [borrowed codec](../evidence/module-independence-survey-20261026.md#c0-borrowed-codec)은 선택6 PASS·독립 D1/D2 수용이며, 후속 [생산자 관측·대여 타입](../evidence/module-independence-survey-20261026.md#c0-producer-types)은 compiler4 자동 PASS·수명 거절1 독립 수동 수용과 원 판정기 FAIL을 보존한다. C1의 [실제 물리 WAL 본문 분리](../evidence/module-independence-survey-20261026.md#c1-physical-wal)는 production/test cfg·privacy 컴파일3 PASS이며 runtime 시험은 실행하지 않았다. 실제 context/lane 생성·source/권한 adapter와 owner/port 이전은 미공급이다. **전체 C0·C1–C5 공급과 A INSERT·B snapshot 조회/cursor의 M5 제품·fixture 인수는 미완료**이며 과거 source별 결과를 승격하지 않는다.
 
 - [DEV3 원 Commit 공통 continuation](dev3-implementation.md#commit-continuation) — 공통 수명·변경 선택 검증·독립 D1 한정 수용; actual Commit·nonempty 복구 미완료.
 

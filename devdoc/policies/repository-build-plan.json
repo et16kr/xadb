@@ -6193,5 +6193,21 @@
     "compiler_scope": "producer data/lifetime/visibility only; not full MBC00 or C0 acceptance",
     "actual_owner_authority_supply": "NOT_IMPLEMENTED",
     "source_roots_changed": false
+  },
+  "dev3_module_c1_physical": {
+    "status": "ACCEPTED_LIMITED_D1_D2",
+    "contract_ref": "dev3-module-boundaries.md#target-imports",
+    "evidence_ref": "module-independence-survey-20261026.md#c1-physical-wal",
+    "implemented_paths": [
+      "crates/engine/src/storage/wal_io/physical.rs",
+      "tests/fixtures/dev3-module-c1/compiler/manifest.json",
+      "tests/fixtures/dev3-module-c1/compiler/private_physical.rs",
+      "tests/fixtures/dev3-module-c1/compiler/wal_boundary.rs"
+    ],
+    "modified_registration_paths": [
+      "crates/engine/src/storage/wal_io.rs"
+    ],
+    "scope": "original physical WAL impl moved; runtime/resource ownership and semantic terminal assembly preserved; not full C1 acceptance",
+    "source_roots_changed": false
   }
 }

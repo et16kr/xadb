@@ -567,3 +567,10 @@ lifecycle 경계의 `input_assembler.rs`와 `input_assembler/rows.rs`에 둔다.
 [소유 계약](../contracts/dev3-module-boundaries.md#producer-input-api)의 관측 context·consuming lane·untrusted 후보를 `crates/engine/src/storage/wal_io/plan4_apply.rs`에 구현하고 `wal_io/disk_api.rs`와 `storage/disk.rs`에서 선택 재노출한다. 실제 존재하는 조상 모듈 이름만 `wal_io` 내부에 열며 private field/factory와 원 owner의 효과 경로는 유지한다. 실제 source 포착·예약·설치·read port와 두 소비자 본문은 아직 공급하지 않았다.
 
 `tests/fixtures/dev3-module-c0/compiler/`의 정상1·부정4 입력과 동결 manifest를 등록한다. 실행은 원 소스 export에 각 입력을 따로 연결한 library compiler 검사이며 runtime 시험이 아니다. source·명령·진단·원 판정기 FAIL과 수동 검토는 [선택 증거](../evidence/module-independence-survey-20261026.md#c0-producer-types)를 따른다. 기존 compiler helper를 재사용하며 새 package/dependency·source root·clean export 규칙은 없다. 정확 경로는 관리 JSON의 `dev3_module_c0_producer`에 둔다.
+
+
+## 모듈 독립 개발 C1 물리 WAL 분리 — 2026-10-26
+
+[선정 경계](../contracts/dev3-module-boundaries.md#target-imports)에 따라 `wal_io/physical.rs`가 원 `WalRuntime`의 실제 stage·requirement·wait·write/sync 본문을 소유한다. runtime·AppendState·원 File/slot/fence/Condvar·생성/Drop은 부모에 남고, method는 wal_io 내부 또는 physical private로 제한한다. Catalog/Row·terminal receipt는 physical의 의존 대상이 아니다. 원 semantic `commit_bridge`의 apply 이전과 DiskSession/port 공급은 후속 의무다.
+
+새 compiler 입력은 `tests/fixtures/dev3-module-c1/compiler/`의 정상 sibling 호출·외부 경로 거절·동결 manifest다. production/test cfg 컴파일만 확인하며 기존 runtime 시험을 실행하지 않는다. 실제 경로는 관리 JSON의 `dev3_module_c1_physical`, source·정확 명령·선택 결과는 [증거](../evidence/module-independence-survey-20261026.md#c1-physical-wal)에 기록한다. 새 package/dependency·source root는 없다.

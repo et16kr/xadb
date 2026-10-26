@@ -1,0 +1,48 @@
+{
+  "schema": "XADB_MODULE_C1_PHYSICAL_COMPILER_V1",
+  "status": "FROZEN_INPUTS_NOT_EXECUTION_EVIDENCE",
+  "scope": "physical WAL module/visibility compile only; no runtime test execution or full C1 acceptance",
+  "budget": {
+    "total_seconds": 180,
+    "case_seconds": 30,
+    "output_bytes": 8388608
+  },
+  "cases": [
+    {
+      "name": "production",
+      "path": "wal_boundary.rs",
+      "bytes": 1321,
+      "sha256": "57e7b3d983113fdaa7e0007aa9e17132a2e12f22d7cba7b9a657a00ee9ee145e",
+      "expected_code": null,
+      "primary_line": null,
+      "anchor": "crates/engine/src/storage/wal_io.rs",
+      "probe": "crates/engine/src/storage/wal_io/module_c1_probe.rs",
+      "declaration": "\nmod module_c1_probe;\n",
+      "mode": "check"
+    },
+    {
+      "name": "test_build",
+      "path": "wal_boundary.rs",
+      "bytes": 1321,
+      "sha256": "57e7b3d983113fdaa7e0007aa9e17132a2e12f22d7cba7b9a657a00ee9ee145e",
+      "expected_code": null,
+      "primary_line": null,
+      "anchor": "crates/engine/src/storage/wal_io.rs",
+      "probe": "crates/engine/src/storage/wal_io/module_c1_probe.rs",
+      "declaration": "\nmod module_c1_probe;\n",
+      "mode": "test-no-run"
+    },
+    {
+      "name": "private_physical",
+      "path": "private_physical.rs",
+      "bytes": 87,
+      "sha256": "9d2f928c72353970e70540bbe1b6b4149965b08f5a319f7f5ea634f880984628",
+      "expected_code": "E0603",
+      "primary_line": 2,
+      "anchor": "crates/engine/src/storage/mod.rs",
+      "probe": "crates/engine/src/storage/module_c1_probe.rs",
+      "declaration": "\nmod module_c1_probe;\n",
+      "mode": "check"
+    }
+  ]
+}
