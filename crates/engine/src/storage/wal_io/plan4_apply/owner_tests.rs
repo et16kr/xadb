@@ -202,6 +202,10 @@ fn disk_session_isolation_backing_and_carriers_are_accounted() {
     let live = resources::source_census::<port::Writer>();
     let recovered = super::super::super::plan4_recovery::source_census::<port::Writer>();
     let directory = dirty_frame::plan4_core_census().directory;
+    println!(
+        "C2_SEMANTIC_BRANCHES {:?}",
+        crate::storage::semantic_catalog::source_branches()
+    );
     println!("C1_ISOLATION_LIVE {live:?}");
     println!("C1_ISOLATION_RECOVERED {recovered:?}");
     assert_eq!(live.caller_isolation, 4_160);

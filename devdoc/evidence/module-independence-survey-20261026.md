@@ -690,3 +690,53 @@ r1 manifest의 MT03 선택 이유에는 `current-build recovery/Prune`를 잘못
 r1 ELF는 `95bc54c4216fe4a503104667281777ba48aa68fc762b44695a078fbc939cc41f`, r2 ELF는 `463ce023e36b350d69fec3ed29e1d3ff900ad7daf0075491ce85552b308b127e`다. 실행 비용34.38/33.58초는 성능 인수가 아니다. 변경 Rust 파일별 rustfmt와 `git diff --check`를 사용했으며 전체 fmt/Clippy·문서 verifier·push는 실행하지 않았다.
 
 `/root/module_handoff_review`는 제품2파일, r1/r2 원 source5613개·manifest/runner/result/ELF/로그 identity와 문서5개를 직접 대조하여 **C2 Catalog scratch 재사용 D1/D2 한정 수용·필수 수정0**으로 판정했다. MT03 범위 오류와 N19 observer-only 설명 정정, 실제12개 결과·r1→r2 제품 변경0·완료 사례 반복0, 전체 peak 불변과 잔여 aggregate/M4/M5 의무를 확인했다. 검토자는 수정·빌드·시험·verifier를 실행하지 않았고 `/root`가 한정 수용을 반영한다.
+
+
+<a id="c2-transaction-source-phases"></a>
+### C2 Catalog 거래·Aging 메타데이터 생성 수명 분리 — 2026-10-27
+
+기준 commit `e0c1900`의 `semantic_catalog/transition.rs`에서 predecessor descriptor를 읽어 inventory만 반환하는 helper를 추출했다. `ledger.rs`는 단일 mutable descriptor로 다음 거래 후보를 만들고, encoder가 반환한 뒤 기존 validator가 output을 다시 검산한다. 이전 apply를 previous에 먼저 보존하고 terminal/apply·inventory·groups overflow·WAL overflow·Forward mutation 검사 순서를 유지한다. 오류 전에 output을 쓰는 시점과 검증 실패 뒤 후보 output의 의미도 유지한다.
+
+첫 source 관측에서 거래 경로보다 Aging successor가 최대값임을 확인했다. 후속 변경은 실제 `next_aging`을 budget 검산·predecessor 관측·최종 encode로 나눴다. budget helper는 전체640B canonical equality와 Root digest를 검사한 뒤 유일하게 비영(非零)이 될 수 있는 category3의112B 행만 반환한다. 나머지4행의 zero 검사는 그대로이며 canonical640B와 전체 budget560B는 predecessor decode 전에 수명을 마친다. predecessor helper는 기존 decode/descriptor 추출·Root 순서/비용·overflow 검사를 보존하고 chain/inventory만 반환한다. 최종 Root-bound encode와 wire1536B는 유지한다.
+
+`resources.rs`는 실제 helper 호출 경계와 argument·owned descriptor·Option/Result·반환 tuple·budget array 생성 비용을 반영한다. test-only branch 관측은 원 owner census 시험에서 출력하며 제품 권한을 발급하지 않는다. D1/D2 담당·통합은 `/root`다. 단순 수식 차감 대신 실제 지역 값의 수명을 나누는 방식을 선택했고, descriptor 검산을 제거하거나 heap/별도 owner로 옮기는 대안은 채택하지 않았다. 공통 admission 계약·제품 한도·형식·오류 의미는 변경하지 않는다. helper 밖에 다시 큰 값을 보유하거나 호출/반환 경로가 달라지면 해당 source 식을 재검토한다.
+
+#### 변경별 선택 실행
+
+[선택 manifest](../../tests/fixtures/dev3-module-c2/transaction-phases/manifest.json)에 source diff와 selector 관계, 총480초·case30초·로그8MiB·test stack32MiB를 고정했다. 각 source의 production check와 test `--no-run`은 빌드 증거이며 runtime PASS와 구별한다. 기존 fixture·generator·oracle·제품 한도는 변경하지 않았다.
+
+| 실행 | 변경·선택 결과 | 적용 범위 |
+| --- | --- | --- |
+| r1 | 거래 inventory/encode/validate 분리. production/test build PASS, exact12개 PASS | C01/C02/C03/C04·R04/R05/R06·K03·N13, source census, 실제 MC02 Forward/CLR/Abort cleanup, MF09 현재-build memory recovery |
+| r2 | 실제 Aging budget/predecessor/encode 분리. production/test build PASS, exact7개 PASS | G01 최초 descriptor·C03 후속/nonzero aggregate·C05 Prune·C09 RootFree/TerminalJob debt1 유지·N18, 변경 census, MF09 현재-build memory recovery |
+
+r2 frozen manifest/result의 C09 설명은 `last debt cleared, zero aggregate`로 잘못 기록됐다. 최종 독립 검토에서 generator와 golden frame의 descriptor를 대조하여 RootFree 뒤 TerminalJob1개가 남고 category3 steps1/WAL55112임을 확인했다. 현재 manifest 설명만 정정하고 원 r2 source/manifest/result·PASS를 그대로 보존한다. G01의 zero와 C09의 잔여 debt 보존을 구별하며, 제품·fixture·oracle 변경이나 시험 재실행은 없다.
+
+N18은 독립 변조한 후행 Aging 비용을 거절하는 **observer-only** 사례다. producer를 호출하지 않으며 잘못된 aggregate를 `aging_budget`에 직접 입력한 시험으로 기록하지 않는다. r2의 C03/census/MF09는 r1 이후 Aging 제품 코드가 실제 변경되어 다시 선택했다. r1 거래 전용 전체12개를 반복하지 않았다. 두 source의19회 실행·16개 고유 selector 결과이며19개 고유 사례나 최종 source에서19개 실행으로 합치지 않는다. native/새 PID 복구·전체 workspace·하위 wrapper·무변경 완료 시험은 실행하지 않았다.
+
+#### 실제 source 값 상한
+
+| source 경로 | r1 | r2 | 차이 |
+| --- | ---: | ---: | ---: |
+| Aging successor | 22342B | 21044B | −1298B |
+| semantic compute | 26682B | 25384B | −1298B |
+| history retention | 35090B | 33792B | −1298B |
+| Catalog lookup | 42850B | 41552B | −1298B |
+| live peak | 64074B | 63184B | −890B |
+| recovered live | 65450B | 64560B | −890B |
+| recovered peak | 65450B | 64611B | −839B |
+
+r1은 거래 경로를 실제 분리했지만 전체 peak는 이전과 같았다. r2에서는 Aging predecessor20222B가 해당 branch의 주요 비용이며 recovered 전체 peak는 기존 bind64611B가 지배한다. live retained20880B·recovered retained22256B·Catalog Commit29680B·읽기 handle400/328B는 그대로다. live metadata186192/whole251728B, recovered metadata106392/whole171928B를 관측했다. 이는 **source의 값·수명에 따른 상한이며 RSS나 컴파일러 stack 실측이 아니다.** 실행 시간도 성능 인수로 해석하지 않는다.
+
+recovered retained22256B와 full lookup41552B의 합은63808B로65536B 아래지만, 남은1728B에서 모든 동시 진입/거절/반환 carrier나 writer를 수용했다고 할 수 없다. shared retained 한 번과 모든 동시 operation의 합, writer/reader/progress admission·writer1+resident reader2, caller-retained factory/read-set·실제 Row/terminal/recovery 공급과 전체 M4/M5는 미완료다.
+
+원 source export·inventory·manifest·runner·compiler diagnostics·ELF·stdout/stderr·result는 `artifacts/module-c2-transaction-phases-20261027-r1/`과 `r2/`에 보존한다.
+
+| 실행 | source SHA-256 | manifest SHA-256 | result SHA-256 |
+| --- | --- | --- | --- |
+| r1 PASS | `ec2d8434cab7105f85265f66426adb9520f1ff50bc2b03a843fec550e1879c43` | `3dbf881f159b7663ff6aa76257745a08b79080987ef0c785c99be7ab329bdecd` | `463fa45ac845ac31561da8ccd5f2524af33b862e94f944483d12772b9dc30628` |
+| r2 PASS | `e7ae87949cdde22c34841e3b71af3bcc2b4446cc13c40b44f55300cda3948477` | `1ae67aa5b8c4f241777840a7e740d9cf4d59af9ba8a9587a121caef823825fb6` | `40dc2f4d4f4054c3a1b81c9e85a46937d534bf8e64d36eda8a0ac28e96c8423c` |
+
+r1 ELF는 `f19bea4ccb51e2c240221b05d83fcd8f400b3eb0b719ad878de14227ade412dc`, r2 ELF는 `a1daba9e115237e8ee199baf516db17e0c251d8aa416532c35fddb4529c9f3c5`다. 실행 비용은 각각42.58/40.27초다. 변경 Rust 파일별 rustfmt와 `git diff --check`를 사용하며 전체 fmt/Clippy·문서 verifier·push는 실행하지 않는다.
+
+`/root/module_handoff_review`는 제품5파일, 원 source5614개·manifest/runner/result/ELF/로그 identity와 문서5개를 직접 대조했다. C09 설명 오류를 지적했고, 현재 manifest·증거의 정정과 원 frozen 기록 보존을 좁게 재확인한 뒤 **거래·Aging 생성 수명 분리 D1/D2 한정 수용·필수 수정0**으로 판정했다. source별12+7회/16개 고유 selector, source 값 상한 감소와 aggregate/M4/M5 미완료를 확인했다. 검토자는 수정·빌드·시험·verifier를 실행하지 않았고 `/root`가 한정 수용을 반영한다.

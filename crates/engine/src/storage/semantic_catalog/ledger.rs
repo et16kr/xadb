@@ -7,7 +7,7 @@ use crate::storage::{
     control::Profile,
     obligation::{self, OwnerState, RemainingBudget},
     retention_obligation::profile_reference,
-    retention_page::catalog::{CREATE_PEAK, JobState, JobView},
+    retention_page::catalog::{CREATE_PEAK, JobState, JobView, RootView},
     status_home::StatusHome,
     transaction_record::{
         RollbackState, TransactionState, TransactionStatus, TransactionStatusCell,
@@ -181,6 +181,16 @@ pub(crate) fn next_transaction(
     input: TransactionTransition<'_>,
     output: &mut [u8; 1536],
 ) -> Result<()> {
+    encode_next_transaction(&input, output)?;
+    // The candidate descriptor and encoder locals have ended before decoding
+    // the output for the independent current-state closure check.
+    validate_transaction(output, input.profile, input.status, input.root)
+}
+
+fn encode_next_transaction(
+    input: &TransactionTransition<'_>,
+    output: &mut [u8; 1536],
+) -> Result<()> {
     use obligation::{DescriptorSpec, OwnerChain};
     let TransactionStatusCell::Occupied(status) = input.status.core() else {
         return Err(Error::IdentityMismatch);
@@ -207,57 +217,11 @@ pub(crate) fn next_transaction(
         if input.operation == Operation::Begin {
             return Err(Error::OrderMismatch);
         }
-        let before = obligation::decode_descriptor(
+        obligation::decode_descriptor(
             bytes,
             ReservationOwner::Transaction(status.reference()),
             profile_reference(input.profile),
-        )?;
-        let OwnerState::Transaction(previous) = before.owner else {
-            return Err(Error::IdentityMismatch);
-        };
-        if matches!(
-            previous.state(),
-            TransactionState::Committed(_) | TransactionState::Aborted
-        ) || before.chain.apply >= input.lsn
-        {
-            return Err(Error::OrderMismatch);
-        }
-        let old_inventory = before.inventory;
-        let inventory_changed = matches!(
-            input.operation,
-            Operation::Reserve | Operation::Forward | Operation::Cancel
-        );
-        if inventory_changed {
-            let (old_count, new_count) = if input.operation == Operation::Reserve {
-                (0, 3)
-            } else {
-                (3, 0)
-            };
-            if old_inventory.items != old_count
-                || input.inventory.items != new_count
-                || input.inventory.change_lsn != input.lsn
-                || input.inventory.growth_extents != 0
-            {
-                return Err(Error::BudgetMismatch);
-            }
-        } else if input.inventory != old_inventory {
-            return Err(Error::BudgetMismatch);
-        }
-        let mut next = before;
-        next.chain.previous = before.chain.apply;
-        next.chain.apply = input.lsn;
-        next.chain.groups = before.chain.groups.checked_add(1).ok_or(Error::Exhausted)?;
-        next.consumed_wal = before
-            .consumed_wal
-            .checked_add(frame_bytes)
-            .ok_or(Error::Exhausted)?;
-        if input.operation == Operation::Forward {
-            if before.last_mutation_sequence != 0 {
-                return Err(Error::OrderMismatch);
-            }
-            next.last_mutation_sequence = 1;
-        }
-        next
+        )?
     } else {
         if input.operation != Operation::Begin
             || input.inventory.items != 0
@@ -283,11 +247,56 @@ pub(crate) fn next_transaction(
             last_mutation_sequence: 0,
         }
     };
+    if input.before.is_some() {
+        let OwnerState::Transaction(previous) = after.owner else {
+            return Err(Error::IdentityMismatch);
+        };
+        if matches!(
+            previous.state(),
+            TransactionState::Committed(_) | TransactionState::Aborted
+        ) || after.chain.apply >= input.lsn
+        {
+            return Err(Error::OrderMismatch);
+        }
+        let old_inventory = after.inventory;
+        let inventory_changed = matches!(
+            input.operation,
+            Operation::Reserve | Operation::Forward | Operation::Cancel
+        );
+        if inventory_changed {
+            let (old_count, new_count) = if input.operation == Operation::Reserve {
+                (0, 3)
+            } else {
+                (3, 0)
+            };
+            if old_inventory.items != old_count
+                || input.inventory.items != new_count
+                || input.inventory.change_lsn != input.lsn
+                || input.inventory.growth_extents != 0
+            {
+                return Err(Error::BudgetMismatch);
+            }
+        } else if input.inventory != old_inventory {
+            return Err(Error::BudgetMismatch);
+        }
+        after.chain.previous = after.chain.apply;
+        after.chain.apply = input.lsn;
+        after.chain.groups = after.chain.groups.checked_add(1).ok_or(Error::Exhausted)?;
+        after.consumed_wal = after
+            .consumed_wal
+            .checked_add(frame_bytes)
+            .ok_or(Error::Exhausted)?;
+        if input.operation == Operation::Forward {
+            if after.last_mutation_sequence != 0 {
+                return Err(Error::OrderMismatch);
+            }
+            after.last_mutation_sequence = 1;
+        }
+    }
     after.owner = OwnerState::Transaction(status);
     after.inventory = input.inventory;
     after.remaining = transaction_remaining(status, input.root)?;
     obligation::encode_descriptor(&after, output)?;
-    validate_transaction(output, input.profile, input.status, input.root)?;
     Ok(())
 }
 
@@ -302,10 +311,42 @@ pub(crate) fn next_aging(
     output: &mut [u8; 1536],
 ) -> Result<()> {
     use crate::storage::{retention_obligation, retention_page::catalog};
-    use foundation::codec::content_digest;
-    use obligation::{DescriptorSpec, InventoryClaim, OwnerChain, SystemProgress, WorkPhase};
+    use obligation::{DescriptorSpec, SystemProgress, WorkPhase};
     let (_, root) = catalog::decode_root_page(after_page, profile.spec().namespace)?;
     let reference = root.aging().ok_or(Error::IdentityMismatch)?;
+    let budget = aging_budget(root, aggregate)?;
+    let (chain, inventory) = aging_predecessor(profile, before_descriptor, before_page, root)?;
+    let after = DescriptorSpec {
+        owner: OwnerState::System(SystemProgress {
+            reference,
+            phase: WorkPhase::Running,
+            sequence: root.revision(),
+            cursor: root.cursor(),
+            limit: 64,
+        }),
+        chain,
+        profile: profile_reference(profile),
+        inventory,
+        consumed_wal: root.consumed_wal(),
+        consumed_control: root.consumed_control(),
+        remaining: [
+            RemainingBudget::default(),
+            RemainingBudget::default(),
+            RemainingBudget::default(),
+            budget,
+            RemainingBudget::default(),
+        ],
+        minimum_wal_lsn: chain.birth,
+        last_mutation_sequence: 0,
+    };
+    retention_obligation::catalog::encode(&after, profile, after_page, output)?;
+    Ok(())
+}
+
+// Only the control row escapes; the other four rows are required to be zero.
+// The canonical aggregate buffer ends before predecessor descriptor decoding.
+fn aging_budget(root: RootView<'_>, aggregate: &[u8; 640]) -> Result<RemainingBudget> {
+    use foundation::codec::content_digest;
     let mut remaining = [RemainingBudget::default(); 5];
     let steps = super::u64_at(aggregate, 3 * 128 + 8);
     if steps != 0 {
@@ -323,7 +364,19 @@ pub(crate) fn next_aging(
     if &canonical != aggregate || content_digest(aggregate) != *root.budget_digest() {
         return Err(Error::BudgetMismatch);
     }
-    let (chain, inventory) = if let Some(bytes) = before_descriptor {
+    Ok(remaining[3])
+}
+
+fn aging_predecessor(
+    profile: Profile,
+    before_descriptor: Option<&[u8; 1536]>,
+    before_page: &[u8; crate::storage::page::PAGE_BYTES],
+    root: RootView<'_>,
+) -> Result<(obligation::OwnerChain, obligation::InventoryClaim)> {
+    use crate::storage::{retention_obligation, retention_page::catalog};
+    use foundation::codec::content_digest;
+    use obligation::{InventoryClaim, OwnerChain};
+    if let Some(bytes) = before_descriptor {
         let previous =
             retention_obligation::catalog::decode(bytes, profile, before_page)?.descriptor();
         if previous.chain.apply >= root.apply()
@@ -332,7 +385,7 @@ pub(crate) fn next_aging(
         {
             return Err(Error::OrderMismatch);
         }
-        (
+        Ok((
             OwnerChain {
                 apply: root.apply(),
                 previous: previous.chain.apply,
@@ -344,7 +397,7 @@ pub(crate) fn next_aging(
                     .ok_or(Error::Exhausted)?,
             },
             previous.inventory,
-        )
+        ))
     } else {
         let (_, previous) = catalog::decode_root_page(before_page, profile.spec().namespace)?;
         if previous.aging().is_some()
@@ -354,7 +407,7 @@ pub(crate) fn next_aging(
         {
             return Err(Error::OrderMismatch);
         }
-        (
+        Ok((
             OwnerChain {
                 apply: root.apply(),
                 previous: 0,
@@ -367,25 +420,6 @@ pub(crate) fn next_aging(
                 digest: content_digest(&[]),
                 growth_extents: 0,
             },
-        )
-    };
-    let after = DescriptorSpec {
-        owner: OwnerState::System(SystemProgress {
-            reference,
-            phase: WorkPhase::Running,
-            sequence: root.revision(),
-            cursor: root.cursor(),
-            limit: 64,
-        }),
-        chain,
-        profile: profile_reference(profile),
-        inventory,
-        consumed_wal: root.consumed_wal(),
-        consumed_control: root.consumed_control(),
-        remaining,
-        minimum_wal_lsn: chain.birth,
-        last_mutation_sequence: 0,
-    };
-    retention_obligation::catalog::encode(&after, profile, after_page, output)?;
-    Ok(())
+        ))
+    }
 }

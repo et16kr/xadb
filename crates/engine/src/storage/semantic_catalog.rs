@@ -29,6 +29,8 @@ mod wire;
 pub(crate) use core::{CoreView, decode_core};
 pub(crate) use effects::{EffectIndices, reference_changes};
 pub(crate) use projection::catalog_projection_digest;
+#[cfg(test)]
+pub(crate) use resources::source_branches;
 pub(crate) use resources::{
     layout_source_bytes, schema_source_bytes, source_bytes, source_census, transaction_source_bytes,
 };

@@ -334,6 +334,44 @@ fn check_reservation(inputs: &Inputs<'_>, job: JobView<'_>) -> Result<()> {
     Ok(())
 }
 
+/// Return only the scalar inventory cut. Predecessor descriptor decoding and
+/// its return carriers finish before the next descriptor is constructed.
+fn transaction_inventory(
+    inputs: &Inputs<'_>,
+    op: Operation,
+    actor: TxnRef,
+    root_before: Option<JobView<'_>>,
+    updated_job: Option<JobView<'_>>,
+    lsn: u64,
+) -> Result<obligation::InventoryClaim> {
+    let prior = inputs
+        .transaction
+        .map(|raw| {
+            obligation::decode_descriptor(
+                raw,
+                allocation_page::ReservationOwner::Transaction(actor),
+                retention_obligation::profile_reference(inputs.profile),
+            )
+        })
+        .transpose()?;
+    let inventory = match op {
+        Operation::Reserve => {
+            let mut items = [0; inventory::ITEMS_BYTES];
+            inventory::items(required(updated_job)?, &mut items)?
+        }
+        Operation::Forward | Operation::Cancel => {
+            let mut items = [0; inventory::ITEMS_BYTES];
+            if inventory::items(required(root_before)?, &mut items)? != required(prior)?.inventory {
+                return Err(Error::BudgetMismatch);
+            }
+            inventory::empty(lsn)?
+        }
+        Operation::Begin => inventory::empty(lsn)?,
+        _ => required(prior)?.inventory,
+    };
+    Ok(inventory)
+}
+
 /// Output roles are fixed so the caller can retain only one eight-page loan.
 /// Ordering for the WAL/pool is computed at the end from actual identities.
 fn compute<'a>(
@@ -584,33 +622,7 @@ fn compute<'a>(
     };
     if is_tx {
         let actor = required(actor)?;
-        let prior = inputs
-            .transaction
-            .map(|raw| {
-                obligation::decode_descriptor(
-                    raw,
-                    allocation_page::ReservationOwner::Transaction(actor),
-                    retention_obligation::profile_reference(inputs.profile),
-                )
-            })
-            .transpose()?;
-        let inventory = match op {
-            Operation::Reserve => {
-                let mut items = [0; inventory::ITEMS_BYTES];
-                inventory::items(required(updated_job)?, &mut items)?
-            }
-            Operation::Forward | Operation::Cancel => {
-                let mut items = [0; inventory::ITEMS_BYTES];
-                if inventory::items(required(root_before)?, &mut items)?
-                    != required(prior)?.inventory
-                {
-                    return Err(Error::BudgetMismatch);
-                }
-                inventory::empty(lsn)?
-            }
-            Operation::Begin => inventory::empty(lsn)?,
-            _ => required(prior)?.inventory,
-        };
+        let inventory = transaction_inventory(inputs, op, actor, root_before, updated_job, lsn)?;
         ledger::next_transaction(
             ledger::TransactionTransition {
                 operation: op,

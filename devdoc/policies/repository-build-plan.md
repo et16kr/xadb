@@ -621,3 +621,8 @@ statement factory·자동 read-set·CheckedTable/RowReadOperation과 short aggre
 ## 모듈 독립 개발 C2 Catalog 후보 scratch — 2026-10-27
 
 기존 `semantic_catalog/images/catalog.rs`의 record scratch를 caller after-page loan으로 옮기고 `semantic_catalog/resources.rs`의 실제 carrier 식을 맞췄다. 새 제품 모듈·package/dependency·source root는 없다. 선택 manifest와 수정 경로는 JSON `dev3_module_c2_catalog_scratch`에 등록한다. [실행 기록](../evidence/module-independence-survey-20261026.md#c2-catalog-scratch)은 local buffer 제거와 전체 source peak 불변, MT03의 잘못된 복구 실행 설명 정정을 구분한다. aggregate byte admission은 후속 공급이다.
+
+
+## 모듈 독립 개발 C2 거래·Aging 생성 수명 — 2026-10-27
+
+기존 `semantic_catalog/ledger.rs`·`transition.rs`의 descriptor 생성/검산 수명을 helper 경계로 나누고 `resources.rs`의 argument·반환 carrier 식을 맞췄다. 기존 owner 시험에 test-only branch 관측을 추가했다. 새 제품 모듈·package/dependency·source root는 없다. 선택 manifest와 수정5경로는 JSON `dev3_module_c2_transaction_phases`에 등록한다. [실행 기록](../evidence/module-independence-survey-20261026.md#c2-transaction-source-phases)은 r1 거래 분리의 peak 불변과 r2 Aging 분리의 실제 source 상한 감소, source별 선택12+7회를 구별한다. 전체 동시 admission과 Row 실제 공급은 후속이다.

@@ -1,0 +1,98 @@
+{
+  "schema": "XADB_MODULE_C2_TRANSACTION_SOURCE_PHASES_V1",
+  "status": "FROZEN_INPUTS_NOT_EXECUTION_EVIDENCE",
+  "scope": "actual Catalog transaction inventory/encode/validate lifetime separation and source census; full short admission remains unimplemented",
+  "baseline_commit": "e0c1900",
+  "changed_product_paths": [
+    "crates/engine/src/storage/semantic_catalog/ledger.rs",
+    "crates/engine/src/storage/semantic_catalog/transition.rs",
+    "crates/engine/src/storage/semantic_catalog/resources.rs"
+  ],
+  "budget": {
+    "total_seconds": 480,
+    "case_seconds": 30,
+    "output_bytes": 8388608,
+    "rust_min_stack": 33554432
+  },
+  "runtime_tests": [
+    {
+      "selector": "storage::semantic_catalog::transition_tests::c01",
+      "reason": "Changed inventory/descriptor phase boundaries: Begin without predecessor; original literal producer/observer oracle unchanged"
+    },
+    {
+      "selector": "storage::semantic_catalog::transition_tests::c02",
+      "reason": "Changed inventory/descriptor phase boundaries: Reserve inventory3 and predecessor successor; original literal producer/observer oracle unchanged"
+    },
+    {
+      "selector": "storage::semantic_catalog::transition_tests::c03",
+      "reason": "Changed inventory/descriptor phase boundaries: Forward inventory3\u21920, original previous/apply/groups and mutation sequence; original literal producer/observer oracle unchanged"
+    },
+    {
+      "selector": "storage::semantic_catalog::transition_tests::c04",
+      "reason": "Changed inventory/descriptor phase boundaries: Commit descriptor successor and outcome; original literal producer/observer oracle unchanged"
+    },
+    {
+      "selector": "storage::semantic_catalog::transition_tests::r04",
+      "reason": "Changed inventory/descriptor phase boundaries: RollbackStart retains predecessor inventory and exact remaining budgets; original literal producer/observer oracle unchanged"
+    },
+    {
+      "selector": "storage::semantic_catalog::transition_tests::r05",
+      "reason": "Changed inventory/descriptor phase boundaries: CLR descriptor successor and remaining budgets; original literal producer/observer oracle unchanged"
+    },
+    {
+      "selector": "storage::semantic_catalog::transition_tests::r06",
+      "reason": "Changed inventory/descriptor phase boundaries: AbortEnd terminal descriptor; original literal producer/observer oracle unchanged"
+    },
+    {
+      "selector": "storage::semantic_catalog::transition_tests::k03",
+      "reason": "Changed inventory/descriptor phase boundaries: Cancel inventory3\u21920 and successor; original literal producer/observer oracle unchanged"
+    },
+    {
+      "selector": "storage::semantic_catalog::transition_tests::n13",
+      "reason": "Changed inventory/descriptor phase boundaries: Changed inventory helper rejects independent wrong predecessor inventory digest; original literal producer/observer oracle unchanged"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::owner_tests::disk_session_isolation_backing_and_carriers_are_accounted",
+      "reason": "r1\u2192r2 actual Aging budget/predecessor/encode carriers and source bounds; report every selected branch"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::lifecycle::mc02_forward_clr_abort_cleanup",
+      "reason": "Changed transaction helpers in actual original-owner Forward/Rollback/CLR/Abort path; memory oracle unchanged"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::commit_failures::catalog_mf09_commit_durable_unwind",
+      "reason": "r1\u2192r2 changed Aging successor in current-build memory recovery replay and committed Prune/cleanup; previous transaction-only result is not reused for this changed code"
+    }
+  ],
+  "aging_runtime_tests": [
+    {
+      "selector": "storage::semantic_catalog::transition_tests::g01",
+      "reason": "r1\u2192r2 actual Aging phase diff: first Aging descriptor with no predecessor, category3 zero aggregate"
+    },
+    {
+      "selector": "storage::semantic_catalog::transition_tests::c03",
+      "reason": "r1\u2192r2 actual Aging phase diff: existing Aging predecessor, nonzero exact aggregate and Forward successor"
+    },
+    {
+      "selector": "storage::semantic_catalog::transition_tests::c05",
+      "reason": "r1\u2192r2 actual Aging phase diff: Prune changed remaining budget and exact successor"
+    },
+    {
+      "selector": "storage::semantic_catalog::transition_tests::c09",
+      "reason": "r1\u2192r2 actual Aging phase diff: RootFree retains one TerminalJob debt with category3 steps=1/WAL=55112 and an existing predecessor"
+    },
+    {
+      "selector": "storage::semantic_catalog::transition_tests::n18",
+      "reason": "r1\u2192r2 actual Aging phase diff: observer rejects independently altered Aging consumed cost; no producer invocation"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::owner_tests::disk_session_isolation_backing_and_carriers_are_accounted",
+      "reason": "r1\u2192r2 actual Aging budget/predecessor/encode carriers and source bounds; report every selected branch"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::commit_failures::catalog_mf09_commit_durable_unwind",
+      "reason": "r1\u2192r2 changed Aging successor in current-build memory recovery replay and committed Prune/cleanup; previous transaction-only result is not reused for this changed code"
+    }
+  ],
+  "second_run_scope": "r2 selects aging_runtime_tests only; r1 transaction-phase source/result retained. Only overlapping cases whose Aging/helper code changed are repeated, no transaction-only suite repetition."
+}

@@ -335,26 +335,86 @@ fn transaction_validate() -> usize {
         + descriptor_codec().max(transaction_remaining())
 }
 
-fn transaction_next() -> usize {
-    size_of::<(TransactionTransition<'_>, &mut [u8; 1536])>()
+fn transaction_next_encode() -> usize {
+    size_of::<(&TransactionTransition<'_>, &mut [u8; 1536])>()
         + size_of::<(TransactionStatus, u64)>()
-        + 3 * size_of::<DescriptorSpec>() // before, next, final after; conservative union
+        + size_of::<DescriptorSpec>() // one mutable decoded/initial candidate
         + returned::<DescriptorSpec, ObligationError>()
         + size_of::<(TransactionStatus, InventoryClaim, bool, [usize; 2])>()
         + returned::<[RemainingBudget; 5], Error>()
         + 3 * size_of::<Result<()>>()
-        + descriptor_codec().max(transaction_remaining()).max(transaction_validate())
+        + descriptor_codec().max(transaction_remaining())
+}
+
+fn transaction_next() -> usize {
+    // The owned transition packet belongs to the wrapper. The encoder borrows
+    // it and returns () before validation decodes its own descriptor.
+    size_of::<(TransactionTransition<'_>, &mut [u8; 1536])>()
+        + 2 * size_of::<Result<()>>()
+        + transaction_next_encode().max(transaction_validate())
+}
+
+fn transaction_inventory() -> usize {
+    size_of::<(
+        &Inputs<'_>,
+        Operation,
+        TxnRef,
+        Option<JobView<'_>>,
+        Option<JobView<'_>>,
+        u64,
+    )>() + size_of::<Option<DescriptorSpec>>()
+        + size_of::<Option<CodecResult<DescriptorSpec, ObligationError>>>()
+        + size_of::<CodecResult<Option<DescriptorSpec>, ObligationError>>()
+        + size_of::<[u8; 288]>()
+        + returned::<InventoryClaim, Error>()
+        + 2 * size_of::<Result<()>>()
+        + descriptor_codec().max(inventory())
+}
+
+fn aging_budget() -> usize {
+    size_of::<(RootView<'_>, &[u8; 640], [u64; 2])>()
+        + size_of::<[RemainingBudget; 5]>()
+        + size_of::<[u8; 640]>()
+        + returned::<RemainingBudget, Error>()
+        + 2 * size_of::<Result<()>>()
+        // Conservative page/hash closure includes aggregate digest temporaries.
+        + page_codec()
+}
+
+fn aging_predecessor() -> usize {
+    size_of::<(Profile, Option<&[u8; 1536]>, &[u8; 16384], RootView<'_>)>()
+        + size_of::<DescriptorSpec>()
+        + returned::<DescriptorSpec, ObligationError>()
+        + returned::<AgingDescriptorView<'_>, AgingObligationError>()
+        + returned::<(OwnerChain, InventoryClaim), Error>()
+        + 2 * size_of::<RootView<'_>>()
+        + 3 * size_of::<Result<()>>()
+        // catalog::decode validates the predecessor, then descriptor() decodes
+        // it again. Both calls finish in this helper, but their real return
+        // carriers remain charged rather than treating the view as the value.
+        + descriptor_codec().max(retention_obligation::catalog::source_bytes())
 }
 
 fn aging_next() -> usize {
-    size_of::<(Profile, Option<&[u8; 1536]>, &[u8; 16384], &[u8; 16384], &[u8; 640], &mut [u8; 1536])>()
-        + size_of::<(RootView<'_>, [RemainingBudget; 5], [u8; 640], [u64; 2])>()
-        + 2 * size_of::<DescriptorSpec>() // prior descriptor extraction and after
+    let wrapper = size_of::<(
+        Profile,
+        Option<&[u8; 1536]>,
+        &[u8; 16384],
+        &[u8; 16384],
+        &[u8; 640],
+        &mut [u8; 1536],
+    )>() + size_of::<(RootView<'_>, RemainingBudget)>()
         + size_of::<(OwnerChain, InventoryClaim, SystemProgress)>()
-        + returned::<DescriptorSpec, ObligationError>()
-        + returned::<AgingDescriptorView<'_>, AgingObligationError>()
-        + 3 * size_of::<Result<()>>()
-        + descriptor_codec().max(retention_obligation::catalog::source_bytes())
+        + returned::<RemainingBudget, Error>()
+        + returned::<(OwnerChain, InventoryClaim), Error>()
+        + 3 * size_of::<Result<()>>();
+    // The final descriptor is constructed only after both preparation helpers
+    // return. Its encode phase retains the wrapper's scalar cut and budget
+    // row, but no predecessor descriptor or canonical aggregate buffer.
+    let encode = size_of::<DescriptorSpec>()
+        + size_of::<[RemainingBudget; 5]>() // final descriptor array construction
+        + retention_obligation::catalog::source_bytes();
+    wrapper + aging_budget().max(aging_predecessor()).max(encode)
 }
 
 fn queue() -> usize {
@@ -442,15 +502,13 @@ fn compute() -> usize {
             .max(undo_image())
             .max(initialize_pair())
             .max(status_image());
-    // `prior` and local items exist only in the explicit if-is_tx block;
-    // that block ends before next_aging. The parent common values remain.
+    // The inventory helper returns only InventoryClaim; its decoded prior and
+    // item array cannot overlap the subsequent next_transaction call. The
+    // parent actor/inventory and both helper returns remain charged here.
     let transaction_call = size_of::<TxnRef>()
-        + size_of::<Option<DescriptorSpec>>()
-        + size_of::<Option<CodecResult<DescriptorSpec, ObligationError>>>()
-        + size_of::<CodecResult<Option<DescriptorSpec>, ObligationError>>()
         + size_of::<InventoryClaim>()
-        + size_of::<[u8; 288]>() // only one match arm's item array
-        + descriptor_codec().max(inventory()).max(transaction_next());
+        + 2 * size_of::<Result<()>>()
+        + transaction_inventory().max(transaction_next());
     common
         + precondition
             .max(queue_call)
@@ -660,4 +718,24 @@ pub(crate) fn schema_source_bytes() -> usize {
 /// Layout parsing without the unrelated semantic transition/image producer.
 pub(crate) fn layout_source_bytes() -> usize {
     layout()
+}
+
+/// Test-only branch observations for selecting the next actual admission work.
+/// They are not reservations and do not replace the enclosing source census.
+#[cfg(test)]
+pub(crate) fn source_branches() -> [(&'static str, usize); 12] {
+    [
+        ("catalog_image", catalog_image()),
+        ("undo_image", undo_image()),
+        ("allocation_image", allocation_image()),
+        ("transaction_inventory", transaction_inventory()),
+        ("transaction_encode", transaction_next_encode()),
+        ("transaction_next", transaction_next()),
+        ("transaction_validate", transaction_validate()),
+        ("aging_budget", aging_budget()),
+        ("aging_predecessor", aging_predecessor()),
+        ("aging_next", aging_next()),
+        ("compute", compute()),
+        ("frame", frame()),
+    ]
 }
