@@ -1234,6 +1234,13 @@ impl<'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
                         e.effect,
                     )
                 })?;
+                self.inner.activate_recovered_epochs(owner).map_err(|e| {
+                    runtime.bound_error(
+                        self.phase,
+                        Plan4RecoveryCause::Retention(e.cause),
+                        Effect::CallerMustResolve,
+                    )
+                })?;
                 self.phase = Plan4RecoveryPhase::Handoff;
                 self.ready = true;
             }

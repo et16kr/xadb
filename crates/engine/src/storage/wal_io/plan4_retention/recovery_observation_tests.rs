@@ -124,6 +124,13 @@ impl<W: WriterNamespace> Plan4Retention<'_, '_, '_, '_, '_, '_, '_, '_, W> {
         )
     }
 
+    pub(in crate::storage) fn catalog_test_epochs(&self) -> (bool, u64, Vec<(u8, u64, u64)>) {
+        self.catalog_visibility
+            .as_ref()
+            .expect("original visibility")
+            .test_epochs()
+    }
+
     pub(in crate::storage) fn catalog_test_epoch_backing(&self) -> (usize, bool) {
         self.catalog_visibility
             .as_ref()

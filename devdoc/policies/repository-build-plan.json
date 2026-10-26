@@ -6341,5 +6341,32 @@
     "validation": "compiler3 PASS; changed census, actual publication MT01 and recovery loan MC04 each PASS once; independent D1/D2 accepted limited with zero required fixes",
     "remaining_supply": "final source table seeding, actual CREATE reservation/change-set publication, transaction and long/short source admission, native/full recovery and C2-C5",
     "source_roots_changed": false
+  },
+  "dev3_module_c1_epoch_activation": {
+    "status": "ACCEPTED_LIMITED_D1_D2",
+    "contract_ref": "dev3-task-10-concurrency.md#module-row-isolation",
+    "evidence_ref": "module-independence-survey-20261026.md#c1-epoch-activation",
+    "implemented_paths": [
+      "crates/engine/src/storage/wal_io/plan4_retention/visibility/epochs.rs",
+      "tests/fixtures/dev3-module-c1/epoch-activation/manifest.json"
+    ],
+    "modified_paths": [
+      "crates/engine/src/storage/wal_io/plan4_recovery.rs",
+      "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory.rs",
+      "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/lifecycle.rs",
+      "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/visibility_gap.rs",
+      "crates/engine/src/storage/wal_io/plan4_retention/catalog_commit.rs",
+      "crates/engine/src/storage/wal_io/plan4_retention/catalog_live.rs",
+      "crates/engine/src/storage/wal_io/plan4_retention/catalog_retire.rs",
+      "crates/engine/src/storage/wal_io/plan4_retention/recovery.rs",
+      "crates/engine/src/storage/wal_io/plan4_retention/recovery_observation_tests.rs",
+      "crates/engine/src/storage/wal_io/plan4_retention/visibility.rs",
+      "crates/engine/src/storage/wal_io/plan4_retention/visibility/authority.rs",
+      "crates/engine/src/storage/wal_io/plan4_retention/visibility/binding.rs"
+    ],
+    "scope": "profile2 original fresh/final READY source table seeding; actual CREATE Reserve/Cancel/CLR and exact ledger/digest/q-bound Commit epoch publication; Reserved slots not yet exposed to CheckedTable/read masks",
+    "validation": "r1 compiler2 PASS/runtime5 PASS plus MC04 FAIL; r2 compiler2 PASS/census and MC04/MC03 PASS plus unsupported empty Commit expectation FAIL; r3 test build1 and corrected empty Commit rejection1 PASS. No unchanged test repeats; original failures and identities preserved; independent D1/D2 limited acceptance, zero required fixes",
+    "remaining_supply": "transaction/statement, source admission, observed Reserved slot lifetime, successful zero-change Commit, Row APIs, native/full recovery and whole C0/C1-C5/M5",
+    "source_roots_changed": false
   }
 }

@@ -29,6 +29,10 @@ fn mc01_reserve_cancel_two_generations() {
                     .reserve_catalog_create(owner, expected, undo, &definition, private)
                     .unwrap();
                 oracle.check(reserved.catalog_test_bound(), state, &id(1));
+                assert_eq!(
+                    reserved.catalog_test_bound().catalog_test_epochs(),
+                    (true, 0, vec![(1, 6 + cycle as u64, 0)])
+                );
                 match reserved.cancel() {
                     Ok(()) => {}
                     Err(RetentionReservationError::Before { error, .. })
@@ -37,6 +41,7 @@ fn mc01_reserve_cancel_two_generations() {
                     }
                 }
                 oracle.check(live, state, &id(2));
+                assert_eq!(live.catalog_test_epochs(), (true, 0, vec![]));
                 live.catalog_rollback_start(owner, expected, private)
                     .unwrap();
                 oracle.check(live, state, &id(3));
@@ -95,6 +100,7 @@ fn mc02_forward_clr_abort_cleanup() {
             live.catalog_retire(owner, 1, Operation::Clr, private)
                 .unwrap();
             oracle.check(live, state, "R05");
+            assert_eq!(live.catalog_test_epochs(), (true, 0, vec![]));
             assert_eq!(resident_index(live, 11), None);
             assert_eq!(resident_index(live, 12), None);
             live.catalog_abort_end(owner, actor, private).unwrap();
@@ -109,6 +115,7 @@ fn mc02_forward_clr_abort_cleanup() {
             live.catalog_retire(owner, 0, Operation::TerminalFinish, private)
                 .unwrap();
             oracle.check(live, state, "R11");
+            assert_eq!(live.catalog_test_epochs(), (true, 0, vec![]));
             query(live, owner, flusher, reader_private, 0, 6, false);
             assert!(!fence.is_fenced());
             owner.check_idle().unwrap();
@@ -158,5 +165,53 @@ fn mc04_reserved_drop_fence_fresh_recovery() {
             before
         });
         recover_check(&images, &oracle, "MC04");
+    });
+}
+
+#[test]
+fn empty_catalog_commit_is_rejected_without_epoch_change() {
+    case("EPOCH_EMPTY", || {
+        let oracle = Oracle::new();
+        with_fresh!(oracle, |live,
+                             owner,
+                             flusher,
+                             status,
+                             undo,
+                             private,
+                             reader_private,
+                             core,
+                             fence,
+                             state| {
+            let _ = (reader_private, core, state);
+            prepare_create(live, owner, flusher, status, undo);
+            let actor = live
+                .catalog_begin(owner, status, private)
+                .unwrap()
+                .actor
+                .unwrap();
+            assert_eq!(live.catalog_test_epochs(), (true, 0, vec![]));
+            // The existing Catalog producer requires a retained CREATE undo.
+            // Queue-only Commit decoding is not a live empty-Commit capability.
+            let before_wal = live.catalog_test_wal_state();
+            let before_bank = content_digest(live.recovery_test_bank());
+            let error = match live.prepare_catalog_commit(owner, actor, private) {
+                Ok(_) => panic!("empty Catalog Commit unexpectedly prepared"),
+                Err(error) => error,
+            };
+            assert!(matches!(
+                error.cause,
+                super::super::super::super::plan4_pages::RetentionCause::CatalogSemantic(
+                    crate::storage::semantic_catalog::Error::InvalidInput
+                )
+            ));
+            assert_eq!(error.effect, Effect::Unchanged);
+            assert_eq!(live.catalog_test_wal_state(), before_wal);
+            assert_eq!(content_digest(live.recovery_test_bank()), before_bank);
+            assert_eq!(live.catalog_test_q(), 0);
+            assert_eq!(live.catalog_test_epochs(), (true, 0, vec![]));
+            assert!(!fence.is_fenced());
+            owner.check_idle().unwrap();
+            flusher.check_idle().unwrap();
+        });
     });
 }

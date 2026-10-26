@@ -1,0 +1,53 @@
+{
+  "schema": "XADB_MODULE_C1_EPOCH_ACTIVATION_V1",
+  "status": "FROZEN_INPUTS_NOT_EXECUTION_EVIDENCE",
+  "scope": "actual fresh/final recovery table seeding, original CREATE Reserve/Cancel/CLR and exact Commit epoch publication; no Row transactions/admission/native full acceptance",
+  "budget": {
+    "total_seconds": 180,
+    "case_seconds": 30,
+    "output_bytes": 8388608
+  },
+  "cases": [
+    {
+      "name": "production",
+      "path": "../epoch-compiler/canonical.rs",
+      "bytes": 545,
+      "sha256": "ed2eeb95af19f82c6a4201d88cf2738c4035541fbd47c166b2fe219601f3258d",
+      "expected_code": null,
+      "primary_line": null,
+      "anchor": "crates/engine/src/storage/mod.rs",
+      "probe": "crates/engine/src/storage/module_c1_epoch_probe.rs",
+      "declaration": "\nmod module_c1_epoch_probe;\n",
+      "mode": "check"
+    },
+    {
+      "name": "test_build",
+      "path": "../epoch-compiler/canonical.rs",
+      "bytes": 545,
+      "sha256": "ed2eeb95af19f82c6a4201d88cf2738c4035541fbd47c166b2fe219601f3258d",
+      "expected_code": null,
+      "primary_line": null,
+      "anchor": "crates/engine/src/storage/mod.rs",
+      "probe": "crates/engine/src/storage/module_c1_epoch_probe.rs",
+      "declaration": "\nmod module_c1_epoch_probe;\n",
+      "mode": "test-no-run"
+    }
+  ],
+  "runtime_tests": [
+    "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::owner_tests::disk_session_isolation_backing_and_carriers_are_accounted",
+    "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::visibility_gap::catalog_mt01_q0_publication_gap",
+    "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::visibility_gap::catalog_mt02_q1_publication_gap",
+    "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::lifecycle::mc01_reserve_cancel_two_generations",
+    "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::lifecycle::mc02_forward_clr_abort_cleanup",
+    "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::lifecycle::mc04_reserved_drop_fence_fresh_recovery",
+    "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::issued_gap::mc03_issued_local_gap_recovers",
+    "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::lifecycle::empty_catalog_commit_is_rejected_without_epoch_change"
+  ],
+  "runtime_scope": [
+    "modified controller/census limits",
+    "actual Commit Q0 and Q1 table epochs plus physical cleanup",
+    "Reserve/Cancel reuse and CLR/abort no logical epochs",
+    "recovery empty and committed seeding; recovered READY then new CREATE/Commit",
+    "existing empty Catalog Commit rejection leaves WAL/ledger/Q/epochs unchanged; successful empty Commit awaits later transaction supply"
+  ]
+}

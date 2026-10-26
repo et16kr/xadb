@@ -163,6 +163,17 @@ impl<'s, 'c, W: WriterNamespace> ReservedCatalogCreate<'_, '_, 's, 'c, '_, '_, '
             self.plan.selected(),
             self.private,
         )?;
+        let epoch_change = self
+            .bound
+            .catalog_visibility
+            .as_ref()
+            .ok_or_else(|| unchanged(RetentionPhase::Prepare, RetentionCause::WrongState))?
+            .prepare_epoch_change(&prepared, storage.profile())
+            .map_err(|e| RetentionError {
+                phase: RetentionPhase::Prepare,
+                effect: e.effect,
+                cause: RetentionCause::Visibility(e),
+            })?;
         let observation = self.bound.apply_existing_catalog(self.owner, prepared)?;
         let source = self.bound.history.source_cut()?;
         let requirement = source
@@ -193,7 +204,19 @@ impl<'s, 'c, W: WriterNamespace> ReservedCatalogCreate<'_, '_, 's, 'c, '_, '_, '
                 super::TxPairCancelKind::Cancelled,
                 Some(requirement),
             )
-            .map_err(|error| fatal(storage, error.phase, error.cause))
+            .map_err(|error| fatal(storage, error.phase, error.cause))?;
+        self.bound
+            .catalog_visibility
+            .as_ref()
+            .expect("checked original visibility")
+            .apply_epoch_change(epoch_change)
+            .map_err(|e| {
+                fatal(
+                    storage,
+                    RetentionPhase::Install,
+                    RetentionCause::Visibility(e),
+                )
+            })
     }
     #[allow(
         clippy::result_large_err,
@@ -1708,6 +1731,23 @@ impl<'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
             .prefix()
             .map_err(|e| fatal(storage, RetentionPhase::Prepare, RetentionCause::Wal(e)))?;
         prepared.check(owner, &self.inner.pool, &self.control.ledger, prefix)?;
+        let visibility = self
+            .catalog_visibility
+            .as_ref()
+            .ok_or_else(|| unchanged(RetentionPhase::Prepare, RetentionCause::WrongState))?;
+        // Live Cancel retains its delta in the linear reservation until pair
+        // cleanup; the closed recovery Cancel has no active epoch map yet.
+        let epoch_change = if prepared.operation() == Operation::Cancel {
+            None
+        } else {
+            visibility
+                .prepare_epoch_change(&prepared, storage.profile())
+                .map_err(|e| RetentionError {
+                    phase: RetentionPhase::Prepare,
+                    effect: e.effect,
+                    cause: RetentionCause::Visibility(e),
+                })?
+        };
         let requests: &[TargetRequest; N] = prepared
             .targets()
             .try_into()
@@ -1809,6 +1849,13 @@ impl<'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
                 RetentionCause::Invariant,
             ));
         }
+        visibility.apply_epoch_change(epoch_change).map_err(|e| {
+            fatal(
+                storage,
+                RetentionPhase::Install,
+                RetentionCause::Visibility(e),
+            )
+        })?;
         self.control.ledger.durable = Some(durable);
         self.control.ledger.pending = None;
         Ok(prepared.observation)
@@ -2428,7 +2475,8 @@ pub(in super::super) fn catalog_live_source_bytes<W: WriterNamespace>() -> Catal
     // The consumed receipt exists once in the actual install callee. Returned
     // Observation/requirement values are included; its caller no longer owns a
     // second receipt after the move.
-    let ordinary_install = size_of::<Prepared<'_>>()
+    let ordinary_install = visibility::epoch_change_carriers()
+        + size_of::<Prepared<'_>>()
         + scalar
         + size_of::<[Option<dirty_frame::DptStamp<'_>>; 9]>()
         + 3 * size_of::<WalRequirement<'_>>()
@@ -2436,7 +2484,9 @@ pub(in super::super) fn catalog_live_source_bytes<W: WriterNamespace>() -> Catal
         + size_of::<DirtyInstallPermit<'_, '_, '_>>()
         + 3 * size_of::<Result<Observation>>()
         + dirty_frame::target_set_call_bytes::<9>()
-        + catalog_control_source_bytes().max(physical);
+        + catalog_control_source_bytes()
+            .max(physical)
+            .max(visibility::epoch_transition_source_bytes());
     let ordinary = (ordinary_caller_source_bytes() + prepare.max(ordinary_install))
         .max(retirement::prepare_caller_source_bytes() + prepare)
         .max(retirement::selection_source_bytes());
@@ -2481,8 +2531,13 @@ pub(in super::super) fn catalog_live_source_bytes<W: WriterNamespace>() -> Catal
         + dirty_frame::tx_pair_source_census().max(dirty_frame::target_set_call_bytes::<1>());
     // This caller is the one original reservation, not an ordinary Begin/Job
     // entry. It has no second request/Job caller packet.
-    let cancel =
-        (token + prepare.max(ordinary_install).max(pair_return)).max(token_return + scalar);
+    let cancel = (token
+        + visibility::epoch_change_carriers()
+        + prepare
+            .max(ordinary_install)
+            .max(pair_return)
+            .max(visibility::epoch_transition_source_bytes()))
+    .max(token_return + scalar);
     let retirement = (retirement::prepare_caller_source_bytes() + prepare)
         .max(retirement::selection_source_bytes())
         .max(retirement::source_bytes());

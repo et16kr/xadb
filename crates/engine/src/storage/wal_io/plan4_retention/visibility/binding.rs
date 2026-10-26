@@ -43,6 +43,7 @@ impl<'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
                 RetentionCause::WrongState,
             ));
         }
+        let epochs_active = self.recovery_binding.is_none();
         let mut scope = self.history.replay_scope(owner)?;
         let result = match scope.checkout() {
             Ok(mut replay) => {
@@ -66,7 +67,24 @@ impl<'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
                             RetentionCause::Retention(e),
                         )
                     })?;
-                    Ok(root.commit_c())
+                    let q = root.commit_c();
+                    if epochs_active {
+                        epochs::seed(
+                            storage.profile(),
+                            replay.bytes(),
+                            &self.control.ledger,
+                            loan.epochs,
+                            q,
+                        )
+                        .map_err(|_| {
+                            super::super::fatal(
+                                storage,
+                                RetentionPhase::Activate,
+                                RetentionCause::Invariant,
+                            )
+                        })?;
+                    }
+                    Ok(q)
                 })();
                 super::super::merge(checked, replay.return_checked())
             }
@@ -74,6 +92,7 @@ impl<'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
         };
         let q = super::super::merge(result, scope.finish_checked())?;
         let ready = SourceFrontier {
+            epochs_active,
             origin: Origin {
                 core: self.inner.pool.bound_core(),
                 binding: &storage.binding,
@@ -84,6 +103,98 @@ impl<'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
         self.catalog_visibility = Some(BoundVisibility::bind(loan, ready).map_err(error)?);
         Ok(())
     }
+    /// Called by the original closed recovery facade after final VERIFY and
+    /// STABILIZE. Exclusive session ownership excludes all foreground ports.
+    pub(in crate::storage) fn activate_recovered_epochs(
+        &mut self,
+        owner: &mut Owner<'c, 's>,
+    ) -> super::super::Result<()> {
+        let storage = self.inner.storage;
+        let _unwind = storage.session_fence().unwind_guard();
+        super::super::health(storage, &self.inner.pool)?;
+        self.inner
+            .pool
+            .check_retention_reader(owner)
+            .map_err(|e| super::super::frame(RetentionPhase::Activate, e))?;
+        if self.recovery_binding.is_none() || self.control.ledger.pending.is_some() {
+            return Err(super::super::unchanged(
+                RetentionPhase::Activate,
+                RetentionCause::WrongState,
+            ));
+        }
+        let visibility = self.catalog_visibility.as_mut().ok_or_else(|| {
+            super::super::unchanged(RetentionPhase::Activate, RetentionCause::WrongState)
+        })?;
+        visibility.origin.health().map_err(error)?;
+        // get_mut needs no mutex acquisition; no publication lock spans replay I/O.
+        let publication = visibility
+            .published
+            .get_mut()
+            .map_err(|_| error(visibility.origin.fatal(VisibilityCause::Poisoned)))?;
+        if publication.epochs_active {
+            return Err(super::super::unchanged(
+                RetentionPhase::Activate,
+                RetentionCause::WrongState,
+            ));
+        }
+        let cut = self.history.source_cut()?;
+        cut.check_origin(storage)?;
+        let prefix = storage.wal().prefix().map_err(|e| {
+            super::super::fatal(storage, RetentionPhase::Activate, RetentionCause::Wal(e))
+        })?;
+        let mut scope = self.history.replay_scope(owner)?;
+        let result = match scope.checkout() {
+            Ok(mut replay) => {
+                let checked = (|| {
+                    history::validate_live(
+                        storage,
+                        &self.control.ledger,
+                        replay.bytes_mut(),
+                        prefix,
+                    )?;
+                    cut.unchanged()?;
+                    let (_, root) = crate::storage::retention_page::catalog::decode_root_page(
+                        history::arena_page(replay.bytes(), 1),
+                        storage.profile().spec().namespace,
+                    )
+                    .map_err(|e| {
+                        super::super::fatal(
+                            storage,
+                            RetentionPhase::Activate,
+                            RetentionCause::Retention(e),
+                        )
+                    })?;
+                    if root.commit_c() != publication.q {
+                        return Err(super::super::fatal(
+                            storage,
+                            RetentionPhase::Activate,
+                            RetentionCause::Invariant,
+                        ));
+                    }
+                    epochs::seed(
+                        storage.profile(),
+                        replay.bytes(),
+                        &self.control.ledger,
+                        publication.epochs,
+                        publication.q,
+                    )
+                    .map_err(|_| {
+                        super::super::fatal(
+                            storage,
+                            RetentionPhase::Activate,
+                            RetentionCause::Invariant,
+                        )
+                    })
+                })();
+                super::super::merge(checked, replay.return_checked())
+            }
+            Err(error) => Err(error),
+        };
+        super::super::merge(result, scope.finish_checked())?;
+        visibility.origin.health().map_err(error)?;
+        publication.epochs_active = true;
+        Ok(())
+    }
 }
 
 /// Nested source values of the original source-to-Q binding. The retained
@@ -92,6 +203,13 @@ pub(in super::super) fn source_bytes<W: WriterNamespace>() -> usize {
     use super::super::{Result, RetentionError};
     use std::mem::size_of;
     let wrapper = size_of::<VisibilityLoan<'_>>()
+        + size_of::<crate::storage::wal_io::WalPrefix>()
+        + size_of::<
+            std::result::Result<
+                crate::storage::wal_io::WalPrefix,
+                crate::storage::wal_io::WalIoError,
+            >,
+        >()
         + size_of::<crate::storage::session_fence::UnwindFence<'_>>()
         + size_of::<history::runtime::LookupSourceCut<'_, '_, '_, '_>>()
         + size_of::<history::runtime::ReplayScope<'_, '_, '_, '_>>()
@@ -119,5 +237,7 @@ pub(in super::super) fn source_bytes<W: WriterNamespace>() -> usize {
         + size_of::<BoundVisibility<'_, '_, '_>>()
         + size_of::<VisibilityResult<BoundVisibility<'_, '_, '_>>>()
         + super::source_census().peak_leaf;
-    wrapper + history::runtime::source_bytes() + replay.max(root).max(publish)
+    wrapper
+        + history::runtime::source_bytes()
+        + replay.max(root + epochs::source_bytes()).max(publish)
 }

@@ -22,6 +22,13 @@ use std::sync::{
 mod binding;
 pub(super) use binding::source_bytes as binding_source_bytes;
 
+#[path = "visibility/epochs.rs"]
+mod epochs;
+pub(super) use epochs::{
+    change_carriers as epoch_change_carriers, commit_carriers as epoch_commit_carriers,
+    transition_source_bytes as epoch_transition_source_bytes,
+};
+
 #[path = "visibility/authority.rs"]
 mod authority;
 #[path = "visibility/catalog_retirement.rs"]
@@ -132,10 +139,11 @@ pub(in crate::storage) struct VisibilityLoan<'a> {
 }
 
 /// The original publication mutex owns both Q and the future table epoch lane.
-/// Epoch bytes remain unactivated: no table/Serializable authority is issued
-/// until final source seeding and actual CREATE change-set publication exist.
+/// The activation bit stays closed through recovery cleanup and source errors.
+/// Published table identities are never evicted in this open.
 struct Publication<'a> {
     q: u64,
+    epochs_active: bool,
     epochs: &'a mut [u8; EPOCH_BYTES],
 }
 
@@ -176,12 +184,15 @@ impl<'a, 'c, 's> BoundVisibility<'a, 'c, 's> {
     ) -> VisibilityResult<Self> {
         ready.origin.health()?;
         loan.bytes.fill(0);
-        loan.epochs.fill(0);
+        if !ready.epochs_active {
+            loan.epochs.fill(0);
+        }
         loan.bytes[..8].copy_from_slice(MAGIC);
         Ok(Self {
             origin: ready.origin,
             published: Mutex::new(Publication {
                 q: ready.q,
+                epochs_active: ready.epochs_active,
                 epochs: loan.epochs,
             }),
             registry: Mutex::new(loan.bytes),
@@ -241,20 +252,6 @@ impl<'a, 'c, 's> BoundVisibility<'a, 'c, 's> {
             published,
             horizon,
         })
-    }
-    pub(super) fn publish_installed(
-        &self,
-        installed: InstalledFrontier<'c, 's>,
-    ) -> VisibilityResult<()> {
-        if !self.origin.same(&installed.origin) {
-            return Err(unchanged(VisibilityCause::BindingMismatch));
-        }
-        let mut current = self.publication()?;
-        if current.q.checked_add(1) != Some(installed.q) {
-            return Err(self.origin.fatal(VisibilityCause::Invariant));
-        }
-        current.q = installed.q;
-        Ok(())
     }
     fn check_horizon(
         &self,
@@ -420,12 +417,12 @@ impl BoundVisibility<'_, '_, '_> {
             .unwrap_or_else(|error| error.into_inner())
             .q
     }
-    /// Observation only: the actual lane identity and its unactivated bytes.
+    /// Observation only: the actual lane identity and activation state.
     pub(super) fn test_epoch_backing(&self) -> (usize, bool) {
         let publication = self.published.lock().unwrap();
         (
             publication.epochs.as_ptr() as usize,
-            publication.epochs.iter().all(|byte| *byte == 0),
+            publication.epochs_active,
         )
     }
     /// Read-only (Q, H) with the capture_horizon min rule. It takes no version

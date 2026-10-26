@@ -5,10 +5,12 @@ use super::*;
 use std::marker::PhantomData;
 
 pub(in crate::storage) struct SourceFrontier<'c, 's> {
+    pub(super) epochs_active: bool,
     pub(super) origin: Origin<'c, 's>,
     pub(super) q: u64,
 }
 pub(in crate::storage) struct InstalledFrontier<'c, 's> {
+    pub(super) digest: [u8; 32],
     pub(super) origin: Origin<'c, 's>,
     pub(super) q: u64,
 }
@@ -24,6 +26,7 @@ impl<'c, 's> InstalledFrontier<'c, 's> {
                 fence,
             },
             q: completed.q(),
+            digest: completed.digest(),
         }
     }
 }

@@ -277,7 +277,7 @@ slot kind는 writable actual actor와 read-only transaction을 구분한다. rea
 
 실제 fresh/READY exclusive activation에서 원 history/replay·Catalog/table/anchor identity를 검산하여 기존 table entry를 만들고 각 epoch와 catalog epoch를 당시 Q로 초기화한다. 이전 open의 transaction/view는 재사용할 수 없으므로 이 보수 초기화는 과거 read-set을 잃지 않는다. 추정 q·raw handle·현재 RowLeaf의 최대 stamp만으로 등록하지 않는다. activation 중 오류는 가짜 READY를 반환하지 않는다. epoch/isolation loan은 metadata이고 disk wire 변경이나 recovery ATT의 새로운 영속 read-set이 아니다.
 
-현재 [C1 backing 부분공급](../evidence/module-independence-survey-20261026.md#c1-epoch-backing)은 Q와 미활성 epoch loan의 원 mutex 소유까지다. recovery cleanup용 visibility binding은 READY 이전이므로 이때 table을 Published로 확정하지 않는다. 실제 최종 source seeding 및 CREATE의 예약·남은 변경목록을 연결하기 전에는 이 bytes를 table/Serializable 권한으로 소비하지 않는다. CREATE 없는 Commit도 존재하므로 origin/q receipt만으로 catalog 논리 변경을 추정하지 않는다.
+현재 [C1 실제 Catalog epoch 공급](../evidence/module-independence-survey-20261026.md#c1-epoch-activation)은 fresh 및 최종 VERIFY·STABILIZE 이후 READY 직전 seeding, 실제 CREATE Reserve/Cancel/CLR, 원 ledger 변경목록과 installed digest/q에 결합한 Commit 공개까지 연결했다. cleanup 최초 binding은 미활성이며 replay 반환·종료 성공 뒤만 활성화한다. Reserved는 아직 CheckedTable/read-mask로 노출하지 않으므로 Cancel/CLR 이후 재사용은 이 제한 범위에 한한다. own-created table 관측·거래/statement 공급과 함께 slot 수명 인수를 추가해야 한다. 기존 actual Catalog producer는 CREATE undo 없는 Commit을 거절한다. queue/core 관측을 live 지원으로 해석한 앞선 판단을 정정하며, 성공하는 빈 Commit 및 Serializable 권한 소비는 후속 공급이다.
 
 ### 거래·statement·자동 관측 등록
 

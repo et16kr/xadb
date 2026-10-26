@@ -66,6 +66,9 @@ impl<'c, 's> CatalogCommitInstalled<'c, 's> {
     ) -> (&'c PageConcurrency<'s>, &'s AtomicU8, &'s SessionFence) {
         (self.core, self.binding, self.fence)
     }
+    pub(in crate::storage::wal_io) fn digest(&self) -> [u8; 32] {
+        self.digest
+    }
     pub(in crate::storage::wal_io) fn q(&self) -> u64 {
         self.q
     }
@@ -105,6 +108,13 @@ impl<'s, 'c, W: WriterNamespace> RetentionWriter<'_, '_, 's, 'c, '_, '_, '_, '_,
             .try_into()
             .map_err(|_| unchanged(RetentionPhase::Prepare, RetentionCause::Invariant))?;
         let q = commit_q(&prepared, storage.profile())?;
+        let epochs = visibility
+            .prepare_commit_epochs(&prepared, self.control, storage.profile(), q)
+            .map_err(|e| RetentionError {
+                phase: RetentionPhase::Prepare,
+                effect: e.effect,
+                cause: RetentionCause::Visibility(e),
+            })?;
         if source_bytes() > 65_536 {
             return Err(unchanged(RetentionPhase::Prepare, RetentionCause::Capacity));
         }
@@ -270,7 +280,7 @@ impl<'s, 'c, W: WriterNamespace> RetentionWriter<'_, '_, 's, 'c, '_, '_, '_, '_,
         #[cfg(test)]
         catalog_hook(prepared.core(), CatalogPoint::BeforePublish);
         visibility
-            .publish_installed(visibility::InstalledFrontier::catalog(&completed))
+            .publish_catalog_epochs(visibility::InstalledFrontier::catalog(&completed), epochs)
             .map_err(|e| {
                 fatal(
                     storage,
@@ -354,7 +364,8 @@ pub(in super::super) fn source_bytes() -> usize {
         ),
         commit_bridge::CatalogStageError<'c, 's>,
     >;
-    let retained = size_of::<PreparedCatalog<'_, '_, '_>>()
+    let retained = visibility::epoch_commit_carriers()
+        + size_of::<PreparedCatalog<'_, '_, '_>>()
         + size_of::<Observation>()
         + size_of::<WalRequirement<'_>>()
         + size_of::<InstallationKey>()
@@ -403,5 +414,6 @@ pub(in super::super) fn source_bytes() -> usize {
             .max(super::catalog_live::catalog_control_source_bytes())
             .max(history::runtime::source_bytes())
             .max(visibility::source_census().peak_leaf)
+            .max(visibility::epoch_transition_source_bytes())
             .max(commit_bridge::catalog_source_bytes())
 }

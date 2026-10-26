@@ -1009,7 +1009,7 @@ fn recover_check(images: &Images, oracle: &Oracle, scenario: &str) {
             let progress = closed.step(&mut owner, &mut flusher).unwrap();
             assert_eq!(
                 closed.inner.catalog_test_epoch_backing(),
-                (epoch_pointer, true)
+                (epoch_pointer, progress.ready)
             );
             let current = closed.inner.free_undo_test_state().unwrap().0.complete_lsn;
             if current > observed_lsn {
@@ -1032,6 +1032,40 @@ fn recover_check(images: &Images, oracle: &Oracle, scenario: &str) {
         oracle.checkpoint(&live, &state, scenario, last);
         query(&mut live, &mut owner, &mut flusher, private, q, 6, found);
         assert_state(&live, last, false);
+        let expected = if found { vec![(2, 6, q)] } else { vec![] };
+        assert_eq!(live.catalog_test_epochs(), (true, q, expected));
+        if scenario == "MC03" {
+            let status = live.recovery_test_expected_target(9).unwrap();
+            let undo = live.recovery_test_expected_target(10).unwrap();
+            prepare_create(&mut live, &owner, &mut flusher, &status, &undo);
+            let actor = live
+                .catalog_begin(&mut owner, &status, private)
+                .unwrap()
+                .actor
+                .unwrap();
+            let definition = table_spec("U");
+            let reserved = live
+                .reserve_catalog_create(&mut owner, actor, &undo, &definition, private)
+                .unwrap();
+            assert_eq!(reserved.object().object.get(), 7);
+            match reserved.initialize() {
+                Ok(object) => assert_eq!(object.object.get(), 7),
+                Err(_) => panic!("recovered READY CREATE initialization"),
+            }
+            assert_eq!(
+                live.catalog_test_epochs(),
+                (true, 1, vec![(2, 6, 1), (1, 7, 0)])
+            );
+            let prepared = live
+                .prepare_catalog_commit(&mut owner, actor, private)
+                .unwrap();
+            live.split().0.commit_catalog(&mut owner, prepared).unwrap();
+            assert_eq!(live.catalog_test_q(), 2);
+            assert_eq!(
+                live.catalog_test_epochs(),
+                (true, 2, vec![(2, 6, 1), (2, 7, 2)])
+            );
+        }
         assert!(!runtime.session_fence().is_fenced());
     }
     assert_closed(&state);

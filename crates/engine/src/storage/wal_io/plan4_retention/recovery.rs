@@ -1213,3 +1213,25 @@ fn restored_credits(
     }
     Ok((wal, steps))
 }
+
+#[cfg(test)]
+impl<W: WriterNamespace> Plan4Retention<'_, '_, '_, '_, '_, '_, '_, '_, W> {
+    /// An expected target copied from the original validated replay. This is
+    /// not a pin/reservation; normal consumers still revalidate membership.
+    pub(in crate::storage) fn recovery_test_expected_target(
+        &mut self,
+        index: usize,
+    ) -> Result<Plan4Target> {
+        if self.recovery_binding.is_none() || index >= 64 {
+            return Err(unchanged(
+                RetentionPhase::Prepare,
+                RetentionCause::WrongState,
+            ));
+        }
+        self.refresh_recovered()?;
+        let image = history::arena_page(self.history.exclusive()?, index);
+        let request = request_from_image(self.inner.storage.profile(), image)
+            .map_err(|cause| fatal(self.inner.storage, RetentionPhase::Census, cause))?;
+        Ok(Plan4Target { request })
+    }
+}

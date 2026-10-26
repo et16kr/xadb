@@ -351,6 +351,9 @@ impl<'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
             .prefix()
             .map_err(|e| fatal(storage, RetentionPhase::Prepare, RetentionCause::Wal(e)))?;
         prepared.check(owner, self.pool, self.control, prefix)?;
+        let epoch_change = visibility
+            .prepare_epoch_change(&prepared, storage.profile())
+            .map_err(visibility_error)?;
         if !std::ptr::eq(flusher.pool, self.pool) || !std::ptr::eq(flusher.storage, storage) {
             return Err(unchanged(
                 RetentionPhase::Prepare,
@@ -635,6 +638,13 @@ impl<'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
                 })
                 .map_err(|e| fatal(storage, RetentionPhase::Install, RetentionCause::Frame(e)))?;
         }
+        visibility.apply_epoch_change(epoch_change).map_err(|e| {
+            fatal(
+                storage,
+                RetentionPhase::Install,
+                RetentionCause::Visibility(e),
+            )
+        })?;
         self.control.durable = Some(durable);
         self.control.pending = None;
         Ok(prepared.observation)
@@ -684,7 +694,8 @@ pub(in super::super::super) fn selection_source_bytes() -> usize {
 pub(in super::super::super) fn source_bytes() -> usize {
     use crate::storage::dirty_frame;
     use std::mem::size_of;
-    size_of::<PreparedCatalog<'_, '_, '_>>()
+    visibility::epoch_change_carriers()
+        + size_of::<PreparedCatalog<'_, '_, '_>>()
         + 2 * size_of::<Result<PreparedCatalog<'_, '_, '_>>>()
         + size_of::<CatalogRetirementStaged<'_, '_, '_, '_>>()
         + size_of::<CatalogRetirementApplied<'_, '_, '_, '_>>()
@@ -714,6 +725,7 @@ pub(in super::super::super) fn source_bytes() -> usize {
         + catalog_control_source_bytes()
             .max(dirty_frame::tx_pair_source_census())
             .max(visibility::source_census().peak_leaf)
+            .max(visibility::epoch_transition_source_bytes())
             .max(
                 crate::storage::wal_io::DURABILITY_CALL_BYTES
                     + 2 * size_of::<

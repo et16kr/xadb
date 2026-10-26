@@ -187,15 +187,28 @@ fn visibility_gap(case_id: &str, base: usize) {
             };
             oracle.check(live, state, &id(base, 4));
             assert_eq!(live.catalog_test_q(), before_q + 1);
+            let expected_epochs = if base == 0 {
+                vec![(2, 6, 1)]
+            } else {
+                vec![(2, 6, 1), (2, 7, 2)]
+            };
+            assert_eq!(
+                live.catalog_test_epochs(),
+                (true, before_q + 1, expected_epochs.clone())
+            );
             cleanup(live, owner, private, &oracle, state, base);
             query(live, owner, flusher, reader_private, before_q + 1, 6, true);
             if base == 10 {
                 query(live, owner, flusher, reader_private, 2, 7, true);
             }
             assert!(!fence.is_fenced());
-            // Q advances only through actual installed Commit; the epoch loan
-            // remains owned and unactivated until table/change-set supply exists.
+            // Q and the actual CREATE epochs publish together; physical cleanup
+            // does not advance the table or namespace epoch.
             assert_eq!(live.catalog_test_epoch_backing(), epoch_backing);
+            assert_eq!(
+                live.catalog_test_epochs(),
+                (true, before_q + 1, expected_epochs)
+            );
             owner.check_idle().unwrap();
             flusher.check_idle().unwrap();
         });
