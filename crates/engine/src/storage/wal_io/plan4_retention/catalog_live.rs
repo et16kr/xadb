@@ -1873,8 +1873,44 @@ impl<'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
         )
     }
 
+    fn catalog_preparation(&self) -> CatalogPreparation<'_, 'a, 's, 'c, 'p, 'd, 'm, 'w, W> {
+        CatalogPreparation {
+            storage: self.inner.storage,
+            pool: &self.inner.pool,
+            control: &self.control,
+            history: &self.history,
+            visibility: self.catalog_visibility.as_ref(),
+        }
+    }
+
     fn prepare_existing_catalog<'i, const N: usize>(
         &mut self,
+        owner: &mut Owner<'c, 's>,
+        change: Change<'_>,
+        slot: Option<usize>,
+        selected: [(TargetRequest, u8); N],
+        private: &'i mut [u8; PRIVATE_BYTES],
+    ) -> Result<PreparedCatalog<'i, 'c, 's>> {
+        self.catalog_preparation()
+            .prepare_existing_catalog(owner, change, slot, selected, private)
+    }
+}
+
+/// A temporary view of the original preparation resources. It owns no pool,
+/// owner, backing bytes or authority and cannot survive a mutable writer step.
+struct CatalogPreparation<'b, 'a, 's, 'c, 'p, 'd, 'm, 'w, W: WriterNamespace> {
+    storage: &'s MutableStorageOwner<'m, 'w, W>,
+    pool: &'b SharedPool<'c, 's, 'p, 'd>,
+    control: &'b control::RetentionControl<'a, 'c, 's>,
+    history: &'b history::runtime::RuntimeHistory<'a, 'c, 's>,
+    visibility: Option<&'b visibility::BoundVisibility<'a, 'c, 's>>,
+}
+
+impl<'b, 'a, 's, 'c, 'p, 'd, 'm, 'w, W: WriterNamespace>
+    CatalogPreparation<'b, 'a, 's, 'c, 'p, 'd, 'm, 'w, W>
+{
+    fn prepare_existing_catalog<'i, const N: usize>(
+        &self,
         owner: &mut Owner<'c, 's>,
         change: Change<'_>,
         slot: Option<usize>,
@@ -1884,13 +1920,19 @@ impl<'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
         const {
             assert!(N >= 1 && N <= 9);
         }
-        let storage = self.inner.storage;
+        let storage = self.storage;
         let _unwind = storage.session_fence().unwind_guard();
-        self.health()?;
+        health(storage, self.pool)?;
+        if self.control.pending.is_some() || self.control.population.reserved() {
+            return Err(fatal(
+                storage,
+                RetentionPhase::Prepare,
+                RetentionCause::Invariant,
+            ));
+        }
         if self
-            .catalog_visibility
-            .as_ref()
-            .is_none_or(|visibility| !visibility.matches_core(self.inner.pool.bound_core()))
+            .visibility
+            .is_none_or(|visibility| !visibility.matches_core(self.pool.bound_core()))
         {
             return Err(unchanged(
                 RetentionPhase::Prepare,
@@ -1902,17 +1944,17 @@ impl<'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
             effect: error.effect,
             cause: RetentionCause::Concurrency(error),
         })?;
-        self.inner
-            .pool
+        self.pool
             .check_retention_reader(owner)
             .map_err(|error| frame(RetentionPhase::Prepare, error))?;
-        let owner_identity = owner
-            .visibility_identity(self.inner.pool.bound_core())
-            .map_err(|error| RetentionError {
-                phase: RetentionPhase::Prepare,
-                effect: error.effect,
-                cause: RetentionCause::Concurrency(error),
-            })?;
+        let owner_identity =
+            owner
+                .visibility_identity(self.pool.bound_core())
+                .map_err(|error| RetentionError {
+                    phase: RetentionPhase::Prepare,
+                    effect: error.effect,
+                    cause: RetentionCause::Concurrency(error),
+                })?;
         let prefix = storage
             .wal()
             .prefix()
@@ -1938,7 +1980,7 @@ impl<'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
             // Canonical replay does not use the physical request/stamp arrays.
             // Form them only after its complete nested source closure has ended.
             if let Err(error) =
-                history::validate_live(storage, &self.control, replay.bytes_mut(), prefix)
+                history::validate_live(storage, self.control, replay.bytes_mut(), prefix)
             {
                 let rejected = merge(Err(error), replay.return_checked());
                 return merge(rejected, audit.finish_checked());
@@ -1947,7 +1989,6 @@ impl<'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
             let mut stamps = [None; 9];
             let prepared = (|| {
                 let read = self
-                    .inner
                     .pool
                     .reserve_target_set(owner, &requests)
                     .map_err(|error| frame(RetentionPhase::Prepare, error))?
@@ -2126,7 +2167,7 @@ impl<'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
                 }
                 let (head, tail) = before.split_at_mut(6);
                 prepare_inventory(
-                    &self.control,
+                    self.control,
                     storage.profile(),
                     observation,
                     slot,
@@ -2138,7 +2179,7 @@ impl<'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
                 )?
             } else {
                 prepare_inventory(
-                    &self.control,
+                    self.control,
                     storage.profile(),
                     observation,
                     slot,
@@ -2199,7 +2240,7 @@ impl<'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
                 .expect("named inventory image")
         };
         Ok(PreparedCatalog {
-            core: self.inner.pool.bound_core(),
+            core: self.pool.bound_core(),
             binding: &storage.binding,
             fence: storage.session_fence(),
             owner: owner_identity,
@@ -2215,8 +2256,22 @@ impl<'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
             after,
             before,
             inventory: Some(inventory),
-            control: ControlCut::capture(&self.control),
+            control: ControlCut::capture(self.control),
         })
+    }
+}
+
+impl<'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
+    RetentionWriter<'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W>
+{
+    fn catalog_preparation(&self) -> CatalogPreparation<'_, 'a, 's, 'c, 'p, 'd, 'm, 'w, W> {
+        CatalogPreparation {
+            storage: self.storage,
+            pool: self.pool,
+            control: self.control,
+            history: self.history,
+            visibility: self.visibility,
+        }
     }
 }
 
@@ -2270,7 +2325,9 @@ pub(in super::super) fn catalog_live_source_bytes<W: WriterNamespace>() -> Catal
     use std::mem::size_of;
     type Prepared<'a> = PreparedCatalog<'a, 'a, 'a>;
     type Reservation<'a, W> = ReservedCatalogCreate<'a, 'a, 'a, 'a, 'a, 'a, 'a, 'a, 'a, W>;
-    let scalar = 2 * size_of::<WalPrefix>()
+    let scalar = size_of::<CatalogPreparation<'_, '_, '_, '_, '_, '_, '_, '_, W>>()
+        + 2 * size_of::<&()>() // temporary view receiver and wrapper argument
+        + 2 * size_of::<WalPrefix>()
         + size_of::<OwnerIdentity>()
         + 6 * size_of::<Result<()>>()
         + 4 * size_of::<RetentionError>()

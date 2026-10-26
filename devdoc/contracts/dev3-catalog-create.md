@@ -82,3 +82,23 @@ v2는 borrowed Root/Job view, budget streaming, prepare/targets/Commit 단계 �
 ## 검토와 남은 의무
 
 독립 검토는 Root/Job 폭·frame/credit 산술, Job cleanup과 incoming edge 분리, H/own-pin 조건, original maintenance 재분할·2MiB profile 경계와 Reserved inventory의 원 checker 재사용을 source에 대조했다. 2026-10-25 독립 `/root/dev3_review`의 결합 검토를 거쳐 `/root`가 이 문서와 연결된5개 계약을 D2 채택했다. 위임 근거는 사용자의 DEV3 완수·병렬 진행 요청과 DP01이다. 비교 대안인 v1 owned 값 확대·별도 pool/WAL·압축 genesis 재생성 대신, 기존 owner의 borrowed v2와 exact-image v3를 선택했다. 기존 A/B1 결정은 해당 한정 범위에 보존한다. 실제 source F05, 독립 fixture/oracle 동결·제품 효과·native 결과는 미완료이며 해당 gate 전에는 grant/effects 입장을 열지 않는다. first-extent/한 CREATE 범위, 자원 한도 또는 owner 수명이 바뀌면 D2를 재검토한다. 문서 수용만으로 CREATE·Commit·복구·DEV3 완료를 표시하지 않는다.
+
+<a id="sequential-create"></a>
+## D3-CATALOG-CREATE-002 — 같은 첫 extent의 순차 CREATE
+
+`D3-CATALOG-CREATE-001`의 D2 재검토 조건("first-extent/한 CREATE 범위")에 따라 범위를 바꾼다. "한 CREATE"는 동시에 진행 중인 CREATE가 하나라는 뜻으로 좁혀 읽는다. 001의 완료 조건(첫 CREATE Commit과 새 process 조회)은 바뀌지 않는다. 첫 CREATE가 Commit과 정리를 마친 뒤 같은 epoch·같은 원 owner/pool에서 두 번째 CREATE를 차례로 수행하는 것을 지원 범위에 포함한다. 채택된 메모리 inventory의 MT02와 transition corpus C11..C20(pair 13/14, 첫 64-page extent 안)이 이 경로를 이미 요구한다.
+
+두 번째 CREATE의 Reserve는 보호된 7개 page 밖의 두 victim frame을 고르는데, 그때 victim은 앞선 CREATE의 dirty pair page일 수 있다. Reserve는 dirty victim을 효과 전 `Busy`로 거절하므로, `prepare_catalog_create_targets`가 같은 선택 규칙(`retention_pair_room`, start 1, 같은 7개 보호 집합, clean 우선·최소 recLSN dirty)으로 victim을 미리 판정하고 dirty victim에 대해 `FlushRequired`를 반환한다. 호출자는 원 flusher로 그 page를 정리한 뒤 다시 준비한다. 9 frame·7 보호이면 victim은 2개이고, 각 flush가 page를 정리하면 flush는 최대 2번이다.
+
+이 판정은 권고이며 권한이 아니다. Reserve는 자기 후보 선택과 dirty 거절을 그대로 유지한다. pair identity가 생기기 전이므로 판정은 request 없이 victim만 고르며 아무것도 예약·초기화하지 않는다. victim이 없으면 오류(`Busy` 또는 `CounterExhausted`, Unchanged, phase Load)가 Begin 전 준비 단계에서 나온다. `Busy`는 후보 frame latch 경합에서도 나온다. 이전에는 Begin 뒤 Reserve에서 나왔다. 준비 단계는 호출자가 넘긴 Job page를 믿으며 Reserve의 첫 Catalog Job page와 같아야 한다.
+
+frame 수, owner/pool, 자원 한도·source cap, wire 형식, allocator 범위(첫 extent)는 바뀌지 않는다. 서로 다른 CREATE의 동시 진행, 두 번째 extent, 다중 root는 여전히 범위 밖이다. 앞선 CREATE의 정리 완료 전 두 번째 CREATE와 epoch 경계를 넘는 순차 CREATE는 이 기록의 검증 근거가 아니다.
+
+| 결정 항목 | 기록 |
+| --- | --- |
+| 상태·분류·일자 | ACCEPTED · D2 · 2026-10-26. 독립 검토(`artifacts/dev3/catalog-create-20261025/work-20261026/dev3-catalog-create-002-review.md`)의 수정 반영 뒤 통합 담당 확정 |
+| 권한 | 사용자의 2026-10-26 결정(대화): MT02를 위해 같은 epoch 두 번째 CREATE의 pair frame 준비를 공급 |
+| 변경 | `dirty_frame/retention_residency.rs`의 request 없는 victim 선택과 `retention_pair_room`, `plan4_retention/load.rs`의 준비 단계 판정 |
+| 검증 | integration-r36에서 MT02 1회 PASS. r33에서 같은 시험이 Reserve17 Busy로 실패한 지점을 통과했으므로, 앞선 CREATE의 dirty pair page에 대한 FlushRequired와 flush 성공은 간접 확인이다(횟수를 직접 계수하지 않음). 첫 CREATE의 `None` 판정은 MT02 첫 주기에서 실행되었다. 완료된 사례의 `None` 판정은 "Reserve 성공이면 victim이 clean 또는 fresh"라는 정적 논증이며 재실행하지 않았다. r36에서 victim 없음과 recLSN 없는 Flush 후보는 정적 검토만 했다. 후속 [PR01–04](../evidence/dev3-catalog-review-fix-20261026.md)에서 둘째 victim 없음·generation 최대·latch Busy의 무효과와 recLSN 누락의 하위 invariant fence를 실행 검증했다. 상위 recLSN 방어 분기는 하위 불변식 때문에 도달 불가이며 실행 PASS로 표시하지 않는다 |
+| 검토·보존 | 실행 전 검토 `artifacts/dev3/catalog-create-20261025/integration-r36/admission-evidence/dev3-catalog-remaining-r36-review.md`, 이 기록의 검토는 상태 행의 파일이다. 결과는 [실행 증거](../evidence/dev3-catalog-remaining-20261026.md)에 연결한다. r33 MT02 FAIL은 원 source의 결과로 보존한다 |
+| 재검토 | 동시 CREATE, 두 번째 extent, 다중 root, frame 수·보호 집합 변경, Reserve 또는 판정의 victim 선택 규칙 변경, Job page를 내부에서 도출하도록 바꿀 때 |

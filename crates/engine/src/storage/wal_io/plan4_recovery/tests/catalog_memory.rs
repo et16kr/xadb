@@ -80,13 +80,33 @@ struct Corpus {
 impl Corpus {
     fn new(kind: &str) -> Self {
         let native = kind == "native";
-        let gap = kind == "memory-gap";
+        let retire = kind == "memory-retire";
+        let gap = kind == "memory-gap" || retire;
         assert!(native || gap || kind == "transition");
         let root = Path::new(env!("CARGO_MANIFEST_DIR"))
             .join("../..")
             .join("tests/fixtures/dev3-catalog-create")
             .join(kind);
-        let pins = if gap {
+        let pins = if retire {
+            [
+                (
+                    "input-plan.json",
+                    "2c7315698b92127458110bab7308d8a5c7497bff35ea0b00e4d078f8954ad515",
+                ),
+                (
+                    "manifest.json",
+                    "049f4416ceaab3ccb18581f49808aa0d5d526664ad5ef90ca386a62ec8e0199c",
+                ),
+                (
+                    "raw-index.tsv",
+                    "5ea47582d3e897d67cb2588106f7af15ad0097e2cbe6948cab0bafa90024946d",
+                ),
+                (
+                    "steps.tsv",
+                    "22ac4014428a4b8160f8f63818dc163e24240c599169e632d3d70683c223fef8",
+                ),
+            ]
+        } else if gap {
             [
                 (
                     "input-plan.json",
@@ -156,7 +176,9 @@ impl Corpus {
         }
         assert_eq!(
             (sizes.len(), total),
-            if gap {
+            if retire {
+                (106, 2_584_076)
+            } else if gap {
                 (137, 3_382_130)
             } else if native {
                 (221, 5_794_810)
@@ -193,7 +215,9 @@ impl Corpus {
         }
         assert_eq!(
             rows.len(),
-            if gap {
+            if retire {
+                16
+            } else if gap {
                 26
             } else if native {
                 56
@@ -206,7 +230,9 @@ impl Corpus {
             let bytes = read(&root.join("checkpoints.tsv"), 1 << 20);
             assert_eq!(
                 hex(&bytes),
-                if gap {
+                if retire {
+                    "44abad550f706b5c2fffa39cd0ddc7f6d5c352f67ee18e253d7fd31876324164"
+                } else if gap {
                     "e0cd3791ddb9a7064387a68809cb3cbe8b26e266e2c824271677c2b16c168268"
                 } else {
                     "0d1abf8d70b01cbaeea218f3cdcb49194e1e17f0b65f362f7f83877b8d98551e"
@@ -218,7 +244,16 @@ impl Corpus {
                 let key = format!("{}-L{:02}", fields[0], fields[1].parse::<u64>().unwrap());
                 assert!(checkpoints.insert(key, fields).is_none());
             }
-            assert_eq!(checkpoints.len(), if gap { 6 } else { 16 });
+            assert_eq!(
+                checkpoints.len(),
+                if retire {
+                    3
+                } else if gap {
+                    6
+                } else {
+                    16
+                }
+            );
         }
         Self {
             root,
@@ -239,6 +274,7 @@ struct Oracle {
     native: Corpus,
     transition: Corpus,
     gap: Corpus,
+    retire: Option<Corpus>,
 }
 impl Oracle {
     fn new() -> Self {
@@ -246,7 +282,13 @@ impl Oracle {
             native: Corpus::new("native"),
             transition: Corpus::new("transition"),
             gap: Corpus::new("memory-gap"),
+            retire: None,
         }
+    }
+    /// Only MF14 depends on the later frozen CLR staged-unwind corpus.
+    fn with_retire(mut self) -> Self {
+        self.retire = Some(Corpus::new("memory-retire"));
+        self
     }
     fn row(&self, id: &str) -> &[String] {
         &self.transition.rows[id]
@@ -825,7 +867,9 @@ macro_rules! with_fresh {
 
 impl Oracle {
     fn scenario(&self, scenario: &str) -> &Corpus {
-        if scenario.starts_with("MC") {
+        if scenario == "MF14" {
+            self.retire.as_ref().expect("MF14 frozen corpus")
+        } else if scenario.starts_with("MC") {
             &self.gap
         } else {
             &self.native
@@ -922,6 +966,7 @@ fn recover_check(images: &Images, oracle: &Oracle, scenario: &str) {
         "MC04" => (7, 11, 0, false),
         "N03" => (9, 15, 1, true),
         "MC03" => (9, 15, 1, true),
+        "MF14" => (9, 16, 0, false),
         _ => panic!("unplanned recovery scenario"),
     };
     let directory = clone_directory(images);
@@ -984,8 +1029,61 @@ fn recover_check(images: &Images, oracle: &Oracle, scenario: &str) {
     );
 }
 
+const WAIT: std::time::Duration = std::time::Duration::from_secs(5);
+
+/// One actual resident lookup. A gap reader cannot borrow the flusher, so a
+/// FlushRequired answer is a failed precondition rather than a retry.
+macro_rules! lookup_resident {
+    ($reader:expr, $owner:expr, $snapshot:expr, $object:expr, $private:expr) => {
+        match $reader
+            .lookup_catalog(
+                $owner,
+                $snapshot,
+                ObjectId::new($object).unwrap(),
+                &mut Plan4ResidencyCursor::new(),
+                $private,
+            )
+            .unwrap()
+        {
+            CatalogLookupStep::Found(record) => {
+                assert_eq!(record.header().identity.object.get(), $object);
+                true
+            }
+            CatalogLookupStep::Missing => false,
+            CatalogLookupStep::FlushRequired { .. } => panic!("gap lookup target not resident"),
+        }
+    };
+}
+
+fn busy(effect: Effect, cause: &super::super::super::plan4_pages::RetentionCause) -> bool {
+    use super::super::super::plan4_pages::{RetentionCause, VisibilityCause};
+    effect == Effect::Unchanged
+        && matches!(
+            cause,
+            RetentionCause::Visibility(error) if error.cause == VisibilityCause::Busy
+        )
+}
+
 #[path = "catalog_memory/lifecycle.rs"]
 mod lifecycle;
 
 #[path = "catalog_memory/commit_failures.rs"]
 mod commit_failures;
+
+#[path = "catalog_memory/issued_gap.rs"]
+mod issued_gap;
+
+#[path = "catalog_memory/visibility_gap.rs"]
+mod visibility_gap;
+
+#[path = "catalog_memory/reference_pins.rs"]
+mod reference_pins;
+
+#[path = "catalog_memory/commit_concurrency.rs"]
+mod commit_concurrency;
+
+#[path = "catalog_memory/retire_failures.rs"]
+mod retire_failures;
+
+#[path = "catalog_memory/reader_validation.rs"]
+mod reader_validation;

@@ -1,0 +1,77 @@
+{
+  "id": "D3-CREATE-MEMORY-RETIRE-G1",
+  "status": "PROPOSED_FOR_ROOT_HASH_ADOPTION",
+  "author": "/root/page_lifetime",
+  "scope": "Independent MF14 CLR staged-unwind recovery expectations only; no product execution admission",
+  "output_directory": "tests/fixtures/dev3-catalog-create/memory-retire",
+  "source_inputs": {
+    "tests/fixtures/dev3-catalog-create/native/generate_literals.py": "cfcf03e3482350b57bd31149ecc9270cfbdac86b4d860f3c4134d9405ccb8f3a",
+    "tests/fixtures/dev3-catalog-create/transition/generate_literals.py": "3716f9d63f099051363bebeeaf0ebe4586ccd0984aa91735a7de82eba7d23b7e",
+    "tests/fixtures/dev3-plan4-free-undo/generate_literals.py": "a9a646f5fd047b1fbd73d743d99d56cde9a8217bf65587d08e9dd1f892e6bb42"
+  },
+  "immutable_existing": {
+    "tests/fixtures/dev3-catalog-create/native/input-plan.json": "d6306d7396ad70165a291a14208c35b7e6e8091f0a4c67e870ea9e96d34e0a34",
+    "tests/fixtures/dev3-catalog-create/native/manifest.json": "87aa46dd81711cc5080097c674e6fb419e371680ea3e19faa5bafbe3e4847b23",
+    "tests/fixtures/dev3-catalog-create/transition/manifest.json": "6da4346527580f3988deb480546fd6e4ee6aa57201a4bedbb7dec60c4f1509eb",
+    "tests/fixtures/dev3-catalog-create/memory-gap/manifest.json": "edfe57082b56540ea5e71f0d5109ca98dc131369d1906388f5dd171f69d3a92b"
+  },
+  "namespace": {
+    "database_hex": "0102030405060708090a0b0c0d0e0f10",
+    "timeline": 1,
+    "file": 4294967297,
+    "profile_id": 1,
+    "profile_format": 2
+  },
+  "setup": [
+    {"lsn": 1, "operation": "AgingStart", "bytes": 19672},
+    {"lsn": 2, "operation": "StatusReserve", "page": 9, "work": 1, "bytes": 21200},
+    {"lsn": 3, "operation": "StatusInit", "page": 9, "work": 1, "bytes": 38000},
+    {"lsn": 4, "operation": "UndoReserve", "page": 10, "work": 2, "bytes": 21200},
+    {"lsn": 5, "operation": "UndoInit", "page": 10, "work": 2, "bytes": 38208}
+  ],
+  "scenarios": {
+    "MF14": {
+      "purpose": "Live CLR10 is staged only in the in-memory WAL slot after durable RollbackStart9 and unwinds after the first retirement page install; a fresh runtime recovers from capture9 and writes the original CLR/AbortEnd/cleanup",
+      "failure": {
+        "boundary": "CLR staged after RollbackStart9; unwind after first retirement page install",
+        "staged_lsn": 10,
+        "staged_operation": 4,
+        "staged_durable": false,
+        "durable_last_lsn": 9,
+        "durable_wal_end": 442862,
+        "wal_file_delta": 0,
+        "effect": "Fenced",
+        "retirement_marker": "retained",
+        "normal_ack": false
+      },
+      "actor": {"epoch": 1, "local": 1, "generation": 2},
+      "logical": {"object": 6, "undo_sequence": 1, "undo_generation": 2, "pair": [11, 12], "incarnation": 2, "q": 0, "outcome": "aborted", "terminal": 0, "root": 1, "terminal_generation": 2, "root_generation": 2},
+      "phases": [
+        {"epoch": 1, "lsns": [1, 9], "cut": "RollbackStart9 durable; live CLR10 staged in memory only, first retirement page installed in the live pool, then unwind/Fenced with marker retained; WAL file unchanged beyond LSN9"},
+        {"epoch": 2, "lsns": [10, 16], "selected_capture": 9, "end": "Recovery CLR10/AbortEnd11/ReleaseRole12..14/RootFree15/TerminalFinish16 then READY/Missing"}
+      ],
+      "operations": [[1, "begin"], [11, "reserve"], [2, "forward"], [3, "rollback"], [4, "clr"], [7, "abort"], [21, "release1"], [21, "release2"], [21, "release3"], [22, "rootfree"], [17, "finish"]],
+      "checkpoints": [5, 9, 16],
+      "final": {"lsn": 16, "revision": 12, "issued": 2, "completed": 2, "canceled": 0, "cursor": 1, "undo_high": 1, "object_high": 6, "C": 0, "Q": 0, "aging_groups": 11, "aging_consumed": 296896, "aging_remaining": 0}
+    }
+  },
+  "writer_rules": [
+    "Import only the three SHA-pinned independent Python serializers; do not import product, native Rust output, or execute prior serializer main functions. Never write old corpus paths.",
+    "Reuse native Inputs setup/blob/row/checkpoint mechanics only. Override scenario iteration with this exact plan and keep output metadata in the fresh directory.",
+    "MF14 uses the first non-canceled logical CREATE plan with the transition ROLLBACK order and outcome aborted. actor remains epoch1/local1/generation2 across epoch2 recovery; q is the declared rollback value0 and changes no rollback byte. Outer WAL epoch changes after RollbackStart9 while logical LSN remains absolute; epoch2 WAL offsets restart at4096.",
+    "The staged live CLR10 never reached the WAL file. No epoch1 CLR row, frame, page image or partially installed retirement page is emitted; the recovery CLR10 is the only CLR row and chains to the durable RollbackStart9 Tx descriptor.",
+    "Write exactly16 rows and3 checkpoints. Whole changed pages, Jobs, before/after descriptors and exact canonical allocated images are independent raw expectations. No raw fixture is installed into the actual pool or home to supply authority.",
+    "MF14 L1..5 must be byte-identical to the preserved native N01 prefix and every row state to native N02. L1..8 and L10 frames equal N02; L9 and L11..16 differ from N02 only in the outer epoch and its two seals. L6..9 frames equal transition R01..R04; L10..16 match R05..R11 semantic/native bytes except the declared outer epoch and its two seals.",
+    "Checkpoint canonical Free/Reserved arena pages are zero; physical stale freed home bytes are not claimed zero. Selected base/INIT provenance, capture authority, the fenced live pool image and the retained retirement marker remain actual runtime obligations."
+  ],
+  "auditor_rules": [
+    "Separate stdlib-only raw parser; no serializer or product imports. Verify full inventory, source pins, exact row/LSN/op/epoch/WALoffset schedule, every envelope/native/redo hash and page checksum.",
+    "Verify every transaction owner/source uses actor epoch1/local1/generation2 in both outer epochs; reject conflating the outer writer epoch or actor.local with sequence/object/slot generations.",
+    "Check Root/Jobs/descriptor conservation and row continuity, remaining/consumed arithmetic, checkpoint allocator/current image identity and exact final external scalars.",
+    "Check epoch1 ends at RollbackStart9 and durable_wal_end with no CLR bytes, recovery CLR10 chains to the RollbackStart9 Tx descriptor, and T and pair11/12 are absent after CLR10.",
+    "Read original manifests/raw for declared byte comparisons only. The generator and auditor are input preparation, never a product/runtime PASS."
+  ],
+  "limits": {"generation_runs": 1, "generation_seconds": 30, "auditor_seconds": 30, "raw_corpus_bytes": 8388608, "raw_file_bytes": 1048576, "output_bytes": 1048576, "transition_input_bytes": 4194304},
+  "generation_admission": "Root delegates this exact plan SHA as the generator adoption constant before a single generation. Preserve failed source/raw/result; no silent regeneration.",
+  "runtime_admission": "NOT_ADMITTED: root whole source admission and coherent source/ELF, exact memory hooks and immutable input SHA are still required."
+}

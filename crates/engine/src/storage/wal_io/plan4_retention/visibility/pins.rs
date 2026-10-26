@@ -328,3 +328,20 @@ pub(super) fn validate(bytes: &[u8]) -> Result<(), ()> {
     }
     Ok(())
 }
+
+/// Read-only source pin census: (Catalog live, rollback live, transferred).
+/// Physical frame pins are a separate pool count and are never inferred here.
+#[cfg(test)]
+pub(super) fn test_census(bytes: &[u8]) -> (usize, usize, usize) {
+    let mut census = (0, 0, 0);
+    for index in 0..REFERENCES {
+        let row = reference_row(bytes, index);
+        match (row[0], row[2]) {
+            (LIVE, CATALOG) => census.0 += 1,
+            (LIVE, ROLLBACK) => census.1 += 1,
+            (TRANSFERRED, _) => census.2 += 1,
+            _ => {}
+        }
+    }
+    census
+}

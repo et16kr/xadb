@@ -93,6 +93,16 @@ fn membership<W: WriterNamespace>(
     }
     Ok(())
 }
+/// The expected shape of a one-slot Undo root page under a read guard.
+#[derive(Clone, Copy, PartialEq, Eq)]
+enum UndoShape {
+    /// The initial Free page of the original Undo container.
+    InitialFree,
+    /// A CREATE root page whose single record the caller decodes with its own
+    /// exact expectation; Live/Releasing records are valid here.
+    CatalogRoot,
+}
+
 impl<'b, 'arena, 's, 'c, 'p, 'd, W: WriterNamespace>
     RetentionReader<'b, 'arena, 's, 'c, 'p, 'd, '_, '_, W>
 {
@@ -100,6 +110,28 @@ impl<'b, 'arena, 's, 'c, 'p, 'd, W: WriterNamespace>
         &'b self,
         owner: &'a mut Owner<'c, 's>,
         target: &Plan4Target,
+    ) -> Result<RetentionReadGuard<'a, 'b, 'c, 's, 'p, 'd>> {
+        self.read_shaped(owner, target, UndoShape::InitialFree)
+    }
+    /// Catalog lookup reads the referenced Undo root of a live CREATE.
+    fn read_catalog_undo<'a>(
+        &'b self,
+        owner: &'a mut Owner<'c, 's>,
+        target: &Plan4Target,
+    ) -> Result<RetentionReadGuard<'a, 'b, 'c, 's, 'p, 'd>> {
+        if target.request.kind != PageKind::Undo {
+            return Err(unchanged(
+                RetentionPhase::Census,
+                RetentionCause::Membership,
+            ));
+        }
+        self.read_shaped(owner, target, UndoShape::CatalogRoot)
+    }
+    fn read_shaped<'a>(
+        &'b self,
+        owner: &'a mut Owner<'c, 's>,
+        target: &Plan4Target,
+        shape: UndoShape,
     ) -> Result<RetentionReadGuard<'a, 'b, 'c, 's, 'p, 'd>> {
         health(self.storage, self.pool)?;
         self.pool
@@ -128,10 +160,21 @@ impl<'b, 'arena, 's, 'c, 'p, 'd, W: WriterNamespace>
                 .map_err(|e| frame(RetentionPhase::Census, e))?;
             match target.request.kind {
                 PageKind::RetentionRoot => {
-                    retention_page::decode_root_page(
-                        bytes,
-                        self.storage.profile().spec().namespace,
-                    )
+                    // The bound Profile selects the grammar. A decoder failure
+                    // must not retry another version and admit mixed pages.
+                    if self.storage.profile().format() == 2 {
+                        retention_page::catalog::decode_root_page(
+                            bytes,
+                            self.storage.profile().spec().namespace,
+                        )
+                        .map(|_| ())
+                    } else {
+                        retention_page::decode_root_page(
+                            bytes,
+                            self.storage.profile().spec().namespace,
+                        )
+                        .map(|_| ())
+                    }
                     .map_err(|e| {
                         fatal(
                             self.storage,
@@ -141,11 +184,19 @@ impl<'b, 'arena, 's, 'c, 'p, 'd, W: WriterNamespace>
                     })?;
                 }
                 PageKind::RetentionJobs => {
-                    retention_page::decode_jobs_page(
-                        bytes,
-                        self.storage.profile().spec().namespace,
-                        (target.request.identity.page.page_no - 2) as u8,
-                    )
+                    if self.storage.profile().format() == 2 {
+                        retention_page::catalog::decode_jobs_page(
+                            bytes,
+                            self.storage.profile().spec().namespace,
+                            (target.request.identity.page.page_no - 2) as u8,
+                        )
+                    } else {
+                        retention_page::decode_jobs_page(
+                            bytes,
+                            self.storage.profile().spec().namespace,
+                            (target.request.identity.page.page_no - 2) as u8,
+                        )
+                    }
                     .map_err(|e| {
                         fatal(
                             self.storage,
@@ -176,17 +227,43 @@ impl<'b, 'arena, 's, 'c, 'p, 'd, W: WriterNamespace>
                     }
                 }
                 PageKind::Undo => {
-                    let lsn = crate::storage::undo_record::initial_undo_page_lsn(
-                        bytes,
-                        target.request.identity,
-                    )
-                    .map_err(|e| {
-                        fatal(
-                            self.storage,
-                            RetentionPhase::Census,
-                            RetentionCause::Undo(e),
-                        )
-                    })?;
+                    let lsn = match shape {
+                        UndoShape::InitialFree => {
+                            crate::storage::undo_record::initial_undo_page_lsn(
+                                bytes,
+                                target.request.identity,
+                            )
+                            .map_err(|e| {
+                                fatal(
+                                    self.storage,
+                                    RetentionPhase::Census,
+                                    RetentionCause::Undo(e),
+                                )
+                            })?
+                        }
+                        UndoShape::CatalogRoot => {
+                            let page = crate::storage::page::decode_page(
+                                bytes,
+                                target.request.identity,
+                                PageKind::Undo,
+                            )
+                            .map_err(|e| {
+                                fatal(
+                                    self.storage,
+                                    RetentionPhase::Census,
+                                    RetentionCause::Page(e),
+                                )
+                            })?;
+                            if page.len() != 1 {
+                                return Err(fatal(
+                                    self.storage,
+                                    RetentionPhase::Census,
+                                    RetentionCause::Invariant,
+                                ));
+                            }
+                            page.header().lsn
+                        }
+                    };
                     let observed = read
                         .observe(1)
                         .map_err(|e| frame(RetentionPhase::Census, e))?;
@@ -358,15 +435,16 @@ impl<'b, 'arena, 's, 'c, 'p, 'd, W: WriterNamespace>
     }
 }
 
-/// Source values for the new two-target Free Undo reader. The decoder borrows
-/// its cell; no page or 432-byte Free cell is copied during validation.
+/// Source values for the two-target reader. Undo and Catalog queue decoders
+/// borrow their cells; charge the larger branch, including v2 Root/Jobs views.
 pub(super) fn undo_read_source_bytes() -> usize {
     use std::mem::size_of;
     type Guard<'a> = RetentionReadGuard<'a, 'a, 'a, 'a, 'a, 'a>;
     dirty_frame::target_set_call_bytes::<2>()
+        + 2 * size_of::<UndoShape>()
         + 2 * size_of::<Guard<'_>>()
         + 2 * size_of::<Result<Guard<'_>>>()
-        + undo_decode_source_bytes()
+        + undo_decode_source_bytes().max(retention_page::catalog::source_bytes())
         + 2 * size_of::<allocation_page::AllocationPage<'_>>()
         + 2 * size_of::<dirty_frame::DirtyObservation>()
         + 4 * size_of::<TargetRequest>()

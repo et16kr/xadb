@@ -231,7 +231,7 @@ impl<'b, 'a, 's, 'c, 'p, 'd, 'm, 'w, W: WriterNamespace>
                     {
                         return Ok(CatalogLookupStep::FlushRequired { target });
                     }
-                    let guard = self.read(owner, &Plan4Target { request })?;
+                    let guard = self.read_catalog_undo(owner, &Plan4Target { request })?;
                     let missing = (|| {
                         let page =
                             page::decode_page(guard.bytes()?, request.identity, PageKind::Undo)

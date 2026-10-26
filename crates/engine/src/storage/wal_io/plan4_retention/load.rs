@@ -359,6 +359,33 @@ impl<'s, 'c, W: WriterNamespace> Plan4Retention<'_, 's, 'c, '_, '_, '_, '_, '_, 
                 return Ok(Some(step));
             }
         }
+        // Reserve later selects two unprotected victims with the same rule and
+        // refuses a dirty one. Surface it here so the caller's original flusher
+        // can clean it, e.g. an earlier CREATE's pair in the same epoch.
+        for candidate in self
+            .inner
+            .pool
+            .retention_pair_room(1, &required)
+            .map_err(|e| frame(RetentionPhase::Load, e))?
+        {
+            if candidate.kind == StatusCandidateKind::Flush {
+                let request = self
+                    .inner
+                    .pool
+                    .target_request(candidate.index)
+                    .map_err(|e| frame(RetentionPhase::Load, e))?;
+                return Ok(Some(RetentionResidencyStep::FlushRequired {
+                    target: Plan4Target { request },
+                    rec_lsn: candidate.frame.and_then(|s| s.rec_lsn).ok_or_else(|| {
+                        fatal(
+                            self.inner.storage,
+                            RetentionPhase::Load,
+                            RetentionCause::Invariant,
+                        )
+                    })?,
+                }));
+            }
+        }
         Ok(None)
     }
 }

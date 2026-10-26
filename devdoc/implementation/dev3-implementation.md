@@ -1,5 +1,8 @@
 # DEV3 구현·검증 현황
 
+<a id="catalog-remaining"></a>
+2026-10-26 [Catalog CREATE 남은 메모리 사례](../evidence/dev3-catalog-remaining-20261026.md): 남은 9개를 모두 source별로 PASS했다. lookup이 Live CREATE Undo를 초기 Free page로만 검증해 fence하던 결함을 고쳤고 Writer 준비 분리를 포함했다. 같은 epoch 두 번째 CREATE의 pair victim 준비를 [D3-CATALOG-CREATE-002](../contracts/dev3-catalog-create.md#sequential-create)로 보완해 MT02가 r36에서 통과했다. [검토 후 수정](../evidence/dev3-catalog-review-fix-20261026.md)에서 Profile에 맞는 Root/Jobs decoder를 연결하고 신규8개와 변경 source 계산2개를 통과했다. 첫 Row INSERT·runtime F05·DEV3/S5는 미완료다.
+
 <a id="commit-continuation"></a>
 2026-10-25 [원 Commit 공통 continuation](../evidence/dev3-commit-continuation-20261025.md): 원 PinSet/core/WAL의 준비·취소·지연 설치 수명과 첫 File write 관측을 구현했다. source별 정적2·prestage5·WAL14사례의 완료/부분완료 경계, compiler7/tool6·fmt/Clippy와 독립 D1을 한정 수용했다. 실제 semantic receipt 생성자는 닫혀 있으며 Commit·nonempty 복구와 DEV3/S5는 미완료다.
 

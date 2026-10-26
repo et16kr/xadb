@@ -1,0 +1,78 @@
+{
+  "id": "D3-CREATE-MEMORY-RETIRE-INPUT-RECEIPT-R0",
+  "status": "INPUT_GENERATED_AND_AUDITED_NOT_PRODUCT_EXECUTION",
+  "plan_sha256": "2c7315698b92127458110bab7308d8a5c7497bff35ea0b00e4d078f8954ad515",
+  "root_adoption": "Root delegated adoption of the exact final plan 2c731569\u2026 as the generator/auditor constant before generation; no separate independent reader review occurred before generation.",
+  "generation_runs": 1,
+  "auditor_runs": 1,
+  "generation": {
+    "status": "GENERATED_INPUT_NOT_PRODUCT_EXECUTION",
+    "rows": 16,
+    "checkpoints": 3,
+    "raw_count": 106,
+    "raw_bytes": 2584076,
+    "manifest_sha256": "049f4416ceaab3ccb18581f49808aa0d5d526664ad5ef90ca386a62ec8e0199c",
+    "wall_seconds": 0.020440098000108264,
+    "generator_sha256": "4f3487dab4812666f97937d8b23c617933fc652688c3819f6cf8a0803d2e6cf6"
+  },
+  "audit": {
+    "checkpoints": 3,
+    "manifest_sha256": "049f4416ceaab3ccb18581f49808aa0d5d526664ad5ef90ca386a62ec8e0199c",
+    "raw_bytes": 2584076,
+    "raw_count": 106,
+    "rows": 16,
+    "status": "INPUT_AUDIT_PASS_NOT_PRODUCT_EXECUTION",
+    "wall_seconds": 0.007571244999780902
+  },
+  "generation_exit_code": 0,
+  "audit_exit_code": 0,
+  "stderr_bytes": {
+    "generation": 0,
+    "audit": 0
+  },
+  "files": {
+    "input-plan.json": "2c7315698b92127458110bab7308d8a5c7497bff35ea0b00e4d078f8954ad515",
+    "generate_literals.py": "4f3487dab4812666f97937d8b23c617933fc652688c3819f6cf8a0803d2e6cf6",
+    "audit_literals.py": "c674b1509fa79b5b5108cd3ee7ad9ca2274aef0ae04637440c2c63a328a37972",
+    "generation-result.json": "d5fec689c806e2e6c933704dd5b2bf1b6aff36f9cad4d1aa9f18c6d39a6f8087",
+    "generation.stdout": "8b40964f3c6f78081d6608d53f778411c1c63e0b26e65026bdb4e477a9143c89",
+    "generation.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "audit.stdout": "52cd1ff13bfb142a92dabf13df02c10d5945f5512ef1dfabf174d3f560fc1688",
+    "audit.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "manifest.json": "049f4416ceaab3ccb18581f49808aa0d5d526664ad5ef90ca386a62ec8e0199c",
+    "raw-index.tsv": "5ea47582d3e897d67cb2588106f7af15ad0097e2cbe6948cab0bafa90024946d",
+    "steps.tsv": "22ac4014428a4b8160f8f63818dc163e24240c599169e632d3d70683c223fef8",
+    "checkpoints.tsv": "44abad550f706b5c2fffa39cd0ddc7f6d5c352f67ee18e253d7fd31876324164",
+    "checkpoint-projection-receipt.json": "548217e7df2a8131327037035ccc88d589f3a16cb3331bffc1c39701512fe058",
+    "provenance.md": "910bcee1f9c6176f21ff66f1b65aac027f1c64ae01f1044546818f39ed90dc17"
+  },
+  "raw": {
+    "count": 106,
+    "bytes": 2584076
+  },
+  "rows": 16,
+  "checkpoints": 3,
+  "declared_final": {
+    "lsn": 16,
+    "revision": 12,
+    "issued": 2,
+    "completed": 2,
+    "canceled": 0,
+    "cursor": 1,
+    "undo_high": 1,
+    "object_high": 6,
+    "C": 0,
+    "Q": 0,
+    "aging_groups": 11,
+    "aging_consumed": 296896,
+    "aging_remaining": 0
+  },
+  "authority": "NONE",
+  "product_runtime": "NOT_RUN",
+  "original_corpora": "SHA-pinned original serializers/plans/manifests remained unchanged; independent audit checked the native N01 prefix, every N02 row state and checkpoint9/16, memory-gap MC04 checkpoint5, and the transition R01..R11 suffix.",
+  "caps": {
+    "generation_seconds": 30,
+    "audit_seconds": 30,
+    "raw_bytes": 8388608
+  }
+}

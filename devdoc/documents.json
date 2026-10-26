@@ -2487,6 +2487,26 @@
       "path": "evidence/dev3-catalog-live-milestone-20261025.json",
       "role": "evidence",
       "title": "DEV3 Catalog CREATE 구현·실제 검증 source별 기록"
+    },
+    "dev3-catalog-remaining-20261026.md": {
+      "path": "evidence/dev3-catalog-remaining-20261026.md",
+      "role": "evidence",
+      "title": "DEV3 Catalog CREATE 남은 메모리 사례 실행"
+    },
+    "dev3-catalog-remaining-20261026.json": {
+      "path": "evidence/dev3-catalog-remaining-20261026.json",
+      "role": "evidence",
+      "title": "DEV3 Catalog CREATE 남은 메모리 사례 source별 기록"
+    },
+    "dev3-catalog-review-fix-20261026.md": {
+      "path": "evidence/dev3-catalog-review-fix-20261026.md",
+      "role": "evidence",
+      "title": "DEV3 Catalog 검토 후 읽기 수정과 오류 분기 검증"
+    },
+    "dev3-catalog-review-fix-20261026.json": {
+      "path": "evidence/dev3-catalog-review-fix-20261026.json",
+      "role": "evidence",
+      "title": "DEV3 Catalog 검토 후 수정 source별 실행 기록"
     }
   }
 }

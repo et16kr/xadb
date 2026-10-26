@@ -462,6 +462,8 @@ mod recovered_bind;
 
 #[cfg(test)]
 pub(in crate::storage) use retention::FreeUndoOracle;
+#[cfg(test)]
+pub(in crate::storage) use retention::install_after_capture;
 
 #[allow(unused_imports)] // Same original owner capabilities across the private module chain.
 pub(in crate::storage) use retention::{

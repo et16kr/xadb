@@ -3,6 +3,10 @@
 use super::*;
 use crate::storage::wal_io::{RetentionLoadPermit, WalRequirement};
 
+#[cfg(test)]
+#[path = "retention_residency_tests.rs"]
+mod tests;
+
 /// New live calls keep the original pool backing; scratch images remain loans.
 pub(in crate::storage) fn source_census() -> usize {
     use std::mem::size_of;
@@ -18,6 +22,8 @@ pub(in crate::storage) fn source_census() -> usize {
         + size_of::<Result<StatusLoadSnapshot<'_, '_>>>()
         + size_of::<RetentionLoadPermit<'_, '_, '_>>()
         + 6 * size_of::<TargetRequest>()
+        + size_of::<Option<TargetRequest>>()
+        + size_of::<Result<[StatusCandidate; 2]>>()
         + 4 * size_of::<Result<FrameStamp>>()
         + 2 * size_of::<MutexGuard<'_, PoolRegistry<'_>>>()
         + 4 * size_of::<MutexGuard<'_, PoolRegistry<'_>>>()
@@ -125,7 +131,22 @@ impl<'c, 's> SharedPool<'c, 's, '_, '_> {
     ) -> Result<StatusCandidate> {
         // CREATE protects seven existing pages; recovered CLR additionally
         // protects both initialized pair pages before retiring them.
-        self.retention_candidate_at(request, start, required, 9, None)
+        self.retention_candidate_at(Some(request), start, required, 9, None)
+    }
+
+    /// Copy-only preflight of the two victims a later CREATE reservation would
+    /// select, before the pair identities exist. A dirty victim is returned to
+    /// the caller's original flusher; nothing is reserved or initialized here.
+    pub(in crate::storage) fn retention_pair_room(
+        &mut self,
+        start: usize,
+        required: &[TargetRequest; 7],
+    ) -> Result<[StatusCandidate; 2]> {
+        self.health()?;
+        let first = self.retention_candidate_at(None, start, required, 7, None)?;
+        let second =
+            self.retention_candidate_at(None, first.next, required, 7, Some(first.index))?;
+        Ok([first, second])
     }
 
     /// Copy-only selection for the actual two-page CREATE reservation. No
@@ -140,28 +161,34 @@ impl<'c, 's> SharedPool<'c, 's, '_, '_> {
         if pair[0].same_address(&pair[1]) {
             return Err(unchanged(Cause::DuplicateTarget));
         }
-        let first = self.retention_candidate_at(pair[0], start, required, 7, None)?;
+        let first = self.retention_candidate_at(Some(pair[0]), start, required, 7, None)?;
         if first.kind == StatusCandidateKind::Resident {
             return Err(unchanged(Cause::AlreadyInitialized));
         }
         let second =
-            self.retention_candidate_at(pair[1], first.next, required, 7, Some(first.index))?;
+            self.retention_candidate_at(Some(pair[1]), first.next, required, 7, Some(first.index))?;
         if second.kind == StatusCandidateKind::Resident {
             return Err(unchanged(Cause::AlreadyInitialized));
         }
         Ok([first, second])
     }
 
+    /// Without a request no address can be Resident; only victims are chosen.
     fn retention_candidate_at(
         &mut self,
-        request: TargetRequest,
+        request: Option<TargetRequest>,
         start: usize,
         required: &[TargetRequest],
         required_limit: usize,
         excluded: Option<usize>,
     ) -> Result<StatusCandidate> {
         self.retention_quiescent()?;
-        if start == 0 || required.len() > required_limit || !self.retention_request(request)? {
+        if start == 0 || required.len() > required_limit {
+            return Err(unchanged(Cause::Shape));
+        }
+        if let Some(request) = request
+            && !self.retention_request(request)?
+        {
             return Err(unchanged(Cause::Shape));
         }
         let allocator = self.registration(0)?.request;
@@ -203,7 +230,9 @@ impl<'c, 's> SharedPool<'c, 's, '_, '_> {
             let registered = self.resolve_registration(index)?.map(|entry| entry.request);
             let frame = if let Some(actual) = registered {
                 let frame = self.pair(index, &content)?.frame;
-                if actual.same_address(&request) {
+                if let Some(request) = request
+                    && actual.same_address(&request)
+                {
                     if actual != request {
                         return Err(unchanged(Cause::Stale));
                     }

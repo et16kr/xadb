@@ -66,146 +66,8 @@ impl<'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
         operation: Operation,
         private: &'i mut [u8; PRIVATE_BYTES],
     ) -> Result<PreparedCatalog<'i, 'c, 's>> {
-        match operation {
-            Operation::ReleaseRole | Operation::RootFree | Operation::TerminalFinish => {
-                self.prepare_catalog_job_n::<4>(owner, ordinal, operation, private)
-            }
-            Operation::Cancel | Operation::Prune => {
-                self.prepare_catalog_job_n::<7>(owner, ordinal, operation, private)
-            }
-            Operation::Clr => self.prepare_catalog_job_n::<9>(owner, ordinal, operation, private),
-            _ => Err(unchanged(
-                RetentionPhase::Prepare,
-                RetentionCause::Unsupported,
-            )),
-        }
-    }
-
-    fn prepare_catalog_job_n<'i, const N: usize>(
-        &mut self,
-        owner: &mut Owner<'c, 's>,
-        ordinal: usize,
-        operation: Operation,
-        private: &'i mut [u8; PRIVATE_BYTES],
-    ) -> Result<PreparedCatalog<'i, 'c, 's>> {
-        // Job/identity decoding and selection end before the nested canonical
-        // replay. Only this selected array, slot and operation survive.
-        let (slot, selected) = self.catalog_job_selection::<N>(ordinal, operation)?;
-        let change = match operation {
-            Operation::ReleaseRole => Change::ReleaseRole { ordinal },
-            Operation::RootFree => Change::RootFree { ordinal },
-            Operation::TerminalFinish => Change::TerminalFinish { ordinal },
-            Operation::Cancel => Change::Cancel { ordinal },
-            Operation::Prune => Change::Prune { ordinal },
-            Operation::Clr => Change::Clr { ordinal },
-            _ => {
-                return Err(unchanged(
-                    RetentionPhase::Prepare,
-                    RetentionCause::Unsupported,
-                ));
-            }
-        };
-        self.prepare_existing_catalog(owner, change, slot, selected, private)
-    }
-
-    fn catalog_job_selection<const N: usize>(
-        &self,
-        ordinal: usize,
-        operation: Operation,
-    ) -> Result<CatalogJobSelection<N>> {
-        let invalid = || unchanged(RetentionPhase::Prepare, RetentionCause::Invariant);
-        let job = queue::decode_job(
-            self.control.jobs().get(ordinal).ok_or_else(invalid)?,
-            self.inner.storage.profile().spec().namespace,
-        )
-        .map_err(queue_error)?;
-        let actor = job.source().ok_or_else(invalid)?;
-        let status = job.status().ok_or_else(invalid)?;
-        let undo = job.undo();
-        let pair = job.pair();
-        let object = job.object();
-        let slot = if matches!(operation, Operation::Cancel | Operation::Clr) {
-            Some(self.control.slot(actor).ok_or_else(invalid)?)
-        } else {
-            None
-        };
-        let allocator = self
-            .inner
-            .pool
-            .target_request(0)
-            .map_err(|e| frame(RetentionPhase::Prepare, e))?;
-        let root = self.target(Plan4Page::Root)?.request;
-        let jobs = self
-            .target(Plan4Page::Jobs {
-                index: (ordinal / 15) as u8,
-            })?
-            .request;
-        let status = self.catalog_status_request(status);
-        let undo = undo.map(|undo| {
-            request(
-                PageIdentity {
-                    database: allocator.identity.database,
-                    page: undo.page(),
-                    owner: ObjectId::new(3).expect("Undo owner"),
-                    owner_generation: one(),
-                },
-                PageKind::Undo,
-            )
-        });
-        let mut selected = [(allocator, 0); N];
-        match operation {
-            Operation::ReleaseRole | Operation::RootFree | Operation::TerminalFinish if N == 4 => {
-                selected.copy_from_slice(&[
-                    (allocator, 0),
-                    (root, 1),
-                    (jobs, 2),
-                    if operation == Operation::TerminalFinish {
-                        (status, 4)
-                    } else {
-                        (undo.ok_or_else(invalid)?, 5)
-                    },
-                ]);
-            }
-            Operation::Cancel | Operation::Prune | Operation::Clr
-                if N == (if operation == Operation::Clr { 9 } else { 7 }) =>
-            {
-                let catalog = self.target(Plan4Page::CatalogLeaf)?.request;
-                let anchor = self.target(Plan4Page::CatalogAnchor)?.request;
-                selected[..7].copy_from_slice(&[
-                    (allocator, 0),
-                    (root, 1),
-                    (jobs, 2),
-                    (catalog, 3),
-                    (status, 4),
-                    (undo.ok_or_else(invalid)?, 5),
-                    (anchor, PROOF_ROLE),
-                ]);
-                if operation == Operation::Clr {
-                    let pair = pair.ok_or_else(invalid)?;
-                    let object = object.ok_or_else(invalid)?;
-                    for side in 0..2 {
-                        selected[7 + side] = (
-                            request(
-                                PageIdentity {
-                                    database: allocator.identity.database,
-                                    page: pair[side],
-                                    owner: object.object,
-                                    owner_generation: object.generation,
-                                },
-                                if side == 0 {
-                                    PageKind::TreeAnchor
-                                } else {
-                                    PageKind::RowLeaf
-                                },
-                            ),
-                            (6 + side) as u8,
-                        );
-                    }
-                }
-            }
-            _ => return Err(invalid()),
-        }
-        Ok((slot, selected))
+        self.catalog_preparation()
+            .prepare_catalog_job(owner, ordinal, operation, private)
     }
 
     pub(crate) fn catalog_cancel_reserved(
@@ -243,16 +105,8 @@ impl<'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
         operation: Operation,
         private: &'i mut [u8; PRIVATE_BYTES],
     ) -> Result<PreparedCatalog<'i, 'c, 's>> {
-        if !matches!(
-            operation,
-            Operation::Clr | Operation::Prune | Operation::RootFree | Operation::TerminalFinish
-        ) {
-            return Err(unchanged(
-                RetentionPhase::Prepare,
-                RetentionCause::Unsupported,
-            ));
-        }
-        self.prepare_catalog_job(owner, ordinal, operation, private)
+        self.catalog_preparation()
+            .prepare_catalog_retirement(owner, ordinal, operation, private)
     }
     pub(crate) fn catalog_retire(
         &mut self,
@@ -267,9 +121,201 @@ impl<'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
     }
 }
 
+impl<'b, 'a, 's, 'c, 'p, 'd, 'm, 'w, W: WriterNamespace>
+    CatalogPreparation<'b, 'a, 's, 'c, 'p, 'd, 'm, 'w, W>
+{
+    fn prepare_catalog_job<'i>(
+        &self,
+        owner: &mut Owner<'c, 's>,
+        ordinal: usize,
+        operation: Operation,
+        private: &'i mut [u8; PRIVATE_BYTES],
+    ) -> Result<PreparedCatalog<'i, 'c, 's>> {
+        match operation {
+            Operation::ReleaseRole | Operation::RootFree | Operation::TerminalFinish => {
+                self.prepare_catalog_job_n::<4>(owner, ordinal, operation, private)
+            }
+            Operation::Cancel | Operation::Prune => {
+                self.prepare_catalog_job_n::<7>(owner, ordinal, operation, private)
+            }
+            Operation::Clr => self.prepare_catalog_job_n::<9>(owner, ordinal, operation, private),
+            _ => Err(unchanged(
+                RetentionPhase::Prepare,
+                RetentionCause::Unsupported,
+            )),
+        }
+    }
+
+    fn prepare_catalog_job_n<'i, const N: usize>(
+        &self,
+        owner: &mut Owner<'c, 's>,
+        ordinal: usize,
+        operation: Operation,
+        private: &'i mut [u8; PRIVATE_BYTES],
+    ) -> Result<PreparedCatalog<'i, 'c, 's>> {
+        // Job/identity decoding and selection end before the nested canonical
+        // replay. Only this selected array, slot and operation survive.
+        let (slot, selected) = self.catalog_job_selection::<N>(ordinal, operation)?;
+        let change = match operation {
+            Operation::ReleaseRole => Change::ReleaseRole { ordinal },
+            Operation::RootFree => Change::RootFree { ordinal },
+            Operation::TerminalFinish => Change::TerminalFinish { ordinal },
+            Operation::Cancel => Change::Cancel { ordinal },
+            Operation::Prune => Change::Prune { ordinal },
+            Operation::Clr => Change::Clr { ordinal },
+            _ => {
+                return Err(unchanged(
+                    RetentionPhase::Prepare,
+                    RetentionCause::Unsupported,
+                ));
+            }
+        };
+        self.prepare_existing_catalog(owner, change, slot, selected, private)
+    }
+
+    fn catalog_job_selection<const N: usize>(
+        &self,
+        ordinal: usize,
+        operation: Operation,
+    ) -> Result<CatalogJobSelection<N>> {
+        let invalid = || unchanged(RetentionPhase::Prepare, RetentionCause::Invariant);
+        let job = queue::decode_job(
+            self.control.jobs().get(ordinal).ok_or_else(invalid)?,
+            self.storage.profile().spec().namespace,
+        )
+        .map_err(queue_error)?;
+        let actor = job.source().ok_or_else(invalid)?;
+        let status = job.status().ok_or_else(invalid)?;
+        let undo = job.undo();
+        let pair = job.pair();
+        let object = job.object();
+        let slot = if matches!(operation, Operation::Cancel | Operation::Clr) {
+            Some(self.control.slot(actor).ok_or_else(invalid)?)
+        } else {
+            None
+        };
+        let allocator = self
+            .pool
+            .target_request(0)
+            .map_err(|e| frame(RetentionPhase::Prepare, e))?;
+        let root = target_from_source(self.storage, Plan4Page::Root)?.request;
+        let jobs = target_from_source(
+            self.storage,
+            Plan4Page::Jobs {
+                index: (ordinal / 15) as u8,
+            },
+        )?
+        .request;
+        let status = request(
+            PageIdentity {
+                database: self.storage.profile().spec().namespace.database,
+                page: status.page(),
+                owner: ObjectId::new(2).expect("Status owner"),
+                owner_generation: one(),
+            },
+            PageKind::TransactionStatus,
+        );
+        let undo = undo.map(|undo| {
+            request(
+                PageIdentity {
+                    database: allocator.identity.database,
+                    page: undo.page(),
+                    owner: ObjectId::new(3).expect("Undo owner"),
+                    owner_generation: one(),
+                },
+                PageKind::Undo,
+            )
+        });
+        let mut selected = [(allocator, 0); N];
+        match operation {
+            Operation::ReleaseRole | Operation::RootFree | Operation::TerminalFinish if N == 4 => {
+                selected.copy_from_slice(&[
+                    (allocator, 0),
+                    (root, 1),
+                    (jobs, 2),
+                    if operation == Operation::TerminalFinish {
+                        (status, 4)
+                    } else {
+                        (undo.ok_or_else(invalid)?, 5)
+                    },
+                ]);
+            }
+            Operation::Cancel | Operation::Prune | Operation::Clr
+                if N == (if operation == Operation::Clr { 9 } else { 7 }) =>
+            {
+                let catalog = target_from_source(self.storage, Plan4Page::CatalogLeaf)?.request;
+                let anchor = target_from_source(self.storage, Plan4Page::CatalogAnchor)?.request;
+                selected[..7].copy_from_slice(&[
+                    (allocator, 0),
+                    (root, 1),
+                    (jobs, 2),
+                    (catalog, 3),
+                    (status, 4),
+                    (undo.ok_or_else(invalid)?, 5),
+                    (anchor, PROOF_ROLE),
+                ]);
+                if operation == Operation::Clr {
+                    let pair = pair.ok_or_else(invalid)?;
+                    let object = object.ok_or_else(invalid)?;
+                    for side in 0..2 {
+                        selected[7 + side] = (
+                            request(
+                                PageIdentity {
+                                    database: allocator.identity.database,
+                                    page: pair[side],
+                                    owner: object.object,
+                                    owner_generation: object.generation,
+                                },
+                                if side == 0 {
+                                    PageKind::TreeAnchor
+                                } else {
+                                    PageKind::RowLeaf
+                                },
+                            ),
+                            (6 + side) as u8,
+                        );
+                    }
+                }
+            }
+            _ => return Err(invalid()),
+        }
+        Ok((slot, selected))
+    }
+
+    pub(crate) fn prepare_catalog_retirement<'i>(
+        &self,
+        owner: &mut Owner<'c, 's>,
+        ordinal: usize,
+        operation: Operation,
+        private: &'i mut [u8; PRIVATE_BYTES],
+    ) -> Result<PreparedCatalog<'i, 'c, 's>> {
+        if !matches!(
+            operation,
+            Operation::Clr | Operation::Prune | Operation::RootFree | Operation::TerminalFinish
+        ) {
+            return Err(unchanged(
+                RetentionPhase::Prepare,
+                RetentionCause::Unsupported,
+            ));
+        }
+        self.prepare_catalog_job(owner, ordinal, operation, private)
+    }
+}
+
 impl<'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
     RetentionWriter<'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W>
 {
+    pub(crate) fn prepare_catalog_retirement<'i>(
+        &mut self,
+        owner: &mut Owner<'c, 's>,
+        ordinal: usize,
+        operation: Operation,
+        private: &'i mut [u8; PRIVATE_BYTES],
+    ) -> Result<PreparedCatalog<'i, 'c, 's>> {
+        self.catalog_preparation()
+            .prepare_catalog_retirement(owner, ordinal, operation, private)
+    }
+
     /// The caller may retain an original reader/snapshot while this writer and
     /// the original flusher are borrowed. No second pool or mutable owner exists.
     pub(crate) fn apply_catalog_retirement(

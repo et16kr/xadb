@@ -1,0 +1,311 @@
+{
+  "id": "D3-CATALOG-REMAINING-20261026",
+  "status": "ALL_NINE_REMAINING_PASS_SOURCE_SPECIFIC",
+  "stop_before": "first Row INSERT",
+  "whole_DEV3_S5_complete": false,
+  "inventory_ref": "artifacts/dev3/catalog-create-20261025/integration-r29/admission-evidence/dev3-catalog-memory-input-plan.md",
+  "input_plan_sha256": "b62433586ae5af09957c7efa1f52cd9cb9afa72161693214dd5117745a8e26e9",
+  "controller_sha256": "30a9185484b9e5edd2eac50edb23edbca4210735bce25abfeedddd11f8d95cf8",
+  "revisions": {
+    "integration-r33": {
+      "source": "0b49aaf70fdb357fbb28513531d281c045e3d9742fb17dd2b94851f9f772a9d0",
+      "elf": "f2e0862f17d9f32c559905ba4be4726ee7530b33581163c5438d4a61fbdf137d",
+      "build_receipt_sha256": "5e84de454f7096c4b58b49bc7e2dfd6ce8e899b622eb39a94a6c6823f790e255",
+      "source_admission_sha256": "8a5efb921a9c11f5b484fe252ee550ace795e9eab32a58d38bebafab00769db4",
+      "memory_admission_sha256": "b06567f25c1523e226017c7de6435a967ea3542fd05ed67aae3530fc539aa0bd",
+      "overlay": null,
+      "target_cleanup_sha256": "e7ce72317c56ad0f83aa498eab95f7ae9c476c4a3d80b0ffe1073c5c8b7aaa44"
+    },
+    "integration-r34": {
+      "source": "c9588c66b21b2e92797a8e8008d667fca468ff51d1ae408c5c93254462a16c0b",
+      "elf": "3fa842c6adf2fbe9a302531d3f1e14d6297fc9b08865c2f026ae0b561cb8d010",
+      "build_receipt_sha256": "24fa4feb8f41a17efe0041aad4b439660c0530c1492a190bf99cbbbf835531f4",
+      "source_admission_sha256": "435a5ed2dd2bf1db1447a093518d24634fdc3f99affc1d10e2bb8f8f5104c111",
+      "memory_admission_sha256": "896246fcf0ee4799cf139e7cde740591c9627143ca46f6a8ba0e39567b77b890",
+      "overlay": "858e8b9a3696c4d156a36c61cabe2199ecee7a0335504e4ba421395d30b1a349",
+      "target_cleanup_sha256": "931231ef7c7f7b36e1e41bff373afefca4cef33f03887c87fd2c3adad5044e88"
+    },
+    "integration-r35": {
+      "source": "9ddae2554b40003d9016321337f2d7632b7ed14f02b7d1a4bfe14700660754fb",
+      "elf": "18fc7e96a7c3d2d6d960a0b94a07cd8489c8678a92f8d0f6afaef9e520102cab",
+      "build_receipt_sha256": "ff65f2f4f09884b5e265e0cc83f5e88c1a2981aca647479afe26c3336bcbb228",
+      "source_admission_sha256": "3fa2b5a962542628d8db2618e89af6006079f2ec65fe8f552c592564167469d1",
+      "memory_admission_sha256": "f5d456bd06f4b90c46af6802b0f45f03f5df239fef6e9b74227de05f6e0e15c2",
+      "overlay": "d546bba8fcbd0dbd9a20d3fe9c62d77c86f32b2ceb66764a60f4b2a06fca4a0b",
+      "target_cleanup_sha256": "e6372f3b7c68ac3e1b635146f02fb9d370792369323ca96f783d7c1c7d38b490"
+    },
+    "integration-r36": {
+      "source": "293b5dc838f9e99001daf4fa5a94d01a5d78116c114d6ab4167f10f327512946",
+      "elf": "28115d296da309b895f27b0cc813ffd25d8e800937a5a65bcc2e635f022c7e52",
+      "build_receipt_sha256": "86765b0aef77cfbb79808b9c09acc44195d6a349d7c92a97c12eb1f3adda7b47",
+      "source_admission_sha256": "d17034b121da5e20745984e752b5194a343633b03dfce7e905e53baed008a7f4",
+      "memory_admission_sha256": "7df8c8d1688fbaff5a5e4dfe762c86f641b79cfa25208ed39556c50b2a826114",
+      "overlay": "1d2335a409e414f9c09b0a119dca8efc27799f6ba628cc0334002bef8c84f4f1",
+      "target_cleanup_sha256": "d04a38525f2cbc3c503fec911b8820d708a5d566d14eb0008e82d02863d78db7"
+    }
+  },
+  "runs": [
+    {
+      "path": "artifacts/dev3/catalog-create-20261025/integration-r33/catalog-memory/MC03/result.json",
+      "sha256": "39cff3c669abf215cc2def1df4baf3d50d1054bc78b81e0e600afcc702bfb6ca",
+      "revision": "integration-r33",
+      "case": "MC03",
+      "status": "PASS",
+      "source": "0b49aaf70fdb357fbb28513531d281c045e3d9742fb17dd2b94851f9f772a9d0",
+      "elf": "f2e0862f17d9f32c559905ba4be4726ee7530b33581163c5438d4a61fbdf137d",
+      "seconds": 8.133216577999974,
+      "error": null
+    },
+    {
+      "path": "artifacts/dev3/catalog-create-20261025/integration-r33/catalog-memory/MT01/result.json",
+      "sha256": "df7d9afee24f42a4f0eee213d8eb7badec85c48dce8eeec908e6cb6f66064874",
+      "revision": "integration-r33",
+      "case": "MT01",
+      "status": "FAIL",
+      "source": "0b49aaf70fdb357fbb28513531d281c045e3d9742fb17dd2b94851f9f772a9d0",
+      "elf": "f2e0862f17d9f32c559905ba4be4726ee7530b33581163c5438d4a61fbdf137d",
+      "seconds": 1.81795193500011,
+      "error": "ValueError('exact case completion')"
+    },
+    {
+      "path": "artifacts/dev3/catalog-create-20261025/integration-r33/catalog-memory/MT02/result.json",
+      "sha256": "67edc0695c749c3f045a86bdf933507c58ffd105de6ff35c25b0af1d55259217",
+      "revision": "integration-r33",
+      "case": "MT02",
+      "status": "FAIL",
+      "source": "0b49aaf70fdb357fbb28513531d281c045e3d9742fb17dd2b94851f9f772a9d0",
+      "elf": "f2e0862f17d9f32c559905ba4be4726ee7530b33581163c5438d4a61fbdf137d",
+      "seconds": 3.899452784999994,
+      "error": "ValueError('exact case completion')"
+    },
+    {
+      "path": "artifacts/dev3/catalog-create-20261025/integration-r33/catalog-memory/MT04/result.json",
+      "sha256": "d460c6ae9da4a9a2bc768d5d62fe47d732c40ee5e6bab0de87539078946a95d1",
+      "revision": "integration-r33",
+      "case": "MT04",
+      "status": "FAIL",
+      "source": "0b49aaf70fdb357fbb28513531d281c045e3d9742fb17dd2b94851f9f772a9d0",
+      "elf": "f2e0862f17d9f32c559905ba4be4726ee7530b33581163c5438d4a61fbdf137d",
+      "seconds": 1.9759855990000688,
+      "error": "ValueError('exact case completion')"
+    },
+    {
+      "path": "artifacts/dev3/catalog-create-20261025/integration-r34/catalog-memory/MF14/result.json",
+      "sha256": "158cfd5ecc9749d26d894e89c4cecf5e57f634f40c85754210f171a1ec9a8737",
+      "revision": "integration-r34",
+      "case": "MF14",
+      "status": "PASS",
+      "source": "c9588c66b21b2e92797a8e8008d667fca468ff51d1ae408c5c93254462a16c0b",
+      "elf": "3fa842c6adf2fbe9a302531d3f1e14d6297fc9b08865c2f026ae0b561cb8d010",
+      "seconds": 9.61713418499994,
+      "error": null
+    },
+    {
+      "path": "artifacts/dev3/catalog-create-20261025/integration-r34/catalog-memory/MT01/result.json",
+      "sha256": "4db2a1daa380604d52d542fc723e14fc960f64961d28b1f696ca04d691fa3e71",
+      "revision": "integration-r34",
+      "case": "MT01",
+      "status": "PASS",
+      "source": "c9588c66b21b2e92797a8e8008d667fca468ff51d1ae408c5c93254462a16c0b",
+      "elf": "3fa842c6adf2fbe9a302531d3f1e14d6297fc9b08865c2f026ae0b561cb8d010",
+      "seconds": 3.714740419000009,
+      "error": null
+    },
+    {
+      "path": "artifacts/dev3/catalog-create-20261025/integration-r34/catalog-memory/MT03/result.json",
+      "sha256": "387e8ef3d4ab76913c64886502b004829ce9747ed31d614939cd75a4897a23b5",
+      "revision": "integration-r34",
+      "case": "MT03",
+      "status": "FAIL",
+      "source": "c9588c66b21b2e92797a8e8008d667fca468ff51d1ae408c5c93254462a16c0b",
+      "elf": "3fa842c6adf2fbe9a302531d3f1e14d6297fc9b08865c2f026ae0b561cb8d010",
+      "seconds": 1.724283934000141,
+      "error": "ValueError('exact case completion')"
+    },
+    {
+      "path": "artifacts/dev3/catalog-create-20261025/integration-r34/catalog-memory/MT04/result.json",
+      "sha256": "62b3f7b827c0e7ebeb563ec5b66763407e1c7b2867a878274c7455637ed3021e",
+      "revision": "integration-r34",
+      "case": "MT04",
+      "status": "PASS",
+      "source": "c9588c66b21b2e92797a8e8008d667fca468ff51d1ae408c5c93254462a16c0b",
+      "elf": "3fa842c6adf2fbe9a302531d3f1e14d6297fc9b08865c2f026ae0b561cb8d010",
+      "seconds": 3.975186178000058,
+      "error": null
+    },
+    {
+      "path": "artifacts/dev3/catalog-create-20261025/integration-r34/catalog-memory/MT05/result.json",
+      "sha256": "ea2fb2365fabaf189269b14c9fe5e62893d1e622d2a4a740fdb12a3716ee7116",
+      "revision": "integration-r34",
+      "case": "MT05",
+      "status": "FAIL",
+      "source": "c9588c66b21b2e92797a8e8008d667fca468ff51d1ae408c5c93254462a16c0b",
+      "elf": "3fa842c6adf2fbe9a302531d3f1e14d6297fc9b08865c2f026ae0b561cb8d010",
+      "seconds": 1.4160955000002104,
+      "error": "ValueError('exact case completion')"
+    },
+    {
+      "path": "artifacts/dev3/catalog-create-20261025/integration-r34/catalog-memory/MT06/result.json",
+      "sha256": "0e511fb8a25b9d32bab58484f75ad79817daafa466c9b821cee155b40d0d4d0d",
+      "revision": "integration-r34",
+      "case": "MT06",
+      "status": "FAIL",
+      "source": "c9588c66b21b2e92797a8e8008d667fca468ff51d1ae408c5c93254462a16c0b",
+      "elf": "3fa842c6adf2fbe9a302531d3f1e14d6297fc9b08865c2f026ae0b561cb8d010",
+      "seconds": 6.439265499000157,
+      "error": "ValueError('exact case completion')"
+    },
+    {
+      "path": "artifacts/dev3/catalog-create-20261025/integration-r34/catalog-memory/MT07/result.json",
+      "sha256": "47c2a9f3cbd13204c660d85e07d18487aa3841fc4f85201f075cb51390d806bf",
+      "revision": "integration-r34",
+      "case": "MT07",
+      "status": "FAIL",
+      "source": "c9588c66b21b2e92797a8e8008d667fca468ff51d1ae408c5c93254462a16c0b",
+      "elf": "3fa842c6adf2fbe9a302531d3f1e14d6297fc9b08865c2f026ae0b561cb8d010",
+      "seconds": 1.422748583000157,
+      "error": "ValueError('exact case completion')"
+    },
+    {
+      "path": "artifacts/dev3/catalog-create-20261025/integration-r35/catalog-memory/MT03/result.json",
+      "sha256": "6fe650b66e66f4e7ce63b3a60b937cb7e36b95249f6a93ea85c1d9aa20d63649",
+      "revision": "integration-r35",
+      "case": "MT03",
+      "status": "PASS",
+      "source": "9ddae2554b40003d9016321337f2d7632b7ed14f02b7d1a4bfe14700660754fb",
+      "elf": "18fc7e96a7c3d2d6d960a0b94a07cd8489c8678a92f8d0f6afaef9e520102cab",
+      "seconds": 2.226576787999875,
+      "error": null
+    },
+    {
+      "path": "artifacts/dev3/catalog-create-20261025/integration-r35/catalog-memory/MT05/result.json",
+      "sha256": "d42dad0ae4a94757d537eb71874bc8e8edc0981e5973626753974d32ffe56f68",
+      "revision": "integration-r35",
+      "case": "MT05",
+      "status": "PASS",
+      "source": "9ddae2554b40003d9016321337f2d7632b7ed14f02b7d1a4bfe14700660754fb",
+      "elf": "18fc7e96a7c3d2d6d960a0b94a07cd8489c8678a92f8d0f6afaef9e520102cab",
+      "seconds": 1.9305771509998522,
+      "error": null
+    },
+    {
+      "path": "artifacts/dev3/catalog-create-20261025/integration-r35/catalog-memory/MT06/result.json",
+      "sha256": "45656b1d7a612834e7a45fbb5529d44a91a9a87fb8631a2d8ddda38e47e41a3a",
+      "revision": "integration-r35",
+      "case": "MT06",
+      "status": "PASS",
+      "source": "9ddae2554b40003d9016321337f2d7632b7ed14f02b7d1a4bfe14700660754fb",
+      "elf": "18fc7e96a7c3d2d6d960a0b94a07cd8489c8678a92f8d0f6afaef9e520102cab",
+      "seconds": 1.6220655669994812,
+      "error": null
+    },
+    {
+      "path": "artifacts/dev3/catalog-create-20261025/integration-r35/catalog-memory/MT07/result.json",
+      "sha256": "ca245ec3fc8938410186eb54bf2019ecd7cdca809979aeae8327ccc7f4c43f9f",
+      "revision": "integration-r35",
+      "case": "MT07",
+      "status": "PASS",
+      "source": "9ddae2554b40003d9016321337f2d7632b7ed14f02b7d1a4bfe14700660754fb",
+      "elf": "18fc7e96a7c3d2d6d960a0b94a07cd8489c8678a92f8d0f6afaef9e520102cab",
+      "seconds": 8.036761207000382,
+      "error": null
+    },
+    {
+      "path": "artifacts/dev3/catalog-create-20261025/integration-r36/catalog-memory/MT02/result.json",
+      "sha256": "8192f9f11fc2bde10a4e9c9e5bf925f7665c6bb10f459da6704dbe6fde6d2231",
+      "revision": "integration-r36",
+      "case": "MT02",
+      "status": "PASS",
+      "source": "293b5dc838f9e99001daf4fa5a94d01a5d78116c114d6ab4167f10f327512946",
+      "elf": "28115d296da309b895f27b0cc813ffd25d8e800937a5a65bcc2e635f022c7e52",
+      "seconds": 9.729363880000164,
+      "error": null
+    }
+  ],
+  "passed_unique": [
+    "MC03",
+    "MF14",
+    "MT01",
+    "MT02",
+    "MT03",
+    "MT04",
+    "MT05",
+    "MT06",
+    "MT07"
+  ],
+  "open": {},
+  "unreachable_not_pass": [
+    "MF01",
+    "MF13"
+  ],
+  "historical_failures_preserved": [
+    "integration-r33/MT01",
+    "integration-r33/MT02",
+    "integration-r33/MT04",
+    "integration-r34/MT03",
+    "integration-r34/MT05",
+    "integration-r34/MT06",
+    "integration-r34/MT07"
+  ],
+  "product_changes": {
+    "lookup_live_undo_read": "read.rs UndoShape {InitialFree, CatalogRoot}; lookup reads the CREATE Undo root through read_catalog_undo (decode_page + one slot + pageLSN); record checks unchanged; found by r33 MT01/MT04",
+    "writer_preparation": "CatalogPreparation view shared by Live and split RetentionWriter; prepare_catalog_retirement on RetentionWriter; behavior-preserving per r33 review Q1; source census +56B, peak 63938",
+    "test_only": "cfg(test) horizon/reference/physical-pin/pool observers and install_after_capture re-export",
+    "pair_victim_preflight": "retention_pair_room (request-free victim selection, same rule as retention_pair_candidates) and prepare_catalog_create_targets returning FlushRequired for a dirty victim; advisory, Reserve keeps its own Busy; no-victim error now surfaces at preparation before Begin"
+  },
+  "open_defects": {
+    "read_root_jobs_v1": "RetentionReader::read Root/Jobs branches decode only the v1 format and fence on valid v2 pages; no current product consumer; fix and review before use"
+  },
+  "deviations": [
+    "MT04 RollbackStart9 precedes the reader capture (CLR requires Aborting)",
+    "MT01/MT02 H observation is a cfg(test) registry read without the version gate; the actual H check is the Busy Prune",
+    "MT01/MT02 lend the disjoint reader loan as Prune scratch",
+    "MT05/MT06 Commit prepares and commits on a second Foreground Owner thread; the sole dedicated flusher Owner stays on the main thread",
+    "MT03 registers the old snapshot before Commit (registration needs apply admission, closed in Pending) and treats FlushRequired as a failed precondition",
+    "MT07 content guard target is Status, not Root (read() rejects v2 Root)",
+    "Begin and Commit may use different concurrency Owners; revisit when a semantic transaction owner exists"
+  ],
+  "reviews": {
+    "artifacts/dev3/catalog-create-20261025/integration-r33/admission-evidence/dev3-catalog-remaining-batch1-review.md": "11bf04fb756d68697936cecb3b3310d605bb76e1d07a83bac4d44524ae6a9c4d",
+    "artifacts/dev3/catalog-create-20261025/integration-r34/admission-evidence/dev3-catalog-remaining-r34-review.md": "6caecabca048659916a8f5c8f43d660a0852d689777e8462f52fe15a5f8393d8",
+    "artifacts/dev3/catalog-create-20261025/integration-r35/admission-evidence/dev3-catalog-remaining-r35-review.md": "67bd28ccc6219546b01462c9f37f0b3c1763b2c6c783a0188696cb850869126c",
+    "artifacts/dev3/catalog-create-20261025/integration-r36/admission-evidence/dev3-catalog-remaining-r36-review.md": "fbb2a4f7a55c8db688b550f84db5bc502c79274c0e3c3562b51de4bda9da7eb8",
+    "artifacts/dev3/catalog-create-20261025/work-20261026/dev3-catalog-create-002-review.md": "b53601ef0a0e6c7c22fe20edc5a2fd14907f606707ed1e6701cc694d45955001"
+  },
+  "review_errors_recorded": [
+    "r34 review claimed try_flush does not enforce the flusher role",
+    "r34 review missed snapshot registration needing apply admission",
+    "r34 review did not check read() Root v1 decoder"
+  ],
+  "corpus": {
+    "path": "tests/fixtures/dev3-catalog-create/memory-retire",
+    "input_plan": "2c7315698b92127458110bab7308d8a5c7497bff35ea0b00e4d078f8954ad515",
+    "manifest": "049f4416ceaab3ccb18581f49808aa0d5d526664ad5ef90ca386a62ec8e0199c",
+    "raw_index": "5ea47582d3e897d67cb2588106f7af15ad0097e2cbe6948cab0bafa90024946d",
+    "steps": "22ac4014428a4b8160f8f63818dc163e24240c599169e632d3d70683c223fef8",
+    "checkpoints": "44abad550f706b5c2fffa39cd0ddc7f6d5c352f67ee18e253d7fd31876324164",
+    "input_receipt": "8daa7ed5e9be67d3aa0400b6b057819d379a9163de72485a5f3d7b649d1b8739",
+    "raw_count": 106,
+    "raw_bytes": 2584076,
+    "rows": 16,
+    "checkpoint_rows": 3,
+    "process_gap": "no pre-generation reader review; r34 independent review is the after-the-fact review"
+  },
+  "unit_memory_seconds": 124.50071106198857,
+  "unit_budget_seconds": 600,
+  "static_checks": "cargo fmt --check and clippy -p xadb-engine --all-targets --all-features -D warnings clean on the working tree; push gate runs on the final commit",
+  "runtime_f05_complete": false,
+  "mt02": {
+    "r33": "FAIL Reserve17 Prepare/Busy (dirty T pair victims, no FlushRequired surfaced)",
+    "r36": "PASS after the pair-victim preflight",
+    "user_decision": "2026-10-26 chat: supply same-epoch second CREATE pair preparation for MT02",
+    "d2_note": "devdoc/contracts/dev3-catalog-create.md#sequential-create (D3-CATALOG-CREATE-002)",
+    "d2_note_review": "ACCEPTED_WITH_EDITS E1-E6 applied; optional E7 applied"
+  },
+  "static_only_branches": [
+    "retention_pair_room no-victim Busy/CounterExhausted at preparation",
+    "Invariant for a Flush candidate without recLSN"
+  ],
+  "selection_rationale": "MT02 executes every changed line (cycle 1 None path, cycle 2 FlushRequired then None, Reserve Some(pair), setup retention_candidate(Some)); completed cases had clean or fresh victims and are not re-run under the changed-code rule",
+  "review_fix_followup": "dev3-catalog-review-fix-20261026.json"
+}

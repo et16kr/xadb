@@ -10,6 +10,56 @@ impl<'s, 'c, 'p, 'd, W: WriterNamespace> Plan4Retention<'_, 's, 'c, 'p, 'd, '_, 
     }
 }
 
+impl<W: WriterNamespace> RetentionReader<'_, '_, '_, '_, '_, '_, '_, '_, W> {
+    /// Actual published Q and registered snapshot horizon H of the original
+    /// visibility binding; a reader in a Commit gap cannot borrow the Live.
+    pub(in crate::storage) fn catalog_test_horizon(&self) -> (u64, u64) {
+        self.visibility
+            .expect("actual visibility binding")
+            .test_horizon()
+    }
+    pub(in crate::storage) fn catalog_test_references(&self) -> ((usize, usize, usize), bool) {
+        self.visibility
+            .expect("actual visibility binding")
+            .test_references()
+    }
+}
+
+impl<W: WriterNamespace> RetentionWriter<'_, '_, '_, '_, '_, '_, '_, '_, '_, W> {
+    pub(in crate::storage) fn catalog_test_references(&self) -> ((usize, usize, usize), bool) {
+        self.visibility
+            .expect("actual visibility binding")
+            .test_references()
+    }
+    /// Physical frame pins of the original pool, separate from source pins.
+    pub(in crate::storage) fn catalog_test_physical_pins(&self) -> u16 {
+        dirty_frame::init_test_support::claim_state(self.pool).1
+    }
+}
+
+impl<'s, 'c, 'p, 'd, W: WriterNamespace> RetentionWriter<'_, '_, 's, 'c, 'p, 'd, '_, '_, '_, W> {
+    /// Borrow-only observation of the original pool, as the Live accessor.
+    pub(in crate::storage) fn catalog_test_pool(&self) -> &SharedPool<'c, 's, 'p, 'd> {
+        self.pool
+    }
+}
+
+impl<'s, 'c, 'p, 'd, W: WriterNamespace> RetentionFlusher<'_, 's, 'c, 'p, 'd, '_, '_, W> {
+    /// Borrow-only observation of the original pool, as the Live accessor.
+    pub(in crate::storage) fn catalog_test_pool(&self) -> &SharedPool<'c, 's, 'p, 'd> {
+        self.pool
+    }
+}
+
+impl<W: WriterNamespace> Plan4Retention<'_, '_, '_, '_, '_, '_, '_, '_, W> {
+    pub(in crate::storage) fn catalog_test_references(&self) -> ((usize, usize, usize), bool) {
+        self.catalog_visibility
+            .as_ref()
+            .expect("actual visibility binding")
+            .test_references()
+    }
+}
+
 pub(in crate::storage) type FreeUndoTestState = (
     crate::storage::wal_io::WalPrefix,
     Option<u64>,

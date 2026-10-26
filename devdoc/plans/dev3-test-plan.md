@@ -914,3 +914,9 @@ S5는 고유5개와 `storage::tree_page::edit::extended_tests::leaf_edit_extende
 [계약](../contracts/dev3-commit-continuation.md)·[동결 입력](../../tests/fixtures/dev3-commit-continuation/input-plan.json)·[source별 증거](../evidence/dev3-commit-continuation-20261025.md)를 따른다. 확정 선택 함수21개는 정적2·pool pre-stage4·core pre-stage1·WAL 물리14다. 중간 r1의 단일 WAL 함수에서 case0–2 완료 후 case3 기대값 FAIL을 보존하고, r2에는 변경 case3·미실행4–13 및 새 capacity/fence1만 실행했다. 이 부분 완료를 r2에서 분리된00–02함수의 새 PASS로 표시하지 않는다.
 
 S5에는 분리된21개 함수와 compiler baseline1/positive1/negative5, tool6을 포함한다. actual semantic grants·durable Drain/flush 순서·terminal 설치·native CREATE/restart는 이 공통 inventory에 포함된 것으로 보지 않으며 실제 소비자 구현과 함께 별도로 동결한다. 각 source의 실패와 미실행을 보존하고 중간 무변경 완료 시험을 반복하지 않는다.
+
+
+<a id="catalog-review-fix-inventory"></a>
+## Catalog 검토 후 읽기와 pair 오류 — 2026-10-26
+
+[후속 증거](../evidence/dev3-catalog-review-fix-20261026.md)와 [exact selector 기록](../evidence/dev3-catalog-review-fix-20261026.json)의 CR01–04 및 PR01–04 신규8개를 최종 S5 inventory에 포함한다. CR은 실제 v2 Root/Jobs 읽기·v1 혼입·손상 거절, PR은 pair 준비의 둘째 victim 없음·세대 소진·latch 경합·recLSN 누락 거절이다. 중간 단계 r38에서 각1회 PASS했으며 r39의 이전 decoder 대조 CR01/02 예상 FAIL은 별도 검증 입력이다. 변경 source 계산의 기존 SC01/02는 직접 영향 검사로만 선택했고 제품 runtime 분모와 구별한다. 이후 완료 무변경 시험 반복은 최종 S5에 한정한다.

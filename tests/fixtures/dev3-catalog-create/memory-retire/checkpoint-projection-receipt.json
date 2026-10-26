@@ -1,0 +1,11 @@
+{
+  "status": "FROZEN_MANIFEST_PROJECTION_NO_REGENERATION",
+  "source_manifest_sha256": "049f4416ceaab3ccb18581f49808aa0d5d526664ad5ef90ca386a62ec8e0199c",
+  "file": "checkpoints.tsv",
+  "sha256": "44abad550f706b5c2fffa39cd0ddc7f6d5c352f67ee18e253d7fd31876324164",
+  "bytes": 13860,
+  "rows": 3,
+  "product_executions": 0,
+  "generator_additional_runs": 0,
+  "auditor_additional_runs": 0
+}

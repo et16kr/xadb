@@ -381,33 +381,7 @@ impl<'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
         )
     }
     pub(crate) fn target(&self, role: Plan4Page) -> Result<Plan4Target> {
-        let index = match role {
-            Plan4Page::Root => 1,
-            Plan4Page::Jobs { index } if index < 5 => usize::from(index) + 2,
-            Plan4Page::CatalogAnchor => 7,
-            Plan4Page::CatalogLeaf => 8,
-            _ => {
-                return Err(unchanged(
-                    RetentionPhase::Prepare,
-                    RetentionCause::Membership,
-                ));
-            }
-        };
-        let h =
-            super::genesis::owned_header(&self.inner.storage.core.plan, index).map_err(|_| {
-                fatal(
-                    self.inner.storage,
-                    RetentionPhase::Prepare,
-                    RetentionCause::Invariant,
-                )
-            })?;
-        Ok(Plan4Target {
-            request: TargetRequest {
-                identity: h.identity,
-                kind: h.kind,
-                level: h.level,
-            },
-        })
+        target_from_source(self.inner.storage, role)
     }
     fn health(&self) -> Result<()> {
         health(self.inner.storage, &self.inner.pool)?;
@@ -421,6 +395,33 @@ impl<'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
         Ok(())
     }
 }
+fn target_from_source<W: WriterNamespace>(
+    storage: &MutableStorageOwner<'_, '_, W>,
+    role: Plan4Page,
+) -> Result<Plan4Target> {
+    let index = match role {
+        Plan4Page::Root => 1,
+        Plan4Page::Jobs { index } if index < 5 => usize::from(index) + 2,
+        Plan4Page::CatalogAnchor => 7,
+        Plan4Page::CatalogLeaf => 8,
+        _ => {
+            return Err(unchanged(
+                RetentionPhase::Prepare,
+                RetentionCause::Membership,
+            ));
+        }
+    };
+    let h = super::genesis::owned_header(&storage.core.plan, index)
+        .map_err(|_| fatal(storage, RetentionPhase::Prepare, RetentionCause::Invariant))?;
+    Ok(Plan4Target {
+        request: TargetRequest {
+            identity: h.identity,
+            kind: h.kind,
+            level: h.level,
+        },
+    })
+}
+
 fn health<W: WriterNamespace>(
     storage: &MutableStorageOwner<'_, '_, W>,
     pool: &SharedPool<'_, '_, '_, '_>,
@@ -445,6 +446,8 @@ fn health<W: WriterNamespace>(
 #[cfg(test)]
 #[path = "plan4_retention/tests.rs"]
 mod tests;
+#[cfg(test)]
+pub(in crate::storage) use tests::install_after_capture;
 
 #[cfg(test)]
 #[path = "plan4_retention/free_undo_literal_tests.rs"]

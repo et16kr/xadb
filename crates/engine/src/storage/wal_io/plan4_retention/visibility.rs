@@ -406,4 +406,32 @@ impl BoundVisibility<'_, '_, '_> {
             .lock()
             .unwrap_or_else(|error| error.into_inner())
     }
+    /// Read-only (Q, H) with the capture_horizon min rule. It takes no version
+    /// hold, so it observes but never replaces an actual retirement check.
+    pub(super) fn test_horizon(&self) -> (u64, u64) {
+        let published = self.test_q();
+        let bytes = self
+            .registry
+            .lock()
+            .unwrap_or_else(|error| error.into_inner());
+        let mut horizon = published;
+        for index in 0..SNAPSHOTS {
+            let row = snapshot_row(&bytes[..], index);
+            if row[0] == 2 {
+                horizon = horizon.min(u64_at(row, 16));
+            }
+        }
+        (published, horizon)
+    }
+    /// Source reference pins and whether a retirement marker is published.
+    pub(super) fn test_references(&self) -> ((usize, usize, usize), bool) {
+        let bytes = self
+            .registry
+            .lock()
+            .unwrap_or_else(|error| error.into_inner());
+        (
+            pins::test_census(&bytes[..]),
+            retirement_row(&bytes[..])[0] != 0,
+        )
+    }
 }

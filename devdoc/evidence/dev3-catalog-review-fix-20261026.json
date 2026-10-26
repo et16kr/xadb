@@ -1,0 +1,504 @@
+{
+  "id": "D3-CATALOG-REVIEW-FIX-20261026",
+  "status": "COMPLETE_BOUNDED_CATALOG_FIX",
+  "scope": "Profile-based Root/Jobs read repair; pair-room failure checks; completion of bounded Catalog work, no Row INSERT",
+  "whole_DEV3_S5_complete": false,
+  "baseline_commit": "e81f610",
+  "input_plan": {
+    "path": "artifacts/dev3/catalog-create-20261025/review-fix-20261026/input-plan.json",
+    "sha256": "507466b8b088427cbf7c5dd69dca07c9a97cd6a911f2931498a4c710f2c932bd"
+  },
+  "runner": {
+    "path": "artifacts/dev3/catalog-create-20261025/review-fix-20261026/run-selected.py",
+    "sha256": "7c296f6bd06af430b720a62dc1fcdefee4e1697a2987fd9892abb9c48c1cdb91"
+  },
+  "revisions": {
+    "integration-r37": {
+      "build": {
+        "path": "artifacts/dev3/catalog-create-20261025/integration-r37/build-receipt.json",
+        "sha256": "b8bbea914006c36aac3eb0eed0a3edc4b1222691bd1f7ca33367bd65ee25c75b"
+      },
+      "source": "2d62798908de054835b29f4360ff0ce1ebfc39a0175da7823baffb92359ae394",
+      "elf": null,
+      "status": "FAIL",
+      "source_manifest": {
+        "path": "artifacts/dev3/catalog-create-20261025/integration-r37/source-files.json",
+        "sha256": "620256cb3e54b53cd05e78dcda58256302303ec405309ef0952ea213fc6b17a6"
+      },
+      "target_cleanup": {
+        "path": "artifacts/dev3/catalog-create-20261025/integration-r37/target-cleanup.json",
+        "sha256": "9e0e9ee7b5b542cd76810fff1a29b3166b05980f575299ecef92be1cc9d7a380"
+      }
+    },
+    "integration-r38": {
+      "build": {
+        "path": "artifacts/dev3/catalog-create-20261025/integration-r38/build-receipt.json",
+        "sha256": "f00ca1da95f21becf8bc2d14f712768ac6aa27f3c23c8890a9d934f0468be09f"
+      },
+      "source": "fa47bc86a7a2bbbb85b4fa6184570c44639e884059c886e8f5eb6318c932b3fe",
+      "elf": "179edbee86615999b15339db759f71bba049e0b46b76ce3c7c1a448946c0a7af",
+      "status": "PASS",
+      "source_manifest": {
+        "path": "artifacts/dev3/catalog-create-20261025/integration-r38/source-files.json",
+        "sha256": "77109a51e5cf3a55c02102742b033f15d8e7e8cecd1e38fb49d84ca8c139812a"
+      },
+      "target_cleanup": {
+        "path": "artifacts/dev3/catalog-create-20261025/integration-r38/target-cleanup.json",
+        "sha256": "1312dca000deeb12a3f5f34cd3dafcdd6d873d6a3a63a9ce863c683657a02c44"
+      }
+    },
+    "integration-r39": {
+      "build": {
+        "path": "artifacts/dev3/catalog-create-20261025/integration-r39/build-receipt.json",
+        "sha256": "02e460b121fdc7275eac1c406505d984b4ad7c47e1e0d5a084f6e6a403bb77a3"
+      },
+      "source": "d51270de9dcf15ae4ff6ef9e7b34cd3961a9ac8c1e881195e5c0c179233f3328",
+      "elf": "25421ab5c7a96f304ce990af0953170f018a5f86aeee01368d83174fc6650c4e",
+      "status": "PASS",
+      "source_manifest": {
+        "path": "artifacts/dev3/catalog-create-20261025/integration-r39/source-files.json",
+        "sha256": "6441a8901c5ab584dc2228d7649d0bb8c58b40698ff8ac450232d69738929996"
+      },
+      "target_cleanup": {
+        "path": "artifacts/dev3/catalog-create-20261025/integration-r39/target-cleanup.json",
+        "sha256": "b061fc4bc3eb04c19e7def2ad1e9344ec6b9060a3c378f03b51032dd76e5ee2d"
+      }
+    },
+    "integration-r40": {
+      "build": {
+        "path": "artifacts/dev3/catalog-create-20261025/integration-r40/build-receipt.json",
+        "sha256": "84ad6acd2c6c0870896a392902906c191d32dfdf20dc3cdd589ed63819c788f2"
+      },
+      "source": "60a66a52ae992b8b280ff9679109f037d615261d8945e26bff74a3e0e0b9efa7",
+      "elf": "3d1306a8aa82e15cf2d4c37f3c0eac306638a340e7bfdbb3e072cb93df88f3ef",
+      "status": "PASS",
+      "source_manifest": {
+        "path": "artifacts/dev3/catalog-create-20261025/integration-r40/source-files.json",
+        "sha256": "af97a30fce166a6591885ee5d3f18faccadf09c3be88684bd087100d4fe11bf0"
+      },
+      "target_cleanup": {
+        "path": "artifacts/dev3/catalog-create-20261025/integration-r40/target-cleanup.json",
+        "sha256": "461a41de60fda7a546f393835d4e1276ec14da038fee6adc8c214c9c7791e6a4"
+      }
+    }
+  },
+  "runs": [
+    {
+      "path": "artifacts/dev3/catalog-create-20261025/integration-r38/review-fix/CR01/result.json",
+      "sha256": "cdf14e09a943aa3dea33389038ef1fbea41ab85bffa0779a8b76c639b34e950a",
+      "case": "CR01",
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::reader_validation::catalog_cr01_v2_root_read",
+      "status": "PASS",
+      "expected_failure_observed": false,
+      "exit_code": 0,
+      "error": null,
+      "seconds": 0.3655741289985599,
+      "source": "fa47bc86a7a2bbbb85b4fa6184570c44639e884059c886e8f5eb6318c932b3fe",
+      "elf": "179edbee86615999b15339db759f71bba049e0b46b76ce3c7c1a448946c0a7af",
+      "input_plan_sha256": "507466b8b088427cbf7c5dd69dca07c9a97cd6a911f2931498a4c710f2c932bd",
+      "runner_sha256": "7c296f6bd06af430b720a62dc1fcdefee4e1697a2987fd9892abb9c48c1cdb91",
+      "stdout_sha256": "17ef59982ca42af5cef4c8646698f5d3302156bf0a7c217fc4f0536ee03be3b8",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "command": [
+        "/home/et16/work/xadb/artifacts/dev3/catalog-create-20261025/integration-r38/xadb-engine-tests",
+        "--exact",
+        "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::reader_validation::catalog_cr01_v2_root_read",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "revision": "integration-r38"
+    },
+    {
+      "path": "artifacts/dev3/catalog-create-20261025/integration-r38/review-fix/CR02/result.json",
+      "sha256": "62c59a47c91a7fea31f70756bb5bfd2c3be6ec2737f8ffb6871ce737ce3daa90",
+      "case": "CR02",
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::reader_validation::catalog_cr02_v2_jobs_read",
+      "status": "PASS",
+      "expected_failure_observed": false,
+      "exit_code": 0,
+      "error": null,
+      "seconds": 0.4154968969996844,
+      "source": "fa47bc86a7a2bbbb85b4fa6184570c44639e884059c886e8f5eb6318c932b3fe",
+      "elf": "179edbee86615999b15339db759f71bba049e0b46b76ce3c7c1a448946c0a7af",
+      "input_plan_sha256": "507466b8b088427cbf7c5dd69dca07c9a97cd6a911f2931498a4c710f2c932bd",
+      "runner_sha256": "7c296f6bd06af430b720a62dc1fcdefee4e1697a2987fd9892abb9c48c1cdb91",
+      "stdout_sha256": "70f4f886c5145e373b1b179886045d84d2180e7b96ac8199557fcea4cef3d2e6",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "command": [
+        "/home/et16/work/xadb/artifacts/dev3/catalog-create-20261025/integration-r38/xadb-engine-tests",
+        "--exact",
+        "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::reader_validation::catalog_cr02_v2_jobs_read",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "revision": "integration-r38"
+    },
+    {
+      "path": "artifacts/dev3/catalog-create-20261025/integration-r38/review-fix/CR03/result.json",
+      "sha256": "c199d10fe3cdb22c757d7c8ce7c146120c17112046ebccc7bd212195716d7e13",
+      "case": "CR03",
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::reader_validation::catalog_cr03_mixed_version_rejected",
+      "status": "PASS",
+      "expected_failure_observed": false,
+      "exit_code": 0,
+      "error": null,
+      "seconds": 0.71595753800284,
+      "source": "fa47bc86a7a2bbbb85b4fa6184570c44639e884059c886e8f5eb6318c932b3fe",
+      "elf": "179edbee86615999b15339db759f71bba049e0b46b76ce3c7c1a448946c0a7af",
+      "input_plan_sha256": "507466b8b088427cbf7c5dd69dca07c9a97cd6a911f2931498a4c710f2c932bd",
+      "runner_sha256": "7c296f6bd06af430b720a62dc1fcdefee4e1697a2987fd9892abb9c48c1cdb91",
+      "stdout_sha256": "fb9e36ba08589724bfe5781d263f7586723a4e8c4052c622ae7a65af3b3a9301",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "command": [
+        "/home/et16/work/xadb/artifacts/dev3/catalog-create-20261025/integration-r38/xadb-engine-tests",
+        "--exact",
+        "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::reader_validation::catalog_cr03_mixed_version_rejected",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "revision": "integration-r38"
+    },
+    {
+      "path": "artifacts/dev3/catalog-create-20261025/integration-r38/review-fix/CR04/result.json",
+      "sha256": "d459346d56a0314cf8c5cbd1c71fc166fe2bae3646b81cc2d0d4fb84a189fa91",
+      "case": "CR04",
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::reader_validation::catalog_cr04_corruption_rejected",
+      "status": "PASS",
+      "expected_failure_observed": false,
+      "exit_code": 0,
+      "error": null,
+      "seconds": 0.7158785809988331,
+      "source": "fa47bc86a7a2bbbb85b4fa6184570c44639e884059c886e8f5eb6318c932b3fe",
+      "elf": "179edbee86615999b15339db759f71bba049e0b46b76ce3c7c1a448946c0a7af",
+      "input_plan_sha256": "507466b8b088427cbf7c5dd69dca07c9a97cd6a911f2931498a4c710f2c932bd",
+      "runner_sha256": "7c296f6bd06af430b720a62dc1fcdefee4e1697a2987fd9892abb9c48c1cdb91",
+      "stdout_sha256": "9effe0c9d3d1b665759a0c3a1e0e990e141eea24100bdf0ea3cbb4d5c987f6bb",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "command": [
+        "/home/et16/work/xadb/artifacts/dev3/catalog-create-20261025/integration-r38/xadb-engine-tests",
+        "--exact",
+        "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::reader_validation::catalog_cr04_corruption_rejected",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "revision": "integration-r38"
+    },
+    {
+      "path": "artifacts/dev3/catalog-create-20261025/integration-r38/review-fix/PR01/result.json",
+      "sha256": "4504889c19ce120fad7d6d7a133916d5b6b12082711aef3af25d83a5b190ddd4",
+      "case": "PR01",
+      "selector": "storage::dirty_frame::retention_residency::tests::pair_room_second_victim_missing_is_unchanged",
+      "status": "PASS",
+      "expected_failure_observed": false,
+      "exit_code": 0,
+      "error": null,
+      "seconds": 0.005201134001254104,
+      "source": "fa47bc86a7a2bbbb85b4fa6184570c44639e884059c886e8f5eb6318c932b3fe",
+      "elf": "179edbee86615999b15339db759f71bba049e0b46b76ce3c7c1a448946c0a7af",
+      "input_plan_sha256": "507466b8b088427cbf7c5dd69dca07c9a97cd6a911f2931498a4c710f2c932bd",
+      "runner_sha256": "7c296f6bd06af430b720a62dc1fcdefee4e1697a2987fd9892abb9c48c1cdb91",
+      "stdout_sha256": "2aadd046e89c4259c2e19884161c0064f781b796329131019dd757848b2dc3d2",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "command": [
+        "/home/et16/work/xadb/artifacts/dev3/catalog-create-20261025/integration-r38/xadb-engine-tests",
+        "--exact",
+        "storage::dirty_frame::retention_residency::tests::pair_room_second_victim_missing_is_unchanged",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "revision": "integration-r38"
+    },
+    {
+      "path": "artifacts/dev3/catalog-create-20261025/integration-r38/review-fix/PR02/result.json",
+      "sha256": "cab021f6272a8824c57323c95dfff524214a59ac077fe67d00a8ee7b2a4cabb0",
+      "case": "PR02",
+      "selector": "storage::dirty_frame::retention_residency::tests::pair_room_generation_exhaustion_is_unchanged",
+      "status": "PASS",
+      "expected_failure_observed": false,
+      "exit_code": 0,
+      "error": null,
+      "seconds": 0.0043662690004566684,
+      "source": "fa47bc86a7a2bbbb85b4fa6184570c44639e884059c886e8f5eb6318c932b3fe",
+      "elf": "179edbee86615999b15339db759f71bba049e0b46b76ce3c7c1a448946c0a7af",
+      "input_plan_sha256": "507466b8b088427cbf7c5dd69dca07c9a97cd6a911f2931498a4c710f2c932bd",
+      "runner_sha256": "7c296f6bd06af430b720a62dc1fcdefee4e1697a2987fd9892abb9c48c1cdb91",
+      "stdout_sha256": "74c079071b99cc8fd7a8bda3e1763b59bab4b776ff8855ad4a7957f546d2a86c",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "command": [
+        "/home/et16/work/xadb/artifacts/dev3/catalog-create-20261025/integration-r38/xadb-engine-tests",
+        "--exact",
+        "storage::dirty_frame::retention_residency::tests::pair_room_generation_exhaustion_is_unchanged",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "revision": "integration-r38"
+    },
+    {
+      "path": "artifacts/dev3/catalog-create-20261025/integration-r38/review-fix/PR03/result.json",
+      "sha256": "46c45fae04c49f8f1894d463c44d93c0b8724dd469c146be8d90d8a5b6208f9e",
+      "case": "PR03",
+      "selector": "storage::dirty_frame::retention_residency::tests::pair_room_latch_busy_is_unchanged",
+      "status": "PASS",
+      "expected_failure_observed": false,
+      "exit_code": 0,
+      "error": null,
+      "seconds": 0.004251842001394834,
+      "source": "fa47bc86a7a2bbbb85b4fa6184570c44639e884059c886e8f5eb6318c932b3fe",
+      "elf": "179edbee86615999b15339db759f71bba049e0b46b76ce3c7c1a448946c0a7af",
+      "input_plan_sha256": "507466b8b088427cbf7c5dd69dca07c9a97cd6a911f2931498a4c710f2c932bd",
+      "runner_sha256": "7c296f6bd06af430b720a62dc1fcdefee4e1697a2987fd9892abb9c48c1cdb91",
+      "stdout_sha256": "17d78f93e00fd748ecbfddcc4d023c58d1526a1a43bfa711d14b09beaf6e2d7a",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "command": [
+        "/home/et16/work/xadb/artifacts/dev3/catalog-create-20261025/integration-r38/xadb-engine-tests",
+        "--exact",
+        "storage::dirty_frame::retention_residency::tests::pair_room_latch_busy_is_unchanged",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "revision": "integration-r38"
+    },
+    {
+      "path": "artifacts/dev3/catalog-create-20261025/integration-r38/review-fix/PR04/result.json",
+      "sha256": "8c94c31b9e806f4040af37b0113f6ab314a1b8b55dfd29407afa44322c1d653e",
+      "case": "PR04",
+      "selector": "storage::dirty_frame::retention_residency::tests::pair_room_missing_rec_lsn_fences_before_candidate",
+      "status": "PASS",
+      "expected_failure_observed": false,
+      "exit_code": 0,
+      "error": null,
+      "seconds": 0.004470724998100195,
+      "source": "fa47bc86a7a2bbbb85b4fa6184570c44639e884059c886e8f5eb6318c932b3fe",
+      "elf": "179edbee86615999b15339db759f71bba049e0b46b76ce3c7c1a448946c0a7af",
+      "input_plan_sha256": "507466b8b088427cbf7c5dd69dca07c9a97cd6a911f2931498a4c710f2c932bd",
+      "runner_sha256": "7c296f6bd06af430b720a62dc1fcdefee4e1697a2987fd9892abb9c48c1cdb91",
+      "stdout_sha256": "447f7707748e2a166e7f372adb20258cd3fe616c26f61f3b4a86b09d19431b8a",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "command": [
+        "/home/et16/work/xadb/artifacts/dev3/catalog-create-20261025/integration-r38/xadb-engine-tests",
+        "--exact",
+        "storage::dirty_frame::retention_residency::tests::pair_room_missing_rec_lsn_fences_before_candidate",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "revision": "integration-r38"
+    },
+    {
+      "path": "artifacts/dev3/catalog-create-20261025/integration-r38/review-fix/SC01/result.json",
+      "sha256": "065c0b1e7f3b1868a441e03f5e36dce4176d1024ae7470c9ed4236c1f4154ef8",
+      "case": "SC01",
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::catalog_source_tests::catalog_source_memory",
+      "status": "PASS",
+      "expected_failure_observed": false,
+      "exit_code": 0,
+      "error": null,
+      "seconds": 0.004735924998385599,
+      "source": "fa47bc86a7a2bbbb85b4fa6184570c44639e884059c886e8f5eb6318c932b3fe",
+      "elf": "179edbee86615999b15339db759f71bba049e0b46b76ce3c7c1a448946c0a7af",
+      "input_plan_sha256": "507466b8b088427cbf7c5dd69dca07c9a97cd6a911f2931498a4c710f2c932bd",
+      "runner_sha256": "7c296f6bd06af430b720a62dc1fcdefee4e1697a2987fd9892abb9c48c1cdb91",
+      "stdout_sha256": "eb980c8432483baf185718080fc418c66cf0e00d5556774ad352a7cfbee885a5",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "command": [
+        "/home/et16/work/xadb/artifacts/dev3/catalog-create-20261025/integration-r38/xadb-engine-tests",
+        "--exact",
+        "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::catalog_source_tests::catalog_source_memory",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "revision": "integration-r38"
+    },
+    {
+      "path": "artifacts/dev3/catalog-create-20261025/integration-r38/review-fix/SC02/result.json",
+      "sha256": "c76aac1e530fb3d5874586a13c259fd6ac26d25914c72fd9121bdb861f1f192a",
+      "case": "SC02",
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::catalog_source_tests::catalog_source_native",
+      "status": "PASS",
+      "expected_failure_observed": false,
+      "exit_code": 0,
+      "error": null,
+      "seconds": 0.004709806999017019,
+      "source": "fa47bc86a7a2bbbb85b4fa6184570c44639e884059c886e8f5eb6318c932b3fe",
+      "elf": "179edbee86615999b15339db759f71bba049e0b46b76ce3c7c1a448946c0a7af",
+      "input_plan_sha256": "507466b8b088427cbf7c5dd69dca07c9a97cd6a911f2931498a4c710f2c932bd",
+      "runner_sha256": "7c296f6bd06af430b720a62dc1fcdefee4e1697a2987fd9892abb9c48c1cdb91",
+      "stdout_sha256": "e35f56a2c47015dcadb2d4a63963cd065a5f513d7d66080c82db2577565efb01",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "command": [
+        "/home/et16/work/xadb/artifacts/dev3/catalog-create-20261025/integration-r38/xadb-engine-tests",
+        "--exact",
+        "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::catalog_source_tests::catalog_source_native",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "revision": "integration-r38"
+    },
+    {
+      "path": "artifacts/dev3/catalog-create-20261025/integration-r39/review-fix/CR01/result.json",
+      "sha256": "f968d618c1db3027b1e55b6659d1ed0011176c2b7f22600fd898ceaf25194c26",
+      "case": "CR01",
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::reader_validation::catalog_cr01_v2_root_read",
+      "status": "FAIL",
+      "expected_failure_observed": true,
+      "exit_code": 101,
+      "error": null,
+      "seconds": 0.3664443489979021,
+      "source": "d51270de9dcf15ae4ff6ef9e7b34cd3961a9ac8c1e881195e5c0c179233f3328",
+      "elf": "25421ab5c7a96f304ce990af0953170f018a5f86aeee01368d83174fc6650c4e",
+      "input_plan_sha256": "507466b8b088427cbf7c5dd69dca07c9a97cd6a911f2931498a4c710f2c932bd",
+      "runner_sha256": "7c296f6bd06af430b720a62dc1fcdefee4e1697a2987fd9892abb9c48c1cdb91",
+      "stdout_sha256": "1eccb32f018b2082bdad75acd9cf1fbb693e9856723a017e6a995863a5314bb6",
+      "stderr_sha256": "99c552131b98f84e6409ae06733753930eedd028986e96ad664bc4a39e2bcc03",
+      "command": [
+        "/home/et16/work/xadb/artifacts/dev3/catalog-create-20261025/integration-r39/xadb-engine-tests",
+        "--exact",
+        "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::reader_validation::catalog_cr01_v2_root_read",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "revision": "integration-r39"
+    },
+    {
+      "path": "artifacts/dev3/catalog-create-20261025/integration-r39/review-fix/CR02/result.json",
+      "sha256": "416d224872e37f6e0c13e4d6eca60e3a1f83ab96bc8ebb79b839d61955821867",
+      "case": "CR02",
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::reader_validation::catalog_cr02_v2_jobs_read",
+      "status": "FAIL",
+      "expected_failure_observed": true,
+      "exit_code": 101,
+      "error": null,
+      "seconds": 0.3660608760001196,
+      "source": "d51270de9dcf15ae4ff6ef9e7b34cd3961a9ac8c1e881195e5c0c179233f3328",
+      "elf": "25421ab5c7a96f304ce990af0953170f018a5f86aeee01368d83174fc6650c4e",
+      "input_plan_sha256": "507466b8b088427cbf7c5dd69dca07c9a97cd6a911f2931498a4c710f2c932bd",
+      "runner_sha256": "7c296f6bd06af430b720a62dc1fcdefee4e1697a2987fd9892abb9c48c1cdb91",
+      "stdout_sha256": "5afc931c66b91ff7d19eae4b79e3c4ac6cd385f9124f4cbdbe1f1c27ea450687",
+      "stderr_sha256": "8e7f6735d0320bf0cdd9f7c84a160c86df64ed34c3b96d0d823e1282b46c576a",
+      "command": [
+        "/home/et16/work/xadb/artifacts/dev3/catalog-create-20261025/integration-r39/xadb-engine-tests",
+        "--exact",
+        "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::reader_validation::catalog_cr02_v2_jobs_read",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "revision": "integration-r39"
+    }
+  ],
+  "checks": [
+    {
+      "path": "artifacts/dev3/catalog-create-20261025/integration-r38/clippy-receipt.json",
+      "sha256": "342c38cbc0764e5a81960f61a9df378b846001440a25daf4dd55ef2664ba2a9c",
+      "source": "fa47bc86a7a2bbbb85b4fa6184570c44639e884059c886e8f5eb6318c932b3fe",
+      "command": [
+        "cargo",
+        "clippy",
+        "-p",
+        "xadb-engine",
+        "--all-targets",
+        "--all-features",
+        "--locked",
+        "--offline",
+        "--",
+        "-D",
+        "warnings"
+      ],
+      "exit_code": 101,
+      "status": "FAIL",
+      "stdout": {
+        "path": "artifacts/dev3/catalog-create-20261025/integration-r38/clippy.stdout",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "stderr": {
+        "path": "artifacts/dev3/catalog-create-20261025/integration-r38/clippy.stderr",
+        "sha256": "904193cb319cbcabc1d81ebc16597671007340cee7d60a5fed42993110a1e2a8"
+      }
+    },
+    {
+      "path": "artifacts/dev3/catalog-create-20261025/integration-r40/fmt-receipt.json",
+      "sha256": "26fd14c0ff1d9142c4a688478ee8672653c7fc1a88297c03b2c08bcd336f1af1",
+      "source": "60a66a52ae992b8b280ff9679109f037d615261d8945e26bff74a3e0e0b9efa7",
+      "command": [
+        "cargo",
+        "fmt",
+        "--all",
+        "--check"
+      ],
+      "exit_code": 0,
+      "status": "PASS",
+      "stdout": {
+        "path": "artifacts/dev3/catalog-create-20261025/integration-r40/fmt.stdout",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "stderr": {
+        "path": "artifacts/dev3/catalog-create-20261025/integration-r40/fmt.stderr",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      }
+    },
+    {
+      "path": "artifacts/dev3/catalog-create-20261025/integration-r40/clippy-receipt.json",
+      "sha256": "cdab096bff95a384839269928adc368e5de1104dafdea194a095a4b9f235d2ec",
+      "source": "60a66a52ae992b8b280ff9679109f037d615261d8945e26bff74a3e0e0b9efa7",
+      "command": [
+        "cargo",
+        "clippy",
+        "-p",
+        "xadb-engine",
+        "--all-targets",
+        "--all-features",
+        "--locked",
+        "--offline",
+        "--",
+        "-D",
+        "warnings"
+      ],
+      "exit_code": 0,
+      "status": "PASS",
+      "stdout": {
+        "path": "artifacts/dev3/catalog-create-20261025/integration-r40/clippy.stdout",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "stderr": {
+        "path": "artifacts/dev3/catalog-create-20261025/integration-r40/clippy.stderr",
+        "sha256": "2249969f8aa13661b8d24a9d2c8874d56c61a4c8a9297f72a897eb47d4a3b8f7"
+      }
+    }
+  ],
+  "integrity": {
+    "path": "artifacts/dev3/catalog-create-20261025/review-fix-20261026/integrity.json",
+    "sha256": "3742f4384a8a36acedbab4ebdc191c7a910bb582aa7009ef692eee89863e45c2"
+  },
+  "final_vs_runtime_delta": "r40 differs from r38 only by an equivalent tuple type alias in retention_residency_tests.rs; product and executable assertions unchanged; no runtime re-execution",
+  "counts": {
+    "new_reader_selectors_pass": 4,
+    "new_pair_selectors_pass": 4,
+    "directly_changed_source_selectors_pass": 2,
+    "known_bad_decoder_expected_fail": 2,
+    "previous_completed_runtime_reexecuted": 0,
+    "whole_workspace_runs": 0
+  },
+  "preserved_failures": [
+    "r37 compile errors 2, no runtime",
+    "r38 Clippy type_complexity",
+    "r39 CR01/CR02 UnsupportedFormat expected failures",
+    "r33-r36 originals"
+  ],
+  "not_claimed": [
+    "upper Flush candidate recLSN=None branch execution (lower invariant rejects first)",
+    "runtime F05",
+    "MF01/MF13 runtime",
+    "native/process or durability requalification",
+    "Row INSERT",
+    "DEV3/S5 complete"
+  ],
+  "independent_review": {
+    "reviewer": "/root/dev3_fix_review",
+    "authorization": "repository D1/D2 independent review requirement",
+    "pre_execution": "product dispatch, source bound, new input and exact selectors accepted after test-only corrections",
+    "final": "ACCEPTED_LIMITED_D1",
+    "report": {
+      "path": "artifacts/dev3/catalog-create-20261025/review-fix-20261026/final-independent-review.md",
+      "sha256": "f8777fa051a870455abdb8bbca2f7eca21b2a631ca6a564b36f3eab7adcf7478"
+    },
+    "blocking_findings": 0
+  }
+}
