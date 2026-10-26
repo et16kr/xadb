@@ -600,7 +600,13 @@ fn cut_case(profile: u32, offset: usize, id: &str) {
                 assert!(!fence.is_fenced());
                 assert!(frame_test::content_busy(pool, 0) && frame_test::content_busy(pool, 1));
                 assert!(core_ref.diagnostic_version_busy());
-                assert_eq!(frame_init::pin_state(pool).1, 2);
+                if offset == 0 {
+                    assert_eq!(frame_init::try_pin_state(pool).unwrap().1, 2);
+                } else {
+                    let held_leaf = frame_init::try_pin_state(pool).unwrap_err();
+                    assert_eq!(held_leaf.cause, dirty_frame::Cause::Busy);
+                    assert_eq!(held_leaf.effect, Effect::Unchanged);
+                }
                 assert_eq!(frame_init::dpt_busy(pool), offset != 0);
                 resume.try_send(frame_test::Resume::Panic).unwrap();
                 ack(&fence_arrival);
@@ -810,17 +816,26 @@ fn status_init_cf12_publication_and_concurrent_reader() {
                 let controller = scope.spawn(move || {
                     let mut reader_owner = core_ref.try_owner(OwnerRole::Foreground).unwrap();
                     ack(&published_ack);
-                    assert!(pool.initialized_request().unwrap().is_some());
-                    assert_eq!(frame_init::pin_state(pool).1, 2);
+                    let unpublished_observation = pool.initialized_request().unwrap_err();
+                    assert_eq!(unpublished_observation.cause, dirty_frame::Cause::Busy);
+                    assert_eq!(unpublished_observation.effect, Effect::Unchanged);
+                    let held_leaf = frame_init::try_pin_state(pool).unwrap_err();
+                    assert_eq!(held_leaf.cause, dirty_frame::Cause::Busy);
+                    assert_eq!(held_leaf.effect, Effect::Unchanged);
                     let rejected = err(reader.read(&mut reader_owner));
                     assert_eq!(rejected.phase, Phase::Observe);
                     frame_failure(rejected, dirty_frame::Cause::Busy, Effect::Unchanged);
                     frame_test::install_release_pause(pool, released, cleanup_release);
-                    assert_eq!(frame_init::pin_state(pool).1, 2);
+                    assert_eq!(
+                        frame_init::try_pin_state(pool).unwrap_err().cause,
+                        dirty_frame::Cause::Busy
+                    );
                     install_resume
                         .try_send(frame_test::Resume::Continue)
                         .unwrap();
                     ack(&released_ack);
+                    assert!(pool.initialized_request().unwrap().is_some());
+                    assert_eq!(frame_init::try_pin_state(pool).unwrap().1, 2);
                     let read = reader.read(&mut reader_owner).unwrap();
                     assert_eq!(
                         &read.bytes().unwrap()[..],
@@ -858,6 +873,12 @@ fn status_init_cf12_publication_and_concurrent_reader() {
         return;
     }
     for (variant, point) in CUTS[..5].iter().copied().enumerate() {
+        // Changed shared-leaf diagnostics can be selected without repeating C1.
+        if std::env::var("XADB_STATUS_INIT_CF12_02_CUTS")
+            .is_ok_and(|value| !value.split(',').any(|cut| cut == (variant + 1).to_string()))
+        {
+            continue;
+        }
         fixture!(1, |bound, core, state| {
             let (mut writer, reader) = bound.split();
             let mut owner = core.try_owner(OwnerRole::Maintenance).unwrap();
@@ -872,13 +893,19 @@ fn status_init_cf12_publication_and_concurrent_reader() {
                 let controller = scope.spawn(move || {
                     let mut reader_owner = core_ref.try_owner(OwnerRole::Foreground).unwrap();
                     ack(&arrival);
-                    let before = frame_init::pin_state(pool);
-                    assert_eq!(before.1, 2);
+                    let before = frame_init::try_pin_state(pool);
+                    if variant == 0 {
+                        assert_eq!(before.as_ref().unwrap().1, 2);
+                    } else {
+                        let held_leaf = before.as_ref().unwrap_err();
+                        assert_eq!(held_leaf.cause, dirty_frame::Cause::Busy);
+                        assert_eq!(held_leaf.effect, Effect::Unchanged);
+                    }
                     assert_eq!(frame_init::dpt_busy(pool), variant != 0);
                     let rejected = err(reader.read(&mut reader_owner));
                     assert_eq!(rejected.effect, Effect::Unchanged);
                     assert!(matches!(rejected.cause, Cause::NotInitialized));
-                    assert_eq!(frame_init::pin_state(pool), before);
+                    assert_eq!(frame_init::try_pin_state(pool), before);
                     resume.try_send(frame_test::Resume::Continue).unwrap();
                     ack(&finish_ack);
                     let read = reader.read(&mut reader_owner).unwrap();

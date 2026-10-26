@@ -1,0 +1,89 @@
+{
+  "id": "D3-CREATE-MEMORY-GAP-G1",
+  "status": "PROPOSED_FOR_ROOT_HASH_ADOPTION",
+  "author": "/root/page_lifetime",
+  "scope": "Independent MC03 issued-local gap and MC04 dropped reservation expectations only; no product execution admission",
+  "output_directory": "tests/fixtures/dev3-catalog-create/memory-gap",
+  "source_inputs": {
+    "tests/fixtures/dev3-catalog-create/native/generate_literals.py": "cfcf03e3482350b57bd31149ecc9270cfbdac86b4d860f3c4134d9405ccb8f3a",
+    "tests/fixtures/dev3-catalog-create/transition/generate_literals.py": "3716f9d63f099051363bebeeaf0ebe4586ccd0984aa91735a7de82eba7d23b7e",
+    "tests/fixtures/dev3-plan4-free-undo/generate_literals.py": "a9a646f5fd047b1fbd73d743d99d56cde9a8217bf65587d08e9dd1f892e6bb42"
+  },
+  "immutable_existing": {
+    "tests/fixtures/dev3-catalog-create/native/input-plan.json": "d6306d7396ad70165a291a14208c35b7e6e8091f0a4c67e870ea9e96d34e0a34",
+    "tests/fixtures/dev3-catalog-create/native/manifest.json": "87aa46dd81711cc5080097c674e6fb419e371680ea3e19faa5bafbe3e4847b23",
+    "tests/fixtures/dev3-catalog-create/transition/manifest.json": "6da4346527580f3988deb480546fd6e4ee6aa57201a4bedbb7dec60c4f1509eb"
+  },
+  "namespace": {
+    "database_hex": "0102030405060708090a0b0c0d0e0f10",
+    "timeline": 1,
+    "file": 4294967297,
+    "profile_id": 1,
+    "profile_format": 2
+  },
+  "setup": [
+    {"lsn": 1, "operation": "AgingStart", "bytes": 19672},
+    {"lsn": 2, "operation": "StatusReserve", "page": 9, "work": 1, "bytes": 21200},
+    {"lsn": 3, "operation": "StatusInit", "page": 9, "work": 1, "bytes": 38000},
+    {"lsn": 4, "operation": "UndoReserve", "page": 10, "work": 2, "bytes": 21200},
+    {"lsn": 5, "operation": "UndoInit", "page": 10, "work": 2, "bytes": 38208}
+  ],
+  "scenarios": {
+    "MC03": {
+      "purpose": "Known Unchanged Begin preflight consumes local1; successful local2 remains replayable",
+      "failure": {
+        "boundary": "catalog_begin issued_local increment followed by prepare_existing_catalog counter prepayment",
+        "target_page": 1,
+        "counter": 18446744073709551615,
+        "fixture": "Copy original DirtyEntry and change only modification_counter; set matching frame counter. Preserve identity/generation/pageLSN/recLSN/requirement and all page bytes. Restore the original two counters after failure, never issued_local.",
+        "phase": "Prepare",
+        "cause": "Exhausted",
+        "effect": "Unchanged",
+        "wal_delta": 0,
+        "att_delta": 0,
+        "issued_local_after_failure": 1,
+        "adopted_local_after_failure": 0
+      },
+      "actor": {"epoch": 1, "local": 2, "generation": 2},
+      "logical": {"object": 6, "undo_sequence": 1, "undo_generation": 2, "pair": [11, 12], "incarnation": 2, "q": 1, "terminal": 0, "root": 1, "terminal_generation": 2, "root_generation": 2},
+      "phases": [
+        {"epoch": 1, "lsns": [1, 9], "cut": "Commit9 returned after actual issued gap"},
+        {"epoch": 2, "lsns": [10, 15], "selected_capture": 9, "end": "Fresh runtime cleanup and READY/query T"}
+      ],
+      "operations": [[1, "begin"], [11, "reserve"], [2, "forward"], [6, "commit"], [20, "prune"], [21, "release1"], [21, "release2"], [21, "release3"], [22, "rootfree"], [17, "finish"]],
+      "checkpoints": [5, 9, 15],
+      "final": {"lsn": 15, "revision": 12, "issued": 2, "completed": 2, "canceled": 0, "cursor": 1, "undo_high": 1, "object_high": 6, "C": 1, "Q": 1, "aging_groups": 11, "aging_consumed": 386900, "aging_remaining": 0}
+    },
+    "MC04": {
+      "purpose": "Dropped actual Reserved token fences without a synthetic Cancel; fresh runtime cancels original pair",
+      "failure": {"boundary": "ReservedCatalogCreate Drop after durable Reserve7", "wal_delta": 0, "cancel_delta": 0, "effect": "Fenced", "normal_ack": false},
+      "actor": {"epoch": 1, "local": 1, "generation": 2},
+      "logical": {"object": 6, "undo_sequence": 1, "undo_generation": 2, "pair": [11, 12], "incarnation": 2, "q": 0, "terminal": 0, "root": 1, "terminal_generation": 2, "root_generation": 2},
+      "phases": [
+        {"epoch": 1, "lsns": [1, 7], "cut": "Reserve7 then token Drop; no further logical frame"},
+        {"epoch": 2, "lsns": [8, 11], "selected_capture": 7, "end": "Actual Cancel8/Rollback9/Abort10/TerminalFinish11 then READY/Missing"}
+      ],
+      "operations": [[1, "begin"], [11, "reserve"], [12, "cancel"], [3, "emptyrollback"], [7, "abort"], [17, "finish"]],
+      "checkpoints": [5, 7, 11],
+      "final": {"lsn": 11, "revision": 7, "issued": 2, "completed": 1, "canceled": 1, "cursor": 1, "undo_high": 1, "object_high": 6, "C": 0, "Q": 0, "aging_groups": 6, "aging_consumed": 74784, "aging_remaining": 0}
+    }
+  },
+  "writer_rules": [
+    "Import only the three SHA-pinned independent Python serializers; do not import product, native Rust output, or execute prior serializer main functions. Never write old corpus paths.",
+    "Reuse native Inputs setup/blob/row/checkpoint mechanics only. Override scenario iteration with this exact plan and keep output metadata in the fresh directory.",
+    "MC03 uses the first logical CREATE plan, changes only actor.local to2, and recomputes schema projection/native/descriptor/page hashes from that declared actor. Status/Undo/object/Job generations and q remain first-CREATE values; local2 must not imply a second transaction cycle.",
+    "MC04 uses the first canceled CREATE plan; actor remains epoch1/local1 across epoch2 Cancel and cleanup. Outer WAL epoch changes after Reserve7 while logical LSN remains absolute.",
+    "Write exactly26 rows and6 checkpoints. Whole changed pages, Jobs, before/after descriptors and exact canonical allocated images are independent raw expectations. No raw fixture is installed into the actual pool or home to supply authority.",
+    "MC03 L1..5 and MC04 L1..7 must be byte-identical to the preserved native N01 prefix. MC04 L8..11 must match preserved K03..K06 semantic/native bytes except the declared outer epoch and its two seals.",
+    "Checkpoint canonical Free/Reserved arena pages are zero; physical stale freed home bytes are not claimed zero. Selected base/INIT provenance and capture authority remain actual recovery obligations."
+  ],
+  "auditor_rules": [
+    "Separate stdlib-only raw parser; no serializer or product imports. Verify full inventory, source pins, exact row/LSN/op/epoch/WALoffset schedule, every envelope/native/redo hash and page checksum.",
+    "Verify every transaction owner/source uses the scenario actor, including MC03 epoch1/local2/generation2; reject conflating actor.local with sequence/object/slot generations.",
+    "Check Root/Jobs/descriptor conservation, remaining/consumed arithmetic, checkpoint allocator/current image identity and exact final external scalars.",
+    "Read original manifests/raw for declared byte comparisons only. The generator and auditor are input preparation, never a product/runtime PASS."
+  ],
+  "limits": {"generation_runs": 1, "generation_seconds": 30, "auditor_seconds": 30, "raw_corpus_bytes": 8388608, "raw_file_bytes": 1048576, "output_bytes": 1048576, "transition_input_bytes": 4194304},
+  "generation_admission": "Root adopts this exact plan SHA before a single generation. Preserve failed source/raw/result; no silent regeneration.",
+  "runtime_admission": "NOT_ADMITTED: root whole source admission and coherent source/ELF, exact memory hooks and immutable input SHA are still required."
+}

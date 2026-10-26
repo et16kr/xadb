@@ -1,10 +1,10 @@
 //! One bounded directory with a publication cell per caller frame.
-//! Only exclusive pool mutation may issue generations or replace a cell. Shared
-//! INIT publishes into its preclaimed generation without adding a lookup lock.
-//! General multi-address loading and repeated INIT remain separate consumers.
+//! The original PoolRegistry leaf owns this directory with pins and DPT.
+//! Exclusive handoff or a checked per-target LOAD claim may replace a cell.
+//! INIT retains its preclaimed generations and joint pair publication gate.
 
 use super::{DirtyFrame, MAX_FRAMES, PageKind, Registration, TargetRequest};
-use std::sync::OnceLock;
+use std::sync::atomic::{AtomicBool, Ordering};
 
 #[derive(Clone, Copy, PartialEq, Eq)]
 enum Mode {
@@ -19,36 +19,42 @@ enum Mode {
 
 struct Slot {
     generation: u64,
-    request: OnceLock<TargetRequest>,
+    request: Option<TargetRequest>,
 }
 impl Slot {
     const fn empty() -> Self {
         Self {
             generation: 0,
-            request: OnceLock::new(),
+            request: None,
         }
     }
 
     fn registration(&self) -> Option<Registration> {
-        self.request.get().copied().map(|request| Registration {
+        self.request.map(|request| Registration {
             request,
             generation: self.generation,
         })
     }
 
-    // A failed generation check cannot initialize the publication cell. OnceLock
-    // provides shared single publication, not address or initializer authority.
-    fn publish(&self, registration: Registration) -> bool {
-        self.generation != 0
-            && self.generation == registration.generation
-            && *self.request.get_or_init(|| registration.request) == registration.request
+    // The original registry leaf supplies exclusive access. Generation and
+    // exact prior identity are checked before changing the publication cell.
+    fn publish(&mut self, registration: Registration) -> bool {
+        if self.generation == 0 || self.generation != registration.generation {
+            return false;
+        }
+        match self.request {
+            Some(request) => request == registration.request,
+            None => {
+                self.request = Some(registration.request);
+                true
+            }
+        }
     }
 
     fn replace(&mut self, registration: Registration) {
-        self.request.take();
         self.generation = registration.generation;
         // Exclusive access makes this assignment infallible.
-        let _ = self.request.set(registration.request);
+        self.request = Some(registration.request);
     }
 }
 
@@ -56,19 +62,39 @@ pub(super) struct RegistrationDirectory {
     mode: Mode,
     entries: [Slot; MAX_FRAMES],
     closed_index: Option<usize>,
+    // A pair is hidden until both publication cells and the whole Forward
+    // installation are complete. The gate, not either cell, publishes it.
+    closed_pair: Option<[u8; 2]>,
+    pair_published: AtomicBool,
     resident: u64,
     pub(super) eviction_epoch: u64,
+}
+
+/// Exact pre-LOAD directory layout for historical source census only. These
+/// types are never constructed; current admission always uses the live type.
+#[allow(dead_code)]
+struct PreLoadSlot {
+    generation: u64,
+    request: std::sync::OnceLock<TargetRequest>,
+}
+#[allow(dead_code)]
+pub(super) struct PreLoadDirectory {
+    mode: Mode,
+    entries: [PreLoadSlot; MAX_FRAMES],
+    closed_index: Option<usize>,
+    closed_pair: Option<[u8; 2]>,
+    pair_published: AtomicBool,
+    resident: u64,
+    eviction_epoch: u64,
 }
 // The old expansion keeps its exact closed-slot predicate. Only live retention
 // admits the original single closed initializer slot.
 macro_rules! plan4_closed_invalid {
     (genesis, $directory:ident, $frames:ident) => {
-        $directory.closed_index.is_some()
+        $directory.closed_index.is_some() || $directory.closed_pair.is_some()
     };
     (retention, $directory:ident, $frames:ident) => {
-        $directory.closed_index.is_some_and(|index| {
-            index == 0 || index >= $frames.len() || $directory.entries[index].generation == 0
-        })
+        !$directory.closed_retention_valid($frames)
     };
 }
 // Two fixed modes share registration geometry; accepted payloads and INIT differ.
@@ -144,6 +170,8 @@ impl RegistrationDirectory {
             mode: Mode::Fixed,
             entries,
             closed_index: None,
+            closed_pair: None,
+            pair_published: AtomicBool::new(false),
             resident: 0,
             eviction_epoch: 0,
         })
@@ -155,6 +183,28 @@ impl RegistrationDirectory {
     }
     pub(super) fn closed_index(&self) -> Option<usize> {
         self.closed_index
+    }
+    pub(super) fn closed_pair(&self) -> Option<[usize; 2]> {
+        self.closed_pair.map(|indices| indices.map(usize::from))
+    }
+    pub(super) fn pair_published(&self) -> bool {
+        self.closed_pair.is_some() && self.pair_published.load(Ordering::Acquire)
+    }
+    fn closed_retention_valid(&self, frames: &[DirtyFrame<'_>]) -> bool {
+        let valid = |index: usize| {
+            index != 0 && index < frames.len() && self.entries[index].generation != 0
+        };
+        if let Some(pair) = self.closed_pair() {
+            self.closed_index.is_none()
+                && pair[0] != pair[1]
+                && pair.into_iter().all(valid)
+                && (!self.pair_published()
+                    || pair
+                        .into_iter()
+                        .all(|index| self.entries[index].registration().is_some()))
+        } else {
+            !self.pair_published.load(Ordering::Relaxed) && self.closed_index.is_none_or(valid)
+        }
     }
     pub(super) fn operational_status(&self) -> bool {
         matches!(self.mode, Mode::OperationalStatus | Mode::ResidentStatus)
@@ -220,8 +270,12 @@ impl RegistrationDirectory {
                 }
                 9..=63 => {
                     request.identity.page.incarnation.get() >= 2
-                        && request.kind == PageKind::TransactionStatus
-                        && request.identity.owner.get() == 2
+                        && matches!(
+                            (request.kind, request.identity.owner.get()),
+                            (PageKind::TransactionStatus, 2)
+                                | (PageKind::Undo, 3)
+                                | (PageKind::TreeAnchor | PageKind::RowLeaf, 6..)
+                        )
                 }
                 _ => false,
             }
@@ -245,6 +299,100 @@ impl RegistrationDirectory {
         self.entries[index].request.take();
         self.entries[index].generation = generation;
         self.closed_index = Some(index);
+    }
+
+    /// Exclusive caller has checked both clean frames and next generations.
+    /// This consumes generations even if the later semantic reserve is cancelled.
+    pub(super) fn prepare_retention_pair(&mut self, indices: [usize; 2], generations: [u64; 2]) {
+        debug_assert!(self.closed_pair.is_none());
+        self.closed_index = None;
+        self.pair_published.store(false, Ordering::Relaxed);
+        for (index, generation) in indices.into_iter().zip(generations) {
+            self.entries[index].request.take();
+            self.entries[index].generation = generation;
+        }
+        self.closed_pair =
+            Some(indices.map(|index| u8::try_from(index).expect("bounded pool index")));
+    }
+
+    pub(super) fn pair_generations(&self) -> Option<[u64; 2]> {
+        Some(
+            self.closed_pair()?
+                .map(|index| self.entries[index].generation),
+        )
+    }
+
+    /// No lookup can observe the first cell while the second is unpublished.
+    /// A failed second publication leaves both hidden; the installer fences.
+    pub(super) fn publish_pair(
+        &mut self,
+        registrations: [Registration; 2],
+        #[cfg(test)] pool: &super::SharedPool<'_, '_, '_, '_>,
+    ) -> bool {
+        let Some(indices) = self.closed_pair() else {
+            return false;
+        };
+        if self.pair_published()
+            || registrations[0]
+                .request
+                .same_address(&registrations[1].request)
+        {
+            return false;
+        }
+        for (index, registration) in indices.into_iter().zip(registrations) {
+            if self.entries[index].generation != registration.generation
+                || self.entries[index].registration().is_some()
+            {
+                return false;
+            }
+        }
+        #[allow(
+            clippy::unused_enumerate_index,
+            reason = "the ordinal selects the first-registration fault cut in test builds"
+        )]
+        for (_at, (index, registration)) in indices.into_iter().zip(registrations).enumerate() {
+            if !self.entries[index].publish(registration) {
+                return false;
+            }
+            #[cfg(test)]
+            if _at == 0 {
+                super::init::test_support::hit(
+                    pool,
+                    super::init::test_support::InitPoint::PairFirstRegistered,
+                );
+            }
+        }
+        #[cfg(test)]
+        super::init::test_support::hit(
+            pool,
+            super::init::test_support::InitPoint::PairBothRegisteredBeforeGate,
+        );
+        self.pair_published.store(true, Ordering::Release);
+        true
+    }
+
+    /// Original bound is exclusive; all pins/claims and selected DWB have been
+    /// resolved by the sealed consumer. Generation tombstones remain consumed.
+    pub(super) fn clear_retention_pair(&mut self, indices: [usize; 2]) {
+        for index in indices {
+            self.entries[index].request.take();
+        }
+        self.closed_pair = None;
+        self.pair_published.store(false, Ordering::Relaxed);
+    }
+
+    /// After a complete Forward the registrations remain ordinary residents.
+    pub(super) fn finish_retention_pair(&mut self) {
+        debug_assert!(self.pair_published());
+        self.closed_pair = None;
+        self.pair_published.store(false, Ordering::Relaxed);
+    }
+
+    pub(super) fn retire_retention(&mut self, index: usize) {
+        self.entries[index].request.take();
+        if self.closed_index == Some(index) {
+            self.closed_index = None;
+        }
     }
     pub(super) fn open_plan4(&mut self, frames: &[DirtyFrame<'_>]) -> bool {
         if self.mode != Mode::Fixed
@@ -348,13 +496,16 @@ impl RegistrationDirectory {
     }
     // The exclusive INIT writer prechecks None before stage. Equality also
     // protects the final publication from silently accepting another value.
-    pub(super) fn publish(&self, registration: Registration) -> bool {
+    pub(super) fn publish(&mut self, registration: Registration) -> bool {
         self.closed_index
             .is_some_and(|index| self.entries[index].publish(registration))
     }
 
     pub(super) fn resolve(&self, frames: &[DirtyFrame<'_>], index: usize) -> Option<Registration> {
         let frame = frames.get(index)?;
+        if self.closed_pair().is_some_and(|pair| pair.contains(&index)) && !self.pair_published() {
+            return None;
+        }
         let original = self.entries.get(index)?.registration();
         if self.closed_index == Some(index)
             || ((self.resident_payloads() || self.plan4_payloads() || self.retention_payloads())
@@ -495,6 +646,9 @@ impl RegistrationDirectory {
         }
         if self.retention_payloads() {
             return self.valid_retention(frames);
+        }
+        if self.closed_pair.is_some() || self.pair_published.load(Ordering::Relaxed) {
+            return false;
         }
         if self.resident_payloads() {
             let Some(selected) = self.closed_index else {
@@ -676,38 +830,66 @@ mod tests {
     }
 
     #[test]
-    fn slot_concurrent_publication_has_one_exact_winner() {
-        let mut slot = Slot::empty();
-        slot.generation = 9;
+    fn original_registry_serializes_exact_publication() {
+        use super::super::{PageConcurrency, SessionFence, SharedPool};
+        use foundation::identity::{Generation, ObjectId};
+        use std::sync::atomic::AtomicU8;
+
+        // Metadata-only publication uses the actual original registry leaf.
+        // It creates no INIT/WAL/image installation or semantic capability.
+        let mut backing = [[0; super::super::PAGE_BYTES]; 2];
+        let mut frames: Vec<_> = backing.iter_mut().map(DirtyFrame::new).collect();
+        let mut allocator = request(0);
+        allocator.kind = PageKind::Allocation;
+        frames[0].register(allocator).unwrap();
+        let fence = SessionFence::new();
+        let core = PageConcurrency::new(&fence).unwrap();
+        let binding = AtomicU8::new(2);
+        let pool = SharedPool::new(&core, &fence, &binding, &frames).unwrap();
+        pool.directory_edit(RegistrationDirectory::close_status_slot)
+            .unwrap();
+        let mut target = request(1);
+        target.kind = PageKind::TransactionStatus;
+        target.identity.owner = ObjectId::new(2).unwrap();
+        target.identity.owner_generation = Generation::new(1).unwrap();
+        target.identity.page.incarnation = Generation::new(2).unwrap();
+        let first = Registration {
+            request: target,
+            generation: 1,
+        };
+        target.identity.page.incarnation = Generation::new(3).unwrap();
+        let second = Registration {
+            request: target,
+            generation: 1,
+        };
         let barrier = std::sync::Barrier::new(3);
         let winners = std::thread::scope(|scope| {
-            let shared = &slot;
+            let shared = &pool;
             let barrier = &barrier;
             let first = scope.spawn(move || {
                 barrier.wait();
-                shared.publish(Registration {
-                    request: request(1),
-                    generation: 9,
-                })
+                shared.entry_registry().unwrap().directory.publish(first)
             });
             let second = scope.spawn(move || {
                 barrier.wait();
-                shared.publish(Registration {
-                    request: request(2),
-                    generation: 9,
-                })
+                shared.entry_registry().unwrap().directory.publish(second)
             });
             barrier.wait();
             (first.join().unwrap(), second.join().unwrap())
         });
         assert_ne!(winners.0, winners.1);
-        let winner = slot.registration().unwrap();
-        assert_eq!(winner.request, request(if winners.0 { 1 } else { 2 }));
-        assert!(slot.publish(winner));
-        assert!(!slot.publish(Registration {
-            generation: 10,
+        let mut state = pool.entry_registry().unwrap();
+        let winner = state.directory.published().unwrap();
+        assert_eq!(winner, if winners.0 { first } else { second });
+        assert!(state.directory.publish(winner));
+        assert!(!state.directory.publish(Registration {
+            generation: 2,
             ..winner
         }));
+        assert_eq!(state.directory.published(), Some(winner));
+        assert_eq!(state.total, 0);
+        assert!(state.init_claim.is_none());
+        assert!(!fence.is_fenced());
     }
 
     #[test]

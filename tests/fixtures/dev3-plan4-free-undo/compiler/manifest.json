@@ -1,0 +1,116 @@
+{
+  "anchor": "crates/engine/src/storage/wal_io/plan4_retention/population.rs",
+  "baseline_count": 1,
+  "budget": {
+    "artifacts_bytes": 1073741824,
+    "audit_seconds": 30,
+    "case_seconds": 30,
+    "output_bytes": 8388608,
+    "total_seconds": 210,
+    "worker_seconds": 180
+  },
+  "cases": [
+    {
+      "expected_code": null,
+      "name": "baseline",
+      "primary_spans": [],
+      "reason": "unmodified source type checks; infrastructure only"
+    },
+    {
+      "bytes": 392,
+      "expected_code": null,
+      "name": "positive",
+      "path": "positive.rs",
+      "primary_spans": [],
+      "reason": "positive at the actual reservation/private role boundary",
+      "sha256": "5e0007d297479d92446303de49e3eb7abfe480c5c298e7f179e3811f739c121c"
+    },
+    {
+      "bytes": 313,
+      "expected_code": "E0382",
+      "name": "double_consume",
+      "path": "double_consume.rs",
+      "primary_spans": [
+        {
+          "column_end": 18,
+          "column_start": 10,
+          "line_end": 9,
+          "line_start": 9
+        }
+      ],
+      "reason": "double consume at the actual reservation/private role boundary",
+      "sha256": "53de00ee6355977e94136433d32343c6c45f09bb353aea57eff5e891a8ad6aa8"
+    },
+    {
+      "bytes": 337,
+      "expected_code": "E0499",
+      "name": "owner_reborrow",
+      "path": "owner_reborrow.rs",
+      "primary_spans": [
+        {
+          "column_end": 37,
+          "column_start": 26,
+          "line_end": 8,
+          "line_start": 8
+        }
+      ],
+      "reason": "owner reborrow at the actual reservation/private role boundary",
+      "sha256": "b3a12fcdc5b95dc58a3c910bd8055c0340e4978b7264f1f2e4f183104a0cda01"
+    },
+    {
+      "bytes": 260,
+      "expected_code": "E0515",
+      "name": "role_escape",
+      "path": "role_escape.rs",
+      "primary_spans": [
+        {
+          "column_end": 73,
+          "column_start": 5,
+          "line_end": 6,
+          "line_start": 6
+        }
+      ],
+      "reason": "role escape at the actual reservation/private role boundary",
+      "sha256": "a191e3579221a926a31ffb320a62ea22954bf6d4b8f7d0486ee7ca82a4d263f6"
+    },
+    {
+      "bytes": 258,
+      "expected_code": "E0308",
+      "name": "plan3_role",
+      "path": "plan3_role.rs",
+      "primary_spans": [
+        {
+          "column_end": 29,
+          "column_start": 21,
+          "line_end": 7,
+          "line_start": 7
+        }
+      ],
+      "reason": "plan3 role at the actual reservation/private role boundary",
+      "sha256": "b28924f335c9b2a49b6de11a12a11bd262da441c7964c7474333d4f44ce993c7"
+    },
+    {
+      "bytes": 317,
+      "expected_code": "E0382",
+      "name": "cancel_after_initialize",
+      "path": "cancel_after_initialize.rs",
+      "primary_spans": [
+        {
+          "column_end": 18,
+          "column_start": 10,
+          "line_end": 9,
+          "line_start": 9
+        }
+      ],
+      "reason": "cancel after initialize at the actual reservation/private role boundary",
+      "sha256": "671a7a9da2400a18fbe2442ab67bb5cbd562343694e41abeb390737fb6571c00"
+    }
+  ],
+  "declaration": "\n#[path = \"free_undo_compiler_probe.rs\"]\nmod free_undo_compiler_probe;\n",
+  "negative_count": 5,
+  "positive_count": 1,
+  "probe": "crates/engine/src/storage/wal_io/plan4_retention/free_undo_compiler_probe.rs",
+  "schema": "XADB_PLAN4_FREE_UNDO_COMPILER_INPUT_V1",
+  "semantic_count": 6,
+  "status": "FROZEN_SOURCE_EXPECTATIONS_NOT_EXECUTED"
+}

@@ -52,8 +52,14 @@ fn check(case: &str) {
         build: expected_build,
         mode: wire::DiagnosticsMode::Off,
     };
-    if case == "active" {
-        assert_eq!(output.path, format!("{}.diagnostic_window.v1", wire::PATH));
+    let suffix = match case {
+        "active" => Some(".diagnostic_window.v1"),
+        "prewarmup-continuous-v1" => Some(".diagnostic_prewarmup_continuous.v1"),
+        "prewarmup-wait-v1" => Some(".diagnostic_prewarmup_wait.v1"),
+        _ => None,
+    };
+    if let Some(suffix) = suffix {
+        assert_eq!(output.path, format!("{}{suffix}", wire::PATH));
         assert_eq!(
             check_output(&input, &side, &output),
             Err("input/path/build identity mismatch")
@@ -74,4 +80,16 @@ fn retained_diagnostic_output_is_correct_but_not_accepted_as_performance() {
 #[ignore = "requires explicitly retained native window evidence"]
 fn retained_disabled_hook_preserves_original_output_semantics() {
     check("disabled");
+}
+
+#[test]
+#[ignore = "requires explicitly retained native window evidence"]
+fn retained_prewarmup_continuous_output_is_correct_and_not_accepted() {
+    check("prewarmup-continuous-v1");
+}
+
+#[test]
+#[ignore = "requires explicitly retained native window evidence"]
+fn retained_prewarmup_wait_output_is_correct_and_not_accepted() {
+    check("prewarmup-wait-v1");
 }

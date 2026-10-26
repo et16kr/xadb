@@ -73,14 +73,14 @@ pub(in crate::storage) fn source_census<W: WriterNamespace>() -> RecoverySourceC
         + 3 * size_of::<SelectedControl>()
         + 4 * size_of::<control::ControlRef>()
         + 512;
-    let codec = base::recovery_source_phases();
+    let codec = base::catalog::source_bytes();
     // These pure-codec phases preserve the existing complete source_bytes
     // bound. Only the proven post-inventory view/Result phase is separated.
     let decode = |outer: usize| {
-        (outer + codec.deep).max(
+        (outer + codec).max(
             outer
-                + codec.other
-                + 2 * size_of::<std::result::Result<base::BaseView<'_>, base::Error>>()
+                + codec
+                + 2 * size_of::<std::result::Result<base::catalog::CatalogBaseView<'_>, base::Error>>()
                 + size_of::<VerifiedPlan4Base<'_>>(),
         )
     };
@@ -147,7 +147,7 @@ pub(in crate::storage) fn source_census<W: WriterNamespace>() -> RecoverySourceC
         .max(owner + common + io + replay_outer + live_census.recovery_frame);
     let capture_outer = 3 * size_of::<base::Header>()
         + 3 * size_of::<base::Expected>()
-        + 2 * size_of::<base::Sections<'_>>()
+        + 2 * size_of::<base::catalog::Sections<'_>>()
         + 3 * size_of::<[RemainingBudget; 5]>()
         + 3 * size_of::<Result<(u32, u32, [RemainingBudget; 5])>>()
         + 3 * size_of::<DescriptorSpec>()
@@ -163,13 +163,13 @@ pub(in crate::storage) fn source_census<W: WriterNamespace>() -> RecoverySourceC
             + size_of::<record::Current>()
             + size_of::<base::Header>()
             + size_of::<base::Expected>()
-            + size_of::<base::Sections<'_>>()
+            + size_of::<base::catalog::Sections<'_>>()
             + 2 * size_of::<Plan4RecoveryError>()
             + 20 * size_of::<&[u8]>()
             + 16 * size_of::<u64>(),
     );
-    let base_capture = capture_encode
-        .max(owner + common + capture_outer + crate::storage::retention_obligation::source_bytes());
+    let base_capture =
+        capture_encode.max(owner + common + capture_outer + analysis::packing_source_bytes());
     let physical = owner
         + common
         + io
@@ -255,14 +255,17 @@ pub(in crate::storage) fn source_census<W: WriterNamespace>() -> RecoverySourceC
     let bind = bind_pages.max(bind_conversion).max(bind_return);
     let facade_delta = size_of::<Recovered<'_, W>>() - size_of::<Live<'_, W>>();
     let retained_live = runtime + live_census.retained - live_census.original_owner + facade_delta;
-    let live = (runtime + live_census.peak - live_census.original_owner + facade_delta)
-        .max(
-            runtime
-                + size_of::<Recovered<'_, W>>()
-                + size_of::<std::result::Result<Live<'_, W>, Recovered<'_, W>>>()
-                + common,
-        )
-        .max(retained_live + common + io + controls + 2 * size_of::<SelectedControl>());
+    let live =
+        (runtime + live_census.peak - live_census.original_owner + facade_delta)
+            .max(
+                runtime
+                    + size_of::<Recovered<'_, W>>()
+                    + size_of::<
+                        std::result::Result<(Live<'_, W>, &mut [u8; 425_984]), Recovered<'_, W>>,
+                    >()
+                    + common,
+            )
+            .max(retained_live + common + io + controls + 2 * size_of::<SelectedControl>());
     let peak = acquire
         .max(selection)
         .max(analysis)
@@ -272,7 +275,9 @@ pub(in crate::storage) fn source_census<W: WriterNamespace>() -> RecoverySourceC
         .max(handoff)
         .max(bind)
         .max(live);
-    let metadata = retained_live + 65_536 + core.directory;
+    // The original control metadata already occupies the 64-KiB budget;
+    // Catalog visibility owns a disjoint 8192-byte metadata loan as well.
+    let metadata = retained_live + 65_536 + 8192 + core.directory;
     RecoverySourceCensus {
         owner,
         runtime,
@@ -301,8 +306,8 @@ pub(in crate::storage) fn source_census<W: WriterNamespace>() -> RecoverySourceC
         caller_wal: wal::MAX_FRAME_BYTES,
         caller_dwb: WORKSPACE_BYTES,
         temporary_files: 2,
-        codec_deep: codec.deep,
-        codec_other: codec.other,
+        codec_deep: codec,
+        codec_other: codec,
         facade: size_of::<Recovered<'_, W>>(),
     }
 }

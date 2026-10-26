@@ -4,8 +4,10 @@ use super::page::{
     self, FileId, PAGE_BYTES, PageError, PageHeader, PageIdentity, PageKind, PageLsn, PageRef,
 };
 use crate::api::Namespace;
+#[cfg(test)]
+use foundation::codec::content_digest;
 use foundation::{
-    codec::{ContentHasher, content_digest},
+    codec::ContentHasher,
     identity::{Generation, ObjectId},
 };
 use std::mem::size_of;
@@ -69,12 +71,14 @@ fn reference(page_no: u64) -> PageRef {
         incarnation: Generation::new(1).expect("fixed genesis incarnation"),
     }
 }
+#[cfg(test)]
 fn free_job(output: &mut [u8; 1024]) {
     output.fill(0);
     output[..4].copy_from_slice(b"XQJ1");
     output[4..6].copy_from_slice(&1u16.to_le_bytes());
     output[8..16].copy_from_slice(&1u64.to_le_bytes());
 }
+#[cfg(test)]
 fn root_cell(namespace: Namespace, output: &mut [u8; 512]) {
     output.fill(0);
     output[..4].copy_from_slice(b"XQR1");
@@ -117,6 +121,7 @@ fn root_cell(namespace: Namespace, output: &mut [u8; 512]) {
 }
 
 /// Pure encoding; all errors preserve the complete caller output.
+#[cfg(test)]
 pub(crate) fn encode(
     namespace: Namespace,
     page: RetentionGenesisPage,
@@ -143,6 +148,7 @@ pub(crate) fn encode(
 }
 
 /// Validates only the exact initial state, never occupied or reused queue cells.
+#[cfg(test)]
 pub(crate) fn validate(
     bytes: &[u8],
     namespace: Namespace,
@@ -192,6 +198,76 @@ pub(crate) fn validate(
         }
     }
     Ok(())
+}
+
+/// Current fresh plan4 uses Root/Job version2. The v1 functions above remain
+/// strict test codecs for historical inputs, never an implicit upgrade path.
+pub(crate) fn encode_current(
+    namespace: Namespace,
+    role: RetentionGenesisPage,
+    output: &mut [u8],
+) -> Result<()> {
+    use super::retention_page::catalog;
+    let header = expected_header(namespace, role)?;
+    if output.len() != PAGE_BYTES {
+        return Err(RetentionGenesisError::InvalidInput);
+    }
+    match role {
+        RetentionGenesisPage::Root => {
+            let mut cell = [0; 512];
+            catalog::initial_root(namespace, &mut cell).map_err(current_error)?;
+            page::encode_page(header, &[&cell], output)?;
+        }
+        RetentionGenesisPage::Jobs { index } => {
+            let mut cell = [0; 1024];
+            catalog::free_job(Generation::new(1).expect("genesis"), &mut cell);
+            let cells: [&[u8]; 15] = [&cell; 15];
+            page::encode_page(header, &cells[..if index == 4 { 4 } else { 15 }], output)?;
+        }
+    }
+    Ok(())
+}
+
+pub(crate) fn validate_current(
+    bytes: &[u8],
+    namespace: Namespace,
+    role: RetentionGenesisPage,
+) -> Result<()> {
+    use super::retention_page::catalog;
+    let expected = expected_header(namespace, role)?;
+    match role {
+        RetentionGenesisPage::Root => {
+            let (header, root) =
+                catalog::decode_root_page(bytes, namespace).map_err(current_error)?;
+            if header != expected || root.aging().is_some() {
+                return Err(RetentionGenesisError::Corrupt);
+            }
+        }
+        RetentionGenesisPage::Jobs { index } => {
+            let page = catalog::decode_jobs_page(bytes, namespace, index).map_err(current_error)?;
+            if page.header() != expected {
+                return Err(RetentionGenesisError::Corrupt);
+            }
+            // The version2 page validator already requires Free generation1
+            // in every slot of a page whose LSN is zero.
+        }
+    }
+    Ok(())
+}
+
+fn current_error(error: super::retention_page::RetentionError) -> RetentionGenesisError {
+    use super::retention_page::RetentionError;
+    match error {
+        RetentionError::InvalidInput => RetentionGenesisError::InvalidInput,
+        RetentionError::UnsupportedFormat => RetentionGenesisError::UnsupportedFormat,
+        RetentionError::IdentityMismatch => RetentionGenesisError::IdentityMismatch,
+        RetentionError::Page(error) => RetentionGenesisError::from(error),
+        _ => RetentionGenesisError::Corrupt,
+    }
+}
+
+pub(in crate::storage) fn current_source_bytes() -> usize {
+    source_bytes() + super::retention_page::catalog::source_bytes()
 }
 
 /// Conservative source-value call closure. Caller page backing is separate.

@@ -1,5 +1,17 @@
 # DEV3 구현·검증 현황
 
+<a id="commit-continuation"></a>
+2026-10-25 [원 Commit 공통 continuation](../evidence/dev3-commit-continuation-20261025.md): 원 PinSet/core/WAL의 준비·취소·지연 설치 수명과 첫 File write 관측을 구현했다. source별 정적2·prestage5·WAL14사례의 완료/부분완료 경계, compiler7/tool6·fmt/Clippy와 독립 D1을 한정 수용했다. 실제 semantic receipt 생성자는 닫혀 있으며 Commit·nonempty 복구와 DEV3/S5는 미완료다.
+
+<a id="plan4-free-undo"></a>
+2026-10-25 [원 plan4 Free Undo container 수명](../evidence/dev3-plan4-free-undo-20261025.md): 같은 원 owner/pool의 발급·INIT·flush·실제 eviction/reload와 v2 base·old WAL 제거 뒤 재장애 복구를 연결했다. 정적2·메모리7·compiler7·native3PID의 source별 선택 검증과 최종 독립 D1을 수용했다. 원 실패·미실행을 보존했고 사용 완료 사본·전용 cache를 정리했다. Live Undo·Catalog CREATE·Row INSERT·Commit/publication·nonempty 복구·전체 DEV3/S5는 미완료다.
+
+<a id="typed-catalog-read"></a>
+2026-10-25 [원 Catalog guard의 typed 조회](../evidence/dev3-catalog-reader-20261025.md): 기존 allocator/anchor/leaf3pin의 수명 안에서 physical record를 반환한다. 신규 제품5·compiler7·도구3 PASS, 원 실패와 source별 경계를 보존한다. 실제 owner는 empty이며 nonempty는 순수 literal 검증이다. Catalog CREATE/CLR·Row/Undo·일반 복구·DEV3/S5는 미완료다.
+
+<a id="leaf-edit"></a>
+2026-10-25 [첫 행의 leaf 후보 편집](../evidence/dev3-leaf-edit-20261025.md): caller scratch로 Insert/Replace/Remove 후보·single-page encode·기존 split 인계를 공급했다. 신규5·compiler7·도구3 선택 PASS, 원 실패·S5 확대 NOT_RUN 보존. 실제 Catalog CREATE/row/Undo·terminal·N>0 복구 연결은 미완료다.
+
 <a id="comparison-adoption"></a>
 2026-10-25 [비교 분석 반영](../evidence/dev3-comparison-adoption-20261025.md): 설계·계획만 보강했다. N=0 plan4 고유50개와 기존 codec/pool의 원 source별 완료는 유지한다. [추가 보완표](../plans/dev3-implementation-plan.md#comparison-adoption)의 실제 행/Undo/CLR 통합, opcode 수치 F05, immutable fuzzy capture, typed namespace rewrite restore, 충돌/공간 계측·대형 qualification은 미완료다. 새 제품 코드·시험·성능 실행은 없다. 설계 채택을 지원 기능이나 DEV3/S5 PASS로 승격하지 않는다.
 

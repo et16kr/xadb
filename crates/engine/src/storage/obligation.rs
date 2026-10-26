@@ -167,6 +167,15 @@ struct Summary {
     protected: u64,
 }
 
+/// Exact private validation return carriers for source-value accounting.
+/// Caller scratch and encoded descriptor bytes are charged at their owner.
+pub(crate) fn source_summary_carrier_bytes() -> (usize, usize) {
+    (
+        std::mem::size_of::<Summary>(),
+        std::mem::size_of::<Result<Summary>>(),
+    )
+}
+
 fn valid_profile(profile: ControlRef) -> Result<()> {
     if profile.kind != ControlKind::Profile || profile.encode(&mut [0; 64]).is_err() {
         return Err(ObligationError::InvalidInput);

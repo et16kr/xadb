@@ -9,6 +9,9 @@
 //! descriptor validators. Integration/selected-source ownership stays separate.
 #![allow(dead_code)] // The selected recovery owner is being connected.
 
+#[path = "plan4_recovery_base/catalog.rs"]
+pub(super) mod catalog;
+
 use super::{
     allocation_page::{self, AllocationEntry, AllocationError, ReservationOwner, SystemWorkRef},
     control::{ControlError, ControlKind, ControlRef, Profile, SelectedControl},
@@ -24,6 +27,7 @@ use super::{
     semantic_retention::{self, HANDOFF_BYTES, ROLLBACK_BYTES},
     status_home::StatusHome,
     transaction_record::{RollbackState, TransactionState, TransactionStatusCell, TxnRef},
+    undo_record::{self, UndoError},
 };
 use foundation::{
     codec::{ContentHasher, content_digest},
@@ -69,6 +73,11 @@ pub(super) enum Error {
     Retention(RetentionError),
     Aging(AgingObligationError),
     Inventory(InventoryError),
+    Undo(UndoError),
+    Catalog(super::catalog_record::CatalogError),
+    Tree(super::tree_page::TreeError),
+    CatalogSemantic(super::semantic_catalog::Error),
+    CatalogAllocation(super::wal_io::CatalogAllocationError),
 }
 macro_rules! from_error {
     ($source:ty, $variant:ident) => {
@@ -86,6 +95,11 @@ from_error!(ObligationError, Descriptor);
 from_error!(RetentionError, Retention);
 from_error!(AgingObligationError, Aging);
 from_error!(InventoryError, Inventory);
+from_error!(UndoError, Undo);
+from_error!(super::catalog_record::CatalogError, Catalog);
+from_error!(super::tree_page::TreeError, Tree);
+from_error!(super::semantic_catalog::Error, CatalogSemantic);
+from_error!(super::wal_io::CatalogAllocationError, CatalogAllocation);
 type Result<T> = std::result::Result<T, Error>;
 
 /// Actual selected immutable geometry. These values alone confer no selection.
@@ -101,6 +115,7 @@ pub(super) enum AllocationTerminal {
     None,
     Cancelled,
     InitializedStatus,
+    InitializedUndo,
 }
 impl AllocationTerminal {
     fn byte(self) -> u8 {
@@ -108,14 +123,24 @@ impl AllocationTerminal {
             Self::None => 0,
             Self::Cancelled => 1,
             Self::InitializedStatus => 2,
+            Self::InitializedUndo => 3,
         }
     }
+}
+
+/// Explicit development format; a parsed tag is not selection authority.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub(super) enum BaseFormat {
+    V1Status = 1,
+    V2System = 2,
+    V3Catalog = 3,
 }
 
 /// Scalar capture observations. Physical charge is rechecked by the namespace
 /// owner; neither it nor the DWB floor grants reservation or deletion authority.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub(super) struct Header {
+    pub(super) format: BaseFormat,
     pub(super) generation: u64,
     pub(super) capture_lsn: u64,
     pub(super) previous_generation: u64,
@@ -208,7 +233,7 @@ impl<'a> BaseView<'a> {
         status_record(self.bytes, ordinal)
     }
     pub(super) fn certificate(self, ordinal: usize) -> Result<Option<Certificate>> {
-        certificate(self.bytes, self.expected, ordinal)
+        certificate(self.bytes, self.expected, self.header.format, ordinal)
     }
     /// Reconstructs one exact canonical image into caller scratch. Free and
     /// Reserved pages have no image; this does not authorize a home write.
@@ -226,7 +251,13 @@ impl<'a> BaseView<'a> {
             )
             .map_err(|_| Error::IdentityMismatch)?,
             9..=63 => {
-                reconstruct_status(self.status_record(ordinal)?, self.expected, ordinal, output)?;
+                reconstruct_payload(
+                    self.status_record(ordinal)?,
+                    self.expected,
+                    self.header.format,
+                    ordinal,
+                    output,
+                )?;
             }
             _ => return Err(Error::InvalidInput),
         }
@@ -246,12 +277,20 @@ impl<'a> BaseView<'a> {
             if raw[0] == 0 {
                 continue;
             }
-            let mut header = status_header(raw, self.expected, ordinal)?;
+            let mut header = payload_header(raw, self.expected, self.header.format, ordinal)?;
             header.lsn = PageLsn(get(raw, 56));
-            let home = StatusHome::new(TransactionStatusCell::Free(one()), 0)?;
-            let mut cell = [0; 224];
-            home.encode(&mut cell)?;
-            page::encode_page(header, &[&cell], scratch)?;
+            match header.kind {
+                PageKind::TransactionStatus => {
+                    let home = StatusHome::new(TransactionStatusCell::Free(one()), 0)?;
+                    let mut cell = [0; 224];
+                    home.encode(&mut cell)?;
+                    page::encode_page(header, &[&cell], scratch)?;
+                }
+                PageKind::Undo => {
+                    undo_record::encode_initial_undo_page(header.identity, header.lsn, scratch)?;
+                }
+                _ => return Err(Error::Unsupported),
+            }
             check(InitClaim {
                 header,
                 full_digest: content_digest(scratch),
@@ -324,13 +363,16 @@ fn identity(
         owner_generation: one(),
     }
 }
-fn fixed_kind(ordinal: usize) -> Result<(PageKind, u64)> {
+fn fixed_kind(ordinal: usize, format: BaseFormat, observed: u8) -> Result<(PageKind, u64)> {
     Ok(match ordinal {
         0 => (PageKind::Allocation, 1),
         1 => (PageKind::RetentionRoot, 4),
         2..=6 => (PageKind::RetentionJobs, 4),
         7 => (PageKind::TreeAnchor, 5),
         8 => (PageKind::CatalogLeaf, 5),
+        9..=63 if format == BaseFormat::V2System && observed == PageKind::Undo as u8 => {
+            (PageKind::Undo, 3)
+        }
         9..=63 => (PageKind::TransactionStatus, 2),
         _ => return Err(Error::InvalidInput),
     })
@@ -349,7 +391,7 @@ fn validate_header(h: Header, e: Expected) -> Result<()> {
         || h.active_systems > 2
         || h.status_mask & 0x1ff != 0
         || h.leased & h.ready != 0
-        || h.leased.count_ones() != h.active_transactions
+        || (h.format != BaseFormat::V3Catalog && h.leased.count_ones() != h.active_transactions)
         || (h.leased | h.ready).count_ones() > 55
         || h.root_revision == 0
         || h.doublewrite_generation == 0
@@ -357,6 +399,9 @@ fn validate_header(h: Header, e: Expected) -> Result<()> {
         || h.system_high_water[1] != 0
         || h.system_high_water[3] != 0
         || h.system_high_water[2] > 1
+        || (h.format == BaseFormat::V1Status
+            && h.allocation_terminal == AllocationTerminal::InitializedUndo)
+        || (h.format == BaseFormat::V3Catalog) != (e.profile.format() == 2)
     {
         return Err(Error::InvalidInput);
     }
@@ -398,9 +443,9 @@ fn write_header(h: Header, e: Expected, output: &mut [u8]) -> Result<()> {
     validate_header(h, e)?;
     output.fill(0);
     output[..4].copy_from_slice(b"XRB1");
-    put16(output, 4, 1);
+    put16(output, 4, h.format as u16);
     put16(output, 6, 1);
-    put32(output, 8, BASE_BYTES as u32);
+    put32(output, 8, e.profile.base_bytes() as u32);
     put32(output, 12, 4096);
     output[16..32].copy_from_slice(&e.profile.spec().namespace.database.bytes());
     put(output, 32, e.profile.spec().namespace.timeline);
@@ -450,13 +495,27 @@ fn write_header(h: Header, e: Expected, output: &mut [u8]) -> Result<()> {
 }
 
 fn read_header(bytes: &[u8; BASE_BYTES], e: Expected) -> Result<Header> {
+    read_header_format(bytes, e, false)
+}
+
+fn read_header_format(bytes: &[u8], e: Expected, catalog: bool) -> Result<Header> {
+    if bytes.len() < 4096 {
+        return Err(Error::Corrupt);
+    }
     if &bytes[..4] != b"XRB1" {
         return Err(Error::Corrupt);
     }
-    if get16(bytes, 4) != 1 || get16(bytes, 6) != 1 {
+    let format = match get16(bytes, 4) {
+        1 => BaseFormat::V1Status,
+        2 => BaseFormat::V2System,
+        3 if catalog => BaseFormat::V3Catalog,
+        _ => return Err(Error::Unsupported),
+    };
+    if get16(bytes, 6) != 1 {
         return Err(Error::Unsupported);
     }
-    if get32(bytes, 8) != BASE_BYTES as u32
+    if bytes.len() != e.profile.base_bytes()
+        || get32(bytes, 8) != e.profile.base_bytes() as u32
         || get32(bytes, 12) != 4096
         || bytes[16..32] != e.profile.spec().namespace.database.bytes()
         || get(bytes, 32) != e.profile.spec().namespace.timeline
@@ -477,11 +536,18 @@ fn read_header(bytes: &[u8; BASE_BYTES], e: Expected) -> Result<Header> {
         || !zero(&bytes[1160..1184])
         || !zero(&bytes[1188..1192])
         || !zero(&bytes[1224..1280])
-        || !zero(&bytes[1664..4096])
+        || !zero(
+            &bytes[if format == BaseFormat::V3Catalog {
+                1600
+            } else {
+                1664
+            }..4096],
+        )
     {
         return Err(Error::IdentityMismatch);
     }
     let h = Header {
+        format,
         generation: get(bytes, 88),
         capture_lsn: get(bytes, 96),
         previous_generation: get(bytes, 104),
@@ -502,6 +568,9 @@ fn read_header(bytes: &[u8; BASE_BYTES], e: Expected) -> Result<Header> {
             0 => AllocationTerminal::None,
             1 => AllocationTerminal::Cancelled,
             2 => AllocationTerminal::InitializedStatus,
+            3 if matches!(format, BaseFormat::V2System | BaseFormat::V3Catalog) => {
+                AllocationTerminal::InitializedUndo
+            }
             _ => return Err(Error::Unsupported),
         },
         retired_batch: get(bytes, 496),
@@ -555,6 +624,62 @@ fn status_header(raw: &[u8; STATUS_BYTES], e: Expected, ordinal: usize) -> Resul
         lsn: PageLsn(get(raw, 48)),
     })
 }
+fn undo_header(raw: &[u8; STATUS_BYTES], e: Expected, ordinal: usize) -> Result<PageHeader> {
+    if !(9..64).contains(&ordinal)
+        || raw[..4] != [2, PageKind::Undo as u8, 0, 1]
+        || !zero(&raw[4..8])
+        || get(raw, 32) != 3
+        || get(raw, 40) != 1
+        || !zero(&raw[96..])
+        || get(raw, 56) == 0
+        || get(raw, 56) != get(raw, 48)
+    {
+        return Err(Error::Corrupt);
+    }
+    let reference = PageRef::decode(&raw[8..32])?;
+    if reference.file != first_file()
+        || reference.page_no != ordinal as u64
+        || reference.incarnation.get() < 2
+    {
+        return Err(Error::IdentityMismatch);
+    }
+    Ok(PageHeader {
+        identity: identity(e, ordinal, reference.incarnation, 3),
+        kind: PageKind::Undo,
+        level: 0,
+        lsn: PageLsn(get(raw, 48)),
+    })
+}
+fn payload_header(
+    raw: &[u8; STATUS_BYTES],
+    e: Expected,
+    format: BaseFormat,
+    ordinal: usize,
+) -> Result<PageHeader> {
+    if raw[0] == 2 && format == BaseFormat::V2System {
+        undo_header(raw, e, ordinal)
+    } else {
+        status_header(raw, e, ordinal)
+    }
+}
+fn reconstruct_payload(
+    raw: &[u8; STATUS_BYTES],
+    e: Expected,
+    format: BaseFormat,
+    ordinal: usize,
+    scratch: &mut [u8; PAGE_BYTES],
+) -> Result<PageKind> {
+    let header = payload_header(raw, e, format, ordinal)?;
+    if header.kind == PageKind::Undo {
+        undo_record::encode_initial_undo_page(header.identity, header.lsn, scratch)?;
+        if content_digest(scratch) != raw[64..96] {
+            return Err(Error::Corrupt);
+        }
+    } else {
+        reconstruct_status(raw, e, ordinal, scratch)?;
+    }
+    Ok(header.kind)
+}
 fn reconstruct_status(
     raw: &[u8; STATUS_BYTES],
     e: Expected,
@@ -600,6 +725,7 @@ fn validate_home(home: StatusHome, e: Expected, lsn: u64, init: u64) -> Result<(
 fn certificate(
     bytes: &[u8; BASE_BYTES],
     e: Expected,
+    format: BaseFormat,
     ordinal: usize,
 ) -> Result<Option<Certificate>> {
     if ordinal >= 64 {
@@ -613,7 +739,7 @@ fn certificate(
         }
         return Ok(None);
     }
-    let (kind, object) = fixed_kind(ordinal)?;
+    let (kind, object) = fixed_kind(ordinal, format, raw[1])?;
     let reference = PageRef::decode(&raw[8..32])?;
     if raw[0] != 1
         || raw[1] != kind as u8
@@ -688,6 +814,44 @@ pub(super) fn encode_status_record(
     Ok(())
 }
 
+/// Compresses either supported SystemInit payload. Only the exact initial
+/// Free Undo image is accepted; ordinary occupied Undo is outside this format.
+pub(super) fn encode_system_record(
+    expected: Expected,
+    header: PageHeader,
+    init_lsn: u64,
+    image: &[u8; PAGE_BYTES],
+    output: &mut [u8; STATUS_BYTES],
+) -> Result<()> {
+    if header.kind == PageKind::TransactionStatus {
+        return encode_status_record(expected, header, init_lsn, image, output);
+    }
+    let ordinal = usize::try_from(header.identity.page.page_no).map_err(|_| Error::InvalidInput)?;
+    if !(9..64).contains(&ordinal)
+        || init_lsn == 0
+        || init_lsn != header.lsn.0
+        || header.identity != identity(expected, ordinal, header.identity.page.incarnation, 3)
+        || header.identity.page.incarnation.get() < 2
+        || header.kind != PageKind::Undo
+        || header.level != 0
+    {
+        return Err(Error::InvalidInput);
+    }
+    if undo_record::initial_undo_page_lsn(image, header.identity)? != header.lsn {
+        return Err(Error::IdentityMismatch);
+    }
+    let mut record = [0; STATUS_BYTES];
+    record[..4].copy_from_slice(&[2, PageKind::Undo as u8, 0, 1]);
+    header.identity.page.encode(&mut record[8..32])?;
+    put(&mut record, 32, 3);
+    put(&mut record, 40, 1);
+    put(&mut record, 48, header.lsn.0);
+    put(&mut record, 56, init_lsn);
+    record[64..96].copy_from_slice(&content_digest(image));
+    output.copy_from_slice(&record);
+    Ok(())
+}
+
 /// Observes a supported allocated image. Free/Reserved entries must instead
 /// have an all-zero certificate; decode checks that allocator bijection.
 pub(super) fn encode_certificate(
@@ -696,8 +860,26 @@ pub(super) fn encode_certificate(
     image: &[u8; PAGE_BYTES],
     output: &mut [u8; CERTIFICATE_BYTES],
 ) -> Result<()> {
+    encode_certificate_for(BaseFormat::V1Status, expected, header, image, output)
+}
+
+pub(super) fn encode_system_certificate(
+    expected: Expected,
+    header: PageHeader,
+    image: &[u8; PAGE_BYTES],
+    output: &mut [u8; CERTIFICATE_BYTES],
+) -> Result<()> {
+    encode_certificate_for(BaseFormat::V2System, expected, header, image, output)
+}
+fn encode_certificate_for(
+    format: BaseFormat,
+    expected: Expected,
+    header: PageHeader,
+    image: &[u8; PAGE_BYTES],
+    output: &mut [u8; CERTIFICATE_BYTES],
+) -> Result<()> {
     let ordinal = usize::try_from(header.identity.page.page_no).map_err(|_| Error::InvalidInput)?;
-    let (kind, object) = fixed_kind(ordinal)?;
+    let (kind, object) = fixed_kind(ordinal, format, header.kind as u8)?;
     if header.identity != identity(expected, ordinal, header.identity.page.incarnation, object)
         || header.kind != kind
         || header.level != 0
@@ -1013,7 +1195,8 @@ fn verify_graph(bytes: &[u8; BASE_BYTES], e: Expected, h: Header) -> Result<(usi
     let mut occupied = 0;
     for ordinal in 9..64 {
         let raw = status_record(bytes, ordinal)?;
-        if raw[0] == 0 {
+        if raw[0] == 0 || raw[0] == 2 {
+            // All Free Undo records were checked before entering this census.
             continue;
         }
         let core = StatusHome::decode(&raw[128..])?.core();
@@ -1184,7 +1367,7 @@ pub(super) fn decode<'a>(
     let mut reserved = None;
     for ordinal in 0..64 {
         let entry = allocation.entry(ordinal)?;
-        let cert = certificate(bytes, expected, ordinal)?;
+        let cert = certificate(bytes, expected, h.format, ordinal)?;
         let status = status_record(bytes, ordinal)?;
         match entry {
             AllocationEntry::Free(_) => {
@@ -1242,9 +1425,17 @@ pub(super) fn decode<'a>(
                         match_certificate(&scratch[0], cert)?;
                     }
                     9..=63 => {
-                        reconstruct_status(status, expected, ordinal, &mut scratch[0])?;
+                        let kind = reconstruct_payload(
+                            status,
+                            expected,
+                            h.format,
+                            ordinal,
+                            &mut scratch[0],
+                        )?;
                         match_certificate(&scratch[0], cert)?;
-                        statuses |= 1 << ordinal;
+                        if kind == PageKind::TransactionStatus {
+                            statuses |= 1 << ordinal;
+                        }
                     }
                     _ => unreachable!("bounded extent"),
                 }
@@ -1327,7 +1518,12 @@ pub(super) fn decode<'a>(
     } else {
         Some(raw_descriptor(bytes, 32)?)
     };
-    super::wal_io::validate_plan4_base_allocation(
+    let validate_allocation = match h.format {
+        BaseFormat::V1Status => super::wal_io::validate_plan4_base_allocation,
+        BaseFormat::V2System => super::wal_io::validate_plan4_system_base_allocation,
+        BaseFormat::V3Catalog => return Err(Error::Unsupported),
+    };
+    validate_allocation(
         page_at(bytes, ALLOCATOR),
         expected.profile,
         allocation_raw,
@@ -1369,6 +1565,9 @@ pub(super) fn encode<'a>(
     output: &'a mut [u8; BASE_BYTES],
     scratch: &mut [[u8; PAGE_BYTES]; 4],
 ) -> Result<BaseView<'a>> {
+    if h.format == BaseFormat::V3Catalog {
+        return Err(Error::Unsupported);
+    }
     validate_header(h, expected)?;
     output.fill(0);
     write_header(h, expected, &mut output[..4096])?;
@@ -1407,7 +1606,7 @@ pub(super) fn encode<'a>(
 /// Caller 1MiB/four-page loans are separately charged; this is not ABI stack.
 pub(super) fn source_bytes() -> usize {
     use std::mem::size_of;
-    640 + 224
+    640 + 432
         + STATUS_BYTES
         + CERTIFICATE_BYTES
         + 3 * size_of::<Header>()
@@ -1436,6 +1635,7 @@ pub(super) fn source_bytes() -> usize {
         + 2 * size_of::<&[u8; BASE_BYTES]>()
         + ownership::borrowed_inventory_source_bytes()
             .max(super::wal_io::plan4_base_allocation_source_bytes())
+            .max(super::wal_io::plan4_system_base_allocation_source_bytes())
             .max(super::wal_io::plan4_catalog_genesis_source_bytes())
 }
 
@@ -1448,7 +1648,8 @@ pub(super) struct RecoverySourcePhases {
 pub(super) fn recovery_source_phases() -> RecoverySourcePhases {
     use std::mem::size_of;
     let inventory = ownership::borrowed_inventory_source_bytes();
-    let allocation = super::wal_io::plan4_base_allocation_source_bytes();
+    let allocation = super::wal_io::plan4_base_allocation_source_bytes()
+        .max(super::wal_io::plan4_system_base_allocation_source_bytes());
     let catalog = super::wal_io::plan4_catalog_genesis_source_bytes();
     let full = source_bytes();
     RecoverySourcePhases {
@@ -1460,3 +1661,7 @@ pub(super) fn recovery_source_phases() -> RecoverySourcePhases {
         other: full - inventory.max(allocation).max(catalog) + allocation.max(catalog),
     }
 }
+
+#[cfg(test)]
+#[path = "plan4_free_undo_base_tests.rs"]
+mod free_undo_tests;

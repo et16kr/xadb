@@ -1,0 +1,72 @@
+{
+  "status": "INPUT_GENERATED_AND_AUDITED_NOT_RUNTIME_ADMISSION",
+  "plan_adoption": {
+    "sha256": "d6306d7396ad70165a291a14208c35b7e6e8091f0a4c67e870ea9e96d34e0a34",
+    "adopter": "/root"
+  },
+  "generator_runs": 1,
+  "auditor_runs": 1,
+  "product_executions": 0,
+  "raw_count": 221,
+  "raw_bytes": 5794810,
+  "rows": 56,
+  "checkpoints": 16,
+  "files": {
+    "input-plan.json": {
+      "bytes": 8554,
+      "sha256": "d6306d7396ad70165a291a14208c35b7e6e8091f0a4c67e870ea9e96d34e0a34"
+    },
+    "generate_literals.py": {
+      "bytes": 14888,
+      "sha256": "cfcf03e3482350b57bd31149ecc9270cfbdac86b4d860f3c4134d9405ccb8f3a"
+    },
+    "audit_literals.py": {
+      "bytes": 11982,
+      "sha256": "9ab6eb66b069ceb5a396987c1202be940235b8590224cca4635ae96414ada97c"
+    },
+    "manifest.json": {
+      "bytes": 229435,
+      "sha256": "87aa46dd81711cc5080097c674e6fb419e371680ea3e19faa5bafbe3e4847b23"
+    },
+    "raw-index.tsv": {
+      "bytes": 31800,
+      "sha256": "19dc89b4fcfa06942dbe1568a83b45d33af97b6c33cbfd50d6f199242e9d84cd"
+    },
+    "steps.tsv": {
+      "bytes": 64651,
+      "sha256": "1b4b8b5b1ae0ee11794f97f643f3605a8a66064a1d57e00094948fe1e5c62f66"
+    },
+    "generation-result.json": {
+      "bytes": 332,
+      "sha256": "7cb9cf941a95dd33005fbe0e18e5500264819aa1a9dc5c69b4ae00e0827feb1c"
+    },
+    "generation.stdout": {
+      "bytes": 316,
+      "sha256": "e9a80d4685999d58b01d91f16748dba2a7e0f970c2e4fc3d4838fe5bb0ed84db"
+    },
+    "generation.stderr": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "audit.stdout": {
+      "bytes": 249,
+      "sha256": "ad94227a3226ac371c2a886631441e3fa2461dcbad5761f4098d38b8571301e4"
+    },
+    "audit.stderr": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    }
+  },
+  "native_runtime_admission": "NOT_ADMITTED: exact source/ELF/whole F05/controller/hooks still required",
+  "n03": "N01 prefix raw reused; separate API UNKNOWN, absence of ACK, and process history required",
+  "source_inputs_unchanged": {
+    "tests/fixtures/dev3-catalog-create/transition/generate_literals.py": {
+      "expected": "3716f9d63f099051363bebeeaf0ebe4586ccd0984aa91735a7de82eba7d23b7e",
+      "actual": "3716f9d63f099051363bebeeaf0ebe4586ccd0984aa91735a7de82eba7d23b7e"
+    },
+    "tests/fixtures/dev3-plan4-free-undo/generate_literals.py": {
+      "expected": "a9a646f5fd047b1fbd73d743d99d56cde9a8217bf65587d08e9dd1f892e6bb42",
+      "actual": "a9a646f5fd047b1fbd73d743d99d56cde9a8217bf65587d08e9dd1f892e6bb42"
+    }
+  }
+}

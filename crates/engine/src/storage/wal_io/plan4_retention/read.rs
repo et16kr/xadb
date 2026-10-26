@@ -1,5 +1,5 @@
-//! Read actors borrow the same original registrations. No source file, mutable
-//! scratch, writer ledger or flush workspace is lent to this actor.
+//! Read actors borrow the same original registrations and checked history loan.
+//! The mutable writer ledger and flush workspace remain with their own actors.
 use super::*;
 use crate::storage::{
     allocation_page::{self, AllocationEntry},
@@ -10,9 +10,24 @@ use crate::storage::{
 };
 use foundation::identity::ObjectId;
 
-pub(crate) struct RetentionReader<'b, 's, 'c, 'p, 'd, 'm, 'w, W: WriterNamespace> {
+#[path = "read/catalog.rs"]
+mod catalog;
+#[path = "read/lookup.rs"]
+mod lookup;
+#[allow(
+    unused_imports,
+    reason = "typed guard name for the following catalog consumer"
+)]
+pub(crate) use catalog::RetentionCatalogGuard;
+pub(super) use catalog::{CATALOG_READ_SOURCE_BYTES, catalog_source_bytes};
+pub(crate) use lookup::CatalogLookupStep;
+pub(super) use lookup::source_bytes as lookup_source_bytes;
+
+pub(crate) struct RetentionReader<'b, 'a, 's, 'c, 'p, 'd, 'm, 'w, W: WriterNamespace> {
     pub(super) storage: &'s MutableStorageOwner<'m, 'w, W>,
     pub(super) pool: &'b SharedPool<'c, 's, 'p, 'd>,
+    pub(super) history: &'b history::runtime::RuntimeHistory<'a, 'c, 's>,
+    pub(super) visibility: Option<&'b visibility::BoundVisibility<'a, 'c, 's>>,
 }
 pub(crate) struct RetentionReadGuard<'a, 'b, 'c, 's, 'p, 'd> {
     read: ReadTargets<'a, 'b, 'c, 's, 'p, 'd, 2>,
@@ -78,7 +93,9 @@ fn membership<W: WriterNamespace>(
     }
     Ok(())
 }
-impl<'b, 's, 'c, 'p, 'd, W: WriterNamespace> RetentionReader<'b, 's, 'c, 'p, 'd, '_, '_, W> {
+impl<'b, 'arena, 's, 'c, 'p, 'd, W: WriterNamespace>
+    RetentionReader<'b, 'arena, 's, 'c, 'p, 'd, '_, '_, W>
+{
     pub(crate) fn read<'a>(
         &'b self,
         owner: &'a mut Owner<'c, 's>,
@@ -151,6 +168,29 @@ impl<'b, 's, 'c, 'p, 'd, W: WriterNamespace> RetentionReader<'b, 's, 'c, 'p, 'd,
                         )
                     })?;
                     if home.len() != 1 {
+                        return Err(fatal(
+                            self.storage,
+                            RetentionPhase::Census,
+                            RetentionCause::Invariant,
+                        ));
+                    }
+                }
+                PageKind::Undo => {
+                    let lsn = crate::storage::undo_record::initial_undo_page_lsn(
+                        bytes,
+                        target.request.identity,
+                    )
+                    .map_err(|e| {
+                        fatal(
+                            self.storage,
+                            RetentionPhase::Census,
+                            RetentionCause::Undo(e),
+                        )
+                    })?;
+                    let observed = read
+                        .observe(1)
+                        .map_err(|e| frame(RetentionPhase::Census, e))?;
+                    if lsn == PageLsn(0) || observed.frame.page_lsn != lsn {
                         return Err(fatal(
                             self.storage,
                             RetentionPhase::Census,
@@ -316,4 +356,39 @@ impl<'b, 's, 'c, 'p, 'd, W: WriterNamespace> RetentionReader<'b, 's, 'c, 'p, 'd,
                 .map_err(|e| frame(RetentionPhase::Census, e)),
         )
     }
+}
+
+/// Source values for the new two-target Free Undo reader. The decoder borrows
+/// its cell; no page or 432-byte Free cell is copied during validation.
+pub(super) fn undo_read_source_bytes() -> usize {
+    use std::mem::size_of;
+    type Guard<'a> = RetentionReadGuard<'a, 'a, 'a, 'a, 'a, 'a>;
+    dirty_frame::target_set_call_bytes::<2>()
+        + 2 * size_of::<Guard<'_>>()
+        + 2 * size_of::<Result<Guard<'_>>>()
+        + undo_decode_source_bytes()
+        + 2 * size_of::<allocation_page::AllocationPage<'_>>()
+        + 2 * size_of::<dirty_frame::DirtyObservation>()
+        + 4 * size_of::<TargetRequest>()
+        + 4 * size_of::<Result<()>>()
+        + 1024
+}
+
+/// The canonical initial-Undo decoder uses a borrowed PageView and a Free
+/// generation observation. Shared by reader/history/recovered census phases.
+pub(super) fn undo_decode_source_bytes() -> usize {
+    use crate::storage::{
+        page::{PageError, PageHeader, PageView},
+        undo_record::UndoError,
+    };
+    use std::mem::size_of;
+    2 * size_of::<PageView<'_>>()
+        + 2 * size_of::<std::result::Result<PageView<'_>, PageError>>()
+        + 2 * size_of::<PageHeader>()
+        + 2 * size_of::<std::result::Result<PageLsn, UndoError>>()
+        + 2 * size_of::<std::result::Result<(), UndoError>>()
+        + 2 * size_of::<std::ops::Range<usize>>()
+        + 4 * size_of::<PageLsn>()
+        + 4 * size_of::<foundation::identity::Generation>()
+        + 8 * size_of::<&[u8]>()
 }

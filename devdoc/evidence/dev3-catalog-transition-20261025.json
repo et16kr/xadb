@@ -1,0 +1,985 @@
+{
+  "status": "PURE_TRANSITION_VERIFIED_INTEGRATION_INCOMPLETE",
+  "date": "2026-10-25",
+  "artifact_root": "artifacts/dev3/catalog-create-20261025",
+  "scope": "core/projection/layout108 and puretransition72 only; no original admission/stage/install/source selection grants",
+  "source_stage_manifest_sha256": "cdd55093da46c2d62e63ad5b16139ba4e81a9c5fdef2130005c0a4acfe5e9c17",
+  "cases": [
+    {
+      "revision": "r3",
+      "source_fingerprint": "3c71915f035789cbdd5523af266d9fe8dd4e337fc0a363218ed947e00ef32bdb",
+      "binary_sha256": "003c111b080da955d0f35e2c114329fc0866ba5eb13be577a1afd4f2e17d8a50",
+      "build_receipt_sha256": "65414cbf44f096976b71b8ea24511492dd0991cecf1e0ad868399514bae67abb",
+      "result_sha256": "98f40b3f2fe1336f7c0939ef1b286b390e89b211ef3eee37d764a25e0e46bb0c",
+      "status": "PASS",
+      "seconds": 2.9509279720004997,
+      "cases": [
+        {
+          "selector": "storage::semantic_catalog::leaf_tests::core_c01",
+          "status": "PASS"
+        },
+        {
+          "selector": "storage::semantic_catalog::leaf_tests::core_c02",
+          "status": "PASS"
+        },
+        {
+          "selector": "storage::semantic_catalog::leaf_tests::core_c03",
+          "status": "PASS"
+        },
+        {
+          "selector": "storage::semantic_catalog::leaf_tests::core_c04",
+          "status": "PASS"
+        },
+        {
+          "selector": "storage::semantic_catalog::leaf_tests::core_c05",
+          "status": "PASS"
+        },
+        {
+          "selector": "storage::semantic_catalog::leaf_tests::core_c06",
+          "status": "PASS"
+        },
+        {
+          "selector": "storage::semantic_catalog::leaf_tests::core_c07",
+          "status": "PASS"
+        },
+        {
+          "selector": "storage::semantic_catalog::leaf_tests::core_c08",
+          "status": "PASS"
+        },
+        {
+          "selector": "storage::semantic_catalog::leaf_tests::core_c09",
+          "status": "PASS"
+        },
+        {
+          "selector": "storage::semantic_catalog::leaf_tests::core_c10",
+          "status": "PASS"
+        },
+        {
+          "selector": "storage::semantic_catalog::leaf_tests::core_c11",
+          "status": "PASS"
+        },
+        {
+          "selector": "storage::semantic_catalog::leaf_tests::core_c12",
+          "status": "PASS"
+        },
+        {
+          "selector": "storage::semantic_catalog::leaf_tests::core_c13",
+          "status": "PASS"
+        },
+        {
+          "selector": "storage::semantic_catalog::leaf_tests::core_c14",
+          "status": "PASS"
+        },
+        {
+          "selector": "storage::semantic_catalog::leaf_tests::core_c15",
+          "status": "PASS"
+        },
+        {
+          "selector": "storage::semantic_catalog::leaf_tests::core_c16",
+          "status": "PASS"
+        },
+        {
+          "selector": "storage::semantic_catalog::leaf_tests::core_c17",
+          "status": "PASS"
+        },
+        {
+          "selector": "storage::semantic_catalog::leaf_tests::core_c18",
+          "status": "PASS"
+        },
+        {
+          "selector": "storage::semantic_catalog::leaf_tests::core_c19",
+          "status": "PASS"
+        },
+        {
+          "selector": "storage::semantic_catalog::leaf_tests::core_c20",
+          "status": "PASS"
+        },
+        {
+          "selector": "storage::semantic_catalog::leaf_tests::core_nc01",
+          "status": "PASS"
+        },
+        {
+          "selector": "storage::semantic_catalog::leaf_tests::core_nc02",
+          "status": "PASS"
+        },
+        {
+          "selector": "storage::semantic_catalog::leaf_tests::core_nc03",
+          "status": "PASS"
+        },
+        {
+          "selector": "storage::semantic_catalog::leaf_tests::core_nc04",
+          "status": "PASS"
+        },
+        {
+          "selector": "storage::semantic_catalog::leaf_tests::core_nc05",
+          "status": "PASS"
+        },
+        {
+          "selector": "storage::semantic_catalog::leaf_tests::core_nc06",
+          "status": "PASS"
+        },
+        {
+          "selector": "storage::semantic_catalog::leaf_tests::core_nc07",
+          "status": "PASS"
+        },
+        {
+          "selector": "storage::semantic_catalog::leaf_tests::core_nc08",
+          "status": "PASS"
+        },
+        {
+          "selector": "storage::semantic_catalog::leaf_tests::core_nc10",
+          "status": "PASS"
+        },
+        {
+          "selector": "storage::semantic_catalog::leaf_tests::core_nc11",
+          "status": "PASS"
+        },
+        {
+          "selector": "storage::semantic_catalog::leaf_tests::core_nc12",
+          "status": "PASS"
+        },
+        {
+          "selector": "storage::semantic_catalog::leaf_tests::core_nc13",
+          "status": "PASS"
+        },
+        {
+          "selector": "storage::semantic_catalog::leaf_tests::core_nc14",
+          "status": "PASS"
+        },
+        {
+          "selector": "storage::semantic_catalog::leaf_tests::core_nc15",
+          "status": "PASS"
+        },
+        {
+          "selector": "storage::semantic_catalog::leaf_tests::core_nc16",
+          "status": "PASS"
+        },
+        {
+          "selector": "storage::semantic_catalog::leaf_tests::core_nc17",
+          "status": "PASS"
+        },
+        {
+          "selector": "storage::semantic_catalog::leaf_tests::core_nc18",
+          "status": "PASS"
+        },
+        {
+          "selector": "storage::semantic_catalog::leaf_tests::core_nc19",
+          "status": "PASS"
+        },
+        {
+          "selector": "storage::semantic_catalog::leaf_tests::core_nc20",
+          "status": "PASS"
+        },
+        {
+          "selector": "storage::semantic_catalog::leaf_tests::core_nc21",
+          "status": "PASS"
+        },
+        {
+          "selector": "storage::semantic_catalog::leaf_tests::core_nc22",
+          "status": "PASS"
+        },
+        {
+          "selector": "storage::semantic_catalog::leaf_tests::core_nc23",
+          "status": "PASS"
+        },
+        {
+          "selector": "storage::semantic_catalog::leaf_tests::core_nc24",
+          "status": "PASS"
+        },
+        {
+          "selector": "storage::semantic_catalog::leaf_tests::core_nc25",
+          "status": "PASS"
+        },
+        {
+          "selector": "storage::semantic_catalog::leaf_tests::core_nc26",
+          "status": "PASS"
+        },
+        {
+          "selector": "storage::semantic_catalog::leaf_tests::core_nc27",
+          "status": "PASS"
+        },
+        {
+          "selector": "storage::semantic_catalog::leaf_tests::core_nc28",
+          "status": "PASS"
+        },
+        {
+          "selector": "storage::semantic_catalog::leaf_tests::core_nc29",
+          "status": "PASS"
+        },
+        {
+          "selector": "storage::semantic_catalog::leaf_tests::core_nc30",
+          "status": "PASS"
+        },
+        {
+          "selector": "storage::semantic_catalog::leaf_tests::core_nc31",
+          "status": "PASS"
+        },
+        {
+          "selector": "storage::semantic_catalog::leaf_tests::core_nc32",
+          "status": "PASS"
+        },
+        {
+          "selector": "storage::semantic_catalog::leaf_tests::core_nc33",
+          "status": "PASS"
+        },
+        {
+          "selector": "storage::semantic_catalog::leaf_tests::core_nc34",
+          "status": "PASS"
+        },
+        {
+          "selector": "storage::semantic_catalog::leaf_tests::core_nc35",
+          "status": "PASS"
+        },
+        {
+          "selector": "storage::semantic_catalog::leaf_tests::projection_p01",
+          "status": "PASS"
+        },
+        {
+          "selector": "storage::semantic_catalog::leaf_tests::projection_p02",
+          "status": "PASS"
+        },
+        {
+          "selector": "storage::semantic_catalog::leaf_tests::projection_p03",
+          "status": "PASS"
+        },
+        {
+          "selector": "storage::semantic_catalog::leaf_tests::projection_p04",
+          "status": "PASS"
+        },
+        {
+          "selector": "storage::semantic_catalog::leaf_tests::projection_p05",
+          "status": "PASS"
+        },
+        {
+          "selector": "storage::semantic_catalog::leaf_tests::projection_p06",
+          "status": "PASS"
+        },
+        {
+          "selector": "storage::semantic_catalog::leaf_tests::projection_np01",
+          "status": "PASS"
+        },
+        {
+          "selector": "storage::semantic_catalog::leaf_tests::projection_np02",
+          "status": "PASS"
+        },
+        {
+          "selector": "storage::semantic_catalog::leaf_tests::projection_np03",
+          "status": "PASS"
+        },
+        {
+          "selector": "storage::semantic_catalog::leaf_tests::projection_np04",
+          "status": "PASS"
+        },
+        {
+          "selector": "storage::semantic_catalog::leaf_tests::projection_np05",
+          "status": "PASS"
+        },
+        {
+          "selector": "storage::semantic_catalog::leaf_tests::projection_np06",
+          "status": "PASS"
+        },
+        {
+          "selector": "storage::semantic_catalog::leaf_tests::projection_np07",
+          "status": "PASS"
+        },
+        {
+          "selector": "storage::semantic_catalog::leaf_tests::projection_np08",
+          "status": "PASS"
+        },
+        {
+          "selector": "storage::semantic_catalog::leaf_tests::projection_np09",
+          "status": "PASS"
+        },
+        {
+          "selector": "storage::semantic_catalog::leaf_tests::projection_np10",
+          "status": "PASS"
+        },
+        {
+          "selector": "storage::semantic_catalog::leaf_tests::projection_np11",
+          "status": "PASS"
+        },
+        {
+          "selector": "storage::semantic_catalog::leaf_tests::projection_np12",
+          "status": "PASS"
+        },
+        {
+          "selector": "storage::semantic_catalog::leaf_tests::wire_w01",
+          "status": "PASS"
+        },
+        {
+          "selector": "storage::semantic_catalog::leaf_tests::wire_w02",
+          "status": "PASS"
+        },
+        {
+          "selector": "storage::semantic_catalog::leaf_tests::wire_w03",
+          "status": "PASS"
+        },
+        {
+          "selector": "storage::semantic_catalog::leaf_tests::wire_w04",
+          "status": "PASS"
+        },
+        {
+          "selector": "storage::semantic_catalog::leaf_tests::wire_w05",
+          "status": "PASS"
+        },
+        {
+          "selector": "storage::semantic_catalog::leaf_tests::wire_w06",
+          "status": "PASS"
+        },
+        {
+          "selector": "storage::semantic_catalog::leaf_tests::wire_w07",
+          "status": "PASS"
+        },
+        {
+          "selector": "storage::semantic_catalog::leaf_tests::wire_w08",
+          "status": "PASS"
+        },
+        {
+          "selector": "storage::semantic_catalog::leaf_tests::wire_w09",
+          "status": "PASS"
+        },
+        {
+          "selector": "storage::semantic_catalog::leaf_tests::wire_w10",
+          "status": "PASS"
+        },
+        {
+          "selector": "storage::semantic_catalog::leaf_tests::wire_w11",
+          "status": "PASS"
+        },
+        {
+          "selector": "storage::semantic_catalog::leaf_tests::wire_w12",
+          "status": "PASS"
+        },
+        {
+          "selector": "storage::semantic_catalog::leaf_tests::wire_w13",
+          "status": "PASS"
+        },
+        {
+          "selector": "storage::semantic_catalog::leaf_tests::wire_w14",
+          "status": "PASS"
+        },
+        {
+          "selector": "storage::semantic_catalog::leaf_tests::wire_w15",
+          "status": "PASS"
+        },
+        {
+          "selector": "storage::semantic_catalog::leaf_tests::wire_w16",
+          "status": "PASS"
+        },
+        {
+          "selector": "storage::semantic_catalog::leaf_tests::wire_w17",
+          "status": "PASS"
+        },
+        {
+          "selector": "storage::semantic_catalog::leaf_tests::wire_nw01",
+          "status": "PASS"
+        },
+        {
+          "selector": "storage::semantic_catalog::leaf_tests::wire_nw02",
+          "status": "PASS"
+        },
+        {
+          "selector": "storage::semantic_catalog::leaf_tests::wire_nw03",
+          "status": "PASS"
+        },
+        {
+          "selector": "storage::semantic_catalog::leaf_tests::wire_nw04",
+          "status": "PASS"
+        },
+        {
+          "selector": "storage::semantic_catalog::leaf_tests::wire_nw05",
+          "status": "PASS"
+        },
+        {
+          "selector": "storage::semantic_catalog::leaf_tests::wire_nw06",
+          "status": "PASS"
+        },
+        {
+          "selector": "storage::semantic_catalog::leaf_tests::wire_nw07",
+          "status": "PASS"
+        },
+        {
+          "selector": "storage::semantic_catalog::leaf_tests::wire_nw08",
+          "status": "PASS"
+        },
+        {
+          "selector": "storage::semantic_catalog::leaf_tests::wire_nw09",
+          "status": "PASS"
+        },
+        {
+          "selector": "storage::semantic_catalog::leaf_tests::wire_nw10",
+          "status": "PASS"
+        },
+        {
+          "selector": "storage::semantic_catalog::leaf_tests::wire_nw11",
+          "status": "PASS"
+        },
+        {
+          "selector": "storage::semantic_catalog::leaf_tests::wire_nw12",
+          "status": "PASS"
+        },
+        {
+          "selector": "storage::semantic_catalog::leaf_tests::wire_nw13",
+          "status": "PASS"
+        },
+        {
+          "selector": "storage::semantic_catalog::leaf_tests::wire_nw14",
+          "status": "PASS"
+        },
+        {
+          "selector": "storage::semantic_catalog::leaf_tests::wire_nw15",
+          "status": "PASS"
+        },
+        {
+          "selector": "storage::semantic_catalog::leaf_tests::wire_nw16",
+          "status": "PASS"
+        },
+        {
+          "selector": "storage::semantic_catalog::leaf_tests::wire_nw17",
+          "status": "PASS"
+        },
+        {
+          "selector": "storage::semantic_catalog::leaf_tests::wire_nw18",
+          "status": "PASS"
+        },
+        {
+          "selector": "storage::semantic_catalog::leaf_tests::wire_nw19",
+          "status": "PASS"
+        }
+      ],
+      "not_run": []
+    },
+    {
+      "revision": "r5",
+      "source_fingerprint": "eab8a3869fbd80d0a43adfd43ae027c6af3d7f7bffb6a03cc172b41b9bb62542",
+      "binary_sha256": "19347986c5c400a8764bb4e77cbc460ab2a682a6410e6ad673701da0f5e94da8",
+      "build_receipt_sha256": "78ca9013887da2ddc316b19f31661a69a13d5c08c5071456189913be74f6bd0f",
+      "result_sha256": "b561073baf0ffb8dd63ef6416eb7b25b35b97ebe45db8b22dbcfc016e1dcc789",
+      "status": "FAIL",
+      "seconds": 3.9910660249988723,
+      "cases": [
+        {
+          "selector": "storage::semantic_catalog::transition_tests::g01",
+          "status": "PASS"
+        },
+        {
+          "selector": "storage::semantic_catalog::transition_tests::c01",
+          "status": "PASS"
+        },
+        {
+          "selector": "storage::semantic_catalog::transition_tests::c02",
+          "status": "PASS"
+        },
+        {
+          "selector": "storage::semantic_catalog::transition_tests::c03",
+          "status": "PASS"
+        },
+        {
+          "selector": "storage::semantic_catalog::transition_tests::c04",
+          "status": "PASS"
+        },
+        {
+          "selector": "storage::semantic_catalog::transition_tests::c05",
+          "status": "PASS"
+        },
+        {
+          "selector": "storage::semantic_catalog::transition_tests::c06",
+          "status": "PASS"
+        },
+        {
+          "selector": "storage::semantic_catalog::transition_tests::c07",
+          "status": "PASS"
+        },
+        {
+          "selector": "storage::semantic_catalog::transition_tests::c08",
+          "status": "PASS"
+        },
+        {
+          "selector": "storage::semantic_catalog::transition_tests::c09",
+          "status": "PASS"
+        },
+        {
+          "selector": "storage::semantic_catalog::transition_tests::c10",
+          "status": "PASS"
+        },
+        {
+          "selector": "storage::semantic_catalog::transition_tests::c11",
+          "status": "PASS"
+        },
+        {
+          "selector": "storage::semantic_catalog::transition_tests::c12",
+          "status": "PASS"
+        },
+        {
+          "selector": "storage::semantic_catalog::transition_tests::c13",
+          "status": "PASS"
+        },
+        {
+          "selector": "storage::semantic_catalog::transition_tests::c14",
+          "status": "PASS"
+        },
+        {
+          "selector": "storage::semantic_catalog::transition_tests::c15",
+          "status": "PASS"
+        },
+        {
+          "selector": "storage::semantic_catalog::transition_tests::c16",
+          "status": "PASS"
+        },
+        {
+          "selector": "storage::semantic_catalog::transition_tests::c17",
+          "status": "PASS"
+        },
+        {
+          "selector": "storage::semantic_catalog::transition_tests::c18",
+          "status": "PASS"
+        },
+        {
+          "selector": "storage::semantic_catalog::transition_tests::c19",
+          "status": "PASS"
+        },
+        {
+          "selector": "storage::semantic_catalog::transition_tests::c20",
+          "status": "PASS"
+        },
+        {
+          "selector": "storage::semantic_catalog::transition_tests::r01",
+          "status": "PASS"
+        },
+        {
+          "selector": "storage::semantic_catalog::transition_tests::r02",
+          "status": "PASS"
+        },
+        {
+          "selector": "storage::semantic_catalog::transition_tests::r03",
+          "status": "PASS"
+        },
+        {
+          "selector": "storage::semantic_catalog::transition_tests::r04",
+          "status": "HARNESS_FAIL_BEFORE_PRODUCT"
+        }
+      ],
+      "not_run": [
+        "storage::semantic_catalog::transition_tests::r05",
+        "storage::semantic_catalog::transition_tests::r06",
+        "storage::semantic_catalog::transition_tests::r07",
+        "storage::semantic_catalog::transition_tests::r08",
+        "storage::semantic_catalog::transition_tests::r09",
+        "storage::semantic_catalog::transition_tests::r10",
+        "storage::semantic_catalog::transition_tests::r11",
+        "storage::semantic_catalog::transition_tests::k01",
+        "storage::semantic_catalog::transition_tests::k02",
+        "storage::semantic_catalog::transition_tests::k03",
+        "storage::semantic_catalog::transition_tests::k04",
+        "storage::semantic_catalog::transition_tests::k05",
+        "storage::semantic_catalog::transition_tests::k06",
+        "storage::semantic_catalog::transition_tests::k07",
+        "storage::semantic_catalog::transition_tests::k08",
+        "storage::semantic_catalog::transition_tests::k09",
+        "storage::semantic_catalog::transition_tests::k10",
+        "storage::semantic_catalog::transition_tests::k11",
+        "storage::semantic_catalog::transition_tests::k12",
+        "storage::semantic_catalog::transition_tests::p01",
+        "storage::semantic_catalog::transition_tests::p02",
+        "storage::semantic_catalog::transition_tests::n01",
+        "storage::semantic_catalog::transition_tests::n02",
+        "storage::semantic_catalog::transition_tests::n03",
+        "storage::semantic_catalog::transition_tests::n04",
+        "storage::semantic_catalog::transition_tests::n05",
+        "storage::semantic_catalog::transition_tests::n06",
+        "storage::semantic_catalog::transition_tests::n07",
+        "storage::semantic_catalog::transition_tests::n08",
+        "storage::semantic_catalog::transition_tests::n09",
+        "storage::semantic_catalog::transition_tests::n10",
+        "storage::semantic_catalog::transition_tests::n11",
+        "storage::semantic_catalog::transition_tests::n12",
+        "storage::semantic_catalog::transition_tests::n13",
+        "storage::semantic_catalog::transition_tests::n14",
+        "storage::semantic_catalog::transition_tests::n15",
+        "storage::semantic_catalog::transition_tests::n16",
+        "storage::semantic_catalog::transition_tests::n17",
+        "storage::semantic_catalog::transition_tests::n18",
+        "storage::semantic_catalog::transition_tests::n19",
+        "storage::semantic_catalog::transition_tests::n20",
+        "storage::semantic_catalog::transition_tests::n21",
+        "storage::semantic_catalog::transition_tests::n22",
+        "storage::semantic_catalog::transition_tests::n23",
+        "storage::semantic_catalog::transition_tests::n24",
+        "storage::semantic_catalog::transition_tests::n25",
+        "storage::semantic_catalog::transition_tests::n26"
+      ]
+    },
+    {
+      "revision": "r6",
+      "source_fingerprint": "6ddd0ba2dade756c15b022eea770622b7d3b5cacc2faa4bc7e2986620dfbb311",
+      "binary_sha256": "d5e324c5144e53dbb6136fb40dcf35838d4b6b7a4fac912b94e741ea6337eab3",
+      "build_receipt_sha256": "19e9f2d539ac8ce8eba8598c9dd3ecdb1bab9cb91851c4f63c8502d9343c8823",
+      "result_sha256": "f32c29809dbad1d107ce6850a2c7ff2446fb5b7171ff265d19b89050336cc411",
+      "status": "PASS",
+      "seconds": 7.155880439997418,
+      "cases": [
+        {
+          "selector": "storage::semantic_catalog::transition_tests::r04",
+          "status": "PASS"
+        },
+        {
+          "selector": "storage::semantic_catalog::transition_tests::r05",
+          "status": "PASS"
+        },
+        {
+          "selector": "storage::semantic_catalog::transition_tests::r06",
+          "status": "PASS"
+        },
+        {
+          "selector": "storage::semantic_catalog::transition_tests::r07",
+          "status": "PASS"
+        },
+        {
+          "selector": "storage::semantic_catalog::transition_tests::r08",
+          "status": "PASS"
+        },
+        {
+          "selector": "storage::semantic_catalog::transition_tests::r09",
+          "status": "PASS"
+        },
+        {
+          "selector": "storage::semantic_catalog::transition_tests::r10",
+          "status": "PASS"
+        },
+        {
+          "selector": "storage::semantic_catalog::transition_tests::r11",
+          "status": "PASS"
+        },
+        {
+          "selector": "storage::semantic_catalog::transition_tests::k01",
+          "status": "PASS"
+        },
+        {
+          "selector": "storage::semantic_catalog::transition_tests::k02",
+          "status": "PASS"
+        },
+        {
+          "selector": "storage::semantic_catalog::transition_tests::k03",
+          "status": "PASS"
+        },
+        {
+          "selector": "storage::semantic_catalog::transition_tests::k04",
+          "status": "PASS"
+        },
+        {
+          "selector": "storage::semantic_catalog::transition_tests::k05",
+          "status": "PASS"
+        },
+        {
+          "selector": "storage::semantic_catalog::transition_tests::k06",
+          "status": "PASS"
+        },
+        {
+          "selector": "storage::semantic_catalog::transition_tests::k07",
+          "status": "PASS"
+        },
+        {
+          "selector": "storage::semantic_catalog::transition_tests::k08",
+          "status": "PASS"
+        },
+        {
+          "selector": "storage::semantic_catalog::transition_tests::k09",
+          "status": "PASS"
+        },
+        {
+          "selector": "storage::semantic_catalog::transition_tests::k10",
+          "status": "PASS"
+        },
+        {
+          "selector": "storage::semantic_catalog::transition_tests::k11",
+          "status": "PASS"
+        },
+        {
+          "selector": "storage::semantic_catalog::transition_tests::k12",
+          "status": "PASS"
+        },
+        {
+          "selector": "storage::semantic_catalog::transition_tests::p01",
+          "status": "PASS"
+        },
+        {
+          "selector": "storage::semantic_catalog::transition_tests::p02",
+          "status": "PASS"
+        },
+        {
+          "selector": "storage::semantic_catalog::transition_tests::n01",
+          "status": "PASS"
+        },
+        {
+          "selector": "storage::semantic_catalog::transition_tests::n02",
+          "status": "PASS"
+        },
+        {
+          "selector": "storage::semantic_catalog::transition_tests::n03",
+          "status": "PASS"
+        },
+        {
+          "selector": "storage::semantic_catalog::transition_tests::n04",
+          "status": "PASS"
+        },
+        {
+          "selector": "storage::semantic_catalog::transition_tests::n05",
+          "status": "PASS"
+        },
+        {
+          "selector": "storage::semantic_catalog::transition_tests::n06",
+          "status": "PASS"
+        },
+        {
+          "selector": "storage::semantic_catalog::transition_tests::n07",
+          "status": "PASS"
+        },
+        {
+          "selector": "storage::semantic_catalog::transition_tests::n08",
+          "status": "PASS"
+        },
+        {
+          "selector": "storage::semantic_catalog::transition_tests::n09",
+          "status": "PASS"
+        },
+        {
+          "selector": "storage::semantic_catalog::transition_tests::n10",
+          "status": "PASS"
+        },
+        {
+          "selector": "storage::semantic_catalog::transition_tests::n11",
+          "status": "PASS"
+        },
+        {
+          "selector": "storage::semantic_catalog::transition_tests::n12",
+          "status": "PASS"
+        },
+        {
+          "selector": "storage::semantic_catalog::transition_tests::n13",
+          "status": "PASS"
+        },
+        {
+          "selector": "storage::semantic_catalog::transition_tests::n14",
+          "status": "PASS"
+        },
+        {
+          "selector": "storage::semantic_catalog::transition_tests::n15",
+          "status": "PASS"
+        },
+        {
+          "selector": "storage::semantic_catalog::transition_tests::n16",
+          "status": "PASS"
+        },
+        {
+          "selector": "storage::semantic_catalog::transition_tests::n17",
+          "status": "PASS"
+        },
+        {
+          "selector": "storage::semantic_catalog::transition_tests::n18",
+          "status": "PASS"
+        },
+        {
+          "selector": "storage::semantic_catalog::transition_tests::n19",
+          "status": "PASS"
+        },
+        {
+          "selector": "storage::semantic_catalog::transition_tests::n20",
+          "status": "PASS"
+        },
+        {
+          "selector": "storage::semantic_catalog::transition_tests::n21",
+          "status": "PASS"
+        },
+        {
+          "selector": "storage::semantic_catalog::transition_tests::n22",
+          "status": "PASS"
+        },
+        {
+          "selector": "storage::semantic_catalog::transition_tests::n23",
+          "status": "PASS"
+        },
+        {
+          "selector": "storage::semantic_catalog::transition_tests::n24",
+          "status": "PASS"
+        },
+        {
+          "selector": "storage::semantic_catalog::transition_tests::n25",
+          "status": "PASS"
+        },
+        {
+          "selector": "storage::semantic_catalog::transition_tests::n26",
+          "status": "PASS"
+        }
+      ],
+      "not_run": []
+    }
+  ],
+  "passed_unique": 180,
+  "original_harness_failure": {
+    "revision": "r5",
+    "case": "R04",
+    "cause": "harness parsed changed Job ordinal -1 as terminal ordinal; product not called",
+    "repair": "ten RollbackStart adapters use explicit terminal from original pinned manifest; golden/raw/product unchanged",
+    "receipt_sha256": "96dabc423f7b7c382f90c6d26081e838ef03c2a07a1db07aceabf768539e9b4e"
+  },
+  "actual_create": "NOT_RUN",
+  "native": "NOT_RUN",
+  "f05_actual_scope2": "NOT_RUN",
+  "dev3_complete": false,
+  "s5": "NOT_RUN",
+  "compile_failures_retained": [
+    "r0",
+    "r1",
+    "r2"
+  ],
+  "capture_error_retained": "r4/capture-failure.json",
+  "input_generation_runs": 1,
+  "input_audit_runs": 1,
+  "whole_workspace_tests": 0,
+  "repeated_completed_cases": 0,
+  "index_compile_failures_retained": [
+    "core-index-r0: omitted Profile2 dependency, no runtime"
+  ],
+  "isolated_commit_compile": {
+    "revision": "core-index-r1",
+    "source_fingerprint": "5fddd5a3b06b69a4890ae88d44f43c2f4e829711b889b7cd65334907d620df29",
+    "binary_sha256": "e4e89d3feab63b5f956e7afb9ce3eca526430d7435fe03a5e0e82dce3a9d61c3",
+    "tree": "1c2850118d0f6184514285bc4bb925ca4d690dae",
+    "build_receipt_sha256": "3278839892059e14e9f8ac91276b06487b06e1b8a7bddb1e19304030cba4216c",
+    "runtime_tests": 0,
+    "warnings": "unused typed reexports awaiting actual consumer; preserved, not zero-warning claim"
+  },
+  "catalog_scratch_followup": {
+    "status": "PASS_CHANGED_PURE_ONLY",
+    "source": "a99a3b66d72a6297b204aa52c8b05b42642f0da6896c9782559819110948d741",
+    "elf": "b8662587fcc92bdd2f9e46d36fd06fb106b8de031b8db87772eace883a8d7572",
+    "plan_sha256": "7df7327f860e821852306c17993e5869f9db54327f7ede1aa1d11b72863fe68a",
+    "controller_sha256": "0e85ee10e8b7f59844e22629401de7acd01e3fbf4dbbf2ec495ef0284bcc35c0",
+    "result_sha256": "ac0e928efa168a40a8a9f4b502ca692cd074ceccf50f1034de6b68e97601eecd",
+    "selectors": [
+      {
+        "selector": "storage::semantic_catalog::images::catalog::scratch_tests::dense_catalog_scratch_has_room_for_metadata_and_insert",
+        "status": "PASS",
+        "command": [
+          "/home/et16/work/xadb/artifacts/dev3/catalog-create-20261025/integration-r10/xadb-engine-tests",
+          "--exact",
+          "storage::semantic_catalog::images::catalog::scratch_tests::dense_catalog_scratch_has_room_for_metadata_and_insert",
+          "--nocapture",
+          "--test-threads=1"
+        ],
+        "exit_code": 0,
+        "seconds": 0.011287698995147366,
+        "error": null,
+        "stdout_sha256": "0df0b7f46a464e54b0f15b453a6d86e2aedff0958805934ce6c4c9ec77d34683",
+        "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "selector": "storage::semantic_catalog::images::catalog::scratch_tests::tiny_or_mismatched_prior_catalog_value_is_rejected",
+        "status": "PASS",
+        "command": [
+          "/home/et16/work/xadb/artifacts/dev3/catalog-create-20261025/integration-r10/xadb-engine-tests",
+          "--exact",
+          "storage::semantic_catalog::images::catalog::scratch_tests::tiny_or_mismatched_prior_catalog_value_is_rejected",
+          "--nocapture",
+          "--test-threads=1"
+        ],
+        "exit_code": 0,
+        "seconds": 0.010930804004601669,
+        "error": null,
+        "stdout_sha256": "85a6364fe57822707870969b94ba7f4f737f8b2fd580a45545976117a8825602",
+        "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "selector": "storage::semantic_catalog::transition_tests::c03",
+        "status": "PASS",
+        "command": [
+          "/home/et16/work/xadb/artifacts/dev3/catalog-create-20261025/integration-r10/xadb-engine-tests",
+          "--exact",
+          "storage::semantic_catalog::transition_tests::c03",
+          "--nocapture",
+          "--test-threads=1"
+        ],
+        "exit_code": 0,
+        "seconds": 0.2538028140043025,
+        "error": null,
+        "stdout_sha256": "d95ab7e115b71406403ab2ade39436982e52ad9f9fe0b55e33898d1811a5f182",
+        "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "selector": "storage::semantic_catalog::transition_tests::c13",
+        "status": "PASS",
+        "command": [
+          "/home/et16/work/xadb/artifacts/dev3/catalog-create-20261025/integration-r10/xadb-engine-tests",
+          "--exact",
+          "storage::semantic_catalog::transition_tests::c13",
+          "--nocapture",
+          "--test-threads=1"
+        ],
+        "exit_code": 0,
+        "seconds": 0.19326369000191335,
+        "error": null,
+        "stdout_sha256": "5114d7a6308c5f034845b2e5c9888cf612681da50fc3b43200919afe9cf898be",
+        "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "selector": "storage::semantic_catalog::transition_tests::p02",
+        "status": "PASS",
+        "command": [
+          "/home/et16/work/xadb/artifacts/dev3/catalog-create-20261025/integration-r10/xadb-engine-tests",
+          "--exact",
+          "storage::semantic_catalog::transition_tests::p02",
+          "--nocapture",
+          "--test-threads=1"
+        ],
+        "exit_code": 0,
+        "seconds": 0.1933070820014109,
+        "error": null,
+        "stdout_sha256": "860cc7790159b9744bb9f749dbb03e0b3b9ddfe2c21a33f37d8a7ffa4d59ea11",
+        "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "selector": "storage::semantic_catalog::transition_tests::c05",
+        "status": "PASS",
+        "command": [
+          "/home/et16/work/xadb/artifacts/dev3/catalog-create-20261025/integration-r10/xadb-engine-tests",
+          "--exact",
+          "storage::semantic_catalog::transition_tests::c05",
+          "--nocapture",
+          "--test-threads=1"
+        ],
+        "exit_code": 0,
+        "seconds": 0.17291287000261946,
+        "error": null,
+        "stdout_sha256": "a31b92192fde822a6cd178f39368c9f5d6c7904a04edce6536db618cdf85dcea",
+        "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "selector": "storage::semantic_catalog::transition_tests::r05",
+        "status": "PASS",
+        "command": [
+          "/home/et16/work/xadb/artifacts/dev3/catalog-create-20261025/integration-r10/xadb-engine-tests",
+          "--exact",
+          "storage::semantic_catalog::transition_tests::r05",
+          "--nocapture",
+          "--test-threads=1"
+        ],
+        "exit_code": 0,
+        "seconds": 0.19342862100165803,
+        "error": null,
+        "stdout_sha256": "2fcfb9d635a27f466d037259955805368fec50947a23caccae1437c0263ecb2c",
+        "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      }
+    ],
+    "seconds": 1.0295977350033354,
+    "independent_review": "page_lifetime source read: semantic minimum record size is established before the smaller array; no optimizer liveness deduction",
+    "fixture_alias": "Test source now refers to already committed transition/raw/ca16fa2a2869199554b3638706d8b2269c757ba4ef510c69667979dfddd4fcad.bin instead of identical native raw alias; full bytes/SHA equal; no repeated semantic execution",
+    "live_admission": "integration-r11 source/native static caps still FAIL 67466>65536; effects0; no native PASS",
+    "staged_index_compile": {
+      "revision": "core-scratch-index-r1",
+      "status": "PASS",
+      "source": "acc1bb4bae91f116fa5e6de807870e8695296714a3372fb933b9d50d1d60d9c3",
+      "elf": "1165edc31b6e8a4836b83ae942d874b16497b0535064d45a35667c14a1c11139",
+      "tests": "NOT_RUN; changed seven already preserved at r10"
+    }
+  }
+}

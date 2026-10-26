@@ -741,6 +741,7 @@ fn input_header(raw: &[u8]) -> Header {
         }
     });
     Header {
+        format: BaseFormat::V1Status,
         generation: number(raw, 88),
         capture_lsn: number(raw, 96),
         previous_generation: number(raw, 104),

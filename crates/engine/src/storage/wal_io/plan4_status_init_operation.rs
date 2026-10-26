@@ -1,4 +1,4 @@
-//! Plan4's adjacent reserve-one -> Status INIT terminal. The current allocator
+//! Plan4's adjacent reserve-one -> fixed Status/Free-Undo INIT terminal. The current allocator
 //! population is checked by the same base bridge; all INIT bytes/descriptor/
 //! redo validation reuse the original Status implementation without extending
 //! its old population or role authority.
@@ -9,10 +9,42 @@ use operation::retention::{
     RetentionReservation, retained_reservation,
 };
 
+/// Pure closed role selector; only the live plan4 role seals authority.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub(crate) enum RetentionPageKind {
+    Status,
+    FreeUndo,
+}
+impl RetentionPageKind {
+    fn scope(self) -> InitScope {
+        InitScope::Retention(match self {
+            Self::Status => mixed::Kind::Status,
+            Self::FreeUndo => mixed::Kind::UndoRoot,
+        })
+    }
+    pub(crate) fn object(self) -> ObjectId {
+        ObjectId::new(self.scope().owner()).expect("fixed role")
+    }
+    pub(crate) fn kind(self) -> PageKind {
+        self.scope().kind()
+    }
+    pub(crate) fn frame_bytes(self) -> usize {
+        self.scope().frame_bytes()
+    }
+    pub(crate) fn terminal(self) -> u8 {
+        match self {
+            Self::Status => 2,
+            Self::FreeUndo => 3,
+        }
+    }
+}
+
 pub(crate) const RETENTION_INIT_BYTES: usize = FRAME_BYTES;
+pub(crate) const RETENTION_UNDO_INIT_BYTES: usize = FRAME_BYTES + 208;
 
 fn context<'p>(
     expected: &RetentionAllocationExpected<'p>,
+    kind: RetentionPageKind,
     before: &[u8; PAGE_BYTES],
 ) -> Result<InitExpected<'p>> {
     let reservation = retained_reservation(expected, before)?;
@@ -22,7 +54,7 @@ fn context<'p>(
         payload: PageIdentity {
             database: expected.profile.spec().namespace.database,
             page: reservation.page,
-            owner: ObjectId::new(2).expect("fixed Status object"),
+            owner: kind.object(),
             owner_generation: Generation::new(1).expect("fixed generation"),
         },
         frame: expected.frame,
@@ -37,7 +69,7 @@ fn context<'p>(
     };
     plan_index(&ScopedExpected {
         context: &context,
-        scope: InitScope::Status,
+        scope: kind.scope(),
     })?;
     Ok(context)
 }
@@ -90,29 +122,30 @@ impl<'out, 's> PreparedRetentionInit<'out, 's> {
     }
 }
 
-fn state(context: &InitExpected<'_>) -> RetentionAllocationState {
+fn state(context: &InitExpected<'_>, kind: RetentionPageKind) -> RetentionAllocationState {
     RetentionAllocationState {
         high_water: context.batch.owner.id(),
-        terminal: 2,
+        terminal: kind.terminal(),
         reserved: None,
     }
 }
 
 pub(crate) fn prepare_retention_init<'out, 's>(
     plan: &RetentionAllocationPlan<'_, 's>,
+    kind: RetentionPageKind,
     before: &[u8; PAGE_BYTES],
     output: &'out mut [u8; 65536],
     allocator_after: &'out mut [u8; PAGE_BYTES],
     status_after: &'out mut [u8; PAGE_BYTES],
 ) -> Result<PreparedRetentionInit<'out, 's>> {
     let expected = plan.expected();
-    let context = context(&expected, before)?;
+    let context = context(&expected, kind, before)?;
     let scoped = ScopedExpected {
         context: &context,
-        scope: InitScope::Status,
+        scope: kind.scope(),
     };
     let h = header(&scoped)?;
-    let bytes = &mut output[..RETENTION_INIT_BYTES];
+    let bytes = &mut output[..kind.frame_bytes()];
     bytes.fill(0);
     encode_allocator(&scoped, before, h.lsn, bytes, allocator_after)?;
     encode_finished_descriptor(
@@ -120,9 +153,10 @@ pub(crate) fn prepare_retention_init<'out, 's>(
         context.batch,
         PageLsn(h.lsn),
         &mut bytes[352..1888],
-        InitScope::Status,
+        kind.scope(),
     )?;
-    InitScope::Status.encode_page(&context.payload, PageLsn(h.lsn), status_after)?;
+    kind.scope()
+        .encode_page(&context.payload, PageLsn(h.lsn), status_after)?;
     encode_group(&scoped, h, before, bytes, allocator_after, status_after)?;
     validate_preflighted(&scoped, before, bytes, allocator_after, status_after)?;
     Ok(PreparedRetentionInit {
@@ -131,7 +165,7 @@ pub(crate) fn prepare_retention_init<'out, 's>(
         status_after,
         prefix: plan.prefix,
         header: h,
-        state: state(&context),
+        state: state(&context, kind),
         fence: plan.fence,
     })
 }
@@ -151,7 +185,7 @@ fn validate_preflighted(
             .try_into()
             .expect("validated header length"),
         PageLsn(h.lsn),
-        InitScope::Status,
+        expected.scope,
     )?;
     validate_allocator_transition(expected, before, bytes, allocator_after, h)?;
     validate_status_transition(expected, bytes, status_after, h)
@@ -159,16 +193,17 @@ fn validate_preflighted(
 
 pub(crate) fn validate_retention_init(
     expected: &RetentionAllocationExpected<'_>,
+    kind: RetentionPageKind,
     before: &[u8; PAGE_BYTES],
     bytes: &[u8],
     allocator_after: &[u8; PAGE_BYTES],
     status_after: &[u8; PAGE_BYTES],
 ) -> Result<()> {
-    let context = context(expected, before)?;
+    let context = context(expected, kind, before)?;
     validate_preflighted(
         &ScopedExpected {
             context: &context,
-            scope: InitScope::Status,
+            scope: kind.scope(),
         },
         before,
         bytes,
@@ -182,15 +217,16 @@ pub(crate) fn validate_retention_init(
 /// physical homes nor a reconstructed scalar state can authorize live apply.
 pub(crate) fn materialize_retention_init(
     expected: &RetentionAllocationExpected<'_>,
+    kind: RetentionPageKind,
     before: &[u8; PAGE_BYTES],
     bytes: &[u8],
     allocator_after: &mut [u8; PAGE_BYTES],
     status_after: &mut [u8; PAGE_BYTES],
 ) -> Result<RetentionAllocationState> {
-    let context = context(expected, before)?;
+    let context = context(expected, kind, before)?;
     let scoped = ScopedExpected {
         context: &context,
-        scope: InitScope::Status,
+        scope: kind.scope(),
     };
     let h = validate_header(&scoped, bytes)?;
     {
@@ -211,9 +247,10 @@ pub(crate) fn materialize_retention_init(
         )
         .map_err(|_| SemanticError::PageMismatch)?;
     }
-    status_after.copy_from_slice(&bytes[INIT.start + 64..INIT.end]);
+    let span = scoped.scope.init();
+    status_after.copy_from_slice(&bytes[span.start + 64..span.end]);
     validate_preflighted(&scoped, before, bytes, allocator_after, status_after)?;
-    Ok(state(&context))
+    Ok(state(&context, kind))
 }
 
 /// New-only actual forwarding/return carriers plus the original bounded INIT
@@ -231,5 +268,30 @@ pub(crate) fn retention_init_source_bytes() -> usize {
         + 2 * size_of::<Result<PreparedRetentionInit<'_, '_>>>()
         + 3 * size_of::<RetentionAllocationState>()
         + 3 * size_of::<Result<RetentionAllocationState>>()
+        + 8 * size_of::<RetentionPageKind>()
+        + 208 // Free Undo codec cell exceeds the Status cell by this amount.
+        + 512
+}
+
+/// Pure replay-only call chain. `context` finishes the original reservation
+/// analysis before the local InitExpected/ScopedExpected run header, allocator,
+/// descriptor and payload validation. No producer Plan/Prepared owner is live.
+pub(crate) fn retention_materialize_source_bytes() -> usize {
+    operation::retention::retention_materialize_source_bytes()
+        .max(temporary_bytes())
+        + 2 * size_of::<RetentionAllocationExpected<'_>>()
+        + 2 * size_of::<InitExpected<'_>>()
+        + 2 * size_of::<Result<InitExpected<'_>>>()
+        + 2 * size_of::<ScopedExpected<'_, '_>>()
+        + 2 * size_of::<RetentionReservation>()
+        + 2 * size_of::<RetentionAllocationState>()
+        + 2 * size_of::<Result<RetentionAllocationState>>()
+        + 2 * size_of::<WalFrameHeader>()
+        + 2 * size_of::<allocation_page::AllocationPage<'_>>()
+        + 4 * size_of::<RetentionPageKind>()
+        + 16 * size_of::<&[u8]>()
+        + 16 * size_of::<u64>()
+        + 4 * size_of::<Result<()>>()
+        + 208 // actual Free Undo cell above the existing Status codec bound
         + 512
 }

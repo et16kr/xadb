@@ -1,0 +1,10 @@
+{
+  "status": "GENERATED_INPUT_NOT_PRODUCT_EXECUTION",
+  "rows": 26,
+  "checkpoints": 6,
+  "raw_count": 137,
+  "raw_bytes": 3382130,
+  "manifest_sha256": "edfe57082b56540ea5e71f0d5109ca98dc131369d1906388f5dd171f69d3a92b",
+  "wall_seconds": 0.0362571600053343,
+  "generator_sha256": "a93f2c5a519a04ec758467b7c2345a2e5021d61b5061a56be4ad9b348b9c38d7"
+}

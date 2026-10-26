@@ -1,0 +1,260 @@
+{
+  "schema_version": 1,
+  "date": "2026-10-25",
+  "classification": "D2_SCOPED_K0_SINGLE_WRITER",
+  "status": "REJECTED_NOT_APPLIED_SCOPED_REVIEW_ACCEPTED",
+  "owner": "/root",
+  "plan_commit": "18eb879",
+  "plan_ref": "dev2-pf04-resolution-plan.md#c2-single-writer",
+  "baseline_commit": "688b9af",
+  "sources": {
+    "baseline": {
+      "source_sha256": "487ef5d7a78f6d50739723418858935b60eaef6a1be051f2fe04a3dfa98be5a5",
+      "files": {
+        "crates/engine/src/diagnostics.rs": "4b029dcd7ca8f17a13d8f8a5f34528c04b42d654889a004a8ff7fae2fa49b349",
+        "crates/engine/src/substrate.rs": "905739a080d33eb1da78470be483f2e8d3e38b734be65c2a4299d47445f6cbc5",
+        "crates/engine/tests/performance.rs": "f753331722bc24d60e1d6de6c377027f6e6ec0f5899d5f162796a04314f42519"
+      }
+    },
+    "candidate": {
+      "source_sha256": "fac595abea1a263a47f1c413931c9e6c20054897d226c1b1cf14992aab54a7f2",
+      "files": {
+        "crates/engine/src/diagnostics.rs": "fb63d202e0bea6a204dc86720b3a921605e589721debfa45b9981041d05d4b80",
+        "crates/engine/src/substrate.rs": "4048ce7a8d953a290015107bdff0aa9dc4fdc2075a76863e03b356fe26d241cc",
+        "crates/engine/tests/performance.rs": "a1a8b7ebcc634f3b7e2a87be662a404e34a6edfb8571782159e518c746dbf9c0"
+      }
+    }
+  },
+  "selected_validation": {
+    "product_test_functions": 11,
+    "existing": 7,
+    "new": 4,
+    "status": "PASS",
+    "compiler_negative_cases": 2,
+    "compiler_negative_status": "EXPECTED_COMPILE_FAILURE",
+    "fmt": "PASS",
+    "scoped_clippy": "PASS",
+    "release_builds": 2,
+    "external_command_cases": 2,
+    "idle_vector_groups": 1,
+    "lifecycle_race_unverified": true,
+    "unchanged_lower_tests": 0,
+    "workspace_wrappers": 0,
+    "pmu_runs": 0,
+    "product_tests_after_rejection": 0
+  },
+  "decision": {
+    "status": "REJECTED",
+    "campaigns": [
+      {
+        "name": "exploration",
+        "comparison": {
+          "validity": "VALID",
+          "correctness": "PASS",
+          "performance_effect": "NO_MATERIAL_CHANGE",
+          "guardrails": "PASS",
+          "cause_status": "UNRESOLVED",
+          "promotion": "INCOMPLETE",
+          "reasons": [],
+          "ratios": [
+            {
+              "numerator": 15980796,
+              "denominator": 16662867
+            },
+            {
+              "numerator": 16168689,
+              "denominator": 16410844
+            },
+            {
+              "numerator": 15945640,
+              "denominator": 16667346
+            },
+            {
+              "numerator": 15990654,
+              "denominator": 16402147
+            },
+            {
+              "numerator": 15993820,
+              "denominator": 16482880
+            },
+            {
+              "numerator": 15921324,
+              "denominator": 16462641
+            },
+            {
+              "numerator": 15904232,
+              "denominator": 16415763
+            },
+            {
+              "numerator": 16308973,
+              "denominator": 16418188
+            },
+            {
+              "numerator": 16033204,
+              "denominator": 16461850
+            },
+            {
+              "numerator": 16044636,
+              "denominator": 16445920
+            }
+          ],
+          "interval": [
+            {
+              "numerator": 15980796,
+              "denominator": 16662867
+            },
+            {
+              "numerator": 16168689,
+              "denominator": 16410844
+            }
+          ],
+          "median": [
+            527561243314520,
+            542677396256000
+          ],
+          "nominal_interval_coverage": [
+            1002,
+            1024
+          ],
+          "worst_elapsed": {
+            "numerator": 16308973,
+            "denominator": 16418188
+          },
+          "worst_cpu": {
+            "numerator": 16230107,
+            "denominator": 16337801
+          },
+          "worst_external": {
+            "numerator": 22818494,
+            "denominator": 22866944
+          },
+          "worst_sample_p99": {
+            "numerator": 280,
+            "denominator": 271
+          },
+          "worst_process_peak_rss_delta": 4096
+        }
+      },
+      {
+        "name": "confirmation",
+        "comparison": {
+          "validity": "VALID",
+          "correctness": "PASS",
+          "performance_effect": "NO_MATERIAL_CHANGE",
+          "guardrails": "PASS",
+          "cause_status": "UNRESOLVED",
+          "promotion": "INCOMPLETE",
+          "reasons": [],
+          "ratios": [
+            {
+              "numerator": 15950780,
+              "denominator": 16413069
+            },
+            {
+              "numerator": 15959176,
+              "denominator": 16341975
+            },
+            {
+              "numerator": 15939970,
+              "denominator": 16389655
+            },
+            {
+              "numerator": 15922417,
+              "denominator": 16741666
+            },
+            {
+              "numerator": 15917958,
+              "denominator": 16398432
+            },
+            {
+              "numerator": 16602595,
+              "denominator": 16410414
+            },
+            {
+              "numerator": 15889745,
+              "denominator": 16412829
+            },
+            {
+              "numerator": 15899865,
+              "denominator": 16388953
+            },
+            {
+              "numerator": 15874076,
+              "denominator": 16356593
+            },
+            {
+              "numerator": 15909643,
+              "denominator": 16386810
+            }
+          ],
+          "interval": [
+            {
+              "numerator": 15889745,
+              "denominator": 16412829
+            },
+            {
+              "numerator": 15959176,
+              "denominator": 16341975
+            }
+          ],
+          "median": [
+            521737752213756,
+            537435978963840
+          ],
+          "nominal_interval_coverage": [
+            1002,
+            1024
+          ],
+          "worst_elapsed": {
+            "numerator": 16602595,
+            "denominator": 16410414
+          },
+          "worst_cpu": {
+            "numerator": 16520599,
+            "denominator": 16330203
+          },
+          "worst_external": {
+            "numerator": 22913172,
+            "denominator": 22685274
+          },
+          "worst_sample_p99": {
+            "numerator": 281,
+            "denominator": 271
+          },
+          "worst_process_peak_rss_delta": 61440
+        }
+      }
+    ],
+    "stop_after": "confirmation",
+    "remaining": "NOT_RUN_BY_FROZEN_STOP_RULE"
+  },
+  "native_runs": 40,
+  "remaining_guards": "NOT_RUN_BY_FROZEN_STOP_RULE",
+  "wal_decision": "NOT_ADOPTED_AS_PF04_RELATIVE_COST_FIX",
+  "artifact_root": "/home/et16/xadb-dev2-evidence/pf04-single-writer-20261025",
+  "independent_review": {
+    "reviewer": "/root/pf04_evidence_review",
+    "plan_status": "PASS_PLAN_ONLY",
+    "final_status": "PASS_SCOPED_D1_D2_C2_REJECTION_WAL_NONADOPTION",
+    "receipt": "/home/et16/xadb-dev2-evidence/pf04-single-writer-20261025/final-review.json",
+    "sha256": "a5cc314093ef1c4ba997ea59da2f8031f1feb71c1ad39182c8dca21d34f49280",
+    "blockers": 0,
+    "limitations": [
+      "RUNNER1 timeout fork race and cleanup exception safety remain unverified; runner not adopted or reused",
+      "PF04 original FAIL and DEV2 incomplete remain unchanged"
+    ]
+  },
+  "original_pf04": "FOUR_CAMPAIGNS_FAIL_UNCHANGED",
+  "dev2": "INCOMPLETE",
+  "documentation_verifier": "NOT_RUN_PRE_PUSH_ONLY",
+  "push": "NOT_REQUESTED_NOT_RUN",
+  "artifact_manifest": {
+    "path": "/home/et16/xadb-dev2-evidence/pf04-single-writer-20261025/artifact-manifest.json",
+    "files": 372,
+    "sha256": "9afd8ebba4fd922811d1bda24fdde602908b89af86c3d389a28aacbdc7065e8a"
+  },
+  "raw_review": {
+    "path": "/home/et16/xadb-dev2-evidence/pf04-single-writer-20261025/retained-raw-review.json",
+    "sha256": "9ba23094ee695d5c6b6934b1f317443a0ed7fd1b63298e181925111a91a96161"
+  }
+}

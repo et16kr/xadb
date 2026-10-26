@@ -1,0 +1,81 @@
+{
+  "scope": "D3-TREE-EDIT-001 bounded leaf candidate only",
+  "baseline_commit": "688b9afce67e5b327d2a3c165b5ef5c0c556435c",
+  "source_sha256": "1cbed969ae706ccf7e315a35bdd0873a3c11d4865bcb9e19f92b2c84e0e79494",
+  "source_directory": "/home/et16/work/xadb/artifacts/dev3/leaf-edit-20261025/source",
+  "binary_sha256": "28f752b6734d4b5cf8735523a1ed72f908046186205688323ae6413e186de9f0",
+  "binary": "/home/et16/work/xadb/artifacts/dev3/leaf-edit-20261025/engine-tests",
+  "product_tests": {
+    "status": "PASS",
+    "count": 5,
+    "log": "/home/et16/work/xadb/artifacts/dev3/leaf-edit-20261025/tests.log",
+    "histories": {
+      "seeds_per_family": 64,
+      "operations": 128,
+      "families": 3
+    },
+    "reexecuted_product_tests": 0
+  },
+  "compiler_probes": {
+    "status": "PASS",
+    "cases": 7,
+    "result": "/home/et16/work/xadb/artifacts/dev3/leaf-edit-20261025/tree-edit-borrows-geav9qxl/result.json",
+    "removed_cache_bytes": 166384441
+  },
+  "checker_tests": {
+    "count": 3,
+    "logs": [
+      "checkers.log",
+      "checkers-r1.log"
+    ]
+  },
+  "static_checks": {
+    "rustfmt": "PASS",
+    "clippy": "PASS",
+    "clippy_source": "preserved source; no live in-progress catalog changes"
+  },
+  "preserved_failures": [
+    "build.log: E0716 in test fixture, fixed in build-r1.log",
+    "receipt-check-r0.log: nocapture witness interleaving; original product log retained",
+    "clippy.log: live checkout read parallel incomplete catalog source; isolated source passed clippy-r1.log"
+  ],
+  "s5_extended": "NOT_RUN:256 seeds x1024 operations x3families",
+  "first_row_integration": "NOT_IMPLEMENTED",
+  "dev3": "INCOMPLETE",
+  "current_file_hashes": {
+    "crates/engine/src/storage/tree_page.rs": "cb854bd0246e976059f9bb023c2a3d40f869c54eb05ca3deaf0e7bb4b5dcbc7b",
+    "crates/engine/src/storage/tree_page/edit.rs": "1771884a82e73092adb9db47127d510775de62a1874f145dd05705e5142b94e6",
+    "crates/engine/src/storage/tree_page/edit/tests.rs": "bf3d0421238eea56afd670921638f79d039b9cda9549da715824b0d209076e60",
+    "scripts/check_dev3_leaf.py": "3a04b04e9d9b48dda76b724516484880d70176cb2eaf16e2a82722bfbb2b9434",
+    "scripts/check_dev3_tree_edit_borrows.py": "10c45b6b8f9ee535a72a3ded977dce1c8985e30edcf258163479f943bcc41c70",
+    "scripts/test_dev3_tree_edit.py": "4bcd27680bab588ab60003ef33b3323eae0fc058943c1f1c7118e963a793aab3"
+  },
+  "artifact_hashes": {
+    "tests.log": "b901bf53af4d0d3522d05a2dd409c2fd4c1297a35ef4fa85859a7f76507e1582",
+    "clippy-r1.log": "daf8e23e643c4ff5d52191eda30e3ad6fa69e5ee2ed119e93467a7c2a72cb83a",
+    "frozen-input.json": "620633e6a38cf0622ad04b0cd3f46745713fd24753cb80955c9c64b55618900c",
+    "tree-edit-borrows-geav9qxl/result.json": "826d998c82b7631e985e69509075330f09376a28b8632b17724a8472c95a04f3"
+  },
+  "independent_review": {
+    "reviewer": "/root/dev3_review",
+    "D2": "ACCEPTED",
+    "D1": "ACCEPTED",
+    "scope": "leaf-edit only; concurrent catalog source excluded"
+  },
+  "cleanup": {
+    "compiler_disposable_bytes": 166384441,
+    "root_target_removed_bytes": 113782993,
+    "preserved": "source, binary, frozen input, original failures, probe patches and raw logs",
+    "source_archive": {
+      "archive": "/home/et16/work/xadb/artifacts/dev3/leaf-edit-20261025/source.tar.gz",
+      "sha256": "84f5f89f528a6dc7b12bb2ef235cd5abce166ebd262396244cdfe5542fc43951",
+      "bytes": 9261560,
+      "members": 4840,
+      "removed_expanded_bytes": 145741233,
+      "source_fingerprint": "1cbed969ae706ccf7e315a35bdd0873a3c11d4865bcb9e19f92b2c84e0e79494",
+      "validation": "Every file length and sha256 matched before expanded source removal. Original ELF and raw logs preserved."
+    }
+  },
+  "source_archive": "/home/et16/work/xadb/artifacts/dev3/leaf-edit-20261025/source.tar.gz",
+  "source_directory_note": "Original execution path, now stored losslessly in source_archive after full member verification."
+}

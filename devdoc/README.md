@@ -2,6 +2,25 @@
 
 2026-10-25 [DEV4 P5 BFS 탐색기](evidence/dev4-lifecycle-explorer-20261025.md): [결정적 BFS](contracts/dev4-lifecycle-explorer.md)를 구현했다. 설계 상한은 상태 50만에서 INCONCLUSIVE이고, 사용자가 승인한 깊이 5는 깊이 4 이하 43만 상태의 6.6억 slot을 모델·checker로 판정해 불일치0으로 비웠다(archive 없음, PASS 아님). 실행 중 찾은 불일치1건은 모델을 고쳐 판정했다. FE14·깊이 6은 미완료다.
 
+2026-10-25 [DEV2 PF04 C3·측정 profile B 계획](plans/dev2-pf04-resolution-plan.md#c3-profile-b): K0 계측 비용을 반복당 locked RMW로 설명하고, thread별 shard counter(C3)와 결과를 보지 않는 환경 타당성 판정(B)을 실행 전 계획으로 정했다. 한도·pair별 판정은 그대로다. 독립 D2 검토5회 끝에 차단0으로 채택했고 구현·측정은 NOT_RUN, 영속 처리는 결정 대기다. 원 PF04 FAIL·DEV2 미완료를 유지한다.
+
+2026-10-25 [DEV2 PF04 CPU 성능 요청 범위 제어](evidence/dev2-pf04-frequency-control-20261025.md): 도구12·driver4개 선택 검증 뒤 첫 host 연결이 즉시 readback 불일치로 실패했다. 최종234필드는 원 값과 같고 프로세스는 종료됐다. 나머지2개 미실행·격리 lease 보존·사용자 조건에 따른 중단이며 원 PF04 FAIL·DEV2 미완료를 유지한다.
+
+2026-10-25 [DEV2 PF04 원 제어기 CPU 배치](evidence/dev2-pf04-controller-placement-20261025.md): 원 e3 worker의60slot을 완료했다. CPU2/3 중앙 차이0.26–0.61%로 큰 배치 효과는 지지되지 않았고, 원 FAIL·DEV2 미완료를 보존하며 해결 조사를 계속한다.
+
+
+2026-10-25 [DEV2 PF04 모드별 실행 작업·CPU 비용](evidence/dev2-pf04-mode-attribution-20261025.md): 같은 경계의40slot을 완료했다. CPU 중앙 Always+9.23%·Detailed+12.28%와 명령 수/CPI 증가를 관측했고, 원 FAIL·과거 원인 미확정·DEV2 미완료를 유지한다.
+
+2026-10-25 [DEV2 PF04 warmup 뒤 관측 경계 대조](evidence/dev2-pf04-boundary-comparison-20261025.md): 디버깅10쌍·20개 정답·PMU160행을 완료했다. CPU W/C 중앙1.002127로 큰 경계 효과 UNKNOWN, 원 PF04 FAIL·DEV2 미완료를 유지한다.
+
+2026-10-25 [DEV2 PF04 warmup 전 관측 경계](evidence/dev2-pf04-prewarmup-20261025.md): 선택11함수·실제4연결을 완료했다. 새 두 모드는 같은 warmup 포함 PMU 범위로 진입 경계를 구분하며, 성능 효과 미평가·원 PF04 FAIL·DEV2 미완료를 유지한다.
+
+2026-10-25 [DEV2 PF04 사용자·커널 CPU 분리](evidence/dev2-pf04-cpu-split-20261025.md): 선택6함수·새 profile의 Off/Always2연결을 완료했다. 커널 counter와 rusage 분할을 구별하며 원 PF04 FAIL·DEV2 미완료를 유지한다.
+
+2026-10-25 [DEV2 PF04 C2 단일 쓰기 통계 후보](evidence/dev2-pf04-single-writer-20261025.md): 선택11함수·compiler2개와40개 비교 실행을 완료했다. 확인 개선 약2.92%로5% 기준에 미달해 제품에 반영하지 않았고 PF04·DEV2 미완료를 유지한다.
+
+2026-10-25 [DEV2 PF04 flush 완료 구분·출력 버퍼 보완](evidence/dev2-pf04-flush-provenance-20261025.md): 수집기 변경과 source별 선택 검증을 완료했다. 원 count 불일치 FAIL을 보존하고 수정 Always의512 fsync/phase와 완료2932개를 연결했다. PF04·DEV2 미완료를 유지한다.
+
 [DEV3 실행 범위](plans/dev3-implementation-plan.md#direction-refinement) · [구현 상태](implementation/README.md) · [최신 증거](evidence/README.md) · [이전 변경 기록](#previous-updates)
 
 ## 작업을 시작할 때
@@ -69,8 +88,6 @@
 2026-10-25 [DEV4 P5 수명 모델 전이](evidence/dev4-lifecycle-model-20261025.md): [소유 계약](contracts/dev4-lifecycle-model.md)의 `transition`을 구현해 원 literal 29 edge·12 trace·5 known-bad와 맞췄다. 1차 독립 검토가 찾은 금지 전이 2건을 교정했고 독립 D2 수용·D1 제한 수용이다. 독립 checker·BFS·FE14는 미완료다.
 
 2026-10-25 [DEV4 P5 전체 입력 조립](evidence/dev4-lifecycle-assembler-20261025.md): [소유 계약](contracts/dev4-lifecycle-assembler.md)의 `assemble_input`을 구현하고 신규 입력1994개를 선택 검증했다. 독립 supplement32·rich 후보 정정2건과 개발 중 불일치 교정 이력을 보존하며 모델 전이·FE14는 미완료다.
-
-2026-10-25 [DEV2 PF04 flush 완료 구분·출력 버퍼 보완](evidence/dev2-pf04-flush-provenance-20261025.md): 수집기 변경과 source별 선택 검증을 완료했다. 원 count 불일치 FAIL을 보존하고 수정 Always의512 fsync/phase와 완료2932개를 연결했다. PF04·DEV2 미완료를 유지한다.
 
 2026-10-25 [DEV3 비교 분석 반영](evidence/dev3-comparison-adoption-20261025.md): [설계 보강](contracts/disk-storage-design.md#task-review-011)·[완료분 보완 계획](plans/dev3-implementation-plan.md#comparison-adoption)·[추가 인수](plans/dev3-test-plan.md#comparison-adoption). 제품·시험 미실행, 기존 완료 증거 보존.
 

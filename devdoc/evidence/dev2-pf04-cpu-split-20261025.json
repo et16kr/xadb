@@ -1,0 +1,388 @@
+{
+  "schema_version": 1,
+  "date": "2026-10-25",
+  "classification": "D2_SCOPED_USER_KERNEL_PMU",
+  "status": "IMPLEMENTED_SELECTED_VALIDATION_COMPLETE_SCOPED_REVIEW_ACCEPTED",
+  "owner": "/root",
+  "plan_commit": "b33f1e4",
+  "plan_ref": "dev2-pf04-resolution-plan.md#cpu-user-kernel",
+  "product_source": {
+    "build": {
+      "source_sha256": "7ced0a5622825b971a4a146cdd8d1ce4a5ef01eefe633e59deb6b338390a5329",
+      "toolchain": "rustc 1.95.0 (59807616e 2026-04-14)",
+      "target": "x86_64-unknown-linux-gnu",
+      "profile": "release",
+      "self_test": false
+    },
+    "workers": {
+      "durable": {
+        "path": "/home/et16/xadb-dev2-evidence/pf04-io-cause-20261025/target/x86_64-unknown-linux-gnu/release/xadbtest-durable-performance-worker",
+        "sha256": "ea1f0f7c5f2d58a61199f399ae6961f290449dea488a9187ebf11505bc501c51"
+      }
+    }
+  },
+  "sources": {
+    "scripts/dev2_measurement_window.py": "bc4811b5751c50755938309f78c7543e48843a6370b3e6aecc0cfb5de051a57e",
+    "scripts/test_dev2_measurement_window.py": "744d0dd23f19d2d9f5264369cfef2decec65f9bfb2879f62c98cbd4310574807",
+    "scripts/fixtures/measurement_window_perf.py": "a5f37df9d3bdd8ab079da33d63416b7e56b1a2a6948f7fa70fbf458eb285a941"
+  },
+  "selected_validation": {
+    "functions": 6,
+    "new": 4,
+    "changed_default": 2,
+    "status": "PASS",
+    "python_syntax_files": 4,
+    "native_connections": 2,
+    "product_tests": 0,
+    "old_privilege_lifecycle_tests": 0,
+    "workspace_wrappers": 0,
+    "original_acceptance_reruns": 0
+  },
+  "observations": {
+    "status": "TWO_DIAGNOSTIC_CONNECTIONS_COMPLETE",
+    "slots": [
+      {
+        "mode": "Off",
+        "status": "CORRECT_DIAGNOSTIC",
+        "correctness": "ACCEPTED",
+        "measured_transactions": 512,
+        "observed_commits_including_setup_warmup": 578,
+        "measurement_ns": 2758469037,
+        "cpu_ns": 28412021,
+        "cycle_p99_ns": 5517289,
+        "usage_delta": [
+          15857000,
+          12597000,
+          27,
+          0,
+          1038,
+          0
+        ],
+        "events": {
+          "cycles:u": {
+            "count": 14351225,
+            "runtime_ns": 25973037,
+            "coverage_percent": 100.0,
+            "status": "REPORTED_FULL_COVERAGE"
+          },
+          "cycles:k": {
+            "count": 20829631,
+            "runtime_ns": 25973037,
+            "coverage_percent": 100.0,
+            "status": "REPORTED_FULL_COVERAGE"
+          },
+          "instructions:u": {
+            "count": 13571051,
+            "runtime_ns": 25973037,
+            "coverage_percent": 100.0,
+            "status": "REPORTED_FULL_COVERAGE"
+          },
+          "instructions:k": {
+            "count": 20775069,
+            "runtime_ns": 25973037,
+            "coverage_percent": 100.0,
+            "status": "REPORTED_FULL_COVERAGE"
+          },
+          "ref-cycles:u": {
+            "count": 20118925,
+            "runtime_ns": 25973037,
+            "coverage_percent": 100.0,
+            "status": "REPORTED_FULL_COVERAGE"
+          },
+          "context-switches": {
+            "count": 1039,
+            "runtime_ns": 25973037,
+            "coverage_percent": 100.0,
+            "status": "REPORTED_FULL_COVERAGE"
+          },
+          "cpu-migrations": {
+            "count": 0,
+            "runtime_ns": 25973037,
+            "coverage_percent": 100.0,
+            "status": "REPORTED_FULL_COVERAGE"
+          },
+          "page-faults": {
+            "count": 27,
+            "runtime_ns": 25973037,
+            "coverage_percent": 100.0,
+            "status": "REPORTED_FULL_COVERAGE"
+          }
+        },
+        "boundary_excess_ns": 8376,
+        "enable_disable_bracket_ns": 2761485636,
+        "idle_attempts": 1,
+        "idle_busy_percent": {
+          "cpu18": 0.1998001998001998,
+          "cpu2": 1.0030090270812437,
+          "disk": 1.0399509339709894
+        },
+        "pre_payload_affinity": {
+          "runner": {
+            "pid": 206521,
+            "starttime": 1216265,
+            "cpus": [
+              3
+            ],
+            "monotonic_ns": 12172721589216
+          },
+          "worker": {
+            "pid": 206654,
+            "starttime": 1217272,
+            "cpus": [
+              2
+            ],
+            "monotonic_ns": 12172721616127
+          }
+        },
+        "pre_ready_perf_affinity": {
+          "pid": 206657,
+          "starttime": 1217274,
+          "cpus": [
+            3
+          ],
+          "monotonic_ns": 12172763511033
+        },
+        "cleanup": [
+          {
+            "pid": 206655,
+            "starttime": 1217274,
+            "returncode": -2,
+            "signals": [
+              "SIGTERM"
+            ],
+            "group_gone": true,
+            "output_overflow": false,
+            "capture_errors": [],
+            "collector": {
+              "pid": 206657,
+              "starttime": 1217274,
+              "exited": true
+            }
+          },
+          {
+            "pid": 206654,
+            "starttime": 1217272,
+            "returncode": 0,
+            "signals": [
+              "SIGTERM"
+            ],
+            "group_gone": true,
+            "output_overflow": false,
+            "capture_errors": []
+          }
+        ],
+        "receipts": {
+          "case.json": "8dfd77fd0d0b07639faad7c6d063b0b65d1433cc752fb6255e266a8b302ae6d3",
+          "semantics.json": "e3fa42031fa8e212cc4079b29be2323a6f301918766dd5f12b372a2d4fc26bac",
+          "idle.json": "880c91f90389f471a70c325bb52ed566555d6e623c4807ce9ad1d3c516434bae",
+          "host.json": "c986c18d776cf7ee5ed1bc08da6f5a150145f84a4edec2dcb9b241ce4ad2d474",
+          "run/result.json": "f3840c360ba92b0cc68741e26c435edb2b0b4e415e19dc5dc9d297299b177442",
+          "run/worker.stdout": "d712097d9cdded08f11f172ef7eb071711eb66e032f3b5ee0adc67c25935e3da",
+          "run/perf.stdout": "cca577208f52eb189814a3dfeab777782ba1b67658100cf682fa2511728948aa"
+        }
+      },
+      {
+        "mode": "Always",
+        "status": "CORRECT_DIAGNOSTIC",
+        "correctness": "ACCEPTED",
+        "measured_transactions": 512,
+        "observed_commits_including_setup_warmup": 578,
+        "measurement_ns": 2760140569,
+        "cpu_ns": 29039299,
+        "cycle_p99_ns": 5584315,
+        "usage_delta": [
+          10235000,
+          18843000,
+          29,
+          0,
+          1040,
+          0
+        ],
+        "events": {
+          "cycles:u": {
+            "count": 15278608,
+            "runtime_ns": 26326191,
+            "coverage_percent": 100.0,
+            "status": "REPORTED_FULL_COVERAGE"
+          },
+          "cycles:k": {
+            "count": 20939151,
+            "runtime_ns": 26326191,
+            "coverage_percent": 100.0,
+            "status": "REPORTED_FULL_COVERAGE"
+          },
+          "instructions:u": {
+            "count": 14863461,
+            "runtime_ns": 26326191,
+            "coverage_percent": 100.0,
+            "status": "REPORTED_FULL_COVERAGE"
+          },
+          "instructions:k": {
+            "count": 20589750,
+            "runtime_ns": 26326191,
+            "coverage_percent": 100.0,
+            "status": "REPORTED_FULL_COVERAGE"
+          },
+          "ref-cycles:u": {
+            "count": 21304250,
+            "runtime_ns": 26326191,
+            "coverage_percent": 100.0,
+            "status": "REPORTED_FULL_COVERAGE"
+          },
+          "context-switches": {
+            "count": 1043,
+            "runtime_ns": 26326191,
+            "coverage_percent": 100.0,
+            "status": "REPORTED_FULL_COVERAGE"
+          },
+          "cpu-migrations": {
+            "count": 0,
+            "runtime_ns": 26326191,
+            "coverage_percent": 100.0,
+            "status": "REPORTED_FULL_COVERAGE"
+          },
+          "page-faults": {
+            "count": 29,
+            "runtime_ns": 26326191,
+            "coverage_percent": 100.0,
+            "status": "REPORTED_FULL_COVERAGE"
+          }
+        },
+        "boundary_excess_ns": 5501,
+        "enable_disable_bracket_ns": 2764133301,
+        "idle_attempts": 1,
+        "idle_busy_percent": {
+          "cpu18": 0.0,
+          "cpu2": 1.2072434607645874,
+          "disk": 0.6099551278580775
+        },
+        "pre_payload_affinity": {
+          "runner": {
+            "pid": 206521,
+            "starttime": 1216265,
+            "cpus": [
+              3
+            ],
+            "monotonic_ns": 12186089292324
+          },
+          "worker": {
+            "pid": 206730,
+            "starttime": 1218608,
+            "cpus": [
+              2
+            ],
+            "monotonic_ns": 12186089307603
+          }
+        },
+        "pre_ready_perf_affinity": {
+          "pid": 206733,
+          "starttime": 1218611,
+          "cpus": [
+            3
+          ],
+          "monotonic_ns": 12186135465456
+        },
+        "cleanup": [
+          {
+            "pid": 206731,
+            "starttime": 1218611,
+            "returncode": -2,
+            "signals": [
+              "SIGTERM"
+            ],
+            "group_gone": true,
+            "output_overflow": false,
+            "capture_errors": [],
+            "collector": {
+              "pid": 206733,
+              "starttime": 1218611,
+              "exited": true
+            }
+          },
+          {
+            "pid": 206730,
+            "starttime": 1218608,
+            "returncode": 0,
+            "signals": [
+              "SIGTERM"
+            ],
+            "group_gone": true,
+            "output_overflow": false,
+            "capture_errors": []
+          }
+        ],
+        "receipts": {
+          "case.json": "b1442fc198f70b36269267f3c32b4b8ca7b26bd27de473e1048be6e94413bec0",
+          "semantics.json": "4850f15028772cd4575a9b280f4d0d35084bbcca04cab4ee58d8cbfdfa654f80",
+          "idle.json": "9b9d2f3e08cf8e206c03548bd54fded5ef07d94780dd1ac353bfa3dad5520840",
+          "host.json": "b7432971916a93a35876e1e372cea3a8189aa0f00a865d7926e066beb2b91e42",
+          "run/result.json": "20d660ef55fd5f0bacec0683491d03a79de4284a6398d82d997877d709457eb2",
+          "run/worker.stdout": "7120c119993e5a1844b84d5a1c34566e84b5eb9dad8201778f05ff94be6042c6",
+          "run/perf.stdout": "6591d90ff359693733b7088e730b02867e969513f799474ee20407e42d80b27c"
+        }
+      }
+    ],
+    "observations": [
+      "All eight events reported 100.00 coverage with nonzero runtime in each connection.",
+      "Kernel instruction counts were 20775069 and 20589750, while rusage system deltas were 12597000 and 18843000 ns.",
+      "User instruction counts were 13571051 and 14863461; these two ordered slots do not estimate stable mode overhead.",
+      "Rusage privilege-domain time and hardware event counts have distinct semantics; no time/cycle correction or GHz inference is made."
+    ],
+    "next_decision": "Inspect the installed kernel CPU-accounting and perf runtime semantics from retained source before choosing another discriminating measurement; do not retry completed slots or adopt WAL changes on these counts.",
+    "cause_status": "UNRESOLVED",
+    "performance_effect": "NOT_EVALUATED",
+    "original_pf04": "FAIL_UNCHANGED",
+    "dev2": "INCOMPLETE"
+  },
+  "host_settings_changed": false,
+  "restarted": false,
+  "artifacts": {
+    "plan-review.json": {
+      "path": "/home/et16/xadb-dev2-evidence/pf04-cpu-split-20261025/plan-review.json",
+      "sha256": "38d36549d547b91609ffd187592b6d92aa91f6bdc3c43c28e5ec63e357e3ea7c"
+    },
+    "code-review.json": {
+      "path": "/home/et16/xadb-dev2-evidence/pf04-cpu-split-20261025/code-review.json",
+      "sha256": "53c0f22cf1bcf76d5bf1cbc36bb1e73a7ad98f9529061c3bcfee17fe905e5d65"
+    },
+    "test-selection.json": {
+      "path": "/home/et16/xadb-dev2-evidence/pf04-cpu-split-20261025/test-selection.json",
+      "sha256": "0a96956c413b83470952896fa8d6fa55ada3a16769c214c65fc450c112597c3e"
+    },
+    "test-result.json": {
+      "path": "/home/et16/xadb-dev2-evidence/pf04-cpu-split-20261025/test-result.json",
+      "sha256": "3e096a9e89286c663870268876f1eaabe283784e9798857ad917d12aad0207b1"
+    },
+    "observation-freeze.json": {
+      "path": "/home/et16/xadb-dev2-evidence/pf04-cpu-split-20261025/observation-freeze.json",
+      "sha256": "5288a0b4d7bed25084fae0f455b9b2dfe404e0e34b36ff58cab6e536f9b3d845"
+    },
+    "observation-summary.json": {
+      "path": "/home/et16/xadb-dev2-evidence/pf04-cpu-split-20261025/observation-summary.json",
+      "sha256": "1178eb963241ee6b4cf5ae3fd9d10befc72900820d4c4fa2b711dd34a73bf358"
+    },
+    "analysis.json": {
+      "path": "/home/et16/xadb-dev2-evidence/pf04-cpu-split-20261025/analysis.json",
+      "sha256": "a9cecef461a1a6c136913a72313fe4814ae5de570475b5735072131157878448"
+    },
+    "artifact-manifest.json": {
+      "path": "/home/et16/xadb-dev2-evidence/pf04-cpu-split-20261025/artifact-manifest.json",
+      "sha256": "14c5f457dbb6f06604c07d4170f4ce3bbfb653c413fc33a55a895e5c17d18ff5"
+    },
+    "final-review.json": {
+      "path": "/home/et16/xadb-dev2-evidence/pf04-cpu-split-20261025/final-review.json",
+      "sha256": "9ce1a5dea0cf8555bb007e88872c0bd467dc3afda7500e9fca7f02195077bb40"
+    }
+  },
+  "independent_review": {
+    "reviewer": "/root/pf04_evidence_review",
+    "status": "PASS_SCOPED_D1_D2_USER_KERNEL_PROFILE_AND_RETAINED_TWO_CONNECTIONS",
+    "blocking_findings": 0,
+    "accepted_by": "/root",
+    "receipt": {
+      "path": "/home/et16/xadb-dev2-evidence/pf04-cpu-split-20261025/final-review.json",
+      "sha256": "9ce1a5dea0cf8555bb007e88872c0bd467dc3afda7500e9fca7f02195077bb40"
+    },
+    "scope": "Fixed event profiles, selected6 tests, retained2 native diagnostic connections, raw correctness/quality/identity/cleanup and limited conclusions; no stable cost or historical cause or PF04/DEV2 acceptance."
+  }
+}

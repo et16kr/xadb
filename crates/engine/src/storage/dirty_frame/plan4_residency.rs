@@ -18,8 +18,8 @@ pub(in crate::storage) fn source_census() -> CoreCensus {
         + 2 * size_of::<Result<DirtyObservation>>()
         + 2 * size_of::<Result<Option<FrameStamp>>>()
         + 4 * size_of::<Result<()>>()
-        + 2 * size_of::<MutexGuard<'_, PinAccounting>>()
-        + 2 * size_of::<MutexGuard<'_, DirtyRegistry<'_>>>()
+        + 2 * size_of::<MutexGuard<'_, PoolRegistry<'_>>>()
+        + 2 * size_of::<MutexGuard<'_, PoolRegistry<'_>>>()
         + 2 * size_of::<RwLockReadGuard<'_, FrameContent<'_>>>()
         + size_of::<RwLockWriteGuard<'_, FrameContent<'_>>>()
         + 256; // Bounded borrowed arguments, indices, iterators and bools.
@@ -51,21 +51,21 @@ impl<'c, 's, 'p, 'd> SharedPool<'c, 's, 'p, 'd> {
         if !(4..=MAX_FRAMES).contains(&frames.len()) {
             return Err(unchanged(Cause::Shape));
         }
-        let mut pool = Self::new(core, fence, binding, frames)?;
-        if !pool.directory.open_plan4(frames) {
+        let pool = Self::new(core, fence, binding, frames)?;
+        if !pool.directory_edit(|directory| directory.open_plan4(frames))? {
             return Err(pool.fatal(Cause::Invariant));
         }
         pool.plan4_quiescent()?;
         Ok(pool)
     }
 
-    pub(in crate::storage) fn plan4_payloads(&self) -> bool {
-        self.directory.plan4_payloads()
+    pub(in crate::storage) fn plan4_payloads(&self) -> Result<bool> {
+        self.directory_read(|directory| directory.plan4_payloads())
     }
 
     pub(in crate::storage) fn check_plan4_reader(&self, owner: &Owner<'c, 's>) -> Result<()> {
         self.health()?;
-        if !self.plan4_payloads() {
+        if !self.plan4_payloads()? {
             return Err(unchanged(Cause::Shape));
         }
         if !owner.check_binding(self.core).map_err(DirtyError::from)? {
@@ -83,7 +83,7 @@ impl<'c, 's, 'p, 'd> SharedPool<'c, 's, 'p, 'd> {
 
     fn plan4_admission(&self) -> Result<()> {
         self.health()?;
-        if !self.plan4_payloads() {
+        if !self.plan4_payloads()? {
             return Err(unchanged(Cause::Shape));
         }
         if !self.handoff_quiescent()? {
@@ -102,10 +102,10 @@ impl<'c, 's, 'p, 'd> SharedPool<'c, 's, 'p, 'd> {
         if !content.fresh() {
             return Err(self.fatal(Cause::Invariant));
         }
-        if self.resolve_registration(index).is_some() {
+        if self.resolve_registration(index)?.is_some() {
             Ok(Some(self.pair(index, content)?.frame))
         } else {
-            let dpt = self.entry_dpt()?;
+            let dpt = self.entry_registry()?;
             if index == 0 || dpt.entries[index].is_some() || dpt.requirements[index].is_some() {
                 return Err(self.fatal(Cause::Invariant));
             }
@@ -134,12 +134,18 @@ impl<'c, 's, 'p, 'd> SharedPool<'c, 's, 'p, 'd> {
         Ok(())
     }
 
-    fn plan4_request(&self, request: TargetRequest) -> bool {
-        self.directory.accepts_plan4_payload(request)
-            && self.resolve_registration(0).is_some_and(|allocator| {
-                request.identity.database == allocator.request.identity.database
-                    && request.identity.page.file == allocator.request.identity.page.file
-            })
+    fn plan4_request(&self, request: TargetRequest) -> Result<bool> {
+        let state = self.entry_registry()?;
+        Ok({
+            state.directory.accepts_plan4_payload(request)
+                && state
+                    .directory
+                    .resolve(self.frames, 0)
+                    .is_some_and(|allocator| {
+                        request.identity.database == allocator.request.identity.database
+                            && request.identity.page.file == allocator.request.identity.page.file
+                    })
+        })
     }
 
     pub(in crate::storage) fn plan4_allocator_snapshot(
@@ -168,8 +174,7 @@ impl<'c, 's, 'p, 'd> SharedPool<'c, 's, 'p, 'd> {
             return Err(unchanged(Cause::Shape));
         }
         let generation = self
-            .directory
-            .next_plan4_generation(index)
+            .directory_read(|directory| directory.next_plan4_generation(index))?
             .ok_or_else(|| unchanged(Cause::CounterExhausted))?;
         let allocator = {
             let content = self.frames[0]
@@ -209,12 +214,12 @@ impl<'c, 's, 'p, 'd> SharedPool<'c, 's, 'p, 'd> {
         required: &[TargetRequest],
     ) -> Result<StatusCandidate> {
         self.plan4_admission()?;
-        if start == 0 || required.len() > 4 || !self.plan4_request(request) {
+        if start == 0 || required.len() > 4 || !self.plan4_request(request)? {
             return Err(unchanged(Cause::Shape));
         }
         let allocator = self.registration(0)?.request;
         for (index, target) in required.iter().enumerate() {
-            if *target != allocator && !self.plan4_request(*target) {
+            if *target != allocator && !self.plan4_request(*target)? {
                 return Err(unchanged(Cause::Shape));
             }
             if required[..index]
@@ -248,7 +253,7 @@ impl<'c, 's, 'p, 'd> SharedPool<'c, 's, 'p, 'd> {
                 Err(TryLockError::Poisoned(_)) => return Err(self.fatal(Cause::Poisoned)),
             };
             let frame = self.plan4_content(index, &content)?;
-            let registered = self.resolve_registration(index).map(|entry| entry.request);
+            let registered = self.resolve_registration(index)?.map(|entry| entry.request);
             if let Some(actual) = registered {
                 if actual.same_address(&request) {
                     if actual != request {
@@ -273,7 +278,9 @@ impl<'c, 's, 'p, 'd> SharedPool<'c, 's, 'p, 'd> {
             // the first candidate in each class without shortening the scan.
             if !keep
                 && clean.is_none_or(|candidate| candidate.frame.is_some() && frame.is_none())
-                && self.directory.next_plan4_generation(index).is_some()
+                && self
+                    .directory_read(|directory| directory.next_plan4_generation(index))?
+                    .is_some()
             {
                 clean = Some(StatusCandidate {
                     kind: StatusCandidateKind::Load,
@@ -307,7 +314,8 @@ impl<'c, 's, 'p, 'd> SharedPool<'c, 's, 'p, 'd> {
             || snapshot.index >= self.frames.len()
             || !std::ptr::eq(self.core, snapshot.core)
             || !std::ptr::eq(self.binding, snapshot.binding)
-            || self.directory.next_plan4_generation(snapshot.index) != Some(snapshot.generation)
+            || self.directory_read(|directory| directory.next_plan4_generation(snapshot.index))?
+                != Some(snapshot.generation)
             || snapshot.requirement.is_some()
         {
             return Err(self.fatal(Cause::Invariant));
@@ -331,7 +339,9 @@ impl<'c, 's, 'p, 'd> SharedPool<'c, 's, 'p, 'd> {
             return Err(self.fatal(Cause::Invariant));
         }
         let request = permit.request();
-        if !self.plan4_request(request) || self.directory.address_present(request) {
+        if !self.plan4_request(request)?
+            || self.directory_read(|directory| directory.address_present(request))?
+        {
             return Err(self.fatal(Cause::Invariant));
         }
         self.health()?;
@@ -342,12 +352,13 @@ impl<'c, 's, 'p, 'd> SharedPool<'c, 's, 'p, 'd> {
             modification_counter: 0,
             rec_lsn: None,
         };
+        let mut registry = self.entry_registry()?;
         content.bytes.copy_from_slice(permit.bytes());
         content.page_lsn = PageLsn(0);
         content.modification_counter = 0;
         content.rec_lsn = None;
         content.dirty = false;
-        self.directory.replace_plan4(
+        registry.directory.replace_plan4(
             snapshot.index,
             Registration {
                 request,
@@ -369,9 +380,13 @@ pub(in crate::storage) mod test_support {
         index: usize,
         generation: u64,
     ) {
-        assert!(pool.plan4_payloads() && index > 0 && generation != 0);
-        let mut registration = pool.resolve_registration(index).unwrap();
+        assert!(pool.plan4_payloads().unwrap() && index > 0 && generation != 0);
+        let mut registration = pool.resolve_registration(index).unwrap().unwrap();
         registration.generation = generation;
-        pool.directory.replace_plan4(index, registration);
+        pool.registry
+            .lock()
+            .unwrap()
+            .directory
+            .replace_plan4(index, registration);
     }
 }

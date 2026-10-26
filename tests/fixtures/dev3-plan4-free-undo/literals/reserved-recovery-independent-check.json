@@ -1,0 +1,11 @@
+{
+  "allocator_sha256": "0dc173487c2216771c1fbbd731c772c5ff062a99377be4243bcdc304cc585a04",
+  "frame_sha256": "668246e84d85a4c34028454f5200efe614a0cdb9077038ae362766cac7eaf88f",
+  "input_plan_sha256": "fe18ef492986f67bdb8d21e90679c63f49354e2a63a9f3e6c2a82cb02216623f",
+  "new_allocators_checked": 1,
+  "new_frames_checked": 1,
+  "prior_unchanged_files": 48,
+  "raw_index_sha256": "17ba2d2855b5fa38366dadb8ce3c2b927e477c0f125b452229969cdb4d5ace72",
+  "schema": "XADB_PLAN4_FREE_UNDO_EXTENSION_CHECK_V1",
+  "status": "INPUT_CONSISTENCY_NOT_PRODUCT_PASS"
+}

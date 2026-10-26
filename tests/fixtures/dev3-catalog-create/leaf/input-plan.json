@@ -1,0 +1,74 @@
+{
+  "author": "/root/dev3_review",
+  "contracts": {
+    "devdoc/contracts/dev3-catalog-format.md": "d39c7c070f5fe03eeff9420ecb54bdd2c0fd755110c68591cfb2cfa4fee0de82",
+    "devdoc/contracts/dev3-create-group-format.md": "30a9a1c1cba52e91df4497e4aca1619781b241b3bcdd387916a0c520a07cbd8a",
+    "devdoc/contracts/dev3-obligation-format.md": "9e1cbaca3e484306f26c0be364c431d0eedb2ebf860859ca6e89e8cac7c6c41d",
+    "devdoc/contracts/dev3-page-format.md": "0d53e26ea03d97d684fc9d36035ff3da7db7eff832ef49f901655641e2f65fb0",
+    "devdoc/contracts/dev3-tree-format.md": "7b1ef62c9db60b4e47a63117d9d2b4b8bb3e6a9fd2f6286e7e6fa48836f8e7c1",
+    "devdoc/contracts/dev3-undo-format.md": "b4e4c037d1469396fa92866540f28c01930f4e2d1bce30db6fd3966b789fcac4",
+    "devdoc/contracts/dev3-wal-format.md": "a70d61590a020399cdd33d21b0c6b4ee42bd4aec6a73ec4ad4040ed9a54698c8"
+  },
+  "expected_wire_sizes": {
+    "AbortEnd": 56712,
+    "AgingStart": 19672,
+    "Begin": 56712,
+    "CLR_max": 124584,
+    "CLR_min": 120238,
+    "Cancel": 69304,
+    "Commit": 56712,
+    "Forward_max": 158440,
+    "Forward_min": 154094,
+    "Prune_max": 98696,
+    "Prune_min": 90004,
+    "ReleaseRole": 55528,
+    "Reserve": 86640,
+    "RollbackStart": 3040,
+    "RootFree": 55528,
+    "TerminalFinish": 55112
+  },
+  "generation_authorized_by": "/root: independent raw fixture creation permitted; product encoder/decoder/test runner prohibited",
+  "identity": {
+    "actor_generation": 2,
+    "actor_local": 1,
+    "anchor_page": 11,
+    "database": "0102030405060708090a0b0c0d0e0f10",
+    "file_id": 4294967297,
+    "object": 6,
+    "object_generation": 1,
+    "pair_incarnation": 2,
+    "row_page": 12,
+    "schema_epoch": 1,
+    "status_page": 9,
+    "timeline": 1,
+    "undo_page": 10,
+    "undo_slot": 0,
+    "undo_slot_generation": 2,
+    "writer_epoch": 1
+  },
+  "input_id": "D3-CREATE-LEAF-L1",
+  "layers": {
+    "core": "OperationCore256 shape and explicit stable-source counterexample. Exact operation supplied externally.",
+    "projection": "Canonical XCP1 byte digest and separate validated XCT1 input; external context is explicit. No page/grant semantics.",
+    "stable_semantic_negatives": "Explicit inputs outside shape-only proof; producer/native semantic admission must reject. No test is executed in this preparation.",
+    "wire": "XWF1 and scope2 header/section/individual native header/redo structural layout only. Descriptor 0xD1/0xD2 and other native sentinel bodies are intentionally invalid semantic state."
+  },
+  "limits": {
+    "compiler_runs": 0,
+    "generation_wall_seconds": 10,
+    "product_runs": 0,
+    "raw_bytes": 8388608,
+    "test_runner_runs": 0
+  },
+  "missing_full_consumer_inputs": [
+    "actual source/caller F05",
+    "exact semantic descriptor/budget/whole graph histories",
+    "queue transition before/after corpus",
+    "actual producer factories",
+    "native and thread cut receipts"
+  ],
+  "non_repetition": "Generation is write-once and refuses any existing raw directory or manifest; completed outputs are never regenerated silently. Product tests will run only after exact source/selector/budget freeze.",
+  "schema": 1,
+  "state": "GENERATION_AUTHORIZED_TESTS_NOT_RUN",
+  "wire_mutation_rule": "Literal patch files specify source base and offset; header and frame SHA are both recomputed. Materialized mutant digest is frozen in manifest; no product encoder is used."
+}

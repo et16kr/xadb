@@ -1,0 +1,2107 @@
+{
+  "cases": [
+    {
+      "authority": "NONE",
+      "bytes": 48,
+      "category": "projection",
+      "expected": "DIGEST_MATCH",
+      "file": "raw/P01.bin",
+      "id": "P01",
+      "object": 6,
+      "sha256": "54f015f3e09e35179c6504e7d98971d61c6e808590e4148cca859d6218ded6f9",
+      "value_file": null
+    },
+    {
+      "authority": "NONE",
+      "bytes": 290,
+      "category": "projection",
+      "expected": "DIGEST_MATCH",
+      "file": "raw/P02.bin",
+      "id": "P02",
+      "object": 6,
+      "sha256": "503e7926a1055fc56a00efccbf1bf2413874e355024546d1ec66f60cb1ce978b",
+      "value_file": "raw/P02-value.bin"
+    },
+    {
+      "bytes": 242,
+      "category": "catalog-value",
+      "expected": "CATALOG_VALID",
+      "file": "raw/P02-value.bin",
+      "id": "P02-value",
+      "object": 6,
+      "sha256": "a009a95697cf6c7f87a52bc818586bb653780045599928068087bdf5658bfd56"
+    },
+    {
+      "bytes": 254,
+      "category": "catalog-cell",
+      "expected": "WRAPPER_MATCH",
+      "file": "raw/P02-cell.bin",
+      "id": "P02-cell",
+      "object": 6,
+      "sha256": "de3d01f2eac613428e425807f006927652c51e392e159c0c85473880bd17cf0a"
+    },
+    {
+      "authority": "NONE",
+      "bytes": 290,
+      "category": "projection",
+      "expected": "DIGEST_MATCH",
+      "file": "raw/P03.bin",
+      "id": "P03",
+      "object": 6,
+      "sha256": "9a559bea7056fa05af261bfb3d0d1f905cae6f5d47cfc2084b26b031ecc6b26b",
+      "value_file": "raw/P03-value.bin"
+    },
+    {
+      "bytes": 242,
+      "category": "catalog-value",
+      "expected": "CATALOG_VALID",
+      "file": "raw/P03-value.bin",
+      "id": "P03-value",
+      "object": 6,
+      "sha256": "81a332b5b41c0671b8097e9ec37c6d2922638ac4e779469c75f7120740596e34"
+    },
+    {
+      "bytes": 254,
+      "category": "catalog-cell",
+      "expected": "WRAPPER_MATCH",
+      "file": "raw/P03-cell.bin",
+      "id": "P03-cell",
+      "object": 6,
+      "sha256": "192b72b82e1085c1abcf33cbf9ffc2e9c64bf3726ae3604dae965dd058f76e44"
+    },
+    {
+      "authority": "NONE",
+      "bytes": 4636,
+      "category": "projection",
+      "expected": "DIGEST_MATCH",
+      "file": "raw/P04.bin",
+      "id": "P04",
+      "object": 6,
+      "sha256": "ff4e1da97e5262748041666ef508dc7222f4c0856c17ba3681790b3de5ba6f9e",
+      "value_file": "raw/P04-value.bin"
+    },
+    {
+      "bytes": 4588,
+      "category": "catalog-value",
+      "expected": "CATALOG_VALID",
+      "file": "raw/P04-value.bin",
+      "id": "P04-value",
+      "object": 6,
+      "sha256": "77981eca2fb16ae71916bdb99552bfbd40a3395238799963a292a57632e45618"
+    },
+    {
+      "bytes": 4600,
+      "category": "catalog-cell",
+      "expected": "WRAPPER_MATCH",
+      "file": "raw/P04-cell.bin",
+      "id": "P04-cell",
+      "object": 6,
+      "sha256": "884a2145e5e54da28d77f494bebda4480308aaaadef1acc109bd545b63eae552"
+    },
+    {
+      "authority": "NONE",
+      "bytes": 290,
+      "category": "projection",
+      "expected": "DIGEST_MATCH",
+      "file": "raw/P05.bin",
+      "id": "P05",
+      "object": 7,
+      "sha256": "b3f02973db1766ca2222ae75fa3b7201041b0f19fdea6c0ef23bea62cd5ed5ea",
+      "value_file": "raw/P05-value.bin"
+    },
+    {
+      "bytes": 242,
+      "category": "catalog-value",
+      "expected": "CATALOG_VALID",
+      "file": "raw/P05-value.bin",
+      "id": "P05-value",
+      "object": 7,
+      "sha256": "9ca80064397e4f8bca4da71ce3ab58a7a6fb1bb6efc28ed19607412375145f86"
+    },
+    {
+      "bytes": 254,
+      "category": "catalog-cell",
+      "expected": "WRAPPER_MATCH",
+      "file": "raw/P05-cell.bin",
+      "id": "P05-cell",
+      "object": 7,
+      "sha256": "e9f181fbe4738fbfde92dfb4bcdbc1ed7b77adf9f3281ecde7d57771411d3a82"
+    },
+    {
+      "authority": "NONE",
+      "bytes": 48,
+      "category": "projection",
+      "expected": "DIGEST_MATCH",
+      "file": "raw/P06.bin",
+      "id": "P06",
+      "object": 7,
+      "sha256": "41755e1715203d646f4ef39e5b9ecf0b7b7010c2db46c5198d0dc97acb63f275",
+      "value_file": null
+    },
+    {
+      "bytes": 242,
+      "category": "projection-value-negative",
+      "expected": "REJECT",
+      "file": "raw/NP01.bin",
+      "id": "NP01",
+      "object": 6,
+      "reason": "wrong object",
+      "sha256": "a3ffc98c3daaaea60396ac31ce48eda80b23bcf4cf276df8f30918476970153b"
+    },
+    {
+      "bytes": 242,
+      "category": "projection-value-negative",
+      "expected": "REJECT",
+      "file": "raw/NP02.bin",
+      "id": "NP02",
+      "object": 6,
+      "reason": "scope object generation",
+      "sha256": "b057e441a9c9da168a3a2758d69df100778bc44b58c91adcc5eaf6299cb8f4e6"
+    },
+    {
+      "bytes": 242,
+      "category": "projection-value-negative",
+      "expected": "REJECT",
+      "file": "raw/NP03.bin",
+      "id": "NP03",
+      "object": 6,
+      "reason": "scope schema epoch",
+      "sha256": "6c69f546167758556445d0f1c277b0469cabc6c4beb017433309dd83c1d39a5f"
+    },
+    {
+      "bytes": 242,
+      "category": "projection-value-negative",
+      "expected": "REJECT",
+      "file": "raw/NP04.bin",
+      "id": "NP04",
+      "object": 6,
+      "reason": "catalog reserved",
+      "sha256": "fccc2b75fcbb34fd69577ae8c80f81654cbf46aa937aea608da71437dbc9c562"
+    },
+    {
+      "bytes": 241,
+      "category": "projection-value-negative",
+      "expected": "REJECT",
+      "file": "raw/NP05.bin",
+      "id": "NP05",
+      "object": 6,
+      "reason": "truncated definition",
+      "sha256": "31c7a2ef83e6903385a716f7d46cea16f8bc78fe056461d81bb9deb7602522cf"
+    },
+    {
+      "bytes": 243,
+      "category": "projection-value-negative",
+      "expected": "REJECT",
+      "file": "raw/NP06.bin",
+      "id": "NP06",
+      "object": 6,
+      "reason": "trailing definition",
+      "sha256": "dbb60653fde3229d7db5eeb88b682a095ff9e0764be0f3f5145449afea51ebe6"
+    },
+    {
+      "bytes": 242,
+      "category": "projection-value-negative",
+      "expected": "REJECT",
+      "file": "raw/NP07.bin",
+      "id": "NP07",
+      "object": 6,
+      "reason": "hasUndo cleared while bytes remain",
+      "sha256": "73595d40ba56a940aa2aff2f0a8301663357ef53fb3d65bc884d77dd29471a48"
+    },
+    {
+      "bytes": 242,
+      "category": "projection-value-negative",
+      "expected": "REJECT",
+      "file": "raw/NP08.bin",
+      "id": "NP08",
+      "object": 6,
+      "reason": "logical Tx epoch mismatches stamp",
+      "sha256": "bc8cb58100b24b766c0cae0fb71d03e0781b32eb6f4e2be33fc1b177295d670e"
+    },
+    {
+      "bytes": 247,
+      "category": "projection-value-negative",
+      "expected": "REJECT",
+      "file": "raw/NP09.bin",
+      "id": "NP09",
+      "object": 6,
+      "reason": "duplicate typed column",
+      "sha256": "dcfeb67430b067f4fbca9bbd5713de72eded91eea52ecaf0bc43e02e950a3cb0"
+    },
+    {
+      "bytes": 242,
+      "category": "projection-context-negative",
+      "database": "1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f",
+      "expected": "REJECT",
+      "file": "raw/NP10.bin",
+      "id": "NP10",
+      "object": 6,
+      "present": true,
+      "sha256": "a009a95697cf6c7f87a52bc818586bb653780045599928068087bdf5658bfd56",
+      "timeline": 1
+    },
+    {
+      "bytes": 0,
+      "category": "projection-context-negative",
+      "database": "0102030405060708090a0b0c0d0e0f10",
+      "expected": "REJECT",
+      "file": "raw/NP11.bin",
+      "id": "NP11",
+      "object": 6,
+      "present": false,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "timeline": 2
+    },
+    {
+      "bytes": 0,
+      "category": "projection-context-negative",
+      "database": "0102030405060708090a0b0c0d0e0f10",
+      "expected": "REJECT",
+      "file": "raw/NP12.bin",
+      "id": "NP12",
+      "object": 5,
+      "present": false,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "timeline": 1
+    },
+    {
+      "bytes": 256,
+      "category": "core",
+      "expected": "ACCEPT_CORE_ONLY",
+      "file": "raw/C01.bin",
+      "id": "C01",
+      "operation": 1,
+      "parsed": {
+        "cursors": [
+          0,
+          0
+        ],
+        "mutation": 0,
+        "q": 0,
+        "sequence": 0,
+        "statement": 0
+      },
+      "sha256": "c60b85597bfdf5a8808c29369654996901d2c1ad7f9e0f874a311fae6dca0acc"
+    },
+    {
+      "bytes": 256,
+      "category": "core",
+      "expected": "ACCEPT_CORE_ONLY",
+      "file": "raw/C02.bin",
+      "id": "C02",
+      "operation": 2,
+      "parsed": {
+        "cursors": [
+          0,
+          0
+        ],
+        "mutation": 1,
+        "q": 0,
+        "sequence": 1,
+        "statement": 1
+      },
+      "sha256": "cf80f4339be0da92d0174a99545dac2ad42f2477ece13cbdf8c4a4fa5d1a2814"
+    },
+    {
+      "bytes": 256,
+      "category": "core",
+      "expected": "ACCEPT_CORE_ONLY",
+      "file": "raw/C03.bin",
+      "id": "C03",
+      "operation": 2,
+      "parsed": {
+        "cursors": [
+          0,
+          0
+        ],
+        "mutation": 1,
+        "q": 0,
+        "sequence": 1,
+        "statement": 1
+      },
+      "sha256": "c69de81363e49c24f06490e07a80807ff06e95c3573ab9ceaea92ddf8792fcef"
+    },
+    {
+      "bytes": 256,
+      "category": "core",
+      "expected": "ACCEPT_CORE_ONLY",
+      "file": "raw/C04.bin",
+      "id": "C04",
+      "operation": 3,
+      "parsed": {
+        "cursors": [
+          0,
+          0
+        ],
+        "mutation": 0,
+        "q": 0,
+        "sequence": 0,
+        "statement": 0
+      },
+      "sha256": "b8b6d73e7891f932683df493a5a26aa188a4e59260d01effd841e12046e5f5fc"
+    },
+    {
+      "bytes": 256,
+      "category": "core",
+      "expected": "ACCEPT_CORE_ONLY",
+      "file": "raw/C05.bin",
+      "id": "C05",
+      "operation": 3,
+      "parsed": {
+        "cursors": [
+          0,
+          0
+        ],
+        "mutation": 0,
+        "q": 0,
+        "sequence": 1,
+        "statement": 0
+      },
+      "sha256": "ddc0d3763cd438e929ec9d57932157b871d2442d19cf9ff505d82e5bb3a65c42"
+    },
+    {
+      "bytes": 256,
+      "category": "core",
+      "expected": "ACCEPT_CORE_ONLY",
+      "file": "raw/C06.bin",
+      "id": "C06",
+      "operation": 4,
+      "parsed": {
+        "cursors": [
+          0,
+          0
+        ],
+        "mutation": 1,
+        "q": 0,
+        "sequence": 1,
+        "statement": 1
+      },
+      "sha256": "0c4d1319d34f6419c59c607c3573de2facc3ff0609a2d4bbc627151a6641a61c"
+    },
+    {
+      "bytes": 256,
+      "category": "core",
+      "expected": "ACCEPT_CORE_ONLY",
+      "file": "raw/C07.bin",
+      "id": "C07",
+      "operation": 4,
+      "parsed": {
+        "cursors": [
+          0,
+          0
+        ],
+        "mutation": 1,
+        "q": 0,
+        "sequence": 1,
+        "statement": 1
+      },
+      "sha256": "b8431f6058beedbb231805f6704ef1e1037202f0ca8acc92e48ae43607a71d66"
+    },
+    {
+      "bytes": 256,
+      "category": "core",
+      "expected": "ACCEPT_CORE_ONLY",
+      "file": "raw/C08.bin",
+      "id": "C08",
+      "operation": 6,
+      "parsed": {
+        "cursors": [
+          0,
+          0
+        ],
+        "mutation": 0,
+        "q": 1,
+        "sequence": 0,
+        "statement": 0
+      },
+      "sha256": "d0cfbe2abeeab329c2c11fb376ad6f24752869c98de539c2b4f48fa008d025fe"
+    },
+    {
+      "bytes": 256,
+      "category": "core",
+      "expected": "ACCEPT_CORE_ONLY",
+      "file": "raw/C09.bin",
+      "id": "C09",
+      "operation": 6,
+      "parsed": {
+        "cursors": [
+          0,
+          0
+        ],
+        "mutation": 0,
+        "q": 18446744073709551615,
+        "sequence": 0,
+        "statement": 0
+      },
+      "sha256": "8365ff21afc268a0e877fd83f5195f1c4e1d6065c84a6cff4ac67ed0bc99ce54"
+    },
+    {
+      "bytes": 256,
+      "category": "core",
+      "expected": "ACCEPT_CORE_ONLY",
+      "file": "raw/C10.bin",
+      "id": "C10",
+      "operation": 7,
+      "parsed": {
+        "cursors": [
+          0,
+          0
+        ],
+        "mutation": 0,
+        "q": 0,
+        "sequence": 0,
+        "statement": 0
+      },
+      "sha256": "eb81a7d491edffd30b701a21f3841fd8f0562a9be726dc0eacf0970222346431"
+    },
+    {
+      "bytes": 256,
+      "category": "core",
+      "expected": "ACCEPT_CORE_ONLY",
+      "file": "raw/C11.bin",
+      "id": "C11",
+      "operation": 11,
+      "parsed": {
+        "cursors": [
+          0,
+          0
+        ],
+        "mutation": 1,
+        "q": 0,
+        "sequence": 1,
+        "statement": 1
+      },
+      "sha256": "8c313a04e1523d77ab78afd4d151aeef68fe9b9671b58cbfdd5626273f11d7dd"
+    },
+    {
+      "bytes": 256,
+      "category": "core",
+      "expected": "ACCEPT_CORE_ONLY",
+      "file": "raw/C12.bin",
+      "id": "C12",
+      "operation": 12,
+      "parsed": {
+        "cursors": [
+          0,
+          0
+        ],
+        "mutation": 1,
+        "q": 0,
+        "sequence": 1,
+        "statement": 1
+      },
+      "sha256": "847c766796d9697d407f1599a10269a9851540f4e3332948a9f448410452dfed"
+    },
+    {
+      "bytes": 256,
+      "category": "core",
+      "expected": "ACCEPT_CORE_ONLY",
+      "file": "raw/C13.bin",
+      "id": "C13",
+      "operation": 16,
+      "parsed": {
+        "cursors": [
+          0,
+          0
+        ],
+        "mutation": 0,
+        "q": 0,
+        "sequence": 0,
+        "statement": 0
+      },
+      "sha256": "ac8a33a6cc8ee9192297b8a5e81f9d105d14bfbf515a7390c9a2bbd880d1bea9"
+    },
+    {
+      "bytes": 256,
+      "category": "core",
+      "expected": "ACCEPT_CORE_ONLY",
+      "file": "raw/C14.bin",
+      "id": "C14",
+      "operation": 17,
+      "parsed": {
+        "cursors": [
+          2,
+          1
+        ],
+        "mutation": 0,
+        "q": 0,
+        "sequence": 0,
+        "statement": 0
+      },
+      "sha256": "71cd79d0da300267820c80ad27338f30e8973fa7bf88f801ffa71420c79c069f"
+    },
+    {
+      "bytes": 256,
+      "category": "core",
+      "expected": "ACCEPT_CORE_ONLY",
+      "file": "raw/C15.bin",
+      "id": "C15",
+      "operation": 17,
+      "parsed": {
+        "cursors": [
+          63,
+          0
+        ],
+        "mutation": 0,
+        "q": 0,
+        "sequence": 0,
+        "statement": 0
+      },
+      "sha256": "f56ff181854ab939981d849098b45788ab3c76a2215a2ff1337e086a52b99ecd"
+    },
+    {
+      "bytes": 256,
+      "category": "core",
+      "expected": "ACCEPT_CORE_ONLY",
+      "file": "raw/C16.bin",
+      "id": "C16",
+      "operation": 20,
+      "parsed": {
+        "cursors": [
+          1,
+          2
+        ],
+        "mutation": 0,
+        "q": 0,
+        "sequence": 1,
+        "statement": 0
+      },
+      "sha256": "c45d78822fcac71989039aa093459fc0bdf031fe2e8755045d44cd9599ca9bbb"
+    },
+    {
+      "bytes": 256,
+      "category": "core",
+      "expected": "ACCEPT_CORE_ONLY",
+      "file": "raw/C17.bin",
+      "id": "C17",
+      "operation": 20,
+      "parsed": {
+        "cursors": [
+          1,
+          2
+        ],
+        "mutation": 0,
+        "q": 0,
+        "sequence": 1,
+        "statement": 0
+      },
+      "sha256": "cc7555c8cbadc3f569fb5ebacbf4f7ff1e3fc4221545bca2804057b0dc4dcdef"
+    },
+    {
+      "bytes": 256,
+      "category": "core",
+      "expected": "ACCEPT_CORE_ONLY",
+      "file": "raw/C18.bin",
+      "id": "C18",
+      "operation": 21,
+      "parsed": {
+        "cursors": [
+          2,
+          2
+        ],
+        "mutation": 0,
+        "q": 0,
+        "sequence": 1,
+        "statement": 0
+      },
+      "sha256": "88aa3bf4834172f88a16668f338c79d0f55aa0324303c52b07c9ff7aad2abc33"
+    },
+    {
+      "bytes": 256,
+      "category": "core",
+      "expected": "ACCEPT_CORE_ONLY",
+      "file": "raw/C19.bin",
+      "id": "C19",
+      "operation": 22,
+      "parsed": {
+        "cursors": [
+          63,
+          0
+        ],
+        "mutation": 0,
+        "q": 0,
+        "sequence": 1,
+        "statement": 0
+      },
+      "sha256": "c75615c330b4e8bff4bf4ce68da906c58cc027b50ea967f0473d029c24ef9076"
+    },
+    {
+      "bytes": 256,
+      "category": "core",
+      "expected": "ACCEPT_CORE_ONLY",
+      "file": "raw/C20.bin",
+      "id": "C20",
+      "operation": 11,
+      "parsed": {
+        "cursors": [
+          0,
+          0
+        ],
+        "mutation": 1,
+        "q": 0,
+        "sequence": 18446744073709551615,
+        "statement": 1
+      },
+      "sha256": "247ab3190e0f1f26deb14274f5a57dfd899d81edb864c73fc4fbce2222527259"
+    },
+    {
+      "base": "C01",
+      "bytes": 256,
+      "category": "core-negative",
+      "expected": "REJECT",
+      "file": "raw/NC01.bin",
+      "id": "NC01",
+      "operation": 1,
+      "reason": "unused Begin statement",
+      "sha256": "b07b15513c2c8dff52c6f2eb6e4d0d031588bacdc78810a5eb7443aa05fd134b"
+    },
+    {
+      "base": "C01",
+      "bytes": 256,
+      "category": "core-negative",
+      "expected": "REJECT",
+      "file": "raw/NC02.bin",
+      "id": "NC02",
+      "operation": 1,
+      "reason": "unknown flag",
+      "sha256": "aa0916db39c83b6250b2d7df59b4146dd8e6c568df64e85d637e8f03545449a5"
+    },
+    {
+      "base": "C01",
+      "bytes": 256,
+      "category": "core-negative",
+      "expected": "REJECT",
+      "file": "raw/NC03.bin",
+      "id": "NC03",
+      "operation": 1,
+      "reason": "wrong declared length",
+      "sha256": "2f850d992653329d18d30a199145f75b39944a9b3409c6c9f27c0e832f4ea6ae"
+    },
+    {
+      "base": "C01",
+      "bytes": 256,
+      "category": "core-negative",
+      "expected": "REJECT",
+      "file": "raw/NC04.bin",
+      "id": "NC04",
+      "operation": 1,
+      "reason": "reserved tail",
+      "sha256": "9cd9c8467a88955887b9ad56a86e360558fb0a92966f95e0de362196936ac76a"
+    },
+    {
+      "base": "C02",
+      "bytes": 256,
+      "category": "core-negative",
+      "expected": "REJECT",
+      "file": "raw/NC05.bin",
+      "id": "NC05",
+      "operation": 2,
+      "reason": "digest presence removed",
+      "sha256": "38a7f304edd17b4a745d83527703e8f7512c19a01a4eede8033a42819061c35e"
+    },
+    {
+      "base": "C02",
+      "bytes": 256,
+      "category": "core-negative",
+      "expected": "REJECT",
+      "file": "raw/NC06.bin",
+      "id": "NC06",
+      "operation": 2,
+      "reason": "missing sequence",
+      "sha256": "65a6e64b48fbf409a881d443720e97bd1bf1bc85757584114ed645db9713693e"
+    },
+    {
+      "base": "C02",
+      "bytes": 256,
+      "category": "core-negative",
+      "expected": "REJECT",
+      "file": "raw/NC07.bin",
+      "id": "NC07",
+      "operation": 2,
+      "reason": "statement outside single statement scope",
+      "sha256": "4e5d6d904b5578d7447eae68f066780d8417040873b35562ef6bfb5a7caeda3f"
+    },
+    {
+      "base": "C02",
+      "bytes": 256,
+      "category": "core-negative",
+      "expected": "REJECT",
+      "file": "raw/NC08.bin",
+      "id": "NC08",
+      "operation": 2,
+      "reason": "mutation outside single mutation scope",
+      "sha256": "834868952cbba9ee7ccd6cc211b2bf5db4a5275d8aa725f9df51ca441cc0228f"
+    },
+    {
+      "base": "C02",
+      "bytes": 256,
+      "category": "core-semantic-context",
+      "expected": "ACCEPT_CORE_REJECT_STABLE_SOURCE",
+      "file": "raw/NC09.bin",
+      "id": "NC09",
+      "operation": 2,
+      "reason": "nonzero Undo slot shape is valid but out-of-scope semantic context",
+      "sha256": "495f10c733604334797e9055935264b88101fc8526050b144c907059a31b4d32"
+    },
+    {
+      "base": "C04",
+      "bytes": 256,
+      "category": "core-negative",
+      "expected": "REJECT",
+      "file": "raw/NC10.bin",
+      "id": "NC10",
+      "operation": 3,
+      "reason": "empty rollback sequence",
+      "sha256": "c9c6650765ff46d99007b71051062e38b08e6794ae14f46d76201257d2b3704f"
+    },
+    {
+      "base": "C05",
+      "bytes": 256,
+      "category": "core-negative",
+      "expected": "REJECT",
+      "file": "raw/NC11.bin",
+      "id": "NC11",
+      "operation": 3,
+      "reason": "rollback next generation mismatch",
+      "sha256": "24d4b036d5014ea87c0c9c1eb40e9f2e1e95257aa204778b1c25f78e3ca32b01"
+    },
+    {
+      "base": "C05",
+      "bytes": 256,
+      "category": "core-negative",
+      "expected": "REJECT",
+      "file": "raw/NC12.bin",
+      "id": "NC12",
+      "operation": 3,
+      "reason": "rollback next presence missing",
+      "sha256": "d246399738f7acd015d6ea83cc77c9d3089305579f48fe57f377bd9f0f19b7cd"
+    },
+    {
+      "base": "C08",
+      "bytes": 256,
+      "category": "core-negative",
+      "expected": "REJECT",
+      "file": "raw/NC13.bin",
+      "id": "NC13",
+      "operation": 6,
+      "reason": "Commit q absent",
+      "sha256": "6af643a865a8c97fadcf70b4613d53b14673a8f65b6cfc70efc564ded26e79a9"
+    },
+    {
+      "base": "C11",
+      "bytes": 256,
+      "category": "core-negative",
+      "expected": "REJECT",
+      "file": "raw/NC14.bin",
+      "id": "NC14",
+      "operation": 11,
+      "reason": "Reserve digest bytes without flag",
+      "sha256": "c6d282f3198645e3e9b9f3c54ae6369339a3e8ecd2ba374640076a540401e4e3"
+    },
+    {
+      "base": "C12",
+      "bytes": 256,
+      "category": "core-negative",
+      "expected": "REJECT",
+      "file": "raw/NC15.bin",
+      "id": "NC15",
+      "operation": 12,
+      "reason": "Cancel cursor unused",
+      "sha256": "67760e47087bd88908c4e791abb0c9c6488ccfd932669fe03a786d34fec623bf"
+    },
+    {
+      "base": "C14",
+      "bytes": 256,
+      "category": "core-negative",
+      "expected": "REJECT",
+      "file": "raw/NC16.bin",
+      "id": "NC16",
+      "operation": 17,
+      "reason": "before cursor above limit",
+      "sha256": "794a4030716d2c23e9b199c27d6213f209443d0f93053aa4c5d05ae1f232af38"
+    },
+    {
+      "base": "C14",
+      "bytes": 256,
+      "category": "core-negative",
+      "expected": "REJECT",
+      "file": "raw/NC17.bin",
+      "id": "NC17",
+      "operation": 17,
+      "reason": "after cursor above limit",
+      "sha256": "97ec1148a50f03fc2858720d64ae241357c18afd78601b122aa686328ebdcdb6"
+    },
+    {
+      "base": "C16",
+      "bytes": 256,
+      "category": "core-negative",
+      "expected": "REJECT",
+      "file": "raw/NC18.bin",
+      "id": "NC18",
+      "operation": 20,
+      "reason": "Prune statement unused",
+      "sha256": "df5143e94f1cf7e429a4218ce24e201f0009a85e702358f1de08bbbf1fcbf317"
+    },
+    {
+      "base": "C18",
+      "bytes": 256,
+      "category": "core-negative",
+      "expected": "REJECT",
+      "file": "raw/NC19.bin",
+      "id": "NC19",
+      "operation": 21,
+      "reason": "ReleaseRole projection unused",
+      "sha256": "13d33017f6479a2d06fe71c6fd2feef352efce7aba2ee66c32410b3ec23f2832"
+    },
+    {
+      "base": "C19",
+      "bytes": 256,
+      "category": "core-negative",
+      "expected": "REJECT",
+      "file": "raw/NC20.bin",
+      "id": "NC20",
+      "operation": 22,
+      "reason": "RootFree target absent bytes",
+      "sha256": "afa4eb9845123e783dc8c63dcc290552672fb5eec3b3eba341be57bc21f0c552"
+    },
+    {
+      "bytes": 255,
+      "category": "core-negative",
+      "expected": "REJECT",
+      "file": "raw/NC21.bin",
+      "id": "NC21",
+      "operation": 1,
+      "reason": "truncated core",
+      "sha256": "82c9ef3f1b0744217be1e58c292f1cfeea30481a22a84ce76cff9376a3413acc"
+    },
+    {
+      "bytes": 257,
+      "category": "core-negative",
+      "expected": "REJECT",
+      "file": "raw/NC22.bin",
+      "id": "NC22",
+      "operation": 1,
+      "reason": "trailing core",
+      "sha256": "1430f48d6b81287d2bbe8429271e97d04a7ec543d0fd7edc2f03e3a24c298ba7"
+    },
+    {
+      "bytes": 256,
+      "category": "core-negative",
+      "expected": "REJECT",
+      "file": "raw/NC23.bin",
+      "id": "NC23",
+      "operation": 6,
+      "reason": "expected operation differs",
+      "sha256": "c60b85597bfdf5a8808c29369654996901d2c1ad7f9e0f874a311fae6dca0acc"
+    },
+    {
+      "base": "C01",
+      "bytes": 256,
+      "category": "core-negative",
+      "expected": "REJECT",
+      "file": "raw/NC24.bin",
+      "id": "NC24",
+      "operation": 1,
+      "reason": "q belongs only to Commit",
+      "sha256": "be32980ef113ce67874e42129a7d073a203d5041bc11880abaddefaab2b00f72"
+    },
+    {
+      "base": "C02",
+      "bytes": 256,
+      "category": "core-negative",
+      "expected": "REJECT",
+      "file": "raw/NC25.bin",
+      "id": "NC25",
+      "operation": 2,
+      "reason": "q belongs only to Commit",
+      "sha256": "3168e20f800b9127bddd4e7a503313bef338802e23bff6068501181a0bb6a481"
+    },
+    {
+      "base": "C04",
+      "bytes": 256,
+      "category": "core-negative",
+      "expected": "REJECT",
+      "file": "raw/NC26.bin",
+      "id": "NC26",
+      "operation": 3,
+      "reason": "q belongs only to Commit",
+      "sha256": "15a47751d825e0b861089f98865b32417f92698a7153030443c25e8eb0aa3d79"
+    },
+    {
+      "base": "C06",
+      "bytes": 256,
+      "category": "core-negative",
+      "expected": "REJECT",
+      "file": "raw/NC27.bin",
+      "id": "NC27",
+      "operation": 4,
+      "reason": "q belongs only to Commit",
+      "sha256": "caaa1e0c5fcadc8703662ba90c04ebdfb401e8c77b1c92311e1fbaacde036ecb"
+    },
+    {
+      "base": "C10",
+      "bytes": 256,
+      "category": "core-negative",
+      "expected": "REJECT",
+      "file": "raw/NC28.bin",
+      "id": "NC28",
+      "operation": 7,
+      "reason": "q belongs only to Commit",
+      "sha256": "8aab987492d42e26d56743ddd231fb932688f114e53076b29ee9071cda52a182"
+    },
+    {
+      "base": "C11",
+      "bytes": 256,
+      "category": "core-negative",
+      "expected": "REJECT",
+      "file": "raw/NC29.bin",
+      "id": "NC29",
+      "operation": 11,
+      "reason": "q belongs only to Commit",
+      "sha256": "553ef5356eb61f32df4fa4317e0e3fb069c35bc21965eaced1fc9b6a185992ff"
+    },
+    {
+      "base": "C12",
+      "bytes": 256,
+      "category": "core-negative",
+      "expected": "REJECT",
+      "file": "raw/NC30.bin",
+      "id": "NC30",
+      "operation": 12,
+      "reason": "q belongs only to Commit",
+      "sha256": "42bf75065ed825fa2047fe4152c5b70488d9c4057cea191774c109ce6513df9b"
+    },
+    {
+      "base": "C13",
+      "bytes": 256,
+      "category": "core-negative",
+      "expected": "REJECT",
+      "file": "raw/NC31.bin",
+      "id": "NC31",
+      "operation": 16,
+      "reason": "q belongs only to Commit",
+      "sha256": "d7700425be9504ca75787248feb88b20a8ca1dc19c447ababb85ea63a2d13ec3"
+    },
+    {
+      "base": "C14",
+      "bytes": 256,
+      "category": "core-negative",
+      "expected": "REJECT",
+      "file": "raw/NC32.bin",
+      "id": "NC32",
+      "operation": 17,
+      "reason": "q belongs only to Commit",
+      "sha256": "713ba4cdfe5b387691b205ca55abf4a823360488128db04f7118d301ca668737"
+    },
+    {
+      "base": "C16",
+      "bytes": 256,
+      "category": "core-negative",
+      "expected": "REJECT",
+      "file": "raw/NC33.bin",
+      "id": "NC33",
+      "operation": 20,
+      "reason": "q belongs only to Commit",
+      "sha256": "3328fdbae6856e1d4243fafb7e65ce406c1be6f6949f2a5944ff15759785fc55"
+    },
+    {
+      "base": "C18",
+      "bytes": 256,
+      "category": "core-negative",
+      "expected": "REJECT",
+      "file": "raw/NC34.bin",
+      "id": "NC34",
+      "operation": 21,
+      "reason": "q belongs only to Commit",
+      "sha256": "810e6d2d234307b727443f0ad7c3dde1bbeaf0c4b7930da5c2474b52e7aa30e6"
+    },
+    {
+      "base": "C19",
+      "bytes": 256,
+      "category": "core-negative",
+      "expected": "REJECT",
+      "file": "raw/NC35.bin",
+      "id": "NC35",
+      "operation": 22,
+      "reason": "q belongs only to Commit",
+      "sha256": "81e0c7118a6fff7ffbe589167bea132024604be6dec1428dcec8aaae7c34d03e"
+    },
+    {
+      "bytes": 56712,
+      "category": "wire-shape-only",
+      "core": "C01",
+      "descriptors": "INVALID_SENTINELS_NOT_HISTORY",
+      "expected": "ACCEPT_LAYOUT_ONLY",
+      "expected_stream": {
+        "database": "0102030405060708090a0b0c0d0e0f10",
+        "epoch": 1,
+        "previous_lsn": 100,
+        "timeline": 1
+      },
+      "file": "raw/W01.bin",
+      "id": "W01",
+      "operation": 1,
+      "profile_format": 2,
+      "sections": {
+        "counts": [
+          7648,
+          0,
+          0
+        ],
+        "edges": [
+          7648,
+          0,
+          0
+        ],
+        "items": [
+          7648,
+          0,
+          0
+        ],
+        "native": [
+          3744,
+          3904,
+          3
+        ],
+        "redo": [
+          7648,
+          49032,
+          3
+        ]
+      },
+      "semantic_authority": false,
+      "sha256": "241506c865c832cd79d9e225ae5359838168ada1cb0e875fdab47a61fbbbe056"
+    },
+    {
+      "bytes": 154094,
+      "category": "wire-shape-only",
+      "core": "C02",
+      "descriptors": "INVALID_SENTINELS_NOT_HISTORY",
+      "expected": "ACCEPT_LAYOUT_ONLY",
+      "expected_stream": {
+        "database": "0102030405060708090a0b0c0d0e0f10",
+        "epoch": 1,
+        "previous_lsn": 100,
+        "timeline": 1
+      },
+      "file": "raw/W02.bin",
+      "id": "W02",
+      "operation": 2,
+      "profile_format": 2,
+      "sections": {
+        "counts": [
+          22286,
+          192,
+          2
+        ],
+        "edges": [
+          21902,
+          384,
+          3
+        ],
+        "items": [
+          22478,
+          624,
+          3
+        ],
+        "native": [
+          3744,
+          18158,
+          8
+        ],
+        "redo": [
+          23102,
+          130960,
+          8
+        ]
+      },
+      "semantic_authority": false,
+      "sha256": "a1da5980acd3de81b119f934a5abf5283151d9f81f4114fd461be5e665b0209b"
+    },
+    {
+      "bytes": 158440,
+      "category": "wire-shape-only",
+      "core": "C03",
+      "descriptors": "INVALID_SENTINELS_NOT_HISTORY",
+      "expected": "ACCEPT_LAYOUT_ONLY",
+      "expected_stream": {
+        "database": "0102030405060708090a0b0c0d0e0f10",
+        "epoch": 1,
+        "previous_lsn": 100,
+        "timeline": 1
+      },
+      "file": "raw/W03.bin",
+      "id": "W03",
+      "operation": 2,
+      "profile_format": 2,
+      "sections": {
+        "counts": [
+          26632,
+          192,
+          2
+        ],
+        "edges": [
+          26248,
+          384,
+          3
+        ],
+        "items": [
+          26824,
+          624,
+          3
+        ],
+        "native": [
+          3744,
+          22504,
+          8
+        ],
+        "redo": [
+          27448,
+          130960,
+          8
+        ]
+      },
+      "semantic_authority": false,
+      "sha256": "6057658543a7c883d7b9cdf02e06c7bdce9137db5263a8b42220f4a9a34fdee3"
+    },
+    {
+      "bytes": 3040,
+      "category": "wire-shape-only",
+      "core": "C04",
+      "descriptors": "INVALID_SENTINELS_NOT_HISTORY",
+      "expected": "ACCEPT_LAYOUT_ONLY",
+      "expected_stream": {
+        "database": "0102030405060708090a0b0c0d0e0f10",
+        "epoch": 1,
+        "previous_lsn": 100,
+        "timeline": 1
+      },
+      "file": "raw/W04.bin",
+      "id": "W04",
+      "operation": 3,
+      "profile_format": 2,
+      "sections": {
+        "counts": [
+          2720,
+          0,
+          0
+        ],
+        "edges": [
+          2720,
+          0,
+          0
+        ],
+        "items": [
+          2720,
+          0,
+          0
+        ],
+        "native": [
+          2144,
+          576,
+          1
+        ],
+        "redo": [
+          2720,
+          288,
+          1
+        ]
+      },
+      "semantic_authority": false,
+      "sha256": "517d275da4f695b294833f099b33cc3bd1bb05d9255ca4e36d8cdeb773663cd1"
+    },
+    {
+      "bytes": 3040,
+      "category": "wire-shape-only",
+      "core": "C05",
+      "descriptors": "INVALID_SENTINELS_NOT_HISTORY",
+      "expected": "ACCEPT_LAYOUT_ONLY",
+      "expected_stream": {
+        "database": "0102030405060708090a0b0c0d0e0f10",
+        "epoch": 1,
+        "previous_lsn": 100,
+        "timeline": 1
+      },
+      "file": "raw/W05.bin",
+      "id": "W05",
+      "operation": 3,
+      "profile_format": 2,
+      "sections": {
+        "counts": [
+          2720,
+          0,
+          0
+        ],
+        "edges": [
+          2720,
+          0,
+          0
+        ],
+        "items": [
+          2720,
+          0,
+          0
+        ],
+        "native": [
+          2144,
+          576,
+          1
+        ],
+        "redo": [
+          2720,
+          288,
+          1
+        ]
+      },
+      "semantic_authority": false,
+      "sha256": "12913963894dc675b8f18cf86331937209396d8e39128afae214c3b3f4fe5cf6"
+    },
+    {
+      "bytes": 120238,
+      "category": "wire-shape-only",
+      "core": "C06",
+      "descriptors": "INVALID_SENTINELS_NOT_HISTORY",
+      "expected": "ACCEPT_LAYOUT_ONLY",
+      "expected_stream": {
+        "database": "0102030405060708090a0b0c0d0e0f10",
+        "epoch": 1,
+        "previous_lsn": 100,
+        "timeline": 1
+      },
+      "file": "raw/W06.bin",
+      "id": "W06",
+      "operation": 4,
+      "profile_format": 2,
+      "sections": {
+        "counts": [
+          21950,
+          192,
+          2
+        ],
+        "edges": [
+          21566,
+          384,
+          3
+        ],
+        "items": [
+          22142,
+          0,
+          0
+        ],
+        "native": [
+          3744,
+          17822,
+          6
+        ],
+        "redo": [
+          22142,
+          98064,
+          6
+        ]
+      },
+      "semantic_authority": false,
+      "sha256": "ac9c24bbd20b7363b0f4c353914b1cb06e10f2e6618b756f33faf23f2b116130"
+    },
+    {
+      "bytes": 124584,
+      "category": "wire-shape-only",
+      "core": "C07",
+      "descriptors": "INVALID_SENTINELS_NOT_HISTORY",
+      "expected": "ACCEPT_LAYOUT_ONLY",
+      "expected_stream": {
+        "database": "0102030405060708090a0b0c0d0e0f10",
+        "epoch": 1,
+        "previous_lsn": 100,
+        "timeline": 1
+      },
+      "file": "raw/W07.bin",
+      "id": "W07",
+      "operation": 4,
+      "profile_format": 2,
+      "sections": {
+        "counts": [
+          26296,
+          192,
+          2
+        ],
+        "edges": [
+          25912,
+          384,
+          3
+        ],
+        "items": [
+          26488,
+          0,
+          0
+        ],
+        "native": [
+          3744,
+          22168,
+          6
+        ],
+        "redo": [
+          26488,
+          98064,
+          6
+        ]
+      },
+      "semantic_authority": false,
+      "sha256": "7943ea1127aaf8e42c927dc0dd0660c737e4879bbd6d510b70c0616cc0ae505f"
+    },
+    {
+      "bytes": 56712,
+      "category": "wire-shape-only",
+      "core": "C08",
+      "descriptors": "INVALID_SENTINELS_NOT_HISTORY",
+      "expected": "ACCEPT_LAYOUT_ONLY",
+      "expected_stream": {
+        "database": "0102030405060708090a0b0c0d0e0f10",
+        "epoch": 1,
+        "previous_lsn": 100,
+        "timeline": 1
+      },
+      "file": "raw/W08.bin",
+      "id": "W08",
+      "operation": 6,
+      "profile_format": 2,
+      "sections": {
+        "counts": [
+          7648,
+          0,
+          0
+        ],
+        "edges": [
+          7648,
+          0,
+          0
+        ],
+        "items": [
+          7648,
+          0,
+          0
+        ],
+        "native": [
+          3744,
+          3904,
+          3
+        ],
+        "redo": [
+          7648,
+          49032,
+          3
+        ]
+      },
+      "semantic_authority": false,
+      "sha256": "68bd59dd4f9d235fc18345cba6c195fd81628e4cd766b2ca6bdccda15f7d1c64"
+    },
+    {
+      "bytes": 56712,
+      "category": "wire-shape-only",
+      "core": "C10",
+      "descriptors": "INVALID_SENTINELS_NOT_HISTORY",
+      "expected": "ACCEPT_LAYOUT_ONLY",
+      "expected_stream": {
+        "database": "0102030405060708090a0b0c0d0e0f10",
+        "epoch": 1,
+        "previous_lsn": 100,
+        "timeline": 1
+      },
+      "file": "raw/W09.bin",
+      "id": "W09",
+      "operation": 7,
+      "profile_format": 2,
+      "sections": {
+        "counts": [
+          7648,
+          0,
+          0
+        ],
+        "edges": [
+          7648,
+          0,
+          0
+        ],
+        "items": [
+          7648,
+          0,
+          0
+        ],
+        "native": [
+          3744,
+          3904,
+          3
+        ],
+        "redo": [
+          7648,
+          49032,
+          3
+        ]
+      },
+      "semantic_authority": false,
+      "sha256": "fc2fc860cf46da5f43049080de3a6f32ce9cd53906a8c63fc21c0944882595ef"
+    },
+    {
+      "bytes": 86640,
+      "category": "wire-shape-only",
+      "core": "C11",
+      "descriptors": "INVALID_SENTINELS_NOT_HISTORY",
+      "expected": "ACCEPT_LAYOUT_ONLY",
+      "expected_stream": {
+        "database": "0102030405060708090a0b0c0d0e0f10",
+        "epoch": 1,
+        "previous_lsn": 100,
+        "timeline": 1
+      },
+      "file": "raw/W10.bin",
+      "id": "W10",
+      "operation": 11,
+      "profile_format": 2,
+      "sections": {
+        "counts": [
+          20608,
+          0,
+          0
+        ],
+        "edges": [
+          20608,
+          0,
+          0
+        ],
+        "items": [
+          20608,
+          624,
+          3
+        ],
+        "native": [
+          3744,
+          16864,
+          4
+        ],
+        "redo": [
+          21232,
+          65376,
+          4
+        ]
+      },
+      "semantic_authority": false,
+      "sha256": "b59b3c6f0928064cc600b80dd90efb92fdb6fe65b5afb332842784580fc92eb2"
+    },
+    {
+      "bytes": 69304,
+      "category": "wire-shape-only",
+      "core": "C12",
+      "descriptors": "INVALID_SENTINELS_NOT_HISTORY",
+      "expected": "ACCEPT_LAYOUT_ONLY",
+      "expected_stream": {
+        "database": "0102030405060708090a0b0c0d0e0f10",
+        "epoch": 1,
+        "previous_lsn": 100,
+        "timeline": 1
+      },
+      "file": "raw/W11.bin",
+      "id": "W11",
+      "operation": 12,
+      "profile_format": 2,
+      "sections": {
+        "counts": [
+          19616,
+          0,
+          0
+        ],
+        "edges": [
+          19616,
+          0,
+          0
+        ],
+        "items": [
+          19616,
+          624,
+          3
+        ],
+        "native": [
+          3744,
+          15872,
+          3
+        ],
+        "redo": [
+          20240,
+          49032,
+          3
+        ]
+      },
+      "semantic_authority": false,
+      "sha256": "f5f2664c4f17e25a449f712992f08bf40dc67593fef0161f8d5541f8a0d8d396"
+    },
+    {
+      "bytes": 19672,
+      "category": "wire-shape-only",
+      "core": "C13",
+      "descriptors": "INVALID_SENTINELS_NOT_HISTORY",
+      "expected": "ACCEPT_LAYOUT_ONLY",
+      "expected_stream": {
+        "database": "0102030405060708090a0b0c0d0e0f10",
+        "epoch": 1,
+        "previous_lsn": 100,
+        "timeline": 1
+      },
+      "file": "raw/W12.bin",
+      "id": "W12",
+      "operation": 16,
+      "profile_format": 2,
+      "sections": {
+        "counts": [
+          3296,
+          0,
+          0
+        ],
+        "edges": [
+          3296,
+          0,
+          0
+        ],
+        "items": [
+          3296,
+          0,
+          0
+        ],
+        "native": [
+          2144,
+          1152,
+          1
+        ],
+        "redo": [
+          3296,
+          16344,
+          1
+        ]
+      },
+      "semantic_authority": false,
+      "sha256": "ff36a2271fe8ae4115e113515f7fe6edc04673eb81f2169376030b40ec3f920d"
+    },
+    {
+      "bytes": 55112,
+      "category": "wire-shape-only",
+      "core": "C14",
+      "descriptors": "INVALID_SENTINELS_NOT_HISTORY",
+      "expected": "ACCEPT_LAYOUT_ONLY",
+      "expected_stream": {
+        "database": "0102030405060708090a0b0c0d0e0f10",
+        "epoch": 1,
+        "previous_lsn": 100,
+        "timeline": 1
+      },
+      "file": "raw/W13.bin",
+      "id": "W13",
+      "operation": 17,
+      "profile_format": 2,
+      "sections": {
+        "counts": [
+          6048,
+          0,
+          0
+        ],
+        "edges": [
+          6048,
+          0,
+          0
+        ],
+        "items": [
+          6048,
+          0,
+          0
+        ],
+        "native": [
+          2144,
+          3904,
+          3
+        ],
+        "redo": [
+          6048,
+          49032,
+          3
+        ]
+      },
+      "semantic_authority": false,
+      "sha256": "6cad1267f380d1222374f40d460354029fbb7aab5c58ecd182cc3e52ba8ce725"
+    },
+    {
+      "bytes": 90004,
+      "category": "wire-shape-only",
+      "core": "C16",
+      "descriptors": "INVALID_SENTINELS_NOT_HISTORY",
+      "expected": "ACCEPT_LAYOUT_ONLY",
+      "expected_stream": {
+        "database": "0102030405060708090a0b0c0d0e0f10",
+        "epoch": 1,
+        "previous_lsn": 100,
+        "timeline": 1
+      },
+      "file": "raw/W14.bin",
+      "id": "W14",
+      "operation": 20,
+      "profile_format": 2,
+      "sections": {
+        "counts": [
+          8060,
+          192,
+          2
+        ],
+        "edges": [
+          7676,
+          384,
+          3
+        ],
+        "items": [
+          8252,
+          0,
+          0
+        ],
+        "native": [
+          2144,
+          5532,
+          5
+        ],
+        "redo": [
+          8252,
+          81720,
+          5
+        ]
+      },
+      "semantic_authority": false,
+      "sha256": "adbe050d9d0a85df1f7494972176f590c66ced892a55f4d390693d46ae6497f8"
+    },
+    {
+      "bytes": 98696,
+      "category": "wire-shape-only",
+      "core": "C17",
+      "descriptors": "INVALID_SENTINELS_NOT_HISTORY",
+      "expected": "ACCEPT_LAYOUT_ONLY",
+      "expected_stream": {
+        "database": "0102030405060708090a0b0c0d0e0f10",
+        "epoch": 1,
+        "previous_lsn": 100,
+        "timeline": 1
+      },
+      "file": "raw/W15.bin",
+      "id": "W15",
+      "operation": 20,
+      "profile_format": 2,
+      "sections": {
+        "counts": [
+          16752,
+          192,
+          2
+        ],
+        "edges": [
+          16368,
+          384,
+          3
+        ],
+        "items": [
+          16944,
+          0,
+          0
+        ],
+        "native": [
+          2144,
+          14224,
+          5
+        ],
+        "redo": [
+          16944,
+          81720,
+          5
+        ]
+      },
+      "semantic_authority": false,
+      "sha256": "89e53b6c48c10c135dc8c4251a8ea46a0e53fe02b0b7d1adf8876e9ad8d50efe"
+    },
+    {
+      "bytes": 55528,
+      "category": "wire-shape-only",
+      "core": "C18",
+      "descriptors": "INVALID_SENTINELS_NOT_HISTORY",
+      "expected": "ACCEPT_LAYOUT_ONLY",
+      "expected_stream": {
+        "database": "0102030405060708090a0b0c0d0e0f10",
+        "epoch": 1,
+        "previous_lsn": 100,
+        "timeline": 1
+      },
+      "file": "raw/W16.bin",
+      "id": "W16",
+      "operation": 21,
+      "profile_format": 2,
+      "sections": {
+        "counts": [
+          6464,
+          0,
+          0
+        ],
+        "edges": [
+          6464,
+          0,
+          0
+        ],
+        "items": [
+          6464,
+          0,
+          0
+        ],
+        "native": [
+          2144,
+          4320,
+          3
+        ],
+        "redo": [
+          6464,
+          49032,
+          3
+        ]
+      },
+      "semantic_authority": false,
+      "sha256": "9127c7067800bdd9ffaa83c112e2874d12519c1e2a42108a760582857221a5f3"
+    },
+    {
+      "bytes": 55528,
+      "category": "wire-shape-only",
+      "core": "C19",
+      "descriptors": "INVALID_SENTINELS_NOT_HISTORY",
+      "expected": "ACCEPT_LAYOUT_ONLY",
+      "expected_stream": {
+        "database": "0102030405060708090a0b0c0d0e0f10",
+        "epoch": 1,
+        "previous_lsn": 100,
+        "timeline": 1
+      },
+      "file": "raw/W17.bin",
+      "id": "W17",
+      "operation": 22,
+      "profile_format": 2,
+      "sections": {
+        "counts": [
+          6464,
+          0,
+          0
+        ],
+        "edges": [
+          6464,
+          0,
+          0
+        ],
+        "items": [
+          6464,
+          0,
+          0
+        ],
+        "native": [
+          2144,
+          4320,
+          3
+        ],
+        "redo": [
+          6464,
+          49032,
+          3
+        ]
+      },
+      "semantic_authority": false,
+      "sha256": "f8be3d6b1eed87dbca32e87d5d9321684596af4009ad5568c88c6eb8df1ee8e3"
+    },
+    {
+      "base": "W02",
+      "bytes": 2,
+      "category": "wire-negative-patch",
+      "expected": "REJECT",
+      "file": "raw/NW01.bin",
+      "id": "NW01",
+      "materialized_sha256": "3ac0d3e0176f87ff1de0fe972e0f70d8c82ffecdb323a668194da0063a40ff10",
+      "offset": 164,
+      "reason": "legacy version",
+      "reseal": "XWF_HEADER_AND_FRAME_SHA256",
+      "sha256": "47dc540c94ceb704a23875c11273e16bb0b8a87aed84de911f2133568115f254"
+    },
+    {
+      "base": "W02",
+      "bytes": 2,
+      "category": "wire-negative-patch",
+      "expected": "REJECT",
+      "file": "raw/NW02.bin",
+      "id": "NW02",
+      "materialized_sha256": "70963e7bbabce6faef7f10103eed0f8f34284fc6e58896c6ba22e46091569b62",
+      "offset": 170,
+      "reason": "SystemInit scope",
+      "reseal": "XWF_HEADER_AND_FRAME_SHA256",
+      "sha256": "47dc540c94ceb704a23875c11273e16bb0b8a87aed84de911f2133568115f254"
+    },
+    {
+      "base": "W02",
+      "bytes": 2,
+      "category": "wire-negative-patch",
+      "expected": "REJECT",
+      "file": "raw/NW03.bin",
+      "id": "NW03",
+      "materialized_sha256": "c20b17c847febc2289131e0b02715493c9a3afa792a9a6f1dd0e09445392a915",
+      "offset": 170,
+      "reason": "legacy scope",
+      "reseal": "XWF_HEADER_AND_FRAME_SHA256",
+      "sha256": "96a296d224f285c67bee93c30f8a309157f0daa35dc5b87e410b78630a09cfc7"
+    },
+    {
+      "base": "W02",
+      "bytes": 2,
+      "category": "wire-negative-patch",
+      "expected": "REJECT",
+      "file": "raw/NW04.bin",
+      "id": "NW04",
+      "materialized_sha256": "ef6c2a8c5ff2719dfa7842c12d774b497acf350d4d45564ddf384c168e08c271",
+      "offset": 166,
+      "reason": "unsupported opcode",
+      "reseal": "XWF_HEADER_AND_FRAME_SHA256",
+      "sha256": "2921a11f25dadaa24aa79a548e4e81508c2e5e56af2d833d65e2bcce448ce2f5"
+    },
+    {
+      "base": "W02",
+      "bytes": 2,
+      "category": "wire-negative-patch",
+      "expected": "REJECT",
+      "file": "raw/NW05.bin",
+      "id": "NW05",
+      "materialized_sha256": "a8e53433019287b664594d9576bafa9810c91b0b93cf52626ddead0e91c6e7aa",
+      "offset": 168,
+      "reason": "XHG header width",
+      "reseal": "XWF_HEADER_AND_FRAME_SHA256",
+      "sha256": "e9aff84fdb699ca706c0a1fed47bb095cb25e3c95aa5d1c5d216ff2cfbcd4998"
+    },
+    {
+      "base": "W02",
+      "bytes": 4,
+      "category": "wire-negative-patch",
+      "expected": "REJECT",
+      "file": "raw/NW06.bin",
+      "id": "NW06",
+      "materialized_sha256": "86e46937c8f685636d6aa463a2415051bb7a186297c218861c1854e9c3bf483d",
+      "offset": 392,
+      "reason": "XHG aux size off by one",
+      "reseal": "XWF_HEADER_AND_FRAME_SHA256",
+      "sha256": "2c1c8a3a2a92af477b20946f2a217fba44cd7574a9126468931ecdc7bcfdc681"
+    },
+    {
+      "base": "W02",
+      "bytes": 2,
+      "category": "wire-negative-patch",
+      "expected": "REJECT",
+      "file": "raw/NW07.bin",
+      "id": "NW07",
+      "materialized_sha256": "87c76ce5fec60f82648f99c378801a3c5b9b9c4faa0066055c31a4c546215ac4",
+      "offset": 404,
+      "reason": "XHG E count mismatch",
+      "reseal": "XWF_HEADER_AND_FRAME_SHA256",
+      "sha256": "99be5efb88ca2013bd8e4eb035fd42d5245468fe9afa70d8ba9c1c419a48c4e8"
+    },
+    {
+      "base": "W02",
+      "bytes": 2,
+      "category": "wire-negative-patch",
+      "expected": "REJECT",
+      "file": "raw/NW08.bin",
+      "id": "NW08",
+      "materialized_sha256": "9554e8bf8b62cdaa67b5288de6505185e0b73dee8e01c0ebf46bab536a48241e",
+      "offset": 406,
+      "reason": "XHG K count mismatch",
+      "reseal": "XWF_HEADER_AND_FRAME_SHA256",
+      "sha256": "47dc540c94ceb704a23875c11273e16bb0b8a87aed84de911f2133568115f254"
+    },
+    {
+      "base": "W02",
+      "bytes": 2,
+      "category": "wire-negative-patch",
+      "expected": "REJECT",
+      "file": "raw/NW09.bin",
+      "id": "NW09",
+      "materialized_sha256": "eb808671e80d032c4c461131f5971797cde8f080b1f8cd0a42facc1409256095",
+      "offset": 408,
+      "reason": "XHG D count mismatch",
+      "reseal": "XWF_HEADER_AND_FRAME_SHA256",
+      "sha256": "99be5efb88ca2013bd8e4eb035fd42d5245468fe9afa70d8ba9c1c419a48c4e8"
+    },
+    {
+      "base": "W02",
+      "bytes": 2,
+      "category": "wire-negative-patch",
+      "expected": "REJECT",
+      "file": "raw/NW10.bin",
+      "id": "NW10",
+      "materialized_sha256": "de4a421e0b62b0b0b33f48738cd3b4d429f962acf5b38b44c3b55623abdf8fd1",
+      "offset": 410,
+      "reason": "XHG tail reserved",
+      "reseal": "XWF_HEADER_AND_FRAME_SHA256",
+      "sha256": "47dc540c94ceb704a23875c11273e16bb0b8a87aed84de911f2133568115f254"
+    },
+    {
+      "base": "W02",
+      "bytes": 2,
+      "category": "wire-negative-patch",
+      "expected": "REJECT",
+      "file": "raw/NW11.bin",
+      "id": "NW11",
+      "materialized_sha256": "5f1668504bdb58a6bd0d0260b4adacae6ab9f584dd715b0b95bb76f4d0d9e841",
+      "offset": 20,
+      "reason": "outer redo count",
+      "reseal": "XWF_HEADER_AND_FRAME_SHA256",
+      "sha256": "0a6361b3a802f55cd5ae06101c88a1e216320fe11cc0cfe1d791eed08a1200fd"
+    },
+    {
+      "base": "W02",
+      "bytes": 8,
+      "category": "wire-negative-patch",
+      "expected": "REJECT",
+      "file": "raw/NW12.bin",
+      "id": "NW12",
+      "materialized_sha256": "ca8cad438a4b824fa532039deb2a004166b2a7fcc412aea7eaedca2f5430d1c7",
+      "offset": 56,
+      "reason": "outer/group apply disagreement",
+      "reseal": "XWF_HEADER_AND_FRAME_SHA256",
+      "sha256": "98fdfcbc3fdc1804f196207e9b88616544580a6213fec7474b2a2ded56e6ca9e"
+    },
+    {
+      "base": "W02",
+      "bytes": 2,
+      "category": "wire-negative-patch",
+      "expected": "REJECT",
+      "file": "raw/NW13.bin",
+      "id": "NW13",
+      "materialized_sha256": "73b89a8499ec094854b18f2e630378ca0279532ccb2c19a90b2141fd946aff9d",
+      "offset": 200,
+      "reason": "owner0 System tag with Tx body",
+      "reseal": "XWF_HEADER_AND_FRAME_SHA256",
+      "sha256": "99be5efb88ca2013bd8e4eb035fd42d5245468fe9afa70d8ba9c1c419a48c4e8"
+    },
+    {
+      "base": "W02",
+      "bytes": 8,
+      "category": "wire-negative-patch",
+      "expected": "REJECT",
+      "file": "raw/NW14.bin",
+      "id": "NW14",
+      "materialized_sha256": "8f5ddb6b7820cfb4910aa7207ccb96c911d69b1f3c96ed2990c3b5abc86757a8",
+      "offset": 248,
+      "reason": "actor generation below first leased generation",
+      "reseal": "XWF_HEADER_AND_FRAME_SHA256",
+      "sha256": "7c9fa136d4413fa6173637e883b6998d32e1d675f88cddff9dcbcf331820f4b8"
+    },
+    {
+      "base": "W01",
+      "bytes": 8,
+      "category": "wire-negative-patch",
+      "expected": "REJECT",
+      "file": "raw/NW15.bin",
+      "id": "NW15",
+      "materialized_sha256": "7e26a311c9eb457186ce8e39aae180b479443475e3b3b2999a33613cfba4b5c7",
+      "offset": 184,
+      "reason": "fresh Begin previous owner must be zero",
+      "reseal": "XWF_HEADER_AND_FRAME_SHA256",
+      "sha256": "7c9fa136d4413fa6173637e883b6998d32e1d675f88cddff9dcbcf331820f4b8"
+    },
+    {
+      "base": "W12",
+      "bytes": 8,
+      "category": "wire-negative-patch",
+      "expected": "REJECT",
+      "file": "raw/NW16.bin",
+      "id": "NW16",
+      "materialized_sha256": "b89210bbff8e09019bc51b2bf28c6ed15eff1d0a1aac683019550eafaaf7cd64",
+      "offset": 184,
+      "reason": "fresh Aging previous owner must be zero",
+      "reseal": "XWF_HEADER_AND_FRAME_SHA256",
+      "sha256": "7c9fa136d4413fa6173637e883b6998d32e1d675f88cddff9dcbcf331820f4b8"
+    },
+    {
+      "base": "W14",
+      "bytes": 4,
+      "category": "wire-negative-patch",
+      "expected": "REJECT",
+      "file": "raw/NW17.bin",
+      "id": "NW17",
+      "materialized_sha256": "37eecc142d41cd186c0598f9f80b17e83deef891bc4338253e09a543d829422f",
+      "offset": 300,
+      "reason": "XSG E byte length",
+      "reseal": "XWF_HEADER_AND_FRAME_SHA256",
+      "sha256": "fd1a5ca117a6abf4d22673f0c1d6b77e1cdbf50ec1e1ddf7887070ce978a482e"
+    },
+    {
+      "base": "W14",
+      "bytes": 2,
+      "category": "wire-negative-patch",
+      "expected": "REJECT",
+      "file": "raw/NW18.bin",
+      "id": "NW18",
+      "materialized_sha256": "ac671588493cde1d82dc7d62832a975e8ee68d97e020f0e05f03a8efa6a8ee98",
+      "offset": 294,
+      "reason": "XSG reserved",
+      "reseal": "XWF_HEADER_AND_FRAME_SHA256",
+      "sha256": "47dc540c94ceb704a23875c11273e16bb0b8a87aed84de911f2133568115f254"
+    },
+    {
+      "base": "W02",
+      "bytes": 2,
+      "category": "wire-semantic-context-patch",
+      "expected": "ACCEPT_LAYOUT_REJECT_STABLE_SEMANTICS",
+      "file": "raw/NS01.bin",
+      "id": "NS01",
+      "materialized_sha256": "18d2cc858c77d7ec714bb2c2cc57e650cb827b277b21ec6c2068ab51916fc4cd",
+      "offset": 22496,
+      "reason": "group-local owner ordinal1 must fail semantic inventory",
+      "reseal": "XWF_HEADER_AND_FRAME_SHA256",
+      "sha256": "47dc540c94ceb704a23875c11273e16bb0b8a87aed84de911f2133568115f254"
+    },
+    {
+      "base": "W02",
+      "bytes": 8,
+      "category": "wire-semantic-context-patch",
+      "expected": "ACCEPT_LAYOUT_REJECT_STABLE_SEMANTICS",
+      "file": "raw/NS02.bin",
+      "id": "NS02",
+      "materialized_sha256": "63c113f39dd95860a86760c65aa9f682259f6a37f1e3ce2a8272c0d0932a0ea7",
+      "offset": 22350,
+      "reason": "deduplicated Undo count1 instead of edge multiset2",
+      "reseal": "XWF_HEADER_AND_FRAME_SHA256",
+      "sha256": "7c9fa136d4413fa6173637e883b6998d32e1d675f88cddff9dcbcf331820f4b8"
+    },
+    {
+      "base": "W02",
+      "bytes": 2,
+      "category": "wire-semantic-context-patch",
+      "expected": "ACCEPT_LAYOUT_REJECT_STABLE_SEMANTICS",
+      "file": "raw/NS03.bin",
+      "id": "NS03",
+      "materialized_sha256": "a7b41d03f575b61aa618330828aadedf50d3dff5c5f9d104fa3eaafe71745f44",
+      "offset": 22032,
+      "reason": "CatalogStamp changed to UndoBeforeStamp role",
+      "reseal": "XWF_HEADER_AND_FRAME_SHA256",
+      "sha256": "ceb827ad3d3884fd4d50ae6099d6d50c09a21e72ebd309708e8b69d93df19e55"
+    }
+  ],
+  "compiler_calls": 0,
+  "contracts": {
+    "devdoc/contracts/dev3-catalog-format.md": "d39c7c070f5fe03eeff9420ecb54bdd2c0fd755110c68591cfb2cfa4fee0de82",
+    "devdoc/contracts/dev3-create-group-format.md": "30a9a1c1cba52e91df4497e4aca1619781b241b3bcdd387916a0c520a07cbd8a",
+    "devdoc/contracts/dev3-obligation-format.md": "9e1cbaca3e484306f26c0be364c431d0eedb2ebf860859ca6e89e8cac7c6c41d",
+    "devdoc/contracts/dev3-page-format.md": "0d53e26ea03d97d684fc9d36035ff3da7db7eff832ef49f901655641e2f65fb0",
+    "devdoc/contracts/dev3-tree-format.md": "7b1ef62c9db60b4e47a63117d9d2b4b8bb3e6a9fd2f6286e7e6fa48836f8e7c1",
+    "devdoc/contracts/dev3-undo-format.md": "b4e4c037d1469396fa92866540f28c01930f4e2d1bce30db6fd3966b789fcac4",
+    "devdoc/contracts/dev3-wal-format.md": "a70d61590a020399cdd33d21b0c6b4ee42bd4aec6a73ec4ad4040ed9a54698c8"
+  },
+  "database": "0102030405060708090a0b0c0d0e0f10",
+  "generator_sha256": "67d8168a2f8596aa5e00af30265a8ae12388d0d2688fe807555f4db141882eaa",
+  "input_id": "D3-CREATE-LEAF-L1",
+  "plan_sha256": "60845e2807c7093b844c0728a5c092680133e41126f8d4696bcb1e28b789ca51",
+  "product_calls": 0,
+  "raw_bytes": 1296915,
+  "raw_files": 119,
+  "schema": 1,
+  "state": "INPUT_FROZEN_NOT_EXECUTED",
+  "test_runner_calls": 0,
+  "timeline": 1,
+  "wire_positive_boundary": "shape-only; sentinel descriptors/native bodies; never semantic authority"
+}

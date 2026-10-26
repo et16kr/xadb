@@ -42,6 +42,11 @@ pub(in crate::storage) struct RetentionSourceCensus {
     pub(in crate::storage) replay: usize,
     pub(in crate::storage) load: usize,
     pub(in crate::storage) flush: usize,
+    pub(in crate::storage) catalog_lookup: usize,
+    pub(in crate::storage) catalog_commit: usize,
+    pub(in crate::storage) catalog_binding: usize,
+    pub(in crate::storage) catalog_live: usize,
+    pub(in crate::storage) catalog_recovery_cleanup: usize,
     pub(in crate::storage) peak: usize,
     pub(in crate::storage) metadata: usize,
     pub(in crate::storage) whole: usize,
@@ -76,6 +81,8 @@ pub(in crate::storage) fn source_census<W: WriterNamespace>() -> RetentionSource
         + size_of::<Old<'_, W>>()
         + 2 * size_of::<Result<()>>()
         + size_of::<EmptyRetentionControlLoan<'_>>()
+        + size_of::<crate::storage::wal_io::WalPrefix>()
+        + size_of::<std::result::Result<crate::storage::wal_io::WalPrefix, WalIoError>>()
         + old.queue_nested.max(dirty_frame::retention_core_census())
         + 1024;
     // Conservatively retain Old, every newly built field, New and the wide
@@ -85,6 +92,7 @@ pub(in crate::storage) fn source_census<W: WriterNamespace>() -> RetentionSource
         + size_of::<New<'_, W>>()
         + size_of::<Into<'_, W>>()
         + size_of::<control::RetentionControl<'_, '_, '_>>()
+        + size_of::<history::runtime::RuntimeHistory<'_, '_, '_>>()
         + size_of::<flush::RetentionFlushControl<'_, '_, '_>>()
         + 2 * size_of::<Result<()>>()
         + 1024;
@@ -92,10 +100,12 @@ pub(in crate::storage) fn source_census<W: WriterNamespace>() -> RetentionSource
     // Only the pure semantic caller has these Before/After/Expected carriers.
     // population's original INIT claims and producer are a different entry.
     let history = history::source_bytes::<W>();
+    let runtime_history = history::runtime::source_bytes();
     let recovery = recovery::phase_source_bytes::<W>();
     let recovered_conversion = (original_owner
         + size_of::<Old<'_, W>>()
         + size_of::<control::RetentionControl<'_, '_, '_>>()
+        + size_of::<history::runtime::RuntimeHistory<'_, '_, '_>>()
         + size_of::<recovery::RetentionReplayCursor>()
         + size_of::<super::super::super::plan4_recovery::RecoveryRetentionBinding<'_, '_>>()
         + recovery.seed.max(recovery.ledger)
@@ -107,7 +117,15 @@ pub(in crate::storage) fn source_census<W: WriterNamespace>() -> RetentionSource
                 ),
         );
     let population = population::phase_source_bytes();
-    let semantic_producer = scalar
+    // live::change retains its independent audit and optional-token slot
+    // through change_with_replay and both checked-cleanup merges. Returning
+    // the token before stage does not end these outer source-value lifetimes.
+    let live_wrapper = size_of::<history::runtime::ReplayScope<'_, '_, '_, '_>>()
+        + size_of::<Option<history::runtime::ReplayLoan<'_, '_, '_, '_>>>()
+        + 3 * size_of::<Result<RetentionObservation>>()
+        + 3 * size_of::<Result<()>>()
+        + 2 * size_of::<&()>();
+    let semantic_producer = scalar + live_wrapper
         + crate::storage::semantic_retention::source_bytes().max(history.rollback)
         + 2 * size_of::<RetentionExpected>()
         + 2 * size_of::<RetentionBefore<'_>>()
@@ -119,12 +137,18 @@ pub(in crate::storage) fn source_census<W: WriterNamespace>() -> RetentionSource
         + 2 * size_of::<Option<&[u8; 1536]>>()
         + 88;
     let population_producer = population.producer()
+        + population::reservation_source_bytes::<W>()
+        // Optional closed-slot observation is a normal live-prepare result.
+        // The required INIT accessor retains its original checked path.
+        + size_of::<Option<usize>>()
+        + size_of::<dirty_frame::Result<Option<usize>>>()
         + 2 * size_of::<Result<()>>()
         + 2 * size_of::<RetentionError>()
         + 16 * size_of::<&[u8]>()
         + 512;
     let producer = semantic_producer.max(population_producer);
     let installation = scalar
+        + live_wrapper
         + dirty_frame::target_set_call_bytes::<4>()
         + 3 * size_of::<Option<DptStamp<'_>>>()
         + 3 * size_of::<RetentionInstall<'_, '_, '_>>()
@@ -134,7 +158,7 @@ pub(in crate::storage) fn source_census<W: WriterNamespace>() -> RetentionSource
         + crate::storage::wal_io::DURABILITY_CALL_BYTES;
     // History accounts its actual fixed-source phases and the original File
     // guard. No live INIT installation carrier is created by replay.
-    let replay = history.peak;
+    let replay = history.peak + runtime_history;
     let load_direct = scalar
         + dirty_frame::retention_core_census()
         + 2 * size_of::<StatusLoadSnapshot<'_, '_>>()
@@ -143,14 +167,24 @@ pub(in crate::storage) fn source_census<W: WriterNamespace>() -> RetentionSource
         + crate::storage::page_io::retention_home_source_bytes::<W>();
     // load_into runs validate_live before creating its allocator snapshot,
     // page reader or install permit. Retain its argument/prefix/return locals.
-    let load = load_direct.max(
-        replay
-            + 2 * size_of::<WalPrefix>()
-            + 2 * size_of::<Plan4Target>()
-            + 2 * size_of::<Result<()>>()
-            + 16 * size_of::<&[u8]>()
-            + 256,
-    );
+    // The combined CREATE preparation retains seven required addresses and
+    // four fixed targets while each original checked load runs. This bound is
+    // deliberately additive to existing load locals, including return carriers.
+    let create_preparation = 7 * size_of::<TargetRequest>()
+        + 4 * size_of::<Plan4Target>()
+        + size_of::<[&Plan4Target; 6]>()
+        + size_of::<RetentionResidencyStep>()
+        + size_of::<Result<Option<RetentionResidencyStep>>>()
+        + 64;
+    let load = create_preparation
+        + load_direct.max(
+            replay
+                + 2 * size_of::<WalPrefix>()
+                + 2 * size_of::<Plan4Target>()
+                + 2 * size_of::<Result<()>>()
+                + 16 * size_of::<&[u8]>()
+                + 256,
+        );
     let flush_direct = scalar
         + size_of::<Option<CapturedPage<'_, '_>>>()
         + size_of::<Result<Option<CapturedPage<'_, '_>>>>()
@@ -169,6 +203,25 @@ pub(in crate::storage) fn source_census<W: WriterNamespace>() -> RetentionSource
             + 16 * size_of::<&[u8]>()
             + 256,
     );
+    let catalog_lookup = read::lookup_source_bytes::<W>();
+    let catalog_commit = create_pair::catalog_commit_source_bytes();
+    let catalog_binding = visibility::binding_source_bytes::<W>();
+    let catalog_live = create_pair::catalog_live::catalog_live_source_bytes::<W>().peak;
+    // The recovery dispatcher retains selection, current Job/slot references,
+    // private-loan arguments and its result while calling a live operation.
+    // Selection/replay, residency, producer and verification are consecutive.
+    let catalog_recovery_cleanup = 3 * size_of::<Result<recovery::RetentionRecoveryStep>>()
+        + 2 * size_of::<recovery::RetentionRecoveryStep>()
+        + 2 * size_of::<crate::storage::retention_page::catalog::JobView<'_>>()
+        + 2 * size_of::<crate::storage::retention_page::JobSlotRef>()
+        + 16 * size_of::<&()>()
+        + 256
+        + catalog_live
+            .max(catalog_binding)
+            .max(load)
+            .max(replay)
+            .max(recovery.cleanup)
+            .max(recovery.verify);
     let active = producer
         .max(installation)
         .max(replay)
@@ -177,11 +230,16 @@ pub(in crate::storage) fn source_census<W: WriterNamespace>() -> RetentionSource
         .max(scalar + old.catalog_nested)
         .max(recovery.ledger)
         .max(recovery.cleanup)
-        .max(recovery.verify);
+        .max(recovery.verify)
+        .max(catalog_lookup)
+        .max(catalog_commit)
+        .max(catalog_binding)
+        .max(catalog_live)
+        .max(catalog_recovery_cleanup);
     let peak = conversion.max(recovered_conversion).max(retained + active);
     // 36 descriptor/bookkeeping slots are actual retained metadata, even
     // though their backing is caller owned. Job and page snapshots are data.
-    let metadata = peak + 36 * control::SLOT_BYTES;
+    let metadata = peak + 36 * control::SLOT_BYTES + visibility::VISIBILITY_BYTES;
     RetentionSourceCensus {
         original_owner,
         retained,
@@ -212,6 +270,11 @@ pub(in crate::storage) fn source_census<W: WriterNamespace>() -> RetentionSource
         replay,
         load,
         flush,
+        catalog_lookup,
+        catalog_commit,
+        catalog_binding,
+        catalog_live,
+        catalog_recovery_cleanup,
         peak,
         metadata,
         whole: metadata + 65_536,
@@ -229,6 +292,13 @@ pub(super) fn fits<W: WriterNamespace>() -> bool {
         && dirty_frame::fits()
         && crate::storage::wal_io::durability_types_fit()
         && super::super::super::flush_io::fits::<W>()
+        // The resident catalog read's fixed reservation is below the existing
+        // catalog preparation path already included in `active` above.
+        && read::catalog_source_bytes::<W>() <= read::CATALOG_READ_SOURCE_BYTES
+        && read::CATALOG_READ_SOURCE_BYTES
+            <= super::super::resources::source_census::<W>().catalog_nested
+        && read::undo_read_source_bytes() <= 16_384
+        && 16_384 <= super::super::resources::source_census::<W>().catalog_nested
         && c.peak <= 65_536
         && c.metadata <= 196_608
         && c.whole <= 262_144

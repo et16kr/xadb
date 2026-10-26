@@ -130,6 +130,10 @@ impl<'s, 'c, W: WriterNamespace> RetentionFlusher<'_, 's, 'c, '_, '_, '_, '_, W>
                 | crate::storage::page::PageKind::RetentionRoot
                 | crate::storage::page::PageKind::RetentionJobs
                 | crate::storage::page::PageKind::TransactionStatus
+                | crate::storage::page::PageKind::Undo
+                | crate::storage::page::PageKind::CatalogLeaf
+                | crate::storage::page::PageKind::TreeAnchor
+                | crate::storage::page::PageKind::RowLeaf
         ) {
             return Err(unchanged(RetentionPhase::Flush, RetentionCause::Membership));
         }

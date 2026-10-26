@@ -28,7 +28,7 @@ impl SharedPool<'_, '_, '_, '_> {
         start: usize,
     ) -> Result<StatusCandidate> {
         self.health()?;
-        if !self.directory.resident_status() {
+        if !self.directory_read(|directory| directory.resident_status())? {
             return Err(unchanged(Cause::Shape));
         }
         self.payload_candidate(Some(request), start)
@@ -39,7 +39,9 @@ impl SharedPool<'_, '_, '_, '_> {
         start: usize,
     ) -> Result<StatusCandidate> {
         self.health()?;
-        if !self.directory.resident_mixed() || !self.directory.accepts_payload(request) {
+        if !self.directory_read(|directory| directory.resident_mixed())?
+            || !self.directory_read(|directory| directory.accepts_payload(request))?
+        {
             return Err(unchanged(Cause::Shape));
         }
         self.payload_candidate(Some(request), start)
@@ -49,7 +51,7 @@ impl SharedPool<'_, '_, '_, '_> {
         start: usize,
     ) -> Result<StatusCandidate> {
         self.health()?;
-        if !self.directory.resident_mixed() {
+        if !self.directory_read(|directory| directory.resident_mixed())? {
             return Err(unchanged(Cause::Shape));
         }
         self.payload_candidate(None, start)
@@ -60,7 +62,10 @@ impl SharedPool<'_, '_, '_, '_> {
         start: usize,
     ) -> Result<StatusCandidate> {
         self.health()?;
-        if !self.directory.resident_payloads() || start == 0 || self.frames.len() < 2 {
+        if !self.directory_read(|directory| directory.resident_payloads())?
+            || start == 0
+            || self.frames.len() < 2
+        {
             return Err(unchanged(Cause::Shape));
         }
         if !self.handoff_quiescent()? {
@@ -82,7 +87,7 @@ impl SharedPool<'_, '_, '_, '_> {
                 }
                 Err(TryLockError::Poisoned(_)) => return Err(self.fatal(Cause::Poisoned)),
             };
-            let frame = if let Some(registration) = self.resolve_registration(index) {
+            let frame = if let Some(registration) = self.resolve_registration(index)? {
                 let frame = self.pair(index, &content)?.frame;
                 if let Some(request) = request
                     && registration.request.same_address(&request)
@@ -99,7 +104,7 @@ impl SharedPool<'_, '_, '_, '_> {
                 }
                 Some(frame)
             } else {
-                let dpt = self.entry_dpt()?;
+                let dpt = self.entry_registry()?;
                 if !content.fresh()
                     || dpt.entries[index].is_some()
                     || dpt.requirements[index].is_some()
@@ -108,7 +113,10 @@ impl SharedPool<'_, '_, '_, '_> {
                 }
                 None
             };
-            if self.directory.next_resident_generation(index).is_none() {
+            if self
+                .directory_read(|directory| directory.next_resident_generation(index))?
+                .is_none()
+            {
                 continue;
             }
             let candidate = StatusCandidate {
@@ -158,18 +166,26 @@ pub(in crate::storage) mod test_support {
     use super::*;
 
     pub(in crate::storage) fn duplicate_registration(pool: &mut SharedPool<'_, '_, '_, '_>) {
-        let registration = pool.resolve_registration(1).unwrap();
-        pool.directory.replace_resident_status(2, registration);
+        let registration = pool.resolve_registration(1).unwrap().unwrap();
+        pool.registry
+            .lock()
+            .unwrap()
+            .directory
+            .replace_resident_status(2, registration);
     }
     pub(in crate::storage) fn generation(
         pool: &mut SharedPool<'_, '_, '_, '_>,
         index: usize,
         generation: u64,
     ) {
-        let mut registration = pool.resolve_registration(index).unwrap();
+        let mut registration = pool.resolve_registration(index).unwrap().unwrap();
         registration.generation = generation;
-        pool.directory.replace_resident_status(index, registration);
-        if let Some(entry) = &mut pool.dpt.lock().unwrap().entries[index] {
+        pool.registry
+            .lock()
+            .unwrap()
+            .directory
+            .replace_resident_status(index, registration);
+        if let Some(entry) = &mut pool.registry.lock().unwrap().entries[index] {
             entry.generation = generation;
         }
     }
@@ -185,7 +201,7 @@ pub(in crate::storage) mod test_support {
         lsn: PageLsn,
     ) {
         pool.frames[index].content.write().unwrap().rec_lsn = Some(lsn);
-        pool.dpt.lock().unwrap().entries[index]
+        pool.registry.lock().unwrap().entries[index]
             .as_mut()
             .unwrap()
             .rec_lsn = lsn;

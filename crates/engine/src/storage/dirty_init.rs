@@ -8,6 +8,11 @@ use crate::storage::{
 };
 use std::sync::LockResult;
 
+#[path = "dirty_init/tx_pair.rs"]
+mod tx_pair;
+pub(in crate::storage) use tx_pair::source_census as tx_pair_source_census;
+pub(in crate::storage) use tx_pair::{CompletedTxPair, TxPairClaimKey, TxPairWriteTargets};
+
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 struct InitClaimRecord {
     allocator: TargetRequest,
@@ -20,9 +25,48 @@ struct InitClaimRecord {
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
+enum InitClaimIdentity {
+    System(InitClaimRecord),
+    TxPair(tx_pair::TxPairClaimRecord),
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub(super) struct InitClaimSlot {
-    identity: InitClaimRecord,
+    identity: InitClaimIdentity,
     pub(super) initializer_pins_held: bool,
+}
+impl InitClaimSlot {
+    fn system(&self) -> Option<&InitClaimRecord> {
+        match &self.identity {
+            InitClaimIdentity::System(record) => Some(record),
+            InitClaimIdentity::TxPair(_) => None,
+        }
+    }
+    #[cfg(test)]
+    fn system_mut(&mut self) -> &mut InitClaimRecord {
+        match &mut self.identity {
+            InitClaimIdentity::System(record) => record,
+            InitClaimIdentity::TxPair(_) => panic!("expected original System claim"),
+        }
+    }
+    fn matches_system(&self, identity: &InitClaimRecord) -> bool {
+        self.system() == Some(identity)
+    }
+    pub(super) fn blocks_load(&self, index: usize, request: TargetRequest) -> bool {
+        match &self.identity {
+            InitClaimIdentity::System(record) => {
+                index == 0 || index == record.payload_index || request.same_address(&record.payload)
+            }
+            InitClaimIdentity::TxPair(record) => record.blocks_load(index, request),
+        }
+    }
+    pub(super) fn owns_unpublished_pin(&self, index: usize) -> bool {
+        self.initializer_pins_held
+            && match &self.identity {
+                InitClaimIdentity::System(record) => record.payload_index == index,
+                InitClaimIdentity::TxPair(record) => record.indices().contains(&index),
+            }
+    }
 }
 
 impl InitClaimRecord {
@@ -38,34 +82,45 @@ impl InitClaimRecord {
         }
     }
 
-    fn valid(&self, pool: &SharedPool<'_, '_, '_, '_>) -> bool {
-        pool.directory.closed_index() == Some(self.payload_index)
+    fn valid(&self, pool: &SharedPool<'_, '_, '_, '_>) -> Result<bool> {
+        let state = pool.entry_registry()?;
+        Ok(self.valid_in(pool, &state))
+    }
+    fn valid_in(&self, pool: &SharedPool<'_, '_, '_, '_>, state: &PoolRegistry<'_>) -> bool {
+        state.directory.closed_index() == Some(self.payload_index)
             && self.payload_index > 0
             && self.payload_index < pool.frames.len()
             && (pool.frames.len() == 2
-                || pool.directory.resident_payloads()
-                || pool.directory.retention_payloads())
-            && pool.directory.init_generations(pool.frames) == Some(self.generations)
-            && pool.resolve_registration(0).is_some_and(|registered| {
-                registered.request == self.allocator && registered.generation == self.generations[0]
-            })
+                || state.directory.resident_payloads()
+                || state.directory.retention_payloads())
+            && state.directory.init_generations(pool.frames) == Some(self.generations)
+            && state
+                .directory
+                .resolve(pool.frames, 0)
+                .is_some_and(|registered| {
+                    registered.request == self.allocator
+                        && registered.generation == self.generations[0]
+                })
             && self.allocator.kind == PageKind::Allocation
             && self.allocator.level == 0
             && self.allocator.identity.page.page_no == 0
             && self.allocator.identity.owner.get() == 1
             && self.allocator.identity.owner_generation.get() == 1
-            && (if pool.directory.retention_payloads() {
-                pool.directory.accepts_retention_payload(self.payload)
-                    && self.payload.kind == PageKind::TransactionStatus
+            && (if state.directory.retention_payloads() {
+                state.directory.accepts_retention_payload(self.payload)
+                    && matches!(
+                        self.payload.kind,
+                        PageKind::TransactionStatus | PageKind::Undo
+                    )
             } else {
-                pool.directory.accepts_payload(self.payload)
+                state.directory.accepts_payload(self.payload)
             })
             && self.payload.level == 0
             && self.payload.identity.database == self.allocator.identity.database
             && self.payload.identity.page.file == self.allocator.identity.page.file
-            && (if pool.directory.retention_payloads() {
+            && (if state.directory.retention_payloads() {
                 (9..64).contains(&self.payload.identity.page.page_no)
-            } else if pool.directory.operational_payloads() {
+            } else if state.directory.operational_payloads() {
                 (1..64).contains(&self.payload.identity.page.page_no)
             } else {
                 self.payload.identity.page.page_no == 1
@@ -81,10 +136,12 @@ impl InitClaimRecord {
             && (0..pool.frames.len())
                 .filter(|index| *index != self.payload_index)
                 .all(|index| {
-                    pool.resolve_registration(index)
+                    state
+                        .directory
+                        .resolve(pool.frames, index)
                         .is_none_or(|entry| !entry.request.same_address(&self.payload))
                 })
-            && pool.directory.published().is_none_or(|published| {
+            && state.directory.published().is_none_or(|published| {
                 published.request == self.payload && published.generation == self.generations[1]
             })
     }
@@ -107,12 +164,16 @@ impl InitClaimKey<'_, '_> {
             && self.identity == InitClaimRecord::from_authority(authority)
     }
 
-    fn matches_pool(&self, pool: &SharedPool<'_, '_, '_, '_>) -> bool {
+    fn matches_pool(&self, pool: &SharedPool<'_, '_, '_, '_>) -> Result<bool> {
+        let state = pool.entry_registry()?;
+        Ok(self.matches_pool_in(pool, &state))
+    }
+    fn matches_pool_in(&self, pool: &SharedPool<'_, '_, '_, '_>, state: &PoolRegistry<'_>) -> bool {
         self.active
             && std::ptr::eq(self.core, pool.core)
             && std::ptr::eq(self.binding, pool.binding)
             && std::ptr::eq(self.fence, pool.fence)
-            && self.identity.valid(pool)
+            && self.identity.valid_in(pool, state)
     }
 }
 impl Drop for InitClaimKey<'_, '_> {
@@ -124,33 +185,42 @@ impl Drop for InitClaimKey<'_, '_> {
 }
 
 impl<'c, 's, 'p, 'd> SharedPool<'c, 's, 'p, 'd> {
-    pub(in crate::storage) fn operational_status(&self) -> bool {
-        self.directory.operational_status()
+    pub(in crate::storage) fn operational_status(&self) -> Result<bool> {
+        self.directory_read(|directory| directory.operational_status())
     }
-    pub(in crate::storage) fn operational_payloads(&self) -> bool {
-        self.directory.operational_payloads()
+    pub(in crate::storage) fn operational_payloads(&self) -> Result<bool> {
+        self.directory_read(|directory| directory.operational_payloads())
     }
-    pub(in crate::storage) fn mixed_payloads(&self) -> bool {
-        self.directory.resident_mixed()
+    pub(in crate::storage) fn mixed_payloads(&self) -> Result<bool> {
+        self.directory_read(|directory| directory.resident_mixed())
     }
     pub(in crate::storage) fn init_payload_index(&self) -> Result<usize> {
         self.health()?;
-        if !self.registrations_valid() {
+        if !self.registrations_valid()? {
             return Err(self.fatal(Cause::Invariant));
         }
-        self.directory
-            .closed_index()
+        self.directory_read(|directory| directory.closed_index())?
             .ok_or_else(|| self.fatal(Cause::Invariant))
+    }
+    /// Absence is normal before a live caller prepares its first closed slot.
+    /// Reservation and publication still require `init_payload_index`.
+    pub(in crate::storage) fn prepared_init_payload_index(&self) -> Result<Option<usize>> {
+        self.health()?;
+        if !self.registrations_valid()? {
+            return Err(self.fatal(Cause::Invariant));
+        }
+        self.directory_read(|directory| directory.closed_index())
     }
     pub(in crate::storage) fn init_generations(&self) -> Result<[u64; 2]> {
         self.health()?;
-        self.directory
-            .init_generations(self.frames)
+        self.directory_read(|directory| directory.init_generations(self.frames))?
             .ok_or_else(|| self.fatal(Cause::Invariant))
     }
     pub(in crate::storage) fn enable_status_operation(&mut self) -> Result<()> {
         self.health()?;
-        if self.frames.len() != 2 || self.directory.closed_index() != Some(1) {
+        if self.frames.len() != 2
+            || self.directory_read(|directory| directory.closed_index())? != Some(1)
+        {
             return Err(unchanged(Cause::Shape));
         }
         self.reload_quiescent()?;
@@ -162,13 +232,17 @@ impl<'c, 's, 'p, 'd> SharedPool<'c, 's, 'p, 'd> {
                     TryLockError::WouldBlock => unchanged(Cause::Busy),
                     TryLockError::Poisoned(_) => self.fatal(Cause::Poisoned),
                 })?;
-            if index == 0 || self.directory.published().is_some() {
+            if index == 0
+                || self
+                    .directory_read(|directory| directory.published())?
+                    .is_some()
+            {
                 self.pair(index, &content)?;
             } else if !content.fresh() {
                 return Err(self.fatal(Cause::Invariant));
             }
         }
-        if !self.directory.enable_status_operation(self.frames) {
+        if !self.directory_edit(|directory| directory.enable_status_operation(self.frames))? {
             return Err(unchanged(Cause::Shape));
         }
         Ok(())
@@ -182,8 +256,7 @@ impl<'c, 's, 'p, 'd> SharedPool<'c, 's, 'p, 'd> {
             return Err(unchanged(Cause::MissingTarget));
         }
         let generation = self
-            .directory
-            .next_status_generation()
+            .directory_read(|directory| directory.next_status_generation())?
             .ok_or_else(|| unchanged(Cause::CounterExhausted))?;
         let mut content = self.frames[1]
             .content
@@ -197,7 +270,8 @@ impl<'c, 's, 'p, 'd> SharedPool<'c, 's, 'p, 'd> {
             return Err(unchanged(Cause::Busy));
         }
         self.health()?;
-        self.directory.prepare_next_status(generation);
+        self.directory_edit(|directory| directory.prepare_next_status(generation))?;
+        self.init_unpublished.store(true, Ordering::Release);
         content.page_lsn = PageLsn(0);
         content.modification_counter = 0;
         content.rec_lsn = None;
@@ -284,35 +358,50 @@ impl<'c, 's, 'p, 'd> SharedPool<'c, 's, 'p, 'd> {
                 return Err(reject(Cause::Invariant));
             }
         }
-        let mut pool = Self::new(core, fence, binding, frames)?;
+        let pool = Self::new(core, fence, binding, frames)?;
         if mixed {
-            pool.directory.open_resident_mixed();
+            pool.directory_edit(|directory| directory.open_resident_mixed())?;
         } else if resident {
-            pool.directory.open_resident_status();
+            pool.directory_edit(|directory| directory.open_resident_status())?;
         } else {
-            pool.directory.close_status_slot();
+            pool.directory_edit(|directory| directory.close_status_slot())?;
         }
+        pool.init_unpublished.store(true, Ordering::Release);
         Ok(pool)
     }
 
-    pub(super) fn init_pins_valid(&self, pins: &PinAccounting) -> bool {
+    pub(super) fn init_pins_valid(&self, pins: &PoolRegistry<'_>) -> bool {
         match &pins.init_claim {
             None => true,
-            Some(slot) => {
-                slot.identity.valid(self)
-                    && (!slot.initializer_pins_held
-                        || (pins.counts[0] != 0 && pins.counts[slot.identity.payload_index] != 0))
-            }
+            Some(slot) => match &slot.identity {
+                InitClaimIdentity::System(identity) => {
+                    identity.valid_in(self, pins)
+                        && (!slot.initializer_pins_held
+                            || (pins.counts[0] != 0 && pins.counts[identity.payload_index] != 0))
+                }
+                InitClaimIdentity::TxPair(identity) => {
+                    identity.valid_in(self, pins)
+                        && (!slot.initializer_pins_held || identity.held_pins_valid(pins))
+                }
+            },
         }
     }
 
     /// Unpublished lookup must remain lock-free even while C5 holds DPT/content.
     pub(in crate::storage) fn initialized_request(&self) -> Result<Option<TargetRequest>> {
         self.health()?;
-        let index = self.init_payload_index()?;
-        Ok(self
-            .resolve_registration(index)
-            .map(|registration| registration.request))
+        if self.init_unpublished.load(Ordering::Acquire) {
+            return Ok(None);
+        }
+        let state = self.try_registry()?;
+        let index = state
+            .directory
+            .closed_index()
+            .ok_or_else(|| self.fatal(Cause::Invariant))?;
+        Ok(state
+            .directory
+            .resolve(self.frames, index)
+            .map(|entry| entry.request))
     }
 
     pub(in crate::storage) fn claim_init_targets<'a, 'b>(
@@ -334,13 +423,21 @@ impl<'c, 's, 'p, 'd> SharedPool<'c, 's, 'p, 'd> {
             return Err(unchanged(Cause::AlreadyInitialized));
         }
         let identity = InitClaimRecord::from_authority(authority);
-        if !identity.valid(self) {
+        if !identity.valid(self)? {
             return Err(unchanged(Cause::Stale));
         }
         {
-            let mut pins = self.entry_pins()?;
-            if pins.init_claim.is_some() {
+            let mut pins = self.entry_registry()?;
+            if pins.init_claim.is_some()
+                || pins
+                    .load
+                    .as_ref()
+                    .is_some_and(|load| load.blocks(identity.payload, identity.payload_index))
+            {
                 return Err(unchanged(Cause::Busy));
+            }
+            if !identity.valid_in(self, &pins) {
+                return Err(unchanged(Cause::Stale));
             }
             if pins.total > MAX_PINS - 2
                 || pins.counts[0] >= MAX_FRAME_PINS
@@ -352,7 +449,7 @@ impl<'c, 's, 'p, 'd> SharedPool<'c, 's, 'p, 'd> {
             pins.counts[identity.payload_index] += 1;
             pins.total += 2;
             pins.init_claim = Some(InitClaimSlot {
-                identity,
+                identity: InitClaimIdentity::System(identity),
                 initializer_pins_held: true,
             });
         }
@@ -381,17 +478,17 @@ impl<'c, 's, 'p, 'd> SharedPool<'c, 's, 'p, 'd> {
         completed: &CompletedInitAuthority<'c, 's>,
     ) -> Result<()> {
         self.health()?;
-        if !key.matches_pool(self)
+        if !key.matches_pool(self)?
             || !completed.matches(key)
             || self.initialized_request()? != Some(key.identity.payload)
         {
             return Err(self.fatal(Cause::Invariant));
         }
-        let mut pins = self.entry_pins()?;
+        let mut pins = self.entry_registry()?;
         if !pins
             .init_claim
             .as_ref()
-            .is_some_and(|slot| slot.identity == key.identity && !slot.initializer_pins_held)
+            .is_some_and(|slot| slot.matches_system(&key.identity) && !slot.initializer_pins_held)
         {
             return Err(self.fatal(Cause::Invariant));
         }
@@ -417,14 +514,14 @@ impl InitPinSet<'_, '_, '_, '_, '_> {
         }
         self.active = false;
         self.pool.fence_unwind();
-        let (mut pins, poison) = match self.pool.pins.lock() {
+        let (mut pins, poison) = match self.pool.registry.lock() {
             Ok(pins) => (pins, None),
             Err(error) => (error.into_inner(), Some(self.pool.fatal(Cause::Poisoned))),
         };
         let result = (|| {
             if !self.pool.pins_valid(&pins)
                 || !pins.init_claim.as_ref().is_some_and(|slot| {
-                    slot.identity == self.identity && slot.initializer_pins_held
+                    slot.matches_system(&self.identity) && slot.initializer_pins_held
                 })
                 || pins.counts[0] == 0
                 || pins.counts[self.identity.payload_index] == 0
@@ -437,7 +534,7 @@ impl InitPinSet<'_, '_, '_, '_, '_> {
                 .checked_sub(2)
                 .ok_or_else(|| self.pool.fatal(Cause::Invariant))?;
             if let Some(key) = &self.key
-                && (!key.matches_pool(self.pool) || key.identity != self.identity)
+                && (!key.matches_pool_in(self.pool, &pins) || key.identity != self.identity)
             {
                 return Err(self.pool.fatal(Cause::Invariant));
             }
@@ -529,11 +626,13 @@ impl<'a, 'b, 'c, 's, 'p, 'd> InitWriteTargets<'a, 'b, 'c, 's, 'p, 'd> {
         let pool = self.pool();
         pool.health()?;
         let pins = self.pins.as_ref().expect("owned initializer pins");
-        if !pins.identity.valid(pool)
-            || !pins
-                .key
-                .as_ref()
-                .is_some_and(|key| key.matches_pool(pool) && key.identity == pins.identity)
+        let key = pins
+            .key
+            .as_ref()
+            .ok_or_else(|| pool.fatal(Cause::Invariant))?;
+        if !pins.identity.valid(pool)?
+            || !key.matches_pool(pool)?
+            || key.identity != pins.identity
             || pins.retained
         {
             return Err(pool.fatal(Cause::Invariant));
@@ -553,7 +652,7 @@ impl<'a, 'b, 'c, 's, 'p, 'd> InitWriteTargets<'a, 'b, 'c, 's, 'p, 'd> {
         if actual.modification_counter == u64::MAX {
             return Err(unchanged(Cause::CounterExhausted));
         }
-        let registry = pool.entry_dpt()?;
+        let registry = pool.entry_registry()?;
         if registry.entries[pins.identity.payload_index].is_some()
             || registry.requirements[pins.identity.payload_index].is_some()
         {
@@ -596,7 +695,7 @@ impl<'a, 'b, 'c, 's, 'p, 'd> InitWriteTargets<'a, 'b, 'c, 's, 'p, 'd> {
         let pool = self.pool();
         // Own even PoisonError's guard immediately; no raw-guard take/local.
         let registry = FencedInitRegistry {
-            held: pool.dpt.lock(),
+            held: pool.registry.lock(),
             pool,
         };
         #[cfg(test)]
@@ -619,7 +718,7 @@ impl<'a, 'b, 'c, 's, 'p, 'd> InitWriteTargets<'a, 'b, 'c, 's, 'p, 'd> {
     fn check_install(
         &self,
         permit: &InitInstallPermit<'_, 'c, 's>,
-        registry: &DirtyRegistry<'s>,
+        registry: &PoolRegistry<'s>,
     ) -> Result<(u64, PageLsn, Registration)> {
         let pool = self.pool();
         pool.health()?;
@@ -630,11 +729,11 @@ impl<'a, 'b, 'c, 's, 'p, 'd> InitWriteTargets<'a, 'b, 'c, 's, 'p, 'd> {
         let lsn = PageLsn(requirement.location().lsn);
         if !pins.retained
             || pins.key.is_some()
-            || !key.matches_pool(pool)
+            || !key.matches_pool_in(pool, registry)
             || key.identity != pins.identity
             || !requirement.uses_fence(pool.fence)
             || !pool.dpt_valid(registry)
-            || pool.directory.published().is_some()
+            || registry.directory.published().is_some()
             || before.identity != pins.identity.allocator.identity
             || before.generation != pins.identity.generations[0]
             || lsn.0 <= before.page_lsn.0
@@ -650,7 +749,7 @@ impl<'a, 'b, 'c, 's, 'p, 'd> InitWriteTargets<'a, 'b, 'c, 's, 'p, 'd> {
             rec_lsn,
             modification_counter: before.modification_counter,
         });
-        if pool.stamp(0, allocator)? != before
+        if pool.stamp_in(registry, 0, allocator)? != before
             || !payload.fresh()
             || registry.entries[0] != expected_entry
             || registry.requirements[0].map(|receipt| receipt.location().lsn)
@@ -728,17 +827,17 @@ impl Drop for InitWriteTargets<'_, '_, '_, '_, '_, '_> {
 }
 
 struct FencedInitRegistry<'b, 'c, 's, 'p, 'd> {
-    held: LockResult<MutexGuard<'b, DirtyRegistry<'s>>>,
+    held: LockResult<MutexGuard<'b, PoolRegistry<'s>>>,
     pool: &'b SharedPool<'c, 's, 'p, 'd>,
 }
 impl<'s> FencedInitRegistry<'_, '_, 's, '_, '_> {
-    fn state(&self) -> Result<&DirtyRegistry<'s>> {
+    fn state(&self) -> Result<&PoolRegistry<'s>> {
         match &self.held {
             Ok(guard) => Ok(guard),
             Err(_) => Err(self.pool.fatal(Cause::Poisoned)),
         }
     }
-    fn prechecked_mut(&mut self) -> &mut DirtyRegistry<'s> {
+    fn prechecked_mut(&mut self) -> &mut PoolRegistry<'s> {
         match &mut self.held {
             Ok(guard) => guard,
             Err(_) => unreachable!("registry poison rejected before installation"),
@@ -837,11 +936,17 @@ impl PreparedInitSet<'_, '_, '_, '_, '_, '_, '_> {
         #[cfg(test)]
         test_support::hit(pool, test_support::InitPoint::RegistryInstalled);
         // Sole initializer, unpublished prechecked; fixed closure cannot fail.
-        if !pool.directory.publish(self.registration) {
+        if !self
+            .registry
+            .prechecked_mut()
+            .directory
+            .publish(self.registration)
+        {
             pool.fatal(Cause::Invariant);
             return;
         }
         self.control.mark_published();
+        pool.init_unpublished.store(false, Ordering::Release);
         #[cfg(test)]
         test_support::hit(pool, test_support::InitPoint::Published);
         self.write.installed = true;
@@ -922,6 +1027,12 @@ pub(in crate::storage) mod test_support {
         MetadataInstalled,
         RegistryInstalled,
         Published,
+        PairImagesInstalled,
+        PairControlInstalled,
+        PairDptInstalled,
+        PairFirstRegistered,
+        PairBothRegisteredBeforeGate,
+        PairGatePublished,
     }
     pub(in crate::storage) fn stage_owned(pool: &SharedPool<'_, '_, '_, '_>) {
         hit(pool, InitPoint::StageOwned);
@@ -937,7 +1048,10 @@ pub(in crate::storage) mod test_support {
             super::super::test_support::FencePause { arrived, resume },
         ));
     }
-    pub(super) fn hit(pool: &SharedPool<'_, '_, '_, '_>, point: InitPoint) {
+    pub(in crate::storage::dirty_frame) fn hit(
+        pool: &SharedPool<'_, '_, '_, '_>,
+        point: InitPoint,
+    ) {
         let pause = {
             let mut held = pool
                 .init_pause
@@ -999,7 +1113,10 @@ pub(in crate::storage) mod test_support {
             dirty[index] = content.dirty;
         }
         let (entries, requirements) = {
-            let registry = pool.dpt.lock().unwrap_or_else(|error| error.into_inner());
+            let registry = pool
+                .registry
+                .lock()
+                .unwrap_or_else(|error| error.into_inner());
             (
                 [registry.entries[0], registry.entries[1]],
                 [
@@ -1008,11 +1125,18 @@ pub(in crate::storage) mod test_support {
                 ],
             )
         };
-        let pins = pool.pins.lock().unwrap_or_else(|error| error.into_inner());
+        let pins = pool
+            .registry
+            .lock()
+            .unwrap_or_else(|error| error.into_inner());
         InitSnapshot {
-            published: pool.directory.published().map(|value| value.request),
-            claim_payload: pins.init_claim.map(|slot| slot.identity.payload),
-            claim_birth: pins.init_claim.map(|slot| slot.identity.birth),
+            published: pins.directory.published().map(|value| value.request),
+            claim_payload: pins
+                .init_claim
+                .and_then(|slot| slot.system().map(|record| record.payload)),
+            claim_birth: pins
+                .init_claim
+                .and_then(|slot| slot.system().map(|record| record.birth)),
             initializer_pins_held: pins
                 .init_claim
                 .is_some_and(|slot| slot.initializer_pins_held),
@@ -1055,13 +1179,22 @@ pub(in crate::storage) mod test_support {
         request: TargetRequest,
         generation: u64,
     ) -> bool {
-        pool.directory.publish(Registration {
-            request,
-            generation,
-        })
+        let published = pool
+            .registry
+            .lock()
+            .unwrap()
+            .directory
+            .publish(Registration {
+                request,
+                generation,
+            });
+        if published {
+            pool.init_unpublished.store(false, Ordering::Release);
+        }
+        published
     }
     pub(in crate::storage) fn dpt_busy(pool: &SharedPool<'_, '_, '_, '_>) -> bool {
-        matches!(pool.dpt.try_lock(), Err(TryLockError::WouldBlock))
+        matches!(pool.registry.try_lock(), Err(TryLockError::WouldBlock))
     }
     /// Actual test-only held content guard with a bounded controller; no fake Busy.
     pub(in crate::storage) fn hold_content(
@@ -1110,13 +1243,19 @@ pub(in crate::storage) mod test_support {
             )
         };
         let (entry, requirement) = {
-            let registry = pool.dpt.lock().unwrap_or_else(|error| error.into_inner());
+            let registry = pool
+                .registry
+                .lock()
+                .unwrap_or_else(|error| error.into_inner());
             (
                 registry.entries[index],
                 registry.requirements[index].map(WalRequirement::location),
             )
         };
-        let pins = pool.pins.lock().unwrap_or_else(|error| error.into_inner());
+        let pins = pool
+            .registry
+            .lock()
+            .unwrap_or_else(|error| error.into_inner());
         RawSnapshot {
             page_lsn,
             counter,
@@ -1130,14 +1269,18 @@ pub(in crate::storage) mod test_support {
             initializer_pins_held: pins
                 .init_claim
                 .is_some_and(|slot| slot.initializer_pins_held),
-            published: pool.directory.published().map(|entry| entry.request),
+            published: pins.directory.published().map(|entry| entry.request),
         }
     }
     pub(in crate::storage) fn seed_status_generation(
         pool: &mut SharedPool<'_, '_, '_, '_>,
         generation: u64,
     ) {
-        pool.directory.seed_status_generation(generation);
+        pool.registry
+            .lock()
+            .unwrap()
+            .directory
+            .seed_status_generation(generation);
     }
     pub(in crate::storage) fn corrupt_local_init_generation(
         write: &mut InitWriteTargets<'_, '_, '_, '_, '_, '_>,
@@ -1158,16 +1301,19 @@ pub(in crate::storage) mod test_support {
         key.identity.generations[1] = key.identity.generations[1].wrapping_add(1);
     }
     pub(in crate::storage) fn corrupt_init_claim(pool: &SharedPool<'_, '_, '_, '_>, variant: u8) {
-        let mut pins = pool.pins.lock().unwrap();
+        let mut pins = pool.registry.lock().unwrap();
         let slot = pins
             .init_claim
             .as_mut()
             .expect("existing initializer claim");
         match variant {
-            1 => slot.identity.birth = PageLsn(0),
-            2 => slot.identity.ordinal = 1,
+            1 => slot.system_mut().birth = PageLsn(0),
+            2 => slot.system_mut().ordinal = 1,
             3 => slot.initializer_pins_held = !slot.initializer_pins_held,
-            4 => slot.identity.generations[1] = slot.identity.generations[1].wrapping_add(1),
+            4 => {
+                slot.system_mut().generations[1] =
+                    slot.system().expect("System claim").generations[1].wrapping_add(1)
+            }
             _ => panic!("unknown initializer corruption"),
         }
     }
@@ -1175,7 +1321,10 @@ pub(in crate::storage) mod test_support {
     pub(in crate::storage) fn pin_state(
         pool: &SharedPool<'_, '_, '_, '_>,
     ) -> ([u16; MAX_FRAMES], u16, bool, bool) {
-        let pins = pool.pins.lock().unwrap_or_else(|error| error.into_inner());
+        let pins = pool
+            .registry
+            .lock()
+            .unwrap_or_else(|error| error.into_inner());
         (
             pins.counts,
             pins.total,
@@ -1183,6 +1332,37 @@ pub(in crate::storage) mod test_support {
             pins.init_claim
                 .is_some_and(|slot| slot.initializer_pins_held),
         )
+    }
+    /// Nonblocking observer for the installer-held unified leaf at C6.
+    pub(in crate::storage) fn try_pin_state(
+        pool: &SharedPool<'_, '_, '_, '_>,
+    ) -> Result<([u16; MAX_FRAMES], u16, bool, bool)> {
+        let pins = pool.try_registry()?;
+        Ok((
+            pins.counts,
+            pins.total,
+            pins.init_claim.is_some(),
+            pins.init_claim
+                .is_some_and(|slot| slot.initializer_pins_held),
+        ))
+    }
+    /// Test-only damage of an already registered original page. This cannot
+    /// publish, register or construct a replacement payload/claim.
+    pub(in crate::storage) fn corrupt_retention_content(
+        pool: &SharedPool<'_, '_, '_, '_>,
+        index: usize,
+        offset: usize,
+        value: u8,
+    ) {
+        pool.frames[index].content.write().unwrap().bytes[offset] = value;
+    }
+    /// Scalar-only observer: never copies the retained pin counts or pages.
+    pub(in crate::storage) fn claim_state(pool: &SharedPool<'_, '_, '_, '_>) -> (bool, u16) {
+        let pins = pool
+            .registry
+            .lock()
+            .unwrap_or_else(|error| error.into_inner());
+        (pins.init_claim.is_some(), pins.total)
     }
     pub(in crate::storage) fn init_layout() -> [(&'static str, usize); 15] {
         use std::mem::size_of;

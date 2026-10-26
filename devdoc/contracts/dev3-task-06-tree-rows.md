@@ -220,6 +220,11 @@ T06-15는 3.12의 실제 복구 공급 뒤 닫는 통합 의무다. 그 전 무�
 
 기존 DEV2 [volatile.rs](../../crates/engine/src/storage/volatile.rs)의 row 경로를 DEV3 disk tree 구현으로 승계하지 않는다. 새 파일·모듈 배치는 실제 구현 책임이 생길 때 저장소 정책에 따라 정하며 이 문서에서 빈 소스 경로를 예약하지 않는다.
 
+<a id="leaf-edit-supply"></a>
+### 첫 행의 leaf 후보 편집 공급
+
+`tree_page::edit`의 `LeafEdit`와 `TreePageView::prepare_leaf_edit`, `LeafEditPlan::{encode,split}`는 [동결 계약](dev3-tree-format.md#leaf-edit)에 따라 이전 leaf와 새 cell에서 후보 bytes를 만든다. 첫 Catalog CREATE/Row INSERT는 Insert, version/tombstone·CLR 값 복원은 Replace, CLR의 이전 Missing 복원은 Remove를 소비한다. 값 의미·LSN·pin/latch·before 재검사·WAL 권한은 각각 실제 producer가 공급한다. [신규 선택 증거](../evidence/dev3-leaf-edit-20261025.md)는 표현·수명만 확인했으며 live tree/SMO·페이지 설치는 미완료다. 일반 opcode F05에 caller scratch16208·전후 page와 cell·typed carrier의 동시 생존량을 합산해야 한다.
+
 <a id="freeze"></a>
 ## 10. 해당 leaf 착수 전에 추가 동결할 항목
 

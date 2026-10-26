@@ -4,7 +4,10 @@
 #![allow(dead_code)] // Awaiting the separately reviewed semantic transaction owner.
 
 use std::{
-    sync::{Condvar, Mutex, MutexGuard},
+    sync::{
+        Condvar, Mutex, MutexGuard,
+        atomic::{AtomicU64, Ordering},
+    },
     time::Duration,
 };
 
@@ -29,6 +32,8 @@ const PROFILE_NAME: &str = "d3-profile";
 const STAGE_NAME: &str = "d3-writer-stage";
 
 mod bootstrap;
+mod commit_bridge;
+pub(in crate::storage) use bootstrap::CatalogRetirementRejected;
 pub(in crate::storage) use bootstrap::Plan4LoadPermit;
 #[cfg(test)]
 pub(in crate::storage) use bootstrap::plan4_test_mutate_page;
@@ -93,6 +98,7 @@ pub(in crate::storage) use bootstrap::{
 pub(in crate::storage) use bootstrap::{
     Plan4TestMutableCause, Plan4TestSemanticError, plan4_test_owner_boundary,
 };
+pub(crate) use commit_bridge::{DurableCommit, InstalledCommit, StagedCommit, UnstagedCommit};
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub(crate) enum Phase {
@@ -434,6 +440,9 @@ struct WalRuntime<'m, W: WriterNamespace> {
     file: Mutex<W::File>,
     append: Mutex<AppendState<'m>>,
     completion: Condvar,
+    // Physical first-write fact for this original runtime only, never a semantic
+    // Commit grant or a recovered prefix. No borrowed core/self-reference.
+    first_write_lsn: AtomicU64,
     #[cfg(test)]
     durability_waits: std::sync::atomic::AtomicUsize,
     #[cfg(test)]
@@ -493,8 +502,28 @@ impl<'m, W: WriterNamespace> GenesisWalSession<'m, W> {
     /// Install only in a complete LOCK-only namespace; no existing files are reused.
     /// Failure after the first create attempt preserves every surviving artifact.
     pub(crate) fn create(
+        writer: W,
+        profile_id: u32,
+        slot: &'m mut [u8; MAX_FRAME_BYTES],
+        scratch: &mut [u8; 16384],
+    ) -> Result<Self> {
+        Self::create_with_profile(writer, profile_id, false, slot, scratch)
+    }
+
+    /// Same original namespace/WAL owner with the explicit current plan4 tuple.
+    fn create_catalog(
+        writer: W,
+        profile_id: u32,
+        slot: &'m mut [u8; MAX_FRAME_BYTES],
+        scratch: &mut [u8; 16384],
+    ) -> Result<Self> {
+        Self::create_with_profile(writer, profile_id, true, slot, scratch)
+    }
+
+    fn create_with_profile(
         mut writer: W,
         profile_id: u32,
+        catalog: bool,
         slot: &'m mut [u8; MAX_FRAME_BYTES],
         scratch: &mut [u8; 16384],
     ) -> Result<Self> {
@@ -528,7 +557,12 @@ impl<'m, W: WriterNamespace> GenesisWalSession<'m, W> {
         let (profile_bytes, rest) = scratch.split_at_mut(CONTROL_BYTES);
         let (epoch_bytes, rest) = rest.split_at_mut(CONTROL_BYTES);
         let (selector_bytes, readback) = rest.split_at_mut(CONTROL_BYTES);
-        control::encode_profile(
+        let encode_profile = if catalog {
+            control::encode_catalog_profile
+        } else {
+            control::encode_profile
+        };
+        encode_profile(
             ProfileSpec {
                 namespace,
                 generation: 1,
@@ -634,6 +668,7 @@ impl<'m, W: WriterNamespace> GenesisWalSession<'m, W> {
                     prefix,
                 }),
                 completion: Condvar::new(),
+                first_write_lsn: AtomicU64::new(0),
                 #[cfg(test)]
                 durability_waits: std::sync::atomic::AtomicUsize::new(0),
                 #[cfg(test)]
@@ -669,6 +704,30 @@ impl<'m, W: WriterNamespace> GenesisWalSession<'m, W> {
 }
 
 impl<'m, W: WriterNamespace> WalRuntime<'m, W> {
+    /// Physical observation only, including after an I/O fence. The original
+    /// stage-issued exact interval is required; no caller LSN or semantic grant.
+    pub(in crate::storage) fn first_write_started(
+        &self,
+        requirement: &WalRequirement<'_>,
+    ) -> Result<bool> {
+        if !requirement.uses_fence(&self.fenced) {
+            return Err(unchanged(Phase::Observe, Cause::IdentityMismatch));
+        }
+        let state = self.append.lock().map_err(|_| {
+            self.fenced.fence();
+            self.completion.notify_all();
+            attempted(Phase::Observe, Cause::Poisoned)
+        })?;
+        // Do not call state()/live(): the post-failure distinction is useful
+        // precisely when the session is fenced. Structural validation remains.
+        self.requirement_ready(&state, requirement)?;
+        let observed = self.first_write_lsn.load(Ordering::Acquire);
+        if observed > state.prefix.complete_lsn {
+            return Err(self.requirement_invariant());
+        }
+        Ok(observed >= requirement.exact.lsn)
+    }
+
     /// Poison is observable without acquiring a possibly held mutex.
     pub(crate) fn is_fenced(&self) -> bool {
         if self.append.is_poisoned() || self.file.is_poisoned() || self._writer.is_poisoned() {
@@ -974,6 +1033,16 @@ impl<'m, W: WriterNamespace> WalRuntime<'m, W> {
             completion: &self.completion,
             armed: true,
         };
+        // This exact staged nonempty interval also proves foundation::io::range
+        // cannot reject between the marker and the first FileIo::write_at call.
+        if !(192..=MAX_FRAME_BYTES).contains(&frame.length)
+            || interval_end(frame.start, frame.length).ok() != Some(frame.end)
+            || frame.start < CONTROL_BYTES as u64
+            || frame.end > WAL_FILE_CAP
+            || frame.lsn <= frame.previous_lsn
+        {
+            return Err(attempted(Phase::Write, Cause::Poisoned));
+        }
         {
             let mut file = self
                 .file
@@ -982,6 +1051,17 @@ impl<'m, W: WriterNamespace> WalRuntime<'m, W> {
             if self.is_fenced() {
                 return Err(attempted(Phase::Write, Cause::Fenced));
             }
+            let previous = self.first_write_lsn.load(Ordering::Acquire);
+            if previous >= frame.lsn
+                || self
+                    .first_write_lsn
+                    .compare_exchange(previous, frame.lsn, Ordering::AcqRel, Ordering::Acquire)
+                    .is_err()
+            {
+                return Err(attempted(Phase::Write, Cause::Poisoned));
+            }
+            // No callback, fallible check, lock or fence recheck may be inserted
+            // between this monotone marker and the nonempty exact write call.
             write_all_at(&mut *file, &slot[..frame.length], frame.start)
                 .map_err(|e| attempted(Phase::Write, Cause::Io(e)))?;
             sync(&mut *file).map_err(|e| attempted(Phase::Sync, Cause::Io(e)))?;
@@ -1030,6 +1110,9 @@ mod durability_test_support;
 #[path = "wal_durability_tests.rs"]
 mod durability_tests;
 #[cfg(test)]
+#[path = "wal_first_write_tests.rs"]
+mod first_write_tests;
+#[cfg(test)]
 #[path = "wal_io_test_support.rs"]
 mod test_support;
 #[cfg(test)]
@@ -1045,7 +1128,8 @@ pub(crate) use bootstrap::EmptyTransactionObservation;
 
 pub(in crate::storage) use bootstrap::{
     encode_plan4_catalog_genesis, plan4_base_allocation_source_bytes,
-    plan4_catalog_genesis_source_bytes, validate_plan4_base_allocation,
+    plan4_catalog_genesis_source_bytes, plan4_system_base_allocation_source_bytes,
+    validate_plan4_base_allocation, validate_plan4_system_base_allocation,
 };
 
 #[allow(
@@ -1054,7 +1138,20 @@ pub(in crate::storage) use bootstrap::{
 )]
 pub(in crate::storage) use bootstrap::{
     RetentionFlushAuthority, RetentionInitAuthority, RetentionInitCommit, RetentionInitCompleted,
-    RetentionInitInstall, RetentionInstall, RetentionLoadPermit,
+    RetentionInitInstall, RetentionInstall, RetentionLoadPermit, VerifiedLookupLoad,
 };
 
 pub(in crate::storage) use bootstrap::RecoveryPoolSeed;
+
+#[allow(unused_imports)] // Same original owner capabilities across the private module chain.
+pub(in crate::storage) use bootstrap::{
+    AppliedRetirement, BoundVisibility, CapturedCatalogRefs, CatalogLookupLoan, CatalogSource,
+    HorizonObservation, InstalledFrontier, ReadyFrontier, ReferenceLease, RetirementIntent,
+    RetirementReject, RetirementScope, RollbackSource, SnapshotGuard, SnapshotReservation,
+    StagedRetirement, TxPairAuthority, TxPairCancelKind, TxPairCancelPermit, TxPairControlCommit,
+    TxPairInstallPermit, TxPairRetirePermit, TxPairStageRejection, TxnPin, UndoPin,
+    VISIBILITY_BYTES, VerifiedRetirement, VisibilityCause, VisibilityError, VisibilityLoan,
+    VisibilityResult,
+};
+
+pub(in crate::storage) use bootstrap::{CatalogAllocationError, validate_catalog_base_allocation};

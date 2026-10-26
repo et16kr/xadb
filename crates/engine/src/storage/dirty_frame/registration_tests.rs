@@ -26,7 +26,7 @@ fn with_pool(run: impl FnOnce(&SharedPool<'_, '_, '_, '_>)) {
     run(&pool);
 }
 fn counts(pool: &SharedPool<'_, '_, '_, '_>) -> ([u16; 2], u16) {
-    let pins = pool.pins.lock().unwrap();
+    let pins = pool.registry.lock().unwrap();
     ([pins.counts[0], pins.counts[1]], pins.total)
 }
 fn invariant<T>(result: Result<T>) {
@@ -64,8 +64,9 @@ fn registration_layout_receipt() {
     println!(
         "REGISTRATION_LAYOUT registration={registration} directory={directory} prior_directory={prior_directory} pin={pin} read={read} write={write} read_result={read_result} generic={scratch} ceiling={CALL_BYTES}"
     );
-    // Per-slot OnceLock adds at most eight bytes per entry; the former global
-    // publication cell is removed. Keep independent whole-operation ceilings.
+    // Current cells are exclusive Option values under the original registry;
+    // prior_directory describes the historical global-publication layout.
+    // Preserve that old ceiling and the independent whole-operation bounds.
     assert!(directory <= prior_directory + MAX_FRAMES * 8);
     assert!(registration <= 112 && scratch <= CALL_BYTES);
     assert!(
@@ -104,7 +105,7 @@ fn registration_pin_set_rejection_is_atomic() {
             assert_eq!(counts(pool), ([0, 0], 0));
         }
         {
-            let mut pins = pool.pins.lock().unwrap();
+            let mut pins = pool.registry.lock().unwrap();
             pins.counts[1] = MAX_FRAME_PINS;
             pins.total = MAX_FRAME_PINS;
         }
@@ -278,10 +279,16 @@ fn registration_copy_request_rejects_invalid_fixed_publication() {
     status.identity.owner_generation = Generation::new(1).unwrap();
     status.identity.page.incarnation = Generation::new(2).unwrap();
     status.identity.owner = ObjectId::new(3).unwrap();
-    assert!(pool.directory.publish(Registration {
-        request: status,
-        generation: 1
-    }));
+    assert!(
+        pool.registry
+            .lock()
+            .unwrap()
+            .directory
+            .publish(Registration {
+                request: status,
+                generation: 1
+            })
+    );
     invariant(pool.target_request(1));
     assert!(fence.is_fenced());
 }

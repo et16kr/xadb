@@ -1,5 +1,39 @@
 # XADB 조사·실행 증거
 
+- [DEV3 Catalog CREATE 구현 중간 저장](dev3-catalog-live-milestone-20261025.md) · [source별 기록](dev3-catalog-live-milestone-20261025.json) — native3경로·메모리14개 확인, 원 FAIL 보존·동시성 등9개 NOT_RUN.
+
+- [DEV3 Catalog 독립 입력과 native 실행기 검증](dev3-catalog-input-controller-20261025.md) · [source별 기록](dev3-catalog-input-controller-20261025.json) — 입력 생성·별도 검산 완료, 실행기 거부14 PASS; 실제 Catalog 통합 진행 중.
+
+2026-10-25 [DEV2 PF04 CPU 성능 요청 범위 제어](dev2-pf04-frequency-control-20261025.md) · [source별 기록](dev2-pf04-frequency-control-20261025.json): 도구12·driver4개 선택 검증 뒤 첫 host 연결이 즉시 readback 불일치로 실패했다. 최종234필드는 원 값과 같고 프로세스는 종료됐다. 나머지2개 미실행·격리 lease 보존·사용자 조건에 따른 중단이며 원 PF04 FAIL·DEV2 미완료를 유지한다.
+
+- [DEV3 Catalog CREATE 순수 전이](dev3-catalog-transition-20261025.md) · [source별 기록](dev3-catalog-transition-20261025.json) — 새108·전이72 선택 검증, 원 harness FAIL 보존·실제 CREATE/F05/S5 미완료.
+
+- [DEV2 PF04 원 제어기 CPU 배치 대조](dev2-pf04-controller-placement-20261025.md) · [source별 기록](dev2-pf04-controller-placement-20261025.json):60slot·정답/정리 완료, 큰 배치 효과 미지지·원 FAIL 보존.
+
+- [DEV2 PF04 같은 경계의 모드별 실행 작업과 CPU 비용](dev2-pf04-mode-attribution-20261025.md) · [실행·분석 기록](dev2-pf04-mode-attribution-20261025.json) — 새40slot 완료, CPU 중앙 Always+9.23%·Detailed+12.28%, 원 FAIL·과거 원인 미확정 유지.
+
+- [DEV2 PF04 warmup 뒤 관측 경계 대조](dev2-pf04-boundary-comparison-20261025.md) · [원자료·판정 기록](dev2-pf04-boundary-comparison-20261025.json) — 디버깅10쌍 완료, 큰 경계 효과 UNKNOWN·원 FAIL 유지.
+
+- [DEV2 PF04 warmup 전 관측 경계](dev2-pf04-prewarmup-20261025.md) · [source·검증 기록](dev2-pf04-prewarmup-20261025.json) — 선택11함수·새/기존 경계4연결 완료. 경계 효과 미평가·원 FAIL 유지.
+
+- [DEV3 원 Commit 공통 continuation](dev3-commit-continuation-20261025.md) · [source별 기록](dev3-commit-continuation-20261025.json) — 변경 선택 검증·독립 D1 한정 수용; actual Commit·nonempty 복구·DEV3/S5 미완료.
+
+- [DEV2 PF04 동일 Off 실행의 변동 분류](dev2-pf04-off-classification-20261025.md) · [실행·집계 기록](dev2-pf04-off-classification-20261025.json) — 사용자 한정 예외로20회·새 출력 정답 검산 완료. 큰 변동 미관측으로 UNKNOWN, 원 FAIL 유지.
+
+- [DEV3 원 plan4 Free Undo container 수명](dev3-plan4-free-undo-20261025.md) · [source별 기록](dev3-plan4-free-undo-20261025.json) — 정적2·메모리7·컴파일러7·native3단계 선택 완료, 최종 D1 수용. 원 실패 보존·실제 행 거래와 DEV3/S5 미완료.
+
+- [DEV2 PF04 보존 실행 파일의 주요 경로 검토](dev2-pf04-hotpath-20261025.md) · [source·주소 기록](dev2-pf04-hotpath-20261025.json) — 기계어7범위·source5파일 확인, 큰 신규 후보 미확인. 새 실행0·원 FAIL 유지.
+
+- [DEV2 PF04 CPU 시간 집계 의미](dev2-pf04-cpu-accounting-20261025.md) · [source 기록](dev2-pf04-cpu-accounting-20261025.json) — kernel12파일 읽기 조사, rusage 분할·원 thread CPU·perf runtime 구분. 새 실행0, 원 FAIL 유지.
+
+- [DEV2 PF04 사용자·커널 CPU 분리](dev2-pf04-cpu-split-20261025.md) · [source별 기록](dev2-pf04-cpu-split-20261025.json) — 선택6함수·실제2연결 완료,8event 수집·정답 검산. 원 PF04 FAIL 유지.
+
+- [DEV3 원 Catalog guard의 typed 조회](dev3-catalog-reader-20261025.md) · [source별 기록](dev3-catalog-reader-20261025.json) — 신규5·compiler7·도구3 PASS, nonempty live·첫 행·DEV3/S5 미완료.
+
+- [DEV2 PF04 C2 단일 쓰기 통계 후보](dev2-pf04-single-writer-20261025.md) · [source별 기록](dev2-pf04-single-writer-20261025.json) — 확인 약2.92% 개선, 채택 기준 미달·제품 미반영. PF04 FAIL 유지.
+
+- [DEV3 첫 행의 leaf 후보 편집](dev3-leaf-edit-20261025.md) · [source별 기록](dev3-leaf-edit-20261025.json) — 신규5·compiler7·도구3 선택 PASS, 첫 행·DEV3/S5 미완료.
+
 - [DEV2 PF04 flush 완료 구분·출력 버퍼 보완](dev2-pf04-flush-provenance-20261025.md) · [source별 기록](dev2-pf04-flush-provenance-20261025.json) — 원 수집 FAIL 보존, 수정 Always 완료2932개·512 fsync/phase 연결. 원 PF04 FAIL 유지.
 
 - [XADB 전체 방향성 점검](xadb-direction-review-20261025.md) · [재점검·계획/설계 반영](xadb-direction-review-20261025.md#review-adoption) — 원 검토·첫 판단을 보존하고 수용7개를 구체화했다. 첫 행 통합 우선, 구조·명명·공통화는 국소 후보, 운영 개선은 기존 절차 활용으로 제한한다. PF04 면제·상위 계획 일괄 동결은 거부하며 제품·시험 미실행이다.

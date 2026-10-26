@@ -1,5 +1,8 @@
 # DEV2 구현 기록
 
+<a id="pf04-frequency-control"></a>
+2026-10-25 [PF04 CPU 요청 제어 도구](../evidence/dev2-pf04-frequency-control-20261025.md): 도구12·driver4개의 신규 선택 검증 뒤 첫 실제 연결에서 apply/restore 즉시 readback 확인이 실패했다. 최종 환경234필드는 원 값과 동일·관련 프로세스0을 확인했으나 도구 인수는 미완료다. 나머지2개는미실행이며 사용자 조건에 따라 추가 작업을 멈추고 격리 lease·원 실패를 보존한다. 원 PF04 네 FAIL·DEV2 미완료는 유지한다.
+
 **이관 상태:** 아래의 API·동작·제약 설명을 현재 코드와 함께 유지한다. 이전 실행 횟수·검토 기록은 새 XADB qualification이 아니다. K0-005 통합 후 r3 실행에서28개 check와 DEV0·DEV1 회귀를 확인했고, 별도 성능 진단 r1에서35개 시험과60개 release 실행을 확인했다. 최초 성능 비교의 sample-p99 guardrail FAIL은 유지한다. 현재 적용 source와 한계는 [구현 상태](implementation-status.json)와 [증거 색인](../evidence/README.md)을 따른다.
 
 
@@ -699,3 +702,45 @@ Off/Always guard는 확인 실패 중단 규칙에 따라 NOT_RUN이고 완료 �
 계획 `f157846`·오류 보완 계획 `f18700d` 뒤 [16-probe 수집·세대별 분석과 source별 검증](../evidence/dev2-pf04-flush-provenance-20261025.md)을 완료했다. 실제 compiler에서 출력15개를 호출별 stack에 배치하고 공유 scratch 참조0을 확인했다. 원 Always count 불일치 FAIL은 보존하며 변경 source의 Always 완료2932개(물리2347·논리585)와512 fsync/phase를 연결했다. 실제5연결은 원3+수정2이고 제품/하위 인수 반복은0이다.
 
 수정 Always의 fsync 중 장치 요청 겹침은 약98.90%이며 journal wait의 대부분이 logging→end 구간에 있다. 원 Off 수집기의 잠재 scratch 오염 한계와 원 PF04 네 FAIL·DEV2/B2/D0 INCOMPLETE를 유지한다. 한 쌍의 영향 screen PASS를 상대 비용 인수로 쓰지 않는다. P4 후보 채택/기각과 K0/영속 CPU 원인 종료 검토가 남는다.
+
+
+<a id="dev2-pf04-single-writer-20261025"></a>
+
+## DEV2 PF04 C2 단일 쓰기 통계 후보 — 2026-10-25
+
+[계획](../plans/dev2-pf04-resolution-plan.md#c2-single-writer)을 `18eb879`로 먼저 commit한 뒤 깨끗한 `688b9af` export에서 C2를 구현했다. 비 Clone writer와 내부5/6label 구분으로 mutation 통계만 atomic load/store를 사용했고 shared CAS·포화·event·quota 의미는 유지했다. 선택11함수·compiler 반례2개·관련 fmt/Clippy와 release build가 PASS였다.
+
+[평가 기록](../evidence/dev2-pf04-single-writer-20261025.md)의 탐색/확인 각10쌍에서 정답·유효성·guard는 통과했으나 확인 중앙0.9707905·구간 상한0.9765757로 동결0.95 미만 조건에 미달했다. C2는 기각하여 제품에 반영하지 않았고 Off/Always guard·추가 PMU는 실행하지 않았다. 원 후보/source/raw와 외부 일회성 실행기의 미검증 timeout 정리 race를 보존한다. 독립 검토 범위와 receipt는 연결 증거를 따른다.
+
+P4 WAL 선확보/data sync도 PF04 상대 비용의 해결책으로 채택할 근거가 부족하여 미채택했다. 기존 P3b 연결을 원 비용 실패의 인과 증거로 확대하지 않는다. 원 PF04 네 FAIL·영속 CPU/tail 원인 미확정·DEV2 미완료는 유지하며, C1/C2 재확인을 이번 예산에 추가하지 않는다.
+
+
+<a id="dev2-pf04-cpu-split-20261025"></a>
+
+## DEV2 PF04 사용자·커널 CPU 분리 — 2026-10-25
+
+계획 `b33f1e4` 뒤 수집 도구의 고정 `user-kernel-v1`8event profile을 추가하고 기본6event와 기존 권한·정리 경로를 유지했다. 실제 변경 범위의 선택6함수와 보존 release ELF의 새 Off/Always 연결2개를 완료했다.8개 모두 reported full coverage,512개 거래의 진단 정답 검산과 소유 process 종료를 확인했다.
+
+[관측 증거](../evidence/dev2-pf04-cpu-split-20261025.md)는 커널 count와 rusage user/system 분할을 구별한다. 이 두 연결로 안정적 모드 비용이나 과거 실패 원인을 판정하지 않는다. 코드·원자료·해석의 독립 검토 상태는 연결 증거를 따른다. 원 PF04 네 FAIL·DEV2/B2/D0 미완료, C1/C2 기각·WAL 미채택은 유지한다.
+
+<a id="dev2-pf04-prewarmup-20261025"></a>
+
+## DEV2 PF04 warmup 전 관측 경계 — 2026-10-25
+
+계획 `12096d4` 뒤 K0 private gate에 명시적인 prewarmup continuous/wait 두 모드를 구현했다. 둘 다 warmup 앞에서 PMU를 한 번 enable하며 continuous는 warmup 뒤 추가 IPC 없이, wait는 추가 START/GO 뒤 측정에 진입한다. 새 PMU는 warmup+drain+measurement+control bracket이고 기존 loop 지표·원 인수 path와 구분한다. 기본 모드와 비활성 경로는 유지한다.
+
+[선택 증거](../evidence/dev2-pf04-prewarmup-20261025.md)는 Python6·Rust5·compile/Clippy/release/fmt와 실제4연결의 정답·정리 PASS를 보존한다. 동시 DEV3 변경을 제외한 source의 검증이며 최종 독립 검토 상태는 연결 증거를 따른다. 구현 검증 당시 경계 효과는 미평가였다. 후속 사용자 정정에 따라 PF04 원인 진단은 개발 회귀 제한과 구분하며 별도 예외 승인 없이 아래 동결 대조를 진행했다.
+
+
+<a id="dev2-pf04-boundary-comparison-20261025"></a>
+
+## DEV2 PF04 warmup 뒤 관측 경계 대조 — 2026-10-25
+
+[동결 디버깅10쌍](../evidence/dev2-pf04-boundary-comparison-20261025.md)을208.675208초에 완료했다. 새 출력20개·PMU160행·소유 process 정리와 독립 원자료 검산을 확인했다. CPU W/C 중앙1.002127138, 구간0.991354900–1.015730013로 큰 경계 효과는 UNKNOWN이다. 작은 효과·과거 원인 배제나 성능 인수 완료를 뜻하지 않는다. 원 PF04 네 FAIL·DEV2/B2/D0 미완료, 기존 후보 기각과 완료 증거를 유지한다. 다음에는 모드별 추가 작업과 실행 간 변동을 구분할 진단을 동결한다.
+
+
+<a id="dev2-pf04-mode-attribution-20261025"></a>
+
+## DEV2 PF04 같은 경계의 모드별 CPU 비용 — 2026-10-25
+
+[후속 디버깅40slot](../evidence/dev2-pf04-mode-attribution-20261025.md)을417.476283초에 한 번 완료했다. 같은 continuous 경계와 보존 ELF에서 Always/Off10쌍·Detailed/Off10쌍을 비교했다. CPU paired 중앙1.092334187/1.122806355, 최악1.104277470/1.133934999이며 이번 pair들의 CPU15% 초과는0이다. 명령 수와 CPI 증가가 함께 관측됐으나 과거 큰 CPU 대역·영속 tail/CPU 원인은 미확정이다. 정답40·PMU320행·소유 정리를 독립 검산했고 새 제품 수정은 없다. 원 PF04 네 FAIL·DEV2/B2/D0 미완료와 기존 후보 기각을 유지한다. 자동 반복 없이 이번 고정 진단을 종료했다.

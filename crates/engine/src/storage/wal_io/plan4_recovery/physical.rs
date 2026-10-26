@@ -17,11 +17,12 @@ pub(super) fn observe_pending(
     profile: Profile,
     selected: SelectedControl,
     raw: &[u8],
-    index: usize,
+    req: crate::storage::dirty_frame::TargetRequest,
     image: &[u8; PAGE_BYTES],
     matched: &mut u64,
 ) -> Result<()> {
     let p = Plan4RecoveryPhase::Analysis;
+    let index = req.identity.page.page_no as usize;
     let view = control::decode_selected_doublewrite(
         &raw[..selected.reference.encoded_len as usize],
         selected.reference,
@@ -33,7 +34,13 @@ pub(super) fn observe_pending(
         if pending.page.page_no as usize != index {
             continue;
         }
-        let req = analysis::request(profile, index, pending.page.incarnation);
+        if pending.page.file == req.identity.page.file
+            && pending.page.incarnation.get() > req.identity.page.incarnation.get()
+        {
+            // An earlier accepted incarnation is not evidence for this slot.
+            // Final exact occurrence and current membership are mandatory.
+            continue;
+        }
         if pending.page != req.identity.page
             || pending.owner != req.identity.owner
             || pending.owner_generation != req.identity.owner_generation
@@ -46,6 +53,44 @@ pub(super) fn observe_pending(
             && content_digest(image) == pending.image_digest
         {
             *matched |= 1u64 << index;
+        }
+    }
+    Ok(())
+}
+
+/// The selected Pending can only repair a still-current target with the exact
+/// accepted identity. A historical occurrence before CLR is insufficient.
+pub(super) fn validate_pending_membership(
+    profile: Profile,
+    selected: SelectedControl,
+    raw: &[u8],
+    targets: u64,
+    matched: u64,
+    table: &[u8],
+) -> Result<()> {
+    let p = Plan4RecoveryPhase::Analysis;
+    let view = control::decode_selected_doublewrite(
+        &raw[..selected.reference.encoded_len as usize],
+        selected.reference,
+        profile,
+    )
+    .map_err(|e| error(p, Plan4RecoveryCause::Control(e)))?;
+    for n in 0..view.len() {
+        let pending = view.entry(n).expect("validated pending index");
+        let index = usize::try_from(pending.page.page_no)
+            .map_err(|_| error(p, Plan4RecoveryCause::IdentityMismatch))?;
+        if index >= 64 || targets & (1u64 << index) == 0 || matched & (1u64 << index) == 0 {
+            return Err(error(p, Plan4RecoveryCause::IdentityMismatch));
+        }
+        let (req, lsn, _) = analysis::target_record(table, profile, index)?;
+        if pending.page != req.identity.page
+            || pending.owner != req.identity.owner
+            || pending.owner_generation != req.identity.owner_generation
+            || pending.kind != req.kind
+            || pending.level != req.level
+            || pending.lsn.0 > lsn
+        {
+            return Err(error(p, Plan4RecoveryCause::IdentityMismatch));
         }
     }
     Ok(())
@@ -80,7 +125,10 @@ impl<W: WriterNamespace> RecoveryState<'_, '_, '_, W> {
         // Every touched target may require one full physical image, independently
         // of its WAL price. All bases/stages/header coexistence is prepaid now.
         let topup = u64::from(analyzed.target_mask.count_ones()) * PAGE_BYTES as u64;
-        let growth = 2 * BASE_BYTES as u64 + 4 * CONTROL_BYTES as u64;
+        let growth = (self.profile().base_bytes() as u64)
+            .checked_mul(2)
+            .and_then(|v| v.checked_add(4 * CONTROL_BYTES as u64))
+            .ok_or_else(|| error(p, Plan4RecoveryCause::Exhausted))?;
         let owned = self
             .observation
             .actual_owned
@@ -574,8 +622,11 @@ impl<W: WriterNamespace> RecoveryState<'_, '_, '_, W> {
         let p = self.observation.phase;
         let profile = self.profile();
         let analyzed = self.analysis.as_ref().expect("analysis");
-        if content_digest(&self.maintenance[REPLAY_START..REPLAY_START + 1_179_648])
-            != analyzed.state_digest
+        if super::super::plan4_pages::retention_replay_digest(
+            (&self.maintenance[REPLAY_START..REPLAY_END])
+                .try_into()
+                .expect("replay"),
+        ) != analyzed.state_digest
         {
             return Err(error(p, Plan4RecoveryCause::ContentMismatch));
         }

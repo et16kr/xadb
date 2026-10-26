@@ -12,10 +12,20 @@ pub(super) struct Claim {
     captured: Option<FrameStamp>,
 }
 impl Claim {
-    pub(super) fn valid(&self, pool: &SharedPool<'_, '_, '_, '_>, last_attempt: u64) -> bool {
+    pub(super) fn index(&self) -> usize {
+        self.index
+    }
+    pub(super) fn request(&self) -> TargetRequest {
+        self.registration.request
+    }
+    pub(super) fn valid(
+        &self,
+        pool: &SharedPool<'_, '_, '_, '_>,
+        state: &PoolRegistry<'_>,
+    ) -> bool {
         self.attempt != 0
-            && self.attempt == last_attempt
-            && pool.resolve_registration(self.index) == Some(self.registration)
+            && self.attempt == state.last_attempt
+            && state.directory.resolve(pool.frames, self.index) == Some(self.registration)
             && self.registration.generation != 0
             && self.captured.is_none_or(|stamp| {
                 stamp.identity == self.registration.request.identity
@@ -87,7 +97,7 @@ impl<'c, 's, 'p, 'd> SharedPool<'c, 's, 'p, 'd> {
 
     /// Stored-state-only admission. No pin, image copy, checksum or I/O.
     pub(in crate::storage) fn flush_preflight(&self) -> Result<()> {
-        let registry = self.entry_dpt()?;
+        let registry = self.entry_registry()?;
         if registry.claim.is_some() {
             return Err(unchanged(Cause::Busy));
         }
@@ -107,19 +117,25 @@ impl<'c, 's, 'p, 'd> SharedPool<'c, 's, 'p, 'd> {
         output: &mut [u8; PAGE_BYTES],
     ) -> Result<Option<CapturedPage<'c, 's>>> {
         self.check_flusher(owner)?;
-        if !self.registrations_valid() {
-            return Err(self.fatal(Cause::Invariant));
-        }
-        let index = (0..self.frames.len())
-            .position(|index| {
-                self.resolve_registration(index)
-                    .is_some_and(|entry| entry.request == request)
-            })
-            .ok_or_else(|| unchanged(Cause::MissingTarget))?;
-        let registration = self.registration(index)?;
-        let attempt = {
-            let mut registry = self.entry_dpt()?;
-            if registry.claim.is_some() {
+        let (index, registration, attempt) = {
+            let mut registry = self.entry_registry()?;
+            if registry.claim.is_some()
+                || registry
+                    .load
+                    .as_ref()
+                    .is_some_and(|load| load.wants(request))
+            {
+                return Err(unchanged(Cause::Busy));
+            }
+            let (index, registration) = registry
+                .directory
+                .lookup(self.frames, request)
+                .ok_or_else(|| unchanged(Cause::MissingTarget))?;
+            if registry
+                .load
+                .as_ref()
+                .is_some_and(|load| load.blocks(request, index))
+            {
                 return Err(unchanged(Cause::Busy));
             }
             let attempt = registry
@@ -133,7 +149,7 @@ impl<'c, 's, 'p, 'd> SharedPool<'c, 's, 'p, 'd> {
                 registration,
                 captured: None,
             });
-            attempt
+            (index, registration, attempt)
         };
         let mut pending = CaptureAttempt {
             pool: self,
@@ -157,7 +173,7 @@ impl<'c, 's, 'p, 'd> SharedPool<'c, 's, 'p, 'd> {
             if stamp.rec_lsn.is_none() {
                 return Ok(None);
             }
-            let mut registry = self.entry_dpt()?;
+            let mut registry = self.entry_registry()?;
             let requirement =
                 registry.requirements[index].ok_or_else(|| self.fatal(Cause::Invariant))?;
             if requirement.location().lsn != stamp.page_lsn.0 || !requirement.uses_fence(self.fence)
@@ -205,7 +221,7 @@ impl<'c, 's, 'p, 'd> SharedPool<'c, 's, 'p, 'd> {
         Ok(captured)
     }
 
-    fn claim_matches(&self, registry: &DirtyRegistry<'s>, capture: &CapturedPage<'c, 's>) -> bool {
+    fn claim_matches(&self, registry: &PoolRegistry<'s>, capture: &CapturedPage<'c, 's>) -> bool {
         std::ptr::eq(capture.binding, self.binding)
             && std::ptr::eq(capture.core, self.core)
             && capture.requirement.uses_fence(self.fence)
@@ -222,11 +238,11 @@ impl<'c, 's, 'p, 'd> SharedPool<'c, 's, 'p, 'd> {
         &self,
         capture: &CapturedPage<'c, 's>,
     ) -> Result<()> {
-        let registry = self.entry_dpt()?;
+        let registry = self.entry_registry()?;
         if !self.claim_matches(&registry, capture) {
             return Err(self.fatal(Cause::Invariant));
         }
-        let registration = self.registration(capture.index)?;
+        let registration = self.registration_in(&registry, capture.index)?;
         if registration.request != capture.request
             || registration.generation != capture.stamp.generation
         {
@@ -261,7 +277,7 @@ impl<'c, 's, 'p, 'd> SharedPool<'c, 's, 'p, 'd> {
         let finalized = (|| -> Result<FinalizedPage> {
             let content = write.guard.as_mut().expect("held finalize content");
             let actual = self.stamp(capture.index, content)?;
-            let mut registry = self.entry_dpt()?;
+            let mut registry = self.entry_registry()?;
             let expected = actual.rec_lsn.map(|rec_lsn| DirtyEntry {
                 identity: actual.identity,
                 generation: actual.generation,
@@ -312,7 +328,7 @@ impl<'c, 's, 'p, 'd> SharedPool<'c, 's, 'p, 'd> {
             (_, Err(error)) => return Err(error),
             (result, Ok(())) => result?,
         };
-        let mut registry = self.entry_dpt()?;
+        let mut registry = self.entry_registry()?;
         if !self.claim_matches(&registry, capture) {
             return Err(self.fatal(Cause::Invariant));
         }
@@ -322,7 +338,13 @@ impl<'c, 's, 'p, 'd> SharedPool<'c, 's, 'p, 'd> {
 }
 
 fn retryable(error: DirtyError) -> bool {
-    error.effect == Effect::Unchanged && matches!(error.cause, Cause::Busy | Cause::Capacity)
+    error.effect == Effect::Unchanged
+        && matches!(
+            error.cause,
+            Cause::Busy
+                | Cause::Capacity
+                | Cause::Concurrency(concurrency::Cause::InstallationPending)
+        )
 }
 
 struct CaptureAttempt<'b, 'c, 's, 'p, 'd> {
@@ -332,7 +354,7 @@ struct CaptureAttempt<'b, 'c, 's, 'p, 'd> {
 }
 impl CaptureAttempt<'_, '_, '_, '_, '_> {
     fn cancel(&mut self) -> Result<()> {
-        let mut registry = self.pool.entry_dpt()?;
+        let mut registry = self.pool.entry_registry()?;
         if !registry
             .claim
             .is_some_and(|claim| claim.attempt == self.attempt && claim.captured.is_none())
@@ -470,7 +492,10 @@ pub(super) mod test_support {
         pub(crate) requirements: [Option<WalFrameLocation>; MAX_FRAMES],
     }
     pub(crate) fn flush_diagnose(pool: &SharedPool<'_, '_, '_, '_>) -> FlushSnapshot {
-        let registry = pool.dpt.lock().unwrap_or_else(|error| error.into_inner());
+        let registry = pool
+            .registry
+            .lock()
+            .unwrap_or_else(|error| error.into_inner());
         FlushSnapshot {
             claim: registry.claim.map(|claim| ClaimSnapshot {
                 attempt: claim.attempt,
@@ -486,13 +511,13 @@ pub(super) mod test_support {
         }
     }
     pub(crate) fn seed_last_attempt(pool: &SharedPool<'_, '_, '_, '_>, attempt: u64) {
-        pool.dpt.lock().unwrap().last_attempt = attempt;
+        pool.registry.lock().unwrap().last_attempt = attempt;
     }
     /// Isolated orphan of the genuine pre-capture claim shape, with no pin or
     /// dirty entry. This is a test-only quiescence witness, never I/O authority.
     pub(crate) fn seed_uncaptured_claim(pool: &SharedPool<'_, '_, '_, '_>) {
-        let registration = pool.resolve_registration(0).unwrap();
-        let mut registry = pool.dpt.lock().unwrap();
+        let registration = pool.resolve_registration(0).unwrap().unwrap();
+        let mut registry = pool.registry.lock().unwrap();
         assert!(registry.claim.is_none());
         registry.last_attempt = registry.last_attempt.checked_add(1).unwrap();
         registry.claim = Some(Claim {
@@ -506,7 +531,7 @@ pub(super) mod test_support {
         pool: &SharedPool<'_, 's, '_, '_>,
         index: usize,
     ) -> Option<WalRequirement<'s>> {
-        pool.dpt.lock().unwrap().requirements[index]
+        pool.registry.lock().unwrap().requirements[index]
     }
     /// Requires a receipt issued by a real stage; cannot manufacture provenance.
     pub(in crate::storage) fn replace_requirement<'s>(
@@ -514,14 +539,14 @@ pub(super) mod test_support {
         index: usize,
         actual: WalRequirement<'s>,
     ) {
-        pool.dpt.lock().unwrap().requirements[index] = Some(actual);
+        pool.registry.lock().unwrap().requirements[index] = Some(actual);
     }
     pub(in crate::storage) fn stale_capture_generation(capture: &mut CapturedPage<'_, '_>) {
         capture.stamp.generation += 1;
     }
     /// Six frozen trusted-state corruptions, applied only to a real claim.
     pub(crate) fn corrupt_flush_claim(pool: &SharedPool<'_, '_, '_, '_>, variant: u8) {
-        let mut registry = pool.dpt.lock().unwrap();
+        let mut registry = pool.registry.lock().unwrap();
         let last = registry.last_attempt;
         let claim = registry.claim.as_mut().expect("actual active claim");
         match variant {

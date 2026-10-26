@@ -937,7 +937,7 @@ fn retention_live_activation() {
             let result = old.into_empty_retention(&mut owner, EmptyRetentionControlLoan { control: &mut control, replay: &mut replay });
             match (case, result) {
                 (1 | 4, Ok(bound)) => {
-                    assert!(bound.inner.pool.retention_payloads());
+                    assert!(bound.inner.pool.retention_payloads().unwrap());
                     assert!(std::ptr::eq(bound.inner.storage, &storage));
                     assert_eq!((bound.control.issued_local, bound.control.adopted_local), (0, 0));
                     assert!(bound.control.pending.is_none() && bound.control.durable.is_none());
@@ -963,7 +963,7 @@ fn retention_live_activation() {
                     assert!(matches!(error.cause, RetentionCause::Plan4(super::super::super::Plan4PageError { cause: super::super::super::Plan4PageCause::Frame(e), .. }) if e.cause == dirty_frame::Cause::BindingMismatch));
                     assert_eq!(effects(&state), io);
                     assert!(!storage.session_fence().is_fenced());
-                    assert!(!bound.pool.retention_payloads());
+                    assert!(!bound.pool.retention_payloads().unwrap());
                     drop(bound);
                 }
                 (3, Err(IntoRetentionError::Fatal(error))) => {

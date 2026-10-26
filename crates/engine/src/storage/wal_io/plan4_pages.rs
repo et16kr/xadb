@@ -40,23 +40,25 @@ pub(in crate::storage) mod tests;
 
 #[path = "plan4_retention.rs"]
 mod retention;
+pub(in crate::storage) use retention::CatalogRetirementRejected;
 #[allow(
     unused_imports,
     reason = "internal live owner export awaits recovered integration"
 )]
 pub(crate) use retention::Plan4Retention;
 pub(in crate::storage) use retention::{
-    EmptyRetentionControlLoan, RetentionCause, RetentionFlushAuthority, RetentionFlushStep,
-    RetentionFrameObservation, RetentionInitAuthority, RetentionInitCommit, RetentionInitCompleted,
-    RetentionInitInstall, RetentionInstall, RetentionLoadPermit, RetentionRecoveryStep,
-    RetentionReplayCursor, observe_recovery_frame, retention_replay_bank, retention_replay_image,
-    seed_recovery_replay,
+    CatalogCommitAttempt, CatalogCommitInstalled, EmptyRetentionControlLoan, RetentionCause,
+    RetentionFlushAuthority, RetentionFlushStep, RetentionFrameObservation, RetentionInitAuthority,
+    RetentionInitCommit, RetentionInitCompleted, RetentionInitInstall, RetentionInstall,
+    RetentionLoadPermit, RetentionRecoveryStep, RetentionReplayCursor, VerifiedLookupLoad,
+    observe_recovery_frame, retention_replay_bank, retention_replay_cells, retention_replay_digest,
+    retention_replay_image, retention_replay_provenance, seed_recovery_replay,
 };
 
 #[cfg(test)]
 pub(in crate::storage) use retention::{
-    IntoRetentionError, RETENTION_CONTROL_BYTES, RETENTION_REPLAY_BYTES, RetentionFlushPhase,
-    RetentionPhase, RetentionReservationError, RetentionResidencyStep,
+    CatalogLookupStep, IntoRetentionError, RETENTION_CONTROL_BYTES, RETENTION_REPLAY_BYTES,
+    RetentionFlushPhase, RetentionPhase, RetentionReservationError, RetentionResidencyStep,
 };
 
 pub(in crate::storage) use retention::source_census as retention_recovery_source_census;
@@ -362,7 +364,10 @@ impl<W: WriterNamespace> Plan4Pages<'_, '_, '_, '_, '_, '_, '_, W> {
         self.storage
             .health()
             .map_err(|error| storage_error(phase, error))?;
-        if !self.pool.plan4_payloads()
+        if !self
+            .pool
+            .plan4_payloads()
+            .map_err(|error| frame(phase, error))?
             || !self
                 .pool
                 .uses_storage_origin(&self.storage.binding, self.storage.session_fence())
@@ -454,3 +459,17 @@ impl<W: WriterNamespace> Drop for Plan4Pages<'_, '_, '_, '_, '_, '_, '_, W> {
 
 #[path = "plan4_recovered_bind.rs"]
 mod recovered_bind;
+
+#[cfg(test)]
+pub(in crate::storage) use retention::FreeUndoOracle;
+
+#[allow(unused_imports)] // Same original owner capabilities across the private module chain.
+pub(in crate::storage) use retention::{
+    AppliedRetirement, BoundVisibility, CapturedCatalogRefs, CatalogLookupLoan, CatalogSource,
+    HorizonObservation, InstalledFrontier, ReadyFrontier, ReferenceLease, RetirementIntent,
+    RetirementReject, RetirementScope, RollbackSource, SnapshotGuard, SnapshotReservation,
+    StagedRetirement, TxPairAuthority, TxPairCancelKind, TxPairCancelPermit, TxPairControlCommit,
+    TxPairInstallPermit, TxPairRetirePermit, TxPairStageRejection, TxnPin, UndoPin,
+    VISIBILITY_BYTES, VerifiedRetirement, VisibilityCause, VisibilityError, VisibilityLoan,
+    VisibilityResult,
+};

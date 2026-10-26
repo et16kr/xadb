@@ -6155,5 +6155,14 @@
       "scripts/dev3/__init__.py",
       "scripts/dev3/empty_transactions/__init__.py"
     ]
+  },
+  "dev2_pf04_frequency_control": {
+    "plan_ref": "dev2-pf04-resolution-plan.md#frequency-control",
+    "helper": "scripts/dev2_frequency_control.py",
+    "selected_tests": "scripts/test_dev2_frequency_control.py",
+    "scope": "CPU2/18 scaling_max_freq temporary request limit, root-owned persistent restore lease, isolated stdlib helper",
+    "product_changes": false,
+    "performance_acceptance": "NOT_APPLICABLE",
+    "source_roots_changed": false
   }
 }

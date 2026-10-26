@@ -24,9 +24,19 @@ import time
 
 EVENTS = ('cycles:u', 'instructions:u', 'ref-cycles:u', 'context-switches',
           'cpu-migrations', 'page-faults')
+EVENT_PROFILES = {
+    'user-v1': EVENTS,
+    'user-kernel-v1': ('cycles:u', 'cycles:k', 'instructions:u', 'instructions:k',
+                       'ref-cycles:u', 'context-switches', 'cpu-migrations', 'page-faults'),
+}
 CAP = 1024 * 1024
 LINE_CAP = 512
 SUFFIX = '.diagnostic_window.v1'
+BOUNDARIES = {
+    'measurement': SUFFIX,
+    'prewarmup-continuous-v1': '.diagnostic_prewarmup_continuous.v1',
+    'prewarmup-wait-v1': '.diagnostic_prewarmup_wait.v1',
+}
 PERFMON = 1 << 38
 PRIVILEGES = ('none', 'sudo-cap-perfmon')
 
@@ -118,14 +128,20 @@ def validate_perf_identity(launcher, collector, worker, policy):
     require(collector['command'] == policy['perf_command'], 'perf command mismatch')
 
 
-def parse_perf(raw):
+def profile_events(profile):
+    require(isinstance(profile, str) and profile in EVENT_PROFILES, 'unsupported perf event profile')
+    return EVENT_PROFILES[profile]
+
+
+def parse_perf(raw, profile='user-v1'):
     """Parse literal perf -x ';' --no-scale rows, retaining availability and coverage."""
+    events = profile_events(profile)
     rows = {}
     for line in raw.splitlines():
         if not line.strip() or line.lstrip().startswith('#'):
             continue
         fields = [v.strip() for v in line.split(';')]
-        require(len(fields) >= 5 and fields[2] in EVENTS, 'unexpected PMU row')
+        require(len(fields) >= 5 and fields[2] in events, 'unexpected PMU row')
         count, unit, event, runtime, coverage = fields[:5]
         require(event not in rows, 'duplicate PMU event')
         item = {'raw': line, 'unit': unit, 'count': None, 'runtime_ns': None,
@@ -139,15 +155,24 @@ def parse_perf(raw):
                         status='REPORTED_FULL_COVERAGE' if value == 100 and int(runtime) > 0 else 'PARTIAL_OR_EMPTY')
         rows[event] = item
     require(bool(rows), 'PMU finalization emitted no counter rows')
-    for event in EVENTS:
+    for event in events:
         rows.setdefault(event, {'status': 'MISSING', 'count': None})
-    eligible = all(rows[event]['status'] == 'REPORTED_FULL_COVERAGE' for event in EVENTS)
-    return {'events': rows, 'all_events_reported_full_coverage': eligible,
+    eligible = all(rows[event]['status'] == 'REPORTED_FULL_COVERAGE' for event in events)
+    return {'profile': profile, 'events': rows, 'all_events_reported_full_coverage': eligible,
             'ratios': None, 'raw_unscaled': True, 'includes_control_bracket': True}
 
 
-def validate_hello(line, peer_pid, pid, expected_start, source, workload, token):
-    require(line.split() == ['HELLO', '1', token, str(pid), str(pid), source, workload],
+def validate_boundary(boundary, workload):
+    require(isinstance(boundary, str) and boundary in BOUNDARIES, 'unsupported window boundary')
+    require(boundary == 'measurement' or workload in ('k0', 'synthetic'), 'prewarmup requires K0')
+
+
+def validate_hello(line, peer_pid, pid, expected_start, source, workload, token, boundary='measurement'):
+    validate_boundary(boundary, workload)
+    expected = ['HELLO', '1' if boundary == 'measurement' else '2', token, str(pid), str(pid), source, workload]
+    if boundary != 'measurement':
+        expected.append(boundary)
+    require(line.split() == expected,
             'HELLO identity/version/token mismatch')
     require(peer_pid == pid and starttime(pid) == expected_start, 'peer PID/starttime mismatch')
 
@@ -160,17 +185,24 @@ def unique_object(pairs):
     return value
 
 
-def validate_stop(line, token, go_ns, received_ns):
+def validate_stop(line, token, go_ns, received_ns, boundary='measurement', armed_go_ns=None):
+    require(len(line.encode('utf-8')) + 1 <= LINE_CAP, 'STOP line bound')
     try:
         value = json.loads(line, object_pairs_hook=unique_object)
     except (ValueError, UnicodeError) as error:
         raise DiagnosticError('invalid STOP JSON') from error
-    require(isinstance(value, dict) and set(value) == {
-        'phase', 'token', 'start_ns', 'end_ns', 'elapsed_ns', 'before', 'after'}, 'STOP fields')
+    validate_boundary(boundary, 'synthetic')
+    fields = {'phase', 'token', 'start_ns', 'end_ns', 'elapsed_ns', 'before', 'after'}
+    if boundary != 'measurement':
+        fields.add('armed_ns')
+    require(isinstance(value, dict) and set(value) == fields, 'STOP fields')
     require(value['phase'] == 'STOP' and value['token'] == token, 'STOP phase/token')
-    for key in ('start_ns', 'end_ns', 'elapsed_ns'):
+    for key in ('start_ns', 'end_ns', 'elapsed_ns') + (() if boundary == 'measurement' else ('armed_ns',)):
         require(type(value[key]) is int and 0 <= value[key] < 2**64, 'STOP timestamp type/range')
     require(go_ns <= value['start_ns'] <= value['end_ns'] <= received_ns, 'STOP bracket order')
+    if boundary != 'measurement':
+        require(type(armed_go_ns) is int and armed_go_ns <= value['armed_ns'] <= value['start_ns'],
+                'STOP arm order')
     require(0 < value['elapsed_ns'] <= value['end_ns'] - value['start_ns'], 'STOP elapsed bounds')
     for key in ('before', 'after'):
         usage = value[key]
@@ -449,7 +481,8 @@ class Runner:
                 pass
             time.sleep(.001)
 
-    def prepare_perf(self, executable, work, pid, control_dir, privilege='none'):
+    def prepare_perf(self, executable, work, pid, control_dir, privilege='none', profile='user-v1'):
+        events = profile_events(profile)
         require(privilege in PRIVILEGES, 'unsupported perf privilege mode')
         if executable is None:
             require(privilege == 'none', 'privileged mode requires installed perf')
@@ -464,7 +497,7 @@ class Runner:
         ack = os.open(ack_path, os.O_RDWR | os.O_NONBLOCK)
         self.fifos = (ctl, ack)
         command = [str(executable), 'stat', '--no-inherit', '--no-scale', '--no-big-num',
-                   '-x', ';', '--log-fd', '1', '-e', ','.join(EVENTS), '--delay=-1',
+                   '-x', ';', '--log-fd', '1', '-e', ','.join(events), '--delay=-1',
                    '--control', f'fifo:{ctl_path},{ack_path}', '--tid', str(pid)]
         self.record['perf_executable'] = {'path': str(executable), 'sha256': digest(executable)}
         command, policy = perf_invocation(command, privilege, work)
@@ -505,7 +538,14 @@ class Runner:
         self.record['pmu'] = {'status': 'ATTACHED', 'tid': pid}
         return perf
 
-    def observe(self, worker, input_file, source, workload, perf_executable, affinity=None, perf_privilege='none'):
+    def observe(self, worker, input_file, source, workload, perf_executable, affinity=None,
+                perf_privilege='none', perf_profile='user-v1', boundary='measurement'):
+        profile_events(perf_profile)
+        validate_boundary(boundary, workload)
+        self.record['perf_profile'] = perf_profile
+        self.record['boundary'] = boundary
+        self.record['pmu_scope'] = ('measurement-and-control-bracket' if boundary == 'measurement' else
+                                    'warmup-drain-measurement-and-control-bracket')
         self.fifos = ()
         token = secrets.token_hex(16)
         work = self.directory / 'work'
@@ -521,6 +561,9 @@ class Runner:
                 server.setblocking(False)
                 env = os.environ.copy()
                 env.update(XADBTEST_WINDOW_SOCKET=str(local / 'socket'), XADBTEST_WINDOW_TOKEN=token)
+                env.pop('XADBTEST_WINDOW_BOUNDARY', None)
+                if boundary != 'measurement':
+                    env['XADBTEST_WINDOW_BOUNDARY'] = boundary
                 command = [str(worker)]
                 if affinity is not None:
                     command = ['taskset', '-c', str(affinity), *command]
@@ -539,32 +582,43 @@ class Runner:
                     hello = self.receive(peer, end)
                     self.record['raw_hello'] = hello
                     peer_pid = struct.unpack('3i', peer.getsockopt(socket.SOL_SOCKET, socket.SO_PEERCRED, 12))[0]
-                    validate_hello(hello, peer_pid, child.pid, child.start, source, workload, token)
+                    validate_hello(hello, peer_pid, child.pid, child.start, source, workload, token, boundary)
                     self.record['identity'] = {'hello': hello, 'peer_pid': peer_pid, 'starttime': child.start}
-                    perf = self.prepare_perf(perf_executable, work, child.pid, local, perf_privilege)
+                    perf = self.prepare_perf(perf_executable, work, child.pid, local, perf_privilege, perf_profile)
                     mode = 'PMU' if perf else 'RUSAGE_ONLY'
                     self.record['mode'] = mode
                     self.send(peer, f'READY {token} {mode}', end)
                     # Warmup itself is bounded by the overall run, not an idle 2s read.
                     self.wait(lambda: bool(select.select([peer], [], [], 0)[0]))
                     end = time.monotonic() + 2
-                    require(self.receive(peer, end) == f'START {token}', 'START phase/token')
+                    phase = 'START' if boundary == 'measurement' else 'ARM'
+                    require(self.receive(peer, end) == f'{phase} {token}', f'{phase} phase/token')
                     enable_start = time.monotonic_ns()
                     if perf:
                         self.perf_command('enable', *self.fifos, perf)
                     go = time.monotonic_ns()
-                    self.send(peer, f'GO {token} {mode}', end)
+                    reply = 'GO' if boundary == 'measurement' else 'ARMED'
+                    self.send(peer, f'{reply} {token} {mode}', end)
+                    armed_go = go if boundary != 'measurement' else None
+                    if boundary == 'prewarmup-wait-v1':
+                        self.wait(lambda: bool(select.select([peer], [], [], 0)[0]))
+                        end = time.monotonic() + 2
+                        require(self.receive(peer, end) == f'START {token}', 'post-warmup START phase/token')
+                        go = time.monotonic_ns()
+                        self.send(peer, f'GO {token} {mode}', end)
                     self.wait(lambda: bool(select.select([peer], [], [], 0)[0]))
                     end = time.monotonic() + 2
                     stop = self.receive(peer, end)
                     received = time.monotonic_ns()
                     self.record['raw_stop'] = stop
-                    self.record['window'] = validate_stop(stop, token, go, received)
+                    self.record['window'] = validate_stop(stop, token, go, received, boundary, armed_go)
                     if perf:
                         self.perf_command('disable', *self.fifos, perf)
                     disabled = time.monotonic_ns()
                     self.record['phases'] = {'enable_sent_ns': enable_start, 'go_ns': go,
                                              'stop_received_ns': received, 'disable_ack_ns': disabled}
+                    if armed_go is not None:
+                        self.record['phases']['armed_go_ns'] = armed_go
                     if perf:
                         # The unreaped worker reserves its PID but stays visible
                         # in /proc. Explicitly flush perf after disable instead
@@ -586,7 +640,8 @@ class Runner:
                         self.record['perf_finalization'].update(si_code=status.si_code, si_status=status.si_status)
                         require((status.si_code == os.CLD_EXITED and status.si_status in (0, 130)) or
                                 (status.si_code == os.CLD_KILLED and status.si_status == signal.SIGINT), 'perf failed')
-                        self.record['pmu'] = {'status': 'COLLECTED', **parse_perf((self.directory / 'perf.stdout').read_text())}
+                        self.record['pmu'] = {'status': 'COLLECTED', **parse_perf(
+                            (self.directory / 'perf.stdout').read_text(), perf_profile)}
                     self.record['observed_ns'] = time.monotonic_ns()
                     require(digest(worker) == self.record['worker_sha256'], 'worker changed during invocation')
                     self.record['status'] = 'COLLECTED_DIAGNOSTIC_ONLY'
@@ -626,7 +681,9 @@ def bounded_input(path):
 
 
 def collect(worker, input_file, source, workload, output, *, deadline=30, perf=None, affinity=None,
-            perf_privilege='none'):
+            perf_privilege='none', perf_profile='user-v1', boundary='measurement'):
+    profile_events(perf_profile)
+    validate_boundary(boundary, workload)
     require(0 < deadline <= 60, 'deadline must be in (0, 60]')
     require(len(source) == 64 and all(v in '0123456789abcdef' for v in source), 'source SHA256 required')
     require(workload in ('k0', 'durable', 'synthetic'), 'unsupported workload')
@@ -642,7 +699,8 @@ def collect(worker, input_file, source, workload, output, *, deadline=30, perf=N
     try:
         for sig in (signal.SIGINT, signal.SIGTERM):
             old_handlers[sig] = signal.signal(sig, interrupt)
-        run.observe(worker.resolve(), output / 'input.bin', source, workload, perf, affinity, perf_privilege)
+        run.observe(worker.resolve(), output / 'input.bin', source, workload, perf, affinity,
+                    perf_privilege, perf_profile, boundary)
     except Exception as error:
         run.record['error'] = f'{type(error).__name__}: {error}'
     finally:
@@ -674,12 +732,16 @@ def main():
     parser.add_argument('--deadline', type=float, default=30)
     parser.add_argument('--affinity', type=int)
     parser.add_argument('--perf', type=Path, default=shutil.which('perf'))
+    parser.add_argument('--perf-profile', choices=EVENT_PROFILES, default='user-v1',
+                        help='fixed event set; kernel counts cover only the target thread')
+    parser.add_argument('--boundary', choices=BOUNDARIES, default='measurement',
+                        help='explicit K0 boundary; prewarmup PMU includes warmup and drain')
     parser.add_argument('--perf-privilege', choices=PRIVILEGES, default='none',
                         help='explicit opt-in: sudo drops to caller with only CAP_PERFMON for installed perf')
     args = parser.parse_args()
     result = collect(args.worker, args.input, args.source, args.workload, args.output.resolve(),
                      deadline=args.deadline, perf=args.perf, affinity=args.affinity,
-                     perf_privilege=args.perf_privilege)
+                     perf_privilege=args.perf_privilege, perf_profile=args.perf_profile, boundary=args.boundary)
     print(json.dumps({'status': result['status'], 'mode': result.get('mode'), 'output': str(args.output)}))
     return 0 if result['status'] == 'COLLECTED_DIAGNOSTIC_ONLY' else 1
 

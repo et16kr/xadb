@@ -1,4 +1,4 @@
-//! Effect-owning N=0 plan4 recovery. Selection and canonical reconstruction are
+//! Effect-owning current Catalog plan4 recovery. Selection and canonical reconstruction are
 //! separate from the eventual original-runtime handoff. No Fresh is created.
 //!
 //! All large bytes remain in the caller's original maintenance/flush/WAL loans.
@@ -48,28 +48,37 @@ mod tests;
 pub(in crate::storage) use resources::source_census;
 
 pub(crate) const MAINTENANCE_BYTES: usize = 12_582_912;
-const BASE_BYTES: usize = 1_048_576;
+// Current Profile v2 selects an exact-image v3 base. The legacy codec keeps
+// its own 1 MiB geometry; the physical home arena is independently 64 pages.
+const BASE_BYTES: usize = base::catalog::BASE_BYTES;
+const PHYSICAL_BYTES: usize = 64 * PAGE_BYTES;
 const CONTROL_BYTES: usize = 4096;
 const REPLAY_START: usize = 2 * BASE_BYTES;
-const REPLAY_END: usize = 3_670_016;
+const REPLAY_END: usize = REPLAY_START + 1_572_864;
 const PHYSICAL_START: usize = REPLAY_END;
-const PHYSICAL_END: usize = 4_718_592;
+const PHYSICAL_END: usize = PHYSICAL_START + PHYSICAL_BYTES;
 const LIVE_START: usize = PHYSICAL_END;
-const LIVE_END: usize = 4_915_200;
+const LIVE_END: usize = LIVE_START + 196_608;
 const PACK_START: usize = LIVE_END;
-const PACK_END: usize = 4_980_736;
+const PACK_END: usize = PACK_START + 65_536;
 const STATUS_START: usize = PACK_END;
-const STATUS_END: usize = 5_013_504;
+const STATUS_END: usize = STATUS_START + 32_768;
 const CERT_START: usize = STATUS_END;
-const CERT_END: usize = 5_029_888;
+const CERT_END: usize = CERT_START + 16_384;
 const INVENTORY_START: usize = CERT_END;
-const INVENTORY_END: usize = 5_046_272;
+const INVENTORY_END: usize = INVENTORY_START + 16_384;
 const BASE_SCRATCH_START: usize = INVENTORY_END;
-const IO_START: usize = 5_111_808;
-const USED_END: usize = 5_177_344;
+const IO_START: usize = BASE_SCRATCH_START + 4 * PAGE_BYTES;
+const USED_END: usize = IO_START + 4 * PAGE_BYTES;
 // A digest of the complete initial bounded namespace observation. It occupies
 // 32 bytes of the retained remainder, never a new resident allocation.
 const SOURCE_STAMP_AT: usize = USED_END;
+const CATALOG_PRIVATE_BYTES: usize = crate::storage::semantic_catalog::PRIVATE_BYTES;
+const CATALOG_VISIBILITY_BYTES: usize = super::plan4_pages::VISIBILITY_BYTES;
+const _: () = assert!(PHYSICAL_BYTES == base::catalog::PAGE_ARENA_BYTES);
+const _: () = assert!(
+    SOURCE_STAMP_AT + 32 + CATALOG_PRIVATE_BYTES + CATALOG_VISIBILITY_BYTES <= MAINTENANCE_BYTES
+);
 const CURRENT_AT: usize = IO_START;
 const POSSIBLE_CURRENT_AT: usize = CURRENT_AT + CONTROL_BYTES;
 const SELECTOR_AT: usize = POSSIBLE_CURRENT_AT + CONTROL_BYTES;
@@ -313,11 +322,11 @@ impl RecoveryPoolSeed<'_> {
 /// the actual CURRENT reference, immutable geometry and provenance agree.
 /// Its BaseView borrows the original external caller allocation, not this owner.
 pub(in crate::storage) struct VerifiedPlan4Base<'a> {
-    view: base::BaseView<'a>,
+    view: base::catalog::CatalogBaseView<'a>,
     digest: [u8; 32],
 }
 impl<'a> VerifiedPlan4Base<'a> {
-    pub(in crate::storage) fn view(&self) -> base::BaseView<'a> {
+    pub(in crate::storage) fn view(&self) -> base::catalog::CatalogBaseView<'a> {
         self.view
     }
     pub(in crate::storage) fn capture_lsn(&self) -> u64 {
@@ -634,7 +643,7 @@ impl<W: WriterNamespace> RecoveryState<'_, '_, '_, W> {
             .0
             .try_into()
             .expect("base scratch");
-        let view = base::decode(&before[BASE_BYTES..2 * BASE_BYTES], expected, scratch)
+        let view = base::catalog::decode(&before[BASE_BYTES..2 * BASE_BYTES], expected, scratch)
             .map_err(|e| error(p, Plan4RecoveryCause::Base(e)))?;
         if Some(view.digest()) != self.selected_epoch.as_ref().map(|e| e.header.base_digest) {
             return Err(error(p, Plan4RecoveryCause::ContentMismatch));
@@ -672,9 +681,14 @@ impl<'a, 'm, 'w, W: WriterNamespace> RecoveryState<'a, 'm, 'w, W> {
         let (old_base, rest) = maintenance.split_at_mut(BASE_BYTES);
         let (new_base, rest) = rest.split_at_mut(BASE_BYTES);
         let (replay, rest) = rest.split_at_mut(REPLAY_END - REPLAY_START);
-        let (physical, rest) = rest.split_at_mut(BASE_BYTES);
+        let (physical, rest) = rest.split_at_mut(PHYSICAL_BYTES);
         let (control, rest) = rest.split_at_mut(LIVE_END - LIVE_START);
         let (packing_and_scratch, reserved) = rest.split_at_mut(USED_END - LIVE_END);
+        // Keep the original source stamp and reserved prefix. The final named
+        // private lane transfers once; no metadata lock survives its use.
+        let private_at = reserved.len() - CATALOG_PRIVATE_BYTES - CATALOG_VISIBILITY_BYTES;
+        let (reserved, private_and_visibility) = reserved.split_at_mut(private_at);
+        let (private, visibility) = private_and_visibility.split_at_mut(CATALOG_PRIVATE_BYTES);
         let scratch_at = BASE_SCRATCH_START - LIVE_END;
         let scratch: &mut [[u8; PAGE_BYTES]; 4] = packing_and_scratch
             [scratch_at..scratch_at + 4 * PAGE_BYTES]
@@ -684,8 +698,8 @@ impl<'a, 'm, 'w, W: WriterNamespace> RecoveryState<'a, 'm, 'w, W> {
             .expect("retained codec scratch");
         // Same immutable bytes/expected values were decoded immediately before
         // transfer; this repeats no I/O or semantic adoption and cannot fail.
-        let view =
-            base::decode(new_base, expected, scratch).expect("prechecked immutable base transfer");
+        let view = base::catalog::decode(new_base, expected, scratch)
+            .expect("prechecked immutable base transfer");
         let base = VerifiedPlan4Base {
             view,
             digest: selected.header.base_digest,
@@ -743,6 +757,10 @@ impl<'a, 'm, 'w, W: WriterNamespace> RecoveryState<'a, 'm, 'w, W> {
             loans: Mutex::new(Some(RecoveryBindLoans {
                 control: control.try_into().expect("original control loan"),
                 replay: replay.try_into().expect("original replay loan"),
+                private: private.try_into().expect("original Catalog private loan"),
+                visibility: visibility
+                    .try_into()
+                    .expect("original visibility metadata loan"),
                 restored: restored.expect("once restored"),
             })),
             remainder: Mutex::new(MaintenanceRemainder {
@@ -761,6 +779,8 @@ impl<'a, 'm, 'w, W: WriterNamespace> RecoveryState<'a, 'm, 'w, W> {
 struct RecoveryBindLoans<'a> {
     control: &'a mut [u8; 196_608],
     replay: &'a mut [u8; 1_572_864],
+    private: &'a mut [u8; CATALOG_PRIVATE_BYTES],
+    visibility: &'a mut [u8; CATALOG_VISIBILITY_BYTES],
     restored: RestoredRetention,
 }
 /// Linear retained-credit transfer. Only Runtime's once-only loan extraction
@@ -783,7 +803,7 @@ impl<'s, 'a> RecoveryRetentionBinding<'s, 'a> {
         self.doublewrite
     }
     pub(in crate::storage) fn cancel_reserved_first(&self) -> bool {
-        self.base.view.census().reserved.is_some()
+        self.base.view.census().reserved != base::catalog::ReservedInventory::None
     }
     pub(in crate::storage) fn remaining_wal(&self) -> u64 {
         self.restored.remaining_wal
@@ -797,7 +817,7 @@ impl<'s, 'a> RecoveryRetentionBinding<'s, 'a> {
 }
 struct MaintenanceRemainder<'a> {
     old_base: &'a mut [u8; BASE_BYTES],
-    physical: &'a mut [u8; BASE_BYTES],
+    physical: &'a mut [u8; PHYSICAL_BYTES],
     packing_and_scratch: &'a mut [u8],
     reserved: &'a mut [u8],
 }
@@ -859,14 +879,16 @@ impl<W: WriterNamespace> Plan4RecoveryRuntime<'_, '_, '_, W> {
     }
 }
 
+type RecoveryBindingParts<'r, 'a> = (
+    RecoveryRetentionBinding<'r, 'a>,
+    &'a mut [u8; 196_608],
+    &'a mut [u8; 1_572_864],
+    &'a mut [u8; CATALOG_PRIVATE_BYTES],
+    &'a mut [u8; CATALOG_VISIBILITY_BYTES],
+);
+
 impl<'a, W: WriterNamespace> Plan4RecoveryRuntime<'a, '_, '_, W> {
-    pub(super) fn take_recovery_binding(
-        &self,
-    ) -> Result<(
-        RecoveryRetentionBinding<'_, 'a>,
-        &'a mut [u8; 196_608],
-        &'a mut [u8; 1_572_864],
-    )> {
+    pub(super) fn take_recovery_binding(&self) -> Result<RecoveryBindingParts<'_, 'a>> {
         let p = Plan4RecoveryPhase::Bind;
         if self.session_fence().is_fenced() {
             return Err(error(p, Plan4RecoveryCause::Fenced));
@@ -895,6 +917,8 @@ impl<'a, W: WriterNamespace> Plan4RecoveryRuntime<'a, '_, '_, W> {
             },
             loan.control,
             loan.replay,
+            loan.private,
+            loan.visibility,
         ))
     }
 }
@@ -908,7 +932,14 @@ pub(crate) struct Plan4Recovered<'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamesp
     observation: Plan4RecoveryObservation,
     waiting_flush: bool,
     ready: bool,
+    private: &'a mut [u8; CATALOG_PRIVATE_BYTES],
+    visibility: Option<&'a mut [u8; CATALOG_VISIBILITY_BYTES]>,
 }
+/// READY handoff reuses the exact recovery private lane for the next lookup.
+pub(crate) type RecoveredLiveParts<'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W> = (
+    super::plan4_pages::Plan4Retention<'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W>,
+    &'a mut [u8; CATALOG_PRIVATE_BYTES],
+);
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub(crate) struct Plan4RecoveryProgress {
     pub(crate) phase: Plan4RecoveryPhase,
@@ -936,8 +967,9 @@ impl<'a, 'm, 'w, W: WriterNamespace> Plan4RecoveryRuntime<'a, 'm, 'w, W> {
         }
         let _unwind = self.session_fence().unwind_guard();
         let mut phase = Plan4RecoveryPhase::Bind;
-        let inner = self.bind_retention(owner, core, frames, operation, &mut phase)?;
-        self.wrap_recovered(inner, phase)
+        let (inner, private, visibility) =
+            self.bind_retention(owner, core, frames, operation, &mut phase)?;
+        self.wrap_recovered(inner, private, visibility, phase)
     }
 
     // The seed and original pool constructor finish before the consuming live
@@ -970,13 +1002,17 @@ impl<'a, 'm, 'w, W: WriterNamespace> Plan4RecoveryRuntime<'a, 'm, 'w, W> {
         frames: &'p mut [crate::storage::dirty_frame::DirtyFrame<'d>],
         operation: &'o mut [u8; 114_688],
         phase: &mut Plan4RecoveryPhase,
-    ) -> Result<super::plan4_pages::Plan4Retention<'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W>>
+    ) -> Result<(
+        super::plan4_pages::Plan4Retention<'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W>,
+        &'a mut [u8; CATALOG_PRIVATE_BYTES],
+        &'a mut [u8; CATALOG_VISIBILITY_BYTES],
+    )>
     where
         'a: 's,
     {
         let p = Plan4RecoveryPhase::Bind;
         let pages = self.bind_original_pages(core, frames, operation)?;
-        let (binding, control, replay) = self
+        let (binding, control, replay, private, visibility) = self
             .take_recovery_binding()
             .map_err(|e| self.bound_error(p, e.cause, Effect::CallerMustResolve))?;
         *phase = if binding.cancel_reserved_first() {
@@ -984,13 +1020,14 @@ impl<'a, 'm, 'w, W: WriterNamespace> Plan4RecoveryRuntime<'a, 'm, 'w, W> {
         } else {
             Plan4RecoveryPhase::Losers
         };
-        pages
+        let live = pages
             .into_recovered_retention(
                 owner,
                 super::plan4_pages::EmptyRetentionControlLoan { control, replay },
                 binding,
             )
-            .map_err(|e| self.bound_error(p, Plan4RecoveryCause::Retention(e.cause), e.effect))
+            .map_err(|e| self.bound_error(p, Plan4RecoveryCause::Retention(e.cause), e.effect))?;
+        Ok((live, private, visibility))
     }
 
     // All conversion locals have ended before these wide return values exist.
@@ -998,6 +1035,8 @@ impl<'a, 'm, 'w, W: WriterNamespace> Plan4RecoveryRuntime<'a, 'm, 'w, W> {
     fn wrap_recovered<'s, 'c, 'p, 'd, 'o>(
         &'s self,
         inner: super::plan4_pages::Plan4Retention<'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W>,
+        private: &'a mut [u8; CATALOG_PRIVATE_BYTES],
+        visibility: &'a mut [u8; CATALOG_VISIBILITY_BYTES],
         phase: Plan4RecoveryPhase,
     ) -> Result<Plan4Recovered<'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W>> {
         Ok(Plan4Recovered {
@@ -1007,6 +1046,8 @@ impl<'a, 'm, 'w, W: WriterNamespace> Plan4RecoveryRuntime<'a, 'm, 'w, W> {
             observation: self.observation,
             waiting_flush: false,
             ready: false,
+            private,
+            visibility: Some(visibility),
         })
     }
     fn bound_error(
@@ -1054,6 +1095,19 @@ impl<'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
         let runtime = self.runtime;
         let _unwind = runtime.session_fence().unwind_guard();
         self.observation.phase = self.phase;
+        if let Some(bytes) = self.visibility.take() {
+            // This metadata enables the recovery's own horizon/pin protocol.
+            // The public facade remains closed until cleanup and STABILIZE.
+            self.inner
+                .enable_catalog_visibility(owner, super::plan4_pages::VisibilityLoan { bytes })
+                .map_err(|e| {
+                    runtime.bound_error(
+                        self.phase,
+                        Plan4RecoveryCause::Retention(e.cause),
+                        Effect::CallerMustResolve,
+                    )
+                })?;
+        }
         if self.waiting_flush {
             let (_, _, mut flush) = self.inner.split();
             let step = flush.continue_flush(flusher).map_err(|e| {
@@ -1071,16 +1125,20 @@ impl<'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
                 ready: false,
             });
         }
-        let step = self.inner.recovery_step(owner).map_err(|e| {
-            runtime.bound_error(self.phase, Plan4RecoveryCause::Retention(e.cause), e.effect)
-        })?;
+        let step = self
+            .inner
+            .recovery_catalog_step(owner, self.private)
+            .map_err(|e| {
+                runtime.bound_error(self.phase, Plan4RecoveryCause::Retention(e.cause), e.effect)
+            })?;
         match step {
             RetentionRecoveryStep::CancelledReserved => {
                 self.phase = Plan4RecoveryPhase::Losers;
             }
             RetentionRecoveryStep::RollbackStarted { .. }
             | RetentionRecoveryStep::Aborted { .. }
-            | RetentionRecoveryStep::Finished { .. } => {
+            | RetentionRecoveryStep::Finished { .. }
+            | RetentionRecoveryStep::CatalogAdvanced { .. } => {
                 if self.phase == Plan4RecoveryPhase::CancelReservedFirst {
                     return Err(runtime.bound_error(
                         self.phase,
@@ -1160,6 +1218,22 @@ impl<'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
             progressed: !self.waiting_flush,
             ready: self.ready,
         })
+    }
+    /// Same READY condition and same original owner as into_live. The private
+    /// cleanup lane moves back to the caller for snapshot lookup; no second
+    /// 425984-byte allocation or metadata guard is retained by this handoff.
+    #[allow(
+        clippy::result_large_err,
+        reason = "not-ready retains original inline owner and loans"
+    )]
+    pub(crate) fn into_live_with_private(
+        self,
+    ) -> std::result::Result<RecoveredLiveParts<'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W>, Self> {
+        if self.ready {
+            Ok((self.inner, self.private))
+        } else {
+            Err(self)
+        }
     }
     /// Consumes the closed facade only after real cleanup/physical readback and
     /// control stabilization. Same owner, pool, generation, loans and fence move.

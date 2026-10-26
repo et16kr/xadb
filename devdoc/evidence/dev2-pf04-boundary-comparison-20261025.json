@@ -1,0 +1,236 @@
+{
+  "schema_version": 1,
+  "date": "2026-10-25",
+  "owner": "/root",
+  "reviewer": "/root/pf04_evidence_review",
+  "scope": "One previously unexecuted PF04 debugging campaign, prewarmup wait versus continuous; not performance acceptance",
+  "evidence_root": "/home/et16/xadb-dev2-evidence/pf04-boundary-comparison-20261025",
+  "plan_commit": "8444a45",
+  "preparation_commit": "d6dc26c",
+  "scope_correction_commit": "590991d",
+  "authorization": {
+    "basis": "Existing PF04 analysis and resolution instruction; debugging is outside unchanged-code development regression prohibition",
+    "user_correction": "지금 개발이 아니라 디버깅 하는데 개발 테스트 규정을 가져오면 어떻하나",
+    "new_exception_required": false,
+    "receipt": {
+      "path": "/home/et16/xadb-dev2-evidence/pf04-boundary-comparison-20261025/authorization.json",
+      "sha256": "c737f3f526bdfc365c87e36a6ade8d6793918f612b1babd9adeb1704ae7b3abe"
+    }
+  },
+  "bindings": {
+    "proposal.json": {
+      "path": "/home/et16/xadb-dev2-evidence/pf04-boundary-comparison-20261025/proposal.json",
+      "sha256": "b9b4ec8d7679756c185c2fa1c56186369637ac372f1eef97e7501a2a183bc4b4"
+    },
+    "run-debug.py": {
+      "path": "/home/et16/xadb-dev2-evidence/pf04-boundary-comparison-20261025/run-debug.py",
+      "sha256": "666ffe14e2ec6b7f23bace5d5f15a37b506683f4ec015716aeb859d9228728c0"
+    },
+    "analyze.py": {
+      "path": "/home/et16/xadb-dev2-evidence/pf04-boundary-comparison-20261025/analyze.py",
+      "sha256": "492acf2b57d1bab1cbceabe019c7c090c25e9b631a75cec593df19925230991b"
+    },
+    "preparation-debug.json": {
+      "path": "/home/et16/xadb-dev2-evidence/pf04-boundary-comparison-20261025/preparation-debug.json",
+      "sha256": "b80de203237bf74b1de79023da6250c32db9b207232784b6f219183a186f1dd9"
+    },
+    "debug-scope-diff.json": {
+      "path": "/home/et16/xadb-dev2-evidence/pf04-boundary-comparison-20261025/debug-scope-diff.json",
+      "sha256": "d7bd57b3daee81dc6e120b01cce16dc08b6702ab87ef02b002cf6db008711ef1"
+    },
+    "design-review.json": {
+      "path": "/home/et16/xadb-dev2-evidence/pf04-boundary-comparison-20261025/design-review.json",
+      "sha256": "5466bf79c8e17b8db9e7b8ef03c6e3e453ff9afd0acb732ac44ef939e4e7deef"
+    },
+    "preflight-review.json": {
+      "path": "/home/et16/xadb-dev2-evidence/pf04-boundary-comparison-20261025/preflight-review.json",
+      "sha256": "8511bdbe1416e62bee3696aa5e6bca7e1f1fd11c617b48c5dbb0b47afefa5818"
+    },
+    "debug-scope-review.json": {
+      "path": "/home/et16/xadb-dev2-evidence/pf04-boundary-comparison-20261025/debug-scope-review.json",
+      "sha256": "b764cd37a4392e91896ba7fa24c3d380637f9b3e681108a628ad88022cb1b138"
+    },
+    "execution/freeze.json": {
+      "path": "/home/et16/xadb-dev2-evidence/pf04-boundary-comparison-20261025/execution/freeze.json",
+      "sha256": "40ec81a23dc096d84092559cb8f1cb6f1dfb8a2a2af21ffe628019db73a214ab"
+    },
+    "execution/summary.json": {
+      "path": "/home/et16/xadb-dev2-evidence/pf04-boundary-comparison-20261025/execution/summary.json",
+      "sha256": "683dc74f1ffa3531f6a5ea05a0148678554f461f1fa7f29a73a6e3345572e993"
+    },
+    "analysis.json": {
+      "path": "/home/et16/xadb-dev2-evidence/pf04-boundary-comparison-20261025/analysis.json",
+      "sha256": "5c9a2922d29a2e46bda04f2c1ce8047288a19862940781f3e7db6b6c23dc6b67"
+    },
+    "raw-review.json": {
+      "path": "/home/et16/xadb-dev2-evidence/pf04-boundary-comparison-20261025/raw-review.json",
+      "sha256": "7e07cef59037834960c0b905b407b642b4cd2509a574a6942b22068037f9593e"
+    },
+    "review-raw.py": {
+      "path": "/home/et16/xadb-dev2-evidence/pf04-boundary-comparison-20261025/review-raw.py",
+      "sha256": "808201952c2bbad41e042c93b95d2fdd56826b38ba18df72aabf77cd21a1f05b"
+    },
+    "manifest.json": {
+      "path": "/home/et16/xadb-dev2-evidence/pf04-boundary-comparison-20261025/manifest.json",
+      "sha256": "033d0797372e4f91901ecd5314be7070b763a2658d5ed4c0513c33c2139a6528"
+    }
+  },
+  "execution": {
+    "completed_slots": 20,
+    "paired_runs": 10,
+    "wall_seconds": 208.6752078999998,
+    "all_slots_status": "CORRECT_DIAGNOSTIC",
+    "oracle_cases": 20,
+    "raw_pmu_rows": 160,
+    "reported_coverage_percent": 100,
+    "owned_group_cleanup_receipts": 60,
+    "actual_collector_pidfd_exit_receipts": 20,
+    "retries": 0,
+    "cancel_signal": null,
+    "new_builds": 0,
+    "product_or_completed_tool_tests_repeated": 0,
+    "host_tuning_reboots_service_restarts": 0,
+    "input": {
+      "mode": "Off",
+      "seed": 20261018,
+      "rows": 128,
+      "old_snapshot": true,
+      "capacity": 256,
+      "warmup": 4096,
+      "measure": 65536,
+      "latency_stride": 16
+    },
+    "order": [
+      "CW",
+      "WC",
+      "WC",
+      "CW",
+      "CW",
+      "CW",
+      "WC",
+      "WC",
+      "WC",
+      "CW"
+    ]
+  },
+  "primary": {
+    "status": "UNKNOWN_NO_FROZEN_LARGE_BOUNDARY_SHIFT",
+    "paired_ratios": [
+      {
+        "numerator": 910192,
+        "denominator": 903805,
+        "display": 1.0070667898495804
+      },
+      {
+        "numerator": 3612227,
+        "denominator": 3628773,
+        "display": 0.9954403320350984
+      },
+      {
+        "numerator": 15763665,
+        "denominator": 14571968,
+        "display": 1.0817800999837497
+      },
+      {
+        "numerator": 14449229,
+        "denominator": 14729004,
+        "display": 0.981005165047141
+      },
+      {
+        "numerator": 2068024,
+        "denominator": 2055419,
+        "display": 1.0061325695636754
+      },
+      {
+        "numerator": 14571097,
+        "denominator": 14345443,
+        "display": 1.0157300126597695
+      },
+      {
+        "numerator": 14373486,
+        "denominator": 14451493,
+        "display": 0.994602149411137
+      },
+      {
+        "numerator": 2086108,
+        "denominator": 2060543,
+        "display": 1.0124069238060065
+      },
+      {
+        "numerator": 14433478,
+        "denominator": 14559345,
+        "display": 0.9913548995507696
+      },
+      {
+        "numerator": 14481128,
+        "denominator": 14508379,
+        "display": 0.9981217060844634
+      }
+    ],
+    "median": {
+      "numerator": 29884230802864,
+      "denominator": 29820797855801,
+      "display": 1.0021271378240693
+    },
+    "interval": [
+      {
+        "numerator": 14433478,
+        "denominator": 14559345,
+        "display": 0.9913548995507696
+      },
+      {
+        "numerator": 14571097,
+        "denominator": 14345443,
+        "display": 1.0157300126597695
+      }
+    ],
+    "order_group_medians": {
+      "CW": {
+        "numerator": 2068024,
+        "denominator": 2055419,
+        "display": 1.0061325695636754
+      },
+      "WC": {
+        "numerator": 3612227,
+        "denominator": 3628773,
+        "display": 0.9954403320350984
+      }
+    },
+    "order_group_ratio": {
+      "numerator": 7504389654552,
+      "denominator": 7424640008113,
+      "display": 1.0107412138974896
+    },
+    "nominal_iid_median_coverage": "1002/1024"
+  },
+  "scope_limits": [
+    "PMU counts include warmup, drain, measurement and control bracket; loop CPU and latency retain their original scope",
+    "Interval coverage 1002/1024 is nominal under IID; independence is not established",
+    "Frozen large multiplicative boundary-shift rule not met in this configuration; smaller effects and historical causes remain unresolved",
+    "Secondary metrics cannot rescue primary result; no warmup subtraction, GHz conversion or CPU domain time decomposition",
+    "Old permission interpretation remains in historical receipts and is superseded by user scope correction"
+  ],
+  "retained_status": {
+    "original_pf04": "FAIL_UNCHANGED",
+    "dev2_b2_d0": "INCOMPLETE",
+    "performance_acceptance": "NOT_APPLICABLE"
+  },
+  "manifest": {
+    "file_count": 315,
+    "total_bytes": 27936904,
+    "sha256": "033d0797372e4f91901ecd5314be7070b763a2658d5ed4c0513c33c2139a6528"
+  },
+  "independent_review": {
+    "raw": {
+      "path": "/home/et16/xadb-dev2-evidence/pf04-boundary-comparison-20261025/raw-review.json",
+      "sha256": "7e07cef59037834960c0b905b407b642b4cd2509a574a6942b22068037f9593e"
+    },
+    "raw_status": "PASS_SCOPED_RETAINED_RAW_RECALCULATION",
+    "reviewer_native_or_test_runs": 0,
+    "final_status": "PASS_SCOPED_D1_D2_BOUNDARY_DIAGNOSTIC_EVIDENCE_AND_DOCUMENTS",
+    "final_receipt": {
+      "path": "/home/et16/xadb-dev2-evidence/pf04-boundary-comparison-20261025/outcome-review.json",
+      "sha256": "e1f867c923cad22ad98cd3c583a495f673ec5703b5dcaf30883141d97df95943"
+    }
+  }
+}

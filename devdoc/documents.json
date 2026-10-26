@@ -3,6 +3,91 @@
   "reference_base": "devdoc",
   "json_document_references": "Registered filenames are document IDs resolved by this catalogue. Markdown uses actual relative paths.",
   "documents": {
+    "dev2-pf04-mode-attribution-20261025.md": {
+      "path": "evidence/dev2-pf04-mode-attribution-20261025.md",
+      "role": "evidence",
+      "title": "DEV2 PF04 같은 경계의 모드별 실행 작업과 CPU 비용"
+    },
+    "dev2-pf04-mode-attribution-20261025.json": {
+      "path": "evidence/dev2-pf04-mode-attribution-20261025.json",
+      "role": "evidence",
+      "title": "DEV2 PF04 같은 경계의 모드별 실행 작업과 CPU 비용 기록"
+    },
+    "dev2-pf04-boundary-comparison-20261025.md": {
+      "path": "evidence/dev2-pf04-boundary-comparison-20261025.md",
+      "role": "evidence",
+      "title": "DEV2 PF04 warmup 뒤 관측 경계 대조"
+    },
+    "dev2-pf04-boundary-comparison-20261025.json": {
+      "path": "evidence/dev2-pf04-boundary-comparison-20261025.json",
+      "role": "evidence",
+      "title": "DEV2 PF04 warmup 뒤 관측 경계 대조 기록"
+    },
+    "dev3-catalog-create.md": {
+      "path": "contracts/dev3-catalog-create.md",
+      "role": "contracts",
+      "title": "DEV3 원 저장 세션의 첫 Catalog CREATE"
+    },
+    "dev3-create-root-format.md": {
+      "path": "contracts/dev3-create-root-format.md",
+      "role": "contracts",
+      "title": "DEV3 실제 CREATE의 Root512 v2"
+    },
+    "dev3-create-job-format.md": {
+      "path": "contracts/dev3-create-job-format.md",
+      "role": "contracts",
+      "title": "DEV3 실제 CREATE의 Job1024 v2"
+    },
+    "dev3-create-group-format.md": {
+      "path": "contracts/dev3-create-group-format.md",
+      "role": "contracts",
+      "title": "DEV3 실제 CREATE의 scope2 그룹 표현"
+    },
+    "dev3-create-recovery-base.md": {
+      "path": "contracts/dev3-create-recovery-base.md",
+      "role": "contracts",
+      "title": "DEV3 실제 CREATE의 exact-image 복구 base"
+    },
+    "dev3-visibility-retirement.md": {
+      "path": "contracts/dev3-visibility-retirement.md",
+      "role": "contracts",
+      "title": "DEV3 실제 snapshot·참조 pin·retirement 경계"
+    },
+    "dev2-pf04-prewarmup-20261025.md": {
+      "path": "evidence/dev2-pf04-prewarmup-20261025.md",
+      "role": "evidence",
+      "title": "DEV2 PF04 warmup 전 관측 경계"
+    },
+    "dev2-pf04-prewarmup-20261025.json": {
+      "path": "evidence/dev2-pf04-prewarmup-20261025.json",
+      "role": "evidence",
+      "title": "DEV2 PF04 prewarmup source·선택 검증 기록"
+    },
+    "dev3-commit-continuation.md": {
+      "path": "contracts/dev3-commit-continuation.md",
+      "role": "contracts",
+      "title": "DEV3 원 Commit의 지연 설치 수명"
+    },
+    "dev2-pf04-off-classification-20261025.md": {
+      "path": "evidence/dev2-pf04-off-classification-20261025.md",
+      "role": "evidence",
+      "title": "DEV2 PF04 동일 Off 실행의 변동 분류"
+    },
+    "dev2-pf04-off-classification-20261025.json": {
+      "path": "evidence/dev2-pf04-off-classification-20261025.json",
+      "role": "evidence",
+      "title": "DEV2 PF04 한정 Off 진단 실행·집계 기록"
+    },
+    "dev2-pf04-single-writer-20261025.md": {
+      "path": "evidence/dev2-pf04-single-writer-20261025.md",
+      "role": "evidence",
+      "title": "DEV2 PF04 C2 단일 쓰기 통계 후보 평가"
+    },
+    "dev2-pf04-single-writer-20261025.json": {
+      "path": "evidence/dev2-pf04-single-writer-20261025.json",
+      "role": "evidence",
+      "title": "DEV2 PF04 C2 source·검증·기각 기록"
+    },
     "dev2-pf04-flush-provenance-20261025.md": {
       "path": "evidence/dev2-pf04-flush-provenance-20261025.md",
       "role": "evidence",
@@ -2297,6 +2382,131 @@
       "path": "evidence/naming-cleanup-20261025.md",
       "role": "evidence",
       "title": "XADB 내부 명칭과 반복 파일명 정리"
+    },
+    "dev3-leaf-edit-20261025.md": {
+      "path": "evidence/dev3-leaf-edit-20261025.md",
+      "role": "evidence",
+      "title": "DEV3 첫 행의 bounded leaf 후보 편집"
+    },
+    "dev3-leaf-edit-20261025.json": {
+      "path": "evidence/dev3-leaf-edit-20261025.json",
+      "role": "evidence",
+      "title": "DEV3 leaf 후보 편집 source별 선택 검증"
+    },
+    "dev3-catalog-reader-20261025.md": {
+      "path": "evidence/dev3-catalog-reader-20261025.md",
+      "role": "evidence",
+      "title": "DEV3 원 Catalog guard의 typed physical 조회"
+    },
+    "dev3-catalog-reader-20261025.json": {
+      "path": "evidence/dev3-catalog-reader-20261025.json",
+      "role": "evidence",
+      "title": "DEV3 typed Catalog 조회 source별 선택 검증"
+    },
+    "dev2-pf04-cpu-split-20261025.md": {
+      "path": "evidence/dev2-pf04-cpu-split-20261025.md",
+      "role": "evidence",
+      "title": "DEV2 PF04 사용자·커널 CPU 분리 관측"
+    },
+    "dev2-pf04-cpu-split-20261025.json": {
+      "path": "evidence/dev2-pf04-cpu-split-20261025.json",
+      "role": "evidence",
+      "title": "DEV2 PF04 CPU 분리 source별 선택 검증"
+    },
+    "dev3-plan4-free-undo.md": {
+      "path": "contracts/dev3-plan4-free-undo.md",
+      "role": "contracts",
+      "title": "DEV3 원 plan4의 Free Undo 페이지 수명"
+    },
+    "dev2-pf04-cpu-accounting-20261025.md": {
+      "path": "evidence/dev2-pf04-cpu-accounting-20261025.md",
+      "role": "evidence",
+      "title": "DEV2 PF04 CPU 시간 집계 의미 조사"
+    },
+    "dev2-pf04-cpu-accounting-20261025.json": {
+      "path": "evidence/dev2-pf04-cpu-accounting-20261025.json",
+      "role": "evidence",
+      "title": "DEV2 PF04 CPU accounting 실제 source 기록"
+    },
+    "dev2-pf04-hotpath-20261025.md": {
+      "path": "evidence/dev2-pf04-hotpath-20261025.md",
+      "role": "evidence",
+      "title": "DEV2 PF04 보존 실행 파일의 주요 경로 검토"
+    },
+    "dev2-pf04-hotpath-20261025.json": {
+      "path": "evidence/dev2-pf04-hotpath-20261025.json",
+      "role": "evidence",
+      "title": "DEV2 PF04 보존 주요 경로 source·주소 기록"
+    },
+    "dev3-plan4-free-undo-20261025.md": {
+      "path": "evidence/dev3-plan4-free-undo-20261025.md",
+      "role": "evidence",
+      "title": "DEV3 원 plan4 Free Undo container 수명"
+    },
+    "dev3-plan4-free-undo-20261025.json": {
+      "path": "evidence/dev3-plan4-free-undo-20261025.json",
+      "role": "evidence",
+      "title": "DEV3 원 plan4 Free Undo source별 검증 기록"
+    },
+    "dev3-commit-continuation-20261025.md": {
+      "path": "evidence/dev3-commit-continuation-20261025.md",
+      "title": "DEV3 원 Commit 공통 continuation 선택 검증",
+      "role": "evidence"
+    },
+    "dev3-commit-continuation-20261025.json": {
+      "path": "evidence/dev3-commit-continuation-20261025.json",
+      "title": "DEV3 원 Commit 공통 continuation source별 기록",
+      "role": "evidence"
+    },
+    "dev3-catalog-transition-20261025.md": {
+      "path": "evidence/dev3-catalog-transition-20261025.md",
+      "role": "evidence",
+      "title": "DEV3 Catalog CREATE 순수 전이 검증"
+    },
+    "dev3-catalog-transition-20261025.json": {
+      "path": "evidence/dev3-catalog-transition-20261025.json",
+      "role": "evidence",
+      "title": "DEV3 Catalog CREATE 순수 전이 source별 기록"
+    },
+    "dev2-pf04-controller-placement-20261025.md": {
+      "path": "evidence/dev2-pf04-controller-placement-20261025.md",
+      "role": "evidence",
+      "title": "DEV2 PF04 원 native 제어기의 CPU 배치 대조"
+    },
+    "dev2-pf04-controller-placement-20261025.json": {
+      "path": "evidence/dev2-pf04-controller-placement-20261025.json",
+      "role": "evidence",
+      "title": "DEV2 PF04 원 native 제어기의 CPU 배치 대조 기록"
+    },
+    "dev2-pf04-frequency-control-20261025.md": {
+      "path": "evidence/dev2-pf04-frequency-control-20261025.md",
+      "role": "evidence",
+      "title": "DEV2 PF04 CPU 성능 요청 범위 제어"
+    },
+    "dev2-pf04-frequency-control-20261025.json": {
+      "path": "evidence/dev2-pf04-frequency-control-20261025.json",
+      "role": "evidence",
+      "title": "DEV2 PF04 CPU 성능 요청 범위 제어"
+    },
+    "dev3-catalog-input-controller-20261025.md": {
+      "path": "evidence/dev3-catalog-input-controller-20261025.md",
+      "role": "evidence",
+      "title": "DEV3 Catalog 독립 입력과 native 실행기 검증"
+    },
+    "dev3-catalog-input-controller-20261025.json": {
+      "path": "evidence/dev3-catalog-input-controller-20261025.json",
+      "role": "evidence",
+      "title": "DEV3 Catalog 독립 입력·실행기 source별 기록"
+    },
+    "dev3-catalog-live-milestone-20261025.md": {
+      "path": "evidence/dev3-catalog-live-milestone-20261025.md",
+      "role": "evidence",
+      "title": "DEV3 Catalog CREATE 구현 중간 저장"
+    },
+    "dev3-catalog-live-milestone-20261025.json": {
+      "path": "evidence/dev3-catalog-live-milestone-20261025.json",
+      "role": "evidence",
+      "title": "DEV3 Catalog CREATE 구현·실제 검증 source별 기록"
     }
   }
 }

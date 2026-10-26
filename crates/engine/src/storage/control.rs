@@ -163,12 +163,31 @@ pub(crate) struct ProfileSpec {
 /// Created only by complete fixed-root validation; not a reservation capability.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub(crate) struct Profile {
-    spec: ProfileSpec,
+    // Flatten the validated spec so format occupies its existing padding.
+    // A version2 profile is never reduced to an indistinguishable v1 value.
+    namespace: Namespace,
+    generation: u64,
+    id: u32,
+    format: u16,
     digest: [u8; 32],
 }
 impl Profile {
     pub(crate) fn spec(self) -> ProfileSpec {
-        self.spec
+        ProfileSpec {
+            namespace: self.namespace,
+            generation: self.generation,
+            id: self.id,
+        }
+    }
+    pub(crate) fn format(self) -> u16 {
+        self.format
+    }
+    pub(crate) fn base_bytes(self) -> usize {
+        match self.format {
+            1 => 1 << 20,
+            2 => 2 << 20,
+            _ => unreachable!("validated Profile format"),
+        }
     }
     pub(crate) fn digest(self) -> [u8; 32] {
         self.digest
@@ -177,11 +196,14 @@ impl Profile {
         OWNED_BYTES
     }
     pub(crate) fn buffer_bytes(self) -> u64 {
-        [4, 16, 64][self.spec.id as usize - 1] << 20
+        [4, 16, 64][self.id as usize - 1] << 20
     }
 }
 
-fn profile_prefix(id: u32) -> Result<[u8; 188]> {
+fn profile_prefix(id: u32, format: u16) -> Result<[u8; 188]> {
+    if !matches!(format, 1 | 2) {
+        return Err(ControlError::UnsupportedFormat);
+    }
     if !(1..=3).contains(&id) {
         return Err(ControlError::UnsupportedProfile);
     }
@@ -201,7 +223,7 @@ fn profile_prefix(id: u32) -> Result<[u8; 188]> {
         (96, 12 << 20),
         (104, 4 << 20),
         (160, CONTAINER_BYTES),
-        (168, 1 << 20),
+        (168, if format == 1 { 1 << 20 } else { 2 << 20 }),
     ];
     for (offset, value) in qwords {
         put64(&mut output, offset, value);
@@ -236,11 +258,20 @@ fn profile_prefix(id: u32) -> Result<[u8; 188]> {
 }
 
 pub(crate) fn encode_profile(spec: ProfileSpec, output: &mut [u8]) -> Result<&[u8]> {
+    encode_profile_format(spec, 1, output)
+}
+
+/// Current Catalog CREATE profile. All other control envelopes stay version1.
+pub(crate) fn encode_catalog_profile(spec: ProfileSpec, output: &mut [u8]) -> Result<&[u8]> {
+    encode_profile_format(spec, 2, output)
+}
+
+fn encode_profile_format(spec: ProfileSpec, format: u16, output: &mut [u8]) -> Result<&[u8]> {
     validate_namespace(spec.namespace)?;
     if spec.generation == 0 {
         return Err(ControlError::InvalidInput);
     }
-    let prefix = profile_prefix(spec.id)?;
+    let prefix = profile_prefix(spec.id, format)?;
     if output.len() < PROFILE_BYTES {
         return Err(ControlError::NoSpace);
     }
@@ -257,6 +288,7 @@ pub(crate) fn encode_profile(spec: ProfileSpec, output: &mut [u8]) -> Result<&[u
         0,
         PROFILE_BYTES,
     );
+    put16(output, 4, format);
     output[128..316].copy_from_slice(&prefix);
     seal(&mut output[..PROFILE_BYTES]);
     Ok(&output[..PROFILE_BYTES])
@@ -271,7 +303,7 @@ pub(crate) fn decode_bootstrap_profile(
     if let Some(namespace) = expected {
         validate_namespace(namespace)?;
     }
-    let header = read_header(input)?;
+    let header = read_header_for(input, true)?;
     if header.kind != ControlKind::Profile {
         return Err(ControlError::Corrupt);
     }
@@ -279,15 +311,15 @@ pub(crate) fn decode_bootstrap_profile(
         return Err(ControlError::IdentityMismatch);
     }
     let id = get32(input, 128);
-    if input[128..316] != profile_prefix(id)? || !zero(&input[316..4064]) {
+    let format = get16(input, 4);
+    if input[128..316] != profile_prefix(id, format)? || !zero(&input[316..4064]) {
         return Err(ControlError::UnsupportedProfile);
     }
     Ok(Profile {
-        spec: ProfileSpec {
-            namespace: header.identity.namespace,
-            generation: header.identity.generation,
-            id,
-        },
+        namespace: header.identity.namespace,
+        generation: header.identity.generation,
+        id,
+        format,
         digest: content_digest(input),
     })
 }
@@ -334,10 +366,10 @@ pub(crate) fn encode_selector(
     output[..4].copy_from_slice(b"XCS1");
     put16(output, 4, 1);
     output[6] = role as u8;
-    output[8..24].copy_from_slice(&profile.spec.namespace.database.bytes());
-    put64(output, 24, profile.spec.namespace.timeline);
+    output[8..24].copy_from_slice(&profile.namespace.database.bytes());
+    put64(output, 24, profile.namespace.timeline);
     put64(output, 32, selected.generation);
-    put64(output, 40, profile.spec.generation);
+    put64(output, 40, profile.generation);
     output[48..80].copy_from_slice(&profile.digest);
     output[80..144].copy_from_slice(&selected.reference.bytes());
     seal(&mut output[..SELECTOR_BYTES]);
@@ -360,8 +392,8 @@ pub(crate) fn decode_selector(
     }
     let namespace = decode_namespace(input, 8, 24)?;
     if input[6] != role as u8
-        || namespace != profile.spec.namespace
-        || get64(input, 40) != profile.spec.generation
+        || namespace != profile.namespace
+        || get64(input, 40) != profile.generation
         || input[48..80] != profile.digest
     {
         return Err(ControlError::IdentityMismatch);
@@ -391,7 +423,7 @@ pub(crate) fn decode_selected_doublewrite(
     doublewrite_control::decode_control(
         input,
         ControlExpectation {
-            namespace: profile.spec.namespace,
+            namespace: profile.namespace,
             generation: reference.generation,
         },
     )
@@ -411,7 +443,7 @@ pub(crate) struct MapIdentity {
 impl MapIdentity {
     fn validate(self, profile: Profile) -> Result<()> {
         validate_namespace(self.namespace)?;
-        if self.generation == 0 || self.slot > 1 || self.namespace != profile.spec.namespace {
+        if self.generation == 0 || self.slot > 1 || self.namespace != profile.namespace {
             return Err(ControlError::InvalidInput);
         }
         Ok(())
@@ -963,10 +995,15 @@ struct Envelope {
     count: u32,
 }
 fn read_header(input: &[u8]) -> Result<Envelope> {
+    read_header_for(input, false)
+}
+fn read_header_for(input: &[u8], profile_versions: bool) -> Result<Envelope> {
     if input.len() < 160 || input[..4] != *b"XDC1" {
         return Err(ControlError::Corrupt);
     }
-    if get16(input, 4) != 1 {
+    if get16(input, 4) != 1
+        && !(profile_versions && get16(input, 4) == 2 && input[6] == ControlKind::Profile as u8)
+    {
         return Err(ControlError::UnsupportedFormat);
     }
     let kind = ControlKind::decode(input[6])?;
@@ -1024,7 +1061,7 @@ fn bind_header(
     bind_digest(input, reference)?;
     let header = read_header(input)?;
     if header.kind != kind
-        || header.identity.namespace != profile.spec.namespace
+        || header.identity.namespace != profile.namespace
         || header.identity.slot != reference.slot
         || header.identity.generation != reference.generation
         || header.index != reference.index

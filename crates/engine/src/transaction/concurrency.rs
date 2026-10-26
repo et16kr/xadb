@@ -1,6 +1,6 @@
 //! DEV3 3.10.1.a.1: bounded operation admission and one version-edit gate.
-//! No page latch, snapshot, FIFO turn, WAL stage or Commit installation API.
-//! The separate test-support module simulates the future installation boundary.
+//! Private Commit continuation retains the original core and consumes sealed WAL
+//! receipts. Their semantic constructors remain unavailable until the real producer.
 #![allow(dead_code)] // Awaiting separately reviewed page/transaction consumers.
 
 use crate::storage::session_fence::SessionFence;
@@ -8,12 +8,29 @@ use foundation::error::Effect;
 use std::{
     marker::PhantomData,
     rc::Rc,
-    sync::{Mutex, MutexGuard, TryLockError},
+    sync::{Condvar, Mutex, MutexGuard, TryLockError},
+};
+
+#[path = "concurrency_commit.rs"]
+mod commit;
+use commit::Installation;
+#[allow(unused_imports)] // The source-census consumer is a separately supplied leaf.
+pub(crate) use commit::source_bytes as commit_common_source_bytes;
+#[allow(unused_imports)] // Sealed continuation types are named by their later consumer.
+pub(crate) use commit::{
+    CommitInstalling, CommitStage, DrainingInstallation, InstallationKey, PendingInstallation,
+    PrepareCommitError,
 };
 
 #[cfg(test)]
 #[path = "concurrency_test_support.rs"]
 pub(super) mod test_support;
+
+/// One-shot observations of actual Catalog consumers. This facade deliberately
+/// exposes no simulated Commit transition or authority constructor.
+#[cfg(test)]
+#[path = "concurrency_catalog_test_support.rs"]
+pub(crate) mod catalog_test_support;
 
 /// Test-only injection for a downstream owner's checked admission cleanup.
 #[cfg(test)]
@@ -66,11 +83,9 @@ enum Mode {
     Apply,
     Content,
     Retired,
-    #[cfg(test)]
     CommitStage,
-    #[cfg(test)]
     CommitPending,
-    #[cfg(test)]
+    CommitDraining,
     CommitInstalling,
 }
 
@@ -90,10 +105,9 @@ struct State {
     slots: [OwnerSlot; OWNER_SLOTS],
     active_apply: u16,
     active_content: u16,
-    #[cfg(test)]
-    installation: test_support::Installation,
-    #[cfg(test)]
+    installation: Installation,
     installation_generation: u64,
+    version_generation: u64,
 }
 impl State {
     const fn new() -> Self {
@@ -101,10 +115,9 @@ impl State {
             slots: [OwnerSlot::EMPTY; OWNER_SLOTS],
             active_apply: 0,
             active_content: 0,
-            #[cfg(test)]
-            installation: test_support::Installation::Open,
-            #[cfg(test)]
+            installation: Installation::Open,
             installation_generation: 0,
+            version_generation: 0,
         }
     }
 
@@ -119,14 +132,13 @@ impl State {
                 Mode::Idle if slot.generation != 0 => {}
                 Mode::Apply if slot.generation != 0 && index != FLUSHER_SLOT => apply += 1,
                 Mode::Content if slot.generation != 0 => content += 1,
-                #[cfg(test)]
                 Mode::CommitStage | Mode::CommitInstalling
                     if slot.generation != 0 && index < FOREGROUND_OWNERS =>
                 {
                     apply += 1;
                 }
-                #[cfg(test)]
-                Mode::CommitPending if slot.generation != 0 && index < FOREGROUND_OWNERS => {}
+                Mode::CommitPending | Mode::CommitDraining
+                    if slot.generation != 0 && index < FOREGROUND_OWNERS => {}
                 _ => return false,
             }
         }
@@ -144,22 +156,14 @@ impl State {
         if !self.accounting_valid() {
             return false;
         }
-        #[cfg(test)]
-        if !test_support::valid_installation(self) {
+        if !commit::valid_installation(self) {
             return false;
         }
         true
     }
 
     fn installation_open(&self) -> bool {
-        #[cfg(test)]
-        {
-            self.installation == test_support::Installation::Open
-        }
-        #[cfg(not(test))]
-        {
-            true
-        }
+        self.installation == Installation::Open
     }
 }
 
@@ -169,6 +173,7 @@ pub(crate) struct PageConcurrency<'f> {
     fence: &'f SessionFence,
     state: Mutex<State>,
     version: Mutex<()>,
+    continuation: Condvar,
     #[cfg(test)]
     hooks: Mutex<test_support::Hooks>,
 }
@@ -206,6 +211,7 @@ impl<'f> PageConcurrency<'f> {
             fence,
             state: Mutex::new(State::new()),
             version: Mutex::new(()),
+            continuation: Condvar::new(),
             #[cfg(test)]
             hooks: Mutex::new(test_support::Hooks::default()),
         })
@@ -213,6 +219,7 @@ impl<'f> PageConcurrency<'f> {
 
     fn fatal(&self, cause: Cause) -> ConcurrencyError {
         self.fence.fence();
+        self.continuation.notify_all();
         ConcurrencyError {
             cause,
             effect: Effect::CallerMustResolve,
@@ -264,6 +271,7 @@ impl<'f> PageConcurrency<'f> {
     fn fence_unwind(&self) {
         if std::thread::panicking() {
             self.fence.fence();
+            self.continuation.notify_all();
             #[cfg(test)]
             test_support::hit_pause(self, test_support::PausePoint::FencedBeforeRelease);
         }
@@ -317,6 +325,21 @@ pub(crate) struct Owner<'c, 'f> {
     _thread: PhantomData<Rc<()>>,
 }
 
+/// Bounded census identity, never an admission or a replacement Owner.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub(crate) struct OwnerIdentity {
+    index: u8,
+    generation: u64,
+}
+impl OwnerIdentity {
+    pub(crate) fn index(self) -> usize {
+        usize::from(self.index)
+    }
+    pub(crate) fn generation(self) -> u64 {
+        self.generation
+    }
+}
+
 impl<'c, 'f> Owner<'c, 'f> {
     /// Distinct cores may borrow the same fence, so consumers bind this exact
     /// core before charging pins or entering an admission section.
@@ -338,6 +361,24 @@ impl<'c, 'f> Owner<'c, 'f> {
         }
         self.check_mode(&state, Mode::Idle)?;
         Ok(true)
+    }
+
+    /// Used before the original consumer borrows this owner for page access.
+    /// A copied identity cannot recreate the owner or enter an admission.
+    pub(crate) fn visibility_identity(
+        &self,
+        expected: &PageConcurrency<'_>,
+    ) -> Result<OwnerIdentity> {
+        if !self.check_binding(expected)? {
+            return Err(unchanged(Cause::InvalidRole));
+        }
+        if self.index == FLUSHER_SLOT {
+            return Err(unchanged(Cause::InvalidRole));
+        }
+        Ok(OwnerIdentity {
+            index: self.index as u8,
+            generation: self.generation,
+        })
     }
 
     /// A flusher can copy/finalize existing content, but cannot acquire Apply.
@@ -396,6 +437,12 @@ impl<'c, 'f> Owner<'c, 'f> {
         {
             let mut state = self.core.entry_state()?;
             self.check_mode(&state, Mode::Idle)?;
+            if matches!(
+                state.installation,
+                Installation::Draining(_, _) | Installation::Installing(_, _)
+            ) {
+                return Err(unchanged(Cause::InstallationPending));
+            }
             let count = state
                 .active_content
                 .checked_add(1)
@@ -430,6 +477,8 @@ impl<'c, 'f> Owner<'c, 'f> {
             state.slots[self.index].mode = Mode::Idle;
             Ok(())
         })();
+        drop(state);
+        self.core.continuation.notify_all();
         match failure {
             Some(error) => Err(error),
             None => cleanup,
@@ -471,6 +520,7 @@ impl<'o, 'c, 'f> ApplyAdmission<'o, 'c, 'f> {
             core: self.core,
             gate: None,
             admission: Some(self),
+            generation: 0,
         };
         match guard.acquire_version() {
             Ok(()) => Ok(guard),
@@ -522,8 +572,53 @@ pub(crate) struct VersionEditGuard<'o, 'c, 'f> {
     core: &'c PageConcurrency<'f>,
     gate: Option<MutexGuard<'c, ()>>,
     admission: Option<ApplyAdmission<'o, 'c, 'f>>,
+    generation: u64,
+}
+
+/// Identifies one continuous hold of the original version mutex.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub(crate) struct VersionIdentity {
+    owner: OwnerIdentity,
+    generation: u64,
+}
+impl VersionIdentity {
+    pub(crate) fn owner(self) -> OwnerIdentity {
+        self.owner
+    }
 }
 impl<'o, 'c, 'f> VersionEditGuard<'o, 'c, 'f> {
+    /// A horizon observation must be consumed during this exact gate hold.
+    /// This query neither releases the gate nor admits another application.
+    pub(crate) fn visibility_identity(
+        &self,
+        expected: &PageConcurrency<'_>,
+    ) -> Result<VersionIdentity> {
+        if !std::ptr::eq(self.core, expected) {
+            return Err(unchanged(Cause::InvalidRole));
+        }
+        let state = self.core.entry_state()?;
+        let owner = self
+            .admission
+            .as_ref()
+            .and_then(|admission| admission.owner.as_deref())
+            .ok_or_else(|| self.core.fatal(Cause::Invariant))?;
+        owner.check_mode(&state, Mode::Apply)?;
+        if self.gate.is_none()
+            || self.generation == 0
+            || self.generation != state.version_generation
+            || !state.installation_open()
+        {
+            return Err(self.core.fatal(Cause::Invariant));
+        }
+        Ok(VersionIdentity {
+            owner: OwnerIdentity {
+                index: owner.index as u8,
+                generation: owner.generation,
+            },
+            generation: self.generation,
+        })
+    }
+
     /// Called after consumer content guards are released. The gate is returned
     /// before the leaf admission state is acquired for checked cleanup.
     pub(crate) fn release_checked(mut self) -> Result<()> {
@@ -567,11 +662,16 @@ impl<'o, 'c, 'f> VersionEditGuard<'o, 'c, 'f> {
         #[cfg(test)]
         test_support::hit_pause(core, test_support::PausePoint::AfterVersionLock);
         {
-            let state = core.entry_state()?;
+            let mut state = core.entry_state()?;
             owner.check_mode(&state, Mode::Apply)?;
             if !state.installation_open() {
                 return Err(unchanged(Cause::InstallationPending));
             }
+            self.generation = state
+                .version_generation
+                .checked_add(1)
+                .ok_or_else(|| unchanged(Cause::GenerationExhausted))?;
+            state.version_generation = self.generation;
         }
         Ok(())
     }

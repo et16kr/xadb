@@ -1,0 +1,266 @@
+{
+  "schema_version": 1,
+  "date": "2026-10-25",
+  "owner": "/root",
+  "reviewer": "/root/pf04_evidence_review",
+  "scope": "One explicitly authorized unchanged-code K0 Off diagnostic campaign and correctness checking of new outputs",
+  "evidence_root": "/home/et16/xadb-dev2-evidence/pf04-off-classification-20261025",
+  "plan_commit": "5da1573",
+  "proposal": {
+    "path": "/home/et16/xadb-dev2-evidence/pf04-off-classification-20261025/proposal.json",
+    "sha256": "a2876aaa2332915e6894ab53c978b34fd8191e9a477b740d9ad8ed044b501e29"
+  },
+  "authorization": {
+    "path": "/home/et16/xadb-dev2-evidence/pf04-off-classification-20261025/authorization.json",
+    "sha256": "5ee7c462b87a4c5b04ba2fff7da2b2807b3af5a1878ce2da274599e5bcdfde64"
+  },
+  "input": {
+    "path": "/home/et16/xadb-dev2-evidence/pf04-off-classification-20261025/request.bin",
+    "sha256": "2af1d575af1300f452cf31f521ff1e1b70c5bbda17f9d71efce7d04d81048851"
+  },
+  "build": {
+    "build": {
+      "source_sha256": "7ced0a5622825b971a4a146cdd8d1ce4a5ef01eefe633e59deb6b338390a5329",
+      "toolchain": "rustc 1.95.0 (59807616e 2026-04-14)",
+      "target": "x86_64-unknown-linux-gnu",
+      "profile": "release",
+      "self_test": false
+    },
+    "workers": {
+      "k0": {
+        "path": "/home/et16/xadb-dev2-evidence/pf04-k0-owner-20261025/baseline-release/xadbtest-engine-worker",
+        "sha256": "b554e895ab3026f5d393c5566ac2cbef3b406801c659ef4da9b0800a2096fb45"
+      }
+    }
+  },
+  "oracle": {
+    "path": "/home/et16/xadb-dev2-evidence/pf04-k0-owner-20261025/target-candidate/debug/deps/measurement_window_output-d11a09a6ee5bc8b6",
+    "sha256": "a1a7bda07962b75afb2d9d43d86fb7d59ebb4098f4b505eff0c831870096966c",
+    "case": "retained_diagnostic_output_is_correct_but_not_accepted_as_performance",
+    "arguments": [
+      "--ignored",
+      "--exact",
+      "retained_diagnostic_output_is_correct_but_not_accepted_as_performance"
+    ],
+    "environment_key": "XADBTEST_WINDOW_NATIVE_EVIDENCE",
+    "purpose": "Validate only each newly collected output; no worker launched by adapter"
+  },
+  "execution_driver": {
+    "path": "/home/et16/xadb-dev2-evidence/pf04-off-classification-20261025/run.py",
+    "sha256": "5f61a0861ef85de23502d6dd3546a6ab7ca72d9280770f1b4191729c8744a661"
+  },
+  "aggregation_script": {
+    "path": "/home/et16/xadb-dev2-evidence/pf04-off-classification-20261025/summarize.py",
+    "sha256": "bacb4c341553c8667a31ee696f95df0ef12cf80d84ceac2798118ecd9524f070"
+  },
+  "execution_summary": {
+    "path": "/home/et16/xadb-dev2-evidence/pf04-off-classification-20261025/execution/summary.json",
+    "sha256": "e4a2d78687a2f0a15b6bb2e398d0df03479b0dae2b01e88752c2cfb9d4acf621"
+  },
+  "analysis": {
+    "path": "/home/et16/xadb-dev2-evidence/pf04-off-classification-20261025/analysis.json",
+    "sha256": "3d4c568337568936cd5758af5c11830cbc89f717c692ae1488d408bdb9c4a7cb"
+  },
+  "source_files": {
+    "/home/et16/work/xadb/scripts/dev2_measurement_window.py": "bc4811b5751c50755938309f78c7543e48843a6370b3e6aecc0cfb5de051a57e",
+    "/home/et16/work/xadb/scripts/check_dev2_window_native.py": "5fff16a636368232ccbc91d12f1fc94008d38fc86a0f4f9748e7a83315d23050",
+    "/home/et16/work/xadb/scripts/dev2_io_trace.py": "4979eae8cedb3806eb69777a2bf4a1a95eeaf571c4d317f088d8022f36496ac8",
+    "/home/et16/work/xadb/scripts/dev2_io_analysis.py": "db1a16147b3f00254b20a0e14ad16176d91cb56627d455fb0c8049460fb575c9",
+    "/home/et16/work/xadb/scripts/dev2_durable_performance.py": "5e8a6f6d9ee9a6eabdec85dde755d2e97dc7551ca2b685bc074ae5047a658570",
+    "/home/et16/work/xadb/scripts/dev2_durable_bridge.py": "e2ce35a12cd5b241419c3d1069bed1b5a8e32a8bf292e901919d96e273a0c493",
+    "/home/et16/work/xadb/scripts/dev2_durable_oracle.py": "459b377d59edcf60abb9f818033b4e8c393cc3a184a9d6ca4e9a67c2e8b0dda1",
+    "/home/et16/xadb-dev2-evidence/pf04-cpu-split-20261025/observe.py": "b1901a84ef16fc971e272bf33b30a9a49419b841c51a4af1327ed0e41f8df50f",
+    "/home/et16/xadb-dev2-evidence/pf04-flush-provenance-20261025/repair/observe.py": "92e0ad947d1babfbcda2c1b2b523805254900e46e00e7f98c75a29e825076396"
+  },
+  "result": {
+    "schema_version": 1,
+    "method": "Fixed CPU top/bottom five; same groups for every metric; descriptive only",
+    "campaign_wall_seconds": 203.62747701300214,
+    "completed": 20,
+    "classification": "UNKNOWN_NO_FROZEN_BAND",
+    "original_pf04": "FAIL_UNCHANGED",
+    "dev2_b2_d0": "INCOMPLETE",
+    "acceptance": "NOT_APPLICABLE",
+    "lower_slots": [
+      15,
+      8,
+      10,
+      14,
+      1
+    ],
+    "upper_slots": [
+      0,
+      3,
+      6,
+      9,
+      17
+    ],
+    "comparison": {
+      "cpu_ns": {
+        "lower_median": 14367505,
+        "upper_median": 14540419,
+        "upper_over_lower": 1.0120350749834435
+      },
+      "elapsed_ns": {
+        "lower_median": 14367218,
+        "upper_median": 14540095,
+        "upper_over_lower": 1.0120327400892783
+      },
+      "p50_ns": {
+        "lower_median": 231.0,
+        "upper_median": 240.0,
+        "upper_over_lower": 1.0389610389610389
+      },
+      "p99_ns": {
+        "lower_median": 250,
+        "upper_median": 251,
+        "upper_over_lower": 1.004
+      },
+      "user_cpi": {
+        "lower_median": 0.8604860017870503,
+        "upper_median": 0.8613884087912208,
+        "upper_over_lower": 1.0010487178202743
+      },
+      "user_cycles_per_ref": {
+        "lower_median": 2.085369321831729,
+        "upper_median": 2.083874734956714,
+        "upper_over_lower": 0.999283298713869
+      },
+      "control_bracket_ns": {
+        "lower_median": 18622209,
+        "upper_median": 18614905,
+        "upper_over_lower": 0.9996077801511088
+      },
+      "boundary_excess_ns": {
+        "lower_median": 2856,
+        "upper_median": 2824,
+        "upper_over_lower": 0.988795518207283
+      },
+      "cycles:u": {
+        "lower_median": 74295363,
+        "upper_median": 74373333,
+        "upper_over_lower": 1.0010494598431399
+      },
+      "cycles:k": {
+        "lower_median": 592533,
+        "upper_median": 1117291,
+        "upper_over_lower": 1.885618184978727
+      },
+      "instructions:u": {
+        "lower_median": 86341172,
+        "upper_median": 86341164,
+        "upper_over_lower": 0.9999999073443201
+      },
+      "instructions:k": {
+        "lower_median": 807724,
+        "upper_median": 798255,
+        "upper_over_lower": 0.9882769361811709
+      },
+      "ref-cycles:u": {
+        "lower_median": 35619625,
+        "upper_median": 35841175,
+        "upper_over_lower": 1.0062198858073323
+      },
+      "context-switches": {
+        "lower_median": 3,
+        "upper_median": 3,
+        "upper_over_lower": 1.0
+      },
+      "cpu-migrations": {
+        "lower_median": 0,
+        "upper_median": 0,
+        "upper_over_lower": null
+      },
+      "page-faults": {
+        "lower_median": 135,
+        "upper_median": 135,
+        "upper_over_lower": 1.0
+      },
+      "rusage_user_ns": {
+        "lower_median": 14201000,
+        "upper_median": 14433000,
+        "upper_over_lower": 1.0163368776846702
+      },
+      "rusage_system_ns": {
+        "lower_median": 200000,
+        "upper_median": 141000,
+        "upper_over_lower": 0.705
+      },
+      "minor_faults": {
+        "lower_median": 135,
+        "upper_median": 135,
+        "upper_over_lower": 1.0
+      },
+      "major_faults": {
+        "lower_median": 0,
+        "upper_median": 0,
+        "upper_over_lower": null
+      },
+      "voluntary_switches": {
+        "lower_median": 0,
+        "upper_median": 0,
+        "upper_over_lower": null
+      },
+      "involuntary_switches": {
+        "lower_median": 0,
+        "upper_median": 0,
+        "upper_over_lower": null
+      }
+    },
+    "band_threshold": 1.1,
+    "broad_speed_band_observed": false
+  },
+  "activity": {
+    "native_off_runs": 20,
+    "new_output_oracle_cases": 20,
+    "old_product_or_tool_test_reruns": 0,
+    "original_acceptance_campaigns": 0,
+    "new_builds": 0,
+    "product_changes": 0,
+    "repository_collector_changes": 0,
+    "external_driver_files": 2,
+    "additional_retries": 0,
+    "host_setting_changes": 0,
+    "restarts": 0,
+    "bpf_runs": 0,
+    "pushes": 0
+  },
+  "review": {
+    "execution_preflight": {
+      "path": "/home/et16/xadb-dev2-evidence/pf04-off-classification-20261025/execution-review.json",
+      "sha256": "84d5405a12a6ab49a9b62552cbbf8150f3cc8c908eb9683c2ec9b1e9320280e5"
+    },
+    "status": "PASS_SCOPED_D1_D2_RETAINED_OUTCOME_AND_DOCUMENT_INTERPRETATION",
+    "outcome": {
+      "path": "/home/et16/xadb-dev2-evidence/pf04-off-classification-20261025/outcome-review.json",
+      "sha256": "37986346d7e2f4c121d1ca0a90a689dd64834b4666e5798aee5a25eac0555021",
+      "blocking_findings": 0
+    },
+    "boundary_note": {
+      "path": "/home/et16/xadb-dev2-evidence/pf04-off-classification-boundary-review-20261025.json",
+      "sha256": "14647331ff20d0529db83750ea80d4379667db09f03c4a4aee7f93ff736247c7",
+      "status": "PASS_SCOPED_START_GO_BOUNDARY_FACT_AND_NONCAUSAL_LIMITATION"
+    }
+  },
+  "decision": {
+    "classification": "UNKNOWN_NO_FROZEN_BAND",
+    "performance_acceptance": "NOT_APPLICABLE",
+    "original_pf04": "FAIL_UNCHANGED",
+    "dev2_b2_d0": "INCOMPLETE",
+    "automatic_additional_execution": false,
+    "overall_goal_achieved": false
+  },
+  "manifest": {
+    "path": "/home/et16/xadb-dev2-evidence/pf04-off-classification-20261025/manifest.json",
+    "sha256": "0204a57a8b2dcc4e6296dcbf6663db13e56f4028b9df5c38d45d6786094b6d2b",
+    "file_count": 294,
+    "bytes": 27601711
+  },
+  "limitations": [
+    "No broad speed band in this campaign does not resolve prior failures.",
+    "PMU reports full coverage for its control bracket, not loop-only isolation.",
+    "Rusage partition is not an independent exact user/kernel CPU decomposition.",
+    "No frequency inference from cycles/reference cycles.",
+    "Retained source 5253caa runs active START/GO after warmup; ordinary inactive acceptance lacks that exchange. The effect of this pre-measurement difference is unmeasured."
+  ]
+}

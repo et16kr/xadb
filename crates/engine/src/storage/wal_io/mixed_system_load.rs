@@ -105,7 +105,7 @@ impl<W: WriterNamespace> MixedSystem<'_, '_, '_, '_, '_, '_, '_, W> {
         if !fits::<W>() {
             return Err(unchanged(LoadCause::Capacity));
         }
-        if !bound.control.role.mixed() || !bound.pool.mixed_payloads() {
+        if !bound.control.role.mixed() || !bound.pool.mixed_payloads().map_err(frame)? {
             return Err(self.load_fatal(LoadCause::Invariant));
         }
         if bound.control.installation.is_some()

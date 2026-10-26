@@ -1,5 +1,15 @@
 # 현재 구현
 
+- [DEV3 원 Commit 공통 continuation](dev3-implementation.md#commit-continuation) — 공통 수명·변경 선택 검증·독립 D1 한정 수용; actual Commit·nonempty 복구 미완료.
+
+2026-10-25 [DEV2 PF04 사용자·커널 CPU 관측](dev2-implementation.md#dev2-pf04-cpu-split-20261025): 기본6event를 유지하고8event profile을 추가했다. 선택6함수·실제2연결 완료, 원 PF04·DEV2 미완료.
+
+2026-10-25 [DEV3 원 Catalog guard의 typed 조회](dev3-implementation.md#typed-catalog-read): 기존3pin 안의 physical record·빌림 수명 선택 검증 완료, 실제 nonempty Catalog·첫 행·DEV3/S5 미완료.
+
+2026-10-25 [DEV2 PF04 C2 후보 기각](dev2-implementation.md#dev2-pf04-single-writer-20261025): 단일 writer 통계 후보의 선택 검증·40개 비교를 완료했으나5% 기준에 미달하여 제품에 반영하지 않았다. PF04·DEV2는 미완료다.
+
+2026-10-25 [DEV3 첫 행의 leaf 후보 편집](dev3-implementation.md#leaf-edit): Insert/Replace/Remove 후보·수명 선택 검증 완료, 실제 행 거래·DEV3/S5 미완료.
+
 - [DEV3 plan4 빈 거래 live·prefix](dev3-implementation.md#retention-live) — 필수75 source별 PASS; fresh 수명·flush·재적재 연결, 복구/DEV3/S5 미완료
 
 - [DEV3 복구 이미지·제어 레코드](dev3-implementation.md#recovery-control-base) — 필수272 source별 PASS·원 실패 보존; 실제 복구 owner와 DEV3/S5 미완료

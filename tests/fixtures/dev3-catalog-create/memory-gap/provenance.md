@@ -1,0 +1,13 @@
+# MC03 / MC04 independent inputs
+
+The exact input plan `3c21253e75cb168a34c7f4d054a27e1bbeb536221a96389208052371f4dd9208` was adopted by root and read independently by dev3_review before one generation and one raw audit. The writer imports only the SHA-pinned independent native/transition/System Python serializers. It never invokes their main functions, imports a product module, runs Rust, or reads actual product output. Existing corpora remain unchanged.
+
+The generated manifest is `edfe57082b56540ea5e71f0d5109ca98dc131369d1906388f5dd171f69d3a92b`: 26 operation rows, six canonical checkpoints, and 137 unique blobs totaling 3,382,130 bytes. The independent stdlib parser audited the full raw inventory and hashes, exact LSN/epoch/operation schedule, frame lengths, semantic owner/descriptors/native/redo identities, current Status/Undo/Catalog actors, Root/Jobs/credit equations, allocator page identities, checkpoint scalars, common native prefixes, and MC04's original K suffix. Generation took 0.036257 seconds and audit 0.008655 seconds, within the separate 30-second limits; both stderr files are empty.
+
+MC03 changes the first successful transaction actor to epoch1/local2/generation2. Its object6, Undo sequence1/generation2, pair11/12/incarnation2, Job generations2, and commit q1 remain the first logical CREATE values. Actual runtime must consume local1 in the original Begin preflight and then restore only the coherent original frame/DPT counters. This corpus does not simulate that failure or give a parsed actor authority. Epoch2 cleanup is L10..15 after the actual Commit9 image is recovered.
+
+MC04 retains actor epoch1/local1/generation2 while the fresh runtime's Cancel8/Rollback9/Abort10/TerminalFinish11 outer frames use epoch2. The expected semantic bodies/pages match K03..K06; only the outer writer epoch and its two envelope seals differ. The actual Reserved token Drop must fence after durable Reserve7 and must not append a Cancel itself.
+
+`steps.tsv` has the same 21-column shape as the original native corpus. `manifest.json` has `rows` and `checkpoints`, indexed by scenario and absolute LSN. `raw-index.tsv` is an exact bounded SHA/length/path inventory. The original consumer can read these immutable expectations, but must never install them into a live pool/home as a source of grants. Free/Reserved canonical arena images are zero; physical stale home bytes are not claimed zero. Actual selected-base provenance and fresh recovery remain runtime obligations.
+
+This is input preparation, not compiler, product, memory, or native execution evidence. The 65,536-byte source component cap and all other original limits remain unchanged. The receipt binds the writer, auditor, plan, manifests, raw index, stdout and stderr.

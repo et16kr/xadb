@@ -1,0 +1,294 @@
+{
+  "id": "D3-CREATE-NATIVE-ORACLE-G1",
+  "status": "PROPOSED_FOR_ROOT_HASH_ADOPTION",
+  "author": "/root/dev3_review",
+  "scope": "CREATE checkpoint only; actual product/native execution is not authorized by this input generation plan",
+  "output_directory": "tests/fixtures/dev3-catalog-create/native",
+  "source_inputs": {
+    "tests/fixtures/dev3-catalog-create/transition/generate_literals.py": "3716f9d63f099051363bebeeaf0ebe4586ccd0984aa91735a7de82eba7d23b7e",
+    "tests/fixtures/dev3-plan4-free-undo/generate_literals.py": "a9a646f5fd047b1fbd73d743d99d56cde9a8217bf65587d08e9dd1f892e6bb42"
+  },
+  "immutable_existing_transition_manifest": "6da4346527580f3988deb480546fd6e4ee6aa57201a4bedbb7dec60c4f1509eb",
+  "namespace": {
+    "database_hex": "0102030405060708090a0b0c0d0e0f10",
+    "timeline": 1,
+    "file": 4294967297,
+    "profile_id": 1,
+    "profile_format": 2
+  },
+  "setup": [
+    {
+      "lsn": 1,
+      "operation": "AgingStart",
+      "bytes": 19672
+    },
+    {
+      "lsn": 2,
+      "operation": "StatusReserve",
+      "page": 9,
+      "work": 1,
+      "bytes": 21200
+    },
+    {
+      "lsn": 3,
+      "operation": "StatusInit",
+      "page": 9,
+      "work": 1,
+      "bytes": 38000
+    },
+    {
+      "lsn": 4,
+      "operation": "UndoReserve",
+      "page": 10,
+      "work": 2,
+      "bytes": 21200
+    },
+    {
+      "lsn": 5,
+      "operation": "UndoInit",
+      "page": 10,
+      "work": 2,
+      "bytes": 38208
+    }
+  ],
+  "scenarios": {
+    "N01": {
+      "purpose": "ACK T, actual old-WAL discard/recovery, independent U ACK and recrash",
+      "phases": [
+        {
+          "pid": 1,
+          "epoch": 1,
+          "lsns": [
+            1,
+            9
+          ],
+          "cut": "after controller AckObserved(T), before further logical groups"
+        },
+        {
+          "pid": 2,
+          "epoch": 2,
+          "lsns": [
+            10,
+            19
+          ],
+          "selected_capture": 9,
+          "cut": "after controller AckObserved(U), before further logical groups"
+        },
+        {
+          "pid": 3,
+          "epoch": 3,
+          "lsns": [
+            20,
+            25
+          ],
+          "selected_capture": 19,
+          "end": "READY/query T+U"
+        }
+      ],
+      "sequences": [
+        {
+          "model_cycle": 1,
+          "name": "T",
+          "actor_epoch": 1,
+          "actor_local": 1,
+          "slot_generation": 2,
+          "undo_sequence": 1,
+          "object": 6,
+          "pair": [
+            11,
+            12
+          ],
+          "terminal": 0,
+          "root": 1,
+          "terminal_generation": 2,
+          "root_generation": 2,
+          "operations": [
+            "Begin6",
+            "Reserve7",
+            "Forward8",
+            "Commit9",
+            "Prune10",
+            "Release11",
+            "Release12",
+            "Release13",
+            "RootFree14",
+            "TerminalFinish15"
+          ]
+        },
+        {
+          "model_cycle": 2,
+          "name": "U",
+          "actor_epoch": 2,
+          "actor_local": 1,
+          "slot_generation": 3,
+          "undo_sequence": 2,
+          "object": 7,
+          "pair": [
+            13,
+            14
+          ],
+          "terminal": 1,
+          "root": 2,
+          "terminal_generation": 3,
+          "root_generation": 2,
+          "operations": [
+            "Begin16",
+            "Reserve17",
+            "Forward18",
+            "Commit19",
+            "Prune20",
+            "Release21",
+            "Release22",
+            "Release23",
+            "RootFree24",
+            "TerminalFinish25"
+          ]
+        }
+      ],
+      "final": {
+        "lsn": 25,
+        "revision": 22,
+        "issued": 4,
+        "completed": 4,
+        "canceled": 0,
+        "cursor": 2,
+        "undo_high": 2,
+        "object_high": 7,
+        "C": 2,
+        "Q": 2,
+        "aging_groups": 21,
+        "aging_consumed": 754128,
+        "aging_remaining": 0
+      }
+    },
+    "N02": {
+      "purpose": "actual uncommitted steal plus durable CLR then recrash",
+      "actor_epoch": 1,
+      "actor_local": 1,
+      "slot_generation": 2,
+      "phases": [
+        {
+          "pid": 1,
+          "epoch": 1,
+          "lsns": [
+            1,
+            8
+          ],
+          "cut": "Catalog page8 LSN8 DWB Pending published+dirsync, before home syscall"
+        },
+        {
+          "pid": 2,
+          "epoch": 2,
+          "lsns": [
+            9,
+            10
+          ],
+          "selected_capture": 8,
+          "cut": "CLR10 durable before AbortEnd"
+        },
+        {
+          "pid": 3,
+          "epoch": 3,
+          "lsns": [
+            11,
+            16
+          ],
+          "selected_capture": 10,
+          "end": "READY/query T absent"
+        }
+      ],
+      "operations": [
+        "Begin6",
+        "Reserve7",
+        "Forward8",
+        "RollbackStart9",
+        "CLR10",
+        "AbortEnd11",
+        "Release12",
+        "Release13",
+        "Release14",
+        "RootFree15",
+        "TerminalFinish16"
+      ],
+      "final": {
+        "lsn": 16,
+        "revision": 12,
+        "issued": 2,
+        "completed": 2,
+        "canceled": 0,
+        "cursor": 1,
+        "undo_high": 1,
+        "object_high": 6,
+        "C": 0,
+        "Q": 0,
+        "aging_groups": 11,
+        "aging_consumed": 296896,
+        "aging_remaining": 0
+      }
+    },
+    "N03": {
+      "purpose": "actual successful sync followed by AfterError/UNKNOWN, fresh recovery winner",
+      "raw_references": "N01 L1..15 byte-identical expected prefix and cleanup; separate controller history and process execution",
+      "phases": [
+        {
+          "pid": 1,
+          "epoch": 1,
+          "lsns": [
+            1,
+            9
+          ],
+          "cut": "actual Commit9 sync success then AfterError; API UNKNOWN/Fenced, no AckObserved"
+        },
+        {
+          "pid": 2,
+          "epoch": 2,
+          "lsns": [
+            10,
+            15
+          ],
+          "selected_capture": 9,
+          "end": "READY/query T present"
+        }
+      ],
+      "final": {
+        "lsn": 15,
+        "revision": 12,
+        "issued": 2,
+        "completed": 2,
+        "canceled": 0,
+        "cursor": 1,
+        "undo_high": 1,
+        "object_high": 6,
+        "C": 1,
+        "Q": 1,
+        "aging_groups": 11,
+        "aging_consumed": 386900,
+        "aging_remaining": 0
+      }
+    }
+  },
+  "writer_rules": [
+    "Import only SHA-pinned independent Python writers; no Rust/product tools/output. Never execute their main or modify prior files.",
+    "Actor callback maps native model cycle2 to epoch2/local1; sequence/object/slot/Job generations remain model cycle2. Creator/source actors retained across later epochs.",
+    "Build every semantic native/sender/descriptor/projection/page hash from the declared before state. Only outer XWF epoch and its two seals change per process; predecessor logical LSN remains absolute.",
+    "System scope1 frames use the independent Free Undo operation serializer with current Profile2 and explicit L2..5 schedule; allocator/page outputs must equal transition setup originals.",
+    "Store immutable full changed pages, whole Jobs, Tx/Aging descriptor, semantic/System frame, and exact allocated-page state at L8/9/10/15/16/19/25. Free/Reserved page logical arena is zero; stale freed home bytes are not claimed zero.",
+    "Base3 selected-header/provenance/certificate is separately audited against these expected images and original INIT frame bytes. These literals do not issue selected-source authority."
+  ],
+  "auditor_rules": [
+    "Separate stdlib raw parser; do not import generator or reused writer helper.",
+    "Verify raw full inventory/hashes, exact rows/LSNs/epochs/offsets/lengths, envelope checksum, actor ownership, Root conservation/credit, native/header/redo identity and fixed checkpoints from this plan.",
+    "Native controller must independently validate actual selected base/old-WAL removal+dirsync/ACK ledger; generator result is never runtime PASS."
+  ],
+  "limits": {
+    "generation_runs": 1,
+    "generation_seconds": 30,
+    "auditor_seconds": 30,
+    "raw_corpus_bytes": 16777216,
+    "raw_file_bytes": 1048576,
+    "output_bytes": 1048576,
+    "transition_input_bytes": 4194304
+  },
+  "generation_admission": "Root adopts exact plan hash before first generation. Preserve any failed source/raw/result and do not silently regenerate.",
+  "runtime_admission": "NOT_ADMITTED: exact hooks/source/ELF/whole F05/controller negative tests still required."
+}

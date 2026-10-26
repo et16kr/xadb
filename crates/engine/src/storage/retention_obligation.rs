@@ -2,6 +2,9 @@
 //! These borrowed observations do not select a root or restore reservations.
 #![allow(dead_code)] // Awaiting the original live retention owner and recovery consumer.
 
+#[path = "retention_obligation/catalog.rs"]
+pub(crate) mod catalog;
+
 use super::{
     allocation_page::ReservationOwner,
     control::{ControlKind, ControlRef, PROFILE_BYTES, Profile},

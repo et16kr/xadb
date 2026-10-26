@@ -2,10 +2,13 @@
 //! caller loan; only bounded indices/counters and authentic requirements live
 //! inline in the owner.
 use super::*;
+
+#[path = "control/catalog.rs"]
+mod catalog;
 use crate::storage::{
     allocation_page::ReservationOwner,
     obligation::{self, OwnerState},
-    retention_page::{JOB_BYTES, JOB_COUNT, JobSpec, JobState},
+    retention_page::{JOB_BYTES, JOB_COUNT, JobState},
     transaction_record::TransactionState,
     wal_io::WalPrefix,
 };
@@ -24,7 +27,6 @@ pub(super) const STAGED: u8 = 2;
 
 pub(super) struct RetentionControl<'a, 'c, 's> {
     pub(super) bytes: &'a mut [u8; RETENTION_CONTROL_BYTES],
-    pub(super) replay: &'a mut [u8; RETENTION_REPLAY_BYTES],
     pub(super) issued_local: u64,
     pub(super) adopted_local: u64,
     pub(super) pending: Option<WalRequirement<'s>>,
@@ -33,11 +35,10 @@ pub(super) struct RetentionControl<'a, 'c, 's> {
     pub(super) source: super::recovery::HistorySource<'s>,
 }
 impl<'a, 'c, 's> RetentionControl<'a, 'c, 's> {
-    pub(super) fn new(loan: EmptyRetentionControlLoan<'a>) -> Self {
-        loan.control.fill(0);
+    pub(super) fn new(bytes: &'a mut [u8; RETENTION_CONTROL_BYTES]) -> Self {
+        bytes.fill(0);
         Self {
-            bytes: loan.control,
-            replay: loan.replay,
+            bytes,
             issued_local: 0,
             adopted_local: 0,
             pending: None,
@@ -55,13 +56,12 @@ impl<'a, 'c, 's> RetentionControl<'a, 'c, 's> {
     pub(super) fn jobs(&self) -> &[[u8; JOB_BYTES]; JOB_COUNT] {
         jobs(self.bytes)
     }
-    pub(super) fn initialize_jobs(&mut self, namespace: crate::api::Namespace) {
-        let free = JobSpec {
-            generation: foundation::identity::Generation::new(1).expect("genesis generation"),
-            state: JobState::Free,
-        };
+    pub(super) fn initialize_jobs(&mut self, _namespace: crate::api::Namespace) {
         for cell in jobs_mut(self.bytes) {
-            retention_page::encode_job(free, namespace, cell).expect("checked genesis namespace");
+            retention_page::catalog::free_job(
+                foundation::identity::Generation::new(1).expect("genesis generation"),
+                cell,
+            );
         }
     }
     pub(super) fn slot(&self, actor: TxnRef) -> Option<usize> {
@@ -77,6 +77,9 @@ impl<'a, 'c, 's> RetentionControl<'a, 'c, 's> {
         profile: crate::storage::control::Profile,
         prefix: WalPrefix,
     ) -> Result<(u64, u64)> {
+        if profile.format() == 2 {
+            return catalog::check(self, profile, prefix);
+        }
         if self.pending.is_some() || self.adopted_local > self.issued_local {
             return Err(unchanged(RetentionPhase::Census, RetentionCause::Invariant));
         }

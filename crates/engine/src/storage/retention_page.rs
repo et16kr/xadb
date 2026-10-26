@@ -2,6 +2,9 @@
 //! authority; the live owner must prove the full Status/ATT/job census.
 #![allow(dead_code)] // Awaiting the original live retention owner and recovery consumer.
 
+#[path = "retention_page/catalog.rs"]
+pub(crate) mod catalog;
+
 use super::{
     allocation_page::{SystemWorkKind, SystemWorkRef},
     obligation::{RemainingBudget, ResourcePeak, encode_budget_rows},

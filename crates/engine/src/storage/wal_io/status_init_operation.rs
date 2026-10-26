@@ -51,10 +51,24 @@ pub(crate) mod retention;
 enum InitScope {
     Status,
     Mixed(mixed::Kind),
+    Retention(mixed::Kind),
 }
 impl InitScope {
+    fn version(self) -> u16 {
+        if matches!(self, Self::Retention(_)) {
+            2
+        } else {
+            1
+        }
+    }
+    fn flags(self) -> u16 {
+        u16::from(matches!(self, Self::Retention(_)))
+    }
     fn undo(self) -> bool {
-        matches!(self, Self::Mixed(mixed::Kind::UndoRoot))
+        matches!(
+            self,
+            Self::Mixed(mixed::Kind::UndoRoot) | Self::Retention(mixed::Kind::UndoRoot)
+        )
     }
     fn body_bytes(self) -> usize {
         if self.undo() { 432 } else { 224 }
@@ -97,7 +111,7 @@ impl InitScope {
     fn budget(self) -> OperationBudget {
         match self {
             Self::Status => OperationBudget::StatusInit114688,
-            Self::Mixed(_) => OperationBudget::MixedInit114688,
+            Self::Mixed(_) | Self::Retention(_) => OperationBudget::MixedInit114688,
         }
     }
     fn accepts_population(self, population: AllocationPopulation) -> bool {
@@ -107,12 +121,15 @@ impl InitScope {
                 AllocationPopulation::Empty | AllocationPopulation::Status
             ),
             Self::Mixed(_) => population == AllocationPopulation::MixedSystem,
+            Self::Retention(_) => false, // plan4 wrapper validates its own fixed genesis population
         }
     }
     fn finished(self, profile: &Profile, batch: Batch, lsn: PageLsn) -> obligation::DescriptorSpec {
         match self {
             Self::Status => operation::finished_status_descriptor(profile, batch, lsn),
-            Self::Mixed(kind) => operation::finished_mixed_descriptor(profile, batch, lsn, kind),
+            Self::Mixed(kind) | Self::Retention(kind) => {
+                operation::finished_mixed_descriptor(profile, batch, lsn, kind)
+            }
         }
     }
     fn page_lsn(self, bytes: &[u8; PAGE_BYTES], identity: &PageIdentity) -> Result<PageLsn> {
@@ -604,7 +621,8 @@ fn encode_group(
     status_after: &[u8; PAGE_BYTES],
 ) -> Result<()> {
     bytes[160..164].copy_from_slice(b"XSG1");
-    put16(bytes, 164, 1);
+    put16(bytes, 164, plan.scope.version());
+    put16(bytes, 170, plan.scope.flags());
     put16(bytes, 166, 10);
     put16(bytes, 168, 192);
     put32(bytes, 172, (plan.scope.frame_bytes() - 192) as u32);
@@ -739,7 +757,9 @@ fn validate_header(plan: &ScopedExpected<'_, '_>, bytes: &[u8]) -> Result<WalFra
     .map_err(frame_error)?;
     require(env.header == header(plan)?, OrderMismatch)?;
     require(
-        env.record_count == 2 && &bytes[160..164] == b"XSG1" && get16(bytes, 164) == 1,
+        env.record_count == 2
+            && &bytes[160..164] == b"XSG1"
+            && get16(bytes, 164) == plan.scope.version(),
         Corrupt,
     )?;
     require(
@@ -748,7 +768,7 @@ fn validate_header(plan: &ScopedExpected<'_, '_>, bytes: &[u8]) -> Result<WalFra
     )?;
     require(
         get16(bytes, 168) == 192
-            && get16(bytes, 170) == 0
+            && get16(bytes, 170) == plan.scope.flags()
             && get32(bytes, 172) == (plan.scope.frame_bytes() - 192) as u32
             && bytes[192] == 2
             && zero(&bytes[193..200])

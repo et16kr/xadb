@@ -337,6 +337,82 @@ class WindowProcesses(unittest.TestCase):
             self.assertTrue(all(r['group_gone'] for r in result['cleanup']))
 
 
+class WindowProfiles(unittest.TestCase):
+    directory = WindowProcesses.directory
+    EVENTS = ('cycles:u', 'cycles:k', 'instructions:u', 'instructions:k', 'ref-cycles:u',
+              'context-switches', 'cpu-migrations', 'page-faults')
+
+    def test_literal_user_kernel_profile_quality_and_wrong_events(self):
+        lines = [f'{200+i};;{event};100000;100.00;' for i, event in enumerate(self.EVENTS)]
+        raw = '\n'.join(lines)
+        result = window.parse_perf(raw, 'user-kernel-v1')
+        self.assertEqual(result['profile'], 'user-kernel-v1')
+        self.assertEqual(tuple(result['events']), self.EVENTS)
+        self.assertEqual(result['events']['instructions:k']['count'], 203)
+        self.assertTrue(result['all_events_reported_full_coverage'])
+        self.assertIsNone(result['ratios'])
+        for altered, event, status in (
+                ('\n'.join(lines[:3] + lines[4:]), 'instructions:k', 'MISSING'),
+                (raw.replace('201;;cycles:k;100000;100.00', '201;;cycles:k;100000;97.50'),
+                 'cycles:k', 'PARTIAL_OR_EMPTY'),
+                (raw.replace('203;;instructions:k;100000;100.00', '<not supported>;;instructions:k;0;'),
+                 'instructions:k', 'UNAVAILABLE')):
+            value = window.parse_perf(altered, 'user-kernel-v1')
+            self.assertEqual(value['events'][event]['status'], status)
+            self.assertFalse(value['all_events_reported_full_coverage'])
+            self.assertIsNone(value['ratios'])
+        for altered, profile in ((raw + '\n' + lines[1], 'user-kernel-v1'),
+                                 (raw.replace('cycles:k', 'cycles:h'), 'user-kernel-v1'),
+                                 (raw, 'user-v1')):
+            with self.assertRaises(window.DiagnosticError):
+                window.parse_perf(altered, profile)
+
+    def test_invalid_profile_rejected_before_input_output_or_spawn(self):
+        base = self.directory()
+        for profile in ('unknown', 'cycles:k', None, []):
+            with patch.object(window, 'Runner') as runner, self.assertRaisesRegex(
+                    window.DiagnosticError, 'unsupported perf event profile'):
+                window.collect(PEER, base / 'missing-input', SOURCE, 'synthetic',
+                               base / 'result', perf_profile=profile)
+            runner.assert_not_called()
+            self.assertFalse((base / 'result').exists())
+
+    def test_cli_user_kernel_profile_reaches_fake_perf_and_parser(self):
+        base = self.directory()
+        source = base / 'input.json'
+        source.write_text(json.dumps({'source': SOURCE}))
+        command = [sys.executable, '-B', str(HERE / 'dev2_measurement_window.py'),
+                   '--worker', str(PEER), '--input', str(source), '--source', SOURCE,
+                   '--workload', 'synthetic', '--output', str(base / 'result'),
+                   '--perf', str(PERF), '--perf-profile', 'user-kernel-v1']
+        completed = subprocess.run(command, capture_output=True, timeout=15, check=False)
+        (base / 'cli.stdout').write_bytes(completed.stdout)
+        (base / 'cli.stderr').write_bytes(completed.stderr)
+        self.assertEqual(completed.returncode, 0, completed.stderr)
+        result = json.loads((base / 'result/result.json').read_text())
+        self.assertEqual(result['perf_profile'], 'user-kernel-v1')
+        self.assertEqual(result['pmu']['profile'], 'user-kernel-v1')
+        self.assertTrue(result['pmu']['all_events_reported_full_coverage'])
+        self.assertEqual(tuple(result['pmu']['events']), self.EVENTS)
+        for i, event in enumerate(self.EVENTS):
+            self.assertEqual(result['pmu']['events'][event]['count'], 100 + i)
+        argv = result['commands']['perf']
+        self.assertEqual(argv[argv.index('-e') + 1], ','.join(self.EVENTS))
+
+    def test_selected_profile_survives_unavailable_and_pre_attach_failure(self):
+        for config, expected_status, expected_mode in (
+                ({'perf': 'permission'}, 'COLLECTED_DIAGNOSTIC_ONLY', 'RUSAGE_ONLY'),
+                ({'behavior': 'bad_identity'}, 'FAILED', None)):
+            base = self.directory()
+            source = base / 'input.json'
+            source.write_text(json.dumps({'source': SOURCE, **config}))
+            result = window.collect(PEER, source, SOURCE, 'synthetic', base / 'result',
+                                    perf=PERF, perf_profile='user-kernel-v1')
+            self.assertEqual(result['perf_profile'], 'user-kernel-v1')
+            self.assertEqual(result['status'], expected_status)
+            self.assertEqual(result.get('mode'), expected_mode)
+
+
 @unittest.skipUnless(os.environ.get('XADBTEST_WINDOW_PRIVILEGED_TESTS') == '1',
                      'explicit sudo/real-PMU diagnostic validation only')
 class WindowPrivilegeIntegration(unittest.TestCase):
@@ -439,6 +515,119 @@ class WindowPrivilegeIntegration(unittest.TestCase):
                 self.assertEqual(len(result['cleanup']), 2)
                 self.assertTrue(all(r['group_gone'] for r in result['cleanup']), result)
                 self.assertTrue(all(r['returncode'] is not None for r in result['cleanup']))
+
+
+
+class PrewarmupBoundary(unittest.TestCase):
+    directory = WindowProcesses.directory
+
+    def test_modes_and_hello_reject_wrong_scope_before_spawn(self):
+        base = self.directory()
+        for boundary, workload in [('unknown', 'k0'), ([], 'k0'),
+                                   ('prewarmup-continuous-v1', 'durable')]:
+            with patch.object(window, 'Runner') as runner, self.assertRaises(window.DiagnosticError):
+                window.collect(PEER, base / 'missing', SOURCE, workload, base / 'out', boundary=boundary)
+            runner.assert_not_called()
+        pid = os.getpid()
+        start = window.starttime(pid)
+        for boundary in ('prewarmup-continuous-v1', 'prewarmup-wait-v1'):
+            hello = f'HELLO 2 t {pid} {pid} {SOURCE} k0 {boundary}'
+            window.validate_hello(hello, pid, pid, start, SOURCE, 'k0', 't', boundary)
+            for wrong in (hello.replace('HELLO 2', 'HELLO 1'), hello.replace(boundary, 'unknown')):
+                with self.assertRaises(window.DiagnosticError):
+                    window.validate_hello(wrong, pid, pid, start, SOURCE, 'k0', 't', boundary)
+
+    def test_armed_and_resume_bounds_and_maximum_u64_stop(self):
+        value = dict(phase='STOP', token='t', armed_ns=12, start_ns=20, end_ns=30,
+                     elapsed_ns=9, before=[0]*6, after=[1]*6)
+        for boundary in ('prewarmup-continuous-v1', 'prewarmup-wait-v1'):
+            result = window.validate_stop(json.dumps(value), 't', 19, 31, boundary, 11)
+            self.assertEqual(result['usage_delta'], [1]*6)
+            for change in ({'armed_ns': 10}, {'armed_ns': 21}, {'armed_ns': True},
+                           {'start_ns': 18}, {'extra': 1}):
+                with self.assertRaises(window.DiagnosticError):
+                    window.validate_stop(json.dumps(value | change), 't', 19, 31, boundary, 11)
+            with self.assertRaises(window.DiagnosticError):
+                window.validate_stop(json.dumps({k:v for k,v in value.items() if k != 'armed_ns'}),
+                                     't', 19, 31, boundary, 11)
+        maximum = 2**64-1
+        full = dict(phase='STOP', token='f'*32, armed_ns=maximum-2, start_ns=maximum-1,
+                    end_ns=maximum, elapsed_ns=1, before=[maximum]*6, after=[maximum]*6)
+        raw = json.dumps(full, separators=(',', ':'))
+        self.assertLessEqual(len(raw) + 1, 512)
+        window.validate_stop(raw, 'f'*32, maximum-1, maximum, 'prewarmup-wait-v1', maximum-2)
+        with self.assertRaises(window.DiagnosticError):
+            window.validate_stop(raw + ' '*512, 'f'*32, 0, maximum, 'prewarmup-wait-v1', 0)
+
+    def new_collect(self, boundary, behavior='normal', deadline=5):
+        base = self.directory()
+        source = base / 'input.json'
+        source.write_text(json.dumps({'source': SOURCE, 'behavior': behavior}))
+        commands, sends = [], []
+        original_perf, original_send = window.Runner.perf_command, window.Runner.send
+        def perf(run, command, *args, **kwargs):
+            commands.append(command)
+            return original_perf(run, command, *args, **kwargs)
+        def send(run, peer, message, end):
+            sends.append(message.split()[0])
+            return original_send(run, peer, message, end)
+        with patch.object(window.Runner, 'perf_command', perf), patch.object(window.Runner, 'send', send):
+            result = window.collect(PEER, source, SOURCE, 'synthetic', base / 'result',
+                                    perf=PERF, deadline=deadline, boundary=boundary)
+        self.assertTrue(result['cleanup'])
+        self.assertTrue(all(r['group_gone'] and not r['output_overflow'] and not r['capture_errors']
+                            for r in result['cleanup']), result)
+        return result, commands, sends
+
+    def test_new_modes_enable_once_and_preserve_distinct_exchange(self):
+        for boundary, expected in [('prewarmup-continuous-v1', ['READY', 'ARMED', 'DONE']),
+                                   ('prewarmup-wait-v1', ['READY', 'ARMED', 'GO', 'DONE'])]:
+            result, commands, sends = self.new_collect(boundary)
+            self.assertEqual(result['status'], 'COLLECTED_DIAGNOSTIC_ONLY', result)
+            self.assertEqual(commands, ['disable', 'enable', 'disable'])
+            self.assertEqual(sends, expected)
+            self.assertEqual(result['boundary'], boundary)
+            self.assertEqual(result['pmu_scope'], 'warmup-drain-measurement-and-control-bracket')
+            self.assertLessEqual(result['phases']['armed_go_ns'], result['window']['armed_ns'])
+            self.assertLessEqual(result['phases']['go_ns'], result['window']['start_ns'])
+
+    def test_arm_start_and_warmup_failures_preserve_owned_cleanup(self):
+        for boundary, behavior, reason in [('prewarmup-continuous-v1', 'bad-arm', 'ARM phase'),
+                                          ('prewarmup-wait-v1', 'bad-start', 'START phase'),
+                                          ('prewarmup-continuous-v1', 'warmup-fail', 'peer EOF'),
+                                          ('prewarmup-wait-v1', 'warmup-hang', 'deadline')]:
+            result, _, _ = self.new_collect(boundary, behavior, deadline=1)
+            self.assertEqual(result['status'], 'FAILED')
+            self.assertIn(reason, result['error'])
+
+    def test_cancel_after_arm_reaps_both_owned_children(self):
+        base = self.directory()
+        source = base / 'input.json'
+        source.write_text(json.dumps({'source': SOURCE, 'behavior': 'warmup-hang'}))
+        command = [sys.executable, '-B', str(HERE / 'dev2_measurement_window.py'), '--worker', str(PEER),
+                   '--input', str(source), '--source', SOURCE, '--workload', 'synthetic',
+                   '--output', str(base / 'result'), '--perf', str(PERF),
+                   '--boundary', 'prewarmup-continuous-v1']
+        with (base / 'runner.stdout').open('xb') as stdout, (base / 'runner.stderr').open('xb') as stderr:
+            process = subprocess.Popen(command, stdout=stdout, stderr=stderr)
+            try:
+                end = time.monotonic() + 5
+                marker = base / 'result/worker.stdout'
+                while not marker.exists() or b'ARMED_WARMUP' not in marker.read_bytes():
+                    self.assertIsNone(process.poll())
+                    self.assertLess(time.monotonic(), end)
+                    time.sleep(.01)
+                process.send_signal(signal.SIGTERM)
+                self.assertEqual(process.wait(timeout=6), 1)
+            finally:
+                if process.poll() is None:
+                    process.kill()
+                    process.wait()
+        result = json.loads((base / 'result/result.json').read_text())
+        self.assertEqual(result['status'], 'FAILED')
+        self.assertIn('interrupted by signal', result['error'])
+        self.assertEqual(len(result['cleanup']), 2)
+        self.assertTrue(all(r['group_gone'] for r in result['cleanup']))
 
 
 if __name__ == '__main__':

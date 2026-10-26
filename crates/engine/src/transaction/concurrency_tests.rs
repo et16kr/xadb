@@ -92,6 +92,7 @@ impl Model {
                 Mode::Retired => RETIRED,
                 Mode::CommitStage => STAGE,
                 Mode::CommitPending => PENDING,
+                Mode::CommitDraining => return Err("production drain is outside simulated model"),
                 Mode::CommitInstalling => INSTALLING,
             };
             if actual != self.modes[index]
@@ -129,6 +130,9 @@ impl Model {
                 k.installation_generation,
                 Some(lsn),
             ),
+            Installation::Draining(_, _) => {
+                return Err("production drain is outside simulated model");
+            }
             Installation::Installing(k, lsn) => (
                 3,
                 k.slot,

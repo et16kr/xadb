@@ -62,6 +62,15 @@ pub(crate) enum CatalogDefinition<'a> {
     Index(IndexDefinition<'a>),
 }
 
+/// A live schema or an already validated borrowed schema from a WAL candidate.
+/// The view carries only definition bytes; callers supply the independently
+/// computed Catalog header. It confers no source or installation authority.
+#[derive(Clone, Copy, Debug)]
+pub(crate) enum CatalogTableInput<'a> {
+    Spec(&'a TableSpec),
+    View(TableDefinitionView<'a>),
+}
+
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub(crate) struct CatalogColumn<'a> {
     pub(crate) name: &'a str,
@@ -265,12 +274,56 @@ pub(crate) fn encode_catalog_record(
         return Err(CatalogError::NoSpace);
     }
     let mut fixed = [0; CATALOG_HEADER_BYTES];
+    let index = match definition {
+        CatalogDefinition::Table(_) => None,
+        CatalogDefinition::Index(index) => Some(index),
+    };
+    encode_header(header, length, index, &mut fixed)?;
+    output[..CATALOG_HEADER_BYTES].copy_from_slice(&fixed);
+    let body = &mut output[CATALOG_HEADER_BYTES..length];
+    write_definition(definition, body);
+    Ok(length)
+}
+
+/// Rebuild a table record's header from its original semantic context while
+/// borrowing the canonical schema. The existing general definition enum and
+/// its legacy callers keep their original size and representation.
+pub(crate) fn encode_catalog_table_record(
+    expected: CatalogExpectation,
+    header: CatalogHeader,
+    definition: CatalogTableInput<'_>,
+    output: &mut [u8],
+) -> Result<usize, CatalogError> {
+    let view = match definition {
+        CatalogTableInput::Spec(spec) => {
+            return encode_catalog_record(expected, header, CatalogDefinition::Table(spec), output);
+        }
+        CatalogTableInput::View(view) => view,
+    };
+    validate_header(header, expected)?;
+    let length = CATALOG_HEADER_BYTES + view.bytes.len();
+    if output.len() < length {
+        return Err(CatalogError::NoSpace);
+    }
+    let mut fixed = [0; CATALOG_HEADER_BYTES];
+    encode_header(header, length, None, &mut fixed)?;
+    output[..CATALOG_HEADER_BYTES].copy_from_slice(&fixed);
+    output[CATALOG_HEADER_BYTES..length].copy_from_slice(view.bytes);
+    Ok(length)
+}
+
+fn encode_header(
+    header: CatalogHeader,
+    length: usize,
+    index: Option<IndexDefinition<'_>>,
+    fixed: &mut [u8; CATALOG_HEADER_BYTES],
+) -> Result<(), CatalogError> {
     fixed[..4].copy_from_slice(b"XCT1");
     fixed[4..6].copy_from_slice(&1_u16.to_le_bytes());
     fixed[7] = u8::from(header.retired) | (u8::from(header.undo.is_some()) << 1);
-    put_u64(&mut fixed, 8, header.identity.object.get());
-    put_u64(&mut fixed, 16, header.identity.generation.get());
-    put_u64(&mut fixed, 24, header.identity.schema_epoch.get());
+    put_u64(fixed, 8, header.identity.object.get());
+    put_u64(fixed, 16, header.identity.generation.get());
+    put_u64(fixed, 24, header.identity.schema_epoch.get());
     header
         .stamp
         .encode(&mut fixed[32..88])
@@ -287,19 +340,16 @@ pub(crate) fn encode_catalog_record(
         .anchor
         .encode(&mut fixed[176..200])
         .map_err(|_| CatalogError::InvalidInput)?;
-    if let CatalogDefinition::Index(index) = definition {
+    if let Some(index) = index {
         fixed[6] = 2;
-        put_u64(&mut fixed, 200, index.parent.object.get());
-        put_u64(&mut fixed, 208, index.parent.generation.get());
-        put_u64(&mut fixed, 216, index.parent.schema_epoch.get());
+        put_u64(fixed, 200, index.parent.object.get());
+        put_u64(fixed, 208, index.parent.generation.get());
+        put_u64(fixed, 216, index.parent.schema_epoch.get());
     } else {
         fixed[6] = 1;
     }
     fixed[224..228].copy_from_slice(&((length - CATALOG_HEADER_BYTES) as u32).to_le_bytes());
-    output[..CATALOG_HEADER_BYTES].copy_from_slice(&fixed);
-    let body = &mut output[CATALOG_HEADER_BYTES..length];
-    write_definition(definition, body);
-    Ok(length)
+    Ok(())
 }
 
 /// The caller validates the definition and provides its exact body length

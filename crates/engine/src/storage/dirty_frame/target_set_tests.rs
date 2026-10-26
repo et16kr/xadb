@@ -35,7 +35,7 @@ fn with_pool<const N: usize>(run: impl FnOnce(&SharedPool<'_, '_, '_, '_>)) {
     run(&pool);
 }
 fn counts(pool: &SharedPool<'_, '_, '_, '_>) -> ([u16; MAX_FRAMES], u16) {
-    let pins = pool.pins.lock().unwrap();
+    let pins = pool.registry.lock().unwrap();
     (pins.counts, pins.total)
 }
 fn idle(pool: &SharedPool<'_, '_, '_, '_>) {
@@ -171,7 +171,7 @@ fn target_set_pin_limits_preserve_prior_owners() {
         idle(pool);
         // A valid aggregate counter state isolates the per-frame ceiling.
         {
-            let mut pins = pool.pins.lock().unwrap();
+            let mut pins = pool.registry.lock().unwrap();
             pins.counts[2] = 34;
             pins.total = 34;
         }
@@ -183,7 +183,7 @@ fn target_set_pin_limits_preserve_prior_owners() {
         );
         assert_eq!(counts(pool), before);
         {
-            let mut pins = pool.pins.lock().unwrap();
+            let mut pins = pool.registry.lock().unwrap();
             pins.counts[2] = 0;
             pins.total = 0;
         }

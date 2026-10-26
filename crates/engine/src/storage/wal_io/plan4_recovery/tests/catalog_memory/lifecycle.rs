@@ -1,0 +1,162 @@
+//! Separate selectors for new actual CREATE cancel/CLR/drop consumers.
+use super::*;
+
+#[test]
+fn mc01_reserve_cancel_two_generations() {
+    case("MC01", || {
+        let oracle = Oracle::new();
+        with_fresh!(oracle, |live,
+                             owner,
+                             flusher,
+                             status,
+                             undo,
+                             private,
+                             reader_private,
+                             core,
+                             fence,
+                             state| {
+            let _ = core;
+            for cycle in 0..2 {
+                prepare_create(live, owner, flusher, status, undo);
+                let at = cycle * 6 + 1;
+                let id = |offset| format!("K{:02}", at + offset);
+                let expected = oracle.actor(&id(0));
+                let begin = live.catalog_begin(owner, status, private).unwrap();
+                assert_eq!(begin.actor, Some(expected));
+                oracle.check(live, state, &id(0));
+                let definition = table_spec(if cycle == 0 { "T" } else { "U" });
+                let reserved = live
+                    .reserve_catalog_create(owner, expected, undo, &definition, private)
+                    .unwrap();
+                oracle.check(reserved.catalog_test_bound(), state, &id(1));
+                match reserved.cancel() {
+                    Ok(()) => {}
+                    Err(RetentionReservationError::Before { error, .. })
+                    | Err(RetentionReservationError::Fatal(error)) => {
+                        panic!("actual Cancel {error:?}")
+                    }
+                }
+                oracle.check(live, state, &id(2));
+                live.catalog_rollback_start(owner, expected, private)
+                    .unwrap();
+                oracle.check(live, state, &id(3));
+                live.catalog_abort_end(owner, expected, private).unwrap();
+                oracle.check(live, state, &id(4));
+                live.catalog_retire(
+                    owner,
+                    oracle.ordinal(&id(5)),
+                    Operation::TerminalFinish,
+                    private,
+                )
+                .unwrap();
+                oracle.check(live, state, &id(5));
+                query(
+                    live,
+                    owner,
+                    flusher,
+                    reader_private,
+                    0,
+                    6 + cycle as u64,
+                    false,
+                );
+                assert!(!fence.is_fenced());
+            }
+            assert!(
+                live.recovery_test_bank()[..32 * 1664]
+                    .iter()
+                    .all(|b| *b == 0)
+            );
+            owner.check_idle().unwrap();
+            flusher.check_idle().unwrap();
+        });
+    });
+}
+
+#[test]
+fn mc02_forward_clr_abort_cleanup() {
+    case("MC02", || {
+        let oracle = Oracle::new();
+        with_fresh!(oracle, |live,
+                             owner,
+                             flusher,
+                             status,
+                             undo,
+                             private,
+                             reader_private,
+                             core,
+                             fence,
+                             state| {
+            let _ = core;
+            let actor = create_forward(
+                live, owner, flusher, status, undo, private, &oracle, state, 1,
+            );
+            live.catalog_rollback_start(owner, actor, private).unwrap();
+            oracle.check(live, state, "R04");
+            live.catalog_retire(owner, 1, Operation::Clr, private)
+                .unwrap();
+            oracle.check(live, state, "R05");
+            assert_eq!(resident_index(live, 11), None);
+            assert_eq!(resident_index(live, 12), None);
+            live.catalog_abort_end(owner, actor, private).unwrap();
+            oracle.check(live, state, "R06");
+            for id in ["R07", "R08", "R09"] {
+                live.catalog_release_role(owner, 1, private).unwrap();
+                oracle.check(live, state, id);
+            }
+            live.catalog_retire(owner, 1, Operation::RootFree, private)
+                .unwrap();
+            oracle.check(live, state, "R10");
+            live.catalog_retire(owner, 0, Operation::TerminalFinish, private)
+                .unwrap();
+            oracle.check(live, state, "R11");
+            query(live, owner, flusher, reader_private, 0, 6, false);
+            assert!(!fence.is_fenced());
+            owner.check_idle().unwrap();
+            flusher.check_idle().unwrap();
+        });
+    });
+}
+
+#[test]
+fn mc04_reserved_drop_fence_fresh_recovery() {
+    case("MC04", || {
+        let oracle = Oracle::new();
+        let images = with_fresh!(oracle, |live,
+                                          owner,
+                                          flusher,
+                                          status,
+                                          undo,
+                                          private,
+                                          reader_private,
+                                          core,
+                                          fence,
+                                          state| {
+            let _ = (reader_private, core);
+            prepare_create(live, owner, flusher, status, undo);
+            let begin = live.catalog_begin(owner, status, private).unwrap();
+            assert_eq!(begin.actor, Some(oracle.actor("K01")));
+            oracle.check(live, state, "K01");
+            let definition = table_spec("T");
+            let reserved = live
+                .reserve_catalog_create(owner, oracle.actor("K01"), undo, &definition, private)
+                .unwrap();
+            oracle.check(reserved.catalog_test_bound(), state, "K02");
+            let before = state.lock().unwrap().images();
+            drop(reserved);
+            assert!(fence.is_fenced());
+            assert_eq!(
+                state.lock().unwrap().images(),
+                before,
+                "Drop emitted bytes or Cancel"
+            );
+            let (prefix, first_write) = live.catalog_test_wal_state();
+            assert_eq!(
+                (prefix.complete_lsn, prefix.synced_lsn, first_write),
+                (7, 7, 7)
+            );
+            assert_eq!(live.catalog_test_q(), 0);
+            before
+        });
+        recover_check(&images, &oracle, "MC04");
+    });
+}

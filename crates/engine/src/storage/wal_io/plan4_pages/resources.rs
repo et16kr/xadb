@@ -49,6 +49,7 @@ pub(in crate::storage) struct Plan4SourceCensus {
     pub(in crate::storage) peak: usize,
     pub(in crate::storage) whole: usize,
     pub(in crate::storage) old_common_delta: usize,
+    pub(in crate::storage) old_common_growth: usize,
     pub(in crate::storage) caller_operation: usize,
     pub(in crate::storage) caller_flush: usize,
     pub(in crate::storage) temporary_files: usize,
@@ -172,6 +173,11 @@ pub(in crate::storage) fn source_census<W: WriterNamespace>() -> Plan4SourceCens
         whole: peak + 65536,
         old_common_delta: core.mode.abs_diff(size_of::<OldMode>())
             + core.directory.abs_diff(size_of::<OldDirectory>()),
+        // Preserve the historical shape and report its absolute difference.
+        // The single registry leaf's Option slots may use less space than
+        // OnceLock; admission forbids growth, not a reduction in those fields.
+        old_common_growth: core.mode.saturating_sub(size_of::<OldMode>())
+            + core.directory.saturating_sub(size_of::<OldDirectory>()),
         caller_operation: OPERATION_BYTES,
         caller_flush: FLUSH_BYTES,
         temporary_files: 2,
@@ -190,7 +196,7 @@ pub(super) fn fits<W: WriterNamespace>() -> bool {
         && dirty_frame::fits()
         && wal::durability_types_fit()
         && genesis::fits::<W>()
-        && c.old_common_delta == 0
+        && c.old_common_growth == 0
         && c.owner + c.bind_nested <= 65536
         && c.owner + c.load_nested <= 65536
         && c.owner + c.catalog_nested <= 65536

@@ -4,6 +4,8 @@
 // Remove when a tree consumer connects this representation leaf.
 #![allow(dead_code)]
 
+pub(crate) mod edit;
+
 use std::cmp::Ordering;
 
 use super::{
@@ -267,6 +269,19 @@ fn same_address(left: PageRef, right: PageRef) -> bool {
 struct Layout {
     leftmost: Option<PageRef>,
     entry_bytes: usize,
+}
+
+/// Source carriers used by the closed Catalog semantic census. This measures
+/// the real private enums/layout rather than a field-sum mirror. It allocates
+/// no scratch and does not change a codec or edit execution path.
+pub(crate) fn catalog_source_carrier_bytes() -> (usize, usize, usize, usize) {
+    use std::mem::size_of;
+    (
+        size_of::<CheckedKey<'_>>(),
+        size_of::<Result<CheckedKey<'_>, TreeError>>(),
+        size_of::<Layout>(),
+        size_of::<Result<Layout, TreeError>>(),
+    )
 }
 
 /// Validate concrete cells before encode, decode publication, or split. No

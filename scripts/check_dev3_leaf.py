@@ -217,6 +217,13 @@ TREE_TESTS = {
     'tree_child_alias_and_kind_level_guards',
     'tree_encoders_preserve_outputs',
 }
+LEAF_EDIT_TESTS = {
+    'leaf_edit_insert_replace_remove_match_independent_pages',
+    'leaf_edit_rejections_preserve_inputs_and_scratch',
+    'leaf_edit_byte_limits_and_overflow_handoff',
+    'leaf_edit_maximum_reference_scratch_is_bounded',
+    'leaf_edit_generated_histories_match_ordered_map',
+}
 OVERFLOW_TESTS = {
     'overflow_head_literal_and_limits',
     'overflow_page_literal',
@@ -384,6 +391,17 @@ NEGATIVE_CASES = {
 
 def check_page_output(output, exit_code):
     return check_named_tests(output, exit_code, 'storage::page::tests::', PAGE_TESTS)
+
+
+def check_leaf_edit_output(output, exit_code):
+    # --nocapture may interleave this one layout witness with its libtest line.
+    # Remove only the exact validated witness; every named result stays required.
+    pattern = r'XADB_LEAF_EDIT_LAYOUT view=(\d+) edit=(\d+) plan=(\d+) result=(\d+) scratch=(\d+)\n'
+    matches = list(re.finditer(pattern, output))
+    if len(matches) != 1 or tuple(map(int, matches[0].groups())) != (128, 24, 104, 104, 16208):
+        raise ValueError('leaf edit layout witness missing, duplicate or mismatched')
+    normalized = output[:matches[0].start()] + output[matches[0].end():]
+    return check_named_tests(normalized, exit_code, 'storage::tree_page::edit::tests::', LEAF_EDIT_TESTS)
 
 
 def check_disk_vectors(output):
@@ -664,7 +682,8 @@ def main():
         output = run('key', [page, 'storage::key::tests::', '--nocapture', '--test-threads=1'])
         report['key_tests'] = check_named_tests(output, 0, 'storage::key::tests::', KEY_TESTS)
         for name, expected in [('anchor', ANCHOR_TESTS), ('undo_ref', UNDO_REF_TESTS),
-                               ('tree_page', TREE_TESTS), ('overflow', OVERFLOW_TESTS),
+                               ('tree_page', TREE_TESTS), ('tree_page::edit', LEAF_EDIT_TESTS),
+                               ('overflow', OVERFLOW_TESTS),
                                ('transaction_record', TRANSACTION_TESTS),
                                ('status_home', STATUS_HOME_TESTS),
                                ('obligation', OBLIGATION_TESTS),
@@ -681,7 +700,8 @@ def main():
             # Intentional poison panics must not split libtest's named result line.
             output_mode = '--show-output' if name in ('read_buffer', 'wal_io', 'wal_io::bootstrap', 'wal_io::bootstrap::doublewrite_install') else '--nocapture'
             output = run(name, [page, prefix, output_mode, '--test-threads=1'])
-            report[f'{name}_tests'] = check_named_tests(output, 0, prefix, expected)
+            report[f'{name}_tests'] = (check_leaf_edit_output(output, 0) if name == 'tree_page::edit'
+                                      else check_named_tests(output, 0, prefix, expected))
             if name == 'wal_io':
                 models = {'slot': evaluate_wal_slot(), 'durable': evaluate_wal_durable(output, source),
                           'source_sha256': report['source_sha256'],

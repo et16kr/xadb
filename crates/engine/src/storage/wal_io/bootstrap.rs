@@ -38,6 +38,7 @@ const PROTECTED_BYTES: u64 = FIXED_BYTES - control::EXTENT_BYTES;
 
 #[path = "plan4_genesis.rs"]
 mod plan4_genesis;
+pub(in crate::storage) use doublewrite_install::CatalogRetirementRejected;
 #[cfg(test)]
 pub(in crate::storage) use doublewrite_install::{Plan4TestMutableCause, Plan4TestSemanticError};
 #[cfg(test)]
@@ -77,6 +78,7 @@ pub(crate) use doublewrite_install::{
     StatusReadGuard, StatusReader, SystemLoadError, SystemLoadObservation, SystemPage,
     SystemPageKind, SystemResidencyCursor, SystemResidencyStep, SystemSlotStep,
 };
+pub(in crate::storage) use doublewrite_install::{CatalogCommitAttempt, CatalogCommitInstalled};
 pub(crate) use doublewrite_install::{
     ClosedRecovery, RecoveryAcquireError, RecoveryCause, RecoveryError, RecoveryFailure,
     RecoveryInspection, RecoveryPhase, RecoveryPrefix, RecoveryPrefixCause, RecoveryPrefixError,
@@ -932,7 +934,7 @@ impl<'m, W: WriterNamespace> FreshStorageSession<'m, W> {
         let images: &mut [[u8; PAGE_BYTES]; 9] = images.try_into().expect("fixed nine-page loan");
         let (work, _) = work.as_chunks_mut::<PAGE_BYTES>();
         let scratch: &mut [[u8; PAGE_BYTES]; 3] = work.try_into().expect("fixed three-page loan");
-        let mut wal = GenesisWalSession::create(writer, profile_id, slot, &mut scratch[0])
+        let mut wal = GenesisWalSession::create_catalog(writer, profile_id, slot, &mut scratch[0])
             .map_err(|cause| Plan4GenesisError {
                 phase: Plan4GenesisPhase::Genesis,
                 effect: cause.effect,
@@ -1205,7 +1207,8 @@ pub(in crate::storage) use doublewrite_install::EmptyTransactionInstall;
 pub(crate) use doublewrite_install::EmptyTransactionObservation;
 
 pub(in crate::storage) use doublewrite_install::{
-    plan4_base_allocation_source_bytes, validate_plan4_base_allocation,
+    plan4_base_allocation_source_bytes, plan4_system_base_allocation_source_bytes,
+    validate_plan4_base_allocation, validate_plan4_system_base_allocation,
 };
 pub(in crate::storage) use plan4_genesis::{
     encode_plan4_catalog_genesis, plan4_catalog_genesis_source_bytes,
@@ -1213,7 +1216,22 @@ pub(in crate::storage) use plan4_genesis::{
 
 pub(in crate::storage) use doublewrite_install::{
     RetentionFlushAuthority, RetentionInitAuthority, RetentionInitCommit, RetentionInitCompleted,
-    RetentionInitInstall, RetentionInstall, RetentionLoadPermit,
+    RetentionInitInstall, RetentionInstall, RetentionLoadPermit, VerifiedLookupLoad,
 };
 
 pub(in crate::storage) use doublewrite_install::RecoveryPoolSeed;
+
+#[allow(unused_imports)] // Same original owner capabilities across the private module chain.
+pub(in crate::storage) use doublewrite_install::{
+    AppliedRetirement, BoundVisibility, CapturedCatalogRefs, CatalogLookupLoan, CatalogSource,
+    HorizonObservation, InstalledFrontier, ReadyFrontier, ReferenceLease, RetirementIntent,
+    RetirementReject, RetirementScope, RollbackSource, SnapshotGuard, SnapshotReservation,
+    StagedRetirement, TxPairAuthority, TxPairCancelKind, TxPairCancelPermit, TxPairControlCommit,
+    TxPairInstallPermit, TxPairRetirePermit, TxPairStageRejection, TxnPin, UndoPin,
+    VISIBILITY_BYTES, VerifiedRetirement, VisibilityCause, VisibilityError, VisibilityLoan,
+    VisibilityResult,
+};
+
+pub(in crate::storage) use doublewrite_install::{
+    CatalogAllocationError, validate_catalog_base_allocation,
+};

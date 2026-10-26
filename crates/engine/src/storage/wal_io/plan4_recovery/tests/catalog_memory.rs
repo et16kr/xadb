@@ -1,0 +1,991 @@
+//! Actual memory consumers of the original CREATE owner. Frozen raw bytes are
+//! observations only; no pure test, decoder or expected image creates authority.
+use super::super::super::plan4_pages::{
+    CatalogLookupStep, EmptyRetentionControlLoan, IntoRetentionError, Plan4Page,
+    Plan4ResidencyCursor, Plan4Target, RETENTION_CONTROL_BYTES, RETENTION_REPLAY_BYTES,
+    RetentionFlushStep, RetentionReservationError, RetentionResidencyStep, VisibilityLoan,
+};
+use super::support::{
+    Images, Live, State, actual_runtime, assert_closed, boxed, clone_directory, drive_flush,
+    page_ref,
+};
+use super::*;
+use crate::{
+    api::{Column, DataType, TableSpec},
+    storage::{
+        dirty_frame::{DirtyFrame, test_support as probe},
+        semantic_catalog::Operation,
+        transaction_record::TxnRef,
+        wal_io::FreshStorageSession,
+    },
+    transaction::{
+        TxnId,
+        concurrency::{Owner, OwnerRole, PageConcurrency},
+    },
+};
+use foundation::{
+    codec::content_digest,
+    identity::{Generation, ObjectId},
+};
+use std::{
+    collections::BTreeMap,
+    io::Read,
+    path::{Path, PathBuf},
+};
+
+const PRIVATE_BYTES: usize = 425_984;
+const NATIVE_INPUT: &str = "d6306d7396ad70165a291a14208c35b7e6e8091f0a4c67e870ea9e96d34e0a34";
+const TRANSITION_INPUT: &str = "7730d42bae88b0ce3ae5fcea96162ae5d8d309050da6820ea09d5bc07572035e";
+
+fn hex(bytes: &[u8]) -> String {
+    content_digest(bytes)
+        .iter()
+        .map(|b| format!("{b:02x}"))
+        .collect()
+}
+fn valid_hash(value: &str) -> bool {
+    value.len() == 64
+        && value
+            .bytes()
+            .all(|b| b.is_ascii_digit() || (b'a'..=b'f').contains(&b))
+}
+fn read(path: &Path, cap: usize) -> Vec<u8> {
+    let mut bytes = Vec::new();
+    std::fs::File::open(path)
+        .unwrap()
+        .take(cap as u64 + 1)
+        .read_to_end(&mut bytes)
+        .unwrap();
+    assert!(bytes.len() <= cap, "fixture cap {}", path.display());
+    bytes
+}
+fn u64_at(bytes: &[u8], at: usize) -> u64 {
+    u64::from_le_bytes(bytes[at..at + 8].try_into().unwrap())
+}
+fn map(text: &str) -> BTreeMap<usize, String> {
+    text.split(',')
+        .map(|item| {
+            let (number, hash) = item.split_once(':').unwrap();
+            assert!(valid_hash(hash));
+            (number.parse().unwrap(), hash.to_owned())
+        })
+        .collect()
+}
+struct Corpus {
+    root: PathBuf,
+    sizes: BTreeMap<String, usize>,
+    rows: BTreeMap<String, Vec<String>>,
+    checkpoints: BTreeMap<String, Vec<String>>,
+}
+impl Corpus {
+    fn new(kind: &str) -> Self {
+        let native = kind == "native";
+        let gap = kind == "memory-gap";
+        assert!(native || gap || kind == "transition");
+        let root = Path::new(env!("CARGO_MANIFEST_DIR"))
+            .join("../..")
+            .join("tests/fixtures/dev3-catalog-create")
+            .join(kind);
+        let pins = if gap {
+            [
+                (
+                    "input-plan.json",
+                    "3c21253e75cb168a34c7f4d054a27e1bbeb536221a96389208052371f4dd9208",
+                ),
+                (
+                    "manifest.json",
+                    "edfe57082b56540ea5e71f0d5109ca98dc131369d1906388f5dd171f69d3a92b",
+                ),
+                (
+                    "raw-index.tsv",
+                    "bb484d66484b12b72a8b847ac7da6d8391b4c7fc99ce1b3809ea7d2e5b19de39",
+                ),
+                (
+                    "steps.tsv",
+                    "8fdf4dcf7b3a5848cba9e5ecf0e6d91ec75f32748b5a33caf3aeaeccb02a9047",
+                ),
+            ]
+        } else if native {
+            [
+                ("input-plan.json", NATIVE_INPUT),
+                (
+                    "manifest.json",
+                    "87aa46dd81711cc5080097c674e6fb419e371680ea3e19faa5bafbe3e4847b23",
+                ),
+                (
+                    "raw-index.tsv",
+                    "19dc89b4fcfa06942dbe1568a83b45d33af97b6c33cbfd50d6f199242e9d84cd",
+                ),
+                (
+                    "steps.tsv",
+                    "1b4b8b5b1ae0ee11794f97f643f3605a8a66064a1d57e00094948fe1e5c62f66",
+                ),
+            ]
+        } else {
+            [
+                ("input-plan.json", TRANSITION_INPUT),
+                (
+                    "manifest.json",
+                    "6da4346527580f3988deb480546fd6e4ee6aa57201a4bedbb7dec60c4f1509eb",
+                ),
+                (
+                    "raw-index.tsv",
+                    "5ac2422996fbd8a8371bd396acc9ea8e9e7681563aeabd21848640740b63d964",
+                ),
+                (
+                    "cases.tsv",
+                    "f5091dfb128b1c49bfe5b00d8e96628b81b9c7ce215c47ae23c44736940fdf26",
+                ),
+            ]
+        };
+        for (name, hash) in pins {
+            assert_eq!(hex(&read(&root.join(name), 1 << 20)), hash);
+        }
+        let index = String::from_utf8(read(&root.join("raw-index.tsv"), 1 << 20)).unwrap();
+        let mut sizes = BTreeMap::new();
+        let mut total = 0usize;
+        for line in index.lines().skip(1) {
+            let fields: Vec<_> = line.split('\t').collect();
+            assert_eq!(fields.len(), 3);
+            assert!(valid_hash(fields[0]));
+            assert_eq!(fields[2], format!("raw/{}.bin", fields[0]));
+            let size: usize = fields[1].parse().unwrap();
+            assert!(size <= 1 << 20);
+            assert!(sizes.insert(fields[0].to_owned(), size).is_none());
+            total = total.checked_add(size).unwrap();
+        }
+        assert_eq!(
+            (sizes.len(), total),
+            if gap {
+                (137, 3_382_130)
+            } else if native {
+                (221, 5_794_810)
+            } else {
+                (324, 8_857_480)
+            }
+        );
+        let actual: BTreeSet<_> = std::fs::read_dir(root.join("raw"))
+            .unwrap()
+            .map(|e| {
+                let e = e.unwrap();
+                assert!(e.file_type().unwrap().is_file());
+                e.file_name().into_string().unwrap()
+            })
+            .collect();
+        assert_eq!(actual, sizes.keys().map(|s| format!("{s}.bin")).collect());
+        let table = if native || gap {
+            "steps.tsv"
+        } else {
+            "cases.tsv"
+        };
+        let mut rows = BTreeMap::new();
+        for (at, line) in String::from_utf8(read(&root.join(table), 1 << 20))
+            .unwrap()
+            .lines()
+            .enumerate()
+        {
+            if (native || gap) && at == 0 {
+                continue;
+            }
+            let fields: Vec<String> = line.split('\t').map(str::to_owned).collect();
+            assert_eq!(fields.len(), if native || gap { 21 } else { 37 });
+            assert!(rows.insert(fields[0].clone(), fields).is_none());
+        }
+        assert_eq!(
+            rows.len(),
+            if gap {
+                26
+            } else if native {
+                56
+            } else {
+                72
+            }
+        );
+        let mut checkpoints = BTreeMap::new();
+        if native || gap {
+            let bytes = read(&root.join("checkpoints.tsv"), 1 << 20);
+            assert_eq!(
+                hex(&bytes),
+                if gap {
+                    "e0cd3791ddb9a7064387a68809cb3cbe8b26e266e2c824271677c2b16c168268"
+                } else {
+                    "0d1abf8d70b01cbaeea218f3cdcb49194e1e17f0b65f362f7f83877b8d98551e"
+                }
+            );
+            for line in String::from_utf8(bytes).unwrap().lines().skip(1) {
+                let fields: Vec<String> = line.split('\t').map(str::to_owned).collect();
+                assert_eq!(fields.len(), 10);
+                let key = format!("{}-L{:02}", fields[0], fields[1].parse::<u64>().unwrap());
+                assert!(checkpoints.insert(key, fields).is_none());
+            }
+            assert_eq!(checkpoints.len(), if gap { 6 } else { 16 });
+        }
+        Self {
+            root,
+            sizes,
+            rows,
+            checkpoints,
+        }
+    }
+    fn raw(&self, hash: &str) -> Vec<u8> {
+        assert!(valid_hash(hash));
+        let bytes = read(&self.root.join(format!("raw/{hash}.bin")), 1 << 20);
+        assert_eq!(bytes.len(), self.sizes[hash]);
+        assert_eq!(hex(&bytes), hash);
+        bytes
+    }
+}
+struct Oracle {
+    native: Corpus,
+    transition: Corpus,
+    gap: Corpus,
+}
+impl Oracle {
+    fn new() -> Self {
+        Self {
+            native: Corpus::new("native"),
+            transition: Corpus::new("transition"),
+            gap: Corpus::new("memory-gap"),
+        }
+    }
+    fn row(&self, id: &str) -> &[String] {
+        &self.transition.rows[id]
+    }
+    fn actor(&self, id: &str) -> TxnRef {
+        let row = self.row(id);
+        actor(1, row[5].parse().unwrap(), row[6].parse().unwrap())
+    }
+    fn ordinal(&self, id: &str) -> usize {
+        self.row(id)[4].parse().unwrap()
+    }
+    fn frame(&self, id: &str) -> Vec<u8> {
+        self.transition.raw(&self.row(id)[21])
+    }
+    fn native_frame(&self, lsn: u64) -> Vec<u8> {
+        self.native
+            .raw(&self.native.rows[&format!("N01-L{lsn:02}")][9])
+    }
+    fn check_initial(
+        &self,
+        live: &Live<'_, '_, '_, '_, '_, '_, '_, '_, port::Writer>,
+        state: &State,
+        lsn: u64,
+    ) {
+        let row = &self.native.rows[&format!("N01-L{lsn:02}")];
+        let frames: Vec<_> = (1..=lsn).map(|n| self.native_frame(n)).collect();
+        assert_wal(state, 1, &frames);
+        for (_, hash) in map(&row[20]) {
+            assert_image(live, &self.native.raw(&hash));
+        }
+        let bank = live.recovery_test_bank();
+        for (field, slot) in [(16, 32), (18, 33)] {
+            if row[field] != "-" {
+                assert_eq!(
+                    &bank[slot * 1664..slot * 1664 + 1536],
+                    self.native.raw(&row[field])
+                );
+            }
+        }
+        assert_eq!(
+            live.catalog_test_jobs().as_flattened(),
+            self.native.raw(&row[12])
+        );
+        assert_state(live, lsn, false);
+    }
+    fn check(
+        &self,
+        live: &Live<'_, '_, '_, '_, '_, '_, '_, '_, port::Writer>,
+        state: &State,
+        id: &str,
+    ) {
+        let row = self.row(id);
+        assert_eq!(row[1], "ACCEPT");
+        let lsn: u64 = row[3].parse().unwrap();
+        let op: u16 = row[2].parse().unwrap();
+        let mut frames: Vec<_> = (1..=5).map(|n| self.native_frame(n)).collect();
+        for at in 1..=id[1..].parse::<usize>().unwrap() {
+            frames.push(self.frame(&format!("{}{at:02}", &id[..1])));
+        }
+        assert_wal(state, 1, &frames);
+        for role in 0..8 {
+            if row[29 + role] != "-" {
+                assert_image(live, &self.transition.raw(&row[29 + role]));
+            }
+        }
+        let frame = self.frame(id);
+        let bank = live.recovery_test_bank();
+        let tx = &bank[..1536];
+        let aging = &bank[32 * 1664..32 * 1664 + 1536];
+        if &frame[160..164] == b"XHG1" {
+            if matches!(op, 6 | 7) {
+                assert!(tx.iter().all(|b| *b == 0));
+            } else {
+                assert_eq!(tx, &frame[416..1952]);
+            }
+            assert_eq!(aging, &frame[1952..3488]);
+        } else {
+            assert_eq!(&frame[160..164], b"XSG1");
+            if op == 3 {
+                assert_eq!(tx, &frame[352..1888]);
+                assert_eq!(aging, self.transition.raw(&row[20]));
+            } else {
+                assert!(tx.iter().all(|b| *b == 0));
+                assert_eq!(aging, &frame[352..1888]);
+            }
+        }
+        let system = &self.native.rows["N01-L05"][18];
+        assert_eq!(&bank[33 * 1664..33 * 1664 + 1536], self.native.raw(system));
+        let mut jobs = self.transition.raw(&row[17]);
+        if row[31] != "-" {
+            let page = self.transition.raw(&row[31]);
+            let page_index = (u64_at(&page, 32) - 2) as usize;
+            for slot in 0..15 {
+                let ordinal = page_index * 15 + slot;
+                if ordinal < 64 {
+                    let at = 16_352 - 1024 * (slot + 1);
+                    jobs[ordinal * 1024..(ordinal + 1) * 1024]
+                        .copy_from_slice(&page[at..at + 1024]);
+                }
+            }
+        }
+        assert_eq!(live.catalog_test_jobs().as_flattened(), jobs);
+        assert_state(live, lsn, op == 11);
+    }
+}
+fn actor(epoch: u32, local: u64, generation: u64) -> TxnRef {
+    TxnRef::new(
+        TxnId {
+            database: super::support::namespace().database,
+            timeline: 1,
+            writer_epoch: epoch,
+            local,
+        },
+        Generation::new(generation).unwrap(),
+    )
+    .unwrap()
+}
+fn table_spec(name: &str) -> TableSpec {
+    TableSpec {
+        name: name.to_owned(),
+        columns: vec![Column {
+            name: "i".to_owned(),
+            data_type: DataType::Int64,
+            nullable: false,
+        }],
+    }
+}
+fn assert_wal(state: &State, epoch: u32, frames: &[Vec<u8>]) {
+    let state = state.lock().unwrap();
+    let file = &state.files[&format!("d3-wal-{epoch:08x}")];
+    let expected = 4096 + frames.iter().map(Vec::len).sum::<usize>();
+    assert_eq!(file.length as usize, expected);
+    assert_eq!(file.bytes.len(), expected);
+    let mut at = 4096;
+    for frame in frames {
+        assert_eq!(&file.bytes[at..at + frame.len()], frame);
+        at += frame.len();
+    }
+}
+fn resident_index(
+    live: &Live<'_, '_, '_, '_, '_, '_, '_, '_, port::Writer>,
+    number: u64,
+) -> Option<usize> {
+    probe::registered_index(live.catalog_test_pool(), number)
+}
+fn assert_image(live: &Live<'_, '_, '_, '_, '_, '_, '_, '_, port::Writer>, expected: &[u8]) {
+    assert_eq!(expected.len(), PAGE_BYTES);
+    let number = u64_at(expected, 32);
+    let index = resident_index(live, number)
+        .unwrap_or_else(|| panic!("actual changed page {number} not resident"));
+    let request = live.catalog_test_pool().target_request(index).unwrap();
+    assert_eq!(
+        request.identity.database.bytes().as_slice(),
+        &expected[8..24]
+    );
+    assert_eq!(
+        request.identity.page.file,
+        crate::storage::page::FileId::new(u64_at(expected, 24)).unwrap()
+    );
+    assert_eq!(request.identity.page.page_no, u64_at(expected, 32));
+    assert_eq!(
+        request.identity.page.incarnation.get(),
+        u64_at(expected, 40)
+    );
+    assert_eq!(request.identity.owner.get(), u64_at(expected, 48));
+    assert_eq!(
+        request.identity.owner_generation.get(),
+        u64_at(expected, 56)
+    );
+    assert_eq!(
+        (request.kind as u8, request.level),
+        (expected[6], expected[7])
+    );
+    let mut actual = boxed::<PAGE_BYTES>();
+    let observed = probe::diagnose(live.catalog_test_pool(), index, &mut actual);
+    assert_eq!(actual.as_slice(), expected, "actual page {number}");
+    assert_eq!(observed.frame.page_lsn.0, u64_at(expected, 64));
+    assert_eq!(observed.total, 0);
+}
+fn assert_state(live: &Live<'_, '_, '_, '_, '_, '_, '_, '_, port::Writer>, lsn: u64, claim: bool) {
+    let (prefix, durable, reserved, installing, pending, actual_claim, pins) =
+        live.free_undo_test_state().unwrap();
+    assert_eq!(
+        (prefix.complete_lsn, prefix.synced_lsn, durable),
+        (lsn, lsn, Some(lsn))
+    );
+    assert!(!reserved && !installing && !pending);
+    assert_eq!((actual_claim, pins), (claim, 0));
+}
+fn case(id: &str, run: impl FnOnce()) {
+    let identity = [
+        "XADB_CATALOG_SOURCE_SHA256",
+        "XADB_CATALOG_ELF_SHA256",
+        "XADB_CATALOG_INPUT_SHA256",
+    ]
+    .map(|key| {
+        let value = std::env::var(key).unwrap_or_else(|_| panic!("missing {key}"));
+        assert!(valid_hash(&value));
+        value
+    })
+    .join("\t");
+    println!("CATALOG_MEMORY_CONTEXT\t{id}\t{identity}\t{NATIVE_INPUT}\t{TRANSITION_INPUT}");
+    println!("CATALOG_MEMORY_BEGIN\t{id}");
+    let started = std::time::Instant::now();
+    match catch_unwind(AssertUnwindSafe(run)) {
+        Ok(()) => {
+            assert!(started.elapsed() < std::time::Duration::from_secs(30));
+            println!("CATALOG_MEMORY_PASS\t{id}");
+        }
+        Err(error) => {
+            println!("CATALOG_MEMORY_FAIL\t{id}");
+            resume_unwind(error);
+        }
+    }
+}
+
+fn prepare_catalog<'s, 'c, W: WriterNamespace>(
+    live: &mut Live<'_, 's, 'c, '_, '_, '_, '_, '_, W>,
+    owner: &Owner<'c, 's>,
+    flusher: &mut Owner<'c, 's>,
+) {
+    let mut cursor = Plan4ResidencyCursor::new();
+    for _ in 0..32 {
+        match live.prepare_catalog(owner, &mut cursor).unwrap() {
+            None => return,
+            Some(RetentionResidencyStep::FlushRequired { target, .. }) => {
+                drive_flush(live, flusher, Some(&target))
+            }
+            Some(_) => panic!("unexpected Catalog preparation"),
+        }
+    }
+    panic!("bounded Catalog preparation exhausted");
+}
+fn prepare_create<'s, 'c, W: WriterNamespace>(
+    live: &mut Live<'_, 's, 'c, '_, '_, '_, '_, '_, W>,
+    owner: &Owner<'c, 's>,
+    flusher: &mut Owner<'c, 's>,
+    status: &Plan4Target,
+    undo: &Plan4Target,
+) {
+    let job = crate::storage::retention_page::JobSlotRef::new(
+        page_ref(2, 1),
+        0,
+        foundation::identity::Generation::new(1).unwrap(),
+    )
+    .unwrap();
+    let mut cursor = Plan4ResidencyCursor::new();
+    for _ in 0..32 {
+        match live
+            .prepare_catalog_create_targets(owner, status, undo, job, &mut cursor)
+            .unwrap()
+        {
+            None => return,
+            Some(RetentionResidencyStep::FlushRequired { target, .. }) => {
+                drive_flush(live, flusher, Some(&target))
+            }
+            Some(_) => panic!("unexpected Begin preparation"),
+        }
+    }
+    panic!("bounded CREATE target preparation exhausted");
+}
+fn initialize<'s, 'c, W: WriterNamespace>(
+    live: &mut Live<'_, 's, 'c, '_, '_, '_, '_, '_, W>,
+    owner: &mut Owner<'c, 's>,
+    flusher: &mut Owner<'c, 's>,
+    undo: bool,
+) -> Plan4Target {
+    let mut cursor = Plan4ResidencyCursor::new();
+    let mut prepared = false;
+    for _ in 0..32 {
+        let step = if undo {
+            live.prepare_undo_slot(owner, &mut cursor)
+        } else {
+            live.prepare_status_slot(owner, &mut cursor)
+        }
+        .unwrap();
+        match step {
+            None => {
+                prepared = true;
+                break;
+            }
+            Some(RetentionResidencyStep::FlushRequired { target, .. }) => {
+                drive_flush(live, flusher, Some(&target))
+            }
+            Some(_) => panic!("unexpected System slot preparation"),
+        }
+    }
+    assert!(prepared, "bounded System preparation exhausted");
+    let reserved = if undo {
+        live.reserve_undo(owner)
+    } else {
+        live.reserve_status(owner)
+    }
+    .unwrap();
+    assert_eq!(reserved.page(), page_ref(if undo { 10 } else { 9 }, 2));
+    match reserved.initialize() {
+        Ok(target) => target,
+        Err(RetentionReservationError::Before { error, .. })
+        | Err(RetentionReservationError::Fatal(error)) => panic!("actual INIT {error:?}"),
+    }
+}
+
+fn flush_all<'s, 'c, W: WriterNamespace>(
+    live: &mut Live<'_, 's, 'c, '_, '_, '_, '_, '_, W>,
+    flusher: &mut Owner<'c, 's>,
+) {
+    drive_flush(live, flusher, None);
+    for page in [
+        Plan4Page::Root,
+        Plan4Page::Jobs { index: 0 },
+        Plan4Page::CatalogAnchor,
+        Plan4Page::CatalogLeaf,
+    ] {
+        let target = live.target(page).unwrap();
+        if probe::registered_index(live.catalog_test_pool(), target.identity().page.page_no)
+            .is_some()
+        {
+            drive_flush(live, flusher, Some(&target));
+        }
+    }
+    for (number, undo) in [(9, false), (10, true)] {
+        if probe::registered_index(live.catalog_test_pool(), number).is_some() {
+            let target = if undo {
+                live.undo_target(page_ref(number, 2))
+            } else {
+                live.status_target(page_ref(number, 2))
+            }
+            .unwrap();
+            drive_flush(live, flusher, Some(&target));
+        }
+    }
+}
+
+#[allow(
+    clippy::too_many_arguments,
+    reason = "actual owners and disjoint loans remain explicit"
+)]
+fn create_forward<'s, 'c>(
+    live: &mut Live<'_, 's, 'c, '_, '_, '_, '_, '_, port::Writer>,
+    owner: &mut Owner<'c, 's>,
+    flusher: &mut Owner<'c, 's>,
+    status: &Plan4Target,
+    undo: &Plan4Target,
+    private: &mut [u8; PRIVATE_BYTES],
+    oracle: &Oracle,
+    state: &State,
+    cycle: u8,
+) -> TxnRef {
+    assert_eq!(
+        cycle, 1,
+        "first CREATE prefix only; later cycles need their exact corpus"
+    );
+    prepare_create(live, owner, flusher, status, undo);
+    let begin = live.catalog_begin(owner, status, private).unwrap();
+    let actor = oracle.actor("R01");
+    assert_eq!((begin.header.lsn, begin.actor), (6, Some(actor)));
+    oracle.check(live, state, "R01");
+    let definition = table_spec("T");
+    let reserved = live
+        .reserve_catalog_create(owner, actor, undo, &definition, private)
+        .unwrap();
+    assert_eq!(reserved.object().object.get(), 6);
+    oracle.check(reserved.catalog_test_bound(), state, "R02");
+    let created = match reserved.initialize() {
+        Ok(value) => value,
+        Err(RetentionReservationError::Before { error, .. })
+        | Err(RetentionReservationError::Fatal(error)) => panic!("actual Forward {error:?}"),
+    };
+    assert_eq!(created.object.get(), 6);
+    oracle.check(live, state, "R03");
+    actor
+}
+
+#[allow(
+    clippy::too_many_arguments,
+    reason = "original snapshot, owner and read loan stay explicit"
+)]
+fn query<'s, 'c, W: WriterNamespace>(
+    live: &mut Live<'_, 's, 'c, '_, '_, '_, '_, '_, W>,
+    owner: &mut Owner<'c, 's>,
+    flusher: &mut Owner<'c, 's>,
+    private: &mut [u8; PRIVATE_BYTES],
+    q: u64,
+    object: u64,
+    found: bool,
+) {
+    prepare_catalog(live, owner, flusher);
+    let (_, reader, mut flush) = live.split();
+    let snapshot = reader.catalog_snapshot(owner).unwrap();
+    assert_eq!(snapshot.q(), q);
+    let mut cursor = Plan4ResidencyCursor::new();
+    let mut finished = false;
+    for _ in 0..32 {
+        match reader
+            .lookup_catalog(
+                owner,
+                &snapshot,
+                ObjectId::new(object).unwrap(),
+                &mut cursor,
+                private,
+            )
+            .unwrap()
+        {
+            CatalogLookupStep::Found(record) => {
+                assert!(found);
+                let header = record.header();
+                assert_eq!(
+                    (
+                        header.identity.object.get(),
+                        header.identity.generation.get(),
+                        header.identity.schema_epoch.get()
+                    ),
+                    (object, 1, 1)
+                );
+                assert!(!header.retired);
+                let crate::storage::catalog_record::CatalogDefinitionView::Table(table) =
+                    record.definition()
+                else {
+                    panic!("table definition");
+                };
+                assert_eq!(table.name(), if object == 6 { "T" } else { "U" });
+                assert_eq!(table.len(), 1);
+                let column = table.column(0).unwrap();
+                assert_eq!(
+                    (column.name, column.data_type, column.nullable),
+                    ("i", DataType::Int64, false)
+                );
+                finished = true;
+                break;
+            }
+            CatalogLookupStep::Missing => {
+                assert!(!found);
+                finished = true;
+                break;
+            }
+            CatalogLookupStep::FlushRequired { target } => {
+                let mut step = flush.try_flush(flusher, &target).unwrap();
+                for _ in 0..8 {
+                    if matches!(
+                        step,
+                        RetentionFlushStep::Complete { .. } | RetentionFlushStep::NoDirty
+                    ) {
+                        break;
+                    }
+                    step = flush.continue_flush(flusher).unwrap();
+                }
+                assert!(matches!(
+                    step,
+                    RetentionFlushStep::Complete { .. } | RetentionFlushStep::NoDirty
+                ));
+            }
+        }
+    }
+    assert!(finished, "bounded actual lookup exhausted");
+    snapshot.release_checked().unwrap();
+    owner.check_idle().unwrap();
+    flusher.check_idle().unwrap();
+}
+
+// All resources belong to the original fresh owner. In particular, reader and
+// writer private loans are disjoint parts of the existing 12MiB reservation.
+macro_rules! with_fresh {
+    ($oracle:expr, |$live:ident, $owner:ident, $flusher:ident, $status:ident, $undo:ident,
+        $private:ident, $reader_private:ident, $core:ident, $fence:ident, $state:ident| $body:block) => {{
+        let directory = port::Directory::fresh();
+        let state = directory.state();
+        {
+            let mut state = state.lock().unwrap();
+            state.live_writes = true;
+            state.recovery_writes = true;
+        }
+        let result = {
+            let mut slot = boxed::<1_048_576>();
+            let mut maintenance = boxed::<12_582_912>();
+            let mut dwb = boxed::<4_194_304>();
+            let storage = FreshStorageSession::create_retention_catalog(
+                directory.acquire_writer().unwrap(),
+                1,
+                &mut slot,
+                &mut maintenance,
+            )
+            .unwrap()
+            .install_doublewrite(&mut dwb)
+            .unwrap()
+            .into_mutable_storage();
+            let core = PageConcurrency::new(storage.session_fence()).unwrap();
+            let mut owner = core.try_owner(OwnerRole::Foreground).unwrap();
+            let mut flusher = core.try_owner(OwnerRole::DedicatedFlusher).unwrap();
+            let mut backing = vec![[0xa7; PAGE_BYTES]; 9];
+            let mut frames: Vec<_> = backing.iter_mut().map(DirtyFrame::new).collect();
+            let mut operation = boxed::<114_688>();
+            let (prefix, visibility) = maintenance.split_at_mut(12_574_720);
+            let (prefix, private) = prefix.split_at_mut(12_148_736);
+            let (prefix, control) = prefix.split_at_mut(6_815_744);
+            let (reader_private, prefix) = prefix.split_at_mut(PRIVATE_BYTES);
+            let replay: &mut [u8; RETENTION_REPLAY_BYTES] = (&mut prefix
+                [4_194_304 - PRIVATE_BYTES..5_767_168 - PRIVATE_BYTES])
+                .try_into()
+                .unwrap();
+            let control: &mut [u8; RETENTION_CONTROL_BYTES] = (&mut control
+                [..RETENTION_CONTROL_BYTES])
+                .try_into()
+                .unwrap();
+            let private: &mut [u8; PRIVATE_BYTES] = private.try_into().unwrap();
+            let reader_private: &mut [u8; PRIVATE_BYTES] = reader_private.try_into().unwrap();
+            let pages = storage
+                .bind_plan4_pages(&core, &mut frames, &mut operation)
+                .unwrap();
+            let mut live = match pages
+                .into_empty_retention(&mut owner, EmptyRetentionControlLoan { control, replay })
+            {
+                Ok(value) => value,
+                Err(IntoRetentionError::Before { error, .. })
+                | Err(IntoRetentionError::Fatal(error)) => {
+                    panic!("actual empty conversion {error:?}")
+                }
+            };
+            live.enable_catalog_visibility(
+                &mut owner,
+                VisibilityLoan {
+                    bytes: visibility.try_into().unwrap(),
+                },
+            )
+            .unwrap();
+            let root = live.target(Plan4Page::Root).unwrap();
+            assert!(matches!(
+                live.residency_step(&root, &mut Plan4ResidencyCursor::new())
+                    .unwrap(),
+                RetentionResidencyStep::Resident { .. }
+            ));
+            assert_eq!(
+                live.catalog_aging_start(&mut owner, private)
+                    .unwrap()
+                    .header
+                    .lsn,
+                1
+            );
+            $oracle.check_initial(&live, &state, 1);
+            let status = initialize(&mut live, &mut owner, &mut flusher, false);
+            $oracle.check_initial(&live, &state, 3);
+            let undo = initialize(&mut live, &mut owner, &mut flusher, true);
+            $oracle.check_initial(&live, &state, 5);
+            let (
+                $live,
+                $owner,
+                $flusher,
+                $status,
+                $undo,
+                $private,
+                $reader_private,
+                $core,
+                $fence,
+                $state,
+            ) = (
+                &mut live,
+                &mut owner,
+                &mut flusher,
+                &status,
+                &undo,
+                private,
+                reader_private,
+                &core,
+                storage.session_fence(),
+                &state,
+            );
+            $body
+        };
+        assert_closed(&state);
+        {
+            let state = state.lock().unwrap();
+            assert!(state.files.values().map(|file| file.length).sum::<u64>() <= 32 * 1_048_576);
+        }
+        result
+    }};
+}
+
+impl Oracle {
+    fn scenario(&self, scenario: &str) -> &Corpus {
+        if scenario.starts_with("MC") {
+            &self.gap
+        } else {
+            &self.native
+        }
+    }
+    fn check_scenario(
+        &self,
+        live: &Live<'_, '_, '_, '_, '_, '_, '_, '_, port::Writer>,
+        state: &State,
+        scenario: &str,
+        lsn: u64,
+    ) {
+        let corpus = self.scenario(scenario);
+        let row = &corpus.rows[&format!("{scenario}-L{lsn:02}")];
+        let epoch: u32 = row[3].parse().unwrap();
+        let frames: Vec<_> = corpus
+            .rows
+            .values()
+            .filter(|selected| {
+                selected[1] == scenario
+                    && selected[3] == row[3]
+                    && selected[2].parse::<u64>().unwrap() <= lsn
+            })
+            .map(|selected| corpus.raw(&selected[9]))
+            .collect();
+        assert_wal(state, epoch, &frames);
+        for (_, hash) in map(&row[20]) {
+            assert_image(live, &corpus.raw(&hash));
+        }
+        let bank = live.recovery_test_bank();
+        for (field, slot) in [(16, 32), (18, 33)] {
+            if row[field] != "-" {
+                assert_eq!(
+                    &bank[slot * 1664..slot * 1664 + 1536],
+                    corpus.raw(&row[field])
+                );
+            }
+        }
+        if row[14] != "-" {
+            let transaction = corpus.raw(&row[14]);
+            if matches!(transaction[6], 3 | 4) {
+                assert!(bank[..32 * 1664].iter().all(|b| *b == 0));
+            } else {
+                assert_eq!(&bank[..1536], transaction);
+            }
+        }
+        assert_eq!(
+            live.catalog_test_jobs().as_flattened(),
+            corpus.raw(&row[12])
+        );
+        assert_state(live, lsn, row[5] == "11");
+    }
+    fn checkpoint(
+        &self,
+        live: &Live<'_, '_, '_, '_, '_, '_, '_, '_, port::Writer>,
+        state: &State,
+        scenario: &str,
+        lsn: u64,
+    ) {
+        let corpus = self.scenario(scenario);
+        let point = &corpus.checkpoints[&format!("{scenario}-L{lsn:02}")];
+        let bank = live.recovery_test_bank();
+        assert!(bank[..32 * 1664].iter().all(|b| *b == 0));
+        assert_eq!(&bank[32 * 1664..32 * 1664 + 1536], corpus.raw(&point[5]));
+        assert_eq!(&bank[33 * 1664..33 * 1664 + 1536], corpus.raw(&point[6]));
+        assert_eq!(
+            live.catalog_test_jobs().as_flattened(),
+            corpus.raw(&point[4])
+        );
+        assert_eq!(live.catalog_test_q(), point[2].parse::<u64>().unwrap());
+        let state = state.lock().unwrap();
+        let home = &state.files[HOME_NAME];
+        assert_eq!(
+            (home.length as usize, home.bytes.len()),
+            (64 * PAGE_BYTES, 64 * PAGE_BYTES)
+        );
+        for (number, hash) in map(&point[3]) {
+            let expected = corpus.raw(&hash);
+            // Free pages have no authoritative home bytes. Every allocated image
+            // including original allocator and pair INIT images is compared.
+            if expected.iter().any(|b| *b != 0) {
+                assert_eq!(
+                    &home.bytes[number * PAGE_BYTES..(number + 1) * PAGE_BYTES],
+                    expected,
+                    "recovered home page {number}"
+                );
+            }
+        }
+    }
+}
+
+fn recover_check(images: &Images, oracle: &Oracle, scenario: &str) {
+    let (capture, last, q, found) = match scenario {
+        "MC04" => (7, 11, 0, false),
+        "N03" => (9, 15, 1, true),
+        "MC03" => (9, 15, 1, true),
+        _ => panic!("unplanned recovery scenario"),
+    };
+    let directory = clone_directory(images);
+    let state = directory.state();
+    {
+        let mut maintenance = boxed::<12_582_912>();
+        let mut dwb = boxed::<4_194_304>();
+        let mut slot = boxed::<1_048_576>();
+        let runtime = actual_runtime(&directory, &mut maintenance, &mut dwb, &mut slot);
+        assert_eq!(runtime.observation().source_lsn, capture);
+        assert!(
+            !state.lock().unwrap().files.contains_key("d3-wal-00000001"),
+            "actual old WAL discard"
+        );
+        let core = PageConcurrency::new(runtime.session_fence()).unwrap();
+        let mut owner = core.try_owner(OwnerRole::Foreground).unwrap();
+        let mut flusher = core.try_owner(OwnerRole::DedicatedFlusher).unwrap();
+        let mut backing = vec![[0xa7; PAGE_BYTES]; 9];
+        let mut frames: Vec<_> = backing.iter_mut().map(DirtyFrame::new).collect();
+        let mut operation = boxed::<114_688>();
+        let mut closed = runtime
+            .bind(&owner, &core, &mut frames, &mut operation)
+            .unwrap();
+        let mut ready = false;
+        let mut observed_lsn = capture;
+        for _ in 0..256 {
+            let progress = closed.step(&mut owner, &mut flusher).unwrap();
+            let current = closed.inner.free_undo_test_state().unwrap().0.complete_lsn;
+            if current > observed_lsn {
+                assert_eq!(current, observed_lsn + 1);
+                oracle.check_scenario(&closed.inner, &state, scenario, current);
+                observed_lsn = current;
+            }
+            if progress.ready {
+                ready = true;
+                break;
+            }
+        }
+        assert!(ready, "bounded actual recovery exhausted");
+        assert_eq!(observed_lsn, last);
+        let (mut live, private) = match closed.into_live_with_private() {
+            Ok(value) => value,
+            Err(_) => panic!("original READY handoff"),
+        };
+        oracle.checkpoint(&live, &state, scenario, last);
+        query(&mut live, &mut owner, &mut flusher, private, q, 6, found);
+        assert_state(&live, last, false);
+        assert!(!runtime.session_fence().is_fenced());
+    }
+    assert_closed(&state);
+    assert!(
+        state
+            .lock()
+            .unwrap()
+            .files
+            .values()
+            .map(|file| file.length)
+            .sum::<u64>()
+            <= 32 * 1_048_576
+    );
+}
+
+#[path = "catalog_memory/lifecycle.rs"]
+mod lifecycle;
+
+#[path = "catalog_memory/commit_failures.rs"]
+mod commit_failures;
