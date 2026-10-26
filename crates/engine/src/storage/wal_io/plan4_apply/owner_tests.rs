@@ -205,10 +205,16 @@ fn disk_session_isolation_backing_and_carriers_are_accounted() {
     println!("C1_ISOLATION_LIVE {live:?}");
     println!("C1_ISOLATION_RECOVERED {recovered:?}");
     assert_eq!(live.caller_isolation, 4_160);
-    assert_eq!(live.metadata - live.peak, 72_256);
+    assert_eq!(visibility::source_census().backing, 9_792);
+    assert!(visibility::fits());
+    assert!(resources::fits::<port::Writer>());
+    assert!(recovered.peak <= 65_536);
+    assert!(recovered.metadata <= 196_608);
+    assert!(recovered.whole <= 262_144);
+    assert_eq!(live.metadata - live.peak, 73_856);
     assert_eq!(
         recovered.metadata - recovered.retained_live - directory,
-        77_888
+        79_488
     );
     assert!(
         std::mem::size_of::<RetentionControl<'_, '_, '_>>()

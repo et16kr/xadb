@@ -639,6 +639,7 @@ fn produce<D: DirectoryPort>(directory: &D, worker: &Worker<'_>) {
     let (prefix, visibility) = maintenance.split_at_mut(12_574_720);
     let (prefix, private) = prefix.split_at_mut(12_148_736);
     let (prefix, isolation) = prefix.split_at_mut(12_144_576);
+    let (prefix, epochs) = prefix.split_at_mut(12_142_976);
     let isolation: &mut [u8; 4_160] = isolation.try_into().unwrap();
     let (prefix, control) = prefix.split_at_mut(6_815_744);
     let replay: &mut [u8; RETENTION_REPLAY_BYTES] =
@@ -667,6 +668,7 @@ fn produce<D: DirectoryPort>(directory: &D, worker: &Worker<'_>) {
         &mut owner,
         VisibilityLoan {
             bytes: visibility.try_into().unwrap(),
+            epochs: epochs.try_into().unwrap(),
         },
     )
     .unwrap();

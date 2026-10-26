@@ -763,8 +763,8 @@ pub(in crate::storage) use bootstrap::RecoveryPoolSeed;
 #[allow(unused_imports)] // Same original owner capabilities across the private module chain.
 pub(in crate::storage) use bootstrap::{
     AppliedRetirement, BoundVisibility, CapturedCatalogRefs, CatalogLookupLoan, CatalogSource,
-    HorizonObservation, InstalledFrontier, ReadyFrontier, ReferenceLease, RetirementIntent,
-    RetirementReject, RetirementScope, RollbackSource, SnapshotGuard, SnapshotReservation,
+    HorizonObservation, InstalledFrontier, ReferenceLease, RetirementIntent, RetirementReject,
+    RetirementScope, RollbackSource, SnapshotGuard, SnapshotReservation, SourceFrontier,
     StagedRetirement, TxPairAuthority, TxPairCancelKind, TxPairCancelPermit, TxPairControlCommit,
     TxPairInstallPermit, TxPairRetirePermit, TxPairStageRejection, TxnPin, UndoPin,
     VISIBILITY_BYTES, VerifiedRetirement, VisibilityCause, VisibilityError, VisibilityLoan,

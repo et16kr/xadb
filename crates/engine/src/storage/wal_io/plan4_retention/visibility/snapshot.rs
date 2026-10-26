@@ -77,7 +77,7 @@ impl<'a, 'c, 's> BoundVisibility<'a, 'c, 's> {
         }
         let version = owner.try_apply()?.try_version()?;
         let registered = (|| {
-            let q = *self.publication()?;
+            let q = self.publication()?.q;
             let mut bytes = self.entry()?;
             reservation.check(&bytes[..], 1)?;
             let row = snapshot_mut(&mut bytes[..], reservation.row);

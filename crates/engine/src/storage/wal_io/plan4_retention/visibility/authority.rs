@@ -1,10 +1,10 @@
 //! Sealed inputs of the original CREATE producer. Constructors belong to the
-//! actual READY/Commit/source-latch/semantic-install paths supplied with it.
+//! actual source-validation/Commit/source-latch/semantic-install paths supplied with it.
 //! In particular there is no raw-q, raw-reference or raw-LSN constructor.
 use super::*;
 use std::marker::PhantomData;
 
-pub(in crate::storage) struct ReadyFrontier<'c, 's> {
+pub(in crate::storage) struct SourceFrontier<'c, 's> {
     pub(super) origin: Origin<'c, 's>,
     pub(super) q: u64,
 }

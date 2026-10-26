@@ -277,6 +277,8 @@ slot kind는 writable actual actor와 read-only transaction을 구분한다. rea
 
 실제 fresh/READY exclusive activation에서 원 history/replay·Catalog/table/anchor identity를 검산하여 기존 table entry를 만들고 각 epoch와 catalog epoch를 당시 Q로 초기화한다. 이전 open의 transaction/view는 재사용할 수 없으므로 이 보수 초기화는 과거 read-set을 잃지 않는다. 추정 q·raw handle·현재 RowLeaf의 최대 stamp만으로 등록하지 않는다. activation 중 오류는 가짜 READY를 반환하지 않는다. epoch/isolation loan은 metadata이고 disk wire 변경이나 recovery ATT의 새로운 영속 read-set이 아니다.
 
+현재 [C1 backing 부분공급](../evidence/module-independence-survey-20261026.md#c1-epoch-backing)은 Q와 미활성 epoch loan의 원 mutex 소유까지다. recovery cleanup용 visibility binding은 READY 이전이므로 이때 table을 Published로 확정하지 않는다. 실제 최종 source seeding 및 CREATE의 예약·남은 변경목록을 연결하기 전에는 이 bytes를 table/Serializable 권한으로 소비하지 않는다. CREATE 없는 Commit도 존재하므로 origin/q receipt만으로 catalog 논리 변경을 추정하지 않는다.
+
 ### 거래·statement·자동 관측 등록
 
 sealed transaction capsule이 원 origin·isolation slot/generation·actual actor를 결합한다. Serializable capsule은 transaction 시작에 얻은 **실제 SnapshotGuard 하나**를 종료까지 소유한다. statement는 그 등록을 borrow하며 새 q를 선택하거나 old q를 놓고 재등록하지 않는다. ReadCommitted는 statement마다 현재 Q의 새 guard를 얻고 성공/실패 statement 종료에서 해제한다. 같은 actor의 active statement는 하나이며 statement token·revision은 [행 owner](dev3-task-06-tree-rows.md#module-statement-cursor)를 따른다. capsule을 control 내부에 저장해 자기 visibility field를 참조하는 자기참조 구조를 만들지 않는다.

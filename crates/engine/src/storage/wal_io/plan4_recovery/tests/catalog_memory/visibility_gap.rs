@@ -101,6 +101,8 @@ fn visibility_gap(case_id: &str, base: usize) {
                 oracle.check(live, state, "C04");
                 cleanup(live, owner, private, &oracle, state, 0);
             }
+            let epoch_backing = live.catalog_test_epoch_backing();
+            assert!(epoch_backing.1);
             let before_q = (base / 10) as u64;
             let actor = forward(
                 live, owner, flusher, status, undo, private, &oracle, state, base,
@@ -191,6 +193,9 @@ fn visibility_gap(case_id: &str, base: usize) {
                 query(live, owner, flusher, reader_private, 2, 7, true);
             }
             assert!(!fence.is_fenced());
+            // Q advances only through actual installed Commit; the epoch loan
+            // remains owned and unactivated until table/change-set supply exists.
+            assert_eq!(live.catalog_test_epoch_backing(), epoch_backing);
             owner.check_idle().unwrap();
             flusher.check_idle().unwrap();
         });

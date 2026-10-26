@@ -479,10 +479,10 @@ pub(in crate::storage) use retention::install_after_capture;
 #[allow(unused_imports)] // Same original owner capabilities across the private module chain.
 pub(in crate::storage) use retention::{
     AppliedRetirement, BoundVisibility, CapturedCatalogRefs, CatalogLookupLoan, CatalogSource,
-    HorizonObservation, InstalledFrontier, ReadyFrontier, ReferenceLease, RetirementIntent,
+    EPOCH_BYTES, HorizonObservation, InstalledFrontier, ReferenceLease, RetirementIntent,
     RetirementReject, RetirementScope, RollbackSource, SnapshotGuard, SnapshotReservation,
-    StagedRetirement, TxPairAuthority, TxPairCancelKind, TxPairCancelPermit, TxPairControlCommit,
-    TxPairInstallPermit, TxPairRetirePermit, TxPairStageRejection, TxnPin, UndoPin,
-    VISIBILITY_BYTES, VerifiedRetirement, VisibilityCause, VisibilityError, VisibilityLoan,
-    VisibilityResult,
+    SourceFrontier, StagedRetirement, TxPairAuthority, TxPairCancelKind, TxPairCancelPermit,
+    TxPairControlCommit, TxPairInstallPermit, TxPairRetirePermit, TxPairStageRejection, TxnPin,
+    UndoPin, VISIBILITY_BYTES, VerifiedRetirement, VisibilityCause, VisibilityError,
+    VisibilityLoan, VisibilityResult,
 };

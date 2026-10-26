@@ -75,13 +75,20 @@ const USED_END: usize = IO_START + 4 * PAGE_BYTES;
 const SOURCE_STAMP_AT: usize = USED_END;
 const CATALOG_PRIVATE_BYTES: usize = crate::storage::semantic_catalog::PRIVATE_BYTES;
 const CATALOG_VISIBILITY_BYTES: usize = super::plan4_pages::VISIBILITY_BYTES;
+const EPOCH_BYTES: usize = crate::storage::disk::EPOCH_BYTES;
 const ISOLATION_BYTES: usize = crate::storage::disk::ISOLATION_BYTES;
 const ISOLATION_AT: usize =
     MAINTENANCE_BYTES - CATALOG_VISIBILITY_BYTES - CATALOG_PRIVATE_BYTES - ISOLATION_BYTES;
-const _: () = assert!(SOURCE_STAMP_AT + 32 <= ISOLATION_AT);
+const EPOCH_AT: usize = ISOLATION_AT - EPOCH_BYTES;
+const _: () = assert!(SOURCE_STAMP_AT + 32 <= EPOCH_AT);
 const _: () = assert!(PHYSICAL_BYTES == base::catalog::PAGE_ARENA_BYTES);
 const _: () = assert!(
-    SOURCE_STAMP_AT + 32 + ISOLATION_BYTES + CATALOG_PRIVATE_BYTES + CATALOG_VISIBILITY_BYTES
+    SOURCE_STAMP_AT
+        + 32
+        + EPOCH_BYTES
+        + ISOLATION_BYTES
+        + CATALOG_PRIVATE_BYTES
+        + CATALOG_VISIBILITY_BYTES
         <= MAINTENANCE_BYTES
 );
 const CURRENT_AT: usize = IO_START;
@@ -691,7 +698,8 @@ impl<'a, 'm, 'w, W: WriterNamespace> RecoveryState<'a, 'm, 'w, W> {
         let (packing_and_scratch, reserved) = rest.split_at_mut(USED_END - LIVE_END);
         // Keep the original source stamp and reserved prefix. The final named
         // private lane transfers once; no metadata lock survives its use.
-        let (reserved, isolation_and_rest) = reserved.split_at_mut(ISOLATION_AT - USED_END);
+        let (reserved, epochs_and_rest) = reserved.split_at_mut(EPOCH_AT - USED_END);
+        let (epochs, isolation_and_rest) = epochs_and_rest.split_at_mut(EPOCH_BYTES);
         let (isolation, private_and_visibility) = isolation_and_rest.split_at_mut(ISOLATION_BYTES);
         let (private, visibility) = private_and_visibility.split_at_mut(CATALOG_PRIVATE_BYTES);
         let scratch_at = BASE_SCRATCH_START - LIVE_END;
@@ -766,9 +774,12 @@ impl<'a, 'm, 'w, W: WriterNamespace> RecoveryState<'a, 'm, 'w, W> {
                     .try_into()
                     .expect("original isolation metadata loan"),
                 private: private.try_into().expect("original Catalog private loan"),
-                visibility: visibility
-                    .try_into()
-                    .expect("original visibility metadata loan"),
+                visibility: super::plan4_pages::VisibilityLoan {
+                    bytes: visibility
+                        .try_into()
+                        .expect("original visibility metadata loan"),
+                    epochs: epochs.try_into().expect("original epoch metadata loan"),
+                },
                 restored: restored.expect("once restored"),
             })),
             remainder: Mutex::new(MaintenanceRemainder {
@@ -789,7 +800,7 @@ struct RecoveryBindLoans<'a> {
     replay: &'a mut [u8; 1_572_864],
     isolation: &'a mut [u8; ISOLATION_BYTES],
     private: &'a mut [u8; CATALOG_PRIVATE_BYTES],
-    visibility: &'a mut [u8; CATALOG_VISIBILITY_BYTES],
+    visibility: super::plan4_pages::VisibilityLoan<'a>,
     restored: RestoredRetention,
 }
 /// Linear retained-credit transfer. Only Runtime's once-only loan extraction
@@ -894,7 +905,7 @@ type RecoveryBindingParts<'r, 'a> = (
     &'a mut [u8; 1_572_864],
     &'a mut [u8; ISOLATION_BYTES],
     &'a mut [u8; CATALOG_PRIVATE_BYTES],
-    &'a mut [u8; CATALOG_VISIBILITY_BYTES],
+    super::plan4_pages::VisibilityLoan<'a>,
 );
 
 impl<'a, W: WriterNamespace> Plan4RecoveryRuntime<'a, '_, '_, W> {
@@ -944,7 +955,7 @@ pub(crate) struct Plan4Recovered<'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamesp
     waiting_flush: bool,
     ready: bool,
     private: &'a mut [u8; CATALOG_PRIVATE_BYTES],
-    visibility: Option<&'a mut [u8; CATALOG_VISIBILITY_BYTES]>,
+    visibility: Option<super::plan4_pages::VisibilityLoan<'a>>,
 }
 /// READY handoff reuses the exact recovery private lane for the next lookup.
 pub(crate) type RecoveredLiveParts<'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W> = (
@@ -1016,7 +1027,7 @@ impl<'a, 'm, 'w, W: WriterNamespace> Plan4RecoveryRuntime<'a, 'm, 'w, W> {
     ) -> Result<(
         crate::storage::disk::DiskSession<'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W>,
         &'a mut [u8; CATALOG_PRIVATE_BYTES],
-        &'a mut [u8; CATALOG_VISIBILITY_BYTES],
+        super::plan4_pages::VisibilityLoan<'a>,
     )>
     where
         'a: 's,
@@ -1051,7 +1062,7 @@ impl<'a, 'm, 'w, W: WriterNamespace> Plan4RecoveryRuntime<'a, 'm, 'w, W> {
         &'s self,
         inner: crate::storage::disk::DiskSession<'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W>,
         private: &'a mut [u8; CATALOG_PRIVATE_BYTES],
-        visibility: &'a mut [u8; CATALOG_VISIBILITY_BYTES],
+        visibility: super::plan4_pages::VisibilityLoan<'a>,
         phase: Plan4RecoveryPhase,
     ) -> Result<Plan4Recovered<'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W>> {
         Ok(Plan4Recovered {
@@ -1110,11 +1121,11 @@ impl<'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
         let runtime = self.runtime;
         let _unwind = runtime.session_fence().unwind_guard();
         self.observation.phase = self.phase;
-        if let Some(bytes) = self.visibility.take() {
+        if let Some(loan) = self.visibility.take() {
             // This metadata enables the recovery's own horizon/pin protocol.
             // The public facade remains closed until cleanup and STABILIZE.
             self.inner
-                .enable_catalog_visibility(owner, super::plan4_pages::VisibilityLoan { bytes })
+                .enable_catalog_visibility(owner, loan)
                 .map_err(|e| {
                     runtime.bound_error(
                         self.phase,

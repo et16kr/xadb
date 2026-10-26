@@ -38,10 +38,10 @@ pub(in crate::storage) use create_pair::{
 #[allow(unused_imports)]
 pub(in crate::storage) use visibility::{
     AppliedRetirement, BoundVisibility, CapturedCatalogRefs, CatalogLookupLoan, CatalogSource,
-    HorizonObservation, InstalledFrontier, ReadyFrontier, ReferenceLease, RetirementIntent,
+    EPOCH_BYTES, HorizonObservation, InstalledFrontier, ReferenceLease, RetirementIntent,
     RetirementReject, RetirementScope, RollbackSource, SnapshotGuard, SnapshotReservation,
-    StagedRetirement, TxnPin, UndoPin, VISIBILITY_BYTES, VerifiedRetirement, VisibilityCause,
-    VisibilityError, VisibilityLoan, VisibilityResult,
+    SourceFrontier, StagedRetirement, TxnPin, UndoPin, VISIBILITY_BYTES, VerifiedRetirement,
+    VisibilityCause, VisibilityError, VisibilityLoan, VisibilityResult,
 };
 
 #[path = "plan4_retention/control.rs"]

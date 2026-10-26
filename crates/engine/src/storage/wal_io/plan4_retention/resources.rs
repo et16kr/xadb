@@ -244,7 +244,11 @@ pub(in crate::storage) fn source_census<W: WriterNamespace>() -> RetentionSource
     let peak = conversion.max(recovered_conversion).max(retained + active);
     // 36 descriptor/bookkeeping slots are actual retained metadata, even
     // though their backing is caller owned. Job and page snapshots are data.
-    let metadata = peak + 36 * control::SLOT_BYTES + visibility::VISIBILITY_BYTES + ISOLATION_BYTES;
+    let metadata = peak
+        + 36 * control::SLOT_BYTES
+        + visibility::VISIBILITY_BYTES
+        + visibility::EPOCH_BYTES
+        + ISOLATION_BYTES;
     RetentionSourceCensus {
         original_owner,
         retained,

@@ -629,8 +629,8 @@ pub(in crate::storage) use plan4_recovery::RecoveryPoolSeed;
 #[allow(unused_imports)] // Same original owner capabilities across the private module chain.
 pub(in crate::storage) use plan4_pages::{
     AppliedRetirement, BoundVisibility, CapturedCatalogRefs, CatalogLookupLoan, CatalogSource,
-    HorizonObservation, InstalledFrontier, ReadyFrontier, ReferenceLease, RetirementIntent,
-    RetirementReject, RetirementScope, RollbackSource, SnapshotGuard, SnapshotReservation,
+    HorizonObservation, InstalledFrontier, ReferenceLease, RetirementIntent, RetirementReject,
+    RetirementScope, RollbackSource, SnapshotGuard, SnapshotReservation, SourceFrontier,
     StagedRetirement, TxPairAuthority, TxPairCancelKind, TxPairCancelPermit, TxPairControlCommit,
     TxPairInstallPermit, TxPairRetirePermit, TxPairStageRejection, TxnPin, UndoPin,
     VISIBILITY_BYTES, VerifiedRetirement, VisibilityCause, VisibilityError, VisibilityLoan,

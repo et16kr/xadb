@@ -783,6 +783,9 @@ macro_rules! with_fresh {
             let (prefix, visibility) = maintenance.split_at_mut(12_574_720);
             let (prefix, private) = prefix.split_at_mut(12_148_736);
             let (prefix, isolation) = prefix.split_at_mut(12_144_576);
+            let (prefix, epochs) = prefix.split_at_mut(12_142_976);
+            epochs.fill(0xa7);
+            let epoch_pointer = epochs.as_ptr() as usize;
             let isolation: &mut [u8; 4_160] = isolation.try_into().unwrap();
             let (prefix, control) = prefix.split_at_mut(6_815_744);
             let (reader_private, prefix) = prefix.split_at_mut(PRIVATE_BYTES);
@@ -817,9 +820,11 @@ macro_rules! with_fresh {
                 &mut owner,
                 VisibilityLoan {
                     bytes: visibility.try_into().unwrap(),
+                    epochs: epochs.try_into().unwrap(),
                 },
             )
             .unwrap();
+            assert_eq!(live.catalog_test_epoch_backing(), (epoch_pointer, true));
             let root = live.target(Plan4Page::Root).unwrap();
             assert!(matches!(
                 live.residency_step(&root, &mut Plan4ResidencyCursor::new())
@@ -982,6 +987,7 @@ fn recover_check(images: &Images, oracle: &Oracle, scenario: &str) {
         let mut maintenance = boxed::<12_582_912>();
         let mut dwb = boxed::<4_194_304>();
         let mut slot = boxed::<1_048_576>();
+        let epoch_pointer = maintenance[super::super::EPOCH_AT..].as_ptr() as usize;
         let runtime = actual_runtime(&directory, &mut maintenance, &mut dwb, &mut slot);
         assert_eq!(runtime.observation().source_lsn, capture);
         assert!(
@@ -1001,6 +1007,10 @@ fn recover_check(images: &Images, oracle: &Oracle, scenario: &str) {
         let mut observed_lsn = capture;
         for _ in 0..256 {
             let progress = closed.step(&mut owner, &mut flusher).unwrap();
+            assert_eq!(
+                closed.inner.catalog_test_epoch_backing(),
+                (epoch_pointer, true)
+            );
             let current = closed.inner.free_undo_test_state().unwrap().0.complete_lsn;
             if current > observed_lsn {
                 assert_eq!(current, observed_lsn + 1);
@@ -1018,6 +1028,7 @@ fn recover_check(images: &Images, oracle: &Oracle, scenario: &str) {
             Ok(value) => value,
             Err(_) => panic!("original READY handoff"),
         };
+        assert_eq!(live.catalog_test_epoch_backing(), (epoch_pointer, true));
         oracle.checkpoint(&live, &state, scenario, last);
         query(&mut live, &mut owner, &mut flusher, private, q, 6, found);
         assert_state(&live, last, false);

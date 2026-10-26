@@ -6301,5 +6301,45 @@
     "validation": "compiler3 PASS; changed owner2, new census1, adjusted foreign-core fixture1 PASS once; independent D1/D2 accepted limited; r1/r2 FAIL retained",
     "remaining_supply": "1600-byte epoch backing/activation, transaction and long/short source admission, native and full recovery runtime acceptance",
     "source_roots_changed": false
+  },
+  "dev3_module_c1_epoch": {
+    "status": "ACCEPTED_LIMITED_D1_D2",
+    "contract_ref": "dev3-task-10-concurrency.md#module-row-isolation",
+    "evidence_ref": "module-independence-survey-20261026.md#c1-epoch-backing",
+    "implemented_paths": [
+      "tests/fixtures/dev3-module-c1/epoch-compiler/canonical.rs",
+      "tests/fixtures/dev3-module-c1/epoch-compiler/epoch_reuse.rs",
+      "tests/fixtures/dev3-module-c1/epoch-compiler/manifest.json"
+    ],
+    "modified_paths": [
+      "crates/engine/src/storage/disk.rs",
+      "crates/engine/src/storage/wal_io.rs",
+      "crates/engine/src/storage/wal_io/bootstrap.rs",
+      "crates/engine/src/storage/wal_io/disk_api.rs",
+      "crates/engine/src/storage/wal_io/doublewrite_install.rs",
+      "crates/engine/src/storage/wal_io/mutable_storage.rs",
+      "crates/engine/src/storage/wal_io/plan4_apply.rs",
+      "crates/engine/src/storage/wal_io/plan4_apply/owner_tests.rs",
+      "crates/engine/src/storage/wal_io/plan4_pages.rs",
+      "crates/engine/src/storage/wal_io/plan4_recovery.rs",
+      "crates/engine/src/storage/wal_io/plan4_recovery/resources.rs",
+      "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_create.rs",
+      "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory.rs",
+      "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/visibility_gap.rs",
+      "crates/engine/src/storage/wal_io/plan4_retention/recovery_observation_tests.rs",
+      "crates/engine/src/storage/wal_io/plan4_retention/resources.rs",
+      "crates/engine/src/storage/wal_io/plan4_retention/visibility.rs",
+      "crates/engine/src/storage/wal_io/plan4_retention/visibility/authority.rs",
+      "crates/engine/src/storage/wal_io/plan4_retention/visibility/binding.rs",
+      "crates/engine/src/storage/wal_io/plan4_retention/visibility/snapshot.rs"
+    ],
+    "scope": "original publication mutex owns Q and unactivated separate epoch1600B; no table seeding or logical epoch publication authority",
+    "recovery_epoch_range": [
+      12142976,
+      12144576
+    ],
+    "validation": "compiler3 PASS; changed census, actual publication MT01 and recovery loan MC04 each PASS once; independent D1/D2 accepted limited with zero required fixes",
+    "remaining_supply": "final source table seeding, actual CREATE reservation/change-set publication, transaction and long/short source admission, native/full recovery and C2-C5",
+    "source_roots_changed": false
   }
 }

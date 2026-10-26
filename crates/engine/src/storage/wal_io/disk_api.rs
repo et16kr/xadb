@@ -12,3 +12,6 @@ pub(crate) use super::bootstrap::doublewrite_install::mutable_storage::plan4_pag
     RowProducerContext, RowProducerInput, RowProducerLane, RowProposal, RowSourceBinding,
     RowSourceRole, RowValidationLane,
 };
+
+#[allow(unused_imports)]
+pub(in crate::storage) use super::bootstrap::doublewrite_install::mutable_storage::plan4_pages::apply::{EPOCH_BYTES, VISIBILITY_BYTES, VisibilityLoan};

@@ -13,3 +13,8 @@ pub(crate) use super::wal_io::disk_api::{
     RowProducerContext, RowProducerInput, RowProducerLane, RowProposal, RowSourceBinding,
     RowSourceRole, RowValidationLane,
 };
+
+#[allow(unused_imports)]
+pub(in crate::storage) use super::wal_io::disk_api::{
+    EPOCH_BYTES, VISIBILITY_BYTES, VisibilityLoan,
+};

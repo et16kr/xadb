@@ -1,5 +1,5 @@
-//! The original READY owner binds its metadata loan to the accepted source.
-//! A raw sequence or a parsed Root outside this path cannot issue ReadyFrontier.
+//! The original owner binds Q and its metadata loans to the accepted source.
+//! A raw sequence or a parsed Root outside this path cannot issue SourceFrontier.
 use super::super::{Plan4Retention, RetentionCause, RetentionPhase, WriterNamespace, history};
 use super::*;
 
@@ -13,7 +13,8 @@ fn error(error: VisibilityError) -> super::super::RetentionError {
 impl<'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
     Plan4Retention<'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W>
 {
-    /// Called once on the actual fresh/recovered READY instance. Its original
+    /// Called once on the actual fresh owner or recovery cleanup instance.
+    /// Recovery is not READY yet; this does not activate table epochs. Its original
     /// mutable borrow excludes both installers and split readers until the
     /// checked source and replay loan have been released.
     pub(in crate::storage) fn enable_catalog_visibility(
@@ -72,7 +73,7 @@ impl<'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
             Err(error) => Err(error),
         };
         let q = super::super::merge(result, scope.finish_checked())?;
-        let ready = ReadyFrontier {
+        let ready = SourceFrontier {
             origin: Origin {
                 core: self.inner.pool.bound_core(),
                 binding: &storage.binding,
@@ -90,7 +91,8 @@ impl<'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
 pub(in super::super) fn source_bytes<W: WriterNamespace>() -> usize {
     use super::super::{Result, RetentionError};
     use std::mem::size_of;
-    let wrapper = size_of::<crate::storage::session_fence::UnwindFence<'_>>()
+    let wrapper = size_of::<VisibilityLoan<'_>>()
+        + size_of::<crate::storage::session_fence::UnwindFence<'_>>()
         + size_of::<history::runtime::LookupSourceCut<'_, '_, '_, '_>>()
         + size_of::<history::runtime::ReplayScope<'_, '_, '_, '_>>()
         + size_of::<Result<history::runtime::ReplayScope<'_, '_, '_, '_>>>()
@@ -113,8 +115,7 @@ pub(in super::super) fn source_bytes<W: WriterNamespace>() -> usize {
             >,
         >()
         + crate::storage::retention_page::catalog::source_bytes();
-    let publish = size_of::<VisibilityLoan<'_>>()
-        + size_of::<ReadyFrontier<'_, '_>>()
+    let publish = size_of::<SourceFrontier<'_, '_>>()
         + size_of::<BoundVisibility<'_, '_, '_>>()
         + size_of::<VisibilityResult<BoundVisibility<'_, '_, '_>>>()
         + super::source_census().peak_leaf;

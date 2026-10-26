@@ -1,5 +1,5 @@
 //! Bounded volatile visibility bookkeeping for the original plan4 owner.
-//! The actual READY, Commit and source-latch producers issue the sealed inputs.
+//! The actual source-validation, Commit and source-latch paths issue sealed inputs.
 //! No decoder, raw sequence or reference can create one of those capabilities.
 #![allow(dead_code)] // Connected by the same CREATE consumer change, not a second owner.
 
@@ -36,14 +36,15 @@ mod snapshot;
 mod source;
 
 pub(in crate::storage) use authority::{
-    AppliedRetirement, CatalogSource, InstalledFrontier, ReadyFrontier, RetirementScope,
-    RollbackSource, StagedRetirement, VerifiedRetirement,
+    AppliedRetirement, CatalogSource, InstalledFrontier, RetirementScope, RollbackSource,
+    SourceFrontier, StagedRetirement, VerifiedRetirement,
 };
 pub(in crate::storage) use pins::{CapturedCatalogRefs, ReferenceLease, TxnPin, UndoPin};
 pub(in crate::storage) use retirement::{RetirementIntent, RetirementReject};
 pub(in crate::storage) use snapshot::{SnapshotGuard, SnapshotReservation};
 
 pub(in crate::storage) const VISIBILITY_BYTES: usize = 8192;
+pub(in crate::storage) const EPOCH_BYTES: usize = 1600;
 const SNAPSHOTS: usize = 68;
 const USERS: usize = 32;
 const REFERENCES: usize = 66;
@@ -127,11 +128,20 @@ impl Origin<'_, '_> {
 /// storage-only loan neither initializes Q nor binds it to a session.
 pub(in crate::storage) struct VisibilityLoan<'a> {
     pub(in crate::storage) bytes: &'a mut [u8; VISIBILITY_BYTES],
+    pub(in crate::storage) epochs: &'a mut [u8; EPOCH_BYTES],
+}
+
+/// The original publication mutex owns both Q and the future table epoch lane.
+/// Epoch bytes remain unactivated: no table/Serializable authority is issued
+/// until final source seeding and actual CREATE change-set publication exist.
+struct Publication<'a> {
+    q: u64,
+    epochs: &'a mut [u8; EPOCH_BYTES],
 }
 
 pub(in crate::storage) struct BoundVisibility<'a, 'c, 's> {
     origin: Origin<'c, 's>,
-    published: Mutex<u64>,
+    published: Mutex<Publication<'a>>,
     registry: Mutex<&'a mut [u8; VISIBILITY_BYTES]>,
 }
 
@@ -162,14 +172,18 @@ impl<'a, 'c, 's> BoundVisibility<'a, 'c, 's> {
 
     pub(super) fn bind(
         loan: VisibilityLoan<'a>,
-        ready: ReadyFrontier<'c, 's>,
+        ready: SourceFrontier<'c, 's>,
     ) -> VisibilityResult<Self> {
         ready.origin.health()?;
         loan.bytes.fill(0);
+        loan.epochs.fill(0);
         loan.bytes[..8].copy_from_slice(MAGIC);
         Ok(Self {
             origin: ready.origin,
-            published: Mutex::new(ready.q),
+            published: Mutex::new(Publication {
+                q: ready.q,
+                epochs: loan.epochs,
+            }),
             registry: Mutex::new(loan.bytes),
         })
     }
@@ -186,7 +200,7 @@ impl<'a, 'c, 's> BoundVisibility<'a, 'c, 's> {
         validate(&bytes).map_err(|_| self.origin.fatal(VisibilityCause::Invariant))?;
         Ok(bytes)
     }
-    fn publication(&self) -> VisibilityResult<MutexGuard<'_, u64>> {
+    fn publication(&self) -> VisibilityResult<MutexGuard<'_, Publication<'a>>> {
         self.origin.health()?;
         let q = self
             .published
@@ -207,7 +221,7 @@ impl<'a, 'c, 's> BoundVisibility<'a, 'c, 's> {
         version: &VersionEditGuard<'_, 'c, 's>,
     ) -> VisibilityResult<HorizonObservation<'c, 's>> {
         let identity = version.visibility_identity(self.origin.core)?;
-        let published = *self.publication()?;
+        let published = self.publication()?.q;
         // The temporary publication guard is gone before entering the registry.
         let bytes = self.entry()?;
         let mut horizon = published;
@@ -236,10 +250,10 @@ impl<'a, 'c, 's> BoundVisibility<'a, 'c, 's> {
             return Err(unchanged(VisibilityCause::BindingMismatch));
         }
         let mut current = self.publication()?;
-        if current.checked_add(1) != Some(installed.q) {
+        if current.q.checked_add(1) != Some(installed.q) {
             return Err(self.origin.fatal(VisibilityCause::Invariant));
         }
-        *current = installed.q;
+        current.q = installed.q;
         Ok(())
     }
     fn check_horizon(
@@ -344,7 +358,7 @@ pub(in crate::storage) fn source_census() -> VisibilitySourceCensus {
     use std::mem::size_of;
     let leaf = 2 * size_of::<VisibilityResult<MutexGuard<'_, &mut [u8; VISIBILITY_BYTES]>>>()
         + size_of::<MutexGuard<'_, &mut [u8; VISIBILITY_BYTES]>>()
-        + 2 * size_of::<VisibilityResult<MutexGuard<'_, u64>>>()
+        + 2 * size_of::<VisibilityResult<MutexGuard<'_, Publication<'_>>>>()
         + 2 * size_of::<VisibilityResult<VersionIdentity>>()
         + 2 * size_of::<VisibilityResult<OwnerIdentity>>()
         + 2 * size_of::<VisibilityError>()
@@ -382,7 +396,7 @@ pub(in crate::storage) fn source_census() -> VisibilitySourceCensus {
         + 2 * size_of::<VisibilityResult<Option<UndoPin<'_, '_, '_, '_>>>>()
         + size_of::<VisibilityResult<u64>>();
     VisibilitySourceCensus {
-        backing: VISIBILITY_BYTES,
+        backing: VISIBILITY_BYTES + EPOCH_BYTES,
         controller: size_of::<BoundVisibility<'_, '_, '_>>(),
         frontier: size_of::<InstalledFrontier<'_, '_>>(),
         snapshot,
@@ -401,10 +415,18 @@ pub(in crate::storage) fn fits() -> bool {
 impl BoundVisibility<'_, '_, '_> {
     /// Read-only post-fault scalar; no snapshot, frontier or publication authority.
     pub(super) fn test_q(&self) -> u64 {
-        *self
-            .published
+        self.published
             .lock()
             .unwrap_or_else(|error| error.into_inner())
+            .q
+    }
+    /// Observation only: the actual lane identity and its unactivated bytes.
+    pub(super) fn test_epoch_backing(&self) -> (usize, bool) {
+        let publication = self.published.lock().unwrap();
+        (
+            publication.epochs.as_ptr() as usize,
+            publication.epochs.iter().all(|byte| *byte == 0),
+        )
     }
     /// Read-only (Q, H) with the capture_horizon min rule. It takes no version
     /// hold, so it observes but never replaces an actual retirement check.

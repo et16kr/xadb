@@ -1,0 +1,58 @@
+{
+  "schema": "XADB_MODULE_C1_EPOCH_COMPILER_V1",
+  "status": "FROZEN_INPUTS_NOT_EXECUTION_EVIDENCE",
+  "scope": "original publication Q plus unactivated epoch loan ownership, disjoint fresh/recovery handoff and census; no table seeding, transaction validation or logical epoch publication acceptance",
+  "budget": {
+    "total_seconds": 180,
+    "case_seconds": 30,
+    "output_bytes": 8388608
+  },
+  "cases": [
+    {
+      "name": "production",
+      "path": "canonical.rs",
+      "bytes": 545,
+      "sha256": "ed2eeb95af19f82c6a4201d88cf2738c4035541fbd47c166b2fe219601f3258d",
+      "expected_code": null,
+      "primary_line": null,
+      "anchor": "crates/engine/src/storage/mod.rs",
+      "probe": "crates/engine/src/storage/module_c1_epoch_probe.rs",
+      "declaration": "\nmod module_c1_epoch_probe;\n",
+      "mode": "check"
+    },
+    {
+      "name": "test_build",
+      "path": "canonical.rs",
+      "bytes": 545,
+      "sha256": "ed2eeb95af19f82c6a4201d88cf2738c4035541fbd47c166b2fe219601f3258d",
+      "expected_code": null,
+      "primary_line": null,
+      "anchor": "crates/engine/src/storage/mod.rs",
+      "probe": "crates/engine/src/storage/module_c1_epoch_probe.rs",
+      "declaration": "\nmod module_c1_epoch_probe;\n",
+      "mode": "test-no-run"
+    },
+    {
+      "name": "epoch_reuse",
+      "path": "epoch_reuse.rs",
+      "bytes": 639,
+      "sha256": "3bc7d20edb8e8bfa6aa3b8a8f4897f48f99445b476df37dbc32c59f0f3c7cad6",
+      "expected_code": "E0506",
+      "primary_line": 7,
+      "anchor": "crates/engine/src/storage/mod.rs",
+      "probe": "crates/engine/src/storage/module_c1_epoch_probe.rs",
+      "declaration": "\nmod module_c1_epoch_probe;\n",
+      "mode": "check"
+    }
+  ],
+  "runtime_tests": [
+    "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::owner_tests::disk_session_isolation_backing_and_carriers_are_accounted",
+    "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::visibility_gap::catalog_mt01_q0_publication_gap",
+    "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::lifecycle::mc04_reserved_drop_fence_fresh_recovery"
+  ],
+  "runtime_scope": [
+    "changed visibility/controller/live/recovery census and exact metadata backing",
+    "changed original publication Q/snapshot path, unactivated epoch identity across actual Commit",
+    "changed recovery loan handoff before/after actual cancel/loser cleanup and READY"
+  ]
+}
