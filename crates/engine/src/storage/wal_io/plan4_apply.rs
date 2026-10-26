@@ -98,7 +98,10 @@ pub(in crate::storage) use population::{
     unused_imports,
     reason = "internal typed consumer exports retained for follow-on integration"
 )]
-pub(crate) use read::{CatalogLookupStep, RetentionReadGuard};
+pub(crate) use read::{
+    CatalogCandidate, CatalogLookupStep, CatalogReadOperation, MissingCatalogEvidence, ReadStep,
+    RetentionReadGuard,
+};
 pub(in crate::storage) use recovery::{
     RetentionFrameObservation, RetentionRecoveryStep, RetentionReplayCursor,
     observe_recovery_frame, retention_replay_bank, retention_replay_cells, retention_replay_digest,

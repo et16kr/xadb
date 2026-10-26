@@ -1,0 +1,78 @@
+{
+  "schema": "XADB_MODULE_C2_CATALOG_READ_V1",
+  "status": "FROZEN_INPUTS_NOT_EXECUTION_EVIDENCE",
+  "scope": "actual synchronous Catalog product/physical separation; no externally retained operation, statement factory, automatic read-set or aggregate admission",
+  "budget": {
+    "total_seconds": 180,
+    "case_seconds": 30,
+    "output_bytes": 8388608
+  },
+  "cases": [
+    {
+      "name": "production",
+      "path": "canonical.rs",
+      "bytes": 470,
+      "sha256": "5ac3b406ed969fd4c94a618ef04ef74525bed02b65fe58f82cc60ec27d846621",
+      "expected_code": null,
+      "primary_line": null,
+      "anchor": "crates/engine/src/storage/mod.rs",
+      "probe": "crates/engine/src/storage/module_c2_read_probe.rs",
+      "declaration": "\nmod module_c2_read_probe;\n",
+      "mode": "check"
+    },
+    {
+      "name": "test_build",
+      "path": "canonical.rs",
+      "bytes": 470,
+      "sha256": "5ac3b406ed969fd4c94a618ef04ef74525bed02b65fe58f82cc60ec27d846621",
+      "expected_code": null,
+      "primary_line": null,
+      "anchor": "crates/engine/src/storage/mod.rs",
+      "probe": "crates/engine/src/storage/module_c2_read_probe.rs",
+      "declaration": "\nmod module_c2_read_probe;\n",
+      "mode": "test-no-run"
+    },
+    {
+      "name": "private_factory",
+      "path": "private_factory.rs",
+      "bytes": 197,
+      "sha256": "9ada3c20fe83abe44d4cf8ab72c6c4da5406b2cf7dfa08639a914eba6b3bb390",
+      "expected_code": "E0624",
+      "primary_line": 5,
+      "anchor": "crates/engine/src/storage/mod.rs",
+      "probe": "crates/engine/src/storage/module_c2_read_probe.rs",
+      "declaration": "\nmod module_c2_read_probe;\n",
+      "mode": "check"
+    },
+    {
+      "name": "private_field",
+      "path": "private_field.rs",
+      "bytes": 254,
+      "sha256": "9b857b982050da8cce47f3a1a5a1fca8d97f0e5928ecde0792e12ce774ab29fa",
+      "expected_code": "E0616",
+      "primary_line": 5,
+      "anchor": "crates/engine/src/storage/mod.rs",
+      "probe": "crates/engine/src/storage/module_c2_read_probe.rs",
+      "declaration": "\nmod module_c2_read_probe;\n",
+      "mode": "check"
+    }
+  ],
+  "runtime_tests": [
+    "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::owner_tests::disk_session_isolation_backing_and_carriers_are_accounted",
+    "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::visibility_gap::catalog_mt02_q1_publication_gap",
+    "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::commit_concurrency::catalog_mt03_pending_reader_loads_undo",
+    "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::reference_pins::catalog_mt04_reader_pins_block_clr",
+    "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::read_boundary::missing_leaf_and_foreign_owner_release_original_resources",
+    "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::read_boundary::dirty_victim_returns_flush_then_retries_same_snapshot",
+    "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::read_boundary::captured_undo_read_error_preserves_fatal_cause"
+  ],
+  "runtime_scope": [
+    "changed operation/product/carrier source census",
+    "changed actual lookup at Q1 publication gap",
+    "changed actual pending Undo load through product adapter",
+    "changed actual captured refs versus CLR retirement",
+    "new empty-leaf absence and foreign owner rejection/checked cleanup",
+    "new actual dirty victim FlushRequired cleanup and same-snapshot retry",
+    "new post-capture actual Undo home read failure preserves fatal cause/fence"
+  ]
+}

@@ -162,7 +162,7 @@ impl<'b, 'arena, 's, 'c, 'p, 'd, 'm, 'w, W: WriterNamespace>
     /// Semantic lookup captures references under this guard and copies the
     /// value before releasing these physical source latches.
     pub(crate) fn read_catalog<'a>(
-        &'b self,
+        &self,
         owner: &'a mut Owner<'c, 's>,
     ) -> Result<RetentionCatalogGuard<'a, 'b, 'c, 's, 'p, 'd, 'm, 'w, W>> {
         health(self.storage, self.pool)?;

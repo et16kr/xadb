@@ -1,6 +1,6 @@
 # XADB 모듈 독립 개발 구조 전환 작업 계획
 
-2026-10-26 · **D2 ACCEPTED / M0–M3 완료 / M4 C0 타입·C1 물리 WAL·원 owner/port·isolation/epoch backing·Catalog epoch 활성화 부분공급 / C0 전체·C1–C5·M5 미완료 / 제품 인수 NOT_RUN**
+2026-10-26 · **D2 ACCEPTED / M0–M3 완료 / M4 C0 타입·C1 물리 WAL·원 owner/port·isolation/epoch backing·Catalog epoch 활성화·읽기 전용 수명 및 C2 동기 Catalog 분리 부분공급 / C0 전체·C1–C5·M5 미완료 / 제품 인수 NOT_RUN**
 
 [개발 문서 진입점](../README.md) · [기존 병렬 정책](../policies/parallel-development-policy.md) · [저장소 배치](../policies/repository-build-plan.md) · [DEV3 작업 분해](dev3-implementation-plan.md#remaining-work) · [변경 코드 시험 지시](../../AGENTS.md)
 
@@ -11,7 +11,7 @@
 
 사용자는 초기부터 “모듈별로 구성하고, 병렬로 개발해도 충돌을 최소화”하기를 요구했다. 현재 평가를 확인한 뒤 현재 구조를 변경하고 이 목적대로 개발되도록 에이전트가 문서를 수정할 작업 계획서를 요청했다. 따라서 후속 문서 담당은 현 구조를 설명하거나 병렬 운영 안내만 추가하는 데 그치지 않고, **목표 구조·내부 API·소유 계약·개발 순서를 수정안으로 구체화**한다.
 
-이번 산출물은 그 문서 수정과 후속 구조 전환의 계획이다. 작성·리뷰만으로 진행 중인 다른 채팅·프로세스가 중지됐거나 소유 계약·제품 코드가 바뀐 것으로 기록하지 않는다. 최초 계획 작성은 계획서와 탐색 색인의 작성·리뷰에 한정했다. 후속 전체 실행 지시에 따른 현재 상태는 [실행 추적](#execution)에 둔다. M0–M3를 완료했고 M4 C0의 borrowed codec·생산자 타입과 C1의 물리 WAL·원 owner/port·isolation/epoch backing·Catalog epoch 활성화 부분공급을 진행했으며 M4 전체·M5는 미완료다.
+이번 산출물은 그 문서 수정과 후속 구조 전환의 계획이다. 작성·리뷰만으로 진행 중인 다른 채팅·프로세스가 중지됐거나 소유 계약·제품 코드가 바뀐 것으로 기록하지 않는다. 최초 계획 작성은 계획서와 탐색 색인의 작성·리뷰에 한정했다. 후속 전체 실행 지시에 따른 현재 상태는 [실행 추적](#execution)에 둔다. M0–M3를 완료했고 M4 C0의 borrowed codec·생산자 타입과 C1의 물리 WAL·원 owner/port·isolation/epoch backing·Catalog epoch 활성화 부분공급을 진행했으며 C2의 [동기 Catalog 조회 본문 분리](../evidence/module-independence-survey-20261026.md#c2-catalog-read)도 부분공급했고 M4 전체·M5는 미완료다.
 
 우선 조사 범위는 DEV3의 WAL·페이지/버퍼·할당·거래/undo·복구·Catalog 연결이다. 실제 첫 전환 범위는 M2에서 선정하는 두 소비 기능과 그 기능에 필요한 공통 경계로 닫는다. foundation/platform·SQL·COMM은 이미 확보한 경계를 보존하면서 수신 계약에 영향이 있는 부분만 대조한다. 이후 단계도 영향을 받는 선행·인계 문구를 갱신하되, 전체 DBMS를 다시 설계하는 작업으로 확대하지 않는다.
 
@@ -262,7 +262,7 @@ PD01은 이 A/B 사례에 연결한다. PD02/PD03은 작업 중 실제 공통 �
 | M1 | [소유·의존 분류와 소비 후보](../evidence/module-independence-survey-20261026.md#survey)·[원 source 독립 검토](../evidence/module-independence-survey-20261026.md#review) 완료 | 선정 경계의 후속 관련 diff가 생기면 영향만 갱신 |
 | M2 | 완료·ACCEPTED. [최종 독립 D2](../evidence/module-independence-survey-20261026.md#final-design-review) 수용·필수 수정0을 수신해 API·소비자·유한 공급·인수 설계 동결 | M4/M5에서 새 반례 또는 계약 변경이 생기면 영향 행만 재검토 |
 | M3 | 완료·ACCEPTED. 소유 문서·운영/시험 JSON 채택 반영, MBC31 보완의 한정 재확인까지 독립 D2 수용·필수 수정0 | 구현에 따른 실제 공급 상태와 등록을 해당 diff에 맞춰 갱신 |
-| M4 | IN_PROGRESS. C0 borrowed codec 선택6 PASS·[독립 수용](../evidence/module-independence-survey-20261026.md#c0-borrowed-codec), 생산자 타입 compiler4 자동 PASS·수명 거절1 독립 수동 수용·원 판정기 FAIL 보존([증거](../evidence/module-independence-survey-20261026.md#c0-producer-types)). [C1 실제 물리 WAL 분리](../evidence/module-independence-survey-20261026.md#c1-physical-wal)·컴파일3 PASS와 [원 owner/port 이전](../evidence/module-independence-survey-20261026.md#c1-owner-ports)·컴파일4/신규 메모리2 PASS에 이어 [control/isolation backing](../evidence/module-independence-survey-20261026.md#c1-isolation-backing)·컴파일3/변경·신규 runtime4 PASS·독립 한정 수용. [epoch backing 소유](../evidence/module-independence-survey-20261026.md#c1-epoch-backing)·compiler3/변경 runtime3 PASS·독립 D1/D2 한정 수용. [Catalog epoch 활성화](../evidence/module-independence-survey-20261026.md#c1-epoch-activation)는 fresh/최종 복구 seeding·CREATE/Commit을 구현하고 source별 선택 실행·원 FAIL·빈 Commit 범위 정정을 보존했다. [읽기 전용 거래/statement 수명](../evidence/module-independence-survey-20261026.md#c1-read-only-capsules)과 장기 credit을 추가하고 source별 compiler·선택 runtime7 결과를 보존했다. 전체 C0·C1–C5 공급과 제품 인수 미완료 | 동결한 공급 단위의 구조 변경·관련 선택 검증·검토 |
+| M4 | IN_PROGRESS. C0 borrowed codec 선택6 PASS·[독립 수용](../evidence/module-independence-survey-20261026.md#c0-borrowed-codec), 생산자 타입 compiler4 자동 PASS·수명 거절1 독립 수동 수용·원 판정기 FAIL 보존([증거](../evidence/module-independence-survey-20261026.md#c0-producer-types)). [C1 실제 물리 WAL 분리](../evidence/module-independence-survey-20261026.md#c1-physical-wal)·컴파일3 PASS와 [원 owner/port 이전](../evidence/module-independence-survey-20261026.md#c1-owner-ports)·컴파일4/신규 메모리2 PASS에 이어 [control/isolation backing](../evidence/module-independence-survey-20261026.md#c1-isolation-backing)·컴파일3/변경·신규 runtime4 PASS·독립 한정 수용. [epoch backing 소유](../evidence/module-independence-survey-20261026.md#c1-epoch-backing)·compiler3/변경 runtime3 PASS·독립 D1/D2 한정 수용. [Catalog epoch 활성화](../evidence/module-independence-survey-20261026.md#c1-epoch-activation)는 fresh/최종 복구 seeding·CREATE/Commit을 구현하고 source별 선택 실행·원 FAIL·빈 Commit 범위 정정을 보존했다. [읽기 전용 거래/statement 수명](../evidence/module-independence-survey-20261026.md#c1-read-only-capsules)과 장기 credit을 추가하고 source별 compiler·선택 runtime7 결과를 보존했다. [C2 동기 Catalog 분리](../evidence/module-independence-survey-20261026.md#c2-catalog-read)는 기존 actual lookup 수신·source별 runtime7을 확인했으며 statement factory·short aggregate는 후속이다. 전체 C0·C1–C5 공급과 제품 인수 미완료 | 동결한 공급 단위의 구조 변경·관련 선택 검증·검토 |
 | M5 | NOT_RUN | C+A/C+B의 실제 제품 병렬 구현·단독/합류 인수·MI01–06 |
 
 현재 편집 위치는 `/home/et16/.codex/worktrees/module-independence/xadb`, 출발 commit은 `b7ce51d2b3ee62b5b8dbc0d9c852a17827d76bd9`다. 이번 단계의 권한·소유·동시 작업·미확인 세션은 [조사 기록](../evidence/module-independence-survey-20261026.md)에 보존한다. 계획의 전체 목표는 M5 인수까지 유지하며 문서 정비만으로 완료하지 않는다.

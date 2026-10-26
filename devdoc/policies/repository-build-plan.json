@@ -6401,5 +6401,41 @@
     },
     "remaining_supply": "writable Begin/terminal, automatic actual-source read-set/conflict, short aggregate admission, cursor/Row APIs, whole C0/C1-C5/M5",
     "source_roots_changed": false
+  },
+  "dev3_module_c2_catalog_read": {
+    "status": "ACCEPTED_LIMITED_D1_D2",
+    "contract_ref": "dev3-module-boundaries.md#common-deliveries",
+    "evidence_ref": "module-independence-survey-20261026.md#c2-catalog-read",
+    "implemented_paths": [
+      "crates/engine/src/storage/catalog/mod.rs",
+      "crates/engine/src/storage/catalog/read.rs",
+      "crates/engine/src/storage/wal_io/plan4_retention/read/operation.rs",
+      "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/read_boundary.rs",
+      "tests/fixtures/dev3-module-c2/catalog-read/canonical.rs",
+      "tests/fixtures/dev3-module-c2/catalog-read/private_factory.rs",
+      "tests/fixtures/dev3-module-c2/catalog-read/private_field.rs",
+      "tests/fixtures/dev3-module-c2/catalog-read/manifest.json"
+    ],
+    "modified_paths": [
+      "crates/engine/src/storage/mod.rs",
+      "crates/engine/src/storage/disk.rs",
+      "crates/engine/src/storage/wal_io/disk_api.rs",
+      "crates/engine/src/storage/wal_io/plan4_apply.rs",
+      "crates/engine/src/storage/wal_io/plan4_retention/read.rs",
+      "crates/engine/src/storage/wal_io/plan4_retention/read/catalog.rs",
+      "crates/engine/src/storage/wal_io/plan4_retention/read/lookup.rs",
+      "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory.rs"
+    ],
+    "scope": "actual synchronous Catalog product lookup over private original source/ref/load/cleanup adapter; private factory consumes actual SnapshotGuard borrow within existing call",
+    "validation": "r1 fixture E0599 FAIL; r2 compiler/privacy PASS and source census FAIL preserved; r3 production PASS and new fixture lifetime FAIL; r4 test build/runtime7 PASS; unchanged privacy/production checks not repeated; r5 corrects one live CatalogHeader in source census after independent review, test build and only changed census PASS, r4 behavior cases not repeated; independent module_handoff_review accepted limited D1/D2 with no required fixes after source/artifact identity and seven-document review",
+    "source_bytes": {
+      "catalog_lookup": 42858,
+      "live_peak": 64074,
+      "live_metadata": 187082,
+      "live_whole": 252618,
+      "recovered_peak": 65450
+    },
+    "remaining_supply": "caller-retained statement factory and automatic read-set together with short aggregate/writer progress admission; CheckedTable, RowReadOperation/cursor, whole C2/C0/C1-C5/M4/M5",
+    "source_roots_changed": false
   }
 }

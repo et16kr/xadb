@@ -1143,3 +1143,6 @@ mod reader_validation;
 
 #[path = "catalog_memory/transactions.rs"]
 mod transactions;
+
+#[path = "catalog_memory/read_boundary.rs"]
+mod read_boundary;

@@ -597,3 +597,10 @@ production의 `plan4_pages::apply`와 test의 `plan4_pages::retention`은 상호
 
 
 [C1 읽기 전용 수명](../evidence/module-independence-survey-20261026.md#c1-read-only-capsules)은 `plan4_apply/transaction.rs`가 원 isolation/visibility의 capsule/view·slot/credit·snapshot 수명을 소유하고 `storage::disk`가 제한 API를 재노출한다. 새 실제 경로와 선택 입력은 JSON `dev3_module_c1_read_only`에 등록했다. writable/실제 조회/자동 read-set·short aggregate admission은 미공급이며 이 부분공급으로 C1 전체나 A/B 착수를 선언하지 않는다.
+
+
+## 모듈 독립 개발 C2 동기 Catalog 조회 분리 — 2026-10-26
+
+`storage/catalog/{mod,read}.rs`는 snapshot visible/retired/Missing/FlushRequired의 실제 제품 선택을 소유한다. 원 `plan4_retention/read/lookup.rs`의 동기 entry가 private `read/operation.rs`를 구성해 이 본문에 즉시 인계한다. operation은 원 ReadPort·Owner·SnapshotGuard·private loan·reference lease를 빌리고 source/Status/Undo/load/cleanup을 소유한다. 제품은 `storage::disk`의 opaque 타입/checked method와 순수 값을 소비하며 deep path·원 pool/registry 필드를 수입하지 않는다.
+
+statement factory·자동 read-set·CheckedTable/RowReadOperation과 short aggregate는 아직 공급하지 않았다. caller가 operation을 보유하는 새 API는 원 source 예약을 함께 수신한 뒤 공개한다. 신규 source4개·compiler fixture3개/manifest 및 수정 경로는 JSON `dev3_module_c2_catalog_read`에 등록했다. [선택 증거](../evidence/module-independence-survey-20261026.md#c2-catalog-read)는 source별 compiler/privacy·runtime7과 원 source census/fixture FAIL을 보존한다. package/dependency·source root·clean export 규칙은 유지한다.

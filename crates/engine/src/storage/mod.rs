@@ -1,5 +1,6 @@
 pub(crate) mod allocation_page;
 pub(crate) mod anchor;
+pub(crate) mod catalog;
 pub(crate) mod catalog_record;
 pub(crate) mod control;
 pub(crate) mod dirty_frame;

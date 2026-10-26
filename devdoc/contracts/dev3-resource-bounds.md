@@ -195,3 +195,6 @@ root별 Aging의 complete cleanup 상계는 `Prune+3×ReleaseRole+RootFree =3116
 Free Undo container가 모자라면 원 System INIT 공급으로 실제 확보한 뒤 RowReserve를 허용한다. 그 INIT의 원 비용·소유·선택 증거를 별도로 포함하며 “기존 Free page”를 fixture에서 raw 생성하지 않는다. CLR은 Missing 행 제거이므로 새 tree page/overflow를 요구하지 않는다. 감소하는 남은 un-compensated roots와 root별 release cursor, 원 bounded fair queue로 종료 진행을 설명하고 reader pin/오래된 snapshot의 해제를 임의로 강제하지 않는다.
 
 M4의 static/compiler 검산에서 source·loan/FD·queue/전체 target 상계를 확인한 뒤만 해당 effect/native 시험을 진행한다. M5에는 독립 계산으로 실제 각 자원−1/동일/+1, 실패 statement의6080 소진 후 신규 거절과 기존 abort 완료, H net0에서 before count 부족, maximum valid leaf와 필요한 split 거절, 반복 crash 예약 비증가를 선택한다. runtime F05와 전체 DEV3 S5의 나머지 의무는 아직 미완료다.
+
+
+[C2 동기 Catalog 분리](../evidence/module-independence-survey-20261026.md#c2-catalog-read)의 source census는 private operation·제품 selection·생성/반환 carrier를 포함한다. decode/check 임시 view가 끝난 뒤 location/LOAD가 시작하므로 nested phase를 구별하며, r2의65770B 상한 초과 FAIL과 정정 근거를 보존한다. 독립 검토가 LOAD 뒤까지 살아 있는 header192B를 복원하도록 지적한 후 최종 lookup42858B, live peak64074/metadata187082/whole252618B와 recovery peak65450B다. 새 caller-retained operation을 공개하지 않았으며 statement entry와 short aggregate admission은 후속 공급이다. 이 결과를 동시 writer/reader 합의 인수로 사용하지 않는다.

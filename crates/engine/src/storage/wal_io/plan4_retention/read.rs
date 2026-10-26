@@ -14,14 +14,19 @@ use foundation::identity::ObjectId;
 mod catalog;
 #[path = "read/lookup.rs"]
 mod lookup;
+#[path = "read/operation.rs"]
+mod operation;
+pub(crate) use crate::storage::catalog::read::CatalogLookupStep;
 #[allow(
     unused_imports,
     reason = "typed guard name for the following catalog consumer"
 )]
 pub(crate) use catalog::RetentionCatalogGuard;
 pub(super) use catalog::{CATALOG_READ_SOURCE_BYTES, catalog_source_bytes};
-pub(crate) use lookup::CatalogLookupStep;
 pub(super) use lookup::source_bytes as lookup_source_bytes;
+pub(crate) use operation::{
+    CatalogCandidate, CatalogReadOperation, MissingCatalogEvidence, ReadStep,
+};
 
 pub(crate) struct RetentionReadGuard<'a, 'b, 'c, 's, 'p, 'd> {
     read: ReadTargets<'a, 'b, 'c, 's, 'p, 'd, 2>,
@@ -101,7 +106,7 @@ impl<'b, 'arena, 's, 'c, 'p, 'd, W: WriterNamespace>
     RetentionReader<'b, 'arena, 's, 'c, 'p, 'd, '_, '_, W>
 {
     pub(crate) fn read<'a>(
-        &'b self,
+        &self,
         owner: &'a mut Owner<'c, 's>,
         target: &Plan4Target,
     ) -> Result<RetentionReadGuard<'a, 'b, 'c, 's, 'p, 'd>> {
@@ -109,7 +114,7 @@ impl<'b, 'arena, 's, 'c, 'p, 'd, W: WriterNamespace>
     }
     /// Catalog lookup reads the referenced Undo root of a live CREATE.
     fn read_catalog_undo<'a>(
-        &'b self,
+        &self,
         owner: &'a mut Owner<'c, 's>,
         target: &Plan4Target,
     ) -> Result<RetentionReadGuard<'a, 'b, 'c, 's, 'p, 'd>> {
@@ -122,7 +127,7 @@ impl<'b, 'arena, 's, 'c, 'p, 'd, W: WriterNamespace>
         self.read_shaped(owner, target, UndoShape::CatalogRoot)
     }
     fn read_shaped<'a>(
-        &'b self,
+        &self,
         owner: &'a mut Owner<'c, 's>,
         target: &Plan4Target,
         shape: UndoShape,
