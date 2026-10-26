@@ -91,6 +91,9 @@ impl<'o, 'c, 'f> VersionEditGuard<'o, 'c, 'f> {
             if !state.installation_open() {
                 return Err(unchanged(Cause::InstallationPending));
             }
+            if state.slots[owner.index].read_operation {
+                return Err(unchanged(Cause::Busy));
+            }
             let generation = state
                 .installation_generation
                 .checked_add(1)
@@ -170,6 +173,7 @@ impl<'o, 'c, 'f> CommitStage<'o, 'c, 'f> {
                     != (OwnerSlot {
                         generation: self.key.owner_generation,
                         mode: Mode::CommitStage,
+                        read_operation: false,
                     })
             {
                 return Err(self.core.fatal(Cause::Invariant));
@@ -336,6 +340,8 @@ impl<'o, 'c, 'f> DrainingInstallation<'o, 'c, 'f> {
         let core = pending.core;
         {
             let mut state = core.entry_state()?;
+            #[cfg(test)]
+            let mut announced_wait = false;
             loop {
                 core.live()?;
                 if !state.valid()
@@ -344,8 +350,22 @@ impl<'o, 'c, 'f> DrainingInstallation<'o, 'c, 'f> {
                 {
                     return Err(core.fatal(Cause::Invariant));
                 }
-                if state.active_apply == 0 && state.active_content == 0 {
+                if state.active_apply == 0
+                    && state.active_content == 0
+                    && !state.slots.iter().any(|slot| slot.read_operation)
+                {
                     break;
+                }
+                #[cfg(test)]
+                if !announced_wait {
+                    announced_wait = true;
+                    drop(state);
+                    super::catalog_test_support::hit(
+                        core,
+                        super::catalog_test_support::Point::DrainWaiting,
+                    );
+                    state = core.entry_state()?;
+                    continue;
                 }
                 state = match core.continuation.wait_timeout(state, FENCE_RECHECK) {
                     Ok((state, _)) => state,
@@ -406,6 +426,7 @@ impl<'c, 'f> CommitInstalling<'_, 'c, 'f> {
             if state.installation != Installation::Installing(pending.key, pending.staged.lsn())
                 || state.active_apply != 1
                 || state.active_content != 0
+                || state.slots.iter().any(|slot| slot.read_operation)
             {
                 return Err(pending.core.fatal(Cause::Invariant));
             }

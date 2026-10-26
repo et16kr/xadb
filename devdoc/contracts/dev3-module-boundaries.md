@@ -1125,6 +1125,8 @@ private `OperationSourceAdmission<'b,'a,'c,'s>`는 원 `&'b Mutex<IsolationLedge
 
 rollback/terminal은 원 progress admission이 새 foreground를 닫고 이미 실행 중인 유한 read operation이 checked 반환한 뒤 reserved source 몫으로 들어간다. 그 몫은 `65536-shared_retained` 안의 해당 progress class nested charge이며 foreground와 겹치지 않는다는 actual admission 증거가 있을 때만 max로 계산한다. 새 선택적 foreground 예약 성공을 rollback/terminal의 선행으로 삼지 않는다. 장기 snapshot/cursor를 강제 종료하여 공간을 만들지 않고, flush의 별도65536B와 원 content Drain 순서를 유지한다. Reserved/Before wrapper를 보유한 writer는 같은 원 exclusive control을 점유하므로 다른 writer progress와 공존한다고 계산하지 않는다. caller의 무한 미반환은 진행 보장이 아니라 보유 소유이며 Drop/fence 규약을 따른다.
 
+실제 부분공급으로 [Catalog 조회 수명/Commit Drain](../evidence/module-independence-survey-20261026.md#c2-read-operation-lifetime)을 연결했다. 원 OwnerSlot의 별도 read 표시를 첫 reference 예약 전부터 checked 정리 시도 뒤까지 유지하고 Drain이 표시0을 기다린다. Pending LOAD는 허용하고 Draining의 신규 operation/content 거절은 유지한다. 정상 refs0과 fence 뒤 원 fatal refs 보존을 구분한다. byte admission·동시 합·writer phase/progress 몫은 아직 미공급이며 이 표시만으로 본 절의 인수를 완료하지 않는다.
+
 전체 설계 상계는 metadata `73856+65536+49152=188544≤196608`, original flush를 더한 whole `254080≤262144`다. 이 admission·동시 합 검산은 **새 C1/C2/C3 공급**이며 기존 active.max 기반 source 결과로 이미 구현됐다고 하지 않는다. header의 실제 byte 배치와 source charge의 측정·실패/정리 경로는 C1/C4 인수에 포함한다.
 
 <a id="common-deliveries"></a>

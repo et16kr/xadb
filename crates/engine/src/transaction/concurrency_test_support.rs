@@ -139,7 +139,11 @@ pub(super) fn owner_identity(owner: &Owner<'_, '_>) -> (usize, u64) {
 }
 
 pub(super) fn set_slot(core: &PageConcurrency<'_>, index: usize, generation: u64, mode: Mode) {
-    core.state.lock().unwrap().slots[index] = OwnerSlot { generation, mode };
+    core.state.lock().unwrap().slots[index] = OwnerSlot {
+        generation,
+        mode,
+        read_operation: false,
+    };
 }
 
 pub(super) fn set_counts(core: &PageConcurrency<'_>, apply: u16, content: u16) {
@@ -284,6 +288,7 @@ impl Drop for SimulatedCommitStage<'_, '_, '_> {
                     != (OwnerSlot {
                         generation: self.key.owner_generation,
                         mode: Mode::CommitStage,
+                        read_operation: false,
                     })
             {
                 self.core.fence.fence();
@@ -442,6 +447,7 @@ impl Drop for SimulatedInstallGuard<'_, '_, '_> {
                     == (OwnerSlot {
                         generation: pending.key.owner_generation,
                         mode: Mode::CommitInstalling,
+                        read_operation: false,
                     })
                 && let Some(count) = state.active_apply.checked_sub(1)
             {

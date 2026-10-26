@@ -1,0 +1,65 @@
+{
+  "schema": "XADB_MODULE_C2_READ_OPERATION_V1",
+  "status": "FROZEN_INPUTS_NOT_EXECUTION_EVIDENCE",
+  "scope": "actual synchronous Catalog whole-operation lifetime and Commit Drain; aggregate byte admission remains unimplemented",
+  "budget": {
+    "total_seconds": 480,
+    "case_seconds": 30,
+    "output_bytes": 8388608,
+    "rust_min_stack": 33554432
+  },
+  "runtime_tests": [
+    {
+      "selector": "transaction::concurrency::read::tests::read_operation_keeps_slot_across_content_and_rejects_apply",
+      "reason": "new complete operation lifetime, nested content, duplicate/apply Busy, reuse/checked close"
+    },
+    {
+      "selector": "transaction::concurrency::read::tests::read_operation_rejects_foreign_core_and_flusher_without_effects",
+      "reason": "new exact core/role rejection and maintenance compatibility"
+    },
+    {
+      "selector": "transaction::concurrency::read::tests::read_operation_forget_and_premature_release_preserve_ownership",
+      "reason": "new forgotten/premature source cleanup must fence without clearing ownership"
+    },
+    {
+      "selector": "transaction::concurrency::read::tests::read_operation_cleanup_returns_known_slot_after_poison_or_fence",
+      "reason": "new original cleanup under poison/fence retains strong error"
+    },
+    {
+      "selector": "transaction::concurrency::read::tests::read_operation_unwind_fences_before_returning_slot",
+      "reason": "new ticket unwind cleanup"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::commit_concurrency::catalog_read_operation_drain_waits_for_captured_refs",
+      "reason": "new actual content0/source1 Drain wait, late rejection, checked cleanup before Commit"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::commit_concurrency::catalog_read_operation_fenced_drain_preserves_fatal_refs",
+      "reason": "new actual fenced Drain source-flag return, old fatal reference preservation/Abandoned; no unchanged recovery execution"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::commit_concurrency::catalog_mt03_pending_reader_loads_undo",
+      "reason": "changed operation entry/cleanup must retain actual Pending Undo LOAD"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::read_boundary::missing_leaf_and_foreign_owner_release_original_resources",
+      "reason": "changed begin/finish_missing/foreign ownership rejection"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::read_boundary::dirty_victim_returns_flush_then_retries_same_snapshot",
+      "reason": "changed close must return progress reservation on FlushRequired before retry"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::read_boundary::captured_undo_read_error_preserves_fatal_cause",
+      "reason": "changed finish_error must preserve actual fatal I/O and return new flag"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::visibility_gap::catalog_mt02_q1_publication_gap",
+      "reason": "changed Found/borrowed ReadPort lifetime at actual Commit publication boundary"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::owner_tests::disk_session_isolation_backing_and_carriers_are_accounted",
+      "reason": "changed core/ticket/Catalog operation carriers and entry/cleanup census"
+    }
+  ]
+}

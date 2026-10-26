@@ -14,6 +14,8 @@ use std::{
 #[path = "concurrency_commit.rs"]
 mod commit;
 use commit::Installation;
+#[path = "concurrency_read.rs"]
+mod read;
 #[allow(unused_imports)] // The source-census consumer is a separately supplied leaf.
 pub(crate) use commit::source_bytes as commit_common_source_bytes;
 #[allow(unused_imports)] // Sealed continuation types are named by their later consumer.
@@ -21,6 +23,7 @@ pub(crate) use commit::{
     CommitInstalling, CommitStage, DrainingInstallation, InstallationKey, PendingInstallation,
     PrepareCommitError,
 };
+pub(crate) use read::{ReadOperationAdmission, source_bytes as read_operation_source_bytes};
 
 #[cfg(test)]
 #[path = "concurrency_test_support.rs"]
@@ -93,11 +96,13 @@ enum Mode {
 struct OwnerSlot {
     generation: u64,
     mode: Mode,
+    read_operation: bool,
 }
 impl OwnerSlot {
     const EMPTY: Self = Self {
         generation: 0,
         mode: Mode::Free,
+        read_operation: false,
     };
 }
 
@@ -126,6 +131,11 @@ impl State {
         let mut apply = 0;
         let mut content = 0;
         for (index, slot) in self.slots.iter().enumerate() {
+            if slot.read_operation
+                && (index == FLUSHER_SLOT || !matches!(slot.mode, Mode::Idle | Mode::Content))
+            {
+                return false;
+            }
             match slot.mode {
                 Mode::Free if slot.generation < u64::MAX => {}
                 Mode::Retired if slot.generation == u64::MAX => {}
@@ -298,6 +308,7 @@ impl<'f> PageConcurrency<'f> {
                 *slot = OwnerSlot {
                     generation,
                     mode: Mode::Idle,
+                    read_operation: false,
                 };
                 return Ok(Owner {
                     core: self,
@@ -393,12 +404,8 @@ impl<'c, 'f> Owner<'c, 'f> {
     }
 
     fn check_mode(&self, state: &State, mode: Mode) -> Result<()> {
-        if state.slots[self.index]
-            != (OwnerSlot {
-                generation: self.generation,
-                mode,
-            })
-        {
+        let slot = &state.slots[self.index];
+        if slot.generation != self.generation || slot.mode != mode {
             return Err(self.core.fatal(Cause::Invariant));
         }
         Ok(())
@@ -412,6 +419,9 @@ impl<'c, 'f> Owner<'c, 'f> {
             self.check_mode(&state, Mode::Idle)?;
             if self.index == FLUSHER_SLOT {
                 return Err(unchanged(Cause::InvalidRole));
+            }
+            if state.slots[self.index].read_operation {
+                return Err(unchanged(Cause::Busy));
             }
             if !state.installation_open() {
                 return Err(unchanged(Cause::InstallationPending));
@@ -497,6 +507,10 @@ impl Drop for Owner<'_, '_> {
         // Forgotten live children are corruption, not permission to erase their
         // admission. Preserve the evidence and permanently fence this instance.
         if self.check_mode(&state, Mode::Idle).is_err() {
+            return;
+        }
+        if state.slots[self.index].read_operation {
+            self.core.fatal(Cause::Invariant);
             return;
         }
         state.slots[self.index].mode = if self.generation == u64::MAX {

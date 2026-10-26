@@ -14,6 +14,7 @@ use crate::storage::{
         UndoTargetKind, UndoTargetView,
     },
 };
+use crate::transaction::concurrency::{ReadOperationAdmission, read_operation_source_bytes};
 use foundation::identity::Generation;
 
 pub(crate) enum ReadStep<T> {
@@ -51,7 +52,8 @@ pub(crate) struct CatalogReadOperation<
     'w,
     W: WriterNamespace,
 > {
-    backend: ReadPort<'b, 'a, 's, 'c, 'p, 'd, 'm, 'w, W>,
+    backend: &'r ReadPort<'b, 'a, 's, 'c, 'p, 'd, 'm, 'w, W>,
+    progress: ReadOperationAdmission<'c, 's>,
     owner: &'u mut Owner<'c, 's>,
     snapshot: &'r SnapshotGuard<'v, 'j, 'c, 's>,
     loader: &'i mut [u8; 409_600],
@@ -67,6 +69,13 @@ fn visibility_error(error: visibility::VisibilityError) -> RetentionError {
         cause: RetentionCause::Visibility(error),
     }
 }
+fn progress_error(error: crate::transaction::concurrency::ConcurrencyError) -> RetentionError {
+    RetentionError {
+        phase: RetentionPhase::Census,
+        effect: error.effect,
+        cause: RetentionCause::Concurrency(error),
+    }
+}
 fn release_refs(refs: CapturedCatalogRefs<'_, '_, '_, '_>) -> Result<()> {
     let tx = refs.transaction.map_or(Ok(()), |pin| {
         pin.release_checked().map_err(visibility_error)
@@ -80,7 +89,7 @@ impl<'u, 'r, 'v, 'j, 'i, 'b, 'a, 's, 'c, 'p, 'd, 'm, 'w, W: WriterNamespace>
     CatalogReadOperation<'u, 'r, 'v, 'j, 'i, 'b, 'a, 's, 'c, 'p, 'd, 'm, 'w, W>
 {
     pub(super) fn begin(
-        backend: &ReadPort<'b, 'a, 's, 'c, 'p, 'd, 'm, 'w, W>,
+        backend: &'r ReadPort<'b, 'a, 's, 'c, 'p, 'd, 'm, 'w, W>,
         owner: &'u mut Owner<'c, 's>,
         snapshot: &'r SnapshotGuard<'v, 'j, 'c, 's>,
         private: &'i mut [u8; 425_984],
@@ -99,18 +108,22 @@ impl<'u, 'r, 'v, 'j, 'i, 'b, 'a, 's, 'c, 'p, 'd, 'm, 'w, W: WriterNamespace>
                 RetentionCause::WrongState,
             ));
         }
+        let mut progress = owner
+            .try_read_operation(backend.pool.bound_core())
+            .map_err(progress_error)?;
+        let lease = match visibility.reserve_references(owner) {
+            Ok(lease) => lease,
+            Err(error) => {
+                return merge(
+                    Err(visibility_error(error)),
+                    progress.release_checked().map_err(progress_error),
+                );
+            }
+        };
         let loan = CatalogLookupLoan::split(private);
-        let lease = visibility
-            .reserve_references(owner)
-            .map_err(visibility_error)?;
         Ok(Self {
-            backend: ReadPort {
-                storage: backend.storage,
-                pool: backend.pool,
-                history: backend.history,
-                isolation: backend.isolation,
-                visibility: backend.visibility,
-            },
+            backend,
+            progress,
             owner,
             snapshot,
             loader: loan.loader,
@@ -403,7 +416,11 @@ impl<'u, 'r, 'v, 'j, 'i, 'b, 'a, 's, 'c, 'p, 'd, 'm, 'w, W: WriterNamespace>
         let lease = self.lease.take().map_or(Ok(()), |lease| {
             lease.release_checked().map_err(visibility_error)
         });
-        merge(refs, lease)
+        // Return the original source flag after checked reference cleanup. On
+        // healthy return all refs are gone; fatal cleanup preserves the old
+        // registry evidence and the permanent fence prevents installation.
+        let progress = self.progress.release_checked().map_err(progress_error);
+        merge(merge(refs, lease), progress)
     }
     pub(in crate::storage) fn finish_found(
         mut self,
@@ -475,6 +492,7 @@ pub(super) fn entry_source_bytes<W: WriterNamespace>() -> usize {
         + 4 * size_of::<Result<()>>()
         + 16 * size_of::<&()>()
         + visibility::source_census().peak_leaf
+        + read_operation_source_bytes()
 }
 
 /// record()/check()/finish_found decoding ends before location replay or LOAD.

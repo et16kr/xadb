@@ -11,6 +11,7 @@ pub(crate) enum Point {
     Pending,
     Durable,
     Draining,
+    DrainWaiting,
     InstalledSecondPage,
     InstalledBeforeFinish,
     BeforePublish,
@@ -36,6 +37,7 @@ pub(crate) fn hit(core: &PageConcurrency<'_>, point: Point) {
 pub(crate) struct Observation {
     pub(crate) active_apply: u16,
     pub(crate) active_content: u16,
+    pub(crate) active_read_operations: usize,
     pub(crate) installation: &'static str,
     pub(crate) fenced: bool,
 }
@@ -53,6 +55,11 @@ pub(crate) fn observe(core: &PageConcurrency<'_>) -> Observation {
     Observation {
         active_apply: state.active_apply,
         active_content: state.active_content,
+        active_read_operations: state
+            .slots
+            .iter()
+            .filter(|slot| slot.read_operation)
+            .count(),
         installation,
         fenced: core.fence.is_fenced(),
     }

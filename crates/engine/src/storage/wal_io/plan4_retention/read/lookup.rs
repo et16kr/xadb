@@ -258,6 +258,7 @@ pub(in super::super) fn source_bytes<W: WriterNamespace>() -> usize {
                 .max(super::super::lookup_load::source_bytes::<W>())
                 .max(read)
                 .max(super::operation::decode_source_bytes())
-                .max(visibility::source_census().peak_leaf),
+                .max(visibility::source_census().peak_leaf)
+                .max(crate::transaction::concurrency::read_operation_source_bytes()),
     )
 }

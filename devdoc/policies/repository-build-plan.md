@@ -611,3 +611,8 @@ statement factory·자동 read-set·CheckedTable/RowReadOperation과 short aggre
 `storage/row.rs`는 A `row/insert.rs`와 B `row/read.rs`를 등록한다. A는 borrowed 값 검산과 `insert/leaf.rs`의 RowLeaf 후보, B는 순수 point/reseek·가시성·진행값 본문을 소유한다. A/B 전용 tests·fixture는 각각 독립하며 공용 구현·권한 factory를 추가하지 않는다. 실제 adapter와 예약/설치·snapshot/cleanup·Forward/CLR·복구는 후속 공급이다.
 
 [작성·단독 검증 증거](../evidence/module-independence-survey-20261026.md#consumer-c0-start)에 같은 기준에서 겹친 제품 작성 구간과 각 첫 source의 상대 코드/fixture 제거를 기록했다. A 선택10개·B 선택3개는 C0_ONLY 범위이며 전체 제품 인수가 아니다. 실제 경로는 JSON `dev3_module_row_c0_consumers`에 등록하고 새 package/dependency·source root는 추가하지 않는다.
+
+
+## 모듈 독립 개발 C2 조회 수명과 Commit Drain — 2026-10-26
+
+`transaction/concurrency_read.rs`는 기존 PageConcurrency의 슬롯 표시와 checked read-operation ticket을 소유한다. Catalog adapter는 이 ticket과 원 ReadPort borrow를 보유하며 refs 정리 뒤 표시를 반환한다. 새 owner/counter·package/dependency·source root는 추가하지 않는다. 실제 경로는 JSON `dev3_module_c2_read_operation`에 등록했다. [선택 증거](../evidence/module-independence-survey-20261026.md#c2-read-operation-lifetime)는 source별13개 결과와 원 compile/fenced-fixture 실패를 구분한다. aggregate byte admission·caller-retained factory는 후속 공급이다.
