@@ -6503,5 +6503,27 @@
     },
     "remaining_supply": "aggregate short byte admission, writer phase/progress budget, caller-retained statement factory/read-set, Row adapters/terminal/recovery, complete M4/M5",
     "source_roots_changed": false
+  },
+  "dev3_module_c2_catalog_scratch": {
+    "status": "ACCEPTED_LIMITED_D1_D2",
+    "contract_ref": "dev3-module-boundaries.md#operation-source-admission",
+    "evidence_ref": "module-independence-survey-20261026.md#c2-catalog-scratch",
+    "implemented_paths": [
+      "tests/fixtures/dev3-module-c2/catalog-scratch/manifest.json"
+    ],
+    "modified_paths": [
+      "crates/engine/src/storage/semantic_catalog/images/catalog.rs",
+      "crates/engine/src/storage/semantic_catalog/resources.rs"
+    ],
+    "scope": "reuse existing caller after-page for Catalog Forward/Prune record scratch; remove local4588B and account actual borrowed slice, no wire or authority change",
+    "validation": "r1 production/test build and eleven exact cases PASS; original MT03 recovery attribution error preserved and corrected; r2 test build and selected current-build memory recovery MF09 PASS; product files unchanged and prior cases not repeated; independent module_handoff_review accepted limited D1/D2 after product/artifact/five-document review, zero required fixes",
+    "source_bytes": {
+      "catalog_lookup": 42850,
+      "live_peak": 64074,
+      "recovered_peak": 65450,
+      "whole_peak_changed": false
+    },
+    "remaining_supply": "aggregate source admission including all concurrent entry/return carriers and writer/read/progress classes; actual Row adapters/terminal/recovery and complete M4/M5",
+    "source_roots_changed": false
   }
 }

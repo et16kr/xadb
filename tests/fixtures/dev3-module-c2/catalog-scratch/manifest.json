@@ -1,0 +1,67 @@
+{
+  "schema": "XADB_MODULE_C2_CATALOG_SCRATCH_V1",
+  "status": "FROZEN_INPUTS_NOT_EXECUTION_EVIDENCE",
+  "scope": "reuse the existing caller after-page loan for Catalog Forward/Prune record scratch; source census reduction only, aggregate source admission remains unimplemented",
+  "baseline_commit": "8247686",
+  "changed_product_paths": [
+    "crates/engine/src/storage/semantic_catalog/images/catalog.rs",
+    "crates/engine/src/storage/semantic_catalog/resources.rs"
+  ],
+  "budget": {
+    "total_seconds": 480,
+    "case_seconds": 30,
+    "output_bytes": 8388608,
+    "rust_min_stack": 33554432
+  },
+  "runtime_tests": [
+    {
+      "selector": "storage::semantic_catalog::transition_tests::c03",
+      "reason": "Changed Forward record scratch; first insertion exact independent page/frame, Spec producer and View observer"
+    },
+    {
+      "selector": "storage::semantic_catalog::transition_tests::c05",
+      "reason": "Changed Prune record scratch; exact committed record and full page/frame"
+    },
+    {
+      "selector": "storage::semantic_catalog::transition_tests::c13",
+      "reason": "Changed Forward output scratch with a prior Catalog entry; preserve the nonselected literal entry"
+    },
+    {
+      "selector": "storage::semantic_catalog::transition_tests::c15",
+      "reason": "Changed Prune output scratch with another Catalog entry; preserve all nonselected bytes"
+    },
+    {
+      "selector": "storage::semantic_catalog::transition_tests::p02",
+      "reason": "Changed Forward scratch at maximum 4588-byte record / 4600-byte leaf cell; 32 columns and 128-byte names"
+    },
+    {
+      "selector": "storage::semantic_catalog::transition_tests::r05",
+      "reason": "Changed shared CLR path no longer owns unused value buffer; exact removal page/frame"
+    },
+    {
+      "selector": "storage::semantic_catalog::transition_tests::n14",
+      "reason": "Changed Forward fails after candidate encoding on wrong projection; no successful observation"
+    },
+    {
+      "selector": "storage::semantic_catalog::transition_tests::n25",
+      "reason": "Changed Forward fails after candidate encoding on wrong planned cell length"
+    },
+    {
+      "selector": "storage::semantic_catalog::transition_tests::n19",
+      "reason": "Changed Forward observer must still reject a modified nonselected Catalog entry"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::commit_concurrency::catalog_mt03_pending_reader_loads_undo",
+      "reason": "Changed pure Catalog image helper is called by actual fresh Pending lookup replay/Undo LOAD; this MT03 selector ends at Commit and does not run recovery or Prune"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::owner_tests::disk_session_isolation_backing_and_carriers_are_accounted",
+      "reason": "Changed actual nested source census propagates to lookup/live/recovered bounds; source-value evidence only"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::commit_failures::catalog_mf09_commit_durable_unwind",
+      "reason": "Changed Catalog image helper in current-build recovery replay of durable Forward and actual committed Prune after pre-install Commit unwind; new selected recovery case for this product diff"
+    }
+  ],
+  "selection_correction": "r1 original manifest incorrectly attributed current-build recovery/Prune to MT03; original source/manifest/result retained. r2 runs only the newly selected MF09; r1 eleven PASS are not repeated."
+}

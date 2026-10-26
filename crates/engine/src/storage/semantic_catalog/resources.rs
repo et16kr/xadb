@@ -178,27 +178,31 @@ fn catalog_image() -> usize {
             CatalogExpectation,
         )>()
         + size_of::<([u8; 8], SearchPosition, [u8; 32])>()
-        + size_of::<[u8; crate::storage::catalog_record::MAX_CATALOG_CELL_BYTES]>()
         + size_of::<[u8; super::MAX_CELL]>()
         + size_of::<[&[u8]; super::images::CATALOG_EDIT_CELLS]>()
         + size_of::<(LeafEdit<'_>, CatalogChangeObservation)>()
         + returned::<CatalogChangeObservation, Error>();
+    // Forward/Prune borrow the existing after-page loan for record scratch.
+    // encode_leaf_cell copies it into the owned cell before plan.encode writes
+    // the final page. Count the slice carrier, not a second owned value array.
     let forward = size_of::<(CatalogTableInput<'_>, CatalogHeader, usize, [u8; 32], &[u8])>()
+        + size_of::<&mut [u8]>()
         + returned::<usize, CatalogError>()
         + returned::<&[u8], TreeError>()
         + catalog_codec().max(projection()).max(tree_codec());
     let remove_or_prune = size_of::<(TreeEntry<'_>, &[u8], CatalogRecordView<'_>, CatalogHeader)>()
+        + size_of::<&mut [u8]>()
         + size_of::<([u8; 32], [u8; 32], CommitSeq, &[u8], &[u8])>()
         + returned::<CatalogRecordView<'_>, CatalogError>()
         + catalog_codec().max(projection()).max(tree_codec());
-    // Match-arm locals end before prepare_leaf_edit; no returned view owns
-    // either byte array. Keep the common arrays/result across every branch.
+    // Match-arm record borrows end before prepare_leaf_edit; the returned edit
+    // borrows only cell. Keep the common cell/reference arrays and result.
     common
         + forward
             .max(remove_or_prune)
             .max(leaf_edit())
-            // All prior leaf values are validated before the owned value/cell
-            // arrays are declared. Keeping those arrays here is conservative.
+            // All prior leaf values are validated before the owned cell array
+            // is declared. Keeping that array here is conservative.
             .max(
                 catalog_codec()
                     + returned::<CatalogRecordView<'_>, CatalogError>()

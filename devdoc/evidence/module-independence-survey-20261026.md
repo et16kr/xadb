@@ -660,3 +660,33 @@ Pending 중 신규 조회·Undo LOAD는 계속 허용한다. Draining/Installing
 r2 ELF는 `a2b2899de3576a2aee43e089b63e5ff2d4b0f7e07da4ea3f58609ee7c3615eaa`다. r3 ELF는 `9401632d5bc94634d72b939a844cecc63a9384eea7edd305297e642f8d70b953`다. r1/r2/r3 실행 비용은 각각19.38/27.00/43.45초이며 성능 인수 수치가 아니다.
 
 `/root/module_handoff_review`는 실제 제품·시험 diff, 원 source/manifest/ELF/result/log identity와 최종 문서7개를 대조하여 **C2 조회 수명·Commit Drain 부분공급 D1/D2 최종 한정 수용·필수 수정0**으로 판정했다. 신규2개·수정7개 경로 등록, r1/r2 FAIL 보존과 r2의6 PASS/r3의7 PASS 분리, unchanged 완료 사례 반복0을 확인했다. 검토자는 파일 수정·빌드·시험·verifier를 실행하지 않았고 `/root`가 이 한정 범위를 반영한다. 변경 Rust 파일만 rustfmt로 정리하고 `git diff --check`를 사용했다. 전체 fmt/Clippy·문서 verifier·push는 실행하지 않았다.
+
+
+<a id="c2-catalog-scratch"></a>
+### C2 Catalog 후보 출력 loan 재사용 — 2026-10-27
+
+기준 commit `8247686`에서 `semantic_catalog/images/catalog.rs::change_catalog`의 Forward/Prune가 기존 caller after-page의 앞4588B를 record scratch로 사용하도록 바꿨다. 기존 `value[4588]` local은 제거하고 `cell[4600]`은 유지한다. 기존 encoder가 record를 별도 cell에 복사한 뒤 scratch borrow가 끝나며, 마지막 leaf encoder가 전체 after-page를 초기화하고 canonical bytes로 쓴다. immutable before와 alias하지 않고 새 allocation·공유 owner·codec API·wire 형식·물리 효과를 추가하지 않는다. 오류 뒤 after는 부분 후보이며 설치할 page가 아니라는 계약을 함수 주석에 명시했다. 상위 produce/observe도 원래 여러 after-page를 순서대로 작성하므로 오류 때 후보 loan을 그대로 설치하는 계약이 아니다.
+
+`semantic_catalog/resources.rs`는 제거한 local4588B 대신 실제 mutable slice16B를 계산한다. 이는 해당 Catalog image 분기의 직접 비용 감소이며 **전체 source peak 감소가 아니다.** 선택 census에서 history_retention35090/catalog_lookup42850B, live peak64074·metadata187082·whole252618B, recovered peak65450B는 모두 이전과 같았다. 다른 branch/phase가 최대값이므로 이번 변경으로 quota 여유를 확보했다고 하지 않는다. shared retained 한 번과 모든 동시 입구·실행·반환의 합을 닫는 short admission, writer1+resident reader2, 실제 Row/terminal/recovery 공급과 전체 M4/M5는 계속 미완료다.
+
+#### 실제 변경과 선택 검증
+
+[선택 manifest](../../tests/fixtures/dev3-module-c2/catalog-scratch/manifest.json)에 마지막 제품 diff와 selector의 관계 및 총480초·각30초·로그8MiB·test stack32MiB를 고정했다. production check·test `--no-run`은 빌드 증거다. 원 fixture·generator·정답·제품 한도는 바꾸지 않았다.
+
+| 실행 | 선택·결과 | 범위와 보존 |
+| --- | --- | --- |
+| r1 | production/test build, pure transition9개(C03/C05/C13/C15/P02/R05/N14/N25/N19), MT03, source census 각1회 PASS | Forward/Prune의 기본·기존 다른 항목 보존·최대4588/4600B, CLR, projection/length/비선택항목 오류를 독립 page/frame literal과 대조. 정상6개는 producer와 독립 golden observer를 모두 검산하며 Forward observer는 borrowed View를 사용한다. N14/N25는 입력 거절, N19는 observer의 비선택 항목 변조 거절만 검산한다. MT03는 fresh Pending replay/Undo LOAD와 Commit까지만 실행 |
+| r2 | test build와 추가 MF09 한 사례 PASS | 원 memory Directory 이미지에서 durable Commit 중단 뒤 현재-build recovery replay·LSN9→15 committed Prune/cleanup·READY/Found를 확인. 제품 파일은 r1/current와 같으며 r1의11 PASS·production은 반복0 |
+
+r1 manifest의 MT03 선택 이유에는 `current-build recovery/Prune`를 잘못 포함했다. 독립 검토에서 실제 selector가 해당 경로를 호출하지 않는 것을 확인했다. **원 r1 source/manifest/result를 그대로 보존**하고 현재 manifest의 설명을 정정했다. 그11개 PASS를 복구 실행 결과로 확대하지 않는다. 변경 helper의 memory 현재-build recovery 및 실제 committed Prune는 별도 MF09로 선택해 통과했고, 앞선11개와 production check는 반복하지 않았다. native/새 PID 복구·전체 workspace·전체72개 pure transition·완료한 무변경 wrapper를 실행하지 않는다.
+
+원 source·전체 inventory·manifest·runner·compiler diagnostics·ELF·stdout/stderr·result는 `artifacts/module-c2-catalog-scratch-20261027-r1/`과 `r2/`에 보존했다. source별12개 선택 결과를 수신하며, 원 설명 오류나 과거 FAIL을 소급 삭제하지 않는다.
+
+| 실행 | source SHA-256 | manifest SHA-256 | result SHA-256 |
+| --- | --- | --- | --- |
+| r1 PASS | `30400294f4c20117891e500850b5817a43e7403a0c64dc35e0f5fa1f219cad91` | `c996ccee3fbde511e633c7f82aaa16a7b3de41cdca67b3ce632f87ae3bf5cd80` | `74b5c3136d09f04ccd6fab415fc3bc230cbd4f131558824d92e3d55d22f131d3` |
+| r2 PASS | `ccc4eac7ffe2d1bc10f5ec1762ce286f2bfea135243f79f97f19d4dca1fa44f3` | `b7b9951ffc622aed18984a00c656fe0764e70863f4f28c24509d23869f47fb44` | `fd5c8276c84319006ee7757f06882a392e5f69916df3818a871420c6cd7d77a1` |
+
+r1 ELF는 `95bc54c4216fe4a503104667281777ba48aa68fc762b44695a078fbc939cc41f`, r2 ELF는 `463ce023e36b350d69fec3ed29e1d3ff900ad7daf0075491ce85552b308b127e`다. 실행 비용34.38/33.58초는 성능 인수가 아니다. 변경 Rust 파일별 rustfmt와 `git diff --check`를 사용했으며 전체 fmt/Clippy·문서 verifier·push는 실행하지 않았다.
+
+`/root/module_handoff_review`는 제품2파일, r1/r2 원 source5613개·manifest/runner/result/ELF/로그 identity와 문서5개를 직접 대조하여 **C2 Catalog scratch 재사용 D1/D2 한정 수용·필수 수정0**으로 판정했다. MT03 범위 오류와 N19 observer-only 설명 정정, 실제12개 결과·r1→r2 제품 변경0·완료 사례 반복0, 전체 peak 불변과 잔여 aggregate/M4/M5 의무를 확인했다. 검토자는 수정·빌드·시험·verifier를 실행하지 않았고 `/root`가 한정 수용을 반영한다.

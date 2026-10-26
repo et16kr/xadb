@@ -67,6 +67,8 @@ pub(crate) struct CatalogChangeObservation {
 
 /// The Catalog anchor remains an immutable ninth target. Its actual root is
 /// checked here before candidate insertion/removal in the current leaf.
+/// `after` is a caller-owned candidate loan: its prefix is temporary record
+/// scratch until the complete leaf is encoded. On error it is not a page.
 pub(crate) fn change_catalog(
     change: CatalogChange<'_>,
     context: RootContext<'_>,
@@ -115,7 +117,6 @@ pub(crate) fn change_catalog(
     let key = object.object.get().to_be_bytes();
     let position = leaf.lower_bound(&key)?;
     let missing = catalog_projection_digest(context.namespace, object.object, None)?;
-    let mut value = [0; catalog_record::MAX_CATALOG_CELL_BYTES];
     let mut cell = [0; super::super::MAX_CELL];
     let (edit, result) = match change {
         CatalogChange::Forward(definition) => {
@@ -130,9 +131,11 @@ pub(crate) fn change_catalog(
                 undo: Some(reference),
                 anchor: pair[0],
             };
-            let length = catalog_record::encode_catalog_table_record(
-                expected, header, definition, &mut value,
-            )?;
+            // The final cell owns its bytes before the leaf encoder reuses
+            // this output. No temporary record escapes the caller's loan.
+            let value = &mut after[..catalog_record::MAX_CATALOG_CELL_BYTES];
+            let length =
+                catalog_record::encode_catalog_table_record(expected, header, definition, value)?;
             let projection = catalog_projection_digest(
                 context.namespace,
                 object.object,
@@ -187,6 +190,7 @@ pub(crate) fn change_catalog(
                 return Err(Error::IdentityMismatch);
             }
             if let CatalogChange::Prune(q) = change {
+                let value = &mut after[..catalog_record::MAX_CATALOG_CELL_BYTES];
                 value[..old.len()].copy_from_slice(old);
                 value[7] &= !2;
                 VersionStamp::Committed(q).encode(&mut value[32..88])?;
