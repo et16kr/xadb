@@ -6437,5 +6437,38 @@
     },
     "remaining_supply": "caller-retained statement factory and automatic read-set together with short aggregate/writer progress admission; CheckedTable, RowReadOperation/cursor, whole C2/C0/C1-C5/M4/M5",
     "source_roots_changed": false
+  },
+  "dev3_module_row_c0_consumers": {
+    "status": "ACCEPTED_LIMITED_D1_D2",
+    "contract_ref": "dev3-module-consumers.md#division",
+    "evidence_ref": "module-independence-survey-20261026.md#consumer-c0-start",
+    "base_commit": "ea783fe2419e3bdd16cb5938f508a02c73b16cd4",
+    "implemented_paths": [
+      "crates/engine/src/storage/row/insert/leaf.rs",
+      "crates/engine/src/storage/row/insert/tests.rs",
+      "crates/engine/src/storage/row/insert.rs",
+      "crates/engine/src/storage/row/read/tests.rs",
+      "crates/engine/src/storage/row/read.rs",
+      "crates/engine/src/storage/row.rs",
+      "tests/fixtures/module-row-insert/bad-row-before.bin",
+      "tests/fixtures/module-row-insert/empty-before.bin",
+      "tests/fixtures/module-row-insert/make_literals.py",
+      "tests/fixtures/module-row-insert/manifest.json",
+      "tests/fixtures/module-row-insert/row7-after.bin",
+      "tests/fixtures/module-row-insert/row7.bin",
+      "tests/fixtures/module-row-insert/rows3-7-9-after.bin",
+      "tests/fixtures/module-row-insert/rows3-9-before.bin",
+      "tests/fixtures/module-row-insert/rows84-before.bin",
+      "tests/fixtures/module-row-insert/rows85-after.bin",
+      "tests/fixtures/module-row-read/c0-versions.txt",
+      "tests/fixtures/module-row-read/manifest.json"
+    ],
+    "modified_paths": [
+      "crates/engine/src/storage/mod.rs"
+    ],
+    "scope": "C0_ONLY: A typed input and incomplete RowLeaf candidate; B private point/reseek, visibility and cursor progress values",
+    "validation": "first C+A and C+B exports physically exclude counterpart source and fixtures; production/test builds and A10/B3 new runtime cases PASS once; common inventory differs only in row.rs registration; combined registration production check PASS, unchanged runtime not repeated; independent module_handoff_review accepted limited D1/D2 after code/artifact/six-document review with no required fixes",
+    "remaining_supply": "actual lane constructors/RowReserve/Forward/CLR, RowReadOperation/statement/cleanup/credit, Commit/rollback/reopen and real C+A/C+B/C+A+B integration; MCA00-V06 and MI01-06 incomplete",
+    "source_roots_changed": false
   }
 }

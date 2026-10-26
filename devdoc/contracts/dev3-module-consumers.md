@@ -1,12 +1,14 @@
 # DEV3 모듈 전환의 두 제품 소비자
 
-2026-10-26 · `D3-MODULE-CONSUMERS-001` · **D2 ACCEPTED / M2 완료 / A·B 제품·fixture 인수 NOT_RUN**
+2026-10-26 · `D3-MODULE-CONSUMERS-001` · **D2 ACCEPTED / M2 완료 / A·B C0 본문 구현 착수 / 실제 제품·fixture 인수 NOT_RUN**
 
 [전환 계획과 MI01–06](../plans/module-independence-plan.md#acceptance) · [공통 경계](dev3-module-boundaries.md) · [첫 행 완료 계약](dev3-task-11-commit.md#first-row-integration) · [트리·행 정본](dev3-task-06-tree-rows.md) · [undo 정본](dev3-task-09-undo-rollback.md) · [시험 계획 DIR03](../plans/dev3-test-plan.md#direction-integration)
 
 이 문서는 A의 **첫 영속 Row INSERT 거래**와 B의 **snapshot row point-read·순서 cursor**를 M5의 서로 다른 제품 기능으로 선정했다. 최초 조사는 `b7ce51d2b3ee62b5b8dbc0d9c852a17827d76bd9`, 이번 설계 대조는 `3c639c31f808b2ce9504525d6993bcb62d304431`의 실제 source/owner를 기준으로 한다. 구체 형식·API·수치의 아래 선택은 [최종 독립 D2 검토](../evidence/module-independence-survey-20261026.md#final-design-review)를 수신한 **채택 계약**이며 구현·시험 완료 주장이 아니다. 담당은 C·통합 `/root`, A INSERT `/root/module_consumer_survey`, B read/cursor `/root/module_boundary_survey`, 독립 검토 `/root/module_handoff_review`다. MCQ01–07의 설계 결정과 실제 공급 의무를 구분한다. M2/M3는 완료했고 C0 borrowed codec 부분공급을 진행했으며 C0 전체·C1–C5 및 A/B 제품·인수는 미완료다.
 
-공통 공급과 인수 fixture가 없는 현재 상태에서 독립 구현·복구 가능성을 완료로 선언하지 않는다. 이 문서의 후보 경로·함수·case는 아직 제품 등록이나 실행된 selector가 아니다. 공유 색인·기존 owner 계약의 채택 반영은 통합 담당이 맡는다.
+[A/B 착수 기록](../evidence/module-independence-survey-20261026.md#consumer-c0-start)에 따라 `ea783fe`의 C0 공급부터 전용 제품 본문을 병행한다. 각 최초 검증은 상대 제품 source/fixture를 제외한 C+A·C+B export에서 수행하며, 순수 결과는 C0_ONLY로 구분한다.
+
+공통 공급과 인수 fixture가 없는 현재 상태에서 독립 구현·복구 가능성을 완료로 선언하지 않는다. 이 문서의 미공급 actual 경로·함수·case는 아직 제품 등록이나 실행된 selector가 아니다. 이번 C0 본문·등록과 선택 실행의 정확한 범위는 [착수·검증 기록](../evidence/module-independence-survey-20261026.md#consumer-c0-start)을 따른다. 공유 색인·기존 owner 계약의 채택 반영은 통합 담당이 맡는다.
 
 <a id="selection"></a>
 ## 1. 선정 이유와 원 backlog

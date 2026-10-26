@@ -1,0 +1,163 @@
+{
+  "schema": "xadb-module-row-c0-literals-v1",
+  "source_kind": "C0_ONLY",
+  "producer": "make_literals.py; Python standard byte packing and SHA-256 only",
+  "namespace": {
+    "database_hex": "01010101010101010101010101010101",
+    "timeline": 2
+  },
+  "table": {
+    "object": 20,
+    "generation": 1,
+    "schema_epoch": 1
+  },
+  "schema_columns": [
+    {
+      "name": "v",
+      "type": "Bool",
+      "nullable": false
+    }
+  ],
+  "actor": {
+    "writer_epoch": 3,
+    "local": 4,
+    "status_generation": 5
+  },
+  "row_rule": {
+    "value": true,
+    "mutation": "RowId - 1",
+    "undo_page": "min(RowId + 20,63)",
+    "undo_slot": 0,
+    "undo_generation": 2
+  },
+  "capacity_input": {
+    "columns": [
+      {
+        "name": "v",
+        "type": "Bool",
+        "nullable": true
+      }
+    ],
+    "before_rows": "RowId 2..85 inclusive, NULL, Committed(7), undo=None",
+    "insert": "RowId86,NULL,Transaction stamp",
+    "next_rejected": "RowId87,NULL,Capacity",
+    "claim": "85-row representation only; no 85-live-Undo admission"
+  },
+  "leaf": {
+    "file": 4294967297,
+    "page": 10,
+    "incarnation": 1,
+    "before_lsn": 11,
+    "after_lsn": 12
+  },
+  "authority": "none; these literal observations cannot open a DB or create a CheckedTable, reserve, pin or receipt",
+  "coverage": "RowLeaf component only; MCA00-V06 full Forward/CLR and H-present/H-absent group accounting remain unsupplied",
+  "status": "FROZEN_INPUTS_NOT_EXECUTION_EVIDENCE",
+  "budget": {
+    "total_seconds": 390,
+    "case_seconds": 30,
+    "output_bytes": 8388608
+  },
+  "runtime_tests": [
+    {
+      "selector": "storage::row::insert::tests::mca00_v01_nullable_bool_literals",
+      "contract_case": "MCA00-V01",
+      "changed_code": "new encode_input nullable and Bool literal values"
+    },
+    {
+      "selector": "storage::row::insert::tests::mca00_v02_int64_extrema_literals",
+      "contract_case": "MCA00-V02",
+      "changed_code": "new encode_input Int64 MIN/MAX literals"
+    },
+    {
+      "selector": "storage::row::insert::tests::mca00_v03_multibyte_utf8_literal",
+      "contract_case": "MCA00-V03",
+      "changed_code": "new encode_input multibyte Utf8 literal"
+    },
+    {
+      "selector": "storage::row::insert::tests::mca00_v04_binary_zero_literal",
+      "contract_case": "MCA00-V04",
+      "changed_code": "new encode_input Binary zero literal"
+    },
+    {
+      "selector": "storage::row::insert::tests::mca00_v05_invalid_input_preserves_candidate",
+      "contract_case": "MCA00-V05",
+      "changed_code": "new type/null/count/2049 refusal preserves candidate"
+    },
+    {
+      "selector": "storage::row::insert::tests::mca_leaf_v01_inline_and_capacity_boundaries",
+      "contract_case": "MCA-LEAF-V01",
+      "changed_code": "new inline2048, leaf capacity minus-one/exact and short candidate refusal"
+    },
+    {
+      "selector": "storage::row::insert::tests::mca_leaf_v02_row_key_and_page_match_independent_literals",
+      "contract_case": "MCA-LEAF-V02",
+      "changed_code": "new leaf producer compared with independently authored XRW1/empty/middle-insert pages"
+    },
+    {
+      "selector": "storage::row::insert::tests::mca_leaf_v03_maximum_minimal_rows_use_bounded_scratch",
+      "contract_case": "MCA-LEAF-V03",
+      "changed_code": "new bounded87-reference scratch,84->85 literal rows and nextCapacity"
+    },
+    {
+      "selector": "storage::row::insert::tests::mca_leaf_v04_duplicate_and_corrupt_existing_row_preserve_output",
+      "contract_case": "MCA-LEAF-V04",
+      "changed_code": "new duplicate and valid-envelope/corrupt-row errors preserve after"
+    },
+    {
+      "selector": "storage::row::insert::tests::mca_leaf_v05_stale_lsn_wrong_owner_and_small_scratch_preserve_output",
+      "contract_case": "MCA-LEAF-V05",
+      "changed_code": "new identity/LSN/scratch preconditions preserve after"
+    }
+  ],
+  "input_files": {
+    "crates/engine/src/storage/row/insert/leaf.rs": {
+      "bytes": 6163,
+      "sha256": "923aa312ea8303aab3c6488ef763f35b3db22f8db884891821746b873ef0f96d"
+    },
+    "crates/engine/src/storage/row/insert/tests.rs": {
+      "bytes": 10728,
+      "sha256": "5ec1bc3455d00d52bb0ee4e511ccc408770b2656c20359452a0a073ce52ffd76"
+    },
+    "crates/engine/src/storage/row/insert.rs": {
+      "bytes": 9044,
+      "sha256": "2a5eeb786b97fae8cc3bd5e9373d8919dc584c8a9291f1705c029aec0049e572"
+    },
+    "tests/fixtures/module-row-insert/bad-row-before.bin": {
+      "bytes": 16384,
+      "sha256": "57fa102d62acc8a585965ca945f3f4fe495177cb4ccdb97e568c448daaff798a"
+    },
+    "tests/fixtures/module-row-insert/empty-before.bin": {
+      "bytes": 16384,
+      "sha256": "a847e905db2e0d2df7cfb835ec7f658a65b09cf49f95c3bfba96c13c5df32234"
+    },
+    "tests/fixtures/module-row-insert/make_literals.py": {
+      "bytes": 2848,
+      "sha256": "e8ff42bee6f1f7842493b16e9416053d7b281201b798fff338205020993d7d10"
+    },
+    "tests/fixtures/module-row-insert/row7-after.bin": {
+      "bytes": 16384,
+      "sha256": "cc4794a2d501f9a04fd2a34d4b41f3afc82e11ca3b9c1613bf7d18de6db1ae03"
+    },
+    "tests/fixtures/module-row-insert/row7.bin": {
+      "bytes": 174,
+      "sha256": "92093c908d7a4958556f8a9ff04be5f73f1a066b7e8d1ba020942518167395fa"
+    },
+    "tests/fixtures/module-row-insert/rows3-7-9-after.bin": {
+      "bytes": 16384,
+      "sha256": "5c4ba639606f8d585d547fd2919e21155a99f5b3aebfb4d2ae403b06949ae806"
+    },
+    "tests/fixtures/module-row-insert/rows3-9-before.bin": {
+      "bytes": 16384,
+      "sha256": "c21cea0b46eb7667d03ce62d6cfdadf81536fda264446468d28ca77ad25af485"
+    },
+    "tests/fixtures/module-row-insert/rows84-before.bin": {
+      "bytes": 16384,
+      "sha256": "390949b3b546c6b470d80046611c3881932565b9b230be93c50dc9c51e23984c"
+    },
+    "tests/fixtures/module-row-insert/rows85-after.bin": {
+      "bytes": 16384,
+      "sha256": "7bd086e5e84a1bd21d183825d3d00918970bb61217a521f39f607e026e7a9b5b"
+    }
+  }
+}

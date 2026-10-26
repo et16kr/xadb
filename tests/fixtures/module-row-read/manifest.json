@@ -1,0 +1,42 @@
+{
+  "schema": "xadb-module-row-c0-selection-v1",
+  "source_kind": "C0_ONLY",
+  "scope": "B private point/reseek, version selection and progress values; no original RowReadOperation, snapshot, pins, cursor credit or output observation",
+  "status": "FROZEN_INPUTS_NOT_EXECUTION_EVIDENCE",
+  "budget": {
+    "total_seconds": 180,
+    "case_seconds": 30,
+    "output_bytes": 8388608
+  },
+  "runtime_tests": [
+    {
+      "selector": "storage::row::read::tests::mcb00_v01_literal_point_and_reseek_bounds",
+      "contract_case": "MCB00-V01",
+      "changed_code": "new seek_point/seek_next/RowRange; fixed key positions, empty/bounded ranges, maximum key"
+    },
+    {
+      "selector": "storage::row::read::tests::mcb00_v02_literal_visibility_requires_status_and_missing_before",
+      "contract_case": "MCB00-V02",
+      "changed_code": "new visible; independent XRW1 and own/foreign/generation/status/q decisions; Missing Undo prerequisite"
+    },
+    {
+      "selector": "storage::row::read::tests::mcb00_v03_invisible_output_retry_cancel_and_revision_progress",
+      "contract_case": "MCB00-V03",
+      "changed_code": "new CursorProgress/check_output; separate examined/returned keys, output shortage/cancel retry, EOF revision priority"
+    }
+  ],
+  "input_files": {
+    "crates/engine/src/storage/row/read.rs": {
+      "bytes": 8730,
+      "sha256": "087db1e45d8205f4ec1ce6a40785610c56469ec93a62c57ddd7d81fc7bad0e40"
+    },
+    "crates/engine/src/storage/row/read/tests.rs": {
+      "bytes": 12256,
+      "sha256": "edf80e7284a0f70e02cb97eb21851660fd0266e13d63cf7b5bece2a9719d0339"
+    },
+    "tests/fixtures/module-row-read/c0-versions.txt": {
+      "bytes": 1020,
+      "sha256": "dc9881b67180f2b42bea86eecb95e4a895dfe0cd027c1baef283e11ed206b0c7"
+    }
+  }
+}

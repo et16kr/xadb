@@ -19,6 +19,7 @@ pub(crate) mod recovery_select;
 pub(crate) mod retention_genesis;
 pub(crate) mod retention_obligation;
 pub(crate) mod retention_page;
+pub(crate) mod row;
 pub(crate) mod row_record;
 pub(crate) mod semantic_catalog;
 mod semantic_group;
