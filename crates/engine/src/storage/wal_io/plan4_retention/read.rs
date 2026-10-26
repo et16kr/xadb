@@ -23,12 +23,6 @@ pub(super) use catalog::{CATALOG_READ_SOURCE_BYTES, catalog_source_bytes};
 pub(crate) use lookup::CatalogLookupStep;
 pub(super) use lookup::source_bytes as lookup_source_bytes;
 
-pub(crate) struct RetentionReader<'b, 'a, 's, 'c, 'p, 'd, 'm, 'w, W: WriterNamespace> {
-    pub(super) storage: &'s MutableStorageOwner<'m, 'w, W>,
-    pub(super) pool: &'b SharedPool<'c, 's, 'p, 'd>,
-    pub(super) history: &'b history::runtime::RuntimeHistory<'a, 'c, 's>,
-    pub(super) visibility: Option<&'b visibility::BoundVisibility<'a, 'c, 's>>,
-}
 pub(crate) struct RetentionReadGuard<'a, 'b, 'c, 's, 'p, 'd> {
     read: ReadTargets<'a, 'b, 'c, 's, 'p, 'd, 2>,
 }

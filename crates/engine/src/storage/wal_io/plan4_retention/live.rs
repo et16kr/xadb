@@ -53,14 +53,6 @@ impl<'a, 'c, 's> RetentionInstall<'a, 'c, 's> {
         self.after
     }
 }
-pub(crate) struct RetentionWriter<'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace> {
-    pub(super) storage: &'s MutableStorageOwner<'m, 'w, W>,
-    pub(super) pool: &'b SharedPool<'c, 's, 'p, 'd>,
-    pub(super) operation: &'b mut &'o mut [u8; super::super::OPERATION_BYTES],
-    pub(super) control: &'b mut control::RetentionControl<'a, 'c, 's>,
-    pub(super) history: &'b history::runtime::RuntimeHistory<'a, 'c, 's>,
-    pub(super) visibility: Option<&'b visibility::BoundVisibility<'a, 'c, 's>>,
-}
 #[derive(Clone, Copy, PartialEq, Eq)]
 enum Change {
     Aging,

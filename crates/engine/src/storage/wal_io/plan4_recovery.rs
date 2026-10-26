@@ -927,7 +927,7 @@ impl<'a, W: WriterNamespace> Plan4RecoveryRuntime<'a, '_, '_, W> {
 /// its actual old-epoch obligations and physical finalization are complete.
 pub(crate) struct Plan4Recovered<'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace> {
     runtime: &'s Plan4RecoveryRuntime<'a, 'm, 'w, W>,
-    inner: super::plan4_pages::Plan4Retention<'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W>,
+    inner: crate::storage::disk::DiskSession<'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W>,
     phase: Plan4RecoveryPhase,
     observation: Plan4RecoveryObservation,
     waiting_flush: bool,
@@ -937,7 +937,7 @@ pub(crate) struct Plan4Recovered<'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamesp
 }
 /// READY handoff reuses the exact recovery private lane for the next lookup.
 pub(crate) type RecoveredLiveParts<'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W> = (
-    super::plan4_pages::Plan4Retention<'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W>,
+    crate::storage::disk::DiskSession<'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W>,
     &'a mut [u8; CATALOG_PRIVATE_BYTES],
 );
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -1003,7 +1003,7 @@ impl<'a, 'm, 'w, W: WriterNamespace> Plan4RecoveryRuntime<'a, 'm, 'w, W> {
         operation: &'o mut [u8; 114_688],
         phase: &mut Plan4RecoveryPhase,
     ) -> Result<(
-        super::plan4_pages::Plan4Retention<'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W>,
+        crate::storage::disk::DiskSession<'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W>,
         &'a mut [u8; CATALOG_PRIVATE_BYTES],
         &'a mut [u8; CATALOG_VISIBILITY_BYTES],
     )>
@@ -1021,7 +1021,7 @@ impl<'a, 'm, 'w, W: WriterNamespace> Plan4RecoveryRuntime<'a, 'm, 'w, W> {
             Plan4RecoveryPhase::Losers
         };
         let live = pages
-            .into_recovered_retention(
+            .into_recovered_disk_session(
                 owner,
                 super::plan4_pages::EmptyRetentionControlLoan { control, replay },
                 binding,
@@ -1034,7 +1034,7 @@ impl<'a, 'm, 'w, W: WriterNamespace> Plan4RecoveryRuntime<'a, 'm, 'w, W> {
     // The same live owner is moved into the facade, with no duplicate pool.
     fn wrap_recovered<'s, 'c, 'p, 'd, 'o>(
         &'s self,
-        inner: super::plan4_pages::Plan4Retention<'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W>,
+        inner: crate::storage::disk::DiskSession<'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W>,
         private: &'a mut [u8; CATALOG_PRIVATE_BYTES],
         visibility: &'a mut [u8; CATALOG_VISIBILITY_BYTES],
         phase: Plan4RecoveryPhase,
@@ -1244,7 +1244,7 @@ impl<'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
     pub(crate) fn into_live(
         self,
     ) -> std::result::Result<
-        super::plan4_pages::Plan4Retention<'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W>,
+        crate::storage::disk::DiskSession<'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W>,
         Self,
     > {
         if self.ready {

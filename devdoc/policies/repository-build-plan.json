@@ -5835,7 +5835,7 @@
       "crates/engine/src/storage/wal_io/mutable_storage.rs",
       "crates/engine/src/storage/wal_io/plan4_allocation_operation.rs",
       "crates/engine/src/storage/wal_io/plan4_pages.rs",
-      "crates/engine/src/storage/wal_io/plan4_retention.rs",
+      "crates/engine/src/storage/wal_io/plan4_apply.rs",
       "crates/engine/src/storage/wal_io/plan4_retention/control.rs",
       "crates/engine/src/storage/wal_io/plan4_retention/flush.rs",
       "crates/engine/src/storage/wal_io/plan4_retention/history.rs",
@@ -6008,7 +6008,7 @@
       "crates/engine/src/storage/wal_io/plan4_recovery/tests/faults.rs",
       "crates/engine/src/storage/wal_io/plan4_recovery/tests/literals.rs",
       "crates/engine/src/storage/wal_io/plan4_recovery/tests/support.rs",
-      "crates/engine/src/storage/wal_io/plan4_retention.rs",
+      "crates/engine/src/storage/wal_io/plan4_apply.rs",
       "crates/engine/src/storage/wal_io/plan4_retention/control.rs",
       "crates/engine/src/storage/wal_io/plan4_retention/flush.rs",
       "crates/engine/src/storage/wal_io/plan4_retention/history.rs",
@@ -6208,6 +6208,51 @@
       "crates/engine/src/storage/wal_io.rs"
     ],
     "scope": "original physical WAL impl moved; runtime/resource ownership and semantic terminal assembly preserved; not full C1 acceptance",
+    "source_roots_changed": false
+  },
+  "dev3_module_c1_owner": {
+    "status": "ACCEPTED_LIMITED_D1_D2",
+    "contract_ref": "dev3-module-boundaries.md#target-imports",
+    "evidence_ref": "module-independence-survey-20261026.md#c1-owner-ports",
+    "implemented_paths": [
+      "crates/engine/src/storage/wal_io/plan4_apply/owner_tests.rs",
+      "tests/fixtures/dev3-module-c1/owner-compiler/canonical.rs",
+      "tests/fixtures/dev3-module-c1/owner-compiler/manifest.json",
+      "tests/fixtures/dev3-module-c1/owner-compiler/private_field.rs",
+      "tests/fixtures/dev3-module-c1/owner-compiler/session_borrow.rs"
+    ],
+    "modified_paths": [
+      "crates/engine/src/storage/disk.rs",
+      "crates/engine/src/storage/wal_io/disk_api.rs",
+      "crates/engine/src/storage/wal_io/plan4_apply.rs",
+      "crates/engine/src/storage/wal_io/plan4_pages.rs",
+      "crates/engine/src/storage/wal_io/plan4_recovery.rs",
+      "crates/engine/src/storage/wal_io/plan4_retention/flush.rs",
+      "crates/engine/src/storage/wal_io/plan4_retention/live.rs",
+      "crates/engine/src/storage/wal_io/plan4_retention/lookup_load.rs",
+      "crates/engine/src/storage/wal_io/plan4_retention/read.rs",
+      "crates/engine/src/storage/wal_io/plan4_retention/recovery.rs"
+    ],
+    "moved_definitions": {
+      "crates/engine/src/storage/wal_io/plan4_retention.rs": "crates/engine/src/storage/wal_io/plan4_apply.rs"
+    },
+    "remaining_helper_roots": [
+      "crates/engine/src/storage/wal_io/plan4_retention/create_pair.rs",
+      "crates/engine/src/storage/wal_io/plan4_retention/visibility.rs",
+      "crates/engine/src/storage/wal_io/plan4_retention/control.rs",
+      "crates/engine/src/storage/wal_io/plan4_retention/flush.rs",
+      "crates/engine/src/storage/wal_io/plan4_retention/history.rs",
+      "crates/engine/src/storage/wal_io/plan4_retention/live.rs",
+      "crates/engine/src/storage/wal_io/plan4_retention/load.rs",
+      "crates/engine/src/storage/wal_io/plan4_retention/lookup_load.rs",
+      "crates/engine/src/storage/wal_io/plan4_retention/population.rs",
+      "crates/engine/src/storage/wal_io/plan4_retention/read.rs",
+      "crates/engine/src/storage/wal_io/plan4_retention/recovery.rs",
+      "crates/engine/src/storage/wal_io/plan4_retention/resources.rs"
+    ],
+    "scope": "actual DiskSession/three private-field port definitions and consuming transitions moved; original resources retained; cfg(test) retains frozen retention selectors using the same source",
+    "validation": "compiler4 PASS; two new owner transfer memory cases PASS once; independent D1/D2 accepted limited; original r1/r2 FAIL retained",
+    "remaining_supply": "control/isolation split, separate backing and source admission, selected recovery runtime acceptance, Catalog/Row adapters and terminal migration",
     "source_roots_changed": false
   }
 }

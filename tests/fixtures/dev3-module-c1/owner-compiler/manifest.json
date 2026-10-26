@@ -1,0 +1,64 @@
+{
+  "schema": "XADB_MODULE_C1_OWNER_COMPILER_V1",
+  "status": "FROZEN_INPUTS_NOT_EXECUTION_EVIDENCE",
+  "scope": "canonical owner/port transfer compile and selected original-resource memory checks; no full C1 or Row acceptance",
+  "budget": {
+    "total_seconds": 180,
+    "case_seconds": 30,
+    "output_bytes": 8388608
+  },
+  "cases": [
+    {
+      "name": "production",
+      "path": "canonical.rs",
+      "bytes": 1311,
+      "sha256": "5f10696c8433e850c5aa9f880c2f6d44a759677ef7b8e9b38005a3da1418692d",
+      "expected_code": null,
+      "primary_line": null,
+      "anchor": "crates/engine/src/storage/mod.rs",
+      "probe": "crates/engine/src/storage/module_c1_owner_probe.rs",
+      "declaration": "\nmod module_c1_owner_probe;\n",
+      "mode": "check"
+    },
+    {
+      "name": "test_build",
+      "path": "canonical.rs",
+      "bytes": 1311,
+      "sha256": "5f10696c8433e850c5aa9f880c2f6d44a759677ef7b8e9b38005a3da1418692d",
+      "expected_code": null,
+      "primary_line": null,
+      "anchor": "crates/engine/src/storage/mod.rs",
+      "probe": "crates/engine/src/storage/module_c1_owner_probe.rs",
+      "declaration": "\nmod module_c1_owner_probe;\n",
+      "mode": "test-no-run"
+    },
+    {
+      "name": "private_field",
+      "path": "private_field.rs",
+      "bytes": 246,
+      "sha256": "d8a164dc763e8413318988e1f01ffd6f512a5b1bd9841bbf9f70eea2e065bf53",
+      "expected_code": "E0616",
+      "primary_line": 5,
+      "anchor": "crates/engine/src/storage/mod.rs",
+      "probe": "crates/engine/src/storage/module_c1_owner_probe.rs",
+      "declaration": "\nmod module_c1_owner_probe;\n",
+      "mode": "check"
+    },
+    {
+      "name": "session_borrow",
+      "path": "session_borrow.rs",
+      "bytes": 312,
+      "sha256": "6a3be54b3e5fc8209960f69ad733db391843a38fb3c63b751e9153f616d44abc",
+      "expected_code": "E0505",
+      "primary_line": 6,
+      "anchor": "crates/engine/src/storage/mod.rs",
+      "probe": "crates/engine/src/storage/module_c1_owner_probe.rs",
+      "declaration": "\nmod module_c1_owner_probe;\n",
+      "mode": "check"
+    }
+  ],
+  "runtime_tests": [
+    "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::owner_tests::disk_session_moves_original_resources_and_splits_disjoint_ports",
+    "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::owner_tests::disk_session_before_returns_original_owner_for_canonical_retry"
+  ]
+}

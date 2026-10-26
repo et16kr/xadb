@@ -20,8 +20,16 @@ use crate::{
 use foundation::{error::Effect, identity::ObjectId, namespace::WriterNamespace};
 use std::sync::{TryLockError, atomic::Ordering};
 
+#[cfg(not(test))]
 #[path = "plan4_apply.rs"]
 pub(in crate::storage::wal_io) mod apply;
+#[cfg(test)]
+#[path = "plan4_apply.rs"]
+pub(in crate::storage::wal_io) mod retention;
+// Compile the same source and visibility under the original unit-test module
+// name so frozen selectors retain their source identity. No behavior differs.
+#[cfg(test)]
+pub(in crate::storage::wal_io) use retention as apply;
 
 #[path = "plan4_pages/load.rs"]
 mod load;
@@ -41,8 +49,8 @@ pub(in crate::storage) mod native;
 #[path = "plan4_pages/tests.rs"]
 pub(in crate::storage) mod tests;
 
-#[path = "plan4_retention.rs"]
-mod retention;
+#[cfg(not(test))]
+use apply as retention;
 pub(in crate::storage) use retention::CatalogRetirementRejected;
 #[allow(
     unused_imports,

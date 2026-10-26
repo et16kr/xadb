@@ -80,11 +80,6 @@ impl<'c, 's, 'w> RetentionFlushControl<'c, 's, 'w> {
         }
     }
 }
-pub(crate) struct RetentionFlusher<'b, 's, 'c, 'p, 'd, 'm, 'w, W: WriterNamespace> {
-    pub(super) storage: &'s MutableStorageOwner<'m, 'w, W>,
-    pub(super) pool: &'b SharedPool<'c, 's, 'p, 'd>,
-    pub(super) control: &'b mut RetentionFlushControl<'c, 's, 'w>,
-}
 impl<'s, 'c, W: WriterNamespace> RetentionFlusher<'_, 's, 'c, '_, '_, '_, '_, W> {
     pub(crate) fn phase(&self) -> RetentionFlushPhase {
         self.control.phase

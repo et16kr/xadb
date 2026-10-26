@@ -1,6 +1,6 @@
 # DEV3 모듈 독립 개발을 위한 원 소유·소비 경계
 
-2026-10-26 · `D3-MODULE-BOUNDARIES-001` · **D2 ACCEPTED / M2 완료 / M4 C0 codec·생산자 타입 부분공급 / 공통 공급·제품 인수 미완료**
+2026-10-26 · `D3-MODULE-BOUNDARIES-001` · **D2 ACCEPTED / M2 완료 / M4 C0 타입·C1 물리 WAL·원 owner/port 부분공급 / 공통 공급·제품 인수 미완료**
 
 [구조 전환 계획](../plans/module-independence-plan.md) · [M1 조사·기준선](../evidence/module-independence-survey-20261026.md) · [구현 계약](implementation-contracts.md) · [저장 정본](disk-storage-design.md) · [원 runtime/core](dev3-storage-session.md#private-runtime-core)
 
@@ -25,7 +25,7 @@
 | [`DoublewriteStorageSession`](../../crates/engine/src/storage/wal_io/doublewrite_install.rs) | Fresh, 원 DWB workspace loan, InstallPlan | 실제 설치를 마친 Fresh를 소비. 다른 namespace/WAL을 생성하지 않음 |
 | [`MutableStorageOwner`](../../crates/engine/src/storage/wal_io/mutable_storage.rs) | core, DWB plan, `Mutex<Option<&mut workspace>>`, 유일 binding CAS | `into_mutable_storage`는 기존 core/plan/loan 이동. `BindingClaim` 실패·Drop은 원 fence/ABANDONED를 유지 |
 | [`Plan4Pages`](../../crates/engine/src/storage/wal_io/plan4_pages.rs) | Mutable borrow, 실제 SharedPool 하나, operation loan, consuming activation용 DWB loan | `bind_plan4_pages`는 원 AVAILABLE→CLAIMED→BOUND와 원 loan take를 사용. 새 pool/map/CAS owner를 만들지 않음 |
-| [`Plan4Retention`](../../crates/engine/src/storage/wal_io/plan4_retention.rs) | 위 Plan4Pages, control bank, RuntimeHistory와 replay loan, flush control, visibility, recovery binding | `into_empty_retention`이 원 pool/loan을 이동. `split`이 writer/read/flusher에 disjoint borrow를 제공 |
+| 조사 당시 `plan4_retention.rs::Plan4Retention` · [현재 정의](../../crates/engine/src/storage/wal_io/plan4_apply.rs) | 위 Plan4Pages, control bank, RuntimeHistory와 replay loan, flush control, visibility, recovery binding | 조사 당시 `into_empty_retention`이 원 pool/loan을 이동. `split`이 writer/read/flusher에 disjoint borrow를 제공. C1의 실제 이전은 §4.2의 후속 기록을 따름 |
 | [`RuntimeHistory`](../../crates/engine/src/storage/wal_io/plan4_retention/history/runtime.rs) | 원 core/binding/fence/Condvar의 borrow, installed-source metadata, 원 replay loan의 checkout 상태 | 원 fresh/recovered 전환만 생성. source cut·replay checkout은 page/INIT 권한이 아님 |
 | [`BoundVisibility`](../../crates/engine/src/storage/wal_io/plan4_retention/visibility.rs) | 원 core/binding/fence의 origin, 작은 published Q, 별도 caller registry loan | actual READY/installed receipt에서만 Q 초기화·공개. q·TxnRef·UndoRef decoder는 guard를 만들지 못함 |
 | [`Plan4Recovery`, `SelectedEpochParts`, `Plan4RecoveryRuntime`](../../crates/engine/src/storage/wal_io/plan4_recovery.rs) | 선택·복원 중 원 W/File/slot/maintenance/flush, 선택 epoch·DWB·base·잔여 obligation | private EpochTransferSeal을 가진 parts를 Mutable에 한 번 이동. Fresh를 합성하지 않음. READY 전 `into_live`는 원 owner를 돌려줌 |
@@ -121,10 +121,12 @@ storage
 | `apply::DiskSession/ReadPort/MutationPort/MaintenancePort` | 타입 `pub(crate)`, 일반 method `pub(in crate::storage)`, 필드 private. raw backend·pool/control/runtime 반환 method 없음 |
 | `apply::InstallGrant`, terminal `Binding`과 receipt | 타입이 필요한 곳만 `pub(crate)`, 필드 private, raw `new/from_parts` 없음. actual validation/stage/install method는 apply의 자손에 둔다. apply root/자손만 struct literal을 만들 수 있음 |
 | `apply::{catalog,row,read,terminal,legacy}` | module private. 이 안의 실제 producer/validator가 원 private owner를 검산하여 proof를 생성. 외부는 검산 method만 호출하고 callback으로 검사 구간을 대체하지 않음 |
-| `apply::state`의 기존 control/history/visibility 구현 | 다른 apply 자손에서 필요한 기존 필드/method만 `pub(in crate::storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::apply)`로 제한. 이 경로는 실제 조상이다. 전체 storage field 공개나 소비자 getter를 추가하지 않음 |
+| `apply::state`의 기존 control/history/visibility 구현 | 다른 apply 자손에서 필요한 기존 필드/method만 실제 apply 조상까지 제한. `pub(in crate::storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::apply)` 또는 같은 실제 조상을 가리키는 `pub(super)`·`pub(in super::super)`를 사용하며 alias를 `pub(in ...)` 조상으로 사용하지 않음. 전체 storage field 공개나 소비자 getter를 추가하지 않음 |
 | `SelectedEpochParts/EpochTransferSeal`, `RecoveryRetentionBinding` | 원 `mutable_storage::plan4_recovery` 위치·seal 유지. `MutableStorageOwner::from_plan4_recovery`만 original parts 소비; `apply`는 raw parts를 받거나 재생성하지 않음 |
 
 Rust privacy는 임의 코드를 trusted apply 자손에 추가하는 repository 변경 자체를 방지하는 보안 경계는 아니다. C 소유·source review와 실제 sibling consumer의 import 제한이 함께 계약이다. 단, 정상 소비자의 raw constructor 호출은 Rust privacy로 거절되어야 한다.
+
+C1의 기존 시험 selector 보존을 위해 production에서는 `plan4_pages::apply`, `cfg(test)`에서는 `plan4_pages::retention`이 같은 `plan4_apply.rs`를 읽고 후자에 `use retention as apply`를 둔다. 두 선언은 상호 배타적이고 조상 깊이·visibility가 같다. 이 이름 호환은 시험용 효과·권한·분기 구현을 추가하지 않으며 신규 소비자는 두 cfg 모두 `storage::disk`를 사용한다.
 
 ### 4.2 current → target의 실제 이동
 
@@ -142,6 +144,8 @@ Rust privacy는 임의 코드를 trusted apply 자손에 추가하는 repository
 | `Plan4RecoveryRuntime::bind_retention`·`Plan4Recovered::into_live` | 원 위치에서 새 consuming `into_recovered_disk_session`/`DiskSession`을 수신 | 선택·epoch·base·READY owner는 그대로. fresh 합성, 원 W/File/slot/fence/loan 재생성 없음 |
 
 `BootstrapPlan`, `InstallPlan`, scope1 physical installer와 기존 recovery 선택 코드를 한 번에 이동하지 않는다. 기존 plan4 정상 owner에 붙은 미전환 helper는 physical file을 그대로 두고 `plan4_apply.rs`의 `#[path = "plan4_retention/..."]` 자손 선언으로 원 owner를 계속 사용한다. 이것은 C1 owner 정의 이전에 필요한 내부 연결이며 독립 기능으로 승격한 것이 아니다. 현재 `retention` 재노출 이름은 이행 중 타입 alias/shim만 남길 수 있으나 신규 Catalog/A/B가 이를 수입하는 것은 금지한다. 미전환 helper의 명시적 잔여 목록은 C1 diff 기록에 남기며 source별 selector identity는 유지한다. 원 `Plan4Pages`는 Drop이 있으므로 필드를 억지로 destructure하거나 `ManuallyDrop/unsafe`로 옮기지 않고 새 `DiskSession.inner`에 **값 전체를 이동**한다. 기존 `_flush_workspace.take()`는 성공 전환에서 한 번만 수행한다.
+
+현재 [C1 원 owner/port 부분공급](../evidence/module-independence-survey-20261026.md#c1-owner-ports)은 실제 `DiskSession`·세 port의 정의/private 필드, 정상 consuming 전환·split 및 selected recovery의 반환 타입을 이전했다. 기존 이름은 새 정의의 역방향 alias와 consuming shim이다. 원 control/history/flush/visibility 구현은 그대로이며 아래 §6.1의 ledger/isolation 분할·별도 backing·source admission과 Row API는 아직 공급하지 않았다. 컴파일4건과 신규 메모리2건의 한정 수용을 전체 C1 또는 복구 handoff runtime 인수로 해석하지 않는다.
 
 <a id="owner-flow"></a>
 ## 5. 생성·정상·실패·재시작 소유 흐름
@@ -1122,7 +1126,7 @@ rollback/terminal은 원 progress admission이 새 foreground를 닫고 이미 �
 <a id="common-deliveries"></a>
 ## 7. 유한한 공통 공급과 C0/C 인계
 
-C는 공통 경계 구현 담당의 역할명이며 새 runtime owner가 아니다. 다음 이행 단위와 §9의 유한 selector를 동결안으로 제출하며 채택은 독립 D2가 판단한다. 구현·실행은 전부 NOT_RUN이다.
+C는 공통 경계 구현 담당의 역할명이며 새 runtime owner가 아니다. 다음 이행 단위와 §9의 유한 selector는 독립 D2로 채택한 공급 계약이다. 실제 부분공급과 실행 범위는 아래 증거를 따르며, 결과를 수신하지 않은 의무는 NOT_RUN이다.
 
 | 단위 | 현재→목표·공급 동작 | 직접 선행·실제 수신자 | 제외·되돌림 단위 |
 | --- | --- | --- | --- |
@@ -1133,7 +1137,7 @@ C는 공통 경계 구현 담당의 역할명이며 새 runtime owner가 아니�
 | C4 Row 의미의 실제 복구 수신 | 실제 source before/target/obligation 검산, Row frame replay/CLR target·잔여 예약·READY 인계. §6.7 action/task로 A CLR handler와 C의 CancelReserved/AbortEnd/committed maintenance를 분리하고 최초 canonical analysis policy gate를 공급. 독립 authored row corpus를 원 owner에 적용하는 제한 경로 | C3 및 Q01/Q04/Q05/Q06; A crash/reopen, B 단독 fixture | 일반 Row UPDATE/DELETE/SMO 및 전체 복구 재설계 제외. 형식이 바뀌면 fresh-fixture/현재-build 복구가 한 단위; 무검증 과거 binary downgrade 없음 |
 | C5 합류 adapter | 원 session의 A Commit 결과를 B가 같은/새 snapshot과 새 process recovery로 읽는 작은 조립 | 필요한 C1–C4, A/B 국소 구현 | 두 기능 본문을 통합 담당에게 이동하지 않음. 조립·fixture·해당 diff의 인수만 포함 |
 
-현재 C0는 [borrowed codec](../evidence/module-independence-survey-20261026.md#c0-borrowed-codec)과 [생산자 관측·대여 타입](../evidence/module-independence-survey-20261026.md#c0-producer-types)을 부분공급했다. C1의 [물리 WAL 구현 분리](../evidence/module-independence-survey-20261026.md#c1-physical-wal)도 실제 본문 이전과 production/test cfg·privacy 컴파일을 마쳤다. 원 owner·isolation·port 및 terminal 이전은 남아 있으며 전체 C0·C1–C5 공급과 runtime·제품 인수는 미완료다. C0는 M2 문서 채택만으로 완료되지 않는다. M3 수용 뒤 M4에서 최소 컴파일 경계가 실제 제공된 범위부터 A/B가 착수할 수 있다. C0의 계약 대역은 canonical row/schema 입력, finite logical Status/Undo 응답, explicit Busy/Capacity/Unsupported 같은 효과 없는 선택을 반환할 수 있다. 실제 `WalRequirement`, pin, snapshot/READY, install receipt, file effects를 제조할 수 없다. 대역으로 시험한 결과는 순수 기능 범위의 결과이며 C 수신 전 실제 저장·가시성·복구 성공으로 승격하지 않는다.
+현재 C0는 [borrowed codec](../evidence/module-independence-survey-20261026.md#c0-borrowed-codec)과 [생산자 관측·대여 타입](../evidence/module-independence-survey-20261026.md#c0-producer-types)을 부분공급했다. C1의 [물리 WAL 구현 분리](../evidence/module-independence-survey-20261026.md#c1-physical-wal)에 이어 [원 owner/port 이전](../evidence/module-independence-survey-20261026.md#c1-owner-ports)의 컴파일4건·신규 메모리2건을 한정 수용했다. control/isolation 분할·source admission·terminal 이전과 복구 handoff runtime 인수는 남아 있으며 전체 C0·C1–C5 공급과 제품 인수는 미완료다. C0는 M2 문서 채택만으로 완료되지 않는다. M3 수용 뒤 M4에서 최소 컴파일 경계가 실제 제공된 범위부터 A/B가 착수할 수 있다. C0의 계약 대역은 canonical row/schema 입력, finite logical Status/Undo 응답, explicit Busy/Capacity/Unsupported 같은 효과 없는 선택을 반환할 수 있다. 실제 `WalRequirement`, pin, snapshot/READY, install receipt, file effects를 제조할 수 없다. 대역으로 시험한 결과는 순수 기능 범위의 결과이며 C 수신 전 실제 저장·가시성·복구 성공으로 승격하지 않는다.
 
 C의 미구현은 M2 종료를 무조건 막지 않는다. 그러나 필수 API·의미·담당·완료 인수가 미정이면 M2를 닫지 않는다. M4 전체 완료를 모든 A/B 구현의 공통 선행으로 두지 않고, C2를 받은 B와 C3를 받은 A의 독립 부분을 진행할 수 있게 배정한다.
 

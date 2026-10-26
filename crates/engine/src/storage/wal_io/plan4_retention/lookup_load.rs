@@ -79,7 +79,7 @@ fn page_io<W: WriterNamespace>(
 }
 
 impl<'b, 'a, 's, 'c, 'p, 'd, 'm, 'w, W: WriterNamespace>
-    read::RetentionReader<'b, 'a, 's, 'c, 'p, 'd, 'm, 'w, W>
+    ReadPort<'b, 'a, 's, 'c, 'p, 'd, 'm, 'w, W>
 {
     /// A finite original-pool residency step. The caller's copied Catalog and
     /// transient Txn/Undo refs live outside `scratch`; this prefix uses six

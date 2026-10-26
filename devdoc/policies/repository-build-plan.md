@@ -574,3 +574,13 @@ lifecycle 경계의 `input_assembler.rs`와 `input_assembler/rows.rs`에 둔다.
 [선정 경계](../contracts/dev3-module-boundaries.md#target-imports)에 따라 `wal_io/physical.rs`가 원 `WalRuntime`의 실제 stage·requirement·wait·write/sync 본문을 소유한다. runtime·AppendState·원 File/slot/fence/Condvar·생성/Drop은 부모에 남고, method는 wal_io 내부 또는 physical private로 제한한다. Catalog/Row·terminal receipt는 physical의 의존 대상이 아니다. 원 semantic `commit_bridge`의 apply 이전과 DiskSession/port 공급은 후속 의무다.
 
 새 compiler 입력은 `tests/fixtures/dev3-module-c1/compiler/`의 정상 sibling 호출·외부 경로 거절·동결 manifest다. production/test cfg 컴파일만 확인하며 기존 runtime 시험을 실행하지 않는다. 실제 경로는 관리 JSON의 `dev3_module_c1_physical`, source·정확 명령·선택 결과는 [증거](../evidence/module-independence-survey-20261026.md#c1-physical-wal)에 기록한다. 새 package/dependency·source root는 없다.
+
+## 모듈 독립 개발 C1 원 owner·port 이전 — 2026-10-26
+
+`wal_io/plan4_retention.rs`의 실제 정상 owner·consuming 전환·split을 기존 `wal_io/plan4_apply.rs`로 이전하고 원 파일을 제거했다. `DiskSession`·`ReadPort`·`MutationPort`·`MaintenancePort`의 실제 정의와 private 필드는 apply가 소유하며 기존 이름은 새 정의의 역방향 alias다. `plan4_recovery.rs`는 새 consuming 전환과 반환 타입을 사용한다. 원 Plan4Pages 전체·pool·control/history/flush/visibility·WAL/fence/loan과 실패 반환·Drop 의미는 유지한다. 새 소비 경로는 `storage::disk`이며 기존 READY receiver인 `Plan4Recovered` 타입만 선택 재노출한다.
+
+production의 `plan4_pages::apply`와 test의 `plan4_pages::retention`은 상호 배타적인 선언으로 같은 파일을 읽는다. test는 `retention as apply` 이름도 제공해 기존 selector를 보존한다. 실제 조상에 대한 상대 visibility를 유지하며 별도 시험용 효과·권한 구현은 없다.
+
+아직 이전하지 않은 실제 helper는 `plan4_retention/`의 `create_pair`(Catalog live/commit 포함), `visibility`, `control`, `flush`, `history`, `live`, `load`, `lookup_load`, `population`, `read`, `recovery`, `resources`와 각 자손이다. 이 파일들은 apply의 private 자손으로 연결되어 원 상태를 사용한다. Catalog CREATE/조회/commit의 제품 본문 분리와 C2/C3 공급은 남아 있으며 이 목록을 최종 독립 소비자 배치로 인정하지 않는다.
+
+신규 source는 `plan4_apply/owner_tests.rs`, compiler 입력은 `tests/fixtures/dev3-module-c1/owner-compiler/`의 정상·private 필드·수명 거절3입력과 manifest다. 정확한 새/수정/이전 경로와 잔여 helper는 관리 JSON의 `dev3_module_c1_owner`에 등록했다. 기존 현재 경로 inventory만 갱신하고 과거 증거의 원 source 경로·hash는 보존한다. [선택 검증·독립 한정 수용](../evidence/module-independence-survey-20261026.md#c1-owner-ports)은 컴파일4건과 신규 메모리2건이며 전체 C1·복구 runtime 인수는 아니다. package/dependency·source root·clean export 규칙은 유지한다.

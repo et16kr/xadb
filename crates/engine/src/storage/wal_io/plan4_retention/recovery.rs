@@ -495,12 +495,12 @@ impl<'s, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace> Plan4Pages<'s, 'c, 'p, 'd, 
         clippy::result_large_err,
         reason = "actual inline live owner return; no boxed authority"
     )]
-    pub(in crate::storage) fn into_recovered_retention<'a, 'base: 's>(
+    pub(in crate::storage::wal_io) fn into_recovered_disk_session<'a, 'base: 's>(
         mut self,
         owner: &Owner<'c, 's>,
         loan: EmptyRetentionControlLoan<'a>,
         binding: RecoveryRetentionBinding<'s, 'base>,
-    ) -> Result<Plan4Retention<'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W>> {
+    ) -> Result<DiskSession<'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W>> {
         let storage = self.storage;
         let _unwind = storage.session_fence().unwind_guard();
         if !resources::fits::<W>() {
@@ -592,7 +592,7 @@ impl<'s, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace> Plan4Pages<'s, 'c, 'p, 'd, 
         );
         // Keep the linear restored-credit receipt through cleanup/stabilize.
         // Its immutable witness references do not retain a copied BaseView.
-        Ok(Plan4Retention {
+        Ok(DiskSession {
             catalog_visibility: None,
             inner: self,
             control,

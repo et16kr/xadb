@@ -1,0 +1,174 @@
+//! Canonical owner transfer only. Existing lifecycle suites are not invoked.
+use super::*;
+use crate::{
+    storage::{
+        dirty_frame::DirtyFrame,
+        wal_frame::MAX_FRAME_BYTES,
+        wal_io::{FreshStorageSession, plan4_test_support as port},
+    },
+    transaction::concurrency::{OwnerRole, PageConcurrency},
+};
+use foundation::namespace::DirectoryPort;
+
+fn boxed<const N: usize>() -> Box<[u8; N]> {
+    vec![0; N].into_boxed_slice().try_into().unwrap()
+}
+
+fn canonical_transfer(reject_foreign_owner: bool) {
+    let directory = port::Directory::fresh();
+    let state = directory.state();
+    state.lock().unwrap().live_writes = true;
+    let mut slot = boxed::<MAX_FRAME_BYTES>();
+    let slot_pointer = slot.as_ptr();
+    let mut maintenance = boxed::<12_582_912>();
+    let mut dwb = boxed::<4_194_304>();
+    let fresh = FreshStorageSession::create_retention_catalog(
+        directory.acquire_writer().unwrap(),
+        1,
+        &mut slot,
+        &mut maintenance,
+    )
+    .unwrap();
+    let storage = fresh
+        .install_doublewrite(&mut dwb)
+        .unwrap()
+        .into_mutable_storage();
+    let core = PageConcurrency::new(storage.session_fence()).unwrap();
+    let foreign = PageConcurrency::new(storage.session_fence()).unwrap();
+    let mut owner = core.try_owner(OwnerRole::Foreground).unwrap();
+    let mut foreign_owner = foreign.try_owner(OwnerRole::Foreground).unwrap();
+    let mut backing = vec![[0xa7; PAGE_BYTES]; 4];
+    let mut frames: Vec<_> = backing.iter_mut().map(DirtyFrame::new).collect();
+    let mut operation = boxed::<114_688>();
+    let operation_pointer = operation.as_ptr();
+    let mut control = boxed::<RETENTION_CONTROL_BYTES>();
+    let control_pointer = control.as_ptr();
+    let mut replay = boxed::<RETENTION_REPLAY_BYTES>();
+    let replay_pointer = replay.as_ptr();
+    let old = storage
+        .bind_plan4_pages(&core, &mut frames, &mut operation)
+        .unwrap();
+    let wal_pointer = storage.wal() as *const _;
+    let fence_pointer = storage.session_fence() as *const _;
+    let prefix = storage.wal().prefix().unwrap();
+    let before = {
+        let state = state.lock().unwrap();
+        (
+            state.acquire_calls,
+            state.entropy_calls,
+            state.mutations(),
+            state.writers,
+            state.handles,
+        )
+    };
+    let old = if reject_foreign_owner {
+        match old.into_disk_session(
+            &mut foreign_owner,
+            EmptyRetentionControlLoan {
+                control: &mut control,
+                replay: &mut replay,
+            },
+        ) {
+            Err(IntoRetentionError::Before { error, bound }) => {
+                assert_eq!(error.effect, Effect::Unchanged);
+                assert!(std::ptr::eq(bound.storage, &storage));
+                assert!(std::ptr::eq(bound.pool.bound_core(), &core));
+                assert_eq!(bound.operation.as_ptr(), operation_pointer);
+                assert!(bound._flush_workspace.is_some());
+                assert!(!storage.session_fence().is_fenced());
+                bound
+            }
+            _ => panic!("foreign owner must return the original healthy Plan4Pages"),
+        }
+    } else {
+        old
+    };
+    let mut session: crate::storage::disk::DiskSession<'_, '_, '_, '_, '_, '_, '_, '_, _> =
+        match old.into_disk_session(
+            &mut owner,
+            EmptyRetentionControlLoan {
+                control: &mut control,
+                replay: &mut replay,
+            },
+        ) {
+            Ok(session) => session,
+            Err(_) => panic!("canonical conversion failed"),
+        };
+    assert!(std::ptr::eq(session.inner.storage, &storage));
+    assert!(std::ptr::eq(session.inner.pool.bound_core(), &core));
+    assert_eq!(session.inner.storage.wal() as *const _, wal_pointer);
+    assert_eq!(
+        session.inner.storage.session_fence() as *const _,
+        fence_pointer
+    );
+    assert_eq!(session.inner.operation.as_ptr(), operation_pointer);
+    assert!(session.inner._flush_workspace.is_none());
+    assert_eq!(session.control.bytes.as_ptr(), control_pointer);
+    assert_eq!(
+        session.history.exclusive().unwrap().as_ptr(),
+        replay_pointer
+    );
+    assert_eq!(
+        storage
+            .wal()
+            .append
+            .lock()
+            .unwrap()
+            .slot
+            .as_ref()
+            .unwrap()
+            .as_ptr(),
+        slot_pointer
+    );
+    assert_eq!(storage.wal().prefix().unwrap(), prefix);
+    let pool_pointer = &session.inner.pool as *const _;
+    let history_pointer = &session.history as *const _;
+    let ledger_pointer = &session.control as *const _;
+    let flush_pointer = &session.flush as *const _;
+    {
+        let (mutation, read, maintenance) = session.split();
+        assert_eq!(mutation.pool as *const _, pool_pointer);
+        assert_eq!(read.pool as *const _, pool_pointer);
+        assert_eq!(maintenance.pool as *const _, pool_pointer);
+        assert_eq!(mutation.history as *const _, history_pointer);
+        assert_eq!(read.history as *const _, history_pointer);
+        assert_eq!(mutation.control as *const _, ledger_pointer);
+        assert_eq!(maintenance.control as *const _, flush_pointer);
+        assert_eq!(mutation.operation.as_ptr(), operation_pointer);
+        for port_storage in [mutation.storage, read.storage, maintenance.storage] {
+            assert!(std::ptr::eq(port_storage, &storage));
+        }
+    }
+    let after = {
+        let state = state.lock().unwrap();
+        (
+            state.acquire_calls,
+            state.entropy_calls,
+            state.mutations(),
+            state.writers,
+            state.handles,
+        )
+    };
+    assert_eq!(
+        after, before,
+        "conversion/split must not replace resources or mutate storage"
+    );
+    drop(session);
+    assert!(storage.session_fence().is_fenced());
+    assert_eq!(state.lock().unwrap().mutations(), before.2);
+    drop(owner);
+    drop(foreign_owner);
+    drop(storage);
+    let state = state.lock().unwrap();
+    assert_eq!((state.writers, state.handles), (0, 0));
+}
+
+#[test]
+fn disk_session_moves_original_resources_and_splits_disjoint_ports() {
+    canonical_transfer(false);
+}
+
+#[test]
+fn disk_session_before_returns_original_owner_for_canonical_retry() {
+    canonical_transfer(true);
+}
