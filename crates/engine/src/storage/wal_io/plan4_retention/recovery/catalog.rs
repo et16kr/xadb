@@ -32,7 +32,7 @@ pub(super) enum Selected {
 impl<'s, 'c, W: WriterNamespace> Plan4Retention<'_, 's, 'c, '_, '_, '_, '_, '_, W> {
     fn recovery_catalog_job(&self, ordinal: usize) -> Result<queue::JobView<'_>> {
         queue::decode_job(
-            &self.control.jobs()[ordinal],
+            &self.control.ledger.jobs()[ordinal],
             self.inner.storage.profile().spec().namespace,
         )
         .map_err(|e| {
@@ -59,7 +59,7 @@ impl<'s, 'c, W: WriterNamespace> Plan4Retention<'_, 's, 'c, '_, '_, '_, '_, '_, 
             }
         }
         for index in 0..control::ATT_SLOTS {
-            let row = self.control.row(index);
+            let row = self.control.ledger.row(index);
             if row.iter().all(|byte| *byte == 0) {
                 continue;
             }
@@ -310,7 +310,7 @@ impl<'s, 'c, W: WriterNamespace> Plan4Retention<'_, 's, 'c, '_, '_, '_, '_, '_, 
                 RetentionCause::Unsupported,
             ));
         }
-        if self.control.population.reserved() {
+        if self.control.ledger.population.reserved() {
             if !self
                 .recovery_binding
                 .as_ref()

@@ -120,7 +120,8 @@ impl<'s, 'c, W: WriterNamespace> ReservedCatalogCreate<'_, '_, 's, 'c, '_, '_, '
                 Ok(())
             }
             Err(error)
-                if error.effect == Effect::Unchanged && self.bound.control.pending.is_none() =>
+                if error.effect == Effect::Unchanged
+                    && self.bound.control.ledger.pending.is_none() =>
             {
                 Err(RetentionReservationError::Before {
                     error,
@@ -148,6 +149,7 @@ impl<'s, 'c, W: WriterNamespace> ReservedCatalogCreate<'_, '_, 's, 'c, '_, '_, '
         let slot = self
             .bound
             .control
+            .ledger
             .slot(self.plan.plan.actor)
             .ok_or_else(|| {
                 unchanged(RetentionPhase::Prepare, RetentionCause::MissingTransaction)
@@ -170,6 +172,7 @@ impl<'s, 'c, W: WriterNamespace> ReservedCatalogCreate<'_, '_, 's, 'c, '_, '_, '
             || self
                 .bound
                 .control
+                .ledger
                 .durable
                 .as_ref()
                 .is_none_or(|durable| !durable.confirms(&requirement))
@@ -205,7 +208,8 @@ impl<'s, 'c, W: WriterNamespace> ReservedCatalogCreate<'_, '_, 's, 'c, '_, '_, '
                 Ok(object)
             }
             Err(error)
-                if error.effect == Effect::Unchanged && self.bound.control.pending.is_none() =>
+                if error.effect == Effect::Unchanged
+                    && self.bound.control.ledger.pending.is_none() =>
             {
                 Err(RetentionReservationError::Before {
                     error,
@@ -227,6 +231,7 @@ impl<'s, 'c, W: WriterNamespace> ReservedCatalogCreate<'_, '_, 's, 'c, '_, '_, '
         let slot = self
             .bound
             .control
+            .ledger
             .slot(self.plan.plan.actor)
             .ok_or_else(|| {
                 unchanged(RetentionPhase::Prepare, RetentionCause::MissingTransaction)
@@ -249,7 +254,7 @@ impl<'s, 'c, W: WriterNamespace> ReservedCatalogCreate<'_, '_, 's, 'c, '_, '_, '
         prepared.check(
             self.owner,
             &self.bound.inner.pool,
-            &self.bound.control,
+            &self.bound.control.ledger,
             prefix,
         )?;
         let requests: &[TargetRequest; 9] =
@@ -283,10 +288,12 @@ impl<'s, 'c, W: WriterNamespace> ReservedCatalogCreate<'_, '_, 's, 'c, '_, '_, '
             .try_into()
             .map_err(|_| unchanged(RetentionPhase::Prepare, RetentionCause::Invariant))?;
         let after: [Option<&[u8; PAGE_BYTES]>; 9] = std::array::from_fn(|at| prepared.after(at));
-        let transaction_before = content_digest(&self.bound.control.row(slot)[..1536]);
-        let aging_before = content_digest(&self.bound.control.row(control::AGING_SLOT)[..1536]);
-        let job_before = content_digest(&self.bound.control.jobs()[self.plan.ordinal]);
-        let inventory_before = content_digest(&self.bound.control.bytes[JOB_END..INVENTORY_END]);
+        let transaction_before = content_digest(&self.bound.control.ledger.row(slot)[..1536]);
+        let aging_before =
+            content_digest(&self.bound.control.ledger.row(control::AGING_SLOT)[..1536]);
+        let job_before = content_digest(&self.bound.control.ledger.jobs()[self.plan.ordinal]);
+        let inventory_before =
+            content_digest(&self.bound.control.ledger.bytes[JOB_END..INVENTORY_END]);
         let inventory_after = prepared
             .inventory_after()
             .ok_or_else(|| unchanged(RetentionPhase::Prepare, RetentionCause::Invariant))?;
@@ -346,8 +353,8 @@ impl<'s, 'c, W: WriterNamespace> ReservedCatalogCreate<'_, '_, 's, 'c, '_, '_, '
                     ));
                 }
             };
-            catalog_mark_staged(&prepared, &mut self.bound.control, requirement)?;
-            self.bound.control.row_mut(slot)[control::PHASE] = control::STAGED;
+            catalog_mark_staged(&prepared, &mut self.bound.control.ledger, requirement)?;
+            self.bound.control.ledger.row_mut(slot)[control::PHASE] = control::STAGED;
             let permit = TxPairInstallPermit {
                 key: &self.key,
                 requirement,
@@ -357,7 +364,7 @@ impl<'s, 'c, W: WriterNamespace> ReservedCatalogCreate<'_, '_, 's, 'c, '_, '_, '
             };
             let control = TxPairControlCommit {
                 authority: &authority,
-                original: &mut self.bound.control,
+                original: &mut self.bound.control.ledger,
                 requirement,
                 transaction_slot: slot,
                 job_ordinal: self.plan.ordinal,
@@ -384,7 +391,7 @@ impl<'s, 'c, W: WriterNamespace> ReservedCatalogCreate<'_, '_, 's, 'c, '_, '_, '
                 .map_err(|e| frame(RetentionPhase::Install, e)),
         )
         .map_err(|e| {
-            if self.bound.control.pending.is_some() {
+            if self.bound.control.ledger.pending.is_some() {
                 fatal(storage, RetentionPhase::Install, e.cause)
             } else {
                 e
@@ -406,8 +413,8 @@ impl<'s, 'c, W: WriterNamespace> ReservedCatalogCreate<'_, '_, 's, 'c, '_, '_, '
             .pool
             .finish_tx_pair(&mut self.key, completed)
             .map_err(|e| fatal(storage, RetentionPhase::Install, RetentionCause::Frame(e)))?;
-        self.bound.control.durable = Some(durable);
-        self.bound.control.pending = None;
+        self.bound.control.ledger.durable = Some(durable);
+        self.bound.control.ledger.pending = None;
         Ok(self.plan.object)
     }
 }
@@ -443,7 +450,7 @@ struct ControlCut {
     adopted: u64,
 }
 impl ControlCut {
-    fn capture(control: &control::RetentionControl<'_, '_, '_>) -> Self {
+    fn capture(control: &control::RetentionLedger<'_, '_, '_>) -> Self {
         Self {
             bank: content_digest(&control.bytes[..BANK_END]),
             jobs: content_digest(&control.bytes[BANK_END..JOB_END]),
@@ -452,7 +459,7 @@ impl ControlCut {
             adopted: control.adopted_local,
         }
     }
-    fn matches(self, control: &control::RetentionControl<'_, '_, '_>) -> bool {
+    fn matches(self, control: &control::RetentionLedger<'_, '_, '_>) -> bool {
         self.bank == content_digest(&control.bytes[..BANK_END])
             && self.jobs == content_digest(&control.bytes[BANK_END..JOB_END])
             && self.inventory == content_digest(&control.bytes[JOB_END..INVENTORY_END])
@@ -560,7 +567,7 @@ impl<'i, 'c, 's> PreparedCatalog<'i, 'c, 's> {
         &self,
         owner: &Owner<'c, 's>,
         pool: &SharedPool<'c, 's, '_, '_>,
-        control: &control::RetentionControl<'_, 'c, 's>,
+        control: &control::RetentionLedger<'_, 'c, 's>,
         prefix: WalPrefix,
     ) -> Result<()> {
         let actual = owner
@@ -622,7 +629,7 @@ impl<'i, 'c, 's> PreparedCatalog<'i, 'c, 's> {
 /// durable continuation performs the whole installation.
 pub(in super::super) fn catalog_mark_staged<'s>(
     prepared: &PreparedCatalog<'_, '_, '_>,
-    control: &mut control::RetentionControl<'_, '_, 's>,
+    control: &mut control::RetentionLedger<'_, '_, 's>,
     requirement: WalRequirement<'s>,
 ) -> Result<()> {
     if !prepared.confirms_requirement(requirement)
@@ -645,7 +652,7 @@ pub(in super::super) fn catalog_mark_staged<'s>(
 /// helper performs no pool access and cannot publish Q or release a stage.
 pub(in super::super) fn catalog_apply(
     prepared: &PreparedCatalog<'_, '_, '_>,
-    control: &mut control::RetentionControl<'_, '_, '_>,
+    control: &mut control::RetentionLedger<'_, '_, '_>,
     profile: crate::storage::control::Profile,
     requirement: WalRequirement<'_>,
 ) -> Result<()> {
@@ -798,7 +805,7 @@ pub(in super::super) fn catalog_control_source_bytes() -> usize {
 /// Borrowed successor projection. The shared encoder is a codec, while this
 /// projection retains the actual verified layout and original control source.
 struct ProjectedInventory<'b, 'i, 'a, 'c, 's> {
-    control: &'b control::RetentionControl<'a, 'c, 's>,
+    control: &'b control::RetentionLedger<'a, 'c, 's>,
     observation: Observation,
     slot: Option<usize>,
     view: semantic_catalog::LayoutView<'i>,
@@ -875,7 +882,7 @@ impl crate::storage::plan4_recovery_base::catalog::inventory::InventoryRows
     reason = "borrowed original phase sections"
 )]
 fn prepare_inventory(
-    control: &control::RetentionControl<'_, '_, '_>,
+    control: &control::RetentionLedger<'_, '_, '_>,
     profile: crate::storage::control::Profile,
     observation: Observation,
     slot: Option<usize>,
@@ -931,7 +938,7 @@ impl<'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
         private: &'r mut [u8; PRIVATE_BYTES],
     ) -> Result<ReservedCatalogCreate<'r, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W>> {
         let plan = self.plan_catalog_create(owner, actor, undo, definition, private)?;
-        let slot = self.control.slot(actor).ok_or_else(|| {
+        let slot = self.control.ledger.slot(actor).ok_or_else(|| {
             unchanged(RetentionPhase::Prepare, RetentionCause::MissingTransaction)
         })?;
         let prepared = self.prepare_existing_catalog(
@@ -976,7 +983,7 @@ impl<'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
             .prepare_tx_pair(&authority, candidates.map(|candidate| candidate.index))
             .map_err(|e| frame(RetentionPhase::Prepare, e))?;
         if let Err(error) = self.apply_existing_catalog(owner, prepared) {
-            if error.effect == Effect::Unchanged && self.control.pending.is_none() {
+            if error.effect == Effect::Unchanged && self.control.ledger.pending.is_none() {
                 self.return_catalog_pair(
                     owner,
                     &mut key,
@@ -1089,8 +1096,8 @@ impl<'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
             undo_ref::UndoRef,
         };
         self.health()?;
-        if self.control.pending.is_some()
-            || self.control.population.reserved()
+        if self.control.ledger.pending.is_some()
+            || self.control.ledger.population.reserved()
             || self.flush.phase != flush::RetentionFlushPhase::Ready
         {
             return Err(unchanged(RetentionPhase::Prepare, RetentionCause::Busy));
@@ -1107,7 +1114,7 @@ impl<'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
         }
         let terminal = self.actor_catalog_job(actor, true)?;
         let terminal = queue::decode_job(
-            &self.control.jobs()[terminal],
+            &self.control.ledger.jobs()[terminal],
             self.inner.storage.profile().spec().namespace,
         )
         .map_err(queue_error)?;
@@ -1381,7 +1388,7 @@ impl<'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
             for offset in 0..64 {
                 let ordinal = (root.cursor() as usize + offset) % 64;
                 if queue::decode_job(
-                    &self.control.jobs()[ordinal],
+                    &self.control.ledger.jobs()[ordinal],
                     self.inner.storage.profile().spec().namespace,
                 )
                 .map_err(queue_error)?
@@ -1409,6 +1416,7 @@ impl<'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
         self.health()?;
         let slot = self
             .control
+            .ledger
             .free_slot()
             .ok_or_else(|| unchanged(RetentionPhase::Prepare, RetentionCause::Capacity))?;
         let ordinal = self.first_catalog_job(owner)?;
@@ -1475,8 +1483,9 @@ impl<'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
                 RetentionCause::Wal(e),
             )
         })?;
-        self.control.issued_local = self
+        self.control.ledger.issued_local = self
             .control
+            .ledger
             .issued_local
             .checked_add(1)
             .ok_or_else(|| unchanged(RetentionPhase::Prepare, RetentionCause::Exhausted))?;
@@ -1485,7 +1494,7 @@ impl<'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
                 database: prefix.stream.database,
                 timeline: prefix.stream.timeline,
                 writer_epoch: prefix.stream.writer_epoch,
-                local: self.control.issued_local,
+                local: self.control.ledger.issued_local,
             },
             generation,
         )
@@ -1507,7 +1516,7 @@ impl<'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
 
     fn actor_catalog_job(&self, actor: TxnRef, terminal: bool) -> Result<usize> {
         let mut found = None;
-        for (ordinal, bytes) in self.control.jobs().iter().enumerate() {
+        for (ordinal, bytes) in self.control.ledger.jobs().iter().enumerate() {
             let job = queue::decode_job(bytes, self.inner.storage.profile().spec().namespace)
                 .map_err(queue_error)?;
             if job.source() == Some(actor)
@@ -1542,11 +1551,11 @@ impl<'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
         private: &mut [u8; PRIVATE_BYTES],
     ) -> Result<Observation> {
         let terminal = self.actor_catalog_job(actor, true)?;
-        let slot = self.control.slot(actor).ok_or_else(|| {
+        let slot = self.control.ledger.slot(actor).ok_or_else(|| {
             unchanged(RetentionPhase::Prepare, RetentionCause::MissingTransaction)
         })?;
         let terminal_job = queue::decode_job(
-            &self.control.jobs()[terminal],
+            &self.control.ledger.jobs()[terminal],
             self.inner.storage.profile().spec().namespace,
         )
         .map_err(queue_error)?;
@@ -1562,7 +1571,7 @@ impl<'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
             .map_err(|e| frame(RetentionPhase::Prepare, e))?;
         let root = self.target(Plan4Page::Root)?.request;
         let mut root_job = None;
-        for bytes in self.control.jobs() {
+        for bytes in self.control.ledger.jobs() {
             let job = queue::decode_job(bytes, self.inner.storage.profile().spec().namespace)
                 .map_err(queue_error)?;
             if job.source() == Some(actor)
@@ -1614,11 +1623,11 @@ impl<'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
         private: &mut [u8; PRIVATE_BYTES],
     ) -> Result<Observation> {
         let terminal = self.actor_catalog_job(actor, true)?;
-        let slot = self.control.slot(actor).ok_or_else(|| {
+        let slot = self.control.ledger.slot(actor).ok_or_else(|| {
             unchanged(RetentionPhase::Prepare, RetentionCause::MissingTransaction)
         })?;
         let status = queue::decode_job(
-            &self.control.jobs()[terminal],
+            &self.control.ledger.jobs()[terminal],
             self.inner.storage.profile().spec().namespace,
         )
         .map_err(queue_error)?
@@ -1698,7 +1707,7 @@ impl<'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
             .wal()
             .prefix()
             .map_err(|e| fatal(storage, RetentionPhase::Prepare, RetentionCause::Wal(e)))?;
-        prepared.check(owner, &self.inner.pool, &self.control, prefix)?;
+        prepared.check(owner, &self.inner.pool, &self.control.ledger, prefix)?;
         let requests: &[TargetRequest; N] = prepared
             .targets()
             .try_into()
@@ -1745,7 +1754,7 @@ impl<'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
                         fatal(storage, RetentionPhase::Stage, RetentionCause::Wal(e))
                     }
                 })?;
-            catalog_mark_staged(&prepared, &mut self.control, requirement)?;
+            catalog_mark_staged(&prepared, &mut self.control.ledger, requirement)?;
             for (at, dpt_entry) in dpt.iter_mut().enumerate() {
                 let Some(after) = prepared.after(at) else {
                     continue;
@@ -1767,7 +1776,12 @@ impl<'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
                     .install_dpt(dpt_entry.take().expect("preflight DPT"), &permit)
                     .map_err(|e| frame(RetentionPhase::Install, e))?;
             }
-            catalog_apply(&prepared, &mut self.control, storage.profile(), requirement)?;
+            catalog_apply(
+                &prepared,
+                &mut self.control.ledger,
+                storage.profile(),
+                requirement,
+            )?;
             self.history.installed(requirement)?;
             Ok(requirement)
         })();
@@ -1778,7 +1792,7 @@ impl<'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
                 .map_err(|e| frame(RetentionPhase::Install, e)),
         )
         .map_err(|e| {
-            if self.control.pending.is_some() {
+            if self.control.ledger.pending.is_some() {
                 fatal(storage, RetentionPhase::Install, e.cause)
             } else {
                 e
@@ -1795,8 +1809,8 @@ impl<'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
                 RetentionCause::Invariant,
             ));
         }
-        self.control.durable = Some(durable);
-        self.control.pending = None;
+        self.control.ledger.durable = Some(durable);
+        self.control.ledger.pending = None;
         Ok(prepared.observation)
     }
 
@@ -1819,11 +1833,11 @@ impl<'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
                 RetentionCause::BindingMismatch,
             ));
         }
-        let slot = self.control.slot(actor).ok_or_else(|| {
+        let slot = self.control.ledger.slot(actor).ok_or_else(|| {
             unchanged(RetentionPhase::Prepare, RetentionCause::MissingTransaction)
         })?;
         let mut terminal = None;
-        for (ordinal, cell) in self.control.jobs().iter().enumerate() {
+        for (ordinal, cell) in self.control.ledger.jobs().iter().enumerate() {
             let job = queue::decode_job(cell, self.inner.storage.profile().spec().namespace)
                 .map_err(queue_error)?;
             if job.state().is_terminal() && job.source() == Some(actor) {
@@ -1877,7 +1891,7 @@ impl<'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
         CatalogPreparation {
             storage: self.inner.storage,
             pool: &self.inner.pool,
-            control: &self.control,
+            control: &self.control.ledger,
             history: &self.history,
             visibility: self.catalog_visibility.as_ref(),
         }
@@ -1901,7 +1915,7 @@ impl<'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
 struct CatalogPreparation<'b, 'a, 's, 'c, 'p, 'd, 'm, 'w, W: WriterNamespace> {
     storage: &'s MutableStorageOwner<'m, 'w, W>,
     pool: &'b SharedPool<'c, 's, 'p, 'd>,
-    control: &'b control::RetentionControl<'a, 'c, 's>,
+    control: &'b control::RetentionLedger<'a, 'c, 's>,
     history: &'b history::runtime::RuntimeHistory<'a, 'c, 's>,
     visibility: Option<&'b visibility::BoundVisibility<'a, 'c, 's>>,
 }

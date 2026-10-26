@@ -233,8 +233,8 @@ impl<'s, 'c, W: WriterNamespace> ReservedRetentionSystem<'_, '_, 's, 'c, '_, '_,
     }
     fn failure(self, error: RetentionError) -> RetentionReservationError<Self> {
         if error.effect == Effect::Unchanged
-            && self.bound.control.pending.is_none()
-            && self.bound.control.population.installation.is_none()
+            && self.bound.control.ledger.pending.is_none()
+            && self.bound.control.ledger.population.installation.is_none()
         {
             RetentionReservationError::Before {
                 error,
@@ -252,7 +252,7 @@ impl<'s, 'c, W: WriterNamespace> ReservedRetentionSystem<'_, '_, 's, 'c, '_, '_,
         health(storage, pool)?;
         pool.check_retention_reader(self.owner)
             .map_err(|e| frame(RetentionPhase::Prepare, e))?;
-        let control = &mut self.bound.control;
+        let control = &mut self.bound.control.ledger;
         if control.pending.is_some() || control.population.installation.is_some() {
             return Err(fatal(
                 storage,
@@ -586,7 +586,9 @@ impl<'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
             .pool
             .check_retention_reader(owner)
             .map_err(|e| frame(RetentionPhase::Prepare, e))?;
-        if self.control.population.reserved() || self.flush.phase != RetentionFlushPhase::Ready {
+        if self.control.ledger.population.reserved()
+            || self.flush.phase != RetentionFlushPhase::Ready
+        {
             return Err(unchanged(RetentionPhase::Prepare, RetentionCause::Busy));
         }
         let storage = self.inner.storage;
@@ -595,10 +597,15 @@ impl<'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
             .wal()
             .prefix()
             .map_err(|e| fatal(storage, RetentionPhase::Prepare, RetentionCause::Wal(e)))?;
-        history::validate_live(storage, &self.control, self.history.exclusive()?, prefix)?;
+        history::validate_live(
+            storage,
+            &self.control.ledger,
+            self.history.exclusive()?,
+            prefix,
+        )?;
         history::catalog::system_initial(
             self.history.exclusive()?,
-            self.control.population.high_water,
+            self.control.ledger.population.high_water,
         )
         .map_err(|e| fatal(storage, RetentionPhase::Source, e))?;
         let allocator = self
@@ -710,7 +717,7 @@ impl<'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
         kind: RetentionPageKind,
     ) -> Result<ReservedRetentionSystem<'r, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W>> {
         self.health()?;
-        if self.control.population.reserved() {
+        if self.control.ledger.population.reserved() {
             return Err(unchanged(RetentionPhase::Prepare, RetentionCause::Busy));
         }
         self.inner
@@ -721,6 +728,7 @@ impl<'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
         self.allocate(owner, false)?;
         let page = self
             .control
+            .ledger
             .population
             .reservation
             .ok_or_else(|| {
@@ -747,7 +755,9 @@ impl<'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
             .pool
             .check_retention_reader(owner)
             .map_err(|e| frame(RetentionPhase::Prepare, e))?;
-        if self.control.pending.is_some() || self.control.population.installation.is_some() {
+        if self.control.ledger.pending.is_some()
+            || self.control.ledger.population.installation.is_some()
+        {
             return Err(fatal(
                 storage,
                 RetentionPhase::Prepare,
@@ -758,16 +768,22 @@ impl<'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
             .wal()
             .prefix()
             .map_err(|e| fatal(storage, RetentionPhase::Prepare, RetentionCause::Wal(e)))?;
-        history::validate_live(storage, &self.control, self.history.exclusive()?, prefix)?;
+        history::validate_live(
+            storage,
+            &self.control.ledger,
+            self.history.exclusive()?,
+            prefix,
+        )?;
         let initialized = history::catalog::system_initial(
             self.history.exclusive()?,
-            self.control.population.high_water,
+            self.control.ledger.population.high_water,
         )
         .map_err(|e| fatal(storage, RetentionPhase::Source, e))?;
-        let (existing_wal, existing_steps) =
-            self.control
-                .check_ledger(storage.profile(), prefix)
-                .map_err(|e| fatal(storage, RetentionPhase::Census, e.cause))?;
+        let (existing_wal, existing_steps) = self
+            .control
+            .ledger
+            .check_ledger(storage.profile(), prefix)
+            .map_err(|e| fatal(storage, RetentionPhase::Census, e.cause))?;
         let extra = if cancel { 0 } else { 21_200 + 38_208 };
         if prefix
             .complete_offset
@@ -789,10 +805,11 @@ impl<'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
             .map_err(|e| frame(RetentionPhase::Prepare, e))?;
         let generation = self
             .control
+            .ledger
             .source
             .base()
             .map_or(1, |base| base.view().header().generation);
-        let (bank, before_space) = self.control.bytes.split_at_mut(147_456);
+        let (bank, before_space) = self.control.ledger.bytes.split_at_mut(147_456);
         let (before_space, inventory_space) = before_space.split_at_mut(PAGE_BYTES);
         let inventory_after: &mut [u8; PAGE_BYTES] = (&mut inventory_space[..PAGE_BYTES])
             .try_into()
@@ -837,8 +854,8 @@ impl<'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
             profile: storage.profile(),
             allocator: request.identity,
             prefix,
-            high_water: self.control.population.high_water,
-            terminal: self.control.population.terminal,
+            high_water: self.control.ledger.population.high_water,
+            terminal: self.control.ledger.population.terminal,
             before_descriptor: descriptor(control::row(bank, ALLOCATION_SLOT)),
             initialized,
             fence: storage.session_fence(),
@@ -891,8 +908,8 @@ impl<'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
                         effect: e.effect,
                         cause: RetentionCause::Wal(e),
                     })?;
-            self.control.pending = Some(requirement);
-            self.control.population.adopt(state);
+            self.control.ledger.pending = Some(requirement);
+            self.control.ledger.population.adopt(state);
             let permit = crate::storage::wal_io::DirtyInstallPermit::from_retention(
                 live::RetentionInstall::allocation(
                     self.inner.pool.bound_core(),
@@ -923,13 +940,17 @@ impl<'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
                 .map_err(|e| frame(RetentionPhase::Install, e)),
         )
         .map_err(|e| {
-            if self.control.pending.is_some() {
+            if self.control.ledger.pending.is_some() {
                 fatal(storage, RetentionPhase::Install, e.cause)
             } else {
                 e
             }
         })?;
-        let requirement = self.control.pending.expect("retained allocation stage");
+        let requirement = self
+            .control
+            .ledger
+            .pending
+            .expect("retained allocation stage");
         let durable = storage
             .wal()
             .wait_durable(&requirement)
@@ -968,8 +989,8 @@ impl<'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
                 .map_err(|e| frame(RetentionPhase::Durable, e)),
         )
         .map_err(|e| fatal(storage, RetentionPhase::Durable, e.cause))?;
-        self.control.durable = Some(durable);
-        self.control.pending = None;
+        self.control.ledger.durable = Some(durable);
+        self.control.ledger.pending = None;
         self.history.installed(requirement)?;
         Ok(())
     }

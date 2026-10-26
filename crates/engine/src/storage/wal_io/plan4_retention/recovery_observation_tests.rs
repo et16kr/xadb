@@ -79,24 +79,25 @@ impl<W: WriterNamespace> Plan4Retention<'_, '_, '_, '_, '_, '_, '_, '_, W> {
                 RetentionCause::Wal(e),
             )
         })?;
-        let (reserved, installation) = self.control.population.test_state();
+        let (reserved, installation) = self.control.ledger.population.test_state();
         let (claim, pins) = dirty_frame::init_test_support::claim_state(&self.inner.pool);
         Ok((
             prefix,
             self.control
+                .ledger
                 .durable
                 .as_ref()
                 .map(|d| d.observation().frame.lsn),
             reserved,
             installation,
-            self.control.pending.is_some(),
+            self.control.ledger.pending.is_some(),
             claim,
             pins,
         ))
     }
 
     pub(in crate::storage) fn catalog_test_jobs(&self) -> &[[u8; 1024]; 64] {
-        self.control.jobs()
+        self.control.ledger.jobs()
     }
 
     /// Original physical state after a fence; observations issue no requirement.
@@ -117,7 +118,10 @@ impl<W: WriterNamespace> Plan4Retention<'_, '_, '_, '_, '_, '_, '_, '_, W> {
     }
 
     pub(in crate::storage) fn catalog_test_locals(&self) -> (u64, u64) {
-        (self.control.issued_local, self.control.adopted_local)
+        (
+            self.control.ledger.issued_local,
+            self.control.ledger.adopted_local,
+        )
     }
 
     pub(in crate::storage) fn catalog_test_q(&self) -> u64 {
@@ -128,7 +132,7 @@ impl<W: WriterNamespace> Plan4Retention<'_, '_, '_, '_, '_, '_, '_, '_, W> {
     }
 
     pub(in crate::storage) fn recovery_test_bank(&self) -> &[u8] {
-        &self.control.bytes[..65_536]
+        &self.control.ledger.bytes[..65_536]
     }
 
     pub(in crate::storage) fn recovery_test_credit(&self) -> Option<(u64, u64, [u8; 32])> {

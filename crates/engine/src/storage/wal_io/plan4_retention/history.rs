@@ -382,7 +382,7 @@ pub(super) fn prove_capture<'c, 's, W: WriterNamespace>(
 /// forced. A later RAM append is never used to extend the disk read limit.
 pub(super) fn validate_live<W: WriterNamespace>(
     storage: &MutableStorageOwner<'_, '_, W>,
-    control: &control::RetentionControl<'_, '_, '_>,
+    control: &control::RetentionLedger<'_, '_, '_>,
     replay: &mut [u8; RETENTION_REPLAY_BYTES],
     prefix: WalPrefix,
 ) -> Result<()> {

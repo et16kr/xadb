@@ -192,7 +192,7 @@ fn retention_s5_partial_writes() {
                     }
                     assert_eq!(fault_hits(&state), 1);
                     assert!(!storage.session_fence().is_fenced());
-                    assert!(bound.control.pending.is_none());
+                    assert!(bound.control.ledger.pending.is_none());
                     owner.check_idle().unwrap();
                 });
             });

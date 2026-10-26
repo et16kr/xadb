@@ -27,7 +27,7 @@ use std::sync::atomic::AtomicU8;
 /// This is a control effect, not a callback or a separately reconstructed owner.
 pub(in crate::storage) struct TxPairControlCommit<'i, 'control, 'c, 's> {
     authority: &'i TxPairAuthority<'i, 'c, 's>,
-    original: &'i mut super::control::RetentionControl<'control, 'c, 's>,
+    original: &'i mut super::control::RetentionLedger<'control, 'c, 's>,
     requirement: WalRequirement<'s>,
     transaction_slot: usize,
     job_ordinal: usize,

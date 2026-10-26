@@ -28,7 +28,7 @@ impl<'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
             .pool
             .check_retention_reader(owner)
             .map_err(|e| super::super::frame(RetentionPhase::Activate, e))?;
-        if self.catalog_visibility.is_some() || self.control.pending.is_some() {
+        if self.catalog_visibility.is_some() || self.control.ledger.pending.is_some() {
             return Err(super::super::unchanged(
                 RetentionPhase::Activate,
                 RetentionCause::WrongState,
@@ -46,7 +46,12 @@ impl<'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
         let result = match scope.checkout() {
             Ok(mut replay) => {
                 let checked = (|| {
-                    history::validate_live(storage, &self.control, replay.bytes_mut(), cut.seed())?;
+                    history::validate_live(
+                        storage,
+                        &self.control.ledger,
+                        replay.bytes_mut(),
+                        cut.seed(),
+                    )?;
                     cut.unchanged()?;
                     let (_, root) = crate::storage::retention_page::catalog::decode_root_page(
                         &replay.bytes()[crate::storage::page::PAGE_BYTES

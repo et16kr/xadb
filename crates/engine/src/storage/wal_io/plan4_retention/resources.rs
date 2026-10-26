@@ -51,6 +51,7 @@ pub(in crate::storage) struct RetentionSourceCensus {
     pub(in crate::storage) metadata: usize,
     pub(in crate::storage) whole: usize,
     pub(in crate::storage) caller_control: usize,
+    pub(in crate::storage) caller_isolation: usize,
     pub(in crate::storage) caller_writer_replay: usize,
     pub(in crate::storage) caller_operation: usize,
     pub(in crate::storage) caller_dwb: usize,
@@ -91,7 +92,9 @@ pub(in crate::storage) fn source_census<W: WriterNamespace>() -> RetentionSource
         + size_of::<Old<'_, W>>()
         + size_of::<New<'_, W>>()
         + size_of::<Into<'_, W>>()
-        + size_of::<control::RetentionControl<'_, '_, '_>>()
+        + size_of::<control::RetentionLedger<'_, '_, '_>>()
+        + size_of::<RetentionControl<'_, '_, '_>>()
+        + size_of::<IsolationLedger<'_, '_, '_>>()
         + size_of::<history::runtime::RuntimeHistory<'_, '_, '_>>()
         + size_of::<flush::RetentionFlushControl<'_, '_, '_>>()
         + 2 * size_of::<Result<()>>()
@@ -104,7 +107,9 @@ pub(in crate::storage) fn source_census<W: WriterNamespace>() -> RetentionSource
     let recovery = recovery::phase_source_bytes::<W>();
     let recovered_conversion = (original_owner
         + size_of::<Old<'_, W>>()
-        + size_of::<control::RetentionControl<'_, '_, '_>>()
+        + size_of::<control::RetentionLedger<'_, '_, '_>>()
+        + size_of::<RetentionControl<'_, '_, '_>>()
+        + size_of::<IsolationLedger<'_, '_, '_>>()
         + size_of::<history::runtime::RuntimeHistory<'_, '_, '_>>()
         + size_of::<recovery::RetentionReplayCursor>()
         + size_of::<super::super::super::plan4_recovery::RecoveryRetentionBinding<'_, '_>>()
@@ -239,7 +244,7 @@ pub(in crate::storage) fn source_census<W: WriterNamespace>() -> RetentionSource
     let peak = conversion.max(recovered_conversion).max(retained + active);
     // 36 descriptor/bookkeeping slots are actual retained metadata, even
     // though their backing is caller owned. Job and page snapshots are data.
-    let metadata = peak + 36 * control::SLOT_BYTES + visibility::VISIBILITY_BYTES;
+    let metadata = peak + 36 * control::SLOT_BYTES + visibility::VISIBILITY_BYTES + ISOLATION_BYTES;
     RetentionSourceCensus {
         original_owner,
         retained,
@@ -279,6 +284,7 @@ pub(in crate::storage) fn source_census<W: WriterNamespace>() -> RetentionSource
         metadata,
         whole: metadata + 65_536,
         caller_control: RETENTION_CONTROL_BYTES,
+        caller_isolation: ISOLATION_BYTES,
         caller_writer_replay: RETENTION_REPLAY_BYTES,
         caller_operation: super::super::OPERATION_BYTES,
         caller_dwb: super::super::FLUSH_BYTES,

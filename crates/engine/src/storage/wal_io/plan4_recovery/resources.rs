@@ -277,7 +277,7 @@ pub(in crate::storage) fn source_census<W: WriterNamespace>() -> RecoverySourceC
         .max(live);
     // The original control metadata already occupies the 64-KiB budget;
     // Catalog visibility owns a disjoint 8192-byte metadata loan as well.
-    let metadata = retained_live + 65_536 + 8192 + core.directory;
+    let metadata = retained_live + 65_536 + 8192 + ISOLATION_BYTES + core.directory;
     RecoverySourceCensus {
         owner,
         runtime,

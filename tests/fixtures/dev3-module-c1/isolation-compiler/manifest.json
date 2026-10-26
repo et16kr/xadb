@@ -1,0 +1,54 @@
+{
+  "schema": "XADB_MODULE_C1_ISOLATION_COMPILER_V1",
+  "status": "FROZEN_INPUTS_NOT_EXECUTION_EVIDENCE",
+  "scope": "original ledger and separate isolation loan initialization/borrow/census only; no transaction, epoch, admission or recovery runtime acceptance",
+  "budget": {
+    "total_seconds": 180,
+    "case_seconds": 30,
+    "output_bytes": 8388608
+  },
+  "cases": [
+    {
+      "name": "production",
+      "path": "canonical.rs",
+      "bytes": 825,
+      "sha256": "05f0cf454de23e7635837d7dbe3e7773727dbc978f285273a95a8578560608ce",
+      "expected_code": null,
+      "primary_line": null,
+      "anchor": "crates/engine/src/storage/mod.rs",
+      "probe": "crates/engine/src/storage/module_c1_isolation_probe.rs",
+      "declaration": "\nmod module_c1_isolation_probe;\n",
+      "mode": "check"
+    },
+    {
+      "name": "test_build",
+      "path": "canonical.rs",
+      "bytes": 825,
+      "sha256": "05f0cf454de23e7635837d7dbe3e7773727dbc978f285273a95a8578560608ce",
+      "expected_code": null,
+      "primary_line": null,
+      "anchor": "crates/engine/src/storage/mod.rs",
+      "probe": "crates/engine/src/storage/module_c1_isolation_probe.rs",
+      "declaration": "\nmod module_c1_isolation_probe;\n",
+      "mode": "test-no-run"
+    },
+    {
+      "name": "isolation_reuse",
+      "path": "isolation_reuse.rs",
+      "bytes": 638,
+      "sha256": "105ac47f92a92eaf623fe5c08ebd73a8318531ee24aa2f5b49d29a2349fdf46a",
+      "expected_code": "E0506",
+      "primary_line": 8,
+      "anchor": "crates/engine/src/storage/mod.rs",
+      "probe": "crates/engine/src/storage/module_c1_isolation_probe.rs",
+      "declaration": "\nmod module_c1_isolation_probe;\n",
+      "mode": "check"
+    }
+  ],
+  "runtime_tests": [
+    "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::owner_tests::disk_session_moves_original_resources_and_splits_disjoint_ports",
+    "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::owner_tests::disk_session_before_returns_original_owner_for_canonical_retry",
+    "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::owner_tests::disk_session_isolation_backing_and_carriers_are_accounted",
+    "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::read::catalog::tests::catalog_read_original_owner_binding_and_fence_cleanup"
+  ]
+}

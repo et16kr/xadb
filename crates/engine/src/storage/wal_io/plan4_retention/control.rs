@@ -25,7 +25,7 @@ pub(super) const PHASE: usize = 1624;
 pub(super) const STABLE: u8 = 1;
 pub(super) const STAGED: u8 = 2;
 
-pub(super) struct RetentionControl<'a, 'c, 's> {
+pub(super) struct RetentionLedger<'a, 'c, 's> {
     pub(super) bytes: &'a mut [u8; RETENTION_CONTROL_BYTES],
     pub(super) issued_local: u64,
     pub(super) adopted_local: u64,
@@ -34,7 +34,7 @@ pub(super) struct RetentionControl<'a, 'c, 's> {
     pub(super) population: super::population::Population<'c, 's>,
     pub(super) source: super::recovery::HistorySource<'s>,
 }
-impl<'a, 'c, 's> RetentionControl<'a, 'c, 's> {
+impl<'a, 'c, 's> RetentionLedger<'a, 'c, 's> {
     pub(super) fn new(bytes: &'a mut [u8; RETENTION_CONTROL_BYTES]) -> Self {
         bytes.fill(0);
         Self {

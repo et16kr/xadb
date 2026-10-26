@@ -638,6 +638,8 @@ fn produce<D: DirectoryPort>(directory: &D, worker: &Worker<'_>) {
     let mut operation = boxed::<114_688>();
     let (prefix, visibility) = maintenance.split_at_mut(12_574_720);
     let (prefix, private) = prefix.split_at_mut(12_148_736);
+    let (prefix, isolation) = prefix.split_at_mut(12_144_576);
+    let isolation: &mut [u8; 4_160] = isolation.try_into().unwrap();
     let (prefix, control) = prefix.split_at_mut(6_815_744);
     let replay: &mut [u8; RETENTION_REPLAY_BYTES] =
         (&mut prefix[4_194_304..5_767_168]).try_into().unwrap();
@@ -648,13 +650,19 @@ fn produce<D: DirectoryPort>(directory: &D, worker: &Worker<'_>) {
     let pages = storage
         .bind_plan4_pages(&core, &mut frames, &mut operation)
         .unwrap();
-    let mut live =
-        match pages.into_empty_retention(&mut owner, EmptyRetentionControlLoan { control, replay })
-        {
-            Ok(value) => value,
-            Err(IntoRetentionError::Before { error, .. })
-            | Err(IntoRetentionError::Fatal(error)) => panic!("actual empty conversion {error:?}"),
-        };
+    let mut live = match pages.into_empty_retention(
+        &mut owner,
+        EmptyRetentionControlLoan {
+            control,
+            replay,
+            isolation,
+        },
+    ) {
+        Ok(value) => value,
+        Err(IntoRetentionError::Before { error, .. }) | Err(IntoRetentionError::Fatal(error)) => {
+            panic!("actual empty conversion {error:?}")
+        }
+    };
     live.enable_catalog_visibility(
         &mut owner,
         VisibilityLoan {

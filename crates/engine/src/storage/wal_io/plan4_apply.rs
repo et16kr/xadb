@@ -17,6 +17,10 @@ use crate::{
     transaction::concurrency::Owner,
 };
 use foundation::{error::Effect, namespace::WriterNamespace};
+use std::sync::Mutex;
+
+#[path = "plan4_apply/isolation.rs"]
+mod isolation;
 
 #[path = "plan4_retention/create_pair.rs"]
 mod create_pair;
@@ -101,6 +105,7 @@ pub(in crate::storage) use resources::{RetentionSourceCensus, source_census};
 
 pub(crate) const RETENTION_CONTROL_BYTES: usize = 196_608;
 pub(crate) const RETENTION_REPLAY_BYTES: usize = 1_572_864;
+pub(crate) const ISOLATION_BYTES: usize = 4_160;
 const FRAME_BYTES: usize = 65_536;
 const DWB_REPLAY_OFFSET: usize = 196_608;
 
@@ -109,6 +114,7 @@ const DWB_REPLAY_OFFSET: usize = 196_608;
 pub(crate) struct EmptyRetentionControlLoan<'a> {
     pub(crate) control: &'a mut [u8; RETENTION_CONTROL_BYTES],
     pub(crate) replay: &'a mut [u8; RETENTION_REPLAY_BYTES],
+    pub(crate) isolation: &'a mut [u8; ISOLATION_BYTES],
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -221,17 +227,40 @@ pub(crate) enum IntoRetentionError<B> {
 
 pub(crate) struct DiskSession<'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace> {
     inner: Plan4Pages<'s, 'c, 'p, 'd, 'o, 'm, 'w, W>,
-    control: control::RetentionControl<'a, 'c, 's>,
+    control: RetentionControl<'a, 'c, 's>,
     history: history::runtime::RuntimeHistory<'a, 'c, 's>,
     flush: flush::RetentionFlushControl<'c, 's, 'w>,
     catalog_visibility: Option<visibility::BoundVisibility<'a, 'c, 's>>,
     recovery_binding: Option<super::super::plan4_recovery::RecoveryRetentionBinding<'s, 's>>,
 }
 
+/// The original durable ledger and its separate caller-backed isolation state.
+/// Splitting the session lends the ledger exclusively and the mutex jointly.
+struct RetentionControl<'a, 'c, 's> {
+    ledger: control::RetentionLedger<'a, 'c, 's>,
+    isolation: Mutex<IsolationLedger<'a, 'c, 's>>,
+}
+
+#[allow(
+    dead_code,
+    reason = "C1 backing/origin supply; transaction and credit operations follow"
+)]
+struct IsolationLedger<'a, 'c, 's> {
+    bytes: &'a mut [u8; ISOLATION_BYTES],
+    core: &'c crate::transaction::concurrency::PageConcurrency<'s>,
+    binding: &'s std::sync::atomic::AtomicU8,
+    fence: &'s crate::storage::session_fence::SessionFence,
+}
+
 pub(crate) struct ReadPort<'b, 'a, 's, 'c, 'p, 'd, 'm, 'w, W: WriterNamespace> {
     storage: &'s MutableStorageOwner<'m, 'w, W>,
     pool: &'b SharedPool<'c, 's, 'p, 'd>,
     history: &'b history::runtime::RuntimeHistory<'a, 'c, 's>,
+    #[allow(
+        dead_code,
+        reason = "shared original isolation backing for pending Row read adapter"
+    )]
+    isolation: &'b Mutex<IsolationLedger<'a, 'c, 's>>,
     visibility: Option<&'b visibility::BoundVisibility<'a, 'c, 's>>,
 }
 
@@ -239,8 +268,13 @@ pub(crate) struct MutationPort<'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterName
     storage: &'s MutableStorageOwner<'m, 'w, W>,
     pool: &'b SharedPool<'c, 's, 'p, 'd>,
     operation: &'b mut &'o mut [u8; super::OPERATION_BYTES],
-    control: &'b mut control::RetentionControl<'a, 'c, 's>,
+    control: &'b mut control::RetentionLedger<'a, 'c, 's>,
     history: &'b history::runtime::RuntimeHistory<'a, 'c, 's>,
+    #[allow(
+        dead_code,
+        reason = "shared original isolation backing for pending transaction adapter"
+    )]
+    isolation: &'b Mutex<IsolationLedger<'a, 'c, 's>>,
     visibility: Option<&'b visibility::BoundVisibility<'a, 'c, 's>>,
 }
 
@@ -349,7 +383,7 @@ impl<'s, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace> Plan4Pages<'s, 'c, 'p, 'd, 
                     ._flush_workspace
                     .take()
                     .expect("checked original DWB loan");
-                let mut control = control::RetentionControl::new(loan.control);
+                let mut ledger = control::RetentionLedger::new(loan.control);
                 let history = history::runtime::RuntimeHistory::new(
                     storage,
                     self.pool.bound_core(),
@@ -357,7 +391,15 @@ impl<'s, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace> Plan4Pages<'s, 'c, 'p, 'd, 
                     seed_prefix,
                     loan.replay,
                 );
-                control.initialize_jobs(storage.profile().spec().namespace);
+                ledger.initialize_jobs(storage.profile().spec().namespace);
+                let control = RetentionControl {
+                    ledger,
+                    isolation: Mutex::new(IsolationLedger::new(
+                        storage,
+                        self.pool.bound_core(),
+                        loan.isolation,
+                    )),
+                };
                 let flush = flush::RetentionFlushControl::new(storage, workspace);
                 Ok(DiskSession {
                     inner: self,
@@ -408,14 +450,16 @@ impl<'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
                 storage: self.inner.storage,
                 pool: &self.inner.pool,
                 operation: &mut self.inner.operation,
-                control: &mut self.control,
+                control: &mut self.control.ledger,
                 history: &self.history,
+                isolation: &self.control.isolation,
                 visibility: self.catalog_visibility.as_ref(),
             },
             ReadPort {
                 storage: self.inner.storage,
                 pool: &self.inner.pool,
                 history: &self.history,
+                isolation: &self.control.isolation,
                 visibility: self.catalog_visibility.as_ref(),
             },
             MaintenancePort {
@@ -430,7 +474,7 @@ impl<'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
     }
     fn health(&self) -> Result<()> {
         health(self.inner.storage, &self.inner.pool)?;
-        if self.control.pending.is_some() || self.control.population.reserved() {
+        if self.control.ledger.pending.is_some() || self.control.ledger.population.reserved() {
             return Err(fatal(
                 self.inner.storage,
                 RetentionPhase::Prepare,

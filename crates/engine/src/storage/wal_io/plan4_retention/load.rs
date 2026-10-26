@@ -49,7 +49,12 @@ impl<'s, 'c, W: WriterNamespace> Plan4Retention<'_, 's, 'c, '_, '_, '_, '_, '_, 
             .wal()
             .prefix()
             .map_err(|e| fatal(storage, RetentionPhase::Load, RetentionCause::Wal(e)))?;
-        history::validate_live(storage, &self.control, self.history.exclusive()?, prefix)?;
+        history::validate_live(
+            storage,
+            &self.control.ledger,
+            self.history.exclusive()?,
+            prefix,
+        )?;
         let allocator = self
             .inner
             .pool
@@ -111,7 +116,12 @@ impl<'s, 'c, W: WriterNamespace> Plan4Retention<'_, 's, 'c, '_, '_, '_, '_, '_, 
             .wal()
             .prefix()
             .map_err(|e| fatal(storage, RetentionPhase::Load, RetentionCause::Wal(e)))?;
-        history::validate_live(storage, &self.control, self.history.exclusive()?, prefix)?;
+        history::validate_live(
+            storage,
+            &self.control.ledger,
+            self.history.exclusive()?,
+            prefix,
+        )?;
         let request = expected.request;
         let page_no = usize::try_from(request.identity.page.page_no)
             .map_err(|_| unchanged(RetentionPhase::Load, RetentionCause::Membership))?;

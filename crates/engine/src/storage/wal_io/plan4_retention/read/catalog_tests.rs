@@ -192,7 +192,7 @@ fn boxed<const N: usize>() -> Box<[u8; N]> {
     vec![0; N].into_boxed_slice().try_into().ok().unwrap()
 }
 macro_rules! original_owner {
-    (|$bound:ident, $owner:ident, $core:ident, $state:ident, $storage:ident| $body:block) => {{
+    (|$bound:ident, $owner:ident, $core:ident, $state:ident, $storage:ident $(, $foreign:ident)?| $body:block) => {{
         let directory = port::Directory::fresh();
         let $state = directory.state();
         let mut slot = boxed::<MAX_FRAME_BYTES>();
@@ -201,14 +201,16 @@ macro_rules! original_owner {
         let fresh = FreshStorageSession::create_retention_catalog(directory.acquire_writer().unwrap(), 1, &mut slot, &mut maintenance).unwrap();
         let $storage = fresh.install_doublewrite(&mut dwb).unwrap().into_mutable_storage();
         let $core = PageConcurrency::new($storage.session_fence()).unwrap();
+        $(let $foreign = PageConcurrency::new($storage.session_fence()).unwrap();)?
         let mut $owner = $core.try_owner(OwnerRole::Foreground).unwrap();
         let mut backing = vec![[0; PAGE_BYTES]; 4];
         let mut frames: Vec<_> = backing.iter_mut().map(DirtyFrame::new).collect();
         let mut operation = boxed::<114_688>();
+        let mut isolation = boxed::<4_160>();
         let mut control = boxed::<{ super::super::super::RETENTION_CONTROL_BYTES }>();
         let mut replay = boxed::<{ super::super::super::RETENTION_REPLAY_BYTES }>();
         let old = $storage.bind_plan4_pages(&$core, &mut frames, &mut operation).unwrap();
-        let mut $bound = match old.into_empty_retention(&mut $owner, super::super::super::EmptyRetentionControlLoan { control: &mut control, replay: &mut replay }) {
+        let mut $bound = match old.into_empty_retention(&mut $owner, super::super::super::EmptyRetentionControlLoan { isolation: &mut isolation, control: &mut control, replay: &mut replay }) {
             Ok(v) => v,
             Err(super::super::super::IntoRetentionError::Before { error, .. }) | Err(super::super::super::IntoRetentionError::Fatal(error)) => panic!("activation: {error:?}"),
         };
@@ -246,8 +248,7 @@ fn catalog_read_original_owner_whole_set_and_release() {
 
 #[test]
 fn catalog_read_original_owner_binding_and_fence_cleanup() {
-    original_owner!(|bound, owner, core, state, storage| {
-        let foreign = PageConcurrency::new(storage.session_fence()).unwrap();
+    original_owner!(|bound, owner, core, state, storage, foreign| {
         let mut foreign_owner = foreign.try_owner(OwnerRole::Foreground).unwrap();
         let (_, reader, _) = bound.split();
         let error = match reader.read_catalog(&mut foreign_owner) {

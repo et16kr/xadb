@@ -584,3 +584,11 @@ production의 `plan4_pages::apply`와 test의 `plan4_pages::retention`은 상호
 아직 이전하지 않은 실제 helper는 `plan4_retention/`의 `create_pair`(Catalog live/commit 포함), `visibility`, `control`, `flush`, `history`, `live`, `load`, `lookup_load`, `population`, `read`, `recovery`, `resources`와 각 자손이다. 이 파일들은 apply의 private 자손으로 연결되어 원 상태를 사용한다. Catalog CREATE/조회/commit의 제품 본문 분리와 C2/C3 공급은 남아 있으며 이 목록을 최종 독립 소비자 배치로 인정하지 않는다.
 
 신규 source는 `plan4_apply/owner_tests.rs`, compiler 입력은 `tests/fixtures/dev3-module-c1/owner-compiler/`의 정상·private 필드·수명 거절3입력과 manifest다. 정확한 새/수정/이전 경로와 잔여 helper는 관리 JSON의 `dev3_module_c1_owner`에 등록했다. 기존 현재 경로 inventory만 갱신하고 과거 증거의 원 source 경로·hash는 보존한다. [선택 검증·독립 한정 수용](../evidence/module-independence-survey-20261026.md#c1-owner-ports)은 컴파일4건과 신규 메모리2건이며 전체 C1·복구 runtime 인수는 아니다. package/dependency·source root·clean export 규칙은 유지한다.
+
+## 모듈 독립 개발 C1 control·isolation 소유 분리 — 2026-10-26
+
+기존 `plan4_retention/control.rs`의 영속 byte 원장과 method는 `RetentionLedger`가 소유한다. 같은 apply root의 `RetentionControl`이 이 원장과 `Mutex<IsolationLedger>`를 직접 보유하고, MutationPort는 원장의 exclusive borrow와 mutex 공유 borrow, ReadPort는 같은 mutex 공유 borrow를 받는다. 기존 helper는 원장만 수신하며 전체 control을 다시 대여하지 않는다.
+
+새 `plan4_apply/isolation.rs`는 별도4160B caller backing의 초기화만 소유한다. fresh는 원 preflight 성공 후, recovery는 원 pool/source 검산 후 같은 core/binding/fence에 연결한다. `EmptyRetentionControlLoan`의 필수 isolation 필드와 recovery의 named `[12144576,12148736)` 구간이 동일 loan을 전달한다. 이 구간은 기존 private 바로 앞이며 ATT/replay 및 private/visibility offset은 유지한다. live와 recovery 자원 회계에 실제 backing4160B 및 새 wrapper/mutex/loan carrier를 반영했다.
+
+새 `tests/fixtures/dev3-module-c1/isolation-compiler/`에는 정상 입력·버퍼 재사용 거절 입력·manifest를 둔다. 새/변경 경로는 JSON의 `dev3_module_c1_isolation`에 등록하며 package/dependency·source root를 추가하지 않는다. [선택 증거](../evidence/module-independence-survey-20261026.md#c1-isolation-backing)는 compiler3와 변경/신규 runtime4의 한정 수용이다. epoch1600B, 거래·statement·credit/admission 동작, native/full recovery runtime 및 전체 C1은 후속 의무다.

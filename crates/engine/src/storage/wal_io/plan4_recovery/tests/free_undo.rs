@@ -143,6 +143,7 @@ fn produce<D: DirectoryPort>(
     let mut backing = vec![[0xa7; PAGE_BYTES]; 4];
     let mut frames: Vec<_> = backing.iter_mut().map(DirtyFrame::new).collect();
     let mut operation = boxed::<114_688>();
+    let mut isolation = boxed::<4_160>();
     let mut control = boxed::<RETENTION_CONTROL_BYTES>();
     let mut replay = boxed::<RETENTION_REPLAY_BYTES>();
     let pages = storage
@@ -151,6 +152,7 @@ fn produce<D: DirectoryPort>(
     let mut live = match pages.into_empty_retention(
         &mut owner,
         EmptyRetentionControlLoan {
+            isolation: &mut isolation,
             control: &mut control,
             replay: &mut replay,
         },

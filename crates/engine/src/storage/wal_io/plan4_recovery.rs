@@ -75,9 +75,14 @@ const USED_END: usize = IO_START + 4 * PAGE_BYTES;
 const SOURCE_STAMP_AT: usize = USED_END;
 const CATALOG_PRIVATE_BYTES: usize = crate::storage::semantic_catalog::PRIVATE_BYTES;
 const CATALOG_VISIBILITY_BYTES: usize = super::plan4_pages::VISIBILITY_BYTES;
+const ISOLATION_BYTES: usize = crate::storage::disk::ISOLATION_BYTES;
+const ISOLATION_AT: usize =
+    MAINTENANCE_BYTES - CATALOG_VISIBILITY_BYTES - CATALOG_PRIVATE_BYTES - ISOLATION_BYTES;
+const _: () = assert!(SOURCE_STAMP_AT + 32 <= ISOLATION_AT);
 const _: () = assert!(PHYSICAL_BYTES == base::catalog::PAGE_ARENA_BYTES);
 const _: () = assert!(
-    SOURCE_STAMP_AT + 32 + CATALOG_PRIVATE_BYTES + CATALOG_VISIBILITY_BYTES <= MAINTENANCE_BYTES
+    SOURCE_STAMP_AT + 32 + ISOLATION_BYTES + CATALOG_PRIVATE_BYTES + CATALOG_VISIBILITY_BYTES
+        <= MAINTENANCE_BYTES
 );
 const CURRENT_AT: usize = IO_START;
 const POSSIBLE_CURRENT_AT: usize = CURRENT_AT + CONTROL_BYTES;
@@ -686,8 +691,8 @@ impl<'a, 'm, 'w, W: WriterNamespace> RecoveryState<'a, 'm, 'w, W> {
         let (packing_and_scratch, reserved) = rest.split_at_mut(USED_END - LIVE_END);
         // Keep the original source stamp and reserved prefix. The final named
         // private lane transfers once; no metadata lock survives its use.
-        let private_at = reserved.len() - CATALOG_PRIVATE_BYTES - CATALOG_VISIBILITY_BYTES;
-        let (reserved, private_and_visibility) = reserved.split_at_mut(private_at);
+        let (reserved, isolation_and_rest) = reserved.split_at_mut(ISOLATION_AT - USED_END);
+        let (isolation, private_and_visibility) = isolation_and_rest.split_at_mut(ISOLATION_BYTES);
         let (private, visibility) = private_and_visibility.split_at_mut(CATALOG_PRIVATE_BYTES);
         let scratch_at = BASE_SCRATCH_START - LIVE_END;
         let scratch: &mut [[u8; PAGE_BYTES]; 4] = packing_and_scratch
@@ -757,6 +762,9 @@ impl<'a, 'm, 'w, W: WriterNamespace> RecoveryState<'a, 'm, 'w, W> {
             loans: Mutex::new(Some(RecoveryBindLoans {
                 control: control.try_into().expect("original control loan"),
                 replay: replay.try_into().expect("original replay loan"),
+                isolation: isolation
+                    .try_into()
+                    .expect("original isolation metadata loan"),
                 private: private.try_into().expect("original Catalog private loan"),
                 visibility: visibility
                     .try_into()
@@ -779,6 +787,7 @@ impl<'a, 'm, 'w, W: WriterNamespace> RecoveryState<'a, 'm, 'w, W> {
 struct RecoveryBindLoans<'a> {
     control: &'a mut [u8; 196_608],
     replay: &'a mut [u8; 1_572_864],
+    isolation: &'a mut [u8; ISOLATION_BYTES],
     private: &'a mut [u8; CATALOG_PRIVATE_BYTES],
     visibility: &'a mut [u8; CATALOG_VISIBILITY_BYTES],
     restored: RestoredRetention,
@@ -883,6 +892,7 @@ type RecoveryBindingParts<'r, 'a> = (
     RecoveryRetentionBinding<'r, 'a>,
     &'a mut [u8; 196_608],
     &'a mut [u8; 1_572_864],
+    &'a mut [u8; ISOLATION_BYTES],
     &'a mut [u8; CATALOG_PRIVATE_BYTES],
     &'a mut [u8; CATALOG_VISIBILITY_BYTES],
 );
@@ -917,6 +927,7 @@ impl<'a, W: WriterNamespace> Plan4RecoveryRuntime<'a, '_, '_, W> {
             },
             loan.control,
             loan.replay,
+            loan.isolation,
             loan.private,
             loan.visibility,
         ))
@@ -1012,7 +1023,7 @@ impl<'a, 'm, 'w, W: WriterNamespace> Plan4RecoveryRuntime<'a, 'm, 'w, W> {
     {
         let p = Plan4RecoveryPhase::Bind;
         let pages = self.bind_original_pages(core, frames, operation)?;
-        let (binding, control, replay, private, visibility) = self
+        let (binding, control, replay, isolation, private, visibility) = self
             .take_recovery_binding()
             .map_err(|e| self.bound_error(p, e.cause, Effect::CallerMustResolve))?;
         *phase = if binding.cancel_reserved_first() {
@@ -1023,7 +1034,11 @@ impl<'a, 'm, 'w, W: WriterNamespace> Plan4RecoveryRuntime<'a, 'm, 'w, W> {
         let live = pages
             .into_recovered_disk_session(
                 owner,
-                super::plan4_pages::EmptyRetentionControlLoan { control, replay },
+                super::plan4_pages::EmptyRetentionControlLoan {
+                    control,
+                    replay,
+                    isolation,
+                },
                 binding,
             )
             .map_err(|e| self.bound_error(p, Plan4RecoveryCause::Retention(e.cause), e.effect))?;

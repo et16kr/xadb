@@ -538,7 +538,7 @@ impl<'s, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace> Plan4Pages<'s, 'c, 'p, 'd, 
                 RetentionCause::Invariant,
             ));
         }
-        let mut control = control::RetentionControl::new(loan.control);
+        let mut control = control::RetentionLedger::new(loan.control);
         control.source = source;
         let mut history = history::runtime::RuntimeHistory::new(
             storage,
@@ -594,11 +594,18 @@ impl<'s, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace> Plan4Pages<'s, 'c, 'p, 'd, 
         // Its immutable witness references do not retain a copied BaseView.
         Ok(DiskSession {
             catalog_visibility: None,
-            inner: self,
-            control,
+            control: RetentionControl {
+                ledger: control,
+                isolation: std::sync::Mutex::new(IsolationLedger::new(
+                    storage,
+                    self.pool.bound_core(),
+                    loan.isolation,
+                )),
+            },
             history,
             flush,
             recovery_binding: Some(binding),
+            inner: self,
         })
     }
 }
@@ -663,7 +670,7 @@ impl<'s, 'c, W: WriterNamespace> Plan4Retention<'_, 's, 'c, '_, '_, '_, '_, '_, 
         if self.flush.phase != RetentionFlushPhase::Ready {
             return Err(unchanged(RetentionPhase::Flush, RetentionCause::Busy));
         }
-        if self.control.pending.is_some() {
+        if self.control.ledger.pending.is_some() {
             return Err(fatal(
                 self.inner.storage,
                 RetentionPhase::Prepare,
@@ -678,8 +685,14 @@ impl<'s, 'c, W: WriterNamespace> Plan4Retention<'_, 's, 'c, '_, '_, '_, '_, '_, 
             .wal()
             .prefix()
             .map_err(|e| fatal(storage, RetentionPhase::Census, RetentionCause::Wal(e)))?;
-        history::validate_live(storage, &self.control, self.history.exclusive()?, prefix)?;
+        history::validate_live(
+            storage,
+            &self.control.ledger,
+            self.history.exclusive()?,
+            prefix,
+        )?;
         self.control
+            .ledger
             .check_ledger(storage.profile(), prefix)
             .map_err(|e| fatal(storage, RetentionPhase::Census, e.cause))?;
         Ok(())
@@ -712,7 +725,7 @@ impl<'s, 'c, W: WriterNamespace> Plan4Retention<'_, 's, 'c, '_, '_, '_, '_, '_, 
         let storage = self.inner.storage;
         let namespace = storage.profile().spec().namespace;
         for index in 0..control::ATT_SLOTS {
-            let row = self.control.row(index);
+            let row = self.control.ledger.row(index);
             if row.iter().all(|b| *b == 0) {
                 continue;
             }
@@ -734,7 +747,7 @@ impl<'s, 'c, W: WriterNamespace> Plan4Retention<'_, 's, 'c, '_, '_, '_, '_, '_, 
                 ));
             };
             let mut job = None;
-            for (ordinal, cell) in self.control.jobs().iter().enumerate() {
+            for (ordinal, cell) in self.control.ledger.jobs().iter().enumerate() {
                 let spec = retention_page::decode_job(cell, namespace)
                     .map_err(|e| {
                         fatal(
@@ -770,7 +783,7 @@ impl<'s, 'c, W: WriterNamespace> Plan4Retention<'_, 's, 'c, '_, '_, '_, '_, '_, 
                 )),
             };
         }
-        for (ordinal, cell) in self.control.jobs().iter().enumerate() {
+        for (ordinal, cell) in self.control.ledger.jobs().iter().enumerate() {
             let spec = retention_page::decode_job(cell, namespace)
                 .map_err(|e| {
                     fatal(
@@ -804,7 +817,7 @@ impl<'s, 'c, W: WriterNamespace> Plan4Retention<'_, 's, 'c, '_, '_, '_, '_, '_, 
         owner: &mut Owner<'c, 's>,
     ) -> Result<RetentionRecoveryStep> {
         self.recovery_enter(owner)?;
-        if self.control.population.reserved() {
+        if self.control.ledger.population.reserved() {
             // New epoch starts at the base LSN; cancel is necessarily its first
             // semantic frame. No residency load or other writer is exposed.
             if !self
@@ -892,7 +905,7 @@ impl<'s, 'c, W: WriterNamespace> Plan4Retention<'_, 's, 'c, '_, '_, '_, '_, '_, 
         &mut self,
         index: usize,
     ) -> Result<Option<Plan4Target>> {
-        if self.recovery_binding.is_none() || self.control.population.reserved() {
+        if self.recovery_binding.is_none() || self.control.ledger.population.reserved() {
             return Err(unchanged(RetentionPhase::Flush, RetentionCause::WrongState));
         }
         self.health()?;
@@ -1171,7 +1184,7 @@ pub(super) fn phase_source_bytes<W: WriterNamespace>() -> RecoveryPhaseCensus {
 /// A base may additionally retain one Prepared allocation reservation; its
 /// separate descriptor credit survives until the compulsory first cancel.
 fn restored_credits(
-    control: &control::RetentionControl<'_, '_, '_>,
+    control: &control::RetentionLedger<'_, '_, '_>,
     profile: Profile,
     prefix: crate::storage::wal_io::WalPrefix,
 ) -> ObservationResult<(u64, u64)> {

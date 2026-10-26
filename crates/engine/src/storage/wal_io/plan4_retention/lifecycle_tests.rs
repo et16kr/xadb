@@ -269,10 +269,11 @@ macro_rules! fixture {
         let mut backing = vec![[0xa7; PAGE_BYTES]; 4];
         let mut frames: Vec<_> = backing.iter_mut().map(DirtyFrame::new).collect();
         let mut operation = boxed::<114_688>();
+        let mut isolation = boxed::<4_160>();
         let mut control = boxed::<RETENTION_CONTROL_BYTES>();
         let mut replay = boxed::<RETENTION_REPLAY_BYTES>();
         let old = $storage.bind_plan4_pages(&$core, &mut frames, &mut operation).unwrap();
-        let mut $bound = match old.into_empty_retention(&mut $owner, EmptyRetentionControlLoan { control: &mut control, replay: &mut replay }) {
+        let mut $bound = match old.into_empty_retention(&mut $owner, EmptyRetentionControlLoan { isolation: &mut isolation, control: &mut control, replay: &mut replay }) {
             Ok(v) => v,
             Err(IntoRetentionError::Before { error, .. }) | Err(IntoRetentionError::Fatal(error)) => panic!("activation: {error:?}"),
         };
@@ -302,7 +303,7 @@ fn complete<'s, 'c>(
     assert_eq!(&bytes[25_296..63_296], initialized.frame);
     assert_page(bound, 0, &initialized.allocator);
     assert_eq!(
-        &bound.control.row(control::ALLOCATION_SLOT)[..1536],
+        &bound.control.ledger.row(control::ALLOCATION_SLOT)[..1536],
         initialized.descriptor
     );
     drop((bytes, reserve, initialized));
@@ -384,13 +385,17 @@ fn complete<'s, 'c>(
             _ => unreachable!(),
         };
         assert_eq!(
-            &bound.control.row(control::AGING_SLOT)[..1536],
+            &bound.control.ledger.row(control::AGING_SLOT)[..1536],
             oracle.raw(aging_descriptor)
         );
         if matches!(index, 1 | 2) {
-            let slot = bound.control.slot(actor).expect("actual stable ATT row");
+            let slot = bound
+                .control
+                .ledger
+                .slot(actor)
+                .expect("actual stable ATT row");
             assert_eq!(
-                &bound.control.row(slot)[..1536],
+                &bound.control.ledger.row(slot)[..1536],
                 oracle.raw(if index == 1 {
                     "tx-begin.descriptor"
                 } else {
@@ -402,7 +407,7 @@ fn complete<'s, 'c>(
             // Its terminal descriptor remains in the real staged operation
             // frame, so compare that transient result and the cleared bank.
             assert!(
-                bound.control.bytes[..32 * control::SLOT_BYTES]
+                bound.control.ledger.bytes[..32 * control::SLOT_BYTES]
                     .iter()
                     .all(|b| *b == 0)
             );
@@ -414,16 +419,16 @@ fn complete<'s, 'c>(
             }
         }
         owner.check_idle().unwrap();
-        assert!(bound.control.pending.is_none());
+        assert!(bound.control.ledger.pending.is_none());
     }
     assert_eq!(expected_offset, 254_544);
     assert!(
-        bound.control.bytes[..32 * control::SLOT_BYTES]
+        bound.control.ledger.bytes[..32 * control::SLOT_BYTES]
             .iter()
             .all(|b| *b == 0)
     );
     assert_eq!(
-        &bound.control.row(control::AGING_SLOT)[..1536],
+        &bound.control.ledger.row(control::AGING_SLOT)[..1536],
         oracle.raw("aging-finish.descriptor")
     );
     let (_, reader, _) = bound.split();
@@ -826,7 +831,10 @@ fn retention_live_writer_boundaries() {
                     assert_eq!(snapshots(&bound), before);
                     assert_eq!(effects(&state).1, 0);
                     assert_eq!(
-                        (bound.control.issued_local, bound.control.adopted_local),
+                        (
+                            bound.control.ledger.issued_local,
+                            bound.control.ledger.adopted_local
+                        ),
                         if case == 1 { (0, 0) } else { (1, 0) }
                     );
                     if case == 2 {
@@ -897,7 +905,7 @@ fn retention_live_writer_boundaries() {
                     }
                     assert!(storage.session_fence().is_fenced());
                     if case >= 4 {
-                        assert!(bound.control.pending.is_some());
+                        assert!(bound.control.ledger.pending.is_some());
                         assert_eq!(fault_hits(&state), 1);
                     }
                     assert_eq!(page_bytes(&bound, 0).0.total, 0);
@@ -928,20 +936,21 @@ fn retention_live_activation() {
             let mut backing = vec![[0xa7; PAGE_BYTES]; 4];
             let mut frames: Vec<_> = backing.iter_mut().map(DirtyFrame::new).collect();
             let mut operation = boxed::<114_688>();
+            let mut isolation = boxed::<4_160>();
             let mut control = boxed::<RETENTION_CONTROL_BYTES>();
             let mut replay = boxed::<RETENTION_REPLAY_BYTES>();
             let old = storage.bind_plan4_pages(&core, &mut frames, &mut operation).unwrap();
             if case == 3 { std::mem::forget(owner.try_apply().unwrap()); }
             clear(&state);
             let io = effects(&state);
-            let result = old.into_empty_retention(&mut owner, EmptyRetentionControlLoan { control: &mut control, replay: &mut replay });
+            let result = old.into_empty_retention(&mut owner, EmptyRetentionControlLoan { isolation: &mut isolation, control: &mut control, replay: &mut replay });
             match (case, result) {
                 (1 | 4, Ok(bound)) => {
                     assert!(bound.inner.pool.retention_payloads().unwrap());
                     assert!(std::ptr::eq(bound.inner.storage, &storage));
-                    assert_eq!((bound.control.issued_local, bound.control.adopted_local), (0, 0));
-                    assert!(bound.control.pending.is_none() && bound.control.durable.is_none());
-                    assert!(bound.control.bytes[..65_536].iter().all(|b| *b == 0));
+                    assert_eq!((bound.control.ledger.issued_local, bound.control.ledger.adopted_local), (0, 0));
+                    assert!(bound.control.ledger.pending.is_none() && bound.control.ledger.durable.is_none());
+                    assert!(bound.control.ledger.bytes[..65_536].iter().all(|b| *b == 0));
                     assert_eq!(effects(&state).1, 0);
                     if case == 1 {
                         let oracle = Oracle::new();
@@ -950,7 +959,7 @@ fn retention_live_activation() {
                             // The fixed plan4 Job cell region ends at the page digest.
                             let first = if page == 6 { 12_256 } else { 992 };
                             let offset = first + (ordinal % 15) * 1024;
-                            assert_eq!(bound.control.jobs()[ordinal].as_slice(), &oracle.genesis(page)[offset..offset + 1024]);
+                            assert_eq!(bound.control.ledger.jobs()[ordinal].as_slice(), &oracle.genesis(page)[offset..offset + 1024]);
                         }
                     }
                     let before_drop = effects(&state);

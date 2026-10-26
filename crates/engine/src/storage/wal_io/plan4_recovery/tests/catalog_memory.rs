@@ -782,6 +782,8 @@ macro_rules! with_fresh {
             let mut operation = boxed::<114_688>();
             let (prefix, visibility) = maintenance.split_at_mut(12_574_720);
             let (prefix, private) = prefix.split_at_mut(12_148_736);
+            let (prefix, isolation) = prefix.split_at_mut(12_144_576);
+            let isolation: &mut [u8; 4_160] = isolation.try_into().unwrap();
             let (prefix, control) = prefix.split_at_mut(6_815_744);
             let (reader_private, prefix) = prefix.split_at_mut(PRIVATE_BYTES);
             let replay: &mut [u8; RETENTION_REPLAY_BYTES] = (&mut prefix
@@ -797,9 +799,14 @@ macro_rules! with_fresh {
             let pages = storage
                 .bind_plan4_pages(&core, &mut frames, &mut operation)
                 .unwrap();
-            let mut live = match pages
-                .into_empty_retention(&mut owner, EmptyRetentionControlLoan { control, replay })
-            {
+            let mut live = match pages.into_empty_retention(
+                &mut owner,
+                EmptyRetentionControlLoan {
+                    control,
+                    replay,
+                    isolation,
+                },
+            ) {
                 Ok(value) => value,
                 Err(IntoRetentionError::Before { error, .. })
                 | Err(IntoRetentionError::Fatal(error)) => {

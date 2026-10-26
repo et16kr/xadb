@@ -24,7 +24,7 @@ fn job(bytes: &[u8], profile: crate::storage::control::Profile) -> Result<JobVie
 }
 
 pub(super) fn check(
-    bank: &RetentionControl<'_, '_, '_>,
+    bank: &RetentionLedger<'_, '_, '_>,
     profile: crate::storage::control::Profile,
     prefix: WalPrefix,
 ) -> Result<(u64, u64)> {

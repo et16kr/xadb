@@ -41,6 +41,9 @@ fn canonical_transfer(reject_foreign_owner: bool) {
     let mut frames: Vec<_> = backing.iter_mut().map(DirtyFrame::new).collect();
     let mut operation = boxed::<114_688>();
     let operation_pointer = operation.as_ptr();
+    let mut isolation = boxed::<4_160>();
+    isolation.fill(0xa7);
+    let isolation_pointer = isolation.as_ptr();
     let mut control = boxed::<RETENTION_CONTROL_BYTES>();
     let control_pointer = control.as_ptr();
     let mut replay = boxed::<RETENTION_REPLAY_BYTES>();
@@ -65,6 +68,7 @@ fn canonical_transfer(reject_foreign_owner: bool) {
         match old.into_disk_session(
             &mut foreign_owner,
             EmptyRetentionControlLoan {
+                isolation: &mut isolation,
                 control: &mut control,
                 replay: &mut replay,
             },
@@ -83,10 +87,12 @@ fn canonical_transfer(reject_foreign_owner: bool) {
     } else {
         old
     };
+    assert!(isolation.iter().all(|byte| *byte == 0xa7));
     let mut session: crate::storage::disk::DiskSession<'_, '_, '_, '_, '_, '_, '_, '_, _> =
         match old.into_disk_session(
             &mut owner,
             EmptyRetentionControlLoan {
+                isolation: &mut isolation,
                 control: &mut control,
                 replay: &mut replay,
             },
@@ -103,7 +109,7 @@ fn canonical_transfer(reject_foreign_owner: bool) {
     );
     assert_eq!(session.inner.operation.as_ptr(), operation_pointer);
     assert!(session.inner._flush_workspace.is_none());
-    assert_eq!(session.control.bytes.as_ptr(), control_pointer);
+    assert_eq!(session.control.ledger.bytes.as_ptr(), control_pointer);
     assert_eq!(
         session.history.exclusive().unwrap().as_ptr(),
         replay_pointer
@@ -121,9 +127,19 @@ fn canonical_transfer(reject_foreign_owner: bool) {
         slot_pointer
     );
     assert_eq!(storage.wal().prefix().unwrap(), prefix);
+    {
+        let isolation = session.control.isolation.lock().unwrap();
+        assert_eq!(isolation.bytes.as_ptr(), isolation_pointer);
+        assert_eq!(&isolation.bytes[..8], &1_u64.to_le_bytes());
+        assert!(isolation.bytes[8..].iter().all(|byte| *byte == 0));
+        assert!(std::ptr::eq(isolation.core, &core));
+        assert!(std::ptr::eq(isolation.binding, &storage.binding));
+        assert_eq!(isolation.fence as *const _, fence_pointer);
+    }
+    let isolation_mutex = &session.control.isolation as *const _;
     let pool_pointer = &session.inner.pool as *const _;
     let history_pointer = &session.history as *const _;
-    let ledger_pointer = &session.control as *const _;
+    let ledger_pointer = &session.control.ledger as *const _;
     let flush_pointer = &session.flush as *const _;
     {
         let (mutation, read, maintenance) = session.split();
@@ -133,6 +149,14 @@ fn canonical_transfer(reject_foreign_owner: bool) {
         assert_eq!(mutation.history as *const _, history_pointer);
         assert_eq!(read.history as *const _, history_pointer);
         assert_eq!(mutation.control as *const _, ledger_pointer);
+        assert_eq!(mutation.isolation as *const _, isolation_mutex);
+        assert_eq!(read.isolation as *const _, isolation_mutex);
+        // The writer's exclusive durable borrow coexists with the shared mutex.
+        let isolation = read.isolation.try_lock().unwrap();
+        assert_eq!(isolation.bytes.as_ptr(), isolation_pointer);
+        assert_eq!(mutation.control.bytes.as_ptr(), control_pointer);
+        assert!(mutation.isolation.try_lock().is_err());
+        drop(isolation);
         assert_eq!(maintenance.control as *const _, flush_pointer);
         assert_eq!(mutation.operation.as_ptr(), operation_pointer);
         for port_storage in [mutation.storage, read.storage, maintenance.storage] {
@@ -171,4 +195,24 @@ fn disk_session_moves_original_resources_and_splits_disjoint_ports() {
 #[test]
 fn disk_session_before_returns_original_owner_for_canonical_retry() {
     canonical_transfer(true);
+}
+
+#[test]
+fn disk_session_isolation_backing_and_carriers_are_accounted() {
+    let live = resources::source_census::<port::Writer>();
+    let recovered = super::super::super::plan4_recovery::source_census::<port::Writer>();
+    let directory = dirty_frame::plan4_core_census().directory;
+    println!("C1_ISOLATION_LIVE {live:?}");
+    println!("C1_ISOLATION_RECOVERED {recovered:?}");
+    assert_eq!(live.caller_isolation, 4_160);
+    assert_eq!(live.metadata - live.peak, 72_256);
+    assert_eq!(
+        recovered.metadata - recovered.retained_live - directory,
+        77_888
+    );
+    assert!(
+        std::mem::size_of::<RetentionControl<'_, '_, '_>>()
+            >= std::mem::size_of::<control::RetentionLedger<'_, '_, '_>>()
+                + std::mem::size_of::<Mutex<IsolationLedger<'_, '_, '_>>>()
+    );
 }

@@ -6254,5 +6254,52 @@
     "validation": "compiler4 PASS; two new owner transfer memory cases PASS once; independent D1/D2 accepted limited; original r1/r2 FAIL retained",
     "remaining_supply": "control/isolation split, separate backing and source admission, selected recovery runtime acceptance, Catalog/Row adapters and terminal migration",
     "source_roots_changed": false
+  },
+  "dev3_module_c1_isolation": {
+    "status": "ACCEPTED_LIMITED_D1_D2",
+    "contract_ref": "dev3-module-boundaries.md#isolation-api",
+    "evidence_ref": "module-independence-survey-20261026.md#c1-isolation-backing",
+    "implemented_paths": [
+      "crates/engine/src/storage/wal_io/plan4_apply/isolation.rs",
+      "tests/fixtures/dev3-module-c1/isolation-compiler/canonical.rs",
+      "tests/fixtures/dev3-module-c1/isolation-compiler/isolation_reuse.rs",
+      "tests/fixtures/dev3-module-c1/isolation-compiler/manifest.json"
+    ],
+    "modified_paths": [
+      "crates/engine/src/storage/disk.rs",
+      "crates/engine/src/storage/wal_io/disk_api.rs",
+      "crates/engine/src/storage/wal_io/plan4_apply.rs",
+      "crates/engine/src/storage/wal_io/plan4_apply/owner_tests.rs",
+      "crates/engine/src/storage/wal_io/plan4_recovery.rs",
+      "crates/engine/src/storage/wal_io/plan4_recovery/resources.rs",
+      "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_create.rs",
+      "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory.rs",
+      "crates/engine/src/storage/wal_io/plan4_recovery/tests/free_undo.rs",
+      "crates/engine/src/storage/wal_io/plan4_recovery/tests/support.rs",
+      "crates/engine/src/storage/wal_io/plan4_retention/catalog_live.rs",
+      "crates/engine/src/storage/wal_io/plan4_retention/control.rs",
+      "crates/engine/src/storage/wal_io/plan4_retention/control/catalog.rs",
+      "crates/engine/src/storage/wal_io/plan4_retention/create_pair.rs",
+      "crates/engine/src/storage/wal_io/plan4_retention/free_undo_tests.rs",
+      "crates/engine/src/storage/wal_io/plan4_retention/history.rs",
+      "crates/engine/src/storage/wal_io/plan4_retention/lifecycle_tests.rs",
+      "crates/engine/src/storage/wal_io/plan4_retention/load.rs",
+      "crates/engine/src/storage/wal_io/plan4_retention/population.rs",
+      "crates/engine/src/storage/wal_io/plan4_retention/read/catalog_tests.rs",
+      "crates/engine/src/storage/wal_io/plan4_retention/recovery.rs",
+      "crates/engine/src/storage/wal_io/plan4_retention/recovery/catalog.rs",
+      "crates/engine/src/storage/wal_io/plan4_retention/recovery_observation_tests.rs",
+      "crates/engine/src/storage/wal_io/plan4_retention/resources.rs",
+      "crates/engine/src/storage/wal_io/plan4_retention/s5_tests.rs",
+      "crates/engine/src/storage/wal_io/plan4_retention/visibility/binding.rs"
+    ],
+    "scope": "Original durable RetentionLedger and separate 4160-byte isolation backing in the same RetentionControl; fresh/recovery transfer, shared reader/writer mutex and metadata census only",
+    "recovery_isolation_range": [
+      12144576,
+      12148736
+    ],
+    "validation": "compiler3 PASS; changed owner2, new census1, adjusted foreign-core fixture1 PASS once; independent D1/D2 accepted limited; r1/r2 FAIL retained",
+    "remaining_supply": "1600-byte epoch backing/activation, transaction and long/short source admission, native and full recovery runtime acceptance",
+    "source_roots_changed": false
   }
 }

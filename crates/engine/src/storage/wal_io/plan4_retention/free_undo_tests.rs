@@ -55,10 +55,11 @@ macro_rules! original {
         let mut backing = vec![[0xa7; PAGE_BYTES]; 4];
         let mut frames: Vec<_> = backing.iter_mut().map(DirtyFrame::new).collect();
         let mut operation = boxed::<114_688>();
+        let mut isolation = boxed::<4_160>();
         let mut control = boxed::<RETENTION_CONTROL_BYTES>();
         let mut replay = boxed::<RETENTION_REPLAY_BYTES>();
         let old = $storage.bind_plan4_pages(&$core, &mut frames, &mut operation).unwrap();
-        let mut $live = match old.into_empty_retention(&mut $owner, EmptyRetentionControlLoan {
+        let mut $live = match old.into_empty_retention(&mut $owner, EmptyRetentionControlLoan { isolation: &mut isolation,
             control: &mut control, replay: &mut replay,
         }) {
             Ok(v) => v,
@@ -189,7 +190,7 @@ fn assert_page(live: &Live<'_, '_, '_, '_, '_, '_, '_, '_>, number: u64, expecte
 fn memory_terminal(live: &Live<'_, '_, '_, '_, '_, '_, '_, '_>, oracle: &FreeUndoOracle, lsn: u64) {
     assert_page(live, 0, &oracle.memory_allocator(lsn));
     assert_eq!(
-        &live.control.row(control::ALLOCATION_SLOT)[..1536],
+        &live.control.ledger.row(control::ALLOCATION_SLOT)[..1536],
         oracle.memory_descriptor(lsn)
     );
 }
@@ -236,7 +237,7 @@ fn free_undo_original_owner_gap_cancel_reuse_flush_reload() {
             );
         }
         assert_eq!(
-            &live.control.row(control::AGING_SLOT)[..1536],
+            &live.control.ledger.row(control::AGING_SLOT)[..1536],
             oracle.reference("memory-aging-finish.descriptor")
         );
         let undo = initialize(&mut live, &mut owner, &core, true, page(10, 2), 9);
@@ -589,13 +590,13 @@ fn free_undo_new_role_preflight_and_install_failure_boundaries() {
                     before
                 );
                 assert_eq!(probe::claim_state(&live.inner.pool), (false, 0));
-                assert_eq!(live.control.population.test_state(), (false, false));
+                assert_eq!(live.control.ledger.population.test_state(), (false, false));
             } else if case == 2 {
                 let token = live.reserve_undo(&mut owner).unwrap();
                 assert_eq!(token.page(), page(10, 2));
                 drop(token);
                 assert!(storage.session_fence().is_fenced());
-                assert_eq!(live.control.population.test_state(), (true, false));
+                assert_eq!(live.control.ledger.population.test_state(), (true, false));
                 assert_eq!(probe::claim_state(&live.inner.pool), (false, 0));
                 let raw = wal_bytes(&state);
                 assert_eq!(&raw[63_296..], oracle.native_frame(3));
@@ -720,10 +721,11 @@ fn free_undo_new_role_preflight_and_install_failure_boundaries() {
                 assert_eq!((a.total, p.total), (0, 0));
                 assert!(a.claim_present && p.claim_present);
                 assert!(!a.initializer_pins_held && !p.initializer_pins_held);
-                assert_eq!(live.control.population.test_state(), (true, true));
-                assert_eq!(live.control.pending.unwrap().location().lsn, 4);
+                assert_eq!(live.control.ledger.population.test_state(), (true, true));
+                assert_eq!(live.control.ledger.pending.unwrap().location().lsn, 4);
                 assert_eq!(
                     live.control
+                        .ledger
                         .durable
                         .as_ref()
                         .unwrap()
@@ -733,7 +735,7 @@ fn free_undo_new_role_preflight_and_install_failure_boundaries() {
                     3
                 );
                 assert_eq!(
-                    &live.control.row(control::ALLOCATION_SLOT)[..1536],
+                    &live.control.ledger.row(control::ALLOCATION_SLOT)[..1536],
                     oracle.native_descriptor(if metadata { 4 } else { 3 })
                 );
                 let append = storage
