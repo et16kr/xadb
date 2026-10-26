@@ -1,0 +1,36 @@
+{
+  "schema_version": 1,
+  "protocol": "xadb-slot-gate-v1",
+  "go_deadline_ms": 660000,
+  "ack_deadline_ms": 60000,
+  "environment": {
+    "profile": "pf04-profile-b-v1",
+    "decision": "PF04-PB-001",
+    "plan": "devdoc/plans/dev2-pf04-resolution-plan.md#measurement-profile-b",
+    "cpus": {"worker": 2, "sibling": 18, "supervisor": 4},
+    "device": {"filesystem_uuid": "1c377269-2890-4dab-9355-0517ec36b0a1", "serial": "S5GYNG0R112060F",
+               "name": "resolved at each campaign from the mounted UUID; kernel block names change across boots"},
+    "b1_pre_pair_idle": {
+      "window_seconds": 10,
+      "maximum_measured_cpu_busy": [5, 100],
+      "maximum_device_io_ticks": [5, 100],
+      "maximum_other_cpu_mean_busy": [10, 100],
+      "maximum_wait_seconds": 600,
+      "second_slot": "starts without waiting"
+    },
+    "b2_slot": {
+      "window": "GO sent to DONE received",
+      "cpu18_nonidle_ticks_maximum": 1,
+      "cpu18_nonidle_fields": ["user", "nice", "system", "irq", "softirq", "steal"],
+      "cpu2_nice_steal_ticks_maximum": 0,
+      "pmu_profile": "slot-env-v1",
+      "pmu_events": ["cycles", "ref-cycles"],
+      "cpu18_cycles_maximum_of_cpu2": [5, 100],
+      "cpu2_cycles_per_ref_tolerance_of_campaign_median": [3, 100],
+      "covariate_median_pair_ratio_interval": [[99, 100], [101, 100]],
+      "pmu_quality": "unscaled, every row 100% coverage and nonzero runtime"
+    },
+    "campaign": {"pairs": 10, "slot_seconds": 60, "maximum_seconds": 1800, "budget_seconds": 10800},
+    "replacement": {"acceptance_roles_maximum": 2, "seed_offsets": [0, 1000000, 2000000], "c3_roles": 0}
+  }
+}

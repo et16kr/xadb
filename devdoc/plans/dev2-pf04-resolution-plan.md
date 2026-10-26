@@ -518,7 +518,7 @@ user instructions 중앙비1.053185367/1.076304360와 user CPI1.036546289/1.0467
 
 ## 후속 해결 계획: C3 계측 counter의 locked RMW 제거와 측정 profile B
 
-2026-10-25 · **실행 전 계획 / 독립 D2 검토 r5 PASS_PLAN_ONLY_WITH_NONBLOCKING 채택 / 구현·build·측정 NOT_RUN / 영속 처리 결정 대기 / 원 PF04 네 FAIL·DEV2 미완료 유지**
+2026-10-25 계획 · 2026-10-26 S1 · **독립 D2 검토 r5 PASS_PLAN_ONLY_WITH_NONBLOCKING 채택 / [S1 profile B 도구](#s1-execution) 구현·선택 검증·실제 연결 완료 / C3 구현·측정(S2–S7) NOT_RUN / 영속 처리 결정 대기 / 원 PF04 네 FAIL·DEV2 미완료 유지**
 
 사용자의 “C3(locked RMW 제거)와 측정 profile 보완(A/B)을 실행 전 계획으로 작성하고 독립 검토까지 진행, 영속 처리는 결정 대기” 요청에 따른 D2 계획이다. 결정 ID는 C3가 `PF04-C3-001`, 측정 profile이 `PF04-PB-001`, 영속 처리가 `PF04-DUR-001`(결정 대기)이다.
 
@@ -781,4 +781,12 @@ B는 [DP03](../policies/development-policy.md#section-4)의 실행 전 D2 profil
 - r5: 차단 지적 없음. 검토자는 baseline ELF의 모든 `lock` 지점이 새 규칙의 한 분류에만 속함을 다시 확인했다.
 - **남은 비차단 N-r5-1(S1 계약 등록 때 반영):** worker panic·오류 응답은 controller에서 validity INVALID·correctness UNKNOWN으로도 보여, 증상만으로는 INCONCLUSIVE_COMPARISON 행과도 맞는다. S1에서 다음을 계약에 명시한다. 한 campaign 안에서는 제품 결함·correctness FAIL 행이 TERMINATED와 INCONCLUSIVE_COMPARISON보다 우선한다. 제품 결함은 worker의 panic 종료 상태, worker `Output.error`, `check_output` 불일치이며, 환경 판정 hash를 기록한 뒤 native 증거에서 읽는다. signal로 종료된 worker와 C3 비교의 baseline 쪽 실패는 TERMINATED/INCOMPLETE다. 이 항목은 PASS나 채택 경로를 만들지 않는 분류 문구이며, 검토받은 본문은 r5 그대로 둔다.
 
-C3·B 계획 상태: **독립 D2 검토 r5 PASS_PLAN_ONLY_WITH_NONBLOCKING 채택 / 실행 전 / S1–S7 착수는 사용자 지시 대기**. 검토 projection은 본 절 anchor부터 `### 검토 상태` 직전까지에서 둘째 줄의 날짜·상태 문장을 뺀 본문이다. 계획 채택은 구현·실행 통과가 아니다.
+C3·B 계획 상태: **독립 D2 검토 r5 PASS_PLAN_ONLY_WITH_NONBLOCKING 채택 / S1 완료 / S2–S7 착수는 사용자 지시 대기**. 검토 projection은 본 절 anchor부터 `### 검토 상태` 직전까지에서 둘째 줄의 날짜·상태 문장을 뺀 본문이다. 계획 채택은 구현·실행 통과가 아니다.
+
+<a id="s1-execution"></a>
+
+### S1 실행 기록 — 2026-10-26
+
+사용자가 S1부터 착수하도록 지시했고, 착수 때 받기로 한 PMU 확인에서 `slot-env-v1`을 허용했다. controller slot gate, supervisor·환경 판정기, `slot-env-v1`과 동결 profile을 구현했다. 계약은 [K0-005 측정 profile B 추가 계약](../implementation/dev2-implementation.md#k0-005-profile-b)에 등록했고 비차단 N-r5-1도 그 계약에 반영했다. 위 검토 본문은 r5 그대로다.
+
+변경한 source별로 신규 controller 시험7함수, Python 시험33함수, 바뀐 verify 경로를 지나는 기존 시험1함수를 실행했다. 독립 검토 r1이 지적한 session별 3시간 예산(차단)은 닫힌 이전 ledger의 사용량을 잇도록 고쳤고, r2·r3는 `PASS_SCOPED_S1_TOOL`이다. 이후 session은 S1 연결 session의 ledger를 닫고 이어 받는다. 실제 native 연결의 r1 init은 장치 이름 고정으로 실패했다. 장치를 UUID·serial로 식별하도록 고친 r2 연결은 Off/Off 2 slot·PMU 포함으로 `TOOL_CONNECTED`였다. 판정기 preflight는 보존 창 80개 중 79개 VALID다. 세부·한계는 [S1 증거](../evidence/dev2-pf04-profile-b-s1-20261026.md)를 따른다. S2–S7과 영속 결정은 NOT_RUN이다.

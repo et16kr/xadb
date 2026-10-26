@@ -1,5 +1,8 @@
 # DEV2 구현 기록
 
+<a id="pf04-profile-b-s1"></a>
+2026-10-26 [PF04 측정 profile B 도구(S1)](../evidence/dev2-pf04-profile-b-s1-20261026.md): controller slot gate·supervisor/환경 판정기·`slot-env-v1`을 구현하고 [K0-005 계약](#k0-005-profile-b)에 등록했다. 신규 controller7·Python33함수와 바뀐 경로의 기존1함수를 source별로 선택 검증했다. 독립 검토 r1의 예산 연계 차단 지적을 고쳤고 r2·r3는 `PASS_SCOPED_S1_TOOL`이다. 실제 native 연결은 r1 init이 장치 이름 고정으로 실패한 뒤 r2에서 `TOOL_CONNECTED`였다. C3·PF04 인수(S2–S7)는 NOT_RUN이며 원 PF04 네 FAIL·DEV2 미완료를 유지한다.
+
 <a id="pf04-frequency-control"></a>
 2026-10-25 [PF04 CPU 요청 제어 도구](../evidence/dev2-pf04-frequency-control-20261025.md): 도구12·driver4개의 신규 선택 검증 뒤 첫 실제 연결에서 apply/restore 즉시 readback 확인이 실패했다. 최종 환경234필드는 원 값과 동일·관련 프로세스0을 확인했으나 도구 인수는 미완료다. 나머지2개는미실행이며 사용자 조건에 따라 추가 작업을 멈추고 격리 lease·원 실패를 보존한다. 원 PF04 네 FAIL·DEV2 미완료는 유지한다.
 
@@ -258,6 +261,44 @@ engine의 [diagnostics](../../crates/engine/src/diagnostics.rs)와 기존 substr
 세 campaign의 원시20run씩과 원본 replay 계보·새 run IDs·실패 축을 보존했다. 이 표의 비율은 표시용 근삿값이며 판정에는 원본 정수 비율을 사용했다. 최초 audit의 p99 실패는 후속 replay PASS로 지우지 않는다. 모든 promotion은 INCOMPLETE이며 CPU·elapsed·외부 시간·RSS의 현재 한도 통과만으로 p99 한도나 원인 규명을 대신하지 않는다. 실제 원인·국소 최적화(PF12), 통합 PF 인수, bounded concurrent 전수,30분 stress/fuzz, K1–K5와 영속성은 남은 의무다. K0·DEV2 전체는 INCOMPLETE다.
 
 최종 독립 검토 `/root/dev2_performance_review`는 현재/보존 source 지문, wrapper19개·필수 시험35개 및 하위28/8/8개 실행 로그 hash, controller/worker/config/receipt/index와60개 실행 원시 파일 hash를 읽기 전용으로 대조했다. 모든 run ID의 유일성, journal↔stdout·envelope·65,536개 값·최종/old 행·counter·Detailed sequence/drop·시간 포함 관계를 별도로 확인했다. 원본 Always campaign은 별도 cwd 사본과 replay의 original에서 byte-identical이며 median/interval·최악 pair 표본 p99의 Fraction 재계산이 원본 보고서와 일치했다. 통합 차단 결함 없이 실행 기능·재현 leaf 통합 GO다. 최초 성능 budget 실패·원인 미규명·승격 INCOMPLETE는 그대로 남으며 성능 인수 GO를 뜻하지 않는다. `/root`가 해당 검토와 원본 보고서 등록을 확인했다.
+
+<a id="k0-005-profile-b"></a>
+
+### K0-005 측정 profile B 추가 계약 — 2026-10-26
+
+**D2 / ACCEPTED(`PF04-PB-001`, 계획 독립 검토 r5) / S1 구현·선택 검증 완료 / 성능 인수 NOT_RUN.** [채택 계획](../plans/dev2-pf04-resolution-plan.md#measurement-profile-b)의 S1을 이 계약에 등록한다. 위 K0-005의 입력·10쌍(AB5/BA5)·pair별 경과·CPU·외부1.15·표본 p99 1.25·RSS 4MiB 한도·정수 비율 판정·drift 검사·정답 검사·recipe 형식은 그대로다. 원 e3 campaign의 FAIL은 바꾸지 않으며 이 계약은 새 source에만 적용한다. 실제 구현·실행은 [S1 증거](../evidence/dev2-pf04-profile-b-s1-20261026.md)를 따른다.
+
+**controller slot gate.** `run-performance`·`replay-performance`는 `--gate <dir>`·`--gate-profile <json>`·`--gate-profile-sha256 <sha256>`을 함께 받거나 하나도 받지 않는다. 하나도 없으면 동작과 bundle(index schema 1, 10파일)이 이전과 같다.
+
+- profile은 64KiB strict JSON(`schema_version` 1, `protocol` `xadb-slot-gate-v1`)이며 GO 대기 660초·ACK 대기 60초로 고정한다. 환경 규칙(`environment`)은 controller가 해석하지 않고 hash로만 묶는다.
+- supervisor가 만든 owner-only FIFO `controller.fifo`(controller→supervisor)와 `supervisor.fifo`(반대 방향)를 쓴다. 한 줄은 128 bytes 이하 ASCII다. slot마다 `READY <ordinal> <run>` → `GO`/`ABORT` → `DONE` → `ACK` 순서다. ordinal은 실행 순서 0–19이고 run은 32자리 16진수다.
+- `GO`를 받은 뒤에만 `Session::start`를 호출한다. worker를 띄운 직후 Performance 요청 전에 `/proc/<pid>/stat`의 nice가0인지 확인하고, 아니면 slot failure로 기록하고 worker를 정리한다. 교환은 Invoke→Observe 밖이므로 `external_ns`에 들어가지 않는다.
+- ordinal 19의 ACK와 `ABORT` 뒤의 ACK만 `ACK <ordinal> <run> <환경 판정 SHA-256>`이다. ABORT한 slot은 `NOT_RUN: slot gate ABORT before worker start`, 그 뒤 slot은 `NOT_RUN: slot gate ended before this slot`이다.
+- 앞선 응답·추가 bytes, ordinal/run 불일치, EOF, deadline, digest 누락은 gate 실패다. controller는 종료 사유를 transcript에 쓰고 digest 없는 index를 저장한 뒤 분석 없이 exit3로 끝난다.
+- gate bundle은 index schema 2와 `gate`(`profile_sha256`, `environment_sha256`)를 쓰고 `gate-profile.json`·`gate-transcript.json`을 보존한다. digest는 index에 먼저 기록한 뒤 분석한다. verify는 schema/gate 조합, 두 파일의 hash·profile 해석, recipe 순서로 다시 만든 유일한 교환 전문과 run 기록의 일치를 확인한다. digest가 없거나 transcript에 종료 사유가 있으면 분석을 거절한다. gate 원본의 replay는 gate를 요구한다.
+
+**supervisor·환경 판정기(`scripts/dev2_profile_b.py`).** 진입점은 `init`(동결 입력·장치 식별·ledger), `campaign --role <역할>`, `close`(예산을 다음 session에 넘기기 전 ledger 종료), `decide`, `preflight`다. 동결 profile은 `scripts/fixtures/dev2_profile_b_v1.json`이다.
+
+- supervisor는 CPU4·nice0에서 실행하고 controller는 `taskset -c 2`로 띄운다. 장치는 파일시스템 UUID와 serial로 식별하며 kernel 이름은 campaign마다 해석해 기록한다.
+- B1·B2·주파수·공변량 규칙은 계획 그대로다. 다른 CPU 평균은 CPU별 busy 비율의 산술 평균이다. 공변량 중앙비는 같은 pair의 baseline/candidate CPU2 cycles/ref 비율10개의 정확한 중앙값이며 구간 양끝을 포함한다. 유휴 창은 끝나는 시점이 10분을 넘을 수 있으면 시작하지 않고 ABORT한다. 30분 상한은 GO마다 남은 시간이 slot deadline 60초보다 작으면 ABORT로 적용한다. GO 직전에 controller가 살아 있는지 확인한다. 유휴 대기 중 controller가 사라지면 GO를 보내지 않으며, 첫 GO 전이면 NOT_RUN, 그 뒤면 TERMINATED다. FIFO 생성·recipe 준비·장치 해석처럼 gate 시작 전 supervisor 실패도 NOT_RUN으로 정산하고 시도1회를 쓴다. C3 recipe 같은 입력 검사는 시도를 만들기 전에 거절한다.
+- `slot-env-v1`은 slot마다 disabled 상태의 `perf stat -C 2,18 -A --no-scale -e cycles,ref-cycles`를 CPU4에서 준비하고 GO 직전 enable, DONE 직후 disable·SIGINT로 끝낸다. 실제 collector는 capability 다섯 집합 모두 CAP_PERFMON만 가져야 한다. 행이 하나라도 scaled·coverage100% 미만이면 그 slot은 UNKNOWN이다.
+- 판정 파일 `environment-verdict.json`을 쓰고 그 SHA-256을 ACK로 보낸 뒤에만 bundle·worker 출력을 읽는다. B2 INVALID slot이 나와도 20 slot을 모두 진행한다. 판정과 campaign 기록에는 판정을 계산한 supervisor·window 스크립트의 SHA-256을 함께 남긴다.
+
+**새 판정 축.** controller의 validity·correctness·performance_effect·guardrails·cause_status·promotion은 바꾸지 않는다.
+
+| 축 | 값 |
+| --- | --- |
+| `environment_validity` | VALID, INVALID(slot INVALID·ABORT), UNKNOWN(slot UNKNOWN·공변량 UNKNOWN·20 slot 미관측·종료) |
+| 인수 역할 campaign 분류 | NOT_RUN(GO 전 도구 실패, 교체 가능), ENVIRONMENT_INVALID(유휴 초과·30분 상한·환경 INVALID/UNKNOWN, 교체 가능), FAIL(PRODUCT_DEFECT·CORRECTNESS_FAIL·GUARDRAIL_FAIL), INCOMPLETE(TERMINATED·INCONCLUSIVE_COMPARISON·ENVIRONMENT), PASS(GUARDRAIL_PASS) |
+| C3 campaign 분류 | COMPLETED(controller 판정을 S3가 해석), REJECTED(CANDIDATE_PRODUCT_DEFECT), INCOMPLETE(NOT_RUN·TERMINATED·BASELINE_FAILURE). 교체·B2 판정 미사용 |
+| 연결 역할 | TOOL_CONNECTED·TOOL_FAILED. 성능 판정 아님 |
+| `pf04_decision` | 모드별 PASS·FAIL·INCOMPLETE(사유). 두 모드가 PASS일 때만 PF04 K0 PASS |
+
+**계획 검토 N-r5-1 반영.** 한 campaign 안에서는 제품 결함과 correctness FAIL 행이 TERMINATED와 INCONCLUSIVE_COMPARISON보다 우선한다. 제품 결함은 worker panic 종료(stderr의 panic 보고), Ready/Performance가 아닌 worker 응답, worker `Output.error`, controller의 `check_output` 불일치(correctness FAIL)다. supervisor는 환경 판정 hash를 기록한 뒤 native 증거에서 이를 읽는다. 그 밖의 run failure(nice 불일치·전송·timeout·signal로 끝난 worker)는 TERMINATED다. C3 비교의 baseline 쪽 실패는 INCOMPLETE다. controller의 correctness FAIL은 어느 쪽 출력인지 알려 주지 않는다. native 증거로 baseline 결함을 확인하지 못하면 candidate 기각으로 본다. N-r5-1 문구상 baseline 쪽 `check_output` 불일치는 INCOMPLETE일 수 있으므로 이는 명시적 차이다. 계획의 “한 단계라도 미달·불확실·실패면 C3를 기각”에 따라 불확실을 기각 쪽으로 처리한다. 이 규칙은 PASS나 채택 경로를 만들지 않는다.
+
+**교체·최종성.** 인수 역할(모드별 control·audit·replay)은 최대2회 교체하며 order seed는 기준값, +1,000,000, +2,000,000이다. 처음으로 교체 불가 분류로 끝난 campaign이 최종이고 같은 역할은 다시 실행하지 않는다. audit는 control 최종 PASS 뒤, replay는 audit 최종 PASS 뒤에만 실행한다. 교체를 다 쓰면 INCOMPLETE(ENVIRONMENT)다. C3 역할은 각 1회이고 탐색 → 확인 → 두 guard 순서다. 앞 단계가 COMPLETED여야 다음 단계를 시작하며, 그 단계의 통과 조건(IMPROVED 등)은 S3가 controller 판정으로 확인한다. C3 recipe는 역할의 kind(탐색·guard는 exploration, 확인은 confirmation)와 한 모드를 양쪽에 쓰고 서로 다른 두 build를 비교해야 한다. 도구 연결 역할 `connection`(seed 2026102600)은 2 slot 뒤 ABORT하며 1회뿐이다.
+
+**3시간 예산.** S1 연결과 S3·S5 측정은 session이 달라도 합쳐 3시간이다. `init`은 `--new-budget`과 `--budget-from <ledger> <sha256>` 중 정확히 하나를 받는다. `--new-budget`은 첫 session(S1 연결 session)에만 쓰는 운영 규칙이다. 도구는 이를 막지 못하므로 ledger의 predecessor 목록으로 감사한다. 그 뒤 session은 `close`로 닫힌 이전 ledger를 지정해 그 누적 사용량에서 시작한다. `close`는 campaign과 같은 lock을 잡는다. 닫힌 ledger는 새 campaign을 시작하거나 시도를 기록하지 않는다. 사용량은 이어 받은 값과 자기 시도 시간의 합과 같아야 한다. 새 campaign은 누적 사용량이 3시간 미만일 때만 시작하며, 시작한 campaign은 자기 30분 상한 안에서 끝낸다.
 
 ## DEV2-K0-006 — 장시간 thread와 native parser 검증 확장
 

@@ -1,5 +1,7 @@
 # XADB 조사·실행 증거
 
+2026-10-26 [DEV2 PF04 측정 profile B 도구(S1)](dev2-pf04-profile-b-s1-20261026.md): controller slot gate·supervisor/환경 판정기·`slot-env-v1`을 구현하고 K0-005 계약에 등록했다. source별 선택 검증과 실제 native 연결(r1 장치 이름 실패 뒤 r2 `TOOL_CONNECTED`)을 마쳤다. C3·PF04 인수는 NOT_RUN이며 원 PF04 FAIL·DEV2 미완료를 유지한다.
+
 - [DEV3 Catalog CREATE 구현 중간 저장](dev3-catalog-live-milestone-20261025.md) · [source별 기록](dev3-catalog-live-milestone-20261025.json) — native3경로·메모리14개 확인, 원 FAIL 보존·동시성 등9개 NOT_RUN.
 
 - [DEV3 Catalog 독립 입력과 native 실행기 검증](dev3-catalog-input-controller-20261025.md) · [source별 기록](dev3-catalog-input-controller-20261025.json) — 입력 생성·별도 검산 완료, 실행기 거부14 PASS; 실제 Catalog 통합 진행 중.

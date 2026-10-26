@@ -1,0 +1,224 @@
+{
+  "schema": 1,
+  "title": "DEV2 PF04 measurement profile B tool (S1)",
+  "decision": "PF04-PB-001",
+  "status": "S1_TOOL_IMPLEMENTED_SELECTED_VERIFIED_CONNECTED_REVIEW_R3_PASS",
+  "plan_ref": "dev2-pf04-resolution-plan.md#measurement-profile-b",
+  "plan_commit": "435c9e0",
+  "base_commit": "9275154d99b455732441c334a92ba44f85ebc1d3",
+  "user_instructions": [
+    "2026-10-26: start from S1 of the adopted C3/profile B plan; the durable decision is made separately",
+    "2026-10-26: slot-env-v1 PMU allowed (sudo -n, setpriv CAP_PERFMON only, /usr/bin/perf, CPUs 2/18, cycles/ref-cycles, GO..DONE)"
+  ],
+  "external_root": "/home/et16/xadb-dev2-evidence/pf04-profile-b-s1-20261026",
+  "source": {
+    "export": "git archive of the base commit plus the S1 overlay; concurrent uncommitted DEV3 engine changes of another session excluded",
+    "export_source_sha256": "343fc36eaa2645439719112a6ec649261fab01ae920e7125e321ca58562e5db9",
+    "overlay_sha256": {
+      "crates/testing/controller/Cargo.toml": "4709e2189a17a3854e3ff9ab9f769536f2b5c4dfd0def0bc1d1d8f95dd348893",
+      "crates/testing/controller/src/main.rs": "b296578bbc31e8cde9cd530552f9a6b483fdbd9ec73c44a1258ee3d5abc9f4e2",
+      "crates/testing/controller/src/performance.rs": "ff2329f5c418215b3f2969e49de49e96039db1b8e82e01aa0dc9746b0231dbdd",
+      "crates/testing/controller/src/performance/bundle.rs": "607020ff647a816648871bbaf0d492450b4a0a9c1d26da547f71e932daeaabcd",
+      "crates/testing/controller/src/performance/gate.rs": "02b9a1cba134d1618b3c45a1956e20a35370b959365d2dde8218e8b5c46c6f29",
+      "crates/testing/controller/tests/performance_gate.rs": "e309e54b279629f3c9a818bac3fc970beb72b297a125ee6fc8a3fa10ad950059"
+    },
+    "overlay_note": "scripts overlay hashes for r2 are in the external export-manifest.json",
+    "export_manifest_sha256": "fa0855f030fa7a780afcd8494facd0ec6c23da39c051846954c90603521145f5",
+    "profile_sha256": "15be2e190b66c7f262b99c59eee808f878d931aab1197091fd42b22456daaa62",
+    "commit_scripts_note": "scripts/dev2_profile_b.py and scripts/test_dev2_profile_b.py were changed after the r2 connection (review fixes r3-r5); the committed scripts differ from the connection export, the controller files do not",
+    "scripts_sha256_by_source": {
+      "r2_connection": "external export-manifest.json overlay",
+      "r3": {
+        "scripts/dev2_profile_b.py": "e22c33b106d5be0a94cbda150e6756895fd9ad37a747286d2941efd36dfd9384",
+        "scripts/test_dev2_profile_b.py": "562512e6101eaf1c5211ce89847299b67c8e4dc75831a64417064e4d1a5391e6",
+        "recorded_by": "s1-review-r2.json"
+      },
+      "r4": {
+        "scripts/dev2_profile_b.py": "b8084d89072dfde9a1a794cf70c28cd89bae1beab5655ccbc3f10332882f9060",
+        "scripts/test_dev2_profile_b.py": "c24b89b846416433c68f9702999bb6340fe07468b1318070e9b75bf8f55b3e62"
+      },
+      "r5_committed": {
+        "scripts/dev2_profile_b.py": "80c5f6fc25a693f8de05ee10e9d0fc4b65a252974c5ae76c180034286741603d",
+        "scripts/test_dev2_profile_b.py": "c818dc269e52cc373e462fd1963ce2a5da5f3443e870d1bd4ed3d7fa97ac8da8"
+      }
+    }
+  },
+  "binaries": {
+    "xadbtest": "a7dc59ff862ac309073844f77baee5e69d524a2d88e53eba0ad1a96f1b63430f",
+    "xadbtest-engine-worker": "1bdce7ff6d35fc0a0b00bc45e0d6bdede35ae494f3f10b03c23a6f0122bebf49",
+    "embedded_source_sha256_checked": true,
+    "build_receipt_sha256": "63b0682bf5096c4cf0a5d6ac4189edf05c1ac8233e0f5faacf2b6cde8a58ee5d",
+    "build_config_sha256": "377c6a03099562e668076d636e35a8d64c201d3f491684f8fc179516f1fa68e7",
+    "discarded": "a shared-target rebuild kept the r1 build-script fingerprint; those binaries were replaced before use"
+  },
+  "selected_tests_by_source": {
+    "controller_r1": {
+      "new_functions": 7,
+      "passed": 6,
+      "failed": 1,
+      "failure": "test assertion matched 'gate' inside 'Investigate' in the ungated resume"
+    },
+    "controller_r1_test_fix": {
+      "functions": 1,
+      "passed": 1
+    },
+    "controller_existing_selected": {
+      "functions": 1,
+      "passed": 1,
+      "selector": "bundle_verifier_reanalyzes_raw_streams_and_rejects_missing_history_identity_and_failure"
+    },
+    "controller_static": {
+      "fmt_check": "PASS",
+      "clippy_all_targets_all_features": "PASS"
+    },
+    "supervisor_r1": {
+      "functions": 26,
+      "passed": 25,
+      "skipped": 1,
+      "skipped_then_passed_with_self_test_binaries": 1
+    },
+    "supervisor_r2": {
+      "functions": 2,
+      "passed": 2,
+      "not_rerun": 25,
+      "correction": "r1 receipt said 24; 27 unique functions minus 2"
+    },
+    "raw_logs": "console only; summarized in the external selected-tests.json",
+    "supervisor_r3": {
+      "change": "independent review r1 findings (budget chain, GO liveness, covariate direction, idle limit, connection once, C3 order and recipe, unreadable bundle)",
+      "functions": 16,
+      "passed": 16,
+      "not_rerun": 15,
+      "unique_functions": 31,
+      "real_native": "not rerun; the r2 connection is the only real native run",
+      "note": "test_campaign_validity_from_slots_abort_and_termination (not rerun) passes the changed covariate line with equal ratios only"
+    },
+    "supervisor_r4": {
+      "change": "independent review r2 nonblocking findings (close lock and total check, closed-ledger settle refusal, pre-gate NOT_RUN settlement, tool hashes)",
+      "functions": 16,
+      "passed": 16,
+      "not_rerun": 17,
+      "unique_functions": 33
+    },
+    "supervisor_r5": {
+      "change": "review r3: signal handlers before launch and restored on failure; tool hash in the unacknowledged verdict",
+      "functions": 2,
+      "passed": 2,
+      "selection": [
+        "SessionLifecycle.test_failure_before_gate_uses_one_attempt_as_not_run (with a new handler-restore assertion)",
+        "CampaignWiring.test_control_and_connection_reach_classification"
+      ],
+      "untested": "unacknowledged verdict fallback path"
+    }
+  },
+  "host_connections": [
+    {
+      "attempt": "r1-init",
+      "status": "FAIL",
+      "campaigns": 0,
+      "cause": "profile froze kernel block name nvme1n1; after a reboot the same UUID/serial disk was nvme0n1",
+      "record_sha256": "8fa1969ef7e924d3d8549a5b13b846f8b9ce34cf5bfcef2000c2f47f13635c1d"
+    },
+    {
+      "attempt": "r2 connection-a0",
+      "status": "TOOL_CONNECTED",
+      "slots_executed": 2,
+      "aborted_at": 2,
+      "device": "nvme0n1 (UUID 1c377269-2890-4dab-9355-0517ec36b0a1, serial S5GYNG0R112060F)",
+      "idle_windows": 1,
+      "slot_b2": [
+        "VALID",
+        "VALID"
+      ],
+      "pmu_rows_full_coverage": [
+        true,
+        true
+      ],
+      "collector_capabilities": "CAP_PERFMON only in all five sets; group gone; pinned collector exited",
+      "go_done_ms": [
+        30.354,
+        30.333
+      ],
+      "done0_to_go1_ms": 58.181,
+      "environment_validity": "INVALID (planned CONNECTION_STOP abort)",
+      "controller_comparison": {
+        "validity": "INVALID",
+        "correctness": "UNKNOWN"
+      },
+      "transcripts_equal": true,
+      "reanalysis_equal": true,
+      "product_defects": 0,
+      "terminated_runs": 0,
+      "campaign_seconds": 10.255,
+      "sha256": {
+        "campaign_json": "9978e3c5fc160e247c22e1b6ee4b9bdb1c64a0f634f820a4876e573f6b03196e",
+        "environment_verdict": "1c31a8be54c60a10769a5d1b01eb43eff2f3f68941894a7f3a74bb436d6b2d5e",
+        "recipe": "894c5b94c1992ac66218f27a9376ef9df05ad0dfdb65ce0cdb2cd4ab96f3bff2",
+        "bundle_index": "cf6515dbd457261192a9fe0cb08c6d77ba8e4409da3bb20e151f043f564870a9",
+        "bundle_gate_transcript": "67fe95440063eb5110c415af325d13348b9e34007e2e1d456fead2431ae9dd31",
+        "supervisor_transcript": "4fc4742eb0f5efc8523900727b9cc5f0e78c5a817cb2e6e3421c213de5f8efd2",
+        "comparison": "711f564ad5b8d56aaf72553f3802002d4a04f7cf53c069bdf0f692a0fb4fcccb",
+        "ledger": "4662f40ac8cdf95158c597fb1f1c1bcabb1a0a092445ebb7bf372964c50c9615"
+      }
+    }
+  ],
+  "perf_format_probe": {
+    "runs": 1,
+    "seconds": 0.1,
+    "purpose": "literal per-CPU CSV format only"
+  },
+  "preflight": {
+    "windows": 80,
+    "tick_rule_valid": 79,
+    "invalid": [
+      "pf04-off-classification-20261025 slot-03: CPU18 non-idle 2 ticks"
+    ],
+    "sha256": "59f4126ef0f67f8161e79c972a8e48e48e39c79ab3ea48ccf97b07146a169872",
+    "remeasurement": false
+  },
+  "not_run": [
+    "S2 C3 implementation",
+    "S3 C3 campaigns",
+    "S4 C3 product change",
+    "S5 PF04 K0 acceptance",
+    "S6 V3 thread stress",
+    "S7 closure record",
+    "PF04-DUR-001 durable path"
+  ],
+  "original_pf04": "FAIL (four e3 campaigns unchanged)",
+  "dev2": "PARTIAL_IMPLEMENTATION",
+  "reboots_service_restarts_host_changes": 0,
+  "review": {
+    "r1": {
+      "file": "s1-review-r1.json",
+      "sha256": "fcabac62abf179704e3db0e0aa9579b001c69af9f2283d62ace1bbaaeaad32e4",
+      "verdict": "BLOCKED",
+      "blocking": [
+        "PB-S1-R1-B1 per-session budget"
+      ],
+      "nonblocking": 12,
+      "handling": "B1 fixed in r3; N1 N2 N4 N5 N6 N7 N8 N9 N11 N12 fixed; N3 recorded as explicit deviation; N10 recorded as limit"
+    },
+    "r2": {
+      "file": "s1-review-r2.json",
+      "sha256": "0133a94c6e56d02c36ceecffa98bd2d5734851e0b9971cb42cbf5833de3d9417",
+      "verdict": "PASS_SCOPED_S1_TOOL",
+      "nonblocking": 7,
+      "handling": "R2-N1 R2-N2 R2-N7 fixed in r4; R2-N3 R2-N4 R2-N5 documentation; R2-N6 left to S3 by plan"
+    },
+    "r3": {
+      "file": "s1-review-r3.json",
+      "sha256": "5e07b18419f692fd278fa396e18501a492e1e235cc1971688ecd7c0a4ac5ccf9",
+      "verdict": "PASS_SCOPED_S1_TOOL",
+      "scope": "r4 diff",
+      "nonblocking": 4,
+      "handling": "R3-N2 R3-N3 fixed in r5; R3-N1 per-source hashes; R3-N4 wording"
+    }
+  },
+  "external_manifest": {
+    "file": "manifest.json",
+    "files": 55,
+    "bytes": 22761564,
+    "sha256": "092ea1f08284b1dba89523ab0948df72e4c975dae926b7e86c5ccb83e40884f8"
+  }
+}

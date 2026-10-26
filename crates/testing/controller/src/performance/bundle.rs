@@ -1,3 +1,4 @@
+use super::gate::{self, Admission, Gate};
 use super::{BuildReceipt, CampaignKind, Order, Recipe, Result, RunSample, Side, analyze};
 use crate::{file_sha256, native, sha256};
 use serde::{Deserialize, Serialize};
@@ -26,12 +27,15 @@ pub struct Options {
     pub baseline_config: PathBuf,
     pub candidate_config: PathBuf,
     pub artifacts: PathBuf,
+    /// Profile B slot gate; None keeps the original ungated behavior and bundle.
+    pub gate: Option<gate::Options>,
 }
 pub struct ReplayOptions {
     pub directory: PathBuf,
     pub recipe_sha256: String,
     pub artifacts: PathBuf,
     pub campaign_id: [u8; 16],
+    pub gate: Option<gate::Options>,
 }
 #[derive(Debug, Serialize)]
 pub struct Report {
@@ -78,7 +82,23 @@ struct Index {
     files: BTreeMap<String, String>,
     runs: Vec<RunRecord>,
     original_recipe_sha256: Option<String>,
+    /// Present only in schema 2 gated bundles; schema 1 bytes are unchanged.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    gate: Option<gate::Binding>,
 }
+const FILES: [&str; 10] = [
+    "recipe.json",
+    "baseline-receipt.json",
+    "candidate-receipt.json",
+    "baseline-config.json",
+    "candidate-config.json",
+    "controller",
+    "baseline-worker",
+    "candidate-worker",
+    "environment.json",
+    "resume.md",
+];
+const GATE_FILES: [&str; 2] = ["gate-profile.json", "gate-transcript.json"];
 fn build() -> BuildIdentity {
     BuildIdentity {
         source_sha256: env!("XADBTEST_SOURCE_SHA256").into(),
@@ -178,6 +198,16 @@ fn files(directory: &Path) -> Result<BTreeMap<String, String>> {
     }
     Ok(result)
 }
+fn not_run(run: [u8; 16], failure: &str) -> RunRecord {
+    RunRecord {
+        ordinal: 0,
+        run,
+        candidate: false,
+        directory: None,
+        failure: Some(failure.into()),
+        files: BTreeMap::new(),
+    }
+}
 fn execute(
     directory: &Path,
     artifacts: &Path,
@@ -185,6 +215,7 @@ fn execute(
     side: &Side,
     run: [u8; 16],
     input: Input,
+    check_nice: bool,
 ) -> RunRecord {
     let mut record = RunRecord {
         ordinal: 0,
@@ -208,6 +239,21 @@ fn execute(
                 .to_string_lossy()
                 .into_owned(),
         );
+        // Profile B fixes worker priority before any request; a mismatch is a tool failure.
+        if check_nice {
+            let detail = match gate::worker_nice(session.worker_id()) {
+                Ok(0) => None,
+                Ok(nice) => Some(format!("worker nice {nice} is not 0")),
+                Err(error) => Some(format!("worker nice unavailable: {error}")),
+            };
+            if let Some(detail) = detail {
+                session.reject::<()>(native::Error {
+                    kind: native::ErrorKind::Configuration,
+                    detail,
+                    cleanup: None,
+                })?;
+            }
+        }
         session.invoke(0, initialize())?;
         session.receive()?;
         session.invoke(0, Action::Performance { input })?;
@@ -275,6 +321,15 @@ fn run_internal(options: &Options, original: Option<&Path>) -> Result<Report> {
             return Err("input worker identity mismatch".into());
         }
     }
+    // The gate attaches before the bundle exists, so a refused profile or absent
+    // supervisor leaves no partial campaign.
+    let (mut gate, gate_profile) = match &options.gate {
+        Some(gate_options) => {
+            let (slot_gate, profile) = Gate::open(gate_options)?;
+            (Some(slot_gate), Some(profile))
+        }
+        None => (None, None),
+    };
     fs::create_dir_all(&options.artifacts)?;
     let directory = tempfile::Builder::new()
         .prefix("performance-")
@@ -300,34 +355,30 @@ fn run_internal(options: &Options, original: Option<&Path>) -> Result<Report> {
         "controller_build":build(),"baseline_build":recipe.baseline.build,"candidate_build":recipe.candidate.build,
         "metric_catalog":super::profile()});
     save_json(&directory.join("environment.json"), &environment)?;
-    save(&directory.join("resume.md"),format!("# K0 performance bundle\n\n{}\n\nFrom this copied campaign directory, run the retained `./controller verify-performance --directory . --recipe-sha256 {}` to reanalyze raw evidence. Run the retained `./controller replay-performance` with `--directory .`, this recipe hash, a fresh `--campaign-id` and a new `--artifacts` directory to start new processes. Both configuration files and workers are retained here. The report separates the recording controller identity from the executable performing analysis. No optimization or durable DB claim. Investigate measured copying only after valid evidence; cause remains unresolved.\n",recipe.hypothesis,options.recipe_sha256).as_bytes())?;
+    save(&directory.join("resume.md"),format!("# K0 performance bundle\n\n{}\n\nFrom this copied campaign directory, run the retained `./controller verify-performance --directory . --recipe-sha256 {}` to reanalyze raw evidence. Run the retained `./controller replay-performance` with `--directory .`, this recipe hash, a fresh `--campaign-id` and a new `--artifacts` directory to start new processes. Both configuration files and workers are retained here. The report separates the recording controller identity from the executable performing analysis. No optimization or durable DB claim. Investigate measured copying only after valid evidence; cause remains unresolved.\n{}",recipe.hypothesis,options.recipe_sha256,if gate.is_some() {"\nThis campaign ran behind a measurement profile B slot gate. `gate-profile.json` and `gate-transcript.json` are retained and the supervisor's environment verdict digest is bound in `index.json`; the controller never judged the environment. A replay of this campaign must also pass `--gate`, `--gate-profile` and `--gate-profile-sha256`.\n"} else {""}).as_bytes())?;
+    if let Some(profile) = &gate_profile {
+        save(&directory.join("gate-profile.json"), profile)?;
+    }
     if let Some(original) = original {
         copy_tree(original, &directory.join("original"), 0)?;
     }
     let mut index = Index {
-        schema_version: 1,
+        schema_version: if gate.is_some() { 2 } else { 1 },
         recipe_sha256: options.recipe_sha256.clone(),
         controller: build(),
         files: BTreeMap::new(),
         runs: Vec::new(),
         original_recipe_sha256: recipe.provenance.original_recipe_sha256.clone(),
+        gate: None,
     };
-    for name in [
-        "recipe.json",
-        "baseline-receipt.json",
-        "candidate-receipt.json",
-        "baseline-config.json",
-        "candidate-config.json",
-        "controller",
-        "baseline-worker",
-        "candidate-worker",
-        "environment.json",
-        "resume.md",
-    ] {
+    for name in FILES {
         index
             .files
             .insert(name.into(), file_sha256(&directory.join(name))?);
     }
+    // After ABORT, the final ACK or a gate failure, later slots stay NOT_RUN.
+    let mut ended = false;
+    let mut gate_failure = None;
     for (number, pair) in recipe.pairs.iter().enumerate() {
         let mut records: [Option<RunRecord>; 2] = [None, None];
         for (position, candidate) in (if pair.order == Order::AB {
@@ -343,26 +394,82 @@ fn run_internal(options: &Options, original: Option<&Path>) -> Result<Report> {
             } else {
                 (&recipe.baseline, pair.baseline_run, "baseline")
             };
-            let parent = directory.join(format!("pair-{number:02}-{name}"));
-            fs::create_dir(&parent)?;
-            let worker = directory.join(format!("{name}-worker"));
-            let mut record = execute(
-                &directory,
-                &parent,
-                &worker,
-                side,
-                id,
-                recipe.input(candidate),
-            );
+            let ordinal = number * 2 + position;
+            let slot = |check_nice| -> Result<RunRecord> {
+                let parent = directory.join(format!("pair-{number:02}-{name}"));
+                fs::create_dir(&parent)?;
+                let worker = directory.join(format!("{name}-worker"));
+                Ok(execute(
+                    &directory,
+                    &parent,
+                    &worker,
+                    side,
+                    id,
+                    recipe.input(candidate),
+                    check_nice,
+                ))
+            };
+            let mut record = match gate.as_mut() {
+                None => slot(false)?,
+                Some(_) if ended => not_run(id, gate::NOT_RUN),
+                Some(slot_gate) => match slot_gate.ready(ordinal, id) {
+                    Ok(Admission::Go) => {
+                        let record = slot(true)?;
+                        if let Err(error) = slot_gate.done(ordinal, id, ordinal == 19) {
+                            gate_failure = Some(error.to_string());
+                        }
+                        ended = ordinal == 19 || gate_failure.is_some();
+                        record
+                    }
+                    Ok(Admission::Abort) => {
+                        if let Err(error) = slot_gate.done(ordinal, id, true) {
+                            gate_failure = Some(error.to_string());
+                        }
+                        ended = true;
+                        not_run(id, gate::ABORTED)
+                    }
+                    Err(error) => {
+                        gate_failure = Some(error.to_string());
+                        ended = true;
+                        not_run(id, gate::NOT_RUN)
+                    }
+                },
+            };
             record.candidate = candidate;
-            record.ordinal = number * 2 + position;
+            record.ordinal = ordinal;
             records[usize::from(candidate)] = Some(record);
         }
         for record in records {
             index.runs.push(record.ok_or("unexecuted campaign slot")?);
         }
     }
+    if let (Some(slot_gate), Some(gate_options)) = (gate.as_mut(), &options.gate) {
+        if let Some(reason) = &gate_failure {
+            slot_gate.terminate(reason.clone());
+        }
+        save_json(
+            &directory.join("gate-transcript.json"),
+            slot_gate.transcript(),
+        )?;
+        for name in GATE_FILES {
+            index
+                .files
+                .insert(name.into(), file_sha256(&directory.join(name))?);
+        }
+        // The verdict digest is bound before any analysis reads worker output.
+        index.gate = Some(gate::Binding {
+            profile_sha256: gate_options.profile_sha256.clone(),
+            environment_sha256: slot_gate.transcript().environment_sha256.clone(),
+        });
+    }
     save_json(&directory.join("index.json"), &index)?;
+    if let Some(reason) = gate_failure {
+        return Err(format!(
+            "slot gate terminated the campaign ({reason}); analysis withheld for {}",
+            directory.display()
+        )
+        .into());
+    }
     let report = verify(&directory, &options.recipe_sha256)?;
     save_json(&directory.join("comparison.json"), &report)?;
     Ok(report)
@@ -526,27 +633,21 @@ fn verify_depth(directory: &Path, expected_recipe: &str, depth: usize) -> Result
     let recipe = Recipe::parse(&bytes)?;
     let index_bytes = bounded(&directory.join("index.json"), INDEX_BYTES)?;
     let index: Index = serde_json::from_slice(&index_bytes)?;
-    if index.schema_version != 1
-        || index.recipe_sha256 != expected_recipe
+    // Schema 2 exists only to distinguish gated bundles from the original format.
+    let gate_files: &[&str] = match (index.schema_version, &index.gate) {
+        (1, None) => &[],
+        (2, Some(_)) => &GATE_FILES,
+        _ => return Err("bundle index schema/gate mismatch".into()),
+    };
+    if index.recipe_sha256 != expected_recipe
         || index.runs.len() != 20
         || index.original_recipe_sha256 != recipe.provenance.original_recipe_sha256
-        || index.files.len() != 10
+        || index.files.len() != FILES.len() + gate_files.len()
     {
         return Err("bundle index identity/inventory mismatch".into());
     }
-    for required in [
-        "recipe.json",
-        "baseline-receipt.json",
-        "candidate-receipt.json",
-        "baseline-config.json",
-        "candidate-config.json",
-        "controller",
-        "baseline-worker",
-        "candidate-worker",
-        "environment.json",
-        "resume.md",
-    ] {
-        if !index.files.contains_key(required) {
+    for required in FILES.iter().chain(gate_files) {
+        if !index.files.contains_key(*required) {
             return Err("missing required bundle file".into());
         }
     }
@@ -604,6 +705,14 @@ fn verify_depth(directory: &Path, expected_recipe: &str, depth: usize) -> Result
         if expected_replay != recipe {
             return Err("replay changed original fixture/policy/build/lineage".into());
         }
+    }
+    if let Some(binding) = &index.gate {
+        let runs = index
+            .runs
+            .iter()
+            .map(|r| (r.ordinal, (r.run, r.directory.is_some(), r.failure.clone())))
+            .collect();
+        gate::check(directory, binding, &recipe, &runs)?;
     }
     let mut samples = Vec::new();
     for (slot, record) in index.runs.iter().enumerate() {
@@ -718,6 +827,13 @@ fn copy_tree(source: &Path, destination: &Path, depth: usize) -> Result<()> {
 /// The complete original remains in the new bundle; promotion is always INCOMPLETE.
 pub fn replay(options: &ReplayOptions) -> Result<Report> {
     let _original = verify(&options.directory, &options.recipe_sha256)?;
+    let index: Index = serde_json::from_slice(&bounded(
+        &options.directory.join("index.json"),
+        INDEX_BYTES,
+    )?)?;
+    if index.gate.is_some() && options.gate.is_none() {
+        return Err("a gated original campaign requires a gated replay".into());
+    }
     let mut recipe = Recipe::parse(&bounded(
         &options.directory.join("recipe.json"),
         super::RECIPE_BYTES,
@@ -757,6 +873,7 @@ pub fn replay(options: &ReplayOptions) -> Result<Report> {
             baseline_config: options.directory.join("baseline-config.json"),
             candidate_config: options.directory.join("candidate-config.json"),
             artifacts: options.artifacts.clone(),
+            gate: options.gate.clone(),
         },
         Some(&options.directory),
     )

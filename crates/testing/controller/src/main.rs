@@ -71,8 +71,8 @@ fn execute() -> Result<u8, Box<dyn std::error::Error>> {
             use test_controller::performance;
             let mode=std::env::args().nth(1).expect("matched command");
             let allowed=match mode.as_str() {
-                "run-performance"=>vec!["--recipe","--recipe-sha256","--baseline-worker","--candidate-worker","--baseline-receipt","--candidate-receipt","--baseline-config","--candidate-config","--artifacts"],
-                "replay-performance"=>vec!["--directory","--recipe-sha256","--artifacts","--campaign-id"],
+                "run-performance"=>vec!["--recipe","--recipe-sha256","--baseline-worker","--candidate-worker","--baseline-receipt","--candidate-receipt","--baseline-config","--candidate-config","--artifacts","--gate","--gate-profile","--gate-profile-sha256"],
+                "replay-performance"=>vec!["--directory","--recipe-sha256","--artifacts","--campaign-id","--gate","--gate-profile","--gate-profile-sha256"],
                 _=>vec!["--directory","--recipe-sha256"],
             };
             let mut options=BTreeMap::new();
@@ -81,11 +81,17 @@ fn execute() -> Result<u8, Box<dyn std::error::Error>> {
                 let value=args.next().ok_or_else(||format!("missing value: {key}"))?;
                 if options.insert(key,value).is_some() {return Err("duplicate option".into());}
             }
+            // The slot gate is all-or-none; partial options never fall back to an ungated run.
+            let gate=match (options.remove("--gate"),options.remove("--gate-profile"),options.remove("--gate-profile-sha256")) {
+                (None,None,None)=>None,
+                (Some(directory),Some(profile),Some(profile_sha256))=>Some(performance::gate::Options {directory:directory.into(),profile:profile.into(),profile_sha256}),
+                _=>return Err("--gate, --gate-profile and --gate-profile-sha256 must be given together".into()),
+            };
             let mut take=|name| options.remove(name).ok_or_else(||format!("missing option: {name}"));
             let recipe_sha256=take("--recipe-sha256")?;
             let report=match mode.as_str() {
-                "run-performance"=>performance::run(&performance::Options {recipe:take("--recipe")?.into(),recipe_sha256,baseline_worker:take("--baseline-worker")?.into(),candidate_worker:take("--candidate-worker")?.into(),baseline_receipt:take("--baseline-receipt")?.into(),candidate_receipt:take("--candidate-receipt")?.into(),baseline_config:take("--baseline-config")?.into(),candidate_config:take("--candidate-config")?.into(),artifacts:take("--artifacts")?.into()})?,
-                "replay-performance"=>performance::replay(&performance::ReplayOptions {directory:take("--directory")?.into(),recipe_sha256,artifacts:take("--artifacts")?.into(),campaign_id:campaign_id(&take("--campaign-id")?)?})?,
+                "run-performance"=>performance::run(&performance::Options {recipe:take("--recipe")?.into(),recipe_sha256,baseline_worker:take("--baseline-worker")?.into(),candidate_worker:take("--candidate-worker")?.into(),baseline_receipt:take("--baseline-receipt")?.into(),candidate_receipt:take("--candidate-receipt")?.into(),baseline_config:take("--baseline-config")?.into(),candidate_config:take("--candidate-config")?.into(),artifacts:take("--artifacts")?.into(),gate})?,
+                "replay-performance"=>performance::replay(&performance::ReplayOptions {directory:take("--directory")?.into(),recipe_sha256,artifacts:take("--artifacts")?.into(),campaign_id:campaign_id(&take("--campaign-id")?)?,gate})?,
                 _=>performance::verify(&PathBuf::from(take("--directory")?),&recipe_sha256)?,
             };
             println!("{}",serde_json::to_string(&report)?);
@@ -145,7 +151,7 @@ fn execute() -> Result<u8, Box<dyn std::error::Error>> {
             println!("{}", serde_json::json!({"run_directory":report.directory, "case_verdict":report.verdict.case_verdict, "exit_code":report.verdict.exit_code()}));
             Ok(report.verdict.exit_code())
         }
-        _ => Err("usage: xadbtest performance-profile | xadbtest prepare-performance --receipt <json> --receipt-sha256 <sha256> --campaign-id <32hex> --seed <u64> --mode <always|detailed> --output <json> | xadbtest run-performance --recipe <json> --recipe-sha256 <sha256> --baseline-worker <binary> --candidate-worker <binary> --baseline-receipt <json> --candidate-receipt <json> --baseline-config <json> --candidate-config <json> --artifacts <directory> | xadbtest verify-performance --directory <run> --recipe-sha256 <sha256> | xadbtest replay-performance --directory <run> --recipe-sha256 <sha256> --artifacts <directory> --campaign-id <32hex> | xadbtest hash <file> | xadbtest run-catalog --recipe <json> --recipe-sha256 <sha256> --worker <binary> --worker-sha256 <sha256> --artifacts <directory> | xadbtest verify-catalog --directory <run> --recipe-sha256 <sha256> --worker-sha256 <sha256> | xadbtest run --case <json> --case-sha256 <sha256> --worker <binary> --worker-sha256 <sha256> --artifacts <directory>".into()),
+        _ => Err("usage: xadbtest performance-profile | xadbtest prepare-performance --receipt <json> --receipt-sha256 <sha256> --campaign-id <32hex> --seed <u64> --mode <always|detailed> --output <json> | xadbtest run-performance --recipe <json> --recipe-sha256 <sha256> --baseline-worker <binary> --candidate-worker <binary> --baseline-receipt <json> --candidate-receipt <json> --baseline-config <json> --candidate-config <json> --artifacts <directory> [--gate <directory> --gate-profile <json> --gate-profile-sha256 <sha256>] | xadbtest verify-performance --directory <run> --recipe-sha256 <sha256> | xadbtest replay-performance --directory <run> --recipe-sha256 <sha256> --artifacts <directory> --campaign-id <32hex> [--gate <directory> --gate-profile <json> --gate-profile-sha256 <sha256>] | xadbtest hash <file> | xadbtest run-catalog --recipe <json> --recipe-sha256 <sha256> --worker <binary> --worker-sha256 <sha256> --artifacts <directory> | xadbtest verify-catalog --directory <run> --recipe-sha256 <sha256> --worker-sha256 <sha256> | xadbtest run --case <json> --case-sha256 <sha256> --worker <binary> --worker-sha256 <sha256> --artifacts <directory>".into()),
     }
 }
 

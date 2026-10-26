@@ -45,5 +45,9 @@ required-features = ["self-test"]
 name = "native"
 required-features = ["self-test"]
 
+[[test]]
+name = "performance_gate"
+required-features = ["self-test"]
+
 [lints]
 workspace = true

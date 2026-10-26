@@ -2,6 +2,7 @@
 //! This leaf qualifies neither durability nor a production optimization.
 mod analysis;
 mod bundle;
+pub mod gate;
 
 pub use analysis::{Comparison, RunSample, analyze, check_output};
 pub use bundle::{Options, ReplayOptions, Report, replay, run, verify};

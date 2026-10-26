@@ -280,7 +280,45 @@
       "recipe_status": "REQUIRES_IMPLEMENTATION_PROFILE",
       "run_entrypoint": null,
       "execution_status": "NOT_RUN",
-      "evidence_refs": []
+      "evidence_refs": [],
+      "profile_refs": [
+        {
+          "decision": "PF04-PB-001",
+          "profile": "pf04-profile-b-v1",
+          "status": "TOOL_IMPLEMENTED_NOT_ACCEPTANCE",
+          "plan_ref": "dev2-pf04-resolution-plan.md#measurement-profile-b",
+          "contract_ref": "dev2-implementation.md#k0-005-profile-b",
+          "evidence_ref": "dev2-pf04-profile-b-s1-20261026.md",
+          "thresholds_changed": false,
+          "environment_validity": [
+            "VALID",
+            "INVALID",
+            "UNKNOWN"
+          ],
+          "campaign_classification": [
+            "NOT_RUN",
+            "ENVIRONMENT_INVALID",
+            "FAIL",
+            "INCOMPLETE",
+            "PASS"
+          ],
+          "decision_reasons": [
+            "PRODUCT_DEFECT",
+            "CORRECTNESS_FAIL",
+            "GUARDRAIL_FAIL",
+            "TERMINATED",
+            "INCONCLUSIVE_COMPARISON",
+            "ENVIRONMENT",
+            "CONTROL_GUARDRAIL_FAIL"
+          ],
+          "pf04_decision": [
+            "PASS",
+            "FAIL",
+            "INCOMPLETE"
+          ],
+          "precedence": "product defect and correctness FAIL before TERMINATED and INCONCLUSIVE_COMPARISON; FAIL before INCOMPLETE"
+        }
+      ]
     },
     {
       "id": "PF05",

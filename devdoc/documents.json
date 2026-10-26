@@ -2438,6 +2438,16 @@
       "role": "evidence",
       "title": "DEV2 PF04 원 native 제어기의 CPU 배치 대조 기록"
     },
+    "dev2-pf04-profile-b-s1-20261026.md": {
+      "path": "evidence/dev2-pf04-profile-b-s1-20261026.md",
+      "role": "evidence",
+      "title": "DEV2 PF04 측정 profile B 도구(S1)"
+    },
+    "dev2-pf04-profile-b-s1-20261026.json": {
+      "path": "evidence/dev2-pf04-profile-b-s1-20261026.json",
+      "role": "evidence",
+      "title": "DEV2 PF04 측정 profile B 도구(S1)"
+    },
     "dev2-pf04-frequency-control-20261025.md": {
       "path": "evidence/dev2-pf04-frequency-control-20261025.md",
       "role": "evidence",
