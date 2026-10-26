@@ -11,18 +11,18 @@ pub(crate) struct ReadOperationAdmission<'c, 'f> {
 }
 
 impl<'c, 'f> Owner<'c, 'f> {
-    /// Enter before the first transient reference or physical read. Pending
-    /// Commit permits readers; Draining/Installing reject new operations. This
-    /// does not relax try_content's existing Drain exclusion.
-    pub(crate) fn try_read_operation(
-        &mut self,
-        expected: &PageConcurrency<'_>,
-    ) -> Result<ReadOperationAdmission<'c, 'f>> {
-        let mut state = self.core.entry_state()?;
+    /// Observe admission priority without claiming a slot. A subsequent entry
+    /// must check again; this grants no right across a concurrent Drain.
+    pub(crate) fn check_read_operation(&self, expected: &PageConcurrency<'_>) -> Result<()> {
+        let state = self.core.entry_state()?;
+        self.check_read_entry(expected, &state)
+    }
+
+    fn check_read_entry(&self, expected: &PageConcurrency<'_>, state: &State) -> Result<()> {
         if !self.belongs_to(expected) || self.index == FLUSHER_SLOT {
             return Err(unchanged(Cause::InvalidRole));
         }
-        self.check_mode(&state, Mode::Idle)?;
+        self.check_mode(state, Mode::Idle)?;
         if state.slots[self.index].read_operation {
             return Err(unchanged(Cause::Busy));
         }
@@ -32,6 +32,17 @@ impl<'c, 'f> Owner<'c, 'f> {
         ) {
             return Err(unchanged(Cause::InstallationPending));
         }
+        Ok(())
+    }
+    /// Enter before the first transient reference or physical read. Pending
+    /// Commit permits readers; Draining/Installing reject new operations. This
+    /// does not relax try_content's existing Drain exclusion.
+    pub(crate) fn try_read_operation(
+        &mut self,
+        expected: &PageConcurrency<'_>,
+    ) -> Result<ReadOperationAdmission<'c, 'f>> {
+        let mut state = self.core.entry_state()?;
+        self.check_read_entry(expected, &state)?;
         state.slots[self.index].read_operation = true;
         Ok(ReadOperationAdmission {
             core: Some(self.core),
@@ -100,6 +111,28 @@ pub(crate) const fn source_bytes() -> usize {
 mod tests {
     use super::*;
     use crate::transaction::concurrency::catalog_test_support::observe;
+
+    #[test]
+    fn read_operation_precheck_has_no_claim_and_entry_checks_again() {
+        let fence = SessionFence::new();
+        let core = PageConcurrency::new(&fence).unwrap();
+        let mut owner = core.try_owner(OwnerRole::Foreground).unwrap();
+        owner.check_read_operation(&core).unwrap();
+        assert_eq!(observe(&core).active_read_operations, 0);
+        let mut operation = owner.try_read_operation(&core).unwrap();
+        assert_eq!(
+            owner.check_read_operation(&core).unwrap_err().cause,
+            Cause::Busy
+        );
+        operation.release_checked().unwrap();
+        owner.check_read_operation(&core).unwrap();
+        fence.fence();
+        assert_eq!(
+            owner.try_read_operation(&core).err().unwrap().cause,
+            Cause::Fenced
+        );
+        assert_eq!(observe(&core).active_read_operations, 0);
+    }
 
     #[test]
     fn read_operation_keeps_slot_across_content_and_rejects_apply() {

@@ -631,3 +631,8 @@ statement factory·자동 read-set·CheckedTable/RowReadOperation과 short aggre
 ## 모듈 독립 개발 C2 Commit Pending 보유 — 2026-10-27
 
 기존 `dirty_frame/commit.rs`는 원 PinSet만 Pending에 이동하고 Drain 뒤 원 installer의 guard storage를 재구성한다. 기존 `plan4_retention/catalog_commit.rs`의 private stage helper가 실제 stage 지역값의 수명을 끝낸다. 신규 package/dependency·제품 파일·source root는 없다. 수정3경로와 선택 manifest는 JSON `dev3_module_c2_pending_carrier`에 등록한다. [실행 기록](../evidence/module-independence-survey-20261026.md#c2-pending-carrier)은 선택11개, Pending 타입112B 감소와 새 반환 carrier를 포함한 포괄 source 합을 구별한다. 실제 phase별 aggregate admission은 후속이다.
+
+
+### C2 전체 Catalog 조회의 short source 예약
+
+`plan4_apply/source.rs`는 원 isolation backing의24..32에 조회 바이트를 예약하고 마지막 output 변환/Result 뒤 checked 반환한다. `source_tests.rs`와 실제 Catalog 동시 호출 시험, 선택 manifest의 신규 경로는 JSON `dev3_module_c2_short_source`에 등록했다. package/dependency·source root·clean export 범위는 유지한다. [한정 증거](../evidence/module-independence-survey-20261026.md#c2-short-source)는 CatalogFull 한 class의 source별17개 PASS와 원 compile FAIL을 보존한다. 다른 입구·writer/progress·resident class의 동시 합은 후속이며 전체64KiB 보장이나 M4/M5 완료가 아니다.

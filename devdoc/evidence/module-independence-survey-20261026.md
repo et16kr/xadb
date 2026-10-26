@@ -788,3 +788,35 @@ D1/D2 담당·통합은 `/root`다. 원 자원을 이동하는 bounded 내부 �
 검증 대상은 실제 push할 commit의 포맷·Clippy·문서 pre-push gate다. 위 attribute/동일 크기 표현 변경에 제품 동작 변경이 없어 완료한 runtime 시험은 반복하지 않는다. `/root/module_handoff_review`가 실제3파일 diff와 원 Clippy 지적·기존512B 반환 회계를 대조하여 좁은 D1 수용·필수 수정0으로 판정했다. 검토자는 빌드·시험·문서 검사를 실행하지 않았고 `/root`가 반영한다. 최종 전송 검증은 이 보완 commit 이후 원 pre-push 훅에서 수행하며 실제 전송 로그와 구별한다. 이전 source별 제품 PASS·FAIL과 M4/M5 미완료를 유지한다.
 
 후속 `522ec12` main 전송 시도는 Rust 포맷·Clippy를 통과했지만 문서4개 링크의 `파일.rs:줄번호` 표기를 파일 이름으로 해석하여 차단됐다. 원 로그는 `artifacts/module-push-20261027-r2.log`에 보존한다. 실제 네 소스 파일의 존재를 확인하고 상대 Markdown 링크에서 줄 번호 접미어만 제거했다. 설명·계약 의미·제품 변경0의 D0 정정이며 최종 전송 시 원 훅을 다시 적용한다.
+
+
+<a id="c2-short-source"></a>
+### C2 CatalogFull short source 예약 — 2026-10-27
+
+기준 `0852f06`에서 계획 완료 지시를 재개했다. 기존 `/home/et16/.codex/worktrees/module-independence/xadb`는 다른 채팅 소유여서 수정하지 않고 같은 commit의 `/home/et16/.codex/worktrees/module-independence-finish/xadb`를 만들었다. 작업·계약·통합 `/root`, 독립 검토 `/root/module_review`다. 원 artifacts는 읽기만 하며 기존 source별 성공·실패·미완료를 유지한다.
+
+D1/D2의 유한 단위는 기존 전체 Catalog 조회의 고정 source 예약이다. 새 private `OperationSourceAdmission`이 원 IsolationLedger header24..32의 합을 checked add/sub로 관리하고 다른 header·장기 credit은 보존한다. class/charge를 caller가 선택하거나 실행 중 늘리는 API는 없다. 같은 원 core의 무효과 admission precheck로 기존 Drain/role 오류 우선순위를 확인한 뒤 source를 예약하며, 실제 progress 진입에서 다시 검사한다. source 부족은 reference/pin/operation 표시 전에 Capacity/Unchanged다. 참조 정리 뒤 마지막 Catalog decode/Result가 끝날 때까지 source를 보유한다. 정상 명시 종료/Drop은 한 번만 반환하고 poison/fence/underflow에서는 잔여 charge와 fatal 오류를 보존한다.
+
+별도 pool/semaphore를 추가하거나 full 조회에 낮은 resident charge를 적용하는 대안은 택하지 않았다. future resident-only class는 miss에서 동일 operation을 확대하지 않고 checked 종료 후 같은 snapshot의 별도 full 조회로 재진입해야 한다. 원 writer·다른 ReadPort entry·rollback/terminal/progress 몫이 아직 예약되지 않으므로 **이 단위는 전체64KiB aggregate 보장, caller-retained factory, writer1+resident reader2 또는 M4/M5 완료가 아니다.** 이 제한을 표시한 설계 순서는 독립 읽기 검토에서 한정 수용했고 실제 diff 검토도 아래 한정 범위로 수용했다.
+
+[실행 전 manifest](../../tests/fixtures/dev3-module-c2/short-source/manifest.json)에 실제 diff와17개 selector, 총600초·compiler90초·case30초·로그8MiB·test stack32MiB를 동결했다. 새 leaf7개는 literal byte 합·동시2thread·overflow/header·underflow·poison/fence·unwind/forget·실제 class/type을 검산한다. 새 precheck1개는 무효과 관측/재검사를, actual 겹침1개는 원 session에서 두 번째 조회가 refs/pin/효과 전에 거절되고 첫 종료 뒤 같은 snapshot으로 재진입함을 확인한다. 기존 영향8개는 정상/fenced Drain, Pending Undo LOAD, Missing/foreign owner, FlushRequired, 실제 I/O 오류, Found/Q 공개와 source census다. 무관한 완료 시험·전체 workspace·하위 wrapper·native/새PID 회복은 실행하지 않았다.
+
+| source 실행 | 결과·범위 |
+| --- | --- |
+| r1 | production PASS. test build FAIL(E0369): 신규 시험이 PartialEq 없는 RetentionCause를 assert_eq로 비교. runtime17 모두 NOT_RUN |
+| r2 | cfg(test) assertion10곳만 matches로 정정, 제품 변경0. production 빌드는 반복하지 않음. test build PASS, 미실행 exact17개 각각1회 PASS |
+
+source census는 shared retained `max(original owner+DiskSession, RecoveryRuntime+Plan4Recovered)`를 원 layout으로 계산한다. 실제22256B, CatalogFull41576B, 합63832B, admission leaf1024B이며 이전 lookup41552B보다 새 handle24B가 늘었다. live peak63184/metadata186192/whole251728B, recovered peak64611B는 그대로다. 이는 Rust source 값·수명 상한이며 stack/RSS 실측이나 성능 인수가 아니다.
+
+원 export/inventory·manifest·runner·compiler 로그·ELF·stdout/stderr·result는 새 작업 공간의 `artifacts/module-c2-short-source-20261027-r1/`·`r2/`에 보존한다.
+
+| 실행 | source SHA-256 | result SHA-256 |
+| --- | --- | --- |
+| r1 FAIL | `44591b2b774d8f8e369fdaab545cedd4521f4eab575b9f20da4b9be4df862660` | `3331cb769e28599597e9c2c4f7ab63737ea2e6df248ac8a4b9b26f0bbc3cb796` |
+| r2 PASS | `30f19b5627da519abca37a7237abbf57f31de5c895dd3967df1f813fcf3dc414` | `b7316a6ef024870e17ff695511bb8033b6ef7cb0a3e51cc21f5f1106089f019e` |
+
+공통 manifest SHA-256은 `810f2025d032eb9183057aab8229371d682f9656fe52c2f789313a798b58e607`, r2 ELF는 `964532d4ad1e9e3cec83553c4947cfaef2359d56945d8cb4c9a2b12bbe2c37e8`다. 경과19.06/43.70초는 성능 결과가 아니다. 변경 Rust만 파일별 rustfmt로 정리했다. 독립 제품/증거 검토는 아래 한정 범위로 수용했고 전체 fmt/Clippy·문서 verifier·push는 실행하지 않았다.
+
+독립 검토에서 frozen manifest의 I/O 오류·fenced Drain 두 선택 이유가 기존 read_operation 표시와 새 source byte charge를 혼동할 수 있음을 확인했다. 현재 manifest만 명확히 정정했다. fatal 뒤 반환되는 것은 기존 progress 표시이며 원 refs와 새 byte charge는 fence 아래 보존한다. frozen r1/r2의 manifest·hash·결과는 원문 그대로 유지하고, 제품·시험 변경이나 재실행은 없다. 위 manifest hash는 두 원 실행의 값이다.
+
+`/root/module_review`는 실제 diff·새 source/fixture·문서6개 및 r1/r2의 원 source5618개씩·manifest/runner/ELF/로그 identity를 읽기 전용 대조했다. 두 선택 이유 정정과 frozen 보존을 좁게 재확인한 뒤 **CatalogFull short source 부분공급 D1/D2 한정 수용·필수 수정0**으로 판정했다. 검토자는 파일 수정·시험·빌드·문서 verifier를 실행하지 않았으며 `/root`가 이 단위를 반영한다. 다음 단위는 resident-only 조회, writer/progress phase와 원 ledger의 실제 합산이며 Row/terminal/recovery 및 M4/M5 전체 목표는 유지한다.

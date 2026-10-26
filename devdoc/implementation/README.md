@@ -1,5 +1,7 @@
 # 현재 구현
 
+2026-10-27 [C2 CatalogFull source 예약](../evidence/module-independence-survey-20261026.md#c2-short-source): 원 isolation 원장에 전체 조회41576B를 선예약하고 마지막 decode/Result 뒤 반환한다. shared retained22256B와 합63832B이며 신규9·변경 영향8의 선택17 PASS, 원 test compile FAIL을 보존한다. 독립 D1/D2 한정 수용이며 writer/resident/progress·전체 aggregate·M4/M5는 미완료다.
+
 2026-10-27 [C2 Commit Pending 보유 분리](../evidence/module-independence-survey-20261026.md#c2-pending-carrier): 동일 pin만 WAL 대기를 통과하고 Drain 뒤 설치 guard를 재구성한다. stage helper를 나눠 준비 로컬 수명을 끝냈으며 관련11개 선택 PASS와 MF03/MF07 설명 정정을 보존하고 최종 독립 D1/D2를 한정 수용했다. Pending 타입112B 감소와 Catalog Commit 포괄 상한 증가를 구별하며 aggregate admission·실제 Row 연결·M4/M5는 미완료다.
 
 2026-10-27 [C2 거래·Aging 생성 수명 분리](../evidence/module-independence-survey-20261026.md#c2-transaction-source-phases): 실제 helper 경계를 나눠 Catalog lookup source 상한42850→41552B, live peak64074→63184B, recovered peak65450→64611B를 확인했다. source별 선택12+7회 PASS(16개 고유 selector)와 C09 설명 정정을 보존하며 최종 독립 D1/D2를 한정 수용했다. short aggregate admission·실제 Row/terminal/recovery·M4/M5는 미완료다.

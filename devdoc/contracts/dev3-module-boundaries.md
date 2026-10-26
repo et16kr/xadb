@@ -1127,6 +1127,8 @@ rollback/terminal은 원 progress admission이 새 foreground를 닫고 이미 �
 
 실제 부분공급으로 [Catalog 조회 수명/Commit Drain](../evidence/module-independence-survey-20261026.md#c2-read-operation-lifetime)을 연결했다. 원 OwnerSlot의 별도 read 표시를 첫 reference 예약 전부터 checked 정리 시도 뒤까지 유지하고 Drain이 표시0을 기다린다. Pending LOAD는 허용하고 Draining의 신규 operation/content 거절은 유지한다. 정상 refs0과 fence 뒤 원 fatal refs 보존을 구분한다. byte admission·동시 합·writer phase/progress 몫은 아직 미공급이며 이 표시만으로 본 절의 인수를 완료하지 않는다.
 
+2026-10-27 [CatalogFull short source 부분공급](../evidence/module-independence-survey-20261026.md#c2-short-source)은 원 isolation header24..32에 고정 source charge를 예약한다. admission 오류 우선순위의 무효과 precheck 뒤 source를 예약하고, 실제 progress 진입에서 다시 확인하며 reference/pin은 그 뒤다. refs/progress의 기존 정리 뒤에도 source를 마지막 decode/Result까지 보유한다. 같은 class의 추가 호출이 부족하면 Capacity/Unchanged이며 이미 보유한 snapshot은 유지한다. poison/fence/underflow는 원 isolation 규약대로 source 잔여를 보존하고 성공 반환으로 표시하지 않는다. 이 한정 범위의 선택17개는 PASS이며 독립 D1/D2를 한정 수용했다. writer·다른 ReadPort 입구·resident-only class·rollback/terminal progress 몫은 미공급이다. 따라서 전체 source aggregate 보장·caller-retained factory·MBC10 V09/V10은 여전히 미완료다.
+
 전체 설계 상계는 metadata `73856+65536+49152=188544≤196608`, original flush를 더한 whole `254080≤262144`다. 이 admission·동시 합 검산은 **새 C1/C2/C3 공급**이며 기존 active.max 기반 source 결과로 이미 구현됐다고 하지 않는다. header의 실제 byte 배치와 source charge의 측정·실패/정리 경로는 C1/C4 인수에 포함한다.
 
 <a id="common-deliveries"></a>

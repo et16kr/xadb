@@ -662,3 +662,93 @@ fn catalog_read_operation_drain_waits_for_captured_refs() {
 fn catalog_read_operation_fenced_drain_preserves_fatal_refs() {
     drain_captured_lookup(true);
 }
+
+#[test]
+fn catalog_full_source_capacity_precedes_second_operation_effects() {
+    case("C2_SHORT01", || {
+        let oracle = Oracle::new();
+        with_fresh!(oracle, |live,
+                             owner,
+                             flusher,
+                             status,
+                             undo,
+                             private,
+                             reader_private,
+                             core,
+                             fence,
+                             state| {
+            let _ = (status, undo, private);
+            prepare_catalog(live, owner, flusher);
+            let before = state.lock().unwrap().images();
+            let (captured, arrived) = sync_channel(1);
+            let (resume, release) = sync_channel(1);
+            hook::install(core, Point::LookupCaptured, captured, release);
+            let (writer, reader, _) = live.split();
+            let snapshot = reader.catalog_snapshot(owner).unwrap();
+            let reader_ref = &reader;
+            std::thread::scope(|scope| {
+                let reading = scope.spawn(move || {
+                    let mut first = core.try_owner(OwnerRole::Foreground).unwrap();
+                    let snapshot = reader_ref.catalog_snapshot(&mut first).unwrap();
+                    assert!(matches!(
+                        reader_ref
+                            .lookup_catalog(
+                                &mut first,
+                                &snapshot,
+                                ObjectId::new(6).unwrap(),
+                                &mut Plan4ResidencyCursor::new(),
+                                reader_private
+                            )
+                            .unwrap(),
+                        CatalogLookupStep::Missing
+                    ));
+                    snapshot.release_checked().unwrap();
+                });
+                arrived.recv_timeout(WAIT).unwrap();
+                let charged = reader.catalog_test_source_used();
+                assert!(charged > 0);
+                let refs = reader.catalog_test_references();
+                assert_eq!(hook::observe(core).active_read_operations, 1);
+                assert_eq!(writer.catalog_test_physical_pins(), 0);
+                let mut second_private = boxed::<PRIVATE_BYTES>();
+                let error = reader
+                    .lookup_catalog(
+                        owner,
+                        &snapshot,
+                        ObjectId::new(6).unwrap(),
+                        &mut Plan4ResidencyCursor::new(),
+                        &mut second_private,
+                    )
+                    .err()
+                    .unwrap();
+                assert!(matches!(error.cause, RetentionCause::Capacity));
+                assert_eq!(error.effect, Effect::Unchanged);
+                assert_eq!(reader.catalog_test_source_used(), charged);
+                assert_eq!(reader.catalog_test_references(), refs);
+                assert_eq!(hook::observe(core).active_read_operations, 1);
+                assert_eq!(writer.catalog_test_physical_pins(), 0);
+                assert_eq!(state.lock().unwrap().images(), before);
+                resume.send(Resume::Continue).unwrap();
+                reading.join().unwrap();
+                assert_eq!(reader.catalog_test_source_used(), 0);
+                assert_eq!(hook::observe(core).active_read_operations, 0);
+                assert!(matches!(
+                    reader
+                        .lookup_catalog(
+                            owner,
+                            &snapshot,
+                            ObjectId::new(6).unwrap(),
+                            &mut Plan4ResidencyCursor::new(),
+                            &mut second_private
+                        )
+                        .unwrap(),
+                    CatalogLookupStep::Missing
+                ));
+                assert_eq!(reader.catalog_test_source_used(), 0);
+                assert!(!fence.is_fenced());
+            });
+            snapshot.release_checked().unwrap();
+            assert_eq!(state.lock().unwrap().images(), before);
+        });
+    });
+}

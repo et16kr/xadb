@@ -21,6 +21,8 @@ use std::sync::Mutex;
 
 #[path = "plan4_apply/isolation.rs"]
 mod isolation;
+#[path = "plan4_apply/source.rs"]
+mod source;
 #[path = "plan4_apply/transaction.rs"]
 mod transaction;
 #[allow(unused_imports)]

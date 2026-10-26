@@ -1,6 +1,7 @@
 //! Original source ownership behind the Catalog product's synchronous lookup.
 //! The private factory is consumed immediately by lookup; a caller-retainable
 //! statement factory requires aggregate source admission and is not exposed.
+use super::super::source::OperationSourceAdmission;
 use super::super::visibility::{
     self, CapturedCatalogRefs, CatalogLookupLoan, CatalogSource, ReferenceLease, SnapshotGuard,
 };
@@ -54,6 +55,7 @@ pub(crate) struct CatalogReadOperation<
 > {
     backend: &'r ReadPort<'b, 'a, 's, 'c, 'p, 'd, 'm, 'w, W>,
     progress: ReadOperationAdmission<'c, 's>,
+    source: OperationSourceAdmission<'b, 'a, 'c, 's>,
     owner: &'u mut Owner<'c, 's>,
     snapshot: &'r SnapshotGuard<'v, 'j, 'c, 's>,
     loader: &'i mut [u8; 409_600],
@@ -108,15 +110,25 @@ impl<'u, 'r, 'v, 'j, 'i, 'b, 'a, 's, 'c, 'p, 'd, 'm, 'w, W: WriterNamespace>
                 RetentionCause::WrongState,
             ));
         }
-        let mut progress = owner
-            .try_read_operation(backend.pool.bound_core())
+        owner
+            .check_read_operation(backend.pool.bound_core())
             .map_err(progress_error)?;
+        let mut source = OperationSourceAdmission::catalog::<W>(backend.isolation)?;
+        let mut progress = match owner.try_read_operation(backend.pool.bound_core()) {
+            Ok(progress) => progress,
+            Err(error) => {
+                return merge(Err(progress_error(error)), source.release_checked());
+            }
+        };
         let lease = match visibility.reserve_references(owner) {
             Ok(lease) => lease,
             Err(error) => {
                 return merge(
-                    Err(visibility_error(error)),
-                    progress.release_checked().map_err(progress_error),
+                    merge(
+                        Err(visibility_error(error)),
+                        progress.release_checked().map_err(progress_error),
+                    ),
+                    source.release_checked(),
                 );
             }
         };
@@ -124,6 +136,7 @@ impl<'u, 'r, 'v, 'j, 'i, 'b, 'a, 's, 'c, 'p, 'd, 'm, 'w, W: WriterNamespace>
         Ok(Self {
             backend,
             progress,
+            source,
             owner,
             snapshot,
             loader: loan.loader,
@@ -437,7 +450,7 @@ impl<'u, 'r, 'v, 'j, 'i, 'b, 'a, 's, 'c, 'p, 'd, 'm, 'w, W: WriterNamespace>
         merge(checked, cleanup)?;
         let namespace = self.backend.storage.profile().spec().namespace;
         let bytes = self.copy.take().ok_or_else(|| self.invariant())?;
-        catalog_record::decode_catalog_record(
+        let result = catalog_record::decode_catalog_record(
             &bytes[..candidate.len],
             CatalogExpectation {
                 namespace,
@@ -450,13 +463,16 @@ impl<'u, 'r, 'v, 'j, 'i, 'b, 'a, 's, 'c, 'p, 'd, 'm, 'w, W: WriterNamespace>
                 RetentionPhase::Census,
                 RetentionCause::Catalog(e),
             )
-        })
+        });
+        merge(result, self.source.release_checked())
     }
     pub(in crate::storage) fn finish_missing(mut self) -> Result<()> {
-        self.close()
+        let closed = self.close();
+        merge(closed, self.source.release_checked())
     }
     pub(in crate::storage) fn finish_error(mut self, error: RetentionError) -> RetentionError {
-        match merge::<()>(Err(error), self.close()) {
+        let closed = merge::<()>(Err(error), self.close());
+        match merge(closed, self.source.release_checked()) {
             Err(error) => error,
             Ok(()) => unreachable!("original error retained"),
         }
@@ -467,6 +483,7 @@ impl<W: WriterNamespace> Drop
 {
     fn drop(&mut self) {
         let _ = self.close();
+        let _ = self.source.release_checked();
     }
 }
 
@@ -493,6 +510,7 @@ pub(super) fn entry_source_bytes<W: WriterNamespace>() -> usize {
         + 16 * size_of::<&()>()
         + visibility::source_census().peak_leaf
         + read_operation_source_bytes()
+        + super::super::source::leaf_source_bytes()
 }
 
 /// record()/check()/finish_found decoding ends before location replay or LOAD.
