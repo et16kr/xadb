@@ -260,7 +260,7 @@ batch 사이에는 page pointer/latch를 보존하지 않고 snapshot token·own
 
 ### 원 view와 mutation 권한
 
-공통 공급 C가 실제 transaction/statement owner와 snapshot을 결합하여 비복제 `RowStatementView`를 발급한다. 값은 원 DB/timeline/open binding, optional own TxnRef, checked statement sequence, snapshot guard, statement 상태와 private revision을 보존한다. 숫자 token·q·TxnRef를 caller가 조립하는 생성자는 없다. 하나의 거래에는 한 active statement만 허용하고 같은 statement의 호출은 직렬화한다. 서로 다른 거래/reader의 원 admission·owner 정책은 유지한다. view는 원 live owner보다 오래 살 수 없고, cursor는 view를 borrow하므로 snapshot 수명을 연장하는 별도 registry를 만들지 않는다.
+공통 공급 C가 실제 transaction/statement owner와 snapshot을 결합하여 비복제 `RowStatementView`를 발급한다. view는 원 DB/timeline/open binding과 actual actor를 가진 sealed transaction capsule을 borrow하고 checked statement sequence·statement 상태·private revision을 보존한다. Serializable은 capsule이 소유한 transaction SnapshotGuard를 연속 borrow하고 ReadCommitted view만 statement의 새 guard를 소유한다. 정확한 read-set·종료 검증은 [격리 공급](dev3-task-10-concurrency.md#module-row-isolation)을 따른다. 숫자 token·q·TxnRef를 caller가 조립하는 생성자는 없다. 하나의 거래에는 한 active statement만 허용하고 같은 statement의 호출은 직렬화한다. 서로 다른 거래/reader의 원 admission·owner 정책은 유지한다. view는 원 live owner보다 오래 살 수 없고, cursor는 view를 borrow하므로 snapshot 수명을 연장하는 별도 registry를 만들지 않는다.
 
 mutation은 A의 후보와 C의 원 apply/transaction authority를 통해서만 수행한다. cursor가 immutable view를 borrow한 상태의 후속 own mutation은 C 내부의 checked revision 상태를 바꾸어 검출한다. view의 내부 상태는 caller에 공개하지 않으며 같은 statement를 여러 thread에서 동시에 변경 가능한 `Sync` handle로 제공하지 않는다. A가 revision을 직접 설정하거나 B가 별도 revision counter를 두지 않는다. 실제 Rust wrapper·lifetime과 source census는 M2 경계 명세에 연결하여 채택하고 M4에서 구현한다.
 

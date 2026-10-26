@@ -4,7 +4,7 @@
 
 [전환 계획과 MI01–06](../plans/module-independence-plan.md#acceptance) · [공통 경계 제안](dev3-module-boundaries.md) · [첫 행 완료 계약](dev3-task-11-commit.md#first-row-integration) · [트리·행 정본](dev3-task-06-tree-rows.md) · [undo 정본](dev3-task-09-undo-rollback.md) · [시험 계획 DIR03](../plans/dev3-test-plan.md#direction-integration)
 
-이 문서는 A의 **첫 영속 Row INSERT 거래**와 B의 **snapshot row point-read·순서 cursor**를 M5의 서로 다른 제품 기능으로 제안한다. 기준 source는 `b7ce51d2b3ee62b5b8dbc0d9c852a17827d76bd9`의 실제 파일을 조사했으며 작성 worktree HEAD는 `61b386cf972ac8a8444a7cd59f9a6a85a2bf24c2`다. 기준 이후 관련 제품 diff는 M2 채택 전에 통합 담당이 대조한다. 구체 형식·API·수치의 아래 선택은 제안이며 기존 소유 계약을 아직 대체하지 않는다. 작성 `/root/module_consumer_survey`, 통합·채택 `/root`, 공통 경계 `/root/module_boundary_survey`; A/B 실제 구현 담당·별도 D1/D2 검토자는 착수 때 기록한다.
+이 문서는 A의 **첫 영속 Row INSERT 거래**와 B의 **snapshot row point-read·순서 cursor**를 M5의 서로 다른 제품 기능으로 제안한다. 최초 조사는 `b7ce51d2b3ee62b5b8dbc0d9c852a17827d76bd9`, 이번 설계 대조는 `3c639c31f808b2ce9504525d6993bcb62d304431`의 실제 source/owner를 기준으로 한다. 구체 형식·API·수치의 아래 선택은 **D2 검토에 제출하는 동결안**이며 채택·구현·시험 완료 주장이 아니다. 담당은 C·통합 `/root`, A INSERT `/root/module_consumer_survey`, B read/cursor `/root/module_boundary_survey`, 독립 검토 `/root/module_handoff_review`다. MCQ01–06의 설계 결정과 실제 공급 의무를 구분하며 M2 완료는 통합 담당의 독립 D2 수신 뒤 판정한다.
 
 공통 공급과 인수 fixture가 없는 현재 상태에서 독립 구현·복구 가능성을 완료로 선언하지 않는다. 이 문서의 후보 경로·함수·case는 아직 제품 등록이나 실행된 selector가 아니다. 공유 색인·기존 owner 계약의 채택 반영은 통합 담당이 맡는다.
 
@@ -29,7 +29,7 @@ CREATE의 남은 native 시험/F05만을 B로 세지 않는다. [현재 CREATE �
 - 현재 table에 index가 실제 존재하면 index를 무시하고 쓰지 않는다. nonzero index·overflow 필요·leaf split 필요·다른 tree level·UPDATE/DELETE/occupied before는 effect 전 typed Unsupported 또는 해당 용량 오류로 거절한다. 기존 API 오류 분류와 정확 우선순위는 M2의 F02 결정에 연결한다. 저장 손상은 Unsupported/NotFound로 낮추지 않는다.
 - 지원 크기 검산 후에도 WAL stage/apply·commit·rollback 실패는 실제 효과에 따라 판정한다. no-force ACK, uncommitted steal, statement 실패, UNKNOWN, 부분 CLR 재장애, 정상 admitted quota에서의 복구와 새 ACK 의무는 [첫 행 완료 계약](dev3-task-11-commit.md#first-row-integration) 그대로다.
 
-일반 SMO·overflow·UPDATE/DELETE·index·locator cache·모든 isolation 조합을 이번 M4 선행으로 추가하지 않는다. 이 제외는 해당 3.06/T06·DEV3 S5 의무나 기본 Serializable·Read Committed 계약의 취소가 아니다. 선택 범위의 실제 read/write set 검증은 MCQ07의 미결 설계이며, 유일 RowId 발급만으로 Serializable을 충족한다고 판정하지 않는다. 지원 profile 밖 이미 저장된 입력을 일부만 읽고 완료로 반환하지 않으며, 현재-format 지원 여부를 첫 효과와 사용자 결과 전에 검사한다.
+일반 SMO·overflow·UPDATE/DELETE·index·locator cache·모든 isolation 조합을 이번 M4 선행으로 추가하지 않는다. 이 제외는 해당 3.06/T06·DEV3 S5 의무나 기본 Serializable·Read Committed 계약의 취소가 아니다. 선택 범위의 실제 read/write set은 [원 격리 공급](dev3-task-10-concurrency.md#module-row-isolation)의 table/catalog epoch·원 Commit 직렬화·Serializable/RC snapshot으로 검증한다. 유일 RowId 발급만으로 Serializable을 충족한다고 판정하지 않는다. 지원 profile 밖 이미 저장된 입력을 일부만 읽고 완료로 반환하지 않으며, 현재-format 지원 여부를 첫 효과와 사용자 결과 전에 검사한다.
 
 <a id="actual-supply"></a>
 ## 3. 실제 공급과 아직 없는 공급
@@ -61,7 +61,7 @@ CREATE의 남은 native 시험/F05만을 B로 세지 않는다. [현재 CREATE �
 
 전용 제품 경로 후보는 A `crates/engine/src/storage/row/insert.rs`와 `row/insert/` 하위, B `row/read.rs`와 `row/read/` 하위다. 시험·fixture도 `row-insert`와 `row-read` 입력으로 분리한다. 실제 내용이 생길 때만 경로를 등록한다. 공유 `storage/row.rs`의 A 또는 B 모듈 한 줄 등록은 통합 담당이 **각 단독 source의 첫 검증 전에** 해당 기능 것만 적용하고, 합류에서 두 등록을 합친다. C0의 빈 모듈/상대 기능 stub은 실제 공급·기능 검증의 증거가 아니다. 다른 공용 의미 변경이 필요하면 원 시도를 보존하고 M2/M4로 환류한다.
 
-C의 Row observer는 필요한 공통 신뢰 경계다. A는 그 grammar에 맞는 실제 forward/CLR producer와 사용자 변경 흐름을 만든다. recovery 조립은 A의 typed Row undo handler를 받으며, C+B의 완결 committed fixture에서 행 undo가 필요하지 않음을 검산할 수 있어야 한다. Row undo handler가 없는 source에 실제 loser가 나타나면 Unsupported/RecoveryRequired로 닫고 READY를 반환하지 않는다. A 없는 fallback으로 CLR를 생략하지 않는다. 이 handler의 exact 연결 signature·모듈 의존은 공통 경계 담당과 M2에서 확정한다.
+C의 Row observer는 필요한 공통 신뢰 경계다. A는 그 grammar에 맞는 실제 forward/CLR producer와 사용자 변경 흐름을 만든다. recovery 조립은 A의 typed Row undo handler를 받으며, C+B의 완결 committed fixture에서 행 undo가 필요하지 않음을 검산할 수 있어야 한다. Row undo handler가 없는 source에 실제 loser가 나타나면 Unsupported/RecoveryRequired로 닫고 READY를 반환하지 않는다. A 없는 fallback으로 CLR를 생략하지 않는다. 이 handler의 consuming 입력·반환·오류/loan·모듈 의존은 [공통 API 명세](dev3-module-boundaries.md#api-candidates)의 RowReservation/recovery 절을 정본으로 따른다. A 없는 source의 READY는 그 절의 no-loser 검산 범위이며 임의 recovery 완결 stub이 아니다.
 
 <a id="row-issuer"></a>
 ## 5. RowId와 예약의 구체 제안
@@ -74,7 +74,9 @@ RowReserve는 원 Active actor·statement, 이 profile의 actual empty Tx invent
 2. transaction Descriptor의 `last_mutation_sequence+1`을 planned mutation으로 소모한다. RowForward는 그 번호를 실제 logical version에 쓰고 다시 증가시키지 않는다. Cancel/CLR/StatementFinish는 이 high-water를 낮추지 않는다. 이는 기존 Catalog Reserve의 last_mutation0 유지와 다른 **새 scope 제안**이다.
 3. Tx의 `UndoSlot(U)` inventory item1, RowMissingRoot Reserved Job, exact 향후 debt. 기존 table anchor/RowLeaf는 이미 Allocated이며 PageToken/pair INIT를 다시 예약하지 않는다. Free Undo container의 실제 확보/INIT는 원 C 공급에서 먼저 수행하고 그 효과·비용을 숨기지 않는다.
 
-성공한 Reserve 뒤 Cancel은 slot reservation·Job과 미사용 debt를 정리하지만 RowId/UndoSequence/mutation/slot generation을 반환하지 않는다. CLR·abort는 논리 행만 보상하고 high-water를 유지한다. crash 전 caller에게 성공 RowId를 반환하기 전에는 해당 Forward가 complete stage/apply되어야 한다. recovery는 선택 base의 row_high와 이후 complete Reserve를 재생하며, 미완결 tail·부분 apply는 원 공통 fence/복구 규칙을 따른다. Cancel·abort 결과를 이유로 초기 high-water를 다시 계산하지 않는다. old WAL 제거 뒤에도 선택된 base가 원 high-water를 보존해야 한다.
+성공한 Reserve 뒤 Cancel은 slot reservation·Job과 미사용 debt를 정리하지만 **같은 live open에서** RowId/UndoSequence/mutation/slot generation을 반환하지 않는다. CLR·abort도 채택된 high-water를 낮추지 않는다. crash 전 caller에게 성공 RowId를 반환하기 전에는 해당 Forward의 complete stage/whole apply가 필요하지만, 이 성공만으로 transaction ACK나 WAL durability를 주장하지 않는다. `wal_io::stage_verified_required`는 RAM slot copy와 exact requirement 발급이며 실제 write/sync는 별도다.
+
+재시작의 비재사용 검산은 **선택된 base와 실제 채택된 complete WAL prefix에 포함된 issuance**를 기준으로 한다. 해당 prefix의 Reserve가 Cancel/CLR/abort로 끝나도 row_high/UndoSequence/mutation/generation을 되감지 않고, old WAL 제거 뒤에는 선택 base가 그 high-water를 보존한다. RAM에만 존재하여 선택 prefix 밖으로 유실된 Reserve는 durable 발급 증거가 아니므로 재시작이 그 번호 소모를 보존한다고 주장하지 않는다. old open의 RowId 관측·statement/handle은 새 open의 권한이 아니다. native 시험은 아래 [prefix witness](#fault-cuts)로 이 두 상태를 분리한다. 시험용 force는 지정 cut의 보존 조건이며 제품의 매 Reserve/Forward/CLR에 새 강제 sync를 요구하는 변경이 아니다.
 
 | 대안 | 평가 |
 | --- | --- |
@@ -92,11 +94,23 @@ RowReserve는 원 Active actor·statement, 이 profile의 actual empty Tx invent
 
 Job1024는 v3, kind3=`RowMissingRoot`를 제안한다. Free/Terminal/CatalogMissingRoot의 의미는 명시된 version3 선택 아래 보존하고 Row 전용 의미를 기존 Catalog kind2에 얹지 않는다. Row root는 U/sequence@128/168, table ObjectHandle@176, stable table anchor@200, **Row의 물리 위치 권한이 아닌 준비 당시 leaf hint**@224, statement/mutation@248/256, planned tree cell bytes@280, row projection digest@288, **RowId@320**, sender-before descriptor digest@328을 사용한다. status/source·lease/adoption/release/cursor·budget 영역은 기존 의미를 소비한다. kind3 전용 필드는 같은 위치를 쓰는 Catalog/Terminal에 존재한다고 해석하지 않는다.
 
-RowReserved/Retained/ReleasingCommitted/ReleasingCompensated는 원 상태 구분을 유지한다. Releasing은 실제 row를 다시 읽을 근거가 없으므로 hint/cell bytes/projection을 canonical zero로 지우고, U/sequence/table/RowId/statement/mutation/source·cleanup 증거는 Free까지 보존한다. RowReserved마다 unique U와 RowId, actor마다 Terminal 정확1을 요구하지만 Row root≤1을 요구하지 않는다. 원 queue64·nonfree≤55와 원 Status/Undo physical uniqueness는 유지한다. 첫 profile에서 한 Undo page의 slot0 하나를 쓰므로 여러 root는 여러 실제 container를 요구한다.
+Job의 state@6/kind@7은 Free=(0,0), TerminalLeased=(1,1), TerminalReady=(2,1)을 유지하고 RowReserved=(1,3), Retained=(2,3), ReleasingCommitted=(3,3), ReleasingCompensated=(4,3)로 고정한다. kind2 Catalog의 기존 state 조합도 version3 아래 별도로 검산하며 kind3로 해석하지 않는다. Releasing은 실제 row를 다시 읽을 근거가 없으므로 hint/cell bytes/projection을 canonical zero로 지우고, U/sequence/table/RowId/statement/mutation/source·cleanup 증거는 Free까지 보존한다. RowReserved마다 unique U와 RowId, actor마다 Terminal 정확1을 요구하지만 Row root≤1을 요구하지 않는다. 원 queue64·nonfree≤55와 원 Status/Undo physical uniqueness는 유지한다. 첫 profile에서 한 Undo page의 slot0 하나를 쓰므로 여러 root는 여러 실제 container를 요구한다.
 
 Row scope의 Compensated(c0)는 실패 statement를 처리한 뒤 Active, AbortingStatement 또는 AbortingFull actor와 공존할 수 있다. 그 뒤 앞선 성공 statement를 Commit하면 source는 Committed(q>0)/TerminalReadyCommitted이지만 **compensated root의 q는0**이다. 전체 abort면 source Aborted/TerminalReadyAborted다. 따라서 Row의 compensated cleanup은 actor가 어느 terminal outcome으로 끝났는지 검산하고 둘 모두에서 진행할 수 있어야 한다. Catalog scope2의 Compensated→AbortingFull/Aborted·headNone 제한을 Row에 복사하지 않는다. RootJob이 남아 있으면 source Status의 TerminalFinish를 막는 원 census로 수명을 보호하며 creator를 숨은 incoming edge로 세지 않는다.
 
-XHG/XSG version2에 explicit scope3=`RowMissing`을 제안한다. scope2 Catalog observer가 이를 fallback으로 받지 않는다. header·두 descriptor(Tx/Aging)·OperationCore256·Native/Edge/Count/Inventory/Redo section layout은 [기존 group envelope](dev3-create-group-format.md)를 재사용한다. current Profile는 version3(같은 ID/용량 tuple), Root/Job는 version3, XRB1 base는 version4(동일2MiB layout에 새 Row state/issuer census)를 추천한다. 형식 폭·기존 backing을 늘리는 결정은 아니다. Row용 body/shape·current genesis/base/profile 수신을 함께 동결해야 한다. 현재 runtime에 old-format fallback을 추가하지 않으며 pure legacy decoder·원 증거를 보존한다. actual source discriminator의 숫자 충돌 여부와 모든 current selector의 일관성을 F01 담당이 채택 전에 대조한다.
+XHG/XSG version2에 explicit scope3=`RowMissing`을 제안한다. scope2 Catalog observer가 이를 fallback으로 받지 않는다. header·두 descriptor(Tx/Aging)·OperationCore256·Native/Edge/Count/Inventory/Redo section layout은 [기존 group envelope](dev3-create-group-format.md)를 재사용한다. current Profile는 version3(같은 ID/용량 tuple), Root/Job는 version3, XRB1 base는 version4(동일2MiB layout에 새 Row state/issuer census)를 추천한다. 형식 폭·기존 backing을 늘리는 결정은 아니다. Row용 body/shape·current genesis/base/profile 수신을 함께 동결해야 한다. 현재 runtime에 old-format fallback을 추가하지 않으며 pure legacy decoder·원 증거를 보존한다. 현재 source와 목표 dispatch의 대응은 다음 표로 고정한다. 숫자1..3의 legacy 해석은 순수 decoder에서만 보존하며 target current runtime이 그 결과를 fallback 권한으로 채택하지 않는다.
+
+<a id="format-dispatch"></a>
+| 경계·현재 실제 source | 현재 값 | 목표 current 경로·거절 |
+| --- | --- | --- |
+| `control::{Profile::base_bytes,profile_prefix,encode_catalog_profile,decode_bootstrap_profile,read_header_for}` | Profile1=1MiB,2=2MiB; ID1/2/3 buffer4/16/64MiB | 명시 `RowMissing` Profile3=2MiB. ID/188B capacity tuple·4096B envelope 유지; current genesis만3 생성. 다른 control envelope는1 유지. parsed Profile는 format을 잃지 않음 |
+| `retention_page::catalog::{initial_root,decode_root,free_job,decode_job}` | XQR1/XQJ1 version2, Root reserved432..512, Job reserved320..328; kind0/1/2 | current Root/Job3. Root row_high@432, Job kind3/RowId@320만 새 의미. legacy2 observer를 current3에 재사용하지 않음 |
+| `plan4_recovery_base::{BaseFormat,catalog::{decode_layout,encode_layout}}` | V1Status1/V2System2/V3Catalog3; Catalog Profile2·base3 고정 | `V4RowMissing=4`, Profile3·base4만 current 조합. Catalog의2MiB section offsets·64page arena·352B INIT provenance 폭 유지. 같은 page arena에서 Row/Undo/Status/Job 그래프를 추가 검산 |
+| `plan4_recovery_select`, original recovery/population/history/read/control/current base inventory | `format()==2` 또는 `V3Catalog` 분기로 Catalog source/census 선택 | target current가 선택한 Profile3→Root3/Job3→base4를 한 closure로 검사. 원 System INIT scope1·Catalog scope2·Row scope3가 같은 **target profile**에서 각자의 closed observer로 분기. raw profile number를 바꿔 v2 검산을 우회하지 않음 |
+| `semantic_catalog::{Operation,wire}` 및 original replay dispatch | XHG/XSG version2, flags2; Catalog opcode5 없음 | Row observer만 version2/flags3. XHG:1,2,4,6,7,11,12; XSG:3,5,16,17,20,21,22. StatementFinish5의 outer=`Update`, 나머지는 원 opcode의 outer 유지. scope/op/outer 조합 불일치는 Unsupported; 다른 observer 재시도 없음 |
+| native/edge/slot/row lower format | Row1/Undo3/Status5/Root8/Job9, 역할1/4/7/10, UndoRow target1 | 번호/기존 폭 유지. Row metadata는 kind11, anchor는10이며 INSERT에서 변경 native가 아님. native kind2/4/6/7/10/11과 occupied before는 이 Row effect의 shape에서 거절; proof page를 가짜 native로 만들지 않음 |
+
+새 current 설치·선택·base capture·replay·recovery·native worker가 위 조합을 함께 소비한다. old Profile1/2 또는 base1/2/3를 발견하면 명시 UnsupportedFormat/UnsupportedClosure이며 삭제·자동 변환·fresh 재생성하지 않는다. target Profile3 안의 Catalog scope2는 실제 CREATE를 유지하되 Root/Job3 검산을 받는 명시 adapter다. 기존 Profile2의 원 증거와 순수 decoder는 그대로 보존한다. 준비 중 변경할 `format()==2` 분기를 단순 `>=2`로 넓히지 않는다. version0/4/65535 Profile, base0/5/65535, Root/Job2/4, flags0/1/2/4를 Row 입구에 넣는 거절 변형을 둔다.
 
 operation은 Begin1, Forward2, RollbackStart3, CLR4, StatementFinish5, Commit6, AbortEnd7, Reserve11, Cancel12, AgingStart16, TerminalFinish17, Prune20, ReleaseRole21, RootFree22를 후보로 둔다. OperationCore의 기존 statement/mutation/current/next/target/q/digests를 실제 전이에 사용하고 unused field는0이다. 별도 opaque body나 일반 무검산 dispatch를 추가하지 않는다. Native Row kind1·Undo3·Status5·Root8·Job9와 기존 role 번호는 원 [obligation](dev3-obligation-format.md)의 의미를 따른다.
 
@@ -136,8 +150,34 @@ Missing-only committed Prune는 q≤Horizon이고 실제 참조 pin 조건이 �
 
 recovery는 current base/profile의 Root v3·Job v3·high-water·다중 Root/Status/Undo census를 검산한다. Row frame의 의미/descriptor 채택과 pageLSN REDO를 분리하고 same owner LSN의 예약을 두 번 소비하지 않는다. loser의 row CLR 생산은 A handler, 원 stage/redo/REBASE/LOG_OPEN/VERIFY/STABILIZE는 C/복구 owner다. no-force·steal·부분 CLR·old WAL 제거 후 high-water/head 복원·새 ACK/재장애의 실제 연결까지 완료 의무다.
 
+<a id="row-states"></a>
+### 6.5 상태와 참조 multiset
+
+한 거래의 Row root 수를 `n`, 아직 보상/Prune되지 않은 행 수를 `v`라 한다. 한 거래에 Catalog/Row root를 함께 만드는 것은 이번 first profile 밖이며 첫 RowReserve 전에 거절한다. 그 제한은 여러 Row/statement를 금지하지 않는다. Reserved U는 `Free(g_new)`의 **실제 bytes+UndoSlot inventory**이며 새 Undo state를 발명하지 않는다.
+
+| 전이 | source Status·head/rollback | Row Job·U와 census |
+| --- | --- | --- |
+| Begin | Active/headNone | TerminalLeased1, Row root0, Status incoming0 |
+| Reserve | Active/headH 그대로, active statement | RootReserved 추가1, U Free(g_new), inventory1; actor의 다른 Reserved0, last_mutation+1 |
+| Cancel | Active/headH 그대로 | Reserved→Free Job, inventory1→0, U Free의 g_new 유지; v/head/count 불변 |
+| Forward | Active/headH→U | Reserved→Retained; U Free→Live Missing incoming2, U.prevTxn=H 또는 Never; inventory1→0, v+1 |
+| StatementRollbackStart | Active/headH→AbortingStatement(headH,nextH,targetM) | Reserved0; retained/compensated roots 유지. targetM은 원 statement mark이고 현재 chain의 suffix 경계 |
+| FullRollbackStart | Active 또는 복구된 AbortingStatement→AbortingFull(headH,nextH,targetNone) | 과거 statement를 재개하지 않음. 원 descriptor의 남은 full-abort 예약 소비 |
+| CLR | AbortingStatement/Full의 head=next=U→H; statement targetM 유지 | Retained→ReleasingCompensated(q0,cursor0); U incoming2→0, prevTxn LinkedH→Cut; 행 제거, v−1 |
+| StatementFinish | AbortingStatement이며 head=next=targetM→Active(headM) | compensated roots 보존; rollback progress 제거, 이전 v개 행/CLR debt 보존. 종료된 statement token 재사용 불가 |
+| Commit | Active·Reserved0→Committed(q=C+1), head 유지 | TerminalReadyCommitted; Retained root의 q는 prune 전0, compensated q0 그대로. pending statement 없음·격리 검증 성공 필요 |
+| AbortEnd | AbortingFull·head/nextNone→Aborted | TerminalReadyAborted; Retained0, compensated 여러 개 가능 |
+| Prune | Committed(q), horizon≥q, 해당 U가 현재 head | Retained→ReleasingCommitted(q,cursor0); row stampCommitted(q)/undoNone, headU→H·U.prevTxn Cut, U incoming0, v−1 |
+| ReleaseRole | source terminal이며 Releasing(cursor0/1/2) | 매 group cursor+1. Missing before의 Never/이미 Cut을 검산하고 count를 중복 감소시키지 않음. cursor3 전 RootFree 금지 |
+| RootFree | source terminal·Releasing cursor3·incoming0·transient0 | U→Free(같은 generation), Job→Free(같은 generation). source actor의 나머지 root는 독립 유지 |
+| TerminalFinish | source terminal·그 actor의 Row/Catalog roots0·Status incoming0·transient0 | Status/Terminal 정리. Job의 source identity를 숨은 incoming edge로 세지 않고 census로 보호 |
+
+동시에 보유하는 **persistent** edge는 행마다 `RowUndo1`, `RowStamp7`이고 chain에 `TxnHead10` 하나 및 각 non-oldest U의 `UndoPreviousTxn4` 하나다. 따라서 모든 retained Live U의 incoming은 정확2(자기 행1+head 또는 후속 U1), source Status incoming은 그 actor를 가리키는 실제 Transaction row stamp 수 `v`다. Reserved/compensated U의 incoming은0이다. `UndoPreviousVersion5/UndoBeforeStamp6`는 Missing-only에서 Never/없음이므로 edge를 넣지 않는다. 각 H의 net0는 old head1 제거+new prevTxn1 추가(Forward), old prevTxn1 제거+new head1 추가(CLR/Prune)라는 multiset이며 실제 before count≥1 증명이 필요하다. net0 target의 CountChange·동일 Native를 추가하지 않는다. target/state/sequence가 다르거나 감소 여유가 없으면 전체 그룹 거절이다.
+
+Prune는 오래된 root부터 임의 제거하지 않는다. 같은 actor의 head가 아닌 Retained Job은 이번 step의 eligible이 아니며 원 bounded queue를 전진한다. actor가 Active/Aborting이면 compensated cleanup도 대기한다. Commit한 actor의 compensated q0는 원 q와 다르지만 정당하며, AbortEnd 뒤 retained root가 남거나 TerminalFinish 때 어느 disposition의 root라도 남으면 손상이다. point/cursor의 transient2pin은 이 persistent count에 더하지 않는다. 두 graph와 exact source latch 이동은 [참조 owner](dev3-visibility-retirement.md#row-missing-traversal), statement/mark 종료는 [F02 owner](dev3-task-06-tree-rows.md#module-statement-cursor)를 따른다.
+
 <a id="row-shape"></a>
-### 6.5 첫 profile의 target·WAL shape 입력
+### 6.6 첫 profile의 target·WAL shape 입력
 
 다음은 위 전이안을 수치화한 **설계 입력**이며 실제 source/caller F05 PASS가 아니다. canonical inline 길이를 `L=5..2048`, row record를 `168+L`, tree cell을 `C=12+168+L=180+L`로 둔다. 따라서 `C=185..2228`, entry의 cell+slot 비용은 `184+L`이다. leaf의 실제 모든 row 의미를 검산해야 작은 scratch/capacity 계산을 적용할 수 있다. canonical 최소 길이일 때 `floor(16188/189)=85`, 최대 길이일 때 `floor(16188/2232)=7`행이다. 이는 leaf 표현 용량이며 transaction admission 수가 아니다.
 
@@ -152,12 +192,13 @@ recovery는 current base/profile의 Root v3·Job v3·high-water·다중 Root/Sta
 | Statement RollbackStart·실패 후 StatementFinish | Status home native576;1page |0/0/0,S, single owner|각`2176+576+288=3040`|
 | Begin·Commit·AbortEnd | Root·TerminalJob·Status, native합3904;3page |0/0/0,3P|각`56712`|
 | committed Prune | Root·RootJob·Status·U·RowLeaf, native합5024+2C;5page |`(3+h)/2/0`,5P, single Aging|`89496+2C+128h`|
+| AgingStart | Root, native합1152;1page |0/0/0,1P, single Aging|`19672`|
 | ReleaseRole·RootFree | Root·RootJob·U, native합4320;3page |0/0/0,3P, single Aging|각`55528`|
 | TerminalFinish | Root·TerminalJob·Status, native합3904;3page |0/0/0,3P, single Aging|`55112`|
 
 성공 statement의 끝은 F02 token/mark의 정상 해제이며 status state가 바뀌지 않는다면 가짜 동일 before/after Native를 만들지 않는다. 위 StatementFinish3040은 AbortingStatement→Active 복귀다. 성공 statement 종료의 별도 영속 operation이 실제 owner 계약에 필요하다고 결정되면 exact 변화를 명시하여 표를 갱신해야 한다. Cancel/CLR에서 이미 소비한 row reserve/발급 bytes를 반환하지 않는다.
 
-변경 page와 proof page는 다르다. Row 단계의 보수적 전체 target 집합 후보는 `{Root, RootJob page, Status, U, RowLeaf, allocator, tableAnchor, TerminalJob page, H Undo}`의 최대9개다. 같은 Jobs page 등 실제 physical identity 중복을 제거하되 read proof의 의미를 생략하지 않는다. source의 Root/Job 전체 census는 원 bounded bank와 version guard를 통해 검산하며 모든 root U를 동시에 pin하는 안이 아니다. 정확 pin9 충분성은 실제 준비/검산/적용 수명과 아래 commit census까지 C/F05 담당이 대조해야 한다. 기존 Catalog pin9와 같다는 이유로 성립을 가정하지 않는다.
+변경 page와 proof page는 다르다. Row 단계의 보수적 전체 target 집합 후보는 `{Root, RootJob page, Status, U, RowLeaf, allocator, tableAnchor, TerminalJob page, H Undo}`의 최대9개다. 같은 Jobs page 등 실제 physical identity 중복을 제거하되 read proof의 의미를 생략하지 않는다. source의 Root/Job 전체 census는 원 bounded bank와 version guard를 통해 검산하며 모든 root U를 동시에 pin하는 안이 아니다. 이9개와 private before9/after5의 설계 배정은 [자원 owner](dev3-resource-bounds.md#row-missing-module-budget)로 동결한다. 실제 준비/검산/적용·return carrier가 이 상계 안에 드는지 source census로 확인하는 일은 해당 C 공급의 구현 의무다. 기존 Catalog pin9와 같다는 이유로 성립을 가정하지 않는다.
 
 첫 profile은 원 **한 Undo page당 slot0 root 하나**, actor당 실제 Status page 하나를 유지한다. Jobs는 page2..6에15+15+15+15+4=64개, cell1024B이며 nonfree≤55다. first extent의 page0 allocator·1Root·2..6Jobs·7CatalogAnchor·8CatalogLeaf 뒤 동적9..63의55page에서 실제 table pair·Status·Undo와 기타 allocated/Reserved를 모두 센다. table 하나와 actor 하나만 있고 다른 동적 점유가 없는 예시라도 U의 물리 상한은52(55−2−1)이며, 모든 source에52를 grant하는 규칙이 아니다. 남아 있는 CREATE root·기존 Status/Undo·pair reservation과 simultaneous owner를 실제 census로 차감한다. 원 queue cap·leaf 남은 bytes·F05 reserve 중 가장 먼저 걸리는 한도가 admission을 닫고 이미 admitted된 rollback/terminal은 계속 진행해야 한다.
 
@@ -166,84 +207,179 @@ statement 실패와 full abort의 같은3040B를 두 번 배정하지 않는다.
 Root cleanup debt 후보는 `Prune(C,h)+4×55528=311608+2C+128h`이며 C2228/h1의 최대는316192B다. CLR는 미사용 Prune 몫만 반환하고 ReleaseRole3+RootFree의222112B를 남긴다. Commit 뒤 미사용 CLR/rollback 반환과 retained Aging debt는 구별한다. Tx 사이 consumable/동시 peak를 sum해야 하는 부분과 원 Aging의 순차 shared peak max를 나누며, Job budget 합을 전역 ATTsum+Aging에 다시 더하지 않는다. 이 식은 실제 opcode source·기존 자원 한도의 수용 여부가 확인되기 전 grant가 아니다.
 
 <a id="api-flow"></a>
-## 7. API 후보와 권한 흐름
+## 7. API·오류와 권한 흐름
 
-[공통 API 후보](dev3-module-boundaries.md#api-candidates)의 이름을 사용한다. 아래는 컴파일하지 않은 설계 호출이며 exact lifetime·visibility는 해당 owner의 미해결 질문으로 남는다. `RowInsertCandidate`는 A가 준비한 검산 대상 값이지 write capability가 아니다.
+[공통 API 명세](dev3-module-boundaries.md#api-candidates)의 full lifetime/visibility·RowReservation/recovery consuming wrapper를 정본으로 수신한다. 아래는 그 설계의 호출 순서이며 컴파일·실제 공급을 이미 확인했다는 뜻이 아니다. `PreflightRow`는 첫 Reserve 전에 실제 schema/index/leaf 문맥을 제공한다. A의 `validate_insert(values,lane)`가 canonical candidate와 `RowInputPlan`을 만들고 `preflight.reserve(plan)`이 같은 source/schema/digest/index/공간을 재검사한 뒤에만 첫 효과를 시작한다. 검산한 candidate가 private 안에서 그대로 이동하므로 Reserve 뒤 `produce_insert(lane)`에 values를 다시 전달하지 않는다. `ReservedRow`는 같은 원 MutationPort/Owner/statement/table/private를 보유한다. `producer_lane`이 frame/before/after를 짧게 빌려주고, A가 반환하는 `RowProposal`은 untrusted scalar 후보다. `prepare(self,proposal)`는 동일 backing을 검산한 scalar cut만 저장하므로 self-borrow하는 Prepared나 원 Owner의 중복 mutable borrow가 없다. 이전 독립 `prepare_row/apply_row(RowChangeCandidate)` 초안은 이 consuming 경계로 대체한다.
 
-| 소비자·순서 | 제안 호출/반환 | 소유·실패 의미 |
+| 소비자·순서 | 호출·반환 | 소유·실패 의미 |
 | --- | --- | --- |
-| 공통 진입 | 원 `DiskSession::split` → `MutationPort`, `ReadPort`, `MaintenancePort`; 실제 CREATE/선택 → `CheckedTable` | 같은 core/pool/fence의 borrow. BootstrapPlan·raw WriterNamespace·AtomicU8·registry를 소비자에게 공개하지 않음 |
-| A 준비 | C statement/mark → RowReserve → A의 canonical row/Undo/leaf 후보 → `MutationPort::prepare_row_change(table,candidate,statement,loan)` | reserved ID/slot/Job와 private loan의 유일 소유. before 변경·Busy는 원 권한 보존 후 재준비, cancel은 명시 consuming 반환 |
-| A 효과·종료 | checked `PreparedRowChange` → C stage/apply → statement 성공 또는 A CLR→C apply → `TerminalAssembly::{stage,wait,install,publish}` | stage 뒤 실패/Drop은 원 fence/의무 보존. 물리 DurableWal만으로 semantic commit receipt 생성 금지 |
-| B 진입 | `ReadPort::snapshot`·owner statement → `acquire_row_source(CheckedTable,query,loan)` | actual anchor/RowLeaf guard. 기대 namespace/table을 row payload 자체에서 되읽지 않음 |
-| B 판정 | source latch 아래 Row Txn/U capture → C Status/Undo resolve → B visible/Missing 판정 | [Missing-only 두 pin 수명](dev3-visibility-retirement.md#row-missing-traversal). source latch 해제 전 참조 확보, 임시 pin을 caller 결과의 수명으로 대체하지 않음 |
-| B 반환/next | caller output과 observation, cursor의 full key·진행점 업데이트 → temporary refs/physical guard 반환 | borrowed page slice 탈출 금지. snapshot/token·cursor 실패 진행점·output 효과는 원 F02 의미를 적용 |
-| 공통 load | Residency/FlushRequired → original MaintenancePort → 같은 snapshot/statement에서 재시도 | stale view는 재검사. 부분 pin을 잡고 I/O·quota를 기다리지 않음 |
+| 공통 진입 | 원 `DiskSession::split`→MutationPort/ReadPort/MaintenancePort; 실제 Catalog source→`CheckedTable` | 같은 core/pool/fence. raw BootstrapPlan/WriterNamespace/AtomicU8 노출0 |
+| A 준비·예약 | exclusive `DiskSession`의 실제 Status/Free Undo System INIT→port/capsule→`begin_statement`→`preflight_row`→`validation_lane`→A `validate_insert(values,lane)`→`preflight.reserve(RowInputPlan)`→`ReservedRow` | type/null/inline/index/leaf 공간 실패는 첫 Reserve 효과0. stale source는 같은 Preflight를 돌려준다. 성공 뒤 원 actor/mark/table/issuer/slot/Job/whole debt의 단일 소유이며 scalar로 권한 재구성 불가 |
+| A 생산·효과 | `reserved.producer_lane`→A `produce_insert`→`RowProposal`→`reserved.prepare`→`prepared.apply` | boundary의 consuming wrapper/loan 반환형 사용. C는 actual before/issuer/inventory/count/redo 검산 및 원 stage/install만 수행. 미stage Before는 같은 reserved/prepared 반환→reopen/retry/cancel이며 이미 완료된 Reserve를 되감지 않음. stage 뒤 실패는 Fatal·원 fence/의무 보존 |
+| A 종료·복구 | C statement/terminal method, A logical CLR producer·typed Row loser handler | TerminalAssembly는 apply private 조립이다. 제품 공개 stage/wait/install/publish 조합이나 arbitrary receipt 생성 없음 |
+| B 탐색 | read statement 또는 own statement→`ReadPort::row_operation(owner,&view,private)`→`op.page`→`page.leaf` | B가 leaf의 lower_bound/순서 탐색을 수행; C가 완성 point/cursor를 대신 반환하지 않음 |
+| B 판정·반환 | `page.capture`→`op.status/missing_before`→B visibility→`copy_candidate` 또는 `release_candidate`→`finish` | source latch 아래 참조 취득; 복사 전에 view 재검산. op는 원 Owner borrow를 유지하고 짧은 page/source만 재대여; caller로 page slice 탈출 없음 |
+| 공통 load | Residency/FlushRequired→원 MaintenancePort→같은 snapshot/statement 재시도 | 모든 partial physical/transient pin 반환 후 I/O. 새 snapshot을 조용히 발급하지 않음 |
 
-일반 RowValue before의 `currentU+beforeTxn+nextU`3-pin 확대는 이번 Missing-only의 실제 필요가 아니다. B는 source Txn+U, CLR는 currentU+nextU로 닫는 두 그래프를 owner에서 검토한다. scope 밖 before를 받기 위해 registry 한도를 미리 확대하지 않는다.
+오류 우선순위는 **입구의 origin/open/statement identity와 fence → 호출 argument/profile 및 operation의 caller-source credit 선예약 → actual source/schema/canonical/owner 검산과 A 값 검산 → effect admission/actual-before 재검사 → stage 이후 효과 판정**으로 고정한다. 이미 관측한 corruption/fence를 quota/NotFound로 낮추지 않는다. 값 타입/열 수/nullable 오류는 InvalidInput, 지원 밖 index/overflow/level/occupied before는 Unsupported, 실제 leaf 공간·quota 부족은 Capacity, transient 권한 충돌은 Busy, 비거주 준비는 원 Residency/FlushRequired, 유효 token의 own revision 차이는 CursorInvalidated다. 서로 다른 오류 enum은 원 cause/effect/certainty를 보존해 감싸며 문자열로 판단하지 않는다. 외부의 잘못된 RowId0·역전 range는 source I/O 전에 InvalidInput이고, 유효한 key의 부재는 전체 source/visibility 검산 뒤에만 NotFound다. OutputTooSmall/취소/EOF·진행 key·token 종료 순서는 [F02 owner 표](dev3-task-06-tree-rows.md#module-statement-cursor)가 우선한다.
+
+초기 provisioning의 입력은 caller의 `prepare(counts)` 요청이며 C가 실제 census와 System INIT 비용을 검산해 요청한 Status/Free Undo 수만 확보한다. fixture의 일반 상계는 actor3·semantic rows12이고 capacity case만 actual 잔여 수를 별도로 요청한다. 성공한 actual 수량이 원 inventory이며52U를 무조건 선할당하지 않는다. active capsule/view/port가 있는 동안 추가 provisioning을 끼워 넣지 않는다. 부족하면 새 Row 효과 전 Capacity이며 기존 snapshot/reader를 없애고 준비 공간을 만드는 우회가 없다. 필요한 경우 모든 정상 소유가 끝난 뒤 exclusive 준비 경계로 돌아간다. 이미 admitted된 rollback/terminal은 추가 준비 없이 진행한다.
+
+일반 occupied before의3pin을 이번 scope에 추가하지 않는다. [Missing-only 두 handoff](dev3-visibility-retirement.md#row-missing-traversal)와 [private425984/target9](dev3-resource-bounds.md#row-missing-module-budget)을 함께 소비한다. fixture도 더 넓은 constructor/loan을 받지 않는다.
 
 <a id="independent-fixtures"></a>
 ## 8. C0/C와 단독 fixture
 
-**C0**는 동결 계약·최소 컴파일 경계와 각 대역의 허용 효과를 받은 구현 기준이다. A/B의 첫 기능 검증부터 각각 C0+A·C0+B를 사용한다. C0 대역은 입력·typed 오류·수명·도메인 후보 검산만 할 수 있고 실제 저장/ACK/recovery를 PASS로 만들지 못한다. C0의 exact source·소유 경로·도구/fixture·제한은 별도 기록한다.
+**C0**는 M3 수용 뒤 공급하는 실제 최소 컴파일 경계다. A/B 전용 본문은 이때 병렬 착수하며 서로의 stub·fixture를 import하지 않는다. C0는 pure canonical 값/후보 bytes, bounded leaf·Status/Undo의 **관측값**, 입력 오류·Busy/Capacity/Unsupported 선택, 비영속 호출 순서 기록을 제공할 수 있다. 값은 대역임이 type/module과 결과에 드러나야 하며 actual CheckedTable/RowReservation/SourcePin/WalRequirement/READY/commit receipt를 제조하지 않는다. C0의 pure producer·순서·오류 결과는 `C0_ONLY`로 남긴다. production owner가 필요한 compile signature에는 정의만 제공하고 actual constructor를 대역 성공으로 구현하지 않는다. test용 raw owner/unsafe/private factory 확대를 금지한다.
 
-**C**는 선정 경계의 실제 공급을 수신한 인수 기준이다. 기존 CREATE가 만드는 actual 영속 table/anchor 및 해당 native/F05 의무, 원 page/visibility/transaction/terminal/recovery, Row 의미 observer·독립 fixture 입구가 필요하다. C0→C의 공급 diff와 A/B diff를 구분한다. 실제 효과가 필요한 시험만 공급 후 선택하며 이미 완료한 동일 시험을 반복하지 않는다.
+**C**는 C1–C4 실제 원 owner/CREATE/INIT/참조/statement/terminal/recovery/Row observer를 수신한 공급이다. C0에서 검증한 pure 기능은 코드 diff가 없으면 반복하지 않되, 저장/ACK/recovery/pin/가시성 인수는 처음부터 actual C source에서 새로 수행한다. C0 성공을 C 실제 연결 사례로 승격하지 않는다. 각 공급은 담당·source commit/tree hash·변경 파일·capability/미공급 영역·선택할 case를 기록한다. hash가 미래라는 사실은 설계 미정이 아니며 공급 시 빈값을 채우지 않은 source는 실행 선택하지 않는다.
 
-### 8.1 C+A
+### 8.1 공통 입력 schema와 신뢰 경계
 
-fresh namespace를 C의 실제 설치→CREATE→Commit→현재-build recovery/선택으로 열고 발급된 `CheckedTable`을 A에 제공한다. A가 작성한 INSERT/CLR/종료가 실제 저장을 만든다. B 제품 구현은 넣지 않는다. 결과는 독립 typed history·WAL/page reader·외부 ACK witness로 검산하며 A 자신의 encode/replay 결과를 expected로 쓰지 않는다.
+계획 경로는 A `tests/fixtures/dev3-row-insert/`, B `tests/fixtures/dev3-row-read/`, 합류 `tests/fixtures/dev3-module-row-integration/`이다. 실제 input/oracle가 생길 때만 등록한다. 각 디렉터리는 다음 `input-plan.json` schema를 별도로 보유하며 독립 writer가 typed oracle를 작성한다.
 
-### 8.2 C+B: raw prebuilt DB를 대체로 쓰지 않음
+| 필드 | exact 내용·한도 | 권한/정답 출처 |
+| --- | --- | --- |
+| `schema`/`case`/`source_kind` | `xadb-module-row-v1`, 아래 variant ID, `C0_ONLY`/`C+A`/`C+B`/`C+A+B` 중 하나 | selector와 case 일치, 상대 제품 source 부재는 dependency inventory로 별도 확인 |
+| `formats`/`profile` | Profile3/Root3/Job3/base4/group2/scope3, profile ID1 기본;2/3은 현재 capacity tuple의 순수 검산 입력, single extent64/index0 | fixture가 old DB를 current라고 표기할 수 없음 |
+| `table`/`values` | TableSpec의1..32열·typed bool/int64/UTF8/binary/null; canonical row length5..2048, 실제 schema SHA | raw target bytes에서 expected table/namespace를 추출하지 않음 |
+| `actors`/`history` | 기호 T0..T2 최대3actor, S1..S8 최대8statement/actor, 일반 semantic case≤12행, 단계≤128; capacity case만 admission 성공 누적≤52행·다음1실패 시도 | 값·논리 expected set·own/snapshot 가시성은 독립 typed history에 고정. grant를 요구하는52행 약속이 아님 |
+| `bindings` | 실제 CREATE/recovery에서 받은 DB/timeline/open/table/generation/schema/anchor; actual Begin/Reserve의 Txn/Status/U/RowId/Job/sequence/mark·LSN 및 digest | C가 만든 비복제 capability는 worker 안에만 존재. controller에는 관측 scalar/trace만 전달, scalar를 capability로 되돌리는 constructor 없음 |
+| `candidate_template` | literal native/edge/count/inventory/core/redo recipe, 기호 binding 위치·길이의 whitelist, group≤94080B; 실제 ID 결합 뒤 exact frame SHA | A producer/B reader를 expected 생성기로 사용하지 않음. late binding은 identity·actual prefix/previous digest·그에 종속된 checksum만 허용, 값/outcome/연산/cut 변경 금지 |
+| `schedule`/`fault` | 아래 fixed barrier 이름, 발생 ordinal, before/after 또는 정확 first-byte/complete-boundary, 단일 cut | 도달 trace가 없으면 NOT_REACHED/미완료. 예상값에 맞출 때까지 seed/cut를 바꾸지 않음 |
+| `expected`/`budget` | ordered `(table,RowId symbol,typed value,logical version)`·visible/absent·count/owner/high-water·효과/certainty·선택 closure·자원 상한·시간 | 독립 reader/checker와 외부 ACK witness. 제품의 encode/visibility/observer 함수를 oracle에 호출하지 않음 |
+| `provenance` | input/template/oracle hash, source/tree/ELF SHA, dependency file list, adapter feature, controller/worker argv, 원 결과 경로 | 실행 직전에 원자료 identity로 채움. native 정상 produce/recover/reenter는 같은 ELF의 서로 다른3PID |
 
-첫 행 정본은 table/anchor·identity를 **실제 영속 생성·선택 경로**에서 공급하라고 요구한다. 독립성이 필요하다는 이유로 임의 handle·RAM table·사전 제작 DB image를 그 생성 증거로 대신하지 않는다. 아래 fixture 설계를 제안한다.
+literal schema는 **untrusted 후보**를 기술한다. 원 C ingress는 actual Begin/RowReserve/statement와 current before/issuer/owner/inventory/F05를 먼저 검산하고 생산과 같은 checked observer→원 stage/apply를 사용한다. adapter는 후보 bytes를 kernel page에 쓰거나 레코드 checksum 성공을 stage authority로 승격하지 않는다. test-only ingress의 feature/visibility는 [공통 API](dev3-module-boundaries.md#api-candidates) 범위에 한정한다. C의 실제 INIT는 별도 효과·예약·trace로 나타나며 fixture가 Free Undo page를 raw 생성하지 않는다.
 
-1. C+B와 같은 build의 native worker가 새 namespace에서 원 설치·실제 CREATE·Commit을 수행한다. 외부 controller가 그 결과와 table/anchor identity를 기록하고 새 process가 C의 실제 recovery/선택을 통과한다. 이 actual source closure가 corpus의 기대 owner 문맥이다.
-2. 독립 fixture 작성자는 고정 typed tuple/history와 Row scope3의 exact offsets로 **완결 Reserve/Forward/Commit 또는 CLR/terminal frames**를 만든다. 생성기는 A producer나 B reader를 호출하지 않는다. namespace/table 바인딩은 actual CREATE 영수증, actor/예약 identity는 아래 C Begin/RowReserve의 actual 영수증에서만 받되 expected 값·edge·count·delta는 별도 원자료로 계산한다. hash·case/byte 범위·자원·cut를 실행 전에 고정한다.
-3. 사전 지정된 시험 전용 입력 adapter가 실제 C Begin과 RowReserve를 통해 actor·statement·U/RowId/Job 예약 권한을 먼저 받는다. 이후 독립 literal Forward 등 untrusted candidate bytes를 C의 **제품과 같은 의미 observer**에 넘긴다. observer는 실제 before page/owner predecessor·예약 inventory/Job·issuer·table/anchor·native/edge/count·F05를 대조한다. 통과한 경우에만 원 owner 내부에서 typed 권한을 만들고 실제 WAL stage/apply/force·terminal bridge를 실행한다. adapter는 private constructor·raw page write·receipt 생성·fence 해제 기능을 갖지 않는다. own-write/다른 Active fixture는 이 live 경로에서 B가 관측한다. recovery READY가 loser를 제거한 corpus만으로 own-write 시험을 충족했다고 하지 않는다.
-4. committed native fixture는 완결 실제 상태에서 닫고 같은 ELF의 새 process가 actual selection/analysis/REDO와 필요한 장벽을 통과한 뒤 B로 읽는다. frame grammar와 실제 I/O/owner 연결의 결과이지 A의 INSERT 실행 증거는 아니다. B의 snapshot gap/Active/Missing/cancel fixture도 같은 원 owner 위에서 고정 candidate schedule로 만들고, 실제 정리 frame까지 보존한다.
-5. B 단독 source에는 A producer/automatic Row loser handler가 없다. native reopen용 fixture는 row loser가 없음을 C가 검산한 범위이며, 예기치 않은 loser를 만나면 실패해야 한다. A의 recovery·CLR 인수는 C+A에서 수행한다. committed retained root·page load와 B 자신의 읽기 실패/참조 반환은 B에서 실제 검증한다.
+### 8.2 C+A
 
-이는 아직 구현되지 않은 fixture 경계다. **actual observer가 없는 상태의 codec literal 주입은 이 설계를 충족하지 않는다.** fixture 입구의 exact capability/기능 feature·source inventory·native build 연결을 C 담당이 동결하고 별도 검토해야 한다. 실제 입력이 이 검산을 통과하지 못하면 원 오류를 보존하며 별도 pool·위조 owner·자동 q 교체로 우회하지 않는다.
+fresh native namespace를 C의 실제 설치→CREATE→Commit→원 Catalog 선택으로 열어 실제 `CheckedTable`을 A에 넘긴다. native P1이 실제 CREATE와 A의 producer를 실행하고 P2가 현재-build recovery·새 ACK, P3가 재진입을 수행한다. Row INSERT 앞에 별도 CREATE-only recovery PID를 추가하지 않으며 P2/P3의 실제 선택·복구로 table identity와 Row를 함께 검산한다. A가 row/Undo/Forward/CLR를 생산하고 C가 검산·실행한다. B 본문/fixture/빌드 산출물 의존은0이다. 결과는 별도 typed-history checker와 page/WAL reader, controller가 실제 수신한 ACK witness로 검산한다. C0 pure tests만으로 실제 DIR03 완료를 주장하지 않는다. Row loser handler의 actual 호출·반환은 A 전용 source에 포함하고 C 복구 조립이 그 handler를 소비한다.
+
+### 8.3 C+B: raw prebuilt DB로 생성 identity를 대신하지 않음
+
+C+B native P1은 같은 build의 actual 설치·CREATE·Commit을 수행한다. P2의 actual recovery/선택이 그 table/anchor를 인증한 뒤 독립 literal actual apply/Commit을 수행하고, P3가 다시 실제 recovery→B point/cursor를 수행한다. independent literal input은 이 실제 binding과 C Begin/RowReserve의 권한 아래 Forward를 제안한다. A encoder/INSERT/CLR/automatic loser handler를 링크하지 않는다. C observer의 before 검산·원 effects/terminal을 통과한 실제 파일만 reopen corpus가 된다.
+
+- **live fixture:** C Begin/Reserve→independent literal Forward→actual apply 후, own/foreign Active·fixed-q·publication gap를 B가 읽는다. 실패 statement/CLR/Prune 관측은 C의 동일 checked ingress에 독립 literal 전이를 넣는다. 이들은 fixture가 제품 A를 대신 구현한 증거가 아니라 B 입력 생산이며, A 인수에는 사용할 수 없다. 종료 시 literal CLR/AbortEnd 또는 actual Commit/cleanup을 완료해 원 소유를 반환한다.
+- **reopen fixture:** actor와 Reserved loser가0이고 완결 Commit·원 barrier를 거친 corpus만 C+B의 no-loser READY를 허용한다. 남은 committed retained roots의 normal cleanup/replay는 C supply로 검산한다. Row loser handler가 없는 source에서 Active/Aborting/Reserved를 만나면 typed Unsupported/RecoveryRequired이며 READY를 내지 않는 것이 요구 정책이다. 이를 보장할 최초 actual census gate의 exact API는 [MCQ05](#open-questions)의 미결이며, RowClr action이 없었다는 사실만으로 이 정책을 충족하지 않는다. 같은 ELF의 새 process와 실제 load/pin을 B가 소비한다.
+- **관측 정답:** 기호 RowId를 실제 receipt의 scalar에 대입하되, expected order·q 관계·own visibility·고정 tuple는 입력 작성 때 이미 결정돼 있다. B 결과를 읽고 expected value/해당 root의 disposition/q를 고치지 않는다. 재시작이 loser를 제거하므로 reopen corpus만으로 own-write 인수를 대신하지 않는다.
+
+C fixture ingress의 필수 known-bad12는 각각 유효 외부 SHA를 갖춘 단일 변조다: K01 foreign table/generation, K02 forged RowId≠reserved, K03 wrong U/generation, K04 duplicate planned mutation, K05 wrong predecessor H, K06 U incoming1(정답2), K07 H before count0에서 net0 이동, K08 row Transaction stamp≠actor, K09 native와 redo row bytes 불일치, K10 Reserved inventory 누락, K11 decrement된 terminal/full-abort debt, K12 valid old-format/scope2 frame의 Row ingress 제출. K01–12 모두 stage0·page 변경0·원 reservation 반환 또는 명시 cancel 가능을 요구한다. poststage fault와 이 precondition 실패를 섞지 않는다.
 
 <a id="acceptance"></a>
-## 9. 단독·합류 인수 inventory 제안
+## 9. 단독·합류 인수 inventory 동결안
 
-아래 ID는 이 설계의 인수 행이며 **아직 실행 selector가 아니다**. 각 행을 구현할 때 test 함수/fixture/oracle·정확 변형·한도·원 source/binary와 연결한다. 원 NT/T06/DIR03 분모는 유지하고 현재 profile 밖 확대 의무는 S5/후속 작업에 남긴다.
+다음은 **미구현 future selector**이며 실행 결과는 전부 NOT_RUN이다. M2에서 variant의 분모/입력/오류/cut/한도를 고정하고, 구현 때 해당 함수/fixture/worker를 연결한다. memory selector는 A `storage::row::insert::tests::<case_snake>`, B `storage::row::read::tests::<case_snake>`, 합류 `storage::row::integration_tests::<case_snake>`로 배정한다. native selector는 각각 `module-row-insert/<ID>`, `module-row-read/<ID>`, `module-row-integration/<ID>`의 exact case를 선택하는 신규 leaf로 배정한다. 아직 존재하지 않는 CLI flag를 실행 명령처럼 기록하지 않는다. 변형은 개별 선택 가능하게 작성하며 하나의 wrapper로 변경 없는 변형까지 재실행하지 않는다.
 
-| ID·source | 필요한 실제 관측 | 기존 연결 |
+### 9.1 C0 전용 선택과 A의 실제 INSERT/rollback
+
+C0의 첫 선택은 `MCA00-V01..06`과 `MCB00-V01..03`이며 아래 actual MCA/MCB와 별도 ID다. MCA00은 nullable Bool, Int64 MIN/MAX, 다중 byte UTF8, zero byte를 포함한 Binary, 잘못된 type/null/L2049 거절, H 없음/있음의 Forward·CLR 후보 literal 대조라는6개 입력이다. MCB00은 lower-bound의 miss/first/middle, own/foreign/q 관계의 순수 선택, invisible→OutputTooSmall/취소 뒤 진행 key라는3개 입력이다. 모두 C0가 준 **권한 없는 관측값**과 독립 literal을 사용하며 실제 pin/저장/ACK/READY 증거는0이다. C 공급 뒤 unchanged MCA00/MCB00를 반복하지 않고 아래 actual 연결 case를 처음 선택한다. MAX의5개 음성 입력도 MCA04에 명시한 C0 범위로만 센다.
+
+| ID·변형 분모 | fixed 입력과 oracle | 원 요구 |
 | --- | --- | --- |
-| MCA01 C+A | 실제 CREATE/recovery table에서 첫 INSERT, 여러 행/statement·연속/건너뛴 발급 RowId, schema/type/null/inline 한도와 effect 전 거절 | DIR03, NT06, T06-01/07/14 |
-| MCA02 C+A | 한 statement의 일부 INSERT 뒤 오류→mark까지 CLR, 이전 성공 statement 보존; 새 statement 뒤 full abort가 compensated suffix를 재undo하지 않음 | NT09, 3.09-R10/11/15 |
-| MCA03 C+A | no-force ACK→새 process 보존, steal loser 제거, 실제 UNKNOWN, 첫/중간 CLR 뒤 재장애, REBASE/새 ACK 뒤 재시작 | DIR03, NT11/12/15, T06-15 |
-| MCA04 C+A | RowReserve→Cancel·CLR·abort·old WAL 제거/reopen 뒤 RowId/UndoSequence/mutation 비재사용, counter MAX와 wrong issuer frame 거절 | 3.06-R4/10, NT03/09/12 |
-| MCA05 C+A | 정해진 모든 opcode의 실제 자원−1/동일/+1, 반복 실패 뒤 admission 거절과 기존 rollback/terminal 진행, private/loan/pin/FD 반환 | NT09/16, T06-14 |
-| MCB01 C+B | actual fixture/reopen의 empty/missing/first/middle/last point와 range/전체 순서·중복/누락·caller 결과/논리 observation | NT06, T06-01/12 |
-| MCB02 C+B | own row·다른 Active·q보다 뒤 Commit·q 이하 Commit·CLR Missing·Pruned committed의 정확 가시성, status q>published Q의 publication gap | NT10/11, T06-11 |
-| MCB03 C+B | source Txn/U capture 중 retire/CLR Busy, nonresident Status/Undo/row 실제 load, dirty victim FlushRequired 후 동일 snapshot 재시도·pin 반환 | NT05/10, T06-11 |
-| MCB04 C+B | stale DB/open/table/schema/statement/cursor·own mutation invalidation·취소/출력 부족 뒤 진행점·EOF. 유효 checksum의 identity/row/Undo 손상을 NotFound로 숨기지 않음 | T06-02/08/12 |
-| MCI01 C+A+B | B old snapshot/cursor→A INSERT/Commit→old 결과 유지·new snapshot 새 행. 같은 transaction의 B cursor→A mutation→CursorInvalidated | MI04, NT06/10 |
-| MCI02 C+A+B | A의 실제 ACK→새 process C recovery→B point/cursor가 독립 typed 이력과 일치. A statement 실패/full abort 뒤 B가 앞선 결과/부재를 정확 관측 | MI04, DIR03 |
-| MCI03 C+A+B | A commit/CLR와 B 참조/pool load의 정해진 barrier, shared fence와 오류 후 소유 반환. 지원하지 않는 runtime 동시 write를 시험 편의로 도입하지 않음 | MI04, NT05/09/10/11 |
+| MCA01-V01..12,12개 memory | V01..04 Bool/Int64/Utf8/Binary nonnull, V05 nullable null 최소L5, V06 mixed32열, V07 L2048, V08 두 statement×3INSERT 성공. V09 타입 불일치,V10 nonnullable null,V11 L2049,V12 index1 existing table. V01..08 실제 bytes/logical identity/count/값 일치, V09..12 첫 effect0·typed 오류 | DIR03,T06-01/07/14 |
+| MCA02-V01..06,6개 memory | S1 row a,b 성공; S2 c,d 뒤 실패→c,d만 CLR; V01 S3 e commit,V02 바로 full abort,V03 S3 e 뒤 full abort,V04 S2 첫 effect 전 실패,V05 S2 예약 후 Cancel,V06 3회 실패 suffix 뒤 새 statement 거절→기존 full abort 완료. 성공 이전 행/새 mark·mutation 비재사용·compensated q0와 source commit/abort·모든 count 검산 | NT09,3.09-R10/11/15 |
+| MCA03-N01..09, 총16개 native | 아래 cut의 기존11개 분모를 유지하고 N03/N05 및 N09의 첫/중간/마지막에 RAM-only와 Durable 변형을 각각 배정하여5개 추가. 독립 ACK/UNKNOWN·winner/loser·원 PID/current-build 복구·첫/중간/마지막 CLR와 재진입 | DIR03,NT11/12/15,T06-15 |
+| MCA03-R01..12,12개 native | 아래 REBASE/종료 barrier 각각1회. Row source에 대한 실제 C+A replay/undo·선택 closure·고정 peak 검산 | DIR03,3.12-R5,D3-COMP-02 |
+| MCA04-V01..08,8개 memory(아래5개 C0 포함) + N01 native1개 | V01 Reserve/Cancel,V02 failed-statement CLR,V03 full abort 뒤 다음issuer,V04 RowIdMAX,V05 UndoSequenceMAX,V06 mutationMAX,V07 slot generationMAX,V08 RootJob generationMAX. V04..08은 fresh DB에서 u64MAX까지 발급한 것으로 꾸미지 않으며 C0의 checked-add/semantic-boundary 음성 입력이다(권한/READY/실제 abort 성공 증거0). 실제 ID 비재사용과 기존 abort 진행은 V01..03/MCA02/05에서 검산한다. N01 Commit→Prune/free→old-WAL회수→reopen→새INSERT→새ACK→reopen에서 issuer 비재사용 | 3.06-R4/10,NT03/09/12 |
+| MCA05-V01..27,27개 memory | dimensions9=`WAL,protected,owned page,UndoSlot,RootJob slot,frame,private bytes,reference registry,files`; 각 최소 필요−1/동일/+1을 하나씩 바꾸고 나머지는 충분히 제공. under는 첫 효과0, equal/plus는 실제 Reserve→Forward→실패 statement→full abort/terminal 진행. 실제 총량 상한을 바꾸지 않고 test admission의 남은 몫을 제한. owned-page 변형은 선행 System INIT 포함, private는 고정 loan 길이를 위조하지 않고 원 자원 credit을 제한 | NT09/16,T06-14 |
+| MCA05-V28..34,7개 memory | V28 한 statement6080소진 뒤 재admission거절·fullabort완료,V29 H net0 beforecount0거절,V30 최대허용 leaf까지 admission/다음split거절,V31 dirtyvictim flush 후 동일예약재시도,V32 API drop/cancel 권한반환,V33 전용FD/파일 상한,V34 DWB slot 부족에서 forward대기와기존rollback몫보호 | NT05/09/16 |
 
-MCI는 A/B source 합치기만으로 PASS하지 않는다. 사전 지정 assembly/연결 diff와 새 interaction case를 실행한다. C+A와 C+B에서 완료한 변경 없는 case, 전체 workspace·하위 wrapper·기존 codec/model은 반복하지 않는다. 합류에서 코드가 바뀌면 그 diff와 관련 실패·미실행 의무만 선택한다. MI01의 실제 제품 구현 겹침·MI02 공용 의미 변경0·MI05 충돌/대기/재작업·MI06 별도 판정은 전환 계획에 기록한다.
+A의 live 지원은 표의 값12개만이 아니다. schema codec의 기존 지원 의미를 사용하며 새 Row glue가 추가한 경계와 실제 흐름을 검증하는 유한 중간 인수다. leaf 최대값은 원 actual admission에서 결정하며 빈 공간만 보고52행을 강요하지 않는다. 최대85개 최소cell의 representation/87reference 검산은 C static/observer leaf 경계 입력으로 별도 수행하며 물리 profile의52root 초과 grant로 가장하지 않는다.
+
+### 9.2 B — actual fixture의 snapshot/point/cursor
+
+| ID·변형 분모 | fixed 입력과 oracle | 원 요구 |
+| --- | --- | --- |
+| MCB01-V01..08,8개 memory + N01 native1개 | actual receipt로 결합된6행 a..f. V01 empty,V02 없는 gap,V03 first,V04 middle,V05 last point,V06 전체scan,V07 `[b,e)` scan,V08 empty/reversed range(End/InvalidInput 구별). N01 committed corpus reopen→allpoint+scan 일치. 순서/값/observation/중복누락은 독립 typed oracle | NT06,T06-01/12 |
+| MCB02-V01..08,8개 memory | V01 ownActive,V02 foreignActive,V03 committedq>snapshot,V04 q=snapshot,V05 q<snapshot,V06 CLR Missing,V07 PrunedCommitted,V08 statusq>publishedQ의 gap. 동일 row에 point+cursor 정답 일치; V01/V02는 live fixture | NT10/11,T06-11 |
+| MCB03-V01..08,8개 memory | V01 sourcecapture 뒤retire Busy,V02 U pin보유CLR Busy,V03 row nonresident,V04 Status nonresident,V05 Undo nonresident,V06 dirtyvictim FlushRequired→load→동일snapshot,V07 필요한U누락,V08 source Txn/U pin2 성공·추가claim Busy. 매반환 physical/transient/loan census 원값, corruption은Missing 아님 | NT05/10,T06-11 |
+| MCB04-V01..14,14개 memory | V01 foreignDB,V02 oldopen,V03 tablegeneration,V04 schemaepoch,V05 endedstatement,V06 ownrevisionchange,V07 outputrequired−1→같은행retry,V08 outputexact,V09 invisible앞행뒤cancel→진행key보존,V10 EOF재호출,V11 EOF후ownmutation→Invalidated,V12 validSHAwrongRowId,V13 wrongUndotarget,V14 occupiedbefore scope밖. 오류/유효길이0/진행점은 F02표 | T06-02/08/12 |
+| MCB05-K01..12,12개 memory | §8의 독립 literal ingress known-bad. 생산자A 없이 실제 C의 actual-before/권한 검산이 거절 | MI03,NT03/09/12 |
+| MCB05-N01 native1개 | actual Forward의 exact durable prefix를 확인한 Active Row corpus를 C+B에 제시→READY0·Unsupported/RecoveryRequired·보존. 최초 no-loser census gate의 M2 미결은 아래 MCQ05에 기록하며 RowClr action이 없었다는 사실만으로 성공하지 않음 | MI03,DIR03 범위 경계 |
+
+### 9.3 합류 — 신규 실제 상호작용
+
+| ID·변형 분모 | 실제 상호작용·oracle | 원 요구 |
+| --- | --- | --- |
+| MCI01-V01..14,14개 memory | V01 oldsnapshot→Acommit→oldscan불변/newscan새행,V02 ownBcursor→Ainsert→Invalidated,V03 같은table부재/range를읽은두Serializable writer에서첫Commit성공/둘째fullabort,V04 RC 같은statement안정/다음새q,V05 서로다른table writer둘다성공,V06 readonly관련Row변경충돌,V07 readonly관측Catalog에CREATE변경충돌,V08 failedstatement관측집합보존,V09 CheckedTable재사용시자동의존/stale거절,V10 RowCommit이catalogepoch를올리지않음,V11 physicalcleanup이논리epoch를올리지않음,V12 foreignactor/RowId CLR거절,V13 compensatedroot terminal전free거절,V14 publicationtable/receipt자원부족을Commitstage전에거절. [격리owner](dev3-task-10-concurrency.md#module-row-isolation)의종료규약을따름 | MI04,NT06/10,MCQ07 |
+| MCI02-N01..03,3개 native | N01 A noforceACK→C recovery→Bscan,N02 S1성공/S2실패→Acommit→B에S1만,N03 full abort의 부분 CLR을 N09-Durable과 같은 exact prefix witness로 보존한 뒤 재장애→C+A recovery→B 부재. N01–03 각새ACK뒤세번째PID재진입 포함 | MI04,DIR03 |
+| MCI03-V01..04,4개 memory | V01 Bsourcecapture의Txn/U pin중 A CLR/aging Busy,V02 Bdirtyload와Aapply 재검사,V03 Acommit durable/status설치뒤Q공개전 B oldsnapshot,V04 stage후오류로원fence→A/B둘다계속읽기/쓰기거절·cleanup보존. 각barrier1회,지원안하는동시write추가0 | MI04,NT05/09/10/11 |
+
+<a id="fault-cuts"></a>
+### 9.4 native cut와 유한 실행 한도
+
+각 native case는 작은 실제 table·최대6행/3statement를 사용한다. 정상 produce/recover/reenter는 같은 ELF의 서로 다른3PID다. recovery 도중 다시 kill하는 R01–R11은 복구 완료 뒤 새 ACK와 재진입 검산까지 최대4PID를 배정한다. 필수 재장애/새 ACK 분모를 PID 수에 맞춰 줄이지 않는다. 기존 N01..08과 N09의 첫/중간/마지막11개 cut를 유지하며 N03/N05/N09 각각에 아래 두 보존 변형을 배정하여 **총16실행**으로 늘린다. cut당1회이며 process kill·명시 I/O fault·성공 sync 보존 모델을 구별한다. ACK는 controller가 응답을 실제 수신한 경우만 존재한다.
+
+**Stage/whole apply는 durable prefix witness가 아니다.** 현재 source [`wal_io.rs::stage_verified_required`](../../crates/engine/src/storage/wal_io.rs)는 RAM의 complete slot과 exact requirement를 만들고, 실제 write/sync 성공은 `wait_durable`/`sync_claim` 경로가 확인한다. nonterminal actual apply는 stage→whole install→`release_checked`→wait 순서이므로 page/version/append/registry guard를 가진 partial install 지점에서 sync를 호출하지 않는다. 시험은 다음 필드를 `input-plan.json`의 `fault.preservation` 및 controller witness에 추가한다.
+
+| 필드/변형 | 사전 조건과 실제 증거 | crash 뒤 oracle |
+| --- | --- | --- |
+| `D` prior preserved prefix | 원 runtime의 앞선 exact requirement에 대한 성공 sync, stream/file/LSN/end/digest와 실제 native write/sync trace. 준비 단계에서 그 prefix를 확인한 뒤 target operation 시작 | 선택 base+`D`의 issuance·앞선 CLR/commit은 반드시 보존 |
+| `F` target frame | opcode·actual actor/U·frame LSN/start/end/digest. C가 actual complete stage에서 받은 원 sealed requirement와 결합하며 raw 숫자로 requirement 생성 금지 | 채택된 complete prefix에 F가 포함됐는지 독립 WAL reader가 판정 |
+| `RamOnly` | target F complete stage/해당 RAM install cut에 도달했으나 F에 대한 native WAL write0, 관련 home write/flush0. 앞선 `D`만 durable이며 별도 drainer를 해당 cut 전에 진행시키지 않는 고정 schedule | F 유실 허용. 보존된 `D`부터 복구하고 유실된 F의 전이를 이미 수행했다고 계산하지 않음. 실제 syscall/파일 prefix가 이 조건과 다르면 NOT_REACHED/입력 불일치이며 Durable 성공으로 재분류하지 않음 |
+| `DurableExact` | **같은 original runtime/requirement**의 actual physical write/sync 완료. nonterminal F는 whole install·guard 해제 뒤 확인하고 Commit은 원 terminal의 durable-before-install 순서를 유지. 반환한 sealed DurableWal의 `confirms(F)`와 stream/file/LSN/end, native successful sync trace 및 controller의 complete-prefix bytes/digest 대조를 함께 요구 | F가 selected complete prefix에 포함돼야 하며 그 의미 전이·issuance/CLR progress를 보존. 제품의 `synced=true` 문자열이나 readback만으로 성공 sync를 대신하지 않음 |
+| `partial_home`(N05-Durable) | F DurableExact 뒤 원 DWB/flush 경로로 변경 target의 numeric 순 첫 home page 한 개만 실제 sync. 이 page의 identity/LSN과 다른 변경 home의 이전 LSN, DWB 상태·원 WAL-before-page 증거를 기록 | 현재 home 하나로 전체 group을 skip하지 않고 나머지 page별 REDO 후 loser undo. RAM partial install과 별개의 물리 partial-home cut임을 결과에 표시 |
+
+`RamOnly`의 즉시 kill 지점은 미리 선택한 무할당·무 I/O fault marker만 기록하고 종료한다. guard 아래 controller callback·로그 파일 쓰기·대기·sync를 추가하지 않는다. controller는 사전 확보한 관측 영역/원 native trace와 남은 파일을 읽는다. `DurableExact`는 guards를 모두 놓은 실제 C 경계에서 원 physical drainer를 진행하는 시험 설정이다. 제품 매 Reserve/CLR의 강제 sync나 semantic Commit receipt 생성으로 확대하지 않는다. 이미 같은 requirement가 실제 durable이면 그 원 증거를 확인하고 가짜 sync를 만들거나 필요 없는 재-sync를 요구하지 않는다.
+
+| cut ID·보존 변형 | 정확 사건·기대 |
+| --- | --- |
+| N01 | no-force Commit ACK 수신 직후, row home flush 전 kill. ACK의 exact Commit durable prefix를 확인하고 모든 ACK행 winner·새 ACK 뒤 재진입 보존 |
+| N02 | Active RowLeaf를 실제 steal/home sync한 뒤 Commit 전 kill. 그 page flush가 사용하는 Row Forward의 원 durable requirement와 prefix를 확인. loser 행 제거·채택 issuance 보존 |
+| N03-RamOnly | Reserve stage/whole RAM apply 후 physical write 전·Forward 전 kill. prior D에 Reserve가 없으므로 이번 예약/번호 소모가 유실될 수 있음; 없는 예약을 Cancel했다고 주장하지 않음 |
+| N03-Durable | Reserve whole apply와 guard 해제 뒤 actual F write/sync를 확인하고 Forward 전 kill. 채택 Reserve의 Cancel·row 부재·해당 issuance 비재사용을 검산 |
+| N04 | RowReserve까지 prior D를 보존한 뒤 Forward 첫 physical write의 첫 byte 뒤 종료. incomplete active tail 제외·D의 원 예약 복구/Cancel·row 부재 |
+| N05-RamOnly | Reserve까지 prior D 보존. Forward complete stage 뒤 numeric 순 첫 변경 **RAM page** 설치 직후, F write/관련 home flush 전 kill. 유실 Forward를 REDO했다고 요구하지 않으며 D의 예약에서 올바르게 복구 |
+| N05-Durable | Forward **whole RAM install 이후** guards 해제→actual F write/sync→원 DWB/flush로 첫 변경 home page만 sync→kill. exact F에 따른 나머지 page별 REDO와 loser undo를 검산. durable-before-partial-RAM-install이나 새 suspend API를 가정하지 않음 |
+| N06 | Commit write 호출 시작 후 injected zero/error. caller UNKNOWN이며 recovery가 실제 채택한 complete prefix로 winner/loser 전체 outcome을 판정; controller ACK 없음 |
+| N07 | Commit frame 전체 write 후 sync 호출 오류. UNKNOWN·실제 보존 prefix로 독립 outcome 판정; 임의 ABORTED 반환 금지 |
+| N08 | Commit DurableExact+Status/Terminal whole install 후 Q 공개 전 kill. recovery winner·ACK 없음·새 snapshot에 완전행만 |
+| N09-V01/02/03-RamOnly | 세 행 full abort의 첫/중간/마지막(k=1/2/3) CLR F를 complete stage/whole RAM apply하고 F physical write 전 kill. prior D는 RollbackStart와 앞선 k−1 CLR까지 실제 durable. 유실 F를 포함한 나머지4−k개의 logical CLR 재생성은 합법이며, D의 앞선 CLR를 새로 undo하면 실패 |
+| N09-V01/02/03-Durable | 같은 kth CLR F의 whole apply·guards 해제 뒤 actual F write/sync를 확인하고 다음 CLR/AbortEnd 전 kill. 새 process는 D+F에 이미 보상된 k개 root를 **새 CLR로 재undo하지 않고** 남은3−k개만 수행. durable F의 물리 REDO는 허용. 세 번째 PID에서 새 ACK 보존 |
+
+REBASE/종료 R01..12의 각 물리 장벽에서1회 kill한다.
+
+| cut | 사건 |
+| --- | --- |
+| R01 | 새 base bytes를 전부 write했으나 sync 전 |
+| R02 | 새 base sync와 readback 완료 |
+| R03 | CURRENT 첫 copy의 `new/old` sync 완료 |
+| R04 | 두 copy의 `new/new` sync 완료 |
+| R05 | second-copy closure readback 완료 |
+| R06 | selected old WAL unlink 후 dirsync 전 |
+| R07 | old WAL dirsync 완료 |
+| R08 | 새 epoch intent sync 후 create 전 |
+| R09 | 새 epoch header sync 후 WRITER 공개 전 |
+| R10 | WRITER+CURRENT WalOpen의 최종 dirsync/readback 후 UNDO 전 |
+| R11 | UNDO 완료 후 VERIFY/STABILIZE 전 |
+| R12 | READY 뒤 새 ACK를 controller가 수신 |
+
+R01–R10의 입력은 nonempty loser의 Reserve/Forward와 이전 winner의 Commit을 actual DurableExact prefix로 보존하고 P1의 종료 전에 독립 대조한다. R11–R12는 그 복구 완료 state를 사용한다. RAM stage만 존재하여 loser가 사라진 입력으로 REBASE/UNDO 도달을 대신하지 않는다. P1이 source를 준비하고 P2가 해당 cut에서 종료된다. R01–R11의 P3는 끝까지 복구하고 새 ACK를 만들며 P4가 그 ACK를 검산한다. R12는 P3가 P2의 새 ACK를 검산한다. 이전 N=0 REBASE PASS를 Row source 결과로 재사용하지 않는다. 구현 때 물리 hook을 위 사건에1:1로 대응하며 실제 원 계약의 필수 단계가 더 세분되면 누락 cut를 추가한다. 기존 필수 분모를 줄이지 않는다.
+
+실행 한도는 **memory case30초, native case180초(감사/정리 포함), 단독 C+A/C+B source 각각45분, 합류20분**이다. 총시간 한도에 도달하면 남은 case를 NOT_RUN/TIMEOUT으로 보존하고 재개 단위를 분리한다. 필수 분모·cut·PID를 줄이지 않는다. performance 반복은 없고 known-bad/cut도 각각1회다. 실패 수정 뒤에는 해당 diff/실패 case만 새 source로 선택하며 원 결과를 보존한다.
+
+자원은 profile ID1의 원 owned/protected/WAL·buffer4MiB·private8MiB/transaction·전체64MiB·metadata8MiB·flush4MiB·maintenance12MiB·DWB16MiB를 유지한다. fixture/process는 원 namespace lease/FD recipe를 사용하며 별도 pool·대체 owner·대역 durability를 만들지 않는다. operation loan은 A/B 각각425984B다. Row recipe `P_R=(9,425984,0,16,5,1)`, 세션 전체 file≤7, 격리 backing5760B, caller 장기 handle envelope49152B와 source typed scratch/return carrier를 [자원 owner](dev3-resource-bounds.md#row-missing-module-budget)의 동시 생존표로 합산한다. source component65536B는 겹치는 writer+resident reader의 **합계** 한도이며 각자65536을 부여하지 않는다. fixture/controller memory는 별도 시험 비용으로 명시하되 worker의 실제 제품 scratch를 그 비용으로 빼지 않는다. case 끝에 namespace 파일/bytes·FD·소유/pin·원 loan 반환을 감사하며 forced Drop으로 누락을 감추지 않는다.
+
+MCI는 source 합침 자체로 PASS하지 않는다. C+A/C+B에서 완료한 변경 없는 case·전체 workspace/하위 wrapper·기존 codec/model은 반복하지 않고 신규 interaction과 실제 합류 diff만 선택한다. MI01 실제 제품 구현 겹침, MI02 공용 의미 변경0, MI05 충돌/대기/재작업, MI06 별도 판정은 전환 계획에 기록한다. 이 중간 선택은 원 NT/T06/DIR03·DEV3 최종 S5 분모의 취소나 일괄 완료가 아니다.
 
 <a id="open-questions"></a>
-## 10. M2 종료 전 질문과 해소할 근거
+## 10. 설계 질문의 제출 상태와 수신 의무
 
-| 질문 | 현재 제안·미완료 부분 | 담당·종료 근거 |
+**MCQ01–06의 아래 선택을 독립 D2에 제출하되, MCQ05의 최초 C+B no-loser census gate는 전체 검토가 드러낸 미결로 유지한다.** 이는 채택이나 M2 완료 선언이 아니다. source/hash·컴파일·runtime 수치는 실제 공급 때 검산할 구현/증거 의무이며 설계 선택을 그때로 미루지 않는다. independent review가 차단 반례를 찾으면 해당 결정을 다시 열고 A/B 양쪽에 같은 변경을 인계한다.
+
+| 질문 | 동결한 설계안·근거 | 담당·후속 실제 수신 |
 | --- | --- | --- |
-| MCQ01 형식 선택 | Profile3·Root v3 row_high@432·Job v3 kind3/RowId@320·XRB1 base4 동일2MiB·scope3 RowMissing 추천. 정확 dispatch·current genesis/selector·전체 native enum/role와 충돌 대조 미완료 | 형식/C 담당+통합. 기존 source/owner wire 표의 현재→목표 대조와 independent byte grammar 검토. fresh/current-build 정책·원 evidence 보존 |
-| MCQ02 다중 head/CLR | Forward의 H net0와 CLR의 U.prev-txn Cut+head H 인계 추천. compensated suffix·Prune head순서·queue/census·Mark/StatementFinish의 모든 상태 교차 미동결 | transaction/undo 담당+독립 검토. Active/AbortingStatement/AbortingFull/Committed·Reserved/Retained/Releasing 표와 count multiset/재장애 반례 |
-| MCQ03 C/A 경계 | C checked observer/replay, A live/CLR producer와 loser handler로 분리. handler 반환·오류/loan 수명·literal adapter 권한·C+B no-loser READY의 exact 조건 미동결 | 공통 경계 담당. [API 후보](dev3-module-boundaries.md#api-candidates)의 exact signature/visibility/import와 C+A/C+B 의존 표 |
-| MCQ04 자원 | [opcode 산식](#row-shape)과 [private/target·종료 예약 제안](dev3-resource-bounds.md#row-missing-module-budget)을 작성. 논리 lock/descriptor peak 및 exact API 생존량의 검토는 미완료 | 자원 담당/root. 설계 숫자·선예약/반환·진행 rank를 D2 검토하고, 실제 source/caller census와 boundary 실행은 해당 M4/M5 effect 전에 수행. 기존 Catalog 결과를 새 PASS로 사용하지 않음 |
-| MCQ05 actual fixture | C actual CREATE/recovery→independent complete frames→같은 validator/owner→native reopen 설계. generator/adapter/receipt·source/ELF 입력 및 actual Row recovery scope 미동결 | 독립 fixture/C/검증 담당. fixture 신뢰 경계·input schema·known-bad·native 일정과 C+B의 A 부재를 읽기 검토 |
-| MCQ06 API/F02와 실행 배정 | owner statement/cursor·Missing2pin 제안 링크 사용. exact 오류 우선순위·지원 profile 한도·A/B 담당·전용 파일·C0/C hash·case selector 미정 | 각 owner+통합. M2 호출 설계/공급표를 상호 대조하고 D2 수용 뒤만 M4/M5 실행 |
-| MCQ07 격리 수준 보존 | 같은 table의 부재/range를 읽은 두 거래가 서로 다른 RowId를 INSERT하면 유일 발급만으로 충돌을 검출할 수 없음. 원 publication owner의 bounded table/catalog epoch와 원 Commit coordinator의 검증을 후보로 검토 중이며 아직 owner 계약·API에 반영하지 않음 | concurrency/Commit/C 담당+독립 검토. Serializable의 Tx snapshot·read-only 종료 검증, RC의 statement snapshot, 실패 statement의 관측 집합 보존, durable 전 publication 자원 선예약, 실제 table 수명 검산과 추가 F05를 명세하고 반례로 검토 |
+| MCQ01 형식 | [현재→target dispatch](#format-dispatch), Row issuer@432·Job kind3/RowId@320·Profile3/base4와 exact scope/op/native/role. 현재 source의 format 분기/bytes와 직접 대조 | C/통합이 current genesis·선택·base/replay/CREATE adapter를 같은 source에서 구현. 기존 증거/순수 legacy 보존. F01 독립 byte 검토 필요 |
+| MCQ02 상태/count | [상태표](#row-states)의 다중 head·mark·Compensated q0/source Commit 공존, H multiset net0·U Cut·head 순 Prune·terminal census. 성공 statement WAL0, 실패6080과 full abort3040 분리 | A는 Row/CLR producer, C는 observer/rollback 조립. MCA02/03·MCB02/03에서 실제 상태/count/재장애 검산 |
+| MCQ03 C/A 경계 | [RowReservation](dev3-module-boundaries.md#row-reservation)의 preflight/validation→reserve consuming API·RowProducerLane/Proposal·Before/Fatal, live/recovery task/handler. C는 실제 검산/효과/maintenance, A는 INSERT/CLR 후보 생산. C+B는 no-loser READY | C0 signature→C actual owner→A handler 수신. 제품 동작을 C0 대역 성공으로 승격하지 않음; A 없는 자동 CLR handler도 없음 |
+| MCQ04 자원 | [자원 owner](dev3-resource-bounds.md#row-missing-module-budget)의9proof/5after·425984 분할, P_R=(9,425984,0,16,5,1), 세션 file≤7, 격리5760·handle49152, 준비 counts·root별 debt/6080·유한 queue·종료 rank를 제안 수치로 고정 | root/C가 새 type/Result/return/caller 동시 생존량·FD/registry cap을 해당 source에서 검산. bound 초과는 설계 수정/재검토 사유이며 증액 허용이 아님. MCA05 실행은 실제 C 수신 뒤 |
+| MCQ05 독립 fixture — **미결1** | 입력 schema·known-bad12·PID·보존 prefix witness는 구체화. 다만 C+B의 최초 actual base/WAL analysis census에서 Row Reserved/Active/Aborting를 거절하는 gate의 exact API는 미동결. 나중 RowClr action만 검사하면 C의 공통 Cancel/Abort가 loser를 먼저 정리할 수 있어 no-loser 입력 정책을 증명하지 못함 | C/경계 담당이 최초 검산 시점·원 census provenance·거절/owner 반환 API를 동결한 뒤 독립 재검토. 이 gate가 없으면 MCB05-N01 또는 C+B no-loser READY 인수를 완료로 판정하지 않음. 현재 commit은 M2 PROPOSED이며 구현/시험 NOT_RUN |
+| MCQ06 F02/배정/인수 | [API/오류 순서](#api-flow), 원 statement/cursor·Missing2pin, A/B/C/검토 담당과 전용 경로, C0 허용 효과/실제 C 의무, [선택 variant/cut/시간](#acceptance) 고정 | M3 D2 수용 후 C0가 실제 공급되면 A/B 본문 병렬 착수. M5의 단독/합류 결과와 MI01–06를 원 분모대로 기록 |
+| MCQ07 격리 | root의 [격리 owner](dev3-task-10-concurrency.md#module-row-isolation): 원 Q/publication+control/5760B 장부, Serializable Tx snapshot/read-set/readonly 종료, RC statement snapshot, 실제 변경 table만 epoch 공개, 실패 statement 관측 보존 | root/C·독립 검토. MCI01-V03..14의 실제 반례와 F05/source 수신. 아직 D2 채택·runtime 인수 아님 |
 
-byte 수 계산은 외형적으로 기존 XHG `3776 + Σ(128+before_native+after_native) + 128E + 96K + 208I + Σ(redo)`를 대입할 수 있으나, exact 변경 page/Job 동시 배치·proof target·source loan·error return 생존량이 정해지지 않아 F05 완료가 아니다. initial row는 whole page Patch16,344B를 쓰는 안이며 기존 patch를 cell 크기로 임의 축소하지 않는다. 없는 source proof를 비용0으로 세거나 중복 page의 Native 수와 pin 수를 혼동하지 않는다.
-
-위 질문은 선정 범위의 설계·배정 공백이다. 해소 전 M2를 완료로 판정하지 않는다. 반면 동결된 공급의 실제 구현·시험은 M4/M5 의무이며 M2 문서 단계에서 prototype·테스트를 요구하지 않는다. 일반 CRUD/SMO·전체 DEV3/S5 완료를 이 질문의 해소 조건으로 추가하지 않는다.
+byte 산식·지원 범위·owner 신뢰 경계는 이 동결안의 일부다. source/caller census가 설계 상계를 넘거나 actual current-format/fixture/단독 source가 예상과 다르면 원 결과를 보존하고 M2 영향 행만 다시 검토한다. 일반 CRUD/SMO·전체 DEV3/S5를 불필요한 선행 조건으로 추가하지 않으며 구조 전환의 중간 선택을 그 전체 완료로 승격하지 않는다.
 
 ## 작성 기록
 
-읽기 전용 조사 뒤 이 Markdown 초안만 작성했다. 제품·시험·fixture·등록 파일 변경, 빌드·테스트·문서 verifier·commit/push는 수행하지 않았다. 설계 검토·실제 API 공급·A/B 병렬 구현·native 인수 결과는 NOT_RUN이다.
+읽기 전용 조사 뒤 이 Markdown 초안만 작성했다. 제품·시험·fixture·등록 파일 변경, 빌드·테스트·문서 verifier·commit/push는 수행하지 않았다. 독립 D2의 이 문서 전체 수용·실제 API 공급·A/B 병렬 구현·native 인수는 아직 완료하지 않았다.

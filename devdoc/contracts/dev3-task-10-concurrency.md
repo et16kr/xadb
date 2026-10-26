@@ -256,3 +256,57 @@ transaction/lock/publication 공통 의미는 한 owner가 조정한다. 파일�
 PF09의 최초 다중 거래 기준선은1/2/8/32 요청 × 독립 table/같은 table의 독립 행/실제 같은 행·key 충돌을 구분한다. true/보수적 conflict는 row ID가 다른지만 보고 분류하지 않는다. 독립 oracle가 읽은 값·범위·부재 predicate·unique key·catalog/schema 의존을 포함한 이력을 판단한다. 단순 Poisson 가정의 `P(conflict)=1−exp(−λ_T τ)`는 관측 설계용 민감도 식이며 실측 또는 직렬화 가능성 판정의 대용이 아니다.
 
 미세 validation은 측정 뒤 별도 D2 후보다. 채택하려면 bounded row/range/absence·catalog 의존 추적, phantom/write skew·DDL 무효화, 추적 공간 초과 시 안전한 table validation fallback과 commit 순서의 증명을 먼저 제출한다. 기본 Serializable을 RC로 바꾸거나 read-set을 생략하여 성능 통과로 만들지 않는다. group commit 후보도 같은 batch의 앞선 성공을 뒤 거래 validation에 반영해야 한다. 상세 batch 장벽은 [commit 소유 문서](dev3-task-11-commit.md#commit-service-bound)를 따른다.
+
+<a id="module-row-isolation"></a>
+## 모듈 전환 후보 — 첫 Row 거래의 격리 공급
+
+2026-10-26 · `D3-ROW-ISOLATION-001` · **D2 PROPOSED / M2 검토 중 / 제품·시험 NOT_RUN**. 담당 `/root`, API 연결 `/root/module_boundary_survey`, 독립 검토 `/root/module_handoff_review`. [선정한 Missing INSERT·조회](dev3-module-consumers.md#profile)에 §5.1의 기본 Serializable과 ReadCommitted를 실제 공급하는 제안이다. 일반 기존-key UPDATE/DELETE·index lock/wait-for는 제외되지만 기본 격리 의미는 제외하지 않는다. 구체 Rust 수명과 호출은 [원 경계 API](dev3-module-boundaries.md#api-candidates)에 둔다.
+
+### 실제 소유와 RAM 배치
+
+기준 source `b7ce51d`의 [`BoundVisibility`](../../crates/engine/src/storage/wal_io/plan4_retention/visibility.rs)는 원 Q의 publication mutex와 snapshot/reference registry를 소유한다. 원 [`RetentionControl`](../../crates/engine/src/storage/wal_io/plan4_retention/control.rs)은 유일 writer가 가변 대여한다. 이 두 소유를 유지하며 다음 disjoint byte loan을 원 metadata/cache8MiB에서 추가 배정한다. 새 전역 owner·Q 사본·독립 transaction manager를 만들지 않는다.
+
+| 배치 | 정확한 범위·의미 |
+| --- | --- |
+| table/catalog epochs1600B | header64+32entry×48. header의 `[0,8)`은 catalog namespace epoch, `[8,16)`은 등록 table 수, 나머지 zero. entry는 `[0,8)` state+reserved, `[8,32)` ObjectHandle24, `[32,40)` last committed change q, `[40,48)` reserved0. state는 Free/Reserved/Published를 구분 |
+| isolation ledger4160B | header64+32slot×128. header의 u64는 다음 발급 generation@0·사용 slot 수@8·장기 handle source byte 사용량@16·짧은 operation source byte 사용량@24이며 `[32,64)`은 zero. slot은 phase@0, isolation@1, actor kind@2, catalog read/write flags@3, table read mask:u32@4, write mask:u32@8, 장기 source byte 사용량:u32@12, generation:u64@16, start_q:u64@24, actual TxnRef48@32..80, active statement sequence:u64@80, statement mark의 canonical Option<UndoRef>40@88..128(None은 zero) |
+
+epoch loan은 원 publication mutex가 Q와 **함께** 보호한다. registry mutex를 추가로 동시에 잠그지 않는다. `RetentionControl`의 원 mutable 부분을 `RetentionLedger`로 분리하고, 같은 control 소유 아래 `Mutex<IsolationLedger>`를 둔다. split의 MutationPort는 `&mut RetentionLedger`와 `&IsolationLedger mutex`, ReadPort는 그 **같은** isolation mutex를 받는다. 원 ATT padding의 zero 검사를 깨거나 두 ledger에 같은 원 상태를 복제하지 않는다. ledger의 TxnRef는 actual actor와 연결하는 identity이며 영속 descriptor/status의 별도 가변 사본이 아니다.
+
+slot kind는 writable actual actor와 read-only transaction을 구분한다. read-only actor 영역은 zero이며 slot generation·원 origin이 identity다. 신규 slot은 checked generation 발급 뒤에만 사용할 수 있고 MAX는 새 admission을 거절한다. 반환 때 generation을 지우거나 재사용하지 않는다. table slot은 이번 open에서 evict/reuse하지 않으며 DROP/기존 identity 교체는 이 profile 밖이다. first extent의 dynamic55page에서 table당 실제 pair2개가 필요하므로 table 수≤27이고32entry에 들어간다. 이 산술로 Status/Undo의 추가 capacity를 약속하지 않는다.
+
+실제 fresh/READY exclusive activation에서 원 history/replay·Catalog/table/anchor identity를 검산하여 기존 table entry를 만들고 각 epoch와 catalog epoch를 당시 Q로 초기화한다. 이전 open의 transaction/view는 재사용할 수 없으므로 이 보수 초기화는 과거 read-set을 잃지 않는다. 추정 q·raw handle·현재 RowLeaf의 최대 stamp만으로 등록하지 않는다. activation 중 오류는 가짜 READY를 반환하지 않는다. epoch/isolation loan은 metadata이고 disk wire 변경이나 recovery ATT의 새로운 영속 read-set이 아니다.
+
+### 거래·statement·자동 관측 등록
+
+sealed transaction capsule이 원 origin·isolation slot/generation·actual actor를 결합한다. Serializable capsule은 transaction 시작에 얻은 **실제 SnapshotGuard 하나**를 종료까지 소유한다. statement는 그 등록을 borrow하며 새 q를 선택하거나 old q를 놓고 재등록하지 않는다. ReadCommitted는 statement마다 현재 Q의 새 guard를 얻고 성공/실패 statement 종료에서 해제한다. 같은 actor의 active statement는 하나이며 statement token·revision은 [행 owner](dev3-task-06-tree-rows.md#module-statement-cursor)를 따른다. capsule을 control 내부에 저장해 자기 visibility field를 참조하는 자기참조 구조를 만들지 않는다.
+
+1. C는 실제 table source를 읽기 전에 publication 아래 CheckedTable의 원 origin/handle에 대응하는 table slot을 확인하고 publication lock을 놓는다. slot 번호는 권한이 아니며 이 preflight만으로 lookup 성공이나 사용 가능 table을 반환하지 않는다.
+2. 실제 Catalog/table/anchor/source 검산이 같은 identity와 statement를 확인한 뒤, C의 source adapter가 leaf isolation mutex 아래 해당 read bit를 등록한다. 값·부재·range·EOF를 사용자에게 반환하기 **전** 등록한다. source latch 아래 leaf 등록은 허용하되 잠금 안에서 publication/version gate·I/O·allocation·대기를 요청하지 않는다. 실제 Catalog 이름/객체 조회는 결과가 부재인 경우에도 catalog read flag를 등록한다.
+3. CheckedTable의 재사용도 실제 open/table/schema/anchor와 snapshot 가시성을 검산하고 table/catalog 의존을 자동 등록한다. caller가 handle을 보유했다는 이유로 이를 생략하지 않는다. RowId만으로 조회해도 actual table 의존은 남는다. C가 발급한 source receipt만 등록하며 A/B가 임의 table mask를 제출하거나 지울 API는 없다.
+4. RowReserve/Forward의 실제 table 검산·권한 수신이 write bit를 자동 등록한다. 성공 statement, 실패 statement·취소·rollback에서 이미 관측한 table/catalog read 및 write bit를 지우지 않는다. 보수적 false conflict는 허용하며 rollback으로 transaction snapshot·read-set을 처음 상태로 되돌리지 않는다.
+5. origin/generation/active statement mismatch는 effect 전 거절한다. 관측 등록 이후의 요청 오류는 등록을 보존하고 정상 snapshot cleanup을 수행한다. poison·미정 mutation·cleanup 실패는 원 fence와 resolve 의무다. Drop에서 Commit·I/O·숨은 abort를 수행하지 않는다. 미종료 writable capsule을 버려 healthy actor를 잃는 경로는 fence/복구로 닫는다.
+
+독립 snapshot 조회 API는 해당 q의 조회 보장을 제공한다. 이를 read-only **transaction 완료**로 표시하려면 같은 capsule·자동 read-set·아래 종료 검증을 거쳐야 한다. readonly·writable capsule의 현재 statement/cursor borrow가 살아 있으면 종료 소유를 소비할 수 없다.
+
+### Commit 직렬화·공개와 오류
+
+현재 source에는 별도 CommitCoordinator mutex가 없다. 실제 직렬화 권한은 **유일 MutationPort의 원 `&mut RetentionLedger`**다. 이 borrow를 validation→stage→durable→whole install→epoch/Q publication까지 한 호출이 보유한다. [현재 `CommitInstalling::finish`](../../crates/engine/src/transaction/concurrency_commit.rs)는 Q publish 전 Installation을 Open으로 돌리므로, 그 상태만을 Commit coordinator로 해석하지 않는다. split으로 두 writer를 생성하거나 publication 전에 가변 ledger 소유를 반환하지 않는다. read-only Serializable 종료도 같은 MutationPort를 통해 직렬화한다.
+
+1. 첫 Commit 효과 전에 현재 capsule·완료 statement·exact actor/root 상태, 적용/종료 비용, 변경 table 목록과 publication slot·receipt 저장 공간을 모두 선예약·검산한다. 신규 CREATE table의 Reserved entry는 actual CREATE 예약에만 연결되고 Abort/Cancel은 이를 반환한다. Row는 기존 table entry를 요구한다. 선예약 실패는 새 Commit을 stage하지 않는다.
+2. isolation mutex에서 관측 mask를 고정 복사하고 잠금을 놓는다. publication mutex에서 해당 **read/write table**의 identity와 `last_change_q ≤ transaction start_q`, 관측한 catalog namespace의 `catalog_q ≤ start_q`를 검사한다. 자체 미Commit 변경은 published epoch를 올리지 않으므로 외부 변경에 섞지 않는다. DB 전체 `Q == start_q` 검사는 금지한다. 검증 뒤 publication lock을 놓고 page/gate/WAL 작업을 수행한다.
+3. Serializable 충돌은 reserved full abort 경로로 인계한다. 앞선 성공 statement까지 undo한 뒤에만 거래 종료 성공을 알린다. read-only Serializable은 쓰기/Commit WAL을 만들지 않고 직렬화된 validation 성공 뒤 slot/guard를 반환한다. 충돌 종료는 SerializationConflict이며 정상 Commit 성공이 아니다. ReadCommitted에는 이 table epoch 검증을 적용하지 않지만 실제 write set/publication 검산은 공통이다.
+4. actual InstalledCommit의 원 requirement·key·digest·whole-install 증거와 준비한 변경 목록이 일치해야 공개할 수 있다. 원 publication lock 한 구간에서 영향을 받은 table epoch와 Q를 같은 installed q로 갱신한다. **Row Commit은 실제 남은 logical Row 변경의 table만**, CREATE Commit은 새 table entry와 catalog namespace를 갱신한다. rollback된 write bit는 검증에 보수적으로 남아도 실제 변경 publication 목록으로 쓰지 않는다. physical Prune/stamping/RootFree는 logical epoch를 전진시키지 않는다.
+5. durable 뒤 새 table 등록/할당·fallible quota 획득·사용자 callback이 없다. 준비된 원 slot에만 bounded 설치한다. poison/receipt 불일치/부분 install은 원 UNKNOWN·fence·재시작 의무를 보존하며 ACK를 내지 않는다. 정상 whole install·epoch/Q publication·종료 소유 반환 뒤에만 ACK한다. publication 뒤 ledger borrow를 반환하므로 다음 Commit의 validation은 새 epoch를 본다.
+
+### 신규 RowId의 논리 배타권
+
+이번 Missing-only INSERT는 영속 비재사용 RowId, actual actor·RowReserve·RootJob의 봉인된 권한으로 RowUID의 X 소유를 표현한다. 새 lock-map/waiter slot을 만들지 않으며 raw RowId·다른 actor·이전 statement receipt로 같은 행을 바꿀 API를 제공하지 않는다. 성공 Forward와 Compensated root의 소유는 actor terminal까지 유지한다. statement rollback이 그 root를 조기 Free하거나 maintenance에 넘기지 않는다. Reserve→Cancel은 아직 사용자 Row가 생기지 않은 unused Job만 반환하고 해당 실행의 RowId high-water를 되돌리지 않는다. 재시작 뒤 비재사용 검산은 실제 선택된 complete/durable issued prefix가 보존한 high-water를 기준으로 한다. RAM slot에만 복사된 미동기 Reserve를 이미 영속된 발급으로 간주하지 않는다. ACK된 행의 발급은 원 Commit의 exact WAL prefix에 포함되어야 한다. 이 구분은 매 Reserve의 강제 sync를 새로 요구하거나 RAM-only fault cut을 durable 복구 증거로 바꾸지 않는다.
+
+이 표현은 논리 배타권의 생략이 아니다. 기존-key 변경·권한 양도·index lock이 필요한 입력은 첫 효과 전 Unsupported로 거절하며 일반 wait-for/deadlock 공급을 제공했다고 하지 않는다. actual root/terminal queue 수와 metadata는 [자원표](dev3-resource-bounds.md#row-missing-module-budget)에 청구한다. terminal 이후의 회수도 snapshot/pin/horizon과 별도 RootJob 수명을 지킨다.
+
+### 필수 반례와 채택 조건
+
+선정 공급에는 같은 table absence→서로 다른 RowId INSERT의 두 Serializable 거래에서 두 번째 전체 abort, 서로 다른 table의 두 writer 성공, readonly transaction 종료 직전 관련 table/CREATE 변경 충돌, RC 같은 statement 안정·다음 statement 새q, 실패 statement 관측 집합 보존, CheckedTable 재사용과 stale origin/generation, status 설치→Q 공개 사이 reader, Row Commit이 catalog epoch를 올리지 않음, physical cleanup이 논리 epoch를 올리지 않음을 각각 포함한다. raw actor/RowId로 다른 actor의 CLR, compensated root의 terminal 전 free, durable 뒤 table slot 부족을 허용하는 mutant도 거절해야 한다. 정확 schedule·selector·독립 이력과 시간 한도는 [소비자 인수](dev3-module-consumers.md#acceptance)에 연결한다.
+
+대안인 DB 전역 Q 비교는 독립 table도 충돌시켜 제외했다. table별 disk epoch 추가는 이전 open 거래가 남지 않는 첫 범위에서 필요하지 않으므로 채택하지 않는다. 별도 전역 lock manager를 선행으로 만드는 대신 원 control·publication의 bounded 장부를 확장한다. 기존 §5.1의 의미는 대체하지 않으며 **수용 뒤 선정 scope의 공급 방식만 상세화**한다. 확장된 table 수·DROP/재사용·병렬 writer·기존-key 변경을 추가할 때 이 표현·slot 수·직렬화와 F05를 다시 검토한다. 독립 D2 수용·제품/source census·실제 시험은 아직 완료하지 않았다.

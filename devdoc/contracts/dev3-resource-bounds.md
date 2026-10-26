@@ -147,7 +147,29 @@ first Row 전용 private backing 후보는 **425984B**이며 다음처럼 배분
 
 B의 읽기 loan은 기존 실제 loader에 필요한 disjoint prefix `[0,409600)`와 copy tail `[409600,425984)`를 유지하는 후보로 정한다. tail에는 현재 row record 최대2216B와 qualified schema 최대4588B가 함께 들어가며 loader가 이를 덮지 않는다. B는 A의 candidate/after loan을 공유하지 않는다. 호출별 allocation 대신 caller가 선예약한 loan을 사용한다. A와 B가 동시에 소유하면 각각 합산하고, 원 단일 maintenance operation만 상호 배타성이 증명된 scratch의 max를 사용한다.
 
-frame/registry 각각9·private425984·기존 원 physical effect의 FD recipe 상계는 C의 actual receiver에서 확인한다. 논리 row lock 표현·private source/value의 전체 포함 관계와 descriptor `ResourcePeak` 최종 값은 별도 검토에서 닫아야 한다. 이 질문을 숫자0이나 기존 CREATE_PEAK 복사로 처리하지 않는다. component65536B·metadata196608B·whole262144B 및 총 metadata8MiB, private8MiB/transaction·64MiB 전체, flush4MiB·maintenance12MiB 한도는 올리지 않는다. 좁은 builder/observer의 생존 phase를 분리하고 borrowed 반환으로 큰 Result/후보 복사를 피한 뒤 실제 source/caller census를 수행한다.
+Row의 활성 CLR/Structural/Terminal/Status row와 Aging의 남은 step에는 **`P_R=(frames9,memory425984,locks0,registry16,files5,doublewrite1)`**을 보수적인 step recipe로 제안한다. inactive row는0이며 기존 System scope1과 Catalog scope2 recipe는 바꾸지 않는다. 단순히 기존 CREATE_PEAK를 복사한 값이 아니며 각 항의 근거는 다음과 같다.
+
+| 항목 | 제안 상계와 실제 근거 |
+| --- | --- |
+| frames9·memory425984 | 위 whole-set9와 Row frame/before/after/candidate/schema의 disjoint 배치. 유지보수는 순차 step의 max, 동시 foreground loan은 합산 |
+| locks0 | [격리 owner](dev3-task-10-concurrency.md#module-row-isolation)의 Missing-only 배타권은 actual sealed RootJob+비재사용 RowId로 표현한다. 별도 logical lock-map/request/waiter **slot**은0이며 논리 X권한이 없다는 뜻이 아니다. root/terminal queue≤55와 실제 native metadata를 따로 청구하고, successful/Compensated root의 terminal 전 해제를 금지 |
+| registry16 | 한 step의 보수 합은 pool target9+source reference2+snapshot handoff old/new2+user admission1+isolation actor1+retirement intent1. 이 중 배타적인 phase도 합으로 둔다. 공용 epoch32 및 원 registry backing은 고정 metadata로 별도 청구. 이 숫자가 기존 registry별 slot 상한을 늘리는 권한은 아님 |
+| files5 | 원 WAL handle1+선택/load/replay의 temporary File≤2+native namespace directory/LOCK2. Row 후보/epoch/read-set은 새 File을 열지 않는다. 원 단일 reader lease와 단계별 handle 반환을 유지. 동시에 별도 flusher의 temporary≤2가 살아 있으면 원 shared handles를 중복 세지 않고 **세션 전체≤7**로 검산하며 process 관측용 FD는 따로 기록 |
+| doublewrite1 | 원 `RetentionFlushControl`의 실제 single captured page/claim. 여러 dirty target은 원 flusher에서 순차 처리하며9개 동시 DWB slot을 요구하지 않는다. buffer frame과 DWB backing은 별도 원 소유 |
+
+files5는 단일 step recipe이며 병렬 lane 전체가5라는 주장이 아니다. reader·flusher·replay의 actual open/close 중첩과 recovery exclusive 단계는 변경 source의 caller census에서 위 상계와 맞춰야 한다. 초과하면 첫 효과 전에 거절하고 source 수명/설계를 고치며 정적 숫자만 확대하지 않는다.
+
+### 격리 장부·장기 handle의 metadata
+
+[격리 공급](dev3-task-10-concurrency.md#module-row-isolation)의 epoch1600B와 isolation4160B, 합계**5760B**를 원 metadata/cache8MiB에서 disjoint loan으로 확보한다. 기존 visibility8192B와 ATT padding은 그대로다. actual source의 고정 ledger/registry subtotal은 `36×1664+8192=68096B`이고 새 backing 포함**73856B**다. Root/Job/page 데이터 backing과 source-value를 혼동하지 않는다.
+
+capsule·statement·cursor처럼 호출 뒤에도 사는 engine handle에는 **전체49152B**의 source envelope를 별도 배정한다. 원 isolation header/actor slot의 checked byte ledger가 이 비용을 추적한다. 각 class의 고정 요금은512B이며 실제 type·생성/반환 carrier와 필요한 caller 동시 보유가 그 안에 드는지 source census로 확인하고, token/source guard/effect를 만들기 전에 예약한다. 32×3×512=49152는 배정 산술이지32개 최대 거래의 동시 성공 보장이 아니다. 여러 cursor도 각각512B를 청구하며 Clone으로 무료 복제하지 않는다. 한 거래 한 cursor라는 기능 제한으로 대체하지 않는다. view/cursor가 transaction을 borrow하므로 terminal에서 capsule을 소비하기 전에 정리되며 반환은 원 slot/generation에 한 번만 적용한다. 이 byte credit은 저장 권한을 생성하지 않는다.
+
+짧은 operation·Result·error·return 임시값은 기존 component source census에 포함하며 각각 별도 runtime credit 계층을 만들지 않는다. generic `W::File`·owner/controller·publication/terminal receipt·typed scratch87·fixture receiver의 실제 반환 복사도 누락하지 않는다. borrowing으로 큰 배열 복사를 줄이는 것과 이미 살아 있는 caller 값의 회계를 생략하는 것은 구분한다.
+
+여기서 **65536B는 허용한 writer/reader의 모든 짧은 실행·retained source·caller carrier의 동시 합**이다. 원 `active.max(...)`를 그대로 병렬 전체 합으로 사용하지 않는다. source 공통 retained는 한 번, 동시에 살아 있는 operation charge는 합으로 세고, max는 실제 배타적인 phase에만 적용한다. C의 원 admission 입구에서 source census로 동결한 operation별 nested peak를 선예약하고 출구에서 반환한다. source guard/pin/효과를 보유한 채 부족한 credit을 기다리지 않는다. 예약된 rollback/terminal은 원 progress admission으로 신규 foreground를 닫고 이미 실행 중인 유한 reader가 반환한 뒤 전용 source 몫을 사용하므로 새 선택적 foreground admission에 의존하지 않는다. 장기 snapshot/cursor를 강제 해제하여 이 공간을 만들지 않는다. flusher의 별도65536B는 이 합과 disjoint이며 기존 준비 중 flush 허용을 유지한다.
+
+위 동시 합≤65536B를 만족할 때 `metadata≤73856+65536+49152=188544B≤196608B`, 원 flush component65536을 더한 `whole≤254080B≤262144B`다. 남는8064B를 미등록 상태·새 예약의 여유로 사용하지 않는다. 총 metadata8MiB·private8MiB/transaction 및 전체64MiB·flush4MiB·maintenance12MiB도 유지한다. 이는 새 **설계 상계**이며 실제 size_of/caller 동시 생존량·기존 visibility/controller 세부 cap은 M4의 변경 source에서 검사해야 한다. source census 실패를 한도 증액·검사 생략으로 해결하지 않는다.
 
 ### WAL·남은 종료 의무
 
