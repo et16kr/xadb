@@ -537,6 +537,10 @@ impl<'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
             source,
         })
     }
+    #[allow(
+        clippy::result_large_err,
+        reason = "unchanged failure returns the same inline statement view; its return carrier is charged to the 512-byte source envelope"
+    )]
     pub(in crate::storage) fn finish_statement<'t, 'v>(
         &mut self,
         owner: &mut Owner<'c, 's>,
@@ -555,6 +559,10 @@ impl<'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
         }
         view.close().map_err(StatementFinishError::Fatal)
     }
+    #[allow(
+        clippy::result_large_err,
+        reason = "unchanged failure returns the same inline transaction; its return carrier is charged to the 512-byte source envelope"
+    )]
     pub(in crate::storage) fn finish_read_only<'v>(
         &mut self,
         owner: &mut Owner<'c, 's>,

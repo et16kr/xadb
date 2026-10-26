@@ -236,7 +236,7 @@ pub(crate) fn local_source_carrier_bytes() -> (usize, usize) {
         + size_of::<RowInputPlan>()
         + size_of::<Result<RowInputPlan>>()
         + size_of::<Result<(usize, [u8; 32])>>()
-        + 8 * size_of::<usize>()
+        + size_of::<[usize; 8]>()
         + 4 * size_of::<&[u8]>();
     let producer = size_of::<crate::storage::disk::RowProducerContext>()
         + size_of::<crate::storage::disk::RowControlObservation<'_>>()

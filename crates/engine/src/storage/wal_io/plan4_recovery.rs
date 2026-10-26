@@ -138,7 +138,15 @@ pub(crate) enum Plan4RecoveryCause {
     Doublewrite(DoublewriteError),
     Page(PageError),
     PageIo(PageIoError),
+    #[allow(
+        private_interfaces,
+        reason = "retain the original private base codec cause without widening its authority scope"
+    )]
     Base(base::Error),
+    #[allow(
+        private_interfaces,
+        reason = "retain the original private record codec cause without widening its authority scope"
+    )]
     Record(record::Error),
     Frame(WalError),
     Bootstrap(super::super::super::BootstrapError),
