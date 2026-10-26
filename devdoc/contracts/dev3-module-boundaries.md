@@ -497,7 +497,7 @@ prepare의 첫 효과 전 거절 또는 Prepared 폐기는 mutable borrow/loan�
 <a id="catalog-claim-gap"></a>
 #### Catalog CREATE의 원 pair claim을 공유 세션에서 수신하는 동결안
 
-현재 [`reserve_catalog_create`](../../crates/engine/src/storage/wal_io/plan4_retention/catalog_live.rs:925)는 actual actor/Undo 이후 `&mut Plan4Retention`을 빌리고 [`prepare_tx_pair`](../../crates/engine/src/storage/dirty_init/tx_pair.rs:206)의 `&mut SharedPool`로 shared user를 배제한다. `target_mask` 관측→두 clean slot close/generation 소비→`init_claim` 설치는 여러 registry 구간이며 그 사이의 배제는 이 가변 borrow에서 온다. `return_catalog_pair`는 원 flush의 가변 borrow로 `PairIoQuiescence`를 발급하고 Cancel의 실제 allocator-after를 읽는다. 이 의미를 transaction 전 provisioning으로 바꾸지 않는다.
+현재 [`reserve_catalog_create`](../../crates/engine/src/storage/wal_io/plan4_retention/catalog_live.rs)는 actual actor/Undo 이후 `&mut Plan4Retention`을 빌리고 [`prepare_tx_pair`](../../crates/engine/src/storage/dirty_init/tx_pair.rs)의 `&mut SharedPool`로 shared user를 배제한다. `target_mask` 관측→두 clean slot close/generation 소비→`init_claim` 설치는 여러 registry 구간이며 그 사이의 배제는 이 가변 borrow에서 온다. `return_catalog_pair`는 원 flush의 가변 borrow로 `PairIoQuiescence`를 발급하고 Cancel의 실제 allocator-after를 읽는다. 이 의미를 transaction 전 provisioning으로 바꾸지 않는다.
 
 **선택한 최소안:** 실제 원 `PoolRegistry`의 directory/counts/init_claim/DPT/physical claim/load를 한 leaf에서 검산·변경하는 atomic close를 공급하고, 원 `TxPairClaimKey`가 살아 있는 동안 일반 pin/load/capture 진입을 닫는다. 원 `RetentionFlushControl`은 disjoint mutable lease로 같은 예약에 빌려준다. 새 manager·pool·claim registry·WAL/File·fence·전역 mutex를 만들지 않는다. `&self`로 시그니처만 바꾸는 수정도 아니다. 원 methods의 actual 원자 구간과 권한을 바꾸는 **C3 필수 구현**이다.
 
@@ -1061,7 +1061,7 @@ next_action은 recovered의 `inner`에서 MutationPort를, 원 recovery private�
 <a id="row-recovery-policy"></a>
 #### C+B 최초 analysis의 no-loser gate
 
-[현재 recover](../../crates/engine/src/storage/wal_io/plan4_recovery.rs:559)는 원 `preinspect` 뒤 reserve_physical→source 안정화→physical→REBASE→log_open을 수행한다. [`analysis::preinspect`](../../crates/engine/src/storage/wal_io/plan4_recovery/analysis.rs:282)는 selected base와 완결 WAL을 원 replay bank에 재구성하고 canonical 관계/전체 source·home·Pending을 검산한다. no-loser 정책은 RowClr action을 처음 보았을 때가 아니라 **이 검산이 끝난 직후, AnalysisSeal 발급 직전**에 적용한다.
+[현재 recover](../../crates/engine/src/storage/wal_io/plan4_recovery.rs)는 원 `preinspect` 뒤 reserve_physical→source 안정화→physical→REBASE→log_open을 수행한다. [`analysis::preinspect`](../../crates/engine/src/storage/wal_io/plan4_recovery/analysis.rs)는 selected base와 완결 WAL을 원 replay bank에 재구성하고 canonical 관계/전체 source·home·Pending을 검산한다. no-loser 정책은 RowClr action을 처음 보았을 때가 아니라 **이 검산이 끝난 직후, AnalysisSeal 발급 직전**에 적용한다.
 
 ```rust
 pub(crate) enum RowRecoveryPolicy { WithRowClr, RejectInitialLosers }

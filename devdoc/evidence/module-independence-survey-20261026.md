@@ -786,3 +786,5 @@ D1/D2 담당·통합은 `/root`다. 원 자원을 이동하는 bounded 내부 �
 수정은 제품 동작·형식·원 권한·메모리 배치를 바꾸지 않는3파일에 한정한다. recovery의 두 private codec 오류 variant는 기존 원인과 visibility를 유지하도록 해당 variant에만 `private_interfaces` 사유를 명시했다. statement/transaction 종료의 Before 반환은 동일 inline handle과512B 회계를 유지하도록 두 함수에만 `result_large_err` 사유를 명시했다. Row INSERT의8개 usize carrier는 byte 합을 명확히 나타내는 `size_of::<[usize; 8]>()`로 표현했다. 힙 할당·공개 범위 확대·lint 전역 허용은 추가하지 않는다.
 
 검증 대상은 실제 push할 commit의 포맷·Clippy·문서 pre-push gate다. 위 attribute/동일 크기 표현 변경에 제품 동작 변경이 없어 완료한 runtime 시험은 반복하지 않는다. `/root/module_handoff_review`가 실제3파일 diff와 원 Clippy 지적·기존512B 반환 회계를 대조하여 좁은 D1 수용·필수 수정0으로 판정했다. 검토자는 빌드·시험·문서 검사를 실행하지 않았고 `/root`가 반영한다. 최종 전송 검증은 이 보완 commit 이후 원 pre-push 훅에서 수행하며 실제 전송 로그와 구별한다. 이전 source별 제품 PASS·FAIL과 M4/M5 미완료를 유지한다.
+
+후속 `522ec12` main 전송 시도는 Rust 포맷·Clippy를 통과했지만 문서4개 링크의 `파일.rs:줄번호` 표기를 파일 이름으로 해석하여 차단됐다. 원 로그는 `artifacts/module-push-20261027-r2.log`에 보존한다. 실제 네 소스 파일의 존재를 확인하고 상대 Markdown 링크에서 줄 번호 접미어만 제거했다. 설명·계약 의미·제품 변경0의 D0 정정이며 최종 전송 시 원 훅을 다시 적용한다.
