@@ -2438,6 +2438,16 @@
       "role": "evidence",
       "title": "DEV2 PF04 원 native 제어기의 CPU 배치 대조 기록"
     },
+    "dev2-pf04-c3-s2-20261026.md": {
+      "path": "evidence/dev2-pf04-c3-s2-20261026.md",
+      "role": "evidence",
+      "title": "DEV2 PF04 C3 shard counter 구현·선택 검증(S2)"
+    },
+    "dev2-pf04-c3-s2-20261026.json": {
+      "path": "evidence/dev2-pf04-c3-s2-20261026.json",
+      "role": "evidence",
+      "title": "DEV2 PF04 C3 shard counter 구현·선택 검증(S2)"
+    },
     "dev2-pf04-profile-b-s1-20261026.md": {
       "path": "evidence/dev2-pf04-profile-b-s1-20261026.md",
       "role": "evidence",

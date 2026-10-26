@@ -1,5 +1,8 @@
 # DEV2 구현 기록
 
+<a id="pf04-c3-s2"></a>
+2026-10-26 [PF04 C3 shard counter 후보(S2)](../evidence/dev2-pf04-c3-s2-20261026.md): 계획의 thread별 shard counter를 기준선 `435c9e0` export 위 diff로 구현하고 선택 시험·정적 lock 대조를 통과했다. 독립 검토 반영 r3 후보 source·worker를 고정했으며 제품 diagnostics와 이 기록의 계약은 S3 확인 뒤 S4에서만 바꾼다.
+
 <a id="pf04-profile-b-s1"></a>
 2026-10-26 [PF04 측정 profile B 도구(S1)](../evidence/dev2-pf04-profile-b-s1-20261026.md): controller slot gate·supervisor/환경 판정기·`slot-env-v1`을 구현하고 [K0-005 계약](#k0-005-profile-b)에 등록했다. 신규 controller7·Python33함수와 바뀐 경로의 기존1함수를 source별로 선택 검증했다. 독립 검토 r1의 예산 연계 차단 지적을 고쳤고 r2·r3는 `PASS_SCOPED_S1_TOOL`이다. 실제 native 연결은 r1 init이 장치 이름 고정으로 실패한 뒤 r2에서 `TOOL_CONNECTED`였다. C3·PF04 인수(S2–S7)는 NOT_RUN이며 원 PF04 네 FAIL·DEV2 미완료를 유지한다.
 

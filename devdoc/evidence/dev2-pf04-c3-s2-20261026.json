@@ -1,0 +1,203 @@
+{
+  "schema": 1,
+  "title": "DEV2 PF04 C3 shard counter implementation and selected verification (S2)",
+  "decision": "PF04-C3-001",
+  "status": "S2_CANDIDATE_R3_FROZEN_REVIEW_R3_PASS_NOT_IN_PRODUCT",
+  "plan_ref": "dev2-pf04-resolution-plan.md#c3-shard-counters",
+  "plan_commit": "435c9e0",
+  "user_instruction": "2026-10-26: start S2 now",
+  "external_root": "/home/et16/xadb-dev2-evidence/pf04-c3-s2-20261026",
+  "baseline": {
+    "source": "git archive 435c9e0",
+    "source_sha256": "6a7035b8a91e5e5632eaf6b662f222e7f6e2b3852192aef6ba33f2d775a379b3",
+    "worker_sha256": "d543b1bc8412e0a844eb15f8e0ebd6d7000469bf649620b4c2f012e330f14220",
+    "receipt_sha256": "4f0f0ec3c8459f5c9d6bfe73db5f28a797b395e9a17c462b117701024e937496",
+    "config_sha256": "377c6a03099562e668076d636e35a8d64c201d3f491684f8fc179516f1fa68e7",
+    "worker_line_tables_sha256": "4a002c34a727fe54053497983267704e716f57cfd559c19e716ee79a02b6ce80"
+  },
+  "embedded_source_sha256_checked": true,
+  "product_source_changed": false,
+  "selected_tests_candidate_r1": {
+    "compile_failures_before_first_run": 2,
+    "diagnostics_unit": {
+      "functions": 12,
+      "existing_adapted": 4,
+      "new": 8,
+      "passed": 12
+    },
+    "engine_performance": {
+      "functions": 5,
+      "passed": 5
+    },
+    "engine_stress_smoke": {
+      "function": "four_readers_keep_old_rows_and_release_pins_smoke",
+      "passed": 1
+    },
+    "worker_performance": {
+      "function": "real_fixture_matrix_preserves_all_read_values_old_roots_and_exact_measurement_cuts",
+      "passed": 1
+    },
+    "fmt_check": "PASS",
+    "clippy": "baseline 435c9e0 fails -D warnings on pre-existing catalog lints; candidate diagnostics identical, 0 in diagnostics.rs; HEAD export plus the same diff: engine and worker all targets all features -D warnings PASS",
+    "raw_logs": "console only",
+    "commands_recorded_before_run": false
+  },
+  "static_lock_comparison": {
+    "rule_sha256": "5c43b25e4abf0d8779e1ff158e7fae95ff263501e2b15461cfe5890b15b0d6cb",
+    "rule_frozen_before_change": true,
+    "amendment_v2_sha256": "6e2f44d84f5015d9601e7e1c7271b572aee2f54c613bded04558a9803efb123c",
+    "baseline_inventory_sha256": "a608b54ed61c073a709be7b6ee39387b7f49a32ef61c15591fa2d762ce21b490",
+    "baseline": {
+      "diagnostics_counter_rmw": 14,
+      "event_queue_mutex": 3,
+      "arc_refcount": 28,
+      "base_metrics_counter": 2,
+      "quota": 2,
+      "unclassified": 0
+    },
+    "candidate": {
+      "diagnostics_counter_rmw": 0,
+      "event_queue_mutex": 3,
+      "arc_refcount": 28,
+      "base_metrics_counter": 2,
+      "quota": 2,
+      "unclassified": 0
+    },
+    "non_counter_multisets_equal": true,
+    "candidate_cold_counter_sites": {
+      "engine::diagnostics::issue": 1,
+      "engine::diagnostics::Collector::claim": 4,
+      "engine::diagnostics::Collector::increment": 1
+    },
+    "verdict": "PASS (r1, r2 and r3)",
+    "timing_claim": null,
+    "first_r1_inventory_under_v1": "FAIL (1 unclassified xchg, symbol-hash key differences); amendment v2 written after seeing it, 13 seconds after the r1 comparison file",
+    "tools_sha256": {
+      "lockscan.py": "f1f954d5c5be0eb78303ccd158053fd71710bb7fd0a845f01699b5bdd3ee1287",
+      "lockscan_v2.py": "9f981e8ec74c225b888cd3007a5b1a179328a57282002f9517d2250a10dc228b",
+      "compare_v2.py": "9e1ce3b6eaf6a3d3330b232b23ce2114ec321313e7c04cccb943f38aa43e8b34"
+    },
+    "r1_result_sha256": "42e6c42d73afcd4743c4186ddaa5bbce97adbc883c363a2f70cf829b0438bb44",
+    "r1_inventory_sha256": {
+      "lock-sites.json": "73cdf9850fa52e23f74070d21d6efa936f335e5ad29fb10e338a3dd9873b8615",
+      "lock-sites-v2.json": "606577db9cb5a33f3869c2698f0f96ddcde0948492bebb066d51efd010c25183"
+    },
+    "r2_result_sha256": "95275cf0a07085685aacc6681979df8b582009c32cf6da4de26d8aed8d33f3f7",
+    "r2_api_calls": "replace/snapshot/read call only record_event (as baseline) and branch-guarded cold claim/increment; no unconditional completed call; replace has an unwind-only drop_in_place<Vec<Value>> call since r1 that the baseline lacks",
+    "r3_result_sha256": "49c5e48a0995dca681e672534bbc6fb4fbe5e8e78662d941aad6bd8926d0bfbf",
+    "tools_run_with": "python3 -B for r2 and r3; the earlier tools/__pycache__ byproduct was deleted"
+  },
+  "not_run": [
+    "S3 C3 exploration/confirmation/guards",
+    "S4 product change",
+    "S5 PF04 K0 acceptance",
+    "S6 V3 thread stress",
+    "S7 closure record",
+    "PF04-DUR-001"
+  ],
+  "original_pf04": "FAIL (four e3 campaigns unchanged)",
+  "dev2": "PARTIAL_IMPLEMENTATION",
+  "review": {
+    "r1": {
+      "file": "s2-review-r1.json",
+      "sha256": "9078b32519504d38ea21fc87416dee40d86782b8b2fca27bce13e7ac38e982f5",
+      "verdict": "PASS_SCOPED_S2_CANDIDATE",
+      "scope": "candidate r1",
+      "nonblocking": 8,
+      "handling": "NB-3 NB-6 NB-7 fixed in r2 source; NB-1 NB-2 NB-4 NB-5 corrected in records; NB-8 at commit"
+    },
+    "r2": {
+      "file": "s2-review-r2.json",
+      "sha256": "6f6e9f96268b8167de06df9fca963e0d40d4f394d5d2a1924b301d9d4dd58760",
+      "verdict": "BLOCKED",
+      "blocking": [
+        "B-1 shell id output in the frozen r2 create comment"
+      ],
+      "nonblocking": 4,
+      "handling": "B-1 fixed in r3; NB-r2-1..4 corrected in records",
+      "note": "the receipt quotes the leaked text"
+    },
+    "r3": {
+      "file": "s2-review-r3.json",
+      "sha256": "dc0f87e6f721833c7cecc2cdc3ade1a715135f7d1718dc2f097843f9dc22197e",
+      "verdict": "PASS_SCOPED_S2_CANDIDATE",
+      "scope": "candidate r3",
+      "nonblocking": 3,
+      "handling": "NB-r3-1 recorded before commit; NB-r3-3 reworded; NB-r3-2 left to the user (local r2 history files and r2 receipt keep the leaked text; never copied into the repository)"
+    }
+  },
+  "candidate_r1_history": {
+    "source": "baseline plus c3.diff (crates/engine/src/diagnostics.rs only)",
+    "source_sha256": "ba493f53ffa51f6807ab174f27a0d96d43ae879fefd38eed8c82948833215cb7",
+    "diff_sha256": "5caa488f32cf4d6fa1886f5e952bb0e5d56406e452d9f7b61dff13bea4bc5a54",
+    "diagnostics_sha256": "4ab072aa26d93ad630d9d45b8e121973db30e931ad1bca0e2d270c8311a71abb",
+    "worker_sha256": "f750e77d814848f615ed99589ba04e68d7ec3fd4c840954d02089ae86da64e31",
+    "receipt_sha256": "c2b49d4e7766e1b4b76a717d13c61180c1297f1608e112cbf2a8e0a300b4125b",
+    "config_sha256": "377c6a03099562e668076d636e35a8d64c201d3f491684f8fc179516f1fa68e7",
+    "location": "frozen/candidate-r1",
+    "used_in_s3": false
+  },
+  "selected_tests_candidate_r2": {
+    "commands_file": "candidate-r2/test-commands.txt",
+    "commands_sha256": "5d89730d618bbf8d793dfb4ed0c35b4a6514475de6b1f65bba2112dd2438ad68",
+    "commands_recorded_before_run": "partly: the diagnostics command ran before test-commands.txt was written; the other commands ran after",
+    "diagnostics_unit": {
+      "functions": 13,
+      "passed": 13
+    },
+    "engine_performance": {
+      "functions": 5,
+      "passed": 5
+    },
+    "engine_stress_smoke": {
+      "passed": 1
+    },
+    "worker_performance": {
+      "passed": 1
+    },
+    "fmt_check": "PASS",
+    "clippy": "HEAD export plus r2 diff: engine and worker all targets all features -D warnings PASS; the baseline-based candidate itself still fails -D warnings on pre-existing catalog lints",
+    "raw_logs": "console only"
+  },
+  "candidate_r2_history": {
+    "revision": "r2",
+    "source": "baseline plus c3.diff r2 (crates/engine/src/diagnostics.rs only)",
+    "source_sha256": "64772392b6649325e82a9281bfdf9d1e13bf0e4ff3f57a5c0ddf1e136575a461",
+    "diff_sha256": "8858f86ec8cc2f51b7c3660aab1e54229e39e1502e48e01b8118ac40b8db5624",
+    "diagnostics_sha256": "593da48fb248a32554308699fe77a301cc956448919c02451a463416d0c0492f",
+    "worker_sha256": "8a5b170f58e48e93cb191da086728ac8f68638581d2ac86ced15165b69c15035",
+    "worker_line_tables_sha256": "2ae4c897f8e8660d1d413f02f3ee90a0bc0efafba93bef82d49493f24198e16d",
+    "receipt_sha256": "c0bb7cbc84cf13b495598ed1915a525281f7acdac99dec758c854a7e8ccc5f45",
+    "config_sha256": "377c6a03099562e668076d636e35a8d64c201d3f491684f8fc179516f1fa68e7",
+    "r2_changes": [
+      "completed #[inline(always)]: Off keeps only the None check (review NB-3)",
+      "find #[inline(always)] inside cold claim (NB-7)",
+      "debug_assert that a shard writer updates only its own shard (NB-7)",
+      "create id precondition comment (NB-7)",
+      "new test exhausted_thread_token_uses_the_fallback (NB-6)"
+    ],
+    "location": "frozen/candidate-r2-defective",
+    "used_in_s3": false,
+    "defect": "create comment contained shell id output (local account and group names) from an unquoted heredoc; review r2 B-1",
+    "r1_to_r2_diff_sha256": "c2f3cbfa83d0561b34f838255e76cc06fa301a6737e59f89cf0bb69e2d435fcf"
+  },
+  "candidate": {
+    "revision": "r3",
+    "source": "baseline plus c3.diff r3 (crates/engine/src/diagnostics.rs only)",
+    "source_sha256": "14576e6aa5f70f2ecb12696d62dcac657ad743c6f1c84bfb961c927710f88088",
+    "diff_sha256": "280a9b765d288e8289c36b465966166ddb740ed57e026c156c36b89fabe95f8c",
+    "diagnostics_sha256": "e854a7b8c8846b632e05432e7b9143815af8bad01f0e36db692039f91bd98934",
+    "worker_sha256": "52d4baeea25ae8f9ce17efeff235c119b70957df2f207ab49a487ba0a198c3d7",
+    "worker_line_tables_sha256": "3158d96277013f4f8ca0baabb7e2c23737f345e7bc172de46015f6973344bb7c",
+    "receipt_sha256": "8c78b436eae1fd0f99c979027cecc9d0368ad116c036f81072f0e720f960b184",
+    "config_sha256": "377c6a03099562e668076d636e35a8d64c201d3f491684f8fc179516f1fa68e7",
+    "r2_to_r3": "one comment line replaced; no r2-to-r3 diff file is kept because it would repeat the leaked text",
+    "id_output_in_r3_files": false
+  },
+  "selected_tests_candidate_r3": {
+    "fmt_check": "PASS",
+    "tests_rerun": "none (comment-only)",
+    "machine_code": "r2 and r3 .text have the same address and size; 154 of 162,984 instructions differ only in rip-relative displacements to .rodata constants; the cause of the constant placement change was not established; the embedded source fingerprint differs by design",
+    "record_sha256": "bae433f26ad344edd0be8e70f9703d1391a225c658fb73fb840c89f420a53552"
+  }
+}

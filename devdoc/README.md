@@ -1,5 +1,7 @@
 # XADB 개발 문서
 
+2026-10-26 [DEV2 PF04 C3 shard counter 후보(S2)](evidence/dev2-pf04-c3-s2-20261026.md): thread별 shard counter를 기준선 위 diagnostics diff로 구현하고 신규8종·기존 선택 시험과 정적 lock 대조(대상 경로 counter RMW 14→0)를 통과했다. 후보는 고정했으나 제품에 반영하지 않았다. C3 측정(S3)·PF04 인수는 NOT_RUN이며 원 PF04 FAIL·DEV2 미완료를 유지한다.
+
 2026-10-26 [DEV2 PF04 측정 profile B 도구(S1)](evidence/dev2-pf04-profile-b-s1-20261026.md): controller slot gate·supervisor/환경 판정기·`slot-env-v1`을 구현하고 K0-005 계약에 등록했다. source별 선택 검증과 실제 native 연결(r1 장치 이름 실패 뒤 r2 `TOOL_CONNECTED`)을 마쳤다. C3·PF04 인수는 NOT_RUN이며 원 PF04 FAIL·DEV2 미완료를 유지한다.
 
 2026-10-25 [DEV2 PF04 C3·측정 profile B 계획](plans/dev2-pf04-resolution-plan.md#c3-profile-b): K0 계측 비용을 반복당 locked RMW로 설명하고, thread별 shard counter(C3)와 결과를 보지 않는 환경 타당성 판정(B)을 실행 전 계획으로 정했다. 한도·pair별 판정은 그대로다. 독립 D2 검토5회 끝에 차단0으로 채택했고 구현·측정은 NOT_RUN, 영속 처리는 결정 대기다. 원 PF04 FAIL·DEV2 미완료를 유지한다.
