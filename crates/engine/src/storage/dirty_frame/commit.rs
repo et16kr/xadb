@@ -29,7 +29,7 @@ pub(in crate::storage) struct CommitStageTargets<'a, 'b, 'c, 's, 'p, 'd, const N
 /// The same physical PinSet, with zero page/version/admission guards. No second
 /// registration map or DPT capacity reservation is introduced.
 pub(in crate::storage) struct PendingCommitTargets<'a, 'b, 'c, 's, 'p, 'd, const N: usize> {
-    targets: Option<WriteTargets<'a, 'b, 'c, 's, 'p, 'd, N>>,
+    pins: Option<PinSet<'b, 'c, 's, 'p, 'd, N>>,
     pending: Option<PendingInstallation<'a, 'c, 's>>,
     stable: [Option<StablePage>; N],
 }
@@ -151,8 +151,10 @@ impl<'a, 'b, 'c, 's, 'p, 'd, const N: usize> CommitStageTargets<'a, 'b, 'c, 's, 
             .expect("owned Commit intent")
             .suspend(staged)
             .map_err(DirtyError::from)?;
+        // Only the original PinSet crosses WAL waiting. The emptied write
+        // carrier ends here; it has no guards, version or pins left to release.
         Ok(PendingCommitTargets {
-            targets: self.targets.take(),
+            pins: targets.pins.take(),
             pending: Some(pending),
             stable: self.stable,
         })
@@ -186,8 +188,15 @@ impl<'a, 'b, 'c, 's, 'p, 'd, const N: usize> PendingCommitTargets<'a, 'b, 'c, 's
             .begin_drain(durable)
             .and_then(|drain| drain.wait_ready())
             .map_err(DirtyError::from)?;
+        // Drain has completed before any guard storage is reconstructed.
+        // This moves the same PinSet; no reservation or registry edit occurs.
+        let targets = WriteTargets {
+            guards: std::array::from_fn(|_| None),
+            version: None,
+            pins: self.pins.take(),
+        };
         let mut result = CommitInstallTargets {
-            targets: self.targets.take(),
+            targets: Some(targets),
             installation: Some(installation),
             stable: self.stable,
         };
@@ -200,7 +209,13 @@ impl<const N: usize> Drop for PendingCommitTargets<'_, '_, '_, '_, '_, '_, N> {
     fn drop(&mut self) {
         // Pending Drop fences before physical identities are released.
         drop(self.pending.take());
-        let _ = release_targets(&mut self.targets);
+        if let Some(pins) = &mut self.pins {
+            #[cfg(test)]
+            if pins.active {
+                test_support::before_release(pins.pool);
+            }
+            let _ = pins.release();
+        }
     }
 }
 
@@ -373,6 +388,9 @@ pub(in crate::storage) const fn source_bytes<const N: usize>() -> usize {
         + 2 * size_of::<Result<PendingCommitTargets<'_, '_, '_, '_, '_, '_, N>>>()
         + 2 * size_of::<Result<CommitInstallTargets<'_, '_, '_, '_, '_, '_, N>>>()
         + target_set_call_bytes::<N>()
+        // resume_durable constructs this owned carrier after Drain, while the
+        // compact Pending value and its install return are still in scope.
+        + size_of::<WriteTargets<'_, '_, '_, '_, '_, '_, N>>()
         + size_of::<[Option<StablePage>; N]>()
         + 4 * size_of::<FrameStamp>()
         + 2 * size_of::<Result<DirtyObservation>>()

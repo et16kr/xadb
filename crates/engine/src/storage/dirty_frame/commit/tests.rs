@@ -193,6 +193,16 @@ fn commit_targets_intent_unwind_fences_and_releases_physical_ownership() {
 
 #[test]
 fn commit_common_source_bounds() {
+    use std::mem::size_of;
+    let pending = size_of::<PendingCommitTargets<'_, '_, '_, '_, '_, '_, 4>>();
+    let old_pending = size_of::<Option<WriteTargets<'_, '_, '_, '_, '_, '_, 4>>>()
+        + size_of::<Option<PendingInstallation<'_, '_, '_>>>()
+        + size_of::<[Option<StablePage>; 4]>();
+    assert!(
+        pending < old_pending,
+        "Pending retains no empty guard/version carrier"
+    );
+    println!("COMMIT_PENDING_LAYOUT compact={pending} previous_fields={old_pending}");
     for (count, bytes) in [(4, source_bytes::<4>()), (9, source_bytes::<9>())] {
         println!(
             "COMMIT_COMMON_SOURCE targets={count} source_bytes={bytes} ceiling=65536 semantic_consumer=NOT_RUN"

@@ -1,0 +1,63 @@
+{
+  "schema": "XADB_MODULE_C2_PENDING_CARRIER_V1",
+  "status": "FROZEN_INPUTS_NOT_EXECUTION_EVIDENCE",
+  "scope": "original Pending Commit pins separated from empty write guard storage; Catalog stage helper ends before WAL wait; aggregate source admission remains unimplemented",
+  "baseline_commit": "a432b46",
+  "changed_paths": [
+    "crates/engine/src/storage/dirty_frame/commit.rs",
+    "crates/engine/src/storage/dirty_frame/commit/tests.rs",
+    "crates/engine/src/storage/wal_io/plan4_retention/catalog_commit.rs"
+  ],
+  "budget": {
+    "total_seconds": 480,
+    "case_seconds": 30,
+    "output_bytes": 8388608,
+    "rust_min_stack": 33554432
+  },
+  "runtime_tests": [
+    {
+      "selector": "storage::dirty_frame::commit::tests::commit_common_source_bounds",
+      "reason": "Changed Pending physical representation, reconstructed install carrier and total source formula; report actual compact layout"
+    },
+    {
+      "selector": "storage::dirty_frame::commit::tests::commit_targets_capacity_preflight_preserves_fence_priority",
+      "reason": "Changed common source formula feeds the existing capacity preflight; preserve capacity and fence ordering"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::commit_concurrency::catalog_mt05_pending_lower_flush",
+      "reason": "Changed compact Pending retains original four pins, allows lower-image flush and revalidates recLSN after Drain"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::commit_concurrency::catalog_mt03_pending_reader_loads_undo",
+      "reason": "Changed actual stage-to-Pending helper and physical carrier still allow Pending reader Undo LOAD and checked commit continuation"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::commit_concurrency::catalog_mt07_drain_content_guard_fence",
+      "reason": "Changed Pending resume/failure cleanup retains original Drain/fence and pin cleanup"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::commit_failures::catalog_mf02_commit_stage_call_unwind",
+      "reason": "Moved stage helper owns actual Intent and guards at StageCallStarted unwind"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::commit_failures::catalog_mf03_commit_write_before_error",
+      "reason": "Changed compact Pending remains live after RAM stage when wait_catalog_commit file write fails before bytes; verify completed=9/synced=8 and Pending Drop cleanup, not Unstaged restore/cancel"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::commit_failures::catalog_mf07_commit_sync_before_error",
+      "reason": "Changed Pending Drop owns pins when original durability wait sync fails before effect; preserve original failure and cleanup evidence, no recovery invocation"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::commit_failures::catalog_mf09_commit_durable_unwind",
+      "reason": "Changed compact Pending is abandoned at durable-before-Drain unwind; actual current-build memory recovery"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::commit_failures::catalog_mf10_commit_second_page_unwind",
+      "reason": "Install guard carrier is now reconstructed after Drain; preserve partial-install fault cleanup and current-build memory recovery"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::owner_tests::disk_session_isolation_backing_and_carriers_are_accounted",
+      "reason": "Changed common/Catalog source equations flow into original live/recovered bounds"
+    }
+  ]
+}

@@ -6554,5 +6554,32 @@
     },
     "remaining_supply": "aggregate source admission including concurrent entry/return carriers and writer/read/progress classes; actual Row adapters/terminal/recovery and complete M4/M5",
     "source_roots_changed": false
+  },
+  "dev3_module_c2_pending_carrier": {
+    "status": "ACCEPTED_LIMITED_D1_D2",
+    "contract_ref": "dev3-module-boundaries.md#operation-source-admission",
+    "evidence_ref": "module-independence-survey-20261026.md#c2-pending-carrier",
+    "implemented_paths": [
+      "tests/fixtures/dev3-module-c2/pending-carrier/manifest.json"
+    ],
+    "modified_paths": [
+      "crates/engine/src/storage/dirty_frame/commit.rs",
+      "crates/engine/src/storage/dirty_frame/commit/tests.rs",
+      "crates/engine/src/storage/wal_io/plan4_retention/catalog_commit.rs"
+    ],
+    "scope": "retain original PinSet in Pending, reconstruct empty write guard storage only after Durable/Drain, end actual Catalog stage locals before WAL wait; preserve authority, cleanup, effects and wire",
+    "validation": "production/test build and eleven exact runtime cases PASS; MF03 is post-RAM-stage file write failure and MF07 is sync failure, both Pending cleanup without recovery; original frozen attribution errors preserved and current descriptions corrected without rerun; actual current-build memory recovery MT07/MF09/MF10; independent module_handoff_review accepted limited D1/D2 after product/artifact/five-document review and narrow description correction, zero required fixes",
+    "source_bytes": {
+      "pending_four_targets": 800,
+      "previous_pending_field_sum": 912,
+      "physical_chain_four_targets": 11888,
+      "physical_chain_nine_targets": 20368,
+      "catalog_commit_broad": 31752,
+      "live_peak": 63184,
+      "recovered_peak": 64611,
+      "aggregate_admission_implemented": false
+    },
+    "remaining_supply": "fixed class and progress charges, aggregate source admission including concurrent entry/return carriers; resident read path and actual Row adapters/terminal/recovery, complete M4/M5",
+    "source_roots_changed": false
   }
 }

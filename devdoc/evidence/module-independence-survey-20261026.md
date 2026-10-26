@@ -740,3 +740,39 @@ recovered retained22256B와 full lookup41552B의 합은63808B로65536B 아래지
 r1 ELF는 `f19bea4ccb51e2c240221b05d83fcd8f400b3eb0b719ad878de14227ade412dc`, r2 ELF는 `a1daba9e115237e8ee199baf516db17e0c251d8aa416532c35fddb4529c9f3c5`다. 실행 비용은 각각42.58/40.27초다. 변경 Rust 파일별 rustfmt와 `git diff --check`를 사용하며 전체 fmt/Clippy·문서 verifier·push는 실행하지 않는다.
 
 `/root/module_handoff_review`는 제품5파일, 원 source5614개·manifest/runner/result/ELF/로그 identity와 문서5개를 직접 대조했다. C09 설명 오류를 지적했고, 현재 manifest·증거의 정정과 원 frozen 기록 보존을 좁게 재확인한 뒤 **거래·Aging 생성 수명 분리 D1/D2 한정 수용·필수 수정0**으로 판정했다. source별12+7회/16개 고유 selector, source 값 상한 감소와 aggregate/M4/M5 미완료를 확인했다. 검토자는 수정·빌드·시험·verifier를 실행하지 않았고 `/root`가 한정 수용을 반영한다.
+
+
+<a id="c2-pending-carrier"></a>
+### C2 Commit Pending의 원 pin 보유와 stage 수명 분리 — 2026-10-27
+
+기준 commit `a432b46`에서 `dirty_frame::PendingCommitTargets`가 빈 page/version guard를 포함한 `WriteTargets` 대신 **동일 원 PinSet**을 보유하도록 바꿨다. suspend는 기존 순서대로 page guards를 해제하고 authentic StagedCommit으로 Pending을 만든 뒤 pin을 이동한다. 빈 이전 WriteTargets는 함수 반환과 함께 끝난다. resume는 original Durable 확인·Drain 대기 뒤에만 빈 guard storage를 다시 구성하고, 동일 PinSet과 stable bytes를 원 installer에 이동한다. pin 예약·등록·DPT 권한을 새로 만들지 않는다.
+
+Pending의 오류/Drop은 원 Pending guard의 fence 처리를 먼저 수행하고 pin을 checked 반환한다. PinSet의 generation/count 검산·underflow/poison 정책과 failed install의 guard→admission→pin 정리는 유지한다. 기존 test-only release 관측도 보존한다. `catalog_commit.rs`는 실제 preflight/write/Intent/stage/mark_staged/suspend를 private `stage_catalog`로 추출하여 WAL wait 이전에 함수 지역 값이 끝나게 했다. helper는 실제 Pending·Wait·InstallationKey·WalRequirement만 반환한다. PreparedCatalog·원 exclusive control과 epoch 검산은 기존 caller에 남고, stage 거절의 authentic Unstaged restore/cancel 및 오류 우선순위는 유지한다.
+
+D1/D2 담당·통합은 `/root`다. 원 자원을 이동하는 bounded 내부 구조를 선택했다. 비어 있는 guard를 계속 보유하면서 수식에서 제외하거나 별도 owner/heap에 옮기는 대안은 채택하지 않았다. shared-retained 한 번과 모든 동시 entry/실행/return의 합을 닫는 admission, writer/reader/progress별 고정 charge, resident 조회 경로와 실제 Row/terminal/recovery·M4/M5 전체는 아직 미완료다. 이 단위는 원 Pending 수명을 후속 phase 회계에 사용할 구조로 나눈 것이며 admission 완료나 writer1+resident reader2의 용량 증거가 아니다. Pending이 다시 guard/대형 임시 값을 보유하거나 정리 순서가 바뀌면 재검토한다.
+
+#### 선택 검증과 자원 관측
+
+[선택 manifest](../../tests/fixtures/dev3-module-c2/pending-carrier/manifest.json)에 마지막 diff와11개 selector의 관계, 총480초·case30초·로그8MiB·test stack32MiB를 고정했다. production check·test `--no-run`은 각각 빌드 PASS이며 runtime과 구별한다. 다음11개 exact runtime이 각각1회 PASS했다.
+
+| 선택 | 실제 변경과 검증 범위 |
+| --- | --- |
+| common source bounds·capacity/fence priority2개 | 변경 Pending layout 및 재구성 carrier 계산, 기존64-target capacity 거절과 fence 우선순위 |
+| MT05·MT03·MT07 | 동일4pin 유지/Pending lower flush 뒤 recLSN 재검산, Pending Undo LOAD, Drain의 content/fence 오류와 원 정리 |
+| MF02·MF03·MF07·MF09·MF10 | MF02는 새 stage helper의 StageCallStarted unwind, MF03/MF07은 RAM stage 뒤 Pending의 file write-before/sync-before error, MF09/MF10은 durable/second-page unwind와 실제 current-build memory recovery |
+| 원 owner census1개 | 변경 물리/Catalog source 식의 live·recovered 합계 수신 |
+
+원 r1 manifest/result는 MF03를 `pre-stage rejection/Unstaged restore/cancel`로 잘못 설명했다. 실제 stage는 RAM complete prefix를9로 진행하며 MF03는 `wait_catalog_commit`의 file write-before 실패 후 synced8을 검산한다. 따라서 새 Pending의 오류/Drop 정리 증거이며 Unstaged restore/cancel 실행 증거가 아니다. MF07 reason의 포괄적인 recovery 표현도 정정했다. 실제 현재-build memory recovery는 MT07/MF09/MF10이며 MF03/MF07의 io_failure 함수는 이를 호출하지 않는다. 원 frozen source/manifest/result·로그는 보존하고 현재 선택 이유와 이 기록만 정정했다. 제품·fixture·oracle 수정 및 시험 재실행은 없다.
+
+네 target의 Pending 실제 타입은800B다. 이전 세 field의 크기 합912B와 비교하여112B 줄었다. 일반 물리 chain의 보수 source 합은 N4=11888B/N9=20368B다. 새 helper output/Result/borrowed arguments 및 Drain 후 WriteTargets 구성도 청구했으므로 **Catalog Commit의 포괄 상한은29680→31752B로 증가했다.** 이를 전체 source 비용 절감으로 표현하지 않는다. 실제 배타 phase의 좁은 charge 계산과 admission 연결은 후속이다.
+
+이번 census에서 Catalog lookup41552B, live peak63184/metadata186192/whole251728B, recovered live64560/peak64611/metadata106392/whole171928B는 이전과 같았다. source 값·수명 계산 및 타입 크기이며 RSS/컴파일러 stack 실측이나 처리 성능 결과가 아니다. 변경 없는 semantic transition 시험·전체 workspace·하위 wrapper·native/새 PID 인수는 실행하지 않았다.
+
+원 source export/inventory·manifest·runner·compiler diagnostics·ELF·stdout/stderr·result는 `artifacts/module-c2-pending-carrier-20261027-r1/`에 보존한다.
+
+- source SHA-256: `35114f98d6748893fde839a3d1bd7ad29759c947c65808f6703811b5f40f2b0b`
+- manifest SHA-256: `47e1fd89b3a1dc089af53330561a69d15d55e014440e520611fda81ce2388c13`
+- ELF SHA-256: `f3ddc9b7a6f6622a7a441bf79c1b3ee01f0842cfb201d33cc75de9def746691c`
+- result SHA-256: `09ecad8dec0a40b517a01bd8fd14874ad475905d9fb20d465984eca9e9d600ac`
+
+실행 비용60.33초는 성능 인수가 아니다. 변경 Rust만 파일별 rustfmt로 정리했고 `git diff --check`를 사용했다. 전체 fmt/Clippy·문서 verifier·push는 실행하지 않았다. `/root/module_handoff_review`는 제품3파일, 원 source5615개·manifest/runner/result/ELF/로그 identity와 문서5개를 직접 대조했다. MF03/MF07 실행 설명 정정과 원 증거 보존을 확인한 뒤 **Pending 보유/stage 수명 분리 D1/D2 한정 수용·필수 수정0**으로 판정했다. compiler2/runtime11 PASS, Pending 크기 감소와 Catalog Commit 포괄 상한 증가, aggregate/M4/M5 미완료를 확인했다. 검토자는 수정·빌드·시험·verifier를 실행하지 않았으며 `/root`가 한정 수용을 반영한다.

@@ -626,3 +626,8 @@ statement factory·자동 read-set·CheckedTable/RowReadOperation과 short aggre
 ## 모듈 독립 개발 C2 거래·Aging 생성 수명 — 2026-10-27
 
 기존 `semantic_catalog/ledger.rs`·`transition.rs`의 descriptor 생성/검산 수명을 helper 경계로 나누고 `resources.rs`의 argument·반환 carrier 식을 맞췄다. 기존 owner 시험에 test-only branch 관측을 추가했다. 새 제품 모듈·package/dependency·source root는 없다. 선택 manifest와 수정5경로는 JSON `dev3_module_c2_transaction_phases`에 등록한다. [실행 기록](../evidence/module-independence-survey-20261026.md#c2-transaction-source-phases)은 r1 거래 분리의 peak 불변과 r2 Aging 분리의 실제 source 상한 감소, source별 선택12+7회를 구별한다. 전체 동시 admission과 Row 실제 공급은 후속이다.
+
+
+## 모듈 독립 개발 C2 Commit Pending 보유 — 2026-10-27
+
+기존 `dirty_frame/commit.rs`는 원 PinSet만 Pending에 이동하고 Drain 뒤 원 installer의 guard storage를 재구성한다. 기존 `plan4_retention/catalog_commit.rs`의 private stage helper가 실제 stage 지역값의 수명을 끝낸다. 신규 package/dependency·제품 파일·source root는 없다. 수정3경로와 선택 manifest는 JSON `dev3_module_c2_pending_carrier`에 등록한다. [실행 기록](../evidence/module-independence-survey-20261026.md#c2-pending-carrier)은 선택11개, Pending 타입112B 감소와 새 반환 carrier를 포함한 포괄 source 합을 구별한다. 실제 phase별 aggregate admission은 후속이다.

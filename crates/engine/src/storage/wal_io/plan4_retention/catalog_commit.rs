@@ -119,90 +119,12 @@ impl<'s, 'c, W: WriterNamespace> RetentionWriter<'_, '_, 's, 'c, '_, '_, '_, '_,
             return Err(unchanged(RetentionPhase::Prepare, RetentionCause::Capacity));
         }
 
-        // All stale/overflow/DPT checks precede Intent and the actual stage.
-        // These proof-only DPT stamps are not retained across Pending: a
-        // flusher is allowed to clean an unchanged page in that interval.
-        let write = self
-            .pool
-            .reserve_target_set(owner, requests)
-            .map_err(|e| frame(RetentionPhase::Prepare, e))?
-            .try_write()
-            .map_err(|e| frame(RetentionPhase::Prepare, e))?;
-        let checked = (|| {
-            for at in 0..TARGETS {
-                let stamp = prepared
-                    .stamp(at)
-                    .ok_or_else(|| unchanged(RetentionPhase::Prepare, RetentionCause::Invariant))?;
-                write
-                    .matches_stamp(at, &stamp)
-                    .map_err(|e| frame(RetentionPhase::Prepare, e))?;
-                if prepared.after(at).is_some() {
-                    if stamp.page_lsn.0 >= prepared.observation().header.lsn {
-                        return Err(unchanged(
-                            RetentionPhase::Prepare,
-                            RetentionCause::Invariant,
-                        ));
-                    }
-                    let _ = write
-                        .preflight_dpt(at, &stamp)
-                        .map_err(|e| frame(RetentionPhase::Prepare, e))?;
-                }
-            }
-            Ok(())
-        })();
-        if let Err(error) = checked {
-            return merge(
-                Err(error),
-                write
-                    .release_checked()
-                    .map_err(|e| frame(RetentionPhase::Prepare, e)),
-            );
-        }
-        let mut stage = write
-            .prepare_commit()
-            .map_err(|e| frame(RetentionPhase::Prepare, e))?;
-        let key = stage
-            .stage_call_started()
-            .map_err(|e| frame(RetentionPhase::Stage, e))?;
-        #[cfg(test)]
-        catalog_hook(prepared.core(), CatalogPoint::StageCallStarted);
-        let (staged, wait) = match storage.wal().stage_catalog_commit(CatalogCommitAttempt {
-            prepared: &prepared,
+        let PendingCatalog {
+            pending,
+            wait,
             key,
-        }) {
-            Ok(staged) => staged,
-            Err(rejected) => {
-                let Some(unstaged) = rejected.unstaged else {
-                    return Err(fatal(
-                        storage,
-                        RetentionPhase::Stage,
-                        RetentionCause::Wal(rejected.error),
-                    ));
-                };
-                stage
-                    .restore_unstaged(unstaged)
-                    .map_err(|e| fatal(storage, RetentionPhase::Stage, RetentionCause::Frame(e)))?;
-                let error = RetentionError {
-                    phase: RetentionPhase::Stage,
-                    effect: rejected.error.effect,
-                    cause: RetentionCause::Wal(rejected.error),
-                };
-                return merge(
-                    Err(error),
-                    stage
-                        .cancel_unstaged()
-                        .map_err(|e| frame(RetentionPhase::Stage, e)),
-                );
-            }
-        };
-        let requirement = wait.requirement();
-        // The exact staged requirement is retained before releasing any lock;
-        // old ATT/descriptor/Jobs bytes remain stable during Pending.
-        catalog_mark_staged(&prepared, self.control, requirement)
-            .map_err(|e| fatal(storage, e.phase, e.cause))?;
-        let pending = stage
-            .suspend(staged)
-            .map_err(|e| fatal(storage, RetentionPhase::Stage, RetentionCause::Frame(e)))?;
+            requirement,
+        } = stage_catalog(storage, self.pool, self.control, owner, &prepared, requests)?;
         #[cfg(test)]
         catalog_hook(prepared.core(), CatalogPoint::Pending);
         let durable = storage
@@ -294,6 +216,114 @@ impl<'s, 'c, W: WriterNamespace> RetentionWriter<'_, '_, 's, 'c, '_, '_, '_, '_,
     }
 }
 
+/// The actual stage result, retaining only the original pins and WAL bindings.
+/// Preparation locals and rejected-stage carriers end before the wait begins.
+struct PendingCatalog<'u, 'b, 'c, 's, 'p, 'd> {
+    pending: dirty_frame::PendingCommitTargets<'u, 'b, 'c, 's, 'p, 'd, TARGETS>,
+    wait: commit_bridge::CatalogCommitWait<'c, 's>,
+    key: InstallationKey,
+    requirement: WalRequirement<'s>,
+}
+
+fn stage_catalog<'u, 'b, 'a, 's, 'c, 'p, 'd, W: WriterNamespace>(
+    storage: &'s MutableStorageOwner<'_, '_, W>,
+    pool: &'b SharedPool<'c, 's, 'p, 'd>,
+    control: &mut control::RetentionLedger<'a, 'c, 's>,
+    owner: &'u mut Owner<'c, 's>,
+    prepared: &PreparedCatalog<'_, 'c, 's>,
+    requests: &[TargetRequest; TARGETS],
+) -> Result<PendingCatalog<'u, 'b, 'c, 's, 'p, 'd>> {
+    // All stale/overflow/DPT checks precede Intent and the actual stage.
+    // These proof-only DPT stamps are not retained across Pending: a
+    // flusher is allowed to clean an unchanged page in that interval.
+    let write = pool
+        .reserve_target_set(owner, requests)
+        .map_err(|e| frame(RetentionPhase::Prepare, e))?
+        .try_write()
+        .map_err(|e| frame(RetentionPhase::Prepare, e))?;
+    let checked = (|| {
+        for at in 0..TARGETS {
+            let stamp = prepared
+                .stamp(at)
+                .ok_or_else(|| unchanged(RetentionPhase::Prepare, RetentionCause::Invariant))?;
+            write
+                .matches_stamp(at, &stamp)
+                .map_err(|e| frame(RetentionPhase::Prepare, e))?;
+            if prepared.after(at).is_some() {
+                if stamp.page_lsn.0 >= prepared.observation().header.lsn {
+                    return Err(unchanged(
+                        RetentionPhase::Prepare,
+                        RetentionCause::Invariant,
+                    ));
+                }
+                let _ = write
+                    .preflight_dpt(at, &stamp)
+                    .map_err(|e| frame(RetentionPhase::Prepare, e))?;
+            }
+        }
+        Ok(())
+    })();
+    if let Err(error) = checked {
+        return merge(
+            Err(error),
+            write
+                .release_checked()
+                .map_err(|e| frame(RetentionPhase::Prepare, e)),
+        );
+    }
+    let mut stage = write
+        .prepare_commit()
+        .map_err(|e| frame(RetentionPhase::Prepare, e))?;
+    let key = stage
+        .stage_call_started()
+        .map_err(|e| frame(RetentionPhase::Stage, e))?;
+    #[cfg(test)]
+    catalog_hook(prepared.core(), CatalogPoint::StageCallStarted);
+    let (staged, wait) = match storage
+        .wal()
+        .stage_catalog_commit(CatalogCommitAttempt { prepared, key })
+    {
+        Ok(staged) => staged,
+        Err(rejected) => {
+            let Some(unstaged) = rejected.unstaged else {
+                return Err(fatal(
+                    storage,
+                    RetentionPhase::Stage,
+                    RetentionCause::Wal(rejected.error),
+                ));
+            };
+            stage
+                .restore_unstaged(unstaged)
+                .map_err(|e| fatal(storage, RetentionPhase::Stage, RetentionCause::Frame(e)))?;
+            let error = RetentionError {
+                phase: RetentionPhase::Stage,
+                effect: rejected.error.effect,
+                cause: RetentionCause::Wal(rejected.error),
+            };
+            return merge(
+                Err(error),
+                stage
+                    .cancel_unstaged()
+                    .map_err(|e| frame(RetentionPhase::Stage, e)),
+            );
+        }
+    };
+    let requirement = wait.requirement();
+    // The exact staged requirement is retained before releasing any lock;
+    // old ATT/descriptor/Jobs bytes remain stable during Pending.
+    catalog_mark_staged(prepared, control, requirement)
+        .map_err(|e| fatal(storage, e.phase, e.cause))?;
+    let pending = stage
+        .suspend(staged)
+        .map_err(|e| fatal(storage, RetentionPhase::Stage, RetentionCause::Frame(e)))?;
+    Ok(PendingCatalog {
+        pending,
+        wait,
+        key,
+        requirement,
+    })
+}
+
 fn commit_q(
     prepared: &PreparedCatalog<'_, '_, '_>,
     profile: crate::storage::control::Profile,
@@ -365,6 +395,9 @@ pub(in super::super) fn source_bytes() -> usize {
         commit_bridge::CatalogStageError<'c, 's>,
     >;
     let retained = visibility::epoch_commit_carriers()
+        + size_of::<PendingCatalog<'_, '_, '_, '_, '_, '_>>()
+        + size_of::<Result<PendingCatalog<'_, '_, '_, '_, '_, '_>>>()
+        + 6 * size_of::<&()>() // stage_catalog borrowed arguments
         + size_of::<PreparedCatalog<'_, '_, '_>>()
         + size_of::<Observation>()
         + size_of::<WalRequirement<'_>>()
