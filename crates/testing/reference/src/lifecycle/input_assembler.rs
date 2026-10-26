@@ -857,7 +857,13 @@ impl<'a> Assembly<'a> {
 
     fn descriptor_transaction(&self, descriptor: &Descriptor) -> Step<Txn<'a>> {
         match descriptor.transaction {
-            Some(reference) => Ok(Txn::Existing(transaction(self.state, reference.0)?)),
+            Some(reference) => {
+                let t = transaction(self.state, reference.0)?;
+                if !caller_owns(self.caller()?, t.id) {
+                    return Err(INVALID);
+                }
+                Ok(Txn::Existing(t))
+            }
             None => Ok(Txn::None),
         }
     }
@@ -916,6 +922,8 @@ impl<'a> Assembly<'a> {
             || statement.id.actor != id.actor
             || statement.id.slot != id.slot
             || !same_scope(statement.id, id)
+            || statement.session.0 != id.session
+            || slot.statement != Some(record.statement)
             || slot.descriptor_result.is_none_or(|r| r.0 != id.nonce)
             || !primitive(record.id, IdentityKind::Result)
         {
@@ -988,7 +996,9 @@ impl<'a> Assembly<'a> {
         if payload.api != kind {
             return Err(INVALID);
         }
-        let backlink = |t: &TransactionRecord| t.parked_context.is_some_and(|c| c.0 == id.nonce);
+        let backlink = |t: &TransactionRecord| {
+            caller_owns(caller, t.id) && t.parked_context.is_some_and(|c| c.0 == id.nonce)
+        };
         if kind == Api::ParkFetch {
             let statement = statement(self.state, payload.statement.ok_or(INVALID)?.0)?;
             let result = payload.result.ok_or(INVALID)?.0;
@@ -998,12 +1008,15 @@ impl<'a> Assembly<'a> {
             })?;
             let slot = slot(self.state, statement.id.actor, statement.id.slot)?;
             if !caller_owns(caller, statement.id)
+                || statement.session.0 != statement.id.session
                 || descriptor.statement.0 != statement.id.nonce
                 || descriptor.transaction != payload.transaction
                 || record.statement.0 != statement.id.nonce
                 || record.public_generation_live != descriptor.public_generation_live
                 || record.id.actor != statement.id.actor
                 || record.id.slot != statement.id.slot
+                || !primitive(record.id, IdentityKind::Result)
+                || !same_scope(record.id, statement.id)
                 || slot.statement.is_none_or(|s| s.0 != statement.id.nonce)
                 || slot.descriptor_result.is_none_or(|r| r.0 != result)
             {

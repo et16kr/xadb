@@ -9,6 +9,197 @@ use super::input_schema::{RawIdentity, ResolvedInput};
 use super::schema::State;
 use std::collections::BTreeMap;
 
+/// New malformed selected-reference cases; the expected error comes from readset-v2 S3.
+fn malformed_assembly_rejected(
+    name: &str,
+    api: super::schema::Api,
+    selector: Option<super::target_selector::TargetSelector>,
+    change: impl FnOnce(&mut State),
+) {
+    let mut state = Box::<State>::default();
+    fixtures().literals.state(name, &mut state).unwrap();
+    change(&mut state);
+    std::thread::Builder::new()
+        .stack_size(256 * 1024)
+        .spawn(move || {
+            let action = super::raw_action::RawAction {
+                api,
+                actor: 0,
+                selector,
+                prepare: None,
+                autocommit: None,
+                outcome: 0,
+            };
+            let mut out = Box::<ResolvedInput>::default();
+            assert_eq!(
+                assemble_input(&state, &action, &mut out),
+                Err(super::input_assembler::AssemblyError::InvalidState)
+            );
+        })
+        .unwrap()
+        .join()
+        .unwrap();
+}
+
+#[test]
+fn assembly_fetch_rejects_foreign_descriptor_transaction() {
+    malformed_assembly_rejected(
+        "sel.open",
+        super::schema::Api::Fetch,
+        Some(super::target_selector::TargetSelector::Issued(0)),
+        |state| {
+            let t = state
+                .transactions
+                .as_mut_slice()
+                .iter_mut()
+                .find(|t| t.id.nonce == 1)
+                .unwrap();
+            t.id.actor = 1;
+            t.id.session = 2;
+        },
+    );
+}
+
+#[test]
+fn assembly_commit_fact_rejects_foreign_parked_transaction() {
+    malformed_assembly_rejected(
+        "rich:pc-BeforeAttempt",
+        super::schema::Api::CommitFact,
+        None,
+        |state| {
+            let t = state
+                .transactions
+                .as_mut_slice()
+                .iter_mut()
+                .find(|t| t.id.nonce == 1)
+                .unwrap();
+            t.id.actor = 1;
+            t.id.session = 2;
+        },
+    );
+}
+
+#[test]
+fn assembly_fetch_rejects_missing_statement_slot_backlink() {
+    malformed_assembly_rejected(
+        "sel.open",
+        super::schema::Api::Fetch,
+        Some(super::target_selector::TargetSelector::Issued(0)),
+        |state| {
+            state
+                .prepared_slots
+                .as_mut_slice()
+                .iter_mut()
+                .find(|p| p.actor == 0 && p.slot == 0)
+                .unwrap()
+                .statement = None;
+        },
+    );
+}
+
+#[test]
+fn assembly_close_result_rejects_foreign_resource_scope() {
+    malformed_assembly_rejected(
+        "sel.open",
+        super::schema::Api::CloseResult,
+        Some(super::target_selector::TargetSelector::Issued(0)),
+        |state| {
+            let owner = state
+                .owners
+                .as_mut_slice()
+                .iter_mut()
+                .find(|o| o.id.nonce == 3)
+                .unwrap();
+            assert_eq!(owner.resource_kind, super::schema::ResourceKind::Snapshot);
+            owner.id.actor = 1;
+            owner.id.session = 2;
+        },
+    );
+}
+
+#[test]
+fn assembly_rollback_rejects_foreign_obligation_scope() {
+    malformed_assembly_rejected(
+        "rw.recovery_pending",
+        super::schema::Api::Rollback,
+        None,
+        |state| {
+            state
+                .obligations
+                .as_mut_slice()
+                .iter_mut()
+                .find(|o| o.id.nonce == 1)
+                .unwrap()
+                .id
+                .engine = 2;
+        },
+    );
+}
+
+#[test]
+fn assembly_resume_rejects_foreign_private_result() {
+    malformed_assembly_rejected(
+        "sel.parked",
+        super::schema::Api::ResumeFetch,
+        None,
+        |state| {
+            let result = state
+                .issued_results
+                .as_mut_slice()
+                .iter_mut()
+                .find(|r| r.id.nonce == 1)
+                .unwrap();
+            result.id.engine = 2;
+        },
+    );
+}
+
+#[test]
+fn assembly_fetch_rejects_statement_session_mismatch() {
+    malformed_assembly_rejected(
+        "sel.open",
+        super::schema::Api::Fetch,
+        Some(super::target_selector::TargetSelector::Issued(0)),
+        |state| {
+            state
+                .issued_statements
+                .as_mut_slice()
+                .iter_mut()
+                .find(|p| p.id.nonce == 1)
+                .unwrap()
+                .session
+                .0 = 2;
+        },
+    );
+}
+
+#[test]
+fn assembly_rollback_rejects_obligation_birth_session_mismatch() {
+    malformed_assembly_rejected(
+        "rw.recovery_pending",
+        super::schema::Api::Rollback,
+        None,
+        |state| {
+            state
+                .transactions
+                .as_mut_slice()
+                .iter_mut()
+                .find(|t| t.id.nonce == 1)
+                .unwrap()
+                .birth_session
+                .0 = 2;
+            state
+                .obligations
+                .as_mut_slice()
+                .iter_mut()
+                .find(|o| o.id.nonce == 1)
+                .unwrap()
+                .origin_session
+                .0 = 2;
+        },
+    );
+}
+
 fn environment(name: &str) -> Option<String> {
     match std::env::var(name) {
         Ok(value) => Some(value),

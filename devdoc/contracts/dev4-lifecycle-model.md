@@ -1,6 +1,6 @@
 # DEV4 P5 수명 모델 전이
 
-2026-10-25 · **D4-LM-MODEL-001 독립 D2 수용 / 구현·선택 시험·독립 D1 제한 수용 / [독립 checker](dev4-lifecycle-checker.md) 차등 판정 반영 / BFS·FE14 미완료**.
+2026-10-25 · **D4-LM-MODEL-001 독립 D2 수용 / 구현·선택 시험·독립 D1 제한 수용 / [독립 checker](dev4-lifecycle-checker.md) 차등 판정 반영 / 메모리 BFS 별도 구현 / checkpoint·FE14 미완료**.
 
 [전체 입력 조립](dev4-lifecycle-assembler.md)이 만든 `ResolvedInput`을 받아 사전 상태에서 응답과 후상태를
 만드는 시험 전용 추상 모델이다. 실제 SQL/session/engine, ACK·내구성, BFS·checkpoint는 이 결정의 범위가
@@ -223,5 +223,5 @@ commit·Bind·CloseStatement 재사용·FencedClose·PeerFence)로 확인한다.
 
 ## 남은 의무
 
-alias, BFS·checkpoint, FE14 완주와 mutant 공간 탐색은 후속이다. 전체 BFS에는 10GiB 영속 공간이
-필요하다.
+alias·메모리 BFS는 [탐색기](dev4-lifecycle-explorer.md)에 구현했다. archive·durable checkpoint,
+FE14 완주와 mutant 공간 탐색은 후속이다. archive 있는 전체 BFS에는 10GiB 영속 공간이 필요하다.

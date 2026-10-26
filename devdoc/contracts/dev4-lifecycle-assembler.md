@@ -1,6 +1,6 @@
 # DEV4 P5 전체 입력 조립
 
-2026-10-25 · **D4-LM-ASM-001 독립 D2 수용 / 구현·선택 시험·독립 D1 수용 / 모델 전이·FE14 미완료**.
+2026-10-25 · **D4-LM-ASM-001 독립 D2 수용 / 구현·선택 시험·독립 D1 수용 / 모델·checker·메모리 BFS는 별도 구현 / FE14·영속 재개 미완료**.
 
 [선행 계획](../plans/dev4-preparation-plan.md#sequence)의 P5에서 [원시 번호·selector](dev4-lifecycle-raw-selection.md)와
 [상태·입력 codec](dev4-lifecycle-codec.md)을 잇는 시험 전용 순수 기능이다. 실제 SQL/engine API,
@@ -85,7 +85,9 @@ Utf8 `61`,`62`이다. N0의 unsupported class를 조립기가 제외하지 않�
 
 statement 인증은 같은 caller의 exact issued identity, Current 또는 CurrentClosed, slot backlink다.
 result 인증은 같은 caller의 exact public current result와 descriptor·statement·slot 연결이다.
-인증한 record의 깨진 연결은 InvalidState다. 인증은 admission이 아니며 Busy/Fenced/cached를
+인증한 record의 깨진 연결은 InvalidState다. 선택 T와 matching continuation의 T는 caller의 actor/E/S와
+같아야 하며, public result의 slot.statement 역참조도 exact하게 일치해야 한다. 선택 resource는 원 holder scope,
+선택 O는 T의 actor/E/S·출생 session과 일치해야 한다(읽지 않는 row의 전체 검산은 하지 않음). 인증은 admission이 아니며 Busy/Fenced/cached를
 예측해 입력을 비우지 않는다. matching ParkedFetch는 fence로 public result가 retired되어도 원 private
 statement·result·descriptor·transaction 연결과 T.parked_context 역참조를 검사해 사용한다.
 
@@ -189,5 +191,9 @@ outcome을 보존한 empty다.
 확인한 뒤 해당 기대값만 대체한다. 기대값은 제품·모델·codec 출력으로 만들지 않는다. 신규 함수의
 선택 시험만 실행한다.
 
-admission·환경 가능성·소비, full input alias, 독립 edge checker, 원51 action model replay,
-전체 BFS·재개와 FE14는 후속이다. 전체 BFS의 10GiB 영속 공간 요구는 미충족이다.
+[수명 모델](dev4-lifecycle-model.md)과 [독립 checker](dev4-lifecycle-checker.md)는 별도 단위로 구현했고
+원51 action replay를 선택 검증했다. alias·메모리 BFS는 [탐색기](dev4-lifecycle-explorer.md)를 따른다.
+archive·영속 재개·FE14는 미완료이며, archive 있는 전체 BFS의 10GiB 영속 공간 요구는 그대로 남는다.
+
+2026-10-26 [병합 전 수정 검증](../evidence/dev4-merge-review-20261026.md)에서 이 선택 참조 검사의 구현 누락을
+보완했다. 기존 원문·fixture 기대값·1994개 원 실행 결과는 그대로 보존한다.

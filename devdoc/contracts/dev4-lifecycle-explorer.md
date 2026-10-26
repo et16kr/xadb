@@ -119,7 +119,9 @@ cap에 걸리면 그 상태의 남은 slot을 분류하지 않고 직전까지�
 `Report`는 profile, status와 이유, 깊이·API별 counter, ledger 형식과 ledger·discovery SHA, 멈춘 frontier,
 경과 시간과 소유 용량 peak, 첫 반례를 담는다. arena는 다시 할당하지 않는 64MiB block이며 한 상태는 block을
 넘지 않는다. 소유 용량은 arena·offset·depth·parent·visited index의 capacity에 worker마다 고정 allowance
-32MiB를 더한 값이다. offset·depth·parent 배열이 커질 때의 옛·새 배열 공존분도 미리 charge한다. worker 쪽
+32MiB를 더한 값이다. block header·offset·depth·parent 배열이 커질 때의 옛·새 배열 공존분도 미리 charge하고
+`capacity_peak`에는 이 보수적 사전 차감 peak를 포함한다(실측 allocator 사용량 아님).
+초기 visited index와 worker allowance도 할당 전에 상한·산술 overflow를 검사하며, state cap 0은 initial을 게시하지 않는다. worker 쪽
 할당(codec buffer·상태 3개·alias 표·batch successor)은 fallible이 아니므로 allowance로 추정해 charge하고, 그래도
 실패하면 process가 끝나 receipt가 없는 INCONCLUSIVE다. allowance는 상한이 아닌 추정이므로 보고에 process의
 peak RSS(`VmHWM`)를 함께 남긴다. ledger 형식과 rule ID 표는 `LEDGER_DESCRIPTOR` 문자열로 고정하고 그 SHA를
@@ -146,3 +148,6 @@ fallible reserve 경로로 다룬다.
 
 archive와 durable checkpoint(원 checkpoint wire의 구현, 10GiB 영속 공간), witness 도달 검사와 FE14 mutant 공간
 탐색, 깊이 6 완주(승인 밖)가 남는다.
+
+2026-10-26 [병합 전 수정 검증](../evidence/dev4-merge-review-20261026.md): 초기 할당·block header 예산,
+state cap 0·worker 산술·peak 보고를 보완했다. 원 깊이 5 실행은 반복하지 않았으며 원 source 결과를 보존한다.

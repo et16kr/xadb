@@ -2,7 +2,7 @@
 //!
 //! Rows follow only pre-state references. Nonces of prospective definitions are assigned
 //! after every used namespace has been checked, in RW3 -> cursor3 -> Recovery phase order.
-use super::{INVALID, Step, primitive, unique};
+use super::{INVALID, Step, primitive, same_scope, unique};
 use crate::lifecycle::schema::{
     Access, CommitProgress, Decision, HolderRef, Identity, IdentityKind, ObligationRecord,
     OwnerDisposition, ResourceKind, ResultState, Settlement, State, TransactionLife,
@@ -602,6 +602,7 @@ fn select(
             continue;
         }
         if !primitive(owner.id, IdentityKind::Resource)
+            || !same_scope(owner.id, holder_identity(state, holder)?)
             || out
                 .iter()
                 .any(|(i, _)| state.owners.as_slice()[i].resource_kind == owner.resource_kind)
@@ -620,7 +621,11 @@ fn select(
             }
             _ => {}
         }
-        out.rows[out.len] = (index, holder_identity(state, current)?);
+        let current_id = holder_identity(state, current)?;
+        if owner.disposition == OwnerDisposition::Transferred && Some(current_id) != obligation {
+            return Err(INVALID);
+        }
+        out.rows[out.len] = (index, current_id);
         out.len += 1;
     }
     Ok(out)
@@ -663,7 +668,11 @@ pub(super) fn transaction_obligation<'a>(
     match (transaction.obligation, by_tuple) {
         (None, None) => Ok(None),
         (Some(reference), Some(o))
-            if o.id.nonce == reference.0 && primitive(o.id, IdentityKind::Obligation) =>
+            if o.id.nonce == reference.0
+                && primitive(o.id, IdentityKind::Obligation)
+                && primitive(transaction.id, IdentityKind::Transaction)
+                && transaction.birth_session.0 == transaction.id.session
+                && same_scope(o.id, transaction.id) =>
         {
             let duplicates = state
                 .obligations

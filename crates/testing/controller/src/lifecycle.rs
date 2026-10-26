@@ -217,7 +217,8 @@ pub struct Report {
     pub frontier: Frontier,
     /// Active wall time.
     pub elapsed: Duration,
-    /// Peak owned capacity in bytes (graph capacity plus the per-worker allowance).
+    /// Peak charged capacity in bytes, including conservative reallocation overlap and the
+    /// per-worker allowance; this is an accounting bound, not measured allocator usage.
     pub capacity_peak: u64,
     /// Peak resident set size of the process (`VmHWM`), when the OS reports it.
     pub process_peak_rss: Option<u64>,
@@ -572,6 +573,8 @@ struct Graph {
     parent: Vec<(u32, u16)>,
     index: Vec<(u64, u32)>,
     mask: usize,
+    /// Peak charged capacity, including conservative reallocation overlap.
+    peak: u64,
 }
 
 const EMPTY: u32 = u32::MAX;
@@ -580,11 +583,21 @@ const BLOCK: usize = 64 * 1024 * 1024;
 pub const WORKER_ALLOWANCE: u64 = 32 * 1024 * 1024;
 
 impl Graph {
-    fn new(state_cap: u32) -> Result<Self, Stop> {
-        let slots = (usize::try_from(state_cap).unwrap_or(usize::MAX))
-            .saturating_mul(2)
-            .next_power_of_two()
+    fn new(state_cap: u32, cap: u64) -> Result<Self, Stop> {
+        let slots = usize::try_from(state_cap)
+            .ok()
+            .and_then(|n| n.checked_mul(2))
+            .and_then(usize::checked_next_power_of_two)
+            .ok_or(Stop::CapacityCap)?
             .max(1024);
+        let bytes = slots
+            .checked_mul(std::mem::size_of::<(u64, u32)>())
+            .ok_or(Stop::CapacityCap)? as u64;
+        // The index is sized from the state cap, which can greatly exceed the memory cap.
+        // Reject it before reserve/resize can consume memory or terminate the process.
+        if bytes > cap {
+            return Err(Stop::CapacityCap);
+        }
         let mut index = Vec::new();
         index
             .try_reserve_exact(slots)
@@ -597,6 +610,7 @@ impl Graph {
             parent: Vec::new(),
             index,
             mask: slots - 1,
+            peak: bytes,
         })
     }
 
@@ -640,15 +654,24 @@ impl Graph {
             .last()
             .is_some_and(|b| b.len() + len <= b.capacity());
         if !room {
-            let charge = BLOCK.max(len) + std::mem::size_of::<Vec<u8>>();
+            let headers = if self.blocks.len() == self.blocks.capacity() {
+                // The old and new header arrays may coexist during exact growth.
+                (self.blocks.len() + 1) * std::mem::size_of::<Vec<u8>>()
+            } else {
+                0
+            };
+            let charge = BLOCK.max(len) + headers;
             if self.capacity() + charge as u64 > cap {
                 return Err(Stop::CapacityCap);
             }
+            self.peak = self.peak.max(self.capacity() + charge as u64);
             let mut block = Vec::new();
             block
                 .try_reserve_exact(BLOCK.max(len))
                 .map_err(|_| Stop::Allocation)?;
-            self.blocks.try_reserve(1).map_err(|_| Stop::Allocation)?;
+            self.blocks
+                .try_reserve_exact(1)
+                .map_err(|_| Stop::Allocation)?;
             self.blocks.push(block);
         }
         if self.offsets.len() == self.offsets.capacity() {
@@ -659,6 +682,7 @@ impl Graph {
             if self.capacity() + charge as u64 > cap {
                 return Err(Stop::CapacityCap);
             }
+            self.peak = self.peak.max(self.capacity() + charge as u64);
             self.offsets
                 .try_reserve_exact(extra)
                 .map_err(|_| Stop::Allocation)?;
@@ -838,9 +862,10 @@ pub fn explore(profile: &Profile, hooks: Hooks, initial: &State) -> Report {
     // Worker-side memory is not fallible; charge a fixed allowance per worker instead: stack,
     // codec buffers, three boxed states, the alias table and the successors of a batch share.
     let workers = profile.workers.max(1);
-    let allowance = WORKER_ALLOWANCE * workers as u64;
-    let graph_cap = profile.capacity_cap.saturating_sub(allowance);
-    report.capacity_peak = allowance;
+    let allowance = u64::try_from(workers)
+        .ok()
+        .and_then(|n| WORKER_ALLOWANCE.checked_mul(n))
+        .unwrap_or(0);
     let mut ledger = Ledger {
         edges: Sha256::new(),
         discovery: Sha256::new(),
@@ -859,7 +884,9 @@ pub fn explore(profile: &Profile, hooks: Hooks, initial: &State) -> Report {
         };
         if let Some(g) = graph {
             report.states = u32::try_from(g.offsets.len()).expect("state count");
-            report.capacity_peak = report.capacity_peak.max(g.capacity() + allowance);
+            report.capacity_peak = report
+                .capacity_peak
+                .max(g.peak.max(g.capacity()) + allowance);
         }
         report.edges = ledger.sequence;
         report.wide_ledger = ledger.wide;
@@ -869,7 +896,15 @@ pub fn explore(profile: &Profile, hooks: Hooks, initial: &State) -> Report {
         report.process_peak_rss = peak_rss();
         report
     };
-    let mut graph = match Graph::new(profile.state_cap) {
+    if profile.state_cap == 0 {
+        return finish(report, Stop::StateCap, None, ledger);
+    }
+    if allowance == 0 || allowance > profile.capacity_cap {
+        return finish(report, Stop::CapacityCap, None, ledger);
+    }
+    let graph_cap = profile.capacity_cap - allowance;
+    report.capacity_peak = allowance;
+    let mut graph = match Graph::new(profile.state_cap, graph_cap) {
         Ok(g) if g.capacity() <= graph_cap => g,
         Ok(g) => return finish(report, Stop::CapacityCap, Some(&g), ledger),
         Err(stop) => return finish(report, stop, None, ledger),

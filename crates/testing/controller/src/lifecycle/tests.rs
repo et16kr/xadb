@@ -352,6 +352,73 @@ fn aliases_cost_no_checker_call_and_raw_totals_close() {
     assert_eq!(report.per_rule.iter().sum::<u64>(), report.totals.excluded);
 }
 
+#[test]
+fn startup_capacity_is_checked_before_allocating_the_index() {
+    let profile = Profile {
+        capacity_cap: WORKER_ALLOWANCE + 1024,
+        ..small(0, 1)
+    };
+    let report = run(&profile, Hooks::REFERENCE);
+    assert_eq!(report.stop, Stop::CapacityCap);
+    assert_eq!(report.states, 0);
+    assert!(report.capacity_peak <= profile.capacity_cap, "{report:?}");
+    relations(&report);
+}
+
+#[test]
+fn zero_state_cap_does_not_publish_the_initial_state() {
+    let report = run(
+        &Profile {
+            state_cap: 0,
+            ..small(0, 1)
+        },
+        Hooks::REFERENCE,
+    );
+    assert_eq!(report.stop, Stop::StateCap);
+    assert_eq!(report.states, 0);
+    assert_eq!(report.edges, 0);
+    assert_eq!(report.capacity_peak, 0);
+    relations(&report);
+}
+
+#[test]
+fn worker_allowance_overflow_is_inconclusive() {
+    let report = run(
+        &Profile {
+            capacity_cap: u64::MAX,
+            ..small(0, usize::MAX)
+        },
+        Hooks::REFERENCE,
+    );
+    assert_eq!(report.stop, Stop::CapacityCap);
+    assert_eq!(report.states, 0);
+    assert_eq!(report.capacity_peak, 0);
+    relations(&report);
+}
+
+#[test]
+fn graph_block_metadata_is_budgeted_before_allocation() {
+    let mut graph = Graph::new(1, u64::MAX).expect("small index");
+    let cap = graph.capacity() + BLOCK as u64 + std::mem::size_of::<Vec<u8>>() as u64;
+    assert_eq!(graph.reserve(1, cap), Err(Stop::CapacityCap));
+    assert!(graph.capacity() <= cap, "block headers exceeded the cap");
+}
+
+#[test]
+fn graph_peak_includes_metadata_growth_overlap() {
+    let mut graph = Graph::new(1_025, u64::MAX).expect("small index");
+    graph.reserve(1, u64::MAX).expect("first state reservation");
+    for id in 0..1_024 {
+        graph.insert(&[0], 0, (u32::MAX, u16::MAX), id);
+    }
+    let before = graph.capacity();
+    let per = std::mem::size_of::<(u64, u32)>() + 1 + std::mem::size_of::<(u32, u16)>();
+    let charged_peak = before + (3 * 1_024 * per) as u64;
+    graph.reserve(1, charged_peak).expect("exact charged cap");
+    assert_eq!(graph.peak, charged_peak);
+    assert!(graph.capacity() < graph.peak);
+}
+
 /// Replays the counterexample of `XADB_BFS_REPLAY=<report path>` from its exact pre-state and
 /// input bytes and prints the observation and the pre-state.
 #[test]

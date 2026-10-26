@@ -1,6 +1,6 @@
 # DEV4 독립 앞단 구현
 
-2026-10-25 · **lexer·이름·splitter·P2/P4 raw 문장·P3 scalar·predicate 구문·typed 평가 제한 구현 / P4·P5 codec 최종 독립 D1 제한 수용 / P5 전체 입력 조립 선택 검증 / 실제 SQL 실행·DEV4·Q1 미완료**
+2026-10-25 · **lexer·이름·splitter·P2/P4 raw 문장·P3 scalar·predicate 구문·typed 평가 제한 구현 / P4·P5 codec 최종 독립 D1 제한 수용 / P5 조립·모델·checker·메모리 BFS 제한 구현 / FE14·실제 SQL 실행·DEV4·Q1 미완료**
 
 [독립 앞단 계약](../contracts/dev4-independent-frontend.md#lexer-leaf) · [병행 계획](../plans/dev4-preparation-plan.md) · [source별 증거](../evidence/dev4-frontend-20261024.md)
 
@@ -287,8 +287,8 @@ transaction 선택, owner/obligation recipe·fence census·recovery negative를 
 순서이며 사용 namespace만 검사하고 State를 바꾸지 않는다. 제품 경로는 heap·재귀·State clone이 없다.
 
 [선택 증거](../evidence/dev4-lifecycle-assembler-20261025.md)에 준비 후보1658·rich304·독립 supplement의
-선택 실행, rich 후보 정정2건, 개발 중 불일치·교정 이력을 기록했다. admission·환경 가능성·전이,
-독립 edge checker, 원51 action model replay, alias, BFS/재개와 FE14는 미완료다.
+선택 실행, rich 후보 정정2건, 개발 중 불일치·교정 이력을 기록했다. 모델·checker·메모리 BFS의 후속 구현은
+아래 절에 연결한다. 영속 재개와 FE14는 미완료다.
 
 ```bash
 cargo test -p xadbtest-reference --lib --offline --locked lifecycle::assembler_tests::<function> -- --exact
@@ -306,7 +306,8 @@ envelope→child→shell→parked→fence→API 상태→entry control→환경�
 fact·owner·obligation 기록과 canonical 정렬을 수행한다. 제외는 상태를 바꾸지 않고, 모델 오류는 게시하지 않는다.
 
 [선택 증거](../evidence/dev4-lifecycle-model-20261025.md)에 원 literal 29 edge·12 trace·5 known-bad 대조,
-census·walk smoke, 고정 trace와 1차 검토 교정 이력을 기록했다. 독립 edge checker·BFS·FE14는 미완료다.
+census·walk smoke, 고정 trace와 1차 검토 교정 이력을 기록했다. 후속 checker·메모리 BFS는 아래 절을 따르며
+FE14는 미완료다.
 
 ```bash
 cargo test -p xadbtest-reference --lib --offline --locked lifecycle::model_tests::<function> -- --exact
@@ -324,7 +325,8 @@ cargo test -p xadbtest-reference --lib --offline --locked lifecycle::model_tests
 
 `differential_tests`는 모델 출력을 checker로 판정한다. 판정한 불일치·검토 결정11건(BFS 판정을 더해 12건)은 모델 계약의
 [차등 판정](../contracts/dev4-lifecycle-model.md#checker-adjudication)에 기록했고
-[선택 증거](../evidence/dev4-lifecycle-checker-20261025.md)에 실행 기록을 남겼다. BFS·FE14는 미완료다.
+[선택 증거](../evidence/dev4-lifecycle-checker-20261025.md)에 실행 기록을 남겼다. 후속 메모리 BFS는 아래 절을
+따르며 FE14는 미완료다.
 
 ```bash
 cargo test -p xadbtest-reference --lib --offline --locked lifecycle::checker_tests::<function> -- --exact
@@ -353,3 +355,6 @@ cargo test -p xadbtest --lib --offline --locked lifecycle::tests::<function> -- 
 
 `profile_run`은 `XADB_BFS_RUN=<report>`일 때만 실행하며 `XADB_BFS_PROFILE=depth5`와 `XADB_BFS_WORKERS`로 profile과
 worker 수를 고른다. 실제 diff에 대응하는 함수만 선택한다.
+
+2026-10-26 [병합 전 리뷰·수정](../evidence/dev4-merge-review-20261026.md): 선택 참조의 scope·역참조 검사와
+탐색기 사전 자원 한도를 보완했다. 신규13함수·관련 정상9회만 선택 검증했으며 원 깊이 5·하위 회귀는 반복하지 않았다.

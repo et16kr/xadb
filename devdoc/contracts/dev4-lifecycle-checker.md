@@ -1,6 +1,6 @@
 # DEV4 P5 독립 edge checker
 
-2026-10-25 · **D4-LM-CHECK-001 구현·선택 시험 PASS / 모델 차등 불일치0 / 독립 D2 수용·D1 제한 수용 / alias·BFS·FE14 미완료**.
+2026-10-25 · **D4-LM-CHECK-001 구현·선택 시험 PASS / 모델 차등 불일치0 / 독립 D2 수용·D1 제한 수용 / alias·메모리 BFS 별도 구현 / checkpoint·FE14 미완료**.
 
 [수명 모델](dev4-lifecycle-model.md)의 관측 하나 `(pre, input, edge, post)`가 명세가 허용하는 결과인지
 판정하는 시험 전용 관계 checker다. 모델이 만든 값을 기대값으로 쓰지 않고 사전 상태와 원문 규칙만으로
@@ -77,7 +77,7 @@ recipe에서 만들며 공급 row나 관측 post에서 역생성하지 않는다
 로컬 원문 `artifacts/dev4-lifecycle-model-20261024/checker-call-contract-v2.md`의 호출 후보를 따른다.
 alias가 아닌 raw slot마다 모델 전이 1회와 `verify_edge` 1회를 호출하며 완료 ledger의 checker 수는
 `success + rejection + excluded`다. checker 거절은 원 반례·입력·관측을 보존하는 탐색 실패이며 호출했다는
-사실만으로 PASS가 아니다. BFS·checkpoint 결합은 후속 단위다.
+사실만으로 PASS가 아니다. 메모리 BFS 결합은 [탐색기](dev4-lifecycle-explorer.md)에 구현했고 durable checkpoint는 후속이다.
 
 <a id="selection"></a>
 ## 선택 검증
@@ -98,5 +98,5 @@ literal 상태와 고정 경로의 마지막 상태에서 context nonce·공급 
 
 ## 남은 의무
 
-alias, BFS·checkpoint(기본 보존 위치 `artifacts/dev4-lifecycle-bfs/`, 약 10GiB), FE14
-완주와 mutant 공간 탐색이 남는다.
+alias·메모리 BFS는 [탐색기](dev4-lifecycle-explorer.md)에 구현했다. archive·durable checkpoint
+(기본 보존 위치 `artifacts/dev4-lifecycle-bfs/`, 약 10GiB), FE14 완주와 mutant 공간 탐색이 남는다.

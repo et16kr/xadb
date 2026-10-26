@@ -1,5 +1,7 @@
 # XADB 조사·실행 증거
 
+- [DEV4 병합 전 리뷰·수정](dev4-merge-review-20261026.md) · [source별 선택 실행](dev4-merge-review-20261026.json) — 선택 참조·탐색기 자원 한도 보완, 신규13·관련 정상9회 PASS; 원 실패·FE14 미완료 보존.
+
 - [DEV3 Catalog CREATE 구현 중간 저장](dev3-catalog-live-milestone-20261025.md) · [source별 기록](dev3-catalog-live-milestone-20261025.json) — native3경로·메모리14개 확인, 원 FAIL 보존·동시성 등9개 NOT_RUN.
 
 - [DEV3 Catalog 독립 입력과 native 실행기 검증](dev3-catalog-input-controller-20261025.md) · [source별 기록](dev3-catalog-input-controller-20261025.json) — 입력 생성·별도 검산 완료, 실행기 거부14 PASS; 실제 Catalog 통합 진행 중.

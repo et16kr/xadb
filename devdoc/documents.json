@@ -2507,6 +2507,16 @@
       "path": "evidence/dev3-catalog-live-milestone-20261025.json",
       "role": "evidence",
       "title": "DEV3 Catalog CREATE 구현·실제 검증 source별 기록"
+    },
+    "dev4-merge-review-20261026.md": {
+      "path": "evidence/dev4-merge-review-20261026.md",
+      "role": "evidence",
+      "title": "DEV4 병합 전 리뷰와 선택 수정 검증"
+    },
+    "dev4-merge-review-20261026.json": {
+      "path": "evidence/dev4-merge-review-20261026.json",
+      "role": "evidence",
+      "title": "DEV4 병합 전 리뷰의 source별 선택 실행 기록"
     }
   }
 }

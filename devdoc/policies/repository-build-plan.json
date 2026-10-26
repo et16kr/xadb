@@ -5911,9 +5911,10 @@
       "tests/fixtures/dev4-lifecycle-assembly/supplement/cases.json"
     ],
     "new_dependencies": false,
-    "scope": "Pure assemble_input of one pre-state and raw action; admission, environment possibility, transitions, checker, alias, 51-action replay, BFS and FE14 remain incomplete",
+    "scope": "Pure assemble_input of one pre-state and raw action; model, checker and in-memory BFS are separate implemented units below; durable resume and FE14 remain incomplete",
     "logical_cases": 1994,
-    "validation": "Independent D2 and D1 accepted; selected 1994 cases PASS, fmt and Clippy PASS; rich 304 differential plus 57-case static sample; 2 rich corrections"
+    "validation": "Independent D2 and D1 accepted; selected 1994 cases PASS, fmt and Clippy PASS; rich 304 differential plus 57-case static sample; 2 rich corrections",
+    "review_evidence": "dev4-merge-review-20261026.md"
   },
   "dev4_lifecycle_model": {
     "decision": "D4-LM-MODEL-001",
@@ -5932,7 +5933,7 @@
     ],
     "fixtures": [],
     "new_dependencies": false,
-    "scope": "Abstract transition of one resolved input; independent edge checker, alias, BFS/checkpoint and FE14 remain incomplete",
+    "scope": "Abstract transition of one resolved input; independent checker and in-memory BFS are separate implemented units below; durable checkpoint and FE14 remain incomplete",
     "validation": "29 literal edges, 12 traces/51 occurrences and 5 known-bad distinctions PASS; census and deep-walk smoke without model error or loader violation; fixed traces are implementer-derived"
   },
   "dev4_lifecycle_checker": {
@@ -5959,7 +5960,7 @@
     ],
     "fixtures": [],
     "new_dependencies": false,
-    "scope": "Independent relational edge checker and model differential; model and assembler corrections from adjudication; alias, BFS/checkpoint and FE14 remain incomplete",
+    "scope": "Independent relational edge checker and model differential; in-memory BFS is a separate implemented unit below; durable checkpoint and FE14 remain incomplete",
     "validation": "checker_tests 10, model_tests 6, assembler_tests 11 PASS; differential over 29 literal states, 7 fixed paths, corrupted inputs and six walk configurations up to 57,276,849 judged edges with 0 disagreements"
   },
   "dev4_lifecycle_explorer": {
@@ -5977,7 +5978,8 @@
     ],
     "new_dependencies": false,
     "scope": "In-memory deterministic BFS over the lifecycle assembler, model and independent checker with the design caps and the user-approved depth-5 extension; archive, durable checkpoint, witness check, FE14 and depth 6 remain incomplete",
-    "validation": "10 selected explorer tests and the corrected model/differential tests PASS; normal profile INCONCLUSIVE at the 500,000-state cap; approved depth-5 profile drained without archive: 660,911,559 slots, 490,363,251 checker calls, 0 disagreements"
+    "validation": "10 selected explorer tests and the corrected model/differential tests PASS; normal profile INCONCLUSIVE at the 500,000-state cap; approved depth-5 profile drained without archive: 660,911,559 slots, 490,363,251 checker calls, 0 disagreements",
+    "review_evidence": "dev4-merge-review-20261026.md"
   },
   "dev3_plan4_recovery_checkpoint": {
     "status": "PAUSED_WIP_NOT_ACCEPTED",
