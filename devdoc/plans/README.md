@@ -1,6 +1,8 @@
 # 개발 계획
 
-- [첫 행 중심 실행과 개선 범위](dev3-implementation-plan.md#direction-refinement) — 방향 재점검 반영. 구조·명명·공통화는 소비자 연결의 국소 후보, 문서·효율·캐시 관리는 기존 절차 활용으로 제한하며 새 선행 장벽을 추가하지 않는다.
+- [모듈 독립 개발 구조 전환 작업 계획](module-independence-plan.md) — 2026-10-26 사용자 구조 변경 방향. 후속 에이전트의 소유 문서 수정 대상, M0–M5 설계·문서·구조 변경·두 제품 기능 병렬 인수, 보류/재개 조건. 작업 계획 독립 D2 채택, 소유 문서 개정·제품 실행 NOT_RUN.
+
+- [첫 행 중심 실행과 개선 범위](dev3-implementation-plan.md#direction-refinement) — 2026-10-25 방향 재점검 반영. 당시 구조·명명·공통화는 소비자 연결의 국소 후보로 제한했다. 후속 구조 전환에서 바꿀 작업 순서의 범위는 [대체 관계](module-independence-plan.md#document-map)에 명시하며 제품 의미·품질 기준은 유지한다.
 
 - DEV3 비교 분석 반영: [완료분 보완·우선순위](dev3-implementation-plan.md#comparison-adoption), [D3-COMP-01–10 구현 동반 인수](dev3-test-plan.md#comparison-adoption). 계획 채택과 실행 결과를 구별한다.
 

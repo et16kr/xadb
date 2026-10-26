@@ -3,6 +3,11 @@
   "reference_base": "devdoc",
   "json_document_references": "Registered filenames are document IDs resolved by this catalogue. Markdown uses actual relative paths.",
   "documents": {
+    "module-independence-plan.md": {
+      "path": "plans/module-independence-plan.md",
+      "role": "plans",
+      "title": "XADB 모듈 독립 개발 구조 전환 작업 계획"
+    },
     "dev2-pf04-mode-attribution-20261025.md": {
       "path": "evidence/dev2-pf04-mode-attribution-20261025.md",
       "role": "evidence",
