@@ -1,0 +1,382 @@
+{
+  "schema_version": 1,
+  "date": "2026-10-26",
+  "original_head": "7327e7a",
+  "base_remote_main": "9275154",
+  "integration_commit": "2877436",
+  "green": {
+    "base": "2877436",
+    "sources": {
+      "crates/testing/controller/src/lifecycle.rs": "d501ef2ec7f3c784e6ffe6333b0aa09659c4c5a4ed8046e29d5c709c52177579",
+      "crates/testing/controller/src/lifecycle/tests.rs": "fe0ea483f7f0e21eeaba4c61aa76a92fbbfd6cf2792fffd167de9dffe4b43d21",
+      "crates/testing/reference/src/lifecycle/assembler_tests.rs": "68530236895a2255fb83168c0679ecaf23d31932874dd48e6c52fbfeba37accc",
+      "crates/testing/reference/src/lifecycle/input_assembler.rs": "425ea53ac10f7e5acbce7c87db200dae4d0122e8297e23867c39b0698495e74f",
+      "crates/testing/reference/src/lifecycle/input_assembler/rows.rs": "109e2cae7bdf7d90aff448521f8ac621a4cfcd9bdb4f989d59cd1405d055213a"
+    },
+    "binary_sha256": {
+      "controller": "3bbb984b2b7cf736b1edde8fb30da46617ce822ca85465e00eb055c1e7d30721",
+      "reference": "993a479014df2c8eddaad22f9deb7fa0250d13f2a44fff7d6768b180fc37d7f5"
+    },
+    "selection": [
+      [
+        "controller",
+        "lifecycle::tests::startup_capacity_is_checked_before_allocating_the_index",
+        null
+      ],
+      [
+        "controller",
+        "lifecycle::tests::zero_state_cap_does_not_publish_the_initial_state",
+        null
+      ],
+      [
+        "controller",
+        "lifecycle::tests::worker_allowance_overflow_is_inconclusive",
+        null
+      ],
+      [
+        "controller",
+        "lifecycle::tests::graph_block_metadata_is_budgeted_before_allocation",
+        null
+      ],
+      [
+        "controller",
+        "lifecycle::tests::graph_peak_includes_metadata_growth_overlap",
+        null
+      ],
+      [
+        "controller",
+        "lifecycle::tests::depth_one_classifies_every_slot_of_initial",
+        null
+      ],
+      [
+        "reference",
+        "lifecycle::assembler_tests::assembly_fetch_rejects_foreign_descriptor_transaction",
+        null
+      ],
+      [
+        "reference",
+        "lifecycle::assembler_tests::assembly_commit_fact_rejects_foreign_parked_transaction",
+        null
+      ],
+      [
+        "reference",
+        "lifecycle::assembler_tests::assembly_fetch_rejects_missing_statement_slot_backlink",
+        null
+      ],
+      [
+        "reference",
+        "lifecycle::assembler_tests::assembly_close_result_rejects_foreign_resource_scope",
+        null
+      ],
+      [
+        "reference",
+        "lifecycle::assembler_tests::assembly_rollback_rejects_foreign_obligation_scope",
+        null
+      ],
+      [
+        "reference",
+        "lifecycle::assembler_tests::assembly_resume_rejects_foreign_private_result",
+        null
+      ],
+      [
+        "reference",
+        "lifecycle::assembler_tests::assembly_fetch_rejects_statement_session_mismatch",
+        null
+      ],
+      [
+        "reference",
+        "lifecycle::assembler_tests::assembly_rollback_rejects_obligation_birth_session_mismatch",
+        null
+      ],
+      [
+        "reference",
+        "lifecycle::assembler_tests::assembly_original_pairs",
+        "asm/original/sel.rows"
+      ],
+      [
+        "reference",
+        "lifecycle::assembler_tests::assembly_original_pairs",
+        "asm/original/sel.close"
+      ],
+      [
+        "reference",
+        "lifecycle::assembler_tests::assembly_original_pairs",
+        "asm/original/sel.resume"
+      ],
+      [
+        "reference",
+        "lifecycle::assembler_tests::assembly_rich_continuation",
+        "asm/pc-BeforeAttempt/1508"
+      ],
+      [
+        "reference",
+        "lifecycle::assembler_tests::assembly_rich_rest",
+        "asm/handoff-idempotence/1310"
+      ],
+      [
+        "reference",
+        "lifecycle::assembler_tests::assembly_rich_normal",
+        "asm/close-closed/1072"
+      ],
+      [
+        "reference",
+        "lifecycle::assembler_tests::assembly_supplement_second",
+        "asm/supplement2/close-session-retired-engine-closed-shell"
+      ],
+      [
+        "reference",
+        "lifecycle::assembler_tests::assembly_supplement",
+        "asm/supplement/census-key-order-a0-rollback"
+      ]
+    ],
+    "results": [
+      {
+        "test": "lifecycle::tests::startup_capacity_is_checked_before_allocating_the_index",
+        "case": null,
+        "exit_code": 0,
+        "seconds": 0.0016599730006419122,
+        "log": "green-00.log",
+        "log_sha256": "9afeff2cd9e8814e1710f33811ce4d44a3944573bcbe6ecee399cb8f284c9391"
+      },
+      {
+        "test": "lifecycle::tests::zero_state_cap_does_not_publish_the_initial_state",
+        "case": null,
+        "exit_code": 0,
+        "seconds": 0.0014763260005565826,
+        "log": "green-01.log",
+        "log_sha256": "5e63309bdbf82c01c4dd3d6a677644823e2741d46eb953f659a4468bb139a776"
+      },
+      {
+        "test": "lifecycle::tests::worker_allowance_overflow_is_inconclusive",
+        "case": null,
+        "exit_code": 0,
+        "seconds": 0.0010493910012883134,
+        "log": "green-02.log",
+        "log_sha256": "ac008b8c247348f973875c3c7b77959563cc83eefebed9f32175f5c02d3390a7"
+      },
+      {
+        "test": "lifecycle::tests::graph_block_metadata_is_budgeted_before_allocation",
+        "case": null,
+        "exit_code": 0,
+        "seconds": 0.000924954998481553,
+        "log": "green-03.log",
+        "log_sha256": "634dd7c685065c43fa4a7a3d9ca0fbdf0066f9345bca32f4f3dceb11aed58f9f"
+      },
+      {
+        "test": "lifecycle::tests::graph_peak_includes_metadata_growth_overlap",
+        "case": null,
+        "exit_code": 0,
+        "seconds": 0.0008750519991735928,
+        "log": "green-04.log",
+        "log_sha256": "b17e1b3d6dc4897a29ab4e87c305e91854c2f41069812e8f517747b744b9303b"
+      },
+      {
+        "test": "lifecycle::tests::depth_one_classifies_every_slot_of_initial",
+        "case": null,
+        "exit_code": 0,
+        "seconds": 0.03131683199899271,
+        "log": "green-05.log",
+        "log_sha256": "90bb765ae83f5ae4dee88f21f0334616a969afbb9a3156d199bf63b20987f445"
+      },
+      {
+        "test": "lifecycle::assembler_tests::assembly_fetch_rejects_foreign_descriptor_transaction",
+        "case": null,
+        "exit_code": 0,
+        "seconds": 0.12262801900214981,
+        "log": "green-06.log",
+        "log_sha256": "2ef66295d9bf13c8ad666ee0269c1725e6dd50d913ba3d5b60473ac40de9082f"
+      },
+      {
+        "test": "lifecycle::assembler_tests::assembly_commit_fact_rejects_foreign_parked_transaction",
+        "case": null,
+        "exit_code": 0,
+        "seconds": 0.12847860100009711,
+        "log": "green-07.log",
+        "log_sha256": "3c2b3ebaa267395aae6723bf7a8f5b7e18a49da6002e980bcca68b4e6fa7e679"
+      },
+      {
+        "test": "lifecycle::assembler_tests::assembly_fetch_rejects_missing_statement_slot_backlink",
+        "case": null,
+        "exit_code": 0,
+        "seconds": 0.12384936399757862,
+        "log": "green-08.log",
+        "log_sha256": "9ed21cd6c21ff5d646c7521fb5d453d96d517ef74aa0f78483c1d16c311353bf"
+      },
+      {
+        "test": "lifecycle::assembler_tests::assembly_close_result_rejects_foreign_resource_scope",
+        "case": null,
+        "exit_code": 0,
+        "seconds": 0.129701057998318,
+        "log": "green-09.log",
+        "log_sha256": "3103acbd1e1a74015c4a24c3a79cc00d71348e68ea74471e3df2456c3e66d84f"
+      },
+      {
+        "test": "lifecycle::assembler_tests::assembly_rollback_rejects_foreign_obligation_scope",
+        "case": null,
+        "exit_code": 0,
+        "seconds": 0.12844408599994495,
+        "log": "green-10.log",
+        "log_sha256": "1dabda1fe9397d75f7e56c2cde58f84ca24a526ecff65e0a6746e16a810be3da"
+      },
+      {
+        "test": "lifecycle::assembler_tests::assembly_resume_rejects_foreign_private_result",
+        "case": null,
+        "exit_code": 0,
+        "seconds": 0.1257323780009756,
+        "log": "green-11.log",
+        "log_sha256": "9a2e27cb7d39d13ce7245628cd3cc65cb136a55d38679ef8af9a5fadee0360a0"
+      },
+      {
+        "test": "lifecycle::assembler_tests::assembly_fetch_rejects_statement_session_mismatch",
+        "case": null,
+        "exit_code": 0,
+        "seconds": 0.12913030200070352,
+        "log": "green-12.log",
+        "log_sha256": "03142e3fb271ec93f8540a54e06340ce634bf284ea69db829693b6b2351a252f"
+      },
+      {
+        "test": "lifecycle::assembler_tests::assembly_rollback_rejects_obligation_birth_session_mismatch",
+        "case": null,
+        "exit_code": 0,
+        "seconds": 0.1305352219969791,
+        "log": "green-13.log",
+        "log_sha256": "864a5491e77fd996cab19d46f0556f19c4f575127092668b4dd98c95d0d29f12"
+      },
+      {
+        "test": "lifecycle::assembler_tests::assembly_original_pairs",
+        "case": "asm/original/sel.rows",
+        "exit_code": 0,
+        "seconds": 0.12274185400019633,
+        "log": "green-14.log",
+        "log_sha256": "532ccb64bde259699bc853539596ff269bc314f8201b4ef94ee632bea837f2a5"
+      },
+      {
+        "test": "lifecycle::assembler_tests::assembly_original_pairs",
+        "case": "asm/original/sel.close",
+        "exit_code": 0,
+        "seconds": 0.1248720349976793,
+        "log": "green-15.log",
+        "log_sha256": "d2b9c33e7c8b2d349f21bf3083d59e789ac165e97c506875a5e51c6c2a3cfe12"
+      },
+      {
+        "test": "lifecycle::assembler_tests::assembly_original_pairs",
+        "case": "asm/original/sel.resume",
+        "exit_code": 0,
+        "seconds": 0.12757800099643646,
+        "log": "green-16.log",
+        "log_sha256": "303382eb591538ad1755d7140bb891bd8a6c8777a92df4c4ddceb94bc7b6e96b"
+      },
+      {
+        "test": "lifecycle::assembler_tests::assembly_rich_continuation",
+        "case": "asm/pc-BeforeAttempt/1508",
+        "exit_code": 0,
+        "seconds": 0.12496363800164545,
+        "log": "green-17.log",
+        "log_sha256": "1db43264bafd2b5e5062f1b74112f572378810b640b03e889aeca8c7f127e4f8"
+      },
+      {
+        "test": "lifecycle::assembler_tests::assembly_rich_rest",
+        "case": "asm/handoff-idempotence/1310",
+        "exit_code": 0,
+        "seconds": 0.1288780360009696,
+        "log": "green-18.log",
+        "log_sha256": "d3ea4ef2857d6c77d44dc14a31bcd597fe0a7c8dcec5fd95e75052275a1e6f3b"
+      },
+      {
+        "test": "lifecycle::assembler_tests::assembly_rich_normal",
+        "case": "asm/close-closed/1072",
+        "exit_code": 0,
+        "seconds": 0.12423551399842836,
+        "log": "green-19.log",
+        "log_sha256": "a11a99218d3dfd862575809064f327bdb462fdccf90402124ad7e867bc79d591"
+      },
+      {
+        "test": "lifecycle::assembler_tests::assembly_supplement_second",
+        "case": "asm/supplement2/close-session-retired-engine-closed-shell",
+        "exit_code": 0,
+        "seconds": 0.12749687900213758,
+        "log": "green-20.log",
+        "log_sha256": "b79d8c818f2ba9b4149b6317c8cab5a9c474ac0b7034ef1e27371bf36b9b1994"
+      },
+      {
+        "test": "lifecycle::assembler_tests::assembly_supplement",
+        "case": "asm/supplement/census-key-order-a0-rollback",
+        "exit_code": 0,
+        "seconds": 0.12400818499736488,
+        "log": "green-21.log",
+        "log_sha256": "48fda672c508f85ca87eb5101d2c4c5d054598fe81b46f89cc8eac6c4bf1b0c3"
+      }
+    ],
+    "sources_unchanged": true
+  },
+  "red_explorer": {
+    "source_sha256": "40e1fa1f52c6cf478381b036a234f3536f816fb54b86e1ecdf5cf0a905d71710",
+    "binary_sha256": "59ea37c7af5e6a7ef9029a210bc439223fee98f9bd62bf8cbca1757ddaf21a9b",
+    "results": [
+      {
+        "test": "startup_capacity_is_checked_before_allocating_the_index",
+        "exit_code": 101
+      },
+      {
+        "test": "zero_state_cap_does_not_publish_the_initial_state",
+        "exit_code": 101
+      },
+      {
+        "test": "worker_allowance_overflow_is_inconclusive",
+        "exit_code": 101
+      }
+    ]
+  },
+  "red_assembler": {
+    "sources": {
+      "crates/testing/reference/src/lifecycle/input_assembler.rs": "349ba859524b6047a7143dd17ea3f51f48f6a2f21958beaf89cf2c54afe234ea",
+      "crates/testing/reference/src/lifecycle/input_assembler/rows.rs": "fc17a6aab008984852b859ceb7343aa825ec322fba74129694a35766e3fe91de"
+    },
+    "binary_sha256": "61cb11f06419eae368d1ec3a5843d579ec9e55191e7fd27570abd718eb624411",
+    "results": [
+      {
+        "test": "assembly_fetch_rejects_foreign_descriptor_transaction",
+        "exit_code": 101
+      },
+      {
+        "test": "assembly_commit_fact_rejects_foreign_parked_transaction",
+        "exit_code": 101
+      },
+      {
+        "test": "assembly_fetch_rejects_missing_statement_slot_backlink",
+        "exit_code": 101
+      },
+      {
+        "test": "assembly_close_result_rejects_foreign_resource_scope",
+        "exit_code": 101
+      },
+      {
+        "test": "assembly_rollback_rejects_foreign_obligation_scope",
+        "exit_code": 101
+      }
+    ]
+  },
+  "red_block_metadata": {
+    "test": "lifecycle::tests::graph_block_metadata_is_budgeted_before_allocation",
+    "result": "FAIL",
+    "log_sha256": "4511044e558df082add472fe6dbb03a0b24c67e0b5e57158cab3a80d6839709d",
+    "source_sha256": "40e1fa1f52c6cf478381b036a234f3536f816fb54b86e1ecdf5cf0a905d71710",
+    "binary_sha256": null,
+    "binary_identity_note": "ELF hash was not captured for this additional red test; original source and failure log are preserved."
+  },
+  "after_test_comment_only_source": {
+    "path": "crates/testing/controller/src/lifecycle.rs",
+    "sha256": "e5d447f2f640a65a47fdeaeb2ccd08cee131bbad291de50b32885228897f05e6",
+    "change": "capacity_peak Rustdoc only; behavioral code unchanged; no tests repeated"
+  },
+  "raw_log_root": "artifacts/dev4-merge-review",
+  "unexecuted": [
+    "whole workspace",
+    "DEV0/DEV1/DEV2 wrappers",
+    "DEV3 tests",
+    "COMM tests",
+    "completed depth-5 BFS",
+    "FE14",
+    "durable checkpoint"
+  ]
+}

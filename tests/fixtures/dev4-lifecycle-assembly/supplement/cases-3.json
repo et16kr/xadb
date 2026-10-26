@@ -1,0 +1,196 @@
+{
+  "status": "INDEPENDENT_SUPPLEMENT_CANDIDATE_NOT_RUN",
+  "authorship": "independent literal oracle, third supplement (ResumeFetch on a read-write transaction) requested after final D1 review; every pre-state put and expected_input field written by hand from wire-proposal-v2 sections 3-4, assembler-proposal-v1 sections 4/6/7, assembler-readset-v2 sections 4-5, owner-scope-v2 and devdoc/contracts/dev4-lifecycle-assembler.md; python used only to expand/inspect JSON states and compare raw_action with raw-descriptors.json; no crates/ source, product, model, codec or test output read or executed",
+  "schema": "same as supplement/cases.json (derived pre-state = base + exact JSON-pointer put on the fully expanded base; identities [kind,actor,slot,engine,session,nonce,generation]; one-line 'purpose' per case). All bases are original: states or pre-states defined in this file.",
+  "prestates": [
+    {
+      "id": "supplement3:rw-parked-fetch",
+      "base": "original:rw.select_open",
+      "put": {
+        "/next_nonce/Context": 7,
+        "/actors/0/parked_context": [5, 0, 255, 1, 1, 6, 0],
+        "/transactions/1/parked_context": [5, 0, 255, 1, 1, 6, 0],
+        "/contexts/6": {"id": [5, 0, 255, 1, 1, 6, 0], "issue_ordinal": 6, "api": "ParkFetch", "status": "ParkedFetch", "original_deadline": "FutureAtEntry", "cancel_supplied_or_signalled": false, "deadline_reached": false, "cancel_observed_at_completion": false, "deadline_observed_at_completion": false, "completion_phase": "NotCompleted", "statement": [3, 0, 1, 1, 1, 2, 1], "result": [4, 0, 1, 1, 1, 1, 1], "transaction": [6, 0, 255, 1, 1, 1, 0]}
+      },
+      "classification": "hand-specified history: original rw.select_open (A0 explicit RW T n1 with a successful Dml write, DmlN0 p1 in slot0 with Plan u4/Binding u5, SelectN0 p2 in slot1 with Plan u6/Binding u7 and Open result R[4,0,1,1,1,1,1] holding cursor u8-u10 for T n1) followed by A0 ParkFetch FutureAtEntry on that result (c6), exactly mirroring original sel.parked over sel.open; no model execution"
+    },
+    {
+      "id": "supplement3:rw-parked-fetch-cancelled",
+      "base": "supplement3:rw-parked-fetch",
+      "put": {
+        "/contexts/6/cancel_supplied_or_signalled": true
+      },
+      "classification": "supplement3:rw-parked-fetch after a SignalContext Cancel on the parked c6 (cancel bit set; SignalContext issues no context of its own), mirroring rich:parked-fetch-cancel over sel.parked; no model execution"
+    },
+    {
+      "id": "supplement3:rw-parked-fetch-deadline",
+      "base": "supplement3:rw-parked-fetch",
+      "put": {
+        "/contexts/6/deadline_reached": true
+      },
+      "classification": "supplement3:rw-parked-fetch after a SignalContext Deadline on c6 (reached bit set, original deadline unchanged), mirroring original sel.signalled over sel.parked; no model execution"
+    }
+  ],
+  "cases": [
+    {
+      "id": "asm/supplement3/rw-resume-conflict-complete",
+      "pre_state": "supplement3:rw-parked-fetch",
+      "raw_index": 1490,
+      "raw_action": {"api": "ResumeFetch", "actor": 0, "selector": null, "prepare": null, "autocommit": null, "outcome": 6},
+      "purpose": "unsignalled Conflict(3)+Complete on the parked RW T: commit Aborted0, RW(T) u1-u3 plus the T's Open descriptor cursor u8-u10 Released; Plan/Binding of both slots untouched",
+      "expected_input": {
+        "schema_version": 1, "api": "ResumeFetch", "api_tag": 16, "actor": 0, "outcome_tag": 6,
+        "prepare_slot": 255, "prepare_shape": 255, "parameter_count": 255, "set_autocommit": 255,
+        "target": null, "context": [5, 0, 255, 1, 1, 6, 0],
+        "original_deadline": "FutureAtEntry", "supplied_cancel": false, "deadline_reached": false, "bind_values": [],
+        "environment": {
+          "envelope_schema": 1, "fact": [11, 255, 255, 1, 0, 3, 0], "kind": "FetchWorkOrCleanup", "work_kind": "Resume", "work_class": 3,
+          "cleanup": 1, "commit_class": 0, "reserved0": 0, "transaction": [6, 0, 255, 1, 1, 1, 0],
+          "receipt": null, "anchor": null, "fresh_engine": null,
+          "obligations": [],
+          "owners": [
+            {"resource": [9, 0, 255, 1, 1, 1, 0], "resource_kind": "Undo", "after_disposition": "Released", "obligation": null, "before_holder": [6, 0, 255, 1, 1, 1, 0], "after_holder": null},
+            {"resource": [9, 0, 255, 1, 1, 2, 0], "resource_kind": "Locks", "after_disposition": "Released", "obligation": null, "before_holder": [6, 0, 255, 1, 1, 1, 0], "after_holder": null},
+            {"resource": [9, 0, 255, 1, 1, 3, 0], "resource_kind": "AbortReserve", "after_disposition": "Released", "obligation": null, "before_holder": [6, 0, 255, 1, 1, 1, 0], "after_holder": null},
+            {"resource": [9, 0, 255, 1, 1, 8, 0], "resource_kind": "Snapshot", "after_disposition": "Released", "obligation": null, "before_holder": [4, 0, 1, 1, 1, 1, 1], "after_holder": null},
+            {"resource": [9, 0, 255, 1, 1, 9, 0], "resource_kind": "Scratch", "after_disposition": "Released", "obligation": null, "before_holder": [4, 0, 1, 1, 1, 1, 1], "after_holder": null},
+            {"resource": [9, 0, 255, 1, 1, 10, 0], "resource_kind": "Temp", "after_disposition": "Released", "obligation": null, "before_holder": [4, 0, 1, 1, 1, 1, 1], "after_holder": null}
+          ]
+        }
+      }
+    },
+    {
+      "id": "asm/supplement3/rw-resume-conflict-incomplete",
+      "pre_state": "supplement3:rw-parked-fetch",
+      "raw_index": 1491,
+      "raw_action": {"api": "ResumeFetch", "actor": 0, "selector": null, "prepare": null, "autocommit": null, "outcome": 7},
+      "purpose": "unsignalled Conflict(3)+Incomplete: commit NCR1 (RW+Incomplete), first-fence census with the parked T as cause: new O n1 NCR, RW3 before=after Held, new Recovery u11; cursor u8-u10 not released",
+      "expected_input": {
+        "schema_version": 1, "api": "ResumeFetch", "api_tag": 16, "actor": 0, "outcome_tag": 7,
+        "prepare_slot": 255, "prepare_shape": 255, "parameter_count": 255, "set_autocommit": 255,
+        "target": null, "context": [5, 0, 255, 1, 1, 6, 0],
+        "original_deadline": "FutureAtEntry", "supplied_cancel": false, "deadline_reached": false, "bind_values": [],
+        "environment": {
+          "envelope_schema": 1, "fact": [11, 255, 255, 1, 0, 3, 0], "kind": "FetchWorkOrCleanup", "work_kind": "Resume", "work_class": 3,
+          "cleanup": 2, "commit_class": 1, "reserved0": 0, "transaction": [6, 0, 255, 1, 1, 1, 0],
+          "receipt": null, "anchor": null, "fresh_engine": null,
+          "obligations": [
+            {"obligation": [10, 0, 255, 1, 1, 1, 0], "known_decision": "NotCommittedRecoveryRequired", "after_ownership_summary": "AllHeld", "associated_owner_count": 4}
+          ],
+          "owners": [
+            {"resource": [9, 0, 255, 1, 1, 1, 0], "resource_kind": "Undo", "after_disposition": "Held", "obligation": [10, 0, 255, 1, 1, 1, 0], "before_holder": [6, 0, 255, 1, 1, 1, 0], "after_holder": [6, 0, 255, 1, 1, 1, 0]},
+            {"resource": [9, 0, 255, 1, 1, 2, 0], "resource_kind": "Locks", "after_disposition": "Held", "obligation": [10, 0, 255, 1, 1, 1, 0], "before_holder": [6, 0, 255, 1, 1, 1, 0], "after_holder": [6, 0, 255, 1, 1, 1, 0]},
+            {"resource": [9, 0, 255, 1, 1, 3, 0], "resource_kind": "AbortReserve", "after_disposition": "Held", "obligation": [10, 0, 255, 1, 1, 1, 0], "before_holder": [6, 0, 255, 1, 1, 1, 0], "after_holder": [6, 0, 255, 1, 1, 1, 0]},
+            {"resource": [9, 0, 255, 1, 1, 11, 0], "resource_kind": "Recovery", "after_disposition": "Held", "obligation": [10, 0, 255, 1, 1, 1, 0], "before_holder": null, "after_holder": [6, 0, 255, 1, 1, 1, 0]}
+          ]
+        }
+      }
+    },
+    {
+      "id": "asm/supplement3/rw-resume-rows-incomplete",
+      "pre_state": "supplement3:rw-parked-fetch",
+      "raw_index": 1485,
+      "raw_action": {"api": "ResumeFetch", "actor": 0, "selector": null, "prepare": null, "autocommit": null, "outcome": 1},
+      "purpose": "unsignalled Rows(0)+Incomplete on the RW T: class keeps cleanup2/commit NCR1 (RW+Incomplete) but, per proposal section 7 'Resume 무신호 Rows/Buffer -> owners empty, supplied cleanup raw kept', the owner/O set is empty (no census); combination is excluded by the model after admission",
+      "expected_input": {
+        "schema_version": 1, "api": "ResumeFetch", "api_tag": 16, "actor": 0, "outcome_tag": 1,
+        "prepare_slot": 255, "prepare_shape": 255, "parameter_count": 255, "set_autocommit": 255,
+        "target": null, "context": [5, 0, 255, 1, 1, 6, 0],
+        "original_deadline": "FutureAtEntry", "supplied_cancel": false, "deadline_reached": false, "bind_values": [],
+        "environment": {
+          "envelope_schema": 1, "fact": [11, 255, 255, 1, 0, 3, 0], "kind": "FetchWorkOrCleanup", "work_kind": "Resume", "work_class": 0,
+          "cleanup": 2, "commit_class": 1, "reserved0": 0, "transaction": [6, 0, 255, 1, 1, 1, 0],
+          "receipt": null, "anchor": null, "fresh_engine": null,
+          "obligations": [],
+          "owners": []
+        }
+      }
+    },
+    {
+      "id": "asm/supplement3/rw-resume-eof-complete",
+      "pre_state": "supplement3:rw-parked-fetch",
+      "raw_index": 1486,
+      "raw_action": {"api": "ResumeFetch", "actor": 0, "selector": null, "prepare": null, "autocommit": null, "outcome": 2},
+      "purpose": "unsignalled Eof(1)+Complete on the explicit RW T: only C(result) u8-u10 Released, RW3 kept (not listed), commit 255",
+      "expected_input": {
+        "schema_version": 1, "api": "ResumeFetch", "api_tag": 16, "actor": 0, "outcome_tag": 2,
+        "prepare_slot": 255, "prepare_shape": 255, "parameter_count": 255, "set_autocommit": 255,
+        "target": null, "context": [5, 0, 255, 1, 1, 6, 0],
+        "original_deadline": "FutureAtEntry", "supplied_cancel": false, "deadline_reached": false, "bind_values": [],
+        "environment": {
+          "envelope_schema": 1, "fact": [11, 255, 255, 1, 0, 3, 0], "kind": "FetchWorkOrCleanup", "work_kind": "Resume", "work_class": 1,
+          "cleanup": 1, "commit_class": 255, "reserved0": 0, "transaction": [6, 0, 255, 1, 1, 1, 0],
+          "receipt": null, "anchor": null, "fresh_engine": null,
+          "obligations": [],
+          "owners": [
+            {"resource": [9, 0, 255, 1, 1, 8, 0], "resource_kind": "Snapshot", "after_disposition": "Released", "obligation": null, "before_holder": [4, 0, 1, 1, 1, 1, 1], "after_holder": null},
+            {"resource": [9, 0, 255, 1, 1, 9, 0], "resource_kind": "Scratch", "after_disposition": "Released", "obligation": null, "before_holder": [4, 0, 1, 1, 1, 1, 1], "after_holder": null},
+            {"resource": [9, 0, 255, 1, 1, 10, 0], "resource_kind": "Temp", "after_disposition": "Released", "obligation": null, "before_holder": [4, 0, 1, 1, 1, 1, 1], "after_holder": null}
+          ]
+        }
+      }
+    },
+    {
+      "id": "asm/supplement3/rw-resume-cancelled-conflict-complete",
+      "pre_state": "supplement3:rw-parked-fetch-cancelled",
+      "raw_index": 1490,
+      "raw_action": {"api": "ResumeFetch", "actor": 0, "selector": null, "prepare": null, "autocommit": null, "outcome": 6},
+      "purpose": "cancel-signalled pending + Conflict(3)+Complete: pending terminal cleanup regardless of work -> only C(result) u8-u10 Released, RW3 kept, commit 255 (no unsignalled-Conflict Aborted0); control copies the cancel bit",
+      "expected_input": {
+        "schema_version": 1, "api": "ResumeFetch", "api_tag": 16, "actor": 0, "outcome_tag": 6,
+        "prepare_slot": 255, "prepare_shape": 255, "parameter_count": 255, "set_autocommit": 255,
+        "target": null, "context": [5, 0, 255, 1, 1, 6, 0],
+        "original_deadline": "FutureAtEntry", "supplied_cancel": true, "deadline_reached": false, "bind_values": [],
+        "environment": {
+          "envelope_schema": 1, "fact": [11, 255, 255, 1, 0, 3, 0], "kind": "FetchWorkOrCleanup", "work_kind": "Resume", "work_class": 3,
+          "cleanup": 1, "commit_class": 255, "reserved0": 0, "transaction": [6, 0, 255, 1, 1, 1, 0],
+          "receipt": null, "anchor": null, "fresh_engine": null,
+          "obligations": [],
+          "owners": [
+            {"resource": [9, 0, 255, 1, 1, 8, 0], "resource_kind": "Snapshot", "after_disposition": "Released", "obligation": null, "before_holder": [4, 0, 1, 1, 1, 1, 1], "after_holder": null},
+            {"resource": [9, 0, 255, 1, 1, 9, 0], "resource_kind": "Scratch", "after_disposition": "Released", "obligation": null, "before_holder": [4, 0, 1, 1, 1, 1, 1], "after_holder": null},
+            {"resource": [9, 0, 255, 1, 1, 10, 0], "resource_kind": "Temp", "after_disposition": "Released", "obligation": null, "before_holder": [4, 0, 1, 1, 1, 1, 1], "after_holder": null}
+          ]
+        }
+      }
+    },
+    {
+      "id": "asm/supplement3/rw-resume-deadline-conflict-incomplete",
+      "pre_state": "supplement3:rw-parked-fetch-deadline",
+      "raw_index": 1491,
+      "raw_action": {"api": "ResumeFetch", "actor": 0, "selector": null, "prepare": null, "autocommit": null, "outcome": 7},
+      "purpose": "deadline-reached pending + Conflict(3)+Incomplete: pending Incomplete is the fence path, identical census to the unsignalled case (cause O n1 NCR, RW3 before=after, Recovery u11, cursor not released), commit NCR1; control copies the reached bit",
+      "expected_input": {
+        "schema_version": 1, "api": "ResumeFetch", "api_tag": 16, "actor": 0, "outcome_tag": 7,
+        "prepare_slot": 255, "prepare_shape": 255, "parameter_count": 255, "set_autocommit": 255,
+        "target": null, "context": [5, 0, 255, 1, 1, 6, 0],
+        "original_deadline": "FutureAtEntry", "supplied_cancel": false, "deadline_reached": true, "bind_values": [],
+        "environment": {
+          "envelope_schema": 1, "fact": [11, 255, 255, 1, 0, 3, 0], "kind": "FetchWorkOrCleanup", "work_kind": "Resume", "work_class": 3,
+          "cleanup": 2, "commit_class": 1, "reserved0": 0, "transaction": [6, 0, 255, 1, 1, 1, 0],
+          "receipt": null, "anchor": null, "fresh_engine": null,
+          "obligations": [
+            {"obligation": [10, 0, 255, 1, 1, 1, 0], "known_decision": "NotCommittedRecoveryRequired", "after_ownership_summary": "AllHeld", "associated_owner_count": 4}
+          ],
+          "owners": [
+            {"resource": [9, 0, 255, 1, 1, 1, 0], "resource_kind": "Undo", "after_disposition": "Held", "obligation": [10, 0, 255, 1, 1, 1, 0], "before_holder": [6, 0, 255, 1, 1, 1, 0], "after_holder": [6, 0, 255, 1, 1, 1, 0]},
+            {"resource": [9, 0, 255, 1, 1, 2, 0], "resource_kind": "Locks", "after_disposition": "Held", "obligation": [10, 0, 255, 1, 1, 1, 0], "before_holder": [6, 0, 255, 1, 1, 1, 0], "after_holder": [6, 0, 255, 1, 1, 1, 0]},
+            {"resource": [9, 0, 255, 1, 1, 3, 0], "resource_kind": "AbortReserve", "after_disposition": "Held", "obligation": [10, 0, 255, 1, 1, 1, 0], "before_holder": [6, 0, 255, 1, 1, 1, 0], "after_holder": [6, 0, 255, 1, 1, 1, 0]},
+            {"resource": [9, 0, 255, 1, 1, 11, 0], "resource_kind": "Recovery", "after_disposition": "Held", "obligation": [10, 0, 255, 1, 1, 1, 0], "before_holder": null, "after_holder": [6, 0, 255, 1, 1, 1, 0]}
+          ]
+        }
+      }
+    }
+  ],
+  "notes": [
+    "R1 Matching ParkedFetch (readset-v2 section 5): actor0.parked_context = c6, the context is ParkedFetch with statement/result/transaction Some, the private descriptor of R[4,0,1,1,1,1,1] links p2/slot1/T n1, and T.parked_context backlinks c6. Context = original c6; control = (original_deadline, cancel bit, reached bit) copied exactly. No fresh Context is used (next Context 7 is not read). Fact = caller attached E1, next Fact 3. Transaction = Parked.transaction T n1.",
+    "R2 Resume Env bytes (wire-v2 Env1 layout line 84 and class table; proposal section 6 Resume row): work_kind Resume, work_class = outcome div 2 (Rows0/Eof1/ReadError2/Conflict3/RowBufferTooSmall4), cleanup = 1 + outcome mod 2, commit = NCR1 for RW+Incomplete, Aborted0 for RW+Complete+unsignalled Conflict, else 255; receipt/anchor None.",
+    "R3 Unsignalled Conflict Complete (proposal section 7 'Execute/Fetch/Resume 무신호 Conflict Complete | 선택 RW + 해당 transaction의 현재 Open cursor release'; contract: 'Fetch·Resume Conflict와 Rollback Complete는 RW(T)와 T의 Open descriptor cursor 전체를 release'): RW3 u1-u3 and the cursor u8-u10 of T's only Open descriptor are Released. Plan/Binding u4-u7 are untouched.",
+    "R4 A second Open cursor of the same T in slot0 was NOT included. The state keeps a single actor.active_public_result, and Execute/CommitAtomic treat another active result as ResultBusy, so two simultaneous Open descriptors are not coherent. Terminal (Eof/Error/Closed) descriptors of T already have all cursor owners Released (C(R) release on EOF/ReadError/Close), so an 'Open only' vs 'all live cursors of T' difference cannot be made observable in a coherent state. A non-reachable read-set workspace with two Open descriptors could test it if D2 accepts one.",
+    "R5 Incomplete with or without a pending signal is the first-fence path (proposal section 7 'Incomplete ... 첫 fence | census'; wire-v2 Resume row 'Incomplete는 fence'). The engine is Admitting and T n1 is the only live RW T, so: cause new O [10,0,255,1,1,1,0] with raw NCR, RW3 before=after Held, new Recovery at next Resource [9,0,255,1,1,11,0], count 4/AllHeld. The cursor is not released ('cause cursor도 incomplete 사실로 release하지 않는다'). This matches the existing RO-T fixtures, where pending+Incomplete has no cursor rows.",
+    "R6 DISAGREEMENT with the request, case rw-resume-rows-incomplete: the request expected 'commit NCR1, same census' for unsignalled Rows+Incomplete. I authored owners/O EMPTY with cleanup 2 and commit NCR1. Basis: assembler-proposal-v1 section 7 explicit row 'Fetch Rows/Buffer 또는 Resume 무신호 Rows/Buffer | owners empty. Resume의 supplied cleanup raw값은 그대로 유지'. That clause about keeping the raw cleanup only has content for the Incomplete case. Also wire-v2 Resume row: '무신호는 Fetch 대응' (Fetch Rows has an empty owner set) and 'Rows/RowBufferTooSmall/Eof+Incomplete는 admitted 뒤 제외'. Commit stays NCR1 because the Env class table ('RW+Incomplete는1') is independent of the owner recipe. If the owner instead decides that every Incomplete Resume runs the census, the expected owners/obligations become exactly those of rw-resume-conflict-incomplete with work_class 0.",
+    "R7 Pending Complete (proposal section 7 'Resume pending Complete | C(R) release, explicit/OFF RW 보존'; wire-v2 'pending Cancel/Deadline이면 work와 무관하게 C(result) cleanup, Complete는 explicit/OFF RW 보존'): with the cancel bit set, Conflict Complete releases only the cursor, keeps RW3, and has commit 255, since the Aborted0 rule is only for unsignalled Conflict.",
+    "R8 Unsignalled Eof Complete follows Fetch Eof Complete (wire-v2 '무신호는 Fetch 대응'; Fetch Eof Complete 'C(result) Released, explicit/OFF RW 보존'): cursor rows only, commit 255.",
+    "R9 Signal variants change only the parked context bits (SignalContext has no context/fact of its own, as original sel.signalled and rich:parked-fetch-cancel). All bases are in this file or original:, and each case carries a 'purpose' string."
+  ]
+}

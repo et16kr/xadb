@@ -5883,6 +5883,104 @@
     "reviewed_call_candidates": 1658,
     "runtime_tests": 0
   },
+  "dev4_lifecycle_assembler": {
+    "decision": "D4-LM-ASM-001",
+    "contract": "dev4-lifecycle-assembler.md",
+    "evidence": "dev4-lifecycle-assembler-20261025.md",
+    "status": "IMPLEMENTED_SELECTED_VALIDATION_D2_D1_ACCEPTED",
+    "implemented_sources": [
+      "crates/testing/reference/src/lifecycle/assembler_literal.rs",
+      "crates/testing/reference/src/lifecycle/assembler_tests.rs",
+      "crates/testing/reference/src/lifecycle/input_assembler.rs",
+      "crates/testing/reference/src/lifecycle/input_assembler/rows.rs",
+      "crates/testing/reference/src/lifecycle/mod.rs"
+    ],
+    "fixtures": [
+      "tests/fixtures/dev4-lifecycle-assembly/README.md",
+      "tests/fixtures/dev4-lifecycle-assembly/provenance/author-continuation.py",
+      "tests/fixtures/dev4-lifecycle-assembly/provenance/author-normal-rest.py",
+      "tests/fixtures/dev4-lifecycle-assembly/provenance/author-rich.py",
+      "tests/fixtures/dev4-lifecycle-assembly/provenance/rich-snapshot.json",
+      "tests/fixtures/dev4-lifecycle-assembly/rich/correction.json",
+      "tests/fixtures/dev4-lifecycle-assembly/rich/rich-continuation-3.json",
+      "tests/fixtures/dev4-lifecycle-assembly/rich/rich-normal-2.json",
+      "tests/fixtures/dev4-lifecycle-assembly/rich/rich-normal-rest-4.json",
+      "tests/fixtures/dev4-lifecycle-assembly/selection-inventory.json",
+      "tests/fixtures/dev4-lifecycle-assembly/supplement/cases-2.json",
+      "tests/fixtures/dev4-lifecycle-assembly/supplement/cases-3.json",
+      "tests/fixtures/dev4-lifecycle-assembly/supplement/cases.json"
+    ],
+    "new_dependencies": false,
+    "scope": "Pure assemble_input of one pre-state and raw action; model, checker and in-memory BFS are separate implemented units below; durable resume and FE14 remain incomplete",
+    "logical_cases": 1994,
+    "validation": "Independent D2 and D1 accepted; selected 1994 cases PASS, fmt and Clippy PASS; rich 304 differential plus 57-case static sample; 2 rich corrections",
+    "review_evidence": "dev4-merge-review-20261026.md"
+  },
+  "dev4_lifecycle_model": {
+    "decision": "D4-LM-MODEL-001",
+    "contract": "dev4-lifecycle-model.md",
+    "evidence": "dev4-lifecycle-model-20261025.md",
+    "status": "IMPLEMENTED_SELECTED_VALIDATION_D2_ACCEPTED_D1_LIMITED",
+    "implemented_sources": [
+      "crates/testing/reference/src/lifecycle/mod.rs",
+      "crates/testing/reference/src/lifecycle/model.rs",
+      "crates/testing/reference/src/lifecycle/model/common.rs",
+      "crates/testing/reference/src/lifecycle/model/edit.rs",
+      "crates/testing/reference/src/lifecycle/model/result.rs",
+      "crates/testing/reference/src/lifecycle/model/session.rs",
+      "crates/testing/reference/src/lifecycle/model/statement.rs",
+      "crates/testing/reference/src/lifecycle/model_tests.rs"
+    ],
+    "fixtures": [],
+    "new_dependencies": false,
+    "scope": "Abstract transition of one resolved input; independent checker and in-memory BFS are separate implemented units below; durable checkpoint and FE14 remain incomplete",
+    "validation": "29 literal edges, 12 traces/51 occurrences and 5 known-bad distinctions PASS; census and deep-walk smoke without model error or loader violation; fixed traces are implementer-derived"
+  },
+  "dev4_lifecycle_checker": {
+    "decision": "D4-LM-CHECK-001",
+    "contract": "dev4-lifecycle-checker.md",
+    "evidence": "dev4-lifecycle-checker-20261025.md",
+    "status": "IMPLEMENTED_SELECTED_VALIDATION_D2_ACCEPTED_D1_LIMITED",
+    "implemented_sources": [
+      "crates/testing/reference/src/lifecycle/checker.rs",
+      "crates/testing/reference/src/lifecycle/checker/delta.rs",
+      "crates/testing/reference/src/lifecycle/checker/expect.rs",
+      "crates/testing/reference/src/lifecycle/checker/fence.rs",
+      "crates/testing/reference/src/lifecycle/checker/gates.rs",
+      "crates/testing/reference/src/lifecycle/checker/ident.rs",
+      "crates/testing/reference/src/lifecycle/checker/materialize.rs",
+      "crates/testing/reference/src/lifecycle/checker/owners.rs",
+      "crates/testing/reference/src/lifecycle/checker/result.rs",
+      "crates/testing/reference/src/lifecycle/checker/session.rs",
+      "crates/testing/reference/src/lifecycle/checker/shared.rs",
+      "crates/testing/reference/src/lifecycle/checker/statement.rs",
+      "crates/testing/reference/src/lifecycle/checker/txn.rs",
+      "crates/testing/reference/src/lifecycle/checker_tests.rs",
+      "crates/testing/reference/src/lifecycle/differential_tests.rs"
+    ],
+    "fixtures": [],
+    "new_dependencies": false,
+    "scope": "Independent relational edge checker and model differential; in-memory BFS is a separate implemented unit below; durable checkpoint and FE14 remain incomplete",
+    "validation": "checker_tests 10, model_tests 6, assembler_tests 11 PASS; differential over 29 literal states, 7 fixed paths, corrupted inputs and six walk configurations up to 57,276,849 judged edges with 0 disagreements"
+  },
+  "dev4_lifecycle_explorer": {
+    "decision": "D4-LM-BFS-001",
+    "contract": "dev4-lifecycle-explorer.md",
+    "evidence": "dev4-lifecycle-explorer-20261025.md",
+    "status": "IMPLEMENTED_IN_MEMORY_RUNS_D2_ACCEPTED_WITH_CHANGES_DEPTH5_DRAINED_UNARCHIVED",
+    "implemented_sources": [
+      "crates/testing/controller/src/lib.rs",
+      "crates/testing/controller/src/lifecycle.rs",
+      "crates/testing/controller/src/lifecycle/tests.rs"
+    ],
+    "fixtures": [
+      "tests/fixtures/dev4-lifecycle-model/vectors/state-initial.bin"
+    ],
+    "new_dependencies": false,
+    "scope": "In-memory deterministic BFS over the lifecycle assembler, model and independent checker with the design caps and the user-approved depth-5 extension; archive, durable checkpoint, witness check, FE14 and depth 6 remain incomplete",
+    "validation": "10 selected explorer tests and the corrected model/differential tests PASS; normal profile INCONCLUSIVE at the 500,000-state cap; approved depth-5 profile drained without archive: 660,911,559 slots, 490,363,251 checker calls, 0 disagreements",
+    "review_evidence": "dev4-merge-review-20261026.md"
+  },
   "dev3_plan4_recovery_checkpoint": {
     "status": "PAUSED_WIP_NOT_ACCEPTED",
     "evidence_ref": "dev3-recovery-paused-20261025.md",

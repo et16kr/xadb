@@ -1,0 +1,440 @@
+{
+  "status": "INDEPENDENT_SUPPLEMENT_CANDIDATE_NOT_RUN",
+  "authorship": "independent literal oracle, second supplement requested by D2 review; every pre-state put and expected_input field written by hand from wire-proposal-v2 sections 3-4, assembler-proposal-v1 sections 2-8, assembler-owner-scope-v2 (A1-A5), assembler-readset-v2/-v3, assembler-owner-addendum-v3, devdoc/contracts/dev4-lifecycle-assembler.md and the coordinator-relayed owner decisions D-A, D-B, D-C (plus the N1 transaction identity-key order now in the contract); python used only to expand/inspect JSON states and compare raw_action with raw-descriptors.json; no crates/ source, product, model, codec or test output read or executed",
+  "schema": "same as supplement/cases.json (derived pre-state = base + exact JSON-pointer put on the fully expanded base; identities [kind,actor,slot,engine,session,nonce,generation]; one-line 'purpose' per case). All bases are original: states or pre-states defined in this file.",
+  "prestates": [
+    {
+      "id": "supplement2:retired-engine-after-recovery",
+      "base": "original:rw.prepared",
+      "put": {
+        "/current_engine": [1, 255, 255, 2, 0, 2, 0],
+        "/next_nonce/Engine": 3,
+        "/next_nonce/Context": 6,
+        "/next_nonce/Resource": 7,
+        "/next_nonce/Obligation": 2,
+        "/next_nonce/Fact": 5,
+        "/engines/1": {"id": [1, 255, 255, 1, 0, 1, 0], "admission": "RecoveryConfirmedRetired", "first_cause": "UndoIncomplete", "known_decision": "NotCommittedRecoveryRequired", "cause_transaction": [6, 0, 255, 1, 1, 1, 0], "first_fence_context": [5, 0, 255, 1, 1, 3, 0], "successor_engine": [1, 255, 255, 2, 0, 2, 0], "recovery_fact": [11, 255, 255, 1, 0, 4, 0]},
+        "/engines/2": {"id": [1, 255, 255, 2, 0, 2, 0], "admission": "Admitting", "first_cause": "None", "known_decision": "NotApplicable", "cause_transaction": null, "first_fence_context": null, "successor_engine": null, "recovery_fact": null},
+        "/session_incarnations/1/lifecycle": "Closed",
+        "/session_incarnations/1/closing_context": [5, 0, 255, 1, 1, 4, 0],
+        "/session_incarnations/2/lifecycle": "Closed",
+        "/session_incarnations/2/closing_context": [5, 1, 255, 1, 2, 5, 0],
+        "/actors/0/shell": "Closed",
+        "/actors/0/transaction": null,
+        "/actors/1/shell": "Closed",
+        "/contexts/3": {"id": [5, 0, 255, 1, 1, 3, 0], "issue_ordinal": 3, "status": "Completed"},
+        "/contexts/4": {"id": [5, 0, 255, 1, 1, 4, 0], "issue_ordinal": 4, "status": "Completed"},
+        "/contexts/5": {"id": [5, 1, 255, 1, 2, 5, 0], "issue_ordinal": 5, "status": "Completed"},
+        "/prepared_slots/0:0": {"actor": 0, "slot": 0, "state": "Vacant", "next_statement_generation": 2, "next_result_generation": 1, "statement": null, "binding": null, "descriptor_result": null},
+        "/issued_statements/1/life": "Retired",
+        "/issued_statements/1/retirement": "SessionClose",
+        "/issued_statements/1/retirement_context": [5, 0, 255, 1, 1, 4, 0],
+        "/bindings/1/life": "Released",
+        "/transactions/1": {"id": [6, 0, 255, 1, 1, 1, 0], "origin": "ExplicitBegin", "access": "ReadWrite", "life": "Ended", "prior_successful_write": false, "progress": "None", "decision": "NotCommittedRecoveryRequired", "client_knowledge": "KnownNotCommittedRecoveryRequired", "delivery": "NotApplicable", "birth_session": [2, 0, 255, 1, 1, 1, 0], "receipt": null, "parked_context": null, "obligation": [10, 0, 255, 1, 1, 1, 0], "completion_fact": [11, 255, 255, 1, 0, 1, 0]},
+        "/obligations/1": {"id": [10, 0, 255, 1, 1, 1, 0], "engine": [1, 255, 255, 1, 0, 1, 0], "transaction": [6, 0, 255, 1, 1, 1, 0], "origin_session": [2, 0, 255, 1, 1, 1, 0], "creation_reason": "KnownNotCommittedUndoPending", "latest_reason": "KnownNotCommittedUndoPending", "reason_mask": 1, "disposition": "AllReleased", "known_decision": "NotCommittedRecoveryRequired", "settlement": "RecoveryConfirmed", "first_fact": [11, 255, 255, 1, 0, 1, 0], "latest_fact": [11, 255, 255, 1, 0, 1, 0], "recovery_fact": [11, 255, 255, 1, 0, 4, 0]},
+        "/owners/1": {"id": [9, 0, 255, 1, 1, 1, 0], "resource_kind": "Undo", "disposition": "Released", "transfer_count": 1, "original_holder": [6, 0, 255, 1, 1, 1, 0], "current_holder": null, "previous_holder": [10, 0, 255, 1, 1, 1, 0], "birth_context": [5, 0, 255, 1, 1, 1, 0], "last_fact": [11, 255, 255, 1, 0, 4, 0]},
+        "/owners/2": {"id": [9, 0, 255, 1, 1, 2, 0], "resource_kind": "Locks", "disposition": "Released", "transfer_count": 1, "original_holder": [6, 0, 255, 1, 1, 1, 0], "current_holder": null, "previous_holder": [10, 0, 255, 1, 1, 1, 0], "birth_context": [5, 0, 255, 1, 1, 1, 0], "last_fact": [11, 255, 255, 1, 0, 4, 0]},
+        "/owners/3": {"id": [9, 0, 255, 1, 1, 3, 0], "resource_kind": "AbortReserve", "disposition": "Released", "transfer_count": 1, "original_holder": [6, 0, 255, 1, 1, 1, 0], "current_holder": null, "previous_holder": [10, 0, 255, 1, 1, 1, 0], "birth_context": [5, 0, 255, 1, 1, 1, 0], "last_fact": [11, 255, 255, 1, 0, 4, 0]},
+        "/owners/4": {"id": [9, 0, 255, 1, 1, 4, 0], "resource_kind": "Plan", "disposition": "Released", "transfer_count": 0, "original_holder": [3, 0, 0, 1, 1, 1, 1], "current_holder": null, "previous_holder": [3, 0, 0, 1, 1, 1, 1], "birth_context": [5, 0, 255, 1, 1, 2, 0], "last_fact": [11, 255, 255, 1, 0, 2, 0]},
+        "/owners/5": {"id": [9, 0, 255, 1, 1, 5, 0], "resource_kind": "Binding", "disposition": "Released", "transfer_count": 0, "original_holder": [3, 0, 0, 1, 1, 1, 1], "current_holder": null, "previous_holder": [3, 0, 0, 1, 1, 1, 1], "birth_context": [5, 0, 255, 1, 1, 2, 0], "last_fact": [11, 255, 255, 1, 0, 2, 0]},
+        "/owners/6": {"id": [9, 0, 255, 1, 1, 6, 0], "resource_kind": "Recovery", "disposition": "Released", "transfer_count": 1, "original_holder": [6, 0, 255, 1, 1, 1, 0], "current_holder": null, "previous_holder": [10, 0, 255, 1, 1, 1, 0], "birth_context": [5, 0, 255, 1, 1, 3, 0], "last_fact": [11, 255, 255, 1, 0, 4, 0]},
+        "/facts/1": {"id": [11, 255, 255, 1, 0, 1, 0], "kind": "RollbackCleanup", "api": "Rollback", "outcome_class": 1, "cleanup": "Incomplete", "decision": "NotCommittedRecoveryRequired", "delivery": "NotApplicable", "next_work": "NotConsumed", "consumed_parts": 2, "engine": [1, 255, 255, 1, 0, 1, 0], "obligation_count": 1, "owner_count": 4, "context": [5, 0, 255, 1, 1, 3, 0], "transaction": [6, 0, 255, 1, 1, 1, 0], "receipt": null, "fresh_engine": null, "anchor": null},
+        "/facts/2": {"id": [11, 255, 255, 1, 0, 2, 0], "kind": "SessionCleanup", "api": "CloseSession", "outcome_class": 0, "cleanup": "LocalReleaseAndHandoff", "decision": "NotApplicable", "delivery": "NotApplicable", "next_work": "NotConsumed", "consumed_parts": 2, "engine": [1, 255, 255, 1, 0, 1, 0], "obligation_count": 1, "owner_count": 6, "context": [5, 0, 255, 1, 1, 4, 0], "transaction": [6, 0, 255, 1, 1, 1, 0], "receipt": null, "fresh_engine": null, "anchor": null},
+        "/facts/3": {"id": [11, 255, 255, 1, 0, 3, 0], "kind": "SessionCleanup", "api": "CloseSession", "outcome_class": 0, "cleanup": "LocalReleaseAndHandoff", "decision": "NotApplicable", "delivery": "NotApplicable", "next_work": "NotConsumed", "consumed_parts": 2, "engine": [1, 255, 255, 1, 0, 1, 0], "obligation_count": 0, "owner_count": 0, "context": [5, 1, 255, 1, 2, 5, 0], "transaction": null, "receipt": null, "fresh_engine": null, "anchor": null},
+        "/facts/4": {"id": [11, 255, 255, 1, 0, 4, 0], "kind": "RecoveryConfirmed", "api": "RecoveryConfirmedFreshEngine", "outcome_class": 0, "cleanup": "RecoveryConfirmed", "decision": "NotApplicable", "delivery": "NotApplicable", "next_work": "NotConsumed", "consumed_parts": 2, "engine": [1, 255, 255, 1, 0, 1, 0], "obligation_count": 1, "owner_count": 4, "context": null, "transaction": null, "receipt": null, "fresh_engine": [1, 255, 255, 2, 0, 2, 0], "anchor": null},
+        "/fact_obligations/1": [
+          {"obligation": [10, 0, 255, 1, 1, 1, 0], "known_decision": "NotCommittedRecoveryRequired", "disposition": "AllHeld", "owner_count": 4}
+        ],
+        "/fact_owners/1": [
+          {"resource": [9, 0, 255, 1, 1, 1, 0], "disposition": "Held", "obligation": [10, 0, 255, 1, 1, 1, 0], "before_holder": [6, 0, 255, 1, 1, 1, 0], "after_holder": [6, 0, 255, 1, 1, 1, 0]},
+          {"resource": [9, 0, 255, 1, 1, 2, 0], "disposition": "Held", "obligation": [10, 0, 255, 1, 1, 1, 0], "before_holder": [6, 0, 255, 1, 1, 1, 0], "after_holder": [6, 0, 255, 1, 1, 1, 0]},
+          {"resource": [9, 0, 255, 1, 1, 3, 0], "disposition": "Held", "obligation": [10, 0, 255, 1, 1, 1, 0], "before_holder": [6, 0, 255, 1, 1, 1, 0], "after_holder": [6, 0, 255, 1, 1, 1, 0]},
+          {"resource": [9, 0, 255, 1, 1, 6, 0], "disposition": "Held", "obligation": [10, 0, 255, 1, 1, 1, 0], "before_holder": null, "after_holder": [6, 0, 255, 1, 1, 1, 0]}
+        ],
+        "/fact_obligations/2": [
+          {"obligation": [10, 0, 255, 1, 1, 1, 0], "known_decision": "NotCommittedRecoveryRequired", "disposition": "AllTransferred", "owner_count": 4}
+        ],
+        "/fact_owners/2": [
+          {"resource": [9, 0, 255, 1, 1, 1, 0], "disposition": "Transferred", "obligation": [10, 0, 255, 1, 1, 1, 0], "before_holder": [6, 0, 255, 1, 1, 1, 0], "after_holder": [10, 0, 255, 1, 1, 1, 0]},
+          {"resource": [9, 0, 255, 1, 1, 2, 0], "disposition": "Transferred", "obligation": [10, 0, 255, 1, 1, 1, 0], "before_holder": [6, 0, 255, 1, 1, 1, 0], "after_holder": [10, 0, 255, 1, 1, 1, 0]},
+          {"resource": [9, 0, 255, 1, 1, 3, 0], "disposition": "Transferred", "obligation": [10, 0, 255, 1, 1, 1, 0], "before_holder": [6, 0, 255, 1, 1, 1, 0], "after_holder": [10, 0, 255, 1, 1, 1, 0]},
+          {"resource": [9, 0, 255, 1, 1, 4, 0], "disposition": "Released", "obligation": null, "before_holder": [3, 0, 0, 1, 1, 1, 1], "after_holder": null},
+          {"resource": [9, 0, 255, 1, 1, 5, 0], "disposition": "Released", "obligation": null, "before_holder": [3, 0, 0, 1, 1, 1, 1], "after_holder": null},
+          {"resource": [9, 0, 255, 1, 1, 6, 0], "disposition": "Transferred", "obligation": [10, 0, 255, 1, 1, 1, 0], "before_holder": [6, 0, 255, 1, 1, 1, 0], "after_holder": [10, 0, 255, 1, 1, 1, 0]}
+        ],
+        "/fact_obligations/4": [
+          {"obligation": [10, 0, 255, 1, 1, 1, 0], "known_decision": "NotCommittedRecoveryRequired", "disposition": "AllReleased", "owner_count": 4}
+        ],
+        "/fact_owners/4": [
+          {"resource": [9, 0, 255, 1, 1, 1, 0], "disposition": "Released", "obligation": [10, 0, 255, 1, 1, 1, 0], "before_holder": [10, 0, 255, 1, 1, 1, 0], "after_holder": null},
+          {"resource": [9, 0, 255, 1, 1, 2, 0], "disposition": "Released", "obligation": [10, 0, 255, 1, 1, 1, 0], "before_holder": [10, 0, 255, 1, 1, 1, 0], "after_holder": null},
+          {"resource": [9, 0, 255, 1, 1, 3, 0], "disposition": "Released", "obligation": [10, 0, 255, 1, 1, 1, 0], "before_holder": [10, 0, 255, 1, 1, 1, 0], "after_holder": null},
+          {"resource": [9, 0, 255, 1, 1, 6, 0], "disposition": "Released", "obligation": [10, 0, 255, 1, 1, 1, 0], "before_holder": [10, 0, 255, 1, 1, 1, 0], "after_holder": null}
+        ]
+      },
+      "classification": "hand-specified history A0 Begin (c1) -> A0 Prepare DmlN0 slot0 (c2) -> A0 Rollback Incomplete first fence (c3, f1, O1, Recovery u6) -> A0 CloseSession Complete under Fenced (c4, f2: Plan/Binding released, RW3+Recovery handed off to O1) -> A1 CloseSession Complete idle (c5, f3) -> Recovery Exact (f4): E1 RecoveryConfirmedRetired with successor E2 Admitting = current_engine, O1 RecoveryConfirmed, all owners Released. Both shells Closed but still attached to E1/S1 and E1/S2. Fact payloads, actor.transaction=null and Vacant slot after CloseSession are plausible fills outside the read-set; no model execution"
+    },
+    {
+      "id": "supplement2:retired-engine-open-shell-workspace",
+      "base": "supplement2:retired-engine-after-recovery",
+      "put": {
+        "/actors/0/shell": "Open",
+        "/actors/0/transaction": [6, 0, 255, 1, 1, 1, 0],
+        "/session_incarnations/1/lifecycle": "Open",
+        "/session_incarnations/1/closing_context": null,
+        "/prepared_slots/0:0": {"actor": 0, "slot": 0, "state": "ReadyBound", "next_statement_generation": 2, "next_result_generation": 1, "statement": [3, 0, 0, 1, 1, 1, 1], "binding": [7, 0, 255, 1, 1, 1, 0], "descriptor_result": null},
+        "/issued_statements/1/life": "Current",
+        "/issued_statements/1/retirement": "None",
+        "/issued_statements/1/retirement_context": null,
+        "/bindings/1/life": "Current",
+        "/owners/4": {"id": [9, 0, 255, 1, 1, 4, 0], "resource_kind": "Plan", "disposition": "Held", "transfer_count": 0, "original_holder": [3, 0, 0, 1, 1, 1, 1], "current_holder": [3, 0, 0, 1, 1, 1, 1], "previous_holder": null, "birth_context": [5, 0, 255, 1, 1, 2, 0], "last_fact": null},
+        "/owners/5": {"id": [9, 0, 255, 1, 1, 5, 0], "resource_kind": "Binding", "disposition": "Held", "transfer_count": 0, "original_holder": [3, 0, 0, 1, 1, 1, 1], "current_holder": [3, 0, 0, 1, 1, 1, 1], "previous_holder": null, "birth_context": [5, 0, 255, 1, 1, 2, 0], "last_fact": null}
+      },
+      "classification": "read-set WORKSPACE, not reachable: actor0's shell/session reopened in place on the RecoveryConfirmedRetired E1 with its slot0 statement, Plan/Binding live and actor.transaction pointing at the Ended RW T1 (Recovery normally requires Closed shells, and the retained f2 history still records the earlier release). Only CloseSession's read-set (actor, attached engine admission, actor-local slots, T, Outstanding O of the origin session) is coherent"
+    },
+    {
+      "id": "supplement2:rw-written-peer-rw",
+      "base": "original:rw.written",
+      "put": {
+        "/next_nonce/Context": 5,
+        "/next_nonce/Transaction": 3,
+        "/next_nonce/Resource": 9,
+        "/actors/1/transaction": [6, 1, 255, 1, 2, 2, 0],
+        "/contexts/4": {"id": [5, 1, 255, 1, 2, 4, 0], "issue_ordinal": 4, "status": "Completed"},
+        "/transactions/2": {"id": [6, 1, 255, 1, 2, 2, 0], "origin": "ExplicitBegin", "access": "ReadWrite", "life": "Active", "prior_successful_write": false, "progress": "None", "decision": "NotAttempted", "client_knowledge": "NoDecisionObserved", "delivery": "NotApplicable", "birth_session": [2, 1, 255, 1, 2, 2, 0], "receipt": null, "parked_context": null, "obligation": null, "completion_fact": null},
+        "/owners/6": {"id": [9, 1, 255, 1, 2, 6, 0], "resource_kind": "Undo", "disposition": "Held", "transfer_count": 0, "original_holder": [6, 1, 255, 1, 2, 2, 0], "current_holder": [6, 1, 255, 1, 2, 2, 0], "previous_holder": null, "birth_context": [5, 1, 255, 1, 2, 4, 0], "last_fact": null},
+        "/owners/7": {"id": [9, 1, 255, 1, 2, 7, 0], "resource_kind": "Locks", "disposition": "Held", "transfer_count": 0, "original_holder": [6, 1, 255, 1, 2, 2, 0], "current_holder": [6, 1, 255, 1, 2, 2, 0], "previous_holder": null, "birth_context": [5, 1, 255, 1, 2, 4, 0], "last_fact": null},
+        "/owners/8": {"id": [9, 1, 255, 1, 2, 8, 0], "resource_kind": "AbortReserve", "disposition": "Held", "transfer_count": 0, "original_holder": [6, 1, 255, 1, 2, 2, 0], "current_holder": [6, 1, 255, 1, 2, 2, 0], "previous_holder": null, "birth_context": [5, 1, 255, 1, 2, 4, 0], "last_fact": null}
+      },
+      "classification": "hand-specified history: original rw.written (A0 explicit RW T n1 with a successful write, DmlN0 p1 in slot0, no pending) followed by A1 Begin (c4, T n2, RW3 u6-u8); no model execution"
+    },
+    {
+      "id": "supplement2:peer-fenced-parked-commit",
+      "base": "supplement2:rw-written-peer-rw",
+      "put": {
+        "/next_nonce/Context": 7,
+        "/next_nonce/Resource": 11,
+        "/next_nonce/Obligation": 3,
+        "/next_nonce/Fact": 3,
+        "/actors/0/parked_context": [5, 0, 255, 1, 1, 5, 0],
+        "/contexts/5": {"id": [5, 0, 255, 1, 1, 5, 0], "issue_ordinal": 5, "api": "BeginCommit", "status": "ParkedCommit", "original_deadline": "FutureAtEntry", "cancel_supplied_or_signalled": true, "deadline_reached": false, "cancel_observed_at_completion": false, "deadline_observed_at_completion": false, "completion_phase": "NotCompleted", "statement": null, "result": null, "transaction": [6, 0, 255, 1, 1, 1, 0]},
+        "/contexts/6": {"id": [5, 1, 255, 1, 2, 6, 0], "issue_ordinal": 6, "status": "Completed"},
+        "/transactions/1/parked_context": [5, 0, 255, 1, 1, 5, 0],
+        "/transactions/1/progress": "BeforeAttempt",
+        "/transactions/1/life": "RecoveryPending",
+        "/transactions/1/obligation": [10, 0, 255, 1, 1, 1, 0],
+        "/transactions/2/life": "RecoveryPending",
+        "/transactions/2/decision": "NotCommittedRecoveryRequired",
+        "/transactions/2/client_knowledge": "KnownNotCommittedRecoveryRequired",
+        "/transactions/2/obligation": [10, 1, 255, 1, 2, 2, 0],
+        "/transactions/2/completion_fact": [11, 255, 255, 1, 0, 2, 0],
+        "/engines/1/admission": "Fenced",
+        "/engines/1/first_cause": "UndoIncomplete",
+        "/engines/1/known_decision": "NotCommittedRecoveryRequired",
+        "/engines/1/cause_transaction": [6, 1, 255, 1, 2, 2, 0],
+        "/engines/1/first_fence_context": [5, 1, 255, 1, 2, 6, 0],
+        "/obligations/1": {"id": [10, 0, 255, 1, 1, 1, 0], "engine": [1, 255, 255, 1, 0, 1, 0], "transaction": [6, 0, 255, 1, 1, 1, 0], "origin_session": [2, 0, 255, 1, 1, 1, 0], "creation_reason": "PeerActiveTransactionAtFence", "latest_reason": "PeerActiveTransactionAtFence", "reason_mask": 8, "disposition": "AllHeld", "known_decision": "NotAttempted", "settlement": "Outstanding", "first_fact": [11, 255, 255, 1, 0, 2, 0], "latest_fact": [11, 255, 255, 1, 0, 2, 0], "recovery_fact": null},
+        "/obligations/2": {"id": [10, 1, 255, 1, 2, 2, 0], "engine": [1, 255, 255, 1, 0, 1, 0], "transaction": [6, 1, 255, 1, 2, 2, 0], "origin_session": [2, 1, 255, 1, 2, 2, 0], "creation_reason": "KnownNotCommittedUndoPending", "latest_reason": "KnownNotCommittedUndoPending", "reason_mask": 1, "disposition": "AllHeld", "known_decision": "NotCommittedRecoveryRequired", "settlement": "Outstanding", "first_fact": [11, 255, 255, 1, 0, 2, 0], "latest_fact": [11, 255, 255, 1, 0, 2, 0], "recovery_fact": null},
+        "/owners/9": {"id": [9, 0, 255, 1, 1, 9, 0], "resource_kind": "Recovery", "disposition": "Held", "transfer_count": 0, "original_holder": [6, 0, 255, 1, 1, 1, 0], "current_holder": [6, 0, 255, 1, 1, 1, 0], "previous_holder": null, "birth_context": [5, 1, 255, 1, 2, 6, 0], "last_fact": [11, 255, 255, 1, 0, 2, 0]},
+        "/owners/10": {"id": [9, 1, 255, 1, 2, 10, 0], "resource_kind": "Recovery", "disposition": "Held", "transfer_count": 0, "original_holder": [6, 1, 255, 1, 2, 2, 0], "current_holder": [6, 1, 255, 1, 2, 2, 0], "previous_holder": null, "birth_context": [5, 1, 255, 1, 2, 6, 0], "last_fact": [11, 255, 255, 1, 0, 2, 0]},
+        "/facts/2": {"id": [11, 255, 255, 1, 0, 2, 0], "kind": "RollbackCleanup", "api": "Rollback", "outcome_class": 1, "cleanup": "Incomplete", "decision": "NotCommittedRecoveryRequired", "delivery": "NotApplicable", "next_work": "NotConsumed", "consumed_parts": 2, "engine": [1, 255, 255, 1, 0, 1, 0], "obligation_count": 2, "owner_count": 8, "context": [5, 1, 255, 1, 2, 6, 0], "transaction": [6, 1, 255, 1, 2, 2, 0], "receipt": null, "fresh_engine": null, "anchor": null},
+        "/fact_obligations/2": [
+          {"obligation": [10, 0, 255, 1, 1, 1, 0], "known_decision": "NotAttempted", "disposition": "AllHeld", "owner_count": 4},
+          {"obligation": [10, 1, 255, 1, 2, 2, 0], "known_decision": "NotCommittedRecoveryRequired", "disposition": "AllHeld", "owner_count": 4}
+        ],
+        "/fact_owners/2": [
+          {"resource": [9, 0, 255, 1, 1, 1, 0], "disposition": "Held", "obligation": [10, 0, 255, 1, 1, 1, 0], "before_holder": [6, 0, 255, 1, 1, 1, 0], "after_holder": [6, 0, 255, 1, 1, 1, 0]},
+          {"resource": [9, 0, 255, 1, 1, 2, 0], "disposition": "Held", "obligation": [10, 0, 255, 1, 1, 1, 0], "before_holder": [6, 0, 255, 1, 1, 1, 0], "after_holder": [6, 0, 255, 1, 1, 1, 0]},
+          {"resource": [9, 0, 255, 1, 1, 3, 0], "disposition": "Held", "obligation": [10, 0, 255, 1, 1, 1, 0], "before_holder": [6, 0, 255, 1, 1, 1, 0], "after_holder": [6, 0, 255, 1, 1, 1, 0]},
+          {"resource": [9, 0, 255, 1, 1, 9, 0], "disposition": "Held", "obligation": [10, 0, 255, 1, 1, 1, 0], "before_holder": null, "after_holder": [6, 0, 255, 1, 1, 1, 0]},
+          {"resource": [9, 1, 255, 1, 2, 6, 0], "disposition": "Held", "obligation": [10, 1, 255, 1, 2, 2, 0], "before_holder": [6, 1, 255, 1, 2, 2, 0], "after_holder": [6, 1, 255, 1, 2, 2, 0]},
+          {"resource": [9, 1, 255, 1, 2, 7, 0], "disposition": "Held", "obligation": [10, 1, 255, 1, 2, 2, 0], "before_holder": [6, 1, 255, 1, 2, 2, 0], "after_holder": [6, 1, 255, 1, 2, 2, 0]},
+          {"resource": [9, 1, 255, 1, 2, 8, 0], "disposition": "Held", "obligation": [10, 1, 255, 1, 2, 2, 0], "before_holder": [6, 1, 255, 1, 2, 2, 0], "after_holder": [6, 1, 255, 1, 2, 2, 0]},
+          {"resource": [9, 1, 255, 1, 2, 10, 0], "disposition": "Held", "obligation": [10, 1, 255, 1, 2, 2, 0], "before_holder": null, "after_holder": [6, 1, 255, 1, 2, 2, 0]}
+        ]
+      },
+      "classification": "hand-specified history: supplement2:rw-written-peer-rw then A0 BeginCommit FutureAtEntry (c5, ParkedCommit on T n1, progress BeforeAttempt; a later SignalContext Cancel set cancel_supplied_or_signalled) then A1 Rollback Incomplete first fence (c6, f2): census in transaction identity-key order gives actor0's peer O n1 (NotAttempted, Recovery u9) and actor1's cause O n2 (NCR, Recovery u10). Peer T life RecoveryPending as in supplement N9; no model execution"
+    },
+    {
+      "id": "supplement2:retired-engine-parked-commit-workspace",
+      "base": "original:rw.written",
+      "put": {
+        "/current_engine": [1, 255, 255, 2, 0, 2, 0],
+        "/next_nonce/Engine": 3,
+        "/next_nonce/Context": 5,
+        "/engines/1/admission": "RecoveryConfirmedRetired",
+        "/engines/1/successor_engine": [1, 255, 255, 2, 0, 2, 0],
+        "/engines/2": {"id": [1, 255, 255, 2, 0, 2, 0], "admission": "Admitting", "first_cause": "None", "known_decision": "NotApplicable", "cause_transaction": null, "first_fence_context": null, "successor_engine": null, "recovery_fact": null},
+        "/actors/0/parked_context": [5, 0, 255, 1, 1, 4, 0],
+        "/contexts/4": {"id": [5, 0, 255, 1, 1, 4, 0], "issue_ordinal": 4, "api": "BeginCommit", "status": "ParkedCommit", "original_deadline": "FutureAtEntry", "cancel_supplied_or_signalled": false, "deadline_reached": true, "cancel_observed_at_completion": false, "deadline_observed_at_completion": false, "completion_phase": "NotCompleted", "statement": null, "result": null, "transaction": [6, 0, 255, 1, 1, 1, 0]},
+        "/transactions/1/parked_context": [5, 0, 255, 1, 1, 4, 0],
+        "/transactions/1/progress": "BeforeAttempt"
+      },
+      "classification": "read-set WORKSPACE, not reachable: E1 is RecoveryConfirmedRetired (successor E2 Admitting = current_engine) without any recovered obligation, while actor0 is still Open on E1 with an Active RW T n1 parked in BeginCommit (BeforeAttempt, deadline reached). Only FinishCommit's read-set (actor, matching ParkedCommit, T, attached engine admission, live RW, Obligation/Resource/Fact namespaces) is coherent"
+    },
+    {
+      "id": "supplement2:idle-prepared-peer-rw",
+      "base": "original:sel.prepared",
+      "put": {
+        "/next_nonce/Context": 3,
+        "/next_nonce/Transaction": 2,
+        "/next_nonce/Resource": 6,
+        "/actors/1/transaction": [6, 1, 255, 1, 2, 1, 0],
+        "/contexts/2": {"id": [5, 1, 255, 1, 2, 2, 0], "issue_ordinal": 2, "status": "Completed"},
+        "/transactions/1": {"id": [6, 1, 255, 1, 2, 1, 0], "origin": "ExplicitBegin", "access": "ReadWrite", "life": "Active", "prior_successful_write": false, "progress": "None", "decision": "NotAttempted", "client_knowledge": "NoDecisionObserved", "delivery": "NotApplicable", "birth_session": [2, 1, 255, 1, 2, 2, 0], "receipt": null, "parked_context": null, "obligation": null, "completion_fact": null},
+        "/owners/3": {"id": [9, 1, 255, 1, 2, 3, 0], "resource_kind": "Undo", "disposition": "Held", "transfer_count": 0, "original_holder": [6, 1, 255, 1, 2, 1, 0], "current_holder": [6, 1, 255, 1, 2, 1, 0], "previous_holder": null, "birth_context": [5, 1, 255, 1, 2, 2, 0], "last_fact": null},
+        "/owners/4": {"id": [9, 1, 255, 1, 2, 4, 0], "resource_kind": "Locks", "disposition": "Held", "transfer_count": 0, "original_holder": [6, 1, 255, 1, 2, 1, 0], "current_holder": [6, 1, 255, 1, 2, 1, 0], "previous_holder": null, "birth_context": [5, 1, 255, 1, 2, 2, 0], "last_fact": null},
+        "/owners/5": {"id": [9, 1, 255, 1, 2, 5, 0], "resource_kind": "AbortReserve", "disposition": "Held", "transfer_count": 0, "original_holder": [6, 1, 255, 1, 2, 1, 0], "current_holder": [6, 1, 255, 1, 2, 1, 0], "previous_holder": null, "birth_context": [5, 1, 255, 1, 2, 2, 0], "last_fact": null}
+      },
+      "classification": "hand-specified history: original sel.prepared (A0 SelectN0 p1 in slot0 with Plan u1/Binding u2, no transaction) then A1 Begin (c2, T n1, RW3 u3-u5); no model execution"
+    },
+    {
+      "id": "supplement2:parked-fetch-peer-rw",
+      "base": "original:sel.parked",
+      "put": {
+        "/next_nonce/Context": 5,
+        "/next_nonce/Transaction": 3,
+        "/next_nonce/Resource": 9,
+        "/actors/1/transaction": [6, 1, 255, 1, 2, 2, 0],
+        "/contexts/4": {"id": [5, 1, 255, 1, 2, 4, 0], "issue_ordinal": 4, "status": "Completed"},
+        "/transactions/2": {"id": [6, 1, 255, 1, 2, 2, 0], "origin": "ExplicitBegin", "access": "ReadWrite", "life": "Active", "prior_successful_write": false, "progress": "None", "decision": "NotAttempted", "client_knowledge": "NoDecisionObserved", "delivery": "NotApplicable", "birth_session": [2, 1, 255, 1, 2, 2, 0], "receipt": null, "parked_context": null, "obligation": null, "completion_fact": null},
+        "/owners/6": {"id": [9, 1, 255, 1, 2, 6, 0], "resource_kind": "Undo", "disposition": "Held", "transfer_count": 0, "original_holder": [6, 1, 255, 1, 2, 2, 0], "current_holder": [6, 1, 255, 1, 2, 2, 0], "previous_holder": null, "birth_context": [5, 1, 255, 1, 2, 4, 0], "last_fact": null},
+        "/owners/7": {"id": [9, 1, 255, 1, 2, 7, 0], "resource_kind": "Locks", "disposition": "Held", "transfer_count": 0, "original_holder": [6, 1, 255, 1, 2, 2, 0], "current_holder": [6, 1, 255, 1, 2, 2, 0], "previous_holder": null, "birth_context": [5, 1, 255, 1, 2, 4, 0], "last_fact": null},
+        "/owners/8": {"id": [9, 1, 255, 1, 2, 8, 0], "resource_kind": "AbortReserve", "disposition": "Held", "transfer_count": 0, "original_holder": [6, 1, 255, 1, 2, 2, 0], "current_holder": [6, 1, 255, 1, 2, 2, 0], "previous_holder": null, "birth_context": [5, 1, 255, 1, 2, 4, 0], "last_fact": null}
+      },
+      "classification": "hand-specified history: original sel.parked (A0 ParkedFetch c3 on its implicit RO T n1) then A1 Begin (c4, T n2, RW3 u6-u8); no model execution"
+    }
+  ],
+  "cases": [
+    {
+      "id": "asm/supplement2/close-session-retired-engine-closed-shell",
+      "pre_state": "supplement2:retired-engine-after-recovery",
+      "raw_index": 1310,
+      "raw_action": {"api": "CloseSession", "actor": 0, "selector": null, "prepare": null, "autocommit": null, "outcome": 0},
+      "purpose": "D-A: CloseSession Complete whose attached engine E1 is RecoveryConfirmedRetired (current_engine E2 is Admitting) takes LocalReleaseAndHandoff cleanup3/commit255; settled O1 and its Released owners are not handed off; actor-local set empty; fact on attached E1",
+      "expected_input": {
+        "schema_version": 1, "api": "CloseSession", "api_tag": 10, "actor": 0, "outcome_tag": 0,
+        "prepare_slot": 255, "prepare_shape": 255, "parameter_count": 255, "set_autocommit": 255,
+        "target": null, "context": [5, 0, 255, 1, 1, 6, 0],
+        "original_deadline": "Absent", "supplied_cancel": false, "deadline_reached": false, "bind_values": [],
+        "environment": {
+          "envelope_schema": 1, "fact": [11, 255, 255, 1, 0, 5, 0], "kind": "SessionCleanup", "work_kind": "None", "work_class": 255,
+          "cleanup": 3, "commit_class": 255, "reserved0": 0, "transaction": null,
+          "receipt": null, "anchor": null, "fresh_engine": null,
+          "obligations": [],
+          "owners": []
+        }
+      }
+    },
+    {
+      "id": "asm/supplement2/close-session-retired-engine-open-shell",
+      "pre_state": "supplement2:retired-engine-open-shell-workspace",
+      "raw_index": 1310,
+      "raw_action": {"api": "CloseSession", "actor": 0, "selector": null, "prepare": null, "autocommit": null, "outcome": 0},
+      "purpose": "workspace D-A: RecoveryConfirmedRetired attached engine with live actor-local Plan/Binding and actor.transaction = RW T1: cleanup3, commit255 (not Aborted0), actor-local Plan/Binding Released, no RW(T) row, no handoff of the settled O",
+      "expected_input": {
+        "schema_version": 1, "api": "CloseSession", "api_tag": 10, "actor": 0, "outcome_tag": 0,
+        "prepare_slot": 255, "prepare_shape": 255, "parameter_count": 255, "set_autocommit": 255,
+        "target": null, "context": [5, 0, 255, 1, 1, 6, 0],
+        "original_deadline": "Absent", "supplied_cancel": false, "deadline_reached": false, "bind_values": [],
+        "environment": {
+          "envelope_schema": 1, "fact": [11, 255, 255, 1, 0, 5, 0], "kind": "SessionCleanup", "work_kind": "None", "work_class": 255,
+          "cleanup": 3, "commit_class": 255, "reserved0": 0, "transaction": [6, 0, 255, 1, 1, 1, 0],
+          "receipt": null, "anchor": null, "fresh_engine": null,
+          "obligations": [],
+          "owners": [
+            {"resource": [9, 0, 255, 1, 1, 4, 0], "resource_kind": "Plan", "after_disposition": "Released", "obligation": null, "before_holder": [3, 0, 0, 1, 1, 1, 1], "after_holder": null},
+            {"resource": [9, 0, 255, 1, 1, 5, 0], "resource_kind": "Binding", "after_disposition": "Released", "obligation": null, "before_holder": [3, 0, 0, 1, 1, 1, 1], "after_holder": null}
+          ]
+        }
+      }
+    },
+    {
+      "id": "asm/supplement2/finish-ncr-fenced-peer-o-handoff",
+      "pre_state": "supplement2:peer-fenced-parked-commit",
+      "raw_index": 1520,
+      "raw_action": {"api": "FinishCommit", "actor": 0, "selector": null, "prepare": null, "autocommit": null, "outcome": 2},
+      "purpose": "D-B Fenced: matching ParkedCommit (context/control copied incl. cancel bit) -> cleanup3, commit1; exact handoff of only the parked T's RW3+Recovery to its existing peer O, whose known_decision stays NotAttempted (not raw NCR); actor1's O/owners and actor0's Plan/Binding absent",
+      "expected_input": {
+        "schema_version": 1, "api": "FinishCommit", "api_tag": 19, "actor": 0, "outcome_tag": 2,
+        "prepare_slot": 255, "prepare_shape": 255, "parameter_count": 255, "set_autocommit": 255,
+        "target": null, "context": [5, 0, 255, 1, 1, 5, 0],
+        "original_deadline": "FutureAtEntry", "supplied_cancel": true, "deadline_reached": false, "bind_values": [],
+        "environment": {
+          "envelope_schema": 1, "fact": [11, 255, 255, 1, 0, 3, 0], "kind": "CommitFinish", "work_kind": "None", "work_class": 255,
+          "cleanup": 3, "commit_class": 1, "reserved0": 0, "transaction": [6, 0, 255, 1, 1, 1, 0],
+          "receipt": null, "anchor": null, "fresh_engine": null,
+          "obligations": [
+            {"obligation": [10, 0, 255, 1, 1, 1, 0], "known_decision": "NotAttempted", "after_ownership_summary": "AllTransferred", "associated_owner_count": 4}
+          ],
+          "owners": [
+            {"resource": [9, 0, 255, 1, 1, 1, 0], "resource_kind": "Undo", "after_disposition": "Transferred", "obligation": [10, 0, 255, 1, 1, 1, 0], "before_holder": [6, 0, 255, 1, 1, 1, 0], "after_holder": [10, 0, 255, 1, 1, 1, 0]},
+            {"resource": [9, 0, 255, 1, 1, 2, 0], "resource_kind": "Locks", "after_disposition": "Transferred", "obligation": [10, 0, 255, 1, 1, 1, 0], "before_holder": [6, 0, 255, 1, 1, 1, 0], "after_holder": [10, 0, 255, 1, 1, 1, 0]},
+            {"resource": [9, 0, 255, 1, 1, 3, 0], "resource_kind": "AbortReserve", "after_disposition": "Transferred", "obligation": [10, 0, 255, 1, 1, 1, 0], "before_holder": [6, 0, 255, 1, 1, 1, 0], "after_holder": [10, 0, 255, 1, 1, 1, 0]},
+            {"resource": [9, 0, 255, 1, 1, 9, 0], "resource_kind": "Recovery", "after_disposition": "Transferred", "obligation": [10, 0, 255, 1, 1, 1, 0], "before_holder": [6, 0, 255, 1, 1, 1, 0], "after_holder": [10, 0, 255, 1, 1, 1, 0]}
+          ]
+        }
+      }
+    },
+    {
+      "id": "asm/supplement2/finish-ncr-retired-engine-census",
+      "pre_state": "supplement2:retired-engine-parked-commit-workspace",
+      "raw_index": 1520,
+      "raw_action": {"api": "FinishCommit", "actor": 0, "selector": null, "prepare": null, "autocommit": null, "outcome": 2},
+      "purpose": "workspace D-B: matching ParkedCommit on a RecoveryConfirmedRetired attached engine is NOT the Fenced branch: cleanup2, commit1 and a first-fence census of E1 (new cause O n1 NCR, RW3 before=after, new Recovery u6); control copied incl. reached bit",
+      "expected_input": {
+        "schema_version": 1, "api": "FinishCommit", "api_tag": 19, "actor": 0, "outcome_tag": 2,
+        "prepare_slot": 255, "prepare_shape": 255, "parameter_count": 255, "set_autocommit": 255,
+        "target": null, "context": [5, 0, 255, 1, 1, 4, 0],
+        "original_deadline": "FutureAtEntry", "supplied_cancel": false, "deadline_reached": true, "bind_values": [],
+        "environment": {
+          "envelope_schema": 1, "fact": [11, 255, 255, 1, 0, 2, 0], "kind": "CommitFinish", "work_kind": "None", "work_class": 255,
+          "cleanup": 2, "commit_class": 1, "reserved0": 0, "transaction": [6, 0, 255, 1, 1, 1, 0],
+          "receipt": null, "anchor": null, "fresh_engine": null,
+          "obligations": [
+            {"obligation": [10, 0, 255, 1, 1, 1, 0], "known_decision": "NotCommittedRecoveryRequired", "after_ownership_summary": "AllHeld", "associated_owner_count": 4}
+          ],
+          "owners": [
+            {"resource": [9, 0, 255, 1, 1, 1, 0], "resource_kind": "Undo", "after_disposition": "Held", "obligation": [10, 0, 255, 1, 1, 1, 0], "before_holder": [6, 0, 255, 1, 1, 1, 0], "after_holder": [6, 0, 255, 1, 1, 1, 0]},
+            {"resource": [9, 0, 255, 1, 1, 2, 0], "resource_kind": "Locks", "after_disposition": "Held", "obligation": [10, 0, 255, 1, 1, 1, 0], "before_holder": [6, 0, 255, 1, 1, 1, 0], "after_holder": [6, 0, 255, 1, 1, 1, 0]},
+            {"resource": [9, 0, 255, 1, 1, 3, 0], "resource_kind": "AbortReserve", "after_disposition": "Held", "obligation": [10, 0, 255, 1, 1, 1, 0], "before_holder": [6, 0, 255, 1, 1, 1, 0], "after_holder": [6, 0, 255, 1, 1, 1, 0]},
+            {"resource": [9, 0, 255, 1, 1, 6, 0], "resource_kind": "Recovery", "after_disposition": "Held", "obligation": [10, 0, 255, 1, 1, 1, 0], "before_holder": null, "after_holder": [6, 0, 255, 1, 1, 1, 0]}
+          ]
+        }
+      }
+    },
+    {
+      "id": "asm/supplement2/commit-atomic-fenced-changed-published",
+      "pre_state": "original:rw.recovery_pending",
+      "raw_index": 1282,
+      "raw_action": {"api": "CommitAtomic", "actor": 0, "selector": null, "prepare": null, "autocommit": null, "outcome": 0},
+      "purpose": "D-C: CommitAtomic Success on the fenced changed RW T with Outstanding O1: Published4 + new durable receipt/anchor, RW(T) only Released and linked to O1 (Recovery u6 excluded), O1 row Committed with envelope-local count3/AllReleased",
+      "expected_input": {
+        "schema_version": 1, "api": "CommitAtomic", "api_tag": 8, "actor": 0, "outcome_tag": 0,
+        "prepare_slot": 255, "prepare_shape": 255, "parameter_count": 255, "set_autocommit": 255,
+        "target": null, "context": [5, 0, 255, 1, 1, 5, 0],
+        "original_deadline": "Absent", "supplied_cancel": false, "deadline_reached": false, "bind_values": [],
+        "environment": {
+          "envelope_schema": 1, "fact": [11, 255, 255, 1, 0, 3, 0], "kind": "CommitAtomic", "work_kind": "None", "work_class": 255,
+          "cleanup": 255, "commit_class": 4, "reserved0": 0, "transaction": [6, 0, 255, 1, 1, 1, 0],
+          "receipt": [8, 0, 255, 1, 1, 1, 0], "anchor": [12, 255, 255, 1, 0, 1, 0], "fresh_engine": null,
+          "obligations": [
+            {"obligation": [10, 0, 255, 1, 1, 1, 0], "known_decision": "Committed", "after_ownership_summary": "AllReleased", "associated_owner_count": 3}
+          ],
+          "owners": [
+            {"resource": [9, 0, 255, 1, 1, 1, 0], "resource_kind": "Undo", "after_disposition": "Released", "obligation": [10, 0, 255, 1, 1, 1, 0], "before_holder": [6, 0, 255, 1, 1, 1, 0], "after_holder": null},
+            {"resource": [9, 0, 255, 1, 1, 2, 0], "resource_kind": "Locks", "after_disposition": "Released", "obligation": [10, 0, 255, 1, 1, 1, 0], "before_holder": [6, 0, 255, 1, 1, 1, 0], "after_holder": null},
+            {"resource": [9, 0, 255, 1, 1, 3, 0], "resource_kind": "AbortReserve", "after_disposition": "Released", "obligation": [10, 0, 255, 1, 1, 1, 0], "before_holder": [6, 0, 255, 1, 1, 1, 0], "after_holder": null}
+          ]
+        }
+      }
+    },
+    {
+      "id": "asm/supplement2/commit-atomic-fenced-validation-aborted",
+      "pre_state": "original:rw.recovery_pending",
+      "raw_index": 1284,
+      "raw_action": {"api": "CommitAtomic", "actor": 0, "selector": null, "prepare": null, "autocommit": null, "outcome": 2},
+      "purpose": "D-C: CommitAtomic ValidationAborted on the same fenced T: cleanup1/commit0, no receipt, same RW(T) release linked to O1, but O1 keeps its existing NotCommittedRecoveryRequired",
+      "expected_input": {
+        "schema_version": 1, "api": "CommitAtomic", "api_tag": 8, "actor": 0, "outcome_tag": 2,
+        "prepare_slot": 255, "prepare_shape": 255, "parameter_count": 255, "set_autocommit": 255,
+        "target": null, "context": [5, 0, 255, 1, 1, 5, 0],
+        "original_deadline": "Absent", "supplied_cancel": false, "deadline_reached": false, "bind_values": [],
+        "environment": {
+          "envelope_schema": 1, "fact": [11, 255, 255, 1, 0, 3, 0], "kind": "CommitAtomic", "work_kind": "None", "work_class": 255,
+          "cleanup": 1, "commit_class": 0, "reserved0": 0, "transaction": [6, 0, 255, 1, 1, 1, 0],
+          "receipt": null, "anchor": null, "fresh_engine": null,
+          "obligations": [
+            {"obligation": [10, 0, 255, 1, 1, 1, 0], "known_decision": "NotCommittedRecoveryRequired", "after_ownership_summary": "AllReleased", "associated_owner_count": 3}
+          ],
+          "owners": [
+            {"resource": [9, 0, 255, 1, 1, 1, 0], "resource_kind": "Undo", "after_disposition": "Released", "obligation": [10, 0, 255, 1, 1, 1, 0], "before_holder": [6, 0, 255, 1, 1, 1, 0], "after_holder": null},
+            {"resource": [9, 0, 255, 1, 1, 2, 0], "resource_kind": "Locks", "after_disposition": "Released", "obligation": [10, 0, 255, 1, 1, 1, 0], "before_holder": [6, 0, 255, 1, 1, 1, 0], "after_holder": null},
+            {"resource": [9, 0, 255, 1, 1, 3, 0], "resource_kind": "AbortReserve", "after_disposition": "Released", "obligation": [10, 0, 255, 1, 1, 1, 0], "before_holder": [6, 0, 255, 1, 1, 1, 0], "after_holder": null}
+          ]
+        }
+      }
+    },
+    {
+      "id": "asm/supplement2/close-session-incomplete-idle-peer-census",
+      "pre_state": "supplement2:idle-prepared-peer-rw",
+      "raw_index": 1311,
+      "raw_action": {"api": "CloseSession", "actor": 0, "selector": null, "prepare": null, "autocommit": null, "outcome": 1},
+      "purpose": "direct CloseSession Incomplete with caller T None still runs the first-fence peer census: actor1 new O n1 with T.decision NotAttempted, RW3 before=after + new Recovery u6; transaction None; actor0's own Plan/Binding not released",
+      "expected_input": {
+        "schema_version": 1, "api": "CloseSession", "api_tag": 10, "actor": 0, "outcome_tag": 1,
+        "prepare_slot": 255, "prepare_shape": 255, "parameter_count": 255, "set_autocommit": 255,
+        "target": null, "context": [5, 0, 255, 1, 1, 3, 0],
+        "original_deadline": "Absent", "supplied_cancel": false, "deadline_reached": false, "bind_values": [],
+        "environment": {
+          "envelope_schema": 1, "fact": [11, 255, 255, 1, 0, 1, 0], "kind": "SessionCleanup", "work_kind": "None", "work_class": 255,
+          "cleanup": 2, "commit_class": 1, "reserved0": 0, "transaction": null,
+          "receipt": null, "anchor": null, "fresh_engine": null,
+          "obligations": [
+            {"obligation": [10, 1, 255, 1, 2, 1, 0], "known_decision": "NotAttempted", "after_ownership_summary": "AllHeld", "associated_owner_count": 4}
+          ],
+          "owners": [
+            {"resource": [9, 1, 255, 1, 2, 3, 0], "resource_kind": "Undo", "after_disposition": "Held", "obligation": [10, 1, 255, 1, 2, 1, 0], "before_holder": [6, 1, 255, 1, 2, 1, 0], "after_holder": [6, 1, 255, 1, 2, 1, 0]},
+            {"resource": [9, 1, 255, 1, 2, 4, 0], "resource_kind": "Locks", "after_disposition": "Held", "obligation": [10, 1, 255, 1, 2, 1, 0], "before_holder": [6, 1, 255, 1, 2, 1, 0], "after_holder": [6, 1, 255, 1, 2, 1, 0]},
+            {"resource": [9, 1, 255, 1, 2, 5, 0], "resource_kind": "AbortReserve", "after_disposition": "Held", "obligation": [10, 1, 255, 1, 2, 1, 0], "before_holder": [6, 1, 255, 1, 2, 1, 0], "after_holder": [6, 1, 255, 1, 2, 1, 0]},
+            {"resource": [9, 1, 255, 1, 2, 6, 0], "resource_kind": "Recovery", "after_disposition": "Held", "obligation": [10, 1, 255, 1, 2, 1, 0], "before_holder": null, "after_holder": [6, 1, 255, 1, 2, 1, 0]}
+          ]
+        }
+      }
+    },
+    {
+      "id": "asm/supplement2/finish-unknown-no-pending-peer-rw",
+      "pre_state": "supplement2:rw-written-peer-rw",
+      "raw_index": 1521,
+      "raw_action": {"api": "FinishCommit", "actor": 0, "selector": null, "prepare": null, "autocommit": null, "outcome": 3},
+      "purpose": "FinishCommit Unknown with no ParkedCommit while actor0 owns a live RW T and actor1 another: A2 unmatched -> context None, control0, transaction None (not actor.transaction), owners/O empty, no census; class cleanup255/commit7 kept",
+      "expected_input": {
+        "schema_version": 1, "api": "FinishCommit", "api_tag": 19, "actor": 0, "outcome_tag": 3,
+        "prepare_slot": 255, "prepare_shape": 255, "parameter_count": 255, "set_autocommit": 255,
+        "target": null, "context": null,
+        "original_deadline": "Absent", "supplied_cancel": false, "deadline_reached": false, "bind_values": [],
+        "environment": {
+          "envelope_schema": 1, "fact": [11, 255, 255, 1, 0, 2, 0], "kind": "CommitFinish", "work_kind": "None", "work_class": 255,
+          "cleanup": 255, "commit_class": 7, "reserved0": 0, "transaction": null,
+          "receipt": null, "anchor": null, "fresh_engine": null,
+          "obligations": [],
+          "owners": []
+        }
+      }
+    },
+    {
+      "id": "asm/supplement2/finish-unknown-wrong-kind-peer-rw",
+      "pre_state": "supplement2:parked-fetch-peer-rw",
+      "raw_index": 1521,
+      "raw_action": {"api": "FinishCommit", "actor": 0, "selector": null, "prepare": null, "autocommit": null, "outcome": 3},
+      "purpose": "FinishCommit Unknown while actor0's pending is a ParkedFetch (wrong kind) and actor1 has a live RW T: unmatched, so no copy of the ParkedFetch context/control/T, owners/O empty, no census",
+      "expected_input": {
+        "schema_version": 1, "api": "FinishCommit", "api_tag": 19, "actor": 0, "outcome_tag": 3,
+        "prepare_slot": 255, "prepare_shape": 255, "parameter_count": 255, "set_autocommit": 255,
+        "target": null, "context": null,
+        "original_deadline": "Absent", "supplied_cancel": false, "deadline_reached": false, "bind_values": [],
+        "environment": {
+          "envelope_schema": 1, "fact": [11, 255, 255, 1, 0, 2, 0], "kind": "CommitFinish", "work_kind": "None", "work_class": 255,
+          "cleanup": 255, "commit_class": 7, "reserved0": 0, "transaction": null,
+          "receipt": null, "anchor": null, "fresh_engine": null,
+          "obligations": [],
+          "owners": []
+        }
+      }
+    }
+  ],
+  "notes": [
+    "M1 D-A: the CloseSession engine is the caller's attached engine (actors/0/engine = E1), not state.current_engine. In both close-session-retired-engine cases E1 is RecoveryConfirmedRetired while current_engine E2 is Admitting, so the class is LocalReleaseAndHandoff cleanup3/commit255 (wire-v2 class table, coordinator D-A); reading current_engine would wrongly give the Admitting whole-abort class.",
+    "M2 D-A handoff set = live RW/Recovery of the Outstanding obligations whose origin_session is the caller session. O1 is RecoveryConfirmed (not Outstanding, O(E) definition 'Outstanding만', readset-v2 O(T)/O(E) row) and its owners are Released, so no handoff row and no obligation row. The LocalReleaseAndHandoff path carries no RW(T) release, so in the open-shell workspace commit stays 255 and the Ended RW T1 contributes only transaction=[6,0,255,1,1,1,0].",
+    "M3 Post-recovery history choices in supplement2:retired-engine-after-recovery that the assembler does not read: CloseSession clears actor.transaction and leaves slot0 Vacant (statement Retired/SessionClose, binding Released); T1 becomes life Ended after Recovery; SessionCleanup/RecoveryConfirmed fact payload fields (decision NotApplicable, consumed_parts 2) are plausible fills. Recovery's precondition (both shells Closed) holds, so this state is history-shaped; the open-shell variant is explicitly a non-reachable read-set workspace.",
+    "M4 D-B: FinishCommit NCR takes cleanup3 + exact handoff only when the attached engine admission is Fenced (wire-v2 'Fenced이면3 아니면2'). A RecoveryConfirmedRetired engine (workspace) gives cleanup2 plus the first-fence census of that engine, identical in shape to the Admitting asm/pc-BeforeAttempt/1520. NOTE: devdoc/contracts/dev4-lifecycle-assembler.md section '구현 해석과 자원' still says the Fenced branch of CloseSession Complete AND Finish NCR applies whenever admission is not Admitting; that matches D-A but contradicts D-B for Finish NCR. I applied the coordinator-relayed D-B; the contract line needs updating.",
+    "M5 Finish NCR Fenced handoff (owner-scope-v2 A5: 'Finish NCR의 이미 Fenced 분기는 handoff 행이며 cause raw NCR로 기존 O값을 덮지 않는다'; D-C): the parked T's existing O is a peer O created by actor1's fence, so the handoff row keeps known_decision NotAttempted, not NCR. Only that T's live RW3+Recovery are handed off (before=T, after=O, Transferred, count4/AllTransferred); actor1's O/owners and actor0's Plan/Binding are not part of the envelope.",
+    "M6 Matching ParkedCommit copies the original context and the three control fields exactly (proposal section 4: matching이면 original deadline·cancel/reached 두 bit 복사): (FutureAtEntry, cancel=true, reached=false) and (FutureAtEntry, cancel=false, reached=true). The fact candidate still uses the caller attached engine E1 and next Fact.",
+    "M7 Census order in supplement2:peer-fenced-parked-commit follows the contract's transaction identity-key order (supplement N1): actor0's T n1 (session1) before actor1's T n2 (session2), so O actor0 n1 / Recovery u9, O actor1 n2 / Recovery u10. Here nonce and key order coincide; the pre-state only needs them to be coherent.",
+    "M8 D-C CommitAtomic on a fenced RW T with Outstanding O1 (original rw.recovery_pending, prior_successful_write true): recipe is RW(T) release only, so Recovery u6 is excluded. The rows link O1 and O1's row is included (contract: 'T에 기존 O가 있으면 그 T의 RW/Recovery row는 O를 연결하고 연결 row가 있을 때 O row를 포함'). Count/summary are envelope-local, 3/AllReleased. Success changed-RW Published supplies Committed; ValidationAborted keeps the existing NotCommittedRecoveryRequired. The Success receipt is new in T's scope [8,0,255,1,1,1,0] (T.receipt was None, next Receipt 1) with anchor [12,255,255,1,0,1,0]. The model's fence gate may reject both; supplied bytes are unaffected (authentication is not admission).",
+    "M9 CloseSession Incomplete with caller T None runs the peer census (readset-v2 section 4: 'caller T=None이더라도 Incomplete의 peer census를 임의 생략하지 않는다'; coordinator). There is no cause T, so the peer's new O uses T.decision NotAttempted. Commit class is the fixed NCR1 and transaction is None. The caller's own Plan/Binding are not released (wire-v2: 'local 성공을 발명하지 않음').",
+    "M10 Unmatched continuations follow A2 (owner-scope-v2; readset-v2 section 5): no pending, or a pending of the other kind (ParkedFetch for FinishCommit), gives context None, control (Absent,false,false), transaction None (never actor.transaction), owners/O empty and no census even with live RW transactions. The wrong-kind payload is not read or copied. The raw class (Finish Unknown: cleanup 255, commit 7, no receipt) and the fact candidate remain.",
+    "M11 Peer transactions after a fence are modelled as life RecoveryPending with decision unchanged (same as supplement N9). Peer O have creation_reason PeerActiveTransactionAtFence and reason_mask 8. A BeforeAttempt parked T keeps progress BeforeAttempt and its parked_context backlink.",
+    "M12 Every base is either an original: literal state or a pre-state defined in this file, so the file has no cross-file pre-state dependency. Each case carries an extra 'purpose' string, as in supplement/cases.json."
+  ]
+}

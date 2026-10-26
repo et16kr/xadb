@@ -4,6 +4,8 @@
 
 2026-10-26 [DEV2 PF04 측정 profile B 도구(S1)](evidence/dev2-pf04-profile-b-s1-20261026.md): controller slot gate·supervisor/환경 판정기·`slot-env-v1`을 구현하고 K0-005 계약에 등록했다. source별 선택 검증과 실제 native 연결(r1 장치 이름 실패 뒤 r2 `TOOL_CONNECTED`)을 마쳤다. C3·PF04 인수는 NOT_RUN이며 원 PF04 FAIL·DEV2 미완료를 유지한다.
 
+2026-10-25 [DEV4 P5 BFS 탐색기](evidence/dev4-lifecycle-explorer-20261025.md): [결정적 BFS](contracts/dev4-lifecycle-explorer.md)를 구현했다. 설계 상한은 상태 50만에서 INCONCLUSIVE이고, 사용자가 승인한 깊이 5는 깊이 4 이하 43만 상태의 6.6억 slot을 모델·checker로 판정해 불일치0으로 비웠다(archive 없음, PASS 아님). 실행 중 찾은 불일치1건은 모델을 고쳐 판정했다. FE14·깊이 6은 미완료다.
+
 2026-10-25 [DEV2 PF04 C3·측정 profile B 계획](plans/dev2-pf04-resolution-plan.md#c3-profile-b): K0 계측 비용을 반복당 locked RMW로 설명하고, thread별 shard counter(C3)와 결과를 보지 않는 환경 타당성 판정(B)을 실행 전 계획으로 정했다. 한도·pair별 판정은 그대로다. 독립 D2 검토5회 끝에 차단0으로 채택했고 구현·측정은 NOT_RUN, 영속 처리는 결정 대기다. 원 PF04 FAIL·DEV2 미완료를 유지한다.
 
 2026-10-25 [DEV2 PF04 CPU 성능 요청 범위 제어](evidence/dev2-pf04-frequency-control-20261025.md): 도구12·driver4개 선택 검증 뒤 첫 host 연결이 즉시 readback 불일치로 실패했다. 최종234필드는 원 값과 같고 프로세스는 종료됐다. 나머지2개 미실행·격리 lease 보존·사용자 조건에 따른 중단이며 원 PF04 FAIL·DEV2 미완료를 유지한다.
@@ -84,6 +86,12 @@
 
 <a id="previous-updates"></a>
 ## 이전 변경 기록
+
+2026-10-25 [DEV4 P5 독립 edge checker](evidence/dev4-lifecycle-checker-20261025.md): 모델을 호출하지 않는 [`verify_edge`](contracts/dev4-lifecycle-checker.md)를 구현하고 모델 출력을 차등 판정했다. 불일치9건·검토 결정2건을 원문으로 판정해 [모델 계약](contracts/dev4-lifecycle-model.md#checker-adjudication)에 남기고 조립기 공백1건을 고쳤다. 독립 D2 수용·D1 제한 수용이며 alias·BFS·FE14는 미완료다.
+
+2026-10-25 [DEV4 P5 수명 모델 전이](evidence/dev4-lifecycle-model-20261025.md): [소유 계약](contracts/dev4-lifecycle-model.md)의 `transition`을 구현해 원 literal 29 edge·12 trace·5 known-bad와 맞췄다. 1차 독립 검토가 찾은 금지 전이 2건을 교정했고 독립 D2 수용·D1 제한 수용이다. 독립 checker·BFS·FE14는 미완료다.
+
+2026-10-25 [DEV4 P5 전체 입력 조립](evidence/dev4-lifecycle-assembler-20261025.md): [소유 계약](contracts/dev4-lifecycle-assembler.md)의 `assemble_input`을 구현하고 신규 입력1994개를 선택 검증했다. 독립 supplement32·rich 후보 정정2건과 개발 중 불일치 교정 이력을 보존하며 모델 전이·FE14는 미완료다.
 
 2026-10-25 [DEV3 비교 분석 반영](evidence/dev3-comparison-adoption-20261025.md): [설계 보강](contracts/disk-storage-design.md#task-review-011)·[완료분 보완 계획](plans/dev3-implementation-plan.md#comparison-adoption)·[추가 인수](plans/dev3-test-plan.md#comparison-adoption). 제품·시험 미실행, 기존 완료 증거 보존.
 

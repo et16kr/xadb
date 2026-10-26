@@ -8,6 +8,8 @@
 
 - [DEV3 Catalog CREATE 남은 메모리 사례 실행](dev3-catalog-remaining-20261026.md) · [source별 기록](dev3-catalog-remaining-20261026.json) — 9개 모두 source별 PASS, 조회 Live Undo 결함과 두 번째 CREATE 준비 공백 수정, 원 FAIL 보존.
 
+- [DEV4 병합 전 리뷰·수정](dev4-merge-review-20261026.md) · [source별 선택 실행](dev4-merge-review-20261026.json) — 선택 참조·탐색기 자원 한도 보완, 신규13·관련 정상9회 PASS; 원 실패·FE14 미완료 보존.
+
 - [DEV3 Catalog CREATE 구현 중간 저장](dev3-catalog-live-milestone-20261025.md) · [source별 기록](dev3-catalog-live-milestone-20261025.json) — native3경로·메모리14개 확인, 원 FAIL 보존·동시성 등9개 NOT_RUN.
 
 - [DEV3 Catalog 독립 입력과 native 실행기 검증](dev3-catalog-input-controller-20261025.md) · [source별 기록](dev3-catalog-input-controller-20261025.json) — 입력 생성·별도 검산 완료, 실행기 거부14 PASS; 실제 Catalog 통합 진행 중.
@@ -63,6 +65,14 @@
 - [DEV3 복구 작업 중간 저장·자료 정리](dev3-recovery-paused-20261025.md) · [source별 상태 색인](dev3-recovery-paused-20261025.json): 사용자 요청 중지, WIP·FAIL/HOLD·NOT_RUN 보존.
 
 - [COMM 시험 산출물 정리](comm-artifact-cleanup-20261025.md): 전용 Cargo cache35개와 검산된 임시 사본을 정리했다. 원 증거·실행물 보존, 저장소 약3.76GiB·tmpfs 약1.62GiB 절감, 시험 실행0.
+
+- [DEV4 P5 BFS 탐색기](dev4-lifecycle-explorer-20261025.md) — 설계 상한 INCONCLUSIVE, 승인된 깊이 5 불일치0·DrainedUnarchived(6.6억 slot), BFS가 찾은 모델 불일치1 교정. archive·FE14·깊이 6 미완료.
+
+- [DEV4 P5 독립 edge checker](dev4-lifecycle-checker-20261025.md) — 모델 차등 판정 불일치0·판정 이력과 조립기 공백 교정; 독립 D2 수용·D1 제한 수용. alias·BFS·FE14 미완료.
+
+- [DEV4 P5 수명 모델 전이](dev4-lifecycle-model-20261025.md) — 원 29 edge·12 trace·5 known-bad 일치, census·walk smoke와 고정 trace; 1차 검토의 금지 전이 2건 교정 보존. 독립 checker·BFS 미완료.
+
+- [DEV4 P5 전체 입력 조립](dev4-lifecycle-assembler-20261025.md) — 신규1994입력 선택 검증·rich 후보 정정2·독립 supplement32; 원 개발 불일치와 교정 이력 보존. 모델/FE14 미완료.
 
 - [DEV4 P5 전체 입력 조립 준비](dev4-lifecycle-assembly-inputs-20261025.md) — 독립 후보1658개 정적 한정 검토; 미검토 rich304·전체 D2·제품·시험 NOT_RUN.
 

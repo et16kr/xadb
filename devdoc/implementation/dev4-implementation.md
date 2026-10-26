@@ -1,6 +1,6 @@
 # DEV4 독립 앞단 구현
 
-2026-10-24 · **lexer·이름·splitter·P2/P4 raw 문장·P3 scalar·predicate 구문·typed 평가 제한 구현 / P4·P5 codec 최종 독립 D1 제한 수용 / 실제 SQL 실행·DEV4·Q1 미완료**
+2026-10-25 · **lexer·이름·splitter·P2/P4 raw 문장·P3 scalar·predicate 구문·typed 평가 제한 구현 / P4·P5 codec 최종 독립 D1 제한 수용 / P5 조립·모델·checker·메모리 BFS 제한 구현 / FE14·실제 SQL 실행·DEV4·Q1 미완료**
 
 [독립 앞단 계약](../contracts/dev4-independent-frontend.md#lexer-leaf) · [병행 계획](../plans/dev4-preparation-plan.md) · [source별 증거](../evidence/dev4-frontend-20261024.md)
 
@@ -276,3 +276,85 @@ handle 인증·모델 전이는 포함하지 않는다. [선택 기록](../evide
 오류·상한76을 정적 한정 검토하고 원 source/hash를 보존했다. 추가 rich304개는 미검토로 남긴다.
 사용자의 정리·commit 요청에 따라 준비 단위를 보존하며 전체 D2·`assemble_input`·시험 harness는
 미완료다. 이 단위의 제품 변경·compile/runtime/test는0이며 이전 완료 시험을 반복하지 않았다.
+
+<a id="lifecycle-assembler"></a>
+## P5 전체 입력 조립
+
+[소유 계약](../contracts/dev4-lifecycle-assembler.md) D4-LM-ASM-001의
+`assemble_input(&State, &RawAction, &mut ResolvedInput)`을 reference lifecycle에 구현했다.
+21 family의 prefix/context/control, A1 Bind payload, Env1 class·receipt/anchor, 인증·continuation과
+transaction 선택, owner/obligation recipe·fence census·recovery negative를 조립한다. 오류는 S0–S5
+순서이며 사용 namespace만 검사하고 State를 바꾸지 않는다. 제품 경로는 heap·재귀·State clone이 없다.
+
+[선택 증거](../evidence/dev4-lifecycle-assembler-20261025.md)에 준비 후보1658·rich304·독립 supplement의
+선택 실행, rich 후보 정정2건, 개발 중 불일치·교정 이력을 기록했다. 모델·checker·메모리 BFS의 후속 구현은
+아래 절에 연결한다. 영속 재개와 FE14는 미완료다.
+
+```bash
+cargo test -p xadbtest-reference --lib --offline --locked lifecycle::assembler_tests::<function> -- --exact
+```
+
+실제 diff에 대응하는 함수만 선택한다. `XADB_ASSEMBLY_CASE`는 한 case ID, `XADB_ASSEMBLY_FROM_CASE`는
+완료 prefix를 제외한 suffix를 고르며 둘은 함께 쓰지 않는다. 어느 그룹에도 없는 ID는 실패한다.
+
+<a id="lifecycle-model"></a>
+## P5 수명 모델 전이
+
+[소유 계약](../contracts/dev4-lifecycle-model.md) D4-LM-MODEL-001의
+`transition(&State, &ResolvedInput, &mut State, &mut Edge)`을 reference lifecycle에 구현했다. fresh 호출의
+envelope→child→shell→parked→fence→API 상태→entry control→환경→admit gate, 21 family 전이, 공급 Env1의
+fact·owner·obligation 기록과 canonical 정렬을 수행한다. 제외는 상태를 바꾸지 않고, 모델 오류는 게시하지 않는다.
+
+[선택 증거](../evidence/dev4-lifecycle-model-20261025.md)에 원 literal 29 edge·12 trace·5 known-bad 대조,
+census·walk smoke, 고정 trace와 1차 검토 교정 이력을 기록했다. 후속 checker·메모리 BFS는 아래 절을 따르며
+FE14는 미완료다.
+
+```bash
+cargo test -p xadbtest-reference --lib --offline --locked lifecycle::model_tests::<function> -- --exact
+```
+
+`model_deep_walks`의 walk 수는 `XADB_MODEL_WALKS`(기본40)로 정한다. 실제 diff에 대응하는 함수만 선택한다.
+
+<a id="lifecycle-checker"></a>
+## P5 독립 edge checker
+
+[소유 계약](../contracts/dev4-lifecycle-checker.md) D4-LM-CHECK-001의
+`verify_edge(&State, &ResolvedInput, &Edge, &State)`를 reference lifecycle에 구현했다. 사전 상태와 원문
+규칙만으로 class·응답·context event·controls·소비 bit·authenticated와 `pre ⊕ delta` 후상태를 다시 계산하고,
+공급 Env1을 독립 recipe와 비교하며 환경 제외의 조건도 판정한다. 모델·조립기를 호출하지 않는다.
+
+`differential_tests`는 모델 출력을 checker로 판정한다. 판정한 불일치·검토 결정11건(BFS 판정을 더해 12건)은 모델 계약의
+[차등 판정](../contracts/dev4-lifecycle-model.md#checker-adjudication)에 기록했고
+[선택 증거](../evidence/dev4-lifecycle-checker-20261025.md)에 실행 기록을 남겼다. 후속 메모리 BFS는 아래 절을
+따르며 FE14는 미완료다.
+
+```bash
+cargo test -p xadbtest-reference --lib --offline --locked lifecycle::checker_tests::<function> -- --exact
+cargo test -p xadbtest-reference --lib --offline --locked lifecycle::differential_tests -- --nocapture
+```
+
+walk 크기는 `XADB_DIFF_WALKS`(기본30)·`XADB_DIFF_DEPTH`(기본6), 한 관측의 재현은
+`XADB_DIFF_REPLAY="raw,…:raw"`로 정한다. 실제 diff에 대응하는 함수만 선택한다.
+
+<a id="lifecycle-explorer"></a>
+## P5 결정적 BFS 탐색기
+
+[소유 계약](../contracts/dev4-lifecycle-explorer.md) D4-LM-BFS-001의 `explore`를 controller `lifecycle`에
+구현했다. 독립 initial vector부터 FIFO 순서로 모든 raw slot을 분류하고 alias가 아닌 slot마다 모델과 checker를 한
+번씩 호출한다. worker가 상태를 평가하고 하나의 merge가 discovery ID와 ledger 순서를 정하므로 결과는 worker 수와
+무관하다. full canonical bytes로 중복을 합치고 edge8(state cap이 2^19 이상이면 edge16) ledger와 discovery32
+stream의 SHA, 깊이·API·rule별 counter를 보고한다. archive와 durable checkpoint는 없어 FIFO가 비어도
+`DrainedUnarchived`다.
+
+[실행 증거](../evidence/dev4-lifecycle-explorer-20261025.md)에 설계 상한 profile과 사용자가 승인한 깊이 5 profile의
+결과를 기록했다. witness 검사·FE14·깊이 6은 미완료다.
+
+```bash
+cargo test -p xadbtest --lib --offline --locked lifecycle::tests::<function> -- --exact
+```
+
+`profile_run`은 `XADB_BFS_RUN=<report>`일 때만 실행하며 `XADB_BFS_PROFILE=depth5`와 `XADB_BFS_WORKERS`로 profile과
+worker 수를 고른다. 실제 diff에 대응하는 함수만 선택한다.
+
+2026-10-26 [병합 전 리뷰·수정](../evidence/dev4-merge-review-20261026.md): 선택 참조의 scope·역참조 검사와
+탐색기 사전 자원 한도를 보완했다. 신규13함수·관련 정상9회만 선택 검증했으며 원 깊이 5·하위 회귀는 반복하지 않았다.
