@@ -1,6 +1,6 @@
 # XADB 모듈 독립 개발 구조 전환 작업 계획
 
-2026-10-26 · **구조 전환 방향은 사용자 확정 / 작업 계획 D2 채택 / 소유 문서 개정·제품 구조 변경·병렬 인수 NOT_RUN**
+2026-10-26 · **작업 계획 D2 채택 / M0 기준선 확인·M1 조사 진행 / 소유 문서 개정·제품 구조 변경·병렬 인수 NOT_RUN**
 
 [개발 문서 진입점](../README.md) · [기존 병렬 정책](../policies/parallel-development-policy.md) · [저장소 배치](../policies/repository-build-plan.md) · [DEV3 작업 분해](dev3-implementation-plan.md#remaining-work) · [변경 코드 시험 지시](../../AGENTS.md)
 
@@ -248,3 +248,19 @@ PD01은 이 A/B 사례에 연결한다. PD02/PD03은 작업 중 실제 공통 �
 | 대안·범위 | 현재 조사 없이 A/B나 API를 미리 확정하는 대안은 배제. 별도 보고 체계 대신 기존 계약·작업 기록을 연결. 계획 본문·단계표·후속 작업 입력과 탐색 README2개만 보완. 문서 ID·경로·제목·역할은 같아 `documents.json`의 기존 등록 유지 |
 | 검토·반영 | `/root/module_handoff_review`가 최신3파일 diff·계획 전체·AGENTS·DP01/DP02·코딩/병렬/문서 정책·하위 계층 순서·DEV3 시험 선정 규칙을 읽기 전용 대조하여 D2 수용, 미해결 필수 수정0·차단0. M2의 설계/배정과 M4/M5의 미구현/미실행 의무 구분, C0/C·병행·A/B 본문 배정·범위 한도·불변식 보존을 확인했고 `/root`가 반영을 확정. 과거 review-002의 수용을 재사용하지 않았으며 구체 API 설계·실제 공급·병렬 인수의 검증은 범위 밖 |
 | 실행·재검토 | 계획·탐색 색인 보완에 한정. M0–M5 수행·제품 변경·테스트·빌드·자동 문서 검사·commit/push 없음. 표가 무관한 기능 선설계·범위 확대·중복 문서 작성의 선행으로 사용되면 재검토 |
+
+<a id="execution"></a>
+## 11. 2026-10-26 계획 실행
+
+사용자의 후속 “이 계획서를 실행해 주세요” 요청으로 M0–M5 실행을 시작한다. 이 요청은 계획 작성만 허용했던 앞선 작업과 구별하며 M4/M5의 실행 지시를 포함한다. 기존 제품 불변식·독립 검토·변경 코드 시험·최종 S5 의무를 유지한다.
+
+| 단계 | 현재 상태·근거 | 남은 종료 조건 |
+| --- | --- | --- |
+| M0 | [기준선 확인](../evidence/module-independence-survey-20261026.md#baseline), 별도 worktree 격리. 다른 세션 중지 없음 | M2/M3 채택 때 관련 diff 재확인·별도 검토 |
+| M1 | `/root/module_boundary_survey`와 `/root/module_consumer_survey`가 읽기 조사 진행 | 실제 소유·의존·차단 표와 후보 비교 확정 |
+| M2 | NOT_RUN | A/B 선정·API·공통 공급·선택 인수 동결과 독립 D2 |
+| M3 | NOT_RUN | 소유 문서·JSON의 실제 반영·대체 관계·독립 D2 |
+| M4 | NOT_RUN | 동결한 공급 단위의 구조 변경·관련 선택 검증·검토 |
+| M5 | NOT_RUN | C+A/C+B의 실제 제품 병렬 구현·단독/합류 인수·MI01–06 |
+
+현재 편집 위치는 `/home/et16/.codex/worktrees/module-independence/xadb`, 출발 commit은 `b7ce51d2b3ee62b5b8dbc0d9c852a17827d76bd9`다. 이번 단계의 권한·소유·동시 작업·미확인 세션은 [조사 기록](../evidence/module-independence-survey-20261026.md)에 보존한다. 계획의 전체 목표는 M5 인수까지 유지하며 문서 정비만으로 완료하지 않는다.

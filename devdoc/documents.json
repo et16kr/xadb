@@ -3,6 +3,11 @@
   "reference_base": "devdoc",
   "json_document_references": "Registered filenames are document IDs resolved by this catalogue. Markdown uses actual relative paths.",
   "documents": {
+    "module-independence-survey-20261026.md": {
+      "path": "evidence/module-independence-survey-20261026.md",
+      "role": "evidence",
+      "title": "모듈 독립 개발 전환의 기준선·경계 조사"
+    },
     "module-independence-plan.md": {
       "path": "plans/module-independence-plan.md",
       "role": "plans",
