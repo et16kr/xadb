@@ -178,6 +178,23 @@
     "hidden CI execution of policy-denied request"
   ],
   "expected_external_effects_M1": "memory and owned bounded scratch only",
+  "module_independence_adoption": {
+    "decision_id": "D3-MODULE-ADOPTION-001",
+    "decision_status": "PROPOSED",
+    "execution_status": "NOT_RUN",
+    "phase_namespace": "module-independence M0-M5, distinct from this matrix's M1/M2/M3 test layers",
+    "plan_ref": "module-independence-plan.md#acceptance",
+    "test_plan_ref": "dev3-test-plan.md#module-independence-tests",
+    "common_inventory_ref": "dev3-module-boundaries.md#validation",
+    "consumer_inventory_ref": "dev3-module-consumers.md#acceptance",
+    "case_groups": ["MBC00", "MBC10", "MBC20", "MBC30", "MBC31", "MBC40", "MCA00-MCA05", "MCB00-MCB05", "MCI01-MCI03"],
+    "first_product_sources": ["C+A", "C+B"],
+    "integration_source": "C+A+B plus declared connection changes",
+    "selection": "Actual changed code and newly connected interactions; shared execution receipts referenced once without repeating unchanged completed cases",
+    "C0_limit": "Pure candidates, errors and compile boundaries only; no synthetic actual authority or effects",
+    "native_requirement": "Actual same-build process recovery with exact retained prefix witnesses and original FAIL/UNKNOWN/NOT_RUN preserved",
+    "existing_inventory": "Preserve original NT/T06/DIR03 and final DEV3 S5 obligations; M5 is not S5"
+  },
   "measured_provider_stop_reduction": null,
   "development_order_reference": "development-stages.json",
   "kernel_suite": "kernel-test-matrix.json",

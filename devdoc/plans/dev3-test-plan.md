@@ -216,6 +216,21 @@ native 13DB는 새로 부풀린 전수 행렬이 아니라 기존 제한 단위�
 
 새 연결의 필수 사례를 구현 시 실행하되 기존 하위 시험을 통째로 다시 호출하지 않는다. 현 시점 DIR01–05는 미작성/미실행이며 문서 반영만으로 제품 테스트를 시작하지 않는다. S5의 확정 DEV3 inventory 전수 예외는 그대로 유지한다.
 
+<a id="module-independence-tests"></a>
+### 5.2 모듈 전환의 공급·단독·합류 인수
+
+`D3-MODULE-ADOPTION-001` **D2 PROPOSED / 구현·시험 NOT_RUN**. 정확 case/변형·입력·오류·시간 한도는 [공통 MBC inventory](../contracts/dev3-module-boundaries.md#validation)와 [소비자 MCA/MCB/MCI inventory](../contracts/dev3-module-consumers.md#acceptance)를 단일 원문으로 둔다. 이것은 실행 가능한 selector의 등록이나 기존 source 결과의 재분류가 아니다.
+
+| 배정 | 실제 변경과 최초 검증 source | 판정 경계 |
+| --- | --- | --- |
+| MBC00·MCA00·MCB00 | C0의 타입·수명·효과 없는 후보/오류, C+A 또는 C+B | 컴파일 가능한 입력과 순수 기능만. pin/WAL/READY 성공을 대역으로 만들지 않음 |
+| MBC10–40 | C1–C4 원 owner·claim·source·apply·terminal·현재-build recovery | 변경된 공통 경계와 실제 Catalog 수신. 과거 무변경 완료 시험 반복 금지 |
+| MCA01–05 | C+A의 INSERT·여러 statement·실패/abort·native cut·quota | 상대 B 본문/fixture/oracle 없이 실제 C를 수신한 최초 기능 검증 |
+| MCB01–05 | C+B의 snapshot·own/foreign·순서 cursor·출력/취소·독립 source | 상대 A producer 없이 실제 읽기; no-loser 검사·committed cleanup과 live fixture 구분 |
+| MCI01–03 | C+A+B와 사전 지정 연결 변경 | 두 기능 상호작용·격리·Q 공개·현재-build recovery의 새 사례. 기존 단독 시험의 일괄 반복 아님 |
+
+구현 때 실제 코드 diff와 case/selector/fixture/ELF·예상 prefix를 연결하고 최초 단독 source를 보존한다. native cut의 RAM stage와 실제 write/sync prefix를 구별하며 TIMEOUT·UNKNOWN·미공급을 PASS로 바꾸지 않는다. 같은 실행이 MBC와 소비자 의무를 함께 충족하면 한 결과를 양쪽에서 참조한다. M5는 DIR03의 선정 범위를 수신하며 NT/T06·전체 row/index/catalog 및 최종 S5 inventory를 취소하지 않는다. 기존 모듈 시험 목록의 M1/M2/M3 계층과 구조 전환 M0–M5 단계는 서로 다른 이름 공간이다.
+
 <a id="test-delivery"></a>
 ## 6. 추가 테스트를 구현에 동반하는 방법
 

@@ -17,6 +17,8 @@
 
 3.09.1은 3.06.2의 사용자 행 변경보다 먼저 공급한다. live record와 상태 기반에 모든 미래 row/index/catalog rollback을 선행으로 요구하지 않는다. 각 대상의 forward producer를 추가할 때 그 대상의 3.09.2/3 소비를 같은 통합 단위로 닫아야 사용자 변경 API의 원자성을 완료로 판정한다. 3.06.1의 구조 변경은 system 그룹의 완결 효과이며 사용자 rollback이 이를 옛 page로 덮어쓰지 않는다.
 
+`D3-MODULE-ADOPTION-001` **D2 PROPOSED 반영안**은 첫 Missing Row에서 A가 INSERT/CLR의 untrusted 후보를 생산하고 C가 actual source·참조·head/mark·잔여 credit을 검산해 stage/apply와 종료를 수행하도록 [소유를 분리](dev3-module-boundaries.md#row-reservation)한다. 동일 A CLR producer를 live rollback과 recovery task에서 소비하며 C는 제품 A를 import하지 않는다. 실패 statement는 원 mark까지 처리하여 이전 성공을 보존하고, full abort는 원 예약과 None head/실제 AbortEnd receipt로 종료한다. 성공 statement의 WAL0, failed statement와 full abort의 별도 debt, H net0/U edge cut·Compensated root의 terminal 이후 회수는 [Row 상태 전이](dev3-module-consumers.md#row-states)가 구체화한다. 일반 occupied before/index rollback이나 전체 undo 완료로 확대하지 않는다.
+
 현재 [undo 표현](dev3-undo-format.md), [거래 core](dev3-transaction-format.md), [status home](dev3-status-home.md), [obligation descriptor](dev3-obligation-format.md)는 무효과 표현·관측을 제공한다. RollbackStart observer/materializer/producer는 full transaction의 Active→Aborting 한 전이에서 caller WAL/page bytes를 구성·검산한다. live dirty 적용·일반 tag2 append·CLR·abort-end·READY 권한은 없다. catalog target identity는 표현하지만 occupied catalog undo body는 `UnsupportedCatalogBody`다.
 
 <a id="requirements"></a>

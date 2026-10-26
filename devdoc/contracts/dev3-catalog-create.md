@@ -47,6 +47,10 @@ Cancel은 Forward bound 안에서69304를 consume하고 그 잔여·unused CLR·
 
 ## 원 소유와 물리 pair
 
+`D3-MODULE-ADOPTION-001` **D2 PROPOSED 반영안**의 [Catalog claim 경계](dev3-module-boundaries.md#catalog-claim-gap)는 현재 `&mut SharedPool`에 기대는 배제를 원 pool의 기존 TxPair `init_claim`에서 명시한다. 두 clean frame의 content 대여와 단일 registry leaf 아래 기존 target identity·pin/load/flush/init 부재·DPT·generation successor를 재검산한 뒤 두 directory close와 claim 설치를 원자 수행한다. claim 동안 일반 신규 resident pin·load·capture는 Busy이며 같은 key를 가진 Reserve/Cancel의 기존 target 접근과 Forward의 원9-target만 제한적으로 허용한다. 장기 transaction snapshot을 해제하거나 별도 pool/gate owner를 만들지 않는다.
+
+ReservedCatalogCreate는 원 MutationPort/Owner/statement/private와 MaintenancePort의 원 flush control을 가변 대여한 opaque lease를 disjoint 보유한다. no-capture 조건을 숫자 관측만으로 대신하지 않는다. finish/cancel은 같은 key가 배제를 유지한 상태에서 원 directory·claim·key를 함께 종료하고, 미완료 Drop·부분 효과는 원 fence/resolve로 닫는다. 실제 API와 정상/실패·Cancel/Drop·장기 reader 공존 인수는 위 경계 문서가 소유한다. 기존 source의 mutable-pool 인수는 새 공유 경계의 실행 증거가 아니다.
+
 원 directory의 단일 closed_index와 single System InitClaim을 그대로 두 번 호출하지 않는다. 원 고정 directory 안에서 두 슬롯의 joint close/prepare/publish를 수행하고 같은 claim slot의 typed TxPair variant로 두 page를 함께 추적한다. 별도 pool·registry owner·PageToken 복제는 없다. allocator Reserved는 generation+claimant만 저장한다. 역할/object/pair는 RootJobReserved·Tx inventory·private semantic plan과 대조한다.
 
 Reserve Cancel은 allocator pair·UndoSlot inventory·RootJob·closed directory 두 슬롯·원 TxPair claim을 모두 정리한 뒤 원 owner를 반환한다. CLR은 pair의 원 transient handle·init/flush claim·selected Pending DWB 조건을 먼저 닫는다. Catalog 제거와 allocator pair Free 뒤 scoped target guard를 해제하고, exclusive original bound와 sealed cleanup 아래 directory/DPT retirement를 마친 다음에만 새 allocation을 노출한다. partial install/retirement는 fence한다. 이미 Free인 pair를 RootJob cleanup이 다시 반환하지 않는다.

@@ -59,6 +59,22 @@
   "unresolved_task_can_start_overlapping_edits": false,
   "current_enforcement": "TASK_CONTRACT_AND_REVIEW",
   "automated_overlap_checker": "NOT_IMPLEMENTED",
+  "module_contract_handoff": {
+    "decision_id": "D3-MODULE-ADOPTION-001",
+    "decision_status": "PROPOSED",
+    "normative_ref": "parallel-development-policy.md#module-contract-handoff",
+    "application_ref": "module-independence-plan.md#acceptance",
+    "execution_status": "NOT_RUN",
+    "C0": "Executable minimal compile boundary and effect-free contract doubles; no fabricated WAL, pin, snapshot, install or READY authority",
+    "C": "Finite real common supply received by each consumer at its declared integration points",
+    "independent_implementation": "Two distinct product bodies with separate owners and overlapping implementation intervals; common semantics have one owner",
+    "first_validation_sources": ["C+A", "C+B"],
+    "integration_source": "C+A+B plus declared connection changes",
+    "contract_change": "Preserve original attempts and results; review the changed common meaning and re-receive only affected supply and consumers",
+    "test_scope": "Actual changed code and new interactions only; no repeat of completed unchanged tests",
+    "PD01_ref": "module-independence-plan.md#acceptance",
+    "PD02_PD03": "Assess only actual corresponding coordination cases; do not infer PASS from adoption or PD01"
+  },
   "acceptance_cases": [
     {
       "id": "PD01",

@@ -154,6 +154,8 @@ false_exclusion_rate = 실제 원인을 후보에서 잘못 제거한 case 수 /
 
 파일 구성·수정 범위·공유 파일 조정의 채택 기준은 [병렬 개발을 위한 파일 구성·소유 정책](parallel-development-policy.md)이다. [작업 계약](../examples/task-contract.example.json)의 `change_coordination`에 담당, 기준 소스, 수정 경로, 공유 계약, 동시 작업의 경로·의미 중복, 병합 순서와 통합 검사를 기록한다. 생성물은 합쳐진 최신 원문에서 재생성한다. 해당 정책의 PD01–PD03은 미실행 개발 절차 인수 계획이며 실제 병렬 개발의 효과를 이미 검증했다는 뜻은 아니다.
 
+`D3-MODULE-ADOPTION-001`의 **D2 PROPOSED 보완**은 [모듈 계약 인계](parallel-development-policy.md#module-contract-handoff)를 실제 작업 입력에 연결한다. C0의 효과 없는 착수 경계, 실제 C 수신, A/B 전용 제품 본문과 독립 기대값, 첫 C+A/C+B 검증, 합류의 새로운 상호작용을 각각 배정한다. 공통 owner의 단일 작성 원칙을 모든 제품 본문의 순차 개발로 확대하지 않는다. 계약 변경은 원 실패·대기 기록을 보존하며 영향 diff만 다시 검증하고, 제품 구현 중첩과 독립 리뷰·시험 동시 실행은 구별한다. 현재 이 보완의 채택·실제 병렬 인수는 미완료다.
+
 작업 DAG의 각 소요 시간을 dᵢ라 할 때 무한 병렬 자원에서도 기간은 `T ≥ max_path Σ dᵢ`다. 첫 사내 커널은 B2/D0에서 검증하고, S1 저장 기준선→Q1 embedded SQL→B3 server로 확장한다. COMM은 공통 기반 뒤 독립 경로이며 PART/NG의 H2/H3 core는 SQL을 요구하지 않는다. GLOBAL_INDEX_QUALIFICATION에서 실제 서버와 합친다. 후속 기능의 구현 시간을 초기 사내 버전의 선행 경로에 자동으로 더하지 않지만 각 기능의 필수 통합 gate와 재작업은 해당 경로에 남는다. 현재 dᵢ 실측이 없으므로 달력 출시일을 계산하지 않는다. 초기 slice에서 소요 시간·실패 위치를 수집해 계획을 갱신한다.
 
 성능 개선은 correctness를 고정한 뒤 baseline/candidate를 같은 머신 조건에서 번갈아 측정한다. warmup·입력 seed·concurrency·dataset·build 옵션을 기록하고 평균뿐 아니라 tail latency, memory, write amplification, recovery 시간을 본다. 가속 효과의 분산과 신뢰구간을 함께 보고한다. 작은 benchmark 하나를 위해 제품 계약을 약화시키지 않는다.

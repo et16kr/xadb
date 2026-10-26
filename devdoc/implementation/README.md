@@ -1,5 +1,7 @@
 # 현재 구현
 
+2026-10-26 [모듈 독립 개발 전환](../plans/module-independence-plan.md#execution): M1 조사 완료, M2/M3 설계·소유 문서 반영안의 독립 D2 검토 수용·필수 수정0이다. 이번 문서 커밋의 채택 상태는 PROPOSED로 보존한다. 목표 공통 경계와 INSERT·snapshot 조회/cursor는 **미구현**, M4/M5·제품 시험은 NOT_RUN이다. 이 문서 반영은 기존 source별 구현/시험 결과를 변경하지 않는다.
+
 - [DEV3 원 Commit 공통 continuation](dev3-implementation.md#commit-continuation) — 공통 수명·변경 선택 검증·독립 D1 한정 수용; actual Commit·nonempty 복구 미완료.
 
 2026-10-25 [DEV2 PF04 사용자·커널 CPU 관측](dev2-implementation.md#dev2-pf04-cpu-split-20261025): 기본6event를 유지하고8event profile을 추가했다. 선택6함수·실제2연결 완료, 원 PF04·DEV2 미완료.

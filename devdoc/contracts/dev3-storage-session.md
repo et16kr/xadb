@@ -306,6 +306,10 @@ DEV0/1/2의 중첩 command wrapper는 exclusive regular log에 stdout/stderr를 
 <a id="consumer-driven-refinement"></a>
 ### 실제 소비자에 필요한 국소 개선
 
+2026-10-26 `D3-MODULE-ADOPTION-001` **D2 PROPOSED 반영안**은 아래 D3-DIRECTION-002의 국소 개선만 허용하던 작업 순서 제한을 [선정한 C0–C5](dev3-module-boundaries.md#common-deliveries)의 모듈 전환 범위에서 대체한다. 채택 후에는 두 Row 소비자의 독립 개발을 위해 실제 owner/접근 경계를 먼저 정비할 수 있다. source의 전체 `wal_io` 재작성·일괄 rename·나머지 DEV3 기능을 선행으로 추가하는 결정은 아니다. 첫 행 목표와 아래 원 자원·상태·오류 보존 규칙은 유지한다.
+
+목표 `DiskSession`은 기존 Plan4Pages/control/history/flush/visibility/recovery binding의 소유 이동이며 새 runtime을 생성하지 않는다. `split`은 같은 원 pool과 disjoint ledger/operation/flush 대여로 MutationPort·ReadPort·MaintenancePort를 만들고, 장기 transaction capsule은 원 visibility/isolation을 빌린다. Catalog 제품은 같은 제한 경계의 실제 claim·source·apply를 수신한다. 자세한 claim/수명·Drop·오류는 [경계 API](dev3-module-boundaries.md#api-candidates)를 단일 원문으로 삼으며 facade 재노출만으로 공급 완료를 판정하지 않는다.
+
 [D3-DIRECTION-002](../plans/dev3-implementation-plan.md#direction-refinement)의 구조 단순화는 다음 소비자의 연결 비용이 확인된 부분에 한정한다. `WalRuntime`·`InstalledStorageCore`의 실제 공유 자원과 Genesis/Fresh/recovered의 권한 구분은 유지한다. 중첩 깊이·타입 수만을 이유로 wrapper를 제거하거나 raw mutable 접근·역변환을 열지 않는다. 추출·전달 함수 변경은 원 writer/File/slot/fence, Drop·poison·notify 순서, 대여 수명과 동시 생존 자원량을 보존하는 좁은 대안과 비교한다.
 
 내부 장부 공통화는 같은 필드의 바이트 표현·소유·오류 의미가 확인된 부분만 대상으로 한다. 현재 `empty_transactions_live`의 offset1624는 설치 phase1–5이고 `recovery_empty_transactions`의 같은 위치는 present0/1이다. offset 일치가 같은 상태 전이라는 근거는 아니다. 정리 큐의 별도 stage 규약도 각각 유지하며, 전체 live/recovery 장부를 하나의 범용 상태 기계로 합치지 않는다. 독립 oracle의 정답 계산에 제품 codec·상수를 공유하는 근거로 사용하지 않는다.

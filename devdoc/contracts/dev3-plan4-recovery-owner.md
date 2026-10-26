@@ -10,6 +10,10 @@ N=0 복구 의미를 실제 API에 연결한다. 새로운 형식·일반 Undo·
 
 ## 입력과 소유권
 
+`D3-MODULE-ADOPTION-001` **D2 PROPOSED 반영안**은 기존 N=0/Catalog 결과를 유지하고 [Row의 복구 action/입구](dev3-module-boundaries.md#api-candidates)를 별도 확장으로 연결한다. 실제 C는 current format의 canonical analysis/replay·원 effects·CancelReserved/AbortEnd·committed maintenance·VERIFY/STABILIZE를 소유하고, A는 새 loser Row CLR 후보만 생산한다. 작은 제품 open driver가 action을 조립하며 C가 A 제품을 역으로 import하지 않는다. 새 format/profile/Row 의미는 [소비자 dispatch](dev3-module-consumers.md#format-dispatch)에 따르고 과거 format 결과를 새 공급의 PASS로 바꾸지 않는다.
+
+C+B의 `RejectInitialLosers` 선택은 selected base와 complete WAL prefix로 재구성·검산한 최초 canonical 상태에서 모든 Reserved inventory(SystemPage/Catalog/Row)와 ATT의 Active/Aborting을 검사한다. 위치는 preinspect 완료 뒤·physical 예약/쓰기 및 REBASE/Cancel/Abort 전이다. base의 과거 상태만 검사하거나 공통 cleanup 뒤에 loser0을 관측하지 않는다. 성공한 실제 분석 seal과 source identity가 원 runtime/recovered handoff를 보호하며 caller의 enum·count는 증거가 아니다. 거절은 Analysis/Unsupported, lease를 보존한 CallerMustResolve/fence, database_effect Unchanged·mutation0·READY0으로 반환한다. legacy recover의 기존 범위를 넓혀 새 Row 정책을 우회하지 않는다. 이미 terminal인 Committed/Aborted의 남은 정리는 새 Row CLR 없이 C가 진행할 수 있다. 정확한 signature·실패 소유·선택 인수는 경계/소비자 문서에 두며 현재는 미구현이다.
+
 `Plan4Recovery::acquire`는 실제 directory의 writer lease 하나와 caller의 maintenance12MiB,
 DWB4MiB, 새 WAL slot1MiB를 유지한다. 처음부터 실제 W/File 타입의 자원 상한을 확인한다.
 획득 전 실패와 획득 뒤 namespace 효과, 실제 database 효과를 구분한다. 획득 뒤 실패는

@@ -1,6 +1,6 @@
 # DEV3 모듈 독립 개발을 위한 원 소유·소비 경계
 
-2026-10-26 · `D3-MODULE-BOUNDARIES-001` · **D2 PROPOSED / M2 미완료 / 제품 변경·컴파일·시험 NOT_RUN**
+2026-10-26 · `D3-MODULE-BOUNDARIES-001` · **채택 상태 PROPOSED / 독립 D2 검토 수용·필수 수정0 / 제품 변경·컴파일·시험 NOT_RUN**
 
 [구조 전환 계획](../plans/module-independence-plan.md) · [M1 조사·기준선](../evidence/module-independence-survey-20261026.md) · [구현 계약](implementation-contracts.md) · [저장 정본](disk-storage-design.md) · [원 runtime/core](dev3-storage-session.md#private-runtime-core)
 
@@ -13,7 +13,7 @@
 
 현재 단일 writer/File/slot/fence/pool 소유는 보존할 기반이다. 개선할 대상은 이 소유를 지키는 수단이 초기화 단계의 깊은 자손 모듈과 private 필드 접근에 묶인 부분, 물리 WAL이 Catalog Commit 의미를 수입하는 부분, 소비자 추가 때 반복되는 재노출·permit 등록이다. **원 owner의 책임 배치와 실제 제한 API를 바꾸고, 기존 Catalog가 그 API를 먼저 소비하게 한다.** 새 re-export facade나 파일 이동만으로 M4 공급 완료를 판정하지 않는다.
 
-첫 범위에서 일반 extent 성장·SMO·overflow·index·checkpoint/backup·전체 DEV3 모듈화를 선행으로 추가하지 않는다. 그렇다고 첫 INSERT의 RowId 발급, statement 실패, undo/CLR, terminal, 현재-build 복구를 생략하지 않는다. single RowLeaf·inline2048·index0·여러 statement의 구체 범위와 명시적 거절은 [소비자 명세](dev3-module-consumers.md#profile)의 제안이며 D2 수용 전이다.
+첫 범위에서 일반 extent 성장·SMO·overflow·index·checkpoint/backup·전체 DEV3 모듈화를 선행으로 추가하지 않는다. 그렇다고 첫 INSERT의 RowId 발급, statement 실패, undo/CLR, terminal, 현재-build 복구를 생략하지 않는다. single RowLeaf·inline2048·index0·여러 statement의 구체 범위와 명시적 거절은 [소비자 명세](dev3-module-consumers.md#profile)의 제안이며 독립 D2 검토 수용과 최종 채택 상태를 구별한다.
 
 <a id="actual-ownership"></a>
 ## 2. 현재 상태 소유와 권한 인계
@@ -135,9 +135,9 @@ Rust privacy는 임의 코드를 trusted apply 자손에 추가하는 repository
 | `RetentionReader/Writer/Flusher` | `apply::{ReadPort,MutationPort,MaintenancePort}` | 새 제품 본문에 `storage`, `pool`, `control`, `history`, `visibility` field가 보이지 않음. port body는 원 borrow를 사용 |
 | `read/lookup.rs::lookup_catalog`의 key 선택·version-visible·결과 분기 | `storage::catalog::read::lookup` | 제품 본문의 `storage.profile/core.plan`, `pool.bound_core`, registry·pin 직접 접근0. 실제 Catalog도 아래 source→capture→resolver API 수신 |
 | `read/catalog.rs`, `lookup_load.rs`의 actual membership/load/source 생성 | `apply::read::{catalog,load}` | whole plan 대신 원 namespace·fixed target의 checked metadata 사용. `CatalogSource::from_guard`의 source 검산은 C 안에 유지 |
-| `catalog_live.rs::prepare_catalog_commit`, `PreparedCatalog` | `MutationPort::prepare_catalog_commit`, `apply::PreparedCatalog` | 제품 본문은 actor와 private loan만 전달. 원 before/control cut/owner/target 검산과 frame materialization을 통과하지 않고 Prepared 생성 불가 |
+| `catalog_live.rs::prepare_catalog_commit`, `PreparedCatalog` | `MutationPort::prepare_catalog_commit`, `apply::PreparedCatalog` | 제품 본문은 원 Owner·실제 RowTransaction의 공유 borrow·private loan을 전달하고 commit 때 같은 transaction을 소비한다. active statement는 prepare 전에 종료한다. 원 before/control cut/owner/target 검산과 frame materialization을 통과하지 않고 Prepared 생성 불가 |
 | `catalog_commit.rs::RetentionWriter::commit_catalog`와 `commit_bridge.rs` | `MutationPort::commit_catalog`, `apply::terminal::{catalog,wal}`의 실제 조립 | 제품·물리 WAL에 raw stage, `Binding`, requirement 조합, whole install/Q factory 없음 |
-| Catalog CREATE의 제품 순서·TableSpec 처리 | `storage::catalog::create`가 `disk::DiskSession::reserve_catalog_create` 및 opaque reservation의 checked `apply/cancel` 소비 | 예약 wrapper가 owner/claim/private loan을 보유하는 실제 C 부분만 `apply::catalog`에 남음. `TxPairClaimKey`·original INIT claim을 제품에서 조립하지 않음 |
+| Catalog CREATE의 제품 순서·TableSpec 처리 | `storage::catalog::create`가 `disk::MutationPort::reserve_catalog_create`에 원 MaintenancePort·Owner·RowStatementView·Undo target·TableSpec/private를 전달하고 opaque reservation의 checked `initialize/cancel` 소비 | 예약 wrapper가 disjoint mutation/owner/claim/private/원 flush lease를 보유하는 실제 C 부분만 `apply::catalog`에 남음. `TxPairClaimKey`·original INIT claim을 제품에서 조립하지 않음 |
 | `dirty_allocation::InstallPermit`을 plan4 새 producer가 생성하던 부분 | `apply::{catalog,row}`가 `apply::InstallGrant` 실제 생성 | 새 Catalog/Row가 `from_retention`의 중앙 등록을 거쳐 옛 allocation factory를 계속 쓰면 C3 미완료 |
 | `Plan4RecoveryRuntime::bind_retention`·`Plan4Recovered::into_live` | 원 위치에서 새 consuming `into_recovered_disk_session`/`DiskSession`을 수신 | 선택·epoch·base·READY owner는 그대로. fresh 합성, 원 W/File/slot/fence/loan 재생성 없음 |
 
@@ -271,6 +271,11 @@ pub(crate) struct RowStatementView<'t,'v,'a,'c,'s> {
     revision: Cell<u64>,
     source: CallerCredit<'v,'a,'c,'s>,
 }
+impl<'t,'v,'a,'c,'s> RowStatementView<'t,'v,'a,'c,'s> {
+    pub(in crate::storage) fn q(&self) -> Result<u64, RetentionError>;
+    pub(in crate::storage) fn own_actor(&self) -> Option<TxnRef>;
+    pub(in crate::storage) fn revision(&self) -> u64;
+}
 pub(crate) enum StatementFinishError<V> {
     Before { error: RetentionError, view: V },
     Fatal(RetentionError),
@@ -315,7 +320,7 @@ isolation backing은 원 control의 별도4160B=`64+32×128`이며 epoch는 원 
 
 `ReadPort`와 `MutationPort`는 같은 isolation mutex를 공유하고, mutation만 기존 durable ledger의 exclusive borrow를 가진다. table mapping은 원 epoch32 slots 안에서 open 동안 안정적이며 eviction/DROP은 이번 scope 밖이다. `CheckedTable`은 검산된 table slot을 포함한다. source latches 전에 epoch identity를 preflight하고 실제 source latch 아래 같은 identity/membership을 다시 확인한 뒤 **C가** read/write set을 원 isolation ledger에 등록한다. set lock 아래 I/O·상위 guard·epoch lookup은0이다. point Missing·range End·Catalog absence도 실제 source를 읽었으므로 등록한다. 성공/실패 statement 종료는 transaction read/write mask를 지우지 않는다. caller가 finish 시 선택적으로 merge하는 API는 없다.
 
-view는 `&RetentionLedger`를 오래 보유하지 않는다. 원 isolation slot의 actor+slotgen+active sequence+mark를 begin/reserve/prepare/apply/finish에서 검산한다. view의 Cell은 statement의 phase/revision RAM 상태이며 actual receipt를 확인한 C만 바꾼다. B cursor는 `&view`와 생성 revision을 보유하고, 같은 직렬 statement의 A는 `&view`를 C에 전달해 own mutation을 수행할 수 있다. Cell 때문에 capsule/view는 `!Sync`이며 동시 same-statement 실행 권한을 제공하지 않는다.
+view는 `&RetentionLedger`를 오래 보유하지 않는다. 원 isolation slot의 actor+slotgen+active sequence+mark를 begin/reserve/prepare/apply/finish에서 검산한다. view의 Cell은 statement의 phase/revision RAM 상태이며 actual receipt를 확인한 C만 바꾼다. q/own_actor/revision getter는 같은 실제 snapshot/slot의 관측값만 돌려주며 guard/lease를 반환하지 않는다. q는 health/active phase를 검사하고 B는 이 값으로 visibility 분기를 수행한다. C의 source/copy 경계는 별도로 actual view를 재검산한다. B cursor는 `&view`와 생성 revision을 보유하고, 같은 직렬 statement의 A는 `&view`를 C에 전달해 own mutation을 수행할 수 있다. Cell 때문에 capsule/view는 `!Sync`이며 동시 same-statement 실행 권한을 제공하지 않는다.
 
 finish_statement는 view를 소비한다. 첫 효과 전 거절은 같은 view 반환, 성공은 phase와 원 active sequence/mark를 닫고 RC guard를 `take()`하여 한 번 checked 해제한다. 실패 statement의 CLR/StatementFinish는 아래 consuming rollback 경계이며 일반 성공 종료가 가짜 WAL을 만들지 않는다. view가 살아 있으면 Rust borrow 때문에 transaction을 소비 종료할 수 없다. read-only statement Drop은 snapshot·active sequence의 no-I/O cleanup을 하되 transaction 자체의 Serializable 성공을 의미하지 않는다. mutation pending/미정 view Drop은 원 fence+resolve를 보존한다.
 
@@ -345,6 +350,11 @@ pub(crate) struct RowSearchPage<'g,'b,'a,'s,'c,'p,'d> {
     copy: &'g mut [u8;16_384],
     capture_sequence: &'g mut u64,
     expectation: RecordExpectation,
+}
+impl RowCandidate {
+    pub(in crate::storage) fn row(&self) -> RowId;
+    pub(in crate::storage) fn version(&self) -> RecordVersion;
+    pub(in crate::storage) fn canonical_len(&self) -> usize;
 }
 pub(crate) enum ReadStep<T> {
     Ready(T),
@@ -449,7 +459,7 @@ impl<'u,'r,'t,'v,'i,'b,'a,'s,'c,'p,'d,'m,'w,W: WriterNamespace>
 }
 ```
 
-`capture_catalog`만 기존 Catalog fixed-leaf에서 object key를 찾는 작은 source adapter로 남으며, lookup의 snapshot version-visible/retired/Missing 선택은 `catalog::read::lookup`으로 옮긴다. `finish_found`는 refs/lease/Owner borrow를 끝낸 뒤 caller copy만 borrow하는 현재 `CatalogRecordView<'i>`를 반환한다. 이 operation의 copy field는 `Option<&'i mut [u8;16_384]>`로 보유하여 cleanup 성공 뒤 `take()`한다. Drop을 가진 owner의 field를 불법 이동하거나 별도 copy backing을 만들지 않는다. `finish_missing`는 오류/FlushRequired의 checked cleanup에도 쓰며 실제 실패의 cause/effect를 덮어쓰지 않는다. `CatalogCandidate`는 version/retired/undo 유무의 read-only getter만 제공한다. 제품 코드가 현재처럼 `refs.transaction.reference`, `storage.profile`, `read_catalog_undo`, registry를 직접 읽는 것은 금지한다.
+`capture_catalog`만 기존 Catalog fixed-leaf에서 object key를 찾는 작은 source adapter로 남으며, lookup의 snapshot version-visible/retired/Missing 선택은 `catalog::read::lookup`으로 옮긴다. `finish_found`는 refs/lease/Owner borrow를 끝낸 뒤 caller copy만 borrow하는 현재 `CatalogRecordView<'i>`를 반환한다. 이 operation의 copy field는 `Option<&'i mut [u8;16_384]>`로 보유하여 cleanup 성공 뒤 `take()`한다. Drop을 가진 owner의 field를 불법 이동하거나 별도 copy backing을 만들지 않는다. `finish_missing`는 오류/FlushRequired의 checked cleanup에도 쓰며 실제 실패의 cause/effect를 덮어쓰지 않는다. `CatalogCandidate::header(&self) -> Option<CatalogHeader>`는 actual copied header의 read-only 관측이며 version/retired/undo와 object identity를 제품 분기에 제공한다. None은 actual complete leaf lookup의 부재이며 profile/identity 오류가 아니다. raw candidate constructor는 없다. 제품 코드가 현재처럼 `refs.transaction.reference`, `storage.profile`, `read_catalog_undo`, registry를 직접 읽는 것은 금지한다.
 
 `CheckedTable<'c,'s>`는 private core/binding/fence origin, 실제 Catalog에서 확인한 ObjectHandle/SchemaEpoch/anchor identity를 가진 non-Copy 값이다. `finish_table`만 actual captured Catalog candidate의 Table 정의·identity를 검사하고 refs를 해제한 뒤 발급한다. raw TableSpec/RecordView decoder나 caller ObjectId로 생성하지 않는다. Catalog 제품은 snapshot-visible 선택 뒤 이 method를 호출하고, Row C는 사용할 때마다 동일 open·schema·table generation·anchor/membership을 재검산한다. 실제 snapshot/source와 분리된 scalar table handle을 pin·write 권한으로 승격하지 않는다. `finish_found`의 일반 Catalog view와 달리 CheckedTable은 원 `'c,'s` 수명 밖으로 나갈 수 없다.
 
@@ -477,11 +487,139 @@ let committed = mutation.commit_catalog(owner, transaction, prepared)?;
 prepare의 첫 효과 전 거절 또는 Prepared 폐기는 mutable borrow/loan을 반환하며 transaction은 caller에 남는다. commit의 stage 전 Unchanged는 Prepared/targets를 checked 정리하고 `Before{transaction}`을 반환하므로 재시도는 같은 capsule로 새 prepare부터 한다. write conflict는 MustAbort capsule을 `RollbackRequired`로 반환한다. stage 후 오류는 원 fence/obligation을 유지하며 healthy retry capsule을 반환하지 않는다. 정상 성공은 epoch/Q 공개 뒤 snapshot/slot/credit을 반환한다. Catalog read/write set도 caller 선택 없이 C의 실제 source/apply에서 등록되므로 Catalog read를 한 read-only Serializable transaction 역시 `finish_read_only` 검증을 거친다.
 
 <a id="catalog-claim-gap"></a>
-**C3 필수 미해결: 기존 Catalog CREATE claim과 장기 transaction capsule의 공존.** 실제 `catalog_live.rs:925–1003`의 `reserve_catalog_create`는 이미 actual actor/Undo를 받은 뒤 `&mut Plan4Retention`과 `&mut SharedPool::prepare_tx_pair`를 통해 unpublished pair를 닫고 claim한다. `ReservedCatalogCreate<'r,'a,'s,'c,'p,'d,'o,'m,'w,W>`는 그 bound/Owner/private/TableSpec을 같은 `'r`로 보유하며 Cancel의 Before는 같은 예약을 돌려준다. 이 의미는 transaction 전 System provisioning으로 바꿀 수 없다. Row의 Free Undo 선행 INIT와도 다르다.
+#### Catalog CREATE의 원 pair claim을 공유 세션에서 수신하는 동결안
 
-원 `prepare_tx_pair`의 mutable pool은 close→claim 사이 모든 shared pool user를 Rust borrow로 배제한다. 새 capsule/ReadPort가 session 필드를 오래 borrow하는 동안 이 exclusive CREATE를 그대로 호출할 수 없으므로, 위 Catalog read/terminal API만으로 **새 Serializable transaction 안의 CREATE 또는 다른 장기 transaction과 CREATE의 격리 충돌 수신이 완성되지 않는다.** 특히 소비자 MCI01-V07의 read-only Catalog 관측→다른 CREATE→종료 conflict는 현재 제안만으로 구현할 수 있다고 주장하지 않는다.
+현재 [`reserve_catalog_create`](../../crates/engine/src/storage/wal_io/plan4_retention/catalog_live.rs:925)는 actual actor/Undo 이후 `&mut Plan4Retention`을 빌리고 [`prepare_tx_pair`](../../crates/engine/src/storage/dirty_init/tx_pair.rs:206)의 `&mut SharedPool`로 shared user를 배제한다. `target_mask` 관측→두 clean slot close/generation 소비→`init_claim` 설치는 여러 registry 구간이며 그 사이의 배제는 이 가변 borrow에서 온다. `return_catalog_pair`는 원 flush의 가변 borrow로 `PairIoQuiescence`를 발급하고 Cancel의 실제 allocator-after를 읽는다. 이 의미를 transaction 전 provisioning으로 바꾸지 않는다.
 
-후속 C3 설계는 원 pool/registry/claim·flush no-capture를 보존한 좁은 progress/Drain 기반 claim 인계를 구체화해야 한다. `&mut SharedPool`을 근거 없이 `&SharedPool`로 바꾸거나 기존 Reserved wrapper를 단순 re-export하는 대안은 채택하지 않는다. 정상 claim·중간오류·Cancel/Drop·기존 reader/load/flusher 배제와 original pair generation의 원자 인계를 닫기 전 **Q02/Q03과 M2는 필수 미해결**이다. 현재 문서는 user Commit 요청 시점의 PROPOSED 초안이며 이 공백을 구현 단계에 떠넘긴 확정 API로 기록하지 않는다.
+**선택한 최소안:** 실제 원 `PoolRegistry`의 directory/counts/init_claim/DPT/physical claim/load를 한 leaf에서 검산·변경하는 atomic close를 공급하고, 원 `TxPairClaimKey`가 살아 있는 동안 일반 pin/load/capture 진입을 닫는다. 원 `RetentionFlushControl`은 disjoint mutable lease로 같은 예약에 빌려준다. 새 manager·pool·claim registry·WAL/File·fence·전역 mutex를 만들지 않는다. `&self`로 시그니처만 바꾸는 수정도 아니다. 원 methods의 actual 원자 구간과 권한을 바꾸는 **C3 필수 구현**이다.
+
+| 현재 source·역할 | 실제 목표 method·제한 |
+| --- | --- |
+| `retention_residency::retention_pair_candidates(&mut self)` | `catalog_pair_candidates(&self, pair, start, existing)`는 actual content/registry 아래 읽은 candidate만 반환. cap/claim이 아니며 최종 close에서 모두 재검산. 기존 mutation activation/load 전체를 공유 API로 열지 않음 |
+| `prepare_tx_pair(&mut self)`와 `prepare_retention_pair_slots` | `try_prepare_tx_pair(&self, authority, indices)`가 두 victim content `try_write` 뒤 **한 registry leaf**에서 seven-existing identity·두 clean victims·generation successor·quiescence를 재검산하고 close+claim을 원자 설치. 기존 slot/key를 그대로 사용 |
+| `reserve_target_capacity`, `reader_load::select_load`, `dirty_flush::{flush_preflight,capture_flush}` | 같은 registry leaf의 active `InitClaimIdentity::TxPair` 검사로 일반 신규 pin/load/capture를 Busy 거절. resident fast path도 검사. claim이 없을 때의 기존 동작과 System INIT 범위 유지 |
+| Reserve/Cancel의 `prepare_existing_catalog`·`apply_existing_catalog_n`, `return_catalog_pair`의 allocator read | 아래 `reserve_tx_pair_existing`으로 같은 key를 검산한 기존-target pin을 사용. 일반 pin gate를 끄거나 borrowed key를 raw bool로 대체하지 않음 |
+| `claim_tx_pair_targets`→`TxPairWriteTargets::install_forward` | 원9-target pin 배열·generation·whole page/metadata/DPT/control·joint publication gate 유지. actual source/permit 검산 없이 fresh pair를 기존-page write로 다루지 않음 |
+| `finish_tx_pair(&mut self)`·`cancel_tx_pair(&mut self)` | 공유 pool에서 key/원 completion 또는 Cancel permit를 소비하는 checked method. active claim이 모든 새 일반 진입을 막는 동안 검산하고 마지막 registry leaf에서 directory+claim+key를 함께 종료 |
+| `RetentionFlushControl`·`PairIoQuiescence` | `CatalogPairIoLease`는 원 flush의 mutable borrow를 보유. 현재 Ready/capture0/known generation과 실제 I/O preflight를 검산하고 Cancel 때 같은 원 `PairIoQuiescence`를 짧게 재대여 |
+
+atomic close는 다음 순서다. 그 전의 candidate 관측은 최종 결정이 아니다.
+
+1. 실제 source/actor/statement와 원 source charge를 검산하고, dirty victim이면 claim/Reserve 효과 전에 반환하여 원 maintenance로 flush한다. source guard/pin을 유지한 채 flush 또는 capacity를 기다리지 않는다.
+2. 원 flush lease가 Ready이고 capture/durable/authority/retired 잔여0임을 확인한다. 같은 pool/core/binding/fence와 selected generation이 일치해야 한다. 이미 진행 중인 flush는 끝낸 뒤 다시 준비하며 이를 새 lease로 덮지 않는다.
+3. 두 victim의 실제 content를 `try_write`하고 registry를 잡는다. registry 아래 total pins0, load0, flush claim0, init claim0, closed pair0, seven-existing의 실제 identity/generation·중복/role, pair 주소 부재, 두 victim의 clean/DPT/requirement0, 각각의 checked generation successor를 모두 확인한다. 기존 pin 또는 reader load가 있으면 **어떤 directory/generation/claim 변경 전 Busy**다. 상대 reader/loan을 취소하거나 snapshot을 버리지 않는다.
+4. 모든 검산 후 동일 registry guard 안에서 directory close와 두 RAM generation 소비, fresh content metadata, 원 `InitClaimSlot::TxPair`를 함께 설치한다. `FencedInitRegistry`와 원 unwind fence를 유지하고 이 구간에는 I/O·상위 lock·allocation·대기·callback이 없다. close됐는데 claim이 없는 상태를 다른 user에게 노출하지 않는다. 마지막으로 authentic `TxPairClaimKey`를 발급한다.
+5. active key의 원 claim을 유지한 채 actual Reserve의 기존-target read/write→stage→whole apply를 수행한다. 현재 Catalog의 release→actual wait_durable 규약을 그대로 보존한다. RowReserve의 별도 durability 제안을 이 Catalog 경로에 소급 적용하지 않는다.
+
+일반 pin/load/capture는 claim 검사와 quota/claim 변경을 **같은 registry 잠금**에서 수행한다. 따라서 ordinary 진입이 먼저 이기면 close가 Busy, close가 먼저 이기면 ordinary 진입이 Busy다. scalar target lookup만으로 page 사용 권한이 생기지 않는다. claimed load/capture의 잔여0을 close가 요구하므로 뒤늦은 이전 I/O completion과 경쟁하지 않는다. 기존 read operation은 유한 작업을 checked 종료하고 같은 snapshot으로 재시도할 수 있으며 장기 transaction/view/cursor는 그 사이 살아 있다. fresh snapshot admission을 취소하거나 강제 만료하지 않는다. source capacity의 원 progress admission·기존 finite-reader 정리와 commit의 authentic Pending→Durable→Drain은 §6.5/6.9를 유지한다. pair close를 위해 가짜 StagedCommit/DurableCommit/Drain을 만들지 않는다.
+
+다음은 C 내부 exact pin adapter다. 실제 타입은 원 pool의 자손 `dirty_init::tx_pair`에 두어 private PinSet을 재사용한다. key는 apply의 actual factory만 보유하고 sibling 제품에 노출하지 않는다.
+
+```rust
+pub(in crate::storage) struct TxPairExistingTargets<'u,'b,'k,'c,'s,'p,'d,const N: usize> {
+    inner: PinnedTargets<'u,'b,'c,'s,'p,'d,N>,
+    key: &'k TxPairClaimKey<'c,'s>,
+}
+pub(in crate::storage) struct TxPairExistingRead<'u,'b,'k,'c,'s,'p,'d,const N: usize> {
+    inner: ReadTargets<'u,'b,'c,'s,'p,'d,N>,
+    key: &'k TxPairClaimKey<'c,'s>,
+}
+pub(in crate::storage) struct TxPairExistingWrite<'u,'b,'k,'c,'s,'p,'d,const N: usize> {
+    inner: WriteTargets<'u,'b,'c,'s,'p,'d,N>,
+    key: &'k TxPairClaimKey<'c,'s>,
+}
+impl<'c,'s,'p,'d> SharedPool<'c,'s,'p,'d> {
+    pub(in crate::storage) fn catalog_pair_candidates(
+        &self, pair: &[TargetRequest;2], start: usize, existing: &[TargetRequest;7],
+    ) -> Result<[StatusCandidate;2], DirtyError>;
+    pub(in crate::storage) fn try_prepare_tx_pair(
+        &self, authority: &TxPairAuthority<'_,'c,'s>, indices: [usize;2],
+    ) -> Result<TxPairClaimKey<'c,'s>, DirtyError>;
+    pub(in crate::storage) fn reserve_tx_pair_existing<'u,'b,'k,const N: usize>(
+        &'b self, owner: &'u mut Owner<'c,'s>, key: &'k TxPairClaimKey<'c,'s>,
+        requests: &[TargetRequest;N],
+    ) -> Result<TxPairExistingTargets<'u,'b,'k,'c,'s,'p,'d,N>, DirtyError>;
+    pub(in crate::storage) fn finish_tx_pair(
+        &self, key: &mut TxPairClaimKey<'c,'s>, completed: CompletedTxPair<'c,'s>,
+    ) -> Result<(), DirtyError>;
+    pub(in crate::storage) fn cancel_tx_pair(
+        &self, key: &mut TxPairClaimKey<'c,'s>, permit: TxPairCancelPermit<'_,'c,'s,'_>,
+    ) -> Result<(), DirtyError>;
+}
+impl<'u,'b,'k,'c,'s,'p,'d,const N: usize>
+    TxPairExistingTargets<'u,'b,'k,'c,'s,'p,'d,N>
+{
+    pub(in crate::storage) fn try_read(self)
+        -> Result<TxPairExistingRead<'u,'b,'k,'c,'s,'p,'d,N>, DirtyError>;
+    pub(in crate::storage) fn try_write(self)
+        -> Result<TxPairExistingWrite<'u,'b,'k,'c,'s,'p,'d,N>, DirtyError>;
+    pub(in crate::storage) fn release_checked(self) -> Result<(), DirtyError>;
+}
+```
+
+`TxPairCancelPermit`의 네 lifetime은 현재 source의 `'i,'c,'s,'w`다. wrapper의 read/write는 원 bytes/observe/matches_stamp/preflight_dpt/install_page/install_metadata/install_dpt와 release_checked만 같은 내부 adapter에 제공한다. raw inner 또는 key를 반환하지 않는다. `N`은1..7이며 모든 요청은 key가 가진 seven-existing mask의 정확한 부분집합이어야 한다. fresh pair 또는 다른 owner/core/주소를 넣으면 pin quota 변경 전 거절한다. registry의 count는 원 PinSet이 계수하며 이 경로는 `initializer_pins_held`를9-target true로 만들지 않는다. 같은 reservation을 `&mut` 재대여하는 C만 사용하므로 subset pin과 Forward의9-target pin을 동시에 만든다고 가정하지 않는다. typed key borrow는 subset read/write가 남은 동안 key의 mutable finish/cancel을 컴파일에서 막는다. actual close/finish/cancel은 total0도 재검산한다.
+
+public-to-storage 소비 경계는 원 session 전체 대신 disjoint port/flush lease를 갖는다. 이 이름은 기존 `ReservedCatalogCreate`의 실제 책임 이전이며 추가 reservation owner가 아니다.
+
+```rust
+struct CatalogPairIoLease<'r,'c,'s,'w> {
+    original: &'r mut RetentionFlushControl<'c,'s,'w>,
+    core: &'c PageConcurrency<'s>,
+    binding: &'s AtomicU8,
+    fence: &'s SessionFence,
+    selected_generation: u64,
+    pair: [TargetRequest;2],
+}
+pub(crate) struct ReservedCatalogCreate<'r,'t,'v,'i,'b,'a,'s,'c,'p,'d,'o,'m,'w,W: WriterNamespace> {
+    mutation: &'r mut MutationPort<'b,'a,'s,'c,'p,'d,'o,'m,'w,W>,
+    owner: &'r mut Owner<'c,'s>,
+    statement: &'r RowStatementView<'t,'v,'a,'c,'s>,
+    io: Option<CatalogPairIoLease<'r,'c,'s,'w>>,
+    private: Option<&'i mut [u8;425_984]>,
+    definition: &'i crate::api::TableSpec,
+    plan: CreatePlan,
+    key: TxPairClaimKey<'c,'s>,
+    reserve: PageLsn,
+    source: OperationSourceAdmission<'b,'a,'c,'s>,
+    active: bool,
+}
+pub(crate) struct CatalogCreated<'i> { object: ObjectHandle, private: &'i mut [u8;425_984] }
+pub(crate) struct CatalogCancelled<'i> { private: &'i mut [u8;425_984] }
+impl<'i> CatalogCreated<'i> {
+    pub(in crate::storage) fn into_parts(self) -> (ObjectHandle, &'i mut [u8;425_984]);
+}
+impl<'i> CatalogCancelled<'i> {
+    pub(in crate::storage) fn into_private(self) -> &'i mut [u8;425_984];
+}
+impl<'b,'a,'s,'c,'p,'d,'o,'m,'w,W: WriterNamespace>
+    MutationPort<'b,'a,'s,'c,'p,'d,'o,'m,'w,W>
+{
+    pub(in crate::storage) fn reserve_catalog_create<'r,'t,'v,'i>(
+        &'r mut self, maintenance: &'r mut MaintenancePort<'b,'s,'c,'p,'d,'m,'w,W>,
+        owner: &'r mut Owner<'c,'s>, statement: &'r RowStatementView<'t,'v,'a,'c,'s>,
+        undo: &Plan4Target, definition: &'i crate::api::TableSpec,
+        private: &'i mut [u8;425_984],
+    ) -> Result<ReservedCatalogCreate<'r,'t,'v,'i,'b,'a,'s,'c,'p,'d,'o,'m,'w,W>, RetentionError>;
+}
+impl<'r,'t,'v,'i,'b,'a,'s,'c,'p,'d,'o,'m,'w,W: WriterNamespace>
+    ReservedCatalogCreate<'r,'t,'v,'i,'b,'a,'s,'c,'p,'d,'o,'m,'w,W>
+{
+    pub(in crate::storage) fn initialize(self)
+        -> Result<CatalogCreated<'i>, RetentionReservationError<Self>>;
+    pub(in crate::storage) fn cancel(self)
+        -> Result<CatalogCancelled<'i>, RetentionReservationError<Self>>;
+}
+```
+
+C는 `maintenance.flush`의 짧은 reborrow만 `CatalogPairIoLease.original`로 이동하며 `&mut MaintenancePort` 전체와 그 내부를 함께 저장하지 않는다. 원 mutation/control과 flush는 `DiskSession::split`의 서로 다른 필드이고 capsule의 snapshot/isolation은 공유 필드다. 원 plan/actor는 statement의 actual transaction에서 얻고 raw TxnRef 인자를 받지 않는다. 같은 open/statement/slotgen·pool·selected generation을 확인한 뒤 Catalog read/write set을 C가 자동 등록한다. schema/leaf 용량 검산은 기존처럼 첫 Reserve 전에 수행한다. 제품 TableSpec와 PRIVATE_BYTES를 복사하지 않는다.
+
+정상 Forward는 key의 원9-target whole PinSet을 쓰고 stage→whole install→release→기존 actual durable 확인→CompletedTxPair 검산 뒤 finish_tx_pair를 호출한다. 마지막 registry 구간에서 `directory.finish_retention_pair`·`init_claim=None`·`key.active=false`를 함께 적용한 후만 flush lease/source charge를 반환한다. 그 뒤 일반 reader는 공개된 pair를 읽을 수 있지만 Catalog의 Transaction stamp는 Commit 전 가시성을 그대로 따른다. 제품은 statement를 종료하고 위 prepare_catalog_commit/commit_catalog로 terminal을 수행한다. 그 terminal의 same-PinSet Pending·Drain과 validation→epoch/Q 공개까지 exclusive ledger 보유는 바뀌지 않는다.
+
+Reserve stage가 실제 Unchanged이면 같은 key로 allocator를 읽고 원 `Unstaged` Cancel permit를 발급해 RAM claim을 checked 반환한다. actual Cancel은 key 경로로 원 existing before를 준비하고 stage/whole apply 및 기존 durable receipt를 검산한 뒤 `Cancelled` permit를 사용한다. allocator-after와 두 fresh pair/DPT/requirement0를 content→registry 순서로 확인하고, 마지막 registry에서 directory return+claim 해제+key inactive를 원자 적용한다. 이 동안 active claim의 ordinary gate와 flush lease가 경쟁을 배제한다. view/transaction의 관측 집합과 소비한 영속 발급값은 되감지 않는다.
+
+예약 이후의 Before는 같은 reservation·key·private·flush lease를 반환하며 외부 maintenance를 새로 호출하려 하지 않는다. 예약 전에 필요한 dirty victim flush는 이미 끝났고 Cancel/Forward는 같은 고정 existing targets와 원 rollback/terminal 몫으로 진행한다. stage 후 오류·cleanup 실패·poison은 원 Fatal/fence/잔여 obligation이다. active Drop은 fence/notify를 먼저 수행하고 claim을 정상 완료한 것처럼 지우지 않으며 no-I/O다. private/borrow의 Rust 해제는 claim 완료의 증거가 아니다. 이 경우 reader와 maintenance가 다시 호출돼도 원 health/fence로 거절하며 recovery가 처리한다.
+
+실제 소비 예는 `T1 Serializable read-only begin→Catalog lookup→read operation만 종료(view/Tx snapshot 유지)→T2 begin/statement→reserve_catalog_create(&mut maintenance,owner2,&view2,...)→initialize→T2 statement 종료/Commit→T1 statement 종료/finish_read_only=Rejected(SerializationConflict)`다. T1의 장기 view가 mutation/flush를 가변 대여하지 않으므로 Rust 수명과 격리 의미가 함께 성립한다. T1이 아직 physical pin을 보유했다면 Reserve 이전 Busy이고 T1이 종료한 뒤 같은 view로 재준비한다. 이를 위해 장기 snapshot을 버리거나 read-only 종료 검증을 생략하지 않는다.
 
 ### 6.5 물리 WAL 밖의 actual terminal과 installer 권한
 
@@ -611,6 +749,12 @@ pub(crate) struct RowApplied<'i> {
     private: &'i mut [u8;425_984],
 }
 pub(crate) struct RowCancelled<'i> { private: &'i mut [u8;425_984] }
+impl<'i> RowApplied<'i> {
+    pub(in crate::storage) fn into_parts(self) -> (RowMutationObservation, &'i mut [u8;425_984]);
+}
+impl<'i> RowCancelled<'i> {
+    pub(in crate::storage) fn into_private(self) -> &'i mut [u8;425_984];
+}
 impl<'r,'t,'v,'i,'b,'a,'s,'c,'p,'d,'o,'m,'w,W: WriterNamespace>
     ReservedRow<'r,'t,'v,'i,'b,'a,'s,'c,'p,'d,'o,'m,'w,W>
 {
@@ -631,11 +775,90 @@ impl<'r,'t,'v,'i,'b,'a,'s,'c,'p,'d,'o,'m,'w,W: WriterNamespace>
 
 이 API는 이전 초안의 독립 `MutationPort::prepare_row/apply_row(candidate)`를 **대체**한다. port/Owner를 reservation이 이미 대여했으므로 별도로 다시 대여하지 않는다. prepare는 immutable frame slice를 외부에서 받아 reservation 안에 보관하지 않고, reservation이 소유한 private bytes를 그 자리에서 검산한 **scalar cut**만 Prepared에 저장한다. self-borrow하는 Prepared를 만들지 않는다. `reopen`은 stage가 시작되지 않은 Prepared에서 그 scalar cut만 폐기하고 **같은 예약**을 되돌린다. 재준비를 새로운 RowId/UndoSlot 예약으로 바꾸지 않는다.
 
+<a id="producer-input-api"></a>
+#### A producer가 읽는 전체 데이터와 borrowed codec
+
+[소비자 입력 대조](dev3-module-consumers.md#producer-inputs)는 실제 `row_record`·`undo_record`·`semantic_catalog::{Inputs,FrameSpec,next_transaction,next_aging}`의 필수 인수를 확인했다. 다음 getter는 C가 보유한 실제 source의 **값/읽기 borrow**만 제공한다. raw control/registry/owner 또는 권한 생성자를 공개하지 않는다. 모든 context 필드는 private이고 constructor는 apply 자손의 actual source adapter에만 있다.
+
+```rust
+pub(crate) struct RowPreflightContext { /* 아래 getter에 대응하는 private scalar cut */ }
+impl RowPreflightContext {
+    pub(in crate::storage) fn profile(&self) -> Profile;
+    pub(in crate::storage) fn namespace(&self) -> Namespace;
+    pub(in crate::storage) fn table(&self) -> ObjectHandle;
+    pub(in crate::storage) fn schema_epoch(&self) -> SchemaEpoch;
+    pub(in crate::storage) fn catalog_expected(&self) -> CatalogExpectation;
+    pub(in crate::storage) fn schema_cell(&self) -> (u16,u16); // page 내 offset,length
+    pub(in crate::storage) fn leaf_expected(&self) -> TreeExpectation;
+    pub(in crate::storage) fn leaf_free_bytes(&self) -> usize;
+    pub(in crate::storage) fn canonical_capacity(&self) -> usize; // 이 profile에서는2048
+    pub(in crate::storage) fn index_count(&self) -> u16;
+    pub(in crate::storage) fn catalog_source(&self) -> (FrameStamp,[u8;32]);
+}
+pub(crate) enum RowSourceRole {
+    Root, RootJob, TerminalJob, Status, Undo, RowLeaf, Allocator, TableAnchor, PreviousUndo,
+}
+pub(crate) struct RowSourceBinding {
+    before_index: u8, identity: PageIdentity, kind: PageKind, level: u8,
+    slot: Option<u16>, cell_offset: Option<u16>, cell_len: Option<u16>,
+}
+impl RowSourceBinding {
+    pub(in crate::storage) fn before_index(&self) -> u8;
+    pub(in crate::storage) fn expected(&self) -> (PageIdentity,PageKind,u8);
+    pub(in crate::storage) fn cell(&self) -> Option<(u16,u16,u16)>; // slot,offset,len
+}
+pub(crate) enum RowProducerInput {
+    Insert { canonical_len: usize, canonical_digest: [u8;32] },
+    Clr { current_row_len: usize, current_projection: [u8;32],
+          rollback_target: Option<UndoRef>, next: Option<UndoLink> },
+}
+pub(crate) struct RowProducerContext { /* private actual scalar cut + role maps */ }
+impl RowProducerContext {
+    pub(in crate::storage) fn schema(&self) -> &RowPreflightContext;
+    pub(in crate::storage) fn operation(&self) -> RowOperation;
+    pub(in crate::storage) fn frame_expected(&self) -> FrameExpectation;
+    pub(in crate::storage) fn header(&self) -> WalFrameHeader;
+    pub(in crate::storage) fn actor(&self) -> TxnRef;
+    pub(in crate::storage) fn status(&self) -> StatusSlotRef;
+    pub(in crate::storage) fn row(&self) -> RowId;
+    pub(in crate::storage) fn undo(&self) -> UndoLink; // actual issued U+sequence
+    pub(in crate::storage) fn statement_sequence(&self) -> Option<u64>;
+    pub(in crate::storage) fn planned_mutation(&self) -> u64;
+    pub(in crate::storage) fn statement_mark(&self) -> Option<UndoRef>;
+    pub(in crate::storage) fn predecessor(&self) -> Option<UndoLink>;
+    pub(in crate::storage) fn root_job_ordinal(&self) -> u8;
+    pub(in crate::storage) fn terminal_job_ordinal(&self) -> u8;
+    pub(in crate::storage) fn before_count(&self) -> u8;
+    pub(in crate::storage) fn source(&self, role: RowSourceRole) -> Option<&RowSourceBinding>;
+    pub(in crate::storage) fn after_order(&self) -> &[RowPageRole];
+    pub(in crate::storage) fn input(&self) -> &RowProducerInput;
+}
+pub(crate) struct RowControlObservation<'l> {
+    jobs: &'l [[u8;1_024];64],
+    transaction: Option<&'l [u8;1_536]>,
+    aging: Option<&'l [u8;1_536]>,
+}
+impl<'l> RowControlObservation<'l> {
+    pub(in crate::storage) fn jobs(&self) -> &'l [[u8;1_024];64];
+    pub(in crate::storage) fn transaction(&self) -> Option<&'l [u8;1_536]>;
+    pub(in crate::storage) fn aging(&self) -> Option<&'l [u8;1_536]>;
+}
+```
+
+`catalog_source`는 완결 actual Catalog leaf census의 stamp/digest이고 index_count는 그 census에서 table identity에 맞춰 계산한다. caller가 숫자0을 넣어 index 없음 증거를 만들 수 없다. schema는 `CatalogExpectation`과 cell 위치/길이로 actual copy에서 검산하고 candidate bytes에서 expected identity를 역으로 얻지 않는다. before_count만큼의 physical image가 유효하고 최대9칸의 나머지는 해석하지 않는다. optional H가 없으면 `source(PreviousUndo)=None`이다. RootJob/TerminalJob가 같은 physical Jobs page이면 같은 before_index와 다른 cell 위치를 사용한다. after_order는 physical identity를 중복 제거한 실제 변경 page 순서이며 최대5개다. A는 이 source role map으로 native/redo를 만들고 C는 후보가 선언한 order/count를 독립 재검산한다.
+
+Insert input은 preflight가 검산한 canonical length/digest를, CLR input은 actual current Row/RootJob의 cell/projection·rollback target·next link를 제공한다. CLR에 과거 사용자 값을 다시 주거나 old statement capsule을 복원하지 않는다. recovery에는 live statement_sequence가 없으므로 None이고 actual descriptor의 planned mutation/head/target을 사용한다. header는 원 stream/next LSN/previous complete/previous transaction LSN의 관측일 뿐 append 권한이 아니다.
+
+`RowControlObservation`은 원 `RetentionLedger::jobs()`와 actual actor/AGING row의 첫1536B를 같은 `'l`로 재대여한다. Reserved/rollback task가 원 ledger를 배타 보유하고 private frame/after와 ledger는 disjoint 필드이므로 한 lane 안에서 immutable descriptor와 mutable output을 함께 빌릴 수 있다. 64KiB Jobs를 복사하거나 별도 ledger를 만들지 않는다. 반환된 descriptor borrow가 끝나기 전에는 prepare/apply로 parent를 소비할 수 없다. A는 이 값으로 multi-root debt/descriptor/inventory/Aging after를 계산하며 C는 lane 종료 뒤 원 source revision/prefix/before/descriptor/Jobs를 모두 다시 검산한다. getter/Result/role map/borrow carrier의 동시 비용도 source census에 포함한다.
+
+공통 pure codec `RowSchemaInput::{Columns(&[Column]),Catalog(TableDefinitionView)}`와 `&[ValueRef]` adapter를 C0 공급에 포함한다. 기존 소유형 함수도 동일 pure 규칙에 위임하고 format·오류·output/tail 보존을 바꾸지 않는다. 이름/값/columns를 heap에 복사하지 않는다. first Missing Undo는 actual Missing/payloadNone 경로에서 columns를 사용하지 않으므로 기존 encode/decode에 `&[]`를 전달하며, CLR의 current Row는 borrowed schema로 검산한다. occupied RowValue schema와 일반3pin은 이번 선행이 아니다.
+
 producer lane은 [확정 제안 private 분할](dev3-resource-bounds.md#row-missing-module-budget)의 동일 backing을 짧게 나눈다. C가 원 actual before/proof와 schema를 채운 후 source guards를 해제한 뒤만 A에게 빌려준다. loan을 반환하기 전 reader/version/append/registry latch는0이다.
 
 ```rust
 pub(crate) struct RowProducerLane<'l> {
     context: RowProducerContext,              // actual issued identity의 값 관측
+    control: RowControlObservation<'l>,
     before: &'l [[u8;16_384];9],              // Root/Job/Status/U/leaf와 proof
     schema: &'l [u8;16_384],                  // actual CheckedTable source
     frame: &'l mut [u8;98_304],
@@ -650,7 +873,7 @@ pub(crate) struct RowProposal {
 }
 impl<'l> RowProducerLane<'l> {
     pub(in crate::storage) fn parts(self)
-        -> (RowProducerContext, &'l [[u8;16_384];9], &'l [u8;16_384],
+        -> (RowProducerContext, RowControlObservation<'l>, &'l [[u8;16_384];9], &'l [u8;16_384],
             &'l mut [u8;98_304], &'l mut [[u8;16_384];5], &'l mut [u8;16_384]);
 }
 impl RowProposal {
@@ -663,7 +886,7 @@ pub(in crate::storage) fn produce_insert(
 ) -> Result<RowProposal, RowError>;
 ```
 
-`parts(self)`는 C가 제공한 lane의 같은 수명/서로 겹치지 않는 slice를 sibling A에 넘기는 데이터 접근이다. private field를 직접 읽게 하지 않는다. 두 context는 effect 권한 없는 issued/schema/identity의 읽기 getter를 제공하고, RowInputPlan/RowProposal의 `new`는 **untrusted 후보**만 만든다. raw reservation/pin/install/terminal receipt constructor는 여전히 없다. context getter의 전체 필드 목록과 consumer encode 접근 대조는 D2 미해결 검토 항목이며 이 후보 접근 경로만으로 compiler 완료를 주장하지 않는다. producer가 candidate를 바꿔도 reserve가 봉인한 input digest와 schema를 C가 재검산하므로 다른 값을 승인한 것으로 처리하지 않는다. 상기 private 배치는 frame98304+before/proof147456+after81920+candidate16384+schema16384+unused65536=`425984`다. unused lane은 추가 authority/owner 저장소가 아니다. RowProposal은 untrusted scalar이며 raw 생성 가능한 후보여도 C의 effect 권한이 아니다. actual after-role 순서/identity·native/edge/count/inventory·frame size·before digest/obligation·reserved issue 및 statement revision은 prepare와 stage 직전에 다시 검산한다. source stamp가 바뀌면 Before로 같은 Reserved/Prepared를 반환해 producer_lane 재취득부터 반복한다. stored draft/checked carrier 비용은 private backing과 별개로 source envelope에 포함한다.
+`parts(self)`는 C가 제공한 lane의 같은 수명/서로 겹치지 않는 slice를 sibling A에 넘기는 데이터 접근이다. private field를 직접 읽게 하지 않는다. 두 context는 effect 권한 없는 issued/schema/identity의 읽기 getter를 제공하고, RowInputPlan/RowProposal의 `new`는 **untrusted 후보**만 만든다. raw reservation/pin/install/terminal receipt constructor는 여전히 없다. 전체 getter/role/presence와 producer 입력 대조는 위 동결안 및 [소비자 입력](dev3-module-consumers.md#producer-inputs)으로 연결한다. 이 문서상의 일치를 compiler 완료로 주장하지 않는다. producer가 candidate를 바꿔도 reserve가 봉인한 input digest와 schema를 C가 재검산하므로 다른 값을 승인한 것으로 처리하지 않는다. 상기 private 배치는 frame98304+before/proof147456+after81920+candidate16384+schema16384+unused65536=`425984`다. unused lane은 추가 authority/owner 저장소가 아니다. RowProposal은 untrusted scalar이며 raw 생성 가능한 후보여도 C의 effect 권한이 아니다. actual after-role 순서/identity·native/edge/count/inventory·frame size·before digest/obligation·reserved issue 및 statement revision은 prepare와 stage 직전에 다시 검산한다. source stamp가 바뀌면 Before로 같은 Reserved/Prepared를 반환해 producer_lane 재취득부터 반복한다. stored draft/checked carrier 비용은 private backing과 별개로 source envelope에 포함한다.
 
 A의 실제 호출은 다음과 같다. producer error에도 예약이 남아 있으므로 A는 cancel 또는 현재 statement의 rollback을 명시적으로 수행한다.
 
@@ -731,6 +954,9 @@ pub(crate) struct PreparedRollbackTask<'x,'r,'t,'v,'i,'b,'a,'s,'c,'p,'d,'o,'m,'w
     checked: RowPreparedCut,
 }
 pub(crate) struct RowRollbackDone<'i> { private: &'i mut [u8;425_984], scope: RollbackScope }
+impl<'i> RowRollbackDone<'i> {
+    pub(in crate::storage) fn into_parts(self) -> (RollbackScope, &'i mut [u8;425_984]);
+}
 impl<'x,'r,'t,'v,'i,'b,'a,'s,'c,'p,'d,'o,'m,'w,W: WriterNamespace>
     RowRollbackTask<'x,'r,'t,'v,'i,'b,'a,'s,'c,'p,'d,'o,'m,'w,W>
 {
@@ -817,7 +1043,36 @@ Before/Source/Producer 오류는 같은 task와 원 loan의 재시도 소유를 
 
 next_action은 recovered의 `inner`에서 MutationPort를, 원 recovery private에서 짧은 reborrow를, 별도 progress field에서 원 phase/observation/waiting state를 **disjoint** 대여한다. task가 `&mut Plan4Recovered`와 내부를 borrow한 port를 동시에 보유하지 않는다. `RecoveryProgressState`는 기존 phase/observation/waiting/ready fields를 한 값으로 옮긴 것이며 복사된 두 진행 owner가 아니다. source refs는 selected의 raw 숫자에서 만들지 않고 task의 actual source capture에서 원 visibility에 등록하여 lane 반환 전에 physical guards만 해제한다. refs는 same original port lifetime에 묶이며 scalar selection 자체를 pin으로 취급하지 않는다.
 
-완결 replay/검산은 C가 Row grammar와 before/target/owner/obligation을 소비하고 A handler는 **새 loser CLR 생성**만 맡는다. committed-only C+B reopen은 RowClr action이 나오면 unsupported/failure이며 이를 READY로 건너뛰지 않는다. **필수 미해결:** 현재 next_action만으로는 최초 actual analysis/base/WAL census에서 Reserved/Active/Aborting 전체를 거절하는 gate가 없다. C의 CancelReserved/AbortEnd가 먼저 loser를 정리한 뒤 READY로 갈 수 있으므로 RowClr 분기 거절만으로 C+B no-loser 정책을 충족하지 않는다. 이 최초 census gate의 위치·능력·실패 반환을 Q05에서 닫기 전 C+B READY 정책 완료를 주장하지 않는다. committed Prune/ReleaseRole/RootFree/TerminalFinish의 actual RowMissing maintenance adapter는 C4의 유한 공급에 포함하므로 B의 정상 committed fixture가 A handler를 요구하지 않는다. CLR/Abort 후 재장애의 새 process는 다시 원 selected binding에서 나머지 chain을 선택한다. 이미 적용된 LSN·credit를 재소비하거나 old statement snapshot을 복원하지 않는다.
+완결 replay/검산은 C가 Row grammar와 before/target/owner/obligation을 소비하고 A handler는 **새 loser CLR 생성**만 맡는다. committed Prune/ReleaseRole/RootFree/TerminalFinish의 actual RowMissing maintenance adapter는 C4에 포함한다. CLR/Abort 뒤 재장애의 새 process는 원 selected binding에서 나머지 chain을 선택하며 이미 적용된 LSN·credit를 재소비하거나 old statement snapshot을 복원하지 않는다.
+
+<a id="row-recovery-policy"></a>
+#### C+B 최초 analysis의 no-loser gate
+
+[현재 recover](../../crates/engine/src/storage/wal_io/plan4_recovery.rs:559)는 원 `preinspect` 뒤 reserve_physical→source 안정화→physical→REBASE→log_open을 수행한다. [`analysis::preinspect`](../../crates/engine/src/storage/wal_io/plan4_recovery/analysis.rs:282)는 selected base와 완결 WAL을 원 replay bank에 재구성하고 canonical 관계/전체 source·home·Pending을 검산한다. no-loser 정책은 RowClr action을 처음 보았을 때가 아니라 **이 검산이 끝난 직후, AnalysisSeal 발급 직전**에 적용한다.
+
+```rust
+pub(crate) enum RowRecoveryPolicy { WithRowClr, RejectInitialLosers }
+impl<'a,'m,'w,W: WriterNamespace> Plan4Recovery<'a,'m,'w,W> {
+    pub(in crate::storage) fn recover_with_rows(self, policy: RowRecoveryPolicy)
+        -> Result<Plan4RecoveryRuntime<'a,'m,'w,W>, Plan4RecoveryFailure<'a,'m,'w,W>>;
+}
+// private 원 recovery owner의 analysis가 발급; 원 seal을 새로 합성하지 않음
+struct RowRecoveryAdmission {
+    policy: RowRecoveryPolicy,
+    state_digest: [u8;32],
+    source_facts_digest: [u8;32],
+}
+```
+
+public enum은 순수 요청 값이다. actual `recover_with_policy` 내부로 기존 recover body를 모으고 legacy `recover()`는 기존 지원 format/scope만 받는다. 새 Row profile/base/scope가 관측되면 legacy entry는 Analysis/Unsupported로 거절하므로 policy를 생략하는 우회가 없다. C+A driver는 WithRowClr와 actual A handler를, C+B driver는 RejectInitialLosers를 선택한다. C가 A module을 수입하는 callback은 추가하지 않는다.
+
+RejectInitialLosers는 final canonical allocator·원 ReservedInventory 관계와 같은 replay의32 ATT/64 Jobs/status graph 전체를 bounded 순회하여 **모든 ReservedInventory=None, Reserved root0, ATT Active/Aborting0**를 요구한다. RowReserved뿐 아니라 기존 SystemPage-only·CatalogCreate Reserved도 거절한다. head가 None인 Active, next가 None인 Aborting도 해당 상태이므로 허용하지 않는다. canonical committed/aborted의 retained cleanup은 허용한다. home page의 겉보기 상태·caller count·부분 Job 목록으로 검사하지 않는다. source 재구성/관계 검산 전에 Unsupported를 먼저 반환하여 corruption을 가리는 순서도 아니다.
+
+정책 통과 때만 같은 actual AnalysisSeal.state_digest와 SourceFacts의 전체 epoch/header_digest/prefix_digest/lsn/end/adopted_local을 canonical 순서로 해시한 값에 policy를 결합해 private admission을 발급한다. raw count/bool/digest를 consumer가 제출해 발급하는 함수는 없다. 원 pre-effect source 재검산도 유지한다. 이 값은 원 runtime→selected binding→Plan4Recovered로 소비 이동하고 first next_action이 actual analyzed/selected handoff와 동일함을 검산한다. 새 owner·별도 replay bank·추가 file lease가 아니며 SourceFacts 전체 복사본을 추가하지 않는다. source fingerprint와 generation이 다른 재진입에는 재사용할 수 없다.
+
+실패는 기존 `Plan4RecoveryFailure`에 원 acquired owner/loan을 보존하고 `phase=Analysis,cause=Unsupported,effect=CallerMustResolve`다. 이 gate는 physical reserve/REBASE/CancelReserved/AbortEnd보다 앞이므로 observation의 **database_effect=Unchanged, mutations=0, READY=0**을 별도로 요구한다. 원 lease/fence 실패 정책을 유지하며 같은 실패 owner를 WithRowClr로 바꿔 healthy 재시도하지 않는다. WithRowClr 재시도는 새 정상 acquire/analysis다. C+B의 live own-write fixture와 재시작 no-loser fixture는 다른 인수이며 이 gate가 live source 의미를 대체하지 않는다.
+
+정책 enum/admission·bounded census locals는 원 source census에 계수한다. gate 자체는 새 disk wire를 추가하지 않고 기존 allocator/ATT/Jobs/selected provenance를 검사하며, 새로운 Row format dispatch는 C4의 별도 수신이다. 실제 gate/legacy 차단/negative process 결과는 NOT_RUN이고 독립 D2 수용과 M4 공급이 필요하다.
 
 <a id="caller-source-credit"></a>
 ### 6.8 장기 capsule/view/cursor의 bounded source credit
@@ -866,11 +1121,11 @@ C는 공통 경계 구현 담당의 역할명이며 새 runtime owner가 아니�
 
 | 단위 | 현재→목표·공급 동작 | 직접 선행·실제 수신자 | 제외·되돌림 단위 |
 | --- | --- | --- | --- |
-| C0 컴파일 계약 구현·배정 | M2에서 동결한 §4–6의 exact type/lifetime/visibility와 Row grammar/owner 의미를 구현. A/B 전용 본문/fixture·효과 없는 최소 대역 제공 | M2 동결안 수용·D2; A/B C0 구현 착수 | runtime 효과·durability 증거를 제공하지 않음. 계약 변경은 영향을 받는 A/B 행만 재검토 |
+| C0 컴파일 계약 구현·배정 | M2에서 동결한 §4–6의 exact type/lifetime/visibility·producer getter/borrowed schema-value codec와 Row grammar/owner 의미를 구현. A/B 전용 본문/fixture·효과 없는 최소 대역 제공 | M2 동결안 수용·D2; A/B C0 구현 착수 | runtime 효과·durability 증거를 제공하지 않음. 계약 변경은 영향을 받는 A/B 행만 재검토 |
 | C1 원 정상 owner·물리 효과 | 원 runtime/초기화 조상 유지; actual WAL impl을 physical로 이전하여 Catalog/Row import0. 실제 Plan4Retention 소유를 apply::DiskSession으로 이전하고 원 Plan4Pages/control/history/flush/visibility를 이동. selected recovery는 새 consuming 전환 수신. 원 control 분할·5760B disjoint backing·49152 long/source aggregate admission 수신 | C0, 기존 Catalog 및 plan4 recovery | scope1 전체 이동 제외. 새 owner 정의·원 consuming 전환·selected READY 반환이 한 되돌림 단위. alias만으로 완료 불가; 새 wire 없음 확인 |
-| C2 original read/visibility | 실제 Catalog lookup의 visible/결과 본문을 storage::catalog::read로 옮겨 제한 operation 소비. original source/load/capture/resolve는 apply::read. RowReadOperation의 Owner 재대여·Row2pin/statement view 공급 | C1, §6.2–6.4와 Q03; B와 기존 Catalog | B의 point/next/reseek·출력 본문 제외. Catalog/B의 deep import·내부 field 접근0. actual lookup 수신·checked cleanup·원 cap 회계가 한 되돌림 단위 |
-| C3 apply/terminal 경계 | actual Prepared/InstallGrant/terminal receipts를 apply private root와 checked 자손 producer로 이전. Catalog actual prepare→stage→same pins→durable→whole install/Q를 MutationPort로 수신. Row observer/adapter·효과 없는 preflight·actual Begin/Reserve·consuming private/claim·Serializable/RC 종료 수신. Catalog CREATE claim 공존은 [필수 미해결](#catalog-claim-gap) | C1, 동결한 §6.5–6.6·Q04; A/Catalog 및 B live fixture | A의 schema/value→row/Undo/CLR 후보 본문 제외. 새 Catalog/A/B의 deep import·legacy grant 경유0. actual proof producer+generic installer+제품 호출이 한 단위 |
-| C4 Row 의미의 실제 복구 수신 | 실제 source before/target/obligation 검산, Row frame replay/CLR target·잔여 예약·READY 인계. §6.7 action/task로 A CLR handler와 C의 CancelReserved/AbortEnd/committed maintenance를 분리. 독립 authored row corpus를 원 owner에 적용하는 제한 경로 | C3 및 Q01/Q04/Q05/Q06; A crash/reopen, B 단독 fixture | 일반 Row UPDATE/DELETE/SMO 및 전체 복구 재설계 제외. 형식이 바뀌면 fresh-fixture/현재-build 복구가 한 단위; 무검증 과거 binary downgrade 없음 |
+| C2 original read/visibility | 실제 Catalog lookup의 visible/결과 본문을 storage::catalog::read로 옮겨 제한 operation 소비. original source/load/capture/resolve는 apply::read. RowReadOperation의 Owner 재대여·Row2pin/statement view 공급. active Catalog pair claim의 Busy/같은 snapshot 재시도 수신 | C1, §6.2–6.4와 Q03; B와 기존 Catalog | B의 point/next/reseek·출력 본문 제외. Catalog/B의 deep import·내부 field 접근0. actual lookup 수신·checked cleanup·원 cap 회계가 한 되돌림 단위 |
+| C3 apply/terminal 경계 | actual Prepared/InstallGrant/terminal receipts를 apply private root와 checked 자손 producer로 이전. Catalog actual prepare→stage→same pins→durable→whole install/Q를 MutationPort로 수신. Row observer/adapter·효과 없는 preflight·actual Begin/Reserve·consuming private/claim·Serializable/RC 종료 수신. Catalog CREATE claim 공존은 [원 registry atomic close/key gate/flush lease](#catalog-claim-gap)를 실제 공급 | C1, 동결한 §6.5–6.6·Q04; A/Catalog 및 B live fixture | A의 schema/value→row/Undo/CLR 후보 본문 제외. 새 Catalog/A/B의 deep import·legacy grant 경유0. actual proof producer+generic installer+제품 호출이 한 단위 |
+| C4 Row 의미의 실제 복구 수신 | 실제 source before/target/obligation 검산, Row frame replay/CLR target·잔여 예약·READY 인계. §6.7 action/task로 A CLR handler와 C의 CancelReserved/AbortEnd/committed maintenance를 분리하고 최초 canonical analysis policy gate를 공급. 독립 authored row corpus를 원 owner에 적용하는 제한 경로 | C3 및 Q01/Q04/Q05/Q06; A crash/reopen, B 단독 fixture | 일반 Row UPDATE/DELETE/SMO 및 전체 복구 재설계 제외. 형식이 바뀌면 fresh-fixture/현재-build 복구가 한 단위; 무검증 과거 binary downgrade 없음 |
 | C5 합류 adapter | 원 session의 A Commit 결과를 B가 같은/새 snapshot과 새 process recovery로 읽는 작은 조립 | 필요한 C1–C4, A/B 국소 구현 | 두 기능 본문을 통합 담당에게 이동하지 않음. 조립·fixture·해당 diff의 인수만 포함 |
 
 C0는 M2의 문서 후보만으로 완료되지 않는다. M3 수용 뒤 M4에서 최소 컴파일 경계가 실제 제공된 범위부터 A/B가 착수할 수 있다. C0의 계약 대역은 canonical row/schema 입력, finite logical Status/Undo 응답, explicit Busy/Capacity/Unsupported 같은 효과 없는 선택을 반환할 수 있다. 실제 `WalRequirement`, pin, snapshot/READY, install receipt, file effects를 제조할 수 없다. 대역으로 시험한 결과는 순수 기능 범위의 결과이며 C 수신 전 실제 저장·가시성·복구 성공으로 승격하지 않는다.
@@ -899,19 +1154,23 @@ B fixture는 checksum/grammar decode만으로 live 권한을 얻지 않는다. C
 
 | ID·정확 분모 | 고정 입력·fault cut | oracle·수신 조건 |
 | --- | --- | --- |
-| MBC00-P01..03, compiler 성공3 | P01 preflight→validation lane종료→reserve→producer lane종료→prepare→apply→statement종료→transaction종료. P02 Before에서 같은 wrapper회수→reopen→cancel. P03 recovered의 disjoint inner/private/progress borrow→A handler→next_action 재호출 | 최소 concrete memory W/File와 실제 lifetime 타입이 컴파일. 대역 효과0. P01의 invalid type/null/len/index는 효과 없는 분기로 선택 |
-| MBC00-N01..12, compiler 거절12 | N01 sibling raw runtime field 접근,N02 InstallGrant raw 구성,N03 bytes/LSN→terminal receipt 생성,N04 Reserved/credit Clone,N05 session보다 오래 port 보관,N06 page guard 생존 중 같은 Owner 재대여,N07 cursor 생존 중 view 소비,N08 view 생존 중 transaction 소비,N09 validation/producer lane 생존 중 parent 소비,N10 Prepared 생존 중 private 수정,N11 consumed recovery task 재사용,N12 같은 &view를 Sync 요구 경계로 공유 | 의도한 privacy/borrow/move/trait 지점의 진단을 요구. 다른 오타·미해결 import·fixture 실패를 성공 거절로 세지 않음. stale path만 바뀐 기존 probe는 해당 diff probe만 선택 |
+| MBC00-P01..05, compiler 성공5 | P01 preflight→validation lane종료→reserve→producer lane종료→prepare→apply→statement종료→transaction종료. P02 Before에서 같은 wrapper회수→reopen→cancel. P03 recovered의 disjoint inner/private/progress borrow→A handler→next_action 재호출. P04 장기 T1 view 유지→T2 Catalog reserve/initialize/Commit→T1 읽기 전용 conflict 종료. P05 producer parts의 control/schema/before immutable borrow와 frame/after/candidate mutable borrow→lane 종료→prepare | 최소 concrete memory W/File와 실제 lifetime 타입이 컴파일. 대역 효과0. P01의 invalid type/null/len/index는 효과 없는 분기로 선택 |
+| MBC00-N01..14, compiler 거절14 | N01 sibling raw runtime field 접근,N02 InstallGrant raw 구성,N03 bytes/LSN→terminal receipt 생성,N04 Reserved/credit Clone,N05 session보다 오래 port 보관,N06 page guard 생존 중 같은 Owner 재대여,N07 cursor 생존 중 view 소비,N08 view 생존 중 transaction 소비,N09 validation/producer lane 생존 중 parent 소비,N10 Prepared 생존 중 private 수정,N11 consumed recovery task 재사용,N12 같은 &view를 Sync 요구 경계로 공유,N13 Catalog reservation의 flush lease 생존 중 maintenance 재사용,N14 TxPairExistingRead/Write 생존 중 key mutable finish/cancel | 의도한 privacy/borrow/move/trait 지점의 진단을 요구. 다른 오타·미해결 import·fixture 실패를 성공 거절로 세지 않음. stale path만 바뀐 기존 probe는 해당 diff probe만 선택 |
 | MBC10-V01..06, C1 memory6 | V01 fresh 원 owner→DiskSession→split→해제,V02 selected recovered→READY 전/후 into_live,V03 원 reader claim/binding 점유 중 재bind,V04 정상 loan반환과 active owner Drop,V05 writer/control mutex poison,V06 poison/실패 대기 notify | writer/File/slot/fence/pool/core 주소·generation·loan 동일, 이동1회. READY 전 같은 owner 반환. poison/Drop은 원 phase/effect/fence·대기 해제, 새 writer 생성0 |
 | MBC10-V07..10, C1 admission memory4 | V07 long512B class의 잔여511/512/513를 각각 capsule/view/cursor 생성에 적용,V08 cursor2개 독립 close,V09 writer1+resident reader2가 겹친 nested sum에서 마지막 admission의−1/동일/+1,V10 foreground read2개 실행 중 progress진입 요청→새 reader거절→기존2개 finite반환 | 각 subinput 독립선택. long/short 별도 총계·same slotgen checked 반환. source guard/effect 전 부족거절. rollback/terminal은 신규 foreground credit 없이 진입하고 snapshot/cursor 강제해제0 |
 | MBC20-V01..08, C2 Catalog memory8 | V01 actual CREATE 전 missing,V02 Commit후 같은 key found,V03 중간 gap key,V04 own Active,V05 foreign Active,V06 old snapshot/새snapshot,V07 source latch의 Txn/U capture 직후 retirement시도,V08 nonresident Status/Undo→dirtyvictim FlushRequired→재진입 | 기존 `lookup_catalog_empty` 관련 실제 경로를 새 `catalog::read`→CatalogReadOperation으로 수신. 고정 Catalog 정의 bytes/key/version oracle, point부재도 catalog-read-set등록. 원2pin·source latch 순서·cleanup census, decoder권한0 |
 | MBC20-V09..11, C2 memory3 | V09 foreign core/old binding handle,V10 capture sequence이후 다른candidate submit,V11 read-only Serializable 종료와 active view/cursor Drop | stale는 typed 오류·output길이0. source/Owner 재대여는 각 guard종료 뒤만. read-only conflict는 Rejected와 slot/snapshot종료, 미해결 mutation Drop은 fence. Row point/cursor 세부는 MCB01–04 수신 |
-| MBC30-V01..04, C3 preflight memory4 | V01 type불일치,V02 nonnullable null,V03 canonical L2049,V04 index1 actualtable; 각 actual preflight→A validation 경계 | Reserve/WAL/page/issuer소비0·생존Reserved0, source read-set만 유지. 값검산 후 source/schema/leaf cut변경의 재검산도 각 case에1회 넣어 samePreflight Before 및 재준비 확인. MCA01-V09..12와 같은 실행을 공유 가능 |
+| MBC30-V01..03와 V04-P/S, C3 preflight5개(1개 C0 pure) | V01 type 불일치,V02 nonnullable null,V03 canonical L2049. V04-P는 독립 valid IndexDefinition을 shared pure 전체 Catalog census에 제출. V04-S는 actual table history와 다른 valid Index cell을 FileIo read에 주입하는 [stored-source 음성 입력](dev3-module-consumers.md#index-negative-input) | V01..03은 Reserve/WAL/page/issuer0·생존Reserved0이며 별도 stale-source cut에서 samePreflight Before를 검산. V04-P는 C0 Unsupported. V04-S는 actual history와 home full equality의 Fatal(Load,Invariant)·원 fence 유지·load install/CheckedTable/Preflight/Reserve/INSERT0·영속 mutation0이며 Before retry가 아님. MCA01의 같은 P/S 실행을 공유 |
 | MBC30-V05..10, C3 Catalog terminal memory6 | V05 prepared foreigncore,V06 prefix/digest변조,V07 actual physicalstage의 first-write 전 Unchanged,V08 firstwrite시작 후 error,V09 complete stage→pending→durable,V10 before stamp가 pending 중 변경 | V05/06 stage0. V07 같은 transaction과 원 intent/targets반환. V08 UNKNOWN/fence/ACK0. V09 original PinSet 배열·generation 동일/suspend 중 latch0/Drain 뒤 설치. V10 재검산 실패로 부분성공/가짜ACK0 |
 | MBC30-V11..14, C3 memory4 | V11 page설치 후 metadata/DPT전 fault,V12 durable+wholeinstall 뒤 Q공개전 barrier,V13 table/receipt/changed-list 부족,V14 isolation validation뒤 같은 원control의 두번째terminal시도 | V11 fatal과 원pending/복구의무. V12 oldsnp가 미공개q를 보지 않으며 ACK0, publish뒤 새q. V13 stage전거절. V14 validation→publish까지 exclusive원ledger 유지·source ordering oracle. MCI01/03의 동일 interaction 실행과 공유 가능 |
 | MBC30-N01..04, C3 Catalog native4 | N01 actual CatalogCommit ACK직후 homeflush전 kill,N02 Commitwrite 첫byte 후 fault,N03 completewrite 뒤 sync error,N04 durable+statuswholeinstall 뒤 Q공개전 kill | 각 동일build3PID produce/recover/reenter. controller ACK만 승자로 강제; UNKNOWN은 actual completeprefix/독립 WAL reader로 outcome결정. 새ACK·세번째PID 재진입 확인. Catalog이전의 바뀐 native driver만 선택 |
-| MBC40-V01..06, C4 memory6 | V01 Root3/Job3/Profile3/base4의 현재format dispatch,V02 validSHA scope2→Rowingress,V03 no-loser committed corpus의Prune→ReleaseRole→RootFree→TerminalFinish,V04 Reserved cleanup,V05 Active chain이 C+B nohandler로dispatch,V06 actual CLR candidate의wronghead/target/debt | C의 observer/원owner가 검산. V02stage0,V03actualREADY,V04C CancelReserved만,V05READY0/Unsupported,V06Before같은task 또는poststagefence. MCB known-bad12 및 A chain cases는 소비자 inventory를 수신 |
+| MBC31-V01..06, C3 pair admission memory6 | V01 다른 reader pin 보유,V02 기존 reader load claim,V03 original flush capture/비Ready,V04 active pair key 중 ordinary resident pin/load/capture 각각 진입,V05 candidate 관측 뒤 source/generation 변경,V06 key의 foreign core/다른 existing request/fresh pair 요청 | V01..03은 close/generation/Reserve 전 Busy와 기존 사용자 소유 유지. V04 새 pin/load/capture0. V05 같은 leaf 최종 재검산으로 변화 전 거절. V06 quota 변경 전 거절. 새 owner/다른 pool claim0 |
+| MBC31-V07..12, C3 pair completion memory6 | V07 Reserve first-write 전 actual Unchanged,V08 Forward stage 전 actual Unchanged,V09 actual Cancel 완료,V10 Forward whole8images/control/DPT/joint publish→release/durable→finish,V11 active key Drop,V12 claim 설치/종료 leaf의 poison/unwind | V07 같은 key의 Unstaged 정리 뒤 ordinary 진입 재개. V08 Before wrapper에 같은 key/private/flush lease 보존→명시 cancel. V09 원 Cancel receipt/allocator-after·fresh pair를 검산한 뒤 claim과 key 한 번 종료. V10 원9-target identity·generation 보존. V11/12 fence/notify·잔여 claim/복구 의무, healthy read/flush 재개0 |
+| MBC31-V13, C3 장기 거래 수신 memory1 | T1 Serializable Catalog 관측 뒤 physical operation만 종료; T2 actual CREATE/Commit; T1 같은 snapshot으로 종료 검증 | snapshot/slot을 강제 해제하지 않고 T1 SerializationConflict. MCI01-V07과 동일 실행을 수신하며 이 기능이 바뀌지 않은 뒤 중복 실행0. 원 native CREATE/Cancel/Commit cut는 MBC30-N의 변경된 실제 driver로 수신 |
+| MBC40-V01..06, C4 memory6 | V01 Root3/Job3/Profile3/base4의 현재format dispatch,V02 validSHA scope2→Rowingress,V03 no-loser committed corpus의Prune→ReleaseRole→RootFree→TerminalFinish,V04 Reserved cleanup,V05 Active chain이 C+B의 최초 canonical analysis policy gate에 도달,V06 actual CLR candidate의wronghead/target/debt | C의 observer/원owner가 검산. V02stage0,V03actualREADY,V04C CancelReserved만,V05 physical/REBASE/cleanup0·READY0/Analysis Unsupported,V06Before같은task 또는poststagefence. MCB known-bad12 및 A chain cases는 소비자 inventory를 수신 |
 | MBC40-V07..09, C4 census3 | V07 memory W/File,V08 native W/File,V09 반환오류가최대인 Preflight/Reserved/Prepared/rollback/recovery task와residentread2개 동시 생존 | source retained1회+Σactive와caller carrier를 계수, class nested/long512/private425984/8192registry/5760backing/FD7/profile상한검산. 기존 `active.max`를 전체로 오인하면 실패. runtime재사용·Drop·source charge underflow/poison도 같은 finite lifecycle에서 감사 |
 | MBC40-N01..03, C4 native3 | N01 C+B committed-only currentbuild READY,N02 실제Reserved→cancel선택 중 재장애,N03 C+A의3행 chain에서 중간CLR 재장애 | 소비자의 **durability witness가 있는 cut 정의**를 수신. actual selectedepoch/새ACK/최종재진입과 잔여credit/issuer/loan을 검산. 같은 source의 MCA03/MCB01 native와 동일사건이면 결과1개로 수신하고 재실행0 |
+| C4 gate MCB05-N01..06 수신, native6개 | [소비자 no-loser 입력](dev3-module-consumers.md#acceptance)의 Active Forward, Row Reserved, Active headNone, Aborting nextNone, SystemPage Reserved-only, CatalogCreate Reserved | 각2PID·180초 negative. canonical 전체 검산 뒤 Analysis/Unsupported·CallerMustResolve, 별도 database_effect=Unchanged/mutations0/READY0. 정상 committed cleanup은 MBC40-N01의3PID. legacy recover의 새 Row scope 차단도 같은 source의 memory gate 검사에 포함. 중복 실행0 |
 | C5 MCI01-V01..14·MCI02-N01..03·MCI03-V01..04 | [합류 exact inventory](dev3-module-consumers.md#acceptance)의 실제 A→B·isolation·publication·recovery 입력/cut를 그대로 수신 | C1–C4와 두 소비자 단독 완료만으로 합류PASS를 만들지 않음. 새로운 상호작용/diff만 실행하며 기존 완료case 반복0 |
 
 물리 fault와 crash oracle는 stage 성공을 durable로 간주하지 않는다. native cut마다 actual write/sync·same requirement의 witness 유무를 입력에 명시하고, RAM-only stage는 유실될 수 있는 prefix로 판정한다. product API에 매 Reserve force를 추가하여 fixture를 통과시키지 않는다. append/latch 아래 임의 callback·sleep/wait를 삽입하지 않으며 필요한 scheduler hook은 실제 C 효과 경계를 가진 새 fixture 코드로 검토한다.
@@ -940,17 +1199,17 @@ source census는 기존/new owner와 view/Result/return carrier의 동시 생존
 <a id="open-questions"></a>
 ## 11. 설계 동결안과 후속 실제 의무
 
-Q01–Q08은 아래 상태로 독립 D2에 제출한다. Q02/Q03의 Catalog CREATE claim 공백·context getter 전체 필드 대조와 Q05의 C+B 최초 no-loser census gate는 필수 미해결로 남는다. **설계 제안·수용·구현·실행을 구별**하며, 미실행 compiler/source census/current-build recovery를 API 미정과 혼동하지 않는다. 차단 반례가 나오면 해당 설계를 다시 열고 양쪽 소비자에 같은 변경을 인계한다.
+Q01–Q08은 아래 상태로 독립 D2에 제출한다. 앞선 Q02/Q03 Catalog CREATE claim·producer getter와 Q05 최초 no-loser census 공백은 아래 구체 설계안으로 닫아 수용 검토에 제출한다. 이는 D2 수용이나 actual compiler/runtime 검증 완료가 아니다. **설계 제안·수용·구현·실행을 구별**하며, 미실행 compiler/source census/current-build recovery를 API 미정과 혼동하지 않는다. 차단 반례가 나오면 해당 설계를 다시 열고 양쪽 소비자에 같은 변경을 인계한다.
 
 | ID | 동결을 요청하는 설계안 | 담당·후속 실제 수신 의무 |
 | --- | --- | --- |
 | Q01 | [issuer/profile/dispatch](dev3-module-consumers.md#format-dispatch)의 Root3 row high-water·Job3 RowMissingRoot·Profile3/base4/scope3, single leaf/inline2048/index0. 원 issuer의 checked successor와 취소 후 비재사용 | format/C/A; 독립 D2 byte/oracle 검토, C4 current-build dispatch와 fresh fixture. 과거 format 결과를 새 format PASS로 승격하지 않음 |
-| Q02 | §4–6의 original owner 이전·조상 private seal·full generic/lifetime·error/loan 인계와 Row consuming API 제안. **필수 미해결:** [Catalog CREATE claim](#catalog-claim-gap)의 장기 capsule 공존 및 A context getter 전체 필드 대조 | 경계/C; 미해결 claim의 정상/실패/Cancel/Drop 인계와 API를 먼저 D2에서 닫음. 이후 MBC00 compiler·C1 identity·C3 actual grant/terminal·Catalog 제품 수신. raw ctor/field 확대·facade-only 완료 금지 |
-| Q03 | 원 Owner의 guard별 재대여·Missing 2pin/8192 registry·Cell view/revision·caller Tx snapshot·RC 각 statement·자동 격리 set·읽기 전용 종료 validation 제안. 일반3pin/occupied before 제외. **Catalog CREATE와 장기 reader 공존은 Q02 해결 전 미완료** | C/B; [visibility](dev3-visibility-retirement.md#row-missing-traversal)·[statement/cursor](dev3-task-06-tree-rows.md#module-statement-cursor)·[격리](dev3-task-10-concurrency.md#module-row-isolation)와 MBC20/MCB/MCI 반례 수신 |
-| Q04 | [Row 상태/count](dev3-module-consumers.md#row-states)의 head/mark/CLR/debt와 §6.7 closed action. A는 live/recovery CLR 후보, C는 actual source/observer/effect·CancelReserved/AbortEnd/committed maintenance | C/A; MCA02/03과 MBC40의 head/count·재장애·같은 loan 반환. handler 없는 C+B는 loser READY 불가라는 정책과 Q05 미해결 구별 |
-| Q05 | [독립 fixture](dev3-module-consumers.md#independent-fixtures)의 actual CREATE/Begin/Reserve binding+untrusted literal+same observer. live own-write/foreign Active와 committed-only reopen 분리. **필수 미해결:** next_action의 RowClr 거절만으로 Reserved/Active/Aborting 최초 census gate를 대신할 수 없음 | B/C; 최초 analysis gate와 실패 반환을 D2에서 먼저 닫음. 이후 known-bad12·서로 다른3PID·입력/ELF hash·상대 producer/fixture import0. decoded bytes로 source 권한 제조 금지 |
+| Q02 | §4–6의 original owner 이전·조상 private seal·full generic/lifetime·error/loan 인계와 Row consuming API. [Catalog CREATE claim](#catalog-claim-gap)은 원 registry atomic close+active key gate+disjoint flush lease, [producer 입력](#producer-input-api)은 exact getters/role/presence/control borrow로 설계 제출 | 경계/C; MBC00 compiler·MBC31 claim의 정상/실패/Cancel/Drop·C1 identity·C3 actual grant/terminal·Catalog 제품 수신. raw ctor/field 확대·facade-only 완료 금지. 실제 borrow/authority 검증은 M4 의무 |
+| Q03 | 원 Owner의 guard별 재대여·Missing 2pin/8192 registry·Cell view/revision·caller Tx snapshot·RC 각 statement·자동 격리 set·읽기 전용 종료 validation. Catalog claim 동안 short operation Busy/같은 snapshot 재시도, 장기 reader/capsule 유지. 일반3pin/occupied before 제외 | C/B; [visibility](dev3-visibility-retirement.md#row-missing-traversal)·[statement/cursor](dev3-task-06-tree-rows.md#module-statement-cursor)·[격리](dev3-task-10-concurrency.md#module-row-isolation)와 MBC20/31·MCB/MCI 반례 수신 |
+| Q04 | [Row 상태/count](dev3-module-consumers.md#row-states)의 head/mark/CLR/debt와 §6.7 closed action. A는 live/recovery CLR 후보, C는 actual source/observer/effect·CancelReserved/AbortEnd/committed maintenance | C/A; MCA02/03과 MBC40의 head/count·재장애·같은 loan 반환. WithRowClr는 actual A handler 수신이며 handler stub로 READY를 만들지 않음 |
+| Q05 | [독립 fixture](dev3-module-consumers.md#independent-fixtures)의 actual binding+untrusted literal+same observer. [최초 policy gate](#row-recovery-policy)는 canonical 전체 검산 뒤 ReservedInventoryNone·Reserved root0·ATT Active/Aborting0를 physical/REBASE/cleanup 전에 요구 | B/C; MCB05-N01..06과 C4 gate/legacy 차단·기존 failure owner 보존. live own-write와 committed reopen 분리, 입력/ELF hash·상대 producer/fixture import0. decoded bytes로 source 권한 제조 금지 |
 | Q06 | [자원 정본](dev3-resource-bounds.md#row-missing-module-budget)의425984 private/9proof5after·5760 backing·49152 long·65536 동시 short 합·original flush, P_R와 FD/profile 상한. §6.8–6.9의 선예약/진행/회수 | resource/C; MBC10/40과 MCA05 actual census·admission. source 측정은 M4 의무, 초과 시 계약 재검토이며 한도 증액/숨김 금지 |
-| Q07 | §9 MBC00–40와 C5 수신의 정확 case 분모·입력/fault cut/oracle·30/180초·45/20분·출력/namespace 예산, [소비자 인수](dev3-module-consumers.md#acceptance)의 MCA/MCB/MCI 연결 | 인수/C/A/B; 실제 diff에 따라 개별 선택·NOT_RUN/FAIL/UNKNOWN 보존·완료한 무변경 case 반복0. 미해결 API 영향 case는 해결 후 고정하며 아직 명령/실행/PASS 없음 |
+| Q07 | §9 MBC00–40와 C5 수신의 정확 case 분모·입력/fault cut/oracle·30/180초·45/20분·출력/namespace 예산, [소비자 인수](dev3-module-consumers.md#acceptance)의 MCA/MCB/MCI 연결 | 인수/C/A/B; 실제 diff에 따라 개별 선택·NOT_RUN/FAIL/UNKNOWN 보존·완료한 무변경 case 반복0. 독립 D2 반례로 설계가 바뀌면 해당 case만 함께 수정하며 아직 명령/실행/PASS 없음 |
 | Q08 | §7의 C0–C5 유한 공급·제외·되돌림, §8과 [소비자 분담](dev3-module-consumers.md#division)의 전용 source/fixture·C0 순수 대역/actual 수신 시점 | root/C/A/B; [M2 인계표](../plans/module-independence-plan.md#m2-handoff)의 담당/기준 source와 대기·충돌·합류 증거 등록. build inventory는 실제 구현 시 등록 |
 
-독립 검토자가 원 source와 정상/실패/복구 반례 및 소비자·자원 owner의 정합을 확인한 뒤만 D2 수용/M2 완료를 판단한다. 확정된 C의 미구현·미실행은 M4/M5 의무로 남으며 M2에서 제품 prototype·컴파일·시험을 수행할 이유가 되지 않는다. 현재 상태는 **D2 PROPOSED·M2 미완료·제품/시험 NOT_RUN**이다.
+독립 검토자가 원 source와 정상/실패/복구 반례 및 소비자·자원 owner의 정합을 확인하여 **D2 검토 수용·필수 수정0**으로 판정했다. [검토 기록](../evidence/module-independence-survey-20261026.md#final-design-review)을 수신하며 이번 커밋의 채택 상태는 PROPOSED로 보존한다. 확정된 C의 미구현·미실행은 M4/M5 의무로 남으며 M2에서 제품 prototype·컴파일·시험을 수행할 이유가 되지 않는다.

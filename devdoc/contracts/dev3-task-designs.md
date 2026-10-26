@@ -39,6 +39,8 @@
 
 화살표는 해당 기능의 최소 공급을 뜻한다. 전체 대분류 완료를 요구하지 않는다. 3.01의 관련 표현과 opcode별 F05는 모든 소비자에 붙는 공통 선행이므로 그림에서 반복하지 않는다. 전체 선행 목록은 [기존 분해표](../plans/dev3-implementation-plan.md#remaining-work)가 정본이다.
 
+`D3-MODULE-ADOPTION-001` **D2 PROPOSED 수신표**는 아래 기능 DAG의 실제 공급을 [C0–C5](dev3-module-boundaries.md#common-deliveries)에 연결한다. 3.04/3.05/3.10/3.11의 원 guard/WAL/가시성/terminal은 C가 공급하고, 3.06.2의 INSERT 후보·3.09의 Row CLR 후보와 제품 흐름은 A, 3.06.3의 point-read/cursor는 B가 소유한다. 3.12는 C의 actual analysis/replay/효과와 A의 새 loser CLR 후보를 조립하며 B 단독 reopen은 최초 no-loser 검사를 통과한 source만 받는다. 3.14의 원 committed cleanup과 3.08의 실제 CREATE는 C의 선행/수신 경로이고 새로운 두 제품 기능의 대용이 아니다. [원 격리](dev3-task-10-concurrency.md#module-row-isolation)·[statement/cursor](dev3-task-06-tree-rows.md#module-statement-cursor)·[Missing Row 참조](dev3-visibility-retirement.md#row-missing-traversal)·[자원](dev3-resource-bounds.md#row-missing-module-budget)이 해당 의미의 단일 원문이다. C0에서 가능한 효과 없는 본문 구현과 실제 C를 요구하는 통합 인수를 구별하며 3.01–3.16/S5 전체 완료 조건은 유지한다.
+
 ```mermaid
 flowchart TD
   F[3.02 파일과 선택 읽기] --> A[3.03.1 제한 예약 취소 공급]

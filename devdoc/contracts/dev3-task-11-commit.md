@@ -13,6 +13,8 @@
 <a id="first-row-integration"></a>
 ### 첫 행 거래의 연결 완료 조건
 
+`D3-MODULE-ADOPTION-001` **D2 PROPOSED 반영안**에서는 이 완료 조건을 [A INSERT·B 조회/cursor](dev3-module-consumers.md#selection)의 독립 구현과 실제 합류로 수신한다. C의 [원 terminal 경계](dev3-module-boundaries.md#api-candidates)가 유일 mutable ledger에서 Serializable validation→exact stage/durable→whole install→실제 변경 table/catalog epoch와 Q 공개를 연결한다. readonly 종료도 같은 coordinator에서 검증하되 Commit WAL은 만들지 않는다. 공통 공급만 구현하고 A/B를 등록·시험 역할로 축소하지 않으며, [MCA/MCB/MCI](dev3-module-consumers.md#acceptance)의 최초 단독 source 및 신규 합류 인수가 필요하다. 아래 첫 행의 기능·실패·현재-build 복구 조건은 그대로다.
+
 [현재 우선순위](../plans/dev3-implementation-plan.md#work-priority)의 세 번째 목표는 작은 실제 행 거래다. 지원하는 row opcode부터3.06.2→3.09.2/3→3.11.1→3.12.5–8을 연결하고 index/catalog의 나머지 대상은 이후 같은 경로에 추가한다. fixture의 table/anchor·identity는 실제 영속 생성·선택 경로로 공급하며 임의 handle·RAM 전용 table로 대체하지 않는다. 이에 필요한 최소 catalog 공급은 선행이고 전체 DDL/build 기능은 선행이 아니다.
 
 공급 순서는3.11.1 공통 terminal/공개 primitive→최소 catalog create와 해당 undo/commit 의미의 연결→성공한 영속 table handle→첫 행 거래 인수다. 공통 primitive를 첫 행 거래 완료 뒤에만 공급하는 순환을 만들지 않는다. 최소 catalog 생성도 실제 recovery에서 재현되어야 하며 codec 성공이나 임의 사전 생성 파일로 원자성·identity 검산을 대신하지 않는다.

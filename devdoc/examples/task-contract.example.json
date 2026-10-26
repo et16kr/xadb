@@ -100,6 +100,30 @@
       "merged-validation",
       "generated-documents"
     ],
+    "module_handoff": {
+      "status": "UNRESOLVED_EXAMPLE",
+      "policy_ref": "parallel-development-policy.md#module-contract-handoff",
+      "policy_decision_status": "PROPOSED",
+      "contract_baseline": null,
+      "C0_compile_and_effect_free_inputs": null,
+      "real_C_supply_units_and_receivers": [],
+      "product_A_owner_paths_and_oracle": null,
+      "product_B_owner_paths_and_oracle": null,
+      "actual_product_implementation_overlap": null,
+      "first_validation_sources": ["C+A", "C+B"],
+      "integration_source": "C+A+B plus declared connection changes",
+      "contract_reopen": "Preserve original attempts; review common semantic changes and re-receive only affected supply and consumers",
+      "empty_fields_mean_ready": false
+    },
+    "validation": {
+      "status": "NOT_RUN",
+      "changed_code_to_cases": [],
+      "first_separate_source_receipts": [],
+      "new_integration_interactions": [],
+      "completed_unchanged_case_reruns": "FORBIDDEN",
+      "preserve_original_failure_and_not_run": true,
+      "documentation_gate": "Pre-push only; not an edit or commit requirement"
+    },
     "generated_outputs": [
       {
         "paths": [

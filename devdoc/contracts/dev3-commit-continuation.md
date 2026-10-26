@@ -6,6 +6,8 @@
 
 ## 1. 실제 소비와 권한의 경계
 
+`D3-MODULE-ADOPTION-001` **D2 PROPOSED 반영안**에서는 이 문서의 continuation과 exact receipt를 [원 apply 경계](dev3-module-boundaries.md#api-candidates)에서 실제 소유한다. Catalog 제품과 A INSERT는 제한 API를 호출하며 원 whole PinSet·generation·before digest를 Pending→Drain→whole install까지 그대로 인계한다. 새 공통 InstallGrant를 raw factory나 legacy permit 우회로 발급하지 않는다. 원 mutable ledger는 Serializable validation부터 actual installed receipt·epoch/Q 공개까지 보유한다. Installation이 Open으로 바뀐 사실만으로 Q 공개 또는 Commit 직렬화 종료를 추정하지 않는다. normal ACK와 UNKNOWN/resolve·Drop fence 의미는 유지하며 이 반영은 실행 결과가 아니다.
+
 첫 실제 소비는 첫 extent 안의 작은 native Catalog CREATE, 원 Commit, 새 process 복구 후 table identity 읽기다. [구현 계약 4절](implementation-contracts.md#section-4)에 따라 CREATE는 독립 원자 거래이며 다음 Row INSERT는 별도 DML 거래다. 일반 DML 거래 중 DDL은 효과 전에 거절한다. SQL implicit commit, index, overflow, SMO는 이 첫 소비의 선행이 아니다.
 
 공통 코드는 먼저 작성할 수 있다. 다만 다음 권한은 실제 terminal producer가 공급하기 전까지 생성자를 닫아 둔다.
