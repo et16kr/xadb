@@ -2,6 +2,8 @@
 
 2026-10-25 · `D3-CATALOG-CREATE-001` 결합 D2 채택·구현 착수 수용 · [실제 소비 계약](dev3-catalog-create.md). 제품 효과·실행 인수 미완료.
 
+2026-10-26의 [첫 Row Missing 참조 이동](#row-missing-traversal)은 별도 D2 PROPOSED이며 기존 채택 범위와 구분한다.
+
 2026-10-25 · r0 · `/root/undo_design` · **결합 D2 채택 정본**. 제품/fixture 수정·시험 실행/commit 0. B1 공통 공급 `35c879e`의 실제 source를 읽었다. B1 PASS는 실제 Commit/publication/reader/aging 완료가 아니다. Root/Job wire는 root 및 다른 담당자의 정본을 따른다.
 
 ## 1. 결론과 실제 공급 경계
@@ -153,3 +155,34 @@ fn finish_applied(self /* RetirementIntent */,
 첫 resolver는 caller에게 임의로 중간 state를 넘기는 framework 대신 **하나의 private 동기 함수**에서 original `&mut Owner`를 유지하고 source/read/load 단계마다 재대여할 수 있다. `CapturedCatalogRefs`의 pin은 registry만 borrow하고 raw Owner authority를 소유하지 않는다. 그 함수 바깥으로 pin을 반환하는 API는 없으며 CLR의 내부 traversal→apply는 actual private pin을 move한다. `&mut Owner`를 가진 struct 안에 그 field를 다시 borrow한 `ReadTargets/WriteTargets`를 저장하는 self-reference는 만들지 않는다. checked cancellation/error에서 guard를 먼저 소비한 뒤 같은 원 owner와 traversal lease를 돌려준다.
 
 Catalog copy 최대4588B는 원 B private425984B loan의 tail `[409600,425984)`에 보존한다. 동기 resolver가 original Owner를 유지하며 load에는 disjoint prefix의 필요한 subloan만 제공한다. source latch를 놓은 뒤 loader가 copy를 덮지 못하도록 typed split으로 수명을 닫는다.
+
+<a id="row-missing-traversal"></a>
+## 8. 모듈 전환 후보 — 첫 Row Missing의 참조 이동
+
+2026-10-26 · `D3-ROW-REFERENCES-001` · **D2 PROPOSED, M2 미완료**. 작성·계약 담당 `/root`. [모듈 전환 계획](../plans/module-independence-plan.md#m2-handoff)의 A/B에 필요한 후속 제안이며, 앞선 Catalog 채택·제품 인수를 변경한 기록이 아니다. 독립 검토·구현·실행은 미완료다. 적용 후보는 실제 CREATE가 만든 단일 RowLeaf의 신규 RowId·inline·Missing Undo INSERT와 이 행의 point-read/cursor, 그 거래의 statement/full rollback이다. occupied before·UPDATE/DELETE·overflow에는 적용하지 않는다.
+
+### 필요한 pin과 발급 원천
+
+기존 source당 두 reference 행을 유지한다. 앞 절의 일반 Row3-pin 경고를 첫 Missing 경로의 무조건적인 확대 선행으로 해석하지 않는다.
+
+| 실제 source와 처리 순서 | 동시에 필요한 semantic pin | 발급·반환 규칙 |
+| --- | --- | --- |
+| RowLeaf의 행 header→Status 판정 | source가 가진 TxnRef와 UndoRef, 최대2 | 검증된 Row target의 content latch 아래 두 target을 먼저 검산하고 일괄 등록. row copy·pin 등록 완료 후 latch 해제. Status target은 exact pin/TxnRef로 읽음 |
+| Status 판정→Missing Undo 판정 | 기존 TxnPin+UndoPin, 최대2 | Status를 읽는 동안 기존 두 pin을 보존. row가 snapshot에 보이지 않으면 같은 U의 Missing·row identity·creator/sequence를 검산. Missing에는 beforeTxn/previous-version 참조가 없으므로 추가 pin 발급 없음 |
+| CLR의 currentU→previous-transaction H | currentU+nextU(H), 최대2 | 원 actor/status의 rollback authority를 유지. U latch 아래 H를 먼저 pin한 뒤 source 해제. CLR이 head/next·row/edge·U 상태를 원자 채택한 뒤 currentU 반환, H는 다음 원 current가 됨. H=None이면 두 번째 행은 미사용 |
+
+row source 발급기는 실제 Row target guard의 메서드로만 접근한다. 입력은 exact RowId와 같은 원 reference lease이며 raw TxnRef/UndoRef를 받아 pin으로 바꾸는 외부 factory를 추가하지 않는다. guard는 expected table generation/schema·anchor/leaf owner·page incarnation·canonical row/header를 확인한 뒤 source capability를 생성한다. registration 전에 대상 중 하나라도 retirement marker와 충돌하면 둘 다 등록하지 않고 Busy를 반환한다. latch 해제 후 pin 등록을 시도하는 대안은 회수 경합 때문에 배제한다.
+
+`Committed(q)` 행은 q로 snapshot을 판정할 수 있으나 undo가 있으면 필요한 참조 보호를 생략하지 않는다. own actor의 Active row도 같은 statement/view authority 검산을 거친다. 다른 actor의 Active/Aborting/Aborted 또는 snapshot보다 늦은 Commit은 해당 Missing을 따라 부재를 확인한다. 필요한 U가 없거나 owner·generation·row identity가 맞지 않으면 Corruption/RecoveryRequired이며 정상 NotFound가 아니다. status 설치와 Q 공개 사이에도 원 snapshot q를 유지한다.
+
+읽기 결과가 caller buffer로 완전히 인계되거나 오류로 폐기된 뒤 physical guard→semantic pin→reference lease 순으로 정리한다. FlushRequired를 반환할 때 조회용 pins/lease는 해제하고 snapshot·statement token만 유지한다. 재시도는 같은 q에서 새 source capture로 시작한다. poison/fence에서는 기존 보수적 보존 정책을 적용하고 clean release 성공으로 위장하지 않는다.
+
+CLR의 H pin 선취득 실패는 current pin·원 head/next·미소비 rollback 예약을 보존한다. stage 전 cancellation은 원 권한을 돌려주고, 완결 stage 이후 실패는 실제 effect/fence와 원 retained ownership을 인계한다. replay/새 process에는 transient pin을 영속 복원하지 않으며 durable source/edge/job census로 loser를 처리한 뒤에만 새 READY를 발급한다.
+
+### 자원·미공급과 선택 인수
+
+이번 후보의 registry는 기존 snapshot68·reference66·admission32·retirement1, **8192B** loan을 유지한다. 새 Row source guard/copy/Result의 실제 type/source 비용과 loader·cursor 중첩 peak는 별도 F05에 포함해야 하며 기존 Catalog census를 새 Row의 PASS로 사용하지 않는다. Row/Undo2pin은 physical target pin 수와 다른 항이다. reader/rollback의 원 Owner 및 pool을 재대여하는 private operation을 유지하고 두 번째 registry나 전체 chain 목록을 만들지 않는다.
+
+일반 occupied Row before에서 currentU+beforeTxn+nextU의 세 pin이 필요한 경로는 미공급이다. 이를 지원할 때는 handoff graph와 lease/registry·metadata 회계를 별도 D2로 변경한다. 현재 두 행을 일반 CRUD 전체 상계로 승격하지 않는다. 참고 산식으로33 actor×3행을 그대로 채택하면 reference99행·총10832B이지만, 이 산식은 이번 공급 배정이나 실제 지원 한도가 아니다.
+
+구현 시 신규 Row 경로에 한해 source capture 직후 reader/CLR 경합, Status commit-q>snapshot-q, current/next pin 선후와 Busy 반환 보존, exact target 변조·missing U, nonresident load/FlushRequired 재진입, caller output 실패 정리, generation 소진·poison·scope 밖 occupied before 거절을 선택한다. compiler 사례는 source guard를 놓고 source capability 사용, lease 이중 반환, foreign origin pin 사용을 거절해야 한다. Catalog가 같은 추출 API로 바뀌면 그 실제 diff에 영향받는 기존 사례만 선택한다. 독립 검토자는 두 handoff graph의 최대2와 적용 범위·retirement/cleanup·F05 연결을 확인한다.

@@ -2,6 +2,8 @@
 
 2026-10-25 · **표현·수학적 회계 보강 / opcode별 수치 F05·실제 I/O 인수 미완료**
 
+2026-10-26의 [첫 Row Missing 모듈 전환 자원표](#row-missing-module-budget)는 D2 PROPOSED이며 기존 채택·실행 범위와 구분한다.
+
 [자원 소유 계약](disk-storage-design.md#reserve-accounting) · [고정 profile](disk-storage-design.md#capacity-profile) · [최악 조건 인수](../plans/dev3-implementation-plan.md#resource-proof) · [병렬 소유](../implementation/dev3-implementation.md#wave-2)
 
 이 문서는 이미 구체화한 표현의 bytes를 실제 예약 계산에 연결한다. 숫자가 있는 표현 표만으로 F05가 완료되는 것은 아니다. undo record·catalog·FILEMAP/profile의 표현 크기는 구체화했으나 예약 descriptor·선택 checkpoint와 실제 tree 변경의 page 집합은 남아 있다. 따라서 아래를 admission된 작업의 완료 보장이나 S2 I/O 실행 승인으로 사용하지 않는다. 필요한 항이 미정인 operation은 첫 effect 전에 거절한다.
@@ -120,3 +122,52 @@ DS03/PF09의 각 inventory 접근량은 configured buffer의4배 이상이다. �
 r=64와 index8개·각K=64인 가득 찬 leaf 근사에서 `16384/65+8×16384/69=2151.6613 bytes/row`다. 이는 사용자64 bytes의33.6197배이나 internal/allocator/Undo/WAL·빈 공간을 제외한 근사이며 실제 DB 크기나 타 DBMS 대비 배율이 아니다. 128KiB row의 old/new overflow와 before Undo가 각각9page이면 일시 공존27page=432KiB, 그중 새 row+before만 신규라면18page=288KiB다. root/SMO/추가 WAL·예약은 별도다.
 
 PF09는 실제 allocated/reserved/retained bytes를 row·index·overflow·Undo·WAL·allocator/control별로 분리하고 이상적 leaf 산식과 차이를 설명한다. key가 변하지 않는 UPDATE의 index mutation 생략은 기존 계약을 유지한다. 압축·metadata 축소·형식 변경은 측정 후 별도 D2이며 이번에 채택하지 않는다.
+
+<a id="row-missing-module-budget"></a>
+## 모듈 전환 후보 — 첫 Row Missing의 자원 배정
+
+2026-10-26 · `D3-ROW-RESOURCE-001` · **D2 PROPOSED / M2 미완료 / runtime F05 NOT_RUN**. 작성·자원 담당 `/root`. [소비자 profile·opcode 산식](dev3-module-consumers.md#row-shape)의 single RowLeaf·inline·index0·Missing INSERT에 한정한다. 이 절은 새 source의 실제 생존량을 측정한 결과가 아니며, 제품 구현과 함께 검산할 설계 예약이다. 범위 밖 일반 CRUD/SMO·복구를 이 수치로 admission하지 않는다.
+
+### page·private loan의 상계
+
+변경 page의 최대는 Forward/CLR/Prune의5개다. 실제 apply 집합에는 원 Root, 해당 RootJob page, Status, U, RowLeaf와 allocator·tableAnchor·TerminalJob page·previous H proof를 포함해 최대9개를 예약한다. 같은 physical identity는 원 pin 집합에서 중복 제거하되 의미 검산을 생략하지 않는다. RootJob 전체 metadata census는 고정 bank64행을 stream하고 모든 U page를 동시에 pin하지 않는다. 물리 target/H proof의 exact 준비·stage 수명은 경계 API의 검토 항목이다.
+
+first Row 전용 private backing 후보는 **425984B**이며 다음처럼 배분한다. 현재 Catalog 크기와 같다는 사실이 근거가 아니라, 이번 Row의 독립 상한이 이 고정 loan 안에 드는지를 기준으로 삼는다.
+
+| 구간 | bytes | 소유·동시 생존 |
+| --- | ---: | --- |
+| `[0,98304)` frame |98304|최대 Row frame94080B를 보존. Pending에는 immutable frame/plan으로 인계 |
+| `[98304,245760)` before/proof9page |147456|원 target의 stable before·변하지 않는 proof를 담는 최대9page. pool frame과 다른 private copy이므로 별도 회계 |
+| `[245760,327680)` after5page |81920|실제 변경 최대5page. pin9라고 after9page를 생성하지 않음 |
+| `[327680,344064)` row candidate |16384|tree cell 최대2228B 및 canonical row 후보. A가 생산하고 observer가 독립 검산 |
+| `[344064,360448)` table/schema copy |16384|실제 Catalog에서 받은 qualified table/schema의 최대4588B와 검증된 문맥. RAM-only table 대용 아님 |
+| `[360448,425984)` 미사용 |65536|다른 원 owner의 비용을 숨기지 않음. 추가 사용 시 이름·수명·선예약을 다시 고정 |
+
+위 raw byte loan에 Rust reference 배열을 unsafe cast하지 않는다. 유효 Row entry는 최소189B이므로 한 leaf의 실제 행은≤85다. metadata1+삽입 후보1을 포함한 **87개 borrowed cell reference**로 `LeafEditPlan`을 구성할 수 있다. 현재64-bit target에서 slice reference16B이면1392B다. 이 typed scratch와 view/Result/return carrier는 raw loan과 별도로 source-value census에 포함한다. 적용 전 모든 기존 row의 canonical shape를 검산하여 최소 크기 전제가 깨진 입력은 손상으로 거절한다. generic tree의1013-reference scratch16208B를 작은 Row profile에 자동 적용하거나, 표현 검산 없이 작은 배열을 사용하는 두 대안을 모두 피한다.
+
+B의 읽기 loan은 기존 실제 loader에 필요한 disjoint prefix `[0,409600)`와 copy tail `[409600,425984)`를 유지하는 후보로 정한다. tail에는 현재 row record 최대2216B와 qualified schema 최대4588B가 함께 들어가며 loader가 이를 덮지 않는다. B는 A의 candidate/after loan을 공유하지 않는다. 호출별 allocation 대신 caller가 선예약한 loan을 사용한다. A와 B가 동시에 소유하면 각각 합산하고, 원 단일 maintenance operation만 상호 배타성이 증명된 scratch의 max를 사용한다.
+
+frame/registry 각각9·private425984·기존 원 physical effect의 FD recipe 상계는 C의 actual receiver에서 확인한다. 논리 row lock 표현·private source/value의 전체 포함 관계와 descriptor `ResourcePeak` 최종 값은 별도 검토에서 닫아야 한다. 이 질문을 숫자0이나 기존 CREATE_PEAK 복사로 처리하지 않는다. component65536B·metadata196608B·whole262144B 및 총 metadata8MiB, private8MiB/transaction·64MiB 전체, flush4MiB·maintenance12MiB 한도는 올리지 않는다. 좁은 builder/observer의 생존 phase를 분리하고 borrowed 반환으로 큰 Result/후보 복사를 피한 뒤 실제 source/caller census를 수행한다.
+
+### WAL·남은 종료 의무
+
+cell 크기 `C=185..2228`, predecessor 존재 `h∈{0,1}`에서 Forward는`91304+C+128h`(최대93660), CLR은`91096+C+128h`(최대93452), Prune는`89496+2C+128h`(최대94080)다. RowReserve57336·Cancel40000·Begin/Commit/AbortEnd56712·RollbackStart/실패 StatementFinish3040·ReleaseRole/RootFree55528·TerminalFinish55112를 같은 profile의 exact group bytes로 제안한다. 원 native/edge/count/redo 항의 정의는 소비자 계약 한 곳에 둔다.
+
+거래의 mandatory remaining은 live root마다 CLR 비용의 합, terminal56712, full-abort RollbackStart3040이다. 진행 중 Reserved row에는 Forward와 그 후 CLR 몫도 포함한다. active mutating statement에는 **별도로6080=statement RollbackStart3040+StatementFinish3040**을 첫 효과 전에 확보한다. full-abort3040을 여기에 중복 배정하지 않는다.
+
+- 성공 statement는 WAL0으로 view/mark를 종료하며 미소비6080을 다음 statement에 인계할 수 있다. 새 행의 Reserve/Forward/Undo/cleanup 비용은 매번 별도 admission이다.
+- 실패 statement는6080과 그 suffix의 CLR 합을 소비한다. 이전 성공 statement의 CLR 합·full-abort3040·terminal56712를 남긴다. 다음 선택적 statement의6080 보충이 거절돼도 기존 full abort는 새 admission 없이 끝나야 한다.
+- Cancel은 이번 미사용 Forward/CLR·root cleanup 예약을 반환하고 이미 consumed Reserve·발급 high-water를 되감지 않는다. statement가 앞서 변경한 행의 의무는 그대로다.
+- Commit은 원 terminal 비용을 소비하고 unused full-abort/CLR/statement 몫을 반환하지만 Aging의 retained cleanup은 보존한다. full abort는 실제 CLR·종료 소비를 기록하고 미소비 statement-finish 몫만 반환한다.
+
+root별 Aging의 complete cleanup 상계는 `Prune+3×ReleaseRole+RootFree =311608+2C+128h`(최대316192)다. compensated root는 불필요한 Prune 몫을 반환하고4step222112를 남긴다. TerminalFinish55112는 actor당 한 번 별도로 합산한다. 서로 다른 root의 WAL/step 합과 단일 Aging의 sequential scratch max를 구별한다. 실패 statement의 Compensated root가 남은 거래가 이후 Commit할 수 있으므로 그 root q0와 source Commit q를 같게 강제하지 않는다. TerminalFinish는 disposition과 관계없이 해당 actor의 RootJobs0·실제 참조/Status 종료 조건을 요구한다.
+
+각 adopted group에서 `δ_r+r_new ≤ r_old+d_r`를 실제 before/after descriptor와 검산한다. 시작된 CLR·terminal·recovery에 새 admission을 요구하지 않는다. crash 뒤 같은 descriptor/소유를 한 번 복원하고, 이미 보상된 suffix는 CLR로 다시 undo하지 않는다. 실제 failed statement 뒤 새 statement 재admission·full abort 분기를 별도 경계 입력으로 둔다.
+
+### 유한 inventory와 진행
+
+원 queue64행·nonfree≤55, first extent의 dynamic55page, 실제 table pair·Status·Undo 및 다른 Reserved/allocated 소유를 원 census로 계산한다. 한 table/한 actor/다른 점유0일 때도 Undo root52는 물리적인 예시 상계이며 사용 가능한 grant가 아니다. leaf 남은 bytes·queue slot·Free Undo generation·동시 frame/loan·WAL/owned/protected 가운데 가장 작은 여유가 신규 admission을 닫는다. 예컨대4MiB buffer는256frame이므로32×9=288을 모든 거래의 동시 성공 약속으로 사용할 수 없다. 기존 flush/rollback 몫을 빼고 실제 허용 owner 수를 계산한다.
+
+Free Undo container가 모자라면 원 System INIT 공급으로 실제 확보한 뒤 RowReserve를 허용한다. 그 INIT의 원 비용·소유·선택 증거를 별도로 포함하며 “기존 Free page”를 fixture에서 raw 생성하지 않는다. CLR은 Missing 행 제거이므로 새 tree page/overflow를 요구하지 않는다. 감소하는 남은 un-compensated roots와 root별 release cursor, 원 bounded fair queue로 종료 진행을 설명하고 reader pin/오래된 snapshot의 해제를 임의로 강제하지 않는다.
+
+M4의 static/compiler 검산에서 source·loan/FD·queue/전체 target 상계를 확인한 뒤만 해당 effect/native 시험을 진행한다. M5에는 독립 계산으로 실제 각 자원−1/동일/+1, 실패 statement의6080 소진 후 신규 거절과 기존 abort 완료, H net0에서 before count 부족, maximum valid leaf와 필요한 split 거절, 반복 crash 예약 비증가를 선택한다. runtime F05와 전체 DEV3 S5의 나머지 의무는 아직 미완료다.

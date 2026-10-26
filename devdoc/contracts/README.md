@@ -1,5 +1,7 @@
 # 기능 계약
 
+- [DEV3 모듈 독립 개발의 소유·소비 경계](dev3-module-boundaries.md) · [두 제품 소비자](dev3-module-consumers.md) — M2 D2 PROPOSED. 제한 port·공통 공급, 첫 INSERT와 snapshot point-read/cursor의 명세·독립 fixture 설계 중; 구현·인수 미완료. [Missing Row 참조 이동](dev3-visibility-retirement.md#row-missing-traversal) · [statement/cursor F02](dev3-task-06-tree-rows.md#module-statement-cursor) · [자원 배정 후보](dev3-resource-bounds.md#row-missing-module-budget).
+
 - [DEV3 첫 Catalog CREATE](dev3-catalog-create.md) — 원 owner의 실제 CREATE·Commit·복구 결합 D2 채택; 제품 효과·인수 미완료. [Root v2](dev3-create-root-format.md) · [Job v2](dev3-create-job-format.md) · [group scope2](dev3-create-group-format.md) · [base v3](dev3-create-recovery-base.md) · [visibility·회수](dev3-visibility-retirement.md).
 
 - [DEV3 원 Commit의 지연 설치 수명](dev3-commit-continuation.md) — 기존 PinSet·WAL·core의 비공개 continuation과 durable content drain을 한정 D2 채택; actual terminal 권한·Commit/복구 검증 미완료.

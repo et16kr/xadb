@@ -1,6 +1,6 @@
 # XADB 모듈 독립 개발 구조 전환 작업 계획
 
-2026-10-26 · **작업 계획 D2 채택 / M0 기준선 확인·M1 조사 진행 / 소유 문서 개정·제품 구조 변경·병렬 인수 NOT_RUN**
+2026-10-26 · **작업 계획 D2 채택 / M0 기준선 확인·M1 한정 조사 완료 / M2 설계 중·미채택 / 제품 구조 변경·병렬 인수 NOT_RUN**
 
 [개발 문서 진입점](../README.md) · [기존 병렬 정책](../policies/parallel-development-policy.md) · [저장소 배치](../policies/repository-build-plan.md) · [DEV3 작업 분해](dev3-implementation-plan.md#remaining-work) · [변경 코드 시험 지시](../../AGENTS.md)
 
@@ -257,10 +257,12 @@ PD01은 이 A/B 사례에 연결한다. PD02/PD03은 작업 중 실제 공통 �
 | 단계 | 현재 상태·근거 | 남은 종료 조건 |
 | --- | --- | --- |
 | M0 | [기준선 확인](../evidence/module-independence-survey-20261026.md#baseline), 별도 worktree 격리. 다른 세션 중지 없음 | M2/M3 채택 때 관련 diff 재확인·별도 검토 |
-| M1 | `/root/module_boundary_survey`와 `/root/module_consumer_survey`가 읽기 조사 진행 | 실제 소유·의존·차단 표와 후보 비교 확정 |
-| M2 | NOT_RUN | A/B 선정·API·공통 공급·선택 인수 동결과 독립 D2 |
+| M1 | [소유·의존 분류와 소비 후보](../evidence/module-independence-survey-20261026.md#survey)·[원 source 독립 검토](../evidence/module-independence-survey-20261026.md#review) 완료 | 선정 경계의 후속 관련 diff가 생기면 영향만 갱신 |
+| M2 | 설계 중·PROPOSED | A/B 선정·API·공통 공급·선택 인수 동결과 독립 D2 |
 | M3 | NOT_RUN | 소유 문서·JSON의 실제 반영·대체 관계·독립 D2 |
 | M4 | NOT_RUN | 동결한 공급 단위의 구조 변경·관련 선택 검증·검토 |
 | M5 | NOT_RUN | C+A/C+B의 실제 제품 병렬 구현·단독/합류 인수·MI01–06 |
 
 현재 편집 위치는 `/home/et16/.codex/worktrees/module-independence/xadb`, 출발 commit은 `b7ce51d2b3ee62b5b8dbc0d9c852a17827d76bd9`다. 이번 단계의 권한·소유·동시 작업·미확인 세션은 [조사 기록](../evidence/module-independence-survey-20261026.md)에 보존한다. 계획의 전체 목표는 M5 인수까지 유지하며 문서 정비만으로 완료하지 않는다.
+
+M2 초안은 [원 소유·소비 경계](../contracts/dev3-module-boundaries.md), [두 제품 소비자](../contracts/dev3-module-consumers.md), [Missing Row 참조 이동](../contracts/dev3-visibility-retirement.md#row-missing-traversal), [statement/cursor F02](../contracts/dev3-task-06-tree-rows.md#module-statement-cursor), [자원 배정](../contracts/dev3-resource-bounds.md#row-missing-module-budget)에서 작성 중이다. 제안·한정 검토와 채택·구현 상태를 구별하며 새 경로는 아직 build inventory에 등록하지 않는다.

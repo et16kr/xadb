@@ -3,6 +3,16 @@
   "reference_base": "devdoc",
   "json_document_references": "Registered filenames are document IDs resolved by this catalogue. Markdown uses actual relative paths.",
   "documents": {
+    "dev3-module-consumers.md": {
+      "path": "contracts/dev3-module-consumers.md",
+      "role": "contracts",
+      "title": "DEV3 모듈 전환의 두 제품 소비자"
+    },
+    "dev3-module-boundaries.md": {
+      "path": "contracts/dev3-module-boundaries.md",
+      "role": "contracts",
+      "title": "DEV3 모듈 독립 개발을 위한 원 소유·소비 경계"
+    },
     "module-independence-survey-20261026.md": {
       "path": "evidence/module-independence-survey-20261026.md",
       "role": "evidence",

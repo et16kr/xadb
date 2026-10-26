@@ -2,6 +2,8 @@
 
 2026-10-22 · **작업 상세 설계 / D2 상세화 수용 / 표현·모델의 기존 검증 보존 / 실제 mutable tree·행 거래 미완료**
 
+2026-10-26의 [첫 모듈 전환 statement/cursor F02](#module-statement-cursor)는 별도 D2 PROPOSED이며 기존 채택 범위와 구분한다.
+
 [공통 규칙](dev3-task-designs.md) · [개발 순서](../plans/dev3-implementation-plan.md#tree-undo-remaining) · [tree 소유 계약](disk-storage-design.md#tree) · [관측 행 버전](disk-storage-design.md#observed-row-version) · [변경 순서](disk-storage-design.md#mutation-protocol) · [참조 수명](disk-storage-design.md#undo-lifecycle)
 
 <a id="scope"></a>
@@ -250,3 +252,48 @@ T06-15는 3.12의 실제 복구 공급 뒤 닫는 통합 의무다. 그 전 무�
 batch 사이에는 page pointer/latch를 보존하지 않고 snapshot token·own mutation revision·마지막 검사한 full physical key로 재진입한다. candidate budget 소진 시 결과0이라도 진행 cursor와 완료/미완료를 구분해야 하며 같은 invisible 후보를 영원히 반복하지 않아야 한다. split/delete/reuse·자기 변경이 cursor 권한을 바꾸면 기존 규약대로 재검사한다. 최적화 전후 같은 결과·중복/누락 없음과 실제 candidate/read bytes를 검증한다. batch 구현은 실측 뒤 별도 후보이고 최초 행 통합의 선행 조건이 아니다.
 
 작은 row·넓은 key·다중 index의 공간 기준선은 [표현 비용 산식](dev3-resource-bounds.md#representation-cost)에 둔다. 형식 축소나 압축을 이번 변경으로 채택하지 않는다.
+
+<a id="module-statement-cursor"></a>
+## 모듈 전환 후보 — statement·cursor의 F02
+
+2026-10-26 · `D3-ROW-CURSOR-001` · **D2 PROPOSED / M2 미완료**. 작성·계약 담당 `/root`. [모듈 전환](../plans/module-independence-plan.md)의 첫 INSERT와 snapshot point-read/cursor를 같은 공통 경계에서 개발하기 위한 제안이다. 기존 일반 tree/CRUD·두 격리 수준 계약을 완료하거나 대체하지 않는다. 적용 범위는 실제 CREATE table의 single RowLeaf(level0), canonical inline≤2048B, index0, 신규 RowId의 Missing INSERT다. multi-statement·한 statement 안의 여러 INSERT와 실패 statement/full abort는 이 범위에도 필요하다. SMO·occupied before·overflow·index 대상은 첫 효과 전에 Unsupported를 반환하며 실제 존재하는 제약을 무시하지 않는다.
+
+### 원 view와 mutation 권한
+
+공통 공급 C가 실제 transaction/statement owner와 snapshot을 결합하여 비복제 `RowStatementView`를 발급한다. 값은 원 DB/timeline/open binding, optional own TxnRef, checked statement sequence, snapshot guard, statement 상태와 private revision을 보존한다. 숫자 token·q·TxnRef를 caller가 조립하는 생성자는 없다. 하나의 거래에는 한 active statement만 허용하고 같은 statement의 호출은 직렬화한다. 서로 다른 거래/reader의 원 admission·owner 정책은 유지한다. view는 원 live owner보다 오래 살 수 없고, cursor는 view를 borrow하므로 snapshot 수명을 연장하는 별도 registry를 만들지 않는다.
+
+mutation은 A의 후보와 C의 원 apply/transaction authority를 통해서만 수행한다. cursor가 immutable view를 borrow한 상태의 후속 own mutation은 C 내부의 checked revision 상태를 바꾸어 검출한다. view의 내부 상태는 caller에 공개하지 않으며 같은 statement를 여러 thread에서 동시에 변경 가능한 `Sync` handle로 제공하지 않는다. A가 revision을 직접 설정하거나 B가 별도 revision counter를 두지 않는다. 실제 Rust wrapper·lifetime과 source census는 M2 경계 명세에 연결하여 채택하고 M4에서 구현한다.
+
+| 사건 | statement·cursor 효과 |
+| --- | --- |
+| 진입 shape/schema/quota 실패, WAL stage 전 취소 | 새 row effect가 없고 revision 불변. 기존 cursor가 유효하면 반환/검사 key도 유지 |
+| 최초 row 변경의 완결 stage/설치 진행 | 원 operation이 MutationPending을 보유하여 겹친 읽기를 차단. whole-install 성공 시 checked private revision 증가. stage 뒤 실패는 실제 fence/RecoveryRequired를 보존하며 cursor를 정상 계속하지 않음 |
+| 같은 statement의 후속 INSERT 설치 | private revision 증가. 이전 revision에서 만든 cursor는 CursorInvalidated. 재생성한 cursor는 같은 snapshot과 현재 own writes를 사용 |
+| statement 성공 종료 | statement token 종료. 해당 cursor·observation은 재사용 불가. 거래의 own writes·전체 abort 예약은 유지 |
+| statement 실패 뒤 rollback | RollingBack 동안 일반 row 읽기/새 mutation 불가. mark까지 CLR을 마친 뒤 해당 statement 종료; 앞선 성공 statement와 실제 잔여 예약을 보존하고 새 sequence의 statement만 시작 가능 |
+| 전체 abort/Commit attempt | 신규 cursor 호출을 닫고 원 terminal/UNKNOWN 규약 적용. ACK/ABORT 이전에 소유를 임의 반환하지 않음 |
+| 실제 구조만 이동·flush/load | 논리 own mutation revision을 올리지 않음. caller는 현재 root/key를 재탐색. 이번 single-leaf 지원 밖 구조는 Unsupported/Corruption 구분을 유지 |
+
+statement sequence와 private revision은 wrap하지 않는다. 새 번호 여유가 없으면 해당 신규 statement/mutation을 첫 효과 전에 거절하며 기존 종료/rollback 예약을 보존한다. private revision은 cursor 유효성용 RAM 상태이고, 영속 `LogicalRowVersion.mutation_sequence`와 동일 변수로 간주하지 않는다. 영속 sequence는 실제 RowReserve/Forward의 owner 계약을 따르며 Cancel/CLR로 되감지 않는다. crash 뒤 old open·statement·cursor는 모두 무효이며 복구가 과거 사용자 statement를 Active로 재개하지 않는다.
+
+### point-read와 순서 cursor의 실패 진행점
+
+B의 실제 본문은 현재 anchor에서의 point/next 탐색, fixed-q 및 own-write 판정, 필요한 Missing Undo 확인, caller output/observation 생성과 full key 재탐색이다. C는 검증된 page·source pin·Status/Undo 읽기와 원 statement authority를 공급하며 완성된 lookup/cursor를 대신 구현하지 않는다. 참조 이동은 [Missing Row의 두 pin 계약](dev3-visibility-retirement.md#row-missing-traversal)을 소비한다.
+
+cursor는 `last_returned`와 `last_examined`의 full RowId key를 구분한다. 생성 때 둘 다 range 시작 이전이며 range 끝은 별도 checked bound다. 호출 간 page pointer·slot·latch·path stack을 보존하지 않는다. `next`는 토큰과 revision을 먼저 검산하고 현재 anchor에서 `last_examined`보다 큰 첫 후보를 찾는다.
+
+| 결과 | output와 진행점 |
+| --- | --- |
+| candidate가 fixed-q에서 보이지 않음 | Missing 판정과 정리를 마친 뒤 `last_examined`만 전진. `last_returned` 불변 |
+| visible candidate, output 충분 | 완전한 canonical row와 observation을 caller 소유로 복사한 뒤 두 key를 candidate로 전진, Found 반환 |
+| visible candidate, output 부족 | typed OutputTooSmall과 필요 길이. candidate 이전 검사 key를 보존하여 재시도 때 같은 행을 반환; 그 전에 건너뛴 invisible key까지는 보존 가능. 부분 row를 유효 결과로 노출하지 않음 |
+| Cancelled 또는 FlushRequired | 마지막 완전히 판정된 invisible candidate까지만 검사 key 보존. 미완료 visible candidate를 건너뛰지 않음. transient/physical pins 해제 후 반환; caller buffer의 유효 길이는0 |
+| 범위 끝 | exhausted를 기록하고 End. 같은 유효 token/revision의 다음 호출도 End. own mutation 이후에는 End보다 CursorInvalidated가 먼저 |
+| stale origin/table/schema/statement, revision 변경 | output 유효 길이0, 두 key 불변. typed identity/token 오류 또는 CursorInvalidated. 새 snapshot으로 조용히 재시작하지 않음 |
+| 필요한 page/Status/Undo 손상·fence | 실제 cause/effect/certainty를 보존. 정상 End/NotFound/취소로 낮추지 않음 |
+
+output는 caller-owned byte slice와 반환한 유효 길이로 다룬다. 실패 시 유효 길이는0이며 scratch bytes 자체가 원래와 같다는 보장은 하지 않는다. observation은 실제 Found의 table/RowId·statement·logical version과 원 view를 결합한 opaque 값이고 raw header decode가 발급하지 않는다. point-read는 cursor 진행 상태가 없고 같은 output·token·손상 규약을 적용한다.
+
+이 첫 single-leaf scan은 한 page의 유한 cell 수 안에서 수행하고 candidate마다 취소를 확인한다. invisible 후보를 output row 수에 포함하지 않아 무한 scan이 되는 batch 설계를 채택하지 않는다. 일반 여러 leaf/Undo chain의 작업 budget·batch API는 별도 미공급 의무로 유지한다. literal row history에서 독립 계산한 순서·q별 visible 집합·own visibility·재시도 key를 oracle로 사용하고 제품의 visible 판정 함수를 expected에 재사용하지 않는다.
+
+필수 신규 인수는 point와 cursor의 같은 결과, old-q/new-q, own write와 revision 무효화, 이전 성공 statement 보존/실패 statement token 종료, OutputTooSmall/취소/FlushRequired 뒤 동일 visible 행 재개, stale generation/schema/open, 원 source capture 경합과 cleanup이다. 적용 가능한 T06-01/02/11/12·C10-10/13 및 DIR03의 실제 연결 사례로 배정한다. 선택 source·fixture·oracle·case와 D2 검토는 M2 소비자 명세에서 확정하며 문서 작성만으로 시험을 실행하거나 인수를 승격하지 않는다.
