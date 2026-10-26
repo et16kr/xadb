@@ -14,6 +14,14 @@
 
 - [DEV3 plan4 빈 거래 live](dev3-retention-live.md) — 원 owner/pool의 fresh 수명·flush·재적재와 관측용 tag3 prefix; 복구 owner 별도
 
+- [DEV4 P5 결정적 BFS 탐색기](dev4-lifecycle-explorer.md) — D4-LM-BFS-001; 메모리 안 결정적 BFS·alias·edge8/16 ledger·cap과 판정, 승인된 깊이 5 확대. archive·durable checkpoint·FE14는 후속.
+
+- [DEV4 P5 독립 edge checker](dev4-lifecycle-checker.md) — D4-LM-CHECK-001; 모델을 호출하지 않는 `verify_edge`의 판정 범위·해석 선택·호출 계약과 모델 차등 대조. BFS·FE14는 후속.
+
+- [DEV4 P5 수명 모델 전이](dev4-lifecycle-model.md) — D4-LM-MODEL-001; gate 순서·응답 행·family 전이·환경 제외·소비 bit와 owner 결정, checker 차등·BFS 판정12건. BFS·FE14는 후속.
+
+- [DEV4 P5 전체 입력 조립](dev4-lifecycle-assembler.md) — D4-LM-ASM-001; 21 family의 prefix/context/control·Bind·Env1·owner/obligation 조립과 S0–S5 오류 순서, owner 결정3건. admission·모델 전이·FE14는 후속.
+
 - [DEV4 P5 원시 action 번호·target 선택](dev4-lifecycle-raw-selection.md) — D4-LM-RAW-001 D2·제한 D1 수용; raw1533 번호·exact selector의 국소 계약. 전체 input/model은 후속.
 
 - [DEV3 복구 이미지·제어 레코드](dev3-recovery-control-base.md) — XRB1·XRC1/XWE2/XWS2와 닫힌 census/공통 bridge; 실제 복구 권한·live F05 별도

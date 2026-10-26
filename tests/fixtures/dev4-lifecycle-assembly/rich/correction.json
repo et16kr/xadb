@@ -1,0 +1,219 @@
+{
+  "id": "D4-LM-ASSEMBLY-RICH-CORRECTION-001",
+  "status": "PROPOSED_FOR_INDEPENDENT_REVIEW",
+  "source_file": "rich/rich-normal-2.json",
+  "source_sha256": "75351fdad1b745339ad9b0e8fc3c461d5ef4cc8a1efacd9428403da6b68f1502",
+  "rule": "Original case expectations stay byte-identical in the source file; a selecting harness replaces only the listed expected_input with corrected_expected_input. Corrections are hand-derived from the cited contract text, never from product output.",
+  "corrections": [
+    {
+      "id": "asm/resume-unsignalled/1488",
+      "raw_index": 1488,
+      "reason": "Resume outcome4 is work index 2 (ReadError) + Complete. Unsignalled Resume follows the Fetch recipe, where ReadError Complete releases C(result). The candidate treated work index 2 as RowBufferTooSmall (owners empty).",
+      "spec_refs": [
+        "wire-proposal-v2.md line 84: Resume work_class Rows0/Eof1/ReadError2/Conflict3/RowBufferTooSmall4",
+        "wire-proposal-v2.md Resume row: 무신호는 Fetch 대응",
+        "wire-proposal-v2.md Fetch Eof1/TerminalCancelled5/TerminalTimeout6/ReadError7 Complete1 C(result) Released",
+        "raw_action.rs: Resume outcome is 2*next_work+cleanup; NextWork Rows1/Eof2/ReadError3/Conflict4/RowBufferTooSmall5"
+      ],
+      "original_expected_logical_sha256": "27e76356f949fb2ac7c469fea330a5368b9e5d351a11103af78e2a9c3ff3821f",
+      "corrected_expected_input": {
+        "schema_version": 1,
+        "api": "ResumeFetch",
+        "api_tag": 16,
+        "actor": 0,
+        "outcome_tag": 4,
+        "prepare_slot": 255,
+        "prepare_shape": 255,
+        "parameter_count": 255,
+        "set_autocommit": 255,
+        "target": null,
+        "context": [
+          5,
+          0,
+          255,
+          1,
+          1,
+          3,
+          0
+        ],
+        "original_deadline": "FutureAtEntry",
+        "supplied_cancel": false,
+        "deadline_reached": false,
+        "bind_values": [],
+        "environment": {
+          "envelope_schema": 1,
+          "fact": [
+            11,
+            255,
+            255,
+            1,
+            0,
+            2,
+            0
+          ],
+          "kind": "FetchWorkOrCleanup",
+          "work_kind": "Resume",
+          "work_class": 2,
+          "cleanup": 1,
+          "commit_class": 255,
+          "reserved0": 0,
+          "transaction": [
+            6,
+            0,
+            255,
+            1,
+            1,
+            1,
+            0
+          ],
+          "receipt": null,
+          "anchor": null,
+          "fresh_engine": null,
+          "obligations": [],
+          "owners": [
+            {
+              "resource": [
+                9,
+                0,
+                255,
+                1,
+                1,
+                3,
+                0
+              ],
+              "resource_kind": "Snapshot",
+              "after_disposition": "Released",
+              "obligation": null,
+              "before_holder": [
+                4,
+                0,
+                0,
+                1,
+                1,
+                1,
+                1
+              ],
+              "after_holder": null
+            },
+            {
+              "resource": [
+                9,
+                0,
+                255,
+                1,
+                1,
+                4,
+                0
+              ],
+              "resource_kind": "Scratch",
+              "after_disposition": "Released",
+              "obligation": null,
+              "before_holder": [
+                4,
+                0,
+                0,
+                1,
+                1,
+                1,
+                1
+              ],
+              "after_holder": null
+            },
+            {
+              "resource": [
+                9,
+                0,
+                255,
+                1,
+                1,
+                5,
+                0
+              ],
+              "resource_kind": "Temp",
+              "after_disposition": "Released",
+              "obligation": null,
+              "before_holder": [
+                4,
+                0,
+                0,
+                1,
+                1,
+                1,
+                1
+              ],
+              "after_holder": null
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "asm/resume-unsignalled/1492",
+      "raw_index": 1492,
+      "reason": "Resume outcome8 is work index 4 (RowBufferTooSmall) + Complete. Unsignalled RowBufferTooSmall follows Fetch RowBufferTooSmall2 with an empty owner set. The candidate treated work index 4 as Conflict (cursor release).",
+      "spec_refs": [
+        "wire-proposal-v2.md line 84: Resume work_class ... RowBufferTooSmall4",
+        "wire-proposal-v2.md Fetch Rows0/RowBufferTooSmall2 owner set empty",
+        "assembler-proposal-v1.md §7: Fetch Rows/Buffer 또는 Resume 무신호 Rows/Buffer → owners empty"
+      ],
+      "original_expected_logical_sha256": "769a7cb524e4de7fece6a76f5c25256c4c42aa184b00c137d03ee20aaa4334eb",
+      "corrected_expected_input": {
+        "schema_version": 1,
+        "api": "ResumeFetch",
+        "api_tag": 16,
+        "actor": 0,
+        "outcome_tag": 8,
+        "prepare_slot": 255,
+        "prepare_shape": 255,
+        "parameter_count": 255,
+        "set_autocommit": 255,
+        "target": null,
+        "context": [
+          5,
+          0,
+          255,
+          1,
+          1,
+          3,
+          0
+        ],
+        "original_deadline": "FutureAtEntry",
+        "supplied_cancel": false,
+        "deadline_reached": false,
+        "bind_values": [],
+        "environment": {
+          "envelope_schema": 1,
+          "fact": [
+            11,
+            255,
+            255,
+            1,
+            0,
+            2,
+            0
+          ],
+          "kind": "FetchWorkOrCleanup",
+          "work_kind": "Resume",
+          "work_class": 4,
+          "cleanup": 1,
+          "commit_class": 255,
+          "reserved0": 0,
+          "transaction": [
+            6,
+            0,
+            255,
+            1,
+            1,
+            1,
+            0
+          ],
+          "receipt": null,
+          "anchor": null,
+          "fresh_engine": null,
+          "obligations": [],
+          "owners": []
+        }
+      }
+    }
+  ]
+}

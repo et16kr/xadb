@@ -8,6 +8,7 @@ pub mod catalog;
 pub mod durable;
 pub mod durable_performance;
 pub mod fault;
+pub mod lifecycle;
 pub mod native;
 mod oracle;
 pub mod performance;

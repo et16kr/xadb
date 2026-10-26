@@ -2283,6 +2283,46 @@
       "role": "evidence",
       "title": "DEV4 P5 원시 번호·selector의 선택 검증"
     },
+    "dev4-lifecycle-assembler.md": {
+      "path": "contracts/dev4-lifecycle-assembler.md",
+      "role": "contracts",
+      "title": "DEV4 P5 전체 입력 조립"
+    },
+    "dev4-lifecycle-assembler-20261025.md": {
+      "path": "evidence/dev4-lifecycle-assembler-20261025.md",
+      "role": "evidence",
+      "title": "DEV4 P5 전체 입력 조립의 선택 검증"
+    },
+    "dev4-lifecycle-explorer.md": {
+      "path": "contracts/dev4-lifecycle-explorer.md",
+      "role": "contracts",
+      "title": "DEV4 P5 결정적 BFS 탐색기"
+    },
+    "dev4-lifecycle-explorer-20261025.md": {
+      "path": "evidence/dev4-lifecycle-explorer-20261025.md",
+      "role": "evidence",
+      "title": "DEV4 P5 BFS 탐색기의 설계 상한·깊이 5 실행"
+    },
+    "dev4-lifecycle-checker.md": {
+      "path": "contracts/dev4-lifecycle-checker.md",
+      "role": "contracts",
+      "title": "DEV4 P5 독립 edge checker"
+    },
+    "dev4-lifecycle-checker-20261025.md": {
+      "path": "evidence/dev4-lifecycle-checker-20261025.md",
+      "role": "evidence",
+      "title": "DEV4 P5 독립 edge checker와 모델 차등 판정"
+    },
+    "dev4-lifecycle-model.md": {
+      "path": "contracts/dev4-lifecycle-model.md",
+      "role": "contracts",
+      "title": "DEV4 P5 수명 모델 전이"
+    },
+    "dev4-lifecycle-model-20261025.md": {
+      "path": "evidence/dev4-lifecycle-model-20261025.md",
+      "role": "evidence",
+      "title": "DEV4 P5 수명 모델 전이의 선택 검증"
+    },
     "dev3-retention-live.md": {
       "path": "contracts/dev3-retention-live.md",
       "role": "contracts",
@@ -2467,6 +2507,16 @@
       "path": "evidence/dev3-catalog-live-milestone-20261025.json",
       "role": "evidence",
       "title": "DEV3 Catalog CREATE 구현·실제 검증 source별 기록"
+    },
+    "dev4-merge-review-20261026.md": {
+      "path": "evidence/dev4-merge-review-20261026.md",
+      "role": "evidence",
+      "title": "DEV4 병합 전 리뷰와 선택 수정 검증"
+    },
+    "dev4-merge-review-20261026.json": {
+      "path": "evidence/dev4-merge-review-20261026.json",
+      "role": "evidence",
+      "title": "DEV4 병합 전 리뷰의 source별 선택 실행 기록"
     }
   }
 }

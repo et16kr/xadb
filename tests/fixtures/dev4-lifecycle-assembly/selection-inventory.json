@@ -1,0 +1,138 @@
+{
+  "id": "D4-LM-ASSEMBLY-SELECTION-001",
+  "contract": "devdoc/contracts/dev4-lifecycle-assembler.md",
+  "logical_cases": 1994,
+  "planned_assemble_input_calls": 1994,
+  "groups": [
+    {
+      "group": "initial",
+      "path": "normal/initial.json",
+      "cases": 1533,
+      "sha256": "19e598b6f05580e043ae45fa75abfb66ed177674fade8ca04fdc61f7988dd126",
+      "status": "REVIEWED_PREPARATION",
+      "test": "lifecycle::assembler_tests::assembly_initial_raw"
+    },
+    {
+      "group": "original",
+      "path": "normal/original-links.json",
+      "cases": 27,
+      "sha256": "0fb2dabb3789eaf2554bf6c0e95a29f5bb69b8357a0d7255742c57fc468d38ea",
+      "status": "REVIEWED_PREPARATION",
+      "test": "lifecycle::assembler_tests::assembly_original_pairs"
+    },
+    {
+      "group": "bind",
+      "path": "normal/rich-bind.json",
+      "cases": 22,
+      "sha256": "ac3d034baa50cea0d77883cd8a550e8bbc15018d3b30936bd8390ef9d34555da",
+      "status": "REVIEWED_PREPARATION",
+      "test": "lifecycle::assembler_tests::assembly_bind_payloads"
+    },
+    {
+      "group": "boundary",
+      "path": "boundaries/cases.json",
+      "cases": 76,
+      "sha256": "b3e17c5957ee204cef8f986d810d9141f37a3d4220a04c30268af283a49782b5",
+      "status": "REVIEWED_PREPARATION",
+      "test": "lifecycle::assembler_tests::assembly_boundaries"
+    },
+    {
+      "group": "rich_normal",
+      "path": "rich/rich-normal-2.json",
+      "cases": 97,
+      "sha256": "75351fdad1b745339ad9b0e8fc3c461d5ef4cc8a1efacd9428403da6b68f1502",
+      "status": "IMPORTED_UNREVIEWED_DIFFERENTIAL_ADJUDICATION",
+      "test": "lifecycle::assembler_tests::assembly_rich_normal"
+    },
+    {
+      "group": "rich_continuation",
+      "path": "rich/rich-continuation-3.json",
+      "cases": 77,
+      "sha256": "a3eec8642e6c927fef37ba0bc9c29085b495c7e6fb0da28223ae3198b81653b3",
+      "status": "IMPORTED_UNREVIEWED_DIFFERENTIAL_ADJUDICATION",
+      "test": "lifecycle::assembler_tests::assembly_rich_continuation"
+    },
+    {
+      "group": "rich_rest",
+      "path": "rich/rich-normal-rest-4.json",
+      "cases": 130,
+      "sha256": "3b7be4f6e43bbd3181a18e7e0ea971c497299d99104570f78ee127ca79e32375",
+      "status": "IMPORTED_UNREVIEWED_DIFFERENTIAL_ADJUDICATION",
+      "test": "lifecycle::assembler_tests::assembly_rich_rest"
+    },
+    {
+      "group": "supplement",
+      "path": "supplement/cases.json",
+      "cases": 17,
+      "sha256": "429ffe0a553c412531fba3a7c80bc00dd43bdf1c31012ed8eb931f65bc170c1d",
+      "status": "NEW_INDEPENDENT_SUPPLEMENT",
+      "test": "lifecycle::assembler_tests::assembly_supplement"
+    },
+    {
+      "group": "supplement2",
+      "path": "supplement/cases-2.json",
+      "cases": 9,
+      "sha256": "dac1ef3d4e6518766955c48d01eba7d229eaf52c50e6bdf3d2d16d179f26f5e7",
+      "status": "NEW_INDEPENDENT_SUPPLEMENT",
+      "test": "lifecycle::assembler_tests::assembly_supplement_second"
+    },
+    {
+      "group": "supplement3",
+      "path": "supplement/cases-3.json",
+      "cases": 6,
+      "sha256": "f2ad0ed9c152ecfa97ebce6391e4a965247df576cffbff2acfe61db445bb6d16",
+      "status": "NEW_INDEPENDENT_SUPPLEMENT",
+      "test": "lifecycle::assembler_tests::assembly_supplement_third"
+    }
+  ],
+  "expected_errors": 42,
+  "corrections": {
+    "path": "rich/correction.json",
+    "sha256": "f88b6517d9ac1a007da30e2c94ec1f86d631bd04e37e548eedc18653a00e2640",
+    "cases": [
+      "asm/resume-unsignalled/1488",
+      "asm/resume-unsignalled/1492"
+    ]
+  },
+  "pre_state_literals": {
+    "path": "../dev4-lifecycle-model/literals.json",
+    "sha256": "ec4a7940a457882c155eb84e2d9e5602eaf880563bab4f6f04d0b643bcec42d2"
+  },
+  "provenance_added": [
+    {
+      "path": "provenance/author-rich.py",
+      "sha256": "5ce608cab3b6f8e677503c1d4d91f3195ce7ebb18c1e2374b2e04d82d087227b"
+    },
+    {
+      "path": "provenance/author-continuation.py",
+      "sha256": "e616c292297d547cc5042fa99a7bdb86e6a5adea0f7fc39254635710b513b44a"
+    },
+    {
+      "path": "provenance/author-normal-rest.py",
+      "sha256": "e98269a0110c959680b9610519f5e38f0664fac32c805f8b1bb0eb91b2824ac9"
+    },
+    {
+      "path": "provenance/rich-snapshot.json",
+      "sha256": "321d1ef167ab98fd6017fb7ebaf772497416c6700d34b6aed6fa9501c0991e06"
+    }
+  ],
+  "occurrence_links": {
+    "original_occurrences": 51,
+    "unique_pairs": 30,
+    "initial_overlap_links": 3,
+    "extra_calls": 0
+  },
+  "rules": [
+    "Original candidate files stay byte-identical; rich/correction.json replaces only listed expectations after checking the original logical SHA-256.",
+    "Expected values are hand-authored literals; no product, model or codec output is used.",
+    "Selection: XADB_ASSEMBLY_CASE (one id) or XADB_ASSEMBLY_FROM_CASE (completed-prefix skip), exclusive, within one group.",
+    "Every selected first call runs in a 256KiB worker; no release or second-stack replay."
+  ],
+  "harness_controls": [
+    {
+      "test": "lifecycle::assembler_tests::assembly_correction_original_check",
+      "purpose": "correction replaces only an exact original logical hash; a changed original is rejected and left unchanged",
+      "assemble_input_calls": 0
+    }
+  ]
+}

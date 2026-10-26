@@ -502,6 +502,25 @@ SELECT/DML/DDL을 나눈다. 독립 reference의 `frontend/remaining_parser.rs`�
 
 ## DEV4 P5 원시 번호·target 선택
 
+[결정적 BFS 탐색기 계약](../contracts/dev4-lifecycle-explorer.md)의 `explore`는 controller의 `lifecycle.rs`와 시험
+`lifecycle/tests.rs`에 두고 reference의 공개 lifecycle API만 쓴다. 관리 JSON의 `dev4_lifecycle_explorer`에 실제
+경로와 독립 initial vector를 등록하며 package·dependency는 유지한다. 실행 산출물은 gitignored
+`artifacts/dev4-lifecycle-bfs/`에 둔다.
+
+[독립 edge checker 계약](../contracts/dev4-lifecycle-checker.md)의 `verify_edge`는 같은 reference lifecycle
+경계의 `checker.rs`와 `checker/` 하위 파일에 두고 시험 `checker_tests.rs`·모델 차등 `differential_tests.rs`를
+추가한다. 관리 JSON의 `dev4_lifecycle_checker`에 실제 경로를 등록하며 package·dependency는 유지한다.
+판정으로 고친 모델·조립기 파일은 기존 등록을 유지한다.
+
+[수명 모델 전이 계약](../contracts/dev4-lifecycle-model.md)의 `transition`은 reference lifecycle의 `model.rs`와
+`model/` 하위 파일에 두고 시험 `model_tests.rs`를 추가한다. 관리 JSON의 `dev4_lifecycle_model`에 실제 경로를
+등록하며 package·dependency는 유지한다.
+
+[전체 입력 조립 계약](../contracts/dev4-lifecycle-assembler.md)의 `assemble_input`은 같은 reference
+lifecycle 경계의 `input_assembler.rs`와 `input_assembler/rows.rs`에 둔다. 시험 전용 `assembler_literal.rs`·
+`assembler_tests.rs`와 rich·supplement 입력을 추가하며 package·dependency·export/fingerprint roots는 유지한다.
+실제 경로는 관리 JSON의 `dev4_lifecycle_assembler`에 등록한다. 모델 전이·BFS는 위 별도 구현 단위를 따른다.
+
 후속 [전체 입력 조립 준비](../evidence/dev4-lifecycle-assembly-inputs-20261025.md)는
 `tests/fixtures/dev4-lifecycle-assembly`의 실제 정적 자료만 추가한다. 검토 후보1658개와 원
 작성/검토 hash를 보존하며 제품 모듈·Cargo 의존·시험 진입점은 추가하지 않는다. 전체 D2와
