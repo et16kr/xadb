@@ -1266,3 +1266,30 @@ r1 production PASS 뒤 새 시험 모듈 경로 지정 누락 E0583으로 test-b
 | r2 선택12 PASS | `a42fa7e538d9d9daed5cd9f6593e5499d2166d1b5dc93c9da86034e786c7768d` | `4920519ad2d9c1fef52a4aacebfb189ebd2dfd4196ae2e39e443196db393259a` |
 
 독립 `/root/module_review`는 실제 제품 diff·원 r1/r2 source5652파일/inventory·manifest/runner/helpers·compiler/ELF/exact12와 문서6개를 읽기 전용 대조해 D1/D2를 한정 수용했다. 제품 필수 수정0이며 예약 전 제거한 guard가 pool/visibility이고 원 core/isolation guard는 남는다는 표현3곳을 정정했고 `/root`가 반영을 확정했다. 검토자는 수정·빌드·시험·verifier를 실행하지 않았다. 무변경 코드·하위 wrapper/workspace를 반복하지 않았고 전체 fmt/Clippy·문서 verifier·push는 실행하지 않았다. 전체 floor·writer phase·Row/terminal/recovery·M4/M5는 미완료다.
+
+
+<a id="c2-statement-reads"></a>
+### C2 원 statement 기반 Catalog 조회와 자동 관측 — 2026-10-27
+
+기준 `9f5fca6`, 작성/통합 `/root`, 독립 검토 `/root/module_review`. [한정 공급 결정](../contracts/dev3-module-boundaries.md#catalog-statement-supply)에 따라 원 Full/Resident Scope와 실제 statement snapshot/slotgen/sequence를 연결한다. Found/Missing 전 catalog read bit를 원 isolation backing에 기록하고 기존 readonly 종료의 실제 epoch 검증을 사용한다. raw snapshot·mask 공개, 새로운 source credit, wire/형식 변화는 없다. caller loop를 장기512B로 이동하지 않았고 새 wide entry/return 및 transaction lifecycle의 전체 short floor는 미완료다.
+
+[실행 전 manifest](../../tests/fixtures/dev3-module-c2/statement-reads/manifest.json)에 신규 실제7selector(8case)·신규 source 관측1·변경 Full/Resident class2와 새 compiler borrow3을 동결했다. Missing→statement Drop→실제 CREATE Commit→Serializable conflict, RC 같은/다음 statement, Found와 foreign Owner, 원 visibility 누락 거절, Resident Busy/Undo I/O Fatal, FlushRequired 뒤 같은 view 재시도 및 실제 결과 직후 등록 Fatal의 자동 bit와 원 resource 정리를 검산한다. compiler는 정상 소비 후 종료·종료 후 nested name 사용 금지·call이 살아 있는 동안 statement Drop 금지를 구별한다. 총600초/compiler90초/case30초/출력8MiB/stack33554432B이며 실행 전 상태는 NOT_RUN이다. 무변경 기존 Catalog 기능/codec/전체 wrapper·workspace 시험은 선택하지 않는다.
+
+
+r1 production PASS 뒤 새 시험 import 누락 E0433·잘못된 DiskSession Commit receiver E0599로 test-build FAIL, runtime9/compiler3 NOT_RUN이다. r2는 cfg(test) import와 실제 MutationPort 호출만 정정해 production을 반복하지 않았으나, 중첩한 두 fresh session을 같은 invariant ledger/core lifetime으로 요구한 fixture가 E0597로 test-build FAIL했다. runtime9/compiler3는 계속 NOT_RUN이다. 실제 두 session의 런타임 origin 시험은 이 증거에서 PASS가 아니다. 정정 fixture는 같은 original reader에서 test-only로 visibility 연결을 누락시켜 factory의 원 origin 거절을 검산하며 reader/guard/admission을 외부로 발급하지 않는다. 실제 foreign core의 Owner 거절은 별도 신규 사례에 유지한다.
+
+독립 검토의 보완으로 새 wrapper 입력3refs+ObjectId와 statement/caller2refs를 `held_source_bytes`에 직접 합하여 큰 physical/replay lookup과 중첩 계수한다. registration/반환 phase의 별도 max로 이 부모 입력을 대신하지 않는다. 신규 원 pause cut에서 실제 Missing을 얻은 직후 bit 등록 전 fence를 세워 성공 노출0/bit0/refs0/pins0과 checked 종료의 progress0/잔여 charge를 검산한다. r3 production PASS 뒤 test-only pause가 반환 step을 borrow한 Scope를 다시 빌려 E0502로 test-build FAIL했다. runtime10/compiler3 NOT_RUN을 보존한다. r4는 cfg(test) 원 core 참조를 lookup 전에 원 수명으로 빌려 결과 뒤 pause에 사용하도록 정정했다. 제품 코드는 같아 production을 반복하지 않고 r4 test-build·exact runtime10/compiler3 PASS를 확인했다. r3 production과 r4 test-build는 경고0이며, compiler 음성 `call_after_statement_drop`은 기대 E0505와 미사용 import 경고1이 함께 존재한다. 이 경고를 지우려고 완료한 probe를 반복하지 않았고 compiler 전체 경고0이라고 표시하지 않는다.
+
+
+현재 wrapper의 registration/반환 phase6678B·중첩 입력48B가 실제 source 식에 연결되어 Full34020B/Resident17636B다. shared19328B는 유지한다. 새 식은 원 소비자의 short accounting이며 실제 stack/RSS·성능·예약 전/해제 후 전체 floor 충족이나 장기512B 귀속의 증명이 아니다. 기존 snapshot 기반 Catalog 조회/codec·readonly 빈 read-set·전체 wrapper/workspace는 반복하지 않았다. 원 compile 실패와 미실행 범위를 보존한다.
+
+원 `artifacts/module-c2-statement-reads-20261027-r{1,2,3,4}/`마다 source5658파일/inventory·manifest/runner/helpers·compiler 로그를 보존한다. r1–r3에는 test ELF/runtime 로그가 없으며 r4에 실제 ELF·10 exact selector와3개 probe별 source/diagnostics가 있다. r4 ELF는 `392c466eb162d9a983052c71104c5863d5238041b46ba44a4cbe61dce120bc03`, r3/r4 manifest는 `5c9bad4bd296b515c6e5d08ca95d809f7574eb16d87df3d0e45f682daa4d5dc0`이며 이전 r1/r2 manifest `f36a91db4a7d2042ac2b3b5307be4d1ee929614c57843a33d8ac484978e40ca8`도 원 증거에 남긴다. 실제20.73/15.29/20.56/54.83초는 성능 결과가 아니다.
+
+| 실행 | source SHA-256 | result SHA-256 |
+| --- | --- | --- |
+| r1 test-build FAIL | `90d3968e17827509939bb0378ce9e8655c59694650f8fec4574bf20fd5e10a1b` | `52053434c16bbd78ef10298ec94eb3f34bf2f69f9516633fc7475fb3cfabec86` |
+| r2 test-build FAIL | `3d3cabd42d7d9cce930b715251b45d385ee5f67144420512ef02a4d870e7d154` | `49ff937cb6de8289f17d40fe3d8a2259d1beb4dcbb054bc1b7cf7210f9d1c8e6` |
+| r3 test-build FAIL | `2dfc91ebf6b7ecfa3630bcd9843a8ae0df48f6a10d083e73c314aa9223d4f6ff` | `f2db79cddf570ff448dcc477afd9b32a810144486e27e2190b0830d04f004844` |
+| r4 runtime10/compiler3 PASS | `0b796f755f4237f05c1318024c45885afca47384cad005cff0387c6f8b0b1a71` | `524b3133ee224b1eb806315b154e738b6ef5de4a18454fdac9a13ceb70533295` |
+
+독립 `/root/module_review`는 r1–r4 각5658 source/inventory·manifest/runner/helpers·compiler/ELF/exact10·C2_STMT01–08·probe3의 export delta/fixture hash/진단 primary line 및7문서를 읽기 전용 대조해 D1/D2를 한정 수용했다. 필수 제품·문서 수정0이며 `/root`가 반영을 확정했다. 검토자는 수정·빌드·시험·verifier를 실행하지 않았다. 변경 파일 rustfmt/diff whitespace만 확인하고 전체 fmt/Clippy·문서 verifier·push는 실행하지 않았다. 전체 short floor·writer/Row/terminal/recovery와 M4/M5는 미완료다.

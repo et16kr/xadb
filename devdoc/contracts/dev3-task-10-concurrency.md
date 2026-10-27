@@ -293,6 +293,8 @@ sealed transaction capsule이 원 origin·isolation slot/generation·actual acto
 
 현재 [C1 읽기 전용 수명](../evidence/module-independence-survey-20261026.md#c1-read-only-capsules)은 원 slot/slotgen·장기512B 비용·실제 Serializable 및 RC snapshot·statement sequence·checked finish/Drop을 공급했다. writable 요청은 효과 전 Unsupported다. guard를 외부에 노출하거나 legacy lookup을 거래 읽기로 연결하지 않았으며 자동 관측 등록·실제 conflict 인수는 C2/C3 후속이다. 빈 read-set 종료 성공을 Serializable 조회 기능 완료로 표시하지 않는다.
 
+후속 [Catalog statement 읽기](../evidence/module-independence-survey-20261026.md#c2-statement-reads)는 원 Full/Resident Scope와 실제 view를 연결하고 성공 Found/Missing 반환 전에 catalog read flag를 자동 등록한다. 원 slotgen/sequence를 매 호출에서 검산하며 Busy/FlushRequired/오류는 완료 관측으로 등록하지 않는다. statement 종료/Drop 후에도 bit는 원 거래에 남고 기존 readonly Serializable epoch 검증이 이를 소비한다. [한정 공급 결정](dev3-module-boundaries.md#catalog-statement-supply)에 따라 이 Catalog 기능의 신규8case를 포함한 runtime10/compiler3을 검증했으며 Row table read/write set·CheckedTable·writable 종료·전체 short/writer 상계의 공급은 미완료다. 과거 빈 read-set 결과를 새 관측의 결과로 바꾸지 않는다.
+
 ### Commit 직렬화·공개와 오류
 
 현재 source에는 별도 CommitCoordinator mutex가 없다. 실제 직렬화 권한은 **유일 MutationPort의 원 `&mut RetentionLedger`**다. 이 borrow를 validation→stage→durable→whole install→epoch/Q publication까지 한 호출이 보유한다. [현재 `CommitInstalling::finish`](../../crates/engine/src/transaction/concurrency_commit.rs)는 Q publish 전 Installation을 Open으로 돌리므로, 그 상태만을 Commit coordinator로 해석하지 않는다. split으로 두 writer를 생성하거나 publication 전에 가변 ledger 소유를 반환하지 않는다. read-only Serializable 종료도 같은 MutationPort를 통해 직렬화한다.

@@ -1,5 +1,7 @@
 # 현재 구현
 
+2026-10-27 [C2 statement Catalog 조회](../evidence/module-independence-survey-20261026.md#c2-statement-reads): 실제 Full/Resident Scope를 원 statement에 연결하고 Found/Missing 반환 전 catalog read bit를 자동 등록했다. r4 runtime10/compiler3 PASS와 r1–r3 test-build FAIL을 보존한다. Full34020B/Resident17636B이며 전체 short floor·writer·Row/terminal/recovery·M4/M5는 미완료다.
+
 2026-10-27 [C2 예약 뒤 원 검산](../evidence/module-independence-survey-20261026.md#c2-admitted-validation): pool/visibility guard 없는 health/origin과 원 core의 Owner/progress 검사 뒤 fixed source 안에서 pool/snapshot 전체 검산을 수행한다. r2 선택12 PASS·r1 test-build FAIL 보존. validation6958B는 Full33972B/Resident17588B에 포함되며 전체 entry/tail·writer phase·M4/M5는 미완료다.
 
 2026-10-27 [C2 LOAD claim borrow](../evidence/module-independence-survey-20261026.md#c2-borrowed-load-claims): 실제 LOAD 검산의 두 claim 복사를 원 참조로 바꾸고 build2/선택4 PASS를 확인했다. pool guard3307B·compact floor14776B는 관측이고 전체 admission은 미연결이다.

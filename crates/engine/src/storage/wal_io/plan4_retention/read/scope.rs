@@ -301,6 +301,13 @@ impl<'u, 'r, 'v, 'j, 'b, 'a, 's, 'c, 'p, 'd, 'm, 'w, W: WriterNamespace>
         merge(result, self.finish_checked().map_err(Into::into))
     }
 
+    #[cfg(test)]
+    pub(super) fn test_record_core(
+        &self,
+    ) -> &'c crate::transaction::concurrency::PageConcurrency<'s> {
+        self.backend.pool.bound_core()
+    }
+
     pub(in crate::storage) fn finish_checked(self) -> CallResult<()> {
         #[cfg(test)]
         crate::transaction::concurrency::catalog_test_support::hit(

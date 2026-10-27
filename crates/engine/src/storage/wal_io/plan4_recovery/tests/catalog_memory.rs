@@ -1175,3 +1175,6 @@ mod call_scope;
 
 #[path = "catalog_memory/dpt_lifecycle.rs"]
 mod dpt_lifecycle;
+
+#[path = "catalog_memory/statement_reads.rs"]
+mod statement_reads;

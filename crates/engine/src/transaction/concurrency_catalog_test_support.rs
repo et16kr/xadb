@@ -18,6 +18,7 @@ pub(crate) enum Point {
     InstalledBeforeFinish,
     BeforePublish,
     LookupCaptured,
+    LookupBeforeCatalogRecord,
     LookupBeforeSourceReserve,
     LookupBeforeSourceReturn,
     ResidentAllocatorCopied,

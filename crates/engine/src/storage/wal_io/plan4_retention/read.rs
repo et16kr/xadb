@@ -20,6 +20,8 @@ mod operation;
 mod resident;
 #[path = "read/scope.rs"]
 mod scope;
+#[path = "read/statement.rs"]
+mod statement;
 pub(crate) use crate::storage::catalog::read::CatalogLookupStep;
 #[allow(
     unused_imports,
@@ -33,6 +35,7 @@ pub(crate) use operation::{
     CatalogCandidate, CatalogReadOperation, MissingCatalogEvidence, ReadStep,
 };
 pub(crate) use scope::{CatalogCallError, CatalogCallScope};
+pub(crate) use statement::CatalogStatementCall;
 
 pub(crate) struct RetentionReadGuard<'a, 'b, 'c, 's, 'p, 'd> {
     read: ReadTargets<'a, 'b, 'c, 's, 'p, 'd, 2>,

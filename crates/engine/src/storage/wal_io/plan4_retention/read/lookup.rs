@@ -363,4 +363,6 @@ fn lookup_source_bytes<W: WriterNamespace>(resident: bool) -> usize {
         .max(super::scope::validation_source_bytes::<W>())
         .max(super::scope::consumer_source_bytes::<W>())
         .max(super::scope::legacy_boundary_source_bytes::<W>())
+        .max(super::statement::source_bytes::<W>())
+        + super::statement::held_source_bytes()
 }

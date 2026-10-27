@@ -7026,5 +7026,33 @@
     "validation": "r1 production PASS/test E0583 FAIL/runtime12 NOT_RUN preserved; cfg(test) path-only r2 test-build+exact12 PASS warning0, production NOT_REPEATED_UNCHANGED_CODE; independent D1/D2 source/evidence/six-document review accepted, required product fixes0",
     "remaining_supply": "validation6958 inside Full33972/Resident17588; shared19328 unchanged; whole uncharged floor/writer/progress/Row/terminal/recovery and M4/M5 remain",
     "source_roots_changed": false
+  },
+  "dev3_module_c2_statement_reads": {
+    "status": "ACCEPTED_LIMITED_D1_D2",
+    "contract_ref": "dev3-module-boundaries.md#catalog-statement-supply",
+    "implemented_paths": [
+      "crates/engine/src/storage/wal_io/plan4_retention/read/statement.rs",
+      "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/statement_reads.rs",
+      "tests/fixtures/dev3-module-c2/statement-reads/manifest.json",
+      "tests/fixtures/dev3-module-c2/statement-reads/consume_then_finish.rs",
+      "tests/fixtures/dev3-module-c2/statement-reads/name_after_call_finish.rs",
+      "tests/fixtures/dev3-module-c2/statement-reads/call_after_statement_drop.rs"
+    ],
+    "modified_paths": [
+      "crates/engine/src/storage/disk.rs",
+      "crates/engine/src/storage/wal_io/disk_api.rs",
+      "crates/engine/src/storage/wal_io/plan4_apply.rs",
+      "crates/engine/src/storage/wal_io/plan4_apply/transaction.rs",
+      "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory.rs",
+      "crates/engine/src/storage/wal_io/plan4_retention/read.rs",
+      "crates/engine/src/storage/wal_io/plan4_retention/read/lookup.rs",
+      "crates/engine/src/storage/wal_io/plan4_retention/read/scope.rs",
+      "crates/engine/src/transaction/concurrency_catalog_test_support.rs"
+    ],
+    "scope": "Original Full/Resident scoped Catalog reads borrow actual statement snapshot internally; original slot/generation/sequence checks and automatic catalog bit before Found/Missing; no raw guard/mask export and no new credit",
+    "evidence_ref": "module-independence-survey-20261026.md#c2-statement-reads",
+    "validation": "r1/r2/r3 test-build FAIL retained; r4 test-build+exact runtime10/compiler3 PASS, production unchanged from r3 PASS; compiler negative call_after_statement_drop retains one unused import warning; independent D1/D2 source/evidence/seven-document review accepted, required fixes0",
+    "remaining_supply": "wrapper6678 + held48 included in Full34020/Resident17636; shared19328; new wide entry/return and transaction lifecycle uncharged floor, whole writer/Row/terminal/recovery/M4/M5; caller long-credit transfer not implemented",
+    "source_roots_changed": false
   }
 }

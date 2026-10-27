@@ -397,6 +397,55 @@ impl RowStatementView<'_, '_, '_, '_, '_> {
         merge(snapshot, self.source.close())
     }
 }
+// Only the original apply adapter can borrow this guard or register a read.
+// Consumers receive a statement-bound call, never the guard or a raw mask.
+impl<'t, 'v, 'a, 'c, 's> RowStatementView<'t, 'v, 'a, 'c, 's> {
+    pub(super) fn catalog_snapshot(
+        &self,
+        ledger: &Mutex<IsolationLedger<'a, 'c, 's>>,
+        visibility: Option<&BoundVisibility<'a, 'c, 's>>,
+    ) -> Result<&SnapshotGuard<'v, 'a, 'c, 's>> {
+        let lease = &self.transaction.lease;
+        if !std::ptr::eq(ledger, lease.ledger)
+            || !visibility.is_some_and(|v| std::ptr::eq(v, lease.visibility))
+        {
+            return Err(unchanged(
+                RetentionPhase::Census,
+                RetentionCause::BindingMismatch,
+            ));
+        }
+        if self.phase.get() != Phase::Active || self.transaction.phase.get() != Phase::Active {
+            return Err(unchanged(
+                RetentionPhase::Census,
+                RetentionCause::WrongState,
+            ));
+        }
+        self.rc_snapshot
+            .as_ref()
+            .or(self.transaction.snapshot.as_ref())
+            .ok_or_else(|| fail(lease.fence, RetentionCause::Invariant))
+    }
+
+    pub(super) fn check_catalog_read(&self) -> Result<()> {
+        self.check()
+    }
+
+    /// Called only after the actual Catalog lookup produced Found or Missing.
+    /// No I/O, epoch/publication guard or callback runs under this leaf lock.
+    pub(super) fn record_catalog_read(&self) -> Result<()> {
+        self.check()?;
+        let lease = &self.transaction.lease;
+        let mut state = entry(lease.ledger, lease.fence)?;
+        lease.check(state.bytes)?;
+        let target = row_mut(state.bytes, lease.slot);
+        if read64(target, 80) != self.sequence || target[88..].iter().any(|&b| b != 0) {
+            return Err(fail(lease.fence, RetentionCause::Invariant));
+        }
+        target[3] |= 1;
+        Ok(())
+    }
+}
+
 impl Drop for RowStatementView<'_, '_, '_, '_, '_> {
     fn drop(&mut self) {
         let _ = self.close();
@@ -656,6 +705,15 @@ pub(super) fn source_bytes() -> usize {
 
 #[cfg(test)]
 impl RowStatementView<'_, '_, '_, '_, '_> {
+    pub(in crate::storage) fn test_catalog_reads(&self) -> u8 {
+        let lease = &self.transaction.lease;
+        let state = lease
+            .ledger
+            .lock()
+            .unwrap_or_else(|poison| poison.into_inner());
+        row(state.bytes, lease.slot)[3]
+    }
+
     pub(in crate::storage) fn test_sequence(&self) -> u64 {
         self.sequence
     }
