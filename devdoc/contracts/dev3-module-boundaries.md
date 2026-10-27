@@ -1157,6 +1157,8 @@ Operation은 scope를 재대여하고 원 refs/lease/loader/copy만 소유한다
 
 [budget 행의 실제 borrow](../evidence/module-independence-survey-20261026.md#c2-borrowed-budget-rows)는 descriptor 검산의5개 행 복사와 values의 행 복사를 제거했다. 검산 순서·출력은 유지하고 descriptor source8047B·Full36972B로 감소했으며 Resident17212B/shared22256B는 유지한다. 기존 Pending5320B 관측까지의 합64548B는988B 여유이나 실제 writer ticket·bound entry/exit가 빠져 있으므로 전체 admission 증거가 아니다. CallScope의 이전65652B 및 그 이전65300B는 각각 원 source 결과로 보존한다.
 
+[readonly replay source 분리](../evidence/module-independence-survey-20261026.md#c2-readonly-replay-source)는 원 allocation 검산의 streaming membership·descriptor decode·expected 생성 phase를 따로 세고 실제 생산자64행 배열을 replay에 중첩하지 않는다. INIT context의 `analyze→reservation`와 실제 후속 검산/Status/FreeUndo codec도 구별한다. live producer 상계·원 byte/검산 의미는 유지한다. 현재 Full35895B·Resident17212B·shared22256B이며 Pending 관측을 더한63471B는2065B 여유지만 실제 entry/tail floor·writer ticket이 빠져 있어 전체 admission 증거가 아니다.
+
 전체 설계 상계는 metadata `73856+65536+49152=188544≤196608`, original flush를 더한 whole `254080≤262144`다. 이 admission·동시 합 검산은 **새 C1/C2/C3 공급**이며 기존 active.max 기반 source 결과로 이미 구현됐다고 하지 않는다. header의 실제 byte 배치와 source charge의 측정·실패/정리 경로는 C1/C4 인수에 포함한다.
 
 <a id="common-deliveries"></a>

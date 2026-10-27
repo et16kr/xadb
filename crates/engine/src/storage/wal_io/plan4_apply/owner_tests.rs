@@ -327,3 +327,27 @@ fn catalog_call_scope_selected_consumer_source_is_bounded() {
     assert!(shared + phases[3] <= 65_536);
     assert!(shared + 2 * phases[4] <= 65_536);
 }
+
+#[test]
+fn catalog_replay_sources_exclude_live_encoder_arrays() {
+    use crate::storage::wal_io::bootstrap::doublewrite_install::allocation_reservation::operation;
+    use crate::storage::wal_io::bootstrap::doublewrite_install::mutable_storage::status_init_operation::retention as init;
+    let branches = operation::retention_readonly_source_branches();
+    let base = operation::plan4_system_base_allocation_source_bytes();
+    let reservation = operation::retention::retained_reservation_source_bytes();
+    let materialize = operation::retention::retention_materialize_source_bytes();
+    let init = init::retention_materialize_source_bytes();
+    let full = read::lookup_source_bytes::<port::Writer>();
+    let resident = read::resident_lookup_source_bytes::<port::Writer>();
+    let shared = source::shared_bytes::<port::Writer>();
+    println!(
+        "C2_REPLAY_SOURCES branches={branches:?} base={base} reservation={reservation} materialize={materialize} init={init} full={full} resident={resident} shared={shared}"
+    );
+    // Decoding retains malformed XTS and expected construction retains the
+    // original current descriptor. Only actual sequential phases use max.
+    assert!(branches[1] > crate::storage::obligation::descriptor_source_bytes());
+    assert!(branches[2] >= 4 * std::mem::size_of::<crate::storage::obligation::DescriptorSpec>());
+    assert!(materialize > reservation);
+    assert!(shared + full <= 65_536);
+    assert!(shared + 2 * resident <= 65_536);
+}

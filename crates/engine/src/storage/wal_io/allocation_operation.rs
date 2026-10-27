@@ -930,11 +930,71 @@ fn validate_plan4_population(
     }
 }
 
-/// New-only forwarding/population values plus the unchanged original codec and
-/// descriptor bound. No caller page or bank array is copied into this closure.
+/// Read-only allocation/descriptor phases used by the plan4 observers and
+/// replay validators. No owned 64-entry encoder array is built in these paths.
+/// The caller counts its retained expected/page/state/return values separately.
+pub(crate) fn retention_readonly_source_branches() -> [usize; 3] {
+    use std::mem::size_of;
+    // Original metadata/hash allowances and eight scalar decoded entries cover
+    // page envelopes, streaming membership, header/redo validation and item_for.
+    // The other 64 entries in budget::ENTRIES belong only to the live encoder.
+    let membership = super::budget::COMMON + super::budget::HASH
+        + 8 * size_of::<AllocationEntry>()
+        // Reserve/cancel validate retains its decoded current descriptor while
+        // the subsequent streaming transition checks membership and redo.
+        + size_of::<DescriptorSpec>();
+    // Keep the complete XOD closure, including malformed Transaction/XTS, plus
+    // current/return handoff. The expected descriptor is constructed later.
+    let decoded = size_of::<DescriptorSpec>()
+        + size_of::<Result<DescriptorSpec>>() // caller map_err/try carrier
+        + obligation::descriptor_source_bytes()
+        + 2 * size_of::<ReservationOwner>()
+        + 2 * size_of::<ControlRef>()
+        + 2 * size_of::<Profile>() // profile_ref argument/return construction
+        + 8 * size_of::<&[u8]>()
+        + 4 * size_of::<Result<()>>()
+        + 512; // Namespace/ProfileSpec and wrapper scalar/error handoffs.
+    // current survives item_digest and expected construction. The four Specs
+    // cover current, expected and finished_* / descriptor return carriers.
+    let expected = 4 * size_of::<DescriptorSpec>()
+        + size_of::<[RemainingBudget; 5]>()
+        + size_of::<RemainingBudget>()
+        + size_of::<(
+            OwnerState,
+            OwnerChain,
+            InventoryClaim,
+            ControlRef,
+            ResourcePeak,
+        )>()
+        + 2 * size_of::<Profile>()
+        + 2 * size_of::<Batch>()
+        + 2 * size_of::<PageHeader>()
+        + 2 * size_of::<PageRef>()
+        + 2 * size_of::<SystemWorkRef>()
+        + 4 * size_of::<AllocationEntry>()
+        + 2 * size_of::<std::result::Result<AllocationEntry, allocation_page::AllocationError>>()
+        + 2 * size_of::<[u8; 96]>()
+        + 2 * size_of::<Result<[u8; 96]>>()
+        + 2 * size_of::<Result<[u8; 32]>>()
+        + size_of::<ContentHasher>()
+        + super::budget::HASH
+        + 4 * size_of::<Result<()>>()
+        + 16 * size_of::<&[u8]>()
+        + 16 * size_of::<u64>()
+        + 512; // Namespace/ProfileSpec, generation/role and iterator return values.
+    [membership, decoded, expected]
+}
+
+pub(crate) fn retention_readonly_source_bytes() -> usize {
+    let [membership, decoded, expected] = retention_readonly_source_branches();
+    membership.max(decoded).max(expected)
+}
+
+/// New-only forwarding/population values plus the read-only codec phases.
+/// No caller page or bank array is copied into this closure.
 pub(crate) fn plan4_base_allocation_source_bytes() -> usize {
     use std::mem::size_of;
-    super::budget::TEMPORARIES
+    retention_readonly_source_bytes()
         + 2 * size_of::<AllocationPage<'_>>()
         + 2 * size_of::<std::result::Result<AllocationPage<'_>, allocation_page::AllocationError>>()
         + 2 * size_of::<Profile>()

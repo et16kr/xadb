@@ -1,5 +1,7 @@
 # 현재 구현
 
+2026-10-27 [C2 readonly replay source](../evidence/module-independence-survey-20261026.md#c2-readonly-replay-source): 실제 allocation 검산 phase와 INIT context를 생산자 배열에서 분리해 Full35895B로 계산했다. source별 선택6+계수 보완1 PASS·MT03 Full Undo LOAD와 현재-build memory recovery를 확인했다. entry/tail·writer phase와 M4/M5는 미완료다.
+
 2026-10-27 [C2 budget 행 borrow](../evidence/module-independence-survey-20261026.md#c2-borrowed-budget-rows): descriptor 검산/encoder의 실제 행 복사를 제거해 Full source36972B로 줄였다. 같은 source의5+5 선택 PASS·현재-build memory 복구와 harness identity 원 FAIL을 보존한다. Pending 관측 합64548B의988B 여유는 전체 admission 증거가 아니며 entry/tail·writer phase·M4/M5는 미완료다.
 
 2026-10-27 [C2 Catalog CallScope](../evidence/module-independence-survey-20261026.md#c2-call-scope): 원 source/progress가 borrowed 결과의 실제 소비까지 유지되며 selected query를 이동했다. source별 runtime14+1+2 PASS·compiler4 PASS와 I/O fixture 원 FAIL을 보존한다. Full38076B·Resident17212B이고 전체 entry/tail·writer phase admission·M4/M5는 미완료다.

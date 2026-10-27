@@ -1072,3 +1072,25 @@ descriptor source8711→8047B(-664), allocation iterator allowance1152→48B(-11
 - 실행 result SHA-256: `f8a8017efa1c78fd0d28ca31c98fc791fc548cf548edd880d28f8bfc67a6927c`
 
 실행 결과 PASS와 설계 기각을 구별한다. 독립 검토자는 제품2파일의 byte-exact 원복, 후보5644 source/inventory와14/compiler3 원 artifact, 문서2개의 사실/식별자를 확인해 기각·원복 기록을 확정했다. 후보 제품 D1/D2는 미수용이며 compact entry/tail·writer phase·M4/M5는 미완료다. 전체 fmt/Clippy·문서 verifier·push는 실행하지 않았다.
+
+<a id="c2-readonly-replay-source"></a>
+### C2 allocation replay의 읽기 검산 source 분리 — 2026-10-27
+
+기준 `f401d51`, 작성·통합 `/root`, 독립 검토 `/root/module_review`다. allocation 원 owner에 actual readonly 검산의 membership·descriptor decode·current 보유 중 expected 생성 phase를 분리했다. membership는 원 COMMON/HASH와8개 scalar entry를 유지하며, live encoder만 만드는64개 entry 배열을 포함하지 않는다. decode는 malformed Transaction/XTS까지 포함하는 기존 XOD closure와 추출 Spec·mapped Semantic Result 및 ReservationOwner/ControlRef/Profile/참조·오류 인자를 계수한다. expected는 원 current와 expected/finished wrapper 반환의4개 Spec·remaining5/current row·구성값·item96/Result·hash를 유지한다. 세 phase의 max 밖에 기존 base forwarding 계수는 그대로 둔다.
+
+INIT context는 `analyze → retained_reservation`만 실행하므로 reserve/cancel materialize의 State/Header 반환을 중첩하지 않는 전용 상계를 연결했다. reserve/cancel replay와 INIT replay의 generic TEMPORARIES fallback도 readonly closure로 대체하고 INIT의 실제 Status/FreeUndo codec max는 유지한다. live producer의 generic TEMPORARIES/PLANS와 실제 배열·Prepared는 그대로다. 제품 검산 순서·encoded byte·권한·WAL/설치 의미나 cap은 바뀌지 않았고 source class 계산만 좁혀졌다.
+
+r1 readonly branches는 membership9360B·decode10883B·expected9080B, system base12763B, retained reservation16591B, reserve/cancel materialize17199B, INIT materialize20439B다. population replay27508→24327B·history population28836→25655B이며 현재 history retention/rollback27759B가 최대라 **Full은36972→35895B(-1077)**다. Resident17212B/shared22256B·live peak63184B/metadata186192B/whole251728B·recovered peak64611B는 유지한다. 원 Pending 관측5320B까지의 합63471B(2065B 여유)는 실제 writer ticket·entry/tail floor가 빠져 있으므로 전체 admission 증거가 아니다.
+
+[동결 manifest](../../tests/fixtures/dev3-module-c2/readonly-replay-source/manifest.json)의 신규 source 관측1·영향 live/recovery census1·원 ledger class2·MT03 Full Pending Undo LOAD1·현재-build memory recovery1만 선택했다. production/test build와6 exact 사례 모두 PASS/경고0다. source 함수만 바뀌었으므로 무변경 codec 정답 시험·하위 회귀·workspace를 반복하지 않았다. 실제 Full charge의 예약/거절/반환, Pending LOAD, reserved Drop/fence와 새 live 인계 뒤 조회는 원 frozen fixture에서 검산했다. native/새 PID 복구 실행은 없다.
+
+원 artifact `artifacts/module-c2-readonly-replay-source-20261027-r1/`에 source5641파일/inventory·manifest·runner/helpers·compiler·ELF·case 로그를 보존한다. 총600초/compiler90초/case30초/출력8MiB/stack33554432B, 경과39.20초는 성능 결과가 아니다.
+
+- source SHA-256: `b6debc2165cdc10a9dff5e7cce43c7aa193cefc9da80884a01fe8da6ef91275d`
+- manifest SHA-256: `c4239be5e0fc68c661a5571999ce125738581f9409a12bc2366c820cb6e4e3d8`
+- ELF SHA-256: `c2833ab6a5a0f6bed7316ecfaf7c2ee34c69f1baee8936b4f0daaa39fa86f3d7`
+- result SHA-256: `ecb558d0c7f7caaf6ab6a56eea7928679a21038e9bcc2a7167a85b2e7fc53a78`
+
+독립 검토에서 reserve/cancel transition 동안 유지하는 current DescriptorSpec1개를 membership 식에 명시하도록 보완했다. r2는 production/test build와 바뀐 branch 관측1만 PASS/경고0이며, membership10272B·decode10883B·expected9080B로 전체 max와 Full/Resident는 그대로다. r1에서 완료한 class/MT03/recovery/census5는 NOT_REPEATED_UNCHANGED_BEHAVIOR다. r2 source `efc20ee154d4de8befdbbd65c1e734732409f2afdbb80aaf71634039cd5c7e14`, manifest는 r1과 동일, ELF `557c192b2ffaec788863ee238523e0fbf715b00e85c042fa91977b54949e43ca`, result `f90cbe58276d6eff61adf8e51b81833c3ba79ab7103983fd926da5f9579a7de3`이며 경과31.51초다. 원 r1의 제한 관측과 r2 보완을 각각 보존한다.
+
+독립 D1/D2는 r2 export 5,641파일·inventory/fingerprint·manifest/runner/helpers·compiler/ELF/관측 로그와 현재 source의 byte-exact 일치, r1→r2 DescriptorSpec 항 하나의 변경, 6문서의 원 source별 기록을 대조해 이 단위를 수용했다. 필수 미해결 수정은 0이다. 검토자는 시험·빌드·verifier·수정을 실행하지 않았다. 변경 파일 rustfmt·diff whitespace만 확인했으며 전체 fmt/Clippy·문서 verifier·push는 실행하지 않았다. compact entry/tail·writer phase 예약·Row/terminal/recovery·M4/M5는 미완료다.

@@ -6838,5 +6838,23 @@
     "validation": "r1 production/test build+descriptor5 PASS then Aging harness identity FAIL before product test; r2 same source/ELF continues failed Aging+not-run source3/current-build memory recovery1 PASS; completed tests/build not repeated; warning0; independent code/artifacts/six-document D1/D2 accepted limited; zero unresolved required fixes",
     "remaining_supply": "Writer/progress phase reservations and complete bound entry/release tail; Row/terminal/recovery and M4/M5; Full36972+shared22256+observed Pending5320=64548 does not include future ticket/floor",
     "source_roots_changed": false
+  },
+  "dev3_module_c2_readonly_replay_source": {
+    "status": "VALIDATED_INDEPENDENT_D1_D2_ACCEPTED",
+    "contract_ref": "dev3-module-boundaries.md#operation-source-admission",
+    "implemented_paths": [
+      "tests/fixtures/dev3-module-c2/readonly-replay-source/manifest.json"
+    ],
+    "modified_paths": [
+      "crates/engine/src/storage/wal_io/allocation_operation.rs",
+      "crates/engine/src/storage/wal_io/plan4_allocation_operation.rs",
+      "crates/engine/src/storage/wal_io/plan4_status_init_operation.rs",
+      "crates/engine/src/storage/wal_io/plan4_apply/owner_tests.rs"
+    ],
+    "scope": "Actual streaming allocation/descriptor readonly phase closure and INIT analyze/reservation context; replay removes live encoder-array fallback while live producers and all wire/authority/checks/caps remain",
+    "evidence_ref": "module-independence-survey-20261026.md#c2-readonly-replay-source",
+    "validation": "r1 production/test build+related exact6 PASS; r2 explicit transition-retained DescriptorSpec source term, production/test build+changed branch1 PASS with unchanged class max; other5 not repeated, warning0; independent D1/D2 accepted, no unresolved required changes",
+    "remaining_supply": "Complete compact bound entry/release tail and writer/progress phase reservations; Row/terminal/recovery and M4/M5; Full35895+shared22256+observed Pending5320=63471 excludes ticket/floor",
+    "source_roots_changed": false
   }
 }

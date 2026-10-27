@@ -678,3 +678,7 @@ statement factory·자동 read-set·CheckedTable/RowReadOperation과 short aggre
 ### C2 descriptor budget 행 borrow 등록 — 2026-10-27
 
 원 obligation의 행 반복/values를 borrow로 바꾸고 allocation source의 iterator 계수를 연결했다. 실제 수정2경로와 선택 manifest1을 JSON `dev3_module_c2_borrowed_budget_rows`에 등록했으며 package/dependency·source root·wire·backing은 유지한다. [증거](../evidence/module-independence-survey-20261026.md#c2-borrowed-budget-rows)는 동일 source/ELF의5+5 PASS, Aging harness identity 원 FAIL과 build/완료 사례 미반복을 보존한다. 실제 전체 admission은 미완료다.
+
+### C2 readonly replay source 등록 — 2026-10-27
+
+기존 allocation/INIT source3경로와 source 관측1을 수정하고 선택 manifest1을 JSON `dev3_module_c2_readonly_replay_source`에 등록했다. package/dependency·source root·backing·wire는 유지한다. [선택 증거](../evidence/module-independence-survey-20261026.md#c2-readonly-replay-source)는 production/test build·source별6+계수 보완1 PASS와 Full35895B를 보존하며 전체 entry/tail·writer admission은 후속이다.

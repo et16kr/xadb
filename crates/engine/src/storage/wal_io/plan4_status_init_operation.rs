@@ -277,8 +277,10 @@ pub(crate) fn retention_init_source_bytes() -> usize {
 /// analysis before the local InitExpected/ScopedExpected run header, allocator,
 /// descriptor and payload validation. No producer Plan/Prepared owner is live.
 pub(crate) fn retention_materialize_source_bytes() -> usize {
-    operation::retention::retention_materialize_source_bytes()
-        .max(temporary_bytes())
+    operation::retention::retained_reservation_source_bytes()
+        .max(operation::retention_readonly_source_bytes())
+        .max(status_codec_bytes())
+        .max(mixed::codec_bytes())
         + 2 * size_of::<RetentionAllocationExpected<'_>>()
         + 2 * size_of::<InitExpected<'_>>()
         + 2 * size_of::<Result<InitExpected<'_>>>()

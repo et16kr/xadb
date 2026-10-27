@@ -1,0 +1,39 @@
+{
+  "schema": "XADB_MODULE_C2_READONLY_REPLAY_SOURCE_V1",
+  "status": "FROZEN_INPUTS_NOT_EXECUTION_EVIDENCE",
+  "baseline": "f401d51",
+  "scope": "separate actual streaming allocation/descriptor observer source phases from live encoder arrays; INIT context counts analyze/reservation only; replay validators use readonly closure while live producer generic bounds remain; no behavioral/wire/cap change or aggregate completion claim",
+  "budget": {
+    "total_seconds": 600,
+    "compiler_seconds": 90,
+    "case_seconds": 30,
+    "output_bytes": 8388608,
+    "rust_min_stack": 33554432
+  },
+  "runtime_tests": [
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::owner_tests::catalog_replay_sources_exclude_live_encoder_arrays",
+      "reason": "new actual readonly membership/decode/expected branch census and replay-specific reservation vs materialize closure"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::owner_tests::disk_session_isolation_backing_and_carriers_are_accounted",
+      "reason": "changed readonly source functions feed actual live/recovery peak and metadata accounting"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::source::tests::catalog_class_uses_current_types_and_recovered_retained_owner",
+      "reason": "modified Full source charge reaches original ledger admission and exact cleanup"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::source::tests::fixed_resident_class_admits_two_and_never_escalates",
+      "reason": "changed Full charge still must be denied beside two fixed resident reservations"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::commit_concurrency::catalog_mt03_pending_reader_loads_undo",
+      "reason": "changed Full charge used during actual Pending Undo replay/LOAD; original Pending reader behavior must remain"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::lifecycle::mc04_reserved_drop_fence_fresh_recovery",
+      "reason": "readonly source census is consumed by current-build recovery binding; preserve actual reserved/fenced recovery and final query"
+    }
+  ]
+}
