@@ -396,7 +396,7 @@ pub(crate) fn retention_allocation_source_bytes() -> usize {
 /// analyzes the same immutable predecessor again; no check is omitted.
 pub(crate) fn retention_materialize_source_bytes() -> usize {
     use std::mem::size_of;
-    super::plan4_system_base_allocation_source_bytes().max(super::super::budget::TEMPORARIES)
+    super::plan4_system_base_allocation_source_bytes().max(super::retention_readonly_source_bytes())
         + 2 * size_of::<RetentionAllocationExpected<'_>>()
         + 3 * size_of::<AnalysisExpected<'_>>()
         + 3 * size_of::<Result<(AnalysisExpected<'_>, RetentionReservation)>>()
@@ -409,5 +409,24 @@ pub(crate) fn retention_materialize_source_bytes() -> usize {
         + 16 * size_of::<&[u8]>()
         + 16 * size_of::<u64>()
         + 4 * size_of::<Result<()>>()
+        + 512
+}
+
+/// INIT context calls only analyze -> map(reservation). It does not materialize
+/// a reserve/cancel frame or return their State/Header. Keep all pair/extracted
+/// reservation and expected handoff carriers; the caller counts InitExpected.
+pub(crate) fn retained_reservation_source_bytes() -> usize {
+    use std::mem::size_of;
+    super::plan4_system_base_allocation_source_bytes()
+        + 2 * size_of::<RetentionAllocationExpected<'_>>()
+        + 3 * size_of::<AnalysisExpected<'_>>()
+        + 3 * size_of::<Result<(AnalysisExpected<'_>, RetentionReservation)>>()
+        + 3 * size_of::<RetentionReservation>()
+        + 2 * size_of::<Result<RetentionReservation>>()
+        + 2 * size_of::<AllocationPage<'_>>()
+        + 16 * size_of::<&[u8]>() + 16 * size_of::<u64>()
+        + 4 * size_of::<Result<()>>()
+        // Namespace, selected Option/tuple and destructured tuple, PageRef,
+        // SystemWorkRef construction/Result and generation/error values.
         + 512
 }

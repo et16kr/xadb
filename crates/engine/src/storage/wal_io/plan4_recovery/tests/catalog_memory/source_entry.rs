@@ -118,56 +118,68 @@ fn failed_source_reservation_returns_progress_under_fence() {
 #[test]
 fn entry_unwind_returns_progress_without_source_charge() {
     case("C2_ENTRY03", || {
-        let oracle = Oracle::new();
-        with_fresh!(oracle, |live,
-                             owner,
-                             flusher,
-                             status,
-                             undo,
-                             private,
-                             reader_private,
-                             core,
-                             fence,
-                             state| {
-            let _ = (status, undo, private);
-            prepare_catalog(live, owner, flusher);
-            let before = state.lock().unwrap().events.len();
-            let (entered, arrived) = sync_channel(1);
-            let (resume, release) = sync_channel(1);
-            hook::install(core, Point::LookupBeforeSourceReserve, entered, release);
-            let (writer, reader, _) = live.split();
-            let reader_ref = &reader;
-            std::thread::scope(|scope| {
-                let reading = scope.spawn(move || {
-                    std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
-                        let mut separate = core.try_owner(OwnerRole::Foreground).unwrap();
-                        let snapshot = reader_ref.catalog_snapshot(&mut separate).unwrap();
-                        {
-                            reader_ref
-                                .lookup_catalog(
-                                    &mut separate,
-                                    &snapshot,
-                                    ObjectId::new(6).unwrap(),
-                                    &mut Plan4ResidencyCursor::new(),
-                                    reader_private,
-                                )
-                                .unwrap();
-                        }
-                    }))
+        for resident in [false, true] {
+            let oracle = Oracle::new();
+            with_fresh!(oracle, |live,
+                                 owner,
+                                 flusher,
+                                 status,
+                                 undo,
+                                 private,
+                                 reader_private,
+                                 core,
+                                 fence,
+                                 state| {
+                let _ = (status, undo, private);
+                prepare_catalog(live, owner, flusher);
+                let before = state.lock().unwrap().events.len();
+                let (entered, arrived) = sync_channel(1);
+                let (resume, release) = sync_channel(1);
+                hook::install(core, Point::LookupBeforeSourceReserve, entered, release);
+                let (writer, reader, _) = live.split();
+                let reader_ref = &reader;
+                std::thread::scope(|scope| {
+                    let reading = scope.spawn(move || {
+                        std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
+                            let mut separate = core.try_owner(OwnerRole::Foreground).unwrap();
+                            let snapshot = reader_ref.catalog_snapshot(&mut separate).unwrap();
+                            if resident {
+                                reader_ref
+                                    .lookup_catalog_resident(
+                                        &mut separate,
+                                        &snapshot,
+                                        ObjectId::new(6).unwrap(),
+                                        &mut Plan4ResidencyCursor::new(),
+                                        reader_private,
+                                    )
+                                    .unwrap();
+                            } else {
+                                reader_ref
+                                    .lookup_catalog(
+                                        &mut separate,
+                                        &snapshot,
+                                        ObjectId::new(6).unwrap(),
+                                        &mut Plan4ResidencyCursor::new(),
+                                        reader_private,
+                                    )
+                                    .unwrap();
+                            }
+                        }))
+                    });
+                    arrived.recv_timeout(WAIT).unwrap();
+                    assert_eq!(reader.catalog_test_source_used(), 0);
+                    assert_eq!(hook::observe(core).active_read_operations, 1);
+                    assert_eq!(writer.catalog_test_physical_pins(), 0);
+                    resume.send(Resume::Panic).unwrap();
+                    assert!(reading.join().unwrap().is_err());
+                    assert_eq!(reader.catalog_test_source_used(), 0);
+                    assert_eq!(reader.catalog_test_references(), ((0, 0, 0), false));
+                    assert_eq!(hook::observe(core).active_read_operations, 0);
                 });
-                arrived.recv_timeout(WAIT).unwrap();
-                assert_eq!(reader.catalog_test_source_used(), 0);
-                assert_eq!(hook::observe(core).active_read_operations, 1);
-                assert_eq!(writer.catalog_test_physical_pins(), 0);
-                resume.send(Resume::Panic).unwrap();
-                assert!(reading.join().unwrap().is_err());
-                assert_eq!(reader.catalog_test_source_used(), 0);
-                assert_eq!(reader.catalog_test_references(), ((0, 0, 0), false));
-                assert_eq!(hook::observe(core).active_read_operations, 0);
+                assert!(fence.is_fenced());
+                assert_eq!(state.lock().unwrap().events.len(), before);
             });
-            assert!(fence.is_fenced());
-            assert_eq!(state.lock().unwrap().events.len(), before);
-        });
+        }
     });
 }
 

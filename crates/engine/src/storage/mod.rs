@@ -22,6 +22,7 @@ pub(crate) mod retention_page;
 pub(crate) mod row;
 pub(crate) mod row_record;
 pub(crate) mod semantic_catalog;
+pub(crate) mod semantic_row;
 mod semantic_group;
 pub(crate) mod semantic_retention;
 pub(crate) mod session_fence;

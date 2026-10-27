@@ -51,7 +51,6 @@ pub(crate) use mutable_storage::{
     StatusReadGuard, StatusReader, SystemLoadError, SystemLoadObservation, SystemPage,
     SystemPageKind, SystemResidencyCursor, SystemResidencyStep, SystemSlotStep,
 };
-pub(in crate::storage) use mutable_storage::{CatalogCommitAttempt, CatalogCommitInstalled};
 pub(crate) use mutable_storage::{
     ClosedRecovery, RecoveryAcquireError, RecoveryCause, RecoveryError, RecoveryFailure,
     RecoveryInspection, RecoveryPhase, RecoveryPrefix, RecoveryPrefixCause, RecoveryPrefixError,

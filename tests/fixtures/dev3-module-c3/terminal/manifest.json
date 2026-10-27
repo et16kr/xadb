@@ -1,0 +1,86 @@
+{
+  "schema": "XADB_MODULE_C3_TERMINAL_V1",
+  "status": "FROZEN_INPUTS_NOT_EXECUTION_EVIDENCE",
+  "baseline": "4cf67bf",
+  "scope": "Move Catalog semantic stage/durable/install receipts and terminal orchestration into original apply owner. Original physical WAL, stage marker, exact binding, pin/Drain/install/publication conditions preserved. No Row or whole source admission completion.",
+  "budget": {
+    "total_seconds": 600,
+    "compiler_seconds": 90,
+    "case_seconds": 30,
+    "output_bytes": 8388608,
+    "rust_min_stack": 33554432
+  },
+  "runtime_tests": [
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::terminal::physical_busy_restores_only_the_rejected_stage",
+      "reason": "New actual physical competing stage -> Busy/Unchanged -> original marker/pin cancellation. Synthetic external complete frame is preserved, then the test explicitly fences/discards the session."
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::commit_failures::catalog_mf02_commit_stage_call_unwind",
+      "reason": "Moved actual pre-stage call boundary still fences on unknown unwind, without an Unstaged receipt."
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::commit_failures::catalog_mf03_commit_write_before_error",
+      "reason": "Moved semantic wait must retain fatal attempted-write classification."
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::commit_failures::catalog_mf07_commit_sync_before_error",
+      "reason": "Moved semantic durable adapter rejects original sync failure."
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::commit_failures::catalog_mf11_commit_installed_before_finish_unwind",
+      "reason": "Moved complete installation boundary retains fatal cleanup and current-build memory recovery."
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::visibility_gap::catalog_mt01_q0_publication_gap",
+      "reason": "Actual normal stage/durable/complete chain, exact original Q and frozen page/WAL oracle."
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::owner_tests::catalog_wal_wait_source_phases_include_claim_and_condvar",
+      "reason": "Changed terminal temporary borrow and wait observation."
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::owner_tests::catalog_commit_phase_sources_measure_consumed_preparation",
+      "reason": "Changed stage/wait/complete source expressions, no unchanged aging codec selection."
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::commit_common::commit_common_original_owner_source_admission",
+      "reason": "Changed production terminal source expression and original retained owner memory/native source gate."
+    }
+  ],
+  "compiler_tests": [
+    {
+      "name": "raw_grant",
+      "path": "raw_grant.rs",
+      "bytes": 152,
+      "sha256": "912d8c2a71033b8ddc5365475ea913995fc49a16fe6ab79dadf77ae3c191f695",
+      "expected_code": "E0599",
+      "primary_line": 5
+    },
+    {
+      "name": "pending_double_consume",
+      "path": "pending_double_consume.rs",
+      "bytes": 348,
+      "sha256": "50fa9c568c7eb4d4948ee7506b768e9e6ef6d934d5133e03f18c36dbe963150d",
+      "expected_code": "E0382",
+      "primary_line": 10
+    },
+    {
+      "name": "private_binding",
+      "path": "private_binding.rs",
+      "bytes": 130,
+      "sha256": "81ea406545376ca747a91d34772253b0811714c4a31c907a3f2c190af38ae3df",
+      "expected_code": "E0616",
+      "primary_line": 4
+    },
+    {
+      "name": "non_clone",
+      "path": "non_clone.rs",
+      "bytes": 136,
+      "sha256": "5c6772fc1663e51617745a45c64b839e13dc47548aa955630a4d226d360902da",
+      "expected_code": "E0599",
+      "primary_line": 4
+    }
+  ],
+  "historical_fixture_note": "Two current probes derive from historical commit-continuation fixtures with disk receipt imports and current drain_durable; historical originals and their execution identities remain unchanged."
+}

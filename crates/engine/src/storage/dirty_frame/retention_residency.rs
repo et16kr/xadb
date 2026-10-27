@@ -7,6 +7,124 @@ use crate::storage::wal_io::{RetentionLoadPermit, WalRequirement};
 #[path = "retention_residency_tests.rs"]
 mod tests;
 
+/// Source phases of retention_payloads/check_retention_reader. The registry's
+/// guard does not escape either API; later Owner checking uses the core leaf.
+/// Columns are guardless waiting, guarded work, guardless returned values.
+pub(in crate::storage) fn entry_source_phases() -> (usize, usize, usize) {
+    use crate::storage::{
+        allocation_page::SystemWorkRef,
+        page::{PageError, PageRef},
+        transaction_record::TxnRef,
+        wal_io::WalFrameLocation,
+    };
+    use crate::{api::Namespace, transaction::TxnId};
+    use std::{mem::size_of, ops::Range};
+    type Guard<'a> = MutexGuard<'a, PoolRegistry<'a>>;
+    let waiting = 8 * size_of::<&()>()
+        + 4 * size_of::<Result<()>>()
+        + 2 * size_of::<Result<bool>>()
+        + 2 * size_of::<DirtyError>();
+    let locks = 4 * size_of::<Guard<'_>>()
+        + 2 * size_of::<std::sync::LockResult<Guard<'_>>>()
+        + 2 * size_of::<Result<Guard<'_>>>()
+        + 2 * size_of::<std::sync::PoisonError<Guard<'_>>>();
+    let directory = registration::retention_source_observation();
+    let rank = 2 * size_of::<(u64, u64, u64)>()
+        + size_of::<[u8; 24]>()
+        + 3 * size_of::<[u8; 8]>()
+        + 2 * size_of::<PageRef>()
+        + 3 * size_of::<std::result::Result<(), PageError>>();
+    // System's borrowed claim remains while init_generations calls valid on
+    // this same directory. Keep the nested directory closure in this branch.
+    let system_init = 2 * size_of::<SystemWorkRef>()
+        + size_of::<Namespace>()
+        + rank
+        + 2 * size_of::<Option<[u64; 2]>>()
+        + size_of::<[u64; 2]>()
+        + 2 * size_of::<TargetRequest>()
+        + 2 * size_of::<Registration>()
+        + 2 * size_of::<Option<Registration>>()
+        + 2 * size_of::<Range<usize>>()
+        + directory;
+    let pair_init = 2 * size_of::<TxnRef>()
+        + 2 * size_of::<TxnId>()
+        + size_of::<PageLsn>()
+        + size_of::<[u64; 2]>()
+        + 2 * size_of::<Option<[u64; 2]>>()
+        + 3 * size_of::<[usize; 2]>()
+        + 2 * size_of::<Option<[usize; 2]>>()
+        + size_of::<std::array::IntoIter<u64, 2>>()
+        + 2 * size_of::<std::array::IntoIter<usize, 2>>()
+        + size_of::<std::iter::Enumerate<std::array::IntoIter<usize, 2>>>()
+        + 2 * size_of::<std::slice::Iter<'_, TargetRequest>>()
+        + 2 * size_of::<Registration>()
+        + 2 * size_of::<Option<Registration>>()
+        + size_of::<TargetRequest>()
+        + size_of::<(u64, u64, PageKind)>()
+        + 2 * size_of::<Range<usize>>()
+        + rank
+        + directory;
+    // Both the load and its flush/INIT conflict inputs remain borrowed under
+    // this same registry guard. Full original claims are retained in the pool.
+    let load = 2 * size_of::<concurrency::OwnerIdentity>()
+        + 2 * size_of::<Option<&flush::Claim>>()
+        + 2 * size_of::<&flush::Claim>()
+        + 2 * size_of::<Option<&init::InitClaimSlot>>()
+        + 2 * size_of::<&init::InitClaimSlot>()
+        + 2 * size_of::<TargetRequest>()
+        + size_of::<(Option<Registration>, Option<FrameStamp>)>()
+        + size_of::<Registration>()
+        + size_of::<FrameStamp>()
+        + 2 * size_of::<Option<(PageKind, u8)>>()
+        + size_of::<std::slice::Iter<'_, TargetRequest>>()
+        + directory;
+    let flush = 2 * size_of::<Option<FrameStamp>>()
+        + 2 * size_of::<FrameStamp>()
+        + 2 * size_of::<Registration>()
+        + 2 * size_of::<Option<Registration>>()
+        + 2 * size_of::<Option<PageLsn>>()
+        + directory;
+    let dpt = 2 * size_of::<Option<WalRequirement<'_>>>()
+        + 2 * size_of::<WalRequirement<'_>>()
+        + 2 * size_of::<WalFrameLocation>()
+        + 2 * size_of::<Registration>()
+        + 2 * size_of::<Option<Registration>>()
+        + size_of::<std::iter::Enumerate<std::slice::Iter<'_, Option<DptEntry>>>>()
+        + 2 * size_of::<(usize, &Option<DptEntry>)>()
+        + directory;
+    let pin_count = size_of::<std::iter::Enumerate<std::slice::Iter<'_, u16>>>()
+        + 2 * size_of::<(usize, &u16)>()
+        + size_of::<Option<u16>>()
+        + size_of::<u16>()
+        + size_of::<Option<&init::InitClaimSlot>>()
+        + size_of::<Option<&reader_load::LoadClaimRecord>>()
+        + size_of::<[usize; 2]>()
+        + directory;
+    // At most13 nested helpers: check -> retention_payloads -> directory_read
+    // -> entry -> registry_valid -> pins -> init -> valid_in -> init_generations
+    // -> directory.valid -> valid_retention -> Slot.registration -> map.
+    // Each has <=64B scalar/ref/closure arguments beyond explicit packets.
+    let auxiliary = 13 * size_of::<(&(), &(), &(), &[u8], usize, u64, [bool; 4])>()
+        + 2 * size_of::<Range<usize>>()
+        + 2 * size_of::<std::slice::Iter<'_, u8>>()
+        + size_of::<std::ops::RangeInclusive<usize>>();
+    let guarded = locks
+        + auxiliary
+        + directory
+            .max(system_init)
+            .max(pair_init)
+            .max(load)
+            .max(flush)
+            .max(dpt)
+            .max(pin_count);
+    let returning = 4 * size_of::<Result<()>>()
+        + 4 * size_of::<Result<bool>>()
+        + 4 * size_of::<DirtyError>()
+        + 2 * size_of::<concurrency::ConcurrencyError>()
+        + 6 * size_of::<&()>();
+    (waiting, guarded, returning)
+}
+
 /// New live calls keep the original pool backing; scratch images remain loans.
 pub(in crate::storage) fn source_census() -> usize {
     use std::mem::size_of;
@@ -57,6 +175,16 @@ impl<'c, 's> SharedPool<'c, 's, '_, '_> {
         self.plan4_quiescent()?;
         if !self.directory_edit(|directory| directory.activate_retention(self.frames))? {
             return Err(self.fatal(Cause::Invariant));
+        }
+        Ok(())
+    }
+
+    /// Guardless observation only. A later original registry acquisition still
+    /// checks fence, poison and the complete metadata under its own guard.
+    pub(in crate::storage) fn check_retention_entry_health(&self) -> Result<()> {
+        self.health()?;
+        if self.registry.is_poisoned() {
+            return Err(self.fatal(Cause::Poisoned));
         }
         Ok(())
     }

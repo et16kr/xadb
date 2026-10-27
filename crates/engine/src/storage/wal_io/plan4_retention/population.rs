@@ -918,6 +918,7 @@ impl<'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
                     after,
                 ),
             );
+            let permit = crate::storage::wal_io::disk_api::legacy_install(permit);
             write
                 .install_page(0, &permit)
                 .map_err(|e| frame(RetentionPhase::Install, e))?;
@@ -1307,6 +1308,7 @@ pub(super) fn phase_source_bytes() -> PopulationSourceCensus {
     // The pure producer has returned before original stage/publication. Keep
     // all bridge moves, retained-claim construction and small return carriers.
     let publication = outer
+        + legacy::conversion_source_bytes()
         + size_of::<InitAuthority<'_, '_>>()
         + size_of::<Write<'_>>()
         + 2 * size_of::<RetentionInitInstall<'_, '_, '_>>()

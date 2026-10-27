@@ -5,9 +5,10 @@
 #![allow(dead_code)] // The separately reviewed allocator consumer is being connected.
 
 use super::{
+    disk::InstallGrant,
     page::{PAGE_BYTES, PageIdentity, PageKind, PageLsn},
     session_fence::SessionFence,
-    wal_io::{DirtyInstallPermit, WalRequirement},
+    wal_io::WalRequirement,
 };
 use crate::transaction::concurrency::{
     self, ContentAdmission, Owner, PageConcurrency, VersionEditGuard,
@@ -34,6 +35,8 @@ pub(in crate::storage) use retirement::{
     RetirementApply, RetirementTargets, retirement_source_bytes,
 };
 mod plan4_residency;
+#[cfg(test)]
+pub(in crate::storage) use commit::phase_sources as commit_phase_sources;
 #[allow(unused_imports)] // The actual terminal producer will consume these opaque carriers.
 pub(in crate::storage) use commit::{
     CommitInstallTargets, CommitStageTargets, DrainedCommitTargets, PendingCommitTargets,
@@ -45,6 +48,7 @@ mod retention_residency;
 pub(in crate::storage) use plan4_residency::source_census as plan4_core_census;
 #[cfg(test)]
 pub(in crate::storage) use plan4_residency::test_support as plan4_load_test_support;
+pub(in crate::storage) use retention_residency::entry_source_phases as retention_entry_source_phases;
 pub(in crate::storage) use retention_residency::source_census as retention_core_census;
 pub(in crate::storage) use status_residency::StatusLoadSnapshot as Plan4LoadSnapshot;
 mod residency;
@@ -59,6 +63,8 @@ pub(in crate::storage) use status_pressure::{StatusCandidate, StatusCandidateKin
 pub(in crate::storage) use status_residency::StatusLoadSnapshot;
 #[cfg(test)]
 pub(in crate::storage) use status_residency::test_support as status_load_test_support;
+#[cfg(test)]
+mod dpt_storage_tests;
 #[cfg(test)]
 mod registration_tests;
 #[cfg(test)]
@@ -272,6 +278,34 @@ pub(crate) struct DirtyEntry {
     pub(crate) rec_lsn: PageLsn,
     pub(crate) modification_counter: u64,
 }
+/// Registry-local DPT key and mutable values. The slot index and generation
+/// identify the original directory publication; its PageIdentity is retained
+/// there once. Producers check full identity before storing this private row.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+struct DptEntry {
+    generation: u64,
+    rec_lsn: PageLsn,
+    modification_counter: u64,
+}
+impl DptEntry {
+    fn from_checked(entry: &DirtyEntry) -> Self {
+        Self {
+            generation: entry.generation,
+            rec_lsn: entry.rec_lsn,
+            modification_counter: entry.modification_counter,
+        }
+    }
+    #[cfg(test)]
+    fn observe(self, identity: PageIdentity) -> DirtyEntry {
+        DirtyEntry {
+            identity,
+            generation: self.generation,
+            rec_lsn: self.rec_lsn,
+            modification_counter: self.modification_counter,
+        }
+    }
+}
+
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub(crate) struct DirtyObservation {
     pub(crate) frame: FrameStamp,
@@ -299,7 +333,7 @@ struct PoolRegistry<'s> {
     counts: [u16; MAX_FRAMES],
     total: u16,
     init_claim: Option<init::InitClaimSlot>,
-    entries: [Option<DirtyEntry>; MAX_FRAMES],
+    entries: [Option<DptEntry>; MAX_FRAMES],
     requirements: [Option<WalRequirement<'s>>; MAX_FRAMES],
     claim: Option<flush::Claim>,
     last_attempt: u64,
@@ -459,8 +493,7 @@ impl<'c, 's, 'p, 'd> SharedPool<'c, 's, 'p, 'd> {
                         .directory
                         .resolve(self.frames, index)
                         .is_some_and(|registration| {
-                            entry.identity == registration.request.identity
-                                && entry.generation == registration.generation
+                            entry.generation == registration.generation
                                 && entry.rec_lsn.0 != 0
                                 && entry.modification_counter != 0
                                 && requirement.uses_fence(self.fence)
@@ -470,6 +503,54 @@ impl<'c, 's, 'p, 'd> SharedPool<'c, 's, 'p, 'd> {
                 }
             })
     }
+    /// Compare the complete observed identity under the same original leaf.
+    /// A missing publication with a present DPT row is never a clean match.
+    fn dpt_matches(
+        &self,
+        state: &PoolRegistry<'s>,
+        index: usize,
+        expected: Option<&DirtyEntry>,
+    ) -> bool {
+        match (state.entries[index].as_ref(), expected) {
+            (None, None) => true,
+            (Some(entry), Some(expected)) => state
+                .directory
+                .resolve(self.frames, index)
+                .is_some_and(|registration| {
+                    entry.generation == registration.generation
+                        && registration.request.identity == expected.identity
+                        && entry.generation == expected.generation
+                        && entry.rec_lsn == expected.rec_lsn
+                        && entry.modification_counter == expected.modification_counter
+                }),
+            _ => false,
+        }
+    }
+
+    /// Fenced diagnostics only. An unpublished INIT row still has its exact
+    /// target in the original claim. This does not make it a readable page.
+    #[cfg(test)]
+    fn diagnose_dpt(&self, state: &PoolRegistry<'s>, index: usize) -> Option<DirtyEntry> {
+        state.entries[index].map(|entry| {
+            let published = state
+                .directory
+                .resolve(self.frames, index)
+                .filter(|registration| registration.generation == entry.generation);
+            let claimed = state
+                .init_claim
+                .as_ref()
+                .and_then(|claim| claim.diagnostic_registration(index))
+                .filter(|registration| registration.generation == entry.generation);
+            if let (Some(published), Some(claimed)) = (published, claimed) {
+                assert_eq!(published, claimed, "diagnostic DPT provenance conflict");
+            }
+            let registration = published
+                .or(claimed)
+                .expect("diagnostic DPT row has no matching original generation");
+            entry.observe(registration.request.identity)
+        })
+    }
+
     fn registry_valid(&self, state: &PoolRegistry<'s>) -> bool {
         self.pins_valid(state) && self.dpt_valid(state)
     }
@@ -578,7 +659,7 @@ impl<'c, 's, 'p, 'd> SharedPool<'c, 's, 'p, 'd> {
             rec_lsn,
             modification_counter: frame.modification_counter,
         });
-        if state.entries[index] != expected
+        if !self.dpt_matches(state, index, expected.as_ref())
             || state.requirements[index].map(|value| value.location().lsn)
                 != frame.rec_lsn.map(|_| frame.page_lsn.0)
         {
@@ -1016,7 +1097,7 @@ impl<'a, 'b, 'c, 's, 'p, 'd, const N: usize> WriteTargets<'a, 'b, 'c, 's, 'p, 'd
             rec_lsn: expected.rec_lsn,
         })
     }
-    fn check_permit(&self, at: usize, permit: &DirtyInstallPermit<'_, 'c, 's>) -> Result<()> {
+    fn check_permit(&self, at: usize, permit: &InstallGrant<'_, 'c, 's>) -> Result<()> {
         let pins = self.pins.as_ref().expect("live write targets");
         pins.pool.health()?;
         if at >= pins.len {
@@ -1041,7 +1122,7 @@ impl<'a, 'b, 'c, 's, 'p, 'd, const N: usize> WriteTargets<'a, 'b, 'c, 's, 'p, 'd
     pub(in crate::storage) fn install_page(
         &mut self,
         at: usize,
-        permit: &DirtyInstallPermit<'_, 'c, 's>,
+        permit: &InstallGrant<'_, 'c, 's>,
     ) -> Result<()> {
         self.check_permit(at, permit)?;
         let pins = self.pins.as_ref().expect("live write targets");
@@ -1063,7 +1144,7 @@ impl<'a, 'b, 'c, 's, 'p, 'd, const N: usize> WriteTargets<'a, 'b, 'c, 's, 'p, 'd
     pub(in crate::storage) fn install_metadata(
         &mut self,
         at: usize,
-        permit: &DirtyInstallPermit<'_, 'c, 's>,
+        permit: &InstallGrant<'_, 'c, 's>,
     ) -> Result<()> {
         self.check_permit(at, permit)?;
         let pins = self.pins.as_ref().expect("live write targets");
@@ -1086,7 +1167,7 @@ impl<'a, 'b, 'c, 's, 'p, 'd, const N: usize> WriteTargets<'a, 'b, 'c, 's, 'p, 'd
     pub(in crate::storage) fn install_dpt(
         &self,
         stamp: DptStamp<'_>,
-        permit: &DirtyInstallPermit<'_, 'c, 's>,
+        permit: &InstallGrant<'_, 'c, 's>,
     ) -> Result<()> {
         let pins = self.pins.as_ref().expect("live write targets");
         if !std::ptr::eq(stamp.anchor, &pins.pool.stamp_anchor) {
@@ -1115,18 +1196,18 @@ impl<'a, 'b, 'c, 's, 'p, 'd, const N: usize> WriteTargets<'a, 'b, 'c, 's, 'p, 'd
             rec_lsn,
             modification_counter: stamp.counter,
         });
-        if dpt.entries[stamp.index] != expected
+        if !pins.pool.dpt_matches(&dpt, stamp.index, expected.as_ref())
             || dpt.requirements[stamp.index].map(|value| value.location().lsn)
                 != stamp.rec_lsn.map(|_| permit.prior_lsn().0)
         {
             return Err(pins.pool.fatal(Cause::Invariant));
         }
-        dpt.entries[stamp.index] = Some(DirtyEntry {
+        dpt.entries[stamp.index] = Some(DptEntry::from_checked(&DirtyEntry {
             identity: actual.identity,
             generation: actual.generation,
             rec_lsn: permit.first_rec_lsn(),
             modification_counter: actual.modification_counter,
-        });
+        }));
         dpt.requirements[stamp.index] = Some(permit.requirement());
         Ok(())
     }
@@ -1166,6 +1247,42 @@ impl<const N: usize> Drop for WriteTargets<'_, '_, '_, '_, '_, '_, N> {
     }
 }
 
+/// Additional nested values for compact DPT comparison/storage. The complete
+/// observed identity remains borrowed. Slot::registration/map returns before
+/// resolve binds its original Option; the closed-pair predicate ends first.
+const fn dpt_call_bytes() -> usize {
+    use std::mem::size_of;
+    let outer = 6 * size_of::<&()>() + 2 * size_of::<usize>() + 4 * size_of::<bool>();
+    let slot_map = 2 * size_of::<Option<TargetRequest>>()
+        + 2 * size_of::<TargetRequest>()
+        + 2 * size_of::<Registration>()
+        + 2 * size_of::<Option<Registration>>()
+        + 4 * size_of::<&()>()
+        + 2 * size_of::<u64>();
+    let resolve_return = 4 * size_of::<Option<Registration>>()
+        + size_of::<Registration>()
+        + 8 * size_of::<&()>()
+        + 4 * size_of::<u64>()
+        + 8 * size_of::<bool>();
+    let closed_pair = 2 * size_of::<Option<[usize; 2]>>()
+        + 2 * size_of::<[usize; 2]>()
+        + 8 * size_of::<&()>()
+        + 8 * size_of::<bool>();
+    let resolve = if slot_map > resolve_return {
+        slot_map
+    } else {
+        resolve_return
+    };
+    let nested = if resolve > closed_pair {
+        resolve
+    } else {
+        closed_pair
+    };
+    let matched = outer + nested;
+    let stored = 2 * size_of::<DptEntry>() + size_of::<Option<DptEntry>>() + 4 * size_of::<&()>();
+    if matched > stored { matched } else { stored }
+}
+
 /// Source-value bound for one target reservation/acquisition/cleanup chain.
 /// Retained groups and concurrently in-flight calls require separate admission.
 pub(in crate::storage) const fn target_set_call_bytes<const N: usize>() -> usize {
@@ -1180,6 +1297,9 @@ pub(in crate::storage) const fn target_set_call_bytes<const N: usize>() -> usize
     } else {
         write_result
     };
+    let dpt = dpt_call_bytes();
+    let observation = InstallGrant::observation_source_bytes();
+    let installer_leaf = if dpt > observation { dpt } else { observation };
     2 * result
         + largest
         + size_of::<PinSet<'_, '_, '_, '_, '_, N>>()
@@ -1189,6 +1309,7 @@ pub(in crate::storage) const fn target_set_call_bytes<const N: usize>() -> usize
         + 2 * size_of::<DirtyObservation>()
         + 4 * size_of::<Result<()>>()
         + 2 * size_of::<MutexGuard<'_, PoolRegistry<'_>>>()
+        + installer_leaf
         + 32 * 8
         + 64
 }
@@ -1464,7 +1585,7 @@ pub(crate) mod test_support {
             .unwrap_or_else(|error| error.into_inner());
         let registration = pins.directory.resolve(pool.frames, index).unwrap();
         output.copy_from_slice(content.bytes);
-        let entry = pins.entries[index];
+        let entry = pool.diagnose_dpt(&pins, index);
         Snapshot {
             frame: FrameStamp {
                 identity: registration.request.identity,
@@ -1491,7 +1612,18 @@ pub(crate) mod test_support {
         index: usize,
         entry: Option<DirtyEntry>,
     ) {
-        pool.registry.lock().unwrap().entries[index] = entry;
+        let mut registry = pool.registry.lock().unwrap();
+        if let Some(entry) = entry {
+            let registration = registry
+                .directory
+                .resolve(pool.frames, index)
+                .expect("seeded DPT identity has a registration");
+            assert_eq!(
+                entry.identity, registration.request.identity,
+                "identity corruption must target the original directory"
+            );
+        }
+        registry.entries[index] = entry.as_ref().map(DptEntry::from_checked);
     }
     pub(crate) fn seed_pins(
         pool: &SharedPool<'_, '_, '_, '_>,

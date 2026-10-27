@@ -1,0 +1,124 @@
+{
+  "schema": "XADB_ROW_TRANSACTION_LEDGER_V1",
+  "status": "FROZEN_INPUTS_NOT_EXECUTION_EVIDENCE",
+  "baseline": "0aa4bf1",
+  "scope": "Pure Profile3 Row actor/Status/Job observations and exact current transaction descriptor residuals. No actual graph, normalized inventory digest, statement mark, previous history, source/admission or live/recovery authority.",
+  "budget": {
+    "total_seconds": 300,
+    "compiler_seconds": 90,
+    "case_seconds": 30,
+    "output_bytes": 8388608,
+    "rust_min_stack": 33554432
+  },
+  "runtime_tests": [
+    {
+      "selector": "storage::semantic_row::ledger::tests::row_ledger_literal_states_and_residuals",
+      "reason": "19 independent current observations; all five residual rows, 16 descriptors; Active with/without credit, Reserved h0/h1, multi Retained, statement/full rollback, terminal and descriptorless cleanup."
+    },
+    {
+      "selector": "storage::semantic_row::ledger::tests::row_ledger_rollback_and_cleanup_states",
+      "reason": "Rollback target membership/next=head, nonterminal cleanup cursor, committed release source/q, Aborted Retained and Aborting Reserved rejection."
+    },
+    {
+      "selector": "storage::semantic_row::ledger::tests::row_ledger_terminal_descriptor_lifetime_and_gaps",
+      "reason": "Descriptorless postterminal residuals, stale terminal descriptor rejection, canceled mutation high and sequence/statement gaps allowed."
+    },
+    {
+      "selector": "storage::semantic_row::ledger::tests::row_ledger_observation_scope_and_borrowed_replacement",
+      "reason": "Inventory digest and whole other-actor census explicitly deferred; local other-actor grammar checked; original/one-cell replacement no authority."
+    },
+    {
+      "selector": "storage::semantic_row::ledger::tests::row_ledger_full_abort_next_must_match_head",
+      "reason": "New independent-review branch: AbortingFull head U13 with next U12 or None is rejected by the exact full-abort next/head check."
+    }
+  ],
+  "compiler_tests": [],
+  "inputs": {
+    "author.py": {
+      "bytes": 6981,
+      "sha256": "abce2c6d978bb91c42f0c2be7f68f274a36015e71f673069120e6ea8840f5b0c"
+    },
+    "budgets.bin": {
+      "bytes": 12160,
+      "sha256": "95fb6b48bd55685d408ae2a301044d7edeea76e31a5b8f37e8de5085bbdad343"
+    },
+    "descriptors.bin": {
+      "bytes": 29184,
+      "sha256": "4dd2042e8a8693f0d90b615b2db8b1341a8b67d2c81b5c8a58d7b8e311b99248"
+    },
+    "homes.bin": {
+      "bytes": 4256,
+      "sha256": "ae2fab7f4cb47ecc73941c0917fa218a9bf31b92128619337e981b5bc60ae297"
+    },
+    "index.json": {
+      "bytes": 8132,
+      "sha256": "867c6386415afad82ea62fd6e860c4e22ae8d84d58bdc41775e93ae82b4273ce"
+    },
+    "jobs.bin": {
+      "bytes": 1245184,
+      "sha256": "52c188341453ec54263b70d1abbffe7335c91abff336e4045eb04ac27b72f750"
+    }
+  },
+  "parent_inputs": {
+    "../job3/cells.bin": {
+      "bytes": 31744,
+      "sha256": "d2ea7dae34cd200c8cf6d75500e669f8ddb54ddbb32f7ab26575648342de8dc7"
+    },
+    "../envelopes/profiles.bin": {
+      "bytes": 12288,
+      "sha256": "e8f5b232f8583c50d697db8ba29d920c10e5cc3c81a939f2cd4289edc0d5767a"
+    }
+  },
+  "preserved_scope": "Only new Row ledger selectors. Completed Catalog/Root3/Job3/Base4/Aging/lower tests are not repeated. Independent current observations do not represent a real WAL trace; opaque nonempty inventory claims require the physical owner.",
+  "all_runtime_tests": [
+    {
+      "selector": "storage::semantic_row::ledger::tests::row_ledger_literal_states_and_residuals",
+      "reason": "19 independent current observations; all five residual rows, 16 descriptors; Active with/without credit, Reserved h0/h1, multi Retained, statement/full rollback, terminal and descriptorless cleanup."
+    },
+    {
+      "selector": "storage::semantic_row::ledger::tests::row_ledger_actor_and_terminal_identity",
+      "reason": "Exact Profile3, externally supplied StatusSlotRef, same TxnId/different generation, missing/duplicate/wrong-scope Terminal and terminal outcome/q."
+    },
+    {
+      "selector": "storage::semantic_row::ledger::tests::row_ledger_root_order_head_and_counts",
+      "reason": "Duplicate Undo sequence/RowId/physical Undo, mutation/statement ordering, Reserved latest, Retained h, Status head/incoming."
+    },
+    {
+      "selector": "storage::semantic_row::ledger::tests::row_ledger_rollback_and_cleanup_states",
+      "reason": "Rollback target membership/next=head, nonterminal cleanup cursor, committed release source/q, Aborted Retained and Aborting Reserved rejection."
+    },
+    {
+      "selector": "storage::semantic_row::ledger::tests::row_ledger_exact_budget_and_statement_credit",
+      "reason": "All five canonical rows, Undo token count, peak, Reserved requires extra statement6080, terminal CLR debt zero."
+    },
+    {
+      "selector": "storage::semantic_row::ledger::tests::row_ledger_descriptor_identity_and_order",
+      "reason": "Profile/status binding and checksum, Terminal birth/minimum LSN, consumed control, inventory change, apply/max mutation, exact Reserved and terminal boundary."
+    },
+    {
+      "selector": "storage::semantic_row::ledger::tests::row_ledger_terminal_descriptor_lifetime_and_gaps",
+      "reason": "Descriptorless postterminal residuals, stale terminal descriptor rejection, canceled mutation high and sequence/statement gaps allowed."
+    },
+    {
+      "selector": "storage::semantic_row::ledger::tests::row_ledger_observation_scope_and_borrowed_replacement",
+      "reason": "Inventory digest and whole other-actor census explicitly deferred; local other-actor grammar checked; original/one-cell replacement no authority."
+    },
+    {
+      "selector": "storage::semantic_row::ledger::tests::row_ledger_full_abort_next_must_match_head",
+      "reason": "New independent-review branch: AbortingFull head U13 with next U12 or None is rejected by the exact full-abort next/head check."
+    }
+  ],
+  "prior_execution": {
+    "artifact": "artifacts/module-row-ledger-20261027-r1",
+    "status": "FAIL_PRESERVED",
+    "source_sha256": "2bf6b31729b5d050ea2b5cd96be113f31f3a202c5a5424bc5a590e8a67792576",
+    "results": "build2/first6 PASS, lifetime FAIL, scope NOT_RUN; the original export/inputs/logs are immutable.",
+    "preserved_unchanged_pass": [
+      "storage::semantic_row::ledger::tests::row_ledger_actor_and_terminal_identity",
+      "storage::semantic_row::ledger::tests::row_ledger_root_order_head_and_counts",
+      "storage::semantic_row::ledger::tests::row_ledger_exact_budget_and_statement_credit",
+      "storage::semantic_row::ledger::tests::row_ledger_descriptor_identity_and_order"
+    ],
+    "selection_reason": "Only cfg(test)/fixture changes: postterminal compensated cursor last_step corrected from41..43 to61..63 in banks12/13/15; literal and rollback selectors consume changed banks, lifetime failed, scope was NOT_RUN, full-abort-next is new. Production build and four unchanged PASS selectors are not repeated."
+  }
+}

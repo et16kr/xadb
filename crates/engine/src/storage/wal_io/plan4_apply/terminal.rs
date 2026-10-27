@@ -1,17 +1,14 @@
 //! Terminal receipts issued by the actual Catalog stage/durable/install chain.
 //! A physical requirement alone is never semantic Commit installation authority.
-use super::bootstrap::{CatalogCommitAttempt, CatalogCommitInstalled};
-use super::{DurableWal, WalRequirement, WalRuntime, WriterNamespace};
+use super::{
+    Binding, CatalogCommitAttempt, CatalogCommitInstalled, CatalogCommitWait, CatalogStageError,
+    DurableCommit, DurableWal, InstalledCommit, StagedCommit, TerminalWal, UnstagedCommit,
+    WalRequirement, WriterNamespace,
+};
+use crate::storage::wal_io as wal;
 use crate::transaction::concurrency::{InstallationKey, PageConcurrency};
 use foundation::error::Effect;
 
-#[derive(Clone, Copy)]
-struct Binding<'c, 'f> {
-    core: &'c PageConcurrency<'f>,
-    key: InstallationKey,
-    requirement: WalRequirement<'f>,
-    semantic_digest: [u8; 32],
-}
 impl Binding<'_, '_> {
     fn same(&self, other: &Self) -> bool {
         std::ptr::eq(self.core, other.core)
@@ -22,48 +19,18 @@ impl Binding<'_, '_> {
     }
 }
 
-pub(crate) struct StagedCommit<'c, 'f> {
-    binding: Binding<'c, 'f>,
-}
-pub(crate) struct DurableCommit<'c, 'f> {
-    binding: Binding<'c, 'f>,
-    durable: DurableWal<'f>,
-}
-pub(crate) struct InstalledCommit<'c, 'f> {
-    binding: Binding<'c, 'f>,
-}
-
-/// Only the actual terminal WAL adapter may seal an unchanged stage rejection.
-/// An upper error code cannot clear the core's stage-call marker. Construction
-/// is private to the original stage call below.
-pub(crate) struct UnstagedCommit<'c, 'f> {
-    core: &'c PageConcurrency<'f>,
-    key: InstallationKey,
-}
-
-/// The companion of the actual StagedCommit. Its private binding is retained
-/// while the original stage is consumed by PinSet suspension. It contains no
-/// file, append, page, version or replay lock.
-pub(super) struct CatalogCommitWait<'c, 's> {
-    binding: Binding<'c, 's>,
-}
 impl<'s> CatalogCommitWait<'_, 's> {
     pub(super) fn requirement(&self) -> WalRequirement<'s> {
         self.binding.requirement
     }
 }
 
-pub(super) struct CatalogStageError<'c, 's> {
-    pub(super) error: super::WalIoError,
-    pub(super) unstaged: Option<UnstagedCommit<'c, 's>>,
-}
-
-impl<W: WriterNamespace> WalRuntime<'_, W> {
+impl<'s, W: WriterNamespace> TerminalWal<'s, '_, W> {
     /// Only the actual adapter can create `attempt`, after the original core
     /// has entered StageCallStarted. The unchanged receipt is constructed in
     /// exactly the branch returning the original WAL stage's Unchanged error.
-    pub(super) fn stage_catalog_commit<'c, 's>(
-        &'s self,
+    pub(super) fn stage_catalog<'c>(
+        &self,
         attempt: CatalogCommitAttempt<'_, '_, 'c, 's>,
     ) -> std::result::Result<
         (StagedCommit<'c, 's>, CatalogCommitWait<'c, 's>),
@@ -71,15 +38,15 @@ impl<W: WriterNamespace> WalRuntime<'_, W> {
     > {
         let (prepared, key) = attempt.into_parts();
         if prepared.operation() != crate::storage::semantic_catalog::Operation::Commit
-            || !std::ptr::eq(prepared.fence(), &self.fenced)
-            || !prepared.core().uses_fence(&self.fenced)
+            || !std::ptr::eq(prepared.fence(), &self.wal.fenced)
+            || !prepared.core().uses_fence(&self.wal.fenced)
         {
             return Err(CatalogStageError {
-                error: self.requirement_invariant(),
+                error: self.wal.requirement_invariant(),
                 unstaged: None,
             });
         }
-        let requirement = match self.stage_verified_required(
+        let requirement = match self.wal.stage_verified_required(
             prepared.prefix(),
             prepared.observation().header,
             prepared.frame(),
@@ -108,16 +75,16 @@ impl<W: WriterNamespace> WalRuntime<'_, W> {
 
     /// This calls the original shared WAL drainer with the exact stage-issued
     /// interval. A scalar DurableWal cannot substitute for this sealed pair.
-    pub(super) fn wait_catalog_commit<'c, 's>(
+    pub(super) fn wait_catalog<'c>(
         &self,
         wait: CatalogCommitWait<'c, 's>,
-    ) -> super::Result<DurableCommit<'c, 's>> {
-        if !wait.binding.requirement.uses_fence(&self.fenced) {
-            return Err(self.requirement_invariant());
+    ) -> wal::Result<DurableCommit<'c, 's>> {
+        if !wait.binding.requirement.uses_fence(&self.wal.fenced) {
+            return Err(self.wal.requirement_invariant());
         }
-        let durable = self.wait_durable(&wait.binding.requirement)?;
+        let durable = self.wal.wait_durable(&wait.binding.requirement)?;
         if !durable.confirms(&wait.binding.requirement) {
-            return Err(self.requirement_invariant());
+            return Err(self.wal.requirement_invariant());
         }
         Ok(DurableCommit {
             binding: wait.binding,
@@ -132,7 +99,7 @@ impl<'c, 's> DurableCommit<'c, 's> {
     pub(super) fn complete_catalog(
         self,
         installed: &CatalogCommitInstalled<'c, 's>,
-    ) -> super::Result<(InstalledCommit<'c, 's>, DurableWal<'s>)> {
+    ) -> wal::Result<(InstalledCommit<'c, 's>, DurableWal<'s>)> {
         if !installed.matches(
             self.binding.core,
             self.binding.key,
@@ -141,9 +108,9 @@ impl<'c, 's> DurableCommit<'c, 's> {
         ) || !self.durable.confirms(&self.binding.requirement)
         {
             self.binding.requirement.origin.fence();
-            return Err(super::attempted(
-                super::Phase::Publish,
-                super::Cause::IdentityMismatch,
+            return Err(wal::attempted(
+                wal::Phase::Publish,
+                wal::Cause::IdentityMismatch,
             ));
         }
         Ok((
@@ -161,15 +128,16 @@ pub(super) fn catalog_source_bytes() -> usize {
         (StagedCommit<'c, 's>, CatalogCommitWait<'c, 's>),
         CatalogStageError<'c, 's>,
     >;
-    size_of::<Binding<'_, '_>>()
+    2 * size_of::<&()>() // temporary TerminalWal and its receiver
+        + size_of::<Binding<'_, '_>>()
         + size_of::<CatalogCommitWait<'_, '_>>()
         + size_of::<StagedCommit<'_, '_>>()
         + 2 * size_of::<Stage<'_, '_>>()
-        + 2 * size_of::<super::Result<WalRequirement<'_>>>()
-        + 2 * size_of::<super::Result<DurableCommit<'_, '_>>>()
-        + 2 * size_of::<super::Result<DurableWal<'_>>>()
-        + 2 * size_of::<super::Result<(InstalledCommit<'_, '_>, DurableWal<'_>)>>()
-        + super::DURABILITY_CALL_BYTES
+        + 2 * size_of::<wal::Result<WalRequirement<'_>>>()
+        + 2 * size_of::<wal::Result<DurableCommit<'_, '_>>>()
+        + 2 * size_of::<wal::Result<DurableWal<'_>>>()
+        + 2 * size_of::<wal::Result<(InstalledCommit<'_, '_>, DurableWal<'_>)>>()
+        + wal::DURABILITY_CALL_BYTES
 }
 impl UnstagedCommit<'_, '_> {
     pub(crate) fn matches(&self, core: &PageConcurrency<'_>, key: InstallationKey) -> bool {
@@ -201,20 +169,49 @@ impl StagedCommit<'_, '_> {
     }
 }
 
+/// Source-only observations; no new receipt constructor or production charge.
+#[cfg(test)]
+pub(super) fn catalog_phase_sources() -> [usize; 3] {
+    use std::mem::size_of;
+    type Stage<'a> = std::result::Result<
+        (StagedCommit<'a, 'a>, CatalogCommitWait<'a, 'a>),
+        CatalogStageError<'a, 'a>,
+    >;
+    let scalar = 6 * size_of::<&()>() + 2 * size_of::<wal::WalIoError>();
+    [
+        size_of::<Binding<'_, '_>>()
+            + size_of::<CatalogCommitWait<'_, '_>>()
+            + size_of::<StagedCommit<'_, '_>>()
+            + 2 * size_of::<Stage<'_>>()
+            + 2 * size_of::<wal::Result<WalRequirement<'_>>>()
+            + wal::DURABILITY_CALL_BYTES
+            + scalar,
+        size_of::<CatalogCommitWait<'_, '_>>()
+            + 2 * size_of::<wal::Result<DurableCommit<'_, '_>>>()
+            + 2 * size_of::<wal::Result<DurableWal<'_>>>()
+            + wal::DURABILITY_CALL_BYTES
+            + scalar,
+        size_of::<DurableCommit<'_, '_>>()
+            + size_of::<Binding<'_, '_>>()
+            + 2 * size_of::<wal::Result<(InstalledCommit<'_, '_>, DurableWal<'_>)>>()
+            + scalar,
+    ]
+}
+
 /// Actual wait adapter closure, separately from stage and completion.
 #[cfg(test)]
 pub(super) fn catalog_wait_source_observation<W: WriterNamespace>() -> usize {
     use std::mem::size_of;
-    let physical = super::physical::wait_source_observations::<W>()[6].1;
+    let physical = wal::physical::wait_source_observations::<W>()[6].1;
     // The physical call has ended before the semantic receipt is initialized.
     // Keep its Result in the physical closure and the extracted DurableWal in
     // the handoff. This max uses source initialization order, not stack reuse.
     let call = physical + size_of::<DurableWal<'_>>();
     let returning = size_of::<DurableWal<'_>>()
         + size_of::<DurableCommit<'_, '_>>()
-        + size_of::<super::Result<DurableCommit<'_, '_>>>();
+        + size_of::<wal::Result<DurableCommit<'_, '_>>>();
     size_of::<CatalogCommitWait<'_, '_>>()
-        + 4 * size_of::<&()>()
-        + 2 * size_of::<super::WalIoError>()
+        + 6 * size_of::<&()>() // includes temporary TerminalWal and receiver
+        + 2 * size_of::<wal::WalIoError>()
         + call.max(returning)
 }

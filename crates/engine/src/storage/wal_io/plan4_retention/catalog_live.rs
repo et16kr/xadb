@@ -10,7 +10,7 @@ use crate::{
         semantic_catalog::{self, Change, Inputs, Observation, Operation},
         session_fence::SessionFence,
         wal_frame::FrameExpectation,
-        wal_io::{DirtyInstallPermit, WalPrefix},
+        wal_io::WalPrefix,
     },
     transaction::concurrency::{OwnerIdentity, PageConcurrency},
 };
@@ -443,22 +443,10 @@ impl<'s, 'c, W: WriterNamespace> ReservedCatalogCreate<'_, '_, 's, 'c, '_, '_, '
     }
 }
 
-/// No Clone/Copy and no raw constructor. This borrows immutable private
-/// operation bytes, not replay/control/page guards or a second storage owner.
-pub(crate) struct PreparedCatalog<'i, 'c, 's> {
-    payload: CatalogPayload<'i, 'c, 's>,
-    owner: OwnerIdentity,
-    requests: [TargetRequest; 9],
-    roles: [u8; 9],
-    count: usize,
-    stamps: [Option<FrameStamp>; 9],
-    before: &'i [[u8; PAGE_BYTES]; 8],
-}
-
 /// Immutable bytes and the original control cut needed after staging. This
 /// owns no pin, WAL effect or publication authority; those remain in the
 /// original stage/installation receipts. Only preparation constructs it.
-pub(super) struct CatalogPayload<'i, 'c, 's> {
+pub(in super::super) struct CatalogPayload<'i, 'c, 's> {
     core: &'c PageConcurrency<'s>,
     binding: &'s AtomicU8,
     fence: &'s SessionFence,
@@ -1866,13 +1854,20 @@ impl<'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
                 let Some(after) = prepared.after(at) else {
                     continue;
                 };
-                let permit =
-                    DirtyInstallPermit::from_retention(live::RetentionInstall::allocation(
-                        self.inner.pool.bound_core(),
-                        prepared.stamp(at).expect("checked existing"),
+                let permit = InstallGrant {
+                    kind: InstallKind::Plan4 {
+                        core: self.inner.pool.bound_core(),
+                        stamp: prepared.stamp(at).expect("checked existing"),
                         requirement,
+                        after_counter: prepared
+                            .stamp(at)
+                            .expect("checked existing")
+                            .modification_counter
+                            .checked_add(1)
+                            .expect("preflight checked successor"),
                         after,
-                    ));
+                    },
+                };
                 write
                     .install_page(at, &permit)
                     .map_err(|e| frame(RetentionPhase::Install, e))?;
@@ -2550,7 +2545,7 @@ pub(in super::super) fn catalog_live_source_bytes<W: WriterNamespace>() -> Catal
         + size_of::<[Option<dirty_frame::DptStamp<'_>>; 9]>()
         + 3 * size_of::<WalRequirement<'_>>()
         + 2 * size_of::<DurableWal<'_>>()
-        + size_of::<DirtyInstallPermit<'_, '_, '_>>()
+        + 2 * size_of::<InstallGrant<'_, '_, '_>>()
         + 3 * size_of::<Result<Observation>>()
         + dirty_frame::target_set_call_bytes::<9>()
         + catalog_control_source_bytes()
@@ -2630,4 +2625,11 @@ pub(in super::super) fn catalog_live_source_bytes<W: WriterNamespace>() -> Catal
             .max(ordinary)
             .max(retirement),
     }
+}
+
+/// Commit's caller plus the existing N9 common preparation closure. Its
+/// returned PreparedCatalog still owns nine request/stamp cells even for N4.
+#[cfg(test)]
+pub(in super::super) fn commit_prepare_source_observation<W: WriterNamespace>() -> usize {
+    ordinary_caller_source_bytes() + catalog_live_source_bytes::<W>().prepare
 }

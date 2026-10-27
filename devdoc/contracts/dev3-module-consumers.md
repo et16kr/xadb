@@ -43,7 +43,7 @@ CREATE의 남은 native 시험/F05만을 B로 세지 않는다. [현재 CREATE �
 | [anchor.rs](../../crates/engine/src/storage/anchor.rs) | XTA1 root descriptor·identity/level 검산 | runtime qualified table/anchor 획득. 현48B anchor cell에 RowId issuer 없음 |
 | [undo_record.rs](../../crates/engine/src/storage/undo_record.rs), [status_home.rs](../../crates/engine/src/storage/status_home.rs) | Row Missing/occupied before·head/progress·count 표현 | Missing row의 실제 head chain·CLR·source pin·retained cleanup |
 | [obligation.rs](../../crates/engine/src/storage/obligation.rs) | Descriptor1536의 `last_mutation_sequence`(offset1344), core의 StatementFinish opcode5 | RowReserve/Forward/CLR·multi-statement 실제 전이와 비용 검산 |
-| [Root v2](../../crates/engine/src/storage/retention_page/catalog/root.rs), [Job v2](../../crates/engine/src/storage/retention_page/catalog/job.rs) | Undo/Object high-water, C, Terminal/CatalogMissingRoot의 실제 queue 표현 | 별도 RowId high-water, RowMissingRoot의 여러 root·table 소유·예산 의미 |
+| [Root/Job v2](../../crates/engine/src/storage/retention_page/catalog.rs), [순수 Root/Job3](../../crates/engine/src/storage/retention_page/row.rs) | actual current는2 유지. 새3의 row_high·Terminal/Catalog/Row cell·64행 identity/debt census를 별도 공급([범위](#job3-census)) | actual Profile3 dispatch·Row 발급/예약·table/Status/Undo/descriptor graph·source admission |
 | [Catalog live](../../crates/engine/src/storage/wal_io/plan4_retention/catalog_live.rs), [commit](../../crates/engine/src/storage/wal_io/plan4_retention/catalog_commit.rs) | 원 owner의 CREATE reserve/initialize·terminal 준비/실행 | 기존 실제 CREATE/native/F05의 해당 미완료 의무; Row 도메인 본문은 없음 |
 | [Catalog lookup](../../crates/engine/src/storage/wal_io/plan4_retention/read/lookup.rs), [visibility pins](../../crates/engine/src/storage/wal_io/plan4_retention/visibility/pins.rs) | Catalog source 아래 Txn+Undo pin·실제 snapshot/Status/Undo resolve | Row source 생성과 Missing-only 참조 이동. 기존 CatalogSource를 raw Row bytes로 만들 수 없음 |
 
@@ -117,6 +117,69 @@ XHG/XSG version2에 explicit scope3=`RowMissing`을 제안한다. scope2 Catalog
 operation은 Begin1, Forward2, RollbackStart3, CLR4, StatementFinish5, Commit6, AbortEnd7, Reserve11, Cancel12, AgingStart16, TerminalFinish17, Prune20, ReleaseRole21, RootFree22를 후보로 둔다. OperationCore의 기존 statement/mutation/current/next/target/q/digests를 실제 전이에 사용하고 unused field는0이다. 별도 opaque body나 일반 무검산 dispatch를 추가하지 않는다. Native Row kind1·Undo3·Status5·Root8·Job9와 기존 role 번호는 원 [obligation](dev3-obligation-format.md)의 의미를 따른다.
 
 row logical projection 후보는 `XRP1`, version1, kindRow1, UndoTargetCore32(table object/generation,entity RowId,arity0,keylen0), presence1+zero7, present일 때 정확 row record bytes다. Missing은48B, present는48+record bytes다. 물리 slot/offset/pageLSN/count는 projection 밖이다. tree entry의 RowId BE key와 row record의 RowId LE를 각각 해석하여 같음을 검사한다. source slot 위치를 논리 identity로 사용하지 않는다.
+
+<a id="root3-codec"></a>
+#### Root3 순수 cell codec 부분공급 — 2026-10-27
+
+기준 `57373f0`에서 `retention_page::row`의 별도 exact version3 Root view/initial/encode/decode와 private Free generation1 Job3 recipe를 공급한다. `row_high@432`는 LE64 관찰이며 `440..512`는0이다. genesis는 row_high0·정확한 Free Job3×64/빈 budget digest·전체 canonical cell을 비교한다. active Root는 namespace/6 PageRef·mask partition/nonfree55·checked completed+canceled+nonfree=issued·Aging identity/apply를 검산한다. u64::MAX high-water 자체는 유효하고 다음 발급의 checked_add 실패는 후속 issuer가 소유한다.
+
+이는 raw512B cell grammar다. active의 job/budget digest는 commitment로만 관찰하고 전체 Job3 census를 완료한 것으로 보지 않는다. 이 Root3 단위는 occupied Job3·multi-root/actor/debt를 포함하지 않았으며 후속 공급은 [Job3 census](#job3-census)에 기록한다. page wrapper의 후속 순수 공급은 [별도 envelope](#row-envelope-codecs)에 기록한다. scope2 Profile3 adapter·Profile3/base4/current 선택·Row issuer/효과/복구는 미공급이다. 기존 Root2 및 actual current Profile2는 그대로이며 version 변조로 old decoder를 호출하거나 `format>=2`로 확대하지 않는다. 후속 current 전환은 [전체 dispatch 조합](#format-dispatch)을 같은 source에서 닫을 때 수행한다. [선택 실행 증거](../evidence/module-independence-survey-20261026.md#row-root3-codec)를 기존 runtime 인수로 승격하지 않는다. 독립 D1/D2는 source/원 결과와6문서를 대조해 한정 수용했으며 필수 수정은0이다. 검토자는 source5686파일 전부/inventory/fingerprint·manifest/runner/helpers/ELF/log와 독립 literal3의 전 바이트·hash를 검산했고 제품·fixture 수정/실행·빌드·시험·verifier는 실행하지 않았다.
+
+<a id="job3-census"></a>
+#### Job3 순수 cell·64행 census 구체화 — 2026-10-27
+
+기준 `2c9964d`의 후속 D2 구체화다. 별도 `row::decode_job/encode_job`은 exact version3만 읽고 원 bytes를 빌린다. Free generation recipe는 그대로 유지하며 kind2 Catalog와 kind3 Row의 의미를 별도로 검산한다. 이 단위는 current Profile 선택·page wrapper·issuer·actual graph/descriptor 권한이 아니다.
+
+- Terminal kind1의 Catalog/Row 구분은 기존 budget5행의 **완전 검산된** peak registry9/16 recipe로 관찰한다. 새 persistent flag는 없다. Row peak는 `{frames9,memory425984,locks0,registry16,files5,doublewrite1}`, Catalog peak는 기존9/425984/0/9/5/1이다. root kind와 actor Terminal recipe가 일치해야 한다. actual Tx descriptor scope의 일치는 후속 의미 observer 의무다.
+- Row Reserved/Retained의 C는185..2228이다. h는 cleanup WAL `311608+2C` 또는 정확히128을 더한 두 recipe로 관찰하며 protected도 같은 값이다. reserved field에 h를 숨기지 않는다. 실제 Status.head/U.prevTxn과의 일치는 후속 observer가 검사한다. Releasing은 anchor/hint200..248과 C/projection280..320을0으로 지우며 RowId320..328·table/U/sequence/statement/mutation은 보존한다. h 관찰은 없다. cleanup은 `(4-cursor)*55528`, Terminal은55112다.
+- Row의 statement/mutation은 양수, actor별 mutation 중복 금지·Reserved≤1·Terminal 정확1이며 여러 retained/compensated root는 허용한다. 같은 actor Catalog/Row 혼합은 금지한다. Catalog actor root≤1과 전역 Catalog object 중복 금지는 유지한다. RowId·UndoSequence·Undo page 주소는 전역 유일하고 Status/Undo 주소 충돌은 incarnation과 무관하게 거절한다.
+- 여러 Row root/actor의 같은 table 공유는 full ObjectHandle이 같고, 두 cell이 pair를 보존하면 동일 역할의 exact PageRef가 같을 때만 허용한다. 다른 object의 pair 주소 공유·cross-role alias·incarnation만 다른 동일 주소·pair와 Status/Undo 충돌은 거절한다. pair는 Row 위치 권한이 아니며 실제 anchor에서 재탐색해야 한다.
+- 같은 table의 Catalog root가 남아 있으면 Retained+TerminalReadyCommitted 또는 ReleasingCommitted만 Row root와 공존한다. Row lease LSN은 Catalog terminal adoption LSN보다 커야 한다. Catalog root가 이미 Free인 과거 생성은 Job만으로 재구성하지 않고 actual Catalog/table/history 검산에 남긴다.
+- RootView의 namespace와 별도 census namespace를 입구에서 결합한다. Root high-water·last_step/apply·mask·Job digest·budget digest·active Terminal≤32를 검산한다. 합산 WAL/step/protected와 단일 Aging의 sequential peak max를 구별하며 caller의640B scratch와 원64행을 빌린다. one-cell replacement도 원 bank 복사 없이 빌린다. 오류 뒤 scratch 내용은 미정이며 권한이 아니다.
+
+TerminalReady와 root의 저장 LSN 관계는 Retained adoption < terminal adoption, ReleasingCommitted terminal adoption < release_start, ReleasingCompensated release_start < terminal adoption으로 고정한다. compensated cursor>0은 추가로 terminal adoption < last_step이며, cursor0+TerminalLeased는 허용한다. Row compensated는 Committed/Aborted terminal 모두와 공존하되 q0을 유지한다. Retained+Aborted는 금지한다. 이것은 전체 WAL history·Status/head/count 증명이 아니라 cell에서 확인 가능한 관계다.
+
+사전 독립 검토에서 namespace 재결합과 compensated CLR/terminal/cleanup 시간 표를 보완했다. 신규 literal/census11 PASS와 최종 D1/D2 한정 수용(필수 수정0)은 [선택 증거](../evidence/module-independence-survey-20261026.md#row-job3-census)에 보존한다. 기존 Root2·완료 Root3 selector는 변경이 없어 반복하지 않는다. 순수 page/Profile3 입구의 후속은 [별도 envelope](#row-envelope-codecs)에 둔다. actual source 비용/admission, Profile3/base4/current dispatch와 Row A/B는 후속 공급이다.
+
+<a id="row-envelope-codecs"></a>
+#### Profile3·Root/Job3 페이지의 별도 순수 입구 — 2026-10-27
+
+기준 `f8f73b0`에서 `control::row_profile::{encode_profile,decode_profile}`를 별도로 공급한다. 이 입구만 exact Profile3를 받으며 parsed Profile의 format3·2MiB base·ID1/2/3의 기존188B capacity tuple·4096B envelope·namespace/generation을 보존한다. 원 `decode_bootstrap_profile`은1/2만 받고3을 거절한다. 공유 private envelope 검산의 기존 bool 인자를 명시1B enum(V1/LegacyProfile/RowProfile)으로 대체하고 같은 함수에서 허용표를 분기한다. nested helper/추가 Envelope 반환 carrier를 만들지 않으며 원 wrapper의 거절 순서·non-Profile version1 규칙을 유지한다. namespace/generation 검산은 원 control 의미를 따르고 current Row/Root의 추가 제한이나 base4 선택을 대신하지 않는다. encode 오류는 output 전체를 보존하고 성공은4096B 뒤 tail을 보존한다.
+
+`retention_page::row`의4 page wrapper는 원 expected PageIdentity(고정 object4/first file/root1·jobs2..6)·PageKind·level0·Root1cell·Jobs15×4+4를 원 page codec과 실제 Row decoder로 검산한다. Root.apply==pageLSN, Job.last_step≤pageLSN이며 LSN0 Job page는 Free/gen1만 허용한다. 후보 전체를 검산한 뒤 encode하며 오류의 caller output은 그대로다. page view/Root view는 원 immutable input을 빌린다. 이 성공만으로64행 census·Status/Undo/descriptor/allocator/history·source admission·pin/issuer/READY 권한을 부여하지 않는다.
+
+기존 actual genesis/selector/base/replay/recovery 호출 연결은0이며 current는 Profile2다. bytes version을 바꿔 legacy decoder를 부르지 않는다. [전체 current 전환 조합](#format-dispatch)은 후속 base4/scoped observer/current recovery와 함께 닫는다. [선택 증거](../evidence/module-independence-survey-20261026.md#row-envelope-codecs)는 독립 envelope 입력·신규8 selector로 검산하며 기존 Root2/완료 Root3/Job3 selector를 반복하지 않는다. 공유 header 변경이 영향을 주는 원 bootstrap/Profile1/2·non-Profile1 수신/거절 경계만 신규 selector에서 함께 검사한다. 신규8 및 두 build PASS·독립 D1/D2 한정 수용, 필수 수정0이다.
+
+<a id="row-base4-layout"></a>
+#### Base4의 별도 raw layout — 2026-10-27
+
+기준 `7071d21`에서 `plan4_recovery_base::row::{decode_layout,encode_layout,LayoutView}`를 분리 공급한다. exact(Profile3,Base4)만 받으며2MiB 배치의 descriptor bank4096/55296B, certificate65536/64×96B, INIT73728/64×352B, inventory98304/16384B, image arena262144/64×16384B, 마지막32B trailer를 검산한다. 고정 section metadata/hash·gap zero·allocator와 allocated certificate/image의 identity/LSN/digest·Free/Reserved 빈 image·status mask·동적 INIT grammar/테이블 reciprocal pair를 대조한다. Root/Job3 실제 page 입구로 Root/header masks·revision·aging와 Job pageLSN≤Root.apply·TerminalLeased 수를 확인한다. leased mask의 root 개수와 활성 거래 수는 다르므로 legacy1/2의 leased.count==active 조건을3/4에 적용하지 않는다.
+
+이는 raw layout이다. descriptor·ownership inventory 내용, 전체64 Job mask/digest/high-water/debt·actor 관계, Status/Undo/Row/Catalog 실제 graph, original INIT/WAL witness·selection·credits·pin·current 복구는 별도 공급이다. 상위 전체 census를 호출하지 않으며 성공이 위 권한을 만들지 않는다. view는 immutable input을 빌리고 임시 Header를 보유하지 않는다. encode는 unpublished caller backing에 기록하고 나중 검산에서 실패하면 output이 바뀔 수 있다. certificate encode만 local96B 후보 검산 뒤 복사한다.
+
+공통 header의 bool은 같은 함수의1B Legacy/Catalog/Row mode로 바꾸고 exact(base1|2,profile1)/(base3,profile2)/(base4,profile3) tuple을 닫는다. 원 Catalog mode의 내부1/2 수신은 보존하되 외부 Catalog layout은3만 받으며 Row는4만 받는다. 기존 legacy encode/decode와 Catalog current 입구는4를 거절한다. reserved header 시작1600·InitializedUndo허용2/3/4를 맞춘다. certificate/INIT 함수 본문과 view 필드를 `image_records`/base root로 그대로 이동해3/4가 같은 grammar를 쓴다. InitProvenance의 raw field는 private이고 검산된 LayoutView 내부에서만 구성한다. 공통 record의 이동은 새로운 historical 권한이나 helper frame을 만들지 않는다. 새 Row 전체 source bound/admission은 미공급이며 기존 Catalog source 수치를 Row에 재사용하지 않는다.
+
+D2 대안은 별도 layout 전체 복제 또는 common record 분리였으며, exact profile 입구는 별도로 두고 동일96/352B grammar만 공유하여 중복을 줄였다. 작성/통합 `/root`, 독립 검토 `/root/module_review`; r1 production/test build 및 신규8 PASS·최종 독립 D1/D2 한정 수용이며 필수 수정은0이다. [선택 증거](../evidence/module-independence-survey-20261026.md#row-base4-layout)에 신규8 selector·독립 초기/활성 input과 결과를 둔다. actual current Profile2·원 완료 증거를 유지한다. actual 연결 시 full graph/source 비용/복구 closure를 다시 검토한다.
+
+<a id="row-aging"></a>
+#### Root3-bound Aging descriptor와 후보 생산 — 2026-10-27
+
+기준 `922bc62`의 `retention_obligation::row`는 exact Profile3/Root3 아래 원 XOD1536/work96(kind7)을 결합하는 별도 encode/decode를 공급한다. owner/Aging progress·revision/cursor/limit64·chain apply/groups+1/birth·empty inventory/minimumLSN·소비 WAL/control·Root budget digest·page/cell SHA를 검산한다. raw decode는 원 immutable descriptor를 빌리며 Root-bound 관측이지 full queue/graph/current 선택 권한이 아니다. 원 Catalog codec과 actual current Profile2는 그대로다.
+
+`next(AgingTransition, aggregate640B, output)`는 after Root와 전체64 Job3 census(원 bank 또는 one-cell replacement)를 직접 검산한 뒤 descriptor를 만든다. Job의 cleanup sum을 단일 Aging row3에 기록하고 혼합 Catalog/Row peak는 순차 max인 registry9 또는16 recipe를 따른다. 이전 descriptor/root를 검사하고 chain.previous=이전apply, groups+1·birth/inventory 보존, apply증가·consumed WAL 비감소/control동일을 요구한다. 첫 AgingStart는 이전 canonical genesis, after revision2·19672B/control0이며 cursor/issued/masks/job·budget digest/completed/canceled/Undo·Object·Commit·Row high-water를 모두 보존한다. output은 모든 실패에 보존하며 aggregate scratch는 변경될 수 있다.
+
+원 semantic Catalog의 queue 준비에 기대는 대안과 별도 생산 입구를 비교해, 새 입구가 after census와 첫 Start의 unchanged queue 조건을 직접 닫도록 했다. 후속 branch가 검사하는 것은 before Root/descriptor 일치와 apply증가/groups+1/consumed비감소/control유지다. 이전 전체 Job bank, 발급 high-water/issued 단조성, 각 opcode의 정확한 before→after/WAL 소비 delta, actual previous SHA/history·source 비용/admission·actual dispatch는 후속 의미 owner가 검산한다. 여기의 연속 후보는 실제 opcode 이력 증거가 아니다. 작성/통합 `/root`, 독립 검토 `/root/module_review`이며 사전 검토의 첫 Start/유효 actor 반례 보완을 첫 실행 전에 반영했다. [선택 증거](../evidence/module-independence-survey-20261026.md#row-aging)에 신규5·원 literal/hash·결과를 기록한다. r1 production/test build·신규5 PASS이며 독립 D1/D2 한정 수용, 필수 수정0이다.
+
+<a id="row-transaction-ledger"></a>
+#### Row 거래의 현재 상태·예약 잔여 검산 — 2026-10-27
+
+기준 `0aa4bf1`의 `semantic_row::ledger`는 exact Profile3 아래 외부 actual StatusSlotRef, StatusHome와 borrowed64 Job3 관측을 대조한다. 동일 TxnId의 다른 generation, 다른 scope/location, 누락/중복 Terminal, 중복 UndoSequence/RowId/물리 Undo page를 거절한다. actor의 root는 sequence·mutation 엄격 증가/statement 비감소, Reserved는 최대 sequence·Active·최대1이며 h는 실제 관측 head 유무와 같아야 한다. Retained h는 더 작은 sequence의 Retained 존재와 같고 최대 Retained U=head, Retained 수=incoming이다. rollback next=head와 statement target의 Retained 소속, terminal outcome/q 및 Releasing source 상태/cursor를 검산한다. 이는 모든 actor/Root commitment의 full census나 실제 U.prevTxn/statement mark 증명이 아니다.
+
+`transaction_remaining`은 비terminal의 Reserved/Retained CLR 합 `Σ(91096+C+128h)`, Reserved Forward `91304+C+128h`/UndoSlot1, terminal 준비56712와 statement control 잔여를 원5행으로 돌려준다. Active control은 기본1×3040 또는 추가6080을 확보한3×3040이며 Reserved는 후자를 요구한다. AbortingStatement는2×3040, AbortingFull/terminal은 control0이다. terminal 거래의 CLR/Forward/terminal/control 예약은0이고 별도 Aging cleanup debt는 원 Job/Aging에 남는다. 각 nonzero row의 peak는 원 Row recipe다. `statement_credit_available`은 관측값이며 실제 reserve/token/mark 권한이 아니다.
+
+`validate_transaction`은 기존1536B descriptor를 actor/Profile에 결합하여 owner Status, birth=minLSN=Terminal lease, apply≥actor 최신 Job step, mutation high≥현재 최대, inventory change 범위·items=Reserved수/UndoSlot 수와 전체5행을 검사한다. Reserved의 apply/inventory change/last mutation은 해당 lease/mutation과 정확히 같고 just-produced terminal의 apply는 Terminal adoption과 같다. terminal 뒤 ATT에서 제거된 descriptor를 Aging이 변경한 상태에 재사용하지 않으며 별도 residual 관측은 가능하다. 취소한 번호의 공백과 현재 root보다 큰 mutation high는 허용한다.
+
+기존 single Catalog root 검산을 범용화하는 대안 대신 다중 Row/statement 계약을 별도 pure 모듈로 둔다. heap/I/O/lock/권한 발급·새 디스크 형식은 없고 actual caller는 아직 없다. 전체 Root census, 실제 Status/Undo/Row graph·정규 UndoSlot Item96 digest/Free U/allocator 소유권, 원 statement mark, 이전 descriptor/WAL 이력·정확 consumed delta, source 비용/admission/current dispatch는 후속 owner의 의무다. 이번 추가는 이 채팅 `/root`가 중단 전에 작성한 미커밋 초안을 사용자 요청으로 완료하는 범위다. 작성/통합 `/root`, 독립 검토 `/root/module_review`; [동결 입력과 선택 증거](../evidence/module-independence-survey-20261026.md#row-transaction-ledger)의 source별 최종9 selector(r1 unchanged4+r2 selected5) PASS와 r1 입력 LSN 오류 FAIL/미실행을 보존한다. 제품 build는 r1 PASS이며 r2는 cfg(test)/fixture만 바뀌어 test build만 실행했다. 독립 D1/D2 한정 수용·필수 수정0이며 M4/M5 전체는 미완료다.
 
 ### 6.2 Forward
 

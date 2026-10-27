@@ -1,16 +1,8 @@
 {
-  "schema": "XADB_MODULE_C2_CATALOG_SHORT_SOURCE_MAIN_V1",
+  "schema": "XADB_MODULE_C2_CATALOG_SHORT_SOURCE_V1",
   "status": "FROZEN_INPUTS_NOT_EXECUTION_EVIDENCE",
-  "scope": "Full Catalog lookup fixed source reservation and original Drain coverage from attempt through final decode/return; full concurrent writer/progress/entry aggregate remains incomplete",
-  "baseline_commit": "fd005ba33a2a0a56b63d91c259698ede2e6547f3",
-  "adapted_from": [
-    "ec018d674a9c19f53bb7929d09278a1f6f685530",
-    "883c920044b86ad542b45ec4e19978695ff60a57",
-    "d9d6a0175707b93b86d95c492fbd5e0b72737c98"
-  ],
-  "changed_paths": [
-    "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/source_return.rs"
-  ],
+  "scope": "CatalogFull short source accounting only; other entries, writer/progress, resident class and whole 65536B aggregate remain incomplete",
+  "baseline": "0852f06",
   "budget": {
     "total_seconds": 600,
     "compiler_seconds": 90,
@@ -20,42 +12,72 @@
   },
   "runtime_tests": [
     {
-      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::source_return::found_decode_keeps_progress_until_source_return",
-      "reason": "Changed final decode/cleanup holds original Drain flag until source return",
-      "env": {}
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::source::tests::exact_aggregate_capacity_releases_only_its_own_charge",
+      "reason": "new source reservation/release and fixed charge contract: exact_aggregate_capacity_releases_only_its_own_charge"
     },
     {
-      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::source_return::unwinding_final_decode_preserves_source_and_cleans_progress",
-      "reason": "Changed final decode/cleanup holds original Drain flag until source return",
-      "env": {}
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::source::tests::simultaneous_reservations_cannot_overbook_the_original_ledger",
+      "reason": "new source reservation/release and fixed charge contract: simultaneous_reservations_cannot_overbook_the_original_ledger"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::source::tests::overflow_and_invalid_header_do_not_create_capacity",
+      "reason": "new source reservation/release and fixed charge contract: overflow_and_invalid_header_do_not_create_capacity"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::source::tests::underflow_fences_without_returning_the_charge",
+      "reason": "new source reservation/release and fixed charge contract: underflow_fences_without_returning_the_charge"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::source::tests::poison_and_fence_preserve_the_outstanding_charge",
+      "reason": "new source reservation/release and fixed charge contract: poison_and_fence_preserve_the_outstanding_charge"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::source::tests::unwind_and_forgotten_loans_never_manufacture_capacity",
+      "reason": "new source reservation/release and fixed charge contract: unwind_and_forgotten_loans_never_manufacture_capacity"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::source::tests::catalog_class_uses_current_types_and_recovered_retained_owner",
+      "reason": "new source reservation/release and fixed charge contract: catalog_class_uses_current_types_and_recovered_retained_owner"
+    },
+    {
+      "selector": "transaction::concurrency::read::tests::read_operation_precheck_has_no_claim_and_entry_checks_again",
+      "reason": "new read admission precheck preserves error priority without a claim; actual entry checks again"
     },
     {
       "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::commit_concurrency::catalog_full_source_capacity_precedes_second_operation_effects",
-      "reason": "New actual overlapping lookup returns Capacity before refs/pins; progress flag returns on denial, same-snapshot retry after first source return",
-      "env": {}
+      "reason": "new actual overlapping lookup rejection before progress/refs/pins, checked return and same-snapshot retry"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::commit_concurrency::catalog_read_operation_drain_waits_for_captured_refs",
+      "reason": "new source loan in existing begin/final decode/cleanup; new actual content0/source1 Drain wait, late rejection, checked cleanup before Commit"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::commit_concurrency::catalog_read_operation_fenced_drain_preserves_fatal_refs",
+      "reason": "changed source loan during fenced Drain; existing read_operation flag returns, original fatal refs and new source byte charge remain; no unchanged recovery execution"
     },
     {
       "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::commit_concurrency::catalog_mt03_pending_reader_loads_undo",
-      "reason": "new source loan in existing begin/final decode/cleanup; changed operation entry/cleanup must retain actual Pending Undo LOAD",
-      "env": {}
+      "reason": "new source loan in existing begin/final decode/cleanup; changed operation entry/cleanup must retain actual Pending Undo LOAD"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::read_boundary::missing_leaf_and_foreign_owner_release_original_resources",
+      "reason": "new source loan in existing begin/final decode/cleanup; changed begin/finish_missing/foreign ownership rejection"
     },
     {
       "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::read_boundary::dirty_victim_returns_flush_then_retries_same_snapshot",
-      "reason": "new source loan in existing begin/final decode/cleanup; changed close must return progress reservation on FlushRequired before retry",
-      "env": {}
+      "reason": "new source loan in existing begin/final decode/cleanup; changed close must return progress reservation on FlushRequired before retry"
     },
     {
       "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::read_boundary::captured_undo_read_error_preserves_fatal_cause",
-      "reason": "changed finish_error preserves actual fatal I/O, returns the existing read_operation flag, and retains the new source byte charge behind the fence",
-      "env": {}
+      "reason": "changed finish_error preserves actual fatal I/O, returns the existing read_operation flag, and retains the new source byte charge behind the fence"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::visibility_gap::catalog_mt02_q1_publication_gap",
+      "reason": "new source loan in existing begin/final decode/cleanup; changed Found/borrowed ReadPort lifetime at actual Commit publication boundary"
     },
     {
       "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::owner_tests::disk_session_isolation_backing_and_carriers_are_accounted",
-      "reason": "new source loan in existing begin/final decode/cleanup; changed core/ticket/Catalog operation carriers and entry/cleanup census",
-      "env": {}
+      "reason": "new source loan in existing begin/final decode/cleanup; changed core/ticket/Catalog operation carriers and entry/cleanup census"
     }
-  ],
-  "excluded": "No resident class, Row/writer/progress charge, completed core/recovery/physical Commit test repetition, full workspace/wrappers or native process inventory",
-  "selection_since_source_sha256": "8cf772e035326b4bf16249c9f3ad329f2590a87f70637dc71b10951d87319b2b",
-  "selection_note": "r1 first14 PASS retained, Found full lookup failed old resident-only no-I/O oracle; full lookup allows WAL reads before final decode. r2 checks no events after final-return hook plus whole image equality; only modified Found normal/unwind and five unexecuted cases selected. Product source unchanged; production build not repeated."
+  ]
 }

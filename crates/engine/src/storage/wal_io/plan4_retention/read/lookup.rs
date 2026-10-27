@@ -44,7 +44,10 @@ impl<'b, 'a, 's, 'c, 'p, 'd, 'm, 'w, W: WriterNamespace>
         &'r self,
         owner: &'u mut Owner<'c, 's>,
         snapshot: &'r SnapshotGuard<'v, 'j, 'c, 's>,
-    ) -> Result<CatalogCallScope<'u, 'r, 'v, 'j, 'b, 'a, 's, 'c, 'p, 'd, 'm, 'w, W>> {
+    ) -> std::result::Result<
+        CatalogCallScope<'u, 'r, 'v, 'j, 'b, 'a, 's, 'c, 'p, 'd, 'm, 'w, W>,
+        CatalogCallError,
+    > {
         super::scope::CatalogCallScope::begin(
             self,
             owner,
@@ -58,7 +61,10 @@ impl<'b, 'a, 's, 'c, 'p, 'd, 'm, 'w, W: WriterNamespace>
         &'r self,
         owner: &'u mut Owner<'c, 's>,
         snapshot: &'r SnapshotGuard<'v, 'j, 'c, 's>,
-    ) -> Result<CatalogCallScope<'u, 'r, 'v, 'j, 'b, 'a, 's, 'c, 'p, 'd, 'm, 'w, W>> {
+    ) -> std::result::Result<
+        CatalogCallScope<'u, 'r, 'v, 'j, 'b, 'a, 's, 'c, 'p, 'd, 'm, 'w, W>,
+        CatalogCallError,
+    > {
         super::scope::CatalogCallScope::begin(
             self,
             owner,
@@ -354,5 +360,9 @@ fn lookup_source_bytes<W: WriterNamespace>(resident: bool) -> usize {
                     // The final decoded output remains live through source return.
                     .max(super::super::source::leaf_source_bytes()),
         )
+        .max(super::scope::validation_source_bytes::<W>())
         .max(super::scope::consumer_source_bytes::<W>())
+        .max(super::scope::legacy_boundary_source_bytes::<W>())
+        .max(super::statement::source_bytes::<W>())
+        + super::statement::held_source_bytes()
 }

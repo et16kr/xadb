@@ -1,0 +1,81 @@
+{
+  "schema": "XADB_MODULE_C2_STATEMENT_READS_V1",
+  "status": "FROZEN_INPUTS_NOT_EXECUTION_EVIDENCE",
+  "baseline": "9f5fca6",
+  "scope": "Limited C2 Full/Resident statement factory and actual Found/Missing automatic catalog read set; no raw snapshot export; original source/progress/statement lifetimes. Whole short floor/writer phases and arbitrary caller aggregate remain incomplete.",
+  "budget": {
+    "total_seconds": 600,
+    "compiler_seconds": 90,
+    "case_seconds": 30,
+    "output_bytes": 8388608,
+    "rust_min_stack": 33554432
+  },
+  "runtime_tests": [
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::statement_reads::missing_read_survives_statement_drop_and_rejects_serializable_commit",
+      "reason": "New actual Missing registers catalog dependence; Drop preserves it; actual CREATE Commit makes readonly terminal reject and close original resources."
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::statement_reads::read_committed_keeps_one_statement_and_refreshes_the_next",
+      "reason": "New actual RC lookup sees same Missing before/after Commit and Found in next statement; automatic flag and typed result use."
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::statement_reads::found_read_registers_before_consumption_and_foreign_owner_does_not",
+      "reason": "New Found sets bit before returned record consumption; original foreign Owner rejected without bit/charge; readonly success."
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::statement_reads::missing_original_visibility_is_rejected_before_admission",
+      "reason": "Corrected negative origin fixture omits original visibility in a test-only unlinked port; rejects before source/progress/I/O. Nested two-session fixture E0597 remains unexecuted, not a PASS."
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::statement_reads::busy_and_io_error_do_not_register_a_catalog_observation",
+      "reason": "New Resident Busy and actual Full Undo PageIo Fatal keep read flag0, correct original cleanup/fence/charge policy."
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::statement_reads::flush_required_records_only_the_completed_retry",
+      "reason": "New statement wrapper returns FlushRequired with read flag0; original flush/retry at same snapshot returns Missing and registers flag1."
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::statement_reads::completed_lookup_cannot_publish_when_registration_fails",
+      "reason": "New exact cut after actual Missing before read-bit registration; original fence causes Census/Fenced Fatal, no success/bit/refs/pins, cleanup progress0 with original source charge retained."
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::read::statement::tests::statement_validation_and_result_carriers_fit_fixed_classes",
+      "reason": "New wrapper/registration source carriers are included in both fixed class expressions; whole floor not connected."
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::source::tests::catalog_class_uses_current_types_and_recovered_retained_owner",
+      "reason": "Changed fixed Full formula with actual statement source and retained borrows; current type/recovered class."
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::source::tests::fixed_resident_class_admits_two_and_never_escalates",
+      "reason": "Changed fixed Resident formula still admits two original reservations without escalation."
+    }
+  ],
+  "compiler_tests": [
+    {
+      "name": "consume_then_finish",
+      "path": "consume_then_finish.rs",
+      "bytes": 994,
+      "sha256": "061f1131249bf81b4e45ad2c4b8be43c59be0bdcbe2a61d57b13e7f43b9b7eec",
+      "expected_code": null,
+      "primary_line": null
+    },
+    {
+      "name": "name_after_call_finish",
+      "path": "name_after_call_finish.rs",
+      "bytes": 945,
+      "sha256": "748ea076815bbf3ba81c00d8e706bfc844fba73939179968624bee6523e9afe5",
+      "expected_code": "E0505",
+      "primary_line": 13
+    },
+    {
+      "name": "call_after_statement_drop",
+      "path": "call_after_statement_drop.rs",
+      "bytes": 644,
+      "sha256": "6ef647ab16b468b79660c9e72ac17ef8022a48bc6028930207d96f5097d7b2aa",
+      "expected_code": "E0505",
+      "primary_line": 7
+    }
+  ]
+}

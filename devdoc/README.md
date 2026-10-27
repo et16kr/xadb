@@ -1,5 +1,7 @@
 # XADB 개발 문서
 
+현재 모듈 개발의 재개 기준은 [2026-10-28 main 통합](evidence/module-independence-survey-20261026.md#merge-main-20261028)과 [작업 계획](plans/module-independence-plan.md)이다. C2/C3·Row 부분공급을 통합하며 M4/M5 제품 인수는 미완료다. 사용자 지시에 따라 이후 개발은 `/home/et16/work/xadb`의 `main`에서 진행한다.
+
 2026-10-26 [DEV2 PF04 C3 shard counter 후보(S2)](evidence/dev2-pf04-c3-s2-20261026.md): thread별 shard counter를 기준선 위 diagnostics diff로 구현하고 신규8종·기존 선택 시험과 정적 lock 대조(대상 경로 counter RMW 14→0)를 통과했다. 후보는 고정했으나 제품에 반영하지 않았다. C3 측정(S3)·PF04 인수는 NOT_RUN이며 원 PF04 FAIL·DEV2 미완료를 유지한다.
 
 2026-10-26 [DEV2 PF04 측정 profile B 도구(S1)](evidence/dev2-pf04-profile-b-s1-20261026.md): controller slot gate·supervisor/환경 판정기·`slot-env-v1`을 구현하고 K0-005 계약에 등록했다. source별 선택 검증과 실제 native 연결(r1 장치 이름 실패 뒤 r2 `TOOL_CONNECTED`)을 마쳤다. C3·PF04 인수는 NOT_RUN이며 원 PF04 FAIL·DEV2 미완료를 유지한다.

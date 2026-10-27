@@ -631,13 +631,40 @@ pub(crate) struct SourceCensus {
 }
 
 pub(crate) fn source_census() -> SourceCensus {
+    census(false)
+}
+
+/// Actual replay entry borrows its original descriptor/core lane. It retains
+/// the loan, checked constructor and return carriers; it owns no local arrays.
+pub(crate) fn borrowed_source_bytes() -> usize {
+    census(true).total
+}
+
+fn census(borrowed: bool) -> SourceCensus {
     let compute = compute();
     let frame = frame();
-    let run_retained = size_of::<[[u8; 1536]; 2]>()
-        + size_of::<[u8; 256]>()
-        + size_of::<(&Inputs<'_>, &mut [[u8; 16384]; 8], Output<'_>)>()
-        + returned::<Computed<'_>, Error>()
+    let run_retained = size_of::<(
+        &Inputs<'_>,
+        &mut [[u8; 16384]; 8],
+        Output<'_>,
+        &mut [[u8; 1536]; 2],
+        &mut [u8; 256],
+    )>() + returned::<Computed<'_>, Error>()
         + returned::<Observation, Error>();
+    let backing = if borrowed {
+        size_of::<super::transition::ReplayScratch<'_>>()
+            + returned::<super::transition::ReplayScratch<'_>, Error>()
+            + size_of::<(&mut [u8; super::REPLAY_SCRATCH_BYTES], &mut [u8], &mut [u8])>()
+            + size_of::<std::slice::IterMut<'_, [u8; 1536]>>()
+            + 4 * size_of::<&[u8]>()
+            + 2 * size_of::<Result<()>>()
+    } else {
+        size_of::<[[u8; 1536]; 2]>()
+            + size_of::<[u8; 256]>()
+            + size_of::<(&Inputs<'_>, &mut [[u8; 16384]; 8], Output<'_>)>()
+            + size_of::<Result<Observation>>()
+    };
+    let run_retained = backing + run_retained;
     // These actual arrays are first declared after compute has returned.
     // They cannot overlap compute's queue/image/ledger call frames, but both
     // stay live through the final frame encode/verify call.

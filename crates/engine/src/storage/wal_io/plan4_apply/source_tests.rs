@@ -32,7 +32,7 @@ fn exact_aggregate_capacity_releases_only_its_own_charge() {
         let error = OperationSourceAdmission::reserve(ledger, 32768, 1)
             .err()
             .unwrap();
-        assert!(matches!(error.cause, RetentionCause::Capacity));
+        assert!(matches!(error.cause, SourceCause::Capacity));
         assert_eq!(error.effect, Effect::Unchanged);
         assert_eq!(*ledger.lock().unwrap().bytes, before);
         first.release_checked().unwrap();
@@ -59,7 +59,7 @@ fn simultaneous_reservations_cannot_overbook_the_original_ledger() {
                 barrier.wait();
                 let admitted = ticket.is_ok();
                 if let Err(error) = &ticket {
-                    assert!(matches!(error.cause, RetentionCause::Capacity));
+                    assert!(matches!(error.cause, SourceCause::Capacity));
                     assert_eq!(error.effect, Effect::Unchanged);
                 }
                 barrier.wait();
@@ -85,14 +85,14 @@ fn overflow_and_invalid_header_do_not_create_capacity() {
         let error = OperationSourceAdmission::reserve(ledger, 1, usize::MAX)
             .err()
             .unwrap();
-        assert!(matches!(error.cause, RetentionCause::Capacity));
+        assert!(matches!(error.cause, SourceCause::Capacity));
         assert_eq!(used(ledger), 0);
         assert!(!fence.is_fenced());
         ledger.lock().unwrap().bytes[32] = 1;
         let error = OperationSourceAdmission::reserve(ledger, 1, 1)
             .err()
             .unwrap();
-        assert!(matches!(error.cause, RetentionCause::Invariant));
+        assert!(matches!(error.cause, SourceCause::Invariant));
         assert_eq!(error.effect, Effect::CallerMustResolve);
         assert_eq!(used(ledger), 0);
         assert!(fence.is_fenced());
@@ -105,7 +105,7 @@ fn underflow_fences_without_returning_the_charge() {
         let mut ticket = OperationSourceAdmission::reserve(ledger, 32768, 4096).unwrap();
         ledger.lock().unwrap().bytes[USED].fill(0);
         let error = ticket.release_checked().unwrap_err();
-        assert!(matches!(error.cause, RetentionCause::Invariant));
+        assert!(matches!(error.cause, SourceCause::Invariant));
         assert!(ticket.active);
         assert!(fence.is_fenced());
         drop(ticket);
@@ -123,7 +123,7 @@ fn poison_and_fence_preserve_the_outstanding_charge() {
         }));
         assert!(panic.is_err());
         let error = ticket.release_checked().unwrap_err();
-        assert!(matches!(error.cause, RetentionCause::Poisoned));
+        assert!(matches!(error.cause, SourceCause::Poisoned));
         assert!(fence.is_fenced());
         assert!(ledger.is_poisoned());
         assert_eq!(used(ledger), 4096);
@@ -135,7 +135,7 @@ fn poison_and_fence_preserve_the_outstanding_charge() {
         fence.fence();
         assert!(matches!(
             ticket.release_checked().unwrap_err().cause,
-            RetentionCause::Fenced
+            SourceCause::Fenced
         ));
         assert_eq!(used(ledger), 4096);
     });
@@ -160,7 +160,7 @@ fn unwind_and_forgotten_loans_never_manufacture_capacity() {
                 .err()
                 .unwrap()
                 .cause,
-            RetentionCause::Capacity
+            SourceCause::Capacity
         ));
         assert_eq!(used(ledger), 32768);
         assert!(!fence.is_fenced());
@@ -173,7 +173,10 @@ fn catalog_class_uses_current_types_and_recovered_retained_owner() {
     let live = super::super::resources::source_census::<W>();
     let recovered = super::super::super::super::plan4_recovery::source_census::<W>();
     let shared = shared_bytes::<W>();
-    assert_eq!(shared, live.retained.max(recovered.retained_live));
+    assert_eq!(
+        shared,
+        live.retained.max(recovered.retained_live) + split_port_bytes::<W>()
+    );
     assert!(shared + live.catalog_lookup <= 65536);
     println!(
         "CATALOG_SHORT shared={shared} charge={} total={} leaf={}",
@@ -182,18 +185,106 @@ fn catalog_class_uses_current_types_and_recovered_retained_owner() {
         leaf_source_bytes()
     );
     with_ledger(|ledger, fence| {
-        let mut first =
-            OperationSourceAdmission::catalog::<W>(ledger, OperationClass::CatalogFull).unwrap();
+        let mut first = OperationSourceAdmission::catalog(
+            ledger,
+            &CatalogSourceCharges::new::<W>(),
+            OperationClass::CatalogFull,
+        )
+        .unwrap();
         assert_eq!(used(ledger) as usize, live.catalog_lookup);
         assert!(matches!(
-            OperationSourceAdmission::catalog::<W>(ledger, OperationClass::CatalogFull)
-                .err()
-                .unwrap()
-                .cause,
-            RetentionCause::Capacity
+            OperationSourceAdmission::catalog(
+                ledger,
+                &CatalogSourceCharges::new::<W>(),
+                OperationClass::CatalogFull
+            )
+            .err()
+            .unwrap()
+            .cause,
+            SourceCause::Capacity
         ));
         first.release_checked().unwrap();
         assert_eq!(used(ledger), 0);
+        assert!(!fence.is_fenced());
+    });
+}
+
+#[test]
+fn fixed_resident_class_admits_two_and_never_escalates() {
+    type W = crate::storage::wal_io::plan4_test_support::Writer;
+    let shared = shared_bytes::<W>();
+    let resident = read::resident_lookup_source_bytes::<W>();
+    let full = read::lookup_source_bytes::<W>();
+    println!(
+        "CATALOG_RESIDENT shared={shared} resident={resident} full={full} two={}",
+        shared + resident * 2
+    );
+    assert!(resident < full);
+    assert!(shared + resident * 2 <= 65536);
+    assert!(shared + resident + full > 65536);
+    with_ledger(|ledger, fence| {
+        let mut first = OperationSourceAdmission::catalog(
+            ledger,
+            &CatalogSourceCharges::new::<W>(),
+            OperationClass::CatalogResident,
+        )
+        .unwrap();
+        assert!(first.resident());
+        let mut second = OperationSourceAdmission::catalog(
+            ledger,
+            &CatalogSourceCharges::new::<W>(),
+            OperationClass::CatalogResident,
+        )
+        .unwrap();
+        assert_eq!(used(ledger), 2 * resident as u64);
+        let before = *ledger.lock().unwrap().bytes;
+        assert!(matches!(
+            OperationSourceAdmission::catalog(
+                ledger,
+                &CatalogSourceCharges::new::<W>(),
+                OperationClass::CatalogFull
+            )
+            .err()
+            .unwrap()
+            .cause,
+            SourceCause::Capacity
+        ));
+        assert_eq!(*ledger.lock().unwrap().bytes, before);
+        first.release_checked().unwrap();
+        assert_eq!(used(ledger), resident as u64);
+        assert!(second.resident());
+        second.release_checked().unwrap();
+        let full_ticket = OperationSourceAdmission::catalog(
+            ledger,
+            &CatalogSourceCharges::new::<W>(),
+            OperationClass::CatalogFull,
+        )
+        .unwrap();
+        assert!(!full_ticket.resident());
+        assert_eq!(used(ledger), full as u64);
+        drop(full_ticket);
+        assert_eq!(used(ledger), 0);
+        assert!(!fence.is_fenced());
+    });
+}
+
+#[test]
+fn ticket_width_preserves_full_65536_charge_and_rejects_overflow() {
+    with_ledger(|ledger, fence| {
+        let ticket = OperationSourceAdmission::reserve(ledger, 0, 65_536).unwrap();
+        assert_eq!(ticket.charge, 65_536);
+        assert_eq!(used(ledger), 65_536);
+        drop(ticket);
+        assert_eq!(used(ledger), 0);
+        for charge in [65_537, u32::MAX as usize + 1, usize::MAX] {
+            let error = OperationSourceAdmission::reserve(ledger, 0, charge)
+                .err()
+                .unwrap();
+            assert!(matches!(error.cause, SourceCause::Capacity));
+            assert_eq!(error.effect, Effect::Unchanged);
+            assert_eq!(used(ledger), 0);
+        }
+        assert_eq!(size_of::<OperationSourceAdmission<'_, '_, '_, '_>>(), 16);
         assert!(!fence.is_fenced());
     });
 }
@@ -205,7 +296,7 @@ fn catalog_native_class_includes_core_once_and_fits() {
     let recovered = super::super::super::super::plan4_recovery::source_census::<W>();
     assert_eq!(
         shared_bytes::<W>(),
-        live.retained.max(recovered.retained_live)
+        live.retained.max(recovered.retained_live) + split_port_bytes::<W>()
     );
     assert!(super::super::resources::fits::<W>());
     println!(
@@ -224,64 +315,11 @@ fn stale_binding_rejects_reservation_and_preserves_outstanding_charge() {
         let error = OperationSourceAdmission::reserve(ledger, 32768, 1)
             .err()
             .unwrap();
-        assert!(matches!(error.cause, RetentionCause::BindingMismatch));
+        assert!(matches!(error.cause, SourceCause::BindingMismatch));
         assert_eq!(error.effect, Effect::CallerMustResolve);
         assert_eq!(used(ledger), 4096);
         assert!(ticket.release_checked().is_err());
         assert!(fence.is_fenced());
         assert_eq!(used(ledger), 4096);
-    });
-}
-
-#[test]
-fn fixed_resident_class_admits_two_and_never_escalates() {
-    type W = crate::storage::wal_io::plan4_test_support::Writer;
-    let shared = shared_bytes::<W>();
-    let resident = read::resident_lookup_source_bytes::<W>();
-    let full = read::lookup_source_bytes::<W>();
-    println!(
-        "CATALOG_RESIDENT shared={shared} resident={resident} full={full} two={}",
-        shared + resident * 2
-    );
-    type Native = super::super::super::native::Writer;
-    let native_shared = shared_bytes::<Native>();
-    let native_resident = read::resident_lookup_source_bytes::<Native>();
-    println!(
-        "CATALOG_RESIDENT_NATIVE shared={native_shared} resident={native_resident} two={}",
-        native_shared + 2 * native_resident
-    );
-    assert!(native_shared + 2 * native_resident <= 65536);
-    assert!(resident < full);
-    assert!(shared + resident * 2 <= 65536);
-    assert!(shared + resident + full > 65536);
-    with_ledger(|ledger, fence| {
-        let mut first =
-            OperationSourceAdmission::catalog::<W>(ledger, OperationClass::CatalogResident)
-                .unwrap();
-        assert!(first.resident());
-        let mut second =
-            OperationSourceAdmission::catalog::<W>(ledger, OperationClass::CatalogResident)
-                .unwrap();
-        assert_eq!(used(ledger), 2 * resident as u64);
-        let before = *ledger.lock().unwrap().bytes;
-        assert!(matches!(
-            OperationSourceAdmission::catalog::<W>(ledger, OperationClass::CatalogFull)
-                .err()
-                .unwrap()
-                .cause,
-            RetentionCause::Capacity
-        ));
-        assert_eq!(*ledger.lock().unwrap().bytes, before);
-        first.release_checked().unwrap();
-        assert_eq!(used(ledger), resident as u64);
-        assert!(second.resident());
-        second.release_checked().unwrap();
-        let full_ticket =
-            OperationSourceAdmission::catalog::<W>(ledger, OperationClass::CatalogFull).unwrap();
-        assert!(!full_ticket.resident());
-        assert_eq!(used(ledger), full as u64);
-        drop(full_ticket);
-        assert_eq!(used(ledger), 0);
-        assert!(!fence.is_fenced());
     });
 }

@@ -31,6 +31,7 @@ pub(in crate::storage) struct RecoverySourceCensus {
     pub(in crate::storage) bind_conversion: usize,
     pub(in crate::storage) bind_return: usize,
     pub(in crate::storage) retained_live: usize,
+    pub(in crate::storage) split: usize,
     pub(in crate::storage) live: usize,
     pub(in crate::storage) peak: usize,
     pub(in crate::storage) metadata: usize,
@@ -261,8 +262,20 @@ pub(in crate::storage) fn source_census<W: WriterNamespace>() -> RecoverySourceC
     let bind = bind_pages.max(bind_conversion).max(bind_return);
     let facade_delta = size_of::<Recovered<'_, W>>() - size_of::<Live<'_, W>>();
     let retained_live = runtime + live_census.retained - live_census.original_owner + facade_delta;
+    // Both waiting-flush and FlushRequired call exclusive inner.split from
+    // step. Its source arithmetic/tuple return overlaps this outer step packet.
+    type Step = super::super::plan4_pages::RetentionRecoveryStep;
+    type StepResult = std::result::Result<Step, crate::storage::disk::RetentionError>;
+    let split_caller = 2 * size_of::<Step>()
+        + 2 * size_of::<StepResult>()
+        + 2 * size_of::<super::super::plan4_pages::Plan4Target>()
+        + size_of::<crate::storage::session_fence::UnwindFence<'_>>()
+        + 8 * size_of::<&()>()
+        + 2 * size_of::<Result<Plan4RecoveryProgress>>();
+    let split = retained_live + live_census.split + split_caller;
     let live =
         (runtime + live_census.peak - live_census.original_owner + facade_delta)
+            .max(split)
             .max(
                 original_core
                     + runtime
@@ -310,6 +323,7 @@ pub(in crate::storage) fn source_census<W: WriterNamespace>() -> RecoverySourceC
         bind_conversion,
         bind_return,
         retained_live,
+        split,
         live,
         peak,
         metadata,

@@ -1,0 +1,75 @@
+{
+  "schema": "XADB_MODULE_C2_UNCHARGED_CALL_PHASES_V1",
+  "status": "FROZEN_INPUTS_NOT_EXECUTION_EVIDENCE",
+  "baseline": "2273185",
+  "scope": "Small consuming source-failure cleanup; cfg(test) same-core34 entry observations with four independent guarded leaves and separate current selected-query wide tail. No source floor connected, no global reader/writer admission claim. Foreign-core callers are not bounded by original34 slots.",
+  "budget": {
+    "total_seconds": 600,
+    "compiler_seconds": 90,
+    "case_seconds": 30,
+    "output_bytes": 8388608,
+    "rust_min_stack": 33554432
+  },
+  "runtime_tests": [
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::read::scope::tests::failed_source_consumes_original_ticket_and_keeps_error_priority",
+      "reason": "New consuming small-failure helper: actual original read ticket clears; Capacity/normal, Capacity/fenced cleanup and original Fatal/fenced cleanup retain exact priority."
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::read::scope::tests::uncharged_call_phases_keep_independent_guards_and_wide_tail_separate",
+      "reason": "New cfg(test) four-owner waiting/guarded/guardless-return census:34 original slots, independent guarded sum, full Scope Result, separate existing selected-query wide tail. Observation only, no admission PASS."
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::source_entry::failed_source_reservation_returns_progress_under_fence",
+      "reason": "Changed actual source-failure branch consumes original progress after source failure under actual Drain/fence, with source/refs/pins remaining0."
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::commit_concurrency::catalog_full_source_capacity_precedes_second_operation_effects",
+      "reason": "Changed actual Capacity branch uses consuming helper and preserves first reader/source, clears second provisional progress, no refs/pins/I/O effects."
+    }
+  ],
+  "counting_contract": {
+    "columns": [
+      "waiting without guard",
+      "additional guarded closure",
+      "guardless returned values"
+    ],
+    "composition": "34 * max(actual per-caller entry/failure/return/close) + sum(core,pool,visibility registry,isolation guarded additions)",
+    "retained": "original shared22400B and fixed Full33972B/Resident16928B unchanged; observer values are not added to actual reservation yet",
+    "wide_tail": "current selected query retains result/step/target in same lexical loop scope and calls wide finish_error on error; conservative consumer+legacy+close baseline retained as separate column, not interpreted as a necessary lower bound",
+    "source_failure": "Consumes SourceFailure and original ReadOperationAdmission before caller constructs Err<Scope>; original Fatal wins, else cleanup error wins; full Scope return remains a per-caller phase."
+  },
+  "owner_audit": {
+    "pool": {
+      "entry_apis": [
+        "retention_payloads",
+        "check_retention_reader"
+      ],
+      "guarded": "locks+typed auxiliary+max(directory,System INIT+directory,TxPair INIT+directory,LOAD+directory,flush+directory,DPT+directory,pin count+directory)",
+      "auxiliary_helper_limit": 13,
+      "scalar_ref_packet": "(&(),&(),&(),&[u8],usize,u64,[bool;4]),64B on this target",
+      "copies": "allocator/current/prior Registration; map TargetRequest/Option; rank PageRef/[24]/tuple; SystemWorkRef/Namespace; TxnRef/TxnId; LOAD whole Option/flush::Claim/InitClaimSlot; previous FrameStamp; DPT WalRequirement/WalFrameLocation",
+      "scope": "one original Plan4Retention registry mutex only; owner.check_binding is later separate core leaf"
+    },
+    "visibility": {
+      "entry_api": "SnapshotGuard::confirms",
+      "guarded": "registry locks+typed auxiliary+max(snapshot validation,pin validation,retirement/count/decode,snapshot check)",
+      "auxiliary_helper_limit": 11,
+      "scalar_ref_packet": "(&(),&(),&(),&[u8],usize,u64,[bool;4]),64B on this target",
+      "copies": "retirement target and count target; Option target comparison; ReferenceTarget enum Result mapping; TxnRef/TxnId/DatabaseId with engine Error; UndoRef/PageRef/FileId/Generation with foundation Error; zero-copy row slices",
+      "exclusions": "publication mutex, snapshot registration, full Status cell/page checksum/inventory are not called by confirms"
+    },
+    "core": {
+      "slots": 34,
+      "progress_admissible": 33,
+      "guarded": "original State entry/cleanup, accounting validation and installation validation, complete lock/poison/result carriers and OwnerIdentity value receivers",
+      "returning": "whole ReadOperationAdmission and Result plus original identity remain per caller"
+    },
+    "isolation": {
+      "ledger": "original short-used u64/zero header",
+      "guarded": "lock/poison/check checked add-sub/used/available/next/byte encoding/results",
+      "returning": "whole source admission and Result remain per caller"
+    },
+    "interpretation": "Conservative source-expression observation only. Scalar helper bounds and typed copies are an audited broad baseline, not optimizer liveness, machine stack/RSS, a required minimum, or an implemented admission floor."
+  }
+}

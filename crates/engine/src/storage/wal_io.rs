@@ -33,7 +33,6 @@ const PROFILE_NAME: &str = "d3-profile";
 const STAGE_NAME: &str = "d3-writer-stage";
 
 mod bootstrap;
-mod commit_bridge;
 pub(in crate::storage) mod disk_api;
 mod physical;
 pub(in crate::storage) use bootstrap::CatalogRetirementRejected;
@@ -101,7 +100,6 @@ pub(in crate::storage) use bootstrap::{
 pub(in crate::storage) use bootstrap::{
     Plan4TestMutableCause, Plan4TestSemanticError, plan4_test_owner_boundary,
 };
-pub(crate) use commit_bridge::{DurableCommit, InstalledCommit, StagedCommit, UnstagedCommit};
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub(crate) enum Phase {

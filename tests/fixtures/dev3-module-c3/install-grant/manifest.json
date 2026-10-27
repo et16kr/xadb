@@ -1,0 +1,98 @@
+{
+  "schema": "XADB_MODULE_C3_INSTALL_GRANT_V1",
+  "status": "FROZEN_INPUTS_NOT_EXECUTION_EVIDENCE",
+  "baseline": "8c0f252",
+  "scope": "C3 apply-owned sealed InstallGrant, three direct Catalog producers, four consumed legacy producer bridges and original generic page/metadata/DPT installer. No Row/terminal completeness, no format change, no whole concurrent short floor claim.",
+  "budget": {
+    "total_seconds": 600,
+    "compiler_seconds": 90,
+    "case_seconds": 30,
+    "output_bytes": 8388608,
+    "rust_min_stack": 33554432
+  },
+  "runtime_tests": [
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::dirty_allocation::tests::dirty_da02_allocator_consumer",
+      "reason": "Changed allocation legacy grant bridge; exact Reserve/Cancel bytes and DPT."
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::status_init::status_flush::resident::empty_transactions::live::tests::empty_live_actual_lifecycle_matches_raw_literals_and_preserves_system",
+      "reason": "Changed empty Begin/Rollback/Abort legacy bridge; original raw literal oracle."
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::status_init::status_flush::resident::empty_transactions::live::tests::empty_live_resource_gate",
+      "reason": "Changed empty grant conversion source formula, both memory/native concrete types."
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::install_grant::current_profile_rejects_legacy_scope1_before_installation",
+      "reason": "r1 historical L01 fixture mismatches current Profile2 before reaching scope1; its FAIL retained. New actual Profile2 rejects all five legacy scope1 entries with no effects; no old-format runtime constructor added. Actual population bridge exercised by remaining Catalog fixtures."
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::lifecycle::mc02_forward_clr_abort_cleanup",
+      "reason": "Changed Catalog ordinary grant and retired CLR/RootFree/TerminalFinish grants, canonical oracle."
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::commit_concurrency::catalog_mt05_pending_lower_flush",
+      "reason": "Changed Commit grant uses actual resumed stamp after Pending lower flush recLSN change."
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::commit_failures::catalog_mf10_commit_second_page_unwind",
+      "reason": "Changed Commit generic installer intermediate failure preserves original fatal obligation and current-build recovery."
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::retire_failures::catalog_mf14_clr_first_page_unwind",
+      "reason": "Changed retirement grant partial installation preserves fence/refs and current-build recovery."
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::install::tests::install_grant_and_legacy_conversion_fit_original_bounds",
+      "reason": "New grant/conversion/accessor source fits original 384/2048/DPT660/CALL3072 envelopes."
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::commit_common::commit_common_original_owner_source_admission",
+      "reason": "Changed actual install source expressions and current retained owner, memory/native source admission."
+    }
+  ],
+  "compiler_tests": [
+    {
+      "name": "observe_only",
+      "path": "observe_only.rs",
+      "bytes": 333,
+      "sha256": "eb71aca454c9aca94eaa3921a4ee1296df9d53e15c62436424163435fe96c396",
+      "expected_code": null,
+      "primary_line": null
+    },
+    {
+      "name": "private_kind",
+      "path": "private_kind.rs",
+      "bytes": 133,
+      "sha256": "2f469513f259701404d6ea42b72475f3e685298ab34cc0bd9fef3b6eb4cc3708",
+      "expected_code": "E0616",
+      "primary_line": 4
+    },
+    {
+      "name": "non_clone",
+      "path": "non_clone.rs",
+      "bytes": 134,
+      "sha256": "e3ad1cfc9db42873b905ed49ec3e632c81e52cc10a67bb9a92db8faf960e0dc4",
+      "expected_code": "E0599",
+      "primary_line": 4
+    },
+    {
+      "name": "consumed_grant",
+      "path": "consumed_grant.rs",
+      "bytes": 154,
+      "sha256": "e01b9f8d246f97bef0e4e70250800c61d0d89412ce780d90fa07cb255d623bc5",
+      "expected_code": "E0382",
+      "primary_line": 5
+    },
+    {
+      "name": "legacy_factory_private",
+      "path": "legacy_factory_private.rs",
+      "bytes": 75,
+      "sha256": "7fc91df7e28380c809c3c4474f396515d6be8245b4e08719c1044e4198e9c38e",
+      "expected_code": "E0603",
+      "primary_line": 2
+    }
+  ],
+  "preserved_failure": "r1 legacy L01 FAILED at population WAL literal (expected Profile1/XSG v1/scope0, actual Profile2/XSG v2/scope1), before legacy scope1 producer. No positive current legacy scope1 install claim."
+}

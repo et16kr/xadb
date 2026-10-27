@@ -1,0 +1,35 @@
+{
+  "schema": "XADB_MODULE_C2_SOURCE_ENTRY_V1",
+  "status": "FROZEN_INPUTS_NOT_EXECUTION_EVIDENCE",
+  "baseline": "a5cfdae",
+  "scope": "original progress before fixed source reservation; failed reservation checked progress cleanup before refs/pins; no nested locks, new source type or byte census change; all-entry aggregate remains unproved",
+  "budget": {
+    "total_seconds": 600,
+    "compiler_seconds": 90,
+    "case_seconds": 30,
+    "output_bytes": 8388608,
+    "rust_min_stack": 33554432
+  },
+  "runtime_tests": [
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::source_entry::drain_waits_for_entry_before_source_charge",
+      "reason": "New Full/Resident entry hook: source0 and readflag1; actual Commit Drain waits; resumed entry fails InstallationPending then cleanup allows whole Commit"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::source_entry::failed_source_reservation_returns_progress_under_fence",
+      "reason": "New Full/Resident source reservation fatal after actual Drain begins; source remains0 and original progress cleanup attempted despite fence"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::source_entry::entry_unwind_returns_progress_without_source_charge",
+      "reason": "New panic before source reservation with original progress ticket; Drop fences and clears flag with refs/pins/source0 and no I/O"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::commit_concurrency::catalog_full_source_capacity_precedes_second_operation_effects",
+      "reason": "Changed reservation failure branch must clear provisional progress, preserve first reader charge/refs and return Capacity Unchanged before physical effects"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::commit_concurrency::catalog_read_operation_drain_waits_for_captured_refs",
+      "reason": "Changed entry ordering keeps InstallationPending ahead of source Capacity when original Full reader occupies available bytes at actual Drain; unchanged source-return tests excluded"
+    }
+  ]
+}

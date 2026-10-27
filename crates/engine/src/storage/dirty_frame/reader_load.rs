@@ -104,9 +104,13 @@ impl LoadClaimRecord {
             && state.counts[self.index] == 1
             && state.entries[self.index].is_none()
             && state.requirements[self.index].is_none()
-            && state.claim.is_none_or(|claim| claim.index() != self.index)
+            && state
+                .claim
+                .as_ref()
+                .is_none_or(|claim| claim.index() != self.index)
             && state
                 .init_claim
+                .as_ref()
                 .is_none_or(|claim| !claim.blocks_load(self.index, self.request))
             && match (
                 state.directory.resolve(pool.frames, self.index),

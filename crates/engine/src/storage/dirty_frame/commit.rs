@@ -1,10 +1,10 @@
 //! Original whole-set pins survive Commit WAL I/O without content latches.
-//! Semantic stage/completion grants remain sealed in the original WAL producer.
+//! Semantic stage/completion grants remain sealed in the original apply producer.
 //! These common carriers cannot create those grants or acknowledge a Commit.
 
 use super::*;
 use crate::{
-    storage::wal_io::{DurableCommit, InstalledCommit, StagedCommit, UnstagedCommit},
+    storage::disk::{DurableCommit, InstalledCommit, StagedCommit, UnstagedCommit},
     transaction::concurrency::{
         CommitInstalling, CommitStage, InstallationKey, PendingInstallation,
     },
@@ -326,7 +326,7 @@ impl<'b, 'c, 's, const N: usize> CommitInstallTargets<'_, 'b, 'c, 's, '_, '_, N>
             .preflight_dpt(at, &self.before(at)?)
     }
 
-    fn check_requirement(&self, permit: &DirtyInstallPermit<'_, 'c, 's>) -> Result<()> {
+    fn check_requirement(&self, permit: &InstallGrant<'_, 'c, 's>) -> Result<()> {
         let targets = self.targets.as_ref().expect("owned Commit install targets");
         let pins = targets.pins.as_ref().expect("retained original pins");
         if !self
@@ -344,7 +344,7 @@ impl<'b, 'c, 's, const N: usize> CommitInstallTargets<'_, 'b, 'c, 's, '_, '_, N>
     pub(in crate::storage) fn install_page(
         &mut self,
         at: usize,
-        permit: &DirtyInstallPermit<'_, 'c, 's>,
+        permit: &InstallGrant<'_, 'c, 's>,
     ) -> Result<()> {
         self.check_requirement(permit)?;
         self.targets
@@ -356,7 +356,7 @@ impl<'b, 'c, 's, const N: usize> CommitInstallTargets<'_, 'b, 'c, 's, '_, '_, N>
     pub(in crate::storage) fn install_metadata(
         &mut self,
         at: usize,
-        permit: &DirtyInstallPermit<'_, 'c, 's>,
+        permit: &InstallGrant<'_, 'c, 's>,
     ) -> Result<()> {
         self.check_requirement(permit)?;
         self.targets
@@ -368,7 +368,7 @@ impl<'b, 'c, 's, const N: usize> CommitInstallTargets<'_, 'b, 'c, 's, '_, '_, N>
     pub(in crate::storage) fn install_dpt(
         &self,
         stamp: DptStamp<'_>,
-        permit: &DirtyInstallPermit<'_, 'c, 's>,
+        permit: &InstallGrant<'_, 'c, 's>,
     ) -> Result<()> {
         self.check_requirement(permit)?;
         self.targets
@@ -488,6 +488,63 @@ pub(in crate::storage) fn source_phases<const N: usize>() -> CommitSourcePhases 
             + size_of::<[Option<StablePage>; N]>()
             + leaf,
         install: install + leaf,
+    }
+}
+
+/// Read-only phase observations for the next admission design. The existing
+/// production source_bytes and all runtime guards/authority stay unchanged.
+#[cfg(test)]
+#[derive(Debug)]
+pub(in crate::storage) struct CommitPhaseSources {
+    pub(in crate::storage) prepare: usize,
+    pub(in crate::storage) suspend: usize,
+    pub(in crate::storage) pending_retained: usize,
+    pub(in crate::storage) drain_wait: usize,
+    pub(in crate::storage) resume: usize,
+    pub(in crate::storage) install_finish: usize,
+}
+#[cfg(test)]
+pub(in crate::storage) fn phase_sources<const N: usize>() -> CommitPhaseSources {
+    use std::mem::size_of;
+    type Stage<'a, const N: usize> = CommitStageTargets<'a, 'a, 'a, 'a, 'a, 'a, N>;
+    type Pending<'a, const N: usize> = PendingCommitTargets<'a, 'a, 'a, 'a, 'a, 'a, N>;
+    type Install<'a, const N: usize> = CommitInstallTargets<'a, 'a, 'a, 'a, 'a, 'a, N>;
+    type Drained<'a, const N: usize> = DrainedCommitTargets<'a, 'a, 'a, 'a, 'a, 'a, N>;
+    // The actual core is already shared; the common leaf includes every
+    // stage/wait/install carrier, conservatively retained as a nested bound.
+    let core_leaf = crate::transaction::concurrency::commit_common_source_bytes()
+        - size_of::<crate::transaction::concurrency::PageConcurrency<'_>>();
+    let physical = target_set_call_bytes::<N>()
+        + 4 * size_of::<FrameStamp>()
+        + 2 * size_of::<Result<DirtyObservation>>()
+        + 2 * size_of::<Result<DptStamp<'_>>>()
+        + 2 * size_of::<foundation::codec::ContentHasher>()
+        + 512;
+    CommitPhaseSources {
+        prepare: size_of::<WriteTargets<'_, '_, '_, '_, '_, '_, N>>()
+            + size_of::<[Option<StablePage>; N]>()
+            + size_of::<Stage<'_, N>>()
+            + 2 * size_of::<Result<Stage<'_, N>>>()
+            + physical
+            + core_leaf,
+        suspend: size_of::<Stage<'_, N>>()
+            + size_of::<Pending<'_, N>>()
+            + 2 * size_of::<Result<Pending<'_, N>>>()
+            + size_of::<StagedCommit<'_, '_>>()
+            + physical
+            + core_leaf,
+        pending_retained: size_of::<Pending<'_, N>>(),
+        drain_wait: size_of::<Pending<'_, N>>()
+            + size_of::<Drained<'_, N>>()
+            + 2 * size_of::<Result<Drained<'_, N>>>()
+            + core_leaf,
+        resume: size_of::<Drained<'_, N>>()
+            + size_of::<WriteTargets<'_, '_, '_, '_, '_, '_, N>>()
+            + size_of::<Install<'_, N>>()
+            + 2 * size_of::<Result<Install<'_, N>>>()
+            + physical
+            + core_leaf,
+        install_finish: size_of::<Install<'_, N>>() + physical + core_leaf,
     }
 }
 

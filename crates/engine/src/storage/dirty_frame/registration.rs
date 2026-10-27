@@ -21,6 +21,23 @@ struct Slot {
     generation: u64,
     request: Option<TargetRequest>,
 }
+
+/// Source-value closure for the retention directory, also a conservative
+/// bound for its resolve/address_present leaves. Counts returned and extracted
+/// registrations as well as allocator/current/prior in the nested predicate.
+pub(super) fn retention_source_observation() -> usize {
+    use std::mem::size_of;
+    4 * size_of::<Registration>()
+        + 4 * size_of::<Option<Registration>>()
+        + 2 * size_of::<TargetRequest>()
+        + 2 * size_of::<Option<TargetRequest>>()
+        + 3 * size_of::<Option<[usize; 2]>>()
+        + 2 * size_of::<[usize; 2]>()
+        + 2 * size_of::<std::array::IntoIter<usize, 2>>()
+        + 2 * size_of::<std::iter::Enumerate<std::slice::Iter<'_, Slot>>>()
+        + 2 * size_of::<std::slice::Iter<'_, Slot>>()
+        + 4 * size_of::<(usize, &Slot)>()
+}
 impl Slot {
     const fn empty() -> Self {
         Self {

@@ -7,17 +7,24 @@
     reason = "C0 boundary awaits the separately owned Row consumers"
 )]
 pub(crate) use super::wal_io::disk_api::{
-    CatalogCallScope, CatalogCandidate, CatalogReadOperation, DiskSession,
-    EmptyRetentionControlLoan, ISOLATION_BYTES, IntoRetentionError, IsolationLevel,
-    MaintenancePort, MissingCatalogEvidence, MutationPort, Plan4Recovered, Plan4ResidencyCursor,
-    Plan4Target, ReadOnlyCommit, ReadPort, ReadStep, RetentionCause, RetentionError,
-    RetentionPhase, RowControlObservation, RowInputPlan, RowOperation, RowPageRole,
-    RowPreflightContext, RowProducerContext, RowProducerInput, RowProducerLane, RowProposal,
-    RowSourceBinding, RowSourceRole, RowStatementView, RowTransaction, RowValidationLane,
-    StatementFinishError, TransactionFinishError, TransactionOptions,
+    CatalogCallError, CatalogCallScope, CatalogCandidate, CatalogReadOperation,
+    CatalogStatementCall, DiskSession, EmptyRetentionControlLoan, ISOLATION_BYTES,
+    IntoRetentionError, IsolationLevel, MaintenancePort, MissingCatalogEvidence, MutationPort,
+    Plan4Recovered, Plan4ResidencyCursor, Plan4Target, PreparedCatalog, ReadOnlyCommit, ReadPort,
+    ReadStep, RetentionCause, RetentionError, RetentionPhase, RowControlObservation, RowInputPlan,
+    RowOperation, RowPageRole, RowPreflightContext, RowProducerContext, RowProducerInput,
+    RowProducerLane, RowProposal, RowSourceBinding, RowSourceRole, RowStatementView,
+    RowTransaction, RowValidationLane, StatementFinishError, TransactionFinishError,
+    TransactionOptions,
 };
 
 #[allow(unused_imports)]
 pub(in crate::storage) use super::wal_io::disk_api::{
     EPOCH_BYTES, VISIBILITY_BYTES, VisibilityLoan,
+};
+
+pub(in crate::storage) use super::wal_io::disk_api::InstallGrant;
+
+pub(crate) use super::wal_io::disk_api::{
+    DurableCommit, InstalledCommit, StagedCommit, UnstagedCommit,
 };

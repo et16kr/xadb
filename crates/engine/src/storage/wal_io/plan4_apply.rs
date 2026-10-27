@@ -5,6 +5,7 @@
 
 pub(crate) use super::super::plan4_recovery::Plan4Recovered;
 use super::{Plan4Page, Plan4Pages, Plan4ResidencyCursor, Plan4Target};
+use crate::storage::session_fence::SessionFence;
 use crate::{
     storage::{
         dirty_frame::{self, FrameStamp, SharedPool, TargetRequest},
@@ -12,12 +13,85 @@ use crate::{
         retention_page::{self, JobSlotRef},
         semantic_retention::RetentionSemanticError,
         transaction_record::{StatusSlotRef, TxnRef},
-        wal_io::{DurableWal, MutableStorageOwner, WalIoError, WalRequirement},
+        wal_io::{DurableWal, MutableStorageOwner, WalIoError, WalRequirement, WalRuntime},
     },
-    transaction::concurrency::Owner,
+    transaction::concurrency::{InstallationKey, Owner, OwnerIdentity, PageConcurrency},
 };
 use foundation::{error::Effect, namespace::WriterNamespace};
-use std::sync::Mutex;
+use std::sync::{Mutex, atomic::AtomicU8};
+
+/// Borrow the original physical WAL; semantic terminal authority belongs here.
+struct TerminalWal<'s, 'm, W: WriterNamespace> {
+    wal: &'s WalRuntime<'m, W>,
+}
+#[derive(Clone, Copy)]
+struct Binding<'c, 'f> {
+    core: &'c PageConcurrency<'f>,
+    key: InstallationKey,
+    requirement: WalRequirement<'f>,
+    semantic_digest: [u8; 32],
+}
+pub(crate) struct StagedCommit<'c, 'f> {
+    binding: Binding<'c, 'f>,
+}
+pub(crate) struct DurableCommit<'c, 'f> {
+    binding: Binding<'c, 'f>,
+    durable: DurableWal<'f>,
+}
+pub(crate) struct InstalledCommit<'c, 'f> {
+    binding: Binding<'c, 'f>,
+}
+/// The original stage call alone seals an Unchanged rejection; an upper error
+/// code cannot clear the core stage-call marker.
+pub(crate) struct UnstagedCommit<'c, 'f> {
+    core: &'c PageConcurrency<'f>,
+    key: InstallationKey,
+}
+/// Original staged binding retained during PinSet suspension, without locks.
+struct CatalogCommitWait<'c, 's> {
+    binding: Binding<'c, 's>,
+}
+struct CatalogStageError<'c, 's> {
+    error: WalIoError,
+    unstaged: Option<UnstagedCommit<'c, 's>>,
+}
+/// Actual input created only after the original core enters StageCallStarted.
+struct CatalogCommitAttempt<'a, 'i, 'c, 's> {
+    prepared: &'a PreparedCatalog<'i, 'c, 's>,
+    key: InstallationKey,
+}
+/// Actual whole page/control/history installation, without a public factory.
+struct CatalogCommitInstalled<'c, 's> {
+    core: &'c PageConcurrency<'s>,
+    binding: &'s AtomicU8,
+    fence: &'s SessionFence,
+    key: InstallationKey,
+    requirement: WalRequirement<'s>,
+    digest: [u8; 32],
+    q: u64,
+}
+#[path = "plan4_apply/terminal.rs"]
+mod terminal;
+
+/// An immutable image sealed by an actual apply producer after complete WAL
+/// stage. The installer can observe it but cannot construct or clone it.
+pub(in crate::storage) struct InstallGrant<'i, 'c, 's> {
+    kind: InstallKind<'i, 'c, 's>,
+}
+enum InstallKind<'i, 'c, 's> {
+    Plan4 {
+        core: &'c crate::transaction::concurrency::PageConcurrency<'s>,
+        stamp: FrameStamp,
+        requirement: WalRequirement<'s>,
+        after_counter: u64,
+        after: &'i [u8; PAGE_BYTES],
+    },
+    Legacy(super::super::dirty_allocation::InstallPermit<'i, 'c, 's>),
+}
+#[path = "plan4_apply/install.rs"]
+mod install;
+#[path = "plan4_apply/legacy.rs"]
+pub(in crate::storage::wal_io) mod legacy;
 
 #[path = "plan4_apply/isolation.rs"]
 mod isolation;
@@ -36,9 +110,19 @@ mod create_pair;
 #[path = "plan4_retention/visibility.rs"]
 mod visibility;
 pub(in crate::storage) use create_pair::CatalogRetirementRejected;
-#[allow(unused_imports)]
-pub(crate) use create_pair::PreparedCatalog;
-pub(in crate::storage) use create_pair::{CatalogCommitAttempt, CatalogCommitInstalled};
+use create_pair::catalog_live::CatalogPayload;
+
+/// No Clone/Copy and no raw constructor. This borrows immutable private
+/// operation bytes, not replay/control/page guards or a second storage owner.
+pub(crate) struct PreparedCatalog<'i, 'c, 's> {
+    payload: CatalogPayload<'i, 'c, 's>,
+    owner: OwnerIdentity,
+    requests: [TargetRequest; 9],
+    roles: [u8; 9],
+    count: usize,
+    stamps: [Option<FrameStamp>; 9],
+    before: &'i [[u8; PAGE_BYTES]; 8],
+}
 
 pub(in crate::storage) use create_pair::{
     TxPairAuthority, TxPairCancelKind, TxPairCancelPermit, TxPairControlCommit,
@@ -101,8 +185,8 @@ pub(in crate::storage) use population::{
     reason = "internal typed consumer exports retained for follow-on integration"
 )]
 pub(crate) use read::{
-    CatalogCallScope, CatalogCandidate, CatalogLookupStep, CatalogReadOperation,
-    MissingCatalogEvidence, ReadStep, RetentionReadGuard,
+    CatalogCallError, CatalogCallScope, CatalogCandidate, CatalogLookupStep, CatalogReadOperation,
+    CatalogStatementCall, MissingCatalogEvidence, ReadStep, RetentionReadGuard,
 };
 pub(in crate::storage) use recovery::{
     RetentionFrameObservation, RetentionRecoveryStep, RetentionReplayCursor,
@@ -266,6 +350,7 @@ struct IsolationLedger<'a, 'c, 's> {
 }
 
 pub(crate) struct ReadPort<'b, 'a, 's, 'c, 'p, 'd, 'm, 'w, W: WriterNamespace> {
+    source_charges: source::CatalogSourceCharges,
     storage: &'s MutableStorageOwner<'m, 'w, W>,
     pool: &'b SharedPool<'c, 's, 'p, 'd>,
     history: &'b history::runtime::RuntimeHistory<'a, 'c, 's>,
@@ -458,6 +543,9 @@ impl<'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
         ReadPort<'b, 'a, 's, 'c, 'p, 'd, 'm, 'w, W>,
         MaintenancePort<'b, 's, 'c, 'p, 'd, 'm, 'w, W>,
     ) {
+        // No previously split port can coexist with this exclusive session
+        // borrow. Complete the recursive type census before lending any port.
+        let source_charges = source::CatalogSourceCharges::new::<W>();
         (
             MutationPort {
                 storage: self.inner.storage,
@@ -469,6 +557,7 @@ impl<'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
                 visibility: self.catalog_visibility.as_ref(),
             },
             ReadPort {
+                source_charges,
                 storage: self.inner.storage,
                 pool: &self.inner.pool,
                 history: &self.history,

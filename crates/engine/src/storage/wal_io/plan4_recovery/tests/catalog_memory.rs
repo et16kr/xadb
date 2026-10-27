@@ -683,45 +683,49 @@ fn query<'s, 'c, W: WriterNamespace>(
     let mut finished = false;
     for _ in 0..32 {
         let mut call = reader.catalog_call(owner, &snapshot).unwrap();
-        let result = call.lookup(ObjectId::new(object).unwrap(), &mut cursor, private);
-        let step = match result {
-            Ok(step) => step,
-            Err(error) => panic!("actual scoped lookup {:?}", call.finish_error(error)),
-        };
-        let target = match step {
-            CatalogLookupStep::Found(record) => {
-                assert!(found);
-                let header = record.header();
-                assert_eq!(
-                    (
-                        header.identity.object.get(),
-                        header.identity.generation.get(),
-                        header.identity.schema_epoch.get()
-                    ),
-                    (object, 1, 1)
-                );
-                assert!(!header.retired);
-                let crate::storage::catalog_record::CatalogDefinitionView::Table(table) =
-                    record.definition()
-                else {
-                    panic!("table definition");
-                };
-                assert_eq!(table.name(), if object == 6 { "T" } else { "U" });
-                assert_eq!(table.len(), 1);
-                let column = table.column(0).unwrap();
-                assert_eq!(
-                    (column.name, column.data_type, column.nullable),
-                    ("i", DataType::Int64, false)
-                );
-                finished = true;
-                None
+        // End all borrowed result/inspection values before consuming close.
+        // The error arm still closes inside this block and is counted separately.
+        let target: Option<Plan4Target> = {
+            let result = call.lookup(ObjectId::new(object).unwrap(), &mut cursor, private);
+            let step = match result {
+                Ok(step) => step,
+                Err(error) => panic!("actual scoped lookup {:?}", call.finish_error(error)),
+            };
+            match step {
+                CatalogLookupStep::Found(record) => {
+                    assert!(found);
+                    let header = record.header();
+                    assert_eq!(
+                        (
+                            header.identity.object.get(),
+                            header.identity.generation.get(),
+                            header.identity.schema_epoch.get()
+                        ),
+                        (object, 1, 1)
+                    );
+                    assert!(!header.retired);
+                    let crate::storage::catalog_record::CatalogDefinitionView::Table(table) =
+                        record.definition()
+                    else {
+                        panic!("table definition");
+                    };
+                    assert_eq!(table.name(), if object == 6 { "T" } else { "U" });
+                    assert_eq!(table.len(), 1);
+                    let column = table.column(0).unwrap();
+                    assert_eq!(
+                        (column.name, column.data_type, column.nullable),
+                        ("i", DataType::Int64, false)
+                    );
+                    finished = true;
+                    None
+                }
+                CatalogLookupStep::Missing => {
+                    assert!(!found);
+                    finished = true;
+                    None
+                }
+                CatalogLookupStep::FlushRequired { target } => Some(target),
             }
-            CatalogLookupStep::Missing => {
-                assert!(!found);
-                finished = true;
-                None
-            }
-            CatalogLookupStep::FlushRequired { target } => Some(target),
         };
         call.finish_checked().unwrap();
         if finished {
@@ -1159,8 +1163,23 @@ mod resident_read;
 #[path = "catalog_memory/resident_faults.rs"]
 mod resident_faults;
 
+#[path = "catalog_memory/admitted_validation.rs"]
+mod admitted_validation;
+
 #[path = "catalog_memory/drained.rs"]
 mod drained;
 
 #[path = "catalog_memory/call_scope.rs"]
 mod call_scope;
+
+#[path = "catalog_memory/dpt_lifecycle.rs"]
+mod dpt_lifecycle;
+
+#[path = "catalog_memory/statement_reads.rs"]
+mod statement_reads;
+
+#[path = "catalog_memory/install_grant.rs"]
+mod install_grant;
+
+#[path = "catalog_memory/terminal.rs"]
+mod terminal;

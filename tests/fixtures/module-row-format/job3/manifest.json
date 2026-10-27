@@ -1,0 +1,87 @@
+{
+  "schema": "XADB_ROW_JOB3_CENSUS_V1",
+  "status": "FROZEN_INPUTS_NOT_EXECUTION_EVIDENCE",
+  "baseline": "2c9964d",
+  "scope": "Pure exact Job3 borrowed codec plus Root3/64 Job cell census. No page wrapper, actual graph/descriptor grant, source admission, current Profile3/base4 or Row execution/recovery.",
+  "budget": {
+    "total_seconds": 300,
+    "compiler_seconds": 90,
+    "case_seconds": 30,
+    "output_bytes": 8388608,
+    "rust_min_stack": 33554432
+  },
+  "runtime_tests": [
+    {
+      "selector": "storage::retention_page::row::job_tests::job3_literal_views_and_exact_recipes",
+      "reason": "Independent 31 literal cells: borrowed identity, explicit states/scopes, exact cleanup recipes and encode equality."
+    },
+    {
+      "selector": "storage::retention_page::row::job_tests::job3_closed_grammar_and_identity_rejections",
+      "reason": "Exact length/version/state/namespace/reserved/identity/LSN/C/RowId rejection, including Catalog preservation."
+    },
+    {
+      "selector": "storage::retention_page::row::job_tests::job3_budget_every_byte_is_checked",
+      "reason": "Every byte of all30 occupied budget640 rows and noncanonical h recipe is checked."
+    },
+    {
+      "selector": "storage::retention_page::row::job_tests::job3_encode_errors_preserve_output",
+      "reason": "Encode rejects invalid candidates and output sizes without modifying caller output."
+    },
+    {
+      "selector": "storage::retention_page::row::job_tests::job3_independent_multi_root_censuses",
+      "reason": "Four independently authored multi-root/actor committed-aborted-active/mixed Catalog banks and aggregate equality."
+    },
+    {
+      "selector": "storage::retention_page::row::job_tests::job3_census_rejects_identity_and_high_water_conflicts",
+      "reason": "Global RowId/U/sequence and physical/pair aliases, high-water and commitment mismatches."
+    },
+    {
+      "selector": "storage::retention_page::row::job_tests::job3_census_binds_root_and_job_namespace",
+      "reason": "Individually valid foreign Job bank cannot be combined with another namespace RootView."
+    },
+    {
+      "selector": "storage::retention_page::row::job_tests::job3_census_checks_terminal_causal_boundaries",
+      "reason": "Stored Retained/Prune/CLR/cleanup LSN causal boundaries against Commit/Abort terminal."
+    },
+    {
+      "selector": "storage::retention_page::row::job_tests::job3_census_active_actor_limit",
+      "reason": "Exactly32 active actor terminals allowed;33 rejected within original64/55 queue constraints."
+    },
+    {
+      "selector": "storage::retention_page::row::job_tests::job3_census_terminal_scope_and_create_visibility",
+      "reason": "Terminal scope/presence, multiple reservations, Catalog single-root and committed-before-Row visibility."
+    },
+    {
+      "selector": "storage::retention_page::row::job_tests::job3_selected_cell_borrows_original_census",
+      "reason": "One-cell replacement retains original bank and candidate borrows, checks ordinal/single replacement."
+    }
+  ],
+  "compiler_tests": [],
+  "inputs": {
+    "aggregates.bin": {
+      "bytes": 2560,
+      "sha256": "5e88de04c9d44458b7dde90012a495f2caad2832a3d1a97c4257dab690ca2f52"
+    },
+    "author.py": {
+      "bytes": 6624,
+      "sha256": "d82d798deddac0c76c0314a104166f0719055422ed5cca57aa2a6e00044212d0"
+    },
+    "cells.bin": {
+      "bytes": 31744,
+      "sha256": "d2ea7dae34cd200c8cf6d75500e669f8ddb54ddbb32f7ab26575648342de8dc7"
+    },
+    "index.json": {
+      "bytes": 797,
+      "sha256": "9743b457ebd79239be2280535711c28fd5eea79640471528538233052e323012"
+    },
+    "jobs.bin": {
+      "bytes": 262144,
+      "sha256": "7942f26f444bf6ce5888da2055fd91d43a8f183932a6a6da9357fb5399d8d5ce"
+    },
+    "roots.bin": {
+      "bytes": 2048,
+      "sha256": "f9415abed73f9957e2ce28cd2cf2b24345857f94cc8529e272a193605072367e"
+    }
+  },
+  "preserved_scope": "Original Root2/current Profile2 and completed standalone Root3 tests unchanged, no lower repetitions. Static corpus does not represent actual storage effects/history."
+}

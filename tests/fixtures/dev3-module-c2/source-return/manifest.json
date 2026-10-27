@@ -1,0 +1,43 @@
+{
+  "schema": "XADB_MODULE_C2_CATALOG_SOURCE_RETURN_V1",
+  "status": "FROZEN_INPUTS_NOT_EXECUTION_EVIDENCE",
+  "baseline": "788702c",
+  "scope": "admitted Catalog read progress through final source return only; source-before-progress entry gap and full writer/progress aggregate remain incomplete",
+  "budget": {
+    "total_seconds": 600,
+    "compiler_seconds": 90,
+    "case_seconds": 30,
+    "output_bytes": 8388608,
+    "rust_min_stack": 33554432
+  },
+  "runtime_tests": [
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::source_return::drain_waits_after_refs_until_source_return",
+      "reason": "new final Missing/source cut: actual Full and Resident Complete paths have refs0/pins0 and still block actual Commit Drain"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::source_return::fenced_source_return_still_cleans_progress",
+      "reason": "new final source-before-progress cleanup retains fenced byte charge yet clears flag and rejects Commit"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::source_return::found_decode_keeps_progress_until_source_return",
+      "reason": "changed Found final decoder/result remains under original read-operation flag and fixed source ticket"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::source_return::unwinding_final_decode_preserves_source_and_cleans_progress",
+      "reason": "changed Drop sequence on actual final decode hook unwind: source fenced/retained while progress cleanup executes"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::read_boundary::captured_undo_read_error_preserves_fatal_cause",
+      "reason": "changed finish_error cleanup source before progress on actual Full Undo I/O fatal"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::commit_concurrency::catalog_read_operation_fenced_drain_preserves_fatal_refs",
+      "reason": "changed finish_error/Drop order with existing captured refs and fenced actual Drain"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::resident_read::resident_corruption_remains_fatal_without_io",
+      "reason": "changed final cleanup on Resident typed Status/Undo fatal keeps original fence and byte charge"
+    }
+  ]
+}

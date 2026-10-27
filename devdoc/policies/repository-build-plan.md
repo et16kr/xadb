@@ -666,3 +666,143 @@ statement factory·자동 read-set·CheckedTable/RowReadOperation과 short aggre
 ### C2 Catalog 결과 소비 수명의 main 수신
 
 `plan4_retention/read/scope.rs`는 기존 Owner/backend/snapshot과 source/progress의 수명을 소유하고 `operation.rs`는 원 refs/lease·복사만 소유한다. `catalog_memory/call_scope.rs`·compiler4입력/manifest와 변경 경로는 JSON `dev3_module_c2_call_scope_main`에 등록한다. 기존 `storage::disk` 경계로 opaque scope를 노출하며 신규 package/dependency·source root·wire/backing은 없다. [증거](../evidence/module-independence-survey-20261026.md#c2-call-scope-main)는 선택 query의 실제 수명과 legacy 반환 이후의 제외 범위, 미공급 writer/progress·entry/return 전체 합을 구별한다.
+
+### C2 전체 Catalog 조회의 short source 예약
+
+`plan4_apply/source.rs`는 원 isolation backing의24..32에 조회 바이트를 예약하고 마지막 output 변환/Result 뒤 checked 반환한다. `source_tests.rs`와 실제 Catalog 동시 호출 시험, 선택 manifest의 신규 경로는 JSON `dev3_module_c2_short_source`에 등록했다. package/dependency·source root·clean export 범위는 유지한다. [한정 증거](../evidence/module-independence-survey-20261026.md#c2-short-source)는 CatalogFull 한 class의 source별17개 PASS와 원 compile FAIL을 보존한다. 다른 입구·writer/progress·resident class의 동시 합은 후속이며 전체64KiB 보장이나 M4/M5 완료가 아니다.
+
+
+### C2 상주 Catalog 조회의 고정 class
+
+`plan4_retention/read/resident.rs`는 원 allocator copy/Status·Undo observation만 제공하며 기존425984B loan을 사용한다. 원 product branch와 source ledger는 Full/Resident class를 구별한다. 신규 실제 시험2파일·선택 manifest와 수정 경로는 JSON `dev3_module_c2_resident_read`에 등록했다. package/dependency·source root·clean export는 유지한다. [한정 증거](../evidence/module-independence-survey-20261026.md#c2-resident-read)는 선택9개 PASS와 원 compile/census FAIL, 상주 두-reader55976B를 보존하며 writer/progress의 전체 동시 합산은 후속이다.
+
+
+### C2 최종 source 반환과 read progress 수명
+
+기존 `read/operation.rs`의 refs 정리와 source/progress 정리를 분리했다. 새 실제 시험과 선택 manifest는 JSON `dev3_module_c2_source_return`에 등록했다. package/dependency·source root·backing·wire 변경은 없다. [한정 증거](../evidence/module-independence-survey-20261026.md#c2-source-return)는 신규4·cleanup 변경 영향3의 선택7개 PASS를 보존하며 source-before-progress 진입 틈과 전체 writer/progress 합산을 후속으로 남긴다.
+
+### C2 Commit phase 관측 등록 — 2026-10-27
+
+기존7개 Rust source에 cfg(test) 관측만 추가했고 신규 manifest는 JSON `dev3_module_c2_commit_phase_observation`에 등록했다. 제품 charge·admission·package/dependency·source root·wire는 유지한다. [한정 증거](../evidence/module-independence-survey-20261026.md#c2-commit-phases)는 test build/신규 관측1 PASS와 원 compile FAIL을 보존하며 실제 Pending layout 축소를 후속으로 남긴다.
+
+### C2 Pending image 수명 분리 등록 — 2026-10-27
+
+기존4개 Rust source의 Prepared/payload·stage 소비·공통 control 입력과 관측 시험을 수정했다. 신규 manifest는 JSON `dev3_module_c2_pending_image`에 등록했다. package/dependency·source root·backing·wire 변경은 없다. [한정 증거](../evidence/module-independence-survey-20261026.md#c2-pending-image)는 관련12 PASS와 원 compile FAIL, Pending 자료 감소와 stage 반환 상한 증가를 함께 보존한다. 전체 source admission은 후속이다.
+
+### C2 source 진입 수명 등록 — 2026-10-27
+
+기존 read operation의 source/progress 진입 순서와 source 실패 정리만 변경했다. 새 actual 시험·manifest는 JSON `dev3_module_c2_source_entry`에 등록했다. package/dependency·source root·owned type/census·wire는 유지한다. [한정 증거](../evidence/module-independence-survey-20261026.md#c2-source-entry)는 production/test build·진입 관련5 PASS를 보존하며 전체 writer/entry/return source 합산은 후속이다.
+
+### C2 Aging/Root source 계산 등록 — 2026-10-27
+
+기존6개 Rust source의 실제 호출 상한·공통 codec 계산과 신규 관측을 변경했다. 신규 manifest는 JSON `dev3_module_c2_aging_source`에 등록했다. package/dependency·source root·backing·wire 변경은 없다. [한정 증거](../evidence/module-independence-survey-20261026.md#c2-aging-source)는 source 관련3 PASS·원 경고와 import-only 후속 compile을 구분하며 전체 writer/read/progress 합산은 미완료다.
+
+### C2 WAL wait source 관측 등록 — 2026-10-27
+
+기존7개 Rust 파일에 cfg(test) 관측/신규1을 추가했고 신규 manifest는 JSON `dev3_module_c2_wal_wait_source`에 등록했다. package/dependency·source root·제품 상계/charge·wire 변경은 없다. [한정 증거](../evidence/module-independence-survey-20261026.md#c2-wal-wait-source)는 물리/semantic/caller 반환 phase와 source별1 PASS를 보존하며 실제 source admission은 후속이다.
+
+### C2 실제 Drained 소비 경계 등록 — 2026-10-27
+
+원 dirty_frame/Commit에 private Drained carrier와 consuming drain/resume를 공급하고 Catalog actual caller·source 계산을 연결했다. 신규 실제 시험/manifest와 수정7경로는 JSON `dev3_module_c2_drained_handoff`에 등록했다. package/dependency·source root·backing·wire는 유지한다. [한정 증거](../evidence/module-independence-survey-20261026.md#c2-drained-handoff)는 신규4·관련4·source2 PASS와 반환 비용 증가를 보존하며 source phase 예약은 후속이다.
+
+### C2 Catalog CallScope 등록 — 2026-10-27
+
+원 ReadPort의 scope factory와 private 원 admission 소유자를 공급하고 Operation refs-only 정리·legacy checked result·selected query 수명을 연결했다. 실제 scope/시험/compile fixture7개 신규 경로와 수정8경로를 JSON `dev3_module_c2_call_scope`에 등록했다. package/dependency·source root·backing·wire는 유지한다. [source별 증거](../evidence/module-independence-survey-20261026.md#c2-call-scope)는 runtime14+1+2·compiler4 PASS, 원 fixture FAIL과 미반복을 보존하며 전체 entry/tail·writer/progress admission은 후속이다.
+
+### C2 descriptor budget 행 borrow 등록 — 2026-10-27
+
+원 obligation의 행 반복/values를 borrow로 바꾸고 allocation source의 iterator 계수를 연결했다. 실제 수정2경로와 선택 manifest1을 JSON `dev3_module_c2_borrowed_budget_rows`에 등록했으며 package/dependency·source root·wire·backing은 유지한다. [증거](../evidence/module-independence-survey-20261026.md#c2-borrowed-budget-rows)는 동일 source/ELF의5+5 PASS, Aging harness identity 원 FAIL과 build/완료 사례 미반복을 보존한다. 실제 전체 admission은 미완료다.
+
+### C2 readonly replay source 등록 — 2026-10-27
+
+기존 allocation/INIT source3경로와 source 관측1을 수정하고 선택 manifest1을 JSON `dev3_module_c2_readonly_replay_source`에 등록했다. package/dependency·source root·backing·wire는 유지한다. [선택 증거](../evidence/module-independence-survey-20261026.md#c2-readonly-replay-source)는 production/test build·source별6+계수 보완1 PASS와 Full35895B를 보존하며 전체 entry/tail·writer admission은 후속이다.
+
+### C2 작은 Catalog 진입·정리 경계 등록 — 2026-10-27
+
+actual health/source/Scope/legacy facade·원 progress consuming finish와 관련 시험11경로를 수정하고 선택 manifest1을 JSON `dev3_module_c2_compact_call_boundary`에 등록했다. 기존 authored compiler4는 파일을 복제하지 않고 원 fixture를 참조한다. package/dependency·source root·backing·wire는 유지한다. [원 증거](../evidence/module-independence-survey-20261026.md#c2-compact-call-boundary)는 production/test build·runtime25·compiler4 PASS와 Full35619B를 보존하며 전체 bound floor·writer/progress 예약은 후속이다.
+
+### C2 replay 작업 공간 대여 등록 — 2026-10-27
+
+기존 semantic transition/source·history/recovery 연결·선택 관측8경로를 수정하고 실제 fixture1을 JSON `dev3_module_c2_borrowed_replay_workspace`에 등록했다. package/dependency·source root·backing·wire는 유지한다. [source별 증거](../evidence/module-independence-survey-20261026.md#c2-borrowed-replay-workspace)는 선택9 PASS·원 compile FAIL/경고와 import-only build를 구별하며 전체 entry/tail·writer admission은 후속이다.
+
+### C2 split 고정 source 계산 등록 — 2026-10-27
+
+기존 port/source/Scope/실제 관측/live·복구 계수7경로를 수정하고 선택 fixture1을 JSON `dev3_module_c2_split_source_charges`에 등록했다. package/dependency·source root·backing·wire는 유지한다. [원 증거](../evidence/module-independence-survey-20261026.md#c2-split-source-charges)는 build/runtime16 PASS와 원 compile FAIL2, source별 계산graph 보완을 구별하며 전체 entry/tail·writer admission은 후속이다.
+
+### C2 예약 밖 호출 phase 관측 등록 — 2026-10-27
+
+기존 Scope·core·pool/registration·visibility·isolation8경로의 작은 실패 helper/cfg(test) 관측과 선택 fixture1을 JSON `dev3_module_c2_uncharged_call_phases`에 등록했다. package/dependency·source roots·backing·wire는 유지한다. [원 증거](../evidence/module-independence-survey-20261026.md#c2-uncharged-call-phases)는 r1 production PASS/test compile FAIL/runtime NOT_RUN과 r2 test build/선택4 PASS·생산 미반복을 구별한다. 관측 floor는 제품에 연결하지 않았으며 전체 reader/writer admission은 미완료다.
+
+### C2 query 종료 경계 등록 — 2026-10-27
+
+기존 Scope·actual query·call_scope3경로와 선택 fixture1을 JSON `dev3_module_c2_query_tail_boundaries`에 등록했다. package/dependency·source roots·backing·wire는 유지한다. [증거](../evidence/module-independence-survey-20261026.md#c2-query-tail-boundaries)의 production/test build·선택5 PASS는 changed finish_error와 query 경계에 한정한다. 정상710B/오류1394B 관측은 전체 reader/writer admission 미공급과 구별한다.
+
+### C2 compact DPT 등록 — 2026-10-27
+
+현재 private DPT representation·producer/flush/진단7기존경로, 신규 표현시험/actual Pair cut시험/선택 manifest3경로를 JSON `dev3_module_c2_compact_dpt`에 등록한다. package/dependency·source root·caller backing·wire는 유지한다. [실행 증거](../evidence/module-independence-survey-20261026.md#c2-compact-dpt)의 source별2+12선택 PASS와 원 compile/fixture FAIL을 구별한다. private 배열3072B 감소와 actual helper660B 비용 연결은 전체 aggregate admission 완료가 아니다.
+
+### C2 LOAD claim borrow 등록 — 2026-10-27
+
+실제 reader_load/retention_residency2기존경로와 선택 fixture1경로를 JSON `dev3_module_c2_borrowed_load_claims`에 등록한다. 같은 registry의 참조 검산이며 원 권한·backing·source roots·package/dependency는 유지한다. [선택4 증거](../evidence/module-independence-survey-20261026.md#c2-borrowed-load-claims)는 해당 actual LOAD와 변경 관측에 한정한다.
+
+
+### C2 예약 뒤 원 검산
+
+실제 pool/visibility/read/source9기존경로, 신규 시험1경로와 선택 manifest1경로를 JSON `dev3_module_c2_admitted_validation`에 등록한다. [내부 admission D2](../contracts/dev3-module-boundaries.md#operation-source-admission)는 pool/visibility guard 없는 원 health/origin, 원 core의 Owner/progress 검사와 source 예약 뒤 전체 pool/snapshot 검산을 수행한다. 원 권한·backing·source roots·package/dependency는 유지한다. [선택12 증거](../evidence/module-independence-survey-20261026.md#c2-admitted-validation)는 원 test-build FAIL과 source별 미반복을 보존하며 전체 floor/phase 공급은 미완료다.
+
+
+### C2 statement Catalog 읽기
+
+실제 private statement adapter와 시험2경로, 선택 manifest·compiler probe4경로를 JSON `dev3_module_c2_statement_reads`에 등록한다. 기존9경로는 private snapshot 대여·자동 read bit·원 Full/Resident class 비용·canonical 재노출을 연결한다. 원 owner/guard/credit/backing과 source roots·package/dependency는 유지한다. [한정 공급](../contracts/dev3-module-boundaries.md#catalog-statement-supply)과 [실제 선택 증거](../evidence/module-independence-survey-20261026.md#c2-statement-reads)는 전체 short/Row 공급과 구별한다.
+
+### C3 apply 설치 권한
+
+apply의 private 권한·관찰 accessor·legacy 소비 adapter와 current Profile2 거절 시험, 선택 manifest/compiler probe를 JSON `dev3_module_c3_install_grant`에 등록한다. 실제 Catalog3·legacy4 생산 지점과 generic installer·source 식의 기존 경로를 수정했다. 원 source roots·package/dependency·backing·disk 형식은 유지한다. [선택 증거](../evidence/module-independence-survey-20261026.md#c3-install-grant)는 전체 terminal/Row 공급과 구별한다.
+
+
+### C3 Catalog terminal 소유 이전
+
+apply root의 private receipt·actual terminal 자손과 Busy 시험·manifest/compiler4를 JSON `dev3_module_c3_terminal`에 등록한다. 원 `wal_io/commit_bridge.rs`를 제거하고 physical WAL의 semantic method/re-export 사슬을 정리했다. generic core/dirty_frame은 disk receipt를 소비한다. 기존 역사적 modified_paths와 원 source 증거는 이전 전 identity를 유지하고 새 항목에 제거·이전 관계를 기록한다. source roots/package/dependency/disk 형식은 유지하며 [선택 증거](../evidence/module-independence-survey-20261026.md#c3-terminal)는 전체 C3/Row/aggregate 공급과 구별한다.
+
+
+### C3 Prepared 정의와 canonical 소비
+
+실제 PreparedCatalog 정의는 원 apply root로 이동하고 checked factory/소비 impl은 기존 자손에 남는다. canonical disk export·epoch/retirement/terminal imports의 기존8경로와 신규 manifest/compiler4를 JSON `dev3_module_c3_prepared`에 등록한다. field type/order·runtime/source 식과 source roots/package/dependency/wire는 유지한다. [컴파일 선택 증거](../evidence/module-independence-survey-20261026.md#c3-prepared)를 runtime 재실행이나 전체 C3 공급으로 승격하지 않는다.
+
+
+### Row Root3 순수 cell codec
+
+별도 `retention_page::row`와 root/test, 독립 author/literal3/선택 manifest를 JSON `dev3_module_row_root3`에 등록한다. 원 모듈 등록 외 existing codec/current dispatcher의 변경은 없다. source roots/package/dependency는 유지하며 [실제 선택 증거](../evidence/module-independence-survey-20261026.md#row-root3-codec)를 current Profile3/Row recovery 공급과 구별한다.
+
+
+### Row Job3 순수 cell·census
+
+`retention_page/row/{job,census,job_tests}.rs`와 독립 author/literal/index/manifest를 JSON `dev3_module_row_job3`에 등록한다. 원 row 모듈만 연결하며 기존 Root/Job2 또는 current 선택 본문은 바꾸지 않는다. source roots/package/dependency를 유지한다. [선택 증거](../evidence/module-independence-survey-20261026.md#row-job3-census)는 actual graph·source admission·Profile3/base4/Row 실행 증거가 아니다.
+
+
+### Profile3·Row page 순수 envelope
+
+별도 `control/row_profile{,_tests}.rs`와 `retention_page/row/pages{,_tests}.rs`, 독립 envelope author/literal3/manifest를 JSON `dev3_module_row_envelopes`에 등록한다. 기존 control/row 모듈에서 명시 Profile format과 좁은 private header의 typed mode/등록을 연결하며 source roots/package/dependency/current 선택은 유지한다. [선택 증거](../evidence/module-independence-survey-20261026.md#row-envelope-codecs)를 actual current·graph·admission과 구별한다.
+
+
+### Base4 raw layout와 공통 image 기록
+
+`plan4_recovery_base/{image_records,row,row_tests}.rs`와 독립 author/Base4 literal2/manifest를 JSON `dev3_module_row_base4`에 등록한다. 기존 base root/header와 Catalog의 공통 record import만 변경하며 source roots/package/dependency는 유지한다. [선택 증거](../evidence/module-independence-survey-20261026.md#row-base4-layout)는 full graph/census/INIT witness·current 선택/복구·source admission의 공급 증거가 아니다.
+
+
+### Root3-bound Aging descriptor
+
+`retention_obligation/row{,_tests}.rs`와 independent author/pages/jobs/descriptors/aggregates/manifest를 JSON `dev3_module_row_aging`에 등록한다. 원 retention_obligation의 모듈 등록 외 existing codec/current 호출은 변경하지 않는다. source roots/package/dependency는 유지하며 [선택 증거](../evidence/module-independence-survey-20261026.md#row-aging)는 actual history/source admission/current 복구를 대신하지 않는다.
+
+
+### Row 거래 현재 예약 ledger
+
+`semantic_row.rs`, `semantic_row/ledger{,_tests}.rs`와 independent author/index/jobs/homes/descriptors/budgets/manifest를 JSON `dev3_module_row_transaction_ledger`에 등록한다. 기존 storage 모듈 등록1줄 외 actual caller는 추가하지 않으며 source roots/package/dependency는 유지한다. [선택 증거](../evidence/module-independence-survey-20261026.md#row-transaction-ledger)는 actual physical graph/history/source admission·live/recovery 인수를 대신하지 않는다.
+
+이 ledger 단위는 source별9 selector와 원 FAIL을 보존하고 독립 D1/D2 한정 수용·필수 수정0을 수신했다. 실제 graph/current 공급·M4/M5의 완료 상태는 변경하지 않는다.
+
+
+<a id="module-main-integration-20261028"></a>
+### 모듈 개발의 main 통합 — 2026-10-28
+
+[통합 기록](../evidence/module-independence-survey-20261026.md#merge-main-20261028)에 따라 main의 공통 core 단일 계수·Commit4phase·복구 반환 수명·반환 Result 계수와 finish의 후속 C2/C3·Row 부분공급을 함께 보존한다. 소스 루트·crate 역할·의존 허용 범위는 그대로다. 사용자 지시에 따라 이후 개발은 main에서 진행하며, C2 미커밋 초안 stash는 병합과 별개로 보존한다. 전체 동시 admission·M4/M5 완료를 뜻하지 않는다.

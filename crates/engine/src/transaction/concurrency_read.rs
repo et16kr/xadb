@@ -11,18 +11,18 @@ pub(crate) struct ReadOperationAdmission<'c, 'f> {
 }
 
 impl<'c, 'f> Owner<'c, 'f> {
-    /// Enter before the first transient reference or physical read. Pending
-    /// Commit permits readers; Draining/Installing reject new operations. This
-    /// does not relax try_content's existing Drain exclusion.
-    pub(crate) fn try_read_operation(
-        &mut self,
-        expected: &PageConcurrency<'_>,
-    ) -> Result<ReadOperationAdmission<'c, 'f>> {
-        let mut state = self.core.entry_state()?;
+    /// Observe admission priority without claiming a slot. A subsequent entry
+    /// must check again; this grants no right across a concurrent Drain.
+    pub(crate) fn check_read_operation(&self, expected: &PageConcurrency<'_>) -> Result<()> {
+        let state = self.core.entry_state()?;
+        self.check_read_entry(expected, &state)
+    }
+
+    fn check_read_entry(&self, expected: &PageConcurrency<'_>, state: &State) -> Result<()> {
         if !self.belongs_to(expected) || self.index == FLUSHER_SLOT {
             return Err(unchanged(Cause::InvalidRole));
         }
-        self.check_mode(&state, Mode::Idle)?;
+        self.check_mode(state, Mode::Idle)?;
         if state.slots[self.index].read_operation {
             return Err(unchanged(Cause::Busy));
         }
@@ -32,6 +32,17 @@ impl<'c, 'f> Owner<'c, 'f> {
         ) {
             return Err(unchanged(Cause::InstallationPending));
         }
+        Ok(())
+    }
+    /// Enter before the first transient reference or physical read. Pending
+    /// Commit permits readers; Draining/Installing reject new operations. This
+    /// does not relax try_content's existing Drain exclusion.
+    pub(crate) fn try_read_operation(
+        &mut self,
+        expected: &PageConcurrency<'_>,
+    ) -> Result<ReadOperationAdmission<'c, 'f>> {
+        let mut state = self.core.entry_state()?;
+        self.check_read_entry(expected, &state)?;
         state.slots[self.index].read_operation = true;
         Ok(ReadOperationAdmission {
             core: Some(self.core),
@@ -44,6 +55,12 @@ impl<'c, 'f> Owner<'c, 'f> {
 }
 
 impl ReadOperationAdmission<'_, '_> {
+    /// Consume the ticket after the source loan has been closed. Exact original
+    /// core/OwnerIdentity remains authoritative; Drop is inert after this call.
+    pub(crate) fn finish_checked(mut self) -> Result<()> {
+        self.release_checked()
+    }
+
     /// Return after all page guards, lookup claims and transient refs. Cleanup
     /// remains possible after a fence/poison, but never reports those as success.
     /// Repeated close is inert so the adapter's explicit close and Drop agree.
@@ -96,10 +113,81 @@ pub(crate) const fn source_bytes() -> usize {
         + 2 * size_of::<usize>()
 }
 
+/// Observation only: same-core Owner slots, guardless waiting, guarded work,
+/// and guardless return carriers. This is not wired into source admission.
+/// The DedicatedFlusher also reaches entry_state before InvalidRole rejection.
+#[cfg(test)]
+pub(crate) fn entry_source_observation() -> (usize, usize, usize, usize) {
+    use std::mem::size_of;
+    // cleanup's self/core Option/extracted core/cleanup_state/live arguments;
+    // its first failure remains while waiting. Entry has fewer arguments.
+    let waiting = 5 * size_of::<&()>()
+        + 2 * size_of::<Option<ConcurrencyError>>()
+        + 4 * size_of::<Result<()>>();
+    let locks = 4 * size_of::<MutexGuard<'_, State>>()
+        + 2 * size_of::<std::sync::LockResult<MutexGuard<'_, State>>>()
+        + 2 * size_of::<Result<MutexGuard<'_, State>>>()
+        + 2 * size_of::<std::sync::PoisonError<MutexGuard<'_, State>>>();
+    let accounting = size_of::<std::slice::Iter<'_, OwnerSlot>>()
+        + size_of::<std::iter::Enumerate<std::slice::Iter<'_, OwnerSlot>>>()
+        + 2 * size_of::<(usize, &OwnerSlot)>()
+        + 5 * size_of::<&()>()
+        + 2 * size_of::<u16>()
+        + 8 * size_of::<usize>()
+        + 8 * size_of::<bool>();
+    // Include the copied match input, expected tuple, extracted key/mode and
+    // returned/extracted iteration values. No State/slot array is copied.
+    let installation = 2 * size_of::<Installation>()
+        + 2 * size_of::<Option<(InstallationKey, Mode)>>()
+        + 2 * size_of::<InstallationKey>()
+        + 2 * size_of::<Mode>()
+        + 2 * size_of::<std::iter::Enumerate<std::slice::Iter<'_, OwnerSlot>>>()
+        + size_of::<(usize, &OwnerSlot)>()
+        + 8 * size_of::<usize>()
+        + 6 * size_of::<&()>()
+        + 8 * size_of::<bool>();
+    let guarded = locks
+        + 6 * size_of::<&()>()
+        + 8 * size_of::<Result<()>>()
+        + 4 * size_of::<Option<ConcurrencyError>>()
+        + 2 * size_of::<OwnerIdentity>() // cleanup index()/generation() value receivers
+        + accounting.max(installation);
+    // Entry's ticket/identity and complete returned Result remain per caller,
+    // even after the guard is gone. Do not classify them as serialized work.
+    let returning = size_of::<ReadOperationAdmission<'_, '_>>()
+        + 2 * size_of::<Result<ReadOperationAdmission<'_, '_>>>()
+        + size_of::<OwnerIdentity>()
+        + 4 * size_of::<ConcurrencyError>()
+        + 3 * size_of::<&()>();
+    (OWNER_SLOTS, waiting, guarded, returning)
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
     use crate::transaction::concurrency::catalog_test_support::observe;
+
+    #[test]
+    fn read_operation_precheck_has_no_claim_and_entry_checks_again() {
+        let fence = SessionFence::new();
+        let core = PageConcurrency::new(&fence).unwrap();
+        let mut owner = core.try_owner(OwnerRole::Foreground).unwrap();
+        owner.check_read_operation(&core).unwrap();
+        assert_eq!(observe(&core).active_read_operations, 0);
+        let mut operation = owner.try_read_operation(&core).unwrap();
+        assert_eq!(
+            owner.check_read_operation(&core).unwrap_err().cause,
+            Cause::Busy
+        );
+        operation.release_checked().unwrap();
+        owner.check_read_operation(&core).unwrap();
+        fence.fence();
+        assert_eq!(
+            owner.try_read_operation(&core).err().unwrap().cause,
+            Cause::Fenced
+        );
+        assert_eq!(observe(&core).active_read_operations, 0);
+    }
 
     #[test]
     fn read_operation_keeps_slot_across_content_and_rejects_apply() {

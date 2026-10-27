@@ -11,6 +11,17 @@
 
 #[path = "plan4_recovery_base/catalog.rs"]
 pub(super) mod catalog;
+#[path = "plan4_recovery_base/image_records.rs"]
+mod image_records;
+#[path = "plan4_recovery_base/row.rs"]
+pub(super) mod row;
+
+pub(in crate::storage) const INIT_BYTES: usize = 352;
+/// Historical observation only; constructed only inside validated layout views.
+#[derive(Clone, Copy)]
+pub(in crate::storage) struct InitProvenance<'a> {
+    bytes: &'a [u8; INIT_BYTES],
+}
 
 use super::{
     allocation_page::{self, AllocationEntry, AllocationError, ReservationOwner, SystemWorkRef},
@@ -134,6 +145,7 @@ pub(super) enum BaseFormat {
     V1Status = 1,
     V2System = 2,
     V3Catalog = 3,
+    V4RowMissing = 4,
 }
 
 /// Scalar capture observations. Physical charge is rechecked by the namespace
@@ -391,7 +403,8 @@ fn validate_header(h: Header, e: Expected) -> Result<()> {
         || h.active_systems > 2
         || h.status_mask & 0x1ff != 0
         || h.leased & h.ready != 0
-        || (h.format != BaseFormat::V3Catalog && h.leased.count_ones() != h.active_transactions)
+        || (matches!(h.format, BaseFormat::V1Status | BaseFormat::V2System)
+            && h.leased.count_ones() != h.active_transactions)
         || (h.leased | h.ready).count_ones() > 55
         || h.root_revision == 0
         || h.doublewrite_generation == 0
@@ -401,7 +414,12 @@ fn validate_header(h: Header, e: Expected) -> Result<()> {
         || h.system_high_water[2] > 1
         || (h.format == BaseFormat::V1Status
             && h.allocation_terminal == AllocationTerminal::InitializedUndo)
-        || (h.format == BaseFormat::V3Catalog) != (e.profile.format() == 2)
+        || !matches!(
+            (h.format, e.profile.format()),
+            (BaseFormat::V1Status | BaseFormat::V2System, 1)
+                | (BaseFormat::V3Catalog, 2)
+                | (BaseFormat::V4RowMissing, 3)
+        )
     {
         return Err(Error::InvalidInput);
     }
@@ -495,10 +513,18 @@ fn write_header(h: Header, e: Expected, output: &mut [u8]) -> Result<()> {
 }
 
 fn read_header(bytes: &[u8; BASE_BYTES], e: Expected) -> Result<Header> {
-    read_header_format(bytes, e, false)
+    read_header_format(bytes, e, HeaderMode::Legacy)
 }
 
-fn read_header_format(bytes: &[u8], e: Expected, catalog: bool) -> Result<Header> {
+#[derive(Clone, Copy, PartialEq, Eq)]
+#[repr(u8)]
+enum HeaderMode {
+    Legacy,
+    Catalog,
+    Row,
+}
+
+fn read_header_format(bytes: &[u8], e: Expected, mode: HeaderMode) -> Result<Header> {
     if bytes.len() < 4096 {
         return Err(Error::Corrupt);
     }
@@ -506,9 +532,10 @@ fn read_header_format(bytes: &[u8], e: Expected, catalog: bool) -> Result<Header
         return Err(Error::Corrupt);
     }
     let format = match get16(bytes, 4) {
-        1 => BaseFormat::V1Status,
-        2 => BaseFormat::V2System,
-        3 if catalog => BaseFormat::V3Catalog,
+        1 if mode != HeaderMode::Row => BaseFormat::V1Status,
+        2 if mode != HeaderMode::Row => BaseFormat::V2System,
+        3 if mode == HeaderMode::Catalog => BaseFormat::V3Catalog,
+        4 if mode == HeaderMode::Row => BaseFormat::V4RowMissing,
         _ => return Err(Error::Unsupported),
     };
     if get16(bytes, 6) != 1 {
@@ -537,7 +564,7 @@ fn read_header_format(bytes: &[u8], e: Expected, catalog: bool) -> Result<Header
         || !zero(&bytes[1188..1192])
         || !zero(&bytes[1224..1280])
         || !zero(
-            &bytes[if format == BaseFormat::V3Catalog {
+            &bytes[if matches!(format, BaseFormat::V3Catalog | BaseFormat::V4RowMissing) {
                 1600
             } else {
                 1664
@@ -568,7 +595,11 @@ fn read_header_format(bytes: &[u8], e: Expected, catalog: bool) -> Result<Header
             0 => AllocationTerminal::None,
             1 => AllocationTerminal::Cancelled,
             2 => AllocationTerminal::InitializedStatus,
-            3 if matches!(format, BaseFormat::V2System | BaseFormat::V3Catalog) => {
+            3 if matches!(
+                format,
+                BaseFormat::V2System | BaseFormat::V3Catalog | BaseFormat::V4RowMissing
+            ) =>
+            {
                 AllocationTerminal::InitializedUndo
             }
             _ => return Err(Error::Unsupported),
@@ -1521,7 +1552,7 @@ pub(super) fn decode<'a>(
     let validate_allocation = match h.format {
         BaseFormat::V1Status => super::wal_io::validate_plan4_base_allocation,
         BaseFormat::V2System => super::wal_io::validate_plan4_system_base_allocation,
-        BaseFormat::V3Catalog => return Err(Error::Unsupported),
+        BaseFormat::V3Catalog | BaseFormat::V4RowMissing => return Err(Error::Unsupported),
     };
     validate_allocation(
         page_at(bytes, ALLOCATOR),
@@ -1565,7 +1596,7 @@ pub(super) fn encode<'a>(
     output: &'a mut [u8; BASE_BYTES],
     scratch: &mut [[u8; PAGE_BYTES]; 4],
 ) -> Result<BaseView<'a>> {
-    if h.format == BaseFormat::V3Catalog {
+    if matches!(h.format, BaseFormat::V3Catalog | BaseFormat::V4RowMissing) {
         return Err(Error::Unsupported);
     }
     validate_header(h, expected)?;

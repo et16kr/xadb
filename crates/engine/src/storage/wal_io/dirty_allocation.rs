@@ -234,6 +234,7 @@ pub(super) fn typed_fits() -> bool {
         && std::mem::size_of::<Option<InstallObligation<'_>>>() <= 192
         && std::mem::size_of::<InstallPermit<'_, '_, '_>>() <= 384
         && std::mem::size_of::<Result<FrameStamp>>() <= 192
+        && super::plan4_pages::apply::legacy::conversion_source_bytes() <= 2048
         && base_delta() <= 64
 }
 
@@ -753,6 +754,7 @@ impl<'s, 'c, W: WriterNamespace> AllocationWriter<'_, 's, 'c, '_, '_, '_, '_, '_
                 after_counter: next_counter,
                 after,
             };
+            let permit = crate::storage::wal_io::disk_api::legacy_install(permit);
             #[cfg(test)]
             cut!(control, AfterStageOwned);
             // S2: page bytes/LSN, while descriptor/counter/recLSN/DPT remain before.

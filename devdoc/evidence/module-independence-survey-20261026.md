@@ -50,7 +50,7 @@
 | Plan4Retention::split과 source latch 아래 [CatalogSource](../../crates/engine/src/storage/wal_io/plan4_retention/visibility/source.rs) | 필수 의미 | 같은 pool/visibility 수명과 실제 참조 발급을 유지. 단순 decoded TxnRef/UndoRef는 usable pin이 아님 |
 | CatalogCommitAttempt/Installed·TxPair·retirement 타입의 중간 re-export | 단순 등록 | 신규 소비자가 정상 연산과 무관한 설치 모듈을 여러 개 수정하게 함. 책임별 좁은 공개 경계와 단일 조립 지점으로 옮길 후보 |
 | [reader](../../crates/engine/src/storage/wal_io/plan4_retention/read.rs)의 `storage.core.plan`, [history runtime](../../crates/engine/src/storage/wal_io/plan4_retention/history/runtime.rs)의 binding/Condvar 직접 접근 | 불필요한 내부 접근 | 필요한 것은 검증된 target·namespace·health·원 fence/notify다. 원 필드를 공개하는 대신 동일 수명의 제한 포트가 필요한지 대조 |
-| [commit_bridge](../../crates/engine/src/storage/wal_io/commit_bridge.rs)의 CatalogCommitAttempt/Installed import | 공통 계약 미완료 | 물리 WAL이 상위 Catalog 의미를 알고 있음. 실제 semantic receipt와 whole-install/publication 조립을 거래 경계가 소유하도록 변경 필요 |
+| 당시 `commit_bridge.rs`의 CatalogCommitAttempt/Installed import([현재 이전 위치](../../crates/engine/src/storage/wal_io/plan4_apply/terminal.rs)) | 공통 계약 미완료 | 물리 WAL이 상위 Catalog 의미를 알고 있음. 실제 semantic receipt와 whole-install/publication 조립을 거래 경계가 소유하도록 변경 필요 |
 | [DirtyInstallPermit](../../crates/engine/src/storage/wal_io/dirty_allocation.rs)의 소비자별 factory | 공통 계약 미완료 | A를 추가할 때 또 하위 구현에 업무 등록이 필요. sealed prepared change와 실제 원 target 재검사를 공통 apply에 연결하는 설계 필요 |
 | Catalog 9-target INIT·TxPair claim | 필수 의미·지원 범위 한정 | CREATE가 새 page 두 개를 함께 설치하는 의미다. 이미 CREATE된 RowLeaf에 INSERT하면서 이 claim을 복제하면 잘못된 authority가 됨 |
 | Catalog-only UndoShape/source/lookup, owner당 reference2행 | 공통 계약 미완료 | row source·Undo 이전 버전·3-pin handoff는 현재 공급되지 않음. signature 이동만으로 행 조회가 가능하다고 표시하지 않음 |
@@ -790,7 +790,7 @@ D1/D2 담당·통합은 `/root`다. 원 자원을 이동하는 bounded 내부 �
 후속 `522ec12` main 전송 시도는 Rust 포맷·Clippy를 통과했지만 문서4개 링크의 `파일.rs:줄번호` 표기를 파일 이름으로 해석하여 차단됐다. 원 로그는 `artifacts/module-push-20261027-r2.log`에 보존한다. 실제 네 소스 파일의 존재를 확인하고 상대 Markdown 링크에서 줄 번호 접미어만 제거했다. 설명·계약 의미·제품 변경0의 D0 정정이며 최종 전송 시 원 훅을 다시 적용한다.
 
 
-<a id="c2-commit-phases"></a>
+<a id="c2-commit-phases-main"></a>
 ### C2 Commit 단계별 source 비용 구체화 — 2026-10-27
 
 사용자의 “진행 위치 확인 후 다음 한 단계” 요청에 따라 clean `main`·`0852f06ff9fa2ec42fdb73f4353373b9ef45e78d`에서 재개했다. 기존 모듈 worktree와 main은 같은 HEAD였으며 이번 편집·증거는 `/home/et16/work/xadb`에 둔다. M0–M3는 완료·채택, M4의 마지막 제품 단위는 Pending pin/stage 수명 분리였고 M5는 A/B 순수 본문 착수까지다. 이번 종료 범위는 그 다음 의무인 **Commit의 실제 배타 phase 비용 계산** 한 단위다. 전체 M4/M5 실행 완료로 확대하지 않는다.
@@ -1357,3 +1357,695 @@ semantic Commit4phase의16632/32292/18532/22052B와 원 core 계수를 유지한
 원 export와 현재 source5648파일, inventory·manifest·runner/helper·ELF, compiler3개 및 runtime18개 로그·진단의 identity를 읽기 전용 검산했다. compiler probe4개는 각각 등록1곳과 정확한 fixture1파일만 달라지며 정상 compile과 의도한 E0505/E0499의 primary path/line을 확인했다. 검토자는 제품·문서 수정이나 빌드·시험·자동 문서 verifier를 실행하지 않았다. 무변경 native/하위 시험을 반복하지 않은 선택, 현재/원 source의 Full+Pending 기준 FAIL, legacy caller 한계와 전체 진입/반환·writer/progress 후속 의무를 확인했다.
 
 `artifacts/module-c2-call-scope-main-review-20261028/`의 report SHA-256은 `d025b567ad278a7e980fe0d9ad836fb6f142a42d99c1abff37cf71ba2a64ac05`, checklist는 `6c4110d51511647823c224306cec87fd3d4bd73fa7415d810317f10156a2102a`, identity-audit는 `6e35d2ca36d640b1ae5d362c24750e025fd3a3f46e9548aca9c0a33b20aa6186`다. 변경10개 Rust 파일은 파일별 rustfmt와 `git diff --check`로 확인했다. compiler 입력4개는 의도한 진단 line/hash를 보존했다. 자동 문서 verifier·전체 workspace fmt/Clippy·push는 실행하지 않으며 문서 검사는 기존 pre-push 훅에서 수행한다.
+
+<a id="c2-short-source"></a>
+### C2 CatalogFull short source 예약 — 2026-10-27
+
+기준 `0852f06`에서 계획 완료 지시를 재개했다. 기존 `/home/et16/.codex/worktrees/module-independence/xadb`는 다른 채팅 소유여서 수정하지 않고 같은 commit의 `/home/et16/.codex/worktrees/module-independence-finish/xadb`를 만들었다. 작업·계약·통합 `/root`, 독립 검토 `/root/module_review`다. 원 artifacts는 읽기만 하며 기존 source별 성공·실패·미완료를 유지한다.
+
+D1/D2의 유한 단위는 기존 전체 Catalog 조회의 고정 source 예약이다. 새 private `OperationSourceAdmission`이 원 IsolationLedger header24..32의 합을 checked add/sub로 관리하고 다른 header·장기 credit은 보존한다. class/charge를 caller가 선택하거나 실행 중 늘리는 API는 없다. 같은 원 core의 무효과 admission precheck로 기존 Drain/role 오류 우선순위를 확인한 뒤 source를 예약하며, 실제 progress 진입에서 다시 검사한다. source 부족은 reference/pin/operation 표시 전에 Capacity/Unchanged다. 참조 정리 뒤 마지막 Catalog decode/Result가 끝날 때까지 source를 보유한다. 정상 명시 종료/Drop은 한 번만 반환하고 poison/fence/underflow에서는 잔여 charge와 fatal 오류를 보존한다.
+
+별도 pool/semaphore를 추가하거나 full 조회에 낮은 resident charge를 적용하는 대안은 택하지 않았다. future resident-only class는 miss에서 동일 operation을 확대하지 않고 checked 종료 후 같은 snapshot의 별도 full 조회로 재진입해야 한다. 원 writer·다른 ReadPort entry·rollback/terminal/progress 몫이 아직 예약되지 않으므로 **이 단위는 전체64KiB aggregate 보장, caller-retained factory, writer1+resident reader2 또는 M4/M5 완료가 아니다.** 이 제한을 표시한 설계 순서는 독립 읽기 검토에서 한정 수용했고 실제 diff 검토도 아래 한정 범위로 수용했다.
+
+[실행 전 manifest](../../tests/fixtures/dev3-module-c2/short-source/manifest.json)에 실제 diff와17개 selector, 총600초·compiler90초·case30초·로그8MiB·test stack32MiB를 동결했다. 새 leaf7개는 literal byte 합·동시2thread·overflow/header·underflow·poison/fence·unwind/forget·실제 class/type을 검산한다. 새 precheck1개는 무효과 관측/재검사를, actual 겹침1개는 원 session에서 두 번째 조회가 refs/pin/효과 전에 거절되고 첫 종료 뒤 같은 snapshot으로 재진입함을 확인한다. 기존 영향8개는 정상/fenced Drain, Pending Undo LOAD, Missing/foreign owner, FlushRequired, 실제 I/O 오류, Found/Q 공개와 source census다. 무관한 완료 시험·전체 workspace·하위 wrapper·native/새PID 회복은 실행하지 않았다.
+
+| source 실행 | 결과·범위 |
+| --- | --- |
+| r1 | production PASS. test build FAIL(E0369): 신규 시험이 PartialEq 없는 RetentionCause를 assert_eq로 비교. runtime17 모두 NOT_RUN |
+| r2 | cfg(test) assertion10곳만 matches로 정정, 제품 변경0. production 빌드는 반복하지 않음. test build PASS, 미실행 exact17개 각각1회 PASS |
+
+source census는 shared retained `max(original owner+DiskSession, RecoveryRuntime+Plan4Recovered)`를 원 layout으로 계산한다. 실제22256B, CatalogFull41576B, 합63832B, admission leaf1024B이며 이전 lookup41552B보다 새 handle24B가 늘었다. live peak63184/metadata186192/whole251728B, recovered peak64611B는 그대로다. 이는 Rust source 값·수명 상한이며 stack/RSS 실측이나 성능 인수가 아니다.
+
+원 export/inventory·manifest·runner·compiler 로그·ELF·stdout/stderr·result는 새 작업 공간의 `artifacts/module-c2-short-source-20261027-r1/`·`r2/`에 보존한다.
+
+| 실행 | source SHA-256 | result SHA-256 |
+| --- | --- | --- |
+| r1 FAIL | `44591b2b774d8f8e369fdaab545cedd4521f4eab575b9f20da4b9be4df862660` | `3331cb769e28599597e9c2c4f7ab63737ea2e6df248ac8a4b9b26f0bbc3cb796` |
+| r2 PASS | `30f19b5627da519abca37a7237abbf57f31de5c895dd3967df1f813fcf3dc414` | `b7316a6ef024870e17ff695511bb8033b6ef7cb0a3e51cc21f5f1106089f019e` |
+
+공통 manifest SHA-256은 `810f2025d032eb9183057aab8229371d682f9656fe52c2f789313a798b58e607`, r2 ELF는 `964532d4ad1e9e3cec83553c4947cfaef2359d56945d8cb4c9a2b12bbe2c37e8`다. 경과19.06/43.70초는 성능 결과가 아니다. 변경 Rust만 파일별 rustfmt로 정리했다. 독립 제품/증거 검토는 아래 한정 범위로 수용했고 전체 fmt/Clippy·문서 verifier·push는 실행하지 않았다.
+
+독립 검토에서 frozen manifest의 I/O 오류·fenced Drain 두 선택 이유가 기존 read_operation 표시와 새 source byte charge를 혼동할 수 있음을 확인했다. 현재 manifest만 명확히 정정했다. fatal 뒤 반환되는 것은 기존 progress 표시이며 원 refs와 새 byte charge는 fence 아래 보존한다. frozen r1/r2의 manifest·hash·결과는 원문 그대로 유지하고, 제품·시험 변경이나 재실행은 없다. 위 manifest hash는 두 원 실행의 값이다.
+
+`/root/module_review`는 실제 diff·새 source/fixture·문서6개 및 r1/r2의 원 source5618개씩·manifest/runner/ELF/로그 identity를 읽기 전용 대조했다. 두 선택 이유 정정과 frozen 보존을 좁게 재확인한 뒤 **CatalogFull short source 부분공급 D1/D2 한정 수용·필수 수정0**으로 판정했다. 검토자는 파일 수정·시험·빌드·문서 verifier를 실행하지 않았으며 `/root`가 이 단위를 반영한다. 다음 단위는 resident-only 조회, writer/progress phase와 원 ledger의 실제 합산이며 Row/terminal/recovery 및 M4/M5 전체 목표는 유지한다.
+
+<a id="c2-resident-read"></a>
+### C2 상주 Catalog 조회와 고정 source class — 2026-10-27
+
+`ec018d6` 뒤 같은 `codex/module-independence-finish` 작업 공간에서 진행했다. **D3-MODULE-RESIDENT-001 · D1/D2 한정 수용 / 선택 runtime9 PASS / 전체 aggregate·M4/M5 미완료**다. 구현·계약·통합은 `/root`, 별도 검토는 `/root/module_review`다. 사용자의 계획 완료 지시와 DP01의 기존 위임으로 진행하며 필수 자원 한도·원 의미를 변경하지 않는다.
+
+선택은 기존 Catalog 제품 본문을 그대로 소비하는 `lookup_catalog_resident` 입구와 immutable `CatalogResident` class다. 원 isolation ledger에 admission을 예약하며 같은 operation 도중 Full로 확대하지 않는다. 비상주는 refs/progress/source/pins의 checked 정리 뒤 Busy/Unchanged이고 같은 snapshot의 Full 재호출이 가능하다. 모든 입력을 Full replay로 보내는 대안은 두 상주 reader의 source 공급에 맞지 않고, 새 주소 map/권한/allocator owner를 만드는 대안은 원 권한의 유일성을 해치므로 채택하지 않았다.
+
+`read/resident.rs`는 원 allocator guard로 읽은 페이지를 기존425984B caller loan의 loader 첫16384B에 복사하고 guard를 반환한다. 원 allocator의64-entry inventory에서 allocated Status를 전부 관측하며, 실제 target-set read가 다시 원 allocator와 페이지 membership을 확인한다. 첫 exact TxnRef를 찾은 뒤에도 후속 Status가 비상주면 Busy이며, 전체 확인 뒤 stable absent/duplicate는 Fatal이다. 마지막 allocator FrameStamp가 바뀌면 Busy다. copied inventory의 후보 Membership은 stamp를 재검산하지만, exact 참조 선택 뒤와 고정 Catalog root의 Membership은 원 참조 pin/고정 identity가 보존해야 하는 mapping 파손이므로 Fatal이다. typed page/Undo corruption을 정상 재시도로 낮추지 않는다. Status/Undo 읽기와 최종 결과 선택은 기존 동기 Catalog 의미를 유지하며 새 경로에서 WAL replay·durability wait·reader file·LOAD는 도달하지 않는다.
+
+원 Full 계산식은41576B로 유지한다. 상주 계산은 실제로 호출하지 않는 Root/Jobs decoder와 WAL LayoutView/native parser의 포괄 비용을 제외하고, 실제 Status/CatalogRoot Undo 물리 read 반환 뒤의 typed decode를 별도 phase로 계산한다. guard·request·StatusSlotRef·TxnRef·UndoRef·PageView·Result 등 동시에 유지되는 parent 값은 합한다. malformed Undo의 CatalogValue before가 도달하는 완전한 Catalog decoder는 포함한다. source class는16860B, shared retained는22256B로 두 resident의 합은55976B다. 고정 caller loan과 원 shared backing은 재복사하지 않는다. 이는 source 값/수명의 보수 합이며 RSS·compiler stack 실측·성능 인수가 아니다. 다른 writer/reader/progress 입구를 포함한 전체64KiB 합산 보장은 아직 미공급이다.
+
+시험은 마지막 검증 `ec018d6` 이후 변경한 class·resolver·오류 분류·source 계산에만 선택했다. 동결 manifest는 `tests/fixtures/dev3-module-c2/resident-read/manifest.json`이며 최초5개에서 검토 반례4개를 추가했고 완료된 기존 시험은 반복하지 않았다. 총600초, compiler90초, 각 exact case30초, 출력8MiB, stack33554432B로 제한했다. r1–r5의 source export/inventory·runner·manifest·compiler·ELF·stdout/stderr·결과를 각각 `artifacts/module-c2-resident-read-20261027-rN/`에 보존한다.
+
+| 원 실행 | 실제 실행·결과 | 후속 변경과 미실행 구분 |
+| --- | --- | --- |
+| r1 | production PASS, test build E0583 FAIL | cfg(test) module의 path 등록 오류. runtime5개 모두 NOT_RUN |
+| r2 | test build PASS, 첫 census FAIL(두 reader68820B) | production은 r1 이후 test-only path 수정뿐이므로 반복 안 함. 나머지 runtime4개 NOT_RUN |
+| r3 | production PASS, test build E0502 FAIL | 실제 source phase 정정·Membership Fatal 수정과 추가 반례를 반영. test corruption closure의 borrow 오류. runtime9개 NOT_RUN |
+| r4 | test build syntax FAIL | test helper 추출의 여분 brace 오류를 보존. runtime9개 NOT_RUN, production 반복 안 함 |
+| r5 | test build PASS, exact runtime9개 모두 PASS | r3 뒤 test-only lifetime/syntax 수정. production 반복 안 함. 미실행·실패를 이 실행의 PASS로 소급하지 않음 |
+
+9개는 고정 class/두-reader/mixed capacity1개, actual active·Commit 전후 snapshot/Found 무 I/O1개, Undo 비상주/Full 재시도1개, 두 actual reader의 독립 예약·반환1개, Status/Undo checksum 파손1개, 원 Status/후속 Status 비상주와 partial hit 거절1개, checksummed Status exact-ref 부재/중복1개, copy 뒤 actual allocator flush의 recLSN 변경1개, 고정 Catalog/선택 뒤 Status/Undo membership 파손1개다. 재생성된 손상 입력도 원 page identity와 checksum을 가진 원 pool frame에만 주입하며 새 권한·directory를 만들지 않는다. 정상 allocator stamp 변화 시험은 실제 flusher를 사용한다. 해당 원 flush 이벤트와 reader 재개 구간의 I/O0을 구분한다. native 파일·새 PID 복구·wire 변경은 이 단위에 없으며 기존 current-build 복구 결과를 새 결과로 표기하지 않는다.
+
+| 실행 | source SHA-256 | result SHA-256 |
+| --- | --- | --- |
+| r1 | `acea3c9a894f0914e66f033ffec2cb91bbeb292777419f743afb64af37c0d3fe` | `83e6b2928a16be858ca237a63c390907f57ab28d0cdff91291c0d318d6b978f4` |
+| r2 | `201b373df3b65232f34a2e0f9b546828f573f98c203b2c85911f9bb7a4bfacde` | `db8220e1347c222027283c7b390a21a0e1db304ff378713fe5d528cae0a2301a` |
+| r3 | `a4dc78cc8104072166dd439ddee4fd15867698fc4969dc63364789c7b22ab49d` | `90c9bb36d4780dba22531775b55181be3b0acd6707ea621ce9902064705a5139` |
+| r4 | `60c396a2076f94320e08cdd98a8ffe110b416eb55ce00272660a4fccd87fb6e8` | `4e3c7710947b34184ab2da8d57ad8804adad8b1cf2365539ee1c8558a4de8596` |
+| r5 | `9e8793e70a36f3e8b8b0e9cc977d75ac24145e0c2013b05ee2f97e0051bb69b5` | `9ab76baa1313927e17ff187b7253f2697d3ccea134a7cd42633bab11acc18eb3` |
+
+r5 ELF SHA-256은 `551330563e88e9eeb598398fe18c4bdd2267a9371fcbea9cefa113c3f3e0a50f`, r3–r5 manifest는 `83adeaa0b04f636bd1d502b3020ec5705fa0ca821d863d939343656b639e433e`다. 변경 Rust만 파일별 rustfmt로 정리했으며 전체 fmt/Clippy·문서 verifier·push는 실행하지 않았다. 독립 검토의 최종 결과는 아래에 기록한다. 재검토 조건은 resolver의 실제 호출 경로, 원 참조 보존/allocator 변경 의미, class source census 또는 caller loan 배치 변경이다.
+
+
+`/root/module_review`는 실제 제품·source census·9개 시험/manifest와 r1–r5의 원 자료를 읽기 전용 감사했다. r1/r2 각5621개, r3–r5 각5622개 inventory의 source·fingerprint·manifest·runner·compiler/case 로그·존재 ELF를 대조했고, r3→r4→r5는 cfg(test) resident_faults.rs만 바뀌었음을 확인했다. 문서6개·신규4/수정10경로 등록까지 확인한 뒤 **C2 상주 Catalog 부분공급 D1/D2 한정 수용·필수 수정0**으로 판정했다. 검토자는 수정·빌드·시험·문서 verifier를 실행하지 않았고 `/root`가 한정 수용을 반영한다. writer/progress·다른 입구 합산·Row/terminal/recovery·M4/M5 완료로 확대하지 않는다.
+
+<a id="c2-source-return"></a>
+### C2 최종 source 반환까지 원 read progress 유지 — 2026-10-27
+
+기준 `788702c`, 동일 작업 공간·브랜치다. **D3-MODULE-SOURCE-RETURN-001 · D1/D2 한정 수용 / production·test build·선택 runtime7 PASS / 전체 source progress 미완료**다. 작성·통합 `/root`, 별도 검토 `/root/module_review`이며 기존 계획 완료 지시 범위의 한정 수정이다.
+
+writer/progress 공급을 준비하며 admitted lookup의 refs/progress가 마지막 decode/Result와 source 반환보다 먼저 끝남을 확인했다. 이 순서로는 read_operation0을 late source0으로 사용할 수 없다. 실제 `CatalogReadOperation`은 `close_refs`와 `close_source`를 나누고 **refs 정리→최종 decode/Result→source checked 반환→progress checked 반환** 순서를 사용한다. Found/Missing/오류·early `?`·Drop·진입 reference 예약 실패에 같은 순서를 적용한다. source 반환 실패도 progress 정리를 건너뛰지 않으며 fatal 효과/원 charge 보존은 그대로다. no-effect source 선예약과 실제 progress 진입 순서는 이번에 바꾸지 않았다.
+
+이 수정은 이미 진입한 lookup의 late source 수명만 닫는다. **source 예약→progress 진입 사이의 틈, 반환 직후 caller의 일반 Result carrier, 다른 입구의 미계수와 writer/progress 원자 인수는 남는다.** 따라서 전체65536B progress 인수가 아니며 기존 Pending reader/Full 동작·same-snapshot retry·wire는 유지한다. owned field/배열/Result type이나 census 식은 바꾸지 않았다. 기존 held4개 Result/2개 오류와 decoder/consumer 반환 계수가 같은 carrier를 덮으므로 이전 type-size/census 시험을 반복하지 않았다.
+
+`tests/fixtures/dev3-module-c2/source-return/manifest.json`은 마지막 검증 뒤 실제 cleanup diff에 해당하는7개만 고정했다. 신규4개는 Full/Resident의 refs0·pin0 뒤 실제 Commit Drain 대기, fence 뒤 source 잔여와 progress 반환, Found 최종 decode 구간의 표시 유지, 그 구간의 panic/Drop이다. 기존3개는 변경된 finish_error/Drop을 실제로 소비하는 Full Undo I/O 실패, captured refs를 가진 fenced Drain, Resident Status/Undo typed corruption이다. 기존 사례의 새 실행은 cleanup 코드가 바뀐 범위에만 해당하며 이전 결과는 원 source대로 유지한다. 수정 없는 하위 wrapper·전체 workspace·native/새 PID 복구는 실행하지 않았다.
+
+원 증거는 `artifacts/module-c2-source-return-20261027-r1/`에 있다. 고정600초/컴파일90초/각 case30초/출력8MiB/stack33554432B 범위에서 production check·test build와7개 exact 사례가 한 번에 PASS다. 경과44.15초는 성능 결과가 아니다.
+
+- source SHA-256: `4be9ff3a89ebac984735e92c952cd20311bdfe4164e4d221d4a794ef73bd7c69`
+- manifest SHA-256: `d00d7ca2167ec2ae0c51ede4c51dd4bda3a02081659db9d5768d4706eebccd80`
+- ELF SHA-256: `1088ca67daf0c247ae23b97fb9e13a788f058c265fe0bc49a34898099954b123`
+- result SHA-256: `39f77f4435a72a80f5ef5675f86a78ec56a8b7a25eba0a03a1b44f4d80a9fc9f`
+
+파일별 rustfmt와 `git diff --check`만 정리에 사용하며 전체 fmt/Clippy·문서 verifier·push는 실행하지 않았다. `/root/module_review`가 실제 diff·시험·manifest 및 원 source5624개·fingerprint·runner·compiler/case 로그·ELF hash를 읽기 전용 대조했고 문서6개와 등록 신규2/수정3경로까지 확인했다. **이 source-return 단위 D1/D2 한정 수용·필수 수정0**을 수신해 `/root`가 반영한다. 검토자는 수정·시험·빌드·문서 verifier를 실행하지 않았다. 전체 writer/reader/progress 합산과 Row/terminal/recovery·M4/M5는 계속 미완료다.
+
+
+<a id="c2-commit-phases"></a>
+### C2 Commit phase source 관측 — 2026-10-27
+
+기준 `883c920`의 실제 타입과 수명 경계를 cfg(test) 함수로 관측했다. 제품 admission·기존 source_bytes31752B·효과 경로는 변경하지 않았다. 작성·통합 `/root`, 별도 검토 `/root/module_review`다. 다음 writer 예약을 설계하기 위한 유한 관측이며 새로운 actual Commit 실행 또는 전체64KiB 인수 결과가 아니다.
+
+shared22256B, Full41576B, Resident16860B를 유지한다. 현재 PreparedCatalog는 실제9-entry requests/roles/stamps를 보유하여2024B다. Pending에서 동시에 살아 있는 PreparedCatalog·원 PendingCommitTargets4·callee의 CatalogCommitWait 세 값만 합한 필요 하한은2984B이고, shared+Full과 합66816B다. 다른 parent/helper를 제외한 이 값만으로도 현재 layout에서 Full과 Pending의 동시 source65536B 보장은 불가능하다. 이는 source 값의 필요 하한이며 stack/RSS 최소치가 아니다.
+
+| phase/값 | source B | shared+Full B | shared+Resident2 B |
+| --- | ---: | ---: | ---: |
+| PreparedCatalog 실제9-entry 값 | 2024 | 65856 | 58000 |
+| 준비 공통9-entry 보수 상한 | 40456 | 104288 | 96432 |
+| pre-stage | 13784 | 77616 | 69760 |
+| stage-return | 27140 | 90972 | 83116 |
+| Pending 세 값 필요 하한 | 2984 | 66816 | 58960 |
+| Pending WAL wait 보수 상한 | 10576 | 74408 | 66552 |
+| Drain wait | 7876 | 71708 | 63852 |
+| resume/install/finish | 24220 | 88052 | 80196 |
+| publish/return | 12992 | 76824 | 68968 |
+| 변경 없는 제품 포괄 상한 | 31752 | 95584 | 87728 |
+
+세 값 하한과 타입 크기를 제외한 phase 값은 기존 포괄 leaf·반환 carrier를 포함하는 보수 상한이다. Pending wait의 두 Resident 합66552B는 그 상한이1016B 초과한다는 관측이며 실제 최소 불가능 증거가 아니다. 실제 layout/helper 수명을 먼저 줄이고 재계수해야 하며, class를 실행 중 확대하거나 필수 progress를 선택적 Capacity로 바꾸는 근거로 사용하지 않는다.
+
+[실행 전 manifest](../../tests/fixtures/dev3-module-c2/commit-phases/manifest.json)는 신규 관측 selector1개만 선택했다. 총600초·compiler90초·case30초·출력8MiB·stack33554432B다. `artifacts/module-c2-commit-phases-20261027-r1/`은 test build E0425/E0433 FAIL, runtime NOT_RUN이며 잘못된 WalPrefix 한정과 private module 경로를 정정했다. r2는 test build와 신규 관측1개 PASS다. 두 실행 모두 cfg(test)만 바뀌어 production build·기존 제품 시험은 반복하지 않았다. 원 FAIL·export·inventory·compiler·ELF·로그·result는 보존한다.
+
+| 실행 | source SHA-256 | result SHA-256 |
+| --- | --- | --- |
+| r1 FAIL | `5a313baaac99347162b1438dc1714a285871701ca4a15694719c0f3890002db2` | `98bf22b12d15b67c6cbbcfcfa5121ac83cab1459d3625112d5fbb472db8f3d6b` |
+| r2 PASS | `97392730cea35a092410994a10c3f08faba2c9d41eb4dc049faff1fa1b4f99e4` | `752f9bcf284f6057382c1eaa84821a025c5398e059c7e6f91343df557adf058f` |
+
+manifest SHA-256은 `45af3e9e36ec38aac1bbe4ec65edcb376d60396b6ee1c318fb8ccd27dff14efc`, r2 ELF는 `4fe0d26e03890679100f937336f707e4c9d3788580b3c081c46fde980bbdf2ce`다. 경과15.27/25.85초는 성능 결과가 아니다. 변경 Rust의 파일별 rustfmt만 적용하고 전체 fmt/Clippy·문서 verifier·push는 실행하지 않았다. `/root/module_review`는 실제 diff·문서6개·r1/r2 각 source5625개와 fingerprint/inventory/manifest/runner/helper/로그/존재 ELF를 읽기 전용 대조하고 **이 관측 단위 D1/D2 한정 수용·필수 수정0**으로 판정했다. 검토자는 수정·빌드·시험·문서 verifier를 실행하지 않았고 `/root`가 반영한다. 다음 단위는 stage 이후 필요 없는 준비 배열의 실제 수명 종료이며 source-before-progress 진입 틈·writer/progress 전체 합산·Row/terminal/recovery·M4/M5 의무는 유지한다.
+
+
+<a id="c2-pending-image"></a>
+### C2 stage 이후 준비 배열 수명 종료 — 2026-10-27
+
+기준 `4403c91`의 다음 유한 단위다. 작성·통합 `/root`, 독립 검토 `/root/module_review`이며 기존 완료 지시 범위에서 진행했다. PreparedCatalog를 private immutable CatalogPayload와 준비 전용 owner/requests9/roles9/stamps9/before로 나눴다. actual stage_catalog가 PreparedCatalog 값을 소비하고 원 mark_staged→suspend 성공 뒤 payload와 기존 after(at)로 뽑은 canonical after 참조4개만 반환한다. Allocation의 proof-only None과 원 target 순서를 그대로 보존한다. 추출은 infallible이며 Intent 전 Commit/target count·source/epoch 검산을 유지한다.
+
+새 CatalogCommitImage는 Clone/Copy·raw 생성자·Prepared 재구성을 제공하지 않는다. 원 pin/StablePage/Wait/설치 영수증이 권한을 계속 소유하며 새 backing·manager·페이지 복사를 만들지 않는다. 공통 catalog_apply는 같은 payload의 requirement/control/pending/layout을 검산하는 단일 본문이다. Begin/Reserve/Forward와 retirement/CLR/Abort도 같은 필드 값을 그 본문에 넘긴다. 제품 wire·원 snapshot/Q·Pending LOAD·Drain 의미는 유지한다.
+
+| 실제 source 관측 | 이전 B | 변경 후 B |
+| --- | ---: | ---: |
+| PreparedCatalog 전체 | 2024 | 2024 |
+| Pending에 남는 준비 자료 | 2024 | 568 |
+| Pending 세 값 필요 하한 | 2984 | 1528 |
+| Pending WAL wait 보수 상한 | 10576 | 9120 |
+| shared+wait+Resident2 | 66552 | 65096 |
+| stage 반환 보수 상한 | 27140 | 28308 |
+| 기존 방식의 제품 포괄 상한 | 31752 | 32920 |
+
+stage 반환에서는 원 Prepared·compact image·tuple Result·추출 참조 배열32B의 보수 중첩을 계수하여 비용이 늘었다. prepare 공통40456B와 live peak63184B/metadata186192B/whole251728B, recovered peak64611B는 유지한다. shared22256B와 새 세 값 하한+Full 합은65360B이므로 과거 source의 최소 불가능 결론을 새 source에 연장하지 않는다. 반대로 wait 상한+Full72952B는 아직 초과하며, Resident2 대기 합65096B도 **전체 writer class·고정 예약·Full 동시 허용·aggregate 인수 증거가 아니다.** phase별 실제 수명과 class 경계·필수 progress 예약은 후속이다.
+
+[실행 전 manifest](../../tests/fixtures/dev3-module-c2/pending-image/manifest.json)는 이4개 Rust diff에 해당하는12개만 선택했다. phase/layout2, common Begin/Reserve/Cancel·Forward/CLR/Abort2, 실제 Pending flush·Full Undo LOAD·Drain/fence3, Q 공개1, stage unwind·wait write 오류·durable unwind/현재-build memory recovery·partial install/현재-build memory recovery4다. 전체 workspace·변경 없는 하위 시험·native/새 PID 복구는 실행하지 않았다. 총600초·compiler90초·case30초·출력8MiB·stack33554432B다.
+
+`artifacts/module-c2-pending-image-20261027-r1/`의 production compile은 E0599 FAIL(옮긴 inventory_after 호출의 payload 경로 누락), test build/runtime12는 NOT_RUN이다. r2는 누락 경로·최소 가시성과 추출 배열의 source 계수를 반영한 source에서 production/test build와 선택12개 각각1회 PASS다. 원 export/inventory·manifest·runner·compiler·ELF·case 로그·result를 보존하고 r1을 소급 PASS로 바꾸지 않는다.
+
+| 실행 | source SHA-256 | result SHA-256 |
+| --- | --- | --- |
+| r1 FAIL | `c860f359ebc7a38ed55e1d38b4eacabd6a09512b9a03ae7d1d77e4de4a3b9acc` | `dcb9397abe0f314462626f639ac8bf0bf5aca991c0ad43689477470a7d8cb035` |
+| r2 PASS | `a29fe07f0e107222dbf1ba17530784ba58c6107a4da2d2965dd72b9d1c6a1f12` | `c4682806c9bd0e45b36ee4010e2c9847087182aa51a260f75d17d0b4159a64b4` |
+
+공통 manifest SHA-256은 `31d1025a5ada9df51631ce41a39b379c47c1346bb72191aa6d0df807d58bf5d2`, r2 ELF는 `660560b76212f5391c37ef28353db062fb42673be225a9214cfaa4a3ef8c1618`다. 경과5.81/71.57초는 성능 결과가 아니다. 변경 파일별 rustfmt·diff whitespace 확인만 했으며 전체 fmt/Clippy·문서 verifier·push는 실행하지 않았다. `/root/module_review`는 실제4개 Rust diff·선택 manifest·문서6개와 r1/r2 각 source5626개·fingerprint/inventory/runner/helper/compiler/case 로그·존재 ELF identity를 읽기 전용 대조했다. 준비 자료의 감소와 전체 tuple 반환을 구별하고 과거 충돌의 source를 명시하는 두 표현을 정정했다. **이 수명 축소 단위 D1/D2 한정 수용·필수 수정0**을 수신하여 `/root`가 반영한다. 검토자는 수정·빌드·시험·문서 verifier를 실행하지 않았다. 원 source-before-progress 진입 틈·writer/reader/progress 전체 계수·Row/terminal/recovery·M4/M5는 남아 있다.
+
+
+<a id="c2-source-entry"></a>
+### C2 source 예약 시도 전 원 read progress 진입 — 2026-10-27
+
+기준 `a5cfdae`, 작성·통합 `/root`, 별도 검토 `/root/module_review`다. 이전 short-source 공급의 source→progress 진입 순서를 **무효과 precheck→원 try_read_operation→고정 source 예약→refs**로 변경한다. try_read_operation 내부의 원 core 잠금은 호출 반환 때 끝나며 이후 source의 짧은 isolation leaf와 중첩하지 않는다. 새 mutex·콜백·capacity 대기·core API를 만들지 않는다.
+
+원 try_read_operation이 진입 선형화 지점이다. Drain이 먼저면 InstallationPending을 source 예약 없이 반환하고, reader가 먼저면 source0인 예약 시도 구간도 flag1로 Drain이 기다린다. source 부족은 refs/pin/물리 효과 전에 progress를 checked 반환한다. 정상 정리 때 Capacity/Unchanged를 보존하되 cleanup의 fence/poison/불변식 실패가 겹치면 기존 merge의 Fatal 우선순위를 따른다. progress를 먼저 선언하여 source 전 panic/early-return에서도 원 Drop을 거친다. 이미 구현한 source→progress 종료 순서와 합쳐 healthy read의 source가 flag0으로 남는 진입/종료 틈을 닫는다. fatal fence 아래 charge 보존은 그대로다.
+
+원 source-first 계약의 ‘부족이면 progress 표시도 하기 전’ 부분만 이 단위에서 재개방했다. 오류 출구의 progress0·refs0·pin0 및 물리 Unchanged를 보존한다. 타입/필드·고정 class/charge·source census는 바뀌지 않으며 현재 entry의 기존 operation/Result/오류 상한 안에서 순서만 바꾼다. **일반 caller return·예약 전 entry carrier 전체합·다른 writer/read 입구·필수 progress 예약을 포함한65536B aggregate 인수는 여전히 미완료**다.
+
+[실행 전 manifest](../../tests/fixtures/dev3-module-c2/source-entry/manifest.json)는 실제 진입 순서와 실패 branch diff에 해당하는5개만 선택했다. 새3개는 각각 Full/Resident의 source 전 actual Drain 대기, fence로 source 예약 실패/flag 정리, source 전 panic/Drop이다. 기존2개는 다른 Full의 charge가 남은 Capacity 실패와 실제 Drain에서 source 부족보다 InstallationPending 우선인 입구다. 종료 순서·타입/census·변경 없는 하위/전체 workspace 시험은 반복하지 않았다.
+
+`artifacts/module-c2-source-entry-20261027-r1/`에서 production/test build·선택5개 각각1회 PASS다. 총600초·compiler90초·case30초·출력8MiB·stack33554432B로 제한하고 원 source export/inventory·manifest·runner·compiler·ELF·case 로그·result를 보존한다. 경과38.43초는 성능 결과가 아니다. native/새 PID 복구·wire 변경은 없다.
+
+- source SHA-256: `e9a4766a93a27a5e65f37e34f8bacecbb2499f6cc453e27e4d74147f6281b11a`
+- manifest SHA-256: `f17f5642a619f40693309e391e91bfbd3fbfb9574f55480fece56b3097ee12aa`
+- ELF SHA-256: `55122e45fc48877994e84103bde590c926dc9221082072976816db81f3fa0855`
+- result SHA-256: `e5504c391e9c8c98eff91cbfa5a2093cc0f2d4b39ea844410c9c749e2f89e3f7`
+
+변경 파일별 rustfmt와 diff whitespace 확인만 수행했고 전체 fmt/Clippy·문서 verifier·push는 실행하지 않았다. `/root/module_review`는 실제 diff·문서6개·원 source5628개와 fingerprint/inventory/manifest/runner/helper/컴파일·case 로그/ELF identity를 읽기 전용 대조했다. **이 진입 수명 단위 D1/D2 한정 수용·필수 수정0**을 수신해 `/root`가 반영한다. 검토자는 수정·빌드·시험·문서 verifier를 실행하지 않았다. writer/read/progress class 전체 공급·Row/terminal/recovery·M4/M5 의무를 계속 진행한다.
+
+<a id="c2-aging-source"></a>
+### C2 Aging/Root 실제 호출의 source 계산 — 2026-10-27
+
+기준 `d9d6a01`, 작성·통합 `/root`, 별도 검토 `/root/module_review`다. 기존 Aging codec의 순차 호출을 실제 수명에 맞춰 계산한다. encode는 Root2 decode→검산→work hash→XOD encode, decode는 Root2 decode→XOD decode·검산→work hash다. 전체 Job queue census 대신 Root2 decoder의 상한을 사용하되 initial Root의 canonical512+initial512+Job1024와 후속 rows640, malformed Transaction XOD가 거치는 XTS decode, parent/Result/반환 복사와 고정 SHA closure를 포함한다. 공통 XOD/XTS 식은 lower owner로 이동하고 XOD validate의 by-value RemainingBudget5 IntoIter·현재 row를 보완한다. 실제 codec·WAL·효과 경로와 backing/wire는 변하지 않는다.
+
+Root decoder6540B, 기존 전체 queue6736B, XOD8711B, XTS1411B, Aging11575B다. XOD 보완으로 transaction inventory/encode/next/validate는 각각2224B 증가하고, 실제 Aging predecessor/next는14853/15675B가 된다. Full 조회 고정 charge는41576→37724B, Resident16860B와 shared22256B는 그대로다. live peak63184B·metadata186192B·whole251728B와 recovered peak64611B는 유지한다. **shared22256+Full37724+Pending wait9120=69100B로3564B 초과**하므로 Full/Pending 동시 공급이나 전체 admission 완료로 해석하지 않는다.
+
+[실행 전 manifest](../../tests/fixtures/dev3-module-c2/aging-source/manifest.json)는 source 계산 diff에 해당하는 신규 관측·owner 합산·고정 class admission3개만 선택했다. `artifacts/module-c2-aging-source-20261027-r1/`에서 production/test build와 exact3개 각각1회 PASS다. compiler의 unused imports(ControlRef/OwnerState) 경고는 원 로그에 보존한다. r2는 두 unused import 제거와 해당 파일 rustfmt만 반영하여 production/test build PASS·경고0이며 runtime은 `NOT_REPEATED_UNCHANGED_CODE`다. r1의 runtime 결과를 r2의 새 실행으로 표시하지 않는다. 총600초·compiler90초·case30초·출력8MiB·stack33554432B이며31.29/31.08초는 성능 결과가 아니다.
+
+| 원 증거 | source SHA-256 | result SHA-256 | ELF SHA-256 |
+| --- | --- | --- | --- |
+| r1 runtime3/compile | `575a9156256068f58b855a6a0609c327a52c82ad728a819f68c1e9ce4227823f` | `95712ade5eb3272ac3263ad209fa4eaa64f48802a1840cacc2c0ed32a484ae6d` | `60f6f15af747d018d806c637be9221f04a4d12aaf0f6fc7f4837d9c22f469c27` |
+| r2 import-only compile | `455f41485cf72b6945defb92dd80941e8dd46aba67b1e9a3c0e45ec646a016d7` | `55d5149365497ce54567027817f5bcb2b67c1b77ba90284403bb82c6a3ddec0d` | `c3915529bc440cb915b7bc15d0d3b5b6f4e9d4ebda98c1112911f815b1738215` |
+
+공통 manifest SHA-256은 `b5c726d4ecd53f3feae1a9273bfa67104725401ba06fd7642e0a3b253c9e21b1`이다. 원 export/inventory·runner/helper·compiler·case 로그와 결과를 보존한다. 변경 없는 codec 동작·하위/전체 workspace·native 복구 시험은 반복하지 않았고 전체 fmt/Clippy·문서 verifier·push도 실행하지 않았다. `/root/module_review`가 source5629개·r1/r2 identity·compiler/ELF/case 로그와 문서6개를 읽기 전용 대조했다. decode/encode 순서 설명1곳을 고쳐 반영했으며 **이 계산 단위 D1/D2 한정 수용·미해결 필수 수정0**이다. 검토자는 수정·빌드·시험·문서 verifier를 실행하지 않았다. writer/progress 실제 phase admission·다른 entry/return carrier·Row/terminal/recovery·M4/M5는 계속 미완료다.
+
+<a id="c2-wal-wait-source"></a>
+### C2 WAL 대기의 실제 phase source 관측 — 2026-10-27
+
+기준 `c4b9b6f`, 작성·통합 `/root`, 독립 검토 `/root/module_review`다. cfg(test) 관측만 추가했다. 제품 WAL 경로·기존 DURABILITY_CALL_BYTES4096·고정 source class/charge·admission은 바꾸지 않았다. physical wait의 state/predicate/기초 I/O/claim/ensure/condvar, semantic bridge의 physical 호출/receipt 반환, 실제 Catalog Pending parent/Result 변환을 분리한다. FileIo 경계의 XADB source 값이며 backend/OS stack·RSS 추정이 아니다.
+
+wait와 ensure 각각의 UnwindFence, claim의 IoFence·slot borrow·frame은 해당 nested 호출 동안 유지한다. ensure의 append guard block은 sync_claim 전에 끝나고 claim의 file block은 마지막 append publication 전에 끝나므로 그 안쪽에만 max를 쓴다. requirement_ready의 복사 frame/prefix·pending closure·SlotState·interval/Option/오류, foundation의 short-write/Interrupted/오류 결과, condvar의 LockResult/변환/next guard를 포함한다. 물리 slot/File/AppendState backing은 원 owner의 빌림이다.
+
+r1은 test build·신규 관측1 PASS지만 bridge에서 아직 생성되지 않은 semantic receipt까지 물리 대기와 합산했다. 독립 검토가 Catalog caller의 WalResult→RetentionResult→DurableCommit 추출 handoff를 명시하도록 요구했다. r2는 실제 초기화 순서에 따라 bridge call/return을 max로 분리하고, caller handoff를 별도 상한으로 추가했다. 원 r1 결과를 지우거나 r2 증거로 재사용하지 않는다.
+
+r2 물리 관측은 state336/predicate710/foundation_io544/sync_claim1160/ensure_durable2248/condvar1046/wait_durable2808B다. Pending parent2064B, bridge3256B, handoff1216B이므로2064+max(3256,1216)=5320B다. shared22256+Full37724+5320=65300B, Resident2 합61296B를 관측했다. **236B 여유는 새 source ticket·progress 전환·입구/종료 전체 비용을 포함한 인수 결과가 아니다.** 기존 포괄 Pending 관측9120B와 생산 상계·charge는 그대로이며5320B를 실제 예약에 사용하지 않는다.
+
+[동결 manifest](../../tests/fixtures/dev3-module-c2/wal-wait-source/manifest.json)는 신규 `catalog_wal_wait_source_phases_include_claim_and_condvar`1개만 선택했다. `artifacts/module-c2-wal-wait-source-20261027-r1/`와r2는 각각 test build·exact1 PASS, 경고0이다. r2 재실행은 관측 계산/반환 handoff diff에 한정한다. production build는 `NOT_RUN_CFG_TEST_ONLY`이며 변경 없는 기존 동작·하위/전체 workspace·native/복구 시험은 반복하지 않았다. 총600초·compiler90초·case30초·출력8MiB·stack33554432B이며26.40/26.25초는 성능 결과가 아니다.
+
+| 원 증거 | source SHA-256 | result SHA-256 | ELF SHA-256 |
+| --- | --- | --- | --- |
+| r1 관측 | `2b23512bc13499235749047c76b7cefefb485995e23186aa0f08a8baceb9ec66` | `16ab99347a38f51db031d29f5f3f9931b5f35a3179783bdeee18c14680ac555f` | `ac09f831c72d5c51dccfbcba90dfbc0f4ae952e7b21bb1355914496a8a0962c5` |
+| r2 반환 경계 보완 | `c3cbb046a02e47eb1d856814d4e8a1b51416d26396edd45a17fdc72ff87a83b4` | `fc2e57394e2349cbffc90be58100ac63ab7483fc00a49a836456e55a22046241` | `1d1a3fa6318c6504ddd3631471e6985fb32d56fae02ac42c8f2e922a25bb0e6b` |
+
+manifest SHA-256은 `3dfa6a3e5db57048d15decfabaa5045c9a6690f5bb2d10b966e164a371d9ced5`다. 독립 검토자는 각 source5630개·원 identity/로그/ELF를 읽기 전용 대조하여 코드/원 증거를 한정 수용했다. 문서6개의 최종 대조까지 **이 cfg(test) 관측 단위 D1/D2 한정 수용·필수 수정0**을 수신했다. 검토자는 수정·빌드·시험·문서 verifier를 실행하지 않았다. 변경 파일 rustfmt와 diff whitespace만 확인했고 전체 fmt/Clippy·문서 verifier·push는 실행하지 않았다. 실제 writer phase/progress 예약·전체 entry/return 합산·C0–C5·M4/M5는 미완료다.
+
+<a id="c2-drained-handoff"></a>
+### C2 실제 Drain 완료와 guard 재구성의 소비 경계 — 2026-10-27
+
+기준 `dfc3bc9`, 작성·통합 `/root`, 독립 검토 `/root/module_review`다. 원 `PendingCommitTargets`의 authentic durable begin_drain→wait_ready를 `drain_durable`로 분리하고 같은 pins/StablePage와 원 CommitInstalling을 private·nonClone `DrainedCommitTargets`에 이동한다. actual Catalog는 이 값을 받은 뒤 `resume`로 소비하여 원 WriteTargets guard storage를 재구성하고 기존 stamp/digest/recLSN 검산을 수행한다. 새 등록·pin 재예약·authority 생성은 없다.
+
+Drained 시점은 **Installation::Installing·active_apply1·원 version gate+pins4·content guard0·read flag0**다. Pending/Draining을 임의로 건너뛰거나 새 상태로 위장하지 않는다. 후속 source 전환이 들어갈 위치를 만들었을 뿐 아직 source ticket/upgrade는 연결하지 않았다. 이미 원 version gate와 pins가 있으므로 그 위치의 전환은 reserved 몫에 대한 무대기 checked leaf여야 하며 capacity를 기다릴 수 없다. Drop은 원 installation을 먼저 drop하여 fence/Abandoned·version 반환을 마친 뒤 같은 pins를 반환한다.
+
+새 owned Drained·physical Result2와 Catalog의 mapped RetentionResult를 source 식에 추가하여 포괄 Commit 상계32920→36184B(+3264), drain 포괄관측6420→9684B다. 기존 live peak63184B·metadata186192B·whole251728B와 recovered peak64611B는 유지한다. 관측 prepare36604B는 앞선 Aging 계산 반영분이며 이번 소비 경계의 감소가 아니다. drain 포괄관측은 반환 carrier까지 합한 상한으로, reader가 살아 있는 대기 phase의 실제 예약이나 전체 동시 인수로 사용하지 않는다. Pending 기존포괄9120B와 앞선 실제 wait 관측5320B도 이번에 변경하지 않았다.
+
+[동결 manifest](../../tests/fixtures/dev3-module-c2/drained-handoff/manifest.json)는 신규4·직접 영향4·변경 source2의10개를 선택했다. 신규4는 healthy handoff의 pins/version 유지·content0/원 before bytes, handoff fence, 정상 unfinished Drop, handoff panic이다. **정상 Drop은 외부 fence/panic 없이** 원 pin-return hook에서 이미 fenced/Abandoned·active0·version 반환·pins4를 관측하고 그 뒤 pins0/Q0를 확인한다. hook은 실제 값을 drop하도록 요청할 뿐 receipt/설치 권한을 만들지 않는다. fence/Drop/panic은 원 frozen C04/N03 기대값과 현재-build memory recovery를 사용했다. 기존 MT03 Full Undo LOAD·MT05 lower flush·MT07 Drain fence·MF10 부분 설치 및 source 합산2만 새 경계의 영향으로 선택했고 무변경 하위/전체 workspace는 반복하지 않았다.
+
+`artifacts/module-c2-drained-handoff-20261027-r1/`에서 production/test build·exact10개 각각1회 PASS, compiler 경고0다. 총600초·compiler90초·case30초·출력8MiB·stack33554432B이며77.86초는 성능 결과가 아니다. 원 export/inventory·manifest·runner/helper·compiler·ELF·case 로그와 결과를 보존한다. wire/native/새 PID 복구 변경·실행은 없다.
+
+- source SHA-256: `8704cd09d5bcaa065937131a680b4099014c37214b76ab562f8b97379a814836`
+- manifest SHA-256: `c47fc25d38fd8ccffea88ea538cf31ff84f08db0a2e65ab98fe1e33d0e9ab7bd`
+- ELF SHA-256: `faf4fd4d1b5c7ff587b5bee9d235ce81ffed6d784295fb5da412206cf12dcf85`
+- result SHA-256: `b2b597cfdcb76566a53408216adaa8b89d07365f76b801da1320f38e555dfb04`
+
+독립 검토자는 실제 값 이동·권한·오류/Drop 순서, 선택10의 원 artifact와 최종 문서6개를 대조하고 D1/D2를 한정 수용했다. 필수 수정0이며 source5632개와 증거 식별자·수치를 확인했다. 변경 파일 rustfmt·diff whitespace만 확인했고 전체 fmt/Clippy·문서 verifier·push는 실행하지 않았다. 실제 source phase 예약·선택 caller의 entry/exit 전체 상계·Row/terminal/recovery·M4/M5는 미완료다.
+
+<a id="c2-call-scope"></a>
+### C2 Catalog 결과 소비까지 유지하는 원 CallScope — 2026-10-27
+
+기준 `00feccd`, 작성·통합 `/root`, 독립 검토 `/root/module_review`다. [소유 수명](../contracts/dev3-module-boundaries.md#operation-source-admission)에 따라 private non-Clone CatalogCallScope가 원 Owner/backend/snapshot과 source/progress를 소유한다. 기존 operation은 그 source를 borrow하고 refs/lease만 정리하며 Catalog 제품 분기는 단일 본문이다. 실제 selected `catalog_memory::query`는 Found의 header/Table/Column 소비와 Missing/FlushRequired 분기를 마친 뒤 scope를 닫고, 필요한 flush는 그 후 수행한다. legacy entry는 lease 실패까지 내부 Result로 받아 같은 checked cleanup을 수행하지만 반환 이후의 caller 소비는 새 보장 밖이다.
+
+source/progress는 이제 결과를 사용하는 동안에도 남는다. scope의 정상 오류 완료는 원 Fatal을 보존하고 Unchanged보다 cleanup Fatal을 우선한다. source 실패에도 progress를 반환한다. Scope Drop은 source→progress 순서이며 Operation Drop은 refs만 정리한다. schema/wire/backing·원 authority·실제 WAL/설치 의미는 바꾸지 않았다. statement factory/자동 read-set이나 전체 writer/progress admission 완료를 주장하지 않는다.
+
+[동결 입력](../../tests/fixtures/dev3-module-c2/call-scope/manifest.json)의 r1은 production/test build·runtime14·compiler4 PASS/경고0다. 새 runtime4는 Found 복사/nested view 소비 중 admission 유지·순차 lookup 재사용/경쟁 Full Capacity, 반환 Missing scope에 대한 실제 Drain 대기, 정상 오류 cleanup Fatal, normal Drop/panic이다. 변경된 기존 admission/lease/refs/legacy cleanup과 query에 직접 관련된10개만 추가 선택했다. compiler는 정상 소비→finish1과 copied RecordView/column.name의 finish 이후 사용(E0505 각각1), 살아 있는 view 중 Owner 재진입(E0499)의 거절3을 exact code/primary span으로 확인했다. negative compiler 거절은 의도한 PASS이며 제품 컴파일 실패가 아니다.
+
+독립 검토 후 선택 caller 소비 phase를 명시적으로5256B로 계산하여 production class에 순차 max를 추가하고 실제 오류2개를 보완했다. r2 production/test build와 실제 resident Undo Busy→fence→finish_error의 Fatal 승격은 PASS다. I/O 오류 사례는 선행 이벤트 이력을 비우지 않아 지정한 nth1 fault가 걸리지 않았고 lookup이 Ok여서 `.err().unwrap()`에서 FAIL했다. 원 FAIL/출력/source를 보존하며 뒤의 새 source 관측은 NOT_RUN이었다. r3는 이 **I/O fixture branch에 events.clear() 한 줄만 추가**하고 실패했던 I/O 1개와 미실행 source 관측 1개만 실행해 합계2 PASS/경고0다. 실제 Undo I/O Fatal의 Load/PageIo 원인을 cleanup Fenced가 덮지 않으며 최종 progress0·fenced source 보존을 확인했다. production은 r2 이후 test-only diff로 NOT_RUN, 완료한 r1 14/4 및 r2 Busy는 재실행하지 않았다.
+
+현재 Scope held392B·entry1944B·선택 consumer5256B, Full38076B·Resident17212B다. 두 class가 이전보다352B 늘었고 shared22256B와 Full 합60332B, Resident2 합56680B다. live peak63184B·metadata186192B·whole251728B와 recovered peak64611B는 유지한다. Pending 관측5320B를 합한65652B는116B 초과이며 이전236B 여유를 현재 admission으로 사용하지 않는다. source 예약 전 bound entry와 source 반환 뒤 tail·foreign Owner 거절의 전체 동시 상계는 미공급이다. consumer의 finite source max가 현재 두 class보다 작다는 관측은 임의 caller의 무제한 복사 보장이 아니다.
+
+원 artifact는 `artifacts/module-c2-call-scope-20261027-r{1,2,3}/`에 export/inventory·compiler/probe exports·ELF·manifest·runner/helpers·case 로그를 보존한다. 각 실행은 총600초/compiler90초/case30초/출력8MiB/stack33554432B로 제한했다. 경과74.01/33.90/28.22초는 성능 결과가 아니다. wire/native/새 PID 복구 변경·실행은 없다.
+
+| 실행 | source SHA-256 | manifest SHA-256 | ELF SHA-256 | result SHA-256 |
+| --- | --- | --- | --- | --- |
+| r1 PASS | `cd68674992ef61ba991794cc6e26771240de745e0dcdfc50f9f58946ea63c03c` | `4b365a2dbed11a296d980a804038c5f1365d5cc54a4183e5c2cab2a3d360dda2` | `77d6f38c46a1ca0d8aaba0bdec9408086b00a34ebe44ae043a5adac9caa16bd3` | `1403c56fc486dc8189b14c9e9efbb93b2d6b8f02023581b55bb33e84dee24180` |
+| r2 FAIL·Busy PASS·관측 NOT_RUN | `2162e5b164dd7b1d9f0627e7c5b23857248d9392d04d92b1f1289f41b402d6e6` | `01797e1d7a552a8bb4bd214f157ccf5642c239ae7872f15eac3c75b8d9cf8505` | `40531aada6fc537cbbf4dbad6a60b42e054966be05bf6c2dca5403fbd81de89d` | `28ba11f8e3d0fcbd73ed303e427b5806e04bd370d103980761f16f1a4aa98623` |
+| r3 실패 I/O 1개 수정·미실행 관측 1개 PASS | `d774709877c8793aa602b82f5814c582bd957585bfabb23957616a09235864cd` | `0bb4c8b9a95f0935204919ec532a8431437640e087407a1a4aea6170ee82bb7f` | `45df418dd24e44c4833a411be32a4bc33a6a5f123e49ae88e930f184657aef55` | `7a39e8ca1ce39ef67a92c0534cc3271506276a3f5cbb8972bc0a20ecfda4ae05` |
+
+독립 검토자는 코드·r1–r3 각각의 source5639파일/원 artifact·최종 문서6개를 대조하고 D1/D2를 한정 수용했다. r3 실패/미실행 개수 문구를 구별하도록 정정했으며 미해결 필수 수정0이다. 변경 파일 rustfmt·diff whitespace만 확인했으며 전체 fmt/Clippy·문서 verifier·push는 실행하지 않았다. 실제 writer/progress phase 예약·전체 entry/tail·Row/terminal/recovery·M4/M5는 미완료다.
+
+<a id="c2-borrowed-budget-rows"></a>
+### C2 descriptor budget 행의 실제 borrow — 2026-10-27
+
+기준 `847def2`, 작성·통합 `/root`, 독립 검토 `/root/module_review`다. `obligation::validate`의5개 RemainingBudget by-value 반복을 원 배열 borrow로 바꾸고 `RemainingBudget::values`도 `&self`로 받는다. 검산 순서·checked arithmetic·반환 `[u64;14]`·encoder의 canonical bytes와 decoder의 원 remaining/spec/Result는 유지한다. source 식은 실제 slice iterator+행 참조를 계산한다. `allocation_budget::DESCRIPTORS`의 두 iterator allowance도 같은 borrow로 수정했으며 기존 cap을 늘리지 않았다.
+
+descriptor source8711→8047B(-664), allocation iterator allowance1152→48B(-1104)로 줄었다. Full38076→36972B, Resident17212B/shared22256B·두 Resident 합56680B는 유지한다. live peak63184B·metadata186192B·whole251728B와 recovered peak64611B는 다른 최대 phase 때문에 그대로다. 기존 Pending 포괄9120B를 쓰면 합68348B, 앞선 실제 wait 관측5320B를 쓰면64548B다. 후자의988B를 실제 admission PASS로 보지 않는다. writer ticket·bound entry/tail은 미공급이다.
+
+[선택 manifest](../../tests/fixtures/dev3-module-c2/borrowed-budget-rows/manifest.json)는 변경된 descriptor의 독립 literal·rechecksummed semantic 손상·budget 합/peak/growth·출력 보존·생성 field5, 같은 codec의 Aging1, 영향 source3, 실제 현재-build memory recovery1의10개만 선택했다. 원 frozen reserve/drop/recovery fixture를 재생해 변경 decoder가 실제 recovery에서 받는 byte 의미를 검산했다. wire·형식·원 authority 변경이나 native/새 PID 복구 실행은 없다.
+
+`artifacts/module-c2-borrowed-budget-rows-20261027-r1/`의 production/test build·첫 descriptor5 PASS/경고0 뒤, Aging harness가 필수 `XADB_G6_SOURCE_SHA256` 부재로 제품 검산 전에 FAIL했다. 원 실패와 뒤의 source3/recovery1 NOT_RUN을 보존한다. r2는 **코드·manifest·source·ELF를 바꾸거나 재빌드하지 않고** 같은 r1 export/binary에 필요한 G6 source/ELF/input identity와 `p1-o00` raw-index hash를 공급했다. 실패했던 Aging1과 미실행4만 PASS이며 완료한5/build는 NOT_REPEATED_UNCHANGED_CODE다. r2가 참조하는 r1 source/binary는 삭제할 수 없는 원 증거다.
+
+두 실행의 공통 source SHA-256은 `e6d01932d56a255b61ac97b1da4805a9181b09abdef144db4cdd5f8e09018064`, manifest는 `f475a3de4e30f58daa0aa36338316be37032c5dd6484baba847bf84f70f9caa7`, ELF는 `ec2b118a6e62cd6dbdf508e5d157818c2bc03ee803c1a274e829bc357a5239a0`다. r1 result `8373cd234c5287b3de4819f81d8efe4200df0b6ce6d8c5c28c751cd882384141`은 FAIL, r2 result `ba08de1a0f6a3e2d85de066e5ccaaadc2a98632d0892c9af0e294a6c7883e9a9`는 선택 continuation PASS다. G6 index SHA-256은 `ce3fd367007a6d798dbb6c2f18367a714d4f105611fb190fe57a1aa72d6d99a8`이며 실제 fixture가 그 index의 각 파일 길이/hash도 검사한다. 총600초/compiler90초/case30초/출력8MiB/stack33554432B 한도를 유지했고 경과31.62/6.93초는 성능 측정이 아니다.
+
+독립 검토자는 actual borrow와 남은 row/descriptor/Result/SHA 계수, 원 source5640파일과 r1/r2 artifact·최종 문서6개를 대조하고 D1/D2를 한정 수용했다. 미해결 필수 수정0이다. 변경 파일 rustfmt·diff whitespace만 확인했고 전체 fmt/Clippy·문서 verifier·push는 실행하지 않았다. source/progress 전체 admission·Row/terminal/recovery 공급·M4/M5는 미완료다.
+
+<a id="c2-borrowed-progress-rejected"></a>
+### C2 progress Owner borrow 축소 후보 기각 — 2026-10-27
+
+기준 `7ce9890`, 작성 `/root`, 독립 검토 `/root/module_review`다. ReadOperationAdmission의 원 core/OwnerIdentity를 `Option<&mut Owner>`로 대체하고 CatalogCallScope의 별도 Owner 필드를 제거하는 후보를 구현했다. 후보 source에서 production/test build·관련 runtime14·compiler3 PASS/경고0를 확인했다. compiler는 정상 Content 반환→close→Owner 재사용1 및 Owner 직접 재진입(E0502)·Content-live close(E0499) 거절2를 포함한다. source 계수는 후보 ticket8B·Scope held368B/entry1816B·Full36948B/Resident17188B였으며 **채택된 제품 값이 아니다**.
+
+독립 D1/D2에서 safe `mem::replace`/`swap` 반례를 발견해 **미수용·원복**했다. `owner_mut() -> &mut Owner`로 전달한 값 자체를 다른 authentic Owner와 교체하면 cleanup이 새 core/index/generation을 따라간다. 다른 read ticket을 forget해 flag1/Idle로 남긴 Owner와 교체하는 경우 원 slot이 아닌 다른 slot을 정상 해제할 수 있으므로 exclusive borrow만으로 exact identity를 고정했다는 주장은 성립하지 않는다. 이 반례는 읽기 분석이며 실행 PASS가 아니다. 기존14/3 PASS가 반례를 덮지 않는다.
+
+원 core+identity를 추가 보유하면 Scope 별도 참조 제거의 크기 이득과 상쇄된다. 실제 Catalog는 기존 Scope와 begin 인자의 독점 Owner borrow로 동시 호출 수명을 제한하므로 low-level ticket 자체의 추가 borrow는 bound entry/tail을 닫는 필수 선행이 아니다. 후보 제품2파일과 fixture는 원복하고, 원 exact-slot ticket·Full36972B·Resident17212B를 유지한다. 무변경 원복 코드의 완료 시험은 반복하지 않았다. compact entry/tail·정확 replay phase 계수와 실제 writer 예약을 후속으로 진행한다.
+
+원 artifact `artifacts/module-c2-borrowed-progress-owner-20261027-r1/`에 **후보** source/inventory·fixture manifest·compiler/probe exports·ELF·exact 로그·runner/helpers를 보존한다. manifest는 이 export 내부 `tests/fixtures/dev3-module-c2/borrowed-progress-owner/manifest.json`이며 현재 제품 경로로 등록하지 않는다. 총600초/compiler90초/case30초/출력8MiB/stack33554432B, 경과60.06초는 성능 결과가 아니다.
+
+- 후보 source SHA-256: `6c105acdb72dbe39bd71a02d6eaf2d015fd4e5d21dd9f6ede1d35d75787f1ac1`
+- 후보 manifest SHA-256: `eae3123994950f3890a11cf9a0a45b178c76f65f7d5b0748e49d33f25c6fe5f2`
+- 후보 ELF SHA-256: `a4fa6d4167701bf17927429584c5e456209cb956f393ab5fb697e523516e958f`
+- 실행 result SHA-256: `f8a8017efa1c78fd0d28ca31c98fc791fc548cf548edd880d28f8bfc67a6927c`
+
+실행 결과 PASS와 설계 기각을 구별한다. 독립 검토자는 제품2파일의 byte-exact 원복, 후보5644 source/inventory와14/compiler3 원 artifact, 문서2개의 사실/식별자를 확인해 기각·원복 기록을 확정했다. 후보 제품 D1/D2는 미수용이며 compact entry/tail·writer phase·M4/M5는 미완료다. 전체 fmt/Clippy·문서 verifier·push는 실행하지 않았다.
+
+<a id="c2-readonly-replay-source"></a>
+### C2 allocation replay의 읽기 검산 source 분리 — 2026-10-27
+
+기준 `f401d51`, 작성·통합 `/root`, 독립 검토 `/root/module_review`다. allocation 원 owner에 actual readonly 검산의 membership·descriptor decode·current 보유 중 expected 생성 phase를 분리했다. membership는 원 COMMON/HASH와8개 scalar entry를 유지하며, live encoder만 만드는64개 entry 배열을 포함하지 않는다. decode는 malformed Transaction/XTS까지 포함하는 기존 XOD closure와 추출 Spec·mapped Semantic Result 및 ReservationOwner/ControlRef/Profile/참조·오류 인자를 계수한다. expected는 원 current와 expected/finished wrapper 반환의4개 Spec·remaining5/current row·구성값·item96/Result·hash를 유지한다. 세 phase의 max 밖에 기존 base forwarding 계수는 그대로 둔다.
+
+INIT context는 `analyze → retained_reservation`만 실행하므로 reserve/cancel materialize의 State/Header 반환을 중첩하지 않는 전용 상계를 연결했다. reserve/cancel replay와 INIT replay의 generic TEMPORARIES fallback도 readonly closure로 대체하고 INIT의 실제 Status/FreeUndo codec max는 유지한다. live producer의 generic TEMPORARIES/PLANS와 실제 배열·Prepared는 그대로다. 제품 검산 순서·encoded byte·권한·WAL/설치 의미나 cap은 바뀌지 않았고 source class 계산만 좁혀졌다.
+
+r1 readonly branches는 membership9360B·decode10883B·expected9080B, system base12763B, retained reservation16591B, reserve/cancel materialize17199B, INIT materialize20439B다. population replay27508→24327B·history population28836→25655B이며 현재 history retention/rollback27759B가 최대라 **Full은36972→35895B(-1077)**다. Resident17212B/shared22256B·live peak63184B/metadata186192B/whole251728B·recovered peak64611B는 유지한다. 원 Pending 관측5320B까지의 합63471B(2065B 여유)는 실제 writer ticket·entry/tail floor가 빠져 있으므로 전체 admission 증거가 아니다.
+
+[동결 manifest](../../tests/fixtures/dev3-module-c2/readonly-replay-source/manifest.json)의 신규 source 관측1·영향 live/recovery census1·원 ledger class2·MT03 Full Pending Undo LOAD1·현재-build memory recovery1만 선택했다. production/test build와6 exact 사례 모두 PASS/경고0다. source 함수만 바뀌었으므로 무변경 codec 정답 시험·하위 회귀·workspace를 반복하지 않았다. 실제 Full charge의 예약/거절/반환, Pending LOAD, reserved Drop/fence와 새 live 인계 뒤 조회는 원 frozen fixture에서 검산했다. native/새 PID 복구 실행은 없다.
+
+원 artifact `artifacts/module-c2-readonly-replay-source-20261027-r1/`에 source5641파일/inventory·manifest·runner/helpers·compiler·ELF·case 로그를 보존한다. 총600초/compiler90초/case30초/출력8MiB/stack33554432B, 경과39.20초는 성능 결과가 아니다.
+
+- source SHA-256: `b6debc2165cdc10a9dff5e7cce43c7aa193cefc9da80884a01fe8da6ef91275d`
+- manifest SHA-256: `c4239be5e0fc68c661a5571999ce125738581f9409a12bc2366c820cb6e4e3d8`
+- ELF SHA-256: `c2833ab6a5a0f6bed7316ecfaf7c2ee34c69f1baee8936b4f0daaa39fa86f3d7`
+- result SHA-256: `ecb558d0c7f7caaf6ab6a56eea7928679a21038e9bcc2a7167a85b2e7fc53a78`
+
+독립 검토에서 reserve/cancel transition 동안 유지하는 current DescriptorSpec1개를 membership 식에 명시하도록 보완했다. r2는 production/test build와 바뀐 branch 관측1만 PASS/경고0이며, membership10272B·decode10883B·expected9080B로 전체 max와 Full/Resident는 그대로다. r1에서 완료한 class/MT03/recovery/census5는 NOT_REPEATED_UNCHANGED_BEHAVIOR다. r2 source `efc20ee154d4de8befdbbd65c1e734732409f2afdbb80aaf71634039cd5c7e14`, manifest는 r1과 동일, ELF `557c192b2ffaec788863ee238523e0fbf715b00e85c042fa91977b54949e43ca`, result `f90cbe58276d6eff61adf8e51b81833c3ba79ab7103983fd926da5f9579a7de3`이며 경과31.51초다. 원 r1의 제한 관측과 r2 보완을 각각 보존한다.
+
+독립 D1/D2는 r2 export 5,641파일·inventory/fingerprint·manifest/runner/helpers·compiler/ELF/관측 로그와 현재 source의 byte-exact 일치, r1→r2 DescriptorSpec 항 하나의 변경, 6문서의 원 source별 기록을 대조해 이 단위를 수용했다. 필수 미해결 수정은 0이다. 검토자는 시험·빌드·verifier·수정을 실행하지 않았다. 변경 파일 rustfmt·diff whitespace만 확인했으며 전체 fmt/Clippy·문서 verifier·push는 실행하지 않았다. compact entry/tail·writer phase 예약·Row/terminal/recovery·M4/M5는 미완료다.
+
+<a id="c2-compact-call-boundary"></a>
+### C2 Catalog 진입·소비 정리 오류의 작은 경계 — 2026-10-27
+
+기준 `514395e`, 작성·통합 `/root`, 독립 검토 `/root/module_review`다. actual MutableStorageOwner health leaf를 `HealthFailure`로 옮겨 원 Poisoned→Fenced 우선순위와 fence 효과를 보존했다. 기존 health는 이 값을 원 MutableStorageError로 확장하며, Catalog scope의 실제 작은 진입은 실패 시 원 WAL completion에 즉시 notify한다. 나중 wide 변환까지 통지를 늦추지 않는다. source 예약/검산/반환도 실제 SourceFailure를 반환하며 원 checked add/sub·Capacity/Unchanged·Fatal·active 잔존·poison/fence 규약을 유지한다. 큰 오류를 만든 뒤 축소하는 adapter가 아니다.
+
+`catalog_call`/`catalog_resident_call`과 consuming `finish_checked`는 private 내부 variant를 가진 CatalogCallError를 사용한다. 원 frame/visibility/concurrency 오류는 그대로 보유하고 phase/cause/effect를 정확히 확장한다. legacy lookup과 `finish_result`/`finish_error`는 기존 wide 오류와 원 Fatal 우선/그 밖에는 cleanup 오류 우선 규칙을 유지한다. 검토 중 원 Unchanged와 cleanup Unchanged가 함께 있을 때의 helper 차이를 실행 전 수정했다. selected query는 실제 작은 factory/finish를 사용하지만 lookup의 wide 결과까지 작은 오류로 승격하지 않는다.
+
+Scope의 원 Owner mutable borrow와 ticket의 원 core+OwnerIdentity는 그대로다. custom Drop을 제거하고 source→progress field Drop 순서를 사용한다. consuming finish는 기존 test hook을 self 보유 중 실행한 다음 즉시 `(source, progress)` 묶음으로 이동하여 source를 소비 정리하고 progress를 소비 정리한다. source 실패에도 progress를 반환하며 source 실패의 active/Drop 재시도를 보존한다. hook/fallible 동작을 destructure와 source 소비 사이에 넣지 않는다. 새 권한·manager·byte backing·wire 변경은 없다.
+
+관측은 Scope72B/전체 Result<Scope>72B/CatalogCallError3B/SourceFailure2B/progress ticket24B/cleanup pair48B다. 실제 한 호출 식은 entry1004B·held116B·선택 consumer4980B·close474B·legacy boundary2018B·source leaf368B다. close에는 pair 전체와 progress 정리 중 남는 source 결과를, legacy 식에는 compact→wide 입력/출력과 LookupStep Result를 넣어 actual lookup max에 연결했다. **entry1004B는 전체33 bound 진입 floor가 아니다.** health/pool registry/visibility/core/source의 guard-held leaf 및 대기·실패 반환 carrier 동시 합은 후속 원 호출 수명 검산 대상이고 foreign Owner 수는33으로 제한하지 않는다.
+
+held의 실제 오류 carrier 축소로 Full35895→35619B·Resident17212→16936B, shared22256B다. live peak63184B/metadata186192B/whole251728B·recovered peak64611B는 유지한다. 이전 Pending 관측5320B를 더한 합63195B/여유2341B는 writer ticket과 전체 entry/tail floor가 빠져 있으므로 admission 인수가 아니다. 이전 source별 수치와 결과를 재분류하지 않는다.
+
+[동결 manifest](../../tests/fixtures/dev3-module-c2/compact-call-boundary/manifest.json)는 신규 health/priority/carrier 관측3, 변경 source 예약/반환8, actual Scope6, source entry3, final return2, Full Pending Undo LOAD1, live/recovery census1, 현재-build memory recovery1의25 exact 사례를 선택했다. Scope custom Drop 제거와 consuming finish 변경에 대해 기존 authored compiler4도 같은 borrow 계약을 재검증했다. production/test build·runtime25·compiler4 모두 PASS/경고0다. 완료한 무변경 codec·하위 회귀·전체 workspace는 실행하지 않았다. normal Drop/unwind·fenced cleanup·원 I/O Fatal·실제 Drain 대기·현재 recovery 뒤 조회는 변경 경계에 연결된 원 oracle을 사용했다. native/새 PID 복구는 실행하지 않았다.
+
+원 artifact `artifacts/module-c2-compact-call-boundary-20261027-r1/`에5642파일 source/inventory·manifest·runner/helpers·compiler/probe export·ELF·각 case 로그를 보존한다. 총600초/compiler90초/case30초/출력8MiB/stack33554432B, 실제75.98초는 성능 결과가 아니다.
+
+- source SHA-256: `94a44d1d4e5a786596bb4be7c91706725fb36ff2d152bd057540cfb82d765738`
+- manifest SHA-256: `77e6d843e5a31e639ded610eac8050342fba53d8a1b5c0ed622e8be537dd282a`
+- ELF SHA-256: `7806bc2b02cb1c1de8a0cb58bc426848ba52b7a5f859d524915917bf80d39120`
+- result SHA-256: `ea0a4d1282b915893cac7922af244c769250e39e86cfe9fd730ab2fc070eb1dd`
+
+독립 D1/D2는 코드·원 source5642파일/inventory·build2/runtime25/compiler4의 원 export/진단·ELF·6문서를 대조해 이 한정 단위를 수용했다. 필수 미해결 수정은0이며 검토자는 시험·빌드·verifier·수정을 실행하지 않았다. 변경 파일 rustfmt·diff whitespace만 확인했고 전체 fmt/Clippy·문서 verifier·push는 실행하지 않았다. 전체 bound entry/tail floor·writer/progress phase 예약·Row/terminal/recovery·M4/M5는 미완료다.
+
+<a id="c2-borrowed-replay-workspace"></a>
+### C2 실제 replay 작업 공간 대여 — 2026-10-27
+
+기준 `b304bea`, 작성·통합 `/root`, 독립 검토 `/root/module_review`다. semantic Catalog의 실제 replay observer가 원 WORK_END 안의 provenance 뒤 zero tail에서 descriptor2×1536B+core256B를 빌린다. 기존 전체 loan1572864B·WORK_END1507328B·claims22528B와 wire/hash 범위는 그대로다. 새 backing/authority/manager는 없다. producer는 원 local 배열을 보유하며 같은 `run_with_buffers`의 원 compute/ordering/frame encode·verify 본문을 사용한다.
+
+private ReplayScratch는 대여 전 전체3328B가0임을 확인하고 오염 입력은 지우지 않고 거절한다. 생성 뒤 정상/오류/unwind Drop는 실제 빌린 descriptor/core만 byte-wise로 지우며 주변 byte를 변경하지 않는다. history/recovery의 원 tail 검산은 유지한다. actual scope2 replay만 borrowed observer를 수신하며 기존 owned observe는 시험 경계에 남는다.
+
+source 식은 owned wrapper의 인자/배열/반환, borrowed constructor/guard/Drop iterator·slice·Result와 forwarding borrow를 포함한다. owned24335B/borrowed20899B는 각각 현재 helper 식이며, 과거 식에서3328B를 단순 차감하지 않는다. history retention24715B·population25743B·initialize26120B/전체 peak28784B로 최대 경로가 바뀌어 Full35619→33980B다. Resident16936B/shared22256B·live peak63184B/metadata186192B/whole251728B·recovered peak64611B는 유지한다. 원 Pending 관측5320B를 더한61556B/여유3980B에는 전체 bound entry/tail·독립 guard leaf·writer ticket이 빠져 있으므로 전체 admission 인수가 아니다.
+
+[동결 manifest](../../tests/fixtures/dev3-module-c2/borrowed-replay-workspace/manifest.json)는 신규 borrowed 독립 C03/N16 검산1·실제 guard 정상/unwind/주변 보존1·변경 owned C03 1·source 관측4·실제 Full Pending Undo LOAD1·현재-build memory recovery1의9 exact 사례다. C03은 원 독립 전체 after/frame golden 일치를 검산하고, N16은 독립 mutant frame 거절과 scratch zero 반환을 검산한다. N16 오류 뒤 after 전체 비교는 수행하지 않는다. 전체72사례를 실행하지 않았다. 총600초/compiler90초/case30초/출력8MiB/stack33554432B로 동결했다. native/새 PID 복구·하위 회귀·전체 workspace는 실행하지 않았다.
+
+`artifacts/module-c2-borrowed-replay-workspace-20261027-r1/`은 편집 중 transition.rs를 시험 본문으로 잘못 덮은 원 source다. production compile FAIL(E0432/E0425/E0603), test build/runtime9 NOT_RUN을 그대로 보존한다. 원 제품 본문을 기준 commit에서 복원해 의도한 helper/guard만 다시 적용한 r2는 production/test build·runtime9 PASS다. production unused observe import 경고1을 보존하고, r3는 re-export의 cfg(test) 분리만 검증해 build2 PASS/경고0다. r2에서 완료한 runtime9는 r3에서 NOT_REPEATED_UNCHANGED_CODE이며 r2 증거를 새 source의 실행으로 바꾸지 않는다. r1→r2 변경은 transition.rs, r2→r3 변경은 semantic_catalog.rs 한 파일이다.
+
+각 artifact에5643파일 source/inventory·manifest·runner/helpers·원 compiler·ELF(생성 시)·case 로그를 보존한다. 실제 경과 r1 5.72초/r2 39.23초/r3 31.73초는 성능 결과가 아니다.
+
+| 실행 | source SHA-256 | ELF SHA-256 | result SHA-256 |
+| --- | --- | --- | --- |
+| r1 FAIL | `662f6ee0c73d28cb83ee2a41d98d6d8e67931ac197ce0adbf74cd7aca2cc7e7b` | 미생성 | `bc92439def393e2edee5f2ece38e5d0951d9ce56862a903ee57f6b2c9792a85d` |
+| r2 PASS/경고1 | `3e8e08f8a8e426ed8bb8957d20aa0eb5bde0266f5c3d8d46d6082489db83dd0b` | `ee6d27c46b7e42c4bdfca29375d96059332dc03ce55b38e2f47d1cc1bc2a26d1` | `9fbcab7f2d4987fe6288af4e0e04336ee46179a4ebdbf20945ff8c09fe9e3f8b` |
+| r3 import-only PASS | `dea3545c6ed6c0657c4b8b219edb8c976aeb8afc65aca381fb64fc15ec8e7906` | `9fbf4135a2176e2b0d9ba272116eda840f72f945ff59a69fc38e223dd278131c` | `4ed50b0321d83361dfcc27f712bc63e2855bc3926949727a3242e5e3e3e0da1e` |
+
+manifest SHA-256은 세 실행 모두 `bd5119987df3f80c7c20169c9245337fa3ff996724b94ac481aad740f61f332d`다. 독립 D1/D2는 제품 diff·r1/r2/r3 원 source/inventory·build/runtime 로그·ELF·6문서를 대조하고, N16 검산 범위와 runtime 미반복의 문구 정정을 수신해 한정 수용했다. 미해결 필수 수정은0이다. 검토자는 수정·빌드·시험·verifier를 실행하지 않는다. 변경 파일 rustfmt·diff whitespace만 확인하고 전체 fmt/Clippy·문서 verifier·push는 실행하지 않았다. 전체 bound entry/tail·writer/progress phase·Row/terminal/recovery·M4/M5는 미완료다.
+
+<a id="c2-split-source-charges"></a>
+### C2 exclusive split의 고정 source 계산과 port 계수 — 2026-10-27
+
+기준 `266c9ca`, 작성·통합 `/root`, 독립 검토 `/root/module_review`다. 전체 entry floor 조사에서 source 예약 전에 매번 여러 하위 계수 함수를 호출하던 일반 source_census 계산값도 실제 temporaries임을 확인했다. compiler constant-folding을 가정해 제외하지 않고, 원 `DiskSession::split(&mut self)`에서 fixed shared/Full/Resident를 한 번 계산한 후 private immutable CatalogSourceCharges를 ReadPort로 이동한다. 살아 있는 port/Scope와 exclusive split은 borrow로 겹치지 않는다. Catalog entry는 자신의 원 ReadPort에서 scalar만 읽으며 caller byte count·새 manager·authority·backing은 추가하지 않는다.
+
+계산 graph는 size_of/산술과 작은 Census/tuple/iterator 값만 생성한다. [동결 manifest](../../tests/fixtures/dev3-module-c2/split-source-charges/manifest.json)에17단계 실제 deep path, 최대 실제packet History/Load 각12usize=96B, bootstrap [usize;7]/IntoIter/fold와 소유 경로를 기록했다. 각 helper의 인자·지역값·미완료 식·iterator·callee return와 추출값까지128word, 동시24helper의 보수 상한24576B를 사용한다. sizeof의 제품 배열/guard는 계산 때 생성되지 않는다. 전체 split24680B는 계산과 tuple+각 port 반환 phase의 max이며 실제 port는 계산 뒤 생성한다. 이는 source-value 상계이며 stack/RSS나 성능 측정이 아니다.
+
+원 shared 식에 빠졌던 실제 split3port를144B로 한 번 추가했다. conversion에는 아직 port가 없으며 live active에는 ports를 더하고 exclusive split은 별도 max다. recovered step의 waiting_flush/FlushRequired에서도 split이 호출되므로 Step/Result/target/UnwindFence·인자·반환을 추가한47600B 별도 가지를 연결했다. port tuple과 추출한 값의 반환 phase도 보수적으로 보존한다.
+
+source ticket charge는 원 checked next<=available<=65536이 성공한 뒤만u32로 변환한다. 반환은u64로 확장하며 header24..32의u64·32..64zero·실패 우선·poison/fence·active 잔존·source→progress 순서와 원 core+OwnerIdentity는 유지한다. 새 경계 시험은65536 전량 보유/반환,65537·u32::MAX+1·usize::MAX 무효과 거절을 검산했다.
+
+실측 ticket24→16B·Scope/ResultScope72→64B·cleanup pair48→40B다. one-call entry948B/held108B/consumer4972B/close434B/legacy1962B/source leaf336B이며 전체 bound floor와 구별한다. Full33972B·Resident16928B·shared22400B, shared+Resident2=56256B다. 원 Pending 관측5320B까지61692B/여유3844B에는 전체 entry/tail·독립 guard leaf·writer ticket이 빠져 있다. live peak63328B/metadata186336B/whole251872B·recovered peak64704B로 올라갔으며 이전63184/64611B를 현재 값으로 재사용하지 않는다. backing/형식/제품 한도는 유지한다.
+
+선택16은 charge 표현/고정 class9, actual port 전달1, split 계수1, live/recovered source1, Scope 크기1, actual Resident 결과 소비1, Full Pending Undo LOAD1, 현재-build memory recovery1이다. runtime은 r3에서만 실행했다. r1은 MaintenancePort sizeof의 lifetime 인자 누락 E0107, r2는 복구 계수의 private legacy module alias E0603으로 production compile FAIL이며 test build/runtime16 NOT_RUN이다. 두 실패 source/log를 그대로 보존하고 타입 인자와 canonical `storage::disk::RetentionError` 경로를 수정했다. r3 build2/runtime16 PASS·경고0다. borrow API/Drop authority가 바뀌지 않아 이전 compiler probes는 재실행하지 않았다. 무변경 codec/하위 회귀·전체 workspace·native/새 PID 복구는 실행하지 않았다.
+
+각 `artifacts/module-c2-split-source-charges-20261027-r{1,2,3}/`에5644파일 source/inventory·manifest·runner/helper·compiler·ELF(생성 시)·case 로그를 보존한다. 동결 총600초/compiler90초/case30초/출력8MiB/stack33554432B, 실제 r1 5.77초/r2 5.67초/r3 40.42초는 성능 결과가 아니다. r1/r2/r3의 선택16은 같고 manifest의 계산graph 감사 근거가 보완됐다.
+
+| 실행 | source SHA-256 | manifest SHA-256 | result SHA-256 |
+| --- | --- | --- | --- |
+| r1 FAIL | `d892ca2683bd4246a6c9c002bfb870a7c5485f6fe48863ed315806fcdf63a277` | `2e8b5a3d0f07c21f04fb167e0dbbb603bba01059caf808b4f4ae456716d19d4e` | `f832bed02f3c703afb45e582b7440b3c2a02f9dfffca92048104926d38a3462d` |
+| r2 FAIL | `bd537f0312325978e5ef2273e4e86adaae7b170332dc11aeb2972ea581fcdee0` | `8e175414b1f77d88e40a989875578ea56c88d746049d48af618831130bb531fb` | `cf404e7e818a0d1c816491856df6f7d3670631c368ac9f7653be31a599e82f03` |
+| r3 PASS | `0af267449e387bc19ef806df764ef921178855552b24206bbea11a4c961d6dc0` | `0cd05e4718397b2462cd5d592e2ff59666e254d11daf7e184bd8fb6917d6eba1` | `1e8fdb2fc971b1b5e84442b4f02c582ef78406bb3c46f56c5bf1c579e46048ea` |
+
+r3 ELF SHA-256은 `427a179ba550920ec7cf11f9e8c6feabfe9202fcc312a8a72d619b178f54d4a1`이다. 독립 D1/D2는 현재 제품/계산graph·원r1/r2/r3 source/inventory·build/runtime 로그·ELF·6문서를 대조해 한정 수용했다. 미해결 필수 수정은0이며 실제 비재귀 호출graph라는 문구 정정을 반영했다. 검토자는 수정·빌드·시험·verifier를 실행하지 않았다. 변경 파일 rustfmt/diff whitespace만 확인했으며 전체 fmt/Clippy·문서 verifier·push는 실행하지 않았다. 전체 bound entry/tail·writer/progress·Row/terminal/recovery·M4/M5는 미완료다.
+
+<a id="c2-uncharged-call-phases"></a>
+### C2 예약 밖 호출 phase의 관측과 작은 실패 정리 — 2026-10-27
+
+기준 `2273185`, 작성·통합 `/root`, 독립 검토 `/root/module_review`다. actual source 예약 실패는 private `finish_failed_source(SourceFailure, ReadOperationAdmission)`가 원 ticket을 소비 정리한 뒤 작은 CatalogCallError를 반환한다. 그 뒤 caller가 전체 `Err<Scope>`를 만든다. 원 SourceFailure와 progress ticket을 다른 권한으로 바꾸지 않으며, 원 Fatal 우선·그 밖에는 cleanup 오류 우선 규칙과 source→progress 순서, fence/poison 정책을 유지한다. 신규 helper의 정상 Capacity·fenced cleanup·원 Fatal 조합과 실제 source 실패 두 경로를 검산했다.
+
+나머지 변경은 **cfg(test) 계수식 관측**이며 제품 charge·source admission에 연결하지 않았다. 원 같은 core의 FOREGROUND32+Maintenance1+DedicatedFlusher 거절 입구1인34개를 사용한다. progress 허용33과 구별하며 다른 core의 foreign Owner 수를34로 제한하지 않는다. 각 owner에서 guard 없는 대기/guard 보유 중 추가값/guard 없는 반환을 구분하고, 독립 core·pool registry·visibility registry·isolation mutex의 guarded 값을 합한다. visibility confirms는 publication mutex나 새 snapshot을 만들지 않는다.
+
+pool에는 allocator/current/prior Registration, map의 TargetRequest, rank의 PageRef/24B/tuple, System INIT→init_generations→directory 검산 중첩, TxPair actor/indices, LOAD의 실제 flush/INIT Option+claim 복사, previous FrameStamp, DPT WalRequirement/WalFrameLocation을 넣었다. visibility에는 원 retirement target과 count의 값 인자·Option 비교, ReferenceTarget의 enum/map/Result, TxnId/DatabaseId의 engine 오류와 Undo/PageRef/Generation의 foundation 오류를 구분했다. 큰 타입·iterator 외의 인자/작은 값은 pool13단계·visibility11단계 각각64B의 보수 packet과 명시된 보조값으로 계수한다. [동결 manifest](../../tests/fixtures/dev3-module-c2/uncharged-call-phases/manifest.json)에 호출 범위와 근거를 보존한다.
+
+| owner | guard 없는 대기 | guarded 추가값 | guard 없는 반환 |
+| --- | ---: | ---: | ---: |
+| core | 52B | 658B | 136B |
+| pool registry | 80B | 3588B | 76B |
+| visibility registry | 84B | 2351B | 66B |
+| isolation | 50B | 504B | 136B |
+
+독립 guarded 합은7101B다. 원 factory/begin 인자와 작은 실패 helper, **전체 Scope Result**를 유지한 관측은 entry217B·source 실패195B·반환197B·compact tail234B이며 `34×234+7101=15057B`다. 현재 selected query는 같은 for lexical scope의 result/step/target과 오류 시 `finish_error`의 wide 값을 종료 호출 동안 유지하므로, 기존 consumer4972+legacy1962+close434=7368B를 별도 넓은 tail baseline으로 남겼다. 그 단순 조합은257613B다. 두 결과 모두 source 식의 보수 상계이며 실제 최소 비용·machine stack/RSS·성능·불가능성 하한이 아니다. 작은 경계만의 값을 selected caller 전체 보장으로 올리지 않는다.
+
+Full33972B·Resident16928B·shared22400B와 원 charge는 그대로다. shared+Full 뒤9164B의 여유에는 현재15057B 관측을 그대로 예약할 수 없으며 wide caller의 실제 소비 경계도 아직 닫히지 않았다. 따라서 전체 reader floor·writer Pending/progress phase admission은 미공급이다. 기존 one-call 식과 source별 PASS를 이번 관측으로 소급 재분류하지 않는다. 후속은 실제 소비/오류 수명과 guard closure를 좁히거나 원 자원을 보존하는 구조로 해소하며 한도 증액·case 삭제는 하지 않는다.
+
+실행 전 diff→선택을 고정해 신규 helper1·신규 관측1·변경된 실제 source 실패(fence/Capacity)2만 실행했다. r1은 production build PASS 뒤 시험용 ConcurrencyError 경로 미한정 E0425로 test build FAIL/runtime4 NOT_RUN이다. 원 source와 로그를 보존하고 cfg(test)의 해당 한 타입만 `concurrency::ConcurrencyError`로 정정했다. r2 test build/runtime4 PASS·경고0이며 생산 코드가 같아 production check는 NOT_REPEATED_UNCHANGED_CODE다. 무변경 lookup/codec/복구·compiler borrow probe·하위 회귀·workspace 시험은 반복하지 않았다. 이 helper는 영속 의미/byte/복구 경로를 바꾸지 않는다.
+
+원 `artifacts/module-c2-uncharged-call-phases-20261027-r{1,2}/`에 source5645파일/inventory·manifest·runner/helpers·compiler·ELF(생성 시)·case 로그를 보존한다. 총600초/compiler90초/case30초/출력8MiB/stack33554432B, 실제 r1 20.29초/r2 29.06초는 성능 결과가 아니다.
+
+| 실행 | source SHA-256 | result SHA-256 |
+| --- | --- | --- |
+| r1 test build FAIL | `49e4b60f12adb8a1cdf77dcea9537a8c51314960157de3b0a349601eb65f01af` | `d6d7311e64519c1d7d51f261508f12ad089d1b95b9d58d493b11683e73aa82ab` |
+| r2 선택4 PASS | `27d454362ffcf02d9be96869300e2d00e9d1dfe526710d92f1669cc68ee718b8` | `5e10c28db8e301e39997f6756bce1cd94825f138ca999fa1e02f5d28626521b4` |
+
+두 실행의 manifest SHA-256은 `c2aeac954ba47fcd69907d911d692b3cade4aa443dc6284cc69f18e0e3790b38`, r2 ELF는 `41a9e95a09a8cc8f64a9de1fb2898cd5220be2134779251efd8aa8d757de54f5`다. 독립 D1/D2는 현재8파일·각5645파일 원 source/inventory·compiler/ELF/case 로그·6문서의 수치와 해시를 대조해 이 한정 단위를 수용했다. 필수 미해결 수정은0이며 검토자는 수정·빌드·시험·verifier를 실행하지 않았다. 변경 파일 rustfmt/diff whitespace만 확인하며 전체 fmt/Clippy·문서 verifier·push는 실행하지 않았다. 전체 entry/tail·writer/progress·Row/terminal/recovery·M4/M5는 미완료다.
+
+<a id="c2-query-tail-boundaries"></a>
+### C2 query 정상/오류 종료 경계 — 2026-10-27
+
+기준 `c8d47ed`, 작성·통합 `/root`, 독립 검토 `/root/module_review`다. actual `CatalogCallScope::finish_error`는 원 wide RetentionError를 유지한 채 작은 `finish_checked` 결과를 받고, 이후에만 cleanup 오류를 wide 오류로 변환한다. 기존 중간 `Result<()>`를 종료 호출 동안 만들지 않는다. 원 Fatal이 우선하며 원 오류가 nonfatal이면 cleanup 오류가 우선하는 의미, 원 source→progress 순서와 fence 아래 charge 잔존은 유지한다.
+
+선택 actual `query`는 lookup Result/step/RecordView와 header/Table/Column 소비를 lexical block 안에서 끝내고 정상 출구의 `Option<Plan4Target>`만 반환한다. block 뒤 consuming close를 실행한 다음 FlushRequired를 처리한다. 오류 arm은 같은 block 안에서 `finish_error`를 호출하므로 그때 caller의 전체 lookup Result를 없다고 세지 않는다. authority·snapshot·pin·영속 byte는 바꾸지 않았다.
+
+신규 cfg(test) 관측은 정상 tail710B와 오류 tail1394B를 구별한다. 오류에는 loop 값, 전체 lookup Result의 반환/추출2개, 추출 오류와 finish_error518B를 포함한다. finish_error는 원 RetentionError72B를 유지하며 작은 close 대기와 오류 변환259B를 별도 phase로 센다. 변환에는 원 오류 외에 반환 wide 오류·phase/cause/effect·SourceFailure를 남긴다. 기존 consumer4972+legacy1962+close434=7368B는 `c8d47ed`의 넓은 baseline으로 보존한다. 이 수치는 한 호출의 보수 source 식이며 actual stack/RSS·성능·동시34입구의 전체 floor가 아니다. 제품 charge/admission에는 연결하지 않았고 Full33972B·Resident16928B·shared22400B는 유지한다.
+
+실행 전 [선택 manifest](../../tests/fixtures/dev3-module-c2/query-tail-boundaries/manifest.json)에 diff→5case와 총600초/compiler90초/case30초/출력8MiB/stack33554432B를 고정했다. 신규 original Scope의 caller 입력 오류(Fatal/nonfatal)×healthy/fenced cleanup4조합1건, 실제 query의 Missing/Commit후 Found1건, 새 관측1건과 finish_error가 직접 바뀐 actual Busy/Undo PageIo Fatal2건만 실행했다. synthetic 원 Fatal 입력은 priority 검증이며 actual source fatal이 fence 없이 발생했다는 증거가 아니다. production/test build 및 runtime5 PASS·경고0다. source/progress/refs/pins/I/O 잔존과 오류 phase/cause/effect를 검산했다. 실제 query 검증은 변경한 helper를 호출하며 기존 결과 소비 test로 대체하지 않았다.
+
+`artifacts/module-c2-query-tail-boundaries-20261027-r1/`에 source5646파일/inventory·manifest·runner/helpers·compiler·ELF·5case 로그를 보존한다. 실제38.26초는 성능 결과가 아니다. source SHA-256 `e5bd6ae338ad27ffff7e6268ad243627e8672f713809e98d5ff717a9982bf7d6`, manifest `49543abcaf49de48a2b0fe5db887063cfa84916d6043d309758ebf1cbf3a8414`, ELF `10747a193a83333e655b41f48714d4329da9ba2d35e1778211b247cfe0d1d537`, result `3a05d737bf2006559fd2ebaa698e0dd7cb89a657609d9740194584d62d7dd7a2`다.
+
+독립 D1/D2는 실제3 Rust diff·원5646파일/inventory·manifest/runner/helpers·compiler/ELF/5case와6문서를 대조해 이 한정 단위를 수용했다. 필수 미해결 수정은0이며 검토자는 수정·빌드·시험·verifier를 실행하지 않았다. 무변경 과거 관측/codec/복구·compiler borrow probe·하위 회귀·workspace 시험은 반복하지 않았다. 변경 파일 rustfmt/diff whitespace만 확인하며 전체 fmt/Clippy·문서 verifier·push는 실행하지 않았다. 전체 entry/tail·writer/progress·Row/terminal/recovery·M4/M5는 미완료다.
+
+<a id="c2-compact-dpt"></a>
+### C2 원 DPT의 중복 identity 저장 제거 — 2026-10-27
+
+`XADB-MODULE-DPT-001` · D2 · 기준 `d6d695d` · 작성/통합 `/root` · 독립 검토 `/root/module_review`. 원 source 예약의 retained 비용을 줄이기 위해 live PoolRegistry의 private 행만 `DptEntry {generation,rec_lsn,modification_counter}`로 바꿨다. full `DirtyEntry` 관측·expected·DptStamp·실제 WalRequirement와 historical DirtyRegistry/PriorPool은 보존한다. 비교 대안은 duplicate identity를 계속 저장하거나 cap/frame 수를 바꾸는 방법이었다. 후자는 채택하지 않고 같은 원 directory가 이미 소유한 identity를 사용한다. 새로운 runtime 영속 파일·버퍼·lock·semaphore·WAL/페이지 형식은 없다. 전체 aggregate 공급 완료 결정은 아니다.
+
+생산자는 ordinary install1곳, System INIT2곳, TxPair Forward loop이며 기존 permit/원 full expected를 검산한 뒤 compact 행을 저장한다. `dpt_matches`는 expected를 borrow하고 같은 registry 아래 published registration의 full identity·generation과 stored generation/recLSN/counter를 모두 비교한다. present DPT와 missing publication은 정상 일치가 아니다. `dpt_valid`는 published registration·같은 generation·nonzero recLSN/counter·원 fence/location의 WalRequirement를 계속 요구한다. 같은 slot의 identity를 바꾸는 정상 LOAD/rebind는 기존 clean/DPT 없음/requirement 없음·checked 다음 generation을 선행한다. 새 dirty 상태에서 same-generation identity 교체를 도입하면 이 결정은 재검토한다.
+
+INIT DPT→directory publication은 원 FencedInitRegistry 아래 유지된다. 중단되면 원 claim이 정확한 두 target/generation을 보유한다. cfg(test) 진단만 같은 generation의 published 또는 original claim으로 full identity를 복원하며 둘 다 있으면 일치해야 한다. 둘 다 없으면 panic으로 명시하며 clean으로 숨기거나 다른 generation을 사용하지 않는다. fenced unwind에서 initializer pins가 이미 반환됐어도 원 claim을 읽을 수 있다. 이 진단은 publication/설치 권한이 아니다. 원 요구·DPT clear와 retirement의 순서는 유지한다.
+
+실제 저장 배열5120→2048B로3072B 감소했다. 새 helper closure660B는 `target_set_call_bytes`와 TxPair `source_census`에 직접 연결했다. generic N2 실제 charge2396B, 원 broad physical2352+helper660=3012≤3072이며 원 cap을 늘리지 않는다. CatalogFull33972B는 유지하고 Resident는16928→17588B, shared는22400→19328B다. Full 합53300B·두 Resident 합54504B다. 현재 live peak62236B/metadata185244B/whole250780B, recovered peak63612B를 선택 source census에서 확인했다. 이 식은 source 값의 보수 상계이며 실제 stack/RSS·성능·전체 entry/tail/writer aggregate admission의 증명이 아니다.
+
+System legacy INIT는 기존 physical3072 예약을 사용하며 Plan4 population/flush는 변경한 target-set 식을 직접 사용한다. legacy allocator/status flusher는 별도 capture/finalize8192를 유지한다. 독립 읽기 검산은 기존 타입상한으로 physical3072 + 2×Result<Option<CapturedPage>>512 + 2×Option<CapturedPage>384 + 2×FinalizeContent192 + 2×Result<Option<FinalizedPage>>192 + 2×FinalizedPage128 + 2×FrameStamp112 + 2×DirtyObservation192 + 2×WalRequirement128 + 2×CaptureAttempt64 + 4×TargetRequest80 + 4×MutexGuard32 + 4×Result<()>32 + outer512 =7968≤8192를 확인했다. outer512는 registration128·borrowed reference128·index64·u64 locals32·boolean/discriminant를 포함한다. capture/finalize를 함께 더한 정적 보수식이며 새 실행·실측으로 주장하지 않는다. helper660은 physical3072 안에 들어가므로 이 전체8192에 다시 가산하지 않는다.
+
+[선택 manifest](../../tests/fixtures/dev3-module-c2/compact-dpt/manifest.json)는 총600초/compiler90초/case30초/출력8MiB/stack33554432B로 고정했다. r1 production PASS 뒤 새 test PageLsn import 누락 E0425로 test-build FAIL·runtime13 NOT_RUN. r2는 cfg(test) import만 고쳐 production을 반복하지 않았고 test-build·첫 표현/진단/layout3 PASS 뒤 새 Pair fixture가 owner2를 기대하여 실제6과 불일치 FAIL, 나머지9 NOT_RUN이다. r3는 실제 source 함수 비용 연결·layout 수정과 owner6 정정을 반영해 production/test-build·선택12 PASS·경고0다. 변경 없는 첫 표현/진단2 PASS는 r2 원 source에 유지하며 반복하지 않았다. 서로 다른14selector의 결과를 source별로 보존하며 r2 layout을 r3 source의 실행으로 바꾸지 않는다.
+
+r3 실제 검증은 새 Pair DPT/first-registration/both-before-gate/gate-published4중단에서 page11/12·owner6·incarnation2·generation·recLSN8/counter1/requirement8·fence/claim과 gate 이전3중단의 비공개를 검산했다. 기존 System CF08-05/06만 선택해 두 publication 경계를 검사했다. 실제 Forward→CLR/Abort 정리, reserved Drop 뒤 fresh recovery, FN04만의 capture→redirty→최초 recLSN 유지→clean finalize, DPT/requirement 한쪽 손상 fence, dirty victim flush 뒤 LOAD 재시도, live/recovered 현재 타입 계산·실제 class 예약·generic N2/3/8/64 한도에 한정했다. 무변경 workspace/하위 wrapper/완료 사례를 일괄 실행하지 않았다.
+
+원 artifacts는 `artifacts/module-c2-compact-dpt-20261027-r1/`, `r2/`, `r3/`의 source5649파일·inventory·manifest·runner/helpers·compiler와 각 시도에서 실제 생성된 ELF·case 로그(생성 시)다. r1에는 test-build 실패로 ELF·runtime case 로그가 없다. r3 source `d58d1b751d9abace6bfc04e3926c6068300362565810eedf5f99d6dc7f88c7a9`, manifest `732bd409443ebf71bf5f23125698dd6f8881526a4933a0dfbd3ff27fe960c850`, ELF `30ca8627036b8bc38472fa8473a982417f1cb2902b19be7eb1c8a3a8b2d9be2f`, result `c6a732242aa6884078bbdd08d89eb0d316ba5c98649d290fd1d5f249584d99be`. r1 result `42abfd8036587a6c30555fdcffdd3924255bd82d94f411d1b3575c7b5b49797d`, r2 result `153ec16bb583d20d4563e3fbf2abcfd8a35fe8d92203d3bdd40f649ed5aee6bc`도 보존한다. r3 실제48.91초는 성능 측정이 아니다.
+
+독립 `/root/module_review`는 최종 제품 diff·r1–r3 source/inventory/compiler/ELF/선택 로그와 문서7개를 읽기 전용 대조하여 D1/D2를 한정 수용했다. 필수 제품 수정0이며 영속 파일 범위·r1 미생성 ELF/case 로그·gate 이전3중단 비공개 설명을 정정했고 `/root`가 반영을 확정했다. private compact DPT·실제 helper 비용·source별 선택 검증의 수용이며 전체 aggregate/M4/M5 완료가 아니다. source별 실패·미실행과 과거 검증 범위를 유지한다. 변경 파일 rustfmt/diff whitespace만 확인하고 전체 fmt/Clippy·문서 verifier·push는 실행하지 않았다. 전체 short floor·writer phase·Row/terminal/recovery·M4/M5는 미완료다.
+
+<a id="c2-borrowed-load-claims"></a>
+### C2 LOAD 검산의 원 claim borrow — 2026-10-27
+
+기준 `1c2f696` · 작성/통합 `/root` · 독립 검토 `/root/module_review`. `LoadClaimRecord::valid`의 원 flush claim과 System/TxPair INIT claim 검사에 `as_ref()`를 사용한다. 기존 `Claim::index`와 `InitClaimSlot::blocks_load`는 이미 `&self`를 받으며, 같은 registry guard·단락평가·검사 순서·원 full target/index/generation을 유지한다. 원 claim/token/pin/WAL 권한을 이동·재구성하지 않는다. 별도 `load_eligible`의 복사는 이 변경 범위 밖이며 모든 LOAD 복사 제거로 주장하지 않는다.
+
+cfg(test) source 관측은 두 copied Option/claim을 각각2×Option<&T>+2×&T로 대체한다. 새 pool guard3307B·독립 guard 합6820B, 원 core34입구의 compact floor14776B다. 과거 pool3588B·합7101B·floor15057B는 원 source의 증거로 유지한다. per-call entry217/failed-source195/return197/compact-tail234B와 기존 broad query tail7368B는 유지한다. source class·shared19328/Full33972/Resident17588은 바꾸지 않았고 관측식을 admission에 연결하지 않았다. 실제 source 최소치·stack/RSS·성능 또는 전체 floor 충족을 뜻하지 않는다.
+
+실행 전 [선택 manifest](../../tests/fixtures/dev3-module-c2/borrowed-load-claims/manifest.json)에 새 관측1·실제 MT03 Pending Undo LOAD·captured Undo PageIo fatal 정리·dirty victim flush 뒤 같은 snapshot LOAD의4selector를 동결했다. 모두 변경 `valid` 또는 변경 관측에 직접 연결된다. MT05 lower flush는 이 변경을 직접 실행하는 근거가 없어 실행 전에 선택에서 제외했다. 총600초/compiler90초/case30초/출력8MiB/stack33554432B, production/test build·runtime4 PASS·경고0다. 성공·오류 실제 LOAD 증거와 Some conflict 조합의 동일 predicate 읽기 검산을 구별하며 Some 조합 전수 실행으로 주장하지 않는다.
+
+`artifacts/module-c2-borrowed-load-claims-20261027-r1/`의 source/inventory/compiler/ELF/4case 로그를 보존한다. source `30ab6d70fa6e99b72b5739708a5989f26d468fc30e4225d4f76421bf95d9d956`, manifest `a34e8c7abcd1d6731328f804e12b7e77c06ea4e5c260008444bfddc9e0c444f9`, ELF `608abbe84e86b62aa9c7d63e1105f4dbde9796341d4977f326bed62dbbdec632`, result `de8011a5c21f9b85b5797f4c31bde3da0d9cbe00a7cf36b0ac3abfeca7ae64cc`다. 실제37.63초는 성능 결과가 아니다.
+
+독립 `/root/module_review`는 실제2파일 diff·5650파일 source/inventory·manifest/runner/helpers·ELF/compiler·exact4와 각 context identity·문서6개를 읽기 전용 대조하여 D1/D2 한정 수용, 미해결 필수 수정0을 확인했고 `/root`가 반영을 확정했다. whole admission이나 Some conflict 전수 인수로 확대하지 않는다. 이전 DPT 표현/진단·class/layout와 무변경 compiler probe·복구·wrapper/workspace는 반복하지 않았다. 원 PASS/FAIL은 source별로 보존하며 변경 파일 rustfmt/diff whitespace 외 전체 fmt/Clippy·문서 verifier·push는 실행하지 않았다. 전체 source floor·writer/progress phase·Row/terminal/recovery와 M4/M5는 미완료다.
+
+<a id="c2-admitted-validation"></a>
+### C2 고정 source 예약 뒤 원 pool/snapshot 검산 — 2026-10-27
+
+기준 `7c6318f` · `XADB-MODULE-ADMISSION-002` D2 · 작성/통합 `/root` · 독립 검토 `/root/module_review`. [내부 입구 우선순위](../contracts/dev3-module-boundaries.md#operation-source-admission)를 한정 재개방한다. 원 source·progress의 동일 소유와 source→progress 종료는 유지하며, 원 pool/snapshot metadata 검산을 fixed 예약 안으로 이동했다. 기존 큰 검산을 거절 분기에서 다시 수행하는 대안은 uncharged floor를 줄이지 못하므로 채택하지 않았다.
+
+실제 begin은 guard 없는 storage/pool health와 원 origin, 기존 Owner::check_binding의 Frame 오류 projection, snapshot 원 registry/health/poison 관측, 기존 check/try read progress, source 예약, 원 전체 validate 순서다. 성공 scope가 작은 validation 오류를 받으면 `finish_entry_error`로 원 오류를 보유하고 source/progress를 소비한 뒤 Err<Scope>를 구성한다. Fatal은 기존 fence 아래 charge를 보존하고 원 progress 정리는 시도한다. full/resident source 식은 `validation_source_bytes`를 직접 max에 넣는다. 원 pool/visibility의 세 phase 계산을 제품 source 식에서 사용하며 guard끼리 배타라는 이유로 빼지 않고 양쪽 값을 모두 가산했다.
+
+[실행 전 manifest](../../tests/fixtures/dev3-module-c2/admitted-validation/manifest.json)는 changed-code12selector와 총600초/compiler90초/case30초/출력8MiB/stack33554432B를 동결했다. 신규 Full/Resident×pool bad sum/SnapshotGuard observed q 불일치4fixture는 foreign/flusher admission projection·Capacity의 무효과 거절 후 원 charge 반환, 동일 손상의 재시도 Fatal·잔여 charge를 비교한다. 신규 observed pool poison+Capacity1과 source phase1, 실제 Drain/fence/unwind3·변경 compact health1·foreign/Missing1·변경 class2·필수 Pending Undo LOAD1·Resident visibility1을 선택했다. 변경 없는 failed_source helper·이전 DPT/LOAD 표현/전체 wrapper는 반복하지 않는다.
+
+r1 production PASS 뒤 새 시험 모듈 경로 지정 누락 E0583으로 test-build FAIL·runtime12 NOT_RUN을 보존한다. cfg(test) path만 고친 r2는 production을 반복하지 않고 test-build·exact12 PASS·경고0을 확인했다. 새로운 validation6958B는 원 Full33972B/Resident17588B 안에 들어가며 shared19328B는 유지한다. SnapshotGuard의 observed q를 바꾼 fixture이며 실제 visibility registry row 손상으로 주장하지 않는다. Busy/Drain과 손상 metadata의 결합은 별도 실행하지 않았다. 해당 우선순위는 코드 순서의 읽기 검토로 확인했으며 healthy Drain 실행을 그 조합의 PASS로 확대하지 않는다.
+
+원 `artifacts/module-c2-admitted-validation-20261027-r{1,2}/`의 각 source5652파일/inventory·manifest/runner/helpers·compiler와 r2 ELF·12case 로그를 보존한다. r1에는 test ELF·runtime 로그가 없다. 실제 r1 20.45초/r2 38.85초는 성능 결과가 아니다. 공통 manifest SHA-256은 `caf6666b940e71ed4892b5ce7cbe8d3a7bbcb74d7ef9987eaae72b22633f2bc3`, r2 ELF는 `e8294794933577202c569fe3b481a9aac1f5faf83e29ba12d81e778ac356c3ef`다.
+
+| 실행 | source SHA-256 | result SHA-256 |
+| --- | --- | --- |
+| r1 test-build FAIL | `db75186dcb56c8d2d6786e12ce3a1876614e99500ea6e4fda3780639f603da7d` | `9dadac48820cdbdba7c987df38805a0392fe3f56c73d6a21337d0358865df9af` |
+| r2 선택12 PASS | `a42fa7e538d9d9daed5cd9f6593e5499d2166d1b5dc93c9da86034e786c7768d` | `4920519ad2d9c1fef52a4aacebfb189ebd2dfd4196ae2e39e443196db393259a` |
+
+독립 `/root/module_review`는 실제 제품 diff·원 r1/r2 source5652파일/inventory·manifest/runner/helpers·compiler/ELF/exact12와 문서6개를 읽기 전용 대조해 D1/D2를 한정 수용했다. 제품 필수 수정0이며 예약 전 제거한 guard가 pool/visibility이고 원 core/isolation guard는 남는다는 표현3곳을 정정했고 `/root`가 반영을 확정했다. 검토자는 수정·빌드·시험·verifier를 실행하지 않았다. 무변경 코드·하위 wrapper/workspace를 반복하지 않았고 전체 fmt/Clippy·문서 verifier·push는 실행하지 않았다. 전체 floor·writer phase·Row/terminal/recovery·M4/M5는 미완료다.
+
+
+<a id="c2-statement-reads"></a>
+### C2 원 statement 기반 Catalog 조회와 자동 관측 — 2026-10-27
+
+기준 `9f5fca6`, 작성/통합 `/root`, 독립 검토 `/root/module_review`. [한정 공급 결정](../contracts/dev3-module-boundaries.md#catalog-statement-supply)에 따라 원 Full/Resident Scope와 실제 statement snapshot/slotgen/sequence를 연결한다. Found/Missing 전 catalog read bit를 원 isolation backing에 기록하고 기존 readonly 종료의 실제 epoch 검증을 사용한다. raw snapshot·mask 공개, 새로운 source credit, wire/형식 변화는 없다. caller loop를 장기512B로 이동하지 않았고 새 wide entry/return 및 transaction lifecycle의 전체 short floor는 미완료다.
+
+[실행 전 manifest](../../tests/fixtures/dev3-module-c2/statement-reads/manifest.json)에 신규 실제7selector(8case)·신규 source 관측1·변경 Full/Resident class2와 새 compiler borrow3을 동결했다. Missing→statement Drop→실제 CREATE Commit→Serializable conflict, RC 같은/다음 statement, Found와 foreign Owner, 원 visibility 누락 거절, Resident Busy/Undo I/O Fatal, FlushRequired 뒤 같은 view 재시도 및 실제 결과 직후 등록 Fatal의 자동 bit와 원 resource 정리를 검산한다. compiler는 정상 소비 후 종료·종료 후 nested name 사용 금지·call이 살아 있는 동안 statement Drop 금지를 구별한다. 총600초/compiler90초/case30초/출력8MiB/stack33554432B이며 실행 전 상태는 NOT_RUN이다. 무변경 기존 Catalog 기능/codec/전체 wrapper·workspace 시험은 선택하지 않는다.
+
+
+r1 production PASS 뒤 새 시험 import 누락 E0433·잘못된 DiskSession Commit receiver E0599로 test-build FAIL, runtime9/compiler3 NOT_RUN이다. r2는 cfg(test) import와 실제 MutationPort 호출만 정정해 production을 반복하지 않았으나, 중첩한 두 fresh session을 같은 invariant ledger/core lifetime으로 요구한 fixture가 E0597로 test-build FAIL했다. runtime9/compiler3는 계속 NOT_RUN이다. 실제 두 session의 런타임 origin 시험은 이 증거에서 PASS가 아니다. 정정 fixture는 같은 original reader에서 test-only로 visibility 연결을 누락시켜 factory의 원 origin 거절을 검산하며 reader/guard/admission을 외부로 발급하지 않는다. 실제 foreign core의 Owner 거절은 별도 신규 사례에 유지한다.
+
+독립 검토의 보완으로 새 wrapper 입력3refs+ObjectId와 statement/caller2refs를 `held_source_bytes`에 직접 합하여 큰 physical/replay lookup과 중첩 계수한다. registration/반환 phase의 별도 max로 이 부모 입력을 대신하지 않는다. 신규 원 pause cut에서 실제 Missing을 얻은 직후 bit 등록 전 fence를 세워 성공 노출0/bit0/refs0/pins0과 checked 종료의 progress0/잔여 charge를 검산한다. r3 production PASS 뒤 test-only pause가 반환 step을 borrow한 Scope를 다시 빌려 E0502로 test-build FAIL했다. runtime10/compiler3 NOT_RUN을 보존한다. r4는 cfg(test) 원 core 참조를 lookup 전에 원 수명으로 빌려 결과 뒤 pause에 사용하도록 정정했다. 제품 코드는 같아 production을 반복하지 않고 r4 test-build·exact runtime10/compiler3 PASS를 확인했다. r3 production과 r4 test-build는 경고0이며, compiler 음성 `call_after_statement_drop`은 기대 E0505와 미사용 import 경고1이 함께 존재한다. 이 경고를 지우려고 완료한 probe를 반복하지 않았고 compiler 전체 경고0이라고 표시하지 않는다.
+
+
+현재 wrapper의 registration/반환 phase6678B·중첩 입력48B가 실제 source 식에 연결되어 Full34020B/Resident17636B다. shared19328B는 유지한다. 새 식은 원 소비자의 short accounting이며 실제 stack/RSS·성능·예약 전/해제 후 전체 floor 충족이나 장기512B 귀속의 증명이 아니다. 기존 snapshot 기반 Catalog 조회/codec·readonly 빈 read-set·전체 wrapper/workspace는 반복하지 않았다. 원 compile 실패와 미실행 범위를 보존한다.
+
+원 `artifacts/module-c2-statement-reads-20261027-r{1,2,3,4}/`마다 source5658파일/inventory·manifest/runner/helpers·compiler 로그를 보존한다. r1–r3에는 test ELF/runtime 로그가 없으며 r4에 실제 ELF·10 exact selector와3개 probe별 source/diagnostics가 있다. r4 ELF는 `392c466eb162d9a983052c71104c5863d5238041b46ba44a4cbe61dce120bc03`, r3/r4 manifest는 `5c9bad4bd296b515c6e5d08ca95d809f7574eb16d87df3d0e45f682daa4d5dc0`이며 이전 r1/r2 manifest `f36a91db4a7d2042ac2b3b5307be4d1ee929614c57843a33d8ac484978e40ca8`도 원 증거에 남긴다. 실제20.73/15.29/20.56/54.83초는 성능 결과가 아니다.
+
+| 실행 | source SHA-256 | result SHA-256 |
+| --- | --- | --- |
+| r1 test-build FAIL | `90d3968e17827509939bb0378ce9e8655c59694650f8fec4574bf20fd5e10a1b` | `52053434c16bbd78ef10298ec94eb3f34bf2f69f9516633fc7475fb3cfabec86` |
+| r2 test-build FAIL | `3d3cabd42d7d9cce930b715251b45d385ee5f67144420512ef02a4d870e7d154` | `49ff937cb6de8289f17d40fe3d8a2259d1beb4dcbb054bc1b7cf7210f9d1c8e6` |
+| r3 test-build FAIL | `2dfc91ebf6b7ecfa3630bcd9843a8ae0df48f6a10d083e73c314aa9223d4f6ff` | `f2db79cddf570ff448dcc477afd9b32a810144486e27e2190b0830d04f004844` |
+| r4 runtime10/compiler3 PASS | `0b796f755f4237f05c1318024c45885afca47384cad005cff0387c6f8b0b1a71` | `524b3133ee224b1eb806315b154e738b6ef5de4a18454fdac9a13ceb70533295` |
+
+독립 `/root/module_review`는 r1–r4 각5658 source/inventory·manifest/runner/helpers·compiler/ELF/exact10·C2_STMT01–08·probe3의 export delta/fixture hash/진단 primary line 및7문서를 읽기 전용 대조해 D1/D2를 한정 수용했다. 필수 제품·문서 수정0이며 `/root`가 반영을 확정했다. 검토자는 수정·빌드·시험·verifier를 실행하지 않았다. 변경 파일 rustfmt/diff whitespace만 확인하고 전체 fmt/Clippy·문서 verifier·push는 실행하지 않았다. 전체 short floor·writer/Row/terminal/recovery와 M4/M5는 미완료다.
+
+<a id="c3-install-grant"></a>
+### C3 apply 소유의 실제 설치 권한 — 2026-10-27
+
+기준 `8c0f252`, 작성·통합 `/root`, 독립 검토 `/root/module_review`다. [기존 §6.5 계약](../contracts/dev3-module-boundaries.md#apply-install-grant)의 private `InstallGrant`와 실제 Catalog ordinary/Commit/retirement 세 생산 지점을 연결했다. Catalog는 dirty_allocation의 권한 생성 경로를 거치지 않는다. generic installer는 관찰 method만 받고 원 core/fence·identity/generation·checked successor·page/prior/recLSN·exact requirement와 DPT 검산을 유지한다. Commit은 Drain 뒤 original `before`를 계속 사용한다. legacy allocation/empty/scope1/population 네 경로는 원 sealed proof를 소비해 같은 grant 안에 보유한다. 별도 System INIT/TxPair/Reload 권한은 그대로다.
+
+source에서 grant 구성/소비·반환 carrier와 sequential accessor를 명시했으며 cap·backing·WAL/페이지 형식은 바꾸지 않았다. Grant224B·순차 관찰 closure400B·legacy conversion696B를 확인했다. 관찰은 기존 DPT660과 max로 연결해 generic N2는2396B를 유지한다. conversion696B는 새 여유를 만든 것이 아니라 원 allocator의 별도 moved2048 항 안에서 추가 검산한다. memory live peak62684B/metadata185692B/whole251228B와 recovered peak64060B, native 타입 source live62820B/metadata185828B/whole251364B와 recovered64196B다. 이 값은 source 보수 상계이며 실제 stack/RSS·성능·전체 동시 admission의 증명이 아니다. writer phase/전체 short floor·Prepared/terminal receipts 전체 이전·Row·M4/M5는 미완료다.
+
+[동결 manifest](../../tests/fixtures/dev3-module-c3/install-grant/manifest.json)는 changed-code와 선택 이유, 총600초/compiler90초/case30초/출력8MiB/stack33554432B를 기록한다. r1 production/test build와 allocator lifecycle·empty lifecycle/source3개를 통과한 뒤, legacy L01이 첫 population WAL 비교에서 실패했다. 해당 fixture는 `e443115` 이후 current Profile2를 설치하면서 Profile1/XSG v1/scope0 literal을 비교한다. 실제 scope1 호출까지 도달하지 않았고 `live::change`는 Profile2를 기존부터 WrongState/Unchanged로 차단한다. 원 FAIL을 보존하며 literal을 actual로 덮거나 legacy fresh factory를 추가하지 않았다. 신규 current Profile2의 다섯 legacy entry 효과0 거절은 별도 검증이며 legacy positive 설치의 PASS가 아니다(`NOT_REACHABLE_CURRENT_PROFILE`). actual population 설치는 Catalog fixtures의 실제 초기화로 검산한다.
+
+r2는 새 cfg(test) `page_ref`의 incarnation 인자 누락 E0061로 test build FAIL이며 runtime7/compiler5 NOT_RUN이다. r1 완료3·production build는 반복하지 않았다. incarnation1을 명시한 r3는 test build·남은 runtime7·compiler5 PASS, 경고0이다. r1 완료3과 합쳐 현재 선택10의 source별 결과를 수신하며 원 L01 FAIL은 별도 보존한다. compiler5는 관찰 사용 성공, private kind E0616·Clone 부재 E0599·소비 후 재사용 E0382·WAL-private legacy factory E0603의 정확한 primary span을 검산했다. Commit Pending lower flush와 두 partial install 실패의 원 fence/잔여 의무 및 메모리 FileIo의 현재-build 복구를 검산했다. native 타입 source 검산은 새 native process/I/O 실행 증거가 아니다. 원 source/ELF/로그와 FAIL·NOT_RUN을 각 artifact에 보존한다. 독립 D1/D2는 한정 수용했으며, 검토자는 수정·빌드·시험·verifier를 실행하지 않았다.
+
+원 `artifacts/module-c3-install-grant-20261027-r{1,2,3}/`에 source/inventory·manifest·runner/helpers·compiler·ELF(생성 시)·각 case와 compiler probe source를 보존한다. r1 source5666파일, r2/r3 5667파일이며 실제32.61/15.23/76.91초는 성능 결과가 아니다.
+
+| 실행 | source SHA-256 | manifest SHA-256 | result SHA-256 |
+| --- | --- | --- | --- |
+| r1 build2/runtime3 PASS, L01 FAIL | `0d5b2dd56326e6f78c70af95c9eff1386afd32d18f82b6ddf4e034d560970956` | `6ae0166d863caba2ef8e86ccb1e22fcb717a3ee6769d92d40e0682b88cb4c6e4` | `30198e7d567e130574bf80ca112b56484c7d880a87c29242d4187cf83c8475c4` |
+| r2 test build FAIL; runtime7/compiler5 NOT_RUN | `348fd8890123023787eb584edaa42af1cc00db93cb3c4590c889e55a309d397e` | `c259ca0d7980219b82621e16d55fe8b602c9bddb6d6e970b4ff753748264c265` | `a073d6591e05a0845c428792af0b4b2222d81ff415afaafd50ddaeeb155b2d44` |
+| r3 test build/runtime7/compiler5 PASS | `b6a202b9dbe64662131d9d9630a9a9b4e94ea46067616e900645eb940eb61bc6` | `c259ca0d7980219b82621e16d55fe8b602c9bddb6d6e970b4ff753748264c265` | `2a4e7ee34a58c2b95b1a445ee67593b49b982b5e8349af9bd319b3641c601ec9` |
+
+r1 ELF `d7349c5cd8a602ff6c2852d17131cef5001c2d58cce4efe2ea223a23e36b8616`, r3 ELF `419bd716615ff5fef8597d2dd15ef172924d3eae9f30e1334c046f33a3567b9a`다. r2/r3 production은 r1과 코드가 같아 NOT_REPEATED_UNCHANGED_CODE다. 완료된 원 runtime3·무변경 하위codec/회귀·workspace 시험은 반복하지 않았으며 변경 파일 rustfmt·diff whitespace만 확인했다. 전체 fmt/Clippy·문서 verifier·push는 실행하지 않았다. 독립 D1/D2는 r1–r3 전체 source/inventory·fingerprint·manifest·runner/helpers·ELF·원 로그 및 compiler probe5의 exact delta/diagnostic span과6문서를 대조해 한정 수용했다. 필수 미해결 수정은0이다.
+
+
+<a id="c3-terminal"></a>
+### C3 실제 Catalog terminal의 apply 소유 — 2026-10-27
+
+기준 `4cf67bf`, 작성/통합 `/root`, 독립 검토 `/root/module_review`. [원 terminal 계약](../contracts/dev3-module-boundaries.md#apply-terminal)에 따라 실제 semantic receipt 정의·factory/검산을 apply root/private terminal로 옮겼다. 물리 runtime과 append/drainer/file/slot·원 core/pins·exact requirement·digest·whole install/Q 조건은 유지한다. canonical disk receipt만 generic core/installer에 재노출하며 실제 Attempt/Installed/getter는 apply 내부로 제한한다. 형식/semantic wire 변경은 없다.
+
+[동결 manifest](../../tests/fixtures/dev3-module-c3/terminal/manifest.json)는 actual Busy 신규1, MF02 stage 진입 중단·MF03 write-before·MF07 sync-before·MF11 전체 설치 후 중단/현재-build memory recovery·MT01 정상 Q 공개 및 변경 source 관측3의 exact runtime9와 compiler4를 선택했다. compiler는 raw LSN factory 부재·Pending 이중 소비·private binding·Installed Clone 부재를 검사한다. 과거 compiler2의 원 fixture는 보존하고 current disk import/drain API를 별도 새 probe로 수신했다. 총600초/compiler90초/case30초/출력8MiB/stack33554432B이며 무변경 codec·MT05/MF10·하위 회귀·전체 wrapper/workspace는 반복하지 않는다.
+
+r1 production build PASS, 새 시험의 `unwrap_err`/직접 Cause 비교가 기존 Debug/PartialEq를 요구해 E0277/E0369 test-build FAIL이다. runtime9/compiler4는 NOT_RUN이다. r2는 cfg(test) 오류 표현만 수정해 test build PASS했지만, 새 competing stage가 legacy physical decoder `try_stage`를 통해 scope2 frame을 읽어 UnsupportedFormat을 반환했다. controller panic/release Disconnected로 신규 Busy fixture FAIL, 후속 runtime8/compiler4 NOT_RUN을 보존한다. r3는 원 current Profile2 `semantic_catalog::decode_layout`로 같은 immutable frame을 검산하고 실제 원 `stage_verified`에 해당 header를 전달한다. 제품 코드는 같으므로 r2/r3 production은 NOT_REPEATED_UNCHANGED_CODE다.
+
+Busy fixture는 actual Prepared.frame과 독립 C04 literal equality를 먼저 검산한다. StageCallStarted pause 동안 원 physical slot에 동일 frame을 점유시키고, 원 terminal의 실제 Busy/Unchanged→authentic Unstaged→restore/cancel을 실행한다. 원 Owner idle·Open/active0·pins0·frame/DPT/control/jobs/epoch/refs/Q/files 불변·I/O0 및 원 call 무 fence를 검산한다. 외부 주입의 complete9/synced8·원 first-write/동기 offset을 보존한 뒤 시험이 명시적으로 fence하고 종료한다. 미설치 물리 의무를 정상 처리한 것으로 기록하지 않으며 다중 semantic writer 지원 증거가 아니다.
+
+r3 test build·exact runtime9·compiler4 PASS, build/probe 경고0이다. 원 MF11 memory FileIo의 현재-build 복구와 정상 MT01의 exact C04/Q 공개를 확인했다. native 타입 source 검산은 native process/I/O 실행 증거가 아니다. 독립 D1/D2는 actual diff·r1–r3 전체 source/inventory·fingerprint·manifest·runner/helpers·ELF·원 로그·probe4 exact delta/diagnostic span 및6문서를 대조해 한정 수용했다. 필수 미해결 수정은0이며 검토자는 수정·시험·빌드·verifier를 실행하지 않았다.
+
+임시 adapter/receiver16B가 원 source 식에 추가되어 세분 wait 관측의 bridge3272B/Pending5336B가 됐다. 보수적인 phase Pending9136B·production broad36844B와 혼합하지 않는다. Full34020B/Resident17636B/shared19328B 및 원 memory live62684B/recovered64060B, native 타입 live62820B/recovered64196B는 유지된다. Full+세분 Pending+shared58684B는 cfg(test) 관측이고 전체 entry/tail·writer/progress admission의 완료 증거가 아니다.
+
+원 `artifacts/module-c3-terminal-20261027-r{1,2,3}/`에 source/inventory·manifest·runner/helpers·compiler·ELF(생성 시)·case logs와 compiler probe source를 보존한다.
+
+| 실행 | source SHA-256 | manifest SHA-256 | result SHA-256 |
+| --- | --- | --- | --- |
+| r1 production PASS/test build FAIL | `2586b276fa41626c8130e8314b9ce9b242389d2418009c656625983422da3cf5` | `47cde5bf37f41342c01276adea30c77bc3d51bfaa59f62efd039c887240bbc0d` | `334fff79ddf5401327aa2ace3de0bdb9efc33aa327f0fc5bdd3bbb064f2e0f12` |
+| r2 test build PASS/new Busy FAIL | `60b6f7ebd6de56a47e6be6fb5f445f220bb6b175e6b922a87ef5c31e17351d68` | `47cde5bf37f41342c01276adea30c77bc3d51bfaa59f62efd039c887240bbc0d` | `05295cc7c12d1cb44db2a4d5d423a041c5e21fa3b766239d3497bc0e1f8e9a80` |
+| r3 test build/runtime9/compiler4 PASS | `8782501923622d54e70d0e14d553897475cc993e2b4c91e2773621d2e29754c2` | `47cde5bf37f41342c01276adea30c77bc3d51bfaa59f62efd039c887240bbc0d` | `b427d198dbd0fa543784a7e34a04153d93712901fbad46567c9bb810ae38cd05` |
+
+r1 source5673파일·20.28초다. r2 source5673파일·27.65초·ELF `3c8d7a9208244a190bb79fd357e6970c6cd5e9eb786d3815a93c53b937052cd3`다. r3 source5673파일·64.44초·ELF `0fae7eeb9e5cee636b49d32dec494c551644fd7bb0c36090119130059344106b`다. 실행 시간은 성능 결과가 아니다. r1/r2 FAIL·후속 NOT_RUN과 무변경 production 생략을 보존하며 완료된 runtime은 반복하지 않았다. 변경 rustfmt·diff whitespace만 확인하고 전체 fmt/Clippy·문서 verifier·push는 실행하지 않았다.
+
+
+<a id="c3-prepared"></a>
+### C3 Prepared 실제 정의의 apply 경계 — 2026-10-27
+
+기준 `4f8afb7`, 작성/통합 `/root`, 독립 검토 `/root/module_review`. [소유 계약](../contracts/dev3-module-boundaries.md#apply-prepared)에 따라 PreparedCatalog의 실제 정의·private field를 apply root로 이동하고 canonical disk export·내부 imports만 연결했다. field type/order·생성/검산/소비 impl·source 계산·wire는 그대로다.
+
+[사전 manifest](../../tests/fixtures/dev3-module-c3/prepared/manifest.json)는 production/test target build 및 신규 compiler4(관찰 성공, private Owner field E0616:4, Clone 부재 E0599:4, 실제 commit_catalog에 같은 Prepared 두 번 전달 E0382:10)를 선택했다. 총300초/compiler90초/출력8MiB이며 runtime/source census/하위 codec/회귀는 변경이 없어 NOT_REPEATED_UNCHANGED_CODE다. 실행 결과와 독립 검토는 아래에 기록한다.
+
+
+r1 production/test build·compiler4 PASS, 모든 build/probe 경고0이다. 원 `artifacts/module-c3-prepared-20261027-r1/`에 5678파일의 immutable source/inventory·runner/helpers·ELF·probe export/diagnostic을 보존한다. source `7a1c1ea402eb1c4e5002a61b1bf7db4f5a574cc4ff6268618c3c019aa82e38ce`, manifest `62b62a797a4fe736d13ad06330212b43c2749e4e510f5ed208e540583dd6fd75`, ELF `3ef827b3b087cdd88fc897694b71bfcec2a9d16a4e0ed878c3dfbb7a2d1184ca`, result `f9b3fde7fce8005f58a75a10f2255a44e99b1e92c362bfdd6a46e7661e9493f1`다. 실제 52.58초는 성능 결과가 아니다. runtime을 실행하지 않았으며 기존 source별 PASS를 새 실행으로 표시하지 않는다. 변경 rustfmt·diff whitespace만 확인했고 전체 fmt/Clippy·문서 verifier·push는 실행하지 않았다. 독립 D1/D2는 제품8경로·source5678파일 전부/inventory/fingerprint·runner/helpers/manifest/ELF·원 compiler logs와4 probe의 exact two-file delta/diagnostic span 및6문서를 대조해 한정 수용했다. 필수 수정은0이며 검토자는 수정·빌드·시험·verifier를 실행하지 않았다.
+
+
+<a id="row-root3-codec"></a>
+### Row Root3의 exact 순수 cell codec — 2026-10-27
+
+기준 `57373f0`, 작성/통합 `/root`, 독립 검토 `/root/module_review`. [Row format owner](../contracts/dev3-module-consumers.md#root3-codec)에 따라 exact Root3/row_high@432/reserved440..512와 canonical Free Job3 digest를 별도 모듈로 구현했다. raw512B view는 원 input을 borrow하며 pin/issuer/reservation/READY 권한이 아니다. active commitments는 전체 Job3 census 전의 opaque 관찰이다. current Profile2·legacy Root2·기존 decoder/선택/복구 호출은 바뀌지 않는다.
+
+[사전 manifest](../../tests/fixtures/module-row-format/root3/manifest.json)에 신규4 selector와 독립 `author.py`/literal3의 hash를 고정했다. Python struct/표준 SHA-256은 XADB encoder를 호출하지 않는다. 초기 byte equality와 borrowed pointer, high-water0/1/MAX·55/56 cap·checked accounting overflow, 짧은 길이0..511/긴513·version0/1/2/4/65535·state/reserved/namespace/6refs/Aging/masks, encode 실패의 output 불변을 검산한다. 전체 Job3/census/page wrapper·current dispatch/복구는 선택하지 않았으며 기존 Root2/하위 codec은 변경이 없어 반복하지 않는다. 총300초/compiler90초/case30초/출력8MiB/stack33554432B다.
+
+r1 production/test build와 신규 첫2 selector PASS 뒤 identity 변형 시험이 FAIL했다. FileId의 낮은 segment1을0으로 바꾸어 구조적으로 잘못된 PageRef를 만들었는데 IdentityMismatch를 기대했으며 실제는 Page(Corrupt)다. 이 원 FAIL과 마지막 output-preservation 사례 NOT_RUN을 보존한다. r2는 유효한 다른 page_no를 identity 변형으로 사용하고, FileId/zero-incarnation 구조 오류12개를 별도 Page(Corrupt)로 검산한다. 제품 코드는 같으므로 production 및 이미 완료된 첫2 selector는 반복하지 않는다. 실행 결과와 최종 독립 검토는 아래에 기록한다.
+
+
+r2 test build·남은2 selector PASS이며 r1의 첫2와 합쳐 신규4개의 source별 결과를 보존한다. build 경고0, 원 FAIL은 소급 변경하지 않는다. raw cell 검산에 한정하며 actual issuance/current-format persistence/복구 또는 전체 source admission 증거가 아니다.
+
+| 실행 | source SHA-256 | manifest SHA-256 | result SHA-256 |
+| --- | --- | --- | --- |
+| r1 | `53d98cbb387f316535fdb42c6394d32f01c75228bb5ee929586e560f691f3d73` | `6b5f202f31f695e891a45086b57c29ae45607f03012a752bf168a39c03feb89d` | `c65ef265df45ca45524441f63e26f6193c5bce40ff3b959585ba97f01f666d37` |
+| r2 | `1c5b45e91a854955f3addd78aa54cb1e29e77531c4298eab08c0cfd22b72bb68` | `6b5f202f31f695e891a45086b57c29ae45607f03012a752bf168a39c03feb89d` | `6e561e3623e973c9dea0ec20d69dd9de0e3195274b942b7709dc2455755278e2` |
+
+r1 source5686파일·ELF `cf28092531fe3749d19db1a0e9bbd81e957e987a1485534be9eac43c7f545a5c`·31.42초다. r2 source5686파일·ELF `c1b8f5184b54dfb238c3d344b47e1ef858ba30ae13b9b8762bb92af30079d37a`·26.66초다. 원 `artifacts/module-row-root3-20261027-r{1,2}/`에 immutable source/inventory·manifest·runner/helpers·ELF·build/case logs를 보존한다. 시간은 성능 결과가 아니다. 변경 rustfmt/diff whitespace만 확인했고 전체 fmt/Clippy·문서 verifier·push는 실행하지 않았다. 독립 D1/D2는 source/원 결과와6문서를 대조해 한정 수용했으며 필수 수정은0이다. 검토자는 source5686파일 전부/inventory/fingerprint·manifest/runner/helpers/ELF/log와 독립 literal3의 전 바이트·hash를 검산했고 제품·fixture 수정/실행·빌드·시험·verifier는 실행하지 않았다.
+
+
+<a id="row-job3-census"></a>
+### Row Job3의 exact cell·64행 census — 2026-10-27
+
+기준 `2c9964d`, 작성/통합 `/root`, 독립 검토 `/root/module_review`. [owner 구체화](../contracts/dev3-module-consumers.md#job3-census)에 따라 별도 exact Job3 decoder/encoder·scope/h recipe 관찰·다중 Row root/actor·unique identity·Terminal/시간 관계·shared table·Root commitment/aggregate를 구현했다. 순수 cell 검산이며 actual Status/Undo/descriptor/allocator/history·page wrapper·issuer·source admission·current Profile3/base4/Row 실행은 미공급이다. 기존 Profile2 및 Root2/Root3 codec 본문은 바꾸지 않았다.
+
+사전 독립 검토에서 same-table Catalog Retained도 미커밋이면 허용할 수 없음을 확인했고 committed terminal/RowReserve LSN 관계를 추가했다. 원 초안의 RootView와 별도 namespace 불일치, Commit 뒤 CLR로 해석되던 positive fixture를 수정하고 namespace 결합·Retained/Prune/CLR/cleanup 시간 표를 동결했다. 테스트 실행 실패를 없애기 위한 사후 기준 변경이 아니며 아래 첫 실행 전 보완이다.
+
+[사전 manifest](../../tests/fixtures/module-row-format/job3/manifest.json)에 신규11 selector·독립 Python author와31 cell/4 complete bank/Root/aggregate literals·index의 hash를 고정했다. 정수 offset/표준 SHA-256으로 작성하며 제품 encoder/decoder/기존 author를 호출하지 않는다. 모든 occupied budget byte30×640 변형, version/identity/시간/alias/namespace 및 actor/census 반례는 해당 신규 코드 검산이다. negative bank는 별도 산식으로 commitment를 정상화하여 hash 실패가 의미 관계 검사를 대신하지 않게 한다. 총300초/build90초/case30초/출력8MiB/stack33554432B, compiler probe0이다. 기존 Root2/완료 standalone Root3/하위 시험은 변경이 없어 NOT_REPEATED다. 실행 결과·최종 독립 검토는 아래에 기록한다.
+
+
+r1 production/test build·신규 exact runtime11 PASS, build 경고0이다. 원 `artifacts/module-row-job3-20261027-r1/`에 5696파일 immutable source/inventory·manifest·runner/helpers·ELF·원 build/case logs를 보존한다. source `bd1c630474fdc2b8dd18bb94e0b7dc0f49bc5879e328c0e296562a4b09eb8616`, manifest `555708a488d8371bbe2b4750dbb9e4dee5a4c5119ea7481841cac87b5e66cc19`, ELF `40487659b016114c34f1cd614762b99b132c860421de663a6eb00186e1d74054`, result `1c4153182d2026360de53c684b4ba039736eafe10bcfc0632f109406d12eef9e`다. 실제32.34초는 성능 결과가 아니다. 기존 Root2/완료 standalone Root3/하위 시험을 반복하지 않았으며 생략을 새 PASS로 표시하지 않는다. 변경 rustfmt·diff whitespace만 확인했고 전체 fmt/Clippy·문서 verifier·push는 실행하지 않았다. 독립 D1/D2는 한정 수용했으며 필수 수정은0이다. 검토자는 source5696파일 전체/current 일치·fingerprint/inventory·manifest/input/helpers/runner·ELF·13행(build2/runtime11) 원 로그/경고0·6문서/신규10+수정1 경로를 대조했다. author를 실행/import하거나 제품 encoder를 사용하지 않고 표준 offset/SHA 산식으로31 cell·4×64 Job bank·Root4·aggregate4의 전 바이트를 독립 재구성해 일치를 확인했다. README의 직전 Root3 요약은 당시 단위 미포함과 후속 Job3 공급 링크로 구별했다. 검토자는 제품/fixture 수정·빌드·시험·verifier를 실행하지 않았다.
+
+
+<a id="row-envelope-codecs"></a>
+### Profile3·Root/Job3의 별도 envelope 검산 — 2026-10-27
+
+기준 `f8f73b0`, 작성/통합 `/root`, 독립 검토 `/root/module_review`. [owner 구체화](../contracts/dev3-module-consumers.md#row-envelope-codecs)에 따라 pure exact Profile3 입구와 Row page wrapper4를 공급한다. 기존 bootstrap1/2·non-Profile1 의미를 유지하고 actual current Profile2·genesis/selection/base/replay/recovery는 바꾸지 않는다. 원 lower codec은 그대로이며 wrapper 성공은 전체 graph/census/admission 권한이 아니다.
+
+[사전 manifest](../../tests/fixtures/module-row-format/envelopes/manifest.json)에 신규8(selector Profile4/page4)·독립 author/Profiles3/pages12/header-only FileMap1·이전 독립 cell4입력의 hash를 고정했다. 표준 struct/SHA와 hash가 고정된 원 독립 Root3/Job3 literal만 사용하며 제품 encoder/decoder/다른 author를 호출하지 않는다. 새 wrapper의 positive에만 별도 전체 census 호출을 명시하며 wrapper 자체의 권한으로 승격하지 않는다. 공유 header의1B typed mode로 바뀐 원 bootstrap/Profile1/2/non-Profile1의 수신·거절 순서를 신규 selector 하나로 검산한다. 기존 완료 Root2/Root3/Job3 selector 및 무변경 control 전체는 반복하지 않는다. 총300초/build90초/case30초/출력8MiB/stack33554432B다. 실행 결과와 최종 독립 검토는 아래에 기록한다.
+
+사전 검토의 추가 helper carrier 지적 뒤, 첫 실행 전에 nested helper 초안을 없애고 원 함수의 bool을1B enum으로 대체했다. 새 helper frame·추가 Envelope 반환을 만들지 않는다. owned type/charge 수치 변경0과 새 pure codec aggregate 미공급을 구별하며 원 source 값이 전혀 증가하지 않았다는 별도 주장은 하지 않는다.
+
+r1 production/test build·신규 exact runtime8 PASS, build 경고0이다. 원 `artifacts/module-row-envelopes-20261027-r1/`에 5705파일 immutable source/inventory·manifest/input/parents·runner/helpers·ELF·원 build/case logs를 보존한다. source `f6e6666c358972dfeda1ee0304eef0791b1dfd32c99978a4a4e4b515070aae3e`, manifest `d603fbfd26b5308b9f2953516daae467e757e3dd33f2e2619003a89dd603c33d`, ELF `2255a8171805aa4002490d4ba707366159d49b22311fbe89a78be61557dd1e91`, result `ab4814c0a420e2e1400020700920907dd520c01feef74811ef911146fa4b1ccd`다. 실제32.91초는 성능 결과가 아니다. 기존 완료 codec/무변경 control 전체를 반복하지 않았다. 변경 rustfmt/diff whitespace만 확인했고 전체 fmt/Clippy·문서 verifier·push는 실행하지 않았다. 독립 D1/D2를 한정 수용했으며 필수 수정은0이다. 검토자는5705 source 파일 전체/current 일치·inventory/fingerprint·manifest/input4/parent4·runner/helpers·ELF·build2/runtime8 원 로그/경고0·예산·6문서/신규9·수정2 경로를 대조했다. 제품/author를 실행·import하지 않고 표준 offset/SHA 산식으로 Profile3 IDs1–3·pages12·header-only FileMap의 전 바이트를 독립 재구성해 동결 입력과 일치함을 확인했다. 제품/fixture 편집·빌드·시험·verifier를 실행하지 않았다.
+
+
+<a id="row-base4-layout"></a>
+### Base4 별도 raw layout와 공통 image 기록 — 2026-10-27
+
+기준 `7071d21`, 작성/통합 `/root`, 독립 검토 `/root/module_review`. [owner 구체화](../contracts/dev3-module-consumers.md#row-base4-layout)의 별도 Profile3/Base4 입구를 구현한다. 동일 certificate/INIT grammar 본문은 그대로 공통으로 옮기고 typed header mode·exact tuple·legacy 거절 경계를 닫는다. actual current는 Profile2이며 신규 raw layout 성공은 full graph/Job census/descriptor/ownership inventory/history/INIT witness·selected owner·source admission을 뜻하지 않는다.
+
+[사전 manifest](../../tests/fixtures/module-row-format/base4/manifest.json)의 신규8 selector와 stdlib independent author·initial/active 각2MiB 및 hash 고정 parent6을 동결한다. 초기 P00/P07/P08 및 초기/활성 Root/Job3는 원 독립 bytes를 빌린다. 활성 입력은 TerminalLeased2·leased3, Status/Undo 동적 record와 Catalog pair INIT, Reserved13/Free14를 포함한다. generic dynamic page envelope·opaque descriptor/inventory와 prefix/bootstrap/FileMap/INIT digest claim은 실제 graph/역사 proof가 아니다. 부정 사례는 section/page/hash를 다시 정상화해 hash 실패와 의미 경계 거절을 구별한다. 같은 source의 완료 하위 시험을 반복하지 않으며 shared header 변경에 대한 기존1/2/3 gate만 신규 사례에서 검산한다. 총300초/build90초/case30초/출력8MiB/stack33554432B, compiler probe0이다. 최초 실행 전 page kind와 Root mask offset을 정적 대조해 수정했으며 실행 결과를 보고 기대값을 바꾼 것이 아니다. 실행 결과와 최종 독립 검토는 아래에 보존한다.
+
+
+r1 production/test build와 신규 exact runtime8 PASS, build 경고0이다. 원 `artifacts/module-row-base4-20261027-r1/`에 source5712파일/inventory·manifest/input/parent·runner/helper·ELF·원 build2/case8 로그를 보존한다. source `f471637b20588a8c8ffacd709230bd62c2c93f9cf5fbe2ce1774e4103ba55293`, manifest `cb165fc8fd4fc3ddec38debc6fe84fcfe6bf203e566395ccb4cf68ecf49b2b49`, ELF `1eadbe64c5884428ed59d0dda4bda3871ae6d04718d0a2b0c272032fd5cc6357`, result `6cf242d7bd7c49aaf1347bda1aa4fcb3cf7ea5c04d1465d86734f95b58bb1192`다. 실제39.90초는 성능 결과가 아니다. 첫 실행 전 독립 검토가 찾은 이동 코드의 import3개(PageKind2/PAGE_BYTES1)를 복구했다. 제품 predicate/권한 변경이 아니며 실행 실패 기록은 없다. 완료 하위 시험은 NOT_REPEATED이며 새 PASS로 표시하지 않는다. 변경 rustfmt/diff whitespace만 확인했고 전체 fmt/Clippy·문서 verifier·push는 실행하지 않았다. 최종 독립 D1/D2를 한정 수용했으며 필수 수정은0이다. 검토자는5712 source파일/current 일치·inventory/fingerprint·manifest/input3/parent6·runner/helpers·ELF·build2/runtime8 원 로그/경고0·예산·6문서/신규7·수정2 경로를 대조했다. 원 공통14 accessor/codec 본문은 whitespace 제외 이전과 같음을 확인했다. 제품/author를 실행·import하지 않고 표준 offset/SHA 산식으로 초기/활성 각2MiB의 전 바이트·hash를 독립 재구성해 일치함을 확인했다. 제품/fixture 편집·빌드·시험·verifier는 실행하지 않았다.
+
+
+<a id="row-aging"></a>
+### Root3-bound Aging descriptor와 전체 queue 후보 — 2026-10-27
+
+기준 `922bc62`, 작성/통합 `/root`, 독립 검토 `/root/module_review`. [별도 owner 입구](../contracts/dev3-module-consumers.md#row-aging)를 공급한다. raw encode/decode의 Root3 binding과 next의 after64 Job census를 구별하고 actual opcode/history/admission/current Profile3 복구는 연결하지 않는다. 기존 Catalog/완료 하위 selector를 반복하지 않는다.
+
+[사전 manifest](../../tests/fixtures/module-row-format/aging/manifest.json)는 신규5 selector, stdlib independent author와 pages6/jobs5bank/descriptors5/aggregate5, 원 독립 parent5의 hash를 동결한다. 빈/Catalog-only/Row-only/혼합/마지막빈 현재 관측을 검산하며 후보 사이의1000B 관찰 차이는 실제 WAL opcode가 아니다. 총300초/build90초/case30초/출력8MiB/stack33554432B, compiler probe0이다. 사전 독립 검토에서 첫 Start가 genesis job generation/high-water/cursor를 바꿀 수 있는 경계를 닫고, 형식 유효한 source.local99에 Root commitments까지 정상화한 뒤 full census가 actor 누락을 거절하는 사례를 첫 실행 전에 보완했다. 실행 결과와 최종 독립 검토는 아래에 보존한다.
+
+
+r1 production/test build·신규 exact runtime5 PASS, build 경고0이다. 원 `artifacts/module-row-aging-20261027-r1/`에 source5720파일/inventory·manifest/input/parent·runner/helper·ELF·build2/case5 원 로그를 보존한다. source `e60d36c0f45be78d88188c4ed955cacf5f9b408516519797e6babc430522acac`, manifest `c84ca2fd8a11923766e556a120cc517e2ce34b0100453262362d24d3e96ad01e`, ELF `a995b541537f84215bb08a1520cdc9100346fe635167f22bd76cc956ba48d037`, result `fd6b2e21d219b58da5917e684517ab9c87bb7ba5725f9b78e1fc3dc3f16d7c29`다. 실제32.61초는 성능 결과가 아니다. 완성한 Base4/Job3/원 codec 및 lower selector를 반복하지 않았으며 생략을 새 PASS로 표시하지 않는다. 변경 rustfmt/diff whitespace만 확인했고 전체 fmt/Clippy·문서 verifier·push는 실행하지 않았다. 독립 D1/D2를 한정 수용했으며 필수 수정0이다. 검토자는5720 source 전 파일/current 일치·inventory/fingerprint·manifest/input5/parent5·runner/helpers/ELF·build2/runtime5 로그/경고0/예산·6문서/신규8·수정1 경로를 대조했다. 제품/author를 실행·import하지 않고 별도 offset/SHA 산식으로 pages6/jobs5bank/descriptors5/aggregate5의 전 바이트를 독립 재구성해 일치함을 확인했다. registry peak `[0,9,16,16,0]`, cleanup steps `[0,6,26,12,0]`, WAL `[0,367228,1584590,734318,0]`를 검산했으며 actual opcode 이력으로 승격하지 않았다. 파일 편집·제품/author 실행·import·build/test/verifier는 수행하지 않았다.
+
+
+<a id="row-transaction-ledger"></a>
+### Row 거래 현재 상태와 예약 잔여 — 2026-10-27
+
+기준 `0aa4bf1`, 작성/통합 `/root`, 독립 검토 `/root/module_review`. 사용자가 다른 에이전트의 수정이 아니라면 작성 중 변경을 완료하도록 요청했다. 이전 이 채팅의 작성 명령과 현재3파일을 대조해 `/root`의 미커밋 초안임을 확인했다. 전체 일시중지 목표를 재개하지 않고 [Row ledger 단위](../contracts/dev3-module-consumers.md#row-transaction-ledger)의 구현·선택 검증·독립 검토·등록·commit을 마무리한다. 최초 구현 검토의 필수 수정0을 수신했으며 실행 수용은 아직 아니다.
+
+r1 최초 동결은 stdlib 독립 author·현재 관측19개(Job bank/StatusHome/5행 budget/descriptor16개와 descriptor 없는3개), hash 고정 parent Job3/Profile3 및 신규8 selector를 명시했다. 현재 [동결 manifest](../../tests/fixtures/module-row-format/ledger/manifest.json)는 보완1개를 포함한 최종9 selector와 r2 선택5개, 원 r1 결과·재선정 근거를 담는다. Active1/3, Reserved h0/h1와 C185/2228, 다중 Retained, statement rollback/mark 도달, full abort/완료, Commit한 Retained와 compensated q0의 공존, Prune/Release 후 관측 및 취소 mutation high를 포함한다. 입력은 실제 WAL trace가 아니며 nonempty inventory digest는 physical owner가 검산할 opaque claim이다. normal/negative input으로 actor/location/order/head/count/h/rollback/terminal·정확 잔여5행/6080·descriptor 수명을 확인하고 다른 actor 전체 census와 physical digest의 한계를 직접 구별한다.
+
+총300초/build90초/case30초/출력8MiB/stack33554432B, r1 최초 선택은 production/test build와 exact8이며 compiler probe0이다. 완료한 Catalog/Root3/Job3/Base4/Aging/하위 selector는 반복하지 않는다. 실제 source별 실행 결과와 최종 독립 D1/D2 수용은 아래에 보존한다. actual graph/history/current 복구·live source/admission·A/B와 M4/M5는 미완료다.
+
+
+r1의 production/test build와 첫6 selector는 PASS, 7번째 `terminal_descriptor_lifetime_and_gaps`는 FAIL, 8번째 scope selector는 NOT_RUN이다. 실패는 post-abort release를 뜻하는 bank15의 compensated cursor>0 last_step을41..43으로 작성하여 Terminal adoption50보다 앞선 입력에서 옛 apply50 descriptor의 거절을 기대한 것이다. pure ledger는 전체 queue/history chronology의 권한이 아니므로 그 입력에서 apply≥latest가 성립했다. 제품을 바꾸거나 기대 거절을 완화하지 않고 author를 고쳐 release cursor>0 step을61..63으로 만들었다. bank12/13/15만 변하며 homes/descriptors/budgets/index는 불변이다. literal selector는 postterminal step>Terminal adoption이라는 입력 선행조건도 직접 검사한다. 원 source/fixture/FAIL을 r1 export/log에 보존한다.
+
+r2는 cfg(test)와 fixture만 바뀌어 production build 및 미변경 PASS4를 반복하지 않았다. 바뀐 bank를 읽는 literal/rollback2, 원 실패 lifetime1, 미실행 scope1, 독립 검토가 추가한 full-abort next≠head(U12/None)1의 총5 selector와 test build가 PASS이며 경고0이다. 따라서 최종9 selector의 유효 증거는 r1 unchanged4+r2 selected5이고, r1의6 PASS 전체를 최신 source PASS로 복사하지 않는다. actual caller/제품 ledger 의미 변화는0이며 완료한 하위 selector·workspace·wrapper·native test는 실행하지 않았다.
+
+| 실행 | source SHA-256 (각5730파일) | manifest / ELF / result SHA-256 | 실제 범위 |
+| --- | --- | --- | --- |
+| r1 | `2bf6b31729b5d050ea2b5cd96be113f31f3a202c5a5424bc5a590e8a67792576` | manifest `510b0d1d19eb0b86d3f92fee7b71afc4a53df641cdfb7d576ac83fa081bebad6`; ELF `495c9c88c6429197f16b44caa5b8a5437cbc1c239fc8bfdbacceec99c53609b5`; result `b9ac527739e46bad2089f44d7dafcb0f41ea31aa6d8c412c282e0e1bda299db0` | production/test build2·runtime6 PASS, runtime1 FAIL, 다음1 NOT_RUN |
+| r2 | `d93ebe70e99ec2f97eba7971ed6b5d01a1ac6796d730a740c8a313181068b4cd` | manifest `bc79a5b0414a52df6cd4e0eec9cc40964c80296f7c77be5209fe698aa0b4bad3`; ELF `295554b09632d8b6a937f2e7fda82e50d3bcbd59d99efdd7c80cd2d8ee0a4e4f`; result `449620886485efbb45ce8d63fa88928eeb7868463edcd17ca8de27775274054a` | test build1·관련/new runtime5 PASS, production/unchanged4 NOT_REPEATED |
+
+원 `artifacts/module-row-ledger-20261027-r1/`와 `r2/`에 source/inventory·input/parent/manifest·runner/helper·build와 exact case stdout/stderr를 보존한다. 실행31.87/27.38초는 성능 결과가 아니다. 총300초/build90초/case30초/출력8MiB/stack33554432B 안에서 종료했으며 독립 작성 입력과 변경 범위 연결은 manifest에 고정했다. changed rustfmt/diff whitespace만 확인했고 전체 fmt/Clippy·문서 verifier·push는 실행하지 않았다. 최종 독립 D1/D2는 아래 범위로 한정 수용했다.
+
+
+독립 `/root/module_review`가 제품 구현·입력·선택 인과성·원 실패·6문서를 읽기 검토하여 **D1/D2 한정 수용, 필수 수정0**을 판정했고 `/root`가 반영을 확인했다. 각5730파일의 원 inventory/전체 hash/fingerprint, r2 현재 source 일치, r1→r2의 test/author/jobs/manifest4파일 차이를 대조했다. input6/parent2·runner/helper3·ELF/result·build3/runtime12 원 로그/hash·경고0과 출력38463/26663B를 확인했다. author/product를 import하거나 실행하지 않고 독립 offset/SHA 산식으로 최초4binary 전체를 재구성했으며 r2의4byte LSN 변경과 나머지 binary/index 불변을 확인했다. FullAbort next 새 분기와 r1/r2 시점 문구의 최종 보완도 수신했다. 검토자는 제품/author/build/test/verifier를 실행하거나 파일을 수정하지 않았다. 이 수용은 현재 actor/descriptor 검산 단위에 한정하며 실제 graph/history/mark/정규 inventory/source admission/current Row·A/B·M4/M5 완료가 아니다.
+
+
+<a id="merge-main-20261028"></a>
+## 모듈 개발 브랜치의 main 통합 — 2026-10-28
+
+사용자는 `codex/module-independence-finish`를 `main`에 병합하고 이후 main에서 진행하도록 지시했다. main 부모 `cbc09f2779847e7ee1452a0028d93d0b52fa2083`와 finish 부모 `76f91e00e8cd3b957246f62cf6d1724078658a67`를 두 부모 병합으로 결합한다. 작성/통합 `/root`, 독립 검토 `/root/merge_review`다. 앞서 main에서 후속 작업을 별도로 진행한 중복을 반복하지 않도록 [작업 지침](../../AGENTS.md)에 재개 위치 확인과 이후 `/home/et16/work/xadb`의 main 사용을 기록했다.
+
+기존 병합의 충돌36파일을 이어서 해결했다. main의 원 core816B 단일 계수·물리/의미 Commit4phase·`restore_recovered_control` 반환 경계·조회 forwarding Result 계수를 유지하고, finish의 compact source/오류·split port·statement 읽기·InstallGrant·TerminalWal·Prepared·Row 순수 codec/ledger 부분공급을 결합했다. 병합 중 생긴 시험 모듈 중복 등록과 helper 인자 불일치는 수정했다. Row actual adapter·terminal/recovery 연결, 전체 source 동시 admission·C3 나머지·M4/M5 제품 인수는 미완료다.
+
+### 원 기록과 미완료 초안의 보존
+
+- `stash@{0}`의 C2 미커밋 초안 `7df6e9215877b681f4cb297ba86bf8afa5c1fcf1`는 병합 전에 보관된 별도 진행분이다. 이번 병합에 적용하거나 개발을 재개하지 않았다.
+- 충돌 전 파일·선택 내역·양쪽 부모의 충돌 manifest8개는 `artifacts/module-independence-merge-main-20261028/`의 `original-conflicts/`, `resolution-choices.json`, `parent-manifests/`에 보존했다. 현재 fixture manifest는 finish의 후속 선택 정보를 채택하며, 과거 main 실행의 원 manifest로 해석하지 않는다. 두 부모 commit도 원 문서/manifest를 보존한다.
+- 기존 main의 원 실행물은 `/home/et16/work/xadb/artifacts/`, finish의 원 실행물은 `/home/et16/.codex/worktrees/module-independence-finish/xadb/artifacts/`에 유지한다. 같은 상대 artifact 이름이 있더라도 부모·source hash·원 작업 위치로 구별하며 덮어쓰지 않는다.
+- 두 기록에 존재하던 같은 anchor `c2-commit-phases`는 main의 제품4phase 기록만 [c2-commit-phases-main](#c2-commit-phases-main)으로 옮겼다. finish의 [cfg(test) phase 관측](#c2-commit-phases)은 기존 anchor를 유지한다. 원 내용과 source별 PASS·FAIL·UNKNOWN은 재분류하지 않는다.
+
+### 실제 병합 diff에 한정한 검증
+
+동결 index tree `0a21a0cedaf0668a2a59e29697203abb1352fb21`를6249파일로 export했다. 이번 검증 identity `08368925eaa388e13260d4f149c225d2baed747bff9c97cfce862854b632e777`는 원 archive inventory 순서의 `{path,sha256}` 목록을 compact JSON으로 직렬화한 SHA256이다. 이는 이번 archive 전체의 identity이며 `check_dev0.source_fingerprint`와 같은 알고리즘이라고 주장하지 않는다. 원 `source-r2.tar`, `source-manifest-r2.json`, test ELF `09bc9e482e42cd87280163a26e1b7804aea8dd38a44b167b7ec52f051e522ff2`, 선택 사유와 예산의 `selection-r2.json` 및 원 로그를 함께 보존한다.
+
+| 범위 | 변경과 선택 이유 | 결과 |
+| --- | --- | --- |
+| production/test compile | 병합한 실제 source의 연결과 타입 검산 | production check PASS; 첫 test build FAIL(중복 module/인자 불일치) 보존; 수정 뒤 r2 test build PASS |
+| source 계수10개 | 두 부모의 core/port·Commit4phase·Pending image·Aging·WAL wait·compact scope/Result·recovery/native 타입 계수를 결합한 diff | exact10 각1회 PASS |
+| MT03·MF09 | 병합한 조회/Pending/C3 설치와 복구 반환 helper의 실제 memory 연결 | exact2 각1회 PASS |
+| entry unwind | main의 선택 가능한 시험과 finish의 Full/Resident unwind helper를 결합 | exact1(두 class 검산)1회 PASS |
+| native N03 | 같은 ELF의 UNKNOWN-after-sync와 actual file recovery 연결 | 독립 admission 뒤1회 PASS(produce/recover 두 process) |
+
+runtime은 실행 전 선택13개·case30초·전체600초·출력8MiB·stack33554432B로 한정했으며 `runtime-r2.json` SHA256 `cc375e051cb6eda28365f8c6981266d9160b932c6ff2fa8c994e9e0510a6f1e3`의13개가 모두 PASS다. 완료한 무변경 Row codec/C3 authority 시험·하위 회귀·전체 workspace는 반복하지 않았다. stage/Commit 변경이나 통합 자체를 반복 근거로 삼지 않았다. 생략은 새 PASS가 아니다. 문서 verifier와 전체 fmt/Clippy는 push gate이므로 실행하지 않았고 push도 하지 않았다.
+
+새 source의 memory/native 관측은 shared20144/20280B, Full34020/35044B, Full+Pending59500/60660B, recovered peak64876/65012B다. main 이전 source의 Full+Pending66468/66604B 기준 FAIL 등은 당시 증거로 그대로 보존한다. 현재 관측의 한도 내 수치는 모든 entry/tail·writer/progress를 포함한 동시 admission 구현 또는 M4/M5 완료의 증거가 아니다.
+
+native N03의 별도 계획·원 controller·budget·source/ELF/input identity는 `native-r2/run-plan.json`과 `admission.json`에 고정한다. 전체30초/worker29초/최종 audit1초, 출력8MiB/trace4MiB/DB32MiB/snapshot128MiB/artifact1GiB/address space1GiB/free floor60GiB/file3/FD6,1회·실패 시 중단이다. N01/N02와 이전 source의 완료 사례는 반복하지 않는다. 최종 native 결과와 독립 수용은 아래에 이어 기록한다.
+
+
+N03는 독립 사전 admission 수용 뒤1회 PASS했다. produce는 실제 WAL sync 성공 뒤 오류가 보고된 UNKNOWN 경계(LSN9)에서 controller가 종료했고 ACK를 만들지 않았다. recover는 동일 ELF의 새 process에서 LSN15까지 완료했으며 oracle이 WAL·home·Base·CURRENT·회수 순서와 원 입력을 검산했다. 실제12.36초는 성능 결과가 아니다. 원 `native-r2/catalog-native/N03/result.json` SHA256 `2933f37b503d36338ce40ac8f1d7b0d33739a9dfebf14dceb3cca60fb0dc2d6a`, admission `d33a3e19428a218ebcd412fbef392c96f92b3adcb5bfffabddebb1d389f44b6e`, 독립 사전 audit `bc447a2ad996940c3ae1d1192332ac49ef0e873fc0a46246d6271dfff1038c1a`와 두 phase의 원 로그·trace·DB snapshot을 보존한다. 사전 검토에서 준비 import가 만든 추가 pycache1개를 제거하고 archive inventory 순서의 identity 설명을 정정한 뒤 승인했다. 실제 제품 source·ELF·선택13 결과는 바뀌지 않았다.
+
+시험 후 변경은 결과·색인·anchor를 정리한 문서9파일뿐이며 제품·fixture·scripts는 동결 source와 동일하다. 독립 최종 D1/D2를 이번 병합 범위에서 수용했으며 미해결 필수 수정은0이다. 검토자는 두 부모 대비 제품 보존·13개 원 로그/identity·N03 실제 trace와 snapshot의 WAL15 frame·최종 allocated home13 page·capture Base64 page 및 순서를 직접 검산했고, 현재 제품/fixture/scripts 동일·문서9개 보완·원 stash hash 유지를 확인했다. `final-review.json` SHA256 `480a75b2bdf02e199fe279a972a16a7105ed1266445a03b7dd8f5f2048d5919a`에 판정을 보존한다. 이 수용은 현재 병합의 관련 검증에 한정하며 전체 M4/M5 인수로 승격하지 않는다.

@@ -78,7 +78,6 @@ pub(crate) use doublewrite_install::{
     StatusReadGuard, StatusReader, SystemLoadError, SystemLoadObservation, SystemPage,
     SystemPageKind, SystemResidencyCursor, SystemResidencyStep, SystemSlotStep,
 };
-pub(in crate::storage) use doublewrite_install::{CatalogCommitAttempt, CatalogCommitInstalled};
 pub(crate) use doublewrite_install::{
     ClosedRecovery, RecoveryAcquireError, RecoveryCause, RecoveryError, RecoveryFailure,
     RecoveryInspection, RecoveryPhase, RecoveryPrefix, RecoveryPrefixCause, RecoveryPrefixError,

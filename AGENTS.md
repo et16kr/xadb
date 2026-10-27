@@ -41,6 +41,12 @@
 - 추가 테스트는 각 기능 구현과 함께 새로 작성할 테스트·fixture·oracle·harness를 뜻한다. 중간 필수 사례와 최종 전수용 확대 사례를 각각 선택 가능하게 작성한다. 긴 부하·대규모 데이터·전체 조합 실행은 최종 인수에 배정한다.
 - [DEV3 단계별 테스트 계획](devdoc/plans/dev3-test-plan.md)을 따른다. 계획 작성 요청만으로 제품 개발·테스트 실행을 재개하지 않는다. 최종 실행 뒤 수정이 생겨도 관련 diff와 실패 사례만 다시 검증하고 원래 결과를 보존한다.
 
+## 개발 재개 위치 — 2026-10-28 사용자 지시
+
+- 모듈 독립 개발의 `codex/module-independence-finish` 작업을 `main`에 병합한 뒤에는 `/home/et16/work/xadb`의 **`main`에서 개발을 이어간다**.
+- “이어서 진행” 요청은 실제 마지막 작업 위치·브랜치·미커밋 변경·source별 검증 기록을 먼저 확인한다. 새 채팅의 기본 경로만을 이유로 다른 기준선에서 이미 구현한 작업을 반복하지 않는다.
+- 이번 병합 전 보존한 C2 초안 stash는 별도 미완료 작업이다. 병합 완료를 이유로 자동 적용하거나 해당 C2 전체 개발을 재개하지 않는다.
+
 ## Repository guidance
 
 - Start with `devdoc/README.md`, then read only the task's owner contracts and evidence.

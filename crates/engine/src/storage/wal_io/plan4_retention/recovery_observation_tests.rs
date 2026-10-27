@@ -1,5 +1,6 @@
 //! Test-only observation of the actual retained byte bank. This lends no
-//! mutation, constructor, requirement, or authority and copies no caller loan.
+//! authority constructor and copies no caller loan. The terminal Busy fixture
+//! can explicitly submit decoded bytes to the original physical WAL stage.
 use super::*;
 
 impl<'s, 'c, 'p, 'd, W: WriterNamespace> Plan4Retention<'_, 's, 'c, 'p, 'd, '_, '_, '_, W> {
@@ -166,5 +167,24 @@ impl<W: WriterNamespace> Plan4Retention<'_, '_, '_, '_, '_, '_, '_, '_, W> {
         let state = self.control.isolation.lock().unwrap();
         let n = |at| u64::from_le_bytes(state.bytes[at..at + 8].try_into().unwrap());
         (n(0), n(8), n(16))
+    }
+}
+
+impl<W: WriterNamespace> RetentionReader<'_, '_, '_, '_, '_, '_, '_, '_, W> {
+    /// Synthetic slot competition: use the actual original decoder and stage.
+    /// This supplies no semantic receipt and must not resume the live session.
+    pub(in crate::storage) fn catalog_test_competing_stage(&self, bytes: &[u8]) {
+        let wal = self.storage.wal();
+        let prefix = wal.prefix().unwrap();
+        let layout = crate::storage::semantic_catalog::decode_layout(
+            bytes,
+            crate::storage::wal_frame::FrameExpectation {
+                stream: prefix.stream,
+                previous_lsn: prefix.complete_lsn,
+            },
+            self.storage.profile(),
+        )
+        .unwrap();
+        wal.stage_verified(prefix, layout.header(), bytes).unwrap();
     }
 }

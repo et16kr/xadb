@@ -55,6 +55,103 @@ pub(in crate::storage) use snapshot::{SnapshotGuard, SnapshotReservation};
 
 pub(in crate::storage) const VISIBILITY_BYTES: usize = 8192;
 pub(in crate::storage) const EPOCH_BYTES: usize = 1600;
+
+/// Observation of SnapshotGuard::confirms only. No publication lock, snapshot
+/// registration, page codec or source authority is part of this closure.
+/// The three columns are guardless waiting, guarded work and guardless return.
+pub(super) fn entry_source_phases() -> (usize, usize, usize) {
+    use crate::storage::page::{FileId, PageError, PageRef};
+    use crate::{api::DatabaseId, transaction::TxnId};
+    use authority::ReferenceTarget;
+    use foundation::identity::Generation;
+    use std::{mem::size_of, ops::Range, slice::Iter};
+    type Guard<'a> = MutexGuard<'a, &'a mut [u8; VISIBILITY_BYTES]>;
+    let waiting = 8 * size_of::<&()>()
+        + 4 * size_of::<VisibilityResult<()>>()
+        + 2 * size_of::<VisibilityResult<bool>>()
+        + 2 * size_of::<VisibilityError>()
+        + 4 * size_of::<bool>();
+    let locks = 4 * size_of::<Guard<'_>>()
+        + 2 * size_of::<std::sync::LockResult<Guard<'_>>>()
+        + 2 * size_of::<VisibilityResult<Guard<'_>>>()
+        + 2 * size_of::<std::sync::PoisonError<Guard<'_>>>()
+        + 4 * size_of::<VisibilityError>()
+        + 4 * size_of::<VisibilityResult<()>>();
+    // Typed identity decode, including whole returned errors and extraction.
+    // PageRef/UndoRef and TxnRef paths are exclusive; neither constructs a
+    // full Status cell, page checksum or inventory descriptor.
+    let generation = 2 * size_of::<Generation>()
+        + 2 * size_of::<Option<std::num::NonZeroU64>>()
+        + 2 * size_of::<foundation::Result<Generation>>()
+        + 2 * size_of::<foundation::Error>()
+        + 2 * size_of::<u64>();
+    let undo = 3 * size_of::<PageRef>()
+        + 3 * size_of::<Result<PageRef, PageError>>()
+        + 2 * size_of::<UndoRef>()
+        + 3 * size_of::<Result<UndoRef, PageError>>()
+        + 2 * size_of::<FileId>()
+        + 2 * size_of::<Result<FileId, PageError>>()
+        + 3 * size_of::<[u8; 8]>()
+        + 2 * size_of::<[u8; 2]>()
+        + 2 * generation;
+    let transaction = 3 * size_of::<TxnId>()
+        + 2 * size_of::<Result<TxnId, PageError>>()
+        + 2 * size_of::<TxnRef>()
+        + 3 * size_of::<Result<TxnRef, PageError>>()
+        + 2 * size_of::<DatabaseId>()
+        + 2 * size_of::<crate::Result<DatabaseId>>()
+        + 2 * size_of::<crate::Error>()
+        + 3 * size_of::<[u8; 16]>()
+        + 2 * size_of::<[u8; 4]>()
+        + 2 * size_of::<[u8; 8]>()
+        + generation;
+    let decode = undo.max(transaction)
+        + 2 * size_of::<ReferenceTarget>()
+        + 2 * size_of::<Result<ReferenceTarget, PageError>>()
+        + 2 * size_of::<Result<ReferenceTarget, ()>>();
+    // Upper validator/counter values remain while the next target decodes.
+    // Covers retained retirement target, count value argument/capture,
+    // decoded Option versus Some(target), and transferred-pin comparison.
+    let snapshots = 2 * size_of::<Range<usize>>()
+        + 2 * size_of::<Iter<'_, u8>>()
+        + 4 * size_of::<u64>()
+        + 4 * size_of::<usize>();
+    let pins = size_of::<Range<usize>>()
+        + 2 * size_of::<std::iter::Chain<Iter<'_, u8>, Iter<'_, u8>>>()
+        + 2 * size_of::<Iter<'_, u8>>()
+        + size_of::<ReferenceTarget>()
+        + decode;
+    let retirement = 2 * size_of::<ReferenceTarget>()
+        + 2 * size_of::<Option<ReferenceTarget>>()
+        + size_of::<RetirementScope>()
+        + size_of::<Option<RetirementScope>>()
+        + size_of::<Result<RetirementScope, ()>>()
+        + size_of::<Result<usize, std::num::TryFromIntError>>()
+        + size_of::<std::num::TryFromIntError>()
+        + size_of::<Range<usize>>()
+        + size_of::<std::iter::Chain<Iter<'_, u8>, Iter<'_, u8>>>()
+        + size_of::<Iter<'_, u8>>()
+        + decode;
+    let check = 4 * size_of::<u64>()
+        + 3 * size_of::<usize>()
+        + 4 * size_of::<&[u8]>()
+        + 2 * size_of::<VisibilityResult<()>>();
+    // <=11 helpers: confirms -> entry -> validate -> retirement -> count ->
+    // filter -> ReferenceTarget::decode -> TxnRef::decode -> decode_txn_id ->
+    // DatabaseId::new -> Error::new; <=64B scalar/ref/closure values per helper
+    // beyond the explicit packets and iterators above. Validators are serial.
+    let scalar_closure = 11 * size_of::<(&(), &(), &(), &[u8], usize, u64, [bool; 4])>()
+        + 4 * size_of::<[u8; 8]>()
+        + 4 * size_of::<Result<(), ()>>()
+        + 4 * size_of::<VisibilityResult<bool>>();
+    let guarded = locks + snapshots.max(pins).max(retirement).max(check) + scalar_closure;
+    let returning = 4 * size_of::<VisibilityResult<bool>>()
+        + 4 * size_of::<VisibilityError>()
+        + 6 * size_of::<&()>()
+        + 2 * size_of::<bool>();
+    (waiting, guarded, returning)
+}
+
 const SNAPSHOTS: usize = 68;
 const USERS: usize = 32;
 const REFERENCES: usize = 66;

@@ -1,5 +1,7 @@
 # 현재 구현
 
+2026-10-28 [모듈 개발 브랜치의 main 통합](../evidence/module-independence-survey-20261026.md#merge-main-20261028): `cbc09f2`의 공통 core·Commit phase·복구 반환 수명 보완과 `76f91e0`의 후속 C2/C3·Row 순수 검산을 결합한다. 이후 개발 기준은 main이며 진행 중 C2 초안은 별도 stash로 보존한다. 변경된 연결에 한정한 runtime13·같은 ELF의 native N03 1회 PASS를 보존하며, 독립 최종 D1/D2 한정 수용·필수 수정0이다. M4/M5 완료를 주장하지 않는다.
+
 2026-10-28 [C2 Catalog 결과 소비 수명](../evidence/module-independence-survey-20261026.md#c2-call-scope-main): 원 source/progress를 private CatalogCallScope에 유지하고 선택 query의 마지막 결과 소비 뒤 checked finish한다. runtime18·compiler4 각1회·production/test build·선택 Clippy PASS. 독립 OCR 전체23파일 한정 수용·시험선택 지적1건 보완·필수 수정0. 현재 Full+Pending66468/66604B는65536B 기준 FAIL이며 writer/progress·전체 진입/반환 합·M4/M5는 미완료다.
 
 2026-10-28 [C2 Drain 완료/content guard 인계](../evidence/module-independence-survey-20261026.md#c2-drained-handoff-main): 원 pin·Installing을 private Drained로 이동하고 정상 미완료 Drop의 fence-before-pins를 검증했다. 변경 경계 선택11개 각1회·production/test build·선택 Clippy PASS, main4phase/core·전체 peak 상계 유지. 독립 OCR 전체18파일 한정 수용·지적1건 수정·필수 수정0이며 writer/progress·전체 동시 합·M4/M5는 미완료다.
@@ -16,7 +18,67 @@
 
 2026-10-27 [C2 공통 core 계수와 복구 반환 수명](../evidence/module-independence-survey-20261026.md#c2-shared-core): main의 fresh/세션/복구 공통 보유분에 원 core816B를 한 번 포함했다. native 타입의65563B 초과를 실제 cursor helper 수명으로 정리해65512B를 확인했고 source별8개 선택 사례의 최종 적용 결과를 검증했다. OCR 전체16파일 검토와 계약 문구1건 정정 뒤 독립 D1/D2 한정 수용·필수 수정0이다. 원 Capacity·fixture·runner FAIL과 전체 aggregate/M4/M5 미완료를 보존한다.
 
-2026-10-27 [C2 Commit 단계별 source 비용](../evidence/module-independence-survey-20261026.md#c2-commit-phases): 실제 전환 carrier를 포함해 준비·대기·설치의 비용을 구분했다. 독립 검토에서 찾은 core816B 누락을 보완하고 source별 선택3+2회 PASS를 보존했다. 최종 독립 D1/D2 한정 수용·필수 수정0이며 Catalog 최대31940B·전체 동시 admission·M4/M5 미완료를 구별한다.
+2026-10-27 [C2 Commit 단계별 source 비용](../evidence/module-independence-survey-20261026.md#c2-commit-phases-main): 실제 전환 carrier를 포함해 준비·대기·설치의 비용을 구분했다. 독립 검토에서 찾은 core816B 누락을 보완하고 source별 선택3+2회 PASS를 보존했다. 최종 독립 D1/D2 한정 수용·필수 수정0이며 Catalog 최대31940B·전체 동시 admission·M4/M5 미완료를 구별한다.
+
+2026-10-27 [Row 거래 ledger](../evidence/module-independence-survey-20261026.md#row-transaction-ledger): Profile3 actor/Status/Job3의 다중 root·statement 상태와 현재 descriptor 잔여5행을 검사하는 pure 모듈을 구현했다. source별9 selector PASS(r1 unchanged4+r2 selected5), build 결과와 r1 fixture LSN 오류 FAIL을 보존한다. 독립 D1/D2 한정 수용·필수 수정0이며 actual graph/history/source admission/current 복구·A/B·M4/M5는 미완료다.
+
+2026-10-27 [Root3 Aging descriptor](../evidence/module-independence-survey-20261026.md#row-aging): 별도 Profile3/Root3 codec과 전체 after64 Job census를 거친 후보 생산자를 구현했다. r1 production/test build·신규5 PASS·독립 D1/D2 한정 수용이며 actual opcode/history/admission/current 복구·A/B·M4/M5는 미완료다.
+
+2026-10-27 [Base4 raw layout](../evidence/module-independence-survey-20261026.md#row-base4-layout): 별도 Profile3/Base4 layout와 공통 certificate/INIT grammar를 구현했다. r1 production/test build·신규8 PASS이며 독립 D1/D2를 한정 수용했다. full graph/Job census/current 복구/source admission·Row A/B·M4/M5는 미완료다.
+
+2026-10-27 [Profile3·Row page 입구](../evidence/module-independence-survey-20261026.md#row-envelope-codecs): 별도 exact Profile3 codec과 Root/Job3 page wrapper4를 구현했다. r1 production/test build·신규8 PASS이며 독립 D1/D2를 한정 수용했다. 기존 bootstrap1/2와 current Profile2를 유지하며 actual Profile3/base4/scoped observer·Row A/B·M4/M5는 미완료다.
+
+2026-10-27 [Job3 순수 cell·census](../evidence/module-independence-survey-20261026.md#row-job3-census): exact Job3/다중 root/actor·Terminal·동일 table·Root commitment/debt 검산을 구현했다. r1 production/test build·신규11 PASS이며 독립 D1/D2를 한정 수용했다. current Profile2와 기존 증거를 유지하며 pure page/Profile3 후속 공급은 [별도 envelope](../evidence/module-independence-survey-20261026.md#row-envelope-codecs)에 기록한다. actual graph/current Profile3/base4/Row A/B·M4/M5는 미완료다.
+
+2026-10-27 [Root3 순수 codec](../evidence/module-independence-survey-20261026.md#row-root3-codec): exact version3/row_high와 초기 Free Job3 commitment의 raw cell을 구현했다. r1 첫2/r2 남은2 PASS·원 FAIL을 보존하며 독립 D1/D2 한정 수용이다. current Profile2는 유지한다. 당시 단위에 포함하지 않은 occupied Job3/census는 [후속 공급](../evidence/module-independence-survey-20261026.md#row-job3-census)에 기록한다. page wrapper의 후속 순수 공급은 [별도 envelope](../evidence/module-independence-survey-20261026.md#row-envelope-codecs)에 둔다. issuer·current Profile3/base4/actual Row 복구·M4/M5는 미완료다.
+
+2026-10-27 [C3 Prepared 경계](../evidence/module-independence-survey-20261026.md#c3-prepared): 실제 정의·private field를 apply root로 이동하고 canonical disk 타입을 공급한다. 원 검산·효과/field 배치는 유지하며 build2/compiler4 PASS·독립 D1/D2 한정 수용이다. writer/전체 source·Row/복구·C3 전체·M4/M5는 미완료다.
+
+2026-10-27 [C3 Catalog terminal 소유](../evidence/module-independence-survey-20261026.md#c3-terminal): 실제 stage/durable/whole-installed receipt와 조립을 apply private 경계로 이전했다. 원 physical WAL·core/pins·정리/Q 규칙을 유지하며 실제 Busy/Unchanged 분기를 추가했다. r3 runtime9/compiler4 PASS·r1/r2 FAIL을 보존하며 독립 D1/D2 한정 수용이다. C3 전체·Row/전체 회계·M4/M5는 미완료다.
+
+2026-10-27 [C3 apply 설치 권한](../evidence/module-independence-survey-20261026.md#c3-install-grant): Catalog ordinary/Commit/retirement는 apply private 권한을 만들고 legacy4경로는 원 proof를 소비한다. 원 installer 검산·Pending flush 후 stamp를 유지한다. source별 runtime3+7·compiler5 PASS와 원 legacy fixture/test-build FAIL을 보존한다. Grant224B/legacy conversion696B이며 독립 D1/D2 한정 수용이다. terminal/Row·C3 전체·M4/M5는 미완료다.
+
+2026-10-27 [C2 statement Catalog 조회](../evidence/module-independence-survey-20261026.md#c2-statement-reads): 실제 Full/Resident Scope를 원 statement에 연결하고 Found/Missing 반환 전 catalog read bit를 자동 등록했다. r4 runtime10/compiler3 PASS와 r1–r3 test-build FAIL을 보존한다. Full34020B/Resident17636B이며 전체 short floor·writer·Row/terminal/recovery·M4/M5는 미완료다.
+
+2026-10-27 [C2 예약 뒤 원 검산](../evidence/module-independence-survey-20261026.md#c2-admitted-validation): pool/visibility guard 없는 health/origin과 원 core의 Owner/progress 검사 뒤 fixed source 안에서 pool/snapshot 전체 검산을 수행한다. r2 선택12 PASS·r1 test-build FAIL 보존. validation6958B는 Full33972B/Resident17588B에 포함되며 전체 entry/tail·writer phase·M4/M5는 미완료다.
+
+2026-10-27 [C2 LOAD claim borrow](../evidence/module-independence-survey-20261026.md#c2-borrowed-load-claims): 실제 LOAD 검산의 두 claim 복사를 원 참조로 바꾸고 build2/선택4 PASS를 확인했다. pool guard3307B·compact floor14776B는 관측이고 전체 admission은 미연결이다.
+
+2026-10-27 [C2 compact DPT](../evidence/module-independence-survey-20261026.md#c2-compact-dpt): 원 registry의 중복 identity 저장3072B를 제거하고 추가 비교 비용660B를 source 식에 연결했다. r3 build2/선택12 PASS와 r2 원 표현·진단2 PASS·기존 FAIL을 보존한다. shared19328B/Full33972B/Resident17588B이며 전체 floor·writer phase·M4/M5는 미완료다.
+
+2026-10-27 [C2 query 종료 경계](../evidence/module-independence-survey-20261026.md#c2-query-tail-boundaries): actual 정상 결과 소비 block과 finish_error의 작은 정리를 분리했다. production/test build·선택5 PASS. 정상710B/오류1394B는 한 호출 관측이고 전체 floor/admission은 미연결이다.
+
+2026-10-27 [C2 예약 밖 호출 phase](../evidence/module-independence-survey-20261026.md#c2-uncharged-call-phases): 실제 source 실패를 작은 consuming helper로 정리하고34입구·네 독립 guard·기존 wide tail을 cfg(test)로 관측했다. 선택4 PASS·원 test compile FAIL 보존. compact floor15057B는 미연결 상계이며 Full/Resident/shared와 전체 admission 미완료 상태를 유지한다.
+
+2026-10-27 [C2 split 고정 charge](../evidence/module-independence-survey-20261026.md#c2-split-source-charges): source 계산을 exclusive port 생성으로 옮기고 실제3port와 복구 caller를 계수했다. ticket16B·Full33972B/Resident16928B/shared22400B, 선택16 PASS·원 compile FAIL2 보존. live/recovered peak63328/64704B이며 전체 entry/tail·writer phase·M4/M5는 미완료다.
+
+2026-10-27 [C2 replay 작업 공간 대여](../evidence/module-independence-survey-20261026.md#c2-borrowed-replay-workspace): 원 zero tail3328B를 actual observer에 빌려 Full33980B로 줄였다. 선택9 PASS·정상/오류/unwind 복원·현재-build memory recovery를 확인하고 원 compile FAIL/경고·import-only build를 보존한다. 전체 entry/tail·writer phase·M4/M5는 미완료다.
+
+2026-10-27 [C2 작은 진입·소비 정리](../evidence/module-independence-survey-20261026.md#c2-compact-call-boundary): 실제 health/source 오류·Catalog factory/finish를 줄이고 원 authority·정리 순서와 wide legacy 변환을 보존했다. production/test build·runtime25·compiler4 PASS, Full35619B/Resident16936B다. 전체 bound entry/tail floor와 writer/progress·M4/M5는 미완료다.
+
+2026-10-27 [C2 readonly replay source](../evidence/module-independence-survey-20261026.md#c2-readonly-replay-source): 실제 allocation 검산 phase와 INIT context를 생산자 배열에서 분리해 Full35895B로 계산했다. source별 선택6+계수 보완1 PASS·MT03 Full Undo LOAD와 현재-build memory recovery를 확인했다. entry/tail·writer phase와 M4/M5는 미완료다.
+
+2026-10-27 [C2 budget 행 borrow](../evidence/module-independence-survey-20261026.md#c2-borrowed-budget-rows): descriptor 검산/encoder의 실제 행 복사를 제거해 Full source36972B로 줄였다. 같은 source의5+5 선택 PASS·현재-build memory 복구와 harness identity 원 FAIL을 보존한다. Pending 관측 합64548B의988B 여유는 전체 admission 증거가 아니며 entry/tail·writer phase·M4/M5는 미완료다.
+
+2026-10-27 [C2 Catalog CallScope](../evidence/module-independence-survey-20261026.md#c2-call-scope): 원 source/progress가 borrowed 결과의 실제 소비까지 유지되며 selected query를 이동했다. source별 runtime14+1+2 PASS·compiler4 PASS와 I/O fixture 원 FAIL을 보존한다. Full38076B·Resident17212B이고 전체 entry/tail·writer phase admission·M4/M5는 미완료다.
+
+2026-10-27 [C2 실제 Drained 소비 경계](../evidence/module-independence-survey-20261026.md#c2-drained-handoff): authentic Drain 완료값이 원 pins/version을 보유한 뒤 content guard를 재구성한다. production/test build·선택10 PASS이며 정상 Drop의 fence-before-pins와 memory 복구를 확인했다. source phase 예약·entry/exit 합산·M4/M5는 미완료다.
+
+2026-10-27 [C2 WAL wait source 관측](../evidence/module-independence-survey-20261026.md#c2-wal-wait-source): cfg(test)의 실제 호출/반환 수명을 분리해 Pending5320B·Full 합65300B를 관측했다. source별 신규1 PASS이며 제품 charge/상계는 유지한다. 실제 phase admission·전체 entry/exit·M4/M5는 미완료다.
+
+2026-10-27 [C2 Aging/Root source 계산](../evidence/module-independence-survey-20261026.md#c2-aging-source): 실제 호출 수명과 malformed 경로를 반영해 Full charge37724B를 검산했다. source 관련3 PASS와 후속 import-only compile을 구분한다. Full/Pending 합69100B·전체 admission 및 M4/M5 미완료다.
+
+2026-10-27 [C2 source 진입 수명 수정](../evidence/module-independence-survey-20261026.md#c2-source-entry): 원 progress 표시를 source 예약 시도 전부터 유지하고 실패 출구에서 checked 정리한다. production/test build·선택5 PASS다. 전체 entry/return carrier·writer/progress 합산과 M4/M5는 미완료다.
+
+2026-10-27 [C2 Pending image 수명 분리](../evidence/module-independence-survey-20261026.md#c2-pending-image): actual stage가 Prepared를 소비하여 Pending 준비 자료2024→568B, wait+Resident2 보수 합65096B를 확인했다. production/test build·관련12 PASS와 원 compile FAIL을 보존한다. stage 반환 비용 증가와 전체 writer/progress·Full 동시 인수 미완료를 구분한다.
+
+2026-10-27 [C2 Commit phase 관측](../evidence/module-independence-survey-20261026.md#c2-commit-phases): cfg(test) 신규1 PASS와 원 compiler FAIL을 보존한다. Pending 세 값의 source 필요 하한2984B로 shared+Full 합66816B이므로 실제 보유 수명 축소가 선행한다. 제품 charge·admission·효과는 변경하지 않았으며 전체 writer/progress·M4/M5는 미완료다.
+
+2026-10-27 [C2 최종 source 반환 수명](../evidence/module-independence-survey-20261026.md#c2-source-return): refs가0이 된 뒤에도 최종 decode/Result·source 반환까지 원 read_operation 표시를 유지한다. 신규4·cleanup 변경 영향3의 선택7개와 production/test build PASS다. 독립 D1/D2 한정 수용이며 진입 틈·writer/progress 전체 합산·M4/M5는 미완료다.
+
+2026-10-27 [C2 상주 Catalog 조회](../evidence/module-independence-survey-20261026.md#c2-resident-read): 새 무 I/O 경로와 고정16860B class, 두 조회의 실제 동시 예약·합55976B를 선택9개로 확인했다. 비상주/정상 allocator 변경과 membership/typed 손상을 구분하며 원 compile·census FAIL을 보존한다. 독립 D1/D2 한정 수용이며 writer/progress 전체 합산·Row·M4/M5는 미완료다.
+
+2026-10-27 [C2 CatalogFull source 예약](../evidence/module-independence-survey-20261026.md#c2-short-source): 원 isolation 원장에 전체 조회41576B를 선예약하고 마지막 decode/Result 뒤 반환한다. shared retained22256B와 합63832B이며 신규9·변경 영향8의 선택17 PASS, 원 test compile FAIL을 보존한다. 독립 D1/D2 한정 수용이며 writer/resident/progress·전체 aggregate·M4/M5는 미완료다.
 
 2026-10-27 [C2 Commit Pending 보유 분리](../evidence/module-independence-survey-20261026.md#c2-pending-carrier): 동일 pin만 WAL 대기를 통과하고 Drain 뒤 설치 guard를 재구성한다. stage helper를 나눠 준비 로컬 수명을 끝냈으며 관련11개 선택 PASS와 MF03/MF07 설명 정정을 보존하고 최종 독립 D1/D2를 한정 수용했다. Pending 타입112B 감소와 Catalog Commit 포괄 상한 증가를 구별하며 aggregate admission·실제 Row 연결·M4/M5는 미완료다.
 

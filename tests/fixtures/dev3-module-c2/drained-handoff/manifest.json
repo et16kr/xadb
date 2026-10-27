@@ -1,6 +1,7 @@
 {
-  "schema": "XADB_MODULE_C2_DRAINED_HANDOFF_MAIN_V1",
+  "schema": "XADB_MODULE_C2_DRAINED_HANDOFF_V1",
   "status": "FROZEN_INPUTS_NOT_EXECUTION_EVIDENCE",
+  "baseline": "dfc3bc9",
   "scope": "actual original Pending -> Drained after authentic durable Drain -> content guard reconstruction; same pins/installation authority, unfinished Drop ordering and complete return source accounting; phase source reservations not yet supplied",
   "budget": {
     "total_seconds": 600,
@@ -12,74 +13,43 @@
   "runtime_tests": [
     {
       "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::drained::drained_handoff_has_original_pins_and_no_content_guards",
-      "reason": "New actual Drained healthy handoff keeps four original pins/version gate, content guards0; canonical C04 whole installation",
-      "env": {}
+      "reason": "New actual Drained healthy handoff keeps four original pins/version gate, content guards0; canonical C04 whole installation"
     },
     {
       "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::drained::drained_handoff_fence_abandons_before_install",
-      "reason": "New actual handoff fence path returns pins and preserves Q0; current-build memory recovery N03",
-      "env": {}
+      "reason": "New actual handoff fence path returns pins and preserves Q0; current-build memory recovery N03"
     },
     {
       "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::drained::drained_normal_unfinished_drop_fences_before_pin_return",
-      "reason": "New Drained normal Drop without pre-fence/panic must abandon/fence before original pin-return hook, then pins0/Q0 and recovery N03",
-      "env": {}
+      "reason": "New Drained normal Drop without pre-fence/panic must abandon/fence before original pin-return hook, then pins0/Q0 and recovery N03"
     },
     {
       "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::commit_failures::catalog_drained_before_resume_unwind",
-      "reason": "New actual handoff panic checks physical before bytes/metadata, abandon and current-build memory recovery",
-      "env": {}
+      "reason": "New actual handoff panic checks physical before bytes/metadata, abandon and current-build memory recovery"
     },
     {
       "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::commit_concurrency::catalog_mt03_pending_reader_loads_undo",
-      "reason": "Changed Pending consumption and install carrier still finish whole original Commit after actual Full Undo load",
-      "env": {}
+      "reason": "Changed Pending consumption and install carrier still finish whole original Commit after actual Full Undo load"
     },
     {
       "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::commit_concurrency::catalog_mt05_pending_lower_flush",
-      "reason": "Changed guard reconstruction must preserve actual lower-image flush recLSN revalidation",
-      "env": {}
+      "reason": "Changed guard reconstruction must preserve actual lower-image flush recLSN revalidation"
     },
     {
       "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::commit_concurrency::catalog_mt07_drain_content_guard_fence",
-      "reason": "Changed drain consuming boundary preserves finite content wait/fence cleanup",
-      "env": {}
+      "reason": "Changed drain consuming boundary preserves finite content wait/fence cleanup"
     },
     {
       "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::commit_failures::catalog_mf10_commit_second_page_unwind",
-      "reason": "Changed installation transfer/drop must preserve existing partial-install byte/metadata distinction and recovery",
-      "env": {}
+      "reason": "Changed installation transfer/drop must preserve existing partial-install byte/metadata distinction and recovery"
     },
     {
       "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::owner_tests::disk_session_isolation_backing_and_carriers_are_accounted",
-      "reason": "New owned Drained/physical and caller Result carriers alter source bound",
-      "env": {}
+      "reason": "New owned Drained/physical and caller Result carriers alter source bound"
     },
     {
-      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::create_pair::catalog_commit::tests::consumed_preparation_has_bounded_pending_image",
-      "reason": "Changed physical Drain/guard handoff and semantic mapped Result must fit the existing main four-phase outer envelope for Memory/Linux types including the original shared core",
-      "env": {}
-    },
-    {
-      "selector": "storage::dirty_frame::commit::tests::commit_phase_sources_cover_transitions_without_changing_capacity_gate",
-      "reason": "Updated independent simultaneous-lifetime lower bounds now cover Pending+Drained+Result and Drained+WriteTargets+Install, include drain in max and preserve original wide-set rejection",
-      "env": {}
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::owner_tests::catalog_commit_phase_sources_measure_consumed_preparation",
+      "reason": "Changed drain/resume/production-broad phase source formulas; Pending wait unchanged"
     }
-  ],
-  "baseline_commit": "d2baeb98839cc390804b6737b5989e5479323d0d",
-  "adapted_from": [
-    "00feccdfcdf3be062005c50dcb11b1c4160403e2"
-  ],
-  "changed_paths": [
-    "crates/engine/src/storage/dirty_frame.rs",
-    "crates/engine/src/storage/dirty_frame/commit.rs",
-    "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory.rs",
-    "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/commit_failures.rs",
-    "crates/engine/src/storage/wal_io/plan4_retention/catalog_commit.rs",
-    "crates/engine/src/transaction/concurrency_catalog_test_support.rs",
-    "crates/engine/src/transaction/concurrency_test_support.rs",
-    "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/drained.rs",
-    "crates/engine/src/storage/dirty_frame/commit/tests.rs"
-  ],
-  "excluded": "No unchanged lower/workspace/wrapper suites or WAL wait observation repeated. Physical WAL I/O, wire, native driver and recovery implementation unchanged; new handoff/failure/Drop checked with actual current-build memory recovery and frozen C04/N03 oracle. Native rerun not selected; no full writer/progress admission claim."
+  ]
 }

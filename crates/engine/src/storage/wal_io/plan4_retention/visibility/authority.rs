@@ -15,8 +15,8 @@ pub(in crate::storage) struct InstalledFrontier<'c, 's> {
     pub(super) q: u64,
 }
 impl<'c, 's> InstalledFrontier<'c, 's> {
-    pub(in crate::storage::wal_io) fn catalog(
-        completed: &super::super::create_pair::CatalogCommitInstalled<'c, 's>,
+    pub(in super::super) fn catalog(
+        completed: &super::super::CatalogCommitInstalled<'c, 's>,
     ) -> Self {
         let (core, binding, fence) = completed.origin();
         Self {

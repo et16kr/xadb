@@ -143,6 +143,14 @@ fn canonical_transfer(reject_foreign_owner: bool) {
     let flush_pointer = &session.flush as *const _;
     {
         let (mutation, read, maintenance) = session.split();
+        assert_eq!(
+            read.source_charges.observations(),
+            [
+                source::shared_bytes::<port::Writer>(),
+                read::lookup_source_bytes::<port::Writer>(),
+                read::resident_lookup_source_bytes::<port::Writer>(),
+            ]
+        );
         assert_eq!(mutation.pool as *const _, pool_pointer);
         assert_eq!(read.pool as *const _, pool_pointer);
         assert_eq!(maintenance.pool as *const _, pool_pointer);
@@ -262,6 +270,29 @@ fn disk_session_isolation_backing_and_carriers_are_accounted() {
 }
 
 #[test]
+fn catalog_commit_phase_sources_measure_consumed_preparation() {
+    let shared = source::shared_bytes::<port::Writer>();
+    let full = read::lookup_source_bytes::<port::Writer>();
+    let resident = read::resident_lookup_source_bytes::<port::Writer>();
+    let phases = create_pair::catalog_commit_phase_observations::<port::Writer>();
+    for (name, bytes) in phases {
+        println!(
+            "COMMIT_PHASE {name}={bytes} shared_sum={} full_overlap={} resident_overlap={} two_resident_overlap={}",
+            shared + bytes,
+            shared + bytes + full,
+            shared + bytes + resident,
+            shared + bytes + resident * 2
+        );
+    }
+    // Actual preparation arrays end at stage return. The compact image keeps
+    // only immutable install/control input; this is not a writer admission.
+    let measured = |key| phases.iter().find(|(name, _)| *name == key).unwrap().1;
+    assert!(measured("pending_image") + 1024 <= measured("prepared_actual_nine"));
+    assert!(shared + measured("pending_wal_wait") + resident * 2 <= 65536);
+    assert!(shared + measured("production_broad") <= 65536);
+}
+
+#[test]
 fn catalog_aging_source_phases_include_initial_and_malformed_paths() {
     use crate::storage::{obligation, retention_obligation, retention_page, transaction_record};
     let root = retention_page::catalog::root_decode_source_bytes();
@@ -291,7 +322,10 @@ fn catalog_aging_source_phases_include_initial_and_malformed_paths() {
             live.peak,
             recovered.peak
         );
-        assert_eq!(shared, live.retained.max(recovered.retained_live));
+        assert_eq!(
+            shared,
+            live.retained.max(recovered.retained_live) + source::split_port_bytes::<W>()
+        );
         assert_eq!(full, live.catalog_lookup);
         assert!(shared + full <= 65_536);
         assert!(shared + resident * 2 <= 65_536);
@@ -358,4 +392,79 @@ fn catalog_call_scope_selected_consumer_source_is_bounded() {
     }
     inspect::<port::Writer>("MEMORY");
     inspect::<super::super::native::Writer>("NATIVE_TYPE");
+}
+
+#[test]
+fn catalog_replay_sources_exclude_live_encoder_arrays() {
+    use crate::storage::wal_io::bootstrap::doublewrite_install::allocation_reservation::operation;
+    use crate::storage::wal_io::bootstrap::doublewrite_install::mutable_storage::status_init_operation::retention as init;
+    let branches = operation::retention_readonly_source_branches();
+    let base = operation::plan4_system_base_allocation_source_bytes();
+    let reservation = operation::retention::retained_reservation_source_bytes();
+    let materialize = operation::retention::retention_materialize_source_bytes();
+    let init = init::retention_materialize_source_bytes();
+    let full = read::lookup_source_bytes::<port::Writer>();
+    let resident = read::resident_lookup_source_bytes::<port::Writer>();
+    let shared = source::shared_bytes::<port::Writer>();
+    println!(
+        "C2_REPLAY_SOURCES branches={branches:?} base={base} reservation={reservation} materialize={materialize} init={init} full={full} resident={resident} shared={shared}"
+    );
+    // Decoding retains malformed XTS and expected construction retains the
+    // original current descriptor. Only actual sequential phases use max.
+    assert!(branches[1] > crate::storage::obligation::descriptor_source_bytes());
+    assert!(branches[2] >= 4 * std::mem::size_of::<crate::storage::obligation::DescriptorSpec>());
+    assert!(materialize > reservation);
+    assert!(shared + full <= 65_536);
+    assert!(shared + 2 * resident <= 65_536);
+}
+
+#[test]
+fn catalog_borrowed_replay_workspace_counts_producer_and_observer() {
+    use crate::storage::semantic_catalog as semantic;
+    let owned = semantic::source_census();
+    let borrowed = semantic::borrowed_source_bytes();
+    let history = history::source_bytes::<port::Writer>();
+    let full = read::lookup_source_bytes::<port::Writer>();
+    let resident = read::resident_lookup_source_bytes::<port::Writer>();
+    let shared = source::shared_bytes::<port::Writer>();
+    println!(
+        "BORROWED_REPLAY_SOURCE owned={owned:?} borrowed={borrowed} history={history:?} full={full} resident={resident} shared={shared}"
+    );
+    assert!(borrowed < owned.total);
+    assert!(
+        borrowed > owned.total - owned.run_retained,
+        "borrowed loan/constructor/cleanup carriers remain charged"
+    );
+    assert!(history.peak >= history.initialize);
+    assert!(shared + full <= 65536);
+    assert!(shared + 2 * resident <= 65536);
+}
+
+#[test]
+fn cached_catalog_charges_count_exclusive_split_and_live_ports() {
+    let live = resources::source_census::<port::Writer>();
+    let recovered = super::super::super::plan4_recovery::source_census::<port::Writer>();
+    let charges = source::CatalogSourceCharges::new::<port::Writer>();
+    let [shared, full, resident] = charges.observations();
+    println!(
+        "SPLIT_CHARGES cached={:?} ports={} split={} calculation={} live_peak={} recovered_peak={} ticket={}",
+        charges.observations(),
+        live.split_ports,
+        live.split,
+        source::SPLIT_CALCULATION_BYTES,
+        live.peak,
+        recovered.peak,
+        std::mem::size_of::<source::OperationSourceAdmission<'_, '_, '_, '_>>()
+    );
+    assert_eq!(
+        shared,
+        live.retained.max(recovered.retained_live) + live.split_ports
+    );
+    assert_eq!(live.split_ports, source::split_port_bytes::<port::Writer>());
+    assert!(live.split >= source::SPLIT_CALCULATION_BYTES);
+    assert!(live.peak >= live.retained + live.split);
+    assert!(live.peak >= live.retained + live.split_ports + live.catalog_lookup);
+    assert!(shared + full <= 65_536);
+    assert!(shared + 2 * resident <= 65_536);
+    assert!(live.peak <= 65_536 && recovered.peak <= 65_536);
 }

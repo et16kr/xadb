@@ -363,13 +363,22 @@ pub(in crate::storage) fn observe_recovery_frame(
             .0
             .try_into()
             .expect("eight after pages");
-        let claims = claims[..history::PROVENANCE_BYTES]
-            .as_chunks_mut::<352>()
-            .0
+        let (claims, temporary) = claims.split_at_mut(history::PROVENANCE_BYTES);
+        let semantic_scratch = (&mut temporary[..history::REPLAY_SCRATCH_BYTES])
             .try_into()
-            .expect("claims");
+            .expect("semantic scratch");
+        let claims = claims.as_chunks_mut::<352>().0.try_into().expect("claims");
         apply_frame(
-            profile, expected, input, arena, cells, bank, after, claims, cursor,
+            profile,
+            expected,
+            input,
+            arena,
+            cells,
+            bank,
+            after,
+            claims,
+            semantic_scratch,
+            cursor,
         )?
     };
     history::refresh_jobs(profile, replay).map_err(|_| RetentionCause::Invariant)?;
@@ -390,9 +399,11 @@ pub(super) fn apply_frame(
     bank: &mut [u8],
     after: &mut [[u8; PAGE_BYTES]; 8],
     claims: &mut [[u8; 352]; 64],
+    semantic_scratch: &mut [u8; history::REPLAY_SCRATCH_BYTES],
     cursor: &mut RetentionReplayCursor,
 ) -> ObservationResult<RetentionFrameObservation> {
-    if profile.format() != 2
+    if semantic_scratch.iter().any(|byte| *byte != 0)
+        || profile.format() != 2
         || expected.previous_lsn != cursor.previous_lsn
         || expected.stream.database != profile.spec().namespace.database
         || expected.stream.timeline != profile.spec().namespace.timeline
@@ -422,6 +433,7 @@ pub(super) fn apply_frame(
                 bank,
                 after,
                 claims,
+                semantic_scratch,
                 &mut cursor.adopted_local,
             )?
         }

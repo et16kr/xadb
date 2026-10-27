@@ -1,0 +1,83 @@
+{
+  "schema": "XADB_MODULE_C2_COMPACT_DPT_V1",
+  "status": "FROZEN_INPUTS_NOT_EXECUTION_EVIDENCE",
+  "baseline": "d6d695d",
+  "scope": "Actual original PoolRegistry private DPT row retains generation/recLSN/counter; full PageIdentity remains in original directory and unpublished INIT claim, authentic WalRequirement unchanged. Expected full identity checked under same leaf. No frame/cap/lock/format change, whole floor not supplied.",
+  "budget": {
+    "total_seconds": 600,
+    "compiler_seconds": 90,
+    "case_seconds": 30,
+    "output_bytes": 8388608,
+    "rust_min_stack": 33554432
+  },
+  "runtime_tests": [
+    {
+      "selector": "storage::dirty_frame::dpt_storage_tests::compact_dpt_layout_and_borrowed_match_fit_original_physical_allowance",
+      "reason": "Changed private helper cost now directly added to actual target_set_call_bytes and TxPair census; unchanged3072 original physical ceiling and actual private row reduction."
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::dpt_lifecycle::pair_dpt_unwind_keeps_original_targets_before_publication",
+      "reason": "New actual Forward four cuts: PairDptInstalled/FirstRegistered/BothRegisteredBeforeGate/GatePublished; original claim preserves exact two targets and WAL8 after unwind, hidden pre-gate."
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::status_init::tests::protocol::status_init_cf08_exact_partial_cuts_fence_before_release",
+      "reason": "Changed System INIT DPT storage and diagnostic fallback at RegistryInstalled and Published only.",
+      "env": {
+        "XADB_STATUS_INIT_CASES": "CF08-05,CF08-06"
+      }
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::lifecycle::mc02_forward_clr_abort_cleanup",
+      "reason": "Changed actual TxPair Forward installation, CLR DPT clear/retirement and normal complete lifecycle."
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::lifecycle::mc04_reserved_drop_fence_fresh_recovery",
+      "reason": "Changed stored DPT rebuilt by same-build fresh recovery and read; current-build memory recovery."
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::allocator_flush::tests::flush_fn_normal",
+      "reason": "Changed ordinary DPT install, authentic capture then redirty, retention of first recLSN and later clean finalize removal. FN04 only.",
+      "env": {
+        "XADB_FLUSH_CASES": "FN04"
+      }
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::allocator_residency::eviction::tests::eviction_dpt_mismatch_fences_before_removal",
+      "reason": "Changed DPT paired with actual authentic requirement: each one-sided corruption fences before removal."
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::read_boundary::dirty_victim_returns_flush_then_retries_same_snapshot",
+      "reason": "Changed DPT validation and clean LOAD generation reuse after actual flush, old snapshot stays fixed."
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::owner_tests::disk_session_isolation_backing_and_carriers_are_accounted",
+      "reason": "Actual stored pool size flows into live/recovered shared/type census, unchanged component caps."
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::source::tests::catalog_class_uses_current_types_and_recovered_retained_owner",
+      "reason": "Actual compact pool size changes original cached shared reservation allowance."
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::source::tests::fixed_resident_class_admits_two_and_never_escalates",
+      "reason": "Actual compact pool shared cost with two unchanged resident class charges, no escalation."
+    },
+    {
+      "selector": "storage::dirty_frame::target_set_tests::target_set_layout",
+      "reason": "Changed generic target-set source formula for N2/3/8/64; original independent caps remain."
+    }
+  ],
+  "invariants": [
+    "Only private live PoolRegistry rows shrink; historical DirtyRegistry/PriorPool unchanged.",
+    "No production identity fallback: dpt_valid still requires published resolve, matching generation and authentic requirement.",
+    "All normal rebind/load entry paths require clean DPT/requirement absence and checked next generation.",
+    "System/TxPair DPT and publication remain in original coupled registry guard; original claim survives unfinished unwind.",
+    "diagnose_dpt only test: matching generation required, conflicting directory/claim rejected, unresolved never presented as clean.",
+    "Borrowed dpt_matches directly compares full expected identity and scalar key/values; expected copies not discarded.",
+    "No unchanged lower wrappers or workspace run. Exact selectors, subset env checked where used."
+  ],
+  "prior_evidence": {
+    "r1": "production PASS; cfg(test) PageLsn import missing test-build FAIL; runtime13 NOT_RUN",
+    "r2": "test-build PASS, first3 PASS, Pair fixture owner6 expected2 FAIL; remaining9 NOT_RUN",
+    "r3_scope": "Do not repeat first2 unchanged representation/diagnostic PASS. Revised helper source accounting layout plus failed Pair fixture and9 previously unexecuted cases; newly changed generic N source calculation layout."
+  }
+}

@@ -6,14 +6,14 @@
     reason = "C0 boundary awaits the separately owned Row consumers"
 )]
 pub(crate) use super::bootstrap::doublewrite_install::mutable_storage::plan4_pages::apply::{
-    CatalogCallScope, CatalogCandidate, CatalogReadOperation, DiskSession,
-    EmptyRetentionControlLoan, ISOLATION_BYTES, IntoRetentionError, IsolationLevel,
-    MaintenancePort, MissingCatalogEvidence, MutationPort, Plan4Recovered, ReadOnlyCommit,
-    ReadPort, ReadStep, RetentionCause, RetentionError, RetentionPhase, RowControlObservation,
-    RowInputPlan, RowOperation, RowPageRole, RowPreflightContext, RowProducerContext,
-    RowProducerInput, RowProducerLane, RowProposal, RowSourceBinding, RowSourceRole,
-    RowStatementView, RowTransaction, RowValidationLane, StatementFinishError,
-    TransactionFinishError, TransactionOptions,
+    CatalogCallError, CatalogCallScope, CatalogCandidate, CatalogReadOperation,
+    CatalogStatementCall, DiskSession, EmptyRetentionControlLoan, ISOLATION_BYTES,
+    IntoRetentionError, IsolationLevel, MaintenancePort, MissingCatalogEvidence, MutationPort,
+    Plan4Recovered, PreparedCatalog, ReadOnlyCommit, ReadPort, ReadStep, RetentionCause,
+    RetentionError, RetentionPhase, RowControlObservation, RowInputPlan, RowOperation, RowPageRole,
+    RowPreflightContext, RowProducerContext, RowProducerInput, RowProducerLane, RowProposal,
+    RowSourceBinding, RowSourceRole, RowStatementView, RowTransaction, RowValidationLane,
+    StatementFinishError, TransactionFinishError, TransactionOptions,
 };
 
 #[allow(unused_imports)]
@@ -22,4 +22,11 @@ pub(in crate::storage) use super::bootstrap::doublewrite_install::mutable_storag
 #[allow(unused_imports)]
 pub(crate) use super::bootstrap::doublewrite_install::mutable_storage::plan4_pages::{
     Plan4ResidencyCursor, Plan4Target,
+};
+
+pub(in crate::storage) use super::bootstrap::doublewrite_install::mutable_storage::plan4_pages::apply::InstallGrant;
+pub(in crate::storage::wal_io) use super::bootstrap::doublewrite_install::mutable_storage::plan4_pages::apply::legacy::from_legacy as legacy_install;
+
+pub(crate) use super::bootstrap::doublewrite_install::mutable_storage::plan4_pages::apply::{
+    DurableCommit, InstalledCommit, StagedCommit, UnstagedCommit,
 };
