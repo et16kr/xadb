@@ -123,7 +123,7 @@ row logical projection 후보는 `XRP1`, version1, kindRow1, UndoTargetCore32(ta
 
 기준 `57373f0`에서 `retention_page::row`의 별도 exact version3 Root view/initial/encode/decode와 private Free generation1 Job3 recipe를 공급한다. `row_high@432`는 LE64 관찰이며 `440..512`는0이다. genesis는 row_high0·정확한 Free Job3×64/빈 budget digest·전체 canonical cell을 비교한다. active Root는 namespace/6 PageRef·mask partition/nonfree55·checked completed+canceled+nonfree=issued·Aging identity/apply를 검산한다. u64::MAX high-water 자체는 유효하고 다음 발급의 checked_add 실패는 후속 issuer가 소유한다.
 
-이는 raw512B cell grammar다. active의 job/budget digest는 commitment로만 관찰하고 전체 Job3 census를 완료한 것으로 보지 않는다. 이 Root3 단위는 occupied Job3·multi-root/actor/debt를 포함하지 않았으며 후속 공급은 [Job3 census](#job3-census)에 기록한다. scope2 Profile3 adapter·page wrapper·Profile3/base4/current 선택·Row issuer/효과/복구는 미공급이다. 기존 Root2 및 actual current Profile2는 그대로이며 version 변조로 old decoder를 호출하거나 `format>=2`로 확대하지 않는다. 후속 current 전환은 [전체 dispatch 조합](#format-dispatch)을 같은 source에서 닫을 때 수행한다. [선택 실행 증거](../evidence/module-independence-survey-20261026.md#row-root3-codec)를 기존 runtime 인수로 승격하지 않는다. 독립 D1/D2는 source/원 결과와6문서를 대조해 한정 수용했으며 필수 수정은0이다. 검토자는 source5686파일 전부/inventory/fingerprint·manifest/runner/helpers/ELF/log와 독립 literal3의 전 바이트·hash를 검산했고 제품·fixture 수정/실행·빌드·시험·verifier는 실행하지 않았다.
+이는 raw512B cell grammar다. active의 job/budget digest는 commitment로만 관찰하고 전체 Job3 census를 완료한 것으로 보지 않는다. 이 Root3 단위는 occupied Job3·multi-root/actor/debt를 포함하지 않았으며 후속 공급은 [Job3 census](#job3-census)에 기록한다. page wrapper의 후속 순수 공급은 [별도 envelope](#row-envelope-codecs)에 기록한다. scope2 Profile3 adapter·Profile3/base4/current 선택·Row issuer/효과/복구는 미공급이다. 기존 Root2 및 actual current Profile2는 그대로이며 version 변조로 old decoder를 호출하거나 `format>=2`로 확대하지 않는다. 후속 current 전환은 [전체 dispatch 조합](#format-dispatch)을 같은 source에서 닫을 때 수행한다. [선택 실행 증거](../evidence/module-independence-survey-20261026.md#row-root3-codec)를 기존 runtime 인수로 승격하지 않는다. 독립 D1/D2는 source/원 결과와6문서를 대조해 한정 수용했으며 필수 수정은0이다. 검토자는 source5686파일 전부/inventory/fingerprint·manifest/runner/helpers/ELF/log와 독립 literal3의 전 바이트·hash를 검산했고 제품·fixture 수정/실행·빌드·시험·verifier는 실행하지 않았다.
 
 <a id="job3-census"></a>
 #### Job3 순수 cell·64행 census 구체화 — 2026-10-27
@@ -139,7 +139,16 @@ row logical projection 후보는 `XRP1`, version1, kindRow1, UndoTargetCore32(ta
 
 TerminalReady와 root의 저장 LSN 관계는 Retained adoption < terminal adoption, ReleasingCommitted terminal adoption < release_start, ReleasingCompensated release_start < terminal adoption으로 고정한다. compensated cursor>0은 추가로 terminal adoption < last_step이며, cursor0+TerminalLeased는 허용한다. Row compensated는 Committed/Aborted terminal 모두와 공존하되 q0을 유지한다. Retained+Aborted는 금지한다. 이것은 전체 WAL history·Status/head/count 증명이 아니라 cell에서 확인 가능한 관계다.
 
-사전 독립 검토에서 namespace 재결합과 compensated CLR/terminal/cleanup 시간 표를 보완했다. 신규 literal/census11 PASS와 최종 D1/D2 한정 수용(필수 수정0)은 [선택 증거](../evidence/module-independence-survey-20261026.md#row-job3-census)에 보존한다. 기존 Root2·완료 Root3 selector는 변경이 없어 반복하지 않는다. actual source 비용/admission, page/Profile3/base4/current dispatch와 Row A/B는 후속 공급이다.
+사전 독립 검토에서 namespace 재결합과 compensated CLR/terminal/cleanup 시간 표를 보완했다. 신규 literal/census11 PASS와 최종 D1/D2 한정 수용(필수 수정0)은 [선택 증거](../evidence/module-independence-survey-20261026.md#row-job3-census)에 보존한다. 기존 Root2·완료 Root3 selector는 변경이 없어 반복하지 않는다. 순수 page/Profile3 입구의 후속은 [별도 envelope](#row-envelope-codecs)에 둔다. actual source 비용/admission, Profile3/base4/current dispatch와 Row A/B는 후속 공급이다.
+
+<a id="row-envelope-codecs"></a>
+#### Profile3·Root/Job3 페이지의 별도 순수 입구 — 2026-10-27
+
+기준 `f8f73b0`에서 `control::row_profile::{encode_profile,decode_profile}`를 별도로 공급한다. 이 입구만 exact Profile3를 받으며 parsed Profile의 format3·2MiB base·ID1/2/3의 기존188B capacity tuple·4096B envelope·namespace/generation을 보존한다. 원 `decode_bootstrap_profile`은1/2만 받고3을 거절한다. 공유 private envelope 검산의 기존 bool 인자를 명시1B enum(V1/LegacyProfile/RowProfile)으로 대체하고 같은 함수에서 허용표를 분기한다. nested helper/추가 Envelope 반환 carrier를 만들지 않으며 원 wrapper의 거절 순서·non-Profile version1 규칙을 유지한다. namespace/generation 검산은 원 control 의미를 따르고 current Row/Root의 추가 제한이나 base4 선택을 대신하지 않는다. encode 오류는 output 전체를 보존하고 성공은4096B 뒤 tail을 보존한다.
+
+`retention_page::row`의4 page wrapper는 원 expected PageIdentity(고정 object4/first file/root1·jobs2..6)·PageKind·level0·Root1cell·Jobs15×4+4를 원 page codec과 실제 Row decoder로 검산한다. Root.apply==pageLSN, Job.last_step≤pageLSN이며 LSN0 Job page는 Free/gen1만 허용한다. 후보 전체를 검산한 뒤 encode하며 오류의 caller output은 그대로다. page view/Root view는 원 immutable input을 빌린다. 이 성공만으로64행 census·Status/Undo/descriptor/allocator/history·source admission·pin/issuer/READY 권한을 부여하지 않는다.
+
+기존 actual genesis/selector/base/replay/recovery 호출 연결은0이며 current는 Profile2다. bytes version을 바꿔 legacy decoder를 부르지 않는다. [전체 current 전환 조합](#format-dispatch)은 후속 base4/scoped observer/current recovery와 함께 닫는다. [선택 증거](../evidence/module-independence-survey-20261026.md#row-envelope-codecs)는 독립 envelope 입력·신규8 selector로 검산하며 기존 Root2/완료 Root3/Job3 selector를 반복하지 않는다. 공유 header 변경이 영향을 주는 원 bootstrap/Profile1/2·non-Profile1 수신/거절 경계만 신규 selector에서 함께 검사한다. 신규8 및 두 build PASS·독립 D1/D2 한정 수용, 필수 수정0이다.
 
 ### 6.2 Forward
 

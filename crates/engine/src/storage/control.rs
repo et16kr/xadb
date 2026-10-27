@@ -4,6 +4,9 @@
 // Remove when the first namespace/control effect consumer is connected.
 #![allow(dead_code)]
 
+#[path = "control/row_profile.rs"]
+pub(crate) mod row_profile;
+
 use super::{
     doublewrite_control::{self, ControlExpectation, ControlView},
     page::{FileId, PAGE_BYTES, PageIdentity, PageRef},
@@ -185,7 +188,7 @@ impl Profile {
     pub(crate) fn base_bytes(self) -> usize {
         match self.format {
             1 => 1 << 20,
-            2 => 2 << 20,
+            2 | 3 => 2 << 20,
             _ => unreachable!("validated Profile format"),
         }
     }
@@ -201,7 +204,7 @@ impl Profile {
 }
 
 fn profile_prefix(id: u32, format: u16) -> Result<[u8; 188]> {
-    if !matches!(format, 1 | 2) {
+    if !matches!(format, 1 | 2 | 3) {
         return Err(ControlError::UnsupportedFormat);
     }
     if !(1..=3).contains(&id) {
@@ -303,7 +306,7 @@ pub(crate) fn decode_bootstrap_profile(
     if let Some(namespace) = expected {
         validate_namespace(namespace)?;
     }
-    let header = read_header_for(input, true)?;
+    let header = read_header_for(input, EnvelopeVersion::LegacyProfile)?;
     if header.kind != ControlKind::Profile {
         return Err(ControlError::Corrupt);
     }
@@ -995,15 +998,31 @@ struct Envelope {
     count: u32,
 }
 fn read_header(input: &[u8]) -> Result<Envelope> {
-    read_header_for(input, false)
+    read_header_for(input, EnvelopeVersion::V1)
 }
-fn read_header_for(input: &[u8], profile_versions: bool) -> Result<Envelope> {
+/// One byte, replacing the original boolean in the same decoder frame.
+/// This is an input grammar selection, not current-profile authority.
+#[derive(Clone, Copy)]
+#[repr(u8)]
+enum EnvelopeVersion {
+    V1,
+    LegacyProfile,
+    RowProfile,
+}
+
+fn read_header_for(input: &[u8], version: EnvelopeVersion) -> Result<Envelope> {
     if input.len() < 160 || input[..4] != *b"XDC1" {
         return Err(ControlError::Corrupt);
     }
-    if get16(input, 4) != 1
-        && !(profile_versions && get16(input, 4) == 2 && input[6] == ControlKind::Profile as u8)
-    {
+    if !match version {
+        EnvelopeVersion::V1 => get16(input, 4) == 1,
+        EnvelopeVersion::LegacyProfile => {
+            get16(input, 4) == 1 || get16(input, 4) == 2 && input[6] == ControlKind::Profile as u8
+        }
+        EnvelopeVersion::RowProfile => {
+            get16(input, 4) == 3 && input[6] == ControlKind::Profile as u8
+        }
+    } {
         return Err(ControlError::UnsupportedFormat);
     }
     let kind = ControlKind::decode(input[6])?;

@@ -17,6 +17,8 @@ use foundation::identity::{ObjectHandle, ObjectId, RowId, SchemaEpoch};
 mod census;
 #[path = "row/job.rs"]
 mod job;
+#[path = "row/pages.rs"]
+mod pages;
 #[allow(
     unused_imports,
     reason = "pure Job3 supply awaits the closed current-profile owner"
@@ -27,6 +29,11 @@ pub(crate) use census::{JobCells, summarize_jobs, verify_census, verify_selected
     reason = "pure Job3 supply awaits the closed current-profile owner"
 )]
 pub(crate) use job::{JobScope, JobState, JobView, decode_job, encode_job};
+#[allow(
+    unused_imports,
+    reason = "pure Row page supply awaits the closed current-profile owner"
+)]
+pub(crate) use pages::{decode_jobs_page, decode_root_page, encode_jobs_page, encode_root_page};
 
 pub(crate) const ROW_PEAK: ResourcePeak = ResourcePeak {
     frames: 9,
@@ -69,3 +76,7 @@ mod tests;
 #[cfg(test)]
 #[path = "row/job_tests.rs"]
 mod job_tests;
+
+#[cfg(test)]
+#[path = "row/pages_tests.rs"]
+mod pages_tests;

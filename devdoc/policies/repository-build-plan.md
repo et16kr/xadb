@@ -744,3 +744,8 @@ apply root의 private receipt·actual terminal 자손과 Busy 시험·manifest/c
 ### Row Job3 순수 cell·census
 
 `retention_page/row/{job,census,job_tests}.rs`와 독립 author/literal/index/manifest를 JSON `dev3_module_row_job3`에 등록한다. 원 row 모듈만 연결하며 기존 Root/Job2 또는 current 선택 본문은 바꾸지 않는다. source roots/package/dependency를 유지한다. [선택 증거](../evidence/module-independence-survey-20261026.md#row-job3-census)는 actual graph·source admission·Profile3/base4/Row 실행 증거가 아니다.
+
+
+### Profile3·Row page 순수 envelope
+
+별도 `control/row_profile{,_tests}.rs`와 `retention_page/row/pages{,_tests}.rs`, 독립 envelope author/literal3/manifest를 JSON `dev3_module_row_envelopes`에 등록한다. 기존 control/row 모듈에서 명시 Profile format과 좁은 private header의 typed mode/등록을 연결하며 source roots/package/dependency/current 선택은 유지한다. [선택 증거](../evidence/module-independence-survey-20261026.md#row-envelope-codecs)를 actual current·graph·admission과 구별한다.
