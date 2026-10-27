@@ -1145,6 +1145,16 @@ rollback/terminal은 원 progress admission이 새 foreground를 닫고 이미 �
 
 [실제 Drained 소비 경계](../evidence/module-independence-survey-20261026.md#c2-drained-handoff)는 authentic durable Drain 완료와 content guard 재구성을 분리한다. 원 Installing/version/pins를 private Drained가 유지하며 normal unfinished Drop은 installation abandon/fence 뒤 pins를 반환한다. 신규4·관련4·source2 PASS, 새 반환값의 비용 증가를 보존한다. source 예약은 아직 연결하지 않았고, 이미 gate/pins를 가진 이 경계에서는 후속 reserved source의 무대기 checked 전환만 가능하다.
 
+#### 선택 Catalog caller의 source 수명
+
+[C2 CallScope 부분공급](../evidence/module-independence-survey-20261026.md#c2-call-scope)은 원 Owner/backend/snapshot borrow와 기존 progress/source를 private non-Clone `CatalogCallScope`에 보유한다. `ReadPort::catalog_call`과 `catalog_resident_call`은 같은 원 admission을 한 번 취득한다. `scope.lookup<'call>(&'call mut self, object, cursor, private: &'call mut [u8;425984]) -> Result<CatalogLookupStep<'call>>`의 RecordView·복사한 view·definition/name/column은 같은 scope borrow에 묶인다. `finish_checked(self)` 뒤 이 borrow를 사용하는 코드는 컴파일 거절되며, 선택 caller는 마지막 결과 소비 뒤에만 scope를 닫는다. 순차 lookup은 같은 고정 class를 재사용하며 escalation은 없다.
+
+Operation은 scope를 재대여하고 원 refs/lease/loader/copy만 소유한다. refs 정리→최종 decode/typed Result→선택 caller 소비→scope source 반환→progress 반환 순서를 유지한다. 정상 오류 출구도 `finish_error(error)`로 명시 완료하여 원 Fatal을 보존하고 성공/Unchanged보다 cleanup Fatal을 우선한다. Drop은 Operation refs와 Scope source/progress를 각각 정리하며, source 실패에도 progress 반환을 실행한다. 원 `lookup_catalog`/`lookup_catalog_resident`는 같은 제품 본문을 사용하되 내부 wide 결과를 `finish_result`로 정리한 뒤 기존 private-buffer 수명으로 반환하는 호환 entry다. **legacy의 반환 이후 caller 소비는 새 scope 보장 밖**이며 해당 경로를 전체 admission 완료로 승격하지 않는다.
+
+선택 caller는 결과의 유한 header/Table/Column 검사를 마친 뒤 닫고 FlushRequired의 실제 flush는 그 뒤 수행한다. 이 소비 phase는5256B이며 operation 호출과 순차라 고정 class의 max에 포함한다. 현재 Full38076B·Resident17212B·shared22256B, shared+Resident2=56680B다. 기존 Pending wait 관측5320B까지 더한 Full 합65652B는 이미116B 초과하며 신규 writer ticket/entry-tail 비용도 미공급이다. 이전65300B 관측은 원 source의 값으로 보존한다.
+
+원 Owner의 최대32 foreground+maintenance1은 같은 core에 binding된 진입만 제한한다. 타 core의 foreign Owner 입력·거절을33개로 셌다고 주장하지 않으며, source 선예약 전 경로와 해제 후 Scope/Result 반환 tail의 전체 상계는 후속 공급이다. caller가 권한 없는 scalar/데이터를 따로 복사한 이후나 임의로 많은 view를 복제하는 코드를 이 유한 선택 caller 검산으로 보장하지 않는다. 이 한정은 source cap 확대·새 registry·generic Result credit 도입을 허용하지 않는다.
+
 전체 설계 상계는 metadata `73856+65536+49152=188544≤196608`, original flush를 더한 whole `254080≤262144`다. 이 admission·동시 합 검산은 **새 C1/C2/C3 공급**이며 기존 active.max 기반 source 결과로 이미 구현됐다고 하지 않는다. header의 실제 byte 배치와 source charge의 측정·실패/정리 경로는 C1/C4 인수에 포함한다.
 
 <a id="common-deliveries"></a>

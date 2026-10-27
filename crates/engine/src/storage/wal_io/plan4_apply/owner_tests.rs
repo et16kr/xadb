@@ -314,3 +314,16 @@ fn catalog_wal_wait_source_phases_include_claim_and_condvar() {
     // Whether a full reader fits is a reported fact, not a relaxed criterion.
     // Entry/exit/source-ticket carriers and the actual phase protocol remain.
 }
+
+#[test]
+fn catalog_call_scope_selected_consumer_source_is_bounded() {
+    let phases = read::catalog_call_source_observations::<port::Writer>();
+    let shared = source::shared_bytes::<port::Writer>();
+    println!(
+        "C2_CALL_SCOPE held={} entry={} consumer={} full={} resident={} shared={}",
+        phases[0], phases[1], phases[2], phases[3], phases[4], shared
+    );
+    assert!(phases[2] < phases[4] && phases[4] < phases[3]);
+    assert!(shared + phases[3] <= 65_536);
+    assert!(shared + 2 * phases[4] <= 65_536);
+}

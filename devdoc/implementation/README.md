@@ -1,5 +1,7 @@
 # 현재 구현
 
+2026-10-27 [C2 Catalog CallScope](../evidence/module-independence-survey-20261026.md#c2-call-scope): 원 source/progress가 borrowed 결과의 실제 소비까지 유지되며 selected query를 이동했다. source별 runtime14+1+2 PASS·compiler4 PASS와 I/O fixture 원 FAIL을 보존한다. Full38076B·Resident17212B이고 전체 entry/tail·writer phase admission·M4/M5는 미완료다.
+
 2026-10-27 [C2 실제 Drained 소비 경계](../evidence/module-independence-survey-20261026.md#c2-drained-handoff): authentic Drain 완료값이 원 pins/version을 보유한 뒤 content guard를 재구성한다. production/test build·선택10 PASS이며 정상 Drop의 fence-before-pins와 memory 복구를 확인했다. source phase 예약·entry/exit 합산·M4/M5는 미완료다.
 
 2026-10-27 [C2 WAL wait source 관측](../evidence/module-independence-survey-20261026.md#c2-wal-wait-source): cfg(test)의 실제 호출/반환 수명을 분리해 Pending5320B·Full 합65300B를 관측했다. source별 신규1 PASS이며 제품 charge/상계는 유지한다. 실제 phase admission·전체 entry/exit·M4/M5는 미완료다.

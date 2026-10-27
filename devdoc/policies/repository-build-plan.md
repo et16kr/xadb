@@ -670,3 +670,7 @@ statement factory·자동 read-set·CheckedTable/RowReadOperation과 short aggre
 ### C2 실제 Drained 소비 경계 등록 — 2026-10-27
 
 원 dirty_frame/Commit에 private Drained carrier와 consuming drain/resume를 공급하고 Catalog actual caller·source 계산을 연결했다. 신규 실제 시험/manifest와 수정7경로는 JSON `dev3_module_c2_drained_handoff`에 등록했다. package/dependency·source root·backing·wire는 유지한다. [한정 증거](../evidence/module-independence-survey-20261026.md#c2-drained-handoff)는 신규4·관련4·source2 PASS와 반환 비용 증가를 보존하며 source phase 예약은 후속이다.
+
+### C2 Catalog CallScope 등록 — 2026-10-27
+
+원 ReadPort의 scope factory와 private 원 admission 소유자를 공급하고 Operation refs-only 정리·legacy checked result·selected query 수명을 연결했다. 실제 scope/시험/compile fixture7개 신규 경로와 수정8경로를 JSON `dev3_module_c2_call_scope`에 등록했다. package/dependency·source root·backing·wire는 유지한다. [source별 증거](../evidence/module-independence-survey-20261026.md#c2-call-scope)는 runtime14+1+2·compiler4 PASS, 원 fixture FAIL과 미반복을 보존하며 전체 entry/tail·writer/progress admission은 후속이다.

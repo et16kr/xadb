@@ -1016,3 +1016,26 @@ Drained 시점은 **Installation::Installing·active_apply1·원 version gate+pi
 - result SHA-256: `b2b597cfdcb76566a53408216adaa8b89d07365f76b801da1320f38e555dfb04`
 
 독립 검토자는 실제 값 이동·권한·오류/Drop 순서, 선택10의 원 artifact와 최종 문서6개를 대조하고 D1/D2를 한정 수용했다. 필수 수정0이며 source5632개와 증거 식별자·수치를 확인했다. 변경 파일 rustfmt·diff whitespace만 확인했고 전체 fmt/Clippy·문서 verifier·push는 실행하지 않았다. 실제 source phase 예약·선택 caller의 entry/exit 전체 상계·Row/terminal/recovery·M4/M5는 미완료다.
+
+<a id="c2-call-scope"></a>
+### C2 Catalog 결과 소비까지 유지하는 원 CallScope — 2026-10-27
+
+기준 `00feccd`, 작성·통합 `/root`, 독립 검토 `/root/module_review`다. [소유 수명](../contracts/dev3-module-boundaries.md#operation-source-admission)에 따라 private non-Clone CatalogCallScope가 원 Owner/backend/snapshot과 source/progress를 소유한다. 기존 operation은 그 source를 borrow하고 refs/lease만 정리하며 Catalog 제품 분기는 단일 본문이다. 실제 selected `catalog_memory::query`는 Found의 header/Table/Column 소비와 Missing/FlushRequired 분기를 마친 뒤 scope를 닫고, 필요한 flush는 그 후 수행한다. legacy entry는 lease 실패까지 내부 Result로 받아 같은 checked cleanup을 수행하지만 반환 이후의 caller 소비는 새 보장 밖이다.
+
+source/progress는 이제 결과를 사용하는 동안에도 남는다. scope의 정상 오류 완료는 원 Fatal을 보존하고 Unchanged보다 cleanup Fatal을 우선한다. source 실패에도 progress를 반환한다. Scope Drop은 source→progress 순서이며 Operation Drop은 refs만 정리한다. schema/wire/backing·원 authority·실제 WAL/설치 의미는 바꾸지 않았다. statement factory/자동 read-set이나 전체 writer/progress admission 완료를 주장하지 않는다.
+
+[동결 입력](../../tests/fixtures/dev3-module-c2/call-scope/manifest.json)의 r1은 production/test build·runtime14·compiler4 PASS/경고0다. 새 runtime4는 Found 복사/nested view 소비 중 admission 유지·순차 lookup 재사용/경쟁 Full Capacity, 반환 Missing scope에 대한 실제 Drain 대기, 정상 오류 cleanup Fatal, normal Drop/panic이다. 변경된 기존 admission/lease/refs/legacy cleanup과 query에 직접 관련된10개만 추가 선택했다. compiler는 정상 소비→finish1과 copied RecordView/column.name의 finish 이후 사용(E0505 각각1), 살아 있는 view 중 Owner 재진입(E0499)의 거절3을 exact code/primary span으로 확인했다. negative compiler 거절은 의도한 PASS이며 제품 컴파일 실패가 아니다.
+
+독립 검토 후 선택 caller 소비 phase를 명시적으로5256B로 계산하여 production class에 순차 max를 추가하고 실제 오류2개를 보완했다. r2 production/test build와 실제 resident Undo Busy→fence→finish_error의 Fatal 승격은 PASS다. I/O 오류 사례는 선행 이벤트 이력을 비우지 않아 지정한 nth1 fault가 걸리지 않았고 lookup이 Ok여서 `.err().unwrap()`에서 FAIL했다. 원 FAIL/출력/source를 보존하며 뒤의 새 source 관측은 NOT_RUN이었다. r3는 이 **I/O fixture branch에 events.clear() 한 줄만 추가**하고 실패했던 I/O 1개와 미실행 source 관측 1개만 실행해 합계2 PASS/경고0다. 실제 Undo I/O Fatal의 Load/PageIo 원인을 cleanup Fenced가 덮지 않으며 최종 progress0·fenced source 보존을 확인했다. production은 r2 이후 test-only diff로 NOT_RUN, 완료한 r1 14/4 및 r2 Busy는 재실행하지 않았다.
+
+현재 Scope held392B·entry1944B·선택 consumer5256B, Full38076B·Resident17212B다. 두 class가 이전보다352B 늘었고 shared22256B와 Full 합60332B, Resident2 합56680B다. live peak63184B·metadata186192B·whole251728B와 recovered peak64611B는 유지한다. Pending 관측5320B를 합한65652B는116B 초과이며 이전236B 여유를 현재 admission으로 사용하지 않는다. source 예약 전 bound entry와 source 반환 뒤 tail·foreign Owner 거절의 전체 동시 상계는 미공급이다. consumer의 finite source max가 현재 두 class보다 작다는 관측은 임의 caller의 무제한 복사 보장이 아니다.
+
+원 artifact는 `artifacts/module-c2-call-scope-20261027-r{1,2,3}/`에 export/inventory·compiler/probe exports·ELF·manifest·runner/helpers·case 로그를 보존한다. 각 실행은 총600초/compiler90초/case30초/출력8MiB/stack33554432B로 제한했다. 경과74.01/33.90/28.22초는 성능 결과가 아니다. wire/native/새 PID 복구 변경·실행은 없다.
+
+| 실행 | source SHA-256 | manifest SHA-256 | ELF SHA-256 | result SHA-256 |
+| --- | --- | --- | --- | --- |
+| r1 PASS | `cd68674992ef61ba991794cc6e26771240de745e0dcdfc50f9f58946ea63c03c` | `4b365a2dbed11a296d980a804038c5f1365d5cc54a4183e5c2cab2a3d360dda2` | `77d6f38c46a1ca0d8aaba0bdec9408086b00a34ebe44ae043a5adac9caa16bd3` | `1403c56fc486dc8189b14c9e9efbb93b2d6b8f02023581b55bb33e84dee24180` |
+| r2 FAIL·Busy PASS·관측 NOT_RUN | `2162e5b164dd7b1d9f0627e7c5b23857248d9392d04d92b1f1289f41b402d6e6` | `01797e1d7a552a8bb4bd214f157ccf5642c239ae7872f15eac3c75b8d9cf8505` | `40531aada6fc537cbbf4dbad6a60b42e054966be05bf6c2dca5403fbd81de89d` | `28ba11f8e3d0fcbd73ed303e427b5806e04bd370d103980761f16f1a4aa98623` |
+| r3 실패 I/O 1개 수정·미실행 관측 1개 PASS | `d774709877c8793aa602b82f5814c582bd957585bfabb23957616a09235864cd` | `0bb4c8b9a95f0935204919ec532a8431437640e087407a1a4aea6170ee82bb7f` | `45df418dd24e44c4833a411be32a4bc33a6a5f123e49ae88e930f184657aef55` | `7a39e8ca1ce39ef67a92c0534cc3271506276a3f5cbb8972bc0a20ecfda4ae05` |
+
+독립 검토자는 코드·r1–r3 각각의 source5639파일/원 artifact·최종 문서6개를 대조하고 D1/D2를 한정 수용했다. r3 실패/미실행 개수 문구를 구별하도록 정정했으며 미해결 필수 수정0이다. 변경 파일 rustfmt·diff whitespace만 확인했으며 전체 fmt/Clippy·문서 verifier·push는 실행하지 않았다. 실제 writer/progress phase 예약·전체 entry/tail·Row/terminal/recovery·M4/M5는 미완료다.
