@@ -1,5 +1,7 @@
 # 현재 구현
 
+2026-10-28 [C2 Catalog 결과 소비 수명](../evidence/module-independence-survey-20261026.md#c2-call-scope-main): 원 source/progress를 private CatalogCallScope에 유지하고 선택 query의 마지막 결과 소비 뒤 checked finish한다. runtime18·compiler4 각1회·production/test build·선택 Clippy PASS. 독립 OCR 전체23파일 한정 수용·시험선택 지적1건 보완·필수 수정0. 현재 Full+Pending66468/66604B는65536B 기준 FAIL이며 writer/progress·전체 진입/반환 합·M4/M5는 미완료다.
+
 2026-10-28 [C2 Drain 완료/content guard 인계](../evidence/module-independence-survey-20261026.md#c2-drained-handoff-main): 원 pin·Installing을 private Drained로 이동하고 정상 미완료 Drop의 fence-before-pins를 검증했다. 변경 경계 선택11개 각1회·production/test build·선택 Clippy PASS, main4phase/core·전체 peak 상계 유지. 독립 OCR 전체18파일 한정 수용·지적1건 수정·필수 수정0이며 writer/progress·전체 동시 합·M4/M5는 미완료다.
 
 2026-10-28 [C2 실제 WAL wait source 관측](../evidence/module-independence-survey-20261026.md#c2-wal-wait-source-main): test-only 호출·반환 계산과 신규 exact1개1회 PASS. main core 포함 Full+Pending 합66116/66252B는65536B 기준 FAIL이며, 관측 PASS를 동시 admission 인수로 승격하지 않는다. 리뷰 지적1건의 배치를 수정하고 선택 Clippy PASS·OCR 전체15파일 독립 D1/D2 한정 수용·필수 수정0이다. 제품 상계·동작은 유지하며 Drain 인계·writer/progress·M4/M5는 미완료다.

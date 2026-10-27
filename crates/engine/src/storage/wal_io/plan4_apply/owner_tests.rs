@@ -333,3 +333,29 @@ fn catalog_wal_wait_source_phases_include_claim_and_condvar() {
     inspect::<port::Writer>("MEMORY");
     inspect::<super::super::native::Writer>("NATIVE_TYPE");
 }
+
+#[test]
+fn catalog_call_scope_selected_consumer_source_is_bounded() {
+    fn inspect<W: WriterNamespace>(kind: &str) {
+        let phases = read::catalog_call_source_observations::<W>();
+        let shared = source::shared_bytes::<W>();
+        let pending = create_pair::catalog_wait_source_observation::<W>()[3];
+        println!(
+            "C2_CALL_SCOPE_{kind} held={} entry={} consumer={} full={} resident={} shared={} full_pending={}",
+            phases[0],
+            phases[1],
+            phases[2],
+            phases[3],
+            phases[4],
+            shared,
+            shared + phases[3] + pending
+        );
+        assert!(phases[2] < phases[4] && phases[4] < phases[3]);
+        assert!(shared + phases[3] <= 65_536);
+        assert!(shared + 2 * phases[4] <= 65_536);
+        // The reported Full+Pending overlap still does not supply admission.
+        // Do not relax the original limit or turn the prior failure into PASS.
+    }
+    inspect::<port::Writer>("MEMORY");
+    inspect::<super::super::native::Writer>("NATIVE_TYPE");
+}

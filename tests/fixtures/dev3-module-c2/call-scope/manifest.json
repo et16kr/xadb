@@ -1,0 +1,155 @@
+{
+  "schema": "XADB_MODULE_C2_CALL_SCOPE_MAIN_V1",
+  "status": "FROZEN_INPUTS_NOT_EXECUTION_EVIDENCE",
+  "scope": "private original Owner-bound Catalog call scope retains source/progress through borrowed result consumption; legacy explicit cleanup preserved; selected query moved; entry/tail aggregate and writer phase admission incomplete",
+  "budget": {
+    "total_seconds": 600,
+    "compiler_seconds": 90,
+    "case_seconds": 30,
+    "output_bytes": 8388608,
+    "rust_min_stack": 33554432
+  },
+  "compiler_tests": [
+    {
+      "name": "consume_then_finish",
+      "path": "consume_then_finish.rs",
+      "bytes": 1004,
+      "sha256": "ed8964d960866b5bcac6894c21e3f90c237d41e4ced28dbd88d3b1bbc1007ea5",
+      "expected_code": null,
+      "primary_line": null
+    },
+    {
+      "name": "copied_view_after_finish",
+      "path": "copied_view_after_finish.rs",
+      "bytes": 823,
+      "sha256": "d15cc91a227ab299f75968252a0f648a97c11e07f5cd2e8ba1c5d52e817e3232",
+      "expected_code": "E0505",
+      "primary_line": 13
+    },
+    {
+      "name": "column_name_after_finish",
+      "path": "column_name_after_finish.rs",
+      "bytes": 949,
+      "sha256": "b5a17b6e52904de00359e87807e87c1265451c3c9572c4d96bc3822d06719bbe",
+      "expected_code": "E0505",
+      "primary_line": 14
+    },
+    {
+      "name": "owner_reentry_while_view_live",
+      "path": "owner_reentry_while_view_live.rs",
+      "bytes": 818,
+      "sha256": "5fb1497c434ba14fd8255bf894be04336e39c73598987b534405940b30e34b58",
+      "expected_code": "E0499",
+      "primary_line": 12
+    }
+  ],
+  "runtime_tests": [
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::call_scope::found_view_consumption_keeps_source_and_progress",
+      "reason": "new scope held during copied/nested Found view use; one reservation for serial calls; actual competing Full denied before effects",
+      "env": {}
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::call_scope::returned_missing_scope_blocks_original_drain",
+      "reason": "new returned result caller scope keeps original Drain waiting after refs0",
+      "env": {}
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::call_scope::scope_cleanup_fatal_overrides_unchanged_error_and_returns_progress",
+      "reason": "new explicit normal-error completion preserves source Fatal and returns progress",
+      "env": {}
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::call_scope::scope_normal_drop_and_unwind_preserve_original_cleanup_policy",
+      "reason": "new scope normal Drop and unwind after actual result consumption",
+      "env": {}
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::source_return::found_decode_keeps_progress_until_source_return",
+      "reason": "changed legacy explicit scope close still retains progress/source through final decode",
+      "env": {}
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::source_return::unwinding_final_decode_preserves_source_and_cleans_progress",
+      "reason": "moved legacy close hook and scope Drop must preserve panic source/fence semantics",
+      "env": {}
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::source_entry::failed_source_reservation_returns_progress_under_fence",
+      "reason": "moved admission constructor preserves failed source reservation progress cleanup",
+      "env": {}
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::source_entry::drain_waits_for_entry_before_source_charge",
+      "reason": "moved reference lease reservation fails inside authentic Drain and legacy explicit close must preserve cleanup",
+      "env": {}
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::read_boundary::missing_leaf_and_foreign_owner_release_original_resources",
+      "reason": "moved validation/admission must reject foreign Owner and cleanup actual empty lookup",
+      "env": {}
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::read_boundary::dirty_victim_returns_flush_then_retries_same_snapshot",
+      "reason": "changed operation/legacy scope completion returns refs before flush and same snapshot retry",
+      "env": {}
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::read_boundary::captured_undo_read_error_preserves_fatal_cause",
+      "reason": "changed reference-only operation finish and scope finish preserve original fatal precedence",
+      "env": {}
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::commit_concurrency::catalog_mt03_pending_reader_loads_undo",
+      "reason": "changed actual operation borrowing still performs Full Pending Undo LOAD then releases source/progress",
+      "env": {}
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::lifecycle::mc02_forward_clr_abort_cleanup",
+      "reason": "selected actual query caller moved to scope API; tests q0 absence after CLR/abort",
+      "env": {}
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::owner_tests::disk_session_isolation_backing_and_carriers_are_accounted",
+      "reason": "changed scope/operation/entry return source census affects actual charges and aggregate owner bounds",
+      "env": {}
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::call_scope::actual_resident_busy_is_upgraded_by_fatal_scope_cleanup",
+      "reason": "new actual nonresident Undo Busy then fence must upgrade error at explicit scope finish",
+      "env": {}
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::call_scope::actual_undo_io_fatal_survives_scope_cleanup",
+      "reason": "new actual captured Undo I/O Fatal retains original phase/cause through scope cleanup",
+      "env": {}
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::owner_tests::catalog_call_scope_selected_consumer_source_is_bounded",
+      "reason": "new finite selected caller consumption phase and its production max against unchanged larger lookup charge",
+      "env": {}
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::visibility_gap::catalog_mt01_q0_publication_gap",
+      "reason": "Changed selected query helper now consumes Found header/Table/Column under the scope before explicit finish; MT01 invokes this actual helper with found=true after Q publication",
+      "env": {}
+    }
+  ],
+  "baseline_commit": "ae042aee730fb66c4adde84e6b793ae472c5e894",
+  "adapted_from": [
+    "847def2aa9d84bd2ade7abe19753caa6b5bf70d6"
+  ],
+  "changed_paths": [
+    "crates/engine/src/storage/disk.rs",
+    "crates/engine/src/storage/wal_io/disk_api.rs",
+    "crates/engine/src/storage/wal_io/plan4_apply.rs",
+    "crates/engine/src/storage/wal_io/plan4_apply/owner_tests.rs",
+    "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory.rs",
+    "crates/engine/src/storage/wal_io/plan4_retention/read.rs",
+    "crates/engine/src/storage/wal_io/plan4_retention/read/lookup.rs",
+    "crates/engine/src/storage/wal_io/plan4_retention/read/operation.rs",
+    "crates/engine/src/storage/wal_io/plan4_retention/read/scope.rs",
+    "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/call_scope.rs"
+  ],
+  "excluded": "No whole workspace/lower wrappers or unchanged product/native suites. Main original core included; reference branch results not transferred. New scope is limited caller lifetime supply, not full writer/progress or entry/tail aggregate admission."
+}

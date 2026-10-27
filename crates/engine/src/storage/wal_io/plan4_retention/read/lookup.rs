@@ -38,9 +38,37 @@ impl<'b, 'a, 's, 'c, 'p, 'd, 'm, 'w, W: WriterNamespace>
             .map_err(visibility_error)
     }
 
-    /// Synchronous compatibility entry. Only this private call constructs the
-    /// adapter and immediately consumes it in the Catalog product module. The
-    /// caller's actual snapshot stays borrowed until all refs are released.
+    /// Admits the original Owner once, retaining source/progress until the
+    /// caller consumes every borrowed result and closes the scope.
+    pub(in crate::storage) fn catalog_call<'u, 'r, 'v, 'j>(
+        &'r self,
+        owner: &'u mut Owner<'c, 's>,
+        snapshot: &'r SnapshotGuard<'v, 'j, 'c, 's>,
+    ) -> Result<CatalogCallScope<'u, 'r, 'v, 'j, 'b, 'a, 's, 'c, 'p, 'd, 'm, 'w, W>> {
+        super::scope::CatalogCallScope::begin(
+            self,
+            owner,
+            snapshot,
+            super::super::source::OperationClass::CatalogFull,
+        )
+    }
+
+    /// Fixed resident class; a lookup cannot escalate while its scope is live.
+    pub(in crate::storage) fn catalog_resident_call<'u, 'r, 'v, 'j>(
+        &'r self,
+        owner: &'u mut Owner<'c, 's>,
+        snapshot: &'r SnapshotGuard<'v, 'j, 'c, 's>,
+    ) -> Result<CatalogCallScope<'u, 'r, 'v, 'j, 'b, 'a, 's, 'c, 'p, 'd, 'm, 'w, W>> {
+        super::scope::CatalogCallScope::begin(
+            self,
+            owner,
+            snapshot,
+            super::super::source::OperationClass::CatalogResident,
+        )
+    }
+
+    /// Legacy synchronous result lifetime. Post-return use of its ordinary
+    /// copied data is outside the new scoped caller-consumption guarantee.
     pub(in crate::storage) fn lookup_catalog<'q>(
         &self,
         owner: &mut Owner<'c, 's>,
@@ -49,14 +77,15 @@ impl<'b, 'a, 's, 'c, 'p, 'd, 'm, 'w, W: WriterNamespace>
         cursor: &mut Plan4ResidencyCursor,
         private: &'q mut [u8; 425_984],
     ) -> Result<CatalogLookupStep<'q>> {
-        let operation =
-            super::operation::CatalogReadOperation::begin(self, owner, snapshot, private)?;
-        crate::storage::catalog::read::lookup(operation, object, cursor)
+        let mut call = self.catalog_call(owner, snapshot)?;
+        let result = call
+            .operation(private)
+            .and_then(|operation| crate::storage::catalog::read::lookup(operation, object, cursor));
+        call.finish_result(result)
     }
 
-    /// Same Catalog semantics with a fixed resident-only source class. A
-    /// nonresident dependency returns Busy after cleanup; callers may retry
-    /// the full entry with the same snapshot. No in-operation escalation.
+    /// Legacy resident entry; Busy permits retry with the same snapshot after
+    /// cleanup. The scoped equivalent retains admission through result use.
     pub(in crate::storage) fn lookup_catalog_resident<'q>(
         &self,
         owner: &mut Owner<'c, 's>,
@@ -65,9 +94,11 @@ impl<'b, 'a, 's, 'c, 'p, 'd, 'm, 'w, W: WriterNamespace>
         cursor: &mut Plan4ResidencyCursor,
         private: &'q mut [u8; 425_984],
     ) -> Result<CatalogLookupStep<'q>> {
-        let operation =
-            super::operation::CatalogReadOperation::begin_resident(self, owner, snapshot, private)?;
-        crate::storage::catalog::read::lookup(operation, object, cursor)
+        let mut call = self.catalog_resident_call(owner, snapshot)?;
+        let result = call
+            .operation(private)
+            .and_then(|operation| crate::storage::catalog::read::lookup(operation, object, cursor));
+        call.finish_result(result)
     }
 
     pub(super) fn lookup_resident(
@@ -306,20 +337,22 @@ fn lookup_source_bytes<W: WriterNamespace>(resident: bool) -> usize {
     } else {
         super::operation::decode_source_bytes()
     };
-    super::operation::entry_source_bytes::<W>().max(
-        retained
-            + capture
-                .max(location)
-                .max(if resident {
-                    0
-                } else {
-                    super::super::lookup_load::source_bytes::<W>()
-                })
-                .max(read)
-                .max(decode)
-                .max(visibility::source_census().peak_leaf)
-                .max(crate::transaction::concurrency::read_operation_source_bytes())
-                // The final decoded output remains live through source return.
-                .max(super::super::source::leaf_source_bytes()),
-    )
+    super::operation::entry_source_bytes::<W>()
+        .max(
+            retained
+                + capture
+                    .max(location)
+                    .max(if resident {
+                        0
+                    } else {
+                        super::super::lookup_load::source_bytes::<W>()
+                    })
+                    .max(read)
+                    .max(decode)
+                    .max(visibility::source_census().peak_leaf)
+                    .max(crate::transaction::concurrency::read_operation_source_bytes())
+                    // The final decoded output remains live through source return.
+                    .max(super::super::source::leaf_source_bytes()),
+        )
+        .max(super::scope::consumer_source_bytes::<W>())
 }

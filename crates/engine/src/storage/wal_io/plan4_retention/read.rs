@@ -18,6 +18,8 @@ mod lookup;
 mod operation;
 #[path = "read/resident.rs"]
 mod resident;
+#[path = "read/scope.rs"]
+mod scope;
 pub(crate) use crate::storage::catalog::read::CatalogLookupStep;
 #[allow(
     unused_imports,
@@ -30,6 +32,7 @@ pub(super) use lookup::source_bytes as lookup_source_bytes;
 pub(crate) use operation::{
     CatalogCandidate, CatalogReadOperation, MissingCatalogEvidence, ReadStep,
 };
+pub(crate) use scope::CatalogCallScope;
 
 pub(crate) struct RetentionReadGuard<'a, 'b, 'c, 's, 'p, 'd> {
     read: ReadTargets<'a, 'b, 'c, 's, 'p, 'd, 2>,
@@ -491,4 +494,15 @@ pub(super) fn undo_decode_source_bytes() -> usize {
         + 4 * size_of::<PageLsn>()
         + 4 * size_of::<foundation::identity::Generation>()
         + 8 * size_of::<&[u8]>()
+}
+
+#[cfg(test)]
+pub(super) fn catalog_call_source_observations<W: WriterNamespace>() -> [usize; 5] {
+    [
+        scope::held_source_bytes::<W>(),
+        scope::entry_source_bytes::<W>(),
+        scope::consumer_source_bytes::<W>(),
+        lookup_source_bytes::<W>(),
+        resident_lookup_source_bytes::<W>(),
+    ]
 }

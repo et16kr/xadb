@@ -1137,6 +1137,14 @@ rollback/terminal은 원 progress admission이 새 foreground를 닫고 이미 �
 
 [main의 Drain 완료/guard 인계](../evidence/module-independence-survey-20261026.md#c2-drained-handoff-main)는 authentic durable Drain과 content guard 재구성을 별도 consuming 호출로 나눈다. private·nonClone `DrainedCommitTargets`가 원 Installing/version gate·PinSet·StablePage를 인계하며 정상 미완료 Drop도 installation abandon/fence를 먼저 완료한 뒤 원 pins를 반환한다. physical drain은 Pending+Drained+Result 반환을 합산하고 resume은 Drained+WriteTargets+Install 반환을 합산한다. main의 semantic4phase는 drain의 mapped Result까지 포함한 설치 상한을 사용하며 원 core는 shared에 한 번 센다. 이 경계는 후속 reserved source의 무대기 checked 전환 위치이며 새 capacity 대기를 허용하지 않는다. source 예약·전체 동시 합 인수는 후속이다.
 
+#### 선택 Catalog caller의 결과 소비 수명
+
+[main의 CatalogCallScope](../evidence/module-independence-survey-20261026.md#c2-call-scope-main)는 원 Owner/backend/snapshot borrow와 기존 source/progress를 private-field·nonClone scope에 보유한다. `ReadPort::catalog_call`과 `catalog_resident_call`이 고정 class를 한 번 예약하고 `lookup<'call>(&'call mut self, ..., private: &'call mut [u8;425984]) -> Result<CatalogLookupStep<'call>>`가 반환 view·복사한 view·definition/name/column의 수명을 같은 scope borrow에 묶는다. 마지막 결과 소비 뒤 `finish_checked(self)`로 닫고 정상 오류는 `finish_error(error)`로 정리한다. 순차 lookup은 같은 예약을 재사용하며 class를 실행 중 확대하지 않는다.
+
+Operation은 scope를 borrow하고 원 refs/lease/loader/copy만 소유한다. refs 정리→최종 decode/Result→선택 caller 소비→source 반환→progress 반환 순서를 유지한다. 원 Fatal은 cleanup 오류보다 우선하며 성공/Unchanged보다 cleanup Fatal을 우선한다. source 반환 실패에도 progress를 반환하고 Drop도 같은 순서를 유지한다. 기존 `lookup_catalog`/`lookup_catalog_resident`는 같은 제품 본문과 명시 `finish_result`를 사용하지만 **반환 이후 caller 소비는 scope 보장 밖**이다. 이 호환 entry를 전체 admission 완료로 승격하지 않는다.
+
+선택 query는 유한 header/Table/Column 검사와 Missing/FlushRequired 분기를 마친 뒤 scope를 닫고 실제 flush는 그 후 수행한다. consumer phase는 operation과 순차이므로 고정 class의 max에 포함한다. main의 원 core는 shared에 한 번 포함하고 생성/반환의 Result를 함께 계수한다. source 선예약 전 진입·해제 뒤 반환 tail·foreign Owner 거절의 전체 동시 상계와 writer/progress 예약은 후속이다. 임의 caller의 무제한 복사나 장기 보유를 이 유한 소비 검산으로 보장하지 않으며 새 registry·generic Result credit·cap 확대를 허용하지 않는다.
+
 전체 설계 상계는 metadata `73856+65536+49152=188544≤196608`, original flush를 더한 whole `254080≤262144`다. 이 admission·동시 합 검산은 **새 C1/C2/C3 공급**이며 기존 active.max 기반 source 결과로 이미 구현됐다고 하지 않는다. header의 실제 byte 배치와 source charge의 측정·실패/정리 경로는 C1/C4 인수에 포함한다.
 
 [main의 Commit 준비 수명 분리](../evidence/module-independence-survey-20261026.md#c2-pending-image-main)는 stage에서 PreparedCatalog를 소비해 불변 payload와 canonical after 참조4만 Pending에 넘긴다. 원 pin/WAL/install 권한은 그대로이며 준비용9개 target/stamp 배열은 stage 반환 전에 끝난다. stage에는 입력·image·반환 tuple·추출 배열을 함께 청구하고 Pending/install에서만 compact image를 사용한다. 전체 Commit peak32292B와 Pending18532B는 서로 다른 phase다. 초기 memory 검증·독립 한정 수용 뒤 [후속 native N03](../evidence/module-independence-survey-20261026.md#c2-pending-image-native)를 같은 source/ELF로1회 PASS했다. 후속 OCR7파일 독립 D1/D2 수용으로 이 C2 단위의 선정 검증 인수를 마쳤으며 writer/progress 동시 합 인수는 남았다.

@@ -1,7 +1,6 @@
-//! Original source ownership behind the Catalog product's synchronous lookup.
-//! The private factory is consumed immediately by lookup; a caller-retainable
-//! statement factory requires aggregate source admission and is not exposed.
-use super::super::source::{OperationClass, OperationSourceAdmission};
+//! One lookup borrows its call scope and owns only the actual reference lease,
+//! captured references and caller scratch. The scope outlives result consumption.
+use super::super::source::OperationSourceAdmission;
 use super::super::visibility::{
     self, CapturedCatalogRefs, CatalogLookupLoan, CatalogSource, ReferenceLease, SnapshotGuard,
 };
@@ -15,7 +14,6 @@ use crate::storage::{
         UndoTargetKind, UndoTargetView,
     },
 };
-use crate::transaction::concurrency::{ReadOperationAdmission, read_operation_source_bytes};
 use foundation::identity::Generation;
 
 pub(crate) enum ReadStep<T> {
@@ -54,8 +52,7 @@ pub(crate) struct CatalogReadOperation<
     W: WriterNamespace,
 > {
     backend: &'r ReadPort<'b, 'a, 's, 'c, 'p, 'd, 'm, 'w, W>,
-    progress: ReadOperationAdmission<'c, 's>,
-    source: OperationSourceAdmission<'b, 'a, 'c, 's>,
+    source: &'r OperationSourceAdmission<'b, 'a, 'c, 's>,
     owner: &'u mut Owner<'c, 's>,
     snapshot: &'r SnapshotGuard<'v, 'j, 'c, 's>,
     loader: &'i mut [u8; 409_600],
@@ -69,13 +66,6 @@ fn visibility_error(error: visibility::VisibilityError) -> RetentionError {
         phase: RetentionPhase::Census,
         effect: error.effect,
         cause: RetentionCause::Visibility(error),
-    }
-}
-fn progress_error(error: crate::transaction::concurrency::ConcurrencyError) -> RetentionError {
-    RetentionError {
-        phase: RetentionPhase::Census,
-        effect: error.effect,
-        cause: RetentionCause::Concurrency(error),
     }
 }
 fn release_refs(refs: CapturedCatalogRefs<'_, '_, '_, '_>) -> Result<()> {
@@ -94,85 +84,18 @@ impl<'u, 'r, 'v, 'j, 'i, 'b, 'a, 's, 'c, 'p, 'd, 'm, 'w, W: WriterNamespace>
         backend: &'r ReadPort<'b, 'a, 's, 'c, 'p, 'd, 'm, 'w, W>,
         owner: &'u mut Owner<'c, 's>,
         snapshot: &'r SnapshotGuard<'v, 'j, 'c, 's>,
+        source: &'r OperationSourceAdmission<'b, 'a, 'c, 's>,
         private: &'i mut [u8; 425_984],
     ) -> Result<Self> {
-        Self::begin_class(
-            backend,
-            owner,
-            snapshot,
-            private,
-            OperationClass::CatalogFull,
-        )
-    }
-
-    pub(super) fn begin_resident(
-        backend: &'r ReadPort<'b, 'a, 's, 'c, 'p, 'd, 'm, 'w, W>,
-        owner: &'u mut Owner<'c, 's>,
-        snapshot: &'r SnapshotGuard<'v, 'j, 'c, 's>,
-        private: &'i mut [u8; 425_984],
-    ) -> Result<Self> {
-        Self::begin_class(
-            backend,
-            owner,
-            snapshot,
-            private,
-            OperationClass::CatalogResident,
-        )
-    }
-
-    fn begin_class(
-        backend: &'r ReadPort<'b, 'a, 's, 'c, 'p, 'd, 'm, 'w, W>,
-        owner: &'u mut Owner<'c, 's>,
-        snapshot: &'r SnapshotGuard<'v, 'j, 'c, 's>,
-        private: &'i mut [u8; 425_984],
-        class: OperationClass,
-    ) -> Result<Self> {
-        health(backend.storage, backend.pool)?;
-        backend
-            .pool
-            .check_retention_reader(owner)
-            .map_err(|e| frame(RetentionPhase::Census, e))?;
         let visibility = backend
             .visibility
             .ok_or_else(|| unchanged(RetentionPhase::Census, RetentionCause::WrongState))?;
-        if !snapshot.confirms(visibility).map_err(visibility_error)? {
-            return Err(unchanged(
-                RetentionPhase::Census,
-                RetentionCause::WrongState,
-            ));
-        }
-        // Keep the original Drain flag from the reservation attempt through
-        // byte return. No core lock survives the short isolation-ledger call.
-        let mut progress = owner
-            .try_read_operation(backend.pool.bound_core())
-            .map_err(progress_error)?;
-        #[cfg(test)]
-        crate::transaction::concurrency::catalog_test_support::hit(
-            backend.pool.bound_core(),
-            crate::transaction::concurrency::catalog_test_support::Point::LookupBeforeSourceReserve,
-        );
-        let mut source = match OperationSourceAdmission::catalog::<W>(backend.isolation, class) {
-            Ok(source) => source,
-            Err(error) => {
-                return merge(
-                    Err(error),
-                    progress.release_checked().map_err(progress_error),
-                );
-            }
-        };
-        let lease = match visibility.reserve_references(owner) {
-            Ok(lease) => lease,
-            Err(error) => {
-                return merge(
-                    merge(Err(visibility_error(error)), source.release_checked()),
-                    progress.release_checked().map_err(progress_error),
-                );
-            }
-        };
+        let lease = visibility
+            .reserve_references(owner)
+            .map_err(visibility_error)?;
         let loan = CatalogLookupLoan::split(private);
         Ok(Self {
             backend,
-            progress,
             source,
             owner,
             snapshot,
@@ -525,24 +448,6 @@ impl<'u, 'r, 'v, 'j, 'i, 'b, 'a, 's, 'c, 'p, 'd, 'm, 'w, W: WriterNamespace>
         });
         merge(refs, lease)
     }
-    fn close_source(&mut self) -> Result<()> {
-        // Drain must keep seeing this admitted operation through final decode
-        // and source return, even after its physical guards and refs are gone.
-        // Fatal source cleanup keeps the byte charge behind the fence; the
-        // original progress cleanup still runs and returns its error.
-        let source = self.source.release_checked();
-        merge(
-            source,
-            self.progress.release_checked().map_err(progress_error),
-        )
-    }
-    #[cfg(test)]
-    fn before_source_return(&self) {
-        crate::transaction::concurrency::catalog_test_support::hit(
-            self.backend.pool.bound_core(),
-            crate::transaction::concurrency::catalog_test_support::Point::LookupBeforeSourceReturn,
-        );
-    }
     pub(in crate::storage) fn finish_found(
         mut self,
         candidate: CatalogCandidate,
@@ -558,7 +463,7 @@ impl<'u, 'r, 'v, 'j, 'i, 'b, 'a, 's, 'c, 'p, 'd, 'm, 'w, W: WriterNamespace>
         merge(checked, cleanup)?;
         let namespace = self.backend.storage.profile().spec().namespace;
         let bytes = self.copy.take().ok_or_else(|| self.invariant())?;
-        let result = catalog_record::decode_catalog_record(
+        catalog_record::decode_catalog_record(
             &bytes[..candidate.len],
             CatalogExpectation {
                 namespace,
@@ -571,22 +476,13 @@ impl<'u, 'r, 'v, 'j, 'i, 'b, 'a, 's, 'c, 'p, 'd, 'm, 'w, W: WriterNamespace>
                 RetentionPhase::Census,
                 RetentionCause::Catalog(e),
             )
-        });
-        #[cfg(test)]
-        self.before_source_return();
-        merge(result, self.close_source())
+        })
     }
     pub(in crate::storage) fn finish_missing(mut self) -> Result<()> {
-        let closed = self.close_refs();
-        #[cfg(test)]
-        self.before_source_return();
-        merge(closed, self.close_source())
+        self.close_refs()
     }
     pub(in crate::storage) fn finish_error(mut self, error: RetentionError) -> RetentionError {
-        let closed = merge::<()>(Err(error), self.close_refs());
-        #[cfg(test)]
-        self.before_source_return();
-        match merge(closed, self.close_source()) {
+        match merge::<()>(Err(error), self.close_refs()) {
             Err(error) => error,
             Ok(()) => unreachable!("original error retained"),
         }
@@ -597,14 +493,14 @@ impl<W: WriterNamespace> Drop
 {
     fn drop(&mut self) {
         let _ = self.close_refs();
-        let _ = self.close_source();
     }
 }
 
-/// Same synchronous call closure: no returned adapter can overlap a later call.
+/// The call scope remains live through lookup and selected result consumption.
 pub(super) fn held_source_bytes<W: WriterNamespace>() -> usize {
     use std::mem::size_of;
-    size_of::<CatalogReadOperation<'_, '_, '_, '_, '_, '_, '_, '_, '_, '_, '_, '_, '_, W>>()
+    super::scope::held_source_bytes::<W>()
+        + size_of::<CatalogReadOperation<'_, '_, '_, '_, '_, '_, '_, '_, '_, '_, '_, '_, '_, W>>()
         + 4 * size_of::<Result<()>>()
         + 2 * size_of::<RetentionError>()
         // missing_before's copied header survives location/LOAD through actor validation.
@@ -617,18 +513,15 @@ pub(super) fn entry_source_bytes<W: WriterNamespace>() -> usize {
         + size_of::<
             Result<CatalogReadOperation<'_, '_, '_, '_, '_, '_, '_, '_, '_, '_, '_, '_, '_, W>>,
         >()
-        // begin/begin_resident forwards the consuming begin_class Result.
-        // Count both call-boundary return carriers and the fixed class value.
+        // begin returns through scope.operation; retain both boundary Results.
         + 2 * size_of::<Result<CatalogReadOperation<'_, '_, '_, '_, '_, '_, '_, '_, '_, '_, '_, '_, '_, W>>>()
-        + size_of::<OperationClass>()
         + size_of::<CatalogLookupLoan<'_>>()
         + 2 * size_of::<ReferenceLease<'_, '_, '_, '_>>()
         + size_of::<Result<ReferenceLease<'_, '_, '_, '_>>>()
         + 4 * size_of::<Result<()>>()
         + 16 * size_of::<&()>()
         + visibility::source_census().peak_leaf
-        + read_operation_source_bytes()
-        + super::super::source::leaf_source_bytes()
+        + super::scope::entry_source_bytes::<W>()
 }
 
 /// record()/check()/finish_found decoding ends before location replay or LOAD.

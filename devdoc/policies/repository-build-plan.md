@@ -661,3 +661,8 @@ statement factory·자동 read-set·CheckedTable/RowReadOperation과 short aggre
 ### C2 Drain 완료/guard 인계의 main 수신
 
 기존 `dirty_frame/commit.rs`의 private Drained가 원 pin·설치 권한을 이동하고 Catalog가 이를 소비한다. 신규 실제 시험 `catalog_memory/drained.rs`·선택 manifest와 수정 경로는 JSON `dev3_module_c2_drained_handoff_main`에 등록한다. 기존 제품 파일·source root·package/dependency·wire는 유지한다. [증거](../evidence/module-independence-survey-20261026.md#c2-drained-handoff-main)는 main의 source 회계·선택 검증과 참고 브랜치를 구별하며 전체 writer/progress 예약·동시 합은 후속이다.
+
+
+### C2 Catalog 결과 소비 수명의 main 수신
+
+`plan4_retention/read/scope.rs`는 기존 Owner/backend/snapshot과 source/progress의 수명을 소유하고 `operation.rs`는 원 refs/lease·복사만 소유한다. `catalog_memory/call_scope.rs`·compiler4입력/manifest와 변경 경로는 JSON `dev3_module_c2_call_scope_main`에 등록한다. 기존 `storage::disk` 경계로 opaque scope를 노출하며 신규 package/dependency·source root·wire/backing은 없다. [증거](../evidence/module-independence-survey-20261026.md#c2-call-scope-main)는 선택 query의 실제 수명과 legacy 반환 이후의 제외 범위, 미공급 writer/progress·entry/return 전체 합을 구별한다.

@@ -6908,5 +6908,54 @@
       "source_bound_not_rss": true
     },
     "review_report_sha256": "5e680864a51e6424c01d21e37e243cb841fa035ccaf0cb6bcd7fb2c3f7a06738"
+  },
+  "dev3_module_c2_call_scope_main": {
+    "status": "ACCEPTED_LIMITED_D1_D2",
+    "contract_ref": "dev3-module-boundaries.md#operation-source-admission",
+    "evidence_ref": "module-independence-survey-20261026.md#c2-call-scope-main",
+    "baseline_commit": "ae042aee730fb66c4adde84e6b793ae472c5e894",
+    "adapted_from": [
+      "847def2aa9d84bd2ade7abe19753caa6b5bf70d6"
+    ],
+    "implemented_paths": [
+      "crates/engine/src/storage/wal_io/plan4_retention/read/scope.rs",
+      "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/call_scope.rs",
+      "tests/fixtures/dev3-module-c2/call-scope/consume_then_finish.rs",
+      "tests/fixtures/dev3-module-c2/call-scope/copied_view_after_finish.rs",
+      "tests/fixtures/dev3-module-c2/call-scope/column_name_after_finish.rs",
+      "tests/fixtures/dev3-module-c2/call-scope/owner_reentry_while_view_live.rs",
+      "tests/fixtures/dev3-module-c2/call-scope/manifest.json"
+    ],
+    "modified_paths": [
+      "crates/engine/src/storage/disk.rs",
+      "crates/engine/src/storage/wal_io/disk_api.rs",
+      "crates/engine/src/storage/wal_io/plan4_apply.rs",
+      "crates/engine/src/storage/wal_io/plan4_apply/owner_tests.rs",
+      "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory.rs",
+      "crates/engine/src/storage/wal_io/plan4_retention/read.rs",
+      "crates/engine/src/storage/wal_io/plan4_retention/read/lookup.rs",
+      "crates/engine/src/storage/wal_io/plan4_retention/read/operation.rs"
+    ],
+    "scope": "private original Owner-bound Catalog call scope retains source/progress through borrowed result consumption; legacy explicit cleanup preserved; selected query moved; entry/tail aggregate and writer phase admission incomplete",
+    "validation": "r1 production check, crate Clippy lib/tests -D warnings, test build PASS/warning0; runtime18 and compiler4 each once PASS. Pre-run review required actual changed query Found branch selection, added MT01 before execution. Main shared core and wrapper Result accounting retained; prior/current Full+Pending bounds FAIL preserved. Independent OCR23/23 files, skipped0, one test-selection finding fixed before execution, zero unresolved required fixes. D1/D2 accepted for this implementation/selected validation; source5648 files, all identities and4 minimally injected compiler exports verified read-only.",
+    "remaining_supply": "Actual writer/progress source reservation, pre-entry/return-tail aggregate and Full+Pending cap exceedance; statement/read-set, Row and M4/M5 acceptance",
+    "source_roots_changed": false,
+    "source_bytes": {
+      "scope_held": 392,
+      "scope_entry": 2105,
+      "selected_consumer": 5256,
+      "catalog_full": 38076,
+      "catalog_resident": 17212,
+      "memory_shared_retained": 23072,
+      "native_type_shared_retained": 23208,
+      "memory_full_pending_total": 66468,
+      "native_type_full_pending_total": 66604,
+      "limit": 65536,
+      "full_pending_bound_status": "FAIL",
+      "memory_live_peak": 64000,
+      "memory_recovered_peak": 65376,
+      "source_bound_not_rss": true
+    },
+    "review_report_sha256": "d025b567ad278a7e980fe0d9ad836fb6f142a42d99c1abff37cf71ba2a64ac05"
   }
 }

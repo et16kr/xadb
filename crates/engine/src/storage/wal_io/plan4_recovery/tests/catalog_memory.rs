@@ -682,16 +682,13 @@ fn query<'s, 'c, W: WriterNamespace>(
     let mut cursor = Plan4ResidencyCursor::new();
     let mut finished = false;
     for _ in 0..32 {
-        match reader
-            .lookup_catalog(
-                owner,
-                &snapshot,
-                ObjectId::new(object).unwrap(),
-                &mut cursor,
-                private,
-            )
-            .unwrap()
-        {
+        let mut call = reader.catalog_call(owner, &snapshot).unwrap();
+        let result = call.lookup(ObjectId::new(object).unwrap(), &mut cursor, private);
+        let step = match result {
+            Ok(step) => step,
+            Err(error) => panic!("actual scoped lookup {:?}", call.finish_error(error)),
+        };
+        let target = match step {
             CatalogLookupStep::Found(record) => {
                 assert!(found);
                 let header = record.header();
@@ -717,29 +714,34 @@ fn query<'s, 'c, W: WriterNamespace>(
                     ("i", DataType::Int64, false)
                 );
                 finished = true;
-                break;
+                None
             }
             CatalogLookupStep::Missing => {
                 assert!(!found);
                 finished = true;
-                break;
+                None
             }
-            CatalogLookupStep::FlushRequired { target } => {
-                let mut step = flush.try_flush(flusher, &target).unwrap();
-                for _ in 0..8 {
-                    if matches!(
-                        step,
-                        RetentionFlushStep::Complete { .. } | RetentionFlushStep::NoDirty
-                    ) {
-                        break;
-                    }
-                    step = flush.continue_flush(flusher).unwrap();
-                }
-                assert!(matches!(
+            CatalogLookupStep::FlushRequired { target } => Some(target),
+        };
+        call.finish_checked().unwrap();
+        if finished {
+            break;
+        }
+        if let Some(target) = target {
+            let mut step = flush.try_flush(flusher, &target).unwrap();
+            for _ in 0..8 {
+                if matches!(
                     step,
                     RetentionFlushStep::Complete { .. } | RetentionFlushStep::NoDirty
-                ));
+                ) {
+                    break;
+                }
+                step = flush.continue_flush(flusher).unwrap();
             }
+            assert!(matches!(
+                step,
+                RetentionFlushStep::Complete { .. } | RetentionFlushStep::NoDirty
+            ));
         }
     }
     assert!(finished, "bounded actual lookup exhausted");
@@ -1159,3 +1161,6 @@ mod resident_faults;
 
 #[path = "catalog_memory/drained.rs"]
 mod drained;
+
+#[path = "catalog_memory/call_scope.rs"]
+mod call_scope;

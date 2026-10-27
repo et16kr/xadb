@@ -1288,3 +1288,72 @@ frozen export에서 `cargo check -p xadb-engine --lib --locked --offline --messa
 원 export와 현재 source5641파일, inventory·manifest·runner/helper·ELF, compiler3개의 진단/로그와 exact11개 stdout/stderr의 identity를 읽기 전용 검산했다. 현재 제품과 실행 source가 같으며 source 시험 보완은 첫 실행 전에 반영됐다. 검토자는 제품·문서 수정이나 빌드·시험·자동 문서 verifier를 실행하지 않았다. 무변경 native/하위 시험을 반복하지 않은 선택과 기존 Full+Pending 기준 FAIL 보존, 원 권한/Drop·main4phase/core 및 후속 source 예약의 무대기 조건을 확인했다.
 
 `artifacts/module-c2-drained-handoff-main-review-20261028/`의 report SHA-256은 `5e680864a51e6424c01d21e37e243cb841fa035ccaf0cb6bcd7fb2c3f7a06738`, checklist는 `a8ccc579c01a11fa32978ab1146881fee77b9f5365272823746c5d7ad2473a36`, identity-audit는 `d865e0b870167bc7bedf8a480076364f1691d1dcea7816b1499dd0df80adfb7a`다. 변경9개 Rust 파일에 파일별 rustfmt와 `git diff --check`를 적용했으며 자동 문서 verifier·전체 workspace fmt/Clippy·push는 실행하지 않는다. 문서 검사는 기존 pre-push 훅에서 수행한다.
+
+
+<a id="c2-call-scope-main"></a>
+### C2 Catalog 결과 소비까지 유지하는 호출 수명의 main 수신 — 2026-10-28
+
+사용자의 “한 단계 더 진행” 요청으로 clean `main`·`ae042aee730fb66c4adde84e6b793ae472c5e894`에서 시작했다. M0–M3 완료, M4 C2는 Drain 완료/guard 인계까지 부분공급, M5는 A/B 순수 본문 착수 상태였다. 이번 한 단계는 **조회 결과를 소비하는 동안에도 원 source/progress 예약을 유지하는 CatalogCallScope**다. writer/progress의 전체 동시 합을 계산하기 전 결과 소비 수명의 공백을 닫는 유한 공급이며, 참고 `847def2aa9d84bd2ade7abe19753caa6b5bf70d6`의 필요한 코드만 main에 적응했다. 참고 브랜치의 전체 코드·과거 실행/실패 결과를 main 결과로 옮기지 않았고 다른 worktree·세션을 변경하지 않았다.
+
+`D3-MODULE-CATALOG-CALL-SCOPE-MAIN-001` · D2 · **구현·선택 검증 완료 / 독립 D1/D2 한정 수용**. 작성·계약·통합 `/root`, 독립 검토 `/root/module_step_review`. 원 §6.9·65,536B 상한·권한·WAL·원자 공개·복구 의미를 유지하며 source 예약의 수신 구간만 구체화한다. 전체 writer/progress·진입/반환 합·statement/자동 read-set·M4/M5 인수는 미완료다.
+
+#### 수명·오류 경계와 대안
+
+`CatalogCallScope`는 원 Owner/backend/snapshot의 borrow와 기존 source/progress를 보유하는 private-field·nonClone 타입이다. `catalog_call`/`catalog_resident_call`이 고정 class를 한 번 취득한다. main의 원 `try_read_operation`이 검산과 표시를 함께 수행하므로 참고 브랜치의 추가 precheck API는 가져오지 않았다. scope의 `lookup`은 원 operation을 재대여하고 반환 RecordView·복사한 view·column.name의 수명을 scope borrow에 묶는다. 순차 lookup은 같은 예약을 사용하며 class escalation은 없다.
+
+Operation은 refs/lease·caller scratch만 소유한다. refs 정리→최종 decode/Result→선택 caller 소비→scope source 반환→progress 반환 순서다. 정상 오류도 `finish_error`/`finish_result`로 명시 정리하여 원 Fatal을 보존하고 성공/Unchanged보다 cleanup Fatal을 우선한다. source cleanup 실패에도 progress를 반환한다. 정상 Drop은 read scope를 정리하고 panic은 원 fence·미해결 source 보존 규약을 따른다. 새 capability·pin/registry·backing을 만들지 않는다.
+
+선택된 실제 `catalog_memory::query`는 Found의 header/Table/Column 또는 Missing/FlushRequired 결과를 소비한 뒤 scope를 닫으며 flush는 그 뒤 수행한다. 기존 synchronous entry는 같은 제품 본문을 사용하고 내부 결과의 cleanup을 명시 완료하지만 **반환 이후 caller 소비는 scope 보장 밖**이다. SQL 연결·statement 수신·전체 source admission 완료를 주장하지 않는다.
+
+결과 반환 전에 예약을 돌려주는 기존 방식은 caller 소비 비용을 포함하지 못한다. Result마다 별도 generic credit/registry를 만들거나 reader backing/상한을 늘리는 대안도 채택하지 않는다. 원 고정 class를 소비 완료까지 유지하고 caller가 borrow를 종료한 뒤 checked finish하는 방식을 선택했다. 임의 caller의 무제한 복사·장기 보유, foreign Owner의 선예약 전 거절과 반환 tail의 전체 동시 상계는 이 유한 caller 검산의 범위 밖이다. 실제 호출/반환 타입·소비 형태·cleanup/authority 또는 writer 예약 연결이 바뀌면 해당 수명과 source 식을 재검토한다.
+
+#### 실행 전 선택·리뷰 보완
+
+[동결 manifest](../../tests/fixtures/dev3-module-c2/call-scope/manifest.json)에 현재 diff와 **runtime18·compiler4, 각각1회**의 관계를 고정했다. 총600초·compiler90초·case30초·로그8MiB·stack32MiB다. 참고 manifest의 과거 r2/r3 선택·실패 metadata를 제거하고 main baseline·변경 경로를 기록했다. main의 wrapper 반환 Result 계수 관례를 operation/scope entry에도 유지했다.
+
+독립 사전 리뷰가 변경 query helper의 Found 분기를 직접 실행하는 사례가 빠졌음을 지적했다. 신규 Found 시험은 scope API 자체를 검증하고 기존 MC02는 query의 Missing만 검증하므로, 실제 query(..., found=true)를 호출하는 MT01을 실행 전에 추가했다. 이는 정적 시험선택 지적이며 실행하지 않은 FAIL을 만들지 않는다.
+
+| 선택 | 변경과 검증의 관계 |
+| --- | --- |
+| 신규 scope runtime6 | Found 복사/nested view 소비 중 예약·표시 유지, 순차 reuse·경쟁 Full Capacity, 반환 Missing scope의 실제 Drain 대기, cleanup Fatal 우선, normal Drop/panic, 실제 resident Undo Busy와 실제 Undo I/O Fatal 정리 |
+| 기존 직접 영향 runtime10 | source 진입/반환4·foreign Owner/Missing·dirty-victim FlushRequired/재시도·Undo I/O3·Pending Undo LOAD MT03·query Missing MC02·query Found MT01. 같은 source/progress 생성·정리 또는 실제 query 호출 변경에 해당하는 사례만 선택 |
+| source runtime2 | 원 shared core/신규 carrier 회계와 유한 caller 소비 phase의 Full/Resident 고정 charge, Memory/Linux 타입의 합계 관측 |
+| 신규 compiler4 | 정상 소비 후 finish1, copied RecordView·column.name의 finish 뒤 사용 E0505 각1, 살아 있는 view 중 Owner 재진입 E0499. exact code·primary path/line으로 의도한 거절을 확인 |
+
+#### 실제 실행과 source 상계
+
+frozen export에서 `cargo check -p xadb-engine --lib --locked --offline --message-format=json`, `cargo clippy -p xadb-engine --lib --tests --locked --offline --message-format=json -- -D warnings`, `cargo test -p xadb-engine --lib --no-run --locked --offline --message-format=json` 모두 **PASS·경고0**이다. 같은 ELF의 exact runtime18개와 각각 분리된 probe export의 compiler4개도 **각1회 PASS**다. 총88.01초는 검증 경과이며 성능 결과가 아니다. 제품 source 동결 이후 수정·완료 시험 반복0이다. 물리 WAL I/O·wire·native driver·복구 구현은 바뀌지 않아 무변경 native/하위/workspace 시험을 반복하지 않는다. Linux type 관측은 native I/O 실행 증거가 아니며 과거 FAIL·UNKNOWN·NOT_RUN과 DEV2·DEV3/S5 미완료는 유지한다.
+
+| 항목 | 이번 main source 값(B) |
+| --- | --- |
+| scope held / entry / 유한 consumer |392 / 2105 / 5256|
+| Full / Resident 고정 charge |38076 / 17212 (각 이전보다352 증가)|
+| shared retained Memory / Linux type (원 core816 포함) |23072 / 23208|
+| shared + Full |61148 / 61284|
+| shared + Resident×2 |57496 / 57632|
+| shared + Full + Pending 관측5320 |**66468 / 66604 — 65536 기준 FAIL, 각각932 / 1068 초과**|
+| Memory live peak / metadata / whole |64000 / 187008 / 252544|
+| Memory recovered peak |65376|
+
+semantic Commit4phase의16632/32292/18532/22052B와 원 core 계수를 유지한다. consumer는 operation과 순차이므로 고정 charge 식에 max로 포함한다. main entry2105B는 생성/forward Result와 class를 포함하며 참고 branch1944B를 그대로 승계하지 않는다. 이 entry 식이 선예약 전 모든 caller의 동시 진입이나 반환 이후 tail까지 예약했다는 뜻은 아니다. source 값은 RSS·실제 stack·성능 측정이 아니다.
+
+원 [WAL wait source](#c2-wal-wait-source-main)의66116/66252B FAIL은 해당 source 결과로 보존한다. 이번 caller 수명 비용352B를 포함한 현재 합도 FAIL이며, 시험 PASS와 전체 동시 admission의 FAIL을 구별한다. 다음은 Full 경로의 중첩 source 비용·진입/반환 합을 정리하고 writer/progress 예약을 공급하는 일이다. 실제 Row·C+A/C+B·MI01–06·M4/M5는 미완료다.
+
+원 source5648파일/inventory·compiler probe4개 source·manifest·runner/helper·compiler/lint·ELF·stdout/stderr/result는 `artifacts/module-c2-call-scope-main-20261028/r1/`에 보존한다.
+
+| identity | SHA-256 |
+| --- | --- |
+| source |`20c5f17a9d6bfe267805f9cb71cb78b2486cde76a3b0c3da7669025380048e34`|
+| manifest |`01a7560485288d8b1ce97e50f089ac5c92028d316307d8ee192c5b91c9c4c53c`|
+| runner |`e6823b67d8421fa4ee0e97f4bda9c6144347101143faebfb9975a1417a1dda58`|
+| inventory |`b3105e38c6cf4a66e38c6b457e146495f5a83d373edb709f8bc1cf3ee8bc39b4`|
+| ELF |`2e9e68ad2c341d5a38ab27267ee2d5b43850d4ac80aba398cb38356bbb2d6fd6`|
+| result |`d92ad8cd1a3c5593fe62ffeb77cfc90e901da4fb3b6cac7f2044371b32bba4e9`|
+
+#### OCR delegate 독립 검토
+
+`/root/module_step_review`가 `ocr delegate preview --format json`·`ocr delegate rule --format json`으로 전체 변경을 검토했다. 기본 대상11개와 기본 제외 중 명시 추가한12개를 모두 읽어 **전체23파일·100%·skip0**, query Found 직접 선택 지적1건의 실행 전 보완 확인·미해결 필수 수정0이다. 독립 D1/D2는 이 Catalog 결과 소비 수명 단위의 구현·선택 검증을 한정 수용했으며 `/root`가 반영했다.
+
+원 export와 현재 source5648파일, inventory·manifest·runner/helper·ELF, compiler3개 및 runtime18개 로그·진단의 identity를 읽기 전용 검산했다. compiler probe4개는 각각 등록1곳과 정확한 fixture1파일만 달라지며 정상 compile과 의도한 E0505/E0499의 primary path/line을 확인했다. 검토자는 제품·문서 수정이나 빌드·시험·자동 문서 verifier를 실행하지 않았다. 무변경 native/하위 시험을 반복하지 않은 선택, 현재/원 source의 Full+Pending 기준 FAIL, legacy caller 한계와 전체 진입/반환·writer/progress 후속 의무를 확인했다.
+
+`artifacts/module-c2-call-scope-main-review-20261028/`의 report SHA-256은 `d025b567ad278a7e980fe0d9ad836fb6f142a42d99c1abff37cf71ba2a64ac05`, checklist는 `6c4110d51511647823c224306cec87fd3d4bd73fa7415d810317f10156a2102a`, identity-audit는 `6e35d2ca36d640b1ae5d362c24750e025fd3a3f46e9548aca9c0a33b20aa6186`다. 변경10개 Rust 파일은 파일별 rustfmt와 `git diff --check`로 확인했다. compiler 입력4개는 의도한 진단 line/hash를 보존했다. 자동 문서 verifier·전체 workspace fmt/Clippy·push는 실행하지 않으며 문서 검사는 기존 pre-push 훅에서 수행한다.
