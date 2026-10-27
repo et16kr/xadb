@@ -1,5 +1,7 @@
 # 현재 구현
 
+2026-10-27 [C2 full Catalog short 예약](../evidence/module-independence-survey-20261026.md#c2-short-source-main): main의 원 isolation ledger에 고정 바이트 예약을 연결하고, 예약 시도부터 최종 decode/반환까지 원 Drain 표시를 유지한다. source별 선택14+7개 PASS·원 Found 시험 FAIL을 보존했고 OCR 전체19파일·독립 D1/D2 한정 수용·필수 수정0이며 전체 동시 admission·M4/M5 인수는 미완료다.
+
 2026-10-27 [C2 공통 core 계수와 복구 반환 수명](../evidence/module-independence-survey-20261026.md#c2-shared-core): main의 fresh/세션/복구 공통 보유분에 원 core816B를 한 번 포함했다. native 타입의65563B 초과를 실제 cursor helper 수명으로 정리해65512B를 확인했고 source별8개 선택 사례의 최종 적용 결과를 검증했다. OCR 전체16파일 검토와 계약 문구1건 정정 뒤 독립 D1/D2 한정 수용·필수 수정0이다. 원 Capacity·fixture·runner FAIL과 전체 aggregate/M4/M5 미완료를 보존한다.
 
 2026-10-27 [C2 Commit 단계별 source 비용](../evidence/module-independence-survey-20261026.md#c2-commit-phases): 실제 전환 carrier를 포함해 준비·대기·설치의 비용을 구분했다. 독립 검토에서 찾은 core816B 누락을 보완하고 source별 선택3+2회 PASS를 보존했다. 최종 독립 D1/D2 한정 수용·필수 수정0이며 Catalog 최대31940B·전체 동시 admission·M4/M5 미완료를 구별한다.

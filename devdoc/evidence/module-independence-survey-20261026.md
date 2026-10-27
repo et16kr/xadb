@@ -895,3 +895,60 @@ r3–r5는 r2의 immutable source/ELF를 재사용하며 새 product build를 �
 최종 판정은 **D1/D2 한정 수용·미해결 필수 수정0·차단0**이다. r1/r2 각5627파일 source inventory, manifest/runner/ELF/result/log hash와 현재 제품9파일의 r2 일치를 대조했다. 원 core의 단일 계수, helper 수명·검산 순서 보존,65563B FAIL→65512B 상계, 원 fixture/selector/marker FAIL, r4 로그 재판정과 source별 고유8개를 확인했다. B04 setup 결함·native I/O 미실행·전체 admission/M4/M5 미완료는 한정 수용으로 해소하지 않는다.
 
 `artifacts/module-c2-shared-core-review-20261027/`에 `preview.json`, `rules.json`, `checklist.json`, `identity-audit.json`, `report.json`을 보존했다. 최종 report SHA-256은 `e9c60a58c2f103bde5ce976ade4e8a1d56cdc225e90a8c7b1007e835b5ffb52b`, checklist는 `ec8cce739c12ce2a6f9275dcae01d3cbb0b497e358da4fd303caf7899adc3e93`이다. 검토자는 제품/문서 수정·빌드·시험·자동 문서 verifier를 실행하지 않았고 `/root`가 실제 수용 결과를 이 증거·구현 색인·build JSON에 반영했다.
+
+
+<a id="c2-short-source-main"></a>
+### C2 full Catalog short 예약의 main 수신 — 2026-10-27
+
+사용자의 “진행 위치 확인 후 다음 한 단계”와 후속 “OCR delegate 리뷰·수정·commit” 요청에 따라 clean `main`·`fd005ba33a2a0a56b63d91c259698ede2e6547f3`에서 시작했다(전체 기준 identity는 아래 manifest). M0–M3는 완료·채택, M4는 공통 core 계수와 복구 반환 수명까지, M5는 A/B 순수 제품 본문 착수까지 수신했다. 이번 한 단계는 **full Catalog 조회에 원 short source 예약을 연결하고 그 앞/뒤 수명을 Drain에 포함**하는 것이다. 별도 `codex/module-independence-finish`·`76f91e0`의 후속 전체 작업을 main 완료로 합치지 않는다.
+
+`D3-MODULE-CATALOG-SHORT-MAIN-001` · D2 · **ACCEPTED / C2 한정 부분공급**. 구현·계약·통합 `/root`, 독립 검토 `/root/module_step_review`. 원 §6.9·65536B 한도·고정 charge를 적용한다. `ec018d6`의 full 조회 source ledger/시험과 `883c920`·`d9d6a01`의 반환/예약 시도 Drain 수정을 읽고 필요한 코드만 적응했다. 원 core816B를 누락한 당시 shared 계산은 main의 fresh/recovered 보유값 중 큰 값에 한 번 포함하도록 맞췄다. 참고 브랜치의 resident class·precheck API 분리·writer/Row 변경·문서/실행 증거는 가져오지 않았다. 기존 `try_read_operation`이 원 lock 안에서 검산과 표시를 수행하므로 같은 검사를 추가 분리하지 않는다. 다른 worktree 편집·병합·중지 없음.
+
+#### 원 소유·수명과 대안
+
+- 원 isolation header24..32에 동시 short-used를 보관하며32..64는0을 검산한다. private non-Clone ticket은 고정 class/charge를 보유한다. 바깥 owner·semaphore·heap·새 wire는 추가하지 않는다.
+- 원 progress 진입 → source 예약 → transient refs/pin 순서다. 용량 초과는 refs/pin/저장 효과 전에 Capacity이고 진입 표시는 checked 반환한다. source 예약 시도 자체를 Drain에서 빼거나 refs 뒤에 예약하는 대안은 수명/진행 경계를 어기므로 제외했다.
+- 출구는 refs 정리 → 최종 decode/Result → source 반환 → progress 표시 반환이다. 정상 반환/Drop은 자기 charge만 반환한다. poison·fence·underflow·잘못된 binding·panic은 원 fence와 미해결 charge를 보존하여 용량을 만들어내지 않는다.
+- 같은 full class의 중첩 lookup은 용량에 따라 거절하고 원 snapshot으로 반환 뒤 재시도한다. writer/progress는 아직 이 ledger에 등록되지 않아 **전체 writer/reader·entry/return 동시 합 보장으로 승격하지 않는다**. resident class와 caller-retainable statement/Row factory도 후속이다.
+
+#### 실제 변경과 실행 전 선택
+
+[현재 선택 manifest](../../tests/fixtures/dev3-module-c2/short-source/manifest.json)와 각 bundle의 원 manifest를 구별한다. 최초 총600초·compiler90초·case30초·로그8MiB·test stack32MiB·각 selector1회로 동결했다. 새 ledger9개는 exact capacity·동시 실제 thread·overflow/header·underflow·poison/fence·unwind/forget·memory/native type·stale binding을 검사한다. 실제 full 조회8개는 두 번째 Capacity, 예약 전 Drain 정상/fence/unwind, refs0 뒤 Drain 정상/fence, Found 반환 정상/unwind를 검사한다. 기존4개는 변경 adapter의 Pending Undo LOAD·FlushRequired 재시도·fatal I/O cleanup·source census만 선택했다. 총21개다.
+
+제품 format·recovery helper·물리 Commit 구현은 바뀌지 않아 완료한 core/recovery/Commit 사례·native process inventory·전체 workspace/하위 wrapper를 반복하지 않는다. native 항목은 실제 Linux Writer/File **타입 상계 계산**이며 native I/O 결과가 아니다. 기존 source별 PASS/FAIL/UNKNOWN과 DEV2·DEV3/S5 미완료를 유지한다.
+
+#### r1 원 실패와 기대값 정정
+
+r1은 production/test build PASS, 선택14개 PASS 뒤 Found 정상 반환에서 FAIL했다. 마지막 assertion의 events는1519→1548이며 일반 lookup의 WAL 읽기 이벤트를 포함한다. 원 resident-only 시험의 “조회 전체 이벤트0” 기대를 full 경로로 옮긴 오류다. assertion이 fixture mutex guard 수명 안에서 panic하여 정리 중 poison/abort까지 발생했고 원 stdout/stderr·exit·FAIL을 보존했다. 통과한 앞14개는 반복하지 않는다.
+
+수정은 `source_return.rs`의 Found 정상/unwind 공통 시험에 한정한다. full lookup의 WAL 읽기는 허용하되 저장 이미지 전체가 전후 같고, final-return hook에서 refs0/pins0·progress1·charge>0을 관측한 **그 시점부터** checked 정리 완료까지 이벤트가 늘지 않아야 한다. 기대 이미지나 제품 코드는 바꾸지 않았다. 비교 전에 mutex guard를 끝내 잘못된 assertion이 fixture mutex를 poison하지 않게 했다. r2는 이 수정2개와 원 미실행5개만 선택하고 production build·완료14개는 반복하지 않는다. 이 정정과 독립 검토는 조회의 저장 효과 금지를 완화하지 않는다.
+
+#### 최종 선택 결과와 source 상계
+
+r1의 앞14개 PASS와 r2의7개 PASS를 해당 source의 검증으로 적용한다. 총22회 실행(21 PASS·1 FAIL), 고유21개이며 한 source에서21개를 다시 실행한 것으로 합치지 않는다. r2 test build는 PASS이며 제품 source가 같아 production check는 반복하지 않았다. r1/r2 경과는38.98초/34.89초로 성능 인수 수치가 아니다.
+
+| source 계산 | memory / native 타입(B) |
+| --- | --- |
+| fresh/recovered 중 큰 shared retained, 원 core816 포함 |23072 / 23208|
+| full lookup 고정 charge |41576 / 41576|
+| shared + full lookup |64648 / 64784 ≤65536|
+| source ledger leaf envelope |1024 / 1024|
+
+charge는41552→41576B이며 실제 ticket/carrier를 포함한다. 기존 memory live peak64000·metadata187008·whole252544, recovered peak65376는 그대로다. 이는 source/type 수명의 보수 상계이며 RSS/ABI stack·성능·전체 동시 admission 측정이 아니다. Capacity 거절 시 이전 charge/refs/pin/image를 보존하고 첫 조회가 반환하면 같은 snapshot으로 재시도하는 실제 시험을 통과했다.
+
+수정 Rust는 파일별 rustfmt와 `git diff --check`를 적용했다. 자동 문서 verifier·전체 fmt/Clippy·push는 실행하지 않았으며 push 시 기존 훅이 적용된다. 새 문서는 없고 기존 계획·계약·증거/구현 색인과 build JSON을 갱신했다.
+
+
+- `artifacts/module-c2-short-source-main-20261027-r1/`: source `8cf772e035326b4bf16249c9f3ad329f2590a87f70637dc71b10951d87319b2b`, manifest `6863665f3f8b111f8636c0380d6c6e3690d9fdbdc1500c6b740edda3526b1684`, ELF `393e788970a90d1f6b1f35ecfb4fad44bf3551695adc6f04bf4b1dc1bdd1e14a`, result `fe9ae0cbbc23806a2c9adea87c3bcd5deecdc644de7535e20c481855d783a861`.
+
+- `artifacts/module-c2-short-source-main-20261027-r2/`: source `4bf708211c73e0947113e6b0a991354f5a51d39f781044bda03381270ae5187c`, manifest `dbd516d04c23665fca57fb8aeffd786b176d6e46f51b4ca49bd7e929dfc95cb4`, ELF `07b8a942955be4765746de2da034d1399a6f85f2b2ced1d49281ba2e0489e2ff`, result `1460e3038a1a8e7c3f400c7b44d6ebdff473038f79abbd5a830a055a5d73f3ed`.
+
+각 bundle에 immutable source·inventory·선택 manifest·runner·compiler diagnostics·ELF·원 stdout/stderr·result를 보존한다.
+
+#### OCR delegate 최종 독립 검토
+
+`/root/module_step_review`가 `ocr delegate preview --format json`·`ocr delegate rule --format json`으로 파일·규칙을 확인하고 OCR 대상12개와 제외 Markdown6개/fixture1개를 모두 검토했다. `total_files=19`, `reviewed_files=19`, `skipped_files=0`, `coverage_rate=1.0`이다. r1/r2 각각5632개 source inventory와 source/manifest/runner/ELF/result/compiler/stdout/stderr identity를 독립 계산했고, r1→r2의 실제 변경은 시험1개·선택 manifest1개이며 현재 source는 r2와 같음을 확인했다.
+
+최종 **독립 D1/D2 한정 수용·미해결 필수 수정0·차단0**이다. 원 core의 한 번 계수, 예약 시도부터 final decode/checked source 반환까지의 Drain 수명, 용량 거절·원 fence/미해결 charge 보존, Found 기대값 정정·원 FAIL/abort 및 source별14+7의 구분을 수용했다. 앞선 byte admission 미공급 문구는 당시 상태와 이번 full 조회 부분공급으로 구별하도록 정리했고 최종 검토가 이 문구를 포함한다. 전체 writer/progress/entry 합·resident/Row·M4/M5 미완료는 해소하지 않는다.
+
+`artifacts/module-c2-short-source-main-review-20261027/`에 preview/rules/checklist/identity-audit/report를 보존했다. report SHA-256은 `64d864f446e348d8329b75477884619375c2d326cb7de8a9de18574de6349ae5`, checklist는 `1f74bba07dd4093bdfa8b0a1f7f733ec89f2bca1acfbcd867abcab821d28ad22`이다. 검토자는 제품/문서 수정·빌드·시험·자동 문서 검사를 실행하지 않았고 `/root`가 이 한정 수용을 반영한다.

@@ -1,6 +1,7 @@
 //! Original source ownership behind the Catalog product's synchronous lookup.
 //! The private factory is consumed immediately by lookup; a caller-retainable
 //! statement factory requires aggregate source admission and is not exposed.
+use super::super::source::OperationSourceAdmission;
 use super::super::visibility::{
     self, CapturedCatalogRefs, CatalogLookupLoan, CatalogSource, ReferenceLease, SnapshotGuard,
 };
@@ -54,6 +55,7 @@ pub(crate) struct CatalogReadOperation<
 > {
     backend: &'r ReadPort<'b, 'a, 's, 'c, 'p, 'd, 'm, 'w, W>,
     progress: ReadOperationAdmission<'c, 's>,
+    source: OperationSourceAdmission<'b, 'a, 'c, 's>,
     owner: &'u mut Owner<'c, 's>,
     snapshot: &'r SnapshotGuard<'v, 'j, 'c, 's>,
     loader: &'i mut [u8; 409_600],
@@ -108,14 +110,30 @@ impl<'u, 'r, 'v, 'j, 'i, 'b, 'a, 's, 'c, 'p, 'd, 'm, 'w, W: WriterNamespace>
                 RetentionCause::WrongState,
             ));
         }
+        // Keep the original Drain flag from the reservation attempt through
+        // byte return. No core lock survives the short isolation-ledger call.
         let mut progress = owner
             .try_read_operation(backend.pool.bound_core())
             .map_err(progress_error)?;
+        #[cfg(test)]
+        crate::transaction::concurrency::catalog_test_support::hit(
+            backend.pool.bound_core(),
+            crate::transaction::concurrency::catalog_test_support::Point::LookupBeforeSourceReserve,
+        );
+        let mut source = match OperationSourceAdmission::catalog::<W>(backend.isolation) {
+            Ok(source) => source,
+            Err(error) => {
+                return merge(
+                    Err(error),
+                    progress.release_checked().map_err(progress_error),
+                );
+            }
+        };
         let lease = match visibility.reserve_references(owner) {
             Ok(lease) => lease,
             Err(error) => {
                 return merge(
-                    Err(visibility_error(error)),
+                    merge(Err(visibility_error(error)), source.release_checked()),
                     progress.release_checked().map_err(progress_error),
                 );
             }
@@ -124,6 +142,7 @@ impl<'u, 'r, 'v, 'j, 'i, 'b, 'a, 's, 'c, 'p, 'd, 'm, 'w, W: WriterNamespace>
         Ok(Self {
             backend,
             progress,
+            source,
             owner,
             snapshot,
             loader: loan.loader,
@@ -411,16 +430,30 @@ impl<'u, 'r, 'v, 'j, 'i, 'b, 'a, 's, 'c, 'p, 'd, 'm, 'w, W: WriterNamespace>
         })();
         merge(missing, guard.release_checked())
     }
-    fn close(&mut self) -> Result<()> {
+    fn close_refs(&mut self) -> Result<()> {
         let refs = self.captured.take().map_or(Ok(()), release_refs);
         let lease = self.lease.take().map_or(Ok(()), |lease| {
             lease.release_checked().map_err(visibility_error)
         });
-        // Return the original source flag after checked reference cleanup. On
-        // healthy return all refs are gone; fatal cleanup preserves the old
-        // registry evidence and the permanent fence prevents installation.
-        let progress = self.progress.release_checked().map_err(progress_error);
-        merge(merge(refs, lease), progress)
+        merge(refs, lease)
+    }
+    fn close_source(&mut self) -> Result<()> {
+        // Drain must keep seeing this admitted operation through final decode
+        // and source return, even after its physical guards and refs are gone.
+        // Fatal source cleanup keeps the byte charge behind the fence; the
+        // original progress cleanup still runs and returns its error.
+        let source = self.source.release_checked();
+        merge(
+            source,
+            self.progress.release_checked().map_err(progress_error),
+        )
+    }
+    #[cfg(test)]
+    fn before_source_return(&self) {
+        crate::transaction::concurrency::catalog_test_support::hit(
+            self.backend.pool.bound_core(),
+            crate::transaction::concurrency::catalog_test_support::Point::LookupBeforeSourceReturn,
+        );
     }
     pub(in crate::storage) fn finish_found(
         mut self,
@@ -433,11 +466,11 @@ impl<'u, 'r, 'v, 'j, 'i, 'b, 'a, 's, 'c, 'p, 'd, 'm, 'w, W: WriterNamespace>
                 Ok(())
             }
         });
-        let cleanup = self.close();
+        let cleanup = self.close_refs();
         merge(checked, cleanup)?;
         let namespace = self.backend.storage.profile().spec().namespace;
         let bytes = self.copy.take().ok_or_else(|| self.invariant())?;
-        catalog_record::decode_catalog_record(
+        let result = catalog_record::decode_catalog_record(
             &bytes[..candidate.len],
             CatalogExpectation {
                 namespace,
@@ -450,13 +483,22 @@ impl<'u, 'r, 'v, 'j, 'i, 'b, 'a, 's, 'c, 'p, 'd, 'm, 'w, W: WriterNamespace>
                 RetentionPhase::Census,
                 RetentionCause::Catalog(e),
             )
-        })
+        });
+        #[cfg(test)]
+        self.before_source_return();
+        merge(result, self.close_source())
     }
     pub(in crate::storage) fn finish_missing(mut self) -> Result<()> {
-        self.close()
+        let closed = self.close_refs();
+        #[cfg(test)]
+        self.before_source_return();
+        merge(closed, self.close_source())
     }
     pub(in crate::storage) fn finish_error(mut self, error: RetentionError) -> RetentionError {
-        match merge::<()>(Err(error), self.close()) {
+        let closed = merge::<()>(Err(error), self.close_refs());
+        #[cfg(test)]
+        self.before_source_return();
+        match merge(closed, self.close_source()) {
             Err(error) => error,
             Ok(()) => unreachable!("original error retained"),
         }
@@ -466,7 +508,8 @@ impl<W: WriterNamespace> Drop
     for CatalogReadOperation<'_, '_, '_, '_, '_, '_, '_, '_, '_, '_, '_, '_, '_, W>
 {
     fn drop(&mut self) {
-        let _ = self.close();
+        let _ = self.close_refs();
+        let _ = self.close_source();
     }
 }
 
@@ -493,6 +536,7 @@ pub(super) fn entry_source_bytes<W: WriterNamespace>() -> usize {
         + 16 * size_of::<&()>()
         + visibility::source_census().peak_leaf
         + read_operation_source_bytes()
+        + super::super::source::leaf_source_bytes()
 }
 
 /// record()/check()/finish_found decoding ends before location replay or LOAD.

@@ -6659,5 +6659,39 @@
     },
     "remaining_supply": "Full concurrent entry/return sum and actual short admission on main; unmerged module-independence-finish has separate later evidence; M4/M5 unfinished",
     "source_roots_changed": false
+  },
+  "dev3_module_c2_short_source_main": {
+    "status": "ACCEPTED_LIMITED_D1_D2",
+    "contract_ref": "dev3-module-boundaries.md#operation-source-admission",
+    "evidence_ref": "module-independence-survey-20261026.md#c2-short-source-main",
+    "implemented_paths": [
+      "crates/engine/src/storage/wal_io/plan4_apply/source.rs",
+      "crates/engine/src/storage/wal_io/plan4_apply/source_tests.rs",
+      "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/source_entry.rs",
+      "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/source_return.rs",
+      "tests/fixtures/dev3-module-c2/short-source/manifest.json"
+    ],
+    "modified_paths": [
+      "crates/engine/src/storage/wal_io/plan4_apply.rs",
+      "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory.rs",
+      "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/commit_concurrency.rs",
+      "crates/engine/src/storage/wal_io/plan4_retention/read/lookup.rs",
+      "crates/engine/src/storage/wal_io/plan4_retention/read/operation.rs",
+      "crates/engine/src/storage/wal_io/plan4_retention/resources.rs",
+      "crates/engine/src/transaction/concurrency_catalog_test_support.rs"
+    ],
+    "scope": "Full Catalog lookup fixed source reservation and original Drain coverage from attempt through final decode/return; full concurrent writer/progress/entry aggregate remains incomplete",
+    "validation": "r1 production/test build PASS; selected14 PASS then resident-only oracle adapted incorrectly to full lookup FAIL/abort preserved. Test-only correction; r2 test build and changed2/unexecuted5 exact PASS. 21 unique selectors, 22 executions across two sources; independent OCR all19 files reviewed/zero skipped, both5632-file source/artifact identity audits, limited D1/D2 acceptance with zero required fixes.",
+    "remaining_supply": "writer/progress and concurrent entry/return aggregate admission, resident class, Row actual adapters, M4/M5",
+    "source_roots_changed": false,
+    "source_bytes": {
+      "memory_shared": 23072,
+      "native_shared": 23208,
+      "catalog_full": 41576,
+      "memory_total": 64648,
+      "native_total": 64784,
+      "ledger_leaf": 1024,
+      "source_bound_not_rss": true
+    }
   }
 }

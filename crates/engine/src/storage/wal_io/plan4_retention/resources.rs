@@ -327,6 +327,7 @@ pub(super) fn fits<W: WriterNamespace>() -> bool {
         && read::undo_read_source_bytes() <= 16_384
         && 16_384 <= super::super::resources::source_census::<W>().catalog_nested
         && c.peak <= 65_536
+        && source::shared_bytes::<W>() + c.catalog_lookup <= 65_536
         && c.metadata <= 196_608
         && c.whole <= 262_144
 }

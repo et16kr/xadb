@@ -1134,6 +1134,10 @@ mod reference_pins;
 
 #[path = "catalog_memory/commit_concurrency.rs"]
 mod commit_concurrency;
+#[path = "catalog_memory/source_entry.rs"]
+mod source_entry;
+#[path = "catalog_memory/source_return.rs"]
+mod source_return;
 
 #[path = "catalog_memory/retire_failures.rs"]
 mod retire_failures;
