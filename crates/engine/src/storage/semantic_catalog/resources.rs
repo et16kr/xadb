@@ -30,10 +30,10 @@ use crate::{
             CatalogExpectation, CatalogHeader, CatalogRecordView, CatalogTableInput,
             IndexDefinition, TableDefinitionView, before::CatalogBeforeView,
         },
-        control::{ControlRef, Profile},
+        control::Profile,
         obligation::{
-            self, DescriptorSpec, InventoryClaim, ObligationError, OwnerChain, OwnerState,
-            RemainingBudget, SystemProgress,
+            self, DescriptorSpec, InventoryClaim, ObligationError, OwnerChain, RemainingBudget,
+            SystemProgress,
         },
         page::{PageError, PageHeader, PageIdentity, PageKind, PageRef, PageView},
         retention_obligation::{self, AgingDescriptorView, AgingObligationError},
@@ -243,15 +243,7 @@ fn undo_image() -> usize {
 }
 
 fn transaction_codec() -> usize {
-    size_of::<[u8; 192]>()
-        + returned::<TransactionStatusCell, PageError>()
-        + returned::<TransactionStatus, PageError>()
-        + returned::<TxnRef, PageError>()
-        + returned::<UndoRef, PageError>()
-        + size_of::<(TransactionState, Option<UndoRef>, Option<UndoRef>)>()
-        + size_of::<([u8; 48], [u8; 40], [u8; 8])>()
-        + size_of::<(&[u8], &mut [u8], [u64; 3], [usize; 2])>()
-        + 3 * size_of::<CodecResult<(), PageError>>()
+    crate::storage::transaction_record::status_codec_source_bytes()
 }
 
 fn status_codec() -> usize {
@@ -305,18 +297,7 @@ fn initialize_pair() -> usize {
 }
 
 fn descriptor_codec() -> usize {
-    let (summary, summary_result) = obligation::source_summary_carrier_bytes();
-    size_of::<[u8; 1536]>() // encode's local, distinct from run's output descriptors
-        + size_of::<[RemainingBudget; 5]>() // decode's remaining before spec construction
-        + returned::<DescriptorSpec, ObligationError>()
-        + size_of::<(OwnerState, OwnerChain, InventoryClaim, ControlRef)>()
-        + size_of::<([u64; 6], [u64; 6], [u64; 14], [u128; 3], [u64; 3])>()
-        + size_of::<([u8; 64], [u8; 32], [u8; 8])>()
-        + summary + summary_result
-        + 2 * size_of::<ContentHasher>()
-        + size_of::<(&DescriptorSpec, &[u8], &mut [u8], [usize; 4], bool)>()
-        + 4 * size_of::<CodecResult<(), ObligationError>>()
-        + transaction_codec() // XOD embeds and validates its actual XTS body
+    obligation::descriptor_source_bytes()
 }
 
 fn transaction_remaining() -> usize {

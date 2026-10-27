@@ -1120,3 +1120,58 @@ begin/begin_resident → begin_class의 class 값과 반환 carrier를 entry sou
 `artifacts/module-c2-pending-image-native-review-20261027/`에 preview/rules/checklist/identity-result-audit/report를 보존했다. report SHA-256은 `af99decd42ba0b4e8a7a41779985e44d85a88e2fd9c15bd7f67ec995f77fc20d`, checklist는 `44f3f18145478451c99e844a14ca9373107fcdf18f1cbbde6a21d70b3bcfaad4`, audit는 `e59b1abb28bfed8978555ba17f5dfc7bc814d44737d414b55344c736b9bf0fb2`이다. 새 `native-r1/verification-completion.json`은 원 r1 결과를 변경하지 않고 이번 단위 수용을 연결한다. 전체 M4/M5는 계속 미완료다.
 
 - `verification-completion.json` SHA-256: `c215041079addad433fad2d64e7294457e58f3fb7badf93cd5a0c0d9375bd2aa`
+
+
+<a id="c2-aging-source-main"></a>
+### C2 Aging/Root 실제 source 계산의 main 수신 — 2026-10-27–28
+
+사용자의 “진행 위치 확인 후 다음 한 단계·OCR delegate 리뷰 및 수정·commit” 요청으로 clean `main`·`4ed0cf979bebfe86d6663c84719fea52d1841538`에서 시작했다. M0–M3 완료, M4 full/상주 Catalog 예약과 Commit 준비 수명 분리의 native N03까지 수신했으며 M5는 A/B 순수 본문 착수 상태였다. 이번 한 단계는 **writer/progress 예약의 선행인 Aging 조회 source 회계 구체화**다. 별도 브랜치 `c4b9b6f5946722109f9660259a3d9389168ea53b`의 제품5파일만 적응하고 main의 원 core816B 단일 계수·Commit4phase를 유지했다. 별도 worktree·원 결과를 변경하거나 해당 브랜치 전체를 병합하지 않았다. 실행 bundle 날짜는 착수일20261027이며 정리·리뷰는2026-10-28 KST다.
+
+`D3-MODULE-AGING-SOURCE-MAIN-001` · D2 · **ACCEPTED / 구현·선택 검증 완료 / 독립 D1/D2 한정 수용**. 작성·계약·통합 `/root`, 별도 검토 `/root/module_step_review`. §6.9의 고정 source 회계를 구체화하며 제품 codec/저장 효과·영속 형식·권한·backing·의존성은 변경하지 않는다. 전체 writer/progress admission·M4/M5 인수는 미완료다.
+
+#### 계산 경계와 선택
+
+기존 Aging 계산은 실제 Root2 decode 대신 전체 Job queue census를 포함했다. 실제 encode의 Root2 decode→검산→work hash→XOD encode와 decode의 Root2 decode→XOD decode·검산→work hash를 분리하고, 순차 helper의 임시값에만 max를 적용한다. 살아 있는 parent·Result·반환값은 밖에서 합산한다. initial Root의 canonical512+initial Root512+initial Job1024, 후속 budget rows640, malformed Transaction XOD가 거치는 XTS decode와 고정 SHA closure를 포함한다. XOD/XTS 공통 식은 각 lower owner로 옮기고 XOD validate의 by-value budget5개 IntoIter·현재 row를 보완했다.
+
+전체 queue 비용을 계속 쓰는 대안은 실제 Aging 호출 범위와 맞지 않는다. 성공 경로만 세거나 희망하는 수치에 맞춰 한도를 키우는 대안도 채택하지 않는다. 참조/반환값·codec 호출 관계가 바뀌면 source 식과 소비자의 한도를 다시 검토한다. 이번 감소는 source/type 수명의 보수 상계 변화이며 RSS·stack·성능 개선 측정이 아니다.
+
+| source 항목 | main 적용값(B) |
+| --- | --- |
+| Root2 decoder / 기존 전체 queue |6540 / 6736|
+| XOD / XTS / Aging |8711 / 1411 / 11575|
+| Full 조회 고정 charge |41576 →37724 (3852 감소)|
+| Resident 고정 charge |16860 (유지)|
+| shared retained (memory / Linux 타입) |23072 / 23208 (원 core816 포함·유지)|
+| shared + Full (memory / Linux 타입) |60796 / 60932|
+| shared + Resident2 (memory / Linux 타입) |56792 / 56928 (유지)|
+| Commit preflight / stage / Pending / install |16632 / 32292 / 18532 / 22052 (유지)|
+| live peak (memory / Linux 타입) |64000 / 64136 (유지)|
+| recovered peak (memory / Linux 타입) |65376 / 65512 (유지)|
+
+공통 XOD 계산 보완으로 transaction inventory/encode/next/validate는 각각2224B 증가하고 Aging predecessor/next는14853/15675B다. Full의 국소 감소를 전체 peak 감소나 writer/reader 동시 합의 인수로 승격하지 않는다. Linux 값은 실제 타입 계산이며 native I/O 실행 결과가 아니다.
+
+#### 변경 범위 선택과 실행
+
+[선택 manifest](../../tests/fixtures/dev3-module-c2/aging-source/manifest.json)에 변경 Rust6파일과 case별 관계를 실행 전에 고정했다. 총600초·compiler90초·case30초·로그8MiB·stack32MiB, 각 selector1회다. 신규 source 관측은 초기 Root/malformed XOD 경로의 계산과 Memory/Linux 타입 한도를, 기존 owner 관측은 semantic/Commit4phase·live/recovery 한도를, ledger 시험은 변경 Full charge와 Resident 혼합 거절·정확 반환을, actual Full 조회 시험은 두 번째 조회의 refs/pin/효과 전 Capacity·원 예약 반환·같은 snapshot 재시도를 확인한다.
+
+- `r1`: production check PASS, 새 시험의 Linux 타입 경로에 `super` 한 단계가 많아 test build E0433 FAIL, runtime0. 원 로그·source·result를 보존한다.
+- `r2`: 해당 test 경로 한 줄만 정정하고 test build PASS, 미실행 runtime **4개 각각1회 PASS**. 변경 없는 production check는 반복하지 않았다. 원 r1 production 결과를 r2의 새 실행으로 표시하지 않는다. 컴파일 경고0이다.
+
+변경 없는 codec 동작·native 복구·전체 workspace/하위 wrapper를 반복하지 않았다. 기존 source별 PASS/FAIL/UNKNOWN·NOT_RUN과 DEV2·DEV3/S5·M4/M5 미완료를 유지한다. r1/r2 경과17.45/23.97초는 기능 검증 경과이며 성능 인수 수치가 아니다. 수정 Rust6파일에 파일별 rustfmt와 `git diff --check`를 적용했다. 자동 문서 verifier·전체 fmt/Clippy·push는 실행하지 않으며 push 시 기존 훅을 적용한다.
+
+원 source/inventory·manifest·runner·compiler diagnostics·ELF·stdout/stderr/result는 `artifacts/module-c2-aging-source-main-20261027/{r1,r2}/`에 보존한다.
+
+| 원 증거 | source SHA-256 | result SHA-256 |
+| --- | --- | --- |
+| r1 production PASS / test build FAIL |`c4f7582ce916d9ba428b2ffd7bad9158d8e48431ae918a019409f2d2d848f6d8`|`4facfa05f9447a3a585c05772fbafa80b8154e4e55dca0c4a9a2d62c059efb33`|
+| r2 test build / runtime4 PASS |`a382bcf5f1ce51c821a6ce3177767ce0834a519179153f88748f6008bc86a74b`|`7b95d95c760a73b0ee55b135927a4bb39a9c3ddfa3b4c9660eea1ca7f07b28a7`|
+
+r2 manifest SHA-256은 `5951f79cad43953e6a2e13609de8483571cc0a1fae153f16c6f8c00b65e6899e`, runner는 `698ae98678339af0c6f670880b06f2b10e6f1d75da0ad1b2a189bc8cbda71da2`, inventory는 `4271f3b5dd309ecc88bd7450faa8610b4eb713af0b687343314431ca3b5b3d28`, ELF는 `1d1f406052368888957399c2cd0e3474dac44f154490481e9a1489b923c980de`다.
+
+#### OCR delegate 독립 검토
+
+`/root/module_step_review`가 `ocr delegate preview --format json`·`ocr delegate rule --format json`으로 대상과 규칙을 확인했다. OCR 대상7개와 기본 제외7개를 모두 읽어 **전체14파일 검토·누락0·100%, 독립 D1/D2 한정 수용·필수 수정0·차단0**이다. `/root`가 이 계산 단위와 선정 검증의 한정 수용을 반영했다. 추가 제품 수정이 필요한 지적은 없었다.
+
+r1/r2 source5638파일·manifest·runner/helper·inventory·compiler/runtime 로그·ELF와 C2_SHORT01 context hash를 읽기 전용 검산했다. 현재 제품/fixture는 r2 export와 같고 r1→r2는 test 경로 한 줄과 manifest 설명만 다르다. 원 E0433 FAIL·runtime0, r1 production PASS와 r2 test build/exact4 PASS를 구별했다. 검토자는 제품·문서·원 실행 결과 수정이나 빌드·시험·문서 verifier를 실행하지 않았다. 검토 identity 스크립트 첫 시도의 문자열/Path 정렬 차이를 원 함수의 Path 정렬로 정정해 일치를 확인했으며 제품/시험 FAIL로 분류하거나 원 결과를 변경하지 않았다.
+
+`artifacts/module-c2-aging-source-main-review-20261027/`에 preview/rules/checklist/identity-audit/report를 보존한다. report SHA-256은 `590066a0d21d6023e5654333b92f2ab8e5f55a180e95b1630b5d1ed008df8072`, checklist는 `8023f7bba3a078b552724710aea554533c30dbb874207d9f1ed8486de153c1a9`, identity-audit는 `6dafbacbb20d52e0981af49f3c8266b5449e3371b8a54da227d6daf460783ec8`이다. 다음은 실제 WAL wait/Drain 호출·반환 수명과 writer/progress 예약이며 전체 동시 admission·실제 Row·M4/M5 인수는 미완료다.

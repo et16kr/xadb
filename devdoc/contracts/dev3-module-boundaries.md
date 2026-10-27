@@ -1139,6 +1139,8 @@ rollback/terminal은 원 progress admission이 새 foreground를 닫고 이미 �
 
 [main의 Commit 준비 수명 분리](../evidence/module-independence-survey-20261026.md#c2-pending-image-main)는 stage에서 PreparedCatalog를 소비해 불변 payload와 canonical after 참조4만 Pending에 넘긴다. 원 pin/WAL/install 권한은 그대로이며 준비용9개 target/stamp 배열은 stage 반환 전에 끝난다. stage에는 입력·image·반환 tuple·추출 배열을 함께 청구하고 Pending/install에서만 compact image를 사용한다. 전체 Commit peak32292B와 Pending18532B는 서로 다른 phase다. 초기 memory 검증·독립 한정 수용 뒤 [후속 native N03](../evidence/module-independence-survey-20261026.md#c2-pending-image-native)를 같은 source/ELF로1회 PASS했다. 후속 OCR7파일 독립 D1/D2 수용으로 이 C2 단위의 선정 검증 인수를 마쳤으며 writer/progress 동시 합 인수는 남았다.
 
+[main의 Aging/Root source 계산](../evidence/module-independence-survey-20261026.md#c2-aging-source-main)은 전체 queue 대신 actual Root2 decode와 순차 Aging helper를 계수한다. initial Root 중첩 버퍼·malformed Transaction XOD의 XTS decode·by-value budget 반복·반환 carrier를 포함하고 XOD/XTS 공통 계산은 각 lower owner가 제공한다. Full 고정 charge는37724B, Resident16860B이며 원 core 포함 shared retained·Commit4phase·전체 peak는 유지한다. 실제 Full 예약·반환의 선택 검증이며 writer/progress·전체 동시 admission 공급을 뜻하지 않는다.
+
 <a id="common-deliveries"></a>
 ## 7. 유한한 공통 공급과 C0/C 인계
 

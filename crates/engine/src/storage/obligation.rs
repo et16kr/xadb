@@ -176,6 +176,32 @@ pub(crate) fn source_summary_carrier_bytes() -> (usize, usize) {
     )
 }
 
+/// Complete XOD encode/decode/validate source closure. The caller owns its
+/// input/output descriptor and counts those separately. Aging's malformed
+/// Transaction branch decodes XTS before rejecting its work kind, so it is
+/// included even when the caller expects a System/Aging owner.
+pub(crate) fn descriptor_source_bytes() -> usize {
+    use foundation::codec::ContentHasher;
+    use std::mem::size_of;
+    let (summary, summary_result) = source_summary_carrier_bytes();
+    size_of::<[u8; 1536]>() // encoder's private output
+        + size_of::<[RemainingBudget; 5]>() // decoder remaining before spec
+        + size_of::<DescriptorSpec>() + size_of::<Result<DescriptorSpec>>()
+        + size_of::<(OwnerState, OwnerChain, InventoryClaim, ControlRef)>()
+        + size_of::<([u64; 6], [u64; 6], [u64; 14], [u128; 3], [u64; 3])>()
+        // validate iterates spec.remaining by value; the IntoIter retains the
+        // original array while its current row and row.values() are live.
+        + size_of::<std::array::IntoIter<RemainingBudget, 5>>()
+        + size_of::<RemainingBudget>()
+        + size_of::<([u8; 64], [u8; 32], [u8; 8])>()
+        + summary + summary_result
+        + 2 * size_of::<ContentHasher>()
+        + 1536 // pinned SHA block/output/compression source closure
+        + size_of::<(&DescriptorSpec, &[u8], &mut [u8], [usize; 4], bool)>()
+        + 4 * size_of::<Result<()>>()
+        + super::transaction_record::status_codec_source_bytes()
+}
+
 fn valid_profile(profile: ControlRef) -> Result<()> {
     if profile.kind != ControlKind::Profile || profile.encode(&mut [0; 64]).is_err() {
         return Err(ObligationError::InvalidInput);

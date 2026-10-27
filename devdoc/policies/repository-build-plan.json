@@ -6778,5 +6778,47 @@
       "review_report_sha256": "af99decd42ba0b4e8a7a41779985e44d85a88e2fd9c15bd7f67ec995f77fc20d",
       "verification_completion_sha256": "c215041079addad433fad2d64e7294457e58f3fb7badf93cd5a0c0d9375bd2aa"
     }
+  },
+  "dev3_module_c2_aging_source_main": {
+    "status": "ACCEPTED_BOUNDED_C2_UNIT",
+    "baseline": "4ed0cf979bebfe86d6663c84719fea52d1841538",
+    "adapted_from": [
+      "c4b9b6f5946722109f9660259a3d9389168ea53b"
+    ],
+    "contract_ref": "dev3-module-boundaries.md#operation-source-admission",
+    "evidence_ref": "module-independence-survey-20261026.md#c2-aging-source-main",
+    "implemented_paths": [
+      "tests/fixtures/dev3-module-c2/aging-source/manifest.json"
+    ],
+    "modified_paths": [
+      "crates/engine/src/storage/obligation.rs",
+      "crates/engine/src/storage/retention_obligation/catalog.rs",
+      "crates/engine/src/storage/retention_page/catalog.rs",
+      "crates/engine/src/storage/semantic_catalog/resources.rs",
+      "crates/engine/src/storage/transaction_record.rs",
+      "crates/engine/src/storage/wal_io/plan4_apply/owner_tests.rs"
+    ],
+    "scope": "Aging sequential source accounting with Root2-only decoder and lower-owner XOD/XTS closures; original codec/effect behavior, main shared core and four Commit phases retained. Full writer/progress admission remains incomplete.",
+    "validation": "r1 production PASS; test build E0433 FAIL in new test native path, runtime0. r2 test-only path correction: test build PASS, four exact runtime once PASS; unchanged production not repeated. Independent OCR14/14 files (default7 plus excluded7), skipped0, zero required fixes; D1/D2 accepted only for this source-accounting unit and selected validation. Saved source5638 files and exact result identities verified; no native I/O or complete aggregate admission claim.",
+    "source_bytes": {
+      "root_decode": 6540,
+      "xod": 8711,
+      "xts": 1411,
+      "aging": 11575,
+      "catalog_full": 37724,
+      "catalog_resident": 16860,
+      "memory_shared_retained": 23072,
+      "native_type_shared_retained": 23208,
+      "memory_full_total": 60796,
+      "native_type_full_total": 60932,
+      "memory_live_peak": 64000,
+      "native_type_live_peak": 64136,
+      "memory_recovered_peak": 65376,
+      "native_type_recovered_peak": 65512,
+      "source_bound_not_rss": true
+    },
+    "remaining_supply": "Actual WAL wait/Drain call and return accounting; writer/progress and all concurrent entry/return sums; actual Row and M4/M5 acceptance",
+    "source_roots_changed": false,
+    "review_report_sha256": "590066a0d21d6023e5654333b92f2ab8e5f55a180e95b1630b5d1ed008df8072"
   }
 }

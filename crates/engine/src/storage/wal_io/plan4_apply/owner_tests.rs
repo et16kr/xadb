@@ -260,3 +260,45 @@ fn disk_session_isolation_backing_and_carriers_are_accounted() {
                 + std::mem::size_of::<Mutex<IsolationLedger<'_, '_, '_>>>()
     );
 }
+
+#[test]
+fn catalog_aging_source_phases_include_initial_and_malformed_paths() {
+    use crate::storage::{obligation, retention_obligation, retention_page, transaction_record};
+    let root = retention_page::catalog::root_decode_source_bytes();
+    let queue = retention_page::catalog::source_bytes();
+    let descriptor = obligation::descriptor_source_bytes();
+    let transaction = transaction_record::status_codec_source_bytes();
+    let aging = retention_obligation::catalog::source_bytes();
+    println!(
+        "AGING_SOURCE root={root} whole_queue={queue} descriptor={descriptor} transaction={transaction} aging={aging}"
+    );
+    // Initial Root decoding nests canonical Root + initial Root + initial Job.
+    // Malformed Transaction XOD reaches the fixed status decoder before reject.
+    assert!(root >= 2 * 512 + 1024);
+    assert!(descriptor > transaction + 1536);
+    assert!(aging >= root && aging >= descriptor);
+
+    fn inspect<W: WriterNamespace>(kind: &str) {
+        let shared = source::shared_bytes::<W>();
+        let full = read::lookup_source_bytes::<W>();
+        let resident = read::resident_lookup_source_bytes::<W>();
+        let live = resources::source_census::<W>();
+        let recovered = super::super::super::plan4_recovery::source_census::<W>();
+        println!(
+            "AGING_SOURCE_{kind} shared={shared} full={full} resident={resident} full_total={} two_resident={} live_peak={} recovered_peak={}",
+            shared + full,
+            shared + resident * 2,
+            live.peak,
+            recovered.peak
+        );
+        assert_eq!(shared, live.retained.max(recovered.retained_live));
+        assert_eq!(full, live.catalog_lookup);
+        assert!(shared + full <= 65_536);
+        assert!(shared + resident * 2 <= 65_536);
+        assert!(resources::fits::<W>());
+        assert!(recovered.peak <= 65_536);
+        assert!(recovered.metadata <= 196_608 && recovered.whole <= 262_144);
+    }
+    inspect::<port::Writer>("MEMORY");
+    inspect::<super::super::native::Writer>("NATIVE_TYPE");
+}
