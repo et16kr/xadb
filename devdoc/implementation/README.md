@@ -1,5 +1,7 @@
 # 현재 구현
 
+2026-10-27 [C2 실제 Drained 소비 경계](../evidence/module-independence-survey-20261026.md#c2-drained-handoff): authentic Drain 완료값이 원 pins/version을 보유한 뒤 content guard를 재구성한다. production/test build·선택10 PASS이며 정상 Drop의 fence-before-pins와 memory 복구를 확인했다. source phase 예약·entry/exit 합산·M4/M5는 미완료다.
+
 2026-10-27 [C2 WAL wait source 관측](../evidence/module-independence-survey-20261026.md#c2-wal-wait-source): cfg(test)의 실제 호출/반환 수명을 분리해 Pending5320B·Full 합65300B를 관측했다. source별 신규1 PASS이며 제품 charge/상계는 유지한다. 실제 phase admission·전체 entry/exit·M4/M5는 미완료다.
 
 2026-10-27 [C2 Aging/Root source 계산](../evidence/module-independence-survey-20261026.md#c2-aging-source): 실제 호출 수명과 malformed 경로를 반영해 Full charge37724B를 검산했다. source 관련3 PASS와 후속 import-only compile을 구분한다. Full/Pending 합69100B·전체 admission 및 M4/M5 미완료다.

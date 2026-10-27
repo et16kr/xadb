@@ -996,3 +996,23 @@ r2 물리 관측은 state336/predicate710/foundation_io544/sync_claim1160/ensure
 | r2 반환 경계 보완 | `c3cbb046a02e47eb1d856814d4e8a1b51416d26396edd45a17fdc72ff87a83b4` | `fc2e57394e2349cbffc90be58100ac63ab7483fc00a49a836456e55a22046241` | `1d1a3fa6318c6504ddd3631471e6985fb32d56fae02ac42c8f2e922a25bb0e6b` |
 
 manifest SHA-256은 `3dfa6a3e5db57048d15decfabaa5045c9a6690f5bb2d10b966e164a371d9ced5`다. 독립 검토자는 각 source5630개·원 identity/로그/ELF를 읽기 전용 대조하여 코드/원 증거를 한정 수용했다. 문서6개의 최종 대조까지 **이 cfg(test) 관측 단위 D1/D2 한정 수용·필수 수정0**을 수신했다. 검토자는 수정·빌드·시험·문서 verifier를 실행하지 않았다. 변경 파일 rustfmt와 diff whitespace만 확인했고 전체 fmt/Clippy·문서 verifier·push는 실행하지 않았다. 실제 writer phase/progress 예약·전체 entry/return 합산·C0–C5·M4/M5는 미완료다.
+
+<a id="c2-drained-handoff"></a>
+### C2 실제 Drain 완료와 guard 재구성의 소비 경계 — 2026-10-27
+
+기준 `dfc3bc9`, 작성·통합 `/root`, 독립 검토 `/root/module_review`다. 원 `PendingCommitTargets`의 authentic durable begin_drain→wait_ready를 `drain_durable`로 분리하고 같은 pins/StablePage와 원 CommitInstalling을 private·nonClone `DrainedCommitTargets`에 이동한다. actual Catalog는 이 값을 받은 뒤 `resume`로 소비하여 원 WriteTargets guard storage를 재구성하고 기존 stamp/digest/recLSN 검산을 수행한다. 새 등록·pin 재예약·authority 생성은 없다.
+
+Drained 시점은 **Installation::Installing·active_apply1·원 version gate+pins4·content guard0·read flag0**다. Pending/Draining을 임의로 건너뛰거나 새 상태로 위장하지 않는다. 후속 source 전환이 들어갈 위치를 만들었을 뿐 아직 source ticket/upgrade는 연결하지 않았다. 이미 원 version gate와 pins가 있으므로 그 위치의 전환은 reserved 몫에 대한 무대기 checked leaf여야 하며 capacity를 기다릴 수 없다. Drop은 원 installation을 먼저 drop하여 fence/Abandoned·version 반환을 마친 뒤 같은 pins를 반환한다.
+
+새 owned Drained·physical Result2와 Catalog의 mapped RetentionResult를 source 식에 추가하여 포괄 Commit 상계32920→36184B(+3264), drain 포괄관측6420→9684B다. 기존 live peak63184B·metadata186192B·whole251728B와 recovered peak64611B는 유지한다. 관측 prepare36604B는 앞선 Aging 계산 반영분이며 이번 소비 경계의 감소가 아니다. drain 포괄관측은 반환 carrier까지 합한 상한으로, reader가 살아 있는 대기 phase의 실제 예약이나 전체 동시 인수로 사용하지 않는다. Pending 기존포괄9120B와 앞선 실제 wait 관측5320B도 이번에 변경하지 않았다.
+
+[동결 manifest](../../tests/fixtures/dev3-module-c2/drained-handoff/manifest.json)는 신규4·직접 영향4·변경 source2의10개를 선택했다. 신규4는 healthy handoff의 pins/version 유지·content0/원 before bytes, handoff fence, 정상 unfinished Drop, handoff panic이다. **정상 Drop은 외부 fence/panic 없이** 원 pin-return hook에서 이미 fenced/Abandoned·active0·version 반환·pins4를 관측하고 그 뒤 pins0/Q0를 확인한다. hook은 실제 값을 drop하도록 요청할 뿐 receipt/설치 권한을 만들지 않는다. fence/Drop/panic은 원 frozen C04/N03 기대값과 현재-build memory recovery를 사용했다. 기존 MT03 Full Undo LOAD·MT05 lower flush·MT07 Drain fence·MF10 부분 설치 및 source 합산2만 새 경계의 영향으로 선택했고 무변경 하위/전체 workspace는 반복하지 않았다.
+
+`artifacts/module-c2-drained-handoff-20261027-r1/`에서 production/test build·exact10개 각각1회 PASS, compiler 경고0다. 총600초·compiler90초·case30초·출력8MiB·stack33554432B이며77.86초는 성능 결과가 아니다. 원 export/inventory·manifest·runner/helper·compiler·ELF·case 로그와 결과를 보존한다. wire/native/새 PID 복구 변경·실행은 없다.
+
+- source SHA-256: `8704cd09d5bcaa065937131a680b4099014c37214b76ab562f8b97379a814836`
+- manifest SHA-256: `c47fc25d38fd8ccffea88ea538cf31ff84f08db0a2e65ab98fe1e33d0e9ab7bd`
+- ELF SHA-256: `faf4fd4d1b5c7ff587b5bee9d235ce81ffed6d784295fb5da412206cf12dcf85`
+- result SHA-256: `b2b597cfdcb76566a53408216adaa8b89d07365f76b801da1320f38e555dfb04`
+
+독립 검토자는 실제 값 이동·권한·오류/Drop 순서, 선택10의 원 artifact와 최종 문서6개를 대조하고 D1/D2를 한정 수용했다. 필수 수정0이며 source5632개와 증거 식별자·수치를 확인했다. 변경 파일 rustfmt·diff whitespace만 확인했고 전체 fmt/Clippy·문서 verifier·push는 실행하지 않았다. 실제 source phase 예약·선택 caller의 entry/exit 전체 상계·Row/terminal/recovery·M4/M5는 미완료다.

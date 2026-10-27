@@ -12,6 +12,8 @@ pub(crate) enum Point {
     Durable,
     Draining,
     DrainWaiting,
+    DrainedBeforeResume,
+    DrainedDrop,
     InstalledSecondPage,
     InstalledBeforeFinish,
     BeforePublish,
@@ -68,4 +70,10 @@ pub(crate) fn observe(core: &PageConcurrency<'_>) -> Observation {
         installation,
         fenced: core.fence.is_fenced(),
     }
+}
+
+/// Request normal unfinished Drop of an actual Drained carrier. This creates
+/// no grant or state; the producer drops its original value before returning.
+pub(crate) fn drop_drained(core: &PageConcurrency<'_>) -> bool {
+    test_support::drop_catalog_drained(core)
 }

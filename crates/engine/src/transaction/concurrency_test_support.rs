@@ -69,6 +69,21 @@ pub(super) fn hit_catalog_pause(
         }
     }
 }
+pub(super) fn drop_catalog_drained(core: &PageConcurrency<'_>) -> bool {
+    let point = super::catalog_test_support::Point::DrainedDrop;
+    let requested = core
+        .hooks
+        .lock()
+        .unwrap()
+        .catalog
+        .as_ref()
+        .is_some_and(|(at, _)| *at == point);
+    if requested {
+        hit_catalog_pause(core, point);
+    }
+    requested
+}
+
 impl Hooks {
     fn at(&mut self, point: PausePoint) -> &mut Option<Pause> {
         match point {

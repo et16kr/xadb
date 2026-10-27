@@ -1,0 +1,55 @@
+{
+  "schema": "XADB_MODULE_C2_DRAINED_HANDOFF_V1",
+  "status": "FROZEN_INPUTS_NOT_EXECUTION_EVIDENCE",
+  "baseline": "dfc3bc9",
+  "scope": "actual original Pending -> Drained after authentic durable Drain -> content guard reconstruction; same pins/installation authority, unfinished Drop ordering and complete return source accounting; phase source reservations not yet supplied",
+  "budget": {
+    "total_seconds": 600,
+    "compiler_seconds": 90,
+    "case_seconds": 30,
+    "output_bytes": 8388608,
+    "rust_min_stack": 33554432
+  },
+  "runtime_tests": [
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::drained::drained_handoff_has_original_pins_and_no_content_guards",
+      "reason": "New actual Drained healthy handoff keeps four original pins/version gate, content guards0; canonical C04 whole installation"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::drained::drained_handoff_fence_abandons_before_install",
+      "reason": "New actual handoff fence path returns pins and preserves Q0; current-build memory recovery N03"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::drained::drained_normal_unfinished_drop_fences_before_pin_return",
+      "reason": "New Drained normal Drop without pre-fence/panic must abandon/fence before original pin-return hook, then pins0/Q0 and recovery N03"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::commit_failures::catalog_drained_before_resume_unwind",
+      "reason": "New actual handoff panic checks physical before bytes/metadata, abandon and current-build memory recovery"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::commit_concurrency::catalog_mt03_pending_reader_loads_undo",
+      "reason": "Changed Pending consumption and install carrier still finish whole original Commit after actual Full Undo load"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::commit_concurrency::catalog_mt05_pending_lower_flush",
+      "reason": "Changed guard reconstruction must preserve actual lower-image flush recLSN revalidation"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::commit_concurrency::catalog_mt07_drain_content_guard_fence",
+      "reason": "Changed drain consuming boundary preserves finite content wait/fence cleanup"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::commit_failures::catalog_mf10_commit_second_page_unwind",
+      "reason": "Changed installation transfer/drop must preserve existing partial-install byte/metadata distinction and recovery"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::owner_tests::disk_session_isolation_backing_and_carriers_are_accounted",
+      "reason": "New owned Drained/physical and caller Result carriers alter source bound"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::owner_tests::catalog_commit_phase_sources_measure_consumed_preparation",
+      "reason": "Changed drain/resume/production-broad phase source formulas; Pending wait unchanged"
+    }
+  ]
+}

@@ -1158,3 +1158,6 @@ mod source_return;
 
 #[path = "catalog_memory/source_entry.rs"]
 mod source_entry;
+
+#[path = "catalog_memory/drained.rs"]
+mod drained;

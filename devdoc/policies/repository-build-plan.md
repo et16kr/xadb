@@ -666,3 +666,7 @@ statement factory·자동 read-set·CheckedTable/RowReadOperation과 short aggre
 ### C2 WAL wait source 관측 등록 — 2026-10-27
 
 기존7개 Rust 파일에 cfg(test) 관측/신규1을 추가했고 신규 manifest는 JSON `dev3_module_c2_wal_wait_source`에 등록했다. package/dependency·source root·제품 상계/charge·wire 변경은 없다. [한정 증거](../evidence/module-independence-survey-20261026.md#c2-wal-wait-source)는 물리/semantic/caller 반환 phase와 source별1 PASS를 보존하며 실제 source admission은 후속이다.
+
+### C2 실제 Drained 소비 경계 등록 — 2026-10-27
+
+원 dirty_frame/Commit에 private Drained carrier와 consuming drain/resume를 공급하고 Catalog actual caller·source 계산을 연결했다. 신규 실제 시험/manifest와 수정7경로는 JSON `dev3_module_c2_drained_handoff`에 등록했다. package/dependency·source root·backing·wire는 유지한다. [한정 증거](../evidence/module-independence-survey-20261026.md#c2-drained-handoff)는 신규4·관련4·source2 PASS와 반환 비용 증가를 보존하며 source phase 예약은 후속이다.

@@ -140,8 +140,24 @@ impl<'s, 'c, W: WriterNamespace> RetentionWriter<'_, '_, 's, 'c, '_, '_, '_, '_,
             .map_err(|e| fatal(storage, RetentionPhase::Durable, RetentionCause::Wal(e)))?;
         #[cfg(test)]
         catalog_hook(prepared.core(), CatalogPoint::Durable);
-        let mut install = pending
-            .resume_durable(&durable)
+        let drained = pending
+            .drain_durable(&durable)
+            .map_err(|e| fatal(storage, RetentionPhase::Install, RetentionCause::Frame(e)))?;
+        #[cfg(test)]
+        {
+            catalog_hook(prepared.core(), CatalogPoint::DrainedBeforeResume);
+            if crate::transaction::concurrency::catalog_test_support::drop_drained(prepared.core())
+            {
+                drop(drained);
+                return Err(fatal(
+                    storage,
+                    RetentionPhase::Install,
+                    RetentionCause::Invariant,
+                ));
+            }
+        }
+        let mut install = drained
+            .resume()
             .map_err(|e| fatal(storage, RetentionPhase::Install, RetentionCause::Frame(e)))?;
 
         // Original target order is the canonical physical order. Each permit
@@ -423,6 +439,7 @@ pub(in super::super) fn source_bytes() -> usize {
         + std::mem::size_of::<[Option<&[u8; PAGE_BYTES]>; TARGETS]>() // extraction output
         + 6 * size_of::<&()>() // stage_catalog borrowed arguments and canonical target borrow
         + size_of::<PreparedCatalog<'_, '_, '_>>()
+        + size_of::<Result<dirty_frame::DrainedCommitTargets<'_, '_, '_, '_, '_, '_, TARGETS>>>()
         + size_of::<Observation>()
         + size_of::<WalRequirement<'_>>()
         + size_of::<InstallationKey>()
@@ -532,8 +549,10 @@ pub(in super::super) fn phase_source_observations<W: WriterNamespace>()
         image + physical.pending_retained + size_of::<commit_bridge::CatalogCommitWait<'_, '_>>();
     let parent = image + common_parent;
     let pending_wait = parent + physical.pending_retained + bridge_wait;
-    let drain_wait =
-        parent + size_of::<crate::storage::wal_io::DurableCommit<'_, '_>>() + physical.drain_wait;
+    let drain_wait = parent
+        + size_of::<crate::storage::wal_io::DurableCommit<'_, '_>>()
+        + size_of::<Result<dirty_frame::DrainedCommitTargets<'_, '_, '_, '_, '_, '_, TARGETS>>>()
+        + physical.drain_wait;
     let install_locals = size_of::<CatalogCommitInstalled<'_, '_>>()
         + 2 * size_of::<crate::storage::wal_io::DurableCommit<'_, '_>>()
         + 2 * size_of::<crate::storage::wal_io::InstalledCommit<'_, '_>>()

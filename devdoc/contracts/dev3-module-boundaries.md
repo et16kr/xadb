@@ -1143,6 +1143,8 @@ rollback/terminal은 원 progress admission이 새 foreground를 닫고 이미 �
 
 [WAL wait phase 관측](../evidence/module-independence-survey-20261026.md#c2-wal-wait-source)은 cfg(test)에서 물리 호출·semantic 반환·caller Result 변환의 수명을 구별한다. Pending5320B와 shared+Full 합65300B를 관측했지만 기존 생산 상계/charge를 변경하지 않았고 신규 ticket/progress·entry/exit 전체 공급 전이다. 따라서236B 여유를 실제 Full/Pending admission 증거로 올리지 않는다.
 
+[실제 Drained 소비 경계](../evidence/module-independence-survey-20261026.md#c2-drained-handoff)는 authentic durable Drain 완료와 content guard 재구성을 분리한다. 원 Installing/version/pins를 private Drained가 유지하며 normal unfinished Drop은 installation abandon/fence 뒤 pins를 반환한다. 신규4·관련4·source2 PASS, 새 반환값의 비용 증가를 보존한다. source 예약은 아직 연결하지 않았고, 이미 gate/pins를 가진 이 경계에서는 후속 reserved source의 무대기 checked 전환만 가능하다.
+
 전체 설계 상계는 metadata `73856+65536+49152=188544≤196608`, original flush를 더한 whole `254080≤262144`다. 이 admission·동시 합 검산은 **새 C1/C2/C3 공급**이며 기존 active.max 기반 source 결과로 이미 구현됐다고 하지 않는다. header의 실제 byte 배치와 source charge의 측정·실패/정리 경로는 C1/C4 인수에 포함한다.
 
 <a id="common-deliveries"></a>
