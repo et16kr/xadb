@@ -1,6 +1,6 @@
 //! Private common continuation. No semantic Commit receipt is constructed here.
 use super::*;
-use crate::storage::wal_io::{DurableCommit, InstalledCommit, StagedCommit, UnstagedCommit};
+use crate::storage::disk::{DurableCommit, InstalledCommit, StagedCommit, UnstagedCommit};
 use std::time::Duration;
 
 const FENCE_RECHECK: Duration = Duration::from_millis(10);

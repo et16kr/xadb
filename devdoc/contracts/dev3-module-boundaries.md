@@ -32,7 +32,7 @@
 
 현재 `Plan4Retention::split`은 writer에 operation/control의 가변 borrow를, reader에 pool/history/visibility의 공유 borrow를, flusher에 원 flush control의 가변 borrow를 준다. 이 분할은 유지할 출발점이다. read actor가 storage 전체의 borrow를 가진 것은 writer/File 접근 권한을 기능 소비자에게 공개해야 한다는 뜻이 아니다.
 
-현재 Commit은 [`PreparedCatalog`](../../crates/engine/src/storage/wal_io/plan4_retention/catalog_live.rs)의 immutable private frame/after/before·core/binding/fence·digest에서 시작한다. [`CatalogCommitAttempt/Installed`](../../crates/engine/src/storage/wal_io/plan4_retention/catalog_commit.rs), [`StagedCommit/DurableCommit/InstalledCommit`](../../crates/engine/src/storage/wal_io/commit_bridge.rs), [`PendingCommitTargets`](../../crates/engine/src/storage/dirty_frame/commit.rs)가 exact requirement와 원 PinSet을 연결한다. 임의 page mask·LSN·scalar durable 관측으로 해당 증거를 대체할 수 없다.
+현재 Commit은 [`PreparedCatalog`](../../crates/engine/src/storage/wal_io/plan4_retention/catalog_live.rs)의 immutable private frame/after/before·core/binding/fence·digest에서 시작한다. [`CatalogCommitAttempt/Installed`](../../crates/engine/src/storage/wal_io/plan4_apply.rs), [`StagedCommit/DurableCommit/InstalledCommit`](../../crates/engine/src/storage/wal_io/plan4_apply/terminal.rs), [`PendingCommitTargets`](../../crates/engine/src/storage/dirty_frame/commit.rs)가 exact requirement와 원 PinSet을 연결한다. 임의 page mask·LSN·scalar durable 관측으로 해당 증거를 대체할 수 없다.
 
 <a id="actual-dependencies"></a>
 ## 3. 실제 Rust 의존과 M1 분류
@@ -690,6 +690,16 @@ actual terminal의 정상/오류 호출은 다음 순서로 고정한다.
 기존 allocation·empty transaction·scope1 retention·population allocation 네 생산 지점은 sealed `InstallPermit` 값을 WAL-private `legacy::from_legacy`로 소비해 보유한다. System INIT·TxPair·Reload의 별도 권한은 이 enum에 합치지 않는다. enum/소비 carrier와 accessor의 순차 closure를 실제 source 식에 연결하고 기존 한도를 유지한다. 이 구조·선택 결과는 [source별 증거](../evidence/module-independence-survey-20261026.md#c3-install-grant)에 기록한다. 현재 Profile2는 기존 scope1 진입을 효과 없이 거절하며, 과거 Profile1 literal과 섞인 L01 FAIL을 positive 설치 증거로 재분류하지 않는다.
 
 이번 공급은 installer 경계에 한정한다. terminal receipts/Prepared의 전체 이전·writer phase admission·Row producer/복구·C3 전체/M4/M5는 미완료다. 기존 실제 producer와 generic installer·legacy adapter를 함께 되돌리는 원 되돌림 단위를 유지한다. 독립 D1/D2는 실제 source·원 실행·6문서를 대조해 이 한정 공급을 수용했고 필수 수정은0이다.
+
+
+<a id="apply-terminal"></a>
+#### C3 실제 Catalog terminal 소유 이전 — 2026-10-27
+
+기준 `4cf67bf`에서 `Binding`·Staged/Durable/Installed/Unstaged와 actual Attempt/Installed를 apply root의 private field로 이전하고 `TerminalWal::stage_catalog/wait_catalog`와 `DurableCommit::complete_catalog`를 private 자손에 연결했다. 원 `commit_bridge.rs`와 bootstrap 재노출 사슬을 제거했다. 원 `WalRuntime`은 물리 stage/requirement/wait만 제공하고 generic concurrency/dirty_frame은 canonical disk receipt의 관찰 method만 소비한다. 원 core/fence·InstallationKey·exact requirement·semantic digest·whole installation 검산과 Pending/Drain/pin/Q 순서는 유지한다. Attempt/Installed 및 해당 getter는 apply 밖에 노출하지 않는다.
+
+원 stage가 실제 Unchanged를 반환한 경우에만 Unstaged를 만들고 original marker를 restore/cancel한다. terminal adapter의 operation/origin 선검산 위반·진입 중단·I/O 실패는 이 receipt를 발급하지 않는다. physical stage의 Busy/Capacity/OrderMismatch가 실제 Unchanged인 경우는 발급 대상이다. 신규 실제 Busy fixture는 같은 Prepared/C04 frame을 current Catalog decoder로 검산해 원 physical slot에 먼저 stage한 뒤 원 terminal의 Busy를 검산한다. 해당 호출의 효과0는 외부 주입 뒤를 기준으로 하며 외부 complete9/synced8 의무를 지우지 않는다. 원 call의 무 fence·원 Owner/pins/control/epoch/페이지 불변을 확인한 뒤 시험이 직접 fence하여 세션을 폐기한다. 정상 두 semantic writer 지원 증거가 아니다.
+
+임시 TerminalWal와 receiver16B를 source 식에 추가했다. 세분한 wait 관측5336B, 보수적 Pending phase9136B를 구별하며 Full34020B/shared19328B와의 합58684B는 제품 aggregate admission이 아니다. 원 production broad36844B·memory/native source gate는 기존 한도를 유지한다. [source별 선택 증거](../evidence/module-independence-survey-20261026.md#c3-terminal)를 보존한다. Prepared 전체 이전·writer/entry/tail 회계·Row 공급/복구·C3 전체·M4/M5는 미완료다. 독립 D1/D2는 actual diff·r1–r3 전체 source/inventory·fingerprint·manifest·runner/helpers·ELF·원 로그·probe4 exact delta/diagnostic span 및6문서를 대조해 한정 수용했다. 필수 미해결 수정은0이며 검토자는 수정·시험·빌드·verifier를 실행하지 않았다.
 
 <a id="row-reservation"></a>
 ### 6.6 RowReserve→A producer→prepare/apply/cancel의 consuming 경계

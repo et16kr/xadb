@@ -1,10 +1,10 @@
 //! Original whole-set pins survive Commit WAL I/O without content latches.
-//! Semantic stage/completion grants remain sealed in the original WAL producer.
+//! Semantic stage/completion grants remain sealed in the original apply producer.
 //! These common carriers cannot create those grants or acknowledge a Commit.
 
 use super::*;
 use crate::{
-    storage::wal_io::{DurableCommit, InstalledCommit, StagedCommit, UnstagedCommit},
+    storage::disk::{DurableCommit, InstalledCommit, StagedCommit, UnstagedCommit},
     transaction::concurrency::{
         CommitInstalling, CommitStage, InstallationKey, PendingInstallation,
     },

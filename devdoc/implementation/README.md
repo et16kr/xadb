@@ -1,5 +1,7 @@
 # 현재 구현
 
+2026-10-27 [C3 Catalog terminal 소유](../evidence/module-independence-survey-20261026.md#c3-terminal): 실제 stage/durable/whole-installed receipt와 조립을 apply private 경계로 이전했다. 원 physical WAL·core/pins·정리/Q 규칙을 유지하며 실제 Busy/Unchanged 분기를 추가했다. r3 runtime9/compiler4 PASS·r1/r2 FAIL을 보존하며 독립 D1/D2 한정 수용이다. C3 전체·Row/전체 회계·M4/M5는 미완료다.
+
 2026-10-27 [C3 apply 설치 권한](../evidence/module-independence-survey-20261026.md#c3-install-grant): Catalog ordinary/Commit/retirement는 apply private 권한을 만들고 legacy4경로는 원 proof를 소비한다. 원 installer 검산·Pending flush 후 stamp를 유지한다. source별 runtime3+7·compiler5 PASS와 원 legacy fixture/test-build FAIL을 보존한다. Grant224B/legacy conversion696B이며 독립 D1/D2 한정 수용이다. terminal/Row·C3 전체·M4/M5는 미완료다.
 
 2026-10-27 [C2 statement Catalog 조회](../evidence/module-independence-survey-20261026.md#c2-statement-reads): 실제 Full/Resident Scope를 원 statement에 연결하고 Found/Missing 반환 전 catalog read bit를 자동 등록했다. r4 runtime10/compiler3 PASS와 r1–r3 test-build FAIL을 보존한다. Full34020B/Resident17636B이며 전체 short floor·writer·Row/terminal/recovery·M4/M5는 미완료다.

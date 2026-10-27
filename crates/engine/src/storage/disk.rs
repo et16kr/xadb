@@ -24,3 +24,7 @@ pub(in crate::storage) use super::wal_io::disk_api::{
 };
 
 pub(in crate::storage) use super::wal_io::disk_api::InstallGrant;
+
+pub(crate) use super::wal_io::disk_api::{
+    DurableCommit, InstalledCommit, StagedCommit, UnstagedCommit,
+};

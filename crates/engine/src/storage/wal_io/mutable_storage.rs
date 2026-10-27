@@ -85,7 +85,6 @@ const ABANDONED: u8 = 3;
 pub(in crate::storage::wal_io) mod plan4_pages;
 pub(in crate::storage) use plan4_pages::CatalogRetirementRejected;
 pub(in crate::storage) use plan4_pages::Plan4LoadPermit;
-pub(in crate::storage) use plan4_pages::{CatalogCommitAttempt, CatalogCommitInstalled};
 #[allow(unused_imports)]
 pub(crate) use plan4_pages::{
     Plan4CatalogLookup, Plan4GenesisCensus, Plan4LoadObservation, Plan4Page, Plan4PageCause,

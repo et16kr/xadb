@@ -50,7 +50,7 @@
 | Plan4Retention::split과 source latch 아래 [CatalogSource](../../crates/engine/src/storage/wal_io/plan4_retention/visibility/source.rs) | 필수 의미 | 같은 pool/visibility 수명과 실제 참조 발급을 유지. 단순 decoded TxnRef/UndoRef는 usable pin이 아님 |
 | CatalogCommitAttempt/Installed·TxPair·retirement 타입의 중간 re-export | 단순 등록 | 신규 소비자가 정상 연산과 무관한 설치 모듈을 여러 개 수정하게 함. 책임별 좁은 공개 경계와 단일 조립 지점으로 옮길 후보 |
 | [reader](../../crates/engine/src/storage/wal_io/plan4_retention/read.rs)의 `storage.core.plan`, [history runtime](../../crates/engine/src/storage/wal_io/plan4_retention/history/runtime.rs)의 binding/Condvar 직접 접근 | 불필요한 내부 접근 | 필요한 것은 검증된 target·namespace·health·원 fence/notify다. 원 필드를 공개하는 대신 동일 수명의 제한 포트가 필요한지 대조 |
-| [commit_bridge](../../crates/engine/src/storage/wal_io/commit_bridge.rs)의 CatalogCommitAttempt/Installed import | 공통 계약 미완료 | 물리 WAL이 상위 Catalog 의미를 알고 있음. 실제 semantic receipt와 whole-install/publication 조립을 거래 경계가 소유하도록 변경 필요 |
+| 당시 `commit_bridge.rs`의 CatalogCommitAttempt/Installed import([현재 이전 위치](../../crates/engine/src/storage/wal_io/plan4_apply/terminal.rs)) | 공통 계약 미완료 | 물리 WAL이 상위 Catalog 의미를 알고 있음. 실제 semantic receipt와 whole-install/publication 조립을 거래 경계가 소유하도록 변경 필요 |
 | [DirtyInstallPermit](../../crates/engine/src/storage/wal_io/dirty_allocation.rs)의 소비자별 factory | 공통 계약 미완료 | A를 추가할 때 또 하위 구현에 업무 등록이 필요. sealed prepared change와 실제 원 target 재검사를 공통 apply에 연결하는 설계 필요 |
 | Catalog 9-target INIT·TxPair claim | 필수 의미·지원 범위 한정 | CREATE가 새 page 두 개를 함께 설치하는 의미다. 이미 CREATE된 RowLeaf에 INSERT하면서 이 claim을 복제하면 잘못된 authority가 됨 |
 | Catalog-only UndoShape/source/lookup, owner당 reference2행 | 공통 계약 미완료 | row source·Undo 이전 버전·3-pin handoff는 현재 공급되지 않음. signature 이동만으로 행 조회가 가능하다고 표시하지 않음 |
@@ -1314,3 +1314,29 @@ r2는 새 cfg(test) `page_ref`의 incarnation 인자 누락 E0061로 test build 
 | r3 test build/runtime7/compiler5 PASS | `b6a202b9dbe64662131d9d9630a9a9b4e94ea46067616e900645eb940eb61bc6` | `c259ca0d7980219b82621e16d55fe8b602c9bddb6d6e970b4ff753748264c265` | `2a4e7ee34a58c2b95b1a445ee67593b49b982b5e8349af9bd319b3641c601ec9` |
 
 r1 ELF `d7349c5cd8a602ff6c2852d17131cef5001c2d58cce4efe2ea223a23e36b8616`, r3 ELF `419bd716615ff5fef8597d2dd15ef172924d3eae9f30e1334c046f33a3567b9a`다. r2/r3 production은 r1과 코드가 같아 NOT_REPEATED_UNCHANGED_CODE다. 완료된 원 runtime3·무변경 하위codec/회귀·workspace 시험은 반복하지 않았으며 변경 파일 rustfmt·diff whitespace만 확인했다. 전체 fmt/Clippy·문서 verifier·push는 실행하지 않았다. 독립 D1/D2는 r1–r3 전체 source/inventory·fingerprint·manifest·runner/helpers·ELF·원 로그 및 compiler probe5의 exact delta/diagnostic span과6문서를 대조해 한정 수용했다. 필수 미해결 수정은0이다.
+
+
+<a id="c3-terminal"></a>
+### C3 실제 Catalog terminal의 apply 소유 — 2026-10-27
+
+기준 `4cf67bf`, 작성/통합 `/root`, 독립 검토 `/root/module_review`. [원 terminal 계약](../contracts/dev3-module-boundaries.md#apply-terminal)에 따라 실제 semantic receipt 정의·factory/검산을 apply root/private terminal로 옮겼다. 물리 runtime과 append/drainer/file/slot·원 core/pins·exact requirement·digest·whole install/Q 조건은 유지한다. canonical disk receipt만 generic core/installer에 재노출하며 실제 Attempt/Installed/getter는 apply 내부로 제한한다. 형식/semantic wire 변경은 없다.
+
+[동결 manifest](../../tests/fixtures/dev3-module-c3/terminal/manifest.json)는 actual Busy 신규1, MF02 stage 진입 중단·MF03 write-before·MF07 sync-before·MF11 전체 설치 후 중단/현재-build memory recovery·MT01 정상 Q 공개 및 변경 source 관측3의 exact runtime9와 compiler4를 선택했다. compiler는 raw LSN factory 부재·Pending 이중 소비·private binding·Installed Clone 부재를 검사한다. 과거 compiler2의 원 fixture는 보존하고 current disk import/drain API를 별도 새 probe로 수신했다. 총600초/compiler90초/case30초/출력8MiB/stack33554432B이며 무변경 codec·MT05/MF10·하위 회귀·전체 wrapper/workspace는 반복하지 않는다.
+
+r1 production build PASS, 새 시험의 `unwrap_err`/직접 Cause 비교가 기존 Debug/PartialEq를 요구해 E0277/E0369 test-build FAIL이다. runtime9/compiler4는 NOT_RUN이다. r2는 cfg(test) 오류 표현만 수정해 test build PASS했지만, 새 competing stage가 legacy physical decoder `try_stage`를 통해 scope2 frame을 읽어 UnsupportedFormat을 반환했다. controller panic/release Disconnected로 신규 Busy fixture FAIL, 후속 runtime8/compiler4 NOT_RUN을 보존한다. r3는 원 current Profile2 `semantic_catalog::decode_layout`로 같은 immutable frame을 검산하고 실제 원 `stage_verified`에 해당 header를 전달한다. 제품 코드는 같으므로 r2/r3 production은 NOT_REPEATED_UNCHANGED_CODE다.
+
+Busy fixture는 actual Prepared.frame과 독립 C04 literal equality를 먼저 검산한다. StageCallStarted pause 동안 원 physical slot에 동일 frame을 점유시키고, 원 terminal의 실제 Busy/Unchanged→authentic Unstaged→restore/cancel을 실행한다. 원 Owner idle·Open/active0·pins0·frame/DPT/control/jobs/epoch/refs/Q/files 불변·I/O0 및 원 call 무 fence를 검산한다. 외부 주입의 complete9/synced8·원 first-write/동기 offset을 보존한 뒤 시험이 명시적으로 fence하고 종료한다. 미설치 물리 의무를 정상 처리한 것으로 기록하지 않으며 다중 semantic writer 지원 증거가 아니다.
+
+r3 test build·exact runtime9·compiler4 PASS, build/probe 경고0이다. 원 MF11 memory FileIo의 현재-build 복구와 정상 MT01의 exact C04/Q 공개를 확인했다. native 타입 source 검산은 native process/I/O 실행 증거가 아니다. 독립 D1/D2는 actual diff·r1–r3 전체 source/inventory·fingerprint·manifest·runner/helpers·ELF·원 로그·probe4 exact delta/diagnostic span 및6문서를 대조해 한정 수용했다. 필수 미해결 수정은0이며 검토자는 수정·시험·빌드·verifier를 실행하지 않았다.
+
+임시 adapter/receiver16B가 원 source 식에 추가되어 세분 wait 관측의 bridge3272B/Pending5336B가 됐다. 보수적인 phase Pending9136B·production broad36844B와 혼합하지 않는다. Full34020B/Resident17636B/shared19328B 및 원 memory live62684B/recovered64060B, native 타입 live62820B/recovered64196B는 유지된다. Full+세분 Pending+shared58684B는 cfg(test) 관측이고 전체 entry/tail·writer/progress admission의 완료 증거가 아니다.
+
+원 `artifacts/module-c3-terminal-20261027-r{1,2,3}/`에 source/inventory·manifest·runner/helpers·compiler·ELF(생성 시)·case logs와 compiler probe source를 보존한다.
+
+| 실행 | source SHA-256 | manifest SHA-256 | result SHA-256 |
+| --- | --- | --- | --- |
+| r1 production PASS/test build FAIL | `2586b276fa41626c8130e8314b9ce9b242389d2418009c656625983422da3cf5` | `47cde5bf37f41342c01276adea30c77bc3d51bfaa59f62efd039c887240bbc0d` | `334fff79ddf5401327aa2ace3de0bdb9efc33aa327f0fc5bdd3bbb064f2e0f12` |
+| r2 test build PASS/new Busy FAIL | `60b6f7ebd6de56a47e6be6fb5f445f220bb6b175e6b922a87ef5c31e17351d68` | `47cde5bf37f41342c01276adea30c77bc3d51bfaa59f62efd039c887240bbc0d` | `05295cc7c12d1cb44db2a4d5d423a041c5e21fa3b766239d3497bc0e1f8e9a80` |
+| r3 test build/runtime9/compiler4 PASS | `8782501923622d54e70d0e14d553897475cc993e2b4c91e2773621d2e29754c2` | `47cde5bf37f41342c01276adea30c77bc3d51bfaa59f62efd039c887240bbc0d` | `b427d198dbd0fa543784a7e34a04153d93712901fbad46567c9bb810ae38cd05` |
+
+r1 source5673파일·20.28초다. r2 source5673파일·27.65초·ELF `3c8d7a9208244a190bb79fd357e6970c6cd5e9eb786d3815a93c53b937052cd3`다. r3 source5673파일·64.44초·ELF `0fae7eeb9e5cee636b49d32dec494c551644fd7bb0c36090119130059344106b`다. 실행 시간은 성능 결과가 아니다. r1/r2 FAIL·후속 NOT_RUN과 무변경 production 생략을 보존하며 완료된 runtime은 반복하지 않았다. 변경 rustfmt·diff whitespace만 확인하고 전체 fmt/Clippy·문서 verifier·push는 실행하지 않았다.

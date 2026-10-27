@@ -5,6 +5,7 @@
 
 pub(crate) use super::super::plan4_recovery::Plan4Recovered;
 use super::{Plan4Page, Plan4Pages, Plan4ResidencyCursor, Plan4Target};
+use crate::storage::session_fence::SessionFence;
 use crate::{
     storage::{
         dirty_frame::{self, FrameStamp, SharedPool, TargetRequest},
@@ -12,12 +13,65 @@ use crate::{
         retention_page::{self, JobSlotRef},
         semantic_retention::RetentionSemanticError,
         transaction_record::{StatusSlotRef, TxnRef},
-        wal_io::{DurableWal, MutableStorageOwner, WalIoError, WalRequirement},
+        wal_io::{DurableWal, MutableStorageOwner, WalIoError, WalRequirement, WalRuntime},
     },
-    transaction::concurrency::Owner,
+    transaction::concurrency::{InstallationKey, Owner, PageConcurrency},
 };
 use foundation::{error::Effect, namespace::WriterNamespace};
-use std::sync::Mutex;
+use std::sync::{Mutex, atomic::AtomicU8};
+
+/// Borrow the original physical WAL; semantic terminal authority belongs here.
+struct TerminalWal<'s, 'm, W: WriterNamespace> {
+    wal: &'s WalRuntime<'m, W>,
+}
+#[derive(Clone, Copy)]
+struct Binding<'c, 'f> {
+    core: &'c PageConcurrency<'f>,
+    key: InstallationKey,
+    requirement: WalRequirement<'f>,
+    semantic_digest: [u8; 32],
+}
+pub(crate) struct StagedCommit<'c, 'f> {
+    binding: Binding<'c, 'f>,
+}
+pub(crate) struct DurableCommit<'c, 'f> {
+    binding: Binding<'c, 'f>,
+    durable: DurableWal<'f>,
+}
+pub(crate) struct InstalledCommit<'c, 'f> {
+    binding: Binding<'c, 'f>,
+}
+/// The original stage call alone seals an Unchanged rejection; an upper error
+/// code cannot clear the core stage-call marker.
+pub(crate) struct UnstagedCommit<'c, 'f> {
+    core: &'c PageConcurrency<'f>,
+    key: InstallationKey,
+}
+/// Original staged binding retained during PinSet suspension, without locks.
+struct CatalogCommitWait<'c, 's> {
+    binding: Binding<'c, 's>,
+}
+struct CatalogStageError<'c, 's> {
+    error: WalIoError,
+    unstaged: Option<UnstagedCommit<'c, 's>>,
+}
+/// Actual input created only after the original core enters StageCallStarted.
+struct CatalogCommitAttempt<'a, 'i, 'c, 's> {
+    prepared: &'a PreparedCatalog<'i, 'c, 's>,
+    key: InstallationKey,
+}
+/// Actual whole page/control/history installation, without a public factory.
+struct CatalogCommitInstalled<'c, 's> {
+    core: &'c PageConcurrency<'s>,
+    binding: &'s AtomicU8,
+    fence: &'s SessionFence,
+    key: InstallationKey,
+    requirement: WalRequirement<'s>,
+    digest: [u8; 32],
+    q: u64,
+}
+#[path = "plan4_apply/terminal.rs"]
+mod terminal;
 
 /// An immutable image sealed by an actual apply producer after complete WAL
 /// stage. The installer can observe it but cannot construct or clone it.
@@ -58,7 +112,6 @@ mod visibility;
 pub(in crate::storage) use create_pair::CatalogRetirementRejected;
 #[allow(unused_imports)]
 pub(crate) use create_pair::PreparedCatalog;
-pub(in crate::storage) use create_pair::{CatalogCommitAttempt, CatalogCommitInstalled};
 
 pub(in crate::storage) use create_pair::{
     TxPairAuthority, TxPairCancelKind, TxPairCancelPermit, TxPairControlCommit,

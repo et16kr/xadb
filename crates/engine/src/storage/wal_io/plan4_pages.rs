@@ -58,12 +58,12 @@ pub(in crate::storage) use retention::CatalogRetirementRejected;
 )]
 pub(crate) use retention::Plan4Retention;
 pub(in crate::storage) use retention::{
-    CatalogCommitAttempt, CatalogCommitInstalled, EmptyRetentionControlLoan, RetentionCause,
-    RetentionFlushAuthority, RetentionFlushStep, RetentionFrameObservation, RetentionInitAuthority,
-    RetentionInitCommit, RetentionInitCompleted, RetentionInitInstall, RetentionInstall,
-    RetentionLoadPermit, RetentionRecoveryStep, RetentionReplayCursor, VerifiedLookupLoad,
-    observe_recovery_frame, retention_replay_bank, retention_replay_cells, retention_replay_digest,
-    retention_replay_image, retention_replay_provenance, seed_recovery_replay,
+    EmptyRetentionControlLoan, RetentionCause, RetentionFlushAuthority, RetentionFlushStep,
+    RetentionFrameObservation, RetentionInitAuthority, RetentionInitCommit, RetentionInitCompleted,
+    RetentionInitInstall, RetentionInstall, RetentionLoadPermit, RetentionRecoveryStep,
+    RetentionReplayCursor, VerifiedLookupLoad, observe_recovery_frame, retention_replay_bank,
+    retention_replay_cells, retention_replay_digest, retention_replay_image,
+    retention_replay_provenance, seed_recovery_replay,
 };
 
 #[cfg(test)]

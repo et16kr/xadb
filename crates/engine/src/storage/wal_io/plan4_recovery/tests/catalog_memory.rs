@@ -1181,3 +1181,6 @@ mod statement_reads;
 
 #[path = "catalog_memory/install_grant.rs"]
 mod install_grant;
+
+#[path = "catalog_memory/terminal.rs"]
+mod terminal;

@@ -7092,5 +7092,44 @@
     "remaining_supply": "Whole terminal receipts/Prepared migration, writer short phases, Row/actual A+B/recovery/M4/M5. Legacy scope1 positive NOT_REACHABLE_CURRENT_PROFILE.",
     "source_roots_changed": false,
     "source_accounting": "Grant224/accessor400/legacy conversion696; generic N2 2396; memory live62684 metadata185692 whole251228 recovered64060; native type source live62820 metadata185828 whole251364 recovered64196. Original caps unchanged; no whole aggregate admission claim."
+  },
+  "dev3_module_c3_terminal": {
+    "status": "ACCEPTED_LIMITED_D1_D2",
+    "contract_ref": "dev3-module-boundaries.md#apply-terminal",
+    "implemented_paths": [
+      "crates/engine/src/storage/wal_io/plan4_apply/terminal.rs",
+      "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/terminal.rs",
+      "tests/fixtures/dev3-module-c3/terminal/manifest.json",
+      "tests/fixtures/dev3-module-c3/terminal/non_clone.rs",
+      "tests/fixtures/dev3-module-c3/terminal/pending_double_consume.rs",
+      "tests/fixtures/dev3-module-c3/terminal/private_binding.rs",
+      "tests/fixtures/dev3-module-c3/terminal/raw_grant.rs"
+    ],
+    "modified_paths": [
+      "crates/engine/src/storage/dirty_frame/commit.rs",
+      "crates/engine/src/storage/disk.rs",
+      "crates/engine/src/storage/wal_io.rs",
+      "crates/engine/src/storage/wal_io/bootstrap.rs",
+      "crates/engine/src/storage/wal_io/disk_api.rs",
+      "crates/engine/src/storage/wal_io/doublewrite_install.rs",
+      "crates/engine/src/storage/wal_io/mutable_storage.rs",
+      "crates/engine/src/storage/wal_io/plan4_apply.rs",
+      "crates/engine/src/storage/wal_io/plan4_pages.rs",
+      "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory.rs",
+      "crates/engine/src/storage/wal_io/plan4_retention/catalog_commit.rs",
+      "crates/engine/src/storage/wal_io/plan4_retention/create_pair.rs",
+      "crates/engine/src/storage/wal_io/plan4_retention/recovery_observation_tests.rs",
+      "crates/engine/src/storage/wal_io/plan4_retention/visibility/authority.rs",
+      "crates/engine/src/transaction/concurrency_commit.rs"
+    ],
+    "removed_paths": [
+      "crates/engine/src/storage/wal_io/commit_bridge.rs"
+    ],
+    "scope": "Actual Catalog terminal receipts/factories now belong to private apply root/terminal; original physical WAL, exact bindings, marker/Drain/install/Q semantics retained.",
+    "evidence_ref": "module-independence-survey-20261026.md#c3-terminal",
+    "validation": "r1 production PASS/test build E0277/E0369 FAIL; r2 test build PASS/new Busy legacy decoder UnsupportedFormat FAIL; r3 cfg(test) current decoder fix: test build/runtime9/compiler4 PASS, warnings0. No production/completed runtime repeat. Original FAIL/NOT_RUN retained; independent D1/D2 audited all source/inventory/manifest/helpers/ELF/logs/probe deltas and six documents; accepted limited scope, required fixes0.",
+    "remaining_supply": "Prepared whole migration; writer/entry/tail aggregate source; Row actual supply/recovery/A+B/M4/M5.",
+    "source_roots_changed": false,
+    "source_accounting": "Temporary TerminalWal and receiver16B; detailed wait bridge3272/Pending5336, conservative Pending phase9136, production broad36844. Memory live62684/recovered64060; native type live62820/recovered64196. No whole aggregate admission."
   }
 }
