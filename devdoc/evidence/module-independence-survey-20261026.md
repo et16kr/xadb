@@ -803,7 +803,7 @@ D1/D2 담당·통합은 `/root`다. 원 자원을 이동하는 bounded 내부 �
 
 예비 독립 검토는 다음 단위의 적절성을 확인하고 전환 carrier·Capacity gate·nested core 값 누락을 경고했다. 첫 실제 diff 검토에서 `PageConcurrency`를 기존 shared retained가 이미 계수한다는 주석의 근거가 없음을 발견했다. `DiskSession`/`SharedPool`은 core 참조만 보유하므로 Catalog의 공통 phase 비용에 **실체816B를 한 번 추가**하고 주석을 정정했다. 이 보완 전 r1 실행 PASS와 검토 미해결1건을 보존하며 r1만으로 최종 회계 계약 수용을 주장하지 않는다. 후속 전체 동시 admission에서는 원 core를 실제 shared-retained 한 곳으로 이동하고 모든 class와 중복 없이 계산해야 한다.
 
-[현재 선택 manifest](../../tests/fixtures/dev3-module-c2/commit-phases/manifest.json)는 직전 검증 source를 지정한다. 각 원 실행의 manifest는 해당 export에 보존한다. 실행 전 총480초·case30초·로그8MiB·test stack32MiB를 고정했다. production `cargo check`와 test `--no-run`은 빌드 결과이며 runtime과 구분한다.
+당시 main 선택 manifest(`cbc09f2:tests/fixtures/dev3-module-c2/commit-phases/manifest.json`; [원본 보존 위치](#merge-main-20261028))는 직전 검증 source를 지정한다. 각 원 실행의 manifest는 해당 export에 보존한다. 실행 전 총480초·case30초·로그8MiB·test stack32MiB를 고정했다. production `cargo check`와 test `--no-run`은 빌드 결과이며 runtime과 구분한다.
 
 | source | 선택·실제 결과 | 변경과의 관계 |
 | --- | --- | --- |
@@ -913,7 +913,7 @@ r3–r5는 r2의 immutable source/ELF를 재사용하며 새 product build를 �
 
 #### 실제 변경과 실행 전 선택
 
-[현재 선택 manifest](../../tests/fixtures/dev3-module-c2/short-source/manifest.json)와 각 bundle의 원 manifest를 구별한다. 최초 총600초·compiler90초·case30초·로그8MiB·test stack32MiB·각 selector1회로 동결했다. 새 ledger9개는 exact capacity·동시 실제 thread·overflow/header·underflow·poison/fence·unwind/forget·memory/native type·stale binding을 검사한다. 실제 full 조회8개는 두 번째 Capacity, 예약 전 Drain 정상/fence/unwind, refs0 뒤 Drain 정상/fence, Found 반환 정상/unwind를 검사한다. 기존4개는 변경 adapter의 Pending Undo LOAD·FlushRequired 재시도·fatal I/O cleanup·source census만 선택했다. 총21개다.
+당시 main 선택 manifest(`cbc09f2:tests/fixtures/dev3-module-c2/short-source/manifest.json`; [원본 보존 위치](#merge-main-20261028))와 각 bundle의 원 manifest를 구별한다. 최초 총600초·compiler90초·case30초·로그8MiB·test stack32MiB·각 selector1회로 동결했다. 새 ledger9개는 exact capacity·동시 실제 thread·overflow/header·underflow·poison/fence·unwind/forget·memory/native type·stale binding을 검사한다. 실제 full 조회8개는 두 번째 Capacity, 예약 전 Drain 정상/fence/unwind, refs0 뒤 Drain 정상/fence, Found 반환 정상/unwind를 검사한다. 기존4개는 변경 adapter의 Pending Undo LOAD·FlushRequired 재시도·fatal I/O cleanup·source census만 선택했다. 총21개다.
 
 제품 format·recovery helper·물리 Commit 구현은 바뀌지 않아 완료한 core/recovery/Commit 사례·native process inventory·전체 workspace/하위 wrapper를 반복하지 않는다. native 항목은 실제 Linux Writer/File **타입 상계 계산**이며 native I/O 결과가 아니다. 기존 source별 PASS/FAIL/UNKNOWN과 DEV2·DEV3/S5 미완료를 유지한다.
 
@@ -970,7 +970,7 @@ charge는41552→41576B이며 실제 ticket/carrier를 포함한다. 기존 memo
 
 #### 실제 diff와 실행 전 선택
 
-[선택 manifest](../../tests/fixtures/dev3-module-c2/resident-read/manifest.json)에 baseline·참고 commit·Rust15파일과 각 exact selector의 변경 관계를 고정했다. 총600초·compiler90초·case30초·로그8MiB·test stack32MiB·각 selector1회다. production check와 test `--no-run`은 각각 빌드 검증이며 runtime과 구분한다.
+당시 main 선택 manifest(`cbc09f2:tests/fixtures/dev3-module-c2/resident-read/manifest.json`; [원본 보존 위치](#merge-main-20261028))에 baseline·참고 commit·Rust15파일과 각 exact selector의 변경 관계를 고정했다. 총600초·compiler90초·case30초·로그8MiB·test stack32MiB·각 selector1회다. production check와 test `--no-run`은 각각 빌드 검증이며 runtime과 구분한다.
 
 | 선택 | 변경 계약·정답 근거 |
 | --- | --- |
@@ -1031,7 +1031,7 @@ begin/begin_resident → begin_class의 class 값과 반환 carrier를 entry sou
 
 #### 변경별 선택과 실제 결과
 
-[선택 manifest](../../tests/fixtures/dev3-module-c2/pending-image/manifest.json)에 변경 Rust3파일·selector별 이유·기준/참고 commit을 실행 전에 고정했다. 총600초·compiler90초·case30초·로그8MiB·test stack32MiB·각 selector1회다. production check와 test `--no-run`은 각각 PASS이며 runtime과 구별한다.
+당시 main 선택 manifest(`cbc09f2:tests/fixtures/dev3-module-c2/pending-image/manifest.json`; [원본 보존 위치](#merge-main-20261028))에 변경 Rust3파일·selector별 이유·기준/참고 commit을 실행 전에 고정했다. 총600초·compiler90초·case30초·로그8MiB·test stack32MiB·각 selector1회다. production check와 test `--no-run`은 각각 PASS이며 runtime과 구별한다.
 
 - 신규 source 시험1개: compact image 크기, Memory/Linux 실제 타입의 공유값+Commit phase 및 live/recovery envelope 검산.
 - 변경 payload의 MC01 reserve/cancel·MC02 Forward/CLR/abort2개; Commit의 MT05 Pending flush·MT03 Undo LOAD·MT07 Drain fence·MT01 Q 공개4개.
@@ -1152,7 +1152,7 @@ begin/begin_resident → begin_class의 class 값과 반환 carrier를 entry sou
 
 #### 변경 범위 선택과 실행
 
-[선택 manifest](../../tests/fixtures/dev3-module-c2/aging-source/manifest.json)에 변경 Rust6파일과 case별 관계를 실행 전에 고정했다. 총600초·compiler90초·case30초·로그8MiB·stack32MiB, 각 selector1회다. 신규 source 관측은 초기 Root/malformed XOD 경로의 계산과 Memory/Linux 타입 한도를, 기존 owner 관측은 semantic/Commit4phase·live/recovery 한도를, ledger 시험은 변경 Full charge와 Resident 혼합 거절·정확 반환을, actual Full 조회 시험은 두 번째 조회의 refs/pin/효과 전 Capacity·원 예약 반환·같은 snapshot 재시도를 확인한다.
+당시 main 선택 manifest(`cbc09f2:tests/fixtures/dev3-module-c2/aging-source/manifest.json`; [원본 보존 위치](#merge-main-20261028))에 변경 Rust6파일과 case별 관계를 실행 전에 고정했다. 총600초·compiler90초·case30초·로그8MiB·stack32MiB, 각 selector1회다. 신규 source 관측은 초기 Root/malformed XOD 경로의 계산과 Memory/Linux 타입 한도를, 기존 owner 관측은 semantic/Commit4phase·live/recovery 한도를, ledger 시험은 변경 Full charge와 Resident 혼합 거절·정확 반환을, actual Full 조회 시험은 두 번째 조회의 refs/pin/효과 전 Capacity·원 예약 반환·같은 snapshot 재시도를 확인한다.
 
 - `r1`: production check PASS, 새 시험의 Linux 타입 경로에 `super` 한 단계가 많아 test build E0433 FAIL, runtime0. 원 로그·source·result를 보존한다.
 - `r2`: 해당 test 경로 한 줄만 정정하고 test build PASS, 미실행 runtime **4개 각각1회 PASS**. 변경 없는 production check는 반복하지 않았다. 원 r1 production 결과를 r2의 새 실행으로 표시하지 않는다. 컴파일 경고0이다.
@@ -1204,7 +1204,7 @@ r1/r2 source5638파일·manifest·runner/helper·inventory·compiler/runtime 로
 
 #### 변경 범위와 실행
 
-[선택 manifest](../../tests/fixtures/dev3-module-c2/wal-wait-source/manifest.json)에 변경7파일·신규 exact selector1개·Memory/Linux 타입 관측과의 관계를 실행 전에 고정했다. 총600초·compiler90초·case30초·로그8MiB·stack32MiB, 각 selector1회다. frozen export에서 `cargo test -p xadb-engine --lib --no-run --locked --offline --message-format=json`으로 test build PASS·경고0, 새 `catalog_wal_wait_source_phases_include_claim_and_condvar`를 `--exact --nocapture`로 **1회 PASS**했다. 경과23.52초는 검증 경과이며 성능 수치가 아니다.
+당시 main 선택 manifest(`cbc09f2:tests/fixtures/dev3-module-c2/wal-wait-source/manifest.json`; [원본 보존 위치](#merge-main-20261028))에 변경7파일·신규 exact selector1개·Memory/Linux 타입 관측과의 관계를 실행 전에 고정했다. 총600초·compiler90초·case30초·로그8MiB·stack32MiB, 각 selector1회다. frozen export에서 `cargo test -p xadb-engine --lib --no-run --locked --offline --message-format=json`으로 test build PASS·경고0, 새 `catalog_wal_wait_source_phases_include_claim_and_condvar`를 `--exact --nocapture`로 **1회 PASS**했다. 경과23.52초는 검증 경과이며 성능 수치가 아니다.
 
 제품 동작 diff0이므로 production check·기존 제품 시험·native 복구·전체 workspace/하위 wrapper는 실행하지 않았다. 독립 검토는 새 helper를 기존 `mod tests` 뒤에 둔 배치가 `items_after_test_module` 규칙에 걸림을 정적으로 지적했다. helper 본문을 그대로 테스트 모듈 앞으로 옮겼다. `r2`는 이1파일의 item 순서만 바뀐 source이며 `cargo clippy -p xadb-engine --lib --tests --locked --offline --message-format=json -- -D warnings`를1회 PASS·경고0으로 확인했다. 원 r1 test build/runtime1을 보존하고 r2에서는 runtime을 반복하지 않았다. 원 지적은 정적 검토 결과이며 실행하지 않은 r1 Clippy FAIL을 만들지 않는다. 기존 source별 PASS/FAIL/UNKNOWN·NOT_RUN과 DEV2·DEV3/S5 미완료를 보존한다. 변경 Rust7파일에 파일별 rustfmt와 `git diff --check`를 적용했다. 자동 문서 verifier·전체 fmt/Clippy·push는 실행하지 않으며 push 시 기존 훅을 적용한다.
 
@@ -1247,7 +1247,7 @@ r1/r2 각각 source5639파일·inventory·manifest·runner/helper·compiler/lint
 
 #### 실행 전 선택·리뷰 수정과 결과
 
-[동결 manifest](../../tests/fixtures/dev3-module-c2/drained-handoff/manifest.json)는 신규4·직접 영향4·source3의 **11개 exact selector, 각각1회**를 선택한다. 총600초·compiler90초·case30초·로그8MiB·test stack32MiB를 실행 전에 고정했다. 독립 사전 리뷰가 기존 physical source 시험의 신규 drain phase 누락과 resume 하한의 Pending 사용을 지적했다. Drained 입력·반환 하한과 drain max를 보완하고 그 시험을 선택 목록에 추가한 뒤 첫 실행했다. 이는 정적 지적이며 실행하지 않은 이전 시험 FAIL을 만들지 않는다.
+당시 main 선택 manifest(`cbc09f2:tests/fixtures/dev3-module-c2/drained-handoff/manifest.json`; [원본 보존 위치](#merge-main-20261028))는 신규4·직접 영향4·source3의 **11개 exact selector, 각각1회**를 선택한다. 총600초·compiler90초·case30초·로그8MiB·test stack32MiB를 실행 전에 고정했다. 독립 사전 리뷰가 기존 physical source 시험의 신규 drain phase 누락과 resume 하한의 Pending 사용을 지적했다. Drained 입력·반환 하한과 drain max를 보완하고 그 시험을 선택 목록에 추가한 뒤 첫 실행했다. 이는 정적 지적이며 실행하지 않은 이전 시험 FAIL을 만들지 않는다.
 
 - 신규4: 건강한 handoff의 원 pins/version·content0·before bytes, 외부 fence, 정상 unfinished Drop, handoff panic. 정상 Drop은 외부 fence/panic 없이 pin-return hook에서 이미 fenced/Abandoned·active0·version 반환·pins4를 확인한 뒤 pins0/Q0을 검산한다. 오류3개는 원 C04/N03 독립 기대값과 현재-build memory recovery를 사용한다.
 - 직접 영향4: MT03 Pending Full Undo LOAD, MT05 lower-image flush/recLSN, MT07 유한 content Drain fence, MF10 partial install/unwind·복구. 새 consuming 경계의 정상·실패·정리 경로만 선택했다.
@@ -1309,7 +1309,7 @@ Operation은 refs/lease·caller scratch만 소유한다. refs 정리→최종 de
 
 #### 실행 전 선택·리뷰 보완
 
-[동결 manifest](../../tests/fixtures/dev3-module-c2/call-scope/manifest.json)에 현재 diff와 **runtime18·compiler4, 각각1회**의 관계를 고정했다. 총600초·compiler90초·case30초·로그8MiB·stack32MiB다. 참고 manifest의 과거 r2/r3 선택·실패 metadata를 제거하고 main baseline·변경 경로를 기록했다. main의 wrapper 반환 Result 계수 관례를 operation/scope entry에도 유지했다.
+당시 main 선택 manifest(`cbc09f2:tests/fixtures/dev3-module-c2/call-scope/manifest.json`; [원본 보존 위치](#merge-main-20261028))에 현재 diff와 **runtime18·compiler4, 각각1회**의 관계를 고정했다. 총600초·compiler90초·case30초·로그8MiB·stack32MiB다. 참고 manifest의 과거 r2/r3 선택·실패 metadata를 제거하고 main baseline·변경 경로를 기록했다. main의 wrapper 반환 Result 계수 관례를 operation/scope entry에도 유지했다.
 
 독립 사전 리뷰가 변경 query helper의 Found 분기를 직접 실행하는 사례가 빠졌음을 지적했다. 신규 Found 시험은 scope API 자체를 검증하고 기존 MC02는 query의 Missing만 검증하므로, 실제 query(..., found=true)를 호출하는 MT01을 실행 전에 추가했다. 이는 정적 시험선택 지적이며 실행하지 않은 FAIL을 만들지 않는다.
 
@@ -1477,6 +1477,8 @@ shared22256B, Full41576B, Resident16860B를 유지한다. 현재 PreparedCatalog
 
 manifest SHA-256은 `45af3e9e36ec38aac1bbe4ec65edcb376d60396b6ee1c318fb8ccd27dff14efc`, r2 ELF는 `4fe0d26e03890679100f937336f707e4c9d3788580b3c081c46fde980bbdf2ce`다. 경과15.27/25.85초는 성능 결과가 아니다. 변경 Rust의 파일별 rustfmt만 적용하고 전체 fmt/Clippy·문서 verifier·push는 실행하지 않았다. `/root/module_review`는 실제 diff·문서6개·r1/r2 각 source5625개와 fingerprint/inventory/manifest/runner/helper/로그/존재 ELF를 읽기 전용 대조하고 **이 관측 단위 D1/D2 한정 수용·필수 수정0**으로 판정했다. 검토자는 수정·빌드·시험·문서 verifier를 실행하지 않았고 `/root`가 반영한다. 다음 단위는 stage 이후 필요 없는 준비 배열의 실제 수명 종료이며 source-before-progress 진입 틈·writer/progress 전체 합산·Row/terminal/recovery·M4/M5 의무는 유지한다.
 
+
+이 절의 manifest와 selector는 당시 finish source의 동결 기록이다. 후속 [Pending image 수명 분리](#c2-pending-image)에서 관측 selector를 `catalog_commit_phase_sources_measure_consumed_preparation`으로 바꿨으므로, 예전 manifest를 현재 main의 실행 목록으로 사용하지 않는다. 원 source·선택·결과는 그대로 보존한다.
 
 <a id="c2-pending-image"></a>
 ### C2 stage 이후 준비 배열 수명 종료 — 2026-10-27
@@ -2049,3 +2051,15 @@ native N03의 별도 계획·원 controller·budget·source/ELF/input identity�
 N03는 독립 사전 admission 수용 뒤1회 PASS했다. produce는 실제 WAL sync 성공 뒤 오류가 보고된 UNKNOWN 경계(LSN9)에서 controller가 종료했고 ACK를 만들지 않았다. recover는 동일 ELF의 새 process에서 LSN15까지 완료했으며 oracle이 WAL·home·Base·CURRENT·회수 순서와 원 입력을 검산했다. 실제12.36초는 성능 결과가 아니다. 원 `native-r2/catalog-native/N03/result.json` SHA256 `2933f37b503d36338ce40ac8f1d7b0d33739a9dfebf14dceb3cca60fb0dc2d6a`, admission `d33a3e19428a218ebcd412fbef392c96f92b3adcb5bfffabddebb1d389f44b6e`, 독립 사전 audit `bc447a2ad996940c3ae1d1192332ac49ef0e873fc0a46246d6271dfff1038c1a`와 두 phase의 원 로그·trace·DB snapshot을 보존한다. 사전 검토에서 준비 import가 만든 추가 pycache1개를 제거하고 archive inventory 순서의 identity 설명을 정정한 뒤 승인했다. 실제 제품 source·ELF·선택13 결과는 바뀌지 않았다.
 
 시험 후 변경은 결과·색인·anchor를 정리한 문서9파일뿐이며 제품·fixture·scripts는 동결 source와 동일하다. 독립 최종 D1/D2를 이번 병합 범위에서 수용했으며 미해결 필수 수정은0이다. 검토자는 두 부모 대비 제품 보존·13개 원 로그/identity·N03 실제 trace와 snapshot의 WAL15 frame·최종 allocated home13 page·capture Base64 page 및 순서를 직접 검산했고, 현재 제품/fixture/scripts 동일·문서9개 보완·원 stash hash 유지를 확인했다. `final-review.json` SHA256 `480a75b2bdf02e199fe279a972a16a7105ed1266445a03b7dd8f5f2048d5919a`에 판정을 보존한다. 이 수용은 현재 병합의 관련 검증에 한정하며 전체 M4/M5 인수로 승격하지 않는다.
+
+
+<a id="merge-review-main-20261028"></a>
+### 병합 후 전체 분량 코드 리뷰 — 2026-10-28
+
+사용자의 병합 결과 검토·즉시 수정 지시에 따라 merge `95e6bb41fa874d1d84e2823b949c06187257efc3`를 두 부모 `cbc09f2`·`76f91e0`와 각각 대조했다. OCR delegate preview/rules의 고유 대상100개(Rust99/관리 JSON1)에 기본 제외된 문서12·fixture75를 추가하여 전체187개 경로를 검토했다. 경로 이동 전 `commit_bridge.rs`의 삭제는 `plan4_apply/terminal.rs`와 함께 대조했다. `total_files=187`, `reviewed_files=187`, `skipped_files=0`, `coverage_rate=1.0`이다.
+
+`/root/catalog_merge_audit`가 Catalog/C2/C3의75개 Rust diff 전체와 owner·호출 경계를, `/root/row_merge_audit`가 Row/공통 codec24개 전체와 계약·fixture를 독립 검토했다. `/root`는 main 고유 결합·전체 부모 blob/자동 병합 재구성·JSON key/value·문서/fixture 원본과 참조를 검토했다. finish 단독134경로는 전부 그대로이며 main 단독6경로 중 제품/fixture4개는 그대로, 색인2개만 통합 상태로 갱신됐다. fixture75개는 finish74개/main1개 원본과 일치하고 manifest의 입력/probe 참조69개를 원 bytes/hash와 대조했다. 제품 유실·중복·권한 확대·정리 수명 회귀의 필수 수정은 발견하지 않았다.
+
+문서 참조2종을 수정했다. main 실행 기록8곳이 같은 경로의 finish manifest를 현재 main 선택으로 가리키던 부분은 `cbc09f2:path`와 원 보존 위치를 명시했다. `PreparedCatalog`의 현재 정의 링크는 실제 apply root로 정정했다. 과거 phase 관측 selector가 Pending image 단계에서 변경된 점도 기록해 원 manifest를 현재 실행 목록으로 사용하지 않도록 했다. 원 source별 PASS·FAIL·UNKNOWN·manifest bytes는 바꾸지 않았다.
+
+제품·fixture·시험 코드 변경0이므로 빌드/제품 시험을 반복하지 않았다. 직전13개 runtime·native N03 결과는 같은 원 source/ELF의 증거로만 보존하며 이번 리뷰의 새 PASS로 표시하지 않는다. 문서 verifier·전체 fmt/Clippy·push는 실행하지 않았다. OCR 원 preview/rules·187개 coverage·부모별 diff hash·각 검토자 판단·수정 내역은 `artifacts/merge-main-full-review-20261028/review-report.json` 및 해당 폴더에 둔다. 이 정적 리뷰는 전체 동시 admission·M4/M5 인수를 완료시키지 않는다.

@@ -32,7 +32,7 @@
 
 현재 `Plan4Retention::split`은 writer에 operation/control의 가변 borrow를, reader에 pool/history/visibility의 공유 borrow를, flusher에 원 flush control의 가변 borrow를 준다. 이 분할은 유지할 출발점이다. read actor가 storage 전체의 borrow를 가진 것은 writer/File 접근 권한을 기능 소비자에게 공개해야 한다는 뜻이 아니다.
 
-현재 Commit은 [`PreparedCatalog`](../../crates/engine/src/storage/wal_io/plan4_retention/catalog_live.rs)의 immutable private frame/after/before·core/binding/fence·digest에서 시작한다. [`CatalogCommitAttempt/Installed`](../../crates/engine/src/storage/wal_io/plan4_apply.rs), [`StagedCommit/DurableCommit/InstalledCommit`](../../crates/engine/src/storage/wal_io/plan4_apply/terminal.rs), [`PendingCommitTargets`](../../crates/engine/src/storage/dirty_frame/commit.rs)가 exact requirement와 원 PinSet을 연결한다. 임의 page mask·LSN·scalar durable 관측으로 해당 증거를 대체할 수 없다.
+현재 Commit은 [`PreparedCatalog`](../../crates/engine/src/storage/wal_io/plan4_apply.rs)의 immutable private frame/after/before·core/binding/fence·digest에서 시작한다. [`CatalogCommitAttempt/Installed`](../../crates/engine/src/storage/wal_io/plan4_apply.rs), [`StagedCommit/DurableCommit/InstalledCommit`](../../crates/engine/src/storage/wal_io/plan4_apply/terminal.rs), [`PendingCommitTargets`](../../crates/engine/src/storage/dirty_frame/commit.rs)가 exact requirement와 원 PinSet을 연결한다. 임의 page mask·LSN·scalar durable 관측으로 해당 증거를 대체할 수 없다.
 
 <a id="actual-dependencies"></a>
 ## 3. 실제 Rust 의존과 M1 분류
