@@ -191,15 +191,13 @@ fn observe<'a>(
         return Err(Error::IdentityMismatch);
     }
     match status.state() {
-        TransactionState::Aborting(RollbackState::Statement { target, next }) => {
-            if next != head || target.is_some() && !target_found {
-                return Err(Error::OrderMismatch);
-            }
+        TransactionState::Aborting(RollbackState::Statement { target, next })
+            if next != head || target.is_some() && !target_found =>
+        {
+            return Err(Error::OrderMismatch);
         }
-        TransactionState::Aborting(RollbackState::Transaction { next }) => {
-            if next != head {
-                return Err(Error::OrderMismatch);
-            }
+        TransactionState::Aborting(RollbackState::Transaction { next }) if next != head => {
+            return Err(Error::OrderMismatch);
         }
         _ => (),
     }

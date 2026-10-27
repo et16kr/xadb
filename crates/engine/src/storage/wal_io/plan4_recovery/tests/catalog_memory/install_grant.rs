@@ -39,7 +39,9 @@ fn current_profile_rejects_legacy_scope1_before_installation() {
                         4 => writer.finish_empty_terminal(owner, job),
                         _ => unreachable!(),
                     };
-                    let error = result.err().expect("legacy scope rejected");
+                    let Err(error) = result else {
+                        panic!("legacy scope rejected");
+                    };
                     assert_eq!(
                         (error.phase, error.effect),
                         (RetentionPhase::Prepare, Effect::Unchanged)

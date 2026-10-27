@@ -125,24 +125,6 @@ pub(super) fn source_bytes<W: WriterNamespace>() -> usize {
 }
 
 #[cfg(test)]
-mod tests {
-    use super::*;
-    use crate::storage::wal_io::plan4_test_support::Writer;
-    #[test]
-    fn statement_validation_and_result_carriers_fit_fixed_classes() {
-        let source = source_bytes::<Writer>();
-        let full = lookup::source_bytes::<Writer>();
-        let resident = lookup::resident_source_bytes::<Writer>();
-        println!(
-            "STATEMENT_SOURCE wrapper={source} held={} full={full} resident={resident} whole_floor=NOT_CONNECTED",
-            held_source_bytes()
-        );
-        assert!(full >= source + held_source_bytes());
-        assert!(resident >= source + held_source_bytes());
-    }
-}
-
-#[cfg(test)]
 impl<'b, 'a, 's, 'c, 'p, 'd, 'm, 'w, W: WriterNamespace>
     ReadPort<'b, 'a, 's, 'c, 'p, 'd, 'm, 'w, W>
 {
@@ -161,10 +143,27 @@ impl<'b, 'a, 's, 'c, 'p, 'd, 'm, 'w, W: WriterNamespace>
             isolation: self.isolation,
             visibility: None,
         };
-        let result = match unlinked.catalog_statement_call(owner, statement) {
-            Err(error) => Err(error),
-            Ok(_) => panic!("missing original visibility must be rejected"),
+        let Err(error) = unlinked.catalog_statement_call(owner, statement) else {
+            panic!("missing original visibility must be rejected");
         };
-        result
+        Err(error)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::storage::wal_io::plan4_test_support::Writer;
+    #[test]
+    fn statement_validation_and_result_carriers_fit_fixed_classes() {
+        let source = source_bytes::<Writer>();
+        let full = lookup::source_bytes::<Writer>();
+        let resident = lookup::resident_source_bytes::<Writer>();
+        println!(
+            "STATEMENT_SOURCE wrapper={source} held={} full={full} resident={resident} whole_floor=NOT_CONNECTED",
+            held_source_bytes()
+        );
+        assert!(full >= source + held_source_bytes());
+        assert!(resident >= source + held_source_bytes());
     }
 }

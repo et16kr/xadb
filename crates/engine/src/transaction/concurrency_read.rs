@@ -133,7 +133,7 @@ pub(crate) fn entry_source_observation() -> (usize, usize, usize, usize) {
         + 2 * size_of::<(usize, &OwnerSlot)>()
         + 5 * size_of::<&()>()
         + 2 * size_of::<u16>()
-        + 8 * size_of::<usize>()
+        + size_of::<[usize; 8]>()
         + 8 * size_of::<bool>();
     // Include the copied match input, expected tuple, extracted key/mode and
     // returned/extracted iteration values. No State/slot array is copied.
@@ -143,7 +143,7 @@ pub(crate) fn entry_source_observation() -> (usize, usize, usize, usize) {
         + 2 * size_of::<Mode>()
         + 2 * size_of::<std::iter::Enumerate<std::slice::Iter<'_, OwnerSlot>>>()
         + size_of::<(usize, &OwnerSlot)>()
-        + 8 * size_of::<usize>()
+        + size_of::<[usize; 8]>()
         + 6 * size_of::<&()>()
         + 8 * size_of::<bool>();
     let guarded = locks

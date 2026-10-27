@@ -558,42 +558,6 @@ pub(in super::super) fn wait_source_observation<W: WriterNamespace>() -> [usize;
     [parent, bridge, handoff, parent + bridge.max(handoff)]
 }
 
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn consumed_preparation_has_bounded_pending_image() {
-        use std::mem::size_of;
-        let prepared = size_of::<PreparedCatalog<'_, '_, '_>>();
-        let image = size_of::<CatalogCommitImage<'_, '_, '_>>();
-        let phases = source_phases();
-        println!("C2_COMMIT_IMAGE prepared={prepared} image={image} phases={phases:?}");
-        // The nine preparation targets and stamps must not be retained by
-        // the compact continuation. Its four borrowed after images are small.
-        assert!(image + 1024 <= prepared);
-        inspect::<crate::storage::wal_io::plan4_test_support::Writer>("memory");
-        #[cfg(target_os = "linux")]
-        inspect::<super::super::super::super::native::Writer>("native-type");
-    }
-
-    fn inspect<W: WriterNamespace>(kind: &str) {
-        let shared = source::shared_bytes::<W>();
-        let live = resources::source_census::<W>();
-        let recovered = super::super::super::super::super::plan4_recovery::source_census::<W>();
-        let phases = source_phases();
-        println!(
-            "C2_COMMIT_IMAGE_BOUND {kind} shared={shared} live={live:?} recovered={recovered:?}"
-        );
-        assert!(shared + phases.peak() <= 65_536);
-        assert_eq!(live.catalog_commit, phases.peak());
-        assert!(live.peak <= 65_536 && live.metadata <= 196_608 && live.whole <= 262_144);
-        assert!(
-            recovered.peak <= 65_536 && recovered.metadata <= 196_608 && recovered.whole <= 262_144
-        );
-    }
-}
-
 /// Observations for the pending writer admission design, not installed charges.
 /// Actual preparation and compact Pending carriers are measured separately.
 #[cfg(test)]
@@ -692,4 +656,40 @@ pub(in super::super) fn phase_source_observations<W: WriterNamespace>()
         ("publish_return", publish),
         ("production_broad", source_bytes()),
     ]
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn consumed_preparation_has_bounded_pending_image() {
+        use std::mem::size_of;
+        let prepared = size_of::<PreparedCatalog<'_, '_, '_>>();
+        let image = size_of::<CatalogCommitImage<'_, '_, '_>>();
+        let phases = source_phases();
+        println!("C2_COMMIT_IMAGE prepared={prepared} image={image} phases={phases:?}");
+        // The nine preparation targets and stamps must not be retained by
+        // the compact continuation. Its four borrowed after images are small.
+        assert!(image + 1024 <= prepared);
+        inspect::<crate::storage::wal_io::plan4_test_support::Writer>("memory");
+        #[cfg(target_os = "linux")]
+        inspect::<super::super::super::super::native::Writer>("native-type");
+    }
+
+    fn inspect<W: WriterNamespace>(kind: &str) {
+        let shared = source::shared_bytes::<W>();
+        let live = resources::source_census::<W>();
+        let recovered = super::super::super::super::super::plan4_recovery::source_census::<W>();
+        let phases = source_phases();
+        println!(
+            "C2_COMMIT_IMAGE_BOUND {kind} shared={shared} live={live:?} recovered={recovered:?}"
+        );
+        assert!(shared + phases.peak() <= 65_536);
+        assert_eq!(live.catalog_commit, phases.peak());
+        assert!(live.peak <= 65_536 && live.metadata <= 196_608 && live.whole <= 262_144);
+        assert!(
+            recovered.peak <= 65_536 && recovered.metadata <= 196_608 && recovered.whole <= 262_144
+        );
+    }
 }

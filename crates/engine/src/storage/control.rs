@@ -204,7 +204,7 @@ impl Profile {
 }
 
 fn profile_prefix(id: u32, format: u16) -> Result<[u8; 188]> {
-    if !matches!(format, 1 | 2 | 3) {
+    if !matches!(format, 1..=3) {
         return Err(ControlError::UnsupportedFormat);
     }
     if !(1..=3).contains(&id) {
