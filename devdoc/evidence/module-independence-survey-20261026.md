@@ -1340,3 +1340,14 @@ r3 test build·exact runtime9·compiler4 PASS, build/probe 경고0이다. 원 MF
 | r3 test build/runtime9/compiler4 PASS | `8782501923622d54e70d0e14d553897475cc993e2b4c91e2773621d2e29754c2` | `47cde5bf37f41342c01276adea30c77bc3d51bfaa59f62efd039c887240bbc0d` | `b427d198dbd0fa543784a7e34a04153d93712901fbad46567c9bb810ae38cd05` |
 
 r1 source5673파일·20.28초다. r2 source5673파일·27.65초·ELF `3c8d7a9208244a190bb79fd357e6970c6cd5e9eb786d3815a93c53b937052cd3`다. r3 source5673파일·64.44초·ELF `0fae7eeb9e5cee636b49d32dec494c551644fd7bb0c36090119130059344106b`다. 실행 시간은 성능 결과가 아니다. r1/r2 FAIL·후속 NOT_RUN과 무변경 production 생략을 보존하며 완료된 runtime은 반복하지 않았다. 변경 rustfmt·diff whitespace만 확인하고 전체 fmt/Clippy·문서 verifier·push는 실행하지 않았다.
+
+
+<a id="c3-prepared"></a>
+### C3 Prepared 실제 정의의 apply 경계 — 2026-10-27
+
+기준 `4f8afb7`, 작성/통합 `/root`, 독립 검토 `/root/module_review`. [소유 계약](../contracts/dev3-module-boundaries.md#apply-prepared)에 따라 PreparedCatalog의 실제 정의·private field를 apply root로 이동하고 canonical disk export·내부 imports만 연결했다. field type/order·생성/검산/소비 impl·source 계산·wire는 그대로다.
+
+[사전 manifest](../../tests/fixtures/dev3-module-c3/prepared/manifest.json)는 production/test target build 및 신규 compiler4(관찰 성공, private Owner field E0616:4, Clone 부재 E0599:4, 실제 commit_catalog에 같은 Prepared 두 번 전달 E0382:10)를 선택했다. 총300초/compiler90초/출력8MiB이며 runtime/source census/하위 codec/회귀는 변경이 없어 NOT_REPEATED_UNCHANGED_CODE다. 실행 결과와 독립 검토는 아래에 기록한다.
+
+
+r1 production/test build·compiler4 PASS, 모든 build/probe 경고0이다. 원 `artifacts/module-c3-prepared-20261027-r1/`에 5678파일의 immutable source/inventory·runner/helpers·ELF·probe export/diagnostic을 보존한다. source `7a1c1ea402eb1c4e5002a61b1bf7db4f5a574cc4ff6268618c3c019aa82e38ce`, manifest `62b62a797a4fe736d13ad06330212b43c2749e4e510f5ed208e540583dd6fd75`, ELF `3ef827b3b087cdd88fc897694b71bfcec2a9d16a4e0ed878c3dfbb7a2d1184ca`, result `f9b3fde7fce8005f58a75a10f2255a44e99b1e92c362bfdd6a46e7661e9493f1`다. 실제 52.58초는 성능 결과가 아니다. runtime을 실행하지 않았으며 기존 source별 PASS를 새 실행으로 표시하지 않는다. 변경 rustfmt·diff whitespace만 확인했고 전체 fmt/Clippy·문서 verifier·push는 실행하지 않았다. 독립 D1/D2는 제품8경로·source5678파일 전부/inventory/fingerprint·runner/helpers/manifest/ELF·원 compiler logs와4 probe의 exact two-file delta/diagnostic span 및6문서를 대조해 한정 수용했다. 필수 수정은0이며 검토자는 수정·빌드·시험·verifier를 실행하지 않았다.

@@ -7131,5 +7131,31 @@
     "remaining_supply": "Prepared whole migration; writer/entry/tail aggregate source; Row actual supply/recovery/A+B/M4/M5.",
     "source_roots_changed": false,
     "source_accounting": "Temporary TerminalWal and receiver16B; detailed wait bridge3272/Pending5336, conservative Pending phase9136, production broad36844. Memory live62684/recovered64060; native type live62820/recovered64196. No whole aggregate admission."
+  },
+  "dev3_module_c3_prepared": {
+    "status": "ACCEPTED_LIMITED_D1_D2",
+    "contract_ref": "dev3-module-boundaries.md#apply-prepared",
+    "implemented_paths": [
+      "tests/fixtures/dev3-module-c3/prepared/commit_twice.rs",
+      "tests/fixtures/dev3-module-c3/prepared/manifest.json",
+      "tests/fixtures/dev3-module-c3/prepared/non_clone.rs",
+      "tests/fixtures/dev3-module-c3/prepared/observe.rs",
+      "tests/fixtures/dev3-module-c3/prepared/private_owner.rs"
+    ],
+    "modified_paths": [
+      "crates/engine/src/storage/disk.rs",
+      "crates/engine/src/storage/wal_io/disk_api.rs",
+      "crates/engine/src/storage/wal_io/plan4_apply.rs",
+      "crates/engine/src/storage/wal_io/plan4_retention/catalog_commit.rs",
+      "crates/engine/src/storage/wal_io/plan4_retention/catalog_live.rs",
+      "crates/engine/src/storage/wal_io/plan4_retention/create_pair.rs",
+      "crates/engine/src/storage/wal_io/plan4_retention/visibility/catalog_retirement.rs",
+      "crates/engine/src/storage/wal_io/plan4_retention/visibility/epochs.rs"
+    ],
+    "scope": "Actual PreparedCatalog definition/private fields moved to apply root; canonical disk export; original checked factory/consumer and field types/order unchanged.",
+    "evidence_ref": "module-independence-survey-20261026.md#c3-prepared",
+    "validation": "Production/test target build and exact compiler4 PASS, warnings0. runtime/source census NOT_REPEATED_UNCHANGED_CODE. Immutable source/inventory/ELF/probe diagnostic evidence retained; independent D1/D2 audited exact source/probe deltas/diagnostics and six documents; accepted limited scope with required fixes0.",
+    "remaining_supply": "Writer/whole entry-tail-source admission, Row actual supply/recovery/A+B/M4/M5.",
+    "source_roots_changed": false
   }
 }

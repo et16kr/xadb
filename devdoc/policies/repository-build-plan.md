@@ -729,3 +729,8 @@ apply의 private 권한·관찰 accessor·legacy 소비 adapter와 current Profi
 ### C3 Catalog terminal 소유 이전
 
 apply root의 private receipt·actual terminal 자손과 Busy 시험·manifest/compiler4를 JSON `dev3_module_c3_terminal`에 등록한다. 원 `wal_io/commit_bridge.rs`를 제거하고 physical WAL의 semantic method/re-export 사슬을 정리했다. generic core/dirty_frame은 disk receipt를 소비한다. 기존 역사적 modified_paths와 원 source 증거는 이전 전 identity를 유지하고 새 항목에 제거·이전 관계를 기록한다. source roots/package/dependency/disk 형식은 유지하며 [선택 증거](../evidence/module-independence-survey-20261026.md#c3-terminal)는 전체 C3/Row/aggregate 공급과 구별한다.
+
+
+### C3 Prepared 정의와 canonical 소비
+
+실제 PreparedCatalog 정의는 원 apply root로 이동하고 checked factory/소비 impl은 기존 자손에 남는다. canonical disk export·epoch/retirement/terminal imports의 기존8경로와 신규 manifest/compiler4를 JSON `dev3_module_c3_prepared`에 등록한다. field type/order·runtime/source 식과 source roots/package/dependency/wire는 유지한다. [컴파일 선택 증거](../evidence/module-independence-survey-20261026.md#c3-prepared)를 runtime 재실행이나 전체 C3 공급으로 승격하지 않는다.

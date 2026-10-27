@@ -15,7 +15,7 @@ use crate::{
         transaction_record::{StatusSlotRef, TxnRef},
         wal_io::{DurableWal, MutableStorageOwner, WalIoError, WalRequirement, WalRuntime},
     },
-    transaction::concurrency::{InstallationKey, Owner, PageConcurrency},
+    transaction::concurrency::{InstallationKey, Owner, OwnerIdentity, PageConcurrency},
 };
 use foundation::{error::Effect, namespace::WriterNamespace};
 use std::sync::{Mutex, atomic::AtomicU8};
@@ -110,8 +110,19 @@ mod create_pair;
 #[path = "plan4_retention/visibility.rs"]
 mod visibility;
 pub(in crate::storage) use create_pair::CatalogRetirementRejected;
-#[allow(unused_imports)]
-pub(crate) use create_pair::PreparedCatalog;
+use create_pair::catalog_live::CatalogPayload;
+
+/// No Clone/Copy and no raw constructor. This borrows immutable private
+/// operation bytes, not replay/control/page guards or a second storage owner.
+pub(crate) struct PreparedCatalog<'i, 'c, 's> {
+    payload: CatalogPayload<'i, 'c, 's>,
+    owner: OwnerIdentity,
+    requests: [TargetRequest; 9],
+    roles: [u8; 9],
+    count: usize,
+    stamps: [Option<FrameStamp>; 9],
+    before: &'i [[u8; PAGE_BYTES]; 8],
+}
 
 pub(in crate::storage) use create_pair::{
     TxPairAuthority, TxPairCancelKind, TxPairCancelPermit, TxPairControlCommit,

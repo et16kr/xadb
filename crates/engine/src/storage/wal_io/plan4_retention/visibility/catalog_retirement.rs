@@ -1,8 +1,8 @@
 //! Sealed bridge from the actual CREATE producer and held original targets.
 //! Parsing a frame or supplying a raw reference cannot call these factories.
-use super::super::create_pair::catalog_live::{
-    PreparedCatalog,
-    retirement::{CatalogRetirementApplied, CatalogRetirementRejected, CatalogRetirementStaged},
+use super::super::PreparedCatalog;
+use super::super::create_pair::catalog_live::retirement::{
+    CatalogRetirementApplied, CatalogRetirementRejected, CatalogRetirementStaged,
 };
 use super::authority::ReferenceTarget;
 use super::*;

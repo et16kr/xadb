@@ -443,22 +443,10 @@ impl<'s, 'c, W: WriterNamespace> ReservedCatalogCreate<'_, '_, 's, 'c, '_, '_, '
     }
 }
 
-/// No Clone/Copy and no raw constructor. This borrows immutable private
-/// operation bytes, not replay/control/page guards or a second storage owner.
-pub(crate) struct PreparedCatalog<'i, 'c, 's> {
-    payload: CatalogPayload<'i, 'c, 's>,
-    owner: OwnerIdentity,
-    requests: [TargetRequest; 9],
-    roles: [u8; 9],
-    count: usize,
-    stamps: [Option<FrameStamp>; 9],
-    before: &'i [[u8; PAGE_BYTES]; 8],
-}
-
 /// Immutable bytes and the original control cut needed after staging. This
 /// owns no pin, WAL effect or publication authority; those remain in the
 /// original stage/installation receipts. Only preparation constructs it.
-pub(super) struct CatalogPayload<'i, 'c, 's> {
+pub(in super::super) struct CatalogPayload<'i, 'c, 's> {
     core: &'c PageConcurrency<'s>,
     binding: &'s AtomicU8,
     fence: &'s SessionFence,

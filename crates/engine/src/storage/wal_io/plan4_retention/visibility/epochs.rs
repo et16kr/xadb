@@ -1,7 +1,7 @@
 //! Private epoch bookkeeping fed only by the original checked Catalog adapters.
 //! Decoded identities are observations; activation remains inside exclusive
 //! source validation and changes remain inside the original writer borrow.
-use super::super::{control, create_pair::PreparedCatalog, history, recovery};
+use super::super::{PreparedCatalog, control, history, recovery};
 use super::*;
 use crate::storage::{
     allocation_page::{self, AllocationEntry},

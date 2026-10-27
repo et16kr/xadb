@@ -701,6 +701,13 @@ actual terminal의 정상/오류 호출은 다음 순서로 고정한다.
 
 임시 TerminalWal와 receiver16B를 source 식에 추가했다. 세분한 wait 관측5336B, 보수적 Pending phase9136B를 구별하며 Full34020B/shared19328B와의 합58684B는 제품 aggregate admission이 아니다. 원 production broad36844B·memory/native source gate는 기존 한도를 유지한다. [source별 선택 증거](../evidence/module-independence-survey-20261026.md#c3-terminal)를 보존한다. Prepared 전체 이전·writer/entry/tail 회계·Row 공급/복구·C3 전체·M4/M5는 미완료다. 독립 D1/D2는 actual diff·r1–r3 전체 source/inventory·fingerprint·manifest·runner/helpers·ELF·원 로그·probe4 exact delta/diagnostic span 및6문서를 대조해 한정 수용했다. 필수 미해결 수정은0이며 검토자는 수정·시험·빌드·verifier를 실행하지 않았다.
 
+<a id="apply-prepared"></a>
+#### C3 Prepared의 실제 정의·소비 경계 — 2026-10-27
+
+기준 `4f8afb7`에서 `PreparedCatalog`의 실제 정의를 apply root로 옮기고 canonical `disk::PreparedCatalog`로 노출한다. payload·OwnerIdentity·targets9·roles9·count·stamps9·before loan의 field type/order와 private visibility를 유지한다. 실제 checked factory/검산/소비 impl은 원 `catalog_live` 자손에 남는다. `CatalogPayload`는 apply에서 타입을 지명할 수 있는 범위로만 열며 자체 field·생성자는 비공개다. 기존 create_pair의 type 재노출은 제거하고 terminal/epoch/retirement는 root를 직접 소비한다.
+
+이 한정 diff에는 runtime predicate/body·source 식·WAL/영속 형식 변화가 없다. [선택 compiler 증거](../evidence/module-independence-survey-20261026.md#c3-prepared)는 관찰 성공·private field/Clone/이중 Commit 거절만 판정하며 기존 runtime/source census는 반복하지 않는다. original owner/loan을 재구성하지 않고 원 checked factory와 소비 경계를 함께 되돌린다. 독립 D1/D2는 실제 source/원 compiler evidence와6문서를 대조해 한정 수용했고 필수 수정은0이다. writer/전체 source 회계·Row/복구·C3 전체·M4/M5는 미완료다.
+
 <a id="row-reservation"></a>
 ### 6.6 RowReserve→A producer→prepare/apply/cancel의 consuming 경계
 

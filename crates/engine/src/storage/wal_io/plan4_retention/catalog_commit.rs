@@ -2,9 +2,7 @@
 //! Immutable private preparation survives Pending; no replay/control gate or
 //! content/version latch is held across the original WAL durability call.
 use super::super::*;
-use super::catalog_live::{
-    CatalogCommitImage, PreparedCatalog, catalog_apply, catalog_mark_staged,
-};
+use super::catalog_live::{CatalogCommitImage, catalog_apply, catalog_mark_staged};
 #[cfg(test)]
 use crate::transaction::concurrency::catalog_test_support::{
     Point as CatalogPoint, hit as catalog_hook,

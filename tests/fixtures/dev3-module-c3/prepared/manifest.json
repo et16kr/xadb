@@ -1,0 +1,49 @@
+{
+  "schema": "XADB_MODULE_C3_PREPARED_V1",
+  "status": "FROZEN_INPUTS_NOT_EXECUTION_EVIDENCE",
+  "baseline": "4f8afb7",
+  "scope": "Move the actual PreparedCatalog definition unchanged to apply root, private fields with actual preparation in the existing checked descendant; canonical disk type export. No runtime predicate/body/field type/order or source-expression change.",
+  "budget": {
+    "total_seconds": 300,
+    "compiler_seconds": 90,
+    "case_seconds": 30,
+    "output_bytes": 8388608,
+    "rust_min_stack": 33554432
+  },
+  "runtime_tests": [],
+  "compiler_tests": [
+    {
+      "name": "observe",
+      "path": "observe.rs",
+      "bytes": 203,
+      "sha256": "15b7ee274713c1ffe6d881d9f6fd20ff4c6dc047573a6826106f9b39d3a15bfc",
+      "expected_code": null,
+      "primary_line": null
+    },
+    {
+      "name": "private_owner",
+      "path": "private_owner.rs",
+      "bytes": 138,
+      "sha256": "fa9e840a97aa825886535a955f98a43875faa2e1b22d94833aa0a91cbce27db5",
+      "expected_code": "E0616",
+      "primary_line": 4
+    },
+    {
+      "name": "non_clone",
+      "path": "non_clone.rs",
+      "bytes": 140,
+      "sha256": "663d1cc6db2848a48851c78f7770cc39cdc06db939f83a1a641e0c32d63439f6",
+      "expected_code": "E0599",
+      "primary_line": 4
+    },
+    {
+      "name": "commit_twice",
+      "path": "commit_twice.rs",
+      "bytes": 447,
+      "sha256": "598cb5ab28228f21e210507335498c3e2338dbcf0718fbe7e49c846798d9a3af",
+      "expected_code": "E0382",
+      "primary_line": 10
+    }
+  ],
+  "selection_note": "Definition/visibility/import-only diff: production and test target compilation plus exact privacy/nonclone/consuming actual commit probes. No unchanged runtime/source census/codec/regression repeated."
+}
