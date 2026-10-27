@@ -7002,5 +7002,29 @@
     "validation": "production/test build +selected4 PASS warning0; independent D1/D2 accepted limited, required fixes0",
     "remaining_supply": "Compact floor14776 observation is not admission; load_eligible unchanged; whole short floor/writer/progress/Row/terminal/recovery and M4/M5 remain",
     "source_roots_changed": false
+  },
+  "dev3_module_c2_admitted_validation": {
+    "status": "ACCEPTED_LIMITED_D1_D2",
+    "contract_ref": "dev3-module-boundaries.md#operation-source-admission",
+    "implemented_paths": [
+      "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/admitted_validation.rs",
+      "tests/fixtures/dev3-module-c2/admitted-validation/manifest.json"
+    ],
+    "modified_paths": [
+      "crates/engine/src/storage/dirty_frame.rs",
+      "crates/engine/src/storage/dirty_frame/registration.rs",
+      "crates/engine/src/storage/dirty_frame/retention_residency.rs",
+      "crates/engine/src/storage/wal_io/plan4_apply/source.rs",
+      "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory.rs",
+      "crates/engine/src/storage/wal_io/plan4_retention/read/lookup.rs",
+      "crates/engine/src/storage/wal_io/plan4_retention/read/scope.rs",
+      "crates/engine/src/storage/wal_io/plan4_retention/visibility.rs",
+      "crates/engine/src/storage/wal_io/plan4_retention/visibility/snapshot.rs"
+    ],
+    "scope": "D2 original admission before unobserved deep metadata validation; pool/visibility-guardless health/origin then original core Owner/progress guards, fixed reservation owns complete original pool/snapshot validators and Fatal cleanup; no authority/lock/format changes",
+    "evidence_ref": "module-independence-survey-20261026.md#c2-admitted-validation",
+    "validation": "r1 production PASS/test E0583 FAIL/runtime12 NOT_RUN preserved; cfg(test) path-only r2 test-build+exact12 PASS warning0, production NOT_REPEATED_UNCHANGED_CODE; independent D1/D2 source/evidence/six-document review accepted, required product fixes0",
+    "remaining_supply": "validation6958 inside Full33972/Resident17588; shared19328 unchanged; whole uncharged floor/writer/progress/Row/terminal/recovery and M4/M5 remain",
+    "source_roots_changed": false
   }
 }

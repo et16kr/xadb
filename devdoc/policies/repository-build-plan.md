@@ -710,3 +710,8 @@ actual health/source/Scope/legacy facade·원 progress consuming finish와 관�
 ### C2 LOAD claim borrow 등록 — 2026-10-27
 
 실제 reader_load/retention_residency2기존경로와 선택 fixture1경로를 JSON `dev3_module_c2_borrowed_load_claims`에 등록한다. 같은 registry의 참조 검산이며 원 권한·backing·source roots·package/dependency는 유지한다. [선택4 증거](../evidence/module-independence-survey-20261026.md#c2-borrowed-load-claims)는 해당 actual LOAD와 변경 관측에 한정한다.
+
+
+### C2 예약 뒤 원 검산
+
+실제 pool/visibility/read/source9기존경로, 신규 시험1경로와 선택 manifest1경로를 JSON `dev3_module_c2_admitted_validation`에 등록한다. [내부 admission D2](../contracts/dev3-module-boundaries.md#operation-source-admission)는 pool/visibility guard 없는 원 health/origin, 원 core의 Owner/progress 검사와 source 예약 뒤 전체 pool/snapshot 검산을 수행한다. 원 권한·backing·source roots·package/dependency는 유지한다. [선택12 증거](../evidence/module-independence-survey-20261026.md#c2-admitted-validation)는 원 test-build FAIL과 source별 미반복을 보존하며 전체 floor/phase 공급은 미완료다.

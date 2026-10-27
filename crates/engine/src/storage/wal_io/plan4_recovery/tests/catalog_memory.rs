@@ -1162,6 +1162,8 @@ mod resident_faults;
 #[path = "catalog_memory/source_return.rs"]
 mod source_return;
 
+#[path = "catalog_memory/admitted_validation.rs"]
+mod admitted_validation;
 #[path = "catalog_memory/source_entry.rs"]
 mod source_entry;
 

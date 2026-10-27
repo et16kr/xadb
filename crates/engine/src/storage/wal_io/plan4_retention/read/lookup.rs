@@ -360,6 +360,7 @@ fn lookup_source_bytes<W: WriterNamespace>(resident: bool) -> usize {
                     // The final decoded output remains live through source return.
                     .max(super::super::source::leaf_source_bytes()),
         )
+        .max(super::scope::validation_source_bytes::<W>())
         .max(super::scope::consumer_source_bytes::<W>())
         .max(super::scope::legacy_boundary_source_bytes::<W>())
 }

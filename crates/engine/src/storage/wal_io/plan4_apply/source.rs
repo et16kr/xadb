@@ -284,6 +284,10 @@ pub(super) fn entry_source_observation() -> (usize, usize, usize) {
 
 #[cfg(test)]
 impl<W: WriterNamespace> ReadPort<'_, '_, '_, '_, '_, '_, '_, '_, W> {
+    pub(in crate::storage) fn catalog_test_fixed_charges(&self) -> [usize; 3] {
+        self.source_charges.observations()
+    }
+
     pub(in crate::storage) fn catalog_test_source_used(&self) -> u64 {
         let state = self
             .isolation

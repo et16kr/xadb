@@ -47,8 +47,7 @@ mod retention_residency;
 pub(in crate::storage) use plan4_residency::source_census as plan4_core_census;
 #[cfg(test)]
 pub(in crate::storage) use plan4_residency::test_support as plan4_load_test_support;
-#[cfg(test)]
-pub(in crate::storage) use retention_residency::entry_source_observation as retention_entry_source_observation;
+pub(in crate::storage) use retention_residency::entry_source_phases as retention_entry_source_phases;
 pub(in crate::storage) use retention_residency::source_census as retention_core_census;
 pub(in crate::storage) use status_residency::StatusLoadSnapshot as Plan4LoadSnapshot;
 mod residency;

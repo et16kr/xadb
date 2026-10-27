@@ -22,10 +22,9 @@ struct Slot {
     request: Option<TargetRequest>,
 }
 
-/// Observation-only closure for the retention directory, also a conservative
+/// Source-value closure for the retention directory, also a conservative
 /// bound for its resolve/address_present leaves. Counts returned and extracted
 /// registrations as well as allocator/current/prior in the nested predicate.
-#[cfg(test)]
 pub(super) fn retention_source_observation() -> usize {
     use std::mem::size_of;
     4 * size_of::<Registration>()

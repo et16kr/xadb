@@ -1,0 +1,71 @@
+{
+  "schema": "XADB_MODULE_C2_ADMITTED_VALIDATION_V1",
+  "status": "FROZEN_INPUTS_NOT_EXECUTION_EVIDENCE",
+  "baseline": "7c6318f",
+  "scope": "D2 original admission rejection precedes unobserved pool/snapshot metadata validation; guardless storage/pool/snapshot health and original owner projection remain first. Successful fixed reservation owns complete original validators and Fatal cleanup. Whole uncharged floor/writer phase not supplied.",
+  "budget": {
+    "total_seconds": 600,
+    "compiler_seconds": 90,
+    "case_seconds": 30,
+    "output_bytes": 8388608,
+    "rust_min_stack": 33554432
+  },
+  "runtime_tests": [
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::admitted_validation::capacity_and_original_admission_precede_unobserved_metadata_faults",
+      "reason": "New Full/Resident x pool/snapshot damage: original foreign/flusher admission and Capacity first, no extra refs/pins/I/O, after original charge released same damage causes exact Fatal and retains new charge."
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::admitted_validation::already_observed_pool_poison_precedes_capacity",
+      "reason": "New original pool poison under full source must be observed before reservation; source unchanged and original progress cleanup."
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::read::scope::tests::admitted_validation_is_inside_both_fixed_source_classes",
+      "reason": "New production validation phase source expression directly included in both original fixed classes."
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::source_entry::drain_waits_for_entry_before_source_charge",
+      "reason": "Changed begin validation order; actual Drain after original progress still waits through reservation/metadata validation and existing original operation rejection."
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::source_entry::failed_source_reservation_returns_progress_under_fence",
+      "reason": "Changed begin source failure with concurrent fence preserves Fatal and returns original progress."
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::source_entry::entry_unwind_returns_progress_without_source_charge",
+      "reason": "Changed begin retains original uncharged hook/unwind cleanup."
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::read::scope::tests::compact_health_keeps_poison_before_fence_and_original_phase",
+      "reason": "Changed compact_health dispatch preserves original storage poison/fence phase and immediate notification."
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::read_boundary::missing_leaf_and_foreign_owner_release_original_resources",
+      "reason": "Changed cheap owner projection and admitted normal Missing path preserve exact original caller/resources."
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::source::tests::catalog_class_uses_current_types_and_recovered_retained_owner",
+      "reason": "Changed actual fixed class formula now includes post-admission validation phase; authentic class charge shared calculation."
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::source::tests::fixed_resident_class_admits_two_and_never_escalates",
+      "reason": "Changed Resident source calculation preserves two original fixed reservations and no escalation."
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::commit_concurrency::catalog_mt03_pending_reader_loads_undo",
+      "reason": "Changed actual begin path must preserve mandatory Pending Undo LOAD and original snapshot/Drain completion."
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::resident_read::resident_snapshot_visibility_has_no_io",
+      "reason": "Changed post-admission snapshot validation preserves resident old/current snapshot results without I/O."
+    }
+  ],
+  "invariants": [
+    "Original foreign Owner/mode Frame projection and read admission failures are not converted to Capacity.",
+    "Capacity, Busy, InvalidRole, Drain and cheap origin rejection precede previously unobserved deep metadata failures.",
+    "Guardless poison/fence observation is not a health receipt; admitted original validation rechecks under original leaf.",
+    "Original source-before-progress close; Fatal retains original charge under fence, while original progress cleanup is attempted.",
+    "No new semaphore/manager/backing/cap/format, no synthetic Drain; validation is directly included in fixed class source max.",
+    "Only changed code/actual affected source paths selected; prior PASS/FAIL and unselected tests remain at original source."
+  ]
+}

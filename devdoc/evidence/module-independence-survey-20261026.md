@@ -1246,3 +1246,23 @@ cfg(test) source 관측은 두 copied Option/claim을 각각2×Option<&T>+2×&T�
 `artifacts/module-c2-borrowed-load-claims-20261027-r1/`의 source/inventory/compiler/ELF/4case 로그를 보존한다. source `30ab6d70fa6e99b72b5739708a5989f26d468fc30e4225d4f76421bf95d9d956`, manifest `a34e8c7abcd1d6731328f804e12b7e77c06ea4e5c260008444bfddc9e0c444f9`, ELF `608abbe84e86b62aa9c7d63e1105f4dbde9796341d4977f326bed62dbbdec632`, result `de8011a5c21f9b85b5797f4c31bde3da0d9cbe00a7cf36b0ac3abfeca7ae64cc`다. 실제37.63초는 성능 결과가 아니다.
 
 독립 `/root/module_review`는 실제2파일 diff·5650파일 source/inventory·manifest/runner/helpers·ELF/compiler·exact4와 각 context identity·문서6개를 읽기 전용 대조하여 D1/D2 한정 수용, 미해결 필수 수정0을 확인했고 `/root`가 반영을 확정했다. whole admission이나 Some conflict 전수 인수로 확대하지 않는다. 이전 DPT 표현/진단·class/layout와 무변경 compiler probe·복구·wrapper/workspace는 반복하지 않았다. 원 PASS/FAIL은 source별로 보존하며 변경 파일 rustfmt/diff whitespace 외 전체 fmt/Clippy·문서 verifier·push는 실행하지 않았다. 전체 source floor·writer/progress phase·Row/terminal/recovery와 M4/M5는 미완료다.
+
+<a id="c2-admitted-validation"></a>
+### C2 고정 source 예약 뒤 원 pool/snapshot 검산 — 2026-10-27
+
+기준 `7c6318f` · `XADB-MODULE-ADMISSION-002` D2 · 작성/통합 `/root` · 독립 검토 `/root/module_review`. [내부 입구 우선순위](../contracts/dev3-module-boundaries.md#operation-source-admission)를 한정 재개방한다. 원 source·progress의 동일 소유와 source→progress 종료는 유지하며, 원 pool/snapshot metadata 검산을 fixed 예약 안으로 이동했다. 기존 큰 검산을 거절 분기에서 다시 수행하는 대안은 uncharged floor를 줄이지 못하므로 채택하지 않았다.
+
+실제 begin은 guard 없는 storage/pool health와 원 origin, 기존 Owner::check_binding의 Frame 오류 projection, snapshot 원 registry/health/poison 관측, 기존 check/try read progress, source 예약, 원 전체 validate 순서다. 성공 scope가 작은 validation 오류를 받으면 `finish_entry_error`로 원 오류를 보유하고 source/progress를 소비한 뒤 Err<Scope>를 구성한다. Fatal은 기존 fence 아래 charge를 보존하고 원 progress 정리는 시도한다. full/resident source 식은 `validation_source_bytes`를 직접 max에 넣는다. 원 pool/visibility의 세 phase 계산을 제품 source 식에서 사용하며 guard끼리 배타라는 이유로 빼지 않고 양쪽 값을 모두 가산했다.
+
+[실행 전 manifest](../../tests/fixtures/dev3-module-c2/admitted-validation/manifest.json)는 changed-code12selector와 총600초/compiler90초/case30초/출력8MiB/stack33554432B를 동결했다. 신규 Full/Resident×pool bad sum/SnapshotGuard observed q 불일치4fixture는 foreign/flusher admission projection·Capacity의 무효과 거절 후 원 charge 반환, 동일 손상의 재시도 Fatal·잔여 charge를 비교한다. 신규 observed pool poison+Capacity1과 source phase1, 실제 Drain/fence/unwind3·변경 compact health1·foreign/Missing1·변경 class2·필수 Pending Undo LOAD1·Resident visibility1을 선택했다. 변경 없는 failed_source helper·이전 DPT/LOAD 표현/전체 wrapper는 반복하지 않는다.
+
+r1 production PASS 뒤 새 시험 모듈 경로 지정 누락 E0583으로 test-build FAIL·runtime12 NOT_RUN을 보존한다. cfg(test) path만 고친 r2는 production을 반복하지 않고 test-build·exact12 PASS·경고0을 확인했다. 새로운 validation6958B는 원 Full33972B/Resident17588B 안에 들어가며 shared19328B는 유지한다. SnapshotGuard의 observed q를 바꾼 fixture이며 실제 visibility registry row 손상으로 주장하지 않는다. Busy/Drain과 손상 metadata의 결합은 별도 실행하지 않았다. 해당 우선순위는 코드 순서의 읽기 검토로 확인했으며 healthy Drain 실행을 그 조합의 PASS로 확대하지 않는다.
+
+원 `artifacts/module-c2-admitted-validation-20261027-r{1,2}/`의 각 source5652파일/inventory·manifest/runner/helpers·compiler와 r2 ELF·12case 로그를 보존한다. r1에는 test ELF·runtime 로그가 없다. 실제 r1 20.45초/r2 38.85초는 성능 결과가 아니다. 공통 manifest SHA-256은 `caf6666b940e71ed4892b5ce7cbe8d3a7bbcb74d7ef9987eaae72b22633f2bc3`, r2 ELF는 `e8294794933577202c569fe3b481a9aac1f5faf83e29ba12d81e778ac356c3ef`다.
+
+| 실행 | source SHA-256 | result SHA-256 |
+| --- | --- | --- |
+| r1 test-build FAIL | `db75186dcb56c8d2d6786e12ce3a1876614e99500ea6e4fda3780639f603da7d` | `9dadac48820cdbdba7c987df38805a0392fe3f56c73d6a21337d0358865df9af` |
+| r2 선택12 PASS | `a42fa7e538d9d9daed5cd9f6593e5499d2166d1b5dc93c9da86034e786c7768d` | `4920519ad2d9c1fef52a4aacebfb189ebd2dfd4196ae2e39e443196db393259a` |
+
+독립 `/root/module_review`는 실제 제품 diff·원 r1/r2 source5652파일/inventory·manifest/runner/helpers·compiler/ELF/exact12와 문서6개를 읽기 전용 대조해 D1/D2를 한정 수용했다. 제품 필수 수정0이며 예약 전 제거한 guard가 pool/visibility이고 원 core/isolation guard는 남는다는 표현3곳을 정정했고 `/root`가 반영을 확정했다. 검토자는 수정·빌드·시험·verifier를 실행하지 않았다. 무변경 코드·하위 wrapper/workspace를 반복하지 않았고 전체 fmt/Clippy·문서 verifier·push는 실행하지 않았다. 전체 floor·writer phase·Row/terminal/recovery·M4/M5는 미완료다.

@@ -7,11 +7,10 @@ use crate::storage::wal_io::{RetentionLoadPermit, WalRequirement};
 #[path = "retention_residency_tests.rs"]
 mod tests;
 
-/// Observation of retention_payloads/check_retention_reader. The registry's
+/// Source phases of retention_payloads/check_retention_reader. The registry's
 /// guard does not escape either API; later Owner checking uses the core leaf.
 /// Columns are guardless waiting, guarded work, guardless returned values.
-#[cfg(test)]
-pub(in crate::storage) fn entry_source_observation() -> (usize, usize, usize) {
+pub(in crate::storage) fn entry_source_phases() -> (usize, usize, usize) {
     use crate::storage::{
         allocation_page::SystemWorkRef,
         page::{PageError, PageRef},
@@ -176,6 +175,16 @@ impl<'c, 's> SharedPool<'c, 's, '_, '_> {
         self.plan4_quiescent()?;
         if !self.directory_edit(|directory| directory.activate_retention(self.frames))? {
             return Err(self.fatal(Cause::Invariant));
+        }
+        Ok(())
+    }
+
+    /// Guardless observation only. A later original registry acquisition still
+    /// checks fence, poison and the complete metadata under its own guard.
+    pub(in crate::storage) fn check_retention_entry_health(&self) -> Result<()> {
+        self.health()?;
+        if self.registry.is_poisoned() {
+            return Err(self.fatal(Cause::Poisoned));
         }
         Ok(())
     }

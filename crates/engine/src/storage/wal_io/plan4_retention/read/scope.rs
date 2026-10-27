@@ -69,21 +69,33 @@ fn compact_merge<T>(result: CallResult<T>, cleanup: CallResult<()>) -> CallResul
         (result, Ok(())) => result,
     }
 }
-fn compact_health<W: WriterNamespace>(
+/// No pool/visibility registry guard is acquired before original admission.
+fn compact_entry_health<W: WriterNamespace>(
     storage: &MutableStorageOwner<'_, '_, W>,
     pool: &SharedPool<'_, '_, '_, '_>,
 ) -> CallResult<()> {
     storage.health_compact().map_err(|e| {
-        // Match original plan4 health/fatal: notify at the failure, not when
-        // a legacy caller eventually converts the small error.
         storage.session_fence().fence();
         storage.wal().completion.notify_all();
         CatalogCallError(CallFailure::PrepareStorage(e))
     })?;
+    pool.check_retention_entry_health()
+        .map_err(|e| CatalogCallError(CallFailure::PrepareFrame(e)))?;
+    if !pool.uses_storage_origin(&storage.binding, storage.session_fence()) {
+        storage.session_fence().fence();
+        storage.wal().completion.notify_all();
+        return Err(CatalogCallError(CallFailure::PrepareBinding));
+    }
+    Ok(())
+}
+fn compact_health<W: WriterNamespace>(
+    storage: &MutableStorageOwner<'_, '_, W>,
+    pool: &SharedPool<'_, '_, '_, '_>,
+) -> CallResult<()> {
+    compact_entry_health(storage, pool)?;
     if !pool
         .retention_payloads()
         .map_err(|e| CatalogCallError(CallFailure::PrepareFrame(e)))?
-        || !pool.uses_storage_origin(&storage.binding, storage.session_fence())
     {
         storage.session_fence().fence();
         storage.wal().completion.notify_all();
@@ -143,15 +155,27 @@ impl<'u, 'r, 'v, 'j, 'b, 'a, 's, 'c, 'p, 'd, 'm, 'w, W: WriterNamespace>
         snapshot: &'r SnapshotGuard<'v, 'j, 'c, 's>,
         class: OperationClass,
     ) -> CallResult<Self> {
-        compact_health(backend.storage, backend.pool)?;
-        backend
-            .pool
-            .check_retention_reader(owner)
-            .map_err(|e| CatalogCallError(CallFailure::CensusFrame(e)))?;
+        compact_entry_health(backend.storage, backend.pool)?;
+        // Keep the original Frame projection for foreign/malformed Owners.
+        // These core checks grant no page or snapshot authority.
+        if !owner
+            .check_binding(backend.pool.bound_core())
+            .map_err(|e| CatalogCallError(CallFailure::CensusFrame(e.into())))?
+        {
+            return Err(CatalogCallError(CallFailure::CensusFrame(
+                dirty_frame::DirtyError {
+                    cause: dirty_frame::Cause::BindingMismatch,
+                    effect: Effect::Unchanged,
+                },
+            )));
+        }
         let visibility = backend
             .visibility
             .ok_or(CatalogCallError(CallFailure::WrongState))?;
-        if !snapshot.confirms(visibility).map_err(visibility_error)? {
+        if !snapshot
+            .confirms_origin(visibility)
+            .map_err(visibility_error)?
+        {
             return Err(CatalogCallError(CallFailure::WrongState));
         }
         owner
@@ -177,13 +201,47 @@ impl<'u, 'r, 'v, 'j, 'b, 'a, 's, 'c, 'p, 'd, 'm, 'w, W: WriterNamespace>
                 return Err(finish_failed_source(error, progress));
             }
         };
-        Ok(Self {
+        let scope = Self {
             backend,
             owner,
             snapshot,
             source,
             progress,
-        })
+        };
+        // Admission rejection precedes unobserved metadata errors. Successful
+        // admission retains its fixed charge through every original validator.
+        if let Err(error) = scope.validate() {
+            return Err(scope.finish_entry_error(error));
+        }
+        Ok(scope)
+    }
+
+    fn validate(&self) -> CallResult<()> {
+        compact_health(self.backend.storage, self.backend.pool)?;
+        self.backend
+            .pool
+            .check_retention_reader(self.owner)
+            .map_err(|e| CatalogCallError(CallFailure::CensusFrame(e)))?;
+        let visibility = self
+            .backend
+            .visibility
+            .ok_or(CatalogCallError(CallFailure::WrongState))?;
+        if !self
+            .snapshot
+            .confirms(visibility)
+            .map_err(visibility_error)?
+        {
+            return Err(CatalogCallError(CallFailure::WrongState));
+        }
+        Ok(())
+    }
+
+    fn finish_entry_error(self, error: CatalogCallError) -> CatalogCallError {
+        let cleanup = self.finish_checked();
+        match compact_merge::<()>(Err(error), cleanup) {
+            Err(error) => error,
+            Ok(()) => unreachable!("original validation failure retained"),
+        }
     }
 
     #[cfg_attr(
@@ -286,6 +344,26 @@ pub(super) fn entry_source_bytes<W: WriterNamespace>() -> usize {
         + super::super::source::leaf_source_bytes()
 }
 
+/// Successful entry owns its source while validating both original registries.
+/// Keep all three columns and both closures additively; this does not require
+/// guards to overlap. The enclosing fixed class takes this phase's max.
+pub(super) fn validation_source_bytes<W: WriterNamespace>() -> usize {
+    use std::mem::size_of;
+    let (pw, pg, pr) = dirty_frame::retention_entry_source_phases();
+    let (vw, vg, vr) = visibility::entry_source_phases();
+    2 * size_of::<CatalogCallScope<'_, '_, '_, '_, '_, '_, '_, '_, '_, '_, '_, '_, W>>()
+        + 8 * size_of::<CallResult<()>>()
+        + 16 * size_of::<&()>()
+        + pw
+        + pg
+        + pr
+        + vw
+        + vg
+        + vr
+        + crate::transaction::concurrency::read_operation_source_bytes()
+        + close_source_bytes()
+}
+
 /// One consuming tail, not a bound on simultaneous pre/post-admission calls.
 /// Source close's result survives progress close; the tuple is counted whole.
 pub(super) fn close_source_bytes() -> usize {
@@ -359,6 +437,20 @@ mod tests {
     }
 
     #[test]
+    fn admitted_validation_is_inside_both_fixed_source_classes() {
+        let validation = validation_source_bytes::<port::Writer>();
+        let full = super::super::lookup_source_bytes::<port::Writer>();
+        let resident = super::super::resident_lookup_source_bytes::<port::Writer>();
+        let (_, pool_guard, _) = dirty_frame::retention_entry_source_phases();
+        let (_, visibility_guard, _) = visibility::entry_source_phases();
+        println!(
+            "ADMITTED_VALIDATION validation={validation} pool_guard={pool_guard} visibility_guard={visibility_guard} full={full} resident={resident} whole_floor=NOT_CONNECTED"
+        );
+        assert!(validation > pool_guard + visibility_guard);
+        assert!(full >= validation && resident >= validation);
+    }
+
+    #[test]
     fn failed_source_consumes_original_ticket_and_keeps_error_priority() {
         use super::super::super::source::SourceCause;
         use crate::storage::session_fence::SessionFence;
@@ -410,10 +502,9 @@ mod tests {
             CatalogCallScope<'a, 'a, 'a, 'a, 'a, 'a, 'a, 'a, 'a, 'a, 'a, 'a, port::Writer>;
         let (owners, core_wait, core_guard, core_return) =
             crate::transaction::concurrency::read_entry_source_observation();
-        let (pool_wait, pool_guard, pool_return) =
-            dirty_frame::retention_entry_source_observation();
+        let (pool_wait, pool_guard, pool_return) = dirty_frame::retention_entry_source_phases();
         let (visibility_wait, visibility_guard, visibility_return) =
-            visibility::entry_source_observation();
+            visibility::entry_source_phases();
         let (source_wait, source_guard, source_return) =
             super::super::super::source::entry_source_observation();
         let guards = core_guard + pool_guard + visibility_guard + source_guard;

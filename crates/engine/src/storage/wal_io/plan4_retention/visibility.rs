@@ -59,8 +59,7 @@ pub(in crate::storage) const EPOCH_BYTES: usize = 1600;
 /// Observation of SnapshotGuard::confirms only. No publication lock, snapshot
 /// registration, page codec or source authority is part of this closure.
 /// The three columns are guardless waiting, guarded work and guardless return.
-#[cfg(test)]
-pub(super) fn entry_source_observation() -> (usize, usize, usize) {
+pub(super) fn entry_source_phases() -> (usize, usize, usize) {
     use crate::storage::page::{FileId, PageError, PageRef};
     use crate::{api::DatabaseId, transaction::TxnId};
     use authority::ReferenceTarget;

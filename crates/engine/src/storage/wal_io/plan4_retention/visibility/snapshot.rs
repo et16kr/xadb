@@ -202,6 +202,28 @@ impl<'v, 'a, 'c, 's> SnapshotGuard<'v, 'a, 'c, 's> {
     pub(in crate::storage) fn q(&self) -> u64 {
         self.q
     }
+    /// Cheap original-registry and already visible health observations. This
+    /// is not snapshot validation; confirms still checks every row after source
+    /// reservation. A false poison observation grants no future health promise.
+    pub(in crate::storage) fn confirms_origin(
+        &self,
+        visibility: &BoundVisibility<'_, '_, '_>,
+    ) -> VisibilityResult<bool> {
+        if !self.visibility.same_registry(visibility) {
+            return Ok(false);
+        }
+        self.visibility.origin.health()?;
+        if self.visibility.registry.is_poisoned() {
+            return Err(self.visibility.origin.fatal(VisibilityCause::Poisoned));
+        }
+        Ok(true)
+    }
+
+    #[cfg(test)]
+    pub(in crate::storage) fn test_corrupt_observed_q(&mut self) {
+        self.q = self.q.checked_add(1).unwrap();
+    }
+
     pub(in crate::storage) fn confirms(
         &self,
         visibility: &BoundVisibility<'_, '_, '_>,
