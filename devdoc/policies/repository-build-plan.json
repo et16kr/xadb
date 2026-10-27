@@ -6712,5 +6712,24 @@
     },
     "remaining_supply": "operation/phase boundaries and all entry/return/source-before-progress gap, whole writer/reader/progress aggregate, Row/terminal/recovery and M4/M5",
     "source_roots_changed": false
+  },
+  "dev3_module_c2_source_entry": {
+    "status": "ACCEPTED_LIMITED_D1_D2",
+    "contract_ref": "dev3-module-boundaries.md#operation-source-admission",
+    "implemented_paths": [
+      "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/source_entry.rs",
+      "tests/fixtures/dev3-module-c2/source-entry/manifest.json"
+    ],
+    "modified_paths": [
+      "crates/engine/src/storage/wal_io/plan4_retention/read/operation.rs",
+      "crates/engine/src/storage/wal_io/plan4_apply/source.rs",
+      "crates/engine/src/transaction/concurrency_catalog_test_support.rs",
+      "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory.rs"
+    ],
+    "evidence_ref": "module-independence-survey-20261026.md#c2-source-entry",
+    "scope": "original read progress before fixed source reservation; checked progress return on source failure, no nested core/isolation locks; healthy source entry/exit lifetime covered, type/class/census unchanged",
+    "validation": "r1 production/test build and 5 exact related cases PASS; 3 new Full/Resident entry cases and 2 changed Capacity/Drain priority cases; unchanged source-return and census tests not repeated; independent module_review code/artifact/six-document audit accepted limited D1/D2, zero required fixes",
+    "remaining_supply": "all entry and ordinary caller return carriers, writer/read/progress aggregate and reserved progress, Row/terminal/recovery and M4/M5",
+    "source_roots_changed": false
   }
 }

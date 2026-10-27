@@ -654,3 +654,7 @@ statement factory·자동 read-set·CheckedTable/RowReadOperation과 short aggre
 ### C2 Pending image 수명 분리 등록 — 2026-10-27
 
 기존4개 Rust source의 Prepared/payload·stage 소비·공통 control 입력과 관측 시험을 수정했다. 신규 manifest는 JSON `dev3_module_c2_pending_image`에 등록했다. package/dependency·source root·backing·wire 변경은 없다. [한정 증거](../evidence/module-independence-survey-20261026.md#c2-pending-image)는 관련12 PASS와 원 compile FAIL, Pending 자료 감소와 stage 반환 상한 증가를 함께 보존한다. 전체 source admission은 후속이다.
+
+### C2 source 진입 수명 등록 — 2026-10-27
+
+기존 read operation의 source/progress 진입 순서와 source 실패 정리만 변경했다. 새 actual 시험·manifest는 JSON `dev3_module_c2_source_entry`에 등록했다. package/dependency·source root·owned type/census·wire는 유지한다. [한정 증거](../evidence/module-independence-survey-20261026.md#c2-source-entry)는 production/test build·진입 관련5 PASS를 보존하며 전체 writer/entry/return source 합산은 후속이다.

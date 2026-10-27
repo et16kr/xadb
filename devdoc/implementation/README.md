@@ -1,5 +1,7 @@
 # 현재 구현
 
+2026-10-27 [C2 source 진입 수명 수정](../evidence/module-independence-survey-20261026.md#c2-source-entry): 원 progress 표시를 source 예약 시도 전부터 유지하고 실패 출구에서 checked 정리한다. production/test build·선택5 PASS다. 전체 entry/return carrier·writer/progress 합산과 M4/M5는 미완료다.
+
 2026-10-27 [C2 Pending image 수명 분리](../evidence/module-independence-survey-20261026.md#c2-pending-image): actual stage가 Prepared를 소비하여 Pending 준비 자료2024→568B, wait+Resident2 보수 합65096B를 확인했다. production/test build·관련12 PASS와 원 compile FAIL을 보존한다. stage 반환 비용 증가와 전체 writer/progress·Full 동시 인수 미완료를 구분한다.
 
 2026-10-27 [C2 Commit phase 관측](../evidence/module-independence-survey-20261026.md#c2-commit-phases): cfg(test) 신규1 PASS와 원 compiler FAIL을 보존한다. Pending 세 값의 source 필요 하한2984B로 shared+Full 합66816B이므로 실제 보유 수명 축소가 선행한다. 제품 charge·admission·효과는 변경하지 않았으며 전체 writer/progress·M4/M5는 미완료다.

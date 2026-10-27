@@ -1137,6 +1137,8 @@ rollback/terminal은 원 progress admission이 새 foreground를 닫고 이미 �
 
 후속 [Pending image 수명 분리](../evidence/module-independence-survey-20261026.md#c2-pending-image)는 stage가 준비 영수증을 소비하고 준비 자료 중568B immutable image만 남긴다. 원 권한·canonical after 순서와 공통 control 검산을 유지하며 선택12 PASS다. Pending wait+Resident2의 보수 합65096B와 stage 반환 상한 증가를 함께 보존한다. 이것은 전체 writer 고정 charge나 Full 동시 허용의 증명이 아니며 본 절의 aggregate·필수 progress 공급은 계속 미완료다.
 
+[source 진입 수명 수정](../evidence/module-independence-survey-20261026.md#c2-source-entry)은 앞선 source-first 부분공급의 순서를 무효과 precheck→원 progress 진입→고정 source 예약→refs로 대체한다. source 부족의 정상 출구에서는 progress0/refs0/pin0과 Capacity/Unchanged를 보존하되 정리 Fatal은 우선한다. core 잠금과 source ledger 잠금은 중첩하지 않고 quota를 기다리지 않는다. Drain이 먼저면 source0 거절, reader가 먼저면 예약 시도도 flag1로 기다린다. source→progress 종료와 함께 healthy source 수명을 덮으며 선택5 PASS다. class/type/census는 그대로이고 예약 전 entry/일반 반환 carrier 및 모든 writer/read/progress 합산 인수는 여전히 미완료다.
+
 전체 설계 상계는 metadata `73856+65536+49152=188544≤196608`, original flush를 더한 whole `254080≤262144`다. 이 admission·동시 합 검산은 **새 C1/C2/C3 공급**이며 기존 active.max 기반 source 결과로 이미 구현됐다고 하지 않는다. header의 실제 byte 배치와 source charge의 측정·실패/정리 경로는 C1/C4 인수에 포함한다.
 
 <a id="common-deliveries"></a>

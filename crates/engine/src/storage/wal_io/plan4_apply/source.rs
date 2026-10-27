@@ -51,7 +51,8 @@ fn check(state: &IsolationLedger<'_, '_, '_>) -> Result<u64> {
 }
 
 impl<'b, 'a, 'c, 's> OperationSourceAdmission<'b, 'a, 'c, 's> {
-    /// Charge the fixed selected lookup closure before progress, refs or pins.
+    /// Charge the fixed lookup closure inside its original progress lifetime,
+    /// before refs or pins. The caller returns progress if reservation fails.
     /// No caller chooses a byte count; the charge cannot grow during lookup.
     pub(super) fn catalog<W: WriterNamespace>(
         ledger: &'b Mutex<IsolationLedger<'a, 'c, 's>>,

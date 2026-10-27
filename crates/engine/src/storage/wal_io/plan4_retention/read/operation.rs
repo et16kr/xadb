@@ -144,11 +144,24 @@ impl<'u, 'r, 'v, 'j, 'i, 'b, 'a, 's, 'c, 'p, 'd, 'm, 'w, W: WriterNamespace>
         owner
             .check_read_operation(backend.pool.bound_core())
             .map_err(progress_error)?;
-        let mut source = OperationSourceAdmission::catalog::<W>(backend.isolation, class)?;
-        let mut progress = match owner.try_read_operation(backend.pool.bound_core()) {
-            Ok(progress) => progress,
+        // Register the finite entry before any byte charge can survive it.
+        // The original core lock ends here; source uses only its own short
+        // ledger leaf, never a nested core lock or a capacity wait.
+        let mut progress = owner
+            .try_read_operation(backend.pool.bound_core())
+            .map_err(progress_error)?;
+        #[cfg(test)]
+        crate::transaction::concurrency::catalog_test_support::hit(
+            backend.pool.bound_core(),
+            crate::transaction::concurrency::catalog_test_support::Point::LookupBeforeSourceReserve,
+        );
+        let mut source = match OperationSourceAdmission::catalog::<W>(backend.isolation, class) {
+            Ok(source) => source,
             Err(error) => {
-                return merge(Err(progress_error(error)), source.release_checked());
+                return merge(
+                    Err(error),
+                    progress.release_checked().map_err(progress_error),
+                );
             }
         };
         let lease = match visibility.reserve_references(owner) {

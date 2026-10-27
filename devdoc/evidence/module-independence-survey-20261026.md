@@ -939,3 +939,24 @@ stage 반환에서는 원 Prepared·compact image·tuple Result·추출 참조 �
 | r2 PASS | `a29fe07f0e107222dbf1ba17530784ba58c6107a4da2d2965dd72b9d1c6a1f12` | `c4682806c9bd0e45b36ee4010e2c9847087182aa51a260f75d17d0b4159a64b4` |
 
 공통 manifest SHA-256은 `31d1025a5ada9df51631ce41a39b379c47c1346bb72191aa6d0df807d58bf5d2`, r2 ELF는 `660560b76212f5391c37ef28353db062fb42673be225a9214cfaa4a3ef8c1618`다. 경과5.81/71.57초는 성능 결과가 아니다. 변경 파일별 rustfmt·diff whitespace 확인만 했으며 전체 fmt/Clippy·문서 verifier·push는 실행하지 않았다. `/root/module_review`는 실제4개 Rust diff·선택 manifest·문서6개와 r1/r2 각 source5626개·fingerprint/inventory/runner/helper/compiler/case 로그·존재 ELF identity를 읽기 전용 대조했다. 준비 자료의 감소와 전체 tuple 반환을 구별하고 과거 충돌의 source를 명시하는 두 표현을 정정했다. **이 수명 축소 단위 D1/D2 한정 수용·필수 수정0**을 수신하여 `/root`가 반영한다. 검토자는 수정·빌드·시험·문서 verifier를 실행하지 않았다. 원 source-before-progress 진입 틈·writer/reader/progress 전체 계수·Row/terminal/recovery·M4/M5는 남아 있다.
+
+
+<a id="c2-source-entry"></a>
+### C2 source 예약 시도 전 원 read progress 진입 — 2026-10-27
+
+기준 `a5cfdae`, 작성·통합 `/root`, 별도 검토 `/root/module_review`다. 이전 short-source 공급의 source→progress 진입 순서를 **무효과 precheck→원 try_read_operation→고정 source 예약→refs**로 변경한다. try_read_operation 내부의 원 core 잠금은 호출 반환 때 끝나며 이후 source의 짧은 isolation leaf와 중첩하지 않는다. 새 mutex·콜백·capacity 대기·core API를 만들지 않는다.
+
+원 try_read_operation이 진입 선형화 지점이다. Drain이 먼저면 InstallationPending을 source 예약 없이 반환하고, reader가 먼저면 source0인 예약 시도 구간도 flag1로 Drain이 기다린다. source 부족은 refs/pin/물리 효과 전에 progress를 checked 반환한다. 정상 정리 때 Capacity/Unchanged를 보존하되 cleanup의 fence/poison/불변식 실패가 겹치면 기존 merge의 Fatal 우선순위를 따른다. progress를 먼저 선언하여 source 전 panic/early-return에서도 원 Drop을 거친다. 이미 구현한 source→progress 종료 순서와 합쳐 healthy read의 source가 flag0으로 남는 진입/종료 틈을 닫는다. fatal fence 아래 charge 보존은 그대로다.
+
+원 source-first 계약의 ‘부족이면 progress 표시도 하기 전’ 부분만 이 단위에서 재개방했다. 오류 출구의 progress0·refs0·pin0 및 물리 Unchanged를 보존한다. 타입/필드·고정 class/charge·source census는 바뀌지 않으며 현재 entry의 기존 operation/Result/오류 상한 안에서 순서만 바꾼다. **일반 caller return·예약 전 entry carrier 전체합·다른 writer/read 입구·필수 progress 예약을 포함한65536B aggregate 인수는 여전히 미완료**다.
+
+[실행 전 manifest](../../tests/fixtures/dev3-module-c2/source-entry/manifest.json)는 실제 진입 순서와 실패 branch diff에 해당하는5개만 선택했다. 새3개는 각각 Full/Resident의 source 전 actual Drain 대기, fence로 source 예약 실패/flag 정리, source 전 panic/Drop이다. 기존2개는 다른 Full의 charge가 남은 Capacity 실패와 실제 Drain에서 source 부족보다 InstallationPending 우선인 입구다. 종료 순서·타입/census·변경 없는 하위/전체 workspace 시험은 반복하지 않았다.
+
+`artifacts/module-c2-source-entry-20261027-r1/`에서 production/test build·선택5개 각각1회 PASS다. 총600초·compiler90초·case30초·출력8MiB·stack33554432B로 제한하고 원 source export/inventory·manifest·runner·compiler·ELF·case 로그·result를 보존한다. 경과38.43초는 성능 결과가 아니다. native/새 PID 복구·wire 변경은 없다.
+
+- source SHA-256: `e9a4766a93a27a5e65f37e34f8bacecbb2499f6cc453e27e4d74147f6281b11a`
+- manifest SHA-256: `f17f5642a619f40693309e391e91bfbd3fbfb9574f55480fece56b3097ee12aa`
+- ELF SHA-256: `55122e45fc48877994e84103bde590c926dc9221082072976816db81f3fa0855`
+- result SHA-256: `e5504c391e9c8c98eff91cbfa5a2093cc0f2d4b39ea844410c9c749e2f89e3f7`
+
+변경 파일별 rustfmt와 diff whitespace 확인만 수행했고 전체 fmt/Clippy·문서 verifier·push는 실행하지 않았다. `/root/module_review`는 실제 diff·문서6개·원 source5628개와 fingerprint/inventory/manifest/runner/helper/컴파일·case 로그/ELF identity를 읽기 전용 대조했다. **이 진입 수명 단위 D1/D2 한정 수용·필수 수정0**을 수신해 `/root`가 반영한다. 검토자는 수정·빌드·시험·문서 verifier를 실행하지 않았다. writer/read/progress class 전체 공급·Row/terminal/recovery·M4/M5 의무를 계속 진행한다.
