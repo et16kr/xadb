@@ -1131,6 +1131,8 @@ rollback/terminal은 원 progress admission이 새 foreground를 닫고 이미 �
 
 2026-10-27 [상주 Catalog 부분공급](../evidence/module-independence-survey-20261026.md#c2-resident-read)은 같은 Catalog 본문을 고정 CatalogResident class로 실행한다. 기존 loader loan의 allocator copy와 원 target-set guard를 사용하고 Status inventory 전체 및 마지막 allocator stamp를 확인한다. 비상주는 checked 정리 뒤 Busy, exact 선택 뒤 membership·typed corruption은 Fatal이며 같은 operation의 Full 확대는 없다. source16860B와 shared22256B로 두 상주 조회의 합55976B, 선택9개 PASS를 확인했다. Full41576B와 과거 결과는 유지하며 writer/progress·다른 입구 전체 합산과 caller-retained factory는 여전히 미공급이다. 독립 D1/D2를 이 부분공급에 한정 수용했으며 필수 수정0이다.
 
+후속 [최종 source 반환까지 progress 유지](../evidence/module-independence-survey-20261026.md#c2-source-return)는 위 CatalogFull 공급 당시 정리 순서 중 progress 반환 시점만 늦춘다. refs 정리와 최종 decode/Result 뒤 source를 반환하고 그 다음 원 read_operation 표시를 반환한다. source 실패에도 progress 정리를 시도하며 fence 아래 charge를 보존한다. 선택7개를 검증했지만 source-before-progress 진입 틈·일반 반환 carrier·writer/다른 입구 합산은 남아 있으므로 전체 progress 비중첩 인수가 아니다.
+
 전체 설계 상계는 metadata `73856+65536+49152=188544≤196608`, original flush를 더한 whole `254080≤262144`다. 이 admission·동시 합 검산은 **새 C1/C2/C3 공급**이며 기존 active.max 기반 source 결과로 이미 구현됐다고 하지 않는다. header의 실제 byte 배치와 source charge의 측정·실패/정리 경로는 C1/C4 인수에 포함한다.
 
 <a id="common-deliveries"></a>

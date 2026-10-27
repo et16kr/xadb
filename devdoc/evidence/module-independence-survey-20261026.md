@@ -856,3 +856,23 @@ r5 ELF SHA-256은 `551330563e88e9eeb598398fe18c4bdd2267a9371fcbea9cefa113c3f3e0a
 
 
 `/root/module_review`는 실제 제품·source census·9개 시험/manifest와 r1–r5의 원 자료를 읽기 전용 감사했다. r1/r2 각5621개, r3–r5 각5622개 inventory의 source·fingerprint·manifest·runner·compiler/case 로그·존재 ELF를 대조했고, r3→r4→r5는 cfg(test) resident_faults.rs만 바뀌었음을 확인했다. 문서6개·신규4/수정10경로 등록까지 확인한 뒤 **C2 상주 Catalog 부분공급 D1/D2 한정 수용·필수 수정0**으로 판정했다. 검토자는 수정·빌드·시험·문서 verifier를 실행하지 않았고 `/root`가 한정 수용을 반영한다. writer/progress·다른 입구 합산·Row/terminal/recovery·M4/M5 완료로 확대하지 않는다.
+
+<a id="c2-source-return"></a>
+### C2 최종 source 반환까지 원 read progress 유지 — 2026-10-27
+
+기준 `788702c`, 동일 작업 공간·브랜치다. **D3-MODULE-SOURCE-RETURN-001 · D1/D2 한정 수용 / production·test build·선택 runtime7 PASS / 전체 source progress 미완료**다. 작성·통합 `/root`, 별도 검토 `/root/module_review`이며 기존 계획 완료 지시 범위의 한정 수정이다.
+
+writer/progress 공급을 준비하며 admitted lookup의 refs/progress가 마지막 decode/Result와 source 반환보다 먼저 끝남을 확인했다. 이 순서로는 read_operation0을 late source0으로 사용할 수 없다. 실제 `CatalogReadOperation`은 `close_refs`와 `close_source`를 나누고 **refs 정리→최종 decode/Result→source checked 반환→progress checked 반환** 순서를 사용한다. Found/Missing/오류·early `?`·Drop·진입 reference 예약 실패에 같은 순서를 적용한다. source 반환 실패도 progress 정리를 건너뛰지 않으며 fatal 효과/원 charge 보존은 그대로다. no-effect source 선예약과 실제 progress 진입 순서는 이번에 바꾸지 않았다.
+
+이 수정은 이미 진입한 lookup의 late source 수명만 닫는다. **source 예약→progress 진입 사이의 틈, 반환 직후 caller의 일반 Result carrier, 다른 입구의 미계수와 writer/progress 원자 인수는 남는다.** 따라서 전체65536B progress 인수가 아니며 기존 Pending reader/Full 동작·same-snapshot retry·wire는 유지한다. owned field/배열/Result type이나 census 식은 바꾸지 않았다. 기존 held4개 Result/2개 오류와 decoder/consumer 반환 계수가 같은 carrier를 덮으므로 이전 type-size/census 시험을 반복하지 않았다.
+
+`tests/fixtures/dev3-module-c2/source-return/manifest.json`은 마지막 검증 뒤 실제 cleanup diff에 해당하는7개만 고정했다. 신규4개는 Full/Resident의 refs0·pin0 뒤 실제 Commit Drain 대기, fence 뒤 source 잔여와 progress 반환, Found 최종 decode 구간의 표시 유지, 그 구간의 panic/Drop이다. 기존3개는 변경된 finish_error/Drop을 실제로 소비하는 Full Undo I/O 실패, captured refs를 가진 fenced Drain, Resident Status/Undo typed corruption이다. 기존 사례의 새 실행은 cleanup 코드가 바뀐 범위에만 해당하며 이전 결과는 원 source대로 유지한다. 수정 없는 하위 wrapper·전체 workspace·native/새 PID 복구는 실행하지 않았다.
+
+원 증거는 `artifacts/module-c2-source-return-20261027-r1/`에 있다. 고정600초/컴파일90초/각 case30초/출력8MiB/stack33554432B 범위에서 production check·test build와7개 exact 사례가 한 번에 PASS다. 경과44.15초는 성능 결과가 아니다.
+
+- source SHA-256: `4be9ff3a89ebac984735e92c952cd20311bdfe4164e4d221d4a794ef73bd7c69`
+- manifest SHA-256: `d00d7ca2167ec2ae0c51ede4c51dd4bda3a02081659db9d5768d4706eebccd80`
+- ELF SHA-256: `1088ca67daf0c247ae23b97fb9e13a788f058c265fe0bc49a34898099954b123`
+- result SHA-256: `39f77f4435a72a80f5ef5675f86a78ec56a8b7a25eba0a03a1b44f4d80a9fc9f`
+
+파일별 rustfmt와 `git diff --check`만 정리에 사용하며 전체 fmt/Clippy·문서 verifier·push는 실행하지 않았다. `/root/module_review`가 실제 diff·시험·manifest 및 원 source5624개·fingerprint·runner·compiler/case 로그·ELF hash를 읽기 전용 대조했고 문서6개와 등록 신규2/수정3경로까지 확인했다. **이 source-return 단위 D1/D2 한정 수용·필수 수정0**을 수신해 `/root`가 반영한다. 검토자는 수정·시험·빌드·문서 verifier를 실행하지 않았다. 전체 writer/reader/progress 합산과 Row/terminal/recovery·M4/M5는 계속 미완료다.

@@ -641,3 +641,8 @@ statement factory·자동 read-set·CheckedTable/RowReadOperation과 short aggre
 ### C2 상주 Catalog 조회의 고정 class
 
 `plan4_retention/read/resident.rs`는 원 allocator copy/Status·Undo observation만 제공하며 기존425984B loan을 사용한다. 원 product branch와 source ledger는 Full/Resident class를 구별한다. 신규 실제 시험2파일·선택 manifest와 수정 경로는 JSON `dev3_module_c2_resident_read`에 등록했다. package/dependency·source root·clean export는 유지한다. [한정 증거](../evidence/module-independence-survey-20261026.md#c2-resident-read)는 선택9개 PASS와 원 compile/census FAIL, 상주 두-reader55976B를 보존하며 writer/progress의 전체 동시 합산은 후속이다.
+
+
+### C2 최종 source 반환과 read progress 수명
+
+기존 `read/operation.rs`의 refs 정리와 source/progress 정리를 분리했다. 새 실제 시험과 선택 manifest는 JSON `dev3_module_c2_source_return`에 등록했다. package/dependency·source root·backing·wire 변경은 없다. [한정 증거](../evidence/module-independence-survey-20261026.md#c2-source-return)는 신규4·cleanup 변경 영향3의 선택7개 PASS를 보존하며 source-before-progress 진입 틈과 전체 writer/progress 합산을 후속으로 남긴다.

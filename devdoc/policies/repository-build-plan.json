@@ -6646,5 +6646,23 @@
     },
     "remaining_supply": "writer/rollback/terminal and other entry accounting, aggregate progress guarantee, caller-retained factories, Row/recovery and M4/M5",
     "source_roots_changed": false
+  },
+  "dev3_module_c2_source_return": {
+    "status": "ACCEPTED_LIMITED_D1_D2",
+    "contract_ref": "dev3-module-boundaries.md#operation-source-admission",
+    "implemented_paths": [
+      "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/source_return.rs",
+      "tests/fixtures/dev3-module-c2/source-return/manifest.json"
+    ],
+    "modified_paths": [
+      "crates/engine/src/storage/wal_io/plan4_retention/read/operation.rs",
+      "crates/engine/src/transaction/concurrency_catalog_test_support.rs",
+      "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory.rs"
+    ],
+    "evidence_ref": "module-independence-survey-20261026.md#c2-source-return",
+    "scope": "admitted Catalog refs cleanup, final decode/Result, checked source return, then original read-operation return; try all cleanup on fatal and Drop; same class, backing, census and wire",
+    "validation": "production/test build and 7 exact runtime PASS once: 4 new late-return cases and 3 changed cleanup fatal cases; original completed unrelated tests not repeated; independent module_review accepted limited D1/D2 after source/artifacts and six-document review; zero required fixes",
+    "remaining_supply": "source-before-progress entry gap, ordinary caller return carriers, all writer/read/progress entries aggregate, Row/terminal/recovery and M4/M5",
+    "source_roots_changed": false
   }
 }

@@ -155,11 +155,8 @@ impl<'u, 'r, 'v, 'j, 'i, 'b, 'a, 's, 'c, 'p, 'd, 'm, 'w, W: WriterNamespace>
             Ok(lease) => lease,
             Err(error) => {
                 return merge(
-                    merge(
-                        Err(visibility_error(error)),
-                        progress.release_checked().map_err(progress_error),
-                    ),
-                    source.release_checked(),
+                    merge(Err(visibility_error(error)), source.release_checked()),
+                    progress.release_checked().map_err(progress_error),
                 );
             }
         };
@@ -512,16 +509,30 @@ impl<'u, 'r, 'v, 'j, 'i, 'b, 'a, 's, 'c, 'p, 'd, 'm, 'w, W: WriterNamespace>
         })();
         merge(missing, guard.release_checked())
     }
-    fn close(&mut self) -> Result<()> {
+    fn close_refs(&mut self) -> Result<()> {
         let refs = self.captured.take().map_or(Ok(()), release_refs);
         let lease = self.lease.take().map_or(Ok(()), |lease| {
             lease.release_checked().map_err(visibility_error)
         });
-        // Return the original source flag after checked reference cleanup. On
-        // healthy return all refs are gone; fatal cleanup preserves the old
-        // registry evidence and the permanent fence prevents installation.
-        let progress = self.progress.release_checked().map_err(progress_error);
-        merge(merge(refs, lease), progress)
+        merge(refs, lease)
+    }
+    fn close_source(&mut self) -> Result<()> {
+        // Drain must keep seeing this admitted operation through final decode
+        // and source return, even after its physical guards and refs are gone.
+        // Fatal source cleanup keeps the byte charge behind the fence; the
+        // original progress cleanup still runs and returns its error.
+        let source = self.source.release_checked();
+        merge(
+            source,
+            self.progress.release_checked().map_err(progress_error),
+        )
+    }
+    #[cfg(test)]
+    fn before_source_return(&self) {
+        crate::transaction::concurrency::catalog_test_support::hit(
+            self.backend.pool.bound_core(),
+            crate::transaction::concurrency::catalog_test_support::Point::LookupBeforeSourceReturn,
+        );
     }
     pub(in crate::storage) fn finish_found(
         mut self,
@@ -534,7 +545,7 @@ impl<'u, 'r, 'v, 'j, 'i, 'b, 'a, 's, 'c, 'p, 'd, 'm, 'w, W: WriterNamespace>
                 Ok(())
             }
         });
-        let cleanup = self.close();
+        let cleanup = self.close_refs();
         merge(checked, cleanup)?;
         let namespace = self.backend.storage.profile().spec().namespace;
         let bytes = self.copy.take().ok_or_else(|| self.invariant())?;
@@ -552,15 +563,21 @@ impl<'u, 'r, 'v, 'j, 'i, 'b, 'a, 's, 'c, 'p, 'd, 'm, 'w, W: WriterNamespace>
                 RetentionCause::Catalog(e),
             )
         });
-        merge(result, self.source.release_checked())
+        #[cfg(test)]
+        self.before_source_return();
+        merge(result, self.close_source())
     }
     pub(in crate::storage) fn finish_missing(mut self) -> Result<()> {
-        let closed = self.close();
-        merge(closed, self.source.release_checked())
+        let closed = self.close_refs();
+        #[cfg(test)]
+        self.before_source_return();
+        merge(closed, self.close_source())
     }
     pub(in crate::storage) fn finish_error(mut self, error: RetentionError) -> RetentionError {
-        let closed = merge::<()>(Err(error), self.close());
-        match merge(closed, self.source.release_checked()) {
+        let closed = merge::<()>(Err(error), self.close_refs());
+        #[cfg(test)]
+        self.before_source_return();
+        match merge(closed, self.close_source()) {
             Err(error) => error,
             Ok(()) => unreachable!("original error retained"),
         }
@@ -570,8 +587,8 @@ impl<W: WriterNamespace> Drop
     for CatalogReadOperation<'_, '_, '_, '_, '_, '_, '_, '_, '_, '_, '_, '_, '_, W>
 {
     fn drop(&mut self) {
-        let _ = self.close();
-        let _ = self.source.release_checked();
+        let _ = self.close_refs();
+        let _ = self.close_source();
     }
 }
 

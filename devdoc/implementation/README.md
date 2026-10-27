@@ -1,5 +1,7 @@
 # 현재 구현
 
+2026-10-27 [C2 최종 source 반환 수명](../evidence/module-independence-survey-20261026.md#c2-source-return): refs가0이 된 뒤에도 최종 decode/Result·source 반환까지 원 read_operation 표시를 유지한다. 신규4·cleanup 변경 영향3의 선택7개와 production/test build PASS다. 독립 D1/D2 한정 수용이며 진입 틈·writer/progress 전체 합산·M4/M5는 미완료다.
+
 2026-10-27 [C2 상주 Catalog 조회](../evidence/module-independence-survey-20261026.md#c2-resident-read): 새 무 I/O 경로와 고정16860B class, 두 조회의 실제 동시 예약·합55976B를 선택9개로 확인했다. 비상주/정상 allocator 변경과 membership/typed 손상을 구분하며 원 compile·census FAIL을 보존한다. 독립 D1/D2 한정 수용이며 writer/progress 전체 합산·Row·M4/M5는 미완료다.
 
 2026-10-27 [C2 CatalogFull source 예약](../evidence/module-independence-survey-20261026.md#c2-short-source): 원 isolation 원장에 전체 조회41576B를 선예약하고 마지막 decode/Result 뒤 반환한다. shared retained22256B와 합63832B이며 신규9·변경 영향8의 선택17 PASS, 원 test compile FAIL을 보존한다. 독립 D1/D2 한정 수용이며 writer/resident/progress·전체 aggregate·M4/M5는 미완료다.
