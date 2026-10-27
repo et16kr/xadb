@@ -1141,3 +1141,28 @@ source 식은 owned wrapper의 인자/배열/반환, borrowed constructor/guard/
 | r3 import-only PASS | `dea3545c6ed6c0657c4b8b219edb8c976aeb8afc65aca381fb64fc15ec8e7906` | `9fbf4135a2176e2b0d9ba272116eda840f72f945ff59a69fc38e223dd278131c` | `4ed50b0321d83361dfcc27f712bc63e2855bc3926949727a3242e5e3e3e0da1e` |
 
 manifest SHA-256은 세 실행 모두 `bd5119987df3f80c7c20169c9245337fa3ff996724b94ac481aad740f61f332d`다. 독립 D1/D2는 제품 diff·r1/r2/r3 원 source/inventory·build/runtime 로그·ELF·6문서를 대조하고, N16 검산 범위와 runtime 미반복의 문구 정정을 수신해 한정 수용했다. 미해결 필수 수정은0이다. 검토자는 수정·빌드·시험·verifier를 실행하지 않는다. 변경 파일 rustfmt·diff whitespace만 확인하고 전체 fmt/Clippy·문서 verifier·push는 실행하지 않았다. 전체 bound entry/tail·writer/progress phase·Row/terminal/recovery·M4/M5는 미완료다.
+
+<a id="c2-split-source-charges"></a>
+### C2 exclusive split의 고정 source 계산과 port 계수 — 2026-10-27
+
+기준 `266c9ca`, 작성·통합 `/root`, 독립 검토 `/root/module_review`다. 전체 entry floor 조사에서 source 예약 전에 매번 여러 하위 계수 함수를 호출하던 일반 source_census 계산값도 실제 temporaries임을 확인했다. compiler constant-folding을 가정해 제외하지 않고, 원 `DiskSession::split(&mut self)`에서 fixed shared/Full/Resident를 한 번 계산한 후 private immutable CatalogSourceCharges를 ReadPort로 이동한다. 살아 있는 port/Scope와 exclusive split은 borrow로 겹치지 않는다. Catalog entry는 자신의 원 ReadPort에서 scalar만 읽으며 caller byte count·새 manager·authority·backing은 추가하지 않는다.
+
+계산 graph는 size_of/산술과 작은 Census/tuple/iterator 값만 생성한다. [동결 manifest](../../tests/fixtures/dev3-module-c2/split-source-charges/manifest.json)에17단계 실제 deep path, 최대 실제packet History/Load 각12usize=96B, bootstrap [usize;7]/IntoIter/fold와 소유 경로를 기록했다. 각 helper의 인자·지역값·미완료 식·iterator·callee return와 추출값까지128word, 동시24helper의 보수 상한24576B를 사용한다. sizeof의 제품 배열/guard는 계산 때 생성되지 않는다. 전체 split24680B는 계산과 tuple+각 port 반환 phase의 max이며 실제 port는 계산 뒤 생성한다. 이는 source-value 상계이며 stack/RSS나 성능 측정이 아니다.
+
+원 shared 식에 빠졌던 실제 split3port를144B로 한 번 추가했다. conversion에는 아직 port가 없으며 live active에는 ports를 더하고 exclusive split은 별도 max다. recovered step의 waiting_flush/FlushRequired에서도 split이 호출되므로 Step/Result/target/UnwindFence·인자·반환을 추가한47600B 별도 가지를 연결했다. port tuple과 추출한 값의 반환 phase도 보수적으로 보존한다.
+
+source ticket charge는 원 checked next<=available<=65536이 성공한 뒤만u32로 변환한다. 반환은u64로 확장하며 header24..32의u64·32..64zero·실패 우선·poison/fence·active 잔존·source→progress 순서와 원 core+OwnerIdentity는 유지한다. 새 경계 시험은65536 전량 보유/반환,65537·u32::MAX+1·usize::MAX 무효과 거절을 검산했다.
+
+실측 ticket24→16B·Scope/ResultScope72→64B·cleanup pair48→40B다. one-call entry948B/held108B/consumer4972B/close434B/legacy1962B/source leaf336B이며 전체 bound floor와 구별한다. Full33972B·Resident16928B·shared22400B, shared+Resident2=56256B다. 원 Pending 관측5320B까지61692B/여유3844B에는 전체 entry/tail·독립 guard leaf·writer ticket이 빠져 있다. live peak63328B/metadata186336B/whole251872B·recovered peak64704B로 올라갔으며 이전63184/64611B를 현재 값으로 재사용하지 않는다. backing/형식/제품 한도는 유지한다.
+
+선택16은 charge 표현/고정 class9, actual port 전달1, split 계수1, live/recovered source1, Scope 크기1, actual Resident 결과 소비1, Full Pending Undo LOAD1, 현재-build memory recovery1이다. runtime은 r3에서만 실행했다. r1은 MaintenancePort sizeof의 lifetime 인자 누락 E0107, r2는 복구 계수의 private legacy module alias E0603으로 production compile FAIL이며 test build/runtime16 NOT_RUN이다. 두 실패 source/log를 그대로 보존하고 타입 인자와 canonical `storage::disk::RetentionError` 경로를 수정했다. r3 build2/runtime16 PASS·경고0다. borrow API/Drop authority가 바뀌지 않아 이전 compiler probes는 재실행하지 않았다. 무변경 codec/하위 회귀·전체 workspace·native/새 PID 복구는 실행하지 않았다.
+
+각 `artifacts/module-c2-split-source-charges-20261027-r{1,2,3}/`에5644파일 source/inventory·manifest·runner/helper·compiler·ELF(생성 시)·case 로그를 보존한다. 동결 총600초/compiler90초/case30초/출력8MiB/stack33554432B, 실제 r1 5.77초/r2 5.67초/r3 40.42초는 성능 결과가 아니다. r1/r2/r3의 선택16은 같고 manifest의 계산graph 감사 근거가 보완됐다.
+
+| 실행 | source SHA-256 | manifest SHA-256 | result SHA-256 |
+| --- | --- | --- | --- |
+| r1 FAIL | `d892ca2683bd4246a6c9c002bfb870a7c5485f6fe48863ed315806fcdf63a277` | `2e8b5a3d0f07c21f04fb167e0dbbb603bba01059caf808b4f4ae456716d19d4e` | `f832bed02f3c703afb45e582b7440b3c2a02f9dfffca92048104926d38a3462d` |
+| r2 FAIL | `bd537f0312325978e5ef2273e4e86adaae7b170332dc11aeb2972ea581fcdee0` | `8e175414b1f77d88e40a989875578ea56c88d746049d48af618831130bb531fb` | `cf404e7e818a0d1c816491856df6f7d3670631c368ac9f7653be31a599e82f03` |
+| r3 PASS | `0af267449e387bc19ef806df764ef921178855552b24206bbea11a4c961d6dc0` | `0cd05e4718397b2462cd5d592e2ff59666e254d11daf7e184bd8fb6917d6eba1` | `1e8fdb2fc971b1b5e84442b4f02c582ef78406bb3c46f56c5bf1c579e46048ea` |
+
+r3 ELF SHA-256은 `427a179ba550920ec7cf11f9e8c6feabfe9202fcc312a8a72d619b178f54d4a1`이다. 독립 D1/D2는 현재 제품/계산graph·원r1/r2/r3 source/inventory·build/runtime 로그·ELF·6문서를 대조해 한정 수용했다. 미해결 필수 수정은0이며 실제 비재귀 호출graph라는 문구 정정을 반영했다. 검토자는 수정·빌드·시험·verifier를 실행하지 않았다. 변경 파일 rustfmt/diff whitespace만 확인했으며 전체 fmt/Clippy·문서 verifier·push는 실행하지 않았다. 전체 bound entry/tail·writer/progress·Row/terminal/recovery·M4/M5는 미완료다.

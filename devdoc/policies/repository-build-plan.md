@@ -690,3 +690,7 @@ actual health/source/Scope/legacy facade·원 progress consuming finish와 관�
 ### C2 replay 작업 공간 대여 등록 — 2026-10-27
 
 기존 semantic transition/source·history/recovery 연결·선택 관측8경로를 수정하고 실제 fixture1을 JSON `dev3_module_c2_borrowed_replay_workspace`에 등록했다. package/dependency·source root·backing·wire는 유지한다. [source별 증거](../evidence/module-independence-survey-20261026.md#c2-borrowed-replay-workspace)는 선택9 PASS·원 compile FAIL/경고와 import-only build를 구별하며 전체 entry/tail·writer admission은 후속이다.
+
+### C2 split 고정 source 계산 등록 — 2026-10-27
+
+기존 port/source/Scope/실제 관측/live·복구 계수7경로를 수정하고 선택 fixture1을 JSON `dev3_module_c2_split_source_charges`에 등록했다. package/dependency·source root·backing·wire는 유지한다. [원 증거](../evidence/module-independence-survey-20261026.md#c2-split-source-charges)는 build/runtime16 PASS와 원 compile FAIL2, source별 계산graph 보완을 구별하며 전체 entry/tail·writer admission은 후속이다.

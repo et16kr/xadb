@@ -6903,5 +6903,26 @@
     "validation": "r1 accidental file replacement production compile FAIL/runtime NOT_RUN retained; r2 build2/runtime9 PASS warning1; r3 cfg(test) import-only build2 PASS warning0, runtime NOT_REPEATED_UNCHANGED_CODE; independent D1/D2 source/evidence/docs accepted, no unresolved required changes",
     "remaining_supply": "Whole bound entry/return and independent guard-held leaves plus writer/progress phases; Row/terminal/recovery and M4/M5; Full33980+shared22256+observed Pending5320=61556 excludes ticket/floor",
     "source_roots_changed": false
+  },
+  "dev3_module_c2_split_source_charges": {
+    "status": "VALIDATED_INDEPENDENT_D1_D2_ACCEPTED",
+    "contract_ref": "dev3-module-boundaries.md#operation-source-admission",
+    "implemented_paths": [
+      "tests/fixtures/dev3-module-c2/split-source-charges/manifest.json"
+    ],
+    "modified_paths": [
+      "crates/engine/src/storage/wal_io/plan4_apply.rs",
+      "crates/engine/src/storage/wal_io/plan4_apply/owner_tests.rs",
+      "crates/engine/src/storage/wal_io/plan4_apply/source.rs",
+      "crates/engine/src/storage/wal_io/plan4_apply/source_tests.rs",
+      "crates/engine/src/storage/wal_io/plan4_recovery/resources.rs",
+      "crates/engine/src/storage/wal_io/plan4_retention/read/scope.rs",
+      "crates/engine/src/storage/wal_io/plan4_retention/resources.rs"
+    ],
+    "scope": "Compute private fixed charges once at original exclusive split; no runtime census in Catalog entry; count actual three ports once plus exclusive computation/tuple return/recovery caller; checked<=65536 u32 ticket with original u64 ledger/authority/cleanup",
+    "evidence_ref": "module-independence-survey-20261026.md#c2-split-source-charges",
+    "validation": "r1/r2 production compile FAIL/test runtime NOT_RUN retained; r3 production/test build+runtime16 PASS warning0; independent D1/D2 source/evidence/docs accepted, no unresolved required changes",
+    "remaining_supply": "Whole bound entry/return and independent guard leaves plus writer/progress; Row/terminal/recovery and M4/M5; shared22400+Full33972+observed Pending5320=61692 excludes ticket/floor",
+    "source_roots_changed": false
   }
 }

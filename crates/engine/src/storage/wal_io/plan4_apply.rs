@@ -266,6 +266,7 @@ struct IsolationLedger<'a, 'c, 's> {
 }
 
 pub(crate) struct ReadPort<'b, 'a, 's, 'c, 'p, 'd, 'm, 'w, W: WriterNamespace> {
+    source_charges: source::CatalogSourceCharges,
     storage: &'s MutableStorageOwner<'m, 'w, W>,
     pool: &'b SharedPool<'c, 's, 'p, 'd>,
     history: &'b history::runtime::RuntimeHistory<'a, 'c, 's>,
@@ -458,6 +459,9 @@ impl<'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
         ReadPort<'b, 'a, 's, 'c, 'p, 'd, 'm, 'w, W>,
         MaintenancePort<'b, 's, 'c, 'p, 'd, 'm, 'w, W>,
     ) {
+        // No previously split port can coexist with this exclusive session
+        // borrow. Complete the recursive type census before lending any port.
+        let source_charges = source::CatalogSourceCharges::new::<W>();
         (
             MutationPort {
                 storage: self.inner.storage,
@@ -469,6 +473,7 @@ impl<'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
                 visibility: self.catalog_visibility.as_ref(),
             },
             ReadPort {
+                source_charges,
                 storage: self.inner.storage,
                 pool: &self.inner.pool,
                 history: &self.history,

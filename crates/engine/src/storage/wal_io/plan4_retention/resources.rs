@@ -15,6 +15,8 @@ use std::mem::size_of;
 pub(in crate::storage) struct RetentionSourceCensus {
     pub(in crate::storage) original_owner: usize,
     pub(in crate::storage) retained: usize,
+    pub(in crate::storage) split_ports: usize,
+    pub(in crate::storage) split: usize,
     pub(in crate::storage) conversion: usize,
     pub(in crate::storage) conversion_preflight: usize,
     pub(in crate::storage) conversion_return: usize,
@@ -242,7 +244,14 @@ pub(in crate::storage) fn source_census<W: WriterNamespace>() -> RetentionSource
         .max(catalog_live)
         .max(catalog_recovery_cleanup)
         .max(transaction::source_bytes());
-    let peak = conversion.max(recovered_conversion).max(retained + active);
+    // Conversion has not produced ports. After split they remain beside the
+    // original owner; the exclusive split calculation/tuple return is separate.
+    let split_ports = source::split_port_bytes::<W>();
+    let split = source::split_source_bytes::<W>();
+    let peak = conversion
+        .max(recovered_conversion)
+        .max(retained + split)
+        .max(retained + split_ports + active);
     // 36 descriptor/bookkeeping slots are actual retained metadata, even
     // though their backing is caller owned. Job and page snapshots are data.
     let metadata = peak
@@ -254,6 +263,8 @@ pub(in crate::storage) fn source_census<W: WriterNamespace>() -> RetentionSource
     RetentionSourceCensus {
         original_owner,
         retained,
+        split_ports,
+        split,
         conversion,
         conversion_preflight,
         conversion_return,

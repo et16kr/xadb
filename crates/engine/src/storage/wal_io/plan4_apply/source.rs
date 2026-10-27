@@ -14,11 +14,33 @@ pub(super) enum OperationClass {
     CatalogResident,
 }
 
+/// Fixed type-derived costs, computed once while DiskSession is exclusively
+/// borrowed for split. ReadPort owns these immutable values; callers cannot
+/// supply a byte count or recompute a recursive census before each admission.
+pub(super) struct CatalogSourceCharges {
+    shared: usize,
+    full: usize,
+    resident: usize,
+}
+impl CatalogSourceCharges {
+    #[cfg(test)]
+    pub(super) fn observations(&self) -> [usize; 3] {
+        [self.shared, self.full, self.resident]
+    }
+    pub(super) fn new<W: WriterNamespace>() -> Self {
+        Self {
+            shared: shared_bytes::<W>(),
+            full: read::lookup_source_bytes::<W>(),
+            resident: read::resident_lookup_source_bytes::<W>(),
+        }
+    }
+}
+
 /// A non-Clone accounting loan, never a page, snapshot or WAL authority.
 pub(super) struct OperationSourceAdmission<'b, 'a, 'c, 's> {
     ledger: &'b Mutex<IsolationLedger<'a, 'c, 's>>,
     class: OperationClass,
-    charge: u64,
+    charge: u32,
     active: bool,
 }
 
@@ -88,15 +110,16 @@ impl<'b, 'a, 'c, 's> OperationSourceAdmission<'b, 'a, 'c, 's> {
     /// Charge the fixed lookup closure inside its original progress lifetime,
     /// before refs or pins. The caller returns progress if reservation fails.
     /// No caller chooses a byte count; the charge cannot grow during lookup.
-    pub(super) fn catalog<W: WriterNamespace>(
+    pub(super) fn catalog(
         ledger: &'b Mutex<IsolationLedger<'a, 'c, 's>>,
+        charges: &CatalogSourceCharges,
         class: OperationClass,
     ) -> SourceResult<Self> {
         let charge = match class {
-            OperationClass::CatalogFull => read::lookup_source_bytes::<W>(),
-            OperationClass::CatalogResident => read::resident_lookup_source_bytes::<W>(),
+            OperationClass::CatalogFull => charges.full,
+            OperationClass::CatalogResident => charges.resident,
         };
-        Self::reserve_class(ledger, shared_bytes::<W>(), charge, class)
+        Self::reserve_class(ledger, charges.shared, charge, class)
     }
 
     pub(super) fn resident(&self) -> bool {
@@ -136,7 +159,8 @@ impl<'b, 'a, 'c, 's> OperationSourceAdmission<'b, 'a, 'c, 's> {
         Ok(Self {
             ledger,
             class,
-            charge: charge as u64,
+            // checked next <= available <= SHORT_BYTES proves this conversion.
+            charge: charge as u32,
             active: true,
         })
     }
@@ -161,11 +185,11 @@ impl<'b, 'a, 'c, 's> OperationSourceAdmission<'b, 'a, 'c, 's> {
         let used = check(&state)?;
         match self.class {
             OperationClass::CatalogFull | OperationClass::CatalogResident
-                if self.charge != 0 && self.charge <= SHORT_BYTES => {}
+                if self.charge != 0 && u64::from(self.charge) <= SHORT_BYTES => {}
             _ => return Err(failed(state.fence, SourceCause::Invariant)),
         }
         let next = used
-            .checked_sub(self.charge)
+            .checked_sub(u64::from(self.charge))
             .ok_or_else(|| failed(state.fence, SourceCause::Invariant))?;
         state.bytes[USED].copy_from_slice(&next.to_le_bytes());
         self.active = false;
@@ -189,7 +213,33 @@ pub(super) fn shared_bytes<W: WriterNamespace>() -> usize {
     .max(
         size_of::<Plan4RecoveryRuntime<'_, '_, '_, W>>()
             + size_of::<Plan4Recovered<'_, '_, '_, '_, '_, '_, '_, '_, W>>(),
-    )
+    ) + split_port_bytes::<W>()
+}
+
+/// The single non-Clone split tuple is consumed into its three ports. Their
+/// actual values remain beside the owner once, including ReadPort's costs.
+pub(super) fn split_port_bytes<W: WriterNamespace>() -> usize {
+    size_of::<MutationPort<'_, '_, '_, '_, '_, '_, '_, '_, '_, W>>()
+        + size_of::<ReadPort<'_, '_, '_, '_, '_, '_, '_, '_, W>>()
+        + size_of::<MaintenancePort<'_, '_, '_, '_, '_, '_, '_, W>>()
+}
+
+/// A deliberately loose bound for evaluating the fixed census expression graph
+/// during exclusive split: at most 24 nested arithmetic helpers, each with at
+/// most 128 usize-sized argument/local/intermediate/iterator/return values.
+/// The graph has no recursion, I/O, authorities, page arrays or decoded values:
+/// size_of<T> returns a usize without constructing T. Both complete returned
+/// census packets and the caller's extracted packet fit the per-helper bound.
+/// See the split-charge fixture's owner-reviewed graph inventory. This is a
+/// source-value upper bound, not an assumed compiler constant-folding/stack size.
+pub(super) const SPLIT_CALCULATION_BYTES: usize = 24 * 128 * size_of::<usize>();
+
+/// The charge computation completes before any port is constructed. In the
+/// return phase the tuple and all extracted ports are conservatively counted.
+pub(super) fn split_source_bytes<W: WriterNamespace>() -> usize {
+    let compute = SPLIT_CALCULATION_BYTES + 3 * size_of::<CatalogSourceCharges>();
+    let returning = 2 * split_port_bytes::<W>() + size_of::<CatalogSourceCharges>();
+    4 * size_of::<&()>() + compute.max(returning)
 }
 
 pub(super) fn leaf_source_bytes() -> usize {

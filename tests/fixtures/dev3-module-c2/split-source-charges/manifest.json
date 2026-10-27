@@ -1,0 +1,125 @@
+{
+  "schema": "XADB_MODULE_C2_SPLIT_SOURCE_CHARGES_V1",
+  "status": "FROZEN_INPUTS_NOT_EXECUTION_EVIDENCE",
+  "baseline": "266c9ca",
+  "scope": "Original exclusive split computes fixed private scalar costs once; actual entry performs no recursive census; live shared includes all three ports; successful checked<=65536 ticket usesu32, ledger remainsu64; entry/tail/writer admission incomplete",
+  "budget": {
+    "total_seconds": 600,
+    "compiler_seconds": 90,
+    "case_seconds": 30,
+    "output_bytes": 8388608,
+    "rust_min_stack": 33554432
+  },
+  "runtime_tests": [
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::source::tests::ticket_width_preserves_full_65536_charge_and_rejects_overflow",
+      "reason": "new actual u32 ticket retains inclusive65536 and rejects65537/u32max+1/usizeMAX before any ledger write"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::source::tests::exact_aggregate_capacity_releases_only_its_own_charge",
+      "reason": "changed actual charge representation/cached fixed classes/shared port cost: original capacity, arithmetic, concurrent reservation, poison/fence/unwind and fixed class rules"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::source::tests::simultaneous_reservations_cannot_overbook_the_original_ledger",
+      "reason": "changed actual charge representation/cached fixed classes/shared port cost: original capacity, arithmetic, concurrent reservation, poison/fence/unwind and fixed class rules"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::source::tests::overflow_and_invalid_header_do_not_create_capacity",
+      "reason": "changed actual charge representation/cached fixed classes/shared port cost: original capacity, arithmetic, concurrent reservation, poison/fence/unwind and fixed class rules"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::source::tests::underflow_fences_without_returning_the_charge",
+      "reason": "changed actual charge representation/cached fixed classes/shared port cost: original capacity, arithmetic, concurrent reservation, poison/fence/unwind and fixed class rules"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::source::tests::poison_and_fence_preserve_the_outstanding_charge",
+      "reason": "changed actual charge representation/cached fixed classes/shared port cost: original capacity, arithmetic, concurrent reservation, poison/fence/unwind and fixed class rules"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::source::tests::unwind_and_forgotten_loans_never_manufacture_capacity",
+      "reason": "changed actual charge representation/cached fixed classes/shared port cost: original capacity, arithmetic, concurrent reservation, poison/fence/unwind and fixed class rules"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::source::tests::catalog_class_uses_current_types_and_recovered_retained_owner",
+      "reason": "changed actual charge representation/cached fixed classes/shared port cost: original capacity, arithmetic, concurrent reservation, poison/fence/unwind and fixed class rules"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::source::tests::fixed_resident_class_admits_two_and_never_escalates",
+      "reason": "changed actual charge representation/cached fixed classes/shared port cost: original capacity, arithmetic, concurrent reservation, poison/fence/unwind and fixed class rules"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::owner_tests::disk_session_moves_original_resources_and_splits_disjoint_ports",
+      "reason": "changed original exclusive split stores exact type-derived costs in the same private ReadPort without changing backing/identity/effects"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::owner_tests::cached_catalog_charges_count_exclusive_split_and_live_ports",
+      "reason": "new separate source arithmetic/tuple return phase and once-per-owner three live ports connected to live/recovered bounds"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::owner_tests::disk_session_isolation_backing_and_carriers_are_accounted",
+      "reason": "changed active port and split calculation feed live/recovered peak and unchanged metadata caps"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::read::scope::tests::compact_call_counts_whole_return_and_consuming_pair",
+      "reason": "changed ticket width feeds real scope/result/pair/entry/cleanup class expressions"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::call_scope::found_view_consumption_keeps_source_and_progress",
+      "reason": "actual cached Resident factory keeps original charge/progress through finite borrowed-result consumption"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::commit_concurrency::catalog_mt03_pending_reader_loads_undo",
+      "reason": "actual cached Full factory used during original Pending Undo LOAD"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::lifecycle::mc04_reserved_drop_fence_fresh_recovery",
+      "reason": "changed split/charge width used by current-build memory recovered actual query"
+    }
+  ],
+  "split_calculation_review": {
+    "max_nested_arithmetic_helpers": 24,
+    "usize_sized_values_per_helper": 128,
+    "scope": "source-value bound includes arguments, named locals, arithmetic intermediate values, small census/tuple arrays, callee return plus caller extraction; sizeof<T> does not construct T; no runtime I/O/recursive/product operation call in cost graph",
+    "owner_groups": [
+      "read lookup/operation/scope/catalog/resident/undo; catalog pure read; lookup_load",
+      "history source/runtime/inventory/catalog and recovery phase/selection",
+      "semantic Catalog resources including tree catalog carriers, obligation, Aging/queue/layout",
+      "population allocation/INIT source helpers and residency/target-set census",
+      "genesis owned source and bootstrap source_budget, DWB/recovery preparation",
+      "visibility source and transaction progress source; source charge/port sizeof"
+    ],
+    "deep_path": [
+      "CatalogSourceCharges::new",
+      "read::lookup::source_bytes",
+      "read::lookup::lookup_source_bytes",
+      "lookup_load::source_bytes",
+      "history::source_bytes",
+      "recovery::phase_source_bytes",
+      "history::catalog::source_bytes",
+      "semantic_catalog::resources::borrowed_source_bytes",
+      "semantic_catalog::resources::census",
+      "semantic_catalog::resources::compute",
+      "semantic_catalog::resources::aging_next",
+      "semantic_catalog::resources::aging_predecessor",
+      "retention_obligation::catalog::source_bytes",
+      "obligation::descriptor_source_bytes",
+      "transaction_record::status_codec_source_bytes",
+      "transaction_record::status_codec_source_bytes::returned",
+      "std::mem::size_of"
+    ],
+    "packet_examples_usize_fields": {
+      "HistorySourceCensus": 12,
+      "LoadSourceCensus": 12,
+      "plan4_genesis::Census": 9,
+      "VisibilitySourceCensus": 8,
+      "semantic_catalog::SourceCensus": 7,
+      "bootstrap::SourceBudget": 6,
+      "RecoveryPhaseCensus": 5,
+      "PopulationSourceCensus": 5,
+      "CoreCensus": 5,
+      "history::catalog::SourceCensus": 3
+    },
+    "per_helper_review": "largest packet boundary covers both returned and extracted packets, up to24 words for HistorySourceCensus; history has<=20 named numeric/helper locals; lookup has9 numeric locals; census uses7 scalar fields and helpers; remaining128-word allowance includes unfinished expression operands, usize max/array iterator carriers, args and intermediate returns. Product arrays appear only inside size_of and are not constructed by these arithmetic functions.",
+    "additional_iterator_boundary": "bootstrap::source_budget constructs [usize;7] and its IntoIter/fold; include both array and iterator plus accumulator/callback args inside128word allowance. The17-node deep_path includes the local status-codec returned helper and sizeof intrinsic."
+  }
+}

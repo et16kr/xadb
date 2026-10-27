@@ -154,7 +154,11 @@ impl<'u, 'r, 'v, 'j, 'b, 'a, 's, 'c, 'p, 'd, 'm, 'w, W: WriterNamespace>
             backend.pool.bound_core(),
             crate::transaction::concurrency::catalog_test_support::Point::LookupBeforeSourceReserve,
         );
-        let source = match OperationSourceAdmission::catalog::<W>(backend.isolation, class) {
+        let source = match OperationSourceAdmission::catalog(
+            backend.isolation,
+            &backend.source_charges,
+            class,
+        ) {
             Ok(source) => source,
             Err(error) => {
                 return compact_merge(

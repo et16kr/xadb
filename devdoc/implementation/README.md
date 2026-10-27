@@ -1,5 +1,7 @@
 # 현재 구현
 
+2026-10-27 [C2 split 고정 charge](../evidence/module-independence-survey-20261026.md#c2-split-source-charges): source 계산을 exclusive port 생성으로 옮기고 실제3port와 복구 caller를 계수했다. ticket16B·Full33972B/Resident16928B/shared22400B, 선택16 PASS·원 compile FAIL2 보존. live/recovered peak63328/64704B이며 전체 entry/tail·writer phase·M4/M5는 미완료다.
+
 2026-10-27 [C2 replay 작업 공간 대여](../evidence/module-independence-survey-20261026.md#c2-borrowed-replay-workspace): 원 zero tail3328B를 actual observer에 빌려 Full33980B로 줄였다. 선택9 PASS·정상/오류/unwind 복원·현재-build memory recovery를 확인하고 원 compile FAIL/경고·import-only build를 보존한다. 전체 entry/tail·writer phase·M4/M5는 미완료다.
 
 2026-10-27 [C2 작은 진입·소비 정리](../evidence/module-independence-survey-20261026.md#c2-compact-call-boundary): 실제 health/source 오류·Catalog factory/finish를 줄이고 원 authority·정리 순서와 wide legacy 변환을 보존했다. production/test build·runtime25·compiler4 PASS, Full35619B/Resident16936B다. 전체 bound entry/tail floor와 writer/progress·M4/M5는 미완료다.

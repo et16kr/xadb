@@ -143,6 +143,14 @@ fn canonical_transfer(reject_foreign_owner: bool) {
     let flush_pointer = &session.flush as *const _;
     {
         let (mutation, read, maintenance) = session.split();
+        assert_eq!(
+            read.source_charges.observations(),
+            [
+                source::shared_bytes::<port::Writer>(),
+                read::lookup_source_bytes::<port::Writer>(),
+                read::resident_lookup_source_bytes::<port::Writer>(),
+            ]
+        );
         assert_eq!(mutation.pool as *const _, pool_pointer);
         assert_eq!(read.pool as *const _, pool_pointer);
         assert_eq!(maintenance.pool as *const _, pool_pointer);
@@ -372,4 +380,33 @@ fn catalog_borrowed_replay_workspace_counts_producer_and_observer() {
     assert!(history.peak >= history.initialize);
     assert!(shared + full <= 65536);
     assert!(shared + 2 * resident <= 65536);
+}
+
+#[test]
+fn cached_catalog_charges_count_exclusive_split_and_live_ports() {
+    let live = resources::source_census::<port::Writer>();
+    let recovered = super::super::super::plan4_recovery::source_census::<port::Writer>();
+    let charges = source::CatalogSourceCharges::new::<port::Writer>();
+    let [shared, full, resident] = charges.observations();
+    println!(
+        "SPLIT_CHARGES cached={:?} ports={} split={} calculation={} live_peak={} recovered_peak={} ticket={}",
+        charges.observations(),
+        live.split_ports,
+        live.split,
+        source::SPLIT_CALCULATION_BYTES,
+        live.peak,
+        recovered.peak,
+        std::mem::size_of::<source::OperationSourceAdmission<'_, '_, '_, '_>>()
+    );
+    assert_eq!(
+        shared,
+        live.retained.max(recovered.retained_live) + live.split_ports
+    );
+    assert_eq!(live.split_ports, source::split_port_bytes::<port::Writer>());
+    assert!(live.split >= source::SPLIT_CALCULATION_BYTES);
+    assert!(live.peak >= live.retained + live.split);
+    assert!(live.peak >= live.retained + live.split_ports + live.catalog_lookup);
+    assert!(shared + full <= 65_536);
+    assert!(shared + 2 * resident <= 65_536);
+    assert!(live.peak <= 65_536 && recovered.peak <= 65_536);
 }
