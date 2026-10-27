@@ -285,7 +285,7 @@ impl<'c, 's, 'p, 'd> SharedPool<'c, 's, 'p, 'd> {
                 modification_counter: actual.modification_counter,
             });
             if !self.claim_matches(&registry, capture)
-                || registry.entries[capture.index] != expected
+                || !self.dpt_matches(&registry, capture.index, expected.as_ref())
                 || registry.requirements[capture.index].map(|value| value.location().lsn)
                     != actual.rec_lsn.map(|_| actual.page_lsn.0)
                 || actual.identity != capture.stamp.identity

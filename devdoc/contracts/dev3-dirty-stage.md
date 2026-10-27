@@ -75,6 +75,13 @@ metadata 상한은 기존2162688+guard65536+dirty196608=2424832≤8388608이며 
 
 Directory/DPT/pin 배열은 retained에 한 번 포함하고 loop는 한 item scratch만 보유한다. registration lookup은 reference를 반환한다. retained O와 Option<O> 각각≤192, permit≤384, WriterControl≤4096, read/write guards≤256이다. bind 전 fits는 실제 타입 크기와 owner/control/Bound/Result, W::File/reader/constructor 합계, deep writer의 owner+control+PLANS+TEMPORARIES+generic2048+move2048≤65536을 확인한다. constructor cold phases는 move82048, 작은 frame wrapper2048, caller wrapper array32768, claimed directory/DPT/Bound90112다. 전체 source-value 수식은 실제 compiler physical stack/RSS 또는 임의 namespace trait의 내부 메모리 상한이 아니다.
 
+<a id="compact-dpt"></a>
+## 원 registry의 compact DPT — 2026-10-27
+
+후속 [XADB-MODULE-DPT-001](../evidence/module-independence-survey-20261026.md#c2-compact-dpt)은 현재 live PoolRegistry의 private 행에 generation/recLSN/counter만 보유한다. full identity는 같은 원 directory가 소유하며 expected·관측·permit·WalRequirement는 축약하지 않는다. 검산은 같은 registry guard 아래 published full identity와 generation을 비교한다. 정상 rebind는 clean/DPT·requirement 없음과 checked 다음 generation을 선행한다. dirty same-generation identity 교체는 허용하지 않는다. INIT의 원 claim은 unpublished 중단 진단의 full identity를 유지하고 정상 서비스의 publication 대체물이 아니다. cfg(test) 진단은 matching generation과 두 원본의 일치를 요구하며 provenance 누락을 clean으로 표시하지 않는다.
+
+실제 DPT 배열5120→2048B, 추가 helper660B는 actual target-set/TxPair source 식에 연결한다. N2 charge2396B와 원 broad physical3012≤3072를 검산했으며 기존 physical3072·frame64·WAL 의미는 유지한다. historical DirtyRegistry/PriorPool·이 문서의 과거 수치와 원 source 증거는 소급 변경하지 않는다. 후속 whole admission과 현재 부분 공급 범위는 위 증거에서 판단한다.
+
 ## 변경 코드 시험과 최종 확대
 
 중간 필수는 새 runtime DA01–DA07 7selector/53case, 독립 counterexample55, 새 compiler baseline+assembly release+16negative, Linux native3, 새 oracle/checker selftests다. 정상1→8→63·profile1/2/3의18operation 확대는 별도 ignored S5 selector로 선택한다. 추가 contention/cut/fault 확대의 작성·동결 상태를 inventory에 명시하고 NOT_RUN을 PASS로 바꾸지 않는다. 실제 실행 입력은 `tests/fixtures/dev3-dirty-allocation/` 및 compiler fixture의 manifest와 source hash로 고정한다.

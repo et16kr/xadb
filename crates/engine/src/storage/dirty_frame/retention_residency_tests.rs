@@ -56,7 +56,7 @@ struct Snapshot {
     registrations: Vec<Option<Registration>>,
     successors: Vec<Option<u64>>,
     contents: Vec<FrameContents>,
-    entries: [Option<DirtyEntry>; MAX_FRAMES],
+    entries: [Option<DptEntry>; MAX_FRAMES],
     counts: [u16; MAX_FRAMES],
     total: u16,
 }

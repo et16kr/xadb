@@ -6963,5 +6963,28 @@
     "validation": "production/test build and selected runtime5 PASS warning0; independent D1/D2 accepted after original source/inventory/compiler/ELF/logs and six-document audit, required fixes0",
     "remaining_supply": "Normal710/error1394 per-call observations are not connected to whole entry/tail floor; actual writer/progress admission, Row/terminal/recovery and M4/M5 remain",
     "source_roots_changed": false
+  },
+  "dev3_module_c2_compact_dpt": {
+    "status": "ACCEPTED_LIMITED_D1_D2",
+    "contract_ref": "dev3-dirty-stage.md#compact-dpt",
+    "implemented_paths": [
+      "crates/engine/src/storage/dirty_frame/dpt_storage_tests.rs",
+      "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/dpt_lifecycle.rs",
+      "tests/fixtures/dev3-module-c2/compact-dpt/manifest.json"
+    ],
+    "modified_paths": [
+      "crates/engine/src/storage/dirty_frame.rs",
+      "crates/engine/src/storage/dirty_flush.rs",
+      "crates/engine/src/storage/dirty_init.rs",
+      "crates/engine/src/storage/dirty_init/tx_pair.rs",
+      "crates/engine/src/storage/dirty_frame/retention_residency.rs",
+      "crates/engine/src/storage/dirty_frame/retention_residency_tests.rs",
+      "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory.rs"
+    ],
+    "scope": "Private original live DPT rows omit duplicate identity; full expected/publication/generation and authentic requirement preserved; new helper cost connected to target-set and TxPair source",
+    "evidence_ref": "module-independence-survey-20261026.md#c2-compact-dpt",
+    "validation": "r3 production/test build +runtime12 PASS; unchanged first2 PASS retained at r2; r1 compile and r2 fixture FAIL preserved; independent D1/D2 accepted limited, required product fixes0",
+    "remaining_supply": "shared19328 full33972 resident17588; whole short floor and writer/progress phases, Row/terminal/recovery and M4/M5 remain",
+    "source_roots_changed": false
   }
 }

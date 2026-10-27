@@ -21,6 +21,16 @@ pub(super) struct TxPairClaimRecord {
     target_mask: u64,
 }
 impl TxPairClaimRecord {
+    #[cfg(test)]
+    pub(super) fn diagnostic_registration(&self, index: usize) -> Option<Registration> {
+        self.indices()
+            .into_iter()
+            .position(|value| value == index)
+            .map(|at| Registration {
+                request: self.pair[at],
+                generation: self.generations[at],
+            })
+    }
     pub(super) fn blocks_load(&self, index: usize, request: TargetRequest) -> bool {
         (index < MAX_FRAMES && self.target_mask & (1 << index) != 0)
             || self.pair.iter().any(|value| value.same_address(&request))
@@ -649,7 +659,7 @@ impl<'a, 'b, 'k, 'c, 's, 'p, 'd> TxPairWriteTargets<'a, 'b, 'k, 'c, 's, 'p, 'd> 
                     if pool.stamp_in(dpt, index, content)? != before
                         || before.identity != request.identity
                         || before.generation != self.pins().generations[at]
-                        || dpt.entries[index] != expected_entry
+                        || !pool.dpt_matches(dpt, index, expected_entry.as_ref())
                         || dpt.requirements[index].map(|receipt| receipt.location().lsn)
                             != before.rec_lsn.map(|_| before.page_lsn.0)
                         || (existing_role(request) == Some(3)) != permit.after()[at].is_none()
@@ -710,12 +720,12 @@ impl<'a, 'b, 'k, 'c, 's, 'p, 'd> TxPairWriteTargets<'a, 'b, 'k, 'c, 's, 'p, 'd> 
                 if permit.after()[at].is_some() {
                     let index = self.pins().indices[at];
                     let content = self.guards[at].as_ref().expect("installed Forward target");
-                    dpt.entries[index] = Some(DirtyEntry {
+                    dpt.entries[index] = Some(DptEntry::from_checked(&DirtyEntry {
                         identity: self.pins().requests[at].identity,
                         generation: self.pins().generations[at],
                         rec_lsn: content.rec_lsn.expect("installed recLSN"),
                         modification_counter: content.modification_counter,
-                    });
+                    }));
                     dpt.requirements[index] = Some(requirement);
                 }
             }
@@ -1018,5 +1028,6 @@ pub(in crate::storage) fn source_census() -> usize {
         + 2 * TARGETS * size_of::<usize>()
         + 2 * size_of::<Registration>()
         + 2 * size_of::<TxPairClaimRecord>()
+        + dpt_call_bytes()
         + 1024 // bounded borrowed inputs, iterators, role masks and scalar locals
 }

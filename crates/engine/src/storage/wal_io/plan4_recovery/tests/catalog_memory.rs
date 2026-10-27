@@ -1170,3 +1170,6 @@ mod drained;
 
 #[path = "catalog_memory/call_scope.rs"]
 mod call_scope;
+
+#[path = "catalog_memory/dpt_lifecycle.rs"]
+mod dpt_lifecycle;

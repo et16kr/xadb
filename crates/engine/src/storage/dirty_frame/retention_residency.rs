@@ -90,8 +90,8 @@ pub(in crate::storage) fn entry_source_observation() -> (usize, usize, usize) {
         + 2 * size_of::<WalFrameLocation>()
         + 2 * size_of::<Registration>()
         + 2 * size_of::<Option<Registration>>()
-        + size_of::<std::iter::Enumerate<std::slice::Iter<'_, Option<DirtyEntry>>>>()
-        + 2 * size_of::<(usize, &Option<DirtyEntry>)>()
+        + size_of::<std::iter::Enumerate<std::slice::Iter<'_, Option<DptEntry>>>>()
+        + 2 * size_of::<(usize, &Option<DptEntry>)>()
         + directory;
     let pin_count = size_of::<std::iter::Enumerate<std::slice::Iter<'_, u16>>>()
         + 2 * size_of::<(usize, &u16)>()

@@ -36,6 +36,23 @@ pub(super) struct InitClaimSlot {
     pub(super) initializer_pins_held: bool,
 }
 impl InitClaimSlot {
+    #[cfg(test)]
+    pub(super) fn diagnostic_registration(&self, index: usize) -> Option<Registration> {
+        match &self.identity {
+            InitClaimIdentity::System(record) if index == 0 => Some(Registration {
+                request: record.allocator,
+                generation: record.generations[0],
+            }),
+            InitClaimIdentity::System(record) if index == record.payload_index => {
+                Some(Registration {
+                    request: record.payload,
+                    generation: record.generations[1],
+                })
+            }
+            InitClaimIdentity::System(_) => None,
+            InitClaimIdentity::TxPair(record) => record.diagnostic_registration(index),
+        }
+    }
     fn system(&self) -> Option<&InitClaimRecord> {
         match &self.identity {
             InitClaimIdentity::System(record) => Some(record),
@@ -751,7 +768,7 @@ impl<'a, 'b, 'c, 's, 'p, 'd> InitWriteTargets<'a, 'b, 'c, 's, 'p, 'd> {
         });
         if pool.stamp_in(registry, 0, allocator)? != before
             || !payload.fresh()
-            || registry.entries[0] != expected_entry
+            || !pool.dpt_matches(registry, 0, expected_entry.as_ref())
             || registry.requirements[0].map(|receipt| receipt.location().lsn)
                 != before.rec_lsn.map(|_| before.page_lsn.0)
             || registry.entries[pins.identity.payload_index].is_some()
@@ -917,18 +934,18 @@ impl PreparedInitSet<'_, '_, '_, '_, '_, '_, '_> {
                 .identity
                 .payload_index;
             let registry = self.registry.prechecked_mut();
-            registry.entries[0] = Some(DirtyEntry {
+            registry.entries[0] = Some(DptEntry::from_checked(&DirtyEntry {
                 identity: allocator_identity,
                 generation: self.permit.allocator_before().generation,
                 rec_lsn: self.rec_lsn,
                 modification_counter: self.counter,
-            });
-            registry.entries[index] = Some(DirtyEntry {
+            }));
+            registry.entries[index] = Some(DptEntry::from_checked(&DirtyEntry {
                 identity: self.registration.request.identity,
                 generation: self.registration.generation,
                 rec_lsn: lsn,
                 modification_counter: 1,
-            });
+            }));
             registry.requirements[0] = Some(requirement);
             registry.requirements[index] = Some(requirement);
             self.control.mark_registry_installed();
@@ -1118,7 +1135,10 @@ pub(in crate::storage) mod test_support {
                 .lock()
                 .unwrap_or_else(|error| error.into_inner());
             (
-                [registry.entries[0], registry.entries[1]],
+                [
+                    pool.diagnose_dpt(&registry, 0),
+                    pool.diagnose_dpt(&registry, 1),
+                ],
                 [
                     registry.requirements[0].map(WalRequirement::location),
                     registry.requirements[1].map(WalRequirement::location),
@@ -1248,7 +1268,7 @@ pub(in crate::storage) mod test_support {
                 .lock()
                 .unwrap_or_else(|error| error.into_inner());
             (
-                registry.entries[index],
+                pool.diagnose_dpt(&registry, index),
                 registry.requirements[index].map(WalRequirement::location),
             )
         };

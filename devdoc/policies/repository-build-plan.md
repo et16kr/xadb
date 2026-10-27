@@ -702,3 +702,7 @@ actual health/source/Scope/legacy facade·원 progress consuming finish와 관�
 ### C2 query 종료 경계 등록 — 2026-10-27
 
 기존 Scope·actual query·call_scope3경로와 선택 fixture1을 JSON `dev3_module_c2_query_tail_boundaries`에 등록했다. package/dependency·source roots·backing·wire는 유지한다. [증거](../evidence/module-independence-survey-20261026.md#c2-query-tail-boundaries)의 production/test build·선택5 PASS는 changed finish_error와 query 경계에 한정한다. 정상710B/오류1394B 관측은 전체 reader/writer admission 미공급과 구별한다.
+
+### C2 compact DPT 등록 — 2026-10-27
+
+현재 private DPT representation·producer/flush/진단7기존경로, 신규 표현시험/actual Pair cut시험/선택 manifest3경로를 JSON `dev3_module_c2_compact_dpt`에 등록한다. package/dependency·source root·caller backing·wire는 유지한다. [실행 증거](../evidence/module-independence-survey-20261026.md#c2-compact-dpt)의 source별2+12선택 PASS와 원 compile/fixture FAIL을 구별한다. private 배열3072B 감소와 actual helper660B 비용 연결은 전체 aggregate admission 완료가 아니다.
