@@ -90,7 +90,7 @@ pub(crate) struct RemainingBudget {
     pub(crate) protected: u64,
 }
 impl RemainingBudget {
-    fn values(self) -> [u64; 14] {
+    fn values(&self) -> [u64; 14] {
         [
             self.steps,
             self.wal,
@@ -189,10 +189,10 @@ pub(crate) fn descriptor_source_bytes() -> usize {
         + size_of::<DescriptorSpec>() + size_of::<Result<DescriptorSpec>>()
         + size_of::<(OwnerState, OwnerChain, InventoryClaim, ControlRef)>()
         + size_of::<([u64; 6], [u64; 6], [u64; 14], [u128; 3], [u64; 3])>()
-        // validate iterates spec.remaining by value; the IntoIter retains the
-        // original array while its current row and row.values() are live.
-        + size_of::<std::array::IntoIter<RemainingBudget, 5>>()
-        + size_of::<RemainingBudget>()
+        // Validation and encoding borrow the original five rows. values()
+        // borrows its current row too; only its fixed output array is copied.
+        + size_of::<std::slice::Iter<'_, RemainingBudget>>()
+        + size_of::<&RemainingBudget>()
         + size_of::<([u8; 64], [u8; 32], [u8; 8])>()
         + summary + summary_result
         + 2 * size_of::<ContentHasher>()
@@ -236,7 +236,7 @@ fn validate(spec: &DescriptorSpec) -> Result<Summary> {
     let mut peaks = [0; 6];
     let mut protected = 0_u64;
     let mut growth_categories = 0_u128;
-    for row in spec.remaining {
+    for row in &spec.remaining {
         let values = row.values();
         if (row.steps == 0 && values.iter().any(|value| *value != 0))
             || !row.growth.is_multiple_of(EXTENT_BYTES)

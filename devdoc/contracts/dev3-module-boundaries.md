@@ -1155,6 +1155,8 @@ Operation은 scope를 재대여하고 원 refs/lease/loader/copy만 소유한다
 
 원 Owner의 최대32 foreground+maintenance1은 같은 core에 binding된 진입만 제한한다. 타 core의 foreign Owner 입력·거절을33개로 셌다고 주장하지 않으며, source 선예약 전 경로와 해제 후 Scope/Result 반환 tail의 전체 상계는 후속 공급이다. caller가 권한 없는 scalar/데이터를 따로 복사한 이후나 임의로 많은 view를 복제하는 코드를 이 유한 선택 caller 검산으로 보장하지 않는다. 이 한정은 source cap 확대·새 registry·generic Result credit 도입을 허용하지 않는다.
 
+[budget 행의 실제 borrow](../evidence/module-independence-survey-20261026.md#c2-borrowed-budget-rows)는 descriptor 검산의5개 행 복사와 values의 행 복사를 제거했다. 검산 순서·출력은 유지하고 descriptor source8047B·Full36972B로 감소했으며 Resident17212B/shared22256B는 유지한다. 기존 Pending5320B 관측까지의 합64548B는988B 여유이나 실제 writer ticket·bound entry/exit가 빠져 있으므로 전체 admission 증거가 아니다. CallScope의 이전65652B 및 그 이전65300B는 각각 원 source 결과로 보존한다.
+
 전체 설계 상계는 metadata `73856+65536+49152=188544≤196608`, original flush를 더한 whole `254080≤262144`다. 이 admission·동시 합 검산은 **새 C1/C2/C3 공급**이며 기존 active.max 기반 source 결과로 이미 구현됐다고 하지 않는다. header의 실제 byte 배치와 source charge의 측정·실패/정리 경로는 C1/C4 인수에 포함한다.
 
 <a id="common-deliveries"></a>

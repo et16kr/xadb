@@ -6822,5 +6822,21 @@
     "validation": "r1 production/test build+runtime14+compiler4 PASS; r2 production/test build+actual Busy1 PASS, I/O fixture FAIL and census NOT_RUN retained; r3 test build+fixed I/O/new census2 PASS, unchanged cases not repeated; warning0; independent code/artifact/six-document D1/D2 accepted limited; zero unresolved required fixes",
     "remaining_supply": "Actual writer/progress source phases and complete bound entry/release tail accounting, foreign pre-entry caller boundary, Row/terminal/recovery and M4/M5; current Full+observed Pending sum65652 exceeds cap116 before tickets",
     "source_roots_changed": false
+  },
+  "dev3_module_c2_borrowed_budget_rows": {
+    "status": "VALIDATED_LIMITED_D1_D2_ACCEPTED",
+    "contract_ref": "dev3-module-boundaries.md#operation-source-admission",
+    "implemented_paths": [
+      "tests/fixtures/dev3-module-c2/borrowed-budget-rows/manifest.json"
+    ],
+    "modified_paths": [
+      "crates/engine/src/storage/obligation.rs",
+      "crates/engine/src/storage/wal_io/allocation_budget.rs"
+    ],
+    "scope": "Actual borrowed RemainingBudget iteration and values receiver, preserving check order/wire and retained descriptor/return/hash carriers; real source charge decrease, no cap increase",
+    "evidence_ref": "module-independence-survey-20261026.md#c2-borrowed-budget-rows",
+    "validation": "r1 production/test build+descriptor5 PASS then Aging harness identity FAIL before product test; r2 same source/ELF continues failed Aging+not-run source3/current-build memory recovery1 PASS; completed tests/build not repeated; warning0; independent code/artifacts/six-document D1/D2 accepted limited; zero unresolved required fixes",
+    "remaining_supply": "Writer/progress phase reservations and complete bound entry/release tail; Row/terminal/recovery and M4/M5; Full36972+shared22256+observed Pending5320=64548 does not include future ticket/floor",
+    "source_roots_changed": false
   }
 }

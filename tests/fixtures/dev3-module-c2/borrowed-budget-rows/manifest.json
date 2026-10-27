@@ -1,0 +1,55 @@
+{
+  "schema": "XADB_MODULE_C2_BORROWED_BUDGET_ROWS_V1",
+  "status": "FROZEN_INPUTS_NOT_EXECUTION_EVIDENCE",
+  "baseline": "847def2",
+  "scope": "borrow original RemainingBudget rows in descriptor validation/encoding and account original references instead of copied array iterators; unchanged wire/check order, no admission completion claim",
+  "budget": {
+    "total_seconds": 600,
+    "compiler_seconds": 90,
+    "case_seconds": 30,
+    "output_bytes": 8388608,
+    "rust_min_stack": 33554432
+  },
+  "runtime_tests": [
+    {
+      "selector": "storage::obligation::tests::descriptor_literals_bind_exact_owner_profile_and_state",
+      "reason": "changed borrowed validation/encoding must preserve exact independent descriptor literals and owner states"
+    },
+    {
+      "selector": "storage::obligation::tests::descriptor_reserved_and_semantic_damage_reject_after_checksum",
+      "reason": "changed row validation must reject rechecksummed invalid budget/semantic fields"
+    },
+    {
+      "selector": "storage::obligation::tests::descriptor_budget_sums_peaks_and_growth_are_exact",
+      "reason": "changed row borrow and values method preserve independent sums/peaks/growth/overflow expectations"
+    },
+    {
+      "selector": "storage::obligation::tests::descriptor_encoder_errors_preserve_output",
+      "reason": "changed encoder row values and validation retain output on all selected invalid inputs"
+    },
+    {
+      "selector": "storage::obligation::tests::descriptor_generated_profiles_match_independent_fields",
+      "reason": "changed shared row loop preserves generated independent field expectations"
+    },
+    {
+      "selector": "storage::retention_obligation::tests::aging_descriptor_inputs",
+      "reason": "Aging uses the same modified descriptor row validation/encoding and borrowed budget-row projection"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::owner_tests::catalog_aging_source_phases_include_initial_and_malformed_paths",
+      "reason": "changed descriptor and allocation row iterator source formulas feed actual source branches"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::owner_tests::disk_session_isolation_backing_and_carriers_are_accounted",
+      "reason": "modified lower source formulas feed actual live/recovery cap census"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::source::tests::fixed_resident_class_admits_two_and_never_escalates",
+      "reason": "modified source census changes Full charge used by original ledger admission"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::lifecycle::mc04_reserved_drop_fence_fresh_recovery",
+      "reason": "changed descriptor decode validation consumed by actual current-build memory recovery from frozen reserved Catalog corpus"
+    }
+  ]
+}

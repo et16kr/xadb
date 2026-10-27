@@ -1039,3 +1039,18 @@ source/progress는 이제 결과를 사용하는 동안에도 남는다. scope�
 | r3 실패 I/O 1개 수정·미실행 관측 1개 PASS | `d774709877c8793aa602b82f5814c582bd957585bfabb23957616a09235864cd` | `0bb4c8b9a95f0935204919ec532a8431437640e087407a1a4aea6170ee82bb7f` | `45df418dd24e44c4833a411be32a4bc33a6a5f123e49ae88e930f184657aef55` | `7a39e8ca1ce39ef67a92c0534cc3271506276a3f5cbb8972bc0a20ecfda4ae05` |
 
 독립 검토자는 코드·r1–r3 각각의 source5639파일/원 artifact·최종 문서6개를 대조하고 D1/D2를 한정 수용했다. r3 실패/미실행 개수 문구를 구별하도록 정정했으며 미해결 필수 수정0이다. 변경 파일 rustfmt·diff whitespace만 확인했으며 전체 fmt/Clippy·문서 verifier·push는 실행하지 않았다. 실제 writer/progress phase 예약·전체 entry/tail·Row/terminal/recovery·M4/M5는 미완료다.
+
+<a id="c2-borrowed-budget-rows"></a>
+### C2 descriptor budget 행의 실제 borrow — 2026-10-27
+
+기준 `847def2`, 작성·통합 `/root`, 독립 검토 `/root/module_review`다. `obligation::validate`의5개 RemainingBudget by-value 반복을 원 배열 borrow로 바꾸고 `RemainingBudget::values`도 `&self`로 받는다. 검산 순서·checked arithmetic·반환 `[u64;14]`·encoder의 canonical bytes와 decoder의 원 remaining/spec/Result는 유지한다. source 식은 실제 slice iterator+행 참조를 계산한다. `allocation_budget::DESCRIPTORS`의 두 iterator allowance도 같은 borrow로 수정했으며 기존 cap을 늘리지 않았다.
+
+descriptor source8711→8047B(-664), allocation iterator allowance1152→48B(-1104)로 줄었다. Full38076→36972B, Resident17212B/shared22256B·두 Resident 합56680B는 유지한다. live peak63184B·metadata186192B·whole251728B와 recovered peak64611B는 다른 최대 phase 때문에 그대로다. 기존 Pending 포괄9120B를 쓰면 합68348B, 앞선 실제 wait 관측5320B를 쓰면64548B다. 후자의988B를 실제 admission PASS로 보지 않는다. writer ticket·bound entry/tail은 미공급이다.
+
+[선택 manifest](../../tests/fixtures/dev3-module-c2/borrowed-budget-rows/manifest.json)는 변경된 descriptor의 독립 literal·rechecksummed semantic 손상·budget 합/peak/growth·출력 보존·생성 field5, 같은 codec의 Aging1, 영향 source3, 실제 현재-build memory recovery1의10개만 선택했다. 원 frozen reserve/drop/recovery fixture를 재생해 변경 decoder가 실제 recovery에서 받는 byte 의미를 검산했다. wire·형식·원 authority 변경이나 native/새 PID 복구 실행은 없다.
+
+`artifacts/module-c2-borrowed-budget-rows-20261027-r1/`의 production/test build·첫 descriptor5 PASS/경고0 뒤, Aging harness가 필수 `XADB_G6_SOURCE_SHA256` 부재로 제품 검산 전에 FAIL했다. 원 실패와 뒤의 source3/recovery1 NOT_RUN을 보존한다. r2는 **코드·manifest·source·ELF를 바꾸거나 재빌드하지 않고** 같은 r1 export/binary에 필요한 G6 source/ELF/input identity와 `p1-o00` raw-index hash를 공급했다. 실패했던 Aging1과 미실행4만 PASS이며 완료한5/build는 NOT_REPEATED_UNCHANGED_CODE다. r2가 참조하는 r1 source/binary는 삭제할 수 없는 원 증거다.
+
+두 실행의 공통 source SHA-256은 `e6d01932d56a255b61ac97b1da4805a9181b09abdef144db4cdd5f8e09018064`, manifest는 `f475a3de4e30f58daa0aa36338316be37032c5dd6484baba847bf84f70f9caa7`, ELF는 `ec2b118a6e62cd6dbdf508e5d157818c2bc03ee803c1a274e829bc357a5239a0`다. r1 result `8373cd234c5287b3de4819f81d8efe4200df0b6ce6d8c5c28c751cd882384141`은 FAIL, r2 result `ba08de1a0f6a3e2d85de066e5ccaaadc2a98632d0892c9af0e294a6c7883e9a9`는 선택 continuation PASS다. G6 index SHA-256은 `ce3fd367007a6d798dbb6c2f18367a714d4f105611fb190fe57a1aa72d6d99a8`이며 실제 fixture가 그 index의 각 파일 길이/hash도 검사한다. 총600초/compiler90초/case30초/출력8MiB/stack33554432B 한도를 유지했고 경과31.62/6.93초는 성능 측정이 아니다.
+
+독립 검토자는 actual borrow와 남은 row/descriptor/Result/SHA 계수, 원 source5640파일과 r1/r2 artifact·최종 문서6개를 대조하고 D1/D2를 한정 수용했다. 미해결 필수 수정0이다. 변경 파일 rustfmt·diff whitespace만 확인했고 전체 fmt/Clippy·문서 verifier·push는 실행하지 않았다. source/progress 전체 admission·Row/terminal/recovery 공급·M4/M5는 미완료다.

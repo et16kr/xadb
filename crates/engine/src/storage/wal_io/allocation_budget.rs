@@ -48,9 +48,9 @@ pub(in super::super) const ENTRIES: usize = 72 * size_of::<AllocationEntry>() + 
 pub(in super::super) const ENCODE: usize = size_of::<DescriptorSpec>() + 1536 + COMMON + HASH;
 // validate's retained descriptor -> validate_live.current -> expected/decoded
 // descriptor, with one spare descriptor for returns. The producer has already
-// returned. Include two copied row iterators with their start/end positions.
+// returned. Both descriptor row iterators borrow their existing arrays.
 pub(in super::super) const DESCRIPTORS: usize = 5 * size_of::<DescriptorSpec>()
-    + 2 * (size_of::<[RemainingBudget; 5]>() + 2 * size_of::<usize>())
+    + 2 * (size_of::<std::slice::Iter<'static, RemainingBudget>>() + size_of::<&RemainingBudget>())
     + COMMON
     + HASH;
 pub(in super::super) const TEMPORARIES: usize = max(ENTRIES, max(ENCODE, DESCRIPTORS));

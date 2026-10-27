@@ -1,5 +1,7 @@
 # 현재 구현
 
+2026-10-27 [C2 budget 행 borrow](../evidence/module-independence-survey-20261026.md#c2-borrowed-budget-rows): descriptor 검산/encoder의 실제 행 복사를 제거해 Full source36972B로 줄였다. 같은 source의5+5 선택 PASS·현재-build memory 복구와 harness identity 원 FAIL을 보존한다. Pending 관측 합64548B의988B 여유는 전체 admission 증거가 아니며 entry/tail·writer phase·M4/M5는 미완료다.
+
 2026-10-27 [C2 Catalog CallScope](../evidence/module-independence-survey-20261026.md#c2-call-scope): 원 source/progress가 borrowed 결과의 실제 소비까지 유지되며 selected query를 이동했다. source별 runtime14+1+2 PASS·compiler4 PASS와 I/O fixture 원 FAIL을 보존한다. Full38076B·Resident17212B이고 전체 entry/tail·writer phase admission·M4/M5는 미완료다.
 
 2026-10-27 [C2 실제 Drained 소비 경계](../evidence/module-independence-survey-20261026.md#c2-drained-handoff): authentic Drain 완료값이 원 pins/version을 보유한 뒤 content guard를 재구성한다. production/test build·선택10 PASS이며 정상 Drop의 fence-before-pins와 memory 복구를 확인했다. source phase 예약·entry/exit 합산·M4/M5는 미완료다.

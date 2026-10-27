@@ -674,3 +674,7 @@ statement factory·자동 read-set·CheckedTable/RowReadOperation과 short aggre
 ### C2 Catalog CallScope 등록 — 2026-10-27
 
 원 ReadPort의 scope factory와 private 원 admission 소유자를 공급하고 Operation refs-only 정리·legacy checked result·selected query 수명을 연결했다. 실제 scope/시험/compile fixture7개 신규 경로와 수정8경로를 JSON `dev3_module_c2_call_scope`에 등록했다. package/dependency·source root·backing·wire는 유지한다. [source별 증거](../evidence/module-independence-survey-20261026.md#c2-call-scope)는 runtime14+1+2·compiler4 PASS, 원 fixture FAIL과 미반복을 보존하며 전체 entry/tail·writer/progress admission은 후속이다.
+
+### C2 descriptor budget 행 borrow 등록 — 2026-10-27
+
+원 obligation의 행 반복/values를 borrow로 바꾸고 allocation source의 iterator 계수를 연결했다. 실제 수정2경로와 선택 manifest1을 JSON `dev3_module_c2_borrowed_budget_rows`에 등록했으며 package/dependency·source root·wire·backing은 유지한다. [증거](../evidence/module-independence-survey-20261026.md#c2-borrowed-budget-rows)는 동일 source/ELF의5+5 PASS, Aging harness identity 원 FAIL과 build/완료 사례 미반복을 보존한다. 실제 전체 admission은 미완료다.
