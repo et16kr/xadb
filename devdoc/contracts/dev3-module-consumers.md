@@ -150,6 +150,17 @@ TerminalReady와 root의 저장 LSN 관계는 Retained adoption < terminal adopt
 
 기존 actual genesis/selector/base/replay/recovery 호출 연결은0이며 current는 Profile2다. bytes version을 바꿔 legacy decoder를 부르지 않는다. [전체 current 전환 조합](#format-dispatch)은 후속 base4/scoped observer/current recovery와 함께 닫는다. [선택 증거](../evidence/module-independence-survey-20261026.md#row-envelope-codecs)는 독립 envelope 입력·신규8 selector로 검산하며 기존 Root2/완료 Root3/Job3 selector를 반복하지 않는다. 공유 header 변경이 영향을 주는 원 bootstrap/Profile1/2·non-Profile1 수신/거절 경계만 신규 selector에서 함께 검사한다. 신규8 및 두 build PASS·독립 D1/D2 한정 수용, 필수 수정0이다.
 
+<a id="row-base4-layout"></a>
+#### Base4의 별도 raw layout — 2026-10-27
+
+기준 `7071d21`에서 `plan4_recovery_base::row::{decode_layout,encode_layout,LayoutView}`를 분리 공급한다. exact(Profile3,Base4)만 받으며2MiB 배치의 descriptor bank4096/55296B, certificate65536/64×96B, INIT73728/64×352B, inventory98304/16384B, image arena262144/64×16384B, 마지막32B trailer를 검산한다. 고정 section metadata/hash·gap zero·allocator와 allocated certificate/image의 identity/LSN/digest·Free/Reserved 빈 image·status mask·동적 INIT grammar/테이블 reciprocal pair를 대조한다. Root/Job3 실제 page 입구로 Root/header masks·revision·aging와 Job pageLSN≤Root.apply·TerminalLeased 수를 확인한다. leased mask의 root 개수와 활성 거래 수는 다르므로 legacy1/2의 leased.count==active 조건을3/4에 적용하지 않는다.
+
+이는 raw layout이다. descriptor·ownership inventory 내용, 전체64 Job mask/digest/high-water/debt·actor 관계, Status/Undo/Row/Catalog 실제 graph, original INIT/WAL witness·selection·credits·pin·current 복구는 별도 공급이다. 상위 전체 census를 호출하지 않으며 성공이 위 권한을 만들지 않는다. view는 immutable input을 빌리고 임시 Header를 보유하지 않는다. encode는 unpublished caller backing에 기록하고 나중 검산에서 실패하면 output이 바뀔 수 있다. certificate encode만 local96B 후보 검산 뒤 복사한다.
+
+공통 header의 bool은 같은 함수의1B Legacy/Catalog/Row mode로 바꾸고 exact(base1|2,profile1)/(base3,profile2)/(base4,profile3) tuple을 닫는다. 원 Catalog mode의 내부1/2 수신은 보존하되 외부 Catalog layout은3만 받으며 Row는4만 받는다. 기존 legacy encode/decode와 Catalog current 입구는4를 거절한다. reserved header 시작1600·InitializedUndo허용2/3/4를 맞춘다. certificate/INIT 함수 본문과 view 필드를 `image_records`/base root로 그대로 이동해3/4가 같은 grammar를 쓴다. InitProvenance의 raw field는 private이고 검산된 LayoutView 내부에서만 구성한다. 공통 record의 이동은 새로운 historical 권한이나 helper frame을 만들지 않는다. 새 Row 전체 source bound/admission은 미공급이며 기존 Catalog source 수치를 Row에 재사용하지 않는다.
+
+D2 대안은 별도 layout 전체 복제 또는 common record 분리였으며, exact profile 입구는 별도로 두고 동일96/352B grammar만 공유하여 중복을 줄였다. 작성/통합 `/root`, 독립 검토 `/root/module_review`; r1 production/test build 및 신규8 PASS·최종 독립 D1/D2 한정 수용이며 필수 수정은0이다. [선택 증거](../evidence/module-independence-survey-20261026.md#row-base4-layout)에 신규8 selector·독립 초기/활성 input과 결과를 둔다. actual current Profile2·원 완료 증거를 유지한다. actual 연결 시 full graph/source 비용/복구 closure를 다시 검토한다.
+
 ### 6.2 Forward
 
 `T`는 원 TxnRef, `H`는 before Status.head, `U`는 Reserved Undo다. 실제 table/anchor/schema와 row key Missing을 원 before 아래 재검사한다. A는 row record `stamp=Transaction(T), logical=(T.id,planned_mutation), undo=U, deleted=false`와 canonical inline payload를 만든다. 새 U는 target Row(table/gen/RowId), before Missing, before stamp/logical 없음, previous-version Never, previous-transaction은 H가 있으면 Linked(H, 실제 sequence), 없으면 Never다.

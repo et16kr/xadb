@@ -1,5 +1,7 @@
 # 현재 구현
 
+2026-10-27 [Base4 raw layout](../evidence/module-independence-survey-20261026.md#row-base4-layout): 별도 Profile3/Base4 layout와 공통 certificate/INIT grammar를 구현했다. r1 production/test build·신규8 PASS이며 독립 D1/D2를 한정 수용했다. full graph/Job census/current 복구/source admission·Row A/B·M4/M5는 미완료다.
+
 2026-10-27 [Profile3·Row page 입구](../evidence/module-independence-survey-20261026.md#row-envelope-codecs): 별도 exact Profile3 codec과 Root/Job3 page wrapper4를 구현했다. r1 production/test build·신규8 PASS이며 독립 D1/D2를 한정 수용했다. 기존 bootstrap1/2와 current Profile2를 유지하며 actual Profile3/base4/scoped observer·Row A/B·M4/M5는 미완료다.
 
 2026-10-27 [Job3 순수 cell·census](../evidence/module-independence-survey-20261026.md#row-job3-census): exact Job3/다중 root/actor·Terminal·동일 table·Root commitment/debt 검산을 구현했다. r1 production/test build·신규11 PASS이며 독립 D1/D2를 한정 수용했다. current Profile2와 기존 증거를 유지하며 pure page/Profile3 후속 공급은 [별도 envelope](../evidence/module-independence-survey-20261026.md#row-envelope-codecs)에 기록한다. actual graph/current Profile3/base4/Row A/B·M4/M5는 미완료다.
