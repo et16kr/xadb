@@ -730,6 +730,7 @@ impl<'b, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
                 requirement,
                 after,
             });
+            let permit = crate::storage::wal_io::disk_api::legacy_install(permit);
             write.install_page(0, &permit).map_err(frame)?;
             bank_row[PHASE] = PAGE_INSTALLED;
             #[cfg(test)]
@@ -968,6 +969,7 @@ fn call_bytes<W: WriterNamespace>() -> usize {
         + 4 * size_of::<Result<EmptyTransactionObservation>>()
         + 4 * size_of::<WalFrameHeader>()
         + 2 * size_of::<EmptyTransactionInstall<'_, '_, '_>>()
+        + 2 * size_of::<crate::storage::disk::InstallGrant<'_, '_, '_>>()
         + 2 * size_of::<DirtyInstallPermit<'_, '_, '_>>()
         + 2048;
     let prepare = codec + common;

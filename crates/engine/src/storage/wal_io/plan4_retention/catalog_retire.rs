@@ -530,13 +530,20 @@ impl<'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
                 let Some(after) = prepared.after(at) else {
                     continue;
                 };
-                let permit =
-                    DirtyInstallPermit::from_retention(live::RetentionInstall::allocation(
-                        self.pool.bound_core(),
-                        prepared.stamp(at).expect("checked existing"),
+                let permit = InstallGrant {
+                    kind: InstallKind::Plan4 {
+                        core: self.pool.bound_core(),
+                        stamp: prepared.stamp(at).expect("checked existing"),
                         requirement,
+                        after_counter: prepared
+                            .stamp(at)
+                            .expect("checked existing")
+                            .modification_counter
+                            .checked_add(1)
+                            .expect("preflight checked successor"),
                         after,
-                    ));
+                    },
+                };
                 apply
                     .install_page(at, &permit)
                     .map_err(|e| frame(RetentionPhase::Install, e))?;
@@ -708,6 +715,7 @@ pub(in super::super::super) fn source_bytes() -> usize {
         + size_of::<PreparedCatalog<'_, '_, '_>>()
         + 2 * size_of::<Result<PreparedCatalog<'_, '_, '_>>>()
         + size_of::<CatalogRetirementStaged<'_, '_, '_, '_>>()
+        + 2 * size_of::<InstallGrant<'_, '_, '_>>()
         + size_of::<CatalogRetirementApplied<'_, '_, '_, '_>>()
         + size_of::<CatalogRetirementRejected<'_, '_, '_, '_>>()
         + 2 * size_of::<visibility::ReferenceLease<'_, '_, '_, '_>>()

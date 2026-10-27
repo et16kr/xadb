@@ -771,6 +771,7 @@ impl<'s, 'c, W: WriterNamespace> RetentionWriter<'_, '_, 's, 'c, '_, '_, '_, '_,
                     requirement,
                     after: &after[at - 1],
                 });
+                let permit = crate::storage::wal_io::disk_api::legacy_install(permit);
                 write
                     .install_page(at, &permit)
                     .map_err(|e| frame(RetentionPhase::Install, e))?;

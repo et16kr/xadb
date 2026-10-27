@@ -15,7 +15,7 @@ use crate::{
         retention_page::catalog as queue,
         semantic_catalog::{Observation, Operation},
         session_fence::SessionFence,
-        wal_io::{DirtyInstallPermit, commit_bridge},
+        wal_io::commit_bridge,
     },
     transaction::concurrency::{InstallationKey, PageConcurrency},
 };
@@ -174,12 +174,18 @@ impl<'s, 'c, W: WriterNamespace> RetentionWriter<'_, '_, 's, 'c, '_, '_, '_, '_,
             let dpt = install
                 .preflight_dpt(at)
                 .map_err(|e| fatal(storage, RetentionPhase::Install, RetentionCause::Frame(e)))?;
-            let permit = DirtyInstallPermit::from_retention(live::RetentionInstall::allocation(
-                prepared.core(),
-                before,
-                requirement,
-                after,
-            ));
+            let permit = InstallGrant {
+                kind: InstallKind::Plan4 {
+                    core: prepared.core(),
+                    stamp: before,
+                    requirement,
+                    after_counter: before
+                        .modification_counter
+                        .checked_add(1)
+                        .expect("preflight checked successor"),
+                    after,
+                },
+            };
             install
                 .install_page(at, &permit)
                 .map_err(|e| fatal(storage, RetentionPhase::Install, RetentionCause::Frame(e)))?;
@@ -461,8 +467,8 @@ pub(in super::super) fn source_bytes() -> usize {
         + size_of::<[usize; 8]>();
     let install = 2 * size_of::<FrameStamp>()
         + size_of::<dirty_frame::DptStamp<'_>>()
-        + size_of::<live::RetentionInstall<'_, '_, '_>>()
-        + size_of::<DirtyInstallPermit<'_, '_, '_>>()
+        + size_of::<InstallGrant<'_, '_, '_>>()
+        + size_of::<InstallGrant<'_, '_, '_>>()
         + 2 * size_of::<dirty_frame::Result<dirty_frame::DptStamp<'_>>>()
         + 2 * size_of::<dirty_frame::Result<FrameStamp>>();
     let root = 4 * size_of::<queue::RootView<'_>>()
@@ -559,8 +565,8 @@ pub(in super::super) fn phase_source_observations<W: WriterNamespace>()
         + size_of::<DurableWal<'_>>()
         + 2 * size_of::<FrameStamp>()
         + size_of::<dirty_frame::DptStamp<'_>>()
-        + size_of::<live::RetentionInstall<'_, '_, '_>>()
-        + size_of::<DirtyInstallPermit<'_, '_, '_>>()
+        + size_of::<InstallGrant<'_, '_, '_>>()
+        + size_of::<InstallGrant<'_, '_, '_>>()
         + 2 * size_of::<dirty_frame::Result<dirty_frame::DptStamp<'_>>>()
         + 2 * size_of::<dirty_frame::Result<FrameStamp>>();
     let install = parent

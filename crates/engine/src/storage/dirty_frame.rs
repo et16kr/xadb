@@ -5,9 +5,10 @@
 #![allow(dead_code)] // The separately reviewed allocator consumer is being connected.
 
 use super::{
+    disk::InstallGrant,
     page::{PAGE_BYTES, PageIdentity, PageKind, PageLsn},
     session_fence::SessionFence,
-    wal_io::{DirtyInstallPermit, WalRequirement},
+    wal_io::WalRequirement,
 };
 use crate::transaction::concurrency::{
     self, ContentAdmission, Owner, PageConcurrency, VersionEditGuard,
@@ -1096,7 +1097,7 @@ impl<'a, 'b, 'c, 's, 'p, 'd, const N: usize> WriteTargets<'a, 'b, 'c, 's, 'p, 'd
             rec_lsn: expected.rec_lsn,
         })
     }
-    fn check_permit(&self, at: usize, permit: &DirtyInstallPermit<'_, 'c, 's>) -> Result<()> {
+    fn check_permit(&self, at: usize, permit: &InstallGrant<'_, 'c, 's>) -> Result<()> {
         let pins = self.pins.as_ref().expect("live write targets");
         pins.pool.health()?;
         if at >= pins.len {
@@ -1121,7 +1122,7 @@ impl<'a, 'b, 'c, 's, 'p, 'd, const N: usize> WriteTargets<'a, 'b, 'c, 's, 'p, 'd
     pub(in crate::storage) fn install_page(
         &mut self,
         at: usize,
-        permit: &DirtyInstallPermit<'_, 'c, 's>,
+        permit: &InstallGrant<'_, 'c, 's>,
     ) -> Result<()> {
         self.check_permit(at, permit)?;
         let pins = self.pins.as_ref().expect("live write targets");
@@ -1143,7 +1144,7 @@ impl<'a, 'b, 'c, 's, 'p, 'd, const N: usize> WriteTargets<'a, 'b, 'c, 's, 'p, 'd
     pub(in crate::storage) fn install_metadata(
         &mut self,
         at: usize,
-        permit: &DirtyInstallPermit<'_, 'c, 's>,
+        permit: &InstallGrant<'_, 'c, 's>,
     ) -> Result<()> {
         self.check_permit(at, permit)?;
         let pins = self.pins.as_ref().expect("live write targets");
@@ -1166,7 +1167,7 @@ impl<'a, 'b, 'c, 's, 'p, 'd, const N: usize> WriteTargets<'a, 'b, 'c, 's, 'p, 'd
     pub(in crate::storage) fn install_dpt(
         &self,
         stamp: DptStamp<'_>,
-        permit: &DirtyInstallPermit<'_, 'c, 's>,
+        permit: &InstallGrant<'_, 'c, 's>,
     ) -> Result<()> {
         let pins = self.pins.as_ref().expect("live write targets");
         if !std::ptr::eq(stamp.anchor, &pins.pool.stamp_anchor) {
@@ -1296,6 +1297,9 @@ pub(in crate::storage) const fn target_set_call_bytes<const N: usize>() -> usize
     } else {
         write_result
     };
+    let dpt = dpt_call_bytes();
+    let observation = InstallGrant::observation_source_bytes();
+    let installer_leaf = if dpt > observation { dpt } else { observation };
     2 * result
         + largest
         + size_of::<PinSet<'_, '_, '_, '_, '_, N>>()
@@ -1305,7 +1309,7 @@ pub(in crate::storage) const fn target_set_call_bytes<const N: usize>() -> usize
         + 2 * size_of::<DirtyObservation>()
         + 4 * size_of::<Result<()>>()
         + 2 * size_of::<MutexGuard<'_, PoolRegistry<'_>>>()
-        + dpt_call_bytes()
+        + installer_leaf
         + 32 * 8
         + 64
 }

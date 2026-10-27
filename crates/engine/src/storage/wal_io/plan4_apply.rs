@@ -19,6 +19,26 @@ use crate::{
 use foundation::{error::Effect, namespace::WriterNamespace};
 use std::sync::Mutex;
 
+/// An immutable image sealed by an actual apply producer after complete WAL
+/// stage. The installer can observe it but cannot construct or clone it.
+pub(in crate::storage) struct InstallGrant<'i, 'c, 's> {
+    kind: InstallKind<'i, 'c, 's>,
+}
+enum InstallKind<'i, 'c, 's> {
+    Plan4 {
+        core: &'c crate::transaction::concurrency::PageConcurrency<'s>,
+        stamp: FrameStamp,
+        requirement: WalRequirement<'s>,
+        after_counter: u64,
+        after: &'i [u8; PAGE_BYTES],
+    },
+    Legacy(super::super::dirty_allocation::InstallPermit<'i, 'c, 's>),
+}
+#[path = "plan4_apply/install.rs"]
+mod install;
+#[path = "plan4_apply/legacy.rs"]
+pub(in crate::storage::wal_io) mod legacy;
+
 #[path = "plan4_apply/isolation.rs"]
 mod isolation;
 #[path = "plan4_apply/source.rs"]

@@ -720,3 +720,7 @@ actual health/source/Scope/legacy facade·원 progress consuming finish와 관�
 ### C2 statement Catalog 읽기
 
 실제 private statement adapter와 시험2경로, 선택 manifest·compiler probe4경로를 JSON `dev3_module_c2_statement_reads`에 등록한다. 기존9경로는 private snapshot 대여·자동 read bit·원 Full/Resident class 비용·canonical 재노출을 연결한다. 원 owner/guard/credit/backing과 source roots·package/dependency는 유지한다. [한정 공급](../contracts/dev3-module-boundaries.md#catalog-statement-supply)과 [실제 선택 증거](../evidence/module-independence-survey-20261026.md#c2-statement-reads)는 전체 short/Row 공급과 구별한다.
+
+### C3 apply 설치 권한
+
+apply의 private 권한·관찰 accessor·legacy 소비 adapter와 current Profile2 거절 시험, 선택 manifest/compiler probe를 JSON `dev3_module_c3_install_grant`에 등록한다. 실제 Catalog3·legacy4 생산 지점과 generic installer·source 식의 기존 경로를 수정했다. 원 source roots·package/dependency·backing·disk 형식은 유지한다. [선택 증거](../evidence/module-independence-survey-20261026.md#c3-install-grant)는 전체 terminal/Row 공급과 구별한다.

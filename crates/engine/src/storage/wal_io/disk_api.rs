@@ -23,3 +23,6 @@ pub(in crate::storage) use super::bootstrap::doublewrite_install::mutable_storag
 pub(crate) use super::bootstrap::doublewrite_install::mutable_storage::plan4_pages::{
     Plan4ResidencyCursor, Plan4Target,
 };
+
+pub(in crate::storage) use super::bootstrap::doublewrite_install::mutable_storage::plan4_pages::apply::InstallGrant;
+pub(in crate::storage::wal_io) use super::bootstrap::doublewrite_install::mutable_storage::plan4_pages::apply::legacy::from_legacy as legacy_install;

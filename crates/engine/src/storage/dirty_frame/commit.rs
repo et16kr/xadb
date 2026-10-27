@@ -326,7 +326,7 @@ impl<'b, 'c, 's, const N: usize> CommitInstallTargets<'_, 'b, 'c, 's, '_, '_, N>
             .preflight_dpt(at, &self.before(at)?)
     }
 
-    fn check_requirement(&self, permit: &DirtyInstallPermit<'_, 'c, 's>) -> Result<()> {
+    fn check_requirement(&self, permit: &InstallGrant<'_, 'c, 's>) -> Result<()> {
         let targets = self.targets.as_ref().expect("owned Commit install targets");
         let pins = targets.pins.as_ref().expect("retained original pins");
         if !self
@@ -344,7 +344,7 @@ impl<'b, 'c, 's, const N: usize> CommitInstallTargets<'_, 'b, 'c, 's, '_, '_, N>
     pub(in crate::storage) fn install_page(
         &mut self,
         at: usize,
-        permit: &DirtyInstallPermit<'_, 'c, 's>,
+        permit: &InstallGrant<'_, 'c, 's>,
     ) -> Result<()> {
         self.check_requirement(permit)?;
         self.targets
@@ -356,7 +356,7 @@ impl<'b, 'c, 's, const N: usize> CommitInstallTargets<'_, 'b, 'c, 's, '_, '_, N>
     pub(in crate::storage) fn install_metadata(
         &mut self,
         at: usize,
-        permit: &DirtyInstallPermit<'_, 'c, 's>,
+        permit: &InstallGrant<'_, 'c, 's>,
     ) -> Result<()> {
         self.check_requirement(permit)?;
         self.targets
@@ -368,7 +368,7 @@ impl<'b, 'c, 's, const N: usize> CommitInstallTargets<'_, 'b, 'c, 's, '_, '_, N>
     pub(in crate::storage) fn install_dpt(
         &self,
         stamp: DptStamp<'_>,
-        permit: &DirtyInstallPermit<'_, 'c, 's>,
+        permit: &InstallGrant<'_, 'c, 's>,
     ) -> Result<()> {
         self.check_requirement(permit)?;
         self.targets

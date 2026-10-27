@@ -22,3 +22,5 @@ pub(crate) use super::wal_io::disk_api::{
 pub(in crate::storage) use super::wal_io::disk_api::{
     EPOCH_BYTES, VISIBILITY_BYTES, VisibilityLoan,
 };
+
+pub(in crate::storage) use super::wal_io::disk_api::InstallGrant;

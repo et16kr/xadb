@@ -1293,3 +1293,24 @@ r1 production PASS 뒤 새 시험 import 누락 E0433·잘못된 DiskSession Com
 | r4 runtime10/compiler3 PASS | `0b796f755f4237f05c1318024c45885afca47384cad005cff0387c6f8b0b1a71` | `524b3133ee224b1eb806315b154e738b6ef5de4a18454fdac9a13ceb70533295` |
 
 독립 `/root/module_review`는 r1–r4 각5658 source/inventory·manifest/runner/helpers·compiler/ELF/exact10·C2_STMT01–08·probe3의 export delta/fixture hash/진단 primary line 및7문서를 읽기 전용 대조해 D1/D2를 한정 수용했다. 필수 제품·문서 수정0이며 `/root`가 반영을 확정했다. 검토자는 수정·빌드·시험·verifier를 실행하지 않았다. 변경 파일 rustfmt/diff whitespace만 확인하고 전체 fmt/Clippy·문서 verifier·push는 실행하지 않았다. 전체 short floor·writer/Row/terminal/recovery와 M4/M5는 미완료다.
+
+<a id="c3-install-grant"></a>
+### C3 apply 소유의 실제 설치 권한 — 2026-10-27
+
+기준 `8c0f252`, 작성·통합 `/root`, 독립 검토 `/root/module_review`다. [기존 §6.5 계약](../contracts/dev3-module-boundaries.md#apply-install-grant)의 private `InstallGrant`와 실제 Catalog ordinary/Commit/retirement 세 생산 지점을 연결했다. Catalog는 dirty_allocation의 권한 생성 경로를 거치지 않는다. generic installer는 관찰 method만 받고 원 core/fence·identity/generation·checked successor·page/prior/recLSN·exact requirement와 DPT 검산을 유지한다. Commit은 Drain 뒤 original `before`를 계속 사용한다. legacy allocation/empty/scope1/population 네 경로는 원 sealed proof를 소비해 같은 grant 안에 보유한다. 별도 System INIT/TxPair/Reload 권한은 그대로다.
+
+source에서 grant 구성/소비·반환 carrier와 sequential accessor를 명시했으며 cap·backing·WAL/페이지 형식은 바꾸지 않았다. Grant224B·순차 관찰 closure400B·legacy conversion696B를 확인했다. 관찰은 기존 DPT660과 max로 연결해 generic N2는2396B를 유지한다. conversion696B는 새 여유를 만든 것이 아니라 원 allocator의 별도 moved2048 항 안에서 추가 검산한다. memory live peak62684B/metadata185692B/whole251228B와 recovered peak64060B, native 타입 source live62820B/metadata185828B/whole251364B와 recovered64196B다. 이 값은 source 보수 상계이며 실제 stack/RSS·성능·전체 동시 admission의 증명이 아니다. writer phase/전체 short floor·Prepared/terminal receipts 전체 이전·Row·M4/M5는 미완료다.
+
+[동결 manifest](../../tests/fixtures/dev3-module-c3/install-grant/manifest.json)는 changed-code와 선택 이유, 총600초/compiler90초/case30초/출력8MiB/stack33554432B를 기록한다. r1 production/test build와 allocator lifecycle·empty lifecycle/source3개를 통과한 뒤, legacy L01이 첫 population WAL 비교에서 실패했다. 해당 fixture는 `e443115` 이후 current Profile2를 설치하면서 Profile1/XSG v1/scope0 literal을 비교한다. 실제 scope1 호출까지 도달하지 않았고 `live::change`는 Profile2를 기존부터 WrongState/Unchanged로 차단한다. 원 FAIL을 보존하며 literal을 actual로 덮거나 legacy fresh factory를 추가하지 않았다. 신규 current Profile2의 다섯 legacy entry 효과0 거절은 별도 검증이며 legacy positive 설치의 PASS가 아니다(`NOT_REACHABLE_CURRENT_PROFILE`). actual population 설치는 Catalog fixtures의 실제 초기화로 검산한다.
+
+r2는 새 cfg(test) `page_ref`의 incarnation 인자 누락 E0061로 test build FAIL이며 runtime7/compiler5 NOT_RUN이다. r1 완료3·production build는 반복하지 않았다. incarnation1을 명시한 r3는 test build·남은 runtime7·compiler5 PASS, 경고0이다. r1 완료3과 합쳐 현재 선택10의 source별 결과를 수신하며 원 L01 FAIL은 별도 보존한다. compiler5는 관찰 사용 성공, private kind E0616·Clone 부재 E0599·소비 후 재사용 E0382·WAL-private legacy factory E0603의 정확한 primary span을 검산했다. Commit Pending lower flush와 두 partial install 실패의 원 fence/잔여 의무 및 메모리 FileIo의 현재-build 복구를 검산했다. native 타입 source 검산은 새 native process/I/O 실행 증거가 아니다. 원 source/ELF/로그와 FAIL·NOT_RUN을 각 artifact에 보존한다. 독립 D1/D2는 한정 수용했으며, 검토자는 수정·빌드·시험·verifier를 실행하지 않았다.
+
+원 `artifacts/module-c3-install-grant-20261027-r{1,2,3}/`에 source/inventory·manifest·runner/helpers·compiler·ELF(생성 시)·각 case와 compiler probe source를 보존한다. r1 source5666파일, r2/r3 5667파일이며 실제32.61/15.23/76.91초는 성능 결과가 아니다.
+
+| 실행 | source SHA-256 | manifest SHA-256 | result SHA-256 |
+| --- | --- | --- | --- |
+| r1 build2/runtime3 PASS, L01 FAIL | `0d5b2dd56326e6f78c70af95c9eff1386afd32d18f82b6ddf4e034d560970956` | `6ae0166d863caba2ef8e86ccb1e22fcb717a3ee6769d92d40e0682b88cb4c6e4` | `30198e7d567e130574bf80ca112b56484c7d880a87c29242d4187cf83c8475c4` |
+| r2 test build FAIL; runtime7/compiler5 NOT_RUN | `348fd8890123023787eb584edaa42af1cc00db93cb3c4590c889e55a309d397e` | `c259ca0d7980219b82621e16d55fe8b602c9bddb6d6e970b4ff753748264c265` | `a073d6591e05a0845c428792af0b4b2222d81ff415afaafd50ddaeeb155b2d44` |
+| r3 test build/runtime7/compiler5 PASS | `b6a202b9dbe64662131d9d9630a9a9b4e94ea46067616e900645eb940eb61bc6` | `c259ca0d7980219b82621e16d55fe8b602c9bddb6d6e970b4ff753748264c265` | `2a4e7ee34a58c2b95b1a445ee67593b49b982b5e8349af9bd319b3641c601ec9` |
+
+r1 ELF `d7349c5cd8a602ff6c2852d17131cef5001c2d58cce4efe2ea223a23e36b8616`, r3 ELF `419bd716615ff5fef8597d2dd15ef172924d3eae9f30e1334c046f33a3567b9a`다. r2/r3 production은 r1과 코드가 같아 NOT_REPEATED_UNCHANGED_CODE다. 완료된 원 runtime3·무변경 하위codec/회귀·workspace 시험은 반복하지 않았으며 변경 파일 rustfmt·diff whitespace만 확인했다. 전체 fmt/Clippy·문서 verifier·push는 실행하지 않았다. 독립 D1/D2는 r1–r3 전체 source/inventory·fingerprint·manifest·runner/helpers·ELF·원 로그 및 compiler probe5의 exact delta/diagnostic span과6문서를 대조해 한정 수용했다. 필수 미해결 수정은0이다.

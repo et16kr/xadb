@@ -10,7 +10,7 @@ use crate::{
         semantic_catalog::{self, Change, Inputs, Observation, Operation},
         session_fence::SessionFence,
         wal_frame::FrameExpectation,
-        wal_io::{DirtyInstallPermit, WalPrefix},
+        wal_io::WalPrefix,
     },
     transaction::concurrency::{OwnerIdentity, PageConcurrency},
 };
@@ -1866,13 +1866,20 @@ impl<'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
                 let Some(after) = prepared.after(at) else {
                     continue;
                 };
-                let permit =
-                    DirtyInstallPermit::from_retention(live::RetentionInstall::allocation(
-                        self.inner.pool.bound_core(),
-                        prepared.stamp(at).expect("checked existing"),
+                let permit = InstallGrant {
+                    kind: InstallKind::Plan4 {
+                        core: self.inner.pool.bound_core(),
+                        stamp: prepared.stamp(at).expect("checked existing"),
                         requirement,
+                        after_counter: prepared
+                            .stamp(at)
+                            .expect("checked existing")
+                            .modification_counter
+                            .checked_add(1)
+                            .expect("preflight checked successor"),
                         after,
-                    ));
+                    },
+                };
                 write
                     .install_page(at, &permit)
                     .map_err(|e| frame(RetentionPhase::Install, e))?;
@@ -2550,7 +2557,7 @@ pub(in super::super) fn catalog_live_source_bytes<W: WriterNamespace>() -> Catal
         + size_of::<[Option<dirty_frame::DptStamp<'_>>; 9]>()
         + 3 * size_of::<WalRequirement<'_>>()
         + 2 * size_of::<DurableWal<'_>>()
-        + size_of::<DirtyInstallPermit<'_, '_, '_>>()
+        + 2 * size_of::<InstallGrant<'_, '_, '_>>()
         + 3 * size_of::<Result<Observation>>()
         + dirty_frame::target_set_call_bytes::<9>()
         + catalog_control_source_bytes()

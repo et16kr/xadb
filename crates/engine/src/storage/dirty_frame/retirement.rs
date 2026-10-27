@@ -252,7 +252,7 @@ impl<'v, 'm, 'c, 's, const N: usize> RetirementApply<'_, 'v, 'm, '_, '_, 'c, 's,
     pub(in crate::storage) fn install_page(
         &mut self,
         at: usize,
-        permit: &DirtyInstallPermit<'_, 'c, 's>,
+        permit: &InstallGrant<'_, 'c, 's>,
     ) -> Result<()> {
         self.intent
             .as_ref()
@@ -264,7 +264,7 @@ impl<'v, 'm, 'c, 's, const N: usize> RetirementApply<'_, 'v, 'm, '_, '_, 'c, 's,
     pub(in crate::storage) fn install_metadata(
         &mut self,
         at: usize,
-        permit: &DirtyInstallPermit<'_, 'c, 's>,
+        permit: &InstallGrant<'_, 'c, 's>,
     ) -> Result<()> {
         self.intent
             .as_ref()
@@ -276,7 +276,7 @@ impl<'v, 'm, 'c, 's, const N: usize> RetirementApply<'_, 'v, 'm, '_, '_, 'c, 's,
     pub(in crate::storage) fn install_dpt(
         &self,
         stamp: DptStamp<'_>,
-        permit: &DirtyInstallPermit<'_, 'c, 's>,
+        permit: &InstallGrant<'_, 'c, 's>,
     ) -> Result<()> {
         self.intent
             .as_ref()

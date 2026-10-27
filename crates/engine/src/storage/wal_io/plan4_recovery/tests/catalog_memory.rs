@@ -1178,3 +1178,6 @@ mod dpt_lifecycle;
 
 #[path = "catalog_memory/statement_reads.rs"]
 mod statement_reads;
+
+#[path = "catalog_memory/install_grant.rs"]
+mod install_grant;

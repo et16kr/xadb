@@ -158,6 +158,7 @@ pub(in crate::storage) fn source_census<W: WriterNamespace>() -> RetentionSource
         + live_wrapper
         + dirty_frame::target_set_call_bytes::<4>()
         + 3 * size_of::<Option<DptStamp<'_>>>()
+        + 3 * size_of::<InstallGrant<'_, '_, '_>>()
         + 3 * size_of::<RetentionInstall<'_, '_, '_>>()
         + 3 * size_of::<Result<FrameStamp>>()
         + size_of::<Option<WalRequirement<'_>>>()
