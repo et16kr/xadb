@@ -650,3 +650,7 @@ statement factory·자동 read-set·CheckedTable/RowReadOperation과 short aggre
 ### C2 Commit phase 관측 등록 — 2026-10-27
 
 기존7개 Rust source에 cfg(test) 관측만 추가했고 신규 manifest는 JSON `dev3_module_c2_commit_phase_observation`에 등록했다. 제품 charge·admission·package/dependency·source root·wire는 유지한다. [한정 증거](../evidence/module-independence-survey-20261026.md#c2-commit-phases)는 test build/신규 관측1 PASS와 원 compile FAIL을 보존하며 실제 Pending layout 축소를 후속으로 남긴다.
+
+### C2 Pending image 수명 분리 등록 — 2026-10-27
+
+기존4개 Rust source의 Prepared/payload·stage 소비·공통 control 입력과 관측 시험을 수정했다. 신규 manifest는 JSON `dev3_module_c2_pending_image`에 등록했다. package/dependency·source root·backing·wire 변경은 없다. [한정 증거](../evidence/module-independence-survey-20261026.md#c2-pending-image)는 관련12 PASS와 원 compile FAIL, Pending 자료 감소와 stage 반환 상한 증가를 함께 보존한다. 전체 source admission은 후속이다.

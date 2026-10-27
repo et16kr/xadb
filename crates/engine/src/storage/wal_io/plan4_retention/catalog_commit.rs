@@ -2,7 +2,9 @@
 //! Immutable private preparation survives Pending; no replay/control gate or
 //! content/version latch is held across the original WAL durability call.
 use super::super::*;
-use super::catalog_live::{PreparedCatalog, catalog_apply, catalog_mark_staged};
+use super::catalog_live::{
+    CatalogCommitImage, PreparedCatalog, catalog_apply, catalog_mark_staged,
+};
 #[cfg(test)]
 use crate::transaction::concurrency::catalog_test_support::{
     Point as CatalogPoint, hit as catalog_hook,
@@ -103,10 +105,12 @@ impl<'s, 'c, W: WriterNamespace> RetentionWriter<'_, '_, 's, 'c, '_, '_, '_, '_,
             .prefix()
             .map_err(|e| fatal(storage, RetentionPhase::Prepare, RetentionCause::Wal(e)))?;
         prepared.check(owner, self.pool, self.control, prefix)?;
-        let requests: &[TargetRequest; TARGETS] = prepared
-            .targets()
-            .try_into()
-            .map_err(|_| unchanged(RetentionPhase::Prepare, RetentionCause::Invariant))?;
+        if prepared.targets().len() != TARGETS {
+            return Err(unchanged(
+                RetentionPhase::Prepare,
+                RetentionCause::Invariant,
+            ));
+        }
         let q = commit_q(&prepared, storage.profile())?;
         let epochs = visibility
             .prepare_commit_epochs(&prepared, self.control, storage.profile(), q)
@@ -119,12 +123,15 @@ impl<'s, 'c, W: WriterNamespace> RetentionWriter<'_, '_, 's, 'c, '_, '_, '_, '_,
             return Err(unchanged(RetentionPhase::Prepare, RetentionCause::Capacity));
         }
 
-        let PendingCatalog {
-            pending,
-            wait,
-            key,
-            requirement,
-        } = stage_catalog(storage, self.pool, self.control, owner, &prepared, requests)?;
+        let (
+            prepared,
+            PendingCatalog {
+                pending,
+                wait,
+                key,
+                requirement,
+            },
+        ) = stage_catalog(storage, self.pool, self.control, owner, prepared)?;
         #[cfg(test)]
         catalog_hook(prepared.core(), CatalogPoint::Pending);
         let durable = storage
@@ -174,8 +181,13 @@ impl<'s, 'c, W: WriterNamespace> RetentionWriter<'_, '_, 's, 'c, '_, '_, '_, '_,
                 .install_dpt(dpt, &permit)
                 .map_err(|e| fatal(storage, RetentionPhase::Install, RetentionCause::Frame(e)))?;
         }
-        catalog_apply(&prepared, self.control, storage.profile(), requirement)
-            .map_err(|e| fatal(storage, e.phase, e.cause))?;
+        catalog_apply(
+            prepared.payload(),
+            self.control,
+            storage.profile(),
+            requirement,
+        )
+        .map_err(|e| fatal(storage, e.phase, e.cause))?;
         self.history
             .installed(requirement)
             .map_err(|e| fatal(storage, e.phase, e.cause))?;
@@ -225,14 +237,20 @@ struct PendingCatalog<'u, 'b, 'c, 's, 'p, 'd> {
     requirement: WalRequirement<'s>,
 }
 
-fn stage_catalog<'u, 'b, 'a, 's, 'c, 'p, 'd, W: WriterNamespace>(
+fn stage_catalog<'i, 'u, 'b, 'a, 's, 'c, 'p, 'd, W: WriterNamespace>(
     storage: &'s MutableStorageOwner<'_, '_, W>,
     pool: &'b SharedPool<'c, 's, 'p, 'd>,
     control: &mut control::RetentionLedger<'a, 'c, 's>,
     owner: &'u mut Owner<'c, 's>,
-    prepared: &PreparedCatalog<'_, 'c, 's>,
-    requests: &[TargetRequest; TARGETS],
-) -> Result<PendingCatalog<'u, 'b, 'c, 's, 'p, 'd>> {
+    prepared: PreparedCatalog<'i, 'c, 's>,
+) -> Result<(
+    CatalogCommitImage<'i, 'c, 's>,
+    PendingCatalog<'u, 'b, 'c, 's, 'p, 'd>,
+)> {
+    let requests: &[TargetRequest; TARGETS] = prepared
+        .targets()
+        .try_into()
+        .map_err(|_| unchanged(RetentionPhase::Prepare, RetentionCause::Invariant))?;
     // All stale/overflow/DPT checks precede Intent and the actual stage.
     // These proof-only DPT stamps are not retained across Pending: a
     // flusher is allowed to clean an unchanged page in that interval.
@@ -279,10 +297,10 @@ fn stage_catalog<'u, 'b, 'a, 's, 'c, 'p, 'd, W: WriterNamespace>(
         .map_err(|e| frame(RetentionPhase::Stage, e))?;
     #[cfg(test)]
     catalog_hook(prepared.core(), CatalogPoint::StageCallStarted);
-    let (staged, wait) = match storage
-        .wal()
-        .stage_catalog_commit(CatalogCommitAttempt { prepared, key })
-    {
+    let (staged, wait) = match storage.wal().stage_catalog_commit(CatalogCommitAttempt {
+        prepared: &prepared,
+        key,
+    }) {
         Ok(staged) => staged,
         Err(rejected) => {
             let Some(unstaged) = rejected.unstaged else {
@@ -311,17 +329,21 @@ fn stage_catalog<'u, 'b, 'a, 's, 'c, 'p, 'd, W: WriterNamespace>(
     let requirement = wait.requirement();
     // The exact staged requirement is retained before releasing any lock;
     // old ATT/descriptor/Jobs bytes remain stable during Pending.
-    catalog_mark_staged(prepared, control, requirement)
+    catalog_mark_staged(&prepared, control, requirement)
         .map_err(|e| fatal(storage, e.phase, e.cause))?;
     let pending = stage
         .suspend(staged)
         .map_err(|e| fatal(storage, RetentionPhase::Stage, RetentionCause::Frame(e)))?;
-    Ok(PendingCatalog {
-        pending,
-        wait,
-        key,
-        requirement,
-    })
+    let image = prepared.into_commit_image();
+    Ok((
+        image,
+        PendingCatalog {
+            pending,
+            wait,
+            key,
+            requirement,
+        },
+    ))
 }
 
 fn commit_q(
@@ -396,8 +418,10 @@ pub(in super::super) fn source_bytes() -> usize {
     >;
     let retained = visibility::epoch_commit_carriers()
         + size_of::<PendingCatalog<'_, '_, '_, '_, '_, '_>>()
-        + size_of::<Result<PendingCatalog<'_, '_, '_, '_, '_, '_>>>()
-        + 6 * size_of::<&()>() // stage_catalog borrowed arguments
+        + size_of::<Result<(CatalogCommitImage<'_, '_, '_>, PendingCatalog<'_, '_, '_, '_, '_, '_>)>>()
+        + size_of::<CatalogCommitImage<'_, '_, '_>>()
+        + std::mem::size_of::<[Option<&[u8; PAGE_BYTES]>; TARGETS]>() // extraction output
+        + 6 * size_of::<&()>() // stage_catalog borrowed arguments and canonical target borrow
         + size_of::<PreparedCatalog<'_, '_, '_>>()
         + size_of::<Observation>()
         + size_of::<WalRequirement<'_>>()
@@ -452,16 +476,16 @@ pub(in super::super) fn source_bytes() -> usize {
 }
 
 /// Observations for the pending writer admission design, not installed charges.
-/// The original broad production bound and runtime phase transitions are intact.
+/// Actual preparation and compact Pending carriers are measured separately.
 #[cfg(test)]
 pub(in super::super) fn phase_source_observations<W: WriterNamespace>()
--> [(&'static str, usize); 10] {
+-> [(&'static str, usize); 11] {
     use std::mem::size_of;
     let physical = dirty_frame::commit_phase_sources::<TARGETS>();
     let [bridge_stage, bridge_wait, bridge_complete] = commit_bridge::catalog_phase_sources();
     let prepared = size_of::<PreparedCatalog<'_, '_, '_>>();
-    let parent = prepared
-        + visibility::epoch_commit_carriers()
+    let image = size_of::<CatalogCommitImage<'_, '_, '_>>();
+    let common_parent = visibility::epoch_commit_carriers()
         + size_of::<crate::storage::wal_io::WalPrefix>()
         + size_of::<WalRequirement<'_>>()
         + size_of::<InstallationKey>()
@@ -471,7 +495,8 @@ pub(in super::super) fn phase_source_observations<W: WriterNamespace>()
         + 4 * size_of::<RetentionError>()
         + 20 * size_of::<&()>()
         + size_of::<[usize; 8]>();
-    let pre_stage = parent
+    let pre_stage = prepared
+        + common_parent
         + queue::source_bytes().max(visibility::epoch_transition_source_bytes())
         + 4 * size_of::<queue::RootView<'_>>()
         + 4 * size_of::<crate::storage::page::PageHeader>()
@@ -482,9 +507,17 @@ pub(in super::super) fn phase_source_observations<W: WriterNamespace>()
         + 2 * size_of::<crate::storage::wal_io::StagedCommit<'_, '_>>()
         + size_of::<commit_bridge::CatalogCommitWait<'_, '_>>()
         + size_of::<PendingCatalog<'_, '_, '_, '_, '_, '_>>()
-        + size_of::<Result<PendingCatalog<'_, '_, '_, '_, '_, '_>>>()
+        + size_of::<
+            Result<(
+                CatalogCommitImage<'_, '_, '_>,
+                PendingCatalog<'_, '_, '_, '_, '_, '_>,
+            )>,
+        >()
+        + size_of::<CatalogCommitImage<'_, '_, '_>>()
+        + std::mem::size_of::<[Option<&[u8; PAGE_BYTES]>; TARGETS]>() // extraction output
         + 6 * size_of::<&()>();
-    let stage = parent
+    let stage = prepared
+        + common_parent
         + stage_locals
         + physical
             .prepare
@@ -495,9 +528,9 @@ pub(in super::super) fn phase_source_observations<W: WriterNamespace>()
             .max(physical.suspend + super::catalog_live::catalog_control_source_bytes());
     // A lower bound from only three necessarily retained owned values. It is
     // deliberately NOT the full Pending envelope or a reservation size.
-    let pending_floor = prepared
-        + physical.pending_retained
-        + size_of::<commit_bridge::CatalogCommitWait<'_, '_>>();
+    let pending_floor =
+        image + physical.pending_retained + size_of::<commit_bridge::CatalogCommitWait<'_, '_>>();
+    let parent = image + common_parent;
     let pending_wait = parent + physical.pending_retained + bridge_wait;
     let drain_wait =
         parent + size_of::<crate::storage::wal_io::DurableCommit<'_, '_>>() + physical.drain_wait;
@@ -525,6 +558,7 @@ pub(in super::super) fn phase_source_observations<W: WriterNamespace>()
         + visibility::epoch_transition_source_bytes();
     [
         ("prepared_actual_nine", prepared),
+        ("pending_image", image),
         (
             "prepare_common_nine",
             super::catalog_live::commit_prepare_source_observation::<W>(),
@@ -536,6 +570,6 @@ pub(in super::super) fn phase_source_observations<W: WriterNamespace>()
         ("drain_wait", drain_wait),
         ("resume_install_finish", install),
         ("publish_return", publish),
-        ("unchanged_production_broad", source_bytes()),
+        ("production_broad", source_bytes()),
     ]
 }

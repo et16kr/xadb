@@ -1,0 +1,63 @@
+{
+  "schema": "XADB_MODULE_C2_PENDING_IMAGE_V1",
+  "status": "FROZEN_INPUTS_NOT_EXECUTION_EVIDENCE",
+  "baseline": "4403c91",
+  "scope": "consume PreparedCatalog at actual stage; retain private immutable payload and canonical after refs4 across Pending; original authority and shared control apply semantics preserved; no aggregate writer admission",
+  "budget": {
+    "total_seconds": 600,
+    "compiler_seconds": 90,
+    "case_seconds": 30,
+    "output_bytes": 8388608,
+    "rust_min_stack": 33554432
+  },
+  "runtime_tests": [
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::owner_tests::catalog_commit_phase_sources_measure_consumed_preparation",
+      "reason": "Changed actual Prepared and compact image layout/phase equations; verify required reduction and conservative resident2 wait bound, without claiming aggregate admission"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::owner_tests::disk_session_isolation_backing_and_carriers_are_accounted",
+      "reason": "Changed Prepared layout and stage return carriers feed live/recovered source census"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::lifecycle::mc01_reserve_cancel_two_generations",
+      "reason": "Moved common Prepared fields feed actual Begin/Reserve/Cancel and single control apply body"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::lifecycle::mc02_forward_clr_abort_cleanup",
+      "reason": "Changed Prepared field projection and retirement control apply input; actual Forward/CLR/Abort/cleanup exact state and WAL oracle"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::commit_concurrency::catalog_mt05_pending_lower_flush",
+      "reason": "Consumed preparation preserves canonical after order, same pins, lower flush and install recLSN"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::commit_concurrency::catalog_mt03_pending_reader_loads_undo",
+      "reason": "Compact original Pending image retains actual Full reader Undo LOAD and final whole installation"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::commit_concurrency::catalog_mt07_drain_content_guard_fence",
+      "reason": "Consumed preparation and compact image cleanup retain original Drain/fence semantics"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::visibility_gap::catalog_mt01_q0_publication_gap",
+      "reason": "Compact observation/control image must preserve complete install and old/new snapshot publication boundary"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::commit_failures::catalog_mf02_commit_stage_call_unwind",
+      "reason": "Owned preparation now drops in stage helper at actual StageCallStarted panic"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::commit_failures::catalog_mf03_commit_write_before_error",
+      "reason": "Compact image drops while original Pending wait file write fails before bytes; no Unstaged claim"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::commit_failures::catalog_mf09_commit_durable_unwind",
+      "reason": "Compact image is abandoned at durable-before-Drain; exact current-build memory recovery"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::commit_failures::catalog_mf10_commit_second_page_unwind",
+      "reason": "Canonical compact after order drives partial installation; exact current-build memory recovery"
+    }
+  ]
+}

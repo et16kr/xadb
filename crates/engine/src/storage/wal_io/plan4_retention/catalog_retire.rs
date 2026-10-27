@@ -374,6 +374,7 @@ impl<'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
                 return Err(unchanged(RetentionPhase::Prepare, RetentionCause::Busy));
             }
             let ordinal = prepared
+                .payload
                 .observation
                 .job_ordinal
                 .expect("actual CLR ordinal");
@@ -485,9 +486,9 @@ impl<'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
                 crate::transaction::concurrency::catalog_test_support::Point::RetirementIntent,
             );
             let requirement = match storage.wal().stage_verified_required(
-                prepared.prefix,
-                prepared.observation.header,
-                prepared.frame,
+                prepared.payload.prefix,
+                prepared.payload.observation.header,
+                prepared.payload.frame,
             ) {
                 Ok(requirement) => requirement,
                 Err(error) if error.effect == Effect::Unchanged => {
@@ -554,7 +555,12 @@ impl<'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
                     .install_dpt(dpt_entry.take().expect("actual DPT preflight"), &permit)
                     .map_err(|e| frame(RetentionPhase::Install, e))?;
             }
-            catalog_apply(&prepared, self.control, storage.profile(), requirement)?;
+            catalog_apply(
+                &prepared.payload,
+                self.control,
+                storage.profile(),
+                requirement,
+            )?;
             self.history.installed(requirement)?;
             let applied = CatalogRetirementApplied { staged };
             apply
@@ -623,7 +629,11 @@ impl<'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
             self.pool
                 .retire_tx_pair(super::super::TxPairRetirePermit {
                     core: self.pool.bound_core(),
-                    actor: prepared.observation.actor.expect("actual CLR actor"),
+                    actor: prepared
+                        .payload
+                        .observation
+                        .actor
+                        .expect("actual CLR actor"),
                     reserve,
                     io: super::super::PairIoQuiescence {
                         original: flusher.control,
@@ -647,7 +657,7 @@ impl<'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
         })?;
         self.control.durable = Some(durable);
         self.control.pending = None;
-        Ok(prepared.observation)
+        Ok(prepared.payload.observation)
     }
 }
 

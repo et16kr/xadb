@@ -908,3 +908,34 @@ shared22256B, Full41576B, Resident16860B를 유지한다. 현재 PreparedCatalog
 | r2 PASS | `97392730cea35a092410994a10c3f08faba2c9d41eb4dc049faff1fa1b4f99e4` | `752f9bcf284f6057382c1eaa84821a025c5398e059c7e6f91343df557adf058f` |
 
 manifest SHA-256은 `45af3e9e36ec38aac1bbe4ec65edcb376d60396b6ee1c318fb8ccd27dff14efc`, r2 ELF는 `4fe0d26e03890679100f937336f707e4c9d3788580b3c081c46fde980bbdf2ce`다. 경과15.27/25.85초는 성능 결과가 아니다. 변경 Rust의 파일별 rustfmt만 적용하고 전체 fmt/Clippy·문서 verifier·push는 실행하지 않았다. `/root/module_review`는 실제 diff·문서6개·r1/r2 각 source5625개와 fingerprint/inventory/manifest/runner/helper/로그/존재 ELF를 읽기 전용 대조하고 **이 관측 단위 D1/D2 한정 수용·필수 수정0**으로 판정했다. 검토자는 수정·빌드·시험·문서 verifier를 실행하지 않았고 `/root`가 반영한다. 다음 단위는 stage 이후 필요 없는 준비 배열의 실제 수명 종료이며 source-before-progress 진입 틈·writer/progress 전체 합산·Row/terminal/recovery·M4/M5 의무는 유지한다.
+
+
+<a id="c2-pending-image"></a>
+### C2 stage 이후 준비 배열 수명 종료 — 2026-10-27
+
+기준 `4403c91`의 다음 유한 단위다. 작성·통합 `/root`, 독립 검토 `/root/module_review`이며 기존 완료 지시 범위에서 진행했다. PreparedCatalog를 private immutable CatalogPayload와 준비 전용 owner/requests9/roles9/stamps9/before로 나눴다. actual stage_catalog가 PreparedCatalog 값을 소비하고 원 mark_staged→suspend 성공 뒤 payload와 기존 after(at)로 뽑은 canonical after 참조4개만 반환한다. Allocation의 proof-only None과 원 target 순서를 그대로 보존한다. 추출은 infallible이며 Intent 전 Commit/target count·source/epoch 검산을 유지한다.
+
+새 CatalogCommitImage는 Clone/Copy·raw 생성자·Prepared 재구성을 제공하지 않는다. 원 pin/StablePage/Wait/설치 영수증이 권한을 계속 소유하며 새 backing·manager·페이지 복사를 만들지 않는다. 공통 catalog_apply는 같은 payload의 requirement/control/pending/layout을 검산하는 단일 본문이다. Begin/Reserve/Forward와 retirement/CLR/Abort도 같은 필드 값을 그 본문에 넘긴다. 제품 wire·원 snapshot/Q·Pending LOAD·Drain 의미는 유지한다.
+
+| 실제 source 관측 | 이전 B | 변경 후 B |
+| --- | ---: | ---: |
+| PreparedCatalog 전체 | 2024 | 2024 |
+| Pending에 남는 준비 자료 | 2024 | 568 |
+| Pending 세 값 필요 하한 | 2984 | 1528 |
+| Pending WAL wait 보수 상한 | 10576 | 9120 |
+| shared+wait+Resident2 | 66552 | 65096 |
+| stage 반환 보수 상한 | 27140 | 28308 |
+| 기존 방식의 제품 포괄 상한 | 31752 | 32920 |
+
+stage 반환에서는 원 Prepared·compact image·tuple Result·추출 참조 배열32B의 보수 중첩을 계수하여 비용이 늘었다. prepare 공통40456B와 live peak63184B/metadata186192B/whole251728B, recovered peak64611B는 유지한다. shared22256B와 새 세 값 하한+Full 합은65360B이므로 과거 source의 최소 불가능 결론을 새 source에 연장하지 않는다. 반대로 wait 상한+Full72952B는 아직 초과하며, Resident2 대기 합65096B도 **전체 writer class·고정 예약·Full 동시 허용·aggregate 인수 증거가 아니다.** phase별 실제 수명과 class 경계·필수 progress 예약은 후속이다.
+
+[실행 전 manifest](../../tests/fixtures/dev3-module-c2/pending-image/manifest.json)는 이4개 Rust diff에 해당하는12개만 선택했다. phase/layout2, common Begin/Reserve/Cancel·Forward/CLR/Abort2, 실제 Pending flush·Full Undo LOAD·Drain/fence3, Q 공개1, stage unwind·wait write 오류·durable unwind/현재-build memory recovery·partial install/현재-build memory recovery4다. 전체 workspace·변경 없는 하위 시험·native/새 PID 복구는 실행하지 않았다. 총600초·compiler90초·case30초·출력8MiB·stack33554432B다.
+
+`artifacts/module-c2-pending-image-20261027-r1/`의 production compile은 E0599 FAIL(옮긴 inventory_after 호출의 payload 경로 누락), test build/runtime12는 NOT_RUN이다. r2는 누락 경로·최소 가시성과 추출 배열의 source 계수를 반영한 source에서 production/test build와 선택12개 각각1회 PASS다. 원 export/inventory·manifest·runner·compiler·ELF·case 로그·result를 보존하고 r1을 소급 PASS로 바꾸지 않는다.
+
+| 실행 | source SHA-256 | result SHA-256 |
+| --- | --- | --- |
+| r1 FAIL | `c860f359ebc7a38ed55e1d38b4eacabd6a09512b9a03ae7d1d77e4de4a3b9acc` | `dcb9397abe0f314462626f639ac8bf0bf5aca991c0ad43689477470a7d8cb035` |
+| r2 PASS | `a29fe07f0e107222dbf1ba17530784ba58c6107a4da2d2965dd72b9d1c6a1f12` | `c4682806c9bd0e45b36ee4010e2c9847087182aa51a260f75d17d0b4159a64b4` |
+
+공통 manifest SHA-256은 `31d1025a5ada9df51631ce41a39b379c47c1346bb72191aa6d0df807d58bf5d2`, r2 ELF는 `660560b76212f5391c37ef28353db062fb42673be225a9214cfaa4a3ef8c1618`다. 경과5.81/71.57초는 성능 결과가 아니다. 변경 파일별 rustfmt·diff whitespace 확인만 했으며 전체 fmt/Clippy·문서 verifier·push는 실행하지 않았다. `/root/module_review`는 실제4개 Rust diff·선택 manifest·문서6개와 r1/r2 각 source5626개·fingerprint/inventory/runner/helper/compiler/case 로그·존재 ELF identity를 읽기 전용 대조했다. 준비 자료의 감소와 전체 tuple 반환을 구별하고 과거 충돌의 source를 명시하는 두 표현을 정정했다. **이 수명 축소 단위 D1/D2 한정 수용·필수 수정0**을 수신하여 `/root`가 반영한다. 검토자는 수정·빌드·시험·문서 verifier를 실행하지 않았다. 원 source-before-progress 진입 틈·writer/reader/progress 전체 계수·Row/terminal/recovery·M4/M5는 남아 있다.

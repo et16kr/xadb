@@ -237,7 +237,7 @@ fn disk_session_isolation_backing_and_carriers_are_accounted() {
 }
 
 #[test]
-fn catalog_commit_phase_sources_expose_full_reader_conflict() {
+fn catalog_commit_phase_sources_measure_consumed_preparation() {
     let shared = source::shared_bytes::<port::Writer>();
     let full = read::lookup_source_bytes::<port::Writer>();
     let resident = read::resident_lookup_source_bytes::<port::Writer>();
@@ -251,23 +251,10 @@ fn catalog_commit_phase_sources_expose_full_reader_conflict() {
             shared + bytes + resident * 2
         );
     }
-    // Three real values alone already rule out simply bolting a fixed Commit
-    // ticket onto the current Full lookup. Do not weaken the 64KiB envelope.
-    let floor = phases
-        .iter()
-        .find(|(name, _)| *name == "pending_three_value_floor")
-        .unwrap()
-        .1;
-    let wait = phases
-        .iter()
-        .find(|(name, _)| *name == "pending_wal_wait")
-        .unwrap()
-        .1;
-    assert!(shared + floor + full > 65536);
-    assert!(shared + wait + resident <= 65536);
-    assert_eq!(
-        phases.last().unwrap().1,
-        31752,
-        "existing production bound must not silently change in an observation-only unit"
-    );
+    // Actual preparation arrays end at stage return. The compact image keeps
+    // only immutable install/control input; this is not a writer admission.
+    let measured = |key| phases.iter().find(|(name, _)| *name == key).unwrap().1;
+    assert!(measured("pending_image") + 1024 <= measured("prepared_actual_nine"));
+    assert!(shared + measured("pending_wal_wait") + resident * 2 <= 65536);
+    assert!(shared + measured("production_broad") <= 65536);
 }
