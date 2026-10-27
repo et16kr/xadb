@@ -254,6 +254,34 @@ pub(super) fn leaf_source_bytes() -> usize {
         + 8 * size_of::<&()>()
 }
 
+/// Observation only, in waiting/guarded/guardless-return order. The original
+/// isolation guard serializes just the middle column; no new owner is created.
+#[cfg(test)]
+pub(super) fn entry_source_observation() -> (usize, usize, usize) {
+    type Guard<'a> = std::sync::MutexGuard<'a, IsolationLedger<'a, 'a, 'a>>;
+    // catalog's three inputs + selected charge, then reserve_class's inputs.
+    let waiting = 3 * size_of::<&()>() + 3 * size_of::<usize>() + 2 * size_of::<OperationClass>();
+    let guarded = 4 * size_of::<Guard<'_>>()
+        + 2 * size_of::<std::sync::LockResult<Guard<'_>>>()
+        + 2 * size_of::<std::sync::PoisonError<Guard<'_>>>()
+        + 4 * size_of::<SourceResult<()>>()
+        + 4 * size_of::<SourceResult<u64>>()
+        + 4 * size_of::<SourceFailure>()
+        + 4 * size_of::<Option<u64>>()
+        + 4 * size_of::<[u8; 8]>()
+        + 6 * size_of::<u64>()
+        + 8 * size_of::<&()>()
+        + 2 * size_of::<&[u8]>()
+        + 2 * size_of::<std::slice::Iter<'_, u8>>()
+        + 8 * size_of::<bool>();
+    let returning = 2 * size_of::<OperationSourceAdmission<'_, '_, '_, '_>>()
+        + 2 * size_of::<SourceResult<OperationSourceAdmission<'_, '_, '_, '_>>>()
+        + 4 * size_of::<SourceFailure>()
+        + 4 * size_of::<&()>()
+        + 4 * size_of::<usize>();
+    (waiting, guarded, returning)
+}
+
 #[cfg(test)]
 impl<W: WriterNamespace> ReadPort<'_, '_, '_, '_, '_, '_, '_, '_, W> {
     pub(in crate::storage) fn catalog_test_source_used(&self) -> u64 {

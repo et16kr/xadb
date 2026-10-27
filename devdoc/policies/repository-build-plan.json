@@ -6924,5 +6924,27 @@
     "validation": "r1/r2 production compile FAIL/test runtime NOT_RUN retained; r3 production/test build+runtime16 PASS warning0; independent D1/D2 source/evidence/docs accepted, no unresolved required changes",
     "remaining_supply": "Whole bound entry/return and independent guard leaves plus writer/progress; Row/terminal/recovery and M4/M5; shared22400+Full33972+observed Pending5320=61692 excludes ticket/floor",
     "source_roots_changed": false
+  },
+  "dev3_module_c2_uncharged_call_phases": {
+    "status": "VALIDATED_INDEPENDENT_D1_D2_ACCEPTED",
+    "contract_ref": "dev3-module-boundaries.md#operation-source-admission",
+    "implemented_paths": [
+      "tests/fixtures/dev3-module-c2/uncharged-call-phases/manifest.json"
+    ],
+    "modified_paths": [
+      "crates/engine/src/storage/dirty_frame.rs",
+      "crates/engine/src/storage/dirty_frame/registration.rs",
+      "crates/engine/src/storage/dirty_frame/retention_residency.rs",
+      "crates/engine/src/storage/wal_io/plan4_apply/source.rs",
+      "crates/engine/src/storage/wal_io/plan4_retention/read/scope.rs",
+      "crates/engine/src/storage/wal_io/plan4_retention/visibility.rs",
+      "crates/engine/src/transaction/concurrency.rs",
+      "crates/engine/src/transaction/concurrency_read.rs"
+    ],
+    "scope": "Actual consuming SourceFailure/progress cleanup before Err<Scope>; cfg(test)34 original-core entry and four independent guard observations, separate current query wide tail; no charge/admission change",
+    "evidence_ref": "module-independence-survey-20261026.md#c2-uncharged-call-phases",
+    "validation": "r1 production PASS/test E0425 FAIL/runtime4 NOT_RUN; r2 test build/runtime4 PASS warning0, production NOT_REPEATED_UNCHANGED_CODE; independent D1/D2 code/evidence/docs accepted; no unresolved required changes",
+    "remaining_supply": "Compact observed floor15057 exceeds available9164; broad current query tail7368 not minimum; actual narrow entry/exit and writer/progress admission, Row/terminal/recovery and M4/M5 remain",
+    "source_roots_changed": false
   }
 }

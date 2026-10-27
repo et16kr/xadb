@@ -23,6 +23,8 @@ pub(crate) use commit::{
     CommitInstalling, CommitStage, DrainingInstallation, InstallationKey, PendingInstallation,
     PrepareCommitError,
 };
+#[cfg(test)]
+pub(crate) use read::entry_source_observation as read_entry_source_observation;
 pub(crate) use read::{ReadOperationAdmission, source_bytes as read_operation_source_bytes};
 
 #[cfg(test)]

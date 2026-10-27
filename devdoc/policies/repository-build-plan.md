@@ -694,3 +694,7 @@ actual health/source/Scope/legacy facade·원 progress consuming finish와 관�
 ### C2 split 고정 source 계산 등록 — 2026-10-27
 
 기존 port/source/Scope/실제 관측/live·복구 계수7경로를 수정하고 선택 fixture1을 JSON `dev3_module_c2_split_source_charges`에 등록했다. package/dependency·source root·backing·wire는 유지한다. [원 증거](../evidence/module-independence-survey-20261026.md#c2-split-source-charges)는 build/runtime16 PASS와 원 compile FAIL2, source별 계산graph 보완을 구별하며 전체 entry/tail·writer admission은 후속이다.
+
+### C2 예약 밖 호출 phase 관측 등록 — 2026-10-27
+
+기존 Scope·core·pool/registration·visibility·isolation8경로의 작은 실패 helper/cfg(test) 관측과 선택 fixture1을 JSON `dev3_module_c2_uncharged_call_phases`에 등록했다. package/dependency·source roots·backing·wire는 유지한다. [원 증거](../evidence/module-independence-survey-20261026.md#c2-uncharged-call-phases)는 r1 production PASS/test compile FAIL/runtime NOT_RUN과 r2 test build/선택4 PASS·생산 미반복을 구별한다. 관측 floor는 제품에 연결하지 않았으며 전체 reader/writer admission은 미완료다.

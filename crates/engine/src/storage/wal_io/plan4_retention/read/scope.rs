@@ -121,6 +121,19 @@ fn progress_error(error: ConcurrencyError) -> CatalogCallError {
     CatalogCallError(CallFailure::Progress(error))
 }
 
+/// Finish the original ticket before constructing the much larger Err<Scope>
+/// return carrier. Both failures stay small throughout the blocking cleanup.
+fn finish_failed_source(
+    error: SourceFailure,
+    progress: ReadOperationAdmission<'_, '_>,
+) -> CatalogCallError {
+    let cleanup = progress.finish_checked().map_err(progress_error);
+    match compact_merge::<()>(Err(CatalogCallError(CallFailure::Source(error))), cleanup) {
+        Err(error) => error,
+        Ok(()) => unreachable!("original source failure retained"),
+    }
+}
+
 impl<'u, 'r, 'v, 'j, 'b, 'a, 's, 'c, 'p, 'd, 'm, 'w, W: WriterNamespace>
     CatalogCallScope<'u, 'r, 'v, 'j, 'b, 'a, 's, 'c, 'p, 'd, 'm, 'w, W>
 {
@@ -161,10 +174,7 @@ impl<'u, 'r, 'v, 'j, 'b, 'a, 's, 'c, 'p, 'd, 'm, 'w, W: WriterNamespace>
         ) {
             Ok(source) => source,
             Err(error) => {
-                return compact_merge(
-                    Err(CatalogCallError(CallFailure::Source(error))),
-                    progress.finish_checked().map_err(progress_error),
-                );
+                return Err(finish_failed_source(error, progress));
             }
         };
         Ok(Self {
@@ -342,6 +352,135 @@ mod tests {
 
     fn boxed<const N: usize>() -> Box<[u8; N]> {
         vec![0; N].into_boxed_slice().try_into().unwrap()
+    }
+
+    #[test]
+    fn failed_source_consumes_original_ticket_and_keeps_error_priority() {
+        use super::super::super::source::SourceCause;
+        use crate::storage::session_fence::SessionFence;
+        use crate::transaction::concurrency::catalog_test_support::observe;
+        for (fatal_source, fenced_cleanup) in [(false, false), (false, true), (true, true)] {
+            let fence = SessionFence::new();
+            let core = PageConcurrency::new(&fence).unwrap();
+            let mut owner = core.try_owner(OwnerRole::Foreground).unwrap();
+            let progress = owner.try_read_operation(&core).unwrap();
+            assert_eq!(observe(&core).active_read_operations, 1);
+            if fenced_cleanup {
+                fence.fence();
+            }
+            let error = finish_failed_source(
+                SourceFailure {
+                    cause: if fatal_source {
+                        SourceCause::Invariant
+                    } else {
+                        SourceCause::Capacity
+                    },
+                    effect: if fatal_source {
+                        Effect::CallerMustResolve
+                    } else {
+                        Effect::Unchanged
+                    },
+                },
+                progress,
+            );
+            assert_eq!(observe(&core).active_read_operations, 0);
+            let error: RetentionError = error.into();
+            match (fatal_source, fenced_cleanup) {
+                (true, _) => assert!(matches!(error.cause, RetentionCause::Invariant)),
+                (false, true) => assert!(
+                    matches!(error.cause, RetentionCause::Concurrency(e) if e.cause == Cause::Fenced)
+                ),
+                (false, false) => {
+                    assert!(matches!(error.cause, RetentionCause::Capacity));
+                    assert_eq!(error.effect, Effect::Unchanged);
+                    owner.check_idle().unwrap();
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn uncharged_call_phases_keep_independent_guards_and_wide_tail_separate() {
+        use std::mem::size_of;
+        type Scope<'a> =
+            CatalogCallScope<'a, 'a, 'a, 'a, 'a, 'a, 'a, 'a, 'a, 'a, 'a, 'a, port::Writer>;
+        let (owners, core_wait, core_guard, core_return) =
+            crate::transaction::concurrency::read_entry_source_observation();
+        let (pool_wait, pool_guard, pool_return) =
+            dirty_frame::retention_entry_source_observation();
+        let (visibility_wait, visibility_guard, visibility_return) =
+            visibility::entry_source_observation();
+        let (source_wait, source_guard, source_return) =
+            super::super::super::source::entry_source_observation();
+        let guards = core_guard + pool_guard + visibility_guard + source_guard;
+        // Factory/begin each have three references; begin also has visibility
+        // and class. The progress ticket is kept separately until consumed.
+        let outer = 7 * size_of::<&()>() + size_of::<OperationClass>();
+        let progress = size_of::<ReadOperationAdmission<'_, '_>>();
+        let leaf_wait = core_wait
+            .max(pool_wait)
+            .max(visibility_wait)
+            .max(source_wait);
+        let leaf_return = core_return
+            .max(pool_return)
+            .max(visibility_return)
+            .max(source_return);
+        // health_compact uses no guard: poison/atomic queries and all its small
+        // error/return/argument values belong to each caller, not guards.
+        let health = 8 * size_of::<&()>()
+            + 4 * size_of::<std::result::Result<(), HealthFailure>>()
+            + 4 * size_of::<CallResult<()>>()
+            + 8 * size_of::<bool>();
+        let entry = outer + progress + health.max(leaf_wait).max(leaf_return);
+        let failed_source = outer
+            + 2 * progress
+            + size_of::<std::result::Result<OperationSourceAdmission<'_, '_, '_, '_>, SourceFailure>>(
+            )
+            + 2 * size_of::<SourceFailure>()
+            + 4 * size_of::<CallResult<()>>()
+            + 2 * size_of::<CatalogCallError>()
+            + core_wait;
+        let returning =
+            outer + 2 * size_of::<CallResult<Scope<'_>>>() + 4 * size_of::<CatalogCallError>();
+        let compact_tail = size_of::<(
+            OperationSourceAdmission<'_, '_, '_, '_>,
+            ReadOperationAdmission<'_, '_>,
+        )>() + 4 * size_of::<&()>()
+            + 4 * size_of::<CallResult<()>>()
+            + 2 * size_of::<SourceFailure>()
+            + 2 * size_of::<ConcurrencyError>()
+            + 2 * size_of::<CatalogCallError>()
+            + leaf_wait.max(leaf_return);
+        let compact_prefix = entry.max(failed_source).max(returning).max(compact_tail);
+        let compact_floor = owners * compact_prefix + guards;
+        // The current selected query's lexical result/step/target survive its
+        // close call; its error branch calls the wide finish_error. Do not
+        // silently treat either as the compact tail above. This intentionally
+        // conservative baseline keeps the whole consumer plus legacy closure.
+        let current_query_tail = consumer_source_bytes::<port::Writer>()
+            + legacy_boundary_source_bytes::<port::Writer>()
+            + close_source_bytes();
+        let current_query_floor = owners * compact_prefix.max(current_query_tail) + guards;
+        println!(
+            "UNCHARGED_OBSERVATION owners={owners} core={core_wait}/{core_guard}/{core_return} pool={pool_wait}/{pool_guard}/{pool_return} visibility={visibility_wait}/{visibility_guard}/{visibility_return} isolation={source_wait}/{source_guard}/{source_return} guards_sum={guards} entry={entry} failed_source={failed_source} return={returning} compact_tail={compact_tail} compact_prefix={compact_prefix} compact_floor={compact_floor} current_query_tail={current_query_tail} current_query_floor={current_query_floor} shared={} full={} resident={} admission=NOT_CONNECTED",
+            super::super::super::source::shared_bytes::<port::Writer>(),
+            super::super::lookup_source_bytes::<port::Writer>(),
+            super::super::resident_lookup_source_bytes::<port::Writer>(),
+        );
+        assert_eq!(
+            owners, 34,
+            "32 foreground + maintenance + flusher rejection"
+        );
+        assert!(
+            guards
+                > core_guard
+                    .max(pool_guard)
+                    .max(visibility_guard)
+                    .max(source_guard)
+        );
+        assert!(current_query_tail > compact_tail);
+        assert!(current_query_floor > compact_floor);
+        assert!(size_of::<CatalogCallError>() < size_of::<CallResult<Scope<'_>>>());
     }
 
     #[test]

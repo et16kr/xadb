@@ -113,6 +113,55 @@ pub(crate) const fn source_bytes() -> usize {
         + 2 * size_of::<usize>()
 }
 
+/// Observation only: same-core Owner slots, guardless waiting, guarded work,
+/// and guardless return carriers. This is not wired into source admission.
+/// The DedicatedFlusher also reaches entry_state before InvalidRole rejection.
+#[cfg(test)]
+pub(crate) fn entry_source_observation() -> (usize, usize, usize, usize) {
+    use std::mem::size_of;
+    // cleanup's self/core Option/extracted core/cleanup_state/live arguments;
+    // its first failure remains while waiting. Entry has fewer arguments.
+    let waiting = 5 * size_of::<&()>()
+        + 2 * size_of::<Option<ConcurrencyError>>()
+        + 4 * size_of::<Result<()>>();
+    let locks = 4 * size_of::<MutexGuard<'_, State>>()
+        + 2 * size_of::<std::sync::LockResult<MutexGuard<'_, State>>>()
+        + 2 * size_of::<Result<MutexGuard<'_, State>>>()
+        + 2 * size_of::<std::sync::PoisonError<MutexGuard<'_, State>>>();
+    let accounting = size_of::<std::slice::Iter<'_, OwnerSlot>>()
+        + size_of::<std::iter::Enumerate<std::slice::Iter<'_, OwnerSlot>>>()
+        + 2 * size_of::<(usize, &OwnerSlot)>()
+        + 5 * size_of::<&()>()
+        + 2 * size_of::<u16>()
+        + 8 * size_of::<usize>()
+        + 8 * size_of::<bool>();
+    // Include the copied match input, expected tuple, extracted key/mode and
+    // returned/extracted iteration values. No State/slot array is copied.
+    let installation = 2 * size_of::<Installation>()
+        + 2 * size_of::<Option<(InstallationKey, Mode)>>()
+        + 2 * size_of::<InstallationKey>()
+        + 2 * size_of::<Mode>()
+        + 2 * size_of::<std::iter::Enumerate<std::slice::Iter<'_, OwnerSlot>>>()
+        + size_of::<(usize, &OwnerSlot)>()
+        + 8 * size_of::<usize>()
+        + 6 * size_of::<&()>()
+        + 8 * size_of::<bool>();
+    let guarded = locks
+        + 6 * size_of::<&()>()
+        + 8 * size_of::<Result<()>>()
+        + 4 * size_of::<Option<ConcurrencyError>>()
+        + 2 * size_of::<OwnerIdentity>() // cleanup index()/generation() value receivers
+        + accounting.max(installation);
+    // Entry's ticket/identity and complete returned Result remain per caller,
+    // even after the guard is gone. Do not classify them as serialized work.
+    let returning = size_of::<ReadOperationAdmission<'_, '_>>()
+        + 2 * size_of::<Result<ReadOperationAdmission<'_, '_>>>()
+        + size_of::<OwnerIdentity>()
+        + 4 * size_of::<ConcurrencyError>()
+        + 3 * size_of::<&()>();
+    (OWNER_SLOTS, waiting, guarded, returning)
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

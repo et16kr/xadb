@@ -1166,3 +1166,34 @@ source ticket charge는 원 checked next<=available<=65536이 성공한 뒤만u3
 | r3 PASS | `0af267449e387bc19ef806df764ef921178855552b24206bbea11a4c961d6dc0` | `0cd05e4718397b2462cd5d592e2ff59666e254d11daf7e184bd8fb6917d6eba1` | `1e8fdb2fc971b1b5e84442b4f02c582ef78406bb3c46f56c5bf1c579e46048ea` |
 
 r3 ELF SHA-256은 `427a179ba550920ec7cf11f9e8c6feabfe9202fcc312a8a72d619b178f54d4a1`이다. 독립 D1/D2는 현재 제품/계산graph·원r1/r2/r3 source/inventory·build/runtime 로그·ELF·6문서를 대조해 한정 수용했다. 미해결 필수 수정은0이며 실제 비재귀 호출graph라는 문구 정정을 반영했다. 검토자는 수정·빌드·시험·verifier를 실행하지 않았다. 변경 파일 rustfmt/diff whitespace만 확인했으며 전체 fmt/Clippy·문서 verifier·push는 실행하지 않았다. 전체 bound entry/tail·writer/progress·Row/terminal/recovery·M4/M5는 미완료다.
+
+<a id="c2-uncharged-call-phases"></a>
+### C2 예약 밖 호출 phase의 관측과 작은 실패 정리 — 2026-10-27
+
+기준 `2273185`, 작성·통합 `/root`, 독립 검토 `/root/module_review`다. actual source 예약 실패는 private `finish_failed_source(SourceFailure, ReadOperationAdmission)`가 원 ticket을 소비 정리한 뒤 작은 CatalogCallError를 반환한다. 그 뒤 caller가 전체 `Err<Scope>`를 만든다. 원 SourceFailure와 progress ticket을 다른 권한으로 바꾸지 않으며, 원 Fatal 우선·그 밖에는 cleanup 오류 우선 규칙과 source→progress 순서, fence/poison 정책을 유지한다. 신규 helper의 정상 Capacity·fenced cleanup·원 Fatal 조합과 실제 source 실패 두 경로를 검산했다.
+
+나머지 변경은 **cfg(test) 계수식 관측**이며 제품 charge·source admission에 연결하지 않았다. 원 같은 core의 FOREGROUND32+Maintenance1+DedicatedFlusher 거절 입구1인34개를 사용한다. progress 허용33과 구별하며 다른 core의 foreign Owner 수를34로 제한하지 않는다. 각 owner에서 guard 없는 대기/guard 보유 중 추가값/guard 없는 반환을 구분하고, 독립 core·pool registry·visibility registry·isolation mutex의 guarded 값을 합한다. visibility confirms는 publication mutex나 새 snapshot을 만들지 않는다.
+
+pool에는 allocator/current/prior Registration, map의 TargetRequest, rank의 PageRef/24B/tuple, System INIT→init_generations→directory 검산 중첩, TxPair actor/indices, LOAD의 실제 flush/INIT Option+claim 복사, previous FrameStamp, DPT WalRequirement/WalFrameLocation을 넣었다. visibility에는 원 retirement target과 count의 값 인자·Option 비교, ReferenceTarget의 enum/map/Result, TxnId/DatabaseId의 engine 오류와 Undo/PageRef/Generation의 foundation 오류를 구분했다. 큰 타입·iterator 외의 인자/작은 값은 pool13단계·visibility11단계 각각64B의 보수 packet과 명시된 보조값으로 계수한다. [동결 manifest](../../tests/fixtures/dev3-module-c2/uncharged-call-phases/manifest.json)에 호출 범위와 근거를 보존한다.
+
+| owner | guard 없는 대기 | guarded 추가값 | guard 없는 반환 |
+| --- | ---: | ---: | ---: |
+| core | 52B | 658B | 136B |
+| pool registry | 80B | 3588B | 76B |
+| visibility registry | 84B | 2351B | 66B |
+| isolation | 50B | 504B | 136B |
+
+독립 guarded 합은7101B다. 원 factory/begin 인자와 작은 실패 helper, **전체 Scope Result**를 유지한 관측은 entry217B·source 실패195B·반환197B·compact tail234B이며 `34×234+7101=15057B`다. 현재 selected query는 같은 for lexical scope의 result/step/target과 오류 시 `finish_error`의 wide 값을 종료 호출 동안 유지하므로, 기존 consumer4972+legacy1962+close434=7368B를 별도 넓은 tail baseline으로 남겼다. 그 단순 조합은257613B다. 두 결과 모두 source 식의 보수 상계이며 실제 최소 비용·machine stack/RSS·성능·불가능성 하한이 아니다. 작은 경계만의 값을 selected caller 전체 보장으로 올리지 않는다.
+
+Full33972B·Resident16928B·shared22400B와 원 charge는 그대로다. shared+Full 뒤9164B의 여유에는 현재15057B 관측을 그대로 예약할 수 없으며 wide caller의 실제 소비 경계도 아직 닫히지 않았다. 따라서 전체 reader floor·writer Pending/progress phase admission은 미공급이다. 기존 one-call 식과 source별 PASS를 이번 관측으로 소급 재분류하지 않는다. 후속은 실제 소비/오류 수명과 guard closure를 좁히거나 원 자원을 보존하는 구조로 해소하며 한도 증액·case 삭제는 하지 않는다.
+
+실행 전 diff→선택을 고정해 신규 helper1·신규 관측1·변경된 실제 source 실패(fence/Capacity)2만 실행했다. r1은 production build PASS 뒤 시험용 ConcurrencyError 경로 미한정 E0425로 test build FAIL/runtime4 NOT_RUN이다. 원 source와 로그를 보존하고 cfg(test)의 해당 한 타입만 `concurrency::ConcurrencyError`로 정정했다. r2 test build/runtime4 PASS·경고0이며 생산 코드가 같아 production check는 NOT_REPEATED_UNCHANGED_CODE다. 무변경 lookup/codec/복구·compiler borrow probe·하위 회귀·workspace 시험은 반복하지 않았다. 이 helper는 영속 의미/byte/복구 경로를 바꾸지 않는다.
+
+원 `artifacts/module-c2-uncharged-call-phases-20261027-r{1,2}/`에 source5645파일/inventory·manifest·runner/helpers·compiler·ELF(생성 시)·case 로그를 보존한다. 총600초/compiler90초/case30초/출력8MiB/stack33554432B, 실제 r1 20.29초/r2 29.06초는 성능 결과가 아니다.
+
+| 실행 | source SHA-256 | result SHA-256 |
+| --- | --- | --- |
+| r1 test build FAIL | `49e4b60f12adb8a1cdf77dcea9537a8c51314960157de3b0a349601eb65f01af` | `d6d7311e64519c1d7d51f261508f12ad089d1b95b9d58d493b11683e73aa82ab` |
+| r2 선택4 PASS | `27d454362ffcf02d9be96869300e2d00e9d1dfe526710d92f1669cc68ee718b8` | `5e10c28db8e301e39997f6756bce1cd94825f138ca999fa1e02f5d28626521b4` |
+
+두 실행의 manifest SHA-256은 `c2aeac954ba47fcd69907d911d692b3cade4aa443dc6284cc69f18e0e3790b38`, r2 ELF는 `41a9e95a09a8cc8f64a9de1fb2898cd5220be2134779251efd8aa8d757de54f5`다. 독립 D1/D2는 현재8파일·각5645파일 원 source/inventory·compiler/ELF/case 로그·6문서의 수치와 해시를 대조해 이 한정 단위를 수용했다. 필수 미해결 수정은0이며 검토자는 수정·빌드·시험·verifier를 실행하지 않았다. 변경 파일 rustfmt/diff whitespace만 확인하며 전체 fmt/Clippy·문서 verifier·push는 실행하지 않았다. 전체 entry/tail·writer/progress·Row/terminal/recovery·M4/M5는 미완료다.
