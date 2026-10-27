@@ -233,7 +233,12 @@ pub(in crate::storage) fn source_census<W: WriterNamespace>() -> RecoverySourceC
         + 2 * size_of::<Result<()>>()
         + 3 * size_of::<Plan4RecoveryPhase>()
         + 128;
-    let bind_pages = runtime
+    // The caller supplies one original core at bind. Earlier acquisition,
+    // analysis and handoff phases do not own or receive it. Nested pool calls
+    // contain only its references; conversion/live inherit its one charge.
+    let original_core = live_census.original_core;
+    let bind_pages = original_core
+        + runtime
         + bind_call
         + 2 * size_of::<RecoveryPoolSeed<'_>>()
         + clean
@@ -247,7 +252,8 @@ pub(in crate::storage) fn source_census<W: WriterNamespace>() -> RecoverySourceC
         runtime + bind_call + live_census.recovered_conversion - live_census.original_owner;
     // Keep every wide value conservatively in wrap_recovered: incoming Live,
     // assembled facade and its Result. Pool/seed/conversion calls have ended.
-    let bind_return = runtime
+    let bind_return = original_core
+        + runtime
         + bind_call
         + size_of::<Live<'_, W>>()
         + size_of::<Recovered<'_, W>>()
@@ -258,7 +264,8 @@ pub(in crate::storage) fn source_census<W: WriterNamespace>() -> RecoverySourceC
     let live =
         (runtime + live_census.peak - live_census.original_owner + facade_delta)
             .max(
-                runtime
+                original_core
+                    + runtime
                     + size_of::<Recovered<'_, W>>()
                     + size_of::<
                         std::result::Result<(Live<'_, W>, &mut [u8; 425_984]), Recovered<'_, W>>,

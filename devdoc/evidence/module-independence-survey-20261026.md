@@ -832,3 +832,66 @@ D1/D2 담당·통합은 `/root`다. 원 자원을 이동하는 bounded 내부 �
 - `artifacts/module-c2-commit-phases-20261027-r2/`: source `5aa4dcd24617c543bd5559c9b1c79a906fc15af844d012937428944e7cd9e1e8`, manifest `5a1269c714962ee36998abd776abd335515448b98247e59ae45ac333ab183084`, ELF `ec8213c47f8af00831217b5433c0b77267a230ca3939ac64c33bd8ddf93c6ed2`, result `97eb0f8e5ff620228316ca6c05a5b0cbc70cdcfd051f418f091221eeb802445e`.
 
 총 실행 경과는 r1 33.11초/r2 32.53초이며 성능 인수가 아니다. 변경 Rust만 파일별 rustfmt로 정리하고 `git diff --check`를 사용했다. 전체 fmt/Clippy·자동 문서 검사·push는 실행하지 않았다. `/root/module_step_review`가 제품8파일·문서6파일·선택 manifest와 r1/r2 각5626개 source/inventory·manifest·runner·ELF·결과·로그 hash 및 현재 source 일치를 직접 대조하여 **D1/D2 최종 한정 수용·필수 수정0**으로 판정했다. core816B 보완, 원 r1 실행/검토 지적 보존, source별3+2회·고유3개와 무변경 물리 시험 반복0, 단일 source 비용과 전체 동시 admission 미완료의 구분을 확인했다. 검토자는 수정·빌드·시험·verifier를 실행하지 않았고 `/root`가 이 한정 수용을 반영한다.
+
+
+<a id="c2-shared-core"></a>
+### C2 공통 core source 계수와 복구 반환 수명 — 2026-10-27
+
+이번 “진행 위치 확인 후 다음 한 단계·OCR delegate 검토·commit” 요청은 `/home/et16/work/xadb`의 clean `main`·`df9881beb8d7d2455760c446551ff22accf4a562`에서 수행한다. main 수신 기준 M0–M3 완료, M4 Commit phase 계산까지 부분공급, M5 A/B 순수 본문 착수 상태였다. 별도 `codex/module-independence-finish`·`76f91e0`에는 후속 C2/C3와 Row 거래 ledger까지 미병합 변경이 있다. 그 worktree는 clean임을 읽기 확인했고 편집·병합·검증 결과 승계·다른 세션 중지는 하지 않았다. 이번 완료 범위는 main의 다음 source 계수 단위이며 별도 브랜치 전체 진행을 main 완료로 표시하지 않는다.
+
+`D3-MODULE-SHARED-CORE-001` · D2 · **ACCEPTED / C2 한정 부분공급**. 구현·계약·통합 `/root`, 독립 검토 `/root/module_step_review`. 직전 단계의 원 core를 공통 보유분으로 옮길 의무를 수행한다. Catalog class에만 core를 두는 대안은 다른 class/전환에서 원 실체를 누락한다. 즉시 전체 admission을 연결하는 대안은 아직 큰 reader/writer의 동시 합과 progress 보장이 닫히지 않아 이번 한 단계에 넣지 않았다. §6.9와 기존64KiB 한도를 유지하며 원 owner·pin·WAL·wire 의미는 변경하지 않는다.
+
+`concurrency::core_source_bytes()`가 원 inline slots·mutex·continuation을 포함한 실제 `PageConcurrency`816B를 정의한다. fresh `Plan4Pages`의 bind/live, `DiskSession`의 fresh/recovered conversion·retained, recovery의 bind_pages/bind_conversion/bind_return/into_live에 같은 실체를 한 번 포함한다. acquire/analysis/handoff는 core를 입력받지 않아 추가하지 않는다. Catalog nested phase에서816B를 빼고 기존 local Capacity는 core+class 합31940B로 유지한다. 독립 low-level Commit closure는 계속 core를 포함한다. 객체 이동·참조 공개 확대·새 owner/heap/byte budget은 없다.
+
+#### 첫 실패와 실제 수명 수정
+
+r1에서 memory source와 fresh/native type 일부는 통과했으나 native recovery bind_conversion이65563B로65536B를27B 초과했다. 원 FAIL은 보존한다. 원 `into_recovered_disk_session`의 replay cursor128B는 restore에만 필요했지만 큰 session 반환까지 같은 함수에 있었다. `restore_recovered_control`로 seed→control/jobs/inventory copy→population→allocator snapshot/equality→restored credit equality를 옮겨 cursor가 실제 helper 반환에서 끝나게 했다. restore phase에는5개 borrow와2개 Result를 추가 계수하고 return에서는 끝난 cursor만 제외했다. linear binding은 계속 보유하여 원 session으로 이동한다. 한도 증가나 근거 없는 상수 축소는 없다.
+
+#### 선택과 실행 기록
+
+[선택 manifest](../../tests/fixtures/dev3-module-c2/shared-core/manifest.json)는 최신 미실행분 선택이며 각 원 manifest는 해당 bundle에 보존했다. 실행 전 총480초·case30초·로그8MiB·test stack32MiB, B08의 첫 적격 padding 후보256/512/1024/2048/4096을 동결했다. r1 static 결과에서2048이 첫 setup 가능/Capacity 거절 후보였고 B08에 그대로 사용했다. native source 사례는 실제 Linux Writer/File **타입 계산**이며 native I/O 시험이 아니다.
+
+| bundle | 실제 실행·판정 | 다음 선택 이유 |
+| --- | --- | --- |
+| r1 | production/test build PASS; owner·G5 memory/native·recovery memory4 PASS; recovery native1 FAIL(65563B); 나머지3 미실행 | helper 변경 뒤 owner/recovery 계산만 다시 선택. 완료한 G5 두 source 검산 반복0 |
+| r2 | production/test build PASS; owner·recovery memory/native·fresh transfer4 PASS. recovery selector의 `tests::cases` 누락으로0개 실행을 runner가 FAIL 처리 | 제품 source 변경0. 같은 frozen source/ELF로 미실행 recovery/B08만 계속 |
+| r3 | 정확 B04만1회 FAIL. `support.rs:260`의 fresh Reserve WAL과 고정 oracle byte 불일치이며 recovery/helper 미도달 | 원 B04 FAIL 유지. fixture 수정·B04 재실행 없음. 독립 D2 검토 뒤 현재 Profile2 MF09로 변경 helper 도달·복구 의무 검증 |
+| r4 | 같은 r2 ELF의 MF09 실제1회 PASS. runner가 `CATALOG_MEMORY` 대신 `CATALOG` marker를 기대해 집계 FAIL | 원 result/log 보존. 별도 `adjudicate.py`가 exact1·exit0·MF09 BEGIN/PASS·source/ELF/input·로그 hash를 재대조하여 `PASS_LOG_VALIDATED_NOT_RERUN`. 제품 반복0 |
+| r5 | 같은 r2 ELF의 미실행 B08만1회 PASS | exact B08 선택으로 다른15개 사례는 SKIP, PASS로 합치지 않음 |
+
+최종 적용되는 검증은 r1의 G5 두 source 검산, r2의 owner/recovery memory/native/fresh4, r4 MF09, r5 B08의 **고유8개**다. 전체 실제 실행은12회(10 PASS·2 FAIL)이며 r2의0개 selector 오류는 별도다. 한 source에서8개를 새 실행한 결과로 합치지 않는다. B04의 early-live 거절 계약은 MF09 PASS로 대체하지 않는다. B04 setup 불일치는 이번 변경 전 경로의 미해결 시험 결함으로 남긴다. MF09는 actual durable unwind images를 고정 C04/N03 oracle로 대조하고 acquire/recover→bind→변경 restore→bounded cleanup→READY/into_live를 확인한다. 이 좁은 목적의 대체는 독립 검토자가 실행 전 수용했다.
+
+#### 최종 source 관측과 한계
+
+| 대상 | byte 상계 |
+| --- | --- |
+| 원 core / memory session shared retained | 816 / 21696(이전20880+816) |
+| Catalog nested preflight / stage / Pending / install | 16632 / 31124 / 19988 / 23508; 원 core는 바깥에서 한 번 계수 |
+| memory live peak / metadata / whole | 64000 / 187008 / 252544 |
+| native live peak / metadata / whole | 64136 / 187144 / 252680 |
+| memory recovered bind / peak / metadata / whole | 65299 / 65376 / 107208 / 172744 |
+| native recovered bind / peak / metadata / whole | 65435 / 65512 / 107344 / 172880 |
+
+이는 실제 source/type 수명 상계이며 RSS·컴파일러 stack·성능·동시 admission 결과가 아니다. native peak의 여유24B는 미등록 자원을 허용하는 예산이 아니다. 원 단일-operation max census와 전체 동시 합을 구별한다. runtime short admission·resident reader·writer/progress class, 실제 Row/terminal/recovery 및 M4/M5 전체는 main 기준 미완료다. 별도 미병합 브랜치 수신은 새로운 관련 diff 검토가 필요하다. 타입/수명이 바뀌거나 class 합을 admission에 사용할 때 다시 검토한다.
+
+변경 Rust는 파일별 rustfmt, diff는 `git diff --check`로 확인한다. 전체 workspace/하위 wrapper·완료한 Commit/lookup 시험·native process inventory는 실행하지 않는다. 자동 문서 verifier·전체 fmt/Clippy·push는 요청 범위 밖으로 실행하지 않는다. 원 source별 PASS/FAIL/UNKNOWN과 DEV2·DEV3/S5 미완료는 유지한다.
+
+- `artifacts/module-c2-shared-core-20261027-r1/`: source `e09df954d79070dd9823eb4d7e510c6f979a10769b97c28fb237da6d164bf7af`, ELF `4530abab5e4b58bd898cb8540946307e5083f0dc8bc215ab8a9bcc7997a91732`, manifest `7122d2fa98bf7516225fad521c2e17af629c03d6dbefe0d958cfadb42afa396e`, result `c13be3feb97f8230519377418148febc1f386d589b18eb0406250362e2b541c1`.
+
+- `artifacts/module-c2-shared-core-20261027-r2/`: source `3da609e26656f22fa82d85fe2f2f9ff2344d4e953a1439122a418b0a29475b58`, ELF `7f996234fa42eaaa44a51a8e1e0f668f22a7bbfce1719b54d9b033188b34e965`, manifest `ff5cd226862554ce16be49c65dc84d9e23d6f0d08ddbbb1c8575cc02ac1ed9f6`, result `39776a2a228cac9f77f652d79a94422c9dae9b0fae33d8ae67f7d188742217ea`.
+
+- `artifacts/module-c2-shared-core-20261027-r3/`: source `3da609e26656f22fa82d85fe2f2f9ff2344d4e953a1439122a418b0a29475b58`, ELF `7f996234fa42eaaa44a51a8e1e0f668f22a7bbfce1719b54d9b033188b34e965`, manifest `33868839c688fdd3324662525d51bcb84ec8b7e4abe48d74f1852657c29ad1f3`, result `f1065bca1908c66e785fe55f79f1cba00c3d53feb01db1d2a20cf75467e5569b`.
+
+- `artifacts/module-c2-shared-core-20261027-r4/`: source `3da609e26656f22fa82d85fe2f2f9ff2344d4e953a1439122a418b0a29475b58`, ELF `7f996234fa42eaaa44a51a8e1e0f668f22a7bbfce1719b54d9b033188b34e965`, manifest `8f9ff39fffa6a8ddcf093166e1a3d5a46cf839deb7100e70ffa6b6d8cc8b3af0`, result `e7b343457d8ff6ac60e3dfd23f6f250fa979b1577fa74cb0820838f8f19a2a68`.
+
+- `artifacts/module-c2-shared-core-20261027-r5/`: source `3da609e26656f22fa82d85fe2f2f9ff2344d4e953a1439122a418b0a29475b58`, ELF `7f996234fa42eaaa44a51a8e1e0f668f22a7bbfce1719b54d9b033188b34e965`, manifest `db23cc5f3f4ea4acd0d8087cb7a457f9f0bbf7cd6067d0cced3bc08c7c542eb2`, result `40c366813b947a04a60ecc889f5ee01d78ddcbb997a13aaf9b8abcc134afe0f8`.
+
+r3–r5는 r2의 immutable source/ELF를 재사용하며 새 product build를 수행하지 않았다. runner·selection manifest·원 stdout/stderr·source inventory와 r4 adjudication을 bundle에 보존했다.
+
+#### OCR delegate·독립 D1/D2 최종 검토
+
+`/root/module_step_review`가 `ocr delegate preview --format json`과 `ocr delegate rule --format json`으로 목록·규칙을 확인하고 전체16파일을 검토했다. OCR 대상10개와 제외6개(문서5·fixture1)를 모두 읽어 `total_files=16`, `reviewed_files=16`, `skipped_files=0`, `coverage_rate=1.0`이다. 계약의 직전 Commit phase 문단이 core의 Catalog 청구를 현재 상태처럼 적은 경미한1건을 과거형과 후속 이행 참조로 정정했고 검토자가 재확인했다. 제품 변경0이므로 시험은 반복하지 않았다.
+
+최종 판정은 **D1/D2 한정 수용·미해결 필수 수정0·차단0**이다. r1/r2 각5627파일 source inventory, manifest/runner/ELF/result/log hash와 현재 제품9파일의 r2 일치를 대조했다. 원 core의 단일 계수, helper 수명·검산 순서 보존,65563B FAIL→65512B 상계, 원 fixture/selector/marker FAIL, r4 로그 재판정과 source별 고유8개를 확인했다. B04 setup 결함·native I/O 미실행·전체 admission/M4/M5 미완료는 한정 수용으로 해소하지 않는다.
+
+`artifacts/module-c2-shared-core-review-20261027/`에 `preview.json`, `rules.json`, `checklist.json`, `identity-audit.json`, `report.json`을 보존했다. 최종 report SHA-256은 `e9c60a58c2f103bde5ce976ade4e8a1d56cdc225e90a8c7b1007e835b5ffb52b`, checklist는 `ec8cce739c12ce2a6f9275dcae01d3cbb0b497e358da4fd303caf7899adc3e93`이다. 검토자는 제품/문서 수정·빌드·시험·자동 문서 verifier를 실행하지 않았고 `/root`가 실제 수용 결과를 이 증거·구현 색인·build JSON에 반영했다.

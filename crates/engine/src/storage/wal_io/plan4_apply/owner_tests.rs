@@ -202,9 +202,19 @@ fn disk_session_isolation_backing_and_carriers_are_accounted() {
     let live = resources::source_census::<port::Writer>();
     let commit = create_pair::catalog_commit_source_phases();
     println!(
-        "C2_CATALOG_COMMIT_PHASES {commit:?} peak={} original_core_once={}",
+        "C2_CATALOG_COMMIT_PHASES {commit:?} operation_peak={} shared_original_core={}",
         commit.peak(),
+        live.original_core
+    );
+    assert_eq!(
+        live.original_core,
         std::mem::size_of::<PageConcurrency<'_>>()
+    );
+    assert_eq!(
+        live.retained,
+        live.original_owner
+            + std::mem::size_of::<DiskSession<'_, '_, '_, '_, '_, '_, '_, '_, port::Writer>>()
+            + live.original_core
     );
     assert_eq!(live.catalog_commit, commit.peak());
     for phase in [

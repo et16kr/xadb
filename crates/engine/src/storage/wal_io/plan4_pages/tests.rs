@@ -865,14 +865,15 @@ fn assert_source<W: WriterNamespace>(label: &str) {
     );
     assert!(resources::fits::<W>());
     assert!(c.owner <= 32_768 && std::mem::size_of::<W::File>() <= 16_384);
-    assert_eq!(c.retained, c.owner + c.bound);
+    assert_eq!(c.original_core, std::mem::size_of::<PageConcurrency<'_>>());
+    assert_eq!(c.retained, c.owner + c.bound + c.original_core);
     for nested in [
         c.bind_nested,
         c.load_nested,
         c.catalog_nested,
         c.queue_nested,
     ] {
-        assert!(c.owner + nested <= 65_536);
+        assert!(c.owner + c.original_core + nested <= 65_536);
     }
     assert!(c.peak <= 65_536 && c.whole <= 262_144);
     assert_eq!(c.old_common_growth, 0);

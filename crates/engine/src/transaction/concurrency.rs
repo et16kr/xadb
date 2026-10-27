@@ -42,6 +42,13 @@ pub(crate) fn diagnostic_poison_state(core: &PageConcurrency<'_>) {
     test_support::poison_state(core);
 }
 
+/// The one original core, including its inline slots, mutex and continuation.
+/// Pool/session values retain references only. Enclosing source censuses charge
+/// this value once from binding through teardown, separate from nested calls.
+pub(crate) const fn core_source_bytes() -> usize {
+    std::mem::size_of::<PageConcurrency<'_>>()
+}
+
 pub(crate) const FOREGROUND_OWNERS: usize = 32;
 pub(crate) const OWNER_SLOTS: usize = FOREGROUND_OWNERS + 2;
 const MAINTENANCE_SLOT: usize = FOREGROUND_OWNERS;

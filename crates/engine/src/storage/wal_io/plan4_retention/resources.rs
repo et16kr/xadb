@@ -14,6 +14,7 @@ use std::mem::size_of;
 #[derive(Clone, Copy, Debug)]
 pub(in crate::storage) struct RetentionSourceCensus {
     pub(in crate::storage) original_owner: usize,
+    pub(in crate::storage) original_core: usize,
     pub(in crate::storage) retained: usize,
     pub(in crate::storage) conversion: usize,
     pub(in crate::storage) conversion_preflight: usize,
@@ -62,7 +63,10 @@ pub(in crate::storage) fn source_census<W: WriterNamespace>() -> RetentionSource
     type New<'a, W> = Plan4Retention<'a, 'a, 'a, 'a, 'a, 'a, 'a, 'a, W>;
     type Into<'a, W> = std::result::Result<New<'a, W>, IntoRetentionError<Old<'a, W>>>;
     let original_owner = size_of::<MutableStorageOwner<'_, '_, W>>();
-    let retained = original_owner + size_of::<New<'_, W>>();
+    // DiskSession/SharedPool only borrow this one core. Nested operation
+    // charges exclude it; fresh and recovered conversions retain it as well.
+    let original_core = crate::transaction::concurrency::core_source_bytes();
+    let retained = original_owner + size_of::<New<'_, W>>() + original_core;
     let scalar = 12 * size_of::<Result<()>>()
         + 6 * size_of::<RetentionError>()
         + 2 * size_of::<WalPrefix>()
@@ -78,7 +82,8 @@ pub(in crate::storage) fn source_census<W: WriterNamespace>() -> RetentionSource
     // Its queue/activation calls have returned before the success fields or
     // wide owner-return carrier are constructed. This is source-value liveness,
     // not an ABI/stack assertion about an uninitialized return destination.
-    let conversion_preflight = original_owner
+    let conversion_preflight = original_core
+        + original_owner
         + size_of::<Old<'_, W>>()
         + 2 * size_of::<Result<()>>()
         + size_of::<EmptyRetentionControlLoan<'_>>()
@@ -88,7 +93,8 @@ pub(in crate::storage) fn source_census<W: WriterNamespace>() -> RetentionSource
         + 1024;
     // Conservatively retain Old, every newly built field, New and the wide
     // Result together in the move/return phase, including the Before variant.
-    let conversion_return = original_owner
+    let conversion_return = original_core
+        + original_owner
         + size_of::<Old<'_, W>>()
         + size_of::<New<'_, W>>()
         + size_of::<Into<'_, W>>()
@@ -105,7 +111,8 @@ pub(in crate::storage) fn source_census<W: WriterNamespace>() -> RetentionSource
     let history = history::source_bytes::<W>();
     let runtime_history = history::runtime::source_bytes();
     let recovery = recovery::phase_source_bytes::<W>();
-    let recovered_conversion = (original_owner
+    let recovered_conversion = (original_core
+        + original_owner
         + size_of::<Old<'_, W>>()
         + size_of::<control::RetentionLedger<'_, '_, '_>>()
         + size_of::<RetentionControl<'_, '_, '_>>()
@@ -114,10 +121,15 @@ pub(in crate::storage) fn source_census<W: WriterNamespace>() -> RetentionSource
         + size_of::<recovery::RetentionReplayCursor>()
         + size_of::<super::super::super::plan4_recovery::RecoveryRetentionBinding<'_, '_>>()
         + recovery.seed.max(recovery.ledger)
+        // restore_recovered_control's five borrows and returned Result live
+        // with the cursor only in this restore phase, before the wide return.
+        + 5 * size_of::<&()>()
+        + 2 * size_of::<Result<()>>()
         + 1024)
         .max(
+            // The restore helper (and its cursor) has returned. The original
+            // binding remains live and moves into New; do not discount it.
             conversion_return
-                + size_of::<recovery::RetentionReplayCursor>()
                 + size_of::<super::super::super::plan4_recovery::RecoveryRetentionBinding<'_, '_>>(
                 ),
         );
@@ -253,6 +265,7 @@ pub(in crate::storage) fn source_census<W: WriterNamespace>() -> RetentionSource
         + transaction::LONG_SOURCE_BYTES;
     RetentionSourceCensus {
         original_owner,
+        original_core,
         retained,
         conversion,
         conversion_preflight,

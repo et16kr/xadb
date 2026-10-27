@@ -115,7 +115,7 @@ impl<'s, 'c, W: WriterNamespace> RetentionWriter<'_, '_, 's, 'c, '_, '_, '_, '_,
                 effect: e.effect,
                 cause: RetentionCause::Visibility(e),
             })?;
-        if source_bytes() > 65_536 {
+        if crate::transaction::concurrency::core_source_bytes() + source_bytes() > 65_536 {
             return Err(unchanged(RetentionPhase::Prepare, RetentionCause::Capacity));
         }
 
@@ -384,9 +384,9 @@ fn commit_q(
 }
 
 /// Source-value closure of this adapter, excluding the original retained
-/// storage owner/controller and caller's page/frame backing. The original
-/// PageConcurrency value is included once here: the existing session census
-/// holds only its reference. No stack/RSS or concurrent admission claim.
+/// storage owner/controller, original core and caller's page/frame backing.
+/// The enclosing session census charges the original core once for every
+/// operation class. No stack/RSS or concurrent admission claim.
 pub(in super::super) fn source_bytes() -> usize {
     source_phases().peak()
 }
@@ -430,8 +430,7 @@ pub(in super::super) fn source_phases() -> CatalogCommitSourcePhases {
     // Deliberately retain even late completion values across every phase.
     // Prepared/control/epoch validation, unwind and caller return carriers are
     // never discounted because the physical target owner changes shape.
-    let retained = size_of::<PageConcurrency<'_>>()
-        + visibility::epoch_commit_carriers()
+    let retained = visibility::epoch_commit_carriers()
         + size_of::<PreparedCatalog<'_, '_, '_>>()
         + size_of::<Observation>()
         + size_of::<WalRequirement<'_>>()

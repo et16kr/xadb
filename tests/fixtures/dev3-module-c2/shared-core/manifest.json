@@ -1,0 +1,49 @@
+{
+  "schema": "XADB_MODULE_C2_SHARED_CORE_V1",
+  "status": "FROZEN_INPUTS_NOT_EXECUTION_EVIDENCE",
+  "scope": "Original PageConcurrency charged once in shared retained fresh/session/recovery phases; Catalog nested phases exclude it; aggregate admission remains unimplemented; recovered replay cursor ends at helper return before wide session construction; original native capacity FAIL preserved",
+  "baseline_commit": "df9881beb8d7d2455760c446551ff22accf4a562",
+  "changed_paths": [],
+  "budget": {
+    "total_seconds": 480,
+    "case_seconds": 30,
+    "output_bytes": 8388608,
+    "rust_min_stack": 33554432
+  },
+  "runtime_tests": [
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::tests::g5_bind_boundaries",
+      "reason": "Changed fresh Capacity gate rejects before I/O; select B08 only using first accepted fixed padding candidate from ST01",
+      "env": {
+        "XADB_PLAN4_INCLUDE": "P4-G5-B08"
+      }
+    }
+  ],
+  "capacity_selection": {
+    "candidates": [
+      256,
+      512,
+      1024,
+      2048,
+      4096
+    ],
+    "rule": "First candidate with setup_fits=true and g5_fits=false in ST01; no candidate means FAIL, not a changed inventory",
+    "selected_from_r1": 2048,
+    "evidence_sha256": "0cf99d7de5e2557c9a7f44e37cfc001479de2fe4347c51ecd1aebbb54948d7eb"
+  },
+  "completed_not_repeated": [
+    "Commit continuation semantics/phase tests",
+    "Catalog snapshot lookup",
+    "DEV0/1/2 and workspace wrappers",
+    "native process recovery inventory",
+    "g5_source_memory / P4-G5-ST01",
+    "g5_source_native / P4-G5-ST02",
+    "r2 owner census",
+    "r2 recovery_source_memory",
+    "r2 recovery_source_native",
+    "r2 canonical fresh transfer",
+    "r4 MF09 runtime PASS; runner CATALOG vs CATALOG_MEMORY marker error adjudicated without rerun"
+  ],
+  "selection_since_source_sha256": "3da609e26656f22fa82d85fe2f2f9ff2344d4e953a1439122a418b0a29475b58",
+  "selection_only_correction": "r2 recovery selector missed tests::cases; zero tests rejected by runner. Product source unchanged; reuse immutable r2 source and ELF for the two unexecuted cases only. r3 B04 fails during fresh_memory Reserve oracle at support.rs:260 before recovery/helper. Independent reviewer approved MF09 as current fixture for bind/restore/READY; B04 failure remains. r4 MF09 executed PASS; harness expected CATALOG instead of CATALOG_MEMORY. Preserve raw runner FAIL, validate logs separately, run only still-unexecuted B08."
+}

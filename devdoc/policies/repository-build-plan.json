@@ -6626,5 +6626,38 @@
     },
     "remaining_supply": "actual shared retained core placement and all concurrent entry/return sums, resident reader and writer/progress class admission; Row adapters/terminal/recovery and M4/M5",
     "source_roots_changed": false
+  },
+  "dev3_module_c2_shared_core": {
+    "status": "ACCEPTED_LIMITED_D1_D2",
+    "contract_ref": "dev3-module-boundaries.md#operation-source-admission",
+    "evidence_ref": "module-independence-survey-20261026.md#c2-shared-core",
+    "implemented_paths": [
+      "tests/fixtures/dev3-module-c2/shared-core/manifest.json"
+    ],
+    "modified_paths": [
+      "crates/engine/src/storage/wal_io/plan4_apply/owner_tests.rs",
+      "crates/engine/src/storage/wal_io/plan4_pages/resources.rs",
+      "crates/engine/src/storage/wal_io/plan4_pages/tests.rs",
+      "crates/engine/src/storage/wal_io/plan4_recovery/resources.rs",
+      "crates/engine/src/storage/wal_io/plan4_retention/catalog_commit.rs",
+      "crates/engine/src/storage/wal_io/plan4_retention/recovery.rs",
+      "crates/engine/src/storage/wal_io/plan4_retention/resources.rs",
+      "crates/engine/src/transaction/concurrency.rs",
+      "crates/engine/src/transaction/concurrency_commit.rs"
+    ],
+    "scope": "One original PageConcurrency shared retained value in fresh/session/recovered lifetimes; replay cursor ends before wide recovered return; Catalog core plus nested gate unchanged",
+    "validation": "r1 static4 PASS/native bound FAIL; r2 build2/runtime4 PASS/zero-selector FAIL; r3 B04 Reserve fixture FAIL before recovery; D2 replacement MF09 runtime PASS with r4 marker FAIL adjudicated without rerun; r5 B08 PASS; eight applicable unique selectors across preserved sources, original failures retained; OCR all16 files reviewed/zero skipped, one contract tense correction resolved, independent D1/D2 limited acceptance with zero required fixes",
+    "source_bytes": {
+      "original_core": 816,
+      "memory_retained": 21696,
+      "catalog_operation": 31124,
+      "memory_live_peak": 64000,
+      "native_live_peak": 64136,
+      "memory_recovered_peak": 65376,
+      "native_recovered_peak": 65512,
+      "source_bound_not_rss": true
+    },
+    "remaining_supply": "Full concurrent entry/return sum and actual short admission on main; unmerged module-independence-finish has separate later evidence; M4/M5 unfinished",
+    "source_roots_changed": false
   }
 }

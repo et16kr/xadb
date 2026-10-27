@@ -39,6 +39,7 @@ struct OldDirectory {
 pub(in crate::storage) struct Plan4SourceCensus {
     pub(in crate::storage) owner: usize,
     pub(in crate::storage) bound: usize,
+    pub(in crate::storage) original_core: usize,
     pub(in crate::storage) retained: usize,
     pub(in crate::storage) bind_nested: usize,
     pub(in crate::storage) load_nested: usize,
@@ -78,7 +79,8 @@ pub(in crate::storage) fn source_census<W: WriterNamespace>() -> Plan4SourceCens
     let canonical_nested = genesis::owned_source_bytes::<W>();
     let owner = size_of::<MutableStorageOwner<'_, '_, W>>();
     let bound = size_of::<B<'_, W>>();
-    let retained = owner + bound;
+    let original_core = crate::transaction::concurrency::core_source_bytes();
+    let retained = owner + bound + original_core;
     let common = 4 * size_of::<Plan4PageError>()
         + 4 * size_of::<Result<()>>()
         + 4 * size_of::<TargetRequest>()
@@ -157,10 +159,11 @@ pub(in crate::storage) fn source_census<W: WriterNamespace>() -> Plan4SourceCens
             .max(set3_nested)
             .max(size_of::<ReadTargets<'_, '_, '_, '_, '_, '_, 4>>() + codec + canonical_nested);
     let active = load_nested.max(catalog_nested).max(queue_nested);
-    let peak = (owner + bind_nested).max(retained + active);
+    let peak = (owner + original_core + bind_nested).max(retained + active);
     Plan4SourceCensus {
         owner,
         bound,
+        original_core,
         retained,
         bind_nested,
         load_nested,
@@ -197,10 +200,10 @@ pub(super) fn fits<W: WriterNamespace>() -> bool {
         && wal::durability_types_fit()
         && genesis::fits::<W>()
         && c.old_common_growth == 0
-        && c.owner + c.bind_nested <= 65536
-        && c.owner + c.load_nested <= 65536
-        && c.owner + c.catalog_nested <= 65536
-        && c.owner + c.queue_nested <= 65536
+        && c.owner + c.original_core + c.bind_nested <= 65536
+        && c.owner + c.original_core + c.load_nested <= 65536
+        && c.owner + c.original_core + c.catalog_nested <= 65536
+        && c.owner + c.original_core + c.queue_nested <= 65536
         && c.peak <= 65536
         && c.peak <= 196608
         && c.whole <= 262144

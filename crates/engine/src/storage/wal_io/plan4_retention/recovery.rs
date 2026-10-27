@@ -547,39 +547,7 @@ impl<'s, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace> Plan4Pages<'s, 'c, 'p, 'd, 
             prefix,
             loan.replay,
         );
-        let replay = history.exclusive()?;
-        let cursor = seed_recovery_replay(storage.profile(), source.base(), replay)
-            .map_err(|e| fatal(storage, RetentionPhase::Activate, e))?;
-        control.bytes[..65536].copy_from_slice(retention_replay_bank(replay));
-        control.bytes[65536..131072].copy_from_slice(&replay[history::ARENA_END..history::JOB_END]);
-        // The live XOI cache starts from the original selected source; its
-        // generation/capture are observations, never new inventory authority.
-        control.bytes[131_072..147_456].copy_from_slice(binding.base().view().inventory());
-        cursor
-            .allocation
-            .restore_population(&mut control.population);
-        let allocator: &mut [u8; PAGE_BYTES] = (&mut self.operation[..PAGE_BYTES])
-            .try_into()
-            .expect("original allocator scratch");
-        self.pool
-            .retention_allocator_snapshot(allocator)
-            .map_err(|e| frame(RetentionPhase::Activate, e))?;
-        if allocator != retention_replay_image(replay, 0) {
-            return Err(fatal(
-                storage,
-                RetentionPhase::Activate,
-                RetentionCause::Invariant,
-            ));
-        }
-        let remaining = restored_credits(&control, storage.profile(), prefix)
-            .map_err(|e| fatal(storage, RetentionPhase::Activate, e))?;
-        if remaining != (binding.remaining_wal(), binding.remaining_steps()) {
-            return Err(fatal(
-                storage,
-                RetentionPhase::Activate,
-                RetentionCause::Invariant,
-            ));
-        }
+        self.restore_recovered_control(&mut control, &mut history, &binding, &prefix)?;
         let workspace = self
             ._flush_workspace
             .take()
@@ -607,6 +575,53 @@ impl<'s, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace> Plan4Pages<'s, 'c, 'p, 'd, 
             recovery_binding: Some(binding),
             inner: self,
         })
+    }
+
+    /// Finish the replay cursor before constructing the wide session return.
+    /// Restores the same loans and credits; the linear binding stays with the
+    /// caller and is moved only into the returned session.
+    fn restore_recovered_control(
+        &mut self,
+        control: &mut control::RetentionLedger<'_, 'c, 's>,
+        history: &mut history::runtime::RuntimeHistory<'_, 'c, 's>,
+        binding: &RecoveryRetentionBinding<'s, '_>,
+        prefix: &crate::storage::wal_io::WalPrefix,
+    ) -> Result<()> {
+        let storage = self.storage;
+        let replay = history.exclusive()?;
+        let cursor = seed_recovery_replay(storage.profile(), Some(binding.base()), replay)
+            .map_err(|e| fatal(storage, RetentionPhase::Activate, e))?;
+        control.bytes[..65536].copy_from_slice(retention_replay_bank(replay));
+        control.bytes[65536..131072].copy_from_slice(&replay[history::ARENA_END..history::JOB_END]);
+        // The live XOI cache starts from the original selected source; its
+        // generation/capture are observations, never new inventory authority.
+        control.bytes[131_072..147_456].copy_from_slice(binding.base().view().inventory());
+        cursor
+            .allocation
+            .restore_population(&mut control.population);
+        let allocator: &mut [u8; PAGE_BYTES] = (&mut self.operation[..PAGE_BYTES])
+            .try_into()
+            .expect("original allocator scratch");
+        self.pool
+            .retention_allocator_snapshot(allocator)
+            .map_err(|e| frame(RetentionPhase::Activate, e))?;
+        if allocator != retention_replay_image(replay, 0) {
+            return Err(fatal(
+                storage,
+                RetentionPhase::Activate,
+                RetentionCause::Invariant,
+            ));
+        }
+        let remaining = restored_credits(control, storage.profile(), *prefix)
+            .map_err(|e| fatal(storage, RetentionPhase::Activate, e))?;
+        if remaining != (binding.remaining_wal(), binding.remaining_steps()) {
+            return Err(fatal(
+                storage,
+                RetentionPhase::Activate,
+                RetentionCause::Invariant,
+            ));
+        }
+        Ok(())
     }
 }
 
