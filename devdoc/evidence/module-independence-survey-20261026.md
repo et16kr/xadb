@@ -1094,3 +1094,27 @@ r1 readonly branches는 membership9360B·decode10883B·expected9080B, system bas
 독립 검토에서 reserve/cancel transition 동안 유지하는 current DescriptorSpec1개를 membership 식에 명시하도록 보완했다. r2는 production/test build와 바뀐 branch 관측1만 PASS/경고0이며, membership10272B·decode10883B·expected9080B로 전체 max와 Full/Resident는 그대로다. r1에서 완료한 class/MT03/recovery/census5는 NOT_REPEATED_UNCHANGED_BEHAVIOR다. r2 source `efc20ee154d4de8befdbbd65c1e734732409f2afdbb80aaf71634039cd5c7e14`, manifest는 r1과 동일, ELF `557c192b2ffaec788863ee238523e0fbf715b00e85c042fa91977b54949e43ca`, result `f90cbe58276d6eff61adf8e51b81833c3ba79ab7103983fd926da5f9579a7de3`이며 경과31.51초다. 원 r1의 제한 관측과 r2 보완을 각각 보존한다.
 
 독립 D1/D2는 r2 export 5,641파일·inventory/fingerprint·manifest/runner/helpers·compiler/ELF/관측 로그와 현재 source의 byte-exact 일치, r1→r2 DescriptorSpec 항 하나의 변경, 6문서의 원 source별 기록을 대조해 이 단위를 수용했다. 필수 미해결 수정은 0이다. 검토자는 시험·빌드·verifier·수정을 실행하지 않았다. 변경 파일 rustfmt·diff whitespace만 확인했으며 전체 fmt/Clippy·문서 verifier·push는 실행하지 않았다. compact entry/tail·writer phase 예약·Row/terminal/recovery·M4/M5는 미완료다.
+
+<a id="c2-compact-call-boundary"></a>
+### C2 Catalog 진입·소비 정리 오류의 작은 경계 — 2026-10-27
+
+기준 `514395e`, 작성·통합 `/root`, 독립 검토 `/root/module_review`다. actual MutableStorageOwner health leaf를 `HealthFailure`로 옮겨 원 Poisoned→Fenced 우선순위와 fence 효과를 보존했다. 기존 health는 이 값을 원 MutableStorageError로 확장하며, Catalog scope의 실제 작은 진입은 실패 시 원 WAL completion에 즉시 notify한다. 나중 wide 변환까지 통지를 늦추지 않는다. source 예약/검산/반환도 실제 SourceFailure를 반환하며 원 checked add/sub·Capacity/Unchanged·Fatal·active 잔존·poison/fence 규약을 유지한다. 큰 오류를 만든 뒤 축소하는 adapter가 아니다.
+
+`catalog_call`/`catalog_resident_call`과 consuming `finish_checked`는 private 내부 variant를 가진 CatalogCallError를 사용한다. 원 frame/visibility/concurrency 오류는 그대로 보유하고 phase/cause/effect를 정확히 확장한다. legacy lookup과 `finish_result`/`finish_error`는 기존 wide 오류와 원 Fatal 우선/그 밖에는 cleanup 오류 우선 규칙을 유지한다. 검토 중 원 Unchanged와 cleanup Unchanged가 함께 있을 때의 helper 차이를 실행 전 수정했다. selected query는 실제 작은 factory/finish를 사용하지만 lookup의 wide 결과까지 작은 오류로 승격하지 않는다.
+
+Scope의 원 Owner mutable borrow와 ticket의 원 core+OwnerIdentity는 그대로다. custom Drop을 제거하고 source→progress field Drop 순서를 사용한다. consuming finish는 기존 test hook을 self 보유 중 실행한 다음 즉시 `(source, progress)` 묶음으로 이동하여 source를 소비 정리하고 progress를 소비 정리한다. source 실패에도 progress를 반환하며 source 실패의 active/Drop 재시도를 보존한다. hook/fallible 동작을 destructure와 source 소비 사이에 넣지 않는다. 새 권한·manager·byte backing·wire 변경은 없다.
+
+관측은 Scope72B/전체 Result<Scope>72B/CatalogCallError3B/SourceFailure2B/progress ticket24B/cleanup pair48B다. 실제 한 호출 식은 entry1004B·held116B·선택 consumer4980B·close474B·legacy boundary2018B·source leaf368B다. close에는 pair 전체와 progress 정리 중 남는 source 결과를, legacy 식에는 compact→wide 입력/출력과 LookupStep Result를 넣어 actual lookup max에 연결했다. **entry1004B는 전체33 bound 진입 floor가 아니다.** health/pool registry/visibility/core/source의 guard-held leaf 및 대기·실패 반환 carrier 동시 합은 후속 원 호출 수명 검산 대상이고 foreign Owner 수는33으로 제한하지 않는다.
+
+held의 실제 오류 carrier 축소로 Full35895→35619B·Resident17212→16936B, shared22256B다. live peak63184B/metadata186192B/whole251728B·recovered peak64611B는 유지한다. 이전 Pending 관측5320B를 더한 합63195B/여유2341B는 writer ticket과 전체 entry/tail floor가 빠져 있으므로 admission 인수가 아니다. 이전 source별 수치와 결과를 재분류하지 않는다.
+
+[동결 manifest](../../tests/fixtures/dev3-module-c2/compact-call-boundary/manifest.json)는 신규 health/priority/carrier 관측3, 변경 source 예약/반환8, actual Scope6, source entry3, final return2, Full Pending Undo LOAD1, live/recovery census1, 현재-build memory recovery1의25 exact 사례를 선택했다. Scope custom Drop 제거와 consuming finish 변경에 대해 기존 authored compiler4도 같은 borrow 계약을 재검증했다. production/test build·runtime25·compiler4 모두 PASS/경고0다. 완료한 무변경 codec·하위 회귀·전체 workspace는 실행하지 않았다. normal Drop/unwind·fenced cleanup·원 I/O Fatal·실제 Drain 대기·현재 recovery 뒤 조회는 변경 경계에 연결된 원 oracle을 사용했다. native/새 PID 복구는 실행하지 않았다.
+
+원 artifact `artifacts/module-c2-compact-call-boundary-20261027-r1/`에5642파일 source/inventory·manifest·runner/helpers·compiler/probe export·ELF·각 case 로그를 보존한다. 총600초/compiler90초/case30초/출력8MiB/stack33554432B, 실제75.98초는 성능 결과가 아니다.
+
+- source SHA-256: `94a44d1d4e5a786596bb4be7c91706725fb36ff2d152bd057540cfb82d765738`
+- manifest SHA-256: `77e6d843e5a31e639ded610eac8050342fba53d8a1b5c0ed622e8be537dd282a`
+- ELF SHA-256: `7806bc2b02cb1c1de8a0cb58bc426848ba52b7a5f859d524915917bf80d39120`
+- result SHA-256: `ea0a4d1282b915893cac7922af244c769250e39e86cfe9fd730ab2fc070eb1dd`
+
+독립 D1/D2는 코드·원 source5642파일/inventory·build2/runtime25/compiler4의 원 export/진단·ELF·6문서를 대조해 이 한정 단위를 수용했다. 필수 미해결 수정은0이며 검토자는 시험·빌드·verifier·수정을 실행하지 않았다. 변경 파일 rustfmt·diff whitespace만 확인했고 전체 fmt/Clippy·문서 verifier·push는 실행하지 않았다. 전체 bound entry/tail floor·writer/progress phase 예약·Row/terminal/recovery·M4/M5는 미완료다.

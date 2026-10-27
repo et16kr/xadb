@@ -154,10 +154,11 @@ fn found_view_consumption_keeps_source_and_progress() {
                 assert_eq!(writer.catalog_test_physical_pins(), 0);
                 let mut other = core.try_owner(OwnerRole::Foreground).unwrap();
                 let other_snapshot = reader.catalog_snapshot(&mut other).unwrap();
-                let rejected = reader
+                let rejected: crate::storage::disk::RetentionError = reader
                     .catalog_call(&mut other, &other_snapshot)
                     .err()
-                    .unwrap();
+                    .unwrap()
+                    .into();
                 assert_eq!(rejected.effect, Effect::Unchanged);
                 assert!(matches!(
                     rejected.cause,

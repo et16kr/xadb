@@ -1159,6 +1159,8 @@ Operation은 scope를 재대여하고 원 refs/lease/loader/copy만 소유한다
 
 [readonly replay source 분리](../evidence/module-independence-survey-20261026.md#c2-readonly-replay-source)는 원 allocation 검산의 streaming membership·descriptor decode·expected 생성 phase를 따로 세고 실제 생산자64행 배열을 replay에 중첩하지 않는다. INIT context의 `analyze→reservation`와 실제 후속 검산/Status/FreeUndo codec도 구별한다. live producer 상계·원 byte/검산 의미는 유지한다. 현재 Full35895B·Resident17212B·shared22256B이며 Pending 관측을 더한63471B는2065B 여유지만 실제 entry/tail floor·writer ticket이 빠져 있어 전체 admission 증거가 아니다.
 
+[작은 Catalog 진입/정리 경계](../evidence/module-independence-survey-20261026.md#c2-compact-call-boundary)는 actual health/source leaf의 작은 오류와 CatalogCallError를 사용한다. 원 poison→fence·즉시 WAL notify·checked charge/active 잔존과 legacy phase/cause/effect를 유지한다. Scope의 원 Owner borrow·ticket core/identity는 바꾸지 않고 field Drop 및 consuming `(source,progress)`의 순서를 보존한다. Scope/ResultScope72B·오류3B·pair48B를 실측했으며 one-call close/legacy wide 변환 식도 따로 계수한다. Full35619B·Resident16936B·shared22256B, 원 Pending 관측까지63195B이나 전체 bound 진입의 대기/반환과 독립 guard leaf·writer ticket이 빠져 있어2341B 여유를 admission 완료로 보지 않는다. entry1004B는 한 호출 식이며33개 전체 floor가 아니다. 선택 query의 작은 begin/finish와 wide lookup·legacy 변환의 범위를 구별한다.
+
 전체 설계 상계는 metadata `73856+65536+49152=188544≤196608`, original flush를 더한 whole `254080≤262144`다. 이 admission·동시 합 검산은 **새 C1/C2/C3 공급**이며 기존 active.max 기반 source 결과로 이미 구현됐다고 하지 않는다. header의 실제 byte 배치와 source charge의 측정·실패/정리 경로는 C1/C4 인수에 포함한다.
 
 <a id="common-deliveries"></a>

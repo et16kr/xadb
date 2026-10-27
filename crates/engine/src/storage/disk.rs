@@ -7,7 +7,7 @@
     reason = "C0 boundary awaits the separately owned Row consumers"
 )]
 pub(crate) use super::wal_io::disk_api::{
-    CatalogCallScope, CatalogCandidate, CatalogReadOperation, DiskSession,
+    CatalogCallError, CatalogCallScope, CatalogCandidate, CatalogReadOperation, DiskSession,
     EmptyRetentionControlLoan, ISOLATION_BYTES, IntoRetentionError, IsolationLevel,
     MaintenancePort, MissingCatalogEvidence, MutationPort, Plan4Recovered, Plan4ResidencyCursor,
     Plan4Target, ReadOnlyCommit, ReadPort, ReadStep, RetentionCause, RetentionError,

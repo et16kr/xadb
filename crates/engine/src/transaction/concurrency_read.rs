@@ -55,6 +55,12 @@ impl<'c, 'f> Owner<'c, 'f> {
 }
 
 impl ReadOperationAdmission<'_, '_> {
+    /// Consume the ticket after the source loan has been closed. Exact original
+    /// core/OwnerIdentity remains authoritative; Drop is inert after this call.
+    pub(crate) fn finish_checked(mut self) -> Result<()> {
+        self.release_checked()
+    }
+
     /// Return after all page guards, lookup claims and transient refs. Cleanup
     /// remains possible after a fence/poison, but never reports those as success.
     /// Repeated close is inert so the adapter's explicit close and Drop agree.

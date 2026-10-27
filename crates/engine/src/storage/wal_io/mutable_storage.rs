@@ -96,6 +96,24 @@ pub(crate) use plan4_pages::{
 #[path = "status_bootstrap_tests.rs"]
 mod status_bootstrap_tests;
 
+/// Exact failures of the non-I/O health leaf, without wide storage carriers.
+#[derive(Clone, Copy, Debug)]
+pub(super) enum HealthFailure {
+    Fenced,
+    Poisoned,
+}
+impl From<HealthFailure> for MutableStorageError {
+    fn from(error: HealthFailure) -> Self {
+        Self {
+            cause: match error {
+                HealthFailure::Fenced => Cause::Fenced,
+                HealthFailure::Poisoned => Cause::Poisoned,
+            },
+            effect: Effect::CallerMustResolve,
+        }
+    }
+}
+
 #[derive(Debug)]
 pub(crate) enum Cause {
     Fenced,
@@ -206,16 +224,21 @@ impl<'m, 'w, W: WriterNamespace> MutableStorageOwner<'m, 'w, W> {
         }
     }
     pub(super) fn health(&self) -> Result<()> {
+        self.health_compact().map_err(Into::into)
+    }
+    pub(super) fn health_compact(&self) -> std::result::Result<(), HealthFailure> {
         let wal = self.wal();
         if wal.append.is_poisoned()
             || wal.file.is_poisoned()
             || wal._writer.is_poisoned()
             || self.workspace.is_poisoned()
         {
-            return Err(self.fatal(Cause::Poisoned));
+            self.session_fence().fence();
+            return Err(HealthFailure::Poisoned);
         }
         if self.session_fence().is_fenced() {
-            return Err(self.fatal(Cause::Fenced));
+            self.session_fence().fence();
+            return Err(HealthFailure::Fenced);
         }
         Ok(())
     }

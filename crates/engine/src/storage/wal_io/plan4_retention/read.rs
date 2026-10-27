@@ -32,7 +32,7 @@ pub(super) use lookup::source_bytes as lookup_source_bytes;
 pub(crate) use operation::{
     CatalogCandidate, CatalogReadOperation, MissingCatalogEvidence, ReadStep,
 };
-pub(crate) use scope::CatalogCallScope;
+pub(crate) use scope::{CatalogCallError, CatalogCallScope};
 
 pub(crate) struct RetentionReadGuard<'a, 'b, 'c, 's, 'p, 'd> {
     read: ReadTargets<'a, 'b, 'c, 's, 'p, 'd, 2>,

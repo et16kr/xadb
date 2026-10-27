@@ -1,0 +1,153 @@
+{
+  "schema": "XADB_MODULE_C2_COMPACT_CALL_BOUNDARY_V1",
+  "status": "FROZEN_INPUTS_NOT_EXECUTION_EVIDENCE",
+  "baseline": "514395e",
+  "scope": "Actual small health/source/Catalog entry and consuming finish errors; original exact core+OwnerIdentity ticket; source-before-progress close/Drop; legacy wide conversion explicitly retained; per-call observations only, whole simultaneous admission floor incomplete",
+  "budget": {
+    "total_seconds": 600,
+    "compiler_seconds": 90,
+    "case_seconds": 30,
+    "output_bytes": 8388608,
+    "rust_min_stack": 33554432
+  },
+  "runtime_tests": [
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::read::scope::tests::compact_health_keeps_poison_before_fence_and_original_phase",
+      "reason": "new compact health/cleanup priority and whole-carrier observation"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::read::scope::tests::compact_capacity_yields_to_original_progress_fatal",
+      "reason": "new compact health/cleanup priority and whole-carrier observation"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::read::scope::tests::compact_call_counts_whole_return_and_consuming_pair",
+      "reason": "new compact health/cleanup priority and whole-carrier observation"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::source::tests::exact_aggregate_capacity_releases_only_its_own_charge",
+      "reason": "changed actual source error carriers/consuming close preserve charge, poison, capacity and fixed class rules"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::source::tests::simultaneous_reservations_cannot_overbook_the_original_ledger",
+      "reason": "changed actual source error carriers/consuming close preserve charge, poison, capacity and fixed class rules"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::source::tests::overflow_and_invalid_header_do_not_create_capacity",
+      "reason": "changed actual source error carriers/consuming close preserve charge, poison, capacity and fixed class rules"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::source::tests::underflow_fences_without_returning_the_charge",
+      "reason": "changed actual source error carriers/consuming close preserve charge, poison, capacity and fixed class rules"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::source::tests::poison_and_fence_preserve_the_outstanding_charge",
+      "reason": "changed actual source error carriers/consuming close preserve charge, poison, capacity and fixed class rules"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::source::tests::unwind_and_forgotten_loans_never_manufacture_capacity",
+      "reason": "changed actual source error carriers/consuming close preserve charge, poison, capacity and fixed class rules"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::source::tests::catalog_class_uses_current_types_and_recovered_retained_owner",
+      "reason": "changed actual source error carriers/consuming close preserve charge, poison, capacity and fixed class rules"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::source::tests::fixed_resident_class_admits_two_and_never_escalates",
+      "reason": "changed actual source error carriers/consuming close preserve charge, poison, capacity and fixed class rules"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::call_scope::found_view_consumption_keeps_source_and_progress",
+      "reason": "changed scope consuming finish/field Drop and compact begin preserve actual result and cleanup lifetime"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::call_scope::returned_missing_scope_blocks_original_drain",
+      "reason": "changed scope consuming finish/field Drop and compact begin preserve actual result and cleanup lifetime"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::call_scope::scope_cleanup_fatal_overrides_unchanged_error_and_returns_progress",
+      "reason": "changed scope consuming finish/field Drop and compact begin preserve actual result and cleanup lifetime"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::call_scope::scope_normal_drop_and_unwind_preserve_original_cleanup_policy",
+      "reason": "changed scope consuming finish/field Drop and compact begin preserve actual result and cleanup lifetime"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::call_scope::actual_resident_busy_is_upgraded_by_fatal_scope_cleanup",
+      "reason": "changed scope consuming finish/field Drop and compact begin preserve actual result and cleanup lifetime"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::call_scope::actual_undo_io_fatal_survives_scope_cleanup",
+      "reason": "changed scope consuming finish/field Drop and compact begin preserve actual result and cleanup lifetime"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::source_entry::drain_waits_for_entry_before_source_charge",
+      "reason": "changed compact admission and consumed progress cleanup preserve original Drain/entry rules"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::source_entry::failed_source_reservation_returns_progress_under_fence",
+      "reason": "changed compact admission and consumed progress cleanup preserve original Drain/entry rules"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::source_entry::entry_unwind_returns_progress_without_source_charge",
+      "reason": "changed compact admission and consumed progress cleanup preserve original Drain/entry rules"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::source_return::found_decode_keeps_progress_until_source_return",
+      "reason": "changed consuming tail and removal of Scope custom Drop retain source through final result and unwind"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::source_return::unwinding_final_decode_preserves_source_and_cleans_progress",
+      "reason": "changed consuming tail and removal of Scope custom Drop retain source through final result and unwind"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::commit_concurrency::catalog_mt03_pending_reader_loads_undo",
+      "reason": "changed actual compact begin and consuming finish used by Full Pending Undo LOAD"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::owner_tests::disk_session_isolation_backing_and_carriers_are_accounted",
+      "reason": "changed source and actual per-call carriers feed original live/recovery class accounting"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::lifecycle::mc04_reserved_drop_fence_fresh_recovery",
+      "reason": "changed selected query compact API consumed by current-build fresh recovery"
+    }
+  ],
+  "compiler_tests": [
+    {
+      "name": "consume_then_finish",
+      "path": "../call-scope/consume_then_finish.rs",
+      "bytes": 1004,
+      "sha256": "ed8964d960866b5bcac6894c21e3f90c237d41e4ced28dbd88d3b1bbc1007ea5",
+      "expected_code": null,
+      "primary_line": null,
+      "reason": "Scope custom Drop removed and consuming finish return changed; same actual Owner/result borrow contract must still compile/reject"
+    },
+    {
+      "name": "copied_view_after_finish",
+      "path": "../call-scope/copied_view_after_finish.rs",
+      "bytes": 823,
+      "sha256": "d15cc91a227ab299f75968252a0f648a97c11e07f5cd2e8ba1c5d52e817e3232",
+      "expected_code": "E0505",
+      "primary_line": 13,
+      "reason": "Scope custom Drop removed and consuming finish return changed; same actual Owner/result borrow contract must still compile/reject"
+    },
+    {
+      "name": "column_name_after_finish",
+      "path": "../call-scope/column_name_after_finish.rs",
+      "bytes": 949,
+      "sha256": "b5a17b6e52904de00359e87807e87c1265451c3c9572c4d96bc3822d06719bbe",
+      "expected_code": "E0505",
+      "primary_line": 14,
+      "reason": "Scope custom Drop removed and consuming finish return changed; same actual Owner/result borrow contract must still compile/reject"
+    },
+    {
+      "name": "owner_reentry_while_view_live",
+      "path": "../call-scope/owner_reentry_while_view_live.rs",
+      "bytes": 818,
+      "sha256": "5fb1497c434ba14fd8255bf894be04336e39c73598987b534405940b30e34b58",
+      "expected_code": "E0499",
+      "primary_line": 12,
+      "reason": "Scope custom Drop removed and consuming finish return changed; same actual Owner/result borrow contract must still compile/reject"
+    }
+  ]
+}

@@ -101,7 +101,7 @@ pub(in crate::storage) use population::{
     reason = "internal typed consumer exports retained for follow-on integration"
 )]
 pub(crate) use read::{
-    CatalogCallScope, CatalogCandidate, CatalogLookupStep, CatalogReadOperation,
+    CatalogCallError, CatalogCallScope, CatalogCandidate, CatalogLookupStep, CatalogReadOperation,
     MissingCatalogEvidence, ReadStep, RetentionReadGuard,
 };
 pub(in crate::storage) use recovery::{

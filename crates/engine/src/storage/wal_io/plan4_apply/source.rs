@@ -22,30 +22,64 @@ pub(super) struct OperationSourceAdmission<'b, 'a, 'c, 's> {
     active: bool,
 }
 
-fn failed(fence: &SessionFence, cause: RetentionCause) -> RetentionError {
+#[derive(Clone, Copy, Debug)]
+pub(super) enum SourceCause {
+    Capacity,
+    Fenced,
+    Poisoned,
+    BindingMismatch,
+    Invariant,
+}
+#[derive(Clone, Copy, Debug)]
+pub(super) struct SourceFailure {
+    pub(super) cause: SourceCause,
+    pub(super) effect: Effect,
+}
+type SourceResult<T> = std::result::Result<T, SourceFailure>;
+impl From<SourceFailure> for RetentionError {
+    fn from(error: SourceFailure) -> Self {
+        Self {
+            phase: RetentionPhase::Census,
+            cause: match error.cause {
+                SourceCause::Capacity => RetentionCause::Capacity,
+                SourceCause::Fenced => RetentionCause::Fenced,
+                SourceCause::Poisoned => RetentionCause::Poisoned,
+                SourceCause::BindingMismatch => RetentionCause::BindingMismatch,
+                SourceCause::Invariant => RetentionCause::Invariant,
+            },
+            effect: error.effect,
+        }
+    }
+}
+fn failed(fence: &SessionFence, cause: SourceCause) -> SourceFailure {
     fence.fence();
-    RetentionError {
-        phase: RetentionPhase::Census,
+    SourceFailure {
         cause,
         effect: Effect::CallerMustResolve,
     }
 }
+fn capacity() -> SourceFailure {
+    SourceFailure {
+        cause: SourceCause::Capacity,
+        effect: Effect::Unchanged,
+    }
+}
 
-fn check(state: &IsolationLedger<'_, '_, '_>) -> Result<u64> {
+fn check(state: &IsolationLedger<'_, '_, '_>) -> SourceResult<u64> {
     if std::thread::panicking() {
         state.fence.fence();
     }
     if state.fence.is_fenced() {
-        return Err(failed(state.fence, RetentionCause::Fenced));
+        return Err(failed(state.fence, SourceCause::Fenced));
     }
     if !state.core.uses_fence(state.fence)
         || state.binding.load(Ordering::Acquire) != super::super::super::BOUND
     {
-        return Err(failed(state.fence, RetentionCause::BindingMismatch));
+        return Err(failed(state.fence, SourceCause::BindingMismatch));
     }
     let used = u64::from_le_bytes(state.bytes[USED].try_into().expect("fixed source field"));
     if used > SHORT_BYTES || state.bytes[32..64].iter().any(|byte| *byte != 0) {
-        return Err(failed(state.fence, RetentionCause::Invariant));
+        return Err(failed(state.fence, SourceCause::Invariant));
     }
     Ok(used)
 }
@@ -57,7 +91,7 @@ impl<'b, 'a, 'c, 's> OperationSourceAdmission<'b, 'a, 'c, 's> {
     pub(super) fn catalog<W: WriterNamespace>(
         ledger: &'b Mutex<IsolationLedger<'a, 'c, 's>>,
         class: OperationClass,
-    ) -> Result<Self> {
+    ) -> SourceResult<Self> {
         let charge = match class {
             OperationClass::CatalogFull => read::lookup_source_bytes::<W>(),
             OperationClass::CatalogResident => read::resident_lookup_source_bytes::<W>(),
@@ -74,7 +108,7 @@ impl<'b, 'a, 'c, 's> OperationSourceAdmission<'b, 'a, 'c, 's> {
         ledger: &'b Mutex<IsolationLedger<'a, 'c, 's>>,
         shared: usize,
         charge: usize,
-    ) -> Result<Self> {
+    ) -> SourceResult<Self> {
         Self::reserve_class(ledger, shared, charge, OperationClass::CatalogFull)
     }
 
@@ -83,21 +117,21 @@ impl<'b, 'a, 'c, 's> OperationSourceAdmission<'b, 'a, 'c, 's> {
         shared: usize,
         charge: usize,
         class: OperationClass,
-    ) -> Result<Self> {
+    ) -> SourceResult<Self> {
         let mut state = ledger
             .lock()
-            .map_err(|poison| failed(poison.into_inner().fence, RetentionCause::Poisoned))?;
+            .map_err(|poison| failed(poison.into_inner().fence, SourceCause::Poisoned))?;
         let used = check(&state)?;
         let available = SHORT_BYTES
             .checked_sub(shared as u64)
-            .ok_or_else(|| unchanged(RetentionPhase::Census, RetentionCause::Capacity))?;
+            .ok_or_else(capacity)?;
         if charge == 0 || used > available {
-            return Err(failed(state.fence, RetentionCause::Invariant));
+            return Err(failed(state.fence, SourceCause::Invariant));
         }
         let next = used
             .checked_add(charge as u64)
             .filter(|next| *next <= available)
-            .ok_or_else(|| unchanged(RetentionPhase::Census, RetentionCause::Capacity))?;
+            .ok_or_else(capacity)?;
         state.bytes[USED].copy_from_slice(&next.to_le_bytes());
         Ok(Self {
             ledger,
@@ -107,26 +141,32 @@ impl<'b, 'a, 'c, 's> OperationSourceAdmission<'b, 'a, 'c, 's> {
         })
     }
 
+    /// Consume the carrier before the original progress ticket is returned.
+    /// Failure keeps active set, so Drop retries without inventing capacity.
+    pub(super) fn finish_checked(mut self) -> SourceResult<()> {
+        self.release_checked()
+    }
+
     /// Called after output decoding/Result construction as well as reference
     /// cleanup. Fatal bookkeeping remains visible, matching isolation credit
     /// cleanup; no poison reset or manufactured capacity is allowed.
-    pub(super) fn release_checked(&mut self) -> Result<()> {
+    pub(super) fn release_checked(&mut self) -> SourceResult<()> {
         if !self.active {
             return Ok(());
         }
         let mut state = self
             .ledger
             .lock()
-            .map_err(|poison| failed(poison.into_inner().fence, RetentionCause::Poisoned))?;
+            .map_err(|poison| failed(poison.into_inner().fence, SourceCause::Poisoned))?;
         let used = check(&state)?;
         match self.class {
             OperationClass::CatalogFull | OperationClass::CatalogResident
                 if self.charge != 0 && self.charge <= SHORT_BYTES => {}
-            _ => return Err(failed(state.fence, RetentionCause::Invariant)),
+            _ => return Err(failed(state.fence, SourceCause::Invariant)),
         }
         let next = used
             .checked_sub(self.charge)
-            .ok_or_else(|| failed(state.fence, RetentionCause::Invariant))?;
+            .ok_or_else(|| failed(state.fence, SourceCause::Invariant))?;
         state.bytes[USED].copy_from_slice(&next.to_le_bytes());
         self.active = false;
         Ok(())
@@ -156,10 +196,10 @@ pub(super) fn leaf_source_bytes() -> usize {
     // Reservation/release, lock success/poison, checked arithmetic, and return
     // carriers. The ledger backing is shared retained metadata, counted once.
     2 * size_of::<OperationSourceAdmission<'_, '_, '_, '_>>()
-        + 2 * size_of::<Result<OperationSourceAdmission<'_, '_, '_, '_>>>()
+        + 2 * size_of::<SourceResult<OperationSourceAdmission<'_, '_, '_, '_>>>()
         + 4 * size_of::<std::sync::MutexGuard<'_, IsolationLedger<'_, '_, '_>>>()
-        + 4 * size_of::<Result<()>>()
-        + 4 * size_of::<RetentionError>()
+        + 4 * size_of::<SourceResult<()>>()
+        + 4 * size_of::<SourceFailure>()
         + 16 * size_of::<usize>()
         + 8 * size_of::<&()>()
 }

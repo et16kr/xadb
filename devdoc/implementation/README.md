@@ -1,5 +1,7 @@
 # 현재 구현
 
+2026-10-27 [C2 작은 진입·소비 정리](../evidence/module-independence-survey-20261026.md#c2-compact-call-boundary): 실제 health/source 오류·Catalog factory/finish를 줄이고 원 authority·정리 순서와 wide legacy 변환을 보존했다. production/test build·runtime25·compiler4 PASS, Full35619B/Resident16936B다. 전체 bound entry/tail floor와 writer/progress·M4/M5는 미완료다.
+
 2026-10-27 [C2 readonly replay source](../evidence/module-independence-survey-20261026.md#c2-readonly-replay-source): 실제 allocation 검산 phase와 INIT context를 생산자 배열에서 분리해 Full35895B로 계산했다. source별 선택6+계수 보완1 PASS·MT03 Full Undo LOAD와 현재-build memory recovery를 확인했다. entry/tail·writer phase와 M4/M5는 미완료다.
 
 2026-10-27 [C2 budget 행 borrow](../evidence/module-independence-survey-20261026.md#c2-borrowed-budget-rows): descriptor 검산/encoder의 실제 행 복사를 제거해 Full source36972B로 줄였다. 같은 source의5+5 선택 PASS·현재-build memory 복구와 harness identity 원 FAIL을 보존한다. Pending 관측 합64548B의988B 여유는 전체 admission 증거가 아니며 entry/tail·writer phase·M4/M5는 미완료다.

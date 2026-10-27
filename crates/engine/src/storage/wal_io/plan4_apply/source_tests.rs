@@ -32,7 +32,7 @@ fn exact_aggregate_capacity_releases_only_its_own_charge() {
         let error = OperationSourceAdmission::reserve(ledger, 32768, 1)
             .err()
             .unwrap();
-        assert!(matches!(error.cause, RetentionCause::Capacity));
+        assert!(matches!(error.cause, SourceCause::Capacity));
         assert_eq!(error.effect, Effect::Unchanged);
         assert_eq!(*ledger.lock().unwrap().bytes, before);
         first.release_checked().unwrap();
@@ -59,7 +59,7 @@ fn simultaneous_reservations_cannot_overbook_the_original_ledger() {
                 barrier.wait();
                 let admitted = ticket.is_ok();
                 if let Err(error) = &ticket {
-                    assert!(matches!(error.cause, RetentionCause::Capacity));
+                    assert!(matches!(error.cause, SourceCause::Capacity));
                     assert_eq!(error.effect, Effect::Unchanged);
                 }
                 barrier.wait();
@@ -85,14 +85,14 @@ fn overflow_and_invalid_header_do_not_create_capacity() {
         let error = OperationSourceAdmission::reserve(ledger, 1, usize::MAX)
             .err()
             .unwrap();
-        assert!(matches!(error.cause, RetentionCause::Capacity));
+        assert!(matches!(error.cause, SourceCause::Capacity));
         assert_eq!(used(ledger), 0);
         assert!(!fence.is_fenced());
         ledger.lock().unwrap().bytes[32] = 1;
         let error = OperationSourceAdmission::reserve(ledger, 1, 1)
             .err()
             .unwrap();
-        assert!(matches!(error.cause, RetentionCause::Invariant));
+        assert!(matches!(error.cause, SourceCause::Invariant));
         assert_eq!(error.effect, Effect::CallerMustResolve);
         assert_eq!(used(ledger), 0);
         assert!(fence.is_fenced());
@@ -105,7 +105,7 @@ fn underflow_fences_without_returning_the_charge() {
         let mut ticket = OperationSourceAdmission::reserve(ledger, 32768, 4096).unwrap();
         ledger.lock().unwrap().bytes[USED].fill(0);
         let error = ticket.release_checked().unwrap_err();
-        assert!(matches!(error.cause, RetentionCause::Invariant));
+        assert!(matches!(error.cause, SourceCause::Invariant));
         assert!(ticket.active);
         assert!(fence.is_fenced());
         drop(ticket);
@@ -123,7 +123,7 @@ fn poison_and_fence_preserve_the_outstanding_charge() {
         }));
         assert!(panic.is_err());
         let error = ticket.release_checked().unwrap_err();
-        assert!(matches!(error.cause, RetentionCause::Poisoned));
+        assert!(matches!(error.cause, SourceCause::Poisoned));
         assert!(fence.is_fenced());
         assert!(ledger.is_poisoned());
         assert_eq!(used(ledger), 4096);
@@ -135,7 +135,7 @@ fn poison_and_fence_preserve_the_outstanding_charge() {
         fence.fence();
         assert!(matches!(
             ticket.release_checked().unwrap_err().cause,
-            RetentionCause::Fenced
+            SourceCause::Fenced
         ));
         assert_eq!(used(ledger), 4096);
     });
@@ -160,7 +160,7 @@ fn unwind_and_forgotten_loans_never_manufacture_capacity() {
                 .err()
                 .unwrap()
                 .cause,
-            RetentionCause::Capacity
+            SourceCause::Capacity
         ));
         assert_eq!(used(ledger), 32768);
         assert!(!fence.is_fenced());
@@ -190,7 +190,7 @@ fn catalog_class_uses_current_types_and_recovered_retained_owner() {
                 .err()
                 .unwrap()
                 .cause,
-            RetentionCause::Capacity
+            SourceCause::Capacity
         ));
         first.release_checked().unwrap();
         assert_eq!(used(ledger), 0);
@@ -226,7 +226,7 @@ fn fixed_resident_class_admits_two_and_never_escalates() {
                 .err()
                 .unwrap()
                 .cause,
-            RetentionCause::Capacity
+            SourceCause::Capacity
         ));
         assert_eq!(*ledger.lock().unwrap().bytes, before);
         first.release_checked().unwrap();
