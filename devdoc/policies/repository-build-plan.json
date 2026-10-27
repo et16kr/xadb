@@ -6737,7 +6737,7 @@
     "source_roots_changed": false
   },
   "dev3_module_c2_pending_image_main": {
-    "status": "ACCEPTED_IMPLEMENTATION_MEMORY_ONLY_NATIVE_NOT_RUN",
+    "status": "ACCEPTED_BOUNDED_C2_UNIT",
     "baseline": "8b4753302e95cd80776fb7bba9e394407fb39f1e",
     "adapted_from": [
       "a5cfdae5fa00e903c4e198a8a75bbb8005383e77"
@@ -6753,7 +6753,7 @@
       "crates/engine/src/storage/wal_io/plan4_retention/catalog_retire.rs"
     ],
     "scope": "Consume PreparedCatalog at stage return; preserve compact immutable install image, original authority and four-phase source accounting. Writer/progress aggregate admission remains incomplete.",
-    "validation": "Frozen r1 production/test build PASS; exact11 runtime PASS once, including current-build memory recovery MF09/MF10. Native N03 NOT_RUN before spawning: 365015040 free bytes below unchanged 64424509440 required. Independent OCR11/11 files, zero skipped/required code fixes; source5637-file identity and exact execution audit accepted only for implementation/memory storage. Unit acceptance remains incomplete pending native N03.",
+    "validation": "Frozen r1 production/test build PASS; exact11 runtime PASS once, including current-build memory recovery MF09/MF10. At initial save, native N03 NOT_RUN before spawning: 365015040 free bytes below unchanged 64424509440 required. Independent OCR11/11 files, zero skipped/required code fixes; source5637-file identity and exact execution audit accepted only for implementation/memory storage. At that save, unit acceptance remained incomplete pending native N03. Follow-up after user disk cleanup: same retained source/ELF, independent admission, N03 once PASS in 12.352271673s, no rebuild or completed-case repetition; independent OCR7/7 documents plus source/ELF and67 saved native outputs reviewed with original oracle; zero required fixes; selected checks accepted for this bounded C2 unit.",
     "source_bytes": {
       "prepared": 2024,
       "pending_image": 568,
@@ -6764,7 +6764,19 @@
       "catalog_peak": 32292,
       "source_bound_not_rss": true
     },
-    "remaining_supply": "Native N03 after original environment/admission conditions; writer/progress and all concurrent entry/return sums, actual Row and M4/M5 acceptance",
-    "source_roots_changed": false
+    "remaining_supply": "writer/progress and all concurrent entry/return sums, actual Row and M4/M5 acceptance",
+    "source_roots_changed": false,
+    "native_followup": {
+      "status": "PASS_INDEPENDENTLY_ACCEPTED",
+      "evidence_ref": "module-independence-survey-20261026.md#c2-pending-image-native",
+      "case": "N03",
+      "attempts": 1,
+      "source_sha256": "7903ea92922bfc2c25638990320bf520387522be29fec95e6c282b28c5e2288f",
+      "elf_sha256": "988fb5ba15810ddd6bebaaca98231243949a0856883748acd190034f70ddaad6",
+      "result_sha256": "6669371adcc52b54efb1dc698748a664f057b44a81a217171b20e55b1d42240d",
+      "prior_not_run_preserved": true,
+      "review_report_sha256": "af99decd42ba0b4e8a7a41779985e44d85a88e2fd9c15bd7f67ec995f77fc20d",
+      "verification_completion_sha256": "c215041079addad433fad2d64e7294457e58f3fb7badf93cd5a0c0d9375bd2aa"
+    }
   }
 }

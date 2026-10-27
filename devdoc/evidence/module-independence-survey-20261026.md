@@ -1017,6 +1017,8 @@ begin/begin_resident → begin_class의 class 값과 반환 carrier를 entry sou
 <a id="c2-pending-image-main"></a>
 ### C2 Commit 준비 자료의 Pending 수명 종료 — 2026-10-27
 
+아래는 `25ff5e9` 초기 저장 당시의 기록이다. 남은 native N03의 후속 결과는 [별도 실행 기록](#c2-pending-image-native)으로 구별한다.
+
 사용자의 “진행 위치 확인 후 다음 한 단계·OCR delegate 리뷰 및 수정·commit” 요청으로 clean `main`·`8b47533`에서 시작했다. M0–M3 완료, M4 full/상주 Catalog 조회 예약, M5 A/B 순수 본문 착수까지 수신한 상태였다. 이번 한 단계는 **Commit의 stage가 준비 자료를 소비하고 설치에 필요한 불변 자료만 Pending에 넘기는 경계**다. 별도 브랜치의 `a5cfdae5fa00e903c4e198a8a75bbb8005383e77`에서 필요한 제품 코드만 적응하며 main의 기존4-phase 계산·원 core 단일 계수를 유지한다. 다른 worktree나 원 증거를 변경하지 않는다.
 
 `D3-MODULE-PENDING-IMAGE-MAIN-001` · D2 · **구현·선택 memory 검증 완료 / 독립 D1/D2 한정 수용 / native N03 NOT_RUN·단위 전체 인수 미완료**. 구현·계약·통합 `/root`, 독립 검토 `/root/module_step_review`. 원 §6.9의 고정 source 회계를 위한 선행 단위이며 전체 writer/progress admission을 공급하지 않는다. 새 형식·의존성·backing·권한은 추가하지 않는다.
@@ -1074,3 +1076,47 @@ begin/begin_resident → begin_class의 class 값과 반환 carrier를 entry sou
 원 source5637파일·current/export 동일, source/manifest/runner/ELF·compiler2·exact11 각각1회 PASS·MF09/10 memory 복구, native preflight/verification identity를 독립 검산했다. 검토자는 제품/문서 수정·빌드·시험·자동 문서 verifier를 실행하지 않았다. **native N03 필수 잔여와 전체 `INCOMPLETE_NATIVE_NOT_RUN`을 유지하므로 이번 단위 전체 인수 완료를 뜻하지 않는다.** M4/M5도 미완료다.
 
 `artifacts/module-c2-pending-image-main-review-20261027/`에 preview/rules/checklist/identity-audit/report를 보존했다. report SHA-256은 `4d012de12c3356fed94b6093abce79a20d826f7ca147a807e45ea09b65498e57`, checklist는 `760272ceff7a403ce603ee86ee6966e28db5311da96eecd720d829ad6791c946`, identity audit는 `6578a7f557e33fab15e9fc478aa09b728a98f84bb7c3afc9226911d4ddc55cc1`이다.
+
+
+<a id="c2-pending-image-native"></a>
+### C2 Commit 준비 수명 분리의 남은 native N03 — 2026-10-27
+
+사용자의 후속 “디스크 지웠음 진행해” 지시에 따라 clean `main`·`25ff5e9`에서 앞 단위의 미실행 N03만 진행했다. 제품·fixture·controller 변경0이며 완료한 build2/runtime11·native N01/N02·전체 workspace/하위 wrapper는 반복하지 않는다. [앞선 저장 기록](#c2-pending-image-main)의 source별 PASS·원 디스크 미달 NOT_RUN·`INCOMPLETE_NATIVE_NOT_RUN` 파일을 그대로 보존한다. 이번 결과는 그 뒤의 새 실행이며 앞선 기록을 소급 PASS로 바꾸지 않는다.
+
+`D3-MODULE-PENDING-IMAGE-MAIN-001`의 후속 검증 · **native N03 1회 PASS / 독립 D1/D2 수용·이 C2 준비 수명 단위의 선정 검증 인수 완료**. source `7903ea92922bfc2c25638990320bf520387522be29fec95e6c282b28c5e2288f`와 ELF `988fb5ba15810ddd6bebaaca98231243949a0856883748acd190034f70ddaad6`는 원 r1 및 현재 제품과 같다. 재빌드 없이 원 source/ELF를 `artifacts/module-c2-pending-image-main-20261027/native-r1/`로 복사했고 전체 source6156파일(문서 포함)·기존 fingerprint5637파일을 구별하여 검산했다.
+
+#### 실행 전 동결과 독립 admission
+
+원 `scripts/dev3_catalog_native.py`·input/oracle·N03 일정과 한도를 유지했다. 실제 ext4에서 계획 시 여유76,215,279,616B, 독립 재확인76,206,051,328B가 기존60GiB+예약분64,613,253,120B 이상이었다. 한 사례1회·전체30초·worker29초·마지막 audit1초·로그8MiB·trace4MiB·DB32MiB·snapshot128MiB·artifact1GiB·주소공간1GiB·File3/FD6을 그대로 적용한다. `RUST_MIN_STACK=33554432`는 원 선택 manifest와 같다. 실패 시 재반복하지 않는 계획을 `run-plan.json`에 고정했다.
+
+`/root/module_step_review`가 source/ELF·원 실행 증거·controller/계획·공간을 독립 확인한 뒤 admission을 수용했다. 같은 ELF에서 이미 통과한 변경 source envelope를 수신하고, fits 관련9경로가 `8b47533`과 같으며 원 생성/복구 경로의 admission 호출이 유지됨을 정적으로 확인했다. `catalog-source-admission/result.json`의 PASS는 이 **독립 admission 판정**이며 source-native prerequisite suite를 새로 실행한 결과가 아니다. 그 구분과 원8192 assertion 관련 미실행 설명을 유지한다.
+
+#### 실행 결과
+
+- produce PID330248: 실제 Commit WAL sync 성공 뒤 주입된 오류를 `CallerMustResolve / IoWriteUnknown`으로 반환했다. `A_CREATE_UNKNOWN_AFTER_SYNC`에서 ACK 없이 UNKNOWN1개를 관측한 뒤 controller가 이 시험 프로세스만 SIGKILL했고 exit−9를 회수했다.
+- recover PID330337: 같은 ELF의 새 프로세스에서 LSN9를 capture하여 epoch2로 복구하고 LSN15까지 진행했다. 원 독립 oracle가 WAL·home·Base/CURRENT·원 WAL unlink/dirsync 순서를 검사했고 query marker는 `6 / 1 / true`, 종료는0이다. handles0·File peak3·FD peak6을 확인했다.
+- 전체 **12.352271673초, N03 PASS**다. 원30초·1초 final audit와 모든 공간/자원 한도를 충족했다. 종료 후 여유76,129,370,112B이며 두 worker는 모두 회수됐다. 이 시간은 기능 검증 경과이며 성능 인수 수치가 아니다.
+
+기존 r1의 build2/runtime11 PASS와 이번 N03 PASS를 같은 제품 source/ELF의 서로 다른 실행 증거로 연결한다. native N03의 잔여 실행을 해소했고 독립 D1/D2가 이 C2 준비 수명 단위의 선정 검증 인수를 수용했다. 전체 writer/progress·동시 entry/return 합, actual C+A/C+B/MI01–06·M4/M5·DEV2·DEV3/S5 인수는 여전히 미완료다.
+
+원 source/ELF·admission·계획·effects/entropy/identity·WAL/DB snapshot·stdout/stderr·worker/reaped receipt·result는 위 native-r1 bundle에 보존한다.
+
+- `source-files.json` SHA-256: `8df0ca0e4f954203b97dd6850cfcedd0d63a6c950705919a71abd040956e9051`
+- `run-plan.json` SHA-256: `893f3ba213f91d1a07955dfbc52941a39d7d0776ba33f977c3adc1404b8993de`
+- `admission.json` SHA-256: `2b74bc75165638e241e839a40dd924f3c53f29744e346e9c014825252a21825f`
+- `catalog-source-admission/audit.json` SHA-256: `b208f915e4ef5aec286b24e9ec6a1de308cae1ea5c8784a65afa241a06ada1a2`
+- `catalog-source-admission/result.json` SHA-256: `64c8a3dd186f1d20a6a0b729e1ebc77bcc958209d49a89d60edcb646773fab68`
+- `catalog-native/N03/result.json` SHA-256: `6669371adcc52b54efb1dc698748a664f057b44a81a217171b20e55b1d42240d`
+- `native-output-inventory.json` SHA-256: `4ef931b518d14711ae608f66d9701eb17e6ec43cf089d99e5dcb528ca742542e`
+
+문서·상태만 갱신하므로 새 제품 시험·빌드·자동 문서 verifier를 실행하지 않는다.
+
+#### OCR delegate 후속 독립 검토
+
+`/root/module_step_review`가 `ocr delegate preview --format json`·`ocr delegate rule --format json`으로 목록/규칙을 확인하고 대상1개·기본 제외6개를 모두 읽었다. **전체7파일 검토·누락0·100%·필수 수정0·차단0**이며 **독립 D1/D2는 이 C2 준비 수명 단위의 선정 검증 인수까지 수용**했다. 초기 NOT_RUN/미완료의 문구는 과거형과 후속 링크로 구분하여 수신했다.
+
+전체 source6156파일·fingerprint5637파일·ELF/admission 및 native 출력67파일 identity를 대조했고, 원 oracle로 저장된 WAL9/15·home·Base/CURRENT capture9 epoch2·descriptor/inventory/provenance·원 WAL unlink/dirsync를 읽기 전용 재검산했다. 실제 sync 성공→AfterError→UNKNOWN/ACK0·지정cut kill−9·회수와 별도 PID의 복구/query·handles0/File3/FD6, 원 NOT_RUN 보존을 확인했다. 검토자는 제품·worker·native controller·빌드·시험·문서 verifier를 실행하지 않았다.
+
+`artifacts/module-c2-pending-image-native-review-20261027/`에 preview/rules/checklist/identity-result-audit/report를 보존했다. report SHA-256은 `af99decd42ba0b4e8a7a41779985e44d85a88e2fd9c15bd7f67ec995f77fc20d`, checklist는 `44f3f18145478451c99e844a14ca9373107fcdf18f1cbbde6a21d70b3bcfaad4`, audit는 `e59b1abb28bfed8978555ba17f5dfc7bc814d44737d414b55344c736b9bf0fb2`이다. 새 `native-r1/verification-completion.json`은 원 r1 결과를 변경하지 않고 이번 단위 수용을 연결한다. 전체 M4/M5는 계속 미완료다.
+
+- `verification-completion.json` SHA-256: `c215041079addad433fad2d64e7294457e58f3fb7badf93cd5a0c0d9375bd2aa`

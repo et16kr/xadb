@@ -645,4 +645,4 @@ statement factory·자동 read-set·CheckedTable/RowReadOperation과 short aggre
 
 ### C2 Commit 준비 자료의 Pending 수명 분리
 
-기존 `catalog_live.rs`의 private payload/image와 `catalog_commit.rs`의 consuming stage·4-phase source 계산을 연결했다. 공통 payload를 쓰는 `catalog_retire.rs`도 함께 변경한다. 신규 실제 선택 manifest와 수정3파일은 JSON `dev3_module_c2_pending_image_main`에 등록한다. package/dependency·source root·backing 추가는 없다. [실행 증거](../evidence/module-independence-survey-20261026.md#c2-pending-image-main)는 memory11개 PASS와 native N03 NOT_RUN을 구분하며 전체 admission·M4/M5는 후속이다.
+기존 `catalog_live.rs`의 private payload/image와 `catalog_commit.rs`의 consuming stage·4-phase source 계산을 연결했다. 공통 payload를 쓰는 `catalog_retire.rs`도 함께 변경한다. 신규 실제 선택 manifest와 수정3파일은 JSON `dev3_module_c2_pending_image_main`에 등록한다. package/dependency·source root·backing 추가는 없다. [실행 증거](../evidence/module-independence-survey-20261026.md#c2-pending-image-main)는 초기 memory11개 PASS·native N03 NOT_RUN을 보존하고, [후속 N03](../evidence/module-independence-survey-20261026.md#c2-pending-image-native)의 같은 source/ELF1회 PASS를 연결한다. 후속 OCR7파일 독립 D1/D2 수용으로 이 C2 단위의 선정 검증 인수를 마쳤으며 전체 admission·M4/M5는 후속이다.
