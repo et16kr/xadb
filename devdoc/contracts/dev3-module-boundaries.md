@@ -1141,6 +1141,8 @@ rollback/terminal은 원 progress admission이 새 foreground를 닫고 이미 �
 
 [main의 Aging/Root source 계산](../evidence/module-independence-survey-20261026.md#c2-aging-source-main)은 전체 queue 대신 actual Root2 decode와 순차 Aging helper를 계수한다. initial Root 중첩 버퍼·malformed Transaction XOD의 XTS decode·by-value budget 반복·반환 carrier를 포함하고 XOD/XTS 공통 계산은 각 lower owner가 제공한다. Full 고정 charge는37724B, Resident16860B이며 원 core 포함 shared retained·Commit4phase·전체 peak는 유지한다. 실제 Full 예약·반환의 선택 검증이며 writer/progress·전체 동시 admission 공급을 뜻하지 않는다.
 
+[main의 실제 WAL wait source 관측](../evidence/module-independence-survey-20261026.md#c2-wal-wait-source-main)은 physical 호출·semantic 반환·Pending parent를 test-only로 구분한다. main 원 core를 포함한 shared+Full+Pending 합은 memory66116B/Linux 타입66252B로65536B 기준 FAIL이다. 관측 시험 PASS와 구별하며 기존 production 상계·charge·admission은 유지한다. Drain 인계·entry/return ticket·writer/progress 전체 합은 후속 공급이다.
+
 <a id="common-deliveries"></a>
 ## 7. 유한한 공통 공급과 C0/C 인계
 

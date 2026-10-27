@@ -651,3 +651,8 @@ statement factory·자동 read-set·CheckedTable/RowReadOperation과 short aggre
 ### C2 Aging/Root source 계산의 main 수신
 
 기존 `retention_page/catalog.rs`는 Root2 decode-only source를, `obligation.rs`·`transaction_record.rs`는 공통 XOD/XTS 계산을 소유한다. `retention_obligation/catalog.rs`·`semantic_catalog/resources.rs`가 실제 순차 수명에 맞춰 소비한다. 신규 제품 파일·package/dependency·backing·source root는 없다. 수정6파일과 선택 manifest는 JSON `dev3_module_c2_aging_source_main`에 등록한다. [실행 증거](../evidence/module-independence-survey-20261026.md#c2-aging-source-main)는 원 test build FAIL·정정 뒤 선택4 PASS를 보존하며 전체 writer/progress admission·M4/M5는 후속이다.
+
+
+### C2 실제 WAL wait source 관측의 main 수신
+
+기존7개 Rust 파일에 test-only 물리/semantic/caller 관측과 신규1개 시험을 추가했다. 선택 manifest와 경로는 JSON `dev3_module_c2_wal_wait_source_main`에 등록한다. package/dependency·source root·제품 상계/charge·wire 변경은 없다. [증거](../evidence/module-independence-survey-20261026.md#c2-wal-wait-source-main)는 새 관측1개 PASS와 main Full+Pending 합의65536B 기준 FAIL을 구별하며 실제 writer/progress admission은 후속이다.

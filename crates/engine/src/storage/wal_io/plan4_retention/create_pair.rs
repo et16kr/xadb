@@ -253,3 +253,6 @@ impl<'c, 's> TxPairRetirePermit<'_, 'c, 's, '_> {
         self.io.matches(binding, fence, &self.io.pair)
     }
 }
+
+#[cfg(test)]
+pub(super) use catalog_commit::wait_source_observation as catalog_wait_source_observation;

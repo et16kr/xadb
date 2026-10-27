@@ -1,0 +1,33 @@
+{
+  "schema": "XADB_MODULE_C2_WAL_WAIT_SOURCE_MAIN_V1",
+  "status": "FROZEN_INPUTS_NOT_EXECUTION_EVIDENCE",
+  "scope": "cfg(test) source observations only for physical WAL wait, semantic bridge wait and actual Pending parent; production bounds/charge/effect behavior unchanged",
+  "budget": {
+    "total_seconds": 600,
+    "compiler_seconds": 90,
+    "case_seconds": 30,
+    "output_bytes": 8388608,
+    "rust_min_stack": 33554432
+  },
+  "runtime_tests": [
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::owner_tests::catalog_wal_wait_source_phases_include_claim_and_condvar",
+      "reason": "New callgraph source observation for Memory/Linux concrete types includes claim/predicate/condvar/error/return carriers and reports actual Pending plus Full/two Resident. Exceeding sums remain an unmet admission obligation, not a new limit; no existing behavior tests repeated.",
+      "env": {}
+    }
+  ],
+  "baseline_commit": "e76e8c4050ef597ca2f4c00cc50642b19a917a54",
+  "adapted_from": [
+    "dfc3bc9b00b025dd12955ed6abee19ef580444e6"
+  ],
+  "changed_paths": [
+    "crates/engine/src/storage/wal_io/commit_bridge.rs",
+    "crates/engine/src/storage/wal_io/physical.rs",
+    "crates/engine/src/storage/wal_io/plan4_apply/owner_tests.rs",
+    "crates/engine/src/storage/wal_io/plan4_retention/catalog_commit.rs",
+    "crates/engine/src/storage/wal_io/plan4_retention/create_pair.rs",
+    "crates/engine/src/storage/wal_io/plan4_retention/visibility.rs",
+    "crates/engine/src/storage/wal_io/plan4_retention/visibility/epochs.rs"
+  ],
+  "excluded": "No production behavior changes; unchanged product/recovery/native cases and production check not repeated. No full writer/progress admission claim. Native type layout only, no native I/O."
+}

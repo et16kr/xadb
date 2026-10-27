@@ -302,3 +302,34 @@ fn catalog_aging_source_phases_include_initial_and_malformed_paths() {
     inspect::<port::Writer>("MEMORY");
     inspect::<super::super::native::Writer>("NATIVE_TYPE");
 }
+
+#[test]
+fn catalog_wal_wait_source_phases_include_claim_and_condvar() {
+    fn inspect<W: WriterNamespace>(kind: &str) {
+        let physical = crate::storage::wal_io::physical::wait_source_observations::<W>();
+        for (name, bytes) in physical {
+            println!("WAL_WAIT_{kind} {name}={bytes}");
+        }
+        let [parent, bridge, handoff, pending] =
+            create_pair::catalog_wait_source_observation::<W>();
+        let shared = source::shared_bytes::<W>();
+        let full = read::lookup_source_bytes::<W>();
+        let resident = read::resident_lookup_source_bytes::<W>();
+        println!(
+            "WAL_WAIT_{kind} parent={parent} bridge={bridge} handoff={handoff} pending={pending} shared={shared} full={full} full_overlap={} two_resident_overlap={}",
+            shared + full + pending,
+            shared + 2 * resident + pending
+        );
+        let measured = |name| physical.iter().find(|(key, _)| *key == name).unwrap().1;
+        assert!(measured("ensure_durable") > measured("sync_claim"));
+        assert!(measured("wait_durable") > measured("ensure_durable"));
+        assert!(measured("wait_durable") > measured("condvar"));
+        assert!(bridge > measured("wait_durable"));
+        assert!(pending > bridge);
+        // These are observations, not admission proof. The original shared
+        // core is counted once by shared_bytes; no capacity limit is relaxed.
+        // Entry/exit tickets and the actual phase protocol are still missing.
+    }
+    inspect::<port::Writer>("MEMORY");
+    inspect::<super::super::native::Writer>("NATIVE_TYPE");
+}

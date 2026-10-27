@@ -524,6 +524,37 @@ pub(in super::super) fn source_phases() -> CatalogCommitSourcePhases {
     }
 }
 
+/// Actual Pending parent, after stage's tuple/Prepared temporaries have ended.
+/// This is an observation, not a reservation or permission to overlap readers.
+#[cfg(test)]
+pub(in super::super) fn wait_source_observation<W: WriterNamespace>() -> [usize; 4] {
+    use std::mem::size_of;
+    let parent = size_of::<CatalogCommitImage<'_, '_, '_>>()
+        + visibility::epoch_commit_retained_carrier()
+        + size_of::<crate::storage::wal_io::WalPrefix>()
+        + size_of::<WalRequirement<'_>>()
+        + size_of::<InstallationKey>()
+        + size_of::<crate::storage::session_fence::UnwindFence<'_>>()
+        + size_of::<u64>() // q, prepared before stage
+        + 6 * size_of::<&()>() // self, owner, storage, visibility and call borrows
+        + size_of::<Result<Observation>>() // outer return, including fatal conversion
+        + 2 * size_of::<RetentionError>()
+        + size_of::<dirty_frame::PendingCommitTargets<'_, '_, '_, '_, '_, '_, TARGETS>>();
+    let bridge = commit_bridge::catalog_wait_source_observation::<W>();
+    // map_err converts the returned WAL Result before extracting durable.
+    // The physical call is over, but include both Results and the owned value,
+    // plus the attempted-effect error conversion, without move elision.
+    let handoff = size_of::<
+        crate::storage::wal_io::Result<crate::storage::wal_io::DurableCommit<'_, '_>>,
+    >() + size_of::<Result<crate::storage::wal_io::DurableCommit<'_, '_>>>()
+        + size_of::<crate::storage::wal_io::DurableCommit<'_, '_>>()
+        + size_of::<crate::storage::wal_io::WalIoError>()
+        + size_of::<RetentionCause>()
+        + size_of::<RetentionError>()
+        + 4 * size_of::<&()>();
+    [parent, bridge, handoff, parent + bridge.max(handoff)]
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

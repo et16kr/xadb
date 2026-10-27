@@ -6820,5 +6820,49 @@
     "remaining_supply": "Actual WAL wait/Drain call and return accounting; writer/progress and all concurrent entry/return sums; actual Row and M4/M5 acceptance",
     "source_roots_changed": false,
     "review_report_sha256": "590066a0d21d6023e5654333b92f2ab8e5f55a180e95b1630b5d1ed008df8072"
+  },
+  "dev3_module_c2_wal_wait_source_main": {
+    "status": "ACCEPTED_LIMITED_D1_D2",
+    "contract_ref": "dev3-module-boundaries.md#operation-source-admission",
+    "evidence_ref": "module-independence-survey-20261026.md#c2-wal-wait-source-main",
+    "baseline_commit": "e76e8c4050ef597ca2f4c00cc50642b19a917a54",
+    "adapted_from": [
+      "dfc3bc9b00b025dd12955ed6abee19ef580444e6"
+    ],
+    "implemented_paths": [
+      "tests/fixtures/dev3-module-c2/wal-wait-source/manifest.json"
+    ],
+    "modified_paths": [
+      "crates/engine/src/storage/wal_io/commit_bridge.rs",
+      "crates/engine/src/storage/wal_io/physical.rs",
+      "crates/engine/src/storage/wal_io/plan4_apply/owner_tests.rs",
+      "crates/engine/src/storage/wal_io/plan4_retention/catalog_commit.rs",
+      "crates/engine/src/storage/wal_io/plan4_retention/create_pair.rs",
+      "crates/engine/src/storage/wal_io/plan4_retention/visibility.rs",
+      "crates/engine/src/storage/wal_io/plan4_retention/visibility/epochs.rs"
+    ],
+    "scope": "cfg(test) source observations only for physical WAL wait, semantic bridge wait and actual Pending parent; production bounds/charge/effect behavior unchanged",
+    "validation": "r1 test build PASS/warning0 and exact new1 once PASS; review found items_after_test_module placement issue. r2 moves identical helper before tests and crate clippy --lib --tests -D warnings PASS/warning0; runtime NOT_REPEATED_ITEM_RELOCATION_ONLY. Production check NOT_RUN_CFG_TEST_ONLY; no native I/O, unchanged behavior tests or full aggregate admission claim. Independent OCR15/15 files (reviewable8 plus excluded7), skipped0; one placement finding resolved, zero unresolved required fixes. D1/D2 accepted only for this observation unit and selected validation; r1/r2 source5639 files and identity correspondence verified.",
+    "source_bytes": {
+      "physical_wait": 2808,
+      "pending_parent": 2064,
+      "semantic_bridge": 3256,
+      "return_handoff": 1216,
+      "observed_pending": 5320,
+      "memory_shared_retained": 23072,
+      "native_type_shared_retained": 23208,
+      "catalog_full": 37724,
+      "catalog_resident": 16860,
+      "memory_full_pending_total": 66116,
+      "native_type_full_pending_total": 66252,
+      "memory_two_resident_pending_total": 62112,
+      "native_type_two_resident_pending_total": 62248,
+      "limit": 65536,
+      "full_pending_bound_status": "FAIL",
+      "source_bound_not_rss": true
+    },
+    "remaining_supply": "Drain-complete/guard handoff; actual writer/progress reservation and full entry/return aggregate; Full+Pending exceeds original cap; actual Row and M4/M5 acceptance",
+    "source_roots_changed": false,
+    "review_report_sha256": "9b91897b654d192d2c6500fd729c2f6870dad469c4c2fb2ed04bbc22e8a53946"
   }
 }

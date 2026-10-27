@@ -1175,3 +1175,56 @@ r2 manifest SHA-256은 `5951f79cad43953e6a2e13609de8483571cc0a1fae153f16c6f8c00b
 r1/r2 source5638파일·manifest·runner/helper·inventory·compiler/runtime 로그·ELF와 C2_SHORT01 context hash를 읽기 전용 검산했다. 현재 제품/fixture는 r2 export와 같고 r1→r2는 test 경로 한 줄과 manifest 설명만 다르다. 원 E0433 FAIL·runtime0, r1 production PASS와 r2 test build/exact4 PASS를 구별했다. 검토자는 제품·문서·원 실행 결과 수정이나 빌드·시험·문서 verifier를 실행하지 않았다. 검토 identity 스크립트 첫 시도의 문자열/Path 정렬 차이를 원 함수의 Path 정렬로 정정해 일치를 확인했으며 제품/시험 FAIL로 분류하거나 원 결과를 변경하지 않았다.
 
 `artifacts/module-c2-aging-source-main-review-20261027/`에 preview/rules/checklist/identity-audit/report를 보존한다. report SHA-256은 `590066a0d21d6023e5654333b92f2ab8e5f55a180e95b1630b5d1ed008df8072`, checklist는 `8023f7bba3a078b552724710aea554533c30dbb874207d9f1ed8486de153c1a9`, identity-audit는 `6dafbacbb20d52e0981af49f3c8266b5449e3371b8a54da227d6daf460783ec8`이다. 다음은 실제 WAL wait/Drain 호출·반환 수명과 writer/progress 예약이며 전체 동시 admission·실제 Row·M4/M5 인수는 미완료다.
+
+
+<a id="c2-wal-wait-source-main"></a>
+### C2 실제 WAL 대기·반환 source 계산의 main 수신 — 2026-10-28
+
+사용자의 “진행 위치 확인 후 다음 한 단계·OCR delegate 리뷰 및 수정·commit” 요청으로 clean `main`·`e76e8c4050ef597ca2f4c00cc50642b19a917a54`에서 시작했다. M0–M3 완료, M4는 Aging/Root source 계산까지 부분공급, M5는 A/B 순수 본문 착수 상태였다. 이번 한 단계는 **writer/progress 예약 전에 실제 WAL 대기 호출·반환의 source 값을 구분하는 관측**이다. 별도 브랜치 `dfc3bc9b00b025dd12955ed6abee19ef580444e6`의 test-only7파일을 현재 main에 적응하고 원 core816B가 포함된 main shared 값을 사용한다. 다른 worktree·과거 결과를 변경하거나 브랜치 전체를 병합하지 않았다.
+
+`D3-MODULE-WAL-WAIT-SOURCE-MAIN-001` · D2 · **ACCEPTED / 구현·선택 검증 완료 / 독립 D1/D2 한정 수용 / Full 동시 합 기준 FAIL**. 작성·계약·통합 `/root`, 별도 검토 `/root/module_step_review`. §6.9의 동시 source 상계를 구체화할 선행 관측이며 제품 상계·charge·admission·효과·wire·권한은 바꾸지 않는다. 전체 writer/progress admission·M4/M5 인수는 미완료다.
+
+#### 호출·반환 수명과 선택
+
+`physical::wait_source_observations`는 state·requirement predicate·foundation I/O·sync claim·ensure·Condvar·wait를 구분한다. append guard 종료 뒤 sync, file guard 종료 뒤 publication에만 max를 적용한다. wait와 ensure의 별도 UnwindFence, 원 borrowed slot·frame·Result·오류·반환값은 수명에 따라 합산한다. backend/OS stack과 원 File/AppendState/slot backing은 이 호출값의 범위 밖이며 해당 소유자의 회계로 남는다.
+
+`commit_bridge`는 실제 physical 호출과 그 뒤 semantic receipt 초기화를 나눈다. caller는 compact image·epoch packet·원 Pending targets·prefix/requirement/key·outer Result를 계속 보유하고, WAL Result→Retention Result→DurableCommit 추출의 handoff를 별도로 합산한다. stage 준비 자료 전체를 WAL wait와 계속 합하는 대안은 실제 수명과 다르며, main의 공통 core를 빼서 참고 브랜치의 수치를 재현하는 대안도 채택하지 않는다. 관측 함수는 모두 `cfg(test)`이고 기존 생산자·동기화 동작은 그대로다. 실제 호출/반환 타입·수명이 바뀌거나 admission에 연결할 때 재검토한다.
+
+| source 항목 | Memory / Linux 구체 타입(B) |
+| --- | --- |
+| state / predicate / foundation I/O |336 / 710 / 544 (양쪽 동일)|
+| sync claim / ensure / Condvar / physical wait |1160 / 2248 / 1046 / 2808 (양쪽 동일)|
+| Pending parent / semantic bridge / 반환 handoff |2064 / 3256 / 1216 (양쪽 동일)|
+| Pending parent + max(bridge, handoff) |5320 (양쪽 동일)|
+| shared retained (원 core 포함) |23072 / 23208|
+| shared + Full37724 + Pending5320 |**66116 / 66252 — 65536 기준 FAIL, 각각580 / 716 초과**|
+| shared + Resident16860×2 + Pending5320 |62112 / 62248 (이 관측 합만 한도 이내)|
+
+기존 production Pending 포괄값18532B를 이번 관측5320B로 교체하지 않는다. 이 값은 source/type 수명 계산이며 RSS·실제 stack·native I/O·성능 측정이 아니다. 참고 브랜치의 shared22256B를 쓰는65300B를 main 결과로 승계하지 않는다. **새 관측 시험 PASS는 Full 동시 합 기준 FAIL을 취소하지 않는다.** Resident 합이 작더라도 entry/exit ticket·Drain 전후·writer/progress protocol 전체가 미공급이므로 해당 조합의 실제 admission 성공으로 승격하지 않는다.
+
+#### 변경 범위와 실행
+
+[선택 manifest](../../tests/fixtures/dev3-module-c2/wal-wait-source/manifest.json)에 변경7파일·신규 exact selector1개·Memory/Linux 타입 관측과의 관계를 실행 전에 고정했다. 총600초·compiler90초·case30초·로그8MiB·stack32MiB, 각 selector1회다. frozen export에서 `cargo test -p xadb-engine --lib --no-run --locked --offline --message-format=json`으로 test build PASS·경고0, 새 `catalog_wal_wait_source_phases_include_claim_and_condvar`를 `--exact --nocapture`로 **1회 PASS**했다. 경과23.52초는 검증 경과이며 성능 수치가 아니다.
+
+제품 동작 diff0이므로 production check·기존 제품 시험·native 복구·전체 workspace/하위 wrapper는 실행하지 않았다. 독립 검토는 새 helper를 기존 `mod tests` 뒤에 둔 배치가 `items_after_test_module` 규칙에 걸림을 정적으로 지적했다. helper 본문을 그대로 테스트 모듈 앞으로 옮겼다. `r2`는 이1파일의 item 순서만 바뀐 source이며 `cargo clippy -p xadb-engine --lib --tests --locked --offline --message-format=json -- -D warnings`를1회 PASS·경고0으로 확인했다. 원 r1 test build/runtime1을 보존하고 r2에서는 runtime을 반복하지 않았다. 원 지적은 정적 검토 결과이며 실행하지 않은 r1 Clippy FAIL을 만들지 않는다. 기존 source별 PASS/FAIL/UNKNOWN·NOT_RUN과 DEV2·DEV3/S5 미완료를 보존한다. 변경 Rust7파일에 파일별 rustfmt와 `git diff --check`를 적용했다. 자동 문서 verifier·전체 fmt/Clippy·push는 실행하지 않으며 push 시 기존 훅을 적용한다.
+
+원 source/inventory·manifest·runner/helper identity·compiler diagnostics·ELF·stdout/stderr/result는 `artifacts/module-c2-wal-wait-source-main-20261028/{r1,r2}/`에 보존한다. 아래 표는 runtime을 실행한 r1 identity다.
+
+| identity | SHA-256 |
+| --- | --- |
+| source |`664389fd66bf3cdf2ea47ef2d7d7130fa43e21594c0a4ddf99718dcfd5cc696c`|
+| manifest |`2e56de1b702669da20e3d273fc51788a891afa126ff5ba852f08994ac0367e9e`|
+| runner |`4e49955cf84abfeb199810920a9d08f9258ec101acbdd6823ff1f730da62c350`|
+| inventory |`31320b35ace8acfbeecfcfd8fe59b80c069a71056d6a41778c0ae0de28933ca4`|
+| ELF |`89df394569bc9c57013289943dce9879bb19fe8259ff4815ac68f1a9c53535ff`|
+| result |`5fb3af3c134d5b09794d01e572c166384a29ebbe3b526f8ae55e92b067cad27f`|
+
+r2는 source `8db0cc5d51e2117d469d1bda6e014d2e0cb426623d29fac24443ae2fa5306210`, inventory `6c968242997a5b80b9380caf6ae9049d1694eb84d4481d7b36ca955627aefeb9`, lint runner `ceccebf84bc8aa5ee68f20bdf15c87804f0f453dd315adbc30434ab0d51c04c3`, result `610b88684f47af2d6873255eac7c48749b1eab86f9e796b871b3f8e21767c49a`다. manifest는 r1과 동일하며 r2 경과18.72초다. 이 정적 검증에는 새 runtime/ELF 실행 결과가 없다.
+
+#### OCR delegate 독립 검토
+
+`/root/module_step_review`가 `ocr delegate preview --format json`·`ocr delegate rule --format json`으로 대상/규칙을 확인하고 OCR 대상8개와 기본 제외7개까지 직접 검토했다. **전체15파일·누락0·100%, 지적1건 수정 확인·미해결 필수 수정0·차단0, 독립 D1/D2 한정 수용**이다. `/root`가 이 관측 단위와 선택 검증의 한정 수용을 반영했다. helper의 테스트 모듈 뒤 배치를 고쳤고 함수 내용·제품 동작 변경은 없다.
+
+r1/r2 각각 source5639파일·inventory·manifest·runner/helper·compiler/lint 로그, r1 ELF·exact1 실행 출력의 identity를 읽기 전용 검산했다. 현재 source=r2, r1→r2는 helper 위치1건뿐이고 나머지 bytes·원 r1 source/ELF/runtime 결과를 보존하며 r2 runtime0을 확인했다. 검토자는 제품·문서 수정이나 빌드·시험·자동 문서 verifier를 실행하지 않았다. 사전 대조에서 main core816B를 포함한 Full 동시 합이 참고 브랜치와 다름을 확인했고 위 실행에서 관측한 FAIL을 그대로 유지했다.
+
+`artifacts/module-c2-wal-wait-source-main-review-20261028/`에 preview/rules/checklist/identity-audit/report를 보존한다. report SHA-256은 `9b91897b654d192d2c6500fd729c2f6870dad469c4c2fb2ed04bbc22e8a53946`, checklist는 `e564d60e311e0a8115b762aa77b55bac25613ffec40117b7f2df0312407b505c`, identity-audit는 `969f044245fd647ad2d0f04cb589c0c519d27d2c3b0d32290aeca4ed10cf5e54`다. 다음 단위는 Drain 완료/guard 인계의 수명 분리이며, 이후 writer/progress 예약·entry/return 전체 합을 위 FAIL을 해소하는 계약과 함께 공급해야 한다. 이번 관측을 전체 M4/M5 인수 완료로 표시하지 않는다.
