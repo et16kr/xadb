@@ -1351,3 +1351,23 @@ r1 source5673파일·20.28초다. r2 source5673파일·27.65초·ELF `3c8d7a9208
 
 
 r1 production/test build·compiler4 PASS, 모든 build/probe 경고0이다. 원 `artifacts/module-c3-prepared-20261027-r1/`에 5678파일의 immutable source/inventory·runner/helpers·ELF·probe export/diagnostic을 보존한다. source `7a1c1ea402eb1c4e5002a61b1bf7db4f5a574cc4ff6268618c3c019aa82e38ce`, manifest `62b62a797a4fe736d13ad06330212b43c2749e4e510f5ed208e540583dd6fd75`, ELF `3ef827b3b087cdd88fc897694b71bfcec2a9d16a4e0ed878c3dfbb7a2d1184ca`, result `f9b3fde7fce8005f58a75a10f2255a44e99b1e92c362bfdd6a46e7661e9493f1`다. 실제 52.58초는 성능 결과가 아니다. runtime을 실행하지 않았으며 기존 source별 PASS를 새 실행으로 표시하지 않는다. 변경 rustfmt·diff whitespace만 확인했고 전체 fmt/Clippy·문서 verifier·push는 실행하지 않았다. 독립 D1/D2는 제품8경로·source5678파일 전부/inventory/fingerprint·runner/helpers/manifest/ELF·원 compiler logs와4 probe의 exact two-file delta/diagnostic span 및6문서를 대조해 한정 수용했다. 필수 수정은0이며 검토자는 수정·빌드·시험·verifier를 실행하지 않았다.
+
+
+<a id="row-root3-codec"></a>
+### Row Root3의 exact 순수 cell codec — 2026-10-27
+
+기준 `57373f0`, 작성/통합 `/root`, 독립 검토 `/root/module_review`. [Row format owner](../contracts/dev3-module-consumers.md#root3-codec)에 따라 exact Root3/row_high@432/reserved440..512와 canonical Free Job3 digest를 별도 모듈로 구현했다. raw512B view는 원 input을 borrow하며 pin/issuer/reservation/READY 권한이 아니다. active commitments는 전체 Job3 census 전의 opaque 관찰이다. current Profile2·legacy Root2·기존 decoder/선택/복구 호출은 바뀌지 않는다.
+
+[사전 manifest](../../tests/fixtures/module-row-format/root3/manifest.json)에 신규4 selector와 독립 `author.py`/literal3의 hash를 고정했다. Python struct/표준 SHA-256은 XADB encoder를 호출하지 않는다. 초기 byte equality와 borrowed pointer, high-water0/1/MAX·55/56 cap·checked accounting overflow, 짧은 길이0..511/긴513·version0/1/2/4/65535·state/reserved/namespace/6refs/Aging/masks, encode 실패의 output 불변을 검산한다. 전체 Job3/census/page wrapper·current dispatch/복구는 선택하지 않았으며 기존 Root2/하위 codec은 변경이 없어 반복하지 않는다. 총300초/compiler90초/case30초/출력8MiB/stack33554432B다.
+
+r1 production/test build와 신규 첫2 selector PASS 뒤 identity 변형 시험이 FAIL했다. FileId의 낮은 segment1을0으로 바꾸어 구조적으로 잘못된 PageRef를 만들었는데 IdentityMismatch를 기대했으며 실제는 Page(Corrupt)다. 이 원 FAIL과 마지막 output-preservation 사례 NOT_RUN을 보존한다. r2는 유효한 다른 page_no를 identity 변형으로 사용하고, FileId/zero-incarnation 구조 오류12개를 별도 Page(Corrupt)로 검산한다. 제품 코드는 같으므로 production 및 이미 완료된 첫2 selector는 반복하지 않는다. 실행 결과와 최종 독립 검토는 아래에 기록한다.
+
+
+r2 test build·남은2 selector PASS이며 r1의 첫2와 합쳐 신규4개의 source별 결과를 보존한다. build 경고0, 원 FAIL은 소급 변경하지 않는다. raw cell 검산에 한정하며 actual issuance/current-format persistence/복구 또는 전체 source admission 증거가 아니다.
+
+| 실행 | source SHA-256 | manifest SHA-256 | result SHA-256 |
+| --- | --- | --- | --- |
+| r1 | `53d98cbb387f316535fdb42c6394d32f01c75228bb5ee929586e560f691f3d73` | `6b5f202f31f695e891a45086b57c29ae45607f03012a752bf168a39c03feb89d` | `c65ef265df45ca45524441f63e26f6193c5bce40ff3b959585ba97f01f666d37` |
+| r2 | `1c5b45e91a854955f3addd78aa54cb1e29e77531c4298eab08c0cfd22b72bb68` | `6b5f202f31f695e891a45086b57c29ae45607f03012a752bf168a39c03feb89d` | `6e561e3623e973c9dea0ec20d69dd9de0e3195274b942b7709dc2455755278e2` |
+
+r1 source5686파일·ELF `cf28092531fe3749d19db1a0e9bbd81e957e987a1485534be9eac43c7f545a5c`·31.42초다. r2 source5686파일·ELF `c1b8f5184b54dfb238c3d344b47e1ef858ba30ae13b9b8762bb92af30079d37a`·26.66초다. 원 `artifacts/module-row-root3-20261027-r{1,2}/`에 immutable source/inventory·manifest·runner/helpers·ELF·build/case logs를 보존한다. 시간은 성능 결과가 아니다. 변경 rustfmt/diff whitespace만 확인했고 전체 fmt/Clippy·문서 verifier·push는 실행하지 않았다. 독립 D1/D2는 source/원 결과와6문서를 대조해 한정 수용했으며 필수 수정은0이다. 검토자는 source5686파일 전부/inventory/fingerprint·manifest/runner/helpers/ELF/log와 독립 literal3의 전 바이트·hash를 검산했고 제품·fixture 수정/실행·빌드·시험·verifier는 실행하지 않았다.

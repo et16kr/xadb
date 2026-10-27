@@ -1,0 +1,51 @@
+{
+  "schema": "XADB_ROW_ROOT3_CODEC_V1",
+  "status": "FROZEN_INPUTS_NOT_EXECUTION_EVIDENCE",
+  "baseline": "57373f0",
+  "scope": "Pure exact Root3 borrowed cell grammar and canonical free Job3 genesis recipe only. No page wrapper, occupied Job3/census, Profile3 current genesis/selection, Row issuer/reservation or recovery supply.",
+  "budget": {
+    "total_seconds": 300,
+    "compiler_seconds": 90,
+    "case_seconds": 30,
+    "output_bytes": 8388608,
+    "rust_min_stack": 33554432
+  },
+  "runtime_tests": [
+    {
+      "selector": "storage::retention_page::row::tests::root3_initial_literals_and_borrowed_view",
+      "reason": "Independent initial Root3 and Free Job3 literal equality, borrowed view and exact initial digest/canonical rejection."
+    },
+    {
+      "selector": "storage::retention_page::row::tests::root3_active_high_water_and_accounting",
+      "reason": "Active u64 high-water boundaries, 55-job mask cap and checked issued accounting; opaque commitments are not full census."
+    },
+    {
+      "selector": "storage::retention_page::row::tests::root3_closed_shape_and_identity_rejections",
+      "reason": "Exact length/version/state/reserved/identity/masks/Aging rejection with independent mutation expectations."
+    },
+    {
+      "selector": "storage::retention_page::row::tests::root3_encode_failures_preserve_output",
+      "reason": "All encode errors preserve caller output."
+    }
+  ],
+  "compiler_tests": [],
+  "inputs": {
+    "active-root.bin": {
+      "bytes": 512,
+      "sha256": "8162de64c7d733908c5f617f89fac36e4cf65186bed83a0b79282178d39be5f9"
+    },
+    "author.py": {
+      "bytes": 1680,
+      "sha256": "7c7cd364b63be4b32cfa471b25b96107ea2b33e0bbebbddc6a124c2a2e58eb38"
+    },
+    "free-job.bin": {
+      "bytes": 1024,
+      "sha256": "aee93979e2d5bf1901a0daf894a8f8c705fcb3335581f215f405b6326a8dbe69"
+    },
+    "initial-root.bin": {
+      "bytes": 512,
+      "sha256": "d6079c1ea15ea2668be3150c6128d9be4a72e28855336ea7c1d971f73d0b3fc4"
+    }
+  },
+  "preserved_scope": "Current Profile2, Root2 decoder and original tests/results unchanged; do not run unchanged lower tests. Raw active cell acceptance does not prove its opaque Job/budget commitments or actual history."
+}

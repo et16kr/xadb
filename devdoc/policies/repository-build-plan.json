@@ -7157,5 +7157,27 @@
     "validation": "Production/test target build and exact compiler4 PASS, warnings0. runtime/source census NOT_REPEATED_UNCHANGED_CODE. Immutable source/inventory/ELF/probe diagnostic evidence retained; independent D1/D2 audited exact source/probe deltas/diagnostics and six documents; accepted limited scope with required fixes0.",
     "remaining_supply": "Writer/whole entry-tail-source admission, Row actual supply/recovery/A+B/M4/M5.",
     "source_roots_changed": false
+  },
+  "dev3_module_row_root3": {
+    "status": "ACCEPTED_LIMITED_D1_D2",
+    "contract_ref": "dev3-module-consumers.md#root3-codec",
+    "implemented_paths": [
+      "crates/engine/src/storage/retention_page/row.rs",
+      "crates/engine/src/storage/retention_page/row/root.rs",
+      "crates/engine/src/storage/retention_page/row/root_tests.rs",
+      "tests/fixtures/module-row-format/root3/active-root.bin",
+      "tests/fixtures/module-row-format/root3/author.py",
+      "tests/fixtures/module-row-format/root3/free-job.bin",
+      "tests/fixtures/module-row-format/root3/initial-root.bin",
+      "tests/fixtures/module-row-format/root3/manifest.json"
+    ],
+    "modified_paths": [
+      "crates/engine/src/storage/retention_page.rs"
+    ],
+    "scope": "Pure exact Root3 borrowed cell codec, row_high@432/reserved440..512 and private canonical Free Job3 genesis commitment recipe. Existing Root2/current Profile2 unchanged.",
+    "evidence_ref": "module-independence-survey-20261026.md#row-root3-codec",
+    "validation": "r1 production/test build and first2 PASS; identity fixture Page(Corrupt) vs IdentityMismatch FAIL preserved. r2 cfg(test) correction: test build/remaining2 PASS, warnings0. No production/completed/lower runtime repetition; independent D1/D2 audited source/inventory/manifest/helpers/ELF/logs/six docs and independently reconstructed all literals; accepted limited scope, required fixes0.",
+    "remaining_supply": "Occupied Job3/multi-root/debt/census; page wrappers; issuer; Profile3/base4/scoped observers/current installation-selection-recovery; Row actual A/B/M4/M5.",
+    "source_roots_changed": false
   }
 }

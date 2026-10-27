@@ -734,3 +734,8 @@ apply root의 private receipt·actual terminal 자손과 Busy 시험·manifest/c
 ### C3 Prepared 정의와 canonical 소비
 
 실제 PreparedCatalog 정의는 원 apply root로 이동하고 checked factory/소비 impl은 기존 자손에 남는다. canonical disk export·epoch/retirement/terminal imports의 기존8경로와 신규 manifest/compiler4를 JSON `dev3_module_c3_prepared`에 등록한다. field type/order·runtime/source 식과 source roots/package/dependency/wire는 유지한다. [컴파일 선택 증거](../evidence/module-independence-survey-20261026.md#c3-prepared)를 runtime 재실행이나 전체 C3 공급으로 승격하지 않는다.
+
+
+### Row Root3 순수 cell codec
+
+별도 `retention_page::row`와 root/test, 독립 author/literal3/선택 manifest를 JSON `dev3_module_row_root3`에 등록한다. 원 모듈 등록 외 existing codec/current dispatcher의 변경은 없다. source roots/package/dependency는 유지하며 [실제 선택 증거](../evidence/module-independence-survey-20261026.md#row-root3-codec)를 current Profile3/Row recovery 공급과 구별한다.

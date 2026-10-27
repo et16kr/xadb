@@ -118,6 +118,13 @@ operation은 Begin1, Forward2, RollbackStart3, CLR4, StatementFinish5, Commit6, 
 
 row logical projection 후보는 `XRP1`, version1, kindRow1, UndoTargetCore32(table object/generation,entity RowId,arity0,keylen0), presence1+zero7, present일 때 정확 row record bytes다. Missing은48B, present는48+record bytes다. 물리 slot/offset/pageLSN/count는 projection 밖이다. tree entry의 RowId BE key와 row record의 RowId LE를 각각 해석하여 같음을 검사한다. source slot 위치를 논리 identity로 사용하지 않는다.
 
+<a id="root3-codec"></a>
+#### Root3 순수 cell codec 부분공급 — 2026-10-27
+
+기준 `57373f0`에서 `retention_page::row`의 별도 exact version3 Root view/initial/encode/decode와 private Free generation1 Job3 recipe를 공급한다. `row_high@432`는 LE64 관찰이며 `440..512`는0이다. genesis는 row_high0·정확한 Free Job3×64/빈 budget digest·전체 canonical cell을 비교한다. active Root는 namespace/6 PageRef·mask partition/nonfree55·checked completed+canceled+nonfree=issued·Aging identity/apply를 검산한다. u64::MAX high-water 자체는 유효하고 다음 발급의 checked_add 실패는 후속 issuer가 소유한다.
+
+이는 raw512B cell grammar다. active의 job/budget digest는 commitment로만 관찰하고 전체 Job3 census를 완료한 것으로 보지 않는다. occupied Job3·multi-root/actor/debt·scope2 Profile3 adapter·page wrapper·Profile3/base4/current 선택·Row issuer/효과/복구는 미공급이다. 기존 Root2 및 actual current Profile2는 그대로이며 version 변조로 old decoder를 호출하거나 `format>=2`로 확대하지 않는다. 후속 current 전환은 [전체 dispatch 조합](#format-dispatch)을 같은 source에서 닫을 때 수행한다. [선택 실행 증거](../evidence/module-independence-survey-20261026.md#row-root3-codec)를 기존 runtime 인수로 승격하지 않는다. 독립 D1/D2는 source/원 결과와6문서를 대조해 한정 수용했으며 필수 수정은0이다. 검토자는 source5686파일 전부/inventory/fingerprint·manifest/runner/helpers/ELF/log와 독립 literal3의 전 바이트·hash를 검산했고 제품·fixture 수정/실행·빌드·시험·verifier는 실행하지 않았다.
+
 ### 6.2 Forward
 
 `T`는 원 TxnRef, `H`는 before Status.head, `U`는 Reserved Undo다. 실제 table/anchor/schema와 row key Missing을 원 before 아래 재검사한다. A는 row record `stamp=Transaction(T), logical=(T.id,planned_mutation), undo=U, deleted=false`와 canonical inline payload를 만든다. 새 U는 target Row(table/gen/RowId), before Missing, before stamp/logical 없음, previous-version Never, previous-transaction은 H가 있으면 Linked(H, 실제 sequence), 없으면 Never다.

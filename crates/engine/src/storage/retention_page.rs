@@ -5,6 +5,9 @@
 #[path = "retention_page/catalog.rs"]
 pub(crate) mod catalog;
 
+#[path = "retention_page/row.rs"]
+pub(crate) mod row;
+
 use super::{
     allocation_page::{SystemWorkKind, SystemWorkRef},
     obligation::{RemainingBudget, ResourcePeak, encode_budget_rows},
