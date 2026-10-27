@@ -1,0 +1,27 @@
+{
+  "schema": "XADB_MODULE_C2_AGING_SOURCE_PHASES_V1",
+  "status": "FROZEN_INPUTS_NOT_EXECUTION_EVIDENCE",
+  "baseline": "d9d6a01",
+  "scope": "source accounting only: actual Root2 decoder and Aging sequential phases, fixed status/XOD codec accounting at lower owner including by-value budget iteration; product codecs/effect paths untouched",
+  "budget": {
+    "total_seconds": 600,
+    "compiler_seconds": 90,
+    "case_seconds": 30,
+    "output_bytes": 8388608,
+    "rust_min_stack": 33554432
+  },
+  "runtime_tests": [
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::owner_tests::catalog_aging_source_phases_include_initial_and_malformed_paths",
+      "reason": "New source phase observations include initial Root nested canonical buffers, malformed XOD Transaction decoder, parent/return values and Full/Pending sum without claiming complete admission"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::owner_tests::disk_session_isolation_backing_and_carriers_are_accounted",
+      "reason": "Changed shared descriptor/Aging source equations feed live/recovered aggregate and concrete owner cap checks"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::source::tests::fixed_resident_class_admits_two_and_never_escalates",
+      "reason": "Changed CatalogFull class charge feeds original ledger reserve and mixed resident/full rejection; unchanged class identity and exact return checked"
+    }
+  ]
+}

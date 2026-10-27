@@ -960,3 +960,19 @@ stage 반환에서는 원 Prepared·compact image·tuple Result·추출 참조 �
 - result SHA-256: `e5504c391e9c8c98eff91cbfa5a2093cc0f2d4b39ea844410c9c749e2f89e3f7`
 
 변경 파일별 rustfmt와 diff whitespace 확인만 수행했고 전체 fmt/Clippy·문서 verifier·push는 실행하지 않았다. `/root/module_review`는 실제 diff·문서6개·원 source5628개와 fingerprint/inventory/manifest/runner/helper/컴파일·case 로그/ELF identity를 읽기 전용 대조했다. **이 진입 수명 단위 D1/D2 한정 수용·필수 수정0**을 수신해 `/root`가 반영한다. 검토자는 수정·빌드·시험·문서 verifier를 실행하지 않았다. writer/read/progress class 전체 공급·Row/terminal/recovery·M4/M5 의무를 계속 진행한다.
+
+<a id="c2-aging-source"></a>
+### C2 Aging/Root 실제 호출의 source 계산 — 2026-10-27
+
+기준 `d9d6a01`, 작성·통합 `/root`, 별도 검토 `/root/module_review`다. 기존 Aging codec의 순차 호출을 실제 수명에 맞춰 계산한다. encode는 Root2 decode→검산→work hash→XOD encode, decode는 Root2 decode→XOD decode·검산→work hash다. 전체 Job queue census 대신 Root2 decoder의 상한을 사용하되 initial Root의 canonical512+initial512+Job1024와 후속 rows640, malformed Transaction XOD가 거치는 XTS decode, parent/Result/반환 복사와 고정 SHA closure를 포함한다. 공통 XOD/XTS 식은 lower owner로 이동하고 XOD validate의 by-value RemainingBudget5 IntoIter·현재 row를 보완한다. 실제 codec·WAL·효과 경로와 backing/wire는 변하지 않는다.
+
+Root decoder6540B, 기존 전체 queue6736B, XOD8711B, XTS1411B, Aging11575B다. XOD 보완으로 transaction inventory/encode/next/validate는 각각2224B 증가하고, 실제 Aging predecessor/next는14853/15675B가 된다. Full 조회 고정 charge는41576→37724B, Resident16860B와 shared22256B는 그대로다. live peak63184B·metadata186192B·whole251728B와 recovered peak64611B는 유지한다. **shared22256+Full37724+Pending wait9120=69100B로3564B 초과**하므로 Full/Pending 동시 공급이나 전체 admission 완료로 해석하지 않는다.
+
+[실행 전 manifest](../../tests/fixtures/dev3-module-c2/aging-source/manifest.json)는 source 계산 diff에 해당하는 신규 관측·owner 합산·고정 class admission3개만 선택했다. `artifacts/module-c2-aging-source-20261027-r1/`에서 production/test build와 exact3개 각각1회 PASS다. compiler의 unused imports(ControlRef/OwnerState) 경고는 원 로그에 보존한다. r2는 두 unused import 제거와 해당 파일 rustfmt만 반영하여 production/test build PASS·경고0이며 runtime은 `NOT_REPEATED_UNCHANGED_CODE`다. r1의 runtime 결과를 r2의 새 실행으로 표시하지 않는다. 총600초·compiler90초·case30초·출력8MiB·stack33554432B이며31.29/31.08초는 성능 결과가 아니다.
+
+| 원 증거 | source SHA-256 | result SHA-256 | ELF SHA-256 |
+| --- | --- | --- | --- |
+| r1 runtime3/compile | `575a9156256068f58b855a6a0609c327a52c82ad728a819f68c1e9ce4227823f` | `95712ade5eb3272ac3263ad209fa4eaa64f48802a1840cacc2c0ed32a484ae6d` | `60f6f15af747d018d806c637be9221f04a4d12aaf0f6fc7f4837d9c22f469c27` |
+| r2 import-only compile | `455f41485cf72b6945defb92dd80941e8dd46aba67b1e9a3c0e45ec646a016d7` | `55d5149365497ce54567027817f5bcb2b67c1b77ba90284403bb82c6a3ddec0d` | `c3915529bc440cb915b7bc15d0d3b5b6f4e9d4ebda98c1112911f815b1738215` |
+
+공통 manifest SHA-256은 `b5c726d4ecd53f3feae1a9273bfa67104725401ba06fd7642e0a3b253c9e21b1`이다. 원 export/inventory·runner/helper·compiler·case 로그와 결과를 보존한다. 변경 없는 codec 동작·하위/전체 workspace·native 복구 시험은 반복하지 않았고 전체 fmt/Clippy·문서 verifier·push도 실행하지 않았다. `/root/module_review`가 source5629개·r1/r2 identity·compiler/ELF/case 로그와 문서6개를 읽기 전용 대조했다. decode/encode 순서 설명1곳을 고쳐 반영했으며 **이 계산 단위 D1/D2 한정 수용·미해결 필수 수정0**이다. 검토자는 수정·빌드·시험·문서 verifier를 실행하지 않았다. writer/progress 실제 phase admission·다른 entry/return carrier·Row/terminal/recovery·M4/M5는 계속 미완료다.

@@ -258,3 +258,33 @@ fn catalog_commit_phase_sources_measure_consumed_preparation() {
     assert!(shared + measured("pending_wal_wait") + resident * 2 <= 65536);
     assert!(shared + measured("production_broad") <= 65536);
 }
+
+#[test]
+fn catalog_aging_source_phases_include_initial_and_malformed_paths() {
+    use crate::storage::{obligation, retention_obligation, retention_page, transaction_record};
+    let root = retention_page::catalog::root_decode_source_bytes();
+    let queue = retention_page::catalog::source_bytes();
+    let descriptor = obligation::descriptor_source_bytes();
+    let transaction = transaction_record::status_codec_source_bytes();
+    let aging = retention_obligation::catalog::source_bytes();
+    let shared = source::shared_bytes::<port::Writer>();
+    let full = read::lookup_source_bytes::<port::Writer>();
+    let resident = read::resident_lookup_source_bytes::<port::Writer>();
+    let phases = create_pair::catalog_commit_phase_observations::<port::Writer>();
+    let wait = phases
+        .iter()
+        .find(|(key, _)| *key == "pending_wal_wait")
+        .unwrap()
+        .1;
+    println!(
+        "AGING_SOURCE root={root} whole_queue={queue} descriptor={descriptor} transaction={transaction} aging={aging} full={full} resident={resident} shared={shared} pending_wait={wait} full_overlap={}",
+        shared + full + wait
+    );
+    // Initial Root can nest two canonical Root buffers and the initial Job;
+    // malformed XOD Transaction bytes reach the fixed status decoder.
+    assert!(root >= 2 * 512 + 1024);
+    assert!(descriptor > transaction + 1536);
+    assert!(aging >= root && aging >= descriptor);
+    assert!(shared + full <= 65536);
+    assert!(shared + resident * 2 <= 65536);
+}

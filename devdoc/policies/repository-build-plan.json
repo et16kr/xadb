@@ -6731,5 +6731,25 @@
     "validation": "r1 production/test build and 5 exact related cases PASS; 3 new Full/Resident entry cases and 2 changed Capacity/Drain priority cases; unchanged source-return and census tests not repeated; independent module_review code/artifact/six-document audit accepted limited D1/D2, zero required fixes",
     "remaining_supply": "all entry and ordinary caller return carriers, writer/read/progress aggregate and reserved progress, Row/terminal/recovery and M4/M5",
     "source_roots_changed": false
+  },
+  "dev3_module_c2_aging_source": {
+    "status": "ACCEPTED_LIMITED_D1_D2",
+    "contract_ref": "dev3-module-boundaries.md#operation-source-admission",
+    "implemented_paths": [
+      "tests/fixtures/dev3-module-c2/aging-source/manifest.json"
+    ],
+    "modified_paths": [
+      "crates/engine/src/storage/obligation.rs",
+      "crates/engine/src/storage/transaction_record.rs",
+      "crates/engine/src/storage/semantic_catalog/resources.rs",
+      "crates/engine/src/storage/retention_obligation/catalog.rs",
+      "crates/engine/src/storage/retention_page/catalog.rs",
+      "crates/engine/src/storage/wal_io/plan4_apply/owner_tests.rs"
+    ],
+    "evidence_ref": "module-independence-survey-20261026.md#c2-aging-source",
+    "scope": "Actual Root2/Aging sequential source bounds with initial/malformed paths; lower-owner XOD/XTS census includes by-value iteration; codec/effect behavior unchanged",
+    "validation": "r1 production/test build and 3 exact changed-source tests PASS, unused imports warnings preserved; r2 import-only compile PASS/warning0, runtime NOT_REPEATED_UNCHANGED_CODE; independent module_review source/artifact/six-document D1/D2 accepted limited after encode/decode order wording correction; zero unresolved required fixes",
+    "remaining_supply": "Full37724+shared22256+Pending9120=69100 exceeds65536; whole writer/read/progress admission, other entry/return carriers, Row/terminal/recovery and M4/M5",
+    "source_roots_changed": false
   }
 }

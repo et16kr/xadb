@@ -342,6 +342,40 @@ fn verify_pair(a: JobView<'_>, b: JobView<'_>) -> Result<()> {
     Ok(())
 }
 
+/// Actual Root2 decode closure. It excludes queue/Job decoding and pair census,
+/// but includes the initial-root comparison reachable before Aging validation.
+/// That branch nests canonical512 + initial_root512 + initial Job1024; rows640
+/// is a later branch. No success-only assumption removes malformed input work.
+pub(crate) fn root_decode_source_bytes() -> usize {
+    use crate::storage::page::{PageError, PageIdentity};
+    use std::mem::size_of;
+    let hashing = 4 * size_of::<ContentHasher>()
+        + 1536 // pinned SHA block/output/compression closure
+        + 4 * size_of::<[u8; 32]>();
+    let views = 4 * size_of::<RootView<'_>>()
+        + 4 * size_of::<Result<RootView<'_>>>()
+        + 4 * size_of::<PageHeader>()
+        + 2 * size_of::<Result<(PageHeader, RootView<'_>)>>()
+        + 4 * size_of::<PageView<'_>>()
+        + 2 * size_of::<std::result::Result<PageView<'_>, PageError>>()
+        + 2 * size_of::<PageIdentity>();
+    let identity = 4 * size_of::<SystemWorkRef>()
+        + 2 * size_of::<
+            std::result::Result<SystemWorkRef, crate::storage::allocation_page::AllocationError>,
+        >()
+        + 6 * size_of::<PageRef>()
+        + 4 * size_of::<std::result::Result<PageRef, PageError>>()
+        + 4 * size_of::<Result<PageHeader>>();
+    let scalar = size_of::<([u64; 3], [usize; 12], [u8; 24], [u8; 16])>()
+        + size_of::<(Namespace, RetentionGenesisPage, PageKind, u8, bool)>()
+        + 16 * size_of::<&()>()
+        + 8 * size_of::<Result<()>>()
+        + 4 * size_of::<std::result::Result<(), PageError>>();
+    // Keep both branches' scalar/reference/return carriers above and join only
+    // the completed initial_jobs_digest and later canonical budget hash.
+    views + identity + scalar + hashing + 2 * ROOT_BYTES + JOB_BYTES.max(640)
+}
+
 /// Fixed bound over this codec's actual scalar/views, nested validation and
 /// return carriers. Caller-owned page/Job arrays are charged by their owners.
 pub(crate) fn source_bytes() -> usize {

@@ -658,3 +658,7 @@ statement factory·자동 read-set·CheckedTable/RowReadOperation과 short aggre
 ### C2 source 진입 수명 등록 — 2026-10-27
 
 기존 read operation의 source/progress 진입 순서와 source 실패 정리만 변경했다. 새 actual 시험·manifest는 JSON `dev3_module_c2_source_entry`에 등록했다. package/dependency·source root·owned type/census·wire는 유지한다. [한정 증거](../evidence/module-independence-survey-20261026.md#c2-source-entry)는 production/test build·진입 관련5 PASS를 보존하며 전체 writer/entry/return source 합산은 후속이다.
+
+### C2 Aging/Root source 계산 등록 — 2026-10-27
+
+기존6개 Rust source의 실제 호출 상한·공통 codec 계산과 신규 관측을 변경했다. 신규 manifest는 JSON `dev3_module_c2_aging_source`에 등록했다. package/dependency·source root·backing·wire 변경은 없다. [한정 증거](../evidence/module-independence-survey-20261026.md#c2-aging-source)는 source 관련3 PASS·원 경고와 import-only 후속 compile을 구분하며 전체 writer/read/progress 합산은 미완료다.

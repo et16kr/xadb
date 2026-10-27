@@ -24,6 +24,24 @@ pub(crate) const VERSION_STAMP_BYTES: usize = 56;
 pub(crate) const STATUS_CELL_BYTES: usize = 192;
 pub(crate) const MAX_STATUS_SLOTS: usize = (DIGEST_OFFSET - HEADER_BYTES) / (STATUS_CELL_BYTES + 4);
 
+/// Source values of the fixed status-cell codec, including malformed input
+/// paths and extracted return values. This does not include a page decoder.
+pub(crate) fn status_codec_source_bytes() -> usize {
+    use std::mem::size_of;
+    fn returned<T>() -> usize {
+        size_of::<T>() + size_of::<Result<T, PageError>>()
+    }
+    size_of::<[u8; 192]>()
+        + returned::<TransactionStatusCell>()
+        + returned::<TransactionStatus>()
+        + returned::<TxnRef>()
+        + returned::<UndoRef>()
+        + size_of::<(TransactionState, Option<UndoRef>, Option<UndoRef>)>()
+        + size_of::<([u8; 48], [u8; 40], [u8; 8])>()
+        + size_of::<(&[u8], &mut [u8], [u64; 3], [usize; 2])>()
+        + 3 * size_of::<Result<(), PageError>>()
+}
+
 fn valid_txn_id(id: TxnId) -> bool {
     id.timeline != 0 && id.writer_epoch != 0 && id.local != 0
 }
