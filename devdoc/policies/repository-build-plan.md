@@ -662,3 +662,7 @@ statement factory·자동 read-set·CheckedTable/RowReadOperation과 short aggre
 ### C2 Aging/Root source 계산 등록 — 2026-10-27
 
 기존6개 Rust source의 실제 호출 상한·공통 codec 계산과 신규 관측을 변경했다. 신규 manifest는 JSON `dev3_module_c2_aging_source`에 등록했다. package/dependency·source root·backing·wire 변경은 없다. [한정 증거](../evidence/module-independence-survey-20261026.md#c2-aging-source)는 source 관련3 PASS·원 경고와 import-only 후속 compile을 구분하며 전체 writer/read/progress 합산은 미완료다.
+
+### C2 WAL wait source 관측 등록 — 2026-10-27
+
+기존7개 Rust 파일에 cfg(test) 관측/신규1을 추가했고 신규 manifest는 JSON `dev3_module_c2_wal_wait_source`에 등록했다. package/dependency·source root·제품 상계/charge·wire 변경은 없다. [한정 증거](../evidence/module-independence-survey-20261026.md#c2-wal-wait-source)는 물리/semantic/caller 반환 phase와 source별1 PASS를 보존하며 실제 source admission은 후속이다.

@@ -1,0 +1,19 @@
+{
+  "schema": "XADB_MODULE_C2_WAL_WAIT_SOURCE_OBSERVATION_V1",
+  "status": "FROZEN_INPUTS_NOT_EXECUTION_EVIDENCE",
+  "baseline": "c4b9b6f",
+  "scope": "cfg(test) source observations only for physical WAL wait, semantic bridge wait and actual Pending parent; production bounds/charge/effect behavior unchanged",
+  "budget": {
+    "total_seconds": 600,
+    "compiler_seconds": 90,
+    "case_seconds": 30,
+    "output_bytes": 8388608,
+    "rust_min_stack": 33554432
+  },
+  "runtime_tests": [
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::owner_tests::catalog_wal_wait_source_phases_include_claim_and_condvar",
+      "reason": "New callgraph source observation includes claim/predicate/condvar/error/return carriers and reports actual Pending plus Full; no existing product behavior tests repeated"
+    }
+  ]
+}

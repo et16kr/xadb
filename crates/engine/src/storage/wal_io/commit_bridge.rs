@@ -229,3 +229,21 @@ pub(super) fn catalog_phase_sources() -> [usize; 3] {
             + scalar,
     ]
 }
+
+/// Actual wait adapter closure, separately from stage and completion.
+#[cfg(test)]
+pub(super) fn catalog_wait_source_observation<W: WriterNamespace>() -> usize {
+    use std::mem::size_of;
+    let physical = super::physical::wait_source_observations::<W>()[6].1;
+    // The physical call has ended before the semantic receipt is initialized.
+    // Keep its Result in the physical closure and the extracted DurableWal in
+    // the handoff. This max uses source initialization order, not stack reuse.
+    let call = physical + size_of::<DurableWal<'_>>();
+    let returning = size_of::<DurableWal<'_>>()
+        + size_of::<DurableCommit<'_, '_>>()
+        + size_of::<super::Result<DurableCommit<'_, '_>>>();
+    size_of::<CatalogCommitWait<'_, '_>>()
+        + 4 * size_of::<&()>()
+        + 2 * size_of::<super::WalIoError>()
+        + call.max(returning)
+}

@@ -288,3 +288,29 @@ fn catalog_aging_source_phases_include_initial_and_malformed_paths() {
     assert!(shared + full <= 65536);
     assert!(shared + resident * 2 <= 65536);
 }
+
+#[test]
+fn catalog_wal_wait_source_phases_include_claim_and_condvar() {
+    let physical = crate::storage::wal_io::physical::wait_source_observations::<port::Writer>();
+    for (name, bytes) in physical {
+        println!("WAL_WAIT {name}={bytes}");
+    }
+    let [parent, bridge, handoff, pending] =
+        create_pair::catalog_wait_source_observation::<port::Writer>();
+    let shared = source::shared_bytes::<port::Writer>();
+    let full = read::lookup_source_bytes::<port::Writer>();
+    let resident = read::resident_lookup_source_bytes::<port::Writer>();
+    println!(
+        "WAL_WAIT parent={parent} bridge={bridge} handoff={handoff} pending={pending} shared={shared} full={full} full_overlap={} two_resident_overlap={}",
+        shared + full + pending,
+        shared + 2 * resident + pending
+    );
+    let measured = |name| physical.iter().find(|(key, _)| *key == name).unwrap().1;
+    assert!(measured("ensure_durable") > measured("sync_claim"));
+    assert!(measured("wait_durable") > measured("ensure_durable"));
+    assert!(measured("wait_durable") > measured("condvar"));
+    assert!(bridge > measured("wait_durable"));
+    assert!(pending > bridge);
+    // Whether a full reader fits is a reported fact, not a relaxed criterion.
+    // Entry/exit/source-ticket carriers and the actual phase protocol remain.
+}

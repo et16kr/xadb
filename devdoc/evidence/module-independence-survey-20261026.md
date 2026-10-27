@@ -976,3 +976,23 @@ Root decoder6540B, 기존 전체 queue6736B, XOD8711B, XTS1411B, Aging11575B다.
 | r2 import-only compile | `455f41485cf72b6945defb92dd80941e8dd46aba67b1e9a3c0e45ec646a016d7` | `55d5149365497ce54567027817f5bcb2b67c1b77ba90284403bb82c6a3ddec0d` | `c3915529bc440cb915b7bc15d0d3b5b6f4e9d4ebda98c1112911f815b1738215` |
 
 공통 manifest SHA-256은 `b5c726d4ecd53f3feae1a9273bfa67104725401ba06fd7642e0a3b253c9e21b1`이다. 원 export/inventory·runner/helper·compiler·case 로그와 결과를 보존한다. 변경 없는 codec 동작·하위/전체 workspace·native 복구 시험은 반복하지 않았고 전체 fmt/Clippy·문서 verifier·push도 실행하지 않았다. `/root/module_review`가 source5629개·r1/r2 identity·compiler/ELF/case 로그와 문서6개를 읽기 전용 대조했다. decode/encode 순서 설명1곳을 고쳐 반영했으며 **이 계산 단위 D1/D2 한정 수용·미해결 필수 수정0**이다. 검토자는 수정·빌드·시험·문서 verifier를 실행하지 않았다. writer/progress 실제 phase admission·다른 entry/return carrier·Row/terminal/recovery·M4/M5는 계속 미완료다.
+
+<a id="c2-wal-wait-source"></a>
+### C2 WAL 대기의 실제 phase source 관측 — 2026-10-27
+
+기준 `c4b9b6f`, 작성·통합 `/root`, 독립 검토 `/root/module_review`다. cfg(test) 관측만 추가했다. 제품 WAL 경로·기존 DURABILITY_CALL_BYTES4096·고정 source class/charge·admission은 바꾸지 않았다. physical wait의 state/predicate/기초 I/O/claim/ensure/condvar, semantic bridge의 physical 호출/receipt 반환, 실제 Catalog Pending parent/Result 변환을 분리한다. FileIo 경계의 XADB source 값이며 backend/OS stack·RSS 추정이 아니다.
+
+wait와 ensure 각각의 UnwindFence, claim의 IoFence·slot borrow·frame은 해당 nested 호출 동안 유지한다. ensure의 append guard block은 sync_claim 전에 끝나고 claim의 file block은 마지막 append publication 전에 끝나므로 그 안쪽에만 max를 쓴다. requirement_ready의 복사 frame/prefix·pending closure·SlotState·interval/Option/오류, foundation의 short-write/Interrupted/오류 결과, condvar의 LockResult/변환/next guard를 포함한다. 물리 slot/File/AppendState backing은 원 owner의 빌림이다.
+
+r1은 test build·신규 관측1 PASS지만 bridge에서 아직 생성되지 않은 semantic receipt까지 물리 대기와 합산했다. 독립 검토가 Catalog caller의 WalResult→RetentionResult→DurableCommit 추출 handoff를 명시하도록 요구했다. r2는 실제 초기화 순서에 따라 bridge call/return을 max로 분리하고, caller handoff를 별도 상한으로 추가했다. 원 r1 결과를 지우거나 r2 증거로 재사용하지 않는다.
+
+r2 물리 관측은 state336/predicate710/foundation_io544/sync_claim1160/ensure_durable2248/condvar1046/wait_durable2808B다. Pending parent2064B, bridge3256B, handoff1216B이므로2064+max(3256,1216)=5320B다. shared22256+Full37724+5320=65300B, Resident2 합61296B를 관측했다. **236B 여유는 새 source ticket·progress 전환·입구/종료 전체 비용을 포함한 인수 결과가 아니다.** 기존 포괄 Pending 관측9120B와 생산 상계·charge는 그대로이며5320B를 실제 예약에 사용하지 않는다.
+
+[동결 manifest](../../tests/fixtures/dev3-module-c2/wal-wait-source/manifest.json)는 신규 `catalog_wal_wait_source_phases_include_claim_and_condvar`1개만 선택했다. `artifacts/module-c2-wal-wait-source-20261027-r1/`와r2는 각각 test build·exact1 PASS, 경고0이다. r2 재실행은 관측 계산/반환 handoff diff에 한정한다. production build는 `NOT_RUN_CFG_TEST_ONLY`이며 변경 없는 기존 동작·하위/전체 workspace·native/복구 시험은 반복하지 않았다. 총600초·compiler90초·case30초·출력8MiB·stack33554432B이며26.40/26.25초는 성능 결과가 아니다.
+
+| 원 증거 | source SHA-256 | result SHA-256 | ELF SHA-256 |
+| --- | --- | --- | --- |
+| r1 관측 | `2b23512bc13499235749047c76b7cefefb485995e23186aa0f08a8baceb9ec66` | `16ab99347a38f51db031d29f5f3f9931b5f35a3179783bdeee18c14680ac555f` | `ac09f831c72d5c51dccfbcba90dfbc0f4ae952e7b21bb1355914496a8a0962c5` |
+| r2 반환 경계 보완 | `c3cbb046a02e47eb1d856814d4e8a1b51416d26396edd45a17fdc72ff87a83b4` | `fc2e57394e2349cbffc90be58100ac63ab7483fc00a49a836456e55a22046241` | `1d1a3fa6318c6504ddd3631471e6985fb32d56fae02ac42c8f2e922a25bb0e6b` |
+
+manifest SHA-256은 `3dfa6a3e5db57048d15decfabaa5045c9a6690f5bb2d10b966e164a371d9ced5`다. 독립 검토자는 각 source5630개·원 identity/로그/ELF를 읽기 전용 대조하여 코드/원 증거를 한정 수용했다. 문서6개의 최종 대조까지 **이 cfg(test) 관측 단위 D1/D2 한정 수용·필수 수정0**을 수신했다. 검토자는 수정·빌드·시험·문서 verifier를 실행하지 않았다. 변경 파일 rustfmt와 diff whitespace만 확인했고 전체 fmt/Clippy·문서 verifier·push는 실행하지 않았다. 실제 writer phase/progress 예약·전체 entry/return 합산·C0–C5·M4/M5는 미완료다.

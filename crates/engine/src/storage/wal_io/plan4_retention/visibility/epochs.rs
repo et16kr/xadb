@@ -506,3 +506,9 @@ impl BoundVisibility<'_, '_, '_> {
         Ok(!catalog || u64_at(publication.epochs, 0) <= start)
     }
 }
+
+/// The extracted owned epoch packet during Pending, after prepare returned.
+#[cfg(test)]
+pub(in super::super) fn commit_retained_carrier() -> usize {
+    std::mem::size_of::<CommitEpochs>()
+}

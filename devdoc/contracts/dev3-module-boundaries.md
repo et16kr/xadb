@@ -1141,6 +1141,8 @@ rollback/terminal은 원 progress admission이 새 foreground를 닫고 이미 �
 
 후속 [Aging/Root source 계산](../evidence/module-independence-survey-20261026.md#c2-aging-source)은 실제 순차 호출·initial/malformed 경로와 반환값을 보존하여 Full charge를37724B로 계산한다. Resident16860B·shared22256B와 live/recovered 전체 peak는 유지한다. source 관련3 PASS 뒤 import-only compile을 분리 기록했다. shared+Full+Pending wait는69100B로 아직3564B 초과하며 전체 admission은 미완료다.
 
+[WAL wait phase 관측](../evidence/module-independence-survey-20261026.md#c2-wal-wait-source)은 cfg(test)에서 물리 호출·semantic 반환·caller Result 변환의 수명을 구별한다. Pending5320B와 shared+Full 합65300B를 관측했지만 기존 생산 상계/charge를 변경하지 않았고 신규 ticket/progress·entry/exit 전체 공급 전이다. 따라서236B 여유를 실제 Full/Pending admission 증거로 올리지 않는다.
+
 전체 설계 상계는 metadata `73856+65536+49152=188544≤196608`, original flush를 더한 whole `254080≤262144`다. 이 admission·동시 합 검산은 **새 C1/C2/C3 공급**이며 기존 active.max 기반 source 결과로 이미 구현됐다고 하지 않는다. header의 실제 byte 배치와 source charge의 측정·실패/정리 경로는 C1/C4 인수에 포함한다.
 
 <a id="common-deliveries"></a>

@@ -406,3 +406,110 @@ impl<'m, W: WriterNamespace> WalRuntime<'m, W> {
         Ok(observation)
     }
 }
+
+/// Source-value census of wait_durable only. Stage retains its separate bound.
+/// This observes XADB carriers at the FileIo boundary, not backend/OS stack or
+/// resident File/AppendState/slot backing. No production admission uses it yet.
+#[cfg(test)]
+pub(super) fn wait_source_observations<W: WriterNamespace>() -> [(&'static str, usize); 7] {
+    use crate::storage::session_fence::UnwindFence;
+    use std::{
+        mem::size_of,
+        sync::{LockResult, WaitTimeoutResult},
+    };
+    type State<'a> = MutexGuard<'a, AppendState<'a>>;
+    type Wait<'a> = (State<'a>, WaitTimeoutResult);
+    // All error constructors, is_fenced/notify and checked interval returns.
+    // These borrowed scalars are nested, never a second runtime or mutex.
+    let checks = 6 * size_of::<&()>()
+        + size_of::<(Phase, Cause, foundation::error::Effect)>()
+        + 2 * size_of::<WalIoError>()
+        + size_of::<std::result::Result<u64, Cause>>()
+        + 2 * size_of::<Option<u64>>()
+        + size_of::<(u64, usize, bool)>();
+    let state = size_of::<State<'_>>()
+        + size_of::<LockResult<State<'_>>>()
+        + size_of::<Result<State<'_>>>()
+        + checks;
+    // requirement_ready keeps frame/prefix while pending_valid takes a copied
+    // pending frame. Include match copies, closure borrow, ranges and results.
+    let predicate = 3 * size_of::<&()>()
+        + 2 * size_of::<WalFrameLocation>()
+        + size_of::<WalPrefix>()
+        + size_of::<SlotState>()
+        + size_of::<&WalPrefix>()
+        + size_of::<std::ops::RangeInclusive<usize>>()
+        + size_of::<[bool; 6]>()
+        + size_of::<Result<bool>>()
+        + checks;
+    // foundation::write_all_at / range / Error::io and sync. No page buffer is
+    // copied. The FileIo adapter's original backing belongs to its own owner.
+    let io = size_of::<(&mut W::File, &[u8], u64, usize, usize)>()
+        + size_of::<(&[u8], u64)>()
+        + 2 * size_of::<std::io::Result<usize>>()
+        + size_of::<std::io::Result<()>>()
+        + 2 * size_of::<std::io::Error>()
+        + 2 * size_of::<foundation::Error>()
+        + 2 * size_of::<foundation::Result<()>>()
+        + size_of::<(foundation::ErrorCode, &str, std::io::ErrorKind)>()
+        + size_of::<Option<u64>>()
+        + size_of::<[u64; 3]>()
+        + checks;
+    let file = size_of::<MutexGuard<'_, W::File>>()
+        + size_of::<LockResult<MutexGuard<'_, W::File>>>()
+        + size_of::<Result<MutexGuard<'_, W::File>>>()
+        + size_of::<u64>()
+        + size_of::<std::result::Result<u64, u64>>()
+        + io;
+    // The file block ends before state()/publication. IoFence and the input
+    // interval survive both, including attempted-effect error exits.
+    let sync_parent = 2 * size_of::<&()>()
+        + size_of::<WalFrameLocation>()
+        + size_of::<IoFence<'_>>()
+        + size_of::<Result<WalSyncObservation>>();
+    let sync = sync_parent
+        + file.max(state + size_of::<SlotState>() + size_of::<WalSyncObservation>() + checks);
+    let claim = size_of::<(&mut [u8; MAX_FRAME_BYTES], WalFrameLocation)>();
+    let ensure_parent = 2 * size_of::<&()>()
+        + size_of::<UnwindFence<'_>>()
+        + size_of::<Result<EnsureDurable<'_>>>();
+    let ensure_inspect = state
+        + predicate
+            .max(2 * claim + size_of::<Option<&mut [u8; MAX_FRAME_BYTES]>>() + checks)
+            .max(size_of::<DurableWal<'_>>() + size_of::<EnsureDurable<'_>>() + checks);
+    // The append guard block has ended here. Tuple/fields remain in the
+    // caller while sync_claim runs; returned observation is counted as well.
+    let ensure_sync = claim
+        + sync
+        + size_of::<WalSyncObservation>()
+        + size_of::<DurableWal<'_>>()
+        + size_of::<EnsureDurable<'_>>()
+        + checks;
+    let ensure = ensure_parent + ensure_inspect.max(ensure_sync);
+    let waiting = state
+        + predicate
+            .max(
+                size_of::<LockResult<Wait<'_>>>()
+                    + size_of::<Result<Wait<'_>>>()
+                    + size_of::<Wait<'_>>()
+                    + size_of::<State<'_>>()
+                    + size_of::<std::time::Duration>()
+                    + checks,
+            )
+            .max(size_of::<DurableWal<'_>>() + checks);
+    // wait's UnwindFence remains during ensure's separate UnwindFence.
+    // The ensure match temporary ends before the AwaitWalOwner branch.
+    let wait = 2 * size_of::<&()>()
+        + size_of::<UnwindFence<'_>>()
+        + size_of::<Result<DurableWal<'_>>>()
+        + (ensure + size_of::<EnsureDurable<'_>>() + size_of::<DurableWal<'_>>()).max(waiting);
+    [
+        ("state", state),
+        ("predicate", predicate),
+        ("foundation_io", io),
+        ("sync_claim", sync),
+        ("ensure_durable", ensure),
+        ("condvar", waiting),
+        ("wait_durable", wait),
+    ]
+}

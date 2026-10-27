@@ -29,6 +29,9 @@ pub(super) use epochs::{
     transition_source_bytes as epoch_transition_source_bytes,
 };
 
+#[cfg(test)]
+pub(super) use epochs::commit_retained_carrier as epoch_commit_retained_carrier;
+
 #[path = "visibility/authority.rs"]
 mod authority;
 #[path = "visibility/catalog_retirement.rs"]

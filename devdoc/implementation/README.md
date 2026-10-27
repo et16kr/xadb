@@ -1,5 +1,7 @@
 # 현재 구현
 
+2026-10-27 [C2 WAL wait source 관측](../evidence/module-independence-survey-20261026.md#c2-wal-wait-source): cfg(test)의 실제 호출/반환 수명을 분리해 Pending5320B·Full 합65300B를 관측했다. source별 신규1 PASS이며 제품 charge/상계는 유지한다. 실제 phase admission·전체 entry/exit·M4/M5는 미완료다.
+
 2026-10-27 [C2 Aging/Root source 계산](../evidence/module-independence-survey-20261026.md#c2-aging-source): 실제 호출 수명과 malformed 경로를 반영해 Full charge37724B를 검산했다. source 관련3 PASS와 후속 import-only compile을 구분한다. Full/Pending 합69100B·전체 admission 및 M4/M5 미완료다.
 
 2026-10-27 [C2 source 진입 수명 수정](../evidence/module-independence-survey-20261026.md#c2-source-entry): 원 progress 표시를 source 예약 시도 전부터 유지하고 실패 출구에서 checked 정리한다. production/test build·선택5 PASS다. 전체 entry/return carrier·writer/progress 합산과 M4/M5는 미완료다.
