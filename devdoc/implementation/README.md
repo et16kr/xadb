@@ -1,6 +1,8 @@
 # 현재 구현
 
-2026-10-27 [Root3 순수 codec](../evidence/module-independence-survey-20261026.md#row-root3-codec): exact version3/row_high와 초기 Free Job3 commitment의 raw cell을 구현했다. r1 첫2/r2 남은2 PASS·원 FAIL을 보존하며 독립 D1/D2 한정 수용이다. current Profile2는 유지한다. occupied Job3/census·page wrapper·issuer·Profile3/base4/actual Row 복구·M4/M5는 미완료다.
+2026-10-27 [Job3 순수 cell·census](../evidence/module-independence-survey-20261026.md#row-job3-census): exact Job3/다중 root/actor·Terminal·동일 table·Root commitment/debt 검산을 구현했다. r1 production/test build·신규11 PASS이며 독립 D1/D2를 한정 수용했다. current Profile2와 기존 증거를 유지하며 actual graph/page/Profile3/base4/Row A/B·M4/M5는 미완료다.
+
+2026-10-27 [Root3 순수 codec](../evidence/module-independence-survey-20261026.md#row-root3-codec): exact version3/row_high와 초기 Free Job3 commitment의 raw cell을 구현했다. r1 첫2/r2 남은2 PASS·원 FAIL을 보존하며 독립 D1/D2 한정 수용이다. current Profile2는 유지한다. 당시 단위에 포함하지 않은 occupied Job3/census는 [후속 공급](../evidence/module-independence-survey-20261026.md#row-job3-census)에 기록한다. page wrapper·issuer·Profile3/base4/actual Row 복구·M4/M5는 미완료다.
 
 2026-10-27 [C3 Prepared 경계](../evidence/module-independence-survey-20261026.md#c3-prepared): 실제 정의·private field를 apply root로 이동하고 canonical disk 타입을 공급한다. 원 검산·효과/field 배치는 유지하며 build2/compiler4 PASS·독립 D1/D2 한정 수용이다. writer/전체 source·Row/복구·C3 전체·M4/M5는 미완료다.
 

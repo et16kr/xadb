@@ -1371,3 +1371,16 @@ r2 test build·남은2 selector PASS이며 r1의 첫2와 합쳐 신규4개의 so
 | r2 | `1c5b45e91a854955f3addd78aa54cb1e29e77531c4298eab08c0cfd22b72bb68` | `6b5f202f31f695e891a45086b57c29ae45607f03012a752bf168a39c03feb89d` | `6e561e3623e973c9dea0ec20d69dd9de0e3195274b942b7709dc2455755278e2` |
 
 r1 source5686파일·ELF `cf28092531fe3749d19db1a0e9bbd81e957e987a1485534be9eac43c7f545a5c`·31.42초다. r2 source5686파일·ELF `c1b8f5184b54dfb238c3d344b47e1ef858ba30ae13b9b8762bb92af30079d37a`·26.66초다. 원 `artifacts/module-row-root3-20261027-r{1,2}/`에 immutable source/inventory·manifest·runner/helpers·ELF·build/case logs를 보존한다. 시간은 성능 결과가 아니다. 변경 rustfmt/diff whitespace만 확인했고 전체 fmt/Clippy·문서 verifier·push는 실행하지 않았다. 독립 D1/D2는 source/원 결과와6문서를 대조해 한정 수용했으며 필수 수정은0이다. 검토자는 source5686파일 전부/inventory/fingerprint·manifest/runner/helpers/ELF/log와 독립 literal3의 전 바이트·hash를 검산했고 제품·fixture 수정/실행·빌드·시험·verifier는 실행하지 않았다.
+
+
+<a id="row-job3-census"></a>
+### Row Job3의 exact cell·64행 census — 2026-10-27
+
+기준 `2c9964d`, 작성/통합 `/root`, 독립 검토 `/root/module_review`. [owner 구체화](../contracts/dev3-module-consumers.md#job3-census)에 따라 별도 exact Job3 decoder/encoder·scope/h recipe 관찰·다중 Row root/actor·unique identity·Terminal/시간 관계·shared table·Root commitment/aggregate를 구현했다. 순수 cell 검산이며 actual Status/Undo/descriptor/allocator/history·page wrapper·issuer·source admission·current Profile3/base4/Row 실행은 미공급이다. 기존 Profile2 및 Root2/Root3 codec 본문은 바꾸지 않았다.
+
+사전 독립 검토에서 same-table Catalog Retained도 미커밋이면 허용할 수 없음을 확인했고 committed terminal/RowReserve LSN 관계를 추가했다. 원 초안의 RootView와 별도 namespace 불일치, Commit 뒤 CLR로 해석되던 positive fixture를 수정하고 namespace 결합·Retained/Prune/CLR/cleanup 시간 표를 동결했다. 테스트 실행 실패를 없애기 위한 사후 기준 변경이 아니며 아래 첫 실행 전 보완이다.
+
+[사전 manifest](../../tests/fixtures/module-row-format/job3/manifest.json)에 신규11 selector·독립 Python author와31 cell/4 complete bank/Root/aggregate literals·index의 hash를 고정했다. 정수 offset/표준 SHA-256으로 작성하며 제품 encoder/decoder/기존 author를 호출하지 않는다. 모든 occupied budget byte30×640 변형, version/identity/시간/alias/namespace 및 actor/census 반례는 해당 신규 코드 검산이다. negative bank는 별도 산식으로 commitment를 정상화하여 hash 실패가 의미 관계 검사를 대신하지 않게 한다. 총300초/build90초/case30초/출력8MiB/stack33554432B, compiler probe0이다. 기존 Root2/완료 standalone Root3/하위 시험은 변경이 없어 NOT_REPEATED다. 실행 결과·최종 독립 검토는 아래에 기록한다.
+
+
+r1 production/test build·신규 exact runtime11 PASS, build 경고0이다. 원 `artifacts/module-row-job3-20261027-r1/`에 5696파일 immutable source/inventory·manifest·runner/helpers·ELF·원 build/case logs를 보존한다. source `bd1c630474fdc2b8dd18bb94e0b7dc0f49bc5879e328c0e296562a4b09eb8616`, manifest `555708a488d8371bbe2b4750dbb9e4dee5a4c5119ea7481841cac87b5e66cc19`, ELF `40487659b016114c34f1cd614762b99b132c860421de663a6eb00186e1d74054`, result `1c4153182d2026360de53c684b4ba039736eafe10bcfc0632f109406d12eef9e`다. 실제32.34초는 성능 결과가 아니다. 기존 Root2/완료 standalone Root3/하위 시험을 반복하지 않았으며 생략을 새 PASS로 표시하지 않는다. 변경 rustfmt·diff whitespace만 확인했고 전체 fmt/Clippy·문서 verifier·push는 실행하지 않았다. 독립 D1/D2는 한정 수용했으며 필수 수정은0이다. 검토자는 source5696파일 전체/current 일치·fingerprint/inventory·manifest/input/helpers/runner·ELF·13행(build2/runtime11) 원 로그/경고0·6문서/신규10+수정1 경로를 대조했다. author를 실행/import하거나 제품 encoder를 사용하지 않고 표준 offset/SHA 산식으로31 cell·4×64 Job bank·Root4·aggregate4의 전 바이트를 독립 재구성해 일치를 확인했다. README의 직전 Root3 요약은 당시 단위 미포함과 후속 Job3 공급 링크로 구별했다. 검토자는 제품/fixture 수정·빌드·시험·verifier를 실행하지 않았다.

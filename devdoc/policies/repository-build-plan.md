@@ -739,3 +739,8 @@ apply root의 private receipt·actual terminal 자손과 Busy 시험·manifest/c
 ### Row Root3 순수 cell codec
 
 별도 `retention_page::row`와 root/test, 독립 author/literal3/선택 manifest를 JSON `dev3_module_row_root3`에 등록한다. 원 모듈 등록 외 existing codec/current dispatcher의 변경은 없다. source roots/package/dependency는 유지하며 [실제 선택 증거](../evidence/module-independence-survey-20261026.md#row-root3-codec)를 current Profile3/Row recovery 공급과 구별한다.
+
+
+### Row Job3 순수 cell·census
+
+`retention_page/row/{job,census,job_tests}.rs`와 독립 author/literal/index/manifest를 JSON `dev3_module_row_job3`에 등록한다. 원 row 모듈만 연결하며 기존 Root/Job2 또는 current 선택 본문은 바꾸지 않는다. source roots/package/dependency를 유지한다. [선택 증거](../evidence/module-independence-survey-20261026.md#row-job3-census)는 actual graph·source admission·Profile3/base4/Row 실행 증거가 아니다.
