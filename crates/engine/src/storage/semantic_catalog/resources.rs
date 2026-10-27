@@ -715,6 +715,22 @@ pub(crate) fn schema_source_bytes() -> usize {
     layout().max(extraction)
 }
 
+/// Codec-only bounds for original Catalog reads. No LayoutView, native WAL
+/// layout, image producer or transition validator is entered by these calls.
+/// The Undo bound keeps malformed CatalogValue before-image schema parsing.
+pub(crate) fn catalog_read_codec_bytes() -> usize {
+    catalog_codec()
+}
+pub(crate) fn status_read_codec_bytes() -> usize {
+    status_codec()
+}
+pub(crate) fn undo_read_codec_bytes() -> usize {
+    undo_codec()
+}
+pub(crate) fn page_read_codec_bytes() -> usize {
+    page_codec()
+}
+
 /// Layout parsing without the unrelated semantic transition/image producer.
 pub(crate) fn layout_source_bytes() -> usize {
     layout()

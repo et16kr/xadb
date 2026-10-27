@@ -1,0 +1,141 @@
+{
+  "schema": "XADB_MODULE_C2_CATALOG_RESIDENT_MAIN_V1",
+  "status": "FROZEN_INPUTS_NOT_EXECUTION_EVIDENCE",
+  "scope": "Resident Catalog lookup only; writer/progress and other operations are not yet included in the complete short source aggregate",
+  "budget": {
+    "total_seconds": 600,
+    "compiler_seconds": 90,
+    "case_seconds": 30,
+    "output_bytes": 8388608,
+    "rust_min_stack": 33554432
+  },
+  "runtime_tests": [
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::source::tests::fixed_resident_class_admits_two_and_never_escalates",
+      "reason": "new fixed class, census, mixed capacity and exactly owned return",
+      "env": {}
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::resident_read::resident_snapshot_visibility_has_no_io",
+      "reason": "new resident allocator/status/undo path, active and committed snapshot visibility, borrowed Found result, no file events",
+      "env": {}
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::resident_read::nonresident_undo_returns_busy_before_full_retry",
+      "reason": "new resident nonresident outcome, no I/O or retained charge/ref/pin, full retry of same snapshot after cleanup",
+      "env": {}
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::resident_read::two_resident_operations_hold_separate_fixed_charges",
+      "reason": "new actual overlapping resident operations, two original flags and byte loans with independent checked return",
+      "env": {}
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::resident_read::resident_corruption_remains_fatal_without_io",
+      "reason": "new resident source typed Status/Undo corruption remains fatal and preserves charge behind fence",
+      "env": {}
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::resident_faults::nonresident_status_and_later_status_prevent_partial_success",
+      "reason": "new complete resident Status scan: missing original Status and missing later allocated Status after exact hit, same-snapshot Full retry",
+      "env": {}
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::resident_faults::checksummed_status_absence_and_duplicate_are_fatal",
+      "reason": "new complete resident Status scan rejects checksum-valid exact-ref absence and cross-page duplicate",
+      "env": {}
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::resident_faults::allocator_flush_after_copy_is_retryable_and_releases_charge",
+      "reason": "new allocator stamp recheck at exact paused cut after copy; actual allocator flush clears recLSN with no mapping change; no reader I/O",
+      "env": {}
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::resident_faults::selected_membership_corruption_is_not_busy",
+      "reason": "fixed Catalog and exact resolved Txn/U mappings cannot become Busy on checksummed allocator membership corruption",
+      "env": {}
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::source_entry::resident_drain_waits_before_source_charge",
+      "reason": "new resident begin_class protects reservation attempt from Drain",
+      "env": {}
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::source_entry::resident_failed_source_returns_progress",
+      "reason": "new resident reservation failure preserves fence and returns original progress",
+      "env": {}
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::source_return::resident_drain_waits_until_source_return",
+      "reason": "new resident class holds Drain after refs return",
+      "env": {}
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::source_return::resident_fenced_return_preserves_source",
+      "reason": "new resident fenced final return retains charge while releasing progress",
+      "env": {}
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::source_return::resident_found_keeps_progress_until_return",
+      "reason": "new resident Found decoding retains original progress and source",
+      "env": {}
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::source_return::resident_unwinding_found_preserves_source",
+      "reason": "new resident final return unwind preserves charge/fence and releases progress",
+      "env": {}
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::source::tests::catalog_class_uses_current_types_and_recovered_retained_owner",
+      "reason": "changed fixed class selector and full/resident census preserve full charge and original shared owner",
+      "env": {}
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::source_entry::drain_waits_for_entry_before_source_charge",
+      "reason": "changed common begin_class and test mode dispatch retain full entry Drain",
+      "env": {}
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::source_return::found_decode_keeps_progress_until_source_return",
+      "reason": "changed common class dispatch and test mode helper retain full Found return",
+      "env": {}
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::commit_concurrency::catalog_mt03_pending_reader_loads_undo",
+      "reason": "changed Full branch must still resolve and LOAD original Undo under Pending",
+      "env": {}
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::read_boundary::dirty_victim_returns_flush_then_retries_same_snapshot",
+      "reason": "changed Full source/status/undo branches preserve FlushRequired cleanup and retry",
+      "env": {}
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::read_boundary::captured_undo_read_error_preserves_fatal_cause",
+      "reason": "changed Full source/status/undo branch preserves fatal I/O error",
+      "env": {}
+    }
+  ],
+  "baseline_commit": "a7fe5e36748e7b900963f31d839db9d03a6c1556",
+  "adapted_from": [
+    "788702ca3a8a1b428251194d06195087f6e7c060"
+  ],
+  "changed_paths": [
+    "crates/engine/src/storage/semantic_catalog.rs",
+    "crates/engine/src/storage/semantic_catalog/resources.rs",
+    "crates/engine/src/storage/wal_io/plan4_apply/source.rs",
+    "crates/engine/src/storage/wal_io/plan4_apply/source_tests.rs",
+    "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory.rs",
+    "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/read_boundary.rs",
+    "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/resident_faults.rs",
+    "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/resident_read.rs",
+    "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/source_entry.rs",
+    "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/source_return.rs",
+    "crates/engine/src/storage/wal_io/plan4_retention/read.rs",
+    "crates/engine/src/storage/wal_io/plan4_retention/read/lookup.rs",
+    "crates/engine/src/storage/wal_io/plan4_retention/read/operation.rs",
+    "crates/engine/src/storage/wal_io/plan4_retention/read/resident.rs",
+    "crates/engine/src/transaction/concurrency_catalog_test_support.rs"
+  ],
+  "excluded": "No unchanged ledger fault-suite repetition, physical Commit/recovery/native process inventory, whole workspace/wrappers; no writer/progress/Row supply or performance claim"
+}

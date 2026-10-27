@@ -952,3 +952,63 @@ charge는41552→41576B이며 실제 ticket/carrier를 포함한다. 기존 memo
 최종 **독립 D1/D2 한정 수용·미해결 필수 수정0·차단0**이다. 원 core의 한 번 계수, 예약 시도부터 final decode/checked source 반환까지의 Drain 수명, 용량 거절·원 fence/미해결 charge 보존, Found 기대값 정정·원 FAIL/abort 및 source별14+7의 구분을 수용했다. 앞선 byte admission 미공급 문구는 당시 상태와 이번 full 조회 부분공급으로 구별하도록 정리했고 최종 검토가 이 문구를 포함한다. 전체 writer/progress/entry 합·resident/Row·M4/M5 미완료는 해소하지 않는다.
 
 `artifacts/module-c2-short-source-main-review-20261027/`에 preview/rules/checklist/identity-audit/report를 보존했다. report SHA-256은 `64d864f446e348d8329b75477884619375c2d326cb7de8a9de18574de6349ae5`, checklist는 `1f74bba07dd4093bdfa8b0a1f7f733ec89f2bca1acfbcd867abcab821d28ad22`이다. 검토자는 제품/문서 수정·빌드·시험·자동 문서 검사를 실행하지 않았고 `/root`가 이 한정 수용을 반영한다.
+
+
+<a id="c2-resident-main"></a>
+### C2 상주 Catalog 고정 class의 main 수신 — 2026-10-27
+
+사용자의 “진행 위치 확인 후 다음 한 단계·OCR delegate 리뷰 및 수정·commit” 요청으로 clean `main`·`a7fe5e36748e7b900963f31d839db9d03a6c1556`에서 시작했다. M0–M3는 완료·채택, M4는 full Catalog short 예약과 원 Drain 수명까지, M5는 A/B 순수 본문 착수까지 수신한 상태였다. 이번 종료 범위는 **상주 Catalog 조회의 고정 source class와 그 진입/반환 수명**이다. 별도 `codex/module-independence-finish`·`76f91e0`의 전체 C2/C3·Row 작업을 main 완료로 합치지 않는다. 해당 브랜치의 `788702c`를 읽고 필요한 제품/시험 코드만 현재 main에 적응했다. 다른 worktree 수정·병합·세션 중지·서비스/호스트 재시작은 없다.
+
+`D3-MODULE-CATALOG-RESIDENT-MAIN-001` · D2 · **ACCEPTED / C2 한정 부분공급·선택 검증 완료**. 구현·계약·통합 `/root`, 독립 검토 `/root/module_step_review`. 사용자 요청과 DP01의 기존 위임, [§6.9](../contracts/dev3-module-boundaries.md#operation-source-admission)의 class 고정·65536B 한도를 적용한다. 원 계획/형식·격리·복구 불변식을 대체하지 않는 C2 구체화다. 참고 commit의 과거 시험/검토 결과는 이번 main의 실행 증거로 승계하지 않는다.
+
+#### 선택과 원 소유·수명
+
+- 새 동기 `lookup_catalog_resident`는 기존 Catalog 제품 본문을 호출하며 private ticket의 class만 고정한다. 원 allocator를 기존425984B caller loan에 복사하고, 전체 할당 Status의 exact reference 유일성과 Undo 위치를 원 guard로 확인한다. 새 page backing·directory·authority·crate/dependency를 만들지 않는다.
+- WAL replay·durability wait·reader file·LOAD에 진입하지 않는다. 필요한 페이지의 비상주 또는 정상 allocator stamp 변화는 refs/pin/charge를 정리한 뒤 Busy다. 같은 snapshot으로 Full을 새로 호출할 수 있으나 살아 있는 operation의 charge를 늘리지 않는다. stable source에서 exact-ref 부재/중복·손상은 Fatal/fence와 미해결 charge를 보존한다.
+- main의 progress 진입 → source 예약 → refs/pin과 refs 정리 → decode/Result → source 반환 → progress 반환 순서를 유지한다. 참고 commit의 오래된 예약 전 progress 검사/예약 뒤 admission 순서는 가져오지 않았다. 원 core816B도 main의 shared retained 한 곳에 유지한다.
+- Full만 유지하는 대안은 동시 읽기의 유한 작은 class를 공급하지 못한다. 상주 조회 중 자동 Full 전환은 고정 예약과 정리 경계를 어기므로 제외한다. writer/progress 전체 예약·caller-retainable statement/Row factory는 이번 범위 밖이다. class가 I/O로 확대되거나 source 수명/소유권이 바뀌면 고정 charge와 해당 경계를 재검토한다.
+
+#### 실제 diff와 실행 전 선택
+
+[선택 manifest](../../tests/fixtures/dev3-module-c2/resident-read/manifest.json)에 baseline·참고 commit·Rust15파일과 각 exact selector의 변경 관계를 고정했다. 총600초·compiler90초·case30초·로그8MiB·test stack32MiB·각 selector1회다. production check와 test `--no-run`은 각각 빌드 검증이며 runtime과 구분한다.
+
+| 선택 | 변경 계약·정답 근거 |
+| --- | --- |
+| resident 신규9개 | 고정 class/혼합 Capacity·Memory/Linux 타입 상계, actual Active/Commit 전후 snapshot과 literal T/i/Int64, 비상주 Status/후속 Status/Undo의 Busy 및 같은 snapshot Full 재시도, 두 실제 thread의 독립 charge 반환, checksum/부재/중복/선택 뒤 membership 손상 Fatal, allocator flush의 정상 stamp 변화 |
+| resident 수명 신규6개 | source 예약 전 Drain 및 fence 실패, refs0 뒤 Drain 정상/fence, Found 최종 decode 뒤 정상/unwind. 원 hook은 관측만 하며 권한을 발급하지 않음 |
+| 영향 Full6개 | 변경 class selector/source 계산, 공통 begin_class와 시험 mode helper의 Full 진입·Found 반환, Pending Undo LOAD, FlushRequired 정리/재시도, fatal I/O 원인 유지 |
+
+제품 WAL/Commit/recovery 구현과 wire는 바뀌지 않아 완료한 물리 Commit·복구/native process inventory·무변경 ledger 실패 suite·전체 workspace/하위 wrapper는 반복하지 않았다. Linux 항목은 **실제 타입 상계**이며 native I/O 실행이 아니다. 과거 source별 PASS/FAIL/UNKNOWN과 DEV2·DEV3/S5 미완료를 유지한다.
+
+#### 실행 결과와 source 상계
+
+`r1`에서 production/test build PASS, 선택 runtime **21개 모두 각1회 PASS**, 실패/중단0이다. 변경하지 않은 코드의 완료 시험을 통합 단계라는 이유로 반복하지 않았다. 경과62.55초는 검증 실행 시간이며 성능 인수/개선 수치가 아니다.
+
+| source 계산 | memory / Linux 타입(B) |
+| --- | --- |
+| fresh/recovered 중 큰 shared retained, 원 core816 포함 |23072 / 23208|
+| Resident 고정 charge |16860 / 16860|
+| shared + Resident 두 개 |56792 / 56928 ≤65536|
+| Full 고정 charge |41576 / 41576|
+| shared + Full 하나 |64648 / 64784 ≤65536|
+
+begin/begin_resident → begin_class의 class 값과 반환 carrier를 entry source에 추가했고, entry/실제 codec·관측·반환의 배타 phase만 max로 계수한다. 위 합은 source/type 수명의 보수 상계이며 RSS·ABI stack·성능·전체 writer/reader/entry 동시 합의 실측이 아니다. Memory에서 Full+Resident는81508B이며 `shared+resident+full>65536`을 actual 타입 계산과 원 ledger Capacity/보유값 불변 시험으로 확인했다.
+
+수정 Rust15파일에 파일별 rustfmt를 적용하고 `git diff --check`를 통과했다. 자동 문서 verifier·전체 fmt/Clippy·push는 실행하지 않았으며 push 시 기존 훅을 적용한다. 신규 문서 없이 기존 계획·계약·증거/구현 색인과 build JSON의 실제 경로를 함께 갱신한다.
+
+원 source export/inventory·manifest·runner·compiler diagnostics·ELF·각 stdout/stderr·result는 `artifacts/module-c2-resident-main-20261027-r1/`에 보존한다.
+
+- source SHA-256: `f12407da9a9f5731d7596eeb454028408ec4f7f46a40f682eda5ef42112841db`
+- manifest SHA-256: `9bcec2862cc9b79b6930b9d6c7ed5862518b64ea1fa5c653dcc87f374cb154d4`
+- runner SHA-256: `16fa11cd9551cc3f783fac56fd1197837e52a56abf823b6a2d5bbe1b9b3c5913`
+- source inventory SHA-256: `4c1045bd86481c92f0dbb3f169854e64f8da3a38e997227fd3067bae71dcc4f9`
+- ELF SHA-256: `02386d9523c3ac1e3ff43f734137dea9f3a5ebd4ba7b56c4ae5fc1035431d74b`
+- result SHA-256: `c4744db11c8ae50cdab47dd88c20b8110786ff75dbb8a1fc00bd95d22fd4d90e`
+
+#### OCR delegate 독립 검토
+
+`/root/module_step_review`가 `ocr delegate preview --format json`·`ocr delegate rule --format json`으로 대상/규칙을 확인했다. OCR 대상16개와 기본 제외7개도 직접 읽어 **전체23파일 검토·누락0·100%**이며 최종 **독립 D1/D2 한정 수용·미해결 필수 수정0·차단0**이다. 원 source5636파일·source/manifest/runner/ELF/result·compiler2 및 runtime21개 로그 identity와 `--exact` 1개 PASS, Catalog BEGIN/PASS 일치를 확인했다. 현재 code/fixture와 frozen export 차이0이며 검토자는 제품·문서 수정, 빌드·시험·문서 verifier를 실행하지 않았다. `/root`가 이 한정 수용을 반영했다.
+
+리뷰 과정에서는 원 full 부분공급 시점의 “resident 미공급”을 현재 상태와 혼동하지 않도록 계약 문구를 정리했다. 제품 수정이 필요한 결함은 발견되지 않았다. 검토자의 identity 감사 첫 시도는 Path 대신 문자열 정렬을 사용해 fingerprint assertion이 실패했고, 기존 원 도구의 Path 정렬로 바로잡아 일치를 확인했다. 이 검토 스크립트 오류는 제품/시험 FAIL이 아니며 원 r1 결과를 재실행하거나 바꾸지 않았다.
+
+`artifacts/module-c2-resident-main-review-20261027/`에 preview/rules/checklist/identity-audit/report를 보존했다. report SHA-256은 `71226df819b56585b4f7e7151a344a83e7ad026fbd46eefb36daa0573f0a301a`, checklist는 `d94dd99914caa48711f6504f1fd60b1882b5e47915a018fbfc33971d63ed2211`이다. 이번 부분공급은 writer/progress·전체 entry/return 동시 합, actual C+A/C+B 및 합류·MI01–06·M4/M5 미완료를 해소하지 않는다.

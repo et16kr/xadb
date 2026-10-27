@@ -1,5 +1,7 @@
 # 현재 구현
 
+2026-10-27 [C2 상주 Catalog 고정 class](../evidence/module-independence-survey-20261026.md#c2-resident-main): 원 allocator/Status/Undo의 I/O 없는 조회와 고정 source 예약을 연결했다. main의 Drain 수명·core 회계를 유지하며 선택21개 각1회 PASS, 독립 OCR 전체23파일 한정 수용·필수 수정0이다. 두 상주 조회 source 합은 memory56792B/Linux 타입56928B이며 전체 writer/progress admission·M4/M5는 미완료다.
+
 2026-10-27 [C2 full Catalog short 예약](../evidence/module-independence-survey-20261026.md#c2-short-source-main): main의 원 isolation ledger에 고정 바이트 예약을 연결하고, 예약 시도부터 최종 decode/반환까지 원 Drain 표시를 유지한다. source별 선택14+7개 PASS·원 Found 시험 FAIL을 보존했고 OCR 전체19파일·독립 D1/D2 한정 수용·필수 수정0이며 전체 동시 admission·M4/M5 인수는 미완료다.
 
 2026-10-27 [C2 공통 core 계수와 복구 반환 수명](../evidence/module-independence-survey-20261026.md#c2-shared-core): main의 fresh/세션/복구 공통 보유분에 원 core816B를 한 번 포함했다. native 타입의65563B 초과를 실제 cursor helper 수명으로 정리해65512B를 확인했고 source별8개 선택 사례의 최종 적용 결과를 검증했다. OCR 전체16파일 검토와 계약 문구1건 정정 뒤 독립 D1/D2 한정 수용·필수 수정0이다. 원 Capacity·fixture·runner FAIL과 전체 aggregate/M4/M5 미완료를 보존한다.

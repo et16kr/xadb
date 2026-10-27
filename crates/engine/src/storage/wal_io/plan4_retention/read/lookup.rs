@@ -54,6 +54,22 @@ impl<'b, 'a, 's, 'c, 'p, 'd, 'm, 'w, W: WriterNamespace>
         crate::storage::catalog::read::lookup(operation, object, cursor)
     }
 
+    /// Same Catalog semantics with a fixed resident-only source class. A
+    /// nonresident dependency returns Busy after cleanup; callers may retry
+    /// the full entry with the same snapshot. No in-operation escalation.
+    pub(in crate::storage) fn lookup_catalog_resident<'q>(
+        &self,
+        owner: &mut Owner<'c, 's>,
+        snapshot: &SnapshotGuard<'_, '_, 'c, 's>,
+        object: ObjectId,
+        cursor: &mut Plan4ResidencyCursor,
+        private: &'q mut [u8; 425_984],
+    ) -> Result<CatalogLookupStep<'q>> {
+        let operation =
+            super::operation::CatalogReadOperation::begin_resident(self, owner, snapshot, private)?;
+        crate::storage::catalog::read::lookup(operation, object, cursor)
+    }
+
     pub(super) fn lookup_resident(
         &self,
         owner: &mut Owner<'c, 's>,
@@ -196,6 +212,12 @@ impl<'b, 'a, 's, 'c, 'p, 'd, 'm, 'w, W: WriterNamespace>
 /// and the separately budgeted 425984-byte caller loan. Actual source guards
 /// end before Status/Undo resolution; no physical Catalog latch survives I/O.
 pub(in super::super) fn source_bytes<W: WriterNamespace>() -> usize {
+    lookup_source_bytes::<W>(false)
+}
+pub(in super::super) fn resident_source_bytes<W: WriterNamespace>() -> usize {
+    lookup_source_bytes::<W>(true)
+}
+fn lookup_source_bytes<W: WriterNamespace>(resident: bool) -> usize {
     use crate::storage::{
         page::{PageHeader, PageView},
         transaction_record::TransactionStatus,
@@ -233,15 +255,19 @@ pub(in super::super) fn source_bytes<W: WriterNamespace>() -> usize {
         // allocation envelope, occupied Status decode and callback returns.
         + super::undo_read_source_bytes()
         + history::runtime::lookup_source_bytes();
-    let location = location_held
-        + history::source_bytes::<W>()
-            .peak
-            .max(
-                history::runtime::lookup_source_bytes()
-                    + crate::storage::wal_io::DURABILITY_CALL_BYTES,
-            )
-            .max(location_select);
-    let read = super::undo_read_source_bytes()
+    let location = if resident {
+        super::resident::source_bytes()
+    } else {
+        location_held
+            + history::source_bytes::<W>()
+                .peak
+                .max(
+                    history::runtime::lookup_source_bytes()
+                        + crate::storage::wal_io::DURABILITY_CALL_BYTES,
+                )
+                .max(location_select)
+    };
+    let read_held = size_of::<super::RetentionReadGuard<'_, '_, '_, '_, '_, '_>>()
         + 3 * size_of::<UndoRecord<'_>>()
         + 2 * size_of::<UndoRecordView<'_>>()
         + 2 * size_of::<std::result::Result<UndoRecordView<'_>, undo_record::UndoError>>()
@@ -249,15 +275,48 @@ pub(in super::super) fn source_bytes<W: WriterNamespace>() -> usize {
         + 2 * size_of::<UndoTargetView<'_>>()
         + size_of::<status_home::StatusHomePage<'_>>()
         + 2 * size_of::<status_home::StatusHome>()
-        + 2 * size_of::<Result<TransactionState>>()
-        + crate::storage::semantic_catalog::schema_source_bytes();
+        + 2 * size_of::<Result<TransactionState>>();
+    let read = if resident {
+        // Physical membership/typed-envelope validation returns before the
+        // caller decodes Status or Undo. The parent guard and exact expected
+        // reference values survive the latter phase, and malformed Undo may
+        // still reach the complete CatalogValue decoder.
+        super::catalog_reference_read_source_bytes().max(
+            read_held
+                + size_of::<TargetRequest>()
+                + size_of::<StatusSlotRef>()
+                + size_of::<UndoRef>()
+                + size_of::<TxnRef>()
+                + size_of::<PageView<'_>>()
+                + size_of::<Result<super::operation::ReadStep<TransactionState>>>()
+                + size_of::<
+                    Result<super::operation::ReadStep<super::operation::MissingCatalogEvidence>>,
+                >()
+                + crate::storage::semantic_catalog::undo_read_codec_bytes()
+                    .max(crate::storage::semantic_catalog::status_read_codec_bytes())
+                    .max(crate::storage::semantic_catalog::page_read_codec_bytes()),
+        )
+    } else {
+        super::undo_read_source_bytes() + read_held
+            - size_of::<super::RetentionReadGuard<'_, '_, '_, '_, '_, '_>>()
+            + crate::storage::semantic_catalog::schema_source_bytes()
+    };
+    let decode = if resident {
+        super::operation::resident_decode_source_bytes()
+    } else {
+        super::operation::decode_source_bytes()
+    };
     super::operation::entry_source_bytes::<W>().max(
         retained
             + capture
                 .max(location)
-                .max(super::super::lookup_load::source_bytes::<W>())
+                .max(if resident {
+                    0
+                } else {
+                    super::super::lookup_load::source_bytes::<W>()
+                })
                 .max(read)
-                .max(super::operation::decode_source_bytes())
+                .max(decode)
                 .max(visibility::source_census().peak_leaf)
                 .max(crate::transaction::concurrency::read_operation_source_bytes())
                 // The final decoded output remains live through source return.

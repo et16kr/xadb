@@ -1,5 +1,5 @@
-//! Short source reservations in the original isolation ledger. Only the full
-//! Catalog lookup currently participates; unconverted writer/reader entries
+//! Short source reservations in the original isolation ledger. Full and resident
+//! Catalog lookup currently participate; unconverted writer/reader entries
 //! are not covered by this partial supply's aggregate bound.
 use super::*;
 use crate::storage::session_fence::SessionFence;
@@ -8,8 +8,10 @@ use std::{mem::size_of, sync::atomic::Ordering};
 const SHORT_BYTES: u64 = 65_536;
 const USED: std::ops::Range<usize> = 24..32;
 
-enum OperationClass {
+#[derive(Clone, Copy)]
+pub(super) enum OperationClass {
     CatalogFull,
+    CatalogResident,
 }
 
 /// A non-Clone accounting loan, never a page, snapshot or WAL authority.
@@ -49,22 +51,37 @@ fn check(state: &IsolationLedger<'_, '_, '_>) -> Result<u64> {
 }
 
 impl<'b, 'a, 'c, 's> OperationSourceAdmission<'b, 'a, 'c, 's> {
-    /// Charge the fixed full lookup closure after progress entry, before refs or pins.
+    /// Charge the fixed selected lookup closure after progress entry, before refs or pins.
     /// No caller chooses a byte count; the charge cannot grow during lookup.
     pub(super) fn catalog<W: WriterNamespace>(
         ledger: &'b Mutex<IsolationLedger<'a, 'c, 's>>,
+        class: OperationClass,
     ) -> Result<Self> {
-        Self::reserve(
-            ledger,
-            shared_bytes::<W>(),
-            read::lookup_source_bytes::<W>(),
-        )
+        let charge = match class {
+            OperationClass::CatalogFull => read::lookup_source_bytes::<W>(),
+            OperationClass::CatalogResident => read::resident_lookup_source_bytes::<W>(),
+        };
+        Self::reserve_class(ledger, shared_bytes::<W>(), charge, class)
     }
 
+    pub(super) fn resident(&self) -> bool {
+        matches!(self.class, OperationClass::CatalogResident)
+    }
+
+    #[cfg(test)]
     fn reserve(
         ledger: &'b Mutex<IsolationLedger<'a, 'c, 's>>,
         shared: usize,
         charge: usize,
+    ) -> Result<Self> {
+        Self::reserve_class(ledger, shared, charge, OperationClass::CatalogFull)
+    }
+
+    fn reserve_class(
+        ledger: &'b Mutex<IsolationLedger<'a, 'c, 's>>,
+        shared: usize,
+        charge: usize,
+        class: OperationClass,
     ) -> Result<Self> {
         let mut state = ledger
             .lock()
@@ -83,7 +100,7 @@ impl<'b, 'a, 'c, 's> OperationSourceAdmission<'b, 'a, 'c, 's> {
         state.bytes[USED].copy_from_slice(&next.to_le_bytes());
         Ok(Self {
             ledger,
-            class: OperationClass::CatalogFull,
+            class,
             charge: charge as u64,
             active: true,
         })
@@ -102,7 +119,8 @@ impl<'b, 'a, 'c, 's> OperationSourceAdmission<'b, 'a, 'c, 's> {
             .map_err(|poison| failed(poison.into_inner().fence, RetentionCause::Poisoned))?;
         let used = check(&state)?;
         match self.class {
-            OperationClass::CatalogFull if self.charge != 0 && self.charge <= SHORT_BYTES => {}
+            OperationClass::CatalogFull | OperationClass::CatalogResident
+                if self.charge != 0 && self.charge <= SHORT_BYTES => {}
             _ => return Err(failed(state.fence, RetentionCause::Invariant)),
         }
         let next = used

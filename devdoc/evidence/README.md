@@ -1,6 +1,6 @@
 # XADB 조사·실행 증거
 
-- [모듈 독립 개발 전환의 기준선·경계 조사](module-independence-survey-20261026.md) — M0–M3 완료·설계/계약 채택, M4 공통 공급과 M5 A/B 순수 본문 부분구현. [공통 core 계수와 복구 반환 수명](module-independence-survey-20261026.md#c2-shared-core)까지 source별 선택 검증을 보존하고, [full Catalog short 예약](module-independence-survey-20261026.md#c2-short-source-main)의 source별14+7개 PASS·OCR 독립 수용을 기록한다. 전체 동시 admission·단독/합류 제품 인수는 미완료.
+- [모듈 독립 개발 전환의 기준선·경계 조사](module-independence-survey-20261026.md) — M0–M3 완료·설계/계약 채택, M4 공통 공급과 M5 A/B 순수 본문 부분구현. [공통 core 계수와 복구 반환 수명](module-independence-survey-20261026.md#c2-shared-core)까지 source별 선택 검증을 보존하고, [full Catalog short 예약](module-independence-survey-20261026.md#c2-short-source-main)의 source별14+7개 PASS·OCR 독립 수용을 기록한다. [상주 Catalog class](module-independence-survey-20261026.md#c2-resident-main)는 선택21개 각1회 PASS·독립 OCR 전체23파일 한정 수용·필수 수정0이다. 전체 동시 admission·단독/합류 제품 인수는 미완료.
 
 2026-10-26 [DEV2 PF04 C3 shard counter 후보(S2)](dev2-pf04-c3-s2-20261026.md) · [source별 기록](dev2-pf04-c3-s2-20261026.json): thread별 shard counter를 기준선 위 diagnostics diff로 구현하고 신규8종·기존 선택 시험과 정적 lock 대조(대상 경로 counter RMW 14→0)를 통과했다. 후보는 고정했으나 제품에 반영하지 않았다. C3 측정(S3)·PF04 인수는 NOT_RUN이며 원 PF04 FAIL·DEV2 미완료를 유지한다.
 

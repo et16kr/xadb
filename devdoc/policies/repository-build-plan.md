@@ -636,3 +636,8 @@ statement factory·자동 read-set·CheckedTable/RowReadOperation과 short aggre
 ## 모듈 독립 개발 C2 full Catalog short 예약 — 2026-10-27
 
 `plan4_apply/source.rs`는 원 isolation ledger의 고정 short charge와 checked 반환을 소유한다. 같은 디렉터리의 `source_tests.rs`와 `plan4_recovery/tests/catalog_memory/source_entry.rs`·`source_return.rs`는 새 예약·Drain 경계 시험이다. 기존 Catalog adapter가 이 private ticket을 보유하며 신규 public factory/package/dependency·source root는 없다. 실제 신규/수정 경로와 선택 manifest는 JSON `dev3_module_c2_short_source_main`에 등록한다. [실행 기록](../evidence/module-independence-survey-20261026.md#c2-short-source-main)은 별도 브랜치 코드의 한정 적응과 main 실행 증거를 구별한다. 전체 writer/progress/entry 합과 resident/Row·M4/M5는 후속이다.
+
+
+## 모듈 독립 개발 C2 상주 Catalog 조회 — 2026-10-27
+
+`plan4_retention/read/resident.rs`는 원 allocator·Status·Undo의 상주 관측을 제공하며 기존 caller loan을 사용한다. 새 backing·권한·package/dependency·source root는 없다. 신규 실제 시험2파일·선택 manifest와 수정 경로는 JSON `dev3_module_c2_resident_read_main`에 등록한다. [main 수신 증거](../evidence/module-independence-survey-20261026.md#c2-resident-main)는 고정 Resident class와 현재 Drain 수명의 선택 검증을 구별하며 writer/progress·전체 동시 합과 M4/M5 인수는 후속이다.

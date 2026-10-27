@@ -32,7 +32,9 @@ pub(crate) use projection::catalog_projection_digest;
 #[cfg(test)]
 pub(crate) use resources::source_branches;
 pub(crate) use resources::{
-    layout_source_bytes, schema_source_bytes, source_bytes, source_census, transaction_source_bytes,
+    catalog_read_codec_bytes, layout_source_bytes, page_read_codec_bytes, schema_source_bytes,
+    source_bytes, source_census, status_read_codec_bytes, transaction_source_bytes,
+    undo_read_codec_bytes,
 };
 pub(crate) use transition::{Change, Inputs, Observation, observe, produce};
 pub(crate) use wire::{LayoutView, decode_layout};

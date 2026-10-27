@@ -6693,5 +6693,47 @@
       "ledger_leaf": 1024,
       "source_bound_not_rss": true
     }
+  },
+  "dev3_module_c2_resident_read_main": {
+    "status": "ACCEPTED_LIMITED_D1_D2",
+    "baseline": "a7fe5e36748e7b900963f31d839db9d03a6c1556",
+    "adapted_from": [
+      "788702ca3a8a1b428251194d06195087f6e7c060"
+    ],
+    "contract_ref": "dev3-module-boundaries.md#operation-source-admission",
+    "evidence_ref": "module-independence-survey-20261026.md#c2-resident-main",
+    "implemented_paths": [
+      "crates/engine/src/storage/wal_io/plan4_retention/read/resident.rs",
+      "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/resident_read.rs",
+      "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/resident_faults.rs",
+      "tests/fixtures/dev3-module-c2/resident-read/manifest.json"
+    ],
+    "modified_paths": [
+      "crates/engine/src/storage/semantic_catalog.rs",
+      "crates/engine/src/storage/semantic_catalog/resources.rs",
+      "crates/engine/src/storage/wal_io/plan4_apply/source.rs",
+      "crates/engine/src/storage/wal_io/plan4_apply/source_tests.rs",
+      "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory.rs",
+      "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/read_boundary.rs",
+      "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/source_entry.rs",
+      "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/source_return.rs",
+      "crates/engine/src/storage/wal_io/plan4_retention/read.rs",
+      "crates/engine/src/storage/wal_io/plan4_retention/read/lookup.rs",
+      "crates/engine/src/storage/wal_io/plan4_retention/read/operation.rs",
+      "crates/engine/src/transaction/concurrency_catalog_test_support.rs"
+    ],
+    "scope": "Fixed resident Catalog lookup on original allocator/Status/Undo with no I/O/LOAD; existing Full path and main progress-before-reservation / source-before-progress-return preserved; original core counted once",
+    "validation": "Frozen r1 production/test build PASS; 21 exact runtime PASS once (9 resident contract + 6 resident lifecycle + 6 affected Full); no failed/repeated cases; independent OCR 23/23 files reviewed, zero required fixes, limited D1/D2 accepted",
+    "source_bytes": {
+      "memory_shared_retained": 23072,
+      "native_type_shared_retained": 23208,
+      "catalog_resident": 16860,
+      "catalog_full": 41576,
+      "memory_two_resident_total": 56792,
+      "native_type_two_resident_total": 56928,
+      "source_bound_not_rss": true
+    },
+    "remaining_supply": "writer/progress and complete concurrent entry/return accounting, caller-retained statement/Row factories, actual C+A/C+B/M5 acceptance",
+    "source_roots_changed": false
   }
 }
