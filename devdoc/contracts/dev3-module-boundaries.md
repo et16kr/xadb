@@ -1272,3 +1272,5 @@ Q01–Q08은 아래 설계로 독립 D2 검토를 수신해 채택했다. 앞선
 [query 정상/오류 종료 경계](../evidence/module-independence-survey-20261026.md#c2-query-tail-boundaries)는 정상 결과 소비의 lexical block을 consuming close 전에 끝내고, 오류 arm은 전체 lookup Result를 보존한다. finish_error는 원 오류를 유지한 작은 close 뒤 wide 변환하며 원 Fatal/cleanup 우선순위를 유지한다. 정상710B/오류1394B는 한 호출 관측식이고34입구 전체 floor나 제품 admission이 아니다. 기존7368B baseline·Full33972B/Resident16928B/shared22400B와 전체 공급 미완료는 보존한다.
 
 [원 DPT 저장 축소](../evidence/module-independence-survey-20261026.md#c2-compact-dpt)는 같은 directory에 full identity를 한 번 보유하고 private 행3072B를 줄였다. expected/원 요구 권한과 publication·generation 검산은 [dirty owner](dev3-dirty-stage.md#compact-dpt)를 따른다. helper660B를 actual source에 연결한 현재 shared19328B/Full33972B/Resident17588B이며 전체 short floor·writer phase는 미공급이다. 과거 shared22400B 수치는 당시 source의 증거다.
+
+[LOAD 검산 claim borrow](../evidence/module-independence-survey-20261026.md#c2-borrowed-load-claims)는 같은 registry 아래 기존 conflict predicate에 원 claim을 참조로 전달한다. 관측 pool guard3307B·guard 합6820B·compact floor14776B는 제품 admission 미연결이다. load_eligible 및 다른 source class의 전체 수명 보증으로 확대하지 않는다.

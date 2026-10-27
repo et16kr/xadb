@@ -706,3 +706,7 @@ actual health/source/Scope/legacy facade·원 progress consuming finish와 관�
 ### C2 compact DPT 등록 — 2026-10-27
 
 현재 private DPT representation·producer/flush/진단7기존경로, 신규 표현시험/actual Pair cut시험/선택 manifest3경로를 JSON `dev3_module_c2_compact_dpt`에 등록한다. package/dependency·source root·caller backing·wire는 유지한다. [실행 증거](../evidence/module-independence-survey-20261026.md#c2-compact-dpt)의 source별2+12선택 PASS와 원 compile/fixture FAIL을 구별한다. private 배열3072B 감소와 actual helper660B 비용 연결은 전체 aggregate admission 완료가 아니다.
+
+### C2 LOAD claim borrow 등록 — 2026-10-27
+
+실제 reader_load/retention_residency2기존경로와 선택 fixture1경로를 JSON `dev3_module_c2_borrowed_load_claims`에 등록한다. 같은 registry의 참조 검산이며 원 권한·backing·source roots·package/dependency는 유지한다. [선택4 증거](../evidence/module-independence-survey-20261026.md#c2-borrowed-load-claims)는 해당 actual LOAD와 변경 관측에 한정한다.

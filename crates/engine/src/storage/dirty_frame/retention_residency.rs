@@ -65,13 +65,13 @@ pub(in crate::storage) fn entry_source_observation() -> (usize, usize, usize) {
         + 2 * size_of::<Range<usize>>()
         + rank
         + directory;
-    // load is borrowed, but its is_none_or checks copy the whole flush/INIT
-    // Option and extracted claim. Do not count them as just references.
+    // Both the load and its flush/INIT conflict inputs remain borrowed under
+    // this same registry guard. Full original claims are retained in the pool.
     let load = 2 * size_of::<concurrency::OwnerIdentity>()
-        + size_of::<Option<flush::Claim>>()
-        + size_of::<flush::Claim>()
-        + size_of::<Option<init::InitClaimSlot>>()
-        + size_of::<init::InitClaimSlot>()
+        + 2 * size_of::<Option<&flush::Claim>>()
+        + 2 * size_of::<&flush::Claim>()
+        + 2 * size_of::<Option<&init::InitClaimSlot>>()
+        + 2 * size_of::<&init::InitClaimSlot>()
         + 2 * size_of::<TargetRequest>()
         + size_of::<(Option<Registration>, Option<FrameStamp>)>()
         + size_of::<Registration>()

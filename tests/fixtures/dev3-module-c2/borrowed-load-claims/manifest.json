@@ -1,0 +1,37 @@
+{
+  "schema": "XADB_MODULE_C2_BORROWED_LOAD_CLAIMS_V1",
+  "status": "FROZEN_INPUTS_NOT_EXECUTION_EVIDENCE",
+  "baseline": "1c2f696",
+  "scope": "LoadClaimRecord valid borrows original flush and System/TxPair INIT claim under same registry; preserves full conflict predicates/order and ownership. Only source observation formula changes, no production charge/cap/progress claim.",
+  "budget": {
+    "total_seconds": 600,
+    "compiler_seconds": 90,
+    "case_seconds": 30,
+    "output_bytes": 8388608,
+    "rust_min_stack": 33554432
+  },
+  "runtime_tests": [
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::read::scope::tests::uncharged_call_phases_keep_independent_guards_and_wide_tail_separate",
+      "reason": "Changed source observation for removed claim copies; all independent mutex leaves and per-owner uncharged values remain."
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::commit_concurrency::catalog_mt03_pending_reader_loads_undo",
+      "reason": "Changed actual load-claim validation in required real Pending Undo LOAD and original snapshot/Commit Drain behavior."
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::read_boundary::captured_undo_read_error_preserves_fatal_cause",
+      "reason": "Changed actual load-claim validation and cancellation after original Undo PageIo failure; preserves fatal effect and refs/pin/fence cleanup."
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::read_boundary::dirty_victim_returns_flush_then_retries_same_snapshot",
+      "reason": "Changed load-claim validation for clean victim generation rebind after dirty victim flush; same snapshot, real read and cleanup."
+    }
+  ],
+  "invariants": [
+    "No copied or reconstructed authority: only Option::as_ref inputs to original &self predicates.",
+    "Original registry guard, conflict short-circuit order, target/index/generation checks unchanged.",
+    "Whole bound entry/tail/writer source remains NOT_SUPPLIED; observation is not admission.",
+    "Changed-code scope only. Prior DPT/class/layout and unchanged previous PASS remain at original source."
+  ]
+}

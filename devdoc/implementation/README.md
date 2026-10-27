@@ -1,5 +1,7 @@
 # 현재 구현
 
+2026-10-27 [C2 LOAD claim borrow](../evidence/module-independence-survey-20261026.md#c2-borrowed-load-claims): 실제 LOAD 검산의 두 claim 복사를 원 참조로 바꾸고 build2/선택4 PASS를 확인했다. pool guard3307B·compact floor14776B는 관측이고 전체 admission은 미연결이다.
+
 2026-10-27 [C2 compact DPT](../evidence/module-independence-survey-20261026.md#c2-compact-dpt): 원 registry의 중복 identity 저장3072B를 제거하고 추가 비교 비용660B를 source 식에 연결했다. r3 build2/선택12 PASS와 r2 원 표현·진단2 PASS·기존 FAIL을 보존한다. shared19328B/Full33972B/Resident17588B이며 전체 floor·writer phase·M4/M5는 미완료다.
 
 2026-10-27 [C2 query 종료 경계](../evidence/module-independence-survey-20261026.md#c2-query-tail-boundaries): actual 정상 결과 소비 block과 finish_error의 작은 정리를 분리했다. production/test build·선택5 PASS. 정상710B/오류1394B는 한 호출 관측이고 전체 floor/admission은 미연결이다.
