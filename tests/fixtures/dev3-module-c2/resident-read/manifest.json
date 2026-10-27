@@ -1,0 +1,51 @@
+{
+  "schema": "XADB_MODULE_C2_CATALOG_RESIDENT_V1",
+  "status": "FROZEN_INPUTS_NOT_EXECUTION_EVIDENCE",
+  "scope": "Resident Catalog lookup only; writer/progress and other operations are not yet included in the complete short source aggregate",
+  "baseline": "ec018d6",
+  "budget": {
+    "total_seconds": 600,
+    "compiler_seconds": 90,
+    "case_seconds": 30,
+    "output_bytes": 8388608,
+    "rust_min_stack": 33554432
+  },
+  "runtime_tests": [
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::source::tests::fixed_resident_class_admits_two_and_never_escalates",
+      "reason": "new fixed class, census, mixed capacity and exactly owned return"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::resident_read::resident_snapshot_visibility_has_no_io",
+      "reason": "new resident allocator/status/undo path, active and committed snapshot visibility, borrowed Found result, no file events"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::resident_read::nonresident_undo_returns_busy_before_full_retry",
+      "reason": "new resident nonresident outcome, no I/O or retained charge/ref/pin, full retry of same snapshot after cleanup"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::resident_read::two_resident_operations_hold_separate_fixed_charges",
+      "reason": "new actual overlapping resident operations, two original flags and byte loans with independent checked return"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::resident_read::resident_corruption_remains_fatal_without_io",
+      "reason": "new resident source typed Status/Undo corruption remains fatal and preserves charge behind fence"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::resident_faults::nonresident_status_and_later_status_prevent_partial_success",
+      "reason": "new complete resident Status scan: missing original Status and missing later allocated Status after exact hit, same-snapshot Full retry"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::resident_faults::checksummed_status_absence_and_duplicate_are_fatal",
+      "reason": "new complete resident Status scan rejects checksum-valid exact-ref absence and cross-page duplicate"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::resident_faults::allocator_flush_after_copy_is_retryable_and_releases_charge",
+      "reason": "new allocator stamp recheck at exact paused cut after copy; actual allocator flush clears recLSN with no mapping change; no reader I/O"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::resident_faults::selected_membership_corruption_is_not_busy",
+      "reason": "fixed Catalog and exact resolved Txn/U mappings cannot become Busy on checksummed allocator membership corruption"
+    }
+  ]
+}

@@ -636,3 +636,8 @@ statement factory·자동 read-set·CheckedTable/RowReadOperation과 short aggre
 ### C2 전체 Catalog 조회의 short source 예약
 
 `plan4_apply/source.rs`는 원 isolation backing의24..32에 조회 바이트를 예약하고 마지막 output 변환/Result 뒤 checked 반환한다. `source_tests.rs`와 실제 Catalog 동시 호출 시험, 선택 manifest의 신규 경로는 JSON `dev3_module_c2_short_source`에 등록했다. package/dependency·source root·clean export 범위는 유지한다. [한정 증거](../evidence/module-independence-survey-20261026.md#c2-short-source)는 CatalogFull 한 class의 source별17개 PASS와 원 compile FAIL을 보존한다. 다른 입구·writer/progress·resident class의 동시 합은 후속이며 전체64KiB 보장이나 M4/M5 완료가 아니다.
+
+
+### C2 상주 Catalog 조회의 고정 class
+
+`plan4_retention/read/resident.rs`는 원 allocator copy/Status·Undo observation만 제공하며 기존425984B loan을 사용한다. 원 product branch와 source ledger는 Full/Resident class를 구별한다. 신규 실제 시험2파일·선택 manifest와 수정 경로는 JSON `dev3_module_c2_resident_read`에 등록했다. package/dependency·source root·clean export는 유지한다. [한정 증거](../evidence/module-independence-survey-20261026.md#c2-resident-read)는 선택9개 PASS와 원 compile/census FAIL, 상주 두-reader55976B를 보존하며 writer/progress의 전체 동시 합산은 후속이다.

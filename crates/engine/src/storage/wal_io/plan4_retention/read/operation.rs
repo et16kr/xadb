@@ -1,7 +1,7 @@
 //! Original source ownership behind the Catalog product's synchronous lookup.
 //! The private factory is consumed immediately by lookup; a caller-retainable
 //! statement factory requires aggregate source admission and is not exposed.
-use super::super::source::OperationSourceAdmission;
+use super::super::source::{OperationClass, OperationSourceAdmission};
 use super::super::visibility::{
     self, CapturedCatalogRefs, CatalogLookupLoan, CatalogSource, ReferenceLease, SnapshotGuard,
 };
@@ -96,6 +96,37 @@ impl<'u, 'r, 'v, 'j, 'i, 'b, 'a, 's, 'c, 'p, 'd, 'm, 'w, W: WriterNamespace>
         snapshot: &'r SnapshotGuard<'v, 'j, 'c, 's>,
         private: &'i mut [u8; 425_984],
     ) -> Result<Self> {
+        Self::begin_class(
+            backend,
+            owner,
+            snapshot,
+            private,
+            OperationClass::CatalogFull,
+        )
+    }
+
+    pub(super) fn begin_resident(
+        backend: &'r ReadPort<'b, 'a, 's, 'c, 'p, 'd, 'm, 'w, W>,
+        owner: &'u mut Owner<'c, 's>,
+        snapshot: &'r SnapshotGuard<'v, 'j, 'c, 's>,
+        private: &'i mut [u8; 425_984],
+    ) -> Result<Self> {
+        Self::begin_class(
+            backend,
+            owner,
+            snapshot,
+            private,
+            OperationClass::CatalogResident,
+        )
+    }
+
+    fn begin_class(
+        backend: &'r ReadPort<'b, 'a, 's, 'c, 'p, 'd, 'm, 'w, W>,
+        owner: &'u mut Owner<'c, 's>,
+        snapshot: &'r SnapshotGuard<'v, 'j, 'c, 's>,
+        private: &'i mut [u8; 425_984],
+        class: OperationClass,
+    ) -> Result<Self> {
         health(backend.storage, backend.pool)?;
         backend
             .pool
@@ -113,7 +144,7 @@ impl<'u, 'r, 'v, 'j, 'i, 'b, 'a, 's, 'c, 'p, 'd, 'm, 'w, W: WriterNamespace>
         owner
             .check_read_operation(backend.pool.bound_core())
             .map_err(progress_error)?;
-        let mut source = OperationSourceAdmission::catalog::<W>(backend.isolation)?;
+        let mut source = OperationSourceAdmission::catalog::<W>(backend.isolation, class)?;
         let mut progress = match owner.try_read_operation(backend.pool.bound_core()) {
             Ok(progress) => progress,
             Err(error) => {
@@ -203,7 +234,16 @@ impl<'u, 'r, 'v, 'j, 'i, 'b, 'a, 's, 'c, 'p, 'd, 'm, 'w, W: WriterNamespace>
         if self.selected.is_some() {
             return Err(self.invariant());
         }
-        let guard = self.backend.read_catalog(&mut *self.owner)?;
+        let guard = self
+            .backend
+            .read_catalog(&mut *self.owner)
+            .map_err(|error| {
+                if self.source.resident() {
+                    super::resident::selected_error(self.backend.storage, error)
+                } else {
+                    error
+                }
+            })?;
         let copied = (|| {
             let source = CatalogSource::from_guard(&guard, object)?;
             let value = guard.value(object)?;
@@ -277,18 +317,42 @@ impl<'u, 'r, 'v, 'j, 'i, 'b, 'a, 's, 'c, 'p, 'd, 'm, 'w, W: WriterNamespace>
         {
             return Err(self.invariant());
         }
-        let (request, location) = self
-            .backend
-            .catalog_status_location(&mut *self.owner, reference)?;
-        if let Some(target) =
+        let (request, location) = if self.source.resident() {
+            self.backend.resident_status_location(
+                &mut *self.owner,
+                reference,
+                (&mut self.loader[..PAGE_BYTES])
+                    .try_into()
+                    .expect("caller allocator page"),
+            )?
+        } else {
             self.backend
-                .lookup_resident(&mut *self.owner, request, cursor, self.loader)?
+                .catalog_status_location(&mut *self.owner, reference)?
+        };
+        #[cfg(test)]
+        if self.source.resident() {
+            crate::transaction::concurrency::catalog_test_support::hit(
+                self.backend.pool.bound_core(),
+                crate::transaction::concurrency::catalog_test_support::Point::ResidentStatusLocated,
+            );
+        }
+        if !self.source.resident()
+            && let Some(target) =
+                self.backend
+                    .lookup_resident(&mut *self.owner, request, cursor, self.loader)?
         {
             return Ok(ReadStep::FlushRequired { target });
         }
         let guard = self
             .backend
-            .read(&mut *self.owner, &Plan4Target { request })?;
+            .read(&mut *self.owner, &Plan4Target { request })
+            .map_err(|error| {
+                if self.source.resident() {
+                    super::resident::selected_error(self.backend.storage, error)
+                } else {
+                    error
+                }
+            })?;
         let state = (|| {
             let page = status_home::decode_status_home_page(
                 guard.bytes()?,
@@ -341,18 +405,42 @@ impl<'u, 'r, 'v, 'j, 'i, 'b, 'a, 's, 'c, 'p, 'd, 'm, 'w, W: WriterNamespace>
         {
             return Err(self.invariant());
         }
-        let request = self
-            .backend
-            .catalog_undo_location(&mut *self.owner, reference)?;
-        if let Some(target) =
+        let request = if self.source.resident() {
+            self.backend.resident_undo_location(
+                &mut *self.owner,
+                reference,
+                (&mut self.loader[..PAGE_BYTES])
+                    .try_into()
+                    .expect("caller allocator page"),
+            )?
+        } else {
             self.backend
-                .lookup_resident(&mut *self.owner, request, cursor, self.loader)?
+                .catalog_undo_location(&mut *self.owner, reference)?
+        };
+        #[cfg(test)]
+        if self.source.resident() {
+            crate::transaction::concurrency::catalog_test_support::hit(
+                self.backend.pool.bound_core(),
+                crate::transaction::concurrency::catalog_test_support::Point::ResidentUndoLocated,
+            );
+        }
+        if !self.source.resident()
+            && let Some(target) =
+                self.backend
+                    .lookup_resident(&mut *self.owner, request, cursor, self.loader)?
         {
             return Ok(ReadStep::FlushRequired { target });
         }
         let guard = self
             .backend
-            .read_catalog_undo(&mut *self.owner, &Plan4Target { request })?;
+            .read_catalog_undo(&mut *self.owner, &Plan4Target { request })
+            .map_err(|error| {
+                if self.source.resident() {
+                    super::resident::selected_error(self.backend.storage, error)
+                } else {
+                    error
+                }
+            })?;
         let missing = (|| {
             let page = page::decode_page(guard.bytes()?, request.identity, PageKind::Undo)
                 .map_err(|e| {
@@ -521,4 +609,13 @@ pub(super) fn decode_source_bytes() -> usize {
         + size_of::<CatalogHeader>()
         + 2 * size_of::<Result<CatalogRecordView<'_>>>()
         + crate::storage::semantic_catalog::schema_source_bytes()
+}
+
+/// Same record decoder as the full entry, without unrelated WAL layout parse.
+pub(super) fn resident_decode_source_bytes() -> usize {
+    use std::mem::size_of;
+    2 * size_of::<CatalogRecordView<'_>>()
+        + size_of::<CatalogHeader>()
+        + 2 * size_of::<Result<CatalogRecordView<'_>>>()
+        + crate::storage::semantic_catalog::catalog_read_codec_bytes()
 }

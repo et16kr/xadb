@@ -1146,3 +1146,9 @@ mod transactions;
 
 #[path = "catalog_memory/read_boundary.rs"]
 mod read_boundary;
+
+#[path = "catalog_memory/resident_read.rs"]
+mod resident_read;
+
+#[path = "catalog_memory/resident_faults.rs"]
+mod resident_faults;

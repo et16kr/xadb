@@ -16,6 +16,8 @@ mod catalog;
 mod lookup;
 #[path = "read/operation.rs"]
 mod operation;
+#[path = "read/resident.rs"]
+mod resident;
 pub(crate) use crate::storage::catalog::read::CatalogLookupStep;
 #[allow(
     unused_imports,
@@ -23,6 +25,7 @@ pub(crate) use crate::storage::catalog::read::CatalogLookupStep;
 )]
 pub(crate) use catalog::RetentionCatalogGuard;
 pub(super) use catalog::{CATALOG_READ_SOURCE_BYTES, catalog_source_bytes};
+pub(super) use lookup::resident_source_bytes as resident_lookup_source_bytes;
 pub(super) use lookup::source_bytes as lookup_source_bytes;
 pub(crate) use operation::{
     CatalogCandidate, CatalogReadOperation, MissingCatalogEvidence, ReadStep,
@@ -445,6 +448,26 @@ pub(super) fn undo_read_source_bytes() -> usize {
         + 2 * size_of::<Result<Guard<'_>>>()
         + undo_decode_source_bytes().max(retention_page::catalog::source_bytes())
         + 2 * size_of::<allocation_page::AllocationPage<'_>>()
+        + 2 * size_of::<dirty_frame::DirtyObservation>()
+        + 4 * size_of::<TargetRequest>()
+        + 4 * size_of::<Result<()>>()
+        + 1024
+}
+
+/// Resident lookup invokes read_shaped only for allocator-issued Status and
+/// exact CatalogRoot Undo requests. Root/Jobs/InitialFree are unreachable from
+/// that caller, so their unrelated queue decoder is excluded here.
+pub(super) fn catalog_reference_read_source_bytes() -> usize {
+    use std::mem::size_of;
+    type Guard<'a> = RetentionReadGuard<'a, 'a, 'a, 'a, 'a, 'a>;
+    dirty_frame::target_set_call_bytes::<2>()
+        + 2 * size_of::<UndoShape>()
+        + 2 * size_of::<Guard<'_>>()
+        + 2 * size_of::<Result<Guard<'_>>>()
+        + crate::storage::semantic_catalog::page_read_codec_bytes()
+            .max(crate::storage::semantic_catalog::status_read_codec_bytes())
+        + 2 * size_of::<allocation_page::AllocationPage<'_>>()
+        + 2 * size_of::<AllocationEntry>()
         + 2 * size_of::<dirty_frame::DirtyObservation>()
         + 4 * size_of::<TargetRequest>()
         + 4 * size_of::<Result<()>>()

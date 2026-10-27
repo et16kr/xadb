@@ -16,6 +16,9 @@ pub(crate) enum Point {
     InstalledBeforeFinish,
     BeforePublish,
     LookupCaptured,
+    ResidentAllocatorCopied,
+    ResidentStatusLocated,
+    ResidentUndoLocated,
     RetirementIntent,
     RetirementFirstPage,
 }

@@ -1129,6 +1129,8 @@ rollback/terminal은 원 progress admission이 새 foreground를 닫고 이미 �
 
 2026-10-27 [CatalogFull short source 부분공급](../evidence/module-independence-survey-20261026.md#c2-short-source)은 원 isolation header24..32에 고정 source charge를 예약한다. admission 오류 우선순위의 무효과 precheck 뒤 source를 예약하고, 실제 progress 진입에서 다시 확인하며 reference/pin은 그 뒤다. refs/progress의 기존 정리 뒤에도 source를 마지막 decode/Result까지 보유한다. 같은 class의 추가 호출이 부족하면 Capacity/Unchanged이며 이미 보유한 snapshot은 유지한다. poison/fence/underflow는 원 isolation 규약대로 source 잔여를 보존하고 성공 반환으로 표시하지 않는다. 이 한정 범위의 선택17개는 PASS이며 독립 D1/D2를 한정 수용했다. writer·다른 ReadPort 입구·resident-only class·rollback/terminal progress 몫은 미공급이다. 따라서 전체 source aggregate 보장·caller-retained factory·MBC10 V09/V10은 여전히 미완료다.
 
+2026-10-27 [상주 Catalog 부분공급](../evidence/module-independence-survey-20261026.md#c2-resident-read)은 같은 Catalog 본문을 고정 CatalogResident class로 실행한다. 기존 loader loan의 allocator copy와 원 target-set guard를 사용하고 Status inventory 전체 및 마지막 allocator stamp를 확인한다. 비상주는 checked 정리 뒤 Busy, exact 선택 뒤 membership·typed corruption은 Fatal이며 같은 operation의 Full 확대는 없다. source16860B와 shared22256B로 두 상주 조회의 합55976B, 선택9개 PASS를 확인했다. Full41576B와 과거 결과는 유지하며 writer/progress·다른 입구 전체 합산과 caller-retained factory는 여전히 미공급이다. 독립 D1/D2를 이 부분공급에 한정 수용했으며 필수 수정0이다.
+
 전체 설계 상계는 metadata `73856+65536+49152=188544≤196608`, original flush를 더한 whole `254080≤262144`다. 이 admission·동시 합 검산은 **새 C1/C2/C3 공급**이며 기존 active.max 기반 source 결과로 이미 구현됐다고 하지 않는다. header의 실제 byte 배치와 source charge의 측정·실패/정리 경로는 C1/C4 인수에 포함한다.
 
 <a id="common-deliveries"></a>

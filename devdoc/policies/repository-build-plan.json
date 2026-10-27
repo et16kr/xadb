@@ -6611,5 +6611,40 @@
     },
     "remaining_supply": "resident-only class, writer/rollback/terminal and all other entry accounting, aggregate progress guarantee, caller-retained factories, Row/recovery and M4/M5",
     "source_roots_changed": false
+  },
+  "dev3_module_c2_resident_read": {
+    "status": "ACCEPTED_LIMITED_D1_D2",
+    "baseline": "ec018d6",
+    "contract_ref": "dev3-module-boundaries.md#operation-source-admission",
+    "evidence_ref": "module-independence-survey-20261026.md#c2-resident-read",
+    "implemented_paths": [
+      "crates/engine/src/storage/wal_io/plan4_retention/read/resident.rs",
+      "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/resident_read.rs",
+      "tests/fixtures/dev3-module-c2/resident-read/manifest.json",
+      "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/resident_faults.rs"
+    ],
+    "modified_paths": [
+      "crates/engine/src/storage/semantic_catalog.rs",
+      "crates/engine/src/storage/semantic_catalog/resources.rs",
+      "crates/engine/src/storage/wal_io/plan4_apply/source.rs",
+      "crates/engine/src/storage/wal_io/plan4_apply/source_tests.rs",
+      "crates/engine/src/storage/wal_io/plan4_retention/read.rs",
+      "crates/engine/src/storage/wal_io/plan4_retention/read/lookup.rs",
+      "crates/engine/src/storage/wal_io/plan4_retention/read/operation.rs",
+      "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory.rs",
+      "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/read_boundary.rs",
+      "crates/engine/src/transaction/concurrency_catalog_test_support.rs"
+    ],
+    "scope": "Fixed resident Catalog class on original allocator and target guards; same product semantics, no WAL replay/durability wait/reader file/LOAD, complete Status scan, exact-ref membership corruption versus retryable normal stamp changes; no new backing or authority",
+    "validation": "r1 production PASS/test build E0583 FAIL; r2 test build PASS/census68820 FAIL; r3 product+adversarial change production PASS/test build E0502 FAIL; r4 test helper syntax FAIL; r5 test-only helper fix test build and 9 exact runtime PASS once; production not repeated after test-only fixes; independent module_review accepted limited D1/D2 after code, original artifacts and six-document review; zero required fixes",
+    "source_bytes": {
+      "shared_retained": 22256,
+      "catalog_resident": 16860,
+      "catalog_full_unchanged": 41576,
+      "two_resident_total": 55976,
+      "source_bound_not_rss": true
+    },
+    "remaining_supply": "writer/rollback/terminal and other entry accounting, aggregate progress guarantee, caller-retained factories, Row/recovery and M4/M5",
+    "source_roots_changed": false
   }
 }

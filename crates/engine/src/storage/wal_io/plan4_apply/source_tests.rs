@@ -182,16 +182,62 @@ fn catalog_class_uses_current_types_and_recovered_retained_owner() {
         leaf_source_bytes()
     );
     with_ledger(|ledger, fence| {
-        let mut first = OperationSourceAdmission::catalog::<W>(ledger).unwrap();
+        let mut first =
+            OperationSourceAdmission::catalog::<W>(ledger, OperationClass::CatalogFull).unwrap();
         assert_eq!(used(ledger) as usize, live.catalog_lookup);
         assert!(matches!(
-            OperationSourceAdmission::catalog::<W>(ledger)
+            OperationSourceAdmission::catalog::<W>(ledger, OperationClass::CatalogFull)
                 .err()
                 .unwrap()
                 .cause,
             RetentionCause::Capacity
         ));
         first.release_checked().unwrap();
+        assert_eq!(used(ledger), 0);
+        assert!(!fence.is_fenced());
+    });
+}
+
+#[test]
+fn fixed_resident_class_admits_two_and_never_escalates() {
+    type W = crate::storage::wal_io::plan4_test_support::Writer;
+    let shared = shared_bytes::<W>();
+    let resident = read::resident_lookup_source_bytes::<W>();
+    let full = read::lookup_source_bytes::<W>();
+    println!(
+        "CATALOG_RESIDENT shared={shared} resident={resident} full={full} two={}",
+        shared + resident * 2
+    );
+    assert!(resident < full);
+    assert!(shared + resident * 2 <= 65536);
+    assert!(shared + resident + full > 65536);
+    with_ledger(|ledger, fence| {
+        let mut first =
+            OperationSourceAdmission::catalog::<W>(ledger, OperationClass::CatalogResident)
+                .unwrap();
+        assert!(first.resident());
+        let mut second =
+            OperationSourceAdmission::catalog::<W>(ledger, OperationClass::CatalogResident)
+                .unwrap();
+        assert_eq!(used(ledger), 2 * resident as u64);
+        let before = *ledger.lock().unwrap().bytes;
+        assert!(matches!(
+            OperationSourceAdmission::catalog::<W>(ledger, OperationClass::CatalogFull)
+                .err()
+                .unwrap()
+                .cause,
+            RetentionCause::Capacity
+        ));
+        assert_eq!(*ledger.lock().unwrap().bytes, before);
+        first.release_checked().unwrap();
+        assert_eq!(used(ledger), resident as u64);
+        assert!(second.resident());
+        second.release_checked().unwrap();
+        let full_ticket =
+            OperationSourceAdmission::catalog::<W>(ledger, OperationClass::CatalogFull).unwrap();
+        assert!(!full_ticket.resident());
+        assert_eq!(used(ledger), full as u64);
+        drop(full_ticket);
         assert_eq!(used(ledger), 0);
         assert!(!fence.is_fenced());
     });

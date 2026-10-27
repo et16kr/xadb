@@ -1,5 +1,7 @@
 # 현재 구현
 
+2026-10-27 [C2 상주 Catalog 조회](../evidence/module-independence-survey-20261026.md#c2-resident-read): 새 무 I/O 경로와 고정16860B class, 두 조회의 실제 동시 예약·합55976B를 선택9개로 확인했다. 비상주/정상 allocator 변경과 membership/typed 손상을 구분하며 원 compile·census FAIL을 보존한다. 독립 D1/D2 한정 수용이며 writer/progress 전체 합산·Row·M4/M5는 미완료다.
+
 2026-10-27 [C2 CatalogFull source 예약](../evidence/module-independence-survey-20261026.md#c2-short-source): 원 isolation 원장에 전체 조회41576B를 선예약하고 마지막 decode/Result 뒤 반환한다. shared retained22256B와 합63832B이며 신규9·변경 영향8의 선택17 PASS, 원 test compile FAIL을 보존한다. 독립 D1/D2 한정 수용이며 writer/resident/progress·전체 aggregate·M4/M5는 미완료다.
 
 2026-10-27 [C2 Commit Pending 보유 분리](../evidence/module-independence-survey-20261026.md#c2-pending-carrier): 동일 pin만 WAL 대기를 통과하고 Drain 뒤 설치 guard를 재구성한다. stage helper를 나눠 준비 로컬 수명을 끝냈으며 관련11개 선택 PASS와 MF03/MF07 설명 정정을 보존하고 최종 독립 D1/D2를 한정 수용했다. Pending 타입112B 감소와 Catalog Commit 포괄 상한 증가를 구별하며 aggregate admission·실제 Row 연결·M4/M5는 미완료다.

@@ -820,3 +820,39 @@ source census는 shared retained `max(original owner+DiskSession, RecoveryRuntim
 독립 검토에서 frozen manifest의 I/O 오류·fenced Drain 두 선택 이유가 기존 read_operation 표시와 새 source byte charge를 혼동할 수 있음을 확인했다. 현재 manifest만 명확히 정정했다. fatal 뒤 반환되는 것은 기존 progress 표시이며 원 refs와 새 byte charge는 fence 아래 보존한다. frozen r1/r2의 manifest·hash·결과는 원문 그대로 유지하고, 제품·시험 변경이나 재실행은 없다. 위 manifest hash는 두 원 실행의 값이다.
 
 `/root/module_review`는 실제 diff·새 source/fixture·문서6개 및 r1/r2의 원 source5618개씩·manifest/runner/ELF/로그 identity를 읽기 전용 대조했다. 두 선택 이유 정정과 frozen 보존을 좁게 재확인한 뒤 **CatalogFull short source 부분공급 D1/D2 한정 수용·필수 수정0**으로 판정했다. 검토자는 파일 수정·시험·빌드·문서 verifier를 실행하지 않았으며 `/root`가 이 단위를 반영한다. 다음 단위는 resident-only 조회, writer/progress phase와 원 ledger의 실제 합산이며 Row/terminal/recovery 및 M4/M5 전체 목표는 유지한다.
+
+<a id="c2-resident-read"></a>
+### C2 상주 Catalog 조회와 고정 source class — 2026-10-27
+
+`ec018d6` 뒤 같은 `codex/module-independence-finish` 작업 공간에서 진행했다. **D3-MODULE-RESIDENT-001 · D1/D2 한정 수용 / 선택 runtime9 PASS / 전체 aggregate·M4/M5 미완료**다. 구현·계약·통합은 `/root`, 별도 검토는 `/root/module_review`다. 사용자의 계획 완료 지시와 DP01의 기존 위임으로 진행하며 필수 자원 한도·원 의미를 변경하지 않는다.
+
+선택은 기존 Catalog 제품 본문을 그대로 소비하는 `lookup_catalog_resident` 입구와 immutable `CatalogResident` class다. 원 isolation ledger에 admission을 예약하며 같은 operation 도중 Full로 확대하지 않는다. 비상주는 refs/progress/source/pins의 checked 정리 뒤 Busy/Unchanged이고 같은 snapshot의 Full 재호출이 가능하다. 모든 입력을 Full replay로 보내는 대안은 두 상주 reader의 source 공급에 맞지 않고, 새 주소 map/권한/allocator owner를 만드는 대안은 원 권한의 유일성을 해치므로 채택하지 않았다.
+
+`read/resident.rs`는 원 allocator guard로 읽은 페이지를 기존425984B caller loan의 loader 첫16384B에 복사하고 guard를 반환한다. 원 allocator의64-entry inventory에서 allocated Status를 전부 관측하며, 실제 target-set read가 다시 원 allocator와 페이지 membership을 확인한다. 첫 exact TxnRef를 찾은 뒤에도 후속 Status가 비상주면 Busy이며, 전체 확인 뒤 stable absent/duplicate는 Fatal이다. 마지막 allocator FrameStamp가 바뀌면 Busy다. copied inventory의 후보 Membership은 stamp를 재검산하지만, exact 참조 선택 뒤와 고정 Catalog root의 Membership은 원 참조 pin/고정 identity가 보존해야 하는 mapping 파손이므로 Fatal이다. typed page/Undo corruption을 정상 재시도로 낮추지 않는다. Status/Undo 읽기와 최종 결과 선택은 기존 동기 Catalog 의미를 유지하며 새 경로에서 WAL replay·durability wait·reader file·LOAD는 도달하지 않는다.
+
+원 Full 계산식은41576B로 유지한다. 상주 계산은 실제로 호출하지 않는 Root/Jobs decoder와 WAL LayoutView/native parser의 포괄 비용을 제외하고, 실제 Status/CatalogRoot Undo 물리 read 반환 뒤의 typed decode를 별도 phase로 계산한다. guard·request·StatusSlotRef·TxnRef·UndoRef·PageView·Result 등 동시에 유지되는 parent 값은 합한다. malformed Undo의 CatalogValue before가 도달하는 완전한 Catalog decoder는 포함한다. source class는16860B, shared retained는22256B로 두 resident의 합은55976B다. 고정 caller loan과 원 shared backing은 재복사하지 않는다. 이는 source 값/수명의 보수 합이며 RSS·compiler stack 실측·성능 인수가 아니다. 다른 writer/reader/progress 입구를 포함한 전체64KiB 합산 보장은 아직 미공급이다.
+
+시험은 마지막 검증 `ec018d6` 이후 변경한 class·resolver·오류 분류·source 계산에만 선택했다. 동결 manifest는 `tests/fixtures/dev3-module-c2/resident-read/manifest.json`이며 최초5개에서 검토 반례4개를 추가했고 완료된 기존 시험은 반복하지 않았다. 총600초, compiler90초, 각 exact case30초, 출력8MiB, stack33554432B로 제한했다. r1–r5의 source export/inventory·runner·manifest·compiler·ELF·stdout/stderr·결과를 각각 `artifacts/module-c2-resident-read-20261027-rN/`에 보존한다.
+
+| 원 실행 | 실제 실행·결과 | 후속 변경과 미실행 구분 |
+| --- | --- | --- |
+| r1 | production PASS, test build E0583 FAIL | cfg(test) module의 path 등록 오류. runtime5개 모두 NOT_RUN |
+| r2 | test build PASS, 첫 census FAIL(두 reader68820B) | production은 r1 이후 test-only path 수정뿐이므로 반복 안 함. 나머지 runtime4개 NOT_RUN |
+| r3 | production PASS, test build E0502 FAIL | 실제 source phase 정정·Membership Fatal 수정과 추가 반례를 반영. test corruption closure의 borrow 오류. runtime9개 NOT_RUN |
+| r4 | test build syntax FAIL | test helper 추출의 여분 brace 오류를 보존. runtime9개 NOT_RUN, production 반복 안 함 |
+| r5 | test build PASS, exact runtime9개 모두 PASS | r3 뒤 test-only lifetime/syntax 수정. production 반복 안 함. 미실행·실패를 이 실행의 PASS로 소급하지 않음 |
+
+9개는 고정 class/두-reader/mixed capacity1개, actual active·Commit 전후 snapshot/Found 무 I/O1개, Undo 비상주/Full 재시도1개, 두 actual reader의 독립 예약·반환1개, Status/Undo checksum 파손1개, 원 Status/후속 Status 비상주와 partial hit 거절1개, checksummed Status exact-ref 부재/중복1개, copy 뒤 actual allocator flush의 recLSN 변경1개, 고정 Catalog/선택 뒤 Status/Undo membership 파손1개다. 재생성된 손상 입력도 원 page identity와 checksum을 가진 원 pool frame에만 주입하며 새 권한·directory를 만들지 않는다. 정상 allocator stamp 변화 시험은 실제 flusher를 사용한다. 해당 원 flush 이벤트와 reader 재개 구간의 I/O0을 구분한다. native 파일·새 PID 복구·wire 변경은 이 단위에 없으며 기존 current-build 복구 결과를 새 결과로 표기하지 않는다.
+
+| 실행 | source SHA-256 | result SHA-256 |
+| --- | --- | --- |
+| r1 | `acea3c9a894f0914e66f033ffec2cb91bbeb292777419f743afb64af37c0d3fe` | `83e6b2928a16be858ca237a63c390907f57ab28d0cdff91291c0d318d6b978f4` |
+| r2 | `201b373df3b65232f34a2e0f9b546828f573f98c203b2c85911f9bb7a4bfacde` | `db8220e1347c222027283c7b390a21a0e1db304ff378713fe5d528cae0a2301a` |
+| r3 | `a4dc78cc8104072166dd439ddee4fd15867698fc4969dc63364789c7b22ab49d` | `90c9bb36d4780dba22531775b55181be3b0acd6707ea621ce9902064705a5139` |
+| r4 | `60c396a2076f94320e08cdd98a8ffe110b416eb55ce00272660a4fccd87fb6e8` | `4e3c7710947b34184ab2da8d57ad8804adad8b1cf2365539ee1c8558a4de8596` |
+| r5 | `9e8793e70a36f3e8b8b0e9cc977d75ac24145e0c2013b05ee2f97e0051bb69b5` | `9ab76baa1313927e17ff187b7253f2697d3ccea134a7cd42633bab11acc18eb3` |
+
+r5 ELF SHA-256은 `551330563e88e9eeb598398fe18c4bdd2267a9371fcbea9cefa113c3f3e0a50f`, r3–r5 manifest는 `83adeaa0b04f636bd1d502b3020ec5705fa0ca821d863d939343656b639e433e`다. 변경 Rust만 파일별 rustfmt로 정리했으며 전체 fmt/Clippy·문서 verifier·push는 실행하지 않았다. 독립 검토의 최종 결과는 아래에 기록한다. 재검토 조건은 resolver의 실제 호출 경로, 원 참조 보존/allocator 변경 의미, class source census 또는 caller loan 배치 변경이다.
+
+
+`/root/module_review`는 실제 제품·source census·9개 시험/manifest와 r1–r5의 원 자료를 읽기 전용 감사했다. r1/r2 각5621개, r3–r5 각5622개 inventory의 source·fingerprint·manifest·runner·compiler/case 로그·존재 ELF를 대조했고, r3→r4→r5는 cfg(test) resident_faults.rs만 바뀌었음을 확인했다. 문서6개·신규4/수정10경로 등록까지 확인한 뒤 **C2 상주 Catalog 부분공급 D1/D2 한정 수용·필수 수정0**으로 판정했다. 검토자는 수정·빌드·시험·문서 verifier를 실행하지 않았고 `/root`가 한정 수용을 반영한다. writer/progress·다른 입구 합산·Row/terminal/recovery·M4/M5 완료로 확대하지 않는다.

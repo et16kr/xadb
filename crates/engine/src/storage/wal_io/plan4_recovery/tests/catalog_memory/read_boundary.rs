@@ -61,7 +61,7 @@ fn missing_leaf_and_foreign_owner_release_original_resources() {
 }
 
 /// Normal flush and original clean-victim replacement make U nonresident.
-fn evict_undo<'s, 'c>(
+pub(super) fn evict_undo<'s, 'c>(
     live: &mut Live<'_, 's, 'c, '_, '_, '_, '_, '_, port::Writer>,
     flusher: &mut Owner<'c, 's>,
     undo: &Plan4Target,
