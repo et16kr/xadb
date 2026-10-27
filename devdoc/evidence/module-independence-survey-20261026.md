@@ -1054,3 +1054,21 @@ descriptor source8711→8047B(-664), allocation iterator allowance1152→48B(-11
 두 실행의 공통 source SHA-256은 `e6d01932d56a255b61ac97b1da4805a9181b09abdef144db4cdd5f8e09018064`, manifest는 `f475a3de4e30f58daa0aa36338316be37032c5dd6484baba847bf84f70f9caa7`, ELF는 `ec2b118a6e62cd6dbdf508e5d157818c2bc03ee803c1a274e829bc357a5239a0`다. r1 result `8373cd234c5287b3de4819f81d8efe4200df0b6ce6d8c5c28c751cd882384141`은 FAIL, r2 result `ba08de1a0f6a3e2d85de066e5ccaaadc2a98632d0892c9af0e294a6c7883e9a9`는 선택 continuation PASS다. G6 index SHA-256은 `ce3fd367007a6d798dbb6c2f18367a714d4f105611fb190fe57a1aa72d6d99a8`이며 실제 fixture가 그 index의 각 파일 길이/hash도 검사한다. 총600초/compiler90초/case30초/출력8MiB/stack33554432B 한도를 유지했고 경과31.62/6.93초는 성능 측정이 아니다.
 
 독립 검토자는 actual borrow와 남은 row/descriptor/Result/SHA 계수, 원 source5640파일과 r1/r2 artifact·최종 문서6개를 대조하고 D1/D2를 한정 수용했다. 미해결 필수 수정0이다. 변경 파일 rustfmt·diff whitespace만 확인했고 전체 fmt/Clippy·문서 verifier·push는 실행하지 않았다. source/progress 전체 admission·Row/terminal/recovery 공급·M4/M5는 미완료다.
+
+<a id="c2-borrowed-progress-rejected"></a>
+### C2 progress Owner borrow 축소 후보 기각 — 2026-10-27
+
+기준 `7ce9890`, 작성 `/root`, 독립 검토 `/root/module_review`다. ReadOperationAdmission의 원 core/OwnerIdentity를 `Option<&mut Owner>`로 대체하고 CatalogCallScope의 별도 Owner 필드를 제거하는 후보를 구현했다. 후보 source에서 production/test build·관련 runtime14·compiler3 PASS/경고0를 확인했다. compiler는 정상 Content 반환→close→Owner 재사용1 및 Owner 직접 재진입(E0502)·Content-live close(E0499) 거절2를 포함한다. source 계수는 후보 ticket8B·Scope held368B/entry1816B·Full36948B/Resident17188B였으며 **채택된 제품 값이 아니다**.
+
+독립 D1/D2에서 safe `mem::replace`/`swap` 반례를 발견해 **미수용·원복**했다. `owner_mut() -> &mut Owner`로 전달한 값 자체를 다른 authentic Owner와 교체하면 cleanup이 새 core/index/generation을 따라간다. 다른 read ticket을 forget해 flag1/Idle로 남긴 Owner와 교체하는 경우 원 slot이 아닌 다른 slot을 정상 해제할 수 있으므로 exclusive borrow만으로 exact identity를 고정했다는 주장은 성립하지 않는다. 이 반례는 읽기 분석이며 실행 PASS가 아니다. 기존14/3 PASS가 반례를 덮지 않는다.
+
+원 core+identity를 추가 보유하면 Scope 별도 참조 제거의 크기 이득과 상쇄된다. 실제 Catalog는 기존 Scope와 begin 인자의 독점 Owner borrow로 동시 호출 수명을 제한하므로 low-level ticket 자체의 추가 borrow는 bound entry/tail을 닫는 필수 선행이 아니다. 후보 제품2파일과 fixture는 원복하고, 원 exact-slot ticket·Full36972B·Resident17212B를 유지한다. 무변경 원복 코드의 완료 시험은 반복하지 않았다. compact entry/tail·정확 replay phase 계수와 실제 writer 예약을 후속으로 진행한다.
+
+원 artifact `artifacts/module-c2-borrowed-progress-owner-20261027-r1/`에 **후보** source/inventory·fixture manifest·compiler/probe exports·ELF·exact 로그·runner/helpers를 보존한다. manifest는 이 export 내부 `tests/fixtures/dev3-module-c2/borrowed-progress-owner/manifest.json`이며 현재 제품 경로로 등록하지 않는다. 총600초/compiler90초/case30초/출력8MiB/stack33554432B, 경과60.06초는 성능 결과가 아니다.
+
+- 후보 source SHA-256: `6c105acdb72dbe39bd71a02d6eaf2d015fd4e5d21dd9f6ede1d35d75787f1ac1`
+- 후보 manifest SHA-256: `eae3123994950f3890a11cf9a0a45b178c76f65f7d5b0748e49d33f25c6fe5f2`
+- 후보 ELF SHA-256: `a4fa6d4167701bf17927429584c5e456209cb956f393ab5fb697e523516e958f`
+- 실행 result SHA-256: `f8a8017efa1c78fd0d28ca31c98fc791fc548cf548edd880d28f8bfc67a6927c`
+
+실행 결과 PASS와 설계 기각을 구별한다. 독립 검토자는 제품2파일의 byte-exact 원복, 후보5644 source/inventory와14/compiler3 원 artifact, 문서2개의 사실/식별자를 확인해 기각·원복 기록을 확정했다. 후보 제품 D1/D2는 미수용이며 compact entry/tail·writer phase·M4/M5는 미완료다. 전체 fmt/Clippy·문서 verifier·push는 실행하지 않았다.
