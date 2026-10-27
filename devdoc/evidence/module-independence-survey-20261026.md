@@ -1197,3 +1197,18 @@ Full33972B·Resident16928B·shared22400B와 원 charge는 그대로다. shared+F
 | r2 선택4 PASS | `27d454362ffcf02d9be96869300e2d00e9d1dfe526710d92f1669cc68ee718b8` | `5e10c28db8e301e39997f6756bce1cd94825f138ca999fa1e02f5d28626521b4` |
 
 두 실행의 manifest SHA-256은 `c2aeac954ba47fcd69907d911d692b3cade4aa443dc6284cc69f18e0e3790b38`, r2 ELF는 `41a9e95a09a8cc8f64a9de1fb2898cd5220be2134779251efd8aa8d757de54f5`다. 독립 D1/D2는 현재8파일·각5645파일 원 source/inventory·compiler/ELF/case 로그·6문서의 수치와 해시를 대조해 이 한정 단위를 수용했다. 필수 미해결 수정은0이며 검토자는 수정·빌드·시험·verifier를 실행하지 않았다. 변경 파일 rustfmt/diff whitespace만 확인하며 전체 fmt/Clippy·문서 verifier·push는 실행하지 않았다. 전체 entry/tail·writer/progress·Row/terminal/recovery·M4/M5는 미완료다.
+
+<a id="c2-query-tail-boundaries"></a>
+### C2 query 정상/오류 종료 경계 — 2026-10-27
+
+기준 `c8d47ed`, 작성·통합 `/root`, 독립 검토 `/root/module_review`다. actual `CatalogCallScope::finish_error`는 원 wide RetentionError를 유지한 채 작은 `finish_checked` 결과를 받고, 이후에만 cleanup 오류를 wide 오류로 변환한다. 기존 중간 `Result<()>`를 종료 호출 동안 만들지 않는다. 원 Fatal이 우선하며 원 오류가 nonfatal이면 cleanup 오류가 우선하는 의미, 원 source→progress 순서와 fence 아래 charge 잔존은 유지한다.
+
+선택 actual `query`는 lookup Result/step/RecordView와 header/Table/Column 소비를 lexical block 안에서 끝내고 정상 출구의 `Option<Plan4Target>`만 반환한다. block 뒤 consuming close를 실행한 다음 FlushRequired를 처리한다. 오류 arm은 같은 block 안에서 `finish_error`를 호출하므로 그때 caller의 전체 lookup Result를 없다고 세지 않는다. authority·snapshot·pin·영속 byte는 바꾸지 않았다.
+
+신규 cfg(test) 관측은 정상 tail710B와 오류 tail1394B를 구별한다. 오류에는 loop 값, 전체 lookup Result의 반환/추출2개, 추출 오류와 finish_error518B를 포함한다. finish_error는 원 RetentionError72B를 유지하며 작은 close 대기와 오류 변환259B를 별도 phase로 센다. 변환에는 원 오류 외에 반환 wide 오류·phase/cause/effect·SourceFailure를 남긴다. 기존 consumer4972+legacy1962+close434=7368B는 `c8d47ed`의 넓은 baseline으로 보존한다. 이 수치는 한 호출의 보수 source 식이며 actual stack/RSS·성능·동시34입구의 전체 floor가 아니다. 제품 charge/admission에는 연결하지 않았고 Full33972B·Resident16928B·shared22400B는 유지한다.
+
+실행 전 [선택 manifest](../../tests/fixtures/dev3-module-c2/query-tail-boundaries/manifest.json)에 diff→5case와 총600초/compiler90초/case30초/출력8MiB/stack33554432B를 고정했다. 신규 original Scope의 caller 입력 오류(Fatal/nonfatal)×healthy/fenced cleanup4조합1건, 실제 query의 Missing/Commit후 Found1건, 새 관측1건과 finish_error가 직접 바뀐 actual Busy/Undo PageIo Fatal2건만 실행했다. synthetic 원 Fatal 입력은 priority 검증이며 actual source fatal이 fence 없이 발생했다는 증거가 아니다. production/test build 및 runtime5 PASS·경고0다. source/progress/refs/pins/I/O 잔존과 오류 phase/cause/effect를 검산했다. 실제 query 검증은 변경한 helper를 호출하며 기존 결과 소비 test로 대체하지 않았다.
+
+`artifacts/module-c2-query-tail-boundaries-20261027-r1/`에 source5646파일/inventory·manifest·runner/helpers·compiler·ELF·5case 로그를 보존한다. 실제38.26초는 성능 결과가 아니다. source SHA-256 `e5bd6ae338ad27ffff7e6268ad243627e8672f713809e98d5ff717a9982bf7d6`, manifest `49543abcaf49de48a2b0fe5db887063cfa84916d6043d309758ebf1cbf3a8414`, ELF `10747a193a83333e655b41f48714d4329da9ba2d35e1778211b247cfe0d1d537`, result `3a05d737bf2006559fd2ebaa698e0dd7cb89a657609d9740194584d62d7dd7a2`다.
+
+독립 D1/D2는 실제3 Rust diff·원5646파일/inventory·manifest/runner/helpers·compiler/ELF/5case와6문서를 대조해 이 한정 단위를 수용했다. 필수 미해결 수정은0이며 검토자는 수정·빌드·시험·verifier를 실행하지 않았다. 무변경 과거 관측/codec/복구·compiler borrow probe·하위 회귀·workspace 시험은 반복하지 않았다. 변경 파일 rustfmt/diff whitespace만 확인하며 전체 fmt/Clippy·문서 verifier·push는 실행하지 않았다. 전체 entry/tail·writer/progress·Row/terminal/recovery·M4/M5는 미완료다.

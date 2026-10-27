@@ -229,9 +229,13 @@ impl<'u, 'r, 'v, 'j, 'b, 'a, 's, 'c, 'p, 'd, 'm, 'w, W: WriterNamespace>
         )
     )]
     pub(in crate::storage) fn finish_error(self, error: RetentionError) -> RetentionError {
-        match self.finish_result::<()>(Err(error)) {
-            Err(error) => error,
-            Ok(()) => unreachable!("original error retained"),
+        // Keep only the original wide error while cleanup may wait. Construct
+        // a replacement wide error after the small cleanup result has returned.
+        let cleanup = self.finish_checked();
+        match cleanup {
+            _ if error.effect == Effect::CallerMustResolve => error,
+            Err(cleanup) => cleanup.into(),
+            Ok(()) => error,
         }
     }
 
@@ -453,10 +457,10 @@ mod tests {
             + leaf_wait.max(leaf_return);
         let compact_prefix = entry.max(failed_source).max(returning).max(compact_tail);
         let compact_floor = owners * compact_prefix + guards;
-        // The current selected query's lexical result/step/target survive its
-        // close call; its error branch calls the wide finish_error. Do not
-        // silently treat either as the compact tail above. This intentionally
-        // conservative baseline keeps the whole consumer plus legacy closure.
+        // Preserve the original broad baseline from c8d47ed. The normal query
+        // now ends its consumer block before close, but its error branch still
+        // closes inside that block. This remains an upper observation, not the
+        // narrowed normal/error tail or an implemented reservation floor.
         let current_query_tail = consumer_source_bytes::<port::Writer>()
             + legacy_boundary_source_bytes::<port::Writer>()
             + close_source_bytes();
@@ -481,6 +485,51 @@ mod tests {
         assert!(current_query_tail > compact_tail);
         assert!(current_query_floor > compact_floor);
         assert!(size_of::<CatalogCallError>() < size_of::<CallResult<Scope<'_>>>());
+    }
+
+    #[test]
+    fn selected_query_tails_keep_normal_packet_and_error_conversion_separate() {
+        use std::mem::size_of;
+        // Normal query ends the lookup/result/record inspection block first.
+        // Target output/extraction and the remaining loop inputs are explicit;
+        // original ports/Owner/snapshot remain their separately owned values.
+        let loop_values = 2 * size_of::<Plan4ResidencyCursor>()
+            + 2 * size_of::<std::ops::Range<usize>>()
+            + 4 * size_of::<u64>()
+            + 8 * size_of::<&()>()
+            + 4 * size_of::<bool>();
+        let normal = loop_values + 2 * size_of::<Option<Plan4Target>>() + close_source_bytes();
+        // finish_error keeps the original RetentionError during close. After
+        // close, From can construct its phase/cause/effect and wide return;
+        // these phases are exclusive but original error survives either one.
+        let conversion = 2 * size_of::<CatalogCallError>()
+            + 2 * size_of::<RetentionError>()
+            + size_of::<(RetentionPhase, RetentionCause)>()
+            + size_of::<Effect>()
+            + 2 * size_of::<SourceFailure>()
+            + 4 * size_of::<&()>();
+        let finish_error = size_of::<RetentionError>()
+            + (4 * size_of::<CallResult<()>>() + close_source_bytes()).max(conversion);
+        // The failure arm is inside the block: its lookup Result cannot be
+        // removed with the normal branch. Preserve complete return/extraction
+        // and the extracted original error beside the finishing call.
+        let error = loop_values
+            + 2 * size_of::<Result<CatalogLookupStep<'_>>>()
+            + size_of::<RetentionError>()
+            + finish_error;
+        let old_broad = consumer_source_bytes::<port::Writer>()
+            + legacy_boundary_source_bytes::<port::Writer>()
+            + close_source_bytes();
+        println!(
+            "QUERY_TAIL normal={normal} error={error} finish_error={finish_error} conversion={conversion} retained_error={} avoided_result_unit={} lookup_result={} target_option={} previous_broad={old_broad} floor=NOT_CONNECTED",
+            size_of::<RetentionError>(),
+            size_of::<Result<()>>(),
+            size_of::<Result<CatalogLookupStep<'_>>>(),
+            size_of::<Option<Plan4Target>>()
+        );
+        assert!(error > normal);
+        assert!(normal < old_broad && error < old_broad);
+        assert!(size_of::<CallResult<()>>() < size_of::<Result<()>>());
     }
 
     #[test]

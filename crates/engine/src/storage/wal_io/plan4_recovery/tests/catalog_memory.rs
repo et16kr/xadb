@@ -683,45 +683,49 @@ fn query<'s, 'c, W: WriterNamespace>(
     let mut finished = false;
     for _ in 0..32 {
         let mut call = reader.catalog_call(owner, &snapshot).unwrap();
-        let result = call.lookup(ObjectId::new(object).unwrap(), &mut cursor, private);
-        let step = match result {
-            Ok(step) => step,
-            Err(error) => panic!("actual scoped lookup {:?}", call.finish_error(error)),
-        };
-        let target = match step {
-            CatalogLookupStep::Found(record) => {
-                assert!(found);
-                let header = record.header();
-                assert_eq!(
-                    (
-                        header.identity.object.get(),
-                        header.identity.generation.get(),
-                        header.identity.schema_epoch.get()
-                    ),
-                    (object, 1, 1)
-                );
-                assert!(!header.retired);
-                let crate::storage::catalog_record::CatalogDefinitionView::Table(table) =
-                    record.definition()
-                else {
-                    panic!("table definition");
-                };
-                assert_eq!(table.name(), if object == 6 { "T" } else { "U" });
-                assert_eq!(table.len(), 1);
-                let column = table.column(0).unwrap();
-                assert_eq!(
-                    (column.name, column.data_type, column.nullable),
-                    ("i", DataType::Int64, false)
-                );
-                finished = true;
-                None
+        // End all borrowed result/inspection values before consuming close.
+        // The error arm still closes inside this block and is counted separately.
+        let target: Option<Plan4Target> = {
+            let result = call.lookup(ObjectId::new(object).unwrap(), &mut cursor, private);
+            let step = match result {
+                Ok(step) => step,
+                Err(error) => panic!("actual scoped lookup {:?}", call.finish_error(error)),
+            };
+            match step {
+                CatalogLookupStep::Found(record) => {
+                    assert!(found);
+                    let header = record.header();
+                    assert_eq!(
+                        (
+                            header.identity.object.get(),
+                            header.identity.generation.get(),
+                            header.identity.schema_epoch.get()
+                        ),
+                        (object, 1, 1)
+                    );
+                    assert!(!header.retired);
+                    let crate::storage::catalog_record::CatalogDefinitionView::Table(table) =
+                        record.definition()
+                    else {
+                        panic!("table definition");
+                    };
+                    assert_eq!(table.name(), if object == 6 { "T" } else { "U" });
+                    assert_eq!(table.len(), 1);
+                    let column = table.column(0).unwrap();
+                    assert_eq!(
+                        (column.name, column.data_type, column.nullable),
+                        ("i", DataType::Int64, false)
+                    );
+                    finished = true;
+                    None
+                }
+                CatalogLookupStep::Missing => {
+                    assert!(!found);
+                    finished = true;
+                    None
+                }
+                CatalogLookupStep::FlushRequired { target } => Some(target),
             }
-            CatalogLookupStep::Missing => {
-                assert!(!found);
-                finished = true;
-                None
-            }
-            CatalogLookupStep::FlushRequired { target } => Some(target),
         };
         call.finish_checked().unwrap();
         if finished {

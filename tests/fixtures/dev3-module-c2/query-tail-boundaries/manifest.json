@@ -1,0 +1,42 @@
+{
+  "schema": "XADB_MODULE_C2_QUERY_TAIL_BOUNDARIES_V1",
+  "status": "FROZEN_INPUTS_NOT_EXECUTION_EVIDENCE",
+  "baseline": "c8d47ed",
+  "scope": "Actual finish_error avoids intermediate wide Result<()> during consuming close; selected query normal consumer values end in a lexical block, error path remains inside and retains original priority. Separate tail expressions only, no source floor/admission change.",
+  "budget": {
+    "total_seconds": 600,
+    "compiler_seconds": 90,
+    "case_seconds": 30,
+    "output_bytes": 8388608,
+    "rust_min_stack": 33554432
+  },
+  "runtime_tests": [
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::call_scope::direct_error_finish_keeps_priority_and_original_accounting",
+      "reason": "New original Scope with caller-supplied Unchanged/Fatal packets x healthy/fenced cleanup; exact phase/cause/effect, source/progress/refs/pins/I/O disposition."
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::call_scope::query_block_consumes_missing_and_found_before_close",
+      "reason": "New actual selected query Missing at q0 and Found at q1 after original CREATE/Commit; normal lexical block ends before consuming close; original fields/source/progress/refs/pins verified."
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::read::scope::tests::selected_query_tails_keep_normal_packet_and_error_conversion_separate",
+      "reason": "New separate source expressions for normal Option target tail and error arm retaining caller lookup Result plus original/converted wide errors; no admission claim."
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::call_scope::actual_resident_busy_is_upgraded_by_fatal_scope_cleanup",
+      "reason": "Changed finish_error directly preserves actual Busy→cleanup Fenced priority and outstanding source under fence."
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::call_scope::actual_undo_io_fatal_survives_scope_cleanup",
+      "reason": "Changed finish_error directly preserves original actual Undo LOAD PageIo Fatal while source/progress cleanup runs."
+    }
+  ],
+  "source_boundaries": {
+    "finish_error": "Original RetentionError remains during finish_checked; cleanup is small CallResult. Original Fatal wins, otherwise cleanup Err converted after close, else original error. Conversion retains original + returned wide values and phase/cause/effect intermediates.",
+    "query_normal": "result/step/record/header/definition/table/column lexical block ends before call.finish_checked; Option<Plan4Target>,cursor,finished and outer inputs remain.",
+    "query_error": "Calls finish_error from inside block, so complete LookupStep Result and original error remain in its separate upper expression. No arbitrary caller copy bound.",
+    "observer": "Does not rerun unchanged 4-owner observation or modify fixed Full/Resident/shared charges. Does not prove global aggregate reservation.",
+    "selection": "Original5 only; unchanged lower codec, full lifecycle/recovery, compiler probes and workspace tests excluded."
+  }
+}

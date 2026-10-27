@@ -6946,5 +6946,22 @@
     "validation": "r1 production PASS/test E0425 FAIL/runtime4 NOT_RUN; r2 test build/runtime4 PASS warning0, production NOT_REPEATED_UNCHANGED_CODE; independent D1/D2 code/evidence/docs accepted; no unresolved required changes",
     "remaining_supply": "Compact observed floor15057 exceeds available9164; broad current query tail7368 not minimum; actual narrow entry/exit and writer/progress admission, Row/terminal/recovery and M4/M5 remain",
     "source_roots_changed": false
+  },
+  "dev3_module_c2_query_tail_boundaries": {
+    "status": "ACCEPTED_LIMITED_D1_D2",
+    "contract_ref": "dev3-module-boundaries.md#operation-source-admission",
+    "implemented_paths": [
+      "tests/fixtures/dev3-module-c2/query-tail-boundaries/manifest.json"
+    ],
+    "modified_paths": [
+      "crates/engine/src/storage/wal_io/plan4_retention/read/scope.rs",
+      "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory.rs",
+      "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/call_scope.rs"
+    ],
+    "scope": "Actual finish_error avoids intermediate wide Result during consuming close; selected query normal block ends before close, error arm retains full lookup Result; separate source observations only",
+    "evidence_ref": "module-independence-survey-20261026.md#c2-query-tail-boundaries",
+    "validation": "production/test build and selected runtime5 PASS warning0; independent D1/D2 accepted after original source/inventory/compiler/ELF/logs and six-document audit, required fixes0",
+    "remaining_supply": "Normal710/error1394 per-call observations are not connected to whole entry/tail floor; actual writer/progress admission, Row/terminal/recovery and M4/M5 remain",
+    "source_roots_changed": false
   }
 }

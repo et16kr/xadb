@@ -698,3 +698,7 @@ actual health/source/Scope/legacy facade·원 progress consuming finish와 관�
 ### C2 예약 밖 호출 phase 관측 등록 — 2026-10-27
 
 기존 Scope·core·pool/registration·visibility·isolation8경로의 작은 실패 helper/cfg(test) 관측과 선택 fixture1을 JSON `dev3_module_c2_uncharged_call_phases`에 등록했다. package/dependency·source roots·backing·wire는 유지한다. [원 증거](../evidence/module-independence-survey-20261026.md#c2-uncharged-call-phases)는 r1 production PASS/test compile FAIL/runtime NOT_RUN과 r2 test build/선택4 PASS·생산 미반복을 구별한다. 관측 floor는 제품에 연결하지 않았으며 전체 reader/writer admission은 미완료다.
+
+### C2 query 종료 경계 등록 — 2026-10-27
+
+기존 Scope·actual query·call_scope3경로와 선택 fixture1을 JSON `dev3_module_c2_query_tail_boundaries`에 등록했다. package/dependency·source roots·backing·wire는 유지한다. [증거](../evidence/module-independence-survey-20261026.md#c2-query-tail-boundaries)의 production/test build·선택5 PASS는 changed finish_error와 query 경계에 한정한다. 정상710B/오류1394B 관측은 전체 reader/writer admission 미공급과 구별한다.

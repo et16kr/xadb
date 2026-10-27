@@ -3,6 +3,127 @@ use super::*;
 use crate::transaction::concurrency::catalog_test_support::{self as hook, Point, Resume};
 use std::sync::mpsc::sync_channel;
 
+#[test]
+fn direct_error_finish_keeps_priority_and_original_accounting() {
+    use crate::storage::disk::{RetentionCause, RetentionError, RetentionPhase};
+    case("C2_TAIL01", || {
+        let oracle = Oracle::new();
+        for original_fatal in [false, true] {
+            for cleanup_fenced in [false, true] {
+                with_fresh!(oracle, |live,
+                                     owner,
+                                     flusher,
+                                     status,
+                                     undo,
+                                     private,
+                                     reader_private,
+                                     core,
+                                     fence,
+                                     state| {
+                    let _ = (status, undo, private, reader_private);
+                    prepare_catalog(live, owner, flusher);
+                    let (writer, reader, _) = live.split();
+                    let snapshot = reader.catalog_snapshot(owner).unwrap();
+                    let call = reader.catalog_resident_call(owner, &snapshot).unwrap();
+                    let charge = reader.catalog_test_source_used();
+                    assert!(charge > 0);
+                    let before = state.lock().unwrap().events.len();
+                    // Caller-supplied error packets exercise all priority
+                    // branches; they grant no product/source authority.
+                    let original = RetentionError {
+                        phase: RetentionPhase::Load,
+                        cause: if original_fatal {
+                            RetentionCause::Invariant
+                        } else {
+                            RetentionCause::Capacity
+                        },
+                        effect: if original_fatal {
+                            Effect::CallerMustResolve
+                        } else {
+                            Effect::Unchanged
+                        },
+                    };
+                    if cleanup_fenced {
+                        fence.fence();
+                    }
+                    let error = call.finish_error(original);
+                    if original_fatal {
+                        assert_eq!(error.phase, RetentionPhase::Load);
+                        assert_eq!(error.effect, Effect::CallerMustResolve);
+                        assert!(matches!(error.cause, RetentionCause::Invariant));
+                    } else if cleanup_fenced {
+                        assert_eq!(error.phase, RetentionPhase::Census);
+                        assert_eq!(error.effect, Effect::CallerMustResolve);
+                        assert!(matches!(error.cause, RetentionCause::Fenced));
+                    } else {
+                        assert_eq!(error.phase, RetentionPhase::Load);
+                        assert_eq!(error.effect, Effect::Unchanged);
+                        assert!(matches!(error.cause, RetentionCause::Capacity));
+                    }
+                    assert_eq!(hook::observe(core).active_read_operations, 0);
+                    assert_eq!(
+                        reader.catalog_test_source_used(),
+                        if cleanup_fenced { charge } else { 0 }
+                    );
+                    assert_eq!(reader.catalog_test_references(), ((0, 0, 0), false));
+                    assert_eq!(writer.catalog_test_physical_pins(), 0);
+                    assert_eq!(state.lock().unwrap().events.len(), before);
+                    assert_eq!(fence.is_fenced(), cleanup_fenced);
+                    if cleanup_fenced {
+                        assert!(snapshot.release_checked().is_err());
+                    } else {
+                        snapshot.release_checked().unwrap();
+                        owner.check_idle().unwrap();
+                    }
+                });
+            }
+        }
+    });
+}
+
+#[test]
+fn query_block_consumes_missing_and_found_before_close() {
+    case("C2_TAIL02", || {
+        let oracle = Oracle::new();
+        with_fresh!(oracle, |live,
+                             owner,
+                             flusher,
+                             status,
+                             undo,
+                             private,
+                             reader_private,
+                             core,
+                             fence,
+                             state| {
+            let actor = create_forward(
+                live, owner, flusher, status, undo, private, &oracle, state, 1,
+            );
+            query(live, owner, flusher, reader_private, 0, 6, false);
+            {
+                let (writer, reader, _) = live.split();
+                assert_eq!(reader.catalog_test_source_used(), 0);
+                assert_eq!(reader.catalog_test_references(), ((0, 0, 0), false));
+                assert_eq!(writer.catalog_test_physical_pins(), 0);
+                assert_eq!(hook::observe(core).active_read_operations, 0);
+            }
+            let prepared = live.prepare_catalog_commit(owner, actor, private).unwrap();
+            {
+                let (mut writer, _, _) = live.split();
+                writer.commit_catalog(owner, prepared).unwrap();
+            }
+            query(live, owner, flusher, reader_private, 1, 6, true);
+            let (writer, reader, _) = live.split();
+            assert_eq!(reader.catalog_test_source_used(), 0);
+            assert_eq!(reader.catalog_test_references(), ((0, 0, 0), false));
+            assert_eq!(writer.catalog_test_physical_pins(), 0);
+            assert_eq!(hook::observe(core).active_read_operations, 0);
+            assert!(!fence.is_fenced());
+            owner.check_idle().unwrap();
+            flusher.check_idle().unwrap();
+        });
+    });
+}
+
 fn lookup_error_cleanup(io_error: bool) {
     case(if io_error { "C2_SCOPE06" } else { "C2_SCOPE05" }, || {
         let oracle = Oracle::new();

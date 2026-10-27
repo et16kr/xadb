@@ -1,5 +1,7 @@
 # 현재 구현
 
+2026-10-27 [C2 query 종료 경계](../evidence/module-independence-survey-20261026.md#c2-query-tail-boundaries): actual 정상 결과 소비 block과 finish_error의 작은 정리를 분리했다. production/test build·선택5 PASS. 정상710B/오류1394B는 한 호출 관측이고 전체 floor/admission은 미연결이다.
+
 2026-10-27 [C2 예약 밖 호출 phase](../evidence/module-independence-survey-20261026.md#c2-uncharged-call-phases): 실제 source 실패를 작은 consuming helper로 정리하고34입구·네 독립 guard·기존 wide tail을 cfg(test)로 관측했다. 선택4 PASS·원 test compile FAIL 보존. compact floor15057B는 미연결 상계이며 Full/Resident/shared와 전체 admission 미완료 상태를 유지한다.
 
 2026-10-27 [C2 split 고정 charge](../evidence/module-independence-survey-20261026.md#c2-split-source-charges): source 계산을 exclusive port 생성으로 옮기고 실제3port와 복구 caller를 계수했다. ticket16B·Full33972B/Resident16928B/shared22400B, 선택16 PASS·원 compile FAIL2 보존. live/recovered peak63328/64704B이며 전체 entry/tail·writer phase·M4/M5는 미완료다.
