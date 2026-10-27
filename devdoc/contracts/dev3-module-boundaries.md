@@ -1133,6 +1133,8 @@ rollback/terminal은 원 progress admission이 새 foreground를 닫고 이미 �
 
 후속 [최종 source 반환까지 progress 유지](../evidence/module-independence-survey-20261026.md#c2-source-return)는 위 CatalogFull 공급 당시 정리 순서 중 progress 반환 시점만 늦춘다. refs 정리와 최종 decode/Result 뒤 source를 반환하고 그 다음 원 read_operation 표시를 반환한다. source 실패에도 progress 정리를 시도하며 fence 아래 charge를 보존한다. 선택7개를 검증했지만 source-before-progress 진입 틈·일반 반환 carrier·writer/다른 입구 합산은 남아 있으므로 전체 progress 비중첩 인수가 아니다.
 
+[Commit phase 관측](../evidence/module-independence-survey-20261026.md#c2-commit-phases)은 cfg(test)만 추가하여 현재 Pending의 실제 세 값 필요 하한2984B와 shared+Full 합66816B를 확인했다. 다른 phase 값은 보수 상한이며 최소 필요량과 구별한다. 기존 제품 charge·admission은 유지하고 stage 뒤 준비 배열 수명을 먼저 줄인다. 이 관측1 PASS는 actual Commit·전체 progress 인수가 아니다.
+
 전체 설계 상계는 metadata `73856+65536+49152=188544≤196608`, original flush를 더한 whole `254080≤262144`다. 이 admission·동시 합 검산은 **새 C1/C2/C3 공급**이며 기존 active.max 기반 source 결과로 이미 구현됐다고 하지 않는다. header의 실제 byte 배치와 source charge의 측정·실패/정리 경로는 C1/C4 인수에 포함한다.
 
 <a id="common-deliveries"></a>

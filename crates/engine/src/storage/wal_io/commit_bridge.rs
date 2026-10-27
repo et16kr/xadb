@@ -200,3 +200,32 @@ impl StagedCommit<'_, '_> {
             && self.binding.requirement.exact == requirement.exact
     }
 }
+
+/// Source-only observations; no new receipt constructor or production charge.
+#[cfg(test)]
+pub(super) fn catalog_phase_sources() -> [usize; 3] {
+    use std::mem::size_of;
+    type Stage<'a> = std::result::Result<
+        (StagedCommit<'a, 'a>, CatalogCommitWait<'a, 'a>),
+        CatalogStageError<'a, 'a>,
+    >;
+    let scalar = 4 * size_of::<&()>() + 2 * size_of::<super::WalIoError>();
+    [
+        size_of::<Binding<'_, '_>>()
+            + size_of::<CatalogCommitWait<'_, '_>>()
+            + size_of::<StagedCommit<'_, '_>>()
+            + 2 * size_of::<Stage<'_>>()
+            + 2 * size_of::<super::Result<WalRequirement<'_>>>()
+            + super::DURABILITY_CALL_BYTES
+            + scalar,
+        size_of::<CatalogCommitWait<'_, '_>>()
+            + 2 * size_of::<super::Result<DurableCommit<'_, '_>>>()
+            + 2 * size_of::<super::Result<DurableWal<'_>>>()
+            + super::DURABILITY_CALL_BYTES
+            + scalar,
+        size_of::<DurableCommit<'_, '_>>()
+            + size_of::<Binding<'_, '_>>()
+            + 2 * size_of::<super::Result<(InstalledCommit<'_, '_>, DurableWal<'_>)>>()
+            + scalar,
+    ]
+}

@@ -646,3 +646,7 @@ statement factory·자동 read-set·CheckedTable/RowReadOperation과 short aggre
 ### C2 최종 source 반환과 read progress 수명
 
 기존 `read/operation.rs`의 refs 정리와 source/progress 정리를 분리했다. 새 실제 시험과 선택 manifest는 JSON `dev3_module_c2_source_return`에 등록했다. package/dependency·source root·backing·wire 변경은 없다. [한정 증거](../evidence/module-independence-survey-20261026.md#c2-source-return)는 신규4·cleanup 변경 영향3의 선택7개 PASS를 보존하며 source-before-progress 진입 틈과 전체 writer/progress 합산을 후속으로 남긴다.
+
+### C2 Commit phase 관측 등록 — 2026-10-27
+
+기존7개 Rust source에 cfg(test) 관측만 추가했고 신규 manifest는 JSON `dev3_module_c2_commit_phase_observation`에 등록했다. 제품 charge·admission·package/dependency·source root·wire는 유지한다. [한정 증거](../evidence/module-independence-survey-20261026.md#c2-commit-phases)는 test build/신규 관측1 PASS와 원 compile FAIL을 보존하며 실제 Pending layout 축소를 후속으로 남긴다.

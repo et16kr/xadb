@@ -2562,3 +2562,10 @@ pub(in super::super) fn catalog_live_source_bytes<W: WriterNamespace>() -> Catal
             .max(retirement),
     }
 }
+
+/// Commit's caller plus the existing N9 common preparation closure. Its
+/// returned PreparedCatalog still owns nine request/stamp cells even for N4.
+#[cfg(test)]
+pub(in super::super) fn commit_prepare_source_observation<W: WriterNamespace>() -> usize {
+    ordinary_caller_source_bytes() + catalog_live_source_bytes::<W>().prepare
+}

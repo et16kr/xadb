@@ -450,3 +450,92 @@ pub(in super::super) fn source_bytes() -> usize {
             .max(visibility::epoch_transition_source_bytes())
             .max(commit_bridge::catalog_source_bytes())
 }
+
+/// Observations for the pending writer admission design, not installed charges.
+/// The original broad production bound and runtime phase transitions are intact.
+#[cfg(test)]
+pub(in super::super) fn phase_source_observations<W: WriterNamespace>()
+-> [(&'static str, usize); 10] {
+    use std::mem::size_of;
+    let physical = dirty_frame::commit_phase_sources::<TARGETS>();
+    let [bridge_stage, bridge_wait, bridge_complete] = commit_bridge::catalog_phase_sources();
+    let prepared = size_of::<PreparedCatalog<'_, '_, '_>>();
+    let parent = prepared
+        + visibility::epoch_commit_carriers()
+        + size_of::<crate::storage::wal_io::WalPrefix>()
+        + size_of::<WalRequirement<'_>>()
+        + size_of::<InstallationKey>()
+        + size_of::<crate::storage::session_fence::UnwindFence<'_>>()
+        + 4 * size_of::<Result<Observation>>()
+        + 8 * size_of::<Result<()>>()
+        + 4 * size_of::<RetentionError>()
+        + 20 * size_of::<&()>()
+        + size_of::<[usize; 8]>();
+    let pre_stage = parent
+        + queue::source_bytes().max(visibility::epoch_transition_source_bytes())
+        + 4 * size_of::<queue::RootView<'_>>()
+        + 4 * size_of::<crate::storage::page::PageHeader>()
+        + 4 * size_of::<crate::storage::page::PageView<'_>>()
+        + 4 * size_of::<foundation::codec::ContentHasher>();
+    let stage_locals = size_of::<CatalogCommitAttempt<'_, '_, '_, '_>>()
+        + size_of::<commit_bridge::CatalogStageError<'_, '_>>()
+        + 2 * size_of::<crate::storage::wal_io::StagedCommit<'_, '_>>()
+        + size_of::<commit_bridge::CatalogCommitWait<'_, '_>>()
+        + size_of::<PendingCatalog<'_, '_, '_, '_, '_, '_>>()
+        + size_of::<Result<PendingCatalog<'_, '_, '_, '_, '_, '_>>>()
+        + 6 * size_of::<&()>();
+    let stage = parent
+        + stage_locals
+        + physical
+            .prepare
+            .max(
+                size_of::<dirty_frame::CommitStageTargets<'_, '_, '_, '_, '_, '_, TARGETS>>()
+                    + bridge_stage,
+            )
+            .max(physical.suspend + super::catalog_live::catalog_control_source_bytes());
+    // A lower bound from only three necessarily retained owned values. It is
+    // deliberately NOT the full Pending envelope or a reservation size.
+    let pending_floor = prepared
+        + physical.pending_retained
+        + size_of::<commit_bridge::CatalogCommitWait<'_, '_>>();
+    let pending_wait = parent + physical.pending_retained + bridge_wait;
+    let drain_wait =
+        parent + size_of::<crate::storage::wal_io::DurableCommit<'_, '_>>() + physical.drain_wait;
+    let install_locals = size_of::<CatalogCommitInstalled<'_, '_>>()
+        + 2 * size_of::<crate::storage::wal_io::DurableCommit<'_, '_>>()
+        + 2 * size_of::<crate::storage::wal_io::InstalledCommit<'_, '_>>()
+        + size_of::<DurableWal<'_>>()
+        + 2 * size_of::<FrameStamp>()
+        + size_of::<dirty_frame::DptStamp<'_>>()
+        + size_of::<live::RetentionInstall<'_, '_, '_>>()
+        + size_of::<DirtyInstallPermit<'_, '_, '_>>()
+        + 2 * size_of::<dirty_frame::Result<dirty_frame::DptStamp<'_>>>()
+        + 2 * size_of::<dirty_frame::Result<FrameStamp>>();
+    let install = parent
+        + install_locals
+        + physical.resume.max(
+            physical.install_finish
+                + super::catalog_live::catalog_control_source_bytes()
+                    .max(history::runtime::source_bytes())
+                    .max(bridge_complete),
+        );
+    let publish = parent
+        + size_of::<CatalogCommitInstalled<'_, '_>>()
+        + size_of::<DurableWal<'_>>()
+        + visibility::epoch_transition_source_bytes();
+    [
+        ("prepared_actual_nine", prepared),
+        (
+            "prepare_common_nine",
+            super::catalog_live::commit_prepare_source_observation::<W>(),
+        ),
+        ("pre_stage", pre_stage),
+        ("stage_return", stage),
+        ("pending_three_value_floor", pending_floor),
+        ("pending_wal_wait", pending_wait),
+        ("drain_wait", drain_wait),
+        ("resume_install_finish", install),
+        ("publish_return", publish),
+        ("unchanged_production_broad", source_bytes()),
+    ]
+}

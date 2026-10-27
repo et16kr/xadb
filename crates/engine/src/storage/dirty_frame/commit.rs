@@ -399,5 +399,58 @@ pub(in crate::storage) const fn source_bytes<const N: usize>() -> usize {
         + 512
 }
 
+/// Read-only phase observations for the next admission design. The existing
+/// production source_bytes and all runtime guards/authority stay unchanged.
+#[cfg(test)]
+#[derive(Debug)]
+pub(in crate::storage) struct CommitPhaseSources {
+    pub(in crate::storage) prepare: usize,
+    pub(in crate::storage) suspend: usize,
+    pub(in crate::storage) pending_retained: usize,
+    pub(in crate::storage) drain_wait: usize,
+    pub(in crate::storage) resume: usize,
+    pub(in crate::storage) install_finish: usize,
+}
+#[cfg(test)]
+pub(in crate::storage) fn phase_sources<const N: usize>() -> CommitPhaseSources {
+    use std::mem::size_of;
+    type Stage<'a, const N: usize> = CommitStageTargets<'a, 'a, 'a, 'a, 'a, 'a, N>;
+    type Pending<'a, const N: usize> = PendingCommitTargets<'a, 'a, 'a, 'a, 'a, 'a, N>;
+    type Install<'a, const N: usize> = CommitInstallTargets<'a, 'a, 'a, 'a, 'a, 'a, N>;
+    // The actual core is already shared; the common leaf includes every
+    // stage/wait/install carrier, conservatively retained as a nested bound.
+    let core_leaf = crate::transaction::concurrency::commit_common_source_bytes()
+        - size_of::<crate::transaction::concurrency::PageConcurrency<'_>>();
+    let physical = target_set_call_bytes::<N>()
+        + 4 * size_of::<FrameStamp>()
+        + 2 * size_of::<Result<DirtyObservation>>()
+        + 2 * size_of::<Result<DptStamp<'_>>>()
+        + 2 * size_of::<foundation::codec::ContentHasher>()
+        + 512;
+    CommitPhaseSources {
+        prepare: size_of::<WriteTargets<'_, '_, '_, '_, '_, '_, N>>()
+            + size_of::<[Option<StablePage>; N]>()
+            + size_of::<Stage<'_, N>>()
+            + 2 * size_of::<Result<Stage<'_, N>>>()
+            + physical
+            + core_leaf,
+        suspend: size_of::<Stage<'_, N>>()
+            + size_of::<Pending<'_, N>>()
+            + 2 * size_of::<Result<Pending<'_, N>>>()
+            + size_of::<StagedCommit<'_, '_>>()
+            + physical
+            + core_leaf,
+        pending_retained: size_of::<Pending<'_, N>>(),
+        drain_wait: size_of::<Pending<'_, N>>() + core_leaf,
+        resume: size_of::<Pending<'_, N>>()
+            + size_of::<WriteTargets<'_, '_, '_, '_, '_, '_, N>>()
+            + size_of::<Install<'_, N>>()
+            + 2 * size_of::<Result<Install<'_, N>>>()
+            + physical
+            + core_leaf,
+        install_finish: size_of::<Install<'_, N>>() + physical + core_leaf,
+    }
+}
+
 #[cfg(test)]
 mod tests;

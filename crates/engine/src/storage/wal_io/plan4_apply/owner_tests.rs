@@ -235,3 +235,39 @@ fn disk_session_isolation_backing_and_carriers_are_accounted() {
                 + std::mem::size_of::<Mutex<IsolationLedger<'_, '_, '_>>>()
     );
 }
+
+#[test]
+fn catalog_commit_phase_sources_expose_full_reader_conflict() {
+    let shared = source::shared_bytes::<port::Writer>();
+    let full = read::lookup_source_bytes::<port::Writer>();
+    let resident = read::resident_lookup_source_bytes::<port::Writer>();
+    let phases = create_pair::catalog_commit_phase_observations::<port::Writer>();
+    for (name, bytes) in phases {
+        println!(
+            "COMMIT_PHASE {name}={bytes} shared_sum={} full_overlap={} resident_overlap={} two_resident_overlap={}",
+            shared + bytes,
+            shared + bytes + full,
+            shared + bytes + resident,
+            shared + bytes + resident * 2
+        );
+    }
+    // Three real values alone already rule out simply bolting a fixed Commit
+    // ticket onto the current Full lookup. Do not weaken the 64KiB envelope.
+    let floor = phases
+        .iter()
+        .find(|(name, _)| *name == "pending_three_value_floor")
+        .unwrap()
+        .1;
+    let wait = phases
+        .iter()
+        .find(|(name, _)| *name == "pending_wal_wait")
+        .unwrap()
+        .1;
+    assert!(shared + floor + full > 65536);
+    assert!(shared + wait + resident <= 65536);
+    assert_eq!(
+        phases.last().unwrap().1,
+        31752,
+        "existing production bound must not silently change in an observation-only unit"
+    );
+}

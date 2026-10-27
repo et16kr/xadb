@@ -876,3 +876,35 @@ writer/progress 공급을 준비하며 admitted lookup의 refs/progress가 마�
 - result SHA-256: `39f77f4435a72a80f5ef5675f86a78ec56a8b7a25eba0a03a1b44f4d80a9fc9f`
 
 파일별 rustfmt와 `git diff --check`만 정리에 사용하며 전체 fmt/Clippy·문서 verifier·push는 실행하지 않았다. `/root/module_review`가 실제 diff·시험·manifest 및 원 source5624개·fingerprint·runner·compiler/case 로그·ELF hash를 읽기 전용 대조했고 문서6개와 등록 신규2/수정3경로까지 확인했다. **이 source-return 단위 D1/D2 한정 수용·필수 수정0**을 수신해 `/root`가 반영한다. 검토자는 수정·시험·빌드·문서 verifier를 실행하지 않았다. 전체 writer/reader/progress 합산과 Row/terminal/recovery·M4/M5는 계속 미완료다.
+
+
+<a id="c2-commit-phases"></a>
+### C2 Commit phase source 관측 — 2026-10-27
+
+기준 `883c920`의 실제 타입과 수명 경계를 cfg(test) 함수로 관측했다. 제품 admission·기존 source_bytes31752B·효과 경로는 변경하지 않았다. 작성·통합 `/root`, 별도 검토 `/root/module_review`다. 다음 writer 예약을 설계하기 위한 유한 관측이며 새로운 actual Commit 실행 또는 전체64KiB 인수 결과가 아니다.
+
+shared22256B, Full41576B, Resident16860B를 유지한다. 현재 PreparedCatalog는 실제9-entry requests/roles/stamps를 보유하여2024B다. Pending에서 동시에 살아 있는 PreparedCatalog·원 PendingCommitTargets4·callee의 CatalogCommitWait 세 값만 합한 필요 하한은2984B이고, shared+Full과 합66816B다. 다른 parent/helper를 제외한 이 값만으로도 현재 layout에서 Full과 Pending의 동시 source65536B 보장은 불가능하다. 이는 source 값의 필요 하한이며 stack/RSS 최소치가 아니다.
+
+| phase/값 | source B | shared+Full B | shared+Resident2 B |
+| --- | ---: | ---: | ---: |
+| PreparedCatalog 실제9-entry 값 | 2024 | 65856 | 58000 |
+| 준비 공통9-entry 보수 상한 | 40456 | 104288 | 96432 |
+| pre-stage | 13784 | 77616 | 69760 |
+| stage-return | 27140 | 90972 | 83116 |
+| Pending 세 값 필요 하한 | 2984 | 66816 | 58960 |
+| Pending WAL wait 보수 상한 | 10576 | 74408 | 66552 |
+| Drain wait | 7876 | 71708 | 63852 |
+| resume/install/finish | 24220 | 88052 | 80196 |
+| publish/return | 12992 | 76824 | 68968 |
+| 변경 없는 제품 포괄 상한 | 31752 | 95584 | 87728 |
+
+세 값 하한과 타입 크기를 제외한 phase 값은 기존 포괄 leaf·반환 carrier를 포함하는 보수 상한이다. Pending wait의 두 Resident 합66552B는 그 상한이1016B 초과한다는 관측이며 실제 최소 불가능 증거가 아니다. 실제 layout/helper 수명을 먼저 줄이고 재계수해야 하며, class를 실행 중 확대하거나 필수 progress를 선택적 Capacity로 바꾸는 근거로 사용하지 않는다.
+
+[실행 전 manifest](../../tests/fixtures/dev3-module-c2/commit-phases/manifest.json)는 신규 관측 selector1개만 선택했다. 총600초·compiler90초·case30초·출력8MiB·stack33554432B다. `artifacts/module-c2-commit-phases-20261027-r1/`은 test build E0425/E0433 FAIL, runtime NOT_RUN이며 잘못된 WalPrefix 한정과 private module 경로를 정정했다. r2는 test build와 신규 관측1개 PASS다. 두 실행 모두 cfg(test)만 바뀌어 production build·기존 제품 시험은 반복하지 않았다. 원 FAIL·export·inventory·compiler·ELF·로그·result는 보존한다.
+
+| 실행 | source SHA-256 | result SHA-256 |
+| --- | --- | --- |
+| r1 FAIL | `5a313baaac99347162b1438dc1714a285871701ca4a15694719c0f3890002db2` | `98bf22b12d15b67c6cbbcfcfa5121ac83cab1459d3625112d5fbb472db8f3d6b` |
+| r2 PASS | `97392730cea35a092410994a10c3f08faba2c9d41eb4dc049faff1fa1b4f99e4` | `752f9bcf284f6057382c1eaa84821a025c5398e059c7e6f91343df557adf058f` |
+
+manifest SHA-256은 `45af3e9e36ec38aac1bbe4ec65edcb376d60396b6ee1c318fb8ccd27dff14efc`, r2 ELF는 `4fe0d26e03890679100f937336f707e4c9d3788580b3c081c46fde980bbdf2ce`다. 경과15.27/25.85초는 성능 결과가 아니다. 변경 Rust의 파일별 rustfmt만 적용하고 전체 fmt/Clippy·문서 verifier·push는 실행하지 않았다. `/root/module_review`는 실제 diff·문서6개·r1/r2 각 source5625개와 fingerprint/inventory/manifest/runner/helper/로그/존재 ELF를 읽기 전용 대조하고 **이 관측 단위 D1/D2 한정 수용·필수 수정0**으로 판정했다. 검토자는 수정·빌드·시험·문서 verifier를 실행하지 않았고 `/root`가 반영한다. 다음 단위는 stage 이후 필요 없는 준비 배열의 실제 수명 종료이며 source-before-progress 진입 틈·writer/progress 전체 합산·Row/terminal/recovery·M4/M5 의무는 유지한다.

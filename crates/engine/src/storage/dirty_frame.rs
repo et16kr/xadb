@@ -34,6 +34,8 @@ pub(in crate::storage) use retirement::{
     RetirementApply, RetirementTargets, retirement_source_bytes,
 };
 mod plan4_residency;
+#[cfg(test)]
+pub(in crate::storage) use commit::phase_sources as commit_phase_sources;
 #[allow(unused_imports)] // The actual terminal producer will consume these opaque carriers.
 pub(in crate::storage) use commit::{
     CommitInstallTargets, CommitStageTargets, PendingCommitTargets,
