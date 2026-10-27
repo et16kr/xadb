@@ -1418,3 +1418,28 @@ r1 production/test build와 신규 exact runtime8 PASS, build 경고0이다. 원
 
 
 r1 production/test build·신규 exact runtime5 PASS, build 경고0이다. 원 `artifacts/module-row-aging-20261027-r1/`에 source5720파일/inventory·manifest/input/parent·runner/helper·ELF·build2/case5 원 로그를 보존한다. source `e60d36c0f45be78d88188c4ed955cacf5f9b408516519797e6babc430522acac`, manifest `c84ca2fd8a11923766e556a120cc517e2ce34b0100453262362d24d3e96ad01e`, ELF `a995b541537f84215bb08a1520cdc9100346fe635167f22bd76cc956ba48d037`, result `fd6b2e21d219b58da5917e684517ab9c87bb7ba5725f9b78e1fc3dc3f16d7c29`다. 실제32.61초는 성능 결과가 아니다. 완성한 Base4/Job3/원 codec 및 lower selector를 반복하지 않았으며 생략을 새 PASS로 표시하지 않는다. 변경 rustfmt/diff whitespace만 확인했고 전체 fmt/Clippy·문서 verifier·push는 실행하지 않았다. 독립 D1/D2를 한정 수용했으며 필수 수정0이다. 검토자는5720 source 전 파일/current 일치·inventory/fingerprint·manifest/input5/parent5·runner/helpers/ELF·build2/runtime5 로그/경고0/예산·6문서/신규8·수정1 경로를 대조했다. 제품/author를 실행·import하지 않고 별도 offset/SHA 산식으로 pages6/jobs5bank/descriptors5/aggregate5의 전 바이트를 독립 재구성해 일치함을 확인했다. registry peak `[0,9,16,16,0]`, cleanup steps `[0,6,26,12,0]`, WAL `[0,367228,1584590,734318,0]`를 검산했으며 actual opcode 이력으로 승격하지 않았다. 파일 편집·제품/author 실행·import·build/test/verifier는 수행하지 않았다.
+
+
+<a id="row-transaction-ledger"></a>
+### Row 거래 현재 상태와 예약 잔여 — 2026-10-27
+
+기준 `0aa4bf1`, 작성/통합 `/root`, 독립 검토 `/root/module_review`. 사용자가 다른 에이전트의 수정이 아니라면 작성 중 변경을 완료하도록 요청했다. 이전 이 채팅의 작성 명령과 현재3파일을 대조해 `/root`의 미커밋 초안임을 확인했다. 전체 일시중지 목표를 재개하지 않고 [Row ledger 단위](../contracts/dev3-module-consumers.md#row-transaction-ledger)의 구현·선택 검증·독립 검토·등록·commit을 마무리한다. 최초 구현 검토의 필수 수정0을 수신했으며 실행 수용은 아직 아니다.
+
+r1 최초 동결은 stdlib 독립 author·현재 관측19개(Job bank/StatusHome/5행 budget/descriptor16개와 descriptor 없는3개), hash 고정 parent Job3/Profile3 및 신규8 selector를 명시했다. 현재 [동결 manifest](../../tests/fixtures/module-row-format/ledger/manifest.json)는 보완1개를 포함한 최종9 selector와 r2 선택5개, 원 r1 결과·재선정 근거를 담는다. Active1/3, Reserved h0/h1와 C185/2228, 다중 Retained, statement rollback/mark 도달, full abort/완료, Commit한 Retained와 compensated q0의 공존, Prune/Release 후 관측 및 취소 mutation high를 포함한다. 입력은 실제 WAL trace가 아니며 nonempty inventory digest는 physical owner가 검산할 opaque claim이다. normal/negative input으로 actor/location/order/head/count/h/rollback/terminal·정확 잔여5행/6080·descriptor 수명을 확인하고 다른 actor 전체 census와 physical digest의 한계를 직접 구별한다.
+
+총300초/build90초/case30초/출력8MiB/stack33554432B, r1 최초 선택은 production/test build와 exact8이며 compiler probe0이다. 완료한 Catalog/Root3/Job3/Base4/Aging/하위 selector는 반복하지 않는다. 실제 source별 실행 결과와 최종 독립 D1/D2 수용은 아래에 보존한다. actual graph/history/current 복구·live source/admission·A/B와 M4/M5는 미완료다.
+
+
+r1의 production/test build와 첫6 selector는 PASS, 7번째 `terminal_descriptor_lifetime_and_gaps`는 FAIL, 8번째 scope selector는 NOT_RUN이다. 실패는 post-abort release를 뜻하는 bank15의 compensated cursor>0 last_step을41..43으로 작성하여 Terminal adoption50보다 앞선 입력에서 옛 apply50 descriptor의 거절을 기대한 것이다. pure ledger는 전체 queue/history chronology의 권한이 아니므로 그 입력에서 apply≥latest가 성립했다. 제품을 바꾸거나 기대 거절을 완화하지 않고 author를 고쳐 release cursor>0 step을61..63으로 만들었다. bank12/13/15만 변하며 homes/descriptors/budgets/index는 불변이다. literal selector는 postterminal step>Terminal adoption이라는 입력 선행조건도 직접 검사한다. 원 source/fixture/FAIL을 r1 export/log에 보존한다.
+
+r2는 cfg(test)와 fixture만 바뀌어 production build 및 미변경 PASS4를 반복하지 않았다. 바뀐 bank를 읽는 literal/rollback2, 원 실패 lifetime1, 미실행 scope1, 독립 검토가 추가한 full-abort next≠head(U12/None)1의 총5 selector와 test build가 PASS이며 경고0이다. 따라서 최종9 selector의 유효 증거는 r1 unchanged4+r2 selected5이고, r1의6 PASS 전체를 최신 source PASS로 복사하지 않는다. actual caller/제품 ledger 의미 변화는0이며 완료한 하위 selector·workspace·wrapper·native test는 실행하지 않았다.
+
+| 실행 | source SHA-256 (각5730파일) | manifest / ELF / result SHA-256 | 실제 범위 |
+| --- | --- | --- | --- |
+| r1 | `2bf6b31729b5d050ea2b5cd96be113f31f3a202c5a5424bc5a590e8a67792576` | manifest `510b0d1d19eb0b86d3f92fee7b71afc4a53df641cdfb7d576ac83fa081bebad6`; ELF `495c9c88c6429197f16b44caa5b8a5437cbc1c239fc8bfdbacceec99c53609b5`; result `b9ac527739e46bad2089f44d7dafcb0f41ea31aa6d8c412c282e0e1bda299db0` | production/test build2·runtime6 PASS, runtime1 FAIL, 다음1 NOT_RUN |
+| r2 | `d93ebe70e99ec2f97eba7971ed6b5d01a1ac6796d730a740c8a313181068b4cd` | manifest `bc79a5b0414a52df6cd4e0eec9cc40964c80296f7c77be5209fe698aa0b4bad3`; ELF `295554b09632d8b6a937f2e7fda82e50d3bcbd59d99efdd7c80cd2d8ee0a4e4f`; result `449620886485efbb45ce8d63fa88928eeb7868463edcd17ca8de27775274054a` | test build1·관련/new runtime5 PASS, production/unchanged4 NOT_REPEATED |
+
+원 `artifacts/module-row-ledger-20261027-r1/`와 `r2/`에 source/inventory·input/parent/manifest·runner/helper·build와 exact case stdout/stderr를 보존한다. 실행31.87/27.38초는 성능 결과가 아니다. 총300초/build90초/case30초/출력8MiB/stack33554432B 안에서 종료했으며 독립 작성 입력과 변경 범위 연결은 manifest에 고정했다. changed rustfmt/diff whitespace만 확인했고 전체 fmt/Clippy·문서 verifier·push는 실행하지 않았다. 최종 독립 D1/D2는 아래 범위로 한정 수용했다.
+
+
+독립 `/root/module_review`가 제품 구현·입력·선택 인과성·원 실패·6문서를 읽기 검토하여 **D1/D2 한정 수용, 필수 수정0**을 판정했고 `/root`가 반영을 확인했다. 각5730파일의 원 inventory/전체 hash/fingerprint, r2 현재 source 일치, r1→r2의 test/author/jobs/manifest4파일 차이를 대조했다. input6/parent2·runner/helper3·ELF/result·build3/runtime12 원 로그/hash·경고0과 출력38463/26663B를 확인했다. author/product를 import하거나 실행하지 않고 독립 offset/SHA 산식으로 최초4binary 전체를 재구성했으며 r2의4byte LSN 변경과 나머지 binary/index 불변을 확인했다. FullAbort next 새 분기와 r1/r2 시점 문구의 최종 보완도 수신했다. 검토자는 제품/author/build/test/verifier를 실행하거나 파일을 수정하지 않았다. 이 수용은 현재 actor/descriptor 검산 단위에 한정하며 실제 graph/history/mark/정규 inventory/source admission/current Row·A/B·M4/M5 완료가 아니다.

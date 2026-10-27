@@ -170,6 +170,17 @@ D2 대안은 별도 layout 전체 복제 또는 common record 분리였으며, e
 
 원 semantic Catalog의 queue 준비에 기대는 대안과 별도 생산 입구를 비교해, 새 입구가 after census와 첫 Start의 unchanged queue 조건을 직접 닫도록 했다. 후속 branch가 검사하는 것은 before Root/descriptor 일치와 apply증가/groups+1/consumed비감소/control유지다. 이전 전체 Job bank, 발급 high-water/issued 단조성, 각 opcode의 정확한 before→after/WAL 소비 delta, actual previous SHA/history·source 비용/admission·actual dispatch는 후속 의미 owner가 검산한다. 여기의 연속 후보는 실제 opcode 이력 증거가 아니다. 작성/통합 `/root`, 독립 검토 `/root/module_review`이며 사전 검토의 첫 Start/유효 actor 반례 보완을 첫 실행 전에 반영했다. [선택 증거](../evidence/module-independence-survey-20261026.md#row-aging)에 신규5·원 literal/hash·결과를 기록한다. r1 production/test build·신규5 PASS이며 독립 D1/D2 한정 수용, 필수 수정0이다.
 
+<a id="row-transaction-ledger"></a>
+#### Row 거래의 현재 상태·예약 잔여 검산 — 2026-10-27
+
+기준 `0aa4bf1`의 `semantic_row::ledger`는 exact Profile3 아래 외부 actual StatusSlotRef, StatusHome와 borrowed64 Job3 관측을 대조한다. 동일 TxnId의 다른 generation, 다른 scope/location, 누락/중복 Terminal, 중복 UndoSequence/RowId/물리 Undo page를 거절한다. actor의 root는 sequence·mutation 엄격 증가/statement 비감소, Reserved는 최대 sequence·Active·최대1이며 h는 실제 관측 head 유무와 같아야 한다. Retained h는 더 작은 sequence의 Retained 존재와 같고 최대 Retained U=head, Retained 수=incoming이다. rollback next=head와 statement target의 Retained 소속, terminal outcome/q 및 Releasing source 상태/cursor를 검산한다. 이는 모든 actor/Root commitment의 full census나 실제 U.prevTxn/statement mark 증명이 아니다.
+
+`transaction_remaining`은 비terminal의 Reserved/Retained CLR 합 `Σ(91096+C+128h)`, Reserved Forward `91304+C+128h`/UndoSlot1, terminal 준비56712와 statement control 잔여를 원5행으로 돌려준다. Active control은 기본1×3040 또는 추가6080을 확보한3×3040이며 Reserved는 후자를 요구한다. AbortingStatement는2×3040, AbortingFull/terminal은 control0이다. terminal 거래의 CLR/Forward/terminal/control 예약은0이고 별도 Aging cleanup debt는 원 Job/Aging에 남는다. 각 nonzero row의 peak는 원 Row recipe다. `statement_credit_available`은 관측값이며 실제 reserve/token/mark 권한이 아니다.
+
+`validate_transaction`은 기존1536B descriptor를 actor/Profile에 결합하여 owner Status, birth=minLSN=Terminal lease, apply≥actor 최신 Job step, mutation high≥현재 최대, inventory change 범위·items=Reserved수/UndoSlot 수와 전체5행을 검사한다. Reserved의 apply/inventory change/last mutation은 해당 lease/mutation과 정확히 같고 just-produced terminal의 apply는 Terminal adoption과 같다. terminal 뒤 ATT에서 제거된 descriptor를 Aging이 변경한 상태에 재사용하지 않으며 별도 residual 관측은 가능하다. 취소한 번호의 공백과 현재 root보다 큰 mutation high는 허용한다.
+
+기존 single Catalog root 검산을 범용화하는 대안 대신 다중 Row/statement 계약을 별도 pure 모듈로 둔다. heap/I/O/lock/권한 발급·새 디스크 형식은 없고 actual caller는 아직 없다. 전체 Root census, 실제 Status/Undo/Row graph·정규 UndoSlot Item96 digest/Free U/allocator 소유권, 원 statement mark, 이전 descriptor/WAL 이력·정확 consumed delta, source 비용/admission/current dispatch는 후속 owner의 의무다. 이번 추가는 이 채팅 `/root`가 중단 전에 작성한 미커밋 초안을 사용자 요청으로 완료하는 범위다. 작성/통합 `/root`, 독립 검토 `/root/module_review`; [동결 입력과 선택 증거](../evidence/module-independence-survey-20261026.md#row-transaction-ledger)의 source별 최종9 selector(r1 unchanged4+r2 selected5) PASS와 r1 입력 LSN 오류 FAIL/미실행을 보존한다. 제품 build는 r1 PASS이며 r2는 cfg(test)/fixture만 바뀌어 test build만 실행했다. 독립 D1/D2 한정 수용·필수 수정0이며 M4/M5 전체는 미완료다.
+
 ### 6.2 Forward
 
 `T`는 원 TxnRef, `H`는 before Status.head, `U`는 Reserved Undo다. 실제 table/anchor/schema와 row key Missing을 원 before 아래 재검사한다. A는 row record `stamp=Transaction(T), logical=(T.id,planned_mutation), undo=U, deleted=false`와 canonical inline payload를 만든다. 새 U는 target Row(table/gen/RowId), before Missing, before stamp/logical 없음, previous-version Never, previous-transaction은 H가 있으면 Linked(H, 실제 sequence), 없으면 Never다.

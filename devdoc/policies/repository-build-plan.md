@@ -759,3 +759,10 @@ apply root의 private receipt·actual terminal 자손과 Busy 시험·manifest/c
 ### Root3-bound Aging descriptor
 
 `retention_obligation/row{,_tests}.rs`와 independent author/pages/jobs/descriptors/aggregates/manifest를 JSON `dev3_module_row_aging`에 등록한다. 원 retention_obligation의 모듈 등록 외 existing codec/current 호출은 변경하지 않는다. source roots/package/dependency는 유지하며 [선택 증거](../evidence/module-independence-survey-20261026.md#row-aging)는 actual history/source admission/current 복구를 대신하지 않는다.
+
+
+### Row 거래 현재 예약 ledger
+
+`semantic_row.rs`, `semantic_row/ledger{,_tests}.rs`와 independent author/index/jobs/homes/descriptors/budgets/manifest를 JSON `dev3_module_row_transaction_ledger`에 등록한다. 기존 storage 모듈 등록1줄 외 actual caller는 추가하지 않으며 source roots/package/dependency는 유지한다. [선택 증거](../evidence/module-independence-survey-20261026.md#row-transaction-ledger)는 actual physical graph/history/source admission·live/recovery 인수를 대신하지 않는다.
+
+이 ledger 단위는 source별9 selector와 원 FAIL을 보존하고 독립 D1/D2 한정 수용·필수 수정0을 수신했다. 실제 graph/current 공급·M4/M5의 완료 상태는 변경하지 않는다.

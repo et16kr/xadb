@@ -1,0 +1,464 @@
+[
+  {
+    "name": "begin-empty",
+    "state": "active",
+    "roots": [],
+    "credit": false,
+    "target": null,
+    "apply": 1,
+    "descriptor": true,
+    "mutation": null
+  },
+  {
+    "name": "active-empty-credit",
+    "state": "active",
+    "roots": [],
+    "credit": true,
+    "target": null,
+    "apply": 2,
+    "descriptor": true,
+    "mutation": null
+  },
+  {
+    "name": "reserved-h0",
+    "state": "active",
+    "roots": [
+      {
+        "kind": "reserved",
+        "seq": 1,
+        "h": 0,
+        "c": 185,
+        "cursor": 0,
+        "statement": 1
+      }
+    ],
+    "credit": true,
+    "target": null,
+    "apply": 10,
+    "descriptor": true,
+    "mutation": null
+  },
+  {
+    "name": "retained-h0",
+    "state": "active",
+    "roots": [
+      {
+        "kind": "retained",
+        "seq": 1,
+        "h": 0,
+        "c": 185,
+        "cursor": 0,
+        "statement": 1
+      }
+    ],
+    "credit": true,
+    "target": null,
+    "apply": 20,
+    "descriptor": true,
+    "mutation": null
+  },
+  {
+    "name": "retained-h0-h1",
+    "state": "active",
+    "roots": [
+      {
+        "kind": "retained",
+        "seq": 1,
+        "h": 0,
+        "c": 185,
+        "cursor": 0,
+        "statement": 1
+      },
+      {
+        "kind": "retained",
+        "seq": 2,
+        "h": 1,
+        "c": 2228,
+        "cursor": 0,
+        "statement": 2
+      }
+    ],
+    "credit": true,
+    "target": null,
+    "apply": 30,
+    "descriptor": true,
+    "mutation": null
+  },
+  {
+    "name": "reserved-h1",
+    "state": "active",
+    "roots": [
+      {
+        "kind": "retained",
+        "seq": 1,
+        "h": 0,
+        "c": 185,
+        "cursor": 0,
+        "statement": 1
+      },
+      {
+        "kind": "reserved",
+        "seq": 2,
+        "h": 1,
+        "c": 2228,
+        "cursor": 0,
+        "statement": 2
+      }
+    ],
+    "credit": true,
+    "target": null,
+    "apply": 20,
+    "descriptor": true,
+    "mutation": null
+  },
+  {
+    "name": "statement-finished",
+    "state": "active",
+    "roots": [
+      {
+        "kind": "retained",
+        "seq": 1,
+        "h": 0,
+        "c": 185,
+        "cursor": 0,
+        "statement": 1
+      },
+      {
+        "kind": "compensated",
+        "seq": 2,
+        "h": 0,
+        "c": 185,
+        "cursor": 0,
+        "statement": 2
+      }
+    ],
+    "credit": false,
+    "target": null,
+    "apply": 45,
+    "descriptor": true,
+    "mutation": null
+  },
+  {
+    "name": "statement-rollback",
+    "state": "statement",
+    "roots": [
+      {
+        "kind": "retained",
+        "seq": 1,
+        "h": 0,
+        "c": 185,
+        "cursor": 0,
+        "statement": 1
+      },
+      {
+        "kind": "retained",
+        "seq": 2,
+        "h": 1,
+        "c": 2228,
+        "cursor": 0,
+        "statement": 2
+      }
+    ],
+    "credit": false,
+    "target": 1,
+    "apply": 35,
+    "descriptor": true,
+    "mutation": null
+  },
+  {
+    "name": "statement-mark-reached",
+    "state": "statement",
+    "roots": [
+      {
+        "kind": "retained",
+        "seq": 1,
+        "h": 0,
+        "c": 185,
+        "cursor": 0,
+        "statement": 1
+      },
+      {
+        "kind": "compensated",
+        "seq": 2,
+        "h": 0,
+        "c": 185,
+        "cursor": 0,
+        "statement": 2
+      }
+    ],
+    "credit": false,
+    "target": 1,
+    "apply": 45,
+    "descriptor": true,
+    "mutation": null
+  },
+  {
+    "name": "full-abort-progress",
+    "state": "abort",
+    "roots": [
+      {
+        "kind": "retained",
+        "seq": 1,
+        "h": 0,
+        "c": 185,
+        "cursor": 0,
+        "statement": 1
+      },
+      {
+        "kind": "retained",
+        "seq": 2,
+        "h": 1,
+        "c": 2228,
+        "cursor": 0,
+        "statement": 2
+      }
+    ],
+    "credit": false,
+    "target": null,
+    "apply": 35,
+    "descriptor": true,
+    "mutation": null
+  },
+  {
+    "name": "full-abort-complete",
+    "state": "abort",
+    "roots": [
+      {
+        "kind": "compensated",
+        "seq": 1,
+        "h": 0,
+        "c": 185,
+        "cursor": 0,
+        "statement": 1
+      },
+      {
+        "kind": "compensated",
+        "seq": 2,
+        "h": 0,
+        "c": 185,
+        "cursor": 0,
+        "statement": 2
+      }
+    ],
+    "credit": false,
+    "target": null,
+    "apply": 45,
+    "descriptor": true,
+    "mutation": null
+  },
+  {
+    "name": "committed-mixed",
+    "state": "committed",
+    "roots": [
+      {
+        "kind": "retained",
+        "seq": 1,
+        "h": 0,
+        "c": 185,
+        "cursor": 0,
+        "statement": 1
+      },
+      {
+        "kind": "retained",
+        "seq": 2,
+        "h": 1,
+        "c": 2228,
+        "cursor": 0,
+        "statement": 2
+      },
+      {
+        "kind": "compensated",
+        "seq": 3,
+        "h": 0,
+        "c": 185,
+        "cursor": 0,
+        "statement": 3
+      }
+    ],
+    "credit": false,
+    "target": null,
+    "apply": 50,
+    "descriptor": true,
+    "mutation": null
+  },
+  {
+    "name": "post-prune",
+    "state": "committed",
+    "roots": [
+      {
+        "kind": "retained",
+        "seq": 1,
+        "h": 0,
+        "c": 185,
+        "cursor": 0,
+        "statement": 1
+      },
+      {
+        "kind": "committed",
+        "seq": 2,
+        "h": 0,
+        "c": 185,
+        "cursor": 1,
+        "statement": 2
+      },
+      {
+        "kind": "compensated",
+        "seq": 3,
+        "h": 0,
+        "c": 185,
+        "cursor": 2,
+        "statement": 3
+      }
+    ],
+    "credit": false,
+    "target": null,
+    "apply": 63,
+    "descriptor": false,
+    "mutation": null
+  },
+  {
+    "name": "post-prune-empty-head",
+    "state": "committed",
+    "roots": [
+      {
+        "kind": "committed",
+        "seq": 1,
+        "h": 0,
+        "c": 185,
+        "cursor": 3,
+        "statement": 1
+      },
+      {
+        "kind": "compensated",
+        "seq": 2,
+        "h": 0,
+        "c": 185,
+        "cursor": 1,
+        "statement": 2
+      }
+    ],
+    "credit": false,
+    "target": null,
+    "apply": 63,
+    "descriptor": false,
+    "mutation": null
+  },
+  {
+    "name": "aborted",
+    "state": "aborted",
+    "roots": [
+      {
+        "kind": "compensated",
+        "seq": 1,
+        "h": 0,
+        "c": 185,
+        "cursor": 0,
+        "statement": 1
+      },
+      {
+        "kind": "compensated",
+        "seq": 2,
+        "h": 0,
+        "c": 185,
+        "cursor": 0,
+        "statement": 2
+      }
+    ],
+    "credit": false,
+    "target": null,
+    "apply": 50,
+    "descriptor": true,
+    "mutation": null
+  },
+  {
+    "name": "post-abort-release",
+    "state": "aborted",
+    "roots": [
+      {
+        "kind": "compensated",
+        "seq": 1,
+        "h": 0,
+        "c": 185,
+        "cursor": 3,
+        "statement": 1
+      },
+      {
+        "kind": "compensated",
+        "seq": 2,
+        "h": 0,
+        "c": 185,
+        "cursor": 2,
+        "statement": 2
+      }
+    ],
+    "credit": false,
+    "target": null,
+    "apply": 63,
+    "descriptor": false,
+    "mutation": null
+  },
+  {
+    "name": "canceled-high-water",
+    "state": "active",
+    "roots": [],
+    "credit": false,
+    "target": null,
+    "apply": 45,
+    "descriptor": true,
+    "mutation": 9
+  },
+  {
+    "name": "statement-none-target",
+    "state": "statement",
+    "roots": [
+      {
+        "kind": "retained",
+        "seq": 1,
+        "h": 0,
+        "c": 185,
+        "cursor": 0,
+        "statement": 1
+      },
+      {
+        "kind": "retained",
+        "seq": 2,
+        "h": 1,
+        "c": 2228,
+        "cursor": 0,
+        "statement": 2
+      }
+    ],
+    "credit": false,
+    "target": null,
+    "apply": 35,
+    "descriptor": true,
+    "mutation": null
+  },
+  {
+    "name": "statement-none-reached",
+    "state": "statement",
+    "roots": [
+      {
+        "kind": "compensated",
+        "seq": 1,
+        "h": 0,
+        "c": 185,
+        "cursor": 0,
+        "statement": 1
+      },
+      {
+        "kind": "compensated",
+        "seq": 2,
+        "h": 0,
+        "c": 185,
+        "cursor": 0,
+        "statement": 2
+      }
+    ],
+    "credit": false,
+    "target": null,
+    "apply": 45,
+    "descriptor": true,
+    "mutation": null
+  }
+]

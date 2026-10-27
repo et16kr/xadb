@@ -7271,5 +7271,30 @@
     "validation": "r1 production/test build and all5 new exact runtime selectors PASS, warnings0. Immutable source5720 files/inventory/manifest/input/parents/runner/helpers/ELF/logs preserved. Completed Base4/Job3/Catalog/lower tests NOT_REPEATED. Independent D1/D2 accepted limited scope, required fixes0: audited all5720 source files/current equality, inventory/fingerprint, manifest/input5/parent5, runner/helpers/ELF/logs/budget and six docs/new8+modified1 paths. Independently reconstructed pages6/jobs5bank/descriptors5/aggregate5 without product/author import or execution.",
     "remaining_supply": "Actual operation before/after and WAL delta/history/admission/source bound, Row full graph/scoped observers/current recovery and actual A/B/M4/M5.",
     "source_roots_changed": false
+  },
+  "dev3_module_row_transaction_ledger": {
+    "status": "ACCEPTED_LIMITED_D1_D2",
+    "contract_ref": "dev3-module-consumers.md#row-transaction-ledger",
+    "implemented_paths": [
+      "crates/engine/src/storage/semantic_row.rs",
+      "crates/engine/src/storage/semantic_row/ledger.rs",
+      "crates/engine/src/storage/semantic_row/ledger_tests.rs",
+      "tests/fixtures/module-row-format/ledger/author.py",
+      "tests/fixtures/module-row-format/ledger/budgets.bin",
+      "tests/fixtures/module-row-format/ledger/descriptors.bin",
+      "tests/fixtures/module-row-format/ledger/homes.bin",
+      "tests/fixtures/module-row-format/ledger/index.json",
+      "tests/fixtures/module-row-format/ledger/jobs.bin",
+      "tests/fixtures/module-row-format/ledger/manifest.json"
+    ],
+    "modified_paths": [
+      "crates/engine/src/storage/mod.rs"
+    ],
+    "scope": "Pure Profile3 actor/Status/Job current consistency and exact residual5 rows/current descriptor; multi-statement control credit and terminal descriptor lifetime. No actual caller or authority.",
+    "evidence_ref": "module-independence-survey-20261026.md#row-transaction-ledger",
+    "validation": "r1 production/test build and first6 runtime PASS; lifetime FAIL, scope NOT_RUN preserved. r2 cfg(test)/fixture-only correction: test build and affected/new5 PASS. Final9 selectors use r1 unchanged4+r2 selected5; no unchanged product build/lower tests repeated. Source5730/input/manifest/ELF/logs preserved; independent D1/D2 accepted with zero required corrections.",
+    "remaining_supply": "Whole Root census/physical graph/normalized inventory digest/statement mark/previous history and exact consumed delta/source cost and admission/current Row live/recovery/A/B/M4/M5.",
+    "source_roots_changed": false,
+    "review": "Read-only independent audit: both5730-file source inventories/fingerprints, current r2 equality, full literal reconstruction and corrected4byte delta, input/parents/runner/helpers/ELF/logs/budgets and six owner/evidence/plan/implementation/build documents. Pure current ledger only; no actual graph/history/source admission claim."
   }
 }

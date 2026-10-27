@@ -1,5 +1,7 @@
 # 현재 구현
 
+2026-10-27 [Row 거래 ledger](../evidence/module-independence-survey-20261026.md#row-transaction-ledger): Profile3 actor/Status/Job3의 다중 root·statement 상태와 현재 descriptor 잔여5행을 검사하는 pure 모듈을 구현했다. source별9 selector PASS(r1 unchanged4+r2 selected5), build 결과와 r1 fixture LSN 오류 FAIL을 보존한다. 독립 D1/D2 한정 수용·필수 수정0이며 actual graph/history/source admission/current 복구·A/B·M4/M5는 미완료다.
+
 2026-10-27 [Root3 Aging descriptor](../evidence/module-independence-survey-20261026.md#row-aging): 별도 Profile3/Root3 codec과 전체 after64 Job census를 거친 후보 생산자를 구현했다. r1 production/test build·신규5 PASS·독립 D1/D2 한정 수용이며 actual opcode/history/admission/current 복구·A/B·M4/M5는 미완료다.
 
 2026-10-27 [Base4 raw layout](../evidence/module-independence-survey-20261026.md#row-base4-layout): 별도 Profile3/Base4 layout와 공통 certificate/INIT grammar를 구현했다. r1 production/test build·신규8 PASS이며 독립 D1/D2를 한정 수용했다. full graph/Job census/current 복구/source admission·Row A/B·M4/M5는 미완료다.
