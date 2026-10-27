@@ -686,3 +686,7 @@ statement factory·자동 read-set·CheckedTable/RowReadOperation과 short aggre
 ### C2 작은 Catalog 진입·정리 경계 등록 — 2026-10-27
 
 actual health/source/Scope/legacy facade·원 progress consuming finish와 관련 시험11경로를 수정하고 선택 manifest1을 JSON `dev3_module_c2_compact_call_boundary`에 등록했다. 기존 authored compiler4는 파일을 복제하지 않고 원 fixture를 참조한다. package/dependency·source root·backing·wire는 유지한다. [원 증거](../evidence/module-independence-survey-20261026.md#c2-compact-call-boundary)는 production/test build·runtime25·compiler4 PASS와 Full35619B를 보존하며 전체 bound floor·writer/progress 예약은 후속이다.
+
+### C2 replay 작업 공간 대여 등록 — 2026-10-27
+
+기존 semantic transition/source·history/recovery 연결·선택 관측8경로를 수정하고 실제 fixture1을 JSON `dev3_module_c2_borrowed_replay_workspace`에 등록했다. package/dependency·source root·backing·wire는 유지한다. [source별 증거](../evidence/module-independence-survey-20261026.md#c2-borrowed-replay-workspace)는 선택9 PASS·원 compile FAIL/경고와 import-only build를 구별하며 전체 entry/tail·writer admission은 후속이다.

@@ -6881,5 +6881,27 @@
     "validation": "production/test build+runtime25+compiler4 PASS, warning0; independent D1/D2 source/evidence/docs accepted, no unresolved required changes",
     "remaining_supply": "Whole bound entry/return and independent guard-held leaves plus writer/progress phase reservations; Row/terminal/recovery and M4/M5; Full35619+shared22256+observed Pending5320=63195 excludes ticket/floor",
     "source_roots_changed": false
+  },
+  "dev3_module_c2_borrowed_replay_workspace": {
+    "status": "VALIDATED_INDEPENDENT_D1_D2_ACCEPTED",
+    "contract_ref": "dev3-module-boundaries.md#operation-source-admission",
+    "implemented_paths": [
+      "tests/fixtures/dev3-module-c2/borrowed-replay-workspace/manifest.json"
+    ],
+    "modified_paths": [
+      "crates/engine/src/storage/semantic_catalog.rs",
+      "crates/engine/src/storage/semantic_catalog/resources.rs",
+      "crates/engine/src/storage/semantic_catalog/transition.rs",
+      "crates/engine/src/storage/semantic_catalog/transition_tests.rs",
+      "crates/engine/src/storage/wal_io/plan4_apply/owner_tests.rs",
+      "crates/engine/src/storage/wal_io/plan4_retention/history.rs",
+      "crates/engine/src/storage/wal_io/plan4_retention/history/catalog.rs",
+      "crates/engine/src/storage/wal_io/plan4_retention/recovery.rs"
+    ],
+    "scope": "Actual semantic replay borrows checked original zero 3328B WORK_END tail; private guard restores exact lane on normal/error/unwind; same transition/frame semantics and owned producer buffers; explicit source loan/forwarding/return carriers",
+    "evidence_ref": "module-independence-survey-20261026.md#c2-borrowed-replay-workspace",
+    "validation": "r1 accidental file replacement production compile FAIL/runtime NOT_RUN retained; r2 build2/runtime9 PASS warning1; r3 cfg(test) import-only build2 PASS warning0, runtime NOT_REPEATED_UNCHANGED_CODE; independent D1/D2 source/evidence/docs accepted, no unresolved required changes",
+    "remaining_supply": "Whole bound entry/return and independent guard-held leaves plus writer/progress phases; Row/terminal/recovery and M4/M5; Full33980+shared22256+observed Pending5320=61556 excludes ticket/floor",
+    "source_roots_changed": false
   }
 }

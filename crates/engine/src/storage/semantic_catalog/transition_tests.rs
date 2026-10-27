@@ -419,6 +419,10 @@ impl Case<'_> {
 }
 
 fn run(id: &str) {
+    run_mode(id, false);
+}
+
+fn run_mode(id: &str, borrowed: bool) {
     let started = Instant::now();
     println!("CREATE_TRANSITION BEGIN {id}");
     let all = corpus();
@@ -446,7 +450,7 @@ fn run(id: &str) {
     let after: &mut [[u8; PAGE_BYTES]; 8] = pages.as_mut_slice().try_into().unwrap();
     let mut frame = vec![0u8; FILE_CAP];
     let golden = case.blob(21).unwrap();
-    if case.fields[1] != "REJECT_FRAME" {
+    if !borrowed && case.fields[1] != "REJECT_FRAME" {
         let input = case.inputs(
             all.profile,
             case.change(plan.as_ref(), CatalogTableInput::Spec(&definition)),
@@ -482,7 +486,27 @@ fn run(id: &str) {
         CatalogTableInput::Spec(&definition)
     };
     let input = case.inputs(all.profile, case.change(plan.as_ref(), replay_definition));
-    let observed = observe(&input, golden, after);
+    let observed = if borrowed {
+        let mut scratch = [0; super::REPLAY_SCRATCH_BYTES];
+        if id == "C03" {
+            scratch[0] = 1;
+            let error = super::observe_borrowed(&input, golden, after, &mut scratch)
+                .err()
+                .unwrap();
+            assert_eq!(error, super::Error::InvalidInput);
+            assert_eq!(scratch[0], 1, "dirty original tail is never hidden");
+            assert!(after.iter().flatten().all(|byte| *byte == 0));
+            scratch[0] = 0;
+        }
+        let observed = super::observe_borrowed(&input, golden, after, &mut scratch);
+        assert!(
+            scratch.iter().all(|byte| *byte == 0),
+            "restore reserved tail on success/error"
+        );
+        observed
+    } else {
+        observe(&input, golden, after)
+    };
     if case.fields[1] == "ACCEPT" {
         case.compare(observed.expect("independent golden must observe"), after);
     } else {
@@ -490,6 +514,9 @@ fn run(id: &str) {
     }
     assert!(started.elapsed().as_secs_f64() < 10.0, "per-case deadline");
     println!("CREATE_TRANSITION PASS {id} scope=pure-transition authority=NONE");
+    if borrowed {
+        println!("BORROWED_REPLAY PASS {id}");
+    }
 }
 
 macro_rules! cases {
@@ -514,4 +541,13 @@ cases! {
     n13 => "N13", n14 => "N14", n15 => "N15", n16 => "N16", n17 => "N17", n18 => "N18",
     n19 => "N19", n20 => "N20", n21 => "N21", n22 => "N22", n23 => "N23", n24 => "N24",
     n25 => "N25", n26 => "N26",
+}
+
+#[test]
+fn borrowed_replay_preserves_independent_operation_and_error_oracles() {
+    // The independent Forward touches both descriptor roles and the complete
+    // page output. N16 fails only after canonical computation at frame verify.
+    for id in ["C03", "N16"] {
+        run_mode(id, true);
+    }
 }

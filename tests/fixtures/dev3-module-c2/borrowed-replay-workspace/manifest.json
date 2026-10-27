@@ -1,0 +1,55 @@
+{
+  "schema": "XADB_MODULE_C2_BORROWED_REPLAY_WORKSPACE_V1",
+  "status": "FROZEN_INPUTS_NOT_EXECUTION_EVIDENCE",
+  "baseline": "b304bea",
+  "scope": "Actual semantic replay borrows a checked zero 3328-byte descriptor/core lane within original WORK_END tail; same compute/frame validation; guard restores on success/error/unwind; owned producer wrapper cost remains; aggregate entry/tail/writer admission incomplete",
+  "budget": {
+    "total_seconds": 600,
+    "compiler_seconds": 90,
+    "case_seconds": 30,
+    "output_bytes": 8388608,
+    "rust_min_stack": 33554432
+  },
+  "runtime_tests": [
+    {
+      "selector": "storage::semantic_catalog::transition_tests::borrowed_replay_preserves_independent_operation_and_error_oracles",
+      "reason": "new borrowed observer consumes independent C03 Forward and N16 late frame rejection; exact after/frame oracle, dirty-input unchanged and zero return"
+    },
+    {
+      "selector": "storage::semantic_catalog::transition::scratch_tests::original_scratch_is_restored_on_normal_drop_and_unwind",
+      "reason": "new actual private loan cleans both descriptors and core on normal Drop/unwind while surrounding sentinels and rejected dirty input remain"
+    },
+    {
+      "selector": "storage::semantic_catalog::transition_tests::c03",
+      "reason": "modified owned run delegates to shared buffers helper; original producer and observer still match independent complete C03 bytes"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::owner_tests::catalog_borrowed_replay_workspace_counts_producer_and_observer",
+      "reason": "new explicit owned/borrowed source modes with loan/carriers and actual complete history max"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::owner_tests::disk_session_isolation_backing_and_carriers_are_accounted",
+      "reason": "modified shared semantic/source expressions feed live/recovered source and metadata bounds"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::source::tests::catalog_class_uses_current_types_and_recovered_retained_owner",
+      "reason": "changed Full source charge must preserve original class capacity, isolation byte return and no escalation"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::source::tests::fixed_resident_class_admits_two_and_never_escalates",
+      "reason": "changed Full source charge must preserve original class capacity, isolation byte return and no escalation"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::commit_concurrency::catalog_mt03_pending_reader_loads_undo",
+      "reason": "modified history reconstruct apply_frame lends actual original zero tail during Full Pending Undo LOAD"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::lifecycle::mc04_reserved_drop_fence_fresh_recovery",
+      "reason": "modified observe_recovery_frame lends actual original zero tail during current-build memory replay and final query"
+    }
+  ],
+  "borrowed_independent_cases": [
+    "C03",
+    "N16"
+  ]
+}

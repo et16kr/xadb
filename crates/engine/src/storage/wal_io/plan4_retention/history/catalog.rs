@@ -378,6 +378,7 @@ pub(in super::super) fn apply(
     bank: &mut [u8],
     after: &mut [[u8; PAGE_BYTES]; 8],
     claims: &mut [[u8; 352]; 64],
+    semantic_scratch: &mut [u8; REPLAY_SCRATCH_BYTES],
     adopted: &mut u64,
 ) -> ObservationResult<recovery::RetentionFrameObservation> {
     // Logical-argument/schema/Inputs carriers end before private publication.
@@ -519,7 +520,7 @@ pub(in super::super) fn apply(
         } else {
             root_before
         };
-        let observed = semantic::observe(
+        let observed = semantic::observe_borrowed(
             &semantic::Inputs {
                 profile,
                 frame: expected,
@@ -540,6 +541,7 @@ pub(in super::super) fn apply(
             },
             raw,
             after,
+            semantic_scratch,
         )
         .map_err(sem)?;
         (
@@ -714,7 +716,9 @@ pub(in super::super) fn source_bytes() -> SourceCensus {
     // forward_table returns directly into Change::Forward; no separate schema
     // local or TableInput survives. Its construction returns are in the schema
     // closure, while observe retains the local Change and copied Inputs above.
-    let semantic = outer + semantic::source_bytes().max(semantic::schema_source_bytes());
+    let semantic = outer
+        + size_of::<&mut [u8; REPLAY_SCRATCH_BYTES]>()
+        + semantic::borrowed_source_bytes().max(semantic::schema_source_bytes());
     let finishing = size_of::<semantic::LayoutView<'_>>()
         + size_of::<Operation>()
         + size_of::<Option<TxnRef>>()

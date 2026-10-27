@@ -40,7 +40,10 @@ pub(super) const REPLAY_FRAME_BYTES: usize = 163_840;
 pub(super) const FRAME_END: usize = BANK_END + REPLAY_FRAME_BYTES;
 pub(super) const AFTER_END: usize = FRAME_END + 8 * PAGE_BYTES;
 pub(super) const PROVENANCE_BYTES: usize = 64 * 352;
+pub(super) const REPLAY_SCRATCH_BYTES: usize =
+    crate::storage::semantic_catalog::REPLAY_SCRATCH_BYTES;
 pub(super) const WORK_END: usize = AFTER_END + 2 * PAGE_BYTES;
+const _: () = assert!(PROVENANCE_BYTES + REPLAY_SCRATCH_BYTES <= 2 * PAGE_BYTES);
 const HOME_END: usize = WORK_END + PAGE_BYTES;
 const _: () = assert!(HOME_END + 2 * PAGE_BYTES <= RETENTION_REPLAY_BYTES);
 
@@ -100,7 +103,9 @@ pub(super) fn source_bytes<W: WriterNamespace>() -> HistorySourceCensus {
     // before the scope observer returns. Its envelope/header lives inside the
     // catalog/System closure; returned observations belong to frame_return.
     // Keep copied profile/expectation arguments at all three dispatch layers.
-    let frame_outer = 3 * size_of::<FrameExpectation>()
+    let frame_outer = 3 * size_of::<&mut [u8; REPLAY_SCRATCH_BYTES]>()
+        + 2 * size_of::<(&mut [u8], &mut [u8])>()
+        + 3 * size_of::<FrameExpectation>()
         + 3 * size_of::<Profile>()
         + size_of::<recovery::RetentionReplayCursor>()
         + 24 * size_of::<&[u8]>()
@@ -702,18 +707,27 @@ fn reconstruct<W: WriterNamespace>(
             .try_into()
             .expect("64 cells");
         let (after, claims) = after.split_at_mut(8 * PAGE_BYTES);
-        let claims = claims[..PROVENANCE_BYTES]
-            .as_chunks_mut::<352>()
-            .0
+        let (claims, temporary) = claims.split_at_mut(PROVENANCE_BYTES);
+        let semantic_scratch = (&mut temporary[..REPLAY_SCRATCH_BYTES])
             .try_into()
-            .expect("claims");
+            .expect("semantic scratch");
+        let claims = claims.as_chunks_mut::<352>().0.try_into().expect("claims");
         let pages: &mut [[u8; PAGE_BYTES]; 8] = after[..8 * PAGE_BYTES]
             .as_chunks_mut::<PAGE_BYTES>()
             .0
             .try_into()
             .expect("after pages");
         let observed = recovery::apply_frame(
-            profile, expected, input, arena, jobs, bank, pages, claims, cursor,
+            profile,
+            expected,
+            input,
+            arena,
+            jobs,
+            bank,
+            pages,
+            claims,
+            semantic_scratch,
+            cursor,
         )
         .map_err(|e| fatal(storage, RetentionPhase::Source, e))?;
         if let Some((request, home, _)) = target

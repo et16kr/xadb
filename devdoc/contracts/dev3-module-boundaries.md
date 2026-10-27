@@ -1262,3 +1262,5 @@ Q01–Q08은 아래 설계로 독립 D2 검토를 수신해 채택했다. 앞선
 | Q08 | §7의 C0–C5 유한 공급·제외·되돌림, §8과 [소비자 분담](dev3-module-consumers.md#division)의 전용 source/fixture·C0 순수 대역/actual 수신 시점 | root/C/A/B; [M2 인계표](../plans/module-independence-plan.md#m2-handoff)의 담당/기준 source와 대기·충돌·합류 증거 등록. build inventory는 실제 구현 시 등록 |
 
 독립 검토자가 원 source와 정상/실패/복구 반례 및 소비자·자원 owner의 정합을 확인하여 **D2 검토 수용·필수 수정0**으로 판정했다. [검토 기록](../evidence/module-independence-survey-20261026.md#final-design-review)을 수신해 채택 상태를 ACCEPTED로 반영했으며 M2는 완료다. 확정된 C의 미구현·미실행은 M4/M5 의무로 남으며 M2에서 제품 prototype·컴파일·시험을 수행할 이유가 되지 않는다.
+
+[실제 replay 작업 공간 대여](../evidence/module-independence-survey-20261026.md#c2-borrowed-replay-workspace)는 원 WORK_END zero tail의3328B를 semantic observer에 빌리고, 정상/오류/unwind 뒤 원 zero tail을 복원한다. producer의 local 배열과 wire/claims/hash·전체 backing은 유지한다. 실제 guard/반환/helper 계수 뒤 Full33980B·Resident16936B/shared22256B다. Pending 관측까지61556B의3980B 여유는 전체 entry/tail·독립 guard leaf·writer ticket을 제외한 값이며 전체 admission 미완료다. source별 선택9 PASS·import-only build와 원 compile FAIL을 구별해 보존한다.

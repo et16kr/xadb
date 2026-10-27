@@ -1118,3 +1118,26 @@ held의 실제 오류 carrier 축소로 Full35895→35619B·Resident17212→1693
 - result SHA-256: `ea0a4d1282b915893cac7922af244c769250e39e86cfe9fd730ab2fc070eb1dd`
 
 독립 D1/D2는 코드·원 source5642파일/inventory·build2/runtime25/compiler4의 원 export/진단·ELF·6문서를 대조해 이 한정 단위를 수용했다. 필수 미해결 수정은0이며 검토자는 시험·빌드·verifier·수정을 실행하지 않았다. 변경 파일 rustfmt·diff whitespace만 확인했고 전체 fmt/Clippy·문서 verifier·push는 실행하지 않았다. 전체 bound entry/tail floor·writer/progress phase 예약·Row/terminal/recovery·M4/M5는 미완료다.
+
+<a id="c2-borrowed-replay-workspace"></a>
+### C2 실제 replay 작업 공간 대여 — 2026-10-27
+
+기준 `b304bea`, 작성·통합 `/root`, 독립 검토 `/root/module_review`다. semantic Catalog의 실제 replay observer가 원 WORK_END 안의 provenance 뒤 zero tail에서 descriptor2×1536B+core256B를 빌린다. 기존 전체 loan1572864B·WORK_END1507328B·claims22528B와 wire/hash 범위는 그대로다. 새 backing/authority/manager는 없다. producer는 원 local 배열을 보유하며 같은 `run_with_buffers`의 원 compute/ordering/frame encode·verify 본문을 사용한다.
+
+private ReplayScratch는 대여 전 전체3328B가0임을 확인하고 오염 입력은 지우지 않고 거절한다. 생성 뒤 정상/오류/unwind Drop는 실제 빌린 descriptor/core만 byte-wise로 지우며 주변 byte를 변경하지 않는다. history/recovery의 원 tail 검산은 유지한다. actual scope2 replay만 borrowed observer를 수신하며 기존 owned observe는 시험 경계에 남는다.
+
+source 식은 owned wrapper의 인자/배열/반환, borrowed constructor/guard/Drop iterator·slice·Result와 forwarding borrow를 포함한다. owned24335B/borrowed20899B는 각각 현재 helper 식이며, 과거 식에서3328B를 단순 차감하지 않는다. history retention24715B·population25743B·initialize26120B/전체 peak28784B로 최대 경로가 바뀌어 Full35619→33980B다. Resident16936B/shared22256B·live peak63184B/metadata186192B/whole251728B·recovered peak64611B는 유지한다. 원 Pending 관측5320B를 더한61556B/여유3980B에는 전체 bound entry/tail·독립 guard leaf·writer ticket이 빠져 있으므로 전체 admission 인수가 아니다.
+
+[동결 manifest](../../tests/fixtures/dev3-module-c2/borrowed-replay-workspace/manifest.json)는 신규 borrowed 독립 C03/N16 검산1·실제 guard 정상/unwind/주변 보존1·변경 owned C03 1·source 관측4·실제 Full Pending Undo LOAD1·현재-build memory recovery1의9 exact 사례다. C03은 원 독립 전체 after/frame golden 일치를 검산하고, N16은 독립 mutant frame 거절과 scratch zero 반환을 검산한다. N16 오류 뒤 after 전체 비교는 수행하지 않는다. 전체72사례를 실행하지 않았다. 총600초/compiler90초/case30초/출력8MiB/stack33554432B로 동결했다. native/새 PID 복구·하위 회귀·전체 workspace는 실행하지 않았다.
+
+`artifacts/module-c2-borrowed-replay-workspace-20261027-r1/`은 편집 중 transition.rs를 시험 본문으로 잘못 덮은 원 source다. production compile FAIL(E0432/E0425/E0603), test build/runtime9 NOT_RUN을 그대로 보존한다. 원 제품 본문을 기준 commit에서 복원해 의도한 helper/guard만 다시 적용한 r2는 production/test build·runtime9 PASS다. production unused observe import 경고1을 보존하고, r3는 re-export의 cfg(test) 분리만 검증해 build2 PASS/경고0다. r2에서 완료한 runtime9는 r3에서 NOT_REPEATED_UNCHANGED_CODE이며 r2 증거를 새 source의 실행으로 바꾸지 않는다. r1→r2 변경은 transition.rs, r2→r3 변경은 semantic_catalog.rs 한 파일이다.
+
+각 artifact에5643파일 source/inventory·manifest·runner/helpers·원 compiler·ELF(생성 시)·case 로그를 보존한다. 실제 경과 r1 5.72초/r2 39.23초/r3 31.73초는 성능 결과가 아니다.
+
+| 실행 | source SHA-256 | ELF SHA-256 | result SHA-256 |
+| --- | --- | --- | --- |
+| r1 FAIL | `662f6ee0c73d28cb83ee2a41d98d6d8e67931ac197ce0adbf74cd7aca2cc7e7b` | 미생성 | `bc92439def393e2edee5f2ece38e5d0951d9ce56862a903ee57f6b2c9792a85d` |
+| r2 PASS/경고1 | `3e8e08f8a8e426ed8bb8957d20aa0eb5bde0266f5c3d8d46d6082489db83dd0b` | `ee6d27c46b7e42c4bdfca29375d96059332dc03ce55b38e2f47d1cc1bc2a26d1` | `9fbcab7f2d4987fe6288af4e0e04336ee46179a4ebdbf20945ff8c09fe9e3f8b` |
+| r3 import-only PASS | `dea3545c6ed6c0657c4b8b219edb8c976aeb8afc65aca381fb64fc15ec8e7906` | `9fbf4135a2176e2b0d9ba272116eda840f72f945ff59a69fc38e223dd278131c` | `4ed50b0321d83361dfcc27f712bc63e2855bc3926949727a3242e5e3e3e0da1e` |
+
+manifest SHA-256은 세 실행 모두 `bd5119987df3f80c7c20169c9245337fa3ff996724b94ac481aad740f61f332d`다. 독립 D1/D2는 제품 diff·r1/r2/r3 원 source/inventory·build/runtime 로그·ELF·6문서를 대조하고, N16 검산 범위와 runtime 미반복의 문구 정정을 수신해 한정 수용했다. 미해결 필수 수정은0이다. 검토자는 수정·빌드·시험·verifier를 실행하지 않는다. 변경 파일 rustfmt·diff whitespace만 확인하고 전체 fmt/Clippy·문서 verifier·push는 실행하지 않았다. 전체 bound entry/tail·writer/progress phase·Row/terminal/recovery·M4/M5는 미완료다.

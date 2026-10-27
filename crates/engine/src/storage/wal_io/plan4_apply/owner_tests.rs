@@ -351,3 +351,25 @@ fn catalog_replay_sources_exclude_live_encoder_arrays() {
     assert!(shared + full <= 65_536);
     assert!(shared + 2 * resident <= 65_536);
 }
+
+#[test]
+fn catalog_borrowed_replay_workspace_counts_producer_and_observer() {
+    use crate::storage::semantic_catalog as semantic;
+    let owned = semantic::source_census();
+    let borrowed = semantic::borrowed_source_bytes();
+    let history = history::source_bytes::<port::Writer>();
+    let full = read::lookup_source_bytes::<port::Writer>();
+    let resident = read::resident_lookup_source_bytes::<port::Writer>();
+    let shared = source::shared_bytes::<port::Writer>();
+    println!(
+        "BORROWED_REPLAY_SOURCE owned={owned:?} borrowed={borrowed} history={history:?} full={full} resident={resident} shared={shared}"
+    );
+    assert!(borrowed < owned.total);
+    assert!(
+        borrowed > owned.total - owned.run_retained,
+        "borrowed loan/constructor/cleanup carriers remain charged"
+    );
+    assert!(history.peak >= history.initialize);
+    assert!(shared + full <= 65536);
+    assert!(shared + 2 * resident <= 65536);
+}

@@ -1,5 +1,7 @@
 # 현재 구현
 
+2026-10-27 [C2 replay 작업 공간 대여](../evidence/module-independence-survey-20261026.md#c2-borrowed-replay-workspace): 원 zero tail3328B를 actual observer에 빌려 Full33980B로 줄였다. 선택9 PASS·정상/오류/unwind 복원·현재-build memory recovery를 확인하고 원 compile FAIL/경고·import-only build를 보존한다. 전체 entry/tail·writer phase·M4/M5는 미완료다.
+
 2026-10-27 [C2 작은 진입·소비 정리](../evidence/module-independence-survey-20261026.md#c2-compact-call-boundary): 실제 health/source 오류·Catalog factory/finish를 줄이고 원 authority·정리 순서와 wide legacy 변환을 보존했다. production/test build·runtime25·compiler4 PASS, Full35619B/Resident16936B다. 전체 bound entry/tail floor와 writer/progress·M4/M5는 미완료다.
 
 2026-10-27 [C2 readonly replay source](../evidence/module-independence-survey-20261026.md#c2-readonly-replay-source): 실제 allocation 검산 phase와 INIT context를 생산자 배열에서 분리해 Full35895B로 계산했다. source별 선택6+계수 보완1 PASS·MT03 Full Undo LOAD와 현재-build memory recovery를 확인했다. entry/tail·writer phase와 M4/M5는 미완료다.

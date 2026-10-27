@@ -32,12 +32,16 @@ pub(crate) use projection::catalog_projection_digest;
 #[cfg(test)]
 pub(crate) use resources::source_branches;
 pub(crate) use resources::{
-    catalog_read_codec_bytes, layout_source_bytes, page_read_codec_bytes, schema_source_bytes,
-    source_bytes, source_census, status_read_codec_bytes, transaction_source_bytes,
-    undo_read_codec_bytes,
+    borrowed_source_bytes, catalog_read_codec_bytes, layout_source_bytes, page_read_codec_bytes,
+    schema_source_bytes, source_bytes, source_census, status_read_codec_bytes,
+    transaction_source_bytes, undo_read_codec_bytes,
 };
-pub(crate) use transition::{Change, Inputs, Observation, observe, produce};
+#[cfg(test)]
+pub(crate) use transition::observe;
+pub(crate) use transition::{Change, Inputs, Observation, observe_borrowed, produce};
 pub(crate) use wire::{LayoutView, decode_layout};
+
+pub(crate) const REPLAY_SCRATCH_BYTES: usize = 3_328;
 
 pub(crate) const FRAME_BYTES: usize = 163_840;
 pub(crate) const PRIVATE_BYTES: usize = 425_984;

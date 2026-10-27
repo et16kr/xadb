@@ -855,8 +855,18 @@ fn run(
 ) -> Result<Observation> {
     let mut descriptors = [[0; 1536]; 2];
     let mut core = [0; 256];
+    run_with_buffers(inputs, after, output, &mut descriptors, &mut core)
+}
+
+fn run_with_buffers(
+    inputs: &Inputs<'_>,
+    after: &mut [[u8; PAGE_BYTES]; 8],
+    output: Output<'_>,
+    descriptors: &mut [[u8; 1536]; 2],
+    core: &mut [u8; 256],
+) -> Result<Observation> {
     let (mut observation, changed, original_root, catalog_bytes) =
-        compute(inputs, after, &mut descriptors, &mut core)?;
+        compute(inputs, after, descriptors, core)?;
     let root = if observation.operation == Operation::Reserve {
         let ordinal = required(observation.job_ordinal)?;
         let page = catalog::decode_jobs_page(
@@ -915,7 +925,7 @@ fn run(
         catalog_bytes,
         before,
         after: [&descriptors[0], &descriptors[1]],
-        core: &core,
+        core,
         root_job: root,
         pages: &ordered[..count],
     };
@@ -949,4 +959,96 @@ pub(crate) fn observe(
     after: &mut [[u8; PAGE_BYTES]; 8],
 ) -> Result<Observation> {
     run(inputs, after, Output::Observe(bytes))
+}
+
+/// Pure temporary storage in the original replay loan. Its bytes never contain
+/// an install/WAL/visibility grant. The caller must lend a zeroed disjoint lane.
+pub(super) struct ReplayScratch<'a> {
+    descriptors: &'a mut [[u8; 1536]; 2],
+    core: &'a mut [u8; 256],
+}
+impl<'a> ReplayScratch<'a> {
+    fn new(bytes: &'a mut [u8; super::REPLAY_SCRATCH_BYTES]) -> Result<Self> {
+        // Never hide an invalid original reserved tail by clearing it on entry.
+        if !super::zero(bytes) {
+            return Err(Error::InvalidInput);
+        }
+        let (descriptors, core) = bytes.split_at_mut(3072);
+        Ok(Self {
+            descriptors: descriptors
+                .as_chunks_mut::<1536>()
+                .0
+                .try_into()
+                .expect("two descriptors"),
+            core: core.try_into().expect("semantic core"),
+        })
+    }
+}
+impl Drop for ReplayScratch<'_> {
+    fn drop(&mut self) {
+        for descriptor in &mut *self.descriptors {
+            descriptor.fill(0);
+        }
+        self.core.fill(0);
+    }
+}
+
+/// Same canonical observer with explicit caller-owned descriptor/core backing.
+/// The zero tail is restored before any success/error reaches the replay owner.
+pub(crate) fn observe_borrowed(
+    inputs: &Inputs<'_>,
+    bytes: &[u8],
+    after: &mut [[u8; PAGE_BYTES]; 8],
+    scratch: &mut [u8; super::REPLAY_SCRATCH_BYTES],
+) -> Result<Observation> {
+    let loan = ReplayScratch::new(scratch)?;
+    run_with_buffers(
+        inputs,
+        after,
+        Output::Observe(bytes),
+        &mut *loan.descriptors,
+        &mut *loan.core,
+    )
+}
+
+#[cfg(test)]
+mod scratch_tests {
+    use super::*;
+
+    #[test]
+    fn original_scratch_is_restored_on_normal_drop_and_unwind() {
+        for unwind in [false, true] {
+            let mut surrounding = [0; super::super::REPLAY_SCRATCH_BYTES + 64];
+            surrounding[..32].fill(0x97);
+            surrounding[super::super::REPLAY_SCRATCH_BYTES + 32..].fill(0x53);
+            let bytes: &mut [u8; super::super::REPLAY_SCRATCH_BYTES] = (&mut surrounding
+                [32..super::super::REPLAY_SCRATCH_BYTES + 32])
+                .try_into()
+                .unwrap();
+            let result = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
+                let loan = ReplayScratch::new(bytes).unwrap();
+                loan.descriptors[0].fill(0xa7);
+                loan.descriptors[1].fill(0x71);
+                loan.core.fill(0x3a);
+                if unwind {
+                    panic!("unwind with original replay temporary loan");
+                }
+            }));
+            assert_eq!(result.is_err(), unwind);
+            assert!(bytes.iter().all(|byte| *byte == 0));
+            assert!(surrounding[..32].iter().all(|byte| *byte == 0x97));
+            assert!(
+                surrounding[super::super::REPLAY_SCRATCH_BYTES + 32..]
+                    .iter()
+                    .all(|byte| *byte == 0x53)
+            );
+        }
+        let mut bytes = [0; super::super::REPLAY_SCRATCH_BYTES];
+        bytes[3072] = 1;
+        assert_eq!(
+            ReplayScratch::new(&mut bytes).err().unwrap(),
+            Error::InvalidInput
+        );
+        assert_eq!(bytes[3072], 1);
+    }
 }
