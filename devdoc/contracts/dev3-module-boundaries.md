@@ -1137,6 +1137,8 @@ rollback/terminal은 원 progress admission이 새 foreground를 닫고 이미 �
 
 전체 설계 상계는 metadata `73856+65536+49152=188544≤196608`, original flush를 더한 whole `254080≤262144`다. 이 admission·동시 합 검산은 **새 C1/C2/C3 공급**이며 기존 active.max 기반 source 결과로 이미 구현됐다고 하지 않는다. header의 실제 byte 배치와 source charge의 측정·실패/정리 경로는 C1/C4 인수에 포함한다.
 
+[main의 Commit 준비 수명 분리](../evidence/module-independence-survey-20261026.md#c2-pending-image-main)는 stage에서 PreparedCatalog를 소비해 불변 payload와 canonical after 참조4만 Pending에 넘긴다. 원 pin/WAL/install 권한은 그대로이며 준비용9개 target/stamp 배열은 stage 반환 전에 끝난다. stage에는 입력·image·반환 tuple·추출 배열을 함께 청구하고 Pending/install에서만 compact image를 사용한다. 전체 Commit peak32292B와 Pending18532B는 서로 다른 phase다. 선택 memory 검증을 완료했으나 native N03는 디스크 여유 기준 미달로 NOT_RUN이며 독립 D1/D2는 구현·memory 검증 저장 범위로 한정 수용했다. 이 단위 전체 인수와 writer/progress 동시 합 인수는 남았다.
+
 <a id="common-deliveries"></a>
 ## 7. 유한한 공통 공급과 C0/C 인계
 

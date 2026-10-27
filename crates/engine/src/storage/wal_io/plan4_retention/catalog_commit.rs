@@ -1,8 +1,10 @@
 //! Actual Catalog Commit continuation on the original pool and WAL runtime.
-//! Immutable private preparation survives Pending; no replay/control gate or
+//! Immutable private install input survives Pending; no replay/control gate or
 //! content/version latch is held across the original WAL durability call.
 use super::super::*;
-use super::catalog_live::{PreparedCatalog, catalog_apply, catalog_mark_staged};
+use super::catalog_live::{
+    CatalogCommitImage, PreparedCatalog, catalog_apply, catalog_mark_staged,
+};
 #[cfg(test)]
 use crate::transaction::concurrency::catalog_test_support::{
     Point as CatalogPoint, hit as catalog_hook,
@@ -103,10 +105,12 @@ impl<'s, 'c, W: WriterNamespace> RetentionWriter<'_, '_, 's, 'c, '_, '_, '_, '_,
             .prefix()
             .map_err(|e| fatal(storage, RetentionPhase::Prepare, RetentionCause::Wal(e)))?;
         prepared.check(owner, self.pool, self.control, prefix)?;
-        let requests: &[TargetRequest; TARGETS] = prepared
-            .targets()
-            .try_into()
-            .map_err(|_| unchanged(RetentionPhase::Prepare, RetentionCause::Invariant))?;
+        if prepared.targets().len() != TARGETS {
+            return Err(unchanged(
+                RetentionPhase::Prepare,
+                RetentionCause::Invariant,
+            ));
+        }
         let q = commit_q(&prepared, storage.profile())?;
         let epochs = visibility
             .prepare_commit_epochs(&prepared, self.control, storage.profile(), q)
@@ -119,12 +123,15 @@ impl<'s, 'c, W: WriterNamespace> RetentionWriter<'_, '_, 's, 'c, '_, '_, '_, '_,
             return Err(unchanged(RetentionPhase::Prepare, RetentionCause::Capacity));
         }
 
-        let PendingCatalog {
-            pending,
-            wait,
-            key,
-            requirement,
-        } = stage_catalog(storage, self.pool, self.control, owner, &prepared, requests)?;
+        let (
+            prepared,
+            PendingCatalog {
+                pending,
+                wait,
+                key,
+                requirement,
+            },
+        ) = stage_catalog(storage, self.pool, self.control, owner, prepared)?;
         #[cfg(test)]
         catalog_hook(prepared.core(), CatalogPoint::Pending);
         let durable = storage
@@ -174,8 +181,13 @@ impl<'s, 'c, W: WriterNamespace> RetentionWriter<'_, '_, 's, 'c, '_, '_, '_, '_,
                 .install_dpt(dpt, &permit)
                 .map_err(|e| fatal(storage, RetentionPhase::Install, RetentionCause::Frame(e)))?;
         }
-        catalog_apply(&prepared, self.control, storage.profile(), requirement)
-            .map_err(|e| fatal(storage, e.phase, e.cause))?;
+        catalog_apply(
+            prepared.payload(),
+            self.control,
+            storage.profile(),
+            requirement,
+        )
+        .map_err(|e| fatal(storage, e.phase, e.cause))?;
         self.history
             .installed(requirement)
             .map_err(|e| fatal(storage, e.phase, e.cause))?;
@@ -225,14 +237,20 @@ struct PendingCatalog<'u, 'b, 'c, 's, 'p, 'd> {
     requirement: WalRequirement<'s>,
 }
 
-fn stage_catalog<'u, 'b, 'a, 's, 'c, 'p, 'd, W: WriterNamespace>(
+fn stage_catalog<'i, 'u, 'b, 'a, 's, 'c, 'p, 'd, W: WriterNamespace>(
     storage: &'s MutableStorageOwner<'_, '_, W>,
     pool: &'b SharedPool<'c, 's, 'p, 'd>,
     control: &mut control::RetentionLedger<'a, 'c, 's>,
     owner: &'u mut Owner<'c, 's>,
-    prepared: &PreparedCatalog<'_, 'c, 's>,
-    requests: &[TargetRequest; TARGETS],
-) -> Result<PendingCatalog<'u, 'b, 'c, 's, 'p, 'd>> {
+    prepared: PreparedCatalog<'i, 'c, 's>,
+) -> Result<(
+    CatalogCommitImage<'i, 'c, 's>,
+    PendingCatalog<'u, 'b, 'c, 's, 'p, 'd>,
+)> {
+    let requests: &[TargetRequest; TARGETS] = prepared
+        .targets()
+        .try_into()
+        .map_err(|_| unchanged(RetentionPhase::Prepare, RetentionCause::Invariant))?;
     // All stale/overflow/DPT checks precede Intent and the actual stage.
     // These proof-only DPT stamps are not retained across Pending: a
     // flusher is allowed to clean an unchanged page in that interval.
@@ -279,10 +297,10 @@ fn stage_catalog<'u, 'b, 'a, 's, 'c, 'p, 'd, W: WriterNamespace>(
         .map_err(|e| frame(RetentionPhase::Stage, e))?;
     #[cfg(test)]
     catalog_hook(prepared.core(), CatalogPoint::StageCallStarted);
-    let (staged, wait) = match storage
-        .wal()
-        .stage_catalog_commit(CatalogCommitAttempt { prepared, key })
-    {
+    let (staged, wait) = match storage.wal().stage_catalog_commit(CatalogCommitAttempt {
+        prepared: &prepared,
+        key,
+    }) {
         Ok(staged) => staged,
         Err(rejected) => {
             let Some(unstaged) = rejected.unstaged else {
@@ -311,17 +329,21 @@ fn stage_catalog<'u, 'b, 'a, 's, 'c, 'p, 'd, W: WriterNamespace>(
     let requirement = wait.requirement();
     // The exact staged requirement is retained before releasing any lock;
     // old ATT/descriptor/Jobs bytes remain stable during Pending.
-    catalog_mark_staged(prepared, control, requirement)
+    catalog_mark_staged(&prepared, control, requirement)
         .map_err(|e| fatal(storage, e.phase, e.cause))?;
     let pending = stage
         .suspend(staged)
         .map_err(|e| fatal(storage, RetentionPhase::Stage, RetentionCause::Frame(e)))?;
-    Ok(PendingCatalog {
-        pending,
-        wait,
-        key,
-        requirement,
-    })
+    let image = prepared.into_commit_image();
+    Ok((
+        image,
+        PendingCatalog {
+            pending,
+            wait,
+            key,
+            requirement,
+        },
+    ))
 }
 
 fn commit_q(
@@ -420,18 +442,20 @@ pub(in super::super) fn source_phases() -> CatalogCommitSourcePhases {
         commit_bridge::CatalogStageError<'c, 's>,
     >;
     let stage_local = size_of::<PendingCatalog<'_, '_, '_, '_, '_, '_>>()
-        + size_of::<Result<PendingCatalog<'_, '_, '_, '_, '_, '_>>>()
-        + 6 * size_of::<&()>() // stage_catalog borrowed arguments
+        + size_of::<Result<(CatalogCommitImage<'_, '_, '_>, PendingCatalog<'_, '_, '_, '_, '_, '_>)>>()
+        + size_of::<CatalogCommitImage<'_, '_, '_>>()
+        + size_of::<[Option<&[u8; PAGE_BYTES]>; TARGETS]>() // extraction output
+        + 6 * size_of::<&()>() // stage arguments and canonical target borrow
         + size_of::<CatalogCommitAttempt<'_, '_, '_, '_>>()
         + size_of::<crate::storage::wal_io::StagedCommit<'_, '_>>()
         + size_of::<commit_bridge::CatalogCommitWait<'_, '_>>()
         + size_of::<Option<crate::storage::wal_io::UnstagedCommit<'_, '_>>>()
         + 2 * size_of::<Stage<'_, '_>>();
     // Deliberately retain even late completion values across every phase.
-    // Prepared/control/epoch validation, unwind and caller return carriers are
-    // never discounted because the physical target owner changes shape.
+    // Control/epoch validation, unwind and caller return carriers are never
+    // discounted. Only the consuming stage boundary ends PreparedCatalog's
+    // target/stamp arrays; its immutable install payload moves into the image.
     let retained = visibility::epoch_commit_carriers()
-        + size_of::<PreparedCatalog<'_, '_, '_>>()
         + size_of::<Observation>()
         + size_of::<WalRequirement<'_>>()
         + size_of::<InstallationKey>()
@@ -473,21 +497,65 @@ pub(in super::super) fn source_phases() -> CatalogCommitSourcePhases {
         .max(visibility::epoch_transition_source_bytes())
         .max(bridge);
     CatalogCommitSourcePhases {
-        preflight: retained + root.max(control).max(publication),
+        preflight: retained
+            + size_of::<PreparedCatalog<'_, '_, '_>>()
+            + root.max(control).max(publication),
         // Both mark_staged and bridge calls run while the stage target set is
         // retained. The stage closure includes its Pending success return.
-        stage: retained + stage_local + physical.stage + control.max(bridge),
+        stage: retained
+            + size_of::<PreparedCatalog<'_, '_, '_>>()
+            + stage_local
+            + physical.stage
+            + control.max(bridge),
         // Original pins and all outer values survive the WAL call, but the
         // stage helper and its Result have returned before this phase starts.
         pending: retained
+            + size_of::<CatalogCommitImage<'_, '_, '_>>()
             + physical.pending
             + size_of::<commit_bridge::CatalogCommitWait<'_, '_>>()
             + bridge,
         // resume returns before per-page permits/control/history publication.
         // Keep the installed physical closure until finish, including errors.
         install: retained
+            + size_of::<CatalogCommitImage<'_, '_, '_>>()
             + physical
                 .resume
                 .max(physical.install + install.max(control).max(publication)),
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn consumed_preparation_has_bounded_pending_image() {
+        use std::mem::size_of;
+        let prepared = size_of::<PreparedCatalog<'_, '_, '_>>();
+        let image = size_of::<CatalogCommitImage<'_, '_, '_>>();
+        let phases = source_phases();
+        println!("C2_COMMIT_IMAGE prepared={prepared} image={image} phases={phases:?}");
+        // The nine preparation targets and stamps must not be retained by
+        // the compact continuation. Its four borrowed after images are small.
+        assert!(image + 1024 <= prepared);
+        inspect::<crate::storage::wal_io::plan4_test_support::Writer>("memory");
+        #[cfg(target_os = "linux")]
+        inspect::<super::super::super::super::native::Writer>("native-type");
+    }
+
+    fn inspect<W: WriterNamespace>(kind: &str) {
+        let shared = source::shared_bytes::<W>();
+        let live = resources::source_census::<W>();
+        let recovered = super::super::super::super::super::plan4_recovery::source_census::<W>();
+        let phases = source_phases();
+        println!(
+            "C2_COMMIT_IMAGE_BOUND {kind} shared={shared} live={live:?} recovered={recovered:?}"
+        );
+        assert!(shared + phases.peak() <= 65_536);
+        assert_eq!(live.catalog_commit, phases.peak());
+        assert!(live.peak <= 65_536 && live.metadata <= 196_608 && live.whole <= 262_144);
+        assert!(
+            recovered.peak <= 65_536 && recovered.metadata <= 196_608 && recovered.whole <= 262_144
+        );
     }
 }

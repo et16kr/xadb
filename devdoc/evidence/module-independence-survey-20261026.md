@@ -1012,3 +1012,65 @@ begin/begin_resident → begin_class의 class 값과 반환 carrier를 entry sou
 리뷰 과정에서는 원 full 부분공급 시점의 “resident 미공급”을 현재 상태와 혼동하지 않도록 계약 문구를 정리했다. 제품 수정이 필요한 결함은 발견되지 않았다. 검토자의 identity 감사 첫 시도는 Path 대신 문자열 정렬을 사용해 fingerprint assertion이 실패했고, 기존 원 도구의 Path 정렬로 바로잡아 일치를 확인했다. 이 검토 스크립트 오류는 제품/시험 FAIL이 아니며 원 r1 결과를 재실행하거나 바꾸지 않았다.
 
 `artifacts/module-c2-resident-main-review-20261027/`에 preview/rules/checklist/identity-audit/report를 보존했다. report SHA-256은 `71226df819b56585b4f7e7151a344a83e7ad026fbd46eefb36daa0573f0a301a`, checklist는 `d94dd99914caa48711f6504f1fd60b1882b5e47915a018fbfc33971d63ed2211`이다. 이번 부분공급은 writer/progress·전체 entry/return 동시 합, actual C+A/C+B 및 합류·MI01–06·M4/M5 미완료를 해소하지 않는다.
+
+
+<a id="c2-pending-image-main"></a>
+### C2 Commit 준비 자료의 Pending 수명 종료 — 2026-10-27
+
+사용자의 “진행 위치 확인 후 다음 한 단계·OCR delegate 리뷰 및 수정·commit” 요청으로 clean `main`·`8b47533`에서 시작했다. M0–M3 완료, M4 full/상주 Catalog 조회 예약, M5 A/B 순수 본문 착수까지 수신한 상태였다. 이번 한 단계는 **Commit의 stage가 준비 자료를 소비하고 설치에 필요한 불변 자료만 Pending에 넘기는 경계**다. 별도 브랜치의 `a5cfdae5fa00e903c4e198a8a75bbb8005383e77`에서 필요한 제품 코드만 적응하며 main의 기존4-phase 계산·원 core 단일 계수를 유지한다. 다른 worktree나 원 증거를 변경하지 않는다.
+
+`D3-MODULE-PENDING-IMAGE-MAIN-001` · D2 · **구현·선택 memory 검증 완료 / 독립 D1/D2 한정 수용 / native N03 NOT_RUN·단위 전체 인수 미완료**. 구현·계약·통합 `/root`, 독립 검토 `/root/module_step_review`. 원 §6.9의 고정 source 회계를 위한 선행 단위이며 전체 writer/progress admission을 공급하지 않는다. 새 형식·의존성·backing·권한은 추가하지 않는다.
+
+#### 원 수명과 선택
+
+`stage_catalog`는 `PreparedCatalog`를 소유로 받아 원 stage/mark_staged/suspend를 마친 뒤 private `CatalogCommitImage`로 소비한다. 준비용 requests/stamps/roles9·before borrow는 helper 반환 전에 끝난다. 불변 payload와 canonical physical order의 after reference4만 Pending/설치에 남으며 proof-only Allocation은 None이다. 원 pin·Staged/Durable/Installed receipt·control cut·exact requirement·WAL-before-page·전체 설치와 epoch/Q 공개 순서는 유지한다. kind/target4 검사는 Intent 전이며 image 추출은 실패할 수 없어 stage 이후 재시도 분기를 만들지 않는다.
+
+기존 Prepared 전체를 유지하는 대안은 준비용 배열을 WAL 대기까지 보유한다. byte 비용만 줄여 표시하거나 별도 heap/owner로 옮기는 대안은 실제 수명과 회계를 어긋나게 하므로 채택하지 않았다. 공유 `catalog_apply`는 같은 payload를 읽는 한 본문을 유지하며 Forward/CLR/Cancel에서도 같은 필드를 소비한다. stage 입력·image·반환 tuple·추출 reference 배열의 공존은 모두 합산하고, 실제 helper 경계 뒤 Pending/install에서만 Prepared를 image로 바꾼다. payload가 변경 가능해지거나 authority/실제 source 수명이 달라지면 재검토한다.
+
+#### 변경별 선택과 실제 결과
+
+[선택 manifest](../../tests/fixtures/dev3-module-c2/pending-image/manifest.json)에 변경 Rust3파일·selector별 이유·기준/참고 commit을 실행 전에 고정했다. 총600초·compiler90초·case30초·로그8MiB·test stack32MiB·각 selector1회다. production check와 test `--no-run`은 각각 PASS이며 runtime과 구별한다.
+
+- 신규 source 시험1개: compact image 크기, Memory/Linux 실제 타입의 공유값+Commit phase 및 live/recovery envelope 검산.
+- 변경 payload의 MC01 reserve/cancel·MC02 Forward/CLR/abort2개; Commit의 MT05 Pending flush·MT03 Undo LOAD·MT07 Drain fence·MT01 Q 공개4개.
+- MF02 stage unwind·MF03 write-before-error·MF09 durable unwind·MF10 second-page unwind4개. MF09/10은 같은 build의 memory 복구 정답까지 검산한다.
+
+위 **runtime11개 각1회 PASS**, 실패/중단0이다. native 타입 계산은 실제 파일 I/O 실행이 아니다. 별도 native N03(실제 Commit sync 성공 뒤 오류·UNKNOWN·복구)은 원 controller의30초·1회와 사전 독립 admission을 계획했으나 **free-floor64,424,509,440B에 대해 실제 여유365,015,040B로 실행 전 중지·NOT_RUN**이다. worker를 만들지 않았고 기준을 줄이지 않았다. 이번 실행에서 생성한 `target/debug/incremental` 캐시만 정리했으며 source·ELF·로그·결과는 보존했다. N03의 새 실행은 원 자료와 독립 admission을 갖춘 후 여유 기준을 충족할 때만 진행한다.
+
+기존 무변경 physical phase·ledger·reader suite, 전체 workspace/하위 wrapper·native N01/N02는 반복하지 않았다. 과거 `catalog_source_native`의 오래된 visibility backing8192 assertion은 이번 검증으로 통과 처리하지 않는다. 새 source 시험은 실제 live/recovery envelope와 공유값+phase만 검증하며 기존 `resources::fits`·fresh binding·visibility 전부의 새 실행을 주장하지 않는다. 원 source별 PASS/FAIL/UNKNOWN 및 DEV2·DEV3/S5·M4/M5 미완료를 유지한다.
+
+#### 실제 source 상계
+
+| 항목 | 이전 main → 이번 source(B) |
+| --- | --- |
+| 준비 값 → Pending image |2024 →568 (1456 감소)|
+| Commit preflight |16632 →16632|
+| Commit stage |31124 →32292|
+| Commit Pending |19988 →18532|
+| Commit install |23508 →22052|
+| Commit phase peak |31124 →32292|
+
+새 image/tuple이 전환 중 공존하므로 **전체 Commit peak는1168B 증가**한다. Pending의 국소 감소를 전체 자원 절감으로 표현하지 않는다. Memory/Linux shared retained는23072/23208B, live peak64000/64136B, recovered peak65376/65512B로 기존 envelope 안이다. source/type 수명 상계이며 stack/RSS·성능·동시 admission 측정이 아니다. writer1+resident reader2의 전체 합과 entry/return/progress 공급은 후속이다.
+
+변경 Rust3파일의 파일별 rustfmt와 `git diff --check`를 적용했다. 자동 문서 verifier·전체 fmt/Clippy·push는 실행하지 않으며 push 시 기존 훅을 적용한다. 새 문서 없이 기존 계약/계획/구현/증거 색인과 build JSON의 실제 경로를 갱신한다.
+
+원 immutable source·inventory·manifest·runner·compiler diagnostics·ELF·각 stdout/stderr·result와 native 미실행 관측은 `artifacts/module-c2-pending-image-main-20261027/r1/`에 보존한다.
+
+- source_sha256: `7903ea92922bfc2c25638990320bf520387522be29fec95e6c282b28c5e2288f`
+- manifest_sha256: `c1fa5969abf9826a0b065edb66e973f340fd0f03db35347284197ba7b47276d6`
+- runner_sha256: `1e8121dd9ee9d570d7f0ec74a960ba3dc26415cb92ebb0d9a1c12519d7da0dd8`
+- inventory_sha256: `76e5b6043c4df65c51065bcd571b7d902bed33886f3a22ad9e97b60e212b587b`
+- binary_sha256: `988fb5ba15810ddd6bebaaca98231243949a0856883748acd190034f70ddaad6`
+- result SHA-256: `7741d2853a7876bf7967b9897f3102625388710742e09d89112aef742a1320fb`
+- native-preflight SHA-256: `249474dad5457126bc98927ba626755215f2e41c395704a621928ae0303d5d4d`
+
+
+`result.json`의 PASS는 build/선택 runtime11개에 한정한다. native NOT_RUN을 포함한 `verification.json`의 전체 판정은 `INCOMPLETE_NATIVE_NOT_RUN`이다.
+
+#### OCR delegate 독립 검토
+
+`/root/module_step_review`가 `ocr delegate preview --format json`·`ocr delegate rule --format json`으로 대상/규칙을 확인했다. OCR 대상4개와 기본 제외7개도 직접 읽어 **전체11파일 검토·누락0·100%**이며 **독립 D1/D2는 구현·memory 검증 저장 범위로 한정 수용·미해결 필수 코드 수정0·차단0**이다. consuming 경계·원 권한·canonical after 순서·공통 payload 적용·stage 공존값·Pending/install 차등 계수 및64KiB envelope를 수용했다. 코드 수정이 필요한 지적은 없었고 `/root`가 리뷰 수신과 native 잔여를 문서에 반영한다.
+
+원 source5637파일·current/export 동일, source/manifest/runner/ELF·compiler2·exact11 각각1회 PASS·MF09/10 memory 복구, native preflight/verification identity를 독립 검산했다. 검토자는 제품/문서 수정·빌드·시험·자동 문서 verifier를 실행하지 않았다. **native N03 필수 잔여와 전체 `INCOMPLETE_NATIVE_NOT_RUN`을 유지하므로 이번 단위 전체 인수 완료를 뜻하지 않는다.** M4/M5도 미완료다.
+
+`artifacts/module-c2-pending-image-main-review-20261027/`에 preview/rules/checklist/identity-audit/report를 보존했다. report SHA-256은 `4d012de12c3356fed94b6093abce79a20d826f7ca147a807e45ea09b65498e57`, checklist는 `760272ceff7a403ce603ee86ee6966e28db5311da96eecd720d829ad6791c946`, identity audit는 `6578a7f557e33fab15e9fc478aa09b728a98f84bb7c3afc9226911d4ddc55cc1`이다.

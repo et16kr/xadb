@@ -300,7 +300,7 @@ impl<'s, 'c, W: WriterNamespace> ReservedCatalogCreate<'_, '_, 's, 'c, '_, '_, '
         }
         let view = prepared.layout(storage.profile())?;
         let job_page = queue::decode_jobs_page(
-            &prepared.after[2],
+            &prepared.payload.after[2],
             storage.profile().spec().namespace,
             (self.plan.ordinal / 15) as u8,
         )
@@ -318,6 +318,7 @@ impl<'s, 'c, W: WriterNamespace> ReservedCatalogCreate<'_, '_, 's, 'c, '_, '_, '
         let inventory_before =
             content_digest(&self.bound.control.ledger.bytes[JOB_END..INVENTORY_END]);
         let inventory_after = prepared
+            .payload
             .inventory_after()
             .ok_or_else(|| unchanged(RetentionPhase::Prepare, RetentionCause::Invariant))?;
         let mut write = self
@@ -340,7 +341,7 @@ impl<'s, 'c, W: WriterNamespace> ReservedCatalogCreate<'_, '_, 's, 'c, '_, '_, '
                 if after_image.is_some()
                     && actual.is_some_and(|stamp| {
                         stamp.modification_counter == u64::MAX
-                            || stamp.page_lsn.0 >= prepared.observation.header.lsn
+                            || stamp.page_lsn.0 >= prepared.payload.observation.header.lsn
                     })
                 {
                     return Err(unchanged(
@@ -353,9 +354,9 @@ impl<'s, 'c, W: WriterNamespace> ReservedCatalogCreate<'_, '_, 's, 'c, '_, '_, '
                 .enter_stage()
                 .map_err(|e| frame(RetentionPhase::Stage, e))?;
             let requirement = match storage.wal().stage_verified_required(
-                prepared.prefix,
-                prepared.observation.header,
-                prepared.frame,
+                prepared.payload.prefix,
+                prepared.payload.observation.header,
+                prepared.payload.frame,
             ) {
                 Ok(requirement) => requirement,
                 Err(error) if error.effect == Effect::Unchanged => {
@@ -445,23 +446,61 @@ impl<'s, 'c, W: WriterNamespace> ReservedCatalogCreate<'_, '_, 's, 'c, '_, '_, '
 /// No Clone/Copy and no raw constructor. This borrows immutable private
 /// operation bytes, not replay/control/page guards or a second storage owner.
 pub(crate) struct PreparedCatalog<'i, 'c, 's> {
-    core: &'c PageConcurrency<'s>,
-    binding: &'s AtomicU8,
-    fence: &'s SessionFence,
+    payload: CatalogPayload<'i, 'c, 's>,
     owner: OwnerIdentity,
-    prefix: WalPrefix,
-    observation: Observation,
-    slot: Option<usize>,
     requests: [TargetRequest; 9],
     roles: [u8; 9],
     count: usize,
     stamps: [Option<FrameStamp>; 9],
+    before: &'i [[u8; PAGE_BYTES]; 8],
+}
+
+/// Immutable bytes and the original control cut needed after staging. This
+/// owns no pin, WAL effect or publication authority; those remain in the
+/// original stage/installation receipts. Only preparation constructs it.
+pub(super) struct CatalogPayload<'i, 'c, 's> {
+    core: &'c PageConcurrency<'s>,
+    binding: &'s AtomicU8,
+    fence: &'s SessionFence,
+    prefix: WalPrefix,
+    observation: Observation,
+    slot: Option<usize>,
     frame: &'i [u8],
     frame_digest: [u8; 32],
     after: &'i [[u8; PAGE_BYTES]; 8],
-    before: &'i [[u8; PAGE_BYTES]; 8],
     inventory: Option<&'i [u8; PAGE_BYTES]>,
     control: ControlCut,
+}
+
+/// Consuming stage continuation. Canonical physical after order is captured
+/// before the preparation arrays end; Allocation's proof-only entry is None.
+/// No Clone/Copy, raw constructor or PreparedCatalog reconstruction exists.
+pub(super) struct CatalogCommitImage<'i, 'c, 's> {
+    payload: CatalogPayload<'i, 'c, 's>,
+    after: [Option<&'i [u8; PAGE_BYTES]>; 4],
+}
+impl<'i, 'c, 's> CatalogCommitImage<'i, 'c, 's> {
+    pub(super) fn payload(&self) -> &CatalogPayload<'i, 'c, 's> {
+        &self.payload
+    }
+    pub(super) fn after(&self, at: usize) -> Option<&'i [u8; PAGE_BYTES]> {
+        self.after.get(at).copied().flatten()
+    }
+    pub(super) fn core(&self) -> &'c PageConcurrency<'s> {
+        self.payload.core
+    }
+    pub(super) fn binding(&self) -> &'s AtomicU8 {
+        self.payload.binding
+    }
+    pub(super) fn fence(&self) -> &'s SessionFence {
+        self.payload.fence
+    }
+    pub(super) fn frame_digest(&self) -> [u8; 32] {
+        self.payload.frame_digest
+    }
+    pub(super) fn observation(&self) -> Observation {
+        self.payload.observation
+    }
 }
 
 #[derive(Clone, Copy)]
@@ -493,28 +532,28 @@ impl ControlCut {
 
 impl<'i, 'c, 's> PreparedCatalog<'i, 'c, 's> {
     pub(in crate::storage) fn operation(&self) -> Operation {
-        self.observation.operation
+        self.payload.observation.operation
     }
     pub(in crate::storage) fn observation(&self) -> Observation {
-        self.observation
+        self.payload.observation
     }
     pub(in crate::storage) fn prefix(&self) -> WalPrefix {
-        self.prefix
+        self.payload.prefix
     }
     pub(in crate::storage) fn owner(&self) -> OwnerIdentity {
         self.owner
     }
     pub(in crate::storage) fn core(&self) -> &'c PageConcurrency<'s> {
-        self.core
+        self.payload.core
     }
     pub(in crate::storage) fn binding(&self) -> &'s AtomicU8 {
-        self.binding
+        self.payload.binding
     }
     pub(in crate::storage) fn fence(&self) -> &'s SessionFence {
-        self.fence
+        self.payload.fence
     }
     pub(in crate::storage) fn transaction_slot(&self) -> Option<usize> {
-        self.slot
+        self.payload.slot
     }
     pub(in crate::storage) fn targets(&self) -> &[TargetRequest] {
         &self.requests[..self.count]
@@ -527,16 +566,17 @@ impl<'i, 'c, 's> PreparedCatalog<'i, 'c, 's> {
             .filter(|_| at < self.count)
     }
     pub(in crate::storage) fn frame(&self) -> &'i [u8] {
-        self.frame
+        self.payload.frame
     }
     pub(in crate::storage) fn frame_digest(&self) -> [u8; 32] {
-        self.frame_digest
+        self.payload.frame_digest
     }
     pub(in crate::storage) fn after(&self, at: usize) -> Option<&'i [u8; PAGE_BYTES]> {
         let role = *self.roles.get(at)?;
         (at < self.count
-            && self.observation.order[..usize::from(self.observation.count)].contains(&role))
-        .then(|| &self.after[usize::from(role)])
+            && self.payload.observation.order[..usize::from(self.payload.observation.count)]
+                .contains(&role))
+        .then(|| &self.payload.after[usize::from(role)])
     }
     pub(in crate::storage) fn before(&self, at: usize) -> Option<&'i [u8; PAGE_BYTES]> {
         let role = *self.roles.get(at)?;
@@ -549,9 +589,6 @@ impl<'i, 'c, 's> PreparedCatalog<'i, 'c, 's> {
             .position(|actual| *actual == role)
             .and_then(|at| self.before(at))
     }
-    fn inventory_after(&self) -> Option<&'i [u8; PAGE_BYTES]> {
-        self.inventory
-    }
     fn add_initialized_pair(&mut self, pair: [TargetRequest; 2]) -> Result<()> {
         if self.operation() != Operation::Forward || self.count != 7 {
             return Err(unchanged(
@@ -561,12 +598,12 @@ impl<'i, 'c, 's> PreparedCatalog<'i, 'c, 's> {
         }
         for (side, request) in pair.into_iter().enumerate() {
             let view = crate::storage::page::decode_page(
-                &self.after[6 + side],
+                &self.payload.after[6 + side],
                 request.identity,
                 request.kind,
             )
             .map_err(|e| unchanged(RetentionPhase::Prepare, RetentionCause::Page(e)))?;
-            if view.header().lsn != PageLsn(self.observation.header.lsn)
+            if view.header().lsn != PageLsn(self.payload.observation.header.lsn)
                 || view.header().level != request.level
             {
                 return Err(unchanged(
@@ -594,31 +631,61 @@ impl<'i, 'c, 's> PreparedCatalog<'i, 'c, 's> {
         prefix: WalPrefix,
     ) -> Result<()> {
         let actual = owner
-            .visibility_identity(self.core)
+            .visibility_identity(self.payload.core)
             .map_err(|error| RetentionError {
                 phase: RetentionPhase::Prepare,
                 effect: error.effect,
                 cause: RetentionCause::Concurrency(error),
             })?;
         if actual != self.owner
-            || !std::ptr::eq(self.core, pool.bound_core())
-            || !pool.uses_storage_origin(self.binding, self.fence)
+            || !std::ptr::eq(self.payload.core, pool.bound_core())
+            || !pool.uses_storage_origin(self.payload.binding, self.payload.fence)
         {
             return Err(unchanged(
                 RetentionPhase::Prepare,
                 RetentionCause::BindingMismatch,
             ));
         }
-        if prefix != self.prefix || control.pending.is_some() || !self.control.matches(control) {
+        if prefix != self.payload.prefix
+            || control.pending.is_some()
+            || !self.payload.control.matches(control)
+        {
             return Err(unchanged(RetentionPhase::Prepare, RetentionCause::Busy));
         }
-        if content_digest(self.frame) != self.frame_digest {
+        if content_digest(self.payload.frame) != self.payload.frame_digest {
             return Err(unchanged(
                 RetentionPhase::Prepare,
                 RetentionCause::Invariant,
             ));
         }
         Ok(())
+    }
+    pub(in super::super) fn confirms_requirement(&self, requirement: WalRequirement<'_>) -> bool {
+        self.payload.confirms_requirement(requirement)
+    }
+    pub(in super::super) fn layout(
+        &self,
+        profile: crate::storage::control::Profile,
+    ) -> Result<semantic_catalog::LayoutView<'i>> {
+        self.payload.layout(profile)
+    }
+    /// Caller has checked Commit and the four-target inventory before Intent.
+    /// Extraction itself is infallible and cannot introduce a post-stage retry.
+    pub(super) fn into_commit_image(self) -> CatalogCommitImage<'i, 'c, 's> {
+        let after = std::array::from_fn(|at| self.after(at));
+        CatalogCommitImage {
+            payload: self.payload,
+            after,
+        }
+    }
+}
+
+impl<'i> CatalogPayload<'i, '_, '_> {
+    fn operation(&self) -> Operation {
+        self.observation.operation
+    }
+    fn inventory_after(&self) -> Option<&'i [u8; PAGE_BYTES]> {
+        self.inventory
     }
     pub(in super::super) fn confirms_requirement(&self, requirement: WalRequirement<'_>) -> bool {
         let location = requirement.location();
@@ -657,9 +724,9 @@ pub(in super::super) fn catalog_mark_staged<'s>(
 ) -> Result<()> {
     if !prepared.confirms_requirement(requirement)
         || control.pending.is_some()
-        || !prepared.control.matches(control)
+        || !prepared.payload.control.matches(control)
     {
-        prepared.fence.fence();
+        prepared.payload.fence.fence();
         return Err(RetentionError {
             phase: RetentionPhase::Install,
             effect: Effect::CallerMustResolve,
@@ -673,8 +740,8 @@ pub(in super::super) fn catalog_mark_staged<'s>(
 /// Applies only the control part of an already installed actual group. The
 /// caller still owns the complete original write/version target set; this
 /// helper performs no pool access and cannot publish Q or release a stage.
-pub(in super::super) fn catalog_apply(
-    prepared: &PreparedCatalog<'_, '_, '_>,
+pub(super) fn catalog_apply(
+    prepared: &CatalogPayload<'_, '_, '_>,
     control: &mut control::RetentionLedger<'_, '_, '_>,
     profile: crate::storage::control::Profile,
     requirement: WalRequirement<'_>,
@@ -971,7 +1038,7 @@ impl<'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
             plan.selected(),
             private,
         )?;
-        if prepared.observation.job_ordinal != Some(plan.ordinal) {
+        if prepared.payload.observation.job_ordinal != Some(plan.ordinal) {
             return Err(unchanged(RetentionPhase::Prepare, RetentionCause::Busy));
         }
         self.flush.io.preflight::<W>().map_err(|e| RetentionError {
@@ -990,7 +1057,7 @@ impl<'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
         {
             return Err(unchanged(RetentionPhase::Prepare, RetentionCause::Busy));
         }
-        let reserve = PageLsn(prepared.observation.header.lsn);
+        let reserve = PageLsn(prepared.payload.observation.header.lsn);
         let authority = TxPairAuthority {
             core: self.inner.pool.bound_core(),
             binding: &self.inner.storage.binding,
@@ -1779,9 +1846,9 @@ impl<'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
             let requirement = storage
                 .wal()
                 .stage_verified_required(
-                    prepared.prefix,
-                    prepared.observation.header,
-                    prepared.frame,
+                    prepared.payload.prefix,
+                    prepared.payload.observation.header,
+                    prepared.payload.frame,
                 )
                 .map_err(|e| {
                     if e.effect == Effect::Unchanged {
@@ -1817,7 +1884,7 @@ impl<'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
                     .map_err(|e| frame(RetentionPhase::Install, e))?;
             }
             catalog_apply(
-                &prepared,
+                &prepared.payload,
                 &mut self.control.ledger,
                 storage.profile(),
                 requirement,
@@ -1858,7 +1925,7 @@ impl<'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
         })?;
         self.control.ledger.durable = Some(durable);
         self.control.ledger.pending = None;
-        Ok(prepared.observation)
+        Ok(prepared.payload.observation)
     }
 
     /// The actual Commit adapter consumes this receipt with the same original
@@ -2301,23 +2368,25 @@ impl<'b, 'a, 's, 'c, 'p, 'd, 'm, 'w, W: WriterNamespace>
                 .expect("named inventory image")
         };
         Ok(PreparedCatalog {
-            core: self.pool.bound_core(),
-            binding: &storage.binding,
-            fence: storage.session_fence(),
+            payload: CatalogPayload {
+                core: self.pool.bound_core(),
+                binding: &storage.binding,
+                fence: storage.session_fence(),
+                prefix,
+                observation,
+                slot,
+                frame: bytes,
+                frame_digest: content_digest(bytes),
+                after,
+                inventory: Some(inventory),
+                control: ControlCut::capture(self.control),
+            },
             owner: owner_identity,
-            prefix,
-            observation,
-            slot,
             requests: targets,
             roles,
             count: N,
             stamps,
-            frame: bytes,
-            frame_digest: content_digest(bytes),
-            after,
             before,
-            inventory: Some(inventory),
-            control: ControlCut::capture(self.control),
         })
     }
 }

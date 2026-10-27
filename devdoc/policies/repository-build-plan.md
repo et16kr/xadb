@@ -641,3 +641,8 @@ statement factory·자동 read-set·CheckedTable/RowReadOperation과 short aggre
 ## 모듈 독립 개발 C2 상주 Catalog 조회 — 2026-10-27
 
 `plan4_retention/read/resident.rs`는 원 allocator·Status·Undo의 상주 관측을 제공하며 기존 caller loan을 사용한다. 새 backing·권한·package/dependency·source root는 없다. 신규 실제 시험2파일·선택 manifest와 수정 경로는 JSON `dev3_module_c2_resident_read_main`에 등록한다. [main 수신 증거](../evidence/module-independence-survey-20261026.md#c2-resident-main)는 고정 Resident class와 현재 Drain 수명의 선택 검증을 구별하며 writer/progress·전체 동시 합과 M4/M5 인수는 후속이다.
+
+
+### C2 Commit 준비 자료의 Pending 수명 분리
+
+기존 `catalog_live.rs`의 private payload/image와 `catalog_commit.rs`의 consuming stage·4-phase source 계산을 연결했다. 공통 payload를 쓰는 `catalog_retire.rs`도 함께 변경한다. 신규 실제 선택 manifest와 수정3파일은 JSON `dev3_module_c2_pending_image_main`에 등록한다. package/dependency·source root·backing 추가는 없다. [실행 증거](../evidence/module-independence-survey-20261026.md#c2-pending-image-main)는 memory11개 PASS와 native N03 NOT_RUN을 구분하며 전체 admission·M4/M5는 후속이다.

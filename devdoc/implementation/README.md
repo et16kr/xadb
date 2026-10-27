@@ -1,5 +1,7 @@
 # 현재 구현
 
+2026-10-27 [C2 Commit 준비 자료 수명 분리](../evidence/module-independence-survey-20261026.md#c2-pending-image-main): stage가 준비 자료를 소비하고 compact 불변 image를 Pending에 넘긴다. 선택 memory11개 각1회 PASS, native N03는 디스크 여유 기준 미달로 NOT_RUN이다. OCR 전체11파일 독립 D1/D2는 구현/memory 한정 수용·필수 수정0이며 단위 전체 인수는 미완료다. 원 권한·공개 순서를 유지하며 전체 writer/progress admission·M4/M5는 미완료다.
+
 2026-10-27 [C2 상주 Catalog 고정 class](../evidence/module-independence-survey-20261026.md#c2-resident-main): 원 allocator/Status/Undo의 I/O 없는 조회와 고정 source 예약을 연결했다. main의 Drain 수명·core 회계를 유지하며 선택21개 각1회 PASS, 독립 OCR 전체23파일 한정 수용·필수 수정0이다. 두 상주 조회 source 합은 memory56792B/Linux 타입56928B이며 전체 writer/progress admission·M4/M5는 미완료다.
 
 2026-10-27 [C2 full Catalog short 예약](../evidence/module-independence-survey-20261026.md#c2-short-source-main): main의 원 isolation ledger에 고정 바이트 예약을 연결하고, 예약 시도부터 최종 decode/반환까지 원 Drain 표시를 유지한다. source별 선택14+7개 PASS·원 Found 시험 FAIL을 보존했고 OCR 전체19파일·독립 D1/D2 한정 수용·필수 수정0이며 전체 동시 admission·M4/M5 인수는 미완료다.

@@ -6735,5 +6735,36 @@
     },
     "remaining_supply": "writer/progress and complete concurrent entry/return accounting, caller-retained statement/Row factories, actual C+A/C+B/M5 acceptance",
     "source_roots_changed": false
+  },
+  "dev3_module_c2_pending_image_main": {
+    "status": "ACCEPTED_IMPLEMENTATION_MEMORY_ONLY_NATIVE_NOT_RUN",
+    "baseline": "8b4753302e95cd80776fb7bba9e394407fb39f1e",
+    "adapted_from": [
+      "a5cfdae5fa00e903c4e198a8a75bbb8005383e77"
+    ],
+    "contract_ref": "dev3-module-boundaries.md#operation-source-admission",
+    "evidence_ref": "module-independence-survey-20261026.md#c2-pending-image-main",
+    "implemented_paths": [
+      "tests/fixtures/dev3-module-c2/pending-image/manifest.json"
+    ],
+    "modified_paths": [
+      "crates/engine/src/storage/wal_io/plan4_retention/catalog_commit.rs",
+      "crates/engine/src/storage/wal_io/plan4_retention/catalog_live.rs",
+      "crates/engine/src/storage/wal_io/plan4_retention/catalog_retire.rs"
+    ],
+    "scope": "Consume PreparedCatalog at stage return; preserve compact immutable install image, original authority and four-phase source accounting. Writer/progress aggregate admission remains incomplete.",
+    "validation": "Frozen r1 production/test build PASS; exact11 runtime PASS once, including current-build memory recovery MF09/MF10. Native N03 NOT_RUN before spawning: 365015040 free bytes below unchanged 64424509440 required. Independent OCR11/11 files, zero skipped/required code fixes; source5637-file identity and exact execution audit accepted only for implementation/memory storage. Unit acceptance remains incomplete pending native N03.",
+    "source_bytes": {
+      "prepared": 2024,
+      "pending_image": 568,
+      "catalog_preflight": 16632,
+      "catalog_stage": 32292,
+      "catalog_pending": 18532,
+      "catalog_install": 22052,
+      "catalog_peak": 32292,
+      "source_bound_not_rss": true
+    },
+    "remaining_supply": "Native N03 after original environment/admission conditions; writer/progress and all concurrent entry/return sums, actual Row and M4/M5 acceptance",
+    "source_roots_changed": false
   }
 }
