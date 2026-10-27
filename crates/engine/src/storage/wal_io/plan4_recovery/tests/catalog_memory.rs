@@ -1156,3 +1156,6 @@ mod resident_read;
 
 #[path = "catalog_memory/resident_faults.rs"]
 mod resident_faults;
+
+#[path = "catalog_memory/drained.rs"]
+mod drained;

@@ -36,7 +36,7 @@ pub(in crate::storage) use retirement::{
 mod plan4_residency;
 #[allow(unused_imports)] // The actual terminal producer will consume these opaque carriers.
 pub(in crate::storage) use commit::{
-    CommitInstallTargets, CommitStageTargets, PendingCommitTargets,
+    CommitInstallTargets, CommitStageTargets, DrainedCommitTargets, PendingCommitTargets,
     source_bytes as commit_source_bytes, source_phases as commit_source_phases,
 };
 mod recovered_plan4;

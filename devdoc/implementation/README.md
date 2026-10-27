@@ -1,5 +1,7 @@
 # 현재 구현
 
+2026-10-28 [C2 Drain 완료/content guard 인계](../evidence/module-independence-survey-20261026.md#c2-drained-handoff-main): 원 pin·Installing을 private Drained로 이동하고 정상 미완료 Drop의 fence-before-pins를 검증했다. 변경 경계 선택11개 각1회·production/test build·선택 Clippy PASS, main4phase/core·전체 peak 상계 유지. 독립 OCR 전체18파일 한정 수용·지적1건 수정·필수 수정0이며 writer/progress·전체 동시 합·M4/M5는 미완료다.
+
 2026-10-28 [C2 실제 WAL wait source 관측](../evidence/module-independence-survey-20261026.md#c2-wal-wait-source-main): test-only 호출·반환 계산과 신규 exact1개1회 PASS. main core 포함 Full+Pending 합66116/66252B는65536B 기준 FAIL이며, 관측 PASS를 동시 admission 인수로 승격하지 않는다. 리뷰 지적1건의 배치를 수정하고 선택 Clippy PASS·OCR 전체15파일 독립 D1/D2 한정 수용·필수 수정0이다. 제품 상계·동작은 유지하며 Drain 인계·writer/progress·M4/M5는 미완료다.
 
 2026-10-28 [C2 Aging/Root source 계산](../evidence/module-independence-survey-20261026.md#c2-aging-source-main): 실제 Root2 decode·순차 Aging 수명과 공통 XOD/XTS 계산을 연결했다. main 원 core·Commit4phase를 유지하며 Full charge41576→37724B, 전체 peak는 그대로다. r1 test build 경로 오류를 보존하고 test-only 정정 뒤 선택4개 각1회 PASS·OCR 전체14파일 독립 D1/D2 한정 수용·필수 수정0이다. writer/progress·전체 동시 admission·M4/M5는 미완료다.

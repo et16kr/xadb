@@ -307,3 +307,8 @@ fn catalog_mf11_commit_installed_before_finish_unwind() {
 fn catalog_mf12_commit_before_publish_unwind() {
     unwind_boundary("MF12", Point::BeforePublish);
 }
+
+#[test]
+fn catalog_drained_before_resume_unwind() {
+    unwind_boundary("C2_DRAIN04", Point::DrainedBeforeResume);
+}

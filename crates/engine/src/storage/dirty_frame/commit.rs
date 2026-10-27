@@ -34,6 +34,14 @@ pub(in crate::storage) struct PendingCommitTargets<'a, 'b, 'c, 's, 'p, 'd, const
     stable: [Option<StablePage>; N],
 }
 
+/// Authentic Drain completion owns the original version gate and pins, but no
+/// page-content guard storage. It cannot be cloned or constructed by callers.
+pub(in crate::storage) struct DrainedCommitTargets<'a, 'b, 'c, 's, 'p, 'd, const N: usize> {
+    pins: Option<PinSet<'b, 'c, 's, 'p, 'd, N>>,
+    installation: Option<CommitInstalling<'a, 'c, 's>>,
+    stable: [Option<StablePage>; N],
+}
+
 pub(in crate::storage) struct CommitInstallTargets<'a, 'b, 'c, 's, 'p, 'd, const N: usize> {
     targets: Option<WriteTargets<'a, 'b, 'c, 's, 'p, 'd, N>>,
     installation: Option<CommitInstalling<'a, 'c, 's>>,
@@ -177,10 +185,10 @@ impl<'a, 'b, 'c, 's, 'p, 'd, const N: usize> PendingCommitTargets<'a, 'b, 'c, 's
     /// Waits only for already admitted finite content/apply sections. The
     /// enclosing producer retains its private plan; no shared workspace, FIFO
     /// turn, file I/O, additional pin or DPT allocation is requested here.
-    pub(in crate::storage) fn resume_durable(
+    pub(in crate::storage) fn drain_durable(
         mut self,
         durable: &DurableCommit<'c, 's>,
-    ) -> Result<CommitInstallTargets<'a, 'b, 'c, 's, 'p, 'd, N>> {
+    ) -> Result<DrainedCommitTargets<'a, 'b, 'c, 's, 'p, 'd, N>> {
         let installation = self
             .pending
             .take()
@@ -188,7 +196,20 @@ impl<'a, 'b, 'c, 's, 'p, 'd, const N: usize> PendingCommitTargets<'a, 'b, 'c, 's
             .begin_drain(durable)
             .and_then(|drain| drain.wait_ready())
             .map_err(DirtyError::from)?;
-        // Drain has completed before any guard storage is reconstructed.
+        Ok(DrainedCommitTargets {
+            pins: self.pins.take(),
+            installation: Some(installation),
+            stable: self.stable,
+        })
+    }
+}
+
+impl<'a, 'b, 'c, 's, 'p, 'd, const N: usize> DrainedCommitTargets<'a, 'b, 'c, 's, 'p, 'd, N> {
+    /// Resume after the consuming Drain boundary. No capacity wait belongs
+    /// here: the original Installing admission and version gate are held.
+    pub(in crate::storage) fn resume(
+        mut self,
+    ) -> Result<CommitInstallTargets<'a, 'b, 'c, 's, 'p, 'd, N>> {
         // This moves the same PinSet; no reservation or registry edit occurs.
         let targets = WriteTargets {
             guards: std::array::from_fn(|_| None),
@@ -197,7 +218,7 @@ impl<'a, 'b, 'c, 's, 'p, 'd, const N: usize> PendingCommitTargets<'a, 'b, 'c, 's
         };
         let mut result = CommitInstallTargets {
             targets: Some(targets),
-            installation: Some(installation),
+            installation: self.installation.take(),
             stable: self.stable,
         };
         result.acquire_and_revalidate()?;
@@ -209,6 +230,21 @@ impl<const N: usize> Drop for PendingCommitTargets<'_, '_, '_, '_, '_, '_, N> {
     fn drop(&mut self) {
         // Pending Drop fences before physical identities are released.
         drop(self.pending.take());
+        if let Some(pins) = &mut self.pins {
+            #[cfg(test)]
+            if pins.active {
+                test_support::before_release(pins.pool);
+            }
+            let _ = pins.release();
+        }
+    }
+}
+
+impl<const N: usize> Drop for DrainedCommitTargets<'_, '_, '_, '_, '_, '_, N> {
+    fn drop(&mut self) {
+        // Normal unfinished Drop must abandon/fence before returning pins.
+        // This ordering does not depend on panic or PinSet::fence_unwind.
+        drop(self.installation.take());
         if let Some(pins) = &mut self.pins {
             #[cfg(test)]
             if pins.active {
@@ -383,13 +419,15 @@ pub(in crate::storage) const fn source_bytes<const N: usize>() -> usize {
     let install = size_of::<CommitInstallTargets<'_, '_, '_, '_, '_, '_, N>>();
     stage
         + pending
+        + size_of::<DrainedCommitTargets<'_, '_, '_, '_, '_, '_, N>>()
+        + 2 * size_of::<Result<DrainedCommitTargets<'_, '_, '_, '_, '_, '_, N>>>()
         + install
         + 2 * size_of::<Result<CommitStageTargets<'_, '_, '_, '_, '_, '_, N>>>()
         + 2 * size_of::<Result<PendingCommitTargets<'_, '_, '_, '_, '_, '_, N>>>()
         + 2 * size_of::<Result<CommitInstallTargets<'_, '_, '_, '_, '_, '_, N>>>()
         + target_set_call_bytes::<N>()
-        // resume_durable constructs this owned carrier after Drain, while the
-        // compact Pending value and its install return are still in scope.
+        // resume constructs this owned carrier after Drain, while the
+        // compact Drained value and its install return are still in scope.
         + size_of::<WriteTargets<'_, '_, '_, '_, '_, '_, N>>()
         + size_of::<[Option<StablePage>; N]>()
         + 4 * size_of::<FrameStamp>()
@@ -406,6 +444,7 @@ pub(in crate::storage) const fn source_bytes<const N: usize>() -> usize {
 pub(in crate::storage) struct CommitSourcePhases {
     pub(in crate::storage) stage: usize,
     pub(in crate::storage) pending: usize,
+    pub(in crate::storage) drain: usize,
     pub(in crate::storage) resume: usize,
     pub(in crate::storage) install: usize,
 }
@@ -415,6 +454,7 @@ pub(in crate::storage) fn source_phases<const N: usize>() -> CommitSourcePhases 
     let stage = size_of::<CommitStageTargets<'_, '_, '_, '_, '_, '_, N>>();
     let pending = size_of::<PendingCommitTargets<'_, '_, '_, '_, '_, '_, N>>();
     let install = size_of::<CommitInstallTargets<'_, '_, '_, '_, '_, '_, N>>();
+    let drained = size_of::<DrainedCommitTargets<'_, '_, '_, '_, '_, '_, N>>();
     // Keep the entire target-call/cleanup envelope in every phase, even when
     // only PinSet cleanup is reachable. Core guards/errors/Condvar returns are
     // explicit; the semantic producer must additionally charge the one core.
@@ -435,9 +475,13 @@ pub(in crate::storage) fn source_phases<const N: usize>() -> CommitSourcePhases 
             + size_of::<[Option<StablePage>; N]>()
             + leaf,
         pending: pending + leaf,
-        // Pending ends only when resume_durable returns. Count the constructed
-        // WriteTargets, installed carrier and both return layers alongside it.
-        resume: pending
+        // Pending and the consuming return coexist until drain_durable ends.
+        // Guard storage is reconstructed only in the later resume call.
+        drain: pending
+            + drained
+            + 2 * size_of::<Result<DrainedCommitTargets<'_, '_, '_, '_, '_, '_, N>>>()
+            + leaf,
+        resume: drained
             + install
             + size_of::<WriteTargets<'_, '_, '_, '_, '_, '_, N>>()
             + 2 * size_of::<Result<CommitInstallTargets<'_, '_, '_, '_, '_, '_, N>>>()

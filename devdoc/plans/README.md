@@ -1,6 +1,6 @@
 # 개발 계획
 
-- [모듈 독립 개발 구조 전환 작업 계획](module-independence-plan.md) — 2026-10-26 사용자 구조 변경 방향. 후속 에이전트의 소유 문서 수정 대상, M0–M5 설계·문서·구조 변경·두 제품 기능 병렬 인수, 보류/재개 조건. [M2 설계 인계](module-independence-plan.md#m2-handoff)는 A/B 기능·API 호출·공통 공급·선택 인수의 연결을 구체화한다. 작업 계획과 M2/M3 독립 D2 채택·완료. M4 C0 borrowed codec 부분공급, C0 전체·C1–C5·M5 미완료·제품 인수 NOT_RUN.
+- [모듈 독립 개발 구조 전환 작업 계획](module-independence-plan.md) — 2026-10-26 사용자 구조 변경 방향. 후속 에이전트의 소유 문서 수정 대상, M0–M5 설계·문서·구조 변경·두 제품 기능 병렬 인수, 보류/재개 조건. [M2 설계 인계](module-independence-plan.md#m2-handoff)는 A/B 기능·API 호출·공통 공급·선택 인수의 연결을 구체화한다. 작업 계획과 M2/M3 독립 D2 채택·완료. M4 C0·C1·C2 부분공급은 [Drain 인계 분리](../evidence/module-independence-survey-20261026.md#c2-drained-handoff-main)까지 진행했고 M5 A/B 순수 본문은 착수했다. 전체 C0·C1–C5 공급·M5 실제 제품 인수는 미완료.
 
 - [첫 행 중심 실행과 개선 범위](dev3-implementation-plan.md#direction-refinement) — 2026-10-25 방향 재점검 반영. 당시 구조·명명·공통화는 소비자 연결의 국소 후보로 제한했다. 후속 구조 전환에서 바꿀 작업 순서의 범위는 [대체 관계](module-independence-plan.md#document-map)에 명시하며 제품 의미·품질 기준은 유지한다.
 

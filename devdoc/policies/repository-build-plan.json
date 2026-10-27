@@ -6864,5 +6864,49 @@
     "remaining_supply": "Drain-complete/guard handoff; actual writer/progress reservation and full entry/return aggregate; Full+Pending exceeds original cap; actual Row and M4/M5 acceptance",
     "source_roots_changed": false,
     "review_report_sha256": "9b91897b654d192d2c6500fd729c2f6870dad469c4c2fb2ed04bbc22e8a53946"
+  },
+  "dev3_module_c2_drained_handoff_main": {
+    "status": "ACCEPTED_LIMITED_D1_D2",
+    "contract_ref": "dev3-module-boundaries.md#operation-source-admission",
+    "evidence_ref": "module-independence-survey-20261026.md#c2-drained-handoff-main",
+    "baseline_commit": "d2baeb98839cc390804b6737b5989e5479323d0d",
+    "adapted_from": [
+      "00feccdfcdf3be062005c50dcb11b1c4160403e2"
+    ],
+    "implemented_paths": [
+      "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/drained.rs",
+      "tests/fixtures/dev3-module-c2/drained-handoff/manifest.json"
+    ],
+    "modified_paths": [
+      "crates/engine/src/storage/dirty_frame.rs",
+      "crates/engine/src/storage/dirty_frame/commit.rs",
+      "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory.rs",
+      "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/commit_failures.rs",
+      "crates/engine/src/storage/wal_io/plan4_retention/catalog_commit.rs",
+      "crates/engine/src/transaction/concurrency_catalog_test_support.rs",
+      "crates/engine/src/transaction/concurrency_test_support.rs",
+      "crates/engine/src/storage/dirty_frame/commit/tests.rs"
+    ],
+    "scope": "Actual consuming Drain/guard-reconstruction boundary on main; original authority and normal Drop fence-before-pins; main four outer source phases and shared original core retained; no source upgrade/admission yet",
+    "validation": "r1 production check, crate Clippy lib/tests -D warnings and test build PASS/warning0; exact11 cases each once PASS (new4, directly affected4, source3). Pre-run review found omitted drain phase/old Pending resume lower bound in existing source test; fixed and selected before first execution. Current-build memory recovery; native I/O not rerun. Independent OCR18/18 files, skipped0, one source-test finding fixed before execution, zero unresolved required fixes. D1/D2 accepted for this implementation/selected validation; source5641 files and all identities verified.",
+    "remaining_supply": "Actual writer/progress source reservations and complete entry/return aggregate; unresolved Full+Pending cap exceedance; Row and M4/M5. Drained holds original version gate/pins so no capacity wait is allowed",
+    "source_roots_changed": false,
+    "source_bytes": {
+      "physical_n4_drain": 9196,
+      "physical_n4_resume": 10260,
+      "physical_n4_full_chain_gate": 14336,
+      "catalog_preflight": 16632,
+      "catalog_stage": 32292,
+      "catalog_pending": 18532,
+      "catalog_install": 22052,
+      "catalog_peak": 32292,
+      "memory_live_peak": 64000,
+      "native_type_live_peak": 64136,
+      "memory_recovered_peak": 65376,
+      "native_type_recovered_peak": 65512,
+      "previous_full_pending_bound_status": "FAIL_PRESERVED",
+      "source_bound_not_rss": true
+    },
+    "review_report_sha256": "5e680864a51e6424c01d21e37e243cb841fa035ccaf0cb6bcd7fb2c3f7a06738"
   }
 }

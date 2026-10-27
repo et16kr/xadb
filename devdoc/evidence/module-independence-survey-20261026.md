@@ -1228,3 +1228,63 @@ r2는 source `8db0cc5d51e2117d469d1bda6e014d2e0cb426623d29fac24443ae2fa5306210`,
 r1/r2 각각 source5639파일·inventory·manifest·runner/helper·compiler/lint 로그, r1 ELF·exact1 실행 출력의 identity를 읽기 전용 검산했다. 현재 source=r2, r1→r2는 helper 위치1건뿐이고 나머지 bytes·원 r1 source/ELF/runtime 결과를 보존하며 r2 runtime0을 확인했다. 검토자는 제품·문서 수정이나 빌드·시험·자동 문서 verifier를 실행하지 않았다. 사전 대조에서 main core816B를 포함한 Full 동시 합이 참고 브랜치와 다름을 확인했고 위 실행에서 관측한 FAIL을 그대로 유지했다.
 
 `artifacts/module-c2-wal-wait-source-main-review-20261028/`에 preview/rules/checklist/identity-audit/report를 보존한다. report SHA-256은 `9b91897b654d192d2c6500fd729c2f6870dad469c4c2fb2ed04bbc22e8a53946`, checklist는 `e564d60e311e0a8115b762aa77b55bac25613ffec40117b7f2df0312407b505c`, identity-audit는 `969f044245fd647ad2d0f04cb589c0c519d27d2c3b0d32290aeca4ed10cf5e54`다. 다음 단위는 Drain 완료/guard 인계의 수명 분리이며, 이후 writer/progress 예약·entry/return 전체 합을 위 FAIL을 해소하는 계약과 함께 공급해야 한다. 이번 관측을 전체 M4/M5 인수 완료로 표시하지 않는다.
+
+
+<a id="c2-drained-handoff-main"></a>
+### C2 Drain 완료와 content guard 인계의 main 수신 — 2026-10-28
+
+사용자의 “진행 위치 확인 후 다음 한 단계·OCR delegate 리뷰 및 수정·commit” 요청으로 clean `main`·`d2baeb98839cc390804b6737b5989e5479323d0d`에서 시작했다. M0–M3 완료, M4는 실제 WAL wait source 관측까지 부분공급, M5는 A/B 순수 본문 착수 상태였다. 이번 한 단계는 **authentic durable Drain 완료와 content guard 재구성의 consuming 경계 분리**다. 별도 브랜치의 `00feccdfcdf3be062005c50dcb11b1c4160403e2`에서 필요한 코드만 main의 기존4phase·원 core 회계에 적응했다. 참고 브랜치 전체·과거 실행 결과를 합치거나 다른 worktree·세션을 변경하지 않았다.
+
+`D3-MODULE-DRAINED-HANDOFF-MAIN-001` · D2 · **ACCEPTED / 구현·선택11개 검증 완료 / 독립 D1/D2 한정 수용**. 작성·계약·통합 `/root`, 독립 검토 `/root/module_step_review`. 기존 M2/M3·§6.9 안의 내부 경계 구체화이며 원65,536B 한도·WAL/권한·원자 공개·오류/복구 의미를 유지한다. 전체 writer/progress 예약·동시 합·M4/M5 인수는 미완료다.
+
+#### 원 소유·수명과 선택
+
+`PendingCommitTargets::drain_durable`은 원 durable proof로 begin_drain→wait_ready를 마친 뒤 같은 PinSet·StablePage·CommitInstalling을 private·nonClone `DrainedCommitTargets`로 이동한다. actual Catalog는 그 반환 뒤 `resume`를 호출하여 content guard storage를 재구성하고 기존 stamp/digest/recLSN 검산을 수행한다. 이 사이에는 Installing·active_apply1·원 version gate와 pins4가 유지되고 content guard/read 표시가0이다. 새 authority·pin 예약·등록·backing은 없다.
+
+정상 미완료 Drop도 먼저 원 installation을 drop하여 fence/Abandoned·version/admission 반환을 완료한 뒤 원 pins를 반환한다. panic에 의존한 fence나 pin 반환 후 fence는 허용하지 않는다. 새 hook은 실제 carrier의 Drop을 요청하거나 관측할 뿐 권한/receipt를 만들지 않는다. 이 경계에서 후속 source 전환은 이미 예약한 몫의 무대기 checked 동작이어야 하며 capacity 대기를 추가할 수 없다.
+
+한 함수에서 Drain과 guard 재구성을 계속 수행하는 대안은 후속 source 전환의 소비 경계를 제공하지 못한다. 참고 브랜치의 포괄 수식을 통째로 가져오는 대안은 main의 기존 phase·core 회계와 달라 제외했다. physical drain은 Pending+Drained+원 Result 반환을 합산하고 resume은 Drained+WriteTargets+Install·반환값을 합산한다. Catalog는 mapped RetentionResult도 포함해 drain/resume/설치의 max를 계산하며 semantic4phase와 shared original core1회 계수를 유지한다. actual 호출·반환 타입, raw content 사용자, 권한/Drop 순서 또는 source 예약 연결이 바뀌면 해당 경계를 재검토한다.
+
+#### 실행 전 선택·리뷰 수정과 결과
+
+[동결 manifest](../../tests/fixtures/dev3-module-c2/drained-handoff/manifest.json)는 신규4·직접 영향4·source3의 **11개 exact selector, 각각1회**를 선택한다. 총600초·compiler90초·case30초·로그8MiB·test stack32MiB를 실행 전에 고정했다. 독립 사전 리뷰가 기존 physical source 시험의 신규 drain phase 누락과 resume 하한의 Pending 사용을 지적했다. Drained 입력·반환 하한과 drain max를 보완하고 그 시험을 선택 목록에 추가한 뒤 첫 실행했다. 이는 정적 지적이며 실행하지 않은 이전 시험 FAIL을 만들지 않는다.
+
+- 신규4: 건강한 handoff의 원 pins/version·content0·before bytes, 외부 fence, 정상 unfinished Drop, handoff panic. 정상 Drop은 외부 fence/panic 없이 pin-return hook에서 이미 fenced/Abandoned·active0·version 반환·pins4를 확인한 뒤 pins0/Q0을 검산한다. 오류3개는 원 C04/N03 독립 기대값과 현재-build memory recovery를 사용한다.
+- 직접 영향4: MT03 Pending Full Undo LOAD, MT05 lower-image flush/recLSN, MT07 유한 content Drain fence, MF10 partial install/unwind·복구. 새 consuming 경계의 정상·실패·정리 경로만 선택했다.
+- source3: fresh/recovered 원 core·carrier 상계, Memory/Linux 실제 타입의 semantic4phase, physical N=4/9 전이의 공존 하한과64-target의 원 Capacity gate 유지.
+
+frozen export에서 `cargo check -p xadb-engine --lib --locked --offline --message-format=json`, `cargo clippy -p xadb-engine --lib --tests --locked --offline --message-format=json -- -D warnings`, `cargo test -p xadb-engine --lib --no-run --locked --offline --message-format=json`이 모두 **PASS·경고0**, 같은 ELF의 exact11개도 모두 **1회 PASS**다. 총90.95초는 검증 경과이며 성능 수치가 아니다. 물리 WAL I/O·wire·native driver·복구 구현 diff0이므로 완료한 native/하위/workspace 시험은 반복하지 않는다. 실제 변경 오류 경계의 현재-build memory 복구와 native 타입 상계를 구별하며 새 native I/O 실행으로 주장하지 않는다. 기존 FAIL·UNKNOWN·NOT_RUN과 DEV2·DEV3/S5 미완료를 보존한다.
+
+#### source 상계와 남은 공급
+
+| 항목 | 이번 source 값(B) |
+| --- | --- |
+| physical N4 stage / pending / drain / resume / install |11260 / 6748 / 9196 / 10260 / 6876|
+| physical N9 stage / pending / drain / resume / install |17180 / 8188 / 12796 / 14900 / 8396|
+| physical 포괄 gate N4 / N9 |14336 / 24976|
+| semantic preflight / stage / pending / install |16632 / 32292 / 18532 / 22052|
+| semantic peak |32292|
+| shared retained Memory / Linux type (core816 포함) |23072 / 23208|
+| live peak Memory / Linux type |64000 / 64136|
+| recovered peak Memory / Linux type |65376 / 65512|
+
+새 carrier/Result 비용을 계수했으며 기존 전체 peak 한도 내 결과를 유지한다. 위 값은 source/type 상계이며 RSS·실제 stack·성능 측정이 아니다. 앞 [WAL wait 관측](#c2-wal-wait-source-main)의 Full+Pending 합66116/66252B·65536B 기준 **FAIL은 그대로**다. 이번 분리로 해당 초과를 해결했다고 하지 않는다. 다음은 writer/progress source 예약·호출 진입/반환 전체 합과 이 FAIL을 해소할 공급이며 실제 Row·C+A/C+B·MI01–06·M4/M5 인수는 남아 있다.
+
+원 source5641파일/inventory·manifest·runner/helper·compiler/lint·ELF·stdout/stderr/result는 `artifacts/module-c2-drained-handoff-main-20261028/r1/`에 보존한다.
+
+| identity | SHA-256 |
+| --- | --- |
+| source |`3734c6b782611aa91fd35dd43cdafb066f6e8046a3696dc63dcbe9c46d18f7bd`|
+| manifest |`1c6a48b14209a97e69b515c1dc54598247ce5dc663ee63916b8fd38533e87f16`|
+| runner |`ddc1e7867c77c243b7892f15fe9459603cb275d56edacf161d1d1a8b460e54ca`|
+| inventory |`cb942e58fefe17d3c4c68526d37194a918eb9f243e7184108adc53444900a9d1`|
+| ELF |`c5a2a5de91a2aa1c47e109a3bf75c69d37136b88f270473286b54e0c692b258b`|
+| result |`91c1b2ecd5eeac020e4d777ec6ef435e282491fdbfd93b09d97a02fe497a98e7`|
+
+#### OCR delegate 독립 검토
+
+`/root/module_step_review`가 `ocr delegate preview --format json`·`ocr delegate rule --format json`으로 전체 변경을 검토했다. 기본 대상10개와 기본 제외 중 명시 추가한8개를 모두 읽어 **전체18파일·100%·skip0**, source 시험의 drain/resume 하한 지적1건 수정 확인·미해결 필수 수정0·차단0이다. 독립 D1/D2는 이 Drain 인계 단위의 구현·선택 검증을 한정 수용했으며 `/root`가 반영했다.
+
+원 export와 현재 source5641파일, inventory·manifest·runner/helper·ELF, compiler3개의 진단/로그와 exact11개 stdout/stderr의 identity를 읽기 전용 검산했다. 현재 제품과 실행 source가 같으며 source 시험 보완은 첫 실행 전에 반영됐다. 검토자는 제품·문서 수정이나 빌드·시험·자동 문서 verifier를 실행하지 않았다. 무변경 native/하위 시험을 반복하지 않은 선택과 기존 Full+Pending 기준 FAIL 보존, 원 권한/Drop·main4phase/core 및 후속 source 예약의 무대기 조건을 확인했다.
+
+`artifacts/module-c2-drained-handoff-main-review-20261028/`의 report SHA-256은 `5e680864a51e6424c01d21e37e243cb841fa035ccaf0cb6bcd7fb2c3f7a06738`, checklist는 `a8ccc579c01a11fa32978ab1146881fee77b9f5365272823746c5d7ad2473a36`, identity-audit는 `d865e0b870167bc7bedf8a480076364f1691d1dcea7816b1499dd0df80adfb7a`다. 변경9개 Rust 파일에 파일별 rustfmt와 `git diff --check`를 적용했으며 자동 문서 verifier·전체 workspace fmt/Clippy·push는 실행하지 않는다. 문서 검사는 기존 pre-push 훅에서 수행한다.

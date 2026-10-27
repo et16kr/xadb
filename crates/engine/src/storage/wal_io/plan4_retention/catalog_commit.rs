@@ -140,8 +140,24 @@ impl<'s, 'c, W: WriterNamespace> RetentionWriter<'_, '_, 's, 'c, '_, '_, '_, '_,
             .map_err(|e| fatal(storage, RetentionPhase::Durable, RetentionCause::Wal(e)))?;
         #[cfg(test)]
         catalog_hook(prepared.core(), CatalogPoint::Durable);
-        let mut install = pending
-            .resume_durable(&durable)
+        let drained = pending
+            .drain_durable(&durable)
+            .map_err(|e| fatal(storage, RetentionPhase::Install, RetentionCause::Frame(e)))?;
+        #[cfg(test)]
+        {
+            catalog_hook(prepared.core(), CatalogPoint::DrainedBeforeResume);
+            if crate::transaction::concurrency::catalog_test_support::drop_drained(prepared.core())
+            {
+                drop(drained);
+                return Err(fatal(
+                    storage,
+                    RetentionPhase::Install,
+                    RetentionCause::Invariant,
+                ));
+            }
+        }
+        let mut install = drained
+            .resume()
             .map_err(|e| fatal(storage, RetentionPhase::Install, RetentionCause::Frame(e)))?;
 
         // Original target order is the canonical physical order. Each permit
@@ -514,13 +530,18 @@ pub(in super::super) fn source_phases() -> CatalogCommitSourcePhases {
             + physical.pending
             + size_of::<commit_bridge::CatalogCommitWait<'_, '_>>()
             + bridge,
-        // resume returns before per-page permits/control/history publication.
+        // Drain returns before guard reconstruction; both calls return before
+        // per-page permits/control/history publication. The mapped caller
+        // Result is counted in addition to the physical drain return layers.
         // Keep the installed physical closure until finish, including errors.
         install: retained
             + size_of::<CatalogCommitImage<'_, '_, '_>>()
-            + physical
-                .resume
-                .max(physical.install + install.max(control).max(publication)),
+            + (physical.drain
+                + size_of::<
+                    Result<dirty_frame::DrainedCommitTargets<'_, '_, '_, '_, '_, '_, TARGETS>>,
+                >())
+            .max(physical.resume)
+            .max(physical.install + install.max(control).max(publication)),
     }
 }
 

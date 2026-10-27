@@ -656,3 +656,8 @@ statement factory·자동 read-set·CheckedTable/RowReadOperation과 short aggre
 ### C2 실제 WAL wait source 관측의 main 수신
 
 기존7개 Rust 파일에 test-only 물리/semantic/caller 관측과 신규1개 시험을 추가했다. 선택 manifest와 경로는 JSON `dev3_module_c2_wal_wait_source_main`에 등록한다. package/dependency·source root·제품 상계/charge·wire 변경은 없다. [증거](../evidence/module-independence-survey-20261026.md#c2-wal-wait-source-main)는 새 관측1개 PASS와 main Full+Pending 합의65536B 기준 FAIL을 구별하며 실제 writer/progress admission은 후속이다.
+
+
+### C2 Drain 완료/guard 인계의 main 수신
+
+기존 `dirty_frame/commit.rs`의 private Drained가 원 pin·설치 권한을 이동하고 Catalog가 이를 소비한다. 신규 실제 시험 `catalog_memory/drained.rs`·선택 manifest와 수정 경로는 JSON `dev3_module_c2_drained_handoff_main`에 등록한다. 기존 제품 파일·source root·package/dependency·wire는 유지한다. [증거](../evidence/module-independence-survey-20261026.md#c2-drained-handoff-main)는 main의 source 회계·선택 검증과 참고 브랜치를 구별하며 전체 writer/progress 예약·동시 합은 후속이다.

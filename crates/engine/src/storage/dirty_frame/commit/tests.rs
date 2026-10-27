@@ -218,14 +218,22 @@ fn commit_phase_sources_cover_transitions_without_changing_capacity_gate() {
         let phases = source_phases::<N>();
         let stage = size_of::<CommitStageTargets<'_, '_, '_, '_, '_, '_, N>>();
         let pending = size_of::<PendingCommitTargets<'_, '_, '_, '_, '_, '_, N>>();
+        let drained = size_of::<DrainedCommitTargets<'_, '_, '_, '_, '_, '_, N>>();
         let install = size_of::<CommitInstallTargets<'_, '_, '_, '_, '_, '_, N>>();
         let nested_core = crate::transaction::concurrency::commit_call_source_bytes();
         // Independent lower bounds on simultaneously live values. In
         // particular max(stage, pending) cannot pass the suspend check.
         assert!(phases.stage >= stage + pending + nested_core);
         assert!(
-            phases.resume
+            phases.drain
                 >= pending
+                    + drained
+                    + size_of::<Result<DrainedCommitTargets<'_, '_, '_, '_, '_, '_, N>>>()
+                    + nested_core
+        );
+        assert!(
+            phases.resume
+                >= drained
                     + install
                     + size_of::<WriteTargets<'_, '_, '_, '_, '_, '_, N>>()
                     + size_of::<Result<CommitInstallTargets<'_, '_, '_, '_, '_, '_, N>>>()
@@ -236,6 +244,7 @@ fn commit_phase_sources_cover_transitions_without_changing_capacity_gate() {
         assert!(
             phases
                 .stage
+                .max(phases.drain)
                 .max(phases.resume)
                 .max(phases.install)
                 .max(phases.pending)
