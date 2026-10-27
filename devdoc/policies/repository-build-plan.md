@@ -754,3 +754,8 @@ apply root의 private receipt·actual terminal 자손과 Busy 시험·manifest/c
 ### Base4 raw layout와 공통 image 기록
 
 `plan4_recovery_base/{image_records,row,row_tests}.rs`와 독립 author/Base4 literal2/manifest를 JSON `dev3_module_row_base4`에 등록한다. 기존 base root/header와 Catalog의 공통 record import만 변경하며 source roots/package/dependency는 유지한다. [선택 증거](../evidence/module-independence-survey-20261026.md#row-base4-layout)는 full graph/census/INIT witness·current 선택/복구·source admission의 공급 증거가 아니다.
+
+
+### Root3-bound Aging descriptor
+
+`retention_obligation/row{,_tests}.rs`와 independent author/pages/jobs/descriptors/aggregates/manifest를 JSON `dev3_module_row_aging`에 등록한다. 원 retention_obligation의 모듈 등록 외 existing codec/current 호출은 변경하지 않는다. source roots/package/dependency는 유지하며 [선택 증거](../evidence/module-independence-survey-20261026.md#row-aging)는 actual history/source admission/current 복구를 대신하지 않는다.

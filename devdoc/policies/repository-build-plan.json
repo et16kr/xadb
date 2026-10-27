@@ -7249,5 +7249,27 @@
     "validation": "r1 production/test build and all8 new exact runtime selectors PASS, warnings0. Immutable source5712 files/inventory/manifest/input/parents/runner/helpers/ELF/logs preserved. Original completed lower tests NOT_REPEATED. Independent D1/D2 accepted limited scope, required fixes0: audited all5712 source files/current equality, inventory/fingerprint, manifest/input3/parent6, runner/helpers, ELF/logs/budget and six docs/new7+modified2 paths. Reconstructed both2MiB inputs with independent offset/SHA arithmetic without author/product import or execution. Original14 accessor/codec bodies unchanged.",
     "remaining_supply": "Complete Job census/Status-Undo-Row-Catalog graph/descriptor/inventory/INIT history and selected ownership, source admission, scoped observers/current recovery and actual Row A/B/M4/M5.",
     "source_roots_changed": false
+  },
+  "dev3_module_row_aging": {
+    "status": "ACCEPTED_LIMITED_D1_D2",
+    "contract_ref": "dev3-module-consumers.md#row-aging",
+    "implemented_paths": [
+      "crates/engine/src/storage/retention_obligation/row.rs",
+      "crates/engine/src/storage/retention_obligation/row_tests.rs",
+      "tests/fixtures/module-row-format/aging/aggregates.bin",
+      "tests/fixtures/module-row-format/aging/author.py",
+      "tests/fixtures/module-row-format/aging/descriptors.bin",
+      "tests/fixtures/module-row-format/aging/jobs.bin",
+      "tests/fixtures/module-row-format/aging/manifest.json",
+      "tests/fixtures/module-row-format/aging/pages.bin"
+    ],
+    "modified_paths": [
+      "crates/engine/src/storage/retention_obligation.rs"
+    ],
+    "scope": "Exact Profile3/Root3-bound XOD/work96; next validates full after Job3 census, preserves genesis first-Start fields and binds predecessor/current budget. Original Catalog/current Profile2 unchanged.",
+    "evidence_ref": "module-independence-survey-20261026.md#row-aging",
+    "validation": "r1 production/test build and all5 new exact runtime selectors PASS, warnings0. Immutable source5720 files/inventory/manifest/input/parents/runner/helpers/ELF/logs preserved. Completed Base4/Job3/Catalog/lower tests NOT_REPEATED. Independent D1/D2 accepted limited scope, required fixes0: audited all5720 source files/current equality, inventory/fingerprint, manifest/input5/parent5, runner/helpers/ELF/logs/budget and six docs/new8+modified1 paths. Independently reconstructed pages6/jobs5bank/descriptors5/aggregate5 without product/author import or execution.",
+    "remaining_supply": "Actual operation before/after and WAL delta/history/admission/source bound, Row full graph/scoped observers/current recovery and actual A/B/M4/M5.",
+    "source_roots_changed": false
   }
 }

@@ -161,6 +161,15 @@ TerminalReady와 root의 저장 LSN 관계는 Retained adoption < terminal adopt
 
 D2 대안은 별도 layout 전체 복제 또는 common record 분리였으며, exact profile 입구는 별도로 두고 동일96/352B grammar만 공유하여 중복을 줄였다. 작성/통합 `/root`, 독립 검토 `/root/module_review`; r1 production/test build 및 신규8 PASS·최종 독립 D1/D2 한정 수용이며 필수 수정은0이다. [선택 증거](../evidence/module-independence-survey-20261026.md#row-base4-layout)에 신규8 selector·독립 초기/활성 input과 결과를 둔다. actual current Profile2·원 완료 증거를 유지한다. actual 연결 시 full graph/source 비용/복구 closure를 다시 검토한다.
 
+<a id="row-aging"></a>
+#### Root3-bound Aging descriptor와 후보 생산 — 2026-10-27
+
+기준 `922bc62`의 `retention_obligation::row`는 exact Profile3/Root3 아래 원 XOD1536/work96(kind7)을 결합하는 별도 encode/decode를 공급한다. owner/Aging progress·revision/cursor/limit64·chain apply/groups+1/birth·empty inventory/minimumLSN·소비 WAL/control·Root budget digest·page/cell SHA를 검산한다. raw decode는 원 immutable descriptor를 빌리며 Root-bound 관측이지 full queue/graph/current 선택 권한이 아니다. 원 Catalog codec과 actual current Profile2는 그대로다.
+
+`next(AgingTransition, aggregate640B, output)`는 after Root와 전체64 Job3 census(원 bank 또는 one-cell replacement)를 직접 검산한 뒤 descriptor를 만든다. Job의 cleanup sum을 단일 Aging row3에 기록하고 혼합 Catalog/Row peak는 순차 max인 registry9 또는16 recipe를 따른다. 이전 descriptor/root를 검사하고 chain.previous=이전apply, groups+1·birth/inventory 보존, apply증가·consumed WAL 비감소/control동일을 요구한다. 첫 AgingStart는 이전 canonical genesis, after revision2·19672B/control0이며 cursor/issued/masks/job·budget digest/completed/canceled/Undo·Object·Commit·Row high-water를 모두 보존한다. output은 모든 실패에 보존하며 aggregate scratch는 변경될 수 있다.
+
+원 semantic Catalog의 queue 준비에 기대는 대안과 별도 생산 입구를 비교해, 새 입구가 after census와 첫 Start의 unchanged queue 조건을 직접 닫도록 했다. 후속 branch가 검사하는 것은 before Root/descriptor 일치와 apply증가/groups+1/consumed비감소/control유지다. 이전 전체 Job bank, 발급 high-water/issued 단조성, 각 opcode의 정확한 before→after/WAL 소비 delta, actual previous SHA/history·source 비용/admission·actual dispatch는 후속 의미 owner가 검산한다. 여기의 연속 후보는 실제 opcode 이력 증거가 아니다. 작성/통합 `/root`, 독립 검토 `/root/module_review`이며 사전 검토의 첫 Start/유효 actor 반례 보완을 첫 실행 전에 반영했다. [선택 증거](../evidence/module-independence-survey-20261026.md#row-aging)에 신규5·원 literal/hash·결과를 기록한다. r1 production/test build·신규5 PASS이며 독립 D1/D2 한정 수용, 필수 수정0이다.
+
 ### 6.2 Forward
 
 `T`는 원 TxnRef, `H`는 before Status.head, `U`는 Reserved Undo다. 실제 table/anchor/schema와 row key Missing을 원 before 아래 재검사한다. A는 row record `stamp=Transaction(T), logical=(T.id,planned_mutation), undo=U, deleted=false`와 canonical inline payload를 만든다. 새 U는 target Row(table/gen/RowId), before Missing, before stamp/logical 없음, previous-version Never, previous-transaction은 H가 있으면 Linked(H, 실제 sequence), 없으면 Never다.

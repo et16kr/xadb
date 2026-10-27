@@ -4,6 +4,8 @@
 
 #[path = "retention_obligation/catalog.rs"]
 pub(crate) mod catalog;
+#[path = "retention_obligation/row.rs"]
+pub(crate) mod row;
 
 use super::{
     allocation_page::ReservationOwner,
