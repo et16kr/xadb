@@ -6581,5 +6581,50 @@
     },
     "remaining_supply": "fixed class and progress charges, aggregate source admission including concurrent entry/return carriers; resident read path and actual Row adapters/terminal/recovery, complete M4/M5",
     "source_roots_changed": false
+  },
+  "dev3_module_c2_commit_phases": {
+    "status": "ACCEPTED_LIMITED_D1_D2",
+    "contract_ref": "dev3-module-boundaries.md#operation-source-admission",
+    "evidence_ref": "module-independence-survey-20261026.md#c2-commit-phases",
+    "implemented_paths": [
+      "tests/fixtures/dev3-module-c2/commit-phases/manifest.json"
+    ],
+    "modified_paths": [
+      "crates/engine/src/storage/dirty_frame.rs",
+      "crates/engine/src/storage/dirty_frame/commit.rs",
+      "crates/engine/src/storage/dirty_frame/commit/tests.rs",
+      "crates/engine/src/storage/wal_io/plan4_apply/owner_tests.rs",
+      "crates/engine/src/storage/wal_io/plan4_retention/catalog_commit.rs",
+      "crates/engine/src/storage/wal_io/plan4_retention/create_pair.rs",
+      "crates/engine/src/transaction/concurrency.rs",
+      "crates/engine/src/transaction/concurrency_commit.rs"
+    ],
+    "scope": "Commit physical and Catalog phase source closures; consuming transition carriers retained, explicit nested concurrency costs and original core once; original physical Capacity gate unchanged",
+    "validation": "r1 production/test build and exact3 PASS; independent review required original core816B accounting; r2 production/test build and changed Catalog exact2 PASS; physical phase test not repeated; five executions across two sources, three unique selectors; independent module_step_review accepted limited D1/D2 after eight product files, six documents, manifests and both source/artifact identities review; zero required fixes",
+    "source_bytes": {
+      "physical_four_targets": {
+        "stage": 11260,
+        "pending": 6748,
+        "resume": 10244,
+        "install": 6876
+      },
+      "physical_nine_targets": {
+        "stage": 17180,
+        "pending": 8188,
+        "resume": 14884,
+        "install": 8396
+      },
+      "catalog": {
+        "preflight": 17448,
+        "stage": 31940,
+        "pending": 20804,
+        "install": 24324,
+        "peak": 31940,
+        "original_core_once": 816
+      },
+      "source_bound_not_rss": true
+    },
+    "remaining_supply": "actual shared retained core placement and all concurrent entry/return sums, resident reader and writer/progress class admission; Row adapters/terminal/recovery and M4/M5",
+    "source_roots_changed": false
   }
 }

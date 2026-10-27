@@ -8,6 +8,8 @@ pub(in crate::storage) use catalog_live::retirement::CatalogRetirementRejected;
 #[path = "catalog_commit.rs"]
 mod catalog_commit;
 pub(super) use catalog_commit::source_bytes as catalog_commit_source_bytes;
+#[cfg(test)]
+pub(super) use catalog_commit::source_phases as catalog_commit_source_phases;
 pub(in crate::storage) use catalog_commit::{CatalogCommitAttempt, CatalogCommitInstalled};
 
 use crate::{

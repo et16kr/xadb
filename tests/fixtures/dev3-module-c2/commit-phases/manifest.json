@@ -1,0 +1,34 @@
+{
+  "schema": "XADB_MODULE_C2_COMMIT_PHASES_V1",
+  "status": "FROZEN_INPUTS_NOT_EXECUTION_EVIDENCE",
+  "scope": "Catalog Commit phase costs include the actual original PageConcurrency value once; phase-only core helper does not prove shared retained ownership; aggregate admission remains unimplemented",
+  "baseline_commit": "0852f06",
+  "changed_paths": [
+    "crates/engine/src/storage/wal_io/plan4_retention/catalog_commit.rs",
+    "crates/engine/src/storage/wal_io/plan4_apply/owner_tests.rs"
+  ],
+  "budget": {
+    "total_seconds": 480,
+    "case_seconds": 30,
+    "output_bytes": 8388608,
+    "rust_min_stack": 33554432
+  },
+  "runtime_tests": [
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::owner_tests::disk_session_isolation_backing_and_carriers_are_accounted",
+      "reason": "Changed Catalog phase census reaches original live/recovered source bounds and per-phase retained plus operation 65536-byte ceiling"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::commit_concurrency::catalog_mt05_pending_lower_flush",
+      "reason": "Changed Catalog source Capacity preflight admits actual four-target Commit through Pending, lower-image flush and revalidated installation; no new concurrency behavior claimed"
+    }
+  ],
+  "selection_since_source_sha256": "1517cbc95c9e4d8d605ce17eb606cbddca9006cf104bab848fd54180313af80b",
+  "comment_only_paths": [
+    "crates/engine/src/transaction/concurrency_commit.rs",
+    "crates/engine/src/storage/dirty_frame/commit.rs"
+  ],
+  "completed_not_repeated": [
+    "storage::dirty_frame::commit::tests::commit_phase_sources_cover_transitions_without_changing_capacity_gate"
+  ]
+}

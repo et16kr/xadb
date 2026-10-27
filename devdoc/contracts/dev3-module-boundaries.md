@@ -1127,6 +1127,8 @@ rollback/terminal은 원 progress admission이 새 foreground를 닫고 이미 �
 
 실제 부분공급으로 [Catalog 조회 수명/Commit Drain](../evidence/module-independence-survey-20261026.md#c2-read-operation-lifetime)을 연결했다. 원 OwnerSlot의 별도 read 표시를 첫 reference 예약 전부터 checked 정리 시도 뒤까지 유지하고 Drain이 표시0을 기다린다. Pending LOAD는 허용하고 Draining의 신규 operation/content 거절은 유지한다. 정상 refs0과 fence 뒤 원 fatal refs 보존을 구분한다. byte admission·동시 합·writer phase/progress 몫은 아직 미공급이며 이 표시만으로 본 절의 인수를 완료하지 않는다.
 
+[Commit phase 비용 구체화](../evidence/module-independence-survey-20261026.md#c2-commit-phases)는 기존 stage helper 반환 전후의 source 값을 구분한다. suspend의 Stage+Pending 반환, resume의 Pending+새 WriteTargets/Install 반환은 합산하고, 준비·대기·설치의 배타 호출만 max로 계산한다. 원 PageConcurrency 실체는 기존 session retained가 참조만 보유하므로 현재 Catalog 비용에 한 번 포함한다. 후속 전체 admission에서는 이를 실제 shared-retained 한 곳으로 옮겨 다른 class와 중복 없이 계수해야 한다. 물리64-target의 기존 보수 Capacity gate는 유지하며, 이 부분공급은 고정 charge의 수치 근거이고 동적 예약 크기 변경이나 동시 합 인수가 아니다.
+
 전체 설계 상계는 metadata `73856+65536+49152=188544≤196608`, original flush를 더한 whole `254080≤262144`다. 이 admission·동시 합 검산은 **새 C1/C2/C3 공급**이며 기존 active.max 기반 source 결과로 이미 구현됐다고 하지 않는다. header의 실제 byte 배치와 source charge의 측정·실패/정리 경로는 C1/C4 인수에 포함한다.
 
 <a id="common-deliveries"></a>

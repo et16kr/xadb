@@ -200,6 +200,21 @@ fn disk_session_before_returns_original_owner_for_canonical_retry() {
 #[test]
 fn disk_session_isolation_backing_and_carriers_are_accounted() {
     let live = resources::source_census::<port::Writer>();
+    let commit = create_pair::catalog_commit_source_phases();
+    println!(
+        "C2_CATALOG_COMMIT_PHASES {commit:?} peak={} original_core_once={}",
+        commit.peak(),
+        std::mem::size_of::<PageConcurrency<'_>>()
+    );
+    assert_eq!(live.catalog_commit, commit.peak());
+    for phase in [
+        commit.preflight,
+        commit.stage,
+        commit.pending,
+        commit.install,
+    ] {
+        assert!(live.retained + phase <= 65_536);
+    }
     let recovered = super::super::super::plan4_recovery::source_census::<port::Writer>();
     let directory = dirty_frame::plan4_core_census().directory;
     println!(

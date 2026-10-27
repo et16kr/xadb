@@ -399,5 +399,53 @@ pub(in crate::storage) const fn source_bytes<const N: usize>() -> usize {
         + 512
 }
 
+/// Physical call closures at the semantic producer's actual call boundaries.
+/// A phase includes its consuming input and return carriers together; these
+/// figures cannot be used to release or grow a live source reservation.
+#[derive(Clone, Copy, Debug)]
+pub(in crate::storage) struct CommitSourcePhases {
+    pub(in crate::storage) stage: usize,
+    pub(in crate::storage) pending: usize,
+    pub(in crate::storage) resume: usize,
+    pub(in crate::storage) install: usize,
+}
+
+pub(in crate::storage) fn source_phases<const N: usize>() -> CommitSourcePhases {
+    use std::mem::size_of;
+    let stage = size_of::<CommitStageTargets<'_, '_, '_, '_, '_, '_, N>>();
+    let pending = size_of::<PendingCommitTargets<'_, '_, '_, '_, '_, '_, N>>();
+    let install = size_of::<CommitInstallTargets<'_, '_, '_, '_, '_, '_, N>>();
+    // Keep the entire target-call/cleanup envelope in every phase, even when
+    // only PinSet cleanup is reachable. Core guards/errors/Condvar returns are
+    // explicit; the semantic producer must additionally charge the one core.
+    let leaf = target_set_call_bytes::<N>()
+        + crate::transaction::concurrency::commit_call_source_bytes()
+        + 4 * size_of::<FrameStamp>()
+        + 2 * size_of::<Result<DirtyObservation>>()
+        + 2 * size_of::<Result<DptStamp<'_>>>()
+        + 2 * size_of::<foundation::codec::ContentHasher>()
+        + 512;
+    CommitSourcePhases {
+        // prepare_commit constructs stable while owning WriteTargets; suspend
+        // owns Stage until its Drop, including the newly built Pending return.
+        stage: stage
+            + pending
+            + 2 * size_of::<Result<CommitStageTargets<'_, '_, '_, '_, '_, '_, N>>>()
+            + 2 * size_of::<Result<PendingCommitTargets<'_, '_, '_, '_, '_, '_, N>>>()
+            + size_of::<[Option<StablePage>; N]>()
+            + leaf,
+        pending: pending + leaf,
+        // Pending ends only when resume_durable returns. Count the constructed
+        // WriteTargets, installed carrier and both return layers alongside it.
+        resume: pending
+            + install
+            + size_of::<WriteTargets<'_, '_, '_, '_, '_, '_, N>>()
+            + 2 * size_of::<Result<CommitInstallTargets<'_, '_, '_, '_, '_, '_, N>>>()
+            + size_of::<[Option<StablePage>; N]>()
+            + leaf,
+        install: install + leaf,
+    }
+}
+
 #[cfg(test)]
 mod tests;

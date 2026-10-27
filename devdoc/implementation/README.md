@@ -1,5 +1,7 @@
 # 현재 구현
 
+2026-10-27 [C2 Commit 단계별 source 비용](../evidence/module-independence-survey-20261026.md#c2-commit-phases): 실제 전환 carrier를 포함해 준비·대기·설치의 비용을 구분했다. 독립 검토에서 찾은 core816B 누락을 보완하고 source별 선택3+2회 PASS를 보존했다. 최종 독립 D1/D2 한정 수용·필수 수정0이며 Catalog 최대31940B·전체 동시 admission·M4/M5 미완료를 구별한다.
+
 2026-10-27 [C2 Commit Pending 보유 분리](../evidence/module-independence-survey-20261026.md#c2-pending-carrier): 동일 pin만 WAL 대기를 통과하고 Drain 뒤 설치 guard를 재구성한다. stage helper를 나눠 준비 로컬 수명을 끝냈으며 관련11개 선택 PASS와 MF03/MF07 설명 정정을 보존하고 최종 독립 D1/D2를 한정 수용했다. Pending 타입112B 감소와 Catalog Commit 포괄 상한 증가를 구별하며 aggregate admission·실제 Row 연결·M4/M5는 미완료다.
 
 2026-10-27 [C2 거래·Aging 생성 수명 분리](../evidence/module-independence-survey-20261026.md#c2-transaction-source-phases): 실제 helper 경계를 나눠 Catalog lookup source 상한42850→41552B, live peak64074→63184B, recovered peak65450→64611B를 확인했다. source별 선택12+7회 PASS(16개 고유 selector)와 C09 설명 정정을 보존하며 최종 독립 D1/D2를 한정 수용했다. short aggregate admission·실제 Row/terminal/recovery·M4/M5는 미완료다.

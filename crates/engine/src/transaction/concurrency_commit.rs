@@ -464,9 +464,14 @@ impl Drop for CommitInstalling<'_, '_, '_> {
 /// Source values in the common continuation. The enclosing pool/semantic
 /// producer additionally counts retained pages, plans and its caller returns.
 pub(crate) const fn source_bytes() -> usize {
+    std::mem::size_of::<PageConcurrency<'_>>() + call_source_bytes()
+}
+
+/// Nested continuation values only. The caller must additionally charge the
+/// original core once; this function does not establish a shared owner census.
+pub(crate) const fn call_source_bytes() -> usize {
     use std::mem::size_of;
-    size_of::<PageConcurrency<'_>>()
-        + 2 * size_of::<PrepareCommitError<'_, '_, '_>>()
+    2 * size_of::<PrepareCommitError<'_, '_, '_>>()
         + 2 * size_of::<std::result::Result<CommitStage<'_, '_, '_>, PrepareCommitError<'_, '_, '_>>>(
         )
         + size_of::<CommitStage<'_, '_, '_>>()

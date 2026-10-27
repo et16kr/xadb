@@ -16,6 +16,7 @@ mod commit;
 use commit::Installation;
 #[path = "concurrency_read.rs"]
 mod read;
+pub(crate) use commit::call_source_bytes as commit_call_source_bytes;
 #[allow(unused_imports)] // The source-census consumer is a separately supplied leaf.
 pub(crate) use commit::source_bytes as commit_common_source_bytes;
 #[allow(unused_imports)] // Sealed continuation types are named by their later consumer.

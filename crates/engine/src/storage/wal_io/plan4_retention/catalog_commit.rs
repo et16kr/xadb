@@ -384,8 +384,33 @@ fn commit_q(
 }
 
 /// Source-value closure of this adapter, excluding the original retained
-/// owner/controller and caller's page/frame backing. No stack/RSS claim.
+/// storage owner/controller and caller's page/frame backing. The original
+/// PageConcurrency value is included once here: the existing session census
+/// holds only its reference. No stack/RSS or concurrent admission claim.
 pub(in super::super) fn source_bytes() -> usize {
+    source_phases().peak()
+}
+
+/// Consecutive closures of commit_catalog; this is not concurrent admission.
+/// Only the stage helper's returned boundary makes its locals disjoint from
+/// waiting/resume. The shared outer values stay charged in every phase.
+#[derive(Clone, Copy, Debug)]
+pub(in super::super) struct CatalogCommitSourcePhases {
+    pub(in super::super) preflight: usize,
+    pub(in super::super) stage: usize,
+    pub(in super::super) pending: usize,
+    pub(in super::super) install: usize,
+}
+impl CatalogCommitSourcePhases {
+    pub(in super::super) fn peak(self) -> usize {
+        self.preflight
+            .max(self.stage)
+            .max(self.pending)
+            .max(self.install)
+    }
+}
+
+pub(in super::super) fn source_phases() -> CatalogCommitSourcePhases {
     use std::mem::size_of;
     type Stage<'c, 's> = std::result::Result<
         (
@@ -394,21 +419,25 @@ pub(in super::super) fn source_bytes() -> usize {
         ),
         commit_bridge::CatalogStageError<'c, 's>,
     >;
-    let retained = visibility::epoch_commit_carriers()
-        + size_of::<PendingCatalog<'_, '_, '_, '_, '_, '_>>()
+    let stage_local = size_of::<PendingCatalog<'_, '_, '_, '_, '_, '_>>()
         + size_of::<Result<PendingCatalog<'_, '_, '_, '_, '_, '_>>>()
         + 6 * size_of::<&()>() // stage_catalog borrowed arguments
+        + size_of::<CatalogCommitAttempt<'_, '_, '_, '_>>()
+        + size_of::<crate::storage::wal_io::StagedCommit<'_, '_>>()
+        + size_of::<commit_bridge::CatalogCommitWait<'_, '_>>()
+        + size_of::<Option<crate::storage::wal_io::UnstagedCommit<'_, '_>>>()
+        + 2 * size_of::<Stage<'_, '_>>();
+    // Deliberately retain even late completion values across every phase.
+    // Prepared/control/epoch validation, unwind and caller return carriers are
+    // never discounted because the physical target owner changes shape.
+    let retained = size_of::<PageConcurrency<'_>>()
+        + visibility::epoch_commit_carriers()
         + size_of::<PreparedCatalog<'_, '_, '_>>()
         + size_of::<Observation>()
         + size_of::<WalRequirement<'_>>()
         + size_of::<InstallationKey>()
-        + size_of::<CatalogCommitAttempt<'_, '_, '_, '_>>()
         + size_of::<CatalogCommitInstalled<'_, '_>>()
         + size_of::<crate::storage::session_fence::UnwindFence<'_>>()
-        + size_of::<crate::storage::wal_io::StagedCommit<'_, '_>>()
-        + size_of::<commit_bridge::CatalogCommitWait<'_, '_>>()
-        + size_of::<Option<crate::storage::wal_io::UnstagedCommit<'_, '_>>>()
-        + 2 * size_of::<Stage<'_, '_>>()
         + 2 * size_of::<crate::storage::wal_io::DurableCommit<'_, '_>>()
         + 2 * size_of::<crate::storage::wal_io::InstalledCommit<'_, '_>>()
         + size_of::<DurableWal<'_>>()
@@ -437,16 +466,29 @@ pub(in super::super) fn source_bytes() -> usize {
         + size_of::<[bool; TARGETS]>()
         + size_of::<Option<u64>>()
         + size_of::<[u64; 8]>();
-    retained
-        + dirty_frame::commit_source_bytes::<TARGETS>()
-        // The installer loop's stamp/permit/DPT values end before control,
-        // history and Q publication. These are consecutive nested calls,
-        // while PreparedCatalog and the common chain remain charged above.
-        + install
-            .max(root)
-            .max(super::catalog_live::catalog_control_source_bytes())
-            .max(history::runtime::source_bytes())
-            .max(visibility::source_census().peak_leaf)
-            .max(visibility::epoch_transition_source_bytes())
-            .max(commit_bridge::catalog_source_bytes())
+    let physical = dirty_frame::commit_source_phases::<TARGETS>();
+    let control = super::catalog_live::catalog_control_source_bytes();
+    let bridge = commit_bridge::catalog_source_bytes();
+    let publication = history::runtime::source_bytes()
+        .max(visibility::source_census().peak_leaf)
+        .max(visibility::epoch_transition_source_bytes())
+        .max(bridge);
+    CatalogCommitSourcePhases {
+        preflight: retained + root.max(control).max(publication),
+        // Both mark_staged and bridge calls run while the stage target set is
+        // retained. The stage closure includes its Pending success return.
+        stage: retained + stage_local + physical.stage + control.max(bridge),
+        // Original pins and all outer values survive the WAL call, but the
+        // stage helper and its Result have returned before this phase starts.
+        pending: retained
+            + physical.pending
+            + size_of::<commit_bridge::CatalogCommitWait<'_, '_>>()
+            + bridge,
+        // resume returns before per-page permits/control/history publication.
+        // Keep the installed physical closure until finish, including errors.
+        install: retained
+            + physical
+                .resume
+                .max(physical.install + install.max(control).max(publication)),
+    }
 }

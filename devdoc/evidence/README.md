@@ -1,6 +1,6 @@
 # XADB 조사·실행 증거
 
-- [모듈 독립 개발 전환의 기준선·경계 조사](module-independence-survey-20261026.md) — M0 기준선·격리, M1 실제 소유/의존 분류·소비 기능 후보. M2 설계 중이며 제품 변경·새 시험·M2–M5 인수 없음.
+- [모듈 독립 개발 전환의 기준선·경계 조사](module-independence-survey-20261026.md) — M0–M3 완료·설계/계약 채택, M4 공통 공급과 M5 A/B 순수 본문 부분구현. [Commit 단계별 비용](module-independence-survey-20261026.md#c2-commit-phases)까지 source별 선택 검증을 기록하며 aggregate admission·단독/합류 제품 인수는 미완료.
 
 2026-10-26 [DEV2 PF04 C3 shard counter 후보(S2)](dev2-pf04-c3-s2-20261026.md) · [source별 기록](dev2-pf04-c3-s2-20261026.json): thread별 shard counter를 기준선 위 diagnostics diff로 구현하고 신규8종·기존 선택 시험과 정적 lock 대조(대상 경로 counter RMW 14→0)를 통과했다. 후보는 고정했으나 제품에 반영하지 않았다. C3 측정(S3)·PF04 인수는 NOT_RUN이며 원 PF04 FAIL·DEV2 미완료를 유지한다.
 

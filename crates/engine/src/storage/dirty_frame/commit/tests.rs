@@ -212,6 +212,52 @@ fn commit_common_source_bounds() {
 }
 
 #[test]
+fn commit_phase_sources_cover_transitions_without_changing_capacity_gate() {
+    use std::mem::size_of;
+    fn check<const N: usize>() {
+        let phases = source_phases::<N>();
+        let stage = size_of::<CommitStageTargets<'_, '_, '_, '_, '_, '_, N>>();
+        let pending = size_of::<PendingCommitTargets<'_, '_, '_, '_, '_, '_, N>>();
+        let install = size_of::<CommitInstallTargets<'_, '_, '_, '_, '_, '_, N>>();
+        let nested_core = crate::transaction::concurrency::commit_call_source_bytes();
+        // Independent lower bounds on simultaneously live values. In
+        // particular max(stage, pending) cannot pass the suspend check.
+        assert!(phases.stage >= stage + pending + nested_core);
+        assert!(
+            phases.resume
+                >= pending
+                    + install
+                    + size_of::<WriteTargets<'_, '_, '_, '_, '_, '_, N>>()
+                    + size_of::<Result<CommitInstallTargets<'_, '_, '_, '_, '_, '_, N>>>()
+                    + nested_core
+        );
+        assert!(phases.pending >= pending + nested_core);
+        assert!(phases.install >= install + nested_core);
+        assert!(
+            phases
+                .stage
+                .max(phases.resume)
+                .max(phases.install)
+                .max(phases.pending)
+                <= 65_536
+        );
+        assert_eq!(
+            crate::transaction::concurrency::commit_common_source_bytes(),
+            nested_core + size_of::<PageConcurrency<'_>>()
+        );
+        println!(
+            "COMMIT_PHASE_SOURCE targets={N} {phases:?} original_gate={}",
+            source_bytes::<N>()
+        );
+    }
+    check::<4>();
+    check::<9>();
+    // The original wide-set gate still uses the conservative full-chain sum.
+    // New semantic phase accounting must not silently admit the rejected set.
+    assert!(source_bytes::<64>() > 65_536);
+}
+
+#[test]
 fn commit_targets_capacity_preflight_preserves_fence_priority() {
     assert!(source_bytes::<64>() > 65_536);
     for fenced in [false, true] {

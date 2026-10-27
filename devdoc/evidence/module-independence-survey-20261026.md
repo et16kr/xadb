@@ -788,3 +788,47 @@ D1/D2 담당·통합은 `/root`다. 원 자원을 이동하는 bounded 내부 �
 검증 대상은 실제 push할 commit의 포맷·Clippy·문서 pre-push gate다. 위 attribute/동일 크기 표현 변경에 제품 동작 변경이 없어 완료한 runtime 시험은 반복하지 않는다. `/root/module_handoff_review`가 실제3파일 diff와 원 Clippy 지적·기존512B 반환 회계를 대조하여 좁은 D1 수용·필수 수정0으로 판정했다. 검토자는 빌드·시험·문서 검사를 실행하지 않았고 `/root`가 반영한다. 최종 전송 검증은 이 보완 commit 이후 원 pre-push 훅에서 수행하며 실제 전송 로그와 구별한다. 이전 source별 제품 PASS·FAIL과 M4/M5 미완료를 유지한다.
 
 후속 `522ec12` main 전송 시도는 Rust 포맷·Clippy를 통과했지만 문서4개 링크의 `파일.rs:줄번호` 표기를 파일 이름으로 해석하여 차단됐다. 원 로그는 `artifacts/module-push-20261027-r2.log`에 보존한다. 실제 네 소스 파일의 존재를 확인하고 상대 Markdown 링크에서 줄 번호 접미어만 제거했다. 설명·계약 의미·제품 변경0의 D0 정정이며 최종 전송 시 원 훅을 다시 적용한다.
+
+
+<a id="c2-commit-phases"></a>
+### C2 Commit 단계별 source 비용 구체화 — 2026-10-27
+
+사용자의 “진행 위치 확인 후 다음 한 단계” 요청에 따라 clean `main`·`0852f06ff9fa2ec42fdb73f4353373b9ef45e78d`에서 재개했다. 기존 모듈 worktree와 main은 같은 HEAD였으며 이번 편집·증거는 `/home/et16/work/xadb`에 둔다. M0–M3는 완료·채택, M4의 마지막 제품 단위는 Pending pin/stage 수명 분리였고 M5는 A/B 순수 본문 착수까지다. 이번 종료 범위는 그 다음 의무인 **Commit의 실제 배타 phase 비용 계산** 한 단위다. 전체 M4/M5 실행 완료로 확대하지 않는다.
+
+`D3-MODULE-COMMIT-PHASES-001` · D2 · **ACCEPTED / C2 한정 부분공급**. 담당·계약·통합 `/root`, 독립 검토 `/root/module_step_review`. 기존 실행 권한·이번 한 단계 지시 아래 §6.9의 고정 source 계산을 구체화한다. 포괄 합을 유지하는 대안은 안전하지만 실제 준비·대기·설치의 배타성을 후속 admission에 설명하지 못한다. stage/Pending/install 타입만 단순 max하는 대안은 전환 시 공존하는 반환값을 누락하므로 채택하지 않았다. source 값의 계산 변경이며 저장 효과·wire·원 pin/owner·Commit 순서 변경은 없다.
+
+물리 `source_phases`는 prepare/suspend 중 Stage와 Pending 반환, resume 중 Pending·새 WriteTargets·Install/Result를 함께 계수한다. 같은 target-call/cleanup envelope를 각 phase에 보수적으로 유지한다. concurrency의 원 `source_bytes`를 core 실체와 nested 호출 값으로 분리하여 prepare 오류·Drain/Condvar·설치 반환을 명시 청구한다. Catalog는 실제 `stage_catalog`의 반환 경계를 기준으로 preflight/stage/Pending/install 비용을 나누고 PreparedCatalog·epochs·늦게 생성되는 완료값·오류/호출자 반환은 모든 phase에서 계속 청구한다. 물리 `prepare_commit`의 기존 포괄 Capacity 식은 바꾸지 않아64-target 거절을 유지한다. 실제 Catalog의 Capacity 검사는 새 phase 최대값을 소비한다.
+
+#### 독립 검토 보완과 변경별 선택
+
+예비 독립 검토는 다음 단위의 적절성을 확인하고 전환 carrier·Capacity gate·nested core 값 누락을 경고했다. 첫 실제 diff 검토에서 `PageConcurrency`를 기존 shared retained가 이미 계수한다는 주석의 근거가 없음을 발견했다. `DiskSession`/`SharedPool`은 core 참조만 보유하므로 Catalog의 공통 phase 비용에 **실체816B를 한 번 추가**하고 주석을 정정했다. 이 보완 전 r1 실행 PASS와 검토 미해결1건을 보존하며 r1만으로 최종 회계 계약 수용을 주장하지 않는다. 후속 전체 동시 admission에서는 원 core를 실제 shared-retained 한 곳으로 이동하고 모든 class와 중복 없이 계산해야 한다.
+
+[현재 선택 manifest](../../tests/fixtures/dev3-module-c2/commit-phases/manifest.json)는 직전 검증 source를 지정한다. 각 원 실행의 manifest는 해당 export에 보존한다. 실행 전 총480초·case30초·로그8MiB·test stack32MiB를 고정했다. production `cargo check`와 test `--no-run`은 빌드 결과이며 runtime과 구분한다.
+
+| source | 선택·실제 결과 | 변경과의 관계 |
+| --- | --- | --- |
+| r1 | production/test build PASS, exact3개 각1회 PASS | 신규 물리 phase 하한·64-target 기존 gate, 수정 owner census, 변경 Catalog Capacity를 통과하는 실제 MT05 Commit |
+| r2 | production/test build PASS, exact2개 각1회 PASS | Catalog core816B 청구·관측 출력 변경에만 owner census와 MT05 재선택. 완료한 물리 phase 시험 반복0 |
+
+두 source의5회 실행·3개 고유 selector다. r1의 물리 시험과 r2의 Catalog 시험을 최종 source에서5개 실행한 것으로 합치지 않는다. MT05는 기존 fixture의 실제 lower-image flush/Pending/재검산 설치를 사용하며 새로운 동시성 알고리즘 인수가 아니다. native/새 PID 복구·crash cut·기존 조회/semantic codec·전체 workspace·하위 wrapper는 해당 실행 코드가 바뀌지 않아 반복하지 않았다. 기존 source별 FAIL/UNKNOWN/미실행과 DEV2·DEV3/S5 미완료를 유지한다.
+
+#### source 관측과 남은 범위
+
+| 대상 | source 값 상한(B) |
+| --- | --- |
+| 물리4-target stage / Pending / resume / install | 11260 / 6748 / 10244 / 6876 |
+| 물리9-target stage / Pending / resume / install | 17180 / 8188 / 14884 / 8396 |
+| 기존 물리 전체 gate4/9-target | 11888 / 20368 — 변경 없음 |
+| Catalog preflight / stage / Pending / install | 17448 / 31940 / 20804 / 24324 — 원 core816B 포함 |
+| Catalog 단일 operation 최대 | **31752→31940**. phase 구분과 누락 core 명시를 함께 적용했으므로 비용 절감으로 주장하지 않음 |
+| 기존 owner census live peak / metadata / whole | 63184 / 186192 / 251728 — 변경 없음 |
+| 기존 recovered census live / peak / metadata / whole | 64560 / 64611 / 106392 / 171928 — 변경 없음 |
+
+위 값은 실제 Rust 타입·source 수명에 대한 보수 계산이며 RSS/ABI stack/처리 성능 측정이 아니다. 각 phase는 고정 예약의 근거이며 실행 도중 charge를 늘리고 줄이는 새 정책이 아니다. 단일 Catalog 비용과 기존 owner census를 전체 동시 합 인수로 표시하지 않는다. shared retained 한 번 + 모든 entry/실행/return의 합, resident reader·writer/progress class의 실제 admission과 Row/terminal/recovery·M4/M5는 여전히 미완료다. source 수명이 달라지거나 새 소비자가 phase 계산을 예약에 사용하면 관련 행을 재검토한다.
+
+원 source export/inventory·manifest·runner·compiler diagnostics·ELF·stdout/stderr·result는 다음 위치에 보존한다.
+
+- `artifacts/module-c2-commit-phases-20261027-r1/`: source `1517cbc95c9e4d8d605ce17eb606cbddca9006cf104bab848fd54180313af80b`, manifest `4fd06aedb0b2dad53eee528675304d41c89c7d04169207e1963ea867f89430b3`, ELF `f6f56be7b00be506e1c4fec108de6835b0bb7997f8afa41f164b00b20088937a`, result `831c347543e69d5deefa41bc94e02dcc2d5ab7c523292e12dd35c8eac2ec491b`.
+- `artifacts/module-c2-commit-phases-20261027-r2/`: source `5aa4dcd24617c543bd5559c9b1c79a906fc15af844d012937428944e7cd9e1e8`, manifest `5a1269c714962ee36998abd776abd335515448b98247e59ae45ac333ab183084`, ELF `ec8213c47f8af00831217b5433c0b77267a230ca3939ac64c33bd8ddf93c6ed2`, result `97eb0f8e5ff620228316ca6c05a5b0cbc70cdcfd051f418f091221eeb802445e`.
+
+총 실행 경과는 r1 33.11초/r2 32.53초이며 성능 인수가 아니다. 변경 Rust만 파일별 rustfmt로 정리하고 `git diff --check`를 사용했다. 전체 fmt/Clippy·자동 문서 검사·push는 실행하지 않았다. `/root/module_step_review`가 제품8파일·문서6파일·선택 manifest와 r1/r2 각5626개 source/inventory·manifest·runner·ELF·결과·로그 hash 및 현재 source 일치를 직접 대조하여 **D1/D2 최종 한정 수용·필수 수정0**으로 판정했다. core816B 보완, 원 r1 실행/검토 지적 보존, source별3+2회·고유3개와 무변경 물리 시험 반복0, 단일 source 비용과 전체 동시 admission 미완료의 구분을 확인했다. 검토자는 수정·빌드·시험·verifier를 실행하지 않았고 `/root`가 이 한정 수용을 반영한다.
