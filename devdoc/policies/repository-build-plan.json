@@ -8685,5 +8685,28 @@
     "source_roots_changed": false,
     "review_ref": "artifacts/module-row-leaf-20261029/review-final.json",
     "review_sha256": "f556fd93f309cb40227fc610aca70649bdbe384e0379962007a07e3b48fdd5f7"
+  },
+  "dev3_module_row_job_images": {
+    "status": "LOCAL_VERIFIED_ACCEPTED_LIMITED_D1_D2",
+    "contract_ref": "dev3-module-consumers.md#row-job-images",
+    "modified_paths": [
+      "crates/engine/src/storage/semantic_row.rs"
+    ],
+    "implemented_paths": [
+      "crates/engine/src/storage/semantic_row/jobs.rs",
+      "crates/engine/src/storage/semantic_row/jobs_tests.rs",
+      "tests/fixtures/module-row-format/jobs/author.py",
+      "tests/fixtures/module-row-format/jobs/cases.bin",
+      "tests/fixtures/module-row-format/jobs/index.tsv",
+      "tests/fixtures/module-row-format/jobs/input-plan.json",
+      "tests/fixtures/module-row-format/jobs/manifest.json",
+      "tests/fixtures/module-row-format/jobs/review-followup.json"
+    ],
+    "scope": "Local actual Job page/native/redo and original-bank actor requirements; sender SHA-only, no descriptor semantics/full graph/authority.",
+    "runtime_selected_cases": 10,
+    "literal_cases": 26,
+    "source_roots_changed": false,
+    "review_ref": "artifacts/module-row-jobs-20261029/review-final.json",
+    "review_sha256": "b9a3915b5ca61048fd577585d362b625037b143cba49b3d46a4bb12aa2ae63a4"
   }
 }

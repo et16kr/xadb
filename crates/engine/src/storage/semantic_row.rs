@@ -3,6 +3,7 @@
 #![allow(dead_code)] // The current-profile semantic and live owners are pending.
 
 mod core;
+pub(crate) mod jobs;
 pub(crate) mod leaf;
 pub(crate) mod ledger;
 mod operation;
@@ -25,6 +26,9 @@ mod undo_tests;
 
 #[cfg(test)]
 mod leaf_tests;
+
+#[cfg(test)]
+mod jobs_tests;
 
 pub(crate) const FRAME_BYTES: usize = 98_304;
 pub(crate) const MIN_CELL: usize = 185;

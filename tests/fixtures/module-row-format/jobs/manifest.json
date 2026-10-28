@@ -1,0 +1,74 @@
+{
+  "schema": "XADB_ROW_JOB_LOCAL_V1",
+  "baseline": "21592e9",
+  "status": "FROZEN_INPUTS_NOT_EXECUTION_EVIDENCE",
+  "scope": "JOB_LOCAL_ONLY; actual selected Job page/native/redo and local original-bank actor requirements. Sender descriptor semantic-invalid opaque bytes are SHA-only binding. No Root commitment/whole graph/history/source admission/authority.",
+  "budget": {
+    "total_seconds": 1200,
+    "compiler_seconds": 420,
+    "case_seconds": 45,
+    "output_bytes": 8388608,
+    "rust_min_stack": 33554432
+  },
+  "compiler_tests": [],
+  "runtime_tests": [
+    {
+      "selector": "storage::semantic_row::jobs_tests::jobs_twenty_six_raw_pairs_and_page_boundaries",
+      "reason": "26 independent raw pairs, 11 opcodes, slot14/15/63, genesis LSN0, maximal lease generation, both terminal outcomes, release cursors0/1/2."
+    },
+    {
+      "selector": "storage::semantic_row::jobs_tests::jobs_generation_lease_free_and_exhaustion",
+      "reason": "Free lease checked increment/MAX exhaustion, preservation on free, exact lease LSN, genesis generation."
+    },
+    {
+      "selector": "storage::semantic_row::jobs_tests::jobs_reserve_plan_is_independent_and_exact",
+      "reason": "Independent plan fields vs after Job and same frame core; candidate rebound RowId/h cannot change expected plan."
+    },
+    {
+      "selector": "storage::semantic_row::jobs_tests::jobs_canonical_wrong_transitions_and_step_times",
+      "reason": "Canonical-valid wrong destination/source states and per-step timestamps."
+    },
+    {
+      "selector": "storage::semantic_row::jobs_tests::jobs_preserves_root_material_rowid_sender_and_budget",
+      "reason": "Immutable root material including RowId/sender, h debt, exact release cursor increment and free-at-cursor3."
+    },
+    {
+      "selector": "storage::semantic_row::jobs_tests::jobs_sender_binds_original_prior_and_after",
+      "reason": "Original 1536 bytes SHA bound to both frame prior0 and afterJob sender; option exclusivity."
+    },
+    {
+      "selector": "storage::semantic_row::jobs_tests::jobs_actual_page_bank_native_redo_and_lsn",
+      "reason": "Original bank, every actual page neighbor, native slot/offset/cells and redo prior/target/span/LSN."
+    },
+    {
+      "selector": "storage::semantic_row::jobs_tests::jobs_terminal_census_uses_all_original_cells",
+      "reason": "All64 original cells: full-generation, Status, unique terminal, Reserved/Retained/Releasing/outcome/q/lastStep constraints."
+    },
+    {
+      "selector": "storage::semantic_row::jobs_tests::jobs_options_core_and_unsupported_boundary",
+      "reason": "Input options, ordinal, external actor, root/core sequence and work cursor, three unsupported opcodes."
+    },
+    {
+      "selector": "storage::semantic_row::jobs_tests::jobs_cell_size_and_predecessor_match_same_frame",
+      "reason": "Canonical-valid C/h changes match same frame wire shape; original external Profile1/2 rejected."
+    }
+  ],
+  "inputs": {
+    "author.py": {
+      "bytes": 6062,
+      "sha256": "de9a98b4e1ffb37c28585b995e1a4cdb87a893e678241faed31a8651ad2dffee"
+    },
+    "cases.bin": {
+      "bytes": 4255772,
+      "sha256": "cac3af893a935e6fd84dfab39a6d9ff24feb412f372ac2ac860d90b45068ca84"
+    },
+    "index.tsv": {
+      "bytes": 3533,
+      "sha256": "69ff972e4d957ed1c3a90676a7eb20748743a2770009c286773e0a85988fac0c"
+    },
+    "input-plan.json": {
+      "bytes": 514,
+      "sha256": "c004a79ce643082255abe5e329a8d47a9ce2b4d8ea0c1c39b37ea585fa9309ea"
+    }
+  }
+}

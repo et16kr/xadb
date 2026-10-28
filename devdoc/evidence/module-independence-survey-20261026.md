@@ -2874,3 +2874,27 @@ r2의 scoped static2와 선택4개는 모두 PASS다. 고유8개의 source별 �
 
 
 최종 독립 D1/D2는 `ACCEPTED_LIMITED_D1_D2`, 필수 수정0이다. `/root/boundary_review`가 고정 변경16파일·artifact41파일의 실제 bytes/hash, 원15쌍 index와 source별 결과를 대조했고 누락·불일치0이다. r1/r2 inventory5870/5871개와 helper 변경 역구성·양쪽 source fingerprint 재산출도 일치했다. 입력 `artifacts/module-row-leaf-20261029/review-input.json` SHA-256 `28499a3508096464982aa6ea471c7fcf4f3ffe6cf0e1b55796084b4f466e756d`, receipt `artifacts/module-row-leaf-20261029/review-final.json` SHA-256 `f556fd93f309cb40227fc610aca70649bdbe384e0379962007a07e3b48fdd5f7`를 보존한다. 검토자 수정·빌드·시험·author·문서 verifier 실행0이며 후속 수용/status/receipt/hash metadata만 반영한다. 전체 graph·source admission·current Profile3/live/recovery·M4/M5는 계속 미완료다.
+
+<a id="row-job-images"></a>
+## 2026-10-29 실제 Job page·원64 bank·국소 전이 검산
+
+기준 `main` `21592e9`에서 중단했던 Job 초안을 이어 [국소 Job 계약](../contracts/dev3-module-consumers.md#row-job-images)을 구현했다. C2 stash와 다른 worktree는 유지한다. 실제 selected Jobs before/after page·원64 bank·kind9 native/redo를 연결하고11opcode의 local state/generation/material·sender SHA·actor terminal/root 요구를 검산한다. 사전 독립 D2의 LSN0 genesis·full generation·RowId 보존·양쪽 sender binding을 반영했다. 첫 구현 리뷰에서 F/CLR/Prune Job C/h와 같은 frame shape의 결합 누락을 발견해 첫 실행 전에 교정하고 별도 신규 반례를 포함했다.
+
+[독립 입력](../../tests/fixtures/module-row-format/jobs/input-plan.json)은 정수/SHA 명시적 전이표의 raw26쌍이다. 원 wire/ledger의 raw recipe 및 Job3 literal source hash를 보존하고 제품 encoder/transition은 호출하지 않는다. slot14/15/63·first Begin LSN0·generation MAX−1→MAX·C185/2228·h0/1·세 release cursor·Committed/Aborted와 Compensated q0 공존을 포함한다. sender descriptor1536B와 다른 frame 역할은 의도한 semantic-invalid opaque 입력이며 성공 범위는 `JOB_LOCAL_ONLY`다. descriptor 의미/잔여·Root commitment/전체 graph·source admission·current Profile3/live/recovery·M4/M5 인수로 확대하지 않는다.
+
+실행 전 [선택 manifest](../../tests/fixtures/module-row-format/jobs/manifest.json)에 변경 Job 코드의 신규10개만 고정했다. 총1200초/compiler420초/case45초/출력8MiB/stack32MiB·첫 실패 중단이다. scoped Clippy와 test-build는 정적 검사이며 runtime은 exact selector만 실행한다. 기존 wire/actor/Status/Undo/RowLeaf 완료 시험과 workspace/lower wrapper는 반복하지 않는다. 결과·로그·파일별source hash·ELF hash를 먼저 보존하고 이번 export/target/ELF만 삭제한다. 실제 native/복구 인수·문서 verifier·push는 실행하지 않는다. 실제 결과와 최종 독립 D1/D2는 아래에 기록한다.
+
+r1의 scoped static2와 앞6개 신규 시험은 PASS다. 일곱 번째 실제 page/native 시험은 반례 offset16000+Job1024가 page끝16352를 넘어서 새 observer 전에 wire decoder에서 Corrupt를 반환하여 FAIL했다. 원 로그·source inventory·FAIL을 보존한다. 반례 offset을 wire-valid14000으로 고치고, 같은 함수의 actual before pageLSN101 음성 입력은 redo prior100을 유지해 wire 검사를 통과한 뒤 page 대조에 도달하도록 교정했다. 제품 코드는 그대로다. [후속 선택](../../tests/fixtures/module-row-format/jobs/review-followup.json)은 수정한 실패1개와 미실행3개만 실행하며, 앞6개를 반복하거나 최종 source 전수 PASS로 합치지 않는다.
+
+
+r2의 scoped static2와 선택4개는 모두 PASS다. 고유10개는 r1 source의 앞6개와 r2 source의 수정1개/미실행3개로 나뉘며, 원 FAIL을 보존하고 final source 전체10개 재실행으로 표시하지 않는다. r1→r2 source inventory 차이는 `jobs_tests.rs`와 `review-followup.json` 두 파일뿐이며 제품은 같다.
+
+| 실행 | source SHA-256 | ELF SHA-256 | result SHA-256 |
+| --- | --- | --- | --- |
+| r1 | `0fdeaf5b4e737a4b31c88652e852cc38b6d8da1d7641ab888f14ee481c022b8e` | `8f3d2bb9df9585bffda0921588bbaac6104cbaf2787aa56d5eca25d672f65a86` | `1ff91651a5bca9c55d909ac05f77dbadf84041882ed8b82d0bddf78cb0473913` |
+| r2 | `d4df30c09888ff147d311aca5c0824ad9a99f3dc7df4ecc51dcca5aab40f5d9d` | `0a7d7bffce60b0b035d80a5f0d99f9c057c3150d3aee125816301b3432dd0bc7` | `535460838c58febd07f83ca54f58e447781f0cedf32a43d5dec0ea2638ea1677` |
+
+원 compiler/runtime 로그·source별 파일 hash inventory·runner/manifest·r1 시험 원본·결과를 `artifacts/module-row-jobs-20261029/`에 보존했고 두 실행의 export/target/ELF는 삭제했다. 최종 독립 D1/D2 검토는 아래에 기록하며 전체 M4/M5는 미완료다.
+
+
+최종 독립 D1/D2는 `ACCEPTED_LIMITED_D1_D2`, 필수 수정0이다. `/root/boundary_review`가 고정 변경16파일·artifact43파일의 실제 bytes/hash와 원 source별 결과를 대조했고 누락·불일치0이다. r1/r2 inventory5878/5879개 및 양쪽 source fingerprint 재산출이 원 결과와 일치했다. 검토 입력 `artifacts/module-row-jobs-20261029/review-input.json` SHA-256 `3cb8fea49c2171e6dea4d5080942cc7bf040293fca0575eeeb560308bea88232`, receipt `artifacts/module-row-jobs-20261029/review-final.json` SHA-256 `b9a3915b5ca61048fd577585d362b625037b143cba49b3d46a4bb12aa2ae63a4`를 보존한다. 검토자 수정·빌드·시험·author·문서 verifier 실행0이며 후속 수용/status/receipt/hash metadata만 반영했다. 전체 graph·descriptor 의미·source admission·current Profile3/live/recovery·M4/M5는 계속 미완료다.

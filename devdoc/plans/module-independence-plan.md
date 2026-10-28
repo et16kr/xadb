@@ -1,5 +1,7 @@
 # XADB 모듈 독립 개발 구조 전환 작업 계획
 
+2026-10-29 [실제 Job page·원 bank 전이](../evidence/module-independence-survey-20261026.md#row-job-images): main `21592e9`에서 Job11개 전이·원64 bank·실제 page/native/redo를 결합했다. raw26쌍·source별 신규10개 선택 검증과 최종 독립 D1/D2 한정 수용·필수 수정0을 확인했다. 전체 M4/M5는 미완료다.
+
 2026-10-29 [실제 RowLeaf·같은 frame Undo/Status](../evidence/module-independence-survey-20261026.md#row-leaf-images): main `7baef05`에서 원 schema/anchor·Job·sealed payload와 Row 전이/이웃 보존을 연결한다. 독립 입력15쌍·source별 신규8개 선택 검증을 통과했다. 최종 독립 D1/D2 한정 수용·필수 수정0이며 전체 M4/M5는 미완료다.
 
 2026-10-29 [Row Undo·원 Job·Status 관계](../evidence/module-independence-survey-20261026.md#row-undo-images): main `09173aa`에서 Undo6개 전이·실제 H/nearest Job·같은 frame Status 연결을 구현하고 raw17쌍·신규9개 선택 검증을 통과했다. 최종 독립 D1/D2 한정 수용·필수 수정0이며 전체 M4/M5는 미완료다.

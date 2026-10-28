@@ -1,0 +1,52 @@
+{
+  "schema": "XADB_ROW_JOB_LOCAL_V1",
+  "baseline": "21592e9",
+  "status": "FROZEN_FOLLOWUP_INPUTS_NOT_EXECUTION_EVIDENCE",
+  "scope": "JOB_LOCAL_ONLY; actual selected Job page/native/redo and local original-bank actor requirements. Sender descriptor semantic-invalid opaque bytes are SHA-only binding. No Root commitment/whole graph/history/source admission/authority.",
+  "budget": {
+    "total_seconds": 1200,
+    "compiler_seconds": 420,
+    "case_seconds": 45,
+    "output_bytes": 8388608,
+    "rust_min_stack": 33554432
+  },
+  "compiler_tests": [],
+  "runtime_tests": [
+    {
+      "selector": "storage::semantic_row::jobs_tests::jobs_actual_page_bank_native_redo_and_lsn",
+      "reason": "Original bank, every actual page neighbor, native slot/offset/cells and redo prior/target/span/LSN."
+    },
+    {
+      "selector": "storage::semantic_row::jobs_tests::jobs_terminal_census_uses_all_original_cells",
+      "reason": "All64 original cells: full-generation, Status, unique terminal, Reserved/Retained/Releasing/outcome/q/lastStep constraints."
+    },
+    {
+      "selector": "storage::semantic_row::jobs_tests::jobs_options_core_and_unsupported_boundary",
+      "reason": "Input options, ordinal, external actor, root/core sequence and work cursor, three unsupported opcodes."
+    },
+    {
+      "selector": "storage::semantic_row::jobs_tests::jobs_cell_size_and_predecessor_match_same_frame",
+      "reason": "Canonical-valid C/h changes match same frame wire shape; original external Profile1/2 rejected."
+    }
+  ],
+  "inputs": {
+    "author.py": {
+      "bytes": 6062,
+      "sha256": "de9a98b4e1ffb37c28585b995e1a4cdb87a893e678241faed31a8651ad2dffee"
+    },
+    "cases.bin": {
+      "bytes": 4255772,
+      "sha256": "cac3af893a935e6fd84dfab39a6d9ff24feb412f372ac2ac860d90b45068ca84"
+    },
+    "index.tsv": {
+      "bytes": 3533,
+      "sha256": "69ff972e4d957ed1c3a90676a7eb20748743a2770009c286773e0a85988fac0c"
+    },
+    "input-plan.json": {
+      "bytes": 514,
+      "sha256": "c004a79ce643082255abe5e329a8d47a9ce2b4d8ea0c1c39b37ea585fa9309ea"
+    }
+  },
+  "original_manifest_sha256": "f4372d7eb4f1f207e169d4379f3e2e6ff790d555057c06a612f41bc6204871fa",
+  "selection_reason": "r1 runtime1..6 PASS are preserved and not repeated; fix failed7 wire-invalid offset16000 to legal14000, and keep redo prior100 for actual page LSN101 negative; execute corrected7 and unrun8..10 only. Product unchanged."
+}
