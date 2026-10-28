@@ -1,6 +1,9 @@
 //! Metadata-only atomic close fixtures. Actual Reserve/Forward/Cancel and
 //! durable recovery are selected separately through the original live harness.
 use super::*;
+
+#[path = "tx_pair_existing_tests.rs"]
+mod existing;
 use crate::storage::page_io::test_support::expected;
 use crate::transaction::TxnId;
 use foundation::identity::{Generation, ObjectId};

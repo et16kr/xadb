@@ -1,5 +1,7 @@
 # XADB 조사·실행 증거
 
+2026-10-28 [CREATE 기존 대상 key 접근](module-independence-survey-20261026.md#c3-pair-existing): main `4e68a4d`에서 typed subset·실제 Reserve/Forward 준비/Cancel 연결을 진행한다. r2 compiler5/runtime8/nativeN01 3PID PASS·r1 주입 FAIL 보존, 최종 독립 D1/D2 한정 수용이며 shared admission·M4/M5는 미완료다.
+
 - [2026-10-28 exclusive CREATE pair 원자 leaf](module-independence-survey-20261026.md#c3-pair-atomic) — 원 close/claim·finish/cancel을 한 registry 구간으로 연결하는 선행 구현. r3 runtime8/nativeN01 3PID PASS·원2개 FAIL 보존, 최종 독립 D1/D2 한정 수용, 공유 admission/M4/M5 미완료.
 
 - [2026-10-28 Commit 준비·적용 단일 예약](module-independence-survey-20261026.md#c2-commit-call) — 새 동기 API·source 수명을 구현하고 source별 runtime11/compiler4·원 N03 2PID를 통과했다. 원3개 FAIL을 보존하며 최종 독립 D1/D2 한정 수용, M4/M5 미완료다.

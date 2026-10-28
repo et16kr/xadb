@@ -25,6 +25,10 @@ pub(in super::super) mod lifecycle;
 #[path = "catalog_retire.rs"]
 pub(in super::super) mod retirement;
 
+#[path = "catalog_targets.rs"]
+mod targets;
+use targets::CatalogTargetAccess;
+
 const PRIVATE_BYTES: usize = semantic_catalog::PRIVATE_BYTES;
 const BANK_END: usize = 65_536;
 const JOB_END: usize = 131_072;
@@ -156,7 +160,8 @@ impl<'s, 'c, W: WriterNamespace> ReservedCatalogCreate<'_, '_, 's, 'c, '_, '_, '
             .ok_or_else(|| {
                 unchanged(RetentionPhase::Prepare, RetentionCause::MissingTransaction)
             })?;
-        let prepared = self.bound.prepare_existing_catalog(
+        let prepared = self.bound.prepare_pair_catalog(
+            &self.key,
             self.owner,
             Change::Cancel {
                 ordinal: self.plan.ordinal,
@@ -176,7 +181,9 @@ impl<'s, 'c, W: WriterNamespace> ReservedCatalogCreate<'_, '_, 's, 'c, '_, '_, '
                 effect: e.effect,
                 cause: RetentionCause::Visibility(e),
             })?;
-        let observation = self.bound.apply_existing_catalog(self.owner, prepared)?;
+        let observation = self
+            .bound
+            .apply_pair_catalog(&self.key, self.owner, prepared)?;
         let source = self.bound.history.source_cut()?;
         let requirement = source
             .requirement()
@@ -261,7 +268,8 @@ impl<'s, 'c, W: WriterNamespace> ReservedCatalogCreate<'_, '_, 's, 'c, '_, '_, '
             .ok_or_else(|| {
                 unchanged(RetentionPhase::Prepare, RetentionCause::MissingTransaction)
             })?;
-        let mut prepared = self.bound.prepare_existing_catalog(
+        let mut prepared = self.bound.prepare_pair_catalog(
+            &self.key,
             self.owner,
             Change::Forward {
                 ordinal: self.plan.ordinal,
@@ -1062,7 +1070,7 @@ impl<'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
             .pool
             .prepare_tx_pair(&authority, candidates.map(|candidate| candidate.index))
             .map_err(|e| frame(RetentionPhase::Prepare, e))?;
-        if let Err(error) = self.apply_existing_catalog(owner, prepared) {
+        if let Err(error) = self.apply_pair_catalog(&key, owner, prepared) {
             if error.effect == Effect::Unchanged && self.control.ledger.pending.is_none() {
                 self.return_catalog_pair(
                     owner,
@@ -1115,7 +1123,7 @@ impl<'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
         let read = self
             .inner
             .pool
-            .reserve_target_set(owner, &[allocator])
+            .reserve_tx_pair_existing(owner, key, &[allocator])
             .map_err(|e| frame(RetentionPhase::Prepare, e))?
             .try_read()
             .map_err(|e| frame(RetentionPhase::Prepare, e))?;
@@ -1478,13 +1486,29 @@ impl<'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
         writer.catalog_abort_end(owner, actor, private, &mut flusher)
     }
 
-    fn apply_existing_catalog(
+    fn apply_pair_catalog(
         &mut self,
+        key: &TxPairClaimKey<'c, 's>,
         owner: &mut Owner<'c, 's>,
         prepared: PreparedCatalog<'_, 'c, 's>,
     ) -> Result<Observation> {
-        self.catalog_application()
-            .apply_existing_catalog(owner, prepared)
+        let mut application = self.catalog_application();
+        application.access = CatalogTargetAccess::Pair(key);
+        application.apply_existing_catalog(owner, prepared)
+    }
+
+    fn prepare_pair_catalog<'i, const N: usize>(
+        &self,
+        key: &TxPairClaimKey<'c, 's>,
+        owner: &mut Owner<'c, 's>,
+        change: Change<'_>,
+        slot: Option<usize>,
+        selected: [(TargetRequest, u8); N],
+        private: &'i mut [u8; PRIVATE_BYTES],
+    ) -> Result<PreparedCatalog<'i, 'c, 's>> {
+        let mut preparation = self.catalog_preparation();
+        preparation.access = CatalogTargetAccess::Pair(key);
+        preparation.prepare_existing_catalog(owner, change, slot, selected, private)
     }
 
     /// Fault fixtures may retain a preparation to corrupt its source cut. The
@@ -1507,6 +1531,7 @@ impl<'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
             control: &self.control.ledger,
             history: &self.history,
             visibility: self.catalog_visibility.as_ref(),
+            access: CatalogTargetAccess::Ordinary,
         }
     }
 
@@ -1531,6 +1556,7 @@ struct CatalogPreparation<'b, 'a, 's, 'c, 'p, 'd, 'm, 'w, W: WriterNamespace> {
     control: &'b control::RetentionLedger<'a, 'c, 's>,
     history: &'b history::runtime::RuntimeHistory<'a, 'c, 's>,
     visibility: Option<&'b visibility::BoundVisibility<'a, 'c, 's>>,
+    access: CatalogTargetAccess<'b, 'c, 's>,
 }
 
 impl<'b, 'a, 's, 'c, 'p, 'd, 'm, 'w, W: WriterNamespace>
@@ -1694,10 +1720,8 @@ impl<'b, 'a, 's, 'c, 'p, 'd, 'm, 'w, W: WriterNamespace>
             let mut stamps = [None; 9];
             let prepared = (|| {
                 let read = self
-                    .pool
-                    .reserve_target_set(owner, &requests)
-                    .map_err(|error| frame(RetentionPhase::Prepare, error))?
-                    .try_read()
+                    .access
+                    .read(self.pool, owner, &requests)
                     .map_err(|error| frame(RetentionPhase::Prepare, error))?;
                 let observed = (|| {
                     for (at, (target, role)) in selected.iter().enumerate() {
@@ -1988,6 +2012,7 @@ impl<'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
             control: self.control,
             history: self.history,
             visibility: self.visibility,
+            access: CatalogTargetAccess::Ordinary,
         }
     }
 }
@@ -2072,8 +2097,8 @@ pub(in super::super) fn catalog_live_source_bytes<W: WriterNamespace>() -> Catal
     let prepare_replay = validation_outer + replay_carriers + history::source_bytes::<W>().peak;
     let prepare_produce = prepare_outer
         + replay_carriers
-        + dirty_frame::target_set_call_bytes::<9>().max(
-            size_of::<dirty_frame::ReadTargets<'_, '_, '_, '_, '_, '_, 9>>()
+        + targets::call_bytes::<9>().max(
+            size_of::<targets::CatalogRead<'_, '_, '_, '_, '_, '_, '_, 9>>()
                 + size_of::<Inputs<'_>>()
                 + size_of::<crate::storage::allocation_page::AllocationPage<'_>>()
                 + size_of::<Result<Observation>>()
@@ -2144,7 +2169,7 @@ pub(in super::super) fn catalog_live_source_bytes<W: WriterNamespace>() -> Catal
         + 2 * size_of::<DurableWal<'_>>()
         + 2 * size_of::<InstallGrant<'_, '_, '_>>()
         + 3 * size_of::<Result<Observation>>()
-        + dirty_frame::target_set_call_bytes::<9>()
+        + targets::call_bytes::<9>()
         + catalog_control_source_bytes()
             .max(physical)
             .max(visibility::epoch_transition_source_bytes());
@@ -2205,7 +2230,8 @@ pub(in super::super) fn catalog_live_source_bytes<W: WriterNamespace>() -> Catal
         + size_of::<TxPairAuthority<'_, '_, '_>>()
         + size_of::<super::TxPairCancelPermit<'_, '_, '_, '_>>()
         + size_of::<super::PairIoQuiescence<'_, '_, '_, '_>>()
-        + dirty_frame::tx_pair_source_census().max(dirty_frame::target_set_call_bytes::<1>());
+        + dirty_frame::tx_pair_source_census()
+            .max(dirty_frame::tx_pair_existing_source_bytes::<1>());
     // This caller is the one original reservation, not an ordinary Begin/Job
     // entry. It has no second request/Job caller packet.
     let cancel = (token

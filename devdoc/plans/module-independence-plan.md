@@ -1,5 +1,7 @@
 # XADB 모듈 독립 개발 구조 전환 작업 계획
 
+2026-10-28 [CREATE 기존 대상 key 접근](../evidence/module-independence-survey-20261026.md#c3-pair-existing): main `4e68a4d`에서 typed subset·실제 Reserve/Forward 준비/Cancel 연결을 진행한다. r2 compiler5/runtime8/nativeN01 3PID PASS·r1 주입 FAIL 보존, 최종 독립 D1/D2 한정 수용이며 shared admission·M4/M5는 미완료다.
+
 2026-10-28 main `ef95a8a`의 [exclusive CREATE pair 원자 leaf](../evidence/module-independence-survey-20261026.md#c3-pair-atomic)를 진행한다. r3 runtime8/nativeN01 3PID PASS·원2개 FAIL 보존, 최종 독립 D1/D2 한정 수용이며 shared admission·C2/C3–C5·M4/M5는 미완료다.
 
 2026-10-28 main `9c334fe`의 [Commit 준비·적용 단일 예약](../evidence/module-independence-survey-20261026.md#c2-commit-call)은 source별 runtime11/compiler4·원 N03 2PID를 통과했다. 원3개 FAIL을 보존하며 최종 독립 D1/D2 한정 수용다. CREATE/일반 floor/Row·M4/M5는 미완료다.

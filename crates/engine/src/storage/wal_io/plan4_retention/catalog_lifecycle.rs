@@ -371,6 +371,7 @@ impl<'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
             control: self.control,
             history: self.history,
             visibility: self.visibility,
+            access: CatalogTargetAccess::Ordinary,
         }
     }
 }
@@ -381,6 +382,7 @@ pub(super) struct CatalogApplication<'b, 'a, 's, 'c, 'p, 'd, 'm, 'w, W: WriterNa
     control: &'b mut control::RetentionLedger<'a, 'c, 's>,
     history: &'b history::runtime::RuntimeHistory<'a, 'c, 's>,
     visibility: Option<&'b visibility::BoundVisibility<'a, 'c, 's>>,
+    pub(super) access: CatalogTargetAccess<'b, 'c, 's>,
 }
 
 impl<'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
@@ -395,6 +397,7 @@ impl<'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
             control: &mut self.control.ledger,
             history: &self.history,
             visibility: self.catalog_visibility.as_ref(),
+            access: CatalogTargetAccess::Ordinary,
         }
     }
 }
@@ -472,10 +475,8 @@ impl<'b, 'a, 's, 'c, 'p, 'd, 'm, 'w, W: WriterNamespace>
             .try_into()
             .map_err(|_| unchanged(RetentionPhase::Prepare, RetentionCause::Invariant))?;
         let mut write = self
-            .pool
-            .reserve_target_set(owner, requests)
-            .map_err(|e| frame(RetentionPhase::Install, e))?
-            .try_write()
+            .access
+            .write(self.pool, owner, requests)
             .map_err(|e| frame(RetentionPhase::Install, e))?;
         let installed = (|| {
             let mut dpt = [const { None }; N];

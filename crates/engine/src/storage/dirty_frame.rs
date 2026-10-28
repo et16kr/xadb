@@ -82,6 +82,10 @@ pub(in crate::storage) use init::{
     CompletedTxPair, TxPairClaimKey, TxPairWriteTargets, tx_pair_source_census,
 };
 pub(in crate::storage) use init::{InitClaimKey, InitWriteTargets};
+#[allow(unused_imports)] // Opaque subset carrier is named by boundary consumers.
+pub(in crate::storage) use init::{
+    TxPairExistingRead, TxPairExistingTargets, TxPairExistingWrite, tx_pair_existing_source_bytes,
+};
 
 pub(crate) const MAX_FRAMES: usize = 64;
 /// Prior closed-INIT metadata allowance plus at most eight bytes per slot for

@@ -12,6 +12,9 @@ use std::sync::LockResult;
 mod tx_pair;
 pub(in crate::storage) use tx_pair::source_census as tx_pair_source_census;
 pub(in crate::storage) use tx_pair::{CompletedTxPair, TxPairClaimKey, TxPairWriteTargets};
+pub(in crate::storage) use tx_pair::{
+    TxPairExistingRead, TxPairExistingTargets, TxPairExistingWrite, tx_pair_existing_source_bytes,
+};
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 struct InitClaimRecord {

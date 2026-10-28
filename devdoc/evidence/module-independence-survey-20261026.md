@@ -2472,3 +2472,46 @@ artifact는 `artifacts/module-c3-pair-atomic-20261028/r1`–`r3`다. 각 source5
 - r3 manifest/runner SHA-256: `e20094a0ec061e78505543afce84744aedc0f99d1fbbd4abfaa96ba9f88b95e5` / `0562c711af6aa185166aff4306a6999fd5c6945854e7fd88256ba49c758ed3bd`.
 
 최종 독립 D1/D2는 `ACCEPTED_LIMITED_D1_D2`, required0으로 한정 수용했다. `/root/source_admission_review`가 변경17/17파일(Rust10·fixture1·문서6)과 evidence135개 hash를 대조했으며 검토자 재시험0이다. receipt `artifacts/module-c3-pair-atomic-20261028/review-final.json` SHA-256은 `8105cd199621854f32124e0db296bfc508c695a8efc383ae3ad97b53b126ffb7`다. 이번 공급은 exclusive pool의 원자 leaf에 한정한다. `&mut` 배제를 유지하며 shared `try_prepare_tx_pair`, ordinary pin/load/capture gate, authentic key 기반 subset, CREATE source/flush lease, Row/C3–C5·M4/M5는 여전히 미완료다. 문서 verifier·push·전체 workspace/하위 wrapper는 실행하지 않았다.
+
+<a id="c3-pair-existing"></a>
+## 2026-10-28 C3 — authentic key 기반 기존 대상과 실제 CREATE 연결
+
+기준 main `4e68a4d`에서 [PAIR-EXISTING-001](../contracts/dev3-module-boundaries.md#catalog-pair-existing)을 구현한다. 담당/통합 `/root`, 독립 `/root/source_admission_review`다. 이전 atomic leaf와 source별 FAIL/PASS·receipt를 그대로 보존하며 이번 변경은 typed subset과 실제 호출부에 한정한다. close/finish/cancel은 여전히 `&mut`이고 ordinary gate·공유 CREATE source·Row/C3–C5·M4/M5는 미완료다.
+
+실행 전 diff→선택은 [manifest](../../tests/fixtures/dev3-module-c3/pair-existing/manifest.json)에 동결했다. compiler5는 실제 key borrow와 inner/key privacy, 신규 metadata4는 N1..7/잘못된 identity·quota/양방향 whole9 배제/Busy·unwind 정리, source1은 바뀐 adapter와 전체 source 상계, MPA01/MC01/MC04는 바뀐 실제 Reserve/Cancel/현재복구다. 원 N01은 changed Forward 준비와 Reserve 설치/복구의3PID9→19→25 한 번이다. atomic close/final leaf의 완료 metadata·unwind 시험은 바뀌지 않아 반복하지 않는다. 원 실패·중단은 새 PASS로 바꾸지 않고 각 실행의 source manifest/hash/log/result를 보존한 뒤 새 export/target/ELF를 삭제한다. 실행은 아직 NOT_RUN이다.
+
+### 독립 검토 반례와 source별 실행
+
+실행 전 검토에서 Ordinary N8/9도 generic으로 인스턴스화된다는 점을 확인하여 Pair N범위를 runtime Shape로 검산했다. subset→whole9도 같은 leaf의 선택9개 count0 조건으로 닫고 양방향 시험을 추가했다. source 검토에서는 새 adapter의 move를 이유로 lower carrier를 빼던 후보식을 채택하지 않고 원 helper에 enclosing enum/Result를 보수 추가했다. 테스트 입력·제품 cap·품질 기준은 완화하지 않았다.
+
+r1은 Clippy와 test build를 통과했지만 첫 positive compiler probe를 crate root sibling에 주입해 storage 내부 API의 E0603/E0624에서 FAIL했다. 의도한 borrow/privacy 경계에 도달하지 못했고 compiler PASS0·runtime/native0이다. 제품 visibility/source를 바꾸지 않고 runner의 주입 위치를 `storage/mod.rs` 안의 sibling으로 고쳤으며 finally에서 원문/주입 파일을 복구한다. r1은 runner가 ELF hash를 probe 뒤에 기록하던 순서 때문에 test ELF가 생성됐지만 hash를 남기기 전에 삭제했다. **r1 ELF hash는 UNKNOWN**이며 r2 값으로 대체하지 않는다. r2는 hash 기록을 compiler probe 앞으로 옮겼다.
+
+r2의 source5781 파일별 inventory는 r1과 동일하다. 완료한 Clippy를 반복하지 않고 r1의 실제 동일 source PASS를 provenance로 연결했다. r2는 새 export를 build하고 probe별 주입 source의 compiler5를 통과했으며, runtime8은 원 r2 source/ELF에서 통과했다. compiler는 storage sibling의 positive, live read/write 이후 key mutable borrow E0502 두 개, inner/key private field E0616 두 개다. `touch(&mut key)`는 pool의 별도 가변 borrow 충돌과 구별하여 key 수명을 검증하며 직접 finish/cancel 호출을 실행한 것으로 기록하지 않는다.
+
+metadata4는 N1..7 역순 입력/정렬·bytes/copy/observe·stamp/DPT preflight, N0/8·중복/fresh/잘못된 object/incarnation·inactive/foreign-binding/key identity·quota 거절, 양방향 subset/whole9 Busy, content Busy와 read/write unwind의 원 pins0·claim 유지·fence를 확인했다. metadata-only fixture는 실제 WAL/allocator authority나 해당 unwind cut 복구가 아니다. 실제 MPA01 Unstaged 반환·MC01 Cancelled generation 두 번·MC04 현재빌드 Reserve prefix 복구와 구분한다.
+
+r2 source 상계는 memory live61894/recovered63270B, native live62486/recovered63862B로 원65536B cap 안이다. shared20192/20328B·metadata184902/185494B·whole250438/251030B도 원 한도를 유지한다. 실제 typed adapter와 source 식 변경을 계수했으며 stack/RSS 실측·성능 인수는 아니다. 독립 actual source/ELF admission 뒤 같은 ELF의 원 N01을 한 번 실행했다.
+
+| native 단계 | PID | LSN | 결과 |
+| --- | ---: | ---: | --- |
+| produce | 139531 | 9 | exit -9; 외부 kill/reaped |
+| recover | 139533 | 19 | exit -9; 외부 kill/reaped |
+| reentry | 139650 | 25 | exit 0; 정상 완료 |
+
+원 N01 3PID9→19→25는 24.516732초 PASS이며 원 controller/corpus/BUDGET를 유지했다. 완료 runtime/compiler/native 사례 반복0이다.
+
+artifact는 `artifacts/module-c3-pair-existing-20261028/r1`–`r2`다. source별 로그/result/runner/inventory와 r2 full6300 manifest·native snapshot/trace/ACK/결과를 보존했다. 이 실행의 source/target/ELF는 정리했고 과거 evidence는 삭제하지 않았다. r1 ELF 식별 미기록 제한은 위에 명시했다.
+
+| 실행 | 실제 범위·결과 | source SHA-256 | ELF SHA-256 | result SHA-256 |
+| --- | --- | --- | --- | --- |
+| r1 | Clippy/test build PASS, positive probe 주입 FAIL; runtime/native NOT_RUN; 43.655초 | `6a89f660405dd4d9117d9c87079d1d1c83f1dc1830a0cad9570cf86281382581` | UNKNOWN(빌드 뒤 probe 실패 시 미기록 삭제) | `1018bf7935c32ce7b946c0baa7c8b204ebc8389fff9d30b194cf170d55a65c46` |
+| r2 | test build·compiler5·runtime8·N01 PASS; Clippy는 원r1 동일source 증거; 221.218초 | `6a89f660405dd4d9117d9c87079d1d1c83f1dc1830a0cad9570cf86281382581` | `03b90f4242eb961ce13bb52a0ce2396926bbd31f6d5865a236e6e4540b769eac` | `0a71eb0bf5f142367a727167b1447728af0a2e6ff3eedacca0bc317261ac730f` |
+
+- r1 source inventory SHA-256: `b7338d78700831259c599e69697fb072653cace27a8a539b888022056b42ffb3`; runner `56f28b37b26cccdc284b87fa7d545b87f040b9b290faed7fa10b74849d031d73`.
+- r2 source inventory SHA-256: `b7338d78700831259c599e69697fb072653cace27a8a539b888022056b42ffb3`; runner `6c09718aa96956b827a68dbb4774a05352e67c45c8eeb9d4615fcedbfddc418f`.
+- r2 `source-files.json` SHA-256: `144e6e492fd05020b98b0458bf7f99d5ffc98bfbe3c50088d481dd59ade1e54e`.
+- r2 `native-admission.json` SHA-256: `ad4e0984250378dfe16f118c68489920fc276836ed86e4873052bdfec39e8501`.
+- r2 `catalog-native/N01/result.json` SHA-256: `8d9efb3a93f191d30b7bb1d0a850c0ef5693b6bbb7464925e3e19d286b7f6b20`.
+- 선택 manifest SHA-256: `92fae722631cc9586775a4a828a5c0e767ab3b13ce679ab1556c0dae820db511`.
+
+최종 독립 D1/D2는 `ACCEPTED_LIMITED_D1_D2`, required0으로 한정 수용했다. `/root/source_admission_review`가 변경21/21파일(Rust9·fixture6·문서6), evidence138개 hash와 native/cleanup을 검산했다. 검토자 재시험0이며 receipt `artifacts/module-c3-pair-existing-20261028/review-final.json` SHA-256은 `9fd97e59a08a13611bd660d7a41edd9eb46890bb7bf96dbcd1bfc8cd1562be76`다. 공급은 authentic existing subset과 실제 exclusive CREATE 연결까지다. ordinary pin/load/capture gate·shared close/finish/cancel·CREATE source/flush lease·일반 entry/return floor·Row/C3–C5·M4/M5는 미완료다. 문서 verifier·push·전체 workspace/하위 wrapper는 실행하지 않았다.

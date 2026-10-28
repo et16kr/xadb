@@ -1,0 +1,96 @@
+{
+  "scope": "Authenticated existing Catalog pair subsets and actual exclusive CREATE consumers; ordinary gates/shared CREATE and M4/M5 remain incomplete",
+  "baseline_commit": "4e68a4d",
+  "budget": {
+    "total_seconds": 1800,
+    "compiler_seconds": 420,
+    "case_seconds": 45,
+    "native_admission_seconds": 600,
+    "output_bytes": 8388608,
+    "rust_min_stack": 33554432
+  },
+  "compiler_tests": [
+    {
+      "name": "positive",
+      "path": "positive.rs",
+      "bytes": 642,
+      "sha256": "3d52c3398ecb35137d050842db41461a7ba0b5094acc3c3f5045782dad10f427",
+      "expected_code": null,
+      "primary_line": null
+    },
+    {
+      "name": "read_key",
+      "path": "read_key.rs",
+      "bytes": 489,
+      "sha256": "56be61b5b7d8bb5d9274659f650bfce266a9178af10e0ae678f8120430ba392f",
+      "expected_code": "E0502",
+      "primary_line": 8
+    },
+    {
+      "name": "write_key",
+      "path": "write_key.rs",
+      "bytes": 492,
+      "sha256": "3e0dc966a57ae29c90029f8e5d2ca5e41fe7d7e3bbc250f5bc34f42bd854a32d",
+      "expected_code": "E0502",
+      "primary_line": 8
+    },
+    {
+      "name": "private_inner",
+      "path": "private_inner.rs",
+      "bytes": 460,
+      "sha256": "2e3aaecf73e1e293095a52899a9630004932454617fc986f513f8d16aa78c775",
+      "expected_code": "E0616",
+      "primary_line": 8
+    },
+    {
+      "name": "private_key",
+      "path": "private_key.rs",
+      "bytes": 459,
+      "sha256": "2951bb33cbcbe3c1bb3da0e98ac2293133bbc670c4b891d92e24aeeb02801b83",
+      "expected_code": "E0616",
+      "primary_line": 8
+    }
+  ],
+  "runtime_tests": [
+    {
+      "selector": "storage::dirty_frame::init::tx_pair::tests::existing::pair_existing_exact_subsets_preserve_original_pin_and_content_lifetime",
+      "reason": "new typedN1..7 read/copy/write stamp/DPT preflight, reverse order and checked release"
+    },
+    {
+      "selector": "storage::dirty_frame::init::tx_pair::tests::existing::pair_existing_rejections_leave_quota_and_claim_unchanged",
+      "reason": "new exact membership/key/quota rejection before change"
+    },
+    {
+      "selector": "storage::dirty_frame::init::tx_pair::tests::existing::pair_existing_whole_forward_exclusion_is_bidirectional",
+      "reason": "changed whole9 same-leaf Busy and new subset reverse admission"
+    },
+    {
+      "selector": "storage::dirty_frame::init::tx_pair::tests::existing::pair_existing_content_busy_and_unwind_release_pins_without_returning_claim",
+      "reason": "new wrapper Busy/unwind cleanup: original pins0, claim retained, fence"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::create_pair::catalog_commit::tests::consumed_preparation_has_bounded_pending_image",
+      "reason": "changed CatalogPreparation/Application access and typed enum/Result/source closure actual full memory/native bounds"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::pair_atomic::rejected_reserve_returns_original_unstaged_pair",
+      "reason": "changed actual Reserve typed write and Unstaged allocator typed read"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::lifecycle::mc01_reserve_cancel_two_generations",
+      "reason": "changed actual Cancel typed prepare/install/allocator return with exact durable/control/generation oracle"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::lifecycle::mc04_reserved_drop_fence_fresh_recovery",
+      "reason": "changed Reserve typed install followed by original drop fence and current-build recovery through changed ordinary dispatch"
+    }
+  ],
+  "native_tests": [
+    {
+      "case": "N01",
+      "reason": "changed actual Reserve typed install/Forward typed preparation and current recovery ordinary dispatch; original3PID9\u219219\u219225 once",
+      "wall_seconds": 30,
+      "controller": "scripts/dev3_catalog_native.py"
+    }
+  ]
+}

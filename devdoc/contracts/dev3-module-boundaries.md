@@ -651,6 +651,19 @@ source는 기존 보수 합과 새 atomic parent+원 entry validation max를 비
 
 실행 전 [manifest](../../tests/fixtures/dev3-module-c3/pair-atomic/manifest.json)에 runtime8·native N01 1회와 총1800초/compiler420초/case45초/native30초/admission600초/로그8MiB/stack32MiB를 동결한다. metadata-only fixture·실제 Unstaged/Cancelled/Forward·두 final unwind·원 Reserve prefix 복구를 구분한다. Native는 원3PID9→19→25다. 공유 경쟁이나 모든 fault 복구를 실행한 것으로 확대하지 않는다. [구현/실행 증거](../evidence/module-independence-survey-20261026.md#c3-pair-atomic)를 따른다.
 
+<a id="catalog-pair-existing"></a>
+#### XADB-MODULE-PAIR-EXISTING-001 — key를 빌리는 기존 대상 공급
+
+2026-10-28 · D2 ACCEPTED(이 공급 한정) · 기준 main `4e68a4d` · 작성/통합 `/root`, 독립 `/root/source_admission_review`. [원 claim 설계](#catalog-claim-gap)의 기존7개 대상 adapter를 실제 exclusive CREATE에 연결한다. close/finish/cancel의 `&mut SharedPool`과 원9-target Forward는 유지하며 일반 pin/load/capture gate·shared CREATE admission은 후속이다.
+
+`TxPairExistingTargets/Read/Write<N>`은 원 private PinSet/ReadTargets/WriteTargets와 authentic key borrow만 보유한다. N1..7, key/core/binding/fence·원 active claim·whole9 미보유, 요청의 exact directory registration·existing mask·fresh pair 배제·주소 중복·quota를 변경 전 검산하고 같은 registry에서 pin을 계수한다. N 범위는 runtime Shape로 확인해 원 Ordinary N8/9의 generic 인스턴스도 컴파일한다. 실행 Owner는 기존 binding/idle 권한을 쓰며 key에 없던 OwnerIdentity를 발급하지 않는다. PageIdentity.owner가 다른 요청은 exact membership에서 거절한다. raw inner/key나 bool 우회는 제공하지 않는다. key borrow가 read/write의 checked release/Drop까지 남아 mutable key 종료를 차단한다.
+
+C의 `&mut reservation` 순차 재대여 외에도 whole9 admission의 같은 leaf에서 선택9개 pin count0을 요구한다. subset→whole과 whole→subset 양방향은 Busy다. 원 Init claim 밖·다른 frame의 ordinary pin 정책은 바꾸지 않는다. 이는 독립 검토 반례를 바탕으로 한 capability 조합 구체화이며 공유 제품 인수가 아니다.
+
+공통 semantic preparation/application 본문은 private `CatalogTargetAccess::{Ordinary,Pair(&key)}`와 typed Read/Write dispatch로 한 번만 유지한다. 일반 factory는 Ordinary, active CREATE의 Reserve apply·Forward 준비·Cancel 준비/apply는 Pair를 사용하고 반환용 allocator read도 authentic subset을 쓴다. Reserve 이전 계획은 원 ordinary 읽기, Forward 설치는 원9-target이다. source는 실제 adapter/Result와 pin parent/원 registry validation을 계수하고 원 cap을 유지한다.
+
+비교 대안인 raw bool 우회·inner 노출은 key 수명을 놓치므로 채택하지 않고, semantic 본문 복제는 두 정답 경로가 되므로 채택하지 않는다. 실행 전 [선택 manifest](../../tests/fixtures/dev3-module-c3/pair-existing/manifest.json)에 compiler5/runtime8·원 N01 한 번, 총1800초/compiler420초/case45초/native30초/admission600초/로그8MiB/stack32MiB를 동결한다. 신규 metadata는 설치/복구 증거가 아니며 실제 MC01/MPA01/MC04/N01과 구분한다. [증거](../evidence/module-independence-survey-20261026.md#c3-pair-existing)를 따른다.
+
 ### 6.5 물리 WAL 밖의 actual terminal과 installer 권한
 
 아래 internal type도 `apply` root에 정의하고 raw field는 private로 둔다. actual factory/검산 impl은 `apply::{catalog,row,terminal}` 자손에 둔다. `TerminalWal`은 원 runtime을 borrow하는 작은 내부 adapter이며 세션/append owner를 추가하지 않는다.

@@ -8139,5 +8139,62 @@
     "reviewed_rust_files": 10,
     "reviewed_fixture_files": 1,
     "reviewed_document_files": 6
+  },
+  "dev3_module_c3_pair_existing": {
+    "status": "LOCAL_VERIFIED_LIMITED_D1_D2",
+    "baseline_commit": "4e68a4d",
+    "owner_contract": "dev3-module-boundaries",
+    "contract_anchor": "catalog-pair-existing",
+    "evidence": "module-independence-survey-20261026",
+    "evidence_anchor": "c3-pair-existing",
+    "implemented_paths": [
+      "crates/engine/src/storage/dirty_init/tx_pair_existing.rs",
+      "crates/engine/src/storage/dirty_init/tx_pair_existing_tests.rs",
+      "crates/engine/src/storage/wal_io/plan4_retention/catalog_targets.rs",
+      "tests/fixtures/dev3-module-c3/pair-existing"
+    ],
+    "compiler_tests": 5,
+    "runtime_tests": 8,
+    "native_case": "N01",
+    "shared_admission": false,
+    "whole_m4_m5_complete": false,
+    "evidence_artifact": "artifacts/module-c3-pair-existing-20261028",
+    "source_specific_results": {
+      "r1": {
+        "status": "FAIL",
+        "source_sha256": "6a89f660405dd4d9117d9c87079d1d1c83f1dc1830a0cad9570cf86281382581",
+        "elf_sha256": null,
+        "result_sha256": "1018bf7935c32ce7b946c0baa7c8b204ebc8389fff9d30b194cf170d55a65c46"
+      },
+      "r2": {
+        "status": "PASS",
+        "source_sha256": "6a89f660405dd4d9117d9c87079d1d1c83f1dc1830a0cad9570cf86281382581",
+        "elf_sha256": "03b90f4242eb961ce13bb52a0ce2396926bbd31f6d5865a236e6e4540b769eac",
+        "result_sha256": "0a71eb0bf5f142367a727167b1447728af0a2e6ff3eedacca0bc317261ac730f"
+      }
+    },
+    "runtime_pass_original_source": "r2",
+    "runtime_pass": 8,
+    "compiler_pass": 5,
+    "native_pass": {
+      "case": "N01",
+      "source": "r2",
+      "workers": 3,
+      "result_sha256": "8d9efb3a93f191d30b7bb1d0a850c0ef5693b6bbb7464925e3e19d286b7f6b20",
+      "admission_sha256": "ad4e0984250378dfe16f118c68489920fc276836ed86e4873052bdfec39e8501"
+    },
+    "completed_case_repeats": 0,
+    "prior_failures_preserved": true,
+    "heavy_artifacts_deleted": true,
+    "r1_elf_hash_status": "UNKNOWN_NOT_RECORDED_BEFORE_CLEANUP",
+    "clippy_provenance": "r1 same source; r2 not executed",
+    "review_status": "ACCEPTED_LIMITED_D1_D2",
+    "review_required_fixes": 0,
+    "review_receipt": "artifacts/module-c3-pair-existing-20261028/review-final.json",
+    "review_sha256": "9fd97e59a08a13611bd660d7a41edd9eb46890bb7bf96dbcd1bfc8cd1562be76",
+    "reviewed_files": 21,
+    "reviewed_rust_files": 9,
+    "reviewed_fixture_files": 6,
+    "reviewed_document_files": 6
   }
 }

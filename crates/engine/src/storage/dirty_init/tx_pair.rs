@@ -11,6 +11,13 @@ use crate::storage::{
 
 const TARGETS: usize = 9;
 
+#[path = "tx_pair_existing.rs"]
+mod existing;
+pub(in crate::storage) use existing::{
+    TxPairExistingRead, TxPairExistingTargets, TxPairExistingWrite,
+    source_bytes as tx_pair_existing_source_bytes,
+};
+
 #[cfg(test)]
 #[path = "tx_pair_tests.rs"]
 mod tests;
@@ -454,6 +461,12 @@ impl<'c, 's, 'p, 'd> SharedPool<'c, 's, 'p, 'd> {
                 slot.identity == InitClaimIdentity::TxPair(key.identity)
                     && !slot.initializer_pins_held
             }) {
+                return Err(unchanged(Cause::Busy));
+            }
+            // An authenticated existing subset may already own these pins.
+            // Whole Forward and that subset must exclude one another in both
+            // directions under the same claim/quota leaf.
+            if indices.iter().any(|index| pins.counts[*index] != 0) {
                 return Err(unchanged(Cause::Busy));
             }
             if pins.total > MAX_PINS - TARGETS as u16
