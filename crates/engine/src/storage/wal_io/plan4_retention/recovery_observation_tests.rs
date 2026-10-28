@@ -104,6 +104,19 @@ impl<W: WriterNamespace> Plan4Retention<'_, '_, '_, '_, '_, '_, '_, '_, W> {
         ))
     }
 
+    /// Fault injection: retain an authentic previous requirement as unexpected
+    /// pending state. This cannot produce authority or a successful transition.
+    pub(in crate::storage) fn catalog_test_create_pending_fault(&mut self) {
+        assert!(self.control.ledger.pending.is_none());
+        self.control.ledger.pending = Some(
+            self.history
+                .source_cut()
+                .unwrap()
+                .requirement()
+                .expect("actual Begin"),
+        );
+    }
+
     pub(in crate::storage) fn catalog_test_jobs(&self) -> &[[u8; 1024]; 64] {
         self.control.ledger.jobs()
     }

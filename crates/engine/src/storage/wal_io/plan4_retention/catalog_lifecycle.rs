@@ -403,6 +403,23 @@ impl<'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
 }
 
 impl<'b, 'a, 's, 'c, 'p, 'd, 'm, 'w, W: WriterNamespace>
+    CatalogCreateAccess<'b, 'a, 's, 'c, 'p, 'd, 'm, 'w, W>
+{
+    pub(super) fn catalog_application(
+        &mut self,
+    ) -> CatalogApplication<'_, 'a, 's, 'c, 'p, 'd, 'm, 'w, W> {
+        CatalogApplication {
+            storage: self.storage,
+            pool: self.pool,
+            control: self.control,
+            history: self.history,
+            visibility: self.visibility,
+            access: CatalogTargetAccess::Ordinary,
+        }
+    }
+}
+
+impl<'b, 'a, 's, 'c, 'p, 'd, 'm, 'w, W: WriterNamespace>
     CatalogApplication<'b, 'a, 's, 'c, 'p, 'd, 'm, 'w, W>
 {
     pub(super) fn apply_existing_catalog(

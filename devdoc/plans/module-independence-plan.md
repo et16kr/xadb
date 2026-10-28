@@ -1,5 +1,7 @@
 # XADB 모듈 독립 개발 구조 전환 작업 계획
 
+2026-10-28 [CREATE 원 자원의 borrow 본문](../evidence/module-independence-survey-20261026.md#c3-create-parts): main `8613c53`의 원6자원을 빌리는 private view로 실제 본문을 분리한다. r1 fixture FAIL을 보존하고 r1 compiler2/runtime5 및 r2 수정·미실행 runtime2/nativeN01을 검증했다. 최종 독립 D1/D2 한정 수용이며 shared 제품 CREATE와 M4/M5는 미완료다.
+
 2026-10-28 [공유 pool CREATE claim](../evidence/module-independence-survey-20261026.md#c3-pair-shared): main `c845ea7`에서 exact 후보·공유 종료·ordinary gate를 구현한다. r1 compiler4/runtime12/nativeN01 3PID PASS, 최종 독립 D1/D2 한정 수용이며 actual shared reservation과 M4/M5는 미완료다.
 
 2026-10-28 [CREATE 기존 대상 key 접근](../evidence/module-independence-survey-20261026.md#c3-pair-existing): main `4e68a4d`에서 typed subset·실제 Reserve/Forward 준비/Cancel 연결을 진행한다. r2 compiler5/runtime8/nativeN01 3PID PASS·r1 주입 FAIL 보존, 최종 독립 D1/D2 한정 수용이며 shared admission·M4/M5는 미완료다.

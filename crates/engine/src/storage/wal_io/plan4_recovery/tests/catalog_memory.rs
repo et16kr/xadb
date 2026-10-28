@@ -1200,3 +1200,6 @@ mod commit_call;
 mod pair_atomic;
 #[path = "catalog_memory/pair_shared.rs"]
 mod pair_shared;
+
+#[path = "catalog_memory/create_parts.rs"]
+mod create_parts;

@@ -677,6 +677,17 @@ Source는 새 carrier·factory Results·동시 read guards2/registry·next gener
 
 [선택 manifest](../../tests/fixtures/dev3-module-c3/pair-shared/manifest.json)는 compiler4/runtime12/원 nativeN01 한 번, total1800초/compiler420초/case45초/native30초/review600초/log8MiB/stack32MiB로 고정한다. 신규 metadata6와 실제 reentry1·실제 dirty hint 경합1·source1·Unstaged1·Drop/recovery1·System CF12-01 한정1을 구분한다. 완료한 atomic/subset 전체 matrix는 반복하지 않는다. [실행·독립 검토 기록](../evidence/module-independence-survey-20261026.md#c3-pair-shared)을 따른다.
 
+<a id="catalog-create-parts"></a>
+#### XADB-MODULE-CREATE-PARTS-001 — 원 CREATE 자원의 짧은 borrow
+
+2026-10-28 · D2 ACCEPTED(이 공급 한정) · 기준 main `8613c53`. private `CatalogCreateAccess`는 원 storage/pool/ledger/history/visibility/flush만 직접 빌린다. factory는 원 bound 안에만 있으며 원 Owner/key/plan/private/definition을 호출 인자로 받는다. view에 session/backing/source admission을 새로 소유시키거나 reservation에 추가 저장하지 않는다. 기존 `ReservedCatalogCreate`의 전체 bound borrow와 consuming wrapper의 active/Before/Fatal/Drop은 유지한다. 다음 공유 MutationPort 수신을 위한 본문 분리이며 shared 제품 CREATE·actor/statement/source/flush lease의 완료가 아니다.
+
+원 health→pending/population Fatal→flush Ready Busy 순서, Forward의 stage/install/history→checked release→durable 확인→finish→durable/pending 갱신, Cancel의 epoch delta 보유→apply/durable→source.unchanged→allocator 반환→epoch 적용 순서를 보존한다. allocator 반환은 원 read checked release와 `&mut *view.flush`의 PairIoQuiescence를 사용한다. 큰 reservation 조립은 기존 wrapper에 둔다. 별도 동작 복제나 arbitrary component constructor는 채택하지 않았다.
+
+Source 상계는 기존 공통 prepare/ordinary/lifecycle 식을 유지하고 CREATE에만 factory 두 view carrier/receiver, 새 인자 및 실제 추가 Result를 더한다. Plan의 큰 Result는 plan 두 대안에만, Reserve apply/Unstaged return은 각 호출에만, Forward/Cancel은 body에만 더한다. 기존 Prepared는 move이고 기존 preparation/application view는 원 lower 식에 들어 있다. 작은 view 호출이 끝난 뒤의 원 큰 Before/reservation 반환은 별도 max이며 last-use 추정 할인은 없다. 원 cap은 유지한다.
+
+[선택 manifest](../../tests/fixtures/dev3-module-c3/create-parts/manifest.json)는 compiler2/runtime7/nativeN01 1회와 total1800초/compiler420초/case45초/native30초/review600초/log8MiB/stack32MiB를 동결한다. 실제 변경 본문에 해당하는 Forward/Cancel/Unstaged/Drop·복구 및 새 오류 우선순위/Before 반환만 실행한다. 완료된 pool leaf·System·하위 wrapper는 반복하지 않는다. [실행 기록](../evidence/module-independence-survey-20261026.md#c3-create-parts)을 따른다. 원 자원 정체성·view 인자/반환 깊이·오류/Drop·source 소유가 바뀌면 재검토한다.
+
 ### 6.5 물리 WAL 밖의 actual terminal과 installer 권한
 
 아래 internal type도 `apply` root에 정의하고 raw field는 private로 둔다. actual factory/검산 impl은 `apply::{catalog,row,terminal}` 자손에 둔다. `TerminalWal`은 원 runtime을 borrow하는 작은 내부 adapter이며 세션/append owner를 추가하지 않는다.

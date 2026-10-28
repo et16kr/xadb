@@ -1,0 +1,68 @@
+{
+  "scope": "CREATE original-resource borrowed view extraction; unchanged exclusive reservation and no shared product admission",
+  "baseline_commit": "8613c53",
+  "budget": {
+    "total_seconds": 1800,
+    "compiler_seconds": 420,
+    "case_seconds": 45,
+    "native_admission_seconds": 600,
+    "output_bytes": 8388608,
+    "rust_min_stack": 33554432
+  },
+  "compiler_tests": [
+    {
+      "name": "positive",
+      "path": "positive.rs",
+      "bytes": 503,
+      "sha256": "fb5d1843229a7df2ff76fb4cad1672bb2a67e43c42550d1e4af119657858edff",
+      "expected_code": null,
+      "primary_line": null
+    },
+    {
+      "name": "bound_borrow",
+      "path": "bound_borrow.rs",
+      "bytes": 489,
+      "sha256": "e39f0a58f5566272dbf67d0a78e4e453a8a4fbfe49f1b2d71c7ba64998ef29f4",
+      "expected_code": "E0499",
+      "primary_line": 9
+    }
+  ],
+  "runtime_tests": [
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::create_pair::catalog_commit::tests::consumed_preparation_has_bounded_pending_image",
+      "reason": "changed CREATE view/forwarded arguments/Results census under unchanged original live/recovered caps"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::pair_shared::pair_shared_actual_finish_and_cancel_reopen_ordinary_admission",
+      "reason": "moved actual plan/Forward/Cancel/allocator return bodies checked by independent oracle and original pool reentry"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::pair_atomic::rejected_reserve_returns_original_unstaged_pair",
+      "reason": "moved Reserve apply and Unstaged allocator return on physical stage rejection"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::pair_atomic::final_pair_retirement_unwind_preserves_claim_under_fence",
+      "reason": "moved Forward and Cancel bodies preserve active token/drop when final retirement unwinds"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::lifecycle::mc04_reserved_drop_fence_fresh_recovery",
+      "reason": "moved Reserve producer plus original unresolved token Drop and current-build recovery"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::create_parts::create_health_pending_precedes_busy_flush",
+      "reason": "new actual checked flush RetiredPendingFinalize, healthy Busy versus authentic prior requirement pending fault Fatal before flush check"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::create_parts::cancel_before_returns_original_active_reservation",
+      "reason": "new actual Cancel stage rejection returns original claim/token/epochs, dropping returned active reservation fences"
+    }
+  ],
+  "native_tests": [
+    {
+      "case": "N01",
+      "reason": "moved actual Reserve/Forward and new forwarding memory under original three-PID9→19→25 current-build recovery",
+      "wall_seconds": 30,
+      "controller": "scripts/dev3_catalog_native.py"
+    }
+  ]
+}

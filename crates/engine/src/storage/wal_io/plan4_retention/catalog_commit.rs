@@ -939,6 +939,10 @@ mod tests {
         println!(
             "C2_COMMIT_IMAGE_BOUND {kind} shared={shared} live={live:?} recovered={recovered:?}"
         );
+        println!(
+            "C3_CREATE_PARTS {kind} phases={:?}",
+            super::super::catalog_live::catalog_live_source_bytes::<W>()
+        );
         assert!(shared + phases.peak() <= 65_536);
         // The census uses the largest admitted writer window with its carriers.
         assert_eq!(live.catalog_commit, source::commit_source_peak::<W>());

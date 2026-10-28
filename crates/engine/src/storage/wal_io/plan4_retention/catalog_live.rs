@@ -77,6 +77,19 @@ impl CreatePlan {
     }
 }
 
+/// Temporary disjoint borrows of the original CREATE resources. This owns
+/// no session, backing, claim or source admission and cannot outlive its caller.
+struct CatalogCreateAccess<'b, 'a, 's, 'c, 'p, 'd, 'm, 'w, W: WriterNamespace> {
+    storage: &'s MutableStorageOwner<'m, 'w, W>,
+    pool: &'b SharedPool<'c, 's, 'p, 'd>,
+    control: &'b mut control::RetentionLedger<'a, 'c, 's>,
+    history: &'b history::runtime::RuntimeHistory<'a, 'c, 's>,
+    visibility: Option<&'b visibility::BoundVisibility<'a, 'c, 's>>,
+    flush: &'b mut flush::RetentionFlushControl<'c, 's, 'w>,
+}
+#[path = "catalog_create.rs"]
+mod create;
+
 /// Owns both the durable Tx reservation and its original unpublished pool
 /// claim. The caller cannot run another writer through this borrowed bound.
 pub(crate) struct ReservedCatalogCreate<'r, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace> {
@@ -142,90 +155,13 @@ impl<'s, 'c, W: WriterNamespace> ReservedCatalogCreate<'_, '_, 's, 'c, '_, '_, '
         }
     }
     fn cancel_inner(&mut self) -> Result<()> {
-        let storage = self.bound.inner.storage;
-        self.bound
-            .flush
-            .io
-            .preflight::<W>()
-            .map_err(|e| RetentionError {
-                phase: RetentionPhase::Prepare,
-                effect: e.effect,
-                cause: RetentionCause::Flush(e),
-            })?;
-        let slot = self
-            .bound
-            .control
-            .ledger
-            .slot(self.plan.plan.actor)
-            .ok_or_else(|| {
-                unchanged(RetentionPhase::Prepare, RetentionCause::MissingTransaction)
-            })?;
-        let prepared = self.bound.prepare_pair_catalog(
-            &self.key,
+        self.bound.catalog_create_access().cancel(
+            &mut self.key,
+            &self.plan,
+            self.reserve,
             self.owner,
-            Change::Cancel {
-                ordinal: self.plan.ordinal,
-            },
-            Some(slot),
-            self.plan.selected(),
             self.private,
-        )?;
-        let epoch_change = self
-            .bound
-            .catalog_visibility
-            .as_ref()
-            .ok_or_else(|| unchanged(RetentionPhase::Prepare, RetentionCause::WrongState))?
-            .prepare_epoch_change(&prepared, storage.profile())
-            .map_err(|e| RetentionError {
-                phase: RetentionPhase::Prepare,
-                effect: e.effect,
-                cause: RetentionCause::Visibility(e),
-            })?;
-        let observation = self
-            .bound
-            .apply_pair_catalog(&self.key, self.owner, prepared)?;
-        let source = self.bound.history.source_cut()?;
-        let requirement = source
-            .requirement()
-            .ok_or_else(|| fatal(storage, RetentionPhase::Install, RetentionCause::Invariant))?;
-        if requirement.location().lsn != observation.header.lsn
-            || self
-                .bound
-                .control
-                .ledger
-                .durable
-                .as_ref()
-                .is_none_or(|durable| !durable.confirms(&requirement))
-        {
-            return Err(fatal(
-                storage,
-                RetentionPhase::Durable,
-                RetentionCause::Invariant,
-            ));
-        }
-        source.unchanged()?;
-        self.bound
-            .return_catalog_pair(
-                self.owner,
-                &mut self.key,
-                &self.plan,
-                self.reserve,
-                super::TxPairCancelKind::Cancelled,
-                Some(requirement),
-            )
-            .map_err(|error| fatal(storage, error.phase, error.cause))?;
-        self.bound
-            .catalog_visibility
-            .as_ref()
-            .expect("checked original visibility")
-            .apply_epoch_change(epoch_change)
-            .map_err(|e| {
-                fatal(
-                    storage,
-                    RetentionPhase::Install,
-                    RetentionCause::Visibility(e),
-                )
-            })
+        )
     }
     #[allow(
         clippy::result_large_err,
@@ -257,199 +193,14 @@ impl<'s, 'c, W: WriterNamespace> ReservedCatalogCreate<'_, '_, 's, 'c, '_, '_, '
     }
 
     fn initialize_inner(&mut self) -> Result<ObjectHandle> {
-        use crate::storage::catalog_record::CatalogTableInput;
-        let storage = self.bound.inner.storage;
-        let _unwind = storage.session_fence().unwind_guard();
-        let slot = self
-            .bound
-            .control
-            .ledger
-            .slot(self.plan.plan.actor)
-            .ok_or_else(|| {
-                unchanged(RetentionPhase::Prepare, RetentionCause::MissingTransaction)
-            })?;
-        let mut prepared = self.bound.prepare_pair_catalog(
-            &self.key,
+        self.bound.catalog_create_access().initialize(
+            &mut self.key,
+            &self.plan,
+            self.reserve,
             self.owner,
-            Change::Forward {
-                ordinal: self.plan.ordinal,
-                definition: CatalogTableInput::Spec(self.definition),
-            },
-            Some(slot),
-            self.plan.selected(),
             self.private,
-        )?;
-        prepared.add_initialized_pair(self.plan.pair)?;
-        let prefix = storage
-            .wal()
-            .prefix()
-            .map_err(|e| fatal(storage, RetentionPhase::Prepare, RetentionCause::Wal(e)))?;
-        prepared.check(
-            self.owner,
-            &self.bound.inner.pool,
-            &self.bound.control.ledger,
-            prefix,
-        )?;
-        let requests: &[TargetRequest; 9] =
-            prepared.targets().try_into().expect("whole Forward set");
-        let authority = TxPairAuthority {
-            core: self.bound.inner.pool.bound_core(),
-            binding: &storage.binding,
-            fence: storage.session_fence(),
-            actor: self.plan.plan.actor,
-            reserve: self.reserve,
-            existing: &self.plan.existing,
-            pair: &self.plan.pair,
-        };
-        if !self.key.matches_authority(&authority) {
-            return Err(fatal(
-                storage,
-                RetentionPhase::Prepare,
-                RetentionCause::Invariant,
-            ));
-        }
-        let view = prepared.layout(storage.profile())?;
-        let job_page = queue::decode_jobs_page(
-            &prepared.payload.after[2],
-            storage.profile().spec().namespace,
-            (self.plan.ordinal / 15) as u8,
+            self.definition,
         )
-        .map_err(queue_error)?;
-        let job_after: &[u8; 1024] = job_page
-            .cell(self.plan.ordinal % 15)
-            .ok_or_else(|| unchanged(RetentionPhase::Prepare, RetentionCause::Invariant))?
-            .try_into()
-            .map_err(|_| unchanged(RetentionPhase::Prepare, RetentionCause::Invariant))?;
-        let after: [Option<&[u8; PAGE_BYTES]>; 9] = std::array::from_fn(|at| prepared.after(at));
-        let transaction_before = content_digest(&self.bound.control.ledger.row(slot)[..1536]);
-        let aging_before =
-            content_digest(&self.bound.control.ledger.row(control::AGING_SLOT)[..1536]);
-        let job_before = content_digest(&self.bound.control.ledger.jobs()[self.plan.ordinal]);
-        let inventory_before =
-            content_digest(&self.bound.control.ledger.bytes[JOB_END..INVENTORY_END]);
-        let inventory_after = prepared
-            .payload
-            .inventory_after()
-            .ok_or_else(|| unchanged(RetentionPhase::Prepare, RetentionCause::Invariant))?;
-        let mut write = self
-            .bound
-            .inner
-            .pool
-            .claim_tx_pair_targets(self.owner, &self.key, requests)
-            .map_err(|e| frame(RetentionPhase::Prepare, e))?
-            .try_write()
-            .map_err(|e| frame(RetentionPhase::Prepare, e))?;
-        let installed = (|| {
-            for (at, after_image) in after.iter().enumerate() {
-                let actual = write
-                    .observe(at)
-                    .map_err(|e| frame(RetentionPhase::Prepare, e))?
-                    .map(|o| o.frame);
-                if actual != prepared.stamp(at) {
-                    return Err(unchanged(RetentionPhase::Prepare, RetentionCause::Busy));
-                }
-                if after_image.is_some()
-                    && actual.is_some_and(|stamp| {
-                        stamp.modification_counter == u64::MAX
-                            || stamp.page_lsn.0 >= prepared.payload.observation.header.lsn
-                    })
-                {
-                    return Err(unchanged(
-                        RetentionPhase::Prepare,
-                        RetentionCause::Exhausted,
-                    ));
-                }
-            }
-            write
-                .enter_stage()
-                .map_err(|e| frame(RetentionPhase::Stage, e))?;
-            let requirement = match storage.wal().stage_verified_required(
-                prepared.payload.prefix,
-                prepared.payload.observation.header,
-                prepared.payload.frame,
-            ) {
-                Ok(requirement) => requirement,
-                Err(error) if error.effect == Effect::Unchanged => {
-                    write
-                        .accept_stage_rejection(super::TxPairStageRejection { key: &self.key })
-                        .map_err(|e| frame(RetentionPhase::Stage, e))?;
-                    return Err(RetentionError {
-                        phase: RetentionPhase::Stage,
-                        effect: error.effect,
-                        cause: RetentionCause::Wal(error),
-                    });
-                }
-                Err(error) => {
-                    return Err(fatal(
-                        storage,
-                        RetentionPhase::Stage,
-                        RetentionCause::Wal(error),
-                    ));
-                }
-            };
-            catalog_mark_staged(&prepared, &mut self.bound.control.ledger, requirement)?;
-            self.bound.control.ledger.row_mut(slot)[control::PHASE] = control::STAGED;
-            let permit = TxPairInstallPermit {
-                key: &self.key,
-                requirement,
-                targets: requests,
-                before: &prepared.stamps,
-                after: &after,
-            };
-            let control = TxPairControlCommit {
-                authority: &authority,
-                original: &mut self.bound.control.ledger,
-                requirement,
-                transaction_slot: slot,
-                job_ordinal: self.plan.ordinal,
-                transaction_before,
-                aging_before,
-                job_before,
-                inventory_before,
-                transaction_after: view.descriptor(0).expect("Forward Tx descriptor"),
-                aging_after: view.descriptor(1).expect("Forward Aging descriptor"),
-                job_after,
-                inventory_after,
-                applied: false,
-            };
-            let completed = write
-                .install_forward(&permit, control)
-                .map_err(|e| frame(RetentionPhase::Install, e))?;
-            self.bound.history.installed(requirement)?;
-            Ok((requirement, completed))
-        })();
-        let (requirement, completed) = merge(
-            installed,
-            write
-                .release_checked()
-                .map_err(|e| frame(RetentionPhase::Install, e)),
-        )
-        .map_err(|e| {
-            if self.bound.control.ledger.pending.is_some() {
-                fatal(storage, RetentionPhase::Install, e.cause)
-            } else {
-                e
-            }
-        })?;
-        let durable = storage
-            .wal()
-            .wait_durable(&requirement)
-            .map_err(|e| fatal(storage, RetentionPhase::Durable, RetentionCause::Wal(e)))?;
-        if !durable.confirms(&requirement) {
-            return Err(fatal(
-                storage,
-                RetentionPhase::Durable,
-                RetentionCause::Invariant,
-            ));
-        }
-        self.bound
-            .inner
-            .pool
-            .finish_tx_pair(&mut self.key, completed)
-            .map_err(|e| fatal(storage, RetentionPhase::Install, RetentionCause::Frame(e)))?;
-        self.bound.control.ledger.durable = Some(durable);
-        self.bound.control.ledger.pending = None;
-        Ok(self.plan.object)
     }
 }
 
@@ -1017,6 +768,17 @@ fn prepare_inventory(
 impl<'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
     Plan4Retention<'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W>
 {
+    fn catalog_create_access(&mut self) -> CatalogCreateAccess<'_, 'a, 's, 'c, 'p, 'd, 'm, 'w, W> {
+        CatalogCreateAccess {
+            storage: self.inner.storage,
+            pool: &self.inner.pool,
+            control: &mut self.control.ledger,
+            history: &self.history,
+            visibility: self.catalog_visibility.as_ref(),
+            flush: &mut self.flush,
+        }
+    }
+
     pub(crate) fn reserve_catalog_create<'r>(
         &'r mut self,
         owner: &'r mut Owner<'c, 's>,
@@ -1103,66 +865,14 @@ impl<'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
         kind: super::TxPairCancelKind,
         requirement: Option<WalRequirement<'s>>,
     ) -> Result<()> {
-        let storage = self.inner.storage;
-        self.flush.io.preflight::<W>().map_err(|e| RetentionError {
-            phase: RetentionPhase::Prepare,
-            effect: e.effect,
-            cause: RetentionCause::Flush(e),
-        })?;
-        if self.flush.phase != flush::RetentionFlushPhase::Ready {
-            return Err(unchanged(RetentionPhase::Prepare, RetentionCause::Busy));
-        }
-        let allocator = self
-            .inner
-            .pool
-            .target_request(0)
-            .map_err(|e| frame(RetentionPhase::Prepare, e))?;
-        let read = self
-            .inner
-            .pool
-            .reserve_tx_pair_existing(owner, key, &[allocator])
-            .map_err(|e| frame(RetentionPhase::Prepare, e))?
-            .try_read()
-            .map_err(|e| frame(RetentionPhase::Prepare, e))?;
-        let stamp = read
-            .observe(0)
-            .map(|observation| observation.frame)
-            .map_err(|e| frame(RetentionPhase::Prepare, e));
-        let allocator_after = merge(
-            stamp,
-            read.release_checked()
-                .map_err(|e| frame(RetentionPhase::Prepare, e)),
-        )?;
-        let authority = TxPairAuthority {
-            core: self.inner.pool.bound_core(),
-            binding: &storage.binding,
-            fence: storage.session_fence(),
-            actor: plan.plan.actor,
+        self.catalog_create_access().return_catalog_pair(
+            owner,
+            key,
+            plan,
             reserve,
-            existing: &plan.existing,
-            pair: &plan.pair,
-        };
-        let selected_generation = self.flush.io.snapshot().known.generation;
-        let io = super::PairIoQuiescence {
-            original: &mut self.flush,
-            binding: &storage.binding,
-            fence: storage.session_fence(),
-            selected_generation,
-            pair: plan.pair,
-        };
-        self.inner
-            .pool
-            .cancel_tx_pair(
-                key,
-                super::TxPairCancelPermit {
-                    authority: &authority,
-                    io,
-                    kind,
-                    requirement,
-                    allocator_after,
-                },
-            )
-            .map_err(|e| frame(RetentionPhase::Install, e))
+            kind,
+            requirement,
+        )
     }
 
     fn plan_catalog_create(
@@ -1173,262 +883,8 @@ impl<'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
         definition: &crate::api::TableSpec,
         private: &mut [u8; PRIVATE_BYTES],
     ) -> Result<CreatePlan> {
-        use crate::storage::{
-            catalog_record, page,
-            transaction_record::{LogicalRowVersion, VersionStamp},
-            tree_page::{self, TreeExpectation, edit::LeafEdit},
-            undo_record,
-            undo_ref::UndoRef,
-        };
-        self.health()?;
-        if self.control.ledger.pending.is_some()
-            || self.control.ledger.population.reserved()
-            || self.flush.phase != flush::RetentionFlushPhase::Ready
-        {
-            return Err(unchanged(RetentionPhase::Prepare, RetentionCause::Busy));
-        }
-        if undo.request.kind != PageKind::Undo
-            || undo.request.level != 0
-            || undo.request.identity.owner.get() != 3
-            || undo.request.identity.owner_generation != one()
-        {
-            return Err(unchanged(
-                RetentionPhase::Prepare,
-                RetentionCause::Membership,
-            ));
-        }
-        let terminal = self.actor_catalog_job(actor, true)?;
-        let terminal = queue::decode_job(
-            &self.control.ledger.jobs()[terminal],
-            self.inner.storage.profile().spec().namespace,
-        )
-        .map_err(queue_error)?;
-        let status = terminal
-            .status()
-            .ok_or_else(|| unchanged(RetentionPhase::Prepare, RetentionCause::Invariant))?;
-        let ordinal = self.first_catalog_job(owner)?;
-        let allocator = self
-            .inner
-            .pool
-            .target_request(0)
-            .map_err(|e| frame(RetentionPhase::Prepare, e))?;
-        let root = self.target(Plan4Page::Root)?.request;
-        let jobs = self
-            .target(Plan4Page::Jobs {
-                index: (ordinal / 15) as u8,
-            })?
-            .request;
-        let anchor = self.target(Plan4Page::CatalogAnchor)?.request;
-        let catalog = self.target(Plan4Page::CatalogLeaf)?.request;
-        let mut existing = [
-            allocator,
-            root,
-            jobs,
-            anchor,
-            catalog,
-            self.catalog_status_request(status),
-            undo.request,
-        ];
-        existing.sort_unstable_by_key(|request| target_rank(*request));
-        let position = |request| {
-            existing
-                .iter()
-                .position(|r| *r == request)
-                .expect("existing role")
-        };
-        let read = self
-            .inner
-            .pool
-            .reserve_target_set(owner, &existing)
-            .map_err(|e| frame(RetentionPhase::Prepare, e))?
-            .try_read()
-            .map_err(|e| frame(RetentionPhase::Prepare, e))?;
-        let planned = (|| {
-            let namespace = self.inner.storage.profile().spec().namespace;
-            let allocation = allocation_page::decode_allocation_page(
-                read.bytes(position(allocator))
-                    .map_err(|e| frame(RetentionPhase::Prepare, e))?,
-                allocator.identity,
-                namespace,
-            )
-            .map_err(|e| unchanged(RetentionPhase::Prepare, RetentionCause::Allocation(e)))?;
-            let (_, root) = queue::decode_root_page(
-                read.bytes(position(root))
-                    .map_err(|e| frame(RetentionPhase::Prepare, e))?,
-                namespace,
-            )
-            .map_err(queue_error)?;
-            let object = ObjectHandle {
-                object: ObjectId::new(root.object_high().checked_add(1).ok_or_else(|| {
-                    unchanged(RetentionPhase::Prepare, RetentionCause::Exhausted)
-                })?)
-                .map_err(|_| unchanged(RetentionPhase::Prepare, RetentionCause::Exhausted))?,
-                generation: one(),
-                schema_epoch: SchemaEpoch::new(1).expect("first schema"),
-            };
-            let mut pair = [allocator.identity.page; 2];
-            let mut count = 0;
-            for index in 9..64 {
-                if let AllocationEntry::Free(generation) = allocation.entry(index).map_err(|e| {
-                    unchanged(RetentionPhase::Prepare, RetentionCause::Allocation(e))
-                })? {
-                    pair[count] = PageRef {
-                        page_no: index as u64,
-                        incarnation: generation.next().map_err(|_| {
-                            unchanged(RetentionPhase::Prepare, RetentionCause::Exhausted)
-                        })?,
-                        ..allocator.identity.page
-                    };
-                    count += 1;
-                    if count == 2 {
-                        break;
-                    }
-                }
-            }
-            if count != 2 {
-                return Err(unchanged(RetentionPhase::Prepare, RetentionCause::Capacity));
-            }
-            let undo_page = page::decode_page(
-                read.bytes(position(undo.request))
-                    .map_err(|e| frame(RetentionPhase::Prepare, e))?,
-                undo.request.identity,
-                PageKind::Undo,
-            )
-            .map_err(|e| unchanged(RetentionPhase::Prepare, RetentionCause::Page(e)))?;
-            if undo_page.len() != 1 {
-                return Err(unchanged(
-                    RetentionPhase::Prepare,
-                    RetentionCause::Membership,
-                ));
-            }
-            let free = undo_page
-                .cell(0)
-                .ok_or_else(|| unchanged(RetentionPhase::Prepare, RetentionCause::Invariant))?;
-            if free.len() != 432 {
-                return Err(unchanged(
-                    RetentionPhase::Prepare,
-                    RetentionCause::Invariant,
-                ));
-            }
-            let old_generation = Generation::new(u64::from_le_bytes(
-                free[8..16].try_into().expect("checked Free cell"),
-            ))
-            .map_err(|_| unchanged(RetentionPhase::Prepare, RetentionCause::Invariant))?;
-            undo_record::decode_free_undo_record(free, old_generation)
-                .map_err(|e| unchanged(RetentionPhase::Prepare, RetentionCause::Undo(e)))?;
-            let reference = UndoRef::new(
-                undo.request.identity.page,
-                0,
-                old_generation
-                    .next()
-                    .map_err(|_| unchanged(RetentionPhase::Prepare, RetentionCause::Exhausted))?,
-            )
-            .map_err(|e| unchanged(RetentionPhase::Prepare, RetentionCause::Page(e)))?;
-            // The first schema/leaf-capacity validation happens before Reserve.
-            // Both temporary cells borrow the existing private frame lane.
-            let (value, rest) = private.split_at_mut(catalog_record::MAX_CATALOG_CELL_BYTES);
-            let cell = &mut rest[..semantic_catalog::MAX_CELL];
-            let length = catalog_record::encode_catalog_record(
-                catalog_record::CatalogExpectation {
-                    namespace,
-                    object: object.object,
-                },
-                catalog_record::CatalogHeader {
-                    identity: object,
-                    retired: false,
-                    stamp: VersionStamp::Transaction(actor),
-                    logical: LogicalRowVersion::new(actor.id(), 1)
-                        .map_err(|e| unchanged(RetentionPhase::Prepare, RetentionCause::Page(e)))?,
-                    undo: Some(reference),
-                    anchor: pair[0],
-                },
-                catalog_record::CatalogDefinition::Table(definition),
-                value,
-            )
-            .map_err(|e| unchanged(RetentionPhase::Prepare, RetentionCause::Catalog(e)))?;
-            let projection = semantic_catalog::catalog_projection_digest(
-                namespace,
-                object.object,
-                Some(&value[..length]),
-            )
-            .map_err(semantic)?;
-            let leaf = tree_page::decode_tree_page(
-                read.bytes(position(catalog))
-                    .map_err(|e| frame(RetentionPhase::Prepare, e))?,
-                TreeExpectation {
-                    identity: catalog.identity,
-                    kind: PageKind::CatalogLeaf,
-                    level: 0,
-                    arity: 0,
-                },
-            )
-            .map_err(|e| {
-                unchanged(
-                    RetentionPhase::Prepare,
-                    RetentionCause::CatalogSemantic(semantic_catalog::Error::Tree(e)),
-                )
-            })?;
-            let encoded = tree_page::encode_leaf_cell(
-                PageKind::CatalogLeaf,
-                0,
-                &object.object.get().to_be_bytes(),
-                &value[..length],
-                cell,
-            )
-            .map_err(|e| {
-                unchanged(
-                    RetentionPhase::Prepare,
-                    RetentionCause::CatalogSemantic(semantic_catalog::Error::Tree(e)),
-                )
-            })?;
-            semantic_catalog::images::validate_catalog_leaf(&leaf, namespace).map_err(semantic)?;
-            let mut cells = [&[][..]; semantic_catalog::images::CATALOG_EDIT_CELLS];
-            if leaf
-                .prepare_leaf_edit(LeafEdit::Insert(encoded), &mut cells)
-                .map_err(|e| {
-                    unchanged(
-                        RetentionPhase::Prepare,
-                        RetentionCause::CatalogSemantic(semantic_catalog::Error::LeafEdit(e)),
-                    )
-                })?
-                .needs_split()
-            {
-                return Err(unchanged(RetentionPhase::Prepare, RetentionCause::Capacity));
-            }
-            Ok(CreatePlan {
-                plan: semantic_catalog::queue::ReservePlan {
-                    actor,
-                    status,
-                    undo: reference,
-                    pair,
-                    catalog_bytes: (length + 12) as u32,
-                    projection,
-                },
-                ordinal,
-                object,
-                existing,
-                pair: std::array::from_fn(|at| {
-                    request(
-                        PageIdentity {
-                            database: allocator.identity.database,
-                            page: pair[at],
-                            owner: object.object,
-                            owner_generation: object.generation,
-                        },
-                        if at == 0 {
-                            PageKind::TreeAnchor
-                        } else {
-                            PageKind::RowLeaf
-                        },
-                    )
-                }),
-            })
-        })();
-        merge(
-            planned,
-            read.release_checked()
-                .map_err(|e| frame(RetentionPhase::Prepare, e)),
-        )
+        self.catalog_create_access()
+            .plan_catalog_create(owner, actor, undo, definition, private)
     }
 
     pub(crate) fn catalog_aging_start(
@@ -1440,10 +896,6 @@ impl<'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
         writer.catalog_aging_start(owner, private, &mut flusher)
     }
 
-    fn first_catalog_job(&self, owner: &mut Owner<'c, 's>) -> Result<usize> {
-        self.catalog_preparation().first_catalog_job(owner)
-    }
-
     pub(crate) fn catalog_begin(
         &mut self,
         owner: &mut Owner<'c, 's>,
@@ -1452,15 +904,6 @@ impl<'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
     ) -> Result<Observation> {
         let (mut writer, _, mut flusher) = self.split();
         writer.catalog_begin(owner, status, private, &mut flusher)
-    }
-
-    fn actor_catalog_job(&self, actor: TxnRef, terminal: bool) -> Result<usize> {
-        self.catalog_preparation()
-            .actor_catalog_job(actor, terminal)
-    }
-
-    fn catalog_status_request(&self, status: StatusSlotRef) -> TargetRequest {
-        self.catalog_preparation().catalog_status_request(status)
     }
 
     pub(crate) fn catalog_rollback_start(
@@ -1489,23 +932,8 @@ impl<'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
         owner: &mut Owner<'c, 's>,
         prepared: PreparedCatalog<'_, 'c, 's>,
     ) -> Result<Observation> {
-        let mut application = self.catalog_application();
-        application.access = CatalogTargetAccess::Pair(key);
-        application.apply_existing_catalog(owner, prepared)
-    }
-
-    fn prepare_pair_catalog<'i, const N: usize>(
-        &self,
-        key: &TxPairClaimKey<'c, 's>,
-        owner: &mut Owner<'c, 's>,
-        change: Change<'_>,
-        slot: Option<usize>,
-        selected: [(TargetRequest, u8); N],
-        private: &'i mut [u8; PRIVATE_BYTES],
-    ) -> Result<PreparedCatalog<'i, 'c, 's>> {
-        let mut preparation = self.catalog_preparation();
-        preparation.access = CatalogTargetAccess::Pair(key);
-        preparation.prepare_existing_catalog(owner, change, slot, selected, private)
+        self.catalog_create_access()
+            .apply_pair_catalog(key, owner, prepared)
     }
 
     /// Fault fixtures may retain a preparation to corrupt its source cut. The
@@ -2189,6 +1617,27 @@ pub(in super::super) fn catalog_live_source_bytes<W: WriterNamespace>() -> Catal
         .max(start_root)
         .max(start_status)
         + source::lifecycle_carrier_bytes::<W>();
+    // CREATE-only forwarding costs. The original common preparation and
+    // application views remain counted in their existing lower phases. A
+    // moved PreparedCatalog is not a second owned receipt in the wrapper.
+    let view = size_of::<CatalogCreateAccess<'_, '_, '_, '_, '_, '_, '_, '_, W>>();
+    let reference = size_of::<&()>();
+    let factory = 2 * view + 2 * reference;
+    let plan_call = factory + 5 * reference + size_of::<TxnRef>() + size_of::<Result<CreatePlan>>();
+    let reserve_apply_call = factory + 3 * reference + size_of::<Result<Observation>>();
+    let unstaged_return_call = factory
+        + 4 * reference
+        + size_of::<PageLsn>()
+        + size_of::<super::TxPairCancelKind>()
+        + size_of::<Option<WalRequirement<'_>>>()
+        + size_of::<Result<()>>();
+    let forward_call = factory
+        + 6 * reference
+        + size_of::<PageLsn>()
+        + size_of::<Result<ObjectHandle>>()
+        + 2 * reference; // newly borrowed key/plan closure captures
+    let cancel_call = factory + 5 * reference + size_of::<PageLsn>() + size_of::<Result<()>>();
+    let plan = plan + plan_call;
     let token = size_of::<Reservation<'_, W>>();
     let token_return = token
         + 2 * size_of::<Result<Reservation<'_, W>>>()
@@ -2205,10 +1654,6 @@ pub(in super::super) fn catalog_live_source_bytes<W: WriterNamespace>() -> Catal
         + size_of::<TxPairAuthority<'_, '_, '_>>()
         + size_of::<dirty_frame::CatalogPairCandidates<'_, '_, '_>>()
         + scalar;
-    let reserve = plan
-        .max(reserve_prepare + prepare)
-        .max(reserve_owned + ordinary_install.max(dirty_frame::tx_pair_source_census()))
-        .max(token_return + scalar);
     let forward_install = token
         + scalar
         + size_of::<Prepared<'_>>()
@@ -2220,8 +1665,8 @@ pub(in super::super) fn catalog_live_source_bytes<W: WriterNamespace>() -> Catal
         + size_of::<TxPairInstallPermit<'_, '_, '_>>()
         + dirty_frame::tx_pair_source_census()
         + catalog_control_source_bytes().max(physical);
-    let forward = (token + prepare)
-        .max(forward_install)
+    let forward = (token + prepare + forward_call)
+        .max(forward_install + forward_call)
         .max(token_return + scalar);
     let pair_return = scalar
         + size_of::<TxPairAuthority<'_, '_, '_>>()
@@ -2229,9 +1674,21 @@ pub(in super::super) fn catalog_live_source_bytes<W: WriterNamespace>() -> Catal
         + size_of::<super::PairIoQuiescence<'_, '_, '_, '_>>()
         + dirty_frame::tx_pair_source_census()
             .max(dirty_frame::tx_pair_existing_source_bytes::<1>());
+    let reserve = plan
+        .max(reserve_prepare + prepare)
+        .max(
+            reserve_owned
+                + (ordinary_install + reserve_apply_call)
+                    .max(dirty_frame::tx_pair_source_census())
+                    .max(pair_return + unstaged_return_call),
+        )
+        .max(token_return + scalar);
+    // The small view call has ended before the consuming wrapper constructs
+    // its original large Before/Reservation return carrier.
     // This caller is the one original reservation, not an ordinary Begin/Job
     // entry. It has no second request/Job caller packet.
     let cancel = (token
+        + cancel_call
         + visibility::epoch_change_carriers()
         + prepare
             .max(ordinary_install)

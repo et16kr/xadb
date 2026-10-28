@@ -2557,3 +2557,34 @@ artifact는 `artifacts/module-c3-pair-shared-20261028/r1`이다. 로그·결과�
 - 선택 manifest SHA-256: `ca61a4ef9ef736b564c33a8564ccee303f063b52a59d29d52a9dd40f3ea7ccd9`; ELF 186526424B.
 
 최종 독립 D1/D2는 `ACCEPTED_LIMITED_D1_D2`, required0으로 한정 수용했다. `/root/source_admission_review`가22/22파일(Rust11·fixture5·문서6), evidence138개 hash와 native/cleanup을 검산했다. 검토자 재시험0이며 receipt `artifacts/module-c3-pair-shared-20261028/review-final.json` SHA-256은 `e4b933fbd250288aed69b35b307e01e2ab442cf12a3d82a1002a7e8a94c0f76c`다. receipt가 허용한 문서/JSON의 수용 metadata만 후속 반영한다. 공급은 공유 pool claim/ordinary 중재와 원 exclusive CREATE 호출부까지이며, 전체 bound를 빌리는 `ReservedCatalogCreate`의 shared 제품 수신·writable actor/statement·원 source/flush lease·일반 entry/return floor·Row/C3–C5·M4/M5는 미완료다. 문서 verifier·push·전체 workspace/하위 wrapper는 실행하지 않았다.
+
+<a id="c3-create-parts"></a>
+## 2026-10-28 C3 — CREATE 원 자원의 짧은 borrow 본문
+
+기준 main `8613c53`에서 [CREATE-PARTS-001](../contracts/dev3-module-boundaries.md#catalog-create-parts)을 진행한다. 담당/통합 `/root`, 독립 `/root/source_admission_review`. 실제 CREATE planner/Forward/Cancel/allocator 반환을 원6자원의 private view로 옮기며 기존 exclusive reservation을 유지한다. 공유 제품 admission·writable actor/statement·source/flush lease·일반 entry/return floor·Row/C3–C5·M4/M5는 미완료다.
+
+실행 전 [manifest](../../tests/fixtures/dev3-module-c3/create-parts/manifest.json)에 compiler2/runtime7/nativeN01 1회와 입력·품질·유한 예산·실패 시 중단을 동결했다. 신규 borrow 컴파일2와 실제 pending/flush 오류 우선순위·Cancel Before 반환2, 변경된 본문의 정상 Forward/Cancel·Unstaged·final leaf unwind·Drop/current recovery·source를 선택했다. N01은 변경된 실제 Reserve/Forward의 원3PID9→19→25다. 순수 metadata/ordinary gate/System 완료 사례를 반복하지 않는다. 실행 전 기록 당시 NOT_RUN이었고 독립 사전 검토 뒤 아래 범위를 실행했다. 실행별 source/target/ELF는 identity와 hash 기록 후 삭제하고 원 로그/결과/native snapshot과 이전 source별 실패·UNKNOWN을 보존한다.
+
+### r1 실패 보존과 fixture 한정 수정
+
+r1은 scoped Clippy·test build·compiler2와 runtime1–5(source/정상 Forward·Cancel/Unstaged/final unwind/Drop-current recovery)를 통과했다. 신규 MCP01은 의도한 pending Fatal/fence와 상태 불변 검산을 마친 뒤 fixture가 fenced owner의 `check_idle()` 성공을 요구해 실패했다. MCP02/native는 미실행이며 r1 FAIL을 보존한다. 제품 코드와 source 식은 바꾸지 않고 새 fixture의 fenced owner 검산을 정확한 `Cause::Fenced` 기대로 수정한다. 아직 실행하지 않은 MCP02의 동일 잘못된 종료 기대도 함께 고친다.
+
+r2 실행 전 선택은 다음과 같다. r1 inventory 대비 변경 파일이 `catalog_memory/create_parts.rs` 하나인지 실행 전에 검산하고 changed MCP01 및 미실행 MCP02만 실행한다. 완료 compiler2/runtime1–5는 반복하지 않는다. 원 source bound PASS를 원 source/ELF/hash와 함께 보존하며, 현재 build에서 제품/census/type 소스 불변을 독립 검토해 native source admission을 결정한다. r2 source-case 새 실행 PASS로 표기하지 않는다. N01은 이전 run에서 미실행한 동일 범위1회만 남아 있다. 예산·정답·native controller·품질 한도는 그대로다.
+
+### source별 선택 결과와 한정 공급
+
+사전 독립 D1/D2는 변경16/16파일(Rust7·fixture3·문서6) 및 runner를 검토해 required0으로 한정 수용했다. receipt `artifacts/module-c3-create-parts-20261028/review-pre.json` SHA-256은 `338dac70023ba3388c7ab6b30198202fee477d2fe9490144964737620ea85718`다. r2 fixture 정정·선택도 별도로 한정 수용했다. source 식은 CREATE에만 늘렸고 기존 reservation·split port·공통 preparation/ordinary/lifecycle 크기를 변경하지 않았다.
+
+| 실행 | 실제 결과·범위 |
+| --- | --- |
+| r1 | scoped engine lib/tests Clippy·test build PASS, 별도 주입 compiler2 PASS, runtime1–5 PASS; MCP01 FAIL 뒤 중단. MCP02/native NOT_RUN |
+| r2 | cfgtest1파일만 바뀐 inventory를 검산. scoped Clippy·test build PASS, 수정 MCP01/미실행 MCP02 PASS, 원 native N01 1회 PASS |
+| 재사용 | r1의 compiler2/runtime1–5는 원 source/ELF의 PASS로 보존. r2에서 다시 실행하거나 새 PASS로 표시하지 않음. 제품·census/type/입력 소스 불변을 독립 검토한 source admission만 현재 ELF에 적용 |
+
+r1 source5793파일 `9c7b9f12d4848b4aab0ff095eb2b270631b84a6e706ae0c25c12e48890418e90`, ELF `9bdae3eb6b5ab77d87f3b62177515477d268488950ce97b05f97dd38e8918ce4`(187011384B), result `b75bcadc0f8481447b8ffdb387c7550020f1583458f71e7d0a679a6f86206941`이며 원 FAIL을 유지한다. r2 source5793파일 `1481cf2f8e1d3d0be84b89ef373b0d4dd314477c3aa76a008c53d69596d72297`, inventory `f48137586a4fbfef2ce83071ef57e1b4fd24a9cd14c165a973299330e8cdf308`, ELF `ae1b1f035b018288c011456be9f00d4fd6ced7e017ce451adc75e716b53ddd87`(187007968B), manifest `8faeea88d576f55c92b69ca23b415264f2b10201118ac678655bb6dcb38c26a0`, result `843881136902315be7a8ff2bb49fee79447d1f70d62c9e2e15448f875011d7e7`다. 전체 export6312 파일 manifest는 `8eac36dada76a22bda0b84c0987a289235d1e1e9ce18331bc094c497f540ef21`다.
+
+r1의 실제 source 관측은 memory live63496/recovered64872, native live63632/recovered65008B이다. shared20192/20328, metadata186504/186640, whole252040/252176, split ports192B로 원 cap을 유지한다. CREATE phase는 memory plan22571/reserve33256/Forward34468/Cancel33584, native plan22571/reserve34280/Forward34552/Cancel34608B다. 전체 Catalog peak43800B는 기존 retirement가 결정하므로 새 CREATE 호출 비용에도 전체 상계가 같으며, 이 수치는 runtime admission이나 shared 제품 CREATE 완료가 아니다.
+
+r2 native admission `51aeeea0d4e5fbcdf5bd1dee3b7faff804cd84f5299a833edd59590faaa82f9e`은 원 source-case 실행·동일 제품 소스·현재 ELF를 구분해 검산했다. N01 PID 155218,155221,155228, LSN9→19→25, 24.119422초이며 앞2 process는 controller SIGKILL/reap, reentry는 exit0이다. native result `3360079220743de8b823a9b66b28d7f3551f145f10f553c719963e076cb49350`. r2 전체 236.323초다. 새 run의 source/target/ELF는 identity 기록 뒤 삭제했으며 원 로그·결과·runner·hash inventory·native snapshot/trace/ACK는 보존했다. 과거 evidence는 삭제하지 않았다.
+
+최종 독립 D1/D2는 `ACCEPTED_LIMITED_D1_D2`, required0으로 한정 수용했다. 검토자 `/root/source_admission_review`가16/16파일(Rust7·fixture3·문서6), artifact137개 hash와 native/cleanup을 검산했다. 검토자 재시험0이며 receipt `artifacts/module-c3-create-parts-20261028/review-final.json` SHA-256은 `3bcb430855ac823ab6f97c0c2d536d06d23d9f3cf47b6044fff2dad0b6a6ec06`다. receipt가 허용한 수용/status/hash metadata만 후속 반영한다. 공급은 원 CREATE planner/Forward/Cancel/allocator 반환의 private disjoint borrow 본문과 기존 exclusive wrapper 연결까지다. shared 제품 reservation·writable actor/statement/source/flush lease·일반 writer entry/return floor·Row/C3–C5·M4/M5는 미완료다. 문서 verifier·push·전체 workspace/하위 wrapper는 실행하지 않았다.
