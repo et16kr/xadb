@@ -1263,13 +1263,26 @@ gate 없는 선택적 foreground 예약은 reader 점유 때문에 terminal을 �
 <a id="retirement-preparation"></a>
 #### XADB-MODULE-RETIREMENT-PREPARATION-001 — 공유 회수 준비 body의 progress 예약
 
-2026-10-28 · D2 ACCEPTED (준비 body 한정) · 기준 main `fa0f033` · 작성/계약/통합 `/root` · 독립 `/root/source_admission_review`의 사전 설계 조건을 반영했다. 구현·최종 검토·실행 상태는 [해당 증거](../evidence/module-independence-survey-20261026.md#c2-retirement-preparation)를 따른다.
+2026-10-28 · D2 ACCEPTED (준비 body 한정) · 기준 main `fa0f033` · 작성/계약/통합 `/root` · 독립 `/root/source_admission_review`의 사전 설계 조건을 반영했다. 구현·최종 검토·실행 상태는 [해당 증거](../evidence/module-independence-survey-20261026.md#c2-retirement-preparation)를 따른다. 후속 [동기 회수 호출](#retirement-call)이 이 절의 외부 준비 결과·prepare/apply 분리를 대체하며 아래 설명과 원 결과는 당시 범위로 보존한다.
 
 `MutationPort::prepare_catalog_retirement`의 CLR/Prune/RootFree/TerminalFinish는 지원 operation·guardless storage/pool health·origin을 확인하고 원 `close_reads_for_retirement`으로 기존 유한 read를 반환시킨 뒤 source를 예약한다. 그 안에서 기존 selection·registry/control 검산·canonical replay·page/producer·Prepared 구성을 그대로 수행한다. foreground와 Maintenance는 허용하고 flusher·foreign core는 거절한다. 깊은 prepared 검산 전에 gate/Capacity 오류가 먼저 관측될 수 있다. 기존 exclusive `DiskSession` 준비는 해당 공유 진입점의 대상이 아니다.
 
 원 `CatalogRetirementCharge`의 단일 scalar를 split에서 `max(application, preparation)`으로 계산한다. 준비는 caller+공통 body와 selection 중 큰 값에 gate/source·wrapper와 `Result<PreparedCatalog>`의 전달·checked cleanup 비용을 더한다. 같은 `&mut MutationPort`의 준비/적용은 직렬이므로 합하지 않는다. 추가 port field·별도 ledger·caller byte 입력은 없다. 준비 완료 뒤 결과를 보유한 채 source→gate를 checked 반환하며 원 Fatal 우선과 unwind의 charge 보존·gate 정리를 유지한다. gate 중 새 조회는 `InstallationPending`, 예약 부족은 `Census/Capacity/Unchanged`이며 WAL/새 refs/pins/private 쓰기 전에 거절한다. 장기 snapshot과 horizon 검산은 유지한다.
 
 대안인 foreground 방식의 즉시 Capacity는 회수 진행을 기존 reader 점유에 맡기며, ledger capacity 대기는 원 progress/lock 계약과 맞지 않는다. 전체 Prepared에 admission을 넣는 안은 별도 borrow/보유 수명 계약을 요구하므로 이 body 공급과 구별한다. **gate 대기 전 entry, source 반환 이후 tail, caller가 보유하는 하나 이상의 Prepared, prepare→apply 사이 gap의 floor는 계속 미공급이다.** 이 부분공급을 전체 short aggregate 또는 M4/M5 완료로 승격하지 않는다. 원 source holder·Prepared 수명·준비 closure가 바뀌면 재검토한다.
+
+<a id="retirement-call"></a>
+#### XADB-MODULE-RETIREMENT-CALL-001 — 회수 준비·적용의 단일 동기 예약
+
+2026-10-28 · D2 · 기준 main `582ccbf` · 작성/계약/통합 `/root` · 독립 설계 `/root/source_admission_review` 수용. [앞선 준비 body 공급](#retirement-preparation)의 caller-retained 회수 Prepared와 prepare→apply gap을 이 결정으로 대체한다. 원 source별 결과는 보존한다. 구현/실행/최종 검토는 [증거](../evidence/module-independence-survey-20261026.md#c2-retirement-call)에 구분한다.
+
+`MutationPort::retire_catalog(owner, ordinal, operation, private, flusher)`는 원 gate/source를 한 번 취득하고 기존 준비→내부 Prepared→적용→durability/epoch→결과 구성→source/gate checked 반환까지 유지한다. 공유 prepare와 exclusive prepare를 제거하고 apply dispatch를 private으로 제한한다. `DiskSession::catalog_retire`도 split 후 같은 동기 writer를 호출하므로 실제 복구 caller가 이를 수신한다. retirement의 중간 Prepared는 외부로 나오지 않는다. Commit의 Prepared 계약은 그대로다. 준비/적용 중 새 조회는 InstallationPending이며 장기 snapshot의 원 horizon Busy, Maintenance 허용, flusher/foreign 거절, 원 Fatal 우선과 fence 아래 charge 보존은 유지한다.
+
+고정 charge는 준비/application 중 큰 값이며 통합 entry 인자·결과 carrier를 포함한다. 준비용 Result 전달 비용도 보수적으로 유지한다. 두 body는 직렬이고 gate/charge를 중간 반환하거나 재취득하지 않는다. 추가 port field·별도 ledger·가변 byte 입력은 없다. `prepared.check`, exact target/stamp, flusher binding/phase, rollback refs·stage cancel·pin 정리와 WAL 순서는 원 구현을 사용한다. 과거의 준비 후 discard·장기 보유는 회수 API에서 제거하는 내부 계약 변경이며 실제 제품 caller에는 그런 사용이 없었다. 독점 recovery도 이제 guardless health 뒤 gate/source 오류를 먼저 받을 수 있다.
+
+준비 receipt에 guard를 넣어 caller에 반환하는 대안은 임의 보유/중도 Drop과 추가 borrow 수명 계약을 늘린다. private callback 대안은 필요 없는 재진입 가능성을 만든다. 실제 caller가 즉시 적용하므로 유한한 동기 호출을 선택했다. 회수의 caller-retained gap만 닫으며 일반 entry-before-reservation/return-tail floor, Commit Prepared lifetime, 다른 writer/Row, C3–C5 및 M4/M5 전체 인수는 미완료다. 새 retirement caller가 준비 후 보유를 요구하거나 body phase·source holder가 바뀌면 재검토한다.
+
+선택 검증은 [동결 manifest](../../tests/fixtures/dev3-module-c2/retirement-call/manifest.json)의 compiler4(정상 동기 호출, 제거된 공유/독점 prepare, private apply), runtime13(source3·동기 schedule/오류/역할·CLR/Prune/root/terminal·unwind/Fatal), native N02 한 번이다. N02는 같은 ELF의 producer→durable CLR 중단→재진입3PID로 실제 recovery 변경을 검산한다. 필수 native 입력·품질·원 controller30초 한도를 유지한다. 변경 없는 Commit/Row·다른 native cut·전체 wrapper는 반복하지 않는다.
 
 <a id="common-deliveries"></a>
 ## 7. 유한한 공통 공급과 C0/C 인계

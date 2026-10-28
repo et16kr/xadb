@@ -2223,3 +2223,49 @@ r3는 engine lib/tests Clippy(`-D warnings`)·test build·runtime12 exact 사례
 | r3 test ELF (삭제) | `924b9f373f1398637b4f7df162fac6954e61a8fb5fc244a0293da86dfe66ba45` |
 
 원 `artifacts/module-c2-retirement-prepare-20261028/r1`–`r3`의 inventory·runner·compiler/case 로그·결과를 보존했고 각 실행의 export/target/ELF는 종료 후 삭제했다. gate 전 entry/반환 tail·caller-retained Prepared·나머지 writer/Row와 C3–C5·M4/M5 인수는 계속 미완료다. 독립 `/root/source_admission_review`가 변경18/18파일(Rust11·manifest1·문서/JSON6), 생략0·검토율100%를 대조하고 **D1/D2 한정 수용·필수 수정0**으로 판정했다. 원 source5745파일/current fingerprint·각 run의 inventory/runner/helper/log/result hash·현재 코드 일치와 삭제 상태를 검산했고 `/root`가 반영했다. 검토자는 수정·build·시험을 실행하지 않았다. `review-final.json` SHA-256은 `c79d36cf85e6f2a8326613c89838ad3141ca7bd13ccee032f25c1dd68c813c65`다. 변경 파일 rustfmt와 diff whitespace를 확인했으며 문서 verifier·전체 fmt/Clippy·push는 실행하지 않았다.
+
+<a id="c2-retirement-call"></a>
+## main의 Catalog 회수 동기 호출 — 2026-10-28
+
+main `582ccbf`에서 앞선 준비 body의 caller-retained gap을 조사하고 [RETIREMENT-CALL-001](../contracts/dev3-module-boundaries.md#retirement-call)을 선택했다. 작성/계약/통합 `/root`, 독립 `/root/source_admission_review`다. C2 stash·다른 worktree는 사용하지 않았다. 회수만 동기화하며 Commit Prepared·일반 entry/return floor와 전체 M4/M5는 미완료다.
+
+사전 독립 D2는 외부 prepare/discard caller가 시험에만 있고 실제 제품 recovery는 즉시 준비·적용한다는 근거로 동기 호출을 수용했다. 공유/독점 prepare 제거, apply private, 원 gate/source 한 번의 연속 수명과 Maintenance·horizon 보존을 요구했다. [manifest](../../tests/fixtures/dev3-module-c2/retirement-call/manifest.json)는 변경 diff에 compiler4·runtime13·native N02 한 번을 연결했다. 총1800초/compiler420초/runtime case30초/native30초/로그8MiB/stack32MiB, native 사전 독립 identity 검토600초를 동결했다. 기존 native controller의 입력·oracle·3PID/자원/30초 한도는 유지한다. 위 값은 실행 전 계획이며 아래 결과와 구분한다. source inventory·hash·로그·실패/미실행을 보존한 뒤 이번 export/target/ELF만 삭제한다. 무변경 wrapper·문서 verifier·push는 실행하지 않는다.
+
+### 선택 검증·source 결과
+
+r1 production check·engine lib/tests Clippy(`-D warnings`)·test build와 compiler4/runtime13을 각각 한 번 PASS했다. 컴파일 검사는 정상 동기 호출1, 제거된 공유/독점 prepare의 E0599 각1, private apply의 E0624 1이며 exact primary span을 검산했다. runtime은 준비 전·Prepared 보유·적용 완료에서 같은 charge/gate를 관측했고, 새 read의 InstallationPending 및 기존 reader 반환 뒤 진행을 확인했다. 준비 두 unwind cut·원 MF14 첫 페이지 unwind는 새 owner의 독립 corpus 복구로 검산했다. Fatal3cut는 준비 Frame(Fenced), apply 입구 Storage Fatal 우선, 성공 적용 결과를 대체하는 Census/Fenced를 구별하고 원 R05까지10frame WAL을 비교했다.
+
+사전 독립 검토는 새 entry/capture packet의 계수가 불명확하다고 지적했다. 실행 전에 inputs4·즉시 closure capture6·exclusive caller3의 참조와 두 caller의 scalar를 따로 보수 계수했다. port 크기는192B 그대로이며 다른 Commit 창은 변경하지 않았다.
+
+| source 계수 | memory | native 타입 |
+| --- | ---: | ---: |
+| shared retained | 20192 | 20328 |
+| 공통 preparation body | 32144 | 33168 |
+| 고정 retirement charge | 42198 | 42198 |
+| shared + charge | 62390 | 62526 |
+| live peak | 61894 | 62030 |
+| recovered peak | 63270 | 63406 |
+
+값은 source-value 상계이며 RSS·stack 실측이 아니다. 준비/application은 직렬이며 둘을 합한 예약이 아니다. 기존 Commit Pending+Full65502B는 무변경 원 결과로 보존하고 새 실행으로 승격하지 않는다. 일반 entry-before-reservation/return-tail floor와 Commit Prepared lifetime·나머지 writer/Row·전체 M4/M5는 미완료다.
+
+| r1 보존 identity | SHA-256 |
+| --- | --- |
+| manifest | `e7063515b6a32bb1196ff6b013761b5cc25dc4a4fc343a8f9f0b747a080515e9` |
+| source5750files | `6cd4e3b8df475887795947ecb6990803e4ea2e3f6d05009a0385db64546fa4c2` |
+| inventory | `1c6a1ad0942a7aa71052a8501b7b41a8f5894303e82e67c8a980614c8a14ac7e` |
+| runner | `ca7fce9421abf0910f3677fdc9a91ca3afaf35e270811a77d7be9c86b83b0311` |
+| test ELF | `99158d45058419965b7a593d97835c384c23717507f5c923c45cfe9e9406804b` |
+| pre-native result | `39e80fb4d9ab6e02d31cbca8350fba14c422c670bc78f4e8b799cec4f5bb7539` |
+
+같은 source/ELF의 native N02를 독립 admission 뒤 한 번 PASS했다. `/root/source_admission_review`가 compiler/runtime 로그·product5750파일 및 full export6269파일·실제 ELF를 대조하고 원 controller30초/3PID/자원 한도를 유지한 admission만 작성했다. producer PID90856는 LSN8 Catalog home 전, recovery PID90859는 LSN10 CLR durable 뒤 실제 SIGKILL됐고 reentry PID90862는 capture10/epoch3에서 LSN16으로 정상 종료했다. 원 독립 corpus가 WAL·base·home·정리·pin/FD를 검산했다. 실제 native 16.006초, 전체 실행(독립 검토 대기 포함) 220.521초, 선택 runtime 로그15460B다. 성능 인수 결과는 아니다.
+
+| 추가 보존 identity | SHA-256 |
+| --- | --- |
+| full export inventory | `df4494e0f1490031f55a13e5ca4db9a560bcd161446206019b19e9560a7b9574` |
+| 독립 native admission | `0d3f92bc1b35e498167ced98d9fa305eac712777986398dac5611b1314dd7cf4` |
+| native N02 result | `abd24e78ff91840d8c62741ef81430ca9dcfe7ba31fcdf799f4a4aee2873e25e` |
+| 전체 r1 result | `b4ad6e63436b4b6117abb7c84633d02c5a7171866c11752f1c4f11d7e509de05` |
+
+`artifacts/module-c2-retirement-call-20261028/r1`에 runner·source manifest·compiler/runtime/native 원 로그·database snapshot·결과를 보존했고 이번 export/target/ELF를 삭제했다. 코드 변경 없이 완료 사례를 반복하지 않았고 이전 실패·원 source 결과는 수정하지 않았다. 최종 문서·전체 diff의 독립 검토는 아래에 별도 기록한다.
+
+독립 `/root/source_admission_review`가 변경17/17파일(Rust6·fixture/manifest5·문서/JSON6), 생략0·검토율100%를 확인하여 **D1/D2 한정 수용·필수 수정0**으로 판정했다. 현재 source5750파일/fingerprint·compiler/runtime/helper hash·admission evidence44개·N02의3PID/cut/reaped/base hash·원 예산·삭제 상태를 대조했다. 검토자는 build·시험·native 재실행·제품/시험 수정 없이 receipt만 기록했고 `/root`가 반영했다. `review-final.json` SHA-256은 `c6fefbbcaada835e8484d4ed7ccf8af1fa366806bf82031b3d70c30515cb140f`다. 후속 변경은 이 receipt hash와 채택 상태 기록뿐이며 제품/fixture/manifest는 r1과 같다. 변경 파일 rustfmt와 diff whitespace를 확인했고 문서 verifier·전체 workspace fmt/Clippy·push는 실행하지 않았다.

@@ -1,0 +1,108 @@
+{
+  "scope": "C2 synchronous retirement: original gate and fixed source loan span prepare, private Prepared, apply and result cleanup; no external retirement preparation. Other writers/entry-return floors/M4-M5 remain incomplete",
+  "baseline_commit": "582ccbf",
+  "budget": {
+    "total_seconds": 1800,
+    "compiler_seconds": 420,
+    "case_seconds": 30,
+    "output_bytes": 8388608,
+    "rust_min_stack": 33554432,
+    "native_admission_seconds": 600
+  },
+  "compiler_tests": [
+    {
+      "name": "synchronous",
+      "path": "synchronous.rs",
+      "bytes": 547,
+      "sha256": "6ded44ded345262b908f1804e5d36953e74c219a11ed9fae46213f0cb90de3dc",
+      "expected_code": null,
+      "primary_line": null
+    },
+    {
+      "name": "shared_prepare",
+      "path": "shared_prepare.rs",
+      "bytes": 584,
+      "sha256": "f60f66f242ef5028788d883671654e7699b833fa5607f6af40fb080de033cf62",
+      "expected_code": "E0599",
+      "primary_line": 11
+    },
+    {
+      "name": "private_apply",
+      "path": "private_apply.rs",
+      "bytes": 541,
+      "sha256": "2cb37aa47715f688ef625528f1b4e8d19869f117d5a9807c6ace2569b91b7604",
+      "expected_code": "E0624",
+      "primary_line": 10
+    },
+    {
+      "name": "exclusive_prepare",
+      "path": "exclusive_prepare.rs",
+      "bytes": 466,
+      "sha256": "dc2914d9c8aeb4d0860b4def8e3800972937341d009523273874f2f0230421c9",
+      "expected_code": "E0599",
+      "primary_line": 10
+    }
+  ],
+  "runtime_tests": [
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::source::tests::retirement_fixed_charge_fits_and_cannot_use_commit_transitions",
+      "reason": "changed synchronous entry and result carriers in fixed preparation/application charge; memory and native bound"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::create_pair::catalog_commit::tests::consumed_preparation_has_bounded_pending_image",
+      "reason": "changed common retirement census feeds live/recovered source peak"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::owner_tests::cached_catalog_charges_count_exclusive_split_and_live_ports",
+      "reason": "split retirement charge recalculated while port storage must remain unchanged"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::reference_pins::catalog_mt04_reader_returns_before_clr_progress",
+      "reason": "changed synchronous CLR admission now spans preparation and apply; parked read and Intent schedule"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::reference_pins::catalog_retirement_capacity_returns_gate_before_effects",
+      "reason": "changed synchronous capacity before any preparation; private/WAL unchanged and exclusive retry"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::lifecycle::mc02_forward_clr_abort_cleanup",
+      "reason": "changed shared synchronous CLR/RootFree/TerminalFinish with Maintenance owner and original bytes"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::visibility_gap::catalog_mt01_q0_publication_gap",
+      "reason": "changed synchronous Prune with old q0 snapshot and original horizon rejection"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::visibility_gap::catalog_mt02_q1_publication_gap",
+      "reason": "changed synchronous Prune with old q1 snapshot and original horizon rejection"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::retirement_prepare::preparation_waits_for_reader_and_returns_its_source",
+      "reason": "changed continuous Preparing/Prepared/Completed schedule holds identical charge and gate across former caller gap"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::retirement_prepare::preparation_capacity_errors_roles_and_retry",
+      "reason": "changed synchronous capacity, malformed, unsupported, foreign/flusher, Maintenance retry"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::retirement_prepare::preparation_unwind_keeps_charge_and_fresh_recovery",
+      "reason": "changed synchronous prep unwind cuts retain charge and recover original R04 prefix using MF14 oracle"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::retirement_prepare::preparation_fatal_preserves_original_error_and_charge",
+      "reason": "changed synchronous fence at Preparing/Prepared preserves body Fatal; Completed cleanup Fatal replaces success with exact original R05 WAL"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::retire_failures::catalog_mf14_clr_first_page_unwind",
+      "reason": "exclusive CLR now enters unified split writer; first-page unwind and fresh-owner recovery must retain original rollback/ref semantics"
+    }
+  ],
+  "native_tests": [
+    {
+      "case": "N02",
+      "reason": "changed exclusive recovery Catalog CLR/RootFree/TerminalFinish via unified writer; same ELF producer kill, durable-CLR recovery kill and third-process reentry, one attempt",
+      "controller": "scripts/dev3_catalog_native.py",
+      "wall_seconds": 30
+    }
+  ]
+}

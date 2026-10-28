@@ -164,20 +164,10 @@ fn visibility_gap(case_id: &str, base: usize) {
                     let spare = lent.recv_timeout(WAIT).unwrap();
                     let before = state.lock().unwrap().images();
                     let ordinal = oracle.ordinal(&id(base, 5));
-                    let error = match writer.prepare_catalog_retirement(
-                        owner,
-                        ordinal,
-                        Operation::Prune,
-                        spare,
-                    ) {
-                        Err(error) => error,
-                        Ok(prune) => {
-                            match writer.apply_catalog_retirement(owner, prune, &mut flush) {
-                                Err(error) => error,
-                                Ok(_) => panic!("old snapshot must keep Prune below committed q"),
-                            }
-                        }
-                    };
+                    let error = writer
+                        .retire_catalog(owner, ordinal, Operation::Prune, spare, &mut flush)
+                        .err()
+                        .expect("old snapshot must keep Prune below committed q");
                     assert!(
                         busy(error.effect, &error.cause),
                         "Prune with old snapshot: {error:?}"

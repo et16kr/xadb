@@ -25,11 +25,6 @@ fn catalog_mt04_reader_returns_before_clr_progress() {
             live.catalog_rollback_start(owner, actor, private).unwrap();
             oracle.check(live, state, "R04");
             assert_eq!(live.catalog_test_references(), ((0, 0, 0), false));
-            // Preparation now has its own progress gate. Complete it before
-            // parking the reader that this test admits ahead of application.
-            let prepared = live
-                .prepare_catalog_retirement(owner, 1, Operation::Clr, private)
-                .unwrap();
             let (entered, arrived) = sync_channel(1);
             let (resume, release) = sync_channel(1);
             hook::install(core, Point::LookupCaptured, entered, release);
@@ -100,7 +95,7 @@ fn catalog_mt04_reader_returns_before_clr_progress() {
                         reader_private
                     });
                     writer
-                        .apply_catalog_retirement(owner, prepared, &mut flush)
+                        .retire_catalog(owner, 1, Operation::Clr, private, &mut flush)
                         .unwrap();
                     assert!(!fence.is_fenced());
                     assert_eq!(writer.catalog_test_source_used(), 0);
@@ -153,16 +148,14 @@ fn catalog_retirement_capacity_returns_gate_before_effects() {
             );
             live.catalog_rollback_start(owner, actor, private).unwrap();
             let before = state.lock().unwrap().images();
-            let prepared = live
-                .prepare_catalog_retirement(owner, 1, Operation::Clr, private)
-                .unwrap();
+            let private_before = hex(private);
             {
                 let (mut writer, reader, mut flush) = live.split();
                 let [shared, ..] = writer.catalog_test_commit_charges();
                 let held = 65536 - shared - writer.catalog_test_retirement_charge() + 1;
                 let error = reader.catalog_test_with_held_source(held, || {
                     let error = writer
-                        .apply_catalog_retirement(owner, prepared, &mut flush)
+                        .retire_catalog(owner, 1, Operation::Clr, private, &mut flush)
                         .err()
                         .unwrap();
                     assert_eq!(writer.catalog_test_source_used(), held as u64);
@@ -182,6 +175,7 @@ fn catalog_retirement_capacity_returns_gate_before_effects() {
                 assert_eq!(writer.catalog_test_physical_pins(), 0);
             }
             assert_eq!(state.lock().unwrap().images(), before);
+            assert_eq!(hex(private), private_before);
             owner.check_idle().unwrap();
             assert!(!fence.is_fenced());
             live.catalog_retire(owner, 1, Operation::Clr, private)

@@ -89,6 +89,7 @@ pub(super) fn retirement_source_peak() -> usize {
         + commit_carrier_bytes()
         + 2 * size_of::<Result<crate::storage::semantic_catalog::Observation>>()
         + 2 * size_of::<crate::storage::session_fence::UnwindFence<'_>>()
+        + retirement_entry_bytes()
 }
 
 /// A fixed split-time cost. Operation callers cannot select a byte count.
@@ -99,17 +100,27 @@ impl CatalogRetirementCharge {
     }
 }
 
-/// The shared writer's preparation wrapper keeps the admission and gate while
-/// its nested selection/replay/producer returns. The Result is then retained
-/// during checked cleanup, including the forwarding merge Results. These are
-/// value bounds, not a claim about a caller retaining Prepared after return.
+/// The synchronous writer keeps the admission and gate through preparation,
+/// application and result cleanup. Prepared is constructed and consumed inside
+/// that call; no preparation receipt escapes to an uncharged caller.
 pub(super) fn retirement_prepare_carrier_bytes() -> usize {
     commit_carrier_bytes()
         + 3 * size_of::<Result<PreparedCatalog<'_, '_, '_>>>()
         + size_of::<crate::storage::session_fence::UnwindFence<'_>>()
-        + 2 * size_of::<crate::storage::semantic_catalog::Operation>()
+        + 2 * size_of::<Result<crate::storage::semantic_catalog::Observation>>()
+        + retirement_entry_bytes()
+}
+
+/// The unified caller's ordinal/operation and borrowed arguments survive into
+/// either closure. Count both by-value arguments and caller packet copies.
+fn retirement_entry_bytes() -> usize {
+    2 * size_of::<crate::storage::semantic_catalog::Operation>()
         + 2 * size_of::<usize>()
-        + 5 * size_of::<&()>()
+        // Synchronous inputs self/owner/private/flusher (4); immediate
+        // closure captures those plus ordinal/operation (6); exclusive
+        // DiskSession caller self/owner/private (3). Keep this packet distinct
+        // from commit_carrier's original application and cleanup references.
+        + (4 + 6 + 3) * size_of::<&()>()
 }
 
 /// The retained admission and gate, their Results and caller conversions, and

@@ -98,16 +98,6 @@ impl<'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
         let prepared = self.prepare_catalog_job(owner, ordinal, Operation::ReleaseRole, private)?;
         self.apply_existing_catalog(owner, prepared)
     }
-    pub(crate) fn prepare_catalog_retirement<'i>(
-        &mut self,
-        owner: &mut Owner<'c, 's>,
-        ordinal: usize,
-        operation: Operation,
-        private: &'i mut [u8; PRIVATE_BYTES],
-    ) -> Result<PreparedCatalog<'i, 'c, 's>> {
-        self.catalog_preparation()
-            .prepare_catalog_retirement(owner, ordinal, operation, private)
-    }
     pub(crate) fn catalog_retire(
         &mut self,
         owner: &mut Owner<'c, 's>,
@@ -115,9 +105,8 @@ impl<'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
         operation: Operation,
         private: &mut [u8; PRIVATE_BYTES],
     ) -> Result<Observation> {
-        let prepared = self.prepare_catalog_retirement(owner, ordinal, operation, private)?;
         let (mut writer, _, mut flusher) = self.split();
-        writer.apply_catalog_retirement(owner, prepared, &mut flusher)
+        writer.retire_catalog(owner, ordinal, operation, private, &mut flusher)
     }
 }
 
@@ -305,16 +294,17 @@ impl<'b, 'a, 's, 'c, 'p, 'd, 'm, 'w, W: WriterNamespace>
 impl<'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
     RetentionWriter<'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W>
 {
-    /// Preparation uses the same finite-reader gate and fixed progress budget
-    /// as application. The returned receipt keeps its original owner/stamps;
-    /// it carries no new authority and application still revalidates it.
-    pub(crate) fn prepare_catalog_retirement<'i>(
+    /// Prepare and consume a retirement under one original progress reservation.
+    /// No caller can retain the intermediate PreparedCatalog or admit a read in
+    /// the preparation/application gap. Long snapshots keep their own horizon.
+    pub(crate) fn retire_catalog(
         &mut self,
         owner: &mut Owner<'c, 's>,
         ordinal: usize,
         operation: Operation,
-        private: &'i mut [u8; PRIVATE_BYTES],
-    ) -> Result<PreparedCatalog<'i, 'c, 's>> {
+        private: &mut [u8; PRIVATE_BYTES],
+        flusher: &mut RetentionFlusher<'_, 's, 'c, 'p, 'd, 'm, 'w, W>,
+    ) -> Result<Observation> {
         let _unwind = self.storage.session_fence().unwind_guard();
         if !matches!(
             operation,
@@ -375,61 +365,35 @@ impl<'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
             self.pool.bound_core(),
             crate::transaction::concurrency::catalog_test_support::Point::RetirementPreparing,
         );
-        let result = self
-            .catalog_preparation()
-            .prepare_catalog_retirement(owner, ordinal, operation, private);
+        let result = (|| {
+            let prepared = self
+                .catalog_preparation()
+                .prepare_catalog_retirement(owner, ordinal, operation, private)?;
+            #[cfg(test)]
+            crate::transaction::concurrency::catalog_test_support::hit(
+                self.pool.bound_core(),
+                crate::transaction::concurrency::catalog_test_support::Point::RetirementPrepared,
+            );
+            self.apply_catalog_retirement(owner, prepared, flusher)
+        })();
         #[cfg(test)]
         crate::transaction::concurrency::catalog_test_support::hit(
             self.pool.bound_core(),
-            crate::transaction::concurrency::catalog_test_support::Point::RetirementPrepared,
+            crate::transaction::concurrency::catalog_test_support::Point::RetirementCompleted,
         );
         let returned = source.finish_checked().map_err(RetentionError::from);
         merge(merge(result, returned), reopen(gate))
     }
 
-    /// The caller may retain an original reader/snapshot while this writer and
-    /// the original flusher are borrowed. No second pool or mutable owner exists.
-    pub(crate) fn apply_catalog_retirement(
+    /// Internal consuming dispatch. Only retire_catalog calls it while holding
+    /// the original gate and source reservation from before preparation.
+    fn apply_catalog_retirement(
         &mut self,
         owner: &mut Owner<'c, 's>,
         prepared: PreparedCatalog<'_, 'c, 's>,
         flusher: &mut RetentionFlusher<'_, 's, 'c, 'p, 'd, 'm, 'w, W>,
     ) -> Result<Observation> {
-        let _unwind = self.storage.session_fence().unwind_guard();
-        health(self.storage, self.pool)?;
-        if !matches!(
-            prepared.operation(),
-            Operation::Clr | Operation::Prune | Operation::RootFree | Operation::TerminalFinish
-        ) {
-            return Err(unchanged(
-                RetentionPhase::Prepare,
-                RetentionCause::WrongState,
-            ));
-        }
-        let gate = owner
-            .close_reads_for_retirement(self.pool.bound_core())
-            .map_err(|error| RetentionError {
-                phase: RetentionPhase::Prepare,
-                cause: RetentionCause::Concurrency(error),
-                effect: error.effect,
-            })?;
-        let reopen = |gate: crate::transaction::concurrency::TerminalReadGate<'c, 's>| {
-            gate.reopen_checked().map_err(|error| RetentionError {
-                phase: RetentionPhase::Census,
-                cause: RetentionCause::Concurrency(error),
-                effect: error.effect,
-            })
-        };
-        let source = match source::OperationSourceAdmission::catalog_retirement(
-            self.isolation,
-            &self.commit_charges,
-            &self.retirement_charge,
-            &gate,
-        ) {
-            Ok(source) => source,
-            Err(error) => return merge(Err(RetentionError::from(error)), reopen(gate)),
-        };
-        let result = match prepared.targets().len() {
+        match prepared.targets().len() {
             4 => self.apply_catalog_retirement_n::<4>(owner, prepared, flusher),
             7 => self.apply_catalog_retirement_n::<7>(owner, prepared, flusher),
             9 => self.apply_catalog_retirement_n::<9>(owner, prepared, flusher),
@@ -437,11 +401,7 @@ impl<'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
                 RetentionPhase::Prepare,
                 RetentionCause::Invariant,
             )),
-        };
-        // All transient refs, physical guards and publication have ended.
-        // Preserve an original Fatal and still attempt both checked returns.
-        let returned = source.finish_checked().map_err(RetentionError::from);
-        merge(merge(result, returned), reopen(gate))
+        }
     }
     fn apply_catalog_retirement_n<const N: usize>(
         &mut self,

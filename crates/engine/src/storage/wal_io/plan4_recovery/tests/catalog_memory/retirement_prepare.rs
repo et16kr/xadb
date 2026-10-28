@@ -1,4 +1,4 @@
-//! Shared writer preparation: finite-reader progress, fixed source reservation,
+//! Synchronous retirement: one source reservation across preparation and apply,
 //! checked result cleanup and unwind, against the original Catalog corpus.
 use super::*;
 use crate::storage::disk::{RetentionCause, RetentionPhase};
@@ -13,12 +13,8 @@ pub(super) fn retire<'s, 'c>(
     private: &mut [u8; PRIVATE_BYTES],
 ) {
     let (mut writer, reader, mut flush) = live.split();
-    let prepared = writer
-        .prepare_catalog_retirement(owner, ordinal, operation, private)
-        .unwrap();
-    assert_eq!(reader.catalog_test_source_used(), 0);
     writer
-        .apply_catalog_retirement(owner, prepared, &mut flush)
+        .retire_catalog(owner, ordinal, operation, private, &mut flush)
         .unwrap();
     assert_eq!(reader.catalog_test_source_used(), 0);
 }
@@ -101,19 +97,30 @@ fn preparation_waits_for_reader_and_returns_its_source() {
                         assert!(hook::observe(core).read_gate_closed);
                         assert_eq!(reader_ref.catalog_test_source_used(), charge);
                         assert_eq!(state.lock().unwrap().images(), before, "preparation has WAL0");
+                        let snapshot = reader_ref.catalog_snapshot(&mut late).unwrap();
+                        let error = reader_ref.lookup_catalog_resident(&mut late, &snapshot,
+                            ObjectId::new(6).unwrap(), &mut Plan4ResidencyCursor::new(), reader_private).err().unwrap();
+                        snapshot.release_checked().unwrap();
+                        assert!(matches!(error.cause, RetentionCause::Concurrency(error)
+                            if error.cause == crate::transaction::concurrency::Cause::InstallationPending));
+                        let (entered, completed) = sync_channel(1);
+                        let (resume_complete, release) = sync_channel(1);
+                        hook::install(core, Point::RetirementCompleted, entered, release);
                         resume_return.send(Resume::Continue).unwrap();
+                        completed.recv_timeout(WAIT).unwrap();
+                        assert!(hook::observe(core).read_gate_closed);
+                        assert_eq!(reader_ref.catalog_test_source_used(), charge);
+                        assert_ne!(state.lock().unwrap().images(), before, "application completed before cleanup");
+                        resume_complete.send(Resume::Continue).unwrap();
                     });
-                    let prepared = writer
-                        .prepare_catalog_retirement(owner, 1, Operation::Clr, private)
+                    writer
+                        .retire_catalog(owner, 1, Operation::Clr, private, &mut flush)
                         .unwrap();
                     assert_eq!(reader.catalog_test_source_used(), 0);
                     assert!(!hook::observe(core).read_gate_closed);
                     assert_eq!(writer.catalog_test_references(), ((0, 0, 0), false));
                     assert_eq!(writer.catalog_test_physical_pins(), 0);
                     controlling.join().unwrap();
-                    writer
-                        .apply_catalog_retirement(owner, prepared, &mut flush)
-                        .unwrap();
                 });
             }
             oracle.check(live, state, "R05");
@@ -151,7 +158,7 @@ fn preparation_capacity_errors_roles_and_retry() {
                 let held = 65536 - shared - writer.catalog_test_retirement_charge() + 1;
                 let error = reader.catalog_test_with_held_source(held, || {
                     let error = writer
-                        .prepare_catalog_retirement(owner, 1, Operation::Clr, private)
+                        .retire_catalog(owner, 1, Operation::Clr, private, &mut flush)
                         .err()
                         .unwrap();
                     assert_eq!(reader.catalog_test_source_used(), held as u64);
@@ -166,7 +173,7 @@ fn preparation_capacity_errors_roles_and_retry() {
                 assert_eq!(hex(private), private_before);
                 // Malformed selection fails inside the reserved preparation.
                 let error = writer
-                    .prepare_catalog_retirement(owner, usize::MAX, Operation::Clr, private)
+                    .retire_catalog(owner, usize::MAX, Operation::Clr, private, &mut flush)
                     .err()
                     .unwrap();
                 assert_eq!(error.effect, Effect::Unchanged);
@@ -174,19 +181,19 @@ fn preparation_capacity_errors_roles_and_retry() {
                 assert_eq!(reader.catalog_test_source_used(), 0);
                 assert!(!hook::observe(core).read_gate_closed);
                 let error = writer
-                    .prepare_catalog_retirement(owner, 1, Operation::Cancel, private)
+                    .retire_catalog(owner, 1, Operation::Cancel, private, &mut flush)
                     .err()
                     .unwrap();
                 assert!(matches!(error.cause, RetentionCause::Unsupported));
                 let error = writer
-                    .prepare_catalog_retirement(flusher, 1, Operation::Clr, private)
+                    .retire_catalog(flusher, 1, Operation::Clr, private, &mut flush)
                     .err()
                     .unwrap();
                 assert!(matches!(error.cause, RetentionCause::Concurrency(error)
                     if error.cause == crate::transaction::concurrency::Cause::InvalidRole));
                 let mut alien = foreign.try_owner(OwnerRole::Foreground).unwrap();
                 let error = writer
-                    .prepare_catalog_retirement(&mut alien, 1, Operation::Clr, private)
+                    .retire_catalog(&mut alien, 1, Operation::Clr, private, &mut flush)
                     .err()
                     .unwrap();
                 assert!(matches!(error.cause, RetentionCause::Concurrency(error)
@@ -196,12 +203,8 @@ fn preparation_capacity_errors_roles_and_retry() {
                 assert_eq!(state.lock().unwrap().images(), before);
                 assert_eq!(hex(private), private_before);
                 let mut maintenance = core.try_owner(OwnerRole::Maintenance).unwrap();
-                let prepared = writer
-                    .prepare_catalog_retirement(&mut maintenance, 1, Operation::Clr, private)
-                    .unwrap();
-                assert_eq!(reader.catalog_test_source_used(), 0);
                 writer
-                    .apply_catalog_retirement(&mut maintenance, prepared, &mut flush)
+                    .retire_catalog(&mut maintenance, 1, Operation::Clr, private, &mut flush)
                     .unwrap();
                 maintenance.check_idle().unwrap();
             }
@@ -237,7 +240,7 @@ fn preparation_unwind_keeps_charge_and_fresh_recovery() {
                     let (entered, arrived) = sync_channel(1);
                     let (resume, release) = sync_channel(1);
                     hook::install(core, point, entered, release);
-                    let (mut writer, reader, _) = live.split();
+                    let (mut writer, reader, mut flush) = live.split();
                     std::thread::scope(|scope| {
                         let controlling = scope.spawn(move || {
                             arrived.recv_timeout(WAIT).unwrap();
@@ -245,11 +248,12 @@ fn preparation_unwind_keeps_charge_and_fresh_recovery() {
                         });
                         assert!(
                             catch_unwind(AssertUnwindSafe(|| {
-                                let _ = writer.prepare_catalog_retirement(
+                                let _ = writer.retire_catalog(
                                     owner,
                                     1,
                                     Operation::Clr,
                                     private,
+                                    &mut flush,
                                 );
                             }))
                             .is_err()
@@ -278,7 +282,11 @@ fn preparation_unwind_keeps_charge_and_fresh_recovery() {
 fn preparation_fatal_preserves_original_error_and_charge() {
     case("MCRP05", || {
         let oracle = Oracle::new();
-        for point in [Point::RetirementPreparing, Point::RetirementPrepared] {
+        for point in [
+            Point::RetirementPreparing,
+            Point::RetirementPrepared,
+            Point::RetirementCompleted,
+        ] {
             with_fresh!(oracle, |live,
                                  owner,
                                  flusher,
@@ -298,7 +306,7 @@ fn preparation_fatal_preserves_original_error_and_charge() {
                 let (entered, arrived) = sync_channel(1);
                 let (resume, release) = sync_channel(1);
                 hook::install(core, point, entered, release);
-                let (mut writer, reader, _) = live.split();
+                let (mut writer, reader, mut flush) = live.split();
                 let error = std::thread::scope(|scope| {
                     let controlling = scope.spawn(move || {
                         arrived.recv_timeout(WAIT).unwrap();
@@ -306,7 +314,7 @@ fn preparation_fatal_preserves_original_error_and_charge() {
                         resume.send(Resume::Continue).unwrap();
                     });
                     let error = writer
-                        .prepare_catalog_retirement(owner, 1, Operation::Clr, private)
+                        .retire_catalog(owner, 1, Operation::Clr, private, &mut flush)
                         .err()
                         .unwrap();
                     controlling.join().unwrap();
@@ -320,11 +328,17 @@ fn preparation_fatal_preserves_original_error_and_charge() {
                             if error.cause == crate::storage::dirty_frame::Cause::Fenced),
                         "original body Fatal wins over cleanup Fatal"
                     );
+                } else if point == Point::RetirementPrepared {
+                    assert_eq!(error.phase, RetentionPhase::Prepare);
+                    assert!(
+                        matches!(error.cause, RetentionCause::Storage(_)),
+                        "original apply-entry Fatal wins over cleanup Fatal"
+                    );
                 } else {
                     assert_eq!(error.phase, RetentionPhase::Census);
                     assert!(
                         matches!(error.cause, RetentionCause::Fenced),
-                        "cleanup Fatal replaces successful Prepared"
+                        "cleanup Fatal replaces successful applied observation"
                     );
                 }
                 assert_eq!(
@@ -334,7 +348,14 @@ fn preparation_fatal_preserves_original_error_and_charge() {
                 assert!(!hook::observe(core).read_gate_closed);
                 assert_eq!(writer.catalog_test_references(), ((0, 0, 0), false));
                 assert_eq!(writer.catalog_test_physical_pins(), 0);
-                assert_eq!(state.lock().unwrap().images(), before);
+                if point == Point::RetirementCompleted {
+                    let mut frames: Vec<_> = (1..=5).map(|n| oracle.native_frame(n)).collect();
+                    frames.extend((1..=5).map(|n| oracle.frame(&format!("R{n:02}"))));
+                    assert_wal(state, 1, &frames);
+                    assert_ne!(state.lock().unwrap().images(), before);
+                } else {
+                    assert_eq!(state.lock().unwrap().images(), before);
+                }
             });
         }
     });

@@ -1,5 +1,7 @@
 # 현재 구현
 
+2026-10-28 [C2 Catalog 회수 동기 호출](../evidence/module-independence-survey-20261026.md#c2-retirement-call): 준비·적용·결과 정리를 원 gate/source 한 번에 연결하고 독점 recovery도 수신했다. compiler4/runtime13·native N02(3PID) 각1회 PASS. 회수 caller-retained gap을 닫았고 고정 charge42198B/port192B이며 일반 entry/return floor·Commit lifetime·다른 writer/Row와 전체 M4/M5는 미완료다.
+
 2026-10-28 [C2 공유 Catalog 회수 준비 body](../evidence/module-independence-survey-20261026.md#c2-retirement-preparation): MutationPort 준비의 replay/page 접근·결과 cleanup까지 원 gate/source 예약을 유지한다. 선택12 PASS·원 compile FAIL2 보존. 고정 charge42074B·port192B 유지, caller-retained Prepared·entry/return floor·전체 M4/M5는 미완료다.
 
 2026-10-28 [C2 Catalog 회수 progress](../evidence/module-independence-survey-20261026.md#c2-retirement-progress): main `c217fbf`에서 CLR/Prune/RootFree/TerminalFinish를 원 read gate와 고정 source 예약에 연결했다. Maintenance 역할·장기 snapshot horizon을 유지하고 source→gate 정리를 수행한다. source별 선택7+6개 PASS·원 compile/시험 FAIL을 보존하며 native shared+회수62402B, Pending+Full65502B다. 준비 경로·다른 writer·entry/return floor·Row progress·M4/M5는 미완료다.
