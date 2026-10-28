@@ -638,6 +638,19 @@ Reserve stage가 실제 Unchanged이면 같은 key로 allocator를 읽고 원 `U
 
 실제 소비 예는 `T1 Serializable read-only begin→Catalog lookup→read operation만 종료(view/Tx snapshot 유지)→T2 begin/statement→reserve_catalog_create(&mut maintenance,owner2,&view2,...)→initialize→T2 statement 종료/Commit→T1 statement 종료/finish_read_only=Rejected(SerializationConflict)`다. T1의 장기 view가 mutation/flush를 가변 대여하지 않으므로 Rust 수명과 격리 의미가 함께 성립한다. T1이 아직 physical pin을 보유했다면 Reserve 이전 Busy이고 T1이 종료한 뒤 같은 view로 재준비한다. 이를 위해 장기 snapshot을 버리거나 read-only 종료 검증을 생략하지 않는다.
 
+<a id="catalog-atomic-leaf"></a>
+#### XADB-MODULE-PAIR-ATOMIC-001 — exclusive pair의 원자 leaf 선행
+
+2026-10-28 · D2 · main `ef95a8a` · 작성/통합 `/root`, 독립 `/root/source_admission_review`. [공유 claim 동결안](#catalog-claim-gap)의 하위 구현을 먼저 공급한다. 실제 `prepare_tx_pair/finish_tx_pair/cancel_tx_pair`의 `&mut SharedPool` 배제는 유지하고 close/claim·종료가 분리된 registry 구간을 각각 하나로 합친다. 공유 API·일반 pin/load/capture gate·key 기반 subset 공급은 이 단위의 완료 범위가 아니다.
+
+prepare는 두 victim `try_write` 뒤 원 `FencedInitRegistry`에서 health/registry 유효성·retention mode·pins/load/flush/init/closed pair 부재, seven-existing exact identity/role/중복/victim 배제·pair 주소 부재·두 successor를 모두 변경 전에 검산한다. 등록 victim은 원 `pair_in`으로 clean/DPT/requirement 정합성을 확인하고 빈 victim은 fresh/DPT0/requirement0 및 selected closed_index의 원 MissingTarget을 보존한다. 같은 guard에서 directory close·fresh metadata·원 claim을 설치하며 Unchanged는 그 전에만 반환한다. 변경 중 unwind는 guard가 unlock되기 전에 fence하고 generation을 되돌리지 않는다.
+
+finish/cancel의 최종 leaf는 실제 key/core/binding/fence/identity·quiescence·publication·완료/permit을 검산한 뒤 directory/claim/key.active를 같이 종료한다. cancel은 allocator read와 두 victim write를 최종 검산까지 유지하여 원 allocator-after를 같은 registry의 `pair_in`으로 대조한다. 잘못된 key의 indices는 content 접근 전에 검산한다. 원 stage/durable/control/epoch/파일 형식은 바꾸지 않는다.
+
+source는 기존 보수 합과 새 atomic parent+원 entry validation max를 비교한다. 명시 parent에 FencedInitRegistry·victim write2·allocator read1·record/key/Result·완료/permit·배열/반환값을 계수하고 entry의 directory/init/load/flush/DPT 중첩 식을 별도로 더한다. 이전 일반 scalar1024B로 새 packet을 대신하지 않는다. 기존 cap은 유지한다.
+
+실행 전 [manifest](../../tests/fixtures/dev3-module-c3/pair-atomic/manifest.json)에 runtime8·native N01 1회와 총1800초/compiler420초/case45초/native30초/admission600초/로그8MiB/stack32MiB를 동결한다. metadata-only fixture·실제 Unstaged/Cancelled/Forward·두 final unwind·원 Reserve prefix 복구를 구분한다. Native는 원3PID9→19→25다. 공유 경쟁이나 모든 fault 복구를 실행한 것으로 확대하지 않는다. [구현/실행 증거](../evidence/module-independence-survey-20261026.md#c3-pair-atomic)를 따른다.
+
 ### 6.5 물리 WAL 밖의 actual terminal과 installer 권한
 
 아래 internal type도 `apply` root에 정의하고 raw field는 private로 둔다. actual factory/검산 impl은 `apply::{catalog,row,terminal}` 자손에 둔다. `TerminalWal`은 원 runtime을 borrow하는 작은 내부 adapter이며 세션/append owner를 추가하지 않는다.

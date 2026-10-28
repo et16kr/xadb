@@ -11,6 +11,10 @@ use crate::storage::{
 
 const TARGETS: usize = 9;
 
+#[cfg(test)]
+#[path = "tx_pair_tests.rs"]
+mod tests;
+
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub(super) struct TxPairClaimRecord {
     pair: [TargetRequest; 2],
@@ -213,6 +217,9 @@ impl Drop for TxPairClaimKey<'_, '_> {
 }
 
 impl<'c, 's, 'p, 'd> SharedPool<'c, 's, 'p, 'd> {
+    /// Close both clean victims and install the original claim in one leaf.
+    /// The mutable pool borrow remains required until ordinary shared admission
+    /// and authenticated existing-target pins are supplied together.
     pub(in crate::storage) fn prepare_tx_pair(
         &mut self,
         authority: &TxPairAuthority<'_, 'c, 's>,
@@ -224,8 +231,41 @@ impl<'c, 's, 'p, 'd> SharedPool<'c, 's, 'p, 'd> {
         {
             return Err(unchanged(Cause::BindingMismatch));
         }
-        if !pair_shape(authority.actor(), authority.reserve(), authority.pair()) {
+        if !pair_shape(authority.actor(), authority.reserve(), authority.pair())
+            || indices[0] == indices[1]
+            || indices
+                .iter()
+                .any(|index| *index == 0 || *index >= self.frames.len())
+        {
             return Err(unchanged(Cause::Shape));
+        }
+        let mut first = self.frames[indices[0]]
+            .content
+            .try_write()
+            .map_err(|error| self.load_lock_error(error))?;
+        let mut second = self.frames[indices[1]]
+            .content
+            .try_write()
+            .map_err(|error| self.load_lock_error(error))?;
+        let mut registry = FencedInitRegistry {
+            held: self.registry.lock(),
+            pool: self,
+        };
+        self.health()?;
+        let state = registry.state()?;
+        if !self.registry_valid(state) {
+            return Err(self.fatal(Cause::Invariant));
+        }
+        if !state.directory.retention_payloads() {
+            return Err(unchanged(Cause::Shape));
+        }
+        if state.total != 0
+            || state.load.is_some()
+            || state.claim.is_some()
+            || state.init_claim.is_some()
+            || state.directory.closed_pair().is_some()
+        {
+            return Err(unchanged(Cause::Busy));
         }
         let mut roles = 0u8;
         let mut target_mask = 0u64;
@@ -238,24 +278,57 @@ impl<'c, 's, 'p, 'd> SharedPool<'c, 's, 'p, 'd> {
                 return Err(unchanged(Cause::DuplicateTarget));
             }
             roles |= 1 << role;
-            let (index, _) = self
-                .directory_read(|directory| directory.lookup(self.frames, *request))?
+            let (index, _) = state
+                .directory
+                .lookup(self.frames, *request)
                 .ok_or_else(|| unchanged(Cause::MissingTarget))?;
+            if indices.contains(&index) || target_mask & (1 << index) != 0 {
+                return Err(unchanged(Cause::DuplicateTarget));
+            }
             target_mask |= 1 << index;
         }
         for index in 0..self.frames.len() {
-            if self.resolve_registration(index)?.is_some_and(|entry| {
-                authority
-                    .pair()
-                    .iter()
-                    .any(|request| entry.request.same_address(request))
-            }) {
+            if state
+                .directory
+                .resolve(self.frames, index)
+                .is_some_and(|entry| {
+                    authority
+                        .pair()
+                        .iter()
+                        .any(|request| entry.request.same_address(request))
+                })
+            {
                 return Err(unchanged(Cause::DuplicateTarget));
             }
         }
-        // The original mutable pool excludes every shared user throughout the
-        // close and claim handoff. The helper checks pin/DPT quiescence first.
-        let generations = self.prepare_retention_pair_slots(indices, authority.existing())?;
+        let generations = [
+            state
+                .directory
+                .next_retention_generation(indices[0])
+                .ok_or_else(|| unchanged(Cause::CounterExhausted))?,
+            state
+                .directory
+                .next_retention_generation(indices[1])
+                .ok_or_else(|| unchanged(Cause::CounterExhausted))?,
+        ];
+        for (index, content) in [(indices[0], &*first), (indices[1], &*second)] {
+            if state.directory.resolve(self.frames, index).is_some() {
+                self.pair_in(state, index, content)?;
+            } else {
+                if !content.fresh()
+                    || state.entries[index].is_some()
+                    || state.requirements[index].is_some()
+                {
+                    return Err(self.fatal(Cause::Invariant));
+                }
+                if state.directory.closed_index() == Some(index) {
+                    return Err(unchanged(Cause::MissingTarget));
+                }
+            }
+            if content.dirty {
+                return Err(unchanged(Cause::Busy));
+            }
+        }
         let identity = TxPairClaimRecord {
             pair: *authority.pair(),
             actor: authority.actor(),
@@ -264,18 +337,30 @@ impl<'c, 's, 'p, 'd> SharedPool<'c, 's, 'p, 'd> {
             indices: indices.map(|index| u8::try_from(index).expect("checked slot")),
             target_mask: target_mask | (1 << indices[0]) | (1 << indices[1]),
         };
-        // A poison after consuming slot generations cannot be reported Unchanged.
-        let mut pins = self
-            .registry
-            .lock()
-            .map_err(|_| self.fatal(Cause::Poisoned))?;
-        if pins.init_claim.is_some() || pins.total != 0 || !identity.valid_in(self, &pins) {
-            return Err(self.fatal(Cause::Invariant));
+        // Every Unchanged path ends before this boundary. Directory, fresh
+        // metadata and the original claim remain under this one registry guard.
+        registry
+            .prechecked_mut()
+            .directory
+            .prepare_retention_pair(indices, generations);
+        self.init_unpublished.store(false, Ordering::Release);
+        for content in [&mut *first, &mut *second] {
+            content.page_lsn = PageLsn(0);
+            content.modification_counter = 0;
+            content.rec_lsn = None;
+            content.dirty = false;
         }
-        pins.init_claim = Some(InitClaimSlot {
+        #[cfg(test)]
+        test_support::hit(self, test_support::InitPoint::PairClosedBeforeClaim);
+        registry.prechecked_mut().init_claim = Some(InitClaimSlot {
             identity: InitClaimIdentity::TxPair(identity),
             initializer_pins_held: false,
         });
+        if !identity.valid_in(self, registry.state()?) {
+            return Err(self.fatal(Cause::Invariant));
+        }
+        #[cfg(test)]
+        test_support::hit(self, test_support::InitPoint::PairClaimInstalled);
         Ok(TxPairClaimKey {
             core: self.core,
             binding: self.binding,
@@ -788,23 +873,24 @@ impl Drop for TxPairWriteTargets<'_, '_, '_, '_, '_, '_, '_> {
     }
 }
 
-impl SharedPool<'_, '_, '_, '_> {
-    fn tx_pair_exclusive_claim(&self, key: &TxPairClaimKey<'_, '_>) -> Result<()> {
+impl<'s> SharedPool<'_, 's, '_, '_> {
+    fn tx_pair_exclusive_claim_in(
+        &self,
+        key: &TxPairClaimKey<'_, '_>,
+        state: &PoolRegistry<'s>,
+    ) -> Result<()> {
         self.health()?;
-        if !key.matches_pool(self)? {
+        if !self.registry_valid(state) || !key.matches_pool_in(self, state) {
             return Err(self.fatal(Cause::Invariant));
         }
-        let pins = self.entry_registry()?;
-        if pins.total != 0
-            || !pins.init_claim.is_some_and(|slot| {
+        if state.total != 0
+            || state.load.is_some()
+            || state.claim.is_some()
+            || !state.init_claim.is_some_and(|slot| {
                 slot.identity == InitClaimIdentity::TxPair(key.identity)
                     && !slot.initializer_pins_held
             })
         {
-            return Err(unchanged(Cause::Busy));
-        }
-        drop(pins);
-        if self.entry_registry()?.claim.is_some() {
             return Err(unchanged(Cause::Busy));
         }
         Ok(())
@@ -815,31 +901,33 @@ impl SharedPool<'_, '_, '_, '_> {
         key: &mut TxPairClaimKey<'_, '_>,
         completed: CompletedTxPair<'_, '_>,
     ) -> Result<()> {
-        self.tx_pair_exclusive_claim(key)?;
+        self.health()?;
+        let mut registry = FencedInitRegistry {
+            held: self.registry.lock(),
+            pool: self,
+        };
+        let state = registry.state()?;
+        self.tx_pair_exclusive_claim_in(key, state)?;
         if !std::ptr::eq(self.core, completed.core)
             || !std::ptr::eq(self.binding, completed.binding)
             || completed.identity != key.identity
             || !completed.requirement.uses_fence(self.fence)
-            || !self.directory_read(|directory| directory.pair_published())?
+            || !state.directory.pair_published()
         {
             return Err(self.fatal(Cause::Invariant));
         }
-        {
-            let registry = self.entry_registry()?;
-            for index in key.identity.indices() {
-                if registry.requirements[index].map(WalRequirement::location)
-                    != Some(completed.requirement.location())
-                {
-                    return Err(self.fatal(Cause::Invariant));
-                }
+        for index in key.identity.indices() {
+            if state.requirements[index].map(WalRequirement::location)
+                != Some(completed.requirement.location())
+            {
+                return Err(self.fatal(Cause::Invariant));
             }
         }
-        let mut pins = self
-            .registry
-            .lock()
-            .map_err(|_| self.fatal(Cause::Poisoned))?;
-        pins.directory.finish_retention_pair();
-        pins.init_claim = None;
+        #[cfg(test)]
+        test_support::hit(self, test_support::InitPoint::PairFinishChecked);
+        let state = registry.prechecked_mut();
+        state.directory.finish_retention_pair();
+        state.init_claim = None;
         key.active = false;
         Ok(())
     }
@@ -849,9 +937,12 @@ impl SharedPool<'_, '_, '_, '_> {
         key: &mut TxPairClaimKey<'_, '_>,
         permit: TxPairCancelPermit<'_, '_, '_, '_>,
     ) -> Result<()> {
-        self.tx_pair_exclusive_claim(key)?;
+        self.health()?;
+        {
+            let state = self.entry_registry()?;
+            self.tx_pair_exclusive_claim_in(key, &state)?;
+        }
         if !key.matches_authority(permit.authority())
-            || self.directory_read(|directory| directory.pair_published())?
             || !permit.io_matches(self.binding, self.fence)
         {
             return Err(self.fatal(Cause::Invariant));
@@ -864,15 +955,12 @@ impl SharedPool<'_, '_, '_, '_> {
                     && permit.allocator_after().page_lsn.0 == requirement.location().lsn => {}
             _ => return Err(self.fatal(Cause::Invariant)),
         }
-        {
-            let allocator = self.frames[0]
-                .content
-                .try_read()
-                .map_err(|error| self.load_lock_error(error))?;
-            if self.pair(0, &allocator)?.frame != permit.allocator_after() {
-                return Err(self.fatal(Cause::Invariant));
-            }
-        }
+        // Retain the allocator observation until the same leaf returns both
+        // fresh slots and retires the claim. Content always precedes registry.
+        let allocator = self.frames[0]
+            .content
+            .try_read()
+            .map_err(|error| self.load_lock_error(error))?;
         let indices = key.identity.indices();
         let first = self.frames[indices[0]]
             .content
@@ -886,29 +974,28 @@ impl SharedPool<'_, '_, '_, '_> {
             held: self.registry.lock(),
             pool: self,
         };
+        let state = registry.state()?;
+        self.tx_pair_exclusive_claim_in(key, state)?;
+        if state.directory.pair_published()
+            || self.pair_in(state, 0, &allocator)?.frame != permit.allocator_after()
+        {
+            return Err(self.fatal(Cause::Invariant));
+        }
         for (index, content) in [(indices[0], &*first), (indices[1], &*second)] {
             if !content.fresh()
-                || registry.state()?.entries[index].is_some()
-                || registry.state()?.requirements[index].is_some()
+                || state.entries[index].is_some()
+                || state.requirements[index].is_some()
             {
                 return Err(self.fatal(Cause::Invariant));
             }
         }
-        // Unpublished pages have no retained image/DPT obligation. All tests
-        // above precede the joint directory return and linear claim retirement.
-        for index in indices {
-            registry.prechecked_mut().entries[index] = None;
-            registry.prechecked_mut().requirements[index] = None;
-        }
-        drop(registry);
-        drop(second);
-        drop(first);
-        let mut pins = self
-            .registry
-            .lock()
-            .map_err(|_| self.fatal(Cause::Poisoned))?;
-        pins.directory.clear_retention_pair(indices);
-        pins.init_claim = None;
+        // All fallible checks precede this single joint retirement; there is
+        // no unlock/relock gap between directory return and claim retirement.
+        #[cfg(test)]
+        test_support::hit(self, test_support::InitPoint::PairCancelChecked);
+        let state = registry.prechecked_mut();
+        state.directory.clear_retention_pair(indices);
+        state.init_claim = None;
         key.active = false;
         Ok(())
     }
@@ -999,11 +1086,37 @@ impl SharedPool<'_, '_, '_, '_> {
     }
 }
 
+/// Complete parent values for the three atomic registry leaves. The original
+/// entry validation owns its nested directory/claim/lookup packets separately;
+/// no leaf calls another registry-locking helper while this parent is live.
+fn atomic_pair_source_bytes() -> usize {
+    use std::mem::size_of;
+    let entry = super::super::retention_residency::entry_source_phases();
+    let parent = size_of::<FencedInitRegistry<'_, '_, '_, '_, '_>>()
+        + 2 * size_of::<RwLockWriteGuard<'_, FrameContent<'_>>>()
+        + size_of::<RwLockReadGuard<'_, FrameContent<'_>>>()
+        + 2 * size_of::<TxPairClaimRecord>()
+        + 2 * size_of::<TxPairClaimKey<'_, '_>>()
+        + size_of::<Result<TxPairClaimKey<'_, '_>>>()
+        + size_of::<CompletedTxPair<'_, '_>>()
+        + size_of::<TxPairCancelPermit<'_, '_, '_, '_>>()
+        + 3 * size_of::<[usize; 2]>()
+        + 2 * size_of::<[u64; 2]>()
+        + 4 * size_of::<TargetRequest>()
+        + 2 * size_of::<Registration>()
+        + 2 * size_of::<Option<Registration>>()
+        + 3 * size_of::<Result<DirtyObservation>>()
+        + 2 * size_of::<Result<FrameStamp>>()
+        + 5 * size_of::<Result<()>>()
+        + size_of::<([&(); 16], [usize; 8], [u64; 2], [u8; 4])>();
+    parent + entry.0.max(entry.1).max(entry.2).max(dpt_call_bytes())
+}
+
 /// Explicit source-value census, including return/Result coexistence and both
 /// cleanup alternatives. Caller image/descriptor loans are counted separately.
 pub(in crate::storage) fn source_census() -> usize {
     use std::mem::size_of;
-    super::super::retention_residency::pair_source_census()
+    let original = super::super::retention_residency::pair_source_census()
         + 2 * size_of::<Result<TxPairWriteTargets<'_, '_, '_, '_, '_, '_, '_>>>()
         + size_of::<TxPairWriteTargets<'_, '_, '_, '_, '_, '_, '_>>()
         + size_of::<TxPairPins<'_, '_, '_, '_, '_, '_>>()
@@ -1029,5 +1142,6 @@ pub(in crate::storage) fn source_census() -> usize {
         + 2 * size_of::<Registration>()
         + 2 * size_of::<TxPairClaimRecord>()
         + dpt_call_bytes()
-        + 1024 // bounded borrowed inputs, iterators, role masks and scalar locals
+        + 1024; // bounded borrowed inputs, iterators, role masks and scalar locals
+    original.max(atomic_pair_source_bytes())
 }

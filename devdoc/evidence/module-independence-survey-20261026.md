@@ -2419,3 +2419,56 @@ artifact는 `artifacts/module-c2-commit-call-20261028/r1`–`r4`다. 각 실행�
 - 원 N03 result SHA-256: `34118938145f748260f311aeecc4493347e05c8adbde348b7d3dfaf59de3aeba`. CURRENT/base SHA-256: `01b4ceb7fdc68c1d6ef63f5efb2edd29de43b6b3b5cb9845c20872b4e34a5125` / `d7ef8013e4acf0aa81ee523b7f5fb9496c8dddc39b74431e1e745d24f9ed38da`.
 
 독립 `/root/source_admission_review`의 최종 receipt `artifacts/module-c2-commit-call-20261028/review-final.json` SHA-256 `88f71a30f49ed7b471aa344f4e1a659e3b9c09615e87da41ea50a75bcb0d278a`는 `ACCEPTED_LIMITED_D1_D2`다. 전체26파일(Rust15·fixture5·문서6) 26/26·생략0·100%, evidence hash67을 검토했고 필수 수정0이다. 검토자 build/test/native/verifier 실행0·제품/시험 편집0이며 총괄이 반영을 확인했다. 한정 구현·실행은 Commit의 외부 Prepared gap을 닫지만 CREATE shared atomic pair claim, 일반 entry/return floor, 다른 writer/Row 연결·C3–C5·M4/M5 제품 인수는 미완료다. 문서 verifier·push·전체 workspace/하위 wrapper는 실행하지 않았다.
+
+<a id="c3-pair-atomic"></a>
+## main의 exclusive CREATE pair 원자 leaf — 2026-10-28
+
+main `ef95a8a`에서 [PAIR-ATOMIC-001](../contracts/dev3-module-boundaries.md#catalog-atomic-leaf)을 진행한다. 원 다중 registry close→claim과 finish/cancel 종료를 같은 leaf에 합치되 현재 `&mut` 배제를 유지한다. 작성/계약/통합 `/root`, 독립 `/root/source_admission_review`. 사전 D2는 이 한정 선행안을 수용했고 빈 victim 분기·변경 전 검산·재잠금 금지·Fenced unwind·최종 leaf identity/permit 및 source packet 계수를 필수로 지정했다. 공유 gate/typed subset·CREATE source admission·Row·M4/M5는 미완료다.
+
+변경은 `dirty_init::tx_pair`, 제거한 `prepare_retention_pair_slots`, cfg(test) close/final 훅과 관측 및 metadata/actual fixture다. 제품 새 owner/ledger/format/파일은 없다. 두 content guard와 original registry를 보유하는 새 parent는 명시 `atomic_pair_source_bytes`로 계산하여 원 source 보수 합과 max한다. Cancel allocator read도 종료 leaf까지 계수한다. 독립 구현/상계 검토 뒤 실행한다.
+
+[manifest](../../tests/fixtures/dev3-module-c3/pair-atomic/manifest.json)의 runtime8/nativeN01 한 번을 diff와 매핑해 고정했다. 세 metadata selector는 권한을 발급하지 않는 synthetic fixture이고 actual Reserve/Cancelled/Forward와 분리한다. actual Unstaged Busy는 준비/claim/stamp 검산 후 실제 stage 호출 직전에 원 physical stage 경쟁을 고정하며 정상 재시도를 주장하지 않는다. final finish/cancel unwind 두 경계는 claim 보존만 검사하며 해당 cut의 복구를 새 PASS로 기록하지 않는다. current-build 복구는 원 MC04 Reserve prefix와 N01 세 PID에 배정했다. 총1800초/compiler420초/case45초/native30초/admission600초/로그8MiB/stack32MiB다. 실행 전 NOT_RUN이며 완료한 무변경 사례·전체 wrapper·문서 verifier·push는 실행하지 않는다. export/target/ELF는 결과/hash 보존 뒤 삭제한다.
+
+실행 전 독립 검토에서 MPA01의 경쟁 stage를 호출 전 설치하면 prepare가 바뀐 prefix를 먼저 읽고 목표 Unstaged 경계에 도달하지 않는다고 지적했다. cfg(test) 실제 existing-stage 직전 훅과 원 storage만 빌리는 fault closure로 옮겼다. 경쟁 R02 자체의 complete LSN/offset 증가는 별도로 검산하고 원 durable prefix·control·파일 무변경을 유지하며, 경쟁 obligation을 지우지 않고 마지막에 fence한다. 실행 전 fixture 정정이며 기존 실행 FAIL이 아니다.
+
+사전 검토에서 registered clean fixture가 metadata0이었다는 빈틈도 보완했다. 해당 분기에 실제 nonzero page LSN/counter를 넣고 원 bytes 보존과 metadata0 전환을 별도로 검산하며 빈 victim 분기와 구분한다. 아직 실행0이다.
+
+사전 D1/D2 최종 검토는 위 두 fixture 정정과 precise lifetime capture, 명시 source parent, runtime8/N01 선택을 한정 수용했고 필수 수정0이다. 이는 실행 PASS나 native admission이 아니며 actual source/ELF는 build 뒤 별도 검토한다.
+
+r1의 Clippy compile은 새 `tx_pair_exclusive_claim_in`에서 pool/registry의 세션 lifetime을 별개 익명 lifetime으로 적어 invariance 오류로 FAIL했다. source `52bdb6d1d19aa92a8d7686a6bc896f132b0dfb3ae9f532fe7c2e16eb4823ab27`,12.817초, runtime/native NOT_RUN이다. 원 로그·inventory/result를 보존하고 export/target을 삭제했다. 동일 세션 `'s`를 명시하는 타입 선언만 고치며 동작/상계/선택 범위는 유지한다. r2는 미실행 runtime8/N01을 진행한다.
+
+r2는 Clippy/test build PASS 뒤 첫 metadata selector에서 예상 DuplicateTarget 대신 Invariant/CallerMustResolve로 FAIL했다. 새 fixture가 page9/10 Status/Undo incarnation을1로 만들어 원 retention directory의 최소2 규칙을 위반했기 때문이다. 제품 검산은 유지하고 fixture의9이상 incarnation을2로, missing-target 변조를3으로 고친다. fault 전 원 entry_registry로 fixture 유효성을 확인하고 variant를 출력한다. 원r2 source `8a40cfb2130e6b4fe527d1e0396f791b2171486110d8b3ebfa31ad75b8d1bece`/ELF `6113671dc5f462a22054ae7cadd0e179875a0a0dca11bf1d35035c079dc145b1`,39.799초 FAIL·로그를 보존하고 export/target을 삭제했다. r2의 정확한 variant는 로그에 없으며 정적 순서상 최초 유효성 검사에 도달하는variant2다. runtime PASS0/native NOT_RUN이므로 r3는 동일8개/N01 미완료 범위만 선택한다.
+
+### 선택 실행 완료와 남은 공유 공급
+
+r3는 Clippy/test build와 동결 runtime8을 모두 통과했다. 새 metadata의10거절·latch Busy/손상·등록된 clean/빈 victim 성공·active claim 거절·두 close unwind, 실제 Unstaged 반환·원 MC01 두 Cancelled generation·두 final unwind·MC04 Reserve prefix current-build 복구를 구분해 확인했다. 두 final unwind는 claim/closed generation 보존과 fence를 확인했으며 해당 cut의 복구를 실행한 것으로 주장하지 않는다. fence-before-unlock은 원 FencedInitRegistry Drop 순서의 정적 검토와 unwind 후 관측에 근거하며 공유 reader 경쟁 인수가 아니다.
+
+동일 r3 source/ELF에서 actual parent+entry 상계6829B, 원 보수 합과 max16468B를 확인했다. source live peak는 memory61894/native62470B, recovered peak63270/63846B, shared20192/20328B로 기존65536B cap을 유지했다. Metadata184902/185478B·whole250438/251014B도 원 cap 안이다. 이는 source 값의 상계이며 stack/RSS 실측이나 성능 인수가 아니다. 원 source 식이 같은 다른 완료 사례는 반복하지 않았다.
+
+독립 actual source/ELF admission 뒤 원 N01을 한 번 실행하여 PASS했다. 원 schedule·corpus·controller·BUDGET는 그대로다.
+
+| native 단계 | PID | LSN | 결과 |
+| --- | ---: | ---: | --- |
+| produce | 127635 | 9 | exit -9; 외부 kill/reaped |
+| recover | 127637 | 19 | exit -9; 외부 kill/reaped |
+| reentry | 127753 | 25 | exit 0; 정상 완료 |
+
+N01은 24.704468초, 원3PID 9→19→25의 ACK/복구/재진입이다. 완료한 native 재실행0이며 r1 compile FAIL·r2 fixture FAIL을 소급 PASS로 바꾸지 않았다.
+
+artifact는 `artifacts/module-c3-pair-atomic-20261028/r1`–`r3`다. 각 source5772 파일별 inventory·runner·로그·result를 보존하고 r3 full export6291 manifest·native snapshot/trace/ACK/결과도 보존했다. 각 실행의 export/target/ELF는 결과와 hash를 기록한 뒤 삭제했으며 원 과거 evidence는 삭제하지 않았다.
+
+| 실행 | 실제 범위·결과 | source SHA-256 | ELF SHA-256 | result SHA-256 |
+| --- | --- | --- | --- | --- |
+| r1 | Clippy compile FAIL; runtime/native NOT_RUN; 12.817초 | `52bdb6d1d19aa92a8d7686a6bc896f132b0dfb3ae9f532fe7c2e16eb4823ab27` | 생성 전 중단 | `9038b02ad38e7aa5fc77c605bf864d2e46d5dd5ab03beb44c843e76249887e19` |
+| r2 | Clippy/build PASS, metadata1 FAIL; 나머지/native NOT_RUN; 39.799초 | `8a40cfb2130e6b4fe527d1e0396f791b2171486110d8b3ebfa31ad75b8d1bece` | `6113671dc5f462a22054ae7cadd0e179875a0a0dca11bf1d35035c079dc145b1` | `9f21b2de00a54168888c6ebc920646d1bfd52401b537767ac3583bb70fab0918` |
+| r3 | Clippy/build·runtime8·N01 PASS; 238.119초 | `471bcd0348d4b10ddabf72fc9e45a497c1c0f0ea18656180bb0a6e1e270bf64d` | `8d1592dfbb9dc1c69ad9a237b2d3865442f299c2b51756b5bcd44240c0b2bda4` | `2444c9aa1292a8bc75a409b61c9f7930e63fa6992188be98f02688963ca02c89` |
+
+- r1 파일별 inventory SHA-256: `b1e6b59b77cd4463a2ddf5aa4d13745a1140d4dcc7907988946c0633ca64b1b1`.
+- r2 파일별 inventory SHA-256: `7b90070243b3f4ce8d736e8c3e6bb0d2a0747c2c188f643300af74e43fc5f7d3`.
+- r3 파일별 inventory SHA-256: `861a6f24bcd2693c0c5bb193424f877ea79752b38e8564e67aedafef499e6607`.
+- r3 `source-files.json` SHA-256: `64f3a6abe996b9cbf3fce0447aeaa58dacc0fe29758448b5f33efaa1278b5cb6`.
+- r3 `native-admission.json` SHA-256: `ffd1c66e26cae24de0b7bdbffb72d2f9c788f49effbd07c61e3a66f82e73ccef`.
+- r3 `catalog-native/N01/result.json` SHA-256: `ea0545c89aeec13061965d1704ad63d4c4aa3b5f88cc4f27ee0be8ed79082bc5`.
+- r3 manifest/runner SHA-256: `e20094a0ec061e78505543afce84744aedc0f99d1fbbd4abfaa96ba9f88b95e5` / `0562c711af6aa185166aff4306a6999fd5c6945854e7fd88256ba49c758ed3bd`.
+
+최종 독립 D1/D2는 `ACCEPTED_LIMITED_D1_D2`, required0으로 한정 수용했다. `/root/source_admission_review`가 변경17/17파일(Rust10·fixture1·문서6)과 evidence135개 hash를 대조했으며 검토자 재시험0이다. receipt `artifacts/module-c3-pair-atomic-20261028/review-final.json` SHA-256은 `8105cd199621854f32124e0db296bfc508c695a8efc383ae3ad97b53b126ffb7`다. 이번 공급은 exclusive pool의 원자 leaf에 한정한다. `&mut` 배제를 유지하며 shared `try_prepare_tx_pair`, ordinary pin/load/capture gate, authentic key 기반 subset, CREATE source/flush lease, Row/C3–C5·M4/M5는 여전히 미완료다. 문서 verifier·push·전체 workspace/하위 wrapper는 실행하지 않았다.

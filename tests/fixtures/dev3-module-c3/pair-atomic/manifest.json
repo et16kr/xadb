@@ -1,0 +1,56 @@
+{
+  "scope": "Exclusive Catalog pair atomic registry close/finish/cancel prerequisite; shared admission/gates/typed subsets and C2/C3-C5/M4/M5 remain incomplete",
+  "baseline_commit": "ef95a8a",
+  "budget": {
+    "total_seconds": 1800,
+    "compiler_seconds": 420,
+    "case_seconds": 45,
+    "native_admission_seconds": 600,
+    "output_bytes": 8388608,
+    "rust_min_stack": 33554432
+  },
+  "compiler_tests": [],
+  "runtime_tests": [
+    {
+      "selector": "storage::dirty_frame::init::tx_pair::tests::pair_close_rejections_preserve_directory_generations_and_contents",
+      "reason": "new atomic leaf:10 rejection shapes/roles/missing/generation/pin/closed-index/flush cases preserve original state"
+    },
+    {
+      "selector": "storage::dirty_frame::init::tx_pair::tests::pair_close_content_busy_and_corruption_never_consume_generations",
+      "reason": "new victim latch Busy and invalid dirty metadata: no generation change; exact effect/fence"
+    },
+    {
+      "selector": "storage::dirty_frame::init::tx_pair::tests::pair_close_publishes_exact_claim_and_unwind_keeps_it_fenced",
+      "reason": "new registered/fresh close success, active claim Busy, exact generations and two fenced-unwind cuts"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::create_pair::catalog_commit::tests::consumed_preparation_has_bounded_pending_image",
+      "reason": "changed TxPair source closure: complete memory/native live/recovered bounds; no other unchanged source selectors"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::pair_atomic::rejected_reserve_returns_original_unstaged_pair",
+      "reason": "actual Reserve Busy enters changed Unstaged return, no WAL/control/file mutation and no lingering pair claim"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::lifecycle::mc01_reserve_cancel_two_generations",
+      "reason": "changed prepare/cancel normal Cancelled permit, exact oracle and generation reuse"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::pair_atomic::final_pair_retirement_unwind_preserves_claim_under_fence",
+      "reason": "changed finish/cancel final leaf unwind retains claim/closed generations under fence; no recovery claim for these cuts"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::lifecycle::mc04_reserved_drop_fence_fresh_recovery",
+      "reason": "changed preparation retained key, Drop fence and actual current-build recovery of original Reserve prefix"
+    }
+  ],
+  "native_tests": [
+    {
+      "case": "N01",
+      "reason": "changed actual Reserve/Forward atomic close and finish; original ACK-T/ACK-U/reentry3PID 9→19→25 once",
+      "wall_seconds": 30,
+      "controller": "scripts/dev3_catalog_native.py"
+    }
+  ],
+  "pre_execution_review_correction": "MPA01 stages competing R02 only at the actual existing stage call after preparation/claim/stamp checks; preserve competing complete prefix separately from unchanged durable/control/files. No execution has occurred."
+}

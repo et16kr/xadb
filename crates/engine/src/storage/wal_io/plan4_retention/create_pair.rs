@@ -105,6 +105,28 @@ pub(in crate::storage) struct TxPairAuthority<'i, 'c, 's> {
     pair: &'i [TargetRequest; 2],
 }
 impl<'i, 'c, 's> TxPairAuthority<'i, 'c, 's> {
+    /// Metadata-only pool fixtures; never an actual WAL/allocator authority.
+    #[cfg(test)]
+    pub(in crate::storage) fn metadata_fixture(
+        core: &'c PageConcurrency<'s>,
+        binding: &'s AtomicU8,
+        fence: &'s SessionFence,
+        actor: TxnRef,
+        reserve: PageLsn,
+        existing: &'i [TargetRequest; 7],
+        pair: &'i [TargetRequest; 2],
+    ) -> Self {
+        Self {
+            core,
+            binding,
+            fence,
+            actor,
+            reserve,
+            existing,
+            pair,
+        }
+    }
+
     pub(in crate::storage) fn core(&self) -> &'c PageConcurrency<'s> {
         self.core
     }

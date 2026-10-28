@@ -8079,5 +8079,65 @@
       "omitted_files": 0,
       "required_fixes": 0
     }
+  },
+  "dev3_module_c3_pair_atomic": {
+    "status": "LOCAL_VERIFIED_LIMITED_D1_D2",
+    "contract_ref": "dev3-module-boundaries.md#catalog-atomic-leaf",
+    "evidence_ref": "module-independence-survey-20261026.md#c3-pair-atomic",
+    "baseline_commit": "ef95a8a",
+    "branch": "main",
+    "implemented_paths": [
+      "crates/engine/src/storage/dirty_init/tx_pair_tests.rs",
+      "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/pair_atomic.rs",
+      "tests/fixtures/dev3-module-c3/pair-atomic/manifest.json"
+    ],
+    "runtime_selected": 8,
+    "native_selected": [
+      "N01"
+    ],
+    "shared_admission_complete": false,
+    "whole_m4_m5_complete": false,
+    "reviewer": "/root/source_admission_review",
+    "evidence_artifact": "artifacts/module-c3-pair-atomic-20261028",
+    "source_specific_results": {
+      "r1": {
+        "status": "FAIL",
+        "source_sha256": "52bdb6d1d19aa92a8d7686a6bc896f132b0dfb3ae9f532fe7c2e16eb4823ab27",
+        "elf_sha256": null,
+        "result_sha256": "9038b02ad38e7aa5fc77c605bf864d2e46d5dd5ab03beb44c843e76249887e19"
+      },
+      "r2": {
+        "status": "FAIL",
+        "source_sha256": "8a40cfb2130e6b4fe527d1e0396f791b2171486110d8b3ebfa31ad75b8d1bece",
+        "elf_sha256": "6113671dc5f462a22054ae7cadd0e179875a0a0dca11bf1d35035c079dc145b1",
+        "result_sha256": "9f21b2de00a54168888c6ebc920646d1bfd52401b537767ac3583bb70fab0918"
+      },
+      "r3": {
+        "status": "PASS",
+        "source_sha256": "471bcd0348d4b10ddabf72fc9e45a497c1c0f0ea18656180bb0a6e1e270bf64d",
+        "elf_sha256": "8d1592dfbb9dc1c69ad9a237b2d3865442f299c2b51756b5bcd44240c0b2bda4",
+        "result_sha256": "2444c9aa1292a8bc75a409b61c9f7930e63fa6992188be98f02688963ca02c89"
+      }
+    },
+    "runtime_pass_original_source": "r3",
+    "runtime_pass": 8,
+    "native_pass": {
+      "case": "N01",
+      "source": "r3",
+      "workers": 3,
+      "result_sha256": "ea0545c89aeec13061965d1704ad63d4c4aa3b5f88cc4f27ee0be8ed79082bc5",
+      "admission_sha256": "ffd1c66e26cae24de0b7bdbffb72d2f9c788f49effbd07c61e3a66f82e73ccef"
+    },
+    "completed_case_repeats": 0,
+    "prior_failures_preserved": true,
+    "heavy_artifacts_deleted": true,
+    "review_status": "ACCEPTED_LIMITED_D1_D2",
+    "review_required_fixes": 0,
+    "review_receipt": "artifacts/module-c3-pair-atomic-20261028/review-final.json",
+    "review_sha256": "8105cd199621854f32124e0db296bfc508c695a8efc383ae3ad97b53b126ffb7",
+    "reviewed_files": 17,
+    "reviewed_rust_files": 10,
+    "reviewed_fixture_files": 1,
+    "reviewed_document_files": 6
   }
 }

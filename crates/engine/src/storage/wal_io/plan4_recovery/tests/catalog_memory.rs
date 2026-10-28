@@ -1195,3 +1195,6 @@ mod terminal;
 
 #[path = "catalog_memory/commit_call.rs"]
 mod commit_call;
+
+#[path = "catalog_memory/pair_atomic.rs"]
+mod pair_atomic;

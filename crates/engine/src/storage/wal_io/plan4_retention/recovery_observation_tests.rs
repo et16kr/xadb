@@ -224,3 +224,27 @@ impl<W: WriterNamespace> RetentionWriter<'_, '_, '_, '_, '_, '_, '_, '_, '_, W> 
         }
     }
 }
+
+/// Synthetic fault access borrows only the original physical owner, so the
+/// fixture can stage at a checked boundary while the original bound is mutable.
+impl<'s, 'm, 'w, W: WriterNamespace> Plan4Retention<'_, 's, '_, '_, '_, '_, 'm, 'w, W> {
+    pub(in crate::storage) fn catalog_test_stage_competitor(
+        &self,
+    ) -> impl FnOnce(&[u8]) + 's + use<'s, 'm, 'w, W> {
+        let storage = self.inner.storage;
+        move |bytes| {
+            let wal = storage.wal();
+            let prefix = wal.prefix().unwrap();
+            let layout = crate::storage::semantic_catalog::decode_layout(
+                bytes,
+                crate::storage::wal_frame::FrameExpectation {
+                    stream: prefix.stream,
+                    previous_lsn: prefix.complete_lsn,
+                },
+                storage.profile(),
+            )
+            .unwrap();
+            wal.stage_verified(prefix, layout.header(), bytes).unwrap();
+        }
+    }
+}

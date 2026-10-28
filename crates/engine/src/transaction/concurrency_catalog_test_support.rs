@@ -11,6 +11,7 @@ pub(crate) enum Point {
     CommitPrepared,
     CommitCompleted,
     StageCallStarted,
+    ExistingStageCallStarted,
     Pending,
     Durable,
     Draining,

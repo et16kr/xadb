@@ -1044,6 +1044,10 @@ pub(in crate::storage) mod test_support {
         MetadataInstalled,
         RegistryInstalled,
         Published,
+        PairClosedBeforeClaim,
+        PairClaimInstalled,
+        PairFinishChecked,
+        PairCancelChecked,
         PairImagesInstalled,
         PairControlInstalled,
         PairDptInstalled,
@@ -1292,6 +1296,19 @@ pub(in crate::storage) mod test_support {
             published: pins.directory.published().map(|entry| entry.request),
         }
     }
+    /// Registry-only observation, including fenced close/return diagnostics.
+    pub(in crate::storage) fn pair_close_state(
+        pool: &SharedPool<'_, '_, '_, '_>,
+    ) -> (Option<[usize; 2]>, Option<[u64; 2]>, bool, u16) {
+        let state = pool.registry.lock().unwrap_or_else(|e| e.into_inner());
+        (
+            state.directory.closed_pair(),
+            state.directory.pair_generations(),
+            state.init_claim.is_some(),
+            state.total,
+        )
+    }
+
     pub(in crate::storage) fn seed_status_generation(
         pool: &mut SharedPool<'_, '_, '_, '_>,
         generation: u64,

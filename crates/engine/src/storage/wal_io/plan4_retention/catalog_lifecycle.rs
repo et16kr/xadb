@@ -494,6 +494,11 @@ impl<'b, 'a, 's, 'c, 'p, 'd, 'm, 'w, W: WriterNamespace>
                     );
                 }
             }
+            #[cfg(test)]
+            crate::transaction::concurrency::catalog_test_support::hit(
+                self.pool.bound_core(),
+                crate::transaction::concurrency::catalog_test_support::Point::ExistingStageCallStarted,
+            );
             let requirement = storage
                 .wal()
                 .stage_verified_required(
