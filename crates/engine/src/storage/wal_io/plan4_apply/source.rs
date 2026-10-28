@@ -65,7 +65,9 @@ impl CatalogCommitCharges {
     }
     pub(super) fn new<W: WriterNamespace>() -> Self {
         let [stage, pending, install, publish] = create_pair::catalog_commit_writer_windows();
-        let carriers = commit_carrier_bytes() + commit_input_bytes();
+        let carriers = commit_carrier_bytes()
+            + commit_input_bytes()
+            + transaction::catalog::terminal_caller_bytes();
         Self {
             shared: shared_bytes::<W>(),
             stage: stage.max(create_pair::catalog_live::commit_prepare_source_bytes::<W>())
@@ -103,6 +105,7 @@ pub(super) fn retirement_source_peak() -> usize {
         + 2 * size_of::<Result<crate::storage::semantic_catalog::Observation>>()
         + 2 * size_of::<crate::storage::session_fence::UnwindFence<'_>>()
         + retirement_entry_bytes()
+        + transaction::catalog::rollback_caller_bytes()
 }
 
 /// A fixed split-time cost. Operation callers cannot select a byte count.
@@ -110,7 +113,12 @@ pub(super) struct CatalogProgressCharge(usize);
 impl CatalogProgressCharge {
     pub(super) fn new<W: WriterNamespace>() -> Self {
         let bodies = create_pair::catalog_live::catalog_live_source_bytes::<W>();
-        Self(bodies.retirement.max(bodies.lifecycle))
+        Self(
+            bodies
+                .retirement
+                .max(bodies.lifecycle)
+                .max(transaction::catalog::check_source_bytes()),
+        )
     }
 }
 
@@ -123,6 +131,7 @@ pub(super) fn retirement_prepare_carrier_bytes() -> usize {
         + size_of::<crate::storage::session_fence::UnwindFence<'_>>()
         + 2 * size_of::<Result<crate::storage::semantic_catalog::Observation>>()
         + retirement_entry_bytes()
+        + transaction::catalog::rollback_caller_bytes()
 }
 
 /// Six finite lifecycle actions share one private dispatch. Three typed
@@ -152,7 +161,7 @@ fn retirement_entry_bytes() -> usize {
 /// one ledger transition/release or gate reopen closure, including the core
 /// state validation the reopen performs. Charged in every window. The gate's
 /// close/wait precedes reservation like a reader's entry.
-fn commit_carrier_bytes() -> usize {
+pub(super) fn commit_carrier_bytes() -> usize {
     size_of::<OperationSourceAdmission<'_, '_, '_, '_>>()
         + 2 * size_of::<SourceResult<OperationSourceAdmission<'_, '_, '_, '_>>>()
         + size_of::<Option<TerminalReadGate<'_, '_>>>()
@@ -593,3 +602,8 @@ impl<W: WriterNamespace> MutationPort<'_, '_, '_, '_, '_, '_, '_, '_, '_, W> {
 #[cfg(test)]
 #[path = "source_tests.rs"]
 mod tests;
+
+#[cfg(test)]
+pub(super) fn progress_test_bytes(charge: &CatalogProgressCharge) -> usize {
+    charge.0
+}

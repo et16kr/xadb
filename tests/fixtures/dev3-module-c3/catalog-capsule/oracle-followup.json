@@ -1,0 +1,33 @@
+{
+  "scope": "actual registered first Catalog Forward to statement finish and consuming Commit/full abort; shared product CREATE remains pending",
+  "baseline_commit": "4ac878c",
+  "budget": {
+    "total_seconds": 1200,
+    "compiler_seconds": 420,
+    "case_seconds": 45,
+    "output_bytes": 8388608,
+    "rust_min_stack": 33554432
+  },
+  "compiler_tests": [],
+  "runtime_tests": [
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::catalog_transactions::completed_commit_postcheck_capacity_is_fatal_not_before",
+      "reason": "new actual Catalog capsule completion path, fault or current-build recovery"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::catalog_transactions::first_statement_and_empty_commit_limits_preserve_unmodified_capsule",
+      "reason": "new actual Catalog capsule completion path, fault or current-build recovery"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::catalog_transactions::completed_catalog_capsules_recover_in_current_build",
+      "reason": "new actual Catalog capsule completion path, fault or current-build recovery"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::catalog_transactions::corrupted_completion_mode_or_mark_fences_before_wal",
+      "reason": "independent review found invalid mode bypass and nonzero mark; new corruption preflight"
+    }
+  ],
+  "native_tests": [],
+  "not_run": "unchanged native N01 and whole regression; new memory current-build recovery is not native durability acceptance",
+  "selection_after": "r4 source2 + WT3 + CT01..04 PASS retained; only CT05 raw expected Job after-image assembly corrected, CT06..08 not yet run; product source unchanged"
+}

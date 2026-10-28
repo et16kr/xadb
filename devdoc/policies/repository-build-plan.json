@@ -8366,5 +8366,65 @@
     "review_receipt_sha256": "272bc57c8e657ac3e12928aff9136c29637c33117829a85d06134c14f10e06bb",
     "review_required_findings": 0,
     "reviewed_files": 21
+  },
+  "dev3_module_c3_catalog_capsule": {
+    "status": "ACCEPTED_LIMITED_D1_D2",
+    "baseline_commit": "4ac878c",
+    "owner_contract": "dev3-module-boundaries",
+    "contract_anchor": "catalog-capsule-completion",
+    "evidence": "module-independence-survey-20261026",
+    "evidence_anchor": "c3-catalog-capsule",
+    "implemented_paths": [
+      "crates/engine/src/storage/wal_io/plan4_apply/transaction_catalog.rs",
+      "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/catalog_transactions.rs",
+      "tests/fixtures/dev3-module-c3/catalog-capsule"
+    ],
+    "compiler_tests": 3,
+    "runtime_tests": 13,
+    "native_tests": 0,
+    "artifact": "artifacts/module-c3-catalog-capsule-20261028",
+    "whole_m4_m5_complete": false,
+    "shared_create_admission": false,
+    "own_actor_reads": false,
+    "runtime_pass_by_source": {
+      "r3": 1,
+      "r4": 9,
+      "r5": 4
+    },
+    "compiler_pass_by_source": {
+      "r3": 3
+    },
+    "original_failed_runs": [
+      "r1",
+      "r2",
+      "r3",
+      "r4"
+    ],
+    "prior_evidence_preserved": true,
+    "heavy_artifacts_deleted": true,
+    "completed_unchanged_case_repeats": 0,
+    "native_recovered_source_bytes": 65512,
+    "r3": {
+      "source_sha256": "ae1daf9e136e83895a0ff7bbe35db688e85b17ac16fb99d25b8948fa294c32d9",
+      "binary_sha256": "51668e814e7a151589812aa75c7df6d2fca05d31bfede3e0aa6de8bb6b7ca70f",
+      "result_sha256": "69969cbdf125e3aaa0a64302d7b13ecfdbc720f95a588851350284a923739d5f"
+    },
+    "r4": {
+      "source_sha256": "b5f06783f3b4a68dec826692377a2155b38e578c9769374d4b5b9f1d1c2c4cba",
+      "binary_sha256": "3b2a60bcdcd4fd2aa02ab74081a044ce0f52688551eaabe6de392ad59f2214e6",
+      "result_sha256": "8bb597767c9752899e89f116b0ee231749e4b764412ae2b3a5cc671a9c5592d9"
+    },
+    "runtime_unique_tests": 13,
+    "current_build_memory_recovery": "CT07: Commit9 to cleanup15/Q1 found; AbortEnd11 to cleanup16/Q0 missing; old capsules0; native NOT_RUN",
+    "source_headroom_bytes": 24,
+    "r5": {
+      "source_sha256": "fc4a46ae6447b8cf2a489151026bd4cec31343d99db32ff7dd8b649bcec1f6ad",
+      "binary_sha256": "509526fbcdf9506808755c84e4e987f7d5285abebdd580dfefd92a0a3f4c4552",
+      "result_sha256": "1fd1769ac72314aacf990da2a6fc00bee978279da0ba42eb902d146bc1081eba"
+    },
+    "review_receipt": "artifacts/module-c3-catalog-capsule-20261028/review-final.json",
+    "review_receipt_sha256": "4a26d61fef92b3a44b51a9bcd28c4bddea4c8d3d08e3a9020aa70609620337fe",
+    "review_required_findings": 0,
+    "reviewed_files": 25
   }
 }

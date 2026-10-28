@@ -1,0 +1,93 @@
+{
+  "scope": "actual registered first Catalog Forward to statement finish and consuming Commit/full abort; shared product CREATE remains pending",
+  "baseline_commit": "4ac878c",
+  "budget": {
+    "total_seconds": 1200,
+    "compiler_seconds": 420,
+    "case_seconds": 45,
+    "output_bytes": 8388608,
+    "rust_min_stack": 33554432
+  },
+  "compiler_tests": [
+    {
+      "name": "positive",
+      "path": "positive.rs",
+      "bytes": 589,
+      "sha256": "597c539b76f23872e8c30b20e4784fc7451ee0ac2bb45def4cb5f51c936c649c",
+      "expected_code": null,
+      "primary_line": null
+    },
+    {
+      "name": "live_view",
+      "path": "live_view.rs",
+      "bytes": 589,
+      "sha256": "bce4feb43cf2e5ef28ccef404564ce2705554a5bc7c990b68c912865b3d3c78b",
+      "expected_code": "E0505",
+      "primary_line": 10
+    },
+    {
+      "name": "consumed",
+      "path": "consumed.rs",
+      "bytes": 637,
+      "sha256": "a5348ef0aa0df54e2e71a467a20b450c93b953ab9b5b5182729e5be59448bd06",
+      "expected_code": "E0382",
+      "primary_line": 12
+    }
+  ],
+  "runtime_tests": [
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::transaction::catalog::tests::consuming_catalog_caller_and_checks_fit_original_limits",
+      "reason": "new terminal caller/helper census and 512/65536 limits"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::create_pair::catalog_commit::tests::consumed_preparation_has_bounded_pending_image",
+      "reason": "changed commit/retirement caller charges, live/recovered memory/native caps"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::write_transactions::issued_capsule_statement_and_empty_abort_return_original_loans",
+      "reason": "changed writable finish_statement admission and terminal lease close"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::write_transactions::actual_nonempty_actor_rejected_at_statement_begin_finish_and_empty_abort",
+      "reason": "changed finish_statement preserves rejection of unregistered actual Forward"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::write_transactions::readonly_abort_phase_corruption_cannot_drop_as_healthy",
+      "reason": "new Committed phase4 must remain invalid for readonly lease"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::catalog_transactions::registered_forward_finishes_and_consumes_commit_or_abort",
+      "reason": "new actual Catalog capsule completion path, fault or current-build recovery"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::catalog_transactions::statement_and_commit_capacity_return_same_original_loans",
+      "reason": "new actual Catalog capsule completion path, fault or current-build recovery"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::catalog_transactions::full_abort_retries_each_actual_completed_step_once",
+      "reason": "new actual Catalog capsule completion path, fault or current-build recovery"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::catalog_transactions::actual_intervening_commit_conflicts_only_with_serializable_writer",
+      "reason": "new actual Catalog capsule completion path, fault or current-build recovery"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::catalog_transactions::completed_commit_postcheck_capacity_is_fatal_not_before",
+      "reason": "new actual Catalog capsule completion path, fault or current-build recovery"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::catalog_transactions::first_statement_and_empty_commit_limits_preserve_unmodified_capsule",
+      "reason": "new actual Catalog capsule completion path, fault or current-build recovery"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::catalog_transactions::completed_catalog_capsules_recover_in_current_build",
+      "reason": "new actual Catalog capsule completion path, fault or current-build recovery"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::catalog_transactions::corrupted_completion_mode_or_mark_fences_before_wal",
+      "reason": "independent review found invalid mode bypass and nonzero mark; new corruption preflight"
+    }
+  ],
+  "native_tests": [],
+  "not_run": "unchanged native N01 and whole regression; new memory current-build recovery is not native durability acceptance"
+}

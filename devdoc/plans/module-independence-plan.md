@@ -332,3 +332,5 @@ Root3/Job3/Profile3·Row scope3·base4는 이름 변경의 부수 효과가 아�
 | 구현 상태 | [구현 색인](../implementation/README.md)에 C0 codec·생산자 타입과 C1 물리 WAL·원 owner/port·isolation/epoch backing·Catalog epoch 활성화 부분공급·전체 C0/C1–C5/M5 미완료를 표시 | `66ddf61`까지 제품 diff0. 후속 C0 실제 diff·선택 인수는 별도 기록하며 과거 실행 증거 승격0 |
 
 별도 검토자는 최종 M2를 수용했고, M3의 module-test-matrix.json에서 누락된 MBC31을 추가한 뒤 해당 행을 한정 재확인하여 M3도 수용했다. 두 판정의 미해결 필수 수정은0이며 [검토 기록](../evidence/module-independence-survey-20261026.md#final-design-review)에 입력 identity와 범위를 보존한다. 구체 API가 actual source로 구현 불가능하거나 원 권한/격리/복구·자원을 약화하는 경우, 공통 의미 재개방이 A/B의 독립 착수를 막는 경우에 해당 행을 다시 검토한다. M4/M5의 compiler·runtime·native·source census와 MI01–06는 실제 구현 뒤의 미완료 의무다.
+
+2026-10-28 `4ac878c` 이후 [첫 Catalog statement의 거래 완료 연결](../contracts/dev3-module-boundaries.md#catalog-capsule-completion)을 한정 수용했다. actual Forward를 등록한 원 capsule의 Commit/full abort와 변경 범위 검증·최종 독립 D1/D2를 마쳤으며, shared CREATE 제품 admission·Row/C4/C5·M4/M5 완료 목표는 축소하지 않는다. [source별 진행 증거](../evidence/module-independence-survey-20261026.md#c3-catalog-capsule)를 따른다.

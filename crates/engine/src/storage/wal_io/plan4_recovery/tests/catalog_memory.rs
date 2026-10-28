@@ -753,7 +753,7 @@ fn query<'s, 'c, W: WriterNamespace>(
 // All resources belong to the original fresh owner. In particular, reader and
 // writer private loans are disjoint parts of the existing 12MiB reservation.
 macro_rules! with_fresh {
-    ($oracle:expr $(, observe_start = $observe_start:expr)?, |$live:ident, $owner:ident, $flusher:ident, $status:ident, $undo:ident,
+    ($oracle:expr $(, observe_start = $observe_start:expr)? $(, frames = $frame_count:expr)?, |$live:ident, $owner:ident, $flusher:ident, $status:ident, $undo:ident,
         $private:ident, $reader_private:ident, $core:ident, $fence:ident, $state:ident $(, $foreign:ident)?| $body:block) => {{
         let directory = port::Directory::fresh();
         let state = directory.state();
@@ -780,7 +780,8 @@ macro_rules! with_fresh {
             let core = PageConcurrency::new(storage.session_fence()).unwrap();
             let mut owner = core.try_owner(OwnerRole::Foreground).unwrap();
             let mut flusher = core.try_owner(OwnerRole::DedicatedFlusher).unwrap();
-            let mut backing = vec![[0xa7; PAGE_BYTES]; 9];
+            let frame_count = 9 $(+ ($frame_count - 9))?;
+            let mut backing = vec![[0xa7; PAGE_BYTES]; frame_count];
             let mut frames: Vec<_> = backing.iter_mut().map(DirtyFrame::new).collect();
             let mut operation = boxed::<114_688>();
             let (prefix, visibility) = maintenance.split_at_mut(12_574_720);
@@ -1205,3 +1206,6 @@ mod create_lease;
 
 #[path = "catalog_memory/write_transactions.rs"]
 mod write_transactions;
+
+#[path = "catalog_memory/catalog_transactions.rs"]
+mod catalog_transactions;

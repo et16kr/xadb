@@ -105,6 +105,9 @@ pub(crate) use transaction::{
     TransactionFinishError, TransactionOptions,
 };
 
+#[allow(unused_imports)]
+pub(crate) use transaction::catalog::CatalogCommit;
+
 #[path = "plan4_retention/create_pair.rs"]
 mod create_pair;
 #[path = "plan4_retention/visibility.rs"]

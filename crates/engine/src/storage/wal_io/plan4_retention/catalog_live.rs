@@ -1753,7 +1753,7 @@ impl<'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
         definition: &crate::api::TableSpec,
         private: &mut [u8; PRIVATE_BYTES],
         flusher: &mut RetentionFlusher<'_, 's, 'c, 'p, 'd, 'm, 'w, W>,
-    ) {
+    ) -> ObjectHandle {
         let access = CatalogCreateAccess {
             storage: self.storage,
             pool: self.pool,
@@ -1765,6 +1765,29 @@ impl<'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
         let reserved = access
             .reserve(owner, actor, undo, definition, private)
             .unwrap();
-        assert!(reserved.initialize().is_ok());
+        reserved.initialize().ok().expect("actual CREATE Forward")
+    }
+}
+
+#[cfg(test)]
+impl<'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
+    RetentionWriter<'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W>
+{
+    /// Actual CREATE plus authentic statement registration. The intervening
+    /// legacy body is a fixture bridge, not shared product source admission.
+    pub(in crate::storage) fn catalog_test_forward_in_statement(
+        &mut self,
+        owner: &mut Owner<'c, 's>,
+        view: &RowStatementView<'_, '_, 'a, 'c, 's>,
+        undo: &Plan4Target,
+        definition: &crate::api::TableSpec,
+        private: &mut [u8; PRIVATE_BYTES],
+        flusher: &mut RetentionFlusher<'_, 's, 'c, 'p, 'd, 'm, 'w, W>,
+    ) -> Result<ObjectHandle> {
+        let actor = self.catalog_statement_create_actor(owner, view)?;
+        let object = self
+            .catalog_test_forward_beside_capsule(owner, actor, undo, definition, private, flusher);
+        self.catalog_statement_created(owner, view, object)?;
+        Ok(object)
     }
 }

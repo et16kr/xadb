@@ -239,13 +239,14 @@ impl<'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
 /// synchronous lifecycle call, without last-use/optimizer discounts.
 pub(in super::super) fn lifecycle_caller_bytes() -> usize {
     use std::mem::size_of;
-    12 * size_of::<&()>() // public arguments plus closure capture references
+    (12 * size_of::<&()>() // public arguments plus closure capture references
         + size_of::<IsolationLevel>()
         + 2 * size_of::<TxnRef>()
         + 2 * size_of::<Result<Observation>>()
         + 4 * size_of::<Result<()>>()
         + 2 * size_of::<RetentionError>()
-        + size_of::<crate::storage::session_fence::UnwindFence<'_>>()
+        + size_of::<crate::storage::session_fence::UnwindFence<'_>>())
+    .max(super::catalog::terminal_caller_bytes())
 }
 
 pub(in super::super) fn source_bytes() -> usize {
@@ -281,7 +282,7 @@ impl RowTransaction<'_, '_, '_, '_> {
     }
     pub(in crate::storage) fn test_corrupt_readonly_phase(&self, phase: u8) {
         assert!(self.lease.actor.is_none());
-        assert!(matches!(phase, 2 | 3));
+        assert!(matches!(phase, 2..=4));
         let mut state = self.lease.ledger.lock().unwrap();
         row_mut(state.bytes, self.lease.slot)[0] = phase;
     }

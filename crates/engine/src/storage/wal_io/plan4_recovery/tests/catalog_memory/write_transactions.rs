@@ -522,7 +522,7 @@ fn new_capsule_begin_and_abort_images_recover_in_current_build() {
 #[test]
 fn readonly_abort_phase_corruption_cannot_drop_as_healthy() {
     case("WT07", || {
-        for phase in [2, 3] {
+        for phase in [2, 3, 4] {
             let oracle = Oracle::new();
             with_fresh!(oracle, |live,
                                  owner,

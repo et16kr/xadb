@@ -6,7 +6,7 @@
     reason = "C0 boundary awaits the separately owned Row consumers"
 )]
 pub(crate) use super::bootstrap::doublewrite_install::mutable_storage::plan4_pages::apply::{
-    CatalogCallError, CatalogCallScope, CatalogCandidate, CatalogReadOperation,
+    CatalogCallError, CatalogCallScope, CatalogCandidate, CatalogCommit, CatalogReadOperation,
     CatalogStatementCall, DiskSession, EmptyRetentionControlLoan, ISOLATION_BYTES,
     IntoRetentionError, IsolationLevel, MaintenancePort, MissingCatalogEvidence, MutationPort,
     Plan4Recovered, PreparedCatalog, ReadOnlyCommit, ReadPort, ReadStep, RetentionCause,

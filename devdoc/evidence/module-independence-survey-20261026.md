@@ -2652,3 +2652,36 @@ r1–r4의 임시 source/export/target/ELF는 실행 출력·hash를 수집한 �
 r5는 scoped Clippy/test build와 선택 runtime3을 모두 PASS했다(44.849초). source `dcac813d80839228df3e865b3d2cbfac166111a158bceb45710a737e12d4e9c1`, result `23473b5276e323b590860c55228c7e37dd8db4ec3662fad1dec9e9694d6dedc5`, ELF `d60f518179ef6cc27a8426a69b35edcbc2206c45a60cf7490919aa89baa7fe8b`(188280688B), source inventory5806개 `741fe51d21e452cf9c509d3aa1af902ec9a58aa63c8e7ac62f1dba765427b9c6`, 전체 export manifest `1e6fc0ddc7ae59988346a24338586e767b7501d56eab364b314d91011412460b`, 선택 manifest `fb25d96fe37fe775d3407e89d162019ad1818a04f1deddf81d3eddec699c42e4`다. compiler probe·source census·memory 복구·native를 다시 실행하지 않았다. 추가 타입/필드·source 계산 변경이 없으므로 r4의 구조별 source 결과는 원 source에 보존하고 새 실행으로 승격하지 않는다. r5 임시 source/target/ELF도 출력·hash 수집 뒤 삭제하고 최종 result에 기록했다. 최종 독립 receipt는 아래에 기록한다.
 
 최종 독립 D1/D2는 `ACCEPTED_LIMITED_D1_D2`, required0이다. `/root/source_admission_review`가 변경21/21파일(Rust8·fixture6·문서/JSON7), artifact88개 hash와 source별 결과·cleanup을 대조했다. 현재 source는 r5와 정확히 같고 source census는 r4 실행 증거로 유지한다. 검토자 재시험0이며 receipt `artifacts/module-c3-write-capsule-20261028/review-final.json` SHA-256은 `272bc57c8e657ac3e12928aff9136c29637c33117829a85d06134c14f10e06bb`다. receipt가 허용한 수용/status/hash metadata만 후속 반영한다. 이번 빈 capsule 공급을 한정 수용하며 자동 Status·own actor 읽기·shared CREATE·일반 Row mark/rollback/commit·전체 floor·C3–C5·M4/M5는 미완료다.
+
+
+<a id="c3-catalog-capsule"></a>
+## 2026-10-28 실제 첫 Catalog statement의 거래 완료 연결
+
+기준은 `main` `4ac878c`다. 앞선 [빈 쓰기 capsule](#c3-write-capsule)의 증거·FAIL·source identity는 보존한다. 기존 미완료 C2 stash는 적용하지 않았다. [첫 Catalog 거래 완료 계약](../contracts/dev3-module-boundaries.md#catalog-capsule-completion)의 구현과 source별 선택 검증을 마쳤고 최종 독립 D1/D2를 한정 수용했다. 아래 실행 전 동결과 source별 실제 결과를 구분한다.
+
+실행 전에 [manifest](../../tests/fixtures/dev3-module-c3/catalog-capsule/manifest.json)를 동결한다. compiler3은 새 consuming Commit 정상 경로/생존 view의 거래 소비 거절/소비 뒤 재사용 거절이며, runtime13은 신규 CT01–CT08, 새 source census, 변경된 nested Commit/retirement 비용 한도, 변경된 writable finish의 WT01/WT05, readonly phase4 오류 WT07이다. CT01은 실제 첫 Forward의 Commit·full abort와 SER/RC를 원 oracle에 대조한다. CT02는 원 statement/transaction의 Capacity·foreign owner 반환, CT03은 실제 RollbackStart/CLR 뒤 실패와 재시도, CT04는 실제 다른 거래의 Commit/Q에 의한 Serializable conflict·RC 성공, CT05는 실제 Commit 뒤 검산 Capacity의 Fatal, CT06은 빈 Commit·후속 statement의 한정 Unsupported, CT07은 새 Commit9/AbortEnd11 image의 현재-build 복구와 원 cleanup15/16·Q·조회 결과를 검산한다. CT08은 독립 검토에서 확인한 isolation mode/mark 손상의 WAL 전 Fatal을 검산한다.
+
+전체1200초, compiler단계420초, case45초, case출력8MiB, Rust test stack32MiB로 제한한다. `python3 -B`로 새 artifact runner를 실행하며 실패 즉시 중단한다. 실행 r1–r5의 실제 순서는 원 source manifest·ELF hash·로그 수집, source/target/ELF 삭제, 삭제 목록을 포함한 최종 result.json 기록이다. 이번 top-level runner에는 후속 실행부터 삭제 전 result-before-cleanup.json을 먼저 기록하도록 보완했다. 이 보완은 이미 완료한 r1–r5의 실행 순서나 결과를 소급 변경하지 않는다. 기존 결과는 삭제·재분류하지 않는다. 무변경 native N01·완료 하위 회귀·workspace 전수는 실행하지 않으며 메모리 복구를 native durability 인수로 표시하지 않는다.
+
+실제 shared CREATE 제품 admission·일반 Row 완료·전체 source floor 및 M4/M5는 계속 미완료다.
+
+
+첫 실행 r1은 새 시험 helper의 부모 `Result` alias 충돌로 compile FAIL(runtime0), r2는 cfg(test) 항목 순서/범위 패턴 Clippy FAIL(runtime0)이며 모두 보존한다. r3은 static2/compiler3 PASS·새 source case1 PASS 뒤 기존 source case2의 recovered native-type65600B로 FAIL했다(상한65536B보다64B 초과). memory/live64088B·native/live64224B와 원 FAIL을 성공으로 재분류하지 않는다.
+
+후속 변경은 실제 CLR arm이 `if let Err`의 Observation Result 하나만 소비하고 다음 loop로 가는 반면 Commit/AbortEnd는 별도 arm에서 Observation을 보유한다는 차이를 source 식에 반영한다. CLR의 actor·selected 값/반환·참조·UnwindFence를 별도 계수하며 optimizer/last-use 할인이나 상한 변경을 하지 않는다. [후속 선택](../../tests/fixtures/dev3-module-c3/catalog-capsule/source-followup.json)은 이 변경의 source2와 미실행 WT/CT11이다. r3에서 완료한 compiler3은 반복하지 않는다.
+
+
+r4은 static2와 runtime9(source2, WT01/WT05/WT07, CT01–CT04) PASS 후 CT05의 expected Job 조립 오류로 FAIL했다. CT05가 원 row17 before-bank에 row31 after-image를 반영하지 않은 것이며 cell0의35B 불일치를 보존했다. 기존 `Oracle::check`와 같은 원 C04 Job-page patch를 새 CT05에만 적용하고 byte equality를 유지한다. [수정 근거](../../artifacts/module-c3-catalog-capsule-20261028/r4-oracle-correction.json)와 [후속 선택](../../tests/fixtures/dev3-module-c3/catalog-capsule/oracle-followup.json)은 실패 CT05·미실행 CT06–CT08만 포함한다. 제품 source와 완료한 source/WT/CT01–CT04를 반복하지 않는다.
+
+r4 source 관측은 handle/return416/328B, Commit caller592B·CLR caller504B·helper24274B·progress44304B다. memory live64000/recovered65376B, native-type live64136/recovered65512B로 원65536B 한도 안이며 마지막 여유24B다. 이는 한정 source census이고 전체 entry/return floor·stack/RSS·native 실행 인수가 아니다.
+
+
+r5은 static2/runtime4(CT05–CT08) PASS다. CT07의 실제 Commit capture9는 cleanup10..15/Q1/Found, AbortEnd capture11은 cleanup12..16/Q0/Missing을 확인했고, 복구된 새 session에는 이전 capsule0이다. CT05의 실제 Commit 뒤 Capacity는 Fatal과 원 C04 WAL/ATT/Job after-image를 대조했으며 mode/mark 손상은 추가 WAL 없이 fence했다. source별 r3 compiler3, r4 runtime9, r5 runtime4로 고정 inventory를 충족했다. r3의 source1 PASS는 당시 source 증거이며 r4 source 수정 뒤 대응2건을 새로 검증한 것이다. 원 r1–r4 FAIL을 지우거나 최종 source의 전수 PASS로 합치지 않는다.
+
+| 실행 | source SHA-256 | ELF SHA-256 | result SHA-256 |
+| --- | --- | --- | --- |
+| r3 | `ae1daf9e136e83895a0ff7bbe35db688e85b17ac16fb99d25b8948fa294c32d9` | `51668e814e7a151589812aa75c7df6d2fca05d31bfede3e0aa6de8bb6b7ca70f` | `69969cbdf125e3aaa0a64302d7b13ecfdbc720f95a588851350284a923739d5f` |
+| r4 | `b5f06783f3b4a68dec826692377a2155b38e578c9769374d4b5b9f1d1c2c4cba` | `3b2a60bcdcd4fd2aa02ab74081a044ce0f52688551eaabe6de392ad59f2214e6` | `8bb597767c9752899e89f116b0ee231749e4b764412ae2b3a5cc671a9c5592d9` |
+| r5 | `fc4a46ae6447b8cf2a489151026bd4cec31343d99db32ff7dd8b649bcec1f6ad` | `509526fbcdf9506808755c84e4e987f7d5285abebdd580dfefd92a0a3f4c4552` | `1fd1769ac72314aacf990da2a6fc00bee978279da0ba42eb902d146bc1081eba` |
+
+[artifact](../../artifacts/module-c3-catalog-capsule-20261028/)의 source manifest·도구/입력 identity·stdout/stderr·결과는 보존했고 각 실행의 source/target/ELF는 삭제했다. [실행 전 D2 한정 수용](../../artifacts/module-c3-catalog-capsule-20261028/review-before-run.json)과 이후 독립 검토에서 mode/mark, source active max, CLR 상위 ordinal 계수를 보완했다. [최종 독립 D1/D2 receipt](../../artifacts/module-c3-catalog-capsule-20261028/review-final.json) SHA-256 `4a26d61fef92b3a44b51a9bcd28c4bddea4c8d3d08e3a9020aa70609620337fe`는25/25파일·artifact78개 검토와 필수 수정0의 한정 수용을 기록한다. 문서 verifier·push·무변경 제품/하위 전체 실행은0이다. 기존 stash 및 다른 증거 artifact는 보존한다.

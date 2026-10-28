@@ -7,6 +7,8 @@ use std::{
     sync::{MutexGuard, atomic::Ordering},
 };
 
+#[path = "transaction_catalog.rs"]
+pub(super) mod catalog;
 #[path = "transaction_write.rs"]
 pub(super) mod writable;
 
@@ -33,6 +35,7 @@ enum Phase {
     Active,
     MustAbort,
     Aborted,
+    Committed,
     Ended,
 }
 
@@ -171,7 +174,7 @@ fn entry<'v, 'a, 'c, 's>(
 fn check_slot(bytes: &[u8], slot: usize, generation: u64, fence: &SessionFence) -> Result<()> {
     if slot >= SLOTS
         || generation == 0
-        || !(1..=3).contains(&row(bytes, slot)[0])
+        || !(1..=4).contains(&row(bytes, slot)[0])
         || read64(row(bytes, slot), 16) != generation
     {
         return Err(fail(fence, RetentionCause::Invariant));
@@ -250,8 +253,11 @@ impl<'v, 'a, 'c, 's> IsolationLease<'v, 'a, 'c, 's> {
         let mut state = entry(self.ledger, self.fence)?;
         self.check(state.bytes)?;
         let target = row(state.bytes, self.slot);
-        if target[0] != if self.actor.is_some() { 3 } else { 1 }
-            || read32(target, 12) != HANDLE_BYTES as u32
+        if !(if self.actor.is_some() {
+            matches!(target[0], 3 | 4)
+        } else {
+            target[0] == 1
+        }) || read32(target, 12) != HANDLE_BYTES as u32
             || read64(target, 80) != 0
         {
             return Err(fail(self.fence, RetentionCause::Invariant));
@@ -340,6 +346,7 @@ impl RowTransaction<'_, '_, '_, '_> {
         row_mut(state.bytes, self.lease.slot)[0] = match phase {
             Phase::MustAbort => 2,
             Phase::Aborted => 3,
+            Phase::Committed => 4,
             _ => return Err(fail(self.lease.fence, RetentionCause::Invariant)),
         };
         self.phase.set(phase);
@@ -349,9 +356,11 @@ impl RowTransaction<'_, '_, '_, '_> {
         if self.phase.get() == Phase::Ended {
             return Ok(());
         }
-        // An issued actor can be released only after the actual AbortEnd
+        // An issued actor can be released only after an actual Commit/AbortEnd
         // handoff. Drop does no WAL/I/O and must not lose a healthy obligation.
-        if self.lease.actor.is_some() && self.phase.get() != Phase::Aborted {
+        if self.lease.actor.is_some()
+            && !matches!(self.phase.get(), Phase::Aborted | Phase::Committed)
+        {
             return Err(fail(self.lease.fence, RetentionCause::WrongState));
         }
         self.phase.set(Phase::Ended);
@@ -659,21 +668,26 @@ impl<'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
         owner: &mut Owner<'c, 's>,
         mut view: RowStatementView<'t, 'v, 'a, 'c, 's>,
     ) -> std::result::Result<(), StatementFinishError<RowStatementView<'t, 'v, 'a, 'c, 's>>> {
+        if view.transaction.lease.actor.is_some() {
+            let checked = self.catalog_transaction_check(owner, |writer, owner| {
+                writer.transaction_entry(owner)?;
+                writer.transaction_matches(view.transaction)?;
+                view.check()?;
+                writer.check_catalog_statement_finish(&view)?;
+                view.close()
+            });
+            return match checked {
+                Ok(()) => Ok(()),
+                Err(error) if error.effect == Effect::Unchanged => {
+                    Err(StatementFinishError::Before { error, view })
+                }
+                Err(error) => Err(StatementFinishError::Fatal(error)),
+            };
+        }
         if let Err(error) = self
             .transaction_entry(owner)
             .and_then(|_| self.transaction_matches(view.transaction))
             .and_then(|_| view.check())
-            .and_then(|_| {
-                if let Some(actor) = view.transaction.lease.actor
-                    && !self.empty_actor_active(actor)?
-                {
-                    return Err(unchanged(
-                        RetentionPhase::Finalize,
-                        RetentionCause::WrongState,
-                    ));
-                }
-                Ok(())
-            })
         {
             return if error.effect == Effect::Unchanged {
                 Err(StatementFinishError::Before { error, view })
@@ -762,9 +776,16 @@ pub(super) fn handle_census() -> (usize, usize) {
     type V<'t, 'v, 'a, 'c, 's> = RowStatementView<'t, 'v, 'a, 'c, 's>;
     (
         size_of::<T<'_, '_, '_, '_>>()
-            + size_of::<Result<T<'_, '_, '_, '_>>>().max(size_of::<
-                std::result::Result<ReadOnlyCommit, TransactionFinishError<T<'_, '_, '_, '_>>>,
-            >()),
+            + size_of::<Result<T<'_, '_, '_, '_>>>()
+                .max(size_of::<
+                    std::result::Result<ReadOnlyCommit, TransactionFinishError<T<'_, '_, '_, '_>>>,
+                >())
+                .max(size_of::<
+                    std::result::Result<
+                        catalog::CatalogCommit,
+                        TransactionFinishError<T<'_, '_, '_, '_>>,
+                    >,
+                >()),
         size_of::<V<'_, '_, '_, '_, '_>>()
             + size_of::<Result<V<'_, '_, '_, '_, '_>>>().max(size_of::<
                 std::result::Result<(), StatementFinishError<V<'_, '_, '_, '_, '_>>>,

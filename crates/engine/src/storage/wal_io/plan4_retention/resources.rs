@@ -258,7 +258,8 @@ pub(in crate::storage) fn source_census<W: WriterNamespace>() -> RetentionSource
         .max(catalog_live)
         .max(catalog_recovery_cleanup)
         .max(transaction::source_bytes())
-        .max(transaction::writable::source_bytes());
+        .max(transaction::writable::source_bytes())
+        .max(transaction::catalog::check_source_bytes());
     // Conversion has not produced ports. After split they remain beside the
     // original owner; the exclusive split calculation/tuple return is separate.
     let split_ports = source::split_port_bytes::<W>();

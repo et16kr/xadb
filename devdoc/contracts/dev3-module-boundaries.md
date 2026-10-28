@@ -1512,3 +1512,17 @@ Q01–Q08은 아래 설계로 독립 D2 검토를 수신해 채택했다. 앞선
 [원 DPT 저장 축소](../evidence/module-independence-survey-20261026.md#c2-compact-dpt)는 같은 directory에 full identity를 한 번 보유하고 private 행3072B를 줄였다. expected/원 요구 권한과 publication·generation 검산은 [dirty owner](dev3-dirty-stage.md#compact-dpt)를 따른다. helper660B를 actual source에 연결한 현재 shared19328B/Full33972B/Resident17588B이며 전체 short floor·writer phase는 미공급이다. 과거 shared22400B 수치는 당시 source의 증거다.
 
 [LOAD 검산 claim borrow](../evidence/module-independence-survey-20261026.md#c2-borrowed-load-claims)는 같은 registry 아래 기존 conflict predicate에 원 claim을 참조로 전달한다. 관측 pool guard3307B·guard 합6820B·compact floor14776B는 제품 admission 미연결이다. load_eligible 및 다른 source class의 전체 수명 보증으로 확대하지 않는다.
+
+
+<a id="catalog-capsule-completion"></a>
+## 실제 첫 Catalog statement의 거래 완료 연결
+
+`XADB-MODULE-CATALOG-CAPSULE-001`은 `4ac878c`의 원 Begin/512B capsule에 실제 첫 Catalog Forward의 statement 종료와 consuming Commit/full abort를 연결하는 D1/D2 구현 단위다. source별 compiler3·runtime13을 검증했고 최종 독립 D1/D2 한정 수용·필수 수정0을 확인했다. [증거와 동결 선택](../evidence/module-independence-survey-20261026.md#c3-catalog-capsule)을 따른다.
+
+- wire의 원 statement/mutation은1이다. 첫 빈 view(sequence1/revision0)의 실제 actor를 검산하고, 실제 CREATE initialize의 object와 원 RootRetained를 대조한 뒤 revision1/catalog read-write bits3으로 등록한다. 완료한 view만 소비하며 일반 Row mark를 제조하지 않는다. 이 단위의 실제 CREATE 연결은 cfg(test) bridge이고 제품 shared reservation admission은 미공급이다.
+- Commit은 live view가 없는 원 Active capsule, 등록한 실제 root, isolation read/write 집합을 검산한다. Serializable은 원 시작Q 이후 실제 Catalog epoch 변경이면 MustAbort/SerializationConflict를 반환하고 ReadCommitted는 Commit을 계속한다. 검산부터 실제 Commit/Q publication까지 같은 exclusive MutationPort/control borrow를 유지한다.
+- 실제 Commit/AbortEnd의 observation·actor·terminal ordinal/status/adoptionLSN/outcome과 실제 Q를 확인한 뒤 각각 Committed4/Aborted3으로 snapshot·slot·512B lease를 반환한다. readonly는 phase1만 정상 반환한다. Commit 이후 검산/정리 오류는 Fatal이며 Before 성공처럼 반환하지 않는다.
+- 전체 abort는 원 Active(논리 MustAbort 포함)에서 실제 RollbackStart를 수행하고 즉시 MustAbort로 기록한다. 원 Aborting/head에서 실제 CLR, compensated root 또는 빈 Aborting에서 실제 AbortEnd를 수행한다. 중간 Capacity는 같은 MustAbort capsule을 반환하며 완료한 WAL 단계를 반복하지 않는다. compensated root는 Aging 의무로 남으므로 RootFree를 기다리지 않고 거래 snapshot을 반환한다.
+- 깊은 ATT/Job/ledger 검산은 원 read gate와 고정 progress source 예약 안에서만 실행한다. 검산 예약은 각 nested WAL 동작 전에 종료한다. 새 helper 최대값과 nested caller carrier를 기존 고정 비용에 계수하며 장기512B/short65536B 한도는 변경하지 않는다. 전체 entry/return floor와 RSS/stack 인수는 이 한정 source 식의 범위가 아니다.
+
+성공하는 빈 Commit, 두 번째 쓰기 statement, own-actor 읽기, 일반 Row rollback/Commit, shared CREATE 제품 경계와 C4/C5·M4/M5 인수는 미완료다. 원 wire/fixture는 바꾸지 않으며 새 Commit/AbortEnd image의 현재-build 메모리 복구를 선택한다. 기존 native 완료 사례·전체 workspace/lower wrapper는 반복하지 않는다.
