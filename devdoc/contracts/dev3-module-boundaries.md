@@ -332,6 +332,21 @@ finish_read_only는 원 durable ledger borrow를 유지한 채 active statement0
 
 현재 [읽기 전용 수명 부분공급](../evidence/module-independence-survey-20261026.md#c1-read-only-capsules)은 위 begin/statement/finish_read_only의 원 slot·512B credit·Serializable/RC snapshot·Before/Drop을 연결했다. writable 옵션은 효과 전 Unsupported이며 finish_aborted/commit_row는 아직 없다. actual source adapter/자동 read-set이 없어 현재 종료 인수는 빈 read-set만 해당한다. 거래·view에서 legacy snapshot guard를 꺼내 조회하는 우회는 공급하지 않는다. short aggregate admission·cursor·쓰기 statement/mark·실제 conflict 인수는 남아 있다.
 
+<a id="writable-empty-capsule"></a>
+#### XADB-MODULE-WRITABLE-EMPTY-001 — 실제 Begin과 빈 쓰기 capsule
+
+2026-10-28 · main `b35150c` 기준 · **독립 D1/D2 한정 수용, 필수 수정0·source별 선택 검증 완료**. 위 최종 자동 선택 API의 선행 공급으로 `MutationPort::begin_catalog_transaction(owner,isolation,status,private,flusher)`를 추가한다. Status는 원 exclusive INIT의 `Plan4Target`, flusher는 같은 storage/pool의 원 MaintenancePort다. 자동 Status 선택이 없는 `begin_transaction`의 writable 요청은 여전히 Unsupported다. raw actor/q 생성자나 외부 Prepared는 추가하지 않는다.
+
+원 isolation slot·512B source와 Serializable snapshot을 먼저 확보하고 기존 admitted `catalog_begin`을 호출한다. 성공 직후 실제 actor를 lease에 귀속시키며 원 canonical slot32..80과 매 경계에서 대조한다. Begin 전 Unchanged는 checked 정리하고 issued-local gap은 원 규칙을 보존한다. Begin 성공 이후 actor 결합/검산 실패는 fence/Fatal이다. lease가 거래의512B 반환을 단독 소유해 중복 CallerCredit을 제거하며 statement credit은 별도 원 slot에 남긴다. slot phase는 Active1/MustAbort2/Aborted3이고 Cell과 같은 원 상태를 검산한다. 읽기 전용 lease는 phase1만 받으며 실제 slot/credit 반환은 readonly1 또는 writable3에서만 허용한다.
+
+첫 writable statement는 실제 ATT/descriptor·TerminalLeased와 **빈 undo head·root 없음**만 받는다. 시작과 명시 종료에서 다시 검산하고 mark는 이 실제 빈 상태의 None이다. 원 statement sequence·Serializable/RC snapshot을 유지한다. 미종료 writable view/transaction Drop은 I/O 없이 fence하며 원 obligation을 healthy 상태로 잃지 않는다. `finish_read_only`는 같은 writable capsule을 Before(WrongState)로 반환한다. own-actor 조회 adapter가 없는 현재 Catalog statement 읽기는 writable을 Unsupported로 거절한다. raw 관측 actor는 권한 생성자가 아니다.
+
+`abort_empty_transaction(owner,transaction,private,flusher)`는 실제 empty 상태만 원 RollbackStart→AbortEnd로 진행한다. 첫 효과 전 Unchanged는 Before이고 RollbackStart 뒤 Unchanged는 같은 MustAbort capsule의 RollbackRequired다. 같은 capsule로 재시도할 때 RollbackStart를 중복하지 않으며 새 statement는 금지한다. 실제 AbortEnd observation과 actor/status, ATT 제거, 정확 한 TerminalReady/outcome2/commit_q0·root 없음이 일치한 뒤 Aborted로 전환하고 slot/snapshot을 checked 반환한다. ATT 부재만으로 종료를 인정하지 않는다. 물리 TerminalFinish는 별도 Aging 의무다. 일반 Row rollback/commit_row·독립 finish_aborted 공급을 주장하지 않는다.
+
+wrapper의 인자·관측/오류 Result는 실제 CatalogProgressCharge와 source census의 lifecycle phase에 더한다. descriptor/root scan은 별도 helper에서 끝나고 큰 decoded 값을 nested lifecycle에 보유하지 않는다. long capsule+반환 carrier512B·short65536B 상한은 바꾸지 않는다. 새 empty-actor pre/postflight와 독립 begin/finish_statement helper에는 아직 runtime source admission이 없다. 이번 공급은 내부 lifecycle의 예약에 한정하며, 이 helper들과 진입 전/반환 뒤 전체 동시 floor는 미공급이다.
+
+[선택 manifest](../../tests/fixtures/dev3-module-c3/write-capsule/manifest.json)는 compiler3·runtime14를 고정한다. source3, 신규 writable6(두 mode·Before/Capacity·실제 중간 abort 재시도·Drop/identity·실제 nonempty 반례·새 이미지의 현재-build memory 복구), 변경한 readonly credit/snapshot5다. 총1200초/compiler420초/case45초/로그8MiB/stack32MiB, 첫 실패 중단·원 실패 보존·완료 무변경 재실행 금지다. 후속 phase 불변식 수정은 [별도 선택](../../tests/fixtures/dev3-module-c3/write-capsule/phase-followup.json)의 WT01/WT03·신규 WT07만 검증한다. unchanged native N01은 실행하지 않으며 memory 복구를 native 영속 인수로 부르지 않는다. 실제 결과는 [이번 증거](../evidence/module-independence-survey-20261026.md#c3-write-capsule)에 보존한다. shared CREATE·own write 읽기·일반 mark/rollback·M4/M5 전체는 미완료다.
+
 ### 6.3 Row read operation: 원 Owner의 단계별 재대여
 
 다음 type의 필드는 `apply::read` 내부다. `RowCandidate`는 private lease generation+capture sequence와 관측 key/version/length만 가진 non-Copy 값이다. source pin이나 slice를 외부로 내보내지 않으므로 mutable resolver와 자기참조 lifetime을 만들지 않는다.

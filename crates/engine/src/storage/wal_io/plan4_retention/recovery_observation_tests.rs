@@ -294,3 +294,36 @@ impl<W: WriterNamespace> CatalogTestState for Plan4Retention<'_, '_, '_, '_, '_,
         self.free_undo_test_state()
     }
 }
+
+impl<W: WriterNamespace> CatalogTestState for MutationPort<'_, '_, '_, '_, '_, '_, '_, '_, '_, W> {
+    fn catalog_test_with_pool<T>(&self, run: impl FnOnce(&SharedPool<'_, '_, '_, '_>) -> T) -> T {
+        run(self.pool)
+    }
+    fn recovery_test_bank(&self) -> &[u8] {
+        self.control.bytes
+    }
+    fn catalog_test_jobs(&self) -> &[[u8; 1024]; 64] {
+        self.control.jobs()
+    }
+    fn free_undo_test_state(&self) -> Result<FreeUndoTestState> {
+        let prefix = self
+            .storage
+            .wal()
+            .prefix()
+            .map_err(|e| fatal(self.storage, RetentionPhase::Census, RetentionCause::Wal(e)))?;
+        let (reserved, installation) = self.control.population.test_state();
+        let (claim, pins) = dirty_frame::init_test_support::claim_state(self.pool);
+        Ok((
+            prefix,
+            self.control
+                .durable
+                .as_ref()
+                .map(|d| d.observation().frame.lsn),
+            reserved,
+            installation,
+            self.control.pending.is_some(),
+            claim,
+            pins,
+        ))
+    }
+}

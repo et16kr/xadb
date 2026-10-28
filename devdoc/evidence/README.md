@@ -1,5 +1,7 @@
 # XADB 조사·실행 증거
 
+2026-10-28 [실제 빈 쓰기 capsule](module-independence-survey-20261026.md#c3-write-capsule): main `b35150c`에서 원 Begin actor·빈 statement·소비형 빈 abort를 연결한다. 원 static2 FAIL을 보존하고 r3 compiler3/runtime14·source 보완 r4 runtime2·phase 보완 r5 runtime3을 통과했다. 최종 독립 D1/D2 한정 수용·필수 수정0이며 자동 Status/일반 mutation·shared CREATE·M4/M5는 미완료다.
+
 2026-10-28 [CREATE 원 flush 대여](module-independence-survey-20261026.md#c3-create-lease): main `3fa5f6f`에서 예약의 disjoint 원 자원·연속 flush lease를 구현했다. r1 compile FAIL을 보존하고 r2 compiler3/runtime10/nativeN01을 통과했다. 최종 독립 D1/D2 한정 수용이며 shared 제품 admission·M4/M5는 미완료다.
 
 2026-10-28 [CREATE 원 자원의 borrow 본문](module-independence-survey-20261026.md#c3-create-parts): main `8613c53`의 원6자원을 빌리는 private view로 실제 본문을 분리한다. r1 fixture FAIL을 보존하고 r1 compiler2/runtime5 및 r2 수정·미실행 runtime2/nativeN01을 검증했다. 최종 독립 D1/D2 한정 수용이며 shared 제품 CREATE와 M4/M5는 미완료다.

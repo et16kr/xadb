@@ -1,12 +1,14 @@
-//! Original-session read-only transaction and statement ownership. No durable
-//! actor is fabricated. Writable Begin and source-dependent reads are supplied
-//! by their later adapters; this module never accepts a caller read-set.
+//! Original-session transaction and statement ownership. Durable actors come
+//! only from the original admitted Begin; callers cannot submit a read-set.
 use super::*;
 use crate::storage::session_fence::SessionFence;
 use std::{
     cell::Cell,
     sync::{MutexGuard, atomic::Ordering},
 };
+
+#[path = "transaction_write.rs"]
+pub(super) mod writable;
 
 const SLOTS: usize = 32;
 const HEADER: usize = 64;
@@ -29,6 +31,8 @@ pub(crate) struct TransactionOptions {
 #[derive(Clone, Copy, PartialEq, Eq)]
 enum Phase {
     Active,
+    MustAbort,
+    Aborted,
     Ended,
 }
 
@@ -38,6 +42,7 @@ struct IsolationLease<'v, 'a, 'c, 's> {
     fence: &'s SessionFence,
     slot: usize,
     generation: u64,
+    actor: Option<TxnRef>,
     active: bool,
 }
 /// One fixed source charge, returned only to its original live slot/generation.
@@ -52,7 +57,6 @@ struct CallerCredit<'v, 'a, 'c, 's> {
 pub(crate) struct RowTransaction<'v, 'a, 'c, 's> {
     snapshot: Option<SnapshotGuard<'v, 'a, 'c, 's>>,
     lease: IsolationLease<'v, 'a, 'c, 's>,
-    source: CallerCredit<'v, 'a, 'c, 's>,
     phase: Cell<Phase>,
     next_statement: Cell<u64>,
 }
@@ -167,7 +171,7 @@ fn entry<'v, 'a, 'c, 's>(
 fn check_slot(bytes: &[u8], slot: usize, generation: u64, fence: &SessionFence) -> Result<()> {
     if slot >= SLOTS
         || generation == 0
-        || row(bytes, slot)[0] != 1
+        || !(1..=3).contains(&row(bytes, slot)[0])
         || read64(row(bytes, slot), 16) != generation
     {
         return Err(fail(fence, RetentionCause::Invariant));
@@ -181,7 +185,7 @@ impl<'v, 'a, 'c, 's> IsolationLease<'v, 'a, 'c, 's> {
         visibility: &'v BoundVisibility<'a, 'c, 's>,
         fence: &'s SessionFence,
         isolation: IsolationLevel,
-    ) -> Result<(Self, CallerCredit<'v, 'a, 'c, 's>)> {
+    ) -> Result<Self> {
         let mut state = entry(ledger, fence)?;
         let bytes = &mut state.bytes;
         let slot = (0..SLOTS)
@@ -210,24 +214,17 @@ impl<'v, 'a, 'c, 's> IsolationLease<'v, 'a, 'c, 's> {
         write64(*bytes, 0, next);
         write64(*bytes, 8, count);
         write64(*bytes, 16, used);
-        Ok((
-            Self {
-                ledger,
-                visibility,
-                fence,
-                slot,
-                generation,
-                active: true,
-            },
-            CallerCredit {
-                ledger,
-                fence,
-                slot,
-                generation,
-                active: true,
-            },
-        ))
+        Ok(Self {
+            ledger,
+            visibility,
+            fence,
+            slot,
+            generation,
+            actor: None,
+            active: true,
+        })
     }
+
     fn check(&self, bytes: &[u8]) -> Result<()> {
         if !self.active {
             return Err(unchanged(
@@ -235,7 +232,16 @@ impl<'v, 'a, 'c, 's> IsolationLease<'v, 'a, 'c, 's> {
                 RetentionCause::WrongState,
             ));
         }
-        check_slot(bytes, self.slot, self.generation, self.fence)
+        check_slot(bytes, self.slot, self.generation, self.fence)?;
+        let target = row(bytes, self.slot);
+        let matches = match self.actor {
+            None => target[0] == 1 && target[2] == 0 && target[32..80].iter().all(|&b| b == 0),
+            Some(actor) => target[2] == 1 && TxnRef::decode(&target[32..80]).ok() == Some(actor),
+        };
+        if !matches {
+            return Err(fail(self.fence, RetentionCause::Invariant));
+        }
+        Ok(())
     }
     fn close(&mut self) -> Result<()> {
         if !self.active {
@@ -244,15 +250,22 @@ impl<'v, 'a, 'c, 's> IsolationLease<'v, 'a, 'c, 's> {
         let mut state = entry(self.ledger, self.fence)?;
         self.check(state.bytes)?;
         let target = row(state.bytes, self.slot);
-        if read32(target, 12) != 0 || read64(target, 80) != 0 {
+        if target[0] != if self.actor.is_some() { 3 } else { 1 }
+            || read32(target, 12) != HANDLE_BYTES as u32
+            || read64(target, 80) != 0
+        {
             return Err(fail(self.fence, RetentionCause::Invariant));
         }
         let count = read64(state.bytes, 8)
             .checked_sub(1)
             .ok_or_else(|| fail(self.fence, RetentionCause::Invariant))?;
+        let used = read64(state.bytes, 16)
+            .checked_sub(HANDLE_BYTES as u64)
+            .ok_or_else(|| fail(self.fence, RetentionCause::Invariant))?;
         row_mut(state.bytes, self.slot).fill(0);
         write64(row_mut(state.bytes, self.slot), 16, self.generation);
         write64(state.bytes, 8, count);
+        write64(state.bytes, 16, used);
         self.active = false;
         Ok(())
     }
@@ -315,20 +328,38 @@ impl RowTransaction<'_, '_, '_, '_> {
             ));
         }
         let state = entry(self.lease.ledger, self.lease.fence)?;
-        self.lease.check(state.bytes)
+        self.lease.check(state.bytes)?;
+        if row(state.bytes, self.lease.slot)[0] != 1 {
+            return Err(fail(self.lease.fence, RetentionCause::Invariant));
+        }
+        Ok(())
+    }
+    fn set_abort_phase(&self, phase: Phase) -> Result<()> {
+        let mut state = entry(self.lease.ledger, self.lease.fence)?;
+        self.lease.check(state.bytes)?;
+        row_mut(state.bytes, self.lease.slot)[0] = match phase {
+            Phase::MustAbort => 2,
+            Phase::Aborted => 3,
+            _ => return Err(fail(self.lease.fence, RetentionCause::Invariant)),
+        };
+        self.phase.set(phase);
+        Ok(())
     }
     fn close(&mut self) -> Result<()> {
         if self.phase.get() == Phase::Ended {
             return Ok(());
+        }
+        // An issued actor can be released only after the actual AbortEnd
+        // handoff. Drop does no WAL/I/O and must not lose a healthy obligation.
+        if self.lease.actor.is_some() && self.phase.get() != Phase::Aborted {
+            return Err(fail(self.lease.fence, RetentionCause::WrongState));
         }
         self.phase.set(Phase::Ended);
         let snapshot = self
             .snapshot
             .take()
             .map_or(Ok(()), |g| g.release_checked().map_err(vis));
-        let credit = self.source.close();
-        let lease = self.lease.close();
-        merge(merge(snapshot, credit), lease)
+        merge(snapshot, self.lease.close())
     }
 }
 impl Drop for RowTransaction<'_, '_, '_, '_> {
@@ -373,7 +404,7 @@ impl RowStatementView<'_, '_, '_, '_, '_> {
         Ok(guard.q())
     }
     pub(in crate::storage) fn own_actor(&self) -> Option<TxnRef> {
-        None
+        self.transaction.lease.actor
     }
     pub(in crate::storage) fn revision(&self) -> u64 {
         self.revision.get()
@@ -414,6 +445,14 @@ impl<'t, 'v, 'a, 'c, 's> RowStatementView<'t, 'v, 'a, 'c, 's> {
                 RetentionCause::BindingMismatch,
             ));
         }
+        // The current Catalog reader has no own-actor visibility adapter.
+        // Never silently read an issued writer as a read-only snapshot.
+        if lease.actor.is_some() {
+            return Err(unchanged(
+                RetentionPhase::Census,
+                RetentionCause::Unsupported,
+            ));
+        }
         if self.phase.get() != Phase::Active || self.transaction.phase.get() != Phase::Active {
             return Err(unchanged(
                 RetentionPhase::Census,
@@ -448,6 +487,12 @@ impl<'t, 'v, 'a, 'c, 's> RowStatementView<'t, 'v, 'a, 'c, 's> {
 
 impl Drop for RowStatementView<'_, '_, '_, '_, '_> {
     fn drop(&mut self) {
+        if self.phase.get() != Phase::Ended && self.transaction.lease.actor.is_some() {
+            // Drop cannot inspect the exclusively borrowed durable ledger.
+            // A legacy mutation may have happened while this view was live.
+            self.transaction.lease.fence.fence();
+            return;
+        }
         let _ = self.close();
     }
 }
@@ -491,7 +536,8 @@ impl<'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
         transaction.check()
     }
     /// Read-only enters the original slot/credit/snapshot state. Writable Begin
-    /// remains Unsupported until its actual durable actor adapter is connected.
+    /// is supplied separately by begin_catalog_transaction with explicit original
+    /// Status and flusher loans; automatic selection remains unimplemented.
     pub(in crate::storage) fn begin_transaction(
         &mut self,
         owner: &mut Owner<'c, 's>,
@@ -505,21 +551,29 @@ impl<'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
                 RetentionCause::Unsupported,
             ));
         }
-        let (lease, source) = IsolationLease::reserve(
+        self.reserve_transaction(owner, options.isolation, visibility)
+    }
+
+    fn reserve_transaction(
+        &mut self,
+        owner: &mut Owner<'c, 's>,
+        isolation: IsolationLevel,
+        visibility: &'b BoundVisibility<'a, 'c, 's>,
+    ) -> Result<RowTransaction<'b, 'a, 'c, 's>> {
+        let lease = IsolationLease::reserve(
             self.isolation,
             visibility,
             self.storage.session_fence(),
-            options.isolation,
+            isolation,
         )?;
         let mut transaction = RowTransaction {
             snapshot: None,
             lease,
-            source,
             phase: Cell::new(Phase::Active),
             next_statement: Cell::new(1),
         };
         let start = (|| {
-            if options.isolation == IsolationLevel::Serializable {
+            if isolation == IsolationLevel::Serializable {
                 let reserved = visibility.reserve_snapshot().map_err(vis)?;
                 transaction.snapshot =
                     Some(visibility.register_current(owner, reserved).map_err(vis)?);
@@ -545,6 +599,16 @@ impl<'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
     ) -> Result<RowStatementView<'t, 'v, 'a, 'c, 's>> {
         self.transaction_entry(owner)?;
         self.transaction_matches(transaction)?;
+        if let Some(actor) = transaction.lease.actor {
+            // The first writable supply has no mutation/rollback statement
+            // adapter. Require actual empty Active state, not a fabricated mark.
+            if !self.empty_actor_active(actor)? {
+                return Err(unchanged(
+                    RetentionPhase::Prepare,
+                    RetentionCause::WrongState,
+                ));
+            }
+        }
         let sequence = transaction.next_statement.get();
         let next = sequence
             .checked_add(1)
@@ -599,6 +663,17 @@ impl<'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
             .transaction_entry(owner)
             .and_then(|_| self.transaction_matches(view.transaction))
             .and_then(|_| view.check())
+            .and_then(|_| {
+                if let Some(actor) = view.transaction.lease.actor
+                    && !self.empty_actor_active(actor)?
+                {
+                    return Err(unchanged(
+                        RetentionPhase::Finalize,
+                        RetentionCause::WrongState,
+                    ));
+                }
+                Ok(())
+            })
         {
             return if error.effect == Effect::Unchanged {
                 Err(StatementFinishError::Before { error, view })
@@ -621,6 +696,12 @@ impl<'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
         let checked = (|| {
             self.transaction_entry(owner)?;
             self.transaction_matches(&transaction)?;
+            if transaction.lease.actor.is_some() {
+                return Err(unchanged(
+                    RetentionPhase::Finalize,
+                    RetentionCause::WrongState,
+                ));
+            }
             let (mode, q, reads, writes, catalog) = {
                 let state = entry(self.isolation, transaction.lease.fence)?;
                 let target = row(state.bytes, transaction.lease.slot);
@@ -700,6 +781,9 @@ pub(super) fn source_bytes() -> usize {
         + 2 * size_of::<CallerCredit<'_, '_, '_, '_>>()
         + 16 * size_of::<u64>()
         + 16 * size_of::<&()>()
+        + 2 * size_of::<Result<TxnRef>>()
+        + 2 * size_of::<TxnRef>()
+        + size_of::<[u64; 4]>()
         + visibility::source_census().peak_leaf
 }
 

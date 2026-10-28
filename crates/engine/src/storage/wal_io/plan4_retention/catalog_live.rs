@@ -1595,7 +1595,8 @@ pub(in super::super) fn catalog_live_source_bytes<W: WriterNamespace>() -> Catal
         .max(start_health)
         .max(start_root)
         .max(start_status)
-        + source::lifecycle_carrier_bytes::<W>();
+        + source::lifecycle_carrier_bytes::<W>()
+        + transaction::writable::lifecycle_caller_bytes();
     // CREATE-only forwarding costs. The original common preparation and
     // application views remain counted in their existing lower phases. A
     // moved PreparedCatalog is not a second owned receipt in the wrapper.
@@ -1736,4 +1737,34 @@ pub(in super::super) fn commit_prepare_source_bytes<W: WriterNamespace>() -> usi
         + size_of::<TxnRef>()
         + 2 * size_of::<Result<PreparedCatalog<'_, '_, '_>>>()
         + 4 * size_of::<&()>()
+}
+
+#[cfg(test)]
+impl<'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
+    RetentionWriter<'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W>
+{
+    /// Negative capsule fixture: perform the existing actual CREATE through its
+    /// private view, without inventing any grant. This is not a product entry.
+    pub(in crate::storage) fn catalog_test_forward_beside_capsule(
+        &mut self,
+        owner: &mut Owner<'c, 's>,
+        actor: TxnRef,
+        undo: &Plan4Target,
+        definition: &crate::api::TableSpec,
+        private: &mut [u8; PRIVATE_BYTES],
+        flusher: &mut RetentionFlusher<'_, 's, 'c, 'p, 'd, 'm, 'w, W>,
+    ) {
+        let access = CatalogCreateAccess {
+            storage: self.storage,
+            pool: self.pool,
+            control: self.control,
+            history: self.history,
+            visibility: self.visibility,
+            flush: flusher.control,
+        };
+        let reserved = access
+            .reserve(owner, actor, undo, definition, private)
+            .unwrap();
+        assert!(reserved.initialize().is_ok());
+    }
 }

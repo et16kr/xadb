@@ -1,0 +1,29 @@
+{
+  "scope": "phase-invariant follow-up after r3/r4: readonly cannot own abort phase; lease close requires Active readonly or Aborted writable",
+  "baseline_commit": "b35150c",
+  "budget": {
+    "total_seconds": 1200,
+    "compiler_seconds": 420,
+    "case_seconds": 45,
+    "output_bytes": 8388608,
+    "rust_min_stack": 33554432
+  },
+  "compiler_tests": [],
+  "runtime_tests": [
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::write_transactions::issued_capsule_statement_and_empty_abort_return_original_loans",
+      "reason": "new writable lifecycle boundary; actual source/receipt, failure, or current-build recovery"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::write_transactions::abort_capacity_after_rollback_returns_same_must_abort_capsule",
+      "reason": "new writable lifecycle boundary; actual source/receipt, failure, or current-build recovery"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::write_transactions::readonly_abort_phase_corruption_cannot_drop_as_healthy",
+      "reason": "new phase2/3 readonly Drop corruption rejection plus valid readonly Drop; lease/long credit retained under fence"
+    }
+  ],
+  "native_tests": [],
+  "not_run": "unchanged native N01 and whole regression; new memory current-build recovery is not native durability acceptance",
+  "preserved_execution": "r3/r4 retained; WT01 and WT03 selected because new lease.close phase predicate directly changes their successful finalization"
+}

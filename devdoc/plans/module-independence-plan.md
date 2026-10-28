@@ -303,6 +303,8 @@ PD01은 이 A/B 사례에 연결한다. PD02/PD03은 작업 중 실제 공통 �
 
 2026-10-28 잔여 작업 branch의 첫 단위는 `c855f1b`에서 [Catalog Commit의 terminal read gate와 writer source 창](../evidence/module-independence-survey-20261026.md#c2-writer-progress)을 공급했다. Commit은 새 read를 닫고 admitted read 반환을 기다린 뒤 stage 몫을 예약하며, Pending·publication에서는 read와 합산하고 Drain 뒤에만 install로 증가한다. 사전 독립 검토의 REQUIRED3을 실행 전에 해소했고 r1 compiler3·runtime59 각1회 PASS다. 다음 공급 의무는 나머지 MutationPort writer와 Row progress class의 ledger 참여, 진입 전·반환 뒤 floor이며 M4/M5는 미완료다.
 
+2026-10-28 `b35150c` 이후 [실제 빈 쓰기 capsule](../contracts/dev3-module-boundaries.md#writable-empty-capsule)을 공급한다. 원 Begin actor·빈 statement·원 RollbackStart/AbortEnd를 연결했고 source별 선택 검증과 독립 D1/D2 한정 수용·필수 수정0을 확인해 이 단위를 commit한다. 자동 Status 선택과 own-actor Catalog 읽기·shared CREATE admission·일반 Row mark/rollback/commit·전체 entry/return floor·C3–C5 및 M4/M5 인수는 계속 미완료다. [이번 증거](../evidence/module-independence-survey-20261026.md#c3-write-capsule)를 재개 기준으로 사용한다.
+
 <a id="m3-adoption"></a>
 ### D3-MODULE-ADOPTION-001 — 선정 경계의 소유 문서 채택
 

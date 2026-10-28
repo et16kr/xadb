@@ -1202,3 +1202,6 @@ mod create_parts;
 
 #[path = "catalog_memory/create_lease.rs"]
 mod create_lease;
+
+#[path = "catalog_memory/write_transactions.rs"]
+mod write_transactions;

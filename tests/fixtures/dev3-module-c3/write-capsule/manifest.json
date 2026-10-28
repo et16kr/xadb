@@ -1,0 +1,97 @@
+{
+  "scope": "actual writable empty Catalog capsule; source-issued Begin and checked RollbackStart/AbortEnd, own reads/general mutation remain unsupported",
+  "baseline_commit": "b35150c",
+  "budget": {
+    "total_seconds": 1200,
+    "compiler_seconds": 420,
+    "case_seconds": 45,
+    "output_bytes": 8388608,
+    "rust_min_stack": 33554432
+  },
+  "compiler_tests": [
+    {
+      "name": "positive",
+      "path": "positive.rs",
+      "bytes": 593,
+      "sha256": "1c871ad673da259c8b9b6e7a80944127b3546734b0d6e4135421c8b5bd8283e0",
+      "expected_code": null,
+      "primary_line": null
+    },
+    {
+      "name": "live_view",
+      "path": "live_view.rs",
+      "bytes": 593,
+      "sha256": "218029cd57be3537328e1dc0a8543fd8cf47b9bfbfc55a9f154024cec0ac1f44",
+      "expected_code": "E0505",
+      "primary_line": 10
+    },
+    {
+      "name": "consumed",
+      "path": "consumed.rs",
+      "bytes": 641,
+      "sha256": "0e373eff22a080d60bae2c31df962c4d722568c421d5ad987b8ac00ae9ceacf7",
+      "expected_code": "E0382",
+      "primary_line": 12
+    }
+  ],
+  "runtime_tests": [
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::transaction::writable::tests::writable_capsule_and_wrappers_stay_within_original_limits",
+      "reason": "new capsule/return512 and wrapper/source accounting"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::create_pair::catalog_commit::tests::consumed_preparation_has_bounded_pending_image",
+      "reason": "changed lifecycle/capsule source accounting, original memory/native and recovered65536 caps"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::read::statement::tests::statement_validation_and_result_carriers_fit_fixed_classes",
+      "reason": "changed lease actor validation/source closure"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::write_transactions::issued_capsule_statement_and_empty_abort_return_original_loans",
+      "reason": "new writable lifecycle boundary; actual source/receipt, failure, or current-build recovery"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::write_transactions::rejected_begin_returns_original_slot_snapshot_and_wal",
+      "reason": "new writable lifecycle boundary; actual source/receipt, failure, or current-build recovery"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::write_transactions::abort_capacity_after_rollback_returns_same_must_abort_capsule",
+      "reason": "new writable lifecycle boundary; actual source/receipt, failure, or current-build recovery"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::write_transactions::writable_drop_and_identity_faults_fence_without_io",
+      "reason": "new writable lifecycle boundary; actual source/receipt, failure, or current-build recovery"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::write_transactions::actual_nonempty_actor_rejected_at_statement_begin_finish_and_empty_abort",
+      "reason": "new writable lifecycle boundary; actual source/receipt, failure, or current-build recovery"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::write_transactions::new_capsule_begin_and_abort_images_recover_in_current_build",
+      "reason": "new writable lifecycle boundary; actual source/receipt, failure, or current-build recovery"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::transactions::serializable_keeps_original_snapshot_across_statements",
+      "reason": "changed lease credit ownership/close and actor identity validation; related readonly snapshot cleanup"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::transactions::read_committed_renews_statement_snapshot",
+      "reason": "changed lease credit ownership/close and actor identity validation; related readonly snapshot cleanup"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::transactions::read_only_capacity_drop_and_generation_are_bounded",
+      "reason": "changed lease credit ownership/close and actor identity validation; related readonly snapshot cleanup"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::transactions::failed_snapshot_registration_returns_slot_and_credit",
+      "reason": "changed lease credit ownership/close and actor identity validation; related readonly snapshot cleanup"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::transactions::failed_rc_statement_snapshot_returns_credit_without_consuming_sequence",
+      "reason": "changed lease credit ownership/close and actor identity validation; related readonly snapshot cleanup"
+    }
+  ],
+  "native_tests": [],
+  "not_run": "unchanged native N01 and whole regression; new memory current-build recovery is not native durability acceptance"
+}

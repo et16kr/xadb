@@ -8308,5 +8308,63 @@
     "review_receipt_sha256": "1f473b008c7807f8c894b52eb10f07ef643ce325b933d91ffca35a114d88ee8c",
     "review_required_fixes": 0,
     "reviewed_files": 18
+  },
+  "dev3_module_c3_write_capsule": {
+    "status": "ACCEPTED_LIMITED_D1_D2",
+    "baseline_commit": "b35150c",
+    "owner_contract": "dev3-module-boundaries",
+    "contract_anchor": "writable-empty-capsule",
+    "evidence": "module-independence-survey-20261026",
+    "evidence_anchor": "c3-write-capsule",
+    "implemented_paths": [
+      "crates/engine/src/storage/wal_io/plan4_apply/transaction_write.rs",
+      "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/write_transactions.rs",
+      "tests/fixtures/dev3-module-c3/write-capsule"
+    ],
+    "compiler_tests": 3,
+    "runtime_tests": 14,
+    "native_tests": 0,
+    "artifact": "artifacts/module-c3-write-capsule-20261028",
+    "whole_m4_m5_complete": false,
+    "own_actor_reads": false,
+    "shared_create_admission": false,
+    "runtime_pass_by_source": {
+      "r3": 14,
+      "r4": 2,
+      "r5": 3
+    },
+    "compiler_pass_by_source": {
+      "r3": 3
+    },
+    "original_failed_runs": [
+      "r1",
+      "r2"
+    ],
+    "heavy_artifacts_deleted": true,
+    "prior_evidence_preserved": true,
+    "current_build_memory_recovery": "WT06: capture6/8 to cleanup9; native NOT_RUN",
+    "native_recovered_source_bytes": 65008,
+    "r3": {
+      "source_sha256": "bf2117acbc16582d5fdfccbdb56328015084b942cdbe01d3301f08e4bcbefe29",
+      "binary_sha256": "9ab7318ac0a72a2c7cce0f5a2643ecde82c8f3b8fc8d22a1219ef7dae257d494",
+      "result_sha256": "54408348af763a130a192bf8adff14160a45bf743b546b4b047bcfcbca5fbc87"
+    },
+    "r4": {
+      "source_sha256": "438474f29a97b3f59a5d3c66127f3d8168d4de220e09833ffbd2ecaf06d34537",
+      "binary_sha256": "1b60f3574e96c2f84a3b93309569e5e3590d2fbce2def27855b4e2c11c3064a3",
+      "result_sha256": "2118189e8c664d76b79459cf8a7ff40c8b2d9a9eeadf753edcc3e8999fbeea30"
+    },
+    "r5": {
+      "source_sha256": "dcac813d80839228df3e865b3d2cbfac166111a158bceb45710a737e12d4e9c1",
+      "binary_sha256": "d60f518179ef6cc27a8426a69b35edcbc2206c45a60cf7490919aa89baa7fe8b",
+      "result_sha256": "23473b5276e323b590860c55228c7e37dd8db4ec3662fad1dec9e9694d6dedc5"
+    },
+    "phase_followup": "phase-followup.json: changed close predicate WT01/WT03 and new readonly phase corruption WT07",
+    "runtime_unique_tests": 15,
+    "completed_unchanged_case_repeats": 0,
+    "review_receipt": "artifacts/module-c3-write-capsule-20261028/review-final.json",
+    "review_receipt_sha256": "272bc57c8e657ac3e12928aff9136c29637c33117829a85d06134c14f10e06bb",
+    "review_required_findings": 0,
+    "reviewed_files": 21
   }
 }

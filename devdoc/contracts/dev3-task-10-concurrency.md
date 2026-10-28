@@ -295,6 +295,8 @@ sealed transaction capsule이 원 origin·isolation slot/generation·actual acto
 
 후속 [Catalog statement 읽기](../evidence/module-independence-survey-20261026.md#c2-statement-reads)는 원 Full/Resident Scope와 실제 view를 연결하고 성공 Found/Missing 반환 전에 catalog read flag를 자동 등록한다. 원 slotgen/sequence를 매 호출에서 검산하며 Busy/FlushRequired/오류는 완료 관측으로 등록하지 않는다. statement 종료/Drop 후에도 bit는 원 거래에 남고 기존 readonly Serializable epoch 검증이 이를 소비한다. [한정 공급 결정](dev3-module-boundaries.md#catalog-statement-supply)에 따라 이 Catalog 기능의 신규8case를 포함한 runtime10/compiler3을 검증했으며 Row table read/write set·CheckedTable·writable 종료·전체 short/writer 상계의 공급은 미완료다. 과거 빈 read-set 결과를 새 관측의 결과로 바꾸지 않는다.
 
+후속 [실제 빈 쓰기 capsule](dev3-module-boundaries.md#writable-empty-capsule)은 원 Status/Begin actor를 실제 slot에 귀속시키고 빈 statement·소비형 빈 abort를 공급하는 제한 단위다. Active1/MustAbort2/Aborted3 원 slot phase와 Cell을 함께 검산하며 writable 미종료 Drop은 fence한다. 자동 Status 선택·own-actor 읽기·일반 Row/CREATE mutation과 commit 인수는 남는다. [실행 증거](../evidence/module-independence-survey-20261026.md#c3-write-capsule)는 과거 readonly 결과와 구별한다.
+
 ### Commit 직렬화·공개와 오류
 
 현재 source에는 별도 CommitCoordinator mutex가 없다. 실제 직렬화 권한은 **유일 MutationPort의 원 `&mut RetentionLedger`**다. 이 borrow를 validation→stage→durable→whole install→epoch/Q publication까지 한 호출이 보유한다. [현재 `CommitInstalling::finish`](../../crates/engine/src/transaction/concurrency_commit.rs)는 Q publish 전 Installation을 Open으로 돌리므로, 그 상태만을 Commit coordinator로 해석하지 않는다. split으로 두 writer를 생성하거나 publication 전에 가변 ledger 소유를 반환하지 않는다. read-only Serializable 종료도 같은 MutationPort를 통해 직렬화한다.

@@ -1,0 +1,25 @@
+{
+  "scope": "source-only follow-up after r3 runtime14/compiler3 PASS: explicit closure references and check_ledger640 in conservative source census",
+  "baseline_commit": "b35150c",
+  "budget": {
+    "total_seconds": 1200,
+    "compiler_seconds": 420,
+    "case_seconds": 45,
+    "output_bytes": 8388608,
+    "rust_min_stack": 33554432
+  },
+  "compiler_tests": [],
+  "runtime_tests": [
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::transaction::writable::tests::writable_capsule_and_wrappers_stay_within_original_limits",
+      "reason": "new capsule/return512 and wrapper/source accounting"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::create_pair::catalog_commit::tests::consumed_preparation_has_bounded_pending_image",
+      "reason": "changed lifecycle/capsule source accounting, original memory/native and recovered65536 caps"
+    }
+  ],
+  "native_tests": [],
+  "not_run": "unchanged native N01 and whole regression; new memory current-build recovery is not native durability acceptance",
+  "preserved_execution": "r3: all compiler3/runtime14 passed on original source; successful semantic/compiler cases are not repeated"
+}
