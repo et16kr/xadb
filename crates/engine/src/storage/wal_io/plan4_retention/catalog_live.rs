@@ -20,6 +20,8 @@ use foundation::{
 };
 use std::sync::atomic::AtomicU8;
 
+#[path = "catalog_lifecycle.rs"]
+pub(in super::super) mod lifecycle;
 #[path = "catalog_retire.rs"]
 pub(in super::super) mod retirement;
 
@@ -1593,33 +1595,12 @@ impl<'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
     }
 
     fn actor_catalog_job(&self, actor: TxnRef, terminal: bool) -> Result<usize> {
-        let mut found = None;
-        for (ordinal, bytes) in self.control.ledger.jobs().iter().enumerate() {
-            let job = queue::decode_job(bytes, self.inner.storage.profile().spec().namespace)
-                .map_err(queue_error)?;
-            if job.source() == Some(actor)
-                && job.state().is_terminal() == terminal
-                && found.replace(ordinal).is_some()
-            {
-                return Err(unchanged(
-                    RetentionPhase::Prepare,
-                    RetentionCause::Invariant,
-                ));
-            }
-        }
-        found.ok_or_else(|| unchanged(RetentionPhase::Prepare, RetentionCause::MissingTransaction))
+        self.catalog_preparation()
+            .actor_catalog_job(actor, terminal)
     }
 
     fn catalog_status_request(&self, status: StatusSlotRef) -> TargetRequest {
-        request(
-            PageIdentity {
-                database: self.inner.storage.profile().spec().namespace.database,
-                page: status.page(),
-                owner: ObjectId::new(2).expect("Status owner"),
-                owner_generation: one(),
-            },
-            PageKind::TransactionStatus,
-        )
+        self.catalog_preparation().catalog_status_request(status)
     }
 
     pub(crate) fn catalog_rollback_start(
@@ -1628,70 +1609,8 @@ impl<'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
         actor: TxnRef,
         private: &mut [u8; PRIVATE_BYTES],
     ) -> Result<Observation> {
-        let terminal = self.actor_catalog_job(actor, true)?;
-        let slot = self.control.ledger.slot(actor).ok_or_else(|| {
-            unchanged(RetentionPhase::Prepare, RetentionCause::MissingTransaction)
-        })?;
-        let terminal_job = queue::decode_job(
-            &self.control.ledger.jobs()[terminal],
-            self.inner.storage.profile().spec().namespace,
-        )
-        .map_err(queue_error)?;
-        let status = self.catalog_status_request(
-            terminal_job
-                .status()
-                .ok_or_else(|| unchanged(RetentionPhase::Prepare, RetentionCause::Invariant))?,
-        );
-        let allocator = self
-            .inner
-            .pool
-            .target_request(0)
-            .map_err(|e| frame(RetentionPhase::Prepare, e))?;
-        let root = self.target(Plan4Page::Root)?.request;
-        let mut root_job = None;
-        for bytes in self.control.ledger.jobs() {
-            let job = queue::decode_job(bytes, self.inner.storage.profile().spec().namespace)
-                .map_err(queue_error)?;
-            if job.source() == Some(actor)
-                && job.state().is_root()
-                && root_job.replace(job).is_some()
-            {
-                return Err(unchanged(
-                    RetentionPhase::Prepare,
-                    RetentionCause::Invariant,
-                ));
-            }
-        }
-        let prepared = if let Some(job) = root_job {
-            let undo = job
-                .undo()
-                .ok_or_else(|| unchanged(RetentionPhase::Prepare, RetentionCause::Invariant))?;
-            let target = request(
-                PageIdentity {
-                    database: allocator.identity.database,
-                    page: undo.page(),
-                    owner: ObjectId::new(3).expect("Undo owner"),
-                    owner_generation: one(),
-                },
-                PageKind::Undo,
-            );
-            self.prepare_existing_catalog(
-                owner,
-                Change::RollbackStart { terminal },
-                Some(slot),
-                [(allocator, 0), (root, 1), (status, 4), (target, 5)],
-                private,
-            )?
-        } else {
-            self.prepare_existing_catalog(
-                owner,
-                Change::RollbackStart { terminal },
-                Some(slot),
-                [(allocator, 0), (root, 1), (status, 4)],
-                private,
-            )?
-        };
-        self.apply_existing_catalog(owner, prepared)
+        let (mut writer, _, mut flusher) = self.split();
+        writer.catalog_rollback_start(owner, actor, private, &mut flusher)
     }
 
     pub(crate) fn catalog_abort_end(
@@ -1700,41 +1619,8 @@ impl<'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
         actor: TxnRef,
         private: &mut [u8; PRIVATE_BYTES],
     ) -> Result<Observation> {
-        let terminal = self.actor_catalog_job(actor, true)?;
-        let slot = self.control.ledger.slot(actor).ok_or_else(|| {
-            unchanged(RetentionPhase::Prepare, RetentionCause::MissingTransaction)
-        })?;
-        let status = queue::decode_job(
-            &self.control.ledger.jobs()[terminal],
-            self.inner.storage.profile().spec().namespace,
-        )
-        .map_err(queue_error)?
-        .status()
-        .ok_or_else(|| unchanged(RetentionPhase::Prepare, RetentionCause::Invariant))?;
-        let allocator = self
-            .inner
-            .pool
-            .target_request(0)
-            .map_err(|e| frame(RetentionPhase::Prepare, e))?;
-        let root = self.target(Plan4Page::Root)?.request;
-        let job = self
-            .target(Plan4Page::Jobs {
-                index: (terminal / 15) as u8,
-            })?
-            .request;
-        let prepared = self.prepare_existing_catalog(
-            owner,
-            Change::AbortEnd { terminal },
-            Some(slot),
-            [
-                (allocator, 0),
-                (root, 1),
-                (job, 2),
-                (self.catalog_status_request(status), 4),
-            ],
-            private,
-        )?;
-        self.apply_existing_catalog(owner, prepared)
+        let (mut writer, _, mut flusher) = self.split();
+        writer.catalog_abort_end(owner, actor, private, &mut flusher)
     }
 
     fn apply_existing_catalog(
@@ -1742,185 +1628,8 @@ impl<'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
         owner: &mut Owner<'c, 's>,
         prepared: PreparedCatalog<'_, 'c, 's>,
     ) -> Result<Observation> {
-        match prepared.count {
-            2 => self.apply_existing_catalog_n::<2>(owner, prepared),
-            3 => self.apply_existing_catalog_n::<3>(owner, prepared),
-            4 => self.apply_existing_catalog_n::<4>(owner, prepared),
-            5 => self.apply_existing_catalog_n::<5>(owner, prepared),
-            6 => self.apply_existing_catalog_n::<6>(owner, prepared),
-            7 => self.apply_existing_catalog_n::<7>(owner, prepared),
-            8 => self.apply_existing_catalog_n::<8>(owner, prepared),
-            9 => self.apply_existing_catalog_n::<9>(owner, prepared),
-            _ => Err(unchanged(
-                RetentionPhase::Prepare,
-                RetentionCause::Invariant,
-            )),
-        }
-    }
-
-    fn apply_existing_catalog_n<const N: usize>(
-        &mut self,
-        owner: &mut Owner<'c, 's>,
-        prepared: PreparedCatalog<'_, 'c, 's>,
-    ) -> Result<Observation> {
-        let storage = self.inner.storage;
-        let _unwind = storage.session_fence().unwind_guard();
-        // Commit must pass the real durable continuation, and reference removal
-        // must pass original retirement admission. Neither uses this fast path.
-        if matches!(
-            prepared.operation(),
-            Operation::Commit
-                | Operation::Forward
-                | Operation::Clr
-                | Operation::Prune
-                | Operation::RootFree
-                | Operation::TerminalFinish
-        ) {
-            return Err(unchanged(
-                RetentionPhase::Prepare,
-                RetentionCause::Unsupported,
-            ));
-        }
-        let prefix = storage
-            .wal()
-            .prefix()
-            .map_err(|e| fatal(storage, RetentionPhase::Prepare, RetentionCause::Wal(e)))?;
-        prepared.check(owner, &self.inner.pool, &self.control.ledger, prefix)?;
-        let visibility = self
-            .catalog_visibility
-            .as_ref()
-            .ok_or_else(|| unchanged(RetentionPhase::Prepare, RetentionCause::WrongState))?;
-        // Live Cancel retains its delta in the linear reservation until pair
-        // cleanup; the closed recovery Cancel has no active epoch map yet.
-        let epoch_change = if prepared.operation() == Operation::Cancel {
-            None
-        } else {
-            visibility
-                .prepare_epoch_change(&prepared, storage.profile())
-                .map_err(|e| RetentionError {
-                    phase: RetentionPhase::Prepare,
-                    effect: e.effect,
-                    cause: RetentionCause::Visibility(e),
-                })?
-        };
-        let requests: &[TargetRequest; N] = prepared
-            .targets()
-            .try_into()
-            .map_err(|_| unchanged(RetentionPhase::Prepare, RetentionCause::Invariant))?;
-        let mut write = self
-            .inner
-            .pool
-            .reserve_target_set(owner, requests)
-            .map_err(|e| frame(RetentionPhase::Install, e))?
-            .try_write()
-            .map_err(|e| frame(RetentionPhase::Install, e))?;
-        let installed = (|| {
-            let mut dpt = [const { None }; N];
-            for (at, dpt_entry) in dpt.iter_mut().enumerate() {
-                let stamp = prepared
-                    .stamp(at)
-                    .ok_or_else(|| unchanged(RetentionPhase::Install, RetentionCause::Invariant))?;
-                write
-                    .matches_stamp(at, &stamp)
-                    .map_err(|e| frame(RetentionPhase::Install, e))?;
-                if prepared.after(at).is_some() {
-                    *dpt_entry = Some(
-                        write
-                            .preflight_dpt(at, &stamp)
-                            .map_err(|e| frame(RetentionPhase::Install, e))?,
-                    );
-                }
-            }
-            let requirement = storage
-                .wal()
-                .stage_verified_required(
-                    prepared.payload.prefix,
-                    prepared.payload.observation.header,
-                    prepared.payload.frame,
-                )
-                .map_err(|e| {
-                    if e.effect == Effect::Unchanged {
-                        RetentionError {
-                            phase: RetentionPhase::Stage,
-                            effect: e.effect,
-                            cause: RetentionCause::Wal(e),
-                        }
-                    } else {
-                        fatal(storage, RetentionPhase::Stage, RetentionCause::Wal(e))
-                    }
-                })?;
-            catalog_mark_staged(&prepared, &mut self.control.ledger, requirement)?;
-            for (at, dpt_entry) in dpt.iter_mut().enumerate() {
-                let Some(after) = prepared.after(at) else {
-                    continue;
-                };
-                let permit = InstallGrant {
-                    kind: InstallKind::Plan4 {
-                        core: self.inner.pool.bound_core(),
-                        stamp: prepared.stamp(at).expect("checked existing"),
-                        requirement,
-                        after_counter: prepared
-                            .stamp(at)
-                            .expect("checked existing")
-                            .modification_counter
-                            .checked_add(1)
-                            .expect("preflight checked successor"),
-                        after,
-                    },
-                };
-                write
-                    .install_page(at, &permit)
-                    .map_err(|e| frame(RetentionPhase::Install, e))?;
-                write
-                    .install_metadata(at, &permit)
-                    .map_err(|e| frame(RetentionPhase::Install, e))?;
-                write
-                    .install_dpt(dpt_entry.take().expect("preflight DPT"), &permit)
-                    .map_err(|e| frame(RetentionPhase::Install, e))?;
-            }
-            catalog_apply(
-                &prepared.payload,
-                &mut self.control.ledger,
-                storage.profile(),
-                requirement,
-            )?;
-            self.history.installed(requirement)?;
-            Ok(requirement)
-        })();
-        let requirement = merge(
-            installed,
-            write
-                .release_checked()
-                .map_err(|e| frame(RetentionPhase::Install, e)),
-        )
-        .map_err(|e| {
-            if self.control.ledger.pending.is_some() {
-                fatal(storage, RetentionPhase::Install, e.cause)
-            } else {
-                e
-            }
-        })?;
-        let durable = storage
-            .wal()
-            .wait_durable(&requirement)
-            .map_err(|e| fatal(storage, RetentionPhase::Durable, RetentionCause::Wal(e)))?;
-        if !durable.confirms(&requirement) {
-            return Err(fatal(
-                storage,
-                RetentionPhase::Durable,
-                RetentionCause::Invariant,
-            ));
-        }
-        visibility.apply_epoch_change(epoch_change).map_err(|e| {
-            fatal(
-                storage,
-                RetentionPhase::Install,
-                RetentionCause::Visibility(e),
-            )
-        })?;
-        self.control.ledger.durable = Some(durable);
-        self.control.ledger.pending = None;
-        Ok(prepared.payload.observation)
+        self.catalog_application()
+            .apply_existing_catalog(owner, prepared)
     }
 
     /// The actual Commit adapter consumes this receipt with the same original
@@ -2416,6 +2125,7 @@ pub(in super::super) struct CatalogLiveSource {
     pub(in super::super) forward: usize,
     pub(in super::super) cancel: usize,
     pub(in super::super) ordinary: usize,
+    pub(in super::super) lifecycle: usize,
     pub(in super::super) retirement: usize,
     pub(in super::super) peak: usize,
 }
@@ -2539,7 +2249,8 @@ pub(in super::super) fn catalog_live_source_bytes<W: WriterNamespace>() -> Catal
     // The consumed receipt exists once in the actual install callee. Returned
     // Observation/requirement values are included; its caller no longer owns a
     // second receipt after the move.
-    let ordinary_install = visibility::epoch_change_carriers()
+    let ordinary_install = lifecycle::application_carrier_bytes::<W>()
+        + visibility::epoch_change_carriers()
         + size_of::<Prepared<'_>>()
         + scalar
         + size_of::<[Option<dirty_frame::DptStamp<'_>>; 9]>()
@@ -2554,6 +2265,8 @@ pub(in super::super) fn catalog_live_source_bytes<W: WriterNamespace>() -> Catal
     let ordinary = (ordinary_caller_source_bytes() + prepare.max(ordinary_install))
         .max(retirement::prepare_caller_source_bytes() + prepare)
         .max(retirement::selection_source_bytes());
+    let lifecycle =
+        ordinary.max(lifecycle::quiescence_source_bytes()) + source::lifecycle_carrier_bytes::<W>();
     let token = size_of::<Reservation<'_, W>>();
     let token_return = token
         + 2 * size_of::<Result<Reservation<'_, W>>>()
@@ -2617,6 +2330,7 @@ pub(in super::super) fn catalog_live_source_bytes<W: WriterNamespace>() -> Catal
         forward,
         cancel,
         ordinary,
+        lifecycle,
         retirement,
         peak: prepare
             .max(plan)
@@ -2624,6 +2338,7 @@ pub(in super::super) fn catalog_live_source_bytes<W: WriterNamespace>() -> Catal
             .max(forward)
             .max(cancel)
             .max(ordinary)
+            .max(lifecycle)
             .max(retirement),
     }
 }

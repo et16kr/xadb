@@ -4,6 +4,8 @@
 
 [개발 문서 진입점](../README.md) · [기존 병렬 정책](../policies/parallel-development-policy.md) · [저장소 배치](../policies/repository-build-plan.md) · [DEV3 작업 분해](dev3-implementation-plan.md#remaining-work) · [변경 코드 시험 지시](../../AGENTS.md)
 
+2026-10-28 main `bf62459`의 후속 [Catalog lifecycle progress](../evidence/module-independence-survey-20261026.md#c2-lifecycle-progress)는 RollbackStart/AbortEnd/CancelReserved/ReleaseRole의 공유 동기 호출과 원 ordinary application view를 구현한다. r3 compiler4/runtime12·같은 ELF native N02(3PID) 각1회 PASS와 r1/r2 compile FAIL을 보존한다. 나머지 C2/Row/C3–C5와 M4/M5는 미완료다.
+
 2026-10-28 main `c217fbf`의 후속 [Catalog 회수 progress 공급](../evidence/module-independence-survey-20261026.md#c2-retirement-progress)은 CLR/Prune/RootFree/TerminalFinish를 원 gate·고정 source ledger에 연결했다. Maintenance 역할과 장기 snapshot horizon을 보존하며 source별 선택7+6 PASS와 원 FAIL을 구분한다. 이어 main `fa0f033`의 [공유 회수 준비 body](../evidence/module-independence-survey-20261026.md#c2-retirement-preparation)를 같은 gate/source에 연결하고 선택12를 검증했다. 후속 main `582ccbf`의 [동기 회수 호출](../evidence/module-independence-survey-20261026.md#c2-retirement-call)은 준비·적용을 한 원 gate/source 안에 묶어 회수 Prepared의 외부 보유 gap을 닫는다. compiler4/runtime13·같은 ELF native N02(3PID)를 각1회 PASS했다. 남은 공급은 일반 진입/반환 floor·Commit Prepared lifetime·나머지 writer/Row의 ledger 참여와 C3–C5이며 M4/M5 전체 인수는 계속 미완료다.
 
 <a id="purpose"></a>

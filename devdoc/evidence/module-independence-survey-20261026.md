@@ -2269,3 +2269,48 @@ r1 production check·engine lib/tests Clippy(`-D warnings`)·test build와 compi
 `artifacts/module-c2-retirement-call-20261028/r1`에 runner·source manifest·compiler/runtime/native 원 로그·database snapshot·결과를 보존했고 이번 export/target/ELF를 삭제했다. 코드 변경 없이 완료 사례를 반복하지 않았고 이전 실패·원 source 결과는 수정하지 않았다. 최종 문서·전체 diff의 독립 검토는 아래에 별도 기록한다.
 
 독립 `/root/source_admission_review`가 변경17/17파일(Rust6·fixture/manifest5·문서/JSON6), 생략0·검토율100%를 확인하여 **D1/D2 한정 수용·필수 수정0**으로 판정했다. 현재 source5750파일/fingerprint·compiler/runtime/helper hash·admission evidence44개·N02의3PID/cut/reaped/base hash·원 예산·삭제 상태를 대조했다. 검토자는 build·시험·native 재실행·제품/시험 수정 없이 receipt만 기록했고 `/root`가 반영했다. `review-final.json` SHA-256은 `c6fefbbcaada835e8484d4ed7ccf8af1fa366806bf82031b3d70c30515cb140f`다. 후속 변경은 이 receipt hash와 채택 상태 기록뿐이며 제품/fixture/manifest는 r1과 같다. 변경 파일 rustfmt와 diff whitespace를 확인했고 문서 verifier·전체 workspace fmt/Clippy·push는 실행하지 않았다.
+
+<a id="c2-lifecycle-progress"></a>
+## main의 Catalog rollback·terminal progress 공급 — 2026-10-28
+
+main `bf62459`에서 [LIFECYCLE-PROGRESS-001](../contracts/dev3-module-boundaries.md#lifecycle-progress)을 진행한다. 작성/계약/통합 `/root`, 독립 `/root/source_admission_review`. 원 stash·다른 worktree는 사용하지 않는다. 네 lifecycle와 borrowed ordinary apply만 해당하며 전체 floor/나머지 writer/Row·M4/M5는 미완료다.
+
+사전 검토는 read gate가 별도 flush를 배제하지 않는 점과 Prepared 아래 split의 추가 source 비용을 지적했다. 같은 원 MaintenancePort mutable borrow·pool/storage 검산, 기존 Ready 무제한 및 Cancel quiescence 조건, 원5참조 private application view로 반영했다. 새 입력/기대값은 기존 MC01/02/04·N02 oracle에 연결하고 독립 검토한다.
+
+실행 전 [manifest](../../tests/fixtures/dev3-module-c2/lifecycle-progress/manifest.json)로 compiler4·runtime12·native N02 같은 ELF3PID 한 번을 동결했다. source3·기존 capacity1·기존 lifecycle3·신규 gate/오류/unwind/Fatal/flush5이며 변경 diff와 관계를 각 행에 기록했다. 총1800초/compiler420초/runtime case45초/native30초/로그8MiB/stack32MiB/사전 독립 identity admission600초. native Cancel coverage를 주장하지 않는다. 무변경 회수13·전체 wrapper·문서 verifier·push는 실행하지 않는다. source identity·파일별 hash·로그·결과·native snapshot을 보존한 뒤 이번 export/target/ELF를 삭제한다. 위는 실행 전 NOT_RUN 계획이며 실제 source별 결과는 아래에 추가한다.
+
+실행 전 검토에서 public→private dispatch의 인자 packet 누락을 추가 계수했고, N02 corpus가 단일 복구가 아닌 epoch2(8→10)/epoch3(10→16) 두 복구임을 확인했다. MCLP03은 원 native와 같은 durable CLR·idle 경계에서 실제 memory snapshot을 얻고 새 runtime으로 재진입하도록 고쳤다. 원 corpus의 WAL epoch·raw bytes·최종 checkpoint는 변경하지 않았다. 이 수정 전 제품/시험 실행은0회다.
+
+r1은 production check PASS 뒤 test module의 명시적 path 누락(E0583)으로 Clippy/test compilation에서 중단됐다. runtime/compiler fixture/native는 NOT_RUN이다. 원 FAIL과 inventory/log를 `artifacts/module-c2-lifecycle-progress-20261028/r1`에 보존하고 export/target을 삭제했다. r2는 cfg(test) module path만 고쳐 미완료 Clippy/build·compiler4/runtime12/native1을 진행하며 완료한 무변경 production check를 반복하지 않는다.
+
+r2는 새 flush-claim 시험이 private `Plan4Target.request`에 접근한 E0616으로 test compilation FAIL이었다. 기존 공개 관찰 identity/kind/level로 expected TargetRequest를 구성하도록 시험만 수정했다. r3는 같은 미완료 범위를 진행하고 r1 production PASS를 원 source로만 참조한다. r2 로그/source inventory와 NOT_RUN을 보존하고 export/target을 삭제했다.
+
+사전 D1/D2는 위 packet·N02 연결 보완 후 필수 수정0으로 수용했다. r3의 최종 구현과 선택 검증은 다음과 같다.
+
+- 네 shared lifecycle 입구와 exclusive caller 모두 원 gate/source를 준비부터 checked cleanup까지 유지한다. 원5참조 application view에는 새 owner/ledger가 없고 Prepared 아래 split도 없다. same mutable flusher와 pool/storage binding, 원 Cancel quiescence 및 live Cancel epoch 순서를 보존했다.
+- r1 production check PASS는 원 source 결과다. r2/r3의 수정은 cfg(test) 파일에만 있으며 r3에서 engine Clippy(lib/tests), test build, compiler4를 PASS했다. private application/preparer 접근과 flusher borrow 중복은 지정 오류/primary line으로 거절됐다.
+- r3 runtime12는 각1회 PASS: source/census3, 변경 fixed capacity1, MC01/02/04 원 lifecycle3, 신규 MCLP01–05의 reader wait·연속 gate/charge·네 capacity-before-effect·역할/오류·두 unwind/새 epoch 복구·세 Fatal 경계·원 flush claim 배제5다. MCLP05는 Cancel Busy 후 selection 재진입이고 성공 recovery Cancel은 MC04다.
+- 같은 ELF native N02 한 번 PASS: producer PID106214 LSN8에서 외부 SIGKILL, recover PID106216 LSN10 durable CLR에서 외부 SIGKILL, reentry PID106218 LSN16/READY/최종 checkpoint 뒤 exit0. 각 원 cut와 원 oracle·resource check를 유지했고 약16.095초였다. native CancelReserved 결과로 일반화하지 않는다.
+
+| 실제 source-value 항목 | memory | native 타입 |
+| --- | ---: | ---: |
+| shared retained | 20192B | 20328B |
+| lifecycle body+carrier | 41590B | 42614B |
+| fixed max(retirement,lifecycle) | 42198B | 42614B |
+| shared+fixed progress | 62390B | 62942B |
+| live peak | 61894B | 62446B |
+| recovered live peak | 63270B | 63822B |
+
+split port는192B이며 physical stack/RSS 측정이 아닌 source 상계다. 일반 entry/return floor·Commit Prepared lifetime·Begin/AgingStart/CREATE admission·Row/C3–C5·M4/M5 인수는 미완료다. 기존 Commit Pending+Full65502B는 수정 없는 과거 증거로 유지하며 재실행하지 않았다.
+
+| run | source SHA-256 | 결과 |
+| --- | --- | --- |
+| r1 | `cf5584aded85c1c52adf6023f724b8c016db6e4462aba0aabfd07330d1a1519a` | production PASS·test module E0583 FAIL·나머지 NOT_RUN |
+| r2 | `f3f240099bdc8e7c6f809810d8999565ded7634cd92b5e913fc9a4bf53b413aa` | test private-field E0616 FAIL·나머지 NOT_RUN |
+| r3 | `9f66e92a233cbe978488ca172c608d79b11ccda14ac2fec343452974ee802220` | Clippy/build·compiler4/runtime12/nativeN02 PASS |
+
+r3 source inventory5757파일 SHA-256 `0c1f5dd646bae526cd6345b569f3cd3fb937f2a7f586209d8fcafed108f91323`, full export6276파일 manifest `f927741478d1dbd9ba999bc5c7bd81bff9175c5a89fd5b052546cd9de5b1e947`, ELF `e9301a3fa6dc30c43c20e917d17f31824f7870255f254a9ecea79833d6e571f3`. r3 결과 SHA-256 `24ba12d1a4c31a0cc6b64113532dd04b4a32f9f591a5dc6f014d52ead06f1085`이며 총241.188초였다. 독립 admission은 source/ELF·raw logs·40개 evidence hash를 대조한 뒤 작성했고 SHA-256 `89a400378ba293b687c3aa14108b3225293107626cb568f20318b1b4c15a8f53`다.
+
+`artifacts/module-c2-lifecycle-progress-20261028/r1`–`r3`에 원 실패/미실행·로그·결과·source hash inventory와 native database snapshot을 보존했다. 각 run의 export/target/ELF는 결과 기록 뒤 삭제했고 기존 증거는 삭제하지 않았다. 최종 문서·전체 diff 독립 수용은 아래에 별도 수신한다.
+
+독립 `/root/source_admission_review`는 변경22/22파일(Rust11·fixture/manifest5·문서/JSON6), 생략0·검토율100%로 **D1/D2 한정 수용·필수 수정0**을 확인했다. source5757·원40개 admission evidence·compiler/runtime/native3PID·cut/base/reaped·예산과 삭제 상태를 대조했다. build/test/verifier/native 재실행 없이 receipt만 작성했으며 `/root`가 반영했다. `review-final.json` SHA-256은 `b504977c49a214ad3218b8fdaba3c4e1edfea5ea6d25576995c759f5eeb9f70c`다. 후속 수정은 이 receipt/채택 상태 기록이며 제품/시험/fixture는 r3와 같다. 변경 파일 rustfmt·diff whitespace를 확인하고 문서 verifier·전체 workspace fmt/Clippy·push는 실행하지 않았다.

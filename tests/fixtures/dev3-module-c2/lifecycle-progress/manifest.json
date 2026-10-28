@@ -1,0 +1,104 @@
+{
+  "scope": "Four synchronous shared Catalog lifecycle progress entries and original ordinary apply through borrowed view; create/Begin/Aging source admission and general floors remain incomplete",
+  "baseline_commit": "bf62459",
+  "budget": {
+    "total_seconds": 1800,
+    "compiler_seconds": 420,
+    "case_seconds": 45,
+    "output_bytes": 8388608,
+    "rust_min_stack": 33554432,
+    "native_admission_seconds": 600
+  },
+  "compiler_tests": [
+    {
+      "name": "synchronous",
+      "path": "synchronous.rs",
+      "bytes": 762,
+      "sha256": "eb68143be895d074c2437452026f5cd23ae5fe2ad61626c642e6580f17a131dd",
+      "expected_code": null,
+      "primary_line": null
+    },
+    {
+      "name": "private_application",
+      "path": "private_application.rs",
+      "bytes": 269,
+      "sha256": "4e5ac695bd7fa0de3f5556dc351346f9a01639a7c882cca05765fc11eab60bee",
+      "expected_code": "E0624",
+      "primary_line": 5
+    },
+    {
+      "name": "private_preparation",
+      "path": "private_preparation.rs",
+      "bytes": 269,
+      "sha256": "ef28c125c25d454860f5b0c3c247998e41875152198736f96d68c44a09bec92c",
+      "expected_code": "E0624",
+      "primary_line": 5
+    },
+    {
+      "name": "exclusive_flusher",
+      "path": "exclusive_flusher.rs",
+      "bytes": 648,
+      "sha256": "106343bf0e41d2fbf17df6d2dd63d012050eeee9d5784b2f1b0efc30f6a36209",
+      "expected_code": "E0499",
+      "primary_line": 12
+    }
+  ],
+  "runtime_tests": [
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::source::tests::retirement_fixed_charge_fits_and_cannot_use_commit_transitions",
+      "reason": "changed fixed max(retirement,lifecycle), borrowed application view and ordinary source census; changed synchronous entry and result carriers in fixed preparation/application charge; memory and native bound"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::create_pair::catalog_commit::tests::consumed_preparation_has_bounded_pending_image",
+      "reason": "changed fixed max(retirement,lifecycle), borrowed application view and ordinary source census; changed common retirement census feeds live/recovered source peak"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::owner_tests::cached_catalog_charges_count_exclusive_split_and_live_ports",
+      "reason": "changed fixed max(retirement,lifecycle), borrowed application view and ordinary source census; split retirement charge recalculated while port storage must remain unchanged"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::reference_pins::catalog_retirement_capacity_returns_gate_before_effects",
+      "reason": "changed fixed max(retirement,lifecycle), borrowed application view and ordinary source census; changed synchronous capacity before any preparation; private/WAL unchanged and exclusive retry"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::lifecycle::mc01_reserve_cancel_two_generations",
+      "reason": "moved ordinary application receives Begin/live Reserve/Cancel and new rollback without root/AbortEnd, two generations original oracle"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::lifecycle::mc02_forward_clr_abort_cleanup",
+      "reason": "changed shared Maintenance rollback with root/AbortEnd/three ReleaseRole and original independent complete lifecycle oracle"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::lifecycle::mc04_reserved_drop_fence_fresh_recovery",
+      "reason": "changed actual recovery CancelReserved and rollback/AbortEnd; original independent MC04 corpus"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::lifecycle_progress::lifecycle_waits_and_keeps_one_charge",
+      "reason": "new reader wait and Preparing/Prepared/Completed gate/charge continuity, late read rejected"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::lifecycle_progress::lifecycle_capacity_roles_errors_and_retry",
+      "reason": "new four-entry capacity before selection/WAL/private writes, invalid inputs/roles and Maintenance retry"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::lifecycle_progress::lifecycle_unwind_recovers_original_prefix",
+      "reason": "new preparation two unwind cuts keep charge/gate cleanup; existing N02 corpus verified through fresh epoch2 8→10 durable CLR cut then fresh epoch3 10→16 with exact WAL and checkpoint"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::lifecycle_progress::lifecycle_fatal_preserves_error_and_charge",
+      "reason": "new Preparing/Prepared/Completed fences preserve original body Fatal or replace success; exact original R04 WAL"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::lifecycle_progress::lifecycle_cancel_keeps_original_flush_claim_exclusion",
+      "reason": "new original flush claim prevents Cancel; other lifecycle has no added Ready restriction; checked flush return then Cancel selection reachable"
+    }
+  ],
+  "native_tests": [
+    {
+      "case": "N02",
+      "reason": "ordinary application and four new lifecycle entries in actual recovery; N02 same-ELF 3PID one attempt; does not certify native CancelReserved coverage",
+      "controller": "scripts/dev3_catalog_native.py",
+      "wall_seconds": 30
+    }
+  ]
+}

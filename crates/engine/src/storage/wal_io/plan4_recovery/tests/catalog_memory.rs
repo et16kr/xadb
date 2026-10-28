@@ -984,6 +984,7 @@ fn recover_check(images: &Images, oracle: &Oracle, scenario: &str) {
     let (capture, last, q, found) = match scenario {
         "MC04" => (7, 11, 0, false),
         "N03" => (9, 15, 1, true),
+        "N02" => (10, 16, 0, false),
         "MC03" => (9, 15, 1, true),
         "MF14" => (9, 16, 0, false),
         _ => panic!("unplanned recovery scenario"),
@@ -1138,6 +1139,8 @@ mod visibility_gap;
 #[path = "catalog_memory/reference_pins.rs"]
 mod reference_pins;
 
+#[path = "catalog_memory/lifecycle_progress.rs"]
+mod lifecycle_progress;
 #[path = "catalog_memory/retirement_prepare.rs"]
 mod retirement_prepare;
 

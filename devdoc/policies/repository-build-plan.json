@@ -7865,5 +7865,63 @@
     "skipped_files": 0,
     "unresolved_required_fixes": 0,
     "review_sha256": "c6fefbbcaada835e8484d4ed7ccf8af1fa366806bf82031b3d70c30515cb140f"
+  },
+  "dev3_module_c2_lifecycle_progress": {
+    "status": "ACCEPTED_LIMITED_D1_D2",
+    "contract_ref": "dev3-module-boundaries.md#lifecycle-progress",
+    "evidence_ref": "module-independence-survey-20261026.md#c2-lifecycle-progress",
+    "baseline_commit": "bf62459",
+    "branch": "main",
+    "implemented_paths": [
+      "crates/engine/src/storage/wal_io/plan4_retention/catalog_lifecycle.rs",
+      "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/lifecycle_progress.rs",
+      "tests/fixtures/dev3-module-c2/lifecycle-progress/exclusive_flusher.rs",
+      "tests/fixtures/dev3-module-c2/lifecycle-progress/manifest.json",
+      "tests/fixtures/dev3-module-c2/lifecycle-progress/private_application.rs",
+      "tests/fixtures/dev3-module-c2/lifecycle-progress/private_preparation.rs",
+      "tests/fixtures/dev3-module-c2/lifecycle-progress/synchronous.rs"
+    ],
+    "scope": "Four synchronous lifecycle entries with original flusher borrow and private application view; general floors, other writers/Row and M4/M5 incomplete",
+    "source_roots_changed": false,
+    "whole_m4_m5_complete": false,
+    "runtime_selected": 12,
+    "compiler_selected": 4,
+    "native_selected": [
+      "N02"
+    ],
+    "reviewer": "/root/source_admission_review",
+    "runtime_exact_pass": 12,
+    "compiler_pass": 4,
+    "source_sha256": "9f66e92a233cbe978488ca172c608d79b11ccda14ac2fec343452974ee802220",
+    "inventory_files": 5757,
+    "inventory_sha256": "0c1f5dd646bae526cd6345b569f3cd3fb937f2a7f586209d8fcafed108f91323",
+    "binary_sha256": "e9301a3fa6dc30c43c20e917d17f31824f7870255f254a9ecea79833d6e571f3",
+    "run_result_sha256": "24ba12d1a4c31a0cc6b64113532dd04b4a32f9f591a5dc6f014d52ead06f1085",
+    "source_bytes": {
+      "shared_memory": 20192,
+      "shared_native": 20328,
+      "lifecycle_memory": 41590,
+      "lifecycle_native": 42614,
+      "fixed_memory": 42198,
+      "fixed_native": 42614,
+      "total_memory": 62390,
+      "total_native": 62942,
+      "live_memory": 61894,
+      "live_native": 62446,
+      "recovered_memory": 63270,
+      "recovered_native": 63822,
+      "split_ports": 192,
+      "limit": 65536,
+      "source_bound_not_rss": true
+    },
+    "preserved_failures": [
+      "r1:E0583",
+      "r2:E0616"
+    ],
+    "production_evidence": "r1 original source only; later cfg(test)-only fixes; not repeated",
+    "reviewed_files": 22,
+    "skipped_files": 0,
+    "unresolved_required_fixes": 0,
+    "review_sha256": "b504977c49a214ad3218b8fdaba3c4e1edfea5ea6d25576995c759f5eeb9f70c"
   }
 }

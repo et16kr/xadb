@@ -95,18 +95,33 @@ fn mc02_forward_clr_abort_cleanup() {
             let actor = create_forward(
                 live, owner, flusher, status, undo, private, &oracle, state, 1,
             );
-            live.catalog_rollback_start(owner, actor, private).unwrap();
-            oracle.check(live, state, "R04");
             let mut maintenance = core.try_owner(OwnerRole::Maintenance).unwrap();
+            {
+                let (mut writer, _, mut flush) = live.split();
+                writer
+                    .catalog_rollback_start(&mut maintenance, actor, private, &mut flush)
+                    .unwrap();
+            }
+            oracle.check(live, state, "R04");
             retirement_prepare::retire(live, &mut maintenance, 1, Operation::Clr, private);
             oracle.check(live, state, "R05");
             assert_eq!(live.catalog_test_epochs(), (true, 0, vec![]));
             assert_eq!(resident_index(live, 11), None);
             assert_eq!(resident_index(live, 12), None);
-            live.catalog_abort_end(owner, actor, private).unwrap();
+            {
+                let (mut writer, _, mut flush) = live.split();
+                writer
+                    .catalog_abort_end(&mut maintenance, actor, private, &mut flush)
+                    .unwrap();
+            }
             oracle.check(live, state, "R06");
             for id in ["R07", "R08", "R09"] {
-                live.catalog_release_role(owner, 1, private).unwrap();
+                {
+                    let (mut writer, _, mut flush) = live.split();
+                    writer
+                        .catalog_release_role(&mut maintenance, 1, private, &mut flush)
+                        .unwrap();
+                }
                 oracle.check(live, state, id);
             }
             retirement_prepare::retire(live, &mut maintenance, 1, Operation::RootFree, private);

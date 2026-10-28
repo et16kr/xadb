@@ -28,6 +28,9 @@ pub(crate) enum Point {
     RetirementPreparing,
     RetirementPrepared,
     RetirementCompleted,
+    LifecyclePreparing,
+    LifecyclePrepared,
+    LifecycleCompleted,
     RetirementFirstPage,
     ReadGateWaiting,
 }

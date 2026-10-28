@@ -1284,6 +1284,19 @@ gate 없는 선택적 foreground 예약은 reader 점유 때문에 terminal을 �
 
 선택 검증은 [동결 manifest](../../tests/fixtures/dev3-module-c2/retirement-call/manifest.json)의 compiler4(정상 동기 호출, 제거된 공유/독점 prepare, private apply), runtime13(source3·동기 schedule/오류/역할·CLR/Prune/root/terminal·unwind/Fatal), native N02 한 번이다. N02는 같은 ELF의 producer→durable CLR 중단→재진입3PID로 실제 recovery 변경을 검산한다. 필수 native 입력·품질·원 controller30초 한도를 유지한다. 변경 없는 Commit/Row·다른 native cut·전체 wrapper는 반복하지 않는다.
 
+<a id="lifecycle-progress"></a>
+#### XADB-MODULE-LIFECYCLE-PROGRESS-001 — Catalog rollback·terminal 동기 공급
+
+2026-10-28 · D2 · 기준 main `bf62459` · 작성/계약/통합 `/root` · 독립 `/root/source_admission_review`. 사용자 전체 진행 지시와 DP01 위임 아래 네 lifecycle 경로를 공급한다. 사전 검토의 원 flusher 배제·기존 phase/Cancel predicate 유지 조건을 반영했고 구현/최종 검토/실행은 [증거](../evidence/module-independence-survey-20261026.md#c2-lifecycle-progress)에 구분한다.
+
+`MutationPort`의 `catalog_rollback_start`·`catalog_abort_end`·`catalog_cancel_reserved`·`catalog_release_role`은 owner와 actor/ordinal, private scratch, 같은 원 `MaintenancePort`의 mutable borrow를 받는다. 원 terminal read gate를 닫고 `CatalogProgressCharge=max(retirement,lifecycle)`를 원 isolation ledger에 한 번 예약한 다음 private preparation→Prepared→ordinary apply→durability/epoch→checked source/gate 반환까지 유지한다. 기존 exclusive caller는 split 후 같은 호출에 위임한다. Maintenance 허용·flusher/foreign owner 거절, capacity-before-selection/private/WAL, 원 Fatal 우선·fence 아래 charge 보존을 유지한다.
+
+read gate만으로 별도 flush 호출이 닫히지 않으므로 같은 flusher를 끝까지 빌리고 pool/storage binding을 확인한다. 기존 exclusive API에 없던 Ready phase 제한은 추가하지 않는다. CancelReserved의 `handoff_quiescent`는 원 pins/init/claim/load 조건을 그대로 유지하며 live `ReservedCatalogCreate::cancel`의 pair 반환 뒤 epoch 적용과 구별한다. 성공하는 recovery Cancel은 기존 MC04 corpus로 검산한다. retained flush claim 사례는 Busy 후 selection 재진입까지 검산하며 성공 Cancel 증거로 승격하지 않는다.
+
+ordinary application을 private `CatalogApplication`(원 storage/pool/control/history/visibility의5개 borrow)로 옮긴다. exclusive/shared caller가 이 view를 직접 만들므로 Prepared를 보유한 채 source 계산을 다시 하는 split은 없다. 별도 owner/ledger·가변 charge·외부 Prepared/preparer/application 공개가 없다. view/forwarder·action/인자/결과 carrier를 기존 body 계산에 추가하고 Cancel registry 관측은 직렬 max로 계산한다. gate/source 밖 일반 진입·반환 floor, Begin/AgingStart/CREATE admission, Commit Prepared lifetime·Row·C3–C5·M4/M5 전체는 미완료다.
+
+기존 exclusive 구현을 네 곳 복제하는 대안은 ordinary apply 의미를 중복시킨다. Prepared 아래 split하는 대안은 불필요한 큰 계산 phase를 겹친다. 직접 borrowed view를 선택하며 새 동시 pool 사용 경로나 일반 body/holder 변경 시 재검토한다. [manifest](../../tests/fixtures/dev3-module-c2/lifecycle-progress/manifest.json)에 compiler4·runtime12·같은 ELF native N02(3PID)1회를 diff별 연결했다. 총1800초/compiler420초/runtime45초/native 원30초/사전 독립 admission600초/로그8MiB/stack32MiB를 실행 전에 고정한다. N02는 actual recovery의 변경 경로를 검산하며 native CancelReserved 증거는 아니다. 완료 무변경 시험·wrapper는 반복하지 않는다.
+
 <a id="common-deliveries"></a>
 ## 7. 유한한 공통 공급과 C0/C 인계
 

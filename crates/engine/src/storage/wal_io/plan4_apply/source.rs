@@ -1,5 +1,5 @@
 //! Short source reservations in the original isolation ledger. Full and resident
-//! Catalog lookup and the Catalog Commit/retirement writers participate;
+//! Catalog lookup and the Catalog Commit/retirement/lifecycle writers participate;
 //! unconverted writer/reader entries are not covered by this aggregate bound.
 use super::*;
 use crate::storage::session_fence::SessionFence;
@@ -16,7 +16,7 @@ pub(super) enum OperationClass {
     /// Terminal progress. Its charge changes only at the read-gate and Drain
     /// boundaries, never while an admitted reader could hold a loan.
     CommitProgress,
-    RetirementProgress,
+    CatalogProgress,
 }
 
 /// Fixed type-derived costs, computed once while DiskSession is exclusively
@@ -93,10 +93,11 @@ pub(super) fn retirement_source_peak() -> usize {
 }
 
 /// A fixed split-time cost. Operation callers cannot select a byte count.
-pub(super) struct CatalogRetirementCharge(usize);
-impl CatalogRetirementCharge {
+pub(super) struct CatalogProgressCharge(usize);
+impl CatalogProgressCharge {
     pub(super) fn new<W: WriterNamespace>() -> Self {
-        Self(create_pair::catalog_live::catalog_live_source_bytes::<W>().retirement)
+        let bodies = create_pair::catalog_live::catalog_live_source_bytes::<W>();
+        Self(bodies.retirement.max(bodies.lifecycle))
     }
 }
 
@@ -109,6 +110,17 @@ pub(super) fn retirement_prepare_carrier_bytes() -> usize {
         + size_of::<crate::storage::session_fence::UnwindFence<'_>>()
         + 2 * size_of::<Result<crate::storage::semantic_catalog::Observation>>()
         + retirement_entry_bytes()
+}
+
+/// Four finite lifecycle actions share one private dispatch. Three typed
+/// Prepared results cover common preparation, action adapter and match output;
+/// Observation results cover application forwarding and checked cleanup.
+pub(super) fn lifecycle_carrier_bytes<W: WriterNamespace>() -> usize {
+    commit_carrier_bytes()
+        + 3 * size_of::<Result<PreparedCatalog<'_, '_, '_>>>()
+        + 2 * size_of::<crate::storage::session_fence::UnwindFence<'_>>()
+        + 3 * size_of::<Result<crate::storage::semantic_catalog::Observation>>()
+        + create_pair::catalog_live::lifecycle::entry_carrier_bytes::<W>()
 }
 
 /// The unified caller's ordinal/operation and borrowed arguments survive into
@@ -222,7 +234,7 @@ impl<'b, 'a, 'c, 's> OperationSourceAdmission<'b, 'a, 'c, 's> {
             OperationClass::CatalogResident => charges.resident,
             // Only the dedicated writer entries, holding a read gate, admit a writer;
             // reserve_class rejects the zero charge as a fenced Invariant.
-            OperationClass::CommitProgress | OperationClass::RetirementProgress => 0,
+            OperationClass::CommitProgress | OperationClass::CatalogProgress => 0,
         };
         Self::reserve_class(ledger, charges.shared, charge, class)
     }
@@ -262,12 +274,12 @@ impl<'b, 'a, 'c, 's> OperationSourceAdmission<'b, 'a, 'c, 's> {
         )
     }
 
-    /// The caller holds the original closed read gate throughout retirement.
+    /// The caller holds the original closed read gate throughout fixed progress.
     /// The fixed charge was computed during exclusive split, before any entry.
-    pub(super) fn catalog_retirement(
+    pub(super) fn catalog_progress(
         ledger: &'b Mutex<IsolationLedger<'a, 'c, 's>>,
         charges: &CatalogCommitCharges,
-        retirement: &CatalogRetirementCharge,
+        progress: &CatalogProgressCharge,
         gate: &TerminalReadGate<'_, '_>,
     ) -> SourceResult<Self> {
         {
@@ -281,8 +293,8 @@ impl<'b, 'a, 'c, 's> OperationSourceAdmission<'b, 'a, 'c, 's> {
         Self::reserve_class(
             ledger,
             charges.shared,
-            retirement.0,
-            OperationClass::RetirementProgress,
+            progress.0,
+            OperationClass::CatalogProgress,
         )
     }
 
@@ -412,7 +424,7 @@ impl<'b, 'a, 'c, 's> OperationSourceAdmission<'b, 'a, 'c, 's> {
             OperationClass::CatalogFull
             | OperationClass::CatalogResident
             | OperationClass::CommitProgress
-            | OperationClass::RetirementProgress
+            | OperationClass::CatalogProgress
                 if self.charge != 0 && u64::from(self.charge) <= SHORT_BYTES => {}
             _ => return Err(failed(state.fence, SourceCause::Invariant)),
         }
@@ -469,11 +481,11 @@ pub(super) fn split_source_bytes<W: WriterNamespace>() -> usize {
     let compute = SPLIT_CALCULATION_BYTES
         + 3 * size_of::<CatalogSourceCharges>()
         + 3 * size_of::<CatalogCommitCharges>()
-        + 3 * size_of::<CatalogRetirementCharge>();
+        + 3 * size_of::<CatalogProgressCharge>();
     let returning = 2 * split_port_bytes::<W>()
         + size_of::<CatalogSourceCharges>()
         + size_of::<CatalogCommitCharges>()
-        + size_of::<CatalogRetirementCharge>();
+        + size_of::<CatalogProgressCharge>();
     4 * size_of::<&()>() + compute.max(returning)
 }
 
@@ -553,7 +565,7 @@ fn test_source_used(isolation: &Mutex<IsolationLedger<'_, '_, '_>>) -> u64 {
 #[cfg(test)]
 impl<W: WriterNamespace> MutationPort<'_, '_, '_, '_, '_, '_, '_, '_, '_, W> {
     pub(in crate::storage) fn catalog_test_retirement_charge(&self) -> usize {
-        self.retirement_charge.0
+        self.progress_charge.0
     }
 
     pub(in crate::storage) fn catalog_test_commit_charges(&self) -> [usize; 5] {

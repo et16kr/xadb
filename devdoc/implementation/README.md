@@ -1,5 +1,7 @@
 # 현재 구현
 
+2026-10-28 [C2 Catalog lifecycle progress](../evidence/module-independence-survey-20261026.md#c2-lifecycle-progress): RollbackStart/AbortEnd/CancelReserved/ReleaseRole을 원 gate/source의 동기 MutationPort로 공급했다. 원 flusher borrow·quiescence·ordinary apply를 유지하며 r3 compiler4/runtime12/native N02(3PID) PASS·r1/r2 compile FAIL을 보존한다. shared+fixed memory62390B/native62942B·port192B이며 일반 floor·Begin/Aging/CREATE·Row와 전체 M4/M5는 미완료다.
+
 2026-10-28 [C2 Catalog 회수 동기 호출](../evidence/module-independence-survey-20261026.md#c2-retirement-call): 준비·적용·결과 정리를 원 gate/source 한 번에 연결하고 독점 recovery도 수신했다. compiler4/runtime13·native N02(3PID) 각1회 PASS. 회수 caller-retained gap을 닫았고 고정 charge42198B/port192B이며 일반 entry/return floor·Commit lifetime·다른 writer/Row와 전체 M4/M5는 미완료다.
 
 2026-10-28 [C2 공유 Catalog 회수 준비 body](../evidence/module-independence-survey-20261026.md#c2-retirement-preparation): MutationPort 준비의 replay/page 접근·결과 cleanup까지 원 gate/source 예약을 유지한다. 선택12 PASS·원 compile FAIL2 보존. 고정 charge42074B·port192B 유지, caller-retained Prepared·entry/return floor·전체 M4/M5는 미완료다.

@@ -338,8 +338,9 @@ fn commit_charges() -> CatalogCommitCharges {
 fn retirement_fixed_charge_fits_and_cannot_use_commit_transitions() {
     fn inspect<W: WriterNamespace>(kind: &str) {
         let shared = shared_bytes::<W>();
-        let charge = CatalogRetirementCharge::new::<W>();
+        let charge = CatalogProgressCharge::new::<W>();
         let phases = create_pair::catalog_live::catalog_live_source_bytes::<W>();
+        assert!(charge.0 >= phases.lifecycle);
         assert!(charge.0 >= phases.prepare + retirement_prepare_carrier_bytes());
         assert!(charge.0 >= retirement_source_peak());
         let live = super::super::resources::source_census::<W>();
@@ -360,9 +361,9 @@ fn retirement_fixed_charge_fits_and_cannot_use_commit_transitions() {
             .try_owner(crate::transaction::concurrency::OwnerRole::Maintenance)
             .unwrap();
         let gate = owner.close_reads_for_retirement(core).unwrap();
-        let charge = CatalogRetirementCharge(8192);
+        let charge = CatalogProgressCharge(8192);
         let mut ticket =
-            OperationSourceAdmission::catalog_retirement(ledger, &commit_charges(), &charge, &gate)
+            OperationSourceAdmission::catalog_progress(ledger, &commit_charges(), &charge, &gate)
                 .unwrap();
         assert_eq!(used(ledger), 8192);
         let error = ticket

@@ -59,35 +59,14 @@ fn release_references(
 impl<'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
     Plan4Retention<'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W>
 {
-    fn prepare_catalog_job<'i>(
-        &mut self,
-        owner: &mut Owner<'c, 's>,
-        ordinal: usize,
-        operation: Operation,
-        private: &'i mut [u8; PRIVATE_BYTES],
-    ) -> Result<PreparedCatalog<'i, 'c, 's>> {
-        self.catalog_preparation()
-            .prepare_catalog_job(owner, ordinal, operation, private)
-    }
-
     pub(crate) fn catalog_cancel_reserved(
         &mut self,
         owner: &mut Owner<'c, 's>,
         ordinal: usize,
         private: &mut [u8; PRIVATE_BYTES],
     ) -> Result<Observation> {
-        // Recovery has no in-process TxPairClaimKey to cancel. A live reservation
-        // must consume ReservedCatalogCreate::cancel instead.
-        if !self
-            .inner
-            .pool
-            .handoff_quiescent()
-            .map_err(|e| frame(RetentionPhase::Prepare, e))?
-        {
-            return Err(unchanged(RetentionPhase::Prepare, RetentionCause::Busy));
-        }
-        let prepared = self.prepare_catalog_job(owner, ordinal, Operation::Cancel, private)?;
-        self.apply_existing_catalog(owner, prepared)
+        let (mut writer, _, mut flusher) = self.split();
+        writer.catalog_cancel_reserved(owner, ordinal, private, &mut flusher)
     }
     pub(crate) fn catalog_release_role(
         &mut self,
@@ -95,8 +74,8 @@ impl<'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
         ordinal: usize,
         private: &mut [u8; PRIVATE_BYTES],
     ) -> Result<Observation> {
-        let prepared = self.prepare_catalog_job(owner, ordinal, Operation::ReleaseRole, private)?;
-        self.apply_existing_catalog(owner, prepared)
+        let (mut writer, _, mut flusher) = self.split();
+        writer.catalog_release_role(owner, ordinal, private, &mut flusher)
     }
     pub(crate) fn catalog_retire(
         &mut self,
@@ -113,7 +92,7 @@ impl<'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
 impl<'b, 'a, 's, 'c, 'p, 'd, 'm, 'w, W: WriterNamespace>
     CatalogPreparation<'b, 'a, 's, 'c, 'p, 'd, 'm, 'w, W>
 {
-    fn prepare_catalog_job<'i>(
+    pub(super) fn prepare_catalog_job<'i>(
         &self,
         owner: &mut Owner<'c, 's>,
         ordinal: usize,
@@ -351,10 +330,10 @@ impl<'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
                 effect: error.effect,
             })
         };
-        let source = match source::OperationSourceAdmission::catalog_retirement(
+        let source = match source::OperationSourceAdmission::catalog_progress(
             self.isolation,
             &self.commit_charges,
-            &self.retirement_charge,
+            &self.progress_charge,
             &gate,
         ) {
             Ok(source) => source,

@@ -38,6 +38,13 @@ impl<W: WriterNamespace> RetentionWriter<'_, '_, '_, '_, '_, '_, '_, '_, '_, W> 
     }
 }
 
+impl<'s, 'c, 'p, 'd, W: WriterNamespace> RetentionReader<'_, '_, 's, 'c, 'p, 'd, '_, '_, W> {
+    /// Borrow the original pool for a test's actual checked retained pin.
+    pub(in crate::storage) fn catalog_test_pool(&self) -> &SharedPool<'c, 's, 'p, 'd> {
+        self.pool
+    }
+}
+
 impl<'s, 'c, 'p, 'd, W: WriterNamespace> RetentionWriter<'_, '_, 's, 'c, 'p, 'd, '_, '_, '_, W> {
     /// Borrow-only observation of the original pool, as the Live accessor.
     pub(in crate::storage) fn catalog_test_pool(&self) -> &SharedPool<'c, 's, 'p, 'd> {
