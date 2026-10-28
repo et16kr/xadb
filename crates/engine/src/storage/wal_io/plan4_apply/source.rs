@@ -82,8 +82,8 @@ pub(super) fn commit_source_peak() -> usize {
     stage.max(pending).max(install).max(publish) + commit_carrier_bytes()
 }
 
-/// Retirement retains one fixed progress charge through publication and
-/// checked cleanup. Its physical read/write closures are consecutive.
+/// Retirement application retains one fixed progress charge through
+/// publication and checked cleanup. Its physical closures are consecutive.
 pub(super) fn retirement_source_peak() -> usize {
     create_pair::catalog_live::retirement::source_bytes()
         + commit_carrier_bytes()
@@ -94,9 +94,22 @@ pub(super) fn retirement_source_peak() -> usize {
 /// A fixed split-time cost. Operation callers cannot select a byte count.
 pub(super) struct CatalogRetirementCharge(usize);
 impl CatalogRetirementCharge {
-    pub(super) fn new() -> Self {
-        Self(retirement_source_peak())
+    pub(super) fn new<W: WriterNamespace>() -> Self {
+        Self(create_pair::catalog_live::catalog_live_source_bytes::<W>().retirement)
     }
+}
+
+/// The shared writer's preparation wrapper keeps the admission and gate while
+/// its nested selection/replay/producer returns. The Result is then retained
+/// during checked cleanup, including the forwarding merge Results. These are
+/// value bounds, not a claim about a caller retaining Prepared after return.
+pub(super) fn retirement_prepare_carrier_bytes() -> usize {
+    commit_carrier_bytes()
+        + 3 * size_of::<Result<PreparedCatalog<'_, '_, '_>>>()
+        + size_of::<crate::storage::session_fence::UnwindFence<'_>>()
+        + 2 * size_of::<crate::storage::semantic_catalog::Operation>()
+        + 2 * size_of::<usize>()
+        + 5 * size_of::<&()>()
 }
 
 /// The retained admission and gate, their Results and caller conversions, and

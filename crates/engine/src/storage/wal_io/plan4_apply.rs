@@ -545,7 +545,7 @@ impl<'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
         // borrow. Complete the recursive type census before lending any port.
         let source_charges = source::CatalogSourceCharges::new::<W>();
         let commit_charges = source::CatalogCommitCharges::new::<W>();
-        let retirement_charge = source::CatalogRetirementCharge::new();
+        let retirement_charge = source::CatalogRetirementCharge::new::<W>();
         (
             MutationPort {
                 commit_charges,

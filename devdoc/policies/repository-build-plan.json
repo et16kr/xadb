@@ -7779,5 +7779,39 @@
     "skipped_files": 0,
     "unresolved_required_fixes": 0,
     "review_sha256": "12a53460a0e6e18043d64a9c45b41a6a2829a8bb96c842844afe627546c6c5d9"
+  },
+  "dev3_module_c2_retirement_preparation": {
+    "status": "ACCEPTED_LIMITED_D1_D2",
+    "contract_ref": "dev3-module-boundaries.md#retirement-preparation",
+    "evidence_ref": "module-independence-survey-20261026.md#c2-retirement-preparation",
+    "baseline_commit": "fa0f033",
+    "branch": "main",
+    "implemented_paths": [
+      "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/retirement_prepare.rs",
+      "tests/fixtures/dev3-module-c2/retirement-prepare/manifest.json"
+    ],
+    "scope": "Shared MutationPort retirement preparation body uses original progress gate and fixed source loan; Prepared caller lifetime, entry/return floor, other writers/Row and M4/M5 incomplete",
+    "source_roots_changed": false,
+    "runtime_exact_pass": 12,
+    "runtime_sources": {
+      "r3": 12
+    },
+    "validation": "r1 production PASS, r1/r2 test compile FAIL preserved; only new test changed between runs. r3 Clippy/lib tests build and 12 exact cases PASS. Exports/targets/ELF deleted after identity capture.",
+    "source_bytes": {
+      "memory_shared_retained": 20192,
+      "native_type_shared_retained": 20328,
+      "memory_common_prepare": 32144,
+      "native_type_common_prepare": 33168,
+      "retirement_charge": 42074,
+      "memory_retirement_total": 62266,
+      "native_type_retirement_total": 62402,
+      "limit": 65536,
+      "source_bound_not_rss": true
+    },
+    "run_result_sha256": "393496fd02cd8f86da1bbd327babd78d5ea140b0c2efbe4964d03c3b424914ca",
+    "reviewed_files": 18,
+    "skipped_files": 0,
+    "unresolved_required_fixes": 0,
+    "review_sha256": "c79d36cf85e6f2a8326613c89838ad3141ca7bd13ccee032f25c1dd68c813c65"
   }
 }

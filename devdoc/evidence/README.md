@@ -1,5 +1,7 @@
 # XADB 조사·실행 증거
 
+- [2026-10-28 공유 Catalog 회수 준비 body](module-independence-survey-20261026.md#c2-retirement-preparation) — 원 gate/source를 준비에도 연결했다. r3 선택12 PASS·r1 production PASS와 원 compile FAIL2를 구분하며 caller-retained Prepared·전체 M4/M5는 미완료다.
+
 - [2026-10-28 main의 Catalog 회수 progress 예약](module-independence-survey-20261026.md#c2-retirement-progress) — 원 gate·고정 source charge·Maintenance 호환, source별 선택7+6 PASS와 compile/시험 FAIL을 구분하여 보존한다. 무변경 완료 시험은 반복하지 않았다.
 
 - [2026-10-28 Catalog Commit writer 창의 main 통합](module-independence-survey-20261026.md#writer-progress-merge-main-20261028) — `854bd8d..af54a4e`의 변경30파일 독립 리뷰·필수 수정0, 제품/시험 변경 없는 병합과 원 실행 증거128파일의 main 작업 경로 이동을 기록한다. 기존 결과를 새 실행 PASS로 승격하지 않는다.

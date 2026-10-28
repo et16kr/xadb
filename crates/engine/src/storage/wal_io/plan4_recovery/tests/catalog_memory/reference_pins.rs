@@ -25,6 +25,11 @@ fn catalog_mt04_reader_returns_before_clr_progress() {
             live.catalog_rollback_start(owner, actor, private).unwrap();
             oracle.check(live, state, "R04");
             assert_eq!(live.catalog_test_references(), ((0, 0, 0), false));
+            // Preparation now has its own progress gate. Complete it before
+            // parking the reader that this test admits ahead of application.
+            let prepared = live
+                .prepare_catalog_retirement(owner, 1, Operation::Clr, private)
+                .unwrap();
             let (entered, arrived) = sync_channel(1);
             let (resume, release) = sync_channel(1);
             hook::install(core, Point::LookupCaptured, entered, release);
@@ -55,9 +60,6 @@ fn catalog_mt04_reader_returns_before_clr_progress() {
                     arrived.recv_timeout(WAIT).unwrap();
                     assert_eq!(writer.catalog_test_references(), ((2, 0, 0), false));
                     assert_eq!(writer.catalog_test_physical_pins(), 0);
-                    let prepared = writer
-                        .prepare_catalog_retirement(owner, 1, Operation::Clr, private)
-                        .unwrap();
                     let before = state.lock().unwrap().images();
                     let read_charge = reader.catalog_test_source_used();
                     let (entered, waiting) = sync_channel(1);

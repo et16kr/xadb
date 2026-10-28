@@ -1138,6 +1138,9 @@ mod visibility_gap;
 #[path = "catalog_memory/reference_pins.rs"]
 mod reference_pins;
 
+#[path = "catalog_memory/retirement_prepare.rs"]
+mod retirement_prepare;
+
 #[path = "catalog_memory/commit_concurrency.rs"]
 mod commit_concurrency;
 #[path = "catalog_memory/source_entry.rs"]

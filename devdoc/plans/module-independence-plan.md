@@ -4,7 +4,7 @@
 
 [개발 문서 진입점](../README.md) · [기존 병렬 정책](../policies/parallel-development-policy.md) · [저장소 배치](../policies/repository-build-plan.md) · [DEV3 작업 분해](dev3-implementation-plan.md#remaining-work) · [변경 코드 시험 지시](../../AGENTS.md)
 
-2026-10-28 main `c217fbf`의 후속 [Catalog 회수 progress 공급](../evidence/module-independence-survey-20261026.md#c2-retirement-progress)은 CLR/Prune/RootFree/TerminalFinish를 원 gate·고정 source ledger에 연결했다. Maintenance 역할과 장기 snapshot horizon을 보존하며 source별 선택7+6 PASS와 원 FAIL을 구분한다. 다음 공급은 준비 경로·나머지 writer/Row의 ledger 참여와 진입/반환 floor이며 M4/M5 전체 인수는 계속 미완료다.
+2026-10-28 main `c217fbf`의 후속 [Catalog 회수 progress 공급](../evidence/module-independence-survey-20261026.md#c2-retirement-progress)은 CLR/Prune/RootFree/TerminalFinish를 원 gate·고정 source ledger에 연결했다. Maintenance 역할과 장기 snapshot horizon을 보존하며 source별 선택7+6 PASS와 원 FAIL을 구분한다. 이어 main `fa0f033`의 [공유 회수 준비 body](../evidence/module-independence-survey-20261026.md#c2-retirement-preparation)를 같은 gate/source에 연결하고 선택12를 검증했다. 남은 공급은 caller-retained Prepared·나머지 writer/Row의 ledger 참여와 진입/반환 floor이며 M4/M5 전체 인수는 계속 미완료다.
 
 <a id="purpose"></a>
 ## 1. 목적과 이번 인계 범위

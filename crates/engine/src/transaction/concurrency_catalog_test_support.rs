@@ -25,6 +25,8 @@ pub(crate) enum Point {
     ResidentStatusLocated,
     ResidentUndoLocated,
     RetirementIntent,
+    RetirementPreparing,
+    RetirementPrepared,
     RetirementFirstPage,
     ReadGateWaiting,
 }

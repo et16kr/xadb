@@ -2185,3 +2185,41 @@ r2의 source/core7개와 r4의 실제 Catalog6개로 동결13 selector의 변경
 검증 뒤 문서와 source.rs의 writer entry 주석 한 줄만 정리했다. `post-run-comment.json`은 그 줄을 원문으로 복원한 SHA가 r4 inventory와 같고 나머지5742파일도 일치함을 기록한다. 실행 토큰 변경이 없어 완료 시험을 반복하지 않았다. 독립 최종 검토 `/root/retirement_design_review`는 OCR11파일과 보충 문서/manifest6파일, 총17/17·생략0·검토율100%를 확인하고 D1/D2 한정 수용·필수 수정0으로 판정했다. r2의7+r4의6 selector 중복 없음과 원 실패·runner/inventory/log/result hash·주석만의 후속 차이를 검산했다. 검토자는 파일 수정이나 시험 실행을 하지 않았다. 검토 receipt `review-final.json` SHA-256은 `12a53460a0e6e18043d64a9c45b41a6a2829a8bb96c842844afe627546c6c5d9`다. 이 단위를 main에 commit하며 전체 M4/M5로 승격하지 않는다.
 
 준비 경로·다른 writer/Maintenance·Row·gate 전/반환 뒤 floor와 C3–C5·M4/M5 전체 인수는 미완료다. 문서 verifier와 pre-push gate·원격 push는 이번 작업에 포함하지 않는다.
+
+<a id="c2-retirement-preparation"></a>
+## main의 공유 Catalog 회수 준비 body — 2026-10-28
+
+clean main `fa0f033`에서 계획 잔여 작업을 재개했다. 작성/계약/통합은 `/root`, 독립 D1/D2 검토는 `/root/source_admission_review`다. C2 stash·다른 worktree는 사용하지 않았다. [RETIREMENT-PREPARATION-001](../contracts/dev3-module-boundaries.md#retirement-preparation)은 공유 MutationPort 준비 body의 원 gate/source 공급이며 caller-retained Prepared와 entry/return floor·전체 M4/M5 완료는 아니다.
+
+사전 설계 검토는 원 `health`가 registry guard를 잡는 점을 지적했다. 새 entry는 guardless health/origin만 예약 전에 확인하고 깊은 health는 기존 preparer 안에서 유지했다. 기존 단일 scalar charge를 preparation/application의 max로 계산하여 port 크기를 늘리지 않았다. 준비 결과와 cleanup carrier도 포함한다. MT04의 기존 apply 대조는 준비를 reader 정지 전에 완료하도록 옮기고 새 준비 schedule을 별도 작성했다.
+
+[사전 manifest](../../tests/fixtures/dev3-module-c2/retirement-prepare/manifest.json)의 runtime12 exact selector를 실제 diff에 연결했다. source/공유 port/복구 census3, 변경된 MT04·apply Capacity·Maintenance lifecycle·Prune horizon2의5, 새 준비 대기·오류/역할·두 unwind cut·명시적 Fatal 정리의4이다. 총1200초/compiler420초/case30초/로그8MiB/stack32MiB를 동결했다. 각 실행의 source inventory·hash·로그·결과를 보존하고 종료 뒤 이번 export/target/ELF만 삭제한다. 기존 무변경 하위 회귀·workspace wrapper·문서 verifier·push는 실행하지 않는다. 선택 실행은 아래와 같으며 최종 독립 검토는 별도 기록한다.
+
+### 실패 보존·선택 결과
+
+r1 production check는 PASS이고 test Clippy build는 새 시험의 foreign-core 수명 오류(E0597)로 FAIL했다. r2의 test-only 수정은 macro의 optional foreign 인자를 빠뜨려 E0425로 FAIL했다. 두 source의 runtime12는 전부 NOT_RUN이다. r3는 원 fixture의 optional foreign core를 사용하고, 독립 검토가 지적한 MCRP05의 원 Fatal을 실제 selection→target_request 순서에 맞는 Prepare/Frame(Fenced)로 정정했다. 기대값 정정은 runtime 전에 수행했으며 Storage 예상값의 runtime FAIL을 만들어 기록하지 않는다.
+
+r3는 engine lib/tests Clippy(`-D warnings`)·test build·runtime12 exact 사례를 각1회 PASS했다. r1→r2→r3의 각5745파일 inventory 차이는 새 `retirement_prepare.rs` 시험 하나뿐이다. production 소스는 동일하여 r1의 원 production PASS를 보존하고 반복하지 않았다. 제품 코드는 시험 결과에 맞춰 수정하지 않았다. 실제 elapsed86.403초·case 로그14411B이며 성능 인수 결과가 아니다.
+
+| 관측 source 계수 | memory | native 타입 |
+| --- | ---: | ---: |
+| shared retained | 20192 | 20328 |
+| 공통 preparation body | 32144 | 33168 |
+| 준비/application 최대 고정 charge | 42074 | 42074 |
+| shared + 고정 charge | 62266 | 62402 |
+| live peak / recovered peak | 61770 / 63146 | 61906 / 63282 |
+
+기존 charge가 새 preparation 상계도 덮어 scalar·split port192B가 그대로다. 이 값은 source-value 상계이며 RSS/stack 측정이 아니다. Commit Pending+Full 코드/형식은 변경하지 않았고 기존65502B 결과를 이번 새 실행으로 표시하지 않는다. 새 unwind2cut는 실제 새 runtime에서 원 R04 durable prefix를 MF14 독립 corpus로 복구했다. explicit Fatal2cut는 원 Prepare/Frame(Fenced) 우선과 성공 Prepared를 대체하는 Census/Fenced·charge 보존/gate 정리를 확인했다. 무관한 native process cut·하위 회귀는 재실행하지 않았다.
+
+| 보존 identity | SHA-256 |
+| --- | --- |
+| manifest | `b8c73af0d3493778a547c905981f64485d4e38b94dec6a9a7fc6a5d6e2fe8924` |
+| r1 result (production PASS·compile FAIL) | `8b06b7ea30a425bd35c2dd271e389cd182b5bff68ecd7f22afc097038a6725df` |
+| r2 result (compile FAIL) | `9d1556ff933704d04a802e034bf52d11119a8bbe84b74678ea2d2a38d692edfe` |
+| r3 result | `393496fd02cd8f86da1bbd327babd78d5ea140b0c2efbe4964d03c3b424914ca` |
+| r3 source | `4e872e91f103734e4b728b081733d2bd08aa7914b3ab0f63a1cfe9824e337d08` |
+| r3 inventory | `48d9aca23bc30026e4a1ca41cb1b2313196417390959f364742000727abd6bd3` |
+| r3 runner | `9b3e7fc9242e1c054550b8e8938773b93bbe6356c57c6ea0d1a725359f77dc58` |
+| r3 test ELF (삭제) | `924b9f373f1398637b4f7df162fac6954e61a8fb5fc244a0293da86dfe66ba45` |
+
+원 `artifacts/module-c2-retirement-prepare-20261028/r1`–`r3`의 inventory·runner·compiler/case 로그·결과를 보존했고 각 실행의 export/target/ELF는 종료 후 삭제했다. gate 전 entry/반환 tail·caller-retained Prepared·나머지 writer/Row와 C3–C5·M4/M5 인수는 계속 미완료다. 독립 `/root/source_admission_review`가 변경18/18파일(Rust11·manifest1·문서/JSON6), 생략0·검토율100%를 대조하고 **D1/D2 한정 수용·필수 수정0**으로 판정했다. 원 source5745파일/current fingerprint·각 run의 inventory/runner/helper/log/result hash·현재 코드 일치와 삭제 상태를 검산했고 `/root`가 반영했다. 검토자는 수정·build·시험을 실행하지 않았다. `review-final.json` SHA-256은 `c79d36cf85e6f2a8326613c89838ad3141ca7bd13ccee032f25c1dd68c813c65`다. 변경 파일 rustfmt와 diff whitespace를 확인했으며 문서 verifier·전체 fmt/Clippy·push는 실행하지 않았다.

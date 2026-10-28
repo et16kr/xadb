@@ -1,0 +1,62 @@
+{
+  "scope": "C2 shared MutationPort Catalog retirement preparation body progress admission; caller-retained Prepared and entry/return floors remain incomplete",
+  "baseline_commit": "fa0f033",
+  "budget": {
+    "total_seconds": 1200,
+    "compiler_seconds": 420,
+    "case_seconds": 30,
+    "output_bytes": 8388608,
+    "rust_min_stack": 33554432
+  },
+  "compiler_tests": [],
+  "runtime_tests": [
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::source::tests::retirement_fixed_charge_fits_and_cannot_use_commit_transitions",
+      "reason": "changed W-specific fixed charge includes shared preparation, memory/native bounds and class isolation"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::create_pair::catalog_commit::tests::consumed_preparation_has_bounded_pending_image",
+      "reason": "changed Catalog preparation wrapper/carrier census feeds live and recovered source peaks"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::owner_tests::cached_catalog_charges_count_exclusive_split_and_live_ports",
+      "reason": "changed split-time retirement census, port storage remains one scalar charge"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::reference_pins::catalog_mt04_reader_returns_before_clr_progress",
+      "reason": "changed test prepares before parked reader because preparation now closes reads; preserves apply schedule"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::reference_pins::catalog_retirement_capacity_returns_gate_before_effects",
+      "reason": "fixed charge changed; actual apply capacity boundary and clean retry"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::lifecycle::mc02_forward_clr_abort_cleanup",
+      "reason": "changed test uses shared writer preparation for CLR/RootFree/TerminalFinish with original Maintenance owner"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::visibility_gap::catalog_mt01_q0_publication_gap",
+      "reason": "changed shared Prune preparation and cleanup path; long snapshot q0 horizon remains authoritative"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::visibility_gap::catalog_mt02_q1_publication_gap",
+      "reason": "changed shared Prune preparation and cleanup path; long snapshot q1 horizon remains authoritative"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::retirement_prepare::preparation_waits_for_reader_and_returns_its_source",
+      "reason": "new actual preparation wait/closed gate, source before replay, retained Prepared result before checked cleanup, then apply"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::retirement_prepare::preparation_capacity_errors_roles_and_retry",
+      "reason": "new preparation capacity and malformed/unsupported/foreign/flusher errors, WAL/private/ref/pin unchanged, Maintenance retry"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::retirement_prepare::preparation_unwind_keeps_charge_and_fresh_recovery",
+      "reason": "new preparation two unwind cuts before and after body retain fixed charge, reopen gate, recover unchanged durable R04 prefix via MF14 independent corpus"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::retirement_prepare::preparation_fatal_preserves_original_error_and_charge",
+      "reason": "new two explicit fence schedules: original preparation Fatal wins over cleanup; cleanup Fatal replaces successful Prepared, preserving charge and reopening gate"
+    }
+  ]
+}

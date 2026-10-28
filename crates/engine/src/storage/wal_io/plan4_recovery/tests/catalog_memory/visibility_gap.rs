@@ -58,8 +58,13 @@ fn cleanup<'s, 'c>(
     base: usize,
 ) {
     let at = |offset| id(base, offset);
-    live.catalog_retire(owner, oracle.ordinal(&at(5)), Operation::Prune, private)
-        .unwrap();
+    retirement_prepare::retire(
+        live,
+        owner,
+        oracle.ordinal(&at(5)),
+        Operation::Prune,
+        private,
+    );
     oracle.check(live, state, &at(5));
     for offset in 6..=8 {
         live.catalog_release_role(owner, oracle.ordinal(&at(offset)), private)

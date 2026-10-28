@@ -1260,6 +1260,17 @@ Operation은 scope를 재대여하고 원 refs/lease/loader/copy만 소유한다
 
 gate 없는 선택적 foreground 예약은 reader 점유 때문에 terminal을 거절하고, ledger capacity 대기는 lock/progress 계약과 맞지 않아 채택하지 않았다. `prepare_catalog_retirement` 등 준비 경로·다른 writer·독립 Maintenance 작업·Row·entry/return floor와 M4/M5 전체 인수는 여전히 미완료다. read가 이 writer를 기다리도록 바뀌거나 물리 closure가 중첩되거나 새 원 ledger holder가 추가되면 재검토한다.
 
+<a id="retirement-preparation"></a>
+#### XADB-MODULE-RETIREMENT-PREPARATION-001 — 공유 회수 준비 body의 progress 예약
+
+2026-10-28 · D2 ACCEPTED (준비 body 한정) · 기준 main `fa0f033` · 작성/계약/통합 `/root` · 독립 `/root/source_admission_review`의 사전 설계 조건을 반영했다. 구현·최종 검토·실행 상태는 [해당 증거](../evidence/module-independence-survey-20261026.md#c2-retirement-preparation)를 따른다.
+
+`MutationPort::prepare_catalog_retirement`의 CLR/Prune/RootFree/TerminalFinish는 지원 operation·guardless storage/pool health·origin을 확인하고 원 `close_reads_for_retirement`으로 기존 유한 read를 반환시킨 뒤 source를 예약한다. 그 안에서 기존 selection·registry/control 검산·canonical replay·page/producer·Prepared 구성을 그대로 수행한다. foreground와 Maintenance는 허용하고 flusher·foreign core는 거절한다. 깊은 prepared 검산 전에 gate/Capacity 오류가 먼저 관측될 수 있다. 기존 exclusive `DiskSession` 준비는 해당 공유 진입점의 대상이 아니다.
+
+원 `CatalogRetirementCharge`의 단일 scalar를 split에서 `max(application, preparation)`으로 계산한다. 준비는 caller+공통 body와 selection 중 큰 값에 gate/source·wrapper와 `Result<PreparedCatalog>`의 전달·checked cleanup 비용을 더한다. 같은 `&mut MutationPort`의 준비/적용은 직렬이므로 합하지 않는다. 추가 port field·별도 ledger·caller byte 입력은 없다. 준비 완료 뒤 결과를 보유한 채 source→gate를 checked 반환하며 원 Fatal 우선과 unwind의 charge 보존·gate 정리를 유지한다. gate 중 새 조회는 `InstallationPending`, 예약 부족은 `Census/Capacity/Unchanged`이며 WAL/새 refs/pins/private 쓰기 전에 거절한다. 장기 snapshot과 horizon 검산은 유지한다.
+
+대안인 foreground 방식의 즉시 Capacity는 회수 진행을 기존 reader 점유에 맡기며, ledger capacity 대기는 원 progress/lock 계약과 맞지 않는다. 전체 Prepared에 admission을 넣는 안은 별도 borrow/보유 수명 계약을 요구하므로 이 body 공급과 구별한다. **gate 대기 전 entry, source 반환 이후 tail, caller가 보유하는 하나 이상의 Prepared, prepare→apply 사이 gap의 floor는 계속 미공급이다.** 이 부분공급을 전체 short aggregate 또는 M4/M5 완료로 승격하지 않는다. 원 source holder·Prepared 수명·준비 closure가 바뀌면 재검토한다.
+
 <a id="common-deliveries"></a>
 ## 7. 유한한 공통 공급과 C0/C 인계
 

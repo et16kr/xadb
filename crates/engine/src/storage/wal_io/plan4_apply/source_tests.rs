@@ -338,10 +338,13 @@ fn commit_charges() -> CatalogCommitCharges {
 fn retirement_fixed_charge_fits_and_cannot_use_commit_transitions() {
     fn inspect<W: WriterNamespace>(kind: &str) {
         let shared = shared_bytes::<W>();
-        let charge = CatalogRetirementCharge::new();
+        let charge = CatalogRetirementCharge::new::<W>();
+        let phases = create_pair::catalog_live::catalog_live_source_bytes::<W>();
+        assert!(charge.0 >= phases.prepare + retirement_prepare_carrier_bytes());
+        assert!(charge.0 >= retirement_source_peak());
         let live = super::super::resources::source_census::<W>();
         println!(
-            "RETIREMENT_SOURCE_{kind} shared={shared} charge={} total={} live={live:?}",
+            "RETIREMENT_SOURCE_{kind} shared={shared} charge={} total={} phases={phases:?} live={live:?}",
             charge.0,
             shared + charge.0
         );
