@@ -2671,7 +2671,7 @@ r5는 scoped Clippy/test build와 선택 runtime3을 모두 PASS했다(44.849초
 후속 변경은 실제 CLR arm이 `if let Err`의 Observation Result 하나만 소비하고 다음 loop로 가는 반면 Commit/AbortEnd는 별도 arm에서 Observation을 보유한다는 차이를 source 식에 반영한다. CLR의 actor·selected 값/반환·참조·UnwindFence를 별도 계수하며 optimizer/last-use 할인이나 상한 변경을 하지 않는다. [후속 선택](../../tests/fixtures/dev3-module-c3/catalog-capsule/source-followup.json)은 이 변경의 source2와 미실행 WT/CT11이다. r3에서 완료한 compiler3은 반복하지 않는다.
 
 
-r4은 static2와 runtime9(source2, WT01/WT05/WT07, CT01–CT04) PASS 후 CT05의 expected Job 조립 오류로 FAIL했다. CT05가 원 row17 before-bank에 row31 after-image를 반영하지 않은 것이며 cell0의35B 불일치를 보존했다. 기존 `Oracle::check`와 같은 원 C04 Job-page patch를 새 CT05에만 적용하고 byte equality를 유지한다. [수정 근거](../../artifacts/module-c3-catalog-capsule-20261028/r4-oracle-correction.json)와 [후속 선택](../../tests/fixtures/dev3-module-c3/catalog-capsule/oracle-followup.json)은 실패 CT05·미실행 CT06–CT08만 포함한다. 제품 source와 완료한 source/WT/CT01–CT04를 반복하지 않는다.
+r4은 static2와 runtime9(source2, WT01/WT05/WT07, CT01–CT04) PASS 후 CT05의 expected Job 조립 오류로 FAIL했다. CT05가 원 row17 before-bank에 row31 after-image를 반영하지 않은 것이며 cell0의35B 불일치를 보존했다. 기존 `Oracle::check`와 같은 원 C04 Job-page patch를 새 CT05에만 적용하고 byte equality를 유지한다. 수정 근거(로컬 `../../artifacts/module-c3-catalog-capsule-20261028/r4-oracle-correction.json`)와 [후속 선택](../../tests/fixtures/dev3-module-c3/catalog-capsule/oracle-followup.json)은 실패 CT05·미실행 CT06–CT08만 포함한다. 제품 source와 완료한 source/WT/CT01–CT04를 반복하지 않는다.
 
 r4 source 관측은 handle/return416/328B, Commit caller592B·CLR caller504B·helper24274B·progress44304B다. memory live64000/recovered65376B, native-type live64136/recovered65512B로 원65536B 한도 안이며 마지막 여유24B다. 이는 한정 source census이고 전체 entry/return floor·stack/RSS·native 실행 인수가 아니다.
 
@@ -2684,7 +2684,7 @@ r5은 static2/runtime4(CT05–CT08) PASS다. CT07의 실제 Commit capture9는 c
 | r4 | `b5f06783f3b4a68dec826692377a2155b38e578c9769374d4b5b9f1d1c2c4cba` | `3b2a60bcdcd4fd2aa02ab74081a044ce0f52688551eaabe6de392ad59f2214e6` | `8bb597767c9752899e89f116b0ee231749e4b764412ae2b3a5cc671a9c5592d9` |
 | r5 | `fc4a46ae6447b8cf2a489151026bd4cec31343d99db32ff7dd8b649bcec1f6ad` | `509526fbcdf9506808755c84e4e987f7d5285abebdd580dfefd92a0a3f4c4552` | `1fd1769ac72314aacf990da2a6fc00bee978279da0ba42eb902d146bc1081eba` |
 
-[artifact](../../artifacts/module-c3-catalog-capsule-20261028/)의 source manifest·도구/입력 identity·stdout/stderr·결과는 보존했고 각 실행의 source/target/ELF는 삭제했다. [실행 전 D2 한정 수용](../../artifacts/module-c3-catalog-capsule-20261028/review-before-run.json)과 이후 독립 검토에서 mode/mark, source active max, CLR 상위 ordinal 계수를 보완했다. [최종 독립 D1/D2 receipt](../../artifacts/module-c3-catalog-capsule-20261028/review-final.json) SHA-256 `4a26d61fef92b3a44b51a9bcd28c4bddea4c8d3d08e3a9020aa70609620337fe`는25/25파일·artifact78개 검토와 필수 수정0의 한정 수용을 기록한다. 문서 verifier·push·무변경 제품/하위 전체 실행은0이다. 기존 stash 및 다른 증거 artifact는 보존한다.
+artifact(로컬 `../../artifacts/module-c3-catalog-capsule-20261028/`)의 source manifest·도구/입력 identity·stdout/stderr·결과는 보존했고 각 실행의 source/target/ELF는 삭제했다. 실행 전 D2 한정 수용(로컬 `../../artifacts/module-c3-catalog-capsule-20261028/review-before-run.json`)과 이후 독립 검토에서 mode/mark, source active max, CLR 상위 ordinal 계수를 보완했다. 최종 독립 D1/D2 receipt(로컬 `../../artifacts/module-c3-catalog-capsule-20261028/review-final.json`) SHA-256 `4a26d61fef92b3a44b51a9bcd28c4bddea4c8d3d08e3a9020aa70609620337fe`는25/25파일·artifact78개 검토와 필수 수정0의 한정 수용을 기록한다. 문서 verifier·push·무변경 제품/하위 전체 실행은0이다. 기존 stash 및 다른 증거 artifact는 보존한다.
 
 <a id="c3-create-admission"></a>
 ## 2026-10-28 원 statement의 shared CREATE 제품 예약
@@ -2713,9 +2713,9 @@ r3은 static2/compiler4·CCA01–03 PASS 뒤 CCA04의 source charge 기대에서
 | r5 | `6f23caf5c7d392c2d62a1163b7210d70bd2d68cc2e8beda97059777f8aaf94d9` | `9a9486d90ca6d9403109147eecfc91a1b37f48ec9653467be98567bec722c68c` | `05e018f6b1b7816c24967d3f9241827b9a4b6a2ea2b89875d46300f4dfbb79da` |
 | r6 | `ec9e04c3c4b884693188acbabff9acaa0c9605b4768b8bda6e781d18d4d4c9b1` | `f24525d5e37124a07b5599d6aa981d1c9a4ffb553779426acf3f74d6b83699f6` | `f83aee1776d04c0e7ba1ca6740bfe84e8167112770a2c09493c5da4b86a67d4a` |
 
-r6은 static2/CCA09 PASS다. source별 compiler4·신규 runtime9+source 사례1을 충족했다. r3와 r5의 정상 경로 재실행은 mode 검산 변경에 해당하는 CCA01/02, source 재실행은 actor helper 식 변경에 해당한다. 무변경 완료 사례 재실행0이다. r6 뒤 `transaction.rs`의 `record_catalog_read` Rustdoc만 실제 CREATE planner 호출을 반영하도록 교정했고 [comment-only delta](../../artifacts/module-c3-create-admission-20261028/comment-only-followup.json)에 원/수정 hash를 남겼다. 구현 변경과 새 시험은 없으며 r6 source를 최종 source로 바꾸어 쓰지 않는다.
+r6은 static2/CCA09 PASS다. source별 compiler4·신규 runtime9+source 사례1을 충족했다. r3와 r5의 정상 경로 재실행은 mode 검산 변경에 해당하는 CCA01/02, source 재실행은 actor helper 식 변경에 해당한다. 무변경 완료 사례 재실행0이다. r6 뒤 `transaction.rs`의 `record_catalog_read` Rustdoc만 실제 CREATE planner 호출을 반영하도록 교정했고 comment-only delta(로컬 `../../artifacts/module-c3-create-admission-20261028/comment-only-followup.json`)에 원/수정 hash를 남겼다. 구현 변경과 새 시험은 없으며 r6 source를 최종 source로 바꾸어 쓰지 않는다.
 
-r1–r6의 원 FAIL/로그/hash/runner/result-before-cleanup/result는 [artifact](../../artifacts/module-c3-create-admission-20261028/)에 보존하고 이번 export/target/ELF만 삭제했다. 최종 독립 D1/D2 검토는 진행 중이다. M4/M5·Row/C4/C5·own-actor 읽기·전체 short floor·native/S5 의무는 미완료다.
+r1–r6의 원 FAIL/로그/hash/runner/result-before-cleanup/result는 artifact(로컬 `../../artifacts/module-c3-create-admission-20261028/`)에 보존하고 이번 export/target/ELF만 삭제했다. 최종 독립 D1/D2 검토는 진행 중이다. M4/M5·Row/C4/C5·own-actor 읽기·전체 short floor·native/S5 의무는 미완료다.
 
 
 최종 source 검토에서 새 factory closure의 큰 tuple Result가 deep Reserve 계수에 명시되지 않은 점을 찾았다. `ReservedParts`를 실제 반환 타입으로 선언하고 closure 반환+factory local Result 각각1280B, 합2560B를 Reserve 식에 추가했다. factory의 반환 항도 실제 `Result<ReservedCatalogCreate,CatalogCreateError>`로 바꿨다. 앞선 r2/r5 관측을 소급 수정하지 않는다.
@@ -2725,7 +2725,7 @@ r1–r6의 원 FAIL/로그/hash/runner/result-before-cleanup/result는 [artifact
 최종 CREATE Reserve는 memory41634/native-type42658B이며 Forward/Cancel은 r5와 같다. progress44304B, native recovered65512B/여유24B 한도는 유지한다. r7 source `4e1ccff0d574ed797296e2af3635e0d49adab5c3e2cb4424ef71429a481e175a`, ELF `7b85c148a5bc3510dd956e082279610058040e76639b8eee9a8e8f6f27faea5d`, result `c5e0cc83e7691791735e63013c82729ab8c1e1baa37d958473634cc9c02e26a7`다. r7에는 앞선 Rustdoc 교정도 포함되어 있고 현재 source와 일치한다. 전체 검토 완료 판정은 아래에 기록한다.
 
 
-최종 독립 D1/D2는 `ACCEPTED_LIMITED_D1_D2`, 필수 수정0이다. `/root/source_admission_review`가 변경33/33파일과 artifact101개를 대조하고 현재 source=r7, 원 FAIL/로그 보존, 임시 build/export/ELF 삭제를 확인했다. 검토자 실행0이며 [최종 receipt](../../artifacts/module-c3-create-admission-20261028/review-final.json) SHA-256은 `d3896261d69ed6d7fbec76665329c735c63e3ac9d989d13f628343c2a89802cd`다. 허용된 receipt/status/hash metadata만 후속 반영했다. 이번 shared CREATE 단위를 한정 수용하며 전체 M4/M5는 미완료다.
+최종 독립 D1/D2는 `ACCEPTED_LIMITED_D1_D2`, 필수 수정0이다. `/root/source_admission_review`가 변경33/33파일과 artifact101개를 대조하고 현재 source=r7, 원 FAIL/로그 보존, 임시 build/export/ELF 삭제를 확인했다. 검토자 실행0이며 최종 receipt(로컬 `../../artifacts/module-c3-create-admission-20261028/review-final.json`) SHA-256은 `d3896261d69ed6d7fbec76665329c735c63e3ac9d989d13f628343c2a89802cd`다. 허용된 receipt/status/hash metadata만 후속 반영했다. 이번 shared CREATE 단위를 한정 수용하며 전체 M4/M5는 미완료다.
 
 
 <a id="c3-own-catalog-read"></a>
@@ -2735,7 +2735,7 @@ r1–r6의 원 FAIL/로그/hash/runner/result-before-cleanup/result는 [artifact
 
 실행 전 [manifest](../../tests/fixtures/dev3-module-c3/own-catalog/manifest.json)는 새 source1, OCR01–03와 변경 WT01만 선택했다. OCR01은 SER/RC×Full/Resident×Cancel 유무8조합으로 own Found/Q0, Reserve gate, 타인 Active Missing, Commit 뒤 원 statement Missing, 다음 RC statement Found/SER Missing·conflict를 검산한다. OCR02는 미등록 Forward/revision0와 mode/mark/원 snapshot 형태 오류, OCR03은 실제 Status frame의 head/state 모순을 검산한다. WT01은 writable Unsupported 기대를 실제 빈 Missing/readbit로 변경했다. 기존 완료 회귀·복구·native 사례는 반복하지 않는다. 새 WAL/형식/복구 코드는 없으며 앞선 current-build 증거는 원 source 범위로 보존한다.
 
-전체1200초/compiler420초/case45초/출력8MiB/Rust stack32MiB이며 실패 즉시 중단한다. [artifact](../../artifacts/module-c3-own-catalog-20261028/)의 runner는 source/ELF/hash/log/result-before-cleanup을 기록하고 이번 실행의 source/target/ELF만 삭제한 뒤 최종 result를 보존한다. 문서 검증·push는 실행하지 않는다.
+전체1200초/compiler420초/case45초/출력8MiB/Rust stack32MiB이며 실패 즉시 중단한다. artifact(로컬 `../../artifacts/module-c3-own-catalog-20261028/`)의 runner는 source/ELF/hash/log/result-before-cleanup을 기록하고 이번 실행의 source/target/ELF만 삭제한 뒤 최종 result를 보존한다. 문서 검증·push는 실행하지 않는다.
 
 초기 formatter는 새 fixture module의 path 속성 누락으로 FAIL했고 기록을 보존했다(시험0). r1은 private field getter 호출·fixture import/미사용 변수·서로 다른 invariant snapshot lifetime의 typed 포인터 비교로 compile FAIL(runtime0)이었다. 실제 두 guard 참조의 주소만 안전하게 type-erased 비교하도록 고쳤으며 raw pointer dereference/새 권한은 없다. 원 r1 source/로그/FAIL을 보존한다. 후속 실행과 최종 검토는 아래에 추가한다.
 
@@ -2751,7 +2751,7 @@ r3은 static2 PASS 뒤 OCR04 FAIL이다. target entity 변조는 거절됐지만
 r4은 scoped static2와 변경 source1·수정 OCR04를 통과했다. source `0a9ded37fbe09ccc9a9fe09bdb43396b7199dfd325c415d5900cfde5b29d2cc8`, ELF `cbbfec097565cf43a2d89a1f7adcab5b471f6e8c8ff6e49d0fc41239e04a7c09`, result `84c248523e41d61ac4f1899cab056392ae7229f01eccbf41f213353d235dfb33`다. r2의 OCR01–03/WT01은 반복하지 않았다. source별 고유 runtime6(source1+새 OCR01–04+변경 WT01)를 충족했고 source 식 변경만 r4에서 다시 검증했다. 모든 실행의 자체 source/target/ELF는 삭제하고 원 FAIL/로그/hash/result를 보존했다. 최종 독립 D1/D2 판정은 아래에 기록한다.
 
 
-최종 독립 D1/D2는 `ACCEPTED_LIMITED_D1_D2`, 필수 수정0이다. `/root/source_admission_review`가19파일(OCR 제외8 포함)·artifact54개를 검토하고 current source=r4와 원 FAIL·결과·삭제 기록을 확인했다. r4 view 검산은6424B이며 Full/Resident·live/recovered peak는 r2와 같다. [최종 receipt](../../artifacts/module-c3-own-catalog-20261028/review-final.json) SHA-256은 `d15f122567f4e5b3be0780520844e0dc5cd037b1a87a2c5d466c5c54723c91ce`다. 검토자 시험·빌드·제품 수정0이며 허용된 status/receipt/hash metadata만 후속 반영했다.
+최종 독립 D1/D2는 `ACCEPTED_LIMITED_D1_D2`, 필수 수정0이다. `/root/source_admission_review`가19파일(OCR 제외8 포함)·artifact54개를 검토하고 current source=r4와 원 FAIL·결과·삭제 기록을 확인했다. r4 view 검산은6424B이며 Full/Resident·live/recovered peak는 r2와 같다. 최종 receipt(로컬 `../../artifacts/module-c3-own-catalog-20261028/review-final.json`) SHA-256은 `d15f122567f4e5b3be0780520844e0dc5cd037b1a87a2c5d466c5c54723c91ce`다. 검토자 시험·빌드·제품 수정0이며 허용된 status/receipt/hash metadata만 후속 반영했다.
 
 사용자의 후속 “일단 문제만 해결해줘요, 문제해결 후 작업을 개시하지는 말아요” 지시에 따라 현재 Catalog 조회 수정의 검증·리뷰·기록을 마무리하고 이후 개발은 개시하지 않는다. 전체 M4/M5를 완료로 표시하지 않는다.
 
@@ -2763,7 +2763,7 @@ r4은 scoped static2와 변경 source1·수정 OCR04를 통과했다. source `0a
 
 사전 독립 D2는 한 actor의 원 Root/64 Job census·Status/Undo/Row 양방향 관계에 조건부 수용했다. 전체 Base4 closure/READY나 live 권한으로 사용하지 않는다. [선택 manifest](../../tests/fixtures/module-row-format/actor/manifest.json)는 신규6 selector를 원 diff에 연결하며, 다중 statement/중간 rollback mark/compensated+Active·Commit/prune·RootFree/Reserved와 chain/count/identity/schema/projection/orphan 음성 입력을 검산한다. 전체1200초/compiler420초/case45초/출력8MiB/stack32MiB이며 실패 즉시 중단한다. 같은 코드의 완료 시험·workspace/하위 wrapper·native·문서 verifier·push는 실행하지 않는다. 새 영속 write/형식/current dispatch 변경은 없으며 native/current-build durability 인수는 후속 실제 공급에 남긴다.
 
-[artifact](../../artifacts/module-row-actor-20261028/)의 runner는 각 실행 source/hash/ELF/로그/result-before-cleanup을 보존하고 그 실행의 source/target/ELF만 삭제한 뒤 최종 result를 남긴다. r1은 새 test helper의 mutable slice·Box coercion과 새 코드의 Clippy collapsible_if로 compile FAIL(runtime0)이다. r2는 static2 PASS 뒤 독립 raw fixture의 CatalogLeaf kind7 오기로 첫 literal raw-layout FAIL(runtime0 PASS)이다. 실제 계약값5로 고쳤다. 별도 source 검토가 발견한 unconditional statement credit 인자도 원 structural 검산 API로 분리했다. 앞선 FAIL은 보존하고 r3에서 변경/미실행6만 선택한다. 후속 실제 결과와 최종 독립 검토는 아래에 기록한다.
+artifact(로컬 `../../artifacts/module-row-actor-20261028/`)의 runner는 각 실행 source/hash/ELF/로그/result-before-cleanup을 보존하고 그 실행의 source/target/ELF만 삭제한 뒤 최종 result를 남긴다. r1은 새 test helper의 mutable slice·Box coercion과 새 코드의 Clippy collapsible_if로 compile FAIL(runtime0)이다. r2는 static2 PASS 뒤 독립 raw fixture의 CatalogLeaf kind7 오기로 첫 literal raw-layout FAIL(runtime0 PASS)이다. 실제 계약값5로 고쳤다. 별도 source 검토가 발견한 unconditional statement credit 인자도 원 structural 검산 API로 분리했다. 앞선 FAIL은 보존하고 r3에서 변경/미실행6만 선택한다. 후속 실제 결과와 최종 독립 검토는 아래에 기록한다.
 
 
 r3은 scoped static2와 최초 신규 runtime6을 통과했다. 독립 리뷰가 지적한 RootFree 뒤 RowId 상한·유일성 및 raw tag0 뒤 비정규 Free body를 추가로 교정했다. [리뷰 후속 선택](../../tests/fixtures/module-row-format/actor/review-followup.json)의 r4는 해당 변경을 지나는 신규3개만 통과했고 r3 완료6개는 반복하지 않았다. 해당 actor의 RowId는 Root.row_high 이하이며 해당 actor의 현재 행끼리 table/leaf를 가로질러 RowId·logical mutation이 중복하지 않는다. 다른 actor와의 전역 유일성은 전체 closure 의무다. allocated Undo의 Free 분기는 tag만 확인하지 않고 canonical body까지 검산한다.
@@ -2781,7 +2781,7 @@ fixture author는 제품 encoder/다른 fixture author를 import하지 않는 �
 각 source의 전체 파일별 hash inventory·선택 manifest·도구 identity·stdout/stderr·원 FAIL·result-before-cleanup/result를 artifact에 보존했다. r1–r5의 자체 source/target/ELF는 모두 삭제했다. 무변경 완료 사례·전체 workspace·하위 wrapper·native·문서 verifier·push 실행0이다. caller 원4page 외 별도 page bank는 만들지 않지만 typed value/return/caller의 전체 동시 source census·admission은 아직 공급하지 않았다. 이를 F05/64KiB aggregate나 native/current-build durability PASS로 표시하지 않는다. 독립 최종 D1/D2 검토 결과는 아래에 기록한다.
 
 
-최종 독립 D1/D2는 `ACCEPTED_LIMITED_D1_D2`, 필수 수정0이다. `/root/boundary_review`가 변경17파일·artifact64파일의 원 bytes/hash/로그/결과와 정리 기록을 대조했다. 제품/fixture 관련10파일은 r5 source와 같고, 검토자는 수정·빌드·시험·문서 verifier를 실행하지 않았다. [최종 receipt](../../artifacts/module-row-actor-20261028/review-final.json) SHA-256은 `24132533000b2ed5f8a7dafcf31428a39a857c6aac47791681fb4c30db02b7b5`다. 허용된 수용/status·receipt/hash metadata만 후속 기입하며 전체 mixed graph·descriptor/inventory/history·statement/source admission·Profile3 실제 연결·M4/M5는 미완료다.
+최종 독립 D1/D2는 `ACCEPTED_LIMITED_D1_D2`, 필수 수정0이다. `/root/boundary_review`가 변경17파일·artifact64파일의 원 bytes/hash/로그/결과와 정리 기록을 대조했다. 제품/fixture 관련10파일은 r5 source와 같고, 검토자는 수정·빌드·시험·문서 verifier를 실행하지 않았다. 최종 receipt(로컬 `../../artifacts/module-row-actor-20261028/review-final.json`) SHA-256은 `24132533000b2ed5f8a7dafcf31428a39a857c6aac47791681fb4c30db02b7b5`다. 허용된 수용/status·receipt/hash metadata만 후속 기입하며 전체 mixed graph·descriptor/inventory/history·statement/source admission·Profile3 실제 연결·M4/M5는 미완료다.
 
 
 <a id="row-scope3-wire"></a>
@@ -2791,7 +2791,7 @@ fixture author는 제품 encoder/다른 fixture author를 import하지 않는 �
 
 [선택 manifest](../../tests/fixtures/module-row-format/wire/manifest.json)는 신규8개 selector만 고정한다. 독립 정수/SHA author의30 literal은14opcode 전체와 C185/2228·h0/1, full/statement RollbackStart, MNone/Some StatementFinish, 마지막/중간 CLR를 포함한다. descriptor/native/auxiliary는 의도한 opaque sentinel이며 성공 의미는 `WIRE_ONLY`다. body 의미·원 stable before·native/redo after equality·history·source/admission·current Profile3 전환을 공급한 것으로 기록하지 않는다. 음성 입력은 outer checksum을 다시 닫은 뒤 scope/op/owner/core/section/native/redo의 해당 오류를 검산한다. 기존 Catalog/Row 완료시험은 반복하지 않는다.
 
-전체1200초/compiler420초/case45초/출력8MiB/stack32MiB, 실패 즉시 중단이다. [artifact](../../artifacts/module-row-wire-20261028/) runner는 원 source/파일별hash/ELF/로그/result-before-cleanup을 먼저 보존하고 이번 export/target/ELF만 삭제한다. 원 실패와 source별 결과를 보존하며 전체 workspace/lower wrapper/native·문서 verifier·push는0이다. 실제 실행 결과와 최종 독립 D1/D2는 아래에 기록한다.
+전체1200초/compiler420초/case45초/출력8MiB/stack32MiB, 실패 즉시 중단이다. artifact(로컬 `../../artifacts/module-row-wire-20261028/`) runner는 원 source/파일별hash/ELF/로그/result-before-cleanup을 먼저 보존하고 이번 export/target/ELF만 삭제한다. 원 실패와 source별 결과를 보존하며 전체 workspace/lower wrapper/native·문서 verifier·push는0이다. 실제 실행 결과와 최종 독립 D1/D2는 아래에 기록한다.
 
 
 r1은 scoped static2와 신규8개를 모두 PASS했다. source `a1781b10a84d2e21903dccb258093b65b874345e54eeb5424a4164e1a9b5f9f8`, ELF `513fddc60481d3fedc61daa880e6a5cc7bf39f653a35c2a924f74eb6fe37ea96`, result `67363558c491756b3ca2bda89aafd3e0bb95ef09580942c1fb068ff1e1eccf9a`다. 독립 구현 리뷰가 Row slot60000도 허용하는 누락을 찾아 원 MAX_PAGE_SLOTS와 최소 directory 종단을 추가했다. 작성자 계약 대조로 유효 envelope의 Profile/dialect/op/outer 오류를 Unsupported로 분리했다. [후속 선택](../../tests/fixtures/module-row-format/wire/review-followup.json)은 두 변경의 신규2개만 실행한다. 앞선8개는 원 source PASS로 보존하며 최종 source 전수 재실행으로 합치지 않는다. slot 경계 정상/거절과 Prune 양쪽, 오류 종류와 op2/op5 정상 인접 사례를 이 신규2개에서 검산한다.
@@ -2800,7 +2800,7 @@ r1은 scoped static2와 신규8개를 모두 PASS했다. source `a1781b10a84d2e2
 r2도 static2와 신규2개 PASS다. source `df5007ff917fbc23186dc5b3bcef4ad87d9c50673e93c18ef02670e8b6642894`, ELF `afe4589da505fb64782f33115c9b7028f515d7426cfa0fa99fbcc1f47d0fa74e`, result `47dc663f7774c527fd174a222aeda6777bc90a6e51477f141c666070fba6c611`을 보존한다. 고유10개는 r1 source8+r2 source2이며 원 r1 이후 동일 완료 사례 재실행0이다. 두 실행의 임시 source/target/ELF는 결과·identity 수집 뒤 삭제했다. 원 compiler/runtime 로그·source inventory·manifest/runner·result는 보존하며 최종 source의 전체 의미 graph/current recovery 성공으로 승격하지 않는다. 최종 독립 D1/D2 receipt는 아래에 기록한다.
 
 
-최종 독립 D1/D2는 `ACCEPTED_LIMITED_D1_D2`, 필수 수정0이다. `/root/boundary_review`가 변경18파일과 artifact39파일을 원 source/독립 literal/실행 결과·hash/cleanup에 대조했다. 제품·fixture11파일은 r2 source와 같으며 검토자 수정·빌드·시험·문서 verifier·author 실행0이다. [최종 receipt](../../artifacts/module-row-wire-20261028/review-final.json) SHA-256은 `432f1972b9df0c46d83f0a46480c788565ce26dc29a2319d50183816eb23f7de`다. 허용된 status·수용·receipt/hash metadata만 후속 기입한다. 전체 semantic graph/descriptor/history·native/redo 의미 일치·source admission·current dispatch/live/recovery·M4/M5는 계속 미완료다.
+최종 독립 D1/D2는 `ACCEPTED_LIMITED_D1_D2`, 필수 수정0이다. `/root/boundary_review`가 변경18파일과 artifact39파일을 원 source/독립 literal/실행 결과·hash/cleanup에 대조했다. 제품·fixture11파일은 r2 source와 같으며 검토자 수정·빌드·시험·문서 verifier·author 실행0이다. 최종 receipt(로컬 `../../artifacts/module-row-wire-20261028/review-final.json`) SHA-256은 `432f1972b9df0c46d83f0a46480c788565ce26dc29a2319d50183816eb23f7de`다. 허용된 status·수용·receipt/hash metadata만 후속 기입한다. 전체 semantic graph/descriptor/history·native/redo 의미 일치·source admission·current dispatch/live/recovery·M4/M5는 계속 미완료다.
 
 <a id="row-status-images"></a>
 ## 2026-10-29 Row Status 실제 before/after와 frame 결합
@@ -2815,7 +2815,7 @@ r2도 static2와 신규2개 PASS다. source `df5007ff917fbc23186dc5b3bcef4ad87d9
 | --- | --- | --- | --- |
 | r1 | `164b6d24330b92e20a43d3da5e6c83705a1197b8172fa33c23d180028f842b2f` | `47d813f5bd2045f4c1d25c07d3f57d09f31d1d2cb6ce50dfb340ac00e928ea42` | `dceba1945dcd313342a394c95b4e682a4af5cba5c359dafb4a45877b4be0da1e` |
 
-[실행 artifact](../../artifacts/module-row-status-20261029/)에 compiler/runtime 원 로그·runner/manifest hash·파일별source inventory·result-before-cleanup/result를 보존하고 이번 export/target/ELF는 삭제했다. native process 인수·문서 verifier·push는 실행하지 않았다. 최종 독립 D1/D2의 실제 결과는 아래에 기록한다.
+실행 artifact(로컬 `../../artifacts/module-row-status-20261029/`)에 compiler/runtime 원 로그·runner/manifest hash·파일별source inventory·result-before-cleanup/result를 보존하고 이번 export/target/ELF는 삭제했다. native process 인수·문서 verifier·push는 실행하지 않았다. 최종 독립 D1/D2의 실제 결과는 아래에 기록한다.
 
 
 독립 리뷰는 r1의 일부 tag 변조가 canonical decoder에서 먼저 거절되어 전이 guard 검산을 대체하지 못함을 지적했다. [후속 선택](../../tests/fixtures/module-row-format/status/review-followup.json)으로 정식 source상태10개가 lower Status decoder를 통과한 뒤 각 opcode의 금지 전이에서 exact OrderMismatch인 신규1개와, 유효 non-Status5opcode·외부 Profile1/2의 exact Unsupported 신규1개를 추가했다. 제품 코드는 바꾸지 않았고 원8개는 반복하지 않았다. r2의 static2·신규2개도 PASS이며 source `c708d0cc89148ce99f4bdd0f2a1c66a3a453c3fc69d6a645ecf66e24c5a86f75`, ELF `3cd102a0162169b9cb9e81b724b7a17111bd1c04d57b187ec99f146abb541e49`, result `27335e01046342dddd3d3f0adc4cb4d97adae34aa5d3fc77ac97055aff1ee87f`다. 고유10개는 r1 source8+r2 source2이며 최종 source에서 전체10개를 반복한 증거가 아니다. 두 실행의 source/target/ELF는 제거했고 원 결과·로그·hash를 보존했다.
@@ -2823,7 +2823,7 @@ r2도 static2와 신규2개 PASS다. source `df5007ff917fbc23186dc5b3bcef4ad87d9
 원 r1의 attempted full→statement 변조에서 offset16192는 writer_epoch이고 실제 next 영역은16312..16352다. 그 원 입력은 정식 상태 전이를 증명하지 않으며 decoder/identity 거절 사례로만 보존한다. 신규 canonical matrix가 별도 lower decode 성공과 exact 전이 오류를 검산한다.
 
 
-최종 독립 D1/D2는 `ACCEPTED_LIMITED_D1_D2`, 필수 수정0이다. `/root/boundary_review`가 고정 변경16파일과 artifact39파일의 원 source/bytes/hash·선택 로그·manifest/runner·cleanup을 대조했고 불일치0이다. 현재 제품/fixture는 r2 source inventory와 같으며 검토자는 수정·빌드·시험·문서 verifier·author를 실행하지 않았다. [고정 검토 입력](../../artifacts/module-row-status-20261029/review-input.json) SHA-256 `1bde2c3e3fa9cfdf4aaab67671fa49a133bafce55e41c884233c902ed3f43ce1`, [최종 receipt](../../artifacts/module-row-status-20261029/review-final.json) SHA-256 `10cdc6052329d4ff121d92d366a07b89ca55cdf7106bacf8e146cccda29b91fb`를 보존한다. 허용된 status/수용/receipt/hash metadata만 후속 반영한다. 전체 graph·source admission·실제 live/recovery·M4/M5는 미완료다.
+최종 독립 D1/D2는 `ACCEPTED_LIMITED_D1_D2`, 필수 수정0이다. `/root/boundary_review`가 고정 변경16파일과 artifact39파일의 원 source/bytes/hash·선택 로그·manifest/runner·cleanup을 대조했고 불일치0이다. 현재 제품/fixture는 r2 source inventory와 같으며 검토자는 수정·빌드·시험·문서 verifier·author를 실행하지 않았다. 고정 검토 입력(로컬 `../../artifacts/module-row-status-20261029/review-input.json`) SHA-256 `1bde2c3e3fa9cfdf4aaab67671fa49a133bafce55e41c884233c902ed3f43ce1`, 최종 receipt(로컬 `../../artifacts/module-row-status-20261029/review-final.json`) SHA-256 `10cdc6052329d4ff121d92d366a07b89ca55cdf7106bacf8e146cccda29b91fb`를 보존한다. 허용된 status/수용/receipt/hash metadata만 후속 반영한다. 전체 graph·source admission·실제 live/recovery·M4/M5는 미완료다.
 
 
 <a id="row-undo-images"></a>
@@ -2833,13 +2833,18 @@ r2도 static2와 신규2개 PASS다. source `df5007ff917fbc23186dc5b3bcef4ad87d9
 
 [독립 입력](../../tests/fixtures/module-row-format/undo/input-plan.json)은 정수/SHA와 명시한 before/after 상태표의 raw17쌍이다. 제품 encoder/transition은 호출하지 않고 원 wire/ledger/status author의 낮은 raw byte recipe만 재사용하며 그 source hash를 남긴다. 다른 frame role/descriptor/auxiliary는 semantic-invalid sentinel이고 성공 범위는 `UNDO_LOCAL_ONLY`와 세 opcode의 같은 frame Status 통합이다. 전체 Row·after Job·Root commitment/census·descriptor/edge/count/inventory 의미·mark ancestry·q 발급/horizon/pin·source 상계/admission·current Profile3/live/recovery·M4/M5는 미완료다. A의 Row/CLR 후보 생산을 C가 대신 구현하지 않는다.
 
-실행 전에 [manifest](../../tests/fixtures/module-row-format/undo/manifest.json)로 신규9개를 고정했다. 예산 총1200초/compiler420초/case45초/출력8MiB/stack32MiB, 첫 실패 즉시 중단이다. 초기 작성 중 rustfmt가 닫는 괄호 누락을 보고했고 compiler/runtime 실행 전 교정했다. [준비 실패 기록](../../artifacts/module-row-undo-20261029/preparation-failure.txt)을 보존하며 실행 시험 FAIL로 바꾸거나 숨기지 않는다. r1은 scoped static2·신규 runtime9 모두 PASS다. 원 wire/actor/Status 완료 시험 및 workspace/lower wrapper는 반복하지 않았다.
+실행 전에 [manifest](../../tests/fixtures/module-row-format/undo/manifest.json)로 신규9개를 고정했다. 예산 총1200초/compiler420초/case45초/출력8MiB/stack32MiB, 첫 실패 즉시 중단이다. 초기 작성 중 rustfmt가 닫는 괄호 누락을 보고했고 compiler/runtime 실행 전 교정했다. 준비 실패 기록(로컬 `../../artifacts/module-row-undo-20261029/preparation-failure.txt`)을 보존하며 실행 시험 FAIL로 바꾸거나 숨기지 않는다. r1은 scoped static2·신규 runtime9 모두 PASS다. 원 wire/actor/Status 완료 시험 및 workspace/lower wrapper는 반복하지 않았다.
 
 | 실행 | source SHA-256 | ELF SHA-256 | result SHA-256 |
 | --- | --- | --- | --- |
 | r1 | `2e9ed00d9d065234a42383ee5b208b9e151da95e63f9185bd2f6f588b686caf2` | `da4114d28d0a1129a5edfc24003b7916c82b2d467026dd63385b6da16ad534e2` | `49b0d88ec3e016fb33762dff24c329c57943f0ad292112b6e976e08ca4316a5a` |
 
-[artifact](../../artifacts/module-row-undo-20261029/)에 원 compiler/runtime 로그·source별 파일 hash inventory·runner/manifest identity·result-before-cleanup/result를 보존하고 이번 source export/target/ELF는 삭제했다. 실제 native/복구 인수·문서 verifier·push는 실행하지 않았다. 최종 독립 D1/D2 결과는 아래에 기록한다.
+artifact(로컬 `../../artifacts/module-row-undo-20261029/`)에 원 compiler/runtime 로그·source별 파일 hash inventory·runner/manifest identity·result-before-cleanup/result를 보존하고 이번 source export/target/ELF는 삭제했다. 실제 native/복구 인수·문서 verifier·push는 실행하지 않았다. 최종 독립 D1/D2 결과는 아래에 기록한다.
 
 
-최종 독립 D1/D2는 `ACCEPTED_LIMITED_D1_D2`, 필수 수정0이다. `/root/boundary_review`가 제품·fixture와 source별 실행 증거를 검토하고, 최종 분리한 index15파일·artifact30파일의 hash 불일치0을 확인했다. [고정 소유 입력](../../artifacts/module-row-undo-20261029/review-input-owned.json) SHA-256 `aae5bf8dcc986f7f42fd37cfef4a3af2804d08d918b8df8d4cc2606ebbde99d1`, [최종 receipt](../../artifacts/module-row-undo-20261029/review-final.json) SHA-256 `2b68fbd1d8ad0f97d04b32c65eafb3c2ff24dd7ba355ac628fef6bb7207c2bba`를 보존한다. 원17파일 입력은 동시 문서 변경 발견 기록이며 이번 commit 범위가 아니다. 검토 후 별도 담당자가 독립성 평가 gate 계획4문서를 `cbff2fd`로 commit했으며, 공유2파일의 Undo 추가2줄과 나머지13파일은 검토 때와 같다. 이번에는 그 위에 소유 변경15파일만 선택한다. 제품·fixture는 r1 source와 같으며 검토자 수정·빌드·시험·문서 verifier·author 실행0이다. 허용된 수용/status/receipt/hash metadata만 후속 반영한다. 전체 graph·source admission·current Profile3/live/recovery·M4/M5는 미완료다.
+최종 독립 D1/D2는 `ACCEPTED_LIMITED_D1_D2`, 필수 수정0이다. `/root/boundary_review`가 제품·fixture와 source별 실행 증거를 검토하고, 최종 분리한 index15파일·artifact30파일의 hash 불일치0을 확인했다. 고정 소유 입력(로컬 `../../artifacts/module-row-undo-20261029/review-input-owned.json`) SHA-256 `aae5bf8dcc986f7f42fd37cfef4a3af2804d08d918b8df8d4cc2606ebbde99d1`, 최종 receipt(로컬 `../../artifacts/module-row-undo-20261029/review-final.json`) SHA-256 `2b68fbd1d8ad0f97d04b32c65eafb3c2ff24dd7ba355ac628fef6bb7207c2bba`를 보존한다. 원17파일 입력은 동시 문서 변경 발견 기록이며 이번 commit 범위가 아니다. 검토 후 별도 담당자가 독립성 평가 gate 계획4문서를 `cbff2fd`로 commit했으며, 공유2파일의 Undo 추가2줄과 나머지13파일은 검토 때와 같다. 이번에는 그 위에 소유 변경15파일만 선택한다. 제품·fixture는 r1 source와 같으며 검토자 수정·빌드·시험·문서 verifier·author 실행0이다. 허용된 수용/status/receipt/hash metadata만 후속 반영한다. 전체 graph·source admission·current Profile3/live/recovery·M4/M5는 미완료다.
+
+<a id="post-separation-gate-push-20261029"></a>
+## 후속 독립성 평가 계획의 push 문서 정정 — 2026-10-29
+
+사용자가 저장한 후속 계획의 commit/push와 발견된 문서 결함 수정을 요청했다. `cbff2fd` 전송의 원 훅은 Rust 포맷·Clippy를 통과했지만 이 문서의 로컬 artifact 링크16개가 commit export에 없어 차단했다. 원 실패 로그는 로컬 `artifacts/module-independence-gate-push-20261029/push-1.log`에 보존한다. 각 원 파일·디렉터리가 로컬에 있고 `/artifacts/`는 Git 제외 대상임을 확인했다. 검사를 진행하는 동안 다른 작업이 별도 commit한 `f3c3611`의 같은 종류4개를 포함하여 총20개를 링크 대신 로컬 경로 표기로 정정했다. 원 경로·receipt hash·실행 결과·FAIL과 실제 artifact bytes는 유지하며, 원자료가 원격 저장소에 포함된다는 주장을 하지 않는다. 제품·검사기·판정 기준 변경이 없는 D0 정정이며 후속 push는 수정 commit에 기존 훅을 적용한다.
