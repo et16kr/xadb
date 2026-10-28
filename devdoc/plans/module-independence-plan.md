@@ -258,6 +258,8 @@ PD01은 이 A/B 사례에 연결한다. PD02/PD03은 작업 중 실제 공통 �
 
 2026-10-28 사용자 지시로 `codex/module-independence-finish`의 기존 작업을 `main`에 병합한다. 이후 이 계획의 개발·재개 기준은 **`/home/et16/work/xadb`의 `main`**이다. 채팅을 새로 열어도 실제 마지막 작업 위치·미커밋 상태·검증 source를 먼저 확인하며 기존 작업을 다른 기준선에서 다시 구현하지 않는다. [병합 기록](../evidence/module-independence-survey-20261026.md#merge-main-20261028)은 두 parent의 고유 변경·원 증거·선택 검증을 구별한다. 아래 과거 브랜치별 실행 기록과 수치는 당시 source에 귀속하며 병합 source의 실행 결과가 아니다. M4/M5 전체는 미완료다.
 
+같은 날 후속 사용자 지시로 남은 작업은 main `854bd8d`에서 만든 별도 branch `claude/module-independence-remaining`에서 단계별 commit으로 진행한다([작업 지침](../../AGENTS.md)). 병합 전 stash 초안은 적용하지 않는다. 각 실행의 build target·임시 export·ELF는 결과 기록 뒤 삭제하고 commit/tree·파일별 hash·로그·결과로 source identity를 보존한다.
+
 사용자의 후속 “이 계획서를 실행해 주세요” 요청으로 M0–M5 실행을 시작한다. 이 요청은 계획 작성만 허용했던 앞선 작업과 구별하며 M4/M5의 실행 지시를 포함한다. 기존 제품 불변식·독립 검토·변경 코드 시험·최종 S5 의무를 유지한다.
 
 | 단계 | 현재 상태·근거 | 남은 종료 조건 |

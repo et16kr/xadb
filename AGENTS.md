@@ -46,6 +46,8 @@
 - 모듈 독립 개발의 `codex/module-independence-finish` 작업을 `main`에 병합한 뒤에는 `/home/et16/work/xadb`의 **`main`에서 개발을 이어간다**.
 - “이어서 진행” 요청은 실제 마지막 작업 위치·브랜치·미커밋 변경·source별 검증 기록을 먼저 확인한다. 새 채팅의 기본 경로만을 이유로 다른 기준선에서 이미 구현한 작업을 반복하지 않는다.
 - 이번 병합 전 보존한 C2 초안 stash는 별도 미완료 작업이다. 병합 완료를 이유로 자동 적용하거나 해당 C2 전체 개발을 재개하지 않는다.
+- 2026-10-28 후속 지시: 모듈 독립 계획의 남은 작업은 `main` `854bd8d`에서 만든 **별도 branch `claude/module-independence-remaining`**(worktree `/home/et16/work/xadb-module-remaining`)에서 이어가며 의미 있는 단계마다 commit한다. `/home/et16/work/xadb` checkout은 `main`에 둔다. 사용자는 stash 초안을 검토·적용하지 않고 main 기준으로 새로 진행하도록 선택했다.
+- 같은 날 사용자 지시: 작업 부산물로 disk가 가득 차지 않게 각 실행의 build target·임시 export·ELF는 결과 기록 뒤 삭제한다. source identity는 commit/tree와 파일별 hash manifest로 남기고 로그·결과·hash를 보존한다. 기존 증거 artifact는 사용자 확인 없이 삭제하지 않는다.
 
 ## Repository guidance
 
