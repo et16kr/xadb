@@ -2,8 +2,13 @@
 //! Ordinary application borrows the original resources; it creates no owner.
 use super::*;
 
+#[path = "catalog_start.rs"]
+mod start;
+
 #[derive(Clone, Copy)]
-enum CatalogLifecycle {
+enum CatalogLifecycle<'q> {
+    Begin(&'q Plan4Target),
+    AgingStart,
     RollbackStart(TxnRef),
     AbortEnd(TxnRef),
     CancelReserved(usize),
@@ -256,7 +261,7 @@ impl<'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
     fn catalog_lifecycle(
         &mut self,
         owner: &mut Owner<'c, 's>,
-        action: CatalogLifecycle,
+        action: CatalogLifecycle<'_>,
         private: &mut [u8; PRIVATE_BYTES],
         flusher: &mut RetentionFlusher<'_, 's, 'c, 'p, 'd, 'm, 'w, W>,
     ) -> Result<Observation> {
@@ -320,20 +325,25 @@ impl<'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
                     RetentionCause::BindingMismatch,
                 ));
             }
-            let preparation = self.catalog_preparation();
             let prepared = match action {
-                CatalogLifecycle::RollbackStart(actor) => {
-                    preparation.prepare_catalog_rollback_start(owner, actor, private)
+                CatalogLifecycle::Begin(status) => {
+                    self.prepare_catalog_begin(owner, status, private)
                 }
-                CatalogLifecycle::AbortEnd(actor) => {
-                    preparation.prepare_catalog_abort_end(owner, actor, private)
-                }
-                CatalogLifecycle::CancelReserved(ordinal) => {
-                    preparation.prepare_catalog_cancel_reserved(owner, ordinal, private)
-                }
-                CatalogLifecycle::ReleaseRole(ordinal) => {
-                    preparation.prepare_catalog_release_role(owner, ordinal, private)
-                }
+                CatalogLifecycle::AgingStart => self
+                    .catalog_preparation()
+                    .prepare_catalog_aging_start(owner, private),
+                CatalogLifecycle::RollbackStart(actor) => self
+                    .catalog_preparation()
+                    .prepare_catalog_rollback_start(owner, actor, private),
+                CatalogLifecycle::AbortEnd(actor) => self
+                    .catalog_preparation()
+                    .prepare_catalog_abort_end(owner, actor, private),
+                CatalogLifecycle::CancelReserved(ordinal) => self
+                    .catalog_preparation()
+                    .prepare_catalog_cancel_reserved(owner, ordinal, private),
+                CatalogLifecycle::ReleaseRole(ordinal) => self
+                    .catalog_preparation()
+                    .prepare_catalog_release_role(owner, ordinal, private),
             }?;
             #[cfg(test)]
             crate::transaction::concurrency::catalog_test_support::hit(
@@ -590,11 +600,12 @@ pub(in super::super::super) fn entry_carrier_bytes<W: WriterNamespace>() -> usiz
     use std::mem::size_of;
     // Public forwarding action and private match packet; public and exclusive
     // actor/ordinal packets are distinct from the nested preparer arguments.
-    // Count public typed entry, private dispatch, closure and exclusive refs.
-    2 * size_of::<CatalogLifecycle>()
+    // Count public typed entry, private dispatch, closure and exclusive refs;
+    // Begin adds public/exclusive/preparer status references.
+    2 * size_of::<CatalogLifecycle<'_>>()
         + 2 * size_of::<TxnRef>()
         + 2 * size_of::<usize>()
-        + (4 + 4 + 5 + 3) * size_of::<&()>()
+        + (4 + 4 + 5 + 3 + 3) * size_of::<&()>()
         + size_of::<CatalogPreparation<'_, '_, '_, '_, '_, '_, '_, '_, W>>()
 }
 
@@ -607,4 +618,9 @@ pub(super) fn quiescence_source_bytes() -> usize {
     waiting.max(guarded).max(returned)
         + 2 * size_of::<std::result::Result<bool, dirty_frame::DirtyError>>()
         + 3 * size_of::<&()>()
+}
+
+pub(in super::super::super) fn start_selection_source_phases<W: WriterNamespace>()
+-> (usize, usize, usize) {
+    start::selection_source_phases::<W>()
 }

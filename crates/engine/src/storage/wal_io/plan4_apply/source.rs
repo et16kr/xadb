@@ -112,7 +112,7 @@ pub(super) fn retirement_prepare_carrier_bytes() -> usize {
         + retirement_entry_bytes()
 }
 
-/// Four finite lifecycle actions share one private dispatch. Three typed
+/// Six finite lifecycle actions share one private dispatch. Three typed
 /// Prepared results cover common preparation, action adapter and match output;
 /// Observation results cover application forwarding and checked cleanup.
 pub(super) fn lifecycle_carrier_bytes<W: WriterNamespace>() -> usize {

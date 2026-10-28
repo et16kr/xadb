@@ -1,5 +1,7 @@
 # XADB 조사·실행 증거
 
+- [2026-10-28 Begin·AgingStart progress](module-independence-survey-20261026.md#c2-start-progress) — 두 시작 경로의 공유 동기 호출·원 발급 gap과 선택 비용을 검증했다. r2 compiler3/runtime5·같은 ELF native N02 PASS, r1 compile FAIL 보존. 전체 M4/M5 미완료.
+
 - [2026-10-28 Catalog rollback·terminal progress](module-independence-survey-20261026.md#c2-lifecycle-progress) — 네 lifecycle 공유 동기 공급과 원 ordinary apply view를 검증했다. r3 compiler4/runtime12·native N02 PASS, r1/r2 compile FAIL 보존, 전체 M4/M5 미완료.
 
 - [2026-10-28 Catalog 회수 동기 호출](module-independence-survey-20261026.md#c2-retirement-call) — 준비부터 적용·정리까지 한 예약을 유지하고 외부 회수 Prepared를 제거했다. compiler4/runtime13·같은 ELF native N02(3PID) PASS, 전체 M4/M5 미완료.

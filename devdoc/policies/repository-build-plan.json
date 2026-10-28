@@ -7923,5 +7923,69 @@
     "skipped_files": 0,
     "unresolved_required_fixes": 0,
     "review_sha256": "b504977c49a214ad3218b8fdaba3c4e1edfea5ea6d25576995c759f5eeb9f70c"
+  },
+  "dev3_module_c2_start_progress": {
+    "status": "ACCEPTED_LIMITED_D1_D2",
+    "contract_ref": "dev3-module-boundaries.md#start-progress",
+    "evidence_ref": "module-independence-survey-20261026.md#c2-start-progress",
+    "baseline_commit": "af78960",
+    "branch": "main",
+    "implemented_paths": [
+      "crates/engine/src/storage/wal_io/plan4_retention/catalog_start.rs",
+      "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/start_progress.rs",
+      "tests/fixtures/dev3-module-c2/start-progress/exclusive_flusher.rs",
+      "tests/fixtures/dev3-module-c2/start-progress/manifest.json",
+      "tests/fixtures/dev3-module-c2/start-progress/private_preparation.rs",
+      "tests/fixtures/dev3-module-c2/start-progress/synchronous.rs"
+    ],
+    "scope": "Two shared start entries preserve original issued-local gap and add explicit pre-selection phase census; CREATE/general floors/Row/M4/M5 incomplete",
+    "source_roots_changed": false,
+    "whole_m4_m5_complete": false,
+    "runtime_selected": 5,
+    "compiler_selected": 3,
+    "native_selected": [
+      "N02"
+    ],
+    "reviewer": "/root/source_admission_review",
+    "runtime_exact_pass": 5,
+    "compiler_pass": 3,
+    "source_sha256": "9de46f9f5944f0c3ff8546843094348e7efd0663674a06e98d02d43e818dff2f",
+    "inventory_files": 5763,
+    "inventory_sha256": "55742f7b9857424f4aeb4307f19579f5f2fa9dd635eff14db6267ce2c85531b6",
+    "binary_sha256": "a9312268ba57e1b48ff022f2872f6331865d26f6e6de2bd96346045eb35c5860",
+    "run_result_sha256": "b535b445b6b189a5e376f8e2fbc27d21757cce37bbb6128e121cceb6e4e5d8a8",
+    "source_bytes": {
+      "start_health": 4631,
+      "start_root": 8376,
+      "start_status": 10425,
+      "shared_memory": 20192,
+      "shared_native": 20328,
+      "lifecycle_memory": 41614,
+      "lifecycle_native": 42638,
+      "fixed_memory": 42198,
+      "fixed_native": 42638,
+      "total_memory": 62390,
+      "total_native": 62966,
+      "live_memory": 61894,
+      "live_native": 62470,
+      "recovered_memory": 63270,
+      "recovered_native": 63846,
+      "split_ports": 192,
+      "limit": 65536,
+      "source_bound_not_rss": true
+    },
+    "preserved_failures": [
+      "r1:E0107"
+    ],
+    "production_evidence": "r1 original source only; later cfg(test)-only fix; not repeated",
+    "independent_review": {
+      "receipt": "artifacts/module-c2-start-progress-20261028/review-final.json",
+      "sha256": "ec52ca0b09e04df4fc6446338d081a6613aec843f30aa9a5bcfe684b490bbdc8",
+      "decision": "D1_D2_ACCEPTED_LIMITED_SCOPE",
+      "reviewed_files": 16,
+      "skipped_files": 0,
+      "coverage_percent": 100,
+      "required_fixes": 0
+    }
   }
 }

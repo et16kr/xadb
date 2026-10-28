@@ -1297,6 +1297,19 @@ ordinary application을 private `CatalogApplication`(원 storage/pool/control/hi
 
 기존 exclusive 구현을 네 곳 복제하는 대안은 ordinary apply 의미를 중복시킨다. Prepared 아래 split하는 대안은 불필요한 큰 계산 phase를 겹친다. 직접 borrowed view를 선택하며 새 동시 pool 사용 경로나 일반 body/holder 변경 시 재검토한다. [manifest](../../tests/fixtures/dev3-module-c2/lifecycle-progress/manifest.json)에 compiler4·runtime12·같은 ELF native N02(3PID)1회를 diff별 연결했다. 총1800초/compiler420초/runtime45초/native 원30초/사전 독립 admission600초/로그8MiB/stack32MiB를 실행 전에 고정한다. N02는 actual recovery의 변경 경로를 검산하며 native CancelReserved 증거는 아니다. 완료 무변경 시험·wrapper는 반복하지 않는다.
 
+<a id="start-progress"></a>
+#### XADB-MODULE-START-PROGRESS-001 — Begin·AgingStart의 동기 source 공급
+
+2026-10-28 · D2 · 기준 main `af78960` · 작성/계약/통합 `/root`, 독립 `/root/source_admission_review`. 사용자 전체 진행 지시와 DP01 위임 아래 [lifecycle progress](#lifecycle-progress)에 두 시작 경로를 연결한다. 구현/실행/최종 검토는 [증거](../evidence/module-independence-survey-20261026.md#c2-start-progress)를 따른다.
+
+공유 `catalog_begin(owner,status,private,flusher)`·`catalog_aging_start(owner,private,flusher)`와 기존 exclusive wrapper는 같은 원 gate/source 안에서 선택→private Prepared→ordinary apply→durability/epoch→checked 정리를 수행한다. Begin의 deep health/control pending/population→free slot→first Job→Status kind/free generation→prefix→checked issued_local 증가→준비 순서를 유지한다. Capacity는 원 admission 앞에서 아직 관측하지 않은 deep 오류보다 먼저일 수 있으며 ADMISSION-002의 내부 입구 순서다. 발급 전 오류는 issued_local을 유지하고 발급 뒤 prepare 오류는 원 gap을 남긴다. 같은 mutable flusher와 binding·Maintenance 허용·Ready 무제한을 유지한다.
+
+Begin/Aging의 gate는 선택적 writer의 유한 직렬화다. rollback/terminal 필수 progress 보장을 새로 주장하지 않는다. 호출 thread가 다른 Owner의 유한 read scope를 보유했다면 먼저 checked 반환해야 하며 장기 snapshot은 강제 해제하지 않는다. 외부 Prepared·새 owner/ledger·가변 charge는 없다. `CatalogPreparation`의 first-job view는 기존 CREATE planner도 직접 빌리며 Prepared 아래 split하지 않는다.
+
+source 상계는 deep health/registry, Root ReadTargets+Root decode/Job scan, Status ReadTargets+전체 page/occupied·duplicate cell decode를 별도 계수한다. caller/result/view와 Begin status reference를 더하고 공통 prepare/apply와 직렬 max로 결합한다. CREATE planner의 새 borrowed first-job helper도 같은 계산에 반영한다. ordinary caller의 준비 후 값만으로 선택 이전 비용을 덮었다고 하지 않는다. 별도 전용 gate/ledger 대안은 원 capacity/reader 정리 의미를 중복시키므로 원 wrapper 재사용을 선택한다. phase/holder 또는 동시 pool 입구가 바뀌면 재검토한다.
+
+[manifest](../../tests/fixtures/dev3-module-c2/start-progress/manifest.json)의 compiler3·runtime5(source3·새 shared start1·기존 MC03 gap/recovery1)·같은 ELF native N02 한 번을 선택한다. 총1800초/compiler420초/runtime45초/native 원30초/admission600초/로그8MiB/stack32MiB를 실행 전에 고정한다. 새 helper 관측은 실제 Aging/Begin 성공의 Preparing/Prepared/Completed를 정지시키고 원 initial/R01 oracle과 gate/charge 연속성을 검산하며 기본 fixture 실행은 유지한다. 완료한 무변경 lifecycle/회수 wrapper는 반복하지 않는다. CREATE admission·Commit Prepared lifetime·일반 entry/return floor·Row/C3–C5·M4/M5는 미완료다.
+
 <a id="common-deliveries"></a>
 ## 7. 유한한 공통 공급과 C0/C 인계
 

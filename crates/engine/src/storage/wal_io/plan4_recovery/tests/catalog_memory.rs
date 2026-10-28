@@ -757,7 +757,7 @@ fn query<'s, 'c, W: WriterNamespace>(
 // All resources belong to the original fresh owner. In particular, reader and
 // writer private loans are disjoint parts of the existing 12MiB reservation.
 macro_rules! with_fresh {
-    ($oracle:expr, |$live:ident, $owner:ident, $flusher:ident, $status:ident, $undo:ident,
+    ($oracle:expr $(, observe_start = $observe_start:expr)?, |$live:ident, $owner:ident, $flusher:ident, $status:ident, $undo:ident,
         $private:ident, $reader_private:ident, $core:ident, $fence:ident, $state:ident $(, $foreign:ident)?| $body:block) => {{
         let directory = port::Directory::fresh();
         let state = directory.state();
@@ -838,13 +838,13 @@ macro_rules! with_fresh {
                     .unwrap(),
                 RetentionResidencyStep::Resident { .. }
             ));
-            assert_eq!(
-                live.catalog_aging_start(&mut owner, private)
-                    .unwrap()
-                    .header
-                    .lsn,
-                1
-            );
+            let observe_start = false $(|| $observe_start)?;
+            let aging = if observe_start {
+                start_progress::observe_start(&mut live, &mut owner, private, &core, &state, None)
+            } else {
+                live.catalog_aging_start(&mut owner, private).unwrap()
+            };
+            assert_eq!(aging.header.lsn, 1);
             $oracle.check_initial(&live, &state, 1);
             let status = initialize(&mut live, &mut owner, &mut flusher, false);
             $oracle.check_initial(&live, &state, 3);
@@ -1138,6 +1138,9 @@ mod visibility_gap;
 
 #[path = "catalog_memory/reference_pins.rs"]
 mod reference_pins;
+
+#[path = "catalog_memory/start_progress.rs"]
+mod start_progress;
 
 #[path = "catalog_memory/lifecycle_progress.rs"]
 mod lifecycle_progress;

@@ -1,0 +1,68 @@
+{
+  "scope": "Shared Begin/AgingStart under original progress gate, preserving original issued-local gap; explicit pre-selection phase bounds; CREATE admission/general floors/Row/M4/M5 remain incomplete",
+  "baseline_commit": "af78960",
+  "budget": {
+    "total_seconds": 1800,
+    "compiler_seconds": 420,
+    "case_seconds": 45,
+    "output_bytes": 8388608,
+    "rust_min_stack": 33554432,
+    "native_admission_seconds": 600
+  },
+  "compiler_tests": [
+    {
+      "name": "synchronous",
+      "path": "synchronous.rs",
+      "bytes": 584,
+      "sha256": "e0d9628fe2e2c17d72646028af9051e55360e015f0db343d78ea31425e5eb80e",
+      "expected_code": null,
+      "primary_line": null
+    },
+    {
+      "name": "private_preparation",
+      "path": "private_preparation.rs",
+      "bytes": 564,
+      "sha256": "49052d2e9f5dc3a787bb196fed3026eed22ef9060cd9789ba34d53b567aa4e76",
+      "expected_code": "E0624",
+      "primary_line": 11
+    },
+    {
+      "name": "exclusive_flusher",
+      "path": "exclusive_flusher.rs",
+      "bytes": 612,
+      "sha256": "40188cc865cb9bcd85b4abee569a58a2bac3191efc6dbaa4f772f1ec836de0ad",
+      "expected_code": "E0499",
+      "primary_line": 11
+    }
+  ],
+  "runtime_tests": [
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::source::tests::retirement_fixed_charge_fits_and_cannot_use_commit_transitions",
+      "reason": "changed start pre-selection phases and lifecycle carrier/fixed max; memory/native/shared/live/recovered source bound and unchanged port size"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::create_pair::catalog_commit::tests::consumed_preparation_has_bounded_pending_image",
+      "reason": "changed start pre-selection phases and lifecycle carrier/fixed max; memory/native/shared/live/recovered source bound and unchanged port size"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::owner_tests::cached_catalog_charges_count_exclusive_split_and_live_ports",
+      "reason": "changed start pre-selection phases and lifecycle carrier/fixed max; memory/native/shared/live/recovered source bound and unchanged port size"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::start_progress::shared_start_capacity_roles_and_begin",
+      "reason": "new shared Aging/Begin success with Preparing/Prepared/Completed same gate/charge, both capacity-before-effect, wrong role/Membership/occupied WrongState before issued local, original oracle initial/R01"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::issued_gap::mc03_issued_local_gap_recovers",
+      "reason": "moved Begin must preserve issued local on post-allocation preparation failure, original MC03 exact corpus and fresh recovery/next actor; moved CREATE first-job view is also exercised"
+    }
+  ],
+  "native_tests": [
+    {
+      "case": "N02",
+      "reason": "changed actual AgingStart/Begin producer and original same-ELF recovery handoff, one attempt with unchanged corpus/3PID/controller/budget",
+      "controller": "scripts/dev3_catalog_native.py",
+      "wall_seconds": 30
+    }
+  ]
+}

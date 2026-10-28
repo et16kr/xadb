@@ -1431,60 +1431,12 @@ impl<'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
         owner: &mut Owner<'c, 's>,
         private: &mut [u8; PRIVATE_BYTES],
     ) -> Result<Observation> {
-        let allocator = self
-            .inner
-            .pool
-            .target_request(0)
-            .map_err(|e| frame(RetentionPhase::Prepare, e))?;
-        let root = self.target(Plan4Page::Root)?.request;
-        let prepared = self.prepare_existing_catalog(
-            owner,
-            Change::AgingStart,
-            None,
-            [(allocator, 0), (root, 1)],
-            private,
-        )?;
-        self.apply_existing_catalog(owner, prepared)
+        let (mut writer, _, mut flusher) = self.split();
+        writer.catalog_aging_start(owner, private, &mut flusher)
     }
 
-    /// Selects the canonical next free Job from the original current Root.
-    /// No reservation or identity is created by this bounded observation.
     fn first_catalog_job(&self, owner: &mut Owner<'c, 's>) -> Result<usize> {
-        let root = self.target(Plan4Page::Root)?.request;
-        let read = self
-            .inner
-            .pool
-            .reserve_target_set(owner, &[root])
-            .map_err(|e| frame(RetentionPhase::Prepare, e))?
-            .try_read()
-            .map_err(|e| frame(RetentionPhase::Prepare, e))?;
-        let selected = (|| {
-            let (_, root) = queue::decode_root_page(
-                read.bytes(0)
-                    .map_err(|e| frame(RetentionPhase::Prepare, e))?,
-                self.inner.storage.profile().spec().namespace,
-            )
-            .map_err(queue_error)?;
-            for offset in 0..64 {
-                let ordinal = (root.cursor() as usize + offset) % 64;
-                if queue::decode_job(
-                    &self.control.ledger.jobs()[ordinal],
-                    self.inner.storage.profile().spec().namespace,
-                )
-                .map_err(queue_error)?
-                .state()
-                    == JobState::Free
-                {
-                    return Ok(ordinal);
-                }
-            }
-            Err(unchanged(RetentionPhase::Prepare, RetentionCause::Capacity))
-        })();
-        merge(
-            selected,
-            read.release_checked()
-                .map_err(|e| frame(RetentionPhase::Prepare, e)),
-        )
+        self.catalog_preparation().first_catalog_job(owner)
     }
 
     pub(crate) fn catalog_begin(
@@ -1493,105 +1445,8 @@ impl<'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
         status: &Plan4Target,
         private: &mut [u8; PRIVATE_BYTES],
     ) -> Result<Observation> {
-        self.health()?;
-        let slot = self
-            .control
-            .ledger
-            .free_slot()
-            .ok_or_else(|| unchanged(RetentionPhase::Prepare, RetentionCause::Capacity))?;
-        let ordinal = self.first_catalog_job(owner)?;
-        let allocator = self
-            .inner
-            .pool
-            .target_request(0)
-            .map_err(|e| frame(RetentionPhase::Prepare, e))?;
-        let root = self.target(Plan4Page::Root)?.request;
-        let job = self
-            .target(Plan4Page::Jobs {
-                index: (ordinal / 15) as u8,
-            })?
-            .request;
-        if status.request.kind != PageKind::TransactionStatus
-            || status.request.identity.owner.get() != 2
-            || status.request.identity.owner_generation != one()
-            || status.request.level != 0
-        {
-            return Err(unchanged(
-                RetentionPhase::Prepare,
-                RetentionCause::Membership,
-            ));
-        }
-        let read = self
-            .inner
-            .pool
-            .reserve_target_set(owner, &[status.request])
-            .map_err(|e| frame(RetentionPhase::Prepare, e))?
-            .try_read()
-            .map_err(|e| frame(RetentionPhase::Prepare, e))?;
-        let generation = (|| {
-            let home = crate::storage::status_home::decode_status_home_page(
-                read.bytes(0)
-                    .map_err(|e| frame(RetentionPhase::Prepare, e))?,
-                status.request.identity,
-                self.inner.storage.profile().spec().namespace,
-            )
-            .map_err(|e| unchanged(RetentionPhase::Prepare, RetentionCause::Page(e)))?;
-            let cell = home
-                .cell(0)
-                .map_err(|e| unchanged(RetentionPhase::Prepare, RetentionCause::Page(e)))?;
-            let crate::storage::transaction_record::TransactionStatusCell::Free(generation) =
-                cell.core()
-            else {
-                return Err(unchanged(
-                    RetentionPhase::Prepare,
-                    RetentionCause::WrongState,
-                ));
-            };
-            generation
-                .next()
-                .map_err(|_| unchanged(RetentionPhase::Prepare, RetentionCause::Exhausted))
-        })();
-        let generation = merge(
-            generation,
-            read.release_checked()
-                .map_err(|e| frame(RetentionPhase::Prepare, e)),
-        )?;
-        let prefix = self.inner.storage.wal().prefix().map_err(|e| {
-            fatal(
-                self.inner.storage,
-                RetentionPhase::Prepare,
-                RetentionCause::Wal(e),
-            )
-        })?;
-        self.control.ledger.issued_local = self
-            .control
-            .ledger
-            .issued_local
-            .checked_add(1)
-            .ok_or_else(|| unchanged(RetentionPhase::Prepare, RetentionCause::Exhausted))?;
-        let actor = TxnRef::new(
-            crate::transaction::TxnId {
-                database: prefix.stream.database,
-                timeline: prefix.stream.timeline,
-                writer_epoch: prefix.stream.writer_epoch,
-                local: self.control.ledger.issued_local,
-            },
-            generation,
-        )
-        .map_err(|e| unchanged(RetentionPhase::Prepare, RetentionCause::Page(e)))?;
-        let location = StatusSlotRef::new(status.request.identity.page, 0, generation)
-            .map_err(|e| unchanged(RetentionPhase::Prepare, RetentionCause::Page(e)))?;
-        let prepared = self.prepare_existing_catalog(
-            owner,
-            Change::Begin {
-                actor,
-                status: location,
-            },
-            Some(slot),
-            [(allocator, 0), (root, 1), (job, 2), (status.request, 4)],
-            private,
-        )?;
-        self.apply_existing_catalog(owner, prepared)
+        let (mut writer, _, mut flusher) = self.split();
+        writer.catalog_begin(owner, status, private, &mut flusher)
     }
 
     fn actor_catalog_job(&self, actor: TxnRef, terminal: bool) -> Result<usize> {
@@ -2125,6 +1980,9 @@ pub(in super::super) struct CatalogLiveSource {
     pub(in super::super) forward: usize,
     pub(in super::super) cancel: usize,
     pub(in super::super) ordinary: usize,
+    pub(in super::super) start_health: usize,
+    pub(in super::super) start_root: usize,
+    pub(in super::super) start_status: usize,
     pub(in super::super) lifecycle: usize,
     pub(in super::super) retirement: usize,
     pub(in super::super) peak: usize,
@@ -2265,8 +2123,22 @@ pub(in super::super) fn catalog_live_source_bytes<W: WriterNamespace>() -> Catal
     let ordinary = (ordinary_caller_source_bytes() + prepare.max(ordinary_install))
         .max(retirement::prepare_caller_source_bytes() + prepare)
         .max(retirement::selection_source_bytes());
-    let lifecycle =
-        ordinary.max(lifecycle::quiescence_source_bytes()) + source::lifecycle_carrier_bytes::<W>();
+    let (start_health, start_root, start_status) = lifecycle::start_selection_source_phases::<W>();
+    // The existing CREATE planner also uses the moved first-job view. Its
+    // selected terminal/status and input arguments remain across that call.
+    let plan = plan.max(
+        start_root
+            + size_of::<queue::JobView<'_>>()
+            + size_of::<StatusSlotRef>()
+            + size_of::<TxnRef>()
+            + 4 * size_of::<&()>(),
+    );
+    let lifecycle = ordinary
+        .max(lifecycle::quiescence_source_bytes())
+        .max(start_health)
+        .max(start_root)
+        .max(start_status)
+        + source::lifecycle_carrier_bytes::<W>();
     let token = size_of::<Reservation<'_, W>>();
     let token_return = token
         + 2 * size_of::<Result<Reservation<'_, W>>>()
@@ -2330,6 +2202,9 @@ pub(in super::super) fn catalog_live_source_bytes<W: WriterNamespace>() -> Catal
         forward,
         cancel,
         ordinary,
+        start_health,
+        start_root,
+        start_status,
         lifecycle,
         retirement,
         peak: prepare

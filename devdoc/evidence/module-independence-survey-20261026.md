@@ -2314,3 +2314,40 @@ r3 source inventory5757파일 SHA-256 `0c1f5dd646bae526cd6345b569f3cd3fb937f2a7f
 `artifacts/module-c2-lifecycle-progress-20261028/r1`–`r3`에 원 실패/미실행·로그·결과·source hash inventory와 native database snapshot을 보존했다. 각 run의 export/target/ELF는 결과 기록 뒤 삭제했고 기존 증거는 삭제하지 않았다. 최종 문서·전체 diff 독립 수용은 아래에 별도 수신한다.
 
 독립 `/root/source_admission_review`는 변경22/22파일(Rust11·fixture/manifest5·문서/JSON6), 생략0·검토율100%로 **D1/D2 한정 수용·필수 수정0**을 확인했다. source5757·원40개 admission evidence·compiler/runtime/native3PID·cut/base/reaped·예산과 삭제 상태를 대조했다. build/test/verifier/native 재실행 없이 receipt만 작성했으며 `/root`가 반영했다. `review-final.json` SHA-256은 `b504977c49a214ad3218b8fdaba3c4e1edfea5ea6d25576995c759f5eeb9f70c`다. 후속 수정은 이 receipt/채택 상태 기록이며 제품/시험/fixture는 r3와 같다. 변경 파일 rustfmt·diff whitespace를 확인하고 문서 verifier·전체 workspace fmt/Clippy·push는 실행하지 않았다.
+
+<a id="c2-start-progress"></a>
+## main의 Begin·AgingStart progress 공급 — 2026-10-28
+
+main `af78960`에서 [START-PROGRESS-001](../contracts/dev3-module-boundaries.md#start-progress)을 진행한다. 작성/계약/통합 `/root`, 독립 `/root/source_admission_review`. 원 Begin health/선택/발급 gap과 Aging 의미를 같은 gate/source에 연결한다. 새 owner·별도 ledger·stash 적용은 없다. 일반 floor·CREATE/Row·M4/M5는 미완료다.
+
+사전 D2는 선택적 writer의 유한 직렬화와 필수 rollback progress 보장을 구분하고, caller의 유한 read scope 선반환·원 장기 snapshot 보존을 요구했다. Root/Job 선택·Status 전체 decode·deep health의 비용을 따로 계수하여 공통 body와 max로 연결했다. 기존 CREATE first-job caller의 새 view 비용도 포함했다. 신규 fixture는 기본 Aging 경로를 유지하면서 요청한 MCSP01에서만 실제 Aging/Begin의 연속 gate/source를 관측한다.
+
+실행 전 [manifest](../../tests/fixtures/dev3-module-c2/start-progress/manifest.json)에 compiler3/runtime5/native N02 oneattempt를 diff별 동결했다. source3·shared start의 성공/두 capacity/역할/Membership/occupied WrongState와 gate·charge 연속1·원 MC03 issued gap/fresh recovery1이다. 총1800초/compiler420초/case45초/native30초/admission600초/로그8MiB/stack32MiB. 기존 controller/corpus/품질은 유지하고 무변경 완료 사례·전체 wrapper·문서 verifier·push는 실행하지 않는다. 각 실행 source identity/file hash·로그·결과·native snapshot을 보존한 뒤 이번 export/target/ELF만 삭제한다. 위는 실행 전 NOT_RUN 계획이며 실제 결과는 아래와 구분한다.
+
+실행 전 D1/D2는 명시적 health/root/status phase와 새 shared 관측·원 MC03/corpus의 선택을 수용했고 필수 수정0이었다. r1 production check PASS 뒤 cfg(test) helper의 Live type alias 수명 인자 수 오류(E0107)로 Clippy/test compilation FAIL이었다. runtime/probe/native는 NOT_RUN이며 원 로그/source inventory를 보존하고 export/target을 삭제했다. r2는 test-only 수명 인자 하나만 제거해 미완료 Clippy/build·compiler3/runtime5/native1을 진행한다. 무변경 production check는 반복하지 않고 원 r1 증거로만 참조한다.
+
+r2에서 engine Clippy(lib/tests)·test build·compiler3·runtime5가 각1회 PASS했다. source3의 Debug 출력에 start_health4631B/start_root8376B/start_status10425B를 보존했다. MCSP01은 실제 Aging 및 shared Maintenance Begin의 Preparing/Prepared/Completed gate·charge 연속, 결과 반환 뒤 source0/gate 재개, 두 action의 capacity-before-effect와 invalid role/Membership/occupied WrongState의 issued/private/WAL 불변을 검산했다. 원 initial/R01 raw oracle는 유지했다. MC03은 실제 Root counter 소진 뒤 `(issued,adopted)=(1,0)` gap과 다음 `(2,2)` Begin, 원 MC03 fresh recovery/후속 Begin을 검산했다. caller read-scope 선반환 조건과 선택적 writer 정책을 유지한다.
+
+같은 ELF native N02 한 번은 약16.123초 PASS였다. producer PID111929 LSN8의 외부 SIGKILL→recover PID111938 LSN10 durable CLR의 외부 SIGKILL→reentry PID111940 LSN16/READY/checkpoint/exit0을 원 controller·corpus·자원 한도에서 확인했다. 이 실행은 변경 Begin/Aging producer의 실제 저장·복구 연결이며 전체 native inventory를 대신하지 않는다.
+
+| source-value 항목 | memory | native 타입 |
+| --- | ---: | ---: |
+| shared retained | 20192B | 20328B |
+| lifecycle body+carrier | 41614B | 42638B |
+| fixed max(retirement,lifecycle) | 42198B | 42638B |
+| shared+fixed | 62390B | 62966B |
+| live peak | 61894B | 62470B |
+| recovered live peak | 63270B | 63846B |
+
+port192B·split 계산24824B를 유지한다. source 상계이며 physical stack/RSS 측정이 아니다. Begin/Aging 선택 phase는 공통 prepare보다 작고, native fixed charge의24B 증가는 status argument 계수다. CREATE admission·Commit Prepared lifetime·일반 entry/return floor·Row/C3–C5·M4/M5는 미완료다. 기존 Pending+Full65502B는 원 source의 증거로 보존하며 재실행하지 않았다.
+
+| run | source SHA-256 | 결과 |
+| --- | --- | --- |
+| r1 | `a2107416882afd388f8fd5584696495eaefc8ce43763020744a64d9f1b6af4c4` | production PASS·test helper E0107 FAIL·나머지 NOT_RUN |
+| r2 | `9de46f9f5944f0c3ff8546843094348e7efd0663674a06e98d02d43e818dff2f` | Clippy/build·compiler3/runtime5/native N02 PASS |
+
+r2 source5763파일 inventory SHA-256 `55742f7b9857424f4aeb4307f19579f5f2fa9dd635eff14db6267ce2c85531b6`, full export6282파일 manifest `13b7740e9ea6e32b91f3e0bf7430c4e0c7deaf35e05af20582b6d0315230531c`, ELF `a9312268ba57e1b48ff022f2872f6331865d26f6e6de2bd96346045eb35c5860`. 결과 SHA-256 `b535b445b6b189a5e376f8e2fbc27d21757cce37bbb6128e121cceb6e4e5d8a8`이며 총202.367초였다. 독립 admission은 실제 source/ELF·24개 evidence hash·새 phase 숫자를 확인한 뒤 작성했고 SHA-256 `6dc22948d71564c69b8d25fa207e882cc1b69007a3ffcfc703dd5670ee44e2f6`다.
+
+r1/r2 원 로그·실패/미실행·source/file hash·결과·native database snapshot을 `artifacts/module-c2-start-progress-20261028`에 보존했고 각 run의 export/target/ELF를 삭제했다. 원 production PASS를 새 source PASS로 옮기거나 완료 시험을 반복하지 않았다. 최종 문서·전체 diff 독립 검토는 아래에 수신한다.
+
+독립 `/root/source_admission_review`는 변경16/16파일(Rust6·fixture/manifest4·문서/JSON6), 생략0·검토율100%로 **D1/D2 한정 수용·필수 수정0**을 확인했다. source5763·57개 evidence hash·원 admission24개·compiler/runtime/native3PID·cut/base/reaped와 삭제 상태를 대조했다. 검토자는 build/test/native/verifier를 재실행하지 않았다. `review-final.json` SHA-256은 `ec52ca0b09e04df4fc6446338d081a6613aec843f30aa9a5bcfe684b490bbdc8`다. 후속 변경은 이 receipt/채택 metadata이며 제품/시험/fixture는 r2와 같다. 변경 파일 rustfmt와 diff whitespace를 확인했고 문서 verifier·workspace 검사·push는 실행하지 않았다.
