@@ -1,0 +1,66 @@
+{
+  "scope": "C2 Catalog retirement fixed progress admission; finite reads return before CLR/Prune/RootFree/TerminalFinish, Maintenance preserved; other writer preparation, entry/tail floors and Row remain incomplete",
+  "baseline_commit": "c217fbf",
+  "budget": {
+    "total_seconds": 1200,
+    "compiler_seconds": 420,
+    "case_seconds": 30,
+    "output_bytes": 8388608,
+    "rust_min_stack": 33554432
+  },
+  "compiler_tests": [],
+  "runtime_tests": [
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::source::tests::retirement_fixed_charge_fits_and_cannot_use_commit_transitions",
+      "reason": "new fixed retirement charge, class isolation/fatal preservation, memory/native bounds"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::source::tests::catalog_commit_windows_fit_beside_admitted_readers",
+      "reason": "port and gate helper sizes changed: Pending/Full aggregate stays within cap"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::create_pair::catalog_commit::tests::consumed_preparation_has_bounded_pending_image",
+      "reason": "changed retirement peak and shared port: complete memory/native live/recovered census"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::owner_tests::cached_catalog_charges_count_exclusive_split_and_live_ports",
+      "reason": "changed exclusive split computation and retained port fields"
+    },
+    {
+      "selector": "transaction::concurrency::read::tests::retirement_gate_preserves_maintenance_and_rejects_flusher_and_foreign",
+      "reason": "new gate permits Maintenance, rejects foreign/flusher and leaves Commit restriction"
+    },
+    {
+      "selector": "transaction::concurrency::read::tests::terminal_gate_closes_new_reads_and_waits_for_admitted_reads",
+      "reason": "shared gate-close helper changed: existing wait and read exclusion"
+    },
+    {
+      "selector": "transaction::concurrency::read::tests::terminal_gate_rejections_drop_and_fence_cleanup",
+      "reason": "shared gate-close helper and accounting changed: existing fatal/drop/rejection paths"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::reference_pins::catalog_mt04_reader_returns_before_clr_progress",
+      "reason": "changed CLR: actual admitted reader returns before source reservation; gated late read; clean source/ref/pin return"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::reference_pins::catalog_retirement_capacity_returns_gate_before_effects",
+      "reason": "new CLR source refusal keeps held loan, WAL0/ref0/pin0, gate reopen and retry"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::lifecycle::mc02_forward_clr_abort_cleanup",
+      "reason": "changed CLR/RootFree/TerminalFinish through real Maintenance owner, independent page/WAL oracle"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::retire_failures::catalog_mf14_clr_first_page_unwind",
+      "reason": "changed CLR wrapper fatal unwind keeps charge, reopens gate, current-source fresh recovery"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::visibility_gap::catalog_mt01_q0_publication_gap",
+      "reason": "changed retirement gate preserves long snapshot horizon Busy and later Prune cleanup at q0"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::visibility_gap::catalog_mt02_q1_publication_gap",
+      "reason": "changed retirement gate preserves long snapshot horizon Busy and later Prune cleanup at q1"
+    }
+  ]
+}

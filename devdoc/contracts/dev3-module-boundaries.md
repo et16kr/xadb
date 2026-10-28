@@ -1247,6 +1247,19 @@ Operation은 scope를 재대여하고 원 refs/lease/loader/copy만 소유한다
 
 **범위 밖·남은 의무.** CREATE 등 다른 MutationPort writer·Maintenance·Row reader/writer는 아직 ledger에 참여하지 않는다. gate 대기를 포함한 진입 전·반환 뒤 floor, Row RowReserve/rollback/RecoveryRowTask progress class, C3–C5와 M4/M5 인수는 미완료다. read가 terminal을 기다리는 경로, Drain 뒤에도 short charge를 가진 새 ledger 사용자, source 수명·타입이나 `install.finish` 순서가 바뀌면 이 결정을 재검토한다.
 
+<a id="retirement-progress"></a>
+#### XADB-MODULE-RETIREMENT-PROGRESS-001 — Catalog 회수의 고정 progress 예약
+
+2026-10-28 · D2 · 기준 main `c217fbf` · 작성/계약/통합 `/root` · 설계 독립 검토 `/root/retirement_design_review`는 Maintenance 역할 보존을 조건으로 수용했다. 구현·시험·최종 검토는 [회수 progress 증거](../evidence/module-independence-survey-20261026.md#c2-retirement-progress)에 구분한다.
+
+`MutationPort::apply_catalog_retirement`의 CLR/Prune/RootFree/TerminalFinish는 첫 source guard·pin·효과 전에 원 `close_reads_for_retirement`으로 새 read operation을 닫고 이미 진입한 유한 read의 반환을 기다린다. 원 foreground와 Maintenance를 허용하고 dedicated flusher·foreign core를 거절한다. Commit의 foreground 전용 entry는 유지한다. 대기는 원 continuation에서 page/version/ledger 잠금 없이 수행한다. 장기 snapshot은 취소하지 않으며 기존 horizon 검산의 Busy를 유지한다. 같은 thread가 다른 Owner의 read scope를 보유한 채 회수하면 미반환 의존이 생기므로 먼저 반환해야 한다.
+
+고정 `CatalogRetirementCharge`는 exclusive split에서 계산하고 원 isolation ledger24..32에 예약한다. caller는 byte 수를 선택하지 못한다. 준비 receipt와 모든 parent carrier를 포함하고, CLR capture read·retirement write·durable 뒤 allocator read는 실제 checked 반환으로 수명이 분리되므로 물리 closure만 max로 계수한다. 예약은 capacity를 기다리지 않는다. 예약 후에는 refs/page/DPT/control/history·durability·pair retirement·epoch publication·결과 구성을 마칠 때까지 같은 charge와 gate를 유지한다. source를 먼저 checked 반환한 뒤 gate를 열며 원 Fatal 우선·fence 뒤 charge 보존·gate 정리 시도는 Commit과 같다.
+
+이전 CLR은 실행 중인 reader pin 때문에 즉시 Busy일 수 있었다. 이제 유한 reader가 source/ref/pin을 반환한 뒤 진행하며 gate 중 새 조회는 `InstallationPending`이다. stage 전 reservation 부족은 `Census/Capacity/Unchanged`이고 효과·새 refs/pins 없이 gate를 다시 연다. operation/health 다음 gate 검산이 기존 깊은 prepared/visibility/flusher 검산보다 먼저이므로 새 entry 오류가 먼저 관측될 수 있다. 이미 관측한 Fatal은 낮추지 않는다. WAL·영속 형식·원자성·horizon은 변경하지 않는다.
+
+gate 없는 선택적 foreground 예약은 reader 점유 때문에 terminal을 거절하고, ledger capacity 대기는 lock/progress 계약과 맞지 않아 채택하지 않았다. `prepare_catalog_retirement` 등 준비 경로·다른 writer·독립 Maintenance 작업·Row·entry/return floor와 M4/M5 전체 인수는 여전히 미완료다. read가 이 writer를 기다리도록 바뀌거나 물리 closure가 중첩되거나 새 원 ledger holder가 추가되면 재검토한다.
+
 <a id="common-deliveries"></a>
 ## 7. 유한한 공통 공급과 C0/C 인계
 

@@ -2604,7 +2604,7 @@ pub(in super::super) fn catalog_live_source_bytes<W: WriterNamespace>() -> Catal
     .max(token_return + scalar);
     let retirement = (retirement::prepare_caller_source_bytes() + prepare)
         .max(retirement::selection_source_bytes())
-        .max(retirement::source_bytes());
+        .max(source::retirement_source_peak());
     CatalogLiveSource {
         prepare,
         prepare_replay,

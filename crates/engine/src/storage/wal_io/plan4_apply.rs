@@ -364,6 +364,7 @@ pub(crate) struct ReadPort<'b, 'a, 's, 'c, 'p, 'd, 'm, 'w, W: WriterNamespace> {
 
 pub(crate) struct MutationPort<'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace> {
     commit_charges: source::CatalogCommitCharges,
+    retirement_charge: source::CatalogRetirementCharge,
     storage: &'s MutableStorageOwner<'m, 'w, W>,
     pool: &'b SharedPool<'c, 's, 'p, 'd>,
     operation: &'b mut &'o mut [u8; super::OPERATION_BYTES],
@@ -544,9 +545,11 @@ impl<'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
         // borrow. Complete the recursive type census before lending any port.
         let source_charges = source::CatalogSourceCharges::new::<W>();
         let commit_charges = source::CatalogCommitCharges::new::<W>();
+        let retirement_charge = source::CatalogRetirementCharge::new();
         (
             MutationPort {
                 commit_charges,
+                retirement_charge,
                 storage: self.inner.storage,
                 pool: &self.inner.pool,
                 operation: &mut self.inner.operation,

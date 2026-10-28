@@ -7743,5 +7743,41 @@
       "source_bound_not_rss": true
     },
     "run_result_sha256": "c9b93acf7a22e38ebd2c16f7ccc622eeea3b0143be011f1c26c6d3955fbfd091"
+  },
+  "dev3_module_c2_retirement_progress": {
+    "status": "ACCEPTED_LIMITED_D1_D2",
+    "contract_ref": "dev3-module-boundaries.md#retirement-progress",
+    "evidence_ref": "module-independence-survey-20261026.md#c2-retirement-progress",
+    "baseline_commit": "c217fbf",
+    "branch": "main",
+    "implemented_paths": [
+      "tests/fixtures/dev3-module-c2/retirement-progress/manifest.json"
+    ],
+    "scope": "Catalog retirement fixed progress admission; original finite reads drain before stage, Maintenance role preserved; unconverted entries and Row remain incomplete",
+    "source_roots_changed": false,
+    "runtime_exact_pass": 13,
+    "runtime_sources": {
+      "r2": 7,
+      "r4": 6
+    },
+    "validation": "r1 production PASS; r2 and r4 Clippy/test build PASS; r1/r2/r3 FAIL preserved. r4 runs only failed/not-run actual6; completed source/core7 not repeated. Post-run code difference is one comment only.",
+    "source_bytes": {
+      "memory_shared_retained": 20192,
+      "native_type_shared_retained": 20328,
+      "retirement_charge": 42074,
+      "memory_retirement_total": 62266,
+      "native_type_retirement_total": 62402,
+      "memory_pending_full_total": 64342,
+      "native_type_pending_full_total": 65502,
+      "limit": 65536,
+      "source_bound_not_rss": true
+    },
+    "run_result_sha256": "62e75c662b28468bc27e5fe2fe5a65e97fbc9df20f55fa26bcbda614ba7dbcee",
+    "whole_m4_m5_complete": false,
+    "reviewer": "/root/retirement_design_review",
+    "reviewed_files": 17,
+    "skipped_files": 0,
+    "unresolved_required_fixes": 0,
+    "review_sha256": "12a53460a0e6e18043d64a9c45b41a6a2829a8bb96c842844afe627546c6c5d9"
   }
 }

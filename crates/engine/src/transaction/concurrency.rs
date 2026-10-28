@@ -178,7 +178,7 @@ impl State {
         }
         if let Some(index) = self.read_gate {
             let index = usize::from(index);
-            if index >= FOREGROUND_OWNERS
+            if index >= FLUSHER_SLOT
                 || self.slots[index].generation == 0
                 || self.slots[index].read_operation
             {

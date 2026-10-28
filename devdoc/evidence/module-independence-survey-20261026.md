@@ -2137,3 +2137,51 @@ gate가 닫힐 때 source 예약 직전에 멈춘 read, gate 앞의 resident rea
 작업 트리 정리에 앞서 원 `/home/et16/work/xadb-module-remaining/artifacts/module-c2-writer-progress-20261028/`의128파일(1,023,923B)을 `/home/et16/work/xadb/artifacts/module-c2-writer-progress-20261028/`로 이동하고 모든 파일의 전후 SHA-256 일치를 확인했다. 원 result SHA-256 `c9b93acf7a22e38ebd2c16f7ccc622eeea3b0143be011f1c26c6d3955fbfd091`과 inventory·로그의 내용은 그대로다. 위 원 실행 경로와 source identity는 당시 기록으로 유지한다. 병합 뒤 해당 branch와 별도 작업 트리를 정리하며 이후 재개는 main을 기준으로 한다. 다른 branch·작업 트리·stash와 이전 증거는 이번 정리 대상이 아니다.
 
 다른 writer의 ledger 참여·진입/반환 floor·Row progress와 C3–C5·M4/M5 인수는 계속 미완료다. native 타입 Pending+Full source 상계65470B의 여유66B와 위 미실행 경계도 그대로 보존한다.
+
+<a id="c2-retirement-progress"></a>
+## main의 Catalog 회수 progress 예약 — 2026-10-28
+
+사용자의 “이어서 작업을 진행…적당한 단계마다 commit” 지시에 따라 `/home/et16/work/xadb`의 clean main `c217fbf`에서 다음 유한 공급을 시작했다. 별도 C2 초안 stash·다른 branch/worktree는 사용하지 않았다. 작성/계약/통합은 `/root`, 독립 D1/D2 검토는 `/root/retirement_design_review`다. [RETIREMENT-PROGRESS-001](../contracts/dev3-module-boundaries.md#retirement-progress)의 CLR/Prune/RootFree/TerminalFinish만 원 short ledger에 연결하며 전체 M4/M5 완료를 뜻하지 않는다.
+
+### 결정·변경과 사전 검토
+
+독립 설계 검토는 기존 retirement가 Maintenance를 허용함을 확인하여 원 Commit용 gate를 그대로 재사용하면 역할 회귀가 생긴다고 지적했다. 별도 `close_reads_for_retirement`과 공통 private close helper를 두고 State gate 검산에 Maintenance를 포함했다. Commit의 foreground 제한은 유지한다. Catalog retirement의 내부 rollback 참조·물리 read/apply는 read_operation 진입을 다시 하지 않으므로 닫힌 gate에 스스로 대기하지 않는다.
+
+exclusive split에서 계산한 sealed `CatalogRetirementCharge`는 caller byte 입력 없이 사용한다. 원 ledger에 예약한 뒤 refs/page/DPT/control/history·WAL durability·pair retirement·epoch publication·결과 구성까지 유지하고 source→gate 순서로 checked 정리한다. Fatal/panic에는 charge를 보존하면서 gate를 정리한다. parent receipt/Result/carrier는 모두 합산하고 capture read→retirement write→post-durable allocator read의 물리 closure만 실제 소비 반환에 근거해 max로 계산했다. 물리 retirement census 자체가 target-set 호출 비용을 포함하므로 같은 비용을 두 번 합산하지 않는다.
+
+첫 OCR 독립 코드 검토는 Rust10파일10/10, 생략0이다. MT04 reader 반환 직후 전역 refs0 단언은 이미 진행한 retirement의 자기 rollback ref와 경쟁하므로 제거하고 양쪽 완료 후 refs0 단언을 유지했다. 그 수정 뒤 필수 코드 지적0이며 최종 증거 검토는 별도로 기록한다.
+
+### 사전 고정 선택과 실패 보존
+
+[manifest](../../tests/fixtures/dev3-module-c2/retirement-progress/manifest.json)에 실제 변경→runtime13 exact selector의 관계를 실행 전에 고정했다. 원 source/class·memory/native 전체 census와 Commit Pending+Full·split 비용4, 새 Maintenance gate와 변경된 공통 gate3, actual MT04·Capacity·Maintenance lifecycle·CLR panic/fresh recovery·장기 snapshot horizon2의6개다. 총1200초, compiler420초, case30초, 로그8MiB, stack32MiB이며 같은 source의 완료 사례는 반복하지 않는다. workspace/하위 회귀 wrapper와 무관한 Row/DEV 시험은 실행하지 않는다.
+
+`artifacts/module-c2-retirement-progress-20261028/r1`은 production check PASS 뒤 시험 코드 Clippy build에서 FAIL했다. 새 시험의 `RetentionCause` import 누락과 `lookup_catalog_resident` cursor 인자 누락이다. runtime13은 모두 NOT_RUN이며 실패를 PASS로 바꾸지 않는다. cfg(test) 파일의 두 항목만 고친 r2는 Clippy/test build와 미실행 runtime을 진행한다. r1 production PASS는 원 source 결과로 보존하고 r2의 새 실행으로 세지 않는다. 각 run의 frozen inventory·runner·source/ELF/hash·로그·result를 보존하며 새 export/target/ELF는 실행 종료 후 삭제한다.
+
+r2는 Clippy/test build·source/core7개 PASS 뒤 MT04에서 FAIL했다. 실제 `RetirementIntent`는 Apply 중이므로 새 snapshot 생성이 기존 `Concurrency(Busy)`로 거절된 것이며, 뒤 lookup의 gate 거절을 아직 시험하지 못했다. snapshot 생성만 Apply 전으로 옮긴 r3는 원 `Owner`의 `!Send`를 위반하여 Clippy build E0277로 FAIL, runtime은 NOT_RUN이다. r4는 controller thread 안에서 원 gate 대기 hook 이후·Apply 이전에 Owner/snapshot을 생성하도록 수정했다. r2의 완료7개는 그대로 보존하고 r4에는 MT04와 뒤 미실행5개만 선택한다. 이 세 수정은 모두 `catalog_memory/reference_pins.rs`의 cfg(test) 코드이며 production·source/core의 완료 검증 경로를 바꾸지 않는다.
+
+### 실행·최종 인수
+
+r2의 source/core7개와 r4의 실제 Catalog6개로 동결13 selector의 변경 경로 검증을 마쳤다. r4 Clippy(lib/tests, `-D warnings`)·test build와 actual6개는 모두 PASS다. production check는 r1의 원 PASS이며 r4에서 반복하지 않았다. r1→r2→r3→r4의 각5743파일 inventory 차이는 `catalog_memory/reference_pins.rs` 하나뿐이다. r1/r2/r3의 FAIL을 유지하며 source별 완료 범위와 분리한다. 실제 r4 elapsed70.943초는 성능 인수 결과가 아니다.
+
+| source 계수 | memory | native 타입 |
+| --- | ---: | ---: |
+| shared retained(원 core·192B split ports 포함) | 20192 | 20328 |
+| retirement 고정 charge | 42074 | 42074 |
+| shared + retirement | 62266 | 62402 |
+| Commit Pending + Full + shared | 64342 | 65502 |
+
+위 값은 source-value 상계이며 stack/RSS가 아니다. native Pending+Full 여유는34B다. gate 보유 때 finite read 몫은0이고 long snapshot은 남아 horizon을 제한한다. retirement 준비 단계와 gate 전/반환 뒤 floor를 이 합계에 연결했다고 주장하지 않는다.
+
+| 보존 identity | SHA-256 |
+| --- | --- |
+| manifest | `e6cbbf3ae5dce650c4826c2e454d25971ab44191eaa0853da1bb5a9dab679e6f` |
+| r1 result(compile FAIL·production PASS) | `94d39d8cc40b514359fec9ba9e1196837e07fe6c39ac06e82ebd6f18fc4b9cb0` |
+| r2 source / result | `ac6c464fe2c2c11c23fd28e62ba344c3d0f19c01bf5f9fc9fa8dff3858109242` / `3d821a06a1813bf4e0a01d0d847c26516ed699b1b0fe53b7301590d1bfbca161` |
+| r3 result(Owner !Send compile FAIL) | `bd3e1046b0d3e9ca86faf5799f074961d0578c02e84dc8fd89b3ca4886883f12` |
+| r4 source / inventory | `f78686bfcb2bc68ef5513d4c898e5262f57790a7549435ec2c28e38cc382d00b` / `cbb64a56bcece9d2324b31a145d9fe723d63573ff7cd0e9bc1c6aace3a894c16` |
+| r4 runner / result | `63fd6433cf11c45329b60ed4f59d53f65eb77d025fcd1d2b0e1b2c1f076d5da6` / `62e75c662b28468bc27e5fe2fe5a65e97fbc9df20f55fa26bcbda614ba7dbcee` |
+| r4 test ELF(삭제) | `3f3ff0e86485aefe8a24e70f20c21e6d0780f129f55a802e1d9a2869be979190` |
+
+검증 뒤 문서와 source.rs의 writer entry 주석 한 줄만 정리했다. `post-run-comment.json`은 그 줄을 원문으로 복원한 SHA가 r4 inventory와 같고 나머지5742파일도 일치함을 기록한다. 실행 토큰 변경이 없어 완료 시험을 반복하지 않았다. 독립 최종 검토 `/root/retirement_design_review`는 OCR11파일과 보충 문서/manifest6파일, 총17/17·생략0·검토율100%를 확인하고 D1/D2 한정 수용·필수 수정0으로 판정했다. r2의7+r4의6 selector 중복 없음과 원 실패·runner/inventory/log/result hash·주석만의 후속 차이를 검산했다. 검토자는 파일 수정이나 시험 실행을 하지 않았다. 검토 receipt `review-final.json` SHA-256은 `12a53460a0e6e18043d64a9c45b41a6a2829a8bb96c842844afe627546c6c5d9`다. 이 단위를 main에 commit하며 전체 M4/M5로 승격하지 않는다.
+
+준비 경로·다른 writer/Maintenance·Row·gate 전/반환 뒤 floor와 C3–C5·M4/M5 전체 인수는 미완료다. 문서 verifier와 pre-push gate·원격 push는 이번 작업에 포함하지 않는다.

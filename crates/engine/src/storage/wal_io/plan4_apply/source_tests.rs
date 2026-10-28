@@ -335,6 +335,46 @@ fn commit_charges() -> CatalogCommitCharges {
 }
 
 #[test]
+fn retirement_fixed_charge_fits_and_cannot_use_commit_transitions() {
+    fn inspect<W: WriterNamespace>(kind: &str) {
+        let shared = shared_bytes::<W>();
+        let charge = CatalogRetirementCharge::new();
+        let live = super::super::resources::source_census::<W>();
+        println!(
+            "RETIREMENT_SOURCE_{kind} shared={shared} charge={} total={} live={live:?}",
+            charge.0,
+            shared + charge.0
+        );
+        assert!(shared + charge.0 <= 65536);
+        assert!(live.catalog_live >= charge.0);
+        assert!(super::super::resources::fits::<W>());
+    }
+    inspect::<crate::storage::wal_io::plan4_test_support::Writer>("MEMORY");
+    inspect::<super::super::super::native::Writer>("NATIVE_TYPE");
+    with_ledger(|ledger, fence| {
+        let core = ledger.lock().unwrap().core;
+        let mut owner = core
+            .try_owner(crate::transaction::concurrency::OwnerRole::Maintenance)
+            .unwrap();
+        let gate = owner.close_reads_for_retirement(core).unwrap();
+        let charge = CatalogRetirementCharge(8192);
+        let mut ticket =
+            OperationSourceAdmission::catalog_retirement(ledger, &commit_charges(), &charge, &gate)
+                .unwrap();
+        assert_eq!(used(ledger), 8192);
+        let error = ticket
+            .enter_commit_pending(&commit_charges())
+            .err()
+            .unwrap();
+        assert!(matches!(error.cause, SourceCause::Invariant));
+        assert!(fence.is_fenced());
+        assert!(ticket.finish_checked().is_err());
+        assert_eq!(used(ledger), 8192);
+        assert!(gate.reopen_checked().is_err());
+    });
+}
+
+#[test]
 fn commit_class_moves_only_at_gate_and_drain_boundaries() {
     use crate::transaction::concurrency::OwnerRole;
     with_ledger(|ledger, fence| {

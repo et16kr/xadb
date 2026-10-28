@@ -97,7 +97,8 @@ fn mc02_forward_clr_abort_cleanup() {
             );
             live.catalog_rollback_start(owner, actor, private).unwrap();
             oracle.check(live, state, "R04");
-            live.catalog_retire(owner, 1, Operation::Clr, private)
+            let mut maintenance = core.try_owner(OwnerRole::Maintenance).unwrap();
+            live.catalog_retire(&mut maintenance, 1, Operation::Clr, private)
                 .unwrap();
             oracle.check(live, state, "R05");
             assert_eq!(live.catalog_test_epochs(), (true, 0, vec![]));
@@ -109,12 +110,13 @@ fn mc02_forward_clr_abort_cleanup() {
                 live.catalog_release_role(owner, 1, private).unwrap();
                 oracle.check(live, state, id);
             }
-            live.catalog_retire(owner, 1, Operation::RootFree, private)
+            live.catalog_retire(&mut maintenance, 1, Operation::RootFree, private)
                 .unwrap();
             oracle.check(live, state, "R10");
-            live.catalog_retire(owner, 0, Operation::TerminalFinish, private)
+            live.catalog_retire(&mut maintenance, 0, Operation::TerminalFinish, private)
                 .unwrap();
             oracle.check(live, state, "R11");
+            maintenance.check_idle().unwrap();
             assert_eq!(live.catalog_test_epochs(), (true, 0, vec![]));
             query(live, owner, flusher, reader_private, 0, 6, false);
             assert!(!fence.is_fenced());

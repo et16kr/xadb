@@ -118,9 +118,26 @@ impl<'c, 'f> Owner<'c, 'f> {
         &mut self,
         expected: &PageConcurrency<'_>,
     ) -> Result<TerminalReadGate<'c, 'f>> {
+        self.close_reads(expected, FOREGROUND_OWNERS)
+    }
+
+    /// Retirement also belongs to the original maintenance owner. Commit keeps
+    /// its foreground-only entry; neither entry admits the dedicated flusher.
+    pub(crate) fn close_reads_for_retirement(
+        &mut self,
+        expected: &PageConcurrency<'_>,
+    ) -> Result<TerminalReadGate<'c, 'f>> {
+        self.close_reads(expected, FLUSHER_SLOT)
+    }
+
+    fn close_reads(
+        &mut self,
+        expected: &PageConcurrency<'_>,
+        owner_limit: usize,
+    ) -> Result<TerminalReadGate<'c, 'f>> {
         let owner = {
             let mut state = self.core.entry_state()?;
-            if !self.belongs_to(expected) || self.index >= FOREGROUND_OWNERS {
+            if !self.belongs_to(expected) || self.index >= owner_limit {
                 return Err(unchanged(Cause::InvalidRole));
             }
             self.check_mode(&state, Mode::Idle)?;
@@ -274,7 +291,9 @@ pub(crate) const fn terminal_gate_source_bytes() -> usize {
         + 4 * size_of::<ConcurrencyError>()
         + size_of::<std::time::Duration>()
         + 10 * size_of::<&()>()
-        + 2 * size_of::<usize>()
+        // The two public entries retain their borrows while the shared close
+        // helper holds its role limit. Count that extra frame explicitly.
+        + 5 * size_of::<usize>()
         + 8 * size_of::<bool>()
 }
 
@@ -563,6 +582,43 @@ mod tests {
             std::mem::size_of::<TerminalReadGate<'_, '_>>(),
             terminal_gate_source_bytes()
         );
+        assert!(!fence.is_fenced());
+    }
+
+    #[test]
+    fn retirement_gate_preserves_maintenance_and_rejects_flusher_and_foreign() {
+        let fence = SessionFence::new();
+        let core = PageConcurrency::new(&fence).unwrap();
+        let foreign = PageConcurrency::new(&fence).unwrap();
+        let mut maintenance = core.try_owner(OwnerRole::Maintenance).unwrap();
+        let mut flusher = core.try_owner(OwnerRole::DedicatedFlusher).unwrap();
+        for error in [
+            maintenance.close_reads_for_terminal(&core).err().unwrap(),
+            maintenance
+                .close_reads_for_retirement(&foreign)
+                .err()
+                .unwrap(),
+            flusher.close_reads_for_retirement(&core).err().unwrap(),
+        ] {
+            assert_eq!(
+                (error.cause, error.effect),
+                (Cause::InvalidRole, Effect::Unchanged)
+            );
+        }
+        let gate = maintenance.close_reads_for_retirement(&core).unwrap();
+        let mut reader = core.try_owner(OwnerRole::Foreground).unwrap();
+        assert_eq!(
+            reader.try_read_operation(&core).err().unwrap().cause,
+            Cause::InstallationPending
+        );
+        gate.reopen_checked().unwrap();
+        reader
+            .try_read_operation(&core)
+            .unwrap()
+            .finish_checked()
+            .unwrap();
+        maintenance.check_idle().unwrap();
+        flusher.check_idle().unwrap();
         assert!(!fence.is_fenced());
     }
 

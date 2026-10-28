@@ -1,5 +1,7 @@
 # 현재 구현
 
+2026-10-28 [C2 Catalog 회수 progress](../evidence/module-independence-survey-20261026.md#c2-retirement-progress): main `c217fbf`에서 CLR/Prune/RootFree/TerminalFinish를 원 read gate와 고정 source 예약에 연결했다. Maintenance 역할·장기 snapshot horizon을 유지하고 source→gate 정리를 수행한다. source별 선택7+6개 PASS·원 compile/시험 FAIL을 보존하며 native shared+회수62402B, Pending+Full65502B다. 준비 경로·다른 writer·entry/return floor·Row progress·M4/M5는 미완료다.
+
 2026-10-28 [Catalog Commit writer 창의 main 통합](../evidence/module-independence-survey-20261026.md#writer-progress-merge-main-20261028): `854bd8d..af54a4e`의 변경30파일을 독립 리뷰하여 필수 수정0으로 확인하고 사용자 병합·branch 삭제 지시를 반영한다. 제품·시험 소스는 리뷰한 branch와 같고 기존 runtime59·빌드/Clippy3 결과를 재실행 없이 보존한다. 재개 위치는 `/home/et16/work/xadb`의 main이며 M4/M5는 미완료다.
 
 2026-10-28 [C2 Catalog Commit writer 창](../evidence/module-independence-survey-20261026.md#c2-writer-progress): branch `claude/module-independence-remaining`에서 Commit이 새 read를 닫고 admitted read 반환을 기다린 뒤 원 isolation ledger에 stage 몫을 예약하고, Pending·publication 축소와 Drain 뒤 install 증가를 연결했다. r1 compiler3·runtime59 각1회 PASS, 사전 독립 검토 REQUIRED3 해소·재확인 신규 REQUIRED0이다. native Pending+Full65470B이며 다른 writer·진입/반환 floor·Row progress·M4/M5는 미완료다.

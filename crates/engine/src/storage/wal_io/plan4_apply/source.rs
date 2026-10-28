@@ -1,5 +1,5 @@
 //! Short source reservations in the original isolation ledger. Full and resident
-//! Catalog lookup and the Catalog Commit writer currently participate;
+//! Catalog lookup and the Catalog Commit/retirement writers participate;
 //! unconverted writer/reader entries are not covered by this aggregate bound.
 use super::*;
 use crate::storage::session_fence::SessionFence;
@@ -16,6 +16,7 @@ pub(super) enum OperationClass {
     /// Terminal progress. Its charge changes only at the read-gate and Drain
     /// boundaries, never while an admitted reader could hold a loan.
     CommitProgress,
+    RetirementProgress,
 }
 
 /// Fixed type-derived costs, computed once while DiskSession is exclusively
@@ -79,6 +80,23 @@ impl CatalogCommitCharges {
 pub(super) fn commit_source_peak() -> usize {
     let [stage, pending, install, publish] = create_pair::catalog_commit_writer_windows();
     stage.max(pending).max(install).max(publish) + commit_carrier_bytes()
+}
+
+/// Retirement retains one fixed progress charge through publication and
+/// checked cleanup. Its physical read/write closures are consecutive.
+pub(super) fn retirement_source_peak() -> usize {
+    create_pair::catalog_live::retirement::source_bytes()
+        + commit_carrier_bytes()
+        + 2 * size_of::<Result<crate::storage::semantic_catalog::Observation>>()
+        + 2 * size_of::<crate::storage::session_fence::UnwindFence<'_>>()
+}
+
+/// A fixed split-time cost. Operation callers cannot select a byte count.
+pub(super) struct CatalogRetirementCharge(usize);
+impl CatalogRetirementCharge {
+    pub(super) fn new() -> Self {
+        Self(retirement_source_peak())
+    }
 }
 
 /// The retained admission and gate, their Results and caller conversions, and
@@ -178,9 +196,9 @@ impl<'b, 'a, 'c, 's> OperationSourceAdmission<'b, 'a, 'c, 's> {
         let charge = match class {
             OperationClass::CatalogFull => charges.full,
             OperationClass::CatalogResident => charges.resident,
-            // Only catalog_commit, holding the read gate, admits a writer;
+            // Only the dedicated writer entries, holding a read gate, admit a writer;
             // reserve_class rejects the zero charge as a fenced Invariant.
-            OperationClass::CommitProgress => 0,
+            OperationClass::CommitProgress | OperationClass::RetirementProgress => 0,
         };
         Self::reserve_class(ledger, charges.shared, charge, class)
     }
@@ -217,6 +235,30 @@ impl<'b, 'a, 'c, 's> OperationSourceAdmission<'b, 'a, 'c, 's> {
             charges.shared,
             charges.stage,
             OperationClass::CommitProgress,
+        )
+    }
+
+    /// The caller holds the original closed read gate throughout retirement.
+    /// The fixed charge was computed during exclusive split, before any entry.
+    pub(super) fn catalog_retirement(
+        ledger: &'b Mutex<IsolationLedger<'a, 'c, 's>>,
+        charges: &CatalogCommitCharges,
+        retirement: &CatalogRetirementCharge,
+        gate: &TerminalReadGate<'_, '_>,
+    ) -> SourceResult<Self> {
+        {
+            let state = ledger
+                .lock()
+                .map_err(|poison| failed(poison.into_inner().fence, SourceCause::Poisoned))?;
+            if !gate.belongs_to(state.core) {
+                return Err(failed(state.fence, SourceCause::Invariant));
+            }
+        }
+        Self::reserve_class(
+            ledger,
+            charges.shared,
+            retirement.0,
+            OperationClass::RetirementProgress,
         )
     }
 
@@ -346,6 +388,7 @@ impl<'b, 'a, 'c, 's> OperationSourceAdmission<'b, 'a, 'c, 's> {
             OperationClass::CatalogFull
             | OperationClass::CatalogResident
             | OperationClass::CommitProgress
+            | OperationClass::RetirementProgress
                 if self.charge != 0 && u64::from(self.charge) <= SHORT_BYTES => {}
             _ => return Err(failed(state.fence, SourceCause::Invariant)),
         }
@@ -401,10 +444,12 @@ pub(super) const SPLIT_CALCULATION_BYTES: usize = 24 * 128 * size_of::<usize>();
 pub(super) fn split_source_bytes<W: WriterNamespace>() -> usize {
     let compute = SPLIT_CALCULATION_BYTES
         + 3 * size_of::<CatalogSourceCharges>()
-        + 3 * size_of::<CatalogCommitCharges>();
+        + 3 * size_of::<CatalogCommitCharges>()
+        + 3 * size_of::<CatalogRetirementCharge>();
     let returning = 2 * split_port_bytes::<W>()
         + size_of::<CatalogSourceCharges>()
-        + size_of::<CatalogCommitCharges>();
+        + size_of::<CatalogCommitCharges>()
+        + size_of::<CatalogRetirementCharge>();
     4 * size_of::<&()>() + compute.max(returning)
 }
 
@@ -483,6 +528,10 @@ fn test_source_used(isolation: &Mutex<IsolationLedger<'_, '_, '_>>) -> u64 {
 
 #[cfg(test)]
 impl<W: WriterNamespace> MutationPort<'_, '_, '_, '_, '_, '_, '_, '_, '_, W> {
+    pub(in crate::storage) fn catalog_test_retirement_charge(&self) -> usize {
+        self.retirement_charge.0
+    }
+
     pub(in crate::storage) fn catalog_test_commit_charges(&self) -> [usize; 5] {
         self.commit_charges.observations()
     }

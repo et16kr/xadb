@@ -324,7 +324,41 @@ impl<'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
         prepared: PreparedCatalog<'_, 'c, 's>,
         flusher: &mut RetentionFlusher<'_, 's, 'c, 'p, 'd, 'm, 'w, W>,
     ) -> Result<Observation> {
-        match prepared.targets().len() {
+        let _unwind = self.storage.session_fence().unwind_guard();
+        health(self.storage, self.pool)?;
+        if !matches!(
+            prepared.operation(),
+            Operation::Clr | Operation::Prune | Operation::RootFree | Operation::TerminalFinish
+        ) {
+            return Err(unchanged(
+                RetentionPhase::Prepare,
+                RetentionCause::WrongState,
+            ));
+        }
+        let gate = owner
+            .close_reads_for_retirement(self.pool.bound_core())
+            .map_err(|error| RetentionError {
+                phase: RetentionPhase::Prepare,
+                cause: RetentionCause::Concurrency(error),
+                effect: error.effect,
+            })?;
+        let reopen = |gate: crate::transaction::concurrency::TerminalReadGate<'c, 's>| {
+            gate.reopen_checked().map_err(|error| RetentionError {
+                phase: RetentionPhase::Census,
+                cause: RetentionCause::Concurrency(error),
+                effect: error.effect,
+            })
+        };
+        let source = match source::OperationSourceAdmission::catalog_retirement(
+            self.isolation,
+            &self.commit_charges,
+            &self.retirement_charge,
+            &gate,
+        ) {
+            Ok(source) => source,
+            Err(error) => return merge(Err(RetentionError::from(error)), reopen(gate)),
+        };
+        let result = match prepared.targets().len() {
             4 => self.apply_catalog_retirement_n::<4>(owner, prepared, flusher),
             7 => self.apply_catalog_retirement_n::<7>(owner, prepared, flusher),
             9 => self.apply_catalog_retirement_n::<9>(owner, prepared, flusher),
@@ -332,7 +366,11 @@ impl<'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
                 RetentionPhase::Prepare,
                 RetentionCause::Invariant,
             )),
-        }
+        };
+        // All transient refs, physical guards and publication have ended.
+        // Preserve an original Fatal and still attempt both checked returns.
+        let returned = source.finish_checked().map_err(RetentionError::from);
+        merge(merge(result, returned), reopen(gate))
     }
     fn apply_catalog_retirement_n<const N: usize>(
         &mut self,
@@ -738,8 +776,12 @@ pub(in super::super::super) fn source_bytes() -> usize {
         + 10 * size_of::<RetentionError>()
         + 32 * size_of::<usize>()
         + 32 * size_of::<&[u8]>()
+        // CLR's capture read is released before RetirementTargets exists.
+        // Its post-durable allocator read starts after release_checked has
+        // consumed those targets. Parent receipts above remain charged; the
+        // physical closures alone are mutually exclusive.
         + dirty_frame::retirement_source_bytes::<9>()
-        + dirty_frame::target_set_call_bytes::<9>()
+            .max(dirty_frame::target_set_call_bytes::<9>())
         + catalog_control_source_bytes()
             .max(dirty_frame::tx_pair_source_census())
             .max(visibility::source_census().peak_leaf)

@@ -66,7 +66,17 @@ fn catalog_mf14_clr_first_page_unwind() {
                 assert!(resident_index(live, number).is_some(), "pair page {number}");
             }
             assert_eq!(live.catalog_test_q(), 0);
+            let (writer, _, _) = live.split();
+            assert_eq!(
+                writer.catalog_test_source_used(),
+                writer.catalog_test_retirement_charge() as u64,
+                "fatal retirement keeps its original charge"
+            );
             let observation = hook::observe(core);
+            assert!(
+                !observation.read_gate_closed,
+                "unwind reopens the original gate"
+            );
             assert_eq!(
                 (observation.active_apply, observation.active_content),
                 (0, 0)
