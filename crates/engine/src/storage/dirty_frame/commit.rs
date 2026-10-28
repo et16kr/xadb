@@ -491,6 +491,19 @@ pub(in crate::storage) fn source_phases<const N: usize>() -> CommitSourcePhases 
     }
 }
 
+/// The consuming Drain call alone; no target acquisition or install leaf.
+/// Success: the core begin/wait envelope builds the Drained return. Failure:
+/// the returned error remains while Pending's Drop first runs the core abandon
+/// and only then releases the original pins, so those two are sequential.
+pub(in crate::storage) fn drain_call_source_bytes<const N: usize>() -> usize {
+    use std::mem::size_of;
+    let core = crate::transaction::concurrency::commit_call_source_bytes();
+    let result = size_of::<Result<DrainedCommitTargets<'_, '_, '_, '_, '_, '_, N>>>();
+    let success = size_of::<DrainedCommitTargets<'_, '_, '_, '_, '_, '_, N>>() + 2 * result + core;
+    let failure = result + core.max(super::pin_release_source_bytes());
+    size_of::<PendingCommitTargets<'_, '_, '_, '_, '_, '_, N>>() + success.max(failure)
+}
+
 /// Read-only phase observations for the next admission design. The existing
 /// production source_bytes and all runtime guards/authority stay unchanged.
 #[cfg(test)]

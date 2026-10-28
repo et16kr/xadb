@@ -1,7 +1,10 @@
 //! Original Drain must include the admitted lookup's final source cleanup,
 //! after all reference/physical guards have already ended.
 use super::*;
-use crate::transaction::concurrency::catalog_test_support::{self as hook, Point, Resume};
+use crate::{
+    storage::dirty_frame::init_test_support as raw,
+    transaction::concurrency::catalog_test_support::{self as hook, Point, Resume},
+};
 use std::sync::mpsc::sync_channel;
 
 fn drain_finished(fenced: bool, resident: bool) {
@@ -28,16 +31,25 @@ fn drain_finished(fenced: bool, resident: bool) {
                     live, owner, flusher, status, undo, private, &oracle, state, 1,
                 );
                 let prepared = live.prepare_catalog_commit(owner, actor, private).unwrap();
-                let (entered, arrived) = sync_channel(1);
-                let (resume, release) = sync_channel(1);
-                hook::install(core, Point::LookupBeforeSourceReturn, entered, release);
+                let (pending_entered, pending_arrived) = sync_channel(1);
+                let (pending_resume, pending_release) = sync_channel(1);
+                // The read is admitted during Pending. A read admitted before
+                // Commit would instead be waited for by the terminal read gate.
+                hook::install(core, Point::Pending, pending_entered, pending_release);
                 {
-                    let (mut writer, reader, _) = live.split();
+                    let (mut writer, reader, maintenance) = live.split();
+                    let pending = writer.catalog_test_commit_charges()[2] as u64;
+                    let pool = maintenance.catalog_test_pool();
                     let reader_ref = &reader;
+                    let (registered, ready) = sync_channel(1);
+                    let (start, started) = sync_channel(1);
                     std::thread::scope(|scope| {
                         let reading = scope.spawn(move || {
                             let mut separate = core.try_owner(OwnerRole::Foreground).unwrap();
+                            // Registration needs apply admission, closed in Pending.
                             let snapshot = reader_ref.catalog_snapshot(&mut separate).unwrap();
+                            registered.send(()).unwrap();
+                            started.recv_timeout(WAIT).unwrap();
                             let result = {
                                 if resident {
                                     reader_ref.lookup_catalog_resident(
@@ -66,27 +78,36 @@ fn drain_finished(fenced: bool, resident: bool) {
                                 separate.check_idle().unwrap();
                             }
                         });
-                        arrived.recv_timeout(WAIT).unwrap();
-                        let charge = reader.catalog_test_source_used();
-                        assert!(charge > 0);
-                        assert_eq!(reader.catalog_test_references(), ((0, 0, 0), false));
-                        assert_eq!(writer.catalog_test_physical_pins(), 0);
-                        assert_eq!(hook::observe(core).active_read_operations, 1);
-                        let (waiting, wait_arrived) = sync_channel(1);
-                        let (drain_resume, drain_release) = sync_channel(1);
-                        hook::install(core, Point::DrainWaiting, waiting, drain_release);
+                        ready.recv_timeout(WAIT).unwrap();
                         let controlling = scope.spawn(move || {
+                            pending_arrived.recv_timeout(WAIT).unwrap();
+                            assert_eq!(reader_ref.catalog_test_source_used(), pending);
+                            let (entered, arrived) = sync_channel(1);
+                            let (resume, release) = sync_channel(1);
+                            hook::install(core, Point::LookupBeforeSourceReturn, entered, release);
+                            start.send(()).unwrap();
+                            arrived.recv_timeout(WAIT).unwrap();
+                            let charge = reader_ref.catalog_test_source_used() - pending;
+                            assert!(charge > 0);
+                            assert_eq!(reader_ref.catalog_test_references(), ((0, 0, 0), false));
+                            assert_eq!(hook::observe(core).active_read_operations, 1);
+                            // Only the Pending writer's four pins; the paused read holds none.
+                            assert_eq!(raw::claim_state(pool).1, 4);
+                            let (waiting, wait_arrived) = sync_channel(1);
+                            let (drain_resume, drain_release) = sync_channel(1);
+                            hook::install(core, Point::DrainWaiting, waiting, drain_release);
+                            pending_resume.send(Resume::Continue).unwrap();
                             wait_arrived.recv_timeout(WAIT).unwrap();
-                            let observation = hook::observe(core);
+                            let observed = hook::observe(core);
                             assert_eq!(
                                 (
-                                    observation.installation,
-                                    observation.active_content,
-                                    observation.active_read_operations
+                                    observed.installation,
+                                    observed.active_content,
+                                    observed.active_read_operations
                                 ),
                                 ("Draining", 0, 1)
                             );
-                            assert_eq!(reader_ref.catalog_test_source_used(), charge);
+                            assert_eq!(reader_ref.catalog_test_source_used(), pending + charge);
                             assert_eq!(reader_ref.catalog_test_references(), ((0, 0, 0), false));
                             if fenced {
                                 fence.fence();
@@ -96,7 +117,7 @@ fn drain_finished(fenced: bool, resident: bool) {
                             assert_eq!(hook::observe(core).active_read_operations, 0);
                             assert_eq!(
                                 reader_ref.catalog_test_source_used(),
-                                if fenced { charge } else { 0 }
+                                pending + if fenced { charge } else { 0 }
                             );
                             drain_resume.send(Resume::Continue).unwrap();
                         });
@@ -105,6 +126,7 @@ fn drain_finished(fenced: bool, resident: bool) {
                             assert_eq!(result.err().unwrap().effect, Effect::CallerMustResolve);
                         } else {
                             result.unwrap();
+                            assert_eq!(writer.catalog_test_source_used(), 0);
                         }
                         controlling.join().unwrap();
                     });

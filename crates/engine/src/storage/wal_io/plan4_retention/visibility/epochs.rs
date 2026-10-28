@@ -407,20 +407,7 @@ pub(in super::super) fn commit_carriers() -> usize {
 /// calls no codec; its complete guard/receipt/check packet is charged here too.
 pub(in super::super) fn transition_source_bytes() -> usize {
     use std::mem::size_of;
-    let outer = 2 * size_of::<VisibilityResult<MutexGuard<'_, Publication<'_>>>>()
-        + size_of::<MutexGuard<'_, Publication<'_>>>()
-        + 2 * size_of::<Origin<'_, '_>>()
-        + 2 * size_of::<ObjectHandle>()
-        + 2 * size_of::<Option<usize>>()
-        + 2 * size_of::<TxnRef>()
-        + 2 * size_of::<Profile>()
-        + 2 * size_of::<EpochChange>()
-        + 2 * size_of::<CommitEpochs>()
-        + size_of::<InstalledFrontier<'_, '_>>()
-        + 4 * size_of::<VisibilityError>()
-        + 8 * size_of::<VisibilityResult<()>>()
-        + 16 * size_of::<&[u8]>()
-        + 16 * size_of::<u64>();
+    let outer = publication_source_bytes();
     let decode = 2 * size_of::<crate::storage::page::PageView<'_>>()
         + 2 * size_of::<queue::JobView<'_>>()
         + 2 * size_of::<
@@ -433,6 +420,26 @@ pub(in super::super) fn transition_source_bytes() -> usize {
         )
         + queue::source_bytes();
     outer + decode
+}
+
+/// The shared guard/receipt/check packet alone. publish_catalog_epochs reaches
+/// only this: no Job decode or other visibility leaf is called there.
+pub(in super::super) fn publication_source_bytes() -> usize {
+    use std::mem::size_of;
+    2 * size_of::<VisibilityResult<MutexGuard<'_, Publication<'_>>>>()
+        + size_of::<MutexGuard<'_, Publication<'_>>>()
+        + 2 * size_of::<Origin<'_, '_>>()
+        + 2 * size_of::<ObjectHandle>()
+        + 2 * size_of::<Option<usize>>()
+        + 2 * size_of::<TxnRef>()
+        + 2 * size_of::<Profile>()
+        + 2 * size_of::<EpochChange>()
+        + 2 * size_of::<CommitEpochs>()
+        + size_of::<InstalledFrontier<'_, '_>>()
+        + 4 * size_of::<VisibilityError>()
+        + 8 * size_of::<VisibilityResult<()>>()
+        + 16 * size_of::<&[u8]>()
+        + 16 * size_of::<u64>()
 }
 
 /// Borrowed decoder carriers and their existing codec closure; backing stays

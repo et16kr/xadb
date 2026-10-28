@@ -1,5 +1,7 @@
 # 현재 구현
 
+2026-10-28 [C2 Catalog Commit writer 창](../evidence/module-independence-survey-20261026.md#c2-writer-progress): branch `claude/module-independence-remaining`에서 Commit이 새 read를 닫고 admitted read 반환을 기다린 뒤 원 isolation ledger에 stage 몫을 예약하고, Pending·publication 축소와 Drain 뒤 install 증가를 연결했다. r1 compiler3·runtime59 각1회 PASS, 사전 독립 검토 REQUIRED3 해소·재확인 신규 REQUIRED0이다. native Pending+Full65470B이며 다른 writer·진입/반환 floor·Row progress·M4/M5는 미완료다.
+
 2026-10-28 [모듈 개발 브랜치의 main 통합](../evidence/module-independence-survey-20261026.md#merge-main-20261028): `cbc09f2`의 공통 core·Commit phase·복구 반환 수명 보완과 `76f91e0`의 후속 C2/C3·Row 순수 검산을 결합한다. 이후 개발 기준은 main이며 진행 중 C2 초안은 별도 stash로 보존한다. 변경된 연결에 한정한 runtime13·같은 ELF의 native N03 1회 PASS를 보존하며, 독립 최종 D1/D2 한정 수용·필수 수정0이다. M4/M5 완료를 주장하지 않는다.
 
 2026-10-28 [C2 Catalog 결과 소비 수명](../evidence/module-independence-survey-20261026.md#c2-call-scope-main): 원 source/progress를 private CatalogCallScope에 유지하고 선택 query의 마지막 결과 소비 뒤 checked finish한다. runtime18·compiler4 각1회·production/test build·선택 Clippy PASS. 독립 OCR 전체23파일 한정 수용·시험선택 지적1건 보완·필수 수정0. 현재 Full+Pending66468/66604B는65536B 기준 FAIL이며 writer/progress·전체 진입/반환 합·M4/M5는 미완료다.

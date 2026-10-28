@@ -50,9 +50,12 @@ fn physical_busy_restores_only_the_rejected_stage() {
             state.lock().unwrap().events.clear();
             let error = {
                 let (mut writer, reader, _) = live.split();
+                let stage = writer.catalog_test_commit_charges()[1] as u64;
                 std::thread::scope(|scope| {
                     let controller = scope.spawn(move || {
                         arrived.recv_timeout(Duration::from_secs(5)).unwrap();
+                        assert!(hook::observe(core).read_gate_closed);
+                        assert_eq!(reader.catalog_test_source_used(), stage);
                         reader.catalog_test_competing_stage(&bytes);
                         resume.send(Resume::Continue).unwrap();
                     });
@@ -61,6 +64,9 @@ fn physical_busy_restores_only_the_rejected_stage() {
                         .err()
                         .expect("actual Busy");
                     controller.join().unwrap();
+                    // The Unchanged rejection returns its stage charge and reopens reads.
+                    assert_eq!(writer.catalog_test_source_used(), 0);
+                    assert!(!hook::observe(core).read_gate_closed);
                     error
                 })
             };

@@ -224,7 +224,9 @@ fn disk_session_isolation_backing_and_carriers_are_accounted() {
             + std::mem::size_of::<DiskSession<'_, '_, '_, '_, '_, '_, '_, '_, port::Writer>>()
             + live.original_core
     );
-    assert_eq!(live.catalog_commit, commit.peak());
+    // The census uses the largest admitted writer window with its carriers.
+    assert_eq!(live.catalog_commit, source::commit_source_peak());
+    assert!(live.catalog_commit >= commit.peak());
     for phase in [
         commit.preflight,
         commit.stage,

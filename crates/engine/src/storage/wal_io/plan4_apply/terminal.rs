@@ -169,6 +169,18 @@ impl StagedCommit<'_, '_> {
     }
 }
 
+/// The WAL durability wait alone, from the moved wait receipt through its
+/// returned DurableCommit. Stage and completion receipts are not reachable.
+pub(super) fn catalog_wait_source_bytes() -> usize {
+    use std::mem::size_of;
+    size_of::<CatalogCommitWait<'_, '_>>()
+        + 2 * size_of::<wal::Result<DurableCommit<'_, '_>>>()
+        + 2 * size_of::<wal::Result<DurableWal<'_>>>()
+        + wal::DURABILITY_CALL_BYTES
+        + 6 * size_of::<&()>()
+        + 2 * size_of::<wal::WalIoError>()
+}
+
 /// Source-only observations; no new receipt constructor or production charge.
 #[cfg(test)]
 pub(super) fn catalog_phase_sources() -> [usize; 3] {
@@ -186,11 +198,7 @@ pub(super) fn catalog_phase_sources() -> [usize; 3] {
             + 2 * size_of::<wal::Result<WalRequirement<'_>>>()
             + wal::DURABILITY_CALL_BYTES
             + scalar,
-        size_of::<CatalogCommitWait<'_, '_>>()
-            + 2 * size_of::<wal::Result<DurableCommit<'_, '_>>>()
-            + 2 * size_of::<wal::Result<DurableWal<'_>>>()
-            + wal::DURABILITY_CALL_BYTES
-            + scalar,
+        catalog_wait_source_bytes(),
         size_of::<DurableCommit<'_, '_>>()
             + size_of::<Binding<'_, '_>>()
             + 2 * size_of::<wal::Result<(InstalledCommit<'_, '_>, DurableWal<'_>)>>()

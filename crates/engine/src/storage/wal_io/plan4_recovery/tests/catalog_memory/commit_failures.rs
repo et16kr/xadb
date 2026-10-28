@@ -179,11 +179,22 @@ fn unwind_boundary(id: &str, point: Point) {
                     resume.send(Resume::Panic).unwrap();
                 });
                 let (mut writer, _, _) = live.split();
+                let charges = writer.catalog_test_commit_charges();
                 assert!(
                     catch_unwind(AssertUnwindSafe(|| writer.commit_catalog(owner, prepared)))
                         .is_err()
                 );
                 controller.join().unwrap();
+                // Unwind fences: the current window charge stays reserved and
+                // the read gate is cleared by its Drop.
+                let window = match point {
+                    Point::StageCallStarted => 1,
+                    Point::Durable => 2,
+                    Point::BeforePublish => 4,
+                    _ => 3,
+                };
+                assert_eq!(writer.catalog_test_source_used(), charges[window] as u64);
+                assert!(!hook::observe(core).read_gate_closed);
             });
             assert!(fence.is_fenced());
             assert_eq!(live.catalog_test_q(), 0);

@@ -1,0 +1,270 @@
+{
+  "schema": "XADB_MODULE_C2_WRITER_PROGRESS_V1",
+  "status": "FROZEN_INPUTS_NOT_EXECUTION_EVIDENCE",
+  "baseline": "854bd8d",
+  "branch": "claude/module-independence-remaining",
+  "scope": "Catalog Commit terminal read gate and fixed writer source windows in the original isolation ledger: stage with new reads closed after admitted reads return, shrink for Pending and publication where reads overlap, no-wait growth into install after the original Drain; other writers, entry/return floors, Row and M4/M5 acceptance incomplete",
+  "budget": {
+    "total_seconds": 1200,
+    "compiler_seconds": 420,
+    "case_seconds": 30,
+    "output_bytes": 8388608,
+    "rust_min_stack": 33554432
+  },
+  "compiler_tests": [],
+  "runtime_tests": [
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::create_pair::catalog_commit::tests::consumed_preparation_has_bounded_pending_image",
+      "reason": "changed census Commit term and live/recovered peaks for memory/native"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::free_undo_tests::free_undo_scope_budget_literals_and_source_census",
+      "reason": "changed census values used by the Free-Undo budget check"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::owner_tests::cached_catalog_charges_count_exclusive_split_and_live_ports",
+      "reason": "changed split census with Commit charges"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::owner_tests::catalog_aging_source_phases_include_initial_and_malformed_paths",
+      "reason": "shared retained and census fits changed"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::owner_tests::catalog_borrowed_replay_workspace_counts_producer_and_observer",
+      "reason": "shared retained changed in borrowed replay bound"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::owner_tests::catalog_call_scope_selected_consumer_source_is_bounded",
+      "reason": "shared retained changed in call scope bound"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::owner_tests::catalog_commit_phase_sources_measure_consumed_preparation",
+      "reason": "changed terminal wait helper and shared retained in phase observation bounds"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::owner_tests::catalog_replay_sources_exclude_live_encoder_arrays",
+      "reason": "shared retained changed in replay bound"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::owner_tests::catalog_wal_wait_source_phases_include_claim_and_condvar",
+      "reason": "shared retained changed in WAL wait observation"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::owner_tests::disk_session_isolation_backing_and_carriers_are_accounted",
+      "reason": "changed census Commit term (largest writer window + carriers) and port sizes"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::owner_tests::disk_session_moves_original_resources_and_splits_disjoint_ports",
+      "reason": "changed split constructs MutationPort with Commit charges"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::read::catalog::tests::catalog_read_source_reservation_fits_existing_peak",
+      "reason": "changed census peak/shared beside the read reservation"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::read::scope::tests::compact_call_counts_whole_return_and_consuming_pair",
+      "reason": "shared retained changed; compact call bound"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::read::scope::tests::uncharged_call_phases_keep_independent_guards_and_wide_tail_separate",
+      "reason": "shared retained changed; uncharged phase observation bound"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::source::tests::catalog_class_uses_current_types_and_recovered_retained_owner",
+      "reason": "shared retained changed by MutationPort charges; Full class bound"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::source::tests::catalog_commit_windows_fit_beside_admitted_readers",
+      "reason": "new fixed charges for memory and native types: stage/install alone, Pending and publish beside one Full read; production wait bound >= measured wait; census peak equals largest window"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::source::tests::catalog_native_class_includes_core_once_and_fits",
+      "reason": "shared retained changed for native types"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::source::tests::commit_boundaries_reject_wrong_order_and_reader_entry",
+      "reason": "new boundaries: reversed window order Unchanged before effects, Pending shrink-only, repeated boundary, foreign-core gate, reader cannot select the writer class"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::source::tests::commit_class_moves_only_at_gate_and_drain_boundaries",
+      "reason": "new writer class: stage reserve, Pending shrink, shared aggregate with a reader, install growth, publish shrink, release"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::source::tests::commit_growth_beside_a_held_loan_fences_and_keeps_charges",
+      "reason": "new growth path: a held loan at the Drain boundary is a fenced Invariant, charges preserved"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::source::tests::fixed_resident_class_admits_two_and_never_escalates",
+      "reason": "shared retained changed; two resident bound"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::source::tests::ticket_width_preserves_full_65536_charge_and_rejects_overflow",
+      "reason": "changed release_checked class match"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::call_scope::returned_missing_scope_blocks_original_drain",
+      "reason": "changed C2_SCOPE02: retained scope admitted in Pending blocks Drain; ledger includes Pending writer"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::call_scope::scope_cleanup_fatal_overrides_unchanged_error_and_returns_progress",
+      "reason": "changed C2_SCOPE03: fenced retained scope; charges preserved under fence"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::commit_concurrency::catalog_commit_read_gate_and_writer_windows",
+      "reason": "new MCW01: actual Commit waits for an admitted read, rejects late reads at gate/stage, charges stage/Pending/install/publish, Full read beside Pending"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::commit_concurrency::catalog_commit_reservation_capacity_reopens_reads",
+      "reason": "new MCW02: reservation Capacity in actual Commit is Unchanged/Census before effects, checked gate reopen, fresh Commit then succeeds"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::commit_concurrency::catalog_mt03_pending_reader_loads_undo",
+      "reason": "changed commit_catalog: actual Full LOAD read beside the Pending writer charge"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::commit_concurrency::catalog_mt05_pending_lower_flush",
+      "reason": "changed commit_catalog: Pending lower flush through new gate/source transitions"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::commit_concurrency::catalog_mt06_flush_capture_then_commit",
+      "reason": "changed commit_catalog: flush capture then Commit"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::commit_concurrency::catalog_mt07_drain_content_guard_fence",
+      "reason": "changed commit_catalog: Drain content guard fence after Pending transition"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::commit_concurrency::catalog_read_operation_drain_waits_for_captured_refs",
+      "reason": "changed MCRD01: captured read admitted in Pending (writer pins4 only); Drain wait with shared ledger"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::commit_concurrency::catalog_read_operation_fenced_drain_preserves_fatal_refs",
+      "reason": "changed MCRD02: fenced Drain wait; fatal refs and writer/read charges preserved"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::commit_failures::catalog_drained_before_resume_unwind",
+      "reason": "changed unwind assertions: install charge right after Drain growth kept under fence"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::commit_failures::catalog_mf02_commit_stage_call_unwind",
+      "reason": "changed unwind assertions: stage-window charge kept under fence, gate cleared by Drop"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::commit_failures::catalog_mf03_commit_write_before_error",
+      "reason": "changed cleanup: fatal WAL write error in stage window"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::commit_failures::catalog_mf06_commit_interrupted_retry",
+      "reason": "changed commit_catalog: interrupted write retry success"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::commit_failures::catalog_mf08_commit_sync_after_error",
+      "reason": "changed cleanup: fatal sync error in Pending window"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::commit_failures::catalog_mf09_commit_durable_unwind",
+      "reason": "changed unwind assertions: Pending-window charge kept, gate already reopened"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::commit_failures::catalog_mf10_commit_second_page_unwind",
+      "reason": "changed unwind assertions: install-window charge kept under fence"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::commit_failures::catalog_mf11_commit_installed_before_finish_unwind",
+      "reason": "changed unwind assertions (shared unwind_boundary): install-window charge kept under fence"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::commit_failures::catalog_mf12_commit_before_publish_unwind",
+      "reason": "changed unwind assertions: publish-window charge kept under fence"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::drained::drained_handoff_fence_abandons_before_install",
+      "reason": "changed assertion C2_DRAIN02: fenced Drained keeps install charge"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::drained::drained_handoff_has_original_pins_and_no_content_guards",
+      "reason": "changed assertion C2_DRAIN01: install charge after Drain, released after Commit"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::drained::drained_normal_unfinished_drop_fences_before_pin_return",
+      "reason": "changed assertion C2_DRAIN03: unfinished Drained Drop after install growth keeps charge under fence"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::source_entry::drain_waits_for_entry_before_source_charge",
+      "reason": "changed C2_ENTRY01: read paused before source reserve in Pending (writer pins4 only), resumed inside Drain"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::source_entry::failed_source_reservation_returns_progress_under_fence",
+      "reason": "changed C2_ENTRY02: fenced reservation in Drain returns progress without charge"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::source_entry::resident_drain_waits_before_source_charge",
+      "reason": "changed C2_RESIDENT_ENTRY01: resident class variant of entry before source"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::source_entry::resident_failed_source_returns_progress",
+      "reason": "changed C2_RESIDENT_ENTRY02: fenced resident variant"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::source_return::drain_waits_after_refs_until_source_return",
+      "reason": "changed C2_RETURN01: read paused before source return in Pending (writer pins4 only); Drain waits; charges summed"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::source_return::fenced_source_return_still_cleans_progress",
+      "reason": "changed C2_RETURN02: fenced source return preserves read charge beside Pending writer"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::source_return::resident_drain_waits_until_source_return",
+      "reason": "changed C2_RESIDENT_RETURN01: resident return variant"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::source_return::resident_fenced_return_preserves_source",
+      "reason": "changed C2_RESIDENT_RETURN02: fenced resident return variant"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::terminal::physical_busy_restores_only_the_rejected_stage",
+      "reason": "changed assertions: actual Unchanged Busy after reservation returns the stage charge and reopens reads"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::visibility_gap::catalog_mt01_q0_publication_gap",
+      "reason": "changed commit_catalog: Full read in the publication gap beside the publish window"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::recovery_source_memory",
+      "reason": "recovery census reuses the changed retention census (split ports)"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::recovery_source_native",
+      "reason": "recovery census reuses the changed retention census for native types"
+    },
+    {
+      "selector": "transaction::concurrency::read::tests::terminal_gate_closes_new_reads_and_waits_for_admitted_reads",
+      "reason": "new core gate: InstallationPending for new reads, bounded wait for the admitted read, reopen"
+    },
+    {
+      "selector": "transaction::concurrency::read::tests::terminal_gate_rejections_drop_and_fence_cleanup",
+      "reason": "new core gate: own read Busy, maintenance/foreign InvalidRole, one gate, Drop reopen, fence during wait clears gate"
+    },
+    {
+      "selector": "transaction::concurrency::read::tests::owner_drop_with_live_terminal_gate_fences_and_keeps_slot",
+      "reason": "new Owner::drop branch: a live gate on its own slot fences and keeps the slot; the exact gate is still cleared"
+    }
+  ],
+  "not_selected": "Unchanged lower DEV0/1/2 regressions, workspace, wrappers, Row codec/ledger, native process cuts and other commit_catalog callers whose path and assertions are unchanged (create/statement/resident/transactions/issued/visibility MT02/MF04/MF05/MF07) are NOT_RUN by the changed-code rule. The env-gated census cases catalog_source_tests::catalog_source_{memory,native} and plan4_retention::tests::retention_source_{memory,native} are excluded: a dev run on this source passed their cap/fits assertions but failed older exact literals unrelated to this diff (visibility.backing==8192 vs 9792 = +1600 epoch backing; metadata==peak+36*slot vs +63104 = visibility8192+isolation/epoch5760+long credit49152 from earlier C1 steps). Those stale expectations are a separate follow-up and are not reclassified here. Clippy/fmt here are package checks, not the push gate.",
+  "split_calculation_review": {
+    "allowance": "unchanged SPLIT_CALCULATION_BYTES: 24 nested helpers x 128 usize values",
+    "new_graph": [
+      "CatalogCommitCharges::new",
+      "create_pair::catalog_commit_writer_windows",
+      "catalog_commit::source_phases | pending_window_parts | publish_window_source_bytes",
+      "terminal::catalog_wait_source_bytes | dirty_frame::commit_drain_call_source_bytes | epochs::publication_source_bytes",
+      "dirty_frame::pin_release_source_bytes",
+      "retention_residency::entry_source_phases",
+      "registration::retention_source_observation",
+      "std::mem::size_of"
+    ],
+    "deepest": "CatalogCommitCharges::new -> writer_window_sources -> source_phases -> history::runtime/visibility/terminal/dirty_frame/control helpers already in the reviewed reader graph (<=13 below their entry) -> at most 16 levels",
+    "packets": "returned packets are [usize;4] windows, CatalogCommitSourcePhases(4), CommitSourcePhases(5), (usize,usize,usize) and [usize;3]; each new helper has fewer than 20 named numeric locals; nothing is constructed except usize arithmetic and size_of",
+    "split_charge": "split_source_bytes counts 3x CatalogCommitCharges in compute and one in the returned tuple"
+  }
+}

@@ -3,7 +3,7 @@ use super::*;
 use crate::storage::disk::{DurableCommit, InstalledCommit, StagedCommit, UnstagedCommit};
 use std::time::Duration;
 
-const FENCE_RECHECK: Duration = Duration::from_millis(10);
+pub(super) const FENCE_RECHECK: Duration = Duration::from_millis(10);
 
 /// Identity only: its fields and constructors are confined to the original core.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]

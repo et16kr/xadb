@@ -80,6 +80,53 @@ impl<'s, 'c, W: WriterNamespace> RetentionWriter<'_, '_, 's, 'c, '_, '_, '_, '_,
                 RetentionCause::BindingMismatch,
             ));
         }
+        // Terminal progress closes new reads and waits only for admitted ones
+        // before any source guard, pin or effect. It holds no page guard,
+        // version gate or ledger lock while waiting; readers never wait on it.
+        let mut gate = Some(
+            owner
+                .close_reads_for_terminal(self.pool.bound_core())
+                .map_err(|error| RetentionError {
+                    phase: RetentionPhase::Prepare,
+                    cause: RetentionCause::Concurrency(error),
+                    effect: error.effect,
+                })?,
+        );
+        let reopen =
+            |gate: &mut Option<crate::transaction::concurrency::TerminalReadGate<'c, 's>>| {
+                gate.take().map_or(Ok(()), |gate| {
+                    gate.reopen_checked().map_err(|error| RetentionError {
+                        phase: RetentionPhase::Census,
+                        cause: RetentionCause::Concurrency(error),
+                        effect: error.effect,
+                    })
+                })
+            };
+        let mut source = match source::OperationSourceAdmission::catalog_commit(
+            self.isolation,
+            &self.commit_charges,
+            gate.as_ref().expect("closed read gate"),
+        ) {
+            Ok(source) => source,
+            // An unreserved Commit still reopens reads with a checked cleanup.
+            Err(error) => return merge(Err(RetentionError::from(error)), reopen(&mut gate)),
+        };
+        let result = self.commit_admitted(owner, prepared, visibility, &mut source, &mut gate);
+        // Return the source charge before reopening reads. An original Fatal
+        // wins; otherwise a cleanup failure replaces success or Unchanged.
+        let source_cleanup = source.finish_checked().map_err(RetentionError::from);
+        merge(merge(result, source_cleanup), reopen(&mut gate))
+    }
+
+    fn commit_admitted(
+        &mut self,
+        owner: &mut Owner<'c, 's>,
+        prepared: PreparedCatalog<'_, 'c, 's>,
+        visibility: &visibility::BoundVisibility<'_, 'c, 's>,
+        source: &mut source::OperationSourceAdmission<'_, '_, 'c, 's>,
+        gate: &mut Option<crate::transaction::concurrency::TerminalReadGate<'c, 's>>,
+    ) -> Result<Observation> {
+        let storage = self.storage;
         let prefix = storage
             .wal()
             .prefix()
@@ -99,10 +146,6 @@ impl<'s, 'c, W: WriterNamespace> RetentionWriter<'_, '_, 's, 'c, '_, '_, '_, '_,
                 effect: e.effect,
                 cause: RetentionCause::Visibility(e),
             })?;
-        if crate::transaction::concurrency::core_source_bytes() + source_bytes() > 65_536 {
-            return Err(unchanged(RetentionPhase::Prepare, RetentionCause::Capacity));
-        }
-
         let (
             prepared,
             PendingCatalog {
@@ -112,6 +155,27 @@ impl<'s, 'c, W: WriterNamespace> RetentionWriter<'_, '_, 's, 'c, '_, '_, '_, '_,
                 requirement,
             },
         ) = stage_catalog(storage, self.pool, self.control, owner, prepared)?;
+        // Shrink to the fixed Pending window before readers may enter again.
+        // Both steps follow the WAL stage, so any failure is fatal.
+        source
+            .enter_commit_pending(&self.commit_charges)
+            .map_err(|e| {
+                fatal(
+                    storage,
+                    RetentionPhase::Stage,
+                    RetentionError::from(e).cause,
+                )
+            })?;
+        gate.take()
+            .expect("closed read gate")
+            .reopen_checked()
+            .map_err(|e| {
+                fatal(
+                    storage,
+                    RetentionPhase::Stage,
+                    RetentionCause::Concurrency(e),
+                )
+            })?;
         #[cfg(test)]
         catalog_hook(prepared.core(), CatalogPoint::Pending);
         let durable = TerminalWal { wal: storage.wal() }
@@ -122,6 +186,17 @@ impl<'s, 'c, W: WriterNamespace> RetentionWriter<'_, '_, 's, 'c, '_, '_, '_, '_,
         let drained = pending
             .drain_durable(&durable)
             .map_err(|e| fatal(storage, RetentionPhase::Install, RetentionCause::Frame(e)))?;
+        // Drain excluded new readers and waited for admitted ones, which return
+        // their loans first; growing into the install window cannot wait.
+        source
+            .enter_commit_install(&self.commit_charges, &drained)
+            .map_err(|e| {
+                fatal(
+                    storage,
+                    RetentionPhase::Install,
+                    RetentionError::from(e).cause,
+                )
+            })?;
         #[cfg(test)]
         {
             catalog_hook(prepared.core(), CatalogPoint::DrainedBeforeResume);
@@ -212,6 +287,18 @@ impl<'s, 'c, W: WriterNamespace> RetentionWriter<'_, '_, 's, 'c, '_, '_, '_, '_,
         install
             .finish(installed)
             .map_err(|e| fatal(storage, RetentionPhase::Install, RetentionCause::Frame(e)))?;
+        // finish reopened reads. Shrink to the publication window; a read
+        // admitted before this sees the install charge and may get Unchanged
+        // Capacity, never a wait.
+        source
+            .enter_commit_publish(&self.commit_charges)
+            .map_err(|e| {
+                fatal(
+                    storage,
+                    RetentionPhase::Install,
+                    RetentionError::from(e).cause,
+                )
+            })?;
         #[cfg(test)]
         catalog_hook(prepared.core(), CatalogPoint::BeforePublish);
         visibility
@@ -413,6 +500,94 @@ fn commit_q(
 /// operation class. No stack/RSS or concurrent admission claim.
 pub(in super::super) fn source_bytes() -> usize {
     source_phases().peak()
+}
+
+/// The writer's admission windows [stage, Pending, install, publish],
+/// excluding the shared retained owner/core/ports and the admission/gate
+/// carriers that source charges in every window. stage runs with new reads
+/// closed; Pending may overlap readers; install begins after the original
+/// Drain; publish follows install.finish, where reads may overlap again.
+pub(in super::super) fn writer_window_sources() -> [usize; 4] {
+    let phases = source_phases();
+    [
+        phases.preflight.max(phases.stage),
+        pending_window_source_bytes(),
+        phases.install,
+        publish_window_source_bytes(),
+    ]
+}
+
+/// After install.finish returned content, version/admission and pins: the
+/// completion receipts, epochs and the Q publication with its conversion.
+fn publish_window_source_bytes() -> usize {
+    use std::mem::size_of;
+    let parent = size_of::<CatalogCommitImage<'_, '_, '_>>()
+        + visibility::epoch_commit_carriers()
+        + size_of::<crate::storage::wal_io::WalPrefix>()
+        + size_of::<WalRequirement<'_>>()
+        + size_of::<InstallationKey>()
+        + size_of::<crate::storage::session_fence::UnwindFence<'_>>()
+        + size_of::<u64>() // q
+        + size_of::<CatalogCommitInstalled<'_, '_>>()
+        + size_of::<InstalledCommit<'_, '_>>()
+        + size_of::<DurableWal<'_>>()
+        + 8 * size_of::<&()>() // self, owner, storage, visibility, source, gate and call borrows
+        + 2 * size_of::<Result<Observation>>()
+        + 2 * size_of::<Result<()>>()
+        + 2 * size_of::<RetentionError>();
+    // The frontier argument and the publication helper's packet, then the
+    // mapped Visibility error; control assignment moves the DurableWal.
+    let publish = size_of::<InstalledFrontier<'_, '_>>()
+        + visibility::epoch_publication_source_bytes()
+        + size_of::<visibility::VisibilityError>()
+        + size_of::<RetentionCause>()
+        + size_of::<RetentionError>()
+        + 4 * size_of::<&()>();
+    parent + publish
+}
+
+/// From stage return through the consuming Drain. Prepared's stage arrays and
+/// the stage tuple have ended and no completion value exists yet. The Drain
+/// term subtracts the Pending carrier its call closure already counts.
+fn pending_window_source_bytes() -> usize {
+    let [parent, wait, drain] = pending_window_parts();
+    parent + wait.max(drain)
+}
+
+/// [parent, WAL wait call, Drain call] of the Pending window.
+pub(in super::super) fn pending_window_parts() -> [usize; 3] {
+    use std::mem::size_of;
+    let parent = size_of::<CatalogCommitImage<'_, '_, '_>>()
+        + visibility::epoch_commit_carriers()
+        + size_of::<crate::storage::wal_io::WalPrefix>()
+        + size_of::<WalRequirement<'_>>()
+        + size_of::<InstallationKey>()
+        + size_of::<crate::storage::session_fence::UnwindFence<'_>>()
+        + size_of::<u64>() // q, prepared before stage
+        + 8 * size_of::<&()>() // self, owner, storage, visibility, source, gate and call borrows
+        + 2 * size_of::<Result<Observation>>() // inner and outer returns
+        + 2 * size_of::<RetentionError>()
+        + size_of::<dirty_frame::PendingCommitTargets<'_, '_, '_, '_, '_, '_, TARGETS>>();
+    // The WAL wait call alone, then the mapped handoff extracting the
+    // DurableCommit and converting an attempted-effect error.
+    let wait = terminal::catalog_wait_source_bytes()
+        + 2 * size_of::<crate::storage::wal_io::Result<DurableCommit<'_, '_>>>()
+        + size_of::<Result<DurableCommit<'_, '_>>>()
+        + size_of::<crate::storage::wal_io::WalIoError>()
+        + size_of::<RetentionCause>()
+        + size_of::<RetentionError>()
+        + 4 * size_of::<&()>();
+    // The consuming Drain moves Pending out of the parent and borrows the
+    // extracted DurableCommit; its closure includes Pending's failure Drop.
+    let moved = size_of::<dirty_frame::PendingCommitTargets<'_, '_, '_, '_, '_, '_, TARGETS>>();
+    let drain = size_of::<DurableCommit<'_, '_>>()
+        + dirty_frame::commit_drain_call_source_bytes::<TARGETS>()
+        + size_of::<Result<dirty_frame::DrainedCommitTargets<'_, '_, '_, '_, '_, '_, TARGETS>>>()
+        + size_of::<RetentionCause>()
+        + size_of::<RetentionError>()
+        + 4 * size_of::<&()>()
+        - moved;
+    [parent, wait, drain]
 }
 
 /// Consecutive closures of commit_catalog; this is not concurrent admission.
@@ -686,7 +861,9 @@ mod tests {
             "C2_COMMIT_IMAGE_BOUND {kind} shared={shared} live={live:?} recovered={recovered:?}"
         );
         assert!(shared + phases.peak() <= 65_536);
-        assert_eq!(live.catalog_commit, phases.peak());
+        // The census uses the largest admitted writer window with its carriers.
+        assert_eq!(live.catalog_commit, source::commit_source_peak());
+        assert!(live.catalog_commit >= phases.peak());
         assert!(live.peak <= 65_536 && live.metadata <= 196_608 && live.whole <= 262_144);
         assert!(
             recovered.peak <= 65_536 && recovered.metadata <= 196_608 && recovered.whole <= 262_144

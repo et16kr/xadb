@@ -53,6 +53,7 @@ fn handoff(fenced: bool, unfinished_drop: bool) {
                     );
                     {
                         let (mut writer, reader, maintenance) = live.split();
+                        let install = writer.catalog_test_commit_charges()[3] as u64;
                         let pool = maintenance.catalog_test_pool();
                         let reader_ref = &reader;
                         let oracle_ref = &oracle;
@@ -72,7 +73,8 @@ fn handoff(fenced: bool, unfinished_drop: bool) {
                                 assert!(!fence.is_fenced());
                                 assert!(core.diagnostic_version_busy());
                                 assert_eq!(raw::claim_state(pool).1, 4);
-                                assert_eq!(reader_ref.catalog_test_source_used(), 0);
+                                // Only the writer's install window is charged after Drain.
+                                assert_eq!(reader_ref.catalog_test_source_used(), install);
                                 for (index, role) in indices.into_iter().zip([1, 2, 4]) {
                                     assert!(!probe::content_busy(pool, index));
                                     let mut bytes = boxed::<PAGE_BYTES>();
@@ -121,7 +123,16 @@ fn handoff(fenced: bool, unfinished_drop: bool) {
                             }
                             controller.join().unwrap();
                             assert_eq!(writer.catalog_test_physical_pins(), 0);
-                            assert_eq!(reader_ref.catalog_test_source_used(), 0);
+                            // A fenced Commit keeps its install charge; capacity is never
+                            // manufactured under the fence.
+                            assert_eq!(
+                                reader_ref.catalog_test_source_used(),
+                                if fenced || unfinished_drop {
+                                    install
+                                } else {
+                                    0
+                                }
+                            );
                             assert!(!core.diagnostic_version_busy());
                         });
                     }

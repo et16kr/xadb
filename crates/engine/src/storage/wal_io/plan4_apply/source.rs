@@ -1,8 +1,9 @@
 //! Short source reservations in the original isolation ledger. Full and resident
-//! Catalog lookup currently participate; unconverted writer/reader entries
-//! are not covered by this partial supply's aggregate bound.
+//! Catalog lookup and the Catalog Commit writer currently participate;
+//! unconverted writer/reader entries are not covered by this aggregate bound.
 use super::*;
 use crate::storage::session_fence::SessionFence;
+use crate::transaction::concurrency::{TerminalReadGate, terminal_gate_source_bytes};
 use std::{mem::size_of, sync::atomic::Ordering};
 
 const SHORT_BYTES: u64 = 65_536;
@@ -12,6 +13,9 @@ const USED: std::ops::Range<usize> = 24..32;
 pub(super) enum OperationClass {
     CatalogFull,
     CatalogResident,
+    /// Terminal progress. Its charge changes only at the read-gate and Drain
+    /// boundaries, never while an admitted reader could hold a loan.
+    CommitProgress,
 }
 
 /// Fixed type-derived costs, computed once while DiskSession is exclusively
@@ -34,6 +38,62 @@ impl CatalogSourceCharges {
             resident: read::resident_lookup_source_bytes::<W>(),
         }
     }
+}
+
+/// Fixed Catalog Commit charges, computed once during split like the reader
+/// charges. stage runs with new reads closed and admitted reads returned;
+/// pending may overlap readers; install starts after the original Drain;
+/// publish follows install.finish, where reads may overlap again.
+pub(super) struct CatalogCommitCharges {
+    shared: usize,
+    stage: usize,
+    pending: usize,
+    install: usize,
+    publish: usize,
+}
+impl CatalogCommitCharges {
+    #[cfg(test)]
+    pub(super) fn observations(&self) -> [usize; 5] {
+        [
+            self.shared,
+            self.stage,
+            self.pending,
+            self.install,
+            self.publish,
+        ]
+    }
+    pub(super) fn new<W: WriterNamespace>() -> Self {
+        let [stage, pending, install, publish] = create_pair::catalog_commit_writer_windows();
+        let carriers = commit_carrier_bytes();
+        Self {
+            shared: shared_bytes::<W>(),
+            stage: stage + carriers,
+            pending: pending + carriers,
+            install: install + carriers,
+            publish: publish + carriers,
+        }
+    }
+}
+
+/// The largest writer window, for the session's single-operation census.
+pub(super) fn commit_source_peak() -> usize {
+    let [stage, pending, install, publish] = create_pair::catalog_commit_writer_windows();
+    stage.max(pending).max(install).max(publish) + commit_carrier_bytes()
+}
+
+/// The retained admission and gate, their Results and caller conversions, and
+/// one ledger transition/release or gate reopen closure, including the core
+/// state validation the reopen performs. Charged in every window. The gate's
+/// close/wait precedes reservation like a reader's entry.
+fn commit_carrier_bytes() -> usize {
+    size_of::<OperationSourceAdmission<'_, '_, '_, '_>>()
+        + 2 * size_of::<SourceResult<OperationSourceAdmission<'_, '_, '_, '_>>>()
+        + size_of::<Option<TerminalReadGate<'_, '_>>>()
+        + 2 * size_of::<SourceResult<()>>()
+        + 2 * size_of::<SourceFailure>()
+        + 2 * size_of::<RetentionError>()
+        + 4 * size_of::<&()>()
+        + leaf_source_bytes().max(terminal_gate_source_bytes())
 }
 
 /// A non-Clone accounting loan, never a page, snapshot or WAL authority.
@@ -118,8 +178,107 @@ impl<'b, 'a, 'c, 's> OperationSourceAdmission<'b, 'a, 'c, 's> {
         let charge = match class {
             OperationClass::CatalogFull => charges.full,
             OperationClass::CatalogResident => charges.resident,
+            // Only catalog_commit, holding the read gate, admits a writer;
+            // reserve_class rejects the zero charge as a fenced Invariant.
+            OperationClass::CommitProgress => 0,
         };
         Self::reserve_class(ledger, charges.shared, charge, class)
+    }
+
+    /// Reserve the stage window after the gate has closed new reads and every
+    /// admitted read returned its loan. No wait: insufficient space can only
+    /// come from an unconverted holder and stays Unchanged Capacity.
+    pub(super) fn catalog_commit(
+        ledger: &'b Mutex<IsolationLedger<'a, 'c, 's>>,
+        charges: &CatalogCommitCharges,
+        gate: &TerminalReadGate<'_, '_>,
+    ) -> SourceResult<Self> {
+        {
+            let state = ledger
+                .lock()
+                .map_err(|poison| failed(poison.into_inner().fence, SourceCause::Poisoned))?;
+            if !gate.belongs_to(state.core) {
+                return Err(failed(state.fence, SourceCause::Invariant));
+            }
+        }
+        // Window order is what makes every later boundary shrink-only or a
+        // no-wait growth under Drain. A violated census is refused before any
+        // effect instead of fencing after the WAL stage.
+        let ordered = charges.pending <= charges.stage
+            && charges.publish <= charges.install
+            && [charges.stage, charges.install]
+                .iter()
+                .all(|charge| charges.shared.saturating_add(*charge) <= SHORT_BYTES as usize);
+        if !ordered {
+            return Err(capacity());
+        }
+        Self::reserve_class(
+            ledger,
+            charges.shared,
+            charges.stage,
+            OperationClass::CommitProgress,
+        )
+    }
+
+    /// After stage returned Pending and before reads reopen. Shrink only.
+    pub(super) fn enter_commit_pending(
+        &mut self,
+        charges: &CatalogCommitCharges,
+    ) -> SourceResult<()> {
+        self.transition(charges.shared, charges.stage, charges.pending, false)
+    }
+
+    /// After the original Drain: no admitted reader holds a loan and new reads
+    /// are rejected, so growth never waits. Exceeding the limit is a broken
+    /// accounting invariant, not Capacity.
+    pub(super) fn enter_commit_install<const N: usize>(
+        &mut self,
+        charges: &CatalogCommitCharges,
+        _drained: &dirty_frame::DrainedCommitTargets<'_, '_, '_, '_, '_, '_, N>,
+    ) -> SourceResult<()> {
+        self.transition(charges.shared, charges.pending, charges.install, true)
+    }
+
+    /// After install.finish reopened reads, before the Q publication. Shrink only.
+    pub(super) fn enter_commit_publish(
+        &mut self,
+        charges: &CatalogCommitCharges,
+    ) -> SourceResult<()> {
+        self.transition(charges.shared, charges.install, charges.publish, false)
+    }
+
+    fn transition(
+        &mut self,
+        shared: usize,
+        from: usize,
+        to: usize,
+        may_grow: bool,
+    ) -> SourceResult<()> {
+        let mut state = self
+            .ledger
+            .lock()
+            .map_err(|poison| failed(poison.into_inner().fence, SourceCause::Poisoned))?;
+        let used = check(&state)?;
+        if !self.active
+            || !matches!(self.class, OperationClass::CommitProgress)
+            || u64::from(self.charge) != from as u64
+            || to == 0
+            || (!may_grow && to > from)
+        {
+            return Err(failed(state.fence, SourceCause::Invariant));
+        }
+        let next = SHORT_BYTES
+            .checked_sub(shared as u64)
+            .and_then(|available| {
+                used.checked_sub(from as u64)
+                    .and_then(|rest| rest.checked_add(to as u64))
+                    .filter(|next| *next <= available)
+            })
+            .ok_or_else(|| failed(state.fence, SourceCause::Invariant))?;
+        state.bytes[USED].copy_from_slice(&next.to_le_bytes());
+        // checked next <= available <= SHORT_BYTES proves this conversion.
+        self.charge = to as u32;
+        Ok(())
     }
 
     pub(super) fn resident(&self) -> bool {
@@ -184,7 +343,9 @@ impl<'b, 'a, 'c, 's> OperationSourceAdmission<'b, 'a, 'c, 's> {
             .map_err(|poison| failed(poison.into_inner().fence, SourceCause::Poisoned))?;
         let used = check(&state)?;
         match self.class {
-            OperationClass::CatalogFull | OperationClass::CatalogResident
+            OperationClass::CatalogFull
+            | OperationClass::CatalogResident
+            | OperationClass::CommitProgress
                 if self.charge != 0 && u64::from(self.charge) <= SHORT_BYTES => {}
             _ => return Err(failed(state.fence, SourceCause::Invariant)),
         }
@@ -238,8 +399,12 @@ pub(super) const SPLIT_CALCULATION_BYTES: usize = 24 * 128 * size_of::<usize>();
 /// The charge computation completes before any port is constructed. In the
 /// return phase the tuple and all extracted ports are conservatively counted.
 pub(super) fn split_source_bytes<W: WriterNamespace>() -> usize {
-    let compute = SPLIT_CALCULATION_BYTES + 3 * size_of::<CatalogSourceCharges>();
-    let returning = 2 * split_port_bytes::<W>() + size_of::<CatalogSourceCharges>();
+    let compute = SPLIT_CALCULATION_BYTES
+        + 3 * size_of::<CatalogSourceCharges>()
+        + 3 * size_of::<CatalogCommitCharges>();
+    let returning = 2 * split_port_bytes::<W>()
+        + size_of::<CatalogSourceCharges>()
+        + size_of::<CatalogCommitCharges>();
     4 * size_of::<&()>() + compute.max(returning)
 }
 
@@ -290,11 +455,40 @@ impl<W: WriterNamespace> ReadPort<'_, '_, '_, '_, '_, '_, '_, '_, W> {
     }
 
     pub(in crate::storage) fn catalog_test_source_used(&self) -> u64 {
-        let state = self
-            .isolation
-            .lock()
-            .unwrap_or_else(|poison| poison.into_inner());
-        u64::from_le_bytes(state.bytes[USED].try_into().unwrap())
+        test_source_used(self.isolation)
+    }
+
+    /// Hold one plain loan in the original ledger while `run` executes.
+    pub(in crate::storage) fn catalog_test_with_held_source<T>(
+        &self,
+        bytes: usize,
+        run: impl FnOnce() -> T,
+    ) -> T {
+        let loan =
+            OperationSourceAdmission::reserve(self.isolation, self.source_charges.shared, bytes)
+                .unwrap();
+        let result = run();
+        drop(loan);
+        result
+    }
+}
+
+#[cfg(test)]
+fn test_source_used(isolation: &Mutex<IsolationLedger<'_, '_, '_>>) -> u64 {
+    let state = isolation
+        .lock()
+        .unwrap_or_else(|poison| poison.into_inner());
+    u64::from_le_bytes(state.bytes[USED].try_into().unwrap())
+}
+
+#[cfg(test)]
+impl<W: WriterNamespace> MutationPort<'_, '_, '_, '_, '_, '_, '_, '_, '_, W> {
+    pub(in crate::storage) fn catalog_test_commit_charges(&self) -> [usize; 5] {
+        self.commit_charges.observations()
+    }
+
+    pub(in crate::storage) fn catalog_test_source_used(&self) -> u64 {
+        test_source_used(self.isolation)
     }
 }
 
