@@ -4,6 +4,8 @@ use super::*;
 
 #[path = "tx_pair_existing_tests.rs"]
 mod existing;
+#[path = "tx_pair_shared_tests.rs"]
+mod shared;
 use crate::storage::page_io::test_support::expected;
 use crate::transaction::TxnId;
 use foundation::identity::{Generation, ObjectId};
@@ -39,7 +41,17 @@ fn fixture(
         &TxPairAuthority<'i, 'c, 's>,
     ),
 ) {
-    let mut bytes = vec![[0xa7; PAGE_BYTES]; 9];
+    fixture_slots(9, run);
+}
+fn fixture_slots(
+    slots: usize,
+    run: impl for<'c, 's, 'p, 'd, 'i> FnOnce(
+        &mut SharedPool<'c, 's, 'p, 'd>,
+        &TxPairAuthority<'i, 'c, 's>,
+    ),
+) {
+    assert!((9..=10).contains(&slots));
+    let mut bytes = vec![[0xa7; PAGE_BYTES]; slots];
     let mut frames: Vec<_> = bytes.iter_mut().map(DirtyFrame::new).collect();
     frames[0].register(request(0)).unwrap();
     let fence = SessionFence::new();
@@ -62,6 +74,15 @@ fn fixture(
                 index,
                 Registration {
                     request: target,
+                    generation: 1,
+                },
+            );
+        }
+        if slots == 10 {
+            directory.replace_retention(
+                9,
+                Registration {
+                    request: request(5),
                     generation: 1,
                 },
             );

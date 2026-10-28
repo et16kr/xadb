@@ -39,6 +39,11 @@ pub(super) struct InitClaimSlot {
     pub(super) initializer_pins_held: bool,
 }
 impl InitClaimSlot {
+    /// Ordinary callers cannot acquire a new pin/load/capture while CREATE
+    /// owns the original pair claim. System INIT keeps its existing policy.
+    pub(super) fn blocks_ordinary(&self) -> bool {
+        matches!(&self.identity, InitClaimIdentity::TxPair(_))
+    }
     #[cfg(test)]
     pub(super) fn diagnostic_registration(&self, index: usize) -> Option<Registration> {
         match &self.identity {
@@ -88,6 +93,10 @@ impl InitClaimSlot {
             }
     }
 }
+
+/// Borrowed claim/Option and predicate locals; no claim record is copied.
+pub(super) const ORDINARY_PAIR_GATE_BYTES: usize =
+    4 * std::mem::size_of::<&InitClaimSlot>() + 2 * std::mem::size_of::<bool>();
 
 impl InitClaimRecord {
     fn from_authority(authority: &InitAuthority<'_, '_>) -> Self {
@@ -1057,6 +1066,9 @@ pub(in crate::storage) mod test_support {
         PairFirstRegistered,
         PairBothRegisteredBeforeGate,
         PairGatePublished,
+        LoadResidentObserved,
+        LoadCleanSelected,
+        LoadFlushSelected,
     }
     pub(in crate::storage) fn stage_owned(pool: &SharedPool<'_, '_, '_, '_>) {
         hit(pool, InitPoint::StageOwned);
@@ -1309,6 +1321,41 @@ pub(in crate::storage) mod test_support {
             state.directory.pair_generations(),
             state.init_claim.is_some(),
             state.total,
+        )
+    }
+
+    /// Only a pool arbitration fixture. This never stages Reserve or issues a
+    /// durable requirement; dropping its unresolved key intentionally fences.
+    pub(in crate::storage) fn close_pair_metadata_fixture<'c, 's>(
+        pool: &SharedPool<'c, 's, '_, '_>,
+        actor: crate::storage::transaction_record::TxnRef,
+        existing: &[TargetRequest; 7],
+        pair: &[TargetRequest; 2],
+        selected: &CatalogPairCandidates<'_, 'c, 's>,
+    ) -> Result<TxPairClaimKey<'c, 's>> {
+        let authority = crate::storage::wal_io::TxPairAuthority::metadata_fixture(
+            pool.core,
+            pool.binding,
+            pool.fence,
+            actor,
+            PageLsn(7),
+            existing,
+            pair,
+        );
+        pool.try_prepare_tx_pair(&authority, selected)
+    }
+
+    pub(in crate::storage) fn pair_gate_counters(
+        pool: &SharedPool<'_, '_, '_, '_>,
+    ) -> ([u16; MAX_FRAMES], u16, u64, u64, bool, bool) {
+        let state = pool.registry.lock().unwrap();
+        (
+            state.counts,
+            state.total,
+            state.last_attempt,
+            state.last_load_attempt,
+            state.load.is_some(),
+            state.claim.is_some(),
         )
     }
 

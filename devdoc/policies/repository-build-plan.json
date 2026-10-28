@@ -8196,5 +8196,54 @@
     "reviewed_rust_files": 9,
     "reviewed_fixture_files": 6,
     "reviewed_document_files": 6
+  },
+  "dev3_module_c3_pair_shared": {
+    "status": "LOCAL_VERIFIED_LIMITED_D1_D2",
+    "baseline_commit": "c845ea7",
+    "owner_contract": "dev3-module-boundaries",
+    "contract_anchor": "catalog-pair-shared",
+    "evidence": "module-independence-survey-20261026",
+    "evidence_anchor": "c3-pair-shared",
+    "implemented_paths": [
+      "crates/engine/src/storage/dirty_init/tx_pair_shared_tests.rs",
+      "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/pair_shared.rs",
+      "tests/fixtures/dev3-module-c3/pair-shared"
+    ],
+    "compiler_tests": 4,
+    "runtime_tests": 12,
+    "native_case": "N01",
+    "shared_pool": true,
+    "shared_admission": false,
+    "whole_m4_m5_complete": false,
+    "evidence_artifact": "artifacts/module-c3-pair-shared-20261028",
+    "source_specific_results": {
+      "r1": {
+        "status": "PASS",
+        "source_sha256": "68c9d3de59b39d1e0228d37687f3ecd722ff998354e217a28c041d1cf54bae26",
+        "elf_sha256": "2d608fe6986861a29aa2eeb7f24d84df40f23016e86b2e6cf2a00a20ae013fa0",
+        "result_sha256": "bb15ccb21a87843c73dcecb8e79ac4aaaed658d16f58bab5d3ac16e9e9dc4ab2"
+      }
+    },
+    "runtime_pass_original_source": "r1",
+    "runtime_pass": 12,
+    "compiler_pass": 4,
+    "native_pass": {
+      "case": "N01",
+      "source": "r1",
+      "workers": 3,
+      "result_sha256": "0c80a88c520e7c762369828d32e80d3f17b9e4d48f0a99f2d42cf8a436bb31f1",
+      "admission_sha256": "d3acda3b705487fc851ff544943fce0b24c5b66b78992078a844028b9435d0a7"
+    },
+    "completed_case_repeats": 0,
+    "prior_evidence_preserved": true,
+    "heavy_artifacts_deleted": true,
+    "review_status": "ACCEPTED_LIMITED_D1_D2",
+    "review_required_fixes": 0,
+    "review_receipt": "artifacts/module-c3-pair-shared-20261028/review-final.json",
+    "review_sha256": "e4b933fbd250288aed69b35b307e01e2ab442cf12a3d82a1002a7e8a94c0f76c",
+    "reviewed_files": 22,
+    "reviewed_rust_files": 11,
+    "reviewed_fixture_files": 5,
+    "reviewed_document_files": 6
   }
 }

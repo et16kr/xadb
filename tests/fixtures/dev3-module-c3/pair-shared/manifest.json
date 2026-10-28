@@ -1,0 +1,108 @@
+{
+  "scope": "Shared original-pool CREATE close/finish/cancel and ordinary pin/load/capture arbitration; exclusive actual CREATE consumer remains, shared product admission and M4/M5 incomplete",
+  "baseline_commit": "c845ea7",
+  "budget": {
+    "total_seconds": 1800,
+    "compiler_seconds": 420,
+    "case_seconds": 45,
+    "native_admission_seconds": 600,
+    "output_bytes": 8388608,
+    "rust_min_stack": 33554432
+  },
+  "compiler_tests": [
+    {
+      "name": "positive",
+      "path": "positive.rs",
+      "bytes": 853,
+      "sha256": "faeb37f29a04c289df227334ae4a0278680f28938c5c6080eb5794a397681818",
+      "expected_code": null,
+      "primary_line": null
+    },
+    {
+      "name": "private_candidate",
+      "path": "private_candidate.rs",
+      "bytes": 348,
+      "sha256": "2f8bd0867f40988cb0d34451026d8cd3e535b0f35278e46fd2120721eb6b2cab",
+      "expected_code": "E0616",
+      "primary_line": 6
+    },
+    {
+      "name": "finish_key",
+      "path": "finish_key.rs",
+      "bytes": 612,
+      "sha256": "c043c2370803c5fda8ea46fce413228e1bc7d66b497b65f51914d199b14b3d1f",
+      "expected_code": "E0502",
+      "primary_line": 8
+    },
+    {
+      "name": "cancel_key",
+      "path": "cancel_key.rs",
+      "bytes": 623,
+      "sha256": "ced59418f983901e6a04925c2af52c564870202fafe96bbc45f7387e30dd6426",
+      "expected_code": "E0502",
+      "primary_line": 8
+    }
+  ],
+  "runtime_tests": [
+    {
+      "selector": "storage::dirty_frame::init::tx_pair::tests::shared::pair_shared_pin_and_load_first_preserve_candidates_and_quota",
+      "reason": "new shared close versus actual ordinary pin and installed LOAD; no generations/content/quota change"
+    },
+    {
+      "selector": "storage::dirty_frame::init::tx_pair::tests::shared::pair_shared_capture_claim_before_pin_blocks_close",
+      "reason": "original Claimed hook pauses before capture pin at total0; close Busy; then actual clean capture returns claim"
+    },
+    {
+      "selector": "storage::dirty_frame::init::tx_pair::tests::shared::pair_shared_close_first_gates_ordinary_entries_before_lookup_or_mutation",
+      "reason": "same-leaf close pause and shared pin contender; existing/fresh pins, resident/missing LOAD, preflight/capture Busy before lookup/attempt/copy; authenticated subset remains"
+    },
+    {
+      "selector": "storage::dirty_frame::init::tx_pair::tests::shared::pair_shared_selected_stamp_and_empty_generation_reject_aba",
+      "reason": "registered generation, same-generation stamp, empty-slot ABA reject Stale without mutation"
+    },
+    {
+      "selector": "storage::dirty_frame::init::tx_pair::tests::shared::pair_shared_candidate_origin_is_checked_without_consuming_generation",
+      "reason": "candidate binding and original pool anchor mismatch reject without mutation"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::create_pair::catalog_commit::tests::consumed_preparation_has_bounded_pending_image",
+      "reason": "changed full candidate/Results/gate source accounting under unchanged caps"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::pair_shared::pair_shared_actual_finish_and_cancel_reopen_ordinary_admission",
+      "reason": "new actual Forward and Cancel oracle; subsequent ordinary pin/resident LOAD/preflight/selected-DWB clean capture reentry"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::pair_atomic::rejected_reserve_returns_original_unstaged_pair",
+      "reason": "changed shared cancel leaf actual Unstaged return"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::lifecycle::mc04_reserved_drop_fence_fresh_recovery",
+      "reason": "changed shared close and original Drop/current-build recovery ordinary gate"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::status_init::tests::protocol::status_init_cf12_publication_and_concurrent_reader",
+      "reason": "modified ordinary pin gate must preserve original System INIT published-reader policy, only CF12-01",
+      "env": {
+        "XADB_STATUS_INIT_CASES": "CF12-01"
+      },
+      "required_marker": "XADB_STATUS_INIT_CASE CF12-01"
+    },
+    {
+      "selector": "storage::dirty_frame::init::tx_pair::tests::shared::pair_shared_close_after_load_observation_rechecks_resident_and_unrelated_victim",
+      "reason": "new guardless cuts after initial resident observation and clean scan; close wins before revalidation, unrelated tenth Job5 victim ensures global gate essential"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::pair_shared::pair_shared_close_after_actual_dirty_selection_blocks_flush_hint",
+      "reason": "actual Begin dirty Root/WAL requirement, no-clean scan cut then metadata-only close; post-scan FlushRequired gate Busy, no pin/attempt/I/O change; no synthetic durability authority"
+    }
+  ],
+  "native_tests": [
+    {
+      "case": "N01",
+      "reason": "changed actual shared pool close/finish and ordinary gate used by Reserve/Forward/current recovery, original three-PID9→19→25 once",
+      "wall_seconds": 30,
+      "controller": "scripts/dev3_catalog_native.py"
+    }
+  ]
+}

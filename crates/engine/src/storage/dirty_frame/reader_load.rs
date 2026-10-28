@@ -239,6 +239,13 @@ impl<'c, 's, 'p, 'd> SharedPool<'c, 's, 'p, 'd> {
         let mut resident = None;
         {
             let state = self.entry_registry()?;
+            if state
+                .init_claim
+                .as_ref()
+                .is_some_and(init::InitClaimSlot::blocks_ordinary)
+            {
+                return Err(unchanged(Cause::Busy));
+            }
             for index in 1..self.frames.len() {
                 if let Some(registration) = state.directory.resolve(self.frames, index)
                     && registration.request.same_address(&request)
@@ -269,11 +276,20 @@ impl<'c, 's, 'p, 'd> SharedPool<'c, 's, 'p, 'd> {
             }
         }
         if let Some(index) = resident {
+            #[cfg(test)]
+            init::test_support::hit(self, init::test_support::InitPoint::LoadResidentObserved);
             let content = self.frames[index]
                 .content
                 .try_read()
                 .map_err(|error| self.load_lock_error(error))?;
             let state = self.entry_registry()?;
+            if state
+                .init_claim
+                .as_ref()
+                .is_some_and(init::InitClaimSlot::blocks_ordinary)
+            {
+                return Err(unchanged(Cause::Busy));
+            }
             if state
                 .load
                 .as_ref()
@@ -309,6 +325,13 @@ impl<'c, 's, 'p, 'd> SharedPool<'c, 's, 'p, 'd> {
                 Err(TryLockError::Poisoned(_)) => return Err(self.fatal(Cause::Poisoned)),
             };
             let state = self.entry_registry()?;
+            if state
+                .init_claim
+                .as_ref()
+                .is_some_and(init::InitClaimSlot::blocks_ordinary)
+            {
+                return Err(unchanged(Cause::Busy));
+            }
             if state.load.is_some() {
                 return Err(unchanged(Cause::Busy));
             }
@@ -350,6 +373,21 @@ impl<'c, 's, 'p, 'd> SharedPool<'c, 's, 'p, 'd> {
             }
         }
         let Some(candidate) = clean else {
+            #[cfg(test)]
+            if dirty.is_some() {
+                init::test_support::hit(self, init::test_support::InitPoint::LoadFlushSelected);
+            }
+            // The scan's content/registry guards have ended. A dirty candidate
+            // is only a hint, but its return must still arbitrate with a pair
+            // close that won after the final scan leaf.
+            let state = self.entry_registry()?;
+            if state
+                .init_claim
+                .as_ref()
+                .is_some_and(init::InitClaimSlot::blocks_ordinary)
+            {
+                return Err(unchanged(Cause::Busy));
+            }
             return dirty.map(Selection::Flush).ok_or_else(|| {
                 unchanged(if exhausted && !blocked {
                     Cause::CounterExhausted
@@ -358,11 +396,20 @@ impl<'c, 's, 'p, 'd> SharedPool<'c, 's, 'p, 'd> {
                 })
             });
         };
+        #[cfg(test)]
+        init::test_support::hit(self, init::test_support::InitPoint::LoadCleanSelected);
         let content = self.frames[candidate.index]
             .content
             .try_read()
             .map_err(|e| self.load_lock_error(e))?;
         let mut state = self.entry_registry()?;
+        if state
+            .init_claim
+            .as_ref()
+            .is_some_and(init::InitClaimSlot::blocks_ordinary)
+        {
+            return Err(unchanged(Cause::Busy));
+        }
         if state.load.is_some()
             || !self.load_eligible(&state, candidate.index, request)
             || state.directory.address_present(request)
@@ -668,7 +715,8 @@ pub(in crate::storage) struct LoadSourceCensus {
 /// Nested figures exclude the retained pool and caller's active claim token.
 pub(in crate::storage) fn source_census() -> LoadSourceCensus {
     use std::mem::size_of;
-    let leaf = 2 * size_of::<Result<MutexGuard<'_, PoolRegistry<'_>>>>()
+    let leaf = init::ORDINARY_PAIR_GATE_BYTES
+        + 2 * size_of::<Result<MutexGuard<'_, PoolRegistry<'_>>>>()
         + size_of::<MutexGuard<'_, PoolRegistry<'_>>>()
         + 4 * size_of::<Result<()>>()
         + 2 * size_of::<Result<Registration>>()
@@ -689,6 +737,8 @@ pub(in crate::storage) fn source_census() -> LoadSourceCensus {
         identity: size_of::<LoadClaimIdentity<'_, '_>>(),
         token: size_of::<RetentionLoadClaim<'_, '_, '_, '_, '_, '_>>(),
         step_result: size_of::<Result<LoadClaimStep<'_, '_, '_, '_, '_, '_>>>(),
+        // The final no-clean return gate is sequential with candidate scans
+        // and final claim installation; leaf includes its guard and Results.
         selection_nested: leaf
             + content
             + 2 * size_of::<Result<Selection>>()

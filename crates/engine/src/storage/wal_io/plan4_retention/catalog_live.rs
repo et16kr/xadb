@@ -1047,12 +1047,9 @@ impl<'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
         let candidates = self
             .inner
             .pool
-            .retention_pair_candidates(&plan.pair, 1, &plan.existing)
+            .catalog_pair_candidates(&plan.pair, 1, &plan.existing)
             .map_err(|e| frame(RetentionPhase::Prepare, e))?;
-        if candidates
-            .iter()
-            .any(|candidate| candidate.kind == dirty_frame::StatusCandidateKind::Flush)
-        {
+        if candidates.requires_flush() {
             return Err(unchanged(RetentionPhase::Prepare, RetentionCause::Busy));
         }
         let reserve = PageLsn(prepared.payload.observation.header.lsn);
@@ -1068,7 +1065,7 @@ impl<'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
         let mut key = self
             .inner
             .pool
-            .prepare_tx_pair(&authority, candidates.map(|candidate| candidate.index))
+            .try_prepare_tx_pair(&authority, &candidates)
             .map_err(|e| frame(RetentionPhase::Prepare, e))?;
         if let Err(error) = self.apply_pair_catalog(&key, owner, prepared) {
             if error.effect == Effect::Unchanged && self.control.ledger.pending.is_none() {
@@ -2206,7 +2203,7 @@ pub(in super::super) fn catalog_live_source_bytes<W: WriterNamespace>() -> Catal
     let reserve_owned = size_of::<CreatePlan>()
         + size_of::<TxPairClaimKey<'_, '_>>()
         + size_of::<TxPairAuthority<'_, '_, '_>>()
-        + size_of::<[dirty_frame::StatusCandidate; 2]>()
+        + size_of::<dirty_frame::CatalogPairCandidates<'_, '_, '_>>()
         + scalar;
     let reserve = plan
         .max(reserve_prepare + prepare)

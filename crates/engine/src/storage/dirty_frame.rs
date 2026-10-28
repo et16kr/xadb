@@ -49,6 +49,7 @@ mod retention_residency;
 pub(in crate::storage) use plan4_residency::source_census as plan4_core_census;
 #[cfg(test)]
 pub(in crate::storage) use plan4_residency::test_support as plan4_load_test_support;
+pub(in crate::storage) use retention_residency::CatalogPairCandidates;
 pub(in crate::storage) use retention_residency::entry_source_phases as retention_entry_source_phases;
 pub(in crate::storage) use retention_residency::source_census as retention_core_census;
 pub(in crate::storage) use status_residency::StatusLoadSnapshot as Plan4LoadSnapshot;
@@ -728,6 +729,13 @@ impl<'c, 's, 'p, 'd> SharedPool<'c, 's, 'p, 'd> {
         let mut generations = [0; N];
         {
             let mut pins = self.entry_registry()?;
+            if pins
+                .init_claim
+                .as_ref()
+                .is_some_and(init::InitClaimSlot::blocks_ordinary)
+            {
+                return Err(unchanged(Cause::Busy));
+            }
             for (at, request) in requests.iter().enumerate() {
                 if pins
                     .load
@@ -1328,6 +1336,7 @@ pub(in crate::storage) const fn target_set_call_bytes<const N: usize>() -> usize
     let observation = InstallGrant::observation_source_bytes();
     let installer_leaf = if dpt > observation { dpt } else { observation };
     2 * result
+        + init::ORDINARY_PAIR_GATE_BYTES
         + largest
         + size_of::<PinSet<'_, '_, '_, '_, '_, N>>()
         + size_of::<PinnedTargets<'_, '_, '_, '_, '_, '_, N>>()

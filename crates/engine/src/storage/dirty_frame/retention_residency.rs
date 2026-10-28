@@ -7,6 +7,24 @@ use crate::storage::wal_io::{RetentionLoadPermit, WalRequirement};
 #[path = "retention_residency_tests.rs"]
 mod tests;
 
+/// Copy-only selection tied to the original pool and exact observed victim
+/// generations. It reserves no quota and owns no replacement permission.
+pub(in crate::storage) struct CatalogPairCandidates<'b, 'c, 's> {
+    pub(super) anchor: &'b u8,
+    pub(super) core: &'c PageConcurrency<'s>,
+    pub(super) binding: &'s AtomicU8,
+    pub(super) fence: &'s SessionFence,
+    pub(super) slots: [StatusCandidate; 2],
+    pub(super) next_generations: [u64; 2],
+}
+impl CatalogPairCandidates<'_, '_, '_> {
+    pub(in crate::storage) fn requires_flush(&self) -> bool {
+        self.slots
+            .iter()
+            .any(|slot| slot.kind == StatusCandidateKind::Flush)
+    }
+}
+
 /// Source phases of retention_payloads/check_retention_reader. The registry's
 /// guard does not escape either API; later Owner checking uses the core leaf.
 /// Columns are guardless waiting, guarded work, guardless returned values.
@@ -160,6 +178,13 @@ pub(in crate::storage) fn source_census() -> usize {
 pub(super) fn pair_source_census() -> usize {
     use std::mem::size_of;
     source_census()
+        + size_of::<CatalogPairCandidates<'_, '_, '_>>()
+        + 2 * size_of::<Result<CatalogPairCandidates<'_, '_, '_>>>()
+        + 2 * size_of::<RwLockReadGuard<'_, FrameContent<'_>>>()
+        + size_of::<MutexGuard<'_, PoolRegistry<'_>>>()
+        + size_of::<[u64; 2]>()
+        + size_of::<Result<DirtyObservation>>()
+        + 2 * size_of::<Option<FrameStamp>>()
         + size_of::<StatusCandidate>()
         + 2 * size_of::<Result<[StatusCandidate; 2]>>()
         + size_of::<[StatusCandidate; 2]>()
@@ -279,12 +304,12 @@ impl<'c, 's> SharedPool<'c, 's, '_, '_> {
 
     /// Copy-only selection for the actual two-page CREATE reservation. No
     /// directory generation is consumed until both selected clean slots close.
-    pub(in crate::storage) fn retention_pair_candidates(
-        &mut self,
+    pub(in crate::storage) fn catalog_pair_candidates(
+        &self,
         pair: &[TargetRequest; 2],
         start: usize,
         required: &[TargetRequest; 7],
-    ) -> Result<[StatusCandidate; 2]> {
+    ) -> Result<CatalogPairCandidates<'_, 'c, 's>> {
         self.health()?;
         if pair[0].same_address(&pair[1]) {
             return Err(unchanged(Cause::DuplicateTarget));
@@ -298,12 +323,72 @@ impl<'c, 's> SharedPool<'c, 's, '_, '_> {
         if second.kind == StatusCandidateKind::Resident {
             return Err(unchanged(Cause::AlreadyInitialized));
         }
-        Ok([first, second])
+        // Selection itself does not reserve the slots. Freeze both stamps and
+        // next generations under their content latches and one final registry
+        // guard, so a later close can reject even clean/empty reuse.
+        let slots = [first, second];
+        let first_content = self.frames[first.index]
+            .content
+            .try_read()
+            .map_err(|e| self.load_lock_error(e))?;
+        let second_content = self.frames[second.index]
+            .content
+            .try_read()
+            .map_err(|e| self.load_lock_error(e))?;
+        let state = self.entry_registry()?;
+        if state.total != 0
+            || state.load.is_some()
+            || state.claim.is_some()
+            || state.init_claim.is_some()
+            || state.directory.closed_pair().is_some()
+        {
+            return Err(unchanged(Cause::Busy));
+        }
+        let mut next_generations = [0; 2];
+        for (at, content) in [&first_content, &second_content].into_iter().enumerate() {
+            let index = slots[at].index;
+            let current = if state.directory.resolve(self.frames, index).is_some() {
+                Some(self.pair_in(&state, index, content)?.frame)
+            } else if content.fresh()
+                && state.entries[index].is_none()
+                && state.requirements[index].is_none()
+            {
+                None
+            } else {
+                return Err(self.fatal(Cause::Invariant));
+            };
+            if current != slots[at].frame {
+                return Err(unchanged(Cause::Stale));
+            }
+            next_generations[at] = state
+                .directory
+                .next_retention_generation(index)
+                .ok_or_else(|| unchanged(Cause::CounterExhausted))?;
+        }
+        Ok(CatalogPairCandidates {
+            anchor: &self.stamp_anchor,
+            core: self.core,
+            binding: self.binding,
+            fence: self.fence,
+            slots,
+            next_generations,
+        })
+    }
+
+    #[cfg(test)]
+    pub(in crate::storage) fn retention_pair_candidates(
+        &mut self,
+        pair: &[TargetRequest; 2],
+        start: usize,
+        required: &[TargetRequest; 7],
+    ) -> Result<[StatusCandidate; 2]> {
+        self.catalog_pair_candidates(pair, start, required)
+            .map(|selected| selected.slots)
     }
 
     /// Without a request no address can be Resident; only victims are chosen.
     fn retention_candidate_at(
-        &mut self,
+        &self,
         request: Option<TargetRequest>,
         start: usize,
         required: &[TargetRequest],

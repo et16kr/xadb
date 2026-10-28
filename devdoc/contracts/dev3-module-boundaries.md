@@ -506,7 +506,7 @@ prepare의 첫 효과 전 거절 또는 Prepared 폐기는 mutable borrow/loan�
 <a id="catalog-claim-gap"></a>
 #### Catalog CREATE의 원 pair claim을 공유 세션에서 수신하는 동결안
 
-현재 [`reserve_catalog_create`](../../crates/engine/src/storage/wal_io/plan4_retention/catalog_live.rs)는 actual actor/Undo 이후 `&mut Plan4Retention`을 빌리고 [`prepare_tx_pair`](../../crates/engine/src/storage/dirty_init/tx_pair.rs)의 `&mut SharedPool`로 shared user를 배제한다. `target_mask` 관측→두 clean slot close/generation 소비→`init_claim` 설치는 여러 registry 구간이며 그 사이의 배제는 이 가변 borrow에서 온다. `return_catalog_pair`는 원 flush의 가변 borrow로 `PairIoQuiescence`를 발급하고 Cancel의 실제 allocator-after를 읽는다. 이 의미를 transaction 전 provisioning으로 바꾸지 않는다.
+동결안 작성 당시 [`reserve_catalog_create`](../../crates/engine/src/storage/wal_io/plan4_retention/catalog_live.rs)는 actual actor/Undo 이후 `&mut Plan4Retention`을 빌리고 [`prepare_tx_pair`](../../crates/engine/src/storage/dirty_init/tx_pair.rs)의 `&mut SharedPool`로 shared user를 배제한다. `target_mask` 관측→두 clean slot close/generation 소비→`init_claim` 설치는 여러 registry 구간이며 그 사이의 배제는 이 가변 borrow에서 온다. `return_catalog_pair`는 원 flush의 가변 borrow로 `PairIoQuiescence`를 발급하고 Cancel의 실제 allocator-after를 읽는다. 이 의미를 transaction 전 provisioning으로 바꾸지 않는다. 이후 [원자 leaf](#catalog-atomic-leaf)·[기존 대상 adapter](#catalog-pair-existing)·[공유 pool leaf](#catalog-pair-shared)를 순차 공급했다. 아래 exact candidate signature는 PAIR-SHARED-001에 따라 full stamp/next generation을 가진 opaque token으로 구체화한다. actual reservation의 전체 bound borrow와 flush lease/statement 연결은 여전히 후속이다.
 
 **선택한 최소안:** 실제 원 `PoolRegistry`의 directory/counts/init_claim/DPT/physical claim/load를 한 leaf에서 검산·변경하는 atomic close를 공급하고, 원 `TxPairClaimKey`가 살아 있는 동안 일반 pin/load/capture 진입을 닫는다. 원 `RetentionFlushControl`은 disjoint mutable lease로 같은 예약에 빌려준다. 새 manager·pool·claim registry·WAL/File·fence·전역 mutex를 만들지 않는다. `&self`로 시그니처만 바꾸는 수정도 아니다. 원 methods의 actual 원자 구간과 권한을 바꾸는 **C3 필수 구현**이다.
 
@@ -548,9 +548,9 @@ pub(in crate::storage) struct TxPairExistingWrite<'u,'b,'k,'c,'s,'p,'d,const N: 
 impl<'c,'s,'p,'d> SharedPool<'c,'s,'p,'d> {
     pub(in crate::storage) fn catalog_pair_candidates(
         &self, pair: &[TargetRequest;2], start: usize, existing: &[TargetRequest;7],
-    ) -> Result<[StatusCandidate;2], DirtyError>;
+    ) -> Result<CatalogPairCandidates<'_,'c,'s>, DirtyError>;
     pub(in crate::storage) fn try_prepare_tx_pair(
-        &self, authority: &TxPairAuthority<'_,'c,'s>, indices: [usize;2],
+        &self, authority: &TxPairAuthority<'_,'c,'s>, selected: &CatalogPairCandidates<'_,'c,'s>,
     ) -> Result<TxPairClaimKey<'c,'s>, DirtyError>;
     pub(in crate::storage) fn reserve_tx_pair_existing<'u,'b,'k,const N: usize>(
         &'b self, owner: &'u mut Owner<'c,'s>, key: &'k TxPairClaimKey<'c,'s>,
@@ -664,6 +664,19 @@ C의 `&mut reservation` 순차 재대여 외에도 whole9 admission의 같은 le
 
 비교 대안인 raw bool 우회·inner 노출은 key 수명을 놓치므로 채택하지 않고, semantic 본문 복제는 두 정답 경로가 되므로 채택하지 않는다. 실행 전 [선택 manifest](../../tests/fixtures/dev3-module-c3/pair-existing/manifest.json)에 compiler5/runtime8·원 N01 한 번, 총1800초/compiler420초/case45초/native30초/admission600초/로그8MiB/stack32MiB를 동결한다. 신규 metadata는 설치/복구 증거가 아니며 실제 MC01/MPA01/MC04/N01과 구분한다. [증거](../evidence/module-independence-survey-20261026.md#c3-pair-existing)를 따른다.
 
+<a id="catalog-pair-shared"></a>
+#### XADB-MODULE-PAIR-SHARED-001 — 공유 pool leaf와 ordinary gate
+
+2026-10-28 · D2 ACCEPTED(이 공급 한정) · 기준 main `c845ea7` · 담당/통합 `/root`, 독립 `/root/source_admission_review`. 사용자 전체 계획 진행 위임과 [PAIR-EXISTING-001](#catalog-pair-existing)에 따라 pool의 close/finish/cancel을 shared borrow로 바꾼다. actual `ReservedCatalogCreate`는 여전히 전체 bound를 exclusive로 빌린다. 이 단계는 공유 제품 CREATE, statement actor/source/flush lease 공급이나 M4/M5 인수를 뜻하지 않는다.
+
+`CatalogPairCandidates`는 original pool anchor/core/binding/fence, 두 slot의 exact `Option<FrameStamp>`와 next generation을 보관한다. 두 content read guard와 최종 단일 registry에서 관측하며 pin·authority·Drop 효과는 없다. `try_prepare_tx_pair`는 원 registry에서 모든 quiescence/identity/shape와 두 full stamp·next generation을 검산한 뒤 원 FencedInitRegistry의 원자 close/claim을 사용한다. 등록 clean generation 변경, 같은 generation의 content stamp 변경, empty→used→empty ABA는 Stale다. index만 고르고 close 당시 새 generation을 허용하는 대안은 원 선택 identity를 잃어 채택하지 않았다. 실제 selected token 필드는 외부 storage caller가 작성할 수 없다. 과거 metadata fixture용 index adapter는 cfg(test)에만 남는다.
+
+TxPair claim 동안 ordinary pin은 lookup/quota 이전, LOAD는 resident·victim·최종 claim 및 FlushRequired 반환의 원 leaf에서, physical capture는 lookup/attempt 이전에 Busy를 반환한다. preflight도 같은 규칙이다. System INIT의 기존 published ordinary 정책은 유지한다. pin/load/capture 선행이면 close가 거절되고, close 선행이면 일반 접근이 거절된다. authentic subset과 whole9는 원 claim 권한을 사용한다. finish/cancel은 mutable key를 요구하며 동일 최종 leaf의 total0/load0/capture0/initializer0 검산을 보존한다. read/write key borrow 중 종료는 컴파일할 수 없다.
+
+Source는 새 carrier·factory Results·동시 read guards2/registry·next generation·full stamp와 caller carrier를 원 계수에 더한다. borrowed gate는34B이며 LOAD 반환 leaf는 순차 최대 leaf 항에 포함된다. shared typed entry의 추가 Result<Key>/3개 인자는 두 source 상계 후보 모두에 명시한다. 원 cap을 늘리거나 test-only adapter를 제품 경로에 더하지 않는다. 재검토 조건은 pool/token/claim 정체성·등록·generation·ordinary admission·source parent 변경이다. 이는 앞 계약의 exclusive pool 수신자 제한만 구체화하며 원 의미·format·Cancel/Forward 권한을 변경하지 않는다.
+
+[선택 manifest](../../tests/fixtures/dev3-module-c3/pair-shared/manifest.json)는 compiler4/runtime12/원 nativeN01 한 번, total1800초/compiler420초/case45초/native30초/review600초/log8MiB/stack32MiB로 고정한다. 신규 metadata6와 실제 reentry1·실제 dirty hint 경합1·source1·Unstaged1·Drop/recovery1·System CF12-01 한정1을 구분한다. 완료한 atomic/subset 전체 matrix는 반복하지 않는다. [실행·독립 검토 기록](../evidence/module-independence-survey-20261026.md#c3-pair-shared)을 따른다.
+
 ### 6.5 물리 WAL 밖의 actual terminal과 installer 권한
 
 아래 internal type도 `apply` root에 정의하고 raw field는 private로 둔다. actual factory/검산 impl은 `apply::{catalog,row,terminal}` 자손에 둔다. `TerminalWal`은 원 runtime을 borrow하는 작은 내부 adapter이며 세션/append owner를 추가하지 않는다.
@@ -737,7 +750,7 @@ actual terminal의 정상/오류 호출은 다음 순서로 고정한다.
 <a id="row-reservation"></a>
 ### 6.6 RowReserve→A producer→prepare/apply/cancel의 consuming 경계
 
-RowReserve는 **이미 original System INIT가 완료한 Free Undo container**의 slot0·RootJob·RowId를 예약한다. 새 physical page INIT나 Catalog pair claim을 RowReserve에 복사하지 않는다. actual [`prepare_undo_slot/initialize`](../../crates/engine/src/storage/wal_io/plan4_retention/population.rs)와 [`prepare_tx_pair(&mut SharedPool)`](../../crates/engine/src/storage/dirty_init/tx_pair.rs)의 차이를 유지한다. 전자는 C의 별도 provisioning 효과·예산으로 공급하고 후자는 기존 Catalog CREATE에만 남는다. `&SharedPool`인 MutationPort가 `&mut SharedPool`을 다시 얻는 불법 adapter는 없다.
+RowReserve는 **이미 original System INIT가 완료한 Free Undo container**의 slot0·RootJob·RowId를 예약한다. 새 physical page INIT나 Catalog pair claim을 RowReserve에 복사하지 않는다. actual [`prepare_undo_slot/initialize`](../../crates/engine/src/storage/wal_io/plan4_retention/population.rs)와 [`try_prepare_tx_pair(&SharedPool)`](../../crates/engine/src/storage/dirty_init/tx_pair.rs)의 차이를 유지한다. 전자는 C의 별도 provisioning 효과·예산으로 공급하고 후자는 기존 Catalog CREATE에만 남는다. `&SharedPool`인 MutationPort가 `&mut SharedPool`을 다시 얻는 불법 adapter는 없다.
 
 첫 profile의 Free Undo/Status provisioning은 `DiskSession`의 exclusive 준비 경계에서 실제 System INIT로 완료한 뒤 port/transaction을 발급한다. 활성 capsule/view/port가 있는 동안 새 page provisioning을 끼워 넣지 않는다. 기존 prepared FreeUndo가 없으면 RowReserve는 **첫 Row 효과 전 Capacity**이며 이미 예약된 rollback/terminal을 방해하지 않는다. 현재 첫 extent 한도, actual allocated/free/retained census, 초기 provisioning 수와 별도 비용은 [자원 owner](dev3-resource-bounds.md#row-missing-module-budget)를 따른다. Free root의 재사용은 기존 allocation generation과 새 slot generation 검산을 모두 수행한다. 단순히 빈 page를 fixture에서 삽입하는 공급은 없다.
 

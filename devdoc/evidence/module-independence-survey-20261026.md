@@ -2431,7 +2431,7 @@ main `ef95a8a`에서 [PAIR-ATOMIC-001](../contracts/dev3-module-boundaries.md#ca
 
 실행 전 독립 검토에서 MPA01의 경쟁 stage를 호출 전 설치하면 prepare가 바뀐 prefix를 먼저 읽고 목표 Unstaged 경계에 도달하지 않는다고 지적했다. cfg(test) 실제 existing-stage 직전 훅과 원 storage만 빌리는 fault closure로 옮겼다. 경쟁 R02 자체의 complete LSN/offset 증가는 별도로 검산하고 원 durable prefix·control·파일 무변경을 유지하며, 경쟁 obligation을 지우지 않고 마지막에 fence한다. 실행 전 fixture 정정이며 기존 실행 FAIL이 아니다.
 
-사전 검토에서 registered clean fixture가 metadata0이었다는 빈틈도 보완했다. 해당 분기에 실제 nonzero page LSN/counter를 넣고 원 bytes 보존과 metadata0 전환을 별도로 검산하며 빈 victim 분기와 구분한다. 아직 실행0이다.
+사전 검토에서 registered clean fixture가 metadata0이었다는 빈틈도 보완했다. 해당 분기에 실제 nonzero page LSN/counter를 넣고 원 bytes 보존과 metadata0 전환을 별도로 검산하며 빈 victim 분기와 구분한다. 사전 검토 시점에는 실행0이었다.
 
 사전 D1/D2 최종 검토는 위 두 fixture 정정과 precise lifetime capture, 명시 source parent, runtime8/N01 선택을 한정 수용했고 필수 수정0이다. 이는 실행 PASS나 native admission이 아니며 actual source/ELF는 build 뒤 별도 검토한다.
 
@@ -2515,3 +2515,45 @@ artifact는 `artifacts/module-c3-pair-existing-20261028/r1`–`r2`다. source별
 - 선택 manifest SHA-256: `92fae722631cc9586775a4a828a5c0e767ab3b13ce679ab1556c0dae820db511`.
 
 최종 독립 D1/D2는 `ACCEPTED_LIMITED_D1_D2`, required0으로 한정 수용했다. `/root/source_admission_review`가 변경21/21파일(Rust9·fixture6·문서6), evidence138개 hash와 native/cleanup을 검산했다. 검토자 재시험0이며 receipt `artifacts/module-c3-pair-existing-20261028/review-final.json` SHA-256은 `9fd97e59a08a13611bd660d7a41edd9eb46890bb7bf96dbcd1bfc8cd1562be76`다. 공급은 authentic existing subset과 실제 exclusive CREATE 연결까지다. ordinary pin/load/capture gate·shared close/finish/cancel·CREATE source/flush lease·일반 entry/return floor·Row/C3–C5·M4/M5는 미완료다. 문서 verifier·push·전체 workspace/하위 wrapper는 실행하지 않았다.
+
+<a id="c3-pair-shared"></a>
+## 2026-10-28 C3 — 공유 pool CREATE claim과 ordinary 접근 중재
+
+기준 main `c845ea7`에서 [PAIR-SHARED-001](../contracts/dev3-module-boundaries.md#catalog-pair-shared)을 구현한다. 담당/통합 `/root`, 독립 `/root/source_admission_review`. 기존 source별 PASS/FAIL/UNKNOWN과 artifact는 보존한다. 공유 제품 reservation·writable statement/source/flush lease·Row/C3–C5·M4/M5는 계속 미완료다.
+
+실행 전 [manifest](../../tests/fixtures/dev3-module-c3/pair-shared/manifest.json)에 실제 diff→compiler4/runtime12/nativeN01 한 번과 유한 예산을 동결했다. 새 metadata6는 진짜 pin/LOAD/uncaptured physical claim 선행, close leaf와 contender, ordinary 기존/fresh/resident/missing 요청 차단, stamp/empty ABA/origin을 검산한다. 새 실제 reentry1은 원 oracle Forward/Cancel 후 pin/LOAD/flush 재개를 확인한다. source1은 새 source 계수, MPA01은 바뀐 shared Unstaged cancel, MC04는 바뀐 close와 Drop/현재복구, System1은 ordinary gate가 영향을 주는 CF12-01만 선택한다. N01은 바뀐 actual close/finish/ordinary gate의 원3PID9→19→25다. 완료된 atomic/subset 전체 사례는 반복하지 않는다. 사전 검토 당시 실행은 NOT_RUN이었으며 최종 결과는 아래에 기록한다. 각 fresh source export/target/ELF는 identity/hash/result 기록 후 삭제하며 원 logs/results/native snapshots는 보존한다.
+
+실행 전 독립 검토 보완: 첫 관측을 통과한 resident와 pair 밖10번째 clean Job victim의 final claim 직전에 guardless pause를 추가했다. close가 먼저 이긴 뒤 재개하면 Busy/Unchanged이며 원 snapshot/quota/attempt가 유지되어야 한다. dirty hint는 actual Begin의 dirty Root와 원 WalRequirement를 사용하고 실제 FlushRequired 선택 이후 pause한다. 그 사이 metadata-only authority로 원 pool close만 수행하며 Reserve/Cancel/durable 결과로 주장하지 않는다. 종료 key Drop의 의도된 fence를 확인한다. 추가 forwarding Result<Key>와3refs도 양쪽 source 상계에 명시했다. 사전 검토 시점에는 실행0이었다.
+
+### 동결 선택의 실제 실행과 source 계수
+
+독립 사전 검토는22/22파일(Rust11·fixture5·문서6)을 확인하고 required0으로 한정 수용했다. `review-pre.json` SHA-256은 `6d35c49582cfbdaee5a8b7bc8a7701fbefafa753b3dece9c76f910028792be85`다. source 계수의 추가 반환 층과 첫 LOAD 관측 이후 경합의 검출 공백을 실행 전에 보완했다. clean-final은 victim뿐 아니라 요청도 pair 밖 page13으로 두어 기존 pair 주소 gate만으로 통과할 수 없게 했다. 품질 기준·원 cap을 완화하지 않았다.
+
+r1 engine lib/tests Clippy·test build PASS, 별도 주입 source의 compiler4 PASS, 원 test ELF의 runtime12 PASS다. positive는 실제 shared close/finish/cancel 호출을 컴파일하고 negative는 private candidate field E0616 line6 및 read가 살아 있는 실제 finish/cancel의 mutable key E0502 line8을 각각 확인한다. compiler probe는 실행된 runtime 결과로 표시하지 않는다. System selector는 `XADB_STATUS_INIT_CASES=CF12-01`로 고정해 완료한 다른 cut을 반복하지 않았다.
+
+metadata6는 pin/actual LOAD/capture-before-pin 선행의 변경 없는 거절, 같은 leaf의 close와 contender, ordinary existing/fresh/resident/missing 차단, full stamp/empty-generation ABA와 origin, 관측 후 resident/unrelated clean claim의 재검산을 확인했다. 실제 MPS01은 R01/R02 뒤 Forward R03 또는 Cancel K03 oracle와 ordinary pin/LOAD/preflight/원 selected-DWB flush 후 clean capture 재개를 확인한다. MPS02는 실제 dirty Root/WAL requirement와 FlushRequired 관측 뒤 **metadata-only close**를 사용한 반환 경합 증거다. MPS02를 Reserve·Cancel·durability 실행으로 분류하지 않는다. 원 MPA01 Unstaged 반환·MC04 Drop 및 현재빌드 recovery도 바뀐 경로 한정으로 통과했다.
+
+source 상계는 memory live63496/recovered64872B, native live63632/recovered65008B로 원65536B 이하다. shared20192/20328B·metadata186504/186640B·whole252040/252176B도 원 한도 안이다. Catalog live closure43800B, split ports192B를 포함한다. 이 수치는 source-value 상계이며 stack/RSS/성능 측정이 아니다. 독립 actual source/ELF admission 뒤 원 N01을 같은 ELF로 한 번 실행했다.
+
+| native 단계 | PID | LSN | 결과 |
+| --- | ---: | ---: | --- |
+| produce | 149994 | 9 | exit -9; 외부 kill/reaped |
+| recover | 149996 | 19 | exit -9; 외부 kill/reaped |
+| reentry | 150009 | 25 | exit 0; 정상 완료 |
+
+원 N01의3PID9→19→25는 24.332274초 PASS다. 원 controller/corpus/BUDGET와 quality/stop 규칙을 유지했으며 완료 사례 반복0이다.
+
+artifact는 `artifacts/module-c3-pair-shared-20261028/r1`이다. 로그·결과·runner·source5788 파일별 inventory·전체 export manifest·native snapshot/trace/ACK는 보존했다. 이번 source/target/ELF만 identity와 hash 기록 뒤 삭제했으며 과거 evidence는 삭제하지 않았다.
+
+| 실행 | 실제 범위·결과 | source SHA-256 | ELF SHA-256 | result SHA-256 |
+| --- | --- | --- | --- | --- |
+| r1 | Clippy/test build·compiler4·runtime12·N01 PASS; 294.086초 | `68c9d3de59b39d1e0228d37687f3ecd722ff998354e217a28c041d1cf54bae26` | `2d608fe6986861a29aa2eeb7f24d84df40f23016e86b2e6cf2a00a20ae013fa0` | `bb15ccb21a87843c73dcecb8e79ac4aaaed658d16f58bab5d3ac16e9e9dc4ab2` |
+
+- r1 `source-inventory.json` SHA-256: `1cb6fbd4ea0ae22f66ba305de0ce8a9b5710334575df504f86431367889bb9e6`.
+- r1 `source-files.json` SHA-256: `fd67d9e320e717bd10f6181410bc2ec12d3a6cefd2031f9157f9cf58fb0279ca`.
+- r1 `runner.py` SHA-256: `716b1a7f573b3b0df0b148c2e65795847df1de0444f4af6feecb5d51ae6a4a36`.
+- r1 `native-admission.json` SHA-256: `d3acda3b705487fc851ff544943fce0b24c5b66b78992078a844028b9435d0a7`.
+- r1 `catalog-native/N01/result.json` SHA-256: `0c80a88c520e7c762369828d32e80d3f17b9e4d48f0a99f2d42cf8a436bb31f1`.
+- 선택 manifest SHA-256: `ca61a4ef9ef736b564c33a8564ccee303f063b52a59d29d52a9dd40f3ea7ccd9`; ELF 186526424B.
+
+최종 독립 D1/D2는 `ACCEPTED_LIMITED_D1_D2`, required0으로 한정 수용했다. `/root/source_admission_review`가22/22파일(Rust11·fixture5·문서6), evidence138개 hash와 native/cleanup을 검산했다. 검토자 재시험0이며 receipt `artifacts/module-c3-pair-shared-20261028/review-final.json` SHA-256은 `e4b933fbd250288aed69b35b307e01e2ab442cf12a3d82a1002a7e8a94c0f76c`다. receipt가 허용한 문서/JSON의 수용 metadata만 후속 반영한다. 공급은 공유 pool claim/ordinary 중재와 원 exclusive CREATE 호출부까지이며, 전체 bound를 빌리는 `ReservedCatalogCreate`의 shared 제품 수신·writable actor/statement·원 source/flush lease·일반 entry/return floor·Row/C3–C5·M4/M5는 미완료다. 문서 verifier·push·전체 workspace/하위 wrapper는 실행하지 않았다.

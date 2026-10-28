@@ -98,7 +98,12 @@ impl<'c, 's, 'p, 'd> SharedPool<'c, 's, 'p, 'd> {
     /// Stored-state-only admission. No pin, image copy, checksum or I/O.
     pub(in crate::storage) fn flush_preflight(&self) -> Result<()> {
         let registry = self.entry_registry()?;
-        if registry.claim.is_some() {
+        if registry.claim.is_some()
+            || registry
+                .init_claim
+                .as_ref()
+                .is_some_and(init::InitClaimSlot::blocks_ordinary)
+        {
             return Err(unchanged(Cause::Busy));
         }
         registry
@@ -120,6 +125,10 @@ impl<'c, 's, 'p, 'd> SharedPool<'c, 's, 'p, 'd> {
         let (index, registration, attempt) = {
             let mut registry = self.entry_registry()?;
             if registry.claim.is_some()
+                || registry
+                    .init_claim
+                    .as_ref()
+                    .is_some_and(init::InitClaimSlot::blocks_ordinary)
                 || registry
                     .load
                     .as_ref()

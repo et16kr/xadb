@@ -225,12 +225,35 @@ impl Drop for TxPairClaimKey<'_, '_> {
 
 impl<'c, 's, 'p, 'd> SharedPool<'c, 's, 'p, 'd> {
     /// Close both clean victims and install the original claim in one leaf.
-    /// The mutable pool borrow remains required until ordinary shared admission
-    /// and authenticated existing-target pins are supplied together.
-    pub(in crate::storage) fn prepare_tx_pair(
-        &mut self,
+    /// Ordinary pins/load/capture arbitrate with this close under the same
+    /// registry guard; only authentic subset/whole pins may enter afterward.
+    pub(in crate::storage) fn try_prepare_tx_pair(
+        &self,
+        authority: &TxPairAuthority<'_, 'c, 's>,
+        selected: &CatalogPairCandidates<'_, 'c, 's>,
+    ) -> Result<TxPairClaimKey<'c, 's>> {
+        self.health()?;
+        if !std::ptr::eq(selected.anchor, &self.stamp_anchor)
+            || !std::ptr::eq(selected.core, self.core)
+            || !self.uses_storage_origin(selected.binding, selected.fence)
+        {
+            return Err(unchanged(Cause::BindingMismatch));
+        }
+        if selected.requires_flush() {
+            return Err(unchanged(Cause::Busy));
+        }
+        self.prepare_tx_pair_selected(
+            authority,
+            [selected.slots[0].index, selected.slots[1].index],
+            Some(selected),
+        )
+    }
+
+    fn prepare_tx_pair_selected(
+        &self,
         authority: &TxPairAuthority<'_, 'c, 's>,
         indices: [usize; 2],
+        selected: Option<&CatalogPairCandidates<'_, 'c, 's>>,
     ) -> Result<TxPairClaimKey<'c, 's>> {
         self.health()?;
         if !std::ptr::eq(self.core, authority.core())
@@ -318,9 +341,15 @@ impl<'c, 's, 'p, 'd> SharedPool<'c, 's, 'p, 'd> {
                 .next_retention_generation(indices[1])
                 .ok_or_else(|| unchanged(Cause::CounterExhausted))?,
         ];
-        for (index, content) in [(indices[0], &*first), (indices[1], &*second)] {
-            if state.directory.resolve(self.frames, index).is_some() {
-                self.pair_in(state, index, content)?;
+        if selected.is_some_and(|value| value.next_generations != generations) {
+            return Err(unchanged(Cause::Stale));
+        }
+        for (at, (index, content)) in [(indices[0], &*first), (indices[1], &*second)]
+            .into_iter()
+            .enumerate()
+        {
+            let observed = if state.directory.resolve(self.frames, index).is_some() {
+                Some(self.pair_in(state, index, content)?.frame)
             } else {
                 if !content.fresh()
                     || state.entries[index].is_some()
@@ -331,6 +360,10 @@ impl<'c, 's, 'p, 'd> SharedPool<'c, 's, 'p, 'd> {
                 if state.directory.closed_index() == Some(index) {
                     return Err(unchanged(Cause::MissingTarget));
                 }
+                None
+            };
+            if selected.is_some_and(|value| value.slots[at].frame != observed) {
+                return Err(unchanged(Cause::Stale));
             }
             if content.dirty {
                 return Err(unchanged(Cause::Busy));
@@ -375,6 +408,16 @@ impl<'c, 's, 'p, 'd> SharedPool<'c, 's, 'p, 'd> {
             identity,
             active: true,
         })
+    }
+
+    /// Historical exclusive fixtures retain their original call spelling.
+    #[cfg(test)]
+    pub(in crate::storage) fn prepare_tx_pair(
+        &mut self,
+        authority: &TxPairAuthority<'_, 'c, 's>,
+        indices: [usize; 2],
+    ) -> Result<TxPairClaimKey<'c, 's>> {
+        self.prepare_tx_pair_selected(authority, indices, None)
     }
 
     pub(in crate::storage) fn claim_tx_pair_targets<'a, 'b, 'k>(
@@ -887,7 +930,7 @@ impl Drop for TxPairWriteTargets<'_, '_, '_, '_, '_, '_, '_> {
 }
 
 impl<'s> SharedPool<'_, 's, '_, '_> {
-    fn tx_pair_exclusive_claim_in(
+    fn tx_pair_quiescent_claim_in(
         &self,
         key: &TxPairClaimKey<'_, '_>,
         state: &PoolRegistry<'s>,
@@ -910,7 +953,7 @@ impl<'s> SharedPool<'_, 's, '_, '_> {
     }
 
     pub(in crate::storage) fn finish_tx_pair(
-        &mut self,
+        &self,
         key: &mut TxPairClaimKey<'_, '_>,
         completed: CompletedTxPair<'_, '_>,
     ) -> Result<()> {
@@ -920,7 +963,7 @@ impl<'s> SharedPool<'_, 's, '_, '_> {
             pool: self,
         };
         let state = registry.state()?;
-        self.tx_pair_exclusive_claim_in(key, state)?;
+        self.tx_pair_quiescent_claim_in(key, state)?;
         if !std::ptr::eq(self.core, completed.core)
             || !std::ptr::eq(self.binding, completed.binding)
             || completed.identity != key.identity
@@ -946,14 +989,14 @@ impl<'s> SharedPool<'_, 's, '_, '_> {
     }
 
     pub(in crate::storage) fn cancel_tx_pair(
-        &mut self,
+        &self,
         key: &mut TxPairClaimKey<'_, '_>,
         permit: TxPairCancelPermit<'_, '_, '_, '_>,
     ) -> Result<()> {
         self.health()?;
         {
             let state = self.entry_registry()?;
-            self.tx_pair_exclusive_claim_in(key, &state)?;
+            self.tx_pair_quiescent_claim_in(key, &state)?;
         }
         if !key.matches_authority(permit.authority())
             || !permit.io_matches(self.binding, self.fence)
@@ -988,7 +1031,7 @@ impl<'s> SharedPool<'_, 's, '_, '_> {
             pool: self,
         };
         let state = registry.state()?;
-        self.tx_pair_exclusive_claim_in(key, state)?;
+        self.tx_pair_quiescent_claim_in(key, state)?;
         if state.directory.pair_published()
             || self.pair_in(state, 0, &allocator)?.frame != permit.allocator_after()
         {
@@ -1105,7 +1148,12 @@ impl<'s> SharedPool<'_, 's, '_, '_> {
 fn atomic_pair_source_bytes() -> usize {
     use std::mem::size_of;
     let entry = super::super::retention_residency::entry_source_phases();
-    let parent = size_of::<FencedInitRegistry<'_, '_, '_, '_, '_>>()
+    let parent = shared_close_forwarder_bytes()
+        + 2 * size_of::<&CatalogPairCandidates<'_, '_, '_>>()
+        + size_of::<Option<&CatalogPairCandidates<'_, '_, '_>>>()
+        + 2 * size_of::<Option<FrameStamp>>()
+        + size_of::<[usize; 2]>()
+        + size_of::<FencedInitRegistry<'_, '_, '_, '_, '_>>()
         + 2 * size_of::<RwLockWriteGuard<'_, FrameContent<'_>>>()
         + size_of::<RwLockReadGuard<'_, FrameContent<'_>>>()
         + 2 * size_of::<TxPairClaimRecord>()
@@ -1125,11 +1173,18 @@ fn atomic_pair_source_bytes() -> usize {
     parent + entry.0.max(entry.1).max(entry.2).max(dpt_call_bytes())
 }
 
+/// The shared typed entry forwards into the original atomic implementation.
+/// Count its additional return layer and all three borrowed arguments.
+fn shared_close_forwarder_bytes() -> usize {
+    std::mem::size_of::<Result<TxPairClaimKey<'_, '_>>>() + 3 * std::mem::size_of::<&()>()
+}
+
 /// Explicit source-value census, including return/Result coexistence and both
 /// cleanup alternatives. Caller image/descriptor loans are counted separately.
 pub(in crate::storage) fn source_census() -> usize {
     use std::mem::size_of;
-    let original = super::super::retention_residency::pair_source_census()
+    let original = shared_close_forwarder_bytes()
+        + super::super::retention_residency::pair_source_census()
         + 2 * size_of::<Result<TxPairWriteTargets<'_, '_, '_, '_, '_, '_, '_>>>()
         + size_of::<TxPairWriteTargets<'_, '_, '_, '_, '_, '_, '_>>()
         + size_of::<TxPairPins<'_, '_, '_, '_, '_, '_>>()

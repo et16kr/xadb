@@ -1198,3 +1198,5 @@ mod commit_call;
 
 #[path = "catalog_memory/pair_atomic.rs"]
 mod pair_atomic;
+#[path = "catalog_memory/pair_shared.rs"]
+mod pair_shared;
