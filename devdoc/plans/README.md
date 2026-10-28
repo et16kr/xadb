@@ -1,5 +1,7 @@
 # 개발 계획
 
+- [분리 완료 후 추가 개발의 독립성 평가와 push·merge 강제](module-independence-plan.md#post-separation-gates) — 2026-10-29 사용자 후속 지시. M4/M5 인수 뒤 추가 개발 착수 때 적용할 기준과 도입 순서이며, 자동 검사·원격 강제는 미구현이다.
+
 - [모듈 독립 개발 구조 전환 작업 계획](module-independence-plan.md) — M0–M3 완료. [2026-10-28 main 통합](../evidence/module-independence-survey-20261026.md#merge-main-20261028)으로 C2 compact source·statement 읽기, C3 InstallGrant·TerminalWal·Prepared, Row 순수 codec·ledger까지의 부분공급을 결합한다. 이후 개발 위치는 main이다. 전체 C0·C1–C5 공급·동시 admission·M4/M5 제품 인수는 미완료다.
 
 - [첫 행 중심 실행과 개선 범위](dev3-implementation-plan.md#direction-refinement) — 2026-10-25 방향 재점검 반영. 당시 구조·명명·공통화는 소비자 연결의 국소 후보로 제한했다. 후속 구조 전환에서 바꿀 작업 순서의 범위는 [대체 관계](module-independence-plan.md#document-map)에 명시하며 제품 의미·품질 기준은 유지한다.

@@ -50,6 +50,11 @@
 - 같은 날 사용자 지시: 작업 부산물로 disk가 가득 차지 않게 각 실행의 build target·임시 export·ELF는 결과 기록 뒤 삭제한다. source identity는 commit/tree와 파일별 hash manifest로 남기고 로그·결과·hash를 보존한다. 기존 증거 artifact는 사용자 확인 없이 삭제하지 않는다.
 - 같은 날 후속 병합 지시: 독립 리뷰한 `claude/module-independence-remaining`의 `af54a4e`를 `main`에 병합하고 해당 branch를 삭제한다. 위 별도 branch 안내는 이 병합으로 종료하며 이후 재개 위치는 `/home/et16/work/xadb`의 `main`이다. [병합·증거 보존 기록](devdoc/evidence/module-independence-survey-20261026.md#writer-progress-merge-main-20261028)을 따르고, C2 stash와 다른 작업은 자동 재개하지 않는다.
 
+## 모듈 분리 후 독립성 평가 적용 — 2026-10-29 사용자 지시
+
+- 현재 모듈 분리의 M4/M5 인수가 끝난 뒤 추가 개발을 시작할 때 [독립성 평가와 push·merge 강제 계획](devdoc/plans/module-independence-plan.md#post-separation-gates)을 작업 입력에 적용한다.
+- 이번 요청은 후속 계획 저장이다. 검사기·훅·원격 보호 설정은 시행 때 구현·검증하며 현재 분리 작업의 새 선행 조건으로 추가하지 않는다. 무변경 테스트 반복 금지·원 source별 증거 보존은 유지한다.
+
 ## Repository guidance
 
 - Start with `devdoc/README.md`, then read only the task's owner contracts and evidence.
