@@ -35,6 +35,7 @@ pub(in crate::storage) use retirement::{
     RetirementApply, RetirementTargets, retirement_source_bytes,
 };
 mod plan4_residency;
+pub(in crate::storage) use commit::drain_call_source_bytes as commit_drain_call_source_bytes;
 #[cfg(test)]
 pub(in crate::storage) use commit::phase_sources as commit_phase_sources;
 #[allow(unused_imports)] // The actual terminal producer will consume these opaque carriers.
@@ -1281,6 +1282,28 @@ const fn dpt_call_bytes() -> usize {
     let matched = outer + nested;
     let stored = 2 * size_of::<DptEntry>() + size_of::<Option<DptEntry>>() + 4 * size_of::<&()>();
     if matched > stored { matched } else { stored }
+}
+
+/// PinSet::release alone. Under the registry guard it runs the original
+/// pins_valid (directory, INIT and LOAD claim validation) and registration
+/// lookups; the retention entry's guarded bound already covers that guard and
+/// validation chain. Added here: the identity loops, one Registration Result
+/// and the combined error Results. No pin acquisition, content guard, stamp
+/// or installer closure is reachable.
+pub(in crate::storage) fn pin_release_source_bytes() -> usize {
+    use std::mem::size_of;
+    let (_, validation, _) = retention_residency::entry_source_phases();
+    validation
+        + 2 * size_of::<Result<Registration>>()
+        + size_of::<Registration>()
+        + 4 * size_of::<Result<()>>()
+        + 2 * size_of::<Option<DirtyError>>()
+        + 2 * size_of::<std::iter::Enumerate<std::slice::Iter<'_, usize>>>()
+        + 2 * size_of::<std::slice::Iter<'_, usize>>()
+        + 2 * size_of::<std::ops::RangeInclusive<usize>>()
+        + 8 * size_of::<&()>()
+        + size_of::<[usize; 8]>()
+        + 64
 }
 
 /// Source-value bound for one target reservation/acquisition/cleanup chain.

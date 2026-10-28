@@ -7,10 +7,12 @@ pub(in crate::storage) use catalog_live::retirement::CatalogRetirementRejected;
 #[path = "catalog_commit.rs"]
 mod catalog_commit;
 #[cfg(test)]
+pub(super) use catalog_commit::pending_window_parts as catalog_commit_pending_parts;
+#[cfg(test)]
 pub(super) use catalog_commit::phase_source_observations as catalog_commit_phase_observations;
-pub(super) use catalog_commit::source_bytes as catalog_commit_source_bytes;
 #[cfg(test)]
 pub(super) use catalog_commit::source_phases as catalog_commit_source_phases;
+pub(super) use catalog_commit::writer_window_sources as catalog_commit_writer_windows;
 
 use crate::{
     storage::{

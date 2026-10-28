@@ -7689,5 +7689,59 @@
     "reviewer": "/root/merge_review",
     "unresolved_required_fixes": 0,
     "review_sha256": "480a75b2bdf02e199fe279a972a16a7105ed1266445a03b7dd8f5f2048d5919a"
+  },
+  "dev3_module_c2_writer_progress": {
+    "status": "ACCEPTED_LIMITED_D1_D2",
+    "contract_ref": "dev3-module-boundaries.md#writer-progress",
+    "evidence_ref": "module-independence-survey-20261026.md#c2-writer-progress",
+    "baseline_commit": "854bd8d",
+    "branch": "claude/module-independence-remaining",
+    "implemented_paths": [
+      "tests/fixtures/dev3-module-c2/writer-progress/manifest.json"
+    ],
+    "modified_paths": [
+      "crates/engine/src/transaction/concurrency.rs",
+      "crates/engine/src/transaction/concurrency_read.rs",
+      "crates/engine/src/transaction/concurrency_commit.rs",
+      "crates/engine/src/transaction/concurrency_catalog_test_support.rs",
+      "crates/engine/src/storage/dirty_frame.rs",
+      "crates/engine/src/storage/dirty_frame/commit.rs",
+      "crates/engine/src/storage/wal_io/plan4_apply.rs",
+      "crates/engine/src/storage/wal_io/plan4_apply/source.rs",
+      "crates/engine/src/storage/wal_io/plan4_apply/source_tests.rs",
+      "crates/engine/src/storage/wal_io/plan4_apply/terminal.rs",
+      "crates/engine/src/storage/wal_io/plan4_apply/owner_tests.rs",
+      "crates/engine/src/storage/wal_io/plan4_retention/catalog_commit.rs",
+      "crates/engine/src/storage/wal_io/plan4_retention/create_pair.rs",
+      "crates/engine/src/storage/wal_io/plan4_retention/resources.rs",
+      "crates/engine/src/storage/wal_io/plan4_retention/visibility.rs",
+      "crates/engine/src/storage/wal_io/plan4_retention/visibility/epochs.rs",
+      "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/call_scope.rs",
+      "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/commit_concurrency.rs",
+      "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/commit_failures.rs",
+      "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/drained.rs",
+      "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/source_entry.rs",
+      "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/source_return.rs",
+      "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/terminal.rs"
+    ],
+    "scope": "Catalog Commit closes new reads and waits for admitted reads before reserving a fixed stage window in the original isolation ledger; shrinks for Pending and publication where reads overlap; grows without waiting into install after the original Drain; other writers, entry/return floors, Row progress and M4/M5 acceptance incomplete",
+    "validation": "r1 frozen export: production check, crate Clippy lib/tests -D warnings, test build and runtime59 each once PASS. Pre-run independent review REQUIRED3/ADVISORY10 fixed before execution; re-check resolved R1/R2 with no new REQUIRED; R3 resolved by the evidence section. Export, target and ELF deleted after recording identities by user instruction.",
+    "remaining_supply": "Other MutationPort writers, Maintenance and Row readers/writers outside the ledger; pre-entry/return-tail floors including the gate wait; Row RowReserve/rollback/recovery progress class; stale env-gated census literals; C3-C5 and M4/M5 acceptance",
+    "source_roots_changed": false,
+    "source_bytes": {
+      "memory_shared_retained": 20184,
+      "native_type_shared_retained": 20320,
+      "commit_stage": 34058,
+      "commit_pending": 10106,
+      "commit_install": 23818,
+      "commit_publish": 4644,
+      "memory_pending_full_total": 64310,
+      "native_type_pending_full_total": 65470,
+      "memory_publish_full_total": 58848,
+      "native_type_publish_full_total": 60008,
+      "limit": 65536,
+      "source_bound_not_rss": true
+    },
+    "run_result_sha256": "c9b93acf7a22e38ebd2c16f7ccc622eeea3b0143be011f1c26c6d3955fbfd091"
   }
 }

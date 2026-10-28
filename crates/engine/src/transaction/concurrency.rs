@@ -26,7 +26,10 @@ pub(crate) use commit::{
 };
 #[cfg(test)]
 pub(crate) use read::entry_source_observation as read_entry_source_observation;
-pub(crate) use read::{ReadOperationAdmission, source_bytes as read_operation_source_bytes};
+pub(crate) use read::{
+    ReadOperationAdmission, TerminalReadGate, source_bytes as read_operation_source_bytes,
+    terminal_gate_source_bytes,
+};
 
 #[cfg(test)]
 #[path = "concurrency_test_support.rs"]
@@ -123,6 +126,9 @@ struct State {
     installation: Installation,
     installation_generation: u64,
     version_generation: u64,
+    /// Slot of the one terminal owner closing new read operations. The gate
+    /// value holds the exact generation; this index keeps the core layout.
+    read_gate: Option<u8>,
 }
 impl State {
     const fn new() -> Self {
@@ -133,6 +139,7 @@ impl State {
             installation: Installation::Open,
             installation_generation: 0,
             version_generation: 0,
+            read_gate: None,
         }
     }
 
@@ -168,6 +175,15 @@ impl State {
             || apply + content > OWNER_SLOTS as u16
         {
             return false;
+        }
+        if let Some(index) = self.read_gate {
+            let index = usize::from(index);
+            if index >= FOREGROUND_OWNERS
+                || self.slots[index].generation == 0
+                || self.slots[index].read_operation
+            {
+                return false;
+            }
         }
         true
     }
@@ -519,7 +535,7 @@ impl Drop for Owner<'_, '_> {
         if self.check_mode(&state, Mode::Idle).is_err() {
             return;
         }
-        if state.slots[self.index].read_operation {
+        if state.slots[self.index].read_operation || state.read_gate == Some(self.index as u8) {
             self.core.fatal(Cause::Invariant);
             return;
         }

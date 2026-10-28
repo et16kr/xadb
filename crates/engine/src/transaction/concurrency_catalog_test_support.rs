@@ -26,6 +26,7 @@ pub(crate) enum Point {
     ResidentUndoLocated,
     RetirementIntent,
     RetirementFirstPage,
+    ReadGateWaiting,
 }
 
 pub(crate) fn install(
@@ -48,6 +49,7 @@ pub(crate) struct Observation {
     pub(crate) active_read_operations: usize,
     pub(crate) installation: &'static str,
     pub(crate) fenced: bool,
+    pub(crate) read_gate_closed: bool,
 }
 
 pub(crate) fn observe(core: &PageConcurrency<'_>) -> Observation {
@@ -70,6 +72,7 @@ pub(crate) fn observe(core: &PageConcurrency<'_>) -> Observation {
             .count(),
         installation,
         fenced: core.fence.is_fenced(),
+        read_gate_closed: state.read_gate.is_some(),
     }
 }
 

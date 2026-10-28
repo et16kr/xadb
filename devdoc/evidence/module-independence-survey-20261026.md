@@ -2063,3 +2063,77 @@ N03는 독립 사전 admission 수용 뒤1회 PASS했다. produce는 실제 WAL 
 문서 참조2종을 수정했다. main 실행 기록8곳이 같은 경로의 finish manifest를 현재 main 선택으로 가리키던 부분은 `cbc09f2:path`와 원 보존 위치를 명시했다. `PreparedCatalog`의 현재 정의 링크는 실제 apply root로 정정했다. 과거 phase 관측 selector가 Pending image 단계에서 변경된 점도 기록해 원 manifest를 현재 실행 목록으로 사용하지 않도록 했다. 원 source별 PASS·FAIL·UNKNOWN·manifest bytes는 바꾸지 않았다.
 
 제품·fixture·시험 코드 변경0이므로 빌드/제품 시험을 반복하지 않았다. 직전13개 runtime·native N03 결과는 같은 원 source/ELF의 증거로만 보존하며 이번 리뷰의 새 PASS로 표시하지 않는다. 문서 verifier·전체 fmt/Clippy·push는 실행하지 않았다. OCR 원 preview/rules·187개 coverage·부모별 diff hash·각 검토자 판단·수정 내역은 `artifacts/merge-main-full-review-20261028/review-report.json` 및 해당 폴더에 둔다. 이 정적 리뷰는 전체 동시 admission·M4/M5 인수를 완료시키지 않는다.
+
+<a id="c2-writer-progress"></a>
+## C2 Catalog Commit의 terminal read gate와 writer source 창 — 2026-10-28
+
+사용자의 “main에서 새로 진행”, “남은 작업은 별도 branch를 생성해 적절한 단계마다 commit”, “사용한 자원을 정리해 가면서 진행” 지시에 따라 main `854bd8d`에서 만든 branch `claude/module-independence-remaining`(worktree `/home/et16/work/xadb-module-remaining`)에서 진행했다. `/home/et16/work/xadb`는 main에 두었고 병합 전 C2 stash 초안 `7df6e92`는 적용·검토하지 않았다. 결정은 [XADB-MODULE-WRITER-PROGRESS-001](../contracts/dev3-module-boundaries.md#writer-progress)이며 D2 · 작성·통합 Claude 세션 · 독립 검토 별도 읽기 전용 subagent다. 이번 단위는 C2 writer/progress 예약 가운데 **실제 Catalog Commit writer 하나**에 한정한다.
+
+### 구현
+
+- 원 core State에 terminal slot index(`Option<u8>`)를 두고 `Owner::close_reads_for_terminal`·private non-Clone `TerminalReadGate`를 공급했다. core는 816B로 그대로다. gate가 닫히면 새 read의 check/try는 Unchanged `InstallationPending`, gate를 가진 Owner의 Drop은 fatal로 slot을 보존한다.
+- 원 isolation ledger에 `CommitProgress` class와 split에서 한 번 계산해 MutationPort가 보유하는 `CatalogCommitCharges`를 추가했다. 예약은 gate core 일치·창 순서·단독 합을 효과 전에 확인한다. 전환은 Pending·publish 축소와 Drain 뒤 무대기 install 증가뿐이다.
+- `commit_catalog`는 gate→stage 창 예약→본문→source→gate checked 정리이며 예약 실패도 gate를 checked 정리한다. 정적 Capacity 검사를 제거했다.
+- lower owner의 production 단독 bound: `terminal::catalog_wait_source_bytes`, `dirty_frame::commit_drain_call_source_bytes`(성공/실패 max), `pin_release_source_bytes`(retention 진입 guarded 검산 bound 재사용), `epochs::publication_source_bytes`. session census의 Commit 항목은 가장 큰 창과 carrier다.
+
+| 값(B) | memory | native 타입 |
+| --- | ---: | ---: |
+| shared retained | 20184 | 20320 |
+| stage / Pending / install / publish 창 | 34058 / 10106 / 23818 / 4644 | 같음 |
+| 창 원값과 carrier | 32952 / 9000 / 22712 / 3538 + 1106 | 같음 |
+| Pending 원값 = parent + max(wait, Drain) | 2376 + max(6624, 6124) | 같음 |
+| shared+stage / shared+install | 54242 / 44002 | 54378 / 44138 |
+| shared+Pending+Full / shared+publish+Full | 64310 / 58848 | 65470 / 60008 |
+| shared+Pending+Resident2 | 65562 — 두 번째는 Capacity | 65698 — 같음 |
+| WAL wait production / 측정 관측 | 5408 / 3272 | 같음 |
+| live census peak / recovered peak | 63540 / 64916 | 63676 / 65052 |
+
+source-value 상계이며 RSS·machine stack·성능 측정이 아니다. native Pending+Full의 여유는 66B다. 이전 source의 Full+Pending 기준 FAIL과 관측 값은 당시 증거로 보존한다.
+
+### 시험 변경과 선택
+
+실행 전 [동결 manifest](../../tests/fixtures/dev3-module-c2/writer-progress/manifest.json)에 실제 diff와 runtime59개·compiler3개(production check, crate Clippy lib/tests `-D warnings`, test build)의 관계를 고정했다. 총1200초·compiler420초·case30초·로그8MiB·stack32MiB이며 각1회다.
+
+- 신규9: core gate3, ledger 전환·경계·창 fit4, actual Commit의 gate 대기·창 관측 MCW01과 예약 Capacity MCW02.
+- 시나리오 이동12: Commit 전에 admitted된 read가 Drain까지 진행하던 MCRD01/02, C2_SCOPE02/03, C2_ENTRY01/02·RESIDENT2, C2_RETURN01/02·RESIDENT2. read 시작을 Pending으로 옮겨 같은 Drain 성질과 writer 몫 합산, Pending pins4를 검산한다.
+- 단언 추가10: physical Busy의 stage 몫 반환, C2_DRAIN01–03의 install 몫, MF02/09/10/11/12·C2_DRAIN04 unwind의 창 몫 보존과 gate 해제.
+- 무변경 시험의 변경 경로5: MT01(publication gap의 Full read), MT03(Pending의 Full LOAD), MT05–07. 실패 경로3: MF03/06/08.
+- census 값 변경20: shared·split·Commit census 항목을 쓰는 owner/source/scope/recovery/free-undo/read 계산.
+
+변경 diff와 관계없는 하위 DEV0/1/2 회귀·workspace·wrapper·Row codec/ledger·native process cut과 경로가 바뀌지 않은 commit_catalog 호출자(MT02, MF04/05/07 등)는 NOT_RUN이다. env 식별 census `catalog_source_{memory,native}`·`retention_source_{memory,native}`는 이번 source의 개발 실행에서 cap/fits 단언은 통과했으나 이 diff와 무관한 오래된 정확 값에서 실패했다(`visibility.backing==8192` 대 9792=+epoch1600, `metadata==peak+36×slot` 대 +63104=visibility8192+isolation/epoch5760+장기 credit49152). 형식 선택에서 제외하고 별도 후속으로 남기며 PASS로 표시하지 않는다.
+
+### 사전 독립 검토와 반영
+
+독립 subagent가 실제 diff·계약·시험을 읽기 전용으로 대조했다. 1차는 **REQUIRED3·ADVISORY10**이다. R1: 예약 실패가 gate cleanup 결과를 버림 → checked reopen과 `merge`, MCW02 추가. R2: PinSet 반환 bound가 원 `pins_valid`·registration 검산을 누락 → retention 진입 guarded bound를 재사용하고 Drain 호출을 성공/실패 max로 재구성. R3: 이 증거 anchor 부재 → 이 절로 해소. ADVISORY는 gate 검산 closure 계수, 창 순서·단독 합의 효과 전 거절, gate 보유 Owner Drop, gate core 확인, census Commit 항목, 관측 동작 목록, wait bound 단언, 문서 주석 위치, pins/unwind 단언 복원, census 시험·split 계산 graph 선택을 반영했다. 재확인에서 R1·R2 해소, 신규 REQUIRED0이며 남은 ADVISORY 가운데 Owner Drop 시험을 추가하고 계약 예시를 정정했다. Drained proof의 core 대조는 미적용 ADVISORY로 남긴다. 검토자는 파일 수정·빌드·시험을 하지 않았다.
+
+### 실행 결과
+
+r1은 동결 export에서 production check·Clippy·test build와 runtime59개가 모두 각1회 PASS다. 실제145초는 성능 결과가 아니다. 사용자 지시에 따라 export·build target·ELF는 결과 기록 뒤 삭제했고 아래 identity·inventory·로그·결과를 보존한다.
+
+| identity | 값 |
+| --- | --- |
+| workspace | HEAD `c855f1b82bb66b89699fb30d9fe5c22ee716fd2b`, tracked diff SHA-256 `8af84f87e4296d228100a614272ce5b924c0a7ade1a2c4c88213e2123c857e81` |
+| source fingerprint (5732파일) | `3e194e532e3665542e71689a6efd543a3a450cecd5287f5a1f269c208f3fbe5a` |
+| inventory | `8ee718fbf342f92339d559987792b9841d74750e22e2da6ccecef016d4f45a41` |
+| manifest | `fc5418db2a7e78d0d93d53b22aede8b57206f7f805f2d10783563b6f62d4061e` |
+| test ELF (182009656B, 삭제) | `a85ef88bf1a5cfb4310a807b2fa0bf4ffa6ae94149cc805dd90bc5618d240b8d` |
+| runner / result | `9c055b8468d32375e3c9268c82638eb91fe1995ddadda2b1bf53c9ca1753d0cf` / `c9b93acf7a22e38ebd2c16f7ccc622eeea3b0143be011f1c26c6d3955fbfd091` |
+
+원 runner·result·inventory·compiler 로그·case stdout/stderr는 branch worktree의 `artifacts/module-c2-writer-progress-20261028/`에 둔다(1.3MB). 실행 뒤 문서만 정리했고 제품·시험·fixture·scripts는 동결 source와 같다. 문서 verifier·workspace fmt/Clippy push gate·push는 실행하지 않았다.
+
+### 시험하지 않은 경로와 남은 범위
+
+gate가 닫힐 때 source 예약 직전에 멈춘 read, gate 앞의 resident read, `close_reads`의 InstallationPending 분기, `wait_timeout` poison, gate 불변식의 음성 사례, finish→publish 사이의 Capacity는 이번에 시험하지 않았다. 다른 MutationPort writer·Maintenance·Row reader/writer의 ledger 참여, 진입 전·반환 뒤 floor, Row progress class, C3–C5·M4/M5 인수는 미완료다.
+
+<a id="writer-progress-merge-main-20261028"></a>
+## Catalog Commit writer 창의 독립 리뷰와 main 통합 — 2026-10-28
+
+사용자가 branch 리뷰 결과를 받은 뒤 “제대로 만들어진거면 머지하고 브랜치 삭제”를 지시했다. 독립 리뷰·병합 담당은 구현 담당 Claude와 다른 Codex `/root` 세션이다. 리뷰 범위는 main `854bd8d3ca2bc2f4033417a0195a7cdbd1048d88`부터 `claude/module-independence-remaining`의 `af54a4e22b2e3a69e8037d2632ca2d7189d7ea9c`까지다. 변경30파일 전부(OCR 선택24·보충 문서/fixture6)를 실제 diff·소유 계약·기존 결과로 검토했으며 생략0·검토율100%·필수 수정0이다. 읽기 gate와 stage/Pending/install/publish 예약, Drain·오류·unwind 정리를 대조한 이번 공급 단위의 한정 수용이며 M4/M5 완료 판정은 아니다.
+
+리뷰 시 원 실행 inventory의 제품·fixture·도구·Cargo/toolchain5731파일을 현재 파일과 해시 대조하여 불일치0을 확인했다. runtime59개 선택은 manifest와 정확히 일치하며 production check·Clippy·test build3개와 함께 원 result에서 PASS다. runtime stdout/stderr, runner·manifest·inventory·result의 기록된 hash도 일치한다. 이는 원 source 실행 기록의 대조이며 새 테스트 실행이 아니다.
+
+병합 직전 두 checkout의 tracked/untracked 변경이 없고 main이 branch의 조상이며 리뷰 뒤 tip 변경이 없음을 확인했다. 충돌 없는 병합에 제품·시험 수정은 없고, 재개 위치·검토·증거 보존을 설명하는 문서만 추가한다. 무변경 코드의 제품 시험·하위 회귀는 반복하지 않는다. 문서 verifier와 push gate는 실행하지 않았으며 원격 push도 이번 작업에 포함하지 않는다.
+
+작업 트리 정리에 앞서 원 `/home/et16/work/xadb-module-remaining/artifacts/module-c2-writer-progress-20261028/`의128파일(1,023,923B)을 `/home/et16/work/xadb/artifacts/module-c2-writer-progress-20261028/`로 이동하고 모든 파일의 전후 SHA-256 일치를 확인했다. 원 result SHA-256 `c9b93acf7a22e38ebd2c16f7ccc622eeea3b0143be011f1c26c6d3955fbfd091`과 inventory·로그의 내용은 그대로다. 위 원 실행 경로와 source identity는 당시 기록으로 유지한다. 병합 뒤 해당 branch와 별도 작업 트리를 정리하며 이후 재개는 main을 기준으로 한다. 다른 branch·작업 트리·stash와 이전 증거는 이번 정리 대상이 아니다.
+
+다른 writer의 ledger 참여·진입/반환 floor·Row progress와 C3–C5·M4/M5 인수는 계속 미완료다. native 타입 Pending+Full source 상계65470B의 여유66B와 위 미실행 경계도 그대로 보존한다.

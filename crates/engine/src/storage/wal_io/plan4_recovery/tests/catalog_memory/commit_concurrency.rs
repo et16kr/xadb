@@ -501,7 +501,9 @@ fn catalog_mt03_pending_reader_loads_undo() {
 }
 
 /// Exercise the gap after Catalog capture: no physical content admission is
-/// alive, but the real operation still owns its Txn/Undo references.
+/// alive, but the real operation still owns its Txn/Undo references. The read
+/// is admitted while Commit is Pending; a read already admitted when Commit
+/// starts is instead waited for by the terminal read gate before stage.
 fn drain_captured_lookup(fence_during_wait: bool) {
     case(
         if fence_during_wait {
@@ -525,17 +527,25 @@ fn drain_captured_lookup(fence_during_wait: bool) {
                     live, owner, flusher, status, undo, private, &oracle, state, 1,
                 );
                 let prepared = live.prepare_catalog_commit(owner, actor, private).unwrap();
-                let (captured, capture_arrived) = sync_channel(1);
-                let (read_resume, read_release) = sync_channel(1);
-                hook::install(core, Point::LookupCaptured, captured, read_release);
+                let (pending_entered, pending_arrived) = sync_channel(1);
+                let (pending_resume, pending_release) = sync_channel(1);
+                hook::install(core, Point::Pending, pending_entered, pending_release);
                 {
-                    let (mut writer, reader, _) = live.split();
+                    let (mut writer, reader, maintenance) = live.split();
+                    let pending_charge = writer.catalog_test_commit_charges()[2] as u64;
+                    let pool = maintenance.catalog_test_pool();
+                    let full_charge = reader.catalog_test_fixed_charges()[1] as u64;
                     let late_snapshot = reader.catalog_snapshot(owner).unwrap();
                     let reader_ref = &reader;
+                    let (registered, ready) = sync_channel(1);
+                    let (start, started) = sync_channel(1);
                     std::thread::scope(|scope| {
                         let reading = scope.spawn(move || {
                             let mut separate = core.try_owner(OwnerRole::Foreground).unwrap();
+                            // Registration needs apply admission, closed in Pending.
                             let snapshot = reader_ref.catalog_snapshot(&mut separate).unwrap();
+                            registered.send(()).unwrap();
+                            started.recv_timeout(WAIT).unwrap();
                             let error = match reader_ref.lookup_catalog(
                                 &mut separate,
                                 &snapshot,
@@ -568,22 +578,31 @@ fn drain_captured_lookup(fence_during_wait: bool) {
                             let cleanup = snapshot.release_checked();
                             assert_eq!(cleanup.is_err(), fence_during_wait);
                         });
+                        ready.recv_timeout(WAIT).unwrap();
+                        let controlling = scope.spawn(move || {
+                        pending_arrived.recv_timeout(WAIT).unwrap();
+                        let pending = hook::observe(core);
+                        assert_eq!((pending.installation, pending.read_gate_closed),
+                            ("Pending", false));
+                        assert_eq!(reader_ref.catalog_test_source_used(), pending_charge);
+                        let (captured, capture_arrived) = sync_channel(1);
+                        let (read_resume, read_release) = sync_channel(1);
+                        hook::install(core, Point::LookupCaptured, captured, read_release);
+                        start.send(()).unwrap();
                         capture_arrived.recv_timeout(WAIT).unwrap();
                         let captured = hook::observe(core);
-                        assert_eq!(
-                            (
-                                captured.active_apply,
-                                captured.active_content,
-                                captured.active_read_operations
-                            ),
-                            (0, 0, 1)
-                        );
-                        assert_eq!(writer.catalog_test_references(), ((2, 0, 0), false));
-                        assert_eq!(writer.catalog_test_physical_pins(), 0);
+                        assert_eq!((captured.active_apply, captured.active_content,
+                            captured.active_read_operations), (0, 0, 1));
+                        assert_eq!(reader_ref.catalog_test_references(), ((2, 0, 0), false));
+                        // Only the Pending writer's four pins; the captured read holds none.
+                        assert_eq!(raw::claim_state(pool).1, 4);
+                        // The Pending writer and the admitted Full read share one total.
+                        assert_eq!(reader_ref.catalog_test_source_used(),
+                            pending_charge + full_charge);
                         let (waiting, wait_arrived) = sync_channel(1);
                         let (drain_resume, drain_release) = sync_channel(1);
                         hook::install(core, Point::DrainWaiting, waiting, drain_release);
-                        let controlling = scope.spawn(move || {
+                        pending_resume.send(Resume::Continue).unwrap();
                         wait_arrived.recv_timeout(WAIT).unwrap();
                         let waiting = hook::observe(core);
                         assert_eq!((waiting.installation, waiting.active_apply,
@@ -609,6 +628,8 @@ fn drain_captured_lookup(fence_during_wait: bool) {
                         read_resume.send(Resume::Continue).unwrap();
                         reading.join().unwrap();
                         assert_eq!(hook::observe(core).active_read_operations, 0);
+                        assert_eq!(reader_ref.catalog_test_source_used(),
+                            pending_charge + if fence_during_wait { full_charge } else { 0 });
                         let cleanup = late_snapshot.release_checked();
                         assert_eq!(cleanup.is_err(), fence_during_wait);
                         drain_resume.send(Resume::Continue).unwrap();
@@ -618,6 +639,7 @@ fn drain_captured_lookup(fence_during_wait: bool) {
                             assert_eq!(committed.err().unwrap().effect, Effect::CallerMustResolve);
                         } else {
                             committed.unwrap();
+                            assert_eq!(writer.catalog_test_source_used(), 0);
                         }
                         controlling.join().unwrap();
                     });
@@ -631,6 +653,7 @@ fn drain_captured_lookup(fence_during_wait: bool) {
                     ),
                     (0, 0, 0)
                 );
+                assert!(!complete.read_gate_closed);
                 assert_eq!(
                     complete.installation,
                     if fence_during_wait {
@@ -661,6 +684,243 @@ fn catalog_read_operation_drain_waits_for_captured_refs() {
 #[test]
 fn catalog_read_operation_fenced_drain_preserves_fatal_refs() {
     drain_captured_lookup(true);
+}
+
+/// A read admitted before Commit keeps its loan until it returns; the terminal
+/// read gate rejects new reads, waits, and only then reserves its stage window.
+/// The writer charge shrinks for Pending, where reads overlap, and grows into
+/// the install window only after the original Drain.
+#[test]
+fn catalog_commit_read_gate_and_writer_windows() {
+    case("MCW01", || {
+        let oracle = Oracle::new();
+        with_fresh!(oracle, |live,
+                             owner,
+                             flusher,
+                             status,
+                             undo,
+                             private,
+                             reader_private,
+                             core,
+                             fence,
+                             state| {
+            let actor = create_forward(
+                live, owner, flusher, status, undo, private, &oracle, state, 1,
+            );
+            let prepared = live.prepare_catalog_commit(owner, actor, private).unwrap();
+            let (captured, capture_arrived) = sync_channel(1);
+            let (read_resume, read_release) = sync_channel(1);
+            hook::install(core, Point::LookupCaptured, captured, read_release);
+            {
+                let (mut writer, reader, _) = live.split();
+                let [_, stage, pending, install, publish] = writer
+                    .catalog_test_commit_charges()
+                    .map(|charge| charge as u64);
+                let full = reader.catalog_test_fixed_charges()[1] as u64;
+                let late_snapshot = reader.catalog_snapshot(owner).unwrap();
+                let reader_ref = &reader;
+                std::thread::scope(|scope| {
+                    let reading = scope.spawn(move || {
+                        let mut separate = core.try_owner(OwnerRole::Foreground).unwrap();
+                        let snapshot = reader_ref.catalog_snapshot(&mut separate).unwrap();
+                        // Admitted before Commit: it completes normally.
+                        assert!(matches!(
+                            reader_ref
+                                .lookup_catalog(
+                                    &mut separate,
+                                    &snapshot,
+                                    ObjectId::new(6).unwrap(),
+                                    &mut Plan4ResidencyCursor::new(),
+                                    reader_private,
+                                )
+                                .unwrap(),
+                            CatalogLookupStep::Missing
+                        ));
+                        snapshot.release_checked().unwrap();
+                        separate.check_idle().unwrap();
+                    });
+                    capture_arrived.recv_timeout(WAIT).unwrap();
+                    assert_eq!(hook::observe(core).active_read_operations, 1);
+                    assert_eq!(reader.catalog_test_source_used(), full);
+                    let (gate_entered, gate_arrived) = sync_channel(1);
+                    let (gate_resume, gate_release) = sync_channel(1);
+                    hook::install(core, Point::ReadGateWaiting, gate_entered, gate_release);
+                    let controlling = scope.spawn(move || {
+                        let mut late = core.try_owner(OwnerRole::Foreground).unwrap();
+                        let mut late_private = boxed::<PRIVATE_BYTES>();
+                        let rejected = |error: crate::storage::disk::RetentionError| {
+                            assert_eq!(error.effect, Effect::Unchanged);
+                            assert!(matches!(error.cause, RetentionCause::Concurrency(error)
+                                if error.cause
+                                    == crate::transaction::concurrency::Cause::InstallationPending));
+                        };
+                        gate_arrived.recv_timeout(WAIT).unwrap();
+                        let waiting = hook::observe(core);
+                        assert_eq!(
+                            (waiting.installation, waiting.read_gate_closed,
+                                waiting.active_read_operations),
+                            ("Open", true, 1)
+                        );
+                        // No writer charge exists before admitted reads return.
+                        assert_eq!(reader_ref.catalog_test_source_used(), full);
+                        rejected(reader_ref.lookup_catalog(
+                            &mut late,
+                            &late_snapshot,
+                            ObjectId::new(6).unwrap(),
+                            &mut Plan4ResidencyCursor::new(),
+                            &mut late_private,
+                        ).err().unwrap());
+                        assert_eq!(reader_ref.catalog_test_source_used(), full);
+                        let (stage_entered, stage_arrived) = sync_channel(1);
+                        let (stage_resume, stage_release) = sync_channel(1);
+                        hook::install(core, Point::StageCallStarted, stage_entered, stage_release);
+                        gate_resume.send(Resume::Continue).unwrap();
+                        read_resume.send(Resume::Continue).unwrap();
+                        reading.join().unwrap();
+                        stage_arrived.recv_timeout(WAIT).unwrap();
+                        let staging = hook::observe(core);
+                        assert_eq!(
+                            (staging.installation, staging.read_gate_closed,
+                                staging.active_read_operations),
+                            ("Intent", true, 0)
+                        );
+                        assert_eq!(reader_ref.catalog_test_source_used(), stage);
+                        rejected(reader_ref.lookup_catalog(
+                            &mut late,
+                            &late_snapshot,
+                            ObjectId::new(6).unwrap(),
+                            &mut Plan4ResidencyCursor::new(),
+                            &mut late_private,
+                        ).err().unwrap());
+                        let (pending_entered, pending_arrived) = sync_channel(1);
+                        let (pending_resume, pending_release) = sync_channel(1);
+                        hook::install(core, Point::Pending, pending_entered, pending_release);
+                        stage_resume.send(Resume::Continue).unwrap();
+                        pending_arrived.recv_timeout(WAIT).unwrap();
+                        let pending_state = hook::observe(core);
+                        assert_eq!(
+                            (pending_state.installation, pending_state.read_gate_closed),
+                            ("Pending", false)
+                        );
+                        assert_eq!(reader_ref.catalog_test_source_used(), pending);
+                        // A Full read is admitted beside the Pending writer.
+                        assert!(matches!(
+                            reader_ref.lookup_catalog(
+                            &mut late,
+                            &late_snapshot,
+                            ObjectId::new(6).unwrap(),
+                            &mut Plan4ResidencyCursor::new(),
+                            &mut late_private,
+                        ).unwrap(),
+                            CatalogLookupStep::Missing
+                        ));
+                        assert_eq!(reader_ref.catalog_test_source_used(), pending);
+                        let (drained_entered, drained_arrived) = sync_channel(1);
+                        let (drained_resume, drained_release) = sync_channel(1);
+                        hook::install(
+                            core,
+                            Point::DrainedBeforeResume,
+                            drained_entered,
+                            drained_release,
+                        );
+                        pending_resume.send(Resume::Continue).unwrap();
+                        drained_arrived.recv_timeout(WAIT).unwrap();
+                        assert_eq!(hook::observe(core).installation, "Installing");
+                        assert_eq!(reader_ref.catalog_test_source_used(), install);
+                        let (publish_entered, publish_arrived) = sync_channel(1);
+                        let (publish_resume, publish_release) = sync_channel(1);
+                        hook::install(core, Point::BeforePublish, publish_entered, publish_release);
+                        drained_resume.send(Resume::Continue).unwrap();
+                        publish_arrived.recv_timeout(WAIT).unwrap();
+                        assert_eq!(hook::observe(core).installation, "Open");
+                        assert_eq!(reader_ref.catalog_test_source_used(), publish);
+                        publish_resume.send(Resume::Continue).unwrap();
+                        late.check_idle().unwrap();
+                        late_snapshot.release_checked().unwrap();
+                    });
+                    writer.commit_catalog(owner, prepared).unwrap();
+                    controlling.join().unwrap();
+                    assert_eq!(writer.catalog_test_source_used(), 0);
+                });
+                let complete = hook::observe(core);
+                assert_eq!(
+                    (
+                        complete.installation,
+                        complete.read_gate_closed,
+                        complete.active_read_operations
+                    ),
+                    ("Open", false, 0)
+                );
+            }
+            assert_eq!(live.catalog_test_q(), 1);
+            assert!(!fence.is_fenced());
+            owner.check_idle().unwrap();
+            oracle.check(live, state, "C04");
+        });
+    });
+}
+
+/// A failed stage reservation is an Unchanged Capacity before any effect; the
+/// read gate is reopened by a checked cleanup and a fresh Commit succeeds.
+#[test]
+fn catalog_commit_reservation_capacity_reopens_reads() {
+    case("MCW02", || {
+        let oracle = Oracle::new();
+        with_fresh!(oracle, |live,
+                             owner,
+                             flusher,
+                             status,
+                             undo,
+                             private,
+                             reader_private,
+                             core,
+                             fence,
+                             state| {
+            let _ = reader_private;
+            let actor = create_forward(
+                live, owner, flusher, status, undo, private, &oracle, state, 1,
+            );
+            let before = state.lock().unwrap().images();
+            let prepared = live.prepare_catalog_commit(owner, actor, private).unwrap();
+            {
+                let (mut writer, reader, _) = live.split();
+                let [shared, stage, ..] = writer.catalog_test_commit_charges();
+                let held = 65536 - shared - stage + 1;
+                let error = reader.catalog_test_with_held_source(held, || {
+                    let error = writer.commit_catalog(owner, prepared).err().unwrap();
+                    assert_eq!(writer.catalog_test_source_used(), held as u64);
+                    error
+                });
+                assert_eq!(
+                    (error.phase, error.effect),
+                    (
+                        crate::storage::disk::RetentionPhase::Census,
+                        Effect::Unchanged
+                    )
+                );
+                assert!(matches!(error.cause, RetentionCause::Capacity));
+                assert_eq!(reader.catalog_test_source_used(), 0);
+                let observed = hook::observe(core);
+                assert_eq!(
+                    (
+                        observed.installation,
+                        observed.read_gate_closed,
+                        observed.active_apply,
+                        observed.active_read_operations
+                    ),
+                    ("Open", false, 0, 0)
+                );
+            }
+            owner.check_idle().unwrap();
+            assert!(!fence.is_fenced());
+            assert_eq!(live.catalog_test_q(), 0);
+            assert_eq!(state.lock().unwrap().images(), before);
+            let prepared = live.prepare_catalog_commit(owner, actor, private).unwrap();
+            live.split().0.commit_catalog(owner, prepared).unwrap();
+            assert_eq!(live.catalog_test_q(), 1);
+            oracle.check(live, state, "C04");
+        });
+    });
 }
 
 #[test]

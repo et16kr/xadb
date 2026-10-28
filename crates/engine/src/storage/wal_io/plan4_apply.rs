@@ -363,15 +363,12 @@ pub(crate) struct ReadPort<'b, 'a, 's, 'c, 'p, 'd, 'm, 'w, W: WriterNamespace> {
 }
 
 pub(crate) struct MutationPort<'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace> {
+    commit_charges: source::CatalogCommitCharges,
     storage: &'s MutableStorageOwner<'m, 'w, W>,
     pool: &'b SharedPool<'c, 's, 'p, 'd>,
     operation: &'b mut &'o mut [u8; super::OPERATION_BYTES],
     control: &'b mut control::RetentionLedger<'a, 'c, 's>,
     history: &'b history::runtime::RuntimeHistory<'a, 'c, 's>,
-    #[allow(
-        dead_code,
-        reason = "shared original isolation backing for pending transaction adapter"
-    )]
     isolation: &'b Mutex<IsolationLedger<'a, 'c, 's>>,
     visibility: Option<&'b visibility::BoundVisibility<'a, 'c, 's>>,
 }
@@ -546,8 +543,10 @@ impl<'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
         // No previously split port can coexist with this exclusive session
         // borrow. Complete the recursive type census before lending any port.
         let source_charges = source::CatalogSourceCharges::new::<W>();
+        let commit_charges = source::CatalogCommitCharges::new::<W>();
         (
             MutationPort {
+                commit_charges,
                 storage: self.inner.storage,
                 pool: &self.inner.pool,
                 operation: &mut self.inner.operation,

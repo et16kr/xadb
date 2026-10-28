@@ -326,13 +326,24 @@ fn retained_missing(fenced: bool) {
             let prepared = live.prepare_catalog_commit(owner, actor, private).unwrap();
             let (entered, arrived) = sync_channel(1);
             let (resume, release) = sync_channel(1);
+            let (pending_entered, pending_arrived) = sync_channel(1);
+            let (pending_resume, pending_release) = sync_channel(1);
+            // The scope is admitted during Pending. A scope admitted before
+            // Commit would instead be waited for by the terminal read gate.
+            hook::install(core, Point::Pending, pending_entered, pending_release);
             {
                 let (mut writer, reader, _) = live.split();
+                let pending = writer.catalog_test_commit_charges()[2] as u64;
                 let reader_ref = &reader;
+                let (registered, ready) = sync_channel(1);
+                let (start, started) = sync_channel(1);
                 std::thread::scope(|threads| {
                     let reading = threads.spawn(move || {
                         let mut separate = core.try_owner(OwnerRole::Foreground).unwrap();
+                        // Registration needs apply admission, closed in Pending.
                         let snapshot = reader_ref.catalog_snapshot(&mut separate).unwrap();
+                        registered.send(()).unwrap();
+                        started.recv_timeout(WAIT).unwrap();
                         let mut call = reader_ref.catalog_call(&mut separate, &snapshot).unwrap();
                         assert!(matches!(
                             call.lookup(
@@ -365,15 +376,20 @@ fn retained_missing(fenced: bool) {
                             separate.check_idle().unwrap();
                         }
                     });
-                    arrived.recv_timeout(WAIT).unwrap();
-                    let charge = reader.catalog_test_source_used();
-                    assert!(charge > 0);
-                    assert_eq!(reader.catalog_test_references(), ((0, 0, 0), false));
-                    assert_eq!(hook::observe(core).active_read_operations, 1);
-                    let (waiting, wait_arrived) = sync_channel(1);
-                    let (drain_resume, drain_release) = sync_channel(1);
-                    hook::install(core, Point::DrainWaiting, waiting, drain_release);
+                    ready.recv_timeout(WAIT).unwrap();
                     let controlling = threads.spawn(move || {
+                        pending_arrived.recv_timeout(WAIT).unwrap();
+                        assert_eq!(reader_ref.catalog_test_source_used(), pending);
+                        start.send(()).unwrap();
+                        arrived.recv_timeout(WAIT).unwrap();
+                        let charge = reader_ref.catalog_test_source_used() - pending;
+                        assert!(charge > 0);
+                        assert_eq!(reader_ref.catalog_test_references(), ((0, 0, 0), false));
+                        assert_eq!(hook::observe(core).active_read_operations, 1);
+                        let (waiting, wait_arrived) = sync_channel(1);
+                        let (drain_resume, drain_release) = sync_channel(1);
+                        hook::install(core, Point::DrainWaiting, waiting, drain_release);
+                        pending_resume.send(Resume::Continue).unwrap();
                         wait_arrived.recv_timeout(WAIT).unwrap();
                         let observed = hook::observe(core);
                         assert_eq!(
@@ -384,7 +400,7 @@ fn retained_missing(fenced: bool) {
                             ),
                             ("Draining", 0, 1)
                         );
-                        assert_eq!(reader_ref.catalog_test_source_used(), charge);
+                        assert_eq!(reader_ref.catalog_test_source_used(), pending + charge);
                         if fenced {
                             fence.fence();
                         }
@@ -393,13 +409,16 @@ fn retained_missing(fenced: bool) {
                         assert_eq!(hook::observe(core).active_read_operations, 0);
                         assert_eq!(
                             reader_ref.catalog_test_source_used(),
-                            if fenced { charge } else { 0 }
+                            pending + if fenced { charge } else { 0 }
                         );
                         drain_resume.send(Resume::Continue).unwrap();
                     });
                     let result = writer.commit_catalog(owner, prepared);
                     assert_eq!(result.is_err(), fenced);
                     controlling.join().unwrap();
+                    if !fenced {
+                        assert_eq!(writer.catalog_test_source_used(), 0);
+                    }
                 });
             }
             assert_eq!(live.catalog_test_q(), u64::from(!fenced));

@@ -323,3 +323,193 @@ fn stale_binding_rejects_reservation_and_preserves_outstanding_charge() {
         assert_eq!(used(ledger), 4096);
     });
 }
+
+fn commit_charges() -> CatalogCommitCharges {
+    CatalogCommitCharges {
+        shared: 32768,
+        stage: 16384,
+        pending: 4096,
+        install: 12288,
+        publish: 8192,
+    }
+}
+
+#[test]
+fn commit_class_moves_only_at_gate_and_drain_boundaries() {
+    use crate::transaction::concurrency::OwnerRole;
+    with_ledger(|ledger, fence| {
+        let core = ledger.lock().unwrap().core;
+        let mut owner = core.try_owner(OwnerRole::Foreground).unwrap();
+        let gate = owner.close_reads_for_terminal(core).unwrap();
+        let charges = commit_charges();
+        let mut writer = OperationSourceAdmission::catalog_commit(ledger, &charges, &gate).unwrap();
+        assert_eq!(used(ledger), 16384);
+        writer.enter_commit_pending(&charges).unwrap();
+        assert_eq!(used(ledger), 4096);
+        // A reader admitted during Pending shares the one aggregate.
+        let reader = OperationSourceAdmission::reserve(ledger, 32768, 16384).unwrap();
+        let error = OperationSourceAdmission::reserve(ledger, 32768, 12289)
+            .err()
+            .unwrap();
+        assert!(matches!(error.cause, SourceCause::Capacity));
+        assert_eq!(used(ledger), 20480);
+        drop(reader);
+        // The Drain boundary grows in place without a second reservation.
+        writer
+            .transition(charges.shared, charges.pending, charges.install, true)
+            .unwrap();
+        assert_eq!(used(ledger), 12288);
+        writer.enter_commit_publish(&charges).unwrap();
+        assert_eq!(used(ledger), 8192);
+        writer.finish_checked().unwrap();
+        assert_eq!(used(ledger), 0);
+        gate.reopen_checked().unwrap();
+        owner.check_idle().unwrap();
+        assert!(!fence.is_fenced());
+    });
+}
+
+#[test]
+fn commit_growth_beside_a_held_loan_fences_and_keeps_charges() {
+    use crate::transaction::concurrency::OwnerRole;
+    with_ledger(|ledger, fence| {
+        let core = ledger.lock().unwrap().core;
+        let mut owner = core.try_owner(OwnerRole::Foreground).unwrap();
+        let gate = owner.close_reads_for_terminal(core).unwrap();
+        let charges = commit_charges();
+        let mut writer = OperationSourceAdmission::catalog_commit(ledger, &charges, &gate).unwrap();
+        writer.enter_commit_pending(&charges).unwrap();
+        let _reader = OperationSourceAdmission::reserve(ledger, 32768, 24576).unwrap();
+        // Only a broken Drain could leave this loan; growth never waits.
+        let error = writer
+            .transition(charges.shared, charges.pending, charges.install, true)
+            .err()
+            .unwrap();
+        assert!(matches!(error.cause, SourceCause::Invariant));
+        assert_eq!(error.effect, Effect::CallerMustResolve);
+        assert!(fence.is_fenced());
+        assert_eq!(used(ledger), 28672);
+        assert!(writer.release_checked().is_err());
+        assert_eq!(used(ledger), 28672);
+    });
+}
+
+#[test]
+fn commit_boundaries_reject_wrong_order_and_reader_entry() {
+    use crate::transaction::concurrency::OwnerRole;
+    type W = crate::storage::wal_io::plan4_test_support::Writer;
+    // A reversed window order is refused before any effect.
+    with_ledger(|ledger, fence| {
+        let core = ledger.lock().unwrap().core;
+        let mut owner = core.try_owner(OwnerRole::Foreground).unwrap();
+        let gate = owner.close_reads_for_terminal(core).unwrap();
+        let charges = CatalogCommitCharges {
+            pending: 20000,
+            ..commit_charges()
+        };
+        let error = OperationSourceAdmission::catalog_commit(ledger, &charges, &gate)
+            .err()
+            .unwrap();
+        assert!(matches!(error.cause, SourceCause::Capacity));
+        assert_eq!(error.effect, Effect::Unchanged);
+        assert!(!fence.is_fenced());
+        assert_eq!(used(ledger), 0);
+    });
+    // Pending itself can only shrink.
+    with_ledger(|ledger, fence| {
+        let core = ledger.lock().unwrap().core;
+        let mut owner = core.try_owner(OwnerRole::Foreground).unwrap();
+        let gate = owner.close_reads_for_terminal(core).unwrap();
+        let charges = commit_charges();
+        let mut writer = OperationSourceAdmission::catalog_commit(ledger, &charges, &gate).unwrap();
+        let error = writer
+            .transition(charges.shared, charges.stage, charges.stage + 1, false)
+            .err()
+            .unwrap();
+        assert!(matches!(error.cause, SourceCause::Invariant));
+        assert!(fence.is_fenced());
+        assert_eq!(used(ledger), 16384);
+    });
+    // A gate closed on another core is not proof for this ledger.
+    with_ledger(|ledger, fence| {
+        let other = PageConcurrency::new(fence).unwrap();
+        let mut owner = other.try_owner(OwnerRole::Foreground).unwrap();
+        let gate = owner.close_reads_for_terminal(&other).unwrap();
+        let error = OperationSourceAdmission::catalog_commit(ledger, &commit_charges(), &gate)
+            .err()
+            .unwrap();
+        assert!(matches!(error.cause, SourceCause::Invariant));
+        assert!(fence.is_fenced());
+        assert_eq!(used(ledger), 0);
+    });
+    // A repeated boundary does not match the current window.
+    with_ledger(|ledger, fence| {
+        let core = ledger.lock().unwrap().core;
+        let mut owner = core.try_owner(OwnerRole::Foreground).unwrap();
+        let gate = owner.close_reads_for_terminal(core).unwrap();
+        let charges = commit_charges();
+        let mut writer = OperationSourceAdmission::catalog_commit(ledger, &charges, &gate).unwrap();
+        writer.enter_commit_pending(&charges).unwrap();
+        let error = writer.enter_commit_pending(&charges).err().unwrap();
+        assert!(matches!(error.cause, SourceCause::Invariant));
+        assert!(fence.is_fenced());
+        assert_eq!(used(ledger), 4096);
+    });
+    // A reader entry cannot select the writer class.
+    with_ledger(|ledger, fence| {
+        let error = OperationSourceAdmission::catalog(
+            ledger,
+            &CatalogSourceCharges::new::<W>(),
+            OperationClass::CommitProgress,
+        )
+        .err()
+        .unwrap();
+        assert!(matches!(error.cause, SourceCause::Invariant));
+        assert!(fence.is_fenced());
+        assert_eq!(used(ledger), 0);
+    });
+}
+
+#[test]
+fn catalog_commit_windows_fit_beside_admitted_readers() {
+    fn inspect<W: WriterNamespace>(kind: &str) {
+        let [reader_shared, full, resident] = CatalogSourceCharges::new::<W>().observations();
+        let [shared, stage, pending, install, publish] =
+            CatalogCommitCharges::new::<W>().observations();
+        let [raw_stage, raw_pending, raw_install, raw_publish] =
+            super::super::create_pair::catalog_commit_writer_windows();
+        let parts = super::super::create_pair::catalog_commit_pending_parts();
+        let physical = crate::storage::dirty_frame::commit_source_phases::<4>();
+        let wait = super::super::terminal::catalog_wait_source_bytes();
+        let measured_wait = super::super::terminal::catalog_wait_source_observation::<W>();
+        println!(
+            "COMMIT_PENDING_PARTS_{kind} parent_wait_drain={parts:?} physical_pending={} physical_drain={} bridge={} wait={wait} measured_wait={measured_wait} drain_call={} pin_release={}",
+            physical.pending,
+            physical.drain,
+            super::super::terminal::catalog_source_bytes(),
+            crate::storage::dirty_frame::commit_drain_call_source_bytes::<4>(),
+            crate::storage::dirty_frame::pin_release_source_bytes()
+        );
+        // The production wait bound covers the measured wait adapter closure.
+        assert!(wait >= measured_wait);
+        assert_eq!(commit_source_peak(), stage.max(install));
+        println!(
+            "COMMIT_WINDOWS_{kind} shared={shared} stage={stage} pending={pending} install={install} publish={publish} raw={raw_stage}/{raw_pending}/{raw_install}/{raw_publish} carriers={} full={full} resident={resident} stage_total={} install_total={} pending_full={} publish_full={} pending_two_resident={}",
+            stage - raw_stage,
+            shared + stage,
+            shared + install,
+            shared + pending + full,
+            shared + publish + full,
+            shared + pending + 2 * resident
+        );
+        assert_eq!(shared, reader_shared);
+        assert!(pending < stage && pending < install && publish < install);
+        // Reads are closed for stage and drained for install; Pending and
+        // publication overlap one admitted Full read.
+        assert!(shared + stage <= 65536 && shared + install <= 65536);
+        assert!(shared + pending + full <= 65536);
+        assert!(shared + publish + full <= 65536);
+    }
+    inspect::<crate::storage::wal_io::plan4_test_support::Writer>("MEMORY");
+    inspect::<super::super::super::native::Writer>("NATIVE_TYPE");
+}

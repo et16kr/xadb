@@ -26,6 +26,7 @@ pub(super) use binding::source_bytes as binding_source_bytes;
 mod epochs;
 pub(super) use epochs::{
     change_carriers as epoch_change_carriers, commit_carriers as epoch_commit_carriers,
+    publication_source_bytes as epoch_publication_source_bytes,
     transition_source_bytes as epoch_transition_source_bytes,
 };
 
