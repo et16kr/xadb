@@ -5,6 +5,7 @@
 mod core;
 pub(crate) mod ledger;
 mod operation;
+pub(crate) mod status;
 mod wire;
 pub(crate) use core::{CoreView, decode_core};
 pub(crate) use operation::{Operation, Shape};
@@ -13,6 +14,9 @@ pub(crate) use wire::{LayoutView, decode_layout};
 
 #[cfg(test)]
 mod wire_tests;
+
+#[cfg(test)]
+mod status_tests;
 
 pub(crate) const FRAME_BYTES: usize = 98_304;
 pub(crate) const MIN_CELL: usize = 185;

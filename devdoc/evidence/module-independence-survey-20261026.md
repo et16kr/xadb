@@ -2801,3 +2801,26 @@ r2도 static2와 신규2개 PASS다. source `df5007ff917fbc23186dc5b3bcef4ad87d9
 
 
 최종 독립 D1/D2는 `ACCEPTED_LIMITED_D1_D2`, 필수 수정0이다. `/root/boundary_review`가 변경18파일과 artifact39파일을 원 source/독립 literal/실행 결과·hash/cleanup에 대조했다. 제품·fixture11파일은 r2 source와 같으며 검토자 수정·빌드·시험·문서 verifier·author 실행0이다. [최종 receipt](../../artifacts/module-row-wire-20261028/review-final.json) SHA-256은 `432f1972b9df0c46d83f0a46480c788565ce26dc29a2319d50183816eb23f7de`다. 허용된 status·수용·receipt/hash metadata만 후속 기입한다. 전체 semantic graph/descriptor/history·native/redo 의미 일치·source admission·current dispatch/live/recovery·M4/M5는 계속 미완료다.
+
+<a id="row-status-images"></a>
+## 2026-10-29 Row Status 실제 before/after와 frame 결합
+
+기준은 `main` `b50e734`이며 C2 stash와 다른 worktree를 건드리지 않았다. [Status 국소 계약](../contracts/dev3-module-consumers.md#row-status-images)은 원 Profile3/actor/StatusSlotRef·외부 statement/mark·Commit/Prune q를 actual pages와 결합한다. 별도 reviewer `/root/boundary_review`의 사전 D2 한정 수용에 따라 전체 graph를 claim하지 않는 국소 Status 관측기를 구현했다. 실제 kind5 native의 양쪽 cell/offset·redo target/priorLSN/span·patch 밖 불변성과 Status의9개 다중 head/count 전이를 검사한다. 새16KiB page 후보나 local bank 없이 immutable before/after와 작은 scalar만 소비한다. 전체 source/caller census·actual admission 수신 전이며 수치 상계 검증을 완료했다고 주장하지 않는다.
+
+[독립 입력](../../tests/fixtures/module-row-format/status/input-plan.json)은 원시 Status24쌍을 explicit before/after로 작성했다. 새 Python author는 제품 encoder/transition을 호출하지 않고 정수/SHA로 cell/page를 만든다. 보존한 wire author의 envelope recipe만 재사용하며 그 source hash도 고정했다. 다른 native·descriptor·auxiliary는 semantic-invalid sentinel이고 성공 범위는 `STATUS_LOCAL_ONLY`다. 실제 Undo U/H/Job/mark ancestry·전체 census·발급 q/horizon/pin·source 예약·WAL stage/install·current Profile3/live/recovery·M4/M5 인수는 미완료다.
+
+실행 전 [선택 manifest](../../tests/fixtures/module-row-format/status/manifest.json)에 신규8개만 고정했다. 예산은 총1200초/compiler420초/case45초/출력8MiB/stack32MiB이고 실패 즉시 중단이다. r1의 scoped Clippy/test-build2와 신규 runtime8은 모두 PASS했다. 이 시험은 새로운 Status 관측기만 대상으로 하며 원 wire10/actor10·workspace/lower wrapper·완료 회귀를 반복하지 않았다. statement markNone/Some·마지막 CLR·잔여head의 Finish·statement→full escalation·full CLR의 이전 statement 번호, count overflow/불일치, actor/page/slot generation·owner·native/redo·LSN 반례를 포함한다.
+
+| 실행 | source SHA-256 | ELF SHA-256 | result SHA-256 |
+| --- | --- | --- | --- |
+| r1 | `164b6d24330b92e20a43d3da5e6c83705a1197b8172fa33c23d180028f842b2f` | `47d813f5bd2045f4c1d25c07d3f57d09f31d1d2cb6ce50dfb340ac00e928ea42` | `dceba1945dcd313342a394c95b4e682a4af5cba5c359dafb4a45877b4be0da1e` |
+
+[실행 artifact](../../artifacts/module-row-status-20261029/)에 compiler/runtime 원 로그·runner/manifest hash·파일별source inventory·result-before-cleanup/result를 보존하고 이번 export/target/ELF는 삭제했다. native process 인수·문서 verifier·push는 실행하지 않았다. 최종 독립 D1/D2의 실제 결과는 아래에 기록한다.
+
+
+독립 리뷰는 r1의 일부 tag 변조가 canonical decoder에서 먼저 거절되어 전이 guard 검산을 대체하지 못함을 지적했다. [후속 선택](../../tests/fixtures/module-row-format/status/review-followup.json)으로 정식 source상태10개가 lower Status decoder를 통과한 뒤 각 opcode의 금지 전이에서 exact OrderMismatch인 신규1개와, 유효 non-Status5opcode·외부 Profile1/2의 exact Unsupported 신규1개를 추가했다. 제품 코드는 바꾸지 않았고 원8개는 반복하지 않았다. r2의 static2·신규2개도 PASS이며 source `c708d0cc89148ce99f4bdd0f2a1c66a3a453c3fc69d6a645ecf66e24c5a86f75`, ELF `3cd102a0162169b9cb9e81b724b7a17111bd1c04d57b187ec99f146abb541e49`, result `27335e01046342dddd3d3f0adc4cb4d97adae34aa5d3fc77ac97055aff1ee87f`다. 고유10개는 r1 source8+r2 source2이며 최종 source에서 전체10개를 반복한 증거가 아니다. 두 실행의 source/target/ELF는 제거했고 원 결과·로그·hash를 보존했다.
+
+원 r1의 attempted full→statement 변조에서 offset16192는 writer_epoch이고 실제 next 영역은16312..16352다. 그 원 입력은 정식 상태 전이를 증명하지 않으며 decoder/identity 거절 사례로만 보존한다. 신규 canonical matrix가 별도 lower decode 성공과 exact 전이 오류를 검산한다.
+
+
+최종 독립 D1/D2는 `ACCEPTED_LIMITED_D1_D2`, 필수 수정0이다. `/root/boundary_review`가 고정 변경16파일과 artifact39파일의 원 source/bytes/hash·선택 로그·manifest/runner·cleanup을 대조했고 불일치0이다. 현재 제품/fixture는 r2 source inventory와 같으며 검토자는 수정·빌드·시험·문서 verifier·author를 실행하지 않았다. [고정 검토 입력](../../artifacts/module-row-status-20261029/review-input.json) SHA-256 `1bde2c3e3fa9cfdf4aaab67671fa49a133bafce55e41c884233c902ed3f43ce1`, [최종 receipt](../../artifacts/module-row-status-20261029/review-final.json) SHA-256 `10cdc6052329d4ff121d92d366a07b89ca55cdf7106bacf8e146cccda29b91fb`를 보존한다. 허용된 status/수용/receipt/hash metadata만 후속 반영한다. 전체 graph·source admission·실제 live/recovery·M4/M5는 미완료다.

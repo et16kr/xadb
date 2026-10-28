@@ -1,5 +1,7 @@
 # 현재 구현
 
+2026-10-29 [Row Status의 실제 페이지/frame 결합](../evidence/module-independence-survey-20261026.md#row-status-images): main `b50e734`에서 Status9개 전이와 native/redo 관계를 구현하고 독립 literal24쌍·source별 신규10개 선택 검증을 통과했다. 최종 독립 D1/D2 한정 수용·필수 수정0이며 전체 M4/M5는 미완료다.
+
 2026-10-28 [Row scope3 frame 검산](../evidence/module-independence-survey-20261026.md#row-scope3-wire): main `2fdff66`에서 별도14opcode·다중 statement core·native/redo 입구를 구현하고 source별 신규10개 선택 검증을 통과했다. 최종 독립 D1/D2 한정 수용·필수 수정0이며 전체 M4/M5는 미완료다.
 
 2026-10-28 [Row actor의 실제 페이지 관계 검산](../evidence/module-independence-survey-20261026.md#row-actor-graph): 사용자의 전체 계획 완료 요청에 따라 `main` `d27bfa4`에서 재개했다. 한 actor의 Base4/Status/Undo/Row graph를 구현했고 source별 신규10개 선택 검증을 통과했다. 최종 독립 D1/D2 한정 수용·필수 수정0이며 전체 M4/M5는 미완료다.

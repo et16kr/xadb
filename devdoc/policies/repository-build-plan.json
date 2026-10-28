@@ -8615,5 +8615,30 @@
     "reviewed_files": 18,
     "review_ref": "artifacts/module-row-wire-20261028/review-final.json",
     "review_sha256": "432f1972b9df0c46d83f0a46480c788565ce26dc29a2319d50183816eb23f7de"
+  },
+  "dev3_module_row_status_images": {
+    "status": "LOCAL_VERIFIED_LIMITED",
+    "contract_ref": "dev3-module-consumers.md#row-status-images",
+    "modified_paths": [
+      "crates/engine/src/storage/semantic_row.rs"
+    ],
+    "implemented_paths": [
+      "crates/engine/src/storage/semantic_row/status.rs",
+      "crates/engine/src/storage/semantic_row/status_tests.rs",
+      "tests/fixtures/module-row-format/status/author.py",
+      "tests/fixtures/module-row-format/status/cases.bin",
+      "tests/fixtures/module-row-format/status/index.tsv",
+      "tests/fixtures/module-row-format/status/input-plan.json",
+      "tests/fixtures/module-row-format/status/manifest.json",
+      "tests/fixtures/module-row-format/status/review-followup.json"
+    ],
+    "scope": "Status local actual-page/native/redo transition observation only. No other role semantics, graph proof, grant or live/recovery.",
+    "runtime_selected_cases": 10,
+    "literal_cases": 24,
+    "source_roots_changed": false,
+    "review_status": "ACCEPTED_LIMITED_D1_D2",
+    "reviewed_files": 16,
+    "review_ref": "artifacts/module-row-status-20261029/review-final.json",
+    "review_sha256": "10cdc6052329d4ff121d92d366a07b89ca55cdf7106bacf8e146cccda29b91fb"
   }
 }

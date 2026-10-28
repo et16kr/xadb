@@ -1,0 +1,8 @@
+{
+  "scope": "STATUS_LOCAL_ONLY; other frame roles are semantic-invalid sentinels",
+  "literal_cases": 24,
+  "bytes": 1970619,
+  "state_oracle": "explicit independent before/after pairs; no product encoder or transition call",
+  "framing_recipe": "../wire/author.py (preserved source; no execution of its main)",
+  "framing_recipe_sha256": "17d265072d67c54b1cfe8d362b5b40abc51fd4486693324d421b183f6bec4f4b"
+}

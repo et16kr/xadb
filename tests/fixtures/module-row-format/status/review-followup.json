@@ -1,0 +1,46 @@
+{
+  "schema": "XADB_ROW_STATUS_LOCAL_V1",
+  "baseline": "b50e734",
+  "status": "FROZEN_INPUTS_NOT_EXECUTION_EVIDENCE",
+  "scope": "Follow-up adds canonical-valid wrong-state matrix and direct non-Status/legacy profile rejection; no rerun of prior8.",
+  "budget": {
+    "total_seconds": 1200,
+    "compiler_seconds": 420,
+    "case_seconds": 45,
+    "output_bytes": 8388608,
+    "rust_min_stack": 33554432
+  },
+  "compiler_tests": [],
+  "runtime_tests": [
+    {
+      "selector": "storage::semantic_row::status_tests::status_rejects_canonical_wrong_source_states",
+      "reason": "10 canonical valid source states pass lower decoder but violate specific operation preconditions; exact OrderMismatch."
+    },
+    {
+      "selector": "storage::semantic_row::status_tests::status_rejects_non_status_operations_and_older_profiles",
+      "reason": "5 valid non-Status scope3 operations and supplied legacy profiles1/2 return exact Unsupported from Status observer."
+    }
+  ],
+  "inputs": {
+    "input-plan.json": {
+      "bytes": 409,
+      "sha256": "1b1a9e9c3a397d1f5374cd4ed8bee4f844d1acd0164a855669ede18738de2a10"
+    },
+    "manifest.json": {
+      "bytes": 2860,
+      "sha256": "bd03e4a7e58f05043c668d498df6bebe047462e0ad7324ac5889acd9e26d213c"
+    },
+    "index.tsv": {
+      "bytes": 2444,
+      "sha256": "997df446a3e5b485b6facf9897b2fcd3a228b1c6b7bab021737a07538a65ec4d"
+    },
+    "cases.bin": {
+      "bytes": 1970619,
+      "sha256": "7c012977af2a5e818d8d9c5f59939bea7d0b113de0cbabd9de442a632408338b"
+    },
+    "author.py": {
+      "bytes": 5630,
+      "sha256": "79db78f6b3d3c3043635b72b382b37c51f2915aabf2f5ec6226be23083c9a210"
+    }
+  }
+}

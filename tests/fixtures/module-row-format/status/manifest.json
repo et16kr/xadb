@@ -1,0 +1,66 @@
+{
+  "schema": "XADB_ROW_STATUS_LOCAL_V1",
+  "baseline": "b50e734",
+  "status": "FROZEN_INPUTS_NOT_EXECUTION_EVIDENCE",
+  "scope": "Status local actual-page/native/redo transition observation only. No other role semantics, graph proof, grant or live/recovery.",
+  "budget": {
+    "total_seconds": 1200,
+    "compiler_seconds": 420,
+    "case_seconds": 45,
+    "output_bytes": 8388608,
+    "rust_min_stack": 33554432
+  },
+  "compiler_tests": [],
+  "runtime_tests": [
+    {
+      "selector": "storage::semantic_row::status_tests::status_independent_twenty_four_local_pairs",
+      "reason": "24 independent before/after literal pairs, all9 Status operations, immutable inputs; STATUS_LOCAL_ONLY."
+    },
+    {
+      "selector": "storage::semantic_row::status_tests::status_statement_marks_and_full_recovery_are_distinct",
+      "reason": "Required external statement/mark; last CLR and retained Finish; full escalation and no fictitious successful statement WAL."
+    },
+    {
+      "selector": "storage::semantic_row::status_tests::status_rejects_local_state_and_head_mutants",
+      "reason": "Canonical/state/head/q mismatches after rebinding frame to mutated pages."
+    },
+    {
+      "selector": "storage::semantic_row::status_tests::status_counts_never_wrap_or_discard_retained_heads",
+      "reason": "Overflow, underflow, head/count shape and retained roots across CLR/Finish/Commit/Prune."
+    },
+    {
+      "selector": "storage::semantic_row::status_tests::status_generation_and_original_context_binding",
+      "reason": "Begin/Terminal generation plus external actor/location and group owner generation binding."
+    },
+    {
+      "selector": "storage::semantic_row::status_tests::status_native_and_redo_are_bound_to_both_pages",
+      "reason": "Native bytes/offset and exact redo span/target/priorLSN must match actual source/candidate pages."
+    },
+    {
+      "selector": "storage::semantic_row::status_tests::status_page_identity_lsn_and_canonical_single_cell",
+      "reason": "Actual page identity/kind/level/LSN/1cell and namespace constraints."
+    },
+    {
+      "selector": "storage::semantic_row::status_tests::status_undo_reference_shape_and_unsupported_operations",
+      "reason": "Local U/H/mark shape and external zero sequence; physical Undo proofs explicitly excluded."
+    }
+  ],
+  "inputs": {
+    "input-plan.json": {
+      "bytes": 409,
+      "sha256": "1b1a9e9c3a397d1f5374cd4ed8bee4f844d1acd0164a855669ede18738de2a10"
+    },
+    "index.tsv": {
+      "bytes": 2444,
+      "sha256": "997df446a3e5b485b6facf9897b2fcd3a228b1c6b7bab021737a07538a65ec4d"
+    },
+    "cases.bin": {
+      "bytes": 1970619,
+      "sha256": "7c012977af2a5e818d8d9c5f59939bea7d0b113de0cbabd9de442a632408338b"
+    },
+    "author.py": {
+      "bytes": 5630,
+      "sha256": "79db78f6b3d3c3043635b72b382b37c51f2915aabf2f5ec6226be23083c9a210"
+    }
+  }
+}
