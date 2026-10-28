@@ -16,6 +16,9 @@ use super::{
 pub(in crate::storage) use super::{INIT_BYTES, InitProvenance};
 use crate::storage::retention_page::row;
 
+#[path = "row/actor.rs"]
+pub(in crate::storage) mod actor;
+
 pub(in crate::storage) const BASE_BYTES: usize = 2_097_152;
 pub(in crate::storage) const PAGE_ARENA_BYTES: usize = 64 * PAGE_BYTES;
 const TRAILER: usize = BASE_BYTES - 32;

@@ -1,0 +1,43 @@
+{
+  "schema": "XADB_ROW_ACTOR_GRAPH_V1",
+  "baseline": "d27bfa4",
+  "status": "FROZEN_INPUTS_NOT_EXECUTION_EVIDENCE",
+  "scope": "One Row actor physical Base4 graph only; original immutable layout and caller scratch. Full mixed Catalog/descriptor/inventory/history/live/source admission/current Profile3 closure remains incomplete.",
+  "budget": {
+    "total_seconds": 1200,
+    "compiler_seconds": 420,
+    "case_seconds": 45,
+    "output_bytes": 8388608,
+    "rust_min_stack": 33554432
+  },
+  "compiler_tests": [],
+  "runtime_tests": [
+    {
+      "selector": "storage::plan4_recovery_base::row::actor::tests::actor_root_free_row_high_water_boundary",
+      "reason": "Changed own row bound: Root.row_high equality allowed and +1 refused after RootFree."
+    },
+    {
+      "selector": "storage::plan4_recovery_base::row::actor::tests::actor_orphan_cannot_hide_in_noncanonical_free",
+      "reason": "Changed raw Free branch: tag-only hidden orphan rejected; canonical generation2 Free accepted with original three-row chain."
+    },
+    {
+      "selector": "storage::plan4_recovery_base::row::actor::tests::actor_root_free_rows_remain_globally_unique",
+      "reason": "New two-table RootFree input: valid independent rows; duplicate RowId and same logical mutation rejected."
+    }
+  ],
+  "inputs": {
+    "index.json": {
+      "bytes": 433,
+      "sha256": "a7d8dec3a53f60177a4efcc0b5f783b3063100d7cbcd041834a5c025d8b50da3"
+    },
+    "cases.bin": {
+      "bytes": 3649536,
+      "sha256": "a66a3eedb08c212550d53e69f1d9c495761c35e4319b6d17d0a22aa33551ddc6"
+    },
+    "author.py": {
+      "bytes": 7658,
+      "sha256": "97ef940e016d9e0c8aa5894cb2d73cd25ae14563ec251d5d1216252fee80363c"
+    }
+  },
+  "selection_reason": "r3 completed six cases are preserved. Only three new selectors cover review changes to own row bounds/uniqueness and canonical Free. Earlier raw inputs retain their first16 pages; fixture extension adds two-table case10."
+}

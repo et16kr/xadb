@@ -484,3 +484,13 @@ byte 산식·지원 범위·owner 신뢰 경계는 이 동결안의 일부다. s
 ## 작성 기록
 
 최초 읽기 전용 조사와 초안 작성 때에는 제품·시험·fixture·등록 파일 변경, 빌드·테스트·문서 verifier·commit/push를 수행하지 않았다. 그 뒤 [최종 독립 검토](../evidence/module-independence-survey-20261026.md#final-design-review)를 수신해 문서 전체를 채택했다. 실제 API 공급·A/B 병렬 구현·native 인수는 미완료다.
+
+
+<a id="row-actor-graph"></a>
+### Base4 한 Row actor의 실제 페이지 관계 — 2026-10-28
+
+결정 `D3-MODULE-ROW-ACTOR-001`(D2, `ACCEPTED_LIMITED_D1_D2`)의 담당/통합자는 `/root`이며 2026-10-28 기존 개발 위임 안에서 구체화했다. 기준 `main` `d27bfa4`에서 `plan4_recovery_base::row::actor::observe`를 구현했다. 새 호출은 immutable `LayoutView`와 exact actor, caller-owned 원4page scratch를 받고 해당 actor의 `RowActorObservation`만 반환한다. Root3/원64 Job3 commitment·Status/head/target·Job 관계, 실제 Undo의 generation/creator/sequence/mutation/target/Missing/count/prevTxn, Catalog schema→stable anchor→현재 RowLeaf의 해당 행과 역참조를 검산한다. hint는 위치 권한이 아니다. Retained의 실제 선행은 작은 sequence 가운데 가장 가까운 Retained U와 exact ref/sequence가 같아야 한다. compensated/pruned U의 edge cut와 release cursor, RootFree 뒤 남는 committed 행을 구분한다. 해당 actor의 현재 RowId는 Root.row_high 이하이며, 해당 actor의 현재 행끼리 table/leaf를 가로질러 RowId·logical mutation이 중복하지 않는다. 다른 actor와의 전역 유일성은 전체 closure 의무로 남긴다. allocated Undo의 Free body도 canonical decoder로 검산한다.
+
+작업·계약·통합 담당은 `/root`, 독립 검토자는 `/root/boundary_review`다. D2 대안은 paged JobCells의 공통 표현 변경 또는 원 caller scratch 사용이다. 기존 Catalog base와 같이 원4page scratch를 명시적으로 받아 Job bank를 복사하며 별도64KiB local/heap을 만들지 않는다. 반환에는 원 owner·pin·stage·READY 권한이 없다. `semantic_row::ledger::validate_actor`는 원 structural 관측만 재사용하고 ATT가 없는 이 입구에서 statement credit 보유나 residual budget을 주장하지 않는다.
+
+이는 전체 current-state closure가 아니다. Catalog/다른 actor의 전체 graph, ATT/Aging descriptor·정규 UndoSlot inventory·역사 INIT/WAL·실제 statement mark·전체 source 상계/admission·current Profile3 선택은 후속 의무다. current 제품은 Profile2이며 새 scope3 stage/live/recovery 또는 M4/M5 완료로 승격하지 않는다. 새 fixture는 독립 raw pages와 opaque history 주장으로 구성하며 실제 durability 증거가 아니다. 검증·독립 최종 수용은 [source별 증거](../evidence/module-independence-survey-20261026.md#row-actor-graph)에 기록한다. 채택 상계를 넘거나 이 결과를 전체 closure/authority로 확장하려면 해당 owner 계약과 D2를 다시 검토한다.

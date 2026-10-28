@@ -283,6 +283,18 @@ pub(crate) fn transaction_remaining(
     remaining(status, &observed, statement_credit_available)
 }
 
+/// Check the actor/Status/Job structure without assuming a live statement
+/// credit. Physical graph readers do not possess the ATT/credit proof needed
+/// to claim any of the remaining budget rows.
+pub(crate) fn validate_actor(
+    profile: Profile,
+    home: StatusHome,
+    location: StatusSlotRef,
+    jobs: JobCells<'_>,
+) -> Result<()> {
+    observe(profile, home, location, jobs).map(|_| ())
+}
+
 /// Validate a current ATT or just-produced terminal descriptor. A descriptor
 /// removed at terminal must not be reused against later Aging-mutated Status.
 pub(crate) fn validate_transaction(

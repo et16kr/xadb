@@ -1,0 +1,55 @@
+{
+  "schema": "XADB_ROW_ACTOR_GRAPH_V1",
+  "baseline": "d27bfa4",
+  "status": "FROZEN_INPUTS_NOT_EXECUTION_EVIDENCE",
+  "scope": "One Row actor physical Base4 graph only; original immutable layout and caller scratch. Full mixed Catalog/descriptor/inventory/history/live/source admission/current Profile3 closure remains incomplete.",
+  "budget": {
+    "total_seconds": 1200,
+    "compiler_seconds": 420,
+    "case_seconds": 45,
+    "output_bytes": 8388608,
+    "rust_min_stack": 33554432
+  },
+  "compiler_tests": [],
+  "runtime_tests": [
+    {
+      "selector": "storage::plan4_recovery_base::row::actor::tests::actor_literal_physical_graphs",
+      "reason": "Nine independent physical graphs: empty, three retained in distinct statements, middle rollback target, compensated Active/Committed, prune/RootFree row survival, full abort cleanup and Reserved with prior head."
+    },
+    {
+      "selector": "storage::plan4_recovery_base::row::actor::tests::actor_rejects_wrong_chain_counts_identity_and_before",
+      "reason": "Actual Undo page ref/sequence/creator/mutation/target, skip/cycle, net-zero predecessor incoming and Missing before."
+    },
+    {
+      "selector": "storage::plan4_recovery_base::row::actor::tests::actor_rejects_uncut_release_and_cursor_mismatch",
+      "reason": "Actual releasing Cut and cursor/incoming mismatch."
+    },
+    {
+      "selector": "storage::plan4_recovery_base::row::actor::tests::actor_rejects_row_target_schema_version_and_projection",
+      "reason": "Actual current Catalog schema/anchor/leaf lookup, BE key/LE RowId, logical/stamp/Undo identity, projection and payload."
+    },
+    {
+      "selector": "storage::plan4_recovery_base::row::actor::tests::actor_rejects_orphan_physical_undo",
+      "reason": "Allocated Live Undo created by this actor without a Job."
+    },
+    {
+      "selector": "storage::plan4_recovery_base::row::actor::tests::actor_rejects_foreign_actor_and_orphan_row",
+      "reason": "Foreign actor binding and independently authored row without a retained Job."
+    }
+  ],
+  "inputs": {
+    "index.json": {
+      "bytes": 433,
+      "sha256": "a7d8dec3a53f60177a4efcc0b5f783b3063100d7cbcd041834a5c025d8b50da3"
+    },
+    "cases.bin": {
+      "bytes": 3649536,
+      "sha256": "a66a3eedb08c212550d53e69f1d9c495761c35e4319b6d17d0a22aa33551ddc6"
+    },
+    "author.py": {
+      "bytes": 7658,
+      "sha256": "97ef940e016d9e0c8aa5894cb2d73cd25ae14563ec251d5d1216252fee80363c"
+    }
+  },
+  "preserved_execution": "Original manifest/source r3 six cases PASS; renamed final selector only clarifies its actual foreign-actor/orphan-row scope. No wrong Status location test claim. Extended data retains original first16 image pages per original case."
+}

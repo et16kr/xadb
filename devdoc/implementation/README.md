@@ -1,5 +1,7 @@
 # 현재 구현
 
+2026-10-28 [Row actor의 실제 페이지 관계 검산](../evidence/module-independence-survey-20261026.md#row-actor-graph): 사용자의 전체 계획 완료 요청에 따라 `main` `d27bfa4`에서 재개했다. 한 actor의 Base4/Status/Undo/Row graph를 구현했고 source별 신규10개 선택 검증을 통과했다. 최종 독립 D1/D2 한정 수용·필수 수정0이며 전체 M4/M5는 미완료다.
+
 2026-10-28 [shared CREATE 제품 예약](../evidence/module-independence-survey-20261026.md#c3-create-admission): 원 statement·source/gate를 기존 예약에 묶고 원 private 반환을 공급한다. source별 compiler4·신규 runtime9/source1과 최종 독립 D1/D2 한정 수용·필수 수정0을 확인했다. 전체 M4/M5는 미완료다.
 
 2026-10-28 [첫 Catalog statement의 거래 완료 연결](../evidence/module-independence-survey-20261026.md#c3-catalog-capsule): main `4ac878c`에서 실제 Forward를 원 statement에 등록하고 consuming Commit/full abort를 연결한다. r3 compiler3·r4 runtime9·r5 runtime4 PASS와 원 FAIL을 보존했으며 최종 독립 D1/D2 한정 수용·필수 수정0이다. shared CREATE 제품 admission·Row·M4/M5는 미완료다.

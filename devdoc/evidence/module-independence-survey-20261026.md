@@ -2754,3 +2754,31 @@ r4은 scoped static2와 변경 source1·수정 OCR04를 통과했다. source `0a
 최종 독립 D1/D2는 `ACCEPTED_LIMITED_D1_D2`, 필수 수정0이다. `/root/source_admission_review`가19파일(OCR 제외8 포함)·artifact54개를 검토하고 current source=r4와 원 FAIL·결과·삭제 기록을 확인했다. r4 view 검산은6424B이며 Full/Resident·live/recovered peak는 r2와 같다. [최종 receipt](../../artifacts/module-c3-own-catalog-20261028/review-final.json) SHA-256은 `d15f122567f4e5b3be0780520844e0dc5cd037b1a87a2c5d466c5c54723c91ce`다. 검토자 시험·빌드·제품 수정0이며 허용된 status/receipt/hash metadata만 후속 반영했다.
 
 사용자의 후속 “일단 문제만 해결해줘요, 문제해결 후 작업을 개시하지는 말아요” 지시에 따라 현재 Catalog 조회 수정의 검증·리뷰·기록을 마무리하고 이후 개발은 개시하지 않는다. 전체 M4/M5를 완료로 표시하지 않는다.
+
+
+<a id="row-actor-graph"></a>
+## 2026-10-28 main에서 Row actor의 실제 페이지 관계 검산 재개
+
+사용자의 계획 전체 완료·단계별 commit 요청에 따라 clean `main` `d27bfa4`에서 재개했다. 이전 Catalog own-read 수정 후 중지 기록은 당시 지시로 보존하며 C2 stash는 적용하지 않았다. M0–M3와 기존 source별 검증은 반복하지 않는다. 다음 실제 Row 공급을 위해 [한 actor graph 계약](../contracts/dev3-module-consumers.md#row-actor-graph)을 구현한다. 전체 M4/M5 목표와 C2/C3/C4/C5·A/B 단독/합류 인수 의무는 유지한다.
+
+사전 독립 D2는 한 actor의 원 Root/64 Job census·Status/Undo/Row 양방향 관계에 조건부 수용했다. 전체 Base4 closure/READY나 live 권한으로 사용하지 않는다. [선택 manifest](../../tests/fixtures/module-row-format/actor/manifest.json)는 신규6 selector를 원 diff에 연결하며, 다중 statement/중간 rollback mark/compensated+Active·Commit/prune·RootFree/Reserved와 chain/count/identity/schema/projection/orphan 음성 입력을 검산한다. 전체1200초/compiler420초/case45초/출력8MiB/stack32MiB이며 실패 즉시 중단한다. 같은 코드의 완료 시험·workspace/하위 wrapper·native·문서 verifier·push는 실행하지 않는다. 새 영속 write/형식/current dispatch 변경은 없으며 native/current-build durability 인수는 후속 실제 공급에 남긴다.
+
+[artifact](../../artifacts/module-row-actor-20261028/)의 runner는 각 실행 source/hash/ELF/로그/result-before-cleanup을 보존하고 그 실행의 source/target/ELF만 삭제한 뒤 최종 result를 남긴다. r1은 새 test helper의 mutable slice·Box coercion과 새 코드의 Clippy collapsible_if로 compile FAIL(runtime0)이다. r2는 static2 PASS 뒤 독립 raw fixture의 CatalogLeaf kind7 오기로 첫 literal raw-layout FAIL(runtime0 PASS)이다. 실제 계약값5로 고쳤다. 별도 source 검토가 발견한 unconditional statement credit 인자도 원 structural 검산 API로 분리했다. 앞선 FAIL은 보존하고 r3에서 변경/미실행6만 선택한다. 후속 실제 결과와 최종 독립 검토는 아래에 기록한다.
+
+
+r3은 scoped static2와 최초 신규 runtime6을 통과했다. 독립 리뷰가 지적한 RootFree 뒤 RowId 상한·유일성 및 raw tag0 뒤 비정규 Free body를 추가로 교정했다. [리뷰 후속 선택](../../tests/fixtures/module-row-format/actor/review-followup.json)의 r4는 해당 변경을 지나는 신규3개만 통과했고 r3 완료6개는 반복하지 않았다. 해당 actor의 RowId는 Root.row_high 이하이며 해당 actor의 현재 행끼리 table/leaf를 가로질러 RowId·logical mutation이 중복하지 않는다. 다른 actor와의 전역 유일성은 전체 closure 의무다. allocated Undo의 Free 분기는 tag만 확인하지 않고 canonical body까지 검산한다.
+
+r4 뒤 제품 변경 없이 추가한 [같은 leaf 후속 선택](../../tests/fixtures/module-row-format/actor/same-leaf-followup.json)의 r5는 신규1개를 통과했다. 같은 leaf의 서로 다른 두 행은 허용하고 같은 logical mutation으로 바꾸면 거절한다. 현재 고유 runtime selector10개는 r3의6·r4의3·r5의1이라는 source별 증거다. r3의 `actor_rejects_foreign_actor_and_wrong_status_location`은 실제 내용에 맞게 현재 `actor_rejects_foreign_actor_and_orphan_row`로 이름만 고쳤으며 원 실행명·로그를 보존한다. 최종 source에서 전체10개를 재실행한 것처럼 표시하지 않는다.
+
+fixture author는 제품 encoder/다른 fixture author를 import하지 않는 독립 정수·SHA 조립이다. r4에18page record와 두 table RootFree 사례를 추가했고 기존10사례의 원16page images를 유지했다. fixture의 descriptor/inventory/history는 opaque 부분이므로 전체 Base4/current recovery oracle로 사용하지 않는다. 새 같은-leaf 사례는 독립 원 row bytes에 기존 leaf envelope만 적용한다.
+
+| 실행 | source SHA-256 | ELF SHA-256 | result SHA-256 |
+| --- | --- | --- | --- |
+| r3 | `b85420544dc079d30848f8c0cedaacf9cc6707bfc38c7ea4c60d17d34ab92bf1` | `93d01d5bc389d4d9900bf0e6f693c9353a59960f82eac25d134f17744cd20a79` | `2159b0e7cc7d95ce2b3ea953b2b939d9fe66a43c4b604f8fad7b18030eff0fac` |
+| r4 | `737be0986ca9bf0a6b14551cc6578c1dd651a5e3fea4a5fa4d5052d95246c946` | `af6785bae11820387754f41ae58204fad653d175309ba161554c6d44b017ebaf` | `edc389d39c7b8f3d036eddb6c8f8359d7728373ac578f232b9feda4bff9377a0` |
+| r5 | `5e18cc410e34b6df4b5b982b3f92abc4d3940432e47a8a5483616a4b0232c828` | `ae71e87853c047f907ec2b5564b37b4eff0dd940f2767be2dbb306ab06d71bbd` | `8816b06fb68a3a9429aeed6f404d335c8117a81b93bbe48b37f27bd631557ec9` |
+
+각 source의 전체 파일별 hash inventory·선택 manifest·도구 identity·stdout/stderr·원 FAIL·result-before-cleanup/result를 artifact에 보존했다. r1–r5의 자체 source/target/ELF는 모두 삭제했다. 무변경 완료 사례·전체 workspace·하위 wrapper·native·문서 verifier·push 실행0이다. caller 원4page 외 별도 page bank는 만들지 않지만 typed value/return/caller의 전체 동시 source census·admission은 아직 공급하지 않았다. 이를 F05/64KiB aggregate나 native/current-build durability PASS로 표시하지 않는다. 독립 최종 D1/D2 검토 결과는 아래에 기록한다.
+
+
+최종 독립 D1/D2는 `ACCEPTED_LIMITED_D1_D2`, 필수 수정0이다. `/root/boundary_review`가 변경17파일·artifact64파일의 원 bytes/hash/로그/결과와 정리 기록을 대조했다. 제품/fixture 관련10파일은 r5 source와 같고, 검토자는 수정·빌드·시험·문서 verifier를 실행하지 않았다. [최종 receipt](../../artifacts/module-row-actor-20261028/review-final.json) SHA-256은 `24132533000b2ed5f8a7dafcf31428a39a857c6aac47791681fb4c30db02b7b5`다. 허용된 수용/status·receipt/hash metadata만 후속 기입하며 전체 mixed graph·descriptor/inventory/history·statement/source admission·Profile3 실제 연결·M4/M5는 미완료다.

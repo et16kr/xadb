@@ -1,0 +1,29 @@
+{
+  "cases": [
+    "empty",
+    "three-retained",
+    "statement-target-one",
+    "compensated-active",
+    "compensated-committed",
+    "head-pruned",
+    "root-free-row-survives",
+    "abort-release",
+    "reserved-after-retained",
+    "orphan-row-known-bad",
+    "two-table-root-free"
+  ],
+  "record_bytes": 331776,
+  "parent_ledger_cases": [
+    0,
+    4,
+    7,
+    8,
+    11,
+    12,
+    13,
+    15,
+    5,
+    4,
+    13
+  ]
+}

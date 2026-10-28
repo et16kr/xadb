@@ -1,0 +1,35 @@
+{
+  "schema": "XADB_ROW_ACTOR_GRAPH_V1",
+  "baseline": "d27bfa4",
+  "status": "FROZEN_INPUTS_NOT_EXECUTION_EVIDENCE",
+  "scope": "One Row actor physical Base4 graph only; original immutable layout and caller scratch. Full mixed Catalog/descriptor/inventory/history/live/source admission/current Profile3 closure remains incomplete.",
+  "budget": {
+    "total_seconds": 1200,
+    "compiler_seconds": 420,
+    "case_seconds": 45,
+    "output_bytes": 8388608,
+    "rust_min_stack": 33554432
+  },
+  "compiler_tests": [],
+  "runtime_tests": [
+    {
+      "selector": "storage::plan4_recovery_base::row::actor::tests::actor_root_free_same_leaf_rejects_duplicate_logical_version",
+      "reason": "New test only: valid two pruned own rows in same leaf, then duplicate logical mutation with distinct keys. Unchanged completed r3/r4 cases are not repeated."
+    }
+  ],
+  "inputs": {
+    "index.json": {
+      "bytes": 433,
+      "sha256": "a7d8dec3a53f60177a4efcc0b5f783b3063100d7cbcd041834a5c025d8b50da3"
+    },
+    "cases.bin": {
+      "bytes": 3649536,
+      "sha256": "a66a3eedb08c212550d53e69f1d9c495761c35e4319b6d17d0a22aa33551ddc6"
+    },
+    "author.py": {
+      "bytes": 7658,
+      "sha256": "97ef940e016d9e0c8aa5894cb2d73cd25ae14563ec251d5d1216252fee80363c"
+    }
+  },
+  "preserved_execution": "Original manifest/source r3 six cases PASS; renamed final selector only clarifies its actual foreign-actor/orphan-row scope. No wrong Status location test claim. Extended data retains original first16 image pages per original case."
+}
