@@ -262,6 +262,17 @@ impl<'s, 'w> FlushIo<'s, 'w> {
         io
     }
 
+    #[cfg(test)]
+    pub(super) fn test_pair_origin_fault(&mut self) {
+        static FOREIGN: AtomicU8 = AtomicU8::new(0);
+        self.binding = &FOREIGN;
+    }
+
+    /// Compare the actual retained owner, without manufacturing provenance.
+    pub(super) fn uses_origin(&self, binding: &AtomicU8, fence: &SessionFence) -> bool {
+        std::ptr::eq(self.binding, binding) && std::ptr::eq(self.fence, fence)
+    }
+
     pub(super) fn snapshot(&self) -> IoObservation {
         self.observation
     }

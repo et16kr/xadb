@@ -1,5 +1,6 @@
 //! Actual memory consumers of the original CREATE owner. Frozen raw bytes are
 //! observations only; no pure test, decoder or expected image creates authority.
+use super::super::super::plan4_pages::apply::CatalogTestState;
 use super::super::super::plan4_pages::{
     CatalogLookupStep, EmptyRetentionControlLoan, IntoRetentionError, Plan4Page,
     Plan4ResidencyCursor, Plan4Target, RETENTION_CONTROL_BYTES, RETENTION_REPLAY_BYTES,
@@ -334,12 +335,7 @@ impl Oracle {
         );
         assert_state(live, lsn, false);
     }
-    fn check(
-        &self,
-        live: &Live<'_, '_, '_, '_, '_, '_, '_, '_, port::Writer>,
-        state: &State,
-        id: &str,
-    ) {
+    fn check(&self, live: &impl CatalogTestState, state: &State, id: &str) {
         let row = self.row(id);
         assert_eq!(row[1], "ACCEPT");
         let lsn: u64 = row[3].parse().unwrap();
@@ -428,18 +424,15 @@ fn assert_wal(state: &State, epoch: u32, frames: &[Vec<u8>]) {
         at += frame.len();
     }
 }
-fn resident_index(
-    live: &Live<'_, '_, '_, '_, '_, '_, '_, '_, port::Writer>,
-    number: u64,
-) -> Option<usize> {
-    probe::registered_index(live.catalog_test_pool(), number)
+fn resident_index(live: &impl CatalogTestState, number: u64) -> Option<usize> {
+    live.catalog_test_with_pool(|pool| probe::registered_index(pool, number))
 }
-fn assert_image(live: &Live<'_, '_, '_, '_, '_, '_, '_, '_, port::Writer>, expected: &[u8]) {
+fn assert_image(live: &impl CatalogTestState, expected: &[u8]) {
     assert_eq!(expected.len(), PAGE_BYTES);
     let number = u64_at(expected, 32);
     let index = resident_index(live, number)
         .unwrap_or_else(|| panic!("actual changed page {number} not resident"));
-    let request = live.catalog_test_pool().target_request(index).unwrap();
+    let request = live.catalog_test_with_pool(|pool| pool.target_request(index).unwrap());
     assert_eq!(
         request.identity.database.bytes().as_slice(),
         &expected[8..24]
@@ -463,12 +456,12 @@ fn assert_image(live: &Live<'_, '_, '_, '_, '_, '_, '_, '_, port::Writer>, expec
         (expected[6], expected[7])
     );
     let mut actual = boxed::<PAGE_BYTES>();
-    let observed = probe::diagnose(live.catalog_test_pool(), index, &mut actual);
+    let observed = live.catalog_test_with_pool(|pool| probe::diagnose(pool, index, &mut actual));
     assert_eq!(actual.as_slice(), expected, "actual page {number}");
     assert_eq!(observed.frame.page_lsn.0, u64_at(expected, 64));
     assert_eq!(observed.total, 0);
 }
-fn assert_state(live: &Live<'_, '_, '_, '_, '_, '_, '_, '_, port::Writer>, lsn: u64, claim: bool) {
+fn assert_state(live: &impl CatalogTestState, lsn: u64, claim: bool) {
     let (prefix, durable, reserved, installing, pending, actual_claim, pins) =
         live.free_undo_test_state().unwrap();
     assert_eq!(
@@ -610,7 +603,10 @@ fn flush_all<'s, 'c, W: WriterNamespace>(
         }
     }
     for (number, undo) in [(9, false), (10, true)] {
-        if probe::registered_index(live.catalog_test_pool(), number).is_some() {
+        if live
+            .catalog_test_with_pool(|pool| probe::registered_index(pool, number))
+            .is_some()
+        {
             let target = if undo {
                 live.undo_target(page_ref(number, 2))
             } else {
@@ -896,7 +892,7 @@ impl Oracle {
     }
     fn check_scenario(
         &self,
-        live: &Live<'_, '_, '_, '_, '_, '_, '_, '_, port::Writer>,
+        live: &impl CatalogTestState,
         state: &State,
         scenario: &str,
         lsn: u64,
@@ -1203,3 +1199,6 @@ mod pair_shared;
 
 #[path = "catalog_memory/create_parts.rs"]
 mod create_parts;
+
+#[path = "catalog_memory/create_lease.rs"]
+mod create_lease;

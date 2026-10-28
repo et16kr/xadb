@@ -1,6 +1,171 @@
 //! CREATE operations on short disjoint borrows of the original resources.
-//! The compatibility reservation still retains its original whole-bound borrow.
+//! The reservation retains the exact disjoint resources and original flush lease.
 use super::*;
+
+/// A continuous exclusive borrow of the original flush owner. The selected
+/// generation and pair are fixed before the claim, never refreshed at Cancel.
+pub(super) struct CatalogPairIoLease<'r, 'c, 's, 'w> {
+    pub(super) original: &'r mut flush::RetentionFlushControl<'c, 's, 'w>,
+    core: &'c PageConcurrency<'s>,
+    binding: &'s AtomicU8,
+    fence: &'s SessionFence,
+    selected_generation: u64,
+    pair: [TargetRequest; 2],
+}
+impl<'r, 'c, 's, 'w> CatalogPairIoLease<'r, 'c, 's, 'w> {
+    fn acquire<W: WriterNamespace>(
+        storage: &'s MutableStorageOwner<'_, 'w, W>,
+        core: &'c PageConcurrency<'s>,
+        original: &'r mut flush::RetentionFlushControl<'c, 's, 'w>,
+        pair: [TargetRequest; 2],
+    ) -> Result<Self> {
+        original.check_catalog_pair_io::<W>(&storage.binding, storage.session_fence())?;
+        let selected_generation = original.io.snapshot().known.generation;
+        Ok(Self {
+            original,
+            core,
+            binding: &storage.binding,
+            fence: storage.session_fence(),
+            selected_generation,
+            pair,
+        })
+    }
+    pub(super) fn check<W: WriterNamespace>(
+        &mut self,
+        storage: &MutableStorageOwner<'_, 'w, W>,
+        core: &PageConcurrency<'s>,
+        pair: &[TargetRequest; 2],
+    ) -> Result<()> {
+        if !std::ptr::eq(self.core, core)
+            || !std::ptr::eq(self.binding, &storage.binding)
+            || !std::ptr::eq(self.fence, storage.session_fence())
+            || self.pair != *pair
+            || self.selected_generation != self.original.io.snapshot().known.generation
+        {
+            return Err(fatal(
+                storage,
+                RetentionPhase::Prepare,
+                RetentionCause::BindingMismatch,
+            ));
+        }
+        self.original
+            .check_catalog_pair_io::<W>(self.binding, self.fence)
+    }
+}
+
+impl<'r, 'a, 's, 'c, 'p, 'd, 'm, 'w, W: WriterNamespace>
+    CatalogCreateAccess<'r, 'a, 's, 'c, 'p, 'd, 'm, 'w, W>
+{
+    pub(super) fn reserve(
+        mut self,
+        owner: &'r mut Owner<'c, 's>,
+        actor: TxnRef,
+        undo: &Plan4Target,
+        definition: &'r crate::api::TableSpec,
+        private: &'r mut [u8; PRIVATE_BYTES],
+    ) -> Result<ReservedCatalogCreate<'r, 'a, 's, 'c, 'p, 'd, 'm, 'w, W>> {
+        // Preserve deep pending/population and planner error precedence.
+        let plan = self.plan_catalog_create(owner, actor, undo, definition, private)?;
+        let Self {
+            storage,
+            pool,
+            control,
+            history,
+            visibility,
+            flush,
+        } = self;
+        let mut io = CatalogPairIoLease::acquire(storage, pool.bound_core(), flush, plan.pair)?;
+        let (key, reserve) = CatalogCreateAccess {
+            storage,
+            pool,
+            control: &mut *control,
+            history,
+            visibility,
+            flush: &mut *io.original,
+        }
+        .reserve_planned(owner, &plan, private)?;
+        io.check::<W>(storage, pool.bound_core(), &plan.pair)
+            .map_err(|error| fatal(storage, error.phase, error.cause))?;
+        Ok(ReservedCatalogCreate {
+            storage,
+            pool,
+            control,
+            history,
+            visibility,
+            io,
+            owner,
+            private,
+            definition,
+            plan,
+            key,
+            reserve,
+            active: true,
+        })
+    }
+
+    fn reserve_planned(
+        &mut self,
+        owner: &mut Owner<'c, 's>,
+        plan: &CreatePlan,
+        private: &mut [u8; PRIVATE_BYTES],
+    ) -> Result<(TxPairClaimKey<'c, 's>, PageLsn)> {
+        let slot = self.control.slot(plan.plan.actor).ok_or_else(|| {
+            unchanged(RetentionPhase::Prepare, RetentionCause::MissingTransaction)
+        })?;
+        let prepared = self.catalog_preparation().prepare_existing_catalog(
+            owner,
+            Change::Reserve(&plan.plan),
+            Some(slot),
+            plan.selected(),
+            private,
+        )?;
+        if prepared.payload.observation.job_ordinal != Some(plan.ordinal) {
+            return Err(unchanged(RetentionPhase::Prepare, RetentionCause::Busy));
+        }
+        self.flush.io.preflight::<W>().map_err(|e| RetentionError {
+            phase: RetentionPhase::Prepare,
+            effect: e.effect,
+            cause: RetentionCause::Flush(e),
+        })?;
+        let candidates = self
+            .pool
+            .catalog_pair_candidates(&plan.pair, 1, &plan.existing)
+            .map_err(|e| frame(RetentionPhase::Prepare, e))?;
+        if candidates.requires_flush() {
+            return Err(unchanged(RetentionPhase::Prepare, RetentionCause::Busy));
+        }
+        let reserve = PageLsn(prepared.payload.observation.header.lsn);
+        let authority = TxPairAuthority {
+            core: self.pool.bound_core(),
+            binding: &self.storage.binding,
+            fence: self.storage.session_fence(),
+            actor: plan.plan.actor,
+            reserve,
+            existing: &plan.existing,
+            pair: &plan.pair,
+        };
+        let mut key = self
+            .pool
+            .try_prepare_tx_pair(&authority, &candidates)
+            .map_err(|e| frame(RetentionPhase::Prepare, e))?;
+        if let Err(error) = self.apply_pair_catalog(&key, owner, prepared) {
+            if error.effect == Effect::Unchanged && self.control.pending.is_none() {
+                self.return_catalog_pair(
+                    owner,
+                    &mut key,
+                    plan,
+                    reserve,
+                    super::super::TxPairCancelKind::Unstaged,
+                    None,
+                )
+                .map_err(|cleanup| fatal(self.storage, cleanup.phase, cleanup.cause))?;
+                return Err(error);
+            }
+            return Err(fatal(self.storage, error.phase, error.cause));
+        }
+        Ok((key, reserve))
+    }
+}
 
 impl<'b, 'a, 's, 'c, 'p, 'd, 'm, 'w, W: WriterNamespace>
     CatalogCreateAccess<'b, 'a, 's, 'c, 'p, 'd, 'm, 'w, W>
@@ -666,6 +831,30 @@ impl<'b, 'a, 's, 'c, 'p, 'd, 'm, 'w, W: WriterNamespace>
             history: self.history,
             visibility: self.visibility,
             access: CatalogTargetAccess::Ordinary,
+        }
+    }
+}
+
+#[cfg(test)]
+impl CatalogPairIoLease<'_, '_, '_, '_> {
+    pub(super) fn test_identity(&self) -> (usize, u64) {
+        (
+            std::ptr::from_ref(&*self.original) as usize,
+            self.selected_generation,
+        )
+    }
+    /// Deliberate corruptions/temporary refusal, never a successful authority.
+    pub(super) fn test_fault(&mut self, kind: u8) {
+        match kind {
+            0 => self.original.phase = flush::RetentionFlushPhase::WaitingSource,
+            1 => self.original.phase = flush::RetentionFlushPhase::Ready,
+            2 => self.selected_generation += 1,
+            3 => self.pair.swap(0, 1),
+            4 => {
+                static FOREIGN: AtomicU8 = AtomicU8::new(0);
+                self.binding = &FOREIGN;
+            }
+            _ => panic!("unknown lease fault"),
         }
     }
 }

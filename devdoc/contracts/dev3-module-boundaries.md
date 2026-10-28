@@ -1373,6 +1373,19 @@ source 상계는 deep health/registry, Root ReadTargets+Root decode/Job scan, St
 
 실행 전 [commit-call manifest](../../tests/fixtures/dev3-module-c2/commit-call/manifest.json)에 runtime11/compiler4/nativeN03 한 번과 총1800초/compiler420초/case45초/native30초/admission600초/로그8MiB/stack32MiB를 동결한다. 새 준비 두 unwind와 세 Fatal 경계, 실제 prepared flush·Full overlap·원 stage rejection/attempted-error를 구분한다. 원 corpus/controller와 자원 한도는 유지한다. source 식/원 gate/WAL/효과 의미가 바뀌거나 필수 상계가 초과하면 이 결정을 재검토한다.
 
+<a id="catalog-create-lease"></a>
+#### XADB-MODULE-CREATE-LEASE-001 — 원 CREATE 자원과 연속 flush 대여
+
+2026-10-28 · D2 ACCEPTED(이 공급 한정) · 기준 main `3fa5f6f` · 작성/계약/통합 `/root`, 독립 `/root/source_admission_review`. [원 공유 claim 목표](#catalog-claim-gap)의 실제 flush 대여를 먼저 공급한다. `ReservedCatalogCreate`는 전체 session 대신 원 storage/pool/control/history/visibility와 `CatalogPairIoLease`를 보유한다. 기존 exclusive entry가 private view를 소비하여 같은 Reserve body를 실행한다. 원 `Owner`/private/definition/key는 그대로이며 아직 raw actor를 받는 기존 exclusive API다. shared 제품 API·writable statement·source admission 완료로 표시하지 않는다.
+
+lease는 원 flush의 단 하나인 mutable borrow를 planner 종료부터 Reserve·Forward/Cancel·Before 반환까지 연속 보유한다. 원 core/binding/fence·pair와 selected generation을 동결한다. acquisition은 actual FlushIo origin, Ready, capture/durable/authority/retired 부재와 실제 `preflight`를 검산한다. Forward/Cancel은 동결 identity/generation을 원 owner와 다시 대조하고 호출 동안 같은 borrow를 재대여한다. Cancel 때 generation을 새로 골라 lease를 다시 만드는 대안은 채택하지 않는다. 원 body의 짧은 PairIoQuiescence는 이 연속 lease 아래 만들어지며 flush I/O나 generation 변경은 불가능하다. active Drop은 fence/notify 뒤 claim을 미완료로 보존한다. 정상·Before·Fatal 및 allocator/epoch 종료 의미는 유지한다.
+
+원 pending/population/deep health와 planner 오류는 lease admission보다 먼저다. 그 뒤 flush preflight를 기존-target preparation보다 앞에서 수행하여 lease를 획득하므로, 미관측 preparation 오류와 flush 오류가 함께 있으면 flush 오류가 먼저다. 이는 내부 admission 경계의 한정 D2 구체화이며 Format/WAL 의미는 바꾸지 않는다. 단순 scalar lease나 whole bound+alias 대안은 선택하지 않는다. 원 mutable borrow를 분리한 실제 자원만 저장하며 새 owner/manager/registry는 없다.
+
+source는 확대 reservation과 Result/Before, lease 획득/반환·IoObservation·검산 helper, 원 reserve tuple 및 caller/view를 보수 추가한다. 변경 없는 retirement peak가 더 크더라도 새 CREATE phase를 누락하지 않는다. cap 증액·optimizer 할인은 없다. test-only `CatalogTestState`는 원 pool/bank/jobs를 관측하므로 reservation에 전체 bound를 다시 구성하지 않는다. 독립 oracle의 원 byte/hash/기대값은 유지한다.
+
+[동결 선택](../../tests/fixtures/dev3-module-c3/create-lease/manifest.json)은 compiler3·runtime10·nativeN01 한 번이다. compiler는 actual reserve/consume, 같은 원 flush 재대여 금지, consumed token 재사용 금지다. runtime은 actual FlushIo foreign origin·Ready 잔여 검산과 바뀐 reservation의 source·Forward/Cancel·Unstaged·final unwind·Drop/current recovery·pending 우선순위·Before Drop, 신규 lease identity/Before 후 성공 Cancel과 identity 변조를 연결한다. input/corpus/controller와 total1800초/compiler420초/runtime45초/native30초/review600초/log8MiB/stack32MiB를 유지한다. 완료 무변경 pair leaf/System/하위 전체 wrapper는 실행하지 않는다. [source별 결과](../evidence/module-independence-survey-20261026.md#c3-create-lease)와 실제 검토를 별도 기록하며 일반 floor·writable actor·Row/C3–C5·M4/M5는 미완료다.
+
 <a id="common-deliveries"></a>
 ## 7. 유한한 공통 공급과 C0/C 인계
 

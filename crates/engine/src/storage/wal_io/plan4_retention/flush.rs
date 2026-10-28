@@ -39,6 +39,43 @@ pub(super) struct RetentionFlushControl<'c, 's, 'w> {
     source: super::recovery::HistorySource<'s>,
 }
 impl<'c, 's, 'w> RetentionFlushControl<'c, 's, 'w> {
+    /// Seal only the original idle flush owner. A Ready label alone is not
+    /// sufficient when a retained capture or receipt still exists.
+    pub(super) fn check_catalog_pair_io<W: WriterNamespace>(
+        &mut self,
+        binding: &std::sync::atomic::AtomicU8,
+        fence: &crate::storage::session_fence::SessionFence,
+    ) -> Result<()> {
+        if !self.io.uses_origin(binding, fence) {
+            fence.fence();
+            return Err(RetentionError {
+                phase: RetentionPhase::Prepare,
+                effect: Effect::CallerMustResolve,
+                cause: RetentionCause::BindingMismatch,
+            });
+        }
+        if self.phase != RetentionFlushPhase::Ready {
+            return Err(unchanged(RetentionPhase::Prepare, RetentionCause::Busy));
+        }
+        if self.capture.is_some()
+            || self.durable.is_some()
+            || self.authority.is_some()
+            || self.retired.is_some()
+        {
+            fence.fence();
+            return Err(RetentionError {
+                phase: RetentionPhase::Prepare,
+                effect: Effect::CallerMustResolve,
+                cause: RetentionCause::Invariant,
+            });
+        }
+        self.io.preflight::<W>().map_err(|error| RetentionError {
+            phase: RetentionPhase::Prepare,
+            effect: error.effect,
+            cause: RetentionCause::Flush(error),
+        })
+    }
+
     pub(super) fn new<W: WriterNamespace>(
         storage: &'s MutableStorageOwner<'_, '_, W>,
         workspace: &'w mut [u8; super::super::FLUSH_BYTES],

@@ -90,10 +90,16 @@ struct CatalogCreateAccess<'b, 'a, 's, 'c, 'p, 'd, 'm, 'w, W: WriterNamespace> {
 #[path = "catalog_create.rs"]
 mod create;
 
-/// Owns both the durable Tx reservation and its original unpublished pool
-/// claim. The caller cannot run another writer through this borrowed bound.
-pub(crate) struct ReservedCatalogCreate<'r, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace> {
-    bound: &'r mut Plan4Retention<'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W>,
+/// Owns the durable Tx reservation, original pair claim and continuous flush
+/// lease. Only the necessary original resources are borrowed; no session or
+/// owner is reconstructed. The exclusive entry remains the product boundary.
+pub(crate) struct ReservedCatalogCreate<'r, 'a, 's, 'c, 'p, 'd, 'm, 'w, W: WriterNamespace> {
+    storage: &'s MutableStorageOwner<'m, 'w, W>,
+    pool: &'r SharedPool<'c, 's, 'p, 'd>,
+    control: &'r mut control::RetentionLedger<'a, 'c, 's>,
+    history: &'r history::runtime::RuntimeHistory<'a, 'c, 's>,
+    visibility: Option<&'r visibility::BoundVisibility<'a, 'c, 's>>,
+    io: create::CatalogPairIoLease<'r, 'c, 's, 'w>,
     owner: &'r mut Owner<'c, 's>,
     private: &'r mut [u8; PRIVATE_BYTES],
     definition: &'r crate::api::TableSpec,
@@ -102,29 +108,84 @@ pub(crate) struct ReservedCatalogCreate<'r, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: W
     reserve: PageLsn,
     active: bool,
 }
-impl<W: WriterNamespace> Drop for ReservedCatalogCreate<'_, '_, '_, '_, '_, '_, '_, '_, '_, W> {
+impl<W: WriterNamespace> Drop for ReservedCatalogCreate<'_, '_, '_, '_, '_, '_, '_, '_, W> {
     fn drop(&mut self) {
         if self.active {
-            self.bound.inner.storage.session_fence().fence();
-            self.bound.inner.storage.wal().completion.notify_all();
+            self.storage.session_fence().fence();
+            self.storage.wal().completion.notify_all();
         }
     }
 }
 
 #[cfg(test)]
-impl<'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
-    ReservedCatalogCreate<'_, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W>
+impl<'s, 'c, 'p, 'd, W: WriterNamespace> ReservedCatalogCreate<'_, '_, 's, 'c, 'p, 'd, '_, '_, W> {
+    pub(in crate::storage) fn catalog_test_lease_identity(&self) -> (usize, u64) {
+        self.io.test_identity()
+    }
+    pub(in crate::storage) fn catalog_test_lease_fault(&mut self, kind: u8) {
+        self.io.test_fault(kind);
+    }
+    pub(in crate::storage) fn catalog_test_bound(&self) -> &Self {
+        self
+    }
+    pub(in crate::storage) fn catalog_test_pool(&self) -> &SharedPool<'c, 's, 'p, 'd> {
+        self.pool
+    }
+    pub(in crate::storage) fn catalog_test_epochs(&self) -> (bool, u64, Vec<(u8, u64, u64)>) {
+        self.visibility.expect("original visibility").test_epochs()
+    }
+    pub(in crate::storage) fn catalog_test_q(&self) -> u64 {
+        self.visibility.expect("original visibility").test_q()
+    }
+    pub(in crate::storage) fn catalog_test_wal_state(&self) -> (WalPrefix, u64) {
+        let wal = self.storage.wal();
+        let prefix = wal.append.lock().unwrap_or_else(|e| e.into_inner()).prefix;
+        (
+            prefix,
+            wal.first_write_lsn
+                .load(std::sync::atomic::Ordering::Acquire),
+        )
+    }
+}
+#[cfg(test)]
+impl<W: WriterNamespace> super::super::CatalogTestState
+    for ReservedCatalogCreate<'_, '_, '_, '_, '_, '_, '_, '_, W>
 {
-    /// Read-only access to the actual retained bound while the reservation
-    /// still owns its exclusive caller borrow. No Owner/claim escapes.
-    pub(in crate::storage) fn catalog_test_bound(
+    fn catalog_test_with_pool<T>(&self, run: impl FnOnce(&SharedPool<'_, '_, '_, '_>) -> T) -> T {
+        run(self.pool)
+    }
+    fn recovery_test_bank(&self) -> &[u8] {
+        &self.control.bytes[..65_536]
+    }
+    fn catalog_test_jobs(&self) -> &[[u8; 1024]; 64] {
+        self.control.jobs()
+    }
+    fn free_undo_test_state(
         &self,
-    ) -> &Plan4Retention<'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W> {
-        self.bound
+    ) -> Result<super::super::recovery_test_observation::FreeUndoTestState> {
+        let prefix = self
+            .storage
+            .wal()
+            .prefix()
+            .map_err(|e| fatal(self.storage, RetentionPhase::Census, RetentionCause::Wal(e)))?;
+        let (reserved, installing) = self.control.population.test_state();
+        let (claim, pins) = dirty_frame::init_test_support::claim_state(self.pool);
+        Ok((
+            prefix,
+            self.control
+                .durable
+                .as_ref()
+                .map(|d| d.observation().frame.lsn),
+            reserved,
+            installing,
+            self.control.pending.is_some(),
+            claim,
+            pins,
+        ))
     }
 }
 
-impl<'s, 'c, W: WriterNamespace> ReservedCatalogCreate<'_, '_, 's, 'c, '_, '_, '_, '_, '_, W> {
+impl<'s, 'c, W: WriterNamespace> ReservedCatalogCreate<'_, '_, 's, 'c, '_, '_, '_, '_, W> {
     pub(crate) fn object(&self) -> ObjectHandle {
         self.plan.object
     }
@@ -138,24 +199,31 @@ impl<'s, 'c, W: WriterNamespace> ReservedCatalogCreate<'_, '_, 's, 'c, '_, '_, '
                 self.active = false;
                 Ok(())
             }
-            Err(error)
-                if error.effect == Effect::Unchanged
-                    && self.bound.control.ledger.pending.is_none() =>
-            {
+            Err(error) if error.effect == Effect::Unchanged && self.control.pending.is_none() => {
                 Err(RetentionReservationError::Before {
                     error,
                     reservation: self,
                 })
             }
             Err(error) => Err(RetentionReservationError::Fatal(fatal(
-                self.bound.inner.storage,
+                self.storage,
                 error.phase,
                 error.cause,
             ))),
         }
     }
     fn cancel_inner(&mut self) -> Result<()> {
-        self.bound.catalog_create_access().cancel(
+        self.io
+            .check::<W>(self.storage, self.pool.bound_core(), &self.plan.pair)?;
+        CatalogCreateAccess {
+            storage: self.storage,
+            pool: self.pool,
+            control: self.control,
+            history: self.history,
+            visibility: self.visibility,
+            flush: self.io.original,
+        }
+        .cancel(
             &mut self.key,
             &self.plan,
             self.reserve,
@@ -175,17 +243,14 @@ impl<'s, 'c, W: WriterNamespace> ReservedCatalogCreate<'_, '_, 's, 'c, '_, '_, '
                 self.active = false;
                 Ok(object)
             }
-            Err(error)
-                if error.effect == Effect::Unchanged
-                    && self.bound.control.ledger.pending.is_none() =>
-            {
+            Err(error) if error.effect == Effect::Unchanged && self.control.pending.is_none() => {
                 Err(RetentionReservationError::Before {
                     error,
                     reservation: self,
                 })
             }
             Err(error) => Err(RetentionReservationError::Fatal(fatal(
-                self.bound.inner.storage,
+                self.storage,
                 error.phase,
                 error.cause,
             ))),
@@ -193,7 +258,17 @@ impl<'s, 'c, W: WriterNamespace> ReservedCatalogCreate<'_, '_, 's, 'c, '_, '_, '
     }
 
     fn initialize_inner(&mut self) -> Result<ObjectHandle> {
-        self.bound.catalog_create_access().initialize(
+        self.io
+            .check::<W>(self.storage, self.pool.bound_core(), &self.plan.pair)?;
+        CatalogCreateAccess {
+            storage: self.storage,
+            pool: self.pool,
+            control: self.control,
+            history: self.history,
+            visibility: self.visibility,
+            flush: self.io.original,
+        }
+        .initialize(
             &mut self.key,
             &self.plan,
             self.reserve,
@@ -786,105 +861,9 @@ impl<'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
         undo: &Plan4Target,
         definition: &'r crate::api::TableSpec,
         private: &'r mut [u8; PRIVATE_BYTES],
-    ) -> Result<ReservedCatalogCreate<'r, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W>> {
-        let plan = self.plan_catalog_create(owner, actor, undo, definition, private)?;
-        let slot = self.control.ledger.slot(actor).ok_or_else(|| {
-            unchanged(RetentionPhase::Prepare, RetentionCause::MissingTransaction)
-        })?;
-        let prepared = self.prepare_existing_catalog(
-            owner,
-            Change::Reserve(&plan.plan),
-            Some(slot),
-            plan.selected(),
-            private,
-        )?;
-        if prepared.payload.observation.job_ordinal != Some(plan.ordinal) {
-            return Err(unchanged(RetentionPhase::Prepare, RetentionCause::Busy));
-        }
-        self.flush.io.preflight::<W>().map_err(|e| RetentionError {
-            phase: RetentionPhase::Prepare,
-            effect: e.effect,
-            cause: RetentionCause::Flush(e),
-        })?;
-        let candidates = self
-            .inner
-            .pool
-            .catalog_pair_candidates(&plan.pair, 1, &plan.existing)
-            .map_err(|e| frame(RetentionPhase::Prepare, e))?;
-        if candidates.requires_flush() {
-            return Err(unchanged(RetentionPhase::Prepare, RetentionCause::Busy));
-        }
-        let reserve = PageLsn(prepared.payload.observation.header.lsn);
-        let authority = TxPairAuthority {
-            core: self.inner.pool.bound_core(),
-            binding: &self.inner.storage.binding,
-            fence: self.inner.storage.session_fence(),
-            actor,
-            reserve,
-            existing: &plan.existing,
-            pair: &plan.pair,
-        };
-        let mut key = self
-            .inner
-            .pool
-            .try_prepare_tx_pair(&authority, &candidates)
-            .map_err(|e| frame(RetentionPhase::Prepare, e))?;
-        if let Err(error) = self.apply_pair_catalog(&key, owner, prepared) {
-            if error.effect == Effect::Unchanged && self.control.ledger.pending.is_none() {
-                self.return_catalog_pair(
-                    owner,
-                    &mut key,
-                    &plan,
-                    reserve,
-                    super::TxPairCancelKind::Unstaged,
-                    None,
-                )
-                .map_err(|cleanup| fatal(self.inner.storage, cleanup.phase, cleanup.cause))?;
-                return Err(error);
-            }
-            return Err(fatal(self.inner.storage, error.phase, error.cause));
-        }
-        Ok(ReservedCatalogCreate {
-            bound: self,
-            owner,
-            private,
-            definition,
-            plan,
-            key,
-            reserve,
-            active: true,
-        })
-    }
-
-    fn return_catalog_pair(
-        &mut self,
-        owner: &mut Owner<'c, 's>,
-        key: &mut TxPairClaimKey<'c, 's>,
-        plan: &CreatePlan,
-        reserve: PageLsn,
-        kind: super::TxPairCancelKind,
-        requirement: Option<WalRequirement<'s>>,
-    ) -> Result<()> {
-        self.catalog_create_access().return_catalog_pair(
-            owner,
-            key,
-            plan,
-            reserve,
-            kind,
-            requirement,
-        )
-    }
-
-    fn plan_catalog_create(
-        &mut self,
-        owner: &mut Owner<'c, 's>,
-        actor: TxnRef,
-        undo: &Plan4Target,
-        definition: &crate::api::TableSpec,
-        private: &mut [u8; PRIVATE_BYTES],
-    ) -> Result<CreatePlan> {
+    ) -> Result<ReservedCatalogCreate<'r, 'a, 's, 'c, 'p, 'd, 'm, 'w, W>> {
         self.catalog_create_access()
-            .plan_catalog_create(owner, actor, undo, definition, private)
+            .reserve(owner, actor, undo, definition, private)
     }
 
     pub(crate) fn catalog_aging_start(
@@ -1495,7 +1474,7 @@ pub(in super::super) fn catalog_live_source_bytes<W: WriterNamespace>() -> Catal
     use crate::storage::{dirty_frame, tree_page::edit};
     use std::mem::size_of;
     type Prepared<'a> = PreparedCatalog<'a, 'a, 'a>;
-    type Reservation<'a, W> = ReservedCatalogCreate<'a, 'a, 'a, 'a, 'a, 'a, 'a, 'a, 'a, W>;
+    type Reservation<'a, W> = ReservedCatalogCreate<'a, 'a, 'a, 'a, 'a, 'a, 'a, 'a, W>;
     let scalar = size_of::<CatalogPreparation<'_, '_, '_, '_, '_, '_, '_, '_, W>>()
         + 2 * size_of::<&()>() // temporary view receiver and wrapper argument
         + 2 * size_of::<WalPrefix>()
@@ -1631,12 +1610,17 @@ pub(in super::super) fn catalog_live_source_bytes<W: WriterNamespace>() -> Catal
         + size_of::<super::TxPairCancelKind>()
         + size_of::<Option<WalRequirement<'_>>>()
         + size_of::<Result<()>>();
-    let forward_call = factory
+    let lease_check = 12 * reference
+        + 2 * size_of::<Result<()>>()
+        + 2 * size_of::<super::super::super::super::flush_io::IoObservation>();
+    let forward_call = lease_check
+        + factory
         + 6 * reference
         + size_of::<PageLsn>()
         + size_of::<Result<ObjectHandle>>()
         + 2 * reference; // newly borrowed key/plan closure captures
-    let cancel_call = factory + 5 * reference + size_of::<PageLsn>() + size_of::<Result<()>>();
+    let cancel_call =
+        lease_check + factory + 5 * reference + size_of::<PageLsn>() + size_of::<Result<()>>();
     let plan = plan + plan_call;
     let token = size_of::<Reservation<'_, W>>();
     let token_return = token
@@ -1682,7 +1666,15 @@ pub(in super::super) fn catalog_live_source_bytes<W: WriterNamespace>() -> Catal
                     .max(dirty_frame::tx_pair_source_census())
                     .max(pair_return + unstaged_return_call),
         )
-        .max(token_return + scalar);
+        .max(token_return + scalar)
+        + lease_check
+        + 3 * size_of::<create::CatalogPairIoLease<'_, '_, '_, '_>>()
+        + 2 * size_of::<Result<create::CatalogPairIoLease<'_, '_, '_, '_>>>()
+        + 2 * size_of::<Result<(TxPairClaimKey<'_, '_>, PageLsn)>>()
+        + 2 * view
+        + 12 * reference
+        + size_of::<TxnRef>()
+        + size_of::<Result<Reservation<'_, W>>>();
     // The small view call has ended before the consuming wrapper constructs
     // its original large Before/Reservation return carrier.
     // This caller is the one original reservation, not an ordinary Begin/Job

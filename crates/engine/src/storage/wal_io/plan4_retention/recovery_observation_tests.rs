@@ -104,6 +104,16 @@ impl<W: WriterNamespace> Plan4Retention<'_, '_, '_, '_, '_, '_, '_, '_, W> {
         ))
     }
 
+    /// Corrupt only the exposed Ready label or retained I/O origin. Existing
+    /// authentic capture/receipts remain for the lease's validation to reject.
+    pub(in crate::storage) fn catalog_test_create_flush_fault(&mut self, kind: u8) {
+        match kind {
+            0 => self.flush.phase = flush::RetentionFlushPhase::Ready,
+            1 => self.flush.io.test_pair_origin_fault(),
+            _ => panic!("unknown flush lease fault"),
+        }
+    }
+
     /// Fault injection: retain an authentic previous requirement as unexpected
     /// pending state. This cannot produce authority or a successful transition.
     pub(in crate::storage) fn catalog_test_create_pending_fault(&mut self) {
@@ -259,5 +269,28 @@ impl<'s, 'm, 'w, W: WriterNamespace> Plan4Retention<'_, 's, '_, '_, '_, '_, 'm, 
             .unwrap();
             wal.stage_verified(prefix, layout.header(), bytes).unwrap();
         }
+    }
+}
+
+/// Test observations over the same resources before and during a CREATE loan.
+/// No raw page/control mutation or authority construction is provided.
+pub(in crate::storage) trait CatalogTestState {
+    fn catalog_test_with_pool<T>(&self, run: impl FnOnce(&SharedPool<'_, '_, '_, '_>) -> T) -> T;
+    fn recovery_test_bank(&self) -> &[u8];
+    fn catalog_test_jobs(&self) -> &[[u8; 1024]; 64];
+    fn free_undo_test_state(&self) -> Result<FreeUndoTestState>;
+}
+impl<W: WriterNamespace> CatalogTestState for Plan4Retention<'_, '_, '_, '_, '_, '_, '_, '_, W> {
+    fn catalog_test_with_pool<T>(&self, run: impl FnOnce(&SharedPool<'_, '_, '_, '_>) -> T) -> T {
+        run(&self.inner.pool)
+    }
+    fn recovery_test_bank(&self) -> &[u8] {
+        self.recovery_test_bank()
+    }
+    fn catalog_test_jobs(&self) -> &[[u8; 1024]; 64] {
+        self.catalog_test_jobs()
+    }
+    fn free_undo_test_state(&self) -> Result<FreeUndoTestState> {
+        self.free_undo_test_state()
     }
 }

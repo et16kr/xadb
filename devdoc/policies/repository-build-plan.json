@@ -8275,5 +8275,38 @@
     "review_receipt": "artifacts/module-c3-create-parts-20261028/review-final.json",
     "review_receipt_sha256": "3bcb430855ac823ab6f97c0c2d536d06d23d9f3cf47b6044fff2dad0b6a6ec06",
     "reviewed_files": 16
+  },
+  "dev3_module_c3_create_lease": {
+    "status": "ACCEPTED_LIMITED_D1_D2",
+    "baseline_commit": "3fa5f6f",
+    "owner_contract": "dev3-module-boundaries",
+    "contract_anchor": "catalog-create-lease",
+    "evidence": "module-independence-survey-20261026",
+    "evidence_anchor": "c3-create-lease",
+    "implemented_paths": [
+      "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/create_lease.rs",
+      "tests/fixtures/dev3-module-c3/create-lease"
+    ],
+    "compiler_tests": 3,
+    "runtime_tests": 10,
+    "native_case": "N01",
+    "shared_admission": false,
+    "whole_m4_m5_complete": false,
+    "artifact": "artifacts/module-c3-create-lease-20261028",
+    "source_sha256": "7be6bf8cc6188165ba0d795d6d4ddd1d3613d4873251f6c7d7183e8c337b9ca0",
+    "binary_sha256": "f231bfdc26802aa74312e3aa184eccfdd9e2f7768134966d52a1a8dd9612e276",
+    "result_sha256": "744891f65b7f4d466dba03b905bae52b050423be98e3f14ef1c91d2358208280",
+    "original_failed_run": "r1",
+    "runtime_pass": 10,
+    "compiler_pass": 3,
+    "native_status": "PASS",
+    "native_recovered_source_bytes": 65008,
+    "heavy_artifacts_deleted": true,
+    "prior_evidence_preserved": true,
+    "completed_case_repeats": 0,
+    "review_receipt": "artifacts/module-c3-create-lease-20261028/review-final.json",
+    "review_receipt_sha256": "1f473b008c7807f8c894b52eb10f07ef643ce325b933d91ffca35a114d88ee8c",
+    "review_required_fixes": 0,
+    "reviewed_files": 18
   }
 }

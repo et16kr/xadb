@@ -159,6 +159,8 @@ mod recovery;
 #[cfg(test)]
 #[path = "plan4_retention/recovery_observation_tests.rs"]
 mod recovery_test_observation;
+#[cfg(test)]
+pub(in crate::storage) use recovery_test_observation::CatalogTestState;
 #[path = "plan4_retention/resources.rs"]
 mod resources;
 

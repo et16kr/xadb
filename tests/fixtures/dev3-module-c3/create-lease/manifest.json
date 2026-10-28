@@ -1,0 +1,88 @@
+{
+  "scope": "CREATE original resource ownership and continuous exact flush lease; exclusive product entry; shared actor/source admission pending",
+  "baseline_commit": "3fa5f6f",
+  "budget": {
+    "total_seconds": 1800,
+    "compiler_seconds": 420,
+    "case_seconds": 45,
+    "native_admission_seconds": 600,
+    "output_bytes": 8388608,
+    "rust_min_stack": 33554432
+  },
+  "compiler_tests": [
+    {
+      "name": "positive",
+      "path": "positive.rs",
+      "bytes": 478,
+      "sha256": "d776ec709f1cfe805cac8aa3f094b11e937891af58131dbeb87025858f820239",
+      "expected_code": null,
+      "primary_line": null
+    },
+    {
+      "name": "flush_borrow",
+      "path": "flush_borrow.rs",
+      "bytes": 515,
+      "sha256": "ff5a2f83b77ab8cd790b913ae0e5b9a28a22e68df6017236a621ffc1a5488c06",
+      "expected_code": "E0506",
+      "primary_line": 9
+    },
+    {
+      "name": "consumed",
+      "path": "consumed.rs",
+      "bytes": 485,
+      "sha256": "cd8b2050df6615cae6e5f5c83967c1428ad5776e93a50aa2f48b7f5bbf8c6032",
+      "expected_code": "E0382",
+      "primary_line": 10
+    }
+  ],
+  "runtime_tests": [
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::create_pair::catalog_commit::tests::consumed_preparation_has_bounded_pending_image",
+      "reason": "changed reservation/resource ownership and flush lease; changed CREATE view/forwarded arguments/Results census under unchanged original live/recovered caps"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::pair_shared::pair_shared_actual_finish_and_cancel_reopen_ordinary_admission",
+      "reason": "changed reservation/resource ownership and flush lease; moved actual plan/Forward/Cancel/allocator return bodies checked by independent oracle and original pool reentry"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::pair_atomic::rejected_reserve_returns_original_unstaged_pair",
+      "reason": "changed reservation/resource ownership and flush lease; moved Reserve apply and Unstaged allocator return on physical stage rejection"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::pair_atomic::final_pair_retirement_unwind_preserves_claim_under_fence",
+      "reason": "changed reservation/resource ownership and flush lease; moved Forward and Cancel bodies preserve active token/drop when final retirement unwinds"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::lifecycle::mc04_reserved_drop_fence_fresh_recovery",
+      "reason": "changed reservation/resource ownership and flush lease; moved Reserve producer plus original unresolved token Drop and current-build recovery"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::create_parts::create_health_pending_precedes_busy_flush",
+      "reason": "changed reservation/resource ownership and flush lease; new actual checked flush RetiredPendingFinalize, healthy Busy versus authentic prior requirement pending fault Fatal before flush check"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::create_parts::cancel_before_returns_original_active_reservation",
+      "reason": "changed reservation/resource ownership and flush lease; new actual Cancel stage rejection returns original claim/token/epochs, dropping returned active reservation fences"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::create_lease::before_keeps_original_lease_for_successful_cancel",
+      "reason": "new fixed original lease identity/Before ownership with explicit successful actual Cancel and frozen oracle"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::create_lease::lease_generation_pair_and_origin_corruption_fence_before_effect",
+      "reason": "new generation/origin/pair corruption rejects before effect; original unresolved claim preserved under fence"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::create_lease::original_flush_origin_and_ready_residual_are_checked",
+      "reason": "new actual FlushIo foreign binding and authentic retained capture/retired receipt under corrupt Ready label; rejects before pair/WAL effects"
+    }
+  ],
+  "native_tests": [
+    {
+      "case": "N01",
+      "reason": "changed actual Reserve/Forward ownership and lease through original current-build three-PID9\u219219\u219225 recovery; one run",
+      "wall_seconds": 30,
+      "controller": "scripts/dev3_catalog_native.py"
+    }
+  ]
+}

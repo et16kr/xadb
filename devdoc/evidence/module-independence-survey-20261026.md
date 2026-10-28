@@ -2588,3 +2588,31 @@ r1의 실제 source 관측은 memory live63496/recovered64872, native live63632/
 r2 native admission `51aeeea0d4e5fbcdf5bd1dee3b7faff804cd84f5299a833edd59590faaa82f9e`은 원 source-case 실행·동일 제품 소스·현재 ELF를 구분해 검산했다. N01 PID 155218,155221,155228, LSN9→19→25, 24.119422초이며 앞2 process는 controller SIGKILL/reap, reentry는 exit0이다. native result `3360079220743de8b823a9b66b28d7f3551f145f10f553c719963e076cb49350`. r2 전체 236.323초다. 새 run의 source/target/ELF는 identity 기록 뒤 삭제했으며 원 로그·결과·runner·hash inventory·native snapshot/trace/ACK는 보존했다. 과거 evidence는 삭제하지 않았다.
 
 최종 독립 D1/D2는 `ACCEPTED_LIMITED_D1_D2`, required0으로 한정 수용했다. 검토자 `/root/source_admission_review`가16/16파일(Rust7·fixture3·문서6), artifact137개 hash와 native/cleanup을 검산했다. 검토자 재시험0이며 receipt `artifacts/module-c3-create-parts-20261028/review-final.json` SHA-256은 `3bcb430855ac823ab6f97c0c2d536d06d23d9f3cf47b6044fff2dad0b6a6ec06`다. receipt가 허용한 수용/status/hash metadata만 후속 반영한다. 공급은 원 CREATE planner/Forward/Cancel/allocator 반환의 private disjoint borrow 본문과 기존 exclusive wrapper 연결까지다. shared 제품 reservation·writable actor/statement/source/flush lease·일반 writer entry/return floor·Row/C3–C5·M4/M5는 미완료다. 문서 verifier·push·전체 workspace/하위 wrapper는 실행하지 않았다.
+
+<a id="c3-create-lease"></a>
+## 2026-10-28 C3 — 원 CREATE 자원과 flush 대여의 연속 소유
+
+기준 main `3fa5f6f`에서 [CREATE-LEASE-001](../contracts/dev3-module-boundaries.md#catalog-create-lease)을 진행한다. 담당/통합 `/root`, 독립 `/root/source_admission_review`. 실제 예약이 원6자원을 빌리고 selected generation·origin·pair를 동결한 원 flush lease를 끝까지 소유한다. 공유 제품 입구를 raw actor로 새로 추가하지 않는다. writable statement/source admission·일반 floor·Row/C3–C5·M4/M5는 미완료다.
+
+실행 전 [manifest](../../tests/fixtures/dev3-module-c3/create-lease/manifest.json)에 compiler3/runtime10/nativeN01 1회와 실제 diff 연결·유한 예산·품질·중단 조건을 동결했다. source 식에는 확대 token/Before/lease 반환·원 reserve tuple·origin/check/preflight 비용을 명시한다. test oracle는 전체 bound 대신 동일 원 pool/bank/jobs를 빌리는 관측 trait를 사용하고 원 byte 기대값은 유지한다. 사전 core 검토의 source acquire/check 누락을 보완하고 flush preflight의 한정 오류 순서를 계약에 명시했다. 실행 전 동결 당시 NOT_RUN이었다. source/target/ELF는 결과/hash 기록 뒤 삭제하며 원 로그/결과/manifest와 과거 증거는 보존한다.
+
+첫 r1은 Clippy/test 정적 빌드에서 source 식의 괄호·원 flush_io 경로·moved preparer 호출을 잘못 연결해 FAIL했다. compiler/runtime/native 실행0이며 원 로그/source identity를 보존했다. r2는 해당 코드 연결과 Reserve 후 검산 실패의 Fatal 승격을 수정하고, 신규 MCL03의 actual FlushIo foreign origin·authentic retained flush under Ready 잔여 두 반례를 실행 전에 추가해 runtime10을 동결한다. 품질 기준과 기존 required selector는 줄이지 않는다.
+
+### source별 결과와 실제 복구
+
+사전 독립 D1/D2는18/18파일을 검토했다. 처음 검토의 source 식/연결 오류와 actual FlushIo origin·Ready 잔여 음성 검증 공백은 r2 실행 전에 보완했다. superseding `review-pre-r2.json` SHA-256 `d3bad7f2d7cd42911975b5a15424926bc0bf8c535337da58a96fe372a460cf1b`는 required0으로 compiler3/runtime10 실행을 수용했다. 검토자 재시험0이다.
+
+| 실행 | 실제 범위·결과 | source SHA-256 | 결과 SHA-256 |
+| --- | --- | --- | --- |
+| r1 | Clippy/test 정적 빌드 FAIL, compiler probe/runtime/native0; 13.004초 | `aa63cdfb05654a70318f74ce6d289e36db7102e16a77441b8616476a6b3f8347` | `e2578f7267e9c8af73eeb18a854cb17472fd7fee141f0ed8f64db378a842e738` |
+| r2 | scoped engine lib/tests Clippy·test build·compiler3·runtime10·nativeN01 PASS; 274.138초 | `7be6bf8cc6188165ba0d795d6d4ddd1d3613d4873251f6c7d7183e8c337b9ca0` | `744891f65b7f4d466dba03b905bae52b050423be98e3f14ef1c91d2358208280` |
+
+r2 ELF SHA-256은 `f231bfdc26802aa74312e3aa184eccfdd9e2f7768134966d52a1a8dd9612e276`(187149920B), source5798 파일별 inventory `b551262ac76624fabeeeb58a411d446eb451c1f8f2efc01e0becf8025ffb40e7`, 전체 export6317 manifest `2e6a3bb1fb544b72c14aa0d56f8c2f7962447d5af4f3c83504ad92ac8bb5fab3`, runner `3ab0b8c5d0ae8648976600ffb54366628cf3a4475c93d7b1974c8e7089be4e95`, 선택 manifest `b26b451a25f52af9a0dd12c807ca7fb715e5ce7fb44184a84b3da193087cc6bb`다. r1은 ELF 생성 전 실패했으며 ELF identity는 N/A다. 원 FAIL과 과거 source 결과는 보존하고 완료 무변경 case 반복0이다.
+
+compiler3은 실제 reserve→initialize 성공과 bound 재사용, private view가 빌린 원 flush의 동시 assignment E0506 line9, 소비한 reservation 재사용 E0382 line10을 확인했다. runtime은 바뀐 원 body의 Forward/Cancel/Unstaged·final unwind·Drop와 현재복구·pending Fatal 우선·Cancel Before Drop을 원 corpus로 확인한다. MCL01은 fault-only WaitingSource 거절이 같은 원 flush 주소/세대·claim/bytes/WAL을 유지한 Before를 돌려주고 원 phase를 복원한 뒤 실제 Cancel K03을 완료한다. MCL02는 동결 세대/쌍/lease origin 변조를 Before로 통과시키지 않고 무효과 Fatal/fence/claim 유지로 확인한다. MCL03은 actual FlushIo의 foreign binding 및 실제 RetiredPendingFinalize capture/receipt 아래 Ready label 변조를 통해 두 신규 acquisition 거절 경로에 도달한다. 이 fault-only 주입을 정상 제품 유지보수 동시 호출로 주장하지 않는다.
+
+source 관측은 memory live63496/recovered64872B, native live63632/recovered65008B다. shared20192/20328B, metadata186504/186640B, whole252040/252176B, split ports192B를 유지한다. CREATE는 memory plan22571/reserve36824/Forward35324/Cancel34440B, native plan22571/reserve37848/Forward35408/Cancel35464B이며 전체 peak43800B는 기존 retirement가 결정한다. 이는 source-value 상계이며 stack/RSS 실측이나 전체 runtime admission이 아니다.
+
+독립 source/ELF admission `b19e1035d38d45b2a67b28a8650ac81adf19d9447b0a553843ba5224b1d3ad43` 뒤 같은 ELF의 원 N01을1회 실행했다. produce PID166321/LSN9와 recover PID166324/LSN19는 controller SIGKILL/reap, reentry PID166335/LSN25는 exit0이다. 24.598205초 PASS이며 native result SHA-256은 `23b5134fb13d180845487bf409479b03ad4f93bb2d1dc0f7c63b86f4ff52e30b`다. 원 corpus/controller/quality/stop 기준은 유지한다.
+
+이번 r1/r2의 source/target/ELF는 hash/result 기록 뒤 삭제했다. 원 로그·runner·결과·파일별 inventory와 native snapshot/trace/ACK는 `artifacts/module-c3-create-lease-20261028`에 남겼으며 과거 artifact는 삭제하지 않았다. 최종 독립 D1/D2는 `ACCEPTED_LIMITED_D1_D2`, required0이다. `/root/source_admission_review`가18/18파일(Rust8·fixture4·문서/JSON6), artifact147개 hash와 native/cleanup을 검산했다. 검토자 재시험0이며 receipt `artifacts/module-c3-create-lease-20261028/review-final.json` SHA-256은 `1f473b008c7807f8c894b52eb10f07ef643ce325b933d91ffca35a114d88ee8c`다. receipt가 허용한 수용/status/hash metadata만 후속 반영한다. shared CREATE 제품 입구, writable actor/statement 및 source admission·일반 floor·Row/C3–C5·M4/M5는 미완료다. 문서 verifier·push·workspace/하위 wrapper 실행0이다.
