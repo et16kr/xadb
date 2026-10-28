@@ -21,7 +21,6 @@ fn issued_capsule_statement_and_empty_abort_return_original_loans() {
                                  core,
                                  fence,
                                  state| {
-                let _ = reader_private;
                 prepare_create(live, owner, flusher, status, undo);
                 {
                     let (mut writer, reader, mut flush) = live.split();
@@ -46,8 +45,18 @@ fn issued_capsule_statement_and_empty_abort_return_original_loans() {
                         assert_eq!(view.own_actor(), identity.0);
                         assert_eq!(view.test_sequence(), sequence);
                         assert_eq!(tx.test_write_identity().4, 1024);
-                        let error = reader.catalog_statement_call(owner, &view).err().unwrap();
-                        assert!(matches!(error.cause, RetentionCause::Unsupported));
+                        let mut call = reader.catalog_statement_call(owner, &view).unwrap();
+                        assert!(matches!(
+                            call.lookup(
+                                ObjectId::new(6).unwrap(),
+                                &mut Plan4ResidencyCursor::new(),
+                                reader_private
+                            )
+                            .unwrap(),
+                            CatalogLookupStep::Missing
+                        ));
+                        call.finish_checked().unwrap();
+                        assert_eq!(view.test_catalog_reads(), 1);
                         assert!(writer.finish_statement(owner, view).is_ok());
                     }
                     assert_eq!(tx.test_write_identity(), identity);

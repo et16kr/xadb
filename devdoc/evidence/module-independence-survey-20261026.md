@@ -2726,3 +2726,31 @@ r1–r6의 원 FAIL/로그/hash/runner/result-before-cleanup/result는 [artifact
 
 
 최종 독립 D1/D2는 `ACCEPTED_LIMITED_D1_D2`, 필수 수정0이다. `/root/source_admission_review`가 변경33/33파일과 artifact101개를 대조하고 현재 source=r7, 원 FAIL/로그 보존, 임시 build/export/ELF 삭제를 확인했다. 검토자 실행0이며 [최종 receipt](../../artifacts/module-c3-create-admission-20261028/review-final.json) SHA-256은 `d3896261d69ed6d7fbec76665329c735c63e3ac9d989d13f628343c2a89802cd`다. 허용된 receipt/status/hash metadata만 후속 반영했다. 이번 shared CREATE 단위를 한정 수용하며 전체 M4/M5는 미완료다.
+
+
+<a id="c3-own-catalog-read"></a>
+## 2026-10-28 원 writable statement의 Catalog own 조회
+
+기준은 `main` `830d053`이며 stash는 적용하지 않았다. [owner 계약](../contracts/dev3-module-boundaries.md#catalog-own-read)에 따라 기존 call의 실제 view를 lookup에 전달하고 실제 Status head 및 CREATE Undo 검산을 거쳐 자기 쓰기를 읽는다. 독립 설계 검토는 Profile2 첫 CREATE 한정으로 수용했다. raw actor/Status 관측값을 별도 권한으로 공개하지 않는다.
+
+실행 전 [manifest](../../tests/fixtures/dev3-module-c3/own-catalog/manifest.json)는 새 source1, OCR01–03와 변경 WT01만 선택했다. OCR01은 SER/RC×Full/Resident×Cancel 유무8조합으로 own Found/Q0, Reserve gate, 타인 Active Missing, Commit 뒤 원 statement Missing, 다음 RC statement Found/SER Missing·conflict를 검산한다. OCR02는 미등록 Forward/revision0와 mode/mark/원 snapshot 형태 오류, OCR03은 실제 Status frame의 head/state 모순을 검산한다. WT01은 writable Unsupported 기대를 실제 빈 Missing/readbit로 변경했다. 기존 완료 회귀·복구·native 사례는 반복하지 않는다. 새 WAL/형식/복구 코드는 없으며 앞선 current-build 증거는 원 source 범위로 보존한다.
+
+전체1200초/compiler420초/case45초/출력8MiB/Rust stack32MiB이며 실패 즉시 중단한다. [artifact](../../artifacts/module-c3-own-catalog-20261028/)의 runner는 source/ELF/hash/log/result-before-cleanup을 기록하고 이번 실행의 source/target/ELF만 삭제한 뒤 최종 result를 보존한다. 문서 검증·push는 실행하지 않는다.
+
+초기 formatter는 새 fixture module의 path 속성 누락으로 FAIL했고 기록을 보존했다(시험0). r1은 private field getter 호출·fixture import/미사용 변수·서로 다른 invariant snapshot lifetime의 typed 포인터 비교로 compile FAIL(runtime0)이었다. 실제 두 guard 참조의 주소만 안전하게 type-erased 비교하도록 고쳤으며 raw pointer dereference/새 권한은 없다. 원 r1 source/로그/FAIL을 보존한다. 후속 실행과 최종 검토는 아래에 추가한다.
+
+
+r2은 scoped Clippy/build와 선택5개(source1/OCR01–03/변경WT01)를 통과했다. source `57de1262730057847299abfbfcc49b5ab241872da48e889abea5650b7918e13a`, ELF `6c8faa5182e39971b4275cd880595e36be91a23bcaf82202915db161acd42e0c`, result `ce2ea48a939d887781e747a4f6c5149e1d51f6213d0b4b7755f94af5b6a542fe`다. memory Full34230B·Resident17880B·view 검산6072B, native-type Full35254B이며 memory live64000/recovered65376B·native-type live64136/recovered65512B를 관측했다. 전체 short floor·stack/RSS·native 실행 인수가 아니다.
+
+[Undo 후속 선택](../../tests/fixtures/dev3-module-c3/own-catalog/undo-followup.json)은 신규 OCR04만 실행한다. 실제 원 Undo frame의 canonical target entity/creator generation을 바꾸고 page digest를 다시 써서 own 경로가 실제 Undo 검산을 건너뛰지 않는지 확인한다. r2 완료 사례는 반복하지 않는다. 독립 source 검토는 own 검산 중 남는 Status Result carrier를 명시 가산하도록 요청했으며 그 식 변경은 별도 source 선택으로 검증한다.
+
+
+r3은 static2 PASS 뒤 OCR04 FAIL이다. target entity 변조는 거절됐지만 creator generation을 상수2로 대입한 fixture가 실제 발급 generation2와 같아 음성 입력이 되지 않았다. 관측한 원 양수 generation/entity에1을 더해 실제 변경을 보장하도록 fixture를 수정한다. 제품 조건·정답 기준을 완화하지 않고 원 FAIL을 보존한다. [source/Undo 후속 선택](../../tests/fixtures/dev3-module-c3/own-catalog/source-undo-followup.json)은 변경한 Status Result carrier 식의 source1과 실패 OCR04만 포함한다.
+
+
+r4은 scoped static2와 변경 source1·수정 OCR04를 통과했다. source `0a9ded37fbe09ccc9a9fe09bdb43396b7199dfd325c415d5900cfde5b29d2cc8`, ELF `cbbfec097565cf43a2d89a1f7adcab5b471f6e8c8ff6e49d0fc41239e04a7c09`, result `84c248523e41d61ac4f1899cab056392ae7229f01eccbf41f213353d235dfb33`다. r2의 OCR01–03/WT01은 반복하지 않았다. source별 고유 runtime6(source1+새 OCR01–04+변경 WT01)를 충족했고 source 식 변경만 r4에서 다시 검증했다. 모든 실행의 자체 source/target/ELF는 삭제하고 원 FAIL/로그/hash/result를 보존했다. 최종 독립 D1/D2 판정은 아래에 기록한다.
+
+
+최종 독립 D1/D2는 `ACCEPTED_LIMITED_D1_D2`, 필수 수정0이다. `/root/source_admission_review`가19파일(OCR 제외8 포함)·artifact54개를 검토하고 current source=r4와 원 FAIL·결과·삭제 기록을 확인했다. r4 view 검산은6424B이며 Full/Resident·live/recovered peak는 r2와 같다. [최종 receipt](../../artifacts/module-c3-own-catalog-20261028/review-final.json) SHA-256은 `d15f122567f4e5b3be0780520844e0dc5cd037b1a87a2c5d466c5c54723c91ce`다. 검토자 시험·빌드·제품 수정0이며 허용된 status/receipt/hash metadata만 후속 반영했다.
+
+사용자의 후속 “일단 문제만 해결해줘요, 문제해결 후 작업을 개시하지는 말아요” 지시에 따라 현재 Catalog 조회 수정의 검증·리뷰·기록을 마무리하고 이후 개발은 개시하지 않는다. 전체 M4/M5를 완료로 표시하지 않는다.

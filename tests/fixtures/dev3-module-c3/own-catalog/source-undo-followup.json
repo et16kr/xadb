@@ -1,0 +1,24 @@
+{
+  "budget": {
+    "total_seconds": 1200,
+    "compiler_seconds": 420,
+    "case_seconds": 45,
+    "output_bytes": 8388608,
+    "rust_min_stack": 33554432
+  },
+  "compiler_tests": [],
+  "native_tests": [],
+  "scope": "original writable Catalog view own CREATE visibility through actual Status and Undo",
+  "baseline_commit": "830d053",
+  "runtime_tests": [
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::read::statement::tests::own_catalog_observations_fit_full_resident_and_original_limits",
+      "reason": "independent review: own-check phase explicitly includes two surviving Result<TransactionStatus> carriers"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::own_catalog_read::own_found_requires_actual_undo_target_and_creator",
+      "reason": "OCR04 failed fixture correction: increment observed generation instead of assigning existing generation2; preserve actual source rejection"
+    }
+  ],
+  "not_run": "r2 completed runtime OCR01-03/WT01 unchanged and not repeated; changed source expression and failed OCR04 only"
+}

@@ -81,7 +81,12 @@ impl<W: WriterNamespace> CatalogStatementCall<'_, '_, '_, '_, '_, '_, '_, '_, '_
         self.statement.check_catalog_read()?;
         #[cfg(test)]
         let core = self.call.test_record_core();
-        let step = self.call.lookup(object, cursor, private)?;
+        let step = crate::storage::catalog::read::lookup(
+            self.call.operation(private)?,
+            object,
+            cursor,
+            Some(self.statement),
+        )?;
         if matches!(
             &step,
             CatalogLookupStep::Found(_) | CatalogLookupStep::Missing
@@ -91,6 +96,7 @@ impl<W: WriterNamespace> CatalogStatementCall<'_, '_, '_, '_, '_, '_, '_, '_, '_
                 core,
                 crate::transaction::concurrency::catalog_test_support::Point::LookupBeforeCatalogRecord,
             );
+            self.statement.check_catalog_read()?;
             self.statement.record_catalog_read()?;
         }
         Ok(step)
@@ -120,7 +126,7 @@ pub(super) fn source_bytes<W: WriterNamespace>() -> usize {
         + 2 * size_of::<Result<CatalogLookupStep<'_>>>()
         + 2 * size_of::<CatalogLookupStep<'_>>()
         + 8 * size_of::<&()>()
-        + super::super::transaction::source_bytes()
+        + super::super::transaction::catalog_read_source_bytes()
         + scope::close_source_bytes()
 }
 
@@ -154,6 +160,24 @@ impl<'b, 'a, 's, 'c, 'p, 'd, 'm, 'w, W: WriterNamespace>
 mod tests {
     use super::*;
     use crate::storage::wal_io::plan4_test_support::Writer;
+    #[test]
+    fn own_catalog_observations_fit_full_resident_and_original_limits() {
+        fn check<W: WriterNamespace>() {
+            let full = lookup::source_bytes::<W>();
+            let resident = lookup::resident_source_bytes::<W>();
+            let actual = super::super::super::transaction::catalog_read_source_bytes();
+            let live = super::super::super::resources::source_census::<W>();
+            let recovered = super::super::super::super::super::plan4_recovery::source_census::<W>();
+            println!(
+                "OWN_CATALOG_SOURCE full={full} resident={resident} checks={actual} live={} recovered={} whole_floor=NOT_CONNECTED",
+                live.peak, recovered.peak
+            );
+            assert!(full >= actual && resident >= actual);
+            assert!(live.peak <= 65536 && recovered.peak <= 65536);
+        }
+        check::<Writer>();
+        check::<super::super::super::super::native::Writer>();
+    }
     #[test]
     fn statement_validation_and_result_carriers_fit_fixed_classes() {
         let source = source_bytes::<Writer>();

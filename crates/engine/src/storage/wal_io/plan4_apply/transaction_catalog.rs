@@ -742,6 +742,10 @@ pub(in super::super) fn check_source_bytes() -> usize {
 
 #[cfg(test)]
 impl RowTransaction<'_, '_, '_, '_> {
+    pub(in crate::storage) fn test_flip_catalog_mode(&self) {
+        let mut state = self.lease.ledger.lock().unwrap();
+        row_mut(state.bytes, self.lease.slot)[1] ^= 1;
+    }
     pub(in crate::storage) fn test_corrupt_catalog_completion(&self, mark: bool) {
         let mut state = self.lease.ledger.lock().unwrap();
         let target = row_mut(state.bytes, self.lease.slot);

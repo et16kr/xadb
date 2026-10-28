@@ -84,9 +84,9 @@ impl<'b, 'a, 's, 'c, 'p, 'd, 'm, 'w, W: WriterNamespace>
         private: &'q mut [u8; 425_984],
     ) -> Result<CatalogLookupStep<'q>> {
         let mut call = self.catalog_call(owner, snapshot)?;
-        let result = call
-            .operation(private)
-            .and_then(|operation| crate::storage::catalog::read::lookup(operation, object, cursor));
+        let result = call.operation(private).and_then(|operation| {
+            crate::storage::catalog::read::lookup(operation, object, cursor, None)
+        });
         call.finish_result(result)
     }
 
@@ -101,9 +101,9 @@ impl<'b, 'a, 's, 'c, 'p, 'd, 'm, 'w, W: WriterNamespace>
         private: &'q mut [u8; 425_984],
     ) -> Result<CatalogLookupStep<'q>> {
         let mut call = self.catalog_resident_call(owner, snapshot)?;
-        let result = call
-            .operation(private)
-            .and_then(|operation| crate::storage::catalog::read::lookup(operation, object, cursor));
+        let result = call.operation(private).and_then(|operation| {
+            crate::storage::catalog::read::lookup(operation, object, cursor, None)
+        });
         call.finish_result(result)
     }
 
@@ -312,7 +312,8 @@ fn lookup_source_bytes<W: WriterNamespace>(resident: bool) -> usize {
         + 2 * size_of::<UndoTargetView<'_>>()
         + size_of::<status_home::StatusHomePage<'_>>()
         + 2 * size_of::<status_home::StatusHome>()
-        + 2 * size_of::<Result<TransactionState>>();
+        + 2 * size_of::<Result<TransactionStatus>>()
+        + 2 * size_of::<Result<bool>>();
     let read = if resident {
         // Physical membership/typed-envelope validation returns before the
         // caller decodes Status or Undo. The parent guard and exact expected
@@ -325,7 +326,7 @@ fn lookup_source_bytes<W: WriterNamespace>(resident: bool) -> usize {
                 + size_of::<UndoRef>()
                 + size_of::<TxnRef>()
                 + size_of::<PageView<'_>>()
-                + size_of::<Result<super::operation::ReadStep<TransactionState>>>()
+                + size_of::<Result<super::operation::ReadStep<(TransactionState, bool)>>>()
                 + size_of::<
                     Result<super::operation::ReadStep<super::operation::MissingCatalogEvidence>>,
                 >()
@@ -354,6 +355,7 @@ fn lookup_source_bytes<W: WriterNamespace>(resident: bool) -> usize {
                         super::super::lookup_load::source_bytes::<W>()
                     })
                     .max(read)
+                    .max(super::super::transaction::catalog_read_source_bytes())
                     .max(decode)
                     .max(visibility::source_census().peak_leaf)
                     .max(crate::transaction::concurrency::read_operation_source_bytes())

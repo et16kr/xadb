@@ -1,0 +1,20 @@
+{
+  "budget": {
+    "total_seconds": 1200,
+    "compiler_seconds": 420,
+    "case_seconds": 45,
+    "output_bytes": 8388608,
+    "rust_min_stack": 33554432
+  },
+  "compiler_tests": [],
+  "native_tests": [],
+  "scope": "original writable Catalog view own CREATE visibility through actual Status and Undo",
+  "baseline_commit": "830d053",
+  "runtime_tests": [
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::own_catalog_read::own_found_requires_actual_undo_target_and_creator",
+      "reason": "new negative actual source fixture proves own Found cannot bypass Undo target/creator validation"
+    }
+  ],
+  "not_run": "r2 completed source/OCR01-03/WT01 unchanged and not repeated; only new OCR04 selected"
+}

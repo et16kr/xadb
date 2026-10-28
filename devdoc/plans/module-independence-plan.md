@@ -337,3 +337,6 @@ Root3/Job3/Profile3·Row scope3·base4는 이름 변경의 부수 효과가 아�
 
 
 2026-10-28 `9f36840` 이후 [원 statement의 shared CREATE 제품 예약](../contracts/dev3-module-boundaries.md#catalog-shared-create)을 구현·선택 검증한다. 원 reservation의 source/gate/flush·claim 보존과 private 반환을 공급하며 [source별 결과](../evidence/module-independence-survey-20261026.md#c3-create-admission)를 기록한다. source별 compiler4·신규 runtime9/source1과 최종 독립 D1/D2 한정 수용·필수 수정0을 확인했다. 일반 Row/C4/C5·전체 floor·M4/M5는 미완료다.
+
+
+2026-10-28 `830d053` 이후 [원 writable view의 Catalog own 조회](../contracts/dev3-module-boundaries.md#catalog-own-read)를 연결한다. 실제 Status head와 CREATE Undo를 검산하는 첫 CREATE 한정 공급이며 [source별 검증](../evidence/module-independence-survey-20261026.md#c3-own-catalog-read)과 독립 D1/D2 한정 수용·필수 수정0을 확인했다. 사용자 후속 지시로 이 문제 해결 뒤 새로운 개발은 개시하지 않는다. 일반 Row/CheckedTable/C4/C5·전체 short floor·M4/M5는 미완료다.

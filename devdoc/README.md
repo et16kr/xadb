@@ -1,5 +1,7 @@
 # XADB 개발 문서
 
+2026-10-28 [원 writable Catalog 조회](evidence/module-independence-survey-20261026.md#c3-own-catalog-read): 실제 statement·Status head·CREATE Undo를 연결해 자기 쓰기를 읽는 한정 경로의 source별 선택6개 검증과 독립 D1/D2 한정 수용·필수 수정0을 확인했다. 사용자 지시에 따라 이 문제 해결 뒤 개발은 중지한다. 전체 M4/M5는 미완료다.
+
 현재 모듈 개발의 재개 기준은 [2026-10-28 Catalog Commit writer 창의 main 통합](evidence/module-independence-survey-20261026.md#writer-progress-merge-main-20261028)과 [작업 계획](plans/module-independence-plan.md)이다. [앞선 C2/C3·Row 부분공급 통합](evidence/module-independence-survey-20261026.md#merge-main-20261028) 위에 리뷰한 잔여 작업 branch를 반영했으며 M4/M5 제품 인수는 미완료다. 이후 개발은 `/home/et16/work/xadb`의 `main`에서 진행한다.
 
 2026-10-26 [DEV2 PF04 C3 shard counter 후보(S2)](evidence/dev2-pf04-c3-s2-20261026.md): thread별 shard counter를 기준선 위 diagnostics diff로 구현하고 신규8종·기존 선택 시험과 정적 lock 대조(대상 경로 counter RMW 14→0)를 통과했다. 후보는 고정했으나 제품에 반영하지 않았다. C3 측정(S3)·PF04 인수는 NOT_RUN이며 원 PF04 FAIL·DEV2 미완료를 유지한다.

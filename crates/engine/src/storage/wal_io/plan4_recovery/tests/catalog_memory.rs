@@ -1212,3 +1212,6 @@ mod catalog_transactions;
 
 #[path = "catalog_memory/create_admission.rs"]
 mod create_admission;
+
+#[path = "catalog_memory/own_catalog_read.rs"]
+mod own_catalog_read;

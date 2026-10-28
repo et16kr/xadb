@@ -454,14 +454,6 @@ impl<'t, 'v, 'a, 'c, 's> RowStatementView<'t, 'v, 'a, 'c, 's> {
                 RetentionCause::BindingMismatch,
             ));
         }
-        // The current Catalog reader has no own-actor visibility adapter.
-        // Never silently read an issued writer as a read-only snapshot.
-        if lease.actor.is_some() {
-            return Err(unchanged(
-                RetentionPhase::Census,
-                RetentionCause::Unsupported,
-            ));
-        }
         if self.phase.get() != Phase::Active || self.transaction.phase.get() != Phase::Active {
             return Err(unchanged(
                 RetentionPhase::Census,
@@ -475,7 +467,50 @@ impl<'t, 'v, 'a, 'c, 's> RowStatementView<'t, 'v, 'a, 'c, 's> {
     }
 
     pub(super) fn check_catalog_read(&self) -> Result<()> {
-        self.check()
+        self.check()?;
+        let lease = &self.transaction.lease;
+        let state = entry(lease.ledger, lease.fence)?;
+        let mode = row(state.bytes, lease.slot)[1];
+        if !matches!(mode, 0 | 1)
+            || (mode == 1) != self.rc_snapshot.is_some()
+            || (mode == 0) != self.transaction.snapshot.is_some()
+        {
+            return Err(fail(lease.fence, RetentionCause::Invariant));
+        }
+        Ok(())
+    }
+
+    /// Called only with a copied candidate and the original physical Status by
+    /// the disk read operation. A matching actor is never a snapshot fallback.
+    pub(super) fn check_own_catalog(
+        &self,
+        header: crate::storage::catalog_record::CatalogHeader,
+        status: crate::storage::transaction_record::TransactionStatus,
+    ) -> Result<bool> {
+        use crate::storage::transaction_record::{TransactionState, VersionStamp};
+        self.check_catalog_read()?;
+        let Some(actor) = self.transaction.lease.actor else {
+            return Ok(false);
+        };
+        if header.stamp != VersionStamp::Transaction(actor) {
+            return Ok(false);
+        }
+        if self.sequence != 1
+            || self.revision.get() != 1
+            || header.logical.transaction() != actor.id()
+            || header.logical.mutation_sequence() != 1
+            || header.retired
+            || header.undo.is_none()
+            || status.reference() != actor
+            || status.state() != TransactionState::Active
+            || status.undo_head() != header.undo
+        {
+            return Err(fail(
+                self.transaction.lease.fence,
+                RetentionCause::Invariant,
+            ));
+        }
+        Ok(true)
     }
 
     /// Register the actual lookup's Found/Missing result, or the admitted
@@ -807,6 +842,24 @@ pub(super) fn source_bytes() -> usize {
         + 2 * size_of::<TxnRef>()
         + size_of::<[u64; 4]>()
         + visibility::source_census().peak_leaf
+}
+
+/// Original view validation plus the actual decoded own-CREATE observations.
+/// These carriers survive the leaf slot checks; the physical guard is gone.
+pub(super) fn catalog_read_source_bytes() -> usize {
+    use crate::storage::{catalog_record::CatalogHeader, transaction_record::TransactionStatus};
+    use std::mem::size_of;
+    source_bytes()
+        + 2 * size_of::<CatalogHeader>()
+        + 2 * size_of::<TransactionStatus>()
+        // status's local Result and merge return remain in lexical scope after
+        // checked physical release, while this own-check leaf may acquire a slot.
+        + 2 * size_of::<Result<TransactionStatus>>()
+        + 2 * size_of::<Result<bool>>()
+        + 2 * size_of::<Result<&SnapshotGuard<'_, '_, '_, '_>>>()
+        + 8 * size_of::<&()>()
+        + size_of::<Option<TxnRef>>()
+        + 4 * size_of::<bool>()
 }
 
 #[cfg(test)]

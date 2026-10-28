@@ -1,5 +1,7 @@
 # XADB 조사·실행 증거
 
+2026-10-28 [원 writable Catalog 조회](module-independence-survey-20261026.md#c3-own-catalog-read): 실제 statement·Status head·CREATE Undo를 연결해 자기 쓰기를 읽는 한정 경로의 source별 선택6개 검증과 독립 D1/D2 한정 수용·필수 수정0을 확인했다. 사용자 지시에 따라 이 문제 해결 뒤 개발은 중지한다. 전체 M4/M5는 미완료다.
+
 2026-10-28 [shared CREATE 제품 예약](module-independence-survey-20261026.md#c3-create-admission): 원 statement·source/gate를 기존 예약에 묶고 원 private 반환을 공급한다. source별 compiler4·신규 runtime9/source1과 최종 독립 D1/D2 한정 수용·필수 수정0을 확인했다. 전체 M4/M5는 미완료다.
 
 2026-10-28 [첫 Catalog statement의 거래 완료 연결](module-independence-survey-20261026.md#c3-catalog-capsule): main `4ac878c`에서 실제 Forward를 원 statement에 등록하고 consuming Commit/full abort를 연결한다. r3 compiler3·r4 runtime9·r5 runtime4 PASS와 원 FAIL을 보존했으며 최종 독립 D1/D2 한정 수용·필수 수정0이다. shared CREATE 제품 admission·Row·M4/M5는 미완료다.

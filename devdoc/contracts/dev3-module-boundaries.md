@@ -1542,3 +1542,18 @@ Q01–Q08은 아래 설계로 독립 D2 검토를 수신해 채택했다. 앞선
 - 확대 token/Result/Before·binding·admission·완료 반환·cleanup은 CREATE phase에만 계수한다. 기존 고정 progress의 max에 Reserve/Forward/Cancel을 포함하며 per-call recursive census와 새 retained port 필드를 만들지 않는다. 512B/65536B 한도·복구 의무·기존 source별 FAIL은 유지한다.
 
 일반 statement mark·두 번째 쓰기 statement·own-actor Catalog 읽기·자동 Status/Undo 선택·Row/C4/C5·전체 short floor·M4/M5는 이 공급으로 완료되지 않는다. native 타입 source census와 실제 native durability 실행도 구분한다.
+
+
+<a id="catalog-own-read"></a>
+## 원 writable statement의 첫 Catalog CREATE 조회
+
+`XADB-MODULE-CATALOG-OWN-READ-001`은 `830d053` 위의 한정 공급이다. 앞선 writable-empty 절의 Unsupported는 당시 source의 상태이며 이번 경로에서 대체한다. 구현·source별 선택 검증과 독립 D1/D2 한정 수용·필수 수정0을 확인했으며 [증거](../evidence/module-independence-survey-20261026.md#c3-own-catalog-read)에 기록한다.
+
+- 기존 `CatalogStatementCall`은 원 view를 product lookup에 참조로 전달한다. legacy snapshot lookup은 None을 전달한다. 새 port/scope/operation 필드·raw actor 승인 API를 추가하지 않는다.
+- source admission 안에서 원 isolation/visibility와 snapshot 주소, slot generation·Active phase·sequence·빈 mark를 검산한다. canonical mode0/1과 원 SER/RC snapshot 형태도 일치해야 한다. 빈 writable view의 Missing/타인 조회를 허용한다.
+- 자기 actor의 후보는 full TxnRef 일치, 첫 statement/revision1, logical actor/mutation1, not-retired, 실제 Undo 참조를 요구한다. 실제 물리 Status를 읽고 guard를 checked release한 뒤 Active와 같은 Undo head를 검산한다. 모순은 Fatal이며 타인 snapshot 경로로 바꾸지 않는다.
+- own=true도 기존 TxPin/UndoPin과 실제 CREATE Missing-before의 creator·target object·canonical material을 검산한 뒤 Found를 선택한다. 지속 발급값인 Undo.sequence는 1로 고정하지 않는다. Cancel 뒤 재Reserve의 새 발급을 유지한다.
+- 타인은 원 Q/Status/Undo 규칙을 유지한다. 결과 반환 직전에 원 view를 다시 검산하고 read bit를 등록한다. Found는 원 call/private/view 수명 안에서만 사용하고 refs→source→progress의 기존 checked cleanup을 유지한다. 활성 Reserve 중 읽기는 기존 gate가 거절한다.
+- 추가 view 참조/Status/tuple Result/helper carrier는 Full/Resident source 식에 계수한다. 기존65536B 한도와 source별 원 FAIL을 보존한다. 새 WAL/영속 형식/복구 상태는 만들지 않는다.
+
+일반 Row, 두 번째 쓰기 statement/일반 mark, CheckedTable, C4/C5, 전체 entry/return floor와 M4/M5는 미완료다. 이번 native-type census는 native 실행 증거가 아니다.

@@ -8500,5 +8500,49 @@
     "review_receipt_sha256": "d3896261d69ed6d7fbec76665329c735c63e3ac9d989d13f628343c2a89802cd",
     "review_required_findings": 0,
     "reviewed_files": 33
+  },
+  "dev3_module_c3_own_catalog_read": {
+    "baseline_commit": "830d053",
+    "status": "ACCEPTED_LIMITED_D1_D2",
+    "contract_anchor": "catalog-own-read",
+    "evidence": "module-independence-survey-20261026.md",
+    "evidence_anchor": "c3-own-catalog-read",
+    "artifact": "artifacts/module-c3-own-catalog-20261028",
+    "own_actor_reads": "PROFILE2_FIRST_CREATE_ONLY",
+    "full_short_source_floor": false,
+    "general_row": false,
+    "m4_m5_acceptance": false,
+    "owner_contract": "dev3-module-boundaries.md",
+    "implemented_paths": [
+      "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/own_catalog_read.rs",
+      "tests/fixtures/dev3-module-c3/own-catalog"
+    ],
+    "source_sha256_by_run": {
+      "r2": "57de1262730057847299abfbfcc49b5ab241872da48e889abea5650b7918e13a",
+      "r4": "0a9ded37fbe09ccc9a9fe09bdb43396b7199dfd325c415d5900cfde5b29d2cc8"
+    },
+    "runtime_pass_by_source": {
+      "r2": 5,
+      "r4": 2
+    },
+    "original_failed_runs": [
+      "prebuild-fmt",
+      "r1",
+      "r3"
+    ],
+    "completed_unchanged_case_repeats": 0,
+    "runtime_unique_tests": 6,
+    "compiler_tests": 0,
+    "native_tests": 0,
+    "whole_m4_m5_complete": false,
+    "artifact_result_sha256": {
+      "r2": "ce2ea48a939d887781e747a4f6c5149e1d51f6213d0b4b7755f94af5b6a542fe",
+      "r4": "84c248523e41d61ac4f1899cab056392ae7229f01eccbf41f213353d235dfb33"
+    },
+    "review_receipt": "artifacts/module-c3-own-catalog-20261028/review-final.json",
+    "review_receipt_sha256": "d15f122567f4e5b3be0780520844e0dc5cd037b1a87a2c5d466c5c54723c91ce",
+    "review_required_items": 0,
+    "reviewed_files": 19,
+    "work_stopped_after_current_issue": true
   }
 }

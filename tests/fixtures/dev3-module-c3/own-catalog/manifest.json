@@ -1,0 +1,36 @@
+{
+  "budget": {
+    "total_seconds": 1200,
+    "compiler_seconds": 420,
+    "case_seconds": 45,
+    "output_bytes": 8388608,
+    "rust_min_stack": 33554432
+  },
+  "compiler_tests": [],
+  "native_tests": [],
+  "scope": "original writable Catalog view own CREATE visibility through actual Status and Undo",
+  "baseline_commit": "830d053",
+  "runtime_tests": [
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::read::statement::tests::own_catalog_observations_fit_full_resident_and_original_limits",
+      "reason": "new Status/tuple/view/validation source terms in both changed read classes and composed memory/native-type bounds"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::own_catalog_read::original_own_create_and_other_snapshot_keep_distinct_visibility",
+      "reason": "new own visibility path: SER/RC, Full/Resident, Cancel/reReserve, read gate, foreign active and committed snapshot semantics"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::own_catalog_read::unregistered_own_forward_and_corrupt_view_never_fall_back",
+      "reason": "new writable read rejects unregistered revision and mode/mark/snapshot shape faults"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::own_catalog_read::actual_own_status_head_and_terminal_contradictions_are_fatal",
+      "reason": "new actual Status head/state verification"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::write_transactions::issued_capsule_statement_and_empty_abort_return_original_loans",
+      "reason": "WT01 changed from writable Unsupported to actual empty writable Missing/readbit registration"
+    }
+  ],
+  "not_run": "No unchanged regression, recovery or native durability cases repeated; no WAL/format/recovery code changed."
+}

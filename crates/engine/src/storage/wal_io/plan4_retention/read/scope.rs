@@ -259,7 +259,7 @@ impl<'u, 'r, 'v, 'j, 'b, 'a, 's, 'c, 'p, 'd, 'm, 'w, W: WriterNamespace>
         cursor: &mut Plan4ResidencyCursor,
         private: &'call mut [u8; 425_984],
     ) -> Result<CatalogLookupStep<'call>> {
-        crate::storage::catalog::read::lookup(self.operation(private)?, object, cursor)
+        crate::storage::catalog::read::lookup(self.operation(private)?, object, cursor, None)
     }
 
     /// Only the legacy synchronous wrapper may detach the ordinary result's

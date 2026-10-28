@@ -1,6 +1,7 @@
 //! One lookup borrows its call scope and owns only the actual reference lease,
 //! captured references and caller scratch. The scope outlives result consumption.
 use super::super::source::OperationSourceAdmission;
+use super::super::transaction::RowStatementView;
 use super::super::visibility::{
     self, CapturedCatalogRefs, CatalogLookupLoan, CatalogSource, ReferenceLease, SnapshotGuard,
 };
@@ -8,7 +9,9 @@ use super::*;
 use crate::storage::{
     catalog_record::{self, CatalogExpectation, CatalogHeader, CatalogRecordView},
     page, status_home,
-    transaction_record::{TransactionState, TransactionStatusCell, VersionStamp},
+    transaction_record::{
+        TransactionState, TransactionStatus, TransactionStatusCell, VersionStamp,
+    },
     undo_record::{
         self, UndoBeforeKind, UndoCreator, UndoEdge, UndoPayload, UndoRecordExpectation,
         UndoTargetKind, UndoTargetView,
@@ -156,6 +159,27 @@ impl<'u, 'r, 'v, 'j, 'i, 'b, 'a, 's, 'c, 'p, 'd, 'm, 'w, W: WriterNamespace>
         }
         Ok(self.snapshot.q())
     }
+    /// The actual statement must name this operation's original snapshot and
+    /// registries. No actor scalar grants own-write visibility.
+    pub(in crate::storage) fn check_statement(
+        &self,
+        statement: Option<&RowStatementView<'_, '_, 'a, 'c, 's>>,
+    ) -> Result<()> {
+        if let Some(statement) = statement {
+            let snapshot =
+                statement.catalog_snapshot(self.backend.isolation, self.backend.visibility)?;
+            // Compare addresses only; the two borrowed guard types have
+            // independent invariant arena lifetimes in the legacy API.
+            if !std::ptr::eq::<()>(
+                std::ptr::from_ref(snapshot).cast(),
+                std::ptr::from_ref(self.snapshot).cast(),
+            ) {
+                return Err(self.invariant());
+            }
+            statement.check_catalog_read()?;
+        }
+        Ok(())
+    }
     pub(in crate::storage) fn capture_catalog(
         &mut self,
         object: ObjectId,
@@ -228,7 +252,9 @@ impl<'u, 'r, 'v, 'j, 'i, 'b, 'a, 's, 'c, 'p, 'd, 'm, 'w, W: WriterNamespace>
         &mut self,
         candidate: &CatalogCandidate,
         cursor: &mut Plan4ResidencyCursor,
-    ) -> Result<ReadStep<TransactionState>> {
+        statement: Option<&RowStatementView<'_, '_, 'a, 'c, 's>>,
+    ) -> Result<ReadStep<(TransactionState, bool)>> {
+        self.check_statement(statement)?;
         self.check(candidate)?;
         let Some(CatalogHeader {
             stamp: VersionStamp::Transaction(reference),
@@ -309,9 +335,17 @@ impl<'u, 'r, 'v, 'j, 'i, 'b, 'a, 's, 'c, 'p, 'd, 'm, 'w, W: WriterNamespace>
                     RetentionCause::Invariant,
                 ));
             };
-            Ok(ReadStep::Ready(status.state()))
+            Ok(status)
         })();
-        merge(state, guard.release_checked())
+        let status = merge(state, guard.release_checked())?;
+        // Release the physical guard before checking the original isolation
+        // slot. Keep the complete Status, including head, through this check.
+        let own = match statement {
+            Some(statement) => statement
+                .check_own_catalog(candidate.header.ok_or_else(|| self.invariant())?, status)?,
+            None => false,
+        };
+        Ok(ReadStep::Ready((status.state(), own)))
     }
     pub(in crate::storage) fn missing_before(
         &mut self,
@@ -505,6 +539,8 @@ pub(super) fn held_source_bytes<W: WriterNamespace>() -> usize {
         + 2 * size_of::<RetentionError>()
         // missing_before's copied header survives location/LOAD through actor validation.
         + size_of::<CatalogHeader>()
+        + size_of::<TransactionStatus>()
+        + size_of::<Option<&RowStatementView<'_, '_, '_, '_, '_>>>()
         + 16 * size_of::<&()>()
 }
 pub(super) fn entry_source_bytes<W: WriterNamespace>() -> usize {
