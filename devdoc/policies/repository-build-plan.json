@@ -29,6 +29,19 @@
     "server_platform_policy": "Linux implementation now; additional OS only after business decision, adapter implementation and qualification",
     "document_layout": "DOC-001 role directories are the current layout; preserve original source paths/revisions/hashes of historical evidence after migration"
   },
+  "module_folder_reorganization": {
+    "date": "2026-10-29",
+    "status": "ACCEPTED_DOCS_ONLY_INDEPENDENT_D2_REVIEWED",
+    "decision_ref": "module-independence-plan.md#folder-reorganization",
+    "policy_ref": "repository-build-plan.md#module-folder-layout",
+    "boundary_ref": "dev3-module-boundaries.md#target-imports",
+    "baseline_revision": "517208d4cddd721db5415fd2e32b759a1ad114ba",
+    "implementation_status": "NOT_RUN",
+    "product_tests": "NOT_RUN",
+    "actual_path_inventory_changed": false,
+    "source_roots_changed": false,
+    "current_m4_m5_prerequisites_changed": false
+  },
   "local_artifact_retention": {
     "decision_ref": "dev3-implementation-plan.md#direction-refinement",
     "contract_ref": "repository-build-plan.md#local-artifact-retention",

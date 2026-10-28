@@ -1,5 +1,7 @@
 # XADB 모듈 독립 개발 구조 전환 작업 계획
 
+2026-10-29 [폴더 재정리 후속 계획](#folder-reorganization): Job 검산 작업의 `517208d` 종료와 clean 상태를 확인하고 임시 조사안을 기존 계획에 반영했다. 참조·소유·API 경계를 기준으로 배치 정리와 논리 의존 변경을 구분한다. 문서 범위의 독립 D2 수용·필수 수정0이며 제품 이동·시험은 NOT_RUN, 전체 M4/M5는 미완료다.
+
 2026-10-29 [실제 Job page·원 bank 전이](../evidence/module-independence-survey-20261026.md#row-job-images): main `21592e9`에서 Job11개 전이·원64 bank·실제 page/native/redo를 결합했다. raw26쌍·source별 신규10개 선택 검증과 최종 독립 D1/D2 한정 수용·필수 수정0을 확인했다. 전체 M4/M5는 미완료다.
 
 2026-10-29 [실제 RowLeaf·같은 frame Undo/Status](../evidence/module-independence-survey-20261026.md#row-leaf-images): main `7baef05`에서 원 schema/anchor·Job·sealed payload와 Row 전이/이웃 보존을 연결한다. 독립 입력15쌍·source별 신규8개 선택 검증을 통과했다. 최종 독립 D1/D2 한정 수용·필수 수정0이며 전체 M4/M5는 미완료다.
@@ -398,3 +400,77 @@ Root3/Job3/Profile3·Row scope3·base4는 이름 변경의 부수 효과가 아�
 이 계획의 저장·검토는 검사기 검증이나 원격 보호 적용 증거가 아니다. 신규 문서를 만들지 않았으므로 `documents.json`의 기존 문서 ID·경로·역할을 유지하고 진입점에서 이 절로 연결한다. 작성·통합 담당은 `/root`이며 후속 시행의 실제 담당·기준 source·결과는 착수 때 배정한다.
 
 2026-10-29 `/root/module_gate_plan_review`가 이 절·상단 안내와 `AGENTS.md`·두 README의 실제4파일 diff를 MI01–06·DP01/DP02·DOC-002·병렬 인계 정책과 읽기 대조하여 **후속 계획 저장에 한정한 독립 D2 수용·필수 수정0**으로 판정했다. 검토 기준 HEAD는 `09173aae2da1a8d43000881d9cebc5ab442cd2cc`, 이 판정 문구 반영 전 계획 파일 SHA-256은 `b70566e67bda3511b23112bde9bb770c9b80f8daa3a90e44048c8517863d1857`이다. `/root`가 판정을 수신해 기록했으며 후속 검사 설계·구현·원격 적용과 M4/M5 인수는 이 검토의 범위가 아니다. 제품·시험·빌드·자동 문서 검사·push는 실행하지 않았다.
+
+<a id="folder-reorganization"></a>
+## 13. 분리 모듈의 폴더 재정리 후속 계획
+
+2026-10-29 · `XADB-MODULE-LAYOUT-001` · **D2 ACCEPTED / 후속 계획 문서 반영 완료 / 제품 이동·시험 NOT_RUN**
+
+사용자는 파일 분리에 비해 폴더 정리가 부족한 부분을 먼저 조사하도록 요청했고, 참조 관계·상태 소유·API가 독립성의 핵심인지 의견을 확인했다. 이어 임시 계획을 저장하고 진행 중인 작업 종료 뒤 기존 문서에 반영하도록 지시했으며, 후속 “진행해 주세요” 요청에 따라 이 절을 작성한다. **이번 실행 범위는 후속 계획과 관련 문서의 정비다.** 제품 파일 이동·참조 변경의 구현은 아직 시작하지 않는다.
+
+### 기준 source와 적용 범위
+
+임시 조사 기준은 `21592e9285ff5116116bdbc414d82a5dce74031c`였다. 반영 기준은 main `517208d4cddd721db5415fd2e32b759a1ad114ba`, tree `daa9542e8b24968dc289615b918caa4d15a85a18`이다. 진행 중이던 Job 검산 작업은 local 채팅 `01a182cb-7080-72b3-963a-e54cbdfeb554`의 turn `01a18355-afc1-7651-b9de-63dd6b1a3e5f`에서 commit·검토·정리를 마쳤다는 최종 보고를 수신했고, 현재 checkout의 clean 상태와 해당 채팅의 종료를 읽기 확인했다. 별도 활성 관련 편집은 관측하지 않았다. 종료된 것은 그 작업 단위이며 전체 M4/M5 인수는 미완료다.
+
+두 기준 사이의 제품 변경은 Row Job 검산과 그 연결·시험에 해당하며 아래 후보 배치는 유지된다. 현재 `storage/` 직속 Rust 파일86개 중 파일명에 `test`가 포함된 시험·지원은44개, `storage/wal_io/` 직속77개 중 같은 분류는41개다. 하위 폴더를 제외한 탐색 밀도 관측이며 파일 수로 의존성·결함·생산성 개선을 판정하지 않는다. 이미 나뉜 `row/`, `semantic_row/`, `semantic_catalog/`, `dirty_frame/`는 유지 후보로 둔다.
+
+이 계획은 기존 M4/M5의 전체 범위나 종료 조건을 늘리지 않는다. 제품 배치 작업을 시작할 후속 지시가 있을 때 최신 source와 동시 작업을 확인해 후보별 범위를 확정한다. 현재 공급과 겹치는 후보는 해당 작업의 인계 뒤 진행하며, 전체 폴더 재정리를 A/B 착수의 새 선행으로 요구하지 않는다. [12절의 자동 강제](#post-separation-gates)는 계속 M4/M5 인수 뒤 추가 개발의 별도 계획이다.
+
+### 판단 기준과 목표
+
+독립성은 **필요한 하위 계약만 참조하고, 기능 변경이 소유 경계 안에 머무는지**로 판단한다. 폴더는 그 책임을 탐색 가능하게 표현한다. 실제 기준은 [코딩 컨벤션](../policies/coding-convention.md#section-4), [배치 정책](../policies/repository-build-plan.md#module-folder-layout), [채택된 허용 의존](../contracts/dev3-module-boundaries.md#target-imports)을 따른다.
+
+- **배치 정리:** 같은 책임의 구현·지원·시험을 모으고 반복 접두어를 폴더로 표현한다. 논리 모듈 경로·production/test cfg·visibility·시험 selector와 제품 의미를 유지한다.
+- **논리 의존 변경:** 다른 모듈의 내부 필드·구체 타입 참조, 초기화 조상 의존, 역방향 호출·재노출 사슬을 검토한다. 필요한 최소 API·원 소유·생성 권한·수명·오류 효과를 확정한 별도 D2 단위로 다룬다.
+
+소유가 다른 파일을 접두어만으로 합치거나, 파일 이동을 위해 권한을 넓히거나, 공통 가변 manager·상태 복제로 결합을 숨기지 않는다. 폴더 진입점은 선언·좁은 재노출·명시적 조립을 맡으며, 줄 수나 타입당 파일 수를 목표로 삼지 않는다. 물리 WAL이 Catalog/Row 의미를 알지 않아도 되는 의존 방향과 실제 기능 변경의 국소성이 평가 대상이다. `use` 문자열 수 감소·새 facade·별도 crate·텍스트 merge 성공만으로 독립성 향상을 주장하지 않는다.
+
+### 후보별 목표 배치와 선행 확인
+
+아래 경로는 `crates/engine/src/` 기준이며 **목표 후보는 미구현**이다. 실행 직전 전체 자손·지원·fixture/tool 참조를 포함한 파일별 이동표를 확정한다. 우선순위는 후속 정리 내부의 순서이며 제품 기능 개발 순서를 바꾸지 않는다.
+
+| 순서·단위 | 현재 파일군 | 목표 후보 | 논리 경계와 실행 전 확인 |
+| --- | --- | --- | --- |
+| 1 / L1 | `storage/wal_io/allocation_reservation.rs`, `allocation_operation.rs`, `allocation_budget.rs`, 관련 시험·지원 | `storage/wal_io/allocation_reservation/{mod,operation,budget,tests,native_tests,resource_tests}.rs`를 중심으로 배치 | 실제 `bootstrap::doublewrite_install::allocation_reservation`의 operation/budget/test 자손이다. 논리 부모·`pub(super)`를 유지하고 operation 안의 추가 자손과 경로 참조까지 매핑한다. |
+| 1 / L2 | `transaction/concurrency.rs`, `concurrency_commit.rs`, `concurrency_read.rs`, 관련 시험·지원 | `transaction/concurrency/`의 진입점·`commit.rs`·`read.rs`·지원·시험 | 실제 `transaction::concurrency` 자손을 모은다. commit/read 각각의 시험과 support 접근, 다른 모듈의 호출·compiler fixture 경로를 함께 확인한다. |
+| 2 / L3 | `storage/wal_io/mixed_system_*` | `storage/wal_io/mixed_system/`의 초기화·owner·history·load·resources·시험 | init은 `status_init_operation::mixed`, owner는 `status_flush::mixed`(`status_home_flush.rs`가 선언)이고 history/load/resources는 owner의 자손이다. 물리 분류를 묶더라도 논리 부모는 보존한다. 같은 부모로 옮길 필요가 있으면 그 부분을 별도 의존 변경으로 분리한다. |
+| 2 / L4 | `storage/wal_io/plan4_apply.rs`, `plan4_apply/`, `plan4_retention/`의 실제 하위 구현 | apply의 실제 소유와 이행 중 legacy에 맞춘 폴더 대응 | apply가 retention 경로의 create_pair·visibility·control·history·read 등을 연결한다. 각 소유와 이행 의무를 확인하고 중복 배치·잔여 이유를 기록한다. `plan4_pages`의 production `apply`와 test `retention` 선언/alias 및 원 selector를 보존하며 retention 전체를 일괄 재부모화하지 않는다. |
+| 3 / L5 | `storage/wal_io/`의 설치·할당·Status·복구·세션 조립 책임 | 책임별 폴더와 필요 시 상위 배치의 별도 설계 | 원 초기화 조상을 유지하는 채택 범위와 대조한다. 우선 조사 결과를 `현재 배치 유지 / 물리 이동 / 논리 경계 재설계`로 닫고, 후속 D2는 실제 소비자와 해결할 내부 참조를 지정한 유한 단위만 연다. 전체 DEV3 재설계를 이번 계획의 선행으로 추가하지 않는다. |
+
+### 이행 순서와 산출물
+
+1. **기준·소유 확인:** HEAD·dirty/index·관련 작업·source별 검증을 확인한다. 이미 정리된 후보는 재실행하지 않고 결과를 수신한다. 각 단위에 담당·공유 조립 파일·허용 경로·되돌림 범위를 지정한다.
+2. **참조와 이동표 확정:** `현재 물리 경로 → 목표 물리 경로 → 논리 mod 경로 → 상태 소유자 → provider/consumer → visibility → 영향 case`를 작성한다. 실제 Rust import/타입 의존 그래프와 생성→정상→오류/정리→복구의 소유·호출 흐름을 구별한다. cfg별 `#[path]`, 부모 private 접근, raw factory/seal, tool·fixture·source census 참조를 확인한다.
+3. **배치 단위 실행:** L1/L2부터 영향이 닫힌 단위를 선택하고 L3/L4는 소속 차이를 먼저 해소한다. 배치·선언 변경을 기능 본문 수정과 섞지 않는다. 이동을 위해 의미 변경이 필요하면 해당 부분을 별도 계약 변경으로 돌린다. 모듈 조립·현재 링크·실제 source inventory는 실제 이동과 함께 갱신한다.
+4. **논리 의존 단위 설계:** L5 및 앞 단계에서 분리한 항목은 실제 소비자를 기준으로 최소 API와 권한 인계를 정한다. 원 pool·WAL·fence·pin/lease·복구 책임·자원 한도를 보존하고 별도 D2 검토 뒤 구현 단위를 확정한다. 구체적인 재설계를 이 절의 후보 표만으로 채택하지 않는다.
+5. **변경 범위 검증·인계:** 실행 전 실제 diff→영향 계약→선택 case를 연결한다. 배치만 바뀌면 영향받은 production/test cfg의 컴파일·모듈 연결·접근 제한을 확인하고 의미·수명·오류 경로가 바뀐 부분에는 필요한 시험을 배정한다. 기존 통과 시험·무변경 하위 회귀·workspace 전체를 반복하지 않는다. 각 단위의 source·선택 결과·독립 리뷰·현재/원 경로 대응을 보존한다.
+
+새 경로는 실제 구현 때만 관리 JSON의 source inventory에 등록한다. 과거 증거의 원 경로·revision·hash·selector와 FAIL/UNKNOWN/NOT_RUN은 소급 수정하지 않는다. 필요한 현재-build 복구 검증은 실제 소유·수명·효과 변경과 연결하며 배치 정리 명목으로 의무를 면제하지 않는다. 문서 verifier와 전체 fmt/Clippy gate는 기존 push 시점 정책을 유지한다.
+
+### 완료 조건과 문서 정본
+
+| 판정 범위 | 완료 조건 |
+| --- | --- |
+| 이번 문서 반영 | 최신 기준과 후보·순서·한계·소유 문서의 연결을 반영하고 독립 D2 필수 지적0. 제품 이동·검증 결과와 구별 |
+| 배치 정리 단위 | 파일별 이동표와 실제 경로가 일치. 해당 논리 모듈·접근 권한·cfg·시험 발견/selector 보존, 영향받은 컴파일/선택 검증·현재 참조 갱신·독립 리뷰 완료 |
+| 논리 의존 변경 단위 | 허용 의존·제한 API·원 상태/권한·오류/자원/복구 계약을 검토하고 실제 소비 경로의 변경 국소성·필요한 선택 검증을 확인. 파일 이동 결과로 대체하지 않음 |
+| M4/M5 | 기존 공통 공급·MI01–06의 실제 인수 조건 유지. 문서 반영과 폴더 정리가 완료되어도 M4/M5를 자동 완료로 표시하지 않음 |
+
+작업 순서·후보·결정은 이 절이 소유한다. [저장소 배치](../policies/repository-build-plan.md#module-folder-layout)는 기존 코딩/병렬 규칙의 적용과 실제 inventory 갱신 시점을 연결하고, [관리 JSON](../policies/repository-build-plan.json)의 `module_folder_reorganization`은 정본 참조·기준·미실행 상태만 색인한다. [소유 계약](../contracts/dev3-module-boundaries.md#target-imports)은 현재 초기화 조상·접근 제한을 유지하며 구체적인 논리 변경 때 영향 절만 재검토한다. 코딩 컨벤션·병렬 정책의 기존 규칙은 그대로 사용한다.
+
+문서 진입점·계획/정책 README에서 이 절과 배치 원칙을 연결한다. 기존 문서의 ID·경로·제목은 유지하므로 `documents.json`의 등록 변경은 없다. 새 정식 문서를 만들지 않고 임시 초안의 제안을 이 절로 통합했다. 후속 사용자의 commit·불필요한 임시 문서 삭제 지시에 따라, 내용과 조사·검토 근거가 정식 문서에 반영된 임시 초안은 삭제한다. 과거 source별 실행 증거는 유지한다.
+
+### 결정과 실행 기록
+
+| 항목 | 기록 |
+| --- | --- |
+| ID·일자·분류 | `XADB-MODULE-LAYOUT-001` · 2026-10-29 · D2 ACCEPTED / 후속 계획에 한정 |
+| 근거·담당 | 사용자의 임시 계획 작성·진행 작업 종료 뒤 문서 갱신 요청과 후속 진행 지시. 작성·계약·통합 `/root` |
+| 선택·이유 | 참조·소유·API 경계를 먼저 대조하여 기존 책임별 배치 규칙을 구체화. 논리 경로 보존 이동과 의존 변경을 분리해 유한한 이행·검증 범위를 확보 |
+| 비교 대안 | 평면 파일 분리 유지에는 탐색·소유 이름 불일치가 남음. 모든 파일을 접두어별로 일괄 이동하면 서로 다른 논리 부모와 private 접근을 혼동. 역할별 crate 전환은 실제 필요·검증 범위를 넘어가므로 이번 계획에서 채택하지 않음 |
+| 대체·영향 | 기존 M2의 원 초기화 조상·권한 계약, M4/M5 종료 조건과 12절 적용 시점을 대체하지 않음. 미래 논리 변경은 해당 owner 계약의 별도 D2 단위에서 채택 |
+| 독립 검토 | `/root/module_layout_plan_review`가 실제7개 문서/JSON diff·임시 초안·DP01/DP02·DOC-002·코딩/병렬 정책·채택 경계 계약·후보 소스 선언과 종료 보고를 직접 읽기 대조하여 문서 반영 범위의 D2 수용·미해결 필수 수정0으로 판정. `/root`가 수신·반영 확인. 구체적 이동표/의존 재설계의 시행 검토와 M4/M5 인수는 포함하지 않음 |
+| 실행 | 문서 반영·독립 검토 시점에는 제품 이동·빌드·시험·문서 자동 검사·commit/push 모두 NOT_RUN. 후속 사용자 지시에 따라 문서7파일을 commit하고 통합된 임시 초안을 정리하는 범위로 진행. 제품·검사 실행과 push는 포함하지 않으며 기존 source별 검증 결과 유지 |
+| 재검토 조건 | 후보가 이미 해결됨, 다른 작업과 소유 중복, 논리 부모/visibility 변경 필요, 원 권한·복구·자원 계약 약화, 공통 변경 확대 또는 새로운 사용자 방향 |
+
+검토 입력은 위 기준 HEAD의7파일 diff이며, 이 판정·채택 상태 반영 전 `git diff --binary HEAD -- <7파일>`의 SHA-256은 `98825b49b1817959d35ce15b19cab1725029201dbbb6eae049c7d970f8f3254f`, 이 계획 파일은 `21359ae314332df4dee0fe9ebafa690f9abd30c9f270c5e71f7919064a4af3df`다. 검토 후 변경은 수용 판정·문서 채택 상태와 후속 commit·임시 초안 정리 지시의 기록이다. 제품·시험·자동 문서 검사 결과를 새로 생성하거나 과거 결과를 재분류하지 않았다.

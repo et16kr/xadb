@@ -13,5 +13,5 @@
 - [parallel-development-policy.json](parallel-development-policy.json)
 - [XADB — 병렬 개발을 위한 파일 구성·소유 정책](parallel-development-policy.md)
 - [repository-build-plan.json](repository-build-plan.json)
-- [XADB — 저장소 구성과 빌드 정책](repository-build-plan.md) — [로컬 산출물·캐시 보존](repository-build-plan.md#local-artifact-retention)
+- [XADB — 저장소 구성과 빌드 정책](repository-build-plan.md) — [로컬 산출물·캐시 보존](repository-build-plan.md#local-artifact-retention) · [모듈 폴더 배치와 참조 경계](repository-build-plan.md#module-folder-layout)
 - [version-compatibility-policy.json](version-compatibility-policy.json)

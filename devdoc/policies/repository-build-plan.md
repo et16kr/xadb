@@ -224,6 +224,17 @@ DISK는 물리 저장 방식만 분리한다. 공통 RowUID, snapshot, catalog, 
 
 채택 규칙의 원문은 [병렬 개발을 위한 파일 구성·소유 정책](parallel-development-policy.md)으로 분리해 관리한다. 책임별 파일 구성, 공통 계약·조립 지점의 최소화, 작업별 수정 범위·공유 파일 담당·병합 순서와 생성물 재생성을 적용한다. 관리 JSON의 `parallel_development_ref`와 [작업 계약 예시](../examples/task-contract.example.json)가 같은 정책을 참조한다. PD01–PD03은 미실행 개발 절차 인수 계획이다.
 
+<a id="module-folder-layout"></a>
+### 5.2 모듈 폴더 배치와 참조 경계
+
+2026-10-29 [후속 작업 계획과 결정](../plans/module-independence-plan.md#folder-reorganization)은 [코딩 기준](coding-convention.md#section-4)과 XADB-LAYOUT-001–006을 현재 분리 모듈에 적용한다. 이름에 반복되는 기능 접두어는 같은 책임인지 확인한 뒤 소유 폴더로 표현하고, 구현·지원·시험을 그 책임 가까이에 둔다. 적용 후보·순서·판정은 계획이 소유하며 이 절은 배치 원칙을 연결한다. 제품 이동은 NOT_RUN이다.
+
+물리 폴더와 실제 Rust 모듈의 부모 관계는 각각 기록한다. `#[path]`로 연결된 파일의 이동이 private 접근·`pub(in ...)`·생성 권한·production/test cfg 경로를 바꾸지 않는지 확인한다. 배치 정리 단위는 논리 모듈 경로·visibility·시험 selector를 유지하고, 이를 바꾸어야 하는 부분은 논리 의존 변경 단위로 분리해 소유 계약을 검토한다. 폴더 진입점에 기능 본문을 새로 집중하거나 접근 권한 확대·공통 manager 도입으로 이동을 성립시키지 않는다.
+
+독립성은 허용 의존 방향과 실제 기능 변경의 국소성으로 평가한다. 재노출 경로 단축·파일 수·폴더 수는 그 증거를 대신하지 않는다. 서로 다른 논리 부모에 있는 `mixed_system_*`와 이행 중 `plan4_apply`/`plan4_retention`은 접두어만으로 일괄 재부모화하지 않는다. 실제 import/타입·소유·호출 흐름을 대조하여 이동표를 확정한다.
+
+후보 경로는 계획에만 둔다. 구현 시 해당 변경의 모듈 선언·현재 링크·source census/도구 입력·관리 JSON의 실제 inventory를 함께 갱신한다. 기존 증거의 원 경로·revision·hash는 유지하며, package·dependency·source/export root 변경은 실제 필요가 검토된 단위에서만 반영한다. 이번 계획 반영은 이 inventory와 제품 빌드 경계를 변경하지 않는다. 관리 JSON의 `module_folder_reorganization`은 문서 계획의 상태와 정본 참조만 색인한다.
+
 <a id="section-8"></a>
 
 ## 6. 단계별 소유 위치
