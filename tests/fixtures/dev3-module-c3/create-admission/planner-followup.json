@@ -1,0 +1,21 @@
+{
+  "scope": "new statement-bound shared CREATE admission, original reservation/private loans and source bounds",
+  "baseline_commit": "9f36840",
+  "budget": {
+    "total_seconds": 1200,
+    "compiler_seconds": 420,
+    "case_seconds": 45,
+    "output_bytes": 8388608,
+    "rust_min_stack": 33554432
+  },
+  "compiler_tests": [],
+  "runtime_tests": [
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::create_admission::planner_before_preserves_read_dependency_and_private",
+      "reason": "new planner-entry read dependency boundary: invalid schema Before preserves bit1/private/noWAL, retry Reserve and Cancel preserves bits3"
+    }
+  ],
+  "native_tests": [],
+  "not_run": "No unchanged regression or existing native acceptance repeated.",
+  "prior_source_case": "r5 product/source/runtime pass preserved; new fixture only, no completed case repeated"
+}

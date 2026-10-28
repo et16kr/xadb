@@ -53,54 +53,117 @@ impl<'r, 'c, 's, 'w> CatalogPairIoLease<'r, 'c, 's, 'w> {
     }
 }
 
+// The factory's move result is explicit so its large carrier is charged
+// independently of the eventual statement-bound reservation.
+type ReservedParts<'r, 'a, 's, 'c, 'p, 'd, 'm, 'w, W> = (
+    &'r SharedPool<'c, 's, 'p, 'd>,
+    &'r mut control::RetentionLedger<'a, 'c, 's>,
+    &'r history::runtime::RuntimeHistory<'a, 'c, 's>,
+    Option<&'r visibility::BoundVisibility<'a, 'c, 's>>,
+    CatalogPairIoLease<'r, 'c, 's, 'w>,
+    CreatePlan,
+    TxPairClaimKey<'c, 's>,
+    PageLsn,
+    std::marker::PhantomData<&'s MutableStorageOwner<'m, 'w, W>>,
+);
+
+pub(super) fn parts_return_bytes<W: WriterNamespace>() -> usize {
+    std::mem::size_of::<Result<ReservedParts<'_, '_, '_, '_, '_, '_, '_, '_, W>>>()
+}
+
 impl<'r, 'a, 's, 'c, 'p, 'd, 'm, 'w, W: WriterNamespace>
     CatalogCreateAccess<'r, 'a, 's, 'c, 'p, 'd, 'm, 'w, W>
 {
-    pub(super) fn reserve(
+    #[allow(
+        clippy::too_many_arguments,
+        clippy::result_large_err,
+        reason = "original reservation and explicit caller loans; no replacement owner"
+    )]
+    pub(super) fn reserve<'t, 'v, 'i>(
         mut self,
         owner: &'r mut Owner<'c, 's>,
         actor: TxnRef,
         undo: &Plan4Target,
-        definition: &'r crate::api::TableSpec,
-        private: &'r mut [u8; PRIVATE_BYTES],
-    ) -> Result<ReservedCatalogCreate<'r, 'a, 's, 'c, 'p, 'd, 'm, 'w, W>> {
-        // Preserve deep pending/population and planner error precedence.
-        let plan = self.plan_catalog_create(owner, actor, undo, definition, private)?;
-        let Self {
-            storage,
-            pool,
-            control,
-            history,
-            visibility,
-            flush,
-        } = self;
-        let mut io = CatalogPairIoLease::acquire(storage, pool.bound_core(), flush, plan.pair)?;
-        let (key, reserve) = CatalogCreateAccess {
-            storage,
-            pool,
-            control: &mut *control,
-            history,
-            visibility,
-            flush: &mut *io.original,
+        definition: &'i crate::api::TableSpec,
+        private: &'i mut [u8; PRIVATE_BYTES],
+        mut admission: Option<CatalogCreateAdmission<'r, 't, 'v, 'a, 'c, 's>>,
+    ) -> std::result::Result<
+        ReservedCatalogCreate<'r, 't, 'v, 'i, 'a, 's, 'c, 'p, 'd, 'm, 'w, W>,
+        CatalogCreateError<'i>,
+    > {
+        let storage = self.storage;
+        let result: Result<ReservedParts<'r, 'a, 's, 'c, 'p, 'd, 'm, 'w, W>> = (|| {
+            if let Some(admission) = &admission {
+                admission.statement.planning()?;
+            }
+            // Preserve deep pending/population and planner error precedence.
+            let plan = self.plan_catalog_create(owner, actor, undo, definition, private)?;
+            let Self {
+                storage,
+                pool,
+                control,
+                history,
+                visibility,
+                flush,
+            } = self;
+            let mut io = CatalogPairIoLease::acquire(storage, pool.bound_core(), flush, plan.pair)?;
+            let (key, reserve) = CatalogCreateAccess {
+                storage,
+                pool,
+                control: &mut *control,
+                history,
+                visibility,
+                flush: &mut *io.original,
+            }
+            .reserve_planned(owner, &plan, private)?;
+            // Durable Reserve exists: all subsequent errors must fence.
+            io.check::<W>(storage, pool.bound_core(), &plan.pair)
+                .map_err(|error| fatal(storage, error.phase, error.cause))?;
+            if let Some(admission) = &admission {
+                admission
+                    .statement
+                    .reserved(storage, control, plan.ordinal, plan.object, reserve)
+                    .map_err(|error| fatal(storage, error.phase, error.cause))?;
+            }
+            Ok((
+                pool,
+                control,
+                history,
+                visibility,
+                io,
+                plan,
+                key,
+                reserve,
+                std::marker::PhantomData,
+            ))
+        })();
+        match result {
+            Ok((pool, control, history, visibility, io, plan, key, reserve, _)) => {
+                Ok(ReservedCatalogCreate {
+                    storage,
+                    pool,
+                    control,
+                    history,
+                    visibility,
+                    io,
+                    owner,
+                    private: Some(private),
+                    definition,
+                    admission,
+                    plan,
+                    key,
+                    reserve,
+                    active: true,
+                })
+            }
+            Err(error) => {
+                let cleanup = admission
+                    .as_mut()
+                    .map_or(Ok(()), CatalogCreateAdmission::finish);
+                let error = merge::<()>(Err(error), cleanup).expect_err("failed reservation");
+                Err(CatalogCreateError::from_error(error, private))
+            }
         }
-        .reserve_planned(owner, &plan, private)?;
-        io.check::<W>(storage, pool.bound_core(), &plan.pair)
-            .map_err(|error| fatal(storage, error.phase, error.cause))?;
-        Ok(ReservedCatalogCreate {
-            storage,
-            pool,
-            control,
-            history,
-            visibility,
-            io,
-            owner,
-            private,
-            definition,
-            plan,
-            key,
-            reserve,
-            active: true,
-        })
     }
 
     fn reserve_planned(

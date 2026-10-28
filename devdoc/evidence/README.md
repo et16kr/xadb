@@ -1,5 +1,7 @@
 # XADB 조사·실행 증거
 
+2026-10-28 [shared CREATE 제품 예약](module-independence-survey-20261026.md#c3-create-admission): 원 statement·source/gate를 기존 예약에 묶고 원 private 반환을 공급한다. source별 compiler4·신규 runtime9/source1과 최종 독립 D1/D2 한정 수용·필수 수정0을 확인했다. 전체 M4/M5는 미완료다.
+
 2026-10-28 [첫 Catalog statement의 거래 완료 연결](module-independence-survey-20261026.md#c3-catalog-capsule): main `4ac878c`에서 실제 Forward를 원 statement에 등록하고 consuming Commit/full abort를 연결한다. r3 compiler3·r4 runtime9·r5 runtime4 PASS와 원 FAIL을 보존했으며 최종 독립 D1/D2 한정 수용·필수 수정0이다. shared CREATE 제품 admission·Row·M4/M5는 미완료다.
 
 2026-10-28 [실제 빈 쓰기 capsule](module-independence-survey-20261026.md#c3-write-capsule): main `b35150c`에서 원 Begin actor·빈 statement·소비형 빈 abort를 연결한다. 원 static2 FAIL을 보존하고 r3 compiler3/runtime14·source 보완 r4 runtime2·phase 보완 r5 runtime3을 통과했다. 최종 독립 D1/D2 한정 수용·필수 수정0이며 자동 Status/일반 mutation·shared CREATE·M4/M5는 미완료다.

@@ -40,7 +40,7 @@ fn forward<'s, 'c>(
     assert_eq!(reserved.object().object.get(), object);
     oracle.check(reserved.catalog_test_bound(), state, &id(base, 2));
     match reserved.initialize() {
-        Ok(created) => assert_eq!(created.object.get(), object),
+        Ok(created) => assert_eq!(created.into_parts().0.object.get(), object),
         Err(RetentionReservationError::Before { error, .. })
         | Err(RetentionReservationError::Fatal(error)) => panic!("actual Forward {error:?}"),
     }

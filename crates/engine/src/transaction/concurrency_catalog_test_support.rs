@@ -39,6 +39,7 @@ pub(crate) enum Point {
     TransactionChecking,
     CatalogRollbackCompleted,
     CatalogClrCompleted,
+    CatalogCreateCompleted,
     RetirementFirstPage,
     ReadGateWaiting,
 }

@@ -450,7 +450,7 @@ impl Worker<'_> {
             Err(RetentionReservationError::Before { error, .. })
             | Err(RetentionReservationError::Fatal(error)) => panic!("actual Forward {error:?}"),
         };
-        assert_eq!(created.object.get(), object);
+        assert_eq!(created.into_parts().0.object.get(), object);
         self.oracle.wal(self.root, self.case, start + 2);
         check_live(live, owner, self.oracle, self.case, start + 2);
         if self.case == "N02" {

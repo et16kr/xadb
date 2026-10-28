@@ -114,6 +114,11 @@ mod create_pair;
 mod visibility;
 pub(in crate::storage) use create_pair::CatalogRetirementRejected;
 use create_pair::catalog_live::CatalogPayload;
+#[allow(unused_imports)]
+pub(crate) use create_pair::catalog_live::{
+    ReservedCatalogCreate,
+    shared_create::{CatalogCancelled, CatalogCreateError, CatalogCreated},
+};
 
 /// No Clone/Copy and no raw constructor. This borrows immutable private
 /// operation bytes, not replay/control/page guards or a second storage owner.

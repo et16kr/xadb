@@ -478,7 +478,8 @@ impl<'t, 'v, 'a, 'c, 's> RowStatementView<'t, 'v, 'a, 'c, 's> {
         self.check()
     }
 
-    /// Called only after the actual Catalog lookup produced Found or Missing.
+    /// Register the actual lookup's Found/Missing result, or the admitted
+    /// CREATE planner's conservative dependency immediately before its reads.
     /// No I/O, epoch/publication guard or callback runs under this leaf lock.
     pub(super) fn record_catalog_read(&self) -> Result<()> {
         self.check()?;

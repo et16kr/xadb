@@ -34,7 +34,7 @@ fn mc01_reserve_cancel_two_generations() {
                     (true, 0, vec![(1, 6 + cycle as u64, 0)])
                 );
                 match reserved.cancel() {
-                    Ok(()) => {}
+                    Ok(_) => {}
                     Err(RetentionReservationError::Before { error, .. })
                     | Err(RetentionReservationError::Fatal(error)) => {
                         panic!("actual Cancel {error:?}")

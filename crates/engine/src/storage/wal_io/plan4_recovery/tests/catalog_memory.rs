@@ -653,7 +653,7 @@ fn create_forward<'s, 'c>(
         Err(RetentionReservationError::Before { error, .. })
         | Err(RetentionReservationError::Fatal(error)) => panic!("actual Forward {error:?}"),
     };
-    assert_eq!(created.object.get(), 6);
+    assert_eq!(created.into_parts().0.object.get(), 6);
     oracle.check(live, state, "R03");
     actor
 }
@@ -1054,7 +1054,7 @@ fn recover_check(images: &Images, oracle: &Oracle, scenario: &str) {
                 .unwrap();
             assert_eq!(reserved.object().object.get(), 7);
             match reserved.initialize() {
-                Ok(object) => assert_eq!(object.object.get(), 7),
+                Ok(object) => assert_eq!(object.into_parts().0.object.get(), 7),
                 Err(_) => panic!("recovered READY CREATE initialization"),
             }
             assert_eq!(
@@ -1209,3 +1209,6 @@ mod write_transactions;
 
 #[path = "catalog_memory/catalog_transactions.rs"]
 mod catalog_transactions;
+
+#[path = "catalog_memory/create_admission.rs"]
+mod create_admission;

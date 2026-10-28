@@ -89,11 +89,28 @@ struct CatalogCreateAccess<'b, 'a, 's, 'c, 'p, 'd, 'm, 'w, W: WriterNamespace> {
 }
 #[path = "catalog_create.rs"]
 mod create;
+#[path = "catalog_shared_create.rs"]
+pub(in super::super) mod shared_create;
+use shared_create::{CatalogCancelled, CatalogCreateAdmission, CatalogCreateError, CatalogCreated};
 
 /// Owns the durable Tx reservation, original pair claim and continuous flush
 /// lease. Only the necessary original resources are borrowed; no session or
-/// owner is reconstructed. The exclusive entry remains the product boundary.
-pub(crate) struct ReservedCatalogCreate<'r, 'a, 's, 'c, 'p, 'd, 'm, 'w, W: WriterNamespace> {
+/// owner is reconstructed. The shared entry binds the original statement and
+/// source admission; the legacy raw entry exists only in test fixtures.
+pub(crate) struct ReservedCatalogCreate<
+    'r,
+    't,
+    'v,
+    'i,
+    'a,
+    's,
+    'c,
+    'p,
+    'd,
+    'm,
+    'w,
+    W: WriterNamespace,
+> {
     storage: &'s MutableStorageOwner<'m, 'w, W>,
     pool: &'r SharedPool<'c, 's, 'p, 'd>,
     control: &'r mut control::RetentionLedger<'a, 'c, 's>,
@@ -101,14 +118,17 @@ pub(crate) struct ReservedCatalogCreate<'r, 'a, 's, 'c, 'p, 'd, 'm, 'w, W: Write
     visibility: Option<&'r visibility::BoundVisibility<'a, 'c, 's>>,
     io: create::CatalogPairIoLease<'r, 'c, 's, 'w>,
     owner: &'r mut Owner<'c, 's>,
-    private: &'r mut [u8; PRIVATE_BYTES],
-    definition: &'r crate::api::TableSpec,
+    private: Option<&'i mut [u8; PRIVATE_BYTES]>,
+    definition: &'i crate::api::TableSpec,
+    admission: Option<CatalogCreateAdmission<'r, 't, 'v, 'a, 'c, 's>>,
     plan: CreatePlan,
     key: TxPairClaimKey<'c, 's>,
     reserve: PageLsn,
     active: bool,
 }
-impl<W: WriterNamespace> Drop for ReservedCatalogCreate<'_, '_, '_, '_, '_, '_, '_, '_, W> {
+impl<W: WriterNamespace> Drop
+    for ReservedCatalogCreate<'_, '_, '_, '_, '_, '_, '_, '_, '_, '_, '_, W>
+{
     fn drop(&mut self) {
         if self.active {
             self.storage.session_fence().fence();
@@ -118,7 +138,9 @@ impl<W: WriterNamespace> Drop for ReservedCatalogCreate<'_, '_, '_, '_, '_, '_, 
 }
 
 #[cfg(test)]
-impl<'s, 'c, 'p, 'd, W: WriterNamespace> ReservedCatalogCreate<'_, '_, 's, 'c, 'p, 'd, '_, '_, W> {
+impl<'s, 'c, 'p, 'd, W: WriterNamespace>
+    ReservedCatalogCreate<'_, '_, '_, '_, '_, 's, 'c, 'p, 'd, '_, '_, W>
+{
     pub(in crate::storage) fn catalog_test_lease_identity(&self) -> (usize, u64) {
         self.io.test_identity()
     }
@@ -149,7 +171,7 @@ impl<'s, 'c, 'p, 'd, W: WriterNamespace> ReservedCatalogCreate<'_, '_, 's, 'c, '
 }
 #[cfg(test)]
 impl<W: WriterNamespace> super::super::CatalogTestState
-    for ReservedCatalogCreate<'_, '_, '_, '_, '_, '_, '_, '_, W>
+    for ReservedCatalogCreate<'_, '_, '_, '_, '_, '_, '_, '_, '_, '_, '_, W>
 {
     fn catalog_test_with_pool<T>(&self, run: impl FnOnce(&SharedPool<'_, '_, '_, '_>) -> T) -> T {
         run(self.pool)
@@ -185,7 +207,9 @@ impl<W: WriterNamespace> super::super::CatalogTestState
     }
 }
 
-impl<'s, 'c, W: WriterNamespace> ReservedCatalogCreate<'_, '_, 's, 'c, '_, '_, '_, '_, W> {
+impl<'i, 's, 'c, W: WriterNamespace>
+    ReservedCatalogCreate<'_, '_, '_, 'i, '_, 's, 'c, '_, '_, '_, '_, W>
+{
     pub(crate) fn object(&self) -> ObjectHandle {
         self.plan.object
     }
@@ -193,11 +217,17 @@ impl<'s, 'c, W: WriterNamespace> ReservedCatalogCreate<'_, '_, 's, 'c, '_, '_, '
         clippy::result_large_err,
         reason = "unchanged cancellation rejection returns the original reservation"
     )]
-    pub(crate) fn cancel(mut self) -> std::result::Result<(), RetentionReservationError<Self>> {
+    pub(crate) fn cancel(
+        mut self,
+    ) -> std::result::Result<CatalogCancelled<'i>, RetentionReservationError<Self>> {
         match self.cancel_inner() {
             Ok(()) => {
+                self.complete(None)
+                    .map_err(RetentionReservationError::Fatal)?;
                 self.active = false;
-                Ok(())
+                Ok(CatalogCancelled::new(
+                    self.private.take().expect("original private loan"),
+                ))
             }
             Err(error) if error.effect == Effect::Unchanged && self.control.pending.is_none() => {
                 Err(RetentionReservationError::Before {
@@ -213,6 +243,15 @@ impl<'s, 'c, W: WriterNamespace> ReservedCatalogCreate<'_, '_, 's, 'c, '_, '_, '
         }
     }
     fn cancel_inner(&mut self) -> Result<()> {
+        if let Some(admission) = &self.admission {
+            admission.statement.reserved(
+                self.storage,
+                self.control,
+                self.plan.ordinal,
+                self.plan.object,
+                self.reserve,
+            )?;
+        }
         self.io
             .check::<W>(self.storage, self.pool.bound_core(), &self.plan.pair)?;
         CatalogCreateAccess {
@@ -228,7 +267,7 @@ impl<'s, 'c, W: WriterNamespace> ReservedCatalogCreate<'_, '_, 's, 'c, '_, '_, '
             &self.plan,
             self.reserve,
             self.owner,
-            self.private,
+            self.private.as_deref_mut().expect("original private loan"),
         )
     }
     #[allow(
@@ -237,11 +276,16 @@ impl<'s, 'c, W: WriterNamespace> ReservedCatalogCreate<'_, '_, 's, 'c, '_, '_, '
     )]
     pub(crate) fn initialize(
         mut self,
-    ) -> std::result::Result<ObjectHandle, RetentionReservationError<Self>> {
+    ) -> std::result::Result<CatalogCreated<'i>, RetentionReservationError<Self>> {
         match self.initialize_inner() {
             Ok(object) => {
+                self.complete(Some(object))
+                    .map_err(RetentionReservationError::Fatal)?;
                 self.active = false;
-                Ok(object)
+                Ok(CatalogCreated::new(
+                    object,
+                    self.private.take().expect("original private loan"),
+                ))
             }
             Err(error) if error.effect == Effect::Unchanged && self.control.pending.is_none() => {
                 Err(RetentionReservationError::Before {
@@ -258,6 +302,15 @@ impl<'s, 'c, W: WriterNamespace> ReservedCatalogCreate<'_, '_, 's, 'c, '_, '_, '
     }
 
     fn initialize_inner(&mut self) -> Result<ObjectHandle> {
+        if let Some(admission) = &self.admission {
+            admission.statement.reserved(
+                self.storage,
+                self.control,
+                self.plan.ordinal,
+                self.plan.object,
+                self.reserve,
+            )?;
+        }
         self.io
             .check::<W>(self.storage, self.pool.bound_core(), &self.plan.pair)?;
         CatalogCreateAccess {
@@ -273,9 +326,28 @@ impl<'s, 'c, W: WriterNamespace> ReservedCatalogCreate<'_, '_, 's, 'c, '_, '_, '
             &self.plan,
             self.reserve,
             self.owner,
-            self.private,
+            self.private.as_deref_mut().expect("original private loan"),
             self.definition,
         )
+    }
+    fn complete(&mut self, object: Option<ObjectHandle>) -> Result<()> {
+        #[cfg(test)]
+        crate::transaction::concurrency::catalog_test_support::hit(
+            self.pool.bound_core(),
+            crate::transaction::concurrency::catalog_test_support::Point::CatalogCreateCompleted,
+        );
+        // The actual key is already consumed. No failure from this point can
+        // return Before, even if a lower cleanup reports Unchanged.
+        let result = if let Some(admission) = &mut self.admission {
+            let registered = admission
+                .statement
+                .completed(self.storage, self.control, object);
+            let cleanup = admission.finish();
+            merge(registered, cleanup)
+        } else {
+            Ok(())
+        };
+        result.map_err(|error| fatal(self.storage, error.phase, error.cause))
     }
 }
 
@@ -854,6 +926,7 @@ impl<'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
         }
     }
 
+    #[cfg(test)]
     pub(crate) fn reserve_catalog_create<'r>(
         &'r mut self,
         owner: &'r mut Owner<'c, 's>,
@@ -861,9 +934,10 @@ impl<'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
         undo: &Plan4Target,
         definition: &'r crate::api::TableSpec,
         private: &'r mut [u8; PRIVATE_BYTES],
-    ) -> Result<ReservedCatalogCreate<'r, 'a, 's, 'c, 'p, 'd, 'm, 'w, W>> {
+    ) -> Result<ReservedCatalogCreate<'r, 'r, 'r, 'r, 'a, 's, 'c, 'p, 'd, 'm, 'w, W>> {
         self.catalog_create_access()
-            .reserve(owner, actor, undo, definition, private)
+            .reserve(owner, actor, undo, definition, private, None)
+            .map_err(CatalogCreateError::error)
     }
 
     pub(crate) fn catalog_aging_start(
@@ -1474,7 +1548,7 @@ pub(in super::super) fn catalog_live_source_bytes<W: WriterNamespace>() -> Catal
     use crate::storage::{dirty_frame, tree_page::edit};
     use std::mem::size_of;
     type Prepared<'a> = PreparedCatalog<'a, 'a, 'a>;
-    type Reservation<'a, W> = ReservedCatalogCreate<'a, 'a, 'a, 'a, 'a, 'a, 'a, 'a, W>;
+    type Reservation<'a, W> = ReservedCatalogCreate<'a, 'a, 'a, 'a, 'a, 'a, 'a, 'a, 'a, 'a, 'a, W>;
     let scalar = size_of::<CatalogPreparation<'_, '_, '_, '_, '_, '_, '_, '_, W>>()
         + 2 * size_of::<&()>() // temporary view receiver and wrapper argument
         + 2 * size_of::<WalPrefix>()
@@ -1675,7 +1749,8 @@ pub(in super::super) fn catalog_live_source_bytes<W: WriterNamespace>() -> Catal
         + 2 * view
         + 12 * reference
         + size_of::<TxnRef>()
-        + size_of::<Result<Reservation<'_, W>>>();
+        + size_of::<std::result::Result<Reservation<'_, W>, CatalogCreateError<'_>>>()
+        + 2 * create::parts_return_bytes::<W>();
     // The small view call has ended before the consuming wrapper constructs
     // its original large Before/Reservation return carrier.
     // This caller is the one original reservation, not an ordinary Begin/Job
@@ -1688,6 +1763,13 @@ pub(in super::super) fn catalog_live_source_bytes<W: WriterNamespace>() -> Catal
             .max(pair_return)
             .max(visibility::epoch_transition_source_bytes()))
     .max(token_return + scalar);
+    // Admission remains live through every CREATE phase and checked return.
+    // Binding checks run sequentially with deep planning/application.
+    let shared = shared_create::carrier_bytes();
+    let checked = token + transaction::catalog::check_source_bytes();
+    let reserve = reserve.max(checked) + shared;
+    let forward = forward.max(checked) + shared;
+    let cancel = cancel.max(checked) + shared;
     let retirement = ((retirement::prepare_caller_source_bytes() + prepare)
         .max(retirement::selection_source_bytes())
         + source::retirement_prepare_carrier_bytes())
@@ -1763,9 +1845,15 @@ impl<'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
             flush: flusher.control,
         };
         let reserved = access
-            .reserve(owner, actor, undo, definition, private)
+            .reserve(owner, actor, undo, definition, private, None)
+            .map_err(CatalogCreateError::error)
             .unwrap();
-        reserved.initialize().ok().expect("actual CREATE Forward")
+        reserved
+            .initialize()
+            .ok()
+            .expect("actual CREATE Forward")
+            .into_parts()
+            .0
     }
 }
 

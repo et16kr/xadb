@@ -117,6 +117,9 @@ impl CatalogProgressCharge {
             bodies
                 .retirement
                 .max(bodies.lifecycle)
+                .max(bodies.reserve)
+                .max(bodies.forward)
+                .max(bodies.cancel)
                 .max(transaction::catalog::check_source_bytes()),
         )
     }
@@ -559,6 +562,11 @@ impl<W: WriterNamespace> ReadPort<'_, '_, '_, '_, '_, '_, '_, '_, W> {
 
     pub(in crate::storage) fn catalog_test_source_used(&self) -> u64 {
         test_source_used(self.isolation)
+    }
+
+    /// Fault-only undercount at a completed CREATE boundary; no authority.
+    pub(in crate::storage) fn catalog_test_corrupt_short_source(&self) {
+        self.isolation.lock().unwrap().bytes[USED].fill(0);
     }
 
     /// Hold one plain loan in the original ledger while `run` executes.

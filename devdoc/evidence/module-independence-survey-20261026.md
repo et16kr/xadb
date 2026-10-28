@@ -2685,3 +2685,44 @@ r5은 static2/runtime4(CT05–CT08) PASS다. CT07의 실제 Commit capture9는 c
 | r5 | `fc4a46ae6447b8cf2a489151026bd4cec31343d99db32ff7dd8b649bcec1f6ad` | `509526fbcdf9506808755c84e4e987f7d5285abebdd580dfefd92a0a3f4c4552` | `1fd1769ac72314aacf990da2a6fc00bee978279da0ba42eb902d146bc1081eba` |
 
 [artifact](../../artifacts/module-c3-catalog-capsule-20261028/)의 source manifest·도구/입력 identity·stdout/stderr·결과는 보존했고 각 실행의 source/target/ELF는 삭제했다. [실행 전 D2 한정 수용](../../artifacts/module-c3-catalog-capsule-20261028/review-before-run.json)과 이후 독립 검토에서 mode/mark, source active max, CLR 상위 ordinal 계수를 보완했다. [최종 독립 D1/D2 receipt](../../artifacts/module-c3-catalog-capsule-20261028/review-final.json) SHA-256 `4a26d61fef92b3a44b51a9bcd28c4bddea4c8d3d08e3a9020aa70609620337fe`는25/25파일·artifact78개 검토와 필수 수정0의 한정 수용을 기록한다. 문서 verifier·push·무변경 제품/하위 전체 실행은0이다. 기존 stash 및 다른 증거 artifact는 보존한다.
+
+<a id="c3-create-admission"></a>
+## 2026-10-28 원 statement의 shared CREATE 제품 예약
+
+기준은 `main` `9f36840`이다. 기존 C2 stash를 적용하지 않고 [shared CREATE 계약](../contracts/dev3-module-boundaries.md#catalog-shared-create)을 구현한다. 동일 기존 reservation에 원 view/source/gate를 묶고 원 private 반환 수명을 분리했다. 처음 설계의 독립 검토는 Reserve 전·진행 중·완료 후 검산 분리, 중복 admission 방지, 효과 후 Fatal, Cancel 관측 보존과 같은 view 재Reserve를 요구했다. 구현 중 독립 검토가 찾아낸 source 예약 전 deep pool health 검사는 얕은 입구로 바꾸고 기존 transaction entry를 예약 뒤에 실행하도록 교정했다.
+
+[source 선택](../../tests/fixtures/dev3-module-c3/create-admission/manifest.json)은 변경 token/CREATE source 식의 새 한도 사례1이다. [후속 실행 선택](../../tests/fixtures/dev3-module-c3/create-admission/execution.json)은 compiler4(원 private 반환 연쇄/생존 view·flush·private 차용 거절)와 신규 CCA01–06을 고정한다. CCA01은 장기 T1 view와 실제 T2 CREATE/Commit/full abort, CCA02는 Before→Cancel→재Reserve, CCA03은 초기 Capacity/foreign owner와 private 반환, CCA04는 active Drop no-I/O fence, CCA05는 실제 Forward/Cancel 뒤 source 반환 오류의 Fatal, CCA06은 새 출력의 현재-build 메모리 복구다.
+
+각 실행 예산은 전체1200초·compiler420초·case45초·출력8MiB·Rust stack32MiB이며 실패 즉시 중단한다. `python3 -B` runner는 source/ELF/파일별 hash·로그·result-before-cleanup.json을 먼저 보존하고 이번 실행의 source/target/ELF만 삭제한 뒤 최종 result.json에 삭제 목록을 남긴다. 기존 artifact·FAIL은 보존한다. 완료한 무변경 사례·native N01·workspace/lower wrapper·문서 verifier·push는 실행하지 않는다.
+
+r1은 신규 source 식의 괄호 오타와 기존 native fixture의 성공 반환 타입 적응 누락으로 compile FAIL(runtime0)이다. r2는 scoped Clippy/test build와 새 source 사례1 PASS다. CREATE carrier2194B, memory Reserve39074/Forward37574/Cancel36690B, native-type40098/37658/37714B이며 고정 progress44304B다. 기존 memory live64000/recovered65376B·native live64136/recovered65512B를 유지한다. 이는 한정 source census이며 전체 floor·stack/RSS·실제 native 실행의 증거가 아니다. r3 이후 compiler/runtime 결과와 최종 독립 검토는 아래에 기록한다.
+
+
+r3은 static2/compiler4·CCA01–03 PASS 뒤 CCA04의 source charge 기대에서 FAIL했다. active Drop은 먼저 fence하므로 기존 source 반환 검산이 Fenced로 거절하며44304B를 보존한다. 원 FAIL을 보존하고 fixture를 charge보존·claim보존·WAL0·원 gate 해제·후속 health 거절로 교정했다. source를 정상 반환한 것처럼 조작하지 않는다. 독립 검토도 이 적용을 수용했다.
+
+추가 독립 검토로 shared binding의 mode0|1 검산을 입장과 진행 공통 경계에 넣었다. CCA07은 mode/mark 손상을 Reserve/Forward/Cancel 전 각각 검산한다. actor-stage 본문 분리의 추가 참조/Result도 helper source 식에 계수한다. r4은 legacy raw factory를 cfg(test)로 한정하면서 공용 private access helper까지 한정한 compile FAIL(runtime0)이다. 여전히 쓰는 private helper는 production에 두고 raw actor factory만 cfg(test)로 남겼다.
+
+[남은 선택](../../tests/fixtures/dev3-module-c3/create-admission/remaining.json)의 r5은 static2/runtime8 PASS다. 변경한 mode 검산의 정상 경로 CCA01/02와 source식 사례1만 다시 실행했으며, 완료한 compiler4·CCA03은 반복하지 않았다. CCA04–08을 완료했고, CCA08은 기존 admitted read ticket이 끝나기 전 source/WAL 진입0, 원 gate의 늦은 reader 거절과 Cancel 뒤 재개를 검산한다. CCA06은 shared CREATE에서 만든 실제 Commit9/AbortEnd11 output의 현재-build 메모리 복구와 cleanup15/16·Q1/0·Found/Missing을 검산했다. source 한도 관측은 r2와 같으며 실제 native durability 인수로 승격하지 않는다.
+
+[planner 오류 선택](../../tests/fixtures/dev3-module-c3/create-admission/planner-followup.json)은 추가한 CCA09만 실행한다. 초기 Capacity/foreign owner는 planner 전이라 read0이고, 이 사례는 실제 invalid schema planner Before 뒤 read1/private/no-WAL을 검산한 후 같은 view 재Reserve→Cancel의 bits3을 확인한다. r5 완료 사례는 반복하지 않는다.
+
+| 실행 | source SHA-256 | ELF SHA-256 | result SHA-256 |
+| --- | --- | --- | --- |
+| r2 | `26e9f0e45fb13f64643a8426236a35ae0377e1a22c251616ba6e9592c7170e09` | `6146e1c91e1b13b677c7beae86fbc121b73a439a998989184b7821f2fccbe78b` | `c218cd8582af49a78ccd721fab0cebe02231e2e8c44d4129952132178e1a1dfd` |
+| r3 | `27dddbf35010a153c9c6bdc0a094ad32e8c0020b30290c804200ad1eb458e4cf` | `2cae15342a633f66a2bcaf20786838e65d577f55b90b0778779b4d4589d79436` | `3cacfc12783274475e9975240611c489ce6d10b2f6d36bd050755fa8e9da6fa2` |
+| r5 | `6f23caf5c7d392c2d62a1163b7210d70bd2d68cc2e8beda97059777f8aaf94d9` | `9a9486d90ca6d9403109147eecfc91a1b37f48ec9653467be98567bec722c68c` | `05e018f6b1b7816c24967d3f9241827b9a4b6a2ea2b89875d46300f4dfbb79da` |
+| r6 | `ec9e04c3c4b884693188acbabff9acaa0c9605b4768b8bda6e781d18d4d4c9b1` | `f24525d5e37124a07b5599d6aa981d1c9a4ffb553779426acf3f74d6b83699f6` | `f83aee1776d04c0e7ba1ca6740bfe84e8167112770a2c09493c5da4b86a67d4a` |
+
+r6은 static2/CCA09 PASS다. source별 compiler4·신규 runtime9+source 사례1을 충족했다. r3와 r5의 정상 경로 재실행은 mode 검산 변경에 해당하는 CCA01/02, source 재실행은 actor helper 식 변경에 해당한다. 무변경 완료 사례 재실행0이다. r6 뒤 `transaction.rs`의 `record_catalog_read` Rustdoc만 실제 CREATE planner 호출을 반영하도록 교정했고 [comment-only delta](../../artifacts/module-c3-create-admission-20261028/comment-only-followup.json)에 원/수정 hash를 남겼다. 구현 변경과 새 시험은 없으며 r6 source를 최종 source로 바꾸어 쓰지 않는다.
+
+r1–r6의 원 FAIL/로그/hash/runner/result-before-cleanup/result는 [artifact](../../artifacts/module-c3-create-admission-20261028/)에 보존하고 이번 export/target/ELF만 삭제했다. 최종 독립 D1/D2 검토는 진행 중이다. M4/M5·Row/C4/C5·own-actor 읽기·전체 short floor·native/S5 의무는 미완료다.
+
+
+최종 source 검토에서 새 factory closure의 큰 tuple Result가 deep Reserve 계수에 명시되지 않은 점을 찾았다. `ReservedParts`를 실제 반환 타입으로 선언하고 closure 반환+factory local Result 각각1280B, 합2560B를 Reserve 식에 추가했다. factory의 반환 항도 실제 `Result<ReservedCatalogCreate,CatalogCreateError>`로 바꿨다. 앞선 r2/r5 관측을 소급 수정하지 않는다.
+
+[carrier/연결 후속 선택](../../tests/fixtures/dev3-module-c3/create-admission/carrier-followup.json)의 r7은 static2/runtime2 PASS다. 수정 source 사례1과 실제 Missing 관측을 넣어 보강한 CCA01만 실행했다. CCA01은 T1 Missing/readbit1 뒤 read operation만 반환하고 같은 long view를 유지한 채 T2 shared CREATE/Commit을 수행한다. T1 Serializable은 실제 epoch 변경으로 Rejected(SerializationConflict), RC는 정상 종료이며 T2 full abort의 경우 정상 종료한다. 원 CCA01의 빈 read-set 검증 범위는 r3/r5 증거로 보존한다.
+
+최종 CREATE Reserve는 memory41634/native-type42658B이며 Forward/Cancel은 r5와 같다. progress44304B, native recovered65512B/여유24B 한도는 유지한다. r7 source `4e1ccff0d574ed797296e2af3635e0d49adab5c3e2cb4424ef71429a481e175a`, ELF `7b85c148a5bc3510dd956e082279610058040e76639b8eee9a8e8f6f27faea5d`, result `c5e0cc83e7691791735e63013c82729ab8c1e1baa37d958473634cc9c02e26a7`다. r7에는 앞선 Rustdoc 교정도 포함되어 있고 현재 source와 일치한다. 전체 검토 완료 판정은 아래에 기록한다.
+
+
+최종 독립 D1/D2는 `ACCEPTED_LIMITED_D1_D2`, 필수 수정0이다. `/root/source_admission_review`가 변경33/33파일과 artifact101개를 대조하고 현재 source=r7, 원 FAIL/로그 보존, 임시 build/export/ELF 삭제를 확인했다. 검토자 실행0이며 [최종 receipt](../../artifacts/module-c3-create-admission-20261028/review-final.json) SHA-256은 `d3896261d69ed6d7fbec76665329c735c63e3ac9d989d13f628343c2a89802cd`다. 허용된 receipt/status/hash metadata만 후속 반영했다. 이번 shared CREATE 단위를 한정 수용하며 전체 M4/M5는 미완료다.

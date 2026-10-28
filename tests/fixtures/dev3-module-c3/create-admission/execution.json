@@ -1,0 +1,74 @@
+{
+  "scope": "new statement-bound shared CREATE admission, original reservation/private loans and source bounds",
+  "baseline_commit": "9f36840",
+  "budget": {
+    "total_seconds": 1200,
+    "compiler_seconds": 420,
+    "case_seconds": 45,
+    "output_bytes": 8388608,
+    "rust_min_stack": 33554432
+  },
+  "compiler_tests": [
+    {
+      "name": "positive",
+      "path": "positive.rs",
+      "bytes": 1137,
+      "sha256": "468af97e5bd8c1a408385b908cd4452787a5cb221251cd2d8d75b854fce61586",
+      "expected_code": null,
+      "primary_line": null
+    },
+    {
+      "name": "live_view",
+      "path": "live_view.rs",
+      "bytes": 687,
+      "sha256": "b8a9f8f882e1b40c2ffa42c5cd4fff7f12e3fc3caa6c3c696c392ec32d8f5c49",
+      "expected_code": "E0505",
+      "primary_line": 11
+    },
+    {
+      "name": "live_flush",
+      "path": "live_flush.rs",
+      "bytes": 696,
+      "sha256": "118ebcaa55dc24bda36d03b52c2700d08c1e2f75e6e292dd7be7f69cc58b06fc",
+      "expected_code": "E0499",
+      "primary_line": 11
+    },
+    {
+      "name": "live_private",
+      "path": "live_private.rs",
+      "bytes": 691,
+      "sha256": "97d13276b553342c39b5932d1e00be7297ebe8607fc403ee47eccfd8d09207f8",
+      "expected_code": "E0506",
+      "primary_line": 11
+    }
+  ],
+  "runtime_tests": [
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::create_admission::actual_shared_create_completes_beside_long_statement",
+      "reason": "new production CREATE, held source/gate and original private, long T1 view, SER/RC Commit/full abort"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::create_admission::before_cancel_and_rereserve_preserve_original_loans",
+      "reason": "Before retains source/gate/claim/flush; Cancel original loan then same statement reReserve with fresh issuance"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::create_admission::initial_capacity_and_foreign_owner_return_private_without_wal",
+      "reason": "new factory initial failure recovers original private, no WAL and gate/source cleanup"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::create_admission::active_drop_fences_without_cancel_or_claim_erasure",
+      "reason": "new admission RAII ordering after active reservation Drop"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::create_admission::completed_forward_and_cancel_cleanup_failure_are_fatal",
+      "reason": "new checked post-effect cleanup never returns Before; original source undercount fault"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::create_admission::shared_create_outputs_recover_in_current_build",
+      "reason": "new shared producer output actual current-build memory recovery"
+    }
+  ],
+  "native_tests": [],
+  "not_run": "No unchanged regression or existing native acceptance repeated.",
+  "prior_source_case": "r2 source census PASS; runtime/compiler follow-up changes add no production types or source formula; no repeat"
+}

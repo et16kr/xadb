@@ -7,11 +7,12 @@
     reason = "C0 boundary awaits the separately owned Row consumers"
 )]
 pub(crate) use super::wal_io::disk_api::{
-    CatalogCallError, CatalogCallScope, CatalogCandidate, CatalogCommit, CatalogReadOperation,
-    CatalogStatementCall, DiskSession, EmptyRetentionControlLoan, ISOLATION_BYTES,
-    IntoRetentionError, IsolationLevel, MaintenancePort, MissingCatalogEvidence, MutationPort,
-    Plan4Recovered, Plan4ResidencyCursor, Plan4Target, PreparedCatalog, ReadOnlyCommit, ReadPort,
-    ReadStep, RetentionCause, RetentionError, RetentionPhase, RowControlObservation, RowInputPlan,
+    CatalogCallError, CatalogCallScope, CatalogCancelled, CatalogCandidate, CatalogCommit,
+    CatalogCreateError, CatalogCreated, CatalogReadOperation, CatalogStatementCall, DiskSession,
+    EmptyRetentionControlLoan, ISOLATION_BYTES, IntoRetentionError, IsolationLevel,
+    MaintenancePort, MissingCatalogEvidence, MutationPort, Plan4Recovered, Plan4ResidencyCursor,
+    Plan4Target, PreparedCatalog, ReadOnlyCommit, ReadPort, ReadStep, ReservedCatalogCreate,
+    RetentionCause, RetentionError, RetentionPhase, RowControlObservation, RowInputPlan,
     RowOperation, RowPageRole, RowPreflightContext, RowProducerContext, RowProducerInput,
     RowProducerLane, RowProposal, RowSourceBinding, RowSourceRole, RowStatementView,
     RowTransaction, RowValidationLane, StatementFinishError, TransactionFinishError,

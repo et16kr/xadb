@@ -1,0 +1,25 @@
+{
+  "scope": "new statement-bound shared CREATE admission, original reservation/private loans and source bounds",
+  "baseline_commit": "9f36840",
+  "budget": {
+    "total_seconds": 1200,
+    "compiler_seconds": 420,
+    "case_seconds": 45,
+    "output_bytes": 8388608,
+    "rust_min_stack": 33554432
+  },
+  "compiler_tests": [],
+  "runtime_tests": [
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::create_pair::catalog_live::shared_create::tests::shared_create_phases_fit_original_live_and_recovered_limits",
+      "reason": "explicit new ReservedParts tuple Results and exact factory error carrier added after independent source review"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::create_admission::actual_shared_create_completes_beside_long_statement",
+      "reason": "changed CCA01 now actual T1 Missing/readbit1, T2 shared CREATE Commit/full abort, original T1 SER conflict versus RC success"
+    }
+  ],
+  "native_tests": [],
+  "not_run": "No unchanged regression or existing native acceptance repeated.",
+  "prior_source_case": "r5/r6 original results retained; only changed source calculation and modified CCA01 connection fixture selected"
+}

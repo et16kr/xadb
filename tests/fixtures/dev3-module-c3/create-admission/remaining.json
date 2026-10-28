@@ -1,0 +1,49 @@
+{
+  "scope": "new statement-bound shared CREATE admission, original reservation/private loans and source bounds",
+  "baseline_commit": "9f36840",
+  "budget": {
+    "total_seconds": 1200,
+    "compiler_seconds": 420,
+    "case_seconds": 45,
+    "output_bytes": 8388608,
+    "rust_min_stack": 33554432
+  },
+  "compiler_tests": [],
+  "runtime_tests": [
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::create_pair::catalog_live::shared_create::tests::shared_create_phases_fit_original_live_and_recovered_limits",
+      "reason": "new reservation binding/admission/return types and CREATE-specific fixed source charge"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::create_admission::actual_shared_create_completes_beside_long_statement",
+      "reason": "new production CREATE, held source/gate and original private, long T1 view, SER/RC Commit/full abort"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::create_admission::before_cancel_and_rereserve_preserve_original_loans",
+      "reason": "Before retains source/gate/claim/flush; Cancel original loan then same statement reReserve with fresh issuance"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::create_admission::active_drop_fences_without_cancel_or_claim_erasure",
+      "reason": "new admission RAII ordering after active reservation Drop"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::create_admission::completed_forward_and_cancel_cleanup_failure_are_fatal",
+      "reason": "new checked post-effect cleanup never returns Before; original source undercount fault"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::create_admission::shared_create_outputs_recover_in_current_build",
+      "reason": "new shared producer output actual current-build memory recovery"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::create_admission::corrupt_mode_or_mark_rejected_before_each_create_effect",
+      "reason": "new binding canonical mode/mark checks at initial Reserve, Forward and Cancel"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::create_admission::actual_read_operation_drains_before_create_admission",
+      "reason": "new shared factory waits for original admitted read ticket before source/WAL; reservation blocks late finite read and reopens after Cancel"
+    }
+  ],
+  "native_tests": [],
+  "not_run": "No unchanged regression or existing native acceptance repeated.",
+  "prior_source_case": "r2 retained; source formula changed by extracted actor-scan wrapper, selected exact source case. Repeat CCA01/02 only because shared binding validation changed; CCA03 and compiler4 unchanged, not repeated."
+}

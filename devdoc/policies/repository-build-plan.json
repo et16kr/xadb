@@ -8426,5 +8426,79 @@
     "review_receipt_sha256": "4a26d61fef92b3a44b51a9bcd28c4bddea4c8d3d08e3a9020aa70609620337fe",
     "review_required_findings": 0,
     "reviewed_files": 25
+  },
+  "dev3_module_c3_shared_create": {
+    "status": "ACCEPTED_LIMITED_D1_D2",
+    "baseline_commit": "9f36840",
+    "owner_contract": "dev3-module-boundaries",
+    "contract_anchor": "catalog-shared-create",
+    "evidence": "module-independence-survey-20261026",
+    "evidence_anchor": "c3-create-admission",
+    "implemented_paths": [
+      "crates/engine/src/storage/wal_io/plan4_retention/catalog_shared_create.rs",
+      "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/create_admission.rs",
+      "tests/fixtures/dev3-module-c3/create-admission"
+    ],
+    "compiler_tests": 4,
+    "runtime_unique_tests": 10,
+    "native_tests": 0,
+    "artifact": "artifacts/module-c3-create-admission-20261028",
+    "whole_m4_m5_complete": false,
+    "shared_create_admission": true,
+    "own_actor_reads": false,
+    "prior_evidence_preserved": true,
+    "completed_unchanged_case_repeats": 0,
+    "compiler_pass_by_source": {
+      "r3": 4
+    },
+    "runtime_pass_by_source": {
+      "r2": 1,
+      "r3": 3,
+      "r5": 8,
+      "r6": 1,
+      "r7": 2
+    },
+    "original_failed_runs": [
+      "r1",
+      "r3",
+      "r4"
+    ],
+    "native_recovered_source_bytes": 65512,
+    "source_headroom_bytes": 24,
+    "heavy_artifacts_deleted": true,
+    "r2": {
+      "source_sha256": "26e9f0e45fb13f64643a8426236a35ae0377e1a22c251616ba6e9592c7170e09",
+      "binary_sha256": "6146e1c91e1b13b677c7beae86fbc121b73a439a998989184b7821f2fccbe78b",
+      "result_sha256": "c218cd8582af49a78ccd721fab0cebe02231e2e8c44d4129952132178e1a1dfd"
+    },
+    "r3": {
+      "source_sha256": "27dddbf35010a153c9c6bdc0a094ad32e8c0020b30290c804200ad1eb458e4cf",
+      "binary_sha256": "2cae15342a633f66a2bcaf20786838e65d577f55b90b0778779b4d4589d79436",
+      "result_sha256": "3cacfc12783274475e9975240611c489ce6d10b2f6d36bd050755fa8e9da6fa2"
+    },
+    "r5": {
+      "source_sha256": "6f23caf5c7d392c2d62a1163b7210d70bd2d68cc2e8beda97059777f8aaf94d9",
+      "binary_sha256": "9a9486d90ca6d9403109147eecfc91a1b37f48ec9653467be98567bec722c68c",
+      "result_sha256": "05e018f6b1b7816c24967d3f9241827b9a4b6a2ea2b89875d46300f4dfbb79da"
+    },
+    "r6": {
+      "source_sha256": "ec9e04c3c4b884693188acbabff9acaa0c9605b4768b8bda6e781d18d4d4c9b1",
+      "binary_sha256": "f24525d5e37124a07b5599d6aa981d1c9a4ffb553779426acf3f74d6b83699f6",
+      "result_sha256": "f83aee1776d04c0e7ba1ca6740bfe84e8167112770a2c09493c5da4b86a67d4a"
+    },
+    "post_validation_source_change": "r6 Rustdoc-only follow-up is included in later r7 validated source",
+    "current_build_memory_recovery": "CCA06: shared production CREATE Commit9 -> cleanup15/Q1 found; AbortEnd11 -> cleanup16/Q0 missing; native NOT_RUN",
+    "r7": {
+      "source_sha256": "4e1ccff0d574ed797296e2af3635e0d49adab5c3e2cb4424ef71429a481e175a",
+      "binary_sha256": "7b85c148a5bc3510dd956e082279610058040e76639b8eee9a8e8f6f27faea5d",
+      "result_sha256": "c5e0cc83e7691791735e63013c82729ab8c1e1baa37d958473634cc9c02e26a7"
+    },
+    "source_create_reserve_memory_bytes": 41634,
+    "source_create_reserve_native_bytes": 42658,
+    "source_progress_bytes": 44304,
+    "review_receipt": "artifacts/module-c3-create-admission-20261028/review-final.json",
+    "review_receipt_sha256": "d3896261d69ed6d7fbec76665329c735c63e3ac9d989d13f628343c2a89802cd",
+    "review_required_findings": 0,
+    "reviewed_files": 33
   }
 }

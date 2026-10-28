@@ -30,6 +30,210 @@ impl CatalogCommit {
     }
 }
 
+fn actor_stage<W: WriterNamespace>(
+    storage: &MutableStorageOwner<'_, '_, W>,
+    control: &control::RetentionLedger<'_, '_, '_>,
+    actor: TxnRef,
+) -> Result<ActorStage> {
+    let bad = || fail(storage.session_fence(), RetentionCause::Invariant);
+    let prefix = storage.wal().prefix().map_err(|_| bad())?;
+    control
+        .check_ledger(storage.profile(), prefix)
+        .map_err(|_| bad())?;
+    let slot = control.slot(actor).ok_or_else(bad)?;
+    let descriptor = obligation::decode_descriptor(
+        control.row(slot)[..1536]
+            .try_into()
+            .expect("ATT descriptor"),
+        ReservationOwner::Transaction(actor),
+        crate::storage::retention_obligation::profile_reference(storage.profile()),
+    )
+    .map_err(|_| bad())?;
+    let OwnerState::Transaction(transaction) = descriptor.owner else {
+        return Err(bad());
+    };
+    if transaction.reference() != actor {
+        return Err(bad());
+    }
+    let mut root = None;
+    let mut terminals = 0;
+    for (ordinal, bytes) in control.jobs().iter().enumerate() {
+        let job =
+            queue::decode_job(bytes, storage.profile().spec().namespace).map_err(|_| bad())?;
+        if job.source() != Some(actor) {
+            continue;
+        }
+        if job.state().is_terminal() {
+            if job.state() != JobState::TerminalLeased {
+                return Err(bad());
+            }
+            terminals += 1;
+        } else if root.replace((ordinal, job)).is_some() {
+            return Err(bad());
+        }
+    }
+    if terminals != 1 {
+        return Err(bad());
+    }
+    let Some((ordinal, root)) = root else {
+        if transaction.undo_head().is_some() || descriptor.last_mutation_sequence != 0 {
+            return Err(bad());
+        }
+        return match transaction.state() {
+            TransactionState::Active => Ok(ActorStage::EmptyActive),
+            TransactionState::Aborting(RollbackState::Transaction { next: None }) => {
+                Ok(ActorStage::EmptyAborting)
+            }
+            _ => Err(bad()),
+        };
+    };
+    if root.state() == JobState::RootReserved {
+        return Err(unchanged(
+            RetentionPhase::Prepare,
+            RetentionCause::Unsupported,
+        ));
+    }
+    if root.statement() != 1 || root.mutation() != 1 || descriptor.last_mutation_sequence != 1 {
+        return Err(bad());
+    }
+    match (root.state(), transaction.state()) {
+        (JobState::RootRetained, TransactionState::Active)
+            if transaction.undo_head() == root.undo() =>
+        {
+            Ok(ActorStage::Active(ordinal))
+        }
+        (
+            JobState::RootRetained,
+            TransactionState::Aborting(RollbackState::Transaction { next }),
+        ) if next == root.undo() && transaction.undo_head() == next => {
+            Ok(ActorStage::Rollback(ordinal))
+        }
+        (
+            JobState::RootReleasingCompensated,
+            TransactionState::Aborting(RollbackState::Transaction { next: None }),
+        ) if transaction.undo_head().is_none() => Ok(ActorStage::Compensated(ordinal)),
+        _ => Err(bad()),
+    }
+}
+
+/// Sealed reference to the original live statement. Scalars never substitute
+/// for its slot/generation, snapshot, credit or transaction ownership.
+pub(in super::super) struct CreateStatementBinding<'r, 't, 'v, 'a, 'c, 's> {
+    view: &'r RowStatementView<'t, 'v, 'a, 'c, 's>,
+}
+impl<'r, 't, 'v, 'a, 'c, 's> CreateStatementBinding<'r, 't, 'v, 'a, 'c, 's> {
+    pub(in super::super) fn admit<W: WriterNamespace>(
+        writer: &MutationPort<'_, 'a, 's, 'c, '_, '_, '_, '_, '_, W>,
+        owner: &mut Owner<'c, 's>,
+        view: &'r RowStatementView<'t, 'v, 'a, 'c, 's>,
+    ) -> Result<Self> {
+        writer.transaction_entry(owner)?;
+        writer.transaction_matches(view.transaction)?;
+        view.check()?;
+        let actor = view
+            .transaction
+            .lease
+            .actor
+            .ok_or_else(|| unchanged(RetentionPhase::Prepare, RetentionCause::WrongState))?;
+        if view.sequence != 1
+            || view.revision.get() != 0
+            || writer.catalog_actor_stage(actor)? != ActorStage::EmptyActive
+        {
+            return Err(unchanged(
+                RetentionPhase::Prepare,
+                RetentionCause::Unsupported,
+            ));
+        }
+        let binding = Self { view };
+        binding.check()?;
+        Ok(binding)
+    }
+    pub(in super::super) fn actor(&self) -> TxnRef {
+        self.view
+            .transaction
+            .lease
+            .actor
+            .expect("authenticated writable statement")
+    }
+    /// Conservative dependency begins immediately before the actual planner:
+    /// even a later planner rejection cannot erase its Catalog observation.
+    pub(in super::super) fn planning(&self) -> Result<()> {
+        self.view.record_catalog_read()
+    }
+    fn check(&self) -> Result<()> {
+        self.view.check()?;
+        let lease = &self.view.transaction.lease;
+        let state = entry(lease.ledger, lease.fence)?;
+        lease.check(state.bytes)?;
+        if row(state.bytes, lease.slot)[1] > 1 {
+            return Err(fail(lease.fence, RetentionCause::Invariant));
+        }
+        drop(state);
+        if self.view.sequence != 1 || self.view.revision.get() != 0 {
+            return Err(fail(
+                self.view.transaction.lease.fence,
+                RetentionCause::Invariant,
+            ));
+        }
+        Ok(())
+    }
+    pub(in super::super) fn reserved<W: WriterNamespace>(
+        &self,
+        storage: &MutableStorageOwner<'_, '_, W>,
+        control: &control::RetentionLedger<'_, '_, '_>,
+        ordinal: usize,
+        object: ObjectHandle,
+        reserve: PageLsn,
+    ) -> Result<()> {
+        self.check()?;
+        let bad = || fail(self.view.transaction.lease.fence, RetentionCause::Invariant);
+        let prefix = storage.wal().prefix().map_err(|_| bad())?;
+        control
+            .check_ledger(storage.profile(), prefix)
+            .map_err(|_| bad())?;
+        let job = queue::decode_job(
+            control.jobs().get(ordinal).ok_or_else(bad)?,
+            storage.profile().spec().namespace,
+        )
+        .map_err(|_| bad())?;
+        if job.state() != JobState::RootReserved
+            || job.source() != Some(self.actor())
+            || job.object() != Some(object)
+            || job.lease_lsn() != reserve.0
+        {
+            return Err(bad());
+        }
+        let lease = &self.view.transaction.lease;
+        let mut state = entry(lease.ledger, lease.fence)?;
+        lease.check(state.bytes)?;
+        row_mut(state.bytes, lease.slot)[3] |= 3;
+        Ok(())
+    }
+    pub(in super::super) fn completed<W: WriterNamespace>(
+        &self,
+        storage: &MutableStorageOwner<'_, '_, W>,
+        control: &control::RetentionLedger<'_, '_, '_>,
+        object: Option<ObjectHandle>,
+    ) -> Result<()> {
+        self.check()?;
+        let bad = || fail(self.view.transaction.lease.fence, RetentionCause::Invariant);
+        match (object, actor_stage(storage, control, self.actor())?) {
+            (Some(object), ActorStage::Active(ordinal)) => {
+                let job =
+                    queue::decode_job(&control.jobs()[ordinal], storage.profile().spec().namespace)
+                        .map_err(|_| bad())?;
+                if job.object() != Some(object) {
+                    return Err(bad());
+                }
+                self.view.revision.set(1);
+                Ok(())
+            }
+            (None, ActorStage::EmptyActive) => Ok(()),
+            _ => Err(bad()),
+        }
+    }
+}
+
 impl<'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
     MutationPort<'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W>
 {
@@ -94,85 +298,7 @@ impl<'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
     }
 
     fn catalog_actor_stage(&self, actor: TxnRef) -> Result<ActorStage> {
-        let bad = || fail(self.storage.session_fence(), RetentionCause::Invariant);
-        let prefix = self.storage.wal().prefix().map_err(|_| bad())?;
-        self.control
-            .check_ledger(self.storage.profile(), prefix)
-            .map_err(|_| bad())?;
-        let slot = self.control.slot(actor).ok_or_else(bad)?;
-        let descriptor = obligation::decode_descriptor(
-            self.control.row(slot)[..1536]
-                .try_into()
-                .expect("ATT descriptor"),
-            ReservationOwner::Transaction(actor),
-            crate::storage::retention_obligation::profile_reference(self.storage.profile()),
-        )
-        .map_err(|_| bad())?;
-        let OwnerState::Transaction(transaction) = descriptor.owner else {
-            return Err(bad());
-        };
-        if transaction.reference() != actor {
-            return Err(bad());
-        }
-        let mut root = None;
-        let mut terminals = 0;
-        for (ordinal, bytes) in self.control.jobs().iter().enumerate() {
-            let job = queue::decode_job(bytes, self.storage.profile().spec().namespace)
-                .map_err(|_| bad())?;
-            if job.source() != Some(actor) {
-                continue;
-            }
-            if job.state().is_terminal() {
-                if job.state() != JobState::TerminalLeased {
-                    return Err(bad());
-                }
-                terminals += 1;
-            } else if root.replace((ordinal, job)).is_some() {
-                return Err(bad());
-            }
-        }
-        if terminals != 1 {
-            return Err(bad());
-        }
-        let Some((ordinal, root)) = root else {
-            if transaction.undo_head().is_some() || descriptor.last_mutation_sequence != 0 {
-                return Err(bad());
-            }
-            return match transaction.state() {
-                TransactionState::Active => Ok(ActorStage::EmptyActive),
-                TransactionState::Aborting(RollbackState::Transaction { next: None }) => {
-                    Ok(ActorStage::EmptyAborting)
-                }
-                _ => Err(bad()),
-            };
-        };
-        if root.state() == JobState::RootReserved {
-            return Err(unchanged(
-                RetentionPhase::Prepare,
-                RetentionCause::Unsupported,
-            ));
-        }
-        if root.statement() != 1 || root.mutation() != 1 || descriptor.last_mutation_sequence != 1 {
-            return Err(bad());
-        }
-        match (root.state(), transaction.state()) {
-            (JobState::RootRetained, TransactionState::Active)
-                if transaction.undo_head() == root.undo() =>
-            {
-                Ok(ActorStage::Active(ordinal))
-            }
-            (
-                JobState::RootRetained,
-                TransactionState::Aborting(RollbackState::Transaction { next }),
-            ) if next == root.undo() && transaction.undo_head() == next => {
-                Ok(ActorStage::Rollback(ordinal))
-            }
-            (
-                JobState::RootReleasingCompensated,
-                TransactionState::Aborting(RollbackState::Transaction { next: None }),
-            ) if transaction.undo_head().is_none() => Ok(ActorStage::Compensated(ordinal)),
-            _ => Err(bad()),
-        }
+        actor_stage(self.storage, self.control, actor)
     }
 
     /// C-only preflight for the actual CREATE caller. The current wire format
@@ -602,6 +728,8 @@ pub(in super::super) fn check_source_bytes() -> usize {
     // Existing bounded descriptor/Job/ledger scans plus the new helper and its
     // retained gate/admission, closure captures and scalar/result returns.
     writable::source_bytes()
+        + size_of::<&()>()
+        + size_of::<Result<ActorStage>>()
         + source::commit_carrier_bytes()
         + 14 * size_of::<&()>()
         + 2 * size_of::<Result<ActorStage>>()

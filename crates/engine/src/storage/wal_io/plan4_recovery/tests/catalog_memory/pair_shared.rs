@@ -32,7 +32,7 @@ fn pair_shared_actual_finish_and_cancel_reopen_ordinary_admission() {
                 oracle.check(reserved.catalog_test_bound(), state, "R02");
                 if cancel {
                     match reserved.cancel() {
-                        Ok(()) => {}
+                        Ok(_) => {}
                         Err(RetentionReservationError::Before { error, .. })
                         | Err(RetentionReservationError::Fatal(error)) => {
                             panic!("actual Cancel {error:?}")

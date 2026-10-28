@@ -87,7 +87,7 @@ fn mc03_issued_local_gap_recovers() {
                 .unwrap();
             oracle.check_scenario(reserved.catalog_test_bound(), state, "MC03", 7);
             match reserved.initialize() {
-                Ok(object) => assert_eq!(object.object.get(), 6),
+                Ok(object) => assert_eq!(object.into_parts().0.object.get(), 6),
                 Err(RetentionReservationError::Before { error, .. })
                 | Err(RetentionReservationError::Fatal(error)) => {
                     panic!("actual Forward {error:?}")
