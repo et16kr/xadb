@@ -1,0 +1,10 @@
+{
+  "scope": "LEAF_LOCAL_WITH_UNDO_STATUS; Root/afterJob/descriptors/auxiliary remain opaque invalid sentinels",
+  "literal_cases": 15,
+  "oracle": "independent typed values/schema and explicit before/after pages; integers/SHA, no product encoder",
+  "recipes": {
+    "../wire/author.py": "17d265072d67c54b1cfe8d362b5b40abc51fd4486693324d421b183f6bec4f4b",
+    "../undo/cases.bin": "0d6ab1e42741f1f120f10432a20ac9577cf2a3b21ea96a8f88d7f1e6760a7bb6",
+    "../undo/index.tsv": "63161ba5e9f95f33acb10468baab48014873789a8563887cdfb96d2b8723c750"
+  }
+}

@@ -537,3 +537,17 @@ U는 external reference의 owner3/gen1·level0·slot0·canonical432B1cell이다.
 Forward/CLR/Prune는 원 bank에서 같은 actor·Status의 U보다 sequence가 작은 Retained 중 최대 H를 고른다. H.sequence/mutation은 U보다 작고 H.statement≤U.statement다. 중복 current sequence를 거절한다. H는 자기 Job의 별도 target/table과 실제 Live/Missing/incoming2 page로 검산하므로 다른 table도 허용한다. H 자체 prevTxn도 원 bank의 nearest Retained와 대조하되 그 다음 page까지 로드하지 않는다. U/H/Status physical address alias는 incarnation을 달리해도 거절한다. 이 세 opcode는 같은 LayoutView로 기존 Status observer를 호출하여 actual before/after Status·외부 statement/mark/q와 연결한다. Reserve/ReleaseRole/RootFree에는 StatusProof/H page가 없어야 한다.
 
 전체 bank 안정성/Root commitment·actor와 다른 actor의 전체 census·after Job/Row·descriptor/edge/count/inventory·mark ancestry/token 인증·q 발급/horizon/pin·source 상계/admission·실제 recovery history·stage/install/READY는 미공급이다. RollbackStart의 실제 head/sequence proof도 후속 연결에 남긴다. current Profile3/live/recovery·M4/M5를 이 국소 결과로 완료하지 않는다. 이 경계를 확대하거나 전체 source 한도를 넘으면 해당 owner와 D2를 재검토한다. 독립 raw17쌍 및 변경 코드 선택 결과는 [증거](../evidence/module-independence-survey-20261026.md#row-undo-images)에 source별로 기록하며 기존 완료 시험을 반복하지 않는다.
+
+
+<a id="row-leaf-images"></a>
+### Scope3 실제 RowLeaf와 같은 frame Undo/Status — 2026-10-29
+
+결정 `D3-MODULE-ROW-LEAF-001`(D2, `ACCEPTED_LIMITED_D1_D2`), 기준 `main` `7baef05`, 담당/통합 `/root`, 독립 검토 `/root/boundary_review`다. 별도 scalar 성공 표시를 조합하는 대안보다 `semantic_row::leaf::observe` 안에서 같은 LayoutView와 원 JobCells/외부 ordinal·actor·StatusProof로 기존 Undo 관측을 호출한다. 외부 TableInput의 ObjectHandle(object/generation/schema_epoch)·stable anchor·원 Catalog record·실제 anchor와 RowLeaf before/after, Forward에만 원 sealed canonical 길이/SHA를 빌린다. 후보 after에서 원 기대값을 역발급하지 않는다. 새16KiB after나64KiB bank·A 후보 생산을 만들지 않고 small scalar 관측만 반환한다.
+
+원 Catalog record는 외부 full handle과 같고 retired=false·Table definition·stable anchor가 일치해야 한다. Catalog stamp를 Committed로만 제한하지 않는다. actual anchor가 가리키는 current level0/arity0 RowLeaf를 쓰며 원 Job의 anchor는 같고 오래된 leaf hint는 달라도 된다. anchor/leaf는 첫 extent의 동적 주소이고 서로 및 U/H/Status와 incarnation을 달리해도 physical alias가 없어야 한다. anchor/leaf beforeLSN은 양수·frame.previous 이하·frameLSN 미만, afterLSN은 frameLSN이다. CLR/Prune leaf beforeLSN은 원 Job.last_step 이상이다.
+
+모든 actual row를 원 Catalog schema로 decode해 keyBE/record RowIdLE·inline5..2048을 검산한다. 대상 key의 존재·entry 수 변화는 Forward +1, CLR −1, Prune0이며 metadata slot0과 모든 비선택 raw cell을 순서대로 보존한다. entry의 물리 slot은 index+1이며 이동한 offset은 허용한다. kind1 native 양쪽 presence·actual slot/offset/fullcell, redo identity/priorLSN/wholebody·header identity 보존을 실제 pages에 결합한다.
+
+Forward는 Missing→Transaction(actor 전체 generation)/logical(actor.id,원 Job mutation)/UndoU를 요구하고 canonical payload 길이/SHA를 원 seal에 대조한다. CLR/Prune의 현재 row도 같은 fullversion을 원 Job/U에 대조한다. Job C=record.len+12와 projection은 Forward의 새 row 또는 CLR/Prune의 원 row와 같아야 한다. frame C는 native의 실제 cell 길이와 기존 wire shape 검산으로 결합한다. XRP1의 target은 원 Job/table/RowId이며 core 양쪽 digest를 실제 Missing/present row에서 계산한다. Prune는 원 StatusProof q의 Committed(q)/undoNone으로 바꾸고 RowId/logical/canonical payload를 보존한다. CLR/Prune에는 seal이 없어야 한다.
+
+원 Catalog record의 실제 선택/가시성/index0 census·stable epoch token, 전체 source/Root commitment·after Job·descriptor/edge/count/inventory·mark/q/horizon/pin 권한·current Profile3/live/recovery·M4/M5는 미공급이다. 이 국소 관측을 전체 권한이나 source 상계로 확대하면 해당 owner와 D2를 재검토한다. 독립 raw15쌍 및 변경 코드의 신규8개 선택·source별 결과와 준비 중 fixture q 교정은 [증거](../evidence/module-independence-survey-20261026.md#row-leaf-images)에 기록한다. 기존 wire/actor/Status/Undo 완료 시험은 반복하지 않는다.

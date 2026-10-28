@@ -3,6 +3,7 @@
 #![allow(dead_code)] // The current-profile semantic and live owners are pending.
 
 mod core;
+pub(crate) mod leaf;
 pub(crate) mod ledger;
 mod operation;
 pub(crate) mod status;
@@ -22,6 +23,9 @@ mod status_tests;
 #[cfg(test)]
 mod undo_tests;
 
+#[cfg(test)]
+mod leaf_tests;
+
 pub(crate) const FRAME_BYTES: usize = 98_304;
 pub(crate) const MIN_CELL: usize = 185;
 pub(crate) const MAX_CELL: usize = 2_228;
@@ -40,6 +44,9 @@ pub(crate) enum Error {
     Page(super::page::PageError),
     Wal(super::wal_frame::WalError),
     Undo(super::undo_record::UndoError),
+    Catalog(super::catalog_record::CatalogError),
+    Tree(super::tree_page::TreeError),
+    Row(super::row_record::RowError),
 }
 impl From<super::page::PageError> for Error {
     fn from(value: super::page::PageError) -> Self {
@@ -77,5 +84,21 @@ impl From<super::retention_page::RetentionError> for Error {
 impl From<super::obligation::ObligationError> for Error {
     fn from(value: super::obligation::ObligationError) -> Self {
         Self::Descriptor(value)
+    }
+}
+
+impl From<super::catalog_record::CatalogError> for Error {
+    fn from(value: super::catalog_record::CatalogError) -> Self {
+        Self::Catalog(value)
+    }
+}
+impl From<super::tree_page::TreeError> for Error {
+    fn from(value: super::tree_page::TreeError) -> Self {
+        Self::Tree(value)
+    }
+}
+impl From<super::row_record::RowError> for Error {
+    fn from(value: super::row_record::RowError) -> Self {
+        Self::Row(value)
     }
 }

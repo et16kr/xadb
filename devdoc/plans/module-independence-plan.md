@@ -1,5 +1,7 @@
 # XADB 모듈 독립 개발 구조 전환 작업 계획
 
+2026-10-29 [실제 RowLeaf·같은 frame Undo/Status](../evidence/module-independence-survey-20261026.md#row-leaf-images): main `7baef05`에서 원 schema/anchor·Job·sealed payload와 Row 전이/이웃 보존을 연결한다. 독립 입력15쌍·source별 신규8개 선택 검증을 통과했다. 최종 독립 D1/D2 한정 수용·필수 수정0이며 전체 M4/M5는 미완료다.
+
 2026-10-29 [Row Undo·원 Job·Status 관계](../evidence/module-independence-survey-20261026.md#row-undo-images): main `09173aa`에서 Undo6개 전이·실제 H/nearest Job·같은 frame Status 연결을 구현하고 raw17쌍·신규9개 선택 검증을 통과했다. 최종 독립 D1/D2 한정 수용·필수 수정0이며 전체 M4/M5는 미완료다.
 
 2026-10-29 사용자 후속 지시: [분리 완료 후 추가 개발의 독립성 평가와 push·merge 강제 계획](#post-separation-gates)을 저장했다. 적용 시점은 M4/M5 분리 인수 뒤 추가 개발 착수이며, 현재 자동 검사·원격 보호 설정은 변경하지 않는다.

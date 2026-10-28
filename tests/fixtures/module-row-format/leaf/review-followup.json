@@ -1,0 +1,52 @@
+{
+  "schema": "XADB_ROW_LEAF_LOCAL_V1",
+  "baseline": "7baef05",
+  "status": "FROZEN_FOLLOWUP_NOT_EXECUTION_EVIDENCE",
+  "scope": "LEAF_LOCAL_WITH_UNDO_STATUS; Forward/CLR/Prune actual page/Job/schema/seal/neighbor semantics only. No overall admission/history/authority.",
+  "budget": {
+    "total_seconds": 1200,
+    "compiler_seconds": 420,
+    "case_seconds": 45,
+    "output_bytes": 8388608,
+    "rust_min_stack": 33554432
+  },
+  "compiler_tests": [],
+  "runtime_tests": [
+    {
+      "selector": "storage::semantic_row::leaf_tests::leaf_forward_original_seal_job_size_and_projection",
+      "reason": "Original canonical length/SHA vs independently rebound candidate, selected Job C/projection and core digests."
+    },
+    {
+      "selector": "storage::semantic_row::leaf_tests::leaf_current_version_and_prune_payload_are_exact",
+      "reason": "Canonical-valid actor generation/mutation/Undo identity, Prune q/logical/payload/undo preservation and sealed-option exclusivity."
+    },
+    {
+      "selector": "storage::semantic_row::leaf_tests::leaf_schema_and_inline_payload_validation",
+      "reason": "Nullable/type/schema arity/record key/payload kind corruption."
+    },
+    {
+      "selector": "storage::semantic_row::leaf_tests::leaf_requires_same_frame_undo_status_and_supported_operation",
+      "reason": "Same-frame actual Undo/Status/H, q and ordinal binding, all11 unsupported scope3 opcodes."
+    }
+  ],
+  "inputs": {
+    "author.py": {
+      "bytes": 6195,
+      "sha256": "82d083b44f8859b42eee246f00b3f93c707c1bb6111abb719fe31ac7d4820290"
+    },
+    "cases.bin": {
+      "bytes": 4334740,
+      "sha256": "ddbbad2c9f7bb144c349ca2560ab8f63546ee90f94fc3bec84e9ec7b0bcec20a"
+    },
+    "index.tsv": {
+      "bytes": 1530,
+      "sha256": "431b2d85680a6dc02a908058a81e7225848a7c44629f042c7c5c16c54246294c"
+    },
+    "input-plan.json": {
+      "bytes": 548,
+      "sha256": "64ddc1d967dea75ae5f3211678a0e9a20cbffed7639ae45edfd8a762f7a4172b"
+    }
+  },
+  "selection_reason": "r1 first4 PASS preserved; failed fifth helper read a modified unsealed frame during mutation rebind. Save operation before changing core; rerun modified failed fifth and first-run remaining3 only. Product unchanged.",
+  "prior_result_sha256": "433a7367fbf616b08e14a18731764fcd374c344eedc9ac3805039d019e7381d9"
+}

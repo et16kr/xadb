@@ -2848,3 +2848,29 @@ artifact(로컬 `../../artifacts/module-row-undo-20261029/`)에 원 compiler/run
 ## 후속 독립성 평가 계획의 push 문서 정정 — 2026-10-29
 
 사용자가 저장한 후속 계획의 commit/push와 발견된 문서 결함 수정을 요청했다. `cbff2fd` 전송의 원 훅은 Rust 포맷·Clippy를 통과했지만 이 문서의 로컬 artifact 링크16개가 commit export에 없어 차단했다. 원 실패 로그는 로컬 `artifacts/module-independence-gate-push-20261029/push-1.log`에 보존한다. 각 원 파일·디렉터리가 로컬에 있고 `/artifacts/`는 Git 제외 대상임을 확인했다. 검사를 진행하는 동안 다른 작업이 별도 commit한 `f3c3611`의 같은 종류4개를 포함하여 총20개를 링크 대신 로컬 경로 표기로 정정했다. 원 경로·receipt hash·실행 결과·FAIL과 실제 artifact bytes는 유지하며, 원자료가 원격 저장소에 포함된다는 주장을 하지 않는다. 제품·검사기·판정 기준 변경이 없는 D0 정정이며 후속 push는 수정 commit에 기존 훅을 적용한다.
+
+
+<a id="row-leaf-images"></a>
+## 2026-10-29 실제 RowLeaf·원 schema/Job·같은 frame Undo/Status 검산
+
+기준 `main` `7baef05`에서 [국소 RowLeaf 계약](../contracts/dev3-module-consumers.md#row-leaf-images)을 구현했다. 독립 사전 D2의 full ObjectHandle·retired/anchor·physical alias·metadata slot0·원 seal 출처·same-frame 조건을 반영했다. 현재 anchor를 따라 원 Job의 오래된 hint와 다른 leaf도 허용하며, 모든 실제 행의 schema/identity와 비선택 raw cells 보존을 검사한다. Forward/CLR/Prune의 actual Row effect와 native/redo/core projection을 같은 frame의 Undo/Status에 결합한다. 전체 graph/current dispatch/live/recovery·source admission·M4/M5는 미완료다.
+
+[독립 입력](../../tests/fixtures/module-row-format/leaf/input-plan.json)은 정수/SHA와 명시적 schema/typed values로 만든 raw15쌍이다. 처음/중간/끝 삽입·중간 삭제/Prune·canonical5/2048B·혼합32열을 포함한다. 보존한 wire의 raw framing recipe와 원 Undo pairs의 actual local role bytes만 재사용하고 제품 encoder/transition은 호출하지 않는다. Root/afterJob/descriptor/auxiliary는 invalid opaque sentinel로 남으며 성공 범위는 `LEAF_LOCAL_WITH_UNDO_STATUS`다. 준비 중 Prune literal q7이 원 Status q9와 다른 것을 첫 실행 전에 찾아 q9로 교정했고 원 준비 산출물은 `artifacts/module-row-leaf-20261029/preparation-v1/`에 hash와 함께 보존한다. 실행 FAIL/PASS로 바꾸지 않는다.
+
+[선택 manifest](../../tests/fixtures/module-row-format/leaf/manifest.json)는 신규8개만 고정한다. 전체1200초/compiler420초/case45초/출력8MiB/stack32MiB·첫 실패 중단이며, 이번 source export/target/ELF는 원 로그/결과/파일별 hash를 먼저 보존한 뒤 삭제한다. 기존 완료 시험·workspace/lower wrapper·문서 verifier·push는 실행하지 않는다. 실제 결과와 최종 독립 검토는 아래에 기록한다.
+
+
+r1의 scoped static2·앞4개 선택 시험은 PASS이며, 다섯 번째 시험은 반례 helper가 core digest를 수정한 직후 frame checksum을 갱신하기 전에 operation을 다시 decode하여 `Wal(Corrupt)`로 FAIL했다. 제품 거절 결과가 아니라 시험 준비 경로 실패다. 원 r1 로그/결과를 보존하고 helper가 수정 전에 원 operation을 읽도록 고쳤다. [후속 선택](../../tests/fixtures/module-row-format/leaf/review-followup.json)은 수정한 실패1개와 미실행3개만 고정한다. 완료한 앞4개는 재실행하지 않으며 final source 전수 PASS로 합치지 않는다. 제품 소스는 r1과 같다.
+
+
+r2의 scoped static2와 선택4개는 모두 PASS다. 고유8개의 source별 증거는 r1의 앞4개+r2의 실패 교정1개/미실행3개이며, r1의 FAIL을 보존하고 final source 전체8개 재실행으로 표시하지 않는다. r1→r2 source 차이는 `leaf_tests.rs`와 `review-followup.json`뿐이다.
+
+| 실행 | source SHA-256 | ELF SHA-256 | result SHA-256 |
+| --- | --- | --- | --- |
+| r1 | `9871d5074d9ba4ebb45d156055725fa8a250a28c15b7676d3b45b3e9a6b49009` | `eedec7ee7818c0c588970d2f6a852c3dd7e6f3df11c3a84f11115c8621fd7730` | `433a7367fbf616b08e14a18731764fcd374c344eedc9ac3805039d019e7381d9` |
+| r2 | `ae7124c18b078a99782ee4bea7f4e12acdb49ccc6e6d7823ae983975f551944d` | `393ec5621b609d14f7430c084157eaa71d685848c81858d1bf36e1b89468291b` | `f83e1d3db8c204bb1945c3d0c8faacff2f173df9f5777117ee2d414ffa334411` |
+
+원 compiler/runtime 로그·source별 파일 hash inventory·runner/manifest·결과를 `artifacts/module-row-leaf-20261029/`에 보존했고 각 실행의 source export/target/ELF는 삭제했다. 실제 native/복구 인수·문서 verifier·push는0이다. 최종 독립 D1/D2 결과는 아래에 기록하며 전체 M4/M5는 미완료다.
+
+
+최종 독립 D1/D2는 `ACCEPTED_LIMITED_D1_D2`, 필수 수정0이다. `/root/boundary_review`가 고정 변경16파일·artifact41파일의 실제 bytes/hash, 원15쌍 index와 source별 결과를 대조했고 누락·불일치0이다. r1/r2 inventory5870/5871개와 helper 변경 역구성·양쪽 source fingerprint 재산출도 일치했다. 입력 `artifacts/module-row-leaf-20261029/review-input.json` SHA-256 `28499a3508096464982aa6ea471c7fcf4f3ffe6cf0e1b55796084b4f466e756d`, receipt `artifacts/module-row-leaf-20261029/review-final.json` SHA-256 `f556fd93f309cb40227fc610aca70649bdbe384e0379962007a07e3b48fdd5f7`를 보존한다. 검토자 수정·빌드·시험·author·문서 verifier 실행0이며 후속 수용/status/receipt/hash metadata만 반영한다. 전체 graph·source admission·current Profile3/live/recovery·M4/M5는 계속 미완료다.
