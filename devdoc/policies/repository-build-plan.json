@@ -8580,5 +8580,40 @@
     "reviewed_files": 17,
     "review_ref": "artifacts/module-row-actor-20261028/review-final.json",
     "review_sha256": "24132533000b2ed5f8a7dafcf31428a39a857c6aac47791681fb4c30db02b7b5"
+  },
+  "dev3_module_row_scope3_wire": {
+    "status": "LOCAL_VERIFIED_LIMITED",
+    "contract_ref": "dev3-module-consumers.md#row-scope3-wire",
+    "modified_paths": [
+      "crates/engine/src/storage/semantic_row.rs"
+    ],
+    "implemented_paths": [
+      "crates/engine/src/storage/semantic_row/operation.rs",
+      "crates/engine/src/storage/semantic_row/core.rs",
+      "crates/engine/src/storage/semantic_row/wire.rs",
+      "crates/engine/src/storage/semantic_row/wire_tests.rs",
+      "tests/fixtures/module-row-format/wire/author.py",
+      "tests/fixtures/module-row-format/wire/frames.bin",
+      "tests/fixtures/module-row-format/wire/index.tsv",
+      "tests/fixtures/module-row-format/wire/input-plan.json",
+      "tests/fixtures/module-row-format/wire/manifest.json",
+      "tests/fixtures/module-row-format/wire/review-followup.json"
+    ],
+    "scope": "Immutable scope3 wire-only observation. No current semantic/live/recovery authority, descriptor/graph/history closure or source admission.",
+    "runtime_selected_cases": 10,
+    "literal_cases": 30,
+    "source_roots_changed": false,
+    "evidence_ref": "module-independence-survey-20261026.md#row-scope3-wire",
+    "runtime_unique_cases": 10,
+    "execution_runs": {
+      "r1": "static2/runtime8 PASS",
+      "r2": "static2/new runtime2 PASS"
+    },
+    "artifacts_ref": "artifacts/module-row-wire-20261028",
+    "review_status": "ACCEPTED_LIMITED_D1_D2",
+    "review_required_items": 0,
+    "reviewed_files": 18,
+    "review_ref": "artifacts/module-row-wire-20261028/review-final.json",
+    "review_sha256": "432f1972b9df0c46d83f0a46480c788565ce26dc29a2319d50183816eb23f7de"
   }
 }

@@ -1,0 +1,66 @@
+{
+  "schema": "XADB_ROW_SCOPE3_WIRE_V1",
+  "baseline": "2fdff66",
+  "status": "FROZEN_INPUTS_NOT_EXECUTION_EVIDENCE",
+  "scope": "Pure scope3 WIRE_ONLY observations, not semantic descriptor/graph/history or live/recovery authority. No current dispatch or source admission.",
+  "budget": {
+    "total_seconds": 1200,
+    "compiler_seconds": 420,
+    "case_seconds": 45,
+    "output_bytes": 8388608,
+    "rust_min_stack": 33554432
+  },
+  "compiler_tests": [],
+  "runtime_tests": [
+    {
+      "selector": "storage::semantic_row::wire_tests::wire_independent_thirty_frames_and_profile_ids",
+      "reason": "30 independently authored WIRE_ONLY frames, all14 opcodes, min/max C and h0/h1, rollback/finish marks; profile IDs1/2/3 and borrowed views."
+    },
+    {
+      "selector": "storage::semantic_row::wire_tests::wire_rejects_profile_scope_opcode_and_outer_aliases",
+      "reason": "Exact Profile3/group2/scope3/opcode/outer/XHG-XSG dialect."
+    },
+    {
+      "selector": "storage::semantic_row::wire_tests::wire_rejects_owner_and_prior_chain_mismatches",
+      "reason": "Tx/Aging binding and fresh/previous chain; StatementFinish Tx owner."
+    },
+    {
+      "selector": "storage::semantic_row::wire_tests::wire_core_multiple_statement_and_mark_relations",
+      "reason": "Positive multi-statement/full/last CLR and mark, op-specific refs/scalars/flags/digests; h/core consistency."
+    },
+    {
+      "selector": "storage::semantic_row::wire_tests::wire_rejects_section_lengths_and_frame_corruption",
+      "reason": "Exact section counts/widths/lengths, outer hashes, truncation and tail."
+    },
+    {
+      "selector": "storage::semantic_row::wire_tests::wire_rejects_native_kind_length_presence_digest_and_order",
+      "reason": "Closed per-op native inventory, exact body lengths and row C, presence/slot/span/hash/index order."
+    },
+    {
+      "selector": "storage::semantic_row::wire_tests::wire_rejects_redo_init_kind_level_span_order_and_aliases",
+      "reason": "No INIT, exact native/page role and level, whole or Status span, physical address order/alias."
+    },
+    {
+      "selector": "storage::semantic_row::wire_tests::wire_closed_shape_equations_and_boundaries",
+      "reason": "Frozen numeric equations and C bounds/h invalid choices; max frame<=98304."
+    }
+  ],
+  "inputs": {
+    "author.py": {
+      "bytes": 6943,
+      "sha256": "17d265072d67c54b1cfe8d362b5b40abc51fd4486693324d421b183f6bec4f4b"
+    },
+    "frames.bin": {
+      "bytes": 1765066,
+      "sha256": "f81feaeaa6eb8df0b27cc2050a041bd3e40f765a7db04b0ff49a998c3ffc10b8"
+    },
+    "index.tsv": {
+      "bytes": 2882,
+      "sha256": "4c7f7739449051bb59c83ee9bce4a19709e26a5316297bae682c59d1e7f4f340"
+    },
+    "input-plan.json": {
+      "bytes": 225,
+      "sha256": "1329cc4cbed2d417ddb7c999952320ec9d9448852ecf7cdd20961cf747e6c23b"
+    }
+  }
+}

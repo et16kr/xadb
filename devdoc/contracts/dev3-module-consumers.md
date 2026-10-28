@@ -494,3 +494,20 @@ byte 산식·지원 범위·owner 신뢰 경계는 이 동결안의 일부다. s
 작업·계약·통합 담당은 `/root`, 독립 검토자는 `/root/boundary_review`다. D2 대안은 paged JobCells의 공통 표현 변경 또는 원 caller scratch 사용이다. 기존 Catalog base와 같이 원4page scratch를 명시적으로 받아 Job bank를 복사하며 별도64KiB local/heap을 만들지 않는다. 반환에는 원 owner·pin·stage·READY 권한이 없다. `semantic_row::ledger::validate_actor`는 원 structural 관측만 재사용하고 ATT가 없는 이 입구에서 statement credit 보유나 residual budget을 주장하지 않는다.
 
 이는 전체 current-state closure가 아니다. Catalog/다른 actor의 전체 graph, ATT/Aging descriptor·정규 UndoSlot inventory·역사 INIT/WAL·실제 statement mark·전체 source 상계/admission·current Profile3 선택은 후속 의무다. current 제품은 Profile2이며 새 scope3 stage/live/recovery 또는 M4/M5 완료로 승격하지 않는다. 새 fixture는 독립 raw pages와 opaque history 주장으로 구성하며 실제 durability 증거가 아니다. 검증·독립 최종 수용은 [source별 증거](../evidence/module-independence-survey-20261026.md#row-actor-graph)에 기록한다. 채택 상계를 넘거나 이 결과를 전체 closure/authority로 확장하려면 해당 owner 계약과 D2를 다시 검토한다.
+
+
+<a id="row-scope3-wire"></a>
+### Scope3의 별도 bounded frame 관측 — 2026-10-28
+
+결정 `D3-MODULE-ROW-WIRE-001`(D2, `ACCEPTED_LIMITED_D1_D2`), 기준 `main` `2fdff66`, 담당/통합 `/root`, 독립 검토 `/root/boundary_review`다. `semantic_row`의 별도 `Operation/Shape/CoreView/LayoutView`가 exact Profile3·XHG/XSG version2/scope3·14opcode와 위 frame 수치를 받는다. 기존 Catalog observer를 범용화하는 안 대신 별도 입구를 택해 scope2의 single-root/statement1 해석을 Row에 전용하지 않는다. 허용 frame 상한은98304B이며 최대 Prune94080B를 포함한다. common lower WAL envelope/redo codec만 원 의미 그대로 소비한다. immutable frame bytes를 빌리며 descriptor/native/edge/count/inventory 내용의 전체 의미·원 stable source·stage/READY 권한을 만들지 않는다.
+
+core의 기존 offset/flag 폭은 유지하고 아래 presence를 명시한다. stmt/mutation은 planned Reserve/Forward/Cancel/CLR에서 양수, CLR는 consumed root의 값을 쓴다. RollbackStart의 stmt는 full이면0/statement이면양수이고 mutation0이다. StatementFinish는 종료하는 statement 번호양수/mutation0이다. 나머지 unused stmt/mutation은0이다. current가 있으면 sequence양수, 없으면0이다. Commit의 q만양수이고 나머지 q0이다. Prune/ReleaseRole/RootFree/TerminalFinish의 work cursor는 각각0..63, 나머지0이다. digest는 Forward/CLR/Prune의 before/after 둘만 존재한다.
+
+- Reserve/Cancel/ReleaseRole/RootFree는 current필수·next/target없음이다. Forward는 current필수·nextH선택·targetNone이며 current≠next다. H는 원 Status.head이자 새 U.previous-transaction이고 실제 native/Edge와 대조한다.
+- CLR는 current필수·nextH선택·statement targetM선택이다. current는 next/target과 달라야 하고 target이 있으면 next가 있어야 한다. target의 실제 선행·소속/rollback mode는 source observer에서 검사한다.
+- RollbackStart는 current=next(H 또는None), targetM선택이다. full(stmt0)은 targetNone, target이 있으면 current가 있다. target=current인 빈 suffix는 허용한다.
+- StatementFinish는 current=next=target(M 또는None)이다. Prune는 current필수·nextH선택·targetNone이며 current≠next다. Begin/Commit/AbortEnd/AgingStart/TerminalFinish는 ref없음이다.
+
+이 core는 statement/mark 권한이나 다중 Undo의 실제 순서를 입증하지 않는다. Row native는 kind1/3/5/8/9의 opcode별 정확 inventory·body 길이·presence를 요구하고, Row insert는 absent→present/CLR는 present→absent/Prune는 present→present이며 나머지는 양쪽 presence다. Native/redo는 원 address/slot 순서·hash·범위와 page kind를 대조하고 각 변경 page를 정확히 한 번 사용한다. present slot은 원 MAX_PAGE_SLOTS 미만이고 offset은 최소 directory 종단 HEADER_BYTES+4×(slot+1) 이상이다. actual 전체 slots/다른 cell 의미는 후속 page 검산 의무다. 유효 envelope의 Profile/dialect/op/outer 조합 불일치는 Unsupported로 반환하며 다른 observer를 재시도하지 않는다. 모든 Row redo는 Patch이며 RollbackStart/StatementFinish만 Status224 구간, 나머지는 whole body다. h는 Forward/CLR/Prune의 edge 수3/4에서 얻고 Forward/CLR/Prune의 core.next 존재와 같다. E/K/I의 의미와 실제 before/after byte 일치는 후속 semantic observer가 검사한다. current dispatch·source 비용/admission·실제 복구 및 M4/M5는 미완료다. 후속 적용에서 다중 mark 계약과 불일치하거나 원 한도를 넘으면 이 결정의 영향 행을 다시 검토한다.
+
+[source별 선택 증거](../evidence/module-independence-survey-20261026.md#row-scope3-wire)는 r1의8개·r2의신규2개로 고유10개를 기록한다. 최종 source에서 전체10개를 반복한 증거가 아니며 순수 framing을 actual 권한/복구 인수로 올리지 않는다.

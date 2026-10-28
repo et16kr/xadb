@@ -1,0 +1,43 @@
+{
+  "schema": "XADB_ROW_SCOPE3_WIRE_V1",
+  "baseline": "2fdff66",
+  "status": "FROZEN_INPUTS_NOT_EXECUTION_EVIDENCE",
+  "scope": "Pure scope3 WIRE_ONLY observations, not semantic descriptor/graph/history or live/recovery authority. No current dispatch or source admission.",
+  "budget": {
+    "total_seconds": 1200,
+    "compiler_seconds": 420,
+    "case_seconds": 45,
+    "output_bytes": 8388608,
+    "rust_min_stack": 33554432
+  },
+  "compiler_tests": [],
+  "runtime_tests": [
+    {
+      "selector": "storage::semantic_row::wire_tests::wire_present_native_slot_and_directory_bounds",
+      "reason": "Changed native bounds: impossible Row slots3244/60000, minimum directory boundary136/135, both Prune sides."
+    },
+    {
+      "selector": "storage::semantic_row::wire_tests::wire_dialect_reports_unsupported_before_semantic_use",
+      "reason": "Changed error classification requires Unsupported for valid-envelope Profile/dialect/op/outer mismatch; adjacent op2/op5 success."
+    }
+  ],
+  "inputs": {
+    "author.py": {
+      "bytes": 6943,
+      "sha256": "17d265072d67c54b1cfe8d362b5b40abc51fd4486693324d421b183f6bec4f4b"
+    },
+    "frames.bin": {
+      "bytes": 1765066,
+      "sha256": "f81feaeaa6eb8df0b27cc2050a041bd3e40f765a7db04b0ff49a998c3ffc10b8"
+    },
+    "index.tsv": {
+      "bytes": 2882,
+      "sha256": "4c7f7739449051bb59c83ee9bce4a19709e26a5316297bae682c59d1e7f4f340"
+    },
+    "input-plan.json": {
+      "bytes": 225,
+      "sha256": "1329cc4cbed2d417ddb7c999952320ec9d9448852ecf7cdd20961cf747e6c23b"
+    }
+  },
+  "preserved_execution": "Original r1 static2/runtime8 PASS retained at original source; only two new cases exercise the actual wire diff."
+}

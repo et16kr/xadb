@@ -1,5 +1,7 @@
 # XADB 모듈 독립 개발 구조 전환 작업 계획
 
+2026-10-28 [Row scope3 frame 검산](../evidence/module-independence-survey-20261026.md#row-scope3-wire): main `2fdff66`에서 별도14opcode·다중 statement core·native/redo 입구를 구현하고 source별 신규10개 선택 검증을 통과했다. 최종 독립 D1/D2 한정 수용·필수 수정0이며 전체 M4/M5는 미완료다.
+
 2026-10-28 [Row actor의 실제 페이지 관계 검산](../evidence/module-independence-survey-20261026.md#row-actor-graph): 사용자의 전체 계획 완료 요청에 따라 `main` `d27bfa4`에서 재개했다. 한 actor의 Base4/Status/Undo/Row graph를 구현했고 source별 신규10개 선택 검증을 통과했다. 최종 독립 D1/D2 한정 수용·필수 수정0이며 전체 M4/M5는 미완료다.
 
 2026-10-28 [CREATE 원 flush 대여](../evidence/module-independence-survey-20261026.md#c3-create-lease): main `3fa5f6f`에서 예약의 disjoint 원 자원·연속 flush lease를 구현했다. r1 compile FAIL을 보존하고 r2 compiler3/runtime10/nativeN01을 통과했다. 최종 독립 D1/D2 한정 수용이며 shared 제품 admission·M4/M5는 미완료다.

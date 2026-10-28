@@ -2782,3 +2782,22 @@ fixture author는 제품 encoder/다른 fixture author를 import하지 않는 �
 
 
 최종 독립 D1/D2는 `ACCEPTED_LIMITED_D1_D2`, 필수 수정0이다. `/root/boundary_review`가 변경17파일·artifact64파일의 원 bytes/hash/로그/결과와 정리 기록을 대조했다. 제품/fixture 관련10파일은 r5 source와 같고, 검토자는 수정·빌드·시험·문서 verifier를 실행하지 않았다. [최종 receipt](../../artifacts/module-row-actor-20261028/review-final.json) SHA-256은 `24132533000b2ed5f8a7dafcf31428a39a857c6aac47791681fb4c30db02b7b5`다. 허용된 수용/status·receipt/hash metadata만 후속 기입하며 전체 mixed graph·descriptor/inventory/history·statement/source admission·Profile3 실제 연결·M4/M5는 미완료다.
+
+
+<a id="row-scope3-wire"></a>
+## 2026-10-28 Row scope3 frame의 독립 입력 검산
+
+기준은 `main` `2fdff66`이다. [scope3 wire 계약](../contracts/dev3-module-consumers.md#row-scope3-wire)의 별도 입구를 구현한다. 독립 D2 설계 검토는 다중 statement core 표와 별도 scope3 선택을 수용했고, Forward/CLR/Prune의 nextH↔E=3+h, StatementFinish의 XSG/Tx owner, kind1/3/5/8/9와 정확 Patch span을 요구해 구현에 반영했다. current-generation은 실제 Status/descriptor의 의미 검산 의무이며 header TxnId만으로 원 TxnRef generation을 인증하지 않는다.
+
+[선택 manifest](../../tests/fixtures/module-row-format/wire/manifest.json)는 신규8개 selector만 고정한다. 독립 정수/SHA author의30 literal은14opcode 전체와 C185/2228·h0/1, full/statement RollbackStart, MNone/Some StatementFinish, 마지막/중간 CLR를 포함한다. descriptor/native/auxiliary는 의도한 opaque sentinel이며 성공 의미는 `WIRE_ONLY`다. body 의미·원 stable before·native/redo after equality·history·source/admission·current Profile3 전환을 공급한 것으로 기록하지 않는다. 음성 입력은 outer checksum을 다시 닫은 뒤 scope/op/owner/core/section/native/redo의 해당 오류를 검산한다. 기존 Catalog/Row 완료시험은 반복하지 않는다.
+
+전체1200초/compiler420초/case45초/출력8MiB/stack32MiB, 실패 즉시 중단이다. [artifact](../../artifacts/module-row-wire-20261028/) runner는 원 source/파일별hash/ELF/로그/result-before-cleanup을 먼저 보존하고 이번 export/target/ELF만 삭제한다. 원 실패와 source별 결과를 보존하며 전체 workspace/lower wrapper/native·문서 verifier·push는0이다. 실제 실행 결과와 최종 독립 D1/D2는 아래에 기록한다.
+
+
+r1은 scoped static2와 신규8개를 모두 PASS했다. source `a1781b10a84d2e21903dccb258093b65b874345e54eeb5424a4164e1a9b5f9f8`, ELF `513fddc60481d3fedc61daa880e6a5cc7bf39f653a35c2a924f74eb6fe37ea96`, result `67363558c491756b3ca2bda89aafd3e0bb95ef09580942c1fb068ff1e1eccf9a`다. 독립 구현 리뷰가 Row slot60000도 허용하는 누락을 찾아 원 MAX_PAGE_SLOTS와 최소 directory 종단을 추가했다. 작성자 계약 대조로 유효 envelope의 Profile/dialect/op/outer 오류를 Unsupported로 분리했다. [후속 선택](../../tests/fixtures/module-row-format/wire/review-followup.json)은 두 변경의 신규2개만 실행한다. 앞선8개는 원 source PASS로 보존하며 최종 source 전수 재실행으로 합치지 않는다. slot 경계 정상/거절과 Prune 양쪽, 오류 종류와 op2/op5 정상 인접 사례를 이 신규2개에서 검산한다.
+
+
+r2도 static2와 신규2개 PASS다. source `df5007ff917fbc23186dc5b3bcef4ad87d9c50673e93c18ef02670e8b6642894`, ELF `afe4589da505fb64782f33115c9b7028f515d7426cfa0fa99fbcc1f47d0fa74e`, result `47dc663f7774c527fd174a222aeda6777bc90a6e51477f141c666070fba6c611`을 보존한다. 고유10개는 r1 source8+r2 source2이며 원 r1 이후 동일 완료 사례 재실행0이다. 두 실행의 임시 source/target/ELF는 결과·identity 수집 뒤 삭제했다. 원 compiler/runtime 로그·source inventory·manifest/runner·result는 보존하며 최종 source의 전체 의미 graph/current recovery 성공으로 승격하지 않는다. 최종 독립 D1/D2 receipt는 아래에 기록한다.
+
+
+최종 독립 D1/D2는 `ACCEPTED_LIMITED_D1_D2`, 필수 수정0이다. `/root/boundary_review`가 변경18파일과 artifact39파일을 원 source/독립 literal/실행 결과·hash/cleanup에 대조했다. 제품·fixture11파일은 r2 source와 같으며 검토자 수정·빌드·시험·문서 verifier·author 실행0이다. [최종 receipt](../../artifacts/module-row-wire-20261028/review-final.json) SHA-256은 `432f1972b9df0c46d83f0a46480c788565ce26dc29a2319d50183816eb23f7de`다. 허용된 status·수용·receipt/hash metadata만 후속 기입한다. 전체 semantic graph/descriptor/history·native/redo 의미 일치·source admission·current dispatch/live/recovery·M4/M5는 계속 미완료다.

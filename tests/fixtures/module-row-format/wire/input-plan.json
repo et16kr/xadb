@@ -1,0 +1,6 @@
+{
+  "scope": "WIRE_ONLY opaque body sentinels; not semantic history or current recovery",
+  "literal_cases": 30,
+  "raw_bytes": 1765066,
+  "author": "independent integers and SHA; no product encoder or other author import"
+}
