@@ -2824,3 +2824,22 @@ r2도 static2와 신규2개 PASS다. source `df5007ff917fbc23186dc5b3bcef4ad87d9
 
 
 최종 독립 D1/D2는 `ACCEPTED_LIMITED_D1_D2`, 필수 수정0이다. `/root/boundary_review`가 고정 변경16파일과 artifact39파일의 원 source/bytes/hash·선택 로그·manifest/runner·cleanup을 대조했고 불일치0이다. 현재 제품/fixture는 r2 source inventory와 같으며 검토자는 수정·빌드·시험·문서 verifier·author를 실행하지 않았다. [고정 검토 입력](../../artifacts/module-row-status-20261029/review-input.json) SHA-256 `1bde2c3e3fa9cfdf4aaab67671fa49a133bafce55e41c884233c902ed3f43ce1`, [최종 receipt](../../artifacts/module-row-status-20261029/review-final.json) SHA-256 `10cdc6052329d4ff121d92d366a07b89ca55cdf7106bacf8e146cccda29b91fb`를 보존한다. 허용된 status/수용/receipt/hash metadata만 후속 반영한다. 전체 graph·source admission·실제 live/recovery·M4/M5는 미완료다.
+
+
+<a id="row-undo-images"></a>
+## 2026-10-29 Row Undo·원 Job·같은 frame Status의 관계 검산
+
+기준은 `main` `09173aa`이며 원 [Undo 국소 계약](../contracts/dev3-module-consumers.md#row-undo-images)을 구체화했다. `/root/boundary_review`의 사전 D2 의견을 반영하여 Reserve의 독립 계획값과 실제 Free before를 분리하고, Existing은 원64 JobCells/외부 ordinal에서 selected Job을 얻는다. native9의 before bytes/slot/offset/redo page와 원 selected 위치를 결합한다. U material과 가장 가까운 Retained H를 원 bank에서 고르고 H의 자기 table/RowId·실제 Live Missing/incoming2 page를 검산한다. H 자체 prevTxn의 bank 관계도 확인하되 다음 실제 page는 로드하지 않는다. Forward/CLR/Prune는 같은 LayoutView에서 기존 Status observer를 호출한다. native3/redo/실제 U before/after와 Reserve·Forward·CLR·Prune·ReleaseRole·RootFree의6개 전이를 검사한다.
+
+[독립 입력](../../tests/fixtures/module-row-format/undo/input-plan.json)은 정수/SHA와 명시한 before/after 상태표의 raw17쌍이다. 제품 encoder/transition은 호출하지 않고 원 wire/ledger/status author의 낮은 raw byte recipe만 재사용하며 그 source hash를 남긴다. 다른 frame role/descriptor/auxiliary는 semantic-invalid sentinel이고 성공 범위는 `UNDO_LOCAL_ONLY`와 세 opcode의 같은 frame Status 통합이다. 전체 Row·after Job·Root commitment/census·descriptor/edge/count/inventory 의미·mark ancestry·q 발급/horizon/pin·source 상계/admission·current Profile3/live/recovery·M4/M5는 미완료다. A의 Row/CLR 후보 생산을 C가 대신 구현하지 않는다.
+
+실행 전에 [manifest](../../tests/fixtures/module-row-format/undo/manifest.json)로 신규9개를 고정했다. 예산 총1200초/compiler420초/case45초/출력8MiB/stack32MiB, 첫 실패 즉시 중단이다. 초기 작성 중 rustfmt가 닫는 괄호 누락을 보고했고 compiler/runtime 실행 전 교정했다. [준비 실패 기록](../../artifacts/module-row-undo-20261029/preparation-failure.txt)을 보존하며 실행 시험 FAIL로 바꾸거나 숨기지 않는다. r1은 scoped static2·신규 runtime9 모두 PASS다. 원 wire/actor/Status 완료 시험 및 workspace/lower wrapper는 반복하지 않았다.
+
+| 실행 | source SHA-256 | ELF SHA-256 | result SHA-256 |
+| --- | --- | --- | --- |
+| r1 | `2e9ed00d9d065234a42383ee5b208b9e151da95e63f9185bd2f6f588b686caf2` | `da4114d28d0a1129a5edfc24003b7916c82b2d467026dd63385b6da16ad534e2` | `49b0d88ec3e016fb33762dff24c329c57943f0ad292112b6e976e08ca4316a5a` |
+
+[artifact](../../artifacts/module-row-undo-20261029/)에 원 compiler/runtime 로그·source별 파일 hash inventory·runner/manifest identity·result-before-cleanup/result를 보존하고 이번 source export/target/ELF는 삭제했다. 실제 native/복구 인수·문서 verifier·push는 실행하지 않았다. 최종 독립 D1/D2 결과는 아래에 기록한다.
+
+
+최종 독립 D1/D2는 `ACCEPTED_LIMITED_D1_D2`, 필수 수정0이다. `/root/boundary_review`가 제품·fixture와 source별 실행 증거를 검토하고, 최종 분리한 index15파일·artifact30파일의 hash 불일치0을 확인했다. [고정 소유 입력](../../artifacts/module-row-undo-20261029/review-input-owned.json) SHA-256 `aae5bf8dcc986f7f42fd37cfef4a3af2804d08d918b8df8d4cc2606ebbde99d1`, [최종 receipt](../../artifacts/module-row-undo-20261029/review-final.json) SHA-256 `2b68fbd1d8ad0f97d04b32c65eafb3c2ff24dd7ba355ac628fef6bb7207c2bba`를 보존한다. 원17파일 입력은 동시 문서 변경 발견 기록이며 이번 commit 범위가 아니다. 검토 후 별도 담당자가 독립성 평가 gate 계획4문서를 `cbff2fd`로 commit했으며, 공유2파일의 Undo 추가2줄과 나머지13파일은 검토 때와 같다. 이번에는 그 위에 소유 변경15파일만 선택한다. 제품·fixture는 r1 source와 같으며 검토자 수정·빌드·시험·문서 verifier·author 실행0이다. 허용된 수용/status/receipt/hash metadata만 후속 반영한다. 전체 graph·source admission·current Profile3/live/recovery·M4/M5는 미완료다.

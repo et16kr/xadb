@@ -6,6 +6,7 @@ mod core;
 pub(crate) mod ledger;
 mod operation;
 pub(crate) mod status;
+pub(crate) mod undo;
 mod wire;
 pub(crate) use core::{CoreView, decode_core};
 pub(crate) use operation::{Operation, Shape};
@@ -17,6 +18,9 @@ mod wire_tests;
 
 #[cfg(test)]
 mod status_tests;
+
+#[cfg(test)]
+mod undo_tests;
 
 pub(crate) const FRAME_BYTES: usize = 98_304;
 pub(crate) const MIN_CELL: usize = 185;
@@ -35,6 +39,7 @@ pub(crate) enum Error {
     Descriptor(super::obligation::ObligationError),
     Page(super::page::PageError),
     Wal(super::wal_frame::WalError),
+    Undo(super::undo_record::UndoError),
 }
 impl From<super::page::PageError> for Error {
     fn from(value: super::page::PageError) -> Self {
@@ -44,6 +49,11 @@ impl From<super::page::PageError> for Error {
 impl From<super::wal_frame::WalError> for Error {
     fn from(value: super::wal_frame::WalError) -> Self {
         Self::Wal(value)
+    }
+}
+impl From<super::undo_record::UndoError> for Error {
+    fn from(value: super::undo_record::UndoError) -> Self {
+        Self::Undo(value)
     }
 }
 fn zero(bytes: &[u8]) -> bool {

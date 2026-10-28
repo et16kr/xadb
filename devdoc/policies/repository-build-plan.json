@@ -8640,5 +8640,27 @@
     "reviewed_files": 16,
     "review_ref": "artifacts/module-row-status-20261029/review-final.json",
     "review_sha256": "10cdc6052329d4ff121d92d366a07b89ca55cdf7106bacf8e146cccda29b91fb"
+  },
+  "dev3_module_row_undo_images": {
+    "status": "LOCAL_VERIFIED_ACCEPTED_LIMITED_D1_D2",
+    "review_ref": "artifacts/module-row-undo-20261029/review-final.json",
+    "review_sha256": "2b68fbd1d8ad0f97d04b32c65eafb3c2ff24dd7ba355ac628fef6bb7207c2bba",
+    "contract_ref": "dev3-module-consumers.md#row-undo-images",
+    "modified_paths": [
+      "crates/engine/src/storage/semantic_row.rs"
+    ],
+    "implemented_paths": [
+      "crates/engine/src/storage/semantic_row/undo.rs",
+      "crates/engine/src/storage/semantic_row/undo_tests.rs",
+      "tests/fixtures/module-row-format/undo/author.py",
+      "tests/fixtures/module-row-format/undo/cases.bin",
+      "tests/fixtures/module-row-format/undo/index.tsv",
+      "tests/fixtures/module-row-format/undo/input-plan.json",
+      "tests/fixtures/module-row-format/undo/manifest.json"
+    ],
+    "scope": "Undo local actual-page/Job/nearest-H observations and same-frame Status integration. No full graph/history or authority.",
+    "runtime_selected_cases": 9,
+    "literal_cases": 17,
+    "source_roots_changed": false
   }
 }

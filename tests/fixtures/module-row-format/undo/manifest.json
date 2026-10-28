@@ -1,0 +1,70 @@
+{
+  "schema": "XADB_ROW_UNDO_LOCAL_V1",
+  "baseline": "09173aa",
+  "status": "FROZEN_INPUTS_NOT_EXECUTION_EVIDENCE",
+  "scope": "Undo local actual-page/Job/nearest-H observations and same-frame Status integration. No full graph/history or authority.",
+  "budget": {
+    "total_seconds": 1200,
+    "compiler_seconds": 420,
+    "case_seconds": 45,
+    "output_bytes": 8388608,
+    "rust_min_stack": 33554432
+  },
+  "compiler_tests": [],
+  "runtime_tests": [
+    {
+      "selector": "storage::semantic_row::undo_tests::undo_independent_seventeen_pairs_and_same_frame_status",
+      "reason": "17 raw explicit pairs across all6 Undo ops, HNone/Some, different-table H, two predecessors, max generation and release/Free."
+    },
+    {
+      "selector": "storage::semantic_row::undo_tests::undo_reserve_uses_external_plan_and_generation_without_wrap",
+      "reason": "Independent planned source versus original Free Job/Undo; no candidate-derived issued identity; MAX generation and wrong generation."
+    },
+    {
+      "selector": "storage::semantic_row::undo_tests::undo_original_job_and_scalar_binding",
+      "reason": "Canonical wrong Job states/source/Status/U, core sequence/statement/mutation, selected ordinal/physical native binding."
+    },
+    {
+      "selector": "storage::semantic_row::undo_tests::undo_actual_predecessor_uses_its_own_target_and_nearest_job",
+      "reason": "Actual H material/target/creator/count/LSN plus nearest original bank, strict sequence/mutation/statement and duplicates."
+    },
+    {
+      "selector": "storage::semantic_row::undo_tests::undo_material_cut_and_incoming_are_exact",
+      "reason": "Missing identity/material and exact Live2 -> Releasing0 Cut/Never from actual H; no fabricated cut."
+    },
+    {
+      "selector": "storage::semantic_row::undo_tests::undo_release_cursor_material_and_same_generation_free",
+      "reason": "Release0/1/2, immutable material, no cursor replay/skip or generation rewind, distinct queue work cursor."
+    },
+    {
+      "selector": "storage::semantic_row::undo_tests::undo_same_frame_status_proof_is_required_and_checked",
+      "reason": "Original Status before/after and external statement/q must be checked against same frame; no standalone authority."
+    },
+    {
+      "selector": "storage::semantic_row::undo_tests::undo_native_redo_page_identity_and_lsn_binding",
+      "reason": "Actual Undo page identity/LSN/1cell, native offset/bytes and redo target/prior/span plus full actor generation."
+    },
+    {
+      "selector": "storage::semantic_row::undo_tests::undo_rejects_operations_without_undo_native",
+      "reason": "Explicit Unsupported for8 valid scope3 operations outside the Undo native role."
+    }
+  ],
+  "inputs": {
+    "input-plan.json": {
+      "bytes": 629,
+      "sha256": "376b3b983fdc4ea176d557668ba6dd13715f3faee0c85d27e0284ea41d3b4937"
+    },
+    "index.tsv": {
+      "bytes": 1770,
+      "sha256": "63161ba5e9f95f33acb10468baab48014873789a8563887cdfb96d2b8723c750"
+    },
+    "cases.bin": {
+      "bytes": 3738802,
+      "sha256": "0d6ab1e42741f1f120f10432a20ac9577cf2a3b21ea96a8f88d7f1e6760a7bb6"
+    },
+    "author.py": {
+      "bytes": 6269,
+      "sha256": "a31cde28bdcfdb857ff79c177ab458ccc685218bbd262f2bd50f2e09a639a145"
+    }
+  }
+}

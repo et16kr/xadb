@@ -1,0 +1,12 @@
+{
+  "scope": "UNDO_LOCAL_ONLY; Status same-frame integration for Forward/CLR/Prune; other roles opaque invalid sentinels",
+  "literal_cases": 17,
+  "bytes": 3738802,
+  "oracle": "explicit state pairs; integer/SHA, no product calls",
+  "recipes": {
+    "../wire/author.py": "17d265072d67c54b1cfe8d362b5b40abc51fd4486693324d421b183f6bec4f4b",
+    "../ledger/author.py": "abce2c6d978bb91c42f0c2be7f68f274a36015e71f673069120e6ea8840f5b0c",
+    "../status/author.py": "79db78f6b3d3c3043635b72b382b37c51f2915aabf2f5ec6226be23083c9a210",
+    "../job3/cells.bin": "d2ea7dae34cd200c8cf6d75500e669f8ddb54ddbb32f7ab26575648342de8dc7"
+  }
+}
