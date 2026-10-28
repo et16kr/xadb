@@ -7987,5 +7987,97 @@
       "coverage_percent": 100,
       "required_fixes": 0
     }
+  },
+  "dev3_module_c2_commit_call": {
+    "status": "ACCEPTED_LIMITED_D1_D2",
+    "contract_ref": "dev3-module-boundaries.md#commit-call",
+    "evidence_ref": "module-independence-survey-20261026.md#c2-commit-call",
+    "baseline_commit": "9c334fe",
+    "branch": "main",
+    "implemented_paths": [
+      "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/commit_call.rs",
+      "tests/fixtures/dev3-module-c2/commit-call/manifest.json",
+      "tests/fixtures/dev3-module-c2/commit-call/old_bound_absent.rs",
+      "tests/fixtures/dev3-module-c2/commit-call/old_writer_absent.rs",
+      "tests/fixtures/dev3-module-c2/commit-call/private_preparation.rs",
+      "tests/fixtures/dev3-module-c2/commit-call/synchronous.rs"
+    ],
+    "scope": "Synchronous Catalog Commit preparation through original stage/Pending/install/publish source; CREATE/general floor/Row/M4/M5 remain incomplete",
+    "source_roots_changed": false,
+    "whole_m4_m5_complete": false,
+    "runtime_selected": 11,
+    "compiler_selected": 4,
+    "native_selected": [
+      "N03"
+    ],
+    "reviewer": "/root/source_admission_review",
+    "evidence_artifact": "artifacts/module-c2-commit-call-20261028",
+    "source_specific_results": {
+      "r1": {
+        "source_sha256": "f7ab614afd1b6fecf53ec5c53313a873f46fcb44c4c2f044925d9d940b0b6f7e",
+        "elf_sha256": "379f1e3ae7c25937db60cb58891d1729b4b6e278a40ccb8d72f9b89b8ba3d001",
+        "result_sha256": "acb86fd021b49ff91f2dfa700102206942077e07a7627ebfbc2b0cabe957199a",
+        "run_status": "FAIL"
+      },
+      "r2": {
+        "source_sha256": "8a6fef0d6a337c9b1959e9d08a82707fd848617d0b3231d66da7b2b6b1e1825e",
+        "elf_sha256": "f541ae1ea2f461f95a799e20db023ba183d6ea95ced2672ef9f02cf07a5c04c9",
+        "result_sha256": "3cfa88e95a2f8a43d3a107575180cb86727e6f99e2df051744ad8be7e777952d",
+        "run_status": "FAIL"
+      },
+      "r3": {
+        "source_sha256": "5c7c722d5de126649e0e139fa74714c8955ab85db8f9751094d853d4ac820b6a",
+        "elf_sha256": "fb8145d5315d4d5805db5cd4a21793aba4d525d2d7f05f19f82a2edfd9c1794e",
+        "result_sha256": "ab5b7aecc64aa49ab134f839024c87c59815738cf8d33cdd62c7bb31654b8af4",
+        "run_status": "FAIL"
+      },
+      "r4": {
+        "source_sha256": "849cce8cee76a3a8b2ecb83608213d76f99e675b2b09dd80d1d4d653834f4f01",
+        "elf_sha256": "6c2bf3fdf941bf7a96e73b126d250254371c87e98125abc113222db81afacdc0",
+        "result_sha256": "1eaaa60c5d2f1a417e3d614f1a6a8f88312b85fd9733aa989c012b5bfde18e23",
+        "run_status": "PASS"
+      }
+    },
+    "runtime_pass_by_original_source": {
+      "r1": [
+        1,
+        2,
+        3
+      ],
+      "r2": [
+        4,
+        5
+      ],
+      "r3": [
+        6,
+        7
+      ],
+      "r4": [
+        8,
+        9,
+        10,
+        11
+      ]
+    },
+    "compiler_pass_original_source": "r1",
+    "native_pass": {
+      "case": "N03",
+      "source": "r4",
+      "workers": 2,
+      "result_sha256": "34118938145f748260f311aeecc4493347e05c8adbde348b7d3dfaf59de3aeba",
+      "admission_sha256": "a31454ad703e95985675547083567975c22f7b7db5f25da2ae3e5d0a2623716f",
+      "source3_current_elf_executions": 0,
+      "source_admission": "DERIVED_STATIC_IDENTITY_ADMISSION"
+    },
+    "completed_case_repeats": 0,
+    "prior_failures_preserved": true,
+    "heavy_artifacts_deleted": true,
+    "final_review": {
+      "receipt": "artifacts/module-c2-commit-call-20261028/review-final.json",
+      "sha256": "88f71a30f49ed7b471aa344f4e1a659e3b9c09615e87da41ea50a75bcb0d278a",
+      "reviewed_files": 26,
+      "omitted_files": 0,
+      "required_fixes": 0
+    }
   }
 }

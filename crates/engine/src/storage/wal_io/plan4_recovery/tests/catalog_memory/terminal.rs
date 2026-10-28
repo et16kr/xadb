@@ -41,9 +41,7 @@ fn physical_busy_restores_only_the_rejected_stage() {
                 let observed = probe::diagnose(live.catalog_test_pool(), index, &mut bytes);
                 originals.push((index, observed, bytes));
             }
-            let prepared = live.prepare_catalog_commit(owner, actor, private).unwrap();
-            let bytes = prepared.frame().to_vec();
-            assert_eq!(bytes, oracle.frame("C04"));
+            let bytes = oracle.frame("C04");
             let (entered, arrived) = sync_channel(1);
             let (resume, release) = sync_channel(1);
             hook::install(core, Point::StageCallStarted, entered, release);
@@ -56,11 +54,20 @@ fn physical_busy_restores_only_the_rejected_stage() {
                         arrived.recv_timeout(Duration::from_secs(5)).unwrap();
                         assert!(hook::observe(core).read_gate_closed);
                         assert_eq!(reader.catalog_test_source_used(), stage);
+                        {
+                            let mut adapter = state.lock().unwrap();
+                            assert_eq!(adapter.mutations(), 0, "preparation is read-only");
+                            println!("C3_TERMINAL_PREPARE_EVENTS {:?}", adapter.events);
+                            // The old separate preparer ended before events.clear.
+                            // Keep the same actual stage boundary now that prepare
+                            // belongs to the synchronous call.
+                            adapter.events.clear();
+                        }
                         reader.catalog_test_competing_stage(&bytes);
                         resume.send(Resume::Continue).unwrap();
                     });
                     let error = writer
-                        .commit_catalog(owner, prepared)
+                        .catalog_commit(owner, actor, private)
                         .err()
                         .expect("actual Busy");
                     controller.join().unwrap();

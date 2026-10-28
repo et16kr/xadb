@@ -195,3 +195,32 @@ impl<W: WriterNamespace> RetentionReader<'_, '_, '_, '_, '_, '_, '_, '_, W> {
         wal.stage_verified(prefix, layout.header(), bytes).unwrap();
     }
 }
+
+/// Read-only actual Commit state; no capability or recovery source is created.
+#[derive(Debug, PartialEq, Eq)]
+pub(in crate::storage) struct CatalogCommitTestState {
+    control: [u8; 32],
+    issued: u64,
+    adopted: u64,
+    prefix: crate::storage::wal_io::WalPrefix,
+    first_write: u64,
+    q: u64,
+    epochs: (bool, u64, Vec<(u8, u64, u64)>),
+}
+impl<W: WriterNamespace> RetentionWriter<'_, '_, '_, '_, '_, '_, '_, '_, '_, W> {
+    pub(in crate::storage) fn catalog_test_commit_state(&self) -> CatalogCommitTestState {
+        let wal = self.storage.wal();
+        let visibility = self.visibility.expect("original visibility");
+        CatalogCommitTestState {
+            control: foundation::codec::content_digest(self.control.bytes),
+            issued: self.control.issued_local,
+            adopted: self.control.adopted_local,
+            prefix: wal.append.lock().unwrap().prefix,
+            first_write: wal
+                .first_write_lsn
+                .load(std::sync::atomic::Ordering::Acquire),
+            q: visibility.test_q(),
+            epochs: visibility.test_epochs(),
+        }
+    }
+}

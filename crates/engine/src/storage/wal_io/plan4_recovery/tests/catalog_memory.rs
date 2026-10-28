@@ -1192,3 +1192,6 @@ mod install_grant;
 
 #[path = "catalog_memory/terminal.rs"]
 mod terminal;
+
+#[path = "catalog_memory/commit_call.rs"]
+mod commit_call;

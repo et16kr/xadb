@@ -1,5 +1,7 @@
 # XADB 모듈 독립 개발 구조 전환 작업 계획
 
+2026-10-28 main `9c334fe`의 [Commit 준비·적용 단일 예약](../evidence/module-independence-survey-20261026.md#c2-commit-call)은 source별 runtime11/compiler4·원 N03 2PID를 통과했다. 원3개 FAIL을 보존하며 최종 독립 D1/D2 한정 수용다. CREATE/일반 floor/Row·M4/M5는 미완료다.
+
 2026-10-28 · **D2 ACCEPTED / M0–M3 완료 / M4 C0·C1·C2·C3 부분공급(C2 compact source·statement 읽기·Catalog Commit writer 창, C3 InstallGrant·TerminalWal·Prepared) / M5 Row 순수 codec·ledger 부분구현 / 전체 M4·M5 제품 인수 미완료 / Catalog Commit writer 창을 main에 통합**
 
 [개발 문서 진입점](../README.md) · [기존 병렬 정책](../policies/parallel-development-policy.md) · [저장소 배치](../policies/repository-build-plan.md) · [DEV3 작업 분해](dev3-implementation-plan.md#remaining-work) · [변경 코드 시험 지시](../../AGENTS.md)

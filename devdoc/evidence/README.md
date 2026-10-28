@@ -1,5 +1,7 @@
 # XADB 조사·실행 증거
 
+- [2026-10-28 Commit 준비·적용 단일 예약](module-independence-survey-20261026.md#c2-commit-call) — 새 동기 API·source 수명을 구현하고 source별 runtime11/compiler4·원 N03 2PID를 통과했다. 원3개 FAIL을 보존하며 최종 독립 D1/D2 한정 수용, M4/M5 미완료다.
+
 - [2026-10-28 Begin·AgingStart progress](module-independence-survey-20261026.md#c2-start-progress) — 두 시작 경로의 공유 동기 호출·원 발급 gap과 선택 비용을 검증했다. r2 compiler3/runtime5·같은 ELF native N02 PASS, r1 compile FAIL 보존. 전체 M4/M5 미완료.
 
 - [2026-10-28 Catalog rollback·terminal progress](module-independence-survey-20261026.md#c2-lifecycle-progress) — 네 lifecycle 공유 동기 공급과 원 ordinary apply view를 검증했다. r3 compiler4/runtime12·native N02 PASS, r1/r2 compile FAIL 보존, 전체 M4/M5 미완료.

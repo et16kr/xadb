@@ -435,7 +435,7 @@ fn lifecycle_cancel_keeps_original_flush_claim_exclusion() {
 
 /// Same durable CLR/owner-idle cut as the original native N02 controller.
 /// A fresh runtime is required afterward: N02 L11–16 belong to epoch3.
-fn recover_to_n02_clr_cut(images: &Images, oracle: &Oracle) -> Images {
+pub(super) fn recover_to_n02_clr_cut(images: &Images, oracle: &Oracle) -> Images {
     let directory = clone_directory(images);
     let state = directory.state();
     let after_clr = {

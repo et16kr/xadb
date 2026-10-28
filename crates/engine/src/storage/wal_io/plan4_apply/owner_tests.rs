@@ -225,7 +225,10 @@ fn disk_session_isolation_backing_and_carriers_are_accounted() {
             + live.original_core
     );
     // The census uses the largest admitted writer window with its carriers.
-    assert_eq!(live.catalog_commit, source::commit_source_peak());
+    assert_eq!(
+        live.catalog_commit,
+        source::commit_source_peak::<port::Writer>()
+    );
     assert!(live.catalog_commit >= commit.peak());
     for phase in [
         commit.preflight,

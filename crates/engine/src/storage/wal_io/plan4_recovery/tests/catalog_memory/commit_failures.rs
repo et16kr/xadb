@@ -41,10 +41,9 @@ fn io_failure(id: &str, action: port::Action, sync: bool) {
                     action,
                 });
             }
-            let prepared = live.prepare_catalog_commit(owner, actor, private).unwrap();
             let result = {
                 let (mut writer, _, _) = live.split();
-                writer.commit_catalog(owner, prepared)
+                writer.catalog_commit(owner, actor, private)
             };
             let interrupted = action == port::Action::Interrupted;
             if interrupted {
@@ -172,7 +171,6 @@ fn unwind_boundary(id: &str, point: Point) {
             let (entered, arrived) = sync_channel(1);
             let (resume, release) = sync_channel(1);
             hook::install(core, point, entered, release);
-            let prepared = live.prepare_catalog_commit(owner, actor, private).unwrap();
             std::thread::scope(|scope| {
                 let controller = scope.spawn(move || {
                     arrived.recv_timeout(Duration::from_secs(5)).unwrap();
@@ -181,8 +179,10 @@ fn unwind_boundary(id: &str, point: Point) {
                 let (mut writer, _, _) = live.split();
                 let charges = writer.catalog_test_commit_charges();
                 assert!(
-                    catch_unwind(AssertUnwindSafe(|| writer.commit_catalog(owner, prepared)))
-                        .is_err()
+                    catch_unwind(AssertUnwindSafe(
+                        || writer.catalog_commit(owner, actor, private)
+                    ))
+                    .is_err()
                 );
                 controller.join().unwrap();
                 // Unwind fences: the current window charge stays reserved and

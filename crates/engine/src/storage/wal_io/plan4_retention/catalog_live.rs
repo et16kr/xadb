@@ -1487,77 +1487,17 @@ impl<'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
             .apply_existing_catalog(owner, prepared)
     }
 
-    /// The actual Commit adapter consumes this receipt with the same original
-    /// owner and rechecks its prefix, control cut and every target stamp.
+    /// Fault fixtures may retain a preparation to corrupt its source cut. The
+    /// production entry prepares only inside the original Commit reservation.
+    #[cfg(test)]
     pub(crate) fn prepare_catalog_commit<'i>(
         &mut self,
         owner: &mut Owner<'c, 's>,
         actor: TxnRef,
         private: &'i mut [u8; PRIVATE_BYTES],
     ) -> Result<PreparedCatalog<'i, 'c, 's>> {
-        self.health()?;
-        let visibility = self
-            .catalog_visibility
-            .as_ref()
-            .ok_or_else(|| unchanged(RetentionPhase::Prepare, RetentionCause::WrongState))?;
-        if !visibility.matches_core(self.inner.pool.bound_core()) {
-            return Err(unchanged(
-                RetentionPhase::Prepare,
-                RetentionCause::BindingMismatch,
-            ));
-        }
-        let slot = self.control.ledger.slot(actor).ok_or_else(|| {
-            unchanged(RetentionPhase::Prepare, RetentionCause::MissingTransaction)
-        })?;
-        let mut terminal = None;
-        for (ordinal, cell) in self.control.ledger.jobs().iter().enumerate() {
-            let job = queue::decode_job(cell, self.inner.storage.profile().spec().namespace)
-                .map_err(queue_error)?;
-            if job.state().is_terminal() && job.source() == Some(actor) {
-                if terminal.is_some() || job.state() != JobState::TerminalLeased {
-                    return Err(unchanged(
-                        RetentionPhase::Prepare,
-                        RetentionCause::Invariant,
-                    ));
-                }
-                terminal = Some((
-                    ordinal,
-                    job.status().ok_or_else(|| {
-                        unchanged(RetentionPhase::Prepare, RetentionCause::Invariant)
-                    })?,
-                ));
-            }
-        }
-        let (terminal, status) = terminal.ok_or_else(|| {
-            unchanged(RetentionPhase::Prepare, RetentionCause::MissingTransaction)
-        })?;
-        let allocator = self
-            .inner
-            .pool
-            .target_request(0)
-            .map_err(|error| frame(RetentionPhase::Prepare, error))?;
-        let root = self.target(Plan4Page::Root)?.request;
-        let job = self
-            .target(Plan4Page::Jobs {
-                index: (terminal / 15) as u8,
-            })?
-            .request;
-        let status = request(
-            PageIdentity {
-                database: allocator.identity.database,
-                page: status.page(),
-                owner: ObjectId::new(2).expect("Status owner"),
-                owner_generation: one(),
-            },
-            PageKind::TransactionStatus,
-        );
-        self.prepare_existing_catalog(
-            owner,
-            Change::Commit { terminal },
-            Some(slot),
-            [(allocator, 0), (root, 1), (job, 2), (status, 4)],
-            private,
-        )
+        self.catalog_preparation()
+            .prepare_catalog_commit(owner, actor, private)
     }
 
     fn catalog_preparation(&self) -> CatalogPreparation<'_, 'a, 's, 'c, 'p, 'd, 'm, 'w, W> {
@@ -1596,6 +1536,84 @@ struct CatalogPreparation<'b, 'a, 's, 'c, 'p, 'd, 'm, 'w, W: WriterNamespace> {
 impl<'b, 'a, 's, 'c, 'p, 'd, 'm, 'w, W: WriterNamespace>
     CatalogPreparation<'b, 'a, 's, 'c, 'p, 'd, 'm, 'w, W>
 {
+    fn prepare_catalog_commit<'i>(
+        &self,
+        owner: &mut Owner<'c, 's>,
+        actor: TxnRef,
+        private: &'i mut [u8; PRIVATE_BYTES],
+    ) -> Result<PreparedCatalog<'i, 'c, 's>> {
+        health(self.storage, self.pool)?;
+        if self.control.pending.is_some() || self.control.population.reserved() {
+            return Err(fatal(
+                self.storage,
+                RetentionPhase::Prepare,
+                RetentionCause::Invariant,
+            ));
+        }
+        let visibility = self
+            .visibility
+            .ok_or_else(|| unchanged(RetentionPhase::Prepare, RetentionCause::WrongState))?;
+        if !visibility.matches_core(self.pool.bound_core()) {
+            return Err(unchanged(
+                RetentionPhase::Prepare,
+                RetentionCause::BindingMismatch,
+            ));
+        }
+        let slot = self.control.slot(actor).ok_or_else(|| {
+            unchanged(RetentionPhase::Prepare, RetentionCause::MissingTransaction)
+        })?;
+        let mut terminal = None;
+        for (ordinal, cell) in self.control.jobs().iter().enumerate() {
+            let job = queue::decode_job(cell, self.storage.profile().spec().namespace)
+                .map_err(queue_error)?;
+            if job.state().is_terminal() && job.source() == Some(actor) {
+                if terminal.is_some() || job.state() != JobState::TerminalLeased {
+                    return Err(unchanged(
+                        RetentionPhase::Prepare,
+                        RetentionCause::Invariant,
+                    ));
+                }
+                terminal = Some((
+                    ordinal,
+                    job.status().ok_or_else(|| {
+                        unchanged(RetentionPhase::Prepare, RetentionCause::Invariant)
+                    })?,
+                ));
+            }
+        }
+        let (terminal, status) = terminal.ok_or_else(|| {
+            unchanged(RetentionPhase::Prepare, RetentionCause::MissingTransaction)
+        })?;
+        let allocator = self
+            .pool
+            .target_request(0)
+            .map_err(|error| frame(RetentionPhase::Prepare, error))?;
+        let root = target_from_source(self.storage, Plan4Page::Root)?.request;
+        let job = target_from_source(
+            self.storage,
+            Plan4Page::Jobs {
+                index: (terminal / 15) as u8,
+            },
+        )?
+        .request;
+        let status = request(
+            PageIdentity {
+                database: allocator.identity.database,
+                page: status.page(),
+                owner: ObjectId::new(2).expect("Status owner"),
+                owner_generation: one(),
+            },
+            PageKind::TransactionStatus,
+        );
+        self.prepare_existing_catalog(
+            owner,
+            Change::Commit { terminal },
+            Some(slot),
+            [(allocator, 0), (root, 1), (job, 2), (status, 4)],
+            private,
+        )
+    }
+
     fn prepare_existing_catalog<'i, const N: usize>(
         &self,
         owner: &mut Owner<'c, 's>,
@@ -1953,6 +1971,16 @@ impl<'b, 'a, 's, 'c, 'p, 'd, 'm, 'w, W: WriterNamespace>
 impl<'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
     RetentionWriter<'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W>
 {
+    pub(super) fn prepare_catalog_commit<'i>(
+        &self,
+        owner: &mut Owner<'c, 's>,
+        actor: TxnRef,
+        private: &'i mut [u8; PRIVATE_BYTES],
+    ) -> Result<PreparedCatalog<'i, 'c, 's>> {
+        self.catalog_preparation()
+            .prepare_catalog_commit(owner, actor, private)
+    }
+
     fn catalog_preparation(&self) -> CatalogPreparation<'_, 'a, 's, 'c, 'p, 'd, 'm, 'w, W> {
         CatalogPreparation {
             storage: self.storage,
@@ -2220,7 +2248,20 @@ pub(in super::super) fn catalog_live_source_bytes<W: WriterNamespace>() -> Catal
 
 /// Commit's caller plus the existing N9 common preparation closure. Its
 /// returned PreparedCatalog still owns nine request/stamp cells even for N4.
-#[cfg(test)]
-pub(in super::super) fn commit_prepare_source_observation<W: WriterNamespace>() -> usize {
-    ordinary_caller_source_bytes() + catalog_live_source_bytes::<W>().prepare
+pub(in super::super) fn commit_prepare_source_bytes<W: WriterNamespace>() -> usize {
+    use std::mem::size_of;
+    let common = ordinary_caller_source_bytes() + catalog_live_source_bytes::<W>().prepare;
+    let (health, _, _) = lifecycle::start_selection_source_phases::<W>();
+    let select = ordinary_caller_source_bytes()
+        + size_of::<CatalogPreparation<'_, '_, '_, '_, '_, '_, '_, '_, W>>()
+        + size_of::<queue::JobView<'_>>()
+        + queue::source_bytes();
+    // View result, writer forward result and the synchronous caller match;
+    // the common preparer already accounts for its own return carriers.
+    common.max(health).max(select)
+        // The private writer forwarder owns another by-value actor until the
+        // borrowed view returns; the public actor is charged in every window.
+        + size_of::<TxnRef>()
+        + 2 * size_of::<Result<PreparedCatalog<'_, '_, '_>>>()
+        + 4 * size_of::<&()>()
 }

@@ -2351,3 +2351,71 @@ r2 source5763파일 inventory SHA-256 `55742f7b9857424f4aeb4307f19579f5f2fa9dd63
 r1/r2 원 로그·실패/미실행·source/file hash·결과·native database snapshot을 `artifacts/module-c2-start-progress-20261028`에 보존했고 각 run의 export/target/ELF를 삭제했다. 원 production PASS를 새 source PASS로 옮기거나 완료 시험을 반복하지 않았다. 최종 문서·전체 diff 독립 검토는 아래에 수신한다.
 
 독립 `/root/source_admission_review`는 변경16/16파일(Rust6·fixture/manifest4·문서/JSON6), 생략0·검토율100%로 **D1/D2 한정 수용·필수 수정0**을 확인했다. source5763·57개 evidence hash·원 admission24개·compiler/runtime/native3PID·cut/base/reaped와 삭제 상태를 대조했다. 검토자는 build/test/native/verifier를 재실행하지 않았다. `review-final.json` SHA-256은 `ec52ca0b09e04df4fc6446338d081a6613aec843f30aa9a5bcfe684b490bbdc8`다. 후속 변경은 이 receipt/채택 metadata이며 제품/시험/fixture는 r2와 같다. 변경 파일 rustfmt와 diff whitespace를 확인했고 문서 verifier·workspace 검사·push는 실행하지 않았다.
+
+<a id="c2-commit-call"></a>
+## main의 Commit 준비·적용 단일 예약 — 2026-10-28
+
+main `9c334fe`에서 [COMMIT-CALL-001](../contracts/dev3-module-boundaries.md#commit-call)을 진행한다. 작성/계약/통합 `/root`, 독립 `/root/source_admission_review`. CREATE는 shared atomic pair claim 선행이 필요하므로 별도 남기고 Commit의 외부 Prepared gap을 먼저 닫는다. 새 제품 API와 native producer를 연결하고 과거 분리 fault adapter는 cfg(test) 한정으로 보존한다.
+
+사전 D2에서 actor/private의 전체 수명 비용을 지적받았다. 원 TxnRef를16B로 가정한 초기 예상은 폐기하고 actual sizeof로 네 창에 모두 계수한다. 기존34B 여유에 의존하지 않는다. 원 prefix 검산을 실제 block에서 종료하여 Pending/publish의 해당 값만 제거하고 stage/preflight 계수와 원 오류 순서는 유지한다. 독립 검토는 이 좁은 대안을 한정 수용했다. 원 preparation의 동시 실제 flush와 새 API Full+Pending을 검증한다.
+
+실행 전 [manifest](../../tests/fixtures/dev3-module-c2/commit-call/manifest.json)의 runtime11/compiler4/nativeN03 1회를 diff별 동결했다. source/상계3, 새 entry3(성공/Capacity/역할/단계/flush·두 unwind의 원 N02 memory 복구·세 Fatal), 새 API의 원 Full overlap1·physical Busy1·stage unwind1·write-before/sync-after error2다. 전체1800초/compiler420초/case45초/native30초/admission600초/로그8MiB/stack32MiB. 기존 완료 사례·전체 wrapper·문서 verifier·push는 실행하지 않는다. build/export/ELF는 결과·hash 보존 뒤 삭제하며 원 evidence는 보존한다. 위는 실행 전 NOT_RUN 계획이며 실제 결과는 후속 기록한다.
+
+사전 구현 검토에서 private writer preparation forwarder의 by-value actor 하나가 빠진 것을 지적받아 준비 stage에 `size_of<TxnRef>`를 추가했다. public actor는 원래 네 창에 유지하며 반환한 helper actor는 stage에서만 센다. 실행 전 보완이며 실행 결과는 아직 없다.
+
+r1 production/Clippy/build·compiler4·source3는 PASS했다. MCC01의 Prepared 뒤 flush가 바로 성공한다는 새 시험 예상이 틀려 실제 Prepare/Frame(Stale)/Unchanged 뒤 Pending 대기 timeout으로 FAIL했다. 원 `stage_catalog`의 Intent/WAL 전 full-stamp 검산은 recLSN도 비교하므로 제품 동작이 맞다. 원 실패/로그/identity를 보존하고 export/target/ELF를 삭제했다. 독립 검토는 제품 검산을 바꾸지 않고 exactStale·flush 후 WAL/control/epochs/Q 불변·source0/gateopen/pins0/healthy와 고정 fresh prepare1회 C04를 검산하는 D2 정정을 수용했다. private scratch는 이미 작성했으므로 호출전 불변을 주장하지 않는다.
+
+r2는 cfg(test) 관측/시험과 manifest만 보완한다. 완료한 production/compiler4/source3는 원r1 source 증거로만 보존하며 반복하지 않는다. 미완료 runtime8 및 nativeN03을 선택한다. native admission은 r1 source3의 원 숫자/로그와 독립 product/type/census 동일성 검토를 actual r2 ELF에 연결하는 파생 admission이며 r2에서 같은 ELF source3 시험을 새 실행한 것으로 쓰지 않는다.
+
+r2 Clippy/build와 MCC01의 exactStale→고정 fresh prepare1회/C04, MCC02의 두 준비 unwind/원N02 memory 복구가 PASS했다. MCC03 첫 Preparing 오류 종류를 lifecycle의 Frame(Fenced)로 예상한 시험은 FAIL했다. Commit의 원 deep `health`는 storage를 먼저 확인하므로 Storage(Fenced)가 정답이며 제품 변경은 필요하지 않다. r3는 이 expectation을 실제 원 오류로 교정하고 Prepared의 원 Wal(Observe,Fenced)도 exact 검산한다. 원r2 FAIL/로그와 두 PASS의 source를 보존하고 export/target/ELF를 삭제했다. 완료 MCC01/02를 반복하지 않고 잔여 runtime6과 nativeN03만 실행한다.
+
+r3 MCC03 exact Storage/Wal/Census Fenced와 새 API MCW01의 Full 동시 조회/창 전환은 PASS했다. Busy 시험은 정확한 Stage/Wal(Busy)/Unchanged와 원 자원/control/파일 이미지 검산 뒤, resident per-frame 후속 비교 전에 `events.is_empty`에서 FAIL했다. 원 시험은 분리 준비 뒤 events를 지웠으나 새 동기 entry는 준비의 read/metadata I/O까지 포함했기 때문이다. 독립 검토에 따라 r4는 StageCallStarted에서 준비 이벤트의 mutation0을 검산·로그로 보존한 뒤 같은 원 stage 구간의 I/O0를 확인한다. 원 WAL/페이지/control/epoch/source 검산은 유지한다. r3 두 PASS·원FAIL/identity를 보존했고 heavy artifact를 삭제했다. r4는 미완료 Busy/MF02/MF03/MF08 네 사례와 nativeN03만 선택한다. r2의 첫 오류 종류는 로그에 미출력이므로 정적 health 순서에 근거한 원인 분석이었고, r3 exact assertion으로 확인했다.
+
+검증 해석 보완: frozen manifest의 MF02 이유에 포함된 current-build recovery는 MF02 자체의 실행 결과가 아니다. 원 StageCallStarted unwind 분기는 복구를 실행하지 않는다. 새 준비 unwind 복구는 MCC02의 두 실제8→10→16 memory 경로, after-sync UNKNOWN native 복구는 N03에 배정했다. 예전 `dev3-module-c3/prepared/commit_twice.rs`의 E0382는 원 source 증거로 남기고, 현재 production의 해당 외부 입구 자체 부재는 새 `old_writer_absent` E0599가 검산한다. 과거 fixture의 E0382를 현재 결과로 주장하지 않는다.
+
+### source별 최종 실행과 한정 결과
+
+r4는 Clippy/test build와 잔여 Busy/MF02/MF03/MF08 네 사례를 통과했다. 준비 중 read/metadata 이벤트는 mutation0이고 실제 Busy stage의 I/O0도 유지됐다. 독립 actual source/ELF admission 뒤 원 N03을 한 번 실행하여 PASS했다. 원 producer PID119388은 LSN9 `A_CREATE_UNKNOWN_AFTER_SYNC`에서 외부 kill(-9), recover PID119390은 LSN15에서 exit0이었다. 12.435492초, UNKNOWN 정확히1·ACK 파일 없음·원 cut/reaped/PID 부재를 확인했다. 이는 두 PID의 UNKNOWN 복구이며 N02의 세 PID 재진입 시험으로 표현하지 않는다.
+
+| 실행 | 그 source에서 실제 PASS | 보존한 전체 실행 상태·범위 |
+| --- | --- | --- |
+| r1 | production/Clippy/build·compiler4·source3 | MCC01 잘못된 flush 성공 기대 FAIL;64.073초 |
+| r2 | Clippy/build·MCC01/02 | MCC03 오류 종류 기대 FAIL;63.639초 |
+| r3 | Clippy/build·MCC03/MCW01 | Busy 관측 구간 기대 FAIL;45.617초 |
+| r4 | Clippy/build·Busy/MF02/MF03/MF08·nativeN03 | 선택 범위 PASS;278.657초 |
+
+runtime11·compiler4의 선택 범위는 위 네 source에 나뉘어 완료했다. r4 ELF에서11개를 새로 전수 실행한 결과가 아니다. r1 이후 제품 코드/자료형/source 식/원 source3 본문은 동일하고 delta는 `commit_call.rs`, cfg(test) 관측 `recovery_observation_tests.rs`, `terminal.rs`, manifest 네 파일뿐이다. 원 r1 source3 로그를 byte 그대로 복사하고 현재 type/census 동일성을 독립 검토한 파생 admission을 적용했다. `r4/catalog-source-admission/result.json`의 source3 현재 실행 수는0이다. r3 runner의 원 "r2 ELF" 문구도 보존하며 이 절의 source 구분을 따른다. 완료한 사례 반복0, 원3개 FAIL·중단 후 NOT_RUN과 source identity는 소급 변경하지 않았다.
+
+r1 source3의 원 실행 값은 다음과 같다. 이는 source 상계이며 실제 stack/RSS 측정이 아니다. r4에는 위 동일성 검토로 연결된다. actor/private 입력56B를 네 창 모두 계수하고, private 준비 forwarder의 actor는 stage에 추가했다. 실제 block으로 종료한 prefix80B 때문에 Pending+Full은 기존보다24B 감소했다. 원 출력의 `carriers=stage-raw_stage`는 새 준비 max 증가분도 포함하므로 순수 carrier 크기로 해석하지 않는다.
+
+| source 항목(B) | memory | native |
+| --- | ---: | ---: |
+| shared | 20192 | 20328 |
+| stage / shared+stage | 38098 / 58290 | 39122 / 59450 |
+| pending / install / publish | 10106 / 23898 / 4644 | 10106 / 23898 / 4644 |
+| Full / shared+pending+Full | 34020 / 64318 | 35044 / 65478 |
+| shared+publish+Full | 58856 | 60016 |
+| live / recovered peak | 61894 / 63270 | 62470 / 63846 |
+| split ports / split total | 192 / 24824 | 192 / 24824 |
+
+한도65536B는 유지한다. 두 resident와 Pending을 겹친65570/65706B는 여전히 admission 거절 대상이며 새로 허용하지 않았다. Prepared2024B/image568B, 기존 lifecycle fixed42198/42638B도 유지한다.
+
+artifact는 `artifacts/module-c2-commit-call-20261028/r1`–`r4`다. 각 실행의 source5769 파일별 inventory, runner, compiler/runtime 로그와 결과를 보존한다. full export6288 manifest와 native 로그/결과는 해당 단계까지 완료한 r4에만 존재한다. 각 실행의 export/target/ELF는 결과 기록 뒤 삭제했고 현재 부재를 확인했다. 과거 evidence·native snapshot은 보존했다.
+
+| 실행 | source SHA-256 | ELF SHA-256 | result SHA-256 |
+| --- | --- | --- | --- |
+| r1 | `f7ab614afd1b6fecf53ec5c53313a873f46fcb44c4c2f044925d9d940b0b6f7e` | `379f1e3ae7c25937db60cb58891d1729b4b6e278a40ccb8d72f9b89b8ba3d001` | `acb86fd021b49ff91f2dfa700102206942077e07a7627ebfbc2b0cabe957199a` |
+| r2 | `8a6fef0d6a337c9b1959e9d08a82707fd848617d0b3231d66da7b2b6b1e1825e` | `f541ae1ea2f461f95a799e20db023ba183d6ea95ced2672ef9f02cf07a5c04c9` | `3cfa88e95a2f8a43d3a107575180cb86727e6f99e2df051744ad8be7e777952d` |
+| r3 | `5c7c722d5de126649e0e139fa74714c8955ab85db8f9751094d853d4ac820b6a` | `fb8145d5315d4d5805db5cd4a21793aba4d525d2d7f05f19f82a2edfd9c1794e` | `ab5b7aecc64aa49ab134f839024c87c59815738cf8d33cdd62c7bb31654b8af4` |
+| r4 | `849cce8cee76a3a8b2ecb83608213d76f99e675b2b09dd80d1d4d653834f4f01` | `6c2bf3fdf941bf7a96e73b126d250254371c87e98125abc113222db81afacdc0` | `1eaaa60c5d2f1a417e3d614f1a6a8f88312b85fd9733aa989c012b5bfde18e23` |
+
+- r1 파일별 source inventory SHA-256: `3ad20fbc30a61597187a5ecd09973a17eb19e8f0d47cc4d2914e08c9c10ddad6`.
+- r2 파일별 source inventory SHA-256: `a2e554bbebb0f943ff7b79ae4e71ce745be667d66d4f6cadc0b211c6f5fbe2a7`.
+- r3 파일별 source inventory SHA-256: `194b0ec09b491a08cf6e88b96d7eec782a9908167bdfd6e42d9a4ec66b0012bf`.
+- r4 파일별 source inventory SHA-256: `df39d777e0f23bba3c2b1799533f6809abd5a3c81be21de971f871743074c093`.
+- r4 full export6288 manifest SHA-256: `5c64f8089f7d1647b3bf99df6ed5b73a916466fac4145285628169980f9ea5b4`.
+- r4 manifest/runner SHA-256: `cd66371d011a61fa2c3893ce40c3dc07014b1695fe6232bd3fa5795c32517b77` / `0ae6a8749d853e0d3e0789acc6b27787a3b742cb7c90282d2fc034780fe228cd`.
+- 독립 native admission SHA-256: `a31454ad703e95985675547083567975c22f7b7db5f25da2ae3e5d0a2623716f`; 현재24·원 source33 evidence hash를 분리 기록했다.
+- 원 N03 result SHA-256: `34118938145f748260f311aeecc4493347e05c8adbde348b7d3dfaf59de3aeba`. CURRENT/base SHA-256: `01b4ceb7fdc68c1d6ef63f5efb2edd29de43b6b3b5cb9845c20872b4e34a5125` / `d7ef8013e4acf0aa81ee523b7f5fb9496c8dddc39b74431e1e745d24f9ed38da`.
+
+독립 `/root/source_admission_review`의 최종 receipt `artifacts/module-c2-commit-call-20261028/review-final.json` SHA-256 `88f71a30f49ed7b471aa344f4e1a659e3b9c09615e87da41ea50a75bcb0d278a`는 `ACCEPTED_LIMITED_D1_D2`다. 전체26파일(Rust15·fixture5·문서6) 26/26·생략0·100%, evidence hash67을 검토했고 필수 수정0이다. 검토자 build/test/native/verifier 실행0·제품/시험 편집0이며 총괄이 반영을 확인했다. 한정 구현·실행은 Commit의 외부 Prepared gap을 닫지만 CREATE shared atomic pair claim, 일반 entry/return floor, 다른 writer/Row 연결·C3–C5·M4/M5 제품 인수는 미완료다. 문서 verifier·push·전체 workspace/하위 wrapper는 실행하지 않았다.

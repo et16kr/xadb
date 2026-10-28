@@ -1310,6 +1310,19 @@ source 상계는 deep health/registry, Root ReadTargets+Root decode/Job scan, St
 
 [manifest](../../tests/fixtures/dev3-module-c2/start-progress/manifest.json)의 compiler3·runtime5(source3·새 shared start1·기존 MC03 gap/recovery1)·같은 ELF native N02 한 번을 선택한다. 총1800초/compiler420초/runtime45초/native 원30초/admission600초/로그8MiB/stack32MiB를 실행 전에 고정한다. 새 helper 관측은 실제 Aging/Begin 성공의 Preparing/Prepared/Completed를 정지시키고 원 initial/R01 oracle과 gate/charge 연속성을 검산하며 기본 fixture 실행은 유지한다. 완료한 무변경 lifecycle/회수 wrapper는 반복하지 않는다. CREATE admission·Commit Prepared lifetime·일반 entry/return floor·Row/C3–C5·M4/M5는 미완료다.
 
+<a id="commit-call"></a>
+#### XADB-MODULE-COMMIT-CALL-001 — Commit 준비부터 같은 source 예약
+
+2026-10-28 · D2 · main `9c334fe` · 작성/계약/통합 `/root`, 독립 `/root/source_admission_review`. [기존 writer 창](#writer-progress)의 외부 Prepared 보유 gap을 닫는 한정 후속이다. 채택/실행은 [증거](../evidence/module-independence-survey-20261026.md#c2-commit-call)로 구분한다. 일반 entry/return floor·CREATE/Row·M4/M5는 남는다.
+
+제품 `MutationPort::catalog_commit(owner, actor, private)`는 guardless storage/pool origin 검산→원 terminal read gate→원 CommitProgress source→원 deep health/Commit 선택/준비→같은 `commit_admitted`의 stage/Pending/Drain/install/publish→checked source/gate cleanup을 수행한다. 원 preparation body는 private borrowed view로 이전하며 제품에서 Prepared를 반환하지 않는다. 과거 source/prefix/stamp 변조 fixture의 분리 준비/적용은 cfg(test)에서만 보존하고 production compiler 음성 사례로 두 구 입구의 부재를 확인한다. 이는 native/public 제품 admission 증거와 구별한다.
+
+준비의 health/Job scan/common closure와 실제 반환 carrier를 stage의 직렬 max에 포함한다. 새 actor/private 인자는 마지막 사용으로 할인하지 않고 네 창 모두 `size_of<TxnRef>+size_of<&mut private>`를 추가한다. 원 `WalPrefix` 취득/Prepared 검산은 실제 작은 block에서 끝내므로 Pending/publish에서만 해당 값을 제거하고 preflight/stage의 기존 비용은 유지한다. 단순 wrapper나 last-use 할인보다 작은 실제 수명 변경이며 한도 확대·새 ledger·port field는 없다. 원 epoch/control 검산·authentic Pending·Drain·Q 공개·Fatal/UNKNOWN/cleanup 우선순위는 유지한다.
+
+원 유한 read operation은 Commit 전 checked 반환하고 장기 snapshot을 강제 종료하지 않는다. Commit 준비 중에도 disjoint 원 MaintenancePort를 사용할 수 있으며 전체 호출이 flusher를 빌리지 않는다. Prepared 뒤 실제 Root flush의 full-stamp Stale/Unchanged와 WAL/control/Q 무효과·checked cleanup, 사전 고정한 새 준비1회의 C04 성공, 새 API의 Full+Pending 합을 검증한다. guardless health/역할 뒤 source Capacity가 깊은 미관측 오류보다 앞설 수 있음은 [ADMISSION-002](#operation-source-admission)의 내부 오류 순서를 따른다.
+
+실행 전 [commit-call manifest](../../tests/fixtures/dev3-module-c2/commit-call/manifest.json)에 runtime11/compiler4/nativeN03 한 번과 총1800초/compiler420초/case45초/native30초/admission600초/로그8MiB/stack32MiB를 동결한다. 새 준비 두 unwind와 세 Fatal 경계, 실제 prepared flush·Full overlap·원 stage rejection/attempted-error를 구분한다. 원 corpus/controller와 자원 한도는 유지한다. source 식/원 gate/WAL/효과 의미가 바뀌거나 필수 상계가 초과하면 이 결정을 재검토한다.
+
 <a id="common-deliveries"></a>
 ## 7. 유한한 공통 공급과 C0/C 인계
 

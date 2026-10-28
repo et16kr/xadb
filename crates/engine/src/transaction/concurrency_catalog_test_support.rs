@@ -7,6 +7,9 @@ pub(crate) use test_support::Resume;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub(crate) enum Point {
+    CommitPreparing,
+    CommitPrepared,
+    CommitCompleted,
     StageCallStarted,
     Pending,
     Durable,

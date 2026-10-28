@@ -536,7 +536,7 @@ fn catalog_commit_windows_fit_beside_admitted_readers() {
         );
         // The production wait bound covers the measured wait adapter closure.
         assert!(wait >= measured_wait);
-        assert_eq!(commit_source_peak(), stage.max(install));
+        assert_eq!(commit_source_peak::<W>(), stage.max(install));
         println!(
             "COMMIT_WINDOWS_{kind} shared={shared} stage={stage} pending={pending} install={install} publish={publish} raw={raw_stage}/{raw_pending}/{raw_install}/{raw_publish} carriers={} full={full} resident={resident} stage_total={} install_total={} pending_full={} publish_full={} pending_two_resident={}",
             stage - raw_stage,

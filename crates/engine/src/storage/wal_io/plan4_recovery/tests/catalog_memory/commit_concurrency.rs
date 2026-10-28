@@ -707,7 +707,6 @@ fn catalog_commit_read_gate_and_writer_windows() {
             let actor = create_forward(
                 live, owner, flusher, status, undo, private, &oracle, state, 1,
             );
-            let prepared = live.prepare_catalog_commit(owner, actor, private).unwrap();
             let (captured, capture_arrived) = sync_channel(1);
             let (read_resume, read_release) = sync_channel(1);
             hook::install(core, Point::LookupCaptured, captured, read_release);
@@ -838,7 +837,7 @@ fn catalog_commit_read_gate_and_writer_windows() {
                         late.check_idle().unwrap();
                         late_snapshot.release_checked().unwrap();
                     });
-                    writer.commit_catalog(owner, prepared).unwrap();
+                    writer.catalog_commit(owner, actor, private).unwrap();
                     controlling.join().unwrap();
                     assert_eq!(writer.catalog_test_source_used(), 0);
                 });

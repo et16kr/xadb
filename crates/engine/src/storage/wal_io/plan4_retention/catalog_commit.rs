@@ -8,11 +8,7 @@ use crate::transaction::concurrency::catalog_test_support::{
     Point as CatalogPoint, hit as catalog_hook,
 };
 use crate::{
-    storage::{
-        page::PageKind,
-        retention_page::catalog as queue,
-        semantic_catalog::{Observation, Operation},
-    },
+    storage::{page::PageKind, retention_page::catalog as queue, semantic_catalog::Observation},
     transaction::concurrency::{InstallationKey, PageConcurrency},
 };
 
@@ -57,6 +53,89 @@ impl<'c, 's> CatalogCommitInstalled<'c, 's> {
 }
 
 impl<'s, 'c, W: WriterNamespace> RetentionWriter<'_, '_, 's, 'c, '_, '_, '_, '_, '_, W> {
+    /// Prepare and commit inside one original source reservation. The private
+    /// preparation cannot escape between selection and the authentic stage.
+    pub(crate) fn catalog_commit(
+        &mut self,
+        owner: &mut Owner<'c, 's>,
+        actor: crate::storage::transaction_record::TxnRef,
+        private: &mut [u8; crate::storage::semantic_catalog::PRIVATE_BYTES],
+    ) -> Result<Observation> {
+        let storage = self.storage;
+        let _unwind = storage.session_fence().unwind_guard();
+        // Guardless checks precede admission; original deep health and ledger
+        // validation execute in the private preparer after source reservation.
+        storage.health().map_err(|error| {
+            fatal(
+                storage,
+                RetentionPhase::Prepare,
+                RetentionCause::Storage(error),
+            )
+        })?;
+        self.pool
+            .check_retention_entry_health()
+            .map_err(|error| frame(RetentionPhase::Prepare, error))?;
+        if !self
+            .pool
+            .uses_storage_origin(&storage.binding, storage.session_fence())
+        {
+            return Err(fatal(
+                storage,
+                RetentionPhase::Prepare,
+                RetentionCause::BindingMismatch,
+            ));
+        }
+        let mut gate = Some(
+            owner
+                .close_reads_for_terminal(self.pool.bound_core())
+                .map_err(|error| RetentionError {
+                    phase: RetentionPhase::Prepare,
+                    cause: RetentionCause::Concurrency(error),
+                    effect: error.effect,
+                })?,
+        );
+        let reopen =
+            |gate: &mut Option<crate::transaction::concurrency::TerminalReadGate<'c, 's>>| {
+                gate.take().map_or(Ok(()), |gate| {
+                    gate.reopen_checked().map_err(|error| RetentionError {
+                        phase: RetentionPhase::Census,
+                        cause: RetentionCause::Concurrency(error),
+                        effect: error.effect,
+                    })
+                })
+            };
+        let mut source = match source::OperationSourceAdmission::catalog_commit(
+            self.isolation,
+            &self.commit_charges,
+            gate.as_ref().expect("closed read gate"),
+        ) {
+            Ok(source) => source,
+            Err(error) => return merge(Err(RetentionError::from(error)), reopen(&mut gate)),
+        };
+        #[cfg(test)]
+        catalog_hook(self.pool.bound_core(), CatalogPoint::CommitPreparing);
+        // A consuming match ends the preparation Result before entering the
+        // continuation. actor/private remain charged in every writer window.
+        let result = match self.prepare_catalog_commit(owner, actor, private) {
+            Ok(prepared) => {
+                #[cfg(test)]
+                catalog_hook(self.pool.bound_core(), CatalogPoint::CommitPrepared);
+                let visibility = self
+                    .visibility
+                    .expect("private preparer checked visibility");
+                self.commit_admitted(owner, prepared, visibility, &mut source, &mut gate)
+            }
+            Err(error) => Err(error),
+        };
+        #[cfg(test)]
+        catalog_hook(self.pool.bound_core(), CatalogPoint::CommitCompleted);
+        let source_cleanup = source.finish_checked().map_err(RetentionError::from);
+        merge(merge(result, source_cleanup), reopen(&mut gate))
+    }
+
+    /// Original separated-entry fault adapter only. No production caller can
+    /// construct or retain Commit preparation outside the synchronous entry.
+    #[cfg(test)]
     pub(crate) fn commit_catalog(
         &mut self,
         owner: &mut Owner<'c, 's>,
@@ -65,7 +144,7 @@ impl<'s, 'c, W: WriterNamespace> RetentionWriter<'_, '_, 's, 'c, '_, '_, '_, '_,
         let storage = self.storage;
         let _unwind = storage.session_fence().unwind_guard();
         health(storage, self.pool)?;
-        if prepared.operation() != Operation::Commit {
+        if prepared.operation() != crate::storage::semantic_catalog::Operation::Commit {
             return Err(unchanged(
                 RetentionPhase::Prepare,
                 RetentionCause::WrongState,
@@ -127,11 +206,13 @@ impl<'s, 'c, W: WriterNamespace> RetentionWriter<'_, '_, 's, 'c, '_, '_, '_, '_,
         gate: &mut Option<crate::transaction::concurrency::TerminalReadGate<'c, 's>>,
     ) -> Result<Observation> {
         let storage = self.storage;
-        let prefix = storage
-            .wal()
-            .prefix()
-            .map_err(|e| fatal(storage, RetentionPhase::Prepare, RetentionCause::Wal(e)))?;
-        prepared.check(owner, self.pool, self.control, prefix)?;
+        {
+            let prefix = storage
+                .wal()
+                .prefix()
+                .map_err(|e| fatal(storage, RetentionPhase::Prepare, RetentionCause::Wal(e)))?;
+            prepared.check(owner, self.pool, self.control, prefix)?;
+        }
         if prepared.targets().len() != TARGETS {
             return Err(unchanged(
                 RetentionPhase::Prepare,
@@ -523,7 +604,6 @@ fn publish_window_source_bytes() -> usize {
     use std::mem::size_of;
     let parent = size_of::<CatalogCommitImage<'_, '_, '_>>()
         + visibility::epoch_commit_carriers()
-        + size_of::<crate::storage::wal_io::WalPrefix>()
         + size_of::<WalRequirement<'_>>()
         + size_of::<InstallationKey>()
         + size_of::<crate::storage::session_fence::UnwindFence<'_>>()
@@ -559,7 +639,6 @@ pub(in super::super) fn pending_window_parts() -> [usize; 3] {
     use std::mem::size_of;
     let parent = size_of::<CatalogCommitImage<'_, '_, '_>>()
         + visibility::epoch_commit_carriers()
-        + size_of::<crate::storage::wal_io::WalPrefix>()
         + size_of::<WalRequirement<'_>>()
         + size_of::<InstallationKey>()
         + size_of::<crate::storage::session_fence::UnwindFence<'_>>()
@@ -820,7 +899,7 @@ pub(in super::super) fn phase_source_observations<W: WriterNamespace>()
         ("pending_image", image),
         (
             "prepare_common_nine",
-            super::catalog_live::commit_prepare_source_observation::<W>(),
+            super::catalog_live::commit_prepare_source_bytes::<W>(),
         ),
         ("pre_stage", pre_stage),
         ("stage_return", stage),
@@ -862,7 +941,7 @@ mod tests {
         );
         assert!(shared + phases.peak() <= 65_536);
         // The census uses the largest admitted writer window with its carriers.
-        assert_eq!(live.catalog_commit, source::commit_source_peak());
+        assert_eq!(live.catalog_commit, source::commit_source_peak::<W>());
         assert!(live.catalog_commit >= phases.peak());
         assert!(live.peak <= 65_536 && live.metadata <= 196_608 && live.whole <= 262_144);
         assert!(

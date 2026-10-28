@@ -1,5 +1,7 @@
 # 현재 구현
 
+2026-10-28 [C2 Commit 준비·적용 단일 예약](../evidence/module-independence-survey-20261026.md#c2-commit-call): 외부 Prepared 보유 경로를 닫고 준비부터 원 Pending/Drain/publish까지 source를 유지한다. source별 runtime11/compiler4·원 N03 2PID PASS, 원3개 FAIL 보존·최종 독립 D1/D2 한정 수용다. CREATE/일반 floor/Row·M4/M5는 미완료다.
+
 2026-10-28 [C2 Begin·AgingStart progress](../evidence/module-independence-survey-20261026.md#c2-start-progress): 두 시작 경로를 원 gate/source의 동기 MutationPort로 공급하고 원 발급 gap·deep health·Root/Status 선택을 유지했다. r2 compiler3/runtime5/native N02(3PID) PASS·r1 compile FAIL을 보존하며 shared+fixed memory62390B/native62966B, recovered63270B/63846B다. CREATE admission·일반 floor·Commit Prepared lifetime·Row와 전체 M4/M5는 미완료다.
 
 2026-10-28 [C2 Catalog lifecycle progress](../evidence/module-independence-survey-20261026.md#c2-lifecycle-progress): RollbackStart/AbortEnd/CancelReserved/ReleaseRole을 원 gate/source의 동기 MutationPort로 공급했다. 원 flusher borrow·quiescence·ordinary apply를 유지하며 r3 compiler4/runtime12/native N02(3PID) PASS·r1/r2 compile FAIL을 보존한다. shared+fixed memory62390B/native62942B·port192B이며 일반 floor·Begin/Aging/CREATE·Row와 전체 M4/M5는 미완료다.

@@ -464,9 +464,6 @@ impl Worker<'_> {
             drive_flush(live, flusher, Some(&target));
             panic!("required before-home crash returned");
         }
-        let prepared = live
-            .prepare_catalog_commit(owner, actor(epoch, generation), private)
-            .unwrap();
         if self.case == "N03" {
             assert_eq!(epoch, 1);
             native::arm_catalog_sync_after_error(
@@ -476,7 +473,7 @@ impl Worker<'_> {
         }
         let result = {
             let (mut writer, _, _) = live.split();
-            writer.commit_catalog(owner, prepared)
+            writer.catalog_commit(owner, actor(epoch, generation), private)
         };
         if self.case == "N03" {
             let error = match result {

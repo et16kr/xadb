@@ -1,0 +1,106 @@
+{
+  "scope": "Synchronous Catalog Commit preparation through original stage/Pending/install/publish source; CREATE/general floor/Row/M4/M5 remain incomplete",
+  "baseline_commit": "9c334fe",
+  "budget": {
+    "total_seconds": 1800,
+    "compiler_seconds": 420,
+    "case_seconds": 45,
+    "output_bytes": 8388608,
+    "rust_min_stack": 33554432,
+    "native_admission_seconds": 600
+  },
+  "compiler_tests": [
+    {
+      "name": "synchronous",
+      "path": "synchronous.rs",
+      "bytes": 443,
+      "sha256": "1889164fa2eb53d7ffcffb9a1216cd7cf9dce57145a198deecfa809ba3f15a10",
+      "expected_code": null,
+      "primary_line": null
+    },
+    {
+      "name": "private_preparation",
+      "path": "private_preparation.rs",
+      "bytes": 451,
+      "sha256": "57f729e3e9b7474220257cb26adf9d58d74a1f8462a46897fba50a0a5ca0e381",
+      "expected_code": "E0624",
+      "primary_line": 10
+    },
+    {
+      "name": "old_writer_absent",
+      "path": "old_writer_absent.rs",
+      "bytes": 443,
+      "sha256": "7e91ab98c7fdaa0c9dd06cdaf4deaeec719077b6587517c221668049cfdd5181",
+      "expected_code": "E0599",
+      "primary_line": 10
+    },
+    {
+      "name": "old_bound_absent",
+      "path": "old_bound_absent.rs",
+      "bytes": 443,
+      "sha256": "7ef1ca44c05f47ad02d329f6f4600b506e433f0c201ae8ce010d03c2ada4ad75",
+      "expected_code": "E0599",
+      "primary_line": 10
+    }
+  ],
+  "runtime_tests": [
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::source::tests::catalog_commit_windows_fit_beside_admitted_readers",
+      "reason": "new prepare-stage max; actual actor/private all-window carrier and ended prefix; Full/Pending memory/native sum"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::create_pair::catalog_commit::tests::consumed_preparation_has_bounded_pending_image",
+      "reason": "changed Commit/source graph and fresh/recovered resource bounds"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::owner_tests::cached_catalog_charges_count_exclusive_split_and_live_ports",
+      "reason": "fixed split calculation and no port growth from new prepare-stage bound"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::commit_call::commit_call_capacity_roles_phases_and_prepared_flush",
+      "reason": "new synchronous entry: Capacity/roles/MissingTransaction; exact Prepared flush -> pre-stage Stale/Unchanged with WAL/control/epochs/q unchanged and source0; one planned fresh prepare -> C04 and continuous phase charges"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::commit_call::commit_preparation_unwind_recovers_original_prefix",
+      "reason": "two new preparation cuts preserve charge/fence and exact N02 memory epoch2/3 recovery"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::commit_call::commit_preparation_and_cleanup_fatal_preserve_charge",
+      "reason": "new Preparing/Prepared/Completed fatal precedence and retained source obligations"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::commit_concurrency::catalog_commit_read_gate_and_writer_windows",
+      "reason": "new actual entry waits admitted read then stage/Pending+Full/Drain/install/publish; original C04"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::terminal::physical_busy_restores_only_the_rejected_stage",
+      "reason": "new actual entry preserves authentic pre-write stage rejection and original source/intent cleanup"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::commit_failures::catalog_mf02_commit_stage_call_unwind",
+      "reason": "changed outer entry and lexical prefix boundary preserve staged unwind/fence and current-build recovery"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::commit_failures::catalog_mf03_commit_write_before_error",
+      "reason": "new actual entry preserves attempted-effect error and charge"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::commit_failures::catalog_mf08_commit_sync_after_error",
+      "reason": "new actual entry preserves durable UNKNOWN and no ACK"
+    }
+  ],
+  "native_tests": [
+    {
+      "case": "N03",
+      "reason": "actual producer uses new synchronous Commit; original N03 after-sync UNKNOWN and recovery (2 PID), same ELF, one attempt",
+      "controller": "scripts/dev3_catalog_native.py",
+      "wall_seconds": 30
+    }
+  ],
+  "revision_notes": {
+    "r1": "Original build/compiler4/source3 PASS and MCC01 wrong flush-success expectation FAIL preserved",
+    "r2": "cfg(test) correction and read-only observation only; exact Stale/Unchanged then one planned fresh prepare; only remaining runtime8, no completed case repetition",
+    "r3": "MCC03 expected original storage health Fenced (not lifecycle pool Fenced); r2 MCC01/MCC02 PASS retained without repetition; only remaining runtime6 and nativeN03",
+    "r4": "Busy fixture records and checks read-only preparation events at StageCallStarted, then preserves original stage I/O0 oracle; r3 MCC03/MCW01 PASS not repeated; runtime4 and nativeN03 remain"
+  }
+}

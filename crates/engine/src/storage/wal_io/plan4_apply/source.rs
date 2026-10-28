@@ -65,10 +65,11 @@ impl CatalogCommitCharges {
     }
     pub(super) fn new<W: WriterNamespace>() -> Self {
         let [stage, pending, install, publish] = create_pair::catalog_commit_writer_windows();
-        let carriers = commit_carrier_bytes();
+        let carriers = commit_carrier_bytes() + commit_input_bytes();
         Self {
             shared: shared_bytes::<W>(),
-            stage: stage + carriers,
+            stage: stage.max(create_pair::catalog_live::commit_prepare_source_bytes::<W>())
+                + carriers,
             pending: pending + carriers,
             install: install + carriers,
             publish: publish + carriers,
@@ -77,9 +78,21 @@ impl CatalogCommitCharges {
 }
 
 /// The largest writer window, for the session's single-operation census.
-pub(super) fn commit_source_peak() -> usize {
-    let [stage, pending, install, publish] = create_pair::catalog_commit_writer_windows();
-    stage.max(pending).max(install).max(publish) + commit_carrier_bytes()
+pub(super) fn commit_source_peak<W: WriterNamespace>() -> usize {
+    let charges = CatalogCommitCharges::new::<W>();
+    charges
+        .stage
+        .max(charges.pending)
+        .max(charges.install)
+        .max(charges.publish)
+}
+
+/// Unlike the former Prepared-consuming outer entry, the synchronous entry
+/// retains its original actor argument and private loan while the continuation
+/// waits. No last-use or optimizer-based discount is taken in any window.
+fn commit_input_bytes() -> usize {
+    size_of::<crate::storage::transaction_record::TxnRef>()
+        + size_of::<&mut [u8; crate::storage::semantic_catalog::PRIVATE_BYTES]>()
 }
 
 /// Retirement application retains one fixed progress charge through

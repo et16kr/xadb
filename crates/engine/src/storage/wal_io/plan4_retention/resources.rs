@@ -225,7 +225,7 @@ pub(in crate::storage) fn source_census<W: WriterNamespace>() -> RetentionSource
     );
     let catalog_lookup = read::lookup_source_bytes::<W>();
     // The writer's largest admission window with its admission/gate carriers.
-    let catalog_commit = source::commit_source_peak();
+    let catalog_commit = source::commit_source_peak::<W>();
     let catalog_binding = visibility::binding_source_bytes::<W>();
     let catalog_live = create_pair::catalog_live::catalog_live_source_bytes::<W>().peak;
     // The recovery dispatcher retains selection, current Job/slot references,
