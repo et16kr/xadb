@@ -3270,3 +3270,42 @@ tracked 파일만 내보낸 tree의 source fingerprint는 이동 전 `91163921c2
 - JSON 5개, 링크·문서 배치 검사 오류 0
 
 선택 지적 1건은 반영하지 않았다. 관리 JSON `module_folder_reorganization.status`의 `ACCEPTED_DOCS_ONLY_INDEPENDENT_D2_REVIEWED`가 새 `implementation_status`와 어긋나 보인다는 지적이다. L2부터 정한 대로 `status`는 13절 계획의 채택 결정만 기록하고, 단위별 실행 상태는 `implementation_status`에 둔다. 이로써 13절 폴더 재정리의 배치 단위(L1–L3, L5-A–D)를 적용하고 L4는 현재 배치 유지로 판정했다. 논리 경계 재설계 R1–R3, 코딩 컨벤션 §4 문구의 별도 D2, 전체 M4/M5 인수는 미완료다. fmt·Clippy·문서 검사는 push gate에서 수행하며 아직 push하지 않았다.
+
+<a id="l6-wal-io-move"></a>
+## 2026-10-29 L6 `storage::wal_io` 시험 자손 폴더 배치
+
+[L6 판정](../plans/module-independence-plan.md#l6-wal-io-tests)을 기준 `85ceef3b35c5c2d0ef1a43056dcea0ba6a1443ea`(tree `504d3e9084e7888e06c7cc78c637c06716c221c9`, 착수 때 `git status --short` 빈 출력)에 적용했다. 작업 위치는 사용자가 지시한 별도 branch `claude/project-thread-h2j8oc`의 클라우드 작업 checkout이며 push하지 않았다. 진입 `storage/wal_io.rs`는 유지했고 기능 본문·논리 모듈 경로·visibility·cfg·시험 selector는 바꾸지 않았다.
+
+| 원 경로(`crates/engine/src/storage/`) | 현재 경로 | 논리 경로 |
+| --- | --- | --- |
+| `wal_durability_test_support.rs` | `wal_io/durability_test_support.rs` | `storage::wal_io::durability_test_support` |
+| `wal_durability_tests.rs` | `wal_io/durability_tests.rs` | `storage::wal_io::durability_tests` |
+| `wal_first_write_tests.rs` | `wal_io/first_write_tests.rs` | `storage::wal_io::first_write_tests` |
+| `wal_io_test_support.rs` | `wal_io/test_support.rs` | `storage::wal_io::test_support` |
+| `wal_io_tests.rs` | `wal_io/tests.rs` | `storage::wal_io::tests` |
+
+`#[path]`는 `wal_io.rs` 5줄만 바꿨다. 진입은 `storage/mod.rs`가 `#[path]` 없이 읽으므로 새 문자열은 `storage/` 기준 `wal_io/…`다. `test_support.rs`의 위치 기준 `include_bytes!` 3개에 `../`를 하나 더했고 같은 `crates/engine/tests/fixtures/dev3-genesis-{profile,epoch,writer}.bin`(SHA-256 `c440c314…`, `2acd1b8f…`, `266b75b0…`)을 가리킨다. 100자를 넘게 된 2개는 rustfmt가 줄을 나눴다. 사전 대조에서 `include_str!`·`include!`만 확인하고 `include_bytes!`를 빠뜨려 첫 `cargo check`가 3건 `couldn't read`로 실패했다. 해당 3줄만 고친 뒤 아래 검증을 다시 수행했으며 이 실패는 제품 의미와 무관한 이동 절차의 누락이다.
+
+현재 Markdown 링크 1개(`plans/dev3-test-plan.md`의 WAL 시험), 본문 표기 1개(`contracts/dev3-wal-io.md`), 관리 JSON 경로 문자열7개(`dev3_genesis_wal` 2, `dev3_allocator_flush_one` 2, `dev3_status_home_flush` 1, `dev3_runtime_core` 2)를 현재 경로로 바꿨다. `module_folder_reorganization`의 `implementation_status`를 `L1_L3_L5_L6_PLACEMENT_APPLIED_L4_KEPT`로, `l6_decision_ref`·`l6_evidence_ref`를 추가했다. 증거 JSON 3개(`dev4-supply-handoff-20261024.json`, `dev3-commit-continuation-20261025.json`, `dev3-runtime-core-20261024.json`)의 원 경로·SHA-256과 leaf 보고서 5개의 `wal_io_tests` 키 이름은 원 source의 기록이므로 보존했다. 그 기록 중 `wal_durability_test_support.rs`(`2d77e233…`)와 `wal_first_write_tests.rs`(`a3b799c5…`)의 SHA-256은 이동한 byte와 같다. `wal_durability_tests.rs`(`3f1b3220…`), `wal_io_test_support.rs`(`8a67c575…`), `wal_io_tests.rs`(`0bed98cc…`/`4e2789ed…`)의 값은 당시 source의 것이며 기준 HEAD에서 이미 다르다. 현재 위치 대응은 위 표가 기록한다.
+
+| 검증 | 실제 범위·결과 |
+| --- | --- |
+| 정적 대응 | `crates/` diff는 rename 5개, `#[path]` 5줄, `include_bytes!` 3줄(rustfmt 줄바꿈 포함 +5/−3)뿐이다. `test_support.rs`는 `2279e599…`→`11d48f7e…`, `wal_io.rs`는 `f0877fc6…`→`7d54dd29…`다. 이동만 한 4개(`durability_test_support` `2d77e233…`, `durability_tests` `626cac86…`, `first_write_tests` `a3b799c5…`, `tests` `3ca32602…`)는 기준 SHA-256과 같다 |
+| 컴파일 | `cargo check -p xadb-engine --all-targets --all-features --locked` PASS, warning 0, 종료 코드 0(`logs/check.log`, 명령 포함). rustc/cargo 1.95.0 |
+| 시험 발견 | 이동 후 시험 목록 1585줄이 이동 전 목록과 byte 단위로 같다(SHA-256 `601bd166c6b31b8bdd9e7361eecb15d5939e7b1153b323f10f9fd5308f30259a`). 이동 전 목록은 같은 환경에서 기준 HEAD로 새로 만들었고 L5-D artifact의 이동 후 목록 SHA-256과도 같다. 기준 HEAD tree의 tracked fingerprint가 `6ac6c8ab…`로 L5-D 이동 후 값과 같다. `storage::wal_io::durability_tests::` 8, `first_write_tests::` 14, `tests::` 10개가 그대로다 |
+| 시험 본문 | NOT_RUN. 본문은 그대로이며 `scripts/test_check_dev3_leaf.py`의 `storage::wal_io::tests::`는 논리 selector다 |
+| fmt | `rustfmt --edition 2024 --check crates/engine/src/storage/wal_io.rs`로 하위 모듈까지 차이 0, 종료 코드 0(`logs/rustfmt-check.log`). 전체 fmt·Clippy·문서 검사는 기존 push gate에서 수행한다 |
+
+tracked 파일만 내보낸 tree의 source fingerprint는 이동 전 `6ac6c8ab7251d243728e7dd2f85bbc0b01a87586891f6d14c93e4a286c40d1d8`, 이동 후 `45be88cdf5ff439d81fbdb3bcd47a2d88ff9e70ff39c5f584c4714b77472eea8`다. 로그·시험 목록·파일별 hash·fingerprint는 프로젝트 공유 폴더 `module-independence-20261029/artifacts/module-l6-wal-io-20261029/`에 보존했다(`manifest.sha256` SHA-256 `cd0129747357dc2487fb4238205ec449e3543a0da8ff1251cfefc3e9a01aacdf`). 로컬 `artifacts/`로 옮길 때 manifest로 대조한다. 클라우드 작업 공간의 build target은 결과 기록 뒤 삭제한다.
+
+이동 뒤 `storage/` 직속 Rust 파일은 81개, `storage/wal_io/` 직속은 28개다. L5-D 때 0개였던 `wal_io/` 직속 `test` 이름 파일은 이제 5개이며 모두 진입 `wal_io` 자신의 시험·지원이다. 이 수는 탐색 밀도 관측일 뿐이며 의존성·생산성 개선을 판정하지 않는다. 처음 실패한 `cargo check`의 로그는 같은 파일을 이후 실행이 덮어써 보존하지 못했다. 실패 내용은 위 문단의 진단 3건(`couldn't read …/wal_io/../../tests/fixtures/dev3-genesis-*.bin`)이 전부다.
+
+독립 검토(이 세션이 띄운 별도 읽기 전용 subagent)는 staged diff·artifact·문서를 대조해 **ACCEPT WITH REQUIRED FIXES, 필수 지적 1건**으로 판정했다. 필수 지적은 증거 JSON의 SHA-256이 이동한 4개와 모두 같다는 문장이 틀렸다는 것이다. 실제로 같은 것은 2개이며 위 문단을 그대로 고쳤다. 선택 지적 중 “자기 시험”을 “시험·지원”으로 바꾸는 표현, `wal_io_tests` 키 보존 명시, `test_support.rs`·`wal_io.rs`의 전후 SHA-256, 실패 로그 미보존 기록을 반영했다. 다음 선택 지적은 반영하지 않았다. 5개 `#[path]`가 이제 기본 해석과 같아 생략할 수 있다는 점은 “`#[path]` 줄만 바꾼다”는 단위 규칙과 `control.rs:7`의 기존 형식을 따라 그대로 두었다. 계획 13절의 XADB-CODE-LAYOUT-001 기록과 코딩 컨벤션 표의 “분류 밖 5개 파일” 후속 범위 문구는 당시 결정의 기록이므로 고치지 않았다. 검토자가 확인한 것은 다음과 같다.
+
+- rename 5개와 `#[path]` 5줄의 해석, 이동만 한 4개의 byte 동일, `include_bytes!`가 같은 fixture byte를 가리킴, export한 staged tree의 rustfmt 검사
+- scripts·fixture·Cargo·`.github`·현재 문서에 옛 경로가 남지 않음, 편집한 Markdown 7개의 링크·anchor 누락 0
+- 관리 JSON의 경로 7개·상태·참조 2개 외 변경 없음
+- 파일 수·시험 수·줄 수, `git archive`/index export로 다시 계산한 fingerprint 전후 값, artifact manifest와 시험 목록 동일성
+- push하지 않았고 시험 본문을 실행하지 않았다는 기록
+
+이로써 13절의 물리 배치 단위(L1–L3, L5-A–D, L6)를 적용하고 L4는 현재 배치 유지로 판정했다. 논리 경계 재설계 R1–R3과 전체 M4/M5 인수는 미완료다. fmt·Clippy·문서 검사는 push gate에서 수행하며 아직 push하지 않았다.

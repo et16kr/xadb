@@ -719,19 +719,19 @@ impl Drop for IoFence<'_> {
 }
 
 #[cfg(test)]
-#[path = "wal_durability_test_support.rs"]
+#[path = "wal_io/durability_test_support.rs"]
 mod durability_test_support;
 #[cfg(test)]
-#[path = "wal_durability_tests.rs"]
+#[path = "wal_io/durability_tests.rs"]
 mod durability_tests;
 #[cfg(test)]
-#[path = "wal_first_write_tests.rs"]
+#[path = "wal_io/first_write_tests.rs"]
 mod first_write_tests;
 #[cfg(test)]
-#[path = "wal_io_test_support.rs"]
+#[path = "wal_io/test_support.rs"]
 mod test_support;
 #[cfg(test)]
-#[path = "wal_io_tests.rs"]
+#[path = "wal_io/tests.rs"]
 mod tests;
 
 pub(in crate::storage) use bootstrap::StatusLoadPermit;

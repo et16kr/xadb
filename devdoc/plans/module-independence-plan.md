@@ -1,5 +1,7 @@
 # XADB 모듈 독립 개발 구조 전환 작업 계획
 
+2026-10-29 [L6 `storage::wal_io` 시험 자손 배치 적용](../evidence/module-independence-survey-20261026.md#l6-wal-io-move): `85ceef3`에서 L5 분류 밖으로 남긴 `storage/` 직속 `wal_io` 시험·지원 자손 5개를 진입 폴더 `storage/wal_io/`로 옮겼다. `#[path]` 5줄과 위치 기준 `include_bytes!` 3줄만 바꿨으며, 이동만 한 4개의 byte 동일, `cargo check` PASS, 이동 전후 시험 목록 동일을 확인했다. 시험 본문은 NOT_RUN이다. 논리 경계 재설계 R1–R3과 전체 M4/M5는 미완료다.
+
 2026-10-29 [L5-D 복구 배치 적용](../evidence/module-independence-survey-20261026.md#l5d-recovery-move): main `47e3994`에서 `recovery_prefix`의 평면 자손 3개와 `plan4_pages`의 `recovered_bind`를 각 진입 폴더로 옮겨 L5 물리 이동 40개를 마쳤다. `#[path]` 4줄만 바꿨으며, 이동만 한 4개의 byte 동일, `cargo check` PASS, 이동 전후 시험 목록 동일을 확인했다. 시험 본문은 NOT_RUN이다. `wal_io/` 직속 Rust 파일은 23개이고 이름에 `test`가 있는 직속 파일은 없다. 논리 경계 재설계 R1–R3과 전체 M4/M5는 미완료다.
 
 2026-10-29 [L5-C Status 배치 적용](../evidence/module-independence-survey-20261026.md#l5c-status-move): main `ff77992`에서 `status_init`·`status_init_operation`·`status_flush::tests::native`·`operational`·`resident`의 평면 자손 16개를 각 선언 파일의 폴더로 옮겼다. L3에서 남긴 `mixed_system_init.rs`도 여기에 포함된다. `#[path]` 16줄만 바꿨으며, 이동만 한 14개의 byte 동일, `cargo check` PASS, 이동 전후 시험 목록 동일을 확인했다. 시험 본문은 NOT_RUN이다. L5-D와 전체 M4/M5는 미완료다.
@@ -424,7 +426,7 @@ Root3/Job3/Profile3·Row scope3·base4는 이름 변경의 부수 효과가 아�
 <a id="folder-reorganization"></a>
 ## 13. 분리 모듈의 폴더 재정리 후속 계획
 
-2026-10-29 · `XADB-MODULE-LAYOUT-001` · **D2 ACCEPTED / 후속 계획 문서 반영 완료 / 제품 이동은 [L1](../evidence/module-independence-survey-20261026.md#l1-allocation-move)·[L2](../evidence/module-independence-survey-20261026.md#l2-concurrency-move)·[L3](../evidence/module-independence-survey-20261026.md#l3-mixed-system-move) 적용, [L4](#l4-record)는 현재 배치 유지, [L5](#l5-classification)는 분류 완료·[L5-A](../evidence/module-independence-survey-20261026.md#l5a-allocation-move)·[L5-B](../evidence/module-independence-survey-20261026.md#l5b-install-move)·[L5-C](../evidence/module-independence-survey-20261026.md#l5c-status-move)·[L5-D](../evidence/module-independence-survey-20261026.md#l5d-recovery-move) 이동 완료, 시험 본문 NOT_RUN**
+2026-10-29 · `XADB-MODULE-LAYOUT-001` · **D2 ACCEPTED / 후속 계획 문서 반영 완료 / 제품 이동은 [L1](../evidence/module-independence-survey-20261026.md#l1-allocation-move)·[L2](../evidence/module-independence-survey-20261026.md#l2-concurrency-move)·[L3](../evidence/module-independence-survey-20261026.md#l3-mixed-system-move) 적용, [L4](#l4-record)는 현재 배치 유지, [L5](#l5-classification)는 분류 완료·[L5-A](../evidence/module-independence-survey-20261026.md#l5a-allocation-move)·[L5-B](../evidence/module-independence-survey-20261026.md#l5b-install-move)·[L5-C](../evidence/module-independence-survey-20261026.md#l5c-status-move)·[L5-D](../evidence/module-independence-survey-20261026.md#l5d-recovery-move) 이동 완료, [L6](#l6-wal-io-tests)의 `storage::wal_io` 시험·지원 자손5개 [이동 완료](../evidence/module-independence-survey-20261026.md#l6-wal-io-move), 시험 본문 NOT_RUN**
 
 사용자는 파일 분리에 비해 폴더 정리가 부족한 부분을 먼저 조사하도록 요청했고, 참조 관계·상태 소유·API가 독립성의 핵심인지 의견을 확인했다. 이어 임시 계획을 저장하고 진행 중인 작업 종료 뒤 기존 문서에 반영하도록 지시했으며, 후속 “진행해 주세요” 요청에 따라 이 절을 작성한다. **이번 실행 범위는 후속 계획과 관련 문서의 정비다.** 제품 파일 이동·참조 변경의 구현은 아직 시작하지 않는다.
 
@@ -798,7 +800,32 @@ L2 뒤 L4의 두 안을 제시했고 사용자는 L3와 함께 권장안, 즉 �
 - **R2:** mixed owner 표면은 `status_init.rs`의 `pub(crate) use`로 `plan4_recovery_base` Catalog graph까지 쓰인다([L3 관찰](#l3-move-table)).
 - **R3:** 설치·할당·Status·복구의 진입이 모두 `bootstrap` → `doublewrite_install` → `mutable_storage` 한 초기화 사슬 아래에 있다. 이를 책임별 상위 폴더로 나누려면 논리 부모를 바꿔야 하므로, 채택 계약의 초기화 조상 유지와 함께 다시 설계해야 한다.
 
-**범위 밖 관찰.** `storage/` 직속의 `wal_durability_test_support.rs`·`wal_durability_tests.rs`·`wal_first_write_tests.rs`·`wal_io_test_support.rs`·`wal_io_tests.rs`는 `storage::wal_io`의 자손이다. 그러나 13절 L5 행의 파일군(`storage/wal_io/`) 밖에 있으므로 이번 분류에 넣지 않는다.
+**범위 밖 관찰.** `storage/` 직속의 `wal_durability_test_support.rs`·`wal_durability_tests.rs`·`wal_first_write_tests.rs`·`wal_io_test_support.rs`·`wal_io_tests.rs`는 `storage::wal_io`의 자손이다. 그러나 13절 L5 행의 파일군(`storage/wal_io/`) 밖에 있으므로 이번 분류에 넣지 않는다. 이 5개는 아래 [L6](#l6-wal-io-tests)에서 판정했다.
+
+<a id="l6-wal-io-tests"></a>
+### L6 `storage::wal_io` 진입의 storage 직속 시험 자손
+
+2026-10-29 · **판정: 진입 폴더로 물리 이동 / 실행 결과는 [증거](../evidence/module-independence-survey-20261026.md#l6-wal-io-move) / 시험 본문 NOT_RUN**
+
+사용자는 이 계획을 “이어서 완료까지” 진행하도록 지시했고, 앞선 단위에서 권장안이 있으면 묻지 않고 진행하도록 했다. 기준은 `85ceef3b35c5c2d0ef1a43056dcea0ba6a1443ea`(tree `504d3e9084e7888e06c7cc78c637c06716c221c9`)이며 작업 branch는 `claude/project-thread-h2j8oc`, checkout은 clean이다. 위 범위 밖 관찰의 5개만 다룬다. `storage/` 직속의 다른 시험 파일은 각자 다른 진입(`wal_frame`, `page_io` 등)의 자손이므로 이 단위에 넣지 않는다.
+
+**분류.** 진입 `storage/wal_io.rs`는 `storage/mod.rs`가 `#[path]` 없이 선언하며 이미 자손 폴더 `storage/wal_io/`를 가진다(배치 B). 5개는 모두 이 진입이 `cfg(test)`로 선언한 평면 자손이므로 L5 분류 기준 2를 그대로 적용해 진입 폴더로 옮긴다. 새 파일 이름은 논리 모듈 이름으로 한다. 진입·`#[path]` 해석은 `storage/wal_io.rs`의 폴더 `storage/` 기준이므로 새 문자열은 `wal_io/…`다.
+
+| 현재 파일(줄) | 목표 파일 | 논리 경로 | 시험 수 |
+| --- | --- | --- | --- |
+| `storage/wal_durability_test_support.rs`(99) | `storage/wal_io/durability_test_support.rs` | `storage::wal_io::durability_test_support` | 0 |
+| `storage/wal_durability_tests.rs`(404) | `storage/wal_io/durability_tests.rs` | `storage::wal_io::durability_tests` | 8 |
+| `storage/wal_first_write_tests.rs`(251) | `storage/wal_io/first_write_tests.rs` | `storage::wal_io::first_write_tests` | 14 |
+| `storage/wal_io_test_support.rs`(443) | `storage/wal_io/test_support.rs` | `storage::wal_io::test_support` | 0 |
+| `storage/wal_io_tests.rs`(1162) | `storage/wal_io/tests.rs` | `storage::wal_io::tests` | 10 |
+
+`wal_io_test_support.rs`의 위치 기준 `include_bytes!` 3개는 한 단계 깊어지므로 `../`를 하나 더한다. 같은 `crates/engine/tests/fixtures/dev3-genesis-{profile,epoch,writer}.bin`을 가리키며, 줄이 100자를 넘는 2개는 rustfmt의 줄바꿈을 따른다. 다른 4개 파일에는 `#[path]`·위치 기준 macro가 없다. 논리 경로·visibility·cfg·시험 selector(`scripts/test_check_dev3_leaf.py`의 `storage::wal_io::tests::`)는 그대로다.
+
+**경로 기록.** 현재 Markdown 링크 1개(`dev3-test-plan.md`), 현재 본문 표기 1개(`dev3-wal-io.md`), 관리 JSON 경로 문자열 7개를 갱신한다. 증거 JSON 3개(`dev4-supply-handoff-20261024.json`, `dev3-commit-continuation-20261025.json`, `dev3-runtime-core-20261024.json`)의 원 경로·SHA-256 기록과 leaf 보고서의 `wal_io_tests` 키 이름은 원 source의 증거이므로 바꾸지 않는다. 링크가 아니라 문서 검사 대상이 아니다.
+
+**검증 선택.** L5와 같다. `crates/` diff는 rename 5개, `#[path]` 5줄, `include_bytes!` 3줄뿐이어야 하고 이동만 한 4개는 기준 SHA-256과 같아야 한다. `cargo check -p xadb-engine --all-targets --all-features --locked`, 이동 전후 시험 목록 전체의 동일성, 변경 파일의 `rustfmt --check`를 확인하고 독립 리뷰를 받는다. 시험 본문은 본문이 같으므로 NOT_RUN이다.
+
+이동 뒤 `storage/` 직속 Rust 파일은 86→81개, `storage/wal_io/` 직속은 23→28개다. L5-D 때 0개였던 `wal_io/` 직속 `test` 이름 파일은 이제 5개이며 모두 진입 `wal_io` 자신의 시험·지원이다. 이 수는 탐색 밀도 관측일 뿐 독립성 판정이 아니다.
 
 ### 완료 조건과 문서 정본
 

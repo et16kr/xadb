@@ -6,9 +6,11 @@ use foundation::{
 };
 use std::{collections::BTreeMap, io, sync::Arc};
 
-pub(super) const PROFILE: &[u8] = include_bytes!("../../tests/fixtures/dev3-genesis-profile.bin");
-pub(super) const EPOCH: &[u8] = include_bytes!("../../tests/fixtures/dev3-genesis-epoch.bin");
-pub(super) const SELECTED: &[u8] = include_bytes!("../../tests/fixtures/dev3-genesis-writer.bin");
+pub(super) const PROFILE: &[u8] =
+    include_bytes!("../../../tests/fixtures/dev3-genesis-profile.bin");
+pub(super) const EPOCH: &[u8] = include_bytes!("../../../tests/fixtures/dev3-genesis-epoch.bin");
+pub(super) const SELECTED: &[u8] =
+    include_bytes!("../../../tests/fixtures/dev3-genesis-writer.bin");
 
 pub(super) fn namespace() -> Namespace {
     Namespace {
