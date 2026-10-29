@@ -1,0 +1,258 @@
+{
+  "schema": "xadb-module-row-read-driver-v2",
+  "revision": "r2",
+  "source_kind": "C0_ONLY",
+  "base_commit": "38364bbd00b5b113df633abdb53dca2cef5ef387",
+  "registration": "C0-only sub-family MCB00-D01..12; selector path storage::row::read::driver::tests::mcb00_dNN_*",
+  "scope": "B point/cursor driver over the C0 Row read boundary through private source/view traits. The driver opens each operation itself on the view it judges with (and, for a cursor, on the table stored at open). Runtime cases use a test-only literal source (independent RowLeaf/XRW1 cells, logical Status/Missing-before answers, literal target values) and a literal view/credit counter and table counter. In the double's C role the cells are wrapped by the production encode_page and read with the production tree/row codecs; expected values are literals. No RowReadOperation, Plan4Target, pin, snapshot, CallerCredit, RowCopyObservation, MissingRowEvidence, ACK or READY is created; the live entries are compile-checked only because the C0 bodies return Unsupported.",
+  "status": "FROZEN_INPUTS_NOT_EXECUTION_EVIDENCE",
+  "review_fixes": {
+    "R1": "RowCursor::open checks the statement/fence (view.q) before RowRange::new, then reserves the credit (consumers 7 order)",
+    "R2": "live entries take ReadPort, Owner and the private loan and open the operation from the same view (next: the cursor's view); RowCursor stores &'r table at open and passes it to every operation"
+  },
+  "budget": {
+    "check_seconds": 900,
+    "build_seconds": 900,
+    "case_seconds": 30,
+    "total_seconds": 2400,
+    "output_bytes": 8388608
+  },
+  "order": [
+    "RUSTFMT_CHECK",
+    "DIFF_CHECK",
+    "CHECK",
+    "BUILD",
+    "RUNTIME"
+  ],
+  "static": [
+    {
+      "id": "RUSTFMT_CHECK",
+      "command": [
+        "rustfmt",
+        "--edition",
+        "2024",
+        "--check",
+        "crates/engine/src/storage/row/read/driver.rs",
+        "crates/engine/src/storage/row/read/driver/live.rs",
+        "crates/engine/src/storage/row/read/driver/tests.rs"
+      ],
+      "pass": "exit 0, no diff (read.rs is unchanged in r2)"
+    },
+    {
+      "id": "DIFF_CHECK",
+      "command": [
+        "git",
+        "diff",
+        "--check"
+      ],
+      "pass": "exit 0, no output"
+    }
+  ],
+  "compiler": [
+    {
+      "id": "CHECK",
+      "command": [
+        "cargo",
+        "check",
+        "-p",
+        "xadb-engine",
+        "--all-targets",
+        "--all-features",
+        "--locked"
+      ],
+      "env": {
+        "CARGO_TARGET_DIR": "<worktree>/target"
+      },
+      "pass": "exit 0 and 0 warnings; the only compile evidence for driver/live.rs against the actual C0 types. 0 warnings relies on the pre-existing module-wide #![allow(dead_code)] at crates/engine/src/storage/row/read.rs:9 (the live entries have no caller yet)"
+    },
+    {
+      "id": "BUILD",
+      "command": [
+        "cargo",
+        "test",
+        "-p",
+        "xadb-engine",
+        "--lib",
+        "--all-features",
+        "--locked",
+        "--no-run"
+      ],
+      "env": {
+        "CARGO_TARGET_DIR": "<worktree>/target"
+      },
+      "pass": "exit 0 and 0 warnings; record ELF sha256 and the test count from --list (lines ending ': test')"
+    }
+  ],
+  "runtime": {
+    "command": [
+      "cargo",
+      "test",
+      "-p",
+      "xadb-engine",
+      "--lib",
+      "--all-features",
+      "--locked",
+      "<selector>",
+      "--",
+      "--exact",
+      "--test-threads=1"
+    ],
+    "env": {
+      "CARGO_TARGET_DIR": "<worktree>/target",
+      "RUST_MIN_STACK": "33554432"
+    },
+    "rule": "each selector once; on failure keep the log, fix, rerun only failing/affected selectors and record both runs",
+    "rerun_reason_for_changed": "d01..d09 are rerun because their code path changed: read_point and RowCursor::next now take an opener, RowCursor::open takes the table and checks the statement before the range, and refused calls no longer open (or finish) an operation"
+  },
+  "runtime_tests": [
+    {
+      "selector": "storage::row::read::driver::tests::mcb00_d01_point_found_and_absent_key",
+      "contract_case": "MCB00-D01",
+      "change": "changed",
+      "oracle": "point Found after copy/release/finish (committed q5, committed exactly at q12), absent keys 1/15/35/41/MAX as checked Missing with page release; exact output bytes and call order; the operation is opened on the read's own view"
+    },
+    {
+      "selector": "storage::row::read::driver::tests::mcb00_d02_point_status_and_missing_before_select_the_version",
+      "contract_case": "MCB00-D02",
+      "change": "changed",
+      "oracle": "transaction stamp needs Status (committed q8/q10, own Active visible; committed q11, foreign Active, own Aborted invisible); invisible -> Missing only with Missing-before; failed Missing-before is an error; committed-after-q without Undo is MissingUndo with no Missing-before call"
+    },
+    {
+      "selector": "storage::row::read::driver::tests::mcb00_d03_flush_required_passes_through_after_cleanup",
+      "contract_case": "MCB00-D03",
+      "change": "changed",
+      "oracle": "FlushRequired from page/Status/Missing-before returns the same target after candidate release and finish; cursor keeps only fully judged invisible rows examined, then retries the same visible row"
+    },
+    {
+      "selector": "storage::row::read::driver::tests::mcb00_d04_point_output_cancel_and_cleanup_never_publish",
+      "contract_case": "MCB00-D04",
+      "change": "changed",
+      "oracle": "required-1 OutputTooSmall without copy and exact length succeeds; cancel before the call opens no operation (log []), cancel before copy; failed release after copy not published; CallerMustResolve cleanup replaces an ordinary error and an earlier CallerMustResolve survives a failed cleanup"
+    },
+    {
+      "selector": "storage::row::read::driver::tests::mcb00_d05_cursor_next_returns_rows_in_order_then_end",
+      "contract_case": "MCB00-D05",
+      "change": "changed",
+      "oracle": "cursor skips invisible 10 with Missing-before, returns 20/30/40 in order with separate examined/returned keys, End after page release, End again without opening an operation (log [])"
+    },
+    {
+      "selector": "storage::row::read::driver::tests::mcb00_d06_cursor_reseeks_by_full_row_id_after_a_gap",
+      "contract_case": "MCB00-D06",
+      "change": "changed",
+      "oracle": "reseek by full RowId on a shifted leaf with new lower rows, on a leaf without the last examined key, and a bounded [20,40) range ending before 40"
+    },
+    {
+      "selector": "storage::row::read::driver::tests::mcb00_d07_cursor_output_cancel_and_cleanup_keep_the_visible_row",
+      "contract_case": "MCB00-D07",
+      "change": "changed",
+      "oracle": "cursor OutputTooSmall/cancel (after invisible judgement and before copy)/failed release/failed finish keep last_examined at the invisible row and never skip or return the visible row; still-cancelled call opens no operation (log []); retry returns it"
+    },
+    {
+      "selector": "storage::row::read::driver::tests::mcb00_d08_statement_and_revision_precede_end_and_cancel",
+      "contract_case": "MCB00-D08",
+      "change": "changed",
+      "oracle": "revision change -> CursorInvalidated before any operation, End and cancellation; reopened cursor reads to End; ended statement refused before revision/End/operation; keys unchanged; refused calls log []"
+    },
+    {
+      "selector": "storage::row::read::driver::tests::mcb00_d09_close_returns_only_its_own_credit",
+      "contract_case": "MCB00-D09",
+      "change": "changed",
+      "oracle": "on a live statement the range is checked before the credit; Capacity before any charge; close returns only its own literal credit; Drop returns the other through the credit's Drop; new cursor takes a new credit; view untouched"
+    },
+    {
+      "selector": "storage::row::read::driver::tests::mcb00_d10_ended_statement_precedes_range_credit_and_operation",
+      "contract_case": "MCB00-D10",
+      "change": "new",
+      "oracle": "R1: ended view + reversed range [40,20) -> WrongState (Unchanged), and ended view + full range -> WrongState, with charged/issued (0,0) and no returned credit; point read on an ended statement -> WrongState with and without a cancelled token, log [] and output untouched"
+    },
+    {
+      "selector": "storage::row::read::driver::tests::mcb00_d11_cursor_operations_open_on_its_own_view_and_table",
+      "contract_case": "MCB00-D11",
+      "change": "new",
+      "oracle": "R2: each next opens exactly one operation with the cursor's own view and table (pointer-equal; table count 4 for 20/30/40/End); exhausted cursor at the same revision with a cancelled token -> End, log [], count unchanged; opener refusal (Unsupported) returned unchanged with log [] and keys (20,20), then 30 is read"
+    },
+    {
+      "selector": "storage::row::read::driver::tests::mcb00_d12_cleanup_failure_replaces_flush_and_scan_errors_keep_progress",
+      "contract_case": "MCB00-D12",
+      "change": "new",
+      "oracle": "merge priority: point Status Flush(8)+failed release -> Busy, point page Flush(7)+CallerMustResolve finish -> Fenced/CallerMustResolve, cursor Missing-before Flush(9)+failed finish -> Busy with keys (None,None); cursor Status failure on 20 -> Busy with keys (10,None); cursor at q4: 10/20 invisible via Missing-before, 30 (committed q5, no Undo) -> MissingUndo with keys (20,None), and again on the next call; output untouched"
+    }
+  ],
+  "not_run": [
+    {
+      "selector": "storage::row::read::tests::mcb00_v01_literal_point_and_reseek_bounds",
+      "reason": "unchanged pure helpers; read.rs is unchanged in r2"
+    },
+    {
+      "selector": "storage::row::read::tests::mcb00_v02_literal_visibility_requires_status_and_missing_before",
+      "reason": "unchanged"
+    },
+    {
+      "selector": "storage::row::read::tests::mcb00_v03_invisible_output_retry_cancel_and_revision_progress",
+      "reason": "unchanged"
+    },
+    {
+      "id": "LIVE_RUNTIME",
+      "reason": "C0 ReadPort::row_operation and the RowReadOperation phases return Unchanged Unsupported until C2/C3 supply the actual source"
+    },
+    {
+      "id": "CURSOR_BORROW_PROBE",
+      "reason": "compile-fail probe (open_cursor_live on a RowStatementView and CheckedTable, then finish_statement -> expected E0505) is described for the integrator, not built here"
+    }
+  ],
+  "input_files": {
+    "crates/engine/src/storage/row/read.rs": {
+      "bytes": 8695,
+      "sha256": "cd27459483e9773250f81cae9ecc37238243371c172b022b2221cd5cdc1e6f5f"
+    },
+    "crates/engine/src/storage/row/read/driver.rs": {
+      "bytes": 13742,
+      "sha256": "70e2529dd87da0c6a4a2fb5c269fdfdd851154f009d049e3a49060f1697f037c"
+    },
+    "crates/engine/src/storage/row/read/driver/live.rs": {
+      "bytes": 7594,
+      "sha256": "51fd1c4c831fa076781c3390bc03f58c0c463e9fbaf2ba97670227d7a5e403d6"
+    },
+    "crates/engine/src/storage/row/read/driver/tests.rs": {
+      "bytes": 50967,
+      "sha256": "ee111674d4fe32771a81ba739dfbf21ae2adef5601f136a5b43b89e5ed28ea0d"
+    },
+    "tests/fixtures/module-row-read/driver-cells.txt": {
+      "bytes": 3157,
+      "sha256": "ded579f8ab78aa20a74834893b9546659b6f09ab8affbd029fff6eacf8c6bd5f"
+    },
+    "tests/fixtures/module-row-read/make_driver_cells.py": {
+      "bytes": 2937,
+      "sha256": "d801d0f6d57ba2920b670a1ed5d71c6d2711b1447b2fab35a2fdfe0087621f57"
+    }
+  },
+  "fixture_note": "driver-cells.txt differs from r1 only in its first comment line (C0_SEAM -> C0_ONLY); every cell line is unchanged",
+  "consumed_boundary": {
+    "crates/engine/src/storage/wal_io/plan4_apply/row/read.rs": {
+      "bytes": 6676,
+      "sha256": "50a727d0690b907677f18eb5bac3a998e73b75e7ca17c2bb1e1441cf5f35599f"
+    },
+    "crates/engine/src/storage/wal_io/plan4_apply/transaction.rs": {
+      "bytes": 35528,
+      "sha256": "62de8a5c2c3b47f5e7c05607a52a60e329d341ccd7e0fa581fc8b6416cc36b50"
+    },
+    "crates/engine/src/transaction/concurrency.rs": {
+      "bytes": 25596,
+      "sha256": "879a98ad622d7147489b8476b668b99a64a4c1a5367a8a4176647122f473b2c1"
+    }
+  },
+  "import_edges_new_in_r2": [
+    "crate::storage::disk::ReadPort (already re-exported by storage::disk)",
+    "crate::transaction::concurrency::Owner (not re-exported by storage::disk; imported directly in driver/live.rs)"
+  ],
+  "history": [
+    {
+      "revision": "r1",
+      "manifest": "tests/fixtures/module-row-read/driver-manifest.json",
+      "manifest_sha256": "d6ad7eb8b1e1a7813fe3b317b884061330fab349f39740980b25d521fadd8e12",
+      "source_kind": "C0_SEAM (renamed C0_ONLY in r2)",
+      "commit": "38364bbd00b5b113df633abdb53dca2cef5ef387",
+      "result": "CHECK exit 0 / 0 warnings; BUILD exit 0 / 0 warnings; ELF sha256 2d51389a0b922b313d4c2287374adbb3bcf5481937bb08bfaa70120f7a491dc9; test_count 1594; MCB00-D01..09 PASS once each (run without RUST_MIN_STACK)"
+    }
+  ]
+}

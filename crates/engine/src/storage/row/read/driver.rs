@@ -4,10 +4,12 @@
 //! Missing-before only when the version needs it, copy, candidate release and
 //! operation finish, and only then publication or progress. C owns every
 //! latch, pin, Status/Undo read and the actual copy. The source is reached
-//! through the narrow private traits below: `live` forwards them to the actual
-//! C0 types without a constructor, and the tests feed literal page bytes and
-//! logical answers. See `devdoc/contracts/dev3-module-boundaries.md` (6.3, 6.8)
-//! and the F02 table in `dev3-task-06-tree-rows.md`.
+//! through the narrow private traits below and is opened by the driver on the
+//! same view it judges with (and, for a cursor, on the cursor's own table):
+//! `live` opens the original operation from the ReadPort, and the tests feed
+//! literal page bytes and logical answers. See
+//! `devdoc/contracts/dev3-module-boundaries.md` (6.3, 6.8) and the F02 table in
+//! `dev3-task-06-tree-rows.md`.
 use super::{
     CursorProgress, ReadError, RowRange, SeekPosition, Visibility, check_output, seek_point,
     visible,
@@ -211,30 +213,33 @@ fn select_row<S: ReadSource>(
     Ok(Step::Ready(Some(copied)))
 }
 
-/// Point read over one operation, which is always finished before returning.
-/// Found and Missing are published only after the checked cleanup succeeds.
-fn read_point<V: ReadView, S: ReadSource>(
-    view: &V,
-    mut source: S,
+/// Point read over one operation that `open` creates on this same view and
+/// that is always finished before returning. Found and Missing are published
+/// only after the checked cleanup succeeds.
+fn read_point<'r, V: ReadView, S: ReadSource>(
+    view: &'r V,
+    open: impl FnOnce(&'r V) -> Result<S, RetentionError>,
     row: RowId,
     output: &mut [u8],
     cancel: &Cancellation,
 ) -> Result<Step<PointRead<S::Copied>, S::Target>, RowReadError> {
-    let selected = select_point(view, &mut source, row, output, cancel);
-    merge(selected, source.finish())
-}
-
-fn select_point<V: ReadView, S: ReadSource>(
-    view: &V,
-    source: &mut S,
-    row: RowId,
-    output: &mut [u8],
-    cancel: &Cancellation,
-) -> Result<Step<PointRead<S::Copied>, S::Target>, RowReadError> {
+    // Statement and fence first, then cancellation; neither opens a source.
     let sample = ViewSample::of(view)?;
     if cancelled(cancel) {
         return Err(ReadError::Cancelled.into());
     }
+    let mut source = open(view)?;
+    let selected = select_point(&mut source, sample, row, output, cancel);
+    merge(selected, source.finish())
+}
+
+fn select_point<S: ReadSource>(
+    source: &mut S,
+    sample: ViewSample,
+    row: RowId,
+    output: &mut [u8],
+    cancel: &Cancellation,
+) -> Result<Step<PointRead<S::Copied>, S::Target>, RowReadError> {
     let page = match source.page()? {
         Step::Ready(page) => page,
         Step::Flush(target) => return Ok(Step::Flush(target)),
@@ -265,22 +270,33 @@ enum Scan<O> {
     End,
 }
 
-/// Opaque, non-Clone cursor. It borrows the original view and holds its own
-/// credit, so the statement cannot finish while the cursor is live. Calls keep
-/// no page, slot or latch: each `next` reseeks by the full last examined RowId.
-struct RowCursor<'r, V: ReadView + 'r> {
+/// Opaque, non-Clone cursor. It borrows the original view and the table it
+/// was opened on and holds its own credit, so the statement cannot finish
+/// while the cursor is live and no call can switch the table under the kept
+/// keys. Calls keep no page, slot or latch: each `next` reseeks by the full
+/// last examined RowId.
+struct RowCursor<'r, V: ReadView + 'r, T: 'r> {
     view: &'r V,
+    table: &'r T,
     credit: V::Credit<'r>,
     progress: CursorProgress,
 }
 
-impl<'r, V: ReadView + 'r> RowCursor<'r, V> {
-    /// The range is checked before the credit, the only effect, is reserved.
-    fn open(view: &'r V, start: Option<RowId>, end: Option<RowId>) -> Result<Self, RowReadError> {
+impl<'r, V: ReadView + 'r, T: 'r> RowCursor<'r, V, T> {
+    /// Statement and fence first, then the range, then the credit, which is
+    /// the only effect.
+    fn open(
+        view: &'r V,
+        table: &'r T,
+        start: Option<RowId>,
+        end: Option<RowId>,
+    ) -> Result<Self, RowReadError> {
+        view.q()?;
         let range = RowRange::new(start, end)?;
         let credit = view.reserve_cursor_credit()?;
         Ok(Self {
             view,
+            table,
             credit,
             progress: CursorProgress::new(range, view.revision()),
         })
@@ -292,17 +308,29 @@ impl<'r, V: ReadView + 'r> RowCursor<'r, V> {
         self.credit.release_checked()
     }
 
-    /// One operation per call. Invisible rows advance only `last_examined`
-    /// after Missing-before and release; a returned row or End is recorded
-    /// only after the operation's checked finish.
+    /// One operation per call, opened by `open` on this cursor's own view
+    /// and table. Invisible rows advance only `last_examined` after
+    /// Missing-before and release; a returned row or End is recorded only
+    /// after the operation's checked finish.
     fn next<S: ReadSource>(
         &mut self,
-        mut source: S,
+        open: impl FnOnce(&'r V, &'r T) -> Result<S, RetentionError>,
         output: &mut [u8],
         cancel: &Cancellation,
     ) -> Result<Step<CursorStep<S::Copied>, S::Target>, RowReadError> {
+        // Statement first; revision precedes End and cancellation. None of
+        // these opens an operation.
         let revision = self.view.revision();
-        let scanned = self.scan(&mut source, revision, output, cancel);
+        let sample = ViewSample::of(self.view)?;
+        self.progress.check_revision(revision)?;
+        if self.progress.exhausted {
+            return Ok(Step::Ready(CursorStep::End));
+        }
+        if cancelled(cancel) {
+            return Err(ReadError::Cancelled.into());
+        }
+        let mut source = open(self.view, self.table)?;
+        let scanned = self.scan(&mut source, sample, revision, output, cancel);
         match merge(scanned, source.finish())? {
             Step::Flush(target) => Ok(Step::Flush(target)),
             Step::Ready(Scan::End) => {
@@ -319,19 +347,11 @@ impl<'r, V: ReadView + 'r> RowCursor<'r, V> {
     fn scan<S: ReadSource>(
         &mut self,
         source: &mut S,
+        sample: ViewSample,
         revision: u64,
         output: &mut [u8],
         cancel: &Cancellation,
     ) -> Result<Step<Scan<S::Copied>, S::Target>, RowReadError> {
-        // Statement first; revision precedes End and cancellation.
-        let sample = ViewSample::of(self.view)?;
-        self.progress.check_revision(revision)?;
-        if self.progress.exhausted {
-            return Ok(Step::Ready(Scan::End));
-        }
-        if cancelled(cancel) {
-            return Err(ReadError::Cancelled.into());
-        }
         loop {
             let page = match source.page()? {
                 Step::Ready(page) => page,

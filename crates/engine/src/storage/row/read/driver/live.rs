@@ -1,19 +1,25 @@
 //! Thin forwarding of the driver traits to the actual C0 Row read types.
 //! Nothing here constructs a source value: every pin, credit, candidate and
-//! observation comes from the original operation and view.
+//! observation comes from the original operation and view. The entries open
+//! the operation themselves through `ReadPort::row_operation` on the view the
+//! driver judges with, so a caller cannot pair one view's operation with
+//! another view's snapshot, or move a cursor to another table.
 use super::{
     CursorCredit, CursorStep, Observed, PointRead, ReadSource, ReadView, RowCursor, RowReadError,
     SearchPage, Step, read_point,
 };
-use crate::storage::{
-    disk::{
-        CallerCredit, CheckedTable, MissingRowEvidence, Plan4ResidencyCursor, Plan4Target,
-        ReadStep, RetentionError, RowCandidate, RowCopyObservation, RowReadOperation,
-        RowSearchPage, RowStatementView,
+use crate::{
+    storage::{
+        disk::{
+            CallerCredit, CheckedTable, MissingRowEvidence, Plan4ResidencyCursor, Plan4Target,
+            ReadPort, ReadStep, RetentionError, RowCandidate, RowCopyObservation, RowReadOperation,
+            RowSearchPage, RowStatementView,
+        },
+        row_record::RecordVersion,
+        transaction_record::{TransactionState, TxnRef},
+        tree_page::TreePageView,
     },
-    row_record::RecordVersion,
-    transaction_record::{TransactionState, TxnRef},
-    tree_page::TreePageView,
+    transaction::concurrency::Owner,
 };
 use foundation::{identity::RowId, namespace::WriterNamespace, runtime::Cancellation};
 
@@ -144,48 +150,83 @@ impl<'b, 'a, 's, 'c, 'p, 'd, W: WriterNamespace> ReadSource
     }
 }
 
-/// Live point read. `operation` must be the one the caller opened on `view`:
-/// the C0 operation exposes no statement check, so B cannot verify it here.
+/// The caller's original port, Owner, private loan and residency cursor for
+/// one call. The entry opens the operation from them; none is kept.
+struct LiveCall<'x, 'b, 'a, 's, 'c, 'p, 'd, 'm, 'w, W: WriterNamespace> {
+    port: &'x ReadPort<'b, 'a, 's, 'c, 'p, 'd, 'm, 'w, W>,
+    owner: &'x mut Owner<'c, 's>,
+    private: &'x mut [u8; 425_984],
+    residency: &'x mut Plan4ResidencyCursor,
+}
+
+/// Live point read on an operation opened here on `view`.
 fn read_point_live<'a, 'c, 's, W: WriterNamespace>(
-    operation: RowReadOperation<'_, '_, '_, '_, '_, '_, 'a, 's, 'c, '_, '_, '_, '_, W>,
+    call: LiveCall<'_, '_, 'a, 's, 'c, '_, '_, '_, '_, W>,
     view: &RowStatementView<'_, '_, 'a, 'c, 's>,
     table: &CheckedTable<'c, 's>,
-    residency: &mut Plan4ResidencyCursor,
     row: RowId,
     output: &mut [u8],
     cancel: &Cancellation,
 ) -> Result<ReadStep<PointRead<RowCopyObservation>>, RowReadError> {
-    let source = LiveSource {
-        operation,
-        table,
+    let LiveCall {
+        port,
+        owner,
+        private,
         residency,
-    };
-    read_point(view, source, row, output, cancel).map(read_step)
+    } = call;
+    read_point(
+        view,
+        move |view| {
+            Ok(LiveSource {
+                operation: port.row_operation(owner, view, private)?,
+                table,
+                residency,
+            })
+        },
+        row,
+        output,
+        cancel,
+    )
+    .map(read_step)
 }
 
-type LiveCursor<'r, 't, 'v, 'a, 'c, 's> = RowCursor<'r, RowStatementView<'t, 'v, 'a, 'c, 's>>;
+type LiveCursor<'r, 't, 'v, 'a, 'c, 's> =
+    RowCursor<'r, RowStatementView<'t, 'v, 'a, 'c, 's>, CheckedTable<'c, 's>>;
 
 fn open_cursor_live<'r, 't, 'v, 'a, 'c, 's>(
     view: &'r RowStatementView<'t, 'v, 'a, 'c, 's>,
+    table: &'r CheckedTable<'c, 's>,
     start: Option<RowId>,
     end: Option<RowId>,
 ) -> Result<LiveCursor<'r, 't, 'v, 'a, 'c, 's>, RowReadError> {
-    RowCursor::open(view, start, end)
+    RowCursor::open(view, table, start, end)
 }
 
-/// Live cursor step with a new operation opened on the cursor's own view.
+/// Live cursor step on an operation opened here on the cursor's own view,
+/// reading the table the cursor was opened on.
 fn next_live<'a, 'c, 's, W: WriterNamespace>(
     cursor: &mut LiveCursor<'_, '_, '_, 'a, 'c, 's>,
-    operation: RowReadOperation<'_, '_, '_, '_, '_, '_, 'a, 's, 'c, '_, '_, '_, '_, W>,
-    table: &CheckedTable<'c, 's>,
-    residency: &mut Plan4ResidencyCursor,
+    call: LiveCall<'_, '_, 'a, 's, 'c, '_, '_, '_, '_, W>,
     output: &mut [u8],
     cancel: &Cancellation,
 ) -> Result<ReadStep<CursorStep<RowCopyObservation>>, RowReadError> {
-    let source = LiveSource {
-        operation,
-        table,
+    let LiveCall {
+        port,
+        owner,
+        private,
         residency,
-    };
-    cursor.next(source, output, cancel).map(read_step)
+    } = call;
+    cursor
+        .next(
+            move |view, table| {
+                Ok(LiveSource {
+                    operation: port.row_operation(owner, view, private)?,
+                    table,
+                    residency,
+                })
+            },
+            output,
+            cancel,
+        )
+        .map(read_step)
 }
