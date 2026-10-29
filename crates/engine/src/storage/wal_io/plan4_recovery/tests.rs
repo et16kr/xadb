@@ -155,6 +155,8 @@ fn recovery_source_native() {
     h.finish();
 }
 
+#[path = "tests/base_cause.rs"]
+mod base_cause;
 #[path = "tests/cases.rs"]
 mod cases;
 #[path = "tests/closure.rs"]

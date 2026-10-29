@@ -14,6 +14,7 @@ use crate::{
     storage::{
         control::{decode_bootstrap_profile, row_profile},
         page::FileId,
+        retention_genesis::tests::resign,
         retention_page::{RetentionError as QueueError, catalog3},
         semantic_catalog,
         wal_frame::WalStreamIdentity,
@@ -336,9 +337,12 @@ fn cursor(previous: u64) -> RetentionReplayCursor {
 
 /// MBC40-V01: the owner-bound sites that used to test `format() == 2` and
 /// fall through to the Profile1 line now reject every other binding before
-/// any effect: grammar selector, census page dispatch, genesis/refresh/
-/// bijection replay, ledger census and free cells, frame replay and the
-/// count-one allocation analysis.
+/// any effect: grammar selector, census page dispatch (also Root/Job wire
+/// version 2/4 under Profile3), genesis/refresh/bijection replay, ledger
+/// census and free cells, frame replay (also scope 3/0/4/65535 under Profile3)
+/// and the count-one allocation analysis. Base version 0/1/2/3/5/65535 and the
+/// Profile3 generation/timeline gates are covered at their owners:
+/// `plan4_recovery::tests::base_cause` and the two selection tests.
 #[test]
 fn mbc40_v01_profile2_binding_rejected_at_owner_grammar_sites() {
     let corpus = Corpus::load();
@@ -366,6 +370,26 @@ fn mbc40_v01_profile2_binding_rejected_at_owner_grammar_sites() {
         read::queue_page_grammar(p3, PageKind::Undo, 1, root),
         Err(RetentionCause::Invariant)
     ));
+    // Root/Job wire version 2 or 4 inside a Profile3 binding is the Root3/Job3
+    // decoder's UnsupportedFormat, never a version2 retry.
+    for (kind, page_no, page) in [
+        (PageKind::RetentionRoot, 1, root),
+        (PageKind::RetentionJobs, 2, jobs),
+    ] {
+        for version in [2u16, 4] {
+            let mut bytes = Box::new(*page);
+            let cell = usize::from(u16::from_le_bytes([bytes[128], bytes[129]]));
+            bytes[cell + 4..cell + 6].copy_from_slice(&version.to_le_bytes());
+            resign(&mut bytes[..]);
+            assert!(
+                matches!(
+                    read::queue_page_grammar(p3, kind, page_no, &bytes[..]),
+                    Err(RetentionCause::Retention(QueueError::UnsupportedFormat))
+                ),
+                "{kind:?} version{version}"
+            );
+        }
+    }
     for profile in rejected {
         for (kind, page_no, bytes) in [
             (PageKind::RetentionRoot, 1, root),
@@ -453,6 +477,23 @@ fn mbc40_v01_profile2_binding_rejected_at_owner_grammar_sites() {
         assert!(state.state() == before, "no effect");
         assert_eq!((at.previous_lsn, at.epoch), (case.number(3) - 1, Some(1)));
     }
+    // A Row scope3 group (and any unknown scope) under Profile3 has no runtime
+    // replay owner: the explicit scope arm rejects it before any effect.
+    for scope in [3u16, 0, 4, u16::MAX] {
+        let mut frame = case.blob(FRAME).to_vec();
+        assert_eq!(u16::from_le_bytes([frame[170], frame[171]]), 2);
+        frame[170..172].copy_from_slice(&scope.to_le_bytes());
+        let mut at = cursor(case.number(3) - 1);
+        assert!(
+            matches!(
+                state.apply(p3, &case, &frame, &mut at),
+                Err(RetentionCause::Unsupported)
+            ),
+            "scope{scope}"
+        );
+        assert!(state.state() == before, "no effect");
+        assert_eq!((at.previous_lsn, at.epoch), (case.number(3) - 1, Some(1)));
+    }
 
     // Count-one allocation analysis (operation/plan4_retention.rs).
     let expected = |profile| allocation::RetentionAllocationExpected {
@@ -478,7 +519,9 @@ fn mbc40_v01_profile2_binding_rejected_at_owner_grammar_sites() {
         allocation::retained_reservation(&expected(p3), allocator),
         Err(SemanticError::IdentityMismatch)
     );
-    println!("MBC40-V01 PASS formats=0,2,4,65535 rejected sites=7 authority=NONE");
+    println!(
+        "MBC40-V01 PASS formats=0,2,4,65535 queue_versions=2,4 scopes=3,0,4,65535 rejected sites=7 authority=NONE"
+    );
 }
 
 /// D5: the runtime Catalog replay carries the before Root3 row_high (7) into

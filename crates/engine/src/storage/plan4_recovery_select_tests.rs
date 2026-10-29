@@ -659,6 +659,35 @@ fn plan4_selection_binds_profile3_exactly() {
     let mut map = q::files(1);
     edit(&mut map, "d3-profile", |raw| *raw = profile2);
     unsupported(&reject(&Directory::from_files(map)));
+    // A Profile3 of generation2 or timeline2 is outside the exact closure.
+    let current =
+        control::row_profile::decode_profile(&q::files(1)["d3-profile"], Some(q::namespace()))
+            .unwrap();
+    for (generation, timeline) in [(2, 1), (1, 2)] {
+        let spec = control::ProfileSpec {
+            namespace: crate::api::Namespace {
+                timeline,
+                ..q::namespace()
+            },
+            generation,
+            ..current.spec()
+        };
+        let mut map = q::files(1);
+        edit(&mut map, "d3-profile", |raw| {
+            control::row_profile::encode_profile(spec, raw).unwrap();
+        });
+        let directory = Directory::from_files(map.clone());
+        // A supplied namespace would refuse timeline2 as a foreign root first.
+        let expected = (timeline == 1).then(q::namespace);
+        let error = match Plan4GenesisSelection::acquire(&directory, expected, &mut backing()) {
+            Err(error) => error,
+            Ok(_) => panic!("generation{generation} timeline{timeline} accepted"),
+        };
+        after_lease(&error);
+        assert_eq!(error.phase, Plan4SelectPhase::Profile);
+        assert!(matches!(error.cause, Plan4SelectCause::UnsupportedClosure));
+        unchanged(&directory, &map);
+    }
     let map = q::files(1);
     let directory = Directory::from_files(map.clone());
     observation(&acquire(&directory).unwrap(), 1);
