@@ -1,6 +1,7 @@
 //! Explicit Profile3 adapter of the scope2 Catalog CREATE observer. Inputs are
 //! the frozen independent stdlib author literals in `module-row-format/catalog3`
-//! over the hash-pinned Profile2 corpus. Producer and observer each consume the
+//! over the hash-pinned Profile2 corpus, including mixed Job3 banks where
+//! another actor holds Row-scope cells. Producer and observer each consume the
 //! original literal before images; product output is never a golden or before.
 use super::{
     Change, Error, Inputs, Observation,
@@ -49,34 +50,41 @@ const FILE_CAP: usize = 2 * 1024 * 1024;
 const PROFILE2: &str = "b8aab8141cbc1807844468c353d62b759e5001d5c3f8f82e54c1f4efeadd3b24";
 const PROFILE3: &str = "f49d4bb26a5c0e1bd66dec9a2b0f77aa24e3fafadf54f27e5db9ab9a960e204e";
 const PARENT_CASES: &str = "f5091dfb128b1c49bfe5b00d8e96628b81b9c7ce215c47ae23c44736940fdf26";
-const PINS: [(&str, &str, usize); 5] = [
+const PINS: [(&str, &str, usize); 6] = [
     (
         "author.py",
-        "878bf0de0ca7429d0a513c3450d4c519ec308598d24ce99298711e6a22b28c50",
-        19_142,
+        "6f3a696f8df308a2dbfa9da4563644835d179a3fa6914947ca7a9f716ad39b1a",
+        35_510,
     ),
     (
         "serializer3.py",
-        "1e77315f0d397df090b9745e8f21f342f8948507757ee25b183601a23724788f",
-        3_108,
+        "0b23d146ef7fa5a1ba712baee37c60c882011f36832ef11b5f1d2b49dea70de1",
+        6_769,
     ),
     (
         "blobs.bin",
-        "7bd6dd24ec49e06aa40095d1e3d2564e9b033270da3790e0e2440abcde30d71a",
-        1_330_126,
+        "29810b2fd6a166c731b4cafbe3884dc96351122dc6cac2eba8fb2a5930c64d57",
+        1_863_950,
     ),
     (
         "blobs.tsv",
-        "99d91ba7ce1c2f752c83b9a01e09fb88653ccab210e8652ba27772dd529e7b90",
-        2_973,
+        "160995135390158bdfa6cad3dc9e5b0d4443c4c9e84171546d3f5349b0bde8f4",
+        4_469,
     ),
     (
         "cases.tsv",
-        "c5bcee621bc036f0b7bb845d0d31f3d8fc7598e528c7476aa91bbba30ccc505d",
-        19_842,
+        "53aae683ed3741e23302b43b7fd20cc106794cbd621e245d3d2c2a3ab376d660",
+        22_671,
+    ),
+    (
+        "bases.tsv",
+        "faa076399c6a097a9ea431af75b6a6895aa8af4a729bb9cab4686e518e8f1295",
+        3_112,
     ),
 ];
-// catalog3/cases.tsv columns; operation fields come from the parent base row.
+// catalog3/cases.tsv columns; operation fields come from the base row: a
+// parent cases.tsv row, or a catalog3/bases.tsv row in the same layout for the
+// mixed-bank groups.
 const JOBS: usize = 4;
 const ROOT_PAGE: usize = 5;
 const FRAME: usize = 14;
@@ -177,11 +185,17 @@ impl Corpus {
                     .is_none()
             );
         }
-        assert_eq!((index.len(), next), (38, blobs.len()));
+        assert_eq!((index.len(), next), (57, blobs.len()));
         let cases = String::from_utf8(pinned.remove("cases.tsv").unwrap()).unwrap();
         let cases = table(&cases, 24, true);
-        let bases = table(&String::from_utf8(parent_cases).unwrap(), 37, false);
-        assert_eq!(cases.len(), 20);
+        let mut bases = table(&String::from_utf8(parent_cases).unwrap(), 37, false);
+        let mixed = String::from_utf8(pinned.remove("bases.tsv").unwrap()).unwrap();
+        let mixed = table(&mixed, 37, false);
+        assert_eq!(mixed.len(), 3);
+        for (id, row) in mixed {
+            assert!(bases.insert(id, row).is_none(), "mixed base ids are new");
+        }
+        assert_eq!(cases.len(), 23);
         let corpus = Self {
             parent,
             blobs,
@@ -349,6 +363,7 @@ impl Case<'_> {
             },
             11 => Change::Reserve(plan.unwrap()),
             16 => Change::AgingStart,
+            17 => Change::TerminalFinish { ordinal: ordinal() },
             value => panic!("unexpected frozen operation {value}"),
         }
     }
@@ -648,14 +663,19 @@ fn profile3_carries_row_high_and_rejects_change() {
     let mut output = [0xa5; PAGE_BYTES];
     assert_eq!(
         Row3::encode_root_page(before, moved.bytes(), namespace(), &mut output).err(),
-        Some(Error::OrderMismatch)
+        Some(Error::Queue(RetentionError::OrderMismatch))
+    );
+    // The queue view exports only this guarded Root3 encode.
+    assert_eq!(
+        catalog3::encode_root_page(before, moved.bytes(), namespace(), &mut output).err(),
+        Some(RetentionError::OrderMismatch)
     );
     assert!(output.iter().all(|b| *b == 0xa5), "refusal leaves output");
     let carried: &[u8; PAGE_BYTES] = accepted.array(AFTER + 1).unwrap();
     let (_, root) = Row3::decode_root_page(carried, namespace()).unwrap();
     Row3::encode_root_page(before, root.bytes(), namespace(), &mut output).unwrap();
     assert_eq!(&output, carried);
-    println!("CATALOG3 REJECT {id} error=Corrupt encode=OrderMismatch authority=NONE");
+    println!("CATALOG3 REJECT {id} error=Corrupt encode=Queue(OrderMismatch) authority=NONE");
 }
 
 fn bank<'a>(case: &'a Case<'_>) -> &'a [[u8; JOB_BYTES]] {
@@ -980,4 +1000,76 @@ fn profile3_source_census_keeps_type_sizes_and_reports_delta() {
             two.schema
         )
     );
+    // The Profile3 instance stays within the Profile2 census it replaces. The
+    // shared seam's forwarding frames are counted in neither instance.
+    assert!(three.compute <= two.compute, "Profile3 compute bound");
+    assert!(three.total <= two.total, "Profile3 total bound");
+    assert!(profile3_borrowed_source_bytes() <= super::borrowed_source_bytes());
+}
+
+/// A Profile3 Job3 bank where another actor (actor3) holds a leased Row
+/// Terminal (ordinal 2) and a Retained Row Root (ordinal 3). The Catalog
+/// TerminalFinish (M01), Begin (M02) and Reserve (M03) groups are accepted
+/// byte-for-byte, pass over the Row cells without adopting or leasing them,
+/// and bind both Aging descriptors to the one Job3 aggregate's Row peak.
+#[test]
+fn profile3_mixed_bank_catalog_groups_skip_other_actor_row_jobs() {
+    let ns = namespace();
+    for id in ["M01-P3", "M02-P3", "M03-P3"] {
+        accept(id, id == "M01-P3");
+        let case = Case::load(id);
+        let actor = case.actor().unwrap();
+        let cells = bank(&case);
+        let mut row_cells = Vec::new();
+        for (ordinal, cell) in cells.iter().enumerate() {
+            let job = row::decode_job(cell, ns).unwrap();
+            if job.scope() == Some(row::JobScope::Row) {
+                row_cells.push((ordinal, job.state()));
+                assert_ne!(job.source().unwrap().id(), actor.id(), "{id} another actor");
+                assert!(catalog3::JobView::catalog(job).is_none());
+                assert_eq!(
+                    catalog3::decode_job(cell, ns).err(),
+                    Some(RetentionError::UnsupportedState)
+                );
+            }
+        }
+        assert_eq!(
+            row_cells,
+            [
+                (2, row::JobState::TerminalLeased),
+                (3, row::JobState::RootRetained)
+            ],
+            "{id}"
+        );
+        // Both Root-bound Aging descriptors carry the one aggregate's Row peak.
+        let golden = case.blob(FRAME).unwrap();
+        let at = if golden[7] == 3 {
+            160 + 256 + 1536
+        } else {
+            160 + 192
+        };
+        let before_root: &[u8; PAGE_BYTES] = case.array(ROOT_PAGE).unwrap();
+        let after_root: &[u8; PAGE_BYTES] = case.array(AFTER + 1).unwrap();
+        for (bytes, root) in [
+            (case.blob(13).unwrap(), before_root),
+            (&golden[at..at + 1536], after_root),
+        ] {
+            let spec = retention_obligation::row::decode(bytes, case.profile, root)
+                .unwrap()
+                .descriptor();
+            assert_eq!(spec.remaining[3].peak, row::ROW_PEAK, "{id}");
+        }
+    }
+    // The Reserve's free-cell search starts at cursor1 (actor2's Terminal) and
+    // passes both Row cells before leasing ordinal4.
+    let case = Case::load("M03-P3");
+    let (_, root) = Row3::decode_root_page(case.blob(ROOT_PAGE).unwrap(), ns).unwrap();
+    assert_eq!((root.cursor(), case.base[4].as_str()), (1, "4"));
+    let terminal = catalog3::decode_job(&bank(&case)[1], ns).unwrap();
+    assert_eq!(
+        (terminal.state(), terminal.source()),
+        (catalog3::JobState::TerminalLeased, case.actor())
+    );
+    assert_eq!(bank(&case)[4][6..8], [0, 0]);
+    println!("CATALOG3 MIXED PASS cases=3 row_cells=2 peak=Row authority=NONE");
 }

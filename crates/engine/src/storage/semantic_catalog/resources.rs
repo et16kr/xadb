@@ -86,6 +86,12 @@ fn returned<T, E>() -> usize {
 /// instances of the one transition body. Every type term below is written
 /// with the Profile2 views; the Profile3 views have the same sizes, which the
 /// Profile3 census test checks, so only these function terms change.
+///
+/// Neither instance itemizes the shared format seam's own forwarding frames:
+/// `run_with_buffers` -> `run_format`, the `AgingStep` carrier of
+/// `Format::next_aging` and the codec Result conversions. The Profile2 values
+/// equal the recorded pre-seam branch values only because those frames are
+/// not counted; that equality is not an upper bound on the seam itself.
 #[derive(Clone, Copy)]
 struct Codecs {
     /// Root/Job cells, both page wrappers and the selected 64-cell census.
@@ -432,8 +438,8 @@ fn aging_next(codecs: Codecs) -> usize {
 }
 
 /// Profile3 successor, counted like `aging_next`: format::Row3::next_aging
-/// builds the selected Job cells (its AgingStep carrier is the same forward
-/// as Profile2's and is not itemized in either instance) and calls
+/// builds the selected Job cells (its `AgingStep` carrier, like Profile2's,
+/// is one of the uncounted seam frames named at `Codecs`) and calls
 /// retention_obligation::row::next. That function's arguments, decoded after
 /// Root, reference, chain/inventory pair and budget scalars stay live; its
 /// Job3 census, predecessor decode and final encode are separate calls. The

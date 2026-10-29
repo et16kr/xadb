@@ -4,7 +4,7 @@
 //! Profile2 selects the original version2 codecs and Profile3 the separate
 //! version3 codecs. There is no version rewriting, `>=` widening or retry of
 //! another observer, and no view here grants WAL, pin or install authority.
-use super::{Error, Result, u64_at};
+use super::{Error, Result};
 use crate::{
     api::Namespace,
     storage::{
@@ -383,17 +383,15 @@ impl Format for Row3 {
         Ok(catalog3::decode_root(input, namespace)?)
     }
     /// Only the Row issuer raises the Root3 RowId high-water. Every Catalog
-    /// group carries `row_high@432` from its before Root unchanged.
+    /// group carries `row_high@432` from its before Root unchanged; the guard
+    /// is the queue view's own `catalog3::encode_root_page`.
     fn encode_root_page(
         before: Self::Root<'_>,
         cell: &[u8; ROOT_BYTES],
         namespace: Namespace,
         output: &mut [u8],
     ) -> Result<()> {
-        if u64_at(cell, 432) != before.row_high() {
-            return Err(Error::OrderMismatch);
-        }
-        Ok(catalog3::encode_root_page(cell, namespace, output)?)
+        Ok(catalog3::encode_root_page(before, cell, namespace, output)?)
     }
     fn decode_jobs_page(input: &[u8], namespace: Namespace, index: u8) -> Result<PageView<'_>> {
         Ok(catalog3::decode_jobs_page(input, namespace, index)?)

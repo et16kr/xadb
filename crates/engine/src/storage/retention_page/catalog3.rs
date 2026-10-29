@@ -9,8 +9,8 @@
 //! The census entries are the Row codec's own: they validate the whole Job3
 //! bank, including other actors' Row Jobs, which this view never returns.
 use super::{
-    Generation, JOB_BYTES, Namespace, PageRef, RemainingBudget, Result, RetentionError,
-    StatusSlotRef, TxnRef, row,
+    Generation, JOB_BYTES, Namespace, PageRef, ROOT_BYTES, RemainingBudget, Result, RetentionError,
+    StatusSlotRef, TxnRef, get, row,
 };
 use crate::storage::undo_ref::UndoRef;
 use foundation::identity::ObjectHandle;
@@ -33,8 +33,7 @@ pub(in crate::storage) use super::row::free_job;
 )]
 pub(crate) use super::row::{
     JobCells, RootView, decode_jobs_page, decode_root, decode_root_page, encode_jobs_page,
-    encode_root_page, initial_root, root_decode_source_bytes, summarize_jobs, verify_census,
-    verify_selected_census,
+    initial_root, root_decode_source_bytes, summarize_jobs, verify_census, verify_selected_census,
 };
 
 /// One exact Job3 cell with Catalog meaning. Constructed only from a decoded
@@ -140,6 +139,23 @@ pub(crate) fn decode_job(input: &[u8], namespace: Namespace) -> Result<JobView<'
     JobView::catalog(row::decode_job(input, namespace)?).ok_or(RetentionError::UnsupportedState)
 }
 
+/// Root3 page encode for a Catalog-scope writer. Only the Row issuer raises
+/// the Root3 RowId high-water, so the candidate cell must carry `row_high@432`
+/// from its before Root unchanged; otherwise `OrderMismatch` and `output` is
+/// untouched. This view exports no unguarded Root3 encode: unlike
+/// `catalog::encode_root_page`, a caller must name the before Root.
+pub(crate) fn encode_root_page(
+    before: RootView<'_>,
+    cell: &[u8; ROOT_BYTES],
+    namespace: Namespace,
+    output: &mut [u8],
+) -> Result<()> {
+    if get(cell, 432) != before.row_high() {
+        return Err(RetentionError::OrderMismatch);
+    }
+    row::encode_root_page(cell, namespace, output)
+}
+
 /// Row codec bound plus this view's own decode wrapper frame. Every other entry
 /// is the Row codec entry itself; caller-owned page/Job arrays and the 640B
 /// aggregate scratch are charged by their owners, as for `catalog`.
@@ -147,14 +163,19 @@ pub(crate) fn source_bytes() -> usize {
     row::source_bytes() + wrapper_frame()
 }
 
-/// `decode_job`'s frame held above the exact Job3 decode chain, with room for
-/// the copied views and state mapping of accessor calls on its result.
+/// The larger of this view's two wrapper frames above the Row codec:
+/// `decode_job` (with room for the copied views and state mapping of accessor
+/// calls on its result) and the row_high guard of `encode_root_page`.
 pub(in crate::storage) fn wrapper_frame() -> usize {
     use std::mem::size_of;
-    size_of::<(&[u8], Namespace)>()
+    let decode = size_of::<(&[u8], Namespace)>()
         + size_of::<Result<row::JobView<'_>>>()
         + size_of::<Option<JobView<'_>>>()
         + size_of::<Result<JobView<'_>>>()
         + 4 * size_of::<JobView<'_>>()
-        + 2 * size_of::<(JobState, row::JobState)>()
+        + 2 * size_of::<(JobState, row::JobState)>();
+    let encode = size_of::<(RootView<'_>, &[u8; ROOT_BYTES], Namespace, &mut [u8])>()
+        + 2 * size_of::<u64>()
+        + size_of::<Result<()>>();
+    decode.max(encode)
 }
