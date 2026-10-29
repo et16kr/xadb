@@ -526,35 +526,7 @@ impl<'i, 'c, 's> PreparedCatalog<'i, 'c, 's> {
         control: &control::RetentionLedger<'_, 'c, 's>,
         prefix: WalPrefix,
     ) -> Result<()> {
-        let actual = owner
-            .visibility_identity(self.payload.core)
-            .map_err(|error| RetentionError {
-                phase: RetentionPhase::Prepare,
-                effect: error.effect,
-                cause: RetentionCause::Concurrency(error),
-            })?;
-        if actual != self.owner
-            || !std::ptr::eq(self.payload.core, pool.bound_core())
-            || !pool.uses_storage_origin(self.payload.binding, self.payload.fence)
-        {
-            return Err(unchanged(
-                RetentionPhase::Prepare,
-                RetentionCause::BindingMismatch,
-            ));
-        }
-        if prefix != self.payload.prefix
-            || control.pending.is_some()
-            || !self.payload.control.matches(control)
-        {
-            return Err(unchanged(RetentionPhase::Prepare, RetentionCause::Busy));
-        }
-        if content_digest(self.payload.frame) != self.payload.frame_digest {
-            return Err(unchanged(
-                RetentionPhase::Prepare,
-                RetentionCause::Invariant,
-            ));
-        }
-        Ok(())
+        check_group(&self.payload, self.owner, owner, pool, control, prefix)
     }
     pub(in super::super) fn confirms_requirement(&self, requirement: WalRequirement<'_>) -> bool {
         self.payload.confirms_requirement(requirement)
@@ -584,15 +556,7 @@ impl<'i> CatalogPayload<'i, '_, '_> {
         self.inventory
     }
     pub(in super::super) fn confirms_requirement(&self, requirement: WalRequirement<'_>) -> bool {
-        let location = requirement.location();
-        requirement.uses_fence(self.fence)
-            && location.stream == self.prefix.stream
-            && location.file == self.prefix.file
-            && location.previous_lsn == self.prefix.complete_lsn
-            && location.lsn == self.observation.header.lsn
-            && location.start == self.prefix.complete_offset
-            && location.length == self.frame.len()
-            && location.start.checked_add(location.length as u64) == Some(location.end)
+        confirms_group(self, requirement)
     }
     pub(in super::super) fn layout(
         &self,
@@ -618,11 +582,113 @@ pub(in super::super) fn catalog_mark_staged<'s>(
     control: &mut control::RetentionLedger<'_, '_, 's>,
     requirement: WalRequirement<'s>,
 ) -> Result<()> {
-    if !prepared.confirms_requirement(requirement)
-        || control.pending.is_some()
-        || !prepared.payload.control.matches(control)
+    mark_staged_group(&prepared.payload, control, requirement)
+}
+
+/// The scope-neutral cut of a prepared existing group (Catalog or Row
+/// payload): one check, staging relation, mark and apply prelude for both.
+trait GroupPayload<'c, 's> {
+    fn core(&self) -> &'c PageConcurrency<'s>;
+    fn binding(&self) -> &'s AtomicU8;
+    fn fence(&self) -> &'s SessionFence;
+    fn prefix(&self) -> WalPrefix;
+    fn lsn(&self) -> u64;
+    fn frame(&self) -> &[u8];
+    fn frame_digest(&self) -> [u8; 32];
+    fn cut(&self) -> ControlCut;
+}
+impl<'c, 's> GroupPayload<'c, 's> for CatalogPayload<'_, 'c, 's> {
+    fn core(&self) -> &'c PageConcurrency<'s> {
+        self.core
+    }
+    fn binding(&self) -> &'s AtomicU8 {
+        self.binding
+    }
+    fn fence(&self) -> &'s SessionFence {
+        self.fence
+    }
+    fn prefix(&self) -> WalPrefix {
+        self.prefix
+    }
+    fn lsn(&self) -> u64 {
+        self.observation.header.lsn
+    }
+    fn frame(&self) -> &[u8] {
+        self.frame
+    }
+    fn frame_digest(&self) -> [u8; 32] {
+        self.frame_digest
+    }
+    fn cut(&self) -> ControlCut {
+        self.control
+    }
+}
+
+/// The original owner, bound origin, unchanged prefix/control cut and frame
+/// digest, rechecked immediately before the install of either scope.
+fn check_group<'c, 's>(
+    group: &impl GroupPayload<'c, 's>,
+    expected: OwnerIdentity,
+    owner: &Owner<'c, 's>,
+    pool: &SharedPool<'c, 's, '_, '_>,
+    control: &control::RetentionLedger<'_, 'c, 's>,
+    prefix: WalPrefix,
+) -> Result<()> {
+    let actual = owner
+        .visibility_identity(group.core())
+        .map_err(|error| RetentionError {
+            phase: RetentionPhase::Prepare,
+            effect: error.effect,
+            cause: RetentionCause::Concurrency(error),
+        })?;
+    if actual != expected
+        || !std::ptr::eq(group.core(), pool.bound_core())
+        || !pool.uses_storage_origin(group.binding(), group.fence())
     {
-        prepared.payload.fence.fence();
+        return Err(unchanged(
+            RetentionPhase::Prepare,
+            RetentionCause::BindingMismatch,
+        ));
+    }
+    if prefix != group.prefix() || control.pending.is_some() || !group.cut().matches(control) {
+        return Err(unchanged(RetentionPhase::Prepare, RetentionCause::Busy));
+    }
+    if content_digest(group.frame()) != group.frame_digest() {
+        return Err(unchanged(
+            RetentionPhase::Prepare,
+            RetentionCause::Invariant,
+        ));
+    }
+    Ok(())
+}
+
+/// The staged requirement is exactly this group's frame after its prefix.
+fn confirms_group<'c, 's>(
+    group: &impl GroupPayload<'c, 's>,
+    requirement: WalRequirement<'_>,
+) -> bool {
+    let location = requirement.location();
+    let prefix = group.prefix();
+    requirement.uses_fence(group.fence())
+        && location.stream == prefix.stream
+        && location.file == prefix.file
+        && location.previous_lsn == prefix.complete_lsn
+        && location.lsn == group.lsn()
+        && location.start == prefix.complete_offset
+        && location.length == group.frame().len()
+        && location.start.checked_add(location.length as u64) == Some(location.end)
+}
+
+fn mark_staged_group<'c, 'g, 's>(
+    group: &impl GroupPayload<'c, 'g>,
+    control: &mut control::RetentionLedger<'_, '_, 's>,
+    requirement: WalRequirement<'s>,
+) -> Result<()> {
+    if !confirms_group(group, requirement)
+        || control.pending.is_some()
+        || !group.cut().matches(control)
+    {
+        group.fence().fence();
         return Err(RetentionError {
             phase: RetentionPhase::Install,
             effect: Effect::CallerMustResolve,
@@ -630,6 +696,29 @@ pub(in super::super) fn catalog_mark_staged<'s>(
         });
     }
     control.pending = Some(requirement);
+    Ok(())
+}
+
+/// The control-apply prelude: the original cut is still unchanged and the
+/// pending requirement is this group's staged one.
+fn check_staged_group<'c, 's>(
+    group: &impl GroupPayload<'c, 's>,
+    control: &control::RetentionLedger<'_, '_, '_>,
+    requirement: WalRequirement<'_>,
+) -> Result<()> {
+    if !confirms_group(group, requirement)
+        || !group.cut().matches(control)
+        || control.pending.is_none_or(|pending| {
+            !pending.uses_fence(group.fence()) || pending.location() != requirement.location()
+        })
+    {
+        group.fence().fence();
+        return Err(RetentionError {
+            phase: RetentionPhase::Install,
+            effect: Effect::CallerMustResolve,
+            cause: RetentionCause::Invariant,
+        });
+    }
     Ok(())
 }
 
@@ -642,19 +731,7 @@ pub(super) fn catalog_apply(
     profile: crate::storage::control::Profile,
     requirement: WalRequirement<'_>,
 ) -> Result<()> {
-    if !prepared.confirms_requirement(requirement)
-        || !prepared.control.matches(control)
-        || control.pending.is_none_or(|pending| {
-            !pending.uses_fence(prepared.fence) || pending.location() != requirement.location()
-        })
-    {
-        prepared.fence.fence();
-        return Err(RetentionError {
-            phase: RetentionPhase::Install,
-            effect: Effect::CallerMustResolve,
-            cause: RetentionCause::Invariant,
-        });
-    }
+    check_staged_group(prepared, control, requirement)?;
     let view = prepared.layout(profile)?;
     let operation = prepared.operation();
     let inventory = prepared
@@ -784,34 +861,42 @@ pub(in super::super) fn catalog_control_source_bytes() -> usize {
         + 4 * size_of::<StatusSlotRef>()
         + 8 * size_of::<Result<()>>()
         + size_of::<([usize; 12], [bool; 8], [&[u8]; 12])>()
+        // The scope-neutral group helpers forward the owner identity, prefix
+        // and their reference arguments one call deeper.
+        + size_of::<OwnerIdentity>()
+        + size_of::<WalPrefix>()
+        + 6 * size_of::<&()>()
         // These are sequential calls; the parent values above remain live.
         + semantic_catalog::layout_source_bytes().max(queue::source_bytes())
 }
 
-/// Borrowed successor projection. The shared encoder is a codec, while this
-/// projection retains the actual verified layout and original control source.
+/// Borrowed successor projection of one group of either scope. The shared
+/// encoder is a codec, while this projection retains the group's verified
+/// successor rows and the original control source for every other row.
 struct ProjectedInventory<'b, 'i, 'a, 'c, 's> {
     control: &'b control::RetentionLedger<'a, 'c, 's>,
-    observation: Observation,
-    slot: Option<usize>,
-    view: semantic_catalog::LayoutView<'i>,
+    rows: GroupRows<'i>,
     root: &'i [u8; PAGE_BYTES],
     allocator: &'i [u8; PAGE_BYTES],
     jobs: Option<crate::storage::page::PageView<'i>>,
+}
+/// The control rows a group changes, read from its verified layout: the
+/// transaction ATT row (slot and successor descriptor, None when cleared),
+/// the successor Aging descriptor when it changes, and the changed Job.
+#[derive(Clone, Copy)]
+struct GroupRows<'i> {
+    transaction: Option<(usize, Option<&'i [u8; 1536]>)>,
+    aging: Option<Option<&'i [u8; 1536]>>,
+    job_ordinal: Option<usize>,
 }
 impl crate::storage::plan4_recovery_base::catalog::inventory::InventoryRows
     for ProjectedInventory<'_, '_, '_, '_, '_>
 {
     fn transaction(&self, index: usize) -> Option<&[u8; 1536]> {
-        let operation = self.observation.operation;
-        if (operation.handoff() || operation == Operation::RollbackStart)
-            && self.slot == Some(index)
+        if let Some((slot, after)) = self.rows.transaction
+            && slot == index
         {
-            if matches!(operation, Operation::Commit | Operation::AbortEnd) {
-                None
-            } else {
-                self.view.descriptor(0)
-            }
+            after
         } else {
             let bytes = &self.control.row(index)[..1536];
             bytes
@@ -828,9 +913,8 @@ impl crate::storage::plan4_recovery_base::catalog::inventory::InventoryRows
             .then(|| bytes.try_into().expect("original descriptor"))
     }
     fn aging(&self) -> Option<&[u8; 1536]> {
-        let operation = self.observation.operation;
-        if operation != Operation::RollbackStart {
-            self.view.descriptor(usize::from(operation.handoff()))
+        if let Some(after) = self.rows.aging {
+            after
         } else {
             let bytes = &self.control.row(control::AGING_SLOT)[..1536];
             bytes
@@ -849,7 +933,7 @@ impl crate::storage::plan4_recovery_base::catalog::inventory::InventoryRows
         &self,
         ordinal: usize,
     ) -> std::result::Result<&[u8], crate::storage::plan4_recovery_base::Error> {
-        if self.observation.job_ordinal == Some(ordinal) {
+        if self.rows.job_ordinal == Some(ordinal) {
             self.jobs
                 .as_ref()
                 .and_then(|page| page.cell(ordinal % 15))
@@ -863,6 +947,36 @@ impl crate::storage::plan4_recovery_base::catalog::inventory::InventoryRows
         }
     }
 }
+impl<'i> GroupRows<'i> {
+    /// A Catalog group: Tx handoffs and RollbackStart own the ATT row, every
+    /// other operation the Aging row.
+    fn catalog(
+        observation: Observation,
+        slot: Option<usize>,
+        view: semantic_catalog::LayoutView<'i>,
+    ) -> Self {
+        let operation = observation.operation;
+        Self {
+            transaction: (operation.handoff() || operation == Operation::RollbackStart)
+                .then_some(slot)
+                .flatten()
+                .map(|slot| {
+                    (
+                        slot,
+                        (!matches!(operation, Operation::Commit | Operation::AbortEnd))
+                            .then(|| view.descriptor(0))
+                            .flatten(),
+                    )
+                }),
+            aging: (operation != Operation::RollbackStart)
+                .then(|| view.descriptor(usize::from(operation.handoff()))),
+            job_ordinal: observation.job_ordinal,
+        }
+    }
+}
+
+/// The XOI successor of one verified group of either scope, encoded before
+/// its stage. `jobs_after` is the changed Jobs page (with `rows.job_ordinal`).
 #[allow(
     clippy::too_many_arguments,
     reason = "borrowed original phase sections"
@@ -870,44 +984,39 @@ impl crate::storage::plan4_recovery_base::catalog::inventory::InventoryRows
 fn prepare_inventory(
     control: &control::RetentionLedger<'_, '_, '_>,
     profile: crate::storage::control::Profile,
-    observation: Observation,
-    slot: Option<usize>,
-    view: semantic_catalog::LayoutView<'_>,
-    root_before: &[u8; PAGE_BYTES],
-    allocator_before: &[u8; PAGE_BYTES],
-    after: &[[u8; PAGE_BYTES]; 8],
+    lsn: u64,
+    rows: GroupRows<'_>,
+    root: &[u8; PAGE_BYTES],
+    allocator: &[u8; PAGE_BYTES],
+    jobs_after: Option<&[u8; PAGE_BYTES]>,
     output: &mut [u8; PAGE_BYTES],
 ) -> Result<(u64, u64)> {
-    let changed = |role| observation.order[..usize::from(observation.count)].contains(&role);
-    let rows = ProjectedInventory {
+    let jobs = match (rows.job_ordinal, jobs_after) {
+        (Some(ordinal), Some(page)) => Some(
+            queue::decode_jobs_page(page, profile.spec().namespace, (ordinal / 15) as u8)
+                .map_err(queue_error)?,
+        ),
+        (None, _) => None,
+        (Some(_), None) => {
+            return Err(unchanged(
+                RetentionPhase::Prepare,
+                RetentionCause::Invariant,
+            ));
+        }
+    };
+    let projected = ProjectedInventory {
         control,
-        observation,
-        slot,
-        view,
-        root: if changed(1) { &after[1] } else { root_before },
-        allocator: if changed(0) {
-            &after[0]
-        } else {
-            allocator_before
-        },
-        jobs: observation
-            .job_ordinal
-            .map(|ordinal| {
-                queue::decode_jobs_page(&after[2], profile.spec().namespace, (ordinal / 15) as u8)
-            })
-            .transpose()
-            .map_err(queue_error)?,
+        rows,
+        root,
+        allocator,
+        jobs,
     };
     let generation = control
         .source
         .base()
         .map_or(1, |base| base.view().header().generation);
     crate::storage::plan4_recovery_base::catalog::inventory::encode_row_current(
-        profile,
-        generation,
-        observation.header.lsn,
-        &rows,
-        output,
+        profile, generation, lsn, &projected, output,
     )
     .map_err(|error| unchanged(RetentionPhase::Prepare, RetentionCause::Base(error)))
 }
@@ -1368,6 +1477,10 @@ impl<'b, 'a, 's, 'c, 'p, 'd, 'm, 'w, W: WriterNamespace>
             // Forward fills nearly the whole frame, but its pair has no before
             // images. Other operations use one page after their exact frame end;
             // CLR therefore keeps both real pair-before pages intact.
+            let changed =
+                |role| observation.order[..usize::from(observation.count)].contains(&role);
+            let rows = GroupRows::catalog(observation, slot, layout);
+            let jobs_after = observation.job_ordinal.map(|_| &after[2]);
             if in_before {
                 if observation.operation != Operation::Forward
                     || roles[..N].iter().any(|role| matches!(role, 6 | 7))
@@ -1381,24 +1494,22 @@ impl<'b, 'a, 's, 'c, 'p, 'd, 'm, 'w, W: WriterNamespace>
                 prepare_inventory(
                     self.control,
                     storage.profile(),
-                    observation,
-                    slot,
-                    layout,
-                    &head[1],
-                    &head[0],
-                    after,
+                    observation.header.lsn,
+                    rows,
+                    if changed(1) { &after[1] } else { &head[1] },
+                    if changed(0) { &after[0] } else { &head[0] },
+                    jobs_after,
                     &mut tail[0],
                 )?
             } else {
                 prepare_inventory(
                     self.control,
                     storage.profile(),
-                    observation,
-                    slot,
-                    layout,
-                    &before[1],
-                    &before[0],
-                    after,
+                    observation.header.lsn,
+                    rows,
+                    if changed(1) { &after[1] } else { &before[1] },
+                    if changed(0) { &after[0] } else { &before[0] },
+                    jobs_after,
                     (&mut spare[..PAGE_BYTES])
                         .try_into()
                         .expect("named inventory page after exact frame"),
