@@ -137,6 +137,24 @@ pub(crate) fn decode_job(input: &[u8], namespace: Namespace) -> Result<JobView<'
     JobView::catalog(row::decode_job(input, namespace)?).ok_or(RetentionError::UnsupportedState)
 }
 
+/// Exact Job3 decode for a Catalog consumer that scans the whole mixed bank.
+/// A valid Row-scope cell (kind3 root or registry16 Terminal) is `Ok(None)`:
+/// it has no Catalog meaning and the caller skips it. Free and Catalog cells
+/// are `Ok(Some)`. Every Job3 decode error (length, version, state, identity,
+/// order, budget, namespace) is kept unchanged, so a corrupt cell is never
+/// mistaken for a skippable Row cell. Its frame is no larger than
+/// `decode_job`'s, which `wrapper_frame` already charges.
+pub(crate) fn decode_catalog_cell(
+    input: &[u8],
+    namespace: Namespace,
+) -> Result<Option<JobView<'_>>> {
+    Ok(JobView::catalog(row::decode_job(input, namespace)?))
+}
+const _: () = assert!(
+    std::mem::size_of::<Result<Option<JobView<'static>>>>()
+        <= std::mem::size_of::<Result<JobView<'static>>>()
+);
+
 /// Root3 page encode for a Catalog-scope writer. Only the Row issuer raises
 /// the Root3 RowId high-water, so the candidate cell must carry `row_high@432`
 /// from its before Root unchanged; otherwise `OrderMismatch` and `output` is
@@ -177,3 +195,7 @@ pub(in crate::storage) fn wrapper_frame() -> usize {
         + size_of::<Result<()>>();
     decode.max(encode)
 }
+
+#[cfg(test)]
+#[path = "catalog3_tests.rs"]
+mod tests;
