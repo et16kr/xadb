@@ -36,6 +36,8 @@ pub(crate) use operation::{
 };
 pub(crate) use scope::{CatalogCallError, CatalogCallScope};
 pub(crate) use statement::CatalogStatementCall;
+pub(super) use statement::TableIssue;
+pub(crate) use statement::TableStep;
 
 pub(crate) struct RetentionReadGuard<'a, 'b, 'c, 's, 'p, 'd> {
     read: ReadTargets<'a, 'b, 'c, 's, 'p, 'd, 2>,

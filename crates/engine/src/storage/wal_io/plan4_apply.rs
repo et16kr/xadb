@@ -205,7 +205,7 @@ pub(in crate::storage) use population::{
 )]
 pub(crate) use read::{
     CatalogCallError, CatalogCallScope, CatalogCandidate, CatalogLookupStep, CatalogReadOperation,
-    CatalogStatementCall, MissingCatalogEvidence, ReadStep, RetentionReadGuard,
+    CatalogStatementCall, MissingCatalogEvidence, ReadStep, RetentionReadGuard, TableStep,
 };
 pub(in crate::storage) use recovery::{
     RetentionFrameObservation, RetentionRecoveryStep, RetentionReplayCursor,

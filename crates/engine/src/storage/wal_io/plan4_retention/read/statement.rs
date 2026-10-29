@@ -6,8 +6,14 @@
         reason = "selected statement-bound Catalog consumer precedes SQL integration"
     )
 )]
+use super::super::row::CheckedTable;
 use super::super::transaction::RowStatementView;
+use super::super::visibility::TableSlot;
 use super::*;
+use crate::storage::{
+    catalog_record::{CatalogDefinitionView, CatalogHeader, CatalogRecordView},
+    transaction_record::VersionStamp,
+};
 
 /// Owns the original short admission and borrows the original statement. Its
 /// result cannot outlive either source accounting or the registered snapshot.
@@ -110,12 +116,189 @@ impl<W: WriterNamespace> CatalogStatementCall<'_, '_, '_, '_, '_, '_, '_, '_, '_
     }
 }
 
+/// The CheckedTable issuer's only outcomes. FlushRequired carries the actual
+/// lookup's original target and registers nothing; Missing (absent, invisible
+/// or retired) registers only the catalog flag.
+pub(crate) enum TableStep<'c, 's> {
+    Table(CheckedTable<'c, 's>),
+    Missing,
+    FlushRequired { target: Plan4Target },
+}
+
+/// Issue witness. Its field is private to this module, so `finish_table` is
+/// the only path to `CheckedTable::issue`; no caller ObjectId or decoded
+/// record can construct one.
+pub(in super::super) struct TableIssue {
+    _private: (),
+}
+
+impl<'s, 'c, W: WriterNamespace>
+    CatalogStatementCall<'_, '_, '_, '_, '_, '_, 's, 'c, '_, '_, '_, '_, W>
+{
+    /// The only CheckedTable issuer: the limited supply of the §6.4
+    /// `finish_table` position until `catalog_operation` exists. `object` is a
+    /// lookup key only; issuance needs this call's actual Found Table, its
+    /// Published epoch slot and the registered catalog flag and table read bit.
+    /// The publication and isolation leaves are taken one after the other.
+    /// Lookup errors keep their original wide form, as in `finish_error`.
+    pub(in crate::storage) fn finish_table(
+        mut self,
+        object: ObjectId,
+        cursor: &mut Plan4ResidencyCursor,
+        private: &mut [u8; 425_984],
+    ) -> Result<TableStep<'c, 's>> {
+        match self.issue_table(object, cursor, private) {
+            Ok(step) => match self.call.finish_checked() {
+                Ok(()) => Ok(step),
+                Err(error) => Err(error.into()),
+            },
+            Err(error) => Err(self.call.finish_error(error)),
+        }
+    }
+
+    fn issue_table(
+        &mut self,
+        object: ObjectId,
+        cursor: &mut Plan4ResidencyCursor,
+        private: &mut [u8; 425_984],
+    ) -> Result<TableStep<'c, 's>> {
+        self.statement.check_catalog_read()?;
+        #[cfg(test)]
+        let core = self.call.test_record_core();
+        let header = match crate::storage::catalog::read::lookup(
+            self.call.operation(private)?,
+            object,
+            cursor,
+            Some(self.statement),
+        )? {
+            CatalogLookupStep::FlushRequired { target } => {
+                return Ok(TableStep::FlushRequired { target });
+            }
+            CatalogLookupStep::Missing => {
+                #[cfg(test)]
+                crate::transaction::concurrency::catalog_test_support::hit(
+                    core,
+                    crate::transaction::concurrency::catalog_test_support::Point::LookupBeforeCatalogRecord,
+                );
+                self.statement.check_catalog_read()?;
+                self.statement.record_catalog_read()?;
+                return Ok(TableStep::Missing);
+            }
+            CatalogLookupStep::Found(record) => table_header(record)?,
+        };
+        let backend = self.call.backend();
+        let storage = backend.storage;
+        let invariant = || fatal(storage, RetentionPhase::Census, RetentionCause::Invariant);
+        // lookup selects a visible retired record as Missing, and its decoder
+        // already bound the key; a Found record contradicting either is fatal.
+        if header.retired || header.identity.object != object {
+            return Err(invariant());
+        }
+        // Same anchor identity as the original epoch seeding. Membership and
+        // root are rechecked by Row C at every use of the handle.
+        let base = super::super::recovery::allocator_identity(storage.profile())
+            .map_err(|_| invariant())?;
+        if header.anchor.file != base.page.file || !(9..64).contains(&header.anchor.page_no) {
+            return Err(invariant());
+        }
+        let anchor = PageIdentity {
+            database: base.database,
+            page: header.anchor,
+            owner: header.identity.object,
+            owner_generation: header.identity.generation,
+        };
+        let visibility = backend.visibility.ok_or_else(invariant)?;
+        // Publication leaf only: its guard ends inside table_slot.
+        let slot = match visibility
+            .table_slot(header.identity)
+            .map_err(|e| RetentionError {
+                phase: RetentionPhase::Census,
+                effect: e.effect,
+                cause: RetentionCause::Visibility(e),
+            })? {
+            TableSlot::Published(slot) => slot,
+            // Own uncommitted CREATE: Row needs an existing table entry.
+            TableSlot::Reserved
+                if matches!(header.stamp, VersionStamp::Transaction(actor)
+                    if self.statement.own_actor() == Some(actor)) =>
+            {
+                return Err(unchanged(
+                    RetentionPhase::Census,
+                    RetentionCause::Unsupported,
+                ));
+            }
+            // A visible Table always has a Published slot in this open.
+            TableSlot::Reserved | TableSlot::Absent => return Err(invariant()),
+        };
+        #[cfg(test)]
+        crate::transaction::concurrency::catalog_test_support::hit(
+            core,
+            crate::transaction::concurrency::catalog_test_support::Point::LookupBeforeCatalogRecord,
+        );
+        // Isolation leaf only, after publication was released.
+        self.statement.check_catalog_read()?;
+        self.statement.record_table_read(slot)?;
+        Ok(TableStep::Table(CheckedTable::issue(
+            TableIssue { _private: () },
+            backend.pool.bound_core(),
+            &storage.binding,
+            storage.session_fence(),
+            header.identity,
+            slot,
+            anchor,
+        )))
+    }
+}
+
+/// The single classification of an actual Found record. A non-Table
+/// definition is refused before any slot observation or registration.
+fn table_header(record: CatalogRecordView<'_>) -> Result<CatalogHeader> {
+    match record.definition() {
+        CatalogDefinitionView::Table(_) => Ok(record.header()),
+        CatalogDefinitionView::Index(_) => Err(unchanged(
+            RetentionPhase::Census,
+            RetentionCause::Unsupported,
+        )),
+    }
+}
+
 /// Statement validation/registration is inside the fixed short reservation.
 /// The extra statement borrow also survives the original lookup's peak.
 pub(super) fn held_source_bytes() -> usize {
     // New wrapper's self/cursor/private inputs and ObjectId survive the nested
     // physical/replay call, alongside statement field and selected caller borrow.
+    // finish_table moves the call instead of borrowing it: its helper's self
+    // takes the caller-borrow place, and the moved call is the counted one.
     5 * std::mem::size_of::<&()>() + std::mem::size_of::<ObjectId>()
+}
+
+/// finish_table after its nested lookup returned: classification, anchor
+/// identity, the publication leaf, then the issued step through the consuming
+/// close. These phases are serial; the isolation registration leaf and the
+/// close itself are the existing catalog_read and close terms.
+fn table_source_bytes() -> usize {
+    use crate::storage::{page::PageHeader, retention_genesis::RetentionGenesisError};
+    use std::mem::size_of;
+    let classify = size_of::<CatalogRecordView<'_>>()
+        + 2 * size_of::<CatalogDefinitionView<'_>>()
+        + 2 * size_of::<Result<CatalogHeader>>();
+    let anchor = 2 * size_of::<PageHeader>()
+        + 2 * size_of::<std::result::Result<PageHeader, RetentionGenesisError>>()
+        + 2 * size_of::<std::result::Result<PageIdentity, RetentionCause>>()
+        + size_of::<PageIdentity>();
+    let slot = super::super::visibility::epoch_publication_source_bytes()
+        + 2 * size_of::<super::super::visibility::VisibilityResult<TableSlot>>()
+        + 2 * size_of::<TableSlot>();
+    2 * size_of::<CatalogHeader>()
+        + size_of::<PageIdentity>()
+        + size_of::<CheckedTable<'_, '_>>()
+        + 2 * size_of::<TableStep<'_, '_>>()
+        + 2 * size_of::<Result<TableStep<'_, '_>>>()
+        + size_of::<TableIssue>()
+        + 2 * size_of::<std::result::Result<(), CatalogCallError>>()
+        + 2 * size_of::<RetentionError>()
+        + 8 * size_of::<&()>()
+        + classify.max(anchor).max(slot)
 }
 
 pub(super) fn source_bytes<W: WriterNamespace>() -> usize {
@@ -128,6 +311,7 @@ pub(super) fn source_bytes<W: WriterNamespace>() -> usize {
         + 8 * size_of::<&()>()
         + super::super::transaction::catalog_read_source_bytes()
         + scope::close_source_bytes()
+        + table_source_bytes()
 }
 
 #[cfg(test)]
@@ -189,5 +373,120 @@ mod tests {
         );
         assert!(full >= source + held_source_bytes());
         assert!(resident >= source + held_source_bytes());
+    }
+    #[test]
+    fn finish_table_carriers_leave_both_fixed_classes_unchanged() {
+        use std::mem::size_of;
+        fn check<W: WriterNamespace>(writer: &str) {
+            let table = table_source_bytes();
+            let wrapper = source_bytes::<W>();
+            let held = held_source_bytes();
+            let full = lookup::source_bytes::<W>();
+            let resident = lookup::resident_source_bytes::<W>();
+            println!(
+                "TABLE_SOURCE writer={writer} table={table} wrapper_before={} wrapper_after={wrapper} held={held} full={full} resident={resident} checked={} step={} result={} retention_error={} call_error={} whole_floor=NOT_CONNECTED",
+                wrapper - table,
+                size_of::<CheckedTable<'_, '_>>(),
+                size_of::<TableStep<'_, '_>>(),
+                size_of::<Result<TableStep<'_, '_>>>(),
+                size_of::<RetentionError>(),
+                size_of::<CatalogCallError>(),
+            );
+            // Each class is max(terms) + held. The wrapper term strictly below
+            // the maximum cannot set it, before or after the added table term,
+            // so neither fixed charge depends on finish_table.
+            assert!(full > wrapper + held);
+            assert!(resident > wrapper + held);
+        }
+        check::<Writer>("memory");
+        check::<super::super::super::super::native::Writer>("native");
+        assert_eq!(size_of::<TableIssue>(), 0);
+    }
+    #[test]
+    fn found_non_table_definition_is_unsupported_before_issue() {
+        use crate::{
+            api::{Column, DataType, DatabaseId, Namespace, TableSpec},
+            storage::{
+                catalog_record::{
+                    self, CatalogDefinition, CatalogExpectation, IndexDefinition, IndexMode,
+                },
+                page::{FileId, PageRef},
+                transaction_record::LogicalRowVersion,
+            },
+            transaction::TxnId,
+        };
+        use foundation::identity::{CommitSeq, Generation, ObjectHandle, SchemaEpoch};
+        let namespace = Namespace {
+            database: DatabaseId::new([0x11; 16]).unwrap(),
+            timeline: 1,
+        };
+        let handle = |object| ObjectHandle {
+            object: ObjectId::new(object).unwrap(),
+            generation: Generation::new(1).unwrap(),
+            schema_epoch: SchemaEpoch::new(1).unwrap(),
+        };
+        let header = |object| CatalogHeader {
+            identity: handle(object),
+            retired: false,
+            stamp: VersionStamp::Committed(CommitSeq::new(1).unwrap()),
+            logical: LogicalRowVersion::new(
+                TxnId {
+                    database: namespace.database,
+                    timeline: 1,
+                    writer_epoch: 1,
+                    local: 1,
+                },
+                1,
+            )
+            .unwrap(),
+            undo: None,
+            anchor: PageRef {
+                file: FileId::new(0x0000_0001_0000_0001).unwrap(),
+                page_no: 5 + object,
+                incarnation: Generation::new(1).unwrap(),
+            },
+        };
+        let spec = TableSpec {
+            name: "T".into(),
+            columns: vec![Column {
+                name: "i".into(),
+                data_type: DataType::Int64,
+                nullable: false,
+            }],
+        };
+        let index = IndexDefinition {
+            parent: handle(6),
+            name: "ix",
+            mode: IndexMode::Unique,
+            columns: &[0],
+        };
+        let mut bytes = [0u8; 4_588];
+        for (object, definition) in [
+            (6, CatalogDefinition::Table(&spec)),
+            (7, CatalogDefinition::Index(index)),
+        ] {
+            let expected = CatalogExpectation {
+                namespace,
+                object: ObjectId::new(object).unwrap(),
+            };
+            let len = catalog_record::encode_catalog_record(
+                expected,
+                header(object),
+                definition,
+                &mut bytes,
+            )
+            .unwrap();
+            let record = catalog_record::decode_catalog_record(&bytes[..len], expected).unwrap();
+            match (object, table_header(record)) {
+                (6, Ok(found)) => assert_eq!(found, header(6)),
+                (7, Err(error)) => {
+                    assert!(matches!(error.cause, RetentionCause::Unsupported));
+                    assert_eq!(error.phase, RetentionPhase::Census);
+                    assert_eq!(error.effect, Effect::Unchanged);
+                }
+                _ => panic!("only a Table definition may reach the slot check"),
+            }
+        }
+        println!("TABLE_CLASSIFY table=Ok index=Unsupported/Unchanged");
     }
 }

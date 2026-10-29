@@ -17,7 +17,7 @@ pub(crate) use super::bootstrap::doublewrite_install::mutable_storage::plan4_pag
     RowMutationObservation, RowOperation, RowOwnedError, RowPageRole, RowPreflightContext,
     RowProducerContext, RowProducerInput, RowProducerLane, RowProposal, RowReadOperation,
     RowRollback, RowRollbackDone, RowRollbackTask, RowSearchPage, RowSourceBinding, RowSourceRole,
-    RowStatementView, RowTransaction, RowValidationLane, StatementFinishError,
+    RowStatementView, RowTransaction, RowValidationLane, StatementFinishError, TableStep,
     TransactionFinishError, TransactionOptions,
 };
 

@@ -514,6 +514,36 @@ impl BoundVisibility<'_, '_, '_> {
     }
 }
 
+/// A table's epoch slot as observed under publication. The slot number is an
+/// observation for the read mask, not an authority; Reserved belongs to an
+/// uncommitted CREATE and is never exposed as a CheckedTable.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub(in super::super) enum TableSlot {
+    Absent,
+    Reserved,
+    Published(u8),
+}
+impl BoundVisibility<'_, '_, '_> {
+    /// Only the CheckedTable issuer calls this. The publication guard ends on
+    /// return, before the caller takes the isolation leaf.
+    pub(in super::super) fn table_slot(&self, object: ObjectHandle) -> VisibilityResult<TableSlot> {
+        let publication = self.publication()?;
+        if !publication.epochs_active {
+            return Err(self.origin.fatal(VisibilityCause::Invariant));
+        }
+        let Some(slot) = find(publication.epochs, object) else {
+            return Ok(TableSlot::Absent);
+        };
+        let state = row(publication.epochs, slot)[0];
+        let slot = u8::try_from(slot).map_err(|_| self.origin.fatal(VisibilityCause::Invariant))?;
+        match state {
+            RESERVED => Ok(TableSlot::Reserved),
+            PUBLISHED => Ok(TableSlot::Published(slot)),
+            _ => Err(self.origin.fatal(VisibilityCause::Invariant)),
+        }
+    }
+}
+
 /// The extracted owned epoch packet during Pending, after prepare returned.
 #[cfg(test)]
 pub(in super::super) fn commit_retained_carrier() -> usize {

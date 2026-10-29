@@ -30,6 +30,7 @@ pub(super) use epochs::{
     transition_source_bytes as epoch_transition_source_bytes,
 };
 
+pub(super) use epochs::TableSlot;
 #[cfg(test)]
 pub(super) use epochs::commit_retained_carrier as epoch_commit_retained_carrier;
 

@@ -547,6 +547,28 @@ impl<'t, 'v, 'a, 'c, 's> RowStatementView<'t, 'v, 'a, 'c, 's> {
         target[3] |= 1;
         Ok(())
     }
+
+    /// Register an issued CheckedTable's table read bit (T10 read mask @4)
+    /// with the catalog flag of its actual lookup, in one isolation leaf. The
+    /// issuer released publication first; no other guard is held here. Bits
+    /// are never cleared by statement end, failure or rollback.
+    pub(super) fn record_table_read(&self, slot: u8) -> Result<()> {
+        self.check()?;
+        let lease = &self.transaction.lease;
+        let bit = 1u32
+            .checked_shl(u32::from(slot))
+            .ok_or_else(|| fail(lease.fence, RetentionCause::Invariant))?;
+        let mut state = entry(lease.ledger, lease.fence)?;
+        lease.check(state.bytes)?;
+        let target = row_mut(state.bytes, lease.slot);
+        if read64(target, 80) != self.sequence || target[88..].iter().any(|&b| b != 0) {
+            return Err(fail(lease.fence, RetentionCause::Invariant));
+        }
+        let mask = read32(target, 4) | bit;
+        write32(target, 4, mask);
+        target[3] |= 1;
+        Ok(())
+    }
 }
 
 impl Drop for RowStatementView<'_, '_, '_, '_, '_> {
@@ -935,6 +957,17 @@ impl RowStatementView<'_, '_, '_, '_, '_> {
             .lock()
             .unwrap_or_else(|poison| poison.into_inner());
         row(state.bytes, lease.slot)[3]
+    }
+
+    /// Scalar (table read mask, table write mask); it cannot set or clear one.
+    pub(in crate::storage) fn test_table_masks(&self) -> (u32, u32) {
+        let lease = &self.transaction.lease;
+        let state = lease
+            .ledger
+            .lock()
+            .unwrap_or_else(|poison| poison.into_inner());
+        let target = row(state.bytes, lease.slot);
+        (read32(target, 4), read32(target, 8))
     }
 
     pub(in crate::storage) fn test_sequence(&self) -> u64 {

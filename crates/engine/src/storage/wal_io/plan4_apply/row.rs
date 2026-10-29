@@ -34,8 +34,8 @@ fn unsupported() -> RetentionError {
 }
 
 /// A table identity checked against the actual Catalog source. Only the
-/// Catalog `finish_table` adapter may issue it (not supplied yet); a decoded
-/// TableSpec, ObjectId or handle cannot. `table` carries the object generation
+/// Catalog `finish_table` adapter may issue it; a decoded TableSpec, ObjectId
+/// or handle cannot. `table` carries the object generation
 /// and SchemaEpoch, `slot` the checked table slot of the original epoch. Row C
 /// rechecks the same open, schema, table generation, slot and anchor at every
 /// use, so holding this value is not a pin or write grant.
@@ -46,6 +46,47 @@ pub(crate) struct CheckedTable<'c, 's> {
     table: ObjectHandle,
     slot: u8,
     anchor: PageIdentity,
+}
+impl<'c, 's> CheckedTable<'c, 's> {
+    /// The sole constructor. Its witness has a field private to the statement
+    /// call, so only `CatalogStatementCall::finish_table` reaches this, after
+    /// its own actual Found Table, Published epoch slot and registered read bit.
+    pub(super) fn issue(
+        _witness: super::read::TableIssue,
+        core: &'c PageConcurrency<'s>,
+        binding: &'s AtomicU8,
+        fence: &'s SessionFence,
+        table: ObjectHandle,
+        slot: u8,
+        anchor: PageIdentity,
+    ) -> Self {
+        Self {
+            core,
+            binding,
+            fence,
+            table,
+            slot,
+            anchor,
+        }
+    }
+}
+#[cfg(test)]
+impl CheckedTable<'_, '_> {
+    /// Scalar observation only; it cannot construct or refresh a handle.
+    pub(in crate::storage) fn test_identity(&self) -> (ObjectHandle, u8, PageIdentity) {
+        (self.table, self.slot, self.anchor)
+    }
+    pub(in crate::storage) fn test_same_origin(
+        &self,
+        core: &PageConcurrency<'_>,
+        fence: &SessionFence,
+    ) -> bool {
+        std::ptr::eq(
+            std::ptr::from_ref(self.core).cast::<()>(),
+            std::ptr::from_ref(core).cast::<()>(),
+        ) && std::ptr::eq(self.fence, fence)
+            && self.core.uses_fence(self.fence)
+    }
 }
 
 #[allow(
