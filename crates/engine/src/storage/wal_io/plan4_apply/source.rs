@@ -120,18 +120,24 @@ pub(super) struct CatalogProgressCharge(usize);
 impl CatalogProgressCharge {
     pub(super) fn new<W: WriterNamespace>() -> Self {
         let bodies = create_pair::catalog_live::catalog_live_source_bytes::<W>();
-        // RowProgress reserves this same charge: the Row lifecycle term is
-        // one more max term, never a sum (exclusive under one control).
-        Self(
-            bodies
-                .retirement
-                .max(bodies.lifecycle)
-                .max(bodies.reserve)
-                .max(bodies.forward)
-                .max(bodies.cancel)
-                .max(bodies.row_lifecycle)
-                .max(transaction::catalog::check_source_bytes()),
-        )
+        let charge = bodies
+            .retirement
+            .max(bodies.lifecycle)
+            .max(bodies.reserve)
+            .max(bodies.forward)
+            .max(bodies.cancel)
+            .max(transaction::catalog::check_source_bytes());
+        // RowProgress reserves this same charge (exclusive under one control,
+        // ROW-BEGIN-001 "자원"). The Row lifecycle body is checked against it
+        // as a type-size constant, never folded in: a larger Row body must
+        // fail here by name instead of silently raising every Catalog peak.
+        // The Row statement end check is the check_source_bytes term above.
+        debug_assert!(
+            bodies.row_lifecycle <= charge,
+            "RowProgress Row lifecycle body {} exceeds CatalogProgressCharge {charge}",
+            bodies.row_lifecycle
+        );
+        Self(charge)
     }
 }
 
