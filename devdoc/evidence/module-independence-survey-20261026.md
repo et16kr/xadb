@@ -3886,3 +3886,70 @@ v2 `native`(221파일, 5,794,810B), `memory-gap`(137, 3,382,130B), `memory-retir
 - native 투영 여유는 8B(96 입력)다. `DELTA_C3 = 0` 가정이 깨지거나 RowCensus가 104B를 넘으면 cap을 넘으며, 그때는 cap을 올리지 않고 계약 재검토로 간다.
 - plan4_genesis 시험은 Profile1 참조와 비교하지만 catalog arm은 `8c0f252`부터 Profile2를 쓴다. 이 단위는 그 시험을 실행하지 않았다.
 - artifact는 `module-independence-20261029/artifacts/module-u2c4a-20261029/`(`manifest-all.sha256` SHA-256 `721a1f945d10457eff98f900e2656c2213f9d3bdae931a5b858c1972f6238d60`)에 r1·r2 manifest·로그·literal 도구·설계 메모·검토 요약을 보존한다.
+
+<a id="base4-closure"></a>
+## 2026-10-29 U2-C2 base4 순수 closure와 공유 Catalog seam
+
+기준은 `31e4614`, branch는 `module-u2-base4`이고 작성 commit은 `f1771b6`, `a9501a2`, `4c4295c`와 검토 반영 `c24bff4`, `20d448d`, `288df8f`다. 통합은 이 branch(`49a7578`) 위로 cherry-pick한 다음 여섯 commit이며, 양쪽이 함께 바꾼 파일은 없다.
+
+| 통합 commit | tree | 원 commit | 내용 |
+| --- | --- | --- | --- |
+| `55d63adcc6e2012d6a099affafc6a440ad37997c` | `2dc5f36b…` | `f1771b6` | base4 순수 closure와 Row base source 상계 |
+| `06b8ad2ae3de9d0496adf8193d6106a6249386f1` | `dd6a49dc…` | `a9501a2` | Catalog base 공유 seam, Profile3 allocation·XOI 모드 |
+| `b4773dbe3f3bea55a4099d266e30a65cc38bf0f2` | `fec63613…` | `4c4295c` | Row graph의 seam 채택과 System allocation 수용 |
+| `c71baffe80163cd5e3e843facd4570fcd98e931e` | `ee62e6a1…` | `c24bff4` | 검토 r1 반영(미 Prune CREATE 행, Row Reserved UndoSlot) |
+| `05b3ee5f58c3a21c749db52dc4b850ce9e5390dc` | `068e5ee5…` | `20d448d` | 검토 r2 반영(committed 행을 creator commit 뒤로) |
+| `fe249d1f486f9f46f1cd7145523e3fe7ed112ba3` | `01d2bd04…` | `288df8f` | 검토 r3 반영(Ready Row actor·보상 root를 creator 뒤로) |
+
+이 단위는 [format dispatch](../contracts/dev3-module-consumers.md#format-dispatch)의 base4(Profile3 recovery base) 관찰자를 순수 공급한다. current는 Profile2/base3 그대로이고 새 입구(`plan4_recovery_base::row::{decode, encode, RowBaseView, RowCensus, source_bytes}`, `wal_io::validate_row_base_allocation`, XOI `encode_row_current`)의 production 호출자는 없다.
+
+**설계**
+
+- **공유 seam.** Catalog base graph의 relations·ledger·provenance·inventory 본문을 비공개 seam(`Phase`, `SeamJob`, `SeamLayout`, `Seam`) 위의 한 generic 본문으로 바꿨다. base3는 Job2/Root2(row_high 0)로 같은 본문을 쓰고, base4 Row graph가 같은 seam을 구현한다. Row 쪽은 actor·table·Row ledger만 따로 갖고 Catalog 의미를 복사하지 않는다(boundaries §10). allocation과 XOI도 비공개 1byte 모드 {Catalog2, Row3}의 한 본문이며 Profile2 경로는 byte 동일이다.
+- **검사 순서.** Graph::new → queue(Job3 census) → provenance → relations(Reserved 분류) → Row actors → tables → Row ledger(`semantic_row::ledger::validate_transaction`) → shared ledger(System allocation은 `validate_row_base_allocation`) → inventory → Row Reserved item. 입구는 정확한 Profile3·base4·Root3/Job3만 받고 base 0/1/2/3/5/65535, Root/Job 2/4를 거절한다.
+- **Catalog 잔여.** Catalog-scope actor의 의미 잔여(`transaction_remaining`/`validate_transaction`)는 이 commit들에서 연결하지 않았다. 그런 actor가 있으면 모든 구조 검사를 마친 뒤 `CatalogUnwired`로 닫힌다. 연결은 U2-C3 entry를 쓰는 후속 wiring commit의 몫이다.
+- **검토로 더한 규칙.**
+  - 미 Prune CREATE table: record가 `Transaction(creator)`이면 creator의 Catalog root가 Retained이고 Terminal이 Ready·outcome 1일 때만 그 table의 행을 받는다(consumers.md:137). Row lease > creator adoption LSN은 Job3 census `verify_pair`가 이미 강제한다.
+  - 행과 actor의 q 순서: committed 행의 q, Ready·outcome 1 writer의 Transaction-stamped 행, 그리고 행을 남기지 않는 Ready writer의 `RootReleasingCompensated` root는 모두 table creator q(Prune 뒤 record의 `Committed(q_t)`, 그 전 creator의 Ready `commit_q`)보다 커야 한다. 아니면 `Order`다.
+  - committed 행 writer TxnId에 header source 상계를 건다. 두 벌이던 `actor_bound`는 `seam::within_source` 하나로 합쳤고 호출자별 오류 값은 그대로다.
+  - Row Reserved: actor 하나의 Row-scope Reserved root와 `UndoSlot(U)` item 하나(kind 2, category 2, lsn = lease = descriptor change, 정확한 U)를 받는다(consumers.md §5 항목 3). XOI Row 모드는 그 item을 낸다. 다른 reservation이나 다른 actor의 RowReserve와 섞이면 공동 item 순서 규칙이 없으므로 `Unsupported`다.
+
+**고정 입력**
+
+`tests/fixtures/module-row-format/base4-closure/`의 stdlib 단독 `author.py`(엔진 import·encoder 재사용 없음)가 genesis·aging·live 2MiB literal, Profile envelope 5개, 변형 51개(`variants.bin`), `index.json`을 쓴다. 판마다 기존 출력은 byte 불변이고 재실행은 byte 동일하다. `manifest.json`은 판마다 실행 전에 동결했다.
+
+**실행**
+
+| 판 | manifest 동결(Z) | 실행 | 결과 |
+| --- | --- | --- | --- |
+| r1 | `fbf675be…` | 신규5 | PASS5 |
+| r2 | `dab68309…` 10:31:28 | 8 | entry-gate 1 FAIL(`Some(Base(Corrupt))` 대 기대 `Some(Corrupt)`) 보존, 나머지 PASS |
+| r2b | `a3e1ee4d…` 10:33:37 | 그 1개 | 기대값 한 줄 수정 뒤 PASS(공유 seam이 같은 XOI1 shape 검사를 `BaseError::Corrupt`로 보고) |
+| r3 | `2c5cad06…` 11:39:47 | 9 | PASS9 |
+| r4 | `fc8a40f6…` 11:55:50 | 9 | PASS9 |
+| r5 | `875d4ed7…` 12:12:57 | 10 | PASS10 |
+
+- 각 판은 고정 export(`git stash create`/`git archive`)에서 test build 1회(경고0), selector마다 1회 `RUST_MIN_STACK=33554432 timeout 30 --exact --test-threads=1`이다. r3–r5의 build tree는 각 commit tree와 같다. `cargo check --all-targets --all-features`는 판마다 경고0이고, r4 첫 check의 미사용 import 경고와 r5 첫 check의 E0618(시험 지역 변수가 helper 함수를 가림) 실패는 기록을 남기고 고친 뒤 다시 check했다.
+- base3 영향 확인: `a9501a2` 코드에서 공유 경로를 지나는 기존 selector 16개를 실행했다. PASS5, FAIL11이며 FAIL11은 모두 기준 `f1771b6`에서 같은 assertion·정규화 출력으로 실패하고, main `85ceef3`의 기존 실패 11개와 같은 이름·위치다. run1은 recovery identity 환경 없이 돌렸으므로 그 환경을 읽는 12개는 run2로 다시 실행했고, 환경을 읽지 않는 5·6·14·15는 run1 결과를 쓴다. 이후 판의 base3 변경(`within_source`, Job2에서 항상 거짓인 `!row_scope()`, base3가 만들지 않는 `RowUndoSlot` arm)은 검토자가 동작 동일로 판정했고 base3 selector는 다시 실행하지 않았다. 통과하는 base3 selector가 바뀐 본문을 실제로 지나지 않으므로 base3 보존의 근거는 code 읽기다.
+- 통합 재실행: 통합 tree `fe249d1`(fingerprint `5eab8f99d750fe53da0e4594bdfb260f2d4d5d930f503f65ce8f5f73a961a950`)은 U2-C3가 일반화한 `semantic_catalog::ledger`를 seam이 부르므로 코드 경로가 바뀌었다. selector 10개 목록을 12:22:02Z에 동결하고 고정 export에서 check 41초·경고0, test build 74초·경고0, ELF `cd18c34f744a4fa603dfcdc92a2a924a7f812729a9a4c7c8a804b47d0f56e1f0`로 각 1회 실행해 10개 모두 PASS했다.
+
+**계수**
+
+| 항목(B) | r1 | r2 | r3–r5 |
+| --- | --- | --- | --- |
+| B4 peak(`source_bytes`) | 59515 | 59699 | 59707 |
+| outer | 8080 | 7832 | 7840 |
+| layout | 17564 | 17564 | 17564 |
+| 측정 peak | 51395 | 52595 | 52603 |
+
+- B4 59707은 65536 native cap보다 5829 작고, U2-C4 계획의 B4 상한(약 60.7KB, 투영 시험 상한 native 60376)안이다. 보존 크기는 `RowCensus` 72, `RowBaseView` 248(`CatalogBaseView` 256 대비 −8), `InventoryObservation` 32, `ReservedInventory` 1이다.
+- Row codec 상계는 Catalog codec(6736)을 대용으로 쓰며 U2-C3의 `catalog3::source_bytes`(6696)보다 크다. `transaction_source_bytes`는 Profile2 validator를 대용으로 쓰고, Profile3 값과의 대조는 wiring commit의 몫이다.
+
+**독립 검토.** 같은 읽기 전용 검토자가 네 번 보았다. r1은 ACCEPT·필수1(미 Prune CREATE 행 거절)과 권고5, r2는 필수1(creator보다 오래된 committed 행), r3는 필수1(Ready writer의 q 순서), r4는 ACCEPT·필수0·권고0이다. 검토자는 forged 변형으로 Transaction stamp와 logical TxnId의 결합이 row codec에서 강제됨을 확인했고, 판마다 `author.py`를 `python3 -I`로 다시 실행해 byte 동일을 확인했다.
+
+**한계와 후속 의무**
+
+- Catalog-scope actor의 의미 잔여는 미연결이다(`CatalogUnwired`). 연결 commit은 hook 두 개를 U2-C3 ledger entry(`catalog3::JobView`)로 바꾸고, XOI Row 모드의 Catalog Reserved item을 투영하고, `CatalogUnwired`를 없애야 한다.
+- (계약 질문) RowReserve가 남은 base에서 capture LSN == reservation LSN을 요구할지 계약에 문장이 없다. Catalog CREATE(dev3-catalog-create.md:52, CREATE-LEASE-001)와 System reservation(dev3-recovery-control-base.md:22)에는 근거가 있지만 RowReserve는 MaintenancePort를 대여하지 않는다. 현재는 lease < capture를 받는다.
+- Row Reserved는 base 전체에서 하나만 받는다. root가 이미 Free인 committed 행은 lease가 없어 q만 비교한다. Row3 XOI item 경로는 호출자가 생기면 `current_source_bytes` 이하임을 단정해야 한다.
+- artifact는 `module-independence-20261029/artifacts/module-u2c2-20261029/`(`manifest-all.sha256` SHA-256 `d88ed5840ea822755b0903f15aa8c36d468c7902430631bac26933da0391c6b0`)에 r1–r5 manifest·로그·author 판·설계 메모·검토 요약·통합 재실행을 보존한다.

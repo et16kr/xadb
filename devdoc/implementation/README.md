@@ -1,5 +1,7 @@
 # 현재 구현
 
+2026-10-29 [U2-C2 base4 closure](../evidence/module-independence-survey-20261026.md#base4-closure): branch `claude/project-thread-h2j8oc`에 공유 Catalog seam과 base4 Row recovery base 관찰자를 더했다. r5 10개·통합 재실행 10개 PASS, 독립 검토 4회. production 호출은 없고 Catalog-scope 잔여 연결은 다음 commit 몫이다.
+
 2026-10-29 [U2-C4a/C4b 전환 준비](../evidence/module-independence-survey-20261026.md#u2-switch-prep): branch `claude/project-thread-h2j8oc`에 설치 Profile 문법 공급과 Profile3 입력 corpus(genesis3-namespace, native3, memory-gap3, memory-retire3)를 더했다. 신규7·재실행5 PASS, 독립 검토 2회. production은 아직 호출하지 않으며 전환은 U2-C4c 몫이다.
 
 2026-10-29 [U2-C3 Catalog scope2 Profile3 adapter](../evidence/module-independence-survey-20261026.md#catalog3-adapter): branch `claude/project-thread-h2j8oc`에서 Catalog 관찰자가 정확한 Profile3 분기로 Root3/Job3와 혼합 Job3 bank를 수용하고 row_high를 보존한다. 신규10·Profile2 재실행14 PASS, 독립 검토 2회. runtime 연결은 U2-C4 전환 때 한다.

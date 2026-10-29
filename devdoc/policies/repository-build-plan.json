@@ -8909,5 +8909,38 @@
     "remaining_supply": "C4c switch: production callers of the installed grammar and open_shared retarget, real census charge for the 488 B wrapper and 48 B argument growth, B4 and retained delta from types, removal of the projection test, parent adoption of the four plans, product execution of the corpora and base4 capture after U2-C2",
     "source_roots_changed": false,
     "artifact_manifest_sha256": "721a1f945d10457eff98f900e2656c2213f9d3bdae931a5b858c1972f6238d60"
+  },
+  "dev3_module_u2_base4_closure": {
+    "status": "LOCAL_VERIFIED_REVIEWED_PURE_SUPPLY",
+    "contract_ref": "dev3-module-consumers.md#format-dispatch",
+    "evidence_ref": "module-independence-survey-20261026.md#base4-closure",
+    "baseline_commit": "31e4614",
+    "integration_base": "49a7578",
+    "branch": "claude/project-thread-h2j8oc",
+    "implemented_paths": [
+      "crates/engine/src/storage/plan4_recovery_base/row/graph.rs",
+      "crates/engine/src/storage/plan4_recovery_base/row/graph/source.rs",
+      "crates/engine/src/storage/plan4_recovery_base/row/graph/source_tests.rs",
+      "crates/engine/src/storage/plan4_recovery_base/row/graph_tests.rs",
+      "tests/fixtures/module-row-format/base4-closure/"
+    ],
+    "modified_paths": [
+      "crates/engine/src/storage/plan4_recovery_base/catalog.rs",
+      "crates/engine/src/storage/plan4_recovery_base/catalog/graph.rs",
+      "crates/engine/src/storage/plan4_recovery_base/catalog/graph/ledger.rs",
+      "crates/engine/src/storage/plan4_recovery_base/catalog/graph/relations.rs",
+      "crates/engine/src/storage/plan4_recovery_base/catalog/inventory.rs",
+      "crates/engine/src/storage/plan4_recovery_base/catalog/inventory/current.rs",
+      "crates/engine/src/storage/plan4_recovery_base/row.rs",
+      "crates/engine/src/storage/wal_io.rs",
+      "crates/engine/src/storage/wal_io/allocation_reservation/operation.rs",
+      "crates/engine/src/storage/wal_io/bootstrap.rs",
+      "crates/engine/src/storage/wal_io/doublewrite_install.rs"
+    ],
+    "scope": "Pure base4 (Profile3 recovery base) closure: shared private Catalog base seam for relations, ledger, provenance, allocation and XOI used by base3 and base4; Row graph with actors, tables (unpruned CREATE admission, commit-q ordering after the table creator for committed rows, Ready writers and compensated roots), Row ledger, System allocation and one Row Reserved UndoSlot item; Row XOI mode; exact Profile3/base4/Root3/Job3 entry gate; source bound B4",
+    "validation": "r1-r5 frozen rounds with one r2 FAIL kept and re-frozen r2b; final r5 10 selectors once PASS; base3 16 shared-path selectors at a9501a2 PASS5 FAIL11 equal to baseline and main pre-existing failures; four independent reviews REQUIRED 1/1/1 resolved then 0; integration rerun of the 10 selectors on fe249d1 PASS with check and build 0 warnings",
+    "remaining_supply": "wiring Catalog-scope hooks to the U2-C3 Profile3 ledger and removing CatalogUnwired; Catalog Reserved item in Row XOI mode; Profile3 transaction_source_bytes; contract question on RowReserve capture LSN; multi-reservation item order; runtime use in the U2-C4 switch",
+    "source_roots_changed": false,
+    "artifact_manifest_sha256": "d88ed5840ea822755b0903f15aa8c36d468c7902430631bac26933da0391c6b0"
   }
 }
