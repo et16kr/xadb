@@ -7,7 +7,7 @@
 use super::super::faults::{rejected, unchanged_error};
 use super::*;
 use crate::storage::disk::{
-    IsolationLevel, RetentionCause, StatementFinishError, TransactionFinishError,
+    IsolationLevel, RetentionCause, RetentionPhase, StatementFinishError, TransactionFinishError,
     TransactionOptions,
 };
 use crate::storage::retention_page::row::{self as job3, JobScope, JobState};
@@ -195,6 +195,18 @@ fn row_begin_rejections_return_original_slot_snapshot_and_wal() {
                         .err()
                         .unwrap();
                     assert_eq!(error.effect, Effect::Unchanged);
+                    // ADV-04: the cause pins the refusal order (:362).
+                    if std::ptr::eq(chosen, status) {
+                        // The flusher owner is not a Foreground role.
+                        assert_eq!(error.phase, RetentionPhase::Census);
+                        assert!(matches!(error.cause, RetentionCause::Visibility(error)
+                            if error.cause == super::super::super::super::plan4_pages::VisibilityCause::Concurrency(
+                                crate::transaction::concurrency::Cause::InvalidRole)));
+                    } else {
+                        // The Root target is not a Status page.
+                        assert_eq!(error.phase, RetentionPhase::Prepare);
+                        assert!(matches!(error.cause, RetentionCause::Membership));
+                    }
                     assert_eq!(reader.catalog_test_references().0.0, 0);
                 }
                 let mut alien = foreign.try_owner(OwnerRole::Foreground).unwrap();
@@ -209,6 +221,10 @@ fn row_begin_rejections_return_original_slot_snapshot_and_wal() {
                     .err()
                     .unwrap();
                 assert_eq!(error.effect, Effect::Unchanged);
+                // ADV-04: an Owner of another core is a binding mismatch.
+                assert_eq!(error.phase, RetentionPhase::Census);
+                assert!(matches!(error.cause, RetentionCause::Frame(error)
+                    if error.cause == crate::storage::dirty_frame::Cause::BindingMismatch));
                 // RowProgress reserves the one CatalogProgressCharge: one byte
                 // short of it beside a held loan is Capacity before Begin.
                 let held = 65536
@@ -331,6 +347,35 @@ fn row_begin_rejections_return_original_slot_snapshot_and_wal() {
                 );
             }
             assert_eq!(live.catalog_test_locals(), (2, 2));
+            // ADV-04: the Status is still occupied by the TerminalReady actor
+            // of that abort, so the next Begin on it is WrongState before any
+            // gate, source, local, WAL, file or bank change.
+            let prefix = live.catalog_test_wal_state();
+            let before_bank = live.recovery_test_bank().to_vec();
+            let images = state.lock().unwrap().images();
+            {
+                let (mut writer, reader, mut flush) = live.split();
+                let error = writer
+                    .begin_row_transaction(
+                        owner,
+                        IsolationLevel::Serializable,
+                        status,
+                        private,
+                        &mut flush,
+                    )
+                    .err()
+                    .unwrap();
+                assert!(matches!(error.cause, RetentionCause::WrongState));
+                assert_eq!(error.phase, RetentionPhase::Prepare);
+                assert_eq!(error.effect, Effect::Unchanged);
+                assert_eq!(reader.catalog_test_source_used(), 0);
+                assert!(!hook::observe(core).read_gate_closed);
+            }
+            assert_eq!(live.catalog_test_locals(), (2, 2));
+            assert_eq!(live.catalog_test_wal_state(), prefix);
+            assert_eq!(live.recovery_test_bank(), before_bank);
+            assert_eq!(live.catalog_test_isolation().1, 0);
+            assert_eq!(state.lock().unwrap().images(), images);
             assert!(!fence.is_fenced());
             owner.check_idle().unwrap();
         });
