@@ -118,7 +118,8 @@ impl<W: WriterNamespace> CatalogStatementCall<'_, '_, '_, '_, '_, '_, '_, '_, '_
 
 /// The CheckedTable issuer's only outcomes. FlushRequired carries the actual
 /// lookup's original target and registers nothing; Missing (absent, invisible
-/// or retired) registers only the catalog flag.
+/// or retired) registers only the catalog flag. A refusal of a completed Found
+/// (non-Table, own Reserved slot) also registers the catalog flag first.
 pub(crate) enum TableStep<'c, 's> {
     Table(CheckedTable<'c, 's>),
     Missing,
@@ -130,6 +131,14 @@ pub(crate) enum TableStep<'c, 's> {
 /// record can construct one.
 pub(in super::super) struct TableIssue {
     _private: (),
+}
+
+/// Owned result of finish_table's nested lookup. It borrows neither the call
+/// nor the private copy, so the issue helper starts only after lookup returned.
+enum TableLookup {
+    FlushRequired(Plan4Target),
+    Missing,
+    Found(Result<CatalogHeader>),
 }
 
 impl<'s, 'c, W: WriterNamespace>
@@ -147,7 +156,34 @@ impl<'s, 'c, W: WriterNamespace>
         cursor: &mut Plan4ResidencyCursor,
         private: &mut [u8; 425_984],
     ) -> Result<TableStep<'c, 's>> {
-        match self.issue_table(object, cursor, private) {
+        // The nested lookup runs in this frame with the same survivors as
+        // `lookup` (held_source_bytes); its step becomes an owned value here.
+        if let Err(error) = self.statement.check_catalog_read() {
+            return Err(self.call.finish_error(error));
+        }
+        let found = match self.call.operation(private) {
+            Ok(operation) => match crate::storage::catalog::read::lookup(
+                operation,
+                object,
+                cursor,
+                Some(self.statement),
+            ) {
+                Ok(CatalogLookupStep::FlushRequired { target }) => {
+                    Ok(TableLookup::FlushRequired(target))
+                }
+                Ok(CatalogLookupStep::Missing) => Ok(TableLookup::Missing),
+                Ok(CatalogLookupStep::Found(record)) => {
+                    Ok(TableLookup::Found(table_header(record)))
+                }
+                Err(error) => Err(error),
+            },
+            Err(error) => Err(error),
+        };
+        let step = match found {
+            Ok(found) => self.issue_table(object, found),
+            Err(error) => Err(error),
+        };
+        match step {
             Ok(step) => match self.call.finish_checked() {
                 Ok(()) => Ok(step),
                 Err(error) => Err(error.into()),
@@ -156,35 +192,23 @@ impl<'s, 'c, W: WriterNamespace>
         }
     }
 
-    fn issue_table(
-        &mut self,
-        object: ObjectId,
-        cursor: &mut Plan4ResidencyCursor,
-        private: &mut [u8; 425_984],
-    ) -> Result<TableStep<'c, 's>> {
-        self.statement.check_catalog_read()?;
-        #[cfg(test)]
-        let core = self.call.test_record_core();
-        let header = match crate::storage::catalog::read::lookup(
-            self.call.operation(private)?,
-            object,
-            cursor,
-            Some(self.statement),
-        )? {
-            CatalogLookupStep::FlushRequired { target } => {
+    /// After lookup returned: every completed Found or Missing registers the
+    /// catalog flag before its step or refusal leaves; only a Published Table
+    /// adds its read bit and is issued.
+    fn issue_table(&self, object: ObjectId, found: TableLookup) -> Result<TableStep<'c, 's>> {
+        let header = match found {
+            TableLookup::FlushRequired(target) => {
                 return Ok(TableStep::FlushRequired { target });
             }
-            CatalogLookupStep::Missing => {
-                #[cfg(test)]
-                crate::transaction::concurrency::catalog_test_support::hit(
-                    core,
-                    crate::transaction::concurrency::catalog_test_support::Point::LookupBeforeCatalogRecord,
-                );
-                self.statement.check_catalog_read()?;
-                self.statement.record_catalog_read()?;
+            TableLookup::Missing => {
+                self.register_catalog_read()?;
                 return Ok(TableStep::Missing);
             }
-            CatalogLookupStep::Found(record) => table_header(record)?,
+            TableLookup::Found(Err(refused)) => {
+                self.register_catalog_read()?;
+                return Err(refused);
+            }
+            TableLookup::Found(Ok(header)) => header,
         };
         let backend = self.call.backend();
         let storage = backend.storage;
@@ -222,6 +246,7 @@ impl<'s, 'c, W: WriterNamespace>
                 if matches!(header.stamp, VersionStamp::Transaction(actor)
                     if self.statement.own_actor() == Some(actor)) =>
             {
+                self.register_catalog_read()?;
                 return Err(unchanged(
                     RetentionPhase::Census,
                     RetentionCause::Unsupported,
@@ -232,7 +257,7 @@ impl<'s, 'c, W: WriterNamespace>
         };
         #[cfg(test)]
         crate::transaction::concurrency::catalog_test_support::hit(
-            core,
+            self.call.test_record_core(),
             crate::transaction::concurrency::catalog_test_support::Point::LookupBeforeCatalogRecord,
         );
         // Isolation leaf only, after publication was released.
@@ -248,10 +273,22 @@ impl<'s, 'c, W: WriterNamespace>
             anchor,
         )))
     }
+
+    /// The catalog flag of a completed lookup without a table read bit.
+    fn register_catalog_read(&self) -> Result<()> {
+        #[cfg(test)]
+        crate::transaction::concurrency::catalog_test_support::hit(
+            self.call.test_record_core(),
+            crate::transaction::concurrency::catalog_test_support::Point::LookupBeforeCatalogRecord,
+        );
+        self.statement.check_catalog_read()?;
+        self.statement.record_catalog_read()
+    }
 }
 
-/// The single classification of an actual Found record. A non-Table
-/// definition is refused before any slot observation or registration.
+/// The single classification of an actual Found record, made in finish_table's
+/// frame as soon as lookup returned. A non-Table definition is refused before
+/// any slot observation; the issuer registers the catalog flag before it leaves.
 fn table_header(record: CatalogRecordView<'_>) -> Result<CatalogHeader> {
     match record.definition() {
         CatalogDefinitionView::Table(_) => Ok(record.header()),
@@ -267,16 +304,20 @@ fn table_header(record: CatalogRecordView<'_>) -> Result<CatalogHeader> {
 pub(super) fn held_source_bytes() -> usize {
     // New wrapper's self/cursor/private inputs and ObjectId survive the nested
     // physical/replay call, alongside statement field and selected caller borrow.
-    // finish_table moves the call instead of borrowing it: its helper's self
-    // takes the caller-borrow place, and the moved call is the counted one.
+    // finish_table runs its nested lookup in its own frame with these same
+    // survivors: the moved call arrives indirectly in self's place. Its
+    // classifier, issue helper and close start only after lookup returned
+    // (table and close terms), so no helper frame is held across lookup.
     5 * std::mem::size_of::<&()>() + std::mem::size_of::<ObjectId>()
 }
 
-/// finish_table after its nested lookup returned: classification, anchor
-/// identity, the publication leaf, then the issued step through the consuming
-/// close. These phases are serial; the isolation registration leaf and the
-/// close itself are the existing catalog_read and close terms.
+/// finish_table after its nested lookup returned: classification into the
+/// owned TableLookup, then the issue helper's anchor identity and publication
+/// leaf, then the issued step through the consuming close. These phases are
+/// serial; the isolation registration leaf and the close itself are the
+/// existing catalog_read and close terms. Each wide Result is named.
 fn table_source_bytes() -> usize {
+    use super::super::visibility::{BoundVisibility, VisibilityResult};
     use crate::storage::{page::PageHeader, retention_genesis::RetentionGenesisError};
     use std::mem::size_of;
     let classify = size_of::<CatalogRecordView<'_>>()
@@ -285,16 +326,22 @@ fn table_source_bytes() -> usize {
     let anchor = 2 * size_of::<PageHeader>()
         + 2 * size_of::<std::result::Result<PageHeader, RetentionGenesisError>>()
         + 2 * size_of::<std::result::Result<PageIdentity, RetentionCause>>()
+        + 2 * size_of::<Result<PageIdentity>>()
         + size_of::<PageIdentity>();
     let slot = super::super::visibility::epoch_publication_source_bytes()
-        + 2 * size_of::<super::super::visibility::VisibilityResult<TableSlot>>()
+        + 2 * size_of::<Result<&BoundVisibility<'_, '_, '_>>>()
+        + 2 * size_of::<VisibilityResult<TableSlot>>()
+        + 2 * size_of::<Result<TableSlot>>()
         + 2 * size_of::<TableSlot>();
-    2 * size_of::<CatalogHeader>()
+    2 * size_of::<Result<TableLookup>>()
+        + 2 * size_of::<TableLookup>()
+        + 2 * size_of::<CatalogHeader>()
         + size_of::<PageIdentity>()
         + size_of::<CheckedTable<'_, '_>>()
         + 2 * size_of::<TableStep<'_, '_>>()
         + 2 * size_of::<Result<TableStep<'_, '_>>>()
         + size_of::<TableIssue>()
+        + 2 * size_of::<Result<()>>()
         + 2 * size_of::<std::result::Result<(), CatalogCallError>>()
         + 2 * size_of::<RetentionError>()
         + 8 * size_of::<&()>()
