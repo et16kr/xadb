@@ -57,9 +57,13 @@ fn actor_stage<W: WriterNamespace>(
     }
     let mut root = None;
     let mut terminals = 0;
+    // Catalog selection skips every Row-scope cell (another actor's).
     for (ordinal, bytes) in control.jobs().iter().enumerate() {
-        let job =
-            queue::decode_job(bytes, storage.profile().spec().namespace).map_err(|_| bad())?;
+        let Some(job) = queue::decode_catalog_cell(bytes, storage.profile().spec().namespace)
+            .map_err(|_| bad())?
+        else {
+            continue;
+        };
         if job.source() != Some(actor) {
             continue;
         }
@@ -467,8 +471,12 @@ impl<'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
         let mut roots = 0;
         let mut q = 0;
         for (ordinal, bytes) in self.control.jobs().iter().enumerate() {
-            let job = queue::decode_job(bytes, self.storage.profile().spec().namespace)
-                .map_err(|_| bad())?;
+            let Some(job) =
+                queue::decode_catalog_cell(bytes, self.storage.profile().spec().namespace)
+                    .map_err(|_| bad())?
+            else {
+                continue;
+            };
             if job.source() != Some(actor) {
                 continue;
             }

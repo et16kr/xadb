@@ -70,7 +70,7 @@ pub(in crate::storage) use retention::{
 pub(in crate::storage) use retention::{
     CatalogLookupStep, IntoRetentionError, RETENTION_CONTROL_BYTES, RETENTION_REPLAY_BYTES,
     RetentionFlushPhase, RetentionPhase, RetentionReservationError, RetentionResidencyStep,
-    retention_replay_closure,
+    retention_ledger_check, retention_replay_closure,
 };
 
 pub(in crate::storage) use retention::source_census as retention_recovery_source_census;

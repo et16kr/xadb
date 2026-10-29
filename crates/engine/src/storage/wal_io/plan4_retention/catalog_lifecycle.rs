@@ -20,9 +20,14 @@ impl<'b, 'a, 's, 'c, 'p, 'd, 'm, 'w, W: WriterNamespace>
 {
     pub(super) fn actor_catalog_job(&self, actor: TxnRef, terminal: bool) -> Result<usize> {
         let mut found = None;
+        // Catalog selection skips every Row-scope cell (another actor's).
         for (ordinal, bytes) in self.control.jobs().iter().enumerate() {
-            let job = queue::decode_job(bytes, self.storage.profile().spec().namespace)
-                .map_err(queue_error)?;
+            let Some(job) =
+                queue::decode_catalog_cell(bytes, self.storage.profile().spec().namespace)
+                    .map_err(queue_error)?
+            else {
+                continue;
+            };
             if job.source() == Some(actor)
                 && job.state().is_terminal() == terminal
                 && found.replace(ordinal).is_some()
@@ -75,8 +80,12 @@ impl<'b, 'a, 's, 'c, 'p, 'd, 'm, 'w, W: WriterNamespace>
         let root = target_from_source(self.storage, Plan4Page::Root)?.request;
         let mut root_job = None;
         for bytes in self.control.jobs() {
-            let job = queue::decode_job(bytes, self.storage.profile().spec().namespace)
-                .map_err(queue_error)?;
+            let Some(job) =
+                queue::decode_catalog_cell(bytes, self.storage.profile().spec().namespace)
+                    .map_err(queue_error)?
+            else {
+                continue;
+            };
             if job.source() == Some(actor)
                 && job.state().is_root()
                 && root_job.replace(job).is_some()

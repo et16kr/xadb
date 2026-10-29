@@ -1067,9 +1067,14 @@ impl<'b, 'a, 's, 'c, 'p, 'd, 'm, 'w, W: WriterNamespace>
             unchanged(RetentionPhase::Prepare, RetentionCause::MissingTransaction)
         })?;
         let mut terminal = None;
+        // Catalog selection skips every Row-scope cell (another actor's).
         for (ordinal, cell) in self.control.jobs().iter().enumerate() {
-            let job = queue::decode_job(cell, self.storage.profile().spec().namespace)
-                .map_err(queue_error)?;
+            let Some(job) =
+                queue::decode_catalog_cell(cell, self.storage.profile().spec().namespace)
+                    .map_err(queue_error)?
+            else {
+                continue;
+            };
             if job.state().is_terminal() && job.source() == Some(actor) {
                 if terminal.is_some() || job.state() != JobState::TerminalLeased {
                     return Err(unchanged(

@@ -211,6 +211,30 @@ pub(in crate::storage) fn retention_replay_closure(
     history::validate_current(profile, replay)
 }
 
+/// Test entry for the live admission check over a seeded replay (S1-c). The
+/// control ledger holds the replay's ATT/Aging rows and Job cells exactly as
+/// `history::validate_live` requires of a live owner; production reaches the
+/// check only through an actual owner's `check_ledger`.
+#[cfg(test)]
+pub(in crate::storage) fn retention_ledger_check(
+    profile: Profile,
+    replay: &[u8; RETENTION_REPLAY_BYTES],
+    adopted_local: u64,
+    prefix: crate::storage::wal_io::WalPrefix,
+) -> Result<(u64, u64)> {
+    let mut bytes: Box<[u8; RETENTION_CONTROL_BYTES]> = vec![0; RETENTION_CONTROL_BYTES]
+        .into_boxed_slice()
+        .try_into()
+        .expect("control loan");
+    let mut ledger = control::RetentionLedger::new(&mut bytes);
+    let bank = retention_replay_bank(replay);
+    ledger.bytes[..bank.len()].copy_from_slice(bank);
+    ledger.bytes[65_536..131_072].copy_from_slice(retention_replay_cells(replay).as_flattened());
+    ledger.issued_local = adopted_local;
+    ledger.adopted_local = adopted_local;
+    ledger.check_ledger(profile, prefix)
+}
+
 pub(super) fn allocator_identity(profile: Profile) -> ObservationResult<PageIdentity> {
     let mut identity = crate::storage::retention_genesis::expected_header(
         profile.spec().namespace,

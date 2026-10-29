@@ -9,7 +9,10 @@ use crate::storage::{
     catalog_record::{self, CatalogDefinitionView, CatalogExpectation},
     control::Profile,
     page::{PAGE_BYTES, PageIdentity, PageKind, PageRef},
-    retention_page::catalog3::{self as queue, JobState},
+    retention_page::{
+        catalog3::{self as queue, JobState},
+        row as job3,
+    },
     semantic_catalog::Operation,
     transaction_record::VersionStamp,
     tree_page::{self, EntryPayload, TreeExpectation},
@@ -198,9 +201,13 @@ impl BoundVisibility<'_, '_, '_> {
             .actor
             .ok_or_else(|| self.origin.fatal(VisibilityCause::Invariant))?;
         let mut mask = 0u32;
+        // Catalog selection skips every Row-scope cell (another actor's).
         for cell in ledger.jobs() {
-            let job = queue::decode_job(cell, profile.spec().namespace)
-                .map_err(|_| self.origin.fatal(VisibilityCause::Invariant))?;
+            let Some(job) = queue::decode_catalog_cell(cell, profile.spec().namespace)
+                .map_err(|_| self.origin.fatal(VisibilityCause::Invariant))?
+            else {
+                continue;
+            };
             if job.source() != Some(actor) || !job.state().is_root() {
                 continue;
             }
@@ -278,8 +285,10 @@ pub(super) fn seed(
     if profile.format() != 3 {
         return Err(());
     }
+    // Drained means every cell of either scope is Free: the Row codec counts
+    // Row-scope cells too.
     for cell in ledger.jobs() {
-        if queue::decode_job(cell, namespace).map_err(|_| ())?.state() != JobState::Free {
+        if job3::decode_job(cell, namespace).map_err(|_| ())?.state() != job3::JobState::Free {
             return Err(());
         }
     }

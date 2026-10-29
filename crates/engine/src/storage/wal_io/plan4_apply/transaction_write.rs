@@ -95,9 +95,14 @@ impl<'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
         }
         // No root, including a merely Reserved or Compensated root, may be
         // abandoned by this empty-only operation.
+        // Catalog selection skips every Row-scope cell (another actor's).
         for bytes in self.control.jobs() {
-            let job = queue::decode_job(bytes, self.storage.profile().spec().namespace)
-                .map_err(|_| bad())?;
+            let Some(job) =
+                queue::decode_catalog_cell(bytes, self.storage.profile().spec().namespace)
+                    .map_err(|_| bad())?
+            else {
+                continue;
+            };
             if job.source() == Some(actor) && job.state().is_root() {
                 return Err(unchanged(
                     RetentionPhase::Prepare,
@@ -198,8 +203,12 @@ impl<'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
             }
             let mut terminals = 0;
             for bytes in self.control.jobs() {
-                let job = queue::decode_job(bytes, self.storage.profile().spec().namespace)
-                    .map_err(|_| fail(transaction.lease.fence, RetentionCause::Invariant))?;
+                let Some(job) =
+                    queue::decode_catalog_cell(bytes, self.storage.profile().spec().namespace)
+                        .map_err(|_| fail(transaction.lease.fence, RetentionCause::Invariant))?
+                else {
+                    continue;
+                };
                 if job.source() == Some(actor) {
                     if job.state() != JobState::TerminalReady
                         || job.outcome() != 2

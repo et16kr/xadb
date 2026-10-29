@@ -668,3 +668,6 @@ fn s1b_row_arm_keeps_original_loans_and_handles() {
         );
     }
 }
+
+#[path = "row_gate/mixed.rs"]
+mod mixed;

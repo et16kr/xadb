@@ -44,13 +44,13 @@ impl<'b, 'a, 's, 'c, 'p, 'd, 'm, 'w, W: WriterNamespace>
             .map_err(queue_error)?;
             for offset in 0..64 {
                 let ordinal = (root.cursor() as usize + offset) % 64;
-                if queue::decode_job(
+                // A Row-scope cell is never free and never a Catalog target.
+                if queue::decode_catalog_cell(
                     &self.control.jobs()[ordinal],
                     self.storage.profile().spec().namespace,
                 )
                 .map_err(queue_error)?
-                .state()
-                    == JobState::Free
+                .is_some_and(|job| job.state() == JobState::Free)
                 {
                     return Ok(ordinal);
                 }
