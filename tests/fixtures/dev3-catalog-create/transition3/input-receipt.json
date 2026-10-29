@@ -1,0 +1,76 @@
+{
+  "status": "FROZEN_INPUTS_NOT_EXECUTED_AGAINST_PRODUCT",
+  "plan_freeze": {
+    "sha256": "4bf20c59207890d66b5b51d06d7778a478f1226e26ce38b7cc803856fbe12181",
+    "frozen_by": "U2-C4c before generation; root adoption pending"
+  },
+  "generator_runs": 1,
+  "auditor_runs": 1,
+  "product_executions": 0,
+  "cases": 72,
+  "positive": 46,
+  "negative": 26,
+  "raw_count": 324,
+  "raw_bytes": 8857480,
+  "profile": "f49d4bb26a5c0e1bd66dec9a2b0f77aa24e3fafadf54f27e5db9ab9a960e204e",
+  "files": {
+    "input-plan.json": {
+      "bytes": 4599,
+      "sha256": "4bf20c59207890d66b5b51d06d7778a478f1226e26ce38b7cc803856fbe12181"
+    },
+    "generate_literals.py": {
+      "bytes": 6960,
+      "sha256": "067ad9b79d98c04489042488b5deddf6b43241fef7d38db824062db215f1267e"
+    },
+    "audit_literals.py": {
+      "bytes": 6751,
+      "sha256": "931967a5e3b23e499605de3932e6f2f131fe095321e46dd47efb458f8ec33b66"
+    },
+    "manifest.json": {
+      "bytes": 146755,
+      "sha256": "abbe3c3086ce22c89c394a2798a4b5e7479c5af2bfbf5286cb9310aaf4028a6c"
+    },
+    "raw-index.tsv": {
+      "bytes": 46617,
+      "sha256": "67a5322b5efd72f24a077a792d42fa9dc44d390c2c678314c135187d82cad662"
+    },
+    "cases.tsv": {
+      "bytes": 78160,
+      "sha256": "b190ee6458f86995ca36228c58a9e43a5d59f636988b588f7dcdbc130dd2f85f"
+    },
+    "generation-result.json": {
+      "bytes": 418,
+      "sha256": "cd5fd7ea76c9ac756d35fa01f1f2721ecf0855922644800b7f4efca507b0ebca"
+    },
+    "generation.stdout": {
+      "bytes": 400,
+      "sha256": "99a0422a9640b202c88011b63d70a84d7fbba7aec30c2b22004971e4783fc894"
+    },
+    "generation.stderr": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "audit.stdout": {
+      "bytes": 312,
+      "sha256": "f0db076b2c3670d7f2eec362eca00e10b0b870f5cc88854771633d5eb173ff3c"
+    },
+    "audit.stderr": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "provenance.md": {
+      "bytes": 1827,
+      "sha256": "29ff5fd81fa5cacc32948dc423dcf227b43d70e05373abee1a12c596c0eadbe8"
+    }
+  },
+  "runtime_admission": "NOT_ADMITTED until the single current-format switch (U2-C4c) runs its consumers",
+  "pinned_inputs_unchanged": {
+    "tests/fixtures/dev3-catalog-create/transition/manifest.json": "6da4346527580f3988deb480546fd6e4ee6aa57201a4bedbb7dec60c4f1509eb",
+    "tests/fixtures/dev3-catalog-create/transition/cases.tsv": "f5091dfb128b1c49bfe5b00d8e96628b81b9c7ce215c47ae23c44736940fdf26",
+    "tests/fixtures/dev3-catalog-create/transition/raw-index.tsv": "5ac2422996fbd8a8371bd396acc9ea8e9e7681563aeabd21848640740b63d964",
+    "tests/fixtures/dev3-catalog-create/native3/manifest.json": "e648b0bc4fb8ccf5f258cec6d521128daef6e59f3f9a20825d19eb81d68555df",
+    "tests/fixtures/dev3-catalog-create/native3/steps.tsv": "780fe934e8d48ff054e9a436030ddc176e63d3483edad0f38345565307ffe205",
+    "tests/fixtures/dev3-catalog-create/native3/raw-index.tsv": "5c649d47ac0b381fbf0e772498adf2fa6420daa2bb550af291fcc96965686fb2",
+    "tests/fixtures/dev3-catalog-create/native/steps.tsv": "1b4b8b5b1ae0ee11794f97f643f3605a8a66064a1d57e00094948fe1e5c62f66"
+  }
+}

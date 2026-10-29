@@ -1,0 +1,10 @@
+{
+  "status": "GENERATED_INPUT_NOT_PRODUCT_EXECUTION",
+  "cases": 72,
+  "raw_files": 324,
+  "raw_bytes": 8857480,
+  "manifest_sha256": "abbe3c3086ce22c89c394a2798a4b5e7479c5af2bfbf5286cb9310aaf4028a6c",
+  "wall_seconds": 0.11296459100049105,
+  "generator_sha256": "067ad9b79d98c04489042488b5deddf6b43241fef7d38db824062db215f1267e",
+  "plan_sha256": "4bf20c59207890d66b5b51d06d7778a478f1226e26ce38b7cc803856fbe12181"
+}
