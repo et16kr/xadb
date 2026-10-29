@@ -9,7 +9,8 @@ base4 capture.
 `f6e0dd554a91931cc8e048e775a666dacd777f0c1c3285abed6773ec15f21eeb`) was frozen
 before generation. It copies the v2 plan's setup, scenarios and finals and pins
 the v2 plan, writer and auditor it derives from, the serializers it imports, and
-the v2 outputs that must stay unchanged. Parent adoption is pending.
+the v2 outputs that must stay unchanged. Root adoption of that SHA-256 is
+recorded in `input-receipt.json` `plan_adoption` (U2-C4c, after generation).
 
 `generate_literals.py` is the v2 native writer with one change: the transition
 serializer module is `module-row-format/catalog3/serializer3.py` `load()`

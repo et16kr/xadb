@@ -4,6 +4,12 @@
     "sha256": "f6e0dd554a91931cc8e048e775a666dacd777f0c1c3285abed6773ec15f21eeb",
     "frozen_by": "U2-C4b before generation; parent adoption pending"
   },
+  "plan_adoption": {
+    "sha256": "f6e0dd554a91931cc8e048e775a666dacd777f0c1c3285abed6773ec15f21eeb",
+    "adopter": "/root",
+    "recorded_by": "U2-C4c",
+    "note": "Root adoption recorded by U2-C4c on the integrator's instruction (2026-10-29), following the v2 receipt pattern. It follows the single generation and audit recorded above; before adoption every file in `files` was re-hashed and matched this receipt (sha256 and bytes). The plan bytes are unchanged."
+  },
   "generator_runs": 1,
   "auditor_runs": 1,
   "projection_runs": 1,

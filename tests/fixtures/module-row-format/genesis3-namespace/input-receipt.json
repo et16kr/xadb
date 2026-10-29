@@ -1,0 +1,30 @@
+{
+  "status": "FROZEN_INPUTS_NOT_EXECUTED_AGAINST_PRODUCT",
+  "plan_freeze": {
+    "sha256": "f3c5884bdc4a4931f85a5adc33bea7d7cfb798ec1d50fb21b268d5dbce72db5f",
+    "frozen_by": "U2-C4b: the plan is embedded in author.py (manifest author_sha256)"
+  },
+  "plan_adoption": {
+    "sha256": "f3c5884bdc4a4931f85a5adc33bea7d7cfb798ec1d50fb21b268d5dbce72db5f",
+    "adopter": "/root",
+    "recorded_by": "U2-C4c",
+    "note": "Root adoption recorded by U2-C4c on the integrator's instruction (2026-10-29), following the v2 receipt pattern, after the single authoring run. Every index.tsv record was re-hashed and matched before adoption; no byte changed."
+  },
+  "raw_count": 42,
+  "raw_bytes": 274720,
+  "files": {
+    "author.py": {
+      "bytes": 10609,
+      "sha256": "f3c5884bdc4a4931f85a5adc33bea7d7cfb798ec1d50fb21b268d5dbce72db5f"
+    },
+    "index.tsv": {
+      "bytes": 4310,
+      "sha256": "ea61ea226ed622ef71bbb889cf50d2e1df14bf330143613b0c8dbf6caef0db5f"
+    },
+    "manifest.json": {
+      "bytes": 15080,
+      "sha256": "34728915ac7ee5de2dab15f71438185280309c66e64db02f23800d2f7e0ad7b0"
+    }
+  },
+  "runtime_admission": "NOT_ADMITTED until the single current-format switch (U2-C4c) runs its consumers"
+}
