@@ -845,6 +845,19 @@ fn read_file<W: WriterNamespace>(
     read_exact_at(&mut file, output, offset).map_err(Cause::Io)
 }
 
+/// U2-C4 row 35 supply: the storage owner's bound Profile selects the profile
+/// grammar through `control::decode_installed_profile`. Uncalled until the
+/// single current-format switch replaces the legacy decode and comparison in
+/// `read_selection`; after it a valid but different installed profile reports
+/// `Control(IdentityMismatch)`, as a namespace mismatch already does.
+#[allow(
+    dead_code,
+    reason = "shared-reader profile grammar awaits the single current-format switch"
+)]
+fn installed_profile(bytes: &[u8], bound: Profile) -> Inner<Profile> {
+    control::decode_installed_profile(bytes, bound).map_err(Cause::Control)
+}
+
 fn read_selection<W: WriterNamespace>(
     storage: &MutableStorageOwner<'_, '_, W>,
     workspace: &mut [u8; WORKSPACE_BYTES],
@@ -1632,6 +1645,10 @@ impl Drop for FlushIo<'_, '_> {
         }
     }
 }
+
+#[cfg(test)]
+#[path = "flush_io_profile_tests.rs"]
+mod profile_tests;
 
 #[cfg(test)]
 pub(super) mod test_support {

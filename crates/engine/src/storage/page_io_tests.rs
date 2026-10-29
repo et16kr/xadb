@@ -385,3 +385,103 @@ fn every_read_fault_preserves_selection_and_bounded_handles() {
     }
     assert_eq!((succeeded, rejected), (28, 28));
 }
+
+/// U2-C4 D1: `open_profile` re-reads the installed profile in the grammar of
+/// the caller's bound Profile; `open` keeps the legacy grammar. The Profile3
+/// envelope is the literal profile with its published version (4) and base
+/// (296) fields changed and resealed; the selector rebinds its digest (48).
+#[test]
+fn open_profile_binds_installed_grammar() {
+    fn relabel(version: u16, base: u64) -> Vec<u8> {
+        let mut bytes = PROFILE.to_vec();
+        put16(&mut bytes, 4, version);
+        put64(&mut bytes, 296, base);
+        seal(&mut bytes);
+        bytes
+    }
+    fn install(writer: &Writer, profile: &[u8], bound: &[u8]) {
+        let mut s = writer.0.lock().unwrap();
+        s.files.insert("d3-profile".into(), profile.to_vec());
+        let selector = s.files.get_mut("FILEMAP").unwrap();
+        selector[48..80].copy_from_slice(&content_digest(bound));
+        seal(selector);
+    }
+    fn read(writer: &mut Writer, profile: Profile) -> Result<Vec<u8>> {
+        let mut root = [0; PAGE_BYTES];
+        let mut scratch = [0; PAGE_BYTES];
+        let mut output = [0; PAGE_BYTES];
+        let mut reader = PageFileReader::open_profile(writer, profile, &mut root, &mut scratch)?;
+        assert_eq!(reader.profile(), profile);
+        assert_eq!(reader.selector_generation(), 29);
+        reader.read_page(expected(), PageKind::RowLeaf, 0, &mut output)?;
+        Ok(output.to_vec())
+    }
+    // A refusal reads only the profile: no selector, root, chunk or data.
+    fn refused(writer: &mut Writer, profile: Profile, cause: control::ControlError) {
+        let before = writer.0.lock().unwrap().reads.len();
+        let result = read(writer, profile);
+        assert!(
+            matches!(result, Err(PageIoError::Control(c)) if c == cause),
+            "{cause:?}"
+        );
+        let s = writer.0.lock().unwrap();
+        assert_eq!(s.reads.len(), before + 1);
+        assert_eq!(s.reads[before].name, "d3-profile");
+    }
+    let profile3 = relabel(3, 2 << 20);
+    let profile2 = relabel(2, 2 << 20);
+    let p1 = control::decode_bootstrap_profile(PROFILE, Some(ns())).unwrap();
+    let p3 = control::row_profile::decode_profile(&profile3, Some(ns())).unwrap();
+    assert_eq!((p1.format(), p3.format()), (1, 3));
+    let other3 = {
+        // Same namespace, Profile3 ID2 (id 128, buffer 168).
+        let mut bytes = profile3.clone();
+        put32(&mut bytes, 128, 2);
+        put64(&mut bytes, 168, 16 << 20);
+        seal(&mut bytes);
+        control::row_profile::decode_profile(&bytes, Some(ns())).unwrap()
+    };
+
+    // Profile1 namespace: both entries read the same page; Profile3 bound refused.
+    let mut writer = fixture(65, false);
+    assert_eq!(read(&mut writer, p1).unwrap(), GOLDEN);
+    assert_eq!(
+        attempt(&mut writer, expected(), PageKind::RowLeaf, 0).unwrap(),
+        GOLDEN
+    );
+    refused(&mut writer, p3, control::ControlError::UnsupportedFormat);
+    clean(&writer);
+
+    // Profile3 namespace: only the bound Profile3 value opens it.
+    let mut writer = fixture(65, false);
+    install(&writer, &profile3, &profile3);
+    assert_eq!(read(&mut writer, p3).unwrap(), GOLDEN);
+    assert!(matches!(
+        attempt(&mut writer, expected(), PageKind::RowLeaf, 0),
+        Err(PageIoError::Control(
+            control::ControlError::UnsupportedFormat
+        ))
+    ));
+    refused(&mut writer, p1, control::ControlError::UnsupportedFormat);
+    refused(&mut writer, other3, control::ControlError::IdentityMismatch);
+    clean(&writer);
+
+    // A Profile2 envelope offered under the Profile3 expectation, with the
+    // selector bound to either digest, never reaches the selector.
+    for bound in [&profile2, &profile3] {
+        let mut writer = fixture(65, false);
+        install(&writer, &profile2, bound);
+        refused(&mut writer, p3, control::ControlError::UnsupportedFormat);
+        clean(&writer);
+    }
+    // Header version 0/4/65535 is refused under every bound grammar.
+    for version in [0u16, 4, u16::MAX] {
+        let mut writer = fixture(65, false);
+        let bytes = relabel(version, 2 << 20);
+        install(&writer, &bytes, &bytes);
+        for bound in [p1, p3] {
+            refused(&mut writer, bound, control::ControlError::UnsupportedFormat);
+        }
+        clean(&writer);
+    }
+}

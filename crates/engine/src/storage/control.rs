@@ -327,6 +327,39 @@ pub(crate) fn decode_bootstrap_profile(
     })
 }
 
+/// Re-read an already installed profile under the grammar its caller bound.
+/// `expected.format()` selects exactly one decoder (1|2 legacy, 3 Row); no
+/// header version is inspected first and a decoder failure is final. The
+/// decoded value must then equal `expected` in every field, digest included.
+/// Uncalled before the single current-format switch; legacy owners keep
+/// `decode_bootstrap_profile`.
+pub(crate) fn decode_installed_profile(input: &[u8], expected: Profile) -> Result<Profile> {
+    let namespace = Some(expected.namespace);
+    let profile = match expected.format {
+        1 | 2 => decode_bootstrap_profile(input, namespace)?,
+        3 => row_profile::decode_profile(input, namespace)?,
+        _ => return Err(ControlError::UnsupportedFormat),
+    };
+    if profile != expected {
+        return Err(ControlError::IdentityMismatch);
+    }
+    Ok(profile)
+}
+
+/// Bound over `decode_installed_profile`: its own argument/result/compare
+/// values plus one selected decoder closure. The legacy decoder has the Row
+/// decoder's frame shape (same header, prefix and SHA closure; one extra u16
+/// local inside that bound's scalar allowance), so the Row bound covers both.
+pub(crate) fn installed_profile_source_bytes() -> usize {
+    use std::mem::size_of;
+    let wrapper = size_of::<(&[u8], Profile)>()
+        + size_of::<Option<Namespace>>()
+        + 2 * size_of::<Result<Profile>>()
+        + 2 * size_of::<Profile>()
+        + 64; // format tag, comparison and enum carriers
+    wrapper + row_profile::source_bytes()
+}
+
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 #[repr(u8)]
 pub(crate) enum SelectorRole {
@@ -1223,3 +1256,7 @@ fn seal(output: &mut [u8]) {
 #[cfg(test)]
 #[path = "control_tests.rs"]
 mod tests;
+
+#[cfg(test)]
+#[path = "control/installed_profile_tests.rs"]
+mod installed_profile_tests;

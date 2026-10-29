@@ -168,6 +168,15 @@ impl<'a, W: WriterNamespace> NamespaceAccess<'a, W> {
     }
 }
 
+/// Which profile grammar an open uses. `Bootstrap` is the original legacy
+/// discovery entry (Profile1/2, optional namespace); `Installed` re-reads the
+/// caller's bound Profile through `control::decode_installed_profile`.
+#[derive(Clone, Copy)]
+enum ProfileGrammar {
+    Bootstrap(Option<Namespace>),
+    Installed(Profile),
+}
+
 /// Borrows one fixed selection and caller workspace, retaining at most two files.
 /// The caller must not resize/reuse pages or mutate the selected controls through
 /// other outstanding handles. This is not a transaction snapshot or frame latch.
@@ -218,7 +227,26 @@ impl<'a, W: WriterNamespace> PageFileReader<'a, W> {
     ) -> Result<Self> {
         Self::open_inner(
             NamespaceAccess::Exclusive(writer),
-            expected,
+            ProfileGrammar::Bootstrap(expected),
+            None,
+            root_bytes,
+            scratch,
+        )
+    }
+
+    /// Same exclusive open, but the caller's bound Profile selects the profile
+    /// grammar (`control::decode_installed_profile`) and must equal the file.
+    /// Uncalled before the single current-format switch; `open` stays the
+    /// legacy Profile1/2 entry for its DEV2 owners.
+    pub(crate) fn open_profile(
+        writer: &'a mut W,
+        profile: Profile,
+        root_bytes: &'a mut [u8; PAGE_BYTES],
+        scratch: &'a mut [u8; PAGE_BYTES],
+    ) -> Result<Self> {
+        Self::open_inner(
+            NamespaceAccess::Exclusive(writer),
+            ProfileGrammar::Installed(profile),
             None,
             root_bytes,
             scratch,
@@ -254,7 +282,7 @@ impl<'a, W: WriterNamespace> PageFileReader<'a, W> {
         });
         Self::open_inner(
             access,
-            Some(expected_profile.spec().namespace),
+            ProfileGrammar::Bootstrap(Some(expected_profile.spec().namespace)),
             Some((expected_profile, expected_selected)),
             root_bytes,
             scratch,
@@ -263,7 +291,7 @@ impl<'a, W: WriterNamespace> PageFileReader<'a, W> {
 
     fn open_inner(
         mut writer: NamespaceAccess<'a, W>,
-        expected: Option<Namespace>,
+        grammar: ProfileGrammar,
         installed: Option<(Profile, SelectedControl)>,
         root_bytes: &'a mut [u8; PAGE_BYTES],
         scratch: &'a mut [u8; PAGE_BYTES],
@@ -275,7 +303,14 @@ impl<'a, W: WriterNamespace> PageFileReader<'a, W> {
                 writer.open_exact(&FileName::new("d3-profile")?, control::PROFILE_BYTES as u64)?;
             let bytes = &mut scratch[..control::PROFILE_BYTES];
             read_exact_at(&mut file, bytes, 0)?;
-            control::decode_bootstrap_profile(bytes, expected)?
+            match grammar {
+                ProfileGrammar::Bootstrap(expected) => {
+                    control::decode_bootstrap_profile(bytes, expected)?
+                }
+                ProfileGrammar::Installed(expected) => {
+                    control::decode_installed_profile(bytes, expected)?
+                }
+            }
         };
         let selected = {
             let mut file =
