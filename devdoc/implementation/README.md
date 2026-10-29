@@ -1,5 +1,7 @@
 # 현재 구현
 
+2026-10-29 [S2/S5 설계와 Row 쓰기 예산 판정](../evidence/module-independence-survey-20261026.md#s2-design-q06): Row 쓰기(S2)는 Q06 예산 개정이 정해질 때까지 멈춘다. 설계와 개정 초안은 공유 폴더 `module-independence-20261029/plans/`에 있다.
+
 2026-10-29 [S1-e Row statement mark와 두 번째 문장](../evidence/module-independence-survey-20261026.md#s1e-statement-mark): Row 거래가 statement를 열고 닫으며 두 번째 statement를 시작할 수 있다. S1이 모두 끝났고 Row 쓰기·읽기 본문은 S2·S5다.
 
 2026-10-29 [S1-g RowReserve replay 값 commitment 채택](../evidence/module-independence-survey-20261026.md#s1g-reserve-replay): `Change::ReserveAdopted`는 replay 전용이며 producer에서는 Unsupported다. RowReserve frame은 이제 recovery·live 검증에서 거절되지 않는다.

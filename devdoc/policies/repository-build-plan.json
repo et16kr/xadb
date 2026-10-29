@@ -9175,5 +9175,19 @@
     "remaining_supply": "S2: Some-mark live path, Reserved finish refusal, full-rollback entry taking the statement view by value (ADV-07), no second reservation of the carried 6080 B credit; MBC10-V09 nested sum partial; ADV-02/03/04/08/09/10 cleanup",
     "source_roots_changed": false,
     "artifact_manifest_sha256": "7eb73277637e65f756c0d48fb293757fb106ecb44644f02edc812f1a0443ccff"
+  },
+  "dev3_module_s2_design_q06": {
+    "status": "DESIGN_ONLY_STOPPED_BY_USER",
+    "contract_ref": "dev3-module-boundaries.md#row-begin-capsule",
+    "evidence_ref": "module-independence-survey-20261026.md#s2-design-q06",
+    "baseline_commit": "753d7b5",
+    "integration_base": "30421b3",
+    "branch": "claude/project-thread-h2j8oc",
+    "commits": [],
+    "scope": "Read-only S2 (C3 Row Reserve/Forward/Cancel) and S5 (C2 Row read source) design; Row write budget verdict; S2-0 Q06 contract amendment draft (M1/M2/M3/M6/M7, 8-part RowProducerLane, preflight flusher and Row IO lease, class rules, V09 replacement oracles) kept outside the contracts",
+    "validation": "Forward producer phase measured 60625 B (60745 B with the S1-e driver) against the 44304 B charge; amendment D2 review r1 ACCEPT WITH REQUIRED CHANGES (5 required, 16 advisory), r2 resolves the 5 required; r2 re-review stopped by the user's decision",
+    "remaining_supply": "user decision on the Q06 amendment; A unit measuring the Forward phase after M1/M2 and MCA00-D15; separate Q06 record for the native commit-window overrun 66612 B; S2, S5, S3, S4, S6, S7, C+A, C+B, MI01-06",
+    "source_roots_changed": false,
+    "artifact_manifest_sha256": "5f1848f2066b18b50f0f5173a0dc98cee414642b7c77d3e4dfa5f8cfbac30689"
   }
 }
