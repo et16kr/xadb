@@ -1,5 +1,7 @@
 # XADB 모듈 독립 개발 구조 전환 작업 계획
 
+2026-10-29 [L5-D 복구 배치 적용](../evidence/module-independence-survey-20261026.md#l5d-recovery-move): main `47e3994`에서 `recovery_prefix`의 평면 자손 3개와 `plan4_pages`의 `recovered_bind`를 각 진입 폴더로 옮겨 L5 물리 이동 40개를 마쳤다. `#[path]` 4줄만 바꿨으며, 이동만 한 4개의 byte 동일, `cargo check` PASS, 이동 전후 시험 목록 동일을 확인했다. 시험 본문은 NOT_RUN이다. `wal_io/` 직속 Rust 파일은 23개이고 이름에 `test`가 있는 직속 파일은 없다. 논리 경계 재설계 R1–R3과 전체 M4/M5는 미완료다.
+
 2026-10-29 [L5-C Status 배치 적용](../evidence/module-independence-survey-20261026.md#l5c-status-move): main `ff77992`에서 `status_init`·`status_init_operation`·`status_flush::tests::native`·`operational`·`resident`의 평면 자손 16개를 각 선언 파일의 폴더로 옮겼다. L3에서 남긴 `mixed_system_init.rs`도 여기에 포함된다. `#[path]` 16줄만 바꿨으며, 이동만 한 14개의 byte 동일, `cargo check` PASS, 이동 전후 시험 목록 동일을 확인했다. 시험 본문은 NOT_RUN이다. L5-D와 전체 M4/M5는 미완료다.
 
 2026-10-29 [L5-B 설치·세션 조립 시험 배치 적용](../evidence/module-independence-survey-20261026.md#l5b-install-move): main `510d5f6`에서 `bootstrap`·`doublewrite_install`·`plan4_genesis`·`mutable_storage`의 평면 시험·지원 자손 11개를 각 진입 폴더로 옮겼다. `#[path]` 11줄만 바꿨으며, 이동만 한 8개의 byte 동일, `cargo check` PASS, 이동 전후 시험 목록 동일을 확인했다. 시험 본문은 NOT_RUN이다. L5-C·D와 전체 M4/M5는 미완료다.
@@ -422,7 +424,7 @@ Root3/Job3/Profile3·Row scope3·base4는 이름 변경의 부수 효과가 아�
 <a id="folder-reorganization"></a>
 ## 13. 분리 모듈의 폴더 재정리 후속 계획
 
-2026-10-29 · `XADB-MODULE-LAYOUT-001` · **D2 ACCEPTED / 후속 계획 문서 반영 완료 / 제품 이동은 [L1](../evidence/module-independence-survey-20261026.md#l1-allocation-move)·[L2](../evidence/module-independence-survey-20261026.md#l2-concurrency-move)·[L3](../evidence/module-independence-survey-20261026.md#l3-mixed-system-move)만 적용, [L4](#l4-record)는 현재 배치 유지, [L5](#l5-classification)는 분류 완료·[L5-A](../evidence/module-independence-survey-20261026.md#l5a-allocation-move)·[L5-B](../evidence/module-independence-survey-20261026.md#l5b-install-move)·[L5-C](../evidence/module-independence-survey-20261026.md#l5c-status-move)만 이동, 시험 본문 NOT_RUN**
+2026-10-29 · `XADB-MODULE-LAYOUT-001` · **D2 ACCEPTED / 후속 계획 문서 반영 완료 / 제품 이동은 [L1](../evidence/module-independence-survey-20261026.md#l1-allocation-move)·[L2](../evidence/module-independence-survey-20261026.md#l2-concurrency-move)·[L3](../evidence/module-independence-survey-20261026.md#l3-mixed-system-move)만 적용, [L4](#l4-record)는 현재 배치 유지, [L5](#l5-classification)는 분류 완료·[L5-A](../evidence/module-independence-survey-20261026.md#l5a-allocation-move)·[L5-B](../evidence/module-independence-survey-20261026.md#l5b-install-move)·[L5-C](../evidence/module-independence-survey-20261026.md#l5c-status-move)·[L5-D](../evidence/module-independence-survey-20261026.md#l5d-recovery-move) 이동 완료, 시험 본문 NOT_RUN**
 
 사용자는 파일 분리에 비해 폴더 정리가 부족한 부분을 먼저 조사하도록 요청했고, 참조 관계·상태 소유·API가 독립성의 핵심인지 의견을 확인했다. 이어 임시 계획을 저장하고 진행 중인 작업 종료 뒤 기존 문서에 반영하도록 지시했으며, 후속 “진행해 주세요” 요청에 따라 이 절을 작성한다. **이번 실행 범위는 후속 계획과 관련 문서의 정비다.** 제품 파일 이동·참조 변경의 구현은 아직 시작하지 않는다.
 

@@ -468,7 +468,7 @@ impl<W: WriterNamespace> Drop for Plan4Pages<'_, '_, '_, '_, '_, '_, '_, W> {
     }
 }
 
-#[path = "plan4_recovered_bind.rs"]
+#[path = "plan4_pages/recovered_bind.rs"]
 mod recovered_bind;
 
 #[cfg(test)]

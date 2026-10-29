@@ -3224,3 +3224,49 @@ tracked 파일만 내보낸 tree의 source fingerprint는 이동 전 `9cc0be961f
 - JSON 29개, 링크·문서 배치 검사 오류 0
 
 선택 지적 1건(native 시험 7개의 구성)은 위 표에 반영했다. 이 반영은 다시 검토받지 않았다. L5-D와 전체 M4/M5는 미완료다.
+
+<a id="l5d-recovery-move"></a>
+## 2026-10-29 L5-D 복구 책임 폴더 배치
+
+[L5 분류](../plans/module-independence-plan.md#l5-classification)의 L5-D를 기준 `main` `47e39949d2fa199b30d9a41b47182e551b656d6a`(tree `4af2d72e56df924e560cca7f4e5963ed29147095`, 착수 때 `git status --short` 빈 출력)에 적용했다. 이로써 L5 물리 이동 40개를 마쳤다. 진입 `recovery_prefix.rs`·`plan4_pages.rs`와 기존 `recovery_effect/`는 유지했다. 기능 본문·논리 모듈 경로·visibility·cfg·시험 selector는 바꾸지 않았다.
+
+| 원 경로(`crates/engine/src/storage/wal_io/`) | 현재 경로 | 논리 경로(`…::mutable_storage::`) |
+| --- | --- | --- |
+| `recovery_empty_transactions.rs` | `recovery_prefix/transactions.rs` | `recovery_prefix::transactions` |
+| `recovery_prefix_native_tests.rs` | `recovery_prefix/native.rs` | `recovery_prefix::native` |
+| `recovery_prefix_tests.rs` | `recovery_prefix/tests.rs` | `recovery_prefix::tests` |
+| `plan4_recovered_bind.rs` | `plan4_pages/recovered_bind.rs` | `plan4_pages::recovered_bind` |
+
+`#[path]`는 `recovery_prefix.rs` 3줄과 `plan4_pages.rs` 1줄만 바꿨다. 두 진입은 `mutable_storage.rs`가 `#[path]`로 읽으므로 새 문자열은 `wal_io/` 기준이다. 대상 파일에 `#[path]`와 위치 기준 macro는 없다.
+
+현재 본문 표기 1개(`policies/repository-build-plan.md:435`)를 현재 경로로 바꾸고 원 이름을 함께 적었다. 증거 `xadb-direction-review-20261025.md`의 링크 2개(8.3절 [복구 구현], 9절 [복구 장부])는 문서 검사의 깨진 링크 거절 대상이다. 그래서 L1 선례대로 링크만 현재 위치로 바꾸고 날짜 주석을 덧붙였다. 주석에는 원 경로, 기준 commit, 변경 전 SHA-256 `cc80dce298ee473e453dba51d2d9e6c8df8727bf94e5706a32b60bd7fc5caab5`를 적었고, 원 byte는 `history/`에 보존했다.
+
+관리 JSON의 경로 문자열 5개를 현재 경로로 바꾸고 `module_folder_reorganization`의 상태(`L1_L3_L5_PLACEMENT_APPLIED_L4_KEPT`)와 `l5d_evidence_ref`를 갱신했다. 상태 문구는 `devdoc/README.md`, `plans/README.md`, 저장소 정책 §5.2와 계획 13절에서 갱신했다.
+
+L5 분류 기준 4에 따라 `crates/engine/tests/fixtures/recovery_prefix/runtime/manifest.json`은 바꾸지 않았다. 상태가 `INPUT_ONLY_NOT_RUN`이고 `scripts/dev3_recovery_prefix.py:22`가 SHA-256 `c934876dc4106ae8c75a7813965f4264be424ed46091a93386d8fab0cee9ec64`로 고정하며, 이동 전후 값이 같음을 대조했다. 원 기록 `"source": "recovery_prefix_tests.rs::BASE_EVENTS"`의 현재 위치는 `wal_io/recovery_prefix/tests.rs`의 `BASE_EVENTS`다.
+
+| 검증 | 실제 범위·결과 |
+| --- | --- |
+| 정적 대응 | `crates/` diff는 rename 4개와 `#[path]` 4줄뿐이다. 이동만 한 4개는 기준 SHA-256과 같고 runtime manifest는 바뀌지 않았다 |
+| 컴파일 | `cargo check -p xadb-engine --all-targets --all-features --locked` PASS, warning 0, 종료 코드 0(`logs/check.log`, 명령 포함). rustc/cargo 1.95.0 |
+| 시험 발견 | 이동 후 시험 목록 1585줄이 이동 전 목록과 byte 단위로 같다(SHA-256 `601bd166c6b31b8bdd9e7361eecb15d5939e7b1153b323f10f9fd5308f30259a`). 이동 전 목록은 L5-C artifact의 이동 후 목록이다. 기준 HEAD tree에서 다시 계산한 tracked fingerprint가 `91163921…`로 그 목록의 source와 같다(`logs/list-before.SOURCE.txt`). `recovery_prefix::tests::` 11개와 `recovery_prefix::native::` 2개가 그대로다. `transactions`·`recovered_bind`에는 시험이 없다 |
+| 시험 본문 | NOT_RUN. 본문은 그대로다. script는 논리 selector만 쓴다 |
+| fmt | `rustfmt --edition 2024 --check`를 `recovery_prefix.rs`·`plan4_pages.rs`에 적용해 하위 모듈까지 차이 0, 종료 코드 0(`logs/rustfmt-check.log`, 명령 포함). 전체 fmt·Clippy·문서 검사는 기존 push gate에서 수행한다 |
+
+tracked 파일만 내보낸 tree의 source fingerprint는 이동 전 `91163921c22807297403bd96a827e8de876ec217ba815c4923c3cf969acf0fd2`, 이동 후 `6ac6c8ab7251d243728e7dd2f85bbc0b01a87586891f6d14c93e4a286c40d1d8`다. 로그·시험 목록·파일별 hash·fingerprint와 증거 원 byte는 로컬 `artifacts/module-l5d-recovery-20261029/`에 보존했다(`manifest.sha256` SHA-256 `e74ebf8cc68b52b9569eb0216fd97b16a40f005837de2752933eca274f6a2976`). build target 1.5G와 임시 export는 삭제했다.
+
+이동 뒤 `wal_io/` 직속 Rust 파일은 23개이고, 이름에 `test`가 있는 직속 파일은 없다. 13절 조사 때는 77개 중 41개가 `test` 파일이었다. 이 수는 탐색 밀도 관측일 뿐이며, 의존성·생산성 개선을 판정하지 않는다.
+
+독립 검토(같은 읽기 전용 subagent)는 staged diff·artifact·문서를 대조해 **ACCEPT, 필수 지적 0**으로 판정했다. 확인한 것은 다음과 같다.
+
+- rename 4개와 `#[path]` 4줄의 해석, 이동한 4개의 byte 동일
+- runtime manifest의 SHA-256이 `scripts/dev3_recovery_prefix.py:22`의 고정값과 같고 바뀌지 않음
+- 이동 전 목록 재사용의 유효성: HEAD tree fingerprint `911639…` 재계산
+- 시험 수
+- 증거 문서 편집: history 사본과 HEAD blob이 `cc80dc…`로 같고, 바뀐 것은 링크 2개와 날짜 주석뿐이며 L1 선례와 같은 형식이다. `document-migration.json`은 이 문서를 고정하지 않는다
+- 최종 수: 직속 23개, `test` 파일 0개, L5 이동 40개
+- 현재 문서에 옛 경로가 남지 않음
+- index에서 다시 계산한 이동 후 fingerprint와 manifest
+- JSON 5개, 링크·문서 배치 검사 오류 0
+
+선택 지적 1건은 반영하지 않았다. 관리 JSON `module_folder_reorganization.status`의 `ACCEPTED_DOCS_ONLY_INDEPENDENT_D2_REVIEWED`가 새 `implementation_status`와 어긋나 보인다는 지적이다. L2부터 정한 대로 `status`는 13절 계획의 채택 결정만 기록하고, 단위별 실행 상태는 `implementation_status`에 둔다. 이로써 13절 폴더 재정리의 배치 단위(L1–L3, L5-A–D)를 적용하고 L4는 현재 배치 유지로 판정했다. 논리 경계 재설계 R1–R3, 코딩 컨벤션 §4 문구의 별도 D2, 전체 M4/M5 인수는 미완료다. fmt·Clippy·문서 검사는 push gate에서 수행하며 아직 push하지 않았다.

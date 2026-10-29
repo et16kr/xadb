@@ -45,7 +45,7 @@ use foundation::{
 };
 use std::mem::size_of;
 
-#[path = "recovery_empty_transactions.rs"]
+#[path = "recovery_prefix/transactions.rs"]
 mod transactions;
 pub(crate) const WORKSPACE_BYTES: usize = 262144;
 const FRAME: usize = 65536;
@@ -1671,10 +1671,10 @@ impl<W: WriterNamespace> WriterNamespace for CheckedNamespace<'_, W> {
 }
 
 #[cfg(all(test, target_os = "linux"))]
-#[path = "recovery_prefix_native_tests.rs"]
+#[path = "recovery_prefix/native.rs"]
 mod native;
 #[cfg(test)]
-#[path = "recovery_prefix_tests.rs"]
+#[path = "recovery_prefix/tests.rs"]
 mod tests;
 
 #[path = "recovery_effect/mod.rs"]
