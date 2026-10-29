@@ -1,5 +1,7 @@
 # XADB 모듈 독립 개발 구조 전환 작업 계획
 
+2026-10-29 [U2 base4 Catalog 잔여 연결](../evidence/module-independence-survey-20261026.md#base4-catalog-wiring): base4 Row graph의 Catalog hook을 U2-C3 Profile3 ledger로 연결하고 XOI Row3 모드에 Catalog Reserved item을 투영해 `CatalogUnwired`를 없앴다. Catalog-scope actor가 있는 base4가 이제 끝까지 검증되며, selector 11개 PASS·독립 검토 필수0이다. B4는 59675B다. U2-C4 전환의 선행 P1–P5가 모두 공급되었다.
+
 2026-10-29 [U2-C2 base4 순수 closure](../evidence/module-independence-survey-20261026.md#base4-closure): Catalog base의 relations·ledger·allocation·XOI 본문을 공유 seam 하나로 바꾸고, 그 위에 Profile3 recovery base(base4)의 Row graph·actor·table·Row ledger·Row Reserved 관찰자를 순수 공급했다. 독립 검토 네 번(필수 1·1·1 해결, 마지막 필수0)으로 미 Prune CREATE 행 수용과 creator 뒤 q 순서를 더했고, r5 10개와 통합 tree 재실행 10개가 PASS다. base3 기존 selector의 FAIL11은 main의 기존 실패와 같다. Catalog-scope 의미 잔여는 `CatalogUnwired`로 닫혀 있고 다음 wiring commit이 U2-C3 ledger로 연결한다. B4는 59707B다.
 
 2026-10-29 [U2-C4a/C4b 전환 준비 공급과 Profile3 입력](../evidence/module-independence-survey-20261026.md#u2-switch-prep): 단일 current 전환이 쓸 순수 공급으로 정확한 한 decoder만 고르는 설치 Profile 문법(`decode_installed_profile`, `PageFileReader::open_profile`, flush_io helper)과 전환 뒤 recovery census 투영을 더하고, Profile3 genesis 전체 namespace와 native3·memory-gap3·memory-retire3 입력 corpus를 stdlib generator로 동결했다. 신규7 PASS, 검토 필수1(낡은 U2-C2 입력 인용)·권고8을 반영해 5개 재실행 PASS, 재검토 새 필수0이다. production 호출과 product 실행은 없고, native 투영 여유는 8B(보수 입력)다. 전환(C4c)은 U2-C2 통합 뒤에 한다.

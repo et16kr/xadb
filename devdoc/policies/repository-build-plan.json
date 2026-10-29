@@ -8942,5 +8942,29 @@
     "remaining_supply": "wiring Catalog-scope hooks to the U2-C3 Profile3 ledger and removing CatalogUnwired; Catalog Reserved item in Row XOI mode; Profile3 transaction_source_bytes; contract question on RowReserve capture LSN; multi-reservation item order; runtime use in the U2-C4 switch",
     "source_roots_changed": false,
     "artifact_manifest_sha256": "d88ed5840ea822755b0903f15aa8c36d468c7902430631bac26933da0391c6b0"
+  },
+  "dev3_module_u2_base4_catalog_wiring": {
+    "status": "LOCAL_VERIFIED_REVIEWED_PURE_SUPPLY",
+    "contract_ref": "dev3-module-consumers.md#format-dispatch",
+    "evidence_ref": "module-independence-survey-20261026.md#base4-catalog-wiring",
+    "baseline_commit": "fe249d1",
+    "integration_base": "314dc62",
+    "branch": "claude/project-thread-h2j8oc",
+    "implemented_paths": [],
+    "modified_paths": [
+      "crates/engine/src/storage/plan4_recovery_base/catalog/inventory/current.rs",
+      "crates/engine/src/storage/plan4_recovery_base/row/graph.rs",
+      "crates/engine/src/storage/plan4_recovery_base/row/graph/source.rs",
+      "crates/engine/src/storage/plan4_recovery_base/row/graph/source_tests.rs",
+      "crates/engine/src/storage/plan4_recovery_base/row/graph_tests.rs",
+      "crates/engine/src/storage/semantic_catalog.rs",
+      "crates/engine/src/storage/semantic_catalog/resources.rs",
+      "tests/fixtures/module-row-format/base4-closure/"
+    ],
+    "scope": "Wire the base4 Catalog-scope hooks to the generic Profile3 Catalog ledger over catalog3::JobView, project Catalog Reserved items in XOI Row3 mode, remove CatalogUnwired, and add the Profile3 transaction source bound",
+    "validation": "w1 frozen manifest; 10 base4 selectors and 1 U2-C3 census selector once PASS; check 0 warnings; independent review ACCEPT with 0 REQUIRED; integrated code tree identical to the tested tree",
+    "remaining_supply": "runtime use in the U2-C4 switch; Row3 XOI source assertion when it gets a caller; RowReserve capture-rule contract question",
+    "source_roots_changed": false,
+    "artifact_manifest_sha256": "5d2c0693cf73866cf2e20bf6b031d86e67effc59075d2a51919eef1e9657c48c"
   }
 }

@@ -3953,3 +3953,26 @@ v2 `native`(221파일, 5,794,810B), `memory-gap`(137, 3,382,130B), `memory-retir
 - (계약 질문) RowReserve가 남은 base에서 capture LSN == reservation LSN을 요구할지 계약에 문장이 없다. Catalog CREATE(dev3-catalog-create.md:52, CREATE-LEASE-001)와 System reservation(dev3-recovery-control-base.md:22)에는 근거가 있지만 RowReserve는 MaintenancePort를 대여하지 않는다. 현재는 lease < capture를 받는다.
 - Row Reserved는 base 전체에서 하나만 받는다. root가 이미 Free인 committed 행은 lease가 없어 q만 비교한다. Row3 XOI item 경로는 호출자가 생기면 `current_source_bytes` 이하임을 단정해야 한다.
 - artifact는 `module-independence-20261029/artifacts/module-u2c2-20261029/`(`manifest-all.sha256` SHA-256 `d88ed5840ea822755b0903f15aa8c36d468c7902430631bac26933da0391c6b0`)에 r1–r5 manifest·로그·author 판·설계 메모·검토 요약·통합 재실행을 보존한다.
+
+<a id="base4-catalog-wiring"></a>
+## 2026-10-29 U2 base4 Catalog-scope 잔여의 Profile3 ledger 연결
+
+작성 commit은 `module-u2-wiring`의 `06d3bd1`(부모 `fe249d1`, tree `c6d32902`)이고, 이 branch에는 `b67fabfb9ddcc8bd95324d6db2c93777b5134c41`로 cherry-pick했다. code·fixture tree는 `06d3bd1`과 같고 차이는 앞선 docs commit뿐이므로 통합 재실행은 하지 않았다.
+
+**변경**
+
+- [base4 closure](#base4-closure)의 Catalog hook 두 개를 U2-C3 entry로 연결했다. `catalog_remaining`은 `semantic_catalog::ledger::transaction_remaining::<catalog3::JobView>`, `catalog_transaction`은 기대 Profile을 넘긴 `validate_transaction::<catalog3::JobView>`를 부른다. helper `catalog_root`는 root가 없으면 None 그대로, Row-scope root가 오면 `Base(IdentityMismatch)`를 낸다(계약 침묵; census `verify_terminal`이 그 결합을 먼저 거절하므로 방어 경로). 오류 변환은 base3 instance와 같은 `BaseError::CatalogSemantic`이다.
+- XOI Row3 모드는 Catalog Reserved의 item 셋(Page pair0, Page pair1, UndoSlot U; category 2, count 1, lease LSN)을 `catalog3::JobView::catalog`와 generic `global_items`로 낸다. Catalog2 경로는 바뀌지 않았다.
+- `CatalogUnwired`(variant, graph의 `Cell<bool>`, 마지막 fail-closed 검사, module 설명)를 없앴다. Graph는 672→664B다.
+- `semantic_catalog::profile3_transaction_source_bytes()`를 더했다. `resources.rs`의 `transaction_validate`/`transaction_remaining`은 Job view type에 대한 generic이 되었고 Profile2 instance는 같은 식(11259)이다. Row hook 상계 `catalog_hook()` = frame 1221 + 11259 = 12480을 relations·ledger 단계에 부과한다.
+
+**고정 입력과 실행**
+
+- `author.py` w1은 byte를 바꾸지 않았다. D의 residual은 이미 계약값이었고(`dev3-catalog-create.md` group 표: Forward 153840+C, CLR 119984+C, Begin/Commit 56712, RollbackStart 3040, peak P_B; Job3 폭 1024는 `dev3-create-job-format.md` §5) 설명 문구만 고쳤다. 음성 변형 셋을 더했다(51→54): `d-residual-clr`, `d-residual-peak` → `Base(CatalogSemantic(BudgetMismatch))`, `d-committed-head` → `Base(CatalogSemantic(IdentityMismatch))`. 각각 수용 상태의 쌍둥이다.
+- 전에 `CatalogUnwired`로 닫히던 다섯 상태(`state-create-reserved`, `state-create-retained`, `state-create-committed-row`, `state-ready-writer-row7`, `state-compensated-writer`)는 실제 ledger를 지나 수용되고 encode가 byte를 재현한다. 시험 `base4_closure_catalog_create_fails_closed_after_structure`는 `base4_closure_accepts_catalog_scope_actor`로 바뀌었다.
+- manifest w1(`64f2ada83ab937b0f49b0fdb7ef77946f288e2d9018199b1b5ccb6fbe2234e4e`)을 12:34:07Z에 동결한 뒤 고정 export(tree `c6d32902`)에서 test build 1회(경고0, ELF `939d082f12bd31d91b8113905f37c0bae93681e047f162722b345a81d09bb3e6`), selector 11개(base4 10개와 `resources.rs` 변경으로 U2-C3의 `catalog3_tests::profile3_source_census_keeps_type_sizes_and_reports_delta`)를 각 1회 실행해 모두 PASS했다. Profile3 census total은 23859(Profile2 24335)이고 Profile2 기록값은 그대로다. `cargo check --all-targets --all-features` 경고0, 바꾼 rs 7개 rustfmt check와 `git diff --check`를 통과했다.
+- B4는 59707→59675B다(graph의 `Cell<bool>` 제거로 outer 7840→7808). 측정 relations_terminal 16118(상계 19950), ledger_rows 22021(상계 34563)이다.
+
+**독립 검토.** U2-C2와 같은 읽기 전용 검토자가 ACCEPT·필수0으로 판정했다. hook의 entry·Profile·root 대응, XOI item이 Catalog2와 같은 구성임, 다섯 상태가 실제 ledger를 지나며 경로마다 실패 쌍둥이가 있음, C=254로 손 계산한 residual(CLR 120238, Forward 154094, Reserve 333576+2C, CREATE_PEAK = P_B)을 확인했고 `author.py`를 `python3 -I`로 다시 실행해 byte 동일을 확인했다. 권고 둘: Row3 XOI에서 Catalog·Row Reserved 혼합은 `IdentityMismatch`이고 graph는 `Unsupported`로 분류한다(호출자 없음). Profile3 ledger 상계는 Profile2 항목 목록을 다시 쓰며 catalog3 accessor 한 단계를 따로 세지 않는다(같은 크기 단언으로 보호).
+
+**한계.** Row3 XOI 경로는 아직 시험 밖 호출자가 없어 `current_source_bytes` 단언은 호출자가 생길 때 한다. Row codec 상계는 Catalog2 queue 상계(6736)를 보수적으로 쓴다. RowReserve의 capture 규칙과 혼합 reservation은 [base4 closure](#base4-closure)의 계약 질문 그대로다. artifact는 `module-independence-20261029/artifacts/module-u2-wiring-20261029/`(`manifest-all.sha256` SHA-256 `5d2c0693cf73866cf2e20bf6b031d86e67effc59075d2a51919eef1e9657c48c`)에 있다.
