@@ -309,9 +309,10 @@ pub(crate) fn produce(
 
 /// `produce` over a caller loan instead of a local backing, for the live Row
 /// install whose source peak cannot hold a second backing. The loan's prior
-/// bytes have no meaning here: it is cleared first, so the body starts from
-/// the same zero backing as `produce`, and on return it holds only
-/// discardable prepared values. Output is byte for byte that of `produce`.
+/// bytes have no meaning here: after the unproduced-change refusal it is
+/// cleared, so the body starts from the same zero backing as `produce`, and
+/// on return it holds only discardable prepared values. Output is byte for
+/// byte that of `produce`.
 pub(crate) fn produce_borrowed(
     inputs: &Inputs<'_>,
     after: &mut [[u8; PAGE_BYTES]; 5],
@@ -525,7 +526,8 @@ pub(crate) fn source_bytes() -> usize {
 
 /// Counted source bound of `produce_borrowed`. The lent scratch is the
 /// caller's and is not counted. The wrapper keeps its arguments and result
-/// while the body runs; the clearing fill is a completed call before it.
+/// while the body runs; the `refuse_unproduced` check and the clearing fill
+/// are completed calls before it, each smaller than the counted tuple.
 pub(crate) fn produce_borrowed_source_bytes() -> usize {
     use std::mem::size_of;
     size_of::<(

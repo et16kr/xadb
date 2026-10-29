@@ -1748,6 +1748,72 @@ fn s1g_row_reserve_replays_n1_literals() {
     assert_eq!(history_h(mode), 0);
 }
 
+/// The combined closure checks the U allocator entry of every non-Free Row
+/// root, not only the Reserve arm: after a replayed Reserve and after the
+/// Forward that opens it, an allocator page that freed U14 or moved its
+/// incarnation is refused as Invariant, and the original page is accepted
+/// again.
+#[test]
+fn s1g_closure_refuses_row_root_without_its_u_allocation() {
+    let mut r = h_504(Mode {
+        closure: true,
+        ..Mode::default()
+    });
+    let check = |r: &mut Replay, at: &str| {
+        for name in ["G-allocator-free14", "G-allocator-inc14"] {
+            r.set_page(&page_of(g(name)));
+            assert_eq!(
+                format!("{:?}", r.closure().err()),
+                "Some(Invariant)",
+                "{at}: {name}"
+            );
+            println!("S1G_CLOSURE_ALLOCATOR\t{at}\t{name}\tInvariant");
+        }
+        r.set_page(&page_of(g("G-allocator")));
+        r.closure().expect("original allocator");
+    };
+    r.step(
+        "H-505",
+        blob("H-505"),
+        Change::Reserve(&reserve_plan(3, blob("H-505-canonical"))),
+        reserve_pages(),
+    );
+    check(&mut r, "H-505");
+    r.step(
+        "H-506",
+        blob("H-506"),
+        Change::Cancel { ordinal: 17 },
+        Pages {
+            jobs: Some(1),
+            status: Some(9),
+            undo: Some(14),
+            ..pages()
+        },
+    );
+    r.step(
+        "H-507",
+        blob("H-507"),
+        Change::Reserve(&reserve_plan(4, blob("H-507-canonical"))),
+        reserve_pages(),
+    );
+    r.step(
+        "H-508",
+        blob("H-508"),
+        Change::Forward {
+            ordinal: 17,
+            statement: boundary(4, None),
+        },
+        Pages {
+            jobs: Some(1),
+            status: Some(9),
+            undo: Some(14),
+            previous: Some(10),
+            table: true,
+        },
+    );
+    check(&mut r, "H-508");
+}
+
 /// One refused case of H09: (label, frame, expected cause).
 type Refusal<'a> = (&'a str, &'a [u8], &'a str);
 
