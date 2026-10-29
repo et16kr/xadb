@@ -7,6 +7,7 @@
     reason = "actual Row reservation/group adapter is not supplied yet"
 )]
 
+mod driver;
 mod group;
 #[cfg(test)]
 mod group_tests;

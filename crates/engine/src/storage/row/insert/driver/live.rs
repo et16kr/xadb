@@ -1,0 +1,320 @@
+//! Thin forwarding of the driver traits to the actual C0 Row write types.
+//! Nothing here constructs a C value: every wrapper, lane, observation and
+//! error comes from the original MutationPort, Owner, statement view and
+//! transaction capsule. The C0 bodies return Unchanged `Unsupported`, so
+//! these entries are compile-checked only until C3 supplies the adapters.
+use super::{
+    Boundary, DriveError, Loan, Preflight, Prepared, PreparedTask, ProducerLane, Reserved,
+    Rollback, RollbackNext, RollbackTask, StatementView, ValidationLane, abort, carrier_bytes,
+    commit, insert_statement, rollback_statement,
+};
+use crate::storage::{
+    disk::{
+        CheckedTable, MutationPort, Owner, PreflightRow, PreparedRollbackTask, PreparedRow,
+        ReservedRow, RetentionError, RollbackScope, RollbackStep, RowCommitObservation,
+        RowInputPlan, RowMutationObservation, RowOwnedError, RowProducerLane, RowProposal,
+        RowRollback, RowRollbackTask, RowStatementView, RowTransaction, RowValidationLane,
+        StatementFinishError, TransactionFinishError,
+    },
+    row::insert::{InsertError, produce_clr, produce_insert, validate_insert},
+    row_record::ValueRef,
+};
+use foundation::namespace::WriterNamespace;
+use std::marker::PhantomData;
+
+impl StatementView for RowStatementView<'_, '_, '_, '_, '_> {
+    fn check(&self) -> Result<(), RetentionError> {
+        RowStatementView::q(self).map(|_| ())
+    }
+}
+
+impl ValidationLane for RowValidationLane<'_> {
+    fn validate(self, values: &[ValueRef<'_>]) -> Result<RowInputPlan, InsertError> {
+        validate_insert(values, self)
+    }
+}
+
+impl ProducerLane for RowProducerLane<'_> {
+    fn forward(self) -> Result<RowProposal, InsertError> {
+        produce_insert(self)
+    }
+    fn clr(self) -> Result<RowProposal, InsertError> {
+        produce_clr(self)
+    }
+}
+
+impl<'r, 't, 'v, 'i, 'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace> Preflight
+    for PreflightRow<'r, 't, 'v, 'i, 'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W>
+{
+    type Applied = RowMutationObservation;
+    type Lane<'l>
+        = RowValidationLane<'l>
+    where
+        Self: 'l;
+    type Reserved = ReservedRow<'r, 't, 'v, 'i, 'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W>;
+    fn validation_lane(&mut self) -> Result<RowValidationLane<'_>, RetentionError> {
+        PreflightRow::validation_lane(self)
+    }
+    fn reserve(self, input: RowInputPlan) -> Result<Self::Reserved, RowOwnedError<Self>> {
+        PreflightRow::reserve(self, input)
+    }
+    fn finish(self) -> Result<(), RetentionError> {
+        PreflightRow::finish(self).map(|_| ())
+    }
+}
+
+impl<'r, 't, 'v, 'i, 'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace> Reserved
+    for ReservedRow<'r, 't, 'v, 'i, 'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W>
+{
+    type Applied = RowMutationObservation;
+    type Lane<'l>
+        = RowProducerLane<'l>
+    where
+        Self: 'l;
+    type Prepared = PreparedRow<'r, 't, 'v, 'i, 'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W>;
+    fn producer_lane(&mut self) -> Result<RowProducerLane<'_>, RetentionError> {
+        ReservedRow::producer_lane(self)
+    }
+    fn prepare(self, proposal: RowProposal) -> Result<Self::Prepared, RowOwnedError<Self>> {
+        ReservedRow::prepare(self, proposal)
+    }
+    fn cancel(self) -> Result<(), RowOwnedError<Self>> {
+        ReservedRow::cancel(self).map(|_| ())
+    }
+}
+
+impl<'r, 't, 'v, 'i, 'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace> Prepared
+    for PreparedRow<'r, 't, 'v, 'i, 'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W>
+{
+    type Reserved = ReservedRow<'r, 't, 'v, 'i, 'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W>;
+    type Applied = RowMutationObservation;
+    fn apply(self) -> Result<RowMutationObservation, RowOwnedError<Self>> {
+        PreparedRow::apply(self).map(|applied| applied.into_parts().0)
+    }
+    fn reopen(self) -> Self::Reserved {
+        PreparedRow::reopen(self)
+    }
+}
+
+impl<'r, 't, 'v, 'i, 'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace> Rollback
+    for RowRollback<'r, 't, 'v, 'i, 'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W>
+{
+    type Task<'x>
+        = RowRollbackTask<'x, 'r, 't, 'v, 'i, 'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W>
+    where
+        Self: 'x;
+    /// FlushRequired's target is not kept: the driver cannot flush while
+    /// this rollback holds the Owner (gap G1) and stops the rollback.
+    fn next(&mut self) -> Result<RollbackNext<Self::Task<'_>>, RetentionError> {
+        Ok(match RowRollback::next(self)? {
+            RollbackStep::Candidate(task) => RollbackNext::Candidate(task),
+            RollbackStep::FlushRequired { .. } => RollbackNext::Flush,
+            RollbackStep::Complete => RollbackNext::Complete,
+        })
+    }
+    fn finish(self) -> Result<(), RowOwnedError<Self>> {
+        RowRollback::finish(self).map(|_| ())
+    }
+}
+
+impl<'x, 'r, 't, 'v, 'i, 'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace> RollbackTask
+    for RowRollbackTask<'x, 'r, 't, 'v, 'i, 'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W>
+{
+    type Lane<'l>
+        = RowProducerLane<'l>
+    where
+        Self: 'l;
+    type Prepared = PreparedRollbackTask<'x, 'r, 't, 'v, 'i, 'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W>;
+    fn producer_lane(&mut self) -> Result<RowProducerLane<'_>, RetentionError> {
+        RowRollbackTask::producer_lane(self)
+    }
+    fn prepare(self, proposal: RowProposal) -> Result<Self::Prepared, RowOwnedError<Self>> {
+        RowRollbackTask::prepare(self, proposal)
+    }
+}
+
+impl<'x, 'r, 't, 'v, 'i, 'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace> PreparedTask
+    for PreparedRollbackTask<'x, 'r, 't, 'v, 'i, 'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W>
+{
+    type Task = RowRollbackTask<'x, 'r, 't, 'v, 'i, 'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W>;
+    fn apply(self) -> Result<(), RowOwnedError<Self>> {
+        PreparedRollbackTask::apply(self).map(|_| ())
+    }
+    fn reopen(self) -> Self::Task {
+        PreparedRollbackTask::reopen(self)
+    }
+}
+
+/// The caller's original port and Owner for one driver call; `capsule` names
+/// the transaction lifetime the statement view borrows. Nothing is kept.
+pub(in crate::storage) struct LiveCall<
+    'x,
+    't,
+    'v,
+    'b,
+    'a,
+    's,
+    'c,
+    'p,
+    'd,
+    'o,
+    'm,
+    'w,
+    W: WriterNamespace,
+> {
+    port: &'x mut MutationPort<'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W>,
+    owner: &'x mut Owner<'c, 's>,
+    capsule: PhantomData<&'t RowTransaction<'v, 'a, 'c, 's>>,
+}
+
+impl<'x, 't, 'v, 'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
+    LiveCall<'x, 't, 'v, 'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W>
+{
+    pub(in crate::storage) fn new(
+        port: &'x mut MutationPort<'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W>,
+        owner: &'x mut Owner<'c, 's>,
+    ) -> Self {
+        Self {
+            port,
+            owner,
+            capsule: PhantomData,
+        }
+    }
+}
+
+impl<'x, 't, 'v, 'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace> Boundary
+    for LiveCall<'x, 't, 'v, 'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W>
+{
+    type Transaction = RowTransaction<'v, 'a, 'c, 's>;
+    type Statement = RowStatementView<'t, 'v, 'a, 'c, 's>;
+    type Table = CheckedTable<'c, 's>;
+    type Applied = RowMutationObservation;
+    type Committed = RowCommitObservation;
+    type Preflight<'r, 'i>
+        = PreflightRow<'r, 't, 'v, 'i, 'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W>
+    where
+        Self: 'r;
+    type Rollback<'r, 'i>
+        = RowRollback<'r, 't, 'v, 'i, 'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W>
+    where
+        Self: 'r;
+    fn preflight<'r, 'i>(
+        &'r mut self,
+        statement: &'r Self::Statement,
+        table: &'r CheckedTable<'c, 's>,
+        loan: &'i mut Loan,
+    ) -> Result<Self::Preflight<'r, 'i>, RetentionError> {
+        self.port.preflight_row(self.owner, statement, table, loan)
+    }
+    fn start_rollback<'r, 'i>(
+        &'r mut self,
+        transaction: &'r Self::Transaction,
+        statement: Option<&'r Self::Statement>,
+        scope: RollbackScope,
+        loan: &'i mut Loan,
+    ) -> Result<Self::Rollback<'r, 'i>, RetentionError> {
+        self.port
+            .start_row_rollback(self.owner, transaction, statement, scope, loan)
+    }
+    fn finish_statement(
+        &mut self,
+        statement: Self::Statement,
+    ) -> Result<(), StatementFinishError<Self::Statement>> {
+        self.port.finish_statement(self.owner, statement)
+    }
+    fn commit(
+        &mut self,
+        transaction: Self::Transaction,
+        loan: &mut Loan,
+    ) -> Result<RowCommitObservation, TransactionFinishError<Self::Transaction>> {
+        self.port.commit_row(self.owner, transaction, loan)
+    }
+    fn finish_aborted(
+        &mut self,
+        transaction: Self::Transaction,
+    ) -> Result<(), TransactionFinishError<Self::Transaction>> {
+        self.port.finish_aborted(self.owner, transaction)
+    }
+}
+
+type Live<'x, 't, 'v, 'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W> =
+    LiveCall<'x, 't, 'v, 'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W>;
+
+/// One INSERT statement over the original statement view: see
+/// `insert_statement`. Every row's input is rejected before its Reserve.
+#[allow(
+    clippy::result_large_err,
+    reason = "the unchanged or open statement view is returned inline to its caller"
+)]
+pub(in crate::storage) fn insert_live<'t, 'v, 'a, 'c, 's, W: WriterNamespace>(
+    call: &mut Live<'_, 't, 'v, '_, 'a, 's, 'c, '_, '_, '_, '_, '_, W>,
+    transaction: &RowTransaction<'v, 'a, 'c, 's>,
+    statement: RowStatementView<'t, 'v, 'a, 'c, 's>,
+    table: &CheckedTable<'c, 's>,
+    private: &mut Loan,
+    rows: &[&[ValueRef<'_>]],
+    slots: &mut [Option<RowMutationObservation>],
+) -> Result<usize, DriveError<RowStatementView<'t, 'v, 'a, 'c, 's>>> {
+    insert_statement(call, transaction, statement, table, private, rows, slots)
+}
+
+/// Retry entry for a statement a failed INSERT returned `Open`.
+#[allow(
+    clippy::result_large_err,
+    reason = "the unchanged or open statement view is returned inline to its caller"
+)]
+pub(in crate::storage) fn rollback_statement_live<'t, 'v, 'a, 'c, 's, W: WriterNamespace>(
+    call: &mut Live<'_, 't, 'v, '_, 'a, 's, 'c, '_, '_, '_, '_, '_, W>,
+    transaction: &RowTransaction<'v, 'a, 'c, 's>,
+    statement: RowStatementView<'t, 'v, 'a, 'c, 's>,
+    private: &mut Loan,
+) -> Result<usize, DriveError<RowStatementView<'t, 'v, 'a, 'c, 's>>> {
+    rollback_statement(call, transaction, statement, private)
+}
+
+/// Row Commit; a write conflict is followed by A's full rollback.
+#[allow(
+    clippy::result_large_err,
+    reason = "the unchanged or open transaction capsule is returned inline to its caller"
+)]
+pub(in crate::storage) fn commit_live<'v, 'a, 'c, 's, W: WriterNamespace>(
+    call: &mut Live<'_, '_, 'v, '_, 'a, 's, 'c, '_, '_, '_, '_, '_, W>,
+    transaction: RowTransaction<'v, 'a, 'c, 's>,
+    private: &mut Loan,
+) -> Result<RowCommitObservation, DriveError<RowTransaction<'v, 'a, 'c, 's>>> {
+    commit(call, transaction, private)
+}
+
+/// Full abort of every remaining row, then `finish_aborted`.
+#[allow(
+    clippy::result_large_err,
+    reason = "the unchanged or open transaction capsule is returned inline to its caller"
+)]
+pub(in crate::storage) fn abort_live<'v, 'a, 'c, 's, W: WriterNamespace>(
+    call: &mut Live<'_, '_, 'v, '_, 'a, 's, 'c, '_, '_, '_, '_, '_, W>,
+    transaction: RowTransaction<'v, 'a, 'c, 's>,
+    private: &mut Loan,
+) -> Result<usize, DriveError<RowTransaction<'v, 'a, 'c, 's>>> {
+    abort(call, transaction, private)
+}
+
+/// `carrier_bytes` for the actual C0 types (INSERT path, CLR path).
+pub(super) fn live_carrier_bytes<W: WriterNamespace + 'static>() -> (usize, usize) {
+    carrier_bytes::<
+        Live<
+            'static,
+            'static,
+            'static,
+            'static,
+            'static,
+            'static,
+            'static,
+            'static,
+            'static,
+            'static,
+            'static,
+            'static,
+            W,
+        >,
+    >()
+}
