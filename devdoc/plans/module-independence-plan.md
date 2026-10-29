@@ -1,5 +1,7 @@
 # XADB 모듈 독립 개발 구조 전환 작업 계획
 
+2026-10-29 [L2 배치 적용](../evidence/module-independence-survey-20261026.md#l2-concurrency-move): main `b691fc7`에서 `transaction::concurrency`의 자손7개를 `transaction/concurrency/`로 옮기고 `#[path]` 7줄과 fixture `include_str!` 경로2개만 바꿨다. 이동만 한 5개의 byte 동일, `cargo check` PASS, 이동 전후 시험 목록 동일을 확인했고 시험 본문은 NOT_RUN이다. L3–L5와 전체 M4/M5는 미완료다.
+
 2026-10-29 [L1 배치 적용](../evidence/module-independence-survey-20261026.md#l1-allocation-move): main `feb2b14`에서 확정한 배치 B로 파일7개를 옮기고 `#[path]` 7줄만 바꿨다. 이동만 한 5개의 byte 동일, `cargo check` PASS, 이동 전후 시험 목록 동일을 확인했고 시험 본문은 NOT_RUN이다. L2–L5와 전체 M4/M5는 미완료다.
 
 2026-10-29 [L1 파일별 이동표](#l1-move-table): main `082d329`에서 `allocation_reservation`의 진입1개와 자손7개, 8개 파일의 선언·소유·소비·visibility·경로 참조를 대조한 초안을 작성했다. 사용자가 권장 배치 B(진입 파일 유지)를 확정했다. 제품 이동·빌드·시험은 NOT_RUN이며 전체 M4/M5는 미완료다.
@@ -408,7 +410,7 @@ Root3/Job3/Profile3·Row scope3·base4는 이름 변경의 부수 효과가 아�
 <a id="folder-reorganization"></a>
 ## 13. 분리 모듈의 폴더 재정리 후속 계획
 
-2026-10-29 · `XADB-MODULE-LAYOUT-001` · **D2 ACCEPTED / 후속 계획 문서 반영 완료 / 제품 이동은 [L1](../evidence/module-independence-survey-20261026.md#l1-allocation-move)만 적용, 시험 본문 NOT_RUN**
+2026-10-29 · `XADB-MODULE-LAYOUT-001` · **D2 ACCEPTED / 후속 계획 문서 반영 완료 / 제품 이동은 [L1](../evidence/module-independence-survey-20261026.md#l1-allocation-move)·[L2](../evidence/module-independence-survey-20261026.md#l2-concurrency-move)만 적용, 시험 본문 NOT_RUN**
 
 사용자는 파일 분리에 비해 폴더 정리가 부족한 부분을 먼저 조사하도록 요청했고, 참조 관계·상태 소유·API가 독립성의 핵심인지 의견을 확인했다. 이어 임시 계획을 저장하고 진행 중인 작업 종료 뒤 기존 문서에 반영하도록 지시했으며, 후속 “진행해 주세요” 요청에 따라 이 절을 작성한다. **이번 실행 범위는 후속 계획과 관련 문서의 정비다.** 제품 파일 이동·참조 변경의 구현은 아직 시작하지 않는다.
 
@@ -537,6 +539,62 @@ Root3/Job3/Profile3·Row scope3·base4는 이름 변경의 부수 효과가 아�
 `AR::operation`은 L1 밖의 운영 파일 26개 이상, `AR::budget`은 운영 파일10개가 `super` 사슬·crate 절대 경로·조상 import 별칭·재노출로 참조한다(위 소비자 표). `operation`의 일부 항목은 `doublewrite_install`→`bootstrap`→`wal_io` 재노출을 거쳐 `wal_io` 밖의 `plan4_recovery_base`까지 이어진다. 배치 정리는 이 참조를 바꾸지 않는다. 최소 API로 좁힐지는 위 이행 순서 4단계에서 실제 소비자를 기준으로 판단할 입력이다.
 
 **독립 검토.** 이 세션이 띄운 별도 검토 subagent가 초안을 실제 source·정책·선례와 읽기 전용으로 대조해 **ACCEPT WITH REQUIRED FIXES**로 판정했다. 이동 대상8개, `#[path]` 해석, 줄 수, SHA-256, JSON 29/25개, 링크, 증거14개, 명령 형식은 일치했다. 필수 지적2건은 소비자 목록 누락과 `AR::tests`의 hook 제공 누락이다. 선택 지적7건은 상태 소유 표현, 영향 case, 검증 단계 정의, A의 명칭과 §4 처리, 파일 이름의 plan4, C2 stash, 파일 수 표현이다. 작성자가 각 지적을 source로 다시 확인한 뒤 반영했다. 같은 검토자의 반영본 재검토는 다른 수정을 모두 확인했지만, `operation` 소비자 목록에서 glob import를 거친 운영6·시험4개 파일의 누락을 필수 지적으로 남겼다. 작성자가 해당 줄을 확인해 10개 파일을 추가하고 목록을 하한으로 표기했다. 이 마지막 반영은 이동 실행 뒤의 [최종 검토](../evidence/module-independence-survey-20261026.md#l1-allocation-move)에서 확인됐다. 이 절의 검토 시점에는 제품 이동·빌드·시험을 실행하지 않았다.
+
+<a id="l2-move-table"></a>
+### L2 파일별 이동표
+
+2026-10-29 · **이동표 / L1에서 확정한 배치 B 적용 / 실행 결과는 증거 문서**
+
+사용자는 L1 완료 뒤 “작업을 이어서 해주세요”라고 지시했고, push는 모든 작업과 추가 리뷰를 마친 뒤로 미뤘다. L1에서 확정한 배치 B를 그대로 쓴다. 기준은 main `b691fc74689dd1275d1e92b946f56984208cb591`, tree `ad13f6644c4caa60835c372c75346a4d5a998eae`이며 checkout은 clean이다. 아래 경로는 `crates/engine/src/transaction/` 기준이고 `CC`는 논리 경로 `crate::transaction::concurrency`다.
+
+진입 `concurrency.rs`는 `transaction.rs:6`의 `pub(crate) mod concurrency;`가 `#[path]` 없이 읽으며 제자리에 둔다. 진입 안의 `#[path]`는 inline module 밖에 있으므로 진입 파일의 폴더 `transaction/`이 기준이다. 이동한 `commit.rs`·`tests.rs`는 `#[path]`로 읽히므로 그 안의 `#[path]`는 새 폴더 `concurrency/` 기준이다.
+
+#### 이동과 선언
+
+| 현재 파일(줄) | 목표 파일 | 논리 경로 | 선언 위치와 새 `#[path]` | cfg |
+| --- | --- | --- | --- | --- |
+| `concurrency.rs`(743) | 유지 | `CC` | `transaction.rs:6`, 변경 없음 | production |
+| `concurrency_commit.rs`(492) | `concurrency/commit.rs` | `CC::commit` | `concurrency.rs:14` → `"concurrency/commit.rs"` | production |
+| `concurrency_commit_tests.rs`(122) | `concurrency/commit/tests.rs` | `CC::commit::tests` | 이동한 `commit.rs:491` → `"commit/tests.rs"` | `test` |
+| `concurrency_read.rs`(703) | `concurrency/read.rs` | `CC::read`(inline `tests` 포함) | `concurrency.rs:17` → `"concurrency/read.rs"` | production |
+| `concurrency_test_support.rs`(477) | `concurrency/test_support.rs` | `CC::test_support` | `concurrency.rs:35` → `"concurrency/test_support.rs"` | `test` |
+| `concurrency_catalog_test_support.rs`(98) | `concurrency/catalog_test_support.rs` | `CC::catalog_test_support` | `concurrency.rs:41` → `"concurrency/catalog_test_support.rs"` | `test` |
+| `concurrency_tests.rs`(1962) | `concurrency/tests.rs` | `CC::tests` | `concurrency.rs:742` → `"concurrency/tests.rs"` | `test` |
+| `concurrency_resource_tests.rs`(134) | `concurrency/tests/resource.rs` | `CC::tests::resource` | 이동한 `tests.rs:1797`(`NORMAL` 줄바꿈 뒤) → `"tests/resource.rs"` | 부모의 `test` |
+
+`concurrency_tests.rs:12,14`의 `include_str!("../../../../tests/fixtures/dev3-concurrency/…")`는 파일 위치 기준 상대 경로다. 한 단계 깊어지므로 `../../../../../`로 바꾼다. 같은 이름의 `crates/engine/tests/fixtures/dev3-concurrency/`가 있으므로, 새 문자열이 원래와 같은 저장소 루트의 `tests/fixtures/dev3-concurrency/*.tsv`를 가리키는지 실행 때 실제 경로로 대조한다. 다른 L2 파일에는 `include!`·`file!`·`module_path!`·`cfg_attr(path)`가 없다. 기능 본문·`super` 사슬·`use`는 바꾸지 않는다.
+
+#### 소유·제공·소비
+
+소비자 수는 `crates/engine/src`에서 `concurrency::`·`transaction::concurrency` 경로를 쓰는 파일을 grep으로 센 근사값이며 L2 파일은 뺐다. `crates/engine/tests/fixtures`의 compiler fixture 약80개도 같은 논리 경로를 쓰며 위치에 의존하지 않는다. rustc 이름 해석 결과가 아니므로 실행 때 컴파일로 최종 확인한다.
+
+| 논리 모듈 | 상태 소유 | 제공 | 실제 소비자 | visibility(유지) |
+| --- | --- | --- | --- | --- |
+| `CC` | DEV3 operation admission과 version-edit gate의 원 core·slot 상태 | admission·gate 타입과 `commit`·`read` 항목의 `pub(crate) use` 재노출 | 113개 파일(이름상 운영44·시험69). `storage/dirty_frame`, `dirty_flush`, `wal_io`의 `plan4_apply`·`plan4_retention`·`plan4_pages`·`plan4_recovery`·`status_*`·`empty_transactions` 등 | `pub(crate) mod` |
+| `CC::commit` | 원 core를 이어 받는 private common continuation. 의미 Commit receipt는 만들지 않음 | `CommitInstalling`, `CommitStage`, `PendingInstallation`, `PrepareCommitError`, source-bytes 상한 등 | `CC`의 재노출을 거친 위 소비자, `commit::tests` | private `mod` |
+| `CC::read` | read-operation 수명 동안 원 admission slot 표시와 checked ticket | `ReadOperationAdmission`, `TerminalReadGate`, source-bytes 상한 등 | `CC`의 재노출을 거친 Catalog adapter 등 | private `mod` |
+| `CC::test_support` | `cfg(test)` 관측·fault와 모의 Commit 소유 전이. WAL은 다루지 않음 | `Installation`, `PausePoint`, `Resume`, `poison_state` 등 | `CC`, `read`, `CC::tests` | `pub(super) mod` |
+| `CC::catalog_test_support` | 실제 소비자 관측만. 권한·상태를 만들거나 바꾸지 않음 | `hit`, `Point` 등 | 34개 파일(운영 파일의 `cfg(test)` hook 10개 포함, `plan4_apply`·`plan4_retention`·`plan4_recovery/tests/catalog_memory`) | `pub(crate) mod` |
+| `CC::tests` | 시험 | `#[test]` 11, fixture `dev3-concurrency/*.tsv` | `scripts/check_dev3_concurrency_runtime.py`의 `transaction::concurrency::tests::` selector | private |
+| `CC::tests::resource` | 시험 helper. `#[test]` 없음 | `type_ceilings`, `all_live_control` 등 | `CC::tests`(`tests.rs:1803,1805`) | private |
+| `CC::read`의 inline `tests` | 시험 | `#[test]` 10 | — | private |
+| `CC::commit::tests` | 시험 | `#[test]` 1 | — | private |
+
+시험은 `CC::tests` 11, `read`의 inline 10, `commit::tests` 1로 모두 22개다.
+
+#### 경로 참조와 검증
+
+| 대상 | 처리 |
+| --- | --- |
+| 현재 Markdown 링크 | `contracts/dev3-concurrency-admission.md:174`(resource 시험), `contracts/dev3-task-10-concurrency.md:302`(commit) |
+| 현재 서술 | `contracts/dev3-concurrency-admission.md:20–22`의 파일 역할 표 3행, `policies/repository-build-plan.md:629`의 `transaction/concurrency_read.rs` |
+| 관리 JSON | L2 경로 문자열35개 중 진입 파일9개를 뺀26개 |
+| 보존 | 증거 파일4개(JSON3·Markdown1)의 원 경로 표기. 링크가 아닌 본문 표기라 문서 검사 대상이 아니다 |
+| 변경 없음 확인 | `scripts/`와 compiler fixture는 논리 selector·probe 파일 위치만 쓴다. `tests/fixtures/dev3-concurrency/manifest.json`에는 `.rs` 경로가 없다 |
+
+검증은 L1과 같다. `crates/` diff는 rename 7개, `#[path]` 7줄, `include_str!` 2줄뿐이어야 하고, 이동만 하는 5개(`commit/tests`·`read`·`test_support`·`catalog_test_support`·`tests/resource`)는 기준 SHA-256과 같아야 한다. `cargo check -p xadb-engine --all-targets --all-features --locked`와 이동 전후 `cargo test -p xadb-engine --lib --all-features --locked -- --list` 전체 출력의 동일성을 확인한다. 시험 본문, runtime script, borrow probe는 본문·논리 경로·probe 위치가 같으므로 NOT_RUN이다. `include_str!`이 읽는 fixture byte가 같다는 것은 실제 경로 대조로 확인한다.
+
+기준 SHA-256(`b691fc7`): `concurrency.rs` `1cb7c28602a6b66addf605fa75cf75513931aad0990d659184664ec6a55315cf`, `concurrency_commit.rs` `10c3245ca5d79a43a2a2cefe414c007288c68a5b4e2ae46373e72b75b69aaa47`, `concurrency_commit_tests.rs` `ebe20fc93f0c333ca4e8ffa564322e7f47cd18b5a4a6b7a97c8c4c2959d4c1ee`, `concurrency_read.rs` `b4d77422aa142f57b18b0fa8f8b2e909c4c2374efdeecb850ece9e31c92e0f22`, `concurrency_test_support.rs` `8f6aa2a939cb8c865077fb366a7f661a2485636a5e1c9e16e9bc05914debb5d0`, `concurrency_catalog_test_support.rs` `11ef50fdf68f1f78d42916ba9a2006aa9553796137b0bfedff06ed5bff7c20c5`, `concurrency_tests.rs` `4d0f0176ae71ea4da39991edc82ad4e933afd45f7e1e33cf73021ae35c30c8ff`, `concurrency_resource_tests.rs` `1629d2889b637c4bdf1f106ff8d260ddf4cf14a3c159b4b0f43f8bd44956efe5`, `transaction.rs` `fcbd03dbd368d21483c800820e36350edc5f41aee49ef52151b16eda52b20b4b`.
 
 ### 완료 조건과 문서 정본
 

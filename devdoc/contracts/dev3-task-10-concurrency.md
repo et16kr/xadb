@@ -299,7 +299,7 @@ sealed transaction capsule이 원 origin·isolation slot/generation·actual acto
 
 ### Commit 직렬화·공개와 오류
 
-현재 source에는 별도 CommitCoordinator mutex가 없다. 실제 직렬화 권한은 **유일 MutationPort의 원 `&mut RetentionLedger`**다. 이 borrow를 validation→stage→durable→whole install→epoch/Q publication까지 한 호출이 보유한다. [현재 `CommitInstalling::finish`](../../crates/engine/src/transaction/concurrency_commit.rs)는 Q publish 전 Installation을 Open으로 돌리므로, 그 상태만을 Commit coordinator로 해석하지 않는다. split으로 두 writer를 생성하거나 publication 전에 가변 ledger 소유를 반환하지 않는다. read-only Serializable 종료도 같은 MutationPort를 통해 직렬화한다.
+현재 source에는 별도 CommitCoordinator mutex가 없다. 실제 직렬화 권한은 **유일 MutationPort의 원 `&mut RetentionLedger`**다. 이 borrow를 validation→stage→durable→whole install→epoch/Q publication까지 한 호출이 보유한다. [현재 `CommitInstalling::finish`](../../crates/engine/src/transaction/concurrency/commit.rs)는 Q publish 전 Installation을 Open으로 돌리므로, 그 상태만을 Commit coordinator로 해석하지 않는다. split으로 두 writer를 생성하거나 publication 전에 가변 ledger 소유를 반환하지 않는다. read-only Serializable 종료도 같은 MutationPort를 통해 직렬화한다.
 
 1. 첫 Commit 효과 전에 현재 capsule·완료 statement·exact actor/root 상태, 적용/종료 비용, 변경 table 목록과 publication slot·receipt 저장 공간을 모두 선예약·검산한다. 신규 CREATE table의 Reserved entry는 actual CREATE 예약에만 연결되고 Abort/Cancel은 이를 반환한다. Row는 기존 table entry를 요구한다. 선예약 실패는 새 Commit을 stage하지 않는다.
 2. isolation mutex에서 관측 mask를 고정 복사하고 잠금을 놓는다. publication mutex에서 해당 **read/write table**의 identity와 `last_change_q ≤ transaction start_q`, 관측한 catalog namespace의 `catalog_q ≤ start_q`를 검사한다. 자체 미Commit 변경은 published epoch를 올리지 않으므로 외부 변경에 섞지 않는다. DB 전체 `Q == start_q` 검사는 금지한다. 검증 뒤 publication lock을 놓고 page/gate/WAL 작업을 수행한다.

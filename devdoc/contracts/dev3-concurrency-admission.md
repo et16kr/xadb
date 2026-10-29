@@ -17,9 +17,9 @@ q 선택/registry 등록, transient UndoRef/TxnRef pin, FIFO/두 단계 drain, �
 | 경로 | 작성자·역할 |
 | --- | --- |
 | `crates/engine/src/transaction/concurrency.rs` | root가 지정한 단일 구현자. DEV3 전용 실제 gate/admission/state; 기존 DEV2 Publication/Coordinator와 별개 책임 |
-| `crates/engine/src/transaction/concurrency_tests.rs` | 별도 시험 담당. 고정 소규모 thread/cleanup/독립 oracle 시험 |
-| `crates/engine/src/transaction/concurrency_resource_tests.rs` | root가 typed F05 layout·동시34-owner 회계 검증 공급 |
-| `crates/engine/src/transaction/concurrency_test_support.rs` | 제품 구현 담당. cfg(test) 전용 관측·fault·모의 설치 seam |
+| `crates/engine/src/transaction/concurrency/tests.rs` | 별도 시험 담당. 고정 소규모 thread/cleanup/독립 oracle 시험 |
+| `crates/engine/src/transaction/concurrency/tests/resource.rs` | root가 typed F05 layout·동시34-owner 회계 검증 공급 |
+| `crates/engine/src/transaction/concurrency/test_support.rs` | 제품 구현 담당. cfg(test) 전용 관측·fault·모의 설치 seam |
 | `crates/engine/src/transaction.rs` | root만 좁은 module 등록. 기존 volatile public 의미 변경 없음 |
 | `crates/engine/src/storage/session_fence.rs` | root만 `SessionFence` 및 필요한 메서드의 `pub(crate)` 가시성을 좁게 확대. 동작·atomic ordering 변경 없음 |
 | compiler runner/fixture | API 최종 동결 후 전용 담당. `scripts/check_dev3_concurrency_borrows.py`, `scripts/test_check_dev3_concurrency_borrows.py`, `crates/engine/tests/fixtures/dev3-concurrency/compiler/` |
@@ -171,7 +171,7 @@ root가 정한 .a.1 부분 공급·shared fence borrow·non-Send·no callback/dy
 
 동시 locals의 source 검토 경로는 `try_version→acquire_version→entry_state→valid→accounting_valid`와 `drop/reject→release_checked→release_admission→cleanup_state/accounting_valid`다. retained control7248 외에 가장 큰 guard의 move/return scratch384와 다음 네 묶음 각128을 합한896bytes로 호출당1024 ceiling을 보수 검산한다. borrowed lock/result carriers는 State guard2×16, lock result24, version try result24, cleanup tuple24, small result/error3×8이다. census는 iterator24·item24·slot16·index4×8·u16 count2×2·bool8로108, borrowed reference/option은16×8, 나머지 scalar/error/branch carrier는16×8이다. State/배열 clone은 없다. 이는 명시 Rust 값의 논리 상한이며 컴파일러 stack spill·unwind machinery 실측으로 해석하지 않는다.
 
-constructor는 slots544+State2×1024+Mutex<State>1040+core2048+Result<core>2056+scalar96=7832bytes≤8192로 검토한다. [자원 시험](../../crates/engine/src/transaction/concurrency_resource_tests.rs)은 각 concrete carrier 크기를 실제 target에서 검산하고34-owner·33-content·1-version 교차 상태와 완전 반환을 관측한다. 상위 caller34 제한과 전체64KiB ingress는 별도 소비 공급 의무다.
+constructor는 slots544+State2×1024+Mutex<State>1040+core2048+Result<core>2056+scalar96=7832bytes≤8192로 검토한다. [자원 시험](../../crates/engine/src/transaction/concurrency/tests/resource.rs)은 각 concrete carrier 크기를 실제 target에서 검산하고34-owner·33-content·1-version 교차 상태와 완전 반환을 관측한다. 상위 caller34 제한과 전체64KiB ingress는 별도 소비 공급 의무다.
 
 [runtime runner](../../scripts/check_dev3_concurrency_runtime.py)는 정상 fixture의 각 GA01–07 그룹을 exact selector로 실행한다. 실제 실행 checker/helper hash와 보존 source의 동일성, source+실행 파일을 연결한 no-run build receipt, 실행 파일·fixture hash를 먼저 확인한다. 전체 runtime은120초 누적 process-group watchdog이며 성공도 정확한 selector·libtest1건 PASS·fixture case 마커·완료 마커 census가 일치해야 한다. [새 checker 시험](../../scripts/test_check_dev3_concurrency_runtime.py)은 좁은 선택·잘못된 fixture·누락/중복/타 selector·불일치 build receipt를 검증한다. S5 확대512 입력은 별도 ignored selector로 남기며 중간 필수 실행과 합산하지 않는다.
 

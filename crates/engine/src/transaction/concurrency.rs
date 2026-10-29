@@ -11,10 +11,10 @@ use std::{
     sync::{Condvar, Mutex, MutexGuard, TryLockError},
 };
 
-#[path = "concurrency_commit.rs"]
+#[path = "concurrency/commit.rs"]
 mod commit;
 use commit::Installation;
-#[path = "concurrency_read.rs"]
+#[path = "concurrency/read.rs"]
 mod read;
 pub(crate) use commit::call_source_bytes as commit_call_source_bytes;
 #[allow(unused_imports)] // The source-census consumer is a separately supplied leaf.
@@ -32,13 +32,13 @@ pub(crate) use read::{
 };
 
 #[cfg(test)]
-#[path = "concurrency_test_support.rs"]
+#[path = "concurrency/test_support.rs"]
 pub(super) mod test_support;
 
 /// One-shot observations of actual Catalog consumers. This facade deliberately
 /// exposes no simulated Commit transition or authority constructor.
 #[cfg(test)]
-#[path = "concurrency_catalog_test_support.rs"]
+#[path = "concurrency/catalog_test_support.rs"]
 pub(crate) mod catalog_test_support;
 
 /// Test-only injection for a downstream owner's checked admission cleanup.
@@ -739,5 +739,5 @@ impl Drop for VersionEditGuard<'_, '_, '_> {
 }
 
 #[cfg(test)]
-#[path = "concurrency_tests.rs"]
+#[path = "concurrency/tests.rs"]
 mod tests;

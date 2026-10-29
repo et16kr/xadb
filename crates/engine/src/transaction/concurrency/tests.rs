@@ -9,9 +9,10 @@ use std::sync::mpsc::{self, Receiver, SyncSender};
 use std::time::Duration;
 
 const STEP: Duration = Duration::from_secs(5);
-const NORMAL: &str = include_str!("../../../../tests/fixtures/dev3-concurrency/normal-cases.tsv");
+const NORMAL: &str =
+    include_str!("../../../../../tests/fixtures/dev3-concurrency/normal-cases.tsv");
 const EXPANDED: &str =
-    include_str!("../../../../tests/fixtures/dev3-concurrency/expanded-schedules.tsv");
+    include_str!("../../../../../tests/fixtures/dev3-concurrency/expanded-schedules.tsv");
 const FREE: u8 = 0;
 const IDLE: u8 = 1;
 const APPLY: u8 = 2;
@@ -1793,7 +1794,7 @@ fn complete(group: &str) {
     println!("GUARD_COMPLETE {group} {count}");
 }
 
-#[path = "concurrency_resource_tests.rs"]
+#[path = "tests/resource.rs"]
 mod resource;
 
 #[test]

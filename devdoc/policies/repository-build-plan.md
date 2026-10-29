@@ -227,7 +227,7 @@ DISK는 물리 저장 방식만 분리한다. 공통 RowUID, snapshot, catalog, 
 <a id="module-folder-layout"></a>
 ### 5.2 모듈 폴더 배치와 참조 경계
 
-2026-10-29 [후속 작업 계획과 결정](../plans/module-independence-plan.md#folder-reorganization)은 [코딩 기준](coding-convention.md#section-4)과 XADB-LAYOUT-001–006을 현재 분리 모듈에 적용한다. 이름에 반복되는 기능 접두어는 같은 책임인지 확인한 뒤 소유 폴더로 표현하고, 구현·지원·시험을 그 책임 가까이에 둔다. 적용 후보·순서·판정은 계획이 소유하며 이 절은 배치 원칙을 연결한다. 제품 이동은 [L1 `allocation_reservation`](../evidence/module-independence-survey-20261026.md#l1-allocation-move)만 2026-10-29 적용했고 L2–L5는 NOT_RUN이다.
+2026-10-29 [후속 작업 계획과 결정](../plans/module-independence-plan.md#folder-reorganization)은 [코딩 기준](coding-convention.md#section-4)과 XADB-LAYOUT-001–006을 현재 분리 모듈에 적용한다. 이름에 반복되는 기능 접두어는 같은 책임인지 확인한 뒤 소유 폴더로 표현하고, 구현·지원·시험을 그 책임 가까이에 둔다. 적용 후보·순서·판정은 계획이 소유하며 이 절은 배치 원칙을 연결한다. 제품 이동은 2026-10-29 [L1 `allocation_reservation`](../evidence/module-independence-survey-20261026.md#l1-allocation-move)과 [L2 `transaction::concurrency`](../evidence/module-independence-survey-20261026.md#l2-concurrency-move)만 적용했고 L3–L5는 NOT_RUN이다.
 
 물리 폴더와 실제 Rust 모듈의 부모 관계는 각각 기록한다. `#[path]`로 연결된 파일의 이동이 private 접근·`pub(in ...)`·생성 권한·production/test cfg 경로를 바꾸지 않는지 확인한다. 배치 정리 단위는 논리 모듈 경로·visibility·시험 selector를 유지하고, 이를 바꾸어야 하는 부분은 논리 의존 변경 단위로 분리해 소유 계약을 검토한다. 폴더 진입점에 기능 본문을 새로 집중하거나 접근 권한 확대·공통 manager 도입으로 이동을 성립시키지 않는다.
 
@@ -626,7 +626,7 @@ statement factory·자동 read-set·CheckedTable/RowReadOperation과 short aggre
 
 ## 모듈 독립 개발 C2 조회 수명과 Commit Drain — 2026-10-26
 
-`transaction/concurrency_read.rs`는 기존 PageConcurrency의 슬롯 표시와 checked read-operation ticket을 소유한다. Catalog adapter는 이 ticket과 원 ReadPort borrow를 보유하며 refs 정리 뒤 표시를 반환한다. 새 owner/counter·package/dependency·source root는 추가하지 않는다. 실제 경로는 JSON `dev3_module_c2_read_operation`에 등록했다. [선택 증거](../evidence/module-independence-survey-20261026.md#c2-read-operation-lifetime)는 source별13개 결과와 원 compile/fenced-fixture 실패를 구분한다. aggregate byte admission·caller-retained factory는 후속 공급이다.
+`transaction/concurrency/read.rs`는 기존 PageConcurrency의 슬롯 표시와 checked read-operation ticket을 소유한다. Catalog adapter는 이 ticket과 원 ReadPort borrow를 보유하며 refs 정리 뒤 표시를 반환한다. 새 owner/counter·package/dependency·source root는 추가하지 않는다. 실제 경로는 JSON `dev3_module_c2_read_operation`에 등록했다. [선택 증거](../evidence/module-independence-survey-20261026.md#c2-read-operation-lifetime)는 source별13개 결과와 원 compile/fenced-fixture 실패를 구분한다. aggregate byte admission·caller-retained factory는 후속 공급이다.
 
 
 ## 모듈 독립 개발 C2 Catalog 후보 scratch — 2026-10-27

@@ -488,5 +488,5 @@ pub(crate) const fn call_source_bytes() -> usize {
 }
 
 #[cfg(test)]
-#[path = "concurrency_commit_tests.rs"]
+#[path = "commit/tests.rs"]
 mod tests;

@@ -2930,3 +2930,35 @@ r2의 scoped static2와 선택4개는 모두 PASS다. 고유10개는 r1 source�
 현재 상태 문구는 `devdoc/README.md`, `plans/README.md`, 저장소 정책 §5.2, `dev3-module-boundaries.md`와 계획 13절에서 L1 적용으로 갱신했다. 로그·이동 전후 시험 목록·파일별 hash·fingerprint·원 증거 문서 byte를 로컬 `artifacts/module-l1-allocation-20261029/`(`manifest.sha256` SHA-256 `396101b84eecf563181a4b2bae526f5533f200fec53a9d7e442f00aa2e5d054d`)에 보존했고, 이번 실행의 build target 2.0G와 임시 export는 삭제했다.
 
 최종 독립 검토는 실제 diff·문서·JSON·artifact를 읽기 전용으로 대조해 **ACCEPT**, 필수 지적0으로 판정했다. rename 7개와 `#[path]` 7줄, byte 동일 5개, 링크 검사 오류0, JSON 경로25개, 시험 목록 동일, manifest 대조를 확인했다. 선택 지적5건 중 오래된 현재 상태 문구, 검토 기록 문구, 명령·이동 전 fingerprint 기록, 상태 문구 갱신 목록의 4건을 반영했다. fmt·Clippy·문서 검사가 push gate에 남는다는 1건은 그대로다. 이 선택 반영은 다시 검토받지 않았다. L2–L5와 전체 M4/M5는 미완료다.
+
+<a id="l2-concurrency-move"></a>
+## 2026-10-29 L2 `transaction::concurrency` 폴더 배치
+
+[L2 이동표](../plans/module-independence-plan.md#l2-move-table)를 기준 `main` `b691fc74689dd1275d1e92b946f56984208cb591`(tree `ad13f6644c4caa60835c372c75346a4d5a998eae`)에 적용했다. 사용자는 L1 완료 뒤 “작업을 이어서 해주세요”라고 지시했고 push는 모든 작업과 추가 리뷰 뒤로 미뤘다. L1에서 확정한 배치 B를 따라 진입 `transaction/concurrency.rs`는 유지했다. 작성·통합은 이 Claude 세션이다. 착수 때 checkout은 clean이었다. 기능 본문·논리 모듈 경로·visibility·cfg·시험 selector는 바꾸지 않았다.
+
+| 원 경로(`crates/engine/src/transaction/`) | 현재 경로 | 논리 경로(`crate::transaction::concurrency`) |
+| --- | --- | --- |
+| `concurrency.rs` | 유지, `#[path]` 5줄만 변경 | 진입 |
+| `concurrency_commit.rs` | `concurrency/commit.rs`, `#[path]` 1줄 변경 | `commit` |
+| `concurrency_commit_tests.rs` | `concurrency/commit/tests.rs` | `commit::tests` |
+| `concurrency_read.rs` | `concurrency/read.rs` | `read` |
+| `concurrency_test_support.rs` | `concurrency/test_support.rs` | `test_support` |
+| `concurrency_catalog_test_support.rs` | `concurrency/catalog_test_support.rs` | `catalog_test_support` |
+| `concurrency_tests.rs` | `concurrency/tests.rs`, `#[path]` 1줄과 `include_str!` 경로2개 변경 | `tests` |
+| `concurrency_resource_tests.rs` | `concurrency/tests/resource.rs` | `tests::resource` |
+
+`tests.rs`의 fixture `include_str!`은 파일 위치 기준이라 `../`를 하나 더했다. 두 경로가 이동 전과 같은 저장소 루트의 `tests/fixtures/dev3-concurrency/normal-cases.tsv`·`expanded-schedules.tsv`로 해석되는 것을 실제 경로로 대조했다. 길어진 `NORMAL` 줄은 rustfmt 폭 100을 넘어서, 바로 아래 `EXPANDED`와 같은 두 줄 형식으로 썼다. `rustfmt --edition 2024 --check`를 진입 파일에 적용해 하위 모듈까지 차이 0을 확인했다. 첫 확인은 로그를 남기지 않아, 같은 검사를 L1 진입 파일과 함께 다시 실행해 `logs/rustfmt-check.log`로 보존했다.
+
+현재 링크는 contracts 2곳, 본문 표기는 `dev3-concurrency-admission.md`의 파일 역할 표 3행과 저장소 정책 1곳을 갱신했다. 관리 JSON의 경로 문자열 26개를 현재 경로로 바꾸고 `module_folder_reorganization`의 상태를 갱신했다. 증거 파일 4개(JSON 3·Markdown 1)의 원 경로 표기는 링크가 아니므로 그대로 두었다. 현재 상태 문구는 `devdoc/README.md`, `plans/README.md`, 저장소 정책 §5.2, `dev3-module-boundaries.md`와 계획 13절에서 갱신했다.
+
+| 검증 | 실제 범위·결과 |
+| --- | --- |
+| 정적 대응 | `crates/` diff는 rename 7개, `#[path]` 7줄, `include_str!` 2줄(한 줄은 두 줄로 줄바꿈)뿐이다. 이동만 한 5개는 기준 SHA-256과 같고 `transaction.rs`는 바뀌지 않았다 |
+| 컴파일 | `cargo check -p xadb-engine --all-targets --all-features --locked` PASS, warning 0. rustc/cargo 1.95.0 |
+| 시험 발견 | 이동 전 `b691fc7`과 이동 후 `cargo test -p xadb-engine --lib --all-features --locked -- --list` 출력 1585줄이 byte 단위로 같다(SHA-256 `601bd166c6b31b8bdd9e7361eecb15d5939e7b1153b323f10f9fd5308f30259a`). `transaction::concurrency::` 22개가 그대로다 |
+| 시험 본문 | NOT_RUN. 본문은 그대로이고 `include_str!`이 읽는 fixture도 같은 파일이다. runtime script·borrow probe도 논리 selector와 probe 파일 위치가 같아 NOT_RUN |
+| fmt | 변경 파일에 한정한 `rustfmt --check` PASS(로그는 재실행본). 전체 fmt·Clippy·문서 검사는 기존 push gate에서 수행한다 |
+
+두 cargo 명령은 scratchpad의 별도 `CARGO_TARGET_DIR`을 썼다. tracked 파일만 내보낸 tree의 source fingerprint는 이동 전 `81ed7353f7c8302b4f859fba7a76b7771a700b33780ca94d39503bcf82c4fa40`(L1 이동 후 값과 같음), 이동 후 `a6ae9251c773c418c67ae24058a2d5dc405fc3feb4b91a6b0e46ef9ec66d1b19`다. 로그·이동 전후 시험 목록·파일별 hash·fingerprint를 로컬 `artifacts/module-l2-concurrency-20261029/`(`manifest.sha256` SHA-256 `3877a1a85f8727aabe48b0410c13ae9736f5c44924f07a598961a4faacca7400`)에 보존했고, build target 1.9G와 임시 export는 삭제했다.
+
+독립 검토(L1과 같은 읽기 전용 subagent)는 이동표·실제 diff·문서·JSON·artifact를 대조해 **ACCEPT WITH REQUIRED FIXES**로 판정했다. 파일 집합, `#[path]` 해석, `include_str!`이 같은 저장소 루트 fixture를 가리킴, 위치 의존 참조 0, 링크 검사 오류 0, JSON 경로26개, 시험 목록 동일(22개), manifest·fingerprint 재계산 일치를 확인했다. 필수 지적1건은 rustfmt PASS의 로그 부재였고 위 재실행 로그로 보완했다. 선택 지적 중 이동표의 줄 번호, 시험 구성 행, 소비자 범위 표기를 반영했다. 관리 JSON의 `status`는 계획 채택 상태이므로 그대로 두고 단위별 상태는 `implementation_status`에 둔다. 이 반영은 다시 검토받지 않았다. L3–L5와 전체 M4/M5는 미완료다.

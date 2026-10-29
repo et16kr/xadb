@@ -36,8 +36,9 @@
     "policy_ref": "repository-build-plan.md#module-folder-layout",
     "boundary_ref": "dev3-module-boundaries.md#target-imports",
     "baseline_revision": "517208d4cddd721db5415fd2e32b759a1ad114ba",
-    "implementation_status": "L1_PLACEMENT_APPLIED_L2_L5_NOT_RUN",
+    "implementation_status": "L1_L2_PLACEMENT_APPLIED_L3_L5_NOT_RUN",
     "l1_evidence_ref": "module-independence-survey-20261026.md#l1-allocation-move",
+    "l2_evidence_ref": "module-independence-survey-20261026.md#l2-concurrency-move",
     "product_tests": "NOT_RUN",
     "actual_path_inventory_changed": true,
     "source_roots_changed": false,
@@ -1558,9 +1559,9 @@
     "contract_ref": "dev3-concurrency-admission.md",
     "source": [
       "crates/engine/src/transaction/concurrency.rs",
-      "crates/engine/src/transaction/concurrency_test_support.rs",
-      "crates/engine/src/transaction/concurrency_tests.rs",
-      "crates/engine/src/transaction/concurrency_resource_tests.rs"
+      "crates/engine/src/transaction/concurrency/test_support.rs",
+      "crates/engine/src/transaction/concurrency/tests.rs",
+      "crates/engine/src/transaction/concurrency/tests/resource.rs"
     ],
     "shared_source": [
       "crates/engine/src/transaction.rs",
@@ -6490,14 +6491,14 @@
     "contract_ref": "dev3-module-boundaries.md#operation-source-admission",
     "evidence_ref": "module-independence-survey-20261026.md#c2-read-operation-lifetime",
     "implemented_paths": [
-      "crates/engine/src/transaction/concurrency_read.rs",
+      "crates/engine/src/transaction/concurrency/read.rs",
       "tests/fixtures/dev3-module-c2/read-operation/manifest.json"
     ],
     "modified_paths": [
       "crates/engine/src/transaction/concurrency.rs",
-      "crates/engine/src/transaction/concurrency_commit.rs",
-      "crates/engine/src/transaction/concurrency_test_support.rs",
-      "crates/engine/src/transaction/concurrency_catalog_test_support.rs",
+      "crates/engine/src/transaction/concurrency/commit.rs",
+      "crates/engine/src/transaction/concurrency/test_support.rs",
+      "crates/engine/src/transaction/concurrency/catalog_test_support.rs",
       "crates/engine/src/storage/wal_io/plan4_retention/read/operation.rs",
       "crates/engine/src/storage/wal_io/plan4_retention/read/lookup.rs",
       "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/commit_concurrency.rs"
@@ -6611,7 +6612,7 @@
       "crates/engine/src/storage/wal_io/plan4_retention/catalog_commit.rs",
       "crates/engine/src/storage/wal_io/plan4_retention/create_pair.rs",
       "crates/engine/src/transaction/concurrency.rs",
-      "crates/engine/src/transaction/concurrency_commit.rs"
+      "crates/engine/src/transaction/concurrency/commit.rs"
     ],
     "scope": "Commit physical and Catalog phase source closures; consuming transition carriers retained, explicit nested concurrency costs and original core once; original physical Capacity gate unchanged",
     "validation": "r1 production/test build and exact3 PASS; independent review required original core816B accounting; r2 production/test build and changed Catalog exact2 PASS; physical phase test not repeated; five executions across two sources, three unique selectors; independent module_step_review accepted limited D1/D2 after eight product files, six documents, manifests and both source/artifact identities review; zero required fixes",
@@ -6657,7 +6658,7 @@
       "crates/engine/src/storage/wal_io/plan4_retention/recovery.rs",
       "crates/engine/src/storage/wal_io/plan4_retention/resources.rs",
       "crates/engine/src/transaction/concurrency.rs",
-      "crates/engine/src/transaction/concurrency_commit.rs"
+      "crates/engine/src/transaction/concurrency/commit.rs"
     ],
     "scope": "One original PageConcurrency shared retained value in fresh/session/recovered lifetimes; replay cursor ends before wide recovered return; Catalog core plus nested gate unchanged",
     "validation": "r1 static4 PASS/native bound FAIL; r2 build2/runtime4 PASS/zero-selector FAIL; r3 B04 Reserve fixture FAIL before recovery; D2 replacement MF09 runtime PASS with r4 marker FAIL adjudicated without rerun; r5 B08 PASS; eight applicable unique selectors across preserved sources, original failures retained; OCR all16 files reviewed/zero skipped, one contract tense correction resolved, independent D1/D2 limited acceptance with zero required fixes",
@@ -6692,7 +6693,7 @@
       "crates/engine/src/storage/wal_io/plan4_retention/read/lookup.rs",
       "crates/engine/src/storage/wal_io/plan4_retention/read/operation.rs",
       "crates/engine/src/storage/wal_io/plan4_retention/resources.rs",
-      "crates/engine/src/transaction/concurrency_catalog_test_support.rs"
+      "crates/engine/src/transaction/concurrency/catalog_test_support.rs"
     ],
     "scope": "Full Catalog lookup fixed source reservation and original Drain coverage from attempt through final decode/return; full concurrent writer/progress/entry aggregate remains incomplete",
     "validation": "r1 production/test build PASS; selected14 PASS then resident-only oracle adapted incorrectly to full lookup FAIL/abort preserved. Test-only correction; r2 test build and changed2/unexecuted5 exact PASS. 21 unique selectors, 22 executions across two sources; independent OCR all19 files reviewed/zero skipped, both5632-file source/artifact identity audits, limited D1/D2 acceptance with zero required fixes.",
@@ -6734,7 +6735,7 @@
       "crates/engine/src/storage/wal_io/plan4_retention/read.rs",
       "crates/engine/src/storage/wal_io/plan4_retention/read/lookup.rs",
       "crates/engine/src/storage/wal_io/plan4_retention/read/operation.rs",
-      "crates/engine/src/transaction/concurrency_catalog_test_support.rs"
+      "crates/engine/src/transaction/concurrency/catalog_test_support.rs"
     ],
     "scope": "Fixed resident Catalog lookup on original allocator/Status/Undo with no I/O/LOAD; existing Full path and main progress-before-reservation / source-before-progress-return preserved; original core counted once",
     "validation": "Frozen r1 production/test build PASS; 21 exact runtime PASS once (9 resident contract + 6 resident lifecycle + 6 affected Full); no failed/repeated cases; independent OCR 23/23 files reviewed, zero required fixes, limited D1/D2 accepted",
@@ -6897,8 +6898,8 @@
       "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory.rs",
       "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/commit_failures.rs",
       "crates/engine/src/storage/wal_io/plan4_retention/catalog_commit.rs",
-      "crates/engine/src/transaction/concurrency_catalog_test_support.rs",
-      "crates/engine/src/transaction/concurrency_test_support.rs",
+      "crates/engine/src/transaction/concurrency/catalog_test_support.rs",
+      "crates/engine/src/transaction/concurrency/test_support.rs",
       "crates/engine/src/storage/dirty_frame/commit/tests.rs"
     ],
     "scope": "Actual consuming Drain/guard-reconstruction boundary on main; original authority and normal Drop fence-before-pins; main four outer source phases and shared original core retained; no source upgrade/admission yet",
@@ -6986,7 +6987,7 @@
       "crates/engine/src/storage/wal_io/plan4_retention/read/operation.rs",
       "crates/engine/src/storage/wal_io/plan4_retention/read/lookup.rs",
       "crates/engine/src/storage/wal_io/plan4_retention/resources.rs",
-      "crates/engine/src/transaction/concurrency_read.rs",
+      "crates/engine/src/transaction/concurrency/read.rs",
       "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/commit_concurrency.rs"
     ],
     "scope": "CatalogFull fixed source reservation in original isolation header24..32, through final decode/Result and checked cleanup; unchanged full lookup class rejects overlapping capacity before operation effects",
@@ -7023,7 +7024,7 @@
       "crates/engine/src/storage/wal_io/plan4_retention/read/operation.rs",
       "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory.rs",
       "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/read_boundary.rs",
-      "crates/engine/src/transaction/concurrency_catalog_test_support.rs"
+      "crates/engine/src/transaction/concurrency/catalog_test_support.rs"
     ],
     "scope": "Fixed resident Catalog class on original allocator and target guards; same product semantics, no WAL replay/durability wait/reader file/LOAD, complete Status scan, exact-ref membership corruption versus retryable normal stamp changes; no new backing or authority",
     "validation": "r1 production PASS/test build E0583 FAIL; r2 test build PASS/census68820 FAIL; r3 product+adversarial change production PASS/test build E0502 FAIL; r4 test helper syntax FAIL; r5 test-only helper fix test build and 9 exact runtime PASS once; production not repeated after test-only fixes; independent module_review accepted limited D1/D2 after code, original artifacts and six-document review; zero required fixes",
@@ -7046,7 +7047,7 @@
     ],
     "modified_paths": [
       "crates/engine/src/storage/wal_io/plan4_retention/read/operation.rs",
-      "crates/engine/src/transaction/concurrency_catalog_test_support.rs",
+      "crates/engine/src/transaction/concurrency/catalog_test_support.rs",
       "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory.rs"
     ],
     "evidence_ref": "module-independence-survey-20261026.md#c2-source-return",
@@ -7113,7 +7114,7 @@
     "modified_paths": [
       "crates/engine/src/storage/wal_io/plan4_retention/read/operation.rs",
       "crates/engine/src/storage/wal_io/plan4_apply/source.rs",
-      "crates/engine/src/transaction/concurrency_catalog_test_support.rs",
+      "crates/engine/src/transaction/concurrency/catalog_test_support.rs",
       "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory.rs"
     ],
     "evidence_ref": "module-independence-survey-20261026.md#c2-source-entry",
@@ -7176,8 +7177,8 @@
       "crates/engine/src/storage/wal_io/plan4_retention/catalog_commit.rs",
       "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory.rs",
       "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/commit_failures.rs",
-      "crates/engine/src/transaction/concurrency_catalog_test_support.rs",
-      "crates/engine/src/transaction/concurrency_test_support.rs"
+      "crates/engine/src/transaction/concurrency/catalog_test_support.rs",
+      "crates/engine/src/transaction/concurrency/test_support.rs"
     ],
     "scope": "Actual consuming Drain/guard-reconstruction boundary; original authority and normal Drop fence-before-pins; no source upgrade/admission yet",
     "evidence_ref": "module-independence-survey-20261026.md#c2-drained-handoff",
@@ -7264,7 +7265,7 @@
       "crates/engine/src/storage/wal_io/plan4_retention/read.rs",
       "crates/engine/src/storage/wal_io/plan4_retention/read/lookup.rs",
       "crates/engine/src/storage/wal_io/plan4_retention/read/scope.rs",
-      "crates/engine/src/transaction/concurrency_read.rs"
+      "crates/engine/src/transaction/concurrency/read.rs"
     ],
     "scope": "Actual narrow health/source/Catalog factory and consuming close; exact original core+OwnerIdentity; source-before-progress field Drop and tuple close; explicit legacy wide conversion one-call census; whole bound entry/return floor remains incomplete",
     "evidence_ref": "module-independence-survey-20261026.md#c2-compact-call-boundary",
@@ -7329,7 +7330,7 @@
       "crates/engine/src/storage/wal_io/plan4_retention/read/scope.rs",
       "crates/engine/src/storage/wal_io/plan4_retention/visibility.rs",
       "crates/engine/src/transaction/concurrency.rs",
-      "crates/engine/src/transaction/concurrency_read.rs"
+      "crates/engine/src/transaction/concurrency/read.rs"
     ],
     "scope": "Actual consuming SourceFailure/progress cleanup before Err<Scope>; cfg(test)34 original-core entry and four independent guard observations, separate current query wide tail; no charge/admission change",
     "evidence_ref": "module-independence-survey-20261026.md#c2-uncharged-call-phases",
@@ -7437,7 +7438,7 @@
       "crates/engine/src/storage/wal_io/plan4_retention/read.rs",
       "crates/engine/src/storage/wal_io/plan4_retention/read/lookup.rs",
       "crates/engine/src/storage/wal_io/plan4_retention/read/scope.rs",
-      "crates/engine/src/transaction/concurrency_catalog_test_support.rs"
+      "crates/engine/src/transaction/concurrency/catalog_test_support.rs"
     ],
     "scope": "Original Full/Resident scoped Catalog reads borrow actual statement snapshot internally; original slot/generation/sequence checks and automatic catalog bit before Found/Missing; no raw guard/mask export and no new credit",
     "evidence_ref": "module-independence-survey-20261026.md#c2-statement-reads",
@@ -7510,7 +7511,7 @@
       "crates/engine/src/storage/wal_io/plan4_retention/create_pair.rs",
       "crates/engine/src/storage/wal_io/plan4_retention/recovery_observation_tests.rs",
       "crates/engine/src/storage/wal_io/plan4_retention/visibility/authority.rs",
-      "crates/engine/src/transaction/concurrency_commit.rs"
+      "crates/engine/src/transaction/concurrency/commit.rs"
     ],
     "removed_paths": [
       "crates/engine/src/storage/wal_io/commit_bridge.rs"
@@ -7715,9 +7716,9 @@
     ],
     "modified_paths": [
       "crates/engine/src/transaction/concurrency.rs",
-      "crates/engine/src/transaction/concurrency_read.rs",
-      "crates/engine/src/transaction/concurrency_commit.rs",
-      "crates/engine/src/transaction/concurrency_catalog_test_support.rs",
+      "crates/engine/src/transaction/concurrency/read.rs",
+      "crates/engine/src/transaction/concurrency/commit.rs",
+      "crates/engine/src/transaction/concurrency/catalog_test_support.rs",
       "crates/engine/src/storage/dirty_frame.rs",
       "crates/engine/src/storage/dirty_frame/commit.rs",
       "crates/engine/src/storage/wal_io/plan4_apply.rs",
