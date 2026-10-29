@@ -10,7 +10,9 @@
 
 이전 owner/File/Plan 각각의 `size_of` 검사는 중첩 decoder·SHA·reader 부가 상태를 모두 세지 않았다. 개별 상한만 유지하는 대안 대신 constructor/operation의 합을 실제 타입 크기로 검사한다. 동적 heap 측정이나 process RSS를 source value 상한의 대체물로 사용하지 않는다. 임의 trait 구현의 내부 stack/heap을 generic owner 크기로 제한할 수 없으므로 XADB 소유 값과 concrete port 관측을 구분한다.
 
-[계산 소스](../../crates/engine/src/storage/wal_io/allocation_budget.rs)의 값은 moved non-Copy owner를 한 번, 동시에 남는 Copy 인자·반환값을 보수적으로 센다. compiler spill·물리적 move 복사본은 별도 실제 stack 관측의 범위다. caller의4개 큰 buffer와 메모리 시험 포트의 가상 파일 bytes는 component가 소유한 중복 allocation이 아니다.
+[계산 소스](../../crates/engine/src/storage/wal_io/allocation_reservation/budget.rs)의 값은 moved non-Copy owner를 한 번, 동시에 남는 Copy 인자·반환값을 보수적으로 센다. compiler spill·물리적 move 복사본은 별도 실제 stack 관측의 범위다. caller의4개 큰 buffer와 메모리 시험 포트의 가상 파일 bytes는 component가 소유한 중복 allocation이 아니다.
+
+2026-10-29 탐색 링크 보완: 위 계산 소스 링크만 현재 위치로 연결했다. 원 source 경로는 `crates/engine/src/storage/wal_io/allocation_budget.rs`이며 기준 commit은 `feb2b14d868738a7510d57876d7db4bd34108ea7`이다. 변경 전 이 문서의 SHA-256은 `95b78867450094fd1286768e6159dfa3b38d559a9c661eb02c3354b56031be55`이고 원 byte는 로컬 `artifacts/module-l1-allocation-20261029/history/dev3-allocation-resource-review-20261022.md`에 보존했다. 원 판단·실행 증거를 갱신하지 않으며 [이동 대응](module-independence-survey-20261026.md#l1-allocation-move)을 따른다.
 
 ## Operation 계산
 

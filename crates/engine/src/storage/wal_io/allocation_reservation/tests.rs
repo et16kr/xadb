@@ -10,7 +10,7 @@ use std::{
     time::Duration,
 };
 
-#[path = "allocation_budget_profile_tests.rs"]
+#[path = "tests/budget_profiles.rs"]
 mod budget_profiles;
 
 const INPUT: &str = concat!(

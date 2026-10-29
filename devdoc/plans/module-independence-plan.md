@@ -1,5 +1,7 @@
 # XADB 모듈 독립 개발 구조 전환 작업 계획
 
+2026-10-29 [L1 배치 적용](../evidence/module-independence-survey-20261026.md#l1-allocation-move): main `feb2b14`에서 확정한 배치 B로 파일7개를 옮기고 `#[path]` 7줄만 바꿨다. 이동만 한 5개의 byte 동일, `cargo check` PASS, 이동 전후 시험 목록 동일을 확인했고 시험 본문은 NOT_RUN이다. L2–L5와 전체 M4/M5는 미완료다.
+
 2026-10-29 [L1 파일별 이동표](#l1-move-table): main `082d329`에서 `allocation_reservation`의 진입1개와 자손7개, 8개 파일의 선언·소유·소비·visibility·경로 참조를 대조한 초안을 작성했다. 사용자가 권장 배치 B(진입 파일 유지)를 확정했다. 제품 이동·빌드·시험은 NOT_RUN이며 전체 M4/M5는 미완료다.
 
 2026-10-29 [폴더 재정리 후속 계획](#folder-reorganization): Job 검산 작업의 `517208d` 종료와 clean 상태를 확인하고 임시 조사안을 기존 계획에 반영했다. 참조·소유·API 경계를 기준으로 배치 정리와 논리 의존 변경을 구분한다. 문서 범위의 독립 D2 수용·필수 수정0이며 제품 이동·시험은 NOT_RUN, 전체 M4/M5는 미완료다.
@@ -406,7 +408,7 @@ Root3/Job3/Profile3·Row scope3·base4는 이름 변경의 부수 효과가 아�
 <a id="folder-reorganization"></a>
 ## 13. 분리 모듈의 폴더 재정리 후속 계획
 
-2026-10-29 · `XADB-MODULE-LAYOUT-001` · **D2 ACCEPTED / 후속 계획 문서 반영 완료 / 제품 이동·시험 NOT_RUN**
+2026-10-29 · `XADB-MODULE-LAYOUT-001` · **D2 ACCEPTED / 후속 계획 문서 반영 완료 / 제품 이동은 [L1](../evidence/module-independence-survey-20261026.md#l1-allocation-move)만 적용, 시험 본문 NOT_RUN**
 
 사용자는 파일 분리에 비해 폴더 정리가 부족한 부분을 먼저 조사하도록 요청했고, 참조 관계·상태 소유·API가 독립성의 핵심인지 의견을 확인했다. 이어 임시 계획을 저장하고 진행 중인 작업 종료 뒤 기존 문서에 반영하도록 지시했으며, 후속 “진행해 주세요” 요청에 따라 이 절을 작성한다. **이번 실행 범위는 후속 계획과 관련 문서의 정비다.** 제품 파일 이동·참조 변경의 구현은 아직 시작하지 않는다.
 
@@ -452,9 +454,9 @@ Root3/Job3/Profile3·Row scope3·base4는 이름 변경의 부수 효과가 아�
 <a id="l1-move-table"></a>
 ### L1 파일별 이동표
 
-2026-10-29 · **이동표 확정(B) / 제품 이동·빌드·시험 NOT_RUN**
+2026-10-29 · **이동표 확정(B) / L1 이동 적용·정적 검증 PASS / 시험 본문 NOT_RUN**
 
-사용자 지시 “L1 이동표 작성”에 따라 위 이행 순서의 1–2단계를 L1에 적용했다. 사용자는 이어서 “권장으로 진행해 주세요”라고 지시해 배치 B를 확정했다. 이 표는 이동이나 검증의 결과가 아니다.
+사용자 지시 “L1 이동표 작성”에 따라 위 이행 순서의 1–2단계를 L1에 적용했다. 사용자는 이어서 “권장으로 진행해 주세요”라고 지시해 배치 B를 확정했다. 이 표는 실행 전 계획이며, 실제 이동과 검증 결과는 [L1 배치 적용 증거](../evidence/module-independence-survey-20261026.md#l1-allocation-move)에 있다.
 
 **기준·소유.** 기준은 main `082d329a28a46fbf201f0276b319a840af1b4929`, tree `dd41b0a5bbd610877bf4e1a9a4767feab509a70c`이며 checkout은 clean이고 `origin/main`과 같다. 다른 worktree `/home/et16/work/xadb-dev4`는 main의 조상 `7327e7a`에 detached·clean 상태라 L1 파일의 동시 편집은 없다. 적용하지 않기로 한 C2 초안 `stash@{0}`은 `allocation_budget.rs`·`allocation_operation.rs`·`plan4_allocation_operation.rs`를 수정하므로, 이동 뒤에는 rename을 반영해야만 다시 적용할 수 있다. 작성 담당은 이 Claude 세션이다. 아래 경로는 `crates/engine/src/storage/wal_io/` 기준이며 `AR`은 논리 경로 `crate::storage::wal_io::bootstrap::doublewrite_install::allocation_reservation`이다.
 
@@ -534,7 +536,7 @@ Root3/Job3/Profile3·Row scope3·base4는 이름 변경의 부수 효과가 아�
 
 `AR::operation`은 L1 밖의 운영 파일 26개 이상, `AR::budget`은 운영 파일10개가 `super` 사슬·crate 절대 경로·조상 import 별칭·재노출로 참조한다(위 소비자 표). `operation`의 일부 항목은 `doublewrite_install`→`bootstrap`→`wal_io` 재노출을 거쳐 `wal_io` 밖의 `plan4_recovery_base`까지 이어진다. 배치 정리는 이 참조를 바꾸지 않는다. 최소 API로 좁힐지는 위 이행 순서 4단계에서 실제 소비자를 기준으로 판단할 입력이다.
 
-**독립 검토.** 이 세션이 띄운 별도 검토 subagent가 초안을 실제 source·정책·선례와 읽기 전용으로 대조해 **ACCEPT WITH REQUIRED FIXES**로 판정했다. 이동 대상8개, `#[path]` 해석, 줄 수, SHA-256, JSON 29/25개, 링크, 증거14개, 명령 형식은 일치했다. 필수 지적2건은 소비자 목록 누락과 `AR::tests`의 hook 제공 누락이다. 선택 지적7건은 상태 소유 표현, 영향 case, 검증 단계 정의, A의 명칭과 §4 처리, 파일 이름의 plan4, C2 stash, 파일 수 표현이다. 작성자가 각 지적을 source로 다시 확인한 뒤 반영했다. 같은 검토자의 반영본 재검토는 다른 수정을 모두 확인했지만, `operation` 소비자 목록에서 glob import를 거친 운영6·시험4개 파일의 누락을 필수 지적으로 남겼다. 작성자가 해당 줄을 확인해 10개 파일을 추가하고 목록을 하한으로 표기했다. 이 마지막 반영은 다시 검토받지 않았다. 제품 이동·빌드·시험은 실행하지 않았다.
+**독립 검토.** 이 세션이 띄운 별도 검토 subagent가 초안을 실제 source·정책·선례와 읽기 전용으로 대조해 **ACCEPT WITH REQUIRED FIXES**로 판정했다. 이동 대상8개, `#[path]` 해석, 줄 수, SHA-256, JSON 29/25개, 링크, 증거14개, 명령 형식은 일치했다. 필수 지적2건은 소비자 목록 누락과 `AR::tests`의 hook 제공 누락이다. 선택 지적7건은 상태 소유 표현, 영향 case, 검증 단계 정의, A의 명칭과 §4 처리, 파일 이름의 plan4, C2 stash, 파일 수 표현이다. 작성자가 각 지적을 source로 다시 확인한 뒤 반영했다. 같은 검토자의 반영본 재검토는 다른 수정을 모두 확인했지만, `operation` 소비자 목록에서 glob import를 거친 운영6·시험4개 파일의 누락을 필수 지적으로 남겼다. 작성자가 해당 줄을 확인해 10개 파일을 추가하고 목록을 하한으로 표기했다. 이 마지막 반영은 이동 실행 뒤의 [최종 검토](../evidence/module-independence-survey-20261026.md#l1-allocation-move)에서 확인됐다. 이 절의 검토 시점에는 제품 이동·빌드·시험을 실행하지 않았다.
 
 ### 완료 조건과 문서 정본
 
@@ -545,7 +547,7 @@ Root3/Job3/Profile3·Row scope3·base4는 이름 변경의 부수 효과가 아�
 | 논리 의존 변경 단위 | 허용 의존·제한 API·원 상태/권한·오류/자원/복구 계약을 검토하고 실제 소비 경로의 변경 국소성·필요한 선택 검증을 확인. 파일 이동 결과로 대체하지 않음 |
 | M4/M5 | 기존 공통 공급·MI01–06의 실제 인수 조건 유지. 문서 반영과 폴더 정리가 완료되어도 M4/M5를 자동 완료로 표시하지 않음 |
 
-작업 순서·후보·결정은 이 절이 소유한다. [저장소 배치](../policies/repository-build-plan.md#module-folder-layout)는 기존 코딩/병렬 규칙의 적용과 실제 inventory 갱신 시점을 연결하고, [관리 JSON](../policies/repository-build-plan.json)의 `module_folder_reorganization`은 정본 참조·기준·미실행 상태만 색인한다. [소유 계약](../contracts/dev3-module-boundaries.md#target-imports)은 현재 초기화 조상·접근 제한을 유지하며 구체적인 논리 변경 때 영향 절만 재검토한다. 코딩 컨벤션·병렬 정책의 기존 규칙은 그대로 사용한다.
+작업 순서·후보·결정은 이 절이 소유한다. [저장소 배치](../policies/repository-build-plan.md#module-folder-layout)는 기존 코딩/병렬 규칙의 적용과 실제 inventory 갱신 시점을 연결하고, [관리 JSON](../policies/repository-build-plan.json)의 `module_folder_reorganization`은 정본 참조·기준·단위별 실행 상태만 색인한다. [소유 계약](../contracts/dev3-module-boundaries.md#target-imports)은 현재 초기화 조상·접근 제한을 유지하며 구체적인 논리 변경 때 영향 절만 재검토한다. 코딩 컨벤션·병렬 정책의 기존 규칙은 그대로 사용한다.
 
 문서 진입점·계획/정책 README에서 이 절과 배치 원칙을 연결한다. 기존 문서의 ID·경로·제목은 유지하므로 `documents.json`의 등록 변경은 없다. 새 정식 문서를 만들지 않고 임시 초안의 제안을 이 절로 통합했다. 후속 사용자의 commit·불필요한 임시 문서 삭제 지시에 따라, 내용과 조사·검토 근거가 정식 문서에 반영된 임시 초안은 삭제한다. 과거 source별 실행 증거는 유지한다.
 

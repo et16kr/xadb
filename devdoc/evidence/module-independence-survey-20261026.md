@@ -2898,3 +2898,35 @@ r2의 scoped static2와 선택4개는 모두 PASS다. 고유10개는 r1 source�
 
 
 최종 독립 D1/D2는 `ACCEPTED_LIMITED_D1_D2`, 필수 수정0이다. `/root/boundary_review`가 고정 변경16파일·artifact43파일의 실제 bytes/hash와 원 source별 결과를 대조했고 누락·불일치0이다. r1/r2 inventory5878/5879개 및 양쪽 source fingerprint 재산출이 원 결과와 일치했다. 검토 입력 `artifacts/module-row-jobs-20261029/review-input.json` SHA-256 `3cb8fea49c2171e6dea4d5080942cc7bf040293fca0575eeeb560308bea88232`, receipt `artifacts/module-row-jobs-20261029/review-final.json` SHA-256 `b9a3915b5ca61048fd577585d362b625037b143cba49b3d46a4bb12aa2ae63a4`를 보존한다. 검토자 수정·빌드·시험·author·문서 verifier 실행0이며 후속 수용/status/receipt/hash metadata만 반영했다. 전체 graph·descriptor 의미·source admission·current Profile3/live/recovery·M4/M5는 계속 미완료다.
+
+<a id="l1-allocation-move"></a>
+## 2026-10-29 L1 `allocation_reservation` 폴더 배치
+
+[L1 이동표](../plans/module-independence-plan.md#l1-move-table)의 배치 B를 기준 `main` `feb2b14d868738a7510d57876d7db4bd34108ea7`(tree `4d3a8799838a1966cfc52ea1d4626e78ef61efaf`)에 적용했다. 사용자 지시는 “권장으로 진행해 주세요”다. 작성·통합은 이 Claude 세션이고 독립 검토는 별도 읽기 전용 subagent다. 착수 때 checkout은 clean이었고 L1 파일의 동시 편집은 없었다. 기능 본문·논리 모듈 경로·visibility·cfg·시험 selector는 바꾸지 않았다.
+
+| 원 경로(`crates/engine/src/storage/wal_io/`) | 현재 경로 | 논리 경로(`…doublewrite_install::allocation_reservation`) |
+| --- | --- | --- |
+| `allocation_reservation.rs` | 유지, `#[path]` 5줄만 변경 | 진입 |
+| `allocation_operation.rs` | `allocation_reservation/operation.rs`, `#[path]` 1줄 변경 | `operation` |
+| `plan4_allocation_operation.rs` | `allocation_reservation/operation/plan4_retention.rs` | `operation::retention` |
+| `allocation_budget.rs` | `allocation_reservation/budget.rs` | `budget` |
+| `allocation_reservation_tests.rs` | `allocation_reservation/tests.rs`, `#[path]` 1줄 변경 | `tests` |
+| `allocation_budget_profile_tests.rs` | `allocation_reservation/tests/budget_profiles.rs` | `tests::budget_profiles` |
+| `allocation_native_tests.rs` | `allocation_reservation/native_tests.rs` | `native_tests` |
+| `allocation_resource_tests.rs` | `allocation_reservation/resource_tests.rs` | `resource_tests` |
+
+현재 링크는 contracts 2곳과 본문 표기 1곳, 증거 Markdown 링크 1곳을 갱신했다. 증거 문서는 링크만 바꾸고 원 경로·기준 commit·변경 전 SHA-256과 원 byte 위치를 그 문서에 덧붙였다. 관리 JSON의 경로 문자열 25개를 현재 경로로 바꾸고 `module_folder_reorganization`의 상태를 갱신했다. 증거 JSON과 다른 역사 기록의 원 경로는 그대로다.
+
+| 검증 | 실제 범위·결과 |
+| --- | --- |
+| 정적 대응 | `crates/` diff는 rename 7개와 `#[path]` 7줄뿐이다. 이동만 한 5개는 기준 SHA-256과 같고 `doublewrite_install.rs`는 바뀌지 않았다 |
+| 컴파일 | `cargo check -p xadb-engine --all-targets --all-features --locked` PASS, warning 0. rustc/cargo 1.95.0 |
+| 시험 발견 | 이동 전 `feb2b14`와 이동 후 `cargo test -p xadb-engine --lib --all-features --locked -- --list` 출력 1585줄이 byte 단위로 같다(SHA-256 `601bd166c6b31b8bdd9e7361eecb15d5939e7b1153b323f10f9fd5308f30259a`). `allocation_reservation::` 14개와 script selector 3개가 그대로다 |
+| 시험 본문 | NOT_RUN. 본문은 그대로이고 위치 attribute만 바뀌었다. borrow probe·mixed-init `owner_drop`도 논리 경로와 probe 파일 위치가 같아 NOT_RUN |
+| fmt·Clippy·문서 검사 | 실행하지 않았다. 기존 push gate에서 수행한다 |
+
+두 cargo 명령은 실행마다 scratchpad의 별도 `CARGO_TARGET_DIR`을 썼다. 이동 전 시험 목록은 `feb2b14`의 clean checkout에서 수집했고(`logs/toolchain.txt`의 HEAD), 그 뒤 `crates/` 밖의 source root는 바뀌지 않았다. `scripts/check_dev0.py`의 `source_fingerprint`를 tracked 파일만 내보낸 tree에 적용한 값은 이동 전 `574aa460b9cfab58ad319dd28b1f5b6fb2cf37d06e0b7e5aac2f0cd3d0d00b74`, 이동 후 `81ed7353f7c8302b4f859fba7a76b7771a700b33780ca94d39503bcf82c4fa40`이다. 작업 tree에서 계산한 이동 후 값 `dd713c1004336bd405b964f876266c18e7837d5b722a978f1b38b7073d28862a`에는 추적하지 않는 `scripts/__pycache__`가 포함된다.
+
+현재 상태 문구는 `devdoc/README.md`, `plans/README.md`, 저장소 정책 §5.2, `dev3-module-boundaries.md`와 계획 13절에서 L1 적용으로 갱신했다. 로그·이동 전후 시험 목록·파일별 hash·fingerprint·원 증거 문서 byte를 로컬 `artifacts/module-l1-allocation-20261029/`(`manifest.sha256` SHA-256 `396101b84eecf563181a4b2bae526f5533f200fec53a9d7e442f00aa2e5d054d`)에 보존했고, 이번 실행의 build target 2.0G와 임시 export는 삭제했다.
+
+최종 독립 검토는 실제 diff·문서·JSON·artifact를 읽기 전용으로 대조해 **ACCEPT**, 필수 지적0으로 판정했다. rename 7개와 `#[path]` 7줄, byte 동일 5개, 링크 검사 오류0, JSON 경로25개, 시험 목록 동일, manifest 대조를 확인했다. 선택 지적5건 중 오래된 현재 상태 문구, 검토 기록 문구, 명령·이동 전 fingerprint 기록, 상태 문구 갱신 목록의 4건을 반영했다. fmt·Clippy·문서 검사가 push gate에 남는다는 1건은 그대로다. 이 선택 반영은 다시 검토받지 않았다. L2–L5와 전체 M4/M5는 미완료다.

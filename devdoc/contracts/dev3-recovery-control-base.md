@@ -38,7 +38,7 @@ INIT claim 대조는 원 recipe의 초기 full image를 확인하는 순수 call
 
 `ownership.rs`는 고정 slice/borrowed 두 policy로 기존 verifier body를 공유한다. borrowed callback의 owner 범위를 먼저 확인하고 ordinal별 descriptor를 빌리며36개 wide descriptor를 복사하지 않는다. 기존 slice 함수의 인자·호출 계층·실행 body는 유지한다. 호출자의 callback과 동시 생존 값은 별도 계상한다.
 
-`allocation_operation.rs`의 base bridge는 plan4 전체 population을 검사한 뒤 원 reserve/finished 검산을 사용한다. `plan4_genesis.rs`의 Catalog bridge도 원 정규 생산자를 사용한다. 실제 live reserve/INIT/cancel 및 새로운 owner는 이 bridge 단위의 완료 범위가 아니다.
+`allocation_reservation/operation.rs`의 base bridge는 plan4 전체 population을 검사한 뒤 원 reserve/finished 검산을 사용한다. `plan4_genesis.rs`의 Catalog bridge도 원 정규 생산자를 사용한다. 실제 live reserve/INIT/cancel 및 새로운 owner는 이 bridge 단위의 완료 범위가 아니다.
 
 ## 자원과 시험 경계
 

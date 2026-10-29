@@ -1,6 +1,6 @@
 # 개발 계획
 
-- [모듈 폴더 재정리 후속 계획](module-independence-plan.md#folder-reorganization) — 2026-10-29 Job 검산 작업 종료 뒤 임시 조사안을 반영. 참조·소유·API 기준, 물리 배치와 논리 의존 변경의 구분, 후보·순서·완료 조건을 정리하며 제품 이동·시험과 M4/M5 전체 인수는 미완료다.
+- [모듈 폴더 재정리 후속 계획](module-independence-plan.md#folder-reorganization) — 2026-10-29 Job 검산 작업 종료 뒤 임시 조사안을 반영. 참조·소유·API 기준, 물리 배치와 논리 의존 변경의 구분, 후보·순서·완료 조건을 정리한다. [L1 이동표](module-independence-plan.md#l1-move-table)의 배치를 적용했고 L2–L5 이동과 M4/M5 전체 인수는 미완료다.
 
 - [분리 완료 후 추가 개발의 독립성 평가와 push·merge 강제](module-independence-plan.md#post-separation-gates) — 2026-10-29 사용자 후속 지시. M4/M5 인수 뒤 추가 개발 착수 때 적용할 기준과 도입 순서이며, 자동 검사·원격 강제는 미구현이다.
 

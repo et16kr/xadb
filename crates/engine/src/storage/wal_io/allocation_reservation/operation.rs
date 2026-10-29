@@ -1753,5 +1753,5 @@ pub(in super::super) fn materialize_analysis_in_population(
     validate_analysis_in_population(expected, before, bytes, after, budget, population)
 }
 
-#[path = "plan4_allocation_operation.rs"]
+#[path = "operation/plan4_retention.rs"]
 pub(crate) mod retention;

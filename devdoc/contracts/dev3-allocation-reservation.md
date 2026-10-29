@@ -156,7 +156,7 @@ OwnerRef 공통 padding은193..200이며 System 전용225..232는 SystemWorkRef 
 
 2026-10-22 재개에서 기존64KiB 예산을 [자원 검토](../evidence/dev3-allocation-resource-review-20261022.md)에 따라 구체화한다. D2 검토·실행 상태는 그 기록을 따르며 위2026-10-21 중단 기록은 당시 상태로 보존한다. WAL/page bytes·전이·보호 quota는 변경하지 않는다.
 
-constructor 첫 읽기 전에 owner/File 각16KiB 상한 외에 `sizeof(owner)+sizeof(PageFileReader)+sizeof(File)+constructor temporaries≤65536`을 확인한다. reader 전체를 세므로 generic File의 padding·alignment와 부가 metadata가 누락되지 않는다. operation은 네 개 Plan 복사본의 합≤4096, 단계별 중첩 임시값의 최댓값≤16384, owner와의 합≤65536을 확인한다. [실제 계산](../../crates/engine/src/storage/wal_io/allocation_budget.rs)은 고정 타입 크기와 검토된 동시 생존 개수를 사용하며 실패는 기존 constructor Capacity/fence/소비 오류 경로다.
+constructor 첫 읽기 전에 owner/File 각16KiB 상한 외에 `sizeof(owner)+sizeof(PageFileReader)+sizeof(File)+constructor temporaries≤65536`을 확인한다. reader 전체를 세므로 generic File의 padding·alignment와 부가 metadata가 누락되지 않는다. operation은 네 개 Plan 복사본의 합≤4096, 단계별 중첩 임시값의 최댓값≤16384, owner와의 합≤65536을 확인한다. [실제 계산](../../crates/engine/src/storage/wal_io/allocation_reservation/budget.rs)은 고정 타입 크기와 검토된 동시 생존 개수를 사용하며 실패는 기존 constructor Capacity/fence/소비 오류 경로다.
 
 entries64와 producer의 encode_prepared 호출은 최종 validate 전에 끝나며, preflight의 plan_change와 validate_header 호출도 각 후속 decoder 전에 끝난다. 반면 cancel의 prepare→validate→validate_transition→validate_live→descriptor chain은 descriptor5개·remaining 배열 iterator2개·공통 임시값·SHA 작업량을 동시에 보수 계산한다. 이 값은 source에서 소유한 값의 상한이며 compiler의 이동 복사본·ABI/최적화 stack frame·임의 generic adapter 내부 할당·전체 process RSS의 상한으로 확대하지 않는다. caller frame16KiB·operation80KiB·flush4MiB·WAL slot1MiB는 별도 공급이며 한 번씩 센다.
 

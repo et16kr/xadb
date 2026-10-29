@@ -36,9 +36,10 @@
     "policy_ref": "repository-build-plan.md#module-folder-layout",
     "boundary_ref": "dev3-module-boundaries.md#target-imports",
     "baseline_revision": "517208d4cddd721db5415fd2e32b759a1ad114ba",
-    "implementation_status": "NOT_RUN",
+    "implementation_status": "L1_PLACEMENT_APPLIED_L2_L5_NOT_RUN",
+    "l1_evidence_ref": "module-independence-survey-20261026.md#l1-allocation-move",
     "product_tests": "NOT_RUN",
-    "actual_path_inventory_changed": false,
+    "actual_path_inventory_changed": true,
     "source_roots_changed": false,
     "current_m4_m5_prerequisites_changed": false
   },
@@ -1437,11 +1438,11 @@
     "contract_ref": "dev3-allocation-reservation.md",
     "source": [
       "crates/engine/src/storage/wal_io/allocation_reservation.rs",
-      "crates/engine/src/storage/wal_io/allocation_operation.rs",
-      "crates/engine/src/storage/wal_io/allocation_reservation_tests.rs",
-      "crates/engine/src/storage/wal_io/allocation_budget.rs",
-      "crates/engine/src/storage/wal_io/allocation_native_tests.rs",
-      "crates/engine/src/storage/wal_io/allocation_resource_tests.rs"
+      "crates/engine/src/storage/wal_io/allocation_reservation/operation.rs",
+      "crates/engine/src/storage/wal_io/allocation_reservation/tests.rs",
+      "crates/engine/src/storage/wal_io/allocation_reservation/budget.rs",
+      "crates/engine/src/storage/wal_io/allocation_reservation/native_tests.rs",
+      "crates/engine/src/storage/wal_io/allocation_reservation/resource_tests.rs"
     ],
     "shared_source": [
       "crates/engine/src/storage/wal_io.rs",
@@ -1611,17 +1612,17 @@
       "crates/engine/src/storage/wal_io/dirty_allocation_test_support.rs",
       "crates/engine/src/storage/wal_io/dirty_allocation_tests.rs",
       "crates/engine/src/storage/wal_io/dirty_allocation_native_tests.rs",
-      "crates/engine/src/storage/wal_io/allocation_budget_profile_tests.rs"
+      "crates/engine/src/storage/wal_io/allocation_reservation/tests/budget_profiles.rs"
     ],
     "shared_source": [
       "crates/engine/src/storage/mod.rs",
       "crates/engine/src/storage/wal_io.rs",
       "crates/engine/src/storage/wal_io/bootstrap.rs",
       "crates/engine/src/storage/wal_io/doublewrite_install.rs",
-      "crates/engine/src/storage/wal_io/allocation_operation.rs",
-      "crates/engine/src/storage/wal_io/allocation_budget.rs",
+      "crates/engine/src/storage/wal_io/allocation_reservation/operation.rs",
+      "crates/engine/src/storage/wal_io/allocation_reservation/budget.rs",
       "crates/engine/src/storage/wal_io/allocation_reservation.rs",
-      "crates/engine/src/storage/wal_io/allocation_reservation_tests.rs",
+      "crates/engine/src/storage/wal_io/allocation_reservation/tests.rs",
       "crates/engine/src/transaction/concurrency.rs"
     ],
     "fixtures": [
@@ -1750,7 +1751,7 @@
       "crates/engine/src/storage/dirty_frame.rs",
       "crates/engine/src/storage/wal_io.rs",
       "crates/engine/src/storage/wal_io/mutable_storage.rs",
-      "crates/engine/src/storage/wal_io/allocation_operation.rs",
+      "crates/engine/src/storage/wal_io/allocation_reservation/operation.rs",
       "crates/engine/src/storage/wal_io/dirty_allocation.rs",
       "crates/engine/src/transaction/concurrency.rs"
     ],
@@ -2406,8 +2407,8 @@
       "crates/engine/src/storage/wal_io/mutable_storage.rs",
       "crates/engine/src/storage/wal_io/dirty_allocation.rs",
       "crates/engine/src/storage/wal_io/dirty_allocation_tests.rs",
-      "crates/engine/src/storage/wal_io/allocation_operation.rs",
-      "crates/engine/src/storage/wal_io/allocation_budget_profile_tests.rs",
+      "crates/engine/src/storage/wal_io/allocation_reservation/operation.rs",
+      "crates/engine/src/storage/wal_io/allocation_reservation/tests/budget_profiles.rs",
       "crates/engine/src/transaction/concurrency.rs"
     ],
     "fixtures": [
@@ -4181,8 +4182,8 @@
     "implemented_paths": [
       "crates/engine/src/storage/wal_frame.rs",
       "crates/engine/src/storage/wal_io.rs",
-      "crates/engine/src/storage/wal_io/allocation_budget.rs",
-      "crates/engine/src/storage/wal_io/allocation_operation.rs",
+      "crates/engine/src/storage/wal_io/allocation_reservation/budget.rs",
+      "crates/engine/src/storage/wal_io/allocation_reservation/operation.rs",
       "crates/engine/src/storage/wal_io/bootstrap.rs",
       "crates/engine/src/storage/wal_io/doublewrite_install.rs",
       "crates/engine/src/storage/wal_io/mutable_storage.rs",
@@ -4415,7 +4416,7 @@
     "contract_ref": "dev3-recovery-effects.md#operational-status-recovery",
     "scope": "Repeated immutable Status INIT/cancel recovery in first extent; readonly Prefix remains closed; subsequent P3 membership load tracked separately; general pool/READY incomplete",
     "implemented_paths": [
-      "crates/engine/src/storage/wal_io/allocation_operation.rs",
+      "crates/engine/src/storage/wal_io/allocation_reservation/operation.rs",
       "crates/engine/src/storage/wal_io/status_init_operation.rs",
       "crates/engine/src/storage/wal_io/recovery_prefix.rs",
       "crates/engine/src/storage/wal_io/recovery_prefix_tests.rs",
@@ -5530,11 +5531,11 @@
     "modified_paths": [
       "crates/engine/src/storage/wal_durability_test_support.rs",
       "crates/engine/src/storage/wal_io.rs",
-      "crates/engine/src/storage/wal_io/allocation_budget_profile_tests.rs",
-      "crates/engine/src/storage/wal_io/allocation_native_tests.rs",
-      "crates/engine/src/storage/wal_io/allocation_operation.rs",
+      "crates/engine/src/storage/wal_io/allocation_reservation/tests/budget_profiles.rs",
+      "crates/engine/src/storage/wal_io/allocation_reservation/native_tests.rs",
+      "crates/engine/src/storage/wal_io/allocation_reservation/operation.rs",
       "crates/engine/src/storage/wal_io/allocation_reservation.rs",
-      "crates/engine/src/storage/wal_io/allocation_reservation_tests.rs",
+      "crates/engine/src/storage/wal_io/allocation_reservation/tests.rs",
       "crates/engine/src/storage/wal_io/allocator_eviction.rs",
       "crates/engine/src/storage/wal_io/allocator_residency.rs",
       "crates/engine/src/storage/wal_io/bootstrap.rs",
@@ -5730,7 +5731,7 @@
       "crates/engine/src/storage/plan4_recovery_control.rs",
       "crates/engine/src/storage/plan4_recovery_control_tests.rs",
       "crates/engine/src/storage/wal_io.rs",
-      "crates/engine/src/storage/wal_io/allocation_operation.rs",
+      "crates/engine/src/storage/wal_io/allocation_reservation/operation.rs",
       "crates/engine/src/storage/wal_io/bootstrap.rs",
       "crates/engine/src/storage/wal_io/doublewrite_install.rs",
       "crates/engine/src/storage/wal_io/plan4_genesis.rs",
@@ -5840,13 +5841,13 @@
       "crates/engine/src/storage/mod.rs",
       "crates/engine/src/storage/page_io.rs",
       "crates/engine/src/storage/wal_io.rs",
-      "crates/engine/src/storage/wal_io/allocation_operation.rs",
+      "crates/engine/src/storage/wal_io/allocation_reservation/operation.rs",
       "crates/engine/src/storage/wal_io/bootstrap.rs",
       "crates/engine/src/storage/wal_io/dirty_allocation.rs",
       "crates/engine/src/storage/wal_io/doublewrite_install.rs",
       "crates/engine/src/storage/wal_io/flush_io.rs",
       "crates/engine/src/storage/wal_io/mutable_storage.rs",
-      "crates/engine/src/storage/wal_io/plan4_allocation_operation.rs",
+      "crates/engine/src/storage/wal_io/allocation_reservation/operation/plan4_retention.rs",
       "crates/engine/src/storage/wal_io/plan4_pages.rs",
       "crates/engine/src/storage/wal_io/plan4_apply.rs",
       "crates/engine/src/storage/wal_io/plan4_retention/control.rs",
@@ -7220,7 +7221,7 @@
     ],
     "modified_paths": [
       "crates/engine/src/storage/obligation.rs",
-      "crates/engine/src/storage/wal_io/allocation_budget.rs"
+      "crates/engine/src/storage/wal_io/allocation_reservation/budget.rs"
     ],
     "scope": "Actual borrowed RemainingBudget iteration and values receiver, preserving check order/wire and retained descriptor/return/hash carriers; real source charge decrease, no cap increase",
     "evidence_ref": "module-independence-survey-20261026.md#c2-borrowed-budget-rows",
@@ -7235,8 +7236,8 @@
       "tests/fixtures/dev3-module-c2/readonly-replay-source/manifest.json"
     ],
     "modified_paths": [
-      "crates/engine/src/storage/wal_io/allocation_operation.rs",
-      "crates/engine/src/storage/wal_io/plan4_allocation_operation.rs",
+      "crates/engine/src/storage/wal_io/allocation_reservation/operation.rs",
+      "crates/engine/src/storage/wal_io/allocation_reservation/operation/plan4_retention.rs",
       "crates/engine/src/storage/wal_io/plan4_status_init_operation.rs",
       "crates/engine/src/storage/wal_io/plan4_apply/owner_tests.rs"
     ],

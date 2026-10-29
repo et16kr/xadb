@@ -12,23 +12,23 @@ use crate::storage::{
 use foundation::{error::Effect, identity::Generation, namespace::WriterNamespace};
 use std::sync::atomic::Ordering;
 
-#[path = "allocation_operation.rs"]
+#[path = "allocation_reservation/operation.rs"]
 pub(super) mod operation;
 use operation::{Batch, SemanticError};
 
-#[path = "allocation_budget.rs"]
+#[path = "allocation_reservation/budget.rs"]
 pub(super) mod budget;
 
 #[cfg(test)]
-#[path = "allocation_reservation_tests.rs"]
+#[path = "allocation_reservation/tests.rs"]
 mod tests;
 
 #[cfg(all(test, target_os = "linux"))]
-#[path = "allocation_native_tests.rs"]
+#[path = "allocation_reservation/native_tests.rs"]
 mod native_tests;
 
 #[cfg(all(test, target_os = "linux"))]
-#[path = "allocation_resource_tests.rs"]
+#[path = "allocation_reservation/resource_tests.rs"]
 mod resource_tests;
 
 const OPERATION_BYTES: usize = 81920;
