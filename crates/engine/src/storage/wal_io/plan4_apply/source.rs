@@ -17,6 +17,11 @@ pub(super) enum OperationClass {
     /// boundaries, never while an admitted reader could hold a loan.
     CommitProgress,
     CatalogProgress,
+    /// Row Begin/RollbackStart/AbortEnd progress. Exclusive with Catalog
+    /// progress under the same exclusive control (§6.9); it reserves the same
+    /// fixed CatalogProgressCharge, which already bounds the Row lifecycle
+    /// (`RowProgress ≤ CatalogProgressCharge`, ROW-BEGIN-001 "자원").
+    RowProgress,
 }
 
 /// Fixed type-derived costs, computed once while DiskSession is exclusively
@@ -113,6 +118,8 @@ pub(super) struct CatalogProgressCharge(usize);
 impl CatalogProgressCharge {
     pub(super) fn new<W: WriterNamespace>() -> Self {
         let bodies = create_pair::catalog_live::catalog_live_source_bytes::<W>();
+        // RowProgress reserves this same charge: the Row lifecycle term is
+        // one more max term, never a sum (exclusive under one control).
         Self(
             bodies
                 .retirement
@@ -120,6 +127,7 @@ impl CatalogProgressCharge {
                 .max(bodies.reserve)
                 .max(bodies.forward)
                 .max(bodies.cancel)
+                .max(bodies.row_lifecycle)
                 .max(transaction::catalog::check_source_bytes()),
         )
     }
@@ -259,7 +267,9 @@ impl<'b, 'a, 'c, 's> OperationSourceAdmission<'b, 'a, 'c, 's> {
             OperationClass::CatalogResident => charges.resident,
             // Only the dedicated writer entries, holding a read gate, admit a writer;
             // reserve_class rejects the zero charge as a fenced Invariant.
-            OperationClass::CommitProgress | OperationClass::CatalogProgress => 0,
+            OperationClass::CommitProgress
+            | OperationClass::CatalogProgress
+            | OperationClass::RowProgress => 0,
         };
         Self::reserve_class(ledger, charges.shared, charge, class)
     }
@@ -307,20 +317,39 @@ impl<'b, 'a, 'c, 's> OperationSourceAdmission<'b, 'a, 'c, 's> {
         progress: &CatalogProgressCharge,
         gate: &TerminalReadGate<'_, '_>,
     ) -> SourceResult<Self> {
+        Self::progress(
+            ledger,
+            charges,
+            progress,
+            gate,
+            OperationClass::CatalogProgress,
+        )
+    }
+
+    /// Fixed progress of either lifecycle class, Catalog or Row. Both reserve
+    /// the one split-time CatalogProgressCharge; any other class is refused as
+    /// a fenced Invariant before the ledger changes.
+    pub(super) fn progress(
+        ledger: &'b Mutex<IsolationLedger<'a, 'c, 's>>,
+        charges: &CatalogCommitCharges,
+        progress: &CatalogProgressCharge,
+        gate: &TerminalReadGate<'_, '_>,
+        class: OperationClass,
+    ) -> SourceResult<Self> {
         {
             let state = ledger
                 .lock()
                 .map_err(|poison| failed(poison.into_inner().fence, SourceCause::Poisoned))?;
-            if !gate.belongs_to(state.core) {
+            if !gate.belongs_to(state.core)
+                || !matches!(
+                    class,
+                    OperationClass::CatalogProgress | OperationClass::RowProgress
+                )
+            {
                 return Err(failed(state.fence, SourceCause::Invariant));
             }
         }
-        Self::reserve_class(
-            ledger,
-            charges.shared,
-            progress.0,
-            OperationClass::CatalogProgress,
-        )
+        Self::reserve_class(ledger, charges.shared, progress.0, class)
     }
 
     /// After stage returned Pending and before reads reopen. Shrink only.
@@ -450,6 +479,7 @@ impl<'b, 'a, 'c, 's> OperationSourceAdmission<'b, 'a, 'c, 's> {
             | OperationClass::CatalogResident
             | OperationClass::CommitProgress
             | OperationClass::CatalogProgress
+            | OperationClass::RowProgress
                 if self.charge != 0 && u64::from(self.charge) <= SHORT_BYTES => {}
             _ => return Err(failed(state.fence, SourceCause::Invariant)),
         }

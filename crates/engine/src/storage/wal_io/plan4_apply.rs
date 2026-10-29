@@ -274,7 +274,9 @@ pub(crate) enum RetentionCause {
     Retention(retention_page::RetentionError),
     Semantic(RetentionSemanticError),
     CatalogSemantic(crate::storage::semantic_catalog::Error),
-    /// The scope3 Row replay arm's whole-group observer refusal.
+    /// A scope3 Row producer/observer refusal (live Row lifecycle and the
+    /// Row replay arm). Its payload is no wider than CatalogSemantic's, so
+    /// the variant adds no byte to the cause (const assertion below).
     RowSemantic(crate::storage::semantic_row::Error),
     #[allow(
         private_interfaces,

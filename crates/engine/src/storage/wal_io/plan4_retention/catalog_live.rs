@@ -879,8 +879,7 @@ fn check_progress_room(
             ));
         }
     }
-    let (_, root) =
-        queue::decode_root_page(root, profile.spec().namespace).map_err(queue_error)?;
+    let (_, root) = queue::decode_root_page(root, profile.spec().namespace).map_err(queue_error)?;
     if root.revision().checked_add(future_steps).is_none() {
         return Err(unchanged(
             RetentionPhase::Prepare,
@@ -1677,6 +1676,8 @@ pub(in super::super) struct CatalogLiveSource {
     pub(in super::super) start_root: usize,
     pub(in super::super) start_status: usize,
     pub(in super::super) lifecycle: usize,
+    /// Row Begin/RollbackStart/AbortEnd under RowProgress (ROW-BEGIN-001).
+    pub(in super::super) row_lifecycle: usize,
     pub(in super::super) retirement: usize,
     pub(in super::super) peak: usize,
 }
@@ -1949,6 +1950,34 @@ pub(in super::super) fn catalog_live_source_bytes<W: WriterNamespace>() -> Catal
     let reserve = reserve.max(checked) + shared;
     let forward = forward.max(checked) + shared;
     let cancel = cancel.max(checked) + shared;
+    // The Row lifecycle: the same shell, entry/ledger/replay validation and
+    // install body with the Row producer, payload and control part.
+    let row = lifecycle::row::row_lifecycle_terms::<W>();
+    let row_prepare = (scalar + row.outer + scope_carriers + history_peak.max(row.produce))
+        .max(scalar + row.outer + row.inventory)
+        .max(scalar + row.outer + row.assembled)
+        .max(ledger);
+    let row_install = lifecycle::application_carrier_bytes::<W>()
+        + visibility::epoch_change_carriers()
+        + scalar
+        + size_of::<[Option<dirty_frame::DptStamp<'_>>; 9]>()
+        + 3 * size_of::<WalRequirement<'_>>()
+        + 2 * size_of::<DurableWal<'_>>()
+        + 2 * size_of::<InstallGrant<'_, '_, '_>>()
+        + targets::call_bytes::<4>()
+        + row
+            .control
+            .max(physical)
+            .max(visibility::epoch_transition_source_bytes());
+    let row_lifecycle = (row.caller + row_prepare.max(row_install))
+        .max(start_health)
+        .max(start_root)
+        .max(start_status)
+        + source::commit_carrier_bytes()
+        + 2 * size_of::<crate::storage::session_fence::UnwindFence<'_>>()
+        + lifecycle::entry_carrier_bytes::<W>()
+        + row.carriers
+        + transaction::writable::row_lifecycle_caller_bytes();
     let retirement = ((retirement::prepare_caller_source_bytes() + prepare)
         .max(retirement::selection_source_bytes())
         + source::retirement_prepare_carrier_bytes())
@@ -1968,6 +1997,7 @@ pub(in super::super) fn catalog_live_source_bytes<W: WriterNamespace>() -> Catal
         start_root,
         start_status,
         lifecycle,
+        row_lifecycle,
         retirement,
         peak: prepare
             .max(plan)
@@ -1976,6 +2006,7 @@ pub(in super::super) fn catalog_live_source_bytes<W: WriterNamespace>() -> Catal
             .max(cancel)
             .max(ordinary)
             .max(lifecycle)
+            .max(row_lifecycle)
             .max(retirement),
     }
 }

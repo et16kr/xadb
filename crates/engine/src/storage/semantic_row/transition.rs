@@ -294,7 +294,6 @@ pub(crate) fn produce(
 /// bytes have no meaning here: it is cleared first, so the body starts from
 /// the same zero backing as `produce`, and on return it holds only
 /// discardable prepared values. Output is byte for byte that of `produce`.
-#[allow(dead_code, reason = "its live caller is the Row Begin install")]
 pub(crate) fn produce_borrowed(
     inputs: &Inputs<'_>,
     after: &mut [[u8; PAGE_BYTES]; 5],
@@ -479,7 +478,6 @@ pub(crate) fn source_bytes() -> usize {
 /// Counted source bound of `produce_borrowed`. The lent scratch is the
 /// caller's and is not counted. The wrapper keeps its arguments and result
 /// while the body runs; the clearing fill is a completed call before it.
-#[allow(dead_code, reason = "its live caller is the Row Begin install census")]
 pub(crate) fn produce_borrowed_source_bytes() -> usize {
     use std::mem::size_of;
     size_of::<(
@@ -507,6 +505,12 @@ pub(crate) fn observe_borrowed_source_bytes() -> usize {
         + size_of::<Result<Observation>>()
         + size_of::<(&[u8], std::slice::Iter<'_, u8>, bool)>()
         + body_bytes()
+}
+
+/// Counted bound of `decode_layout`, the live Row install's XOI projection
+/// and control-part decode of its own staged frame.
+pub(crate) fn layout_source_bytes() -> usize {
+    source::layout_decode()
 }
 
 /// Counted bound of `ledger::validate_transaction`/`validate_actor`, the

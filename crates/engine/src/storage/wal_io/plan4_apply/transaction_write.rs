@@ -5,10 +5,11 @@ use crate::storage::{
     allocation_page::ReservationOwner,
     obligation::{self, OwnerState},
     retention_page::{
-        catalog3::{self as queue, JobState},
-        row::{self as job3, JobScope},
+        catalog3 as queue,
+        row::{self as job3, JobScope, JobState},
     },
     semantic_catalog::{Observation, Operation},
+    semantic_row::{Operation as RowOperation, transition::Observation as RowObservation},
     transaction_record::{RollbackState, TransactionState},
 };
 
@@ -43,6 +44,41 @@ impl<'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
             observation.actor,
             observation.operation == Operation::Begin,
             CATALOG_KIND,
+        )?;
+        Ok(transaction)
+    }
+
+    /// Row Begin (XADB-MODULE-ROW-BEGIN-001), in the Catalog entry's order:
+    /// the original slot, 512-byte source and snapshot first, then C's scope3
+    /// Begin group (registry 16) under RowProgress. A rejection before Begin
+    /// returns them checked (Unchanged keeps the issued-local gap); after
+    /// Begin, `bind_writable` writes slot@2 kind 2 or fails fatally. Begin
+    /// publishes no epoch or Q; Row statements are not supplied here.
+    pub(in crate::storage) fn begin_row_transaction(
+        &mut self,
+        owner: &mut Owner<'c, 's>,
+        isolation: IsolationLevel,
+        status: &Plan4Target,
+        private: &mut [u8; 425_984],
+        flusher: &mut MaintenancePort<'_, 's, 'c, 'p, 'd, 'm, 'w, W>,
+    ) -> Result<RowTransaction<'b, 'a, 'c, 's>> {
+        let _unwind = self.storage.session_fence().unwind_guard();
+        let visibility = self.transaction_entry(owner)?;
+        let mut transaction = self.reserve_transaction(owner, isolation, visibility)?;
+        let observation = match self.row_begin(owner, status, private, flusher) {
+            Ok(observation) => observation,
+            Err(error) => {
+                if error.effect != Effect::Unchanged {
+                    transaction.lease.fence.fence();
+                }
+                return merge(Err(error), transaction.close());
+            }
+        };
+        self.bind_writable(
+            &mut transaction,
+            observation.actor,
+            observation.operation == RowOperation::Begin,
+            ROW_KIND,
         )?;
         Ok(transaction)
     }
@@ -168,15 +204,9 @@ impl<'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
         flusher: &mut MaintenancePort<'_, 's, 'c, 'p, 'd, 'm, 'w, W>,
     ) -> std::result::Result<(), TransactionFinishError<RowTransaction<'v, 'a, 'c, 's>>> {
         let _unwind = self.storage.session_fence().unwind_guard();
+        // Dispatch by the capsule kind written once at Begin (slot@2).
+        let row_scope = transaction.row_scope();
         let checked = (|| {
-            // Dispatch by kind before any check, gate or Job scan. The Row
-            // empty path is not supplied by this entry yet.
-            if transaction.row_scope() {
-                return Err(unchanged(
-                    RetentionPhase::Finalize,
-                    RetentionCause::Unsupported,
-                ));
-            }
             self.transaction_entry(owner)?;
             if !std::ptr::eq(self.isolation, transaction.lease.ledger)
                 || !self
@@ -218,7 +248,11 @@ impl<'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
                 if transaction.phase.get() != Phase::Active {
                     return Err(fail(transaction.lease.fence, RetentionCause::Invariant));
                 }
-                self.catalog_rollback_start(owner, actor, private, flusher)?;
+                if row_scope {
+                    self.row_rollback_start(owner, actor, private, flusher)?;
+                } else {
+                    self.catalog_rollback_start(owner, actor, private, flusher)?;
+                }
             }
             transaction.set_abort_phase(Phase::MustAbort)?;
             #[cfg(test)]
@@ -226,28 +260,42 @@ impl<'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
                 self.pool.bound_core(),
                 crate::transaction::concurrency::catalog_test_support::Point::EmptyRollbackCompleted,
             );
-            let observation = self.catalog_abort_end(owner, actor, private, flusher)?;
+            let (ended, status) = if row_scope {
+                let observation = self.row_abort_end(owner, actor, private, flusher)?;
+                (
+                    observation.operation == RowOperation::AbortEnd
+                        && observation.actor == Some(actor),
+                    observation.status,
+                )
+            } else {
+                let observation = self.catalog_abort_end(owner, actor, private, flusher)?;
+                (
+                    observation.operation == Operation::AbortEnd
+                        && observation.actor == Some(actor),
+                    observation.status,
+                )
+            };
             // No-ATT alone is insufficient. This exact successful AbortEnd and
-            // actual TerminalReady/outcome=Aborted must agree before releasing
-            // the snapshot. Physical TerminalFinish remains Aging's obligation.
-            if observation.operation != Operation::AbortEnd
-                || observation.actor != Some(actor)
-                || self.control.slot(actor).is_some()
-            {
+            // actual TerminalReady/outcome=Aborted of the capsule's scope must
+            // agree before releasing the snapshot. Physical TerminalFinish
+            // remains Aging's obligation.
+            if !ended || self.control.slot(actor).is_some() {
                 return Err(fail(transaction.lease.fence, RetentionCause::Invariant));
             }
+            let scope = if row_scope {
+                JobScope::Row
+            } else {
+                JobScope::Catalog
+            };
             let mut terminals = 0;
             for bytes in self.control.jobs() {
-                let Some(job) =
-                    queue::decode_catalog_cell(bytes, self.storage.profile().spec().namespace)
-                        .map_err(|_| fail(transaction.lease.fence, RetentionCause::Invariant))?
-                else {
-                    continue;
-                };
+                let job = job3::decode_job(bytes, self.storage.profile().spec().namespace)
+                    .map_err(|_| fail(transaction.lease.fence, RetentionCause::Invariant))?;
                 if job.source() == Some(actor) {
-                    if job.state() != JobState::TerminalReady
+                    if job.scope() != Some(scope)
+                        || job.state() != JobState::TerminalReady
                         || job.outcome() != 2
-                        || job.status() != observation.status
+                        || job.status() != status
                         || job.commit_q() != 0
                     {
                         return Err(fail(transaction.lease.fence, RetentionCause::Invariant));
@@ -282,15 +330,27 @@ impl<'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
 /// 512-byte lease. Count this new wrapper's other values through the original
 /// synchronous lifecycle call, without last-use/optimizer discounts.
 pub(in super::super) fn lifecycle_caller_bytes() -> usize {
+    caller_bytes::<Observation>().max(super::catalog::terminal_caller_bytes())
+}
+
+/// The same wrappers around the Row lifecycle (Row Begin and the Row arm of
+/// the empty abort) carry the scope3 Observation instead.
+pub(in super::super) fn row_lifecycle_caller_bytes() -> usize {
+    caller_bytes::<RowObservation>()
+}
+
+/// The empty abort's (ended, status) pair is formed after its Observation
+/// has been dropped, so the two Observation Results bound it.
+fn caller_bytes<O>() -> usize {
     use std::mem::size_of;
-    (12 * size_of::<&()>() // public arguments plus closure capture references
+    12 * size_of::<&()>() // public arguments plus closure capture references
+        + size_of::<bool>() // the abort's capsule kind, captured by its closure
         + size_of::<IsolationLevel>()
         + 2 * size_of::<TxnRef>()
-        + 2 * size_of::<Result<Observation>>()
+        + 2 * size_of::<Result<O>>()
         + 4 * size_of::<Result<()>>()
         + 2 * size_of::<RetentionError>()
-        + size_of::<crate::storage::session_fence::UnwindFence<'_>>())
-    .max(super::catalog::terminal_caller_bytes())
+        + size_of::<crate::storage::session_fence::UnwindFence<'_>>()
 }
 
 pub(in super::super) fn source_bytes() -> usize {
