@@ -1,11 +1,11 @@
 //! Row point/cursor decisions over borrowed representations.
 //!
 //! These private C0 helpers carry no snapshot, pin, table, cursor-credit or
-//! observation authority. The live adapter must obtain its inputs from the
-//! original RowReadOperation, validate the view and finish checked cleanup
-//! before publishing output or advancing progress. That adapter is not supplied
-//! here. See `devdoc/contracts/dev3-module-consumers.md` (MCB00).
-// Remove when the actual read operation connects these private product helpers.
+//! observation authority. `driver` obtains their inputs from the original
+//! RowReadOperation, validates the view and finishes checked cleanup before
+//! publishing output or advancing progress. See
+//! `devdoc/contracts/dev3-module-consumers.md` (MCB00).
+// Remove when a statement caller connects the driver's live entry points.
 #![allow(dead_code)]
 
 use crate::storage::{
@@ -261,6 +261,8 @@ impl CursorProgress {
         Ok(())
     }
 }
+
+mod driver;
 
 #[cfg(test)]
 mod tests;
