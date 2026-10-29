@@ -293,7 +293,8 @@ struct Prepared<'a, 's> {
 
 /// Produce one complete C-owned group into caller loans. Every refusal that
 /// depends on the inputs returns before the first `after`/`frame` byte is
-/// written. Forward and CLR are A's and return Unsupported here.
+/// written. Forward and CLR are A's and ReserveAdopted is replay-only; all
+/// three return Unsupported here.
 #[allow(
     dead_code,
     reason = "owned-backing producer; the live Row install uses produce_borrowed"
@@ -317,8 +318,22 @@ pub(crate) fn produce_borrowed(
     frame: &mut [u8],
     scratch: &mut [u8; ROW_REPLAY_SCRATCH_BYTES],
 ) -> Result<Observation> {
+    refuse_unproduced(inputs)?;
     scratch.fill(0);
     produce_with(inputs, after, frame, scratch)
+}
+
+/// Forward and CLR are A's; ReserveAdopted is replay-only. Both producers
+/// refuse them before writing any loan, `produce_borrowed` before clearing
+/// its scratch.
+fn refuse_unproduced(inputs: &Inputs<'_>) -> Result<()> {
+    if matches!(
+        inputs.change,
+        Change::Forward { .. } | Change::Clr { .. } | Change::ReserveAdopted { .. }
+    ) {
+        return Err(Error::Unsupported);
+    }
+    Ok(())
 }
 
 fn produce_with(
@@ -327,12 +342,7 @@ fn produce_with(
     frame: &mut [u8],
     backing: &mut [u8; ROW_REPLAY_SCRATCH_BYTES],
 ) -> Result<Observation> {
-    if matches!(
-        inputs.change,
-        Change::Forward { .. } | Change::Clr { .. } | Change::ReserveAdopted { .. }
-    ) {
-        return Err(Error::Unsupported);
-    }
+    refuse_unproduced(inputs)?;
     let mut prepared = prepare::new_prepared(inputs, backing);
     prepare::prepare(inputs, None, &mut prepared)?;
     if frame.len() < prepared.frame_bytes {

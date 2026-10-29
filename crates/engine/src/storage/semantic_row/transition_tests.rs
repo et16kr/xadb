@@ -3167,8 +3167,8 @@ fn s1g_reserve_adopted_equals_produced() {
 }
 
 /// H12: `ReserveAdopted` is reachable only through `observe_borrowed`:
-/// `produce` and owned `observe` return Unsupported before writing any after
-/// or frame byte. Owned `observe(Reserve(plan))` over N1's H-505 gets
+/// `produce`, `produce_borrowed` and owned `observe` return Unsupported
+/// before writing any after, frame or scratch byte. Owned `observe(Reserve(plan))` over N1's H-505 gets
 /// `inserted` None and passes the full recomputation. `prepare` called with
 /// the pairs the carriage rule never builds, (Reserve(plan), Some) and
 /// (ReserveAdopted, None), is InvalidInput; the matching pairs pass it.
@@ -3207,6 +3207,19 @@ fn s1g_reserve_adopted_not_producible() {
             .all(|page| page.iter().all(|byte| *byte == 0xa5))
     );
     assert!(frame.iter().all(|byte| *byte == 0xa5));
+    let mut after = loans(0xa5);
+    let mut scratch = [0xa5; ROW_REPLAY_SCRATCH_BYTES];
+    assert_eq!(
+        produce_borrowed(&replay, &mut after, &mut frame, &mut scratch).map(|_| ()),
+        Err(Error::Unsupported)
+    );
+    assert!(
+        after
+            .iter()
+            .all(|page| page.iter().all(|byte| *byte == 0xa5))
+    );
+    assert!(frame.iter().all(|byte| *byte == 0xa5));
+    assert!(scratch.iter().all(|byte| *byte == 0xa5));
     let mut after = loans(0xa5);
     assert_eq!(
         observe(&replay, literal, &mut after).map(|_| ()),
