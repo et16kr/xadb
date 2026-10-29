@@ -1,5 +1,7 @@
 # 현재 구현
 
+2026-10-29 [U2-C4 단일 current 전환](../evidence/module-independence-survey-20261026.md#u2-single-current): branch `claude/project-thread-h2j8oc`에서 Profile3/Root3/Job3/base4가 current 형식이다. Profile1은 DEV2 v1 arm, 그 밖은 명시 거절이다. genesis native PASS, Catalog·recovery native는 로컬 실행이 남았다.
+
 2026-10-29 [C3 scope3 Row 전이 producer·observer](../evidence/module-independence-survey-20261026.md#c3-row-transition): branch `claude/project-thread-h2j8oc`의 `semantic_row/transition*`가 Row 거래의 C 소유 group을 만들고 A Forward·CLR을 포함한 전체 group을 바이트로 검산한다. 아직 어떤 경로도 부르지 않는다. n1 selector 7개 PASS, 독립 검토 2회.
 
 2026-10-29 [A INSERT statement driver](../evidence/module-independence-survey-20261026.md#a-insert-driver): branch `claude/project-thread-h2j8oc`의 `row/insert/driver*`가 C0 경계 위에서 INSERT 문장 흐름과 rollback hand-back을 구현한다. MCA00-D01..14 PASS(C0_ONLY), 독립 검토 3회. live 입구는 컴파일만 확인했다.

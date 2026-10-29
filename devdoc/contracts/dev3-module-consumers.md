@@ -114,6 +114,8 @@ XHG/XSG version2에 explicit scope3=`RowMissing`을 제안한다. scope2 Catalog
 
 새 current 설치·선택·base capture·replay·recovery·native worker가 위 조합을 함께 소비한다. old Profile1/2 또는 base1/2/3를 발견하면 명시 UnsupportedFormat/UnsupportedClosure이며 삭제·자동 변환·fresh 재생성하지 않는다. target Profile3 안의 Catalog scope2는 실제 CREATE를 유지하되 Root/Job3 검산을 받는 명시 adapter다. 기존 Profile2의 원 증거와 순수 decoder는 그대로 보존한다. 준비 중 변경할 `format()==2` 분기를 단순 `>=2`로 넓히지 않는다. version0/4/65535 Profile, base0/5/65535, Root/Job2/4, flags0/1/2/4를 Row 입구에 넣는 거절 변형을 둔다.
 
+2026-10-29 공급(branch `claude/project-thread-h2j8oc`): [U2-C4 단일 current 전환](../evidence/module-independence-survey-20261026.md#u2-single-current)이 위 표의 target 경로를 current로 만들었다. 이전 `format()==2` 지점은 모두 `match {3 => current, 1 => DEV2 v1, _ => 명시 거절}`이고 `>=`·dual-current·fallback은 없다. 순수 Profile2 codec은 남겨 두었으며 current 경로에서 부르지 않는다. Catalog·recovery native 실행은 아직 없다(증거의 CR1).
+
 operation은 Begin1, Forward2, RollbackStart3, CLR4, StatementFinish5, Commit6, AbortEnd7, Reserve11, Cancel12, AgingStart16, TerminalFinish17, Prune20, ReleaseRole21, RootFree22를 후보로 둔다. OperationCore의 기존 statement/mutation/current/next/target/q/digests를 실제 전이에 사용하고 unused field는0이다. 별도 opaque body나 일반 무검산 dispatch를 추가하지 않는다. Native Row kind1·Undo3·Status5·Root8·Job9와 기존 role 번호는 원 [obligation](dev3-obligation-format.md)의 의미를 따른다.
 
 row logical projection 후보는 `XRP1`, version1, kindRow1, UndoTargetCore32(table object/generation,entity RowId,arity0,keylen0), presence1+zero7, present일 때 정확 row record bytes다. Missing은48B, present는48+record bytes다. 물리 slot/offset/pageLSN/count는 projection 밖이다. tree entry의 RowId BE key와 row record의 RowId LE를 각각 해석하여 같음을 검사한다. source slot 위치를 논리 identity로 사용하지 않는다.

@@ -4048,3 +4048,39 @@ v2 `native`(221파일, 5,794,810B), `memory-gap`(137, 3,382,130B), `memory-retir
 **독립 검토.** 같은 읽기 전용 검토자가 두 번 보았다. r1은 필수0과 권고5(정확 오류 비교, Prune 인용, Reserve leaf proof, 기존 observer와의 규칙 중복, 손 상수 bound)이고, r2는 다섯 권고가 모두 해소되었고 다른 동작 변화가 없음을 확인한 필수0이다. 남은 권고: 꽉 찬 leaf의 OrderMismatch는 다른 순서 오류와 구별되지 않으므로 API의 Capacity는 caller의 `reserve()` preflight가 정한다(:289). `leaf.rs` observer는 Catalog record가 필요해 교차 호출하지 않았다.
 
 **한계.** live 기록·복구 replay 연결(S1의 `history/row.rs`), Row Begin 진입점, Row write·rollback 본문은 U2-C4 전환 뒤 S1–S3에서 한다. A literal의 `row_high` 9 이전 상태는 frame 없는 fixture 단축이며 이 공급의 Reserve 발급 시험은 `row_high+1`을 독립 literal로 확인한다. artifact는 `module-independence-20261029/artifacts/module-c3-row-transition-20261029/`(`manifest-all.sha256` SHA-256 `53929b7dbb9ea91eff673a414bb85e8a7b69e9f2cd0417904d7e89ba909c4a94`)에 있다.
+
+<a id="u2-single-current"></a>
+## 2026-10-29 U2-C4c/C4d Profile3 → Root3/Job3 → base4 단일 current 전환
+
+기준은 `06d3bd1`(이 branch의 `b67fabf`와 crates·tests·scripts tree가 같다), branch는 `module-u2-switch`다. 작성 commit은 `e1e54e1`, `e12afe6`, `26fbe71`이고 검토 반영 commit은 `0a89207`, `665e7bd`, `fc8dfb9`, `3d7bb32`다. 이 branch에는 `5135e16` 위로 cherry-pick했다(`12aac636f1df825f9bb8c12c6536f574782ff996`, `cdc7c45b48ebe418eab3b60f61f0f97a3395356a`, `bbca0cbd979e2e2692f283f894708ef48e290d37`, `a1a2e148a0133484d25d95ac827448b5ba550ca7`, `c4516a91453671f40bef45f464f66b231381b8bb`, `1dd9dec2fd2c070c79f5c49d6286a6433e478fd6`, `b5f7c9b1a26a1eed1daf672720e1967e89aa32c2`). 앞의 두 commit과 `0a89207`은 product가 읽지 않는 receipt·fixture다.
+
+**전환 내용**
+
+- [format dispatch](../contracts/dev3-module-consumers.md#format-dispatch)의 target 경로가 current다. 이전 `format()==2` 지점은 모두 `match {3 => current, 1 => DEV2 v1, _ => 명시 UnsupportedFormat/UnsupportedClosure}`다. `>=` 비교·dual-current·fallback은 없다. 적용 지점은 `read.rs` queue_page_grammar, `history.rs` initialize/refresh_jobs/validate_bijection·XOI gate, `plan4_retention/control.rs` check_ledger/initialize_jobs, `recovery.rs` `bound_grammar`(XOI cache·flush target·verify)·apply_frame, allocation `operation/plan4_retention.rs`, `plan4_recovery/select.rs`, `plan4_genesis.rs`다. 순수 Profile2 codec은 지우지 않고 `allow(dead_code, reason = "historical Profile2 pure codec")`만 붙였다.
+- D1: `open_shared`는 `ProfileGrammar::Installed(expected_profile)`, flush `read_selection`은 `installed_profile`로 묶는다. 다른 설치 profile은 이른 `Control(IdentityMismatch)`, 다른 형식은 `Control(UnsupportedFormat)`이며 effect는 같다(bootstrap readback case2 기대 갱신).
+- D4(계획 문구와 다른 편차): `Plan4RecoveryCause::RowBase(RowBaseError)`를 더했다. `RowBaseError::Base(e)`는 `Base(e)`로 옮기고, CURRENT fallback은 `RowBase(Corrupt)`만 `Base(Corrupt)`와 대칭으로 받는다(`current_may_fall_back`, select.rs:217). 수용 범위는 넓어지지 않았다.
+- D5: runtime Root는 `catalog3::encode_root_page` guard로만 쓴다. D6(편차): Profile3 transition corpus가 없어 `tests/fixtures/dev3-catalog-create/transition3/`를 동결 plan → stdlib generator → 독립 auditor로 만들고 root 채택을 `0a89207`에 기록했다(cases 72, raw 324 files / 8,857,480 B).
+- `plan4_recovery/tests/projected_census.rs`는 C4c에서 지운다는 자기 머리말대로 지웠고 실제 census assert(peak ≤ 65536)가 대체한다.
+
+**자원(cap 불변).** recovered peak native 65504·memory 65368, live 64136·64000, B4 59675(측정 deep 59332), installed profile bound 4538 = row 4050 + wrapper 488이다. wrapper 488과 `ProfileGrammar` 인자 증가 48B를 page_io·flush census에 부과했다. 그 결과 CatalogFull이 +340B(+488, +48, Row genesis codec −196) 늘어 commit-window `pending_full`은 native 66280 → 66612, memory 65120 → 65452다. native는 main `85ceef3`에서 이미 cap을 넘어 `source_tests.rs:554`가 실패하던 값이고 이 전환은 pass→fail을 만들지 않는다. 다만 memory 여유가 416B에서 84B로 줄었으므로 다음 증가는 memory도 넘긴다(창 소유자에게 남기는 carried limit).
+
+**시험과 실행**
+
+| 판 | head | 범위 | 결과 |
+| --- | --- | --- | --- |
+| r1 | `26fbe71` | 304 selector(변경·신규와 변경 경로의 기존 시험) | 304/304가 동결 기대와 일치: PASS 269(신규4), 기존 실패 11(과제 목록), base 실패 24(같은 위치17·위치 이동2·시간5), base 실패 → PASS 10 |
+| r2 | `26fbe71` | 시간 실패 7개 1회 재실행 | 7/7 TIMEOUT, 기대와 일치 |
+| r3 | `3d7bb32` | 검토 R2의 변경 없는 7개, A2/A3 신규·확장, fc8dfb9 경로 | 30/30 일치: PASS 20, base 4, 기존 4, 위치 이동 2 |
+| genesis native | `3d7bb32` | `scripts/dev3_plan4_genesis_native.py` 1회 | PASS(produce/select/reentry, 22,069,248B byte 비교, 9.61초) |
+| 통합 | `919a272` | 아래 S1-f·S1-a와 함께 22 selector | 21 PASS, commit window 1개 기대 FAIL |
+
+- 판마다 manifest를 build 전에 동결했고 selector마다 1회 실행했다. 판마다 `cargo check --all-targets --all-features` 경고0, 바꾼 파일 rustfmt check와 `git diff --check`를 통과했다. identity env는 `XADB_{PLAN4_RECOVERY,PLAN4_LIVE,CATALOG,PLAN4_GENESIS}_{SOURCE,ELF,INPUT}_SHA256`이다.
+- base 실패 24개와 base 실패 → PASS 10개는 main `85ceef3`의 고정 export에서도 같은 위치로 실패했다(`artifacts/main-preexisting-check-20261029/u2c4c-base-34/`). r3의 `status_flush_rf`(authority 296 > 256)도 main에서 같다(`status-flush-rf/`). 이 전환이 바꾼 줄은 `io_SelectionPhase` 6080 → 6568(cap 8192)뿐이다. 메시지가 base와 다른 14개는 32B digest 영역만 다른 낡은 literal, Profile1 oracle, Root2/Root3 공통 IdentityMismatch로 모두 설명된다.
+- 신규 selector: `format_tests::mbc40_v01_profile2_binding_rejected_at_owner_grammar_sites`(Root/Job version 2/4, scope 3/0/4/65535 포함), `format_tests::catalog_replay_carries_row_high_and_rejects_moved_root`, `flush_io::profile_tests::read_selection_binds_installed_profile_grammar`, `recovery_select::plan4::tests::plan4_selection_binds_profile3_exactly`(generation·timeline 2 포함), `plan4_recovery::tests::base_cause::{row_base_carrier_and_current_fallback_predicate, recovery_selection_binds_profile3_generation_timeline}`.
+- 시간 실패 진단(증거 규칙 밖, 240초): `flush_fb_before_fault`는 base·전환 모두 약 58초에 PASS다. catalog_memory 4개는 둘 다 시험 자체의 30초 assert에서 실패하며 전환이 3–4.5초(7–10%) 느리다.
+
+**독립 검토.** 같은 읽기 전용 검토자가 두 번 보았다. r1은 필수 R1–R4(native, 변경 경로 7개 재실행, transition3 root 채택, B31 근거 정정)와 권고7이었고, r2는 R2–R4와 권고 A2/A3/A4/A6 해소를 확인하고 문서 정정 Q1만 요구했다. Q1은 반영했다. **되돌림 단위는 `git revert b5f7c9b 1dd9dec c4516a9 bbca0cb`(최신부터, 원 branch의 `3d7bb32 fc8dfb9 665e7bd 26fbe71`)이며, 불활성 receipt·fixture commit은 남긴다.** 전환 commit 하나만 되돌리면 뒤 commit이 RowBase arm·format_tests·B31 줄에 기대므로 Profile2 current로 돌아가지 않는다.
+
+**CR1(사용자 로컬에서 할 일, main이나 공유 remote에 올리기 전).** 통합 head의 source·ELF로 (a) `scripts/dev3_catalog_native.py` N01/N02/N03을 60GiB+reserve 여유와 독립 ACCEPTED admission을 갖춰 돌리고, (b) F05 plan4 recovery native를 독립 gate가 생기고 기존 `support.rs:260` 실패가 고쳐진 뒤 돌린다. 이 cloud container는 여유가 약 30GB라 (a)를 돌릴 수 없고 (b)의 gate는 단위가 스스로 발급할 수 없다. 실패하면 위 되돌림 단위로 되돌린다.
+
+**남은 권고.** preflight_empty_retention의 명시 형식 gate(A5), `page_io.rs:197-228`의 debug_assert를 `fits` 검사로(A7), commit window 소유자의 84B 여유 기록(A1). artifact는 `module-independence-20261029/artifacts/module-u2c4c-20261029/`(`manifest-all.sha256` SHA-256 `30c4ab322770370b2d0b765ed258154f8f8dddad86acaf36e108ec47c523972f`)에 있다.

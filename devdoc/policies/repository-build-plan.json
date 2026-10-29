@@ -9023,5 +9023,28 @@
     "remaining_supply": "S1 wiring (history/row.rs live record and replay arm, Row Begin entry per XADB-MODULE-ROW-BEGIN-001), Row write and rollback bodies, leaf.rs cross-call once a Catalog record is available, API Capacity mapping in the reserve preflight; integration must replace the parallel Catalog observer phase cost under the 65536 cap",
     "source_roots_changed": false,
     "artifact_manifest_sha256": "53929b7dbb9ea91eff673a414bb85e8a7b69e9f2cd0417904d7e89ba909c4a94"
+  },
+  "dev3_module_u2_single_current": {
+    "status": "LOCAL_VERIFIED_REVIEWED_NATIVE_PENDING",
+    "contract_ref": "dev3-module-consumers.md#format-dispatch",
+    "evidence_ref": "module-independence-survey-20261026.md#u2-single-current",
+    "baseline_commit": "06d3bd1",
+    "integration_base": "5135e16",
+    "branch": "claude/project-thread-h2j8oc",
+    "commits": [
+      "12aac63",
+      "cdc7c45",
+      "bbca0cb",
+      "a1a2e14",
+      "c4516a9",
+      "1dd9dec",
+      "b5f7c9b"
+    ],
+    "rollback": "git revert b5f7c9b 1dd9dec c4516a9 bbca0cb (inert receipt/fixture commits stay)",
+    "scope": "Single current format switch Profile3 -> Root3/Job3 -> base4: exact {3 current, 1 DEV2 v1, explicit reject} dispatch at every former Profile2-current site, installed ProfileGrammar binding for open_shared and flush selection, RowBase recovery cause with symmetric Corrupt fallback, Root3 encode guard, transition3 Profile3 corpus, pure Profile2 codecs kept",
+    "validation": "r1 304 selectors and r3 30 selectors match frozen expectations; 34 base failures and status_flush_rf reproduced on main 85ceef3; genesis native PASS; integrated round with S1-f and S1-a 21 PASS plus expected commit-window FAIL; check 0 warnings each round; two independent reviews, REQUIRED resolved",
+    "remaining_supply": "CR1 on the user's machine: catalog native N01-N03 (60 GiB floor, independent admission) and F05 plan4 recovery native (independent gate, pre-existing support.rs:260); commit-window memory margin 84 B; advisories A5 format gate in preflight_empty_retention and A7 fits check",
+    "source_roots_changed": false,
+    "artifact_manifest_sha256": "30c4ab322770370b2d0b765ed258154f8f8dddad86acaf36e108ec47c523972f"
   }
 }
