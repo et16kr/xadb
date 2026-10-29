@@ -8,7 +8,7 @@
 use super::{
     Change, Inputs, Issued, JOB, LEAF, Observation, ROOT, ROW_REPLAY_SCRATCH_BYTES, ReplayLoan,
     ReservePlan, STATUS, TableSource, UNDO, frame, observe, observe_borrowed, observe_with,
-    prepare, produce,
+    prepare, produce, produce_borrowed,
 };
 use crate::{
     api::{Column, DataType, DatabaseId, Namespace},
@@ -94,6 +94,9 @@ thread_local! {
     /// S1-a: while set, every World observation of a literal or R- variant is
     /// repeated through `observe_borrowed`; counts (accepted, refused).
     static BORROWED: Cell<Option<(usize, usize)>> = const { Cell::new(None) };
+    /// While set, every World production is repeated through
+    /// `produce_borrowed` over a dirty lent scratch; counts the groups.
+    static PRODUCED: Cell<Option<usize>> = const { Cell::new(None) };
 }
 
 /// A lent replay tail between two sentinel runs, as the WORK_END tail sits
@@ -153,6 +156,35 @@ fn borrowed_twin<'a>(
         Ok(_) => (accepted + 1, refused),
         Err(_) => (accepted, refused + 1),
     }));
+}
+
+/// Repeat one owned production through `produce_borrowed` from the same
+/// loans, over a scratch full of unrelated bytes: the same observation, all
+/// five after loans and the whole frame loan, byte for byte.
+fn produced_twin(
+    label: &str,
+    inputs: &Inputs<'_>,
+    owned: Observation,
+    owned_after: &[Page; 5],
+    owned_frame: &[u8],
+) {
+    let Some(count) = PRODUCED.get() else {
+        return;
+    };
+    let mut scratch = vec![0x5a; ROW_REPLAY_SCRATCH_BYTES];
+    let mut after = loans(0xa5);
+    let mut frame = vec![0xa5; owned_frame.len()];
+    let observation = produce_borrowed(
+        inputs,
+        &mut after,
+        &mut frame,
+        (&mut scratch[..]).try_into().unwrap(),
+    )
+    .unwrap_or_else(|error| panic!("{label}: produce_borrowed {error:?}"));
+    assert_eq!(observation, owned, "{label}: borrowed observation");
+    assert!(*after == *owned_after, "{label}: borrowed after loans");
+    assert!(frame == owned_frame, "{label}: borrowed frame loan");
+    PRODUCED.set(Some(count + 1));
 }
 
 fn hex(bytes: &[u8]) -> String {
@@ -541,6 +573,7 @@ impl World {
             let inputs = self.inputs(change, pages);
             let observation = produce(&inputs, &mut after, &mut frame)
                 .unwrap_or_else(|error| panic!("{name}: produce {error:?}"));
+            produced_twin(name, &inputs, observation, &after, &frame);
             assert_eq!(observation.frame_bytes, expected.len(), "{name}");
             assert!(frame[expected.len()..].iter().all(|byte| *byte == 0xa5));
             same(name, &frame[..expected.len()], expected);
@@ -2785,4 +2818,53 @@ fn s1a_borrowed_observer_source_bound_covers_measured_frames() {
         bound <= FRAME_PHASE_MAX,
         "borrowed Row observer above the frame-phase max"
     );
+}
+
+/// World productions in the E, N, H and A-literal histories.
+const PRODUCED_GROUPS: usize = 27;
+
+/// The borrowed producer over a dirty caller scratch is the owned producer,
+/// byte for byte, for every N1 group this module produces (A's Forward/CLR
+/// are observed only and stay Unsupported through the shared body).
+#[test]
+fn s1d_borrowed_producer_matches_owned_groups() {
+    PRODUCED.set(Some(0));
+    let checked = history_e(false) + history_n(false) + history_h(false) + a_literals(false);
+    let produced = PRODUCED.take().expect("produced count");
+    println!("S1D_PRODUCED_BORROWED groups={produced}");
+    assert_eq!((checked, produced), (0, PRODUCED_GROUPS));
+}
+
+/// The borrowed producer's counted bound: its wrapper (arguments, result and
+/// the completed clearing fill), the shared body frame and the deepest body
+/// phase, with no backing array. Every measured chain fits, and it is the
+/// owned bound less the backing, up to the wrapper difference.
+#[test]
+fn s1d_borrowed_producer_source_bound_covers_measured_frames() {
+    use std::mem::size_of;
+    let bound = super::produce_borrowed_source_bytes();
+    let entry = super::entry_bytes();
+    let wrapper = size_of::<(
+        &Inputs<'_>,
+        &mut [Page; 5],
+        &mut [u8],
+        &mut [u8; ROW_REPLAY_SCRATCH_BYTES],
+    )>() + size_of::<std::result::Result<Observation, Error>>()
+        + size_of::<(&mut [u8], std::slice::IterMut<'_, u8>, u8)>();
+    let body = prepare::split_bytes()
+        .max(prepare::source_bytes())
+        .max(frame::source_bytes())
+        .max(prepare::write_source_bytes());
+    assert_eq!(bound, wrapper + entry + body);
+    let chains = measured_chains(wrapper + entry);
+    for (name, bytes) in chains {
+        assert!(bound >= bytes, "{name}");
+    }
+    let measured = chains.iter().map(|(_, bytes)| *bytes).max().unwrap();
+    let owned = super::source_bytes();
+    println!(
+        "S1D_PRODUCE_SOURCE borrowed={bound} measured={measured} owned={owned} wrapper={wrapper} entry={entry} body={body} scratch={ROW_REPLAY_SCRATCH_BYTES}"
+    );
+    assert_eq!(owned + wrapper, bound + owned_outer());
+    assert!(bound + ROW_REPLAY_SCRATCH_BYTES <= owned + wrapper);
 }

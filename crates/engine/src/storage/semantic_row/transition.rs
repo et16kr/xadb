@@ -111,7 +111,7 @@ pub(crate) enum Change<'a> {
     },
     #[allow(
         dead_code,
-        reason = "replay refuses RowReserve (no canonical value in its frame); its producer caller is S2"
+        reason = "replay refuses RowReserve (no canonical value in its frame); its producer caller is the RowReserve entry"
     )]
     Reserve(&'a ReservePlan<'a>),
     /// Observe only; A produces Forward.
@@ -279,18 +279,42 @@ struct Prepared<'a, 's> {
 /// written. Forward and CLR are A's and return Unsupported here.
 #[allow(
     dead_code,
-    reason = "the scope3 producer; its live caller is the Row Begin install (S1-d)"
+    reason = "owned-backing producer; the live Row install uses produce_borrowed"
 )]
 pub(crate) fn produce(
     inputs: &Inputs<'_>,
     after: &mut [[u8; PAGE_BYTES]; 5],
     frame: &mut [u8],
 ) -> Result<Observation> {
+    produce_with(inputs, after, frame, &mut [0; ROW_REPLAY_SCRATCH_BYTES])
+}
+
+/// `produce` over a caller loan instead of a local backing, for the live Row
+/// install whose source peak cannot hold a second backing. The loan's prior
+/// bytes have no meaning here: it is cleared first, so the body starts from
+/// the same zero backing as `produce`, and on return it holds only
+/// discardable prepared values. Output is byte for byte that of `produce`.
+#[allow(dead_code, reason = "its live caller is the Row Begin install")]
+pub(crate) fn produce_borrowed(
+    inputs: &Inputs<'_>,
+    after: &mut [[u8; PAGE_BYTES]; 5],
+    frame: &mut [u8],
+    scratch: &mut [u8; ROW_REPLAY_SCRATCH_BYTES],
+) -> Result<Observation> {
+    scratch.fill(0);
+    produce_with(inputs, after, frame, scratch)
+}
+
+fn produce_with(
+    inputs: &Inputs<'_>,
+    after: &mut [[u8; PAGE_BYTES]; 5],
+    frame: &mut [u8],
+    backing: &mut [u8; ROW_REPLAY_SCRATCH_BYTES],
+) -> Result<Observation> {
     if matches!(inputs.change, Change::Forward { .. } | Change::Clr { .. }) {
         return Err(Error::Unsupported);
     }
-    let mut backing = [0; ROW_REPLAY_SCRATCH_BYTES];
-    let mut prepared = prepare::new_prepared(inputs, &mut backing);
+    let mut prepared = prepare::new_prepared(inputs, backing);
     prepare::prepare(inputs, None, &mut prepared)?;
     if frame.len() < prepared.frame_bytes {
         return Err(Error::InvalidInput);
@@ -404,9 +428,9 @@ fn run(
     })
 }
 
-/// Own frame of `produce`/`observe_with`: the prepared carrier (references
-/// into the backing), the returned observation, the decoded candidate layout
-/// and the arguments.
+/// Own frame of `produce_with`/`observe_with`: the prepared carrier
+/// (references into the backing), the returned observation, the decoded
+/// candidate layout and the arguments.
 fn entry_bytes() -> usize {
     use std::mem::size_of;
     size_of::<Prepared<'_, '_>>()
@@ -442,13 +466,29 @@ fn body_bytes() -> usize {
 /// loans (5 pages, frame) are charged by the caller.
 #[allow(
     dead_code,
-    reason = "owned produce/observe bound; its live caller is the Row Begin install (S1-d)"
+    reason = "owned produce/observe bound; the live Row install counts produce_borrowed"
 )]
 pub(crate) fn source_bytes() -> usize {
     use std::mem::size_of;
     size_of::<[u8; ROW_REPLAY_SCRATCH_BYTES]>()
         + size_of::<(&Inputs<'_>, &[u8], &mut [[u8; PAGE_BYTES]; 5])>()
         + size_of::<Result<Observation>>()
+        + body_bytes()
+}
+
+/// Counted source bound of `produce_borrowed`. The lent scratch is the
+/// caller's and is not counted. The wrapper keeps its arguments and result
+/// while the body runs; the clearing fill is a completed call before it.
+#[allow(dead_code, reason = "its live caller is the Row Begin install census")]
+pub(crate) fn produce_borrowed_source_bytes() -> usize {
+    use std::mem::size_of;
+    size_of::<(
+        &Inputs<'_>,
+        &mut [[u8; PAGE_BYTES]; 5],
+        &mut [u8],
+        &mut [u8; ROW_REPLAY_SCRATCH_BYTES],
+    )>() + size_of::<Result<Observation>>()
+        + size_of::<(&mut [u8], std::slice::IterMut<'_, u8>, u8)>()
         + body_bytes()
 }
 
