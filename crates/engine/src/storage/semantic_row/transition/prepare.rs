@@ -9,6 +9,7 @@ use super::{
     cells::{self, RELEASE_BYTES, TERMINAL_BYTES, put, require, same, set_budget},
     frame,
     graph::{self, Aux, Core},
+    source::{self, ROW_EDIT_CELLS, SHA},
 };
 use crate::storage::{
     allocation_page::{ReservationOwner, SystemWorkKind, SystemWorkRef},
@@ -30,7 +31,7 @@ use crate::storage::{
         LogicalRowVersion, RollbackState, StatusSlotRef, TransactionState, TransactionStatus,
         TransactionStatusCell, TxnRef, VersionStamp,
     },
-    tree_page::{self, EntryPayload, TREE_ENTRY_CAPACITY, TreeExpectation, edit},
+    tree_page::{self, EntryPayload, TreeExpectation, edit},
     undo_record::{self, UndoCell, UndoEdge, UndoLink},
     undo_ref::UndoRef,
     wal_frame::WalFrameHeader,
@@ -39,10 +40,6 @@ use foundation::{
     codec::content_digest,
     identity::{CommitSeq, RowId},
 };
-
-/// Validated rows occupy at least 189 bytes including their slot, plus the
-/// metadata cell and one inserted cell.
-const ROW_EDIT_CELLS: usize = TREE_ENTRY_CAPACITY / (row_record::ROW_HEADER_BYTES + 5 + 16) + 2;
 
 pub(super) fn new_prepared<'a>(inputs: &Inputs<'a>) -> Prepared<'a> {
     Prepared {
@@ -1465,12 +1462,12 @@ pub(super) fn finish_aging(
     .map_err(cells::aging_error)
 }
 
-/// prepare's own frame: decoded views, summaries, specs and scratch.
+/// prepare's own frame: decoded views, summaries, specs and scratch, plus
+/// the standard scalar slack.
 pub(super) fn locals_bytes() -> usize {
     use std::mem::size_of;
     640 // aggregate
-        + MAX_RECORD // Reserve/Prune record scratch
-        + size_of::<[&[u8]; ROW_EDIT_CELLS]>()
+        + MAX_RECORD // Reserve record scratch
         + 2 * size_of::<DescriptorSpec>()
         + size_of::<Option<DescriptorSpec>>()
         + 8 * size_of::<JobView<'_>>()
@@ -1482,8 +1479,6 @@ pub(super) fn locals_bytes() -> usize {
         + 2 * size_of::<TransactionStatus>()
         + size_of::<Core>()
         + size_of::<cells::ActorJobs>()
-        + size_of::<LeafSource<'_>>()
-        + size_of::<tree_page::TreePageView<'_>>()
         + size_of::<row_record::RowRecordView<'_>>()
         + size_of::<row_record::CanonicalRowView<'_>>()
         + 2 * size_of::<RecordVersion>()
@@ -1494,36 +1489,27 @@ pub(super) fn locals_bytes() -> usize {
         + 3 * size_of::<[u8; 32]>()
         + size_of::<[Option<usize>; 5]>()
         + 32 * size_of::<usize>()
+        + source::slack()
 }
-/// Deepest nested callee of prepare: Row census/summary, the Aging decode
-/// closure, the descriptor codec under the ledger observer, Undo material
-/// encode+compare (two 432B cells) or the leaf edit/record codec.
+/// Deepest nested callee of prepare, each a counted chain: Row census and
+/// cells, the Aging decode closure, the actor ledger over the descriptor
+/// codec, the Status proof, Undo material, the RowLeaf proof/edit with the
+/// record codec and projection, Job edits and the graph.
 pub(super) fn callee_bytes() -> usize {
-    use std::mem::size_of;
-    let ledger = size_of::<[obligation::RemainingBudget; 5]>()
-        + size_of::<DescriptorSpec>()
-        + 2 * size_of::<JobView<'_>>()
-        + 512;
-    let material = 2 * undo_record::UNDO_RECORD_BYTES
-        + size_of::<undo_record::UndoRecord<'_>>()
-        + 2 * size_of::<undo_record::UndoRecordExpectation<'_>>()
-        + 1024;
     row::source_bytes()
         .max(crate::storage::retention_obligation::row::source_bytes())
-        .max(obligation::descriptor_source_bytes() + ledger)
-        .max(material)
-        .max(tree_page_source_bytes())
+        .max(source::ledger())
+        .max(source::status())
+        .max(source::material())
+        .max(source::leaf())
+        .max(source::job_edit())
+        .max(source::graph())
 }
 pub(super) fn source_bytes() -> usize {
-    locals_bytes() + callee_bytes() + 1536 // SHA closure of the root digests
+    locals_bytes() + callee_bytes() + SHA
 }
-fn tree_page_source_bytes() -> usize {
-    use std::mem::size_of;
-    size_of::<tree_page::TreePageView<'_>>()
-        + size_of::<edit::LeafEditPlan<'_, '_>>()
-        + size_of::<[usize; 16]>()
-        + 2048
-}
+/// `write_pages` then `finish_aging`: their scratch, the Aging successor over
+/// the Job3 census, Root/Jobs/Status/Undo page encode or the RowLeaf edit.
 pub(super) fn write_source_bytes() -> usize {
     use std::mem::size_of;
     size_of::<[&[u8]; ROW_EDIT_CELLS]>()
@@ -1533,8 +1519,12 @@ pub(super) fn write_source_bytes() -> usize {
         + size_of::<AgingTransition<'_>>()
         + size_of::<tree_page::TreePageView<'_>>()
         + size_of::<PageHeader>()
+        + size_of::<[u8; 8]>()
+        + source::slack()
         + crate::storage::retention_obligation::row::source_bytes()
             .max(row::source_bytes())
-            .max(tree_page_source_bytes())
-        + 1536
+            .max(source::leaf_edit())
+            .max(source::status_codec())
+            .max(source::page_codec())
+        + SHA
 }

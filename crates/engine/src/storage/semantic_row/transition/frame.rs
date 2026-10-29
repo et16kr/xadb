@@ -367,11 +367,9 @@ pub(super) fn locals_bytes() -> usize {
         + 24 * size_of::<usize>()
 }
 
-/// Charged deepest callee of framing: page decode/digest, the envelope
-/// finish with its SHA state, or the layout decoder's nested record walk.
-/// The measured chains of these callees must stay at or below it.
-pub(super) const CALLEE_BYTES: usize = 4096;
-
+/// Framing's locals with the standard slack, its counted deepest callee
+/// (layout decode, envelope finish or a native page view) and the SHA
+/// closure of the frame/native digests.
 pub(super) fn source_bytes() -> usize {
-    locals_bytes() + CALLEE_BYTES
+    locals_bytes() + super::source::slack() + super::source::frame_callee() + super::source::SHA
 }

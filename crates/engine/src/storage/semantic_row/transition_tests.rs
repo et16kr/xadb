@@ -22,6 +22,7 @@ use crate::{
         row_record::RowSchemaInput,
         semantic_row::{Error, FRAME_BYTES, Operation, decode_layout, status::StatementBoundary},
         transaction_record::{StatusSlotRef, TxnRef},
+        tree_page,
         undo_ref::UndoRef,
         wal_frame::{self, FrameExpectation, WalStreamIdentity},
     },
@@ -1404,14 +1405,628 @@ fn n1_producer_refusals_precede_output() {
 
 // ---- source bound -----------------------------------------------------------
 
+/// Function frames read from row_record, tree_page, undo_record, the identity
+/// codecs they call and the cells.rs material recipe. Each frame sums
+/// `size_of` over its arguments, locals, temporaries and both sides of each
+/// return boundary while its deepest nested call runs (the retention_page::row
+/// `frames` convention); a chain adds the callee chain it enters. Index-key
+/// decoding is omitted: RowLeaf pages and Row Undo targets never reach it.
+/// These sums check the counted `source` terms; they are not stack samples.
+mod measured {
+    use super::super::source::returned;
+    use super::frames;
+    use crate::{
+        api::{Column, DataType, DatabaseId, Namespace},
+        storage::{
+            catalog_record::{
+                CatalogColumn, CatalogError, CatalogExpectation, TableDefinitionView,
+                before::CatalogBeforeView,
+            },
+            control::Profile,
+            overflow::{OVERFLOW_HEAD_BYTES, OverflowError, OverflowHead},
+            page::{FileId, PageError, PageHeader, PageKind, PageLsn, PageRef, PageView},
+            retention_page::row::JobView,
+            row_record::{
+                CanonicalRowView, MAX_ROW_COLUMNS, ROW_HEADER_BYTES, RecordExpectation,
+                RecordVersion, RowError, RowPayload, RowRecordView, RowSchemaInput, ValueRef,
+            },
+            semantic_catalog,
+            semantic_row::{Error, LayoutView, Operation, Shape},
+            transaction_record::{LogicalRowVersion, TxnRef, VersionStamp},
+            tree_page::{
+                self, EntryPayload, SearchPosition, TreeEntry, TreeError, TreeExpectation,
+                TreePageView,
+                edit::{LeafEdit, LeafEditError, LeafEditPlan},
+            },
+            undo_record::{
+                UNDO_RECORD_BYTES, UndoBeforeKind, UndoCell, UndoEdge, UndoError, UndoLink,
+                UndoPayload, UndoPayloadHead, UndoRecord, UndoRecordExpectation, UndoRecordView,
+                UndoRelease, UndoTargetView,
+            },
+            undo_ref::UndoRef,
+            wal_frame::{
+                FrameEnvelope, FrameExpectation, RedoRecordView, WalError, WalFrameHeader,
+            },
+        },
+        transaction::TxnId,
+    };
+    use foundation::identity::{CommitSeq, Generation, ObjectHandle, ObjectId, RowId};
+    use std::{array, iter::Enumerate, mem::size_of, ops::Range, slice::IterMut, str};
+
+    type R<T, E> = std::result::Result<T, E>;
+    type Fe = foundation::Error;
+
+    // ---- identity codecs (page, transaction_record, undo_ref) ----
+
+    fn page_ref_decode() -> usize {
+        size_of::<&[u8]>()
+            + returned::<PageRef, PageError>()
+            + size_of::<R<FileId, PageError>>()
+            + returned::<Generation, Fe>()
+    }
+    fn page_ref_encode() -> usize {
+        size_of::<(PageRef, &mut [u8])>() + size_of::<R<(), PageError>>()
+    }
+    fn txn_id_decode() -> usize {
+        size_of::<&[u8]>()
+            + size_of::<R<TxnId, PageError>>()
+            + size_of::<([u8; 16], [u8; 4], TxnId)>()
+            + size_of::<R<DatabaseId, crate::Error>>()
+    }
+    fn txn_id_encode() -> usize {
+        size_of::<(TxnId, &mut [u8])>() + size_of::<R<(), PageError>>() + size_of::<(TxnId, bool)>()
+    }
+    /// TxnRef::decode: its return and TxnRef::new's result, then decode_txn_id.
+    fn txn_ref_decode() -> usize {
+        size_of::<&[u8]>()
+            + 2 * size_of::<R<TxnRef, PageError>>()
+            + returned::<TxnId, PageError>()
+            + returned::<Generation, Fe>()
+            + txn_id_decode()
+    }
+    fn txn_ref_encode() -> usize {
+        size_of::<(TxnRef, &mut [u8])>()
+            + 2 * size_of::<R<(), PageError>>()
+            + size_of::<[u8; 48]>()
+            + txn_id_encode()
+    }
+    fn stamp_decode() -> usize {
+        size_of::<&[u8]>()
+            + size_of::<R<VersionStamp, PageError>>()
+            + returned::<CommitSeq, Fe>()
+            + returned::<TxnRef, PageError>()
+            + txn_ref_decode()
+    }
+    fn stamp_encode() -> usize {
+        size_of::<(VersionStamp, &mut [u8])>()
+            + 2 * size_of::<R<(), PageError>>()
+            + size_of::<([u8; 56], TxnRef)>()
+            + txn_ref_encode()
+    }
+    fn logical_decode() -> usize {
+        size_of::<&[u8]>()
+            + 2 * size_of::<R<LogicalRowVersion, PageError>>()
+            + returned::<TxnId, PageError>()
+            + txn_id_decode()
+    }
+    fn logical_encode() -> usize {
+        size_of::<(LogicalRowVersion, &mut [u8])>()
+            + 2 * size_of::<R<(), PageError>>()
+            + size_of::<[u8; 48]>()
+            + txn_id_encode()
+    }
+    fn undo_ref_decode() -> usize {
+        size_of::<&[u8]>()
+            + 2 * size_of::<R<UndoRef, PageError>>()
+            + returned::<PageRef, PageError>()
+            + size_of::<(u16, [u8; 8])>()
+            + returned::<Generation, Fe>()
+            + page_ref_decode()
+    }
+    fn undo_ref_encode() -> usize {
+        size_of::<(UndoRef, &mut [u8])>() + 2 * size_of::<R<(), PageError>>() + page_ref_encode()
+    }
+
+    // ---- row_record ----
+
+    /// RecordVersion::validate: self, expected, the logical id, the stamp's TxnRef.
+    fn rr_validate() -> usize {
+        size_of::<(RecordVersion, RecordExpectation)>()
+            + size_of::<R<(), RowError>>()
+            + size_of::<(TxnId, TxnRef)>()
+    }
+    /// decode_version while an identity decoder or validate runs.
+    fn rr_decode_version() -> usize {
+        size_of::<(&[u8], bool, RecordExpectation)>()
+            + size_of::<R<RecordVersion, RowError>>()
+            + returned::<RowId, Fe>()
+            + returned::<VersionStamp, PageError>()
+            + returned::<LogicalRowVersion, PageError>()
+            + returned::<UndoRef, PageError>()
+            + size_of::<(Option<UndoRef>, RecordVersion)>()
+            + size_of::<R<(), RowError>>()
+            + stamp_decode()
+                .max(logical_decode())
+                .max(undo_ref_decode())
+                .max(rr_validate())
+    }
+    /// parse_value: input, return, tag, Int64 bytes, length/end, payload, UTF-8.
+    fn rr_parse_value() -> usize {
+        size_of::<&[u8]>()
+            + size_of::<R<(ValueRef<'_>, usize), RowError>>()
+            + size_of::<(u8, [u8; 8], usize, usize, &[u8])>()
+            + size_of::<ValueRef<'_>>()
+            + size_of::<R<&str, str::Utf8Error>>()
+    }
+    /// RowSchemaInput::column over a Catalog table's column and read_name.
+    fn rr_column() -> usize {
+        size_of::<(&RowSchemaInput<'_>, usize)>()
+            + size_of::<R<(DataType, bool), RowError>>()
+            + returned::<CatalogColumn<'_>, CatalogError>()
+            + size_of::<(TableDefinitionView<'_>, usize, usize, usize)>()
+            + returned::<&str, CatalogError>()
+            + returned::<DataType, CatalogError>()
+            + size_of::<(
+                &[u8],
+                R<&str, str::Utf8Error>,
+                &str,
+                str::Chars<'_>,
+                char,
+                bool,
+            )>()
+    }
+    /// decode_canonical_row_with_schema while parse_value or a column runs.
+    pub(super) fn rr_canonical() -> usize {
+        size_of::<(&[u8], RowSchemaInput<'_>)>()
+            + size_of::<R<CanonicalRowView<'_>, RowError>>()
+            + size_of::<R<(), RowError>>()
+            + size_of::<[u32; MAX_ROW_COLUMNS + 1]>()
+            + size_of::<[usize; 3]>()
+            + returned::<(ValueRef<'_>, usize), RowError>()
+            + returned::<(DataType, bool), RowError>()
+            + size_of::<CanonicalRowView<'_>>()
+            + rr_parse_value().max(rr_column())
+    }
+    fn overflow_decode() -> usize {
+        size_of::<&[u8]>()
+            + 2 * size_of::<R<OverflowHead, OverflowError>>()
+            + returned::<PageRef, PageError>()
+            + size_of::<([u8; 32], OverflowHead)>()
+            + page_ref_decode().max(size_of::<(PageRef, usize, [u8; 32])>())
+    }
+    fn overflow_encode() -> usize {
+        size_of::<(OverflowHead, &mut [u8])>()
+            + 2 * size_of::<R<(), OverflowError>>()
+            + page_ref_encode()
+    }
+    /// decode_row_record_with_schema while decode_version, the canonical
+    /// parse or the overflow head decode runs.
+    pub(super) fn rr_decode_record() -> usize {
+        size_of::<(&[u8], RecordExpectation, RowSchemaInput<'_>)>()
+            + size_of::<R<RowRecordView<'_>, RowError>>()
+            + size_of::<R<(), RowError>>()
+            + returned::<RecordVersion, RowError>()
+            + size_of::<(&[u8], (bool, u8), RowPayload<'_>)>()
+            + returned::<CanonicalRowView<'_>, RowError>()
+            + returned::<OverflowHead, OverflowError>()
+            + size_of::<RowRecordView<'_>>()
+            + rr_decode_version()
+                .max(rr_canonical())
+                .max(overflow_decode())
+    }
+    fn rr_version_bytes() -> usize {
+        size_of::<(RecordVersion, &mut [u8])>()
+            + size_of::<R<(), RowError>>()
+            + size_of::<R<(), PageError>>()
+            + size_of::<UndoRef>()
+            + stamp_encode().max(logical_encode()).max(undo_ref_encode())
+    }
+    /// encode_row_record_with_schema while validate, version_bytes, the
+    /// canonical check or the overflow head encoder runs.
+    pub(super) fn rr_encode_record() -> usize {
+        size_of::<(
+            RecordExpectation,
+            RowSchemaInput<'_>,
+            RecordVersion,
+            RowPayload<'_>,
+            &mut [u8],
+        )>() + size_of::<R<usize, RowError>>()
+            + 3 * size_of::<R<(), RowError>>()
+            + size_of::<[u8; ROW_HEADER_BYTES]>()
+            + size_of::<[u8; OVERFLOW_HEAD_BYTES]>()
+            + size_of::<(&[u8], usize, CanonicalRowView<'_>, OverflowHead)>()
+            + size_of::<R<CanonicalRowView<'_>, RowError>>()
+            + size_of::<R<(), OverflowError>>()
+            + rr_validate()
+                .max(rr_version_bytes())
+                .max(rr_canonical())
+                .max(overflow_encode())
+    }
+
+    // ---- tree_page ----
+
+    /// (CheckedKey, its Result, Layout, its Result): tree_page's own carriers.
+    fn carriers() -> (usize, usize, usize, usize) {
+        tree_page::catalog_source_carrier_bytes()
+    }
+    fn tp_checked_key() -> usize {
+        let (_, key_result, _, _) = carriers();
+        size_of::<(PageKind, u8, &[u8])>()
+            + key_result
+            + size_of::<R<[u8; 8], array::TryFromSliceError>>()
+            + size_of::<([u8; 8], u64)>()
+    }
+    fn tp_parse_entry() -> usize {
+        let (_, key_result, _, _) = carriers();
+        size_of::<(PageKind, u8, &[u8])>()
+            + size_of::<R<TreeEntry<'_>, TreeError>>()
+            + size_of::<(usize, bool, usize, &[u8])>()
+            + size_of::<R<bool, TreeError>>()
+            + key_result
+            + size_of::<EntryPayload<'_>>()
+            + returned::<PageRef, PageError>()
+            + tp_checked_key().max(page_ref_decode())
+    }
+    /// validate_cells with the widest `cell_at` capture (prepare_leaf_edit's
+    /// three references) while parse_entry, checked_key or a prior child's
+    /// PageRef decode runs; `previous` is charged as a full key Result.
+    fn tp_validate_cells() -> usize {
+        let (key, key_result, layout, layout_result) = carriers();
+        size_of::<(PageHeader, u8, usize, [&(); 3], usize)>()
+            + layout_result
+            + 3 * size_of::<R<bool, TreeError>>()
+            + size_of::<(bool, &[u8], Option<PageRef>)>()
+            + returned::<PageRef, PageError>()
+            + size_of::<(usize, Option<&[u8]>, &[u8], usize)>()
+            + 2 * key_result
+            + key
+            + returned::<TreeEntry<'_>, TreeError>()
+            + 2 * size_of::<Range<usize>>()
+            + size_of::<(&[u8], usize, PageRef)>()
+            + layout
+            + tp_parse_entry()
+                .max(tp_checked_key())
+                .max(page_ref_decode())
+    }
+    /// page::decode_page while its digest or the header PageRef decode runs.
+    fn page_decode() -> usize {
+        frames::decode_page_frame() + frames::content_digest_frame().max(page_ref_decode())
+    }
+    fn page_encode() -> usize {
+        frames::encode_page_frame() + frames::content_digest_frame()
+    }
+    /// decode_tree_page while decode_page or validate_cells runs.
+    pub(super) fn tp_decode() -> usize {
+        let (_, _, layout, layout_result) = carriers();
+        size_of::<(&[u8], TreeExpectation)>()
+            + size_of::<R<TreePageView<'_>, TreeError>>()
+            + size_of::<R<bool, TreeError>>()
+            + returned::<PageView<'_>, PageError>()
+            + layout
+            + layout_result
+            + size_of::<&PageView<'_>>()
+            + size_of::<TreePageView<'_>>()
+            + page_decode().max(tp_validate_cells())
+    }
+    fn tp_entry() -> usize {
+        size_of::<(&TreePageView<'_>, usize)>()
+            + size_of::<R<TreeEntry<'_>, TreeError>>()
+            + size_of::<(usize, Option<&[u8]>, &[u8], PageHeader)>()
+            + tp_parse_entry()
+    }
+    /// lower_bound while entry or checked_key runs.
+    pub(super) fn tp_lower_bound() -> usize {
+        let (key, key_result, _, _) = carriers();
+        size_of::<(&TreePageView<'_>, &[u8])>()
+            + size_of::<R<SearchPosition, TreeError>>()
+            + 2 * key
+            + key_result
+            + size_of::<[usize; 3]>()
+            + returned::<TreeEntry<'_>, TreeError>()
+            + size_of::<(PageHeader, bool)>()
+            + tp_entry().max(tp_checked_key())
+    }
+    pub(super) fn tp_leaf_cell() -> usize {
+        let (_, key_result, _, _) = carriers();
+        size_of::<(PageKind, u8, &[u8], &[u8], &mut [u8])>()
+            + size_of::<R<&[u8], TreeError>>()
+            + size_of::<R<bool, TreeError>>()
+            + key_result
+            + size_of::<(usize, Option<usize>)>()
+            + tp_checked_key()
+    }
+    /// prepare_leaf_edit while parse_entry, lower_bound or validate_cells runs.
+    pub(super) fn tp_prepare_leaf_edit() -> usize {
+        let (_, _, layout, layout_result) = carriers();
+        size_of::<(&TreePageView<'_>, LeafEdit<'_>, &mut [&[u8]])>()
+            + size_of::<R<LeafEditPlan<'_, '_>, LeafEditError>>()
+            + size_of::<(PageHeader, &[u8], usize, usize)>()
+            + size_of::<R<bool, TreeError>>()
+            + returned::<TreeEntry<'_>, TreeError>()
+            + returned::<SearchPosition, TreeError>()
+            + size_of::<[&(); 3]>()
+            + layout
+            + layout_result
+            + size_of::<Enumerate<IterMut<'_, &[u8]>>>()
+            + size_of::<(usize, &mut &[u8], Option<&[u8]>)>()
+            + size_of::<LeafEditPlan<'_, '_>>()
+            + tp_parse_entry()
+                .max(tp_lower_bound())
+                .max(tp_validate_cells())
+    }
+    /// LeafEditPlan::encode → encode_tree_page while validate_cells or
+    /// encode_page runs.
+    pub(super) fn tp_encode() -> usize {
+        let (_, _, _, layout_result) = carriers();
+        size_of::<(&LeafEditPlan<'_, '_>, PageLsn, &mut [u8])>()
+            + 2 * size_of::<R<(), TreeError>>()
+            + size_of::<PageHeader>()
+            + size_of::<(PageHeader, u8, &[&[u8]], &mut [u8])>()
+            + layout_result
+            + size_of::<&&[&[u8]]>()
+            + size_of::<R<(), PageError>>()
+            + page_encode().max(tp_validate_cells())
+    }
+
+    // ---- undo_record and the cells.rs material recipe ----
+
+    fn ur_target_validate() -> usize {
+        size_of::<UndoTargetView<'_>>() + size_of::<R<(), UndoError>>()
+    }
+    fn ur_target_parse() -> usize {
+        size_of::<(&[u8], &[u8])>()
+            + size_of::<R<UndoTargetView<'_>, UndoError>>()
+            + size_of::<UndoTargetView<'_>>()
+            + size_of::<(R<ObjectId, Fe>, R<Generation, Fe>)>()
+            + size_of::<R<(), UndoError>>()
+            + ur_target_validate()
+    }
+    fn ur_expectation_valid() -> usize {
+        size_of::<UndoRecordExpectation<'_>>()
+            + size_of::<R<(), UndoError>>()
+            + ur_target_validate()
+    }
+    /// A CatalogValue before: decode_catalog_before over the Catalog codec.
+    fn ur_catalog_before() -> usize {
+        size_of::<(&[u8], CatalogExpectation)>()
+            + size_of::<R<CatalogBeforeView<'_>, CatalogError>>()
+            + semantic_catalog::catalog_read_codec_bytes()
+    }
+    /// validate_record while the target check, a Row/Catalog before parse or
+    /// catalog_expectation runs.
+    fn ur_validate_record() -> usize {
+        size_of::<(UndoRecord<'_>, bool, UndoRecordExpectation<'_>, &[Column])>()
+            + size_of::<R<usize, UndoError>>()
+            + size_of::<R<(), UndoError>>()
+            + returned::<TxnRef, PageError>()
+            + size_of::<(array::IntoIter<UndoEdge, 2>, UndoEdge, UndoLink)>()
+            + size_of::<(UndoRelease, [UndoEdge; 2], UndoEdge, [bool; 4])>()
+            + returned::<LogicalRowVersion, UndoError>()
+            + returned::<VersionStamp, UndoError>()
+            + size_of::<(usize, UndoPayloadHead, usize, Option<PageRef>)>()
+            + returned::<CanonicalRowView<'_>, RowError>()
+            + returned::<CatalogExpectation, UndoError>()
+            + returned::<CatalogBeforeView<'_>, CatalogError>()
+            + ur_target_validate()
+                .max(rr_canonical())
+                .max(size_of::<(UndoRecord<'_>, Namespace)>() + returned::<ObjectId, Fe>())
+                .max(ur_catalog_before())
+    }
+    fn ur_encoded_len() -> usize {
+        size_of::<(UndoCell<'_>, UndoRecordExpectation<'_>, &[Column])>()
+            + size_of::<R<usize, UndoError>>()
+            + size_of::<R<(), UndoError>>()
+            + size_of::<UndoRecord<'_>>()
+            + ur_expectation_valid().max(ur_validate_record())
+    }
+    fn ur_free_encode() -> usize {
+        size_of::<(Generation, &mut [u8])>()
+            + size_of::<R<usize, UndoError>>()
+            + size_of::<Option<&mut [u8]>>()
+    }
+    fn ur_head_encode() -> usize {
+        size_of::<(UndoPayloadHead, &mut [u8])>()
+            + size_of::<R<usize, UndoError>>()
+            + size_of::<R<(), PageError>>()
+            + page_ref_encode()
+    }
+    /// encode_undo_record while the length check or a field encoder runs.
+    fn ur_encode() -> usize {
+        size_of::<(
+            UndoCell<'_>,
+            UndoRecordExpectation<'_>,
+            &[Column],
+            &mut [u8],
+        )>() + size_of::<R<usize, UndoError>>()
+            + 2 * returned::<usize, UndoError>()
+            + size_of::<[u8; UNDO_RECORD_BYTES]>()
+            + size_of::<(&[u8], &[u8], UndoRecord<'_>)>()
+            + size_of::<(
+                Enumerate<array::IntoIter<UndoEdge, 2>>,
+                usize,
+                UndoEdge,
+                UndoLink,
+            )>()
+            + size_of::<(
+                usize,
+                VersionStamp,
+                LogicalRowVersion,
+                UndoPayloadHead,
+                PageRef,
+            )>()
+            + 2 * size_of::<R<(), PageError>>()
+            + ur_encoded_len()
+                .max(txn_id_encode())
+                .max(undo_ref_encode())
+                .max(stamp_encode())
+                .max(logical_encode())
+                .max(ur_head_encode())
+                .max(page_ref_encode())
+                .max(ur_free_encode())
+    }
+    fn ur_record_generation() -> usize {
+        size_of::<(&[u8], Generation)>()
+            + returned::<Generation, UndoError>()
+            + returned::<Generation, Fe>()
+    }
+    fn ur_head_decode() -> usize {
+        size_of::<&[u8]>()
+            + 2 * size_of::<R<UndoPayloadHead, UndoError>>()
+            + returned::<PageRef, PageError>()
+            + size_of::<([u8; 32], UndoPayloadHead)>()
+            + page_ref_decode().max(size_of::<(PageRef, usize, [u8; 32])>())
+    }
+    fn ur_edge_decode() -> usize {
+        size_of::<(u8, &[u8])>()
+            + size_of::<R<UndoEdge, UndoError>>()
+            + returned::<UndoRef, PageError>()
+            + size_of::<UndoLink>()
+            + undo_ref_decode()
+    }
+    /// decode_undo_record: every field result of the record literal, then
+    /// validate_record or one field decoder.
+    fn ur_decode() -> usize {
+        size_of::<(&[u8], UndoRecordExpectation<'_>, &[Column])>()
+            + size_of::<R<UndoRecordView<'_>, UndoError>>()
+            + 2 * size_of::<R<(), UndoError>>()
+            + returned::<Generation, UndoError>()
+            + size_of::<UndoCell<'_>>()
+            + size_of::<[usize; 2]>()
+            + returned::<UndoTargetView<'_>, UndoError>()
+            + size_of::<(UndoBeforeKind, UndoPayload<'_>)>()
+            + returned::<UndoPayloadHead, UndoError>()
+            + size_of::<UndoRecord<'_>>()
+            + returned::<TxnId, PageError>()
+            + returned::<Generation, Fe>()
+            + 2 * returned::<UndoEdge, UndoError>()
+            + returned::<VersionStamp, PageError>()
+            + returned::<LogicalRowVersion, PageError>()
+            + returned::<PageRef, PageError>()
+            + size_of::<R<usize, UndoError>>()
+            + size_of::<UndoRecordView<'_>>()
+            + ur_expectation_valid()
+                .max(ur_record_generation())
+                .max(ur_target_parse())
+                .max(ur_head_decode())
+                .max(txn_id_decode())
+                .max(ur_edge_decode())
+                .max(stamp_decode())
+                .max(logical_decode())
+                .max(page_ref_decode())
+                .max(ur_validate_record())
+    }
+    /// cells::check_material over encode_material: the canonical cell stays
+    /// live while encode_undo_record or decode_undo_record runs.
+    pub(super) fn ur_material() -> usize {
+        let check = size_of::<(Namespace, JobView<'_>, UndoCell<'_>, &[u8])>()
+            + 2 * size_of::<R<(), Error>>()
+            + size_of::<[u8; UNDO_RECORD_BYTES]>();
+        let encode = size_of::<(
+            Namespace,
+            JobView<'_>,
+            UndoCell<'_>,
+            &mut [u8; UNDO_RECORD_BYTES],
+        )>() + size_of::<R<(), Error>>()
+            + returned::<UndoRef, Error>()
+            + returned::<ObjectHandle, Error>()
+            + returned::<RowId, Error>()
+            + size_of::<UndoRecordExpectation<'_>>()
+            + returned::<usize, UndoError>()
+            + returned::<UndoRecordView<'_>, UndoError>();
+        check + encode + ur_encode().max(ur_decode())
+    }
+
+    // ---- framing ----
+
+    /// decode_layout's own frame over a page decode, the envelope finish, a
+    /// native page decode or a page encode, without the SHA closure.
+    pub(super) fn frame_callee() -> usize {
+        let layout_decode = size_of::<(&[u8], FrameExpectation, Profile)>()
+            + size_of::<R<LayoutView<'_>, Error>>()
+            + size_of::<LayoutView<'_>>()
+            + size_of::<R<FrameEnvelope<'_>, WalError>>()
+            + size_of::<(Operation, Shape, &[u8], [usize; 5])>()
+            + size_of::<R<RedoRecordView<'_>, WalError>>()
+            + page_decode();
+        let envelope = size_of::<WalFrameHeader>()
+            + size_of::<[u8; 160]>()
+            + size_of::<R<(), WalError>>()
+            + frames::content_digest_frame();
+        layout_decode
+            .max(envelope)
+            .max(page_decode())
+            .max(page_encode())
+    }
+}
+
 #[test]
 fn n1_transition_source_bounds_cover_measured_frames() {
-    use super::super::{LayoutView, Shape};
+    use super::source;
     use std::mem::size_of;
     let bound = super::source_bytes();
     let entry = super::entry_bytes();
     let sha = frames::SHA;
-    let digest = frames::content_digest_frame() + sha;
+    assert_eq!(source::SHA, sha, "pinned SHA closure");
+    // Each codec chain, measured function by function, within its counted term.
+    let codecs = [
+        (
+            "row_record_decode",
+            measured::rr_decode_record(),
+            source::row_codec(),
+        ),
+        (
+            "row_record_encode",
+            measured::rr_encode_record(),
+            source::row_codec(),
+        ),
+        (
+            "row_record_canonical",
+            measured::rr_canonical(),
+            source::row_codec(),
+        ),
+        (
+            "tree_page_decode",
+            measured::tp_decode(),
+            source::tree_codec(),
+        ),
+        (
+            "tree_page_lower_bound",
+            measured::tp_lower_bound(),
+            source::tree_codec(),
+        ),
+        (
+            "tree_page_leaf_cell",
+            measured::tp_leaf_cell(),
+            source::tree_codec(),
+        ),
+        (
+            "tree_page_prepare_leaf_edit",
+            measured::tp_prepare_leaf_edit(),
+            source::leaf_edit(),
+        ),
+        (
+            "tree_page_plan_encode",
+            measured::tp_encode(),
+            source::leaf_edit(),
+        ),
+        (
+            "undo_record_material",
+            measured::ur_material(),
+            source::material(),
+        ),
+        (
+            "frame_callee",
+            measured::frame_callee(),
+            source::frame_callee(),
+        ),
+    ];
+    for (name, chain, counted) in codecs {
+        println!("N1_SOURCE_CODEC\t{name}\tmeasured={chain}\tcounted={counted}");
+        assert!(
+            chain <= counted,
+            "{name}: measured {chain} > counted {counted}"
+        );
+    }
     let row_job = frames::job_chains()
         .iter()
         .map(|(_, bytes)| *bytes)
@@ -1422,28 +2037,16 @@ fn n1_transition_source_bounds_cover_measured_frames() {
         .map(|(_, bytes)| *bytes)
         .max()
         .unwrap();
-    // decode_layout: arguments, returned views, envelope and redo walk with
-    // Init validation's nested page view, and the frame digest.
-    let layout_decode = size_of::<(&[u8], FrameExpectation, Profile)>()
-        + size_of::<Result<LayoutView<'_>, Error>>()
-        + size_of::<LayoutView<'_>>()
-        + size_of::<Result<wal_frame::FrameEnvelope<'_>, wal_frame::WalError>>()
-        + size_of::<(Operation, Shape, &[u8], [usize; 5])>()
-        + size_of::<Result<wal_frame::RedoRecordView<'_>, wal_frame::WalError>>()
-        + frames::decode_page_frame()
-        + digest;
-    let envelope = size_of::<wal_frame::WalFrameHeader>()
-        + 160
-        + size_of::<Result<(), wal_frame::WalError>>()
-        + digest;
-    let page_decode = frames::decode_page_frame() + digest;
-    let page_encode = frames::encode_page_frame() + digest;
-    let callee = [layout_decode, envelope, page_decode, page_encode]
-        .into_iter()
-        .max()
-        .unwrap();
+    // Whole chains: the entry frame, the phase's own locals, one SHA closure
+    // and one measured callee chain.
     let prepared = entry + prepare::locals_bytes() + sha;
-    let framing = entry + frame::locals_bytes();
+    let framing = entry + frame::locals_bytes() + source::slack() + sha;
+    let writing = entry
+        + size_of::<[u8; 640]>()
+        + size_of::<[&[u8]; source::ROW_EDIT_CELLS]>()
+        + size_of::<retention_obligation::row::AgingTransition<'_>>()
+        + size_of::<tree_page::TreePageView<'_>>()
+        + sha;
     let chains = [
         ("prepare+row_job_census", prepared + row_job),
         ("prepare+row_root_decode", prepared + row_root),
@@ -1456,31 +2059,56 @@ fn n1_transition_source_bounds_cover_measured_frames() {
             prepared + retention_obligation::row::source_bytes(),
         ),
         ("prepare+row_codec_bound", prepared + row::source_bytes()),
-        ("frame+layout_decode", framing + layout_decode),
-        ("frame+envelope_finish", framing + envelope),
-        ("frame+page_decode", framing + page_decode),
-        ("frame+page_encode", framing + page_encode),
+        (
+            "prepare+row_record_decode",
+            prepared + measured::rr_decode_record(),
+        ),
+        (
+            "prepare+row_record_encode",
+            prepared + measured::rr_encode_record(),
+        ),
+        ("prepare+tree_page_decode", prepared + measured::tp_decode()),
+        (
+            "prepare+leaf_edit",
+            prepared + measured::tp_prepare_leaf_edit(),
+        ),
+        ("prepare+undo_material", prepared + measured::ur_material()),
+        ("frame+callee", framing + measured::frame_callee()),
         (
             "write+aging_next",
-            entry
-                + 640
-                + size_of::<retention_obligation::row::AgingTransition<'_>>()
-                + retention_obligation::row::source_bytes().max(row_job),
+            writing + retention_obligation::row::source_bytes().max(row_job),
+        ),
+        (
+            "write+leaf_encode",
+            writing + measured::tp_prepare_leaf_edit().max(measured::tp_encode()),
         ),
     ];
     for (name, bytes) in chains {
         println!("N1_SOURCE_CHAIN\t{name}\t{bytes}");
         assert!(bound >= bytes, "{name}");
     }
-    assert!(callee <= frame::CALLEE_BYTES, "framing callee {callee}");
     let measured = chains.iter().map(|(_, bytes)| *bytes).max().unwrap();
     println!(
-        "N1_SOURCE bound={bound} measured={measured} entry={entry} prepare={} locals={} callee={} frame={} frame_callee_measured={callee} write={} cap=65536 recovered_peak=65512",
+        "N1_SOURCE bound={bound} measured={measured} entry={entry} prepare={} locals={} callee={} frame={} write={} slack={} cap=65536 recovered_peak=65512",
         prepare::source_bytes(),
         prepare::locals_bytes(),
         prepare::callee_bytes(),
         frame::source_bytes(),
-        prepare::write_source_bytes()
+        prepare::write_source_bytes(),
+        source::slack(),
+    );
+    println!(
+        "N1_SOURCE_TERMS ledger={} status={} material={} leaf={} job_edit={} graph={} row_codec={} tree_codec={} leaf_edit={} frame_callee={}",
+        source::ledger(),
+        source::status(),
+        source::material(),
+        source::leaf(),
+        source::job_edit(),
+        source::graph(),
+        source::row_codec(),
+        source::tree_codec(),
+        source::leaf_edit(),
+        source::frame_callee(),
     );
     assert_eq!(
         bound,

@@ -39,6 +39,7 @@ mod cells;
 mod frame;
 mod graph;
 mod prepare;
+mod source;
 
 /// Fixed output roles of the caller's five-page loan. Physical WAL order is
 /// computed separately from the actual page identities.
@@ -337,12 +338,13 @@ fn entry_bytes() -> usize {
         + size_of::<Result<super::LayoutView<'_>>>()
         + size_of::<Option<&[u8]>>()
         + 16 * size_of::<usize>()
+        + source::slack()
 }
 
-/// Hand-counted nonrecursive source bound of `produce`/`observe`: the entry
-/// frame plus the deepest of the sequential phases (prepare, page/Aging
-/// placement, framing/comparison). Caller loans (5 pages, frame) are charged
-/// by the caller.
+/// Counted nonrecursive source bound of `produce`/`observe`: the entry frame
+/// plus the deepest of the sequential phases (prepare, page/Aging placement,
+/// framing/comparison), each with its counted callee chains (`source`).
+/// Caller loans (5 pages, frame) are charged by the caller.
 pub(crate) fn source_bytes() -> usize {
     entry_bytes()
         + prepare::source_bytes()
