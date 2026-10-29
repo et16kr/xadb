@@ -1,0 +1,117 @@
+{
+  "status": "FROZEN_INPUTS_NOT_EXECUTED_AGAINST_PRODUCT",
+  "plan_freeze": {
+    "sha256": "5286a7f6395aff44d7c49825d574ba69138ffa2a0a1e6e097aeabbd01f1bc336",
+    "frozen_by": "U2-C4b before generation; parent adoption pending"
+  },
+  "generator_runs": 1,
+  "auditor_runs": 1,
+  "projection_runs": 1,
+  "product_executions": 0,
+  "raw_count": 137,
+  "raw_bytes": 3382130,
+  "rows": 26,
+  "checkpoints": 6,
+  "profile": "f49d4bb26a5c0e1bd66dec9a2b0f77aa24e3fafadf54f27e5db9ab9a960e204e",
+  "files": {
+    "input-plan.json": {
+      "bytes": 11334,
+      "sha256": "5286a7f6395aff44d7c49825d574ba69138ffa2a0a1e6e097aeabbd01f1bc336"
+    },
+    "generate_literals.py": {
+      "bytes": 7327,
+      "sha256": "71ae14c22c8555928a5191440e30a50a6d0194b5f50e2f4e57eb2c50d54b8b18"
+    },
+    "audit_literals.py": {
+      "bytes": 17830,
+      "sha256": "e1e64a578888aca74e778f184d2a842ad23fa0c813757e0bc3276cf0b8e84fc9"
+    },
+    "manifest.json": {
+      "bytes": 94558,
+      "sha256": "9a484fc975e9d83340729bf1d117431abbeb97944e7031b66be62b8ab4635657"
+    },
+    "raw-index.tsv": {
+      "bytes": 19716,
+      "sha256": "696c7ba15c4d55f3afef803afd1109a7b3b3ad9527e00de0f4fa65f468e1700d"
+    },
+    "steps.tsv": {
+      "bytes": 27938,
+      "sha256": "67cc203ac42fd11e899cee1f8a106673bbf7551596e70874f286c4e79e12c5b9"
+    },
+    "generation-result.json": {
+      "bytes": 352,
+      "sha256": "0023de309cfb214b9efc4b4a04a17740c6c48a0c3d7d77c773fcedb02cbf2d1d"
+    },
+    "generation.stdout": {
+      "bytes": 334,
+      "sha256": "a09efc2cac117073220762afebcc5b57dd5caf371af291fc5f4f9b1211023d91"
+    },
+    "generation.stderr": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "audit.stdout": {
+      "bytes": 247,
+      "sha256": "43247d31ecc1824a21f8c4b3f805cf04d60eda1408cd90a03d1f188cbee94852"
+    },
+    "audit.stderr": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "checkpoints.tsv": {
+      "bytes": 27586,
+      "sha256": "2964e48b3a2114dcb8e075074b24aead4a2d44dc05958c0ba2bb4336e4274b23"
+    },
+    "checkpoint-projection-receipt.json": {
+      "bytes": 762,
+      "sha256": "383c6e572bf555e94137c4298f758e94e2744eb64ea5a698820c584ab53d73ca"
+    }
+  },
+  "runtime_admission": "NOT_ADMITTED: executable only after the single current-format switch (U2-C4c) with the U2-C2 base4 capture; exact memory hooks/source/ELF and immutable input SHA re-freeze still required.",
+  "pinned_inputs_unchanged": {
+    "tests/fixtures/dev3-catalog-create/native3/generate_literals.py": {
+      "expected": "bb3a71e439f0f96071893721824164dbe7b0333176e1dc965a426b55b5f261b7",
+      "actual": "bb3a71e439f0f96071893721824164dbe7b0333176e1dc965a426b55b5f261b7"
+    },
+    "tests/fixtures/module-row-format/catalog3/serializer3.py": {
+      "expected": "0b23d146ef7fa5a1ba712baee37c60c882011f36832ef11b5f1d2b49dea70de1",
+      "actual": "0b23d146ef7fa5a1ba712baee37c60c882011f36832ef11b5f1d2b49dea70de1"
+    },
+    "tests/fixtures/dev3-plan4-free-undo/generate_literals.py": {
+      "expected": "a9a646f5fd047b1fbd73d743d99d56cde9a8217bf65587d08e9dd1f892e6bb42",
+      "actual": "a9a646f5fd047b1fbd73d743d99d56cde9a8217bf65587d08e9dd1f892e6bb42"
+    },
+    "tests/fixtures/dev3-catalog-create/transition/generate_literals.py": {
+      "expected": "3716f9d63f099051363bebeeaf0ebe4586ccd0984aa91735a7de82eba7d23b7e",
+      "actual": "3716f9d63f099051363bebeeaf0ebe4586ccd0984aa91735a7de82eba7d23b7e"
+    },
+    "tests/fixtures/dev3-catalog-create/native3/input-plan.json": {
+      "expected": "f6e0dd554a91931cc8e048e775a666dacd777f0c1c3285abed6773ec15f21eeb",
+      "actual": "f6e0dd554a91931cc8e048e775a666dacd777f0c1c3285abed6773ec15f21eeb"
+    },
+    "tests/fixtures/dev3-catalog-create/native3/manifest.json": {
+      "expected": "e648b0bc4fb8ccf5f258cec6d521128daef6e59f3f9a20825d19eb81d68555df",
+      "actual": "e648b0bc4fb8ccf5f258cec6d521128daef6e59f3f9a20825d19eb81d68555df"
+    },
+    "tests/fixtures/dev3-catalog-create/memory-gap/input-plan.json": {
+      "expected": "3c21253e75cb168a34c7f4d054a27e1bbeb536221a96389208052371f4dd9208",
+      "actual": "3c21253e75cb168a34c7f4d054a27e1bbeb536221a96389208052371f4dd9208"
+    },
+    "tests/fixtures/dev3-catalog-create/memory-gap/manifest.json": {
+      "expected": "edfe57082b56540ea5e71f0d5109ca98dc131369d1906388f5dd171f69d3a92b",
+      "actual": "edfe57082b56540ea5e71f0d5109ca98dc131369d1906388f5dd171f69d3a92b"
+    },
+    "tests/fixtures/dev3-catalog-create/memory-gap/checkpoints.tsv": {
+      "expected": "e0cd3791ddb9a7064387a68809cb3cbe8b26e266e2c824271677c2b16c168268",
+      "actual": "e0cd3791ddb9a7064387a68809cb3cbe8b26e266e2c824271677c2b16c168268"
+    },
+    "tests/fixtures/module-row-format/catalog3/manifest.json": {
+      "expected": "714d6583459998b8bee50992ec39e55c3eb05a750b9116533e9d52cd24816adf",
+      "actual": "714d6583459998b8bee50992ec39e55c3eb05a750b9116533e9d52cd24816adf"
+    }
+  },
+  "projector": "tests/fixtures/dev3-catalog-create/native3/project_checkpoints.py",
+  "v2_schedule_equivalence": "audited: 26 rows, ids/LSN/epoch/kind/operation/bytes/WAL offsets/page-role sets/checkpoint scalars equal to memory-gap v2; every frame differs",
+  "v3_prefix": "MC03 L1..5 and MC04 L1..7 equal native3 N01 (frame and state)",
+  "not_carried_over": "v2 MC04 L8..11 vs transition K03..K06 (cross-version)"
+}

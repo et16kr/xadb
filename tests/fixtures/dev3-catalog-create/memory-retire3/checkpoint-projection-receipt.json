@@ -1,0 +1,17 @@
+{
+  "status": "FROZEN_MANIFEST_PROJECTION_NO_REGENERATION",
+  "source_manifest_sha256": "feb90a36adaf12540f3f618e31820f497e7d1e9241fb67fde5435e522d427ccf",
+  "projector_sha256": "8bfddf4af9dcb06190fb250d82334b2f491b5d64e3c4e1d9c99da8dd6aa518e7",
+  "v2_reproduced": {
+    "native": "0d1abf8d70b01cbaeea218f3cdcb49194e1e17f0b65f362f7f83877b8d98551e",
+    "memory-gap": "e0cd3791ddb9a7064387a68809cb3cbe8b26e266e2c824271677c2b16c168268",
+    "memory-retire": "44abad550f706b5c2fffa39cd0ddc7f6d5c352f67ee18e253d7fd31876324164"
+  },
+  "file": "checkpoints.tsv",
+  "sha256": "c7be1dcf2802b04c205cbb353b0ccc928f8b2c5d33dc55625b03aebf9a307c66",
+  "bytes": 13860,
+  "rows": 3,
+  "product_executions": 0,
+  "generator_additional_runs": 0,
+  "auditor_additional_runs": 0
+}
