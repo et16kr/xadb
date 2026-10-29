@@ -310,6 +310,24 @@
    "parent": "live",
    "runs": 119,
    "sha256": "7e2faa9c473a19dc1ea82ecd7caf3fa436584783df869e3a3cbcaf6a454b4f40"
+  },
+  {
+   "name": "d-residual-clr",
+   "parent": "live",
+   "runs": 85,
+   "sha256": "85047a4753dc38226ca5f67f0f5fc7237dea555dcde80643dda40c260088ae65"
+  },
+  {
+   "name": "d-residual-peak",
+   "parent": "live",
+   "runs": 82,
+   "sha256": "a1c0f6ae992baf20ea8beff7894a8390cdcc6db1dc87ed976c5f8abd2d1efc84"
+  },
+  {
+   "name": "d-committed-head",
+   "parent": "live",
+   "runs": 105,
+   "sha256": "1fb911d89d435f5baa1628d7716a73a2e885310156e7e57312246f3a5efad368"
   }
  ],
  "envelopes": [

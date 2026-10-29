@@ -8,7 +8,7 @@ use crate::storage::{
     page::{PageIdentity, PageRef},
     plan4_recovery_base::{Error, PAGE_BYTES, Result, first_file, one, put, put16},
     retention_obligation,
-    retention_page::{catalog as queue, row as row_queue},
+    retention_page::{catalog as queue, catalog3, row as row_queue},
     semantic_catalog,
     transaction_record::TxnRef,
 };
@@ -160,16 +160,24 @@ fn encode(
             if job.state() != row_queue::JobState::RootReserved {
                 continue;
             }
-            // Job3 Catalog-scope items need the Profile3 semantic projection
-            // (U2-C3); a Row-scope RowReserve owns one UndoSlot item.
-            if job.scope() != Some(row_queue::JobScope::Row) {
-                return Err(Error::Unsupported);
-            }
             if count != 0 {
                 return Err(Error::IdentityMismatch);
             }
-            row_undo_item(output, transactions, job)?;
-            count = 1;
+            // A Row-scope RowReserve owns one UndoSlot item; a Catalog-scope
+            // CREATE its three items through the Catalog-scope Job3 view.
+            let Some(catalog) = catalog3::JobView::catalog(job) else {
+                row_undo_item(output, transactions, job)?;
+                count = 1;
+                continue;
+            };
+            let actor = catalog.source().ok_or(Error::IdentityMismatch)?;
+            let owner = reserving_owner(output, transactions, actor)?;
+            let mut items = [0; semantic_catalog::inventory::ITEMS_BYTES];
+            semantic_catalog::inventory::global_items(catalog, owner, &mut items)?;
+            for index in 0..3 {
+                item_slot(output, index)?.copy_from_slice(&items[index * 96..(index + 1) * 96]);
+            }
+            count = 3;
             continue;
         }
         let job = queue::decode_job(rows.job(ordinal)?, profile.spec().namespace)?;
@@ -254,14 +262,13 @@ fn encode(
     Ok(future)
 }
 
-/// Profile3 Row mode: a RowReserve's `UndoSlot(U)` item in the Forward row's
-/// category, owned by its actor's ATT row and born at the lease.
-fn row_undo_item(
+/// Profile3 Row mode: the one ATT owner row of a reserving actor among the
+/// packed transactions.
+fn reserving_owner(
     output: &mut [u8; PAGE_BYTES],
     transactions: usize,
-    job: row_queue::JobView<'_>,
-) -> Result<()> {
-    let actor = job.source().ok_or(Error::IdentityMismatch)?;
+    actor: TxnRef,
+) -> Result<u16> {
     let mut owner = None;
     for index in 0..transactions {
         if TxnRef::decode(&owner_slot(output, index)?[8..56])? == actor
@@ -270,13 +277,24 @@ fn row_undo_item(
             return Err(Error::IdentityMismatch);
         }
     }
-    let owner = owner.ok_or(Error::IdentityMismatch)?;
+    Ok(owner.ok_or(Error::IdentityMismatch)? as u16)
+}
+
+/// Profile3 Row mode: a RowReserve's `UndoSlot(U)` item in the Forward row's
+/// category, owned by its actor's ATT row and born at the lease.
+fn row_undo_item(
+    output: &mut [u8; PAGE_BYTES],
+    transactions: usize,
+    job: row_queue::JobView<'_>,
+) -> Result<()> {
+    let actor = job.source().ok_or(Error::IdentityMismatch)?;
+    let owner = reserving_owner(output, transactions, actor)?;
     let undo = job.undo().ok_or(Error::IdentityMismatch)?;
     let item = item_slot(output, 0)?;
     item.fill(0);
     item[0] = 2;
     item[1] = 2;
-    put16(item, 2, owner as u16);
+    put16(item, 2, owner);
     undo.encode(&mut item[8..48])?;
     put(item, 64, 1);
     put(item, 72, job.lease_lsn());
@@ -284,8 +302,10 @@ fn row_undo_item(
 }
 
 /// Typed nested codec closure. Its sum is the Catalog2 mode's; the Profile3
-/// Row mode has no separate bound yet. Caller-owned rows/adapter, output page and any
-/// retained current/projected views are accounted by the calling phase.
+/// Row mode (Job3 decode, the Catalog-scope Job3 view of a CREATE reservation
+/// or a RowReserve item) has no separate bound yet and no caller outside tests.
+/// Caller-owned rows/adapter, output page and any retained current/projected
+/// views are accounted by the calling phase.
 pub(in crate::storage) fn current_source_bytes() -> usize {
     use foundation::codec::ContentHasher;
     use std::mem::size_of;

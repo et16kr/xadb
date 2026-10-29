@@ -11,9 +11,14 @@ and, after D commits without its Catalog Prune and a System Undo INIT of page18,
 a Retained A row in D's table 7. r4 adds commit-order twins (a committed row
 older than its table's CREATE, pruned or not) and a RowReserve beside a System
 page reservation. r5 commits A (Ready Terminal, q a_q) over Retained rows or
-a compensated table-7 root, with q above or below each table creator. Integers and SHA claims here are not WAL
-history; D's residual rows copy the Profile2 Catalog recipe only as a stand-in
-for the Profile3 owner.
+a compensated table-7 root, with q above or below each table creator. w1 adds
+D residual negatives for the wired Profile3 Catalog ledger: a CLR row off by
+one byte, the Row peak in place of P_B, and a committed Status head that is not
+the Retained root's Undo. Integers and SHA claims here are not WAL history.
+D's residual rows are the contract's Catalog CREATE values for C254: the group
+table of dev3-catalog-create.md (Forward 153840+C, CLR 119984+C, terminal
+56712, RollbackStart 3040, peak P_B) and dev3-create-job-format.md 5 (Job width
+1024 keeps those bytes; Job3 is 1024 too).
 """
 from pathlib import Path
 import hashlib
@@ -39,8 +44,9 @@ AGING_START_BYTES = 19672
 FRAME1 = 20992 + 208  # one-page System allocation frame
 SYS_PEAK = [2, 114688, 0, 0, 1, 0]
 CREATE_PEAK = [9, 425984, 0, 9, 5, 1]
-# Profile2 Catalog frame bytes for a 254-byte Catalog cell (stand-in recipe).
-BEGIN, RESERVE, FORWARD254, CLR254 = 56712, 86640, 154094, 120238
+# Catalog CREATE group bytes for a 254-byte Catalog cell (contract table; see
+# the module note): Begin, Reserve, Forward 153840+C and CLR 119984+C.
+BEGIN, RESERVE, FORWARD254, CLR254 = 56712, 86640, 153840 + 254, 119984 + 254
 
 
 def sha(b): return hashlib.sha256(b).digest()
@@ -311,7 +317,7 @@ LIVE = dict(undo_high=4, f_row=1, f_q=2, f_local=2, free_undo=3, status14_digest
             reserved=False, slot32='finished', system=False, system_terminal=0, system_owner=1,
             create=None, undo15_lsn=36, item_order=(0, 1, 2), projection=None,
             row_reserve=False, row_items='one', d_commit=False, a_row7=False, f_table7=False,
-            c_q=1, a_q=None, a_comp7=False)
+            c_q=1, a_q=None, a_comp7=False, d_clr=0, d_peak=None, d_head=None)
 
 
 def live(genesis_digest, **changes):
@@ -377,7 +383,8 @@ def live(genesis_digest, **changes):
         images[8] = relsn(image(INITIAL, 8), 37, catalog + [entry(7, rec7)])
         images[14] = page(14, STATUS, 2, 37, [status_home(active_core(d_ref, u15), 1)])
         if v['d_commit']:
-            images[14] = page(14, STATUS, 2, 38, [status_home(committed_core(d_ref, 3, u15), 1)])
+            d_head = slot_ref(v['d_head']) if v['d_head'] else u15
+            images[14] = page(14, STATUS, 2, 38, [status_home(committed_core(d_ref, 3, d_head), 1)])
         images[15] = page(15, UNDO, 3, 37, [catalog_undo(4, 5, d_ref, 7)])
         images.update(d_initial)
         if leaf7:
@@ -544,11 +551,12 @@ def live(genesis_digest, **changes):
         a_items, a_digest = 1, normalized(items if v['row_items'] == 'kind3' else [item])
     if d_active:
         owners.append((1, d_ref))
-        d_debt = lambda wal, **x: dict(steps=1, wal=wal, peak=CREATE_PEAK, **x)
+        d_debt = lambda wal, **x: dict(steps=1, wal=wal, peak=v['d_peak'] or CREATE_PEAK, **x)
         if create == 'reserved':
             items = [xoi_item(1, 2, 1, pref(16), 36), xoi_item(1, 2, 1, pref(17), 36),
                      xoi_item(2, 2, 1, u15, 36)]
-            d_rows = budget_rows({0: d_debt(CLR254), 1: d_debt(FORWARD254, pages=2, undo=1),
+            d_rows = budget_rows({0: d_debt(CLR254 + v['d_clr']),
+                                  1: d_debt(FORWARD254, pages=2, undo=1),
                                   2: d_debt(56712), 3: d_debt(3040)})
             descriptors[1] = descriptor(1, 1, d_ref, (36, 35, 35, 2), d_rows, core=active_core(d_ref),
                                         change=36, consumed=BEGIN + RESERVE, items=3,
@@ -556,7 +564,7 @@ def live(genesis_digest, **changes):
             items = [items[i] for i in v['item_order']]
             reserved_entries = {16: (1, d_ref), 17: (1, d_ref)}
         else:
-            d_rows = budget_rows({0: d_debt(CLR254), 2: d_debt(56712), 3: d_debt(3040)})
+            d_rows = budget_rows({0: d_debt(CLR254 + v['d_clr']), 2: d_debt(56712), 3: d_debt(3040)})
             descriptors[1] = descriptor(1, 1, d_ref, (37, 36, 35, 3), d_rows,
                                         core=active_core(d_ref, u15), change=37,
                                         consumed=BEGIN + RESERVE + FORWARD254, last_mutation=1)
@@ -687,6 +695,9 @@ def main():
         ('state-compensated-writer', dict(create='retained', d_commit=True, a_comp7=True, a_q=4)),
         ('compensated-writer-before-create', dict(create='retained', d_commit=True, a_comp7=True,
                                                   a_q=2, f_q=4)),
+        ('d-residual-clr', dict(create='retained', d_clr=1)),
+        ('d-residual-peak', dict(create='reserved', d_peak=ROW_PEAK)),
+        ('d-committed-head', dict(create='retained', d_commit=True, a_row7=True, d_head=12)),
     ]:
         variants.append((name, 'live', live(gd, **change)))
     for name, data in bases.items():

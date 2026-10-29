@@ -1,27 +1,36 @@
 {
   "schema": "XADB_ROW_BASE4_CLOSURE_V2",
-  "baseline": "31e4614",
-  "revision": "r5",
+  "baseline": "49a7578",
+  "revision": "w1",
   "previous_revision": {
-    "revision": "r4",
-    "sha256": "fc8a40f61c89d07517cceb7afbec70488c7e429960708090c2c997f654789261"
+    "revision": "r5",
+    "sha256": "875d4ed7aec45019fa4315b621c82871b0ef9d5ca724a319f084173555de9853"
   },
   "previous_commits": [
+    "55d63ad",
+    "06b8ad2",
+    "b4773db",
+    "c71baff",
+    "05b3ee5",
+    "fe249d1"
+  ],
+  "rebased_from": [
     "f1771b6",
     "a9501a2",
     "4c4295c",
     "c24bff4",
-    "20d448d"
+    "20d448d",
+    "288df8f"
   ],
   "status": "FROZEN_INPUTS_NOT_EXECUTION_EVIDENCE",
-  "scope": "Pure uncalled Profile3/base4 current-state closure over immutable bytes. r2 accepts System allocation states (Finished INIT, Prepared page reservation) through validate_row_base_allocation, checks Catalog-scope Job3 relations, provenance, ledger rows and XOI inventory through the shared Catalog base seam, and fails closed with CatalogUnwired after all structural relations when a Catalog-scope semantic residual would be needed. r3 admits a row in a Transaction-stamped table only under a committed (TerminalReady outcome 1) creator whose Catalog root is Retained, bounds committed row writers by the header source, and accepts one Row-scope Reserved root per base with exactly one UndoSlot(U) item. r4 orders every committed row after its table creator (row q > the record Committed q, or the creator Ready Terminal q while unpruned) and reports a RowReserve beside another reservation as Unsupported. r5 also orders a committed Row actor still on its Ready Terminal after its table creator (Ready q > creator q) for every Transaction-stamped row and every ReleasingCompensated Row root. Profile3 Row XOI mode reproduces the inventory page. No INIT/WAL history, source selection, replay or Profile2 behaviour change.",
+  "scope": "Pure uncalled Profile3/base4 current-state closure over immutable bytes. r2 accepts System allocation states (Finished INIT, Prepared page reservation) through validate_row_base_allocation, checks Catalog-scope Job3 relations, provenance, ledger rows and XOI inventory through the shared Catalog base seam (r2..r5 failed closed with CatalogUnwired when a Catalog-scope semantic residual was needed; w1 wires the exact Profile3 Catalog ledger through catalog3::JobView instead). r3 admits a row in a Transaction-stamped table only under a committed (TerminalReady outcome 1) creator whose Catalog root is Retained, bounds committed row writers by the header source, and accepts one Row-scope Reserved root per base with exactly one UndoSlot(U) item. r4 orders every committed row after its table creator (row q > the record Committed q, or the creator Ready Terminal q while unpruned) and reports a RowReserve beside another reservation as Unsupported. r5 also orders a committed Row actor still on its Ready Terminal after its table creator (Ready q > creator q) for every Transaction-stamped row and every ReleasingCompensated Row root. Profile3 Row XOI mode reproduces the inventory page. No INIT/WAL history, source selection, replay or Profile2 behaviour change.",
   "budget": {
     "total_seconds": 1200,
     "compiler_seconds": 600,
     "case_seconds": 60,
     "output_bytes": 8388608
   },
-  "independence": "author.py is stdlib-only, imports no engine code and reuses no engine encoder; parents are pinned by sha256 below. Catalog actor D residual rows copy the Profile2 Catalog recipe only as a stand-in.",
+  "independence": "author.py is stdlib-only, imports no engine code and reuses no engine encoder; parents are pinned by sha256 below. Catalog actor D residual rows are the contract Catalog CREATE values for C254 (dev3-catalog-create.md group table; dev3-create-job-format.md 5: Job width 1024 keeps them, Job3 is 1024).",
   "runtime_tests": [
     {
       "selector": "storage::plan4_recovery_base::row::graph::tests::base4_closure_accepts_genesis_and_aging_start",
@@ -44,9 +53,9 @@
       "reason": "state-row-reserved (A RowReserve of the free Undo15 at 33, one UndoSlot(U15) XOI item in the Forward category) accepted with reserved RowUndoSlot, 2 owners/1 item/1 chunk/5 reads; check_queue Ok; validate_relations None; row_reservation(None) RowUndoSlot; row_item Ok; encode reproduces bytes."
     },
     {
-      "selector": "storage::plan4_recovery_base::row::graph::tests::base4_closure_catalog_create_fails_closed_after_structure",
+      "selector": "storage::plan4_recovery_base::row::graph::tests::base4_closure_accepts_catalog_scope_actor",
       "expected": "PASS",
-      "reason": "state-create-reserved, state-create-retained and state-create-committed-row (D committed at 38, CREATE root still Retained, one Retained A row in table 7 leased at 41) pass every structural relation (validate_relations gives CatalogCreate / None / None) and inventory check, then decode and encode both return CatalogUnwired; encode output equals input."
+      "reason": "w1: state-create-reserved, state-create-retained and state-create-committed-row decode and encode Ok with census{tx 2, reserved CatalogCreate, owners 3 items 3 chunks 1 reads 5} / {tx 2, tables 2, owners 3} / {tx 1, retained 3, tables 2, rows 4, owners 2} (other fields as LIVE_CENSUS); encode output equals input. On live, catalog_remaining and catalog_transaction given A's Row-scope Retained root both return Base(IdentityMismatch) before any Catalog ledger call."
     },
     {
       "selector": "storage::plan4_recovery_base::row::graph::tests::base4_closure_entry_gates_profile_base_root_job",
@@ -56,28 +65,37 @@
     {
       "selector": "storage::plan4_recovery_base::row::graph::tests::base4_closure_relation_variants",
       "expected": "PASS",
-      "reason": "33 relation variants each pass decode_layout and are rejected by the closure with the listed error (r3 added committed-writer-bound, create-uncommitted-row, create-uncommitted-committed-row, row-reserved-no-item, row-reserved-two-items, row-reserved-item-kind, row-reserved-twice and changed reserved-row-root; r4 adds committed-row-before-create, committed-row-before-pruned-create (Order) and row-reserved-mixed (Unsupported); r5 adds ready-writer-before-pruned-create, ready-writer-before-create and compensated-writer-before-create (Order))."
+      "reason": "36 relation variants each pass decode_layout and are rejected by the closure with the listed error (r3 added committed-writer-bound, create-uncommitted-row, create-uncommitted-committed-row, row-reserved-no-item, row-reserved-two-items, row-reserved-item-kind, row-reserved-twice and changed reserved-row-root; r4 adds committed-row-before-create, committed-row-before-pruned-create (Order) and row-reserved-mixed (Unsupported); r5 adds ready-writer-before-pruned-create, ready-writer-before-create and compensated-writer-before-create (Order); w1 adds d-residual-clr, d-residual-peak (Base(CatalogSemantic(BudgetMismatch))) and d-committed-head (Base(CatalogSemantic(IdentityMismatch))))."
     },
     {
       "selector": "storage::plan4_recovery_base::row::graph::tests::base4_closure_orders_ready_row_writer_after_creator",
       "expected": "PASS",
-      "reason": "r5 R1-c: for state-ready-writer, state-ready-writer-row7 and state-compensated-writer check_queue Ok, validate_relations None, actors [1,2,0]/[1,3,0]/[1,2,1] and tables [1,3]/[2,4]/[2,3]; their negative twins ready-writer-before-pruned-create, ready-writer-before-create and compensated-writer-before-create keep the same actors and tables gives Order; state-ready-writer decodes with census{LIVE_CENSUS, transactions 0, owners 1} and encode reproduces it; the two D-unpruned states decode and encode to CatalogUnwired with encode output equal to input."
+      "reason": "r5 R1-c: for state-ready-writer, state-ready-writer-row7 and state-compensated-writer check_queue Ok, validate_relations None, actors [1,2,0]/[1,3,0]/[1,2,1] and tables [1,3]/[2,4]/[2,3]; their negative twins ready-writer-before-pruned-create, ready-writer-before-create and compensated-writer-before-create keep the same actors and tables gives Order; state-ready-writer decodes with census{LIVE_CENSUS, transactions 0, owners 1} and encode reproduces it; w1: the two D-unpruned states now decode and encode Ok with census {transactions 0, retained 3, tables 2, rows 4, owners 1} / {transactions 0, releasing 1, tables 2, owners 1} and encode output equal to input."
     },
     {
       "selector": "storage::plan4_recovery_base::row::graph::tests::base4_closure_row_xoi_mode_reproduces_inventory",
       "expected": "PASS",
-      "reason": "Profile3 Row XOI mode (encode_row_current over borrowed slots/root/allocator/Job3 cells) reproduces the INVENTORY page and returns (sum wal, sum steps) of header.remaining for genesis, aging, live, state-system-reserved, state-create-retained, state-row-reserved (emits the one UndoSlot item), state-create-committed-row; state-create-reserved gives Base(Unsupported) pending the Profile3 Catalog item projection."
+      "reason": "Profile3 Row XOI mode (encode_row_current over borrowed slots/root/allocator/Job3 cells) reproduces the INVENTORY page and returns (sum wal, sum steps) of header.remaining for genesis, aging, live, state-system-reserved, state-create-retained, state-row-reserved (emits the one UndoSlot item), state-create-committed-row and (w1) state-create-reserved (emits D's three Catalog items through catalog3::JobView and global_items); 8 states."
     },
     {
       "selector": "storage::plan4_recovery_base::row::graph::source::tests::base4_closure_source_bound_covers_measured_frames",
       "expected": "PASS",
-      "reason": "Production source_bytes phases cover per-frame size_of inventories of every closure chain (frames, seam accessors, phases); prints ROW_BASE_SOURCE with Catalog base3 source_census/layout_source_bytes and ROW_BASE_SIZES. r3 adds the Row reservation/item, creator and header-bound chains; r5 adds the table-creator q chain to the row visitor and the compensated-root pass to tables(); B4 must stay below the 65536 native cap."
+      "reason": "Production source_bytes phases cover per-frame size_of inventories of every closure chain (frames, seam accessors, phases); prints ROW_BASE_SOURCE with Catalog base3 source_census/layout_source_bytes and ROW_BASE_SIZES. r3 adds the Row reservation/item, creator and header-bound chains; r5 adds the table-creator q chain to the row visitor and the compensated-root pass to tables(); w1 charges both Catalog hooks as their frame plus semantic_catalog::profile3_transaction_source_bytes (asserted <= the Profile2 transaction bound, with equal Option<JobView> sizes) and prints ROW_BASE_CATALOG_HOOK; B4 must stay below the 65536 native cap."
+    },
+    {
+      "selector": "storage::semantic_catalog::catalog3_tests::profile3_source_census_keeps_type_sizes_and_reports_delta",
+      "expected": "PASS",
+      "reason": "U2-C3 selector rerun because w1 made resources::transaction_validate/transaction_remaining generic over the Job view (Profile2 instance unchanged): source_branches keeps transaction_validate 11259 and every recorded Profile2 branch value; Profile3 census <= Profile2."
     }
   ],
   "removed_tests": [
     {
       "selector": "storage::plan4_recovery_base::row::graph::tests::base4_closure_live_actor_reaches_allocation_boundary",
       "reason": "r1 boundary (AllocationUnwired) no longer exists; replaced by base4_closure_accepts_live_system_init_done."
+    },
+    {
+      "selector": "storage::plan4_recovery_base::row::graph::tests::base4_closure_catalog_create_fails_closed_after_structure",
+      "reason": "w1: CatalogUnwired no longer exists; replaced by base4_closure_accepts_catalog_scope_actor."
     }
   ],
   "variants": [
@@ -257,7 +275,8 @@
       "name": "state-create-reserved",
       "parent": "live",
       "sha256": "33cebf12ccada1d921b8566d5187af756a3ecb12c1f40dc8cd3e1bf7620b4d6b",
-      "expected": "CatalogUnwired after structure (validate_relations -> CatalogCreate); XOI Row mode Base(Unsupported)"
+      "expected": "ACCEPT census{LIVE_CENSUS with transactions 2, reserved CatalogCreate, XOI owners 3 items 3 chunks 1 read_calls 5}: D Active with its CREATE Reserved (residual CLR 119984+C, Forward 153840+C pages 2 undo 1, terminal 56712, rollback 3040, peak P_B; items 3; last mutation 0); encode reproduces bytes; XOI Row mode reproduces INVENTORY with the three Catalog items of D",
+      "changed_from": "r5 CatalogUnwired after structure, XOI Row mode Base(Unsupported): the Profile3 Catalog hooks are now wired and the Row XOI mode emits Catalog Reserved items through catalog3::JobView"
     },
     {
       "name": "create-undo-lsn",
@@ -275,7 +294,8 @@
       "name": "state-create-retained",
       "parent": "live",
       "sha256": "1904a93aea7009b9b917f7621b6b0f992b1e8a0382bc04b5f92d87e6a7c9af18",
-      "expected": "CatalogUnwired after structure (validate_relations -> None); XOI Row mode reproduces INVENTORY"
+      "expected": "ACCEPT census{LIVE_CENSUS with transactions 2, tables 2, XOI owners 3}: D Active with its CREATE Retained (residual CLR 119984+C, terminal 56712, rollback 3040, peak P_B; last mutation 1; incoming 1); encode reproduces bytes; XOI Row mode reproduces INVENTORY",
+      "changed_from": "r5 CatalogUnwired after structure: the Profile3 Catalog hooks are now wired"
     },
     {
       "name": "retained-projection",
@@ -293,7 +313,8 @@
       "name": "state-create-committed-row",
       "parent": "live",
       "sha256": "2e923c8178afc2630d3a15fa7051ff6bb5e80b7e7f8b3555ec0365d1e9561ec7",
-      "expected": "CatalogUnwired after structure (validate_relations -> None; tables admits the A row in the committed, unpruned CREATE table 7); XOI Row mode reproduces INVENTORY"
+      "expected": "ACCEPT census{LIVE_CENSUS with retained 3, tables 2, rows 4}: D committed q3 with its CREATE root still Retained (Catalog ledger: Committed Status head == root Undo, no residual), one Retained A row in table 7; encode reproduces bytes; XOI Row mode reproduces INVENTORY",
+      "changed_from": "r5 CatalogUnwired after structure: the Profile3 Catalog hooks are now wired"
     },
     {
       "name": "create-uncommitted-row",
@@ -372,7 +393,8 @@
       "name": "state-ready-writer-row7",
       "parent": "live",
       "sha256": "d0b4f4b0d16aaf3de87ccdb3b6b0784416bdd2831069b5b4898c81f815ac7c73",
-      "expected": "CatalogUnwired after structure: D committed q3 unpruned, A Ready q4 with a third Retained row in table 7; check_queue Ok; validate_relations None; actors [1,3,0]; tables [2,4]; encode output equals input"
+      "expected": "ACCEPT census{LIVE_CENSUS with transactions 0, retained 3, tables 2, rows 4, XOI owners 1}: D committed q3 unpruned (Catalog ledger closes its Committed Status over the Retained root), A Ready q4 with a third Retained row in table 7; check_queue Ok; validate_relations None; actors [1,3,0]; tables [2,4]; encode reproduces bytes",
+      "changed_from": "r5 CatalogUnwired after structure: the Profile3 Catalog hooks are now wired"
     },
     {
       "name": "ready-writer-before-create",
@@ -385,7 +407,8 @@
       "name": "state-compensated-writer",
       "parent": "live",
       "sha256": "a213a6583d867d29f43ad671cfa6333d93163afef45ed39822bd620407824fad",
-      "expected": "CatalogUnwired after structure: D committed q3 unpruned, A Ready q4 with a ReleasingCompensated cursor-0 Row root on table 7 (no row version); check_queue Ok; validate_relations None; actors [1,2,1]; tables [2,3]; encode output equals input"
+      "expected": "ACCEPT census{LIVE_CENSUS with transactions 0, releasing 1, tables 2, XOI owners 1}: D committed q3 unpruned, A Ready q4 with a ReleasingCompensated cursor-0 Row root on table 7 (no row version); check_queue Ok; validate_relations None; actors [1,2,1]; tables [2,3]; encode reproduces bytes",
+      "changed_from": "r5 CatalogUnwired after structure: the Profile3 Catalog hooks are now wired"
     },
     {
       "name": "compensated-writer-before-create",
@@ -393,12 +416,33 @@
       "sha256": "7e2faa9c473a19dc1ea82ecd7caf3fa436584783df869e3a3cbcaf6a454b4f40",
       "expected": "Order",
       "note": "r5 scan: A Ready q2 <= unpruned creator D Ready q3 for its ReleasingCompensated root on table 7 (no row version left)"
+    },
+    {
+      "name": "d-residual-clr",
+      "parent": "live",
+      "sha256": "85047a4753dc38226ca5f67f0f5fc7237dea555dcde80643dda40c260088ae65",
+      "expected": "Base(CatalogSemantic(semantic_catalog::Error::BudgetMismatch))",
+      "note": "w1: state-create-retained with D CLR residual 120239 (one byte over 119984+C, C254); validate_transaction remaining != transaction_remaining"
+    },
+    {
+      "name": "d-residual-peak",
+      "parent": "live",
+      "sha256": "a1c0f6ae992baf20ea8beff7894a8390cdcc6db1dc87ed976c5f8abd2d1efc84",
+      "expected": "Base(CatalogSemantic(semantic_catalog::Error::BudgetMismatch))",
+      "note": "w1: state-create-reserved with every D residual row peak set to the Row recipe (9,425984,0,16,5,1) instead of P_B; validate_transaction remaining != transaction_remaining"
+    },
+    {
+      "name": "d-committed-head",
+      "parent": "live",
+      "sha256": "1fb911d89d435f5baa1628d7716a73a2e885310156e7e57312246f3a5efad368",
+      "expected": "Base(CatalogSemantic(semantic_catalog::Error::IdentityMismatch))",
+      "note": "w1: state-create-committed-row with D Committed Status head = Undo12 (another actor's Undo) instead of its Retained root Undo15; transaction_remaining in relations::terminal"
     }
   ],
   "inputs": {
     "author.py": {
-      "bytes": 37585,
-      "sha256": "e9cb5a83b78b6d393289df5c66728306c4c0319a23a045d9f4c840395ed25ead"
+      "bytes": 38448,
+      "sha256": "19842b1dc177b4dd23eb4d436fe01aa98ecac69f3d97a0fc129f8a6ed6769099"
     },
     "genesis.xrb": {
       "bytes": 2097152,
@@ -413,16 +457,16 @@
       "sha256": "5a446fbf0fab629b7bfc10b5040e0a54b77ea6e2a993ca58db70482f3f5c94d9"
     },
     "variants.bin": {
-      "bytes": 94627,
-      "sha256": "e14b5ff035b8a82df861ff66dd440dabb4449662e326197487d28c1f0cfc7a72"
+      "bytes": 108173,
+      "sha256": "9a3a127435d053f7b4f250f10befb8815f211d67a72c4c981ca4fc6c44abef89"
     },
     "envelopes.bin": {
       "bytes": 20480,
       "sha256": "7f9331527ec54a7c7e3e332b1ccafd9395d539d265c3d4793468a0ff47e06653"
     },
     "index.json": {
-      "bytes": 8311,
-      "sha256": "375885f92aa373704ba2f008f9249d536cde769d04d851c730c61852cc77adfd"
+      "bytes": 8777,
+      "sha256": "41f87266ffa53869557be8602f66363fd4a3895ca5eb2ae61ad0ddb630778e05"
     }
   },
   "parents": {

@@ -207,7 +207,6 @@ fn base4_closure_accepts_live_system_init_done() {
     );
     assert_eq!(graph.actors(&mut scratch), Ok([1, 2, 0]));
     assert_eq!(graph.tables(), Ok([1, 3]));
-    assert!(!graph.catalog_unwired.get());
     let (output, encoded) = encoded(LIVE);
     assert_eq!(*output, *LIVE);
     assert_eq!(encoded, Ok(LIVE_CENSUS));
@@ -275,30 +274,74 @@ fn base4_closure_accepts_row_undo_slot_reservation() {
 }
 
 #[test]
-fn base4_closure_catalog_create_fails_closed_after_structure() {
-    // Reserved (three CREATE items), Retained/uncommitted CREATE, and a
-    // committed not yet pruned CREATE whose table holds a Retained A row:
-    // every structural relation and inventory check closes, then the semantic
-    // Catalog residual fails closed.
-    for (name, reserved) in [
-        ("state-create-reserved", ReservedInventory::CatalogCreate),
-        ("state-create-retained", ReservedInventory::None),
-        ("state-create-committed-row", ReservedInventory::None),
+fn base4_closure_accepts_catalog_scope_actor() {
+    // Catalog actor D with its CREATE Reserved (three items), Retained and
+    // uncommitted, or committed and not yet pruned under a Retained A row in
+    // its table: the exact Profile3 Catalog ledger closes D's residual.
+    let active = RowCensus {
+        transactions: 2,
+        inventory: InventoryObservation { owners: 3, ..EMPTY },
+        ..LIVE_CENSUS
+    };
+    for (name, census) in [
+        (
+            "state-create-reserved",
+            RowCensus {
+                reserved: ReservedInventory::CatalogCreate,
+                inventory: InventoryObservation {
+                    owners: 3,
+                    items: 3,
+                    chunks: 1,
+                    read_calls: 5,
+                },
+                ..active
+            },
+        ),
+        (
+            "state-create-retained",
+            RowCensus {
+                tables: 2,
+                ..active
+            },
+        ),
+        (
+            "state-create-committed-row",
+            RowCensus {
+                retained: 3,
+                tables: 2,
+                rows: 4,
+                ..LIVE_CENSUS
+            },
+        ),
     ] {
         let bytes = state(name);
-        let layout = decode_layout(&*bytes, expected()).unwrap();
-        let graph = Graph::new(layout).unwrap();
-        assert_eq!(seam::validate_relations(&graph), Ok(reserved), "{name}");
-        assert!(graph.catalog_unwired.get(), "{name}");
         assert_eq!(
-            decode(&*bytes, expected(), &mut scratch()).err(),
-            Some(RowBaseError::CatalogUnwired),
+            decode(&*bytes, expected(), &mut scratch()).map(|view| view.census()),
+            Ok(census),
             "{name}"
         );
-        let (output, encoded) = encoded(&bytes);
+        let (output, packed) = encoded(&bytes);
         assert_eq!(*output, *bytes, "{name}");
-        assert_eq!(encoded, Err(RowBaseError::CatalogUnwired), "{name}");
+        assert_eq!(packed, Ok(census), "{name}");
     }
+    // A Row-scope root never reaches the Catalog ledger, not even as no root.
+    let graph = Graph::new(decode_layout(LIVE, expected()).unwrap()).unwrap();
+    let (terminal, root) = (graph.job(0).unwrap(), graph.job(1).unwrap());
+    assert!(terminal.row_scope() && root.state() == JobState::RootRetained);
+    let home = graph.home(terminal).unwrap();
+    let crate::storage::transaction_record::TransactionStatusCell::Occupied(status) = home.core()
+    else {
+        panic!("A's Status is occupied");
+    };
+    assert_eq!(
+        graph.catalog_remaining(status, Some(root)),
+        Err(BaseError::IdentityMismatch)
+    );
+    let raw: &[u8; 1536] = LIVE[BANK..BANK + 1536].try_into().unwrap();
+    assert_eq!(
+        graph.catalog_transaction(raw, home, Some(root)),
+        Err(BaseError::IdentityMismatch)
+    );
 }
 
 #[test]
@@ -375,6 +418,15 @@ fn base4_closure_relation_variants() {
             | "ready-writer-before-pruned-create"
             | "ready-writer-before-create"
             | "compensated-writer-before-create" => RowBaseError::Order,
+            // D's descriptor residual differs from the exact Profile3 Catalog
+            // ledger's (a CLR byte, the Row peak), or its committed Status head
+            // is not its Retained root's Undo.
+            "d-residual-clr" | "d-residual-peak" => B(BaseError::CatalogSemantic(
+                semantic_catalog::Error::BudgetMismatch,
+            )),
+            "d-committed-head" => B(BaseError::CatalogSemantic(
+                semantic_catalog::Error::IdentityMismatch,
+            )),
             "catalog-row-mixing" => RowBaseError::Identity,
             "init-initial-digest" => B(BaseError::ProvenanceMismatch),
             "descriptor-last-mutation" => RowBaseError::Ledger(Ledger::OrderMismatch),
@@ -408,7 +460,7 @@ fn base4_closure_relation_variants() {
             "{name}"
         );
     }
-    assert_eq!(seen, 33);
+    assert_eq!(seen, 36);
 }
 
 #[test]
@@ -462,16 +514,35 @@ fn base4_closure_orders_ready_row_writer_after_creator() {
     let (output, packed) = encoded(&bytes);
     assert_eq!(*output, *bytes);
     assert_eq!(packed, Ok(census));
-    for name in ["state-ready-writer-row7", "state-compensated-writer"] {
+    // Over D's committed, unpruned table 7 the Catalog ledger closes D too.
+    for (name, census) in [
+        (
+            "state-ready-writer-row7",
+            RowCensus {
+                retained: 3,
+                tables: 2,
+                rows: 4,
+                ..census
+            },
+        ),
+        (
+            "state-compensated-writer",
+            RowCensus {
+                releasing: 1,
+                tables: 2,
+                ..census
+            },
+        ),
+    ] {
         let bytes = state(name);
         assert_eq!(
-            decode(&*bytes, expected(), &mut scratch).err(),
-            Some(RowBaseError::CatalogUnwired),
+            decode(&*bytes, expected(), &mut scratch).map(|view| view.census()),
+            Ok(census),
             "{name}"
         );
-        let (output, encoded) = encoded(&bytes);
+        let (output, packed) = encoded(&bytes);
         assert_eq!(*output, *bytes, "{name}");
-        assert_eq!(encoded, Err(RowBaseError::CatalogUnwired), "{name}");
+        assert_eq!(packed, Ok(census), "{name}");
     }
 }
 
@@ -543,11 +614,6 @@ fn base4_closure_row_xoi_mode_reproduces_inventory() {
             &rows,
             &mut output,
         );
-        if name == "state-create-reserved" {
-            // Job3 Catalog CREATE items need the Profile3 projection (U2-C3).
-            assert_eq!(result, Err(BaseError::Unsupported), "{name}");
-            continue;
-        }
         // Current credit is every active owner's residual, as in the header.
         let wal = header.remaining.iter().map(|row| row.wal).sum::<u64>();
         let steps = header.remaining.iter().map(|row| row.steps).sum::<u64>();
@@ -555,5 +621,5 @@ fn base4_closure_row_xoi_mode_reproduces_inventory() {
         assert_eq!(*output, bytes[INVENTORY..INVENTORY + PAGE_BYTES], "{name}");
         seen += 1;
     }
-    assert_eq!(seen, 7);
+    assert_eq!(seen, 8);
 }

@@ -168,7 +168,6 @@ fn new_frame() -> usize {
         + size_of::<(&LayoutView<'_>, &Namespace, usize)>()
         + 5 * size_of::<Result<PageView<'_>>>()
         + size_of::<Native<PageView<'_>, RetentionError>>()
-        + size_of::<Cell<bool>>()
         + size_of::<Result<Graph<'_>>>()
 }
 /// Seam::job through row::decode_job.
@@ -487,6 +486,18 @@ fn allocation_measured() -> usize {
         + size_of::<(&[u8], Namespace)>();
     decode.max(entry)
 }
+/// The shared part of either Catalog hook: `catalog_root` (its argument, the
+/// Catalog view, its per-root Result and the transposed return) and the hook's
+/// converted result. The exact Profile3 ledger is charged by its production
+/// bound, which nests `transaction_remaining` under `validate_transaction`.
+fn catalog_hook_measured() -> usize {
+    size_of::<Option<JobView<'_>>>()
+        + size_of::<Option<catalog3::JobView<'_>>>()
+        + size_of::<Option<BaseResult<catalog3::JobView<'_>>>>()
+        + 2 * size_of::<BaseResult<Option<catalog3::JobView<'_>>>>()
+        + size_of::<BaseResult<()>>()
+        + semantic_catalog::profile3_transaction_source_bytes()
+}
 /// relations::terminal for one Catalog-scope Terminal.
 fn terminal_fn_measured() -> usize {
     let frame = size_of::<(&Graph<'_>, JobView<'_>)>()
@@ -499,8 +510,9 @@ fn terminal_fn_measured() -> usize {
         + size_of::<(Pages<'_>, BaseResult<Pages<'_>>)>()
         + size_of::<Option<StatusSlotRef>>()
         + size_of::<LayoutView<'_>>();
-    // The deferred Catalog hook only records the fail-closed flag.
-    let hook = size_of::<(&Graph<'_>, TransactionStatus, Option<JobView<'_>>)>();
+    let hook = size_of::<(&Graph<'_>, TransactionStatus, Option<JobView<'_>>)>()
+        + size_of::<Native<[RemainingBudget; 5], semantic_catalog::Error>>()
+        + catalog_hook_measured();
     frame
         + home_measured()
             .max(header_chain())
@@ -758,7 +770,9 @@ fn ledger_measured() -> [(&'static str, usize); 4] {
         + size_of::<SystemProgress>()
         + 2 * size_of::<BaseResult<()>>()
         + size_of::<BaseResult<(usize, usize)>>();
-    let hook = size_of::<(&Graph<'_>, &[u8; 1536], StatusHome, Option<JobView<'_>>)>();
+    let hook = size_of::<(&Graph<'_>, &[u8; 1536], StatusHome, Option<JobView<'_>>)>()
+        + size_of::<(Profile, Native<(), semantic_catalog::Error>)>()
+        + catalog_hook_measured();
     let budget = size_of::<(&mut [RemainingBudget; 5], &[RemainingBudget; 5])>()
         + 2 * size_of::<RemainingBudget>()
         + size_of::<BaseResult<()>>();
@@ -918,6 +932,22 @@ fn base4_closure_source_bound_covers_measured_frames() {
     }
     // The layout phase nests the Row codec under its own frame.
     assert!(census.layout >= row_codec() + 1536);
+    // The Profile3 ledger terms are Profile2's with the Catalog-scope Job3
+    // view, whose sizes are equal; the hook bound stays within both phases.
+    let (profile3, profile2) = (
+        semantic_catalog::profile3_transaction_source_bytes(),
+        semantic_catalog::transaction_source_bytes(),
+    );
+    assert_eq!(
+        size_of::<Option<catalog3::JobView<'_>>>(),
+        size_of::<Option<retention_page::catalog::JobView<'_>>>()
+    );
+    assert!(profile3 <= profile2, "{profile3} > {profile2}");
+    assert!(catalog_hook() <= census.relations.min(census.ledger));
+    println!(
+        "ROW_BASE_CATALOG_HOOK hook={} profile3_transaction={profile3} profile2_transaction={profile2}",
+        catalog_hook()
+    );
     let catalog = crate::storage::plan4_recovery_base::catalog::source_census();
     let catalog_layout = crate::storage::plan4_recovery_base::catalog::layout_source_bytes();
     println!(

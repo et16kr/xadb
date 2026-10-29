@@ -36,8 +36,8 @@ pub(crate) use projection::catalog_projection_digest;
 pub(crate) use resources::source_branches;
 pub(crate) use resources::{
     borrowed_source_bytes, catalog_read_codec_bytes, layout_source_bytes, page_read_codec_bytes,
-    schema_source_bytes, source_bytes, source_census, status_read_codec_bytes,
-    transaction_source_bytes, undo_read_codec_bytes,
+    profile3_transaction_source_bytes, schema_source_bytes, source_bytes, source_census,
+    status_read_codec_bytes, transaction_source_bytes, undo_read_codec_bytes,
 };
 #[cfg(test)]
 pub(crate) use transition::observe;

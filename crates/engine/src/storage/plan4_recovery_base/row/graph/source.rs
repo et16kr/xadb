@@ -416,6 +416,27 @@ pub(in crate::storage) fn active_chain() -> usize {
         + slack()
         + descriptor_decode()
 }
+/// Either Catalog hook: the union of both argument lists, the Catalog-scope
+/// Job3 view of the actor's root with its conversion, and both ledger results
+/// with their conversion, over the exact Profile3 `validate_transaction` bound
+/// (which nests `transaction_remaining`).
+pub(in crate::storage) fn catalog_hook() -> usize {
+    size_of::<(
+        &Graph<'_>,
+        &[u8; 1536],
+        StatusHome,
+        TransactionStatus,
+        Option<JobView<'_>>,
+    )>() + size_of::<(
+        Option<catalog3::JobView<'_>>,
+        BaseResult<Option<catalog3::JobView<'_>>>,
+        Option<BaseResult<catalog3::JobView<'_>>>,
+    )>() + size_of::<std::result::Result<[RemainingBudget; 5], semantic_catalog::Error>>()
+        + size_of::<std::result::Result<(), semantic_catalog::Error>>()
+        + size_of::<BaseResult<()>>()
+        + slack()
+        + semantic_catalog::profile3_transaction_source_bytes()
+}
 
 #[derive(Clone, Copy, Debug)]
 pub(in crate::storage) struct SourceCensus {
@@ -457,7 +478,7 @@ pub(in crate::storage) fn source_census() -> SourceCensus {
         + scalar;
     let job = 2 * size_of::<JobView<'_>>() + 2 * size_of::<Result<JobView<'_>>>();
     let layout = super::super::layout_source_bytes();
-    let graph = size_of::<(LayoutView<'_>, Namespace, Cell<bool>)>()
+    let graph = size_of::<(LayoutView<'_>, Namespace)>()
         + size_of::<(PageHeader, RootView<'_>)>()
         + 2 * size_of::<std::result::Result<(PageHeader, RootView<'_>), RetentionError>>()
         + 6 * size_of::<Result<PageView<'_>>>()
@@ -499,7 +520,7 @@ pub(in crate::storage) fn source_census() -> SourceCensus {
         + header_read().max(certificate_read()).max(encode);
     // Shared relations: issuer, every Catalog-scope Job, Catalog records,
     // payloads and the Reserved classification, each returning before the next.
-    let hook = semantic_catalog::transaction_source_bytes();
+    let hook = catalog_hook();
     let terminal = size_of::<(&Graph<'_>, JobView<'_>, Header)>()
         + size_of::<(StatusHome, Result<StatusHome>)>()
         + size_of::<(TransactionStatus, TxnRef, bool)>()

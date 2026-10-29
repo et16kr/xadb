@@ -3,9 +3,8 @@
 //! Catalog Jobs and records, payloads, INIT shape, descriptors, System
 //! allocation and inventory) and every Row actor's physical graph and ledger.
 //! Success does not prove historical INIT/WAL, select a source or replay.
-//! A Catalog-scope actor's semantic residual needs the Profile3 Catalog entry,
-//! so any such actor fails closed with `CatalogUnwired` after every structural
-//! relation has been checked.
+//! A Catalog-scope actor's semantic residual is the exact Profile3 Catalog
+//! ledger's, through the Catalog-scope Job3 view of its own root.
 use super::super::catalog::seam::{self, Phase, ReservedInventory, Seam, SeamJob, SeamLayout};
 use super::super::{
     Certificate, DescriptorSpec, Error as BaseError, Expected, Header, INVENTORY_ROOT_CAP,
@@ -23,7 +22,7 @@ use crate::{
         page::{PAGE_BYTES, PageView},
         retention_obligation,
         retention_page::{
-            JOB_BYTES, JOB_COUNT, RetentionError,
+            JOB_BYTES, JOB_COUNT, RetentionError, catalog3,
             row::{self, JobScope, JobState, JobView, RootView},
         },
         row_record::{
@@ -38,7 +37,6 @@ use crate::{
     transaction::TxnId,
 };
 use foundation::identity::{Generation, ObjectHandle, ObjectId, RowId};
-use std::cell::Cell;
 
 #[path = "graph/source.rs"]
 mod source;
@@ -60,9 +58,6 @@ pub(in crate::storage) enum RowBaseError {
     /// Explicitly outside the first Profile3 closure (non-inline or non-Table
     /// payloads, a RowReserve beside another reservation).
     Unsupported,
-    /// A Catalog-scope actor's semantic residual needs the Profile3 Catalog
-    /// ledger entry, which this module cannot reach yet. Never an acceptance.
-    CatalogUnwired,
 }
 type Error = RowBaseError;
 type Result<T> = std::result::Result<T, Error>;
@@ -269,8 +264,6 @@ struct Graph<'a> {
     layout: LayoutView<'a>,
     root: RootView<'a>,
     jobs: [PageView<'a>; 5],
-    /// Set by a deferred Catalog semantic hook; checked last.
-    catalog_unwired: Cell<bool>,
 }
 impl<'a> Graph<'a> {
     fn new(layout: LayoutView<'a>) -> Result<Self> {
@@ -284,7 +277,6 @@ impl<'a> Graph<'a> {
             layout,
             root,
             jobs: [decode(0)?, decode(1)?, decode(2)?, decode(3)?, decode(4)?],
-            catalog_unwired: Cell::new(false),
         })
     }
     fn namespace(&self) -> Namespace {
@@ -621,6 +613,14 @@ impl<'a> Graph<'a> {
     }
 }
 
+/// The Catalog meaning of a Catalog-scope actor's root for its exact Profile3
+/// ledger. The census already pairs Terminal and root scope; a Row-scope root
+/// reaching a Catalog hook is still refused, never passed on as no root.
+fn catalog_root(root: Option<JobView<'_>>) -> BaseResult<Option<catalog3::JobView<'_>>> {
+    root.map(|job| catalog3::JobView::catalog(job).ok_or(BaseError::IdentityMismatch))
+        .transpose()
+}
+
 impl<'a> Seam<'a> for Graph<'a> {
     type Layout = LayoutView<'a>;
     type Job = JobView<'a>;
@@ -661,25 +661,29 @@ impl<'a> Seam<'a> for Graph<'a> {
     fn apply(&self) -> u64 {
         self.root.apply()
     }
-    // U2-C3 call site: semantic_catalog::ledger::transaction_remaining(status,
-    // root.and_then(catalog3::JobView::catalog)) once both branches integrate.
     fn catalog_remaining(
         &self,
-        _status: TransactionStatus,
-        _root: Option<JobView<'a>>,
+        status: TransactionStatus,
+        root: Option<JobView<'a>>,
     ) -> BaseResult<()> {
-        self.catalog_unwired.set(true);
+        semantic_catalog::ledger::transaction_remaining::<catalog3::JobView<'a>>(
+            status,
+            catalog_root(root)?,
+        )?;
         Ok(())
     }
-    // U2-C3 call site: semantic_catalog::ledger::validate_transaction(bytes,
-    // profile, home, root.and_then(catalog3::JobView::catalog)).
     fn catalog_transaction(
         &self,
-        _bytes: &[u8; 1536],
-        _home: StatusHome,
-        _root: Option<JobView<'a>>,
+        bytes: &[u8; 1536],
+        home: StatusHome,
+        root: Option<JobView<'a>>,
     ) -> BaseResult<()> {
-        self.catalog_unwired.set(true);
+        semantic_catalog::ledger::validate_transaction::<catalog3::JobView<'a>>(
+            bytes,
+            self.layout.expected.profile,
+            home,
+            catalog_root(root)?,
+        )?;
         Ok(())
     }
     fn allocation(
@@ -702,10 +706,9 @@ impl<'a> Seam<'a> for Graph<'a> {
     fn codec_source_bytes() -> usize {
         source::row_codec()
     }
-    /// Charged now for the deferred C3 entry, with the Profile2 validator as
-    /// its stand-in until the Profile3 bound is joined.
+    /// Either Catalog hook frame over the exact Profile3 ledger bound.
     fn transaction_source_bytes() -> usize {
-        semantic_catalog::transaction_source_bytes()
+        source::catalog_hook()
     }
 }
 
@@ -744,10 +747,6 @@ fn validate<'a>(
     let inventory = seam::inventory(&graph, reserved, transactions + systems, scratch)?;
     if reserved == ReservedInventory::RowUndoSlot {
         graph.row_item()?;
-    }
-    // Last, so every structural relation has been checked before failing closed.
-    if graph.catalog_unwired.get() {
-        return Err(Error::CatalogUnwired);
     }
     Ok(RowBaseView {
         layout,

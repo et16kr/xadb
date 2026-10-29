@@ -340,7 +340,12 @@ fn descriptor_codec() -> usize {
 }
 
 fn transaction_remaining() -> usize {
-    size_of::<(TransactionStatus, Option<JobView<'_>>, bool, usize)>()
+    transaction_remaining_with::<JobView<'static>>()
+}
+
+/// `ledger::transaction_remaining::<J>`; the Job view is its only J term.
+fn transaction_remaining_with<J>() -> usize {
+    size_of::<(TransactionStatus, Option<J>, bool, usize)>()
         + size_of::<[RemainingBudget; 5]>()
         + returned::<[RemainingBudget; 5], Error>()
         + 2 * size_of::<RemainingBudget>() // debt return and selected assignment
@@ -348,11 +353,16 @@ fn transaction_remaining() -> usize {
 }
 
 fn transaction_validate() -> usize {
-    size_of::<(&[u8; 1536], Profile, StatusHome, Option<JobView<'_>>)>()
+    transaction_validate_with::<JobView<'static>>()
+}
+
+/// `ledger::validate_transaction::<J>` with its nested remaining closure.
+fn transaction_validate_with<J>() -> usize {
+    size_of::<(&[u8; 1536], Profile, StatusHome, Option<J>)>()
         + size_of::<(TransactionStatus, DescriptorSpec, bool, u64)>()
         + returned::<DescriptorSpec, ObligationError>()
         + 2 * size_of::<Result<()>>()
-        + descriptor_codec().max(transaction_remaining())
+        + descriptor_codec().max(transaction_remaining_with::<J>())
 }
 
 fn transaction_next_encode() -> usize {
@@ -779,6 +789,14 @@ pub(crate) fn source_bytes() -> usize {
 /// Catalog adapter, while retaining actual descriptor/remaining return copies.
 pub(crate) fn transaction_source_bytes() -> usize {
     transaction_validate()
+}
+
+/// The same current-state validation for the explicit Profile3 adapter
+/// (`validate_transaction::<catalog3::JobView>`), as a base4 Catalog-scope
+/// actor's residual check calls it. Its terms are the Profile2 ones with the
+/// Catalog-scope Job3 view in place of the Job2 view.
+pub(crate) fn profile3_transaction_source_bytes() -> usize {
+    transaction_validate_with::<catalog3::JobView<'static>>()
 }
 
 /// Separate LayoutView::forward_table phase. Replay retains the returned schema
