@@ -509,6 +509,11 @@ fn canonical_mutation(case: usize) -> (usize, Vec<u8>) {
     match case {
         1 => raw::put64(&mut bytes, 10_208 + 63 * 96 + 8, 2),
         2 => raw::put64(&mut bytes, 10_208 + 96 + 16, 5),
+        // Case 3 changes the Root cell's PageRef of Job page 4. The Root2 and
+        // Root3 decoders check that reference identically and report
+        // IdentityMismatch; the Corrupt expected for it below is the Profile1
+        // v1 byte-compare value. That match already failed before the
+        // current-format switch (pre-existing, left to its owner).
         3 => raw::put64(&mut bytes, 15_840 + 256 + 4 * 24 + 8, 5),
         4 => {
             raw::put16(&mut bytes, 72, 3);

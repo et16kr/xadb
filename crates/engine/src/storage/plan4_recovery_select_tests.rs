@@ -405,8 +405,9 @@ fn control_error(case: usize, error: &Plan4SelectError) {
                 )
             ))
         )),
-        // Root3 grammar: a set Aging byte whose Aging reference does not
-        // decode is the Row decoder's IdentityMismatch (Root2 was Corrupt).
+        // A set Aging byte whose Aging reference does not decode: the Root2
+        // and Root3 decoders check it identically and both report
+        // IdentityMismatch; Corrupt was the Profile1 v1 byte-compare value.
         31 => assert!(matches!(
             error.cause,
             Plan4SelectCause::Genesis(wal_io::Plan4GenesisCause::Retention(

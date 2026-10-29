@@ -245,7 +245,8 @@ pub(in super::super) fn init_record(
 
 /// The accepted seed and exact semantic transition preserve the full graph.
 /// This bounded closure checks cached queue/ATT/status agreement between frames;
-/// full XOI/current graph validation is repeated by the v3 capture decoder.
+/// full XOI/current graph validation is repeated by the base4 capture decoder
+/// (`plan4_recovery_base::row`).
 pub(in super::super) fn validate_current(profile: Profile, replay: &[u8]) -> ObservationResult<()> {
     if profile.format() != 3
         || replay.len() < WORK_END
