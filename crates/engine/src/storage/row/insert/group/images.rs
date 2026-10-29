@@ -1,7 +1,10 @@
 //! Five changed page after images and both handoff descriptors. Every input
 //! here was checked by `observe`; the codecs below recheck their own grammar.
 
-use super::{Change, GroupInput, InsertError, Observed, Result, encode_material, leaf, require};
+use super::{
+    CLR_FIXED, Change, GroupInput, InsertError, Observed, Result, debt, encode_material, leaf,
+    require,
+};
 use crate::storage::{
     disk::RowPageRole,
     obligation::{self, InventoryClaim, OwnerChain, OwnerState, RemainingBudget},
@@ -9,10 +12,13 @@ use crate::storage::{
     retention_obligation::row::{self as aging, AgingTransition},
     retention_page::{
         JOB_BYTES, JOB_COUNT,
+        catalog::RELEASE_BYTES,
         row::{self, JobCells},
     },
     status_home::{STATUS_HOME_BYTES, StatusHome},
-    transaction_record::{TransactionState, TransactionStatus, TransactionStatusCell},
+    transaction_record::{
+        RollbackState, TransactionState, TransactionStatus, TransactionStatusCell,
+    },
     undo_record::UNDO_RECORD_BYTES,
 };
 use foundation::codec::content_digest;
@@ -21,34 +27,71 @@ fn put(bytes: &mut [u8], at: usize, value: u64) {
     bytes[at..at + 8].copy_from_slice(&value.to_le_bytes());
 }
 
-/// RootJob after: Forward adopts it (Retained). Unchanged fields keep the
-/// reserve-sealed bytes.
+/// RootJob after: Forward adopts it (Retained), CLR starts its compensated
+/// release at cursor0. Unchanged fields keep the reserve-sealed bytes.
 pub(super) fn job(observed: &Observed<'_>) -> Result<[u8; JOB_BYTES]> {
     let lsn = observed.header.lsn;
     let mut cell = *observed.job.bytes();
-    cell[6] = 2;
-    put(&mut cell, 72, lsn);
-    cell[328..360].copy_from_slice(&content_digest(observed.transaction_bytes));
+    if observed.forward {
+        cell[6] = 2;
+        put(&mut cell, 72, lsn);
+        cell[328..360].copy_from_slice(&content_digest(observed.transaction_bytes));
+    } else {
+        cell[6] = 4;
+        cell[200..248].fill(0);
+        cell[280..320].fill(0);
+        put(&mut cell, 272, lsn);
+        let wal = 4 * RELEASE_BYTES;
+        let mut rows = [RemainingBudget::default(); 5];
+        rows[3] = RemainingBudget {
+            steps: 4,
+            wal,
+            protected: wal,
+            peak: row::ROW_PEAK,
+            ..RemainingBudget::default()
+        };
+        let budget: &mut [u8; 640] = (&mut cell[384..1024]).try_into().expect("fixed budget");
+        obligation::encode_budget_rows(&rows, budget);
+    }
     put(&mut cell, 376, lsn);
     row::decode_job(&cell, observed.namespace)?;
     Ok(cell)
 }
 
-/// Status after: Forward pushes U onto the Active head.
+/// Status after: Forward pushes U; CLR pops it back to H (or empty).
 pub(super) fn status(observed: &Observed<'_>) -> Result<StatusHome> {
-    let TransactionStatusCell::Occupied(_) = observed.status.core() else {
+    let TransactionStatusCell::Occupied(core) = observed.status.core() else {
         return Err(InsertError::OrderMismatch);
     };
-    let incoming = observed
-        .status
-        .incoming()
-        .checked_add(1)
-        .ok_or(InsertError::OrderMismatch)?;
-    let core = TransactionStatus::new(
-        observed.actor,
-        TransactionState::Active,
-        Some(observed.undo.reference),
+    let incoming = observed.status.incoming();
+    let next = observed.predecessor.map(|link| link.reference);
+    let (state, head, incoming) = if observed.forward {
+        (
+            TransactionState::Active,
+            Some(observed.undo.reference),
+            incoming.checked_add(1).ok_or(InsertError::OrderMismatch)?,
+        )
+    } else {
+        let rollback = match core.state() {
+            TransactionState::Aborting(RollbackState::Statement { target, .. }) => {
+                RollbackState::Statement { target, next }
+            }
+            TransactionState::Aborting(RollbackState::Transaction { .. }) => {
+                RollbackState::Transaction { next }
+            }
+            _ => return Err(InsertError::OrderMismatch),
+        };
+        (
+            TransactionState::Aborting(rollback),
+            next,
+            incoming.checked_sub(1).ok_or(InsertError::OrderMismatch)?,
+        )
+    };
+    require(
+        head.is_some() == (incoming != 0),
+        InsertError::OrderMismatch,
     )?;
+    let core = TransactionStatus::new(observed.actor, state, head)?;
     Ok(StatusHome::new(
         TransactionStatusCell::Occupied(core),
         incoming,
@@ -121,29 +164,42 @@ pub(super) fn pages(
             }
             RowPageRole::Undo => {
                 let mut cell = [0; UNDO_RECORD_BYTES];
-                encode_material(observed, &mut cell)?;
+                encode_material(observed, observed.forward, &mut cell)?;
                 page::encode_page(header(observed, index), &[&cell], output)?;
             }
             RowPageRole::RowLeaf => {
-                let Change::Forward { canonical } = input.change;
-                leaf::produce(
-                    leaf::LeafInput {
+                let lsn = PageLsn(lsn);
+                match input.change {
+                    Change::Forward { canonical } => {
+                        leaf::produce(
+                            leaf::LeafInput {
+                                namespace,
+                                expected: observed.leaf,
+                                before: page.before,
+                                schema: input.schema,
+                                canonical,
+                                version: super::current_version(
+                                    observed.actor,
+                                    observed.row,
+                                    observed.job,
+                                    observed.undo.reference,
+                                )?,
+                                lsn,
+                            },
+                            scratch,
+                            output,
+                        )?;
+                    }
+                    Change::Clr { .. } => leaf::remove(
                         namespace,
-                        expected: observed.leaf,
-                        before: page.before,
-                        schema: input.schema,
-                        canonical,
-                        version: super::current_version(
-                            observed.actor,
-                            observed.row,
-                            observed.job,
-                            observed.undo.reference,
-                        )?,
-                        lsn: PageLsn(lsn),
-                    },
-                    scratch,
-                    output,
-                )?;
+                        observed.leaf,
+                        input.schema,
+                        page.before,
+                        observed.row,
+                        lsn,
+                        output,
+                    )?,
+                }
             }
         }
         require(
@@ -194,13 +250,35 @@ pub(super) fn descriptors(
         .consumed_wal
         .checked_add(observed.frame_len as u64)
         .ok_or(InsertError::BudgetMismatch)?;
-    spec.inventory = InventoryClaim {
-        change_lsn: lsn,
-        items: 0,
-        digest: content_digest(&[]),
-        growth_extents: 0,
-    };
-    spec.remaining[1] = RemainingBudget::default();
+    if observed.forward {
+        spec.inventory = InventoryClaim {
+            change_lsn: lsn,
+            items: 0,
+            digest: content_digest(&[]),
+            growth_extents: 0,
+        };
+        spec.remaining[1] = RemainingBudget::default();
+    } else {
+        let clr = debt(CLR_FIXED, observed.cell, observed.predecessor.is_some(), 0);
+        let old = spec.remaining[0];
+        let steps = old.steps - 1;
+        let wal = old
+            .wal
+            .checked_sub(clr.wal)
+            .ok_or(InsertError::BudgetMismatch)?;
+        spec.remaining[0] = if steps == 0 {
+            require(wal == 0, InsertError::BudgetMismatch)?;
+            RemainingBudget::default()
+        } else {
+            RemainingBudget {
+                steps,
+                wal,
+                protected: wal,
+                peak: row::ROW_PEAK,
+                ..RemainingBudget::default()
+            }
+        };
+    }
     obligation::encode_descriptor(&spec, &mut output[416..1952])?;
 
     let root = role_index(observed, RowPageRole::Root);

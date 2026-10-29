@@ -6,7 +6,7 @@ use crate::{
     api::Namespace,
     storage::{
         overflow::INLINE_ROW_BYTES,
-        page::{PAGE_BYTES, PageLsn},
+        page::{self, PAGE_BYTES, PageLsn},
         row_record::{
             self, ROW_HEADER_BYTES, RecordExpectation, RecordVersion, RowPayload, RowSchemaInput,
         },
@@ -152,6 +152,73 @@ pub(super) fn produce(
     })
 }
 
+/// The actual current row of a CLR: one inline record whose version is the
+/// caller's U-owned Missing INSERT. `cell` is (slot, offset, length).
+pub(super) struct Current<'a> {
+    pub(super) record: &'a [u8],
+    pub(super) cell: (u16, u16, u16),
+}
+
+pub(super) fn current<'a>(
+    namespace: Namespace,
+    expected: TreeExpectation,
+    schema: RowSchemaInput<'_>,
+    bytes: &'a [u8; PAGE_BYTES],
+    version: RecordVersion,
+) -> Result<Current<'a>> {
+    let source = inspect(namespace, expected, schema, bytes)?;
+    let position = source.view.lower_bound(&version.row.get().to_be_bytes())?;
+    if !position.equal {
+        return Err(InsertError::IdentityMismatch);
+    }
+    let EntryPayload::Value(record) = source.view.entry(position.index)?.payload else {
+        return Err(InsertError::Unsupported);
+    };
+    let view = row_record::decode_row_record_with_schema(
+        record,
+        RecordExpectation {
+            namespace,
+            row: version.row,
+        },
+        schema,
+    )?;
+    if view.version() != version {
+        return Err(InsertError::IdentityMismatch);
+    }
+    let slot = position.index + 1;
+    let range = page::decode_page(bytes, expected.identity, expected.kind)?
+        .cell_range(slot)
+        .ok_or(InsertError::IdentityMismatch)?;
+    Ok(Current {
+        record,
+        cell: (slot as u16, range.start as u16, range.len() as u16),
+    })
+}
+
+/// Physically remove the U-owned Missing INSERT row: the CLR RowLeaf after.
+/// Errors preserve `output`; the caller already proved the exact current row.
+pub(super) fn remove(
+    namespace: Namespace,
+    expected: TreeExpectation,
+    schema: RowSchemaInput<'_>,
+    before: &[u8; PAGE_BYTES],
+    row: RowId,
+    lsn: PageLsn,
+    output: &mut [u8; PAGE_BYTES],
+) -> Result<()> {
+    let source = inspect(namespace, expected, schema, before)?;
+    if lsn.0 <= source.view.header().lsn.0 {
+        return Err(InsertError::IdentityMismatch);
+    }
+    let key = row.get().to_be_bytes();
+    let mut cells: [&[u8]; ROW_EDIT_CELLS] = [&[]; ROW_EDIT_CELLS];
+    let plan = source
+        .view
+        .prepare_leaf_edit(LeafEdit::Remove(&key), &mut cells)?;
+    plan.encode(lsn, output)?;
+    Ok(())
+}
+
 pub(super) fn local_source_carrier_bytes() -> usize {
     use std::mem::size_of;
     size_of::<LeafInput<'_>>()
@@ -163,6 +230,7 @@ pub(super) fn local_source_carrier_bytes() -> usize {
         + size_of::<row_record::CanonicalRowView<'_>>()
         + size_of::<row_record::RowRecordView<'_>>()
         + size_of::<Result<LeafBytes>>()
+        + size_of::<Result<Current<'_>>>()
         + 2 * size_of::<LeafBytes>()
         + 2 * size_of::<RecordExpectation>()
         + 2 * size_of::<RecordVersion>()

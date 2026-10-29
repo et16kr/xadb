@@ -1,4 +1,4 @@
-//! The scope3 XHG1 Forward frame body around already produced after
+//! The scope3 XHG1 Forward/CLR frame body around already produced after
 //! images and descriptors. The tag3 envelope is finished last and the whole
 //! frame is reread by the shared layout decoder before success is reported.
 
@@ -84,7 +84,8 @@ fn native(
         }
         RowPageRole::Status => (5, Some(0), Some(0)),
         RowPageRole::Undo => (3, Some(0), Some(0)),
-        RowPageRole::RowLeaf => (1, None, Some(leaf_slot(observed, after)?)),
+        RowPageRole::RowLeaf if observed.forward => (1, None, Some(leaf_slot(observed, after)?)),
+        RowPageRole::RowLeaf => (1, Some(leaf_slot(observed, page.before)?), None),
     };
     output[0] = kind;
     put16(output, 2, index as u16);
@@ -120,8 +121,13 @@ fn native(
 fn core(observed: &Observed<'_>, output: &mut [u8]) -> Result<()> {
     let job = observed.job;
     let h = observed.predecessor.is_some();
-    let flags = 1 | (u16::from(h) << 1) | 24;
-    put16(output, 0, Operation::Forward as u16);
+    let flags = 1 | (u16::from(h) << 1) | (u16::from(observed.target.is_some()) << 2) | 24;
+    let operation = if observed.forward {
+        Operation::Forward
+    } else {
+        Operation::Clr
+    };
+    put16(output, 0, operation as u16);
     put16(output, 2, flags);
     put32(output, 4, 256);
     put64(output, 8, job.statement());
@@ -131,8 +137,18 @@ fn core(observed: &Observed<'_>, output: &mut [u8]) -> Result<()> {
     if let Some(link) = observed.predecessor {
         link.reference.encode(&mut output[72..112])?;
     }
-    output[176..208].copy_from_slice(&projection(observed.table, observed.row, None)?);
-    output[208..240].copy_from_slice(job.projection_digest());
+    if let Some(target) = observed.target {
+        target.encode(&mut output[112..152])?;
+    }
+    let missing = projection(observed.table, observed.row, None)?;
+    let present = job.projection_digest();
+    let (before, after) = if observed.forward {
+        (&missing, present)
+    } else {
+        (present, &missing)
+    };
+    output[176..208].copy_from_slice(before);
+    output[208..240].copy_from_slice(after);
     Ok(())
 }
 
@@ -144,7 +160,11 @@ pub(super) fn write(
     output: &mut [u8],
 ) -> Result<()> {
     let h = observed.predecessor.is_some();
-    let operation = Operation::Forward;
+    let operation = if observed.forward {
+        Operation::Forward
+    } else {
+        Operation::Clr
+    };
     let shape = operation.shape(observed.cell, h)?;
     core(observed, &mut output[CORE_AT..NATIVE_AT])?;
 
@@ -164,12 +184,27 @@ pub(super) fn write(
     let status = native_index(observed, RowPageRole::Status);
     let undo = native_index(observed, RowPageRole::Undo);
     let leaf = native_index(observed, RowPageRole::RowLeaf);
+    let present = |value| {
+        if observed.forward {
+            (None, value)
+        } else {
+            (value, None)
+        }
+    };
     let mut edges = [(0u16, 0u8, None, None); 4];
-    edges[0] = (status, TRANSACTION_HEAD, previous, Some(u));
-    edges[1] = (leaf, ROW_UNDO, None, Some(u));
-    edges[2] = (leaf, ROW_STAMP, None, Some(Target::Transaction));
+    let head = if observed.forward {
+        (previous, Some(u))
+    } else {
+        (Some(u), previous)
+    };
+    edges[0] = (status, TRANSACTION_HEAD, head.0, head.1);
+    let (old, new) = present(Some(u));
+    edges[1] = (leaf, ROW_UNDO, old, new);
+    let (old, new) = present(Some(Target::Transaction));
+    edges[2] = (leaf, ROW_STAMP, old, new);
     let count = if let Some(previous) = previous {
-        edges[3] = (undo, UNDO_PREVIOUS_TRANSACTION, None, Some(previous));
+        let (old, new) = present(Some(previous));
+        edges[3] = (undo, UNDO_PREVIOUS_TRANSACTION, old, new);
         4
     } else {
         3
@@ -194,8 +229,16 @@ pub(super) fn write(
     }
     let incoming = observed.status.incoming();
     let counts = [
-        (u, (0, 2), undo),
-        (Target::Transaction, (incoming, incoming + 1), status),
+        (u, if observed.forward { (0, 2) } else { (2, 0) }, undo),
+        (
+            Target::Transaction,
+            if observed.forward {
+                (incoming, incoming + 1)
+            } else {
+                (incoming, incoming - 1)
+            },
+            status,
+        ),
     ];
     for (target, (before, after), index) in counts {
         let count = &mut output[at..at + 96];
@@ -205,11 +248,13 @@ pub(super) fn write(
         put16(count, 72, index);
         at += 96;
     }
-    let delta = &mut output[at..at + 208];
-    delta[0] = 2;
-    delta[1] = 1;
-    delta[16..112].copy_from_slice(&undo_item(observed.job)?);
-    at += 208;
+    if observed.forward {
+        let delta = &mut output[at..at + 208];
+        delta[0] = 2;
+        delta[1] = 1;
+        delta[16..112].copy_from_slice(&undo_item(observed.job)?);
+        at += 208;
+    }
     let auxiliary = at - edges_at;
     require(
         auxiliary

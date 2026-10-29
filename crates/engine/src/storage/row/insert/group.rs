@@ -1,4 +1,4 @@
-//! Complete scope3 Row INSERT Forward over plain observations.
+//! Complete scope3 Row INSERT Forward and its CLR over plain observations.
 //! C0 only: every input is a borrowed copy of an owner observation and grants
 //! no reservation, pin, stage, install or recovery authority. The owner must
 //! recheck the whole candidate; an error leaves frame/after unspecified.
@@ -25,7 +25,9 @@ use crate::{
         row_record::RowSchemaInput,
         semantic_row::Operation,
         status_home::StatusHome,
-        transaction_record::{StatusSlotRef, TransactionState, TransactionStatusCell, TxnRef},
+        transaction_record::{
+            RollbackState, StatusSlotRef, TransactionState, TransactionStatusCell, TxnRef,
+        },
         tree_page::TreeExpectation,
         undo_record::{
             self, INITIAL_UNDO_CELL, UndoBeforeKind, UndoCell, UndoCreator, UndoEdge, UndoLink,
@@ -71,10 +73,19 @@ pub(super) struct Source {
     pub(super) cell: Option<(u16, u16, u16)>,
 }
 
-/// The reserve-sealed INSERT value.
+/// The reserve-sealed INSERT value, or the CLR's actual current Row/RootJob
+/// observation. `cell_bytes` is the RootJob tree-cell length C (`180+L`).
 #[derive(Clone, Copy, Debug)]
 pub(super) enum Change<'a> {
-    Forward { canonical: &'a [u8] },
+    Forward {
+        canonical: &'a [u8],
+    },
+    Clr {
+        cell_bytes: usize,
+        projection: [u8; 32],
+        target: Option<UndoRef>,
+        next: Option<UndoLink>,
+    },
 }
 
 /// Plain inputs mirroring the producer lane getters. The fields are copies of
@@ -126,6 +137,7 @@ struct Changed<'a> {
 
 /// Facts checked from the inputs before any output byte is written.
 struct Observed<'a> {
+    forward: bool,
     namespace: Namespace,
     profile: Profile,
     header: WalFrameHeader,
@@ -135,6 +147,7 @@ struct Observed<'a> {
     leaf: TreeExpectation,
     undo: UndoLink,
     predecessor: Option<UndoLink>,
+    target: Option<UndoRef>,
     ordinal: usize,
     job: JobView<'a>,
     cell: usize,
@@ -147,7 +160,7 @@ struct Observed<'a> {
     pages: [Changed<'a>; 5],
 }
 
-/// Produce the whole Forward candidate. All input checks precede the
+/// Produce the whole Forward/CLR candidate. All input checks precede the
 /// first output write; later codec failures may leave partial output bytes.
 pub(super) fn produce(
     input: &GroupInput<'_>,
@@ -304,20 +317,22 @@ pub(super) fn projection(
     Ok(hash.digest())
 }
 
-/// Missing-only U material after Forward: Live(incoming2, prevTxn H/Never).
-fn material(observed: &Observed<'_>) -> UndoCell<'static> {
-    let transaction = match observed.predecessor {
-        Some(link) => UndoEdge::Linked(link),
-        None => UndoEdge::Never,
+/// Missing-only U material: Live(incoming2, prevTxn H/Never) before CLR,
+/// Releasing(incoming0, cursor0, prevTxn Cut/Never) after it.
+fn material(observed: &Observed<'_>, live: bool) -> UndoCell<'static> {
+    let transaction = match (live, observed.predecessor) {
+        (true, Some(link)) => UndoEdge::Linked(link),
+        (false, Some(_)) => UndoEdge::Cut,
+        (_, None) => UndoEdge::Never,
     };
-    UndoCell::Live(UndoRecord {
+    let record = UndoRecord {
         creator: UndoCreator {
             id: observed.actor.id(),
             status_generation: observed.actor.generation(),
         },
         sequence: observed.undo.sequence,
         mutation_sequence: observed.job.mutation(),
-        incoming: 2,
+        incoming: if live { 2 } else { 0 },
         target: row_target(observed.table, observed.row),
         edges: [transaction, UndoEdge::Never],
         before_kind: UndoBeforeKind::Missing,
@@ -329,16 +344,21 @@ fn material(observed: &Observed<'_>) -> UndoCell<'static> {
             chunks_released: 0,
             next: None,
         },
-    })
+    };
+    if live {
+        UndoCell::Live(record)
+    } else {
+        UndoCell::Releasing(record)
+    }
 }
 
-fn encode_material(observed: &Observed<'_>, output: &mut [u8]) -> Result<()> {
+fn encode_material(observed: &Observed<'_>, live: bool, output: &mut [u8]) -> Result<()> {
     let expected = UndoRecordExpectation {
         namespace: observed.namespace,
         reference: observed.undo.reference,
         target: row_target(observed.table, observed.row),
     };
-    undo_record::encode_undo_record(material(observed), expected, &[], output)?;
+    undo_record::encode_undo_record(material(observed, live), expected, &[], output)?;
     Ok(())
 }
 
@@ -378,6 +398,7 @@ fn rank(page: PageRef) -> Result<(u64, u64)> {
 }
 
 fn observe<'a>(input: &GroupInput<'a>) -> Result<Observed<'a>> {
+    let forward = matches!(input.change, Change::Forward { .. });
     let profile = input.profile;
     let namespace = profile.spec().namespace;
     require(
@@ -391,7 +412,12 @@ fn observe<'a>(input: &GroupInput<'a>) -> Result<Observed<'a>> {
     let header = input.header;
     let actor = input.actor;
     require(
-        header.kind == FrameKind::Update
+        header.kind
+            == if forward {
+                FrameKind::Update
+            } else {
+                FrameKind::Clr
+            }
             && header.stream == input.expected.stream
             && header.previous_lsn == input.expected.previous_lsn
             && header.stream.database == namespace.database
@@ -419,7 +445,13 @@ fn observe<'a>(input: &GroupInput<'a>) -> Result<Observed<'a>> {
     let job = row::decode_job(&input.jobs[ordinal], namespace)?;
     let h = input.predecessor.is_some();
     require(
-        job.state() == JobState::RootReserved && job.last_step() <= header.previous_lsn,
+        job.state()
+            == if forward {
+                JobState::RootReserved
+            } else {
+                JobState::RootRetained
+            }
+            && job.last_step() <= header.previous_lsn,
         InsertError::OrderMismatch,
     )?;
     let pair = job.pair().ok_or(InsertError::IdentityMismatch)?;
@@ -504,7 +536,7 @@ fn observe<'a>(input: &GroupInput<'a>) -> Result<Observed<'a>> {
         namespace,
     )?;
 
-    // Actual Status before: Active with head H (or empty).
+    // Actual Status before and the rollback/next/target relation.
     let status_identity = fixed_identity(namespace, input.status.page(), 2);
     let status_bytes = bind(
         input,
@@ -527,13 +559,57 @@ fn observe<'a>(input: &GroupInput<'a>) -> Result<Observed<'a>> {
     };
     require(core.reference() == actor, InsertError::IdentityMismatch)?;
     let head = input.predecessor.map(|link| link.reference);
-    let Change::Forward { canonical } = input.change;
-    require(
-        core.state() == TransactionState::Active && core.undo_head() == head,
-        InsertError::OrderMismatch,
-    )?;
-    require(input.statement.is_some(), InsertError::InvalidInput)?;
-    let cell = 180 + canonical.len();
+    let (cell, target) = match input.change {
+        Change::Forward { canonical } => {
+            require(
+                core.state() == TransactionState::Active && core.undo_head() == head,
+                InsertError::OrderMismatch,
+            )?;
+            require(input.statement.is_some(), InsertError::InvalidInput)?;
+            (180 + canonical.len(), None)
+        }
+        Change::Clr {
+            cell_bytes,
+            projection: digest,
+            target,
+            next,
+        } => {
+            let rollback_target = match core.state() {
+                TransactionState::Aborting(RollbackState::Statement { target, next })
+                    if next == core.undo_head() =>
+                {
+                    require(
+                        input.statement.is_some() && input.mark == target,
+                        InsertError::InvalidInput,
+                    )?;
+                    target
+                }
+                TransactionState::Aborting(RollbackState::Transaction { next })
+                    if next == core.undo_head() =>
+                {
+                    require(
+                        input.statement.is_none() && input.mark.is_none(),
+                        InsertError::InvalidInput,
+                    )?;
+                    None
+                }
+                _ => return Err(InsertError::OrderMismatch),
+            };
+            require(
+                core.undo_head() == Some(input.undo.reference)
+                    && status.incoming() != 0
+                    && target == rollback_target
+                    && next == input.predecessor
+                    && target != Some(input.undo.reference),
+                InsertError::OrderMismatch,
+            )?;
+            require(
+                digest == *job.projection_digest(),
+                InsertError::IdentityMismatch,
+            )?;
+            (cell_bytes, target)
+        }
+    };
     require(
         cell == job.cell_bytes() as usize,
         InsertError::IdentityMismatch,
@@ -561,22 +637,29 @@ fn observe<'a>(input: &GroupInput<'a>) -> Result<Observed<'a>> {
             && transaction.remaining[0].protected >= clr_debt.wal,
         InsertError::BudgetMismatch,
     )?;
-    let item = undo_item(job)?;
-    require(
-        transaction.inventory
-            == InventoryClaim {
-                change_lsn: job.lease_lsn(),
-                items: 1,
-                digest: content_digest(&item),
-                growth_extents: 0,
-            }
-            && transaction.chain.apply == job.lease_lsn()
-            && transaction.last_mutation_sequence == job.mutation()
-            && transaction.remaining[1] == debt(FORWARD_FIXED, cell, h, 1),
-        InsertError::BudgetMismatch,
-    )?;
+    if forward {
+        let item = undo_item(job)?;
+        require(
+            transaction.inventory
+                == InventoryClaim {
+                    change_lsn: job.lease_lsn(),
+                    items: 1,
+                    digest: content_digest(&item),
+                    growth_extents: 0,
+                }
+                && transaction.chain.apply == job.lease_lsn()
+                && transaction.last_mutation_sequence == job.mutation()
+                && transaction.remaining[1] == debt(FORWARD_FIXED, cell, h, 1),
+            InsertError::BudgetMismatch,
+        )?;
+    } else {
+        require(
+            transaction.inventory.items == 0 && transaction.remaining[1].steps == 0,
+            InsertError::BudgetMismatch,
+        )?;
+    }
 
-    // U before: the reserved Free generation.
+    // U before: the reserved Free generation or the Live material.
     let undo_identity = fixed_identity(namespace, input.undo.reference.page(), 3);
     let undo_bytes = bind(
         input,
@@ -664,7 +747,7 @@ fn observe<'a>(input: &GroupInput<'a>) -> Result<Observed<'a>> {
         InsertError::IdentityMismatch,
     )?;
 
-    // RowLeaf before; the inserted row is absent, so no cell is bound.
+    // RowLeaf before; the CLR current row is checked here, before writes.
     let leaf_source =
         input.sources[source_index(RowSourceRole::RowLeaf)].ok_or(InsertError::InvalidInput)?;
     require(
@@ -673,19 +756,40 @@ fn observe<'a>(input: &GroupInput<'a>) -> Result<Observed<'a>> {
     )?;
     let leaf_bytes = &input.before[leaf_source.index];
     checked_page(leaf_bytes, input.leaf.identity, PageKind::RowLeaf, header)?;
+    let actual_cell = if forward {
+        None
+    } else {
+        let current = leaf::current(
+            namespace,
+            input.leaf,
+            input.schema,
+            leaf_bytes,
+            current_version(actor, input.row, job, input.undo.reference)?,
+        )?;
+        require(
+            current.record.len() + 12 == cell
+                && projection(input.table, input.row, Some(current.record))?
+                    == *job.projection_digest(),
+            InsertError::IdentityMismatch,
+        )?;
+        Some(current.cell)
+    };
     bind(
         input,
         RowSourceRole::RowLeaf,
         input.leaf.identity,
         PageKind::RowLeaf,
-        None,
+        actual_cell,
         false,
     )?;
-    require(
-        undo_page.header().lsn.0 == job.lease_lsn(),
-        InsertError::OrderMismatch,
-    )?;
-    undo_record::decode_free_undo_record(undo_cell, input.undo.reference.generation())?;
+
+    if forward {
+        require(
+            undo_page.header().lsn.0 == job.lease_lsn(),
+            InsertError::OrderMismatch,
+        )?;
+        undo_record::decode_free_undo_record(undo_cell, input.undo.reference.generation())?;
+    }
     let mut changed = [
         (
             RowPageRole::Root,
@@ -749,7 +853,44 @@ fn observe<'a>(input: &GroupInput<'a>) -> Result<Observed<'a>> {
                 .all(|(role, page)| *role == page.role),
         InsertError::IdentityMismatch,
     )?;
+    if !forward {
+        let expected = &mut [0; undo_record::UNDO_RECORD_BYTES];
+        let partial = Observed {
+            forward,
+            namespace,
+            profile,
+            header,
+            actor,
+            table: input.table,
+            row: input.row,
+            leaf: input.leaf,
+            undo: input.undo,
+            predecessor: input.predecessor,
+            target,
+            ordinal,
+            job,
+            cell,
+            frame_len: 0,
+            status,
+            transaction,
+            transaction_bytes,
+            aging,
+            jobs: input.jobs,
+            pages,
+        };
+        encode_material(&partial, true, expected)?;
+        require(
+            undo_cell == &expected[..] && undo_page.header().lsn.0 >= job.last_step(),
+            InsertError::IdentityMismatch,
+        )?;
+    }
+    let operation = if forward {
+        Operation::Forward
+    } else {
+        Operation::Clr
+    };
     Ok(Observed {
+        forward,
         namespace,
         profile,
         header,
@@ -759,10 +900,11 @@ fn observe<'a>(input: &GroupInput<'a>) -> Result<Observed<'a>> {
         leaf: input.leaf,
         undo: input.undo,
         predecessor: input.predecessor,
+        target,
         ordinal,
         job,
         cell,
-        frame_len: Operation::Forward.frame_bytes(cell, h)?,
+        frame_len: operation.frame_bytes(cell, h)?,
         status,
         transaction,
         transaction_bytes,

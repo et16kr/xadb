@@ -1,4 +1,4 @@
-//! First inline INSERT input, RowLeaf candidate and complete scope3 Forward
+//! First inline INSERT input, RowLeaf candidate and complete scope3 Forward/CLR
 //! candidate production. C0 only: these functions neither reserve an identity
 //! nor stage, append or install a group. Actual reserve, whole-group validation
 //! and apply belong to the original disk owner; no candidate is a grant.
@@ -279,6 +279,12 @@ pub(in crate::storage) fn produce_insert(lane: RowProducerLane<'_>) -> Result<Ro
     propose(lane, RowOperation::Forward)
 }
 
+/// Complete CLR candidate for the U-owned Missing INSERT, using the owner's
+/// actual current Row/RootJob observation and rollback target. Same limits.
+pub(in crate::storage) fn produce_clr(lane: RowProducerLane<'_>) -> Result<RowProposal> {
+    propose(lane, RowOperation::Clr)
+}
+
 /// Thin adapter: copy lane getters into plain inputs, then call the pure core.
 fn propose(lane: RowProducerLane<'_>, operation: RowOperation) -> Result<RowProposal> {
     let (context, control, before, schema_bytes, frame, after, candidate) = lane.parts();
@@ -301,6 +307,20 @@ fn propose(lane: RowProducerLane<'_>, operation: RowOperation) -> Result<RowProp
             }
             group::Change::Forward { canonical }
         }
+        (
+            RowOperation::Clr,
+            RowProducerInput::Clr {
+                current_row_len,
+                current_projection,
+                rollback_target,
+                next,
+            },
+        ) => group::Change::Clr {
+            cell_bytes: *current_row_len,
+            projection: *current_projection,
+            target: *rollback_target,
+            next: *next,
+        },
         _ => return Err(InsertError::Unsupported),
     };
     let table = schema(context.schema(), schema_bytes)?;
