@@ -81,73 +81,127 @@
    "name": "issuer-undo-high",
    "parent": "live",
    "runs": 9,
-   "sha256": "a7f2d8d01e82172e11dd363906d641fc565ac229a3351c6b50710eec91de325c"
+   "sha256": "f834d2c21f45181f5bd66b3df8957714fecfc0a51750769a1a44540e23003c7b"
   },
   {
    "name": "row-high-global",
    "parent": "live",
    "runs": 14,
-   "sha256": "cd17cfd5dbf61d78d71054f3bd93e8693db3aed29f458a500e16370f6baf7aef"
+   "sha256": "ccc28dfa5a0d8867e5c98cb9425a5570a72a2ccf625c7aea13d7dbf87e5dcb82"
   },
   {
    "name": "committed-q-collision",
    "parent": "live",
    "runs": 6,
-   "sha256": "1f7ac841a25a61406fadf310d4c69be5ff6a0ee5e90ae30842ea92700fa87310"
+   "sha256": "7566c54dcd41244855428e363a98ce0002e05895babdef9941fa08a9555b1b8a"
   },
   {
    "name": "catalog-row-mixing",
    "parent": "live",
    "runs": 6,
-   "sha256": "0739ea43855a2f739e3ee4837af77f8ae886a8adcd9e67bbfac417dc4217c852"
+   "sha256": "090f84955ffd69182274ccd4fae969c9ca507f8ff67f0634625936dd476d5436"
   },
   {
    "name": "free-undo-generation",
    "parent": "live",
    "runs": 6,
-   "sha256": "d8df57c4111c22900c471b7d7a1d4db65d0942fd8ecf02f395f80d65117d05d2"
+   "sha256": "8589769760ff7822382d4f129d85219b82e69915f56354a4427e399c6dc52e29"
   },
   {
    "name": "init-initial-digest",
    "parent": "live",
    "runs": 3,
-   "sha256": "baad57b90596459a959699e8ebac44c8838fd8af2d34b4f24fb491ebd203b80c"
+   "sha256": "42aff5b7c468afa55c3a961eba742c1e9f98175e0fc7b2abf3564bee5a9be102"
   },
   {
    "name": "descriptor-last-mutation",
    "parent": "live",
    "runs": 4,
-   "sha256": "e875a850eedf0480ee459c63e4774fff38701af116ec0a0a3cc0894eafbb6dc6"
+   "sha256": "bb9938c6b1a56f444bdbbb085ad64dfb2081816030084d57496bfb105c729dab"
   },
   {
    "name": "att-missing",
    "parent": "live",
    "runs": 11,
-   "sha256": "97e52a6576dafd965ac01ad117ec36a249a7a3bc4443d1cd76a78487da786faa"
+   "sha256": "8b511b3a9d62b111ccae3286dd1e418cb6936c9362b59ac0111c3b75247e248b"
   },
   {
    "name": "inventory-generation",
    "parent": "live",
    "runs": 4,
-   "sha256": "40210771b184dc985560b8eb76c14d0926b38802e5f4f2534269c491eb63af29"
+   "sha256": "ec1cf58b8a3c5e5df9a98b1d7dff21d88ab175d0f628f23b17fbad849fbe74e1"
   },
   {
    "name": "aging-descriptor-missing",
    "parent": "live",
    "runs": 12,
-   "sha256": "cf15909e928a18d991649aa0739e69af7b67109107d15a06e483f0576f250174"
+   "sha256": "e37570116651cb26665b8770e9af61e3ce83c3f524b73abf81d5721bc523f077"
   },
   {
    "name": "catalog-scope-terminal",
    "parent": "live",
    "runs": 25,
-   "sha256": "d6ef867e5c4ad31a7e95c834c6e725db79cec20be5813c741f837d71ffc77d5d"
+   "sha256": "d03e5ecca9c92d78ddd1c56f5c26de93e1a9a1ded837d4c34f91cef81baa9344"
   },
   {
    "name": "reserved-row-root",
    "parent": "live",
    "runs": 16,
-   "sha256": "d68a4d7db3443b2130cfabbf1eb82aa8f511e70a47746ea2d9403b0c87a33c34"
+   "sha256": "a6936687b1c55d5d3d210e9498d63cd90fd4b6e4e0d45d7faec9acd0929281b1"
+  },
+  {
+   "name": "allocation-finished-noncanonical",
+   "parent": "live",
+   "runs": 5,
+   "sha256": "8f2313ac73989e04d9b25c7b76dfdcb076fdd635a13bf6a5e1cb2f16863ae5ae"
+  },
+  {
+   "name": "state-system-reserved",
+   "parent": "live",
+   "runs": 35,
+   "sha256": "ba8876f2d0c61f702d08912b533f7207db53a68cff3a3012cbf4609577709705"
+  },
+  {
+   "name": "system-reserved-terminal",
+   "parent": "live",
+   "runs": 34,
+   "sha256": "dab4dce285710b883e9326ae427c15a6ba430b1f7d33fc53364ad98d32f3cf11"
+  },
+  {
+   "name": "system-item-owner",
+   "parent": "live",
+   "runs": 35,
+   "sha256": "7671958f79284152af6d488ce7675023dfb62dca001d6cb25ba15a274b94bad6"
+  },
+  {
+   "name": "state-create-reserved",
+   "parent": "live",
+   "runs": 82,
+   "sha256": "33cebf12ccada1d921b8566d5187af756a3ecb12c1f40dc8cd3e1bf7620b4d6b"
+  },
+  {
+   "name": "create-undo-lsn",
+   "parent": "live",
+   "runs": 82,
+   "sha256": "de1162166ef01f8d19e4e85dd8f458901c208fb8e37dddf2e6dba8ceda66a080"
+  },
+  {
+   "name": "create-item-order",
+   "parent": "live",
+   "runs": 82,
+   "sha256": "4887d5d21ab9f81438a3b514c31318a6463b277ecdfb749db82cdbcc65df0b6d"
+  },
+  {
+   "name": "state-create-retained",
+   "parent": "live",
+   "runs": 85,
+   "sha256": "1904a93aea7009b9b917f7621b6b0f992b1e8a0382bc04b5f92d87e6a7c9af18"
+  },
+  {
+   "name": "retained-projection",
+   "parent": "live",
+   "runs": 85,
+   "sha256": "1e55147954a18d95089dde82f7d3c37bdb50375777a833c4b82fcf4e6648ab33"
   }
  ],
  "envelopes": [

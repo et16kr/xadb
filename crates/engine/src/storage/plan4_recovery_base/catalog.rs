@@ -17,6 +17,7 @@ use crate::storage::retention_page::catalog;
 mod graph;
 #[path = "catalog/inventory.rs"]
 pub(in crate::storage) mod inventory;
+pub(in crate::storage::plan4_recovery_base) use graph::seam;
 #[cfg(test)]
 pub(in crate::storage) use graph::source_census;
 pub(in crate::storage) use graph::{

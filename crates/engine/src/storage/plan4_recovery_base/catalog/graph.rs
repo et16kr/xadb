@@ -301,7 +301,6 @@ pub(in crate::storage::plan4_recovery_base) trait Seam<'a> {
 }
 
 /// The shared body re-exported to the base4 Row graph only.
-#[allow(unused_imports, reason = "the base4 Row graph adopts this seam next")]
 pub(in crate::storage::plan4_recovery_base) mod seam {
     pub(in crate::storage::plan4_recovery_base) use super::ledger::{
         active_descriptor, descriptor, inventory, source_census as ledger_census,

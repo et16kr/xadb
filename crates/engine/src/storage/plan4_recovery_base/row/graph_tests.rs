@@ -2,8 +2,14 @@ use super::super::{ARENA, BANK, CERTIFICATES, INVENTORY, PROVENANCE};
 use super::*;
 use crate::storage::{
     control,
-    plan4_recovery_base::{ControlRef, Expected, SelectedControl},
+    ownership::InventoryError,
+    plan4_recovery_base::{
+        ControlRef, Expected, SelectedControl,
+        catalog::inventory::{InventoryRows, encode_row_current},
+        content_digest,
+    },
     retention_page::RetentionError,
+    wal_io::CatalogAllocationError,
 };
 
 macro_rules! fixture {
@@ -99,15 +105,36 @@ fn variants() -> Vec<(String, Box<[u8; BASE_BYTES]>)> {
     }
     out
 }
+fn state(name: &str) -> Box<[u8; BASE_BYTES]> {
+    variants()
+        .into_iter()
+        .find_map(|(n, bytes)| (n == name).then_some(bytes))
+        .unwrap()
+}
+
+const EMPTY: InventoryObservation = InventoryObservation {
+    owners: 0,
+    items: 0,
+    chunks: 0,
+    read_calls: 0,
+};
+/// The live literal: one Row actor with two Retained rows over a committed
+/// CREATE and INSERT, after the last System Undo INIT finished.
+const LIVE_CENSUS: RowCensus = RowCensus {
+    transactions: 1,
+    systems: 1,
+    statuses: 2,
+    actors: 1,
+    retained: 2,
+    releasing: 0,
+    tables: 1,
+    rows: 3,
+    reserved: ReservedInventory::None,
+    inventory: InventoryObservation { owners: 2, ..EMPTY },
+};
 
 #[test]
 fn base4_closure_accepts_genesis_and_aging_start() {
-    let empty = InventoryObservation {
-        owners: 0,
-        items: 0,
-        chunks: 0,
-        read_calls: 0,
-    };
     let genesis = RowCensus {
         transactions: 0,
         systems: 0,
@@ -117,11 +144,12 @@ fn base4_closure_accepts_genesis_and_aging_start() {
         releasing: 0,
         tables: 0,
         rows: 0,
-        inventory: empty,
+        reserved: ReservedInventory::None,
+        inventory: EMPTY,
     };
     let aging = RowCensus {
         systems: 1,
-        inventory: InventoryObservation { owners: 1, ..empty },
+        inventory: InventoryObservation { owners: 1, ..EMPTY },
         ..genesis
     };
     for (bytes, census) in [(GENESIS, genesis), (AGING, aging)] {
@@ -149,31 +177,92 @@ fn base4_closure_accepts_genesis_and_aging_start() {
 }
 
 #[test]
-fn base4_closure_live_actor_reaches_allocation_boundary() {
-    // Every relation before the System boundary closes on the live literal.
-    let layout = decode_layout(LIVE, expected()).unwrap();
-    let graph = Graph::new(layout).unwrap();
+fn base4_closure_accepts_live_system_init_done() {
     let mut scratch = scratch();
+    let view = decode(LIVE, expected(), &mut scratch).unwrap();
+    assert!(std::ptr::eq(view.bytes(), LIVE));
+    assert_eq!(view.census(), LIVE_CENSUS);
+    // The Finished System row stays in the bank but owns no inventory.
+    let finished = view.descriptor(32).unwrap().unwrap();
+    assert!(matches!(
+        finished.owner,
+        crate::storage::obligation::OwnerState::System(p)
+            if p.phase == crate::storage::obligation::WorkPhase::Finished
+    ));
+    assert_eq!(
+        view.active_descriptor(1),
+        Ok(view.descriptor(34).unwrap().unwrap())
+    );
+    assert_eq!(
+        view.active_descriptor(2),
+        Err(RowBaseError::Base(BaseError::InvalidInput))
+    );
+    assert_eq!(view.header().system_high_water, [5, 0, 1, 0]);
+    // The graph pieces the census is built from.
+    let graph = Graph::new(decode_layout(LIVE, expected()).unwrap()).unwrap();
     graph.check_queue(&mut scratch).unwrap();
-    assert_eq!(graph.issuer(), Ok(3));
+    assert_eq!(
+        seam::validate_relations(&graph),
+        Ok(ReservedInventory::None)
+    );
     assert_eq!(graph.actors(&mut scratch), Ok([1, 2, 0]));
     assert_eq!(graph.tables(), Ok([1, 3]));
-    assert_eq!(graph.payloads(3), Ok(2));
-    graph.provenance(&mut scratch[0]).unwrap();
-    assert_eq!(ledger::validate(&graph, &mut scratch), Ok([1, 1]));
-    let inventory = ledger::inventory(&graph, 2, &mut scratch).unwrap();
-    assert_eq!((inventory.owners, inventory.items), (2, 0));
-    assert_eq!(
-        ledger::system_allocation(&graph),
-        Err(RowBaseError::AllocationUnwired)
-    );
-    assert_eq!(
-        decode(LIVE, expected(), &mut scratch).err(),
-        Some(RowBaseError::AllocationUnwired)
-    );
+    assert!(!graph.catalog_unwired.get());
     let (output, encoded) = encoded(LIVE);
     assert_eq!(*output, *LIVE);
-    assert_eq!(encoded, Err(RowBaseError::AllocationUnwired));
+    assert_eq!(encoded, Ok(LIVE_CENSUS));
+}
+
+#[test]
+fn base4_closure_accepts_system_page_reservation() {
+    let bytes = state("state-system-reserved");
+    let census = RowCensus {
+        systems: 2,
+        reserved: ReservedInventory::SystemPage,
+        inventory: InventoryObservation {
+            owners: 3,
+            items: 1,
+            chunks: 1,
+            read_calls: 5,
+        },
+        ..LIVE_CENSUS
+    };
+    let view = decode(&*bytes, expected(), &mut scratch()).unwrap();
+    assert_eq!(view.census(), census);
+    assert_eq!(view.header().system_high_water, [6, 0, 1, 0]);
+    // The Prepared System row is active ordinal 1, between A and Aging.
+    assert_eq!(
+        view.active_descriptor(1),
+        Ok(view.descriptor(32).unwrap().unwrap())
+    );
+    let (output, encoded) = encoded(&bytes);
+    assert_eq!(*output, *bytes);
+    assert_eq!(encoded, Ok(census));
+}
+
+#[test]
+fn base4_closure_catalog_create_fails_closed_after_structure() {
+    // Reserved (three CREATE items) and Retained/uncommitted CREATE: every
+    // structural relation and inventory check closes, then the semantic
+    // Catalog residual fails closed.
+    for (name, reserved) in [
+        ("state-create-reserved", ReservedInventory::CatalogCreate),
+        ("state-create-retained", ReservedInventory::None),
+    ] {
+        let bytes = state(name);
+        let layout = decode_layout(&*bytes, expected()).unwrap();
+        let graph = Graph::new(layout).unwrap();
+        assert_eq!(seam::validate_relations(&graph), Ok(reserved), "{name}");
+        assert!(graph.catalog_unwired.get(), "{name}");
+        assert_eq!(
+            decode(&*bytes, expected(), &mut scratch()).err(),
+            Some(RowBaseError::CatalogUnwired),
+            "{name}"
+        );
+        let (output, encoded) = encoded(&bytes);
+        assert_eq!(*output, *bytes, "{name}");
+        assert_eq!(encoded, Err(RowBaseError::CatalogUnwired), "{name}");
+    }
 }
 
 #[test]
@@ -217,32 +306,42 @@ fn base4_closure_entry_gates_profile_base_root_job() {
         );
     }
     assert_eq!(seen, 10);
+    // The XOI1 shape check runs in the shared Catalog seam.
     assert_eq!(
         decode(NO_INVENTORY, expected(), &mut scratch).err(),
-        Some(RowBaseError::Corrupt)
+        Some(Base(BaseError::Corrupt))
     );
 }
 
 #[test]
 fn base4_closure_relation_variants() {
     use crate::storage::semantic_row::Error as Ledger;
+    use RowBaseError::Base as B;
     let mut scratch = scratch();
     let mut seen = 0;
     for (name, bytes) in &variants() {
         let expected_error = match name.as_str() {
-            "terminal-without-system" => RowBaseError::Identity,
-            "aging-header-budget" => RowBaseError::Budget,
-            "issuer-undo-high" => RowBaseError::Order,
-            "row-high-global" => RowBaseError::Order,
-            "committed-q-collision" => RowBaseError::Order,
+            "terminal-without-system"
+            | "allocation-finished-noncanonical"
+            | "system-reserved-terminal" => B(BaseError::CatalogAllocation(
+                CatalogAllocationError::StateMismatch,
+            )),
+            "aging-header-budget" => B(BaseError::BudgetMismatch),
+            "issuer-undo-high" | "free-undo-generation" | "create-undo-lsn" => {
+                B(BaseError::OrderMismatch)
+            }
+            "row-high-global" | "committed-q-collision" => RowBaseError::Order,
             "catalog-row-mixing" => RowBaseError::Identity,
-            "free-undo-generation" => RowBaseError::Order,
-            "init-initial-digest" => RowBaseError::Provenance,
+            "init-initial-digest" => B(BaseError::ProvenanceMismatch),
             "descriptor-last-mutation" => RowBaseError::Ledger(Ledger::OrderMismatch),
-            "att-missing" => RowBaseError::Identity,
-            "inventory-generation" => RowBaseError::Corrupt,
-            "aging-descriptor-missing" => RowBaseError::Identity,
-            "catalog-scope-terminal" => RowBaseError::Unsupported,
+            "att-missing"
+            | "aging-descriptor-missing"
+            | "catalog-scope-terminal"
+            | "retained-projection" => B(BaseError::IdentityMismatch),
+            "inventory-generation" => B(BaseError::Corrupt),
+            "system-item-owner" | "create-item-order" => {
+                B(BaseError::Inventory(InventoryError::Corrupt))
+            }
             "reserved-row-root" => RowBaseError::Unsupported,
             _ => continue,
         };
@@ -255,5 +354,84 @@ fn base4_closure_relation_variants() {
             "{name}"
         );
     }
-    assert_eq!(seen, 14);
+    assert_eq!(seen, 20);
+}
+
+/// Borrowed rows of one accepted literal for the Profile3 XOI mode.
+struct Rows<'a> {
+    bytes: &'a [u8; BASE_BYTES],
+    graph: Graph<'a>,
+}
+impl Rows<'_> {
+    fn slot(&self, slot: usize) -> Option<&[u8; 1536]> {
+        let bytes: &[u8; 1536] = self.graph.layout.descriptor_bank()[slot * 1536..][..1536]
+            .try_into()
+            .unwrap();
+        bytes.iter().any(|byte| *byte != 0).then_some(bytes)
+    }
+}
+impl InventoryRows for Rows<'_> {
+    fn transaction(&self, index: usize) -> Option<&[u8; 1536]> {
+        (index < 32).then(|| self.slot(index)).flatten()
+    }
+    fn allocation(&self) -> Option<&[u8; 1536]> {
+        self.slot(32)
+    }
+    fn aging(&self) -> Option<&[u8; 1536]> {
+        self.slot(34)
+    }
+    fn root(&self) -> &[u8; PAGE_BYTES] {
+        image(self.bytes, 1)
+    }
+    fn allocator(&self) -> &[u8; PAGE_BYTES] {
+        image(self.bytes, 0)
+    }
+    fn job(&self, ordinal: usize) -> BaseResult<&[u8]> {
+        self.graph.jobs[ordinal / 15]
+            .cell(ordinal % 15)
+            .ok_or(BaseError::InvalidInput)
+    }
+}
+
+#[test]
+fn base4_closure_row_xoi_mode_reproduces_inventory() {
+    let reserved = state("state-system-reserved");
+    let retained = state("state-create-retained");
+    let create = state("state-create-reserved");
+    let mut seen = 0;
+    for (name, bytes) in [
+        ("genesis", GENESIS),
+        ("aging", AGING),
+        ("live", LIVE),
+        ("state-system-reserved", &*reserved),
+        ("state-create-retained", &*retained),
+        ("state-create-reserved", &*create),
+    ] {
+        let layout = decode_layout(bytes, expected()).unwrap();
+        let header = layout.header();
+        let rows = Rows {
+            bytes,
+            graph: Graph::new(layout).unwrap(),
+        };
+        let mut output = Box::new([0xa5; PAGE_BYTES]);
+        let result = encode_row_current(
+            expected().profile,
+            header.generation,
+            header.capture_lsn,
+            &rows,
+            &mut output,
+        );
+        if name == "state-create-reserved" {
+            // Job3 Catalog CREATE items need the Profile3 projection (U2-C3).
+            assert_eq!(result, Err(BaseError::Unsupported), "{name}");
+            continue;
+        }
+        // Current credit is every active owner's residual, as in the header.
+        let wal = header.remaining.iter().map(|row| row.wal).sum::<u64>();
+        let steps = header.remaining.iter().map(|row| row.steps).sum::<u64>();
+        assert_eq!(result, Ok((wal, steps)), "{name}");
+        assert_eq!(*output, bytes[INVENTORY..INVENTORY + PAGE_BYTES], "{name}");
+        seen += 1;
+    }
+    assert_eq!(seen, 5);
 }
