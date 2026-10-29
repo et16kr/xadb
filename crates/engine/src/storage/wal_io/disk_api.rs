@@ -6,15 +6,19 @@
     reason = "C0 boundary awaits the separately owned Row consumers"
 )]
 pub(crate) use super::bootstrap::doublewrite_install::mutable_storage::plan4_pages::apply::{
-    CatalogCallError, CatalogCallScope, CatalogCancelled, CatalogCandidate, CatalogCommit,
-    CatalogCreateError, CatalogCreated, CatalogReadOperation, CatalogStatementCall, DiskSession,
-    EmptyRetentionControlLoan, ISOLATION_BYTES, IntoRetentionError, IsolationLevel,
-    MaintenancePort, MissingCatalogEvidence, MutationPort, Plan4Recovered, PreparedCatalog,
-    ReadOnlyCommit, ReadPort, ReadStep, ReservedCatalogCreate, RetentionCause, RetentionError,
-    RetentionPhase, RowControlObservation, RowInputPlan, RowOperation, RowPageRole,
-    RowPreflightContext, RowProducerContext, RowProducerInput, RowProducerLane, RowProposal,
-    RowSourceBinding, RowSourceRole, RowStatementView, RowTransaction, RowValidationLane,
-    StatementFinishError, TransactionFinishError, TransactionOptions,
+    CallerCredit, CatalogCallError, CatalogCallScope, CatalogCancelled, CatalogCandidate,
+    CatalogCommit, CatalogCreateError, CatalogCreated, CatalogReadOperation, CatalogStatementCall,
+    CheckedTable, DiskSession, EmptyRetentionControlLoan, ISOLATION_BYTES, IntoRetentionError,
+    IsolationLevel, MaintenancePort, MissingCatalogEvidence, MissingRowEvidence, MutationPort,
+    Plan4Recovered, PreflightRow, PreparedCatalog, PreparedRollbackTask, PreparedRow,
+    ReadOnlyCommit, ReadPort, ReadStep, ReservedCatalogCreate, ReservedRow, RetentionCause,
+    RetentionError, RetentionPhase, RollbackScope, RollbackStep, RowApplied, RowCancelled,
+    RowCandidate, RowCommitObservation, RowControlObservation, RowCopyObservation, RowInputPlan,
+    RowMutationObservation, RowOperation, RowOwnedError, RowPageRole, RowPreflightContext,
+    RowProducerContext, RowProducerInput, RowProducerLane, RowProposal, RowReadOperation,
+    RowRollback, RowRollbackDone, RowRollbackTask, RowSearchPage, RowSourceBinding, RowSourceRole,
+    RowStatementView, RowTransaction, RowValidationLane, StatementFinishError,
+    TransactionFinishError, TransactionOptions,
 };
 
 #[allow(unused_imports)]

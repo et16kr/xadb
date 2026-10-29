@@ -8734,5 +8734,33 @@
     "source_roots_changed": false,
     "review_ref": "artifacts/module-row-jobs-20261029/review-final.json",
     "review_sha256": "b9a3915b5ca61048fd577585d362b625037b143cba49b3d46a4bb12aa2ae63a4"
+  },
+  "dev3_module_c0_row_boundary": {
+    "status": "LOCAL_VERIFIED_REVIEWED_COMPILE_SUPPLY",
+    "contract_ref": "dev3-module-boundaries.md#c0-row-boundary",
+    "evidence_ref": "module-independence-survey-20261026.md#c0-row-boundary",
+    "baseline_commit": "036d4be",
+    "branch": "claude/project-thread-h2j8oc",
+    "implemented_paths": [
+      "crates/engine/src/storage/wal_io/plan4_apply/row.rs",
+      "crates/engine/src/storage/wal_io/plan4_apply/row/read.rs",
+      "crates/engine/src/storage/wal_io/plan4_apply/row/rollback.rs",
+      "crates/engine/src/storage/wal_io/plan4_apply/row/write.rs",
+      "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/cursor_credits.rs",
+      "tests/fixtures/dev3-module-c0/boundary-compiler/manifest.json",
+      "tests/fixtures/dev3-module-c0/cursor-credit/manifest.json"
+    ],
+    "modified_paths": [
+      "crates/engine/src/storage/disk.rs",
+      "crates/engine/src/storage/wal_io/disk_api.rs",
+      "crates/engine/src/storage/wal_io/plan4_apply.rs",
+      "crates/engine/src/storage/wal_io/plan4_apply/transaction.rs",
+      "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory.rs"
+    ],
+    "scope": "Compile-only C0 Row consumer boundary: write preflight/reserve/prepare/apply/cancel, read operation/search page/candidate, live statement and transaction rollback, commit_row and finish_aborted, and actual 512-byte cursor credits that borrow the view; every factory and step returns Unchanged Unsupported before any effect",
+    "validation": "compiler r1 14 and r2 4 changed cases, runtime r1 2 and r2 5 selected tests, each once PASS on fixed exports; test list differs from L6 only by the 2 new tests; independent review REQUIRED1/ADVISORY7, REQUIRED fixed by narrowing the credit lifetime",
+    "remaining_supply": "actual C2 Row read source, C3 preflight/RowReserve/Commit/rollback adapters, Catalog finish_table, C4 recovery types (next_action, RecoveryRowTask, RowRecoveryPolicy) with MBC00-P03/N11, A/B body connection, MCA/MCB/MCI and M4/M5 acceptance",
+    "source_roots_changed": false,
+    "artifact_manifest_sha256": "057ac71935038c00a0b798bdd6ab405450d20f9161d243d17dcd33852e0f0ba9"
   }
 }

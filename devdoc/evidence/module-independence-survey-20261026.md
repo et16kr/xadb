@@ -3483,3 +3483,59 @@ patch SHA-256은 다음과 같다.
 - 계획의 시험 목록 문구를 lib 목록으로 한정하고, L3 정정에 `mixed_init` 시험의 variant 일치를, R1의 28개에 census 기준을 덧붙였다.
 
 통합 담당이 이 반영을 확인했다. 13절 폴더 재정리는 배치 단위 L1–L3·L5-A–D·L6를 적용했고, L4·R1·R3는 유지로, R2는 미사용 재노출 제거로 판정했다. 전체 M4/M5 인수는 미완료다. fmt·Clippy·문서 검사는 push gate에서 수행하며 아직 push하지 않았다.
+
+<a id="c0-row-boundary"></a>
+## 2026-10-29 C0 Row 소비 경계의 컴파일 공급
+
+[계약 §6.2–6.9](../contracts/dev3-module-boundaries.md#c0-row-boundary)에서 동결한 Row 소비 경계 중 A/B 본문이 호출할 wrapper·수명·소유 형태를 실제 타입으로 공급했다. 작성 기준 `76742f3`(L6), 통합 기준 `036d4be`(R1–R3), 작업 branch `claude/project-thread-h2j8oc`의 클라우드 checkout이며 push하지 않았다. 모든 factory와 단계는 첫 source guard·pin·admission·WAL·page 효과 전에 Unchanged `Unsupported`를 반환한다. 실제 preflight/RowReserve·Row read source·rollback·Commit adapter는 C2/C3 공급이며 이 단위는 runtime 저장·가시성·복구 성공을 주장하지 않는다.
+
+| 파일(`crates/engine/src/storage/wal_io/`) | 공급 |
+| --- | --- |
+| `plan4_apply/row.rs` (신규) | `CheckedTable`(Catalog `finish_table` adapter만 발급할 table 확인 값, 필드 private), `RowOwnedError<T>{Before{error,owned},Fatal}`, `RowMutationObservation`·`RowCommitObservation` getter, private scalar cut 3종 |
+| `plan4_apply/row/write.rs` (신규) | `MutationPort::preflight_row`→`PreflightRow`(`validation_lane`/`reserve`/`finish`)→`ReservedRow`(`producer_lane`/`prepare`/`cancel`)→`PreparedRow`(`apply`/`reopen`), `RowApplied`/`RowCancelled`. private `RowSlotReservation`은 Clone이 아니며 외부 생성자가 없다 |
+| `plan4_apply/row/read.rs` (신규) | `ReadPort::row_operation`→`RowReadOperation`(`page`/`status`/`missing_before`/`copy_candidate`/`release_candidate`/`finish`), `RowSearchPage`(`leaf`/`capture`/`release_checked`), `RowCandidate`·`MissingRowEvidence`·`RowCopyObservation`. 정리는 captured refs→lease→admission 순서다 |
+| `plan4_apply/row/rollback.rs` (신규) | `RollbackScope`, `MutationPort::start_row_rollback`→`RowRollback`(`next`/`finish`), `RollbackStep{Candidate,FlushRequired,Complete}`, `RowRollbackTask`(`producer_lane`/`prepare`), `PreparedRollbackTask`(`apply`/`reopen`), `RowRollbackDone` |
+| `plan4_apply/transaction.rs` | `CallerCredit`을 `pub(crate)` 타입으로 노출(필드·생성자 private)하고 `release_checked`를 추가. `RowStatementView::reserve_cursor_credit`가 같은 원 slot에 512B를 실제 예약하며 반환 credit은 view를 빌린다. 512B handle census에 두 새 finisher 반환을 더했다. `finish_aborted`·`commit_row`는 Before로 같은 거래를 돌려준다. cfg(test) `test_charges`는 scalar 관측만 한다 |
+| `plan4_apply.rs`, `disk_api.rs`, `storage/disk.rs` | 새 이름의 선택 재노출만 추가 |
+
+§6.7의 recovery 타입(`next_action`, `RecoveryRowTask`, `RowRecoveryPolicy`/`recover_with_rows`)과 MBC00-P03/N11은 `Plan4Recovered`의 진행 상태 분리가 필요하므로 C4로 남겼다. MBC00-N02/N03/N05/N13/N14는 같은 의미의 기존 동결 입력(`dev3-module-c3/install-grant::private_kind`, `terminal::raw_grant`, `dev3-module-c1/owner-compiler::session_borrow`, `dev3-module-c3/create-lease::flush_borrow`, `pair-existing::read_key/write_key`)으로 수신하고 다시 실행하지 않았다.
+
+**컴파일 경계 r1(검토 전).** 실행 전에 [동결 manifest](../../tests/fixtures/dev3-module-c0/boundary-compiler/manifest.json)(SHA-256 `de439ef9aae3e29fb431c4ac24dcc1da070aa6c02831a853d31cc9335f9e339f`)에 입력 hash·예상 code/line을 기록했다. 각 입력을 고정 export의 `crate::storage::module_c0_compiler_probe`로 삽입하고 `cargo check -p xadb-engine --lib --profile test --locked --offline --message-format=json`을 사례마다 1회 실행했다. 원 작업 트리에는 probe를 넣지 않았다. 판정은 오류가 모두 기대 code이고 primary span이 모두 probe의 기대 줄일 때만 PASS다. 같은 export의 무 probe baseline은 41초, 진단0으로 통과했다.
+
+| 입력 | 결과 |
+| --- | --- |
+| P01 전체 INSERT 형태(begin_statement→preflight→validation lane→reserve→producer lane→prepare→apply→finish_statement→commit_row, 잘못된 입력은 preflight.finish) | PASS, 진단0 |
+| P02 prepare Before/reopen·재prepare·apply Before/reopen·cancel과 같은 private 대여 | PASS, 진단0 |
+| P04 T1 read-only Serializable 유지 중 T2 Catalog CREATE Commit, T1 read-only 종료 | PASS, 진단0 |
+| P05 producer lane의 immutable/mutable 부분 동시 사용 후 proposal | PASS, 진단0 |
+| N01 `ReservedRow.reservation` 접근 | E0616·line5 PASS |
+| N04 `ReservedRow`/`CallerCredit`의 `clone()` | E0599·line5 / E0599·line4 PASS |
+| N06 `RowSearchPage`가 살아 있는 동안 operation 사용 | E0499·line9 PASS |
+| N07 cursor가 view를 빌린 동안 `finish_statement` | E0505·line12 PASS |
+| N08 view가 살아 있는 동안 `commit_row` | E0505·line10 PASS |
+| N09 lane이 살아 있는 동안 `reserve` / `prepare` | E0505·line8 / E0505·line8 PASS |
+| N10 `PreparedRow`가 보유한 private 대여 접근 | E0499·line14 PASS |
+| N12 `RowStatementView`의 `Sync` 요구 | E0277×2·line5 PASS |
+
+14개 모두 첫 실행에서 PASS였다(사례당 5.7–8.6초). export source fingerprint는 `95970a463453f4903bde66a34a7cdb15f81581b5d73deb875486a1b2e2886faa`, result.json은 artifact의 `compiler-r1/`에 있다. 당시 N07은 credit을 `CallerCredit<'v,…>`로 받는 입력이었고, 아래 검토 반영으로 r2 입력이 대체한다.
+
+**cursor credit runtime r1(검토 전).** 당시 [동결 manifest](../../tests/fixtures/dev3-module-c0/cursor-credit/manifest.json)(SHA-256 `2be7f82987d7b537914501b32a77397525063c7392d605e9519fdf5851caee08`)의 선택 2개를 새 `plan4_recovery::tests::catalog_memory::cursor_credits::` 아래에 추가했다. r1 export와의 차이는 cfg(test) `test_charges`, 시험 모듈 등록 1줄, 시험 파일, manifest뿐이다. 고정 export(fingerprint `b3289abed3215e57e861ca2457f2dc121d794b1117a11a77b22f989c86f29355`)에서 test build 1회(78초, 진단0), ELF SHA-256 `4a8ab426f538d43fa460fa5b4d41e537a014b629b7bc6559f6c9146d2395b51f`, `RUST_MIN_STACK=33554432`, `--exact --test-threads=1`로 각 1회 실행했다.
+
+| selector | 실제 oracle·결과 |
+| --- | --- |
+| `cursor_credits_return_only_their_own_charge` | 두 read-only 거래·view 뒤 같은 view의 cursor 2개와 다른 view의 cursor 1개. 각 반환이 자기 512B만 줄이고(전역 3584→3072→2560→2048, slot 2048→1536→1024) 다른 slot·view·sequence·q는 그대로. 종료 뒤 slot/credit0, generation3, disk images 불변, unfenced. PASS 0.81초 |
+| `cursor_credit_capacity_is_unchanged_before_any_charge` | lease·view 1024B 뒤 cursor 94개로 49152B. 다음 요청은 Unchanged `Capacity`이고 회계 불변·unfenced. 하나 반환 후 재예약 성공, 전체 반환 뒤 1024B, 종료 뒤 slot/credit0·images 불변. PASS 0.82초 |
+
+같은 ELF의 시험 목록은 L6 목록(`601bd166…`) 대비 위 2개 추가만 다르다(1587줄, SHA-256 `97bd54ca609ee9732e4c7df1a078c0672710423724ccf72f6d8e7b1061c459f4`). 첫 production `cargo check`는 `OperationSourceAdmission` import 누락(E0425 2건)으로 실패했고 로그를 `logs/check1.log`로 보존한다.
+
+**독립 검토와 반영.** 이 세션이 띄운 별도 읽기 전용 subagent가 staged diff·계약·probe JSON 본문을 대조해 **필수 지적1·선택 지적7**로 판정했다. signature는 계약과 같고(배열 길이 표기·`Debug`/`Copy` 같은 무해한 차이만), 모든 단계가 효과 전에 Unsupported이며, 음성 probe10개의 message가 manifest의 이유와 같고, credit 산술이 맞다고 확인했다.
+
+- 필수: `reserve_cursor_credit`가 계약대로 `CallerCredit<'v,…>`를 돌려주면 credit이 view·거래보다 오래 남을 수 있다. 그 상태의 거래 종료는 slot charge 검산에서 fence하고, Catalog Commit에서는 durable Commit·Q 공개 뒤 거짓 Fatal이 된다. 검토자는 각 finisher의 사전 검산(Busy Before)을 제안했다. 이 대신 반환을 `CallerCredit<'r,…>`(`&'r self`)로 좁혀 credit이 view를 빌리게 했다. 컴파일 단계에서 막고 finisher 경로를 바꾸지 않는다. [계약 §6.8](../contracts/dev3-module-boundaries.md#c0-row-boundary)에 수정을 기록했다. `mem::forget`으로 버린 credit은 여전히 거래 종료 때 fence한다.
+- 선택 반영: `RowReadOperation`·rollback refs의 필드 순서를 pin→lease→admission 정리 순서로 바꿨다(명시 Drop이 없어 선언 순서가 Drop 순서다). `release_candidate`가 lease generation도 대조한다. `CheckedTable`에 검산된 table slot을 더하고 문서에 `finish_table` 미공급을 적었다. handle census에 `commit_row`·`finish_aborted` 반환을 더했다. N07이 B cursor 형태의 검사임을 manifest에 적고 credit 단독 N07-credit과 live rollback 양성 P06을 추가했다. manifest scope에 live rollback을 넣었다. 시험 주석과 import를 고쳤다.
+- 남긴 것: P04는 기존 API만 쓰고, 구체 W는 P01의 memory writer뿐이며 `cargo check`는 monomorphize하지 않는다. 이 한계는 실제 adapter 공급 때 runtime으로 확인한다.
+
+**r2(검토 반영 뒤, `036d4be` 위).** R1–R3 commit을 먼저 branch에 반영한 뒤 index를 고정 export했다(fingerprint `26ded808976d38c21b8d84ac0741e7c1b7dcfcced5294279c778b5ab9a39c4fa`). [manifest v2](../../tests/fixtures/dev3-module-c0/boundary-compiler/manifest.json)(SHA-256 `85c4420b27e575be961b86517c4b43b8a49c2a4ea752aac1df998e1e6199451a`)는 16개 입력과 r1/r2 선택을 기록한다. 코드가 바뀐 사례만 골랐고 r1 PASS의 나머지는 반복하지 않았다. 무 probe baseline 42초·진단0 뒤 P06 PASS(진단0), N06 E0499·line9, N07 E0505·line12, N07-credit E0505·line10이 모두 PASS다. runtime은 [manifest](../../tests/fixtures/dev3-module-c0/cursor-credit/manifest.json)(SHA-256 `8f0fac91054bd95fea583b3f71d35bd6e69c62f4ac89aa956ce490077bd42277`)의 r2 선택5개다. test build 78초·진단0, ELF `7bba6aa52377580848577d72a1e59a116b746e5426f28cc1b88e307bfbb2a6b9`에서 cursor credit 2개와 handle census를 쓰는 기존 3개(`owner_tests::disk_session_isolation_backing_and_carriers_are_accounted`, `transaction::writable::tests::writable_capsule_and_wrappers_stay_within_original_limits`, `transaction::catalog::tests::consuming_catalog_caller_and_checks_fit_original_limits`)를 각 1회 PASS했다. handle은 r4 기록과 같은 transaction416B·statement328B이고, 두 새 반환을 더해도 최대값이 바뀌지 않았다. 시험 목록은 r1과 byte 동일하다(`97bd54ca…`). 변경 Rust 파일의 `rustfmt --edition 2024 --check`와 `git diff --cached --check`는 차이0, production `cargo check --all-targets --all-features`는 경고0이다(`logs-r2/check3.log`). 전체 fmt·Clippy·문서 검사는 push gate에서 수행한다.
+
+artifact는 프로젝트 공유 폴더 `module-independence-20261029/artifacts/module-u1-c0-20261029/`(`manifest.sha256` SHA-256 `057ac71935038c00a0b798bdd6ab405450d20f9161d243d17dcd33852e0f0ba9`)에 원 manifest·runner·per-case JSON/stderr·build 로그·시험 목록·export 차이를 보존한다. r1/r2의 export·target·ELF는 기록 뒤 삭제했다.
+
+**남은 의무.** 실제 C2 Row read source·C3 preflight/RowReserve/Commit·rollback adapter, C4 recovery 타입, A/B 본문 연결, MCA/MCB/MCI 인수와 M4/M5는 미완료다.

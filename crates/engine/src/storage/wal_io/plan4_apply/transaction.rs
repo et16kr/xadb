@@ -49,7 +49,8 @@ struct IsolationLease<'v, 'a, 'c, 's> {
     active: bool,
 }
 /// One fixed source charge, returned only to its original live slot/generation.
-struct CallerCredit<'v, 'a, 'c, 's> {
+/// RAM accounting only: no pin, WAL, snapshot or statement authority.
+pub(crate) struct CallerCredit<'v, 'a, 'c, 's> {
     ledger: &'v Mutex<IsolationLedger<'a, 'c, 's>>,
     fence: &'s SessionFence,
     slot: usize,
@@ -320,6 +321,12 @@ impl<'v, 'a, 'c, 's> CallerCredit<'v, 'a, 'c, 's> {
         Ok(())
     }
 }
+impl CallerCredit<'_, '_, '_, '_> {
+    /// Explicit cursor close; returns only this credit to its original slot.
+    pub(in crate::storage) fn release_checked(mut self) -> Result<()> {
+        self.close()
+    }
+}
 impl Drop for CallerCredit<'_, '_, '_, '_> {
     fn drop(&mut self) {
         let _ = self.close();
@@ -435,6 +442,18 @@ impl RowStatementView<'_, '_, '_, '_, '_> {
             .take()
             .map_or(Ok(()), |g| g.release_checked().map_err(vis));
         merge(snapshot, self.source.close())
+    }
+}
+impl<'v, 'a, 'c, 's> RowStatementView<'_, 'v, 'a, 'c, 's> {
+    /// A cursor's 512-byte charge on the view's original slot. Each cursor
+    /// holds its own credit; aggregate shortage is Capacity before any effect.
+    /// The credit borrows the view, so neither the statement nor the
+    /// transaction can finish while it still holds a charge on the slot.
+    pub(in crate::storage) fn reserve_cursor_credit<'r>(
+        &'r self,
+    ) -> Result<CallerCredit<'r, 'a, 'c, 's>> {
+        self.check()?;
+        CallerCredit::reserve(&self.transaction.lease)
     }
 }
 // Only the original apply adapter can borrow this guard or register a read.
@@ -802,6 +821,42 @@ impl<'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
             }
         }
     }
+    /// Consumes the capsule only after the actual AbortEnd and terminal close
+    /// of a Row rollback. That adapter is not supplied: Before, no effect.
+    #[allow(
+        clippy::result_large_err,
+        reason = "unchanged failure returns the same inline transaction; its return carrier is charged to the 512-byte source envelope"
+    )]
+    pub(in crate::storage) fn finish_aborted<'v>(
+        &mut self,
+        _owner: &mut Owner<'c, 's>,
+        transaction: RowTransaction<'v, 'a, 'c, 's>,
+    ) -> std::result::Result<(), TransactionFinishError<RowTransaction<'v, 'a, 'c, 's>>> {
+        Err(TransactionFinishError::Before {
+            error: unchanged(RetentionPhase::Finalize, RetentionCause::Unsupported),
+            transaction,
+        })
+    }
+    /// Row Commit keeps the durable ledger borrow from validation to Q
+    /// publication. Not supplied yet: Before with the same capsule, no effect.
+    #[allow(
+        clippy::result_large_err,
+        reason = "unchanged failure returns the same inline transaction; its return carrier is charged to the 512-byte source envelope"
+    )]
+    pub(in crate::storage) fn commit_row<'v>(
+        &mut self,
+        _owner: &mut Owner<'c, 's>,
+        transaction: RowTransaction<'v, 'a, 'c, 's>,
+        _private: &mut [u8; 425_984],
+    ) -> std::result::Result<
+        super::row::RowCommitObservation,
+        TransactionFinishError<RowTransaction<'v, 'a, 'c, 's>>,
+    > {
+        Err(TransactionFinishError::Before {
+            error: unchanged(RetentionPhase::Finalize, RetentionCause::Unsupported),
+            transaction,
+        })
+    }
 }
 
 /// Caller-owned handle plus its largest creation/return carrier is charged once
@@ -821,6 +876,15 @@ pub(super) fn handle_census() -> (usize, usize) {
                         catalog::CatalogCommit,
                         TransactionFinishError<T<'_, '_, '_, '_>>,
                     >,
+                >())
+                .max(size_of::<
+                    std::result::Result<
+                        super::row::RowCommitObservation,
+                        TransactionFinishError<T<'_, '_, '_, '_>>,
+                    >,
+                >())
+                .max(size_of::<
+                    std::result::Result<(), TransactionFinishError<T<'_, '_, '_, '_>>>,
                 >()),
         size_of::<V<'_, '_, '_, '_, '_>>()
             + size_of::<Result<V<'_, '_, '_, '_, '_>>>().max(size_of::<
@@ -875,5 +939,18 @@ impl RowStatementView<'_, '_, '_, '_, '_> {
 
     pub(in crate::storage) fn test_sequence(&self) -> u64 {
         self.sequence
+    }
+
+    /// Scalar (global used, own slot charge); cannot reserve or return one.
+    pub(in crate::storage) fn test_charges(&self) -> (u64, u32) {
+        let lease = &self.transaction.lease;
+        let state = lease
+            .ledger
+            .lock()
+            .unwrap_or_else(|poison| poison.into_inner());
+        (
+            read64(state.bytes, 16),
+            read32(row(state.bytes, lease.slot), 12),
+        )
     }
 }

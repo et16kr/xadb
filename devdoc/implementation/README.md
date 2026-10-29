@@ -1,5 +1,7 @@
 # 현재 구현
 
+2026-10-29 [C0 Row 소비 경계](../evidence/module-independence-survey-20261026.md#c0-row-boundary): branch `claude/project-thread-h2j8oc`에서 `plan4_apply/row.rs`와 `row/{write,read,rollback}.rs`에 Row write·read operation·live rollback wrapper와 `commit_row`·`finish_aborted`·cursor credit을 공급했다. 본문은 효과 전 Unsupported이며 credit은 view를 빌린다. compiler probe와 runtime 선택이 각 1회 PASS, 독립 검토 필수1 반영. 실제 C2/C3 adapter·C4 recovery 타입·A/B 연결·M4/M5는 미완료다.
+
 2026-10-29 [실제 Job page·원 bank 전이](../evidence/module-independence-survey-20261026.md#row-job-images): main `21592e9`에서 Job11개 전이·원64 bank·실제 page/native/redo를 결합했다. raw26쌍·source별 신규10개 선택 검증과 최종 독립 D1/D2 한정 수용·필수 수정0을 확인했다. 전체 M4/M5는 미완료다.
 
 2026-10-29 [실제 RowLeaf·같은 frame Undo/Status](../evidence/module-independence-survey-20261026.md#row-leaf-images): main `7baef05`에서 원 schema/anchor·Job·sealed payload와 Row 전이/이웃 보존을 연결한다. 독립 입력15쌍·source별 신규8개 선택 검증을 통과했다. 최종 독립 D1/D2 한정 수용·필수 수정0이며 전체 M4/M5는 미완료다.

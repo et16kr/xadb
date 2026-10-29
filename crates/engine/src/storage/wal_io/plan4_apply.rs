@@ -101,8 +101,17 @@ mod source;
 mod transaction;
 #[allow(unused_imports)]
 pub(crate) use transaction::{
-    IsolationLevel, ReadOnlyCommit, RowStatementView, RowTransaction, StatementFinishError,
-    TransactionFinishError, TransactionOptions,
+    CallerCredit, IsolationLevel, ReadOnlyCommit, RowStatementView, RowTransaction,
+    StatementFinishError, TransactionFinishError, TransactionOptions,
+};
+#[path = "plan4_apply/row.rs"]
+mod row;
+#[allow(unused_imports)]
+pub(crate) use row::{
+    CheckedTable, MissingRowEvidence, PreflightRow, PreparedRollbackTask, PreparedRow, ReservedRow,
+    RollbackScope, RollbackStep, RowApplied, RowCancelled, RowCandidate, RowCommitObservation,
+    RowCopyObservation, RowMutationObservation, RowOwnedError, RowReadOperation, RowRollback,
+    RowRollbackDone, RowRollbackTask, RowSearchPage,
 };
 
 #[allow(unused_imports)]

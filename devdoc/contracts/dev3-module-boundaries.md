@@ -1212,6 +1212,8 @@ impl<'t,'v,'a,'c,'s> RowStatementView<'t,'v,'a,'c,'s> {
 }
 ```
 
+**2026-10-29 수정([C0 Row 경계](#c0-row-boundary)).** 위 signature의 반환을 `CallerCredit<'r,'a,'c,'s>`(`&'r self`)로 좁혔다. `'v`를 그대로 돌려주면 credit이 view·거래보다 오래 남을 수 있고, 그 상태로 거래를 끝내면 slot charge 검산이 Invariant로 fence한다. Catalog Commit에서는 durable Commit·Q 공개 뒤의 거짓 Fatal이 된다. credit이 view를 빌리게 하여 credit이 남은 동안 statement·거래 종료를 컴파일 단계에서 막는다. cursor가 view borrow와 credit을 함께 보유한다는 의미와 charge·Capacity 규칙은 그대로다. `mem::forget`으로 버린 credit은 여전히 거래 종료 때 fence한다.
+
 credit은 storage authority가 아니므로512B보다 작은 반환 row value/output을 새 owner로 취급하지 않는다. point/cursor의 반환 결과는 독립 pin/snapshot/transaction 권한을 가지지 않는 값과 caller buffer다. 그 결과와 오류·operation carrier의 실제 동시 크기는 해당 함수 source census에 포함하지만 result마다 registry/credit layer를 추가하지 않는다. cursor clone은 허용하지 않으며 새 cursor를 생성하려면 새 credit을 취득한다.
 
 isolation header는 aggregate-used, slot12..16은 source-owned-bytes를 보유한다. release는 same open/slotgen과 checked subtraction을 검사하는 no-I/O leaf 동작이다. cursor는 view를, view는 transaction을 borrow하므로 transaction을 소비 종료하기 전 cursor/view가 모두 끝나야 한다. 정상 종료는 capsule의 마지막512B를 반환한 뒤 source-owned0에서만 slot을 Free로 만들고 slotgen을 갱신한다. 별도 Closing 상태나 종료 후 남은 result lease는 없다. active Drop과 poison/underflow는 원 cleanup/fence 정책을 유지하며 존재하지 않는 capacity를 만들어내지 않는다.
@@ -1403,6 +1405,26 @@ source는 확대 reservation과 Result/Before, lease 획득/반환·IoObservatio
 
 [동결 선택](../../tests/fixtures/dev3-module-c3/create-lease/manifest.json)은 compiler3·runtime10·nativeN01 한 번이다. compiler는 actual reserve/consume, 같은 원 flush 재대여 금지, consumed token 재사용 금지다. runtime은 actual FlushIo foreign origin·Ready 잔여 검산과 바뀐 reservation의 source·Forward/Cancel·Unstaged·final unwind·Drop/current recovery·pending 우선순위·Before Drop, 신규 lease identity/Before 후 성공 Cancel과 identity 변조를 연결한다. input/corpus/controller와 total1800초/compiler420초/runtime45초/native30초/review600초/log8MiB/stack32MiB를 유지한다. 완료 무변경 pair leaf/System/하위 전체 wrapper는 실행하지 않는다. [source별 결과](../evidence/module-independence-survey-20261026.md#c3-create-lease)와 실제 검토를 별도 기록하며 일반 floor·writable actor·Row/C3–C5·M4/M5는 미완료다.
 
+<a id="c0-row-boundary"></a>
+#### XADB-MODULE-C0-ROW-001 — Row 소비 경계의 컴파일 공급
+
+2026-10-29 · D2(이 공급 한정) · 작성 기준 `76742f3`, 통합 기준 `036d4be` · branch `claude/project-thread-h2j8oc` · 작성·통합 Claude 세션, 독립 검토는 별도 읽기 전용 subagent. 실행 결과는 [증거](../evidence/module-independence-survey-20261026.md#c0-row-boundary)에 둔다.
+
+§6.2·6.3·6.6·6.7의 live rollback·6.8의 wrapper를 실제 Rust 타입으로 공급했다. `plan4_apply/row.rs`와 자손 `row/{write,read,rollback}.rs`에 `CheckedTable`, `RowOwnedError`, `PreflightRow`→`ReservedRow`→`PreparedRow`/`RowApplied`/`RowCancelled`, `RowReadOperation`/`RowSearchPage`/`RowCandidate`/`MissingRowEvidence`/`RowCopyObservation`, `RowRollback`/`RollbackStep`/`RowRollbackTask`/`PreparedRollbackTask`/`RowRollbackDone`, `RowMutationObservation`·`RowCommitObservation`을 두고, `transaction.rs`에 `reserve_cursor_credit`·`CallerCredit::release_checked`·`finish_aborted`·`commit_row`를 더했다. `storage::disk`는 이름만 선택 재노출한다.
+
+**효과 경계.** 모든 factory와 단계는 첫 source guard·pin·admission·WAL·page 효과 전에 Unchanged `Unsupported`를 반환한다. consuming 단계의 거절은 `RowOwnedError::Before`/`TransactionFinishError::Before`로 같은 wrapper·거래를 돌려준다. `reserve_cursor_credit`만 실제 효과(원 slot의512B 예약)를 가진다. private 필드와 외부 생성자 부재로 raw TxnRef/UndoRef/RowId/q에서 wrapper·credit·관측을 만들 수 없다. 실제 preflight/RowReserve·Row read source·rollback·Commit adapter는 C2/C3, recovery 타입은 C4가 공급한다.
+
+**계약과 다른 점.**
+- `reserve_cursor_credit`의 반환 수명을 `'r`로 좁혔다(§6.8 수정 기록).
+- `RowReadOperation`은 원 lease의 generation을 별도 scalar로 기록하고 `release_candidate`가 lease generation과 capture sequence를 함께 대조한다. `ReferenceLease`의 generation은 private이므로 실제 lease 취득 adapter가 이 값을 채운다.
+- `CheckedTable`은 `ObjectHandle`(generation·SchemaEpoch 포함)과 함께 원 epoch의 검산된 table slot(`u8`)을 가진다. 발급자 `finish_table`은 미공급이다.
+- 명시 Drop이 없는 wrapper의 필드 순서를 checked 정리 순서와 맞췄다. read는 captured refs→lease→admission, rollback refs는 current/next pin→lease다. 실제 adapter가 자원을 채울 때 Drop 순서가 원 lease보다 pin을 먼저 반환하게 한다.
+- copy 배열은 `[u8; PAGE_BYTES]`(=16384), 관측 타입의 `Debug`, `RollbackScope`의 `Copy`/`Eq`는 의미를 바꾸지 않는 표기 차이다.
+
+**C4로 남긴 것.** §6.7의 `next_action`, `RecoveryRowTask`, `RowRecoveryPolicy`/`recover_with_rows`와 MBC00-P03/N11은 `Plan4Recovered`의 진행 상태 분리가 필요하므로 C4 공급에서 함께 구현한다.
+
+**재검토 조건.** 실제 adapter가 Unsupported 전에 효과를 내야 하거나, credit이 view 밖으로 나가야 하는 cursor 설계, 또는 wrapper에 명시 Drop을 추가해 정리 순서가 바뀌면 이 기록을 다시 검토한다.
+
 <a id="common-deliveries"></a>
 ## 7. 유한한 공통 공급과 C0/C 인계
 
@@ -1417,7 +1439,7 @@ C는 공통 경계 구현 담당의 역할명이며 새 runtime owner가 아니�
 | C4 Row 의미의 실제 복구 수신 | 실제 source before/target/obligation 검산, Row frame replay/CLR target·잔여 예약·READY 인계. §6.7 action/task로 A CLR handler와 C의 CancelReserved/AbortEnd/committed maintenance를 분리하고 최초 canonical analysis policy gate를 공급. 독립 authored row corpus를 원 owner에 적용하는 제한 경로 | C3 및 Q01/Q04/Q05/Q06; A crash/reopen, B 단독 fixture | 일반 Row UPDATE/DELETE/SMO 및 전체 복구 재설계 제외. 형식이 바뀌면 fresh-fixture/현재-build 복구가 한 단위; 무검증 과거 binary downgrade 없음 |
 | C5 합류 adapter | 원 session의 A Commit 결과를 B가 같은/새 snapshot과 새 process recovery로 읽는 작은 조립 | 필요한 C1–C4, A/B 국소 구현 | 두 기능 본문을 통합 담당에게 이동하지 않음. 조립·fixture·해당 diff의 인수만 포함 |
 
-현재 C0는 [borrowed codec](../evidence/module-independence-survey-20261026.md#c0-borrowed-codec)과 [생산자 관측·대여 타입](../evidence/module-independence-survey-20261026.md#c0-producer-types)을 부분공급했다. C1의 [물리 WAL 구현 분리](../evidence/module-independence-survey-20261026.md#c1-physical-wal)에 이어 [원 owner/port 이전](../evidence/module-independence-survey-20261026.md#c1-owner-ports)의 컴파일4건·신규 메모리2건을 한정 수용했다. [control/isolation 소유·4160B 분리](../evidence/module-independence-survey-20261026.md#c1-isolation-backing)는 컴파일3·변경/신규 runtime4로 한정 수용했다. [epoch1600B 원 소유](../evidence/module-independence-survey-20261026.md#c1-epoch-backing)는 compiler3·변경 runtime3 PASS·독립 D1/D2 한정 수용이다. [Catalog epoch 활성화](../evidence/module-independence-survey-20261026.md#c1-epoch-activation)는 실제 seeding·CREATE/Commit을 연결하고 source별 선택 결과와 원 FAIL을 보존했다. [읽기 전용 거래/statement 수명](../evidence/module-independence-survey-20261026.md#c1-read-only-capsules)은 별도 부분공급했다. [C2 동기 Catalog 제품 본문 분리](../evidence/module-independence-survey-20261026.md#c2-catalog-read)는 실제 source adapter와 기존 소비 호출을 연결하고 source별 compiler·runtime7을 검증했다. 한정 내부 statement factory/자동 Catalog read bit는 [후속 공급](#catalog-statement-supply)에 기록하며 CheckedTable/Row 전체 공급과 구별한다. 쓰기 거래·Row read-set·전체 short admission·terminal 이전·성공하는 빈 Commit과 전체 복구 handoff 인수는 남아 있으며 전체 C0·C1–C5 공급과 제품 인수는 미완료다. C0는 M2 문서 채택만으로 완료되지 않는다. M3 수용 뒤 M4에서 최소 컴파일 경계가 실제 제공된 범위부터 A/B가 착수할 수 있다. C0의 계약 대역은 canonical row/schema 입력, finite logical Status/Undo 응답, explicit Busy/Capacity/Unsupported 같은 효과 없는 선택을 반환할 수 있다. 실제 `WalRequirement`, pin, snapshot/READY, install receipt, file effects를 제조할 수 없다. 대역으로 시험한 결과는 순수 기능 범위의 결과이며 C 수신 전 실제 저장·가시성·복구 성공으로 승격하지 않는다.
+현재 C0는 [borrowed codec](../evidence/module-independence-survey-20261026.md#c0-borrowed-codec)과 [생산자 관측·대여 타입](../evidence/module-independence-survey-20261026.md#c0-producer-types)을 부분공급했다. 2026-10-29 [Row 소비 경계](#c0-row-boundary)의 wrapper·수명·credit을 컴파일 공급했다(본문은 Unsupported). C1의 [물리 WAL 구현 분리](../evidence/module-independence-survey-20261026.md#c1-physical-wal)에 이어 [원 owner/port 이전](../evidence/module-independence-survey-20261026.md#c1-owner-ports)의 컴파일4건·신규 메모리2건을 한정 수용했다. [control/isolation 소유·4160B 분리](../evidence/module-independence-survey-20261026.md#c1-isolation-backing)는 컴파일3·변경/신규 runtime4로 한정 수용했다. [epoch1600B 원 소유](../evidence/module-independence-survey-20261026.md#c1-epoch-backing)는 compiler3·변경 runtime3 PASS·독립 D1/D2 한정 수용이다. [Catalog epoch 활성화](../evidence/module-independence-survey-20261026.md#c1-epoch-activation)는 실제 seeding·CREATE/Commit을 연결하고 source별 선택 결과와 원 FAIL을 보존했다. [읽기 전용 거래/statement 수명](../evidence/module-independence-survey-20261026.md#c1-read-only-capsules)은 별도 부분공급했다. [C2 동기 Catalog 제품 본문 분리](../evidence/module-independence-survey-20261026.md#c2-catalog-read)는 실제 source adapter와 기존 소비 호출을 연결하고 source별 compiler·runtime7을 검증했다. 한정 내부 statement factory/자동 Catalog read bit는 [후속 공급](#catalog-statement-supply)에 기록하며 CheckedTable/Row 전체 공급과 구별한다. 쓰기 거래·Row read-set·전체 short admission·terminal 이전·성공하는 빈 Commit과 전체 복구 handoff 인수는 남아 있으며 전체 C0·C1–C5 공급과 제품 인수는 미완료다. C0는 M2 문서 채택만으로 완료되지 않는다. M3 수용 뒤 M4에서 최소 컴파일 경계가 실제 제공된 범위부터 A/B가 착수할 수 있다. C0의 계약 대역은 canonical row/schema 입력, finite logical Status/Undo 응답, explicit Busy/Capacity/Unsupported 같은 효과 없는 선택을 반환할 수 있다. 실제 `WalRequirement`, pin, snapshot/READY, install receipt, file effects를 제조할 수 없다. 대역으로 시험한 결과는 순수 기능 범위의 결과이며 C 수신 전 실제 저장·가시성·복구 성공으로 승격하지 않는다.
 
 C의 미구현은 M2 종료를 무조건 막지 않는다. 그러나 필수 API·의미·담당·완료 인수가 미정이면 M2를 닫지 않는다. M4 전체 완료를 모든 A/B 구현의 공통 선행으로 두지 않고, C2를 받은 B와 C3를 받은 A의 독립 부분을 진행할 수 있게 배정한다.
 

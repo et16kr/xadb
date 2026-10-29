@@ -1157,6 +1157,8 @@ mod retire_failures;
 #[path = "catalog_memory/reader_validation.rs"]
 mod reader_validation;
 
+#[path = "catalog_memory/cursor_credits.rs"]
+mod cursor_credits;
 #[path = "catalog_memory/transactions.rs"]
 mod transactions;
 
