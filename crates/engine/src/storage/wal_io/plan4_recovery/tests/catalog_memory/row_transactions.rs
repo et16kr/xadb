@@ -24,7 +24,7 @@ fn namespace_of(actor: TxnRef) -> crate::api::Namespace {
 }
 
 /// The one Job cell of `actor`; it must carry the Row scope.
-fn row_job(jobs: &[[u8; 1024]; 64], actor: TxnRef) -> (usize, JobState, u8, u64) {
+pub(super) fn row_job(jobs: &[[u8; 1024]; 64], actor: TxnRef) -> (usize, JobState, u8, u64) {
     let mut found = None;
     for (ordinal, bytes) in jobs.iter().enumerate() {
         let job = job3::decode_job(bytes, namespace_of(actor)).unwrap();
@@ -66,7 +66,7 @@ fn gated(images: &Images) {
 }
 
 /// A second preprovisioned Status (page 11) by the original exclusive INIT.
-fn second_status<'s, 'c, W: WriterNamespace>(
+pub(super) fn second_status<'s, 'c, W: WriterNamespace>(
     live: &mut Live<'_, 's, 'c, '_, '_, '_, '_, '_, W>,
     owner: &mut Owner<'c, 's>,
     flusher: &mut Owner<'c, 's>,
