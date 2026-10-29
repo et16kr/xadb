@@ -8,8 +8,8 @@
 //! relation has been checked.
 use super::super::catalog::seam::{self, Phase, ReservedInventory, Seam, SeamJob, SeamLayout};
 use super::super::{
-    Certificate, DescriptorSpec, Error as BaseError, Expected, Header, InventoryObservation,
-    PageHeader, PageKind, PageRef, TxnRef,
+    Certificate, DescriptorSpec, Error as BaseError, Expected, Header, INVENTORY_ROOT_CAP,
+    InventoryObservation, PageHeader, PageKind, PageRef, TxnRef, get, get16,
 };
 use super::{
     BASE_BYTES, DESCRIPTOR_BYTES, InitProvenance, LayoutView, Sections, actor, decode_layout,
@@ -19,6 +19,8 @@ use crate::{
     api::Namespace,
     storage::{
         catalog_record::{self, CatalogDefinitionView, CatalogError, CatalogExpectation},
+        obligation::OwnerState,
+        ownership::InventoryError,
         page::{PAGE_BYTES, PageView},
         retention_obligation,
         retention_page::{
@@ -56,8 +58,8 @@ pub(in crate::storage) enum RowBaseError {
     Corrupt,
     Identity,
     Order,
-    /// Explicitly outside the first Profile3 closure (Reserved Row roots,
-    /// non-inline or non-Table payloads).
+    /// Explicitly outside the first Profile3 closure (non-inline or non-Table
+    /// payloads).
     Unsupported,
     /// A Catalog-scope actor's semantic residual needs the Profile3 Catalog
     /// ledger entry, which this module cannot reach yet. Never an acceptance.
@@ -153,15 +155,6 @@ fn bank(scratch: &mut [[u8; PAGE_BYTES]; 4]) -> &mut [[u8; JOB_BYTES]; JOB_COUNT
         .0
         .try_into()
         .expect("original four-page job scratch")
-}
-
-fn actor_bound(actor: TxnRef, h: &Header) -> Result<()> {
-    if actor.id().writer_epoch > h.source_epoch
-        || actor.id().writer_epoch == h.source_epoch && actor.id().local > h.source_local
-    {
-        return Err(Error::Order);
-    }
-    Ok(())
 }
 
 impl<'a> SeamJob<'a> for JobView<'a> {
@@ -400,12 +393,54 @@ impl<'a> Graph<'a> {
         }
         let mut aggregate = [0; 640];
         row::verify_census(self.root, self.namespace(), cells, &mut aggregate)?;
+        Ok(())
+    }
+
+    /// Count Row-scope Reserved roots, keeping the last one of `actor` (any
+    /// actor if `None`). The census already allows one per actor.
+    fn row_reserved(&self, actor: Option<TxnRef>) -> Result<(usize, Option<JobView<'a>>)> {
+        let mut found = (0, None);
         for ordinal in 0..JOB_COUNT {
-            // A Reserved Row root awaits a closed UndoSlot inventory item.
             let job = self.job(ordinal)?;
-            if job.row_scope() && job.state() == JobState::RootReserved {
-                return Err(Error::Unsupported);
+            if job.row_scope()
+                && job.state() == JobState::RootReserved
+                && actor.is_none_or(|actor| job.source() == Some(actor))
+            {
+                found = (found.0 + 1, Some(job));
             }
+        }
+        Ok(found)
+    }
+    /// The shared pass classified System and Catalog reservations. A RowReserve
+    /// owns only its actor's `UndoSlot(U)` item and is alone in this base.
+    fn row_reservation(&self, reserved: ReservedInventory) -> Result<ReservedInventory> {
+        match (self.row_reserved(None)?.0, reserved) {
+            (0, reserved) => Ok(reserved),
+            (1, ReservedInventory::None) => Ok(ReservedInventory::RowUndoSlot),
+            _ => Err(BaseError::Inventory(InventoryError::Corrupt).into()),
+        }
+    }
+    /// Couple the one verified item to its Row root: kind UndoSlot in the
+    /// Forward row's category, the root's exact U, born at its lease. The
+    /// shared verifier already closed owner, digest, count and category sums.
+    fn row_item(&self) -> Result<()> {
+        let item = &self.layout.inventory()[INVENTORY_ROOT_CAP + 128..INVENTORY_ROOT_CAP + 224];
+        let descriptor = seam::active_descriptor(self.layout, usize::from(get16(item, 2)))?;
+        let OwnerState::Transaction(status) = descriptor.owner else {
+            return Err(Error::Identity);
+        };
+        let job = self
+            .row_reserved(Some(status.reference()))?
+            .1
+            .ok_or(Error::Identity)?;
+        let undo = UndoRef::decode(&item[8..48]).map_err(|_| Error::Identity)?;
+        if item[0] != 2
+            || item[1] != 2
+            || get(item, 72) != job.lease_lsn()
+            || get(item, 72) != descriptor.inventory.change_lsn
+            || job.undo() != Some(undo)
+        {
+            return Err(Error::Identity);
         }
         Ok(())
     }
@@ -420,7 +455,9 @@ impl<'a> Graph<'a> {
                 continue;
             }
             let actor = job.source().ok_or(Error::Identity)?;
-            actor_bound(actor, &header)?;
+            if !seam::within_source(actor.id(), &header) {
+                return Err(Error::Order);
+            }
             let observed = actor::observe(self.layout, actor, scratch)?;
             counts[0] += 1;
             counts[1] += observed.retained as u32;
@@ -432,6 +469,7 @@ impl<'a> Graph<'a> {
     /// Every actual row across all tables. Catalog records themselves are the
     /// shared body's; here only the Row/Catalog actor split and rows remain.
     fn tables(&self) -> Result<[u32; 2]> {
+        let header = self.layout.header();
         let tables = self.catalog()?.len();
         for index in 0..tables {
             let creator = self.record_at(index)?.1.header().logical.transaction();
@@ -456,11 +494,11 @@ impl<'a> Graph<'a> {
                     return Err(Error::Identity);
                 }
             }
-            // An uncommitted CREATE's table is visible to no other actor.
-            if !matches!(
-                self.record_at(table)?.1.header().stamp,
-                VersionStamp::Committed(_)
-            ) {
+            // A CREATE stays Transaction-stamped until its Catalog Prune; other
+            // actors may write the table only once that creator has committed.
+            if let VersionStamp::Transaction(creator) = self.record_at(table)?.1.header().stamp
+                && !self.creator_committed(creator)?
+            {
                 return Err(Error::Order);
             }
             match version.stamp {
@@ -471,7 +509,10 @@ impl<'a> Graph<'a> {
                     }
                 }
                 VersionStamp::Committed(q) => {
-                    if q.get() > self.root.commit_c() || version.undo.is_some() {
+                    if q.get() > self.root.commit_c()
+                        || version.undo.is_some()
+                        || !seam::within_source(writer, &header)
+                    {
                         return Err(Error::Order);
                     }
                 }
@@ -496,6 +537,19 @@ impl<'a> Graph<'a> {
             })
         })?;
         Ok([tables as u32, rows])
+    }
+
+    /// A not yet pruned CREATE: its Catalog root is Retained under a committed
+    /// TerminalReady. The Job3 census (`verify_pair`, run by `check_queue`)
+    /// orders every Row root sharing that table after the terminal adoption.
+    fn creator_committed(&self, creator: TxnRef) -> Result<bool> {
+        let root = self.for_actor(creator, false)?;
+        let terminal = self.for_actor(creator, true)?;
+        Ok(
+            root.is_some_and(|r| !r.row_scope() && r.state() == JobState::RootRetained)
+                && terminal
+                    .is_some_and(|t| t.state() == JobState::TerminalReady && t.outcome() == 1),
+        )
     }
 
     /// Each Row actor's residual ledger, through its exact semantic owner. The
@@ -651,12 +705,15 @@ fn validate<'a>(
     let graph = Graph::new(layout)?;
     graph.check_queue(scratch)?;
     seam::provenance(&graph, &mut scratch[0])?;
-    let reserved = seam::validate_relations(&graph)?;
+    let reserved = graph.row_reservation(seam::validate_relations(&graph)?)?;
     let [actors, retained, releasing] = graph.actors(scratch)?;
     let [tables, rows] = graph.tables()?;
     graph.row_ledger(scratch)?;
     let (transactions, systems) = seam::validate_ledger(&graph, reserved)?;
     let inventory = seam::inventory(&graph, reserved, transactions + systems, scratch)?;
+    if reserved == ReservedInventory::RowUndoSlot {
+        graph.row_item()?;
+    }
     // Last, so every structural relation has been checked before failing closed.
     if graph.catalog_unwired.get() {
         return Err(Error::CatalogUnwired);

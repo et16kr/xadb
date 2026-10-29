@@ -241,13 +241,49 @@ fn base4_closure_accepts_system_page_reservation() {
 }
 
 #[test]
+fn base4_closure_accepts_row_undo_slot_reservation() {
+    // A RowReserve of the free Undo15: the shared pass sees no page
+    // reservation and the Row owner couples the one UndoSlot(U) item.
+    let bytes = state("state-row-reserved");
+    let census = RowCensus {
+        reserved: ReservedInventory::RowUndoSlot,
+        inventory: InventoryObservation {
+            owners: 2,
+            items: 1,
+            chunks: 1,
+            read_calls: 5,
+        },
+        ..LIVE_CENSUS
+    };
+    let mut scratch = scratch();
+    let view = decode(&*bytes, expected(), &mut scratch).unwrap();
+    assert_eq!(view.census(), census);
+    let graph = Graph::new(decode_layout(&*bytes, expected()).unwrap()).unwrap();
+    graph.check_queue(&mut scratch).unwrap();
+    assert_eq!(
+        seam::validate_relations(&graph),
+        Ok(ReservedInventory::None)
+    );
+    assert_eq!(
+        graph.row_reservation(ReservedInventory::None),
+        Ok(ReservedInventory::RowUndoSlot)
+    );
+    assert_eq!(graph.row_item(), Ok(()));
+    let (output, encoded) = encoded(&bytes);
+    assert_eq!(*output, *bytes);
+    assert_eq!(encoded, Ok(census));
+}
+
+#[test]
 fn base4_closure_catalog_create_fails_closed_after_structure() {
-    // Reserved (three CREATE items) and Retained/uncommitted CREATE: every
-    // structural relation and inventory check closes, then the semantic
+    // Reserved (three CREATE items), Retained/uncommitted CREATE, and a
+    // committed not yet pruned CREATE whose table holds a Retained A row:
+    // every structural relation and inventory check closes, then the semantic
     // Catalog residual fails closed.
     for (name, reserved) in [
         ("state-create-reserved", ReservedInventory::CatalogCreate),
         ("state-create-retained", ReservedInventory::None),
+        ("state-create-committed-row", ReservedInventory::None),
     ] {
         let bytes = state(name);
         let layout = decode_layout(&*bytes, expected()).unwrap();
@@ -330,7 +366,10 @@ fn base4_closure_relation_variants() {
             "issuer-undo-high" | "free-undo-generation" | "create-undo-lsn" => {
                 B(BaseError::OrderMismatch)
             }
-            "row-high-global" | "committed-q-collision" => RowBaseError::Order,
+            "row-high-global"
+            | "committed-q-collision"
+            | "committed-writer-bound"
+            | "create-uncommitted-committed-row" => RowBaseError::Order,
             "catalog-row-mixing" => RowBaseError::Identity,
             "init-initial-digest" => B(BaseError::ProvenanceMismatch),
             "descriptor-last-mutation" => RowBaseError::Ledger(Ledger::OrderMismatch),
@@ -338,11 +377,19 @@ fn base4_closure_relation_variants() {
             | "aging-descriptor-missing"
             | "catalog-scope-terminal"
             | "retained-projection" => B(BaseError::IdentityMismatch),
-            "inventory-generation" => B(BaseError::Corrupt),
-            "system-item-owner" | "create-item-order" => {
+            "inventory-generation" | "row-reserved-no-item" | "row-reserved-two-items" => {
+                B(BaseError::Corrupt)
+            }
+            "system-item-owner" | "create-item-order" | "row-reserved-item-kind" => {
                 B(BaseError::Inventory(InventoryError::Corrupt))
             }
-            "reserved-row-root" => RowBaseError::Unsupported,
+            // Its Status still counts two incoming Retained roots.
+            "reserved-row-root" => {
+                RowBaseError::Actor(actor::Error::Ledger(Ledger::IdentityMismatch))
+            }
+            // The Row root is ordered after an uncommitted creator's table.
+            "create-uncommitted-row" => RowBaseError::Queue(RetentionError::OrderMismatch),
+            "row-reserved-twice" => RowBaseError::Queue(RetentionError::IdentityMismatch),
             _ => continue,
         };
         seen += 1;
@@ -354,7 +401,7 @@ fn base4_closure_relation_variants() {
             "{name}"
         );
     }
-    assert_eq!(seen, 20);
+    assert_eq!(seen, 27);
 }
 
 /// Borrowed rows of one accepted literal for the Profile3 XOI mode.
@@ -398,6 +445,8 @@ fn base4_closure_row_xoi_mode_reproduces_inventory() {
     let reserved = state("state-system-reserved");
     let retained = state("state-create-retained");
     let create = state("state-create-reserved");
+    let row = state("state-row-reserved");
+    let committed = state("state-create-committed-row");
     let mut seen = 0;
     for (name, bytes) in [
         ("genesis", GENESIS),
@@ -406,6 +455,8 @@ fn base4_closure_row_xoi_mode_reproduces_inventory() {
         ("state-system-reserved", &*reserved),
         ("state-create-retained", &*retained),
         ("state-create-reserved", &*create),
+        ("state-row-reserved", &*row),
+        ("state-create-committed-row", &*committed),
     ] {
         let layout = decode_layout(bytes, expected()).unwrap();
         let header = layout.header();
@@ -433,5 +484,5 @@ fn base4_closure_row_xoi_mode_reproduces_inventory() {
         assert_eq!(*output, bytes[INVENTORY..INVENTORY + PAGE_BYTES], "{name}");
         seen += 1;
     }
-    assert_eq!(seen, 5);
+    assert_eq!(seen, 7);
 }

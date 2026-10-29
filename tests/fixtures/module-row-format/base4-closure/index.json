@@ -202,6 +202,60 @@
    "parent": "live",
    "runs": 85,
    "sha256": "1e55147954a18d95089dde82f7d3c37bdb50375777a833c4b82fcf4e6648ab33"
+  },
+  {
+   "name": "committed-writer-bound",
+   "parent": "live",
+   "runs": 6,
+   "sha256": "6012b498268fe778b54c3f87720876f938b361d36a7db5a70e9d165310e11e8c"
+  },
+  {
+   "name": "state-create-committed-row",
+   "parent": "live",
+   "runs": 105,
+   "sha256": "2e923c8178afc2630d3a15fa7051ff6bb5e80b7e7f8b3555ec0365d1e9561ec7"
+  },
+  {
+   "name": "create-uncommitted-row",
+   "parent": "live",
+   "runs": 114,
+   "sha256": "ea75159a4ccedf6dcda1b00d2ce29ffbd299167a427050330483a53a50946ec4"
+  },
+  {
+   "name": "create-uncommitted-committed-row",
+   "parent": "live",
+   "runs": 98,
+   "sha256": "74c72ce3869ffdedd0c1bf70385b580abeafd850c7f74e4d8e12562b3554879d"
+  },
+  {
+   "name": "state-row-reserved",
+   "parent": "live",
+   "runs": 56,
+   "sha256": "aa0b1cbf2e3ad9c1d48e72d754a1d9bebf3e57b95cc31d9dd9958a70afbcd4ae"
+  },
+  {
+   "name": "row-reserved-no-item",
+   "parent": "live",
+   "runs": 50,
+   "sha256": "cd4c698934bd25ad449574f429bdf9c39854d2f968afe45ca9729673e5d1beef"
+  },
+  {
+   "name": "row-reserved-two-items",
+   "parent": "live",
+   "runs": 58,
+   "sha256": "7a566b439d6615e387714d35c8f68585615309542a59a6971c895cb15104e60b"
+  },
+  {
+   "name": "row-reserved-item-kind",
+   "parent": "live",
+   "runs": 56,
+   "sha256": "62bffb228966dd171defebe4e7b7da7231816cbff7f3f11172a22447da954eb1"
+  },
+  {
+   "name": "row-reserved-twice",
+   "parent": "live",
+   "runs": 59,
+   "sha256": "4d54e0592bc5b103655a75255ca2d58644135574921bb99e78242b2c9a6af6de"
   }
  ],
  "envelopes": [

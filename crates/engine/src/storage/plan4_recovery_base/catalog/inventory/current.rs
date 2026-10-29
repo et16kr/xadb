@@ -156,12 +156,20 @@ fn encode(
     let mut count = 0;
     for ordinal in 0..64 {
         if mode == Mode::Row3 {
-            // Job3 Catalog-scope items need the Profile3 semantic projection
-            // (U2-C3); a Row-scope Reserved cell is not a base4 state.
             let job = row_queue::decode_job(rows.job(ordinal)?, profile.spec().namespace)?;
-            if job.state() == row_queue::JobState::RootReserved {
+            if job.state() != row_queue::JobState::RootReserved {
+                continue;
+            }
+            // Job3 Catalog-scope items need the Profile3 semantic projection
+            // (U2-C3); a Row-scope RowReserve owns one UndoSlot item.
+            if job.scope() != Some(row_queue::JobScope::Row) {
                 return Err(Error::Unsupported);
             }
+            if count != 0 {
+                return Err(Error::IdentityMismatch);
+            }
+            row_undo_item(output, transactions, job)?;
+            count = 1;
             continue;
         }
         let job = queue::decode_job(rows.job(ordinal)?, profile.spec().namespace)?;
@@ -246,7 +254,37 @@ fn encode(
     Ok(future)
 }
 
-/// Typed nested codec closure. Caller-owned rows/adapter, output page and any
+/// Profile3 Row mode: a RowReserve's `UndoSlot(U)` item in the Forward row's
+/// category, owned by its actor's ATT row and born at the lease.
+fn row_undo_item(
+    output: &mut [u8; PAGE_BYTES],
+    transactions: usize,
+    job: row_queue::JobView<'_>,
+) -> Result<()> {
+    let actor = job.source().ok_or(Error::IdentityMismatch)?;
+    let mut owner = None;
+    for index in 0..transactions {
+        if TxnRef::decode(&owner_slot(output, index)?[8..56])? == actor
+            && owner.replace(index).is_some()
+        {
+            return Err(Error::IdentityMismatch);
+        }
+    }
+    let owner = owner.ok_or(Error::IdentityMismatch)?;
+    let undo = job.undo().ok_or(Error::IdentityMismatch)?;
+    let item = item_slot(output, 0)?;
+    item.fill(0);
+    item[0] = 2;
+    item[1] = 2;
+    put16(item, 2, owner as u16);
+    undo.encode(&mut item[8..48])?;
+    put(item, 64, 1);
+    put(item, 72, job.lease_lsn());
+    Ok(())
+}
+
+/// Typed nested codec closure. Its sum is the Catalog2 mode's; the Profile3
+/// Row mode has no separate bound yet. Caller-owned rows/adapter, output page and any
 /// retained current/projected views are accounted by the calling phase.
 pub(in crate::storage) fn current_source_bytes() -> usize {
     use foundation::codec::ContentHasher;

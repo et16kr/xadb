@@ -218,6 +218,25 @@ pub(in crate::storage) fn terminal_frame() -> usize {
         + 2 * size_of::<Result<Option<JobView<'_>>>>()
         + slack()
 }
+/// Graph::creator_committed: the creator's root and Terminal lookups.
+pub(in crate::storage) fn creator_chain() -> usize {
+    size_of::<(&Graph<'_>, TxnRef)>()
+        + 2 * size_of::<Option<JobView<'_>>>()
+        + 2 * size_of::<Result<Option<JobView<'_>>>>()
+        + size_of::<Result<bool>>()
+        + slack()
+        + terminal_frame()
+        + job_chain()
+}
+/// Graph::row_reserved over the 64 Jobs.
+pub(in crate::storage) fn reserved_chain() -> usize {
+    size_of::<(&Graph<'_>, Option<TxnRef>)>()
+        + 2 * size_of::<(usize, Option<JobView<'_>>)>()
+        + size_of::<(JobView<'_>, Result<JobView<'_>>)>()
+        + size_of::<Result<(usize, Option<JobView<'_>>)>>()
+        + slack()
+        + job_chain()
+}
 /// Seam::page through the certificate decoder; `image` decodes it again.
 pub(in crate::storage) fn page_chain() -> usize {
     size_of::<(&Graph<'_>, PageRef, PageKind, u64, LayoutView<'_>)>()
@@ -421,6 +440,8 @@ pub(in crate::storage) fn source_census() -> SourceCensus {
         + 2 * size_of::<RowCensus>()
         + 2 * size_of::<ReservedInventory>()
         + 2 * size_of::<BaseResult<ReservedInventory>>()
+        + size_of::<Result<ReservedInventory>>()
+        + size_of::<Result<()>>()
         + 2 * size_of::<BaseResult<InventoryObservation>>()
         + 2 * size_of::<Result<[u32; 3]>>()
         + 2 * size_of::<Result<[u32; 2]>>()
@@ -583,6 +604,11 @@ pub(in crate::storage) fn source_census() -> SourceCensus {
         + size_of::<(ReservationOwner, Option<[PageRef; 2]>)>()
         + layout_temps()
         + scalar;
+    // The Row owner's reservation classification follows the shared pass.
+    let reservation = size_of::<(&Graph<'_>, ReservedInventory, Result<ReservedInventory>)>()
+        + size_of::<(usize, BaseError)>()
+        + slack()
+        + reserved_chain();
     let relations = (relations_frame
         + header_read()
             .max(job_chain())
@@ -592,7 +618,8 @@ pub(in crate::storage) fn source_census() -> SourceCensus {
             .max(payloads)
             .max(allocation_decode())
             .max(terminal_frame() + job_chain()))
-    .max(seam::relations_source_bytes::<Graph<'_>>());
+    .max(seam::relations_source_bytes::<Graph<'_>>())
+    .max(reservation);
     let actors = size_of::<Header>()
         + job
         + 2 * size_of::<(TxnRef, Option<TxnRef>)>()
@@ -603,9 +630,12 @@ pub(in crate::storage) fn source_census() -> SourceCensus {
         + job_chain().max(header_read()).max(actor_observe());
     // each_row nests inside each_row and commits inside commits; each level
     // keeps its Table or record while the inner level decodes.
+    // The row visitor also keeps the header bound and the creator check.
     let rows = each_row_chain(
         visitor()
+            + size_of::<(&Header, VersionStamp, Result<bool>)>()
             + record_chain()
+                .max(creator_chain())
                 .max(terminal_frame() + job_chain())
                 .max(each_row_chain(visitor())),
     );
@@ -622,10 +652,12 @@ pub(in crate::storage) fn source_census() -> SourceCensus {
         + 2 * size_of::<Result<Record<'_>>>()
         + 2 * size_of::<CatalogHeader>()
         + size_of::<(TxnId, std::ops::Range<usize>)>()
+        + size_of::<Header>()
         + job
         + size_of::<(Table<'_>, Result<Table<'_>>)>()
         + scalar
-        + record_codec()
+        + header_read()
+            .max(record_codec())
             .max(catalog_chain())
             .max(record_chain())
             .max(table_chain())
@@ -711,6 +743,16 @@ pub(in crate::storage) fn source_census() -> SourceCensus {
         + allocation_decode()
             .max(active_chain())
             .max(terminal_frame() + job_chain());
+    // Graph::row_item couples a RowUndoSlot item after the shared pass.
+    let row_item = size_of::<(&Graph<'_>, &[u8])>()
+        + size_of::<(DescriptorSpec, Result<DescriptorSpec>)>()
+        + size_of::<TransactionStatus>()
+        + size_of::<(JobView<'_>, Option<JobView<'_>>)>()
+        + size_of::<Result<(usize, Option<JobView<'_>>)>>()
+        + size_of::<(UndoRef, std::result::Result<UndoRef, PageError>)>()
+        + size_of::<Option<UndoRef>>()
+        + slack()
+        + active_chain().max(reserved_chain());
     let inventory = (size_of::<(Header, Profile)>()
         + layout_temps()
         + 2 * size_of::<InventoryExpected>()
@@ -723,7 +765,8 @@ pub(in crate::storage) fn source_census() -> SourceCensus {
             .max(digest())
             .max(ownership::borrowed_inventory_source_bytes() + callback + active_chain())
             .max(items))
-    .max(shared.inventory);
+    .max(shared.inventory)
+    .max(row_item);
     let phases = graph
         .max(queue)
         .max(provenance)

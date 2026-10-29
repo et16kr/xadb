@@ -23,6 +23,7 @@ use crate::storage::{
     undo_record::{self, UndoRecordExpectation, UndoRecordState, UndoTargetKind, UndoTargetView},
     undo_ref::UndoRef,
 };
+use crate::transaction::TxnId;
 use foundation::identity::{Generation, ObjectHandle, ObjectId};
 
 #[path = "graph/ledger.rs"]
@@ -35,6 +36,16 @@ pub(in crate::storage) enum ReservedInventory {
     None,
     SystemPage,
     CatalogCreate,
+    /// One Row-scope Reserved root's `UndoSlot(U)` item. Only the base4 Row
+    /// owner classifies and couples it; base3 has no Row-scope Job.
+    RowUndoSlot,
+}
+
+/// Whether an actor id is within the header's issued source position. Each
+/// caller keeps its own error for an actor beyond it.
+pub(in crate::storage::plan4_recovery_base) fn within_source(id: TxnId, h: &Header) -> bool {
+    id.writer_epoch < h.source_epoch
+        || id.writer_epoch == h.source_epoch && id.local <= h.source_local
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -310,7 +321,7 @@ pub(in crate::storage::plan4_recovery_base) mod seam {
         provenance, source_bytes as relations_source_bytes, validate as validate_relations,
     };
     pub(in crate::storage::plan4_recovery_base) use super::{
-        Phase, ReservedInventory, Seam, SeamJob, SeamLayout,
+        Phase, ReservedInventory, Seam, SeamJob, SeamLayout, within_source,
     };
 }
 

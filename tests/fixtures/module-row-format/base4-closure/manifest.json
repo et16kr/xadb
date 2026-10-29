@@ -1,18 +1,18 @@
 {
   "schema": "XADB_ROW_BASE4_CLOSURE_V2",
   "baseline": "31e4614",
-  "revision": "r2b",
-  "refrozen_from": {
-    "revision": "r2",
-    "sha256": "dab6830993aef1a0cf8fedb41fb9bb1110eb54e4665716070b8b131140cf906e",
-    "reason": "entry-gate test expectation for the XOI1-less legacy base corrected from Corrupt to Base(Corrupt) after its first run failed; no fixture byte changed"
+  "revision": "r3",
+  "previous_revision": {
+    "revision": "r2b",
+    "sha256": "a3e1ee4d216d66632c692af9d96c90056801dacb3002712f1e4fb2eaa4fa7a7c"
   },
   "previous_commits": [
     "f1771b6",
-    "a9501a2"
+    "a9501a2",
+    "4c4295c"
   ],
   "status": "FROZEN_INPUTS_NOT_EXECUTION_EVIDENCE",
-  "scope": "Pure uncalled Profile3/base4 current-state closure over immutable bytes. r2 accepts System allocation states (Finished INIT, Prepared page reservation) through validate_row_base_allocation, checks Catalog-scope Job3 relations, provenance, ledger rows and XOI inventory through the shared Catalog base seam, and fails closed with CatalogUnwired after all structural relations when a Catalog-scope semantic residual would be needed. Profile3 Row XOI mode reproduces the inventory page. No INIT/WAL history, source selection, replay or Profile2 behaviour change.",
+  "scope": "Pure uncalled Profile3/base4 current-state closure over immutable bytes. r2 accepts System allocation states (Finished INIT, Prepared page reservation) through validate_row_base_allocation, checks Catalog-scope Job3 relations, provenance, ledger rows and XOI inventory through the shared Catalog base seam, and fails closed with CatalogUnwired after all structural relations when a Catalog-scope semantic residual would be needed. r3 admits a row in a Transaction-stamped table only under a committed (TerminalReady outcome 1) creator whose Catalog root is Retained, bounds committed row writers by the header source, and accepts one Row-scope Reserved root per base with exactly one UndoSlot(U) item. Profile3 Row XOI mode reproduces the inventory page. No INIT/WAL history, source selection, replay or Profile2 behaviour change.",
   "budget": {
     "total_seconds": 1200,
     "compiler_seconds": 600,
@@ -37,9 +37,14 @@
       "reason": "state-system-reserved (Prepared System AllocationMaintenance reserving one page, one XOI item) accepted with reserved SystemPage, 3 owners/1 item; Prepared row is active ordinal 1; encode reproduces bytes."
     },
     {
+      "selector": "storage::plan4_recovery_base::row::graph::tests::base4_closure_accepts_row_undo_slot_reservation",
+      "expected": "PASS",
+      "reason": "state-row-reserved (A RowReserve of the free Undo15 at 33, one UndoSlot(U15) XOI item in the Forward category) accepted with reserved RowUndoSlot, 2 owners/1 item/1 chunk/5 reads; check_queue Ok; validate_relations None; row_reservation(None) RowUndoSlot; row_item Ok; encode reproduces bytes."
+    },
+    {
       "selector": "storage::plan4_recovery_base::row::graph::tests::base4_closure_catalog_create_fails_closed_after_structure",
       "expected": "PASS",
-      "reason": "state-create-reserved and state-create-retained pass every structural relation (validate_relations gives CatalogCreate / None) and inventory check, then decode and encode both return CatalogUnwired; encode output equals input."
+      "reason": "state-create-reserved, state-create-retained and state-create-committed-row (D committed at 38, CREATE root still Retained, one Retained A row in table 7 leased at 41) pass every structural relation (validate_relations gives CatalogCreate / None / None) and inventory check, then decode and encode both return CatalogUnwired; encode output equals input."
     },
     {
       "selector": "storage::plan4_recovery_base::row::graph::tests::base4_closure_entry_gates_profile_base_root_job",
@@ -49,17 +54,17 @@
     {
       "selector": "storage::plan4_recovery_base::row::graph::tests::base4_closure_relation_variants",
       "expected": "PASS",
-      "reason": "20 relation variants each pass decode_layout and are rejected by the closure with the listed error."
+      "reason": "27 relation variants each pass decode_layout and are rejected by the closure with the listed error (r3 adds committed-writer-bound, create-uncommitted-row, create-uncommitted-committed-row, row-reserved-no-item, row-reserved-two-items, row-reserved-item-kind, row-reserved-twice; reserved-row-root changed)."
     },
     {
       "selector": "storage::plan4_recovery_base::row::graph::tests::base4_closure_row_xoi_mode_reproduces_inventory",
       "expected": "PASS",
-      "reason": "Profile3 Row XOI mode (encode_row_current over borrowed slots/root/allocator/Job3 cells) reproduces the INVENTORY page and returns (sum wal, sum steps) of header.remaining for genesis, aging, live, state-system-reserved, state-create-retained; state-create-reserved gives Base(Unsupported) pending the Profile3 Catalog item projection."
+      "reason": "Profile3 Row XOI mode (encode_row_current over borrowed slots/root/allocator/Job3 cells) reproduces the INVENTORY page and returns (sum wal, sum steps) of header.remaining for genesis, aging, live, state-system-reserved, state-create-retained, state-row-reserved (emits the one UndoSlot item), state-create-committed-row; state-create-reserved gives Base(Unsupported) pending the Profile3 Catalog item projection."
     },
     {
       "selector": "storage::plan4_recovery_base::row::graph::source::tests::base4_closure_source_bound_covers_measured_frames",
       "expected": "PASS",
-      "reason": "Production source_bytes phases cover per-frame size_of inventories of every closure chain (frames, seam accessors, phases); prints ROW_BASE_SOURCE with Catalog base3 source_census/layout_source_bytes and ROW_BASE_SIZES."
+      "reason": "Production source_bytes phases cover per-frame size_of inventories of every closure chain (frames, seam accessors, phases); prints ROW_BASE_SOURCE with Catalog base3 source_census/layout_source_bytes and ROW_BASE_SIZES. r3 adds the Row reservation/item, creator and header-bound chains; B4 must stay below the 65536 native cap."
     }
   ],
   "removed_tests": [
@@ -213,7 +218,8 @@
       "name": "reserved-row-root",
       "parent": "live",
       "sha256": "a6936687b1c55d5d3d210e9498d63cd90fd4b6e4e0d45d7faec9acd0929281b1",
-      "expected": "Unsupported"
+      "expected": "Actor(actor::Error::Ledger(semantic_row::Error::IdentityMismatch))",
+      "changed_from": "r2 Unsupported: a Row-scope Reserved root is now a closed RowUndoSlot reservation; this variant keeps its Status incoming count at two while only one root is Retained, so the semantic_row ledger rejects it"
     },
     {
       "name": "allocation-finished-noncanonical",
@@ -268,12 +274,66 @@
       "parent": "live",
       "sha256": "1e55147954a18d95089dde82f7d3c37bdb50375777a833c4b82fcf4e6648ab33",
       "expected": "Base(IdentityMismatch)"
+    },
+    {
+      "name": "committed-writer-bound",
+      "parent": "live",
+      "sha256": "6012b498268fe778b54c3f87720876f938b361d36a7db5a70e9d165310e11e8c",
+      "expected": "Order"
+    },
+    {
+      "name": "state-create-committed-row",
+      "parent": "live",
+      "sha256": "2e923c8178afc2630d3a15fa7051ff6bb5e80b7e7f8b3555ec0365d1e9561ec7",
+      "expected": "CatalogUnwired after structure (validate_relations -> None; tables admits the A row in the committed, unpruned CREATE table 7); XOI Row mode reproduces INVENTORY"
+    },
+    {
+      "name": "create-uncommitted-row",
+      "parent": "live",
+      "sha256": "ea75159a4ccedf6dcda1b00d2ce29ffbd299167a427050330483a53a50946ec4",
+      "expected": "Queue(RetentionError::OrderMismatch)"
+    },
+    {
+      "name": "create-uncommitted-committed-row",
+      "parent": "live",
+      "sha256": "74c72ce3869ffdedd0c1bf70385b580abeafd850c7f74e4d8e12562b3554879d",
+      "expected": "Order"
+    },
+    {
+      "name": "state-row-reserved",
+      "parent": "live",
+      "sha256": "aa0b1cbf2e3ad9c1d48e72d754a1d9bebf3e57b95cc31d9dd9958a70afbcd4ae",
+      "expected": "ACCEPT census{LIVE_CENSUS with reserved RowUndoSlot, XOI owners 2 items 1 chunks 1 read_calls 5}; validate_relations None; row_reservation RowUndoSlot; row_item Ok; encode reproduces bytes; XOI Row mode reproduces INVENTORY"
+    },
+    {
+      "name": "row-reserved-no-item",
+      "parent": "live",
+      "sha256": "cd4c698934bd25ad449574f429bdf9c39854d2f968afe45ca9729673e5d1beef",
+      "expected": "Base(Corrupt)"
+    },
+    {
+      "name": "row-reserved-two-items",
+      "parent": "live",
+      "sha256": "7a566b439d6615e387714d35c8f68585615309542a59a6971c895cb15104e60b",
+      "expected": "Base(Corrupt)"
+    },
+    {
+      "name": "row-reserved-item-kind",
+      "parent": "live",
+      "sha256": "62bffb228966dd171defebe4e7b7da7231816cbff7f3f11172a22447da954eb1",
+      "expected": "Base(Inventory(InventoryError::Corrupt))"
+    },
+    {
+      "name": "row-reserved-twice",
+      "parent": "live",
+      "sha256": "4d54e0592bc5b103655a75255ca2d58644135574921bb99e78242b2c9a6af6de",
+      "expected": "Queue(RetentionError::IdentityMismatch)"
     }
   ],
   "inputs": {
     "author.py": {
-      "bytes": 29283,
-      "sha256": "00c243219cc07a82b15625e12d5945277f03e7a257d6040790e9f11b9e729315"
+      "bytes": 34296,
+      "sha256": "b3ba5790664fef00da8ca029ecdb315ff771ef5aac6afce89fba8542b89d29a6"
     },
     "genesis.xrb": {
       "bytes": 2097152,
@@ -288,16 +348,16 @@
       "sha256": "5a446fbf0fab629b7bfc10b5040e0a54b77ea6e2a993ca58db70482f3f5c94d9"
     },
     "variants.bin": {
-      "bytes": 30467,
-      "sha256": "32cc4fd30edaef3a4b7016e38e93cdb240feb9da9b1469ad1ff0eaf9d40966ce"
+      "bytes": 57914,
+      "sha256": "9fb96696d773407b7637a651c06aec71abbe49732ec5f911b86659aaaec4d586"
     },
     "envelopes.bin": {
       "bytes": 20480,
       "sha256": "7f9331527ec54a7c7e3e332b1ccafd9395d539d265c3d4793468a0ff47e06653"
     },
     "index.json": {
-      "bytes": 5350,
-      "sha256": "2c2566a5e0e75a39c6038ad9297905979d0319fe6f1c1ac7949bcd3102b38d0a"
+      "bytes": 6813,
+      "sha256": "85a0224b28e85fb275ed2b9e500007fc549c3754872cc85c81a01c1a288a940c"
     }
   },
   "parents": {

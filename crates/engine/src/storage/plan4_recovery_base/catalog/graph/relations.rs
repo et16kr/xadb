@@ -1,21 +1,14 @@
 use super::*;
 
-fn actor_bound(actor: TxnRef, h: &Header) -> Result<()> {
-    if actor.id().writer_epoch > h.source_epoch
-        || actor.id().writer_epoch == h.source_epoch && actor.id().local > h.source_local
-    {
-        return Err(Error::OrderMismatch);
-    }
-    Ok(())
-}
-
 fn terminal<'a, G: Seam<'a>>(graph: &G, job: G::Job) -> Result<()> {
     let home = graph.home(job)?;
     let TransactionStatusCell::Occupied(status) = home.core() else {
         return Err(Error::IdentityMismatch);
     };
     let actor = job.source().ok_or(Error::IdentityMismatch)?;
-    actor_bound(actor, &graph.layout().header())?;
+    if !within_source(actor.id(), &graph.layout().header()) {
+        return Err(Error::OrderMismatch);
+    }
     let root = graph.for_actor(actor, false)?;
     graph.catalog_remaining(status, root)?;
     if home.incoming() != u64::from(root.is_some_and(|j| j.phase() == Phase::RootRetained)) {
@@ -526,8 +519,11 @@ pub(in crate::storage::plan4_recovery_base) fn validate<'a, G: Seam<'a>>(
             }
         }
     }
+    // A Row-scope Reserved root reserves no page; the base4 Row owner
+    // classifies its UndoSlot item after this shared pass.
     let roots = (0..JOB_COUNT).try_fold(0, |count, index| {
-        Ok::<_, Error>(count + usize::from(graph.job(index)?.phase() == Phase::RootReserved))
+        let job = graph.job(index)?;
+        Ok::<_, Error>(count + usize::from(job.phase() == Phase::RootReserved && !job.row_scope()))
     })?;
     let reserved = match (system, tx, roots) {
         (0, 0, 0) => ReservedInventory::None,
@@ -590,7 +586,9 @@ pub(in crate::storage::plan4_recovery_base) fn provenance<'a, G: Seam<'a>>(
                 }
             }
             ReservationOwner::Transaction(actor) => {
-                actor_bound(actor, &header)?;
+                if !within_source(actor.id(), &header) {
+                    return Err(Error::OrderMismatch);
+                }
                 let pair = provenance.pair().ok_or(Error::ProvenanceMismatch)?;
                 if provenance.role() == 3 {
                     anchor::encode_anchor(

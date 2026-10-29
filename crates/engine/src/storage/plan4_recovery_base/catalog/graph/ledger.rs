@@ -292,7 +292,7 @@ fn inventory_observation<'a, G: Seam<'a>>(
     let bank = graph.layout().inventory();
     let items = match reserved {
         ReservedInventory::None => 0,
-        ReservedInventory::SystemPage => 1,
+        ReservedInventory::SystemPage | ReservedInventory::RowUndoSlot => 1,
         ReservedInventory::CatalogCreate => 3,
     };
     let root_length = 160 + owners * 56;
@@ -337,8 +337,9 @@ fn inventory_observation<'a, G: Seam<'a>>(
 
 fn inventory_items<'a, G: Seam<'a>>(graph: &G, reserved: ReservedInventory) -> Result<()> {
     let bank = graph.layout().inventory();
+    // The base4 Row owner couples a RowUndoSlot item to its Row-scope root.
     let items = match reserved {
-        ReservedInventory::None => 0,
+        ReservedInventory::None | ReservedInventory::RowUndoSlot => 0,
         ReservedInventory::SystemPage => 1,
         ReservedInventory::CatalogCreate => 3,
     };
@@ -405,7 +406,9 @@ fn inventory_items<'a, G: Seam<'a>>(graph: &G, reserved: ReservedInventory) -> R
                     return Err(Error::Unsupported);
                 }
             }
-            ReservedInventory::None => return Err(Error::IdentityMismatch),
+            ReservedInventory::None | ReservedInventory::RowUndoSlot => {
+                return Err(Error::IdentityMismatch);
+            }
         }
     }
     if reserved == ReservedInventory::CatalogCreate && (pair_seen != 3 || !undo_seen) {

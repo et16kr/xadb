@@ -73,7 +73,8 @@ fn validate_frame() -> usize {
         + size_of::<([u32; 2], Result<[u32; 2]>)>()
         + size_of::<((usize, usize), BaseResult<(usize, usize)>)>()
         + size_of::<(InventoryObservation, BaseResult<InventoryObservation>)>()
-        + 3 * size_of::<Result<()>>()
+        + size_of::<Result<ReservedInventory>>()
+        + 4 * size_of::<Result<()>>()
         + size_of::<Header>()
         + size_of::<RowCensus>()
         + size_of::<Result<RowBaseView<'_>>>()
@@ -313,6 +314,21 @@ fn commits_frame_measured(captures: usize) -> usize {
         + size_of::<(Option<TxnRef>, Result<TxnRef>)>()
         + size_of::<Result<()>>()
 }
+/// Graph::creator_committed.
+fn creator_measured() -> usize {
+    size_of::<(&Graph<'_>, TxnRef)>()
+        + 2 * size_of::<(Option<JobView<'_>>, BaseResult<Option<JobView<'_>>>)>()
+        + size_of::<(bool, Result<bool>)>()
+        + terminal_measured()
+}
+/// Graph::row_reserved.
+fn reserved_measured() -> usize {
+    size_of::<(&Graph<'_>, Option<TxnRef>)>()
+        + size_of::<((usize, Option<JobView<'_>>), Range<usize>, usize)>()
+        + size_of::<(JobView<'_>, BaseResult<JobView<'_>>)>()
+        + size_of::<(Option<TxnRef>, Result<(usize, Option<JobView<'_>>)>)>()
+        + job_measured()
+}
 fn row_visitor(captures: usize) -> usize {
     captures + size_of::<(usize, usize, RecordVersion)>() + size_of::<Result<()>>()
 }
@@ -323,6 +339,7 @@ fn commit_visitor(captures: usize) -> usize {
 fn tables_measured() -> [(&'static str, usize); 4] {
     let refs = |count: usize| count * size_of::<&()>();
     let frame = size_of::<&Graph<'_>>()
+        + size_of::<Header>()
         + size_of::<(usize, Range<usize>, usize)>()
         + size_of::<(Record<'_>, Result<Record<'_>>)>()
         + size_of::<(CatalogHeader, TxnId, Range<usize>)>()
@@ -333,21 +350,25 @@ fn tables_measured() -> [(&'static str, usize); 4] {
         + refs(1)
         + 2 * size_of::<Result<()>>()
         + size_of::<Result<[u32; 2]>>();
-    // tables → each_row → row visitor → each_row → uniqueness visitor.
-    let outer_visitor = row_visitor(refs(3))
+    // tables → each_row → row visitor → each_row → uniqueness visitor. The
+    // row visitor captures the header for the committed writer bound.
+    let outer_visitor = row_visitor(refs(4))
         + size_of::<(TxnId, Range<usize>, usize)>()
         + size_of::<(Result<Record<'_>>, CatalogHeader, VersionStamp)>()
+        + size_of::<(TxnRef, bool, Result<bool>)>()
         + size_of::<(
             BaseResult<Option<JobView<'_>>>,
             Option<JobView<'_>>,
             JobView<'_>,
         )>()
+        + size_of::<(TxnId, &Header, bool)>()
         + refs(3);
     let rows = frame
         + each_row_measured(
-            refs(3),
+            refs(4),
             outer_visitor
                 + record_measured()
+                    .max(creator_measured())
                     .max(terminal_measured())
                     .max(each_row_measured(refs(3), row_visitor(refs(3)))),
         );
@@ -365,7 +386,8 @@ fn tables_measured() -> [(&'static str, usize); 4] {
             row_visitor(refs(1)) + commit_visitor(refs(1)) + refs(2) + inner,
         );
     let direct = frame
-        + record_codec()
+        + header_chain()
+            .max(record_codec())
             .max(catalog_measured())
             .max(record_measured())
             .max(table_measured())
@@ -578,7 +600,7 @@ fn payloads_measured() -> usize {
 }
 /// relations::validate: the issuer, every Catalog-scope Job, records,
 /// payloads and the Reserved classification, each returning before the next.
-fn relations_measured() -> [(&'static str, usize); 6] {
+fn relations_measured() -> [(&'static str, usize); 7] {
     let frame = size_of::<(&Graph<'_>, u64, Option<u64>, Range<usize>)>()
         + size_of::<(JobView<'_>, BaseResult<JobView<'_>>)>()
         + 2 * size_of::<BaseResult<()>>()
@@ -607,6 +629,17 @@ fn relations_measured() -> [(&'static str, usize); 6] {
                 + allocation_measured()
                     .max(terminal_measured())
                     .max(header_chain()),
+        ),
+        // Graph::row_reservation after the shared pass returns.
+        (
+            "relations_reservation",
+            size_of::<(&Graph<'_>, ReservedInventory, Result<ReservedInventory>)>()
+                + size_of::<(
+                    (usize, Option<JobView<'_>>),
+                    Result<(usize, Option<JobView<'_>>)>,
+                )>()
+                + size_of::<BaseError>()
+                + reserved_measured(),
         ),
     ]
 }
@@ -765,7 +798,7 @@ fn ledger_measured() -> [(&'static str, usize); 4] {
     ]
 }
 /// The shared inventory pass: the borrowed verifier, then item coupling.
-fn inventory_measured() -> [(&'static str, usize); 2] {
+fn inventory_measured() -> [(&'static str, usize); 3] {
     let frame = size_of::<(&Graph<'_>, ReservedInventory, usize, &mut Scratch, Header)>()
         + layout_copies()
         + size_of::<(&[u8; PAGE_BYTES], usize, usize, usize)>()
@@ -800,6 +833,17 @@ fn inventory_measured() -> [(&'static str, usize); 2] {
         + size_of::<([PageRef; 2], Option<[PageRef; 2]>, usize, Option<usize>)>()
         + size_of::<(UndoRef, Native<UndoRef, PageError>, Option<UndoRef>)>()
         + size_of::<BaseResult<()>>();
+    // Graph::row_item, after the shared pass, for a RowUndoSlot base.
+    let row_item = size_of::<(&Graph<'_>, &[u8])>()
+        + size_of::<(usize, DescriptorSpec, BaseResult<DescriptorSpec>)>()
+        + size_of::<(TransactionStatus, TxnRef)>()
+        + size_of::<(
+            JobView<'_>,
+            Option<JobView<'_>>,
+            Result<(usize, Option<JobView<'_>>)>,
+        )>()
+        + size_of::<(UndoRef, Native<UndoRef, PageError>, Option<UndoRef>)>()
+        + size_of::<Result<()>>();
     [
         (
             "inventory_verify",
@@ -817,6 +861,10 @@ fn inventory_measured() -> [(&'static str, usize); 2] {
                     .max(active_measured())
                     .max(descriptor_measured())
                     .max(terminal_measured()),
+        ),
+        (
+            "inventory_row_item",
+            row_item + active_measured().max(reserved_measured()),
         ),
     ]
 }

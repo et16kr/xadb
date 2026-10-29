@@ -6,8 +6,11 @@ a committed Catalog CREATE (C), a finished Row INSERT (F) and an Active Row
 actor (A) with two Retained roots, after a finished System Undo INIT. r2 states
 are live-parented run lists: a Prepared System page reservation (one XOI item),
 and a Catalog actor D whose CREATE is Reserved (three XOI items) or Retained and
-uncommitted. Integers and SHA claims here are not WAL history; D's residual rows
-copy the Profile2 Catalog recipe only as a stand-in for the Profile3 owner.
+uncommitted. r3 adds a Row RowReserve of the free Undo15 (one UndoSlot item)
+and, after D commits without its Catalog Prune and a System Undo INIT of page18,
+a Retained A row in D's table 7. Integers and SHA claims here are not WAL
+history; D's residual rows copy the Profile2 Catalog recipe only as a stand-in
+for the Profile3 owner.
 """
 from pathlib import Path
 import hashlib
@@ -95,12 +98,14 @@ def active_core(ref, head=None):
     b = bytearray(192); b[:6] = b'XTS1\x01\x00'; b[6] = 1; b[8:56] = ref
     if head: b[64] = 1; b[72:112] = head
     return b
+def committed_core(ref, q, head):
+    b = active_core(ref, head); b[6] = 3; put(b, 56, q); return b
 def free_undo(gen):
     b = bytearray(432); b[:6] = b'XUR1\x01\x00'; put(b, 8, gen); return b
-def live_undo(gen, seq, creator, mutation, row, previous=None):
+def live_undo(gen, seq, creator, mutation, row, previous=None, table=6):
     b = bytearray(432); b[:6] = b'XUR1\x01\x00'; b[6] = 1; put(b, 8, gen); put(b, 16, seq)
     b[24:72] = creator; put(b, 72, mutation); put(b, 80, 2)
-    b[88] = 1; put(b, 96, 6); put(b, 104, 1); put(b, 112, row)
+    b[88] = 1; put(b, 96, table); put(b, 104, 1); put(b, 112, row)
     if previous:
         b[326] = 1; b[120:160] = previous[0]; put(b, 160, previous[1])
     return b
@@ -135,9 +140,9 @@ def row_record(row, writer, mutation, value, stamp_ref=None, undo=None, q=0):
     b[168:] = struct.pack('<IBq', 1, 2, value)
     return b
 def entry(key, value): return struct.pack('<HH', 8, len(value)) + struct.pack('>Q', key) + value
-def projection(row, value):
+def projection(row, value, table=6):
     b = bytearray(48); b[:8] = b'XRP1\x01\x00\x01\x00'; b[8] = 1
-    for at, v in [(16, 6), (24, 1), (32, row)]: put(b, at, v)
+    for at, v in [(16, table), (24, 1), (32, row)]: put(b, at, v)
     b[40] = 1
     return sha(bytes(b) + value)
 META = bytes(cells_of(image(INITIAL, 8))[0])  # leaf metadata, arity0 and no leftmost
@@ -295,7 +300,8 @@ def reheader(b):
 LIVE = dict(undo_high=4, f_row=1, f_q=2, f_local=2, free_undo=3, status14_digest=None,
             last_mutation=2, att=True, aging=True, inventory_gen=2, catalog_terminal=False,
             reserved=False, slot32='finished', system=False, system_terminal=0, system_owner=1,
-            create=None, undo15_lsn=36, item_order=(0, 1, 2), projection=None)
+            create=None, undo15_lsn=36, item_order=(0, 1, 2), projection=None,
+            row_reserve=False, row_items='one', d_commit=False, a_row7=False, f_table7=False)
 
 
 def live(genesis_digest, **changes):
@@ -308,14 +314,32 @@ def live(genesis_digest, **changes):
     d_ref = txn_ref(4, 4); u15 = slot_ref(15, 4)
     apply, revision = {None: (32, 20), 'reserved': (36, 22), 'retained': (37, 23)}[create]
     capture = 35 if v['system'] else {None: 34, 'reserved': 36, 'retained': 37}[create]
+    # A's third root (ordinal 9): a RowReserve of the free Undo15 at 33, or a
+    # Retained INSERT into table 7 (System reserves page18 at 39 and INITs it
+    # at 40, A reserves at 41 and Forwards at 42). D commits at 38 (Ready
+    # Terminal, Status14 Committed q3) and keeps its Retained CREATE root.
+    third = v['row_reserve'] or v['a_row7']
+    u18 = slot_ref(18)
+    if v['row_reserve']:
+        apply, revision = 33, revision + 1
+    if v['d_commit']:
+        apply, revision, capture = 38, revision + 1, 38
+    if v['a_row7']:
+        apply, revision, capture = 42, revision + 2, 42
     rec7 = catalog_record(d_ref[:40], 0, obj=7, anchor=16, stamp=d_ref, undo=u15, name=b'U')
+    a7 = row_record(4, txn_id(3), 3, 104, a_ref, u18 if v['a_row7'] else u15)
     # Pages: C's Status/Undo reused by F; A's own Status/Undo; C's CREATE pair.
+    f = (v['f_row'], row_record(v['f_row'], f_id, 1, 101, q=v['f_q']))
     rows = [
-        (v['f_row'], row_record(v['f_row'], f_id, 1, 101, q=v['f_q'])),
         (2, row_record(2, txn_id(3), 1, 102, a_ref, u12)),
         (3, row_record(3, txn_id(3), 2, 103, a_ref, u13)),
     ]
-    rows.sort()
+    leaf7 = [f] if v['f_table7'] else []
+    if not v['f_table7']:
+        rows.append(f)
+    if v['a_row7']:
+        leaf7.append((4, a7))
+    rows.sort(); leaf7.sort()
     catalog = [META, entry(6, catalog_record(c_ref[:40], 1))]
     images = {
         8: relsn(image(INITIAL, 8), 11, catalog),
@@ -327,15 +351,26 @@ def live(genesis_digest, **changes):
         14: page(14, STATUS, 2, 20, [status_home(free_core(3))]),
         15: page(15, UNDO, 3, 19, [free_undo(v['free_undo'])]),
     }
+    d_initial = {16: page(16, ANCHOR, 7, 37, [anchor_cell(17)]), 17: page(17, ROWLEAF, 7, 37, [META])}
     if create == 'reserved':
         images[14] = page(14, STATUS, 2, 35, [status_home(active_core(d_ref))])
         images[15] = page(15, UNDO, 3, v['undo15_lsn'], [free_undo(4)])
     elif create == 'retained':
         images[8] = relsn(image(INITIAL, 8), 37, catalog + [entry(7, rec7)])
         images[14] = page(14, STATUS, 2, 37, [status_home(active_core(d_ref, u15), 1)])
+        if v['d_commit']:
+            images[14] = page(14, STATUS, 2, 38, [status_home(committed_core(d_ref, 3, u15), 1)])
         images[15] = page(15, UNDO, 3, 37, [catalog_undo(4, 5, d_ref, 7)])
-        images[16] = page(16, ANCHOR, 7, 37, [anchor_cell(17)])
-        images[17] = page(17, ROWLEAF, 7, 37, [META])
+        images.update(d_initial)
+        if leaf7:
+            images[17] = page(17, ROWLEAF, 7, 42 if v['a_row7'] else 37,
+                              [META] + [entry(k, r) for k, r in leaf7])
+    seq3 = LIVE['undo_high'] + int(bool(create)) + 1
+    if v['row_reserve']:
+        images[15] = page(15, UNDO, 3, 33, [free_undo(4)])
+    if v['a_row7']:
+        images[9] = page(9, STATUS, 2, 42, [status_home(active_core(a_ref, u18), 3)])
+        images[18] = page(18, UNDO, 3, 42, [live_undo(2, seq3, a_ref, 3, 4, (u13, 4), table=7)])
     initial = {
         9: page(9, STATUS, 2, 23, [status_home(free_core(1))]),
         10: page(10, ANCHOR, 6, 8, [ANCHOR_CELL]),
@@ -344,10 +379,14 @@ def live(genesis_digest, **changes):
         13: page(13, UNDO, 3, 30, [free_undo(1)]),
         14: page(14, STATUS, 2, 2, [status_home(free_core(1))]),
         15: page(15, UNDO, 3, 5, [free_undo(1)]),
+        18: page(18, UNDO, 3, 40, [free_undo(1)]),
     }
     create_frame = sha(b'opaque CREATE INIT frame')
     inits = {}
-    for n, ident, init in [(14, 1, 2), (15, 2, 5), (9, 3, 23), (12, 4, 26), (13, 5, 30)]:
+    system_inits = [(14, 1, 2), (15, 2, 5), (9, 3, 23), (12, 4, 26), (13, 5, 30)]
+    if v['a_row7']:
+        system_inits.append((18, 6, 40))
+    for n, ident, init in system_inits:
         inits[n] = init_record(initial[n], 1 if initial[n][6] == STATUS else 2, 1, init, init - 1,
                                work_ref(1, ident), sha(b'opaque System INIT frame' + bytes([n])))
     for n, role in [(10, 3), (11, 4)]:
@@ -355,7 +394,7 @@ def live(genesis_digest, **changes):
     if create == 'retained':
         d_frame = sha(b'opaque D CREATE INIT frame')
         for n, role in [(16, 3), (17, 4)]:
-            inits[n] = init_record(images[n], role, 2, 37, 36, d_ref, d_frame, pair=(16, 17), obj=7)
+            inits[n] = init_record(d_initial[n], role, 2, 37, 36, d_ref, d_frame, pair=(16, 17), obj=7)
     if v['status14_digest']:
         inits[14][96:128] = v['status14_digest']
     # Jobs: A's Terminal and two Retained roots; C/F used ordinals 3..6.
@@ -383,18 +422,38 @@ def live(genesis_digest, **changes):
     ready = ((1 << 1) | (1 << 2)) & ~leased
     if create:
         # Catalog-scope D: Terminal at ordinal 7, CREATE root at ordinal 8.
-        t = cell(1); t[16:64] = d_ref; t[80:120] = slot_ref(14, 4); put(t, 64, 35); put(t, 376, 35)
+        t = cell(2 if v['d_commit'] else 1); t[16:64] = d_ref; t[80:120] = slot_ref(14, 4)
+        put(t, 64, 35); put(t, 376, 35)
+        if v['d_commit']:
+            for at, x in [(72, 38), (264, 3), (376, 38)]: put(t, at, x)
+            ready |= 1 << 7
+        else:
+            leased |= 1 << 7
         bank[7] = t
         r = cell(7 if create == 'reserved' else 9); r[16:64] = d_ref; r[80:120] = slot_ref(14, 4)
         r[128:168] = u15; r[200:224] = pref(16); r[224:248] = pref(17)
         for at, x in [(64, 36), (168, 5), (176, 7)]: put(r, at, x)
         r[288:320] = v['projection'] or catalog_projection(7, rec7)
         if create == 'reserved':
-            put(r, 376, 36); leased |= (1 << 7) | (1 << 8)
+            put(r, 376, 36); leased |= 1 << 8
         else:
-            put(r, 72, 37); put(r, 376, 37); leased |= 1 << 7; ready |= 1 << 8
+            put(r, 72, 37); put(r, 376, 37); ready |= 1 << 8
         bank[8] = r
-    occupied = 3 + int(v['catalog_terminal']) + 2 * int(bool(create))
+    if third:
+        lease, undo, table, pair = (33, u15, 6, (10, 11)) if v['row_reserve'] else (41, u18, 7, (16, 17))
+        j = cell(19 if v['row_reserve'] else 21); j[16:64] = a_ref; j[80:120] = slot_ref(9)
+        j[128:168] = undo; j[200:224] = pref(pair[0]); j[224:248] = pref(pair[1])
+        for at, x in [(64, lease), (168, seq3), (176, table), (248, 3), (256, 3), (320, 4)]: put(j, at, x)
+        put(j, 280, len(a7) + 12, 4)
+        wal = 311608 + 2 * (len(a7) + 12) + 128
+        put(j, 384 + 3 * 128 + 16, wal); put(j, 384 + 3 * 128 + 112, wal)
+        if v['row_reserve']:
+            put(j, 376, lease); leased |= 1 << 9
+        else:
+            put(j, 72, 42); put(j, 376, 42); j[288:320] = projection(4, a7, 7); ready |= 1 << 9
+        bank[9] = j
+    d_active = bool(create) and not v['d_commit']
+    occupied = 3 + int(v['catalog_terminal']) + 2 * int(bool(create)) + int(third)
     free = ((1 << 64) - 1) & ~(leased | ready)
     aggregate = budget_rows({})
     for j in bank:
@@ -405,20 +464,29 @@ def live(genesis_digest, **changes):
     AGGREGATE[0] = aggregate
     jobs_page = relsn(image(INITIAL, 2), apply, [bytes(c) for c in bank[:15]])
     root = initial_root(); root[6] = 1; root[16:64] = work_ref(3, 1)
-    undo_high = v['undo_high'] + int(bool(create))
+    undo_high = v['undo_high'] + int(bool(create)) + int(third)
     for at, x in [(64, revision), (72, 7), (80, apply), (88, 4 + occupied), (96, free), (104, leased),
                   (112, ready), (376, 4), (384, 0), (392, undo_high), (400, 6 + int(bool(create))),
-                  (408, 2), (416, 120000), (424, 0), (432, 3)]:
+                  (408, 2 + int(v['d_commit'])), (416, 120000), (424, 0), (432, 3 + int(third))]:
         put(root, at, x)
     root[128:160] = sha(b''.join(bank)); root[160:192] = sha(aggregate)
     rp = root_page(root, apply)
     images.update({1: rp, 2: jobs_page})
     # Descriptors: A in ATT slot0, D in slot1, the last System and Aging.
-    a_rows = budget_rows({0: debt(2, (91096 + 193) + (91096 + 193 + 128)), 2: debt(1, 56712),
-                          3: debt(3, 9120)})
+    clr = [91096 + 193, 91096 + 193 + 128] + [91096 + len(a7) + 12 + 128] * int(third)
+    a_debts = {0: debt(len(clr), sum(clr)), 2: debt(1, 56712), 3: debt(3, 9120)}
+    if v['row_reserve']:
+        # A RowReserve's Forward residual holds its one Undo slot.
+        a_debts[1] = debt(1, 91304 + len(a7) + 12 + 128, 1)
+    a_rows = budget_rows(a_debts)
     remaining = add_rows(a_rows, aggregate)
     descriptors = {}
-    if v['slot32'] == 'finished':
+    if v['a_row7']:
+        # The page18 Undo INIT is now the last System row, Finished.
+        descriptors[32] = descriptor(6, 2, work_ref(1, 6), (40, 39, 39, 2), budget_rows({}),
+                                     progress=(1, 4, 1, 1, 1), change=40,
+                                     consumed=FRAME1 + 38208, minimum=0)
+    elif v['slot32'] == 'finished':
         # Exact original Finished UndoRoot INIT terminal: no remainder retained.
         descriptors[32] = descriptor(6, 2, work_ref(1, 5), (30, 29, 29, 2), budget_rows({}),
                                      progress=(1, 4, 1, 1, 1), change=30,
@@ -429,7 +497,13 @@ def live(genesis_digest, **changes):
     owners = [(1, a_ref)]
     items = []
     reserved_entries = {}
-    if create:
+    a_items, a_digest = 0, None
+    if v['row_reserve']:
+        item = xoi_item(2, 2, 0, u15, 33)
+        items = {'one': [item], 'none': [], 'two': [item, xoi_item(2, 2, 0, slot_ref(16), 33)],
+                 'kind3': [xoi_item(3, 2, 0, u15, 33)]}[v['row_items']]
+        a_items, a_digest = 1, normalized(items if v['row_items'] == 'kind3' else [item])
+    if d_active:
         owners.append((1, d_ref))
         d_debt = lambda wal, **x: dict(steps=1, wal=wal, peak=CREATE_PEAK, **x)
         if create == 'reserved':
@@ -460,17 +534,24 @@ def live(genesis_digest, **changes):
         remaining = add_rows(remaining, s_rows)
     owners.append((2, work_ref(3, 1)))
     if v['att']:
-        descriptors[0] = descriptor(1, 1, a_ref, (32, 31, 24, 5), a_rows,
-                                    core=active_core(a_ref, u13), change=32,
-                                    last_mutation=v['last_mutation'])
+        a_chain, a_change, a_head = (32, 31, 24, 5), 32, u13
+        if v['row_reserve']:
+            a_chain, a_change = (33, 32, 24, 6), 33
+        if v['a_row7']:
+            a_chain, a_change, a_head = (42, 41, 24, 7), 42, u18
+        descriptors[0] = descriptor(1, 1, a_ref, a_chain, a_rows,
+                                    core=active_core(a_ref, a_head), change=a_change,
+                                    last_mutation=v['last_mutation'] + int(third),
+                                    items=a_items, digest=a_digest)
     if v['aging']:
         descriptors[34] = aging_descriptor(rp, root, apply, 31 if apply == 32 else 32, 3)
-    allocated = {n: images[n] for n in range(9, 18) if n in images}
-    images[0] = relsn(image(INITIAL, 0), capture if v['system'] or create else 30)
-    active = 1 + int(v['catalog_terminal']) + int(bool(create))
+    allocated = {n: images[n] for n in range(9, 19) if n in images}
+    allocator_lsn = 40 if v['a_row7'] else capture if v['system'] or create else 30
+    images[0] = relsn(image(INITIAL, 0), allocator_lsn)
+    active = 1 + int(v['catalog_terminal']) + int(d_active)
     header = [(88, 2, 8), (96, capture, 8), (248, capture, 8), (104, 1, 8), (152, 65536, 8),
               (192, 4 if v['catalog_terminal'] or create else 3, 8),
-              (208, 6 if v['system'] else 5, 8), (224, 1, 8),
+              (208, 6 if v['system'] or v['a_row7'] else 5, 8), (224, 1, 8),
               (256, active, 4), (260, 1 + int(v['system']), 4), (264, (1 << 9) | (1 << 14), 8),
               (272, leased, 8), (280, ready, 8), (288, revision, 8), (296, revision - 1, 8),
               (304, v['system_terminal'] if v['system'] else 3, 1)]
@@ -546,6 +627,15 @@ def main():
         ('create-item-order', dict(create='reserved', item_order=(1, 0, 2))),
         ('state-create-retained', dict(create='retained')),
         ('retained-projection', dict(create='retained', projection=sha(b'not the CREATE projection'))),
+        ('committed-writer-bound', dict(f_local=9)),
+        ('state-create-committed-row', dict(create='retained', d_commit=True, a_row7=True)),
+        ('create-uncommitted-row', dict(create='retained', a_row7=True)),
+        ('create-uncommitted-committed-row', dict(create='retained', f_table7=True)),
+        ('state-row-reserved', dict(row_reserve=True)),
+        ('row-reserved-no-item', dict(row_reserve=True, row_items='none')),
+        ('row-reserved-two-items', dict(row_reserve=True, row_items='two')),
+        ('row-reserved-item-kind', dict(row_reserve=True, row_items='kind3')),
+        ('row-reserved-twice', dict(row_reserve=True, reserved=True)),
     ]:
         variants.append((name, 'live', live(gd, **change)))
     for name, data in bases.items():
