@@ -8842,5 +8842,43 @@
     "remaining_supply": "actual C2 Row read source, live entry statement caller and dead_code allowance removal, optional RowReadOperation::check_statement, cursor borrow negative probes, MCB01-05, MCI and MI01-06",
     "source_roots_changed": false,
     "artifact_manifest_sha256": "2ee884e6621cd95773fb0e7b47b15c7ce56e97e61395445772ba086d41b753fb"
+  },
+  "dev3_module_u2_catalog3_adapter": {
+    "status": "LOCAL_VERIFIED_REVIEWED_PURE_SUPPLY",
+    "contract_ref": "dev3-module-consumers.md#format-dispatch",
+    "evidence_ref": "module-independence-survey-20261026.md#catalog3-adapter",
+    "baseline_commit": "41b55a9",
+    "integration_base": "c043e4d",
+    "branch": "claude/project-thread-h2j8oc",
+    "implemented_paths": [
+      "crates/engine/src/storage/retention_page/catalog3.rs",
+      "crates/engine/src/storage/semantic_catalog/catalog3_tests.rs",
+      "crates/engine/src/storage/semantic_catalog/format.rs",
+      "tests/fixtures/module-row-format/catalog3/"
+    ],
+    "modified_paths": [
+      "crates/engine/src/storage/retention_obligation/row.rs",
+      "crates/engine/src/storage/retention_page.rs",
+      "crates/engine/src/storage/retention_page/row/source_tests.rs",
+      "crates/engine/src/storage/semantic_catalog.rs",
+      "crates/engine/src/storage/semantic_catalog/core.rs",
+      "crates/engine/src/storage/semantic_catalog/effects.rs",
+      "crates/engine/src/storage/semantic_catalog/frame.rs",
+      "crates/engine/src/storage/semantic_catalog/images.rs",
+      "crates/engine/src/storage/semantic_catalog/images/allocator.rs",
+      "crates/engine/src/storage/semantic_catalog/images/catalog.rs",
+      "crates/engine/src/storage/semantic_catalog/images/undo.rs",
+      "crates/engine/src/storage/semantic_catalog/inventory.rs",
+      "crates/engine/src/storage/semantic_catalog/ledger.rs",
+      "crates/engine/src/storage/semantic_catalog/queue.rs",
+      "crates/engine/src/storage/semantic_catalog/resources.rs",
+      "crates/engine/src/storage/semantic_catalog/transition.rs",
+      "crates/engine/src/storage/semantic_catalog/wire.rs"
+    ],
+    "scope": "Explicit Profile3 adapter for Catalog scope2: one generic Catalog observer/producer body over Format (Catalog2, Row3) with exact Profile::format() dispatch; catalog3 queue view over Root3/Job3 with guarded Root3 encode preserving row_high@432; Row-scope cells refused or skipped for other actors; generic ledger entries over CatalogJob; Row Aging and Profile3 census source bounds",
+    "validation": "r1 9 selectors with 2 FAIL kept (author sender-digest defect); r2 9 PASS; r3 census selector PASS; independent review REQUIRED2; r4 10 new plus 14 Profile2 reruns once PASS; second review RESOLVED with 0 new REQUIRED; integration rerun of the merged source_tests selector PASS and cargo check 0 warnings",
+    "remaining_supply": "runtime queue alias swap, caller profile selection and Catalog scope2 replay under Profile3 (U2-C4); mixed-bank cases for Forward/Commit/Prune/Release/Rollback and real Row group interleaving; seam forwarding frames uncounted in both census instances",
+    "source_roots_changed": false,
+    "artifact_manifest_sha256": "872f87235a0651904d615d267fd5d5acc8cdfe6f428f3446008fbdf1d2519f56"
   }
 }

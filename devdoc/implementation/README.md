@@ -1,5 +1,7 @@
 # 현재 구현
 
+2026-10-29 [U2-C3 Catalog scope2 Profile3 adapter](../evidence/module-independence-survey-20261026.md#catalog3-adapter): branch `claude/project-thread-h2j8oc`에서 Catalog 관찰자가 정확한 Profile3 분기로 Root3/Job3와 혼합 Job3 bank를 수용하고 row_high를 보존한다. 신규10·Profile2 재실행14 PASS, 독립 검토 2회. runtime 연결은 U2-C4 전환 때 한다.
+
 2026-10-29 [B Row 읽기 driver](../evidence/module-independence-survey-20261026.md#b-read-driver): branch `claude/project-thread-h2j8oc`에서 `row/read/driver*`가 point read·cursor를 C0 경계 위에 올렸다. MCB00-D01..12 PASS, 독립 검토 2회(필수2 해결). live 입구는 컴파일만 확인했고 실제 source 연결은 미완료다.
 
 2026-10-29 [A Row INSERT scope3 후보 생산](../evidence/module-independence-survey-20261026.md#consumer-a-scope3-forward-clr): branch `claude/project-thread-h2j8oc`에서 `row/insert/group*`가 Forward·CLR 후보 frame과 다섯 after를 만들고 모든 입력 거부를 첫 출력 전에 끝낸다. MCA00-V06 16 selector PASS, 독립 검토 2회(필수1 해결). 실제 C3 lane·WAL·replay 연결은 미완료다.

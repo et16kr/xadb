@@ -3645,3 +3645,167 @@ A 제품 본문이 C0가 준 **권한 없는 관측값**으로 scope3 Row INSERT
 **통합.** 두 commit을 `f0e2d66` 위로 cherry-pick했다. 검토의 수입 경계 권고에 따라 `68dd01c`에서 `wal_io::disk_api`와 `storage::disk`가 `Owner` 형식만 `pub(in crate::storage)`로 재노출하고 `driver/live.rs`가 `storage::disk`에서 수입하게 했다. `Owner`는 private 필드와 `try_owner`로만 만들어지므로 새 권한은 없다. 통합 tree 고정 export(fingerprint `371fa510e15e0e0a92a6d6f4c0fcd88f0d3d9c845773f842c48570709a724c6d`)에서 `cargo check -p xadb-engine --all-targets --all-features --locked --offline`이 43.6초·경고0이다. 수입 경로만 바뀌어 B 시험은 반복하지 않았다. 시험 ID는 [§9.1 등록](../contracts/dev3-module-consumers.md#acceptance)에 C0_ONLY 하위 family `MCB00-D01..12`로 적었다. artifact는 `module-independence-20261029/artifacts/module-b-read-20261029/`(`manifest-all.sha256` SHA-256 `2ee884e6621cd95773fb0e7b47b15c7ce56e97e61395445772ba086d41b753fb`)에 r1/r2 manifest·로그·결과·검토 요약·통합 check를 보존한다. target과 ELF는 기록 뒤 삭제했다.
 
 **남은 의무.** 실제 C2 Row read source와 live 입구의 statement caller 연결(그때 `dead_code` 허용 제거), cursor borrow 음성 probe(`open_cursor_live` 뒤 `finish_statement` E0505, `cursor.clone()` E0599; `RowCursor`가 private이라 driver 자식 모듈 위치가 필요), actual MCB01–05·MCI 인수와 M4/M5는 미완료다.
+
+<a id="catalog3-adapter"></a>
+## 2026-10-29 U2-C3 Catalog scope2의 명시적 Profile3 adapter
+
+기준은 `41b55a9`, branch는 `module-u2-catalog3`, commit은 `9fbd7c9794f75123e60059c5c3b518e4b06f912b`(tree `3caa9ca5b0e1224d474e76bffe288312abd6d2f1`)와 후속 `fb893c0fdee7a2eb378cffda7925a4e260fdd8ac`(tree `54a1380eb3c1c04b22e613595fa97dfb2a86e54c`)다. 작성은 U2-C3 작업 세션, 통합은 이 branch에서 cherry-pick `c70795c`(9fbd7c9)·`43e6407`(fb893c0)와 설명 정정 `ada04da`로 했다. 9fbd7c9의 독립 검토는 ACCEPT·필수2(R1, R2)였고 fb893c0에서 필수2와 권고 A1~A4를 반영했으며, 같은 검토자의 재검토는 해결·새 필수0이다. 이 단위는 [전체 dispatch 조합](../contracts/dev3-module-consumers.md#format-dispatch) 가운데 Catalog scope2 관찰자의 Profile3 instance만 공급한다. runtime 호출자, queue alias, genesis, selection, base, replay, recovery는 전환하지 않았다. current-format 상수도 그대로다.
+
+**설계**
+
+- **공유 seam.** `semantic_catalog::format::{Format, CatalogJob, CatalogRoot}`를 공유 seam으로 두었다. produce, observe, observe_borrowed, decode_layout은 이 seam 위의 한 본문이다.
+  - instance는 `Catalog2`(기존 version2 codec, census, Root2 결속 Aging)와 `Row3`(Root3/Job3 codec, Job kind2 Catalog 의미, Root3 결속 Aging) 두 개다.
+  - 분기는 `Profile::format()`에 대한 정확한 match다. 2는 기존 경로, 3은 `Row3`, 그 밖은 기존 `IdentityMismatch`다. `>=` 비교, 버전 재작성, legacy fallback은 없다.
+  - Profile2와 Profile3의 `CatalogJob` 구현은 하나의 macro가 만든다. 본문을 복사하지 않는다.
+- **row_high.** Catalog group은 Root3 `row_high@432`를 바꾸지 않고 옮긴다.
+  - guard는 queue view의 `catalog3::encode_root_page(before, cell, namespace, output)`에 있다. before Root와 row_high가 다르면 `OrderMismatch`를 내고 output을 바꾸지 않는다.
+  - `Row3::encode_root_page`는 이 guard에 위임하므로 거절은 `Queue(OrderMismatch)`다(fb893c0, A3). 9fbd7c9에서는 guard가 `Row3`에만 있었고 거절은 `OrderMismatch`였다.
+  - observe는 전체 frame을 비교하므로, row_high를 바꾼 frame은 `Corrupt`로 거절된다.
+  - C01..C04 Profile3 before Root는 합성 row_high 7을 가진다(D5).
+- **Row 전용 Job 거절.** Row scope Job(kind3 root, registry16 Terminal)은 Catalog 의미를 받지 않는다. 관찰자는 `Unsupported`, queue view는 `UnsupportedState`로 거절한다.
+  - 같은 actor의 Row Job에 대한 `Unsupported`(`root_for`, TerminalFinish scan)는 이른 거절일 뿐이다. 한 actor가 두 scope의 Job을 갖지 못한다는 Job3 census `verify_pair` 규칙을 반복하며, 새로운 Row 검증이 아니다(A2).
+  - 다른 actor의 Row Job은 건너뛴다. 이 경로는 fb893c0의 M01..M03이 실행한다.
+- **queue view.** `retention_page::catalog3`는 `retention_page::catalog`와 이름, 호출 모양이 같은 Catalog scope view다.
+  - `JobView`, `decode_job`, `decode_root_page`, `source_bytes` 등을 제공한다. Root decode, page, census는 `row`를 재노출한다. Root3 encode는 재노출하지 않고 guarded `encode_root_page`만 둔다. 따라서 C4에서 alias를 바꿔도 before Root 없이는 encode할 수 없다.
+  - `JobView::catalog(row::JobView)`는 Row scope일 때 `None`을 준다. 혼합 bank에서 이 생성자를 쓴다.
+  - U2-C4의 `queue` alias 교체는 하지 않았다.
+  - `retention_page::row`는 본문을 바꾸지 않았다. `row/source_tests.rs`의 `job_cell_chain` visibility만 넓혔다.
+- **ledger.** `transaction_remaining<'a, J: CatalogJob<'a>>(TransactionStatus, Option<J>)`와 `validate_transaction<'a, J>(&[u8; 1536], Profile, StatusHome, Option<J>)`로 일반화했다. 두 함수는 `J::VERSION`과 Profile을 정확히 대조한다. Job3 Catalog view의 J는 `retention_page::catalog3::JobView<'_>`다.
+- **source 계수.**
+  - `retention_obligation::row::source_bytes`를 추가했다. Catalog Aging 상계와 같은 방식으로 세며, `next`는 호출 owner가 따로 센다.
+  - `semantic_catalog::resources::{profile3_source_census, profile3_borrowed_source_bytes}`를 추가했다. Profile2 census는 같은 함수의 `Codecs::catalog2()` instance라서 기록값을 재현한다.
+  - seam forwarding frame(`run_with_buffers`→`run_format`, `AgingStep` carrier, Result 변환)은 두 instance 모두 세지 않는다. 그러므로 기록값과의 일치는 새 seam source의 상계가 아니다(A1).
+- **serializer.** 재사용 serializer는 `tests/fixtures/module-row-format/catalog3/serializer3.py`다.
+  - `load()`는 hash가 고정된 version2 `generate_literals.py`를 불러온다. 그 가운데 `profile()`, `free_job()`, `root_page()`만 Profile3/Job3/Root3 형태로 바꾼다. row_high는 state key `row_high`에서 읽고 기본값은 0이다.
+  - fb893c0에서 `root_page()`의 budget digest와 aggregate를 Job3 census 규칙(가산 항은 합, peak는 최대)으로 바꿨다. Catalog-only bank에서는 version2 값과 같음을 단언한다.
+  - Row scope Job3 cell을 만드는 `row_job()`과 `census_aggregate()`를 더했다.
+  - emit과 main은 막아 두었다.
+
+**고정 입력과 author**
+
+[사전 manifest](../../tests/fixtures/module-row-format/catalog3/manifest.json)에 selector 9개(r4에서 10개와 재실행 대상 14개), 기대 결과, 입력 hash, 예산을 고정했다. 예산은 총 1800초, build 900초, case 30초, 출력 8MiB, stack 33554432B, selector당 1회다. manifest는 실행할 때마다 먼저 동결했다.
+
+| 판 | manifest sha256 | 동결 시각(Z) |
+| --- | --- | --- |
+| r1 | `c6a18769…7829900c` | 09:08:52 |
+| r2 | `03581c9f…54c1e0ea` | 09:30:46 |
+| r3 | `2de73e41…a5ac62a5` | 09:37:54 |
+| r4 | `714d6583…24816adf` | 10:23:58 |
+
+- `author.py`(`878bf0de…22b28c50`)는 `python3 -I`로 실행했다. stdlib만 쓰며 `sys.dont_write_bytecode`를 켠다.
+- author는 hash가 고정된 parent literal을 byte로 읽어 20 case를 만든다. 산출물은 `cases.tsv`(`c5bcee62…`), `blobs.tsv`, 그리고 dense literal 38개를 담은 `blobs.bin`(`7bd6dd24…`)이다.
+- author는 다음을 단언한다.
+  - Profile3 envelope와 Root3 genesis cell이 parent와 같다.
+  - parent와 Profile3의 C01→C04 Root/Aging chain이 성립한다.
+  - G01과 C01..C04의 모든 accepted literal이 serializer3 재생 결과와 byte까지 같다.
+- author r5(`6f3a696f…`, serializer3 `0b23d146…`)는 기존 20 case의 byte를 바꾸지 않고 혼합 bank case M01..M03을 더했다. 산출물은 cases 23행(`53aae683…`), dense literal 57개(`blobs.bin` `29810b2f…`), 그리고 `bases.tsv`(`faa07639…`)다.
+  - `bases.tsv`는 parent cases.tsv와 같은 37열로 M01..M03의 연산 필드를 담는다. M01=C10, M02=C11과 같고 M03=C12는 ordinal만 4다.
+  - Row cell: `serializer3.row_job`이 hash가 고정된 `job3/cells.bin`(`d2ea7dae…`)의 Row literal 4개를 재현한다. actor3 cell은 그 literal의 필드를 바꿔 만든 것과 같아야 한다.
+  - M01/M02: 변환한 parent C10/C11 Profile3 literal에 Row cell을 넣고 Root census 필드, Aging remaining·열 최대·work byte·seal, Root native, Root/Jobs redo, trailer만 다시 계산한다. 이 독립 유도가 serializer3 결과와 byte까지 같다.
+  - M01..M03: before/after Root와 Aging descriptor를 bank의 독립 census로 검산한다.
+- 시험은 page와 cell 전체 byte를 비교한다.
+- r1~r3은 기존 Profile2 transition과 leaf selector를 반복하지 않았다. 9fbd7c9 검토(R1)는 본문이 바뀌었는데 재생 literal이 닿지 않는 Profile2 경로를 지적했다. 이에 따라 r4에서 그 14개를 1회씩 실행했다.
+
+**실행과 결과**
+
+`CARGO_TARGET_DIR`는 worktree 안에 두었다. 아래 시간은 성능 결과가 아니다.
+
+| 판 | check(`--all-targets --all-features --locked --offline`) | test build | 경고 | ELF |
+| --- | --- | --- | --- | --- |
+| r1 | 8.7초 | 85.8초 | 0 | `73928ee2…` |
+| r2 | 7.9초 | 60.4초 | 0 | `a691ed02…` |
+| r3 | 9.2초 | 17.3초 | 0 | `4c74c2e6…` |
+| r4 | 37.9초(동결 전), 동결 후 기록 check는 증분 0.1초 | 69.5초 | 0 | `71f48bf6…` |
+
+각 selector는 `--exact --test-threads=1`, `RUST_MIN_STACK=33554432`로 판마다 1회 실행했다. 모든 selector 이름은 `storage::semantic_catalog::catalog3_tests::` 아래에 있다.
+
+| selector | r1 | r2 | r3 | r4 | 초(r4) |
+| --- | --- | --- | --- | --- | --- |
+| `profile3_create_path_matches_independent_literals` | FAIL | PASS | — | PASS | 0.77 |
+| `profile2_dispatch_keeps_original_literals` | PASS | PASS | — | PASS | 0.71 |
+| `profile3_rejects_other_profiles_and_versions` | PASS | PASS | — | PASS | 0.28 |
+| `profile3_rejects_row_scope_jobs` | PASS | PASS | — | PASS | 0.26 |
+| `profile3_carries_row_high_and_rejects_change` | FAIL | PASS | — | PASS | 0.33 |
+| `catalog3_queue_view_keeps_catalog_meaning_and_refuses_row_scope` | — | PASS | — | PASS | 0.33 |
+| `ledger_entries_accept_job3_view_by_exact_profile` | — | PASS | — | PASS | 0.26 |
+| `catalog3_and_row_aging_source_bounds_cover_their_frames` | — | PASS | — | PASS | 0.010 |
+| `profile3_source_census_keeps_type_sizes_and_reports_delta` | — | PASS | PASS | PASS | 0.008 |
+| `profile3_mixed_bank_catalog_groups_skip_other_actor_row_jobs` | — | — | — | PASS | 0.60 |
+
+r4의 Profile2 재실행 14개는 모두 1회 PASS다(초). `transition_tests::`는 k03 0.31, k04 0.25, r05 0.31, k05 0.28, c05 0.28, c06 0.28, c09 0.36, c10 0.28, n22 0.32, n05 0.32, n21 0.30, `borrowed_replay_preserves_independent_operation_and_error_oracles` 0.32다. `leaf_tests::`는 wire_w01 0.04, wire_nw01 0.06이다. 이 14개는 9fbd7c9에서 본문이 바뀐 다음 경로에 닿는다.
+- TerminalFinish scan을 Scan match로 다시 쓴 부분과 `F::free_job`(queue.rs)
+- RollbackStart의 `F::verify_census`/`F::check_aging`과 `root_for`(transition.rs)
+- `decode_layout` gate(wire.rs)
+
+- **r1 FAIL.** C03-P3와 C04-P3의 whole page role1에서 Root Job digest(128..160)만 달랐다.
+  - 원인은 제품이 아니라 author 결함이다. Job 328..360은 SHA(before Transaction descriptor)를 담는데, 그 descriptor에는 Profile digest가 들어간다. 그래서 Profile3 sender digest는 Profile2와 달라야 한다.
+  - author를 고쳐 SHA(tx2)를 SHA(tx3)로 대응시켰다. 바뀐 literal은 `r2-cases-delta.txt`에 있다.
+  - r2에서 9개를 모두 실행한 이유는 다음과 같다. 1, 3, 4, 5는 literal이 바뀌었다. 2는 Catalog2 `CatalogJob` 구현을 macro로 다시 썼다. 6~9는 신규다.
+- **r2 → r3.** r2의 selector 9는 Profile3 census에서 compute +1136B(total 24335 → 25471)를 보고했다.
+  - 원인은 Profile3 Aging 후속 항의 계수 방식이다. r2는 adapter와 `row::next`의 모든 local을 더했다. Profile2 항은 겹치지 않는 callee(Job census, 선행 decode, 최종 encode)를 max로 묶고, 계속 살아 있는 값은 그 바깥에서 더한다.
+  - r3에서 같은 규약으로 다시 셌다. `resources.rs`만 바뀌었으므로 selector 9만 실행했다.
+- **r3 → r4.** 9fbd7c9 독립 검토의 필수 2건과 권고 4건을 fb893c0에서 반영했다.
+  - R1: Profile2 selector 14개를 재실행했다.
+  - R2: 혼합 bank 수락 case와 selector 10을 더했다.
+  - A3: guarded Root3 encode로 바꿨다.
+  - A4: selector 9가 Profile3 ≤ Profile2를 단언한다.
+  - A1: `resources.rs` 주석을 고쳤다.
+  - A2: 이 문서의 표현을 고쳤다.
+  - 공유 harness의 loader, pin, Change 대응이 바뀌었으므로 catalog3_tests 10개를 모두 1회 실행했다. 5와 8은 바뀐 catalog3 encode와 wrapper도 읽는다. FAIL은 없었다.
+
+**거절 결과**
+
+| 입력 | 결과 |
+| --- | --- |
+| C04-P2-UNDER-P3, C04-P3-UNDER-P2, C04-ROOT-V4, C04-JOB-V2-FREE, C04-JOB-V4-SELECTED | `Queue(UnsupportedFormat)` |
+| C03-ROW-RESERVED, C04-ROW-TERMINAL, C04-ROW-SAME-ACTOR | `Unsupported` |
+| C03-KIND2-ROWID(kind2 cell의 RowId byte) | `Queue(Corrupt)` |
+| C04-ROW-HIGH-FRAME | observe `Corrupt`, `Row3::encode_root_page` `Queue(OrderMismatch)`, `catalog3::encode_root_page` `OrderMismatch` |
+| Profile1 binding | `IdentityMismatch` |
+| queue view: Row scope / version2·4 / kind2 RowId | `UnsupportedState` / `UnsupportedFormat` / `Corrupt` |
+
+**혼합 bank 수락(r4)**
+
+actor1의 CREATE가 commit되고 Root가 해제된 뒤(C09), 다른 actor3가 Job3 bank에 다음 두 cell을 가진다.
+- leased Row Terminal: ordinal2, registry16, Status page16.
+- Retained Row Root: ordinal3, RowId1, table object6, Undo page17, pair 18/19, undo sequence 2. Root uhigh는 1에서 2로, issued는 2만큼 늘었다.
+
+| case | 연산 | 결과 |
+| --- | --- | --- |
+| M01-P3 | actor1 TerminalFinish, lsn15, ordinal0 | produce/observe/borrowed가 전체 frame과 page에서 일치한다. `root_for`와 TerminalFinish scan이 actor3의 Row cell을 건너뛴다 |
+| M02-P3 | actor2 Begin, lsn16, ordinal1 | 일치한다. `root_for`가 Row cell을 건너뛴다 |
+| M03-P3 | actor2 Reserve, lsn17, ordinal4 | 일치한다. `first_free`가 cursor1(Terminal)에서 Row cell 2, 3을 지나 ordinal4를 lease한다 |
+
+세 group 모두 before/after Aging descriptor의 `remaining[3].peak`가 `row::ROW_PEAK`(registry16)다. 이로써 `Row3::next_aging`의 registry16 경로가 실행된다. row_high는 7로 유지된다.
+
+**계수**
+
+| 항목(B) | Profile3 | Profile2/Catalog | 비고 |
+| --- | --- | --- | --- |
+| `catalog3::source_bytes` | 6696 | 6736 | Row codec 6540에 view wrapper(decode wrapper와 r4의 encode guard 중 큰 값)를 더한 값. 측정 Job 최대 5144, Root 최대 5079 |
+| `retention_obligation::row::source_bytes` | 10911 | 10911 | Root3 decode 6540 = Root2 decode 6540 |
+| census compute / total (r3, r4 같음) | 18875 / 23859 | 19351 / 24335 | Δ −476. frame, catalog_image, descriptor, run_retained, schema의 Δ는 모두 0. r4부터 selector 9가 Profile3 ≤ Profile2(compute, total, borrowed)를 단언한다 |
+| `resources.rs` 보존 type 크기 | 같음 | — | JobView와 그 Option/Result 중첩, RootView, JobCells, RootContext, CoreInput, FrameSpec, TransactionTransition, Computed |
+
+Profile2 `source_branches()` 12개는 U1-C0 runtime-r2 기록값과 같다.
+
+**정리와 보존**
+
+- lib 시험 목록은 r4에서 1599개다. U2-C1 기준 목록 1591개 대비 신규 10개가 늘고, `test-support` feature에 묶인 2개가 기본 feature build에서 빠졌다. 그 밖에는 byte까지 같다. r4 목록은 r3 목록에 selector 10만 더한 것이다.
+- 변경한 rs(9fbd7c9 20개, fb893c0 4개)는 `rustfmt --edition 2024 --check`를 통과했다. staged `git diff --check`도 통과했다.
+- 전체 fmt, Clippy, 문서 verifier, push는 실행하지 않았다.
+- build target은 기록한 뒤 삭제했다. 로그, 결과, hash는 작업 artifact `u2c3-artifacts/`에 보존한다(`manifest.sha256` `ac05145e…752ccec5`).
+
+**한계와 후속 의무**
+
+이 증거는 순수 관찰자 instance와 source-value 계수에 한정된다.
+
+- shared seam의 forwarding frame(`run_with_buffers`→`run_format`, `AgingStep` carrier, Result 변환)은 두 census instance 어디에도 항목으로 세지 않았다. Profile2 값이 기록값과 같다는 사실은 이 frame의 상계가 아니다.
+- Profile3 census는 혼합 bank에서 다른 actor의 Row Job도 Job3 census로 검증한다. Catalog view가 Row Job을 반환하지는 않는다.
+- 혼합 bank의 positive case는 Catalog TerminalFinish, Begin, Reserve 세 group에 한정된다. 나머지 Catalog 연산(Forward, Commit, Prune, Release, Rollback)과 실제 Row group의 interleaving은 C4의 의무다.
+- actor3의 Row 이력은 cell만 합성한 것이다. Row group이 Root revision/apply를 올리는 과정은 없다. Row LSN 10/11/12는 Catalog group C05..C07의 LSN 번호와 겹친다. 순수 Job3 census와 Catalog 관찰자는 이 LSN을 Root apply 및 서로에게만 대조하므로 검출하지 않는다. 합성 row_high 7과 같은 성격의 입력이다.
+- r4에서 Profile2 selector 14개를 다시 실행했다. 그 밖의 기존 selector는 실행하지 않았다.
+- 9fbd7c9 검토자는 이 tree에서 기존 selector `catalog_source_tests::catalog_source_memory`가 실패한다고 보고했다(visibility.backing 9792 대 기대 8192, catalog_source_tests.rs:60). `visibility.rs`의 `backing: VISIBILITY_BYTES + EPOCH_BYTES`(8192+1600)와 시험의 기대값 8192는 main `85ceef3`에서도 같은 줄이므로 이 branch 이전부터 있던 실패다(devdoc의 마지막 PASS 기록은 기대값을 넣은 `df9881b` 이전인 10-26). 이 단위는 visibility 파일을 건드리지 않았다. census와 기대값 중 어느 쪽이 맞는지는 계약 판단이 필요하므로 숫자를 고치지 않았다.
+- U2-C4의 의무: `queue` alias 교체, 실제 caller의 Profile 선택, base4 layout 계수(`plan4_recovery_base`는 편집하지 않음).
+
+**독립 재검토와 통합.** 같은 읽기 전용 검토자가 fb893c0에서 R1의 14 selector 1회 실행, R2의 M01–M03이 다른 actor Row cell 건너뛰기·`first_free`·TerminalFinish scan·registry16 peak 경로를 실제로 실행함, literal의 byte 동일 재생성, guarded `catalog3::encode_root_page`를 확인했다. 남은 권고는 셋이다. `catalog3.rs` module 설명이 version2와 같은 호출 모양을 주장하던 문장은 통합 때 `ada04da`에서 고쳤다. `serializer3.row_job`은 Row group 없이 cell만 배치하므로 U2-C4 corpus가 recovery가 재생할 이력을 만드는 데 쓰면 안 된다. 나머지 Catalog 연산의 혼합 bank case와 실제 Row group interleaving은 U2-C4의 의무로 넘긴다. 통합 tree에서 U2-C1 검토 반영(`06f8558`)과 이 단위가 함께 바꾼 `retention_page/row/source_tests.rs`의 병합 내용을 실행 전 manifest(SHA-256 `b40f847c8d06fb3d60be4191adf4e46e88d42f9436b897eb2f97905f5494fb5b`)로 동결하고, 고정 export(fingerprint `7027bae840032b7eb4d5acaa7845c2483d73266c9db3db16fd848c4a08ce7040`)에서 check 39.0초·경고0, test build 74.5초·경고0, ELF `477bfbf90021e7877614dffc8850d3ecbc8f6483ca7ba3c8003530a9a23ffc60`로 `row_codec_source_bounds_cover_measured_frames`를 1회 PASS했다. 통합 목록은 기본 feature에서 1622개다. artifact는 `module-independence-20261029/artifacts/module-u2c3-20261029/`(`manifest-all.sha256` SHA-256 `872f87235a0651904d615d267fd5d5acc8cdfe6f428f3446008fbdf1d2519f56`)에 r1–r4 manifest·로그·결과·설계 메모·검토 요약·통합 실행을 보존한다.
