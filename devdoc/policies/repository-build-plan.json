@@ -8994,5 +8994,34 @@
     "remaining_supply": "C3 Row Begin and CheckedTable issuer, Row write and rollback bodies, RowRollback flush-through or drop meaning (G1, G5), stale-source cause (G3), C4 recovered CLR handler (G4), live entries, MCA01-05, MCI and MI01-06; re-measure the stack inventory when C0 cut types are filled",
     "source_roots_changed": false,
     "artifact_manifest_sha256": "064ba0bc1b7c48a6390fe7db6f725563935b6d2b756e89575b4cfa44a9f9838e"
+  },
+  "dev3_module_c3_row_transition": {
+    "status": "LOCAL_VERIFIED_REVIEWED_UNWIRED",
+    "contract_ref": "dev3-module-consumers.md#row-shape",
+    "evidence_ref": "module-independence-survey-20261026.md#c3-row-transition",
+    "baseline_commit": "49a7578",
+    "integration_base": "113b410",
+    "branch": "claude/project-thread-h2j8oc",
+    "implemented_paths": [
+      "crates/engine/src/storage/semantic_row/transition.rs",
+      "crates/engine/src/storage/semantic_row/transition/cells.rs",
+      "crates/engine/src/storage/semantic_row/transition/graph.rs",
+      "crates/engine/src/storage/semantic_row/transition/prepare.rs",
+      "crates/engine/src/storage/semantic_row/transition/frame.rs",
+      "crates/engine/src/storage/semantic_row/transition/source.rs",
+      "crates/engine/src/storage/semantic_row/transition_tests.rs",
+      "tests/fixtures/module-row-format/transition/author.py",
+      "tests/fixtures/module-row-format/transition/blobs.bin",
+      "tests/fixtures/module-row-format/transition/index.tsv",
+      "tests/fixtures/module-row-format/transition/input-plan.json"
+    ],
+    "modified_paths": [
+      "crates/engine/src/storage/semantic_row.rs"
+    ],
+    "scope": "Pure C3 scope3 Row transaction group producer (AgingStart, Begin(Row), Reserve with RowLeaf proof, Cancel, RollbackStart, StatementFinish, Commit, AbortEnd, Prune, ReleaseRole, RootFree, TerminalFinish) and borrowed whole-group observer that also accepts A Forward and CLR; not called by any runtime path",
+    "validation": "r1 2 FAIL kept; r2, r3 and integrated rounds 7 selectors once PASS against independent stdlib literals; 19 exact reject errors; existing status/undo/jobs observers cross-checked on 34 groups; check 0 warnings each round; two independent reviews REQUIRED 0",
+    "remaining_supply": "S1 wiring (history/row.rs live record and replay arm, Row Begin entry per XADB-MODULE-ROW-BEGIN-001), Row write and rollback bodies, leaf.rs cross-call once a Catalog record is available, API Capacity mapping in the reserve preflight; integration must replace the parallel Catalog observer phase cost under the 65536 cap",
+    "source_roots_changed": false,
+    "artifact_manifest_sha256": "53929b7dbb9ea91eff673a414bb85e8a7b69e9f2cd0417904d7e89ba909c4a94"
   }
 }

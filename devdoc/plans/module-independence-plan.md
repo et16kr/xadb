@@ -1,5 +1,7 @@
 # XADB 모듈 독립 개발 구조 전환 작업 계획
 
+2026-10-29 [C3 scope3 Row 전이 producer·observer](../evidence/module-independence-survey-20261026.md#c3-row-transition): `semantic_row::transition`에 Row 거래의 C 소유 group producer(AgingStart·Begin·Reserve·Cancel·RollbackStart·StatementFinish·Commit·AbortEnd·Prune·ReleaseRole·RootFree·TerminalFinish)와 A Forward·CLR까지 받는 borrowed whole-group observer를 미호출 공급으로 더했다. Reserve는 첫 효과 전 RowLeaf proof를 한다. 독립 literal 바이트 비교 7 selector PASS(r1 FAIL2 보존), 독립 검토 2회 필수0, source bound 35256B. 연결은 U2-C4 전환 뒤 S1이다.
+
 2026-10-29 [Row Begin·Row 쓰기 capsule 계약 등록](../contracts/dev3-module-boundaries.md#row-begin-capsule): U2-C4 전환 뒤 S1이 공급할 명시 `MutationPort::begin_row_transaction`(registry16 Terminal recipe로 scope를 Begin에 고정), slot actor kind 2(Row, RAM 전용), Catalog/Row capsule 혼합의 효과 전 거절, Row 문장 mark(ATT undo_head), `CatalogStatementCall::finish_table` 한정 공급, live·replay 공용 `history/row.rs` 본문, C4 전까지의 Row scope 분석 gate와 WORK_END tail 차용 자원 규칙을 XADB-MODULE-ROW-BEGIN-001로 등록했다. 독립 D2 검토 2회(필수 7, 재검토 필수 2)를 모두 반영해 수용됐다. 계약 등록만이며 코드·시험은 없다.
 
 2026-10-29 [A INSERT statement driver](../evidence/module-independence-survey-20261026.md#a-insert-driver): A 전용 경로에 C0 Row 경계를 소비하는 문장 driver(행별 preflight→Reserve→produce→prepare/apply, Cancel·caller 구동 문장 rollback·Commit·full abort)를 더하고 C0_ONLY `MCA00-D01..14`를 등록했다. r1 D12 FAIL을 보존하고 r4에서 14개 PASS, 독립 검토 필수2 해결·마지막 필수0이다. live 연결은 C3의 Row Begin/CheckedTable, write·rollback 본문과 flush-through(G1)·rollback drop 의미(G5) 공급 뒤에 한다.

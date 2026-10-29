@@ -4015,3 +4015,36 @@ v2 `native`(221파일, 5,794,810B), `memory-gap`(137, 3,382,130B), `memory-retir
 **독립 검토.** 읽기 전용 검토자가 세 번 보았다. r1은 필수2(끝난 rollback 뒤 finish만 남음을 표시하지 않음, 시작한 rollback을 버리고 재시작함)와 권고5, r2는 필수0과 권고4(문장 원자성이 caller에 달림, `finish_aborted`의 RollbackRequired 처리 등), r3는 `PendingRollback` typestate와 `MustResolve` 처리를 확인해 필수0이다. 남은 메모: C가 start를 CallerMustResolve로 거절하면 pending은 `Required`로 남고 재시도 금지는 `Failure.must_resolve`로만 알린다.
 
 **한계.** live 경로와 MCA01–05·MCI는 C3 공급(Row Begin/CheckedTable, write·rollback 본문, flush-through 또는 drop 의미) 뒤에 한다. A literal의 `row_high` 9 이전 상태(RowId 7·4 예약)는 frame 없는 fixture 단축이며 `row_high+1` 발급의 증거로 쓰지 않는다(C3 Row transition 공급의 독립 검토가 확인). artifact는 `module-independence-20261029/artifacts/module-a-driver-20261029/`(`manifest-all.sha256` SHA-256 `064ba0bc1b7c48a6390fe7db6f725563935b6d2b756e89575b4cfa44a9f9838e`)에 있다.
+
+<a id="c3-row-transition"></a>
+## 2026-10-29 C3 scope3 Row 전이 producer와 전체 그룹 observer(미호출 공급)
+
+기준은 `49a7578`, branch는 `module-c3-row-transition`이고 작성 commit은 `0483c62`, `0755406`, `1d0779f`, r1 FAIL 수정 `5c34efe`, 검토 권고 반영 `e891e47`, `6492ddf`, `c9452e2`다. 이 branch에는 `113b410` 위로 cherry-pick했다(`ef6fa77ba2ddf410f1d59031a425b50d3f95c3c2`, `7e6f592710722ae694b77e34c851aac731275693`, `7c73ca506ab6dba0025461ed3eb38ccf35f928a3`, `65921e008e690c8f45e13a7b52c6ebb4bad950f5`, `d12e5e090b2e11f271491e967af1c4cc0a0fba2b`, `9ac15cc1f92a918150b8bb94fcb5b60d1305f8db`, `07cd1908aed6bbb5a229afd565f82605a645c56d`). 바꾼 경로는 `crates/engine/src/storage/semantic_row.rs`(mod 한 줄), `semantic_row/transition.rs`, `transition/{cells,graph,prepare,frame,source}.rs`, `transition_tests.rs`, `tests/fixtures/module-row-format/transition/`뿐이다. plan4_recovery_base, allocation_reservation, plan4_retention runtime, `row/insert/**`, `row/read/**`는 건드리지 않았고 형식은 Profile2 current 그대로다. 어떤 실행 경로도 이 module을 부르지 않는다.
+
+**공급**
+
+- `transition::produce`는 scope3 Row 거래의 C 소유 group을 만든다: AgingStart, Begin(Row), Reserve, Cancel, RollbackStart(전체·문장), StatementFinish, Commit, AbortEnd, Prune, ReleaseRole, RootFree, TerminalFinish. Forward·CLR은 A 소유라 Unsupported이고, Catalog scope Begin도 Unsupported다.
+- `transition::observe`는 위 op와 A의 Forward·CLR까지 14종을 받는다. 같은 before 관찰에서 정준 후속을 다시 계산하고 header·descriptor·core·native·Edge/Count/Delta·redo를 바이트로 비교한다. 이 borrowed whole-group observer가 [ROW-BEGIN-001](../contracts/dev3-module-boundaries.md#row-begin-capsule)과 S1이 쓰는 선행 공급이다.
+- 계약 읽기(`transition.rs`): Begin control은 1×3040, Reserve는 3×3040을 보유하고 StatementFinish 뒤 1×3040으로 돌아간다([consumers](../contracts/dev3-module-consumers.md#row-shape) :178, :270). Reserve는 `row_high+1`·`undo_high+1`·`last_mutation+1`과 Free U의 다음 generation을 발급하고 Cancel은 되돌리지 않는다. ReleaseRole·RootFree는 source actor의 TerminalReady를 요구하고 RootFree·TerminalFinish는 generation을 유지한다. Prune은 Commit 뒤 head만 대상으로 caller schema로 재encode한다(:214, :242). Begin scope는 caller가 명시한다.
+- Reserve는 첫 효과 전에 RowLeaf proof를 한다(:73, :282): 안정 RowLeaf의 모든 행을 schema로 형 검사하고, 발급 RowId가 없을 것(KeyExists → IdentityMismatch, 손상 취급 :289)과 계획 cell이 split 없이 들어갈 것(needs_split → OrderMismatch)을 요구한다. A producer가 받는 leaf는 이 검사도 모두 받는다.
+- Prune의 after Status·Job census는 기존 `ledger::validate_actor`로, Tx op는 기존 `validate_transaction`으로 다시 확인한다.
+
+**시험과 실행**
+
+`storage::semantic_row::transition::tests::n1_*` 7개다. literal은 독립 stdlib 작성기 `author.py`(`python3 -I`)가 만든 `blobs.bin`/`index.tsv`/`input-plan.json`이며 producer 출력과 바이트로 비교한다. observer는 A의 Forward·CLR literal을 받고 19개 변형을 정확한 오류(모두 Corrupt)로 거절한다. 시험은 actor가 있는 34 group에서 기존 `semantic_row::{status,undo,jobs}::observe`를 다시 돌린다(`World::cross_check`). 확인한 frame 크기는 consumers :252-262 표와 같다(Begin·Commit·AbortEnd 56712, Reserve 57336, Cancel 40000, Prune 90012/89884, A Forward 91506/91634, A CLR 91298/91426 등).
+
+| 판 | head | manifest | 결과 |
+| --- | --- | --- | --- |
+| r1 | `1d0779f` | `r1-manifest.txt` | 5 PASS, 2 FAIL 보존(H-505 `produce InvalidInput`: handoff인 Reserve/Cancel의 `out.status` None) |
+| r2 | `5c34efe` | `r2-manifest.txt` | 7 PASS(Status after에 before를 씀) |
+| r3 | `c9452e2` | `r3-manifest.txt` | 7 PASS, 거절 19/19 정확 오류, refusal 19 |
+| 통합 | `07cd190`(tree `cc33449d…`) | `int-manifest.txt` | 7 PASS, ELF `4ac5186e36eadb482c6b67f44cf6852fd6160ebdecf7a0de255ddc516a23895f`, check 경고0 |
+
+- 판마다 manifest를 build 전에 동결하고 selector마다 1회(`RUST_MIN_STACK=33554432 timeout 30 --exact --test-threads=1 --nocapture`) 실행했다. r2·r3는 7개 selector의 코드나 시험이 모두 바뀌어 7개를 돌렸다. 판마다 `cargo check --all-targets --all-features` 경고0, 바꾼 파일 rustfmt check와 `git diff --check`를 통과했다.
+- 통합 판은 `49a7578` 이후 U2-C2가 바꾼 `semantic_catalog/resources.rs`의 codec 계수 항을 `transition/source.rs`가 쓰므로 7개를 다시 돌렸다. source 출력은 r3와 같다.
+
+**계수(size_of inventory).** `transition::source_bytes()`는 35256B다(r2의 34207B에서 손 상수를 빼고 계수 항과 `retention_page::row` 방식의 표준 slack 656B로 교체). entry 11608, prepare 23648(locals 9760 + callee 12352 + SHA 1536), write 15927, frame 8504다. codec 체인은 함수 frame 단위로 재서 모두 계수 항 이하이고(row_record decode 3002 ≤ 3168, undo material 11390 ≤ 12352 등), 가장 깊은 전체 체인은 `prepare+undo_material` 34294B로 bound 아래 962B다. module이 호출되지 않으므로 recovered peak 65512B는 그대로다. 연결할 때는 남은 24B 때문에 병렬 Catalog observer 단계 비용을 대체해야 하며 더할 수 없다.
+
+**독립 검토.** 같은 읽기 전용 검토자가 두 번 보았다. r1은 필수0과 권고5(정확 오류 비교, Prune 인용, Reserve leaf proof, 기존 observer와의 규칙 중복, 손 상수 bound)이고, r2는 다섯 권고가 모두 해소되었고 다른 동작 변화가 없음을 확인한 필수0이다. 남은 권고: 꽉 찬 leaf의 OrderMismatch는 다른 순서 오류와 구별되지 않으므로 API의 Capacity는 caller의 `reserve()` preflight가 정한다(:289). `leaf.rs` observer는 Catalog record가 필요해 교차 호출하지 않았다.
+
+**한계.** live 기록·복구 replay 연결(S1의 `history/row.rs`), Row Begin 진입점, Row write·rollback 본문은 U2-C4 전환 뒤 S1–S3에서 한다. A literal의 `row_high` 9 이전 상태는 frame 없는 fixture 단축이며 이 공급의 Reserve 발급 시험은 `row_high+1`을 독립 literal로 확인한다. artifact는 `module-independence-20261029/artifacts/module-c3-row-transition-20261029/`(`manifest-all.sha256` SHA-256 `53929b7dbb9ea91eff673a414bb85e8a7b69e9f2cd0417904d7e89ba909c4a94`)에 있다.
