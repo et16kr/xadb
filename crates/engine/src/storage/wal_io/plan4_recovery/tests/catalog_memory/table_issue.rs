@@ -67,9 +67,13 @@ fn committed_table_issues_only_after_read_bit_and_catalog_flag() {
                     let (arrived, arrival) = sync_channel(1);
                     let (resume, release) = sync_channel(1);
                     hook::install(core, Point::LookupBeforeCatalogRecord, arrived, release);
+                    let probe = view.test_leaf_probe();
                     std::thread::scope(|scope| {
                         let fencing = scope.spawn(move || {
                             arrival.recv_timeout(WAIT).unwrap();
+                            // Paused at the cut: neither the isolation nor the
+                            // publication leaf is held by the issuer.
+                            assert_eq!(probe.busy(), (false, false));
                             fence.fence();
                             resume.send(Resume::Continue).unwrap();
                         });
@@ -174,7 +178,8 @@ fn committed_table_issues_only_after_read_bit_and_catalog_flag() {
 /// seeding refuses one, and lookup selects a visible retired record as the
 /// same Missing exercised below. A non-Table Found has no actual producer
 /// (semantic Catalog refuses Index); its refusal is the shared classifier
-/// covered by statement::tests::found_non_table_definition_is_unsupported_before_issue.
+/// covered by statement::tests::found_non_table_definition_is_unsupported_before_issue,
+/// and the issuer registers the same catalog flag before that refusal leaves.
 #[test]
 fn missing_object_registers_only_the_catalog_flag() {
     case("S1F_T02", || {
@@ -277,6 +282,29 @@ fn own_reserved_create_slot_is_unsupported_until_published() {
             let (object, private) = reserved.initialize().ok().unwrap().into_parts();
             assert_eq!(object.object.get(), 6);
             // CREATE planning already registered its conservative flags.
+            assert_eq!(
+                (view.test_catalog_reads(), view.test_table_masks()),
+                (3, (0, 0))
+            );
+            // The same state's lookup finds the own CREATE as a Table, so the
+            // refusal below is the Reserved slot, not the definition.
+            let mut call = reader.catalog_statement_call(owner, &view).unwrap();
+            let CatalogLookupStep::Found(record) = call
+                .lookup(
+                    object.object,
+                    &mut Plan4ResidencyCursor::new(),
+                    reader_private,
+                )
+                .unwrap()
+            else {
+                panic!("own uncommitted CREATE is visible to its statement")
+            };
+            assert!(matches!(
+                record.definition(),
+                CatalogDefinitionView::Table(_)
+            ));
+            assert_eq!(record.header().identity, object);
+            call.finish_checked().unwrap();
             assert_eq!(
                 (view.test_catalog_reads(), view.test_table_masks()),
                 (3, (0, 0))

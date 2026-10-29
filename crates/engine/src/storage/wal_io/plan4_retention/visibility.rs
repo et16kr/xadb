@@ -519,6 +519,14 @@ impl BoundVisibility<'_, '_, '_> {
             .unwrap_or_else(|error| error.into_inner())
             .q
     }
+    /// Probe only: whether the publication leaf is held at this instant. It
+    /// tries the lock and drops it at once; it reads no state.
+    pub(super) fn test_publication_busy(&self) -> bool {
+        matches!(
+            self.published.try_lock(),
+            Err(std::sync::TryLockError::WouldBlock)
+        )
+    }
     /// Observation only: the actual lane identity and activation state.
     pub(super) fn test_epoch_backing(&self) -> (usize, bool) {
         let publication = self.published.lock().unwrap();

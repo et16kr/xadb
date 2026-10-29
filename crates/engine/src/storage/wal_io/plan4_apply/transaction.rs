@@ -948,6 +948,37 @@ pub(super) fn catalog_read_source_bytes() -> usize {
         + 4 * size_of::<bool>()
 }
 
+/// (isolation leaf held, publication leaf held) at the instant of the call.
+/// Each lock is only tried and dropped at once; nothing is read or changed.
+#[cfg(test)]
+pub(in crate::storage) struct LeafProbe<'v, 'a, 'c, 's> {
+    ledger: &'v Mutex<IsolationLedger<'a, 'c, 's>>,
+    visibility: &'v BoundVisibility<'a, 'c, 's>,
+}
+#[cfg(test)]
+impl<'v, 'a, 'c, 's> RowStatementView<'_, 'v, 'a, 'c, 's> {
+    /// Cross-thread probe of this statement's own isolation and publication
+    /// leaves, for exact-cut tests. It carries no bytes, mask or authority.
+    pub(in crate::storage) fn test_leaf_probe(&self) -> LeafProbe<'v, 'a, 'c, 's> {
+        LeafProbe {
+            ledger: self.transaction.lease.ledger,
+            visibility: self.transaction.lease.visibility,
+        }
+    }
+}
+#[cfg(test)]
+impl LeafProbe<'_, '_, '_, '_> {
+    pub(in crate::storage) fn busy(&self) -> (bool, bool) {
+        (
+            matches!(
+                self.ledger.try_lock(),
+                Err(std::sync::TryLockError::WouldBlock)
+            ),
+            self.visibility.test_publication_busy(),
+        )
+    }
+}
+
 #[cfg(test)]
 impl RowStatementView<'_, '_, '_, '_, '_> {
     pub(in crate::storage) fn test_catalog_reads(&self) -> u8 {
