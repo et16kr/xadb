@@ -111,9 +111,20 @@ pub(crate) enum Change<'a> {
     },
     #[allow(
         dead_code,
-        reason = "replay refuses RowReserve (no canonical value in its frame); its producer caller is the RowReserve entry"
+        reason = "the live RowReserve producer; replay observes RowReserve through ReserveAdopted"
     )]
     Reserve(&'a ReservePlan<'a>),
+    /// Replay-only RowReserve (contract row-reserve-replay): the three
+    /// selectors the original owner chose, bound and checked by the Row
+    /// replay arm. C and the projection are adopted from the candidate's
+    /// single kind-9 after; every other byte is recomputed and compared.
+    /// Reached only through `observe_borrowed`.
+    ReserveAdopted {
+        terminal: usize,
+        container: PageRef,
+        table: ObjectHandle,
+        statement: u64,
+    },
     /// Observe only; A produces Forward.
     Forward {
         ordinal: usize,
@@ -160,7 +171,7 @@ impl Change<'_> {
         match self {
             Self::AgingStart => Operation::AgingStart,
             Self::Begin { .. } => Operation::Begin,
-            Self::Reserve(_) => Operation::Reserve,
+            Self::Reserve(_) | Self::ReserveAdopted { .. } => Operation::Reserve,
             Self::Forward { .. } => Operation::Forward,
             Self::Cancel { .. } => Operation::Cancel,
             Self::RollbackStart { .. } => Operation::RollbackStart,
@@ -175,6 +186,12 @@ impl Change<'_> {
         }
     }
 }
+
+/// ReserveAdopted's payload (64 B) is below Begin's, so neither `Change` nor
+/// `Inputs` grows (contract row-reserve-replay, resources): the sizes before
+/// the variant was added.
+const _: () = assert!(std::mem::size_of::<Change<'static>>() == 96);
+const _: () = assert!(std::mem::size_of::<Inputs<'static>>() == 448);
 
 /// Borrowed before observations of one original stabilized version. Proof-only
 /// pages (`undo` for Cancel/RollbackStart, `previous` for H, the anchor) are
@@ -310,7 +327,10 @@ fn produce_with(
     frame: &mut [u8],
     backing: &mut [u8; ROW_REPLAY_SCRATCH_BYTES],
 ) -> Result<Observation> {
-    if matches!(inputs.change, Change::Forward { .. } | Change::Clr { .. }) {
+    if matches!(
+        inputs.change,
+        Change::Forward { .. } | Change::Clr { .. } | Change::ReserveAdopted { .. }
+    ) {
         return Err(Error::Unsupported);
     }
     let mut prepared = prepare::new_prepared(inputs, backing);
@@ -329,6 +349,7 @@ fn produce_with(
 /// header, both descriptors, core, natives, Edge/Count/InventoryDelta and
 /// redo. Forward's inserted row cell is the one candidate value adopted, and
 /// only after its record version, length and projection match the Job.
+/// ReserveAdopted is replay-only and returns Unsupported before any output.
 #[allow(
     dead_code,
     reason = "owned-backing observer; replay uses observe_borrowed"
@@ -338,6 +359,9 @@ pub(crate) fn observe<'a>(
     bytes: &'a [u8],
     after: &mut [[u8; PAGE_BYTES]; 5],
 ) -> Result<Observation> {
+    if matches!(inputs.change, Change::ReserveAdopted { .. }) {
+        return Err(Error::Unsupported);
+    }
     observe_with(inputs, bytes, after, &mut [0; ROW_REPLAY_SCRATCH_BYTES])
 }
 
@@ -382,13 +406,27 @@ fn observe_with<'a>(
     if layout.operation() != inputs.change.operation() {
         return Err(Error::IdentityMismatch);
     }
-    let inserted = if layout.operation() == Operation::Forward {
-        layout
+    // The one candidate value each change adopts, chosen by the change and
+    // not by the layout (Reserve and ReserveAdopted share one layout):
+    // Forward's inserted row cell, ReserveAdopted's Job after (C and
+    // projection, checked by prepare's Reserve arm), otherwise none.
+    let inserted = match inputs.change {
+        Change::Forward { .. } => layout
             .native_records()
             .find(|native| native.kind() == 1)
-            .and_then(|native| native.after())
-    } else {
-        None
+            .and_then(|native| native.after()),
+        Change::ReserveAdopted { .. } => {
+            let cell = layout
+                .native_records()
+                .find(|native| native.kind() == 9)
+                .and_then(|native| native.after())
+                .ok_or(Error::InvalidInput)?;
+            if cell.len() != JOB_BYTES {
+                return Err(Error::InvalidInput);
+            }
+            Some(cell)
+        }
+        _ => None,
     };
     let mut prepared = prepare::new_prepared(inputs, backing);
     prepare::prepare(inputs, inserted, &mut prepared)?;

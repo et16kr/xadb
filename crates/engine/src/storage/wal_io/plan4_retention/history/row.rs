@@ -6,9 +6,11 @@
 //! before arena; candidate natives and the core only select logical
 //! arguments. This module never calls `semantic_catalog`'s observer.
 //!
-//! RowReserve is refused here before any effect: its frame does not carry the
-//! canonical row value the observer recomputes the Job projection and leaf
-//! fit from, so no Reserve successor can be derived from the arena and bank.
+//! RowReserve carries no canonical row value. Its replay adopts only the
+//! value commitment (Job C and projection) from the candidate's Job after and
+//! recomputes everything else (`Change::ReserveAdopted`, contract
+//! row-reserve-replay); the selectors it takes from the candidate are checked
+//! against the arena and bank before the observer runs.
 use super::catalog::{image, raw_descriptor, row_actor};
 use super::*;
 use crate::storage::{
@@ -144,6 +146,27 @@ fn head(home: StatusHome) -> Option<crate::storage::undo_ref::UndoRef> {
         TransactionStatusCell::Free(_) => None,
     }
 }
+/// A Row root's U names a page its provisioning owner allocated as Undo:
+/// `Allocated{generation=incarnation, object 3/generation 1, kind Undo}`
+/// (contract row-reserve-replay, boundaries §6.6 Free-root reuse note).
+/// Anything else, including a page outside the allocator, is Invariant.
+fn undo_allocated(
+    allocation: &allocation_page::AllocationPage<'_>,
+    page: PageRef,
+) -> ObservationResult<()> {
+    let index = usize::try_from(page.page_no).map_err(|_| invalid())?;
+    if allocation.entry(index).ok()
+        != Some(AllocationEntry::Allocated {
+            generation: page.incarnation,
+            object: ObjectId::new(3).expect("Undo"),
+            object_generation: Generation::new(1).expect("one"),
+            kind: PageKind::Undo,
+        })
+    {
+        return Err(invalid());
+    }
+    Ok(())
+}
 /// The Job's table: its anchor/leaf images and the canonical Catalog schema
 /// from the fixed CatalogLeaf (page 8). The record must be the Job's live
 /// table handle with the Job's anchor; a retired table has no Row replay.
@@ -249,8 +272,7 @@ pub(in super::super) fn apply(
         };
         let ordinal = match op {
             Operation::AgingStart => None,
-            Operation::Begin => Some(first_free(arena, jobs, profile)?),
-            Operation::Reserve => return Err(RetentionCause::Unsupported),
+            Operation::Begin | Operation::Reserve => Some(first_free(arena, jobs, profile)?),
             Operation::Forward | Operation::Cancel => Some(actor_job(
                 jobs,
                 profile,
@@ -267,8 +289,35 @@ pub(in super::super) fn apply(
             | Operation::RootFree
             | Operation::TerminalFinish => Some(native_before(view, jobs)?),
         };
+        // Reserve: the actor's TerminalLeased Job (its Status) and the
+        // adopted Job after, a Row RootReserved cell of the same actor whose
+        // UndoRef and table are the candidate's selectors.
+        let reserve_terminal = match op {
+            Operation::Reserve => Some(terminal(actor)?),
+            _ => None,
+        };
+        let reserved = match op {
+            Operation::Reserve => {
+                let cell = job3::decode_job(
+                    native_job(view)?.1.ok_or_else(invalid)?,
+                    profile.spec().namespace,
+                )
+                .map_err(RetentionCause::Retention)?;
+                if cell.scope() != Some(JobScope::Row)
+                    || cell.state() != job3::JobState::RootReserved
+                    || cell.source() != actor
+                {
+                    return Err(invalid());
+                }
+                Some(cell)
+            }
+            _ => None,
+        };
         let selected = match op {
             Operation::Begin => None,
+            Operation::Reserve => reserve_terminal
+                .map(|i| job(jobs, profile, i))
+                .transpose()?,
             _ => ordinal.map(|i| job(jobs, profile, i)).transpose()?,
         };
         let location = match op {
@@ -296,7 +345,12 @@ pub(in super::super) fn apply(
                 status: location.ok_or_else(invalid)?,
                 scope: JobScope::Row,
             },
-            Operation::Reserve => return Err(RetentionCause::Unsupported),
+            Operation::Reserve => Change::ReserveAdopted {
+                terminal: reserve_terminal.ok_or_else(invalid)?,
+                container: reserved.and_then(|j| j.undo()).ok_or_else(invalid)?.page(),
+                table: reserved.and_then(|j| j.object()).ok_or_else(invalid)?,
+                statement: core.statement(),
+            },
             Operation::Forward => Change::Forward {
                 ordinal: ordinal_of()?,
                 statement: StatementBoundary {
@@ -365,6 +419,7 @@ pub(in super::super) fn apply(
                 Some(selected.and_then(|j| j.undo()).ok_or_else(invalid)?.page())
             }
             Operation::RollbackStart => home.and_then(head).map(|u| u.page()),
+            Operation::Reserve => Some(reserved.and_then(|j| j.undo()).ok_or_else(invalid)?.page()),
             _ => None,
         };
         let row = matches!(op, Operation::Forward | Operation::Clr | Operation::Prune);
@@ -375,6 +430,17 @@ pub(in super::super) fn apply(
         };
         let table = if row {
             Some(table_source(arena, profile, selected.ok_or_else(invalid)?)?)
+        } else if op == Operation::Reserve {
+            // Live `finish_table` issues no table for a retired or non-Table
+            // record, so such a Reserve is damage here, not Unsupported.
+            Some(
+                table_source(arena, profile, reserved.ok_or_else(invalid)?).map_err(|cause| {
+                    match cause {
+                        RetentionCause::Unsupported => invalid(),
+                        cause => cause,
+                    }
+                })?,
+            )
         } else {
             None
         };
@@ -403,6 +469,19 @@ pub(in super::super) fn apply(
         } else {
             None
         };
+        if op == Operation::Reserve {
+            // The container the provisioning owner allocated as Undo, before
+            // the observer (contract row-reserve-replay, container).
+            undo_allocated(
+                &allocation_page::decode_allocation_page(
+                    arena_page(arena, 0),
+                    recovery::allocator_identity(profile)?,
+                    profile.spec().namespace,
+                )
+                .map_err(RetentionCause::Allocation)?,
+                undo.ok_or_else(invalid)?,
+            )?;
+        }
         let observed = transition::observe_borrowed(
             &Inputs {
                 profile,
@@ -658,6 +737,14 @@ pub(in super::super) fn validate_rows(
                 .map_err(sem)?;
         }
     }
+    // Every non-Free Row root's U is allocated as Undo, the provisioning
+    // owner's criterion, on every replay path (contract row-reserve-replay).
+    for ordinal in 0..JOB_COUNT {
+        let root = job(cells, profile, ordinal)?;
+        if root.scope() == Some(JobScope::Row) && root.state().is_root() {
+            undo_allocated(&allocation, root.undo().ok_or_else(invalid)?.page())?;
+        }
+    }
     Ok(())
 }
 
@@ -731,10 +818,15 @@ pub(in super::super) fn source_bytes() -> SourceCensus {
         + size_of::<Option<TableSource<'_>>>()
         + size_of::<semantic::CoreView<'_>>()
         + carriers;
+    // The arm outer above already counts Reserve's two selection values: the
+    // TerminalLeased ordinal is one of the six `Option<usize>` and the adopted
+    // Job after one of the four `Option<JobView>`; its selectors are scalars
+    // inside `Change` (contract row-reserve-replay, resources).
     // Selection and lookups complete before the observer: Job/Root decode
-    // (Row codec), the native scan, the Status home decode and the table
-    // lookup (CatalogLeaf decode/search and the XCT1 record), each with its
-    // returned carrier. Their results are already inside Inputs.
+    // (Row codec), the native scan, the Status home decode, the table
+    // lookup (CatalogLeaf decode/search and the XCT1 record) and Reserve's
+    // allocator entry, each with its returned carrier. Their results are
+    // already inside Inputs.
     let lookup = job
         .max(size_of::<NativeJob<'_>>() + 2 * size_of::<ObservationResult<NativeJob<'_>>>())
         .max(
@@ -750,6 +842,11 @@ pub(in super::super) fn source_bytes() -> SourceCensus {
                 + 2 * size_of::<ObservationResult<TableSource<'_>>>()
                 + transition::tree_source_bytes()
                     .max(crate::storage::semantic_catalog::catalog_read_codec_bytes()),
+        )
+        .max(
+            2 * size_of::<allocation_page::AllocationPage<'_>>()
+                + 2 * size_of::<ObservationResult<PageIdentity>>()
+                + 2 * size_of::<Option<AllocationEntry>>(),
         );
     let semantic = outer
         + size_of::<&mut [u8; ROW_REPLAY_SCRATCH_BYTES]>()
@@ -769,7 +866,9 @@ pub(in super::super) fn source_bytes() -> SourceCensus {
         + 2 * size_of::<crate::storage::page::PageView<'_>>()
         + 4 * size_of::<crate::storage::page::PageHeader>()
         + job.max(hashing);
-    let closure_outer = 2 * size_of::<job3::JobView<'_>>()
+    // The U allocator check adds one root JobView and its entry comparison.
+    let closure_outer = 3 * size_of::<job3::JobView<'_>>()
+        + 2 * size_of::<Option<AllocationEntry>>()
         + 2 * size_of::<allocation_page::AllocationPage<'_>>()
         + 2 * size_of::<status_home::StatusHomePage<'_>>()
         + 4 * size_of::<StatusHome>()

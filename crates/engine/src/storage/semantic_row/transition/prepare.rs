@@ -626,7 +626,9 @@ pub(super) fn prepare<'a>(
             }
             Some(cells::first_free(root, inputs.jobs, namespace)?)
         }
-        Change::Reserve(_) => Some(cells::first_free(root, inputs.jobs, namespace)?),
+        Change::Reserve(_) | Change::ReserveAdopted { .. } => {
+            Some(cells::first_free(root, inputs.jobs, namespace)?)
+        }
         Change::Forward { ordinal, .. }
         | Change::Cancel { ordinal }
         | Change::Clr { ordinal, .. }
@@ -644,6 +646,10 @@ pub(super) fn prepare<'a>(
         Change::Begin { actor, status, .. } => (Some(actor), Some(status)),
         Change::Reserve(plan) => {
             let (actor, status) = terminal_actor(inputs, plan.terminal)?;
+            (Some(actor), Some(status))
+        }
+        Change::ReserveAdopted { terminal, .. } => {
+            let (actor, status) = terminal_actor(inputs, terminal)?;
             (Some(actor), Some(status))
         }
         Change::RollbackStart { terminal, .. } | Change::StatementFinish { terminal, .. } => {
@@ -754,7 +760,26 @@ pub(super) fn prepare<'a>(
             set_budget(out.job, 1, TERMINAL_BYTES);
             out.status = Some(home(actor, TransactionState::Active, None, 0)?);
         }
-        Change::Reserve(plan) => {
+        Change::Reserve(_) | Change::ReserveAdopted { .. } => {
+            // Live passes its plan and no cell. Replay passes the candidate's
+            // kind-9 Job after and adopts only its C and projection; every
+            // other step below runs for both (contract row-reserve-replay).
+            // The selectors are bound by reference, never copied.
+            let (plan, container, handle, statement) = match (&inputs.change, inserted) {
+                (Change::Reserve(plan), None) => {
+                    (Some(*plan), &plan.container, &plan.table, &plan.statement)
+                }
+                (
+                    Change::ReserveAdopted {
+                        container,
+                        table,
+                        statement,
+                        ..
+                    },
+                    Some(_),
+                ) => (None, container, table, statement),
+                _ => return Err(Error::InvalidInput),
+            };
             let actor = actor.expect("actor");
             let location = location.expect("location");
             let summary = summary.as_ref().expect("actor");
@@ -763,62 +788,101 @@ pub(super) fn prepare<'a>(
             require(
                 status.state() == TransactionState::Active
                     && summary.reserved.is_none()
-                    && plan.statement != 0
-                    && plan.statement >= summary.statement,
+                    && *statement != 0
+                    && *statement >= summary.statement,
             )?;
             let table = inputs.table.ok_or(Error::InvalidInput)?;
-            same(table.handle == plan.table)?;
+            same(table.handle == *handle)?;
             let leaf = table_leaf(inputs, table)?;
-            let canonical =
-                row_record::decode_canonical_row_with_schema(plan.canonical, table.schema)?;
-            if !(5..=crate::storage::overflow::INLINE_ROW_BYTES).contains(&plan.canonical.len()) {
-                return Err(Error::Unsupported);
-            }
-            let cell_bytes = 180 + plan.canonical.len();
+            // The value: A's canonical row, or the adopted C read again
+            // against the Job3 Row range.
+            let canonical = plan
+                .map(|plan| {
+                    row_record::decode_canonical_row_with_schema(plan.canonical, table.schema)
+                })
+                .transpose()?;
+            let cell_bytes = match (plan, inserted) {
+                (Some(plan), _) => {
+                    if !(5..=crate::storage::overflow::INLINE_ROW_BYTES)
+                        .contains(&plan.canonical.len())
+                    {
+                        return Err(Error::Unsupported);
+                    }
+                    180 + plan.canonical.len()
+                }
+                (None, adopted) => {
+                    let adopted = adopted.ok_or(Error::InvalidInput)?;
+                    let bytes = u32::from_le_bytes(adopted[280..284].try_into().expect("C"));
+                    let bytes = usize::try_from(bytes).map_err(|_| Error::Corrupt)?;
+                    if !(super::super::MIN_CELL..=MAX_CELL).contains(&bytes) {
+                        return Err(Error::Corrupt);
+                    }
+                    bytes
+                }
+            };
             // The planned U is the next generation of an actual Free slot.
             same(
-                !cells::same_address(plan.container, location.page())
-                    && !cells::same_address(plan.container, table.anchor)
-                    && !cells::same_address(plan.container, leaf),
+                !cells::same_address(*container, location.page())
+                    && !cells::same_address(*container, table.anchor)
+                    && !cells::same_address(*container, leaf),
             )?;
             let undo_bytes = inputs.undo.ok_or(Error::InvalidInput)?;
-            let cell = cells::undo_before(undo_bytes, namespace, plan.container, frame)?;
+            let cell = cells::undo_before(undo_bytes, namespace, *container, frame)?;
             let old = undo_record::decode_free_undo_record(cell, cells::undo_generation(cell)?)?;
             let generation = old.next().map_err(|_| Error::Exhausted)?;
-            let undo = UndoRef::new(plan.container, 0, generation)?;
+            let undo = UndoRef::new(*container, 0, generation)?;
             let row = RowId::new(root.row_high().checked_add(1).ok_or(Error::Exhausted)?)
                 .map_err(|_| Error::Exhausted)?;
             let sequence = root.undo_high().checked_add(1).ok_or(Error::Exhausted)?;
             let mutation = last_mutation.checked_add(1).ok_or(Error::Exhausted)?;
             let h = head.is_some();
             let record = record_scratch(out.descriptors);
-            let length = row_record::encode_row_record_with_schema(
-                RecordExpectation { namespace, row },
-                table.schema,
-                RecordVersion {
-                    row,
-                    stamp: VersionStamp::Transaction(actor),
-                    logical: LogicalRowVersion::new(actor.id(), mutation)?,
-                    undo: Some(undo),
-                },
-                RowPayload::Inline(canonical),
-                record,
-            )?;
-            same(length + 12 == cell_bytes)?;
+            let length = match canonical {
+                Some(canonical) => {
+                    let length = row_record::encode_row_record_with_schema(
+                        RecordExpectation { namespace, row },
+                        table.schema,
+                        RecordVersion {
+                            row,
+                            stamp: VersionStamp::Transaction(actor),
+                            logical: LogicalRowVersion::new(actor.id(), mutation)?,
+                            undo: Some(undo),
+                        },
+                        RowPayload::Inline(canonical),
+                        record,
+                    )?;
+                    same(length + 12 == cell_bytes)?;
+                    length
+                }
+                None => {
+                    // The version check the record encode would make. The
+                    // leaf fit depends only on the key and the record length
+                    // (tree_page.rs:399-424, tree_page/edit.rs:48-90), so a
+                    // zero placeholder of length C-12 stands for the record.
+                    LogicalRowVersion::new(actor.id(), mutation)?;
+                    record[..cell_bytes - 12].fill(0);
+                    cell_bytes - 12
+                }
+            };
             reserve_leaf(inputs, table, leaf, row, &record[..length], out.cell)?;
             out.cell.fill(0);
-            let projection = cells::projection(plan.table, row, Some(&record[..length]))?;
+            let projection = match (canonical, inserted) {
+                (Some(_), _) => cells::projection(*handle, row, Some(&record[..length]))?,
+                (None, adopted) => adopted.ok_or(Error::InvalidInput)?[288..320]
+                    .try_into()
+                    .expect("projection"),
+            };
             record.fill(0);
             let job = &mut *out.job;
             cells::lease(job, before.expect("free"), actor, location, lsn, 3)?;
             undo.encode(&mut job[128..168])?;
             put(job, 168, sequence);
-            put(job, 176, plan.table.object.get());
-            put(job, 184, plan.table.generation.get());
-            put(job, 192, plan.table.schema_epoch.get());
+            put(job, 176, handle.object.get());
+            put(job, 184, handle.generation.get());
+            put(job, 192, handle.schema_epoch.get());
             table.anchor.encode(&mut job[200..224])?;
             leaf.encode(&mut job[224..248])?;
-            put(job, 248, plan.statement);
+            put(job, 248, *statement);
             put(job, 256, mutation);
             cells::put32(job, 280, cell_bytes as u32);
             job[288..320].copy_from_slice(&projection);
@@ -832,7 +896,7 @@ pub(super) fn prepare<'a>(
                 mutation,
             });
             out.pages[UNDO] = Some(Changed {
-                identity: cells::fixed_identity(namespace, plan.container, 3),
+                identity: cells::fixed_identity(namespace, *container, 3),
                 kind: PageKind::Undo,
                 before: undo_bytes,
                 before_slot: Some(0),
@@ -840,7 +904,7 @@ pub(super) fn prepare<'a>(
             });
             credit = true;
             core = Core {
-                statement: plan.statement,
+                statement: *statement,
                 mutation,
                 sequence,
                 current: Some(undo),
