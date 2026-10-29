@@ -429,10 +429,9 @@ fn row_capsule_refused_by_catalog_entries_and_aborts_empty() {
                 .unwrap();
             let identity = tx.test_write_identity();
             let before = state.lock().unwrap().images();
-            // Kind 2 is refused before any gate, source, scan or mark.
-            let error = writer.begin_statement(owner, &tx).err().unwrap();
-            assert!(matches!(error.cause, RetentionCause::Unsupported));
-            assert_eq!(error.effect, Effect::Unchanged);
+            // Catalog entries refuse kind 2 before any gate, source or scan.
+            // begin_statement/finish_statement dispatch by kind instead
+            // (ROW-BEGIN-001); the Row statement has its own cases.
             let tx = match writer.commit_catalog_transaction(owner, tx, private) {
                 Err(TransactionFinishError::Before { error, transaction }) => {
                     assert!(matches!(error.cause, RetentionCause::Unsupported));
