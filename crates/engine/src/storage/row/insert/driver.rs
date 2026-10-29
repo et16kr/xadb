@@ -6,8 +6,11 @@
 //! lane → A `produce_insert` → prepare → apply. A row failure releases what
 //! that row holds (preflight finish, or Cancel of the one reservation) before
 //! anything else. A statement whose rows of this call stay applied is handed
-//! back `RollbackRequired`; its rollback is driven by the caller one step at a
-//! time (`start_statement_rollback` → `rollback_step`… → `finish_rollback` →
+//! back `RollbackRequired` inside a `PendingRollback`, which gives the
+//! statement up only after a rollback started from it has finished, so
+//! partial rows never reach `finish_statement` as a success. The rollback is
+//! driven by the caller one step at a time (`start_statement_rollback` →
+//! `rollback_step`… → `finish_rollback` → `PendingRollback::rolled_back` →
 //! `finish_statement`), so every wrapper C hands back after a refusal reaches
 //! the caller for retry and none is dropped to restart a started rollback
 //! (gap G5). Commit and the full rollback use the same steps. C is reached
@@ -246,6 +249,8 @@ impl Failure {
         }
     }
 
+    /// C answered Fatal, or answered with no defined continuation: C keeps
+    /// the fence and obligations.
     fn fatal(stage: Stage, error: RetentionError) -> Self {
         Self {
             must_resolve: true,
@@ -268,7 +273,8 @@ pub(crate) enum After<H> {
     Returned(H),
     /// Rows stay applied and no rollback is started: the next step is
     /// `start_statement_rollback` (`start_full_rollback` for a transaction).
-    RollbackRequired(H),
+    /// The handle stays inside `PendingRollback` until that rollback finished.
+    RollbackRequired(PendingRollback<H>),
     /// Nothing is left to roll back (or the rollback finished): only
     /// `finish_statement` (`finish_aborted`) remains, never a new rollback.
     FinishPending(H),
@@ -276,6 +282,98 @@ pub(crate) enum After<H> {
     Closed,
     /// Only for dropping into C's fence and recovery obligations.
     MustResolve(Option<H>),
+}
+
+impl<H> After<H> {
+    fn rollback_required(handle: H) -> Self {
+        Self::RollbackRequired(PendingRollback {
+            handle,
+            progress: Progress::Required,
+        })
+    }
+}
+
+/// How far the one rollback a `PendingRollback` allows has come. Only a
+/// rollback started from that pending moves it on.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+enum Progress {
+    Required,
+    Started,
+    Finished,
+}
+
+/// A statement (or transaction) whose applied rows must be rolled back
+/// before it is finished. The fields are private to the driver and nothing
+/// outside it builds one, so the handle has three uses only:
+/// `start_statement_rollback` (`start_full_rollback`) borrows it for C's one
+/// RollbackStart; `rolled_back` gives it up once that rollback finished; and
+/// dropping it hands it to C's fence and recovery obligations. A second
+/// start is refused without calling C, so a started rollback is never
+/// started again (G5).
+#[derive(Debug)]
+pub(crate) struct PendingRollback<H> {
+    handle: H,
+    progress: Progress,
+}
+
+impl<H> PendingRollback<H> {
+    /// The handle, only after the rollback started from this pending
+    /// finished; before that (not started, stopped, or fenced) the pending
+    /// is returned unchanged.
+    pub(crate) fn rolled_back(self) -> Result<H, Self> {
+        match self.progress {
+            Progress::Finished => Ok(self.handle),
+            Progress::Required | Progress::Started => Err(self),
+        }
+    }
+
+    /// The handle for C's RollbackStart and the progress the started
+    /// rollback will move on. Refused, with no C call, unless no rollback
+    /// was started yet; after an abandoned start it must be resolved.
+    fn start(&mut self) -> Result<(&H, &mut Progress), Failure> {
+        match self.progress {
+            Progress::Required => Ok((&self.handle, &mut self.progress)),
+            progress => Err(Failure {
+                must_resolve: progress == Progress::Started,
+                ..Failure::new(Stage::RollbackStart, InsertError::OrderMismatch.into())
+            }),
+        }
+    }
+}
+
+/// C's started rollback, tied to the `PendingRollback` it came from: its
+/// successful finish is the only way that pending is marked finished.
+pub(crate) struct StartedRollback<'r, K> {
+    rollback: K,
+    progress: &'r mut Progress,
+}
+
+impl<K: Rollback> Rollback for StartedRollback<'_, K> {
+    type Target = K::Target;
+    type Task<'x>
+        = K::Task<'x>
+    where
+        Self: 'x;
+    fn next(&mut self) -> Result<RollbackNext<Self::Task<'_>, K::Target>, RetentionError> {
+        self.rollback.next()
+    }
+    fn finish(self) -> Result<(), RowOwnedError<Self>> {
+        let Self { rollback, progress } = self;
+        match rollback.finish() {
+            Ok(()) => {
+                *progress = Progress::Finished;
+                Ok(())
+            }
+            Err(RowOwnedError::Before { error, owned }) => Err(RowOwnedError::Before {
+                error,
+                owned: Self {
+                    rollback: owned,
+                    progress,
+                },
+            }),
+            Err(RowOwnedError::Fatal(error)) => Err(RowOwnedError::Fatal(error)),
+        }
+    }
 }
 
 #[derive(Debug)]
@@ -360,7 +458,7 @@ fn insert_statement<B: Boundary>(
     } else if applied_rows == 0 {
         After::Returned(statement)
     } else {
-        After::RollbackRequired(statement)
+        After::rollback_required(statement)
     };
     Err(DriveError::new(failure, after))
 }
@@ -457,8 +555,9 @@ fn cancel<R: Reserved>(reserved: R, failure: Failure) -> Failure {
 }
 
 /// Finishes a statement whose rows are all applied, or whose rollback has
-/// finished. A refusal hands it back `FinishPending`: the retry is this call
-/// alone, never another rollback.
+/// finished (`PendingRollback::rolled_back`); a `RollbackRequired` statement
+/// cannot reach it otherwise. A refusal hands it back `FinishPending`: the
+/// retry is this call alone, never another rollback.
 fn finish_statement<B: Boundary>(
     call: &mut B,
     statement: B::Statement,
@@ -479,26 +578,35 @@ fn finish_statement<B: Boundary>(
 
 /// Starts C's statement rollback to the statement's mark (RollbackStart). A
 /// refusal starts nothing, so the statement stays `RollbackRequired` and the
-/// start may be retried; a started rollback is never started again.
+/// start may be retried; a started rollback is never started again (the
+/// pending refuses a second start without calling C).
 fn start_statement_rollback<'r, 'i, B: Boundary>(
     call: &'r mut B,
     transaction: &'r B::Transaction,
-    statement: &'r B::Statement,
+    pending: &'r mut PendingRollback<B::Statement>,
     loan: &'i mut Loan,
-) -> Result<B::Rollback<'r, 'i>, Failure> {
-    call.start_rollback(transaction, Some(statement), RollbackScope::Statement, loan)
-        .map_err(|error| Failure::new(Stage::RollbackStart, error.into()))
+) -> Result<StartedRollback<'r, B::Rollback<'r, 'i>>, Failure> {
+    let (statement, progress) = pending.start()?;
+    let rollback = call
+        .start_rollback(transaction, Some(statement), RollbackScope::Statement, loan)
+        .map_err(|error| Failure::new(Stage::RollbackStart, error.into()))?;
+    *progress = Progress::Started;
+    Ok(StartedRollback { rollback, progress })
 }
 
 /// Starts the full rollback of every remaining row, the only step after a
 /// commit C answered `RollbackRequired`. Refusals are as for a statement.
 fn start_full_rollback<'r, 'i, B: Boundary>(
     call: &'r mut B,
-    transaction: &'r B::Transaction,
+    pending: &'r mut PendingRollback<B::Transaction>,
     loan: &'i mut Loan,
-) -> Result<B::Rollback<'r, 'i>, Failure> {
-    call.start_rollback(transaction, None, RollbackScope::Transaction, loan)
-        .map_err(|error| Failure::new(Stage::RollbackStart, error.into()))
+) -> Result<StartedRollback<'r, B::Rollback<'r, 'i>>, Failure> {
+    let (transaction, progress) = pending.start()?;
+    let rollback = call
+        .start_rollback(transaction, None, RollbackScope::Transaction, loan)
+        .map_err(|error| Failure::new(Stage::RollbackStart, error.into()))?;
+    *progress = Progress::Started;
+    Ok(StartedRollback { rollback, progress })
 }
 
 /// One rollback step's progress.
@@ -610,14 +718,16 @@ fn held<T, F>(stage: Stage, error: DriverError, task: T) -> RollbackStop<T, F> {
 }
 
 /// C's finish of a complete rollback. Before returns the same rollback for
-/// retry; after it succeeds only `finish_statement` / `finish_aborted`
-/// remains.
+/// retry; after it succeeds the pending gives its handle up
+/// (`PendingRollback::rolled_back`) and only `finish_statement` /
+/// `finish_aborted` remains.
 fn finish_rollback<K: Rollback>(rollback: K) -> Result<(), RowOwnedError<K>> {
     rollback.finish()
 }
 
 /// Commit. A write conflict (`RollbackRequired`) leaves A only the full
-/// rollback: the transaction is handed back for `start_full_rollback`.
+/// rollback: the transaction is handed back inside a `PendingRollback` for
+/// `start_full_rollback`.
 fn commit<B: Boundary>(
     call: &mut B,
     transaction: B::Transaction,
@@ -634,7 +744,7 @@ fn commit<B: Boundary>(
             Err(DriveError::kept(
                 Failure::new(Stage::Commit, error.into()),
                 transaction,
-                After::RollbackRequired,
+                After::rollback_required,
             ))
         }
         Err(TransactionFinishError::Rejected(error)) => Err(DriveError::new(
@@ -649,7 +759,10 @@ fn commit<B: Boundary>(
 }
 
 /// Consumes the transaction after its full rollback finished. A Before is
-/// retried by this call alone; C's own `RollbackRequired` is passed on.
+/// retried by this call alone. C answering `RollbackRequired` here, after
+/// that rollback finished, has no defined continuation: a second full
+/// RollbackStart would restart a finished rollback (G5), so the transaction
+/// is kept for C's fence (`MustResolve`).
 fn finish_aborted<B: Boundary>(
     call: &mut B,
     transaction: B::Transaction,
@@ -662,10 +775,9 @@ fn finish_aborted<B: Boundary>(
             After::FinishPending,
         )),
         Err(TransactionFinishError::RollbackRequired { error, transaction }) => {
-            Err(DriveError::kept(
-                Failure::new(Stage::FinishAborted, error.into()),
-                transaction,
-                After::RollbackRequired,
+            Err(DriveError::new(
+                Failure::fatal(Stage::FinishAborted, error),
+                After::MustResolve(Some(transaction)),
             ))
         }
         Err(TransactionFinishError::Rejected(error)) => Err(DriveError::new(
@@ -701,7 +813,7 @@ const fn carrier_bytes<B: Boundary + 'static>() -> (usize, usize) {
     type D<B> = <R<B> as Reserved>::Prepared;
     type A<B> = <B as Boundary>::Applied;
     type S<B> = <B as Boundary>::Statement;
-    type K<B> = <B as Boundary>::Rollback<'static, 'static>;
+    type K<B> = StartedRollback<'static, <B as Boundary>::Rollback<'static, 'static>>;
     type F<B> = <K<B> as Rollback>::Target;
     type T<B> = <K<B> as Rollback>::Task<'static>;
     type M<B> = <T<B> as RollbackTask>::Lane<'static>;

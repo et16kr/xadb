@@ -7,10 +7,11 @@
 //! bodies return Unchanged `Unsupported`, so these entries are
 //! compile-checked only until C3 supplies the adapters (gap G2).
 use super::{
-    Boundary, DriveError, Failure, Loan, Preflight, Prepared, PreparedTask, ProducerLane, Reserved,
-    Rollback, RollbackNext, RollbackStop, RollbackTask, StatementView, Stepped, ValidationLane,
-    carrier_bytes, commit, finish_aborted, finish_rollback, finish_statement, insert_statement,
-    retry_task, rollback_step, start_full_rollback, start_statement_rollback,
+    Boundary, DriveError, Failure, Loan, PendingRollback, Preflight, Prepared, PreparedTask,
+    ProducerLane, Reserved, Rollback, RollbackNext, RollbackStop, RollbackTask, StartedRollback,
+    StatementView, Stepped, ValidationLane, carrier_bytes, commit, finish_aborted, finish_rollback,
+    finish_statement, insert_statement, retry_task, rollback_step, start_full_rollback,
+    start_statement_rollback,
 };
 use crate::storage::{
     disk::{
@@ -245,9 +246,10 @@ impl<'x, 't, 'v, 'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace> Boundar
 type Live<'x, 't, 'v, 'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W> =
     LiveCall<'x, 't, 'v, 'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W>;
 
-/// The rollback `start_*_rollback_live` hands to the caller, which steps it.
+/// The rollback `start_*_rollback_live` hands to the caller, which steps it;
+/// its successful finish releases the `PendingRollback` it was started from.
 type LiveRollback<'r, 't, 'v, 'i, 'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W> =
-    RowRollback<'r, 't, 'v, 'i, 'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W>;
+    StartedRollback<'r, RowRollback<'r, 't, 'v, 'i, 'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W>>;
 
 /// One INSERT statement over the original statement view: see
 /// `insert_statement`. Every row's input is rejected before its Reserve.
@@ -266,7 +268,9 @@ pub(in crate::storage) fn insert_live<'t, 'v, 'a, 'c, 's, W: WriterNamespace>(
     insert_statement(call, statement, table, private, rows, slots)
 }
 
-/// `finish_statement`: also the only retry of a `FinishPending` statement.
+/// `finish_statement` of a statement whose rows all applied, or that
+/// `PendingRollback::rolled_back` released; also the only retry of a
+/// `FinishPending` statement.
 #[allow(
     clippy::result_large_err,
     reason = "the finish-pending statement view is returned inline"
@@ -278,7 +282,8 @@ pub(in crate::storage) fn finish_statement_live<'t, 'v, 'a, 'c, 's, W: WriterNam
     finish_statement(call, statement)
 }
 
-/// RollbackStart for a `RollbackRequired` statement; see `rollback_step_live`.
+/// RollbackStart for a `RollbackRequired` statement, borrowing its
+/// `PendingRollback`; see `rollback_step_live`.
 pub(in crate::storage) fn start_statement_rollback_live<
     'r,
     'i,
@@ -298,13 +303,14 @@ pub(in crate::storage) fn start_statement_rollback_live<
 >(
     call: &'r mut Live<'x, 't, 'v, 'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W>,
     transaction: &'r RowTransaction<'v, 'a, 'c, 's>,
-    statement: &'r RowStatementView<'t, 'v, 'a, 'c, 's>,
+    pending: &'r mut PendingRollback<RowStatementView<'t, 'v, 'a, 'c, 's>>,
     private: &'i mut Loan,
 ) -> Result<LiveRollback<'r, 't, 'v, 'i, 'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W>, Failure> {
-    start_statement_rollback(call, transaction, statement, private)
+    start_statement_rollback(call, transaction, pending, private)
 }
 
-/// RollbackStart of the full rollback for a `RollbackRequired` transaction.
+/// RollbackStart of the full rollback for a `RollbackRequired` transaction,
+/// borrowing its `PendingRollback`.
 pub(in crate::storage) fn start_full_rollback_live<
     'r,
     'i,
@@ -323,10 +329,10 @@ pub(in crate::storage) fn start_full_rollback_live<
     W: WriterNamespace,
 >(
     call: &'r mut Live<'x, 't, 'v, 'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W>,
-    transaction: &'r RowTransaction<'v, 'a, 'c, 's>,
+    pending: &'r mut PendingRollback<RowTransaction<'v, 'a, 'c, 's>>,
     private: &'i mut Loan,
 ) -> Result<LiveRollback<'r, 't, 'v, 'i, 'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W>, Failure> {
-    start_full_rollback(call, transaction, private)
+    start_full_rollback(call, pending, private)
 }
 
 /// One step of the caller's held rollback; a stop hands back what C
@@ -415,8 +421,8 @@ pub(in crate::storage) fn finish_rollback_live<
     finish_rollback(rollback)
 }
 
-/// Row Commit; a write conflict hands the transaction back for the full
-/// rollback.
+/// Row Commit; a write conflict hands the transaction back, inside a
+/// `PendingRollback`, for the full rollback.
 #[allow(
     clippy::result_large_err,
     reason = "the unchanged or rollback-required transaction capsule is returned inline"
@@ -429,7 +435,9 @@ pub(in crate::storage) fn commit_live<'v, 'a, 'c, 's, W: WriterNamespace>(
     commit(call, transaction, private)
 }
 
-/// `finish_aborted` after the full rollback finished; also its only retry.
+/// `finish_aborted` of the transaction `PendingRollback::rolled_back`
+/// released; also its only retry. C's `RollbackRequired` here is kept for
+/// C's fence (G5).
 #[allow(
     clippy::result_large_err,
     reason = "the finish-pending transaction capsule is returned inline"
