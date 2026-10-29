@@ -3012,3 +3012,34 @@ r2의 scoped static2와 선택4개는 모두 PASS다. 고유10개는 r1 source�
 | 경로 참조 | 관리 JSON의 `plan4_retention/` 경로 184개와 `plan4_apply/` 45개, `plan4_retention/` 현재 Markdown 링크 11개(계약 3개 문서)와 증거 링크 4개 |
 
 독립 검토(같은 읽기 전용 subagent)는 위 관측과 계획의 판정 기록을 HEAD source와 대조해 **ACCEPT, 필수 지적 0**으로 판정했다. 확인 범위는 선언·파일 수·묶음 합계·역할 요약, 시험 62개와 구성, 공유 helper의 외부 선언과 논리 경로, 참조 수, 대안의 `#[path]` 19줄, 13절 L4 행과의 부합, 링크·문서 배치·JSON `_ref` 검사 오류 0이다. HEAD의 tracked fingerprint가 L3 이동 후 값 `0fcb9877…`과 같아 L3 시험 목록을 HEAD에 쓸 수 있음도 확인했다. 선택 지적 4건 중 세 건을 반영했다. `plan4_retention/`이 commit `ad0c45f`에서 합쳐진 원 모듈의 폴더라는 설명, 대안의 합치는 방향, 재검토 때의 목표 배치(소유 계약의 `plan4_apply/{state,read,catalog,row,terminal,legacy}*.rs`)다. JSON `status`는 계획 채택 상태라 그대로 둔다. 이 반영은 다시 검토받지 않았다. L5와 전체 M4/M5는 미완료다.
+
+<a id="l5-classification-review"></a>
+## 2026-10-29 L5 책임별 분류 검토
+
+[L5 책임별 분류](../plans/module-independence-plan.md#l5-classification)를 기준 `main` `af50b46230f8ee4cf050b3aa61e7e940aeef3dfd`(clean)에서 작성했다. 이 단계에서 제품 source·fixture·script·관리 JSON 경로는 바꾸지 않았고 build·시험도 실행하지 않았다. HEAD의 tracked source fingerprint는 L3 이동 후 값 `0fcb9877149b2a13cd3ec959185c73ed18a68f866a0ad2774c2ab14570104b72`와 같고, `08d854d` 이후 source 경로의 diff는 없다.
+
+독립 검토(같은 읽기 전용 subagent)의 첫 판정은 **ACCEPT WITH REQUIRED FIXES**였다. 필수 지적은 3건이다.
+
+1. 저장소 전체 검색에서 빠진 입력이 2개 있었다: `tests/fixtures/dev3-plan4-genesis/recipes-g.json`, `crates/engine/tests/fixtures/recovery_prefix/runtime/manifest.json`.
+2. `dirty_allocation`을 유지한 근거가 부정확했다. checker는 `--root`로 받은 보존 source를 검증하고, 기록된 SHA-256은 이미 현재 파일과 다르다.
+3. 진입 유지와 물리 이동 기준이 production 하위 모듈에서 서로 어긋났다.
+
+작성자는 각 지적을 source로 확인한 뒤 다음과 같이 반영했다.
+
+- 경로 기록 처리 기준 4를 두고, 빠진 두 입력을 원 source 기록으로 분류했다.
+- `dirty_allocation` 3개를 L3 선례대로 L5-A 이동에 넣었다. 그래서 대상이 40개(A 9·B 11·C 16·D 4)가 되었다.
+- 실제 적용 기준을 기준 1·2에 적었다.
+- 선택 지적 중 R3 문구, `plan4` 표기 규칙, 관리 JSON 경로 69개(A 13·B 22·C 29·D 5)를 반영했다.
+
+좁은 재검토는 **ACCEPT, 필수 지적 0**이었다. 검증 범위는 다음과 같다.
+
+- 40개 파일 이름의 저장소 전체 검색 결과가 모두 기준 4나 단위 실행 3단계로 분류됨
+- `dirty_allocation.rs:30,37,41` 선언과 `dirty_allocation_tests.rs:76,624`의 `include_str!`
+- 수치, 링크·문서 배치 검사 오류 0
+
+재검토의 선택 지적 2건은 다음과 같이 처리했다.
+
+- `scripts/test_check_dev3_dirty_runtime.py:80–81`을 유지 입력에 더했다.
+- `dev3_recovery_prefix.py`의 고정 줄이 21행이라는 지적은 실제로 22행이라서 반영하지 않았다.
+
+이 반영은 다시 검토받지 않았다. 물리 이동 L5-A–D와 전체 M4/M5는 미완료다.

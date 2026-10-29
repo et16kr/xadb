@@ -1,5 +1,7 @@
 # XADB 모듈 독립 개발 구조 전환 작업 계획
 
+2026-10-29 [L5 책임별 분류](#l5-classification): main `af50b46`에서 `wal_io/` 직속 63개를 책임별로 분류했다. 진입은 유지하고, 평면 자손 40개를 진입 폴더로 옮기는 물리 이동 4단위(L5-A–D)를 정했다. 원 source를 고정한 입력·checker 상수는 바꾸지 않으며, 논리 경계 재설계 R1–R3은 입력만 기록했다. 이 분류 작성 때 제품 변경과 시험 실행은 없다. L5-A–D 이동과 전체 M4/M5는 미완료다.
+
 2026-10-29 [L4 배치 판정](#l4-record): main `08d854d`에서 `plan4_apply/`(10)·`plan4_retention/`(48)이 모두 한 모듈 `plan4_apply.rs`(production `apply`, 시험 `retention`)의 자손이고 소유가 같음을 확인했다. 이행 중 helper의 최종 소유가 미정이고 공유 시험 helper 2개가 외부 `#[path]`로도 쓰이므로, 권장안대로 현재 배치를 유지하고 재검토 조건을 기록했다. 제품·JSON 경로 변경과 시험 실행은 없다. L5와 전체 M4/M5는 미완료다.
 
 2026-10-29 [L3 배치 적용](../evidence/module-independence-survey-20261026.md#l3-mixed-system-move): main `d251b8f`에서 [L3 이동표](#l3-move-table)의 권장안대로 `mixed_system_owner`의 자손6개를 `mixed_system_owner/`로, recovery 시험을 선언 폴더 `recovery_effect/`로 옮겼다. init 두 파일은 형제를 가진 평면 부모 아래에 남기고 L5에서 판단한다. `#[path]` 7줄과 fixture inventory의 `path` 151개만 바꿨고, 이동만 한 6개의 byte 동일, `cargo check` PASS, 이동 전후 시험 목록 동일을 확인했다. 시험 본문은 NOT_RUN이다. L4·L5와 전체 M4/M5는 미완료다.
@@ -414,7 +416,7 @@ Root3/Job3/Profile3·Row scope3·base4는 이름 변경의 부수 효과가 아�
 <a id="folder-reorganization"></a>
 ## 13. 분리 모듈의 폴더 재정리 후속 계획
 
-2026-10-29 · `XADB-MODULE-LAYOUT-001` · **D2 ACCEPTED / 후속 계획 문서 반영 완료 / 제품 이동은 [L1](../evidence/module-independence-survey-20261026.md#l1-allocation-move)·[L2](../evidence/module-independence-survey-20261026.md#l2-concurrency-move)·[L3](../evidence/module-independence-survey-20261026.md#l3-mixed-system-move)만 적용, [L4](#l4-record)는 현재 배치 유지, 시험 본문 NOT_RUN**
+2026-10-29 · `XADB-MODULE-LAYOUT-001` · **D2 ACCEPTED / 후속 계획 문서 반영 완료 / 제품 이동은 [L1](../evidence/module-independence-survey-20261026.md#l1-allocation-move)·[L2](../evidence/module-independence-survey-20261026.md#l2-concurrency-move)·[L3](../evidence/module-independence-survey-20261026.md#l3-mixed-system-move)만 적용, [L4](#l4-record)는 현재 배치 유지, [L5](#l5-classification)는 분류 완료·이동 단위 미실행, 시험 본문 NOT_RUN**
 
 사용자는 파일 분리에 비해 폴더 정리가 부족한 부분을 먼저 조사하도록 요청했고, 참조 관계·상태 소유·API가 독립성의 핵심인지 의견을 확인했다. 이어 임시 계획을 저장하고 진행 중인 작업 종료 뒤 기존 문서에 반영하도록 지시했으며, 후속 “진행해 주세요” 요청에 따라 이 절을 작성한다. **이번 실행 범위는 후속 계획과 관련 문서의 정비다.** 제품 파일 이동·참조 변경의 구현은 아직 시작하지 않는다.
 
@@ -708,6 +710,85 @@ L2 뒤 L4의 두 안을 제시했고 사용자는 L3와 함께 권장안, 즉 �
 4. `plan4_retention/`을 `plan4_apply/`로 합치는 대안의 비용은 `#[path]` 19줄(내부 17·외부 2), 관리 JSON 경로 184개, 현재 계약 문서 3개의 Markdown 링크 11개, 증거 링크 4개의 날짜 주석이다. 그에 비해 얻는 것은 이름 정리뿐이다.
 
 **재검토 조건.** 다음 중 하나가 생기면 그 단위에서 소유별로 옮긴다. (1) 이행이 끝나 helper의 최종 소유가 정해짐(`legacy` bridge 제거, Row producer adapter 도입 등). 이때 목표는 [소유 계약](../contracts/dev3-module-boundaries.md)의 계획 배치 `plan4_apply/{state,read,catalog,row,terminal,legacy}*.rs`다. (2) frozen `retention` selector 이름을 바꾸는 별도 결정. (3) 공유 literal helper의 소비자 변경. 그 전에는 13절 후보 표의 “retention 전체를 일괄 재부모화하지 않는다”를 따른다.
+
+<a id="l5-classification"></a>
+### L5 책임별 분류
+
+2026-10-29 · **분류 완료 / 물리 이동 4단위(L5-A–D) 계획 / 논리 경계 재설계는 입력만 기록 / 이 절 작성 때 제품 변경 없음**
+
+사용자는 권장안이 있으면 묻지 않고 진행하도록 지시했다. 기준은 main `af50b46230f8ee4cf050b3aa61e7e940aeef3dfd`, tree `beca31399b29b1d390e8c7c650c5d7d8f978c97a`이며 checkout은 clean이다. L1·L3 뒤 `wal_io/` 직속 Rust 파일은 63개이고 그중 이름에 `test`가 있는 파일은 33개다. 13절 L5 행대로 각 책임을 `현재 배치 유지 / 물리 이동 / 논리 경계 재설계`로 닫는다. 아래 경로는 `crates/engine/src/storage/wal_io/` 기준이다.
+
+**분류 기준.** 제자리에 둘 진입과, 그 진입과 함께 옮길 하위 모듈을 아래처럼 나눈다.
+
+1. **진입으로 유지:** 다음은 진입으로 제자리에 둔다(배치 B). 진입을 부모 폴더로 옮기면 그 아래 모든 `#[path]` 기준과 compiler probe anchor가 함께 바뀐다. 이는 소유 변화 없는 상위 배치이므로 이번 정리에 넣지 않는다.
+   - 상위 조립 사슬 `bootstrap` → `doublewrite_install` → `mutable_storage`와 `physical`·`disk_api`.
+   - 이 사슬이 직접 선언한 production 자식, 곧 각 책임의 진입.
+   - `status_flush` 아래에서 각자 actor를 소유하는 `mixed`·`operational`·`resident`. L3에서 owner 진입을 유지한 선례다.
+   - 이미 자기 폴더가 있는 모듈: `allocation_reservation`, `empty_transactions`, `mixed_system_owner`, `plan4_pages`, `plan4_recovery`, `recovery_effect`, `status_home_flush`.
+2. **진입과 함께 물리 이동:** 위 진입이 선언한 평면 자손은 진입 옆 `진입이름/`으로 옮긴다.
+   - 시험·지원만이 아니라, 진입 하나의 구현 일부인 production 하위 모듈도 자기 자손과 함께 옮긴다(L1 `operation` 선례). 해당하는 것은 `eviction`, `operational::load`(`status_load.rs`), `status_init_operation`의 `fixed`·`mixed`·`retention`, `recovery_prefix::transactions`, `plan4_pages::recovered_bind`다.
+   - 새 파일 이름은 논리 모듈 이름으로 한다. 실제 bootstrap 종류 `plan4`는 파일이나 폴더 이름 중 하나로 경로에 남긴다.
+3. **현재 배치 유지:** 자손이 없는 leaf(`undo_bootstrap`, `flush_io`)와 L4의 `plan4_apply` 자손.
+4. **경로 기록의 처리:**
+   - case 위치를 가리키는 현재 authored inventory는 새 위치로 갱신한다. 상태 표시나 SHA 고정이 없는 입력이며, L3의 `runtime-manifest.json`이 예다.
+   - 다음은 원 source의 기록이므로 바꾸지 않고, 증거에 현재 위치 대응만 남긴다(L3의 `dev3_mixed_owner_continue.py` 선례): frozen·prepared·input-only 상태이거나 source·파일 SHA를 고정한 입력, 그리고 보존된 이력 source root를 검증하는 checker 상수.
+5. **논리 경계 재설계:** 논리 부모나 소비 범위를 바꿔야 하는 항목이다. 입력만 기록하고 위 이행 순서 4단계의 별도 D2로 둔다.
+
+#### 책임별 분류와 이동 목표
+
+| 책임 | 진입(논리 모듈) | 분류 | 평면 자손 → 목표 |
+| --- | --- | --- | --- |
+| 세션 조립 상위 사슬 | `bootstrap.rs` → `doublewrite_install.rs` → `mutable_storage.rs`, 그리고 `physical.rs`·`disk_api.rs` | 진입 유지 | 채택 계약이 유지하는 원 초기화 조상이다. production 자식 진입(`plan4_genesis`, `undo_bootstrap`, `allocation_reservation`, `dirty_allocation`, `plan4_recovery`, `recovery_prefix`, `status_init`, `status_init_operation`, `allocator_flush`, `flush_io`, `allocator_residency`, `plan4_pages`)도 각자 진입으로 둔다 |
+| 설치 | `bootstrap` | 물리 이동 L5-B | `bootstrap_test_support.rs` → `bootstrap/test_support.rs`, `bootstrap_tests.rs` → `bootstrap/tests.rs` |
+| 설치 | `doublewrite_install` | 물리 이동 L5-B | `doublewrite_install_tests.rs` → `doublewrite_install/tests.rs` |
+| 설치 | `plan4_genesis` | 물리 이동 L5-B | `plan4_genesis_tests.rs` → `plan4_genesis/tests.rs`, `plan4_genesis_test_support.rs` → `plan4_genesis/tests/support.rs` |
+| 세션 조립 시험 | `mutable_storage` | 물리 이동 L5-B | `runtime_core_tests.rs` → `mutable_storage/runtime_core_tests.rs`; `status_bootstrap_tests.rs` → `mutable_storage/status_bootstrap_tests.rs`, 그 자손 `status_bootstrap_native_tests.rs` → `…/status_bootstrap_tests/native.rs`, `undo_bootstrap_tests.rs` → `…/status_bootstrap_tests/undo.rs`, `undo_bootstrap_native_tests.rs` → `…/status_bootstrap_tests/undo/native_undo.rs`, `mixed_system_init_tests.rs` → `…/status_bootstrap_tests/undo/mixed_init.rs` |
+| 설치·세션 조립 leaf | `undo_bootstrap`, `flush_io` | 현재 배치 유지 | 자손 없음 |
+| 할당 | `allocator_residency` | 물리 이동 L5-A | `allocator_eviction.rs` → `allocator_residency/eviction.rs`, `allocator_eviction_tests.rs` → `allocator_residency/eviction/tests.rs`, `allocator_residency_native_tests.rs` → `allocator_residency/native_tests.rs`, `allocator_residency_tests.rs` → `allocator_residency/tests.rs` |
+| 할당 | `allocator_flush` | 물리 이동 L5-A | `allocator_flush_native_tests.rs` → `allocator_flush/native_tests.rs`, `allocator_flush_tests.rs` → `allocator_flush/tests.rs`. 시험의 위치 기준 `include_str!` 5개에 `../`를 더한다 |
+| 할당 | `dirty_allocation` | 물리 이동 L5-A | `dirty_allocation_test_support.rs` → `dirty_allocation/test_support.rs`, `dirty_allocation_native_tests.rs` → `dirty_allocation/native_tests.rs`, `dirty_allocation_tests.rs` → `dirty_allocation/tests.rs`. 시험의 위치 기준 `include_str!` 2개에 `../`를 더한다. `scripts/check_dev3_dirty_runtime.py:83–84`의 경로 상수와 `tests/fixtures/dev3-dirty-allocation/runtime-manifest.json`의 `implementation_files`는 `--root`로 받은 보존 source를 검증하고, 기록된 SHA-256은 이미 현재 파일과 다르다. 기준 4에 따라 바꾸지 않는다 |
+| Status | `status_init` | 물리 이동 L5-C | `status_init_tests.rs` → `status_init/tests.rs`, 그 자손 `status_init_native_tests.rs` → `status_init/tests/native.rs`, `status_init_protocol_tests.rs` → `status_init/tests/protocol.rs`, `status_init_resource_tests.rs` → `status_init/tests/resources.rs` |
+| Status | `status_init_operation` | 물리 이동 L5-C | `fixed_system_operation.rs` → `status_init_operation/fixed.rs`, `mixed_system_init.rs` → `status_init_operation/mixed.rs`, `plan4_status_init_operation.rs` → `status_init_operation/plan4_retention.rs`, `status_init_operation_tests.rs` → `status_init_operation/tests.rs`. L3에서 남긴 init과 그 형제를 함께 옮긴다 |
+| Status | `status_flush`(`status_home_flush.rs`) | 물리 이동 L5-C | `status_home_flush/native_tests.rs`가 `../`로 선언하는 `operational_status_native_tests.rs` → `status_home_flush/native_tests/operational.rs`, `status_load_native_tests.rs` → `…/native_tests/status_load.rs`, `empty_history_native_tests.rs` → `…/native_tests/empty_history.rs`, `empty_load_native_tests.rs` → `…/native_tests/empty_load.rs`. production 자식 `mixed`·`operational`·`resident`는 진입 유지 |
+| Status | `operational`(`operational_status.rs`) | 물리 이동 L5-C | `operational_status_tests.rs` → `operational_status/tests.rs`, `status_load.rs` → `operational_status/load.rs`, `status_load_tests.rs` → `operational_status/load/tests.rs` |
+| Status | `resident`(`resident_status.rs`) | 물리 이동 L5-C | `resident_status_tests.rs` → `resident_status/tests.rs`. 자식 `empty_transactions`는 자기 폴더가 있어 유지 |
+| 복구 | `recovery_prefix` | 물리 이동 L5-D | `recovery_empty_transactions.rs` → `recovery_prefix/transactions.rs`, `recovery_prefix_native_tests.rs` → `recovery_prefix/native.rs`, `recovery_prefix_tests.rs` → `recovery_prefix/tests.rs`. 자식 `effect`(`recovery_effect/mod.rs`)는 유지 |
+| 복구·apply | `plan4_pages` | 물리 이동 L5-D | `plan4_recovered_bind.rs` → `plan4_pages/recovered_bind.rs`. `apply`/`retention`은 L4대로 유지 |
+
+물리 이동은 4단위 40개(A 9·B 11·C 16·D 4)다. 실행 뒤 `wal_io/` 직속은 23개가 되고, 이름에 `test`가 있는 직속 파일은 남지 않는다. 대상 `#[path]` 선언은 모두 inline module 밖에 있다. 위치 기준 macro는 `allocator_flush_tests.rs`(5개)와 `dirty_allocation_tests.rs`(2개)에만 있고, 다른 fixture는 `env!("CARGO_MANIFEST_DIR")` 기준이다.
+
+#### 단위 실행 방식
+
+각 단위는 L1–L3와 같이 한 commit으로 진행한다. 순서는 A → B → C → D다.
+
+1. 기준 SHA-256과 이동 전 시험 목록을 남긴다.
+2. rename과 `#[path]`·`include_str!` 줄만 바꾼다.
+3. 현재 Markdown 링크·본문 표기, 관리 JSON 경로, 상태 문구를 갱신한다.
+4. 다음을 확인한다: `cargo check -p xadb-engine --all-targets --all-features --locked`, 이동 전후 시험 목록 전체의 동일성, 이동만 한 파일의 byte 동일, 변경 파일의 `rustfmt --check`.
+5. 독립 리뷰를 받는다.
+6. 시험 본문은 본문이 같으므로 NOT_RUN이다.
+
+현재 참조 중 미리 확인한 것(저장소 전체 파일 이름 검색):
+
+- 현재 Markdown 링크: `bootstrap_tests.rs`, `doublewrite_install_tests.rs`, `operational_status_tests.rs` 각 1개.
+- 본문 표기: `dev3-test-plan.md`, `dev3-task-05-buffer-flush.md`, 저장소 정책.
+- 증거 Markdown 링크 2개: `xadb-direction-review-20261025.md:144,165`의 `recovery_empty_transactions.rs`. L1 선례대로 날짜 주석과 원 byte 보존으로 갱신한다.
+- 관리 JSON 경로 문자열 69개: A 13, B 22, C 29, D 5.
+- 기준 4에 따라 바꾸지 않는 입력. 이 파일들의 현재 위치 대응은 각 단위 증거에 남긴다.
+  - L5-A: dirty runtime checker의 상수, 같은 옛 경로로 합성 root를 만드는 `scripts/test_check_dev3_dirty_runtime.py:80–81`, runtime manifest(위 표).
+  - L5-B: `tests/fixtures/dev3-plan4-genesis/recipes-g.json`. 상태는 `SOURCE_PREPARED_NOT_EXECUTED`다. `source_files`의 SHA-256 고정은 이미 현재 파일과 다르며, 원 경로는 `source_files` 2개와 `cases[].test_source` 227개에 있다.
+  - L5-C: `crates/engine/tests/fixtures/dev3-resident-status/manifest.json`. 상태는 `FROZEN_INPUTS_NOT_EXECUTION_EVIDENCE`이고, `changed_path`는 각 case를 추가할 때 바뀐 원 파일을 적는다.
+  - L5-D: `crates/engine/tests/fixtures/recovery_prefix/runtime/manifest.json`. 상태는 `INPUT_ONLY_NOT_RUN`이고, `scripts/dev3_recovery_prefix.py:22`가 이 파일의 SHA-256을 고정한다. 원 경로는 `source` 1개에 있다.
+
+#### 논리 경계 재설계 입력
+
+실행하지 않으며, 각 항목은 실제 소비자를 지정한 별도 D2 단위로만 연다.
+
+- **R1:** `AR::operation`은 L1 밖 운영 파일 26개 이상이 쓰고, 재노출 사슬로 `plan4_recovery_base`까지 이어진다([L1 관찰](#l1-move-table)).
+- **R2:** mixed owner 표면은 `status_init.rs`의 `pub(crate) use`로 `plan4_recovery_base` Catalog graph까지 쓰인다([L3 관찰](#l3-move-table)).
+- **R3:** 설치·할당·Status·복구의 진입이 모두 `bootstrap` → `doublewrite_install` → `mutable_storage` 한 초기화 사슬 아래에 있다. 이를 책임별 상위 폴더로 나누려면 논리 부모를 바꿔야 하므로, 채택 계약의 초기화 조상 유지와 함께 다시 설계해야 한다.
+
+**범위 밖 관찰.** `storage/` 직속의 `wal_durability_test_support.rs`·`wal_durability_tests.rs`·`wal_first_write_tests.rs`·`wal_io_test_support.rs`·`wal_io_tests.rs`는 `storage::wal_io`의 자손이다. 그러나 13절 L5 행의 파일군(`storage/wal_io/`) 밖에 있으므로 이번 분류에 넣지 않는다.
 
 ### 완료 조건과 문서 정본
 
