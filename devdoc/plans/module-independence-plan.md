@@ -1,5 +1,7 @@
 # XADB 모듈 독립 개발 구조 전환 작업 계획
 
+2026-10-29 [A INSERT statement driver](../evidence/module-independence-survey-20261026.md#a-insert-driver): A 전용 경로에 C0 Row 경계를 소비하는 문장 driver(행별 preflight→Reserve→produce→prepare/apply, Cancel·caller 구동 문장 rollback·Commit·full abort)를 더하고 C0_ONLY `MCA00-D01..14`를 등록했다. r1 D12 FAIL을 보존하고 r4에서 14개 PASS, 독립 검토 필수2 해결·마지막 필수0이다. live 연결은 C3의 Row Begin/CheckedTable, write·rollback 본문과 flush-through(G1)·rollback drop 의미(G5) 공급 뒤에 한다.
+
 2026-10-29 [U2 base4 Catalog 잔여 연결](../evidence/module-independence-survey-20261026.md#base4-catalog-wiring): base4 Row graph의 Catalog hook을 U2-C3 Profile3 ledger로 연결하고 XOI Row3 모드에 Catalog Reserved item을 투영해 `CatalogUnwired`를 없앴다. Catalog-scope actor가 있는 base4가 이제 끝까지 검증되며, selector 11개 PASS·독립 검토 필수0이다. B4는 59675B다. U2-C4 전환의 선행 P1–P5가 모두 공급되었다.
 
 2026-10-29 [U2-C2 base4 순수 closure](../evidence/module-independence-survey-20261026.md#base4-closure): Catalog base의 relations·ledger·allocation·XOI 본문을 공유 seam 하나로 바꾸고, 그 위에 Profile3 recovery base(base4)의 Row graph·actor·table·Row ledger·Row Reserved 관찰자를 순수 공급했다. 독립 검토 네 번(필수 1·1·1 해결, 마지막 필수0)으로 미 Prune CREATE 행 수용과 creator 뒤 q 순서를 더했고, r5 10개와 통합 tree 재실행 10개가 PASS다. base3 기존 selector의 FAIL11은 main의 기존 실패와 같다. Catalog-scope 의미 잔여는 `CatalogUnwired`로 닫혀 있고 다음 wiring commit이 U2-C3 ledger로 연결한다. B4는 59707B다.

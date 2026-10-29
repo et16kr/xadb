@@ -8966,5 +8966,33 @@
     "remaining_supply": "runtime use in the U2-C4 switch; Row3 XOI source assertion when it gets a caller; RowReserve capture-rule contract question",
     "source_roots_changed": false,
     "artifact_manifest_sha256": "5d2c0693cf73866cf2e20bf6b031d86e67effc59075d2a51919eef1e9657c48c"
+  },
+  "dev3_module_a_insert_driver": {
+    "status": "LOCAL_VERIFIED_REVIEWED_C0_ONLY",
+    "contract_ref": "dev3-module-boundaries.md#consumers",
+    "evidence_ref": "module-independence-survey-20261026.md#a-insert-driver",
+    "baseline_commit": "49a7578",
+    "integration_base": "983879c",
+    "branch": "claude/project-thread-h2j8oc",
+    "implemented_paths": [
+      "crates/engine/src/storage/row/insert/driver.rs",
+      "crates/engine/src/storage/row/insert/driver/live.rs",
+      "crates/engine/src/storage/row/insert/driver/tests.rs",
+      "tests/fixtures/module-row-insert/driver-literals.txt",
+      "tests/fixtures/module-row-insert/driver-manifest-r1.txt",
+      "tests/fixtures/module-row-insert/driver-manifest-r2.txt",
+      "tests/fixtures/module-row-insert/driver-manifest-r3.json",
+      "tests/fixtures/module-row-insert/driver-manifest-r4.json",
+      "tests/fixtures/module-row-insert/make_driver_literals.py"
+    ],
+    "modified_paths": [
+      "crates/engine/src/storage/row/insert.rs",
+      "devdoc/contracts/dev3-module-consumers.md"
+    ],
+    "scope": "Consumer A INSERT statement driver over the C0 Row boundary: per-row preflight, validation lane, A validate_insert, RowReserve, producer lane, A produce_insert, prepare, apply; cancel of the single reservation; caller-driven statement and full rollback that hands back C's wrapper or task and carries the flush target; PendingRollback typestate; commit and full abort; C0_ONLY family MCA00-D01..14",
+    "validation": "r1 D12 FAIL kept; r2-r4 frozen rounds; r4 14 selectors once PASS; check 0 warnings each round; three independent reviews REQUIRED 2 resolved then 0; integrated tree check 0 warnings without rerun (no overlapping files or changed test paths)",
+    "remaining_supply": "C3 Row Begin and CheckedTable issuer, Row write and rollback bodies, RowRollback flush-through or drop meaning (G1, G5), stale-source cause (G3), C4 recovered CLR handler (G4), live entries, MCA01-05, MCI and MI01-06; re-measure the stack inventory when C0 cut types are filled",
+    "source_roots_changed": false,
+    "artifact_manifest_sha256": "064ba0bc1b7c48a6390fe7db6f725563935b6d2b756e89575b4cfa44a9f9838e"
   }
 }

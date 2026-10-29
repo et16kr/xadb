@@ -3976,3 +3976,42 @@ v2 `native`(221파일, 5,794,810B), `memory-gap`(137, 3,382,130B), `memory-retir
 **독립 검토.** U2-C2와 같은 읽기 전용 검토자가 ACCEPT·필수0으로 판정했다. hook의 entry·Profile·root 대응, XOI item이 Catalog2와 같은 구성임, 다섯 상태가 실제 ledger를 지나며 경로마다 실패 쌍둥이가 있음, C=254로 손 계산한 residual(CLR 120238, Forward 154094, Reserve 333576+2C, CREATE_PEAK = P_B)을 확인했고 `author.py`를 `python3 -I`로 다시 실행해 byte 동일을 확인했다. 권고 둘: Row3 XOI에서 Catalog·Row Reserved 혼합은 `IdentityMismatch`이고 graph는 `Unsupported`로 분류한다(호출자 없음). Profile3 ledger 상계는 Profile2 항목 목록을 다시 쓰며 catalog3 accessor 한 단계를 따로 세지 않는다(같은 크기 단언으로 보호).
 
 **한계.** Row3 XOI 경로는 아직 시험 밖 호출자가 없어 `current_source_bytes` 단언은 호출자가 생길 때 한다. Row codec 상계는 Catalog2 queue 상계(6736)를 보수적으로 쓴다. RowReserve의 capture 규칙과 혼합 reservation은 [base4 closure](#base4-closure)의 계약 질문 그대로다. artifact는 `module-independence-20261029/artifacts/module-u2-wiring-20261029/`(`manifest-all.sha256` SHA-256 `5d2c0693cf73866cf2e20bf6b031d86e67effc59075d2a51919eef1e9657c48c`)에 있다.
+
+<a id="a-insert-driver"></a>
+## 2026-10-29 A INSERT statement driver의 C0 경계 소비(C0_ONLY)
+
+기준은 `49a7578`, branch는 `module-a-insert-driver`이고 작성 commit은 `5b74fb0`, `582ad34`, `881aa64`, 검토 반영 `6db722e`, `f2f1d4c`, `9dcd197`이다. 이 branch에는 `983879c` 위로 cherry-pick했다(`9734e49c798cea701d1fde067846c08886fd439e`, `bbf9186da19fc9c8e3ed22419857123200f7df8a`, `af58ba3e7f6e7c3f01080ebb83a9b4e998698e57`, `412071d7362ed1a0ab566595d10375dd64cf6314`, `a1d013f46f4135b5d64a5703547c1a94e87d5ce6`, `d8ce17e34f33ac677395578310d8c8b85f65df48`). 바꾼 경로는 A 전용 `crates/engine/src/storage/row/insert.rs`(mod 한 줄), `row/insert/driver.rs`, `driver/{live,tests}.rs`, `tests/fixtures/module-row-insert/`의 driver 파일뿐이며 C 소유 파일, `row/read/**`, `plan4_recovery_base/**`는 건드리지 않았다(MI02).
+
+**설계**
+
+- 행마다 문장 fence와 인수 검사 → preflight → 검증 lane → A `validate_insert` → RowReserve → producer lane → A `produce_insert` → prepare → apply 순서다. 모든 입력 거절은 효과 있는 첫 C 호출 전에 끝나고, Reserve는 앞 행의 Apply 또는 Cancel 뒤에만 하므로 actor당 미완결 RowReserve는 하나다. reserve 뒤 실패는 Cancel(apply 거절이면 reopen 뒤 Cancel)로 그 예약을 푼다.
+- 적용된 행이 있는 문장의 실패는 `After::RollbackRequired(PendingRollback<H>)`로 돌아간다. 문장 rollback(§6.7)은 caller가 `start_statement_rollback`/`start_full_rollback` → `rollback_step` → `finish_rollback` → finish 호출 순서로 구동한다. C가 Before로 돌려준 rollback·task는 그대로 caller에게 돌려주고, `FlushRequired`는 `Flush(Plan4Target)`로 대상을 넘긴다. driver는 시작한 rollback을 버리거나 다시 시작하지 않는다(G5). `PendingRollback`의 handle은 끝난 rollback 뒤에만 `rolled_back()`으로 나오므로 RollbackRequired 문장이 성공으로 `finish_statement`에 닿지 못한다. 두 번째 start는 C를 부르지 않고 거절한다. 끝난 rollback 뒤 finish가 거절되면 `FinishPending`으로 그 finish만 다시 한다.
+- Commit이 RollbackRequired면 full abort로 간다. 끝난 full rollback 뒤 `finish_aborted`가 다시 RollbackRequired를 답하면 `MustResolve`다. Fatal·CallerMustResolve·거절된 Cancel 뒤에는 C를 더 부르지 않으며 재시도하지 않는다. 오류는 `DriverError{Insert, Disk(RetentionError), Gap}`로 감싸 Busy·Capacity·Unsupported를 구별한다.
+
+**C0 공급의 빈 곳(C를 넓히지 않음)**
+
+- G1: `RowRollback`이 유일한 `&mut Owner`를 쥐고 flush-through 호출이 없어 rollback 중 flush 요구를 처리할 수 없다. 대상은 넘기지만 caller는 rollback을 쥔 채 flush할 수 없다.
+- G2: 쓰기 capsule(`MutationPort::begin_catalog_transaction`)과 빈 actor의 `begin_statement`는 있지만 `CheckedTable` 발급자가 없고 Row write 본문이 Unsupported라 live 입구(`insert_live` 등)는 컴파일만 된다.
+- G3: "source가 바뀌어 다시 prepare" 원인이 따로 없어 driver는 재시도 대신 푼다.
+- G4: `handle_recovered_clr`은 C4의 `RecoveryRowTask`가 필요하다.
+- G5: 계약은 시작한 live rollback의 재개나 drop 의미를 정하지 않는다.
+
+**시험과 실행**
+
+`storage::row::insert::driver::tests::mca00_d01..d14_*`(C0_ONLY)는 literal stand-in·실제 Unsupported wrapper·비영속 호출 기록으로 호출 순서, 이른 거절, Unsupported 전파, 거절 뒤 효과 없음, rollback hand-back, typestate를 검사한다. byte 비교는 A `encode_input` 출력과 stdlib `make_driver_literals.py`의 literal 사이에만 있다.
+
+| 판 | head | manifest | 결과 |
+| --- | --- | --- | --- |
+| r1 | `582ad34` | `driver-manifest-r1.txt` | D01–D11 PASS, D12 FAIL(debug 실제 stack 17440B를 size_of 상계 16384B와 비교) 보존 |
+| r2 | `881aa64` | `driver-manifest-r2.txt` | D01–D12 PASS(상계를 source 회계 inventory로 한정) |
+| r3 | `f2f1d4c` | `driver-manifest-r3.json` | D01–D13 PASS |
+| r4 | `9dcd197` | `driver-manifest-r4.json`(`29f55d3f…`) | D01–D14 PASS, ELF `2843b5c8c39c6b4980470a973b280d3f5ee0b59bb87ba24be7867c4b85df7029` |
+
+- 판마다 manifest를 build 전에 동결했고 selector마다 1회(`RUST_MIN_STACK=33554432 timeout 30 --exact --test-threads=1 --nocapture`) 실행했다. 편차: r1의 동결 명령줄에 없던 `--nocapture`를 썼고, r2는 바뀌지 않은 D01–D11까지 다시 실행했다. r3·r4는 selector마다 바뀐 경로 이유를 manifest에 적었다. 판마다 `cargo check --all-targets --all-features` 경고0, rustfmt check와 `git diff --check`를 통과했다.
+- 통합 tree(fingerprint `571231b0c513955533464789b5bb45c592b0f59506bcd2ab3fe4bfd605e80a8b`)는 고정 export에서 check 39초·경고0이다. 바꾼 파일이 겹치지 않고 driver 시험이 지나는 경로(C0 wrapper, A producer)는 `49a7578` 이후 바뀌지 않았으므로 시험은 다시 실행하지 않았다.
+
+**계수(size_of inventory, 실제 stack 증명이 아님).** driver 상계는 12288B이고 live C0 type으로 INSERT 9835B, CLR 7184B다. A producer 50790B(검증 1112B)를 더하면 live 60625B, 상계 기준 63078B로 65536B cap 안이지만 여유는 2458B다. C0 cut type 셋은 아직 크기0 자리표시라 C3가 채우면 다시 재야 한다. debug 실제 깊이는 stand-in 기준 INSERT 11568B, CLR 5584B로 출력만 한다.
+
+**독립 검토.** 읽기 전용 검토자가 세 번 보았다. r1은 필수2(끝난 rollback 뒤 finish만 남음을 표시하지 않음, 시작한 rollback을 버리고 재시작함)와 권고5, r2는 필수0과 권고4(문장 원자성이 caller에 달림, `finish_aborted`의 RollbackRequired 처리 등), r3는 `PendingRollback` typestate와 `MustResolve` 처리를 확인해 필수0이다. 남은 메모: C가 start를 CallerMustResolve로 거절하면 pending은 `Required`로 남고 재시도 금지는 `Failure.must_resolve`로만 알린다.
+
+**한계.** live 경로와 MCA01–05·MCI는 C3 공급(Row Begin/CheckedTable, write·rollback 본문, flush-through 또는 drop 의미) 뒤에 한다. A literal의 `row_high` 9 이전 상태(RowId 7·4 예약)는 frame 없는 fixture 단축이며 `row_high+1` 발급의 증거로 쓰지 않는다(C3 Row transition 공급의 독립 검토가 확인). artifact는 `module-independence-20261029/artifacts/module-a-driver-20261029/`(`manifest-all.sha256` SHA-256 `064ba0bc1b7c48a6390fe7db6f725563935b6d2b756e89575b4cfa44a9f9838e`)에 있다.
