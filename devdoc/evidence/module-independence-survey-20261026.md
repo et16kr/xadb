@@ -4113,3 +4113,31 @@ v2 `native`(221파일, 5,794,810B), `memory-gap`(137, 3,382,130B), `memory-retir
 - 지금 제품으로 만들 수 없는 경로: retired record(DROP 없음), non-Table record(Index를 쓰는 producer 없음; 분류 unit test만), slot 부재 Fatal(손상 epoch 필요).
 
 **독립 검토.** 같은 읽기 전용 검토자가 두 번 보았다. r1은 필수2(non-Table 거절 전 catalog flag 등록, 중첩 lookup을 감싼 helper frame 미계수)와 권고6, r2는 둘 다 해소된 필수0이다. 오류 형식 `RetentionError`는 계약 문구의 오기를 바로잡는 올바른 읽기로 판정되어 계약에 날짜 정정을 달았다. 남은 일: 사용 쪽 MBC20-V09 stale handle 거절, Row class(S2/S3/S5)의 `CheckedTable` 보유 계수, S1-e의 zero-mark 검사를 `record_catalog_read`·`record_table_read` 둘 다에서 바꾸기. artifact는 `module-independence-20261029/artifacts/module-s1f-20261029/`(`manifest-all.sha256` SHA-256 `920be89dc7a195b43441fe836ef84955ba37f255e9e8d35a04cd02400c99aaa4`)에 있다.
+
+<a id="s1a-borrowed-observer"></a>
+## 2026-10-29 S1-a Row 전이 observer의 replay tail 대여(미호출 공급)
+
+기준은 `5135e16`, branch는 `module-s1a-borrowed-observer`이고 commit은 `44ce537`, 검토 반영 `e48f324`, `d6b2ceb`, `1c38b26`이다. 이 branch에는 S1-f 뒤에 cherry-pick했다(`38c3d9c20f443791da4e93e811c5ec3f420bfde9`, `5ef3014ad228718b5bf23d61d5dad592bef1802a`, `97cea7a4decfdb7cbe2439750ed88669839f1954`, `919a272b4e5d6f850a450860e1efc3136633620f`). 바꾼 파일은 `semantic_row/transition.rs`, `transition/{prepare,source,frame,graph}.rs`, `transition_tests.rs`뿐이고 plan4_retention·history.rs는 건드리지 않았다. 계약은 [ROW-BEGIN-001](../contracts/dev3-module-boundaries.md#row-begin-capsule)의 "자원" 문단이다.
+
+**공급**
+
+- `observe_borrowed(inputs, bytes, after, scratch: &mut [u8; ROW_REPLAY_SCRATCH_BYTES])`. `ROW_REPLAY_SCRATCH_BYTES` 9076B는 WORK_END의 provenance 뒤 tail 10240B(2 page − 64×352) 안이다(const assert). 배치는 descriptor 2×1536, core 256, cell 2228, Job 1024, Root 512, U record 432, aux 912, aggregate 640이고, 2216B record scratch는 descriptor 앞부분을 쓰되 descriptor를 쓰기 전에 지운다.
+- `ReplayLoan`은 0이 아닌 tail을 지우지 않고 `InvalidInput`으로 거절한다. Drop이 성공·오류·unwind 모두에서 tail 전체를 0으로 되돌린다. 기존 `produce`/`observe`는 지역 0 backing으로 같은 본문을 쓰며 출력 byte는 바뀌지 않았다.
+- `Prepared`는 부분 참조만 보유해 9552 → 1184B다. r2에서 prepare 지역 DescriptorSpec 셋(각 912B)을 `decode_tx_before`(24B `TxBefore` 반환)와 한 spec을 제자리에서 고치는 `descriptor_after` helper로 옮겼다. 오류 순서와 출력은 그대로다(독립 검토 확인). r3에서 재decode가 안전한 불변식을 debug_assert로 적었다.
+- Row-only Undo material 항: Row material은 언제나 `row_target`이고 `validate_record`가 payload 분기 전에 target·before kind를 거절하므로 CatalogValue arm에 닿지 않는다. 그래서 Catalog parse를 뺀 계수 10070B(측정 8872B)를 쓴다.
+
+**계수.** borrowed bound는 21323B(wrapper 400 + entry 3280 + prepare 17643 = locals 4296 + callee 11811 + SHA 1536)이고 측정 chain 최대는 20423B다. owned bound는 30327B다(N1의 35256B에서 줄어듦). 목표 수치 24715/25743/26120B는 이 repository에 없는 원 /root history의 C2 기준 `b304bea`에서 기록된 값이다. `8c0f252`은 그 계열을 부모 없이 가져온 import라 이미 뒤 C2 round를 포함하므로, 이 수치는 여기의 모든 commit보다 앞선다. 시험은 더 엄격한 population 25743B와 비교한다. S1-b의 Row arm 바깥 carrier 여유는 25743 기준 2996B, 26120 기준 3373B로 Catalog arm 바깥 2392B를 넣을 수 있다. S1-b는 목표를 live `HistorySourceCensus`에서 다시 얻고 `PROVENANCE_BYTES + ROW_REPLAY_SCRATCH_BYTES <= 2*PAGE_BYTES`(31604 ≤ 32768)를 history.rs에 단언한다.
+
+**시험과 실행**
+
+| 판 | head | 결과 |
+| --- | --- | --- |
+| r1 | `44ce537` | 11 PASS(신규 4 + N1 7) |
+| r2 | `d6b2ceb` | 11 PASS, 로그는 시간 줄 말고 r1과 byte 같음 |
+| r3 | `1c38b26` | 11 PASS |
+| 통합 | `919a272` | 전환의 semantic_catalog census 항과 함께 11 PASS |
+
+- 신규 selector `storage::semantic_row::transition::tests::{s1a_borrowed_observer_accepts_n1_and_a_literals, s1a_borrowed_observer_rejects_mutated_literals, s1a_borrowed_tail_refused_dirty_and_restored_on_every_exit, s1a_borrowed_observer_source_bound_covers_measured_frames}`. 35개 N1·A literal 관찰이 `observe`와 같은 결과와 after 5 page를 내고, 19 변형을 같은 오류로 거절하며, 8 부분의 양끝 dirty byte 16경우 거절, 성공·늦은 prepare 오류·강제 unwind 뒤 tail 0과 앞뒤 sentinel 보존을 확인한다.
+- 판마다 manifest를 build 전에 동결하고 selector마다 1회 실행했으며 check 경고0, rustfmt·`git diff --check`를 통과했다.
+
+**독립 검토.** 같은 읽기 전용 검토자가 세 번 보았다. r1 필수0(권고: 목표 출처, history.rs 단언, 오류 뒤 after 미정, S1-b 여유를 위한 tx_spec 지렛대), r2 필수1(목표 출처 문구 정정), r3은 그 정정이 그대로 들어갔음을 조정자가 diff로 확인했다. S1-b는 오류 뒤 `after`를 미정으로 다뤄야 한다. artifact는 `module-independence-20261029/artifacts/module-s1a-20261029/`(`manifest-all.sha256` SHA-256 `7a984ff5b3a666105a7fd95f9d6ba7342816efa2ed35b2792f5812cb4e366a52`)에 있다.

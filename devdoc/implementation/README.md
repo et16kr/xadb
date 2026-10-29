@@ -1,5 +1,7 @@
 # 현재 구현
 
+2026-10-29 [S1-a Row observer replay tail 대여](../evidence/module-independence-survey-20261026.md#s1a-borrowed-observer): `semantic_row::transition::observe_borrowed`가 replay tail을 빌려 쓰고 모든 출구에서 0으로 복원한다. 미호출이며 S1-b가 Row replay arm에 연결한다.
+
 2026-10-29 [S1-f CheckedTable 발급자](../evidence/module-independence-survey-20261026.md#s1f-finish-table): `read/statement.rs`의 `finish_table`이 `CheckedTable`을 만드는 유일한 경로다. 아직 이를 소비하는 Row 쓰기·읽기 본문은 없다.
 
 2026-10-29 [U2-C4 단일 current 전환](../evidence/module-independence-survey-20261026.md#u2-single-current): branch `claude/project-thread-h2j8oc`에서 Profile3/Root3/Job3/base4가 current 형식이다. Profile1은 DEV2 v1 arm, 그 밖은 명시 거절이다. genesis native PASS, Catalog·recovery native는 로컬 실행이 남았다.

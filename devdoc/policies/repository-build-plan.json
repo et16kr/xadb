@@ -9065,5 +9065,24 @@
     "remaining_supply": "use-side MBC20-V09 stale handle rejection, Row class charge for held CheckedTable, S1-e mark check in both register paths, CatalogReadOperation::finish_table of §6.4",
     "source_roots_changed": false,
     "artifact_manifest_sha256": "920be89dc7a195b43441fe836ef84955ba37f255e9e8d35a04cd02400c99aaa4"
+  },
+  "dev3_module_s1a_borrowed_observer": {
+    "status": "LOCAL_VERIFIED_REVIEWED_UNWIRED",
+    "contract_ref": "dev3-module-boundaries.md#row-begin-capsule",
+    "evidence_ref": "module-independence-survey-20261026.md#s1a-borrowed-observer",
+    "baseline_commit": "5135e16",
+    "integration_base": "76d3d52",
+    "branch": "claude/project-thread-h2j8oc",
+    "commits": [
+      "38c3d9c",
+      "5ef3014",
+      "97cea7a",
+      "919a272"
+    ],
+    "scope": "Borrowed-workspace Row transition observer: 9076 B replay tail layout under the 10240 B WORK_END tail, ReplayLoan dirty refusal and zero restore on every exit, in-place transaction descriptor spec helpers, Row-only Undo material term; owned produce/observe unchanged",
+    "validation": "r1, r2, r3 and integrated rounds 11 selectors PASS; borrowed bound 21323 B, owned 30327 B; check 0 warnings; three independent review rounds, REQUIRED 1 resolved",
+    "remaining_supply": "S1-b wiring into history/row.rs with the live HistorySourceCensus target and the provenance+scratch assert; after loans undefined on error",
+    "source_roots_changed": false,
+    "artifact_manifest_sha256": "7a984ff5b3a666105a7fd95f9d6ba7342816efa2ed35b2792f5812cb4e366a52"
   }
 }

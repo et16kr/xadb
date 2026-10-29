@@ -1,5 +1,7 @@
 # XADB 모듈 독립 개발 구조 전환 작업 계획
 
+2026-10-29 [S1-a Row observer replay tail 대여](../evidence/module-independence-survey-20261026.md#s1a-borrowed-observer): N1 observer의 큰 배열을 WORK_END tail 9076B로 빌리는 `observe_borrowed`를 더했다. 모든 출구에서 tail을 0으로 되돌린다. borrowed bound 21323B로 S1-b Row arm에 2996B 여유를 남긴다. 11 selector PASS, 독립 검토 3회. 아직 호출되지 않으며 연결은 S1-b다.
+
 2026-10-29 [S1-f CheckedTable 발급자](../evidence/module-independence-survey-20261026.md#s1f-finish-table): `CatalogStatementCall::finish_table`을 `CheckedTable`의 유일 발급자로 공급했다. 같은 호출의 lookup Found만 근거로 하고, publication과 isolation lock을 겹치지 않게 잡으며 read bit·catalog flag를 반환 전에 등록한다. 전환된 형식에서 8 selector PASS, 독립 검토 2회(필수2 반영). 오류 형식 정정과 미공급 문구를 계약에 반영했다.
 
 2026-10-29 [U2-C4 단일 current 전환](../evidence/module-independence-survey-20261026.md#u2-single-current): Profile3 → Root3/Job3 → base4를 유일한 current 형식으로 바꿨다. 이전 Profile2-current 지점은 모두 정확한 `{3, 1, 명시 거절}` 분기이고 `>=`·dual-current·fallback은 없으며 순수 Profile2 codec은 남겼다. recovered peak native 65504·memory 65368(cap 65536). r1 304·r3 30 selector가 동결 기대와 일치하고, base 실패 34개는 main `85ceef3`에서도 같은 위치로 실패한다. genesis native PASS. 독립 검토 2회 수용. Catalog native와 F05 recovery native는 사용자 로컬의 남은 요구(CR1)다.
