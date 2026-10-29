@@ -8,6 +8,8 @@
 )]
 
 mod group;
+#[cfg(test)]
+mod group_tests;
 mod leaf;
 #[cfg(test)]
 mod tests;
