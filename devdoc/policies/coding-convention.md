@@ -1,6 +1,6 @@
 # XADB 코딩 컨벤션과 개발 절차
 
-2026-10-18 · **개발 기준 v1.1 / 새 코드와 변경 코드에 적용**
+2026-10-29 · **개발 기준 v1.2 / 새 코드와 변경 코드에 적용**
 
 [규칙 색인 JSON](coding-convention.json) · [저장소 배치](repository-build-plan.md) · [Rust 구현 계약](../contracts/implementation-contracts.md) · [AI 개발 방법](ai-development-method.md)
 
@@ -89,7 +89,7 @@ Rust 코드에는 인자 `a`, 지역변수 `s`, 멤버 `m`, 전역 `g` 같은 �
 
 동일한 기능 접두어가 여러 파일에서 반복되면 소유 모듈의 폴더로 표현한다. 예를 들어 `plan4_retention_control.rs`는 `plan4_retention/control.rs`로 둔다. 배치만 바꿀 때 논리 모듈 경로·visibility·시험 selector를 유지하며, 단계 식별자·wire 값·원 증거의 이름은 줄이지 않는다.
 
-작은 모듈은 `name.rs`로 시작하고, 내부 책임이 나뉘면 `name/mod.rs`와 하위 파일로 확장한다. 타입당 파일 하나, 고정 함수 길이, 고정 파일 줄 수를 강제하지 않는다. 하나의 변경을 이해하려고 따라가야 하는 파일 수와 서로 다른 책임의 결합을 함께 검토한다. `common`, `utils`에 소유자를 알 수 없는 코드를 모으지 않는다. 공통화에는 실제 공유 의미와 사용자가 있어야 한다.
+작은 모듈은 `name.rs`로 시작하고, 내부 책임이 나뉘면 진입 파일 `name.rs`를 유지하며 자손을 옆의 `name/` 폴더에 두는 방식을 기본으로 한다. 기존 `name/mod.rs`와 하위 파일 배치도 유효하며 형식 통일만을 위해 옮기지 않는다. 파일을 이동할 때는 실제 논리 부모와 `#[path]`의 해석 기준을 확인하고, 논리 모듈 경로·visibility·cfg·시험 selector를 유지한다. 이 기본 배치의 결정은 [XADB-CODE-LAYOUT-001](#module-entry-layout)에 기록한다. 타입당 파일 하나, 고정 함수 길이, 고정 파일 줄 수를 강제하지 않는다. 하나의 변경을 이해하려고 따라가야 하는 파일 수와 서로 다른 책임의 결합을 함께 검토한다. `common`, `utils`에 소유자를 알 수 없는 코드를 모으지 않는다. 공통화에는 실제 공유 의미와 사용자가 있어야 한다.
 
 `XADB-CODE-MOD-001/003`의 배치 판단에서는 **공유되는 의미와 여러 기능을 조립하는 절차를 구분한다.** 동일한 의미·수명·오류 계약을 여러 소비자가 사용하면 필요한 하위 경계로 추출하고, 서로 다른 기능을 함께 사용하는 순서는 상위 조립 지점에 둔다. 예를 들어 WAL과 저장소를 연결하는 commit 순서는 기존 transaction 소유 책임이다. 두 모듈이 함께 사용한다고 foundation으로 옮기거나, 순환을 없애려고 모든 타입을 공통 계층에 모으지 않는다.
 
@@ -100,6 +100,23 @@ Rust 코드에는 인자 `a`, 지역변수 `s`, 멤버 `m`, 전역 `g` 같은 �
 공개 범위는 private를 기본으로 하고 필요한 만큼만 `pub(super)`, `pub(in ...)`, `pub(crate)`, `pub`으로 넓힌다. 외부 API와 re-export는 명시적인 경계에서 제공한다. `pub(crate)`는 같은 crate 안의 계층 역참조를 자동으로 막아 주지 않으므로 내부 의존 방향도 리뷰한다. production 코드의 glob import는 명시 import를 우선하고, 좁은 테스트 모듈의 `use super::*` 등 문맥이 분명한 사용은 허용한다.
 
 foundation과 향후 engine은 platform 구현을 직접 import하지 않는다. worker·CLI·server가 실제 구현을 선택해 계약으로 전달한다. 시험 controller의 OS 제어와 production engine의 OS 의존은 구분한다. 전체 feature·target·build·dev 의존 및 내부 모듈 경계의 자동 검사 확대는 저장소 정책의 후속 작업이다.
+
+<a id="module-entry-layout"></a>
+### XADB-CODE-LAYOUT-001 — 모듈 진입 파일 배치
+
+| 항목 | 기록 |
+| --- | --- |
+| 상태·분류·일자 | ACCEPTED · D2 · 2026-10-29 · 독립 검토 수용·미해결 필수 수정0 |
+| 담당·통합·계약 확인 | `/root` — 코딩·저장소 정책과 사용자 확정 배치 대조 |
+| 권한 근거 | 사용자가 [L1 배치 B](../plans/module-independence-plan.md#l1-move-table)를 선택했고, 후속으로 그 배치를 컨벤션에 반영·독립 검토·commit·push하도록 지시 |
+| 선택·범위 | 새 하위 파일을 둘 때 `name.rs` + `name/`를 기본으로 명시. 기존 `name/mod.rs`는 유지 가능. `XADB-CODE-MOD-001`의 책임별 배치·최소 분리 원칙은 유지 |
+| 비교 대안·이유 | 기존 `name/mod.rs` 확장만 요구하면 선택한 L1–L3·L5 배치와 규칙이 충돌한다. 두 형식만 나열하면 후속 작업의 기본 선택이 불명확하다. 확정한 B를 기본으로 삼고 기존 형식의 일괄 이동을 요구하지 않아 불필요한 선언·경로 변경을 줄인다 |
+| 관련 계약 | [저장소 배치 §5·§5.2](repository-build-plan.md#module-folder-layout), [폴더 재정리 §13](../plans/module-independence-plan.md#folder-reorganization), [DP01·DP02](development-policy.md#section-2) |
+| 대체 관계 | 이 절과 저장소 정책 §5의 기존 “확장 시 `name/mod.rs`” 문구만 대체. [L1 이동표](../plans/module-independence-plan.md#l1-move-table)의 별도 D2 문구 결정을 이 기록으로 처리. 과거 배치·검토·실행 증거는 유지 |
+| 독립 검토 | `/root/module_layout_convention_review`가 기준 `2e65fcb` 대비 문서/JSON 4파일 diff, 사용자 B 선택, DP01/DP02·문서·코딩·저장소 정책과 실제 allocation/concurrency/Status/recovery 선언을 읽기 대조하여 D2 수용·미해결 필수 수정0으로 판정. Markdown/JSON 버전 표기 지적을 수정한 뒤 재확인했고 `/root`가 수신·반영했다. 제품·자동 검사·push 검증은 이 검토에 포함하지 않음 |
+| 검증 범위 | 기준 `main` `2e65fcb`. 문서/JSON 변경만 수행하며 제품·시험·도구 소스와 실제 경로는 그대로다. 제품 시험 NOT_RUN. fmt·Clippy·문서 검사는 실제 push의 tip commit에 기존 훅으로 적용하며 결과는 별도 실행 로그에 보존 |
+| 후속 범위 | 논리 경계 R1–R3, L4 재검토 조건, L5 범위 밖 5개 파일과 M4/M5 인수는 이 문구 정리로 착수하거나 완료하지 않는다. C2 stash 유지 |
+| 재검토 조건 | 진입 배치가 탐색·조립 비용을 늘리거나 실제 논리 부모·접근 권한·cfg·selector 변경이 필요한 경우, 해당 소유 계약의 별도 D2에서 검토 |
 
 <a id="section-5"></a>
 

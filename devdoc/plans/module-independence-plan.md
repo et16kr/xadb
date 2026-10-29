@@ -424,7 +424,7 @@ Root3/Job3/Profile3·Row scope3·base4는 이름 변경의 부수 효과가 아�
 <a id="folder-reorganization"></a>
 ## 13. 분리 모듈의 폴더 재정리 후속 계획
 
-2026-10-29 · `XADB-MODULE-LAYOUT-001` · **D2 ACCEPTED / 후속 계획 문서 반영 완료 / 제품 이동은 [L1](../evidence/module-independence-survey-20261026.md#l1-allocation-move)·[L2](../evidence/module-independence-survey-20261026.md#l2-concurrency-move)·[L3](../evidence/module-independence-survey-20261026.md#l3-mixed-system-move)만 적용, [L4](#l4-record)는 현재 배치 유지, [L5](#l5-classification)는 분류 완료·[L5-A](../evidence/module-independence-survey-20261026.md#l5a-allocation-move)·[L5-B](../evidence/module-independence-survey-20261026.md#l5b-install-move)·[L5-C](../evidence/module-independence-survey-20261026.md#l5c-status-move)·[L5-D](../evidence/module-independence-survey-20261026.md#l5d-recovery-move) 이동 완료, 시험 본문 NOT_RUN**
+2026-10-29 · `XADB-MODULE-LAYOUT-001` · **D2 ACCEPTED / 후속 계획 문서 반영 완료 / 제품 이동은 [L1](../evidence/module-independence-survey-20261026.md#l1-allocation-move)·[L2](../evidence/module-independence-survey-20261026.md#l2-concurrency-move)·[L3](../evidence/module-independence-survey-20261026.md#l3-mixed-system-move) 적용, [L4](#l4-record)는 현재 배치 유지, [L5](#l5-classification)는 분류 완료·[L5-A](../evidence/module-independence-survey-20261026.md#l5a-allocation-move)·[L5-B](../evidence/module-independence-survey-20261026.md#l5b-install-move)·[L5-C](../evidence/module-independence-survey-20261026.md#l5c-status-move)·[L5-D](../evidence/module-independence-survey-20261026.md#l5d-recovery-move) 이동 완료, 시험 본문 NOT_RUN**
 
 사용자는 파일 분리에 비해 폴더 정리가 부족한 부분을 먼저 조사하도록 요청했고, 참조 관계·상태 소유·API가 독립성의 핵심인지 의견을 확인했다. 이어 임시 계획을 저장하고 진행 중인 작업 종료 뒤 기존 문서에 반영하도록 지시했으며, 후속 “진행해 주세요” 요청에 따라 이 절을 작성한다. **이번 실행 범위는 후속 계획과 관련 문서의 정비다.** 제품 파일 이동·참조 변경의 구현은 아직 시작하지 않는다.
 
@@ -476,12 +476,14 @@ Root3/Job3/Profile3·Row scope3·base4는 이름 변경의 부수 효과가 아�
 
 **기준·소유.** 기준은 main `082d329a28a46fbf201f0276b319a840af1b4929`, tree `dd41b0a5bbd610877bf4e1a9a4767feab509a70c`이며 checkout은 clean이고 `origin/main`과 같다. 다른 worktree `/home/et16/work/xadb-dev4`는 main의 조상 `7327e7a`에 detached·clean 상태라 L1 파일의 동시 편집은 없다. 적용하지 않기로 한 C2 초안 `stash@{0}`은 `allocation_budget.rs`·`allocation_operation.rs`·`plan4_allocation_operation.rs`를 수정하므로, 이동 뒤에는 rename을 반영해야만 다시 적용할 수 있다. 작성 담당은 이 Claude 세션이다. 아래 경로는 `crates/engine/src/storage/wal_io/` 기준이며 `AR`은 논리 경로 `crate::storage::wal_io::bootstrap::doublewrite_install::allocation_reservation`이다.
 
-**배치 형식 — B 확정.** 13절 후보는 `allocation_reservation/{mod,operation,budget,tests,native_tests,resource_tests}.rs`이고 [코딩 컨벤션 §4](../policies/coding-convention.md#section-4)는 `name/mod.rs` 확장을 쓴다. 반면 `crates/engine/src`의 실제 폴더 모듈은 진입 파일을 폴더 옆에 두는 `name.rs`+`name/` 형식이 38개, `mod.rs` 형식이 4개다. `wal_io`에서는 `plan4_pages`·`plan4_recovery`(`tests.rs`+`tests/` 포함)·`plan4_apply`·`empty_transactions`와 하위의 `plan4_retention/control.rs`+`control/`이 앞 형식이고 [XADB-NAME-001](../evidence/naming-cleanup-20261025.md)도 이 형식으로 옮겼다. `mod.rs` 형식은 `recovery_effect/` 하나다.
+**배치 형식 — B 확정(이동표 작성 당시 비교).** 13절 후보는 `allocation_reservation/{mod,operation,budget,tests,native_tests,resource_tests}.rs`이고 당시 [코딩 컨벤션 §4](../policies/coding-convention.md#section-4)는 `name/mod.rs` 확장을 썼다. 반면 당시 `crates/engine/src`의 실제 폴더 모듈은 진입 파일을 폴더 옆에 두는 `name.rs`+`name/` 형식이 38개, `mod.rs` 형식이 4개였다. `wal_io`에서는 `plan4_pages`·`plan4_recovery`(`tests.rs`+`tests/` 포함)·`plan4_apply`·`empty_transactions`와 하위의 `plan4_retention/control.rs`+`control/`이 앞 형식이고 [XADB-NAME-001](../evidence/naming-cleanup-20261025.md)도 이 형식으로 옮겼다. `mod.rs` 형식은 `recovery_effect/` 하나였다.
 
 - **B(권장):** 진입 `allocation_reservation.rs`는 제자리에 두고 자손7개만 `allocation_reservation/`로 옮긴다. 공유 조립 파일 `doublewrite_install.rs`를 수정하지 않고, 한 단위에 `mod.rs`가 셋 생기지 않는다. 채택하면 단위별 예외로 남기지 않고, §4 문구를 실제 배치에 맞출지를 별도 D2로 정한다.
 - **A(§4를 자손까지 적용):** 진입도 `allocation_reservation/mod.rs`로 옮긴다. 13절 후보는 `operation.rs`·`tests.rs`를 파일로 두지만, §4를 자손에도 적용하면 자손을 가진 둘은 `operation/mod.rs`·`tests/mod.rs`가 된다. `doublewrite_install.rs:22`의 `#[path]` 1줄, 진입 파일을 가리키는 Markdown 링크2개와 JSON 경로4개를 추가로 고친다.
 
 두 안 모두 논리 모듈 경로·visibility·cfg·시험 selector가 같다. 아래 표는 B 기준이다.
+
+2026-10-29 후속 사용자 지시에 따른 §4 문구 정리는 [XADB-CODE-LAYOUT-001](../policies/coding-convention.md#module-entry-layout)에서 독립 D2 수용·미해결 필수 수정0으로 채택했다. 기본 배치 B와 기존 `mod.rs` 유지 범위를 코딩 컨벤션·저장소 정책에 명시하는 문서 작업이며, L1–L3·L5의 실제 이동이나 검증을 반복하지 않는다. R1–R3·L4 재검토·분류 밖 5개 파일·M4/M5는 후속 범위로 유지한다.
 
 #### 이동과 선언
 

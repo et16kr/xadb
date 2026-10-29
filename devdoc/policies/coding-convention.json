@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "date": "2026-10-18",
+  "date": "2026-10-29",
   "status": "DEVELOPMENT_POLICY_NEW_AND_CHANGED_CODE",
   "document": "coding-convention.md",
   "normative_text": "Markdown; JSON indexes rule IDs, enforcement scope, source references and decision lifecycle",
@@ -34,7 +34,18 @@
       "xadbtest-engine-worker": "engine_worker"
     },
     "repeated_file_prefix": "Use the owning module directory; preserve logical module paths and test selectors",
-    "naming_decision_ref": "naming-cleanup-20261025.md"
+    "naming_decision_ref": "naming-cleanup-20261025.md",
+    "module_entry_layout": {
+      "preferred": "name.rs with children in name/",
+      "existing_mod_rs_layout": "Preserve; no relocation solely to unify entry-file style",
+      "preserved_on_placement_changes": [
+        "logical_module_paths",
+        "visibility",
+        "cfg",
+        "test_selectors"
+      ],
+      "decision_ref": "coding-convention.md#module-entry-layout"
+    }
   },
   "current_example_paths": [
     "crates/foundation/src/identity.rs",
@@ -175,7 +186,7 @@
     "changes_stage_order": false,
     "internal_versions_are_compatibility_baselines": false
   },
-  "revision": "1.1",
+  "revision": "1.2",
   "design_reference": {
     "title": "대규모 C++ I편: 절차와 아키텍처 [23주년 개정판]",
     "author": "존 레이코스",
@@ -321,6 +332,35 @@
       "revisit_trigger": "Increased discovery/reproduction/integration cost, duplicated shared meaning, forbidden dependencies or escaped defects.",
       "expanded_dependency_checker_execution": "NOT_RUN",
       "ai_efficiency_evaluation": "NOT_RUN"
+    },
+    {
+      "id": "XADB-CODE-LAYOUT-001",
+      "title": "모듈 진입 파일과 자손 폴더의 기본 배치",
+      "status": "ACCEPTED",
+      "change_class": "D2",
+      "date": "2026-10-29",
+      "owner": "/root",
+      "integration_owner": "/root",
+      "contract_owner": "/root",
+      "decision_ref": "coding-convention.md#module-entry-layout",
+      "rule_refs": [
+        "XADB-CODE-MOD-001"
+      ],
+      "supersedes": [
+        "coding-convention.md#section-4: require name/mod.rs when expanding a module",
+        "repository-build-plan.md#section-7: require name/mod.rs when expanding a module"
+      ],
+      "review_record": {
+        "status": "REVIEWED_NO_BLOCKING_FINDINGS",
+        "reviewer": "/root/module_layout_convention_review",
+        "date": "2026-10-29",
+        "independent_execution": true,
+        "scope": "Four-file documentation diff against 2e65fcb, user-selected layout B, owner policies and actual module declarations; version wording correction rechecked",
+        "blocking_findings": [],
+        "required_revisions": []
+      },
+      "product_source_changes": false,
+      "product_tests": "NOT_RUN"
     }
   ]
 }

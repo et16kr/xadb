@@ -161,7 +161,7 @@ worker 실행 관계는 controller의 engine import를 뜻하지 않는다. `xad
 
 ## 5. DEV2 커널 내부 배치와 후속 저장 확장
 
-아래는 모듈 소유 경로다. Rust 파일은 작은 경우 `name.rs`, 확장 시 `name/mod.rs`와 하위 파일을 사용한다. api/catalog/storage::volatile는 현재 `.rs`로 K0 substrate를 구현한다. 나머지는 계획이며 아래 논리 경로의 디렉터리를 미리 만들지 않는다. task는 해당 책임을 도입하는 작업이며, 단계 완료는 관련 모든 작업과 인수 시험을 요구한다.
+아래는 모듈 소유 경로다. Rust 진입 파일과 자손 폴더의 형식은 [코딩 컨벤션 §4](coding-convention.md#section-4)를 따른다. 기본은 `name.rs` + `name/`이며 기존 `name/mod.rs` 배치도 유지할 수 있다([XADB-CODE-LAYOUT-001](coding-convention.md#module-entry-layout)). api/catalog/storage::volatile는 현재 `.rs`로 K0 substrate를 구현한다. 나머지는 계획이며 아래 논리 경로의 디렉터리를 미리 만들지 않는다. task는 해당 책임을 도입하는 작업이며, 단계 완료는 관련 모든 작업과 인수 시험을 요구한다.
 
 | 모듈 경로 | 도입 단계 | 도입 task | 책임 |
 | --- | --- | --- | --- |
@@ -227,7 +227,7 @@ DISK는 물리 저장 방식만 분리한다. 공통 RowUID, snapshot, catalog, 
 <a id="module-folder-layout"></a>
 ### 5.2 모듈 폴더 배치와 참조 경계
 
-2026-10-29 [후속 작업 계획과 결정](../plans/module-independence-plan.md#folder-reorganization)은 [코딩 기준](coding-convention.md#section-4)과 XADB-LAYOUT-001–006을 현재 분리 모듈에 적용한다. 이름에 반복되는 기능 접두어는 같은 책임인지 확인한 뒤 소유 폴더로 표현하고, 구현·지원·시험을 그 책임 가까이에 둔다. 적용 후보·순서·판정은 계획이 소유하며 이 절은 배치 원칙을 연결한다. 제품 이동은 2026-10-29 [L1 `allocation_reservation`](../evidence/module-independence-survey-20261026.md#l1-allocation-move), [L2 `transaction::concurrency`](../evidence/module-independence-survey-20261026.md#l2-concurrency-move), [L3 `mixed_system_owner` 자손·recovery 시험](../evidence/module-independence-survey-20261026.md#l3-mixed-system-move)만 적용했다. [L4](../plans/module-independence-plan.md#l4-record)는 한 모듈 `plan4_apply.rs`의 자손 폴더 두 개를 이행 중 최종 소유가 정해질 때까지 현재 배치로 유지하기로 판정했다. [L5](../plans/module-independence-plan.md#l5-classification)는 책임별 분류를 마쳤고 물리 이동 [L5-A](../evidence/module-independence-survey-20261026.md#l5a-allocation-move)·[L5-B](../evidence/module-independence-survey-20261026.md#l5b-install-move)·[L5-C](../evidence/module-independence-survey-20261026.md#l5c-status-move)·[L5-D](../evidence/module-independence-survey-20261026.md#l5d-recovery-move)를 모두 적용했다. 논리 경계 재설계 R1–R3은 별도 D2 입력으로 남는다.
+2026-10-29 [후속 작업 계획과 결정](../plans/module-independence-plan.md#folder-reorganization)은 [코딩 기준](coding-convention.md#section-4)과 XADB-LAYOUT-001–006을 현재 분리 모듈에 적용한다. 이름에 반복되는 기능 접두어는 같은 책임인지 확인한 뒤 소유 폴더로 표현하고, 구현·지원·시험을 그 책임 가까이에 둔다. 적용 후보·순서·판정은 계획이 소유하며 이 절은 배치 원칙을 연결한다. 제품 이동은 2026-10-29 [L1 `allocation_reservation`](../evidence/module-independence-survey-20261026.md#l1-allocation-move), [L2 `transaction::concurrency`](../evidence/module-independence-survey-20261026.md#l2-concurrency-move), [L3 `mixed_system_owner` 자손·recovery 시험](../evidence/module-independence-survey-20261026.md#l3-mixed-system-move)를 적용했다. [L4](../plans/module-independence-plan.md#l4-record)는 한 모듈 `plan4_apply.rs`의 자손 폴더 두 개를 이행 중 최종 소유가 정해질 때까지 현재 배치로 유지하기로 판정했다. [L5](../plans/module-independence-plan.md#l5-classification)는 책임별 분류를 마쳤고 물리 이동 [L5-A](../evidence/module-independence-survey-20261026.md#l5a-allocation-move)·[L5-B](../evidence/module-independence-survey-20261026.md#l5b-install-move)·[L5-C](../evidence/module-independence-survey-20261026.md#l5c-status-move)·[L5-D](../evidence/module-independence-survey-20261026.md#l5d-recovery-move)를 모두 적용했다. 논리 경계 재설계 R1–R3은 별도 D2 입력으로 남는다.
 
 물리 폴더와 실제 Rust 모듈의 부모 관계는 각각 기록한다. `#[path]`로 연결된 파일의 이동이 private 접근·`pub(in ...)`·생성 권한·production/test cfg 경로를 바꾸지 않는지 확인한다. 배치 정리 단위는 논리 모듈 경로·visibility·시험 selector를 유지하고, 이를 바꾸어야 하는 부분은 논리 의존 변경 단위로 분리해 소유 계약을 검토한다. 폴더 진입점에 기능 본문을 새로 집중하거나 접근 권한 확대·공통 manager 도입으로 이동을 성립시키지 않는다.
 
