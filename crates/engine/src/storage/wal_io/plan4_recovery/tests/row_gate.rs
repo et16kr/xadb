@@ -6,30 +6,33 @@
 //! scope3 producer from the actual replayed before state; nothing a product
 //! function returns is a golden.
 use super::super::super::plan4_pages::{
-    EmptyRetentionControlLoan, Plan4Page, Plan4ResidencyCursor, RETENTION_CONTROL_BYTES,
-    RetentionResidencyStep, VisibilityLoan,
+    EmptyRetentionControlLoan, Plan4Page, Plan4ResidencyCursor, Plan4Target,
+    RETENTION_CONTROL_BYTES, RetentionReservationError, RetentionResidencyStep, VisibilityLoan,
 };
 use super::super::super::plan4_pages::{
-    RETENTION_REPLAY_BYTES, retention_recovery_source_census, retention_replay_bank,
-    retention_replay_cells, retention_replay_closure, retention_replay_image,
-    retention_replay_row_scope, seed_recovery_replay,
+    RETENTION_REPLAY_BYTES, observe_recovery_frame, retention_recovery_source_census,
+    retention_replay_bank, retention_replay_cells, retention_replay_closure,
+    retention_replay_image, retention_replay_row_scope, seed_recovery_replay,
 };
 use super::faults::{rejected, unchanged_error};
 use super::support::*;
 use super::*;
+use crate::api::{Column, DataType, TableSpec};
 use crate::storage::{
     control::{ControlRef, SelectedControl, row_profile},
     dirty_frame::DirtyFrame,
+    page::PageRef,
     retention_page::row::{self as job3, JobScope, JobState},
+    row_record::RowSchemaInput,
     semantic_row::{
         decode_layout,
-        transition::{self, Change, Inputs, JOB, ROOT, STATUS},
+        transition::{self, Change, Inputs, JOB, ROOT, ReservePlan, STATUS, TableSource, UNDO},
     },
     transaction_record::{StatusSlotRef, TransactionStatusCell, TxnRef},
     wal_frame::{FrameExpectation, WalStreamIdentity},
     wal_io::FreshStorageSession,
 };
-use crate::transaction::concurrency::{OwnerRole, PageConcurrency};
+use crate::transaction::concurrency::{Owner, OwnerRole, PageConcurrency};
 use foundation::identity::{Generation, ObjectId};
 use std::path::Path;
 
@@ -667,6 +670,406 @@ fn s1b_row_arm_keeps_original_loans_and_handles() {
             "{label}"
         );
     }
+}
+
+/// One System INIT (Status or Undo) through the original exclusive owner;
+/// the page is whatever the allocator chose.
+fn system_init<'s, 'c, W: WriterNamespace>(
+    live: &mut Live<'_, 's, 'c, '_, '_, '_, '_, '_, W>,
+    owner: &mut Owner<'c, 's>,
+    flusher: &mut Owner<'c, 's>,
+    undo: bool,
+) -> Plan4Target {
+    let mut cursor = Plan4ResidencyCursor::new();
+    let mut prepared = false;
+    for _ in 0..32 {
+        let step = if undo {
+            live.prepare_undo_slot(owner, &mut cursor)
+        } else {
+            live.prepare_status_slot(owner, &mut cursor)
+        }
+        .unwrap();
+        match step {
+            None => {
+                prepared = true;
+                break;
+            }
+            Some(RetentionResidencyStep::FlushRequired { target, .. }) => {
+                drive_flush(live, flusher, Some(&target))
+            }
+            Some(_) => panic!("unexpected System slot preparation"),
+        }
+    }
+    assert!(prepared, "bounded System preparation exhausted");
+    let reserved = if undo {
+        live.reserve_undo(owner)
+    } else {
+        live.reserve_status(owner)
+    }
+    .unwrap();
+    match reserved.initialize() {
+        Ok(target) => target,
+        Err(RetentionReservationError::Before { error, .. })
+        | Err(RetentionReservationError::Fatal(error)) => panic!("actual INIT {error:?}"),
+    }
+}
+
+/// An actual fresh Profile3 database through the current Catalog writer:
+/// AgingStart, Status/Undo INIT, a committed CREATE of table T (one Int64
+/// column `i`, object 6), then a second Status and Undo INIT for a Row actor
+/// (the committed Catalog actor keeps Status 9 and its root keeps Undo 10).
+/// Only actual owner methods run; the second Status and Undo targets are
+/// returned with the files.
+fn fresh_created() -> (Images, PageRef, PageRef) {
+    let d = port::Directory::fresh();
+    {
+        let state = d.state();
+        let mut state = state.lock().unwrap();
+        state.live_writes = true;
+        state.recovery_writes = true;
+    }
+    let state = d.state();
+    let pages = {
+        let mut slot = boxed::<1_048_576>();
+        let mut maintenance = boxed::<12_582_912>();
+        let mut dwb = boxed::<4_194_304>();
+        let storage = FreshStorageSession::create_retention_catalog(
+            d.acquire_writer().unwrap(),
+            1,
+            &mut slot,
+            &mut maintenance,
+        )
+        .unwrap()
+        .install_doublewrite(&mut dwb)
+        .unwrap()
+        .into_mutable_storage();
+        let core = PageConcurrency::new(storage.session_fence()).unwrap();
+        let mut owner = core.try_owner(OwnerRole::Foreground).unwrap();
+        let mut flusher = core.try_owner(OwnerRole::DedicatedFlusher).unwrap();
+        let mut backing = vec![[0xa7; PAGE_BYTES]; 9];
+        let mut frames: Vec<_> = backing.iter_mut().map(DirtyFrame::new).collect();
+        let mut operation = boxed::<114_688>();
+        let (prefix, visibility) = maintenance.split_at_mut(12_574_720);
+        let (prefix, private) = prefix.split_at_mut(12_148_736);
+        let (prefix, isolation) = prefix.split_at_mut(12_144_576);
+        let (prefix, epochs) = prefix.split_at_mut(12_142_976);
+        let isolation: &mut [u8; 4_160] = isolation.try_into().unwrap();
+        let (prefix, control) = prefix.split_at_mut(6_815_744);
+        let replay: &mut [u8; RETENTION_REPLAY_BYTES] = (&mut prefix
+            [4_194_304 - PRIVATE_BYTES..5_767_168 - PRIVATE_BYTES])
+            .try_into()
+            .unwrap();
+        let control: &mut [u8; RETENTION_CONTROL_BYTES] = (&mut control[..RETENTION_CONTROL_BYTES])
+            .try_into()
+            .unwrap();
+        let private: &mut [u8; PRIVATE_BYTES] = private.try_into().unwrap();
+        let pages = storage
+            .bind_plan4_pages(&core, &mut frames, &mut operation)
+            .unwrap();
+        let Ok(mut live) = pages.into_empty_retention(
+            &mut owner,
+            EmptyRetentionControlLoan {
+                control,
+                replay,
+                isolation,
+            },
+        ) else {
+            panic!("actual fresh activation");
+        };
+        live.enable_catalog_visibility(
+            &mut owner,
+            VisibilityLoan {
+                bytes: visibility.try_into().unwrap(),
+                epochs: epochs.try_into().unwrap(),
+            },
+        )
+        .unwrap();
+        assert_eq!(
+            live.catalog_aging_start(&mut owner, private)
+                .unwrap()
+                .header
+                .lsn,
+            1
+        );
+        let status = system_init(&mut live, &mut owner, &mut flusher, false);
+        let undo = system_init(&mut live, &mut owner, &mut flusher, true);
+        let mut cursor = Plan4ResidencyCursor::new();
+        let mut prepared = false;
+        for _ in 0..32 {
+            match live
+                .prepare_catalog_create_targets(&owner, &status, &undo, job(1), &mut cursor)
+                .unwrap()
+            {
+                None => {
+                    prepared = true;
+                    break;
+                }
+                Some(RetentionResidencyStep::FlushRequired { target, .. }) => {
+                    drive_flush(&mut live, &mut flusher, Some(&target))
+                }
+                Some(_) => panic!("unexpected CREATE preparation"),
+            }
+        }
+        assert!(prepared, "bounded CREATE preparation exhausted");
+        let actor = live
+            .catalog_begin(&mut owner, &status, private)
+            .unwrap()
+            .actor
+            .expect("Catalog actor");
+        let definition = TableSpec {
+            name: "T".to_owned(),
+            columns: vec![Column {
+                name: "i".to_owned(),
+                data_type: DataType::Int64,
+                nullable: false,
+            }],
+        };
+        let reserved = live
+            .reserve_catalog_create(&mut owner, actor, &undo, &definition, private)
+            .unwrap();
+        assert_eq!(reserved.object().object.get(), 6);
+        match reserved.initialize() {
+            Ok(created) => assert_eq!(created.into_parts().0.object.get(), 6),
+            Err(RetentionReservationError::Before { error, .. })
+            | Err(RetentionReservationError::Fatal(error)) => panic!("actual Forward {error:?}"),
+        }
+        let prepared = live
+            .prepare_catalog_commit(&mut owner, actor, private)
+            .unwrap();
+        {
+            let (mut writer, _, _) = live.split();
+            writer.commit_catalog(&mut owner, prepared).unwrap();
+        }
+        let row_status = system_init(&mut live, &mut owner, &mut flusher, false);
+        let row_undo = system_init(&mut live, &mut owner, &mut flusher, true);
+        drive_flush(&mut live, &mut flusher, None);
+        (row_status.identity().page, row_undo.identity().page)
+    };
+    assert_closed(&state);
+    (images(&state), pages.0, pages.1)
+}
+
+/// H13: a WAL whose last group is a RowReserve (after the committed CREATE,
+/// a Row Begin and its Reserve, both produced by the scope3 producer from
+/// the actual replayed state) replays through the Row arm (ReserveAdopted)
+/// and the combined closure, the U allocator check included. Analysis then
+/// stops at the interim gate: phase Analysis, cause Unsupported (not
+/// Retention(Unsupported)), CallerMustResolve, database Unchanged, no
+/// mutation, no READY, every file unchanged. The same prefix through the
+/// per-frame body of `replay_durable` (seed, then `apply_frame`,
+/// `refresh_jobs` and the Profile3 closure for every frame, i.e.
+/// `observe_recovery_frame`) is accepted frame by frame, so a live
+/// `validate_live` over it does not fence.
+#[test]
+fn s1g_reserve_tail_stops_at_interim_gate() {
+    let (files, status_page, undo_page) = fresh_created();
+    let (lsn, replay, profile) = preinspected(&files);
+    let lsn = lsn.expect("Catalog-only history passes analysis");
+    assert_eq!(
+        retention_replay_row_scope(profile, &replay).ok(),
+        Some(false)
+    );
+    let ns = profile.spec().namespace;
+    // The committed CREATE's Catalog root names table T and its pair.
+    let (table, pair) = retention_replay_cells(&replay)
+        .iter()
+        .map(|cell| job3::decode_job(cell, ns).unwrap())
+        .find(|job| job.scope() == Some(JobScope::Catalog) && job.state().is_root())
+        .map(|job| (job.object().unwrap(), job.pair().unwrap()))
+        .expect("CREATE root");
+    let status_image = retention_replay_image(&replay, status_page.page_no as usize);
+    let status_home = crate::storage::status_home::decode_status_home_page(
+        status_image,
+        crate::storage::page::PageIdentity {
+            database: ns.database,
+            page: status_page,
+            owner: ObjectId::new(2).unwrap(),
+            owner_generation: Generation::new(1).unwrap(),
+        },
+        ns,
+    )
+    .unwrap();
+    let TransactionStatusCell::Free(previous) = status_home.cell(0).unwrap().core() else {
+        panic!("the Row actor's Status is Free");
+    };
+    let generation = Generation::new(previous.get() + 1).unwrap();
+    let actor = TxnRef::new(
+        crate::transaction::TxnId {
+            database: ns.database,
+            timeline: 1,
+            writer_epoch: 1,
+            local: 2,
+        },
+        generation,
+    )
+    .unwrap();
+    let aging: [u8; 1536] = bank_row(&replay, AGING_ROW)[..1536].try_into().unwrap();
+    let mut world = RowWorld {
+        profile,
+        lsn,
+        root: *retention_replay_image(&replay, 1),
+        jobs: *retention_replay_image(&replay, 2),
+        status: *status_image,
+        cells: Box::new(*retention_replay_cells(&replay)),
+        transaction: None,
+        aging,
+    };
+    let mut wal = files[wal::WAL_NAME].clone();
+    wal.extend(world.produce(
+        Change::Begin {
+            actor,
+            status: StatusSlotRef::new(status_page, 0, generation).unwrap(),
+            scope: JobScope::Row,
+        },
+        true,
+        true,
+    ));
+    let terminal = (0..64)
+        .find(|i| {
+            job3::decode_job(&world.cells[*i], ns)
+                .is_ok_and(|j| j.source() == Some(actor) && j.state() == JobState::TerminalLeased)
+        })
+        .unwrap();
+    // One non-null Int64 `i` = 7 (C = 180 + 13).
+    let mut canonical = 1u32.to_le_bytes().to_vec();
+    canonical.push(2);
+    canonical.extend_from_slice(&7i64.to_le_bytes());
+    let plan = ReservePlan {
+        terminal,
+        container: undo_page,
+        table,
+        statement: 1,
+        canonical: &canonical,
+    };
+    let columns = [Column {
+        name: "i".to_owned(),
+        data_type: DataType::Int64,
+        nullable: false,
+    }];
+    let inputs = Inputs {
+        profile,
+        frame: FrameExpectation {
+            stream: WalStreamIdentity {
+                database: ns.database,
+                timeline: 1,
+                writer_epoch: 1,
+            },
+            previous_lsn: world.lsn,
+        },
+        change: Change::Reserve(&plan),
+        jobs: &world.cells,
+        root: &world.root,
+        jobs_page: Some(&world.jobs),
+        status: Some(&world.status),
+        undo: Some(retention_replay_image(&replay, undo_page.page_no as usize)),
+        previous: None,
+        table: Some(TableSource {
+            handle: table,
+            anchor: pair[0],
+            anchor_image: retention_replay_image(&replay, pair[0].page_no as usize),
+            leaf_image: Some(retention_replay_image(&replay, pair[1].page_no as usize)),
+            schema: RowSchemaInput::Columns(&columns),
+        }),
+        transaction: world.transaction.as_ref(),
+        aging: Some(&world.aging),
+    };
+    let mut after = Box::new([[0; PAGE_BYTES]; 5]);
+    let mut frame = vec![0; 98_304];
+    let reserved = transition::produce(&inputs, &mut after, &mut frame)
+        .unwrap_or_else(|e| panic!("produce Reserve: {e:?}"));
+    frame.truncate(reserved.frame_bytes);
+    let ordinal = reserved.job_ordinal.expect("Reserve Job");
+    assert!(ordinal < 15);
+    println!(
+        "S1G_H13_GROUP\tReserve\tlsn={}\tbytes={}\tjob={ordinal}\tundo={}\tstatus={}",
+        reserved.header.lsn, reserved.frame_bytes, undo_page.page_no, status_page.page_no
+    );
+    wal.extend(&frame);
+    let mut cells = world.cells.clone();
+    let jobs_page = job3::decode_jobs_page(&after[JOB], ns, 0).unwrap();
+    cells[ordinal].copy_from_slice(jobs_page.cell(ordinal).unwrap());
+    let job = job3::decode_job(&cells[ordinal], ns).unwrap();
+    assert_eq!(
+        (job.state(), job.scope(), job.undo().map(|u| u.page())),
+        (JobState::RootReserved, Some(JobScope::Row), Some(undo_page))
+    );
+
+    let mut input = files.clone();
+    input.insert(wal::WAL_NAME.to_owned(), wal.clone());
+    // Analysis replays the Reserve (ReserveAdopted) and stops at the gate.
+    let (result, gated, _) = preinspected(&input);
+    let error = result.expect_err("gated");
+    assert!(matches!(error.cause, Plan4RecoveryCause::Unsupported));
+    assert_eq!(*retention_replay_cells(&gated), *cells);
+    assert_eq!(retention_replay_image(&gated, 1), &after[ROOT]);
+    assert_eq!(retention_replay_image(&gated, 2), &after[JOB]);
+    assert_eq!(
+        retention_replay_image(&gated, undo_page.page_no as usize),
+        &after[UNDO]
+    );
+    assert_eq!(retention_replay_row_scope(profile, &gated).ok(), Some(true));
+    retention_replay_closure(profile, &gated).expect("closure after the Reserve");
+    let d = clone_directory(&input);
+    let state = d.state();
+    rejected(&d, &state, |error, observation| {
+        println!(
+            "S1G_H13\tphase={:?}\tcause={:?}\teffect={:?}\tdatabase={:?}\tmutations={}/{}",
+            error.phase,
+            error.cause,
+            error.effect,
+            error.database_effect,
+            observation.mutations_attempted,
+            observation.mutations_completed
+        );
+        unchanged_error(error, observation, Plan4RecoveryPhase::Analysis);
+        assert!(matches!(error.cause, Plan4RecoveryCause::Unsupported));
+    });
+    assert_eq!(images(&state), input, "every file unchanged");
+
+    // replay_durable's per-frame body over the same complete prefix.
+    let mut durable = boxed_replay();
+    let mut cursor = seed_recovery_replay(profile, None, &mut durable).unwrap();
+    let mut at = 4096;
+    let mut previous = 0;
+    while at < wal.len() {
+        let length = u32::from_le_bytes(wal[at + 12..at + 16].try_into().unwrap()) as usize;
+        let expected = FrameExpectation {
+            stream: WalStreamIdentity {
+                database: ns.database,
+                timeline: 1,
+                writer_epoch: 1,
+            },
+            previous_lsn: previous,
+        };
+        let observed = observe_recovery_frame(
+            profile,
+            expected,
+            &wal[at..at + length],
+            &mut durable,
+            &mut cursor,
+        )
+        .unwrap_or_else(|e| panic!("frame at {at}: {e:?}"));
+        previous = observed.header.lsn;
+        at += length;
+    }
+    assert_eq!(at, wal.len());
+    assert_eq!(previous, reserved.header.lsn);
+    assert_eq!(
+        *retention_replay_cells(&durable),
+        *retention_replay_cells(&gated)
+    );
+    assert_eq!(
+        retention_replay_bank(&durable),
+        retention_replay_bank(&gated)
+    );
+    for index in 0..64 {
+        assert_eq!(
+            retention_replay_image(&durable, index),
+            retention_replay_image(&gated, index),
+            "page {index}"
+        );
+    }
+    println!("S1G_H13_DURABLE\tframes_to={previous}\taccepted");
 }
 
 #[path = "row_gate/mixed.rs"]
