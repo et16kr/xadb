@@ -3539,3 +3539,34 @@ patch SHA-256은 다음과 같다.
 artifact는 프로젝트 공유 폴더 `module-independence-20261029/artifacts/module-u1-c0-20261029/`(`manifest.sha256` SHA-256 `057ac71935038c00a0b798bdd6ab405450d20f9161d243d17dcd33852e0f0ba9`)에 원 manifest·runner·per-case JSON/stderr·build 로그·시험 목록·export 차이를 보존한다. r1/r2의 export·target·ELF는 기록 뒤 삭제했다.
 
 **남은 의무.** 실제 C2 Row read source·C3 preflight/RowReserve/Commit·rollback adapter, C4 recovery 타입, A/B 본문 연결, MCA/MCB/MCI 인수와 M4/M5는 미완료다.
+
+<a id="row-genesis3-supply"></a>
+## 2026-10-29 U2-C1 Profile3 genesis 순수 공급과 Row source 상계
+
+[전체 dispatch 조합](../contracts/dev3-module-consumers.md#format-dispatch)을 current로 바꾸는 단일 전환(U2-C4)에 앞서 호출자 없는 순수 공급만 더했다. 작성 기준 `31e4614`(branch `module-u2-genesis`, commit `41b55a9`, tree `04266ea4`), 통합 commit `7c2393f`(cherry-pick, tree 동일)와 검토 반영 `06f8558`이다. actual genesis·selection·base·replay·recovery 호출 연결은0이고 current는 Profile2 그대로다.
+
+- `retention_genesis::{encode_row_current,validate_row_current}`는 `retention_page::row::{initial_root,free_job,decode_root_page,decode_jobs_page}`와 기존 `expected_header`/`current_error`/`page::encode_page`를 호출하고 본문을 복사하지 않는다. Root3 row_high0, Free Job3×64, 빈 budget digest의 genesis 6 page만 받는다. Root/Job version1/2/4, 다른 namespace/generation, 비정규 byte와 LSN은 legacy decoder로 넘기거나 변환하지 않고 명시 거절한다. Profile2의 `encode_current`/`validate_current`/`current_source_bytes`는 바뀌지 않았다.
+- `row::free_job`은 본문을 그대로 두고 visibility만 `pub(in crate::storage)`로 넓혔다. genesis owner와 공유하는 가장 좁은 조상이다.
+- source 상계 `row::root_decode_source_bytes`, `row::source_bytes`, `control::row_profile::source_bytes`, `retention_genesis::row_current_source_bytes`를 더했다. Root3 decode는 Catalog Root2와 같은 식에 Row 타입을 넣는다. Row codec은 Catalog의 평면 합 대신 Root decode closure와 Job/census chain의 max를 쓴다. Row 경로는 Job decode 안에서 Root decode를 중첩하지 않으므로(census는 이미 decode한 `RootView`를 받는다) 이 방법은 건전하다. Catalog보다 196B 작은 것은 이 방법 차이에서 오며 Row codec이 적은 값을 보유해서가 아니다. 시험의 frame 합은 같은 작성자가 손으로 만든 **계수 목록**이며 machine stack/RSS 측정이 아니다.
+
+| 상계(B) | production | 계수 chain 최대 | 비교 |
+| --- | --- | --- | --- |
+| `row::root_decode_source_bytes` | 6540 | 5079(decode_initial_jobs) | Catalog Root2 6540과 같음 |
+| `row::source_bytes` | 6540 | 5144(encode_root), census 최대 2561 | Catalog 6736 이하 |
+| `control::row_profile::source_bytes` | 4050 | 2734(decode_checksum) | 별도 Profile2 함수 없음 |
+| `retention_genesis::row_current_source_bytes` | 13836(=7296+6540) | 5632(validate_root) | Catalog `current_source_bytes` 14032 이하 |
+
+**r1(작성 세션).** [사전 manifest](../../tests/fixtures/module-row-format/genesis3/manifest.json)(SHA-256 `ad6521c942109038751e23ac24c86200ca1ffb2969239eaed82f121f122a1689`, 08:31:06Z 동결)에 신규 selector6개·기대 결과·입력 hash를 고정했다. stdlib `author.py`는 pathlib/struct/hashlib만 쓰고, hash가 고정된 `root3/{initial-root,free-job,active-root}.bin`·`envelopes/pages.bin`에서 namespace A/B의 LSN0 genesis page12개(`pages.bin`)와 거절 입력7개(`rejects.bin`: Profile2 current 모양의 Root2/Job2 genesis6 page, LSN99 active Root3 page)를 만든다. author는 자기 namespace A 6 page가 앞선 독립 envelope author의 초기6 page와 byte까지 같음을 단언한다. 동결 전 `cargo check` 2회(08:27, 08:30, 경고0)가 있었고, 동결 뒤 `cargo check -p xadb-engine --all-targets --all-features --locked` 경고0, test build 75.3초·경고0, ELF `8dfe159a92da789f7a84f9a1e6e46b6079659d0625ea5daf1c0d6e15093990c5`에서 6 selector를 `--exact --test-threads=1`로 각1회 실행해 모두 PASS(0.007–0.158초)했다. FAIL·재실행은 없다. 시험 목록은 base 1585개에서 신규6개만 늘어 1591개다. 결과 tsv SHA-256은 `8879172df6737f44b7f69d3cb42adc3649b274a8b08f9110027c58eff6ecd333`이다.
+
+**독립 검토와 반영.** 별도 읽기 전용 subagent가 commit·계약·artifact를 대조하고 author를 다시 실행해 **필수1·선택5**로 판정했다. 형식 검산은 Profile2 validator와 구조가 같고 더 약한 검사가 없으며, 새 입구의 production 호출자는0이고, 재생성한 `pages.bin`/`rejects.bin`이 byte 동일하다고 확인했다.
+
+- 필수: 작성 초안이 결과 tsv hash를 r1 check 로그 hash와 이어 붙여 적었다. 위 문단의 전체 hash로 고쳤다.
+- 반영(A2/A4, `06f8558`): LSN99 active Root3 거절 사례가 먼저 `decode_root_page`의 수용을 확인하게 했다(다른 `Corrupt` 경로로 통과하는 약한 oracle 차단). Row genesis·Root3 decode·codec 상계가 Catalog 대응 값 이하임을 단언으로 고정했다.
+- 정정(A1): Profile3 4050B는 별도 Profile2 함수가 없을 뿐 Profile2 codec 사용은 이미 `wal_io/bootstrap.rs`의 Profile·ProfileSpec·codec 표 계수와 `recovery_select.rs`에 들어 있다. U2-C4는 이 계수를 **교체·대조**해야 하며 4050B를 그대로 더하는 것이 아니다. 따라서 native recovered peak 여유 24B만으로 전환이 불가능하다고 볼 근거는 없다.
+- 남긴 것(A3/A5): 일부 단언은 정의를 다시 쓰거나 fixture를 parent와 대조할 뿐이다. r1 로그 일부에는 명령줄이 없다.
+
+**r2(검토 반영 뒤, `7c2393f` 위).** 시험 본문만 바꾸고 실행 전 r2 manifest(SHA-256 `fc2f25e913ea29cb9176429ac1223592d9fe6f833001f4b09c2d2296b671a79d`)를 동결했다. index 고정 export(fingerprint `828280d3a9afa680d27dd3f941b731db4e3dda84170e54d25ca64c45b2f6b965`, commit `06f8558`과 같음)에서 `cargo test -p xadb-engine --lib --no-run --locked --offline` 79초·경고0, ELF `5ce6ddc6d9b519a9cccd0a7f8a7d1ab40481f3c15fd13a782d79268ae7870851`로 바뀐 3 selector(`row_genesis_rejects_versions_identity_and_noncanonical`, `row_genesis_source_bound_covers_measured_frames`, `row_codec_source_bounds_cover_measured_frames`)를 각1회 실행해 모두 PASS(0.010–0.183초)했다. 나머지3개는 코드 경로가 같아 r1 결과를 유지한다. r2 build는 `test-support` feature 없이 했으므로 목록 1589개는 r1 대비 feature 전용 `plan4_genesis::tests::{plan4_selected_page_kind_inputs,plan4_buffer_trace_kind_inputs}` 2개만 없다. rustfmt(바뀐 2 파일)는 build 전과 commit 전에 차이0, `git diff --cached --check` 차이0이다. 전체 fmt·Clippy·문서 검사는 push gate에서 수행한다.
+
+artifact는 `module-independence-20261029/artifacts/module-u2c1-20261029/`(`manifest.sha256` SHA-256 `40cefcc1670511fedfcdc23311a38e7b6d5cfcfd6858b26cf0300f4ebbf5445b`)에 r1/r2 manifest·runner·case 로그·build/check 로그·시험 목록·검토 요약을 보존한다. export·target·ELF는 기록 뒤 삭제했다.
+
+**남은 의무.** base4 layout(`plan4_recovery_base/row.rs`) source 계수는 U2-C2에서 공급한다. U2-C4가 실제 caller의 Profile 선택, bootstrap/selection의 Profile2 계수 교체, Row census/Aging/descriptor 결합, shared reader의 grammar 선택을 맡는다. 이 증거는 순수 page/cell 공급과 source-value 계수에 한정되며 current Profile3 설치·선택·base4·복구 증거가 아니다.

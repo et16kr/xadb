@@ -8762,5 +8762,31 @@
     "remaining_supply": "actual C2 Row read source, C3 preflight/RowReserve/Commit/rollback adapters, Catalog finish_table, C4 recovery types (next_action, RecoveryRowTask, RowRecoveryPolicy) with MBC00-P03/N11, A/B body connection, MCA/MCB/MCI and M4/M5 acceptance",
     "source_roots_changed": false,
     "artifact_manifest_sha256": "057ac71935038c00a0b798bdd6ab405450d20f9161d243d17dcd33852e0f0ba9"
+  },
+  "dev3_module_u2_row_genesis3": {
+    "status": "LOCAL_VERIFIED_REVIEWED_PURE_SUPPLY",
+    "contract_ref": "dev3-module-consumers.md#format-dispatch",
+    "evidence_ref": "module-independence-survey-20261026.md#row-genesis3-supply",
+    "baseline_commit": "31e4614",
+    "branch": "claude/project-thread-h2j8oc",
+    "implemented_paths": [
+      "crates/engine/src/storage/retention_genesis/row_tests.rs",
+      "crates/engine/src/storage/retention_page/row/source_tests.rs",
+      "tests/fixtures/module-row-format/genesis3/author.py",
+      "tests/fixtures/module-row-format/genesis3/manifest.json",
+      "tests/fixtures/module-row-format/genesis3/pages.bin",
+      "tests/fixtures/module-row-format/genesis3/rejects.bin"
+    ],
+    "modified_paths": [
+      "crates/engine/src/storage/control/row_profile.rs",
+      "crates/engine/src/storage/control/row_profile_tests.rs",
+      "crates/engine/src/storage/retention_genesis.rs",
+      "crates/engine/src/storage/retention_page/row.rs"
+    ],
+    "scope": "Uncalled Profile3 genesis retention pages (Root3 row_high0, Free Job3x64, empty budget digest) with explicit refusal of Root/Job versions 1/2/4, identity and non-canonical bytes; source bounds for Row Root3 decode, Row codec, Profile3 codec and Row genesis; current stays Profile2",
+    "validation": "r1 6 new selectors once PASS on a frozen manifest; independent review REQUIRED1 (evidence hash) and ADVISORY5; r2 3 changed selectors once PASS on a fixed export; test list +6 only",
+    "remaining_supply": "base4 closure and layout source bound (U2-C2), Catalog scope2 Profile3 adapter (U2-C3), single current switch with bootstrap/selection budget replacement and fresh fixtures (U2-C4)",
+    "source_roots_changed": false,
+    "artifact_manifest_sha256": "40cefcc1670511fedfcdc23311a38e7b6d5cfcfd6858b26cf0300f4ebbf5445b"
   }
 }
