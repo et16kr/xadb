@@ -1,5 +1,7 @@
 # XADB 모듈 독립 개발 구조 전환 작업 계획
 
+2026-10-29 [U2-C4a/C4b 전환 준비 공급과 Profile3 입력](../evidence/module-independence-survey-20261026.md#u2-switch-prep): 단일 current 전환이 쓸 순수 공급으로 정확한 한 decoder만 고르는 설치 Profile 문법(`decode_installed_profile`, `PageFileReader::open_profile`, flush_io helper)과 전환 뒤 recovery census 투영을 더하고, Profile3 genesis 전체 namespace와 native3·memory-gap3·memory-retire3 입력 corpus를 stdlib generator로 동결했다. 신규7 PASS, 검토 필수1(낡은 U2-C2 입력 인용)·권고8을 반영해 5개 재실행 PASS, 재검토 새 필수0이다. production 호출과 product 실행은 없고, native 투영 여유는 8B(보수 입력)다. 전환(C4c)은 U2-C2 통합 뒤에 한다.
+
 2026-10-29 [U2-C3 Catalog scope2 Profile3 adapter](../evidence/module-independence-survey-20261026.md#catalog3-adapter): `semantic_catalog::format`의 `Format`/`CatalogJob` seam으로 Catalog 관찰자 본문 하나가 정확한 Profile 2/3 분기로 version2와 Root3/Job3를 함께 처리하고, runtime alias 교체용 `retention_page::catalog3` view·guarded Root3 encode·Row Aging 상계를 더했다. r1 FAIL2(author의 sender digest 결함)를 보존하고 r2–r4로 신규10·Profile2 재실행14가 PASS, 독립 검토 필수2 해결·재검토 새 필수0이다. current 전환(U2-C4)은 base4 closure(U2-C2) 뒤에 한다.
 
 2026-10-29 [B Row 읽기 driver](../evidence/module-independence-survey-20261026.md#b-read-driver): B 독점 경로에서 C0 read operation·view·cursor credit을 소비하는 point read와 `RowCursor`를 더했다. 독립 검토 필수2(cursor open 오류 순서, operation·table과 view의 결속)를 고쳐 B가 판정하는 같은 view에서 operation을 직접 열게 했고, r2 MCB00-D01..12 각1회 PASS·재검토 해결(새 필수0)이다. 통합 때 `Owner` 형식을 disk API로 재노출했다. 실제 C2 Row read source와 MCB01–05·MCI는 미완료다.

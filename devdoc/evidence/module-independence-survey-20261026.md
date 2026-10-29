@@ -3809,3 +3809,80 @@ Profile2 `source_branches()` 12개는 U1-C0 runtime-r2 기록값과 같다.
 - U2-C4의 의무: `queue` alias 교체, 실제 caller의 Profile 선택, base4 layout 계수(`plan4_recovery_base`는 편집하지 않음).
 
 **독립 재검토와 통합.** 같은 읽기 전용 검토자가 fb893c0에서 R1의 14 selector 1회 실행, R2의 M01–M03이 다른 actor Row cell 건너뛰기·`first_free`·TerminalFinish scan·registry16 peak 경로를 실제로 실행함, literal의 byte 동일 재생성, guarded `catalog3::encode_root_page`를 확인했다. 남은 권고는 셋이다. `catalog3.rs` module 설명이 version2와 같은 호출 모양을 주장하던 문장은 통합 때 `ada04da`에서 고쳤다. `serializer3.row_job`은 Row group 없이 cell만 배치하므로 U2-C4 corpus가 recovery가 재생할 이력을 만드는 데 쓰면 안 된다. 나머지 Catalog 연산의 혼합 bank case와 실제 Row group interleaving은 U2-C4의 의무로 넘긴다. 통합 tree에서 U2-C1 검토 반영(`06f8558`)과 이 단위가 함께 바꾼 `retention_page/row/source_tests.rs`의 병합 내용을 실행 전 manifest(SHA-256 `b40f847c8d06fb3d60be4191adf4e46e88d42f9436b897eb2f97905f5494fb5b`)로 동결하고, 고정 export(fingerprint `7027bae840032b7eb4d5acaa7845c2483d73266c9db3db16fd848c4a08ce7040`)에서 check 39.0초·경고0, test build 74.5초·경고0, ELF `477bfbf90021e7877614dffc8850d3ecbc8f6483ca7ba3c8003530a9a23ffc60`로 `row_codec_source_bounds_cover_measured_frames`를 1회 PASS했다. 통합 목록은 기본 feature에서 1622개다. artifact는 `module-independence-20261029/artifacts/module-u2c3-20261029/`(`manifest-all.sha256` SHA-256 `872f87235a0651904d615d267fd5d5acc8cdfe6f428f3446008fbdf1d2519f56`)에 r1–r4 manifest·로그·결과·설계 메모·검토 요약·통합 실행을 보존한다.
+
+<a id="u2-switch-prep"></a>
+## 2026-10-29 U2-C4a/C4b 단일 current 전환 준비 공급과 Profile3 입력 corpus
+
+기준은 `c83771b`, branch는 `module-u2-switch-prep`이고 commit은 다음 여섯이다. 통합은 이 branch로의 fast-forward라서 hash와 tree가 그대로다(HEAD tree `c4e483dee5308421b4b0e8ac40887e4429770fce`).
+
+| commit | tree | 내용 |
+| --- | --- | --- |
+| `b6c66590ac1452978f0f5cbf957a06e6e1c3b071` | `f76433b7…` | D1 설치 Profile 문법(`decode_installed_profile`, `PageFileReader::open_profile`, flush_io helper)과 시험 |
+| `a06585a62f60b2cf030f4db9ed014c3c7bb7b5f3` | `ba238d3e…` | 전환 뒤 recovery source census 투영(cfg(test)) |
+| `75144889b7cea081f61ac820e273ec08d9a9085c` | `cfb4610d…` | `module-row-format/genesis3-namespace/` Profile3 ID1–3 전체 namespace |
+| `6742c082fc852e7989631a6b81dab0ad6416a219` | `cf8021b4…` | `dev3-catalog-create/native3/` |
+| `10d34f405268836613ebc3866437f916d29b3b4e` | `632cc91b…` | `dev3-catalog-create/{memory-gap3,memory-retire3}/` |
+| `ea560f1ef1ef6fbc8e304d2d45e0a08fbe5e8cfc` | `c4e483de…` | 독립 검토 r1 반영(필수1, 권고 A1–A8) |
+
+이 단위는 [format dispatch](../contracts/dev3-module-consumers.md#format-dispatch)의 단일 current 전환(Profile3 → Root3/Job3 → base4)이 쓸 순수 공급과 입력만 더한다. production 경로는 새 API를 하나도 호출하지 않고, current-format 상수와 v2 corpus, `genesis3/`, U2-C2 범위(`plan4_recovery_base/**`, `wal_io/allocation_reservation/**`)는 바꾸지 않았다. [버전 정책](../policies/version-compatibility-policy.json)에 따라 dual-current, `>=2` 확대, legacy adapter는 없다.
+
+**D1 공유 reader 문법**
+
+- `control::decode_installed_profile(input, expected)`는 `expected.format`으로 decoder를 하나만 고른다. 1|2는 `decode_bootstrap_profile`, 3은 `row_profile::decode_profile`, 그 밖은 byte를 읽기 전에 `UnsupportedFormat`이다. decode 뒤 Profile 전체(namespace, generation, id, format, digest)가 `expected`와 같아야 하며, 다르면 `IdentityMismatch`다. 시험 decode와 header 선행 확인은 없다. Profile1 byte를 Profile2 기대로 읽으면 format1로 decode된 뒤 `IdentityMismatch`이므로 확대가 없다.
+- `control::installed_profile_source_bytes()`는 4538B다(Row bound 4050 + helper가 부과하는 wrapper 488). r2 시험은 helper 항목과 따로 frame을 나열한다. `decode_installed_profile` frame 354B, legacy chain 최대 3090B(checksum), Row chain 최대 3088B, decoder만은 최대 2736B다. 가장 빠듯한 검사는 wrapper(488 대 354, 여유 134B)다.
+- `PageFileReader::open_profile(writer, profile, root, scratch)`는 private `ProfileGrammar::{Bootstrap, Installed}`로 `open_inner`를 나눈다. `open`과 `open_shared`는 같은 legacy decoder, 같은 인자, 같은 위치, 같은 오류 전파 그대로다.
+- `flush_io::installed_profile(bytes, bound)`는 `Cause::Control`로 사상하고 `read_selection`은 바꾸지 않았다. 허용은 `#[cfg_attr(not(test), expect(dead_code, reason))]`이라 C4c 호출이 생기면 기대가 깨져 드러난다.
+- 시험 기대 `Profile`은 `#[cfg(test)] Profile::literal`로 field마다 만들고, digest는 product 밖 stdlib 계산(`page_io_literals.py` SHA-256 `27c2479525a92268197bee7421a79e960441a0ac2686b4542ed58f04ffedf57f`)의 literal이다. 제공 envelope은 모두 sha로 고정했다.
+
+**Corpus 재고와 생성 입력**
+
+v2 `native`(221파일, 5,794,810B), `memory-gap`(137, 3,382,130B), `memory-retire`(106, 2,584,076B)는 모두 generator가 쓴 XDC1/XDP1/XOD1/XQJ1/XWF1 blob이고, base4가 필요한 파일은 0이다. product가 runtime에 쓰는 captured base3 XRB1+XOI1 inventory, `catalog_create.rs`의 d3-profile pin `b8aab814…`, catalog_memory·catalog_create의 capture 검사는 U2-C2 뒤 C4c에서 옮긴다. base4 byte는 만들지 않았다.
+
+| 디렉터리 | plan | manifest | 행/ckpt | raw |
+| --- | --- | --- | --- | --- |
+| `module-row-format/genesis3-namespace` | author 내장 | `34728915…` | 42 기록 | 274,720B |
+| `dev3-catalog-create/native3` | `f6e0dd55…` | `e648b0bc…` | 56/16 | 221파일 |
+| `dev3-catalog-create/memory-gap3` | `5286a7f6…` | `9a484fc9…` | 26/6 | 137파일 |
+| `dev3-catalog-create/memory-retire3` | `0a6efde6…` | `feb90a36…` | 16/3 | 106파일 |
+
+- generator와 auditor는 stdlib만 쓰고 product code를 import하지 않으며, 각각 한 번 실행했다. `serializer3.row_job`은 쓰지 않았다. plan은 생성 전에 sha로 동결했다.
+- 상태는 `FROZEN_INPUTS_NOT_EXECUTED_AGAINST_PRODUCT`, runtime은 `NOT_ADMITTED`다. plan 넷은 작성 세션의 자체 동결이며 v2처럼 parent/root의 sha 채택이 남았다.
+- 세 auditor는 `INPUT_AUDIT_PASS_NOT_PRODUCT_EXECUTION`을 냈다. Root3/Job3 wire, `row_high`@432 = 0과 [440,512) 영, Job kind3 없음, Profile3 ID1 blob(`f49d4bb2…`)을 검사한다. v2와 ID, LSN, epoch, kind, op, frame 길이, WAL offset, page 역할, checkpoint scalar가 같고 frame은 모두 다르다. 다른 version 사이의 transition K/R 비교는 옮기지 않았다.
+- `native3/project_checkpoints.py`는 세 v2 `checkpoints.tsv`를 byte 그대로 재현한 뒤에만 쓴다.
+- native3 첫 실행 시도는 `/usr/bin/time`이 없어 shell rc 127로 끝났고 generator는 시작하지 않았다. 이 기록을 보존한다(`attempt0.*`). `native3/pre-run.sha256`의 마지막 수정(11:03:36)은 generation(11:02:53)·audit(11:02:59)보다 늦다. projector 줄을 뒤에 덧붙였기 때문이며, plan 동결은 generator의 `ADOPTED_PLAN` 검사, auditor의 `PLAN_SHA` 검사, generation-result의 generator sha로 보인다.
+
+**투영 census(cfg(test))**
+
+입력은 `ROW_CENSUS_BYTES = 96`(보수 상한), `DELTA_C3 = 0`, B4 미기입이다. 증가분만 더하고 감소분은 상쇄하지 않는다. U2-C2 r2 측정값은 RowCensus 72B, RowBaseView 248B 대 CatalogBaseView 256B(실제 보유 차이 −8B, 상쇄하지 않음), peak B4 59699B다.
+
+| | 현재 peak | 투영 live | B4 상한 |
+| --- | --- | --- | --- |
+| memory | 65376 | 65392 | 60512 |
+| native | 65512 | 65528 | 60376 |
+
+- 증가분은 census 80→96(+16)뿐이다. queue view 항은 Catalog 6736→`catalog3::source_bytes` 6696, genesis 14032→13836, Aging 10911 그대로다.
+- native live 여유는 96 입력에서 8B, 72 입력에서 24B다. B4 59699를 넣은 참고 decode는 96 입력에서 native 64859·memory 64723, 72 입력에서 64811·64675이며 단언하지 않았다.
+- C4c는 `B4 = base::row::source_bytes()`와 보유 차이 `size_of::<RowBaseView>() − size_of::<CatalogBaseView>()`를 type에서 얻어야 하며 literal을 쓰지 않는다. base3 codec을 고정하는 이 투영 시험은 C4c에서 없애거나 바꾼다.
+
+**실행**
+
+| 판 | selector manifest | build | 실행 | check |
+| --- | --- | --- | --- | --- |
+| r1 | `f9b1f446…`(11:09:02 동결) | 78.6초, 경고0 | 신규7 각1회 PASS(각 ≤0.05초) | `--all-targets --all-features` 40.4초, 경고0 |
+| r2 | `0d364c54…`(11:31:05 동결, diff sha `d8637e64…` = `git diff 10d34f4 ea560f1`) | 77.6초, 경고0 | code가 바뀐 5개 각1회 PASS(각 ≤0.04초) | 41.2초, 경고0 |
+
+- 실행 flag는 `RUST_MIN_STACK=33554432`, `timeout 30`, `--exact --test-threads=1`이다. r1은 동결 명령줄에 없던 `--nocapture`를 붙였으므로 편차로 기록한다. 출력만 바뀐다. r2에서는 동결 명령줄에 들어 있다.
+- r1 신규 selector: `storage::control::installed_profile_tests::{installed_profile_accepts_only_bound_grammar, installed_profile_refuses_versions_and_foreign_expectations, installed_profile_source_bound_covers_measured_frames}`, `storage::page_io::tests::open_profile_binds_installed_grammar`, `…mutable_storage::flush_io::profile_tests::installed_profile_maps_control_causes`, `…plan4_recovery::tests::projected_census::{projected_switch_census_memory, projected_switch_census_native}`.
+- 바꾼 rs는 `rustfmt --edition 2024 --check`와 `git diff --check`를 통과했다. 전체 fmt, Clippy, 문서 verifier, push는 실행하지 않았다. target은 기록 뒤 삭제했다.
+- 통합은 fast-forward라 통합 tree가 r2 build·check tree와 같으므로 통합 재실행은 하지 않았다(fingerprint `490b04fe3328dc6bc2b87bac620b8c42fab0f0cc7e2921d3ec96e4db0159c594`).
+
+**독립 검토.** 읽기 전용 검토자의 r1 판정은 ACCEPT·필수1이었다. 필수 R1은 투영이 U2-C2 r1의 낡은 입력(RowCensus 96을 실측처럼 표기, B4 59515)을 인용한 것이다. 권고는 bound 시험이 실패할 수 없음(A1), queue 대체 항(A2), C4c의 투영 시험 처리(A3), 인자 증가와 wrapper 미부과(A4), `open_shared` 오류 분류 변화(A5), product decoder로 만든 기대값과 고정되지 않은 envelope(A6), 증거 위생(A7), dead_code 기대(A8)였다. 검토자는 네 corpus를 `python3 -I`로 다시 생성해 byte까지 같음을 확인했고, 독립 scanner로 모든 XQR1 cell이 v3이며 row_high 0·꼬리 영(113/65/45 cell)임을 확인했다. `ea560f1`이 모두 반영했고 같은 검토자의 재검토는 ACCEPT·새 필수0이다.
+
+**한계와 C4c 의무**
+
+- 새 API와 corpus는 product 경로에서 실행되지 않았다. corpus는 입력 감사만 통과했다.
+- `ProfileGrammar` 80B는 `Option<Namespace>` 32B보다 48B 커서 `open_inner` 인자가 커진다. 이 증가와 설치 decode bound 4538B는 `retention_home_source_bytes`의 4096B 덩어리에 부과되지 않았다. C4c는 실제 census에 wrapper 488B와 인자 48B를 부과해야 하고, page_io의 "명시 ≤ 단언 뒤 0" 가정은 더 이상 성립하지 않는다.
+- C4c에서 `open_shared`를 `Installed(expected_profile)`로 바꾸면, 지금 map을 읽은 뒤 나는 늦은 `PageIoError::IdentityMismatch`가 `d3-profile` 직후의 이른 `Control(IdentityMismatch)`로 바뀐다. flush readback도 다른 설치 profile을 bare `IdentityMismatch` 대신 `Control(IdentityMismatch)`로 분류한다. 효과는 같으며 C4c 검토에서 수용 여부를 정한다.
+- native 투영 여유는 8B(96 입력)다. `DELTA_C3 = 0` 가정이 깨지거나 RowCensus가 104B를 넘으면 cap을 넘으며, 그때는 cap을 올리지 않고 계약 재검토로 간다.
+- plan4_genesis 시험은 Profile1 참조와 비교하지만 catalog arm은 `8c0f252`부터 Profile2를 쓴다. 이 단위는 그 시험을 실행하지 않았다.
+- artifact는 `module-independence-20261029/artifacts/module-u2c4a-20261029/`(`manifest-all.sha256` SHA-256 `721a1f945d10457eff98f900e2656c2213f9d3bdae931a5b858c1972f6238d60`)에 r1·r2 manifest·로그·literal 도구·설계 메모·검토 요약을 보존한다.

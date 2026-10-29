@@ -8880,5 +8880,34 @@
     "remaining_supply": "runtime queue alias swap, caller profile selection and Catalog scope2 replay under Profile3 (U2-C4); mixed-bank cases for Forward/Commit/Prune/Release/Rollback and real Row group interleaving; seam forwarding frames uncounted in both census instances",
     "source_roots_changed": false,
     "artifact_manifest_sha256": "872f87235a0651904d615d267fd5d5acc8cdfe6f428f3446008fbdf1d2519f56"
+  },
+  "dev3_module_u2_switch_prep": {
+    "status": "LOCAL_VERIFIED_REVIEWED_PURE_SUPPLY",
+    "contract_ref": "dev3-module-consumers.md#format-dispatch",
+    "evidence_ref": "module-independence-survey-20261026.md#u2-switch-prep",
+    "baseline_commit": "c83771b",
+    "integration_base": "c83771b",
+    "branch": "claude/project-thread-h2j8oc",
+    "implemented_paths": [
+      "crates/engine/src/storage/control/installed_profile_tests.rs",
+      "crates/engine/src/storage/wal_io/flush_io_profile_tests.rs",
+      "crates/engine/src/storage/wal_io/plan4_recovery/tests/projected_census.rs",
+      "tests/fixtures/dev3-catalog-create/memory-gap3/",
+      "tests/fixtures/dev3-catalog-create/memory-retire3/",
+      "tests/fixtures/dev3-catalog-create/native3/",
+      "tests/fixtures/module-row-format/genesis3-namespace/"
+    ],
+    "modified_paths": [
+      "crates/engine/src/storage/control.rs",
+      "crates/engine/src/storage/page_io.rs",
+      "crates/engine/src/storage/page_io_tests.rs",
+      "crates/engine/src/storage/wal_io/flush_io.rs",
+      "crates/engine/src/storage/wal_io/plan4_recovery/tests.rs"
+    ],
+    "scope": "Pure supply for the single current switch: installed Profile grammar choosing exactly one decoder by expected format with whole-Profile equality, PageFileReader::open_profile behind a private grammar tag with open/open_shared unchanged, flush_io installed_profile helper expected dead until C4c, projected post-switch recovery source census, and frozen Profile3 input corpora (genesis3-namespace IDs 1-3, native3, memory-gap3, memory-retire3) written by stdlib generators without base4 bytes",
+    "validation": "r1 7 new selectors once PASS with --nocapture deviation recorded; independent review REQUIRED1 (stale U2-C2 inputs) and 8 advisories; r2 5 changed selectors once PASS; check --all-targets --all-features 0 warnings both rounds; reviewer regenerated all four corpora byte-identical; second review ACCEPT with 0 new REQUIRED; integration by fast-forward with identical tree",
+    "remaining_supply": "C4c switch: production callers of the installed grammar and open_shared retarget, real census charge for the 488 B wrapper and 48 B argument growth, B4 and retained delta from types, removal of the projection test, parent adoption of the four plans, product execution of the corpora and base4 capture after U2-C2",
+    "source_roots_changed": false,
+    "artifact_manifest_sha256": "721a1f945d10457eff98f900e2656c2213f9d3bdae931a5b858c1972f6238d60"
   }
 }
