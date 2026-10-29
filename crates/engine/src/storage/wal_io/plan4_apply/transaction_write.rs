@@ -189,6 +189,57 @@ impl<'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
         }
     }
 
+    /// A Row statement boundary (ROW-BEGIN-001 "statement mark"): the actor
+    /// must be Active with no RowReserved root, and its mark is the ATT
+    /// descriptor's undo_head. Roots retained or compensated by earlier
+    /// statements stay. The same live ATT/terminal observation as
+    /// `empty_actor_active`; a Job of the actor without the Row recipe is the
+    /// deep check's Fatal(Invariant). A Reserved or Aborting actor is
+    /// Unchanged WrongState in the caller's phase. Nothing is written.
+    pub(super) fn row_statement_head(
+        &self,
+        actor: TxnRef,
+        phase: RetentionPhase,
+    ) -> Result<Option<UndoRef>> {
+        let fence = self.storage.session_fence();
+        let bad = || fail(fence, RetentionCause::Invariant);
+        let prefix = self.storage.wal().prefix().map_err(|_| bad())?;
+        self.control
+            .check_ledger(self.storage.profile(), prefix)
+            .map_err(|_| bad())?;
+        let slot = self.control.slot(actor).ok_or_else(bad)?;
+        let descriptor = obligation::decode_descriptor(
+            self.control.row(slot)[..1536]
+                .try_into()
+                .expect("ATT descriptor"),
+            ReservationOwner::Transaction(actor),
+            crate::storage::retention_obligation::profile_reference(self.storage.profile()),
+        )
+        .map_err(|_| bad())?;
+        let OwnerState::Transaction(transaction) = descriptor.owner else {
+            return Err(bad());
+        };
+        if transaction.reference() != actor {
+            return Err(bad());
+        }
+        let mut reserved = false;
+        for bytes in self.control.jobs() {
+            let job = job3::decode_job(bytes, self.storage.profile().spec().namespace)
+                .map_err(|_| bad())?;
+            if job.source() != Some(actor) {
+                continue;
+            }
+            if job.scope() != Some(JobScope::Row) {
+                return Err(bad());
+            }
+            reserved |= job.state() == JobState::RootReserved;
+        }
+        if reserved || transaction.state() != TransactionState::Active {
+            return Err(unchanged(phase, RetentionCause::WrongState));
+        }
+        Ok(transaction.undo_head())
+    }
+
     /// Consume an empty writer through the actual RollbackStart and AbortEnd.
     /// A pre-effect rejection returns the same capsule; after RollbackStart an
     /// Unchanged rejection retains MustAbort and can retry this operation only.
@@ -365,6 +416,9 @@ pub(in super::super) fn source_bytes() -> usize {
         // its result stay live around its nested empty-actor preflight.
         + size_of::<(&(), &(), Option<TxnRef>, bool, u8)>()
         + size_of::<Result<()>>()
+        // The Row statement boundary's phase argument and mark result.
+        + size_of::<RetentionPhase>()
+        + 2 * size_of::<Result<Option<UndoRef>>>()
         + 2 * size_of::<obligation::DescriptorSpec>()
         + 2 * size_of::<Result<obligation::DescriptorSpec>>()
         + 3 * size_of::<queue::JobView<'_>>()

@@ -767,6 +767,8 @@ pub(in super::super) fn check_source_bytes() -> usize {
         + size_of::<Result<ActorStage>>()
         + source::commit_carrier_bytes()
         + size_of::<source::OperationClass>() // transaction_check's class
+        // finish_statement's actor and kind dispatch around the check.
+        + size_of::<(TxnRef, bool)>()
         + 14 * size_of::<&()>()
         + 2 * size_of::<Result<ActorStage>>()
         + 2 * size_of::<Result<TxnRef>>()

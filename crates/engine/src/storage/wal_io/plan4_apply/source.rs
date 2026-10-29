@@ -17,9 +17,11 @@ pub(super) enum OperationClass {
     /// boundaries, never while an admitted reader could hold a loan.
     CommitProgress,
     CatalogProgress,
-    /// Row Begin/RollbackStart/AbortEnd progress. Exclusive with Catalog
-    /// progress under the same exclusive control (§6.9); it reserves the same
-    /// fixed CatalogProgressCharge, which already bounds the Row lifecycle
+    /// Row Begin/RollbackStart/AbortEnd progress and the Row statement end
+    /// check. Exclusive with Catalog progress under the same exclusive
+    /// control (§6.9); it reserves the same fixed CatalogProgressCharge, which
+    /// already bounds the Row lifecycle and, through the shared
+    /// `check_source_bytes` term, the statement end check
     /// (`RowProgress ≤ CatalogProgressCharge`, ROW-BEGIN-001 "자원").
     RowProgress,
 }

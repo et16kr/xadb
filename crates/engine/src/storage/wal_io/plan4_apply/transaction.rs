@@ -1,7 +1,10 @@
 //! Original-session transaction and statement ownership. Durable actors come
 //! only from the original admitted Begin; callers cannot submit a read-set.
 use super::*;
-use crate::storage::session_fence::SessionFence;
+use crate::storage::{
+    session_fence::SessionFence,
+    undo_ref::{UNDO_REF_BYTES, UndoRef},
+};
 use std::{
     cell::Cell,
     sync::{MutexGuard, atomic::Ordering},
@@ -22,6 +25,10 @@ pub(super) const LONG_SOURCE_BYTES: usize = 49_152;
 /// refuse by it (XADB-MODULE-ROW-BEGIN-001).
 pub(super) const CATALOG_KIND: u8 = 1;
 pub(super) const ROW_KIND: u8 = 2;
+/// Slot bytes 88..128: the active statement's mark, a canonical 40-byte
+/// `Option<UndoRef>` whose None is all zero (T10 slot layout, §6.2).
+const MARK: std::ops::Range<usize> = 88..SLOT;
+const _: () = assert!(MARK.end - MARK.start == UNDO_REF_BYTES);
 
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
 pub(crate) enum IsolationLevel {
@@ -75,6 +82,10 @@ pub(crate) struct RowStatementView<'t, 'v, 'a, 'c, 's> {
     transaction: &'t RowTransaction<'v, 'a, 'c, 's>,
     rc_snapshot: Option<SnapshotGuard<'v, 'a, 'c, 's>>,
     sequence: u64,
+    /// The mark written to slot bytes 88..128 at begin: a Row statement's
+    /// ATT `undo_head`; None for a Catalog or read-only statement. Every
+    /// boundary compares it with the slot ("view mark == slot mark").
+    mark: Option<UndoRef>,
     phase: Cell<Phase>,
     revision: Cell<u64>,
     source: CallerCredit<'v, 'a, 'c, 's>,
@@ -139,6 +150,33 @@ fn row(bytes: &[u8], slot: usize) -> &[u8] {
 }
 fn row_mut(bytes: &mut [u8], slot: usize) -> &mut [u8] {
     &mut bytes[HEADER + slot * SLOT..HEADER + (slot + 1) * SLOT]
+}
+/// The slot bytes of `mark`: zero for None, the `UndoRef` wire identity for
+/// Some. A valid `UndoRef` never encodes to zero (its file id and both
+/// generations are nonzero), so the two cases cannot alias.
+fn encode_mark(mark: Option<UndoRef>) -> Option<[u8; UNDO_REF_BYTES]> {
+    let mut bytes = [0; UNDO_REF_BYTES];
+    match mark {
+        None => Some(bytes),
+        Some(reference) => reference.encode(&mut bytes).ok().map(|()| bytes),
+    }
+}
+/// The mark held by slot bytes, or None when they are not a canonical mark.
+/// `UndoRef::decode` fixes every byte it accepts, so equal decoded marks
+/// mean equal bytes.
+fn decode_mark(bytes: &[u8]) -> Option<Option<UndoRef>> {
+    if bytes.len() != UNDO_REF_BYTES {
+        return None;
+    }
+    if bytes.iter().all(|&b| b == 0) {
+        return Some(None);
+    }
+    UndoRef::decode(bytes).ok().map(Some)
+}
+/// The slot row holds the active statement `sequence` with exactly `mark`.
+/// The Catalog empty mark is the None special case of this one comparison.
+fn statement_slot(target: &[u8], sequence: u64, mark: Option<UndoRef>) -> bool {
+    read64(target, 80) == sequence && decode_mark(&target[MARK]) == Some(mark)
 }
 fn fail(fence: &SessionFence, cause: RetentionCause) -> RetentionError {
     fence.fence();
@@ -418,8 +456,7 @@ impl RowStatementView<'_, '_, '_, '_, '_> {
         let lease = &self.transaction.lease;
         let state = entry(lease.ledger, lease.fence)?;
         lease.check(state.bytes)?;
-        let target = row(state.bytes, lease.slot);
-        if read64(target, 80) != self.sequence || target[88..].iter().any(|&b| b != 0) {
+        if !statement_slot(row(state.bytes, lease.slot), self.sequence, self.mark) {
             return Err(fail(lease.fence, RetentionCause::Invariant));
         }
         Ok(())
@@ -461,7 +498,10 @@ impl RowStatementView<'_, '_, '_, '_, '_> {
         {
             let mut state = entry(lease.ledger, lease.fence)?;
             lease.check(state.bytes)?;
-            write64(row_mut(state.bytes, lease.slot), 80, 0);
+            // The ended statement closes its sequence and its mark.
+            let target = row_mut(state.bytes, lease.slot);
+            write64(target, 80, 0);
+            target[MARK].fill(0);
         }
         self.phase.set(Phase::Ended);
         let snapshot = self
@@ -568,7 +608,7 @@ impl<'t, 'v, 'a, 'c, 's> RowStatementView<'t, 'v, 'a, 'c, 's> {
         let mut state = entry(lease.ledger, lease.fence)?;
         lease.check(state.bytes)?;
         let target = row_mut(state.bytes, lease.slot);
-        if read64(target, 80) != self.sequence || target[88..].iter().any(|&b| b != 0) {
+        if !statement_slot(target, self.sequence, self.mark) {
             return Err(fail(lease.fence, RetentionCause::Invariant));
         }
         target[3] |= 1;
@@ -588,7 +628,7 @@ impl<'t, 'v, 'a, 'c, 's> RowStatementView<'t, 'v, 'a, 'c, 's> {
         let mut state = entry(lease.ledger, lease.fence)?;
         lease.check(state.bytes)?;
         let target = row_mut(state.bytes, lease.slot);
-        if read64(target, 80) != self.sequence || target[88..].iter().any(|&b| b != 0) {
+        if !statement_slot(target, self.sequence, self.mark) {
             return Err(fail(lease.fence, RetentionCause::Invariant));
         }
         let mask = read32(target, 4) | bit;
@@ -710,26 +750,31 @@ impl<'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
         owner: &mut Owner<'c, 's>,
         transaction: &'t RowTransaction<'v, 'a, 'c, 's>,
     ) -> Result<RowStatementView<'t, 'v, 'a, 'c, 's>> {
-        // A Row statement (Active, no RowReserved root, ATT undo_head mark)
-        // is not supplied yet: refuse by kind before any credit or mark.
-        if transaction.row_scope() {
-            return Err(unchanged(
-                RetentionPhase::Prepare,
-                RetentionCause::Unsupported,
-            ));
-        }
         self.transaction_entry(owner)?;
         self.transaction_matches(transaction)?;
-        if let Some(actor) = transaction.lease.actor {
-            // The first writable supply has no mutation/rollback statement
-            // adapter. Require actual empty Active state, not a fabricated mark.
-            if !self.empty_actor_active(actor, transaction.lease.kind)? {
-                return Err(unchanged(
-                    RetentionPhase::Prepare,
-                    RetentionCause::WrongState,
-                ));
+        // The statement mark, chosen by the capsule kind written at Begin.
+        let mark = match transaction.lease.actor {
+            // Row (ROW-BEGIN-001 "statement mark"): an Active actor with no
+            // RowReserved root; the mark is its ATT descriptor's undo_head.
+            Some(actor) if transaction.row_scope() => {
+                self.row_statement_head(actor, RetentionPhase::Prepare)?
             }
-        }
+            // The first Catalog writable supply has no mutation/rollback
+            // statement adapter. Require actual empty Active state, whose
+            // mark is the empty None, not a fabricated mark.
+            Some(actor) => {
+                if !self.empty_actor_active(actor, transaction.lease.kind)? {
+                    return Err(unchanged(
+                        RetentionPhase::Prepare,
+                        RetentionCause::WrongState,
+                    ));
+                }
+                None
+            }
+            None => None,
+        };
+        let encoded = encode_mark(mark)
+            .ok_or_else(|| fail(transaction.lease.fence, RetentionCause::Invariant))?;
         let sequence = transaction.next_statement.get();
         let next = sequence
             .checked_add(1)
@@ -739,6 +784,10 @@ impl<'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
             let target = row(state.bytes, transaction.lease.slot);
             if read64(target, 80) != 0 {
                 return Err(unchanged(RetentionPhase::Census, RetentionCause::Busy));
+            }
+            // An ended statement closed its mark; a live idle mark is corrupt.
+            if !statement_slot(target, 0, None) {
+                return Err(fail(transaction.lease.fence, RetentionCause::Invariant));
             }
             target[1]
         };
@@ -759,13 +808,17 @@ impl<'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
         {
             let mut state = entry(self.isolation, transaction.lease.fence)?;
             transaction.lease.check(state.bytes)?;
-            write64(row_mut(state.bytes, transaction.lease.slot), 80, sequence);
+            // The mark is RAM slot state only: no WAL (ROW-BEGIN-001).
+            let target = row_mut(state.bytes, transaction.lease.slot);
+            write64(target, 80, sequence);
+            target[MARK].copy_from_slice(&encoded);
         }
         transaction.next_statement.set(next);
         Ok(RowStatementView {
             transaction,
             rc_snapshot: snapshot,
             sequence,
+            mark,
             phase: Cell::new(Phase::Active),
             revision: Cell::new(0),
             source,
@@ -780,19 +833,29 @@ impl<'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
         owner: &mut Owner<'c, 's>,
         mut view: RowStatementView<'t, 'v, 'a, 'c, 's>,
     ) -> std::result::Result<(), StatementFinishError<RowStatementView<'t, 'v, 'a, 'c, 's>>> {
-        // No Row view exists before the Row statement supply; refuse by kind.
-        if view.row_scope() {
-            return Err(StatementFinishError::Before {
-                error: unchanged(RetentionPhase::Finalize, RetentionCause::Unsupported),
-                view,
-            });
-        }
-        if view.transaction.lease.actor.is_some() {
-            let checked = self.catalog_transaction_check(owner, |writer, owner| {
+        if let Some(actor) = view.transaction.lease.actor {
+            // A writable statement ends under the fixed progress class of its
+            // capsule kind (ROW-BEGIN-001: finish_statement dispatches by
+            // kind; RowProgress reserves the same CatalogProgressCharge).
+            let row_scope = view.row_scope();
+            let class = if row_scope {
+                source::OperationClass::RowProgress
+            } else {
+                source::OperationClass::CatalogProgress
+            };
+            let checked = self.transaction_check(owner, class, |writer, owner| {
                 writer.transaction_entry(owner)?;
                 writer.transaction_matches(view.transaction)?;
                 view.check()?;
-                writer.check_catalog_statement_finish(&view)?;
+                if row_scope {
+                    // A Reserved or Aborting actor is Before(WrongState). A
+                    // clean end writes no WAL and keeps the unused 6080-byte
+                    // statement credit for the next mark (consumer contract,
+                    // row-shape): nothing durable changes here.
+                    writer.row_statement_head(actor, RetentionPhase::Finalize)?;
+                } else {
+                    writer.check_catalog_statement_finish(&view)?;
+                }
                 view.close()
             });
             return match checked {
@@ -968,6 +1031,11 @@ pub(super) fn source_bytes() -> usize {
         + 16 * size_of::<&()>()
         + 2 * size_of::<Result<TxnRef>>()
         + 2 * size_of::<TxnRef>()
+        // The statement mark: the view's copy and begin's chosen value, the
+        // slot's decoded mark at each boundary, and begin's encoded bytes.
+        + 2 * size_of::<Option<UndoRef>>()
+        + 2 * size_of::<Option<Option<UndoRef>>>()
+        + size_of::<Option<[u8; UNDO_REF_BYTES]>>()
         + size_of::<[u64; 4]>()
         + visibility::source_census().peak_leaf
 }
