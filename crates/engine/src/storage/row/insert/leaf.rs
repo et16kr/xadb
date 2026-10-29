@@ -26,6 +26,8 @@ const MIN_ENTRY_COST: usize = ROW_HEADER_BYTES + MIN_CANONICAL_BYTES + 16;
 const ROW_EDIT_CELLS: usize = TREE_ENTRY_CAPACITY / MIN_ENTRY_COST + 2;
 const MAX_RECORD_BYTES: usize = ROW_HEADER_BYTES + INLINE_ROW_BYTES;
 const MAX_CELL_BYTES: usize = 12 + MAX_RECORD_BYTES;
+/// Row and cell scratch that `produce` and `check` require.
+pub(super) const LEAF_SCRATCH_BYTES: usize = MAX_RECORD_BYTES + MAX_CELL_BYTES;
 
 pub(super) struct LeafSource<'a> {
     view: TreePageView<'a>,
@@ -101,6 +103,21 @@ pub(super) fn produce(
     scratch: &mut [u8],
     output: &mut [u8; PAGE_BYTES],
 ) -> Result<LeafBytes> {
+    edit(input, scratch, Some(output))
+}
+
+/// Run every `produce` refusal (duplicate RowId, inline limit, capacity and
+/// split) without an output page. On success `scratch[..record_bytes]` holds
+/// the candidate XRW1 record that `produce` would insert.
+pub(super) fn check(input: LeafInput<'_>, scratch: &mut [u8]) -> Result<LeafBytes> {
+    edit(input, scratch, None)
+}
+
+fn edit(
+    input: LeafInput<'_>,
+    scratch: &mut [u8],
+    output: Option<&mut [u8; PAGE_BYTES]>,
+) -> Result<LeafBytes> {
     let source = inspect(input.namespace, input.expected, input.schema, input.before)?;
     if input.lsn.0 <= source.view.header().lsn.0
         || input.version.undo.is_none()
@@ -115,7 +132,7 @@ pub(super) fn produce(
     if input.canonical.len() + ROW_HEADER_BYTES + 16 > source.free_bytes {
         return Err(InsertError::Capacity);
     }
-    if scratch.len() < MAX_RECORD_BYTES + MAX_CELL_BYTES {
+    if scratch.len() < LEAF_SCRATCH_BYTES {
         return Err(InsertError::Capacity);
     }
     let (record_space, cell_space) = scratch.split_at_mut(MAX_RECORD_BYTES);
@@ -144,7 +161,9 @@ pub(super) fn produce(
     if plan.needs_split() {
         return Err(InsertError::Capacity);
     }
-    plan.encode(input.lsn, output)?;
+    if let Some(output) = output {
+        plan.encode(input.lsn, output)?;
+    }
     Ok(LeafBytes {
         key,
         record_bytes,
@@ -196,7 +215,7 @@ pub(super) fn current<'a>(
 }
 
 /// Physically remove the U-owned Missing INSERT row: the CLR RowLeaf after.
-/// Errors preserve `output`; the caller already proved the exact current row.
+/// Errors preserve `output`; `None` runs the same checks without a page.
 pub(super) fn remove(
     namespace: Namespace,
     expected: TreeExpectation,
@@ -204,7 +223,7 @@ pub(super) fn remove(
     before: &[u8; PAGE_BYTES],
     row: RowId,
     lsn: PageLsn,
-    output: &mut [u8; PAGE_BYTES],
+    output: Option<&mut [u8; PAGE_BYTES]>,
 ) -> Result<()> {
     let source = inspect(namespace, expected, schema, before)?;
     if lsn.0 <= source.view.header().lsn.0 {
@@ -215,7 +234,9 @@ pub(super) fn remove(
     let plan = source
         .view
         .prepare_leaf_edit(LeafEdit::Remove(&key), &mut cells)?;
-    plan.encode(lsn, output)?;
+    if let Some(output) = output {
+        plan.encode(lsn, output)?;
+    }
     Ok(())
 }
 
@@ -234,6 +255,7 @@ pub(super) fn local_source_carrier_bytes() -> usize {
         + 2 * size_of::<LeafBytes>()
         + 2 * size_of::<RecordExpectation>()
         + 2 * size_of::<RecordVersion>()
+        + size_of::<Option<&mut [u8; PAGE_BYTES]>>()
         + 12 * size_of::<usize>()
         + 6 * size_of::<&[u8]>()
         + 16

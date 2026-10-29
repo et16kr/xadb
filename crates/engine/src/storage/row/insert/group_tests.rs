@@ -1,5 +1,6 @@
 //! C0_ONLY MCA00-V06: complete scope3 Row INSERT Forward/CLR candidates, H
-//! absent and present, against independent make_literals.py bytes. Literal
+//! absent and present, and a Forward whose physical page order differs from
+//! the role order, against independent make_literals.py bytes. Literal
 //! observations confer no actual source, reservation, pin or apply rights.
 
 use super::{
@@ -9,16 +10,18 @@ use super::{
 use crate::{
     api::{Column, DataType, DatabaseId, Namespace},
     storage::{
+        allocation_page::ReservationOwner,
         control::{Profile, row_profile},
         disk::RowPageRole,
+        obligation,
         page::{FileId, PAGE_BYTES, PageIdentity, PageKind, PageRef},
-        retention_obligation,
+        retention_obligation::{self, AgingObligationError, profile_reference},
         retention_page::{JOB_BYTES, JOB_COUNT, row::JobCells},
         row_record::RowSchemaInput,
         semantic_row::{self, jobs, ledger, status, undo},
         status_home::StatusHome,
         transaction_record::{StatusSlotRef, TxnRef},
-        tree_page::TreeExpectation,
+        tree_page::{TreeExpectation, edit::LeafEditError},
         undo_record::UndoLink,
         undo_ref::UndoRef,
         wal_frame::{FrameExpectation, FrameKind, WalFrameHeader, WalStreamIdentity},
@@ -54,6 +57,14 @@ const ROLES: [RowPageRole; 5] = [
     RowPageRole::Undo,
     RowPageRole::RowLeaf,
 ];
+/// ForwardOrd: U on page14 follows the RowLeaf page13 in physical order.
+const ORD_ROLES: [RowPageRole; 5] = [
+    RowPageRole::Root,
+    RowPageRole::RootJob,
+    RowPageRole::Status,
+    RowPageRole::RowLeaf,
+    RowPageRole::Undo,
+];
 const ROOT_CELL: (u16, u16, u16) = (0, 15_840, 512);
 const STATUS_CELL: (u16, u16, u16) = (0, 16_128, 224);
 const UNDO_CELL: (u16, u16, u16) = (0, 15_920, 432);
@@ -65,6 +76,7 @@ enum Case {
     ForwardH,
     ClrNoH,
     ClrH,
+    ForwardOrd,
 }
 
 fn generation(value: u64) -> Generation {
@@ -196,7 +208,8 @@ struct Fixture {
 impl Fixture {
     fn new(case: Case) -> Self {
         let h = matches!(case, Case::ForwardH | Case::ClrH);
-        let forward = matches!(case, Case::ForwardNoH | Case::ForwardH);
+        let forward = matches!(case, Case::ForwardNoH | Case::ForwardH | Case::ForwardOrd);
+        let u_page = if case == Case::ForwardOrd { 14 } else { 11 };
         #[rustfmt::skip]
         let (pages, bank, transaction, aging, frame, after, transaction_after, aging_after): (
             [Page; 6], Bank, Descriptor, Descriptor, &'static [u8], [Page; 5], Descriptor, Descriptor,
@@ -237,11 +250,21 @@ impl Fixture {
                  scope3!("h-503-undo11.bin"), scope3!("h-503-leaf.bin")],
                 scope3!("h-503-tx.bin"), scope3!("h-503-aging.bin"),
             ),
+            // The expected after images are in physical order: Leaf, then U.
+            Case::ForwardOrd => (
+                [scope3!("ord-300-root.bin"), scope3!("ord-300-jobs2.bin"), scope3!("ord-300-jobs2.bin"),
+                 scope3!("ord-300-status.bin"), scope3!("ord-300-undo14.bin"), scope3!("ord-300-leaf.bin")],
+                scope3!("ord-300-bank.bin"), scope3!("ord-300-tx.bin"), scope3!("ord-300-aging.bin"),
+                scope3!("ord-301-forward.wal"),
+                [scope3!("ord-301-root.bin"), scope3!("ord-301-jobs2.bin"), scope3!("ord-301-status.bin"),
+                 scope3!("ord-301-leaf.bin"), scope3!("ord-301-undo14.bin")],
+                scope3!("ord-301-tx.bin"), scope3!("ord-301-aging.bin"),
+            ),
         };
         // H absent: terminal2 and U3 share Jobs page2. H present: terminal14
         // is on page2, U16 on page3, and H is the unchanged Undo page10.
         let (ordinal, terminal, sequence, lsn) = match case {
-            Case::ForwardNoH => (3, 2, 1, 301),
+            Case::ForwardNoH | Case::ForwardOrd => (3, 2, 1, 301),
             Case::ClrNoH => (3, 2, 1, 303),
             Case::ForwardH => (16, 14, 2, 501),
             Case::ClrH => (16, 14, 2, 503),
@@ -300,7 +323,7 @@ impl Fixture {
                 PageKind::TransactionStatus,
                 Some(STATUS_CELL),
             ),
-            source(4, identity(11, 2, 3), PageKind::Undo, Some(UNDO_CELL)),
+            source(4, identity(u_page, 2, 3), PageKind::Undo, Some(UNDO_CELL)),
             source(5, identity(13, 2, 6), PageKind::RowLeaf, leaf_cell),
             None,
             source(
@@ -351,7 +374,7 @@ impl Fixture {
             ordinal,
             terminal,
             undo: UndoLink {
-                reference: undo_ref(11, 3),
+                reference: undo_ref(u_page, 3),
                 sequence,
             },
             predecessor: h.then(h_link),
@@ -364,7 +387,11 @@ impl Fixture {
             projection,
             target: (h && !forward).then(|| h_link().reference),
             next: (h && !forward).then(h_link),
-            after_order: ROLES,
+            after_order: if case == Case::ForwardOrd {
+                ORD_ROLES
+            } else {
+                ROLES
+            },
             frame,
             after,
             transaction_after,
@@ -373,7 +400,18 @@ impl Fixture {
     }
 
     fn forward(&self) -> bool {
-        matches!(self.case, Case::ForwardNoH | Case::ForwardH)
+        matches!(
+            self.case,
+            Case::ForwardNoH | Case::ForwardH | Case::ForwardOrd
+        )
+    }
+
+    /// Index of a role in the physical after order of this case.
+    fn after_index(&self, role: RowPageRole) -> usize {
+        self.after_order
+            .iter()
+            .position(|candidate| *candidate == role)
+            .unwrap()
     }
 
     fn input(&self) -> GroupInput<'_> {
@@ -449,7 +487,7 @@ fn literal_case(case: Case) {
     let produced = fixture.produce(&mut frame, &mut after).unwrap();
     assert_eq!(produced.frame_len, fixture.frame.len());
     assert_eq!(produced.after_count, 5);
-    assert_eq!(produced.roles, ROLES);
+    assert_eq!(produced.roles, fixture.after_order);
     let h = 128 * usize::from(fixture.predecessor.is_some());
     let fixed = if fixture.forward() { 91_304 } else { 91_096 };
     assert_eq!(produced.frame_len, fixed + 202 + h);
@@ -597,13 +635,106 @@ fn mca00_v06_clr_refusals_precede_output() {
     });
 }
 
+/// U on page14 sorts after the RowLeaf page13: natives, edges, counts and
+/// redo follow (Root, Jobs, Status, Leaf, U), unlike the role order.
+#[test]
+fn mca00_v06_forward_physical_order_differs_from_roles() {
+    literal_case(Case::ForwardOrd);
+    refuses(Case::ForwardOrd, InsertError::IdentityMismatch, |f| {
+        f.after_order = ROLES
+    });
+}
+
+/// The whole RowLeaf plan is checked before the first output byte.
+#[test]
+fn mca00_v06_leaf_refusals_precede_output() {
+    // RowId7 already present (an older committed row) at the same LSN50.
+    refuses(
+        Case::ForwardNoH,
+        InsertError::LeafEdit(LeafEditError::KeyExists),
+        |f| f.before[4] = *scope3!("noh-300-leaf-dup7.bin"),
+    );
+    // 91 free entry bytes cannot hold the 206 that this row needs.
+    refuses(Case::ForwardNoH, InsertError::Capacity, |f| {
+        f.before[4] = *scope3!("noh-300-leaf-full.bin")
+    });
+    // Same length, other value: the record must match the Job projection.
+    refuses(Case::ForwardNoH, InsertError::IdentityMismatch, |f| {
+        f.canonical[21] = b'c'
+    });
+    refuses(Case::ForwardH, InsertError::IdentityMismatch, |f| {
+        f.canonical[5] = 43
+    });
+}
+
+/// Re-encode the Tx before with `extra` more CLR residual WAL/protected.
+fn add_residual(fixture: &mut Fixture, extra: u64) {
+    let mut spec = obligation::decode_descriptor(
+        &fixture.transaction,
+        ReservationOwner::Transaction(actor()),
+        profile_reference(profile()),
+    )
+    .unwrap();
+    spec.remaining[0].wal += extra;
+    spec.remaining[0].protected += extra;
+    obligation::encode_descriptor(&spec, &mut fixture.transaction).unwrap();
+}
+
+/// A stale or future Aging before and an inexact Tx residual are refused
+/// before the first output byte.
+#[test]
+fn mca00_v06_descriptor_refusals_precede_output() {
+    let aging = InsertError::Aging(AgingObligationError::IdentityMismatch);
+    refuses(Case::ClrNoH, aging, |f| {
+        f.aging = *scope3!("noh-300-aging.bin")
+    });
+    refuses(Case::ForwardNoH, aging, |f| {
+        f.aging = *scope3!("noh-301-aging.bin")
+    });
+    refuses(Case::ClrH, aging, |f| f.aging = *scope3!("h-500-aging.bin"));
+    // CLR with one step left but 128 residual bytes would end with WAL
+    // and no step; Forward must carry the residual unchanged and exact.
+    refuses(Case::ClrNoH, InsertError::BudgetMismatch, |f| {
+        add_residual(f, 128)
+    });
+    refuses(Case::ClrH, InsertError::BudgetMismatch, |f| {
+        add_residual(f, 128)
+    });
+    refuses(Case::ForwardNoH, InsertError::BudgetMismatch, |f| {
+        add_residual(f, 128)
+    });
+}
+
+/// writer_epoch0 would fail the envelope; LSN0 pages are genesis images.
+#[test]
+fn mca00_v06_header_and_zero_lsn_refusals_precede_output() {
+    refuses(Case::ForwardNoH, InsertError::IdentityMismatch, |f| {
+        f.header.stream.writer_epoch = 0
+    });
+    refuses(Case::ClrNoH, InsertError::IdentityMismatch, |f| {
+        f.header.stream.writer_epoch = 0
+    });
+    refuses(Case::ForwardNoH, InsertError::OrderMismatch, |f| {
+        f.before[5] = *scope3!("anchor-lsn0.bin")
+    });
+    refuses(Case::ClrH, InsertError::OrderMismatch, |f| {
+        f.before[6] = *scope3!("anchor-lsn0.bin")
+    });
+}
+
 /// Optional C cross-check: the shared scope3 observers accept every produced
 /// group. Descriptor residuals, Aging and Status/Undo/Job transitions are
 /// checked by their original observers; the Leaf observer needs a Catalog
 /// record that these literals do not include.
 #[test]
 fn mca00_v06_produced_groups_pass_c_observers() {
-    for case in [Case::ForwardNoH, Case::ForwardH, Case::ClrNoH, Case::ClrH] {
+    for case in [
+        Case::ForwardNoH,
+        Case::ForwardH,
+        Case::ClrNoH,
+        Case::ClrH,
+        Case::ForwardOrd,
+    ] {
         let fixture = Fixture::new(case);
         let mut frame = [0; FRAME_BYTES];
         let mut after = [[0; PAGE_BYTES]; 5];
@@ -635,7 +766,7 @@ fn mca00_v06_produced_groups_pass_c_observers() {
         });
         let images = status::StatusImages {
             before: status_before,
-            after: &after[2],
+            after: &after[fixture.after_index(RowPageRole::Status)],
         };
         status::observe(
             layout,
@@ -658,7 +789,7 @@ fn mca00_v06_produced_groups_pass_c_observers() {
             },
             undo::UndoImages {
                 before: undo_before,
-                after: &after[3],
+                after: &after[fixture.after_index(RowPageRole::Undo)],
                 predecessor: h.then_some(&fixture.before[7]),
             },
             Some(undo::StatusProof {
@@ -676,7 +807,7 @@ fn mca00_v06_produced_groups_pass_c_observers() {
                 ordinal: fixture.ordinal,
                 images: jobs::JobImages {
                     before: jobs_before,
-                    after: &after[1],
+                    after: &after[fixture.after_index(RowPageRole::RootJob)],
                 },
                 reserve: None,
                 sender: fixture.forward().then_some(&fixture.transaction),
@@ -685,10 +816,12 @@ fn mca00_v06_produced_groups_pass_c_observers() {
         )
         .unwrap_or_else(|error| panic!("{case:?} jobs: {error:?}"));
         let slot = fixture.ordinal % 15;
-        let job: &[u8; JOB_BYTES] = after[1][usize::from(job_cell(slot).1)..][..JOB_BYTES]
+        let jobs_after = &after[fixture.after_index(RowPageRole::RootJob)];
+        let job: &[u8; JOB_BYTES] = jobs_after[usize::from(job_cell(slot).1)..][..JOB_BYTES]
             .try_into()
             .unwrap();
-        let home = StatusHome::decode(&after[2][16_128..16_352]).unwrap();
+        let status_after = &after[fixture.after_index(RowPageRole::Status)];
+        let home = StatusHome::decode(&status_after[16_128..16_352]).unwrap();
         let transaction: &[u8; 1536] = frame[416..1952].try_into().unwrap();
         ledger::validate_transaction(
             transaction,
@@ -700,7 +833,8 @@ fn mca00_v06_produced_groups_pass_c_observers() {
                 .unwrap(),
         )
         .unwrap_or_else(|error| panic!("{case:?} ledger: {error:?}"));
-        retention_obligation::row::decode(&frame[1952..3488], profile(), &after[0])
+        let root_after = &after[fixture.after_index(RowPageRole::Root)];
+        retention_obligation::row::decode(&frame[1952..3488], profile(), root_after)
             .unwrap_or_else(|error| panic!("{case:?} aging: {error:?}"));
     }
 }

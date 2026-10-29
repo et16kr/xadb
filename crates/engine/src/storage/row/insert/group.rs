@@ -1,7 +1,8 @@
 //! Complete scope3 Row INSERT Forward and its CLR over plain observations.
 //! C0 only: every input is a borrowed copy of an owner observation and grants
 //! no reservation, pin, stage, install or recovery authority. The owner must
-//! recheck the whole candidate; an error leaves frame/after unspecified.
+//! recheck the whole candidate. Every refusal over the inputs returns before
+//! the first frame/after byte is written; see `produce`.
 
 mod frame;
 mod images;
@@ -15,9 +16,9 @@ use crate::{
         control::Profile,
         disk::{RowPageRole, RowSourceRole},
         obligation::{self, DescriptorSpec, InventoryClaim, OwnerState, RemainingBudget},
-        page::{self, PAGE_BYTES, PageIdentity, PageKind, PageRef, PageView},
+        page::{self, PAGE_BYTES, PageIdentity, PageKind, PageLsn, PageRef, PageView},
         retention_genesis::{self, RetentionGenesisPage},
-        retention_obligation::profile_reference,
+        retention_obligation::{profile_reference, row as aging_row},
         retention_page::{
             JOB_BYTES, JOB_COUNT,
             row::{self, JobScope, JobState, JobView},
@@ -160,20 +161,33 @@ struct Observed<'a> {
     pages: [Changed<'a>; 5],
 }
 
-/// Produce the whole Forward/CLR candidate. All input checks precede the
-/// first output write; later codec failures may leave partial output bytes.
+/// Produce the whole Forward/CLR candidate. `observe` and `images::prepare`
+/// run every check over the inputs before the first output byte: header and
+/// page LSNs, the leaf insert/remove plan with duplicate RowId and capacity,
+/// the Forward record projection, the exact Tx residual and both Aging
+/// descriptors. A refusal therefore leaves frame/after untouched. The write
+/// pass only places prepared values and re-encodes checked images; an error
+/// there is a broken internal invariant and leaves frame/after unspecified.
 pub(super) fn produce(
     input: &GroupInput<'_>,
     frame: &mut [u8; FRAME_BYTES],
     after: &mut [[u8; PAGE_BYTES]; 5],
 ) -> Result<Produced> {
     let observed = observe(input)?;
-    let job = images::job(&observed)?;
-    let status = images::status(&observed)?;
-    images::pages(&observed, input, &job, status, frame, after)?;
+    let mut prepared = images::Prepared {
+        job: images::job(&observed)?,
+        status: images::status(&observed)?,
+        root: [0; PAGE_BYTES],
+        undo: [0; undo_record::UNDO_RECORD_BYTES],
+        descriptors: [0; images::DESCRIPTORS_BYTES],
+    };
+    images::prepare(&observed, &mut prepared)?;
+
+    // Write pass: every input refusal has already returned above.
+    images::pages(&observed, input, &prepared, frame, after)?;
     let output = &mut frame[..observed.frame_len];
     output.fill(0);
-    images::descriptors(&observed, &job, status, after, output)?;
+    output[416..416 + images::DESCRIPTORS_BYTES].copy_from_slice(&prepared.descriptors);
     frame::write(&observed, after, output)?;
     let mut roles = [RowPageRole::Root; 5];
     for (role, page) in roles.iter_mut().zip(observed.pages) {
@@ -226,8 +240,11 @@ fn checked_page<'a>(
     header: WalFrameHeader,
 ) -> Result<PageView<'a>> {
     let view = page::decode_page(bytes, identity, kind)?;
+    // Like the Status/Undo/Leaf observers, a changed or proof page before is
+    // never the LSN0 genesis image.
     require(
         view.header().level == 0
+            && view.header().lsn.0 != 0
             && view.header().lsn.0 <= header.previous_lsn
             && view.header().lsn.0 < header.lsn,
         InsertError::OrderMismatch,
@@ -422,6 +439,7 @@ fn observe<'a>(input: &GroupInput<'a>) -> Result<Observed<'a>> {
             && header.previous_lsn == input.expected.previous_lsn
             && header.stream.database == namespace.database
             && header.stream.timeline == namespace.timeline
+            && header.stream.writer_epoch != 0
             && header.txn == Some(actor.id())
             && header.previous_lsn < header.lsn
             && header.previous_txn_lsn != 0
@@ -476,11 +494,31 @@ fn observe<'a>(input: &GroupInput<'a>) -> Result<Observed<'a>> {
             && terminal.status() == Some(input.status),
         InsertError::IdentityMismatch,
     )?;
+    // One pass also sums the exact CLR residual row of this actor: one CLR
+    // debt per Reserved/Retained Row root, each with its own h recipe.
     let mut previous: Option<JobView<'_>> = None;
+    let (mut clr_steps, mut clr_wal) = (0u64, 0u64);
     for other in 0..JOB_COUNT {
         let candidate = row::decode_job(&input.jobs[other], namespace)?;
+        if candidate.source() != Some(actor) {
+            continue;
+        }
+        if matches!(
+            candidate.state(),
+            JobState::RootReserved | JobState::RootRetained
+        ) {
+            let recipe = candidate
+                .has_previous_transaction()
+                .ok_or(InsertError::IdentityMismatch)?;
+            let owed = debt(CLR_FIXED, candidate.cell_bytes() as usize, recipe, 0);
+            clr_steps = clr_steps
+                .checked_add(1)
+                .ok_or(InsertError::BudgetMismatch)?;
+            clr_wal = clr_wal
+                .checked_add(owed.wal)
+                .ok_or(InsertError::BudgetMismatch)?;
+        }
         if other != ordinal
-            && candidate.source() == Some(actor)
             && candidate.state() == JobState::RootRetained
             && candidate.undo_sequence() < input.undo.sequence
             && previous.is_none_or(|old| old.undo_sequence() < candidate.undo_sequence())
@@ -623,7 +661,6 @@ fn observe<'a>(input: &GroupInput<'a>) -> Result<Observed<'a>> {
         ReservationOwner::Transaction(actor),
         profile_reference(profile),
     )?;
-    let clr_debt = debt(CLR_FIXED, cell, h, 0);
     require(
         transaction.owner == OwnerState::Transaction(core)
             && transaction.chain.apply == header.previous_txn_lsn
@@ -631,10 +668,17 @@ fn observe<'a>(input: &GroupInput<'a>) -> Result<Observed<'a>> {
             && transaction.inventory.growth_extents == 0,
         InsertError::IdentityMismatch,
     )?;
+    // The residual is exact, so the CLR after row (one step and this C/h
+    // debt less) cannot underflow or leave WAL without a step.
+    let residual = RemainingBudget {
+        steps: clr_steps,
+        wal: clr_wal,
+        peak: row::ROW_PEAK,
+        protected: clr_wal,
+        ..RemainingBudget::default()
+    };
     require(
-        transaction.remaining[0].steps >= 1
-            && transaction.remaining[0].wal >= clr_debt.wal
-            && transaction.remaining[0].protected >= clr_debt.wal,
+        clr_steps >= 1 && transaction.remaining[0] == residual,
         InsertError::BudgetMismatch,
     )?;
     if forward {
@@ -658,6 +702,8 @@ fn observe<'a>(input: &GroupInput<'a>) -> Result<Observed<'a>> {
             InsertError::BudgetMismatch,
         )?;
     }
+    // Aging before: bound to this Root before (sequence, work digest, chain).
+    aging_row::decode(aging, profile, root_bytes)?;
 
     // U before: the reserved Free generation or the Live material.
     let undo_identity = fixed_identity(namespace, input.undo.reference.page(), 3);
@@ -782,6 +828,43 @@ fn observe<'a>(input: &GroupInput<'a>) -> Result<Observed<'a>> {
         actual_cell,
         false,
     )?;
+    // The whole leaf edit plan, before writes: duplicate RowId, inline limit
+    // and capacity for Forward; the exact removal for CLR. The Forward record
+    // must be the one the RootJob projection committed to at reserve.
+    let version = current_version(actor, input.row, job, input.undo.reference)?;
+    match input.change {
+        Change::Forward { canonical } => {
+            let mut scratch = [0; leaf::LEAF_SCRATCH_BYTES];
+            let candidate = leaf::check(
+                leaf::LeafInput {
+                    namespace,
+                    expected: input.leaf,
+                    before: leaf_bytes,
+                    schema: input.schema,
+                    canonical,
+                    version,
+                    lsn: PageLsn(header.lsn),
+                },
+                &mut scratch,
+            )?;
+            let record = &scratch[..candidate.record_bytes];
+            require(
+                record.len() + 12 == cell
+                    && projection(input.table, input.row, Some(record))?
+                        == *job.projection_digest(),
+                InsertError::IdentityMismatch,
+            )?;
+        }
+        Change::Clr { .. } => leaf::remove(
+            namespace,
+            input.leaf,
+            input.schema,
+            leaf_bytes,
+            input.row,
+            PageLsn(header.lsn),
+            None,
+        )?,
+    }
 
     if forward {
         require(
@@ -946,6 +1029,10 @@ pub(super) fn local_source_carrier_bytes() -> usize {
         + size_of::<[u8; 256]>()
         + size_of::<[&[u8]; 15]>()
         + 2 * size_of::<DescriptorSpec>()
+        + size_of::<images::Prepared>()
+        + size_of::<[u8; leaf::LEAF_SCRATCH_BYTES]>()
+        + size_of::<leaf::LeafInput<'_>>()
+        + size_of::<RemainingBudget>()
         + images::local_source_carrier_bytes()
         + frame::local_source_carrier_bytes()
 }

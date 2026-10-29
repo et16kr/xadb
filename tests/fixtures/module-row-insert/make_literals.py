@@ -81,7 +81,7 @@ DYNAMIC = 2  # incarnation of every dynamic page below
 STATUS_PAGE, H_PAGE, U_PAGE, ANCHOR_PAGE, LEAF_PAGE = 9, 10, 11, 12, 13
 KIND = {"leaf": 1, "undo": 8, "status": 9, "anchor": 11, "root": 12, "jobs": 13}
 NATIVE = {"leaf": 1, "undo": 3, "status": 5, "root": 8, "jobs": 9}
-ROLES = ("root", "jobs", "status", "undo", "leaf")  # physical order 1,2..6,9,11,13
+ROLES = ("root", "jobs", "status", "undo", "leaf")  # sorted by page below
 
 
 def sha(data):
@@ -236,13 +236,13 @@ def leaf_slot(page_bytes, row):
     raise ValueError(row)
 
 
-def anchor_page():
+def anchor_page(lsn=5):
     cell = bytearray(48)
     cell[:4] = b"XTA1"
     pack_into("<HBB", cell, 4, 1, KIND["leaf"], 0)
     cell[8:32] = page_ref(LEAF_PAGE, DYNAMIC)
     pack_into("<Q", cell, 32, 1)
-    return page("anchor", ANCHOR_PAGE, DYNAMIC, TABLE[0], 5, [bytes(cell)])
+    return page("anchor", ANCHOR_PAGE, DYNAMIC, TABLE[0], lsn, [bytes(cell)])
 
 
 def undo_cell(generation, state=0, plan=None, incoming=0, cut=False):
@@ -664,9 +664,19 @@ class History:
         missing = projection(plan["row"], None)
         core[176:208], core[208:240] = (missing, present) if forward else (present, missing)
 
+        # Changed pages in physical (file, page) order; one file here.
+        identities = dict(
+            root=(1, 1, 4),
+            jobs=(2 + ordinal // 15, 1, 4),
+            status=(STATUS_PAGE, DYNAMIC, 2),
+            undo=(plan["page"], DYNAMIC, 3),
+            leaf=(LEAF_PAGE, DYNAMIC, TABLE[0]),
+        )
+        order = sorted(ROLES, key=lambda role: identities[role][0])
+        at = {role: index for index, role in enumerate(order)}
         slots = dict(root=0, jobs=ordinal % 15, status=0, undo=0)
         natives = b""
-        for index, role in enumerate(ROLES):
+        for index, role in enumerate(order):
             if role == "leaf" and forward:
                 sides = (None, (after[role], leaf_slot(after[role], plan["row"])))
             elif role == "leaf":
@@ -675,13 +685,18 @@ class History:
                 sides = ((before[role], slots[role]), (after[role], slots[role]))
             natives += native(NATIVE[role], index, *sides)
         old, new = (None, u_target) if forward else (u_target, None)
-        edges = [edge(2, 10, h_target, u_target) if forward else edge(2, 10, u_target, h_target)]
+        # (native index, role, old, new); written sorted by (index, role).
+        pending = [(at["status"], 10, *((h_target, u_target) if forward else (u_target, h_target)))]
         if h:
-            edges.append(edge(3, 4, None, h_target) if forward else edge(3, 4, h_target, None))
-        edges += [edge(4, 1, old, new), edge(4, 7, *((None, TXN_TARGET) if forward else (TXN_TARGET, None)))]
+            pending.append((at["undo"], 4, *((None, h_target) if forward else (h_target, None))))
+        pending += [
+            (at["leaf"], 1, old, new),
+            (at["leaf"], 7, *((None, TXN_TARGET) if forward else (TXN_TARGET, None))),
+        ]
+        edges = [edge(*item) for item in sorted(pending, key=lambda item: item[:2])]
         counts = [
-            count(u_target, *((0, 2) if forward else (2, 0)), 3),
-            count(TXN_TARGET, incoming, incoming + 1 if forward else incoming - 1, 2),
+            count(u_target, *((0, 2) if forward else (2, 0)), at["undo"]),
+            count(TXN_TARGET, incoming, incoming + 1 if forward else incoming - 1, at["status"]),
         ]
         deltas = b""
         if forward:
@@ -689,14 +704,7 @@ class History:
             delta[:2] = b"\x02\x01"
             delta[16:112] = undo_item(plan)
             deltas = bytes(delta)
-        identities = dict(
-            root=(1, 1, 4),
-            jobs=(2 + ordinal // 15, 1, 4),
-            status=(STATUS_PAGE, DYNAMIC, 2),
-            undo=(plan["page"], DYNAMIC, 3),
-            leaf=(LEAF_PAGE, DYNAMIC, TABLE[0]),
-        )
-        redos = b"".join(redo(role, *identities[role], before[role], after[role]) for role in ROLES)
+        redos = b"".join(redo(role, *identities[role], before[role], after[role]) for role in order)
         auxiliary = b"".join(edges) + b"".join(counts) + deltas
         length = 160 + 256 + 3072 + 256 + len(natives) + len(auxiliary) + len(redos) + 32
         assert length == (91_304 if forward else 91_096) + cell + 128 * h
@@ -752,6 +760,17 @@ def write_scope3():
     u = plan(7, 42, "xadb", U_PAGE, 3, 1, 1, None)
     noh.reserve(300, 3, u)
     keep("noh-300", noh.snapshot([2, 3], [U_PAGE]))
+    # Refusal inputs at the same LSN50: RowId7 already present (an older
+    # committed row) and a leaf whose free bytes are below the 206 that the
+    # 22-byte canonical needs (2 rows + 8 fillers of text 1760).
+    literals["noh-300-leaf-dup7.bin"] = leaf_page({**noh.rows, 7: record(7, canonical(5, "old"))}, noh.leaf_lsn)
+    full = dict(noh.rows)
+    for row in range(10, 18):
+        full[row] = record(row, canonical(row, "f" * 1760))
+    free = 16188 - sum(len(value) + 16 for value in full.values())
+    assert 0 <= free < 22 + 168 + 16, free
+    literals["noh-300-leaf-full.bin"] = leaf_page(full, noh.leaf_lsn)
+    literals["anchor-lsn0.bin"] = anchor_page(0)
     literals["noh-301-forward.wal"] = noh.change(True, 301, 300, 3, u)
     keep("noh-301", noh.snapshot([2, 3], [U_PAGE]))
     noh.rollback_start(302)
@@ -774,6 +793,16 @@ def write_scope3():
     keep("h-502", hist.snapshot([16], []), {"status", "tx"})
     literals["h-503-clr.wal"] = hist.change(False, 503, 502, 16, up)
     keep("h-503", hist.snapshot([16], [U_PAGE]))
+
+    # Physical order differs from the role order: U on page14 follows the
+    # RowLeaf page13, so natives/redo are Root, Jobs, Status, Leaf, Undo.
+    order = History(2)
+    order.begin(200, 2)
+    up14 = plan(7, 42, "xadb", 14, 3, 1, 1, None)
+    order.reserve(300, 3, up14)
+    keep("ord-300", order.snapshot([2, 3], [14]))
+    literals["ord-301-forward.wal"] = order.change(True, 301, 300, 3, up14)
+    keep("ord-301", order.snapshot([2, 3], [14]))
 
     SCOPE3.mkdir(exist_ok=True)
     for name, data in literals.items():

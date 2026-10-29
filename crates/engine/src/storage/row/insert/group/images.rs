@@ -1,5 +1,6 @@
-//! Five changed page after images and both handoff descriptors. Every input
-//! here was checked by `observe`; the codecs below recheck their own grammar.
+//! Five changed page after images and both handoff descriptors. `prepare`
+//! computes every fallible after value before the first output byte; `pages`
+//! then only places them and re-encodes images whose inputs `observe` checked.
 
 use super::{
     CLR_FIXED, Change, GroupInput, InsertError, Observed, Result, debt, encode_material, leaf,
@@ -98,6 +99,73 @@ pub(super) fn status(observed: &Observed<'_>) -> Result<StatusHome> {
     )?)
 }
 
+/// Tx then Aging descriptor after, frame bytes [416..3488).
+pub(super) const DESCRIPTORS_BYTES: usize = 2 * 1536;
+
+/// After values computed from the observation before any output byte.
+pub(super) struct Prepared {
+    pub(super) job: [u8; JOB_BYTES],
+    pub(super) status: StatusHome,
+    /// Complete Root after page; the Aging after binds its digest.
+    pub(super) root: [u8; PAGE_BYTES],
+    pub(super) undo: [u8; UNDO_RECORD_BYTES],
+    pub(super) descriptors: [u8; DESCRIPTORS_BYTES],
+}
+
+/// Root after page, U after cell and both descriptor afters. Root revision,
+/// Tx chain/consumed arithmetic, the CLR residual step, the after Job census
+/// and the whole Aging transition (its before included) are checked here.
+pub(super) fn prepare(observed: &Observed<'_>, prepared: &mut Prepared) -> Result<()> {
+    root(observed, &prepared.job, &mut prepared.root)?;
+    encode_material(observed, observed.forward, &mut prepared.undo)?;
+    let (transaction, aging_after) = prepared.descriptors.split_at_mut(1536);
+    descriptor(observed, prepared.status, transaction)?;
+    let index = role_index(observed, RowPageRole::Root);
+    let mut aggregate = [0; 640];
+    aging::next(
+        AgingTransition {
+            profile: observed.profile,
+            before_descriptor: Some(observed.aging),
+            before_root: observed.pages[index].before,
+            after_root: &prepared.root,
+            jobs: JobCells::original(observed.jobs).replace(observed.ordinal, &prepared.job)?,
+        },
+        &mut aggregate,
+        aging_after,
+    )?;
+    Ok(())
+}
+
+/// Root after: revision+1, apply LSN, and the after Job census summary.
+fn root(
+    observed: &Observed<'_>,
+    job: &[u8; JOB_BYTES],
+    output: &mut [u8; PAGE_BYTES],
+) -> Result<()> {
+    let namespace = observed.namespace;
+    let page = observed.pages[role_index(observed, RowPageRole::Root)];
+    let (_, root) = row::decode_root_page(page.before, namespace)?;
+    let mut cell = *root.bytes();
+    put(
+        &mut cell,
+        64,
+        root.revision()
+            .checked_add(1)
+            .ok_or(InsertError::OrderMismatch)?,
+    );
+    put(&mut cell, 80, observed.header.lsn);
+    let cells = JobCells::original(observed.jobs).replace(observed.ordinal, job)?;
+    let mut aggregate = [0; 640];
+    let (masks, digest) = row::summarize_jobs(cells, namespace, &mut aggregate)?;
+    for (at, mask) in [96, 104, 112].into_iter().zip(masks) {
+        put(&mut cell, at, mask);
+    }
+    cell[128..160].copy_from_slice(&digest);
+    cell[160..192].copy_from_slice(&content_digest(&aggregate));
+    row::encode_root_page(&cell, namespace, output)?;
+    Ok(())
+}
+
 fn header(observed: &Observed<'_>, index: usize) -> PageHeader {
     let page = observed.pages[index];
     PageHeader {
@@ -109,41 +177,22 @@ fn header(observed: &Observed<'_>, index: usize) -> PageHeader {
 }
 
 /// Write all five after images in physical order. The frame is used only as
-/// row/cell scratch here and is cleared by the caller before framing.
+/// row/cell scratch here and is cleared by the caller before framing. Every
+/// input refusal already returned from `observe` or `prepare`.
 pub(super) fn pages(
     observed: &Observed<'_>,
     input: &GroupInput<'_>,
-    job: &[u8; JOB_BYTES],
-    status: StatusHome,
+    prepared: &Prepared,
     scratch: &mut [u8],
     after: &mut [[u8; PAGE_BYTES]; 5],
 ) -> Result<()> {
     let namespace = observed.namespace;
     let lsn = observed.header.lsn;
+    let job = &prepared.job;
     for (index, output) in after.iter_mut().enumerate() {
         let page = observed.pages[index];
         match page.role {
-            RowPageRole::Root => {
-                let (_, root) = row::decode_root_page(page.before, namespace)?;
-                let mut cell = *root.bytes();
-                put(
-                    &mut cell,
-                    64,
-                    root.revision()
-                        .checked_add(1)
-                        .ok_or(InsertError::OrderMismatch)?,
-                );
-                put(&mut cell, 80, lsn);
-                let cells = JobCells::original(observed.jobs).replace(observed.ordinal, job)?;
-                let mut aggregate = [0; 640];
-                let (masks, digest) = row::summarize_jobs(cells, namespace, &mut aggregate)?;
-                for (at, mask) in [96, 104, 112].into_iter().zip(masks) {
-                    put(&mut cell, at, mask);
-                }
-                cell[128..160].copy_from_slice(&digest);
-                cell[160..192].copy_from_slice(&content_digest(&aggregate));
-                row::encode_root_page(&cell, namespace, output)?;
-            }
+            RowPageRole::Root => *output = prepared.root,
             RowPageRole::RootJob => {
                 let base = observed.ordinal / 15 * 15;
                 let count = if base == 60 { JOB_COUNT - 60 } else { 15 };
@@ -159,13 +208,11 @@ pub(super) fn pages(
             }
             RowPageRole::Status => {
                 let mut cell = [0; STATUS_HOME_BYTES];
-                status.encode(&mut cell)?;
+                prepared.status.encode(&mut cell)?;
                 page::encode_page(header(observed, index), &[&cell], output)?;
             }
             RowPageRole::Undo => {
-                let mut cell = [0; UNDO_RECORD_BYTES];
-                encode_material(observed, observed.forward, &mut cell)?;
-                page::encode_page(header(observed, index), &[&cell], output)?;
+                page::encode_page(header(observed, index), &[&prepared.undo], output)?;
             }
             RowPageRole::RowLeaf => {
                 let lsn = PageLsn(lsn);
@@ -197,7 +244,7 @@ pub(super) fn pages(
                         page.before,
                         observed.row,
                         lsn,
-                        output,
+                        Some(output),
                     )?,
                 }
             }
@@ -222,14 +269,9 @@ fn role_index(observed: &Observed<'_>, role: RowPageRole) -> usize {
         .expect("five distinct roles")
 }
 
-/// Tx and Aging descriptor after images at their fixed frame positions.
-pub(super) fn descriptors(
-    observed: &Observed<'_>,
-    job: &[u8; JOB_BYTES],
-    status: StatusHome,
-    after: &[[u8; PAGE_BYTES]; 5],
-    output: &mut [u8],
-) -> Result<()> {
+/// Tx descriptor after. `observe` proved the CLR residual exact, so its one
+/// step and C/h debt are removed without underflow; checked anyway.
+fn descriptor(observed: &Observed<'_>, status: StatusHome, output: &mut [u8]) -> Result<()> {
     let TransactionStatusCell::Occupied(core) = status.core() else {
         return Err(InsertError::OrderMismatch);
     };
@@ -261,7 +303,10 @@ pub(super) fn descriptors(
     } else {
         let clr = debt(CLR_FIXED, observed.cell, observed.predecessor.is_some(), 0);
         let old = spec.remaining[0];
-        let steps = old.steps - 1;
+        let steps = old
+            .steps
+            .checked_sub(1)
+            .ok_or(InsertError::BudgetMismatch)?;
         let wal = old
             .wal
             .checked_sub(clr.wal)
@@ -279,32 +324,19 @@ pub(super) fn descriptors(
             }
         };
     }
-    obligation::encode_descriptor(&spec, &mut output[416..1952])?;
-
-    let root = role_index(observed, RowPageRole::Root);
-    let mut aggregate = [0; 640];
-    aging::next(
-        AgingTransition {
-            profile: observed.profile,
-            before_descriptor: Some(observed.aging),
-            before_root: observed.pages[root].before,
-            after_root: &after[root],
-            jobs: JobCells::original(observed.jobs).replace(observed.ordinal, job)?,
-        },
-        &mut aggregate,
-        &mut output[1952..3488],
-    )?;
+    obligation::encode_descriptor(&spec, output)?;
     Ok(())
 }
 
+/// Locals of this module; the caller's `Prepared` is counted by its owner.
 pub(super) fn local_source_carrier_bytes() -> usize {
     use std::mem::size_of;
-    2 * size_of::<[u8; JOB_BYTES]>()
+    size_of::<[u8; JOB_BYTES]>()
+        + size_of::<Result<[u8; JOB_BYTES]>>()
         + 2 * size_of::<[u8; 640]>()
         + size_of::<[u8; 512]>()
         + size_of::<[&[u8]; 15]>()
         + size_of::<[u8; STATUS_HOME_BYTES]>()
-        + size_of::<[u8; UNDO_RECORD_BYTES]>()
         + size_of::<obligation::DescriptorSpec>()
         + size_of::<AgingTransition<'_>>()
         + 2 * size_of::<StatusHome>()

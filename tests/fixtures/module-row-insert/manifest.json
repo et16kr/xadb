@@ -51,14 +51,14 @@
     "after_lsn": 12
   },
   "authority": "none; these literal observations cannot open a DB or create a CheckedTable, reserve, pin or receipt",
-  "coverage": "RowLeaf component (MCA-LEAF-V01..V05) and MCA00-V06 complete scope3 Forward/CLR candidates with H absent and present; actual reserve, stage, apply, WAL append, install and recovery remain the original owner's and are not covered",
+  "coverage": "RowLeaf component (MCA-LEAF-V01..V05) and MCA00-V06 complete scope3 Forward/CLR candidates with H absent and present, a Forward whose physical page order differs from the role order, and input refusals (duplicate RowId, leaf capacity, record projection, stale Aging, inexact Tx residual, writer_epoch0, LSN0 page) that return before any frame/after byte; actual reserve, stage, apply, WAL append, install and recovery remain the original owner's and are not covered",
   "status": "FROZEN_INPUTS_NOT_EXECUTION_EVIDENCE",
   "budget": {
-    "total_seconds": 600,
+    "total_seconds": 900,
     "case_seconds": 30,
     "output_bytes": 8388608,
     "stack_bytes": 33554432,
-    "basis": "30 s for each of 17 runtime cases plus check/list/compile steps; RUST_MIN_STACK=33554432 per test thread; each log at most 8 MiB"
+    "basis": "r2 runs 16 selectors once each (5 MCA-LEAF whose leaf::produce was refactored, 7 changed MCA00-V06, 4 new MCA00-V06) at 30 s each plus check/list/compile steps; MCA00-V01..V05 code is unchanged and not rerun; RUST_MIN_STACK=33554432 per test thread; each log at most 8 MiB"
   },
   "runtime_tests": [
     {
@@ -89,62 +89,94 @@
     {
       "selector": "storage::row::insert::tests::mca_leaf_v01_inline_and_capacity_boundaries",
       "contract_case": "MCA-LEAF-V01",
-      "changed_code": "new inline2048, leaf capacity minus-one/exact and short candidate refusal"
+      "changed_code": "new inline2048, leaf capacity minus-one/exact and short candidate refusal",
+      "r2_changed_code": "r2: leaf::produce now wraps the shared edit() also used by leaf::check"
     },
     {
       "selector": "storage::row::insert::tests::mca_leaf_v02_row_key_and_page_match_independent_literals",
       "contract_case": "MCA-LEAF-V02",
-      "changed_code": "new leaf producer compared with independently authored XRW1/empty/middle-insert pages"
+      "changed_code": "new leaf producer compared with independently authored XRW1/empty/middle-insert pages",
+      "r2_changed_code": "r2: leaf::produce now wraps the shared edit() also used by leaf::check"
     },
     {
       "selector": "storage::row::insert::tests::mca_leaf_v03_maximum_minimal_rows_use_bounded_scratch",
       "contract_case": "MCA-LEAF-V03",
-      "changed_code": "new bounded87-reference scratch,84->85 literal rows and nextCapacity"
+      "changed_code": "new bounded87-reference scratch,84->85 literal rows and nextCapacity",
+      "r2_changed_code": "r2: leaf::produce now wraps the shared edit() also used by leaf::check"
     },
     {
       "selector": "storage::row::insert::tests::mca_leaf_v04_duplicate_and_corrupt_existing_row_preserve_output",
       "contract_case": "MCA-LEAF-V04",
-      "changed_code": "new duplicate and valid-envelope/corrupt-row errors preserve after"
+      "changed_code": "new duplicate and valid-envelope/corrupt-row errors preserve after",
+      "r2_changed_code": "r2: leaf::produce now wraps the shared edit() also used by leaf::check"
     },
     {
       "selector": "storage::row::insert::tests::mca_leaf_v05_stale_lsn_wrong_owner_and_small_scratch_preserve_output",
       "contract_case": "MCA-LEAF-V05",
-      "changed_code": "new identity/LSN/scratch preconditions preserve after"
+      "changed_code": "new identity/LSN/scratch preconditions preserve after",
+      "r2_changed_code": "r2: leaf::produce now wraps the shared edit() also used by leaf::check"
     },
     {
       "selector": "storage::row::insert::group_tests::mca00_v06_forward_without_h_matches_literals",
       "contract_case": "MCA00-V06",
-      "changed_code": "new produce_insert/group core: H-absent Forward frame, five after images, Tx/Aging descriptors byte-equal to literals"
+      "changed_code": "new produce_insert/group core: H-absent Forward frame, five after images, Tx/Aging descriptors byte-equal to literals",
+      "r2_changed_code": "r2: observe/prepare move leaf plan, exact residual, Aging before/after, writer_epoch and LSN0 checks before the first output byte"
     },
     {
       "selector": "storage::row::insert::group_tests::mca00_v06_forward_with_h_matches_literals",
       "contract_case": "MCA00-V06",
-      "changed_code": "new group core with predecessor H: U.prevTxn edge, Status head H->U, 128-byte h frame growth"
+      "changed_code": "new group core with predecessor H: U.prevTxn edge, Status head H->U, 128-byte h frame growth",
+      "r2_changed_code": "r2: observe/prepare move leaf plan, exact residual, Aging before/after, writer_epoch and LSN0 checks before the first output byte"
     },
     {
       "selector": "storage::row::insert::group_tests::mca00_v06_clr_without_h_matches_literals",
       "contract_case": "MCA00-V06",
-      "changed_code": "new produce_clr/group core: transaction rollback CLR, leaf::remove, U Releasing, Job compensated, Tx CLR debt"
+      "changed_code": "new produce_clr/group core: transaction rollback CLR, leaf::remove, U Releasing, Job compensated, Tx CLR debt",
+      "r2_changed_code": "r2: observe/prepare move leaf plan, exact residual, Aging before/after, writer_epoch and LSN0 checks before the first output byte"
     },
     {
       "selector": "storage::row::insert::group_tests::mca00_v06_clr_with_h_matches_literals",
       "contract_case": "MCA00-V06",
-      "changed_code": "new group core statement rollback CLR to mark H: core target/next, Status head U->H, U prevTxn Cut"
+      "changed_code": "new group core statement rollback CLR to mark H: core target/next, Status head U->H, U prevTxn Cut",
+      "r2_changed_code": "r2: observe/prepare move leaf plan, exact residual, Aging before/after, writer_epoch and LSN0 checks before the first output byte"
     },
     {
       "selector": "storage::row::insert::group_tests::mca00_v06_forward_refusals_precede_output",
       "contract_case": "MCA00-V06",
-      "changed_code": "new observe Forward refusals (header, canonical, census H, mark, statement, sources, order, Tx, U LSN) before any output write"
+      "changed_code": "new observe Forward refusals (header, canonical, census H, mark, statement, sources, order, Tx, U LSN) before any output write",
+      "r2_changed_code": "r2: observe/prepare move leaf plan, exact residual, Aging before/after, writer_epoch and LSN0 checks before the first output byte"
     },
     {
       "selector": "storage::row::insert::group_tests::mca00_v06_clr_refusals_precede_output",
       "contract_case": "MCA00-V06",
-      "changed_code": "new observe CLR refusals (target, next, statement/mark, projection, cell, leaf::current cell, kind, Status state) before any output write"
+      "changed_code": "new observe CLR refusals (target, next, statement/mark, projection, cell, leaf::current cell, kind, Status state) before any output write",
+      "r2_changed_code": "r2: observe/prepare move leaf plan, exact residual, Aging before/after, writer_epoch and LSN0 checks before the first output byte"
     },
     {
       "selector": "storage::row::insert::group_tests::mca00_v06_produced_groups_pass_c_observers",
       "contract_case": "MCA00-V06",
-      "changed_code": "new produced frames cross-checked by existing semantic_row status/undo/jobs/ledger and Aging decode observers"
+      "changed_code": "new produced frames cross-checked by existing semantic_row status/undo/jobs/ledger and Aging decode observers",
+      "r2_changed_code": "r2: observe/prepare move leaf plan, exact residual, Aging before/after, writer_epoch and LSN0 checks before the first output byte; ForwardOrd added, after images located by role"
+    },
+    {
+      "selector": "storage::row::insert::group_tests::mca00_v06_forward_physical_order_differs_from_roles",
+      "contract_case": "MCA00-V06",
+      "changed_code": "r2 new: U page14 after RowLeaf page13; natives/edges/counts/redo and after images in physical order byte-equal to literals; role-order after_order refused before output"
+    },
+    {
+      "selector": "storage::row::insert::group_tests::mca00_v06_leaf_refusals_precede_output",
+      "contract_case": "MCA00-V06",
+      "changed_code": "r2 new: observe runs leaf::check before writes; duplicate RowId7 (KeyExists), 91-free-byte leaf (Capacity) and a same-length value whose XRP1 differs from the RootJob projection (IdentityMismatch) leave frame/after untouched"
+    },
+    {
+      "selector": "storage::row::insert::group_tests::mca00_v06_descriptor_refusals_precede_output",
+      "contract_case": "MCA00-V06",
+      "changed_code": "r2 new: Aging before decoded in observe (stale/future/other-history refused) and Tx remaining[0] required equal to the exact CLR residual; frame/after untouched"
+    },
+    {
+      "selector": "storage::row::insert::group_tests::mca00_v06_header_and_zero_lsn_refusals_precede_output",
+      "contract_case": "MCA00-V06",
+      "changed_code": "r2 new: header writer_epoch0 and a changed/proof page before at LSN0 refused before output; frame/after untouched"
     }
   ],
   "input_files": {
@@ -153,24 +185,24 @@
       "sha256": "60638302aa1fb32e9eb31a64fa87989e96d988e2c810b2e475f63f9cd4451445"
     },
     "crates/engine/src/storage/row/insert/group.rs": {
-      "bytes": 32127,
-      "sha256": "65639882806723be5f6f13a2ae8761d52a6ad8ee9b6071e2c4053eb4c48a7a95"
+      "bytes": 35820,
+      "sha256": "db4824365842d9216f61f182ea70b87950765aa1a38a571f49065e6ba7ec6a0f"
     },
     "crates/engine/src/storage/row/insert/group/frame.rs": {
       "bytes": 12071,
       "sha256": "bda9ea17ed47296da321152ec8d79a5841dd999a6c54a219b0b113002bed6c56"
     },
     "crates/engine/src/storage/row/insert/group/images.rs": {
-      "bytes": 11372,
-      "sha256": "a726cfde11cfe077cc5d042cb3f001235619a9d9cac00ae8453a547f4d09048d"
+      "bytes": 12749,
+      "sha256": "3caa0ae9cc2f5958e0eb56cf16009db2c8b4cd9cf089da709491829cd5a2db7b"
     },
     "crates/engine/src/storage/row/insert/group_tests.rs": {
-      "bytes": 25391,
-      "sha256": "f48cff657be7a564c4899c09c681add9de61770188ee6820c534c9cc7ac7dc87"
+      "bytes": 30789,
+      "sha256": "62b2f606a8bb54d3824f1a3563b14efab74a6e407982301c0a0150dab1d546c7"
     },
     "crates/engine/src/storage/row/insert/leaf.rs": {
-      "bytes": 8417,
-      "sha256": "7d8d4bc253f6ec3488d766ac543ca0fa5733f8fe886a3ba20f025a5f8bb29a4e"
+      "bytes": 9191,
+      "sha256": "1108e543a3b4e7756448032745ac767bb61b78aa8b45f377928c3a5390a04d38"
     },
     "crates/engine/src/storage/row/insert/tests.rs": {
       "bytes": 10724,
@@ -185,8 +217,8 @@
       "sha256": "a847e905db2e0d2df7cfb835ec7f658a65b09cf49f95c3bfba96c13c5df32234"
     },
     "tests/fixtures/module-row-insert/make_literals.py": {
-      "bytes": 29852,
-      "sha256": "11932a16dc2b6f907edfb303386463d92eccf187c7e2ab16e769fb0adbb3bf01"
+      "bytes": 31410,
+      "sha256": "6ef528afeb550233a9b52dbc286d960360cdf39f9d12b3a11bb339caac55513e"
     },
     "tests/fixtures/module-row-insert/row7-after.bin": {
       "bytes": 16384,
@@ -211,6 +243,10 @@
     "tests/fixtures/module-row-insert/rows85-after.bin": {
       "bytes": 16384,
       "sha256": "7bd086e5e84a1bd21d183825d3d00918970bb61217a521f39f607e026e7a9b5b"
+    },
+    "tests/fixtures/module-row-insert/scope3/anchor-lsn0.bin": {
+      "bytes": 16384,
+      "sha256": "1b785c9fa5c24d5f5bba0b2c8762ecfda5c642f08c9a244a5dffa51f7130a82c"
     },
     "tests/fixtures/module-row-insert/scope3/anchor.bin": {
       "bytes": 16384,
@@ -352,6 +388,14 @@
       "bytes": 16384,
       "sha256": "674836beb88b8c7f7a1e8680694d40c21e96fd0f9f9a4dc753c49977f2ef22ab"
     },
+    "tests/fixtures/module-row-insert/scope3/noh-300-leaf-dup7.bin": {
+      "bytes": 16384,
+      "sha256": "db63af8a06337dee1a02eb3b926847d2c24a19da4c1f1c3f833bc45dc4fd0e05"
+    },
+    "tests/fixtures/module-row-insert/scope3/noh-300-leaf-full.bin": {
+      "bytes": 16384,
+      "sha256": "63e019f509565c03d139c60239e964423683b7ad77e1b86feaa1d83bc9bf796c"
+    },
     "tests/fixtures/module-row-insert/scope3/noh-300-leaf.bin": {
       "bytes": 16384,
       "sha256": "9368dd2fc059c059b1deed137c40191119fd9820d293e48f2743dc318adb8b93"
@@ -452,6 +496,74 @@
       "bytes": 16384,
       "sha256": "0218bb5fa33da73c81f952ef5adbbb8298187b412d8655ac6084eb10bae1d117"
     },
+    "tests/fixtures/module-row-insert/scope3/ord-300-aging.bin": {
+      "bytes": 1536,
+      "sha256": "6fe084a2c836d125308cceb2c303ff79baafcb6612cbd9baef4394f933b91790"
+    },
+    "tests/fixtures/module-row-insert/scope3/ord-300-bank.bin": {
+      "bytes": 65536,
+      "sha256": "572043eca04ee687ebe5f4c9c191e39c7b6f690e73f066576567167373fe9d27"
+    },
+    "tests/fixtures/module-row-insert/scope3/ord-300-jobs2.bin": {
+      "bytes": 16384,
+      "sha256": "735b5a2fd4c09670861717e1186303fc04da3eaf1654535a58d429d9c624a373"
+    },
+    "tests/fixtures/module-row-insert/scope3/ord-300-leaf.bin": {
+      "bytes": 16384,
+      "sha256": "9368dd2fc059c059b1deed137c40191119fd9820d293e48f2743dc318adb8b93"
+    },
+    "tests/fixtures/module-row-insert/scope3/ord-300-root.bin": {
+      "bytes": 16384,
+      "sha256": "c126682d7ab651f16be4ccf77d7c60ba30d7b8fcc6c4b266c48949013612af39"
+    },
+    "tests/fixtures/module-row-insert/scope3/ord-300-status.bin": {
+      "bytes": 16384,
+      "sha256": "cb5405c0004e3df2b6e814ab8e071bdc0eb21599003e5e8b7802ba4476618842"
+    },
+    "tests/fixtures/module-row-insert/scope3/ord-300-tx.bin": {
+      "bytes": 1536,
+      "sha256": "8da9d3cb9646c11e4e8b3ab300357025fa101b103e82c754377cda7d1542b1ee"
+    },
+    "tests/fixtures/module-row-insert/scope3/ord-300-undo14.bin": {
+      "bytes": 16384,
+      "sha256": "2a0a8c98a5b515f3fc197d6d940a88466a7bea5c5206752398b3e393391d14b9"
+    },
+    "tests/fixtures/module-row-insert/scope3/ord-301-aging.bin": {
+      "bytes": 1536,
+      "sha256": "fa18dc989fb446d8205f40878d17d6588aa2994ae985c4f9a70f26937c5869f1"
+    },
+    "tests/fixtures/module-row-insert/scope3/ord-301-bank.bin": {
+      "bytes": 65536,
+      "sha256": "5f7068f715d70f3fad1e34df3129e6aad44af10c686d0e8f0402d918f5a6b386"
+    },
+    "tests/fixtures/module-row-insert/scope3/ord-301-forward.wal": {
+      "bytes": 91506,
+      "sha256": "db7d8cf320baac58a2d533e85525908e0d0d36b4add7d93529d33f57bc1e1f7e"
+    },
+    "tests/fixtures/module-row-insert/scope3/ord-301-jobs2.bin": {
+      "bytes": 16384,
+      "sha256": "b8fb350a9b8593d20e167084876daa30eed0a93734e9c83e39f4c195f354f974"
+    },
+    "tests/fixtures/module-row-insert/scope3/ord-301-leaf.bin": {
+      "bytes": 16384,
+      "sha256": "03cb3be095d50fb6fd77cc64809e05ab5137d0b6323eaec9422567adbaa5682e"
+    },
+    "tests/fixtures/module-row-insert/scope3/ord-301-root.bin": {
+      "bytes": 16384,
+      "sha256": "c402cf672f91418e2453135bc3a972a6e90c0c9c450ff0450b30d88602c4831e"
+    },
+    "tests/fixtures/module-row-insert/scope3/ord-301-status.bin": {
+      "bytes": 16384,
+      "sha256": "ed48a23d53cdd9eb80e014e02541711bacfdf383a7b24874f985bd993fbdad58"
+    },
+    "tests/fixtures/module-row-insert/scope3/ord-301-tx.bin": {
+      "bytes": 1536,
+      "sha256": "cbec71eed61db2189f8e98657a1861f113ff1f02b2865e9263d59e517510e372"
+    },
+    "tests/fixtures/module-row-insert/scope3/ord-301-undo14.bin": {
+      "bytes": 16384,
+      "sha256": "7012b449ed7340e7d6d1676f6c5e3db0bb010b672d119c1db781768a2d8335e9"
+    },
     "tests/fixtures/module-row-insert/scope3/profile3.bin": {
       "bytes": 4096,
       "sha256": "8335423a65c2870d4c3d115ef5011e3c82d2fc2b4341e7e10d5b7321ec5a3934"
@@ -496,7 +608,8 @@
       "u_undo": 11,
       "anchor": 12,
       "row_leaf": 13,
-      "dynamic_incarnation": 2
+      "dynamic_incarnation": 2,
+      "u_undo_ord": 14
     },
     "row": {
       "row_id": 7,
@@ -509,7 +622,8 @@
     },
     "cases": {
       "noh": "prior 2 empty transactions; Begin200 (terminal ordinal2); Reserve300 (ordinal3, seq1, statement1); Forward301; transaction RollbackStart302; CLR303",
-      "h": "prior 14; Begin200 (terminal14); H Reserve300 (ordinal15, page10, RowId4) and Forward400; U Reserve500 (ordinal16, seq2, statement2, prevTxn H); Forward501; statement RollbackStart502 (mark H); CLR503"
+      "h": "prior 14; Begin200 (terminal14); H Reserve300 (ordinal15, page10, RowId4) and Forward400; U Reserve500 (ordinal16, seq2, statement2, prevTxn H); Forward501; statement RollbackStart502 (mark H); CLR503",
+      "ord": "prior 2; Begin200 (terminal ordinal2); Reserve300 (ordinal3, seq1, statement1, U page14); Forward301 with physical order Root, Jobs2, Status9, Leaf13, Undo14"
     },
     "frame_bytes": {
       "forward": "91304 + C + 128h",
@@ -520,7 +634,25 @@
       "Forward binds RowLeaf with no cell; CLR accepts no cell or the exact current row cell",
       "TerminalJob, TableAnchor and PreviousUndo accept no cell or their exact cell",
       "Allocator source is not read; Root consumed_wal is unchanged by a handoff group",
-      "counts are U then T; edges sorted by (native index, role)"
-    ]
+      "counts are U then T; edges sorted by (native index, role)",
+      "every input refusal returns before the first frame/after byte (dev3-obligation-format.md:381); only a broken internal invariant in the final write pass can leave partial bytes",
+      "Tx remaining[0] must equal the exact CLR residual: one 91096+C+128h step per actor Reserved/Retained Row root, protected=wal, ROW_PEAK",
+      "the Forward XRW1 record XRP1 must equal the RootJob projection digest",
+      "changed and proof page befores (Status, Undo, H, anchor, RowLeaf) must have LSN > 0",
+      "edges sort by physical native index then role; counts name the U/Status native indices"
+    ],
+    "refusal_literals": {
+      "noh-300-leaf-dup7.bin": "noh-300 leaf plus an older committed RowId7 at LSN50",
+      "noh-300-leaf-full.bin": "noh-300 leaf plus RowId10..17 (text 1760) at LSN50: 91 free entry bytes < 206",
+      "anchor-lsn0.bin": "anchor.bin at LSN0"
+    },
+    "revision": {
+      "r2": {
+        "frozen_at": "2026-10-29 17:47:28.527 KST",
+        "reason": "independent review of ba24925/2d49268/1b7c98e: refusals after output bytes; advisories 2, 3 and 7",
+        "base_commit": "1b7c98e",
+        "existing_literals_unchanged": true
+      }
+    }
   }
 }
