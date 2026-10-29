@@ -13,8 +13,11 @@
 //!   of them (:79).
 //! - ReleaseRole/RootFree need the source actor's TerminalReady Job; RootFree
 //!   and TerminalFinish keep the Job/U generations (:236-238).
-//! - Prune takes only the actor's current head after Commit (:212, :242) and
+//! - Prune takes only the actor's current head after Commit (:214, :242) and
 //!   re-encodes the record with the caller's stable table schema.
+//! - RowReserve checks the table/anchor/leaf proof (:73): the stable RowLeaf
+//!   types every row, lacks the issued RowId and takes the planned cell
+//!   without a split (leaf space fails before the first Reserve effect, :282).
 //! - Aging selection order is the caller's; a non-handoff group with a Job
 //!   writes only the Root cursor `(ordinal+1) % 64`.
 //! - Begin's Row/Catalog scope is the caller's explicit input; Catalog is

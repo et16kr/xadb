@@ -14,7 +14,7 @@ use crate::storage::{
     allocation_page::{ReservationOwner, SystemWorkKind, SystemWorkRef},
     anchor::{self, TreeKind},
     obligation::{self, DescriptorSpec, OwnerChain, OwnerState},
-    page::{self, PAGE_BYTES, PageHeader, PageKind, PageLsn},
+    page::{self, PAGE_BYTES, PageHeader, PageKind, PageLsn, PageRef},
     retention_genesis::RetentionGenesisPage,
     retention_obligation::{
         AGING_START_BYTES, profile_reference,
@@ -183,12 +183,20 @@ struct LeafSource<'a> {
     before: &'a [u8; PAGE_BYTES],
 }
 fn leaf_source<'a>(inputs: &Inputs<'a>, job: JobView<'_>) -> Result<LeafSource<'a>> {
-    let namespace = inputs.profile.spec().namespace;
     let table = inputs.table.ok_or(Error::InvalidInput)?;
     let pair = job.pair().ok_or(Error::IdentityMismatch)?;
     same(job.object() == Some(table.handle) && pair[0] == table.anchor)?;
     let leaf = table_leaf(inputs, table)?;
     same(leaf == pair[1])?;
+    typed_leaf(inputs, table, leaf)
+}
+/// The anchor's RowLeaf before image with every row typed by the schema.
+fn typed_leaf<'a>(
+    inputs: &Inputs<'a>,
+    table: super::TableSource<'a>,
+    leaf: PageRef,
+) -> Result<LeafSource<'a>> {
+    let namespace = inputs.profile.spec().namespace;
     let expected = TreeExpectation {
         identity: cells::table_identity(table.handle, namespace, leaf),
         kind: PageKind::RowLeaf,
@@ -225,6 +233,27 @@ fn leaf_source<'a>(inputs: &Inputs<'a>, job: JobView<'_>) -> Result<LeafSource<'
         schema: table.schema,
         before,
     })
+}
+/// RowReserve's leaf proof (consumers.md:73, :282): the stable RowLeaf types
+/// every row, lacks the issued key and takes the planned cell without a
+/// split. `scratch` only holds the planned cell while it is checked.
+fn reserve_leaf(
+    inputs: &Inputs<'_>,
+    table: super::TableSource<'_>,
+    leaf: PageRef,
+    row: RowId,
+    record: &[u8],
+    scratch: &mut [u8; MAX_CELL],
+) -> Result<()> {
+    let source = typed_leaf(inputs, table, leaf)?;
+    let key = row.get().to_be_bytes();
+    let view = tree_page::decode_tree_page(source.before, source.expected)?;
+    let cell = tree_page::encode_leaf_cell(PageKind::RowLeaf, 0, &key, record, scratch)?;
+    let mut refs: [&[u8]; ROW_EDIT_CELLS] = [&[]; ROW_EDIT_CELLS];
+    let plan = view
+        .prepare_leaf_edit(edit::LeafEdit::Insert(cell), &mut refs)
+        .map_err(cells::edit_error)?;
+    require(!plan.needs_split())
 }
 /// The stable anchor's single level0 RowLeaf (the Job leaf is only a hint).
 fn table_leaf(
@@ -618,6 +647,8 @@ pub(super) fn prepare<'a>(
                 &mut record,
             )?;
             same(length + 12 == cell_bytes)?;
+            reserve_leaf(inputs, table, leaf, row, &record[..length], &mut out.cell)?;
+            out.cell.fill(0);
             let projection = cells::projection(plan.table, row, Some(&record[..length]))?;
             let job = &mut out.job;
             cells::lease(job, before.expect("free"), actor, location, lsn, 3)?;
@@ -1259,6 +1290,17 @@ pub(super) fn prepare<'a>(
         )?;
         out.header.txn = Some(actor.id());
         out.header.previous_txn_lsn = tx_spec.map_or(0, |spec| spec.chain.apply);
+    }
+
+    // Prune keeps its actor live without a Tx descriptor: the after Status
+    // must close over the after Job census as the ledger observer reads it.
+    if op == Operation::Prune {
+        ledger::validate_actor(
+            profile,
+            out.status.ok_or(Error::InvalidInput)?,
+            location.ok_or(Error::InvalidInput)?,
+            original.replace(selected.ok_or(Error::InvalidInput)?, &out.job)?,
+        )?;
     }
 
     // Graph and inventory in physical native order.
