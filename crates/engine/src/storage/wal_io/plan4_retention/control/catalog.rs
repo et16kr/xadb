@@ -1,6 +1,9 @@
-//! Current admission totals from the original live mixed bank. The caller
-//! first proves that bank against installed history and actual Status pages;
-//! this arithmetic check neither creates a status nor admits an operation.
+//! Current admission totals from the original live mixed bank. A caller that
+//! runs `history::validate_live` first proves that bank against installed
+//! history and actual Status pages; admission-only callers (empty-actor and
+//! Catalog terminal entries) rely on the checks here alone, including the Row
+//! ledger's Status-free subset for a Row ATT descriptor. This arithmetic check
+//! neither creates a status nor admits an operation.
 //! Catalog per-actor selection and semantics skip Row-scope cells; the
 //! Terminal/ATT correspondence and every debt sum read all cells through the
 //! Row codec (XADB-MODULE-ROW-BEGIN-001, "replay와 분석 gate").
@@ -74,6 +77,7 @@ pub(super) fn check(
         let mut root = None;
         let mut terminal = None;
         let mut row_terminal = None;
+        let mut row_reserved = 0u64;
         let mut row_cells = false;
         for cell in bank.jobs() {
             let candidate = job(cell, profile)?;
@@ -85,11 +89,10 @@ pub(super) fn check(
             }
             let Some(candidate) = JobView::catalog(candidate) else {
                 row_cells = true;
-                if candidate.state().is_terminal()
-                    && row_terminal.replace(candidate.state()).is_some()
-                {
+                if candidate.state().is_terminal() && row_terminal.replace(candidate).is_some() {
                     return Err(bad());
                 }
+                row_reserved += u64::from(candidate.state() == job3::JobState::RootReserved);
                 continue;
             };
             let selected = if candidate.state().is_terminal() {
@@ -105,7 +108,9 @@ pub(super) fn check(
         let row_scope = match (terminal, row_cells) {
             (Some(selected), false) if selected.state() == JobState::TerminalLeased => false,
             (None, true)
-                if root.is_none() && row_terminal == Some(job3::JobState::TerminalLeased) =>
+                if root.is_none()
+                    && row_terminal.map(|job| job.state())
+                        == Some(job3::JobState::TerminalLeased) =>
             {
                 true
             }
@@ -127,10 +132,19 @@ pub(super) fn check(
         {
             return Err(bad());
         }
-        // Catalog semantics only. A Row descriptor's remaining/inventory need
-        // its actual Status page; the caller's combined history closure
-        // proves them through the Row ledger (`history::row::validate_rows`).
-        if !row_scope {
+        // A Row descriptor gets the Row ledger's Status-free subset here:
+        // birth, reserved-root items, the terminal row and the Row recipe of
+        // every debt row. Its Status-dependent rows need the actual Status
+        // page; only callers that run `history::validate_live` (its combined
+        // closure, `history::row::validate_rows`) prove those.
+        if row_scope {
+            crate::storage::semantic_row::ledger::validate_admission(
+                &descriptor,
+                row_terminal.ok_or_else(bad)?,
+                row_reserved,
+            )
+            .map_err(|_| bad())?;
+        } else {
             if descriptor.remaining
                 != ledger::transaction_remaining(transaction, root).map_err(semantic)?
             {

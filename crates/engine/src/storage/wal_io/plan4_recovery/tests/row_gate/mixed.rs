@@ -179,3 +179,71 @@ fn s1c_ledger_check_matches_row_terminals_to_att() {
     replay[bank_at(0)..bank_at(1)].copy_from_slice(bank_row(&live, slot));
     refused("att-without-terminal", &replay);
 }
+
+/// Review A1: `check_ledger` runs on admission-only paths (empty-actor and
+/// Catalog terminal entries) that never run the history closure, so a Row
+/// ATT descriptor must pass the Row ledger's Status-free subset there: the
+/// terminal lease birth, the reserved-root items, the open terminal row and
+/// the Row recipe of every debt row. Each re-encoded (still well-formed)
+/// descriptor change is an Unchanged Census Invariant.
+#[test]
+fn s1d_ledger_check_applies_row_admission_subset() {
+    let genesis = fixture(GENESIS);
+    let p = profile();
+    let live = seeded(&fixture(LIVE), &genesis);
+    let (actor, _, slot) = row_actor(&live);
+    let (epoch, adopted) = (actor.id().writer_epoch, actor.id().local);
+    assert!(retention_ledger_check(p, &live, adopted, prefix(epoch)).is_ok());
+    let spec = obligation::decode_descriptor(
+        bank_row(&live, slot)[..1536].try_into().unwrap(),
+        ReservationOwner::Transaction(actor),
+        profile_reference(p),
+    )
+    .unwrap();
+    assert!(spec.remaining[0].steps > 0, "live actor has CLR debt");
+    // The subset's frame is dominated by the Catalog branch it excludes.
+    assert!(
+        crate::storage::semantic_row::ledger::admission_source_bytes()
+            <= crate::storage::semantic_catalog::profile3_transaction_source_bytes()
+    );
+    // An items count without its inventory digest is not encodable, so the
+    // items clause is covered only through well-formed descriptors here.
+    let changes: [(&str, Box<dyn Fn(&mut obligation::DescriptorSpec)>); 4] = [
+        (
+            "terminal-row",
+            Box::new(|s| s.remaining[2] = obligation::RemainingBudget::default()),
+        ),
+        (
+            "catalog-recipe",
+            Box::new(|s| {
+                s.remaining[0].peak = crate::storage::retention_page::catalog::CREATE_PEAK
+            }),
+        ),
+        (
+            "birth",
+            Box::new(|s| {
+                s.chain.birth -= 1;
+                s.minimum_wal_lsn -= 1;
+            }),
+        ),
+        ("minimum", Box::new(|s| s.minimum_wal_lsn -= 1)),
+    ];
+    for (name, change) in changes {
+        let mut changed = spec;
+        change(&mut changed);
+        let mut bytes = [0; 1536];
+        obligation::encode_descriptor(&changed, &mut bytes)
+            .unwrap_or_else(|e| panic!("{name}: encode {e:?}"));
+        let mut replay = live.clone();
+        replay[bank_at(slot)..bank_at(slot) + 1536].copy_from_slice(&bytes);
+        let result = retention_ledger_check(p, &replay, adopted, prefix(epoch));
+        println!("S1D_LEDGER_SUBSET_REJECT\t{name}\t{result:?}");
+        let error = result.expect_err(name);
+        assert!(
+            error.phase == RetentionPhase::Census
+                && matches!(error.cause, RetentionCause::Invariant)
+                && error.effect == Effect::Unchanged,
+            "{name}"
+        );
+    }
+}

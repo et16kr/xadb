@@ -1621,7 +1621,10 @@ pub(in super::super) fn catalog_live_source_bytes<W: WriterNamespace>() -> Catal
         + size_of::<[(TargetRequest, u8); 9]>()
         + 640
         + 2 * size_of::<crate::storage::obligation::DescriptorSpec>()
-        + queue::source_bytes().max(semantic_catalog::profile3_transaction_source_bytes());
+        + queue::source_bytes()
+            .max(semantic_catalog::profile3_transaction_source_bytes())
+            // The Row admission subset is exclusive with the Catalog branch.
+            .max(crate::storage::semantic_row::ledger::admission_source_bytes());
     let prepare = prepare_replay
         .max(prepare_produce)
         .max(prepare_inventory)

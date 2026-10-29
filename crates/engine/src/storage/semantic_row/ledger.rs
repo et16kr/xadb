@@ -343,6 +343,51 @@ pub(crate) fn validate_transaction(
     Ok(())
 }
 
+/// The Status-free part of `validate_transaction`, for an admission census
+/// that reads an ATT row and the Job bank but not the actor's Status page:
+/// the terminal lease birth, the reserved-root inventory count (0 or 1),
+/// the open transaction's terminal row and the Row recipe of every nonzero
+/// debt row (zero rows are empty). The Status state, head and the CLR,
+/// structural and control rows that depend on them stay with
+/// `validate_transaction`, which the history closure runs.
+pub(crate) fn validate_admission(
+    descriptor: &obligation::DescriptorSpec,
+    terminal: JobView<'_>,
+    reserved: u64,
+) -> Result<()> {
+    if terminal.scope() != Some(JobScope::Row)
+        || terminal.state() != JobState::TerminalLeased
+        || descriptor.minimum_wal_lsn != descriptor.chain.birth
+        || descriptor.chain.birth != terminal.lease_lsn()
+    {
+        return Err(Error::IdentityMismatch);
+    }
+    if reserved > 1
+        || descriptor.inventory.items != reserved
+        || descriptor.remaining[2] != debt(1, 56_712)
+        || descriptor.remaining.iter().any(|row| {
+            if row.steps == 0 {
+                *row != RemainingBudget::default()
+            } else {
+                row.peak != row::ROW_PEAK
+            }
+        })
+    {
+        return Err(Error::BudgetMismatch);
+    }
+    Ok(())
+}
+
+/// Counted frame of `validate_admission`: its arguments and result, the
+/// computed terminal row and one compared debt row. It calls nothing else.
+pub(crate) fn admission_source_bytes() -> usize {
+    use std::mem::size_of;
+    size_of::<(&obligation::DescriptorSpec, JobView<'_>, u64)>()
+        + size_of::<Result<()>>()
+        + 2 * size_of::<RemainingBudget>()
+        + 4 * size_of::<&()>()
+}
+
 #[cfg(test)]
 #[path = "ledger_tests.rs"]
 mod tests;

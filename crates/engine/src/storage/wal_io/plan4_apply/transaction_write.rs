@@ -274,6 +274,7 @@ pub(in super::super) fn source_bytes() -> usize {
         + 2 * size_of::<[u8; 48]>()
         + obligation::descriptor_source_bytes()
             .max(crate::storage::semantic_catalog::profile3_transaction_source_bytes())
+            .max(crate::storage::semantic_row::ledger::admission_source_bytes())
             .max(queue::source_bytes())
 }
 
