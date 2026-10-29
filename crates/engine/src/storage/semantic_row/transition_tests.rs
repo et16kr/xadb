@@ -2358,7 +2358,7 @@ mod measured {
 
 /// Whole measured chains above `outer` (every frame live over the phases):
 /// a phase's own locals, one SHA closure and one measured callee chain.
-fn measured_chains(outer: usize) -> [(&'static str, usize); 13] {
+fn measured_chains(outer: usize) -> [(&'static str, usize); 15] {
     use super::source;
     use std::mem::size_of;
     let sha = frames::SHA;
@@ -2388,6 +2388,12 @@ fn measured_chains(outer: usize) -> [(&'static str, usize); 13] {
         (
             "prepare+descriptor_codec",
             prepared + obligation::descriptor_source_bytes(),
+        ),
+        // The ATT spec lives only in these two helper frames, not in prepare's.
+        ("prepare+tx_before", prepared + prepare::tx_before_bytes()),
+        (
+            "prepare+descriptor_after",
+            prepared + prepare::descriptor_after_bytes(),
         ),
         (
             "prepare+aging_decode",
@@ -2513,8 +2519,10 @@ fn n1_transition_source_bounds_cover_measured_frames() {
         source::slack(),
     );
     println!(
-        "N1_SOURCE_TERMS ledger={} status={} material={} leaf={} job_edit={} graph={} row_codec={} tree_codec={} leaf_edit={} frame_callee={}",
+        "N1_SOURCE_TERMS ledger={} tx_before={} descriptor_after={} status={} material={} leaf={} job_edit={} graph={} row_codec={} tree_codec={} leaf_edit={} frame_callee={}",
         source::ledger(),
+        prepare::tx_before_bytes(),
+        prepare::descriptor_after_bytes(),
         source::status(),
         source::material(),
         source::leaf(),
@@ -2725,6 +2733,8 @@ fn s1a_borrowed_observer_source_bound_covers_measured_frames() {
     let measured = chains.iter().map(|(_, bytes)| *bytes).max().unwrap();
     let callees = [
         ("ledger", source::ledger()),
+        ("tx_before", prepare::tx_before_bytes()),
+        ("descriptor_after", prepare::descriptor_after_bytes()),
         (
             "aging",
             crate::storage::retention_obligation::row::source_bytes(),

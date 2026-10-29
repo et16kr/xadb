@@ -14,7 +14,11 @@ use super::{
 use crate::storage::{
     allocation_page::{ReservationOwner, SystemWorkKind, SystemWorkRef},
     anchor::{self, TreeKind},
-    obligation::{self, DescriptorSpec, OwnerChain, OwnerState},
+    control::{ControlRef, Profile},
+    obligation::{
+        self, DescriptorSpec, InventoryClaim, ObligationError, OwnerChain, OwnerState,
+        RemainingBudget,
+    },
     page::{self, PAGE_BYTES, PageHeader, PageKind, PageLsn, PageRef},
     retention_genesis::RetentionGenesisPage,
     retention_obligation::{
@@ -22,7 +26,7 @@ use crate::storage::{
         row::{self as aging_row, AgingTransition},
     },
     retention_page::{
-        JOB_BYTES, JOB_COUNT, ROOT_BYTES,
+        JOB_BYTES, JOB_COUNT, ROOT_BYTES, RetentionError,
         row::{self, JobCells, JobScope, JobState, JobView},
     },
     row_record::{self, RecordExpectation, RecordVersion, RowPayload, RowSchemaInput},
@@ -450,6 +454,130 @@ fn prepare_leaf<'a>(
     Ok(result)
 }
 
+/// What prepare keeps of the validated original ATT: its apply LSN (the
+/// order check and `previous_txn_lsn`), last mutation (Reserve) and the
+/// Status budget row's steps (statement rollback). No decoded spec lives in
+/// prepare's own frame: `descriptor_after` decodes the same bytes again and
+/// updates that one spec in place.
+#[derive(Clone, Copy)]
+struct TxBefore {
+    apply: u64,
+    last_mutation: u64,
+    statement_steps: u64,
+}
+/// The original ATT of `actor`, already checked by `validate_transaction`:
+/// decode it for its owner and profile; it was applied before this frame.
+fn decode_tx_before(
+    raw: &[u8; 1536],
+    actor: TxnRef,
+    profile: Profile,
+    previous_lsn: u64,
+    lsn: u64,
+) -> Result<TxBefore> {
+    let spec = obligation::decode_descriptor(
+        raw,
+        ReservationOwner::Transaction(actor),
+        profile_reference(profile),
+    )?;
+    require(spec.chain.apply <= previous_lsn && spec.chain.apply < lsn)?;
+    Ok(TxBefore {
+        apply: spec.chain.apply,
+        last_mutation: spec.last_mutation_sequence,
+        statement_steps: spec.remaining[3].steps,
+    })
+}
+
+/// The checked values the ATT after is built from: the actor's Status after
+/// and its core, the Job census after, the selected Job after (`job`) and
+/// before, and Reserve's issue.
+struct TxAfter<'a> {
+    lsn: u64,
+    frame_bytes: u64,
+    actor: TxnRef,
+    location: StatusSlotRef,
+    status: StatusHome,
+    core: TransactionStatus,
+    cells: JobCells<'a>,
+    job: &'a [u8; JOB_BYTES],
+    selected: Option<JobView<'a>>,
+    issued: Option<Issued>,
+    credit: bool,
+}
+/// Encode the ATT after (XHG ordinal0, Tx-owned XSG) into `output`: Begin's
+/// first descriptor, or the original ATT's next group, updated in place.
+fn descriptor_after(
+    inputs: &Inputs<'_>,
+    after: TxAfter<'_>,
+    output: &mut [u8; 1536],
+) -> Result<()> {
+    let profile = inputs.profile;
+    let lsn = after.lsn;
+    // None only at Begin; otherwise the bytes `decode_tx_before` decoded.
+    let original = inputs.transaction;
+    let mut spec = match original {
+        None => DescriptorSpec {
+            owner: OwnerState::Transaction(after.core),
+            chain: OwnerChain {
+                apply: lsn,
+                previous: 0,
+                birth: lsn,
+                groups: 1,
+            },
+            profile: profile_reference(profile),
+            inventory: cells::empty_claim(lsn),
+            consumed_wal: after.frame_bytes,
+            consumed_control: 0,
+            remaining: Default::default(),
+            minimum_wal_lsn: lsn,
+            last_mutation_sequence: 0,
+        },
+        Some(raw) => obligation::decode_descriptor(
+            raw,
+            ReservationOwner::Transaction(after.actor),
+            profile_reference(profile),
+        )?,
+    };
+    if original.is_some() {
+        spec.chain = OwnerChain {
+            apply: lsn,
+            previous: spec.chain.apply,
+            birth: spec.chain.birth,
+            groups: spec.chain.groups.checked_add(1).ok_or(Error::Exhausted)?,
+        };
+        spec.consumed_wal = spec
+            .consumed_wal
+            .checked_add(after.frame_bytes)
+            .ok_or(Error::Exhausted)?;
+        match inputs.change.operation() {
+            Operation::Reserve => {
+                let issued = after.issued.expect("reserve");
+                let reserved = row::decode_job(after.job, profile.spec().namespace)?;
+                spec.inventory = cells::item_claim(&cells::undo_item(reserved)?, lsn);
+                spec.last_mutation_sequence = issued.mutation;
+            }
+            Operation::Forward | Operation::Cancel => {
+                let reserved = after.selected.expect("selected");
+                same(
+                    spec.inventory
+                        == cells::item_claim(&cells::undo_item(reserved)?, reserved.lease_lsn()),
+                )?;
+                spec.inventory = cells::empty_claim(lsn);
+            }
+            _ => {}
+        }
+    }
+    spec.owner = OwnerState::Transaction(after.core);
+    spec.remaining = ledger::transaction_remaining(
+        profile,
+        after.status,
+        after.location,
+        after.cells,
+        after.credit,
+    )?;
+    obligation::encode_descriptor(&spec, output)?;
+    Ok(())
+}
+
 #[allow(
     clippy::too_many_lines,
     reason = "one closed transition table keeps every refusal before the first write"
@@ -549,7 +677,7 @@ pub(super) fn prepare<'a>(
     } else {
         None
     };
-    let tx_spec = if is_tx(op) && op != Operation::Begin {
+    let tx_before = if is_tx(op) && op != Operation::Begin {
         let raw = inputs.transaction.ok_or(Error::InvalidInput)?;
         ledger::validate_transaction(
             raw,
@@ -558,14 +686,15 @@ pub(super) fn prepare<'a>(
             location.ok_or(Error::InvalidInput)?,
             original,
         )?;
-        let spec = obligation::decode_descriptor(
+        let kept = decode_tx_before(
             raw,
-            ReservationOwner::Transaction(actor.ok_or(Error::InvalidInput)?),
-            profile_reference(profile),
+            actor.ok_or(Error::InvalidInput)?,
+            profile,
+            frame.previous_lsn,
+            lsn,
         )?;
-        require(spec.chain.apply <= frame.previous_lsn && spec.chain.apply < lsn)?;
         out.transaction_before = Some(raw);
-        Some(spec)
+        Some(kept)
     } else {
         if op == Operation::Begin && inputs.transaction.is_some() {
             return Err(Error::OrderMismatch);
@@ -624,7 +753,7 @@ pub(super) fn prepare<'a>(
             let actor = actor.expect("actor");
             let location = location.expect("location");
             let summary = summary.as_ref().expect("actor");
-            let spec = tx_spec.as_ref().expect("descriptor");
+            let last_mutation = tx_before.expect("descriptor").last_mutation;
             let status = occupied(status_before.expect("status"), actor)?;
             require(
                 status.state() == TransactionState::Active
@@ -655,10 +784,7 @@ pub(super) fn prepare<'a>(
             let row = RowId::new(root.row_high().checked_add(1).ok_or(Error::Exhausted)?)
                 .map_err(|_| Error::Exhausted)?;
             let sequence = root.undo_high().checked_add(1).ok_or(Error::Exhausted)?;
-            let mutation = spec
-                .last_mutation_sequence
-                .checked_add(1)
-                .ok_or(Error::Exhausted)?;
+            let mutation = last_mutation.checked_add(1).ok_or(Error::Exhausted)?;
             let h = head.is_some();
             let record = record_scratch(out.descriptors);
             let length = row_record::encode_row_record_with_schema(
@@ -759,7 +885,7 @@ pub(super) fn prepare<'a>(
                     require(
                         status.state() == TransactionState::Active
                             && boundary.sequence != 0
-                            && tx_spec.as_ref().expect("descriptor").remaining[3].steps == 3,
+                            && tx_before.expect("descriptor").statement_steps == 3,
                     )?;
                     require(boundary.mark.is_none() || head.is_some())?;
                     RollbackState::Statement {
@@ -1253,62 +1379,23 @@ pub(super) fn prepare<'a>(
             Some(ordinal) => original.replace(ordinal, out.job)?,
             None => original,
         };
-        let frame_bytes = out.frame_bytes as u64;
-        let mut spec = match tx_spec {
-            None => DescriptorSpec {
-                owner: OwnerState::Transaction(core_after),
-                chain: OwnerChain {
-                    apply: lsn,
-                    previous: 0,
-                    birth: lsn,
-                    groups: 1,
-                },
-                profile: profile_reference(profile),
-                inventory: cells::empty_claim(lsn),
-                consumed_wal: frame_bytes,
-                consumed_control: 0,
-                remaining: Default::default(),
-                minimum_wal_lsn: lsn,
-                last_mutation_sequence: 0,
+        descriptor_after(
+            inputs,
+            TxAfter {
+                lsn,
+                frame_bytes: out.frame_bytes as u64,
+                actor,
+                location,
+                status: status_after,
+                core: core_after,
+                cells: cells_after,
+                job: out.job,
+                selected: before,
+                issued: out.issued,
+                credit,
             },
-            Some(mut spec) => {
-                spec.chain = OwnerChain {
-                    apply: lsn,
-                    previous: spec.chain.apply,
-                    birth: spec.chain.birth,
-                    groups: spec.chain.groups.checked_add(1).ok_or(Error::Exhausted)?,
-                };
-                spec.consumed_wal = spec
-                    .consumed_wal
-                    .checked_add(frame_bytes)
-                    .ok_or(Error::Exhausted)?;
-                match op {
-                    Operation::Reserve => {
-                        let issued = out.issued.expect("reserve");
-                        let reserved = row::decode_job(out.job, namespace)?;
-                        spec.inventory = cells::item_claim(&cells::undo_item(reserved)?, lsn);
-                        spec.last_mutation_sequence = issued.mutation;
-                    }
-                    Operation::Forward | Operation::Cancel => {
-                        let reserved = before.expect("selected");
-                        same(
-                            spec.inventory
-                                == cells::item_claim(
-                                    &cells::undo_item(reserved)?,
-                                    reserved.lease_lsn(),
-                                ),
-                        )?;
-                        spec.inventory = cells::empty_claim(lsn);
-                    }
-                    _ => {}
-                }
-                spec
-            }
-        };
-        spec.owner = OwnerState::Transaction(core_after);
-        spec.remaining =
-            ledger::transaction_remaining(profile, status_after, location, cells_after, credit)?;
-        obligation::encode_descriptor(&spec, &mut out.descriptors[0])?;
+            &mut out.descriptors[0],
+        )?;
         ledger::validate_transaction(
             &out.descriptors[0],
             profile,
@@ -1317,7 +1404,7 @@ pub(super) fn prepare<'a>(
             cells_after,
         )?;
         out.header.txn = Some(actor.id());
-        out.header.previous_txn_lsn = tx_spec.map_or(0, |spec| spec.chain.apply);
+        out.header.previous_txn_lsn = tx_before.map_or(0, |kept| kept.apply);
     }
 
     // Prune keeps its actor live without a Tx descriptor: the after Status
@@ -1492,9 +1579,11 @@ pub(super) fn finish_aging(
     .map_err(cells::aging_error)
 }
 
-/// prepare's own frame: decoded views, summaries, specs, the Reserve record
-/// reference with its `record_scratch` call, plus the standard scalar slack.
-/// The aggregate and record bytes are parts of the backing.
+/// prepare's own frame: decoded views, summaries, the kept ATT fields with
+/// their return, the Reserve record reference with its `record_scratch`
+/// call, plus the standard scalar slack. The aggregate and record bytes are
+/// parts of the backing; no `DescriptorSpec` is a prepare local (the
+/// descriptor helpers below own the one spec each decodes).
 pub(super) fn locals_bytes() -> usize {
     use std::mem::size_of;
     size_of::<&mut [u8; MAX_RECORD]>()
@@ -1503,8 +1592,8 @@ pub(super) fn locals_bytes() -> usize {
             &mut [u8],
             Option<&mut [u8; MAX_RECORD]>,
         )>()
-        + 2 * size_of::<DescriptorSpec>()
-        + size_of::<Option<DescriptorSpec>>()
+        + size_of::<Option<TxBefore>>()
+        + source::returned::<TxBefore, Error>()
         + 8 * size_of::<JobView<'_>>()
         + 4 * size_of::<Option<JobView<'_>>>()
         + 2 * size_of::<JobCells<'_>>()
@@ -1526,14 +1615,62 @@ pub(super) fn locals_bytes() -> usize {
         + 32 * size_of::<usize>()
         + source::slack()
 }
+/// `decode_tx_before` over the descriptor decode: its arguments, the decode's
+/// owner/profile arguments, its one spec with the decode result and the
+/// order check.
+pub(super) fn tx_before_bytes() -> usize {
+    use std::mem::size_of;
+    size_of::<(&[u8; 1536], TxnRef, Profile, u64, u64)>()
+        + size_of::<(ReservationOwner, ControlRef)>()
+        + source::returned::<DescriptorSpec, ObligationError>()
+        + size_of::<Result<()>>()
+        + obligation::descriptor_source_bytes()
+}
+/// `descriptor_after`: its arguments, locals and the one spec live
+/// throughout. Each step's own values live only around its calls: the
+/// decode's owner/profile arguments and result over the descriptor codec;
+/// the new chain, Reserve's Job after or the Forward/Cancel Job before with
+/// the Undo item and claims over the Job decode or the item claim; the
+/// residual rows' return over `transaction_remaining`; the encode.
+pub(super) fn descriptor_after_bytes() -> usize {
+    use std::mem::size_of;
+    let decode = size_of::<(ReservationOwner, ControlRef)>()
+        + size_of::<std::result::Result<DescriptorSpec, ObligationError>>()
+        + obligation::descriptor_source_bytes();
+    let update = size_of::<OwnerChain>()
+        + 2 * size_of::<Result<u64>>()
+        + source::returned::<JobView<'_>, RetentionError>()
+        + source::returned::<[u8; 96], Error>()
+        + 2 * size_of::<InventoryClaim>()
+        + size_of::<Result<()>>()
+        + row::source_bytes().max(source::job_edit());
+    let remaining =
+        source::returned::<[RemainingBudget; 5], Error>() + source::transaction_remaining();
+    let encode = size_of::<Result<()>>() + obligation::descriptor_source_bytes();
+    size_of::<(&Inputs<'_>, TxAfter<'_>, &mut [u8; 1536])>()
+        + size_of::<(
+            Profile,
+            crate::api::Namespace,
+            u64,
+            Option<&[u8; 1536]>,
+            Issued,
+            JobView<'_>,
+            u64,
+        )>()
+        + size_of::<DescriptorSpec>()
+        + decode.max(update).max(remaining).max(encode)
+}
 /// Deepest nested callee of prepare, each a counted chain: Row census and
 /// cells, the Aging decode closure, the actor ledger over the descriptor
-/// codec, the Status proof, Undo material, the RowLeaf proof/edit with the
-/// record codec and projection, Job edits and the graph.
+/// codec, the ATT before/after helpers, the Status proof, Undo material, the
+/// RowLeaf proof/edit with the record codec and projection, Job edits and
+/// the graph.
 pub(super) fn callee_bytes() -> usize {
     row::source_bytes()
         .max(crate::storage::retention_obligation::row::source_bytes())
         .max(source::ledger())
+        .max(tx_before_bytes())
+        .max(descriptor_after_bytes())
         .max(source::status())
         .max(source::material())
         .max(source::leaf())

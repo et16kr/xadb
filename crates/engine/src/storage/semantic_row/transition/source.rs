@@ -238,6 +238,25 @@ pub(super) fn status() -> usize {
         + before_page().max(status_codec())
 }
 
+/// `ledger::observe`: arguments, the scanned Jobs and links, then the
+/// 64-cell actor scan over the Row codec.
+fn ledger_observe() -> usize {
+    size_of::<(Profile, StatusHome, StatusSlotRef, JobCells<'_>)>()
+        + 2 * size_of::<JobView<'_>>()
+        + 2 * size_of::<Option<JobView<'_>>>()
+        + 2 * size_of::<Option<UndoRef>>()
+        + size_of::<([u64; 8], bool, usize, usize)>()
+        + returned::<JobView<'_>, RetentionError>()
+        + row::source_bytes()
+}
+
+/// `ledger::remaining`: the five rows and their per-row scratch.
+fn ledger_remaining() -> usize {
+    size_of::<[RemainingBudget; 5]>()
+        + 3 * size_of::<RemainingBudget>()
+        + size_of::<(TransactionStatus, bool, u64)>()
+}
+
 /// `ledger::validate_transaction`/`validate_actor`/`transaction_remaining`:
 /// arguments, the observed `(status, ActorSummary)`, the decoded spec and the
 /// rows, then the 64-cell actor scan (Row codec), the descriptor codec or the
@@ -254,20 +273,20 @@ pub(super) fn ledger() -> usize {
         + returned::<DescriptorSpec, ObligationError>()
         + returned::<[RemainingBudget; 5], Error>()
         + 2 * size_of::<Result<()>>();
-    let observe = size_of::<(Profile, StatusHome, StatusSlotRef, JobCells<'_>)>()
-        + 2 * size_of::<JobView<'_>>()
-        + 2 * size_of::<Option<JobView<'_>>>()
-        + 2 * size_of::<Option<UndoRef>>()
-        + size_of::<([u64; 8], bool, usize, usize)>()
-        + returned::<JobView<'_>, RetentionError>()
-        + row::source_bytes();
-    let remaining = size_of::<[RemainingBudget; 5]>()
-        + 3 * size_of::<RemainingBudget>()
-        + size_of::<(TransactionStatus, bool, u64)>();
     validate
-        + observe
+        + ledger_observe()
             .max(obligation::descriptor_source_bytes())
-            .max(remaining)
+            .max(ledger_remaining())
+}
+
+/// `ledger::transaction_remaining` alone (prepare's `descriptor_after`):
+/// arguments and the observed `(status, ActorSummary)`, then the actor scan
+/// or the residual rows. Its row return is the caller's.
+pub(super) fn transaction_remaining() -> usize {
+    type Summary<'a> = (JobView<'a>, Option<JobView<'a>>, [u64; 4]);
+    size_of::<(Profile, StatusHome, StatusSlotRef, JobCells<'_>, bool)>()
+        + returned::<(TransactionStatus, Summary<'_>), Error>()
+        + ledger_observe().max(ledger_remaining())
 }
 
 /// U material: `check_material`'s canonical cell over `encode_material`, then
