@@ -18,6 +18,15 @@ use crate::storage::retention_page::row;
 
 #[path = "row/actor.rs"]
 pub(in crate::storage) mod actor;
+#[path = "row/graph.rs"]
+mod graph;
+#[allow(
+    unused_imports,
+    reason = "pure Base4 closure awaits the Profile3 recovery owner"
+)]
+pub(in crate::storage) use graph::{
+    RowBaseError, RowBaseView, RowCensus, decode, encode, source_bytes,
+};
 
 pub(in crate::storage) const BASE_BYTES: usize = 2_097_152;
 pub(in crate::storage) const PAGE_ARENA_BYTES: usize = 64 * PAGE_BYTES;
@@ -306,6 +315,36 @@ pub(in crate::storage) fn encode_layout<'a>(
     let digest = content_digest(&output[..TRAILER]);
     output[TRAILER..].copy_from_slice(&digest);
     decode_layout(output, expected)
+}
+
+/// Raw encode/decode carriers, excluding the caller's 2MiB/page loans. The
+/// full graph decoder ends this phase before constructing its graph carrier.
+/// Root3/Job3 decoding has the Root2/Job2 call shape, so it reuses that codec
+/// bound until the separately measured Row codec bound is joined.
+pub(in crate::storage) fn layout_source_bytes() -> usize {
+    use super::PageHeader;
+    use crate::storage::{page::PageView, retention_page::catalog};
+    use std::mem::size_of;
+    640 + 1536
+        + 4 * size_of::<Header>()
+        + 4 * size_of::<Expected>()
+        + 4 * size_of::<LayoutView<'_>>()
+        + 4 * size_of::<Result<LayoutView<'_>>>()
+        + 4 * size_of::<Certificate>()
+        + 4 * size_of::<Result<Option<Certificate>>>()
+        + 4 * size_of::<InitProvenance<'_>>()
+        + 4 * size_of::<Result<Option<InitProvenance<'_>>>>()
+        + 4 * size_of::<PageHeader>()
+        + 4 * size_of::<PageView<'_>>()
+        + 2 * size_of::<allocation_page::AllocationPage<'_>>()
+        + 4 * size_of::<AllocationEntry>()
+        + 2 * size_of::<(PageHeader, row::RootView<'_>)>()
+        + 4 * size_of::<row::JobView<'_>>()
+        + 4 * size_of::<Result<()>>()
+        + 4 * size_of::<Sections<'_>>()
+        + 32 * size_of::<&[u8]>()
+        + 32 * size_of::<u64>()
+        + catalog::source_bytes()
 }
 
 #[cfg(test)]
