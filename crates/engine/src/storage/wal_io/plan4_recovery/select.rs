@@ -209,6 +209,21 @@ pub(super) fn stable_inventory<W: WriterNamespace>(
     Ok(())
 }
 
+/// Whether a failed CURRENT closure may fall back to its previous closure:
+/// only a missing or content-mismatched input and a corrupt base, whether the
+/// base codec's own `Base(Corrupt)` or the base4 Row graph's
+/// `RowBase(Corrupt)`. Unsupported semantics, mismatched valid identity and IO
+/// uncertainty are never hidden by an older fallback.
+pub(super) fn current_may_fall_back(cause: &Plan4RecoveryCause) -> bool {
+    matches!(
+        cause,
+        Plan4RecoveryCause::Missing
+            | Plan4RecoveryCause::ContentMismatch
+            | Plan4RecoveryCause::Base(base::Error::Corrupt)
+            | Plan4RecoveryCause::RowBase(base::row::RowBaseError::Corrupt)
+    )
+}
+
 impl<W: WriterNamespace> RecoveryState<'_, '_, '_, W> {
     pub(super) fn current(&self) -> Result<Option<record::Current>> {
         if !self.current_present {
@@ -348,16 +363,7 @@ impl<W: WriterNamespace> RecoveryState<'_, '_, '_, W> {
             match self.try_closure(current.current) {
                 Ok(()) => {}
                 Err(first) => {
-                    // Unsupported semantics, mismatched valid identity and IO
-                    // uncertainty are never hidden by an older fallback.
-                    let can_fallback = matches!(
-                        first.cause,
-                        Plan4RecoveryCause::Missing
-                            | Plan4RecoveryCause::ContentMismatch
-                            | Plan4RecoveryCause::Base(base::Error::Corrupt)
-                            | Plan4RecoveryCause::RowBase(base::row::RowBaseError::Corrupt)
-                    );
-                    if !can_fallback || current.current == current.previous {
+                    if !current_may_fall_back(&first.cause) || current.current == current.previous {
                         return Err(first);
                     }
                     self.try_closure(current.previous)?;
