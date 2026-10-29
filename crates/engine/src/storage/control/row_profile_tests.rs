@@ -206,3 +206,81 @@ fn profile3_shared_header_keeps_legacy_entry_closed() {
         Err(ControlError::UnsupportedFormat)
     );
 }
+
+/// Frame inventories read from the Profile3 codec source: values whose scope
+/// encloses each deepest nested call, plus earlier temporaries. SHA is the
+/// pinned 1536B closure constant; these are not machine-stack measurements.
+#[test]
+fn profile3_source_bound_covers_measured_frames() {
+    use foundation::codec::ContentHasher;
+    use std::{
+        array::IntoIter,
+        mem::{size_of, size_of_val},
+    };
+    const SHA: usize = 1536;
+    let digest = size_of::<&[u8]>() + size_of::<[u8; 32]>() + size_of::<ContentHasher>();
+    let prefix = size_of::<(u32, u16)>()
+        + size_of::<Result<[u8; 188]>>()
+        + size_of::<[u8; 188]>()
+        + size_of::<[(usize, u64); 15]>()
+        + size_of::<IntoIter<(usize, u64), 15>>()
+        + size_of::<(usize, u64)>()
+        + size_of::<[(usize, u32); 12]>()
+        + size_of::<IntoIter<(usize, u32), 12>>()
+        + size_of::<(usize, u32)>()
+        + size_of::<[(usize, u16); 6]>()
+        + size_of::<IntoIter<(usize, u16), 6>>()
+        + size_of::<(usize, u16)>()
+        + size_of::<[u8; 8]>();
+    let encode = size_of::<(ProfileSpec, &mut [u8])>() + size_of::<Result<&[u8]>>();
+    let format = size_of::<(ProfileSpec, u16, &mut [u8])>()
+        + size_of::<Result<&[u8]>>()
+        + size_of::<Result<()>>()
+        + size_of::<Result<[u8; 188]>>()
+        + size_of::<[u8; 188]>()
+        + size_of::<MapIdentity>();
+    let sealing = size_of::<(&mut [u8], usize, [u8; 32])>();
+    let header = size_of::<(&mut [u8], ControlKind, MapIdentity, u32, u32, usize)>()
+        + size_of::<([u8; 16], [u8; 2], [u8; 4], [u8; 8])>();
+    let decode = size_of::<(&[u8], Option<Namespace>)>()
+        + size_of::<Result<Profile>>()
+        + size_of::<Namespace>()
+        + size_of::<Result<()>>()
+        + size_of::<Envelope>()
+        + size_of::<Result<Envelope>>()
+        + size_of::<u32>()
+        + size_of::<Result<[u8; 188]>>()
+        + size_of::<[u8; 188]>()
+        + size_of::<[u8; 32]>()
+        + size_of::<Profile>();
+    let read = size_of::<(&[u8], EnvelopeVersion)>()
+        + size_of::<Result<Envelope>>()
+        + size_of::<(ControlKind, Result<ControlKind>, u32, usize, u32, bool)>()
+        + size_of::<MapIdentity>()
+        + size_of::<Envelope>()
+        + size_of::<Result<Namespace>>();
+    let checksum = size_of::<(&[u8], bool, [u8; 32])>();
+    let namespace = size_of::<(&[u8], usize, usize)>()
+        + size_of::<Result<Namespace>>()
+        + size_of::<Namespace>()
+        + size_of_val(&DatabaseId::new([1; 16]))
+        + size_of::<[u8; 16]>()
+        + size_of::<Result<()>>();
+    let chains = [
+        ("encode_prefix", encode + format + prefix),
+        ("encode_seal", encode + format + sealing + digest + SHA),
+        ("encode_header", encode + format + header),
+        ("decode_checksum", decode + read + checksum + digest + SHA),
+        ("decode_namespace", decode + read + namespace),
+        ("decode_prefix", decode + prefix),
+        ("decode_digest", decode + digest + SHA),
+    ];
+    let bound = source_bytes();
+    for (name, bytes) in chains {
+        println!("PROFILE3_SOURCE_CHAIN {name}={bytes}");
+        assert!(bound >= bytes, "{name}");
+    }
+    let measured = chains.iter().map(|(_, bytes)| *bytes).max().unwrap();
+    println!("PROFILE3_SOURCE bound={bound} measured={measured}");
+    assert!(bound >= 2 * 188 + SHA);
+}

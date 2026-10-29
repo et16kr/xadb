@@ -1,0 +1,91 @@
+{
+  "schema": "XADB_ROW_GENESIS3_V1",
+  "status": "FROZEN_INPUTS_NOT_EXECUTION_EVIDENCE",
+  "baseline": "31e4614",
+  "scope": "Uncalled Profile3 genesis retention page encode/validate (Root3 row_high0, Free Job3x64, empty budget digest) and production source bounds for Row Root3/Job3 decode, the Row codec and Profile3 codec. Current genesis/selection/base/replay/recovery stay Profile2; nothing calls the new entries before the single switch.",
+  "budget": {
+    "total_seconds": 1800,
+    "compiler_seconds": 900,
+    "case_seconds": 30,
+    "output_bytes": 8388608,
+    "rust_min_stack": 33554432,
+    "runs_per_selector": 1
+  },
+  "runtime_tests": [
+    {
+      "selector": "storage::retention_genesis::row_tests::row_genesis_pages_match_independent_literals",
+      "expected": "PASS",
+      "reason": "encode_row_current for 6 roles x 2 namespaces equals the independent pages.bin literal from zero/0xa5 output; validate_row_current accepts each; Root cell equals root3/initial-root.bin (database substituted for B) with row_high bytes zero; every Job slot equals root3/free-job.bin."
+    },
+    {
+      "selector": "storage::retention_genesis::row_tests::row_genesis_rejects_versions_identity_and_noncanonical",
+      "expected": "PASS",
+      "reason": "Profile2 Root2/Job2 genesis pages UnsupportedFormat; active Root3 page LSN99 Corrupt; cell version 0/1/2/4/65535 at first/last slot and page version2 UnsupportedFormat; other namespace, page incarnation/owner/owner generation, cross role IdentityMismatch; timeline0/2 and Jobs index5/255 InvalidInput; LSN1 Corrupt; lengths0/16383/16385 Page(Corrupt); Root cell database/timeline/ref IdentityMismatch; revision/issued/object_high/commit/row_high/reserved/digest bytes Corrupt; Job generation0/2, state/kind/tail bytes Corrupt."
+    },
+    {
+      "selector": "storage::retention_genesis::row_tests::row_genesis_encode_failures_preserve_output",
+      "expected": "PASS",
+      "reason": "Invalid namespace, Jobs index and output length return InvalidInput with the caller output unchanged."
+    },
+    {
+      "selector": "storage::retention_genesis::row_tests::row_genesis_source_bound_covers_measured_frames",
+      "expected": "PASS",
+      "reason": "row_current_source_bytes is at least every measured encode/validate wrapper chain (wrapper frames plus the Row frame inventory) and equals wrapper source_bytes + Row codec source_bytes; prints numbers."
+    },
+    {
+      "selector": "storage::retention_page::row::source_tests::row_codec_source_bounds_cover_measured_frames",
+      "expected": "PASS",
+      "reason": "Row root_decode_source_bytes is at least 2x512+1024+1536 and every measured Root decode/encode chain; Row source_bytes is at least that and every measured Job3/page/census chain; prints numbers and the Catalog counterparts for comparison."
+    },
+    {
+      "selector": "storage::control::row_profile::tests::profile3_source_bound_covers_measured_frames",
+      "expected": "PASS",
+      "reason": "Profile3 codec source_bytes is at least every measured encode/decode chain (prefix tables, seal/checksum/digest SHA, header, namespace); prints numbers."
+    }
+  ],
+  "compiler_tests": [],
+  "inputs": {
+    "genesis3/author.py": {
+      "bytes": 3785,
+      "sha256": "a49288e3d7f9d58da95fc7a6ca52866693ddb9b2a0fcdd4085ea0cec2f1eb49e"
+    },
+    "genesis3/pages.bin": {
+      "bytes": 196608,
+      "sha256": "c527c443c0c4e661c0eefff48b352e5f23c7526fa303f336697a2d04e1c471fe"
+    },
+    "genesis3/rejects.bin": {
+      "bytes": 114688,
+      "sha256": "8183abf242c5c75dc08806d548fbf9aecaad040c047aeb3cf2da823efaaf7bf6"
+    }
+  },
+  "parent_inputs": {
+    "root3/initial-root.bin": {
+      "bytes": 512,
+      "sha256": "d6079c1ea15ea2668be3150c6128d9be4a72e28855336ea7c1d971f73d0b3fc4"
+    },
+    "root3/free-job.bin": {
+      "bytes": 1024,
+      "sha256": "aee93979e2d5bf1901a0daf894a8f8c705fcb3335581f215f405b6326a8dbe69"
+    },
+    "root3/active-root.bin": {
+      "bytes": 512,
+      "sha256": "8162de64c7d733908c5f617f89fac36e4cf65186bed83a0b79282178d39be5f9"
+    },
+    "envelopes/pages.bin": {
+      "bytes": 196608,
+      "sha256": "a6877a6d30c795f532803ce348a56962735652d80d1d06c28239d873f9fac6d7"
+    }
+  },
+  "literal_layout": {
+    "pages.bin": "12 x 16384B: namespace A (database 01..10) Root page1, Jobs pages2..6, then namespace B (database a1..b0) in the same order; all LSN0, timeline1.",
+    "rejects.bin": "7 x 16384B: namespace A Profile2-current Root2 page1 and Job2 pages2..6 (version2 cells, Root2 digest over Free Job2), then the root3 active Root3 cell in page1 at LSN99.",
+    "cross_check": "author.py asserts its first six pages equal the first six pages of the hash-pinned envelopes/pages.bin from the earlier independent author."
+  },
+  "expected_outcomes": {
+    "pages.bin[0..12]": "encode_row_current byte-equal and validate_row_current Ok for its namespace/role",
+    "rejects.bin[0..6]": "validate_row_current Err(UnsupportedFormat) for roles Root, Jobs0..4",
+    "rejects.bin[6]": "validate_row_current(Root) Err(Corrupt)",
+    "lib_test_list": "differs from base 31e4614 only by the six selectors above"
+  },
+  "preserved_scope": "No existing selectors are run: Root2/Root3/Job3/page/Profile3/genesis codecs and Catalog current genesis are unchanged in behavior. free_job only gains pub(in crate::storage) visibility; its body is unchanged. encode_current/validate_current/current_source_bytes stay the Profile2 current entries."
+}
