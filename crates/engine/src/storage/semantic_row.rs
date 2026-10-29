@@ -8,6 +8,7 @@ pub(crate) mod leaf;
 pub(crate) mod ledger;
 mod operation;
 pub(crate) mod status;
+pub(crate) mod transition;
 pub(crate) mod undo;
 mod wire;
 pub(crate) use core::{CoreView, decode_core};
