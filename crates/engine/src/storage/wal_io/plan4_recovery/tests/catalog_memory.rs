@@ -1222,3 +1222,6 @@ mod own_catalog_read;
 
 #[path = "catalog_memory/row_transactions.rs"]
 mod row_transactions;
+
+#[path = "catalog_memory/row_statements.rs"]
+mod row_statements;

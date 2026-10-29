@@ -1115,6 +1115,11 @@ impl RowStatementView<'_, '_, '_, '_, '_> {
         self.sequence
     }
 
+    /// The view's own mark; it cannot change the view or the slot.
+    pub(in crate::storage) fn test_mark(&self) -> Option<UndoRef> {
+        self.mark
+    }
+
     /// Scalar (global used, own slot charge); cannot reserve or return one.
     pub(in crate::storage) fn test_charges(&self) -> (u64, u32) {
         let lease = &self.transaction.lease;
@@ -1128,6 +1133,28 @@ impl RowStatementView<'_, '_, '_, '_, '_> {
         )
     }
 }
+
+#[cfg(test)]
+impl RowTransaction<'_, '_, '_, '_> {
+    /// Scalar (active statement sequence, slot mark bytes 88..128).
+    pub(in crate::storage) fn test_statement_slot(&self) -> (u64, [u8; UNDO_REF_BYTES]) {
+        let state = self.lease.ledger.lock().unwrap();
+        let target = row(state.bytes, self.lease.slot);
+        (
+            read64(target, 80),
+            target[MARK].try_into().expect("40-byte mark"),
+        )
+    }
+    /// Stale-mark fault fixture: overwrite only the slot's mark bytes.
+    pub(in crate::storage) fn test_write_statement_mark(&self, bytes: [u8; UNDO_REF_BYTES]) {
+        let mut state = self.lease.ledger.lock().unwrap();
+        row_mut(state.bytes, self.lease.slot)[MARK].copy_from_slice(&bytes);
+    }
+}
+
+#[cfg(test)]
+#[path = "transaction_mark_tests.rs"]
+mod mark_tests;
 
 #[cfg(test)]
 impl<W: WriterNamespace> ReadPort<'_, '_, '_, '_, '_, '_, '_, '_, W> {
