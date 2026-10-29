@@ -328,9 +328,13 @@ impl<'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
 
 /// The long-lived capsule and its return carrier are already charged by the
 /// 512-byte lease. Count this new wrapper's other values through the original
-/// synchronous lifecycle call, without last-use/optimizer discounts.
+/// synchronous lifecycle call, without last-use/optimizer discounts. The empty
+/// abort is one frame whichever kind it dispatches, so a Catalog lifecycle
+/// reached from it is charged that frame's larger Row-arm Observation too.
 pub(in super::super) fn lifecycle_caller_bytes() -> usize {
-    caller_bytes::<Observation>().max(super::catalog::terminal_caller_bytes())
+    caller_bytes::<Observation>()
+        .max(row_lifecycle_caller_bytes())
+        .max(super::catalog::terminal_caller_bytes())
 }
 
 /// The same wrappers around the Row lifecycle (Row Begin and the Row arm of
