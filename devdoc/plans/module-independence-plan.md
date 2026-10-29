@@ -1,5 +1,7 @@
 # XADB 모듈 독립 개발 구조 전환 작업 계획
 
+2026-10-29 [L1 파일별 이동표](#l1-move-table): main `082d329`에서 `allocation_reservation`의 진입1개와 자손7개, 8개 파일의 선언·소유·소비·visibility·경로 참조를 대조한 초안을 작성했다. 사용자가 권장 배치 B(진입 파일 유지)를 확정했다. 제품 이동·빌드·시험은 NOT_RUN이며 전체 M4/M5는 미완료다.
+
 2026-10-29 [폴더 재정리 후속 계획](#folder-reorganization): Job 검산 작업의 `517208d` 종료와 clean 상태를 확인하고 임시 조사안을 기존 계획에 반영했다. 참조·소유·API 경계를 기준으로 배치 정리와 논리 의존 변경을 구분한다. 문서 범위의 독립 D2 수용·필수 수정0이며 제품 이동·시험은 NOT_RUN, 전체 M4/M5는 미완료다.
 
 2026-10-29 [실제 Job page·원 bank 전이](../evidence/module-independence-survey-20261026.md#row-job-images): main `21592e9`에서 Job11개 전이·원64 bank·실제 page/native/redo를 결합했다. raw26쌍·source별 신규10개 선택 검증과 최종 독립 D1/D2 한정 수용·필수 수정0을 확인했다. 전체 M4/M5는 미완료다.
@@ -446,6 +448,93 @@ Root3/Job3/Profile3·Row scope3·base4는 이름 변경의 부수 효과가 아�
 5. **변경 범위 검증·인계:** 실행 전 실제 diff→영향 계약→선택 case를 연결한다. 배치만 바뀌면 영향받은 production/test cfg의 컴파일·모듈 연결·접근 제한을 확인하고 의미·수명·오류 경로가 바뀐 부분에는 필요한 시험을 배정한다. 기존 통과 시험·무변경 하위 회귀·workspace 전체를 반복하지 않는다. 각 단위의 source·선택 결과·독립 리뷰·현재/원 경로 대응을 보존한다.
 
 새 경로는 실제 구현 때만 관리 JSON의 source inventory에 등록한다. 과거 증거의 원 경로·revision·hash·selector와 FAIL/UNKNOWN/NOT_RUN은 소급 수정하지 않는다. 필요한 현재-build 복구 검증은 실제 소유·수명·효과 변경과 연결하며 배치 정리 명목으로 의무를 면제하지 않는다. 문서 verifier와 전체 fmt/Clippy gate는 기존 push 시점 정책을 유지한다.
+
+<a id="l1-move-table"></a>
+### L1 파일별 이동표
+
+2026-10-29 · **이동표 확정(B) / 제품 이동·빌드·시험 NOT_RUN**
+
+사용자 지시 “L1 이동표 작성”에 따라 위 이행 순서의 1–2단계를 L1에 적용했다. 사용자는 이어서 “권장으로 진행해 주세요”라고 지시해 배치 B를 확정했다. 이 표는 이동이나 검증의 결과가 아니다.
+
+**기준·소유.** 기준은 main `082d329a28a46fbf201f0276b319a840af1b4929`, tree `dd41b0a5bbd610877bf4e1a9a4767feab509a70c`이며 checkout은 clean이고 `origin/main`과 같다. 다른 worktree `/home/et16/work/xadb-dev4`는 main의 조상 `7327e7a`에 detached·clean 상태라 L1 파일의 동시 편집은 없다. 적용하지 않기로 한 C2 초안 `stash@{0}`은 `allocation_budget.rs`·`allocation_operation.rs`·`plan4_allocation_operation.rs`를 수정하므로, 이동 뒤에는 rename을 반영해야만 다시 적용할 수 있다. 작성 담당은 이 Claude 세션이다. 아래 경로는 `crates/engine/src/storage/wal_io/` 기준이며 `AR`은 논리 경로 `crate::storage::wal_io::bootstrap::doublewrite_install::allocation_reservation`이다.
+
+**배치 형식 — B 확정.** 13절 후보는 `allocation_reservation/{mod,operation,budget,tests,native_tests,resource_tests}.rs`이고 [코딩 컨벤션 §4](../policies/coding-convention.md#section-4)는 `name/mod.rs` 확장을 쓴다. 반면 `crates/engine/src`의 실제 폴더 모듈은 진입 파일을 폴더 옆에 두는 `name.rs`+`name/` 형식이 38개, `mod.rs` 형식이 4개다. `wal_io`에서는 `plan4_pages`·`plan4_recovery`(`tests.rs`+`tests/` 포함)·`plan4_apply`·`empty_transactions`와 하위의 `plan4_retention/control.rs`+`control/`이 앞 형식이고 [XADB-NAME-001](../evidence/naming-cleanup-20261025.md)도 이 형식으로 옮겼다. `mod.rs` 형식은 `recovery_effect/` 하나다.
+
+- **B(권장):** 진입 `allocation_reservation.rs`는 제자리에 두고 자손7개만 `allocation_reservation/`로 옮긴다. 공유 조립 파일 `doublewrite_install.rs`를 수정하지 않고, 한 단위에 `mod.rs`가 셋 생기지 않는다. 채택하면 단위별 예외로 남기지 않고, §4 문구를 실제 배치에 맞출지를 별도 D2로 정한다.
+- **A(§4를 자손까지 적용):** 진입도 `allocation_reservation/mod.rs`로 옮긴다. 13절 후보는 `operation.rs`·`tests.rs`를 파일로 두지만, §4를 자손에도 적용하면 자손을 가진 둘은 `operation/mod.rs`·`tests/mod.rs`가 된다. `doublewrite_install.rs:22`의 `#[path]` 1줄, 진입 파일을 가리키는 Markdown 링크2개와 JSON 경로4개를 추가로 고친다.
+
+두 안 모두 논리 모듈 경로·visibility·cfg·시험 selector가 같다. 아래 표는 B 기준이다.
+
+#### 이동과 선언
+
+| 현재 파일(줄) | 목표 파일(B) | 논리 경로 | 선언 위치와 새 `#[path]` | cfg |
+| --- | --- | --- | --- | --- |
+| `allocation_reservation.rs`(541) | 유지 | `AR` | `doublewrite_install.rs:22`, 변경 없음 | production |
+| `allocation_operation.rs`(1757) | `allocation_reservation/operation.rs` | `AR::operation` | `allocation_reservation.rs:15` → `"allocation_reservation/operation.rs"` | production |
+| `plan4_allocation_operation.rs`(432) | `allocation_reservation/operation/plan4_retention.rs` | `AR::operation::retention` | 이동한 `operation.rs:1756` → `"operation/plan4_retention.rs"` | production |
+| `allocation_budget.rs`(103) | `allocation_reservation/budget.rs` | `AR::budget` | `allocation_reservation.rs:19` → `"allocation_reservation/budget.rs"` | production |
+| `allocation_reservation_tests.rs`(1124) | `allocation_reservation/tests.rs` | `AR::tests` | `allocation_reservation.rs:23` → `"allocation_reservation/tests.rs"` | `test` |
+| `allocation_budget_profile_tests.rs`(295) | `allocation_reservation/tests/budget_profiles.rs` | `AR::tests::budget_profiles` | 이동한 `tests.rs:13` → `"tests/budget_profiles.rs"` | 부모의 `test` |
+| `allocation_native_tests.rs`(510) | `allocation_reservation/native_tests.rs` | `AR::native_tests` | `allocation_reservation.rs:27` → `"allocation_reservation/native_tests.rs"` | `test`·linux |
+| `allocation_resource_tests.rs`(150) | `allocation_reservation/resource_tests.rs` | `AR::resource_tests` | `allocation_reservation.rs:31` → `"allocation_reservation/resource_tests.rs"` | `test`·linux |
+
+`#[path]`로 읽힌 파일 안의 `#[path]`는 그 파일의 폴더를 기준으로 한다(`plan4_recovery/tests.rs`의 `"tests/cases.rs"`와 같은 형식). `plan4_allocation_operation.rs`는 이름에 plan4가 있지만 논리 부모가 `operation`이므로 L4가 아니라 이 단위에서 옮긴다. `plan4`는 XADB-NAME-001이 실제 bootstrap 종류로 유지한 이름이므로 새 파일 이름에도 남긴다. `status_init_operation::retention`(`plan4_status_init_operation.rs`)은 이름만 같은 별도 모듈이며 이동하지 않는다. 기능 본문·`super` 사슬·`use`는 바꾸지 않는다. 대상8개 파일에 `include!`·`file!`·`module_path!`·`cfg_attr(path)`는 없다.
+
+#### 소유·제공·소비
+
+소비자는 `allocation_reservation` 경로, `doublewrite_install`·`bootstrap`·`wal_io`의 재노출 이름, 조상 import 별칭을 거친 항목 이름을 grep으로 모은 파일 목록이다. L1 내부 파일은 뺐다. `operation`의 `Batch`·`SemanticError`·`TerminalOutcome`처럼 `use super::*`와 부모 import를 거쳐 쓰이는 이름은 독립 검토에서 추가로 찾은 파일까지 넣었으므로, 그 목록은 확인된 하한이다. rustc 이름 해석 결과가 아니므로 실행 때 컴파일로 최종 확인한다. 경로는 `wal_io/` 기준이며 `storage/`로 시작하면 `crates/engine/src/` 기준이다.
+
+| 논리 모듈 | 상태 소유 | 제공 | 실제 소비자 | visibility(유지) |
+| --- | --- | --- | --- | --- |
+| `AR` | static 없음. `AllocationSession`이 이동받은 설치 `DoublewriteStorageSession`과 예약 `AllocationState`를 소유하고, 그 core의 fence·`reader_active` flag를 읽고 바꾼다 | `AllocationSession`, `AllocationObservation`, `AllocationSessionError`, `Phase`, `Cause`, `into_allocation_session` | 운영7: `storage/wal_io.rs`, `bootstrap`, `allocator_eviction`, `dirty_allocation`, `mixed_system_owner`, `mixed_system_resources`, `status_init`. 시험6: `allocator_residency_tests`, `recovery_effect/native_tests`, `recovery_prefix_native_tests`, `status_bootstrap_tests`, `status_init_tests`, `undo_bootstrap_tests`. borrow probe6: `crates/engine/tests/fixtures/dev3-allocation-reservation/compiler/*.rs` | private `mod`, 항목 `pub(crate)`, `doublewrite_install` 재노출 |
+| `AR::operation` | 보관 상태 없음. `PreparedAllocation` 생성 봉인과 allocator before/after 검산 | `SemanticError`, `AllocationPopulation`, `OperationBudget`, `MixedInitKind`, `Batch`, `Plan`, `validate_*`, plan4/Catalog base bridge | 운영26 이상: `storage/plan4_recovery_base.rs`, `storage/plan4_recovery_base/catalog/graph/ledger.rs`, `storage/wal_io.rs`, `bootstrap`, `dirty_allocation`, `empty_transactions/{history,load,pressure}`, `fixed_system_operation`, `flush_io`, `mixed_system_history`, `mixed_system_init`, `mixed_system_load`, `operational_status`, `plan4_apply`, `plan4_retention/{history,population}`, `plan4_status_init_operation`, `recovery_effect/{physical,types}`, `recovery_empty_transactions`, `recovery_prefix`, `status_home_flush`, `status_init`, `status_init_operation`, `status_load`. 시험13 이상: `storage/plan4_recovery_base_bridge_tests.rs`, `dirty_allocation_test_support`, `mixed_system_init_tests`, `operational_status_tests`, `plan4_apply/owner_tests`, `plan4_genesis_tests`, `recovery_effect/operational_tests`, `recovery_prefix_tests`, `resident_status_tests`, `status_home_flush/home_tests`, `status_init_operation_tests`, `status_init_resource_tests`, `status_init_tests`. compiler fixture `dev3-mixed-system-init/compiler/owner_drop.rs` | `pub(super) mod`, 항목 `pub(in super::super)`·`pub(crate)`, `doublewrite_install`→`bootstrap`→`wal_io` 재노출 |
+| `AR::operation::retention` | 보관 상태 없음. plan4 reserve/cancel 준비 값과 검산 | `RetentionAllocationPlan`, `RetentionReservation`, `RetentionAllocationState`, `PreparedRetentionAllocation`, prepare/validate/materialize, source-bytes 상한 | 운영2: `plan4_retention/population`, `plan4_status_init_operation`. 시험1: `plan4_apply/owner_tests` | `pub(crate) mod`(실효 범위는 부모의 `pub(super)`) |
+| `AR::budget` | 상태 없음. 고정 live-value 상한 | `COMMON`…`CONSTRUCTOR` 상수, `fits` | 운영10: `allocator_residency`, `empty_transactions`, `empty_transactions/{live,pressure}`, `mixed_system_history`, `mixed_system_init`, `mutable_storage`, `recovery_prefix`, `status_init`, `status_init_operation`. 시험4: `allocator_residency_native_tests`, `dirty_allocation_tests`, `recovery_prefix_tests`, `status_init_resource_tests`. L1 내부의 `AR`·`operation`·`retention`·`resource_tests`도 쓴다 | `pub(super) mod`, 항목 `pub(in super::super)` |
+| `AR::tests` | 시험 지원. 보관 상태 없음 | `#[test]` 9(AR01–AR08, constructor 경계)와 `cfg(test)` hook `Point`·`TerminalCapture`·`Hook`·`stage_cut`·`cut` | `AR` 본문의 `cfg(test)` 경로가 hook을 호출한다. 시험은 `bootstrap::test_support`와 fixture `dev3-allocation-reservation`을 쓴다 | private `mod`, hook `pub(super)` |
+| `AR::tests::budget_profiles` | 시험 | `#[test]` 1 | fixture `dev3-dirty-allocation`을 쓴다 | private |
+| `AR::native_tests` | 시험 | `#[test]` 2(`allocation_native_profiles`·`allocation_native_faults`) | `scripts/dev3_allocation_native.py`의 `MODULE` selector | private |
+| `AR::resource_tests` | 시험 | `#[test]` 2 | `scripts/check_dev3_allocation_stack.py`의 `TEST` selector, `bootstrap::test_support` | private |
+
+#### 영향 case와 실행 때의 처리
+
+| case | 연결 | 처리 |
+| --- | --- | --- |
+| `AR::tests`의 AR01–AR08·constructor 경계, `budget_profiles` | 이동 파일의 시험 | 시험 발견 목록의 동일성만 확인한다. 본문은 그대로이므로 NOT_RUN |
+| `native_tests` 2개 | `scripts/dev3_allocation_native.py`의 논리 selector | 목록에서 selector를 확인한다. native 실행 NOT_RUN |
+| `resource_tests` 2개 | `scripts/check_dev3_allocation_stack.py`의 논리 selector 1개 | 목록에서 selector를 확인한다. 실행 NOT_RUN |
+| borrow probe baseline과 6사례 | `scripts/check_dev3_allocation_borrows.py`. 기대 오류 위치는 probe 파일의 줄이다 | 논리 경로와 probe 파일 위치가 그대로이므로 NOT_RUN |
+| mixed-init `owner_drop` | `scripts/check_dev3_mixed_init_borrows.py`. primary span은 probe 파일이다 | 같은 이유로 NOT_RUN |
+| 위 표의 다른 소비자 모듈 | 논리 경로·재노출 | production·test cfg 컴파일로 확인 |
+
+#### 경로 참조의 갱신과 보존
+
+| 대상 | 처리(B) |
+| --- | --- |
+| 현재 Markdown 링크 | `contracts/dev3-allocation-reservation.md:159`(budget)와 `contracts/dev3-task-03-allocation.md:78`(operation)를 새 경로로 바꾼다. 진입 파일 링크2개(task-03·task-14)는 그대로 유효하다 |
+| 현재 서술 | `contracts/dev3-recovery-control-base.md:41`의 `allocation_operation.rs` 표기를 현재 경로로 바꾼다 |
+| 증거 Markdown 링크 | `evidence/dev3-allocation-resource-review-20261022.md:13`의 budget 링크는 문서 검사의 깨진 링크 거절 대상이다. XADB-NAME-001 선례대로 링크만 현재 위치로 바꾸고 원 경로·기준 commit·변경 전 SHA-256을 덧붙이며 원 byte는 로컬 `artifacts/maintenance/`에 보존한다 |
+| 관리 JSON | `repository-build-plan.json`의 L1 경로 문자열29개 중 진입 파일4개를 뺀25개를 새 경로로 바꾼다. XADB-NAME-001도 `implemented_paths`·`modified_paths`를 현재 경로로 갱신했다 |
+| 보존 | 증거 파일14개의 원 경로 표기(위 링크1개만 예외), `implementation/dev3-implementation.md:593`의 역사 서술, 이 절의 후보 표 |
+| 변경 없음 확인 | `scripts/`는 논리 selector만, compiler fixture와 borrow probe는 논리 경로만 쓴다. `.github`·Cargo manifest의 참조는 없다 |
+
+#### 실행 때의 검증 선택
+
+1. **정적 대응:** `crates/` 안의 `git diff -M`에서 이동7개와 `#[path]` 7줄(진입5·operation1·tests1)만 바뀌어야 한다. 이동만 하는 5개(`plan4_retention`·`budget`·`budget_profiles`·`native_tests`·`resource_tests`)는 아래 기준 SHA-256과 byte가 같아야 하고, 진입·`operation`·`tests`는 지정한 줄만 달라야 한다.
+2. **컴파일:** `cargo check -p xadb-engine --all-targets --all-features --locked`로 production·test cfg(linux 포함)의 모듈 연결과 접근 제한을 확인한다.
+3. **시험 발견:** 이동 전·후 `cargo test -p xadb-engine --lib --all-features --locked -- --list`의 전체 출력이 같아야 한다. 그중 `allocation_reservation::` 행의 정적 예상은14개이며 실제 수는 이동 전 목록으로 확정한다. script selector 3개(native2·resource1)가 목록에 있는지도 확인한다.
+4. **시험 본문:** 본문은 그대로이고 위치 attribute만 바뀌므로 NOT_RUN으로 기록한다. 기존 결과는 원 source의 증거로 유지한다.
+5. **fmt·Clippy·문서 검사:** 기존 push gate에서 수행한다.
+6. **독립 리뷰와 기록:** 실제 diff와 이 표를 대조하고, 결과는 [조사 증거](../evidence/module-independence-survey-20261026.md)에 새 anchor로 남긴다. build target·임시 export는 결과 기록 뒤 삭제한다.
+
+되돌림은 하나의 commit 단위로 한다. commit 전이면 이동7개와 수정 파일을 기준 HEAD로 복원하고, commit 뒤면 그 commit을 revert한다. 허용 경로는 위 8개 파일과 새 폴더, 갱신 표의 문서·JSON·증거 Markdown 각 해당 줄, 이 계획과 조사 증거다.
+
+기준 SHA-256(`082d329`): `allocation_reservation.rs` `6d8d1ba52723a452838112fe9f948b7fe44fa41f2015e6855de3273c5f551cbb`, `allocation_operation.rs` `aa3a49b8e29b6c272f6f432f5c47ae8e3fccc82afc8394f3155d118bf24868b7`, `plan4_allocation_operation.rs` `4e3a05306a28f9eeebb0e6f966826beaaa2c5be6fc719ac2a582cda3d98ed08d`, `allocation_budget.rs` `5eb34f0804bbe3ac69aa4964aade3de17ee3414861ad88085d70d8b6ab7c8426`, `allocation_reservation_tests.rs` `42984184eacbe1e8e8143e52be5497dbe463bf9067dd6b4cd311f7ef235e9f2b`, `allocation_budget_profile_tests.rs` `fd6c140f4c8ff34470caf144b29f0d21ace70a56d96571999d0b3aff7a089dfd`, `allocation_native_tests.rs` `ec501278cf1d632d6e95cfb097c657c4782a0bd6460b7c307d4125cc74d6db03`, `allocation_resource_tests.rs` `ed3187e5f595ffa4100e10f7843f254fe9a9d386d7ed93b4b296ba8efaa4615f`, `doublewrite_install.rs` `a26734af6f3a2c97844b178ba96687df8342c57a8064c5535eef3a53d74b01a5`.
+
+#### L1 범위 밖 관찰
+
+`AR::operation`은 L1 밖의 운영 파일 26개 이상, `AR::budget`은 운영 파일10개가 `super` 사슬·crate 절대 경로·조상 import 별칭·재노출로 참조한다(위 소비자 표). `operation`의 일부 항목은 `doublewrite_install`→`bootstrap`→`wal_io` 재노출을 거쳐 `wal_io` 밖의 `plan4_recovery_base`까지 이어진다. 배치 정리는 이 참조를 바꾸지 않는다. 최소 API로 좁힐지는 위 이행 순서 4단계에서 실제 소비자를 기준으로 판단할 입력이다.
+
+**독립 검토.** 이 세션이 띄운 별도 검토 subagent가 초안을 실제 source·정책·선례와 읽기 전용으로 대조해 **ACCEPT WITH REQUIRED FIXES**로 판정했다. 이동 대상8개, `#[path]` 해석, 줄 수, SHA-256, JSON 29/25개, 링크, 증거14개, 명령 형식은 일치했다. 필수 지적2건은 소비자 목록 누락과 `AR::tests`의 hook 제공 누락이다. 선택 지적7건은 상태 소유 표현, 영향 case, 검증 단계 정의, A의 명칭과 §4 처리, 파일 이름의 plan4, C2 stash, 파일 수 표현이다. 작성자가 각 지적을 source로 다시 확인한 뒤 반영했다. 같은 검토자의 반영본 재검토는 다른 수정을 모두 확인했지만, `operation` 소비자 목록에서 glob import를 거친 운영6·시험4개 파일의 누락을 필수 지적으로 남겼다. 작성자가 해당 줄을 확인해 10개 파일을 추가하고 목록을 하한으로 표기했다. 이 마지막 반영은 다시 검토받지 않았다. 제품 이동·빌드·시험은 실행하지 않았다.
 
 ### 완료 조건과 문서 정본
 
