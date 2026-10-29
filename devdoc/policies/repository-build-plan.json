@@ -9084,5 +9084,24 @@
     "remaining_supply": "S1-b wiring into history/row.rs with the live HistorySourceCensus target and the provenance+scratch assert; after loans undefined on error",
     "source_roots_changed": false,
     "artifact_manifest_sha256": "7a984ff5b3a666105a7fd95f9d6ba7342816efa2ed35b2792f5812cb4e366a52"
+  },
+  "dev3_module_s1b_row_replay": {
+    "status": "LOCAL_VERIFIED_REVIEWED",
+    "contract_ref": "dev3-module-boundaries.md#row-begin-capsule",
+    "evidence_ref": "module-independence-survey-20261026.md#s1b-row-replay",
+    "baseline_commit": "8522aaf",
+    "integration_base": "8522aaf",
+    "branch": "claude/project-thread-h2j8oc",
+    "commits": [
+      "e6e6ba4",
+      "3c6d083",
+      "2b18a45"
+    ],
+    "rollback": "git revert 2b18a45 3c6d083 e6e6ba4 (S1-c alone is revertible; S1-b only after S1-c)",
+    "scope": "Row scope3 replay arm through history/row.rs apply/record/validate_rows with the S1-a borrowed observer, combined Catalog+Row+ATT closure and 10240 B dirty-tail check, interim analysis gate refusing Row state before SourceFacts, catalog3::decode_catalog_cell and Row-cell skips in Catalog selection loops, Row actors admitted by control/catalog check",
+    "validation": "r0 base 42 and r1 head 59 selectors: 17 new or changed PASS, 6 failures identical to base; supplemental r2b/r2h 6 selectors identical on base and head; recovered peak unchanged; check 0 warnings; one independent review, REQUIRED 0, ADVISORY 13",
+    "remaining_supply": "S1-d carries A1 check() Row descriptor subset, A2 record slot guard, A3 mixed Catalog+Row bank test (R09), A13 Catalog-entry Row-capsule refusal; Q1 RowReserve replay decided before S2; C4 carries A8 retired-table refusal; S6 replaces the interim gate",
+    "source_roots_changed": false,
+    "artifact_manifest_sha256": "ec9cb24610a666b890439d13650de9f1abbbd70df0bbe653cdc8dd9c4267a7f4"
   }
 }

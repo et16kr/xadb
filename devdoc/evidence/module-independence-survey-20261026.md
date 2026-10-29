@@ -4141,3 +4141,35 @@ v2 `native`(221파일, 5,794,810B), `memory-gap`(137, 3,382,130B), `memory-retir
 - 판마다 manifest를 build 전에 동결하고 selector마다 1회 실행했으며 check 경고0, rustfmt·`git diff --check`를 통과했다.
 
 **독립 검토.** 같은 읽기 전용 검토자가 세 번 보았다. r1 필수0(권고: 목표 출처, history.rs 단언, 오류 뒤 after 미정, S1-b 여유를 위한 tx_spec 지렛대), r2 필수1(목표 출처 문구 정정), r3은 그 정정이 그대로 들어갔음을 조정자가 diff로 확인했다. S1-b는 오류 뒤 `after`를 미정으로 다뤄야 한다. artifact는 `module-independence-20261029/artifacts/module-s1a-20261029/`(`manifest-all.sha256` SHA-256 `7a984ff5b3a666105a7fd95f9d6ba7342816efa2ed35b2792f5812cb4e366a52`)에 있다.
+
+<a id="s1b-row-replay"></a>
+## 2026-10-29 S1-b/S1-c Row scope3 replay arm, 결합 closure·임시 분석 gate, Catalog 혼합 bank 허용
+
+기준은 `8522aaf`, branch는 `module-s1b-row-replay`이고 commit은 `e6e6ba4`(S1-c-1), `3c6d083`(S1-b), `2b18a45`(S1-c)다. 기준이 이 branch의 head와 같아 fast-forward로 넣었으므로 sha가 그대로이고, r1 round가 통합 head와 같은 tree(`6354fd69`)다. 계약은 [ROW-BEGIN-001](../contracts/dev3-module-boundaries.md#row-begin-capsule)의 "replay와 분석 gate"·"자원" 문단과 [consumers](../contracts/dev3-module-consumers.md)의 Row cleanup·혼합 bank 문단이다. 되돌림은 S1-c(`2b18a45`)만 단독 가능하고, S1-b는 S1-c 뒤에만, S1-c-1은 둘 다가 기댄다.
+
+**공급**
+
+- `apply_frame`의 scope3 arm은 `plan4_retention/history/row.rs::apply` 하나다. Profile3 XHG/XSG v2 flags3 scope3만 받고, 입력은 canonical arena·bank에서만 얻으며, S1-a `observe_borrowed` 결과를 후보와 byte 비교한다. `semantic_catalog`는 부르지 않는다. 오류 뒤 `after`는 미정으로 다루며 arena·bank 효과가 없다. `record`는 Row group의 control 부분을 쓰는 유일한 본문이고 replay가 지금 부르며 S1-d live install이 같은 본문을 부른다. Begin은 Catalog arm과 `cursor.adopted_local`을 함께 쓴다.
+- 결합 closure(`history.rs`)는 `catalog::validate_current`(Row Terminal 건너뜀) → `row::validate_rows` → `validate_att` 순이고, ATT 행마다 두 scope를 합쳐 정확히 하나의 TerminalLeased actor와 맞아야 한다. dirty 검사는 `REPLAY_TAIL_BYTES` 10240B 전체다.
+- 임시 분석 gate(`plan4_recovery/analysis.rs`)는 replay·Pending·remaining·zero-LSN 검사 뒤, SourceFacts와 AnalysisSeal 앞이다. Row scope 상태가 하나라도 있으면 Analysis/Unsupported, CallerMustResolve, database Unchanged, mutation 0, READY 없음이다. Row 잔여 cleanup은 `Complete`가 아니라 `Unsupported`다. S6이 이 gate를 대체한다.
+- `catalog3::decode_catalog_cell`은 올바른 Row cell에만 Ok(None)을 내고 Job3 decode 오류는 모두 보존한다. actor·root별 선택 loop(transaction_write, transaction_catalog, catalog_lifecycle, catalog_start, catalog_live, epochs)만 이를 쓰고, 단일 ordinal 지점은 정확한 `decode_job`을 유지한다. census·ATT 대응·cleanup 합·`epochs::seed` drained 검사는 모든 cell을 Row codec으로 읽는다.
+- `control/catalog.rs::check`는 Row actor를 받는다. Row actor는 ATT Status에 Row TerminalLeased 정확히 하나, Catalog cell 없음이 조건이고 remaining은 합계에 더한다. 이전에는 혼합 live bank가 `UnsupportedState`로 거절되어 모든 Catalog writer가 막혔을 것이다.
+- 공급하지 않음(S1-d/S1-e): Row Begin, `abort_empty_transaction` scope 분기, actor kind 2, statement mark, Catalog 진입점의 Row capsule 거절. RowReserve frame은 canonical row 값이 없어 Unsupported·무효과로 거절한다(Q1 선택지 B).
+
+**계수(cap 불변).** Row arm은 Catalog/System arm과 배타라 max 항만 더한다. `history_row` 25707 ≤ `history_frame` 25743(불변), `history_peak` 29124 불변, `closure` 20819 → 20951, `frame_return` 10658 → 14532는 기존 max 안이다. recovered 65368 memory·65504 native, live 64000·64136이 그대로이며 S1-c는 census 항을 더하지 않는다.
+
+**시험과 실행**
+
+| 판 | head | 범위 | 결과 |
+| --- | --- | --- | --- |
+| r0 | `8522aaf` | 변경 경로의 기존 42 selector | 36 PASS, 기존 실패 6 |
+| r1 | `2b18a45` | 신규 15·변경 2 + 기존 42 | 53 PASS, 실패 6은 r0와 같은 위치·메시지 |
+| r2b/r2h | `8522aaf`/`2b18a45` | 검토 A11 보충 6 | 양쪽 같음: 3 FAIL(support.rs:260), 3 PASS |
+
+- 신규 selector: `retention_page::catalog3::tests::{catalog_cell_skips_row_and_keeps_catalog_views, catalog_cell_keeps_every_job3_error, catalog_cell_scans_mixed_banks}`, `retention::recovery::row_tests::{s1b_row_arm_replays_n1_and_a_literals, s1b_row_arm_refuses_mutations_without_effect, s1b_scope_routes_only_to_its_own_arm, s1b_record_is_byte_equal_live_and_replay, s1b_row_begin_shares_adopted_local}`(H01–H04·H07), `plan4_recovery::tests::row_gate::{s1b_row_state_stops_at_interim_analysis_gate, s1b_mixed_bank_passes_combined_closure_and_gate_observation, s1b_row_arm_census_memory, s1b_row_arm_census_native, s1b_row_arm_keeps_original_loans_and_handles}`(H05·H06·C01–C03), `row_gate::mixed::{s1c_ledger_check_admits_mixed_bank_with_row_debt, s1c_ledger_check_matches_row_terminals_to_att}`. 변경: `format_tests::{mbc40_v01_profile2_binding_rejected_at_owner_grammar_sites, catalog_replay_carries_row_high_and_rejects_moved_root}`.
+- r0/r1 기존 42개는 rc가 모두 같고 34개는 정규화 출력이 같다. 나머지 8개는 census 줄의 `history_closure`·`history_frame_return`·`history_row` 세 필드만 다르다.
+- 기존 실패 6: `catalog_commit_windows_fit_beside_admitted_readers`(source_tests.rs:554, native 66612 > 65536, main `85ceef3`에서 66280으로 이미 초과), `catalog_source_{memory,native}`(9792 vs 8192), `retention_source_{memory,native}`(tests.rs:140), `retention_live_flush_boundaries`(lifecycle_tests.rs:1012 WrongState). 모두 main에서도 실패한다.
+- r2b/r2h(검토 A11): 제외 이유가 없던 `plan4_recovery::tests::{closure::recovery_closure, cases::recovery_lifecycle, cases::recovery_binding}`은 base·head 모두 recovery 코드 전의 `support.rs:260:5`에서 실패한다. 첫 case에서 멈춰 flush 경로를 덮지 못하는 U42 대신 `catalog_memory::commit_concurrency::{catalog_mt05_pending_lower_flush, catalog_mt06_flush_capture_then_commit}`, `commit_call::commit_call_capacity_roles_phases_and_prepared_flush`를 돌렸고 base·head 모두 PASS다.
+- 판마다 manifest를 build 전에 동결하고 selector마다 1회 실행했다. r0·r1은 check 경고0, 바꾼 28개 .rs의 rustfmt check와 `git diff --check`를 통과했다. r2b·r2h는 r0·r1과 같은 tree라 check를 다시 돌리지 않았다.
+
+**독립 검토.** 읽기 전용 검토자 1회, 필수0·권고13이다. S1-d로 넘기는 권고: A1 `check_ledger` 호출자(`transaction_write.rs:79`, `transaction_catalog.rs:41/196`)는 history closure를 돌리지 않으므로 `check()`에 Status 없는 Row descriptor 검사를 더할 것, A2 slot 내용 전제를 `record` 안으로 옮길 것, A3 live Catalog actor와 Row actor가 함께 있는 bank 시험(R09), A13 Catalog 진입점의 Row capsule 거절. C4로 넘기는 권고: A8 DROP 뒤 Row Clr/Prune replay를 막는 `table_source`의 retired 거절. Q1(RowReserve replay)은 이 병합에는 B로 충분하지만 S2가 live RowReserve를 쓰는 순간 모든 `validate_live`가 그 frame을 거절해 session을 fence하므로 S2 전에 정해야 한다. 검토자는 후보 Job cell을 채택하는 replay 변형(A)을 ROW-BEGIN-001·ROW-WIRE-001 개정과 D2 검토로 권한다. artifact는 `module-independence-20261029/artifacts/module-s1b-20261029/`(`manifest-all.sha256` SHA-256 `ec9cb24610a666b890439d13650de9f1abbbd70df0bbe653cdc8dd9c4267a7f4`)에 있다.

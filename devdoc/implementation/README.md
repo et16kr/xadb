@@ -1,5 +1,7 @@
 # 현재 구현
 
+2026-10-29 [S1-b/S1-c Row replay arm과 혼합 bank](../evidence/module-independence-survey-20261026.md#s1b-row-replay): recovery가 Row scope3 frame을 `history/row.rs`로 replay하고, Row 상태가 남은 재시작은 S6 전까지 분석 gate에서 Unsupported·Unchanged로 멈춘다. live Catalog 연산은 Row cell이 섞인 bank를 받아들인다.
+
 2026-10-29 [S1-a Row observer replay tail 대여](../evidence/module-independence-survey-20261026.md#s1a-borrowed-observer): `semantic_row::transition::observe_borrowed`가 replay tail을 빌려 쓰고 모든 출구에서 0으로 복원한다. 미호출이며 S1-b가 Row replay arm에 연결한다.
 
 2026-10-29 [S1-f CheckedTable 발급자](../evidence/module-independence-survey-20261026.md#s1f-finish-table): `read/statement.rs`의 `finish_table`이 `CheckedTable`을 만드는 유일한 경로다. 아직 이를 소비하는 Row 쓰기·읽기 본문은 없다.

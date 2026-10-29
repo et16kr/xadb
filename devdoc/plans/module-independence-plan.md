@@ -1,5 +1,7 @@
 # XADB 모듈 독립 개발 구조 전환 작업 계획
 
+2026-10-29 [S1-b/S1-c Row replay arm과 혼합 bank](../evidence/module-independence-survey-20261026.md#s1b-row-replay): `apply_frame` scope3 arm을 `history/row.rs`의 단일 Row 본문으로 공급하고 결합 closure와 Row 상태를 거절하는 임시 분석 gate를 더했다. Catalog 선택 loop는 Row cell을 건너뛰고 Job3 오류는 보존한다. recovered peak 불변(65368/65504). 신규 17 selector PASS, 기존 실패 6은 base와 같음. 독립 검토 필수0. RowReserve replay(Q1)는 S2 전에 정한다.
+
 2026-10-29 [S1-a Row observer replay tail 대여](../evidence/module-independence-survey-20261026.md#s1a-borrowed-observer): N1 observer의 큰 배열을 WORK_END tail 9076B로 빌리는 `observe_borrowed`를 더했다. 모든 출구에서 tail을 0으로 되돌린다. borrowed bound 21323B로 S1-b Row arm에 2996B 여유를 남긴다. 11 selector PASS, 독립 검토 3회. 아직 호출되지 않으며 연결은 S1-b다.
 
 2026-10-29 [S1-f CheckedTable 발급자](../evidence/module-independence-survey-20261026.md#s1f-finish-table): `CatalogStatementCall::finish_table`을 `CheckedTable`의 유일 발급자로 공급했다. 같은 호출의 lookup Found만 근거로 하고, publication과 isolation lock을 겹치지 않게 잡으며 read bit·catalog flag를 반환 전에 등록한다. 전환된 형식에서 8 selector PASS, 독립 검토 2회(필수2 반영). 오류 형식 정정과 미공급 문구를 계약에 반영했다.
