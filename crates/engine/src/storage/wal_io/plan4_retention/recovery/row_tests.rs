@@ -6,15 +6,17 @@
 //! table. Expected afters are each frame's redo records applied to the before
 //! pages here, A's snapshot literals and the bank rule of the consumer
 //! contract; no product producer or observer output is a golden. RowReserve
-//! has no replay successor (its frame lacks the canonical row value) and is
-//! installed test-side from its redo after the arm refuses it.
+//! replays by adopting its value commitment (S1-g, contract
+//! row-reserve-replay) over an arena whose page 0 is the independent
+//! allocator literal of `module-row-format/reserve-replay` (H08-H10).
 use super::super::{control as ledger, history, population};
 use super::*;
 use crate::{
     api::{Column, DataType, DatabaseId, Namespace, TableSpec},
     storage::{
         catalog_record::{
-            CatalogDefinition, CatalogExpectation, CatalogHeader, encode_catalog_record,
+            CatalogDefinition, CatalogExpectation, CatalogHeader, IndexDefinition, IndexMode,
+            encode_catalog_record,
         },
         control::row_profile,
         page::{DIGEST_OFFSET, FileId, PAGE_BYTES, PageHeader, PageIdentity, PageLsn},
@@ -25,7 +27,8 @@ use crate::{
             Operation, decode_layout,
             status::StatementBoundary,
             transition::{
-                self, Change, Inputs, JOB, Observation, ROW_REPLAY_SCRATCH_BYTES, TableSource,
+                self, Change, Inputs, JOB, Observation, ROW_REPLAY_SCRATCH_BYTES, ReservePlan,
+                TableSource,
             },
         },
         transaction_record::{LogicalRowVersion, StatusSlotRef, TxnRef, VersionStamp},
@@ -55,6 +58,14 @@ const INDEX: &str = include_str!(concat!(
     env!("CARGO_MANIFEST_DIR"),
     "/../../tests/fixtures/module-row-format/transition/index.tsv"
 ));
+const S1G_BLOBS: &[u8] = include_bytes!(concat!(
+    env!("CARGO_MANIFEST_DIR"),
+    "/../../tests/fixtures/module-row-format/reserve-replay/blobs.bin"
+));
+const S1G_INDEX: &str = include_str!(concat!(
+    env!("CARGO_MANIFEST_DIR"),
+    "/../../tests/fixtures/module-row-format/reserve-replay/index.tsv"
+));
 
 type Page = [u8; PAGE_BYTES];
 type Descriptor = [u8; 1536];
@@ -62,19 +73,27 @@ type Descriptor = [u8; 1536];
 fn hex(bytes: &[u8]) -> String {
     bytes.iter().map(|byte| format!("{byte:02x}")).collect()
 }
-/// One literal from blobs.bin, located and SHA-checked through index.tsv.
-fn blob(name: &str) -> &'static [u8] {
-    for line in INDEX.lines() {
+/// One literal from a blobs.bin, located and SHA-checked through its index.
+fn literal(blobs: &'static [u8], index: &str, name: &str) -> &'static [u8] {
+    for line in index.lines() {
         let fields: Vec<&str> = line.split('\t').collect();
         if fields[0] == name {
             let offset: usize = fields[1].parse().unwrap();
             let length: usize = fields[2].parse().unwrap();
-            let bytes = &BLOBS[offset..offset + length];
+            let bytes = &blobs[offset..offset + length];
             assert_eq!(hex(&content_digest(bytes)), fields[3], "{name}");
             return bytes;
         }
     }
     panic!("missing literal {name}");
+}
+/// An N1 transition literal.
+fn blob(name: &str) -> &'static [u8] {
+    literal(BLOBS, INDEX, name)
+}
+/// An S1-g reserve-replay literal.
+fn g(name: &str) -> &'static [u8] {
+    literal(S1G_BLOBS, S1G_INDEX, name)
 }
 fn page_of(bytes: &[u8]) -> &Page {
     bytes.try_into().unwrap()
@@ -166,6 +185,11 @@ fn columns() -> [Column; 2] {
 /// A's two columns: the replay reads the Row schema from the canonical
 /// Catalog, never from the candidate.
 fn catalog_leaf(object: u64, retired: bool, anchor: PageRef) -> Page {
+    catalog_leaf_with(object, retired, anchor, false)
+}
+/// `catalog_leaf`, or with `index` an Index record (parent object 7) for
+/// `object`: a live non-Table definition.
+fn catalog_leaf_with(object: u64, retired: bool, anchor: PageRef, index: bool) -> Page {
     let spec = TableSpec {
         name: "row_table".into(),
         columns: columns().to_vec(),
@@ -191,6 +215,19 @@ fn catalog_leaf(object: u64, retired: bool, anchor: PageRef) -> Page {
         undo: None,
         anchor,
     };
+    let definition = if index {
+        CatalogDefinition::Index(IndexDefinition {
+            parent: ObjectHandle {
+                object: ObjectId::new(7).unwrap(),
+                ..table()
+            },
+            name: "row_index",
+            mode: IndexMode::Nonunique,
+            columns: &[0],
+        })
+    } else {
+        CatalogDefinition::Table(&spec)
+    };
     let mut record = vec![0; 4096];
     let length = encode_catalog_record(
         CatalogExpectation {
@@ -198,7 +235,7 @@ fn catalog_leaf(object: u64, retired: bool, anchor: PageRef) -> Page {
             object: identity.object,
         },
         header,
-        CatalogDefinition::Table(&spec),
+        definition,
         &mut record,
     )
     .unwrap();
@@ -256,6 +293,8 @@ struct Mode {
     rejects: bool,
     /// H04: `record` on a live-layout control loan must equal the replay.
     live: bool,
+    /// H08: the combined Profile3 closure holds after every accepted group.
+    closure: bool,
 }
 
 /// Everything `apply_frame` may change, for no-effect comparisons.
@@ -432,6 +471,36 @@ impl Replay {
                 self.cursor.adopted_local,
             ),
         }
+    }
+    /// Puts back what `saved` captured (test-side variants of the before
+    /// state; the replay itself never needs it).
+    fn restore(&mut self, saved: &Saved) {
+        self.arena.copy_from_slice(&saved.arena);
+        self.cells.as_flattened_mut().copy_from_slice(&saved.cells);
+        self.bank.copy_from_slice(&saved.bank);
+        self.claims
+            .as_flattened_mut()
+            .copy_from_slice(&saved.claims);
+        self.tail.copy_from_slice(&saved.tail);
+        (
+            self.cursor.previous_lsn,
+            self.cursor.epoch,
+            self.cursor.adopted_local,
+        ) = saved.cursor;
+    }
+    /// The combined Profile3 closure (`retention_replay_closure`) over this
+    /// replay's arena, Job cells, bank and claims in one replay backing.
+    fn closure(&self) -> ObservationResult<()> {
+        let mut replay: Box<[u8; RETENTION_REPLAY_BYTES]> = vec![0; RETENTION_REPLAY_BYTES]
+            .into_boxed_slice()
+            .try_into()
+            .unwrap();
+        replay[..history::ARENA_END].copy_from_slice(&self.arena);
+        replay[history::ARENA_END..history::JOB_END].copy_from_slice(self.cells.as_flattened());
+        replay[history::JOB_END..history::BANK_END].copy_from_slice(&self.bank);
+        replay[history::AFTER_END..history::AFTER_END + history::PROVENANCE_BYTES]
+            .copy_from_slice(self.claims.as_flattened());
+        retention_replay_closure(profile(), &replay)
     }
     fn apply_with(
         &mut self,
@@ -699,6 +768,11 @@ impl Replay {
             "S1B_REPLAYED\t{name}\t{:?}\tpages={changed:?}",
             change.operation()
         );
+        if self.mode.closure {
+            self.closure()
+                .unwrap_or_else(|e| panic!("{name}: closure {e:?}"));
+            println!("S1G_CLOSURE\t{name}\tok");
+        }
     }
     /// Test-side Tx/Aging descriptor tracking (N1 install rule).
     fn track(&mut self, frame: &[u8], before: &Saved) {
@@ -716,26 +790,6 @@ impl Replay {
         } else {
             self.aging = Some(*layout.descriptor(0).unwrap());
         }
-    }
-    /// RowReserve: refused before any effect, then installed test-side from
-    /// its own redo and the control rule so the history can continue.
-    fn reserve(&mut self, name: &str, frame: &[u8]) {
-        if self.mode.rejects {
-            self.variants(name);
-        }
-        let cause = self.refused(name, frame);
-        assert_eq!(cause, "Some(Unsupported)", "{name}");
-        let afters = self.redo_afters(frame);
-        let (bank, cells) = self.expected_control(frame, None, &afters);
-        let before = self.saved();
-        for (_, image) in &afters {
-            self.set_page(image);
-        }
-        self.bank = bank;
-        self.cells.as_flattened_mut().copy_from_slice(&cells);
-        self.cursor.previous_lsn += 1;
-        self.track(frame, &before);
-        println!("S1B_RESERVE_INSTALLED\t{name}");
     }
     /// Every `R-<name>-*` variant of the transition corpus is refused here.
     fn variants(&mut self, name: &str) {
@@ -943,10 +997,13 @@ fn history_n(mode: Mode) -> usize {
     r.rejected.get()
 }
 
+/// A's h-501 snapshots over the S1-g page 0 allocator literal (Status 9,
+/// Undo 10/11/14, anchor 12 and leaf 13 Allocated at their incarnations).
 fn h_501(mode: Mode) -> Replay {
     Replay::new(
         501,
         &[
+            page_of(g("G-allocator")),
             scope3!("h-501-root.bin"),
             scope3!("h-501-jobs2.bin"),
             scope3!("h-501-jobs3.bin"),
@@ -963,7 +1020,8 @@ fn h_501(mode: Mode) -> Replay {
     .with(mode)
 }
 
-fn history_h(mode: Mode) -> usize {
+/// H through the statement RollbackStart502 (Status Aborting).
+fn h_502(mode: Mode) -> Replay {
     let mut r = h_501(mode);
     let mark = boundary(2, Some(undo_ref(10, 2)));
     r.step(
@@ -981,6 +1039,13 @@ fn history_h(mode: Mode) -> usize {
     );
     r.check_page("H-502 Status", scope3!("h-502-status.bin"));
     r.check_tx("H-502 Tx", scope3!("h-502-tx.bin"));
+    r
+}
+/// H through StatementFinish504 and N1's pre-initialized Undo page 14: the
+/// before state of H-505.
+fn h_504(mode: Mode) -> Replay {
+    let mut r = h_502(mode);
+    let mark = boundary(2, Some(undo_ref(10, 2)));
     r.step(
         "H-503",
         scope3!("h-503-clr.wal"),
@@ -1018,7 +1083,36 @@ fn history_h(mode: Mode) -> usize {
     );
     // N1's pre-initialized Undo page 14 (System INIT is not a Row group).
     r.set_page(page_of(blob("H-undo14-0")));
-    r.reserve("H-505", blob("H-505"));
+    r
+}
+/// The live selectors of a Reserve in H (terminal 14, container Undo 14).
+fn reserve_plan(statement: u64, canonical: &[u8]) -> ReservePlan<'_> {
+    ReservePlan {
+        terminal: 14,
+        container: page_ref(14, 2),
+        table: table(),
+        statement,
+        canonical,
+    }
+}
+fn reserve_pages() -> Pages {
+    Pages {
+        jobs: Some(1),
+        status: Some(9),
+        undo: Some(14),
+        table: true,
+        ..pages()
+    }
+}
+
+fn history_h(mode: Mode) -> usize {
+    let mut r = h_504(mode);
+    r.step(
+        "H-505",
+        blob("H-505"),
+        Change::Reserve(&reserve_plan(3, blob("H-505-canonical"))),
+        reserve_pages(),
+    );
     r.step(
         "H-506",
         blob("H-506"),
@@ -1030,7 +1124,12 @@ fn history_h(mode: Mode) -> usize {
             ..pages()
         },
     );
-    r.reserve("H-507", blob("H-507"));
+    r.step(
+        "H-507",
+        blob("H-507"),
+        Change::Reserve(&reserve_plan(4, blob("H-507-canonical"))),
+        reserve_pages(),
+    );
     let row = Pages {
         jobs: Some(1),
         status: Some(9),
@@ -1270,8 +1369,8 @@ fn forward_301() -> (Change<'static>, Pages) {
 /// H01: every N1 group (E, N, H) and A's five Forward/CLR candidates replay
 /// through `apply_frame` to exactly their redo afters, the bank rule and A's
 /// snapshot literals; the tail stays zero, the cursor advances by one LSN
-/// and records only adopted Begins. RowReserve (H-505/H-507) is refused with
-/// no effect.
+/// and records only adopted Begins. RowReserve (H-505/H-507) replays too
+/// (S1-g).
 #[test]
 fn s1b_row_arm_replays_n1_and_a_literals() {
     let mode = Mode::default();
@@ -1432,7 +1531,8 @@ fn s1b_scope_routes_only_to_its_own_arm() {
 /// H04: `record` is one body for live recording and replay: on a live-layout
 /// control loan (rows, then Jobs) with the step's own observation it writes
 /// exactly the bytes replay wrote into the replay bank and cells, for every
-/// recorded op (all but RowReserve).
+/// recorded op. For RowReserve the live observation is owned
+/// `observe(Reserve(plan))` and the replay's is `ReserveAdopted` (S1-g).
 #[test]
 fn s1b_record_is_byte_equal_live_and_replay() {
     let mode = Mode {
@@ -1622,4 +1722,292 @@ fn s1d_record_guards_its_own_slot() {
     let (result, _) = record(&r, blob("E-102"), commit, 0, &mut rows);
     assert!(result.is_ok());
     assert!(ledger::row(&rows, 0).iter().all(|byte| *byte == 0));
+}
+
+// ---- S1-g: RowReserve replay (contract row-reserve-replay) ------------------
+
+/// H08: H-505 and H-507 replay through `apply_frame` (`ReserveAdopted`) to
+/// exactly their redo afters and the bank rule, so the whole H history
+/// continues without any test-side install, over an arena whose page 0 is
+/// the independent allocator literal. The combined Profile3 closure (with
+/// the U allocator check of every non-Free Row root) holds after every
+/// group, in particular after each Reserve and after the Cancel. A10: the
+/// Row closure term stays within the Catalog one, so the combined closure
+/// maximum is unchanged.
+#[test]
+fn s1g_row_reserve_replays_n1_literals() {
+    let row = history::row::source_bytes().closure;
+    let catalog = history::catalog::source_bytes().closure;
+    println!("S1G_CLOSURE_TERMS\trow={row}\tcatalog={catalog}");
+    assert!(row <= catalog, "A10: Row closure {row} > Catalog {catalog}");
+    h_501(Mode::default()).closure().expect("h-501 closure");
+    let mode = Mode {
+        closure: true,
+        ..Mode::default()
+    };
+    assert_eq!(history_h(mode), 0);
+}
+
+/// One refused case of H09: (label, frame, expected cause).
+type Refusal<'a> = (&'a str, &'a [u8], &'a str);
+
+/// H09: every Reserve variant is refused before any effect (arena, Jobs,
+/// bank, provenance, tail and cursor byte-identical), each with the cause
+/// class the contract assigns: Job3 decode of the adopted cell
+/// `Retention(..)`; selector, allocator, scope and source `Invariant`
+/// (retired and non-Table included, unlike Clr/Prune); every value-free
+/// step and byte comparison `RowSemantic(..)`.
+#[test]
+fn s1g_row_reserve_refuses_without_effect() {
+    let mut r = h_504(Mode::default());
+    let base = r.saved();
+    let frames: [Refusal<'_>; 16] = [
+        ("R-H-505-item", blob("R-H-505-item"), "RowSemantic(Corrupt)"),
+        // Commitment carried only by the native (C kept inside the Job3
+        // range and budget, so the other carriers refuse it).
+        (
+            "G-505-projection",
+            g("G-505-projection"),
+            "RowSemantic(Corrupt)",
+        ),
+        ("G-505-c", g("G-505-c"), "RowSemantic(Corrupt)"),
+        ("G-505-c184", g("G-505-c184"), "Retention(Corrupt)"),
+        ("G-505-c2229", g("G-505-c2229"), "Retention(Corrupt)"),
+        ("G-505-budget", g("G-505-budget"), "RowSemantic(Corrupt)"),
+        // Position and issued generations.
+        (
+            "G-505-ordinal18",
+            g("G-505-ordinal18"),
+            "RowSemantic(Corrupt)",
+        ),
+        ("G-505-jobgen", g("G-505-jobgen"), "RowSemantic(Corrupt)"),
+        ("G-505-undogen", g("G-505-undogen"), "RowSemantic(Corrupt)"),
+        // Container: the Job3 codec already separates U from Status/pair.
+        (
+            "G-505-container9",
+            g("G-505-container9"),
+            "Retention(IdentityMismatch)",
+        ),
+        (
+            "G-505-container12",
+            g("G-505-container12"),
+            "Retention(IdentityMismatch)",
+        ),
+        (
+            "G-505-container13",
+            g("G-505-container13"),
+            "Retention(IdentityMismatch)",
+        ),
+        (
+            "G-505-container10",
+            g("G-505-container10"),
+            "RowSemantic(Undo(StateMismatch))",
+        ),
+        ("G-505-container15", g("G-505-container15"), "Invariant"),
+        (
+            "G-505-container-inc3",
+            g("G-505-container-inc3"),
+            "Invariant",
+        ),
+        // Statement below the actor's root maximum (2).
+        (
+            "G-505-statement1",
+            g("G-505-statement1"),
+            "RowSemantic(OrderMismatch)",
+        ),
+    ];
+    let mut seen = Vec::new();
+    for (label, frame, cause) in frames {
+        assert_eq!(r.refused(label, frame), format!("Some({cause})"), "{label}");
+        seen.push(label);
+    }
+    // Canonical-state variants under the authentic H-505.
+    let frame = blob("H-505");
+    let catalog = |page: Page| {
+        move |r: &mut Replay| r.arena[8 * PAGE_BYTES..9 * PAGE_BYTES].copy_from_slice(&page)
+    };
+    let cases: [(&str, &str, Box<dyn Fn(&mut Replay)>); 10] = [
+        (
+            "allocator-free14",
+            "Invariant",
+            Box::new(|r: &mut Replay| r.set_page(page_of(g("G-allocator-free14")))),
+        ),
+        (
+            "allocator-inc14",
+            "Invariant",
+            Box::new(|r: &mut Replay| r.set_page(page_of(g("G-allocator-inc14")))),
+        ),
+        (
+            "catalog-missing",
+            "Invariant",
+            Box::new(catalog(catalog_leaf(7, false, page_ref(12, 2)))),
+        ),
+        (
+            "catalog-anchor",
+            "Invariant",
+            Box::new(catalog(catalog_leaf(6, false, page_ref(12, 3)))),
+        ),
+        (
+            "catalog-retired",
+            "Invariant",
+            Box::new(catalog(catalog_leaf(6, true, page_ref(12, 2)))),
+        ),
+        (
+            "catalog-index",
+            "Invariant",
+            Box::new(catalog(catalog_leaf_with(6, false, page_ref(12, 2), true))),
+        ),
+        (
+            "actor-not-leased",
+            "Invariant",
+            Box::new(|r: &mut Replay| {
+                r.cells[14][48..56].copy_from_slice(&99u64.to_le_bytes());
+            }),
+        ),
+        (
+            "leaf-full",
+            "RowSemantic(OrderMismatch)",
+            Box::new(|r: &mut Replay| r.set_page(page_of(g("G-leaf-crowded")))),
+        ),
+        (
+            "leaf-key-present",
+            "RowSemantic(IdentityMismatch)",
+            Box::new(|r: &mut Replay| r.set_page(page_of(g("G-leaf-key10")))),
+        ),
+        (
+            "tail-dirty",
+            "Invariant",
+            Box::new(|r: &mut Replay| r.tail[ROW_REPLAY_SCRATCH_BYTES - 1] = 1),
+        ),
+    ];
+    for (label, cause, mutate) in cases {
+        mutate(&mut r);
+        assert_eq!(r.refused(label, frame), format!("Some({cause})"), "{label}");
+        r.restore(&base);
+        seen.push(label);
+    }
+    assert_eq!(r.saved(), base);
+    // The unmutated before state accepts H-505 (the refusals are causal);
+    // then a second Reserve while the Reserved root exists is refused.
+    r.step(
+        "H-505",
+        frame,
+        Change::Reserve(&reserve_plan(3, blob("H-505-canonical"))),
+        reserve_pages(),
+    );
+    assert_eq!(
+        r.refused("G-506-reserve2", g("G-506-reserve2")),
+        "Some(RowSemantic(OrderMismatch))"
+    );
+    seen.push("G-506-reserve2");
+    // Status Aborting (statement rollback, H-502) with Undo 14 ready: a
+    // Reserve consistent in every carrier is refused by the Active check.
+    let mut r = h_502(Mode::default());
+    r.set_page(page_of(blob("H-undo14-0")));
+    let refused = r.refused("G-503-reserve-aborting", g("G-503-reserve-aborting"));
+    assert_eq!(refused, "Some(RowSemantic(OrderMismatch))");
+    seen.push("G-503-reserve-aborting");
+    println!("S1G_REFUSED_COUNT\t{}", seen.len());
+    assert_eq!(seen.len(), 28);
+}
+
+/// H10: the adopted commitment opens only at the Forward. R(X)->F(X)
+/// replays; R(X)->F(Y) is refused at the Forward with no effect;
+/// R(X)->Cancel replays. A Reserve R'(Z) rewritten consistently in every
+/// carrier and every later before digest replays, its Cancel replays, and
+/// the authentic Forward of X over it is refused (as is a Forward of X
+/// whose before digests follow R'(Z)).
+#[test]
+fn s1g_reserve_commitment_opens_at_forward() {
+    let mut r = h_504(Mode {
+        closure: true,
+        ..Mode::default()
+    });
+    r.step(
+        "H-505",
+        blob("H-505"),
+        Change::Reserve(&reserve_plan(3, blob("H-505-canonical"))),
+        reserve_pages(),
+    );
+    r.step(
+        "H-506",
+        blob("H-506"),
+        Change::Cancel { ordinal: 17 },
+        Pages {
+            jobs: Some(1),
+            status: Some(9),
+            undo: Some(14),
+            ..pages()
+        },
+    );
+    let after_cancel = r.saved();
+    r.step(
+        "H-507",
+        blob("H-507"),
+        Change::Reserve(&reserve_plan(4, blob("H-507-canonical"))),
+        reserve_pages(),
+    );
+    let reserved_x = r.saved();
+    let row = Pages {
+        jobs: Some(1),
+        status: Some(9),
+        undo: Some(14),
+        previous: Some(10),
+        table: true,
+    };
+    let forward = Change::Forward {
+        ordinal: 17,
+        statement: boundary(4, None),
+    };
+    let cancel_pages = Pages {
+        jobs: Some(1),
+        status: Some(9),
+        undo: Some(14),
+        ..pages()
+    };
+    // R(X) -> F(Y): refused at the Forward, before any effect.
+    assert_eq!(
+        r.refused("G-508-forward-y", g("G-508-forward-y")),
+        "Some(RowSemantic(IdentityMismatch))"
+    );
+    // R(X) -> F(X).
+    r.step("H-508", blob("H-508"), forward, row);
+    r.restore(&reserved_x);
+    // R(X) -> Cancel.
+    r.step(
+        "G-508-cancel-x",
+        g("G-508-cancel-x"),
+        Change::Cancel { ordinal: 17 },
+        cancel_pages,
+    );
+    // R'(Z), consistent in every carrier, then its Cancel.
+    r.restore(&after_cancel);
+    r.step(
+        "G-507-reserve-z",
+        g("G-507-reserve-z"),
+        Change::Reserve(&reserve_plan(4, g("G-507-z-canonical"))),
+        reserve_pages(),
+    );
+    assert_ne!(
+        r.cells[17][288..320],
+        reserved_x.cells[17 * JOB_BYTES + 288..17 * JOB_BYTES + 320]
+    );
+    let reserved_z = r.saved();
+    for (label, frame) in [
+        ("H-508-over-z", blob("H-508")),
+        ("G-508-forward-x-over-z", g("G-508-forward-x-over-z")),
+    ] {
+        assert_eq!(
+            r.refused(label, frame),
+            "Some(RowSemantic(IdentityMismatch))",
+            "{label}"
+        );
+    }
+    assert_eq!(r.saved(), reserved_z);
+    r.step(
+        "G-508-cancel-z",
+        g("G-508-cancel-z"),
+        Change::Cancel { ordinal: 17 },
+        cancel_pages,
+    );
 }

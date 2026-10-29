@@ -25,6 +25,8 @@ G-505-*       H-505 rewritten in its Job native after only (native digest
 G-505-ordinal18 / -jobgen / -undogen / -statement1   whole Reserve groups
               re-produced with one selector or issuance changed.
 G-506-reserve2  a second Reserve after H-505 (a Reserved root exists).
+G-503-reserve-aborting  a Reserve right after H-502 (Status Aborting by a
+              statement rollback), Undo 14 initialized as before H-505.
 G-507-reserve-z  Reserve of Z=canonical(13, None) in place of H-507, every
               carrier consistent; G-508-cancel-z its Cancel and
               G-508-forward-x-over-z the Forward of H-507's value over it.
@@ -279,11 +281,12 @@ def history():
     assert h.row_change(2, 501, 16) == n1.a('h-501-forward.wal')
     mark = n1.slot_ref(10, 2)
     assert h.status_patch(3, 502, statement=2, mark=mark) == N1['H-502']
+    states = {'502': copy.deepcopy(h)}
     assert h.row_change(4, 503, 16) == n1.a('h-503-clr.wal')
     assert h.status_patch(5, 504, statement=2, mark=mark) == N1['H-504']
     h.undo[14] = [n1.undo_free(2), 60]
     assert h.undo_page(14) == N1['H-undo14-0']
-    states = {'504': copy.deepcopy(h)}
+    states['504'] = copy.deepcopy(h)
     assert N1['H-505-canonical'] == n1.canonical(10, 'ten')
     frame, ordinal = h.reserve(505, 14, 3, N1['H-505-canonical'])
     assert frame == N1['H-505'] and ordinal == 17
@@ -351,6 +354,11 @@ def main():
     frame, ordinal = reserve(copy.deepcopy(states['505']), 506, 14, 3, canon)
     assert ordinal == 18
     out['G-506-reserve2'] = frame
+    h = copy.deepcopy(states['502'])
+    h.undo[14] = [n1.undo_free(2), 60]
+    assert h.status_core()[6:8] == b'\x02\x01'  # Aborting(Statement)
+    out['G-503-reserve-aborting'], ordinal = reserve(h, 503, 14, 3, canon)
+    assert ordinal == 17
 
     x, y, z = N1['H-507-canonical'], n1.canonical(12, None), n1.canonical(13, None)
     out['G-508-y-canonical'] = y
