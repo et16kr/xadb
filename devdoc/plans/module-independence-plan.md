@@ -1,5 +1,7 @@
 # XADB 모듈 독립 개발 구조 전환 작업 계획
 
+2026-10-29 [S1-d Row Begin과 빈 Row 철회](../evidence/module-independence-survey-20261026.md#s1d-row-begin): Row Begin과 빈 full abort를 Catalog lifecycle과 같은 gate/progress shell과 설치 본문으로 공급하고, Row control byte는 replay와 같은 `history::row::record`만 쓴다. slot kind 2, RowProgress class, Catalog 진입점의 Row capsule 거절, S1-b 검토의 A1·A2·A3·A9·A13을 닫았다. cap 불변(Catalog lifecycle native 44253/44304). 신규 14 PASS, 실패 16은 base와 같음. 독립 검토 필수0.
+
 2026-10-29 [S1-b/S1-c Row replay arm과 혼합 bank](../evidence/module-independence-survey-20261026.md#s1b-row-replay): `apply_frame` scope3 arm을 `history/row.rs`의 단일 Row 본문으로 공급하고 결합 closure와 Row 상태를 거절하는 임시 분석 gate를 더했다. Catalog 선택 loop는 Row cell을 건너뛰고 Job3 오류는 보존한다. recovered peak 불변(65368/65504). 신규 17 selector PASS, 기존 실패 6은 base와 같음. 독립 검토 필수0. RowReserve replay(Q1)는 S2 전에 정한다.
 
 2026-10-29 [S1-a Row observer replay tail 대여](../evidence/module-independence-survey-20261026.md#s1a-borrowed-observer): N1 observer의 큰 배열을 WORK_END tail 9076B로 빌리는 `observe_borrowed`를 더했다. 모든 출구에서 tail을 0으로 되돌린다. borrowed bound 21323B로 S1-b Row arm에 2996B 여유를 남긴다. 11 selector PASS, 독립 검토 3회. 아직 호출되지 않으며 연결은 S1-b다.

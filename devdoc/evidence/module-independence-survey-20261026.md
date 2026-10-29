@@ -4173,3 +4173,34 @@ v2 `native`(221파일, 5,794,810B), `memory-gap`(137, 3,382,130B), `memory-retir
 - 판마다 manifest를 build 전에 동결하고 selector마다 1회 실행했다. r0·r1은 check 경고0, 바꾼 28개 .rs의 rustfmt check와 `git diff --check`를 통과했다. r2b·r2h는 r0·r1과 같은 tree라 check를 다시 돌리지 않았다.
 
 **독립 검토.** 읽기 전용 검토자 1회, 필수0·권고13이다. S1-d로 넘기는 권고: A1 `check_ledger` 호출자(`transaction_write.rs:79`, `transaction_catalog.rs:41/196`)는 history closure를 돌리지 않으므로 `check()`에 Status 없는 Row descriptor 검사를 더할 것, A2 slot 내용 전제를 `record` 안으로 옮길 것, A3 live Catalog actor와 Row actor가 함께 있는 bank 시험(R09), A13 Catalog 진입점의 Row capsule 거절. C4로 넘기는 권고: A8 DROP 뒤 Row Clr/Prune replay를 막는 `table_source`의 retired 거절. Q1(RowReserve replay)은 이 병합에는 B로 충분하지만 S2가 live RowReserve를 쓰는 순간 모든 `validate_live`가 그 frame을 거절해 session을 fence하므로 S2 전에 정해야 한다. 검토자는 후보 Job cell을 채택하는 replay 변형(A)을 ROW-BEGIN-001·ROW-WIRE-001 개정과 D2 검토로 권한다. artifact는 `module-independence-20261029/artifacts/module-s1b-20261029/`(`manifest-all.sha256` SHA-256 `ec9cb24610a666b890439d13650de9f1abbbd70df0bbe653cdc8dd9c4267a7f4`)에 있다.
+
+<a id="s1d-row-begin"></a>
+## 2026-10-29 S1-d Row Begin·빈 Row 철회·actor kind 2·RowProgress·Catalog 진입의 Row capsule 거절
+
+기준은 `2b18a45`, branch는 `module-s1d-row-begin`이고 작성 commit은 `c484057`..`d067c4b` 10개다. 이 branch에는 [RowReserve replay 개정](../contracts/dev3-module-boundaries.md#row-reserve-replay) `a458bef` 뒤로 cherry-pick했다(`fd47138`, `51e8c70`, `ff3b918`, `ea769cf`, `49c5048`, `d702aae`, `5b4c552`, `169b190`, `b35975e`, `33ffcc4`). `a458bef`는 문서만 바꿨으므로 통합 head의 `crates`·`tests`·`scripts` tree가 `d067c4b`와 같고, 아래 r1·r2h가 통합 round다. 계약은 [ROW-BEGIN-001](../contracts/dev3-module-boundaries.md#row-begin-capsule)과 [WRITABLE-EMPTY-001](../contracts/dev3-module-boundaries.md#writable-empty-capsule)이다.
+
+**공급**
+
+- S1-b 검토에서 넘어온 항목을 먼저 닫았다. `history/row.rs::record`가 첫 쓰기 전에 slot 소유를 검산하고(A2), Row closure가 Status 점유자 일치를 검산하며(A9), `control::catalog::check`가 Status 없는 Row 수용 검산(`semantic_row::ledger::validate_admission`)을 `check_ledger` 호출자에도 적용한다(A1 일부).
+- `semantic_row::transition::produce_borrowed`: caller scratch 위의 producer로 owned `produce`와 같은 group을 낸다.
+- writable slot kind {1,2}. Catalog 진입점(`reserve_catalog_create`, transaction_catalog commit/abort, `abort_empty_transaction`)은 gate·source·scan 전에 kind로 Row capsule을 거절한다(A13). 반대 방향 Row 진입의 Catalog actor도 MissingTransaction·Unchanged·stage 0이다(MBC40-V02).
+- 두 refactor(`d702aae`, `5b4c552`)가 group 검산·stage·XOI 투영·진입·대상 관측·진행 여유·Begin 선택을 scope 중립 helper로 옮겼다. Catalog의 검산 순서·오류 형식·WAL/page byte는 그대로다(r0/r1 동일).
+- Row Begin과 빈 Row 철회(full RollbackStart + AbortEnd)는 새 `plan4_retention/row_start.rs`에서 N1 producer로 만들고, Catalog lifecycle과 같은 shell `progress_lifecycle(class)`와 같은 설치 본문 `apply_existing`(`ExistingGroup{Catalog,Row}`)을 지난다. Row control byte는 replay와 같은 `history::row::record`만 쓰므로 `history::validate_live`가 live == replay를 증명한다(byte 하나를 뒤집으면 Fatal). Row group은 epoch·Q를 공개하지 않는다. `OperationClass::RowProgress`는 `CatalogProgressCharge`와 같은 양을 별도 class로 예약한다.
+- 오류: Begin 전은 Unchanged(Capacity, WrongState, Membership)로 slot·credit·snapshot을 돌려주고 `issued_local` 간격을 남긴다. Begin 뒤는 Fatal Invariant다. Row Begin이 있는 WAL의 재시작은 임시 분석 gate에서 Analysis/Unsupported·파일 불변으로 멈춘다(R01, R09).
+
+**계수(cap 불변).** Catalog lifecycle memory 43083 → 43229, native 44107 → 44253(retirement 44304, native 여유 51B), Row lifecycle 42089/43113 신규, retirement=charge 44304, live 64000/64136, recovered 65368/65504 모두 그대로다. commit install이 helper 인자 한 단계로 +144B 늘었지만 commit window는 prepare가 정하므로 memory 여유 84B는 그대로다.
+
+**시험과 실행**
+
+| 판 | head | 범위 | 결과 |
+| --- | --- | --- | --- |
+| r0 | `2b18a45` | 변경 경로의 기존 220 selector | 204 PASS, 16 FAIL |
+| r1 | `d067c4b` | 신규 14 + 기존 220 | 218 PASS, 16 FAIL(r0와 같은 selector) |
+| r2b/r2h | `2b18a45`/`d067c4b` | r1이 빠뜨린 `validate_live`·`check_ledger` 호출자 16 | 양쪽 같음: 4 PASS, 12 FAIL |
+
+- 신규 selector: `catalog_memory::row_transactions`의 R1D-R01·R02·R03·R07·R08·R09·A5N·V07·V10, `row_progress_reserves_the_same_catalog_progress_charge`, `s1d_record_guards_its_own_slot`, `s1d_ledger_check_applies_row_admission_subset`, `s1d_borrowed_producer_matches_owned_groups`, `s1d_borrowed_producer_source_bound_covers_measured_frames`. R1D-* 번호는 증거에만 등록했다. R09는 live Catalog actor와 live Row actor가 함께 있는 bank에서 Catalog Begin/Commit과 S1-c scan 지점을 지난다(S1-b 검토 A3).
+- r0/r1 실패 16은 모두 알려진 기존 실패다: `catalog_source_{memory,native}`, `retention_source_{memory,native}`, `runtime_core_source_{memory,native}`, `catalog_commit_windows_fit_beside_admitted_readers`(native 66612), `plan4_recovery::tests::{closure::recovery_closure, cases::recovery_lifecycle, cases::recovery_binding}`, 느린 `catalog_memory` unwind·own-read 6개(30초 timeout). 220개 중 210개는 출력이 같고 10개는 census 값(위 표), `prepare_inventory` 22160 → 21784, forward·commit install +144, check 24354 → 24611, panic 줄 번호만 다르다.
+- r2b/r2h: r1 뒤 `live.rs`·`population.rs`·recovery seed가 바뀐 `validate_live`/`check_ledger`를 부른다는 것을 찾아 16개를 더 돌렸고 base·head의 rc와 출력이 같다. 그중 `free_undo_new_role_preflight_and_install_failure_boundaries`(free_undo_tests.rs:602)는 main `85ceef3`에서도 같은 줄로 실패한다.
+- 판마다 manifest를 build 전에 동결하고 selector마다 1회 실행했다. r0·r1은 check 경고0, r1은 바꾼 20개 .rs의 rustfmt check와 `git diff --check`를 통과했다. r2b·r2h는 r0·r1과 같은 rev라 check를 다시 돌리지 않았다.
+
+**독립 검토.** 읽기 전용 검토자 1회, 필수0·권고9다. S1-e로 넘긴 권고: ADV-05 MBC10-V07 view/cursor 부분과 V09의 +1·중첩 두 reader 경우, ADV-07 Row view가 생겨야 닿는 `finish_statement`·`reserve_catalog_create`의 Row 거절 시험. 나중에 다룰 권고: ADV-01 Row ledger 부분 검산이 행 0/1/3과 inventory `change_lsn`도 비교할 수 있음, ADV-02 잘못된 점유자 시험 없음, ADV-03 `semantic_row/transition/frame.rs`의 낡은 dead_code 허용 2개, ADV-04 R1D-R02가 원인을 단언하지 않음, ADV-06 RowProgress ≤ CatalogProgressCharge가 max 접기로만 성립하므로 상수 검사가 필요, ADV-09 시험 주석의 검토·단위 ID. ADV-08: commit window native 66612 > 65536은 main `85ceef3`(66280)부터 cap을 넘은 값이며 Q06 계약 재검토 대상으로 남긴다. 되돌림은 S1-d를 최신부터 모두 되돌린 뒤에만 S1-c·S1-b를 되돌린다. artifact는 `module-independence-20261029/artifacts/module-s1d-20261029/`(`manifest-all.sha256` SHA-256 `b4e7865a1c9a33ffde806ed089e286099f8b582cd58ff125b2365a24cab007e8`)에 있다.

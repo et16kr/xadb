@@ -9103,5 +9103,31 @@
     "remaining_supply": "S1-d carries A1 check() Row descriptor subset, A2 record slot guard, A3 mixed Catalog+Row bank test (R09), A13 Catalog-entry Row-capsule refusal; Q1 RowReserve replay decided before S2; C4 carries A8 retired-table refusal; S6 replaces the interim gate",
     "source_roots_changed": false,
     "artifact_manifest_sha256": "ec9cb24610a666b890439d13650de9f1abbbd70df0bbe653cdc8dd9c4267a7f4"
+  },
+  "dev3_module_s1d_row_begin": {
+    "status": "LOCAL_VERIFIED_REVIEWED",
+    "contract_ref": "dev3-module-boundaries.md#row-begin-capsule",
+    "evidence_ref": "module-independence-survey-20261026.md#s1d-row-begin",
+    "baseline_commit": "2b18a45",
+    "integration_base": "a458bef",
+    "branch": "claude/project-thread-h2j8oc",
+    "commits": [
+      "fd47138",
+      "51e8c70",
+      "ff3b918",
+      "ea769cf",
+      "49c5048",
+      "d702aae",
+      "5b4c552",
+      "169b190",
+      "b35975e",
+      "33ffcc4"
+    ],
+    "rollback": "revert 33ffcc4 back to fd47138 (newest first) before S1-c or S1-b",
+    "scope": "Row Begin and empty full Row abort through the shared progress_lifecycle shell and apply_existing install body over ExistingGroup{Catalog,Row}, Row control bytes only via history::row::record, borrowed Row producer, writable slot kind {1,2}, Catalog-entry Row-capsule refusal by kind, RowProgress class reserving the CatalogProgressCharge amount, record slot guard, Status occupant check, Row admission subset in check_ledger",
+    "validation": "r0 220 and r1 234 selectors: 14 new PASS, 16 failures identical to base; r2b/r2h 16 validate_live/check_ledger callers identical on base and head; Catalog WAL/page bytes unchanged; caps unchanged; check 0 warnings; one independent review, REQUIRED 0, ADVISORY 9",
+    "remaining_supply": "S1-e takes ADV-05 MBC10-V07/V09 and ADV-07 Row refusals in finish_statement and reserve_catalog_create; later cleanup ADV-01/02/03/04/06/09; ADV-08 commit-window native overrun (pre-existing on main) to Q06; S6 replaces the interim gate",
+    "source_roots_changed": false,
+    "artifact_manifest_sha256": "b4e7865a1c9a33ffde806ed089e286099f8b582cd58ff125b2365a24cab007e8"
   }
 }
