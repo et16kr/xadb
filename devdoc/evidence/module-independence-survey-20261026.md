@@ -4204,3 +4204,32 @@ v2 `native`(221파일, 5,794,810B), `memory-gap`(137, 3,382,130B), `memory-retir
 - 판마다 manifest를 build 전에 동결하고 selector마다 1회 실행했다. r0·r1은 check 경고0, r1은 바꾼 20개 .rs의 rustfmt check와 `git diff --check`를 통과했다. r2b·r2h는 r0·r1과 같은 rev라 check를 다시 돌리지 않았다.
 
 **독립 검토.** 읽기 전용 검토자 1회, 필수0·권고9다. S1-e로 넘긴 권고: ADV-05 MBC10-V07 view/cursor 부분과 V09의 +1·중첩 두 reader 경우, ADV-07 Row view가 생겨야 닿는 `finish_statement`·`reserve_catalog_create`의 Row 거절 시험. 나중에 다룰 권고: ADV-01 Row ledger 부분 검산이 행 0/1/3과 inventory `change_lsn`도 비교할 수 있음, ADV-02 잘못된 점유자 시험 없음, ADV-03 `semantic_row/transition/frame.rs`의 낡은 dead_code 허용 2개, ADV-04 R1D-R02가 원인을 단언하지 않음, ADV-06 RowProgress ≤ CatalogProgressCharge가 max 접기로만 성립하므로 상수 검사가 필요, ADV-09 시험 주석의 검토·단위 ID. ADV-08: commit window native 66612 > 65536은 main `85ceef3`(66280)부터 cap을 넘은 값이며 Q06 계약 재검토 대상으로 남긴다. 되돌림은 S1-d를 최신부터 모두 되돌린 뒤에만 S1-c·S1-b를 되돌린다. artifact는 `module-independence-20261029/artifacts/module-s1d-20261029/`(`manifest-all.sha256` SHA-256 `b4e7865a1c9a33ffde806ed089e286099f8b582cd58ff125b2365a24cab007e8`)에 있다.
+
+<a id="s1g-reserve-replay"></a>
+## 2026-10-29 S1-g RowReserve replay의 값 commitment 채택과 Row root U allocator 검산
+
+기준은 `a458bef`, branch는 `module-s1g-reserve-replay`이고 작성 commit은 `436116b`..`6c28fae` 5개다. 이 branch에는 S1-d 문서 `2bb726b` 위로 cherry-pick했다(`27c34bf`, `1557d54`, `253cc1a`, `a6295f2`, `e438704`). `transition.rs`의 Reserve 허용 사유·`produce_with` 거절, `transition_tests.rs`·`recovery/row_tests.rs`의 양쪽 시험 추가에서 충돌을 풀었고, 통합 수정 `ae75c16`(S1-d의 `produce_borrowed`도 scratch를 지우기 전에 ReserveAdopted를 거절, H12 확장)과 검토 반영 `96de0ba`를 더했다. 계약은 [RowReserve replay 개정](../contracts/dev3-module-boundaries.md#row-reserve-replay)이다.
+
+**공급**
+
+- `semantic_row::transition::Change::ReserveAdopted{terminal, container, table, statement}`. `operation()`은 Reserve이고, `size_of::<Change>()` 96B·`size_of::<Inputs>()` 448B를 const assert로 고정했다. `produce`·`produce_borrowed`·owned `observe`는 출력 전에 Unsupported다.
+- `observe_with`는 `inserted`를 `inputs.change`로 고른다. Forward는 kind1 after, ReserveAdopted는 정확히 `JOB_BYTES`인 kind9 after, 그 밖은 None이므로 owned `observe(Reserve(plan))`는 전체 검산을 유지한다. prepare의 Reserve arm 하나가 `inserted`로 분기해 C(cell 280..284, 185..=2228)와 projection(288..320)만 채택하고, leaf 적합은 0 자리표시자로 검사하며 나머지 byte는 모두 다시 계산해 후보 전체와 비교한다. 엇갈린 쌍은 InvalidInput이다.
+- `history/row.rs`의 Reserve arm: 첫 빈 ordinal, actor의 TerminalLeased Job, kind9 after의 Job3 decode(오류는 `Retention(..)`), Row RootReserved·source == actor, container의 allocator 항목 `Allocated{incarnation, object 3, generation 1, Undo}`를 observer 전에 요구한다. 이 arm에서만 `table_source`의 retired·non-Table Unsupported를 Invariant로 바꾼다(Clr·Prune은 C4까지 Unsupported). `validate_rows`는 모든 non-Free Row root의 U에 같은 allocator 검산을 한다.
+- 계수: 새 counted 항 없음. `source_bytes` lookup max에 allocator decode 항 하나를 더했으나 지배된다. `history_row` 25707(분석 상한 25731, frame 25743), Row closure 14947 ≤ Catalog closure 15883, S1-a borrowed 21323·owned 30327, recovered 65368/65504 불변이다.
+- 독립 literal: `tests/fixtures/module-row-format/reserve-replay/`(stdlib 전용 `author.py`가 N1 author를 sha로 고정해 가져오며 product 코드는 쓰지 않는다; 다시 돌리면 `blobs.bin`·`index.tsv`·`input-plan.json`이 byte 같음).
+
+**시험과 실행**
+
+| 판 | head | 범위 | 결과 |
+| --- | --- | --- | --- |
+| r0 | `a458bef` | 변경 경로의 기존 39 selector | 30 PASS, 기존 실패 9 |
+| r1 | `6c28fae` | 신규 H08–H13 6 + 기존 39 | 36 PASS, 실패 9는 r0와 같음 |
+| i1 | `ae75c16` | r1 45 + S1-d 신규 14(병합 head) | 50 PASS, 실패 9는 같음 |
+| i2 | `96de0ba` | 검토 A1 신규 1 + 관련 12 | 13 PASS |
+
+- 신규 selector: `retention::recovery::row_tests::{s1g_row_reserve_replays_n1_literals, s1g_row_reserve_refuses_without_effect, s1g_reserve_commitment_opens_at_forward, s1g_closure_refuses_row_root_without_its_u_allocation}`(H08–H10과 A1), `semantic_row::transition::tests::{s1g_reserve_adopted_equals_produced, s1g_reserve_adopted_not_producible}`(H11·H12), `plan4_recovery::tests::row_gate::s1g_reserve_tail_stops_at_interim_gate`(H13).
+- H09는 28개 변형을 효과 없이 거절한다: `RowSemantic(Corrupt)`(item·projection·C·budget·ordinal·generation), `Retention(Corrupt)`(C184·C2229), `Retention(IdentityMismatch)`(container 9/12/13), `RowSemantic(Undo(StateMismatch))`(container10), `Invariant`(container15·inc·allocator free/inc·catalog missing/anchor/retired/index·actor 미임대·tail dirty), `RowSemantic(OrderMismatch)`·`RowSemantic(IdentityMismatch)`. H10은 Reserve(X) 뒤 Forward(Y) 거절, Forward(X)·Cancel 수용, 일관되게 고친 Reserve(Z)는 replay되지만 그 위의 실제 Forward가 거절됨을 보인다. H13은 RowReserve로 끝나는 WAL이 분석 gate에서 Analysis/Unsupported·CallerMustResolve·database Unchanged·mutation 0으로 멈추고, frame별 durable 본문(`observe_recovery_frame`)은 모든 frame을 받아 gate 재생과 같은 결과를 냄을 보인다.
+- r0/r1에서 바뀐 출력은 S1-b H01·H04(H-505/H-507이 거절·시험 설치에서 `S1B_REPLAYED`로)와 H02의 R-H-505-item(Unsupported → `RowSemantic(Corrupt)`)뿐이다. 기존 실패 9: `catalog_source_{memory,native}`, `retention_source_{memory,native}`, `catalog_commit_windows_fit_beside_admitted_readers`, `retention_live_flush_boundaries`, `plan4_recovery::tests::{closure::recovery_closure, cases::recovery_lifecycle, cases::recovery_binding}`.
+- 판마다 manifest를 build 전에 동결하고 selector마다 1회 실행했으며 check 경고0, 바꾼 .rs의 rustfmt check와 `git diff --check`를 통과했다. 작성자가 round 밖 개발 사본에서 돌린 module 단위 sweep은 증거로 인용하지 않는다(검토 A9).
+
+**독립 검토.** 읽기 전용 검토자 1회(컨테이너 재시작으로 끊긴 뒤 재개), 필수0·권고11이며 통합 diff도 올바르고 완전하다고 판정했다. 반영: A1 `validate_rows` U allocator loop를 실제로 거절시키는 시험(loop를 끈 개발 build에서 실패 확인), A10 문서 정정. 기록만: A2 H11의 `record` 동치는 서명 논증(H04가 byte로 확인), A3 H13의 "fence하지 않음"은 frame별 본문으로 충분하며 `replay_durable` 직접 호출은 S2가 필요, A5 allocator 검산이 `table_source` 뒤(계약은 observer 전만 요구), A6 Reserve arm의 Unsupported → Invariant 일괄 변환, A11 재생된 RootReserved root 위의 `check_ledger` Row 부분 검산은 S2 진입 시험. 되돌림: S2가 있으면 S2 먼저, S1-b를 되돌리려면 S1-g 먼저(`96de0ba`부터 `27c34bf`까지 최신부터). artifact는 `module-independence-20261029/artifacts/module-s1g-20261029/`(`manifest-all.sha256` SHA-256 `031dfcdd7b98cf98cc91a3befd6cb0bd88210057593a799127ec4c632c4d2278`)에 있다.

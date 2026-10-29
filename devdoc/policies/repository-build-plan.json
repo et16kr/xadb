@@ -9129,5 +9129,28 @@
     "remaining_supply": "S1-e takes ADV-05 MBC10-V07/V09 and ADV-07 Row refusals in finish_statement and reserve_catalog_create; later cleanup ADV-01/02/03/04/06/09; ADV-08 commit-window native overrun (pre-existing on main) to Q06; S6 replaces the interim gate",
     "source_roots_changed": false,
     "artifact_manifest_sha256": "b4e7865a1c9a33ffde806ed089e286099f8b582cd58ff125b2365a24cab007e8"
+  },
+  "dev3_module_s1g_reserve_replay": {
+    "status": "LOCAL_VERIFIED_REVIEWED",
+    "contract_ref": "dev3-module-boundaries.md#row-reserve-replay",
+    "evidence_ref": "module-independence-survey-20261026.md#s1g-reserve-replay",
+    "baseline_commit": "a458bef",
+    "integration_base": "2bb726b",
+    "branch": "claude/project-thread-h2j8oc",
+    "commits": [
+      "27c34bf",
+      "1557d54",
+      "253cc1a",
+      "a6295f2",
+      "e438704",
+      "ae75c16",
+      "96de0ba"
+    ],
+    "rollback": "revert 96de0ba back to 27c34bf (newest first); revert S2 first if present; revert S1-g before S1-b",
+    "scope": "Replay-only Change::ReserveAdopted adopting C and projection from the kind-9 Jobs after and recomputing every other byte, inserted chosen by change, producers refuse it before any output, Reserve-arm selector, scope and Undo allocator checks, Reserve-only Invariant for retired or non-Table tables, validate_rows Undo allocator check for every non-Free Row root, independent reserve-replay literal author",
+    "validation": "r0 39 and r1 45 selectors: 6 new PASS, 9 failures identical to base; integrated i1 59 selectors 50 PASS with the same 9 known failures; i2 13 PASS including the A1 negative test; Change/Inputs sizes pinned; history_row 25707; check 0 warnings; one independent review, REQUIRED 0, ADVISORY 11",
+    "remaining_supply": "S2 live RowReserve producer and direct replay_durable test; S2 entry test for check_ledger Row subset over a replayed RootReserved root (A11); C4 retired-table Clr/Prune",
+    "source_roots_changed": false,
+    "artifact_manifest_sha256": "031dfcdd7b98cf98cc91a3befd6cb0bd88210057593a799127ec4c632c4d2278"
   }
 }

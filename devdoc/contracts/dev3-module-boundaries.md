@@ -352,7 +352,7 @@ wrapper의 인자·관측/오류 Result는 실제 CatalogProgressCharge와 sourc
 <a id="row-begin-capsule"></a>
 #### XADB-MODULE-ROW-BEGIN-001 — 명시 Row Begin과 Row 쓰기 capsule의 scope 고정
 
-2026-10-29 · branch `claude/project-thread-h2j8oc` 기준 · **독립 D2 2회 검토 수용(필수 수정 9건 반영). 부분 공급: S1-a·S1-b/S1-c·S1-d·S1-f. S1-e와 [RowReserve replay 개정](#row-reserve-replay)의 S1-g는 미공급**. [WRITABLE-EMPTY-001](#writable-empty-capsule)과 같은 방식으로 최종 자동 선택 API의 선행 공급을 정한다. 이 등록은 U2-C4 단일 current 전환([format dispatch](dev3-module-consumers.md#format-dispatch): Profile3 → Root3/Job3 → base4) 뒤에만 적용하며, C의 scope3 순수 producer와 borrowed whole-group observer(`semantic_row::transition`)를 선행 공급으로 쓴다.
+2026-10-29 · branch `claude/project-thread-h2j8oc` 기준 · **독립 D2 2회 검토 수용(필수 수정 9건 반영). 부분 공급: S1-a·S1-b/S1-c·S1-d·S1-f와 [RowReserve replay 개정](#row-reserve-replay)의 S1-g. S1-e는 미공급**. [WRITABLE-EMPTY-001](#writable-empty-capsule)과 같은 방식으로 최종 자동 선택 API의 선행 공급을 정한다. 이 등록은 U2-C4 단일 current 전환([format dispatch](dev3-module-consumers.md#format-dispatch): Profile3 → Root3/Job3 → base4) 뒤에만 적용하며, C의 scope3 순수 producer와 borrowed whole-group observer(`semantic_row::transition`)를 선행 공급으로 쓴다.
 
 **scope를 정하는 시점.** 쓰기 거래의 scope는 Begin에서 진입점이 정한다. `MutationPort::begin_row_transaction(owner,isolation,status,private,flusher)`를 `begin_catalog_transaction` 옆에 추가하고, Begin은 registry 16 Terminal recipe로 scope를 영속 기록한다. 근거: §6.2의 `begin`은 read-write 거래의 Status·TerminalJob·Begin을 begin 시점에 공급한다(§6.2 `TransactionOptions` 문단). Job bank에서 scope는 Terminal registry 9/16 recipe로만 표시되며, root kind와 ATT descriptor 예약 행의 peak recipe는 이와 같아야 한다([Job3 census](dev3-module-consumers.md#job3-census) 첫 항목). 같은 actor의 Catalog/Row 혼합은 금지다(같은 절 셋째 항목). 소비자 계약 operation 표에서 TerminalJob을 바꾸는 Commit·AbortEnd(state 전이)와 TerminalFinish(Free)는 registry recipe를 바꾸지 않고, 같은 actor의 scope 불일치는 Job3 census가 거절하므로(같은 절 첫·셋째 항목) scope는 Begin 뒤 바뀌지 않는다. 자동 Status 선택이 없는 `begin_transaction`의 writable 요청은 여전히 Unsupported다.
 
@@ -376,7 +376,7 @@ wrapper의 인자·관측/오류 Result는 실제 CatalogProgressCharge와 sourc
 <a id="row-reserve-replay"></a>
 ##### 2026-10-29 개정 — RowReserve replay의 값 commitment 채택(Q1)
 
-**2026-10-29 · 독립 D2 검토 2회(r1 필수 4·권고 12, r2 필수 1·권고 5), 필수 전부 반영·코드 미공급(공급 단위 S1-g).** 위 "replay와 분석 gate"와 "자원" 문단을 보충한다. Row replay가 입력을 어디서 얻는지를 S1-b 공급분까지 포함해 등록하고, RowReserve의 replay 후속을 정한다.
+**2026-10-29 · 독립 D2 검토 2회(r1 필수 4·권고 12, r2 필수 1·권고 5), 필수 전부 반영·S1-g로 공급([증거](../evidence/module-independence-survey-20261026.md#s1g-reserve-replay)).** 위 "replay와 분석 gate"와 "자원" 문단을 보충한다. Row replay가 입력을 어디서 얻는지를 S1-b 공급분까지 포함해 등록하고, RowReserve의 replay 후속을 정한다.
 
 **결정.** RowReserve frame(57336B 고정, native Root8·Jobs9·Undo3, inventory item1)에는 canonical row 값이 없다. 그래서 S1-b는 이를 Unsupported·무효과로 거절한다([S1-b 증거](../evidence/module-independence-survey-20261026.md#s1b-row-replay), 선택지 B). B는 두 이유로 S2와 공존할 수 없다.
 1. S2가 live RowReserve를 history에 쓰면 이후 모든 `validate_live`(`replay_durable`→`apply_frame`)가 `fatal(Source, Unsupported)`로 session을 fence한다.
