@@ -1,6 +1,8 @@
 //! Catalog scope2 view of the exact Profile3 Root3/Job3 queue. It has the names
 //! and call shapes of `retention_page::catalog`, so a Catalog owner bound to an
-//! exact Profile3 can change only its `queue` alias. Every cell is decoded by
+//! exact Profile3 can change only its `queue` alias, except `encode_root_page`:
+//! it also takes the before Root so the row_high guard cannot be skipped, and a
+//! caller of the version2 shape fails to compile. Every cell is decoded by
 //! the exact version3 codec in `row`; this view yields Free, registry9 Catalog
 //! Terminal and kind2 Catalog roots only, and refuses a Row-scope cell (kind3
 //! root or registry16 Terminal) with `UnsupportedState` instead of giving it a
