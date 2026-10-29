@@ -51,6 +51,28 @@ pub(crate) const LEAF: usize = 4;
 /// Largest Row tree cell C (`180+2048`) and its XRW1 record.
 const MAX_CELL: usize = super::MAX_CELL;
 const MAX_RECORD: usize = MAX_CELL - 12;
+/// Row Job census aggregate (`retention_page::row::summarize_jobs`).
+const AGGREGATE_BYTES: usize = 640;
+
+/// Backing of one group's large prepared values, in this order: both
+/// descriptors, core, Row cell, Job, Root, U record, Edge/Count/Delta and the
+/// Job census aggregate. Neither descriptor is written before prepare's
+/// descriptor step, so Reserve/Prune borrow their first `MAX_RECORD` bytes as
+/// record scratch and clear them before it (`prepare::record_scratch`).
+/// `observe_borrowed` takes this from the replay WORK_END zero tail after
+/// provenance, the lane the Catalog arm borrows exclusively
+/// (plan4_retention/history.rs:42-46); produce/observe use a local array.
+pub(crate) const ROW_REPLAY_SCRATCH_BYTES: usize = 2 * 1536
+    + 256
+    + MAX_CELL
+    + JOB_BYTES
+    + ROOT_BYTES
+    + UNDO_RECORD_BYTES
+    + graph::AUX_BYTES
+    + AGGREGATE_BYTES;
+/// The WORK_END tail after provenance: two pages less 64 Claim352.
+const _: () = assert!(ROW_REPLAY_SCRATCH_BYTES <= 2 * PAGE_BYTES - 64 * 352);
+const _: () = assert!(MAX_RECORD <= 2 * 1536);
 
 /// Plan of one RowReserve. RowId, UndoSequence, mutation, slot and Job
 /// generations are issued from the stable Root/descriptor/page, never here.
@@ -215,8 +237,9 @@ enum LeafEdit<'a> {
 }
 
 /// Every fallible input-dependent value, computed before the first output
-/// byte. Writing pages and framing only place these values afterwards.
-struct Prepared<'a> {
+/// byte. Writing pages and framing only place these values afterwards. The
+/// arrays are disjoint parts of one `ROW_REPLAY_SCRATCH_BYTES` backing.
+struct Prepared<'a, 's> {
     op: Operation,
     header: WalFrameHeader,
     frame_bytes: usize,
@@ -226,21 +249,22 @@ struct Prepared<'a> {
     actor: Option<TxnRef>,
     location: Option<StatusSlotRef>,
     issued: Option<Issued>,
-    job: [u8; JOB_BYTES],
-    root: [u8; ROOT_BYTES],
+    job: &'s mut [u8; JOB_BYTES],
+    root: &'s mut [u8; ROOT_BYTES],
     status: Option<StatusHome>,
-    undo: [u8; UNDO_RECORD_BYTES],
+    undo: &'s mut [u8; UNDO_RECORD_BYTES],
     leaf: Option<(
         LeafEdit<'a>,
         crate::storage::tree_page::TreeExpectation,
         RowSchemaInput<'a>,
     )>,
-    cell: [u8; MAX_CELL],
+    cell: &'s mut [u8; MAX_CELL],
     cell_len: usize,
     /// Tx then Aging for XHG; the single owner's descriptor first for XSG.
-    descriptors: [[u8; 1536]; 2],
-    core: [u8; 256],
-    aux: graph::Aux,
+    descriptors: &'s mut [[u8; 1536]; 2],
+    core: &'s mut [u8; 256],
+    aux: graph::Aux<'s>,
+    aggregate: &'s mut [u8; AGGREGATE_BYTES],
     pages: [Option<Changed<'a>>; 5],
     aging_before: Option<&'a [u8; 1536]>,
     transaction_before: Option<&'a [u8; 1536]>,
@@ -257,7 +281,8 @@ pub(crate) fn produce(
     if matches!(inputs.change, Change::Forward { .. } | Change::Clr { .. }) {
         return Err(Error::Unsupported);
     }
-    let mut prepared = prepare::new_prepared(inputs);
+    let mut backing = [0; ROW_REPLAY_SCRATCH_BYTES];
+    let mut prepared = prepare::new_prepared(inputs, &mut backing);
     prepare::prepare(inputs, None, &mut prepared)?;
     if frame.len() < prepared.frame_bytes {
         return Err(Error::InvalidInput);
@@ -278,6 +303,46 @@ pub(crate) fn observe<'a>(
     bytes: &'a [u8],
     after: &mut [[u8; PAGE_BYTES]; 5],
 ) -> Result<Observation> {
+    observe_with(inputs, bytes, after, &mut [0; ROW_REPLAY_SCRATCH_BYTES])
+}
+
+/// The Row replay arm's exclusive loan of the WORK_END zero tail. Never hide
+/// a nonzero original tail by clearing it on entry; once lent, the whole loan
+/// is zero again on every success, error and unwind (Drop).
+struct ReplayLoan<'s>(&'s mut [u8; ROW_REPLAY_SCRATCH_BYTES]);
+impl<'s> ReplayLoan<'s> {
+    fn new(bytes: &'s mut [u8; ROW_REPLAY_SCRATCH_BYTES]) -> Result<Self> {
+        if !super::zero(bytes) {
+            return Err(Error::InvalidInput);
+        }
+        Ok(Self(bytes))
+    }
+}
+impl Drop for ReplayLoan<'_> {
+    fn drop(&mut self) {
+        self.0.fill(0);
+    }
+}
+
+/// `observe` over the caller's zero tail instead of a local backing: the same
+/// canonical comparison, byte for byte. The tail is zero again before any
+/// success or error reaches the replay owner.
+pub(crate) fn observe_borrowed<'a>(
+    inputs: &Inputs<'a>,
+    bytes: &'a [u8],
+    after: &mut [[u8; PAGE_BYTES]; 5],
+    scratch: &mut [u8; ROW_REPLAY_SCRATCH_BYTES],
+) -> Result<Observation> {
+    let loan = ReplayLoan::new(scratch)?;
+    observe_with(inputs, bytes, after, &mut *loan.0)
+}
+
+fn observe_with<'a>(
+    inputs: &Inputs<'a>,
+    bytes: &'a [u8],
+    after: &mut [[u8; PAGE_BYTES]; 5],
+    backing: &mut [u8; ROW_REPLAY_SCRATCH_BYTES],
+) -> Result<Observation> {
     let layout = super::decode_layout(bytes, inputs.frame, inputs.profile)?;
     if layout.operation() != inputs.change.operation() {
         return Err(Error::IdentityMismatch);
@@ -290,7 +355,7 @@ pub(crate) fn observe<'a>(
     } else {
         None
     };
-    let mut prepared = prepare::new_prepared(inputs);
+    let mut prepared = prepare::new_prepared(inputs, backing);
     prepare::prepare(inputs, inserted, &mut prepared)?;
     if bytes.len() != prepared.frame_bytes {
         return Err(Error::Corrupt);
@@ -303,7 +368,7 @@ pub(crate) fn observe<'a>(
 /// Place the prepared images, then bind the Aging after to the after Root.
 fn run(
     inputs: &Inputs<'_>,
-    prepared: &mut Prepared<'_>,
+    prepared: &mut Prepared<'_, '_>,
     after: &mut [[u8; PAGE_BYTES]; 5],
 ) -> Result<Observation> {
     prepare::write_pages(inputs, prepared, after)?;
@@ -327,29 +392,65 @@ fn run(
     })
 }
 
-/// Own frame of `produce`/`observe`: the prepared carrier, the returned
-/// observation and the decoded candidate layout.
+/// Own frame of `produce`/`observe_with`: the prepared carrier (references
+/// into the backing), the returned observation, the decoded candidate layout
+/// and the arguments.
 fn entry_bytes() -> usize {
     use std::mem::size_of;
-    size_of::<Prepared<'_>>()
+    size_of::<Prepared<'_, '_>>()
         + size_of::<Result<Observation>>()
         + 2 * size_of::<Observation>()
         + size_of::<super::LayoutView<'_>>()
         + size_of::<Result<super::LayoutView<'_>>>()
         + size_of::<Option<&[u8]>>()
+        + size_of::<(
+            &Inputs<'_>,
+            &[u8],
+            &mut [[u8; PAGE_BYTES]; 5],
+            &mut [u8; ROW_REPLAY_SCRATCH_BYTES],
+        )>()
         + 16 * size_of::<usize>()
         + source::slack()
 }
 
-/// Counted nonrecursive source bound of `produce`/`observe`: the entry frame
-/// plus the deepest of the sequential phases (prepare, page/Aging placement,
-/// framing/comparison), each with its counted callee chains (`source`).
-/// Caller loans (5 pages, frame) are charged by the caller.
-pub(crate) fn source_bytes() -> usize {
+/// The entry frame plus the deepest of the sequential phases (backing split,
+/// prepare, page/Aging placement, framing/comparison), each with its counted
+/// callee chains (`source`). The backing and caller loans (5 pages, frame) are not
+/// counted here.
+fn body_bytes() -> usize {
     entry_bytes()
-        + prepare::source_bytes()
+        + prepare::split_bytes()
+            .max(prepare::source_bytes())
             .max(frame::source_bytes())
             .max(prepare::write_source_bytes())
+}
+
+/// Counted nonrecursive source bound of `produce`/`observe`: the local
+/// backing array, the wrapper's arguments and result, then the body. Caller
+/// loans (5 pages, frame) are charged by the caller.
+pub(crate) fn source_bytes() -> usize {
+    use std::mem::size_of;
+    size_of::<[u8; ROW_REPLAY_SCRATCH_BYTES]>()
+        + size_of::<(&Inputs<'_>, &[u8], &mut [[u8; PAGE_BYTES]; 5])>()
+        + size_of::<Result<Observation>>()
+        + body_bytes()
+}
+
+/// Counted source bound of `observe_borrowed`. The lent tail is the replay
+/// owner's and is not counted. The wrapper keeps its arguments, the loan and
+/// the result while the body runs; the entry zero check and the restoring
+/// fill (Drop) are completed calls before and after it, charged additively.
+pub(crate) fn observe_borrowed_source_bytes() -> usize {
+    use std::mem::size_of;
+    size_of::<(
+        &Inputs<'_>,
+        &[u8],
+        &mut [[u8; PAGE_BYTES]; 5],
+        &mut [u8; ROW_REPLAY_SCRATCH_BYTES],
+    )>() + source::returned::<ReplayLoan<'_>, Error>()
+        + size_of::<Result<Observation>>()
+        + size_of::<(&[u8], std::slice::Iter<'_, u8>, bool)>()
+        + body_bytes()
 }
 
 #[cfg(test)]

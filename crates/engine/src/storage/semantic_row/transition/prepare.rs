@@ -4,11 +4,11 @@
 //! checked here; their errors are broken internal invariants.
 use super::super::{Error, Operation, Result, ledger, status::StatementBoundary};
 use super::{
-    Change, Changed, Inputs, Issued, JOB, LEAF, LeafEdit, MAX_CELL, MAX_RECORD, Prepared, ROOT,
-    STATUS, UNDO,
+    AGGREGATE_BYTES, Change, Changed, Inputs, Issued, JOB, LEAF, LeafEdit, MAX_CELL, MAX_RECORD,
+    Prepared, ROOT, ROW_REPLAY_SCRATCH_BYTES, STATUS, UNDO,
     cells::{self, RELEASE_BYTES, TERMINAL_BYTES, put, require, same, set_budget},
     frame,
-    graph::{self, Aux, Core},
+    graph::{self, AUX_BYTES, Aux, Core},
     source::{self, ROW_EDIT_CELLS, SHA},
 };
 use crate::storage::{
@@ -22,7 +22,7 @@ use crate::storage::{
         row::{self as aging_row, AgingTransition},
     },
     retention_page::{
-        JOB_BYTES, JOB_COUNT,
+        JOB_BYTES, JOB_COUNT, ROOT_BYTES,
         row::{self, JobCells, JobScope, JobState, JobView},
     },
     row_record::{self, RecordExpectation, RecordVersion, RowPayload, RowSchemaInput},
@@ -32,7 +32,7 @@ use crate::storage::{
         TransactionStatusCell, TxnRef, VersionStamp,
     },
     tree_page::{self, EntryPayload, TreeExpectation, edit},
-    undo_record::{self, UndoCell, UndoEdge, UndoLink},
+    undo_record::{self, UNDO_RECORD_BYTES, UndoCell, UndoEdge, UndoLink},
     undo_ref::UndoRef,
     wal_frame::WalFrameHeader,
 };
@@ -41,7 +41,23 @@ use foundation::{
     identity::{CommitSeq, RowId},
 };
 
-pub(super) fn new_prepared<'a>(inputs: &Inputs<'a>) -> Prepared<'a> {
+/// Split one zero backing into the prepared parts, in the order of
+/// `ROW_REPLAY_SCRATCH_BYTES`.
+pub(super) fn new_prepared<'a, 's>(
+    inputs: &Inputs<'a>,
+    backing: &'s mut [u8; ROW_REPLAY_SCRATCH_BYTES],
+) -> Prepared<'a, 's> {
+    let (descriptors, rest) = backing
+        .split_first_chunk_mut::<{ 2 * 1536 }>()
+        .expect("descriptors");
+    let (core, rest) = rest.split_first_chunk_mut::<256>().expect("core");
+    let (cell, rest) = rest.split_first_chunk_mut::<MAX_CELL>().expect("cell");
+    let (job, rest) = rest.split_first_chunk_mut::<JOB_BYTES>().expect("job");
+    let (root, rest) = rest.split_first_chunk_mut::<ROOT_BYTES>().expect("root");
+    let (undo, rest) = rest
+        .split_first_chunk_mut::<UNDO_RECORD_BYTES>()
+        .expect("undo");
+    let (aux, aggregate) = rest.split_first_chunk_mut::<AUX_BYTES>().expect("aux");
     Prepared {
         op: inputs.change.operation(),
         header: WalFrameHeader {
@@ -59,20 +75,34 @@ pub(super) fn new_prepared<'a>(inputs: &Inputs<'a>) -> Prepared<'a> {
         actor: None,
         location: None,
         issued: None,
-        job: [0; JOB_BYTES],
-        root: [0; crate::storage::retention_page::ROOT_BYTES],
+        job,
+        root,
         status: None,
-        undo: [0; undo_record::UNDO_RECORD_BYTES],
+        undo,
         leaf: None,
-        cell: [0; MAX_CELL],
+        cell,
         cell_len: 0,
-        descriptors: [[0; 1536]; 2],
-        core: [0; 256],
-        aux: Aux::new(),
+        descriptors: descriptors
+            .as_chunks_mut::<1536>()
+            .0
+            .try_into()
+            .expect("two descriptors"),
+        core,
+        aux: Aux::new(aux),
+        aggregate: aggregate.try_into().expect("aggregate ends the backing"),
         pages: [None; 5],
         aging_before: None,
         transaction_before: None,
     }
+}
+
+/// Reserve/Prune record scratch: the descriptor bytes, which nothing writes
+/// before prepare's descriptor step. Each user clears it after its last use.
+fn record_scratch(descriptors: &mut [[u8; 1536]; 2]) -> &mut [u8; MAX_RECORD] {
+    descriptors
+        .as_flattened_mut()
+        .first_chunk_mut::<MAX_RECORD>()
+        .expect("record scratch")
 }
 
 fn needs_status(op: Operation) -> bool {
@@ -320,7 +350,7 @@ fn check_record<'a>(
 /// Row native slot and the after cell plan; also the core projections.
 fn prepare_leaf<'a>(
     inputs: &Inputs<'a>,
-    out: &mut Prepared<'a>,
+    out: &mut Prepared<'a, '_>,
     job: JobView<'_>,
     actor: TxnRef,
     inserted: Option<&'a [u8]>,
@@ -377,7 +407,7 @@ fn prepare_leaf<'a>(
                     undo: None,
                     ..old.version()
                 };
-                let mut record_bytes = [0; MAX_RECORD];
+                let record_bytes = record_scratch(out.descriptors);
                 let length = row_record::encode_row_record_with_schema(
                     RecordExpectation {
                         namespace: inputs.profile.spec().namespace,
@@ -386,7 +416,7 @@ fn prepare_leaf<'a>(
                     source.schema,
                     version,
                     RowPayload::Inline(canonical),
-                    &mut record_bytes,
+                    record_bytes,
                 )?;
                 same(length == record.len())?;
                 let after = cells::projection(table, row, Some(&record_bytes[..length]))?;
@@ -395,9 +425,10 @@ fn prepare_leaf<'a>(
                     0,
                     &key,
                     &record_bytes[..length],
-                    &mut out.cell,
+                    out.cell,
                 )?
                 .len();
+                record_bytes.fill(0);
                 out.cell_len = cell_len;
                 let plan = view
                     .prepare_leaf_edit(edit::LeafEdit::Replace(&out.cell[..cell_len]), &mut refs)
@@ -426,7 +457,7 @@ fn prepare_leaf<'a>(
 pub(super) fn prepare<'a>(
     inputs: &Inputs<'a>,
     inserted: Option<&'a [u8]>,
-    out: &mut Prepared<'a>,
+    out: &mut Prepared<'a, '_>,
 ) -> Result<()> {
     let op = inputs.change.operation();
     let profile = inputs.profile;
@@ -450,8 +481,7 @@ pub(super) fn prepare<'a>(
     let (root_header, root) = row::decode_root_page(inputs.root, namespace)?;
     require(root_header.lsn.0 <= frame.previous_lsn)?;
     require(root.aging().is_none() == (op == Operation::AgingStart))?;
-    let mut aggregate = [0; 640];
-    row::verify_census(root, namespace, inputs.jobs, &mut aggregate)?;
+    row::verify_census(root, namespace, inputs.jobs, out.aggregate)?;
     let original = JobCells::original(inputs.jobs);
 
     // Selected Job, actor and Status location.
@@ -586,8 +616,8 @@ pub(super) fn prepare<'a>(
                 generation.next().map_err(|_| Error::Exhausted)? == actor.generation()
                     && home_before.incoming() == 0,
             )?;
-            cells::lease(&mut out.job, before.expect("free"), actor, status, lsn, 1)?;
-            set_budget(&mut out.job, 1, TERMINAL_BYTES);
+            cells::lease(out.job, before.expect("free"), actor, status, lsn, 1)?;
+            set_budget(out.job, 1, TERMINAL_BYTES);
             out.status = Some(home(actor, TransactionState::Active, None, 0)?);
         }
         Change::Reserve(plan) => {
@@ -630,7 +660,7 @@ pub(super) fn prepare<'a>(
                 .checked_add(1)
                 .ok_or(Error::Exhausted)?;
             let h = head.is_some();
-            let mut record = [0; MAX_RECORD];
+            let record = record_scratch(out.descriptors);
             let length = row_record::encode_row_record_with_schema(
                 RecordExpectation { namespace, row },
                 table.schema,
@@ -641,13 +671,14 @@ pub(super) fn prepare<'a>(
                     undo: Some(undo),
                 },
                 RowPayload::Inline(canonical),
-                &mut record,
+                record,
             )?;
             same(length + 12 == cell_bytes)?;
-            reserve_leaf(inputs, table, leaf, row, &record[..length], &mut out.cell)?;
+            reserve_leaf(inputs, table, leaf, row, &record[..length], out.cell)?;
             out.cell.fill(0);
             let projection = cells::projection(plan.table, row, Some(&record[..length]))?;
-            let job = &mut out.job;
+            record.fill(0);
+            let job = &mut *out.job;
             cells::lease(job, before.expect("free"), actor, location, lsn, 3)?;
             undo.encode(&mut job[128..168])?;
             put(job, 168, sequence);
@@ -662,7 +693,7 @@ pub(super) fn prepare<'a>(
             job[288..320].copy_from_slice(&projection);
             put(job, 320, row.get());
             set_budget(job, 5, 311_608 + 2 * cell_bytes as u64 + 128 * u64::from(h));
-            undo_record::encode_free_undo_record(generation, &mut out.undo)?;
+            undo_record::encode_free_undo_record(generation, out.undo)?;
             out.issued = Some(Issued {
                 row,
                 undo,
@@ -697,7 +728,7 @@ pub(super) fn prepare<'a>(
             undo_record::decode_free_undo_record(cell, undo.generation())?;
             require(cells::page_lsn(bytes) == job.lease_lsn())?;
             item = Some(cells::undo_item(job)?);
-            row::free_job(job.generation(), &mut out.job);
+            row::free_job(job.generation(), out.job);
             credit = true;
             core = Core {
                 statement: job.statement(),
@@ -829,7 +860,7 @@ pub(super) fn prepare<'a>(
                 )?;
                 home(actor, TransactionState::Aborted, None, 0)?
             };
-            let jobs = &mut out.job;
+            let jobs = &mut *out.job;
             jobs[6] = 2;
             jobs[120] = if committed { 1 } else { 2 };
             put(jobs, 72, lsn);
@@ -871,10 +902,10 @@ pub(super) fn prepare<'a>(
                         namespace,
                         job,
                         UndoCell::Live(cells::material(job, edge, 2, 0)?),
-                        &mut out.undo,
+                        out.undo,
                     )?;
                     item = Some(cells::undo_item(job)?);
-                    let jobs = &mut out.job;
+                    let jobs = &mut *out.job;
                     jobs[6] = 2;
                     put(jobs, 72, lsn);
                     jobs[328..360].copy_from_slice(&sender.ok_or(Error::InvalidInput)?);
@@ -899,7 +930,7 @@ pub(super) fn prepare<'a>(
                         namespace,
                         job,
                         UndoCell::Releasing(cells::material(job, cut, 0, 0)?),
-                        &mut out.undo,
+                        out.undo,
                     )?;
                     let state = if op == Operation::Clr {
                         let Change::Clr { statement, .. } = inputs.change else {
@@ -948,7 +979,7 @@ pub(super) fn prepare<'a>(
                         q = commit.get();
                         status.state()
                     };
-                    let jobs = &mut out.job;
+                    let jobs = &mut *out.job;
                     jobs[6] = if op == Operation::Prune { 3 } else { 4 };
                     jobs[200..248].fill(0);
                     jobs[280..320].fill(0);
@@ -1032,8 +1063,8 @@ pub(super) fn prepare<'a>(
                 cell,
             )?;
             if op == Operation::RootFree {
-                undo_record::encode_free_undo_record(undo.generation(), &mut out.undo)?;
-                row::free_job(job.generation(), &mut out.job);
+                undo_record::encode_free_undo_record(undo.generation(), out.undo)?;
+                row::free_job(job.generation(), out.job);
             } else {
                 let next = cursor + 1;
                 cells::encode_material(
@@ -1049,11 +1080,11 @@ pub(super) fn prepare<'a>(
                         0,
                         next,
                     )?),
-                    &mut out.undo,
+                    out.undo,
                 )?;
                 out.job[121] = next;
                 set_budget(
-                    &mut out.job,
+                    out.job,
                     u64::from(3 - cursor),
                     u64::from(3 - cursor) * RELEASE_BYTES,
                 );
@@ -1087,7 +1118,7 @@ pub(super) fn prepare<'a>(
                         TransactionState::Committed(_) | TransactionState::Aborted
                     ),
             )?;
-            row::free_job(job.generation(), &mut out.job);
+            row::free_job(job.generation(), out.job);
             out.status = Some(StatusHome::new(
                 TransactionStatusCell::Free(actor.generation()),
                 0,
@@ -1095,20 +1126,20 @@ pub(super) fn prepare<'a>(
         }
     }
     if out.job[6] != 0 && selected.is_some() {
-        put(&mut out.job, 376, lsn);
+        put(out.job, 376, lsn);
     }
     if selected.is_some() {
-        row::decode_job(&out.job, namespace)?;
+        row::decode_job(out.job, namespace)?;
     }
     out.frame_bytes = op.frame_bytes(out.row_cell, out.predecessor)?;
 
     // Root after (not for the status-patch ops) and the after census.
     if has_root(op) {
         let cells_after = match selected {
-            Some(ordinal) => original.replace(ordinal, &out.job)?,
+            Some(ordinal) => original.replace(ordinal, out.job)?,
             None => original,
         };
-        let root_cell = &mut out.root;
+        let root_cell = &mut *out.root;
         root_cell.copy_from_slice(root.bytes());
         put(
             root_cell,
@@ -1156,14 +1187,14 @@ pub(super) fn prepare<'a>(
                 put(root_cell, 72, ((ordinal + 1) % JOB_COUNT) as u64);
             }
         }
-        let (masks, digest) = row::summarize_jobs(cells_after, namespace, &mut aggregate)?;
+        let (masks, digest) = row::summarize_jobs(cells_after, namespace, out.aggregate)?;
         for (index, mask) in masks.into_iter().enumerate() {
             put(root_cell, 96 + index * 8, mask);
         }
         root_cell[128..160].copy_from_slice(&digest);
-        root_cell[160..192].copy_from_slice(&content_digest(&aggregate));
-        let after_root = row::decode_root(&out.root, namespace)?;
-        row::verify_selected_census(after_root, namespace, cells_after, &mut aggregate)?;
+        root_cell[160..192].copy_from_slice(&content_digest(&out.aggregate[..]));
+        let after_root = row::decode_root(out.root, namespace)?;
+        row::verify_selected_census(after_root, namespace, cells_after, out.aggregate)?;
         if matches!(
             op,
             Operation::Prune
@@ -1219,7 +1250,7 @@ pub(super) fn prepare<'a>(
             return Err(Error::OrderMismatch);
         };
         let cells_after = match selected {
-            Some(ordinal) => original.replace(ordinal, &out.job)?,
+            Some(ordinal) => original.replace(ordinal, out.job)?,
             None => original,
         };
         let frame_bytes = out.frame_bytes as u64;
@@ -1254,7 +1285,7 @@ pub(super) fn prepare<'a>(
                 match op {
                     Operation::Reserve => {
                         let issued = out.issued.expect("reserve");
-                        let reserved = row::decode_job(&out.job, namespace)?;
+                        let reserved = row::decode_job(out.job, namespace)?;
                         spec.inventory = cells::item_claim(&cells::undo_item(reserved)?, lsn);
                         spec.last_mutation_sequence = issued.mutation;
                     }
@@ -1296,7 +1327,7 @@ pub(super) fn prepare<'a>(
             profile,
             out.status.ok_or(Error::InvalidInput)?,
             location.ok_or(Error::InvalidInput)?,
-            original.replace(selected.ok_or(Error::InvalidInput)?, &out.job)?,
+            original.replace(selected.ok_or(Error::InvalidInput)?, out.job)?,
         )?;
     }
 
@@ -1329,12 +1360,12 @@ pub(super) fn prepare<'a>(
     ) {
         let item = match item {
             Some(item) => item,
-            None => cells::undo_item(row::decode_job(&out.job, namespace)?)?,
+            None => cells::undo_item(row::decode_job(out.job, namespace)?)?,
         };
         graph::inventory(op, &item, &mut out.aux)?;
     }
     require(out.aux.len == op.shape(out.row_cell, out.predecessor)?.auxiliary_bytes())?;
-    graph::encode_core(op, &core, &mut out.core)?;
+    graph::encode_core(op, &core, out.core)?;
     Ok(())
 }
 
@@ -1358,13 +1389,13 @@ fn head_sequence(inputs: &Inputs<'_>, actor: TxnRef, head: Option<UndoRef>) -> R
 /// Place every prepared after image into its fixed role.
 pub(super) fn write_pages(
     inputs: &Inputs<'_>,
-    prepared: &Prepared<'_>,
+    prepared: &Prepared<'_, '_>,
     after: &mut [[u8; PAGE_BYTES]; 5],
 ) -> Result<()> {
     let namespace = inputs.profile.spec().namespace;
     let lsn = prepared.header.lsn;
     if prepared.pages[ROOT].is_some() {
-        row::encode_root_page(&prepared.root, namespace, &mut after[ROOT])?;
+        row::encode_root_page(prepared.root, namespace, &mut after[ROOT])?;
     }
     if let (Some(_), Some(ordinal)) = (prepared.pages[JOB], prepared.ordinal) {
         let base = ordinal / 15 * 15;
@@ -1372,7 +1403,7 @@ pub(super) fn write_pages(
         let mut cells: [&[u8]; 15] = [&[]; 15];
         for (slot, cell) in cells[..count].iter_mut().enumerate() {
             *cell = if base + slot == ordinal {
-                &prepared.job
+                &prepared.job[..]
             } else {
                 &inputs.jobs[base + slot]
             };
@@ -1403,7 +1434,7 @@ pub(super) fn write_pages(
                 .encode(&mut cell)?;
             page::encode_page(header, &[&cell], &mut after[STATUS])?;
         } else {
-            page::encode_page(header, &[&prepared.undo], &mut after[UNDO])?;
+            page::encode_page(header, &[&prepared.undo[..]], &mut after[UNDO])?;
         }
     }
     if let (Some(page), Some((leaf_edit, expected, _))) = (prepared.pages[LEAF], prepared.leaf) {
@@ -1428,7 +1459,7 @@ pub(super) fn write_pages(
 /// Aging after over the placed Root after page (`retention_obligation::row`).
 pub(super) fn finish_aging(
     inputs: &Inputs<'_>,
-    prepared: &mut Prepared<'_>,
+    prepared: &mut Prepared<'_, '_>,
     after: &[[u8; PAGE_BYTES]; 5],
 ) -> Result<()> {
     let op = prepared.op;
@@ -1437,10 +1468,9 @@ pub(super) fn finish_aging(
     }
     let original = JobCells::original(inputs.jobs);
     let jobs = match prepared.ordinal {
-        Some(ordinal) => original.replace(ordinal, &prepared.job)?,
+        Some(ordinal) => original.replace(ordinal, prepared.job)?,
         None => original,
     };
-    let mut aggregate = [0; 640];
     let slot = usize::from(op.handoff());
     let (left, right) = prepared.descriptors.split_at_mut(1);
     let output = if slot == 0 {
@@ -1456,18 +1486,23 @@ pub(super) fn finish_aging(
             after_root: &after[ROOT],
             jobs,
         },
-        &mut aggregate,
+        prepared.aggregate,
         output,
     )
     .map_err(cells::aging_error)
 }
 
-/// prepare's own frame: decoded views, summaries, specs and scratch, plus
-/// the standard scalar slack.
+/// prepare's own frame: decoded views, summaries, specs, the Reserve record
+/// reference with its `record_scratch` call, plus the standard scalar slack.
+/// The aggregate and record bytes are parts of the backing.
 pub(super) fn locals_bytes() -> usize {
     use std::mem::size_of;
-    640 // aggregate
-        + MAX_RECORD // Reserve record scratch
+    size_of::<&mut [u8; MAX_RECORD]>()
+        + size_of::<(
+            &mut [[u8; 1536]; 2],
+            &mut [u8],
+            Option<&mut [u8; MAX_RECORD]>,
+        )>()
         + 2 * size_of::<DescriptorSpec>()
         + size_of::<Option<DescriptorSpec>>()
         + 8 * size_of::<JobView<'_>>()
@@ -1508,14 +1543,27 @@ pub(super) fn callee_bytes() -> usize {
 pub(super) fn source_bytes() -> usize {
     locals_bytes() + callee_bytes() + SHA
 }
+/// `new_prepared`: the prepared value it returns and its split carriers. It
+/// completes before prepare starts.
+pub(super) fn split_bytes() -> usize {
+    use std::{array::TryFromSliceError, mem::size_of};
+    type Part<'s, T> = std::result::Result<&'s mut T, TryFromSliceError>;
+    size_of::<Prepared<'_, '_>>()
+        + size_of::<(&Inputs<'_>, &mut [u8; ROW_REPLAY_SCRATCH_BYTES])>()
+        + 8 * size_of::<Option<(&mut [u8; 1536], &mut [u8])>>()
+        + size_of::<(&mut [[u8; 1536]], &mut [u8])>()
+        + size_of::<Part<'_, [[u8; 1536]; 2]>>()
+        + size_of::<Part<'_, [u8; AGGREGATE_BYTES]>>()
+}
 /// `write_pages` then `finish_aging`: their scratch, the Aging successor over
-/// the Job3 census, Root/Jobs/Status/Undo page encode or the RowLeaf edit.
+/// the Job3 census (its aggregate is the backing's), Root/Jobs/Status/Undo
+/// page encode or the RowLeaf edit.
 pub(super) fn write_source_bytes() -> usize {
     use std::mem::size_of;
     size_of::<[&[u8]; ROW_EDIT_CELLS]>()
         + size_of::<[&[u8]; 15]>()
         + STATUS_HOME_BYTES
-        + 640
+        + size_of::<(JobCells<'_>, usize, &mut [u8; 1536], &mut [u8; 1536])>()
         + size_of::<AgingTransition<'_>>()
         + size_of::<tree_page::TreePageView<'_>>()
         + size_of::<PageHeader>()

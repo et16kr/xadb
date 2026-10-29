@@ -14,7 +14,7 @@ use crate::storage::{
 use foundation::codec::content_digest;
 
 /// Present roles sorted by the physical `(file, page_no)` WAL order.
-pub(super) fn physical_order(prepared: &Prepared<'_>) -> Result<[Option<usize>; 5]> {
+pub(super) fn physical_order(prepared: &Prepared<'_, '_>) -> Result<[Option<usize>; 5]> {
     let mut ranked = [(0u64, 0u64, 0usize); 5];
     let mut count = 0;
     for (role, page) in prepared.pages.iter().enumerate() {
@@ -124,7 +124,7 @@ fn native_kind(kind: PageKind) -> Result<u8> {
 }
 
 /// The group header fields fixed by the owners, shape and descriptors.
-fn group_header(prepared: &Prepared<'_>, output: &mut [u8; 256]) -> Result<usize> {
+fn group_header(prepared: &Prepared<'_, '_>, output: &mut [u8; 256]) -> Result<usize> {
     let op = prepared.op;
     let shape = op.shape(prepared.row_cell, prepared.predecessor)?;
     let size = if op.handoff() { 256 } else { 192 };
@@ -202,7 +202,7 @@ fn group_header(prepared: &Prepared<'_>, output: &mut [u8; 256]) -> Result<usize
 
 /// Every section after the XWF1 header, in body order, through one cursor.
 fn body(
-    prepared: &Prepared<'_>,
+    prepared: &Prepared<'_, '_>,
     after: &[[u8; PAGE_BYTES]; 5],
     cursor: &mut Cursor<'_>,
 ) -> Result<()> {
@@ -214,7 +214,7 @@ fn body(
     for descriptor in &prepared.descriptors[..if op.handoff() { 2 } else { 1 }] {
         cursor.part(descriptor)?;
     }
-    cursor.part(&prepared.core)?;
+    cursor.part(&prepared.core[..])?;
     let order = physical_order(prepared)?;
     let natives = cursor.at;
     for (index, role) in order.iter().enumerate() {
@@ -297,7 +297,7 @@ fn body(
 /// envelope last and reread it through the shared layout decoder.
 pub(super) fn encode(
     inputs: &Inputs<'_>,
-    prepared: &Prepared<'_>,
+    prepared: &Prepared<'_, '_>,
     after: &[[u8; PAGE_BYTES]; 5],
     output: &mut [u8],
 ) -> Result<()> {
@@ -329,7 +329,7 @@ pub(super) fn encode(
 /// Compare a decoded candidate with the computed group, section by section.
 pub(super) fn verify(
     _inputs: &Inputs<'_>,
-    prepared: &Prepared<'_>,
+    prepared: &Prepared<'_, '_>,
     after: &[[u8; PAGE_BYTES]; 5],
     layout: LayoutView<'_>,
 ) -> Result<()> {

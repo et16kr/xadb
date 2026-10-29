@@ -3,16 +3,18 @@
 //! This is not a compiler-stack/RSS estimate. Each term sums `size_of` over
 //! the values its call chain keeps live: arguments, locals and both sides of
 //! every return boundary (`returned`). A `max` joins completed calls; their
-//! still-live parent values are added outside it. Page/status/undo codecs are
-//! the Catalog scope2 census terms over the same codecs, and the tree terms
-//! repeat its `tree_codec`/`leaf_edit` inventory, so neither owner charges a
-//! smaller codec. `slack` is the repo's standard scalar allowance
+//! still-live parent values are added outside it. Page/status codecs are the
+//! Catalog scope2 census terms over the same codecs; the Undo codec and the
+//! tree terms repeat its `undo_codec`/`tree_codec`/`leaf_edit` inventories, so
+//! neither owner charges a smaller codec (the Undo one without the
+//! CatalogValue before parse a Row target cannot reach, see `undo_row_codec`).
+//! `slack` is the repo's standard scalar allowance
 //! (`retention_page::row::source_bytes`). transition_tests measures each
 //! codec chain function by function and requires these terms to cover it.
 use super::super::{CoreView, Error, LayoutView, Operation, Result, Shape};
 use super::{MAX_RECORD, TableSource};
 use crate::{
-    api::{DataType, DatabaseId, Namespace},
+    api::{Column, DataType, DatabaseId, Namespace},
     storage::{
         allocation_page::{ReservationOwner, SystemWorkRef},
         anchor::{AnchorRoot, TreeAnchor},
@@ -89,9 +91,31 @@ pub(super) fn status_codec() -> usize {
     semantic_catalog::status_read_codec_bytes()
 }
 
-/// Undo record encode/decode, including the malformed-before schema parse.
-pub(super) fn undo_codec() -> usize {
-    semantic_catalog::undo_read_codec_bytes()
+/// Undo record encode/decode over a Row target: the Catalog census's
+/// `undo_codec` inventory (header copy, records, cells, view, expectations,
+/// target, version identities, edge/stamp scratch, hashers, results) with the
+/// Row before parse instead of its CatalogValue one. Every Row material
+/// call names `cells::row_target`, and `validate_record` refuses any record
+/// whose target differs (undo_record.rs:498) or whose before kind a Row target
+/// does not admit (:534-550) before its payload match (:589), so the
+/// CatalogValue arm with `decode_catalog_before` (:608) is unreachable here
+/// for any input, valid or malformed. The RowValue arm's canonical parse
+/// (:602, `decode_canonical_row` over its schema form) stays charged.
+pub(super) fn undo_row_codec() -> usize {
+    size_of::<[u8; UNDO_RECORD_BYTES]>()
+        + 3 * size_of::<UndoRecord<'_>>()
+        + 2 * size_of::<UndoCell<'_>>()
+        + returned::<UndoRecordView<'_>, UndoError>()
+        + 3 * size_of::<UndoRecordExpectation<'_>>()
+        + returned::<UndoTargetView<'_>, UndoError>()
+        + size_of::<(TxnRef, VersionStamp, LogicalRowVersion, Option<UndoRef>)>()
+        + size_of::<([u8; 40], [u8; 32], [u8; 32])>()
+        + size_of::<(&[u8], &[u8], &mut [u8], [usize; 8], [u64; 4])>()
+        + 2 * size_of::<ContentHasher>()
+        + 4 * size_of::<CodecResult<(), UndoError>>()
+        + size_of::<(&[u8], &[Column])>()
+        + returned::<CanonicalRowView<'_>, RowError>()
+        + canonical_codec()
 }
 
 /// Tree page decode, `validate_cells`, search and entry parsing (the
@@ -145,18 +169,23 @@ fn identity_codec() -> usize {
     decode.max(encode)
 }
 
-/// row_record decode/encode with the canonical check, the version codecs
-/// over their identity codecs, an inline value parse and a Catalog-schema
-/// column lookup, all summed.
-pub(super) fn row_codec() -> usize {
-    let canonical = size_of::<(&[u8], RowSchemaInput<'_>)>()
+/// The canonical row check: an inline value parse and a Catalog-schema
+/// column lookup.
+fn canonical_codec() -> usize {
+    size_of::<(&[u8], RowSchemaInput<'_>)>()
         + returned::<CanonicalRowView<'_>, RowError>()
         + size_of::<[u32; MAX_ROW_COLUMNS + 1]>()
         + size_of::<([usize; 4], ValueRef<'_>, [u8; 8])>()
         + returned::<(ValueRef<'_>, usize), RowError>()
         + returned::<(DataType, bool), RowError>()
         + returned::<CatalogColumn<'_>, CatalogError>()
-        + 2 * size_of::<CodecResult<(), RowError>>();
+        + 2 * size_of::<CodecResult<(), RowError>>()
+}
+
+/// row_record decode/encode with the canonical check, the version codecs
+/// over their identity codecs, an inline value parse and a Catalog-schema
+/// column lookup, all summed.
+pub(super) fn row_codec() -> usize {
     let version = size_of::<(&[u8], bool, RecordExpectation)>()
         + 2 * size_of::<RecordVersion>()
         + returned::<RowId, foundation::Error>()
@@ -180,7 +209,7 @@ pub(super) fn row_codec() -> usize {
         + size_of::<(&[u8], usize)>()
         + returned::<usize, RowError>()
         + size_of::<CodecResult<(), OverflowError>>();
-    decode.max(encode) + canonical + version
+    decode.max(encode) + canonical_codec() + version
 }
 
 /// `cells::projection`: XRP1 prefix, target copies and the hasher.
@@ -242,7 +271,7 @@ pub(super) fn ledger() -> usize {
 }
 
 /// U material: `check_material`'s canonical cell over `encode_material`, then
-/// the Undo codec (whose Row before parse is the Row codec).
+/// the Row-target Undo codec or a proof-page decode.
 pub(super) fn material() -> usize {
     size_of::<[u8; UNDO_RECORD_BYTES]>()
         + size_of::<(Namespace, JobView<'_>, UndoCell<'_>, &[u8])>()
@@ -252,7 +281,7 @@ pub(super) fn material() -> usize {
         + returned::<usize, UndoError>()
         + returned::<UndoRecordView<'_>, UndoError>()
         + returned::<Generation, UndoError>()
-        + undo_codec().max(row_codec()).max(before_page())
+        + undo_row_codec().max(before_page())
 }
 
 /// Job cell edits: lease, Undo item and the budget rows of `set_budget`.
@@ -306,7 +335,14 @@ pub(super) fn leaf() -> usize {
             [u8; 32],
         )>()
         + size_of::<[&[u8]; ROW_EDIT_CELLS]>()
-        + size_of::<[u8; MAX_RECORD]>()
+        // Prune's record is backing scratch: its reference and the
+        // `record_scratch` call that lends it.
+        + size_of::<&mut [u8; MAX_RECORD]>()
+        + size_of::<(
+            &mut [[u8; 1536]; 2],
+            &mut [u8],
+            Option<&mut [u8; MAX_RECORD]>,
+        )>()
         + 2 * size_of::<RecordVersion>()
         + 2 * size_of::<RowRecordView<'_>>()
         + returned::<LeafEditPlan<'_, '_>, LeafEditError>()

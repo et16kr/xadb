@@ -2,10 +2,13 @@
 //! independent `module-row-format/transition/author.py` literals and A's
 //! MCA00-V06 Forward/CLR literals. Literal observations confer no actual
 //! source, reservation, pin, staging, installation or recovery authority.
+//! S1-a repeats every literal and variant observation through
+//! `observe_borrowed` over a lent replay tail.
 
 use super::{
-    Change, Inputs, Issued, JOB, LEAF, Observation, ROOT, ReservePlan, STATUS, TableSource, UNDO,
-    frame, observe, prepare, produce,
+    Change, Inputs, Issued, JOB, LEAF, Observation, ROOT, ROW_REPLAY_SCRATCH_BYTES, ReplayLoan,
+    ReservePlan, STATUS, TableSource, UNDO, frame, observe, observe_borrowed, observe_with,
+    prepare, produce,
 };
 use crate::{
     api::{Column, DataType, DatabaseId, Namespace},
@@ -86,6 +89,71 @@ const REJECTS: [(&str, Error); 19] = [
 
 type Page = [u8; PAGE_BYTES];
 type Descriptor = [u8; 1536];
+
+thread_local! {
+    /// S1-a: while set, every World observation of a literal or R- variant is
+    /// repeated through `observe_borrowed`; counts (accepted, refused).
+    static BORROWED: Cell<Option<(usize, usize)>> = const { Cell::new(None) };
+}
+
+/// A lent replay tail between two sentinel runs, as the WORK_END tail sits
+/// between provenance and the home page.
+fn new_lane() -> Vec<u8> {
+    let mut lane = vec![0; ROW_REPLAY_SCRATCH_BYTES + 64];
+    lane[..32].fill(0x97);
+    lane[ROW_REPLAY_SCRATCH_BYTES + 32..].fill(0x53);
+    lane
+}
+fn lent(lane: &mut [u8]) -> &mut [u8; ROW_REPLAY_SCRATCH_BYTES] {
+    (&mut lane[32..ROW_REPLAY_SCRATCH_BYTES + 32])
+        .try_into()
+        .unwrap()
+}
+/// The lent tail is zero again and neither neighbour changed.
+fn restored(label: &str, lane: &[u8]) {
+    assert!(
+        lane[32..ROW_REPLAY_SCRATCH_BYTES + 32]
+            .iter()
+            .all(|byte| *byte == 0),
+        "{label}: lent tail"
+    );
+    assert!(
+        lane[..32].iter().all(|byte| *byte == 0x97),
+        "{label}: before"
+    );
+    assert!(
+        lane[ROW_REPLAY_SCRATCH_BYTES + 32..]
+            .iter()
+            .all(|byte| *byte == 0x53),
+        "{label}: after"
+    );
+}
+
+/// Repeat one owned observation through the borrowed observer from the same
+/// `fill` loans: the same result, all five after loans byte for byte and the
+/// lent tail restored.
+fn borrowed_twin<'a>(
+    label: &str,
+    inputs: &Inputs<'a>,
+    bytes: &'a [u8],
+    fill: u8,
+    owned: std::result::Result<Observation, Error>,
+    owned_after: &[Page; 5],
+) {
+    let Some((accepted, refused)) = BORROWED.get() else {
+        return;
+    };
+    let mut lane = new_lane();
+    let mut after = loans(fill);
+    let result = observe_borrowed(inputs, bytes, &mut after, lent(&mut lane));
+    assert_eq!(result, owned, "{label}: borrowed result");
+    assert!(*after == *owned_after, "{label}: borrowed after loans");
+    restored(label, &lane);
+    BORROWED.set(Some(match result {
+        Ok(_) => (accepted + 1, refused),
+        Err(_) => (accepted, refused + 1),
+    }));
+}
 
 fn hex(bytes: &[u8]) -> String {
     bytes.iter().map(|byte| format!("{byte:02x}")).collect()
@@ -455,7 +523,9 @@ impl World {
                 .unwrap_or_else(|| panic!("{variant} has no expected refusal"))
                 .1;
             let mut after = loans(0);
-            let result = observe(inputs, bytes, &mut after).map(|_| ());
+            let owned = observe(inputs, bytes, &mut after);
+            borrowed_twin(variant, inputs, bytes, 0, owned, &after);
+            let result = owned.map(|_| ());
             assert_eq!(result, Err(expected), "{variant}");
             println!("N1_REJECT\t{variant}\t{expected:?}");
             counter.set(counter.get() + 1);
@@ -478,6 +548,7 @@ impl World {
             let observed = observe(&inputs, expected, &mut again)
                 .unwrap_or_else(|error| panic!("{name}: observe {error:?}"));
             assert_eq!(observed, observation, "{name}");
+            borrowed_twin(name, &inputs, expected, 0, Ok(observed), &again);
             for &role in &observation.order[..usize::from(observation.count)] {
                 same(name, &again[usize::from(role)], &after[usize::from(role)]);
             }
@@ -509,6 +580,7 @@ impl World {
             let observation = observe(&inputs, bytes, &mut after)
                 .unwrap_or_else(|error| panic!("{name}: observe {error:?}"));
             assert_eq!(observation.frame_bytes, bytes.len());
+            borrowed_twin(name, &inputs, bytes, 0xa5, Ok(observation), &after);
             // A's operations stay unsupported on the producer side.
             let mut frame = vec![0xa5; FRAME_BYTES];
             let mut untouched = loans(0xa5);
@@ -1157,10 +1229,9 @@ fn n1_statement_reserve_commit_prune_match_literals() {
 
 // ---- A's Forward/CLR literals through the whole-group observer ------------
 
-fn a_literals(rejects: bool) -> usize {
-    let mut checked = 0;
-    // noh Forward301 from noh-300.
-    let mut world = World::from_a(
+/// A's noh-300 snapshot and its Forward301 inputs.
+fn noh_300() -> Box<World> {
+    World::from_a(
         300,
         scope3!("noh-300-root.bin"),
         &[(0, scope3!("noh-300-jobs2.bin"))],
@@ -1170,11 +1241,10 @@ fn a_literals(rejects: bool) -> usize {
         scope3!("noh-300-leaf.bin"),
         scope3!("noh-300-tx.bin"),
         scope3!("noh-300-aging.bin"),
-    );
-    world.rejects = rejects.then(|| Cell::new(0));
-    let observed = world.observe(
-        "A-noh-301",
-        scope3!("noh-301-forward.wal"),
+    )
+}
+fn forward_301() -> (Change<'static>, Pages) {
+    (
         Change::Forward {
             ordinal: 3,
             statement: boundary(1, None),
@@ -1186,7 +1256,16 @@ fn a_literals(rejects: bool) -> usize {
             table: true,
             ..pages()
         },
-    );
+    )
+}
+
+fn a_literals(rejects: bool) -> usize {
+    let mut checked = 0;
+    // noh Forward301 from noh-300.
+    let mut world = noh_300();
+    world.rejects = rejects.then(|| Cell::new(0));
+    let (change, inputs) = forward_301();
+    let observed = world.observe("A-noh-301", scope3!("noh-301-forward.wal"), change, inputs);
     assert_eq!(observed.operation, Operation::Forward);
     world.check_page("noh-301 Root", &world.root, scope3!("noh-301-root.bin"));
     world.check_page(
@@ -1743,10 +1822,7 @@ mod measured {
     use crate::{
         api::{Column, DataType, DatabaseId, Namespace},
         storage::{
-            catalog_record::{
-                CatalogColumn, CatalogError, CatalogExpectation, TableDefinitionView,
-                before::CatalogBeforeView,
-            },
+            catalog_record::{CatalogColumn, CatalogError, TableDefinitionView},
             control::Profile,
             overflow::{OVERFLOW_HEAD_BYTES, OverflowError, OverflowHead},
             page::{FileId, PageError, PageHeader, PageKind, PageLsn, PageRef, PageView},
@@ -1755,7 +1831,6 @@ mod measured {
                 CanonicalRowView, MAX_ROW_COLUMNS, ROW_HEADER_BYTES, RecordExpectation,
                 RecordVersion, RowError, RowPayload, RowRecordView, RowSchemaInput, ValueRef,
             },
-            semantic_catalog,
             semantic_row::{Error, LayoutView, Operation, Shape},
             transaction_record::{LogicalRowVersion, TxnRef, VersionStamp},
             tree_page::{
@@ -2111,14 +2186,10 @@ mod measured {
             + size_of::<R<(), UndoError>>()
             + ur_target_validate()
     }
-    /// A CatalogValue before: decode_catalog_before over the Catalog codec.
-    fn ur_catalog_before() -> usize {
-        size_of::<(&[u8], CatalogExpectation)>()
-            + size_of::<R<CatalogBeforeView<'_>, CatalogError>>()
-            + semantic_catalog::catalog_read_codec_bytes()
-    }
-    /// validate_record while the target check, a Row/Catalog before parse or
-    /// catalog_expectation runs.
+    /// validate_record over a Row target while the target check or the Row
+    /// before parse runs. Its CatalogValue arm (catalog_expectation and
+    /// decode_catalog_before) is unreachable: a Row target refuses that before
+    /// kind first (undo_record.rs:534-550).
     fn ur_validate_record() -> usize {
         size_of::<(UndoRecord<'_>, bool, UndoRecordExpectation<'_>, &[Column])>()
             + size_of::<R<usize, UndoError>>()
@@ -2130,12 +2201,13 @@ mod measured {
             + returned::<VersionStamp, UndoError>()
             + size_of::<(usize, UndoPayloadHead, usize, Option<PageRef>)>()
             + returned::<CanonicalRowView<'_>, RowError>()
-            + returned::<CatalogExpectation, UndoError>()
-            + returned::<CatalogBeforeView<'_>, CatalogError>()
-            + ur_target_validate()
-                .max(rr_canonical())
-                .max(size_of::<(UndoRecord<'_>, Namespace)>() + returned::<ObjectId, Fe>())
-                .max(ur_catalog_before())
+            + ur_target_validate().max(rr_canonical_columns())
+    }
+    /// decode_canonical_row: the column-schema wrapper over rr_canonical.
+    fn rr_canonical_columns() -> usize {
+        size_of::<(&[u8], &[Column])>()
+            + size_of::<R<CanonicalRowView<'_>, RowError>>()
+            + rr_canonical()
     }
     fn ur_encoded_len() -> usize {
         size_of::<(UndoCell<'_>, UndoRecordExpectation<'_>, &[Column])>()
@@ -2284,10 +2356,81 @@ mod measured {
     }
 }
 
+/// Whole measured chains above `outer` (every frame live over the phases):
+/// a phase's own locals, one SHA closure and one measured callee chain.
+fn measured_chains(outer: usize) -> [(&'static str, usize); 13] {
+    use super::source;
+    use std::mem::size_of;
+    let sha = frames::SHA;
+    let row_job = frames::job_chains()
+        .iter()
+        .map(|(_, bytes)| *bytes)
+        .max()
+        .unwrap();
+    let row_root = frames::root_chains()
+        .iter()
+        .map(|(_, bytes)| *bytes)
+        .max()
+        .unwrap();
+    let prepared = outer + prepare::locals_bytes() + sha;
+    let framing = outer + frame::locals_bytes() + source::slack() + sha;
+    // finish_aging's aggregate is the backing's; its Job cells, slot and
+    // descriptor halves are locals.
+    let writing = outer
+        + size_of::<(JobCells<'_>, usize, &mut [u8; 1536], &mut [u8; 1536])>()
+        + size_of::<[&[u8]; source::ROW_EDIT_CELLS]>()
+        + size_of::<retention_obligation::row::AgingTransition<'_>>()
+        + size_of::<tree_page::TreePageView<'_>>()
+        + sha;
+    [
+        ("prepare+row_job_census", prepared + row_job),
+        ("prepare+row_root_decode", prepared + row_root),
+        (
+            "prepare+descriptor_codec",
+            prepared + obligation::descriptor_source_bytes(),
+        ),
+        (
+            "prepare+aging_decode",
+            prepared + retention_obligation::row::source_bytes(),
+        ),
+        ("prepare+row_codec_bound", prepared + row::source_bytes()),
+        (
+            "prepare+row_record_decode",
+            prepared + measured::rr_decode_record(),
+        ),
+        (
+            "prepare+row_record_encode",
+            prepared + measured::rr_encode_record(),
+        ),
+        ("prepare+tree_page_decode", prepared + measured::tp_decode()),
+        (
+            "prepare+leaf_edit",
+            prepared + measured::tp_prepare_leaf_edit(),
+        ),
+        ("prepare+undo_material", prepared + measured::ur_material()),
+        ("frame+callee", framing + measured::frame_callee()),
+        (
+            "write+aging_next",
+            writing + retention_obligation::row::source_bytes().max(row_job),
+        ),
+        (
+            "write+leaf_encode",
+            writing + measured::tp_prepare_leaf_edit().max(measured::tp_encode()),
+        ),
+    ]
+}
+
+/// The owned wrapper over the body: local backing, arguments, result.
+fn owned_outer() -> usize {
+    use std::mem::size_of;
+    size_of::<[u8; ROW_REPLAY_SCRATCH_BYTES]>()
+        + size_of::<(&Inputs<'_>, &[u8], &mut [Page; 5])>()
+        + size_of::<std::result::Result<Observation, Error>>()
+}
+
 #[test]
 fn n1_transition_source_bounds_cover_measured_frames() {
     use super::source;
-    use std::mem::size_of;
     let bound = super::source_bytes();
     let entry = super::entry_bytes();
     let sha = frames::SHA;
@@ -2352,69 +2495,16 @@ fn n1_transition_source_bounds_cover_measured_frames() {
             "{name}: measured {chain} > counted {counted}"
         );
     }
-    let row_job = frames::job_chains()
-        .iter()
-        .map(|(_, bytes)| *bytes)
-        .max()
-        .unwrap();
-    let row_root = frames::root_chains()
-        .iter()
-        .map(|(_, bytes)| *bytes)
-        .max()
-        .unwrap();
-    // Whole chains: the entry frame, the phase's own locals, one SHA closure
-    // and one measured callee chain.
-    let prepared = entry + prepare::locals_bytes() + sha;
-    let framing = entry + frame::locals_bytes() + source::slack() + sha;
-    let writing = entry
-        + size_of::<[u8; 640]>()
-        + size_of::<[&[u8]; source::ROW_EDIT_CELLS]>()
-        + size_of::<retention_obligation::row::AgingTransition<'_>>()
-        + size_of::<tree_page::TreePageView<'_>>()
-        + sha;
-    let chains = [
-        ("prepare+row_job_census", prepared + row_job),
-        ("prepare+row_root_decode", prepared + row_root),
-        (
-            "prepare+descriptor_codec",
-            prepared + obligation::descriptor_source_bytes(),
-        ),
-        (
-            "prepare+aging_decode",
-            prepared + retention_obligation::row::source_bytes(),
-        ),
-        ("prepare+row_codec_bound", prepared + row::source_bytes()),
-        (
-            "prepare+row_record_decode",
-            prepared + measured::rr_decode_record(),
-        ),
-        (
-            "prepare+row_record_encode",
-            prepared + measured::rr_encode_record(),
-        ),
-        ("prepare+tree_page_decode", prepared + measured::tp_decode()),
-        (
-            "prepare+leaf_edit",
-            prepared + measured::tp_prepare_leaf_edit(),
-        ),
-        ("prepare+undo_material", prepared + measured::ur_material()),
-        ("frame+callee", framing + measured::frame_callee()),
-        (
-            "write+aging_next",
-            writing + retention_obligation::row::source_bytes().max(row_job),
-        ),
-        (
-            "write+leaf_encode",
-            writing + measured::tp_prepare_leaf_edit().max(measured::tp_encode()),
-        ),
-    ];
+    let chains = measured_chains(owned_outer() + entry);
     for (name, bytes) in chains {
         println!("N1_SOURCE_CHAIN\t{name}\t{bytes}");
         assert!(bound >= bytes, "{name}");
     }
     let measured = chains.iter().map(|(_, bytes)| *bytes).max().unwrap();
     println!(
-        "N1_SOURCE bound={bound} measured={measured} entry={entry} prepare={} locals={} callee={} frame={} write={} slack={} cap=65536 recovered_peak=65512",
+        "N1_SOURCE bound={bound} measured={measured} outer={} entry={entry} split={} prepare={} locals={} callee={} frame={} write={} slack={} cap=65536 recovered_peak=65512",
+        owned_outer(),
+        prepare::split_bytes(),
         prepare::source_bytes(),
         prepare::locals_bytes(),
         prepare::callee_bytes(),
@@ -2437,10 +2527,238 @@ fn n1_transition_source_bounds_cover_measured_frames() {
     );
     assert_eq!(
         bound,
-        entry
-            + prepare::source_bytes()
+        owned_outer()
+            + entry
+            + prepare::split_bytes()
+                .max(prepare::source_bytes())
                 .max(frame::source_bytes())
                 .max(prepare::write_source_bytes())
     );
     assert!(bound <= 65_536, "native short-source cap");
+}
+
+// ---- S1-a: the observer over a lent replay tail ----------------------------
+
+/// Owned observations of N1's produced literals and A's Forward/CLR literals.
+const LITERAL_OBSERVATIONS: usize = 35;
+
+/// Run literal histories with every observation repeated through
+/// `observe_borrowed`: (the histories' variant count, accepted, refused).
+fn with_borrowed(run: impl FnOnce() -> usize) -> (usize, usize, usize) {
+    BORROWED.set(Some((0, 0)));
+    let checked = run();
+    let (accepted, refused) = BORROWED.take().expect("borrowed counts");
+    (checked, accepted, refused)
+}
+
+#[test]
+fn s1a_borrowed_observer_accepts_n1_and_a_literals() {
+    let (checked, accepted, refused) = with_borrowed(|| {
+        history_e(false) + history_n(false) + history_h(false) + a_literals(false)
+    });
+    println!("S1A_BORROWED accepted={accepted} refused={refused}");
+    assert_eq!((checked, accepted, refused), (0, LITERAL_OBSERVATIONS, 0));
+}
+
+#[test]
+fn s1a_borrowed_observer_rejects_mutated_literals() {
+    let (checked, accepted, refused) =
+        with_borrowed(|| a_literals(true) + history_e(true) + history_n(true) + history_h(true));
+    println!("S1A_BORROWED_REJECTS checked={checked} accepted={accepted} refused={refused}");
+    assert_eq!(
+        (checked, accepted, refused),
+        (REJECTS.len(), LITERAL_OBSERVATIONS, REJECTS.len())
+    );
+}
+
+/// The backing parts in `ROW_REPLAY_SCRATCH_BYTES` order.
+fn backing_parts() -> [(&'static str, usize); 8] {
+    [
+        ("descriptors", 2 * 1536),
+        ("core", 256),
+        ("cell", super::MAX_CELL),
+        ("job", JOB_BYTES),
+        ("root", crate::storage::retention_page::ROOT_BYTES),
+        ("undo", crate::storage::undo_record::UNDO_RECORD_BYTES),
+        ("aux", super::graph::AUX_BYTES),
+        ("aggregate", super::AGGREGATE_BYTES),
+    ]
+}
+
+#[test]
+fn s1a_borrowed_tail_refused_dirty_and_restored_on_every_exit() {
+    let world = noh_300();
+    let (change, pages) = forward_301();
+    let inputs = world.inputs(change, pages);
+    let bytes = scope3!("noh-301-forward.wal");
+    let mut owned_after = loans(0);
+    let observed = observe(&inputs, bytes, &mut owned_after).unwrap();
+
+    // A nonzero byte at either end of any part: refused before any work,
+    // the lent tail and the after loans kept as they were.
+    let mut start = 0;
+    for (part, length) in backing_parts() {
+        for at in [start, start + length - 1] {
+            let mut lane = new_lane();
+            lane[32 + at] = 0x5a;
+            let mut after = loans(0xa5);
+            assert_eq!(
+                observe_borrowed(&inputs, bytes, &mut after, lent(&mut lane)).map(|_| ()),
+                Err(Error::InvalidInput),
+                "{part}@{at}"
+            );
+            assert_eq!(lane[32 + at], 0x5a, "{part}@{at} kept");
+            lane[32 + at] = 0;
+            restored(part, &lane);
+            assert!(after.iter().flatten().all(|byte| *byte == 0xa5), "{part}");
+            println!("S1A_DIRTY_REFUSED\t{part}\t{at}");
+        }
+        start += length;
+    }
+    assert_eq!(start, ROW_REPLAY_SCRATCH_BYTES);
+
+    // Success: the same observation and after loans, the tail zero again.
+    let mut lane = new_lane();
+    let mut after = loans(0);
+    let borrowed = observe_borrowed(&inputs, bytes, &mut after, lent(&mut lane)).unwrap();
+    assert_eq!(borrowed, observed);
+    assert!(*after == *owned_after);
+    restored("success", &lane);
+
+    // An error inside prepare, after the census and Job copy were written.
+    let late = Change::Forward {
+        ordinal: 3,
+        statement: boundary(2, None),
+    };
+    let inputs = world.inputs(late, pages);
+    let mut owned_after = loans(0);
+    let refused = observe(&inputs, bytes, &mut owned_after);
+    assert_eq!(refused.map(|_| ()), Err(Error::OrderMismatch));
+    let mut lane = new_lane();
+    let mut after = loans(0);
+    assert_eq!(
+        observe_borrowed(&inputs, bytes, &mut after, lent(&mut lane)),
+        refused
+    );
+    assert!(*after == *owned_after);
+    restored("prepare error", &lane);
+
+    // A forced unwind while the loan holds the real observation's values.
+    let inputs = world.inputs(change, pages);
+    let mut lane = new_lane();
+    let mut dirty = Vec::new();
+    let unwound = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
+        let loan = ReplayLoan::new(lent(&mut lane)).unwrap();
+        let mut after = loans(0);
+        assert_eq!(
+            observe_with(&inputs, bytes, &mut after, &mut *loan.0).unwrap(),
+            observed
+        );
+        let mut at = 0;
+        for (part, length) in backing_parts() {
+            if loan.0[at..at + length].iter().any(|byte| *byte != 0) {
+                dirty.push(part);
+            }
+            at += length;
+        }
+        panic!("forced unwind with the Row replay loan");
+    }));
+    assert!(unwound.is_err());
+    restored("unwind", &lane);
+    println!("S1A_UNWIND dirty={dirty:?}");
+    // Forward writes every part but the Prune/Reserve cell.
+    assert_eq!(
+        dirty,
+        [
+            "descriptors",
+            "core",
+            "job",
+            "root",
+            "undo",
+            "aux",
+            "aggregate"
+        ]
+    );
+}
+
+/// S1-a target: the existing frame-phase maximum of the original replay
+/// (history initialize 26120B; retention 24715B, population 25743B), from
+/// module-independence-survey-20261026.md#c2-borrowed-replay-workspace.
+const FRAME_PHASE_MAX: usize = 26_120;
+
+#[test]
+fn s1a_borrowed_observer_source_bound_covers_measured_frames() {
+    use super::source;
+    use std::mem::size_of;
+    let bound = super::observe_borrowed_source_bytes();
+    let entry = super::entry_bytes();
+    let wrapper = size_of::<(
+        &Inputs<'_>,
+        &[u8],
+        &mut [Page; 5],
+        &mut [u8; ROW_REPLAY_SCRATCH_BYTES],
+    )>() + source::returned::<ReplayLoan<'_>, Error>()
+        + size_of::<std::result::Result<Observation, Error>>()
+        + size_of::<(&[u8], std::slice::Iter<'_, u8>, bool)>();
+    let phases = [
+        ("split", prepare::split_bytes()),
+        ("prepare", prepare::source_bytes()),
+        ("frame", frame::source_bytes()),
+        ("write", prepare::write_source_bytes()),
+    ];
+    assert_eq!(
+        bound,
+        wrapper + entry + phases.iter().map(|(_, bytes)| *bytes).max().unwrap()
+    );
+    // The Row-target Undo material chain stays within its counted term.
+    let material = measured::ur_material();
+    println!(
+        "S1A_SOURCE_CODEC\tundo_record_material_row\tmeasured={material}\tcounted={}",
+        source::material()
+    );
+    assert!(material <= source::material());
+    let chains = measured_chains(wrapper + entry);
+    for (name, bytes) in chains {
+        println!("S1A_SOURCE_CHAIN\t{name}\t{bytes}");
+        assert!(bound >= bytes, "{name}");
+    }
+    let measured = chains.iter().map(|(_, bytes)| *bytes).max().unwrap();
+    let callees = [
+        ("ledger", source::ledger()),
+        (
+            "aging",
+            crate::storage::retention_obligation::row::source_bytes(),
+        ),
+        ("material", source::material()),
+        ("leaf", source::leaf()),
+        ("row_census", row::source_bytes()),
+        ("status", source::status()),
+        ("job_edit", source::job_edit()),
+        ("graph", source::graph()),
+    ];
+    let dominant = callees.iter().max_by_key(|(_, bytes)| *bytes).unwrap();
+    assert_eq!(dominant.1, prepare::callee_bytes());
+    println!(
+        "S1A_SOURCE borrowed={bound} measured={measured} owned={} wrapper={wrapper} entry={entry} prepared={} locals={} callee={} dominant={} sha={} slack={} scratch={ROW_REPLAY_SCRATCH_BYTES} tail={} target={FRAME_PHASE_MAX} room={}",
+        super::source_bytes(),
+        size_of::<super::Prepared<'_, '_>>(),
+        prepare::locals_bytes(),
+        prepare::callee_bytes(),
+        dominant.0,
+        source::SHA,
+        source::slack(),
+        2 * PAGE_BYTES - 64 * 352,
+        FRAME_PHASE_MAX as i64 - bound as i64,
+    );
+    for (name, bytes) in phases {
+        println!("S1A_SOURCE_PHASE\t{name}\t{bytes}");
+    }
+    for (name, bytes) in callees {
+        println!("S1A_SOURCE_CALLEE\t{name}\t{bytes}");
+    }
+    assert!(ROW_REPLAY_SCRATCH_BYTES <= 2 * PAGE_BYTES - 64 * 352);
+    assert!(
+        bound <= FRAME_PHASE_MAX,
+        "borrowed Row observer above the frame-phase max"
+    );
 }

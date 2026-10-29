@@ -58,17 +58,14 @@ pub(super) fn encode_core(operation: Operation, core: &Core, output: &mut [u8; 2
     Ok(())
 }
 
-#[derive(Clone, Copy)]
-pub(super) struct Aux {
-    pub(super) bytes: [u8; AUX_BYTES],
+/// Edge/Count/Delta bytes in their part of the group backing.
+pub(super) struct Aux<'s> {
+    pub(super) bytes: &'s mut [u8; AUX_BYTES],
     pub(super) len: usize,
 }
-impl Aux {
-    pub(super) fn new() -> Self {
-        Self {
-            bytes: [0; AUX_BYTES],
-            len: 0,
-        }
+impl<'s> Aux<'s> {
+    pub(super) fn new(bytes: &'s mut [u8; AUX_BYTES]) -> Self {
+        Self { bytes, len: 0 }
     }
     pub(super) fn bytes(&self) -> &[u8] {
         &self.bytes[..self.len]
@@ -106,7 +103,7 @@ pub(super) fn references(
     previous: Option<UndoLink>,
     incoming: u64,
     indices: Indices,
-    aux: &mut Aux,
+    aux: &mut Aux<'_>,
 ) -> Result<()> {
     let adding = match operation {
         Operation::Forward => true,
@@ -173,7 +170,7 @@ pub(super) fn references(
 }
 
 /// Reserve absent→item, Forward item→absent Consume, Cancel item→absent Release.
-pub(super) fn inventory(operation: Operation, item: &[u8; 96], aux: &mut Aux) -> Result<()> {
+pub(super) fn inventory(operation: Operation, item: &[u8; 96], aux: &mut Aux<'_>) -> Result<()> {
     let action = match operation {
         Operation::Reserve => 1,
         Operation::Forward => 2,
