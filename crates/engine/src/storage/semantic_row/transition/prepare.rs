@@ -512,8 +512,13 @@ fn descriptor_after(
 ) -> Result<()> {
     let profile = inputs.profile;
     let lsn = after.lsn;
-    // None only at Begin; otherwise the bytes `decode_tx_before` decoded.
+    // None only at Begin; otherwise the bytes `decode_tx_before` decoded:
+    // prepare refuses a Begin ATT and requires one for every other Tx op.
     let original = inputs.transaction;
+    debug_assert_eq!(
+        original.is_some(),
+        inputs.change.operation() != Operation::Begin
+    );
     let mut spec = match original {
         None => DescriptorSpec {
             owner: OwnerState::Transaction(after.core),

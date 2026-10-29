@@ -2690,7 +2690,11 @@ fn s1a_borrowed_tail_refused_dirty_and_restored_on_every_exit() {
 }
 
 /// S1-a target, a dated reference rather than a live value. These history
-/// phases were measured by C2 at 8c0f252, not at this base 5135e16
+/// phases were recorded by C2 on base b304bea (original /root history, absent
+/// from this repository); 8c0f252, this repository's parentless import of
+/// that line, already includes later C2 rounds (survey:1715-1850, e.g.
+/// c2-compact-dpt's Plan4 population change), so they predate every commit
+/// here, including this base 5135e16
 /// (module-independence-survey-20261026.md#c2-borrowed-replay-workspace:
 /// retention 24715B, population 25743B, initialize 26120B); semantic_catalog
 /// resources/transition and plan4_retention recovery.rs/population.rs changed
