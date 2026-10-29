@@ -4,6 +4,12 @@
     "sha256": "4bf20c59207890d66b5b51d06d7778a478f1226e26ce38b7cc803856fbe12181",
     "frozen_by": "U2-C4c before generation; root adoption pending"
   },
+  "plan_adoption": {
+    "sha256": "4bf20c59207890d66b5b51d06d7778a478f1226e26ce38b7cc803856fbe12181",
+    "adopter": "/root",
+    "recorded_by": "U2-C4c",
+    "note": "Root adoption recorded by U2-C4c on the integrator's instruction after the independent review (2026-10-29), following the v2 receipt pattern. It follows the single generation and audit recorded above; before adoption every file in `files` (sha256 and bytes) and every raw-index.tsv record (324 files, 8857480 bytes, exact raw/ inventory) was re-hashed and matched. No byte changed. provenance.md is pinned in `files`, so it stays byte-identical; this entry supersedes its sentence that root adoption is pending."
+  },
   "generator_runs": 1,
   "auditor_runs": 1,
   "product_executions": 0,
