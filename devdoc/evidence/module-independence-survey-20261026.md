@@ -3097,3 +3097,63 @@ tracked 파일만 내보낸 tree의 source fingerprint는 이동 전 `0fcb987714
 - JSON 13개, 링크·문서 배치 검사 오류 0
 
 선택 지적 2건(dirty fixture 폴더 서술, 로그의 명령 줄)은 위 두 문장에 반영했다. 이 반영은 다시 검토받지 않았다. L5-B–D와 전체 M4/M5는 미완료다.
+
+<a id="l5b-install-move"></a>
+## 2026-10-29 L5-B 설치·세션 조립 시험 폴더 배치
+
+[L5 분류](../plans/module-independence-plan.md#l5-classification)의 L5-B를 기준 `main` `510d5f6989a09e172539023964ce2cb1faf42c28`(tree `f92c07a06585080e4125c4ae3cbebd339fb8e5f3`, 착수 때 `git status --short` 빈 출력)에 적용했다. 진입 `bootstrap.rs`·`doublewrite_install.rs`·`plan4_genesis.rs`·`mutable_storage.rs`는 유지했다. 기능 본문·논리 모듈 경로·visibility·cfg·시험 selector는 바꾸지 않았다.
+
+| 원 경로(`crates/engine/src/storage/wal_io/`) | 현재 경로 | 논리 경로(`storage::wal_io::bootstrap::`) |
+| --- | --- | --- |
+| `bootstrap_test_support.rs` | `bootstrap/test_support.rs` | `test_support` |
+| `bootstrap_tests.rs` | `bootstrap/tests.rs` | `tests` |
+| `doublewrite_install_tests.rs` | `doublewrite_install/tests.rs` | `doublewrite_install::tests` |
+| `plan4_genesis_tests.rs` | `plan4_genesis/tests.rs`, `#[path]` 1줄 변경 | `plan4_genesis::tests` |
+| `plan4_genesis_test_support.rs` | `plan4_genesis/tests/support.rs` | `plan4_genesis::tests::support` |
+| `runtime_core_tests.rs` | `mutable_storage/runtime_core_tests.rs` | `doublewrite_install::mutable_storage::runtime_core_tests` |
+| `status_bootstrap_tests.rs` | `mutable_storage/status_bootstrap_tests.rs`, `#[path]` 2줄 변경 | `…::mutable_storage::status_bootstrap_tests` |
+| `status_bootstrap_native_tests.rs` | `mutable_storage/status_bootstrap_tests/native.rs` | `…::status_bootstrap_tests::native` |
+| `undo_bootstrap_tests.rs` | `mutable_storage/status_bootstrap_tests/undo.rs`, `#[path]` 2줄 변경 | `…::status_bootstrap_tests::undo` |
+| `undo_bootstrap_native_tests.rs` | `mutable_storage/status_bootstrap_tests/undo/native_undo.rs` | `…::undo::native_undo` |
+| `mixed_system_init_tests.rs` | `mutable_storage/status_bootstrap_tests/undo/mixed_init.rs` | `…::undo::mixed_init` |
+
+`#[path]` 11줄의 분포는 다음과 같다.
+
+- 진입 네 파일: 6줄(bootstrap 2·doublewrite_install 1·plan4_genesis 1·mutable_storage 2)
+- 이동한 `plan4_genesis/tests.rs`: 1줄
+- 이동한 `status_bootstrap_tests.rs`: 2줄
+- 이동한 `undo.rs`: 2줄
+
+`#[path]`로 읽히는 이동 파일의 `#[path]`는 각 파일의 폴더 기준이다. 대상 파일에 위치 기준 macro는 없고, fixture는 `env!("CARGO_MANIFEST_DIR")` 기준이다. L3에서 형제 때문에 남겼던 init 시험이 이 단위에서 논리 부모 `status_bootstrap_tests::undo`의 폴더로 들어갔다.
+
+현재 링크 2개(`contracts/dev3-task-05-buffer-flush.md:239`, `plans/dev3-test-plan.md:178`)와 본문 표기 2개(`plans/dev3-test-plan.md:677`, `policies/repository-build-plan.md:502`)를 현재 경로로 바꿨다. 본문 표기 2개에는 원 이름을 함께 적었다. 관리 JSON의 경로 문자열 22개를 현재 경로로 바꾸고 `module_folder_reorganization`의 상태와 `l5b_evidence_ref`를 갱신했다. 상태 문구는 `devdoc/README.md`, `plans/README.md`, 저장소 정책 §5.2와 계획 13절에서 갱신했다.
+
+L5 분류 기준 4에 따라 `tests/fixtures/dev3-plan4-genesis/recipes-g.json`은 바꾸지 않았다. 이 파일은 상태가 `SOURCE_PREPARED_NOT_EXECUTED`이고, `source_files`의 SHA-256 고정은 이미 현재 파일과 다르다. 이 파일의 원 경로와 현재 위치는 다음과 같다.
+
+| 원 경로 기록 | 현재 위치 |
+| --- | --- |
+| `source_files[].path`의 `wal_io/plan4_genesis_tests.rs`와 `cases[].test_source` 227개 | `wal_io/plan4_genesis/tests.rs` |
+| `source_files[].path`의 `wal_io/plan4_genesis_test_support.rs` | `wal_io/plan4_genesis/tests/support.rs` |
+
+| 검증 | 실제 범위·결과 |
+| --- | --- |
+| 정적 대응 | `crates/` diff는 rename 11개와 `#[path]` 11줄뿐이다. 이동만 한 8개는 기준 SHA-256과 같다 |
+| 컴파일 | `cargo check -p xadb-engine --all-targets --all-features --locked` PASS, warning 0, 종료 코드 0(`logs/check.log`, 명령 포함). rustc/cargo 1.95.0 |
+| 시험 발견 | 이동 후 시험 목록 1585줄이 이동 전 목록과 byte 단위로 같다(SHA-256 `601bd166c6b31b8bdd9e7361eecb15d5939e7b1153b323f10f9fd5308f30259a`). 이동 전 목록은 L5-A artifact의 이동 후 목록이다. 기준 HEAD tree에서 다시 계산한 tracked fingerprint가 `4eae9c64…`로 그 목록의 source와 같다(`logs/list-before.SOURCE.txt`). 다음 시험 수가 그대로다. `bootstrap::tests::` 12, `doublewrite_install::tests::` 10, `plan4_genesis::tests::` 12, `runtime_core_tests::` 7, `status_bootstrap_tests::` 23(native 1, undo 16(native_undo 1, mixed_init 9)) |
+| 시험 본문 | NOT_RUN. 본문은 그대로다. script·fixture generator는 논리 selector만 쓴다 |
+| fmt | `rustfmt --edition 2024 --check`를 `bootstrap.rs`에 적용해 하위 모듈까지 차이 0, 종료 코드 0(`logs/rustfmt-check.log`, 명령 포함). 전체 fmt·Clippy·문서 검사는 기존 push gate에서 수행한다 |
+
+tracked 파일만 내보낸 tree의 source fingerprint는 이동 전 `4eae9c646174b05f9dfdad03b5ebe3c11667173599149e4a08dff4e6dc47b35b`, 이동 후 `9cc0be961f944a96afcc54ec8e47de1f94f556cd521d57d6de4b86a6a260bc3f`다. 로그·시험 목록·파일별 hash·fingerprint는 로컬 `artifacts/module-l5b-install-20261029/`에 보존했다(`manifest.sha256` SHA-256 `005e7d8191bf19e3bbb1278fc414832edcc277643bd9e068f085decb01a35146`). build target 1.5G와 임시 export는 삭제했다. 이동 뒤 `wal_io/` 직속 Rust 파일은 43개다.
+
+독립 검토(같은 읽기 전용 subagent)는 staged diff·artifact·문서를 대조해 **ACCEPT, 필수·선택 지적 0**으로 판정했다. 확인한 것은 다음과 같다.
+
+- rename 11개와 L5-B 행의 일치
+- `#[path]` 11줄의 해석: non-mod-rs `bootstrap.rs`, `#[path]`로 읽히는 진입 세 파일과 중첩 이동 파일 세 개
+- 이동만 한 8개의 byte 동일과, 나머지 세 파일이 `#[path]` 줄만 다름
+- 이동 전 목록 재사용의 유효성: HEAD tree fingerprint `4eae9c…` 재계산
+- 시험 수, script가 논리 selector만 쓰고 `recipes-g.json`을 읽는 script가 없음
+- `recipes-g.json` 원 경로 229개의 대응
+- index에서 다시 계산한 이동 후 fingerprint와 manifest
+- JSON 22개, 링크·문서 배치 검사 오류 0
+
+L5-C·D와 전체 M4/M5는 미완료다.

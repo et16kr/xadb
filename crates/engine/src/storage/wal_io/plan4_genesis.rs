@@ -860,5 +860,5 @@ pub(in crate::storage) fn fits<W: WriterNamespace>() -> bool {
 }
 
 #[cfg(test)]
-#[path = "plan4_genesis_tests.rs"]
+#[path = "plan4_genesis/tests.rs"]
 pub(in crate::storage) mod tests;

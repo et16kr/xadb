@@ -12,7 +12,7 @@ use std::{
     panic::{AssertUnwindSafe, catch_unwind},
 };
 
-#[path = "plan4_genesis_test_support.rs"]
+#[path = "tests/support.rs"]
 pub(in crate::storage) mod support;
 use support::{Action, Directory, Edit, Fault, Hook, Key, Writer};
 const DATA: &str = "d3-data-0000000100000001";

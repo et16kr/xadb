@@ -81,7 +81,7 @@ const MAX_OWNED_BYTES: u64 = super::MAX_OWNED_BYTES + doublewrite_control::POOL_
 const PROTECTED_BYTES: u64 = super::PROTECTED_BYTES + doublewrite_control::POOL_BYTES as u64;
 
 #[cfg(test)]
-#[path = "doublewrite_install_tests.rs"]
+#[path = "doublewrite_install/tests.rs"]
 mod tests;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]

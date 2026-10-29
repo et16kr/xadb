@@ -127,10 +127,10 @@ pub(crate) enum Phase {
 }
 
 #[cfg(test)]
-#[path = "bootstrap_test_support.rs"]
+#[path = "bootstrap/test_support.rs"]
 mod test_support;
 #[cfg(test)]
-#[path = "bootstrap_tests.rs"]
+#[path = "bootstrap/tests.rs"]
 mod tests;
 
 #[derive(Debug)]

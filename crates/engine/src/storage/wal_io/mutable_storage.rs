@@ -92,7 +92,7 @@ pub(crate) use plan4_pages::{
 };
 
 #[cfg(test)]
-#[path = "status_bootstrap_tests.rs"]
+#[path = "mutable_storage/status_bootstrap_tests.rs"]
 mod status_bootstrap_tests;
 
 /// Exact failures of the non-I/O health leaf, without wide storage carriers.
@@ -636,7 +636,7 @@ pub(in crate::storage) use status_init::EmptyTransactionInstall;
 pub(crate) use status_init::EmptyTransactionObservation;
 
 #[cfg(test)]
-#[path = "runtime_core_tests.rs"]
+#[path = "mutable_storage/runtime_core_tests.rs"]
 mod runtime_core_tests;
 
 pub(in crate::storage) use plan4_pages::{

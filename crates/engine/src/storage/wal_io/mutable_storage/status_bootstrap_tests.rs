@@ -20,10 +20,10 @@ const OLD_INPUT: &str = concat!(
 );
 type State = Arc<Mutex<port::State>>;
 
-#[path = "status_bootstrap_native_tests.rs"]
+#[path = "status_bootstrap_tests/native.rs"]
 mod native;
 
-#[path = "undo_bootstrap_tests.rs"]
+#[path = "status_bootstrap_tests/undo.rs"]
 mod undo;
 
 fn mark(id: &str) {

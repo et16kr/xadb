@@ -236,7 +236,7 @@ F05는 4/16/64MiB 각각에서 `charged + outstanding_reserved <= capacity`를 �
 | [doublewrite_install.rs](../../crates/engine/src/storage/wal_io/doublewrite_install.rs) | `install_doublewrite`, `DoublewriteStorageSession::open_reader/is_fenced`, 기존4MiB borrow·설치 plan. Pending/flush API 없음 |
 | [doublewrite_control.rs](../../crates/engine/src/storage/doublewrite_control.rs) | XDW1/XDS1 encode/decode·`PendingImage`·`validate_image`. codec 검산은 선택·sync·repair 증거가 아님 |
 | [semantic_group.rs](../../crates/engine/src/storage/semantic_group.rs) | 완결 semantic group 검산. page 효과/DPT/예약의 실제 stage 인계는 생산 opcode와 함께 검증 |
-| [read_buffer_tests.rs](../../crates/engine/src/storage/read_buffer_tests.rs), [doublewrite_install_tests.rs](../../crates/engine/src/storage/wal_io/doublewrite_install_tests.rs) | 기존 제한 fixture·수명·I/O witness 진입점. 기존 무변경 사례를 새 dirty 실행 분모로 복제하지 않음 |
+| [read_buffer_tests.rs](../../crates/engine/src/storage/read_buffer_tests.rs), [doublewrite_install/tests.rs](../../crates/engine/src/storage/wal_io/doublewrite_install/tests.rs) | 기존 제한 fixture·수명·I/O witness 진입점. 기존 무변경 사례를 새 dirty 실행 분모로 복제하지 않음 |
 
 <a id="acceptance"></a>
 ## 9. 독립 인수 case와 증거

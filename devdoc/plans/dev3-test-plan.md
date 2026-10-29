@@ -175,7 +175,7 @@ runtime8 및 r3/r4에서 이미 확인한 선택 사례는 관련 코드가 같�
 
 native 13DB는 새로 부풀린 전수 행렬이 아니라 기존 제한 단위의 고정 필수 입력이다. 정상3DB는 profile1/2/3의 reserve/cancel 1→8→63 cycle, 장애10DB는 profile1·N8의 reserve/cancel×write-before/half/after·sync-before/after다. compiler는 정상 baseline과 installed owner 재사용·frame/operation/flush/WAL slot 중첩 변경 거절, owner 종료 뒤 반환 성공을 구별한다.
 
-남은 WAL4의 실제 기존 시험명은 `wal_slot_writes_exact_logical_and_physical_prefixes`, `wal_slot_rejects_boundaries_before_effect`, `wal_io_releases_gate_and_protects_slot`([WAL 시험](../../crates/engine/src/storage/wal_io_tests.rs)), `bootstrap_wal_requires_selected_mapping`([bootstrap 시험](../../crates/engine/src/storage/wal_io/bootstrap_tests.rs))다. 실행 시 실제 모듈을 포함한 전체 이름으로 선택하고 원래 미검증 helper diff와 대응한다.
+남은 WAL4의 실제 기존 시험명은 `wal_slot_writes_exact_logical_and_physical_prefixes`, `wal_slot_rejects_boundaries_before_effect`, `wal_io_releases_gate_and_protects_slot`([WAL 시험](../../crates/engine/src/storage/wal_io_tests.rs)), `bootstrap_wal_requires_selected_mapping`([bootstrap 시험](../../crates/engine/src/storage/wal_io/bootstrap/tests.rs))다. 실행 시 실제 모듈을 포함한 전체 이름으로 선택하고 원래 미검증 helper diff와 대응한다.
 
 <a id="recovery-minimum"></a>
 ## 5. 복구 3.12의 장벽별 중간 필수
@@ -674,7 +674,7 @@ NOT_RUN을 유지한다. native INIT·현재-build 복구는 이후 실제 효�
 ## 혼합 Status·Free Undo INIT 준비 후속 — 2026-10-24
 
 [소유 계약](../contracts/dev3-status-init.md#mixed-system-init)의 신규 선택은
-`mixed_system_init_tests.rs`의 최초 MI01–07은7함수234case(runtime233/static1)다.
+`mutable_storage/status_bootstrap_tests/undo/mixed_init.rs`(원 `mixed_system_init_tests.rs`)의 최초 MI01–07은7함수234case(runtime233/static1)다.
 검토 후 coherent Free gen6/native4의 MI08 12case를 추가하여 최종8함수246case로 확장했다.
 profile3×Status A/Undo B/C의 독립 bytes와 reserve/cancel, 기존 Status 공통 코어의 직접
 영향 producer/observer/materializer, strict scope/budget/terminal, resealed 손상과 길이,

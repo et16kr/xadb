@@ -1,10 +1,10 @@
 //! New plan3 branch only; seeded roles do not prove successful installation.
 use super::*;
 
-#[path = "undo_bootstrap_native_tests.rs"]
+#[path = "undo/native_undo.rs"]
 mod native_undo;
 
-#[path = "mixed_system_init_tests.rs"]
+#[path = "undo/mixed_init.rs"]
 mod mixed_init;
 
 const UNDO_INPUT: &str = concat!(
