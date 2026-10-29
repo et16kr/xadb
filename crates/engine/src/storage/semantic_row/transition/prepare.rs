@@ -1185,7 +1185,8 @@ pub(super) fn prepare<'a>(
     if is_tx(op) {
         let actor = actor.expect("actor");
         let location = location.expect("location");
-        let status_after = out.status.ok_or(Error::InvalidInput)?;
+        // Reserve/Cancel keep the Status home: its before is the after.
+        let status_after = out.status.or(status_before).ok_or(Error::InvalidInput)?;
         let TransactionStatusCell::Occupied(core_after) = status_after.core() else {
             return Err(Error::OrderMismatch);
         };
