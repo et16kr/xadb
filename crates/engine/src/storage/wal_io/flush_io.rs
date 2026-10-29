@@ -850,9 +850,13 @@ fn read_file<W: WriterNamespace>(
 /// single current-format switch replaces the legacy decode and comparison in
 /// `read_selection`; after it a valid but different installed profile reports
 /// `Control(IdentityMismatch)`, as a namespace mismatch already does.
-#[allow(
-    dead_code,
-    reason = "shared-reader profile grammar awaits the single current-format switch"
+/// The expectation is unfulfilled, and so reported, once C4c calls it.
+#[cfg_attr(
+    not(test),
+    expect(
+        dead_code,
+        reason = "shared-reader profile grammar awaits the single current-format switch"
+    )
 )]
 fn installed_profile(bytes: &[u8], bound: Profile) -> Inner<Profile> {
     control::decode_installed_profile(bytes, bound).map_err(Cause::Control)

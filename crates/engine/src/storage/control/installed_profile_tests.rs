@@ -268,22 +268,113 @@ fn installed_profile_refuses_versions_and_foreign_expectations() {
     );
 }
 
-/// Measured value inventory of the wrapper frame over either decoder. The Row
-/// decoder bound is its own measured test; the legacy decoder adds one u16.
+/// Frame inventories read from the installed-profile source, independent of
+/// the helper's own terms: `decode_installed_profile`'s frame over each
+/// decoder's deepest nested calls, listed separately for the legacy
+/// (`decode_bootstrap_profile`) and Row (`row_profile::decode_profile`)
+/// chains. SHA is the pinned 1536B closure constant; these are not
+/// machine-stack measurements.
 #[test]
 fn installed_profile_source_bound_covers_measured_frames() {
-    use std::mem::size_of;
-    let wrapper = size_of::<(&[u8], Profile)>()
+    use foundation::codec::ContentHasher;
+    use std::{
+        array::IntoIter,
+        mem::{size_of, size_of_val},
+    };
+    const SHA: usize = 1536;
+    // decode_installed_profile: arguments, the Some(namespace) it passes, the
+    // selected decoder's Result carrier, the decoded binding, its own return
+    // and the format scrutinee.
+    let installed = size_of::<(&[u8], Profile)>()
         + size_of::<Option<Namespace>>()
         + size_of::<Result<Profile>>()
         + size_of::<Profile>()
+        + size_of::<Result<Profile>>()
         + size_of::<u16>();
-    let legacy_extra = size_of::<u16>();
+    // decode_bootstrap_profile: arguments, return, validated namespace and its
+    // Result, header and its Result, id and format locals, the prefix Result
+    // and value it compares, the content digest and the built Profile.
+    let legacy = size_of::<(&[u8], Option<Namespace>)>()
+        + size_of::<Result<Profile>>()
+        + size_of::<Namespace>()
+        + size_of::<Result<()>>()
+        + size_of::<Envelope>()
+        + size_of::<Result<Envelope>>()
+        + size_of::<u32>()
+        + size_of::<u16>()
+        + size_of::<Result<[u8; 188]>>()
+        + size_of::<[u8; 188]>()
+        + size_of::<[u8; 32]>()
+        + size_of::<Profile>();
+    // row_profile::decode_profile: the same without the format local.
+    let row = size_of::<(&[u8], Option<Namespace>)>()
+        + size_of::<Result<Profile>>()
+        + size_of::<Namespace>()
+        + size_of::<Result<()>>()
+        + size_of::<Envelope>()
+        + size_of::<Result<Envelope>>()
+        + size_of::<u32>()
+        + size_of::<Result<[u8; 188]>>()
+        + size_of::<[u8; 188]>()
+        + size_of::<[u8; 32]>()
+        + size_of::<Profile>();
+    // Callees shared by both decoders.
+    let read = size_of::<(&[u8], EnvelopeVersion)>()
+        + size_of::<Result<Envelope>>()
+        + size_of::<(ControlKind, Result<ControlKind>, u32, usize, u32, bool)>()
+        + size_of::<MapIdentity>()
+        + size_of::<Envelope>()
+        + size_of::<Result<Namespace>>();
+    let checksum = size_of::<(&[u8], bool, [u8; 32])>();
+    let namespace = size_of::<(&[u8], usize, usize)>()
+        + size_of::<Result<Namespace>>()
+        + size_of::<Namespace>()
+        + size_of_val(&DatabaseId::new([1; 16]))
+        + size_of::<[u8; 16]>()
+        + size_of::<Result<()>>();
+    let prefix = size_of::<(u32, u16)>()
+        + size_of::<Result<[u8; 188]>>()
+        + size_of::<[u8; 188]>()
+        + size_of::<[(usize, u64); 15]>()
+        + size_of::<IntoIter<(usize, u64), 15>>()
+        + size_of::<(usize, u64)>()
+        + size_of::<[(usize, u32); 12]>()
+        + size_of::<IntoIter<(usize, u32), 12>>()
+        + size_of::<(usize, u32)>()
+        + size_of::<[(usize, u16); 6]>()
+        + size_of::<IntoIter<(usize, u16), 6>>()
+        + size_of::<(usize, u16)>()
+        + size_of::<[u8; 8]>();
+    let digest = size_of::<&[u8]>() + size_of::<[u8; 32]>() + size_of::<ContentHasher>();
+    let mut chains = Vec::new();
+    for (grammar, decoder) in [("legacy", legacy), ("row", row)] {
+        for (name, callees) in [
+            ("checksum", read + checksum + digest + SHA),
+            ("namespace", read + namespace),
+            ("prefix", prefix),
+            ("digest", digest + SHA),
+        ] {
+            chains.push((grammar, name, decoder + callees));
+        }
+    }
     let bound = installed_profile_source_bytes();
-    let row = row_profile::source_bytes();
+    let row_bound = row_profile::source_bytes();
+    for &(grammar, name, bytes) in &chains {
+        println!(
+            "INSTALLED_PROFILE_CHAIN {grammar}_{name}={}",
+            installed + bytes
+        );
+        assert!(bound >= installed + bytes, "{grammar} {name}");
+        // The decoder alone stays inside the Row bound the helper reuses.
+        assert!(row_bound >= bytes, "{grammar} {name} under the Row bound");
+    }
+    let measured = chains.iter().map(|&(_, _, bytes)| bytes).max().unwrap();
+    let charged = bound - row_bound;
     println!(
-        "INSTALLED_PROFILE_SOURCE bound={bound} row={row} wrapper={wrapper} legacy_extra={legacy_extra}"
+        "INSTALLED_PROFILE_SOURCE bound={bound} row_bound={row_bound} charged_wrapper={charged} installed_frame={installed} measured_decoder={measured}"
     );
-    assert!(bound >= wrapper + row + legacy_extra);
-    assert!(bound - row <= 512, "wrapper stays a small fixed frame");
+    assert!(
+        charged >= installed,
+        "charged wrapper covers the measured frame"
+    );
 }

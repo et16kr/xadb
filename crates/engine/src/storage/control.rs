@@ -202,6 +202,26 @@ impl Profile {
         [4, 16, 64][self.id as usize - 1] << 20
     }
 }
+#[cfg(test)]
+impl Profile {
+    /// Test expectation assembled field by field from pinned literals, so a
+    /// test never derives its expected value from the decoder it checks.
+    pub(crate) const fn literal(
+        namespace: Namespace,
+        generation: u64,
+        id: u32,
+        format: u16,
+        digest: [u8; 32],
+    ) -> Self {
+        Self {
+            namespace,
+            generation,
+            id,
+            format,
+            digest,
+        }
+    }
+}
 
 fn profile_prefix(id: u32, format: u16) -> Result<[u8; 188]> {
     if !matches!(format, 1..=3) {
@@ -350,6 +370,8 @@ pub(crate) fn decode_installed_profile(input: &[u8], expected: Profile) -> Resul
 /// values plus one selected decoder closure. The legacy decoder has the Row
 /// decoder's frame shape (same header, prefix and SHA closure; one extra u16
 /// local inside that bound's scalar allowance), so the Row bound covers both.
+/// The wrapper charge (this bound minus the Row bound) is not yet in any real
+/// census; the C4c callers charge it with the decode they replace.
 pub(crate) fn installed_profile_source_bytes() -> usize {
     use std::mem::size_of;
     let wrapper = size_of::<(&[u8], Profile)>()

@@ -428,18 +428,53 @@ fn open_profile_binds_installed_grammar() {
         assert_eq!(s.reads.len(), before + 1);
         assert_eq!(s.reads[before].name, "d3-profile");
     }
+    // Every envelope is pinned by an sha256 literal computed outside the
+    // product (stdlib relabel/reseal of dev3-io-profile.bin: namespace
+    // 0x11../17, generation 19, id 1). Expected values are built field by
+    // field from those literals, never by the decoder under test.
+    fn pinned(bytes: &[u8], hex: &str) -> [u8; 32] {
+        let digest =
+            std::array::from_fn(|i| u8::from_str_radix(&hex[2 * i..2 * i + 2], 16).unwrap());
+        assert_eq!(content_digest(bytes), digest, "{hex}");
+        digest
+    }
     let profile3 = relabel(3, 2 << 20);
     let profile2 = relabel(2, 2 << 20);
-    let p1 = control::decode_bootstrap_profile(PROFILE, Some(ns())).unwrap();
-    let p3 = control::row_profile::decode_profile(&profile3, Some(ns())).unwrap();
-    assert_eq!((p1.format(), p3.format()), (1, 3));
+    pinned(
+        &profile2,
+        "65660c27d6f2fdc94ce71129bbae95ec5ae9050b3729f9d34cd5acf838c0ae2d",
+    );
+    let p1 = Profile::literal(
+        ns(),
+        19,
+        1,
+        1,
+        pinned(
+            PROFILE,
+            "985651bdbfde061063f76265665c2aff331c9b01486e0be4de60223d6ec327d8",
+        ),
+    );
+    let p3 = Profile::literal(
+        ns(),
+        19,
+        1,
+        3,
+        pinned(
+            &profile3,
+            "6f301e8550b943b84a7412bf57a0985412bf273da7c2087077cb7eaea5e3e832",
+        ),
+    );
     let other3 = {
         // Same namespace, Profile3 ID2 (id 128, buffer 168).
         let mut bytes = profile3.clone();
         put32(&mut bytes, 128, 2);
         put64(&mut bytes, 168, 16 << 20);
         seal(&mut bytes);
-        control::row_profile::decode_profile(&bytes, Some(ns())).unwrap()
+        let digest = pinned(
+            &bytes,
+            "7d6c0105ec4757a32662fc8d1b7eb2c97e3c6ffed744b5a2e832d9d39055acfa",
+        );
+        Profile::literal(ns(), 19, 2, 3, digest)
     };
 
     // Profile1 namespace: both entries read the same page; Profile3 bound refused.
@@ -475,9 +510,23 @@ fn open_profile_binds_installed_grammar() {
         clean(&writer);
     }
     // Header version 0/4/65535 is refused under every bound grammar.
-    for version in [0u16, 4, u16::MAX] {
+    for (version, hex) in [
+        (
+            0u16,
+            "a9a23c2e7072dd1f53ab587047e4a5a20a615bc87197725f0ac83af1a7576026",
+        ),
+        (
+            4,
+            "fb3ddab442c33f6efca51bdf295e7698dc7c45cf7b492d98e8e266c7455f7fc3",
+        ),
+        (
+            u16::MAX,
+            "14e50845e8293d03975f023dab13e41c63d006d8512bffa178545bf7fc38ddd6",
+        ),
+    ] {
         let mut writer = fixture(65, false);
         let bytes = relabel(version, 2 << 20);
+        pinned(&bytes, hex);
         install(&writer, &bytes, &bytes);
         for bound in [p1, p3] {
             refused(&mut writer, bound, control::ControlError::UnsupportedFormat);

@@ -2,14 +2,24 @@
 //! census with the post-switch terms substituted. A projection over source
 //! carrier bounds, not the switched source and not compiler stack evidence.
 //! Growth is charged conservatively; a smaller replacement is never credited.
+//!
+//! C4c: this test pins the base3 codec (`assert_eq!(codec,
+//! base::catalog::source_bytes())`) and must be removed or converted to the
+//! switched source census there. The real census then takes
+//! `B4 = base::row::source_bytes()` and the retained delta
+//! `size_of::<RowBaseView>() - size_of::<CatalogBaseView>()` from the types,
+//! never from the literals below.
 use super::*;
 use crate::storage::{control, retention_genesis, retention_obligation, retention_page};
 
-/// base4 `RowCensus` (8 x usize + 32 B InventoryObservation) retained in
-/// `VerifiedPlan4Base` through `RowBaseView`. U2-C2 supplies the type; it is
-/// absent on this branch, so the size is an explicit input.
+/// Conservative ceiling for the base4 `RowCensus` retained in
+/// `VerifiedPlan4Base` through `RowBaseView`; U2-C2 is absent on this branch,
+/// so the size is an explicit input. U2-C2 r2 measures `RowCensus` 72 B and
+/// `RowBaseView` 248 B against `CatalogBaseView` 256 B (LayoutView 176 +
+/// CatalogCensus 80): the real retained delta is -8 B, which is not credited.
 const ROW_CENSUS_BYTES: usize = 96;
-/// U2-C2's base4 codec source bound. Unfilled until that closure lands here;
+/// U2-C2's base4 codec source bound (r2 peak 59699 B; may still move with
+/// its pending Row Reserved fix). Unfilled until that closure lands here;
 /// the decode phases are then projected and asserted, otherwise only printed.
 const B4: Option<usize> = None;
 /// Semantic Catalog Profile3 census minus Profile2. U2-C3 asserts it is not
@@ -24,10 +34,12 @@ fn project<W: WriterNamespace>(label: &str) -> usize {
     assert_eq!(codec, base::catalog::source_bytes());
     // (term, current Profile2/base3 value, post-switch value)
     let terms = [
+        // The Catalog queue view is replaced by its Profile3 view, which
+        // wraps the Row codec.
         (
             "retention_page_codec",
             retention_page::catalog::source_bytes(),
-            retention_page::row::source_bytes(),
+            retention_page::catalog3::source_bytes(),
         ),
         (
             "retention_genesis",
