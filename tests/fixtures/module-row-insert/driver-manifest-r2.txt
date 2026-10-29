@@ -1,0 +1,35 @@
+# N2 frozen round r2 manifest (written before the test build). r1 = 582ad346a2bbc796504cb09b56ccff05aeea422d: D01-D11 PASS, D12 FAIL (kept in ../r1).
+frozen_at=2026-10-29T12:31:56Z
+worktree=wt-n2 branch=module-a-insert-driver base=49a75783cb22fdf959611013c5d6e85846e9ec13 head=881aa646f645cb2d5e92913f703687d53357522f
+status_clean=yes
+change_from_r1: driver.rs (DRIVER_SOURCE_BYTES 16384->8192, carrier_bytes doc), tests.rs (D12 only). All 12 selectors rerun once because the ELF changes.
+## inputs (sha256 of git show HEAD:path)
+82467fd8b3c05675c41dfa1df5685b8deda4406e71bca35e50ee5a7af544a779  crates/engine/src/storage/row/insert.rs
+fb4507474faea06a410e44f99b5361da5bb4f0823139d1801d49b28169487835  crates/engine/src/storage/row/insert/driver.rs
+6d8c7756ab6584d26783924281bd1d5eaa2472578b4f3017646d64171ac14712  crates/engine/src/storage/row/insert/driver/live.rs
+42325ce71439def2a4447b3fb339c3368c11f9f161f66d4ea5703f14970f2e31  crates/engine/src/storage/row/insert/driver/tests.rs
+179b3f55900a130fcb8d37887130de7868b75b8a7e634b496922d7ead1bef2ef  Cargo.lock
+## literal provenance
+8cfa18a1548550584982a9e51d46e56660ea17ff3c3490dd776d7450d5ada5a6  make_literals.py
+9014973650251183aa5bc8dc2e4848e6da9db756a634501d062bb38c777114ff  literals.txt
+## commands
+export: git -C wt-n2 archive --format=tar HEAD | tar -x -C n2-export-r2
+build: CARGO_TARGET_DIR=n2-target-r2 cargo test -p xadb-engine --lib --no-run --locked --offline --message-format=json  (once)
+elf: executable of the compiler-artifact whose target.name == engine
+run: RUST_MIN_STACK=33554432 timeout 30 $ELF --exact <selector> --test-threads=1 --nocapture  (once each; --nocapture added so D12 prints its numbers, as in r1)
+check: cargo check -p xadb-engine --all-targets --all-features --locked --offline  (once, in the export; expect 0 warnings)
+fmt: rustfmt --edition 2024 --check on the 4 touched .rs files; git diff --check 49a7578..HEAD
+## selectors (expected result)
+PASS  storage::row::insert::driver::tests::mca00_d01_one_row_statement_reserves_produces_applies_and_finishes
+PASS  storage::row::insert::driver::tests::mca00_d02_rows_take_one_reservation_at_a_time
+PASS  storage::row::insert::driver::tests::mca00_d03_statement_and_arguments_are_checked_before_any_c_call
+PASS  storage::row::insert::driver::tests::mca00_d04_value_rejections_release_the_preflight_without_reserve
+PASS  storage::row::insert::driver::tests::mca00_d05_c_refusals_keep_busy_capacity_unsupported_distinct
+PASS  storage::row::insert::driver::tests::mca00_d06_failures_after_reserve_cancel_the_one_reservation
+PASS  storage::row::insert::driver::tests::mca00_d07_failed_row_after_applied_rows_rolls_back_to_the_mark
+PASS  storage::row::insert::driver::tests::mca00_d08_unsupported_c0_wrappers_propagate_unchanged
+PASS  storage::row::insert::driver::tests::mca00_d09_fatal_and_unreleased_reservations_stop_all_calls
+PASS  storage::row::insert::driver::tests::mca00_d10_rollback_stops_without_retry_and_returns_the_statement
+PASS  storage::row::insert::driver::tests::mca00_d11_commit_and_full_abort_close_the_transaction
+PASS  storage::row::insert::driver::tests::mca00_d12_driver_frames_stay_within_the_driver_source_bound
+## D12 expectation: live/stand-in inventories <= 8192; 8192 + max(a_validation,a_producer) <= 65536; machine depths printed only
