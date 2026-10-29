@@ -256,6 +256,24 @@
    "parent": "live",
    "runs": 59,
    "sha256": "4d54e0592bc5b103655a75255ca2d58644135574921bb99e78242b2c9a6af6de"
+  },
+  {
+   "name": "committed-row-before-create",
+   "parent": "live",
+   "runs": 86,
+   "sha256": "eecf6497b3be43a469c37609dda1d5d33d8d65518ca0b5eedf055bc561284df8"
+  },
+  {
+   "name": "committed-row-before-pruned-create",
+   "parent": "live",
+   "runs": 9,
+   "sha256": "880b4c4778ea2f5348b60c36e35fb0d8083e9111e0785d502193916b22c4c79d"
+  },
+  {
+   "name": "row-reserved-mixed",
+   "parent": "live",
+   "runs": 81,
+   "sha256": "abbcfd4dcf885794418b22c435379a2f9fcfe3e102e952a19ab58939245ec16c"
   }
  ],
  "envelopes": [

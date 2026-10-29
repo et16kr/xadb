@@ -8,7 +8,9 @@ are live-parented run lists: a Prepared System page reservation (one XOI item),
 and a Catalog actor D whose CREATE is Reserved (three XOI items) or Retained and
 uncommitted. r3 adds a Row RowReserve of the free Undo15 (one UndoSlot item)
 and, after D commits without its Catalog Prune and a System Undo INIT of page18,
-a Retained A row in D's table 7. Integers and SHA claims here are not WAL
+a Retained A row in D's table 7. r4 adds commit-order twins (a committed row
+older than its table's CREATE, pruned or not) and a RowReserve beside a System
+page reservation. Integers and SHA claims here are not WAL
 history; D's residual rows copy the Profile2 Catalog recipe only as a stand-in
 for the Profile3 owner.
 """
@@ -301,7 +303,8 @@ LIVE = dict(undo_high=4, f_row=1, f_q=2, f_local=2, free_undo=3, status14_digest
             last_mutation=2, att=True, aging=True, inventory_gen=2, catalog_terminal=False,
             reserved=False, slot32='finished', system=False, system_terminal=0, system_owner=1,
             create=None, undo15_lsn=36, item_order=(0, 1, 2), projection=None,
-            row_reserve=False, row_items='one', d_commit=False, a_row7=False, f_table7=False)
+            row_reserve=False, row_items='one', d_commit=False, a_row7=False, f_table7=False,
+            c_q=1)
 
 
 def live(genesis_digest, **changes):
@@ -340,7 +343,7 @@ def live(genesis_digest, **changes):
     if v['a_row7']:
         leaf7.append((4, a7))
     rows.sort(); leaf7.sort()
-    catalog = [META, entry(6, catalog_record(c_ref[:40], 1))]
+    catalog = [META, entry(6, catalog_record(c_ref[:40], v['c_q']))]
     images = {
         8: relsn(image(INITIAL, 8), 11, catalog),
         9: page(9, STATUS, 2, 32, [status_home(active_core(a_ref, u13), 2)]),
@@ -524,12 +527,13 @@ def live(genesis_digest, **changes):
         remaining = add_rows(remaining, d_rows)
     if v['system']:
         # Prepared one-page System reservation of page16, born at capture.
-        work = work_ref(1, 6); items = [xoi_item(1, 3, v['system_owner'], pref(16), 35)]
+        work = work_ref(1, 6); s_items = [xoi_item(1, 3, v['system_owner'], pref(16), 35)]
         s_rows = budget_rows({2: dict(steps=1, wal=38208, pages=1, peak=SYS_PEAK,
                                       protected=38208 + 2 * P)})
         descriptors[32] = descriptor(5, 2, work, (35, 0, 35, 1), s_rows, progress=(1, 1, 1, 0, 1),
                                      change=35, consumed=FRAME1, items=1,
-                                     digest=normalized(items))
+                                     digest=normalized(s_items))
+        items = items + s_items
         owners.append((2, work)); reserved_entries = {16: (2, work)}
         remaining = add_rows(remaining, s_rows)
     owners.append((2, work_ref(3, 1)))
@@ -636,6 +640,9 @@ def main():
         ('row-reserved-two-items', dict(row_reserve=True, row_items='two')),
         ('row-reserved-item-kind', dict(row_reserve=True, row_items='kind3')),
         ('row-reserved-twice', dict(row_reserve=True, reserved=True)),
+        ('committed-row-before-create', dict(create='retained', d_commit=True, f_table7=True)),
+        ('committed-row-before-pruned-create', dict(c_q=2, f_q=1)),
+        ('row-reserved-mixed', dict(row_reserve=True, system=True)),
     ]:
         variants.append((name, 'live', live(gd, **change)))
     for name, data in bases.items():

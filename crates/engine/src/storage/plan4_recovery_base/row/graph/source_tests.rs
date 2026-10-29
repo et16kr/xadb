@@ -314,11 +314,11 @@ fn commits_frame_measured(captures: usize) -> usize {
         + size_of::<(Option<TxnRef>, Result<TxnRef>)>()
         + size_of::<Result<()>>()
 }
-/// Graph::creator_committed.
+/// Graph::creator_q.
 fn creator_measured() -> usize {
     size_of::<(&Graph<'_>, TxnRef)>()
         + 2 * size_of::<(Option<JobView<'_>>, BaseResult<Option<JobView<'_>>>)>()
-        + size_of::<(bool, Result<bool>)>()
+        + size_of::<(Option<JobView<'_>>, Option<u64>, Result<Option<u64>>)>()
         + terminal_measured()
 }
 /// Graph::row_reserved.
@@ -355,7 +355,7 @@ fn tables_measured() -> [(&'static str, usize); 4] {
     let outer_visitor = row_visitor(refs(4))
         + size_of::<(TxnId, Range<usize>, usize)>()
         + size_of::<(Result<Record<'_>>, CatalogHeader, VersionStamp)>()
-        + size_of::<(TxnRef, bool, Result<bool>)>()
+        + size_of::<(TxnRef, u64, Result<Option<u64>>)>()
         + size_of::<(
             BaseResult<Option<JobView<'_>>>,
             Option<JobView<'_>>,

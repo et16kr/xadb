@@ -218,12 +218,12 @@ pub(in crate::storage) fn terminal_frame() -> usize {
         + 2 * size_of::<Result<Option<JobView<'_>>>>()
         + slack()
 }
-/// Graph::creator_committed: the creator's root and Terminal lookups.
+/// Graph::creator_q: the creator's root and Terminal lookups.
 pub(in crate::storage) fn creator_chain() -> usize {
     size_of::<(&Graph<'_>, TxnRef)>()
         + 2 * size_of::<Option<JobView<'_>>>()
         + 2 * size_of::<Result<Option<JobView<'_>>>>()
-        + size_of::<Result<bool>>()
+        + size_of::<Result<Option<u64>>>()
         + slack()
         + terminal_frame()
         + job_chain()
@@ -630,10 +630,10 @@ pub(in crate::storage) fn source_census() -> SourceCensus {
         + job_chain().max(header_read()).max(actor_observe());
     // each_row nests inside each_row and commits inside commits; each level
     // keeps its Table or record while the inner level decodes.
-    // The row visitor also keeps the header bound and the creator check.
+    // The row visitor also keeps the header bound and the creator q.
     let rows = each_row_chain(
         visitor()
-            + size_of::<(&Header, VersionStamp, Result<bool>)>()
+            + size_of::<(&Header, VersionStamp, u64, Result<Option<u64>>)>()
             + record_chain()
                 .max(creator_chain())
                 .max(terminal_frame() + job_chain())

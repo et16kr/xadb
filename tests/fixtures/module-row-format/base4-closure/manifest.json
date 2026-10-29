@@ -1,18 +1,19 @@
 {
   "schema": "XADB_ROW_BASE4_CLOSURE_V2",
   "baseline": "31e4614",
-  "revision": "r3",
+  "revision": "r4",
   "previous_revision": {
-    "revision": "r2b",
-    "sha256": "a3e1ee4d216d66632c692af9d96c90056801dacb3002712f1e4fb2eaa4fa7a7c"
+    "revision": "r3",
+    "sha256": "2c5cad06e96f732a1c101c0db68dc8d69c9e19be25401e2c655905b12f12bcd1"
   },
   "previous_commits": [
     "f1771b6",
     "a9501a2",
-    "4c4295c"
+    "4c4295c",
+    "c24bff4"
   ],
   "status": "FROZEN_INPUTS_NOT_EXECUTION_EVIDENCE",
-  "scope": "Pure uncalled Profile3/base4 current-state closure over immutable bytes. r2 accepts System allocation states (Finished INIT, Prepared page reservation) through validate_row_base_allocation, checks Catalog-scope Job3 relations, provenance, ledger rows and XOI inventory through the shared Catalog base seam, and fails closed with CatalogUnwired after all structural relations when a Catalog-scope semantic residual would be needed. r3 admits a row in a Transaction-stamped table only under a committed (TerminalReady outcome 1) creator whose Catalog root is Retained, bounds committed row writers by the header source, and accepts one Row-scope Reserved root per base with exactly one UndoSlot(U) item. Profile3 Row XOI mode reproduces the inventory page. No INIT/WAL history, source selection, replay or Profile2 behaviour change.",
+  "scope": "Pure uncalled Profile3/base4 current-state closure over immutable bytes. r2 accepts System allocation states (Finished INIT, Prepared page reservation) through validate_row_base_allocation, checks Catalog-scope Job3 relations, provenance, ledger rows and XOI inventory through the shared Catalog base seam, and fails closed with CatalogUnwired after all structural relations when a Catalog-scope semantic residual would be needed. r3 admits a row in a Transaction-stamped table only under a committed (TerminalReady outcome 1) creator whose Catalog root is Retained, bounds committed row writers by the header source, and accepts one Row-scope Reserved root per base with exactly one UndoSlot(U) item. r4 orders every committed row after its table creator (row q > the record Committed q, or the creator Ready Terminal q while unpruned) and reports a RowReserve beside another reservation as Unsupported. Profile3 Row XOI mode reproduces the inventory page. No INIT/WAL history, source selection, replay or Profile2 behaviour change.",
   "budget": {
     "total_seconds": 1200,
     "compiler_seconds": 600,
@@ -54,7 +55,7 @@
     {
       "selector": "storage::plan4_recovery_base::row::graph::tests::base4_closure_relation_variants",
       "expected": "PASS",
-      "reason": "27 relation variants each pass decode_layout and are rejected by the closure with the listed error (r3 adds committed-writer-bound, create-uncommitted-row, create-uncommitted-committed-row, row-reserved-no-item, row-reserved-two-items, row-reserved-item-kind, row-reserved-twice; reserved-row-root changed)."
+      "reason": "30 relation variants each pass decode_layout and are rejected by the closure with the listed error (r3 added committed-writer-bound, create-uncommitted-row, create-uncommitted-committed-row, row-reserved-no-item, row-reserved-two-items, row-reserved-item-kind, row-reserved-twice and changed reserved-row-root; r4 adds committed-row-before-create, committed-row-before-pruned-create (Order) and row-reserved-mixed (Unsupported))."
     },
     {
       "selector": "storage::plan4_recovery_base::row::graph::tests::base4_closure_row_xoi_mode_reproduces_inventory",
@@ -163,7 +164,8 @@
       "name": "committed-q-collision",
       "parent": "live",
       "sha256": "7566c54dcd41244855428e363a98ce0002e05895babdef9941fa08a9555b1b8a",
-      "expected": "Order"
+      "expected": "Order",
+      "note": "r4: same expected Order, now raised first by the committed-row q > creator q check (row q1 == Catalog record q1) before the q/TxnId one-to-one check"
     },
     {
       "name": "catalog-row-mixing",
@@ -328,12 +330,30 @@
       "parent": "live",
       "sha256": "4d54e0592bc5b103655a75255ca2d58644135574921bb99e78242b2c9a6af6de",
       "expected": "Queue(RetentionError::IdentityMismatch)"
+    },
+    {
+      "name": "committed-row-before-create",
+      "parent": "live",
+      "sha256": "eecf6497b3be43a469c37609dda1d5d33d8d65518ca0b5eedf055bc561284df8",
+      "expected": "Order"
+    },
+    {
+      "name": "committed-row-before-pruned-create",
+      "parent": "live",
+      "sha256": "880b4c4778ea2f5348b60c36e35fb0d8083e9111e0785d502193916b22c4c79d",
+      "expected": "Order"
+    },
+    {
+      "name": "row-reserved-mixed",
+      "parent": "live",
+      "sha256": "abbcfd4dcf885794418b22c435379a2f9fcfe3e102e952a19ab58939245ec16c",
+      "expected": "Unsupported"
     }
   ],
   "inputs": {
     "author.py": {
-      "bytes": 34296,
-      "sha256": "b3ba5790664fef00da8ca029ecdb315ff771ef5aac6afce89fba8542b89d29a6"
+      "bytes": 34732,
+      "sha256": "bdd1740eabe9fbfed19f8e0642f69013425726311c132a88d05e044c7bcd9f0b"
     },
     "genesis.xrb": {
       "bytes": 2097152,
@@ -348,16 +368,16 @@
       "sha256": "5a446fbf0fab629b7bfc10b5040e0a54b77ea6e2a993ca58db70482f3f5c94d9"
     },
     "variants.bin": {
-      "bytes": 57914,
-      "sha256": "9fb96696d773407b7637a651c06aec71abbe49732ec5f911b86659aaaec4d586"
+      "bytes": 65405,
+      "sha256": "dde7fd09838977dab2f90cf6007a1d8d67383bf3c972445af259bf54e9dc814e"
     },
     "envelopes.bin": {
       "bytes": 20480,
       "sha256": "7f9331527ec54a7c7e3e332b1ccafd9395d539d265c3d4793468a0ff47e06653"
     },
     "index.json": {
-      "bytes": 6813,
-      "sha256": "85a0224b28e85fb275ed2b9e500007fc549c3754872cc85c81a01c1a288a940c"
+      "bytes": 7311,
+      "sha256": "d540f791298e120c8f00493bafe9ab4e8b0cd8a18d28efcbc00c68fb1e265a61"
     }
   },
   "parents": {

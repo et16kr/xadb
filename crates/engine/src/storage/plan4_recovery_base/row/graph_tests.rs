@@ -369,7 +369,9 @@ fn base4_closure_relation_variants() {
             "row-high-global"
             | "committed-q-collision"
             | "committed-writer-bound"
-            | "create-uncommitted-committed-row" => RowBaseError::Order,
+            | "create-uncommitted-committed-row"
+            | "committed-row-before-create"
+            | "committed-row-before-pruned-create" => RowBaseError::Order,
             "catalog-row-mixing" => RowBaseError::Identity,
             "init-initial-digest" => B(BaseError::ProvenanceMismatch),
             "descriptor-last-mutation" => RowBaseError::Ledger(Ledger::OrderMismatch),
@@ -390,6 +392,8 @@ fn base4_closure_relation_variants() {
             // The Row root is ordered after an uncommitted creator's table.
             "create-uncommitted-row" => RowBaseError::Queue(RetentionError::OrderMismatch),
             "row-reserved-twice" => RowBaseError::Queue(RetentionError::IdentityMismatch),
+            // A RowReserve beside a System page reservation: no joint item order.
+            "row-reserved-mixed" => RowBaseError::Unsupported,
             _ => continue,
         };
         seen += 1;
@@ -401,7 +405,7 @@ fn base4_closure_relation_variants() {
             "{name}"
         );
     }
-    assert_eq!(seen, 27);
+    assert_eq!(seen, 30);
 }
 
 /// Borrowed rows of one accepted literal for the Profile3 XOI mode.

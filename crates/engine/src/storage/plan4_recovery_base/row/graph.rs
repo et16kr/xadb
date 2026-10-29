@@ -20,7 +20,6 @@ use crate::{
     storage::{
         catalog_record::{self, CatalogDefinitionView, CatalogError, CatalogExpectation},
         obligation::OwnerState,
-        ownership::InventoryError,
         page::{PAGE_BYTES, PageView},
         retention_obligation,
         retention_page::{
@@ -59,7 +58,7 @@ pub(in crate::storage) enum RowBaseError {
     Identity,
     Order,
     /// Explicitly outside the first Profile3 closure (non-inline or non-Table
-    /// payloads).
+    /// payloads, a RowReserve beside another reservation).
     Unsupported,
     /// A Catalog-scope actor's semantic residual needs the Profile3 Catalog
     /// ledger entry, which this module cannot reach yet. Never an acceptance.
@@ -412,12 +411,13 @@ impl<'a> Graph<'a> {
         Ok(found)
     }
     /// The shared pass classified System and Catalog reservations. A RowReserve
-    /// owns only its actor's `UndoSlot(U)` item and is alone in this base.
+    /// owns only its actor's `UndoSlot(U)` item. Beside another reservation the
+    /// joint item order is not fixed here: unsupported, not proven corrupt.
     fn row_reservation(&self, reserved: ReservedInventory) -> Result<ReservedInventory> {
         match (self.row_reserved(None)?.0, reserved) {
             (0, reserved) => Ok(reserved),
             (1, ReservedInventory::None) => Ok(ReservedInventory::RowUndoSlot),
-            _ => Err(BaseError::Inventory(InventoryError::Corrupt).into()),
+            _ => Err(Error::Unsupported),
         }
     }
     /// Couple the one verified item to its Row root: kind UndoSlot in the
@@ -496,11 +496,12 @@ impl<'a> Graph<'a> {
             }
             // A CREATE stays Transaction-stamped until its Catalog Prune; other
             // actors may write the table only once that creator has committed.
-            if let VersionStamp::Transaction(creator) = self.record_at(table)?.1.header().stamp
-                && !self.creator_committed(creator)?
-            {
-                return Err(Error::Order);
-            }
+            let creator_q = match self.record_at(table)?.1.header().stamp {
+                VersionStamp::Committed(q) => q.get(),
+                VersionStamp::Transaction(creator) => {
+                    self.creator_q(creator)?.ok_or(Error::Order)?
+                }
+            };
             match version.stamp {
                 VersionStamp::Transaction(stamped) => {
                     let terminal = self.for_actor(stamped, true)?.ok_or(Error::Identity)?;
@@ -508,8 +509,11 @@ impl<'a> Graph<'a> {
                         return Err(Error::Identity);
                     }
                 }
+                // A Row write starts after the creator's adoption, so its
+                // commit follows the creator's.
                 VersionStamp::Committed(q) => {
                     if q.get() > self.root.commit_c()
+                        || q.get() <= creator_q
                         || version.undo.is_some()
                         || !seam::within_source(writer, &header)
                     {
@@ -539,17 +543,17 @@ impl<'a> Graph<'a> {
         Ok([tables as u32, rows])
     }
 
-    /// A not yet pruned CREATE: its Catalog root is Retained under a committed
-    /// TerminalReady. The Job3 census (`verify_pair`, run by `check_queue`)
-    /// orders every Row root sharing that table after the terminal adoption.
-    fn creator_committed(&self, creator: TxnRef) -> Result<bool> {
+    /// The commit q of a not yet pruned CREATE: its Catalog root is Retained
+    /// under a committed TerminalReady. The Job3 census (`verify_pair`, run by
+    /// `check_queue`) orders every Row root sharing that table after the
+    /// terminal adoption.
+    fn creator_q(&self, creator: TxnRef) -> Result<Option<u64>> {
         let root = self.for_actor(creator, false)?;
         let terminal = self.for_actor(creator, true)?;
-        Ok(
-            root.is_some_and(|r| !r.row_scope() && r.state() == JobState::RootRetained)
-                && terminal
-                    .is_some_and(|t| t.state() == JobState::TerminalReady && t.outcome() == 1),
-        )
+        Ok(terminal
+            .filter(|t| t.state() == JobState::TerminalReady && t.outcome() == 1)
+            .filter(|_| root.is_some_and(|r| !r.row_scope() && r.state() == JobState::RootRetained))
+            .map(|t| t.commit_q()))
     }
 
     /// Each Row actor's residual ledger, through its exact semantic owner. The
