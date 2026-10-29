@@ -2689,10 +2689,19 @@ fn s1a_borrowed_tail_refused_dirty_and_restored_on_every_exit() {
     );
 }
 
-/// S1-a target: the existing frame-phase maximum of the original replay
-/// (history initialize 26120B; retention 24715B, population 25743B), from
-/// module-independence-survey-20261026.md#c2-borrowed-replay-workspace.
-const FRAME_PHASE_MAX: usize = 26_120;
+/// S1-a target, a dated reference rather than a live value. These history
+/// phases were measured by C2 at 8c0f252, not at this base 5135e16
+/// (module-independence-survey-20261026.md#c2-borrowed-replay-workspace:
+/// retention 24715B, population 25743B, initialize 26120B); semantic_catalog
+/// resources/transition and plan4_retention recovery.rs/population.rs changed
+/// since. `initialize` sits beside `frame` in history `file_scope`
+/// (history.rs:129-130), not inside it; of the `frame` arms (:124-128) C2
+/// recorded, population is the largest. The assert takes that stricter
+/// frame-phase reading. S1-b derives the live target from
+/// `HistorySourceCensus` instead.
+const FRAME_PHASE_MAX: usize = 25_743;
+/// The looser reading: history `initialize` at the same measurement.
+const INITIALIZE_MAX: usize = 26_120;
 
 #[test]
 fn s1a_borrowed_observer_source_bound_covers_measured_frames() {
@@ -2749,7 +2758,7 @@ fn s1a_borrowed_observer_source_bound_covers_measured_frames() {
     let dominant = callees.iter().max_by_key(|(_, bytes)| *bytes).unwrap();
     assert_eq!(dominant.1, prepare::callee_bytes());
     println!(
-        "S1A_SOURCE borrowed={bound} measured={measured} owned={} wrapper={wrapper} entry={entry} prepared={} locals={} callee={} dominant={} sha={} slack={} scratch={ROW_REPLAY_SCRATCH_BYTES} tail={} target={FRAME_PHASE_MAX} room={}",
+        "S1A_SOURCE borrowed={bound} measured={measured} owned={} wrapper={wrapper} entry={entry} prepared={} locals={} callee={} dominant={} sha={} slack={} scratch={ROW_REPLAY_SCRATCH_BYTES} tail={} target={FRAME_PHASE_MAX} room={} initialize={INITIALIZE_MAX} initialize_room={}",
         super::source_bytes(),
         size_of::<super::Prepared<'_, '_>>(),
         prepare::locals_bytes(),
@@ -2759,6 +2768,7 @@ fn s1a_borrowed_observer_source_bound_covers_measured_frames() {
         source::slack(),
         2 * PAGE_BYTES - 64 * 352,
         FRAME_PHASE_MAX as i64 - bound as i64,
+        INITIALIZE_MAX as i64 - bound as i64,
     );
     for (name, bytes) in phases {
         println!("S1A_SOURCE_PHASE\t{name}\t{bytes}");
