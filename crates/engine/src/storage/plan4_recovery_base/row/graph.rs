@@ -496,21 +496,22 @@ impl<'a> Graph<'a> {
             }
             // A CREATE stays Transaction-stamped until its Catalog Prune; other
             // actors may write the table only once that creator has committed.
-            let creator_q = match self.record_at(table)?.1.header().stamp {
-                VersionStamp::Committed(q) => q.get(),
-                VersionStamp::Transaction(creator) => {
-                    self.creator_q(creator)?.ok_or(Error::Order)?
-                }
-            };
+            // A Row write starts after the creator's adoption, so a committed
+            // writer's q, stamped or still on its Ready Terminal, follows it.
+            let creator_q = self.table_creator_q(self.record_at(table)?.1.header().stamp)?;
             match version.stamp {
                 VersionStamp::Transaction(stamped) => {
                     let terminal = self.for_actor(stamped, true)?.ok_or(Error::Identity)?;
                     if !terminal.row_scope() {
                         return Err(Error::Identity);
                     }
+                    if terminal.state() == JobState::TerminalReady
+                        && terminal.outcome() == 1
+                        && terminal.commit_q() <= creator_q
+                    {
+                        return Err(Error::Order);
+                    }
                 }
-                // A Row write starts after the creator's adoption, so its
-                // commit follows the creator's.
                 VersionStamp::Committed(q) => {
                     if q.get() > self.root.commit_c()
                         || q.get() <= creator_q
@@ -531,6 +532,24 @@ impl<'a> Graph<'a> {
                 Ok(())
             })
         })?;
+        // A committed actor's compensated write left no row version; its
+        // Retained and committed-release rows were ordered above.
+        for ordinal in 0..JOB_COUNT {
+            let job = self.job(ordinal)?;
+            if !job.row_scope() || job.state() != JobState::RootReleasingCompensated {
+                continue;
+            }
+            let actor = job.source().ok_or(Error::Identity)?;
+            let terminal = self.for_actor(actor, true)?.ok_or(Error::Identity)?;
+            if terminal.state() != JobState::TerminalReady || terminal.outcome() != 1 {
+                continue;
+            }
+            let object = job.object().ok_or(Error::Identity)?.object;
+            let (record, _) = self.record(object)?.ok_or(Error::Identity)?;
+            if terminal.commit_q() <= self.table_creator_q(record.header().stamp)? {
+                return Err(Error::Order);
+            }
+        }
         // Distinct committed actors have distinct coordinator q; one actor has one.
         self.commits(|id, q| {
             self.commits(|other, p| {
@@ -543,6 +562,14 @@ impl<'a> Graph<'a> {
         Ok([tables as u32, rows])
     }
 
+    /// The q every committed Row write into a table must exceed: the pruned
+    /// record's own q, or its not yet pruned creator's Ready commit q.
+    fn table_creator_q(&self, stamp: VersionStamp) -> Result<u64> {
+        match stamp {
+            VersionStamp::Committed(q) => Ok(q.get()),
+            VersionStamp::Transaction(creator) => self.creator_q(creator)?.ok_or(Error::Order),
+        }
+    }
     /// The commit q of a not yet pruned CREATE: its Catalog root is Retained
     /// under a committed TerminalReady. The Job3 census (`verify_pair`, run by
     /// `check_queue`) orders every Row root sharing that table after the

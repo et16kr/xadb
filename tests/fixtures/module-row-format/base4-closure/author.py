@@ -10,7 +10,8 @@ uncommitted. r3 adds a Row RowReserve of the free Undo15 (one UndoSlot item)
 and, after D commits without its Catalog Prune and a System Undo INIT of page18,
 a Retained A row in D's table 7. r4 adds commit-order twins (a committed row
 older than its table's CREATE, pruned or not) and a RowReserve beside a System
-page reservation. Integers and SHA claims here are not WAL
+page reservation. r5 commits A (Ready Terminal, q a_q) over Retained rows or
+a compensated table-7 root, with q above or below each table creator. Integers and SHA claims here are not WAL
 history; D's residual rows copy the Profile2 Catalog recipe only as a stand-in
 for the Profile3 owner.
 """
@@ -110,6 +111,12 @@ def live_undo(gen, seq, creator, mutation, row, previous=None, table=6):
     b[88] = 1; put(b, 96, table); put(b, 104, 1); put(b, 112, row)
     if previous:
         b[326] = 1; b[120:160] = previous[0]; put(b, 160, previous[1])
+    return b
+def releasing_undo(gen, seq, creator, mutation, row, table):
+    # Compensated cursor0: incoming0, transaction edge cut (2), version edge 0.
+    b = bytearray(432); b[:6] = b'XUR1\x01\x00'; b[6] = 2; put(b, 8, gen); put(b, 16, seq)
+    b[24:72] = creator; put(b, 72, mutation)
+    b[88] = 1; put(b, 96, table); put(b, 104, 1); put(b, 112, row); b[326] = 2
     return b
 def schema(name): return struct.pack('<HBB', 1, 1, 0) + name + struct.pack('<HBB', 1, 2, 0) + b'i'
 def catalog_record(creator, q, obj=6, anchor=10, stamp=None, undo=None, name=b'T'):
@@ -304,7 +311,7 @@ LIVE = dict(undo_high=4, f_row=1, f_q=2, f_local=2, free_undo=3, status14_digest
             reserved=False, slot32='finished', system=False, system_terminal=0, system_owner=1,
             create=None, undo15_lsn=36, item_order=(0, 1, 2), projection=None,
             row_reserve=False, row_items='one', d_commit=False, a_row7=False, f_table7=False,
-            c_q=1)
+            c_q=1, a_q=None, a_comp7=False)
 
 
 def live(genesis_digest, **changes):
@@ -321,7 +328,10 @@ def live(genesis_digest, **changes):
     # Retained INSERT into table 7 (System reserves page18 at 39 and INITs it
     # at 40, A reserves at 41 and Forwards at 42). D commits at 38 (Ready
     # Terminal, Status14 Committed q3) and keeps its Retained CREATE root.
-    third = v['row_reserve'] or v['a_row7']
+    # With a_comp7 the table-7 write is compensated by a CLR at 43. With a_q A
+    # commits (Ready Terminal q=a_q) one LSN after its last step.
+    third = v['row_reserve'] or v['a_row7'] or v['a_comp7']
+    page18 = v['a_row7'] or v['a_comp7']
     u18 = slot_ref(18)
     if v['row_reserve']:
         apply, revision = 33, revision + 1
@@ -329,6 +339,11 @@ def live(genesis_digest, **changes):
         apply, revision, capture = 38, revision + 1, 38
     if v['a_row7']:
         apply, revision, capture = 42, revision + 2, 42
+    if v['a_comp7']:
+        apply, revision, capture = 43, revision + 3, 43
+    a_last = apply if page18 else 33 if v['row_reserve'] else 32
+    if v['a_q']:
+        a_last = apply = a_last + 1; revision += 1; capture = max(capture, apply)
     rec7 = catalog_record(d_ref[:40], 0, obj=7, anchor=16, stamp=d_ref, undo=u15, name=b'U')
     a7 = row_record(4, txn_id(3), 3, 104, a_ref, u18 if v['a_row7'] else u15)
     # Pages: C's Status/Undo reused by F; A's own Status/Undo; C's CREATE pair.
@@ -368,12 +383,21 @@ def live(genesis_digest, **changes):
         if leaf7:
             images[17] = page(17, ROWLEAF, 7, 42 if v['a_row7'] else 37,
                               [META] + [entry(k, r) for k, r in leaf7])
+        if v['a_comp7']:
+            images[17] = page(17, ROWLEAF, 7, 43, [META])
     seq3 = LIVE['undo_high'] + int(bool(create)) + 1
     if v['row_reserve']:
         images[15] = page(15, UNDO, 3, 33, [free_undo(4)])
     if v['a_row7']:
         images[9] = page(9, STATUS, 2, 42, [status_home(active_core(a_ref, u18), 3)])
         images[18] = page(18, UNDO, 3, 42, [live_undo(2, seq3, a_ref, 3, 4, (u13, 4), table=7)])
+    if v['a_comp7']:
+        images[9] = page(9, STATUS, 2, 43, [status_home(active_core(a_ref, u13), 2)])
+        images[18] = page(18, UNDO, 3, 43, [releasing_undo(2, seq3, a_ref, 3, 4, 7)])
+    if v['a_q']:
+        head, incoming = (u18, 3) if v['a_row7'] else (u13, 2)
+        images[9] = page(9, STATUS, 2, a_last,
+                         [status_home(committed_core(a_ref, v['a_q'], head), incoming)])
     initial = {
         9: page(9, STATUS, 2, 23, [status_home(free_core(1))]),
         10: page(10, ANCHOR, 6, 8, [ANCHOR_CELL]),
@@ -387,7 +411,7 @@ def live(genesis_digest, **changes):
     create_frame = sha(b'opaque CREATE INIT frame')
     inits = {}
     system_inits = [(14, 1, 2), (15, 2, 5), (9, 3, 23), (12, 4, 26), (13, 5, 30)]
-    if v['a_row7']:
+    if page18:
         system_inits.append((18, 6, 40))
     for n, ident, init in system_inits:
         inits[n] = init_record(initial[n], 1 if initial[n][6] == STATUS else 2, 1, init, init - 1,
@@ -418,11 +442,16 @@ def live(genesis_digest, **changes):
         else:
             put(j, 72, lease + 1); put(j, 376, lease + 1); j[288:320] = projection(row, value)
         bank[o] = j
-    leased = (1 << 0) | ((1 << 2) if v['reserved'] else 0)
+    if v['a_q']:
+        # A's Ready committed Row Terminal.
+        t = cell(5); t[16:64] = a_ref; t[80:120] = slot_ref(9)
+        for at, x in [(64, 24), (72, a_last), (264, v['a_q']), (376, a_last)]: put(t, at, x)
+        bank[0] = t
+    leased = (0 if v['a_q'] else 1 << 0) | ((1 << 2) if v['reserved'] else 0)
     if v['catalog_terminal']:
         d = cell(1); d[16:64] = txn_ref(4, 2); d[80:120] = slot_ref(16); put(d, 8, 3)
         put(d, 64, 30); put(d, 376, 30); bank[3] = d; leased |= 1 << 3
-    ready = ((1 << 1) | (1 << 2)) & ~leased
+    ready = ((1 << 1) | (1 << 2) | (1 if v['a_q'] else 0)) & ~leased
     if create:
         # Catalog-scope D: Terminal at ordinal 7, CREATE root at ordinal 8.
         t = cell(2 if v['d_commit'] else 1); t[16:64] = d_ref; t[80:120] = slot_ref(14, 4)
@@ -442,7 +471,14 @@ def live(genesis_digest, **changes):
         else:
             put(r, 72, 37); put(r, 376, 37); ready |= 1 << 8
         bank[8] = r
-    if third:
+    if v['a_comp7']:
+        # Compensated cursor0 table-7 root: Releasing clears pair/C/projection.
+        j = cell(27); j[16:64] = a_ref; j[80:120] = slot_ref(9); j[128:168] = u18
+        for at, x in [(64, 41), (72, 42), (168, seq3), (176, 7), (248, 3), (256, 3), (272, 43),
+                      (320, 4), (376, 43)]:
+            put(j, at, x)
+        bank[9] = j; ready |= 1 << 9
+    elif third:
         lease, undo, table, pair = (33, u15, 6, (10, 11)) if v['row_reserve'] else (41, u18, 7, (16, 17))
         j = cell(19 if v['row_reserve'] else 21); j[16:64] = a_ref; j[80:120] = slot_ref(9)
         j[128:168] = undo; j[200:224] = pref(pair[0]); j[224:248] = pref(pair[1])
@@ -470,7 +506,7 @@ def live(genesis_digest, **changes):
     undo_high = v['undo_high'] + int(bool(create)) + int(third)
     for at, x in [(64, revision), (72, 7), (80, apply), (88, 4 + occupied), (96, free), (104, leased),
                   (112, ready), (376, 4), (384, 0), (392, undo_high), (400, 6 + int(bool(create))),
-                  (408, 2 + int(v['d_commit'])), (416, 120000), (424, 0), (432, 3 + int(third))]:
+                  (408, max(2 + int(v['d_commit']), v['a_q'] or 0, v['f_q'])), (416, 120000), (424, 0), (432, 3 + int(third))]:
         put(root, at, x)
     root[128:160] = sha(b''.join(bank)); root[160:192] = sha(aggregate)
     rp = root_page(root, apply)
@@ -482,9 +518,9 @@ def live(genesis_digest, **changes):
         # A RowReserve's Forward residual holds its one Undo slot.
         a_debts[1] = debt(1, 91304 + len(a7) + 12 + 128, 1)
     a_rows = budget_rows(a_debts)
-    remaining = add_rows(a_rows, aggregate)
+    remaining = add_rows(budget_rows({}) if v['a_q'] else a_rows, aggregate)
     descriptors = {}
-    if v['a_row7']:
+    if page18:
         # The page18 Undo INIT is now the last System row, Finished.
         descriptors[32] = descriptor(6, 2, work_ref(1, 6), (40, 39, 39, 2), budget_rows({}),
                                      progress=(1, 4, 1, 1, 1), change=40,
@@ -497,7 +533,7 @@ def live(genesis_digest, **changes):
     else:
         descriptors[32] = descriptor(6, 2, work_ref(1, 5), (30, 29, 29, 2), budget_rows({}),
                                      progress=(1, 4, 1, 1, 1), change=30)
-    owners = [(1, a_ref)]
+    owners = [] if v['a_q'] else [(1, a_ref)]
     items = []
     reserved_entries = {}
     a_items, a_digest = 0, None
@@ -537,7 +573,7 @@ def live(genesis_digest, **changes):
         owners.append((2, work)); reserved_entries = {16: (2, work)}
         remaining = add_rows(remaining, s_rows)
     owners.append((2, work_ref(3, 1)))
-    if v['att']:
+    if v['att'] and not v['a_q']:
         a_chain, a_change, a_head = (32, 31, 24, 5), 32, u13
         if v['row_reserve']:
             a_chain, a_change = (33, 32, 24, 6), 33
@@ -550,12 +586,12 @@ def live(genesis_digest, **changes):
     if v['aging']:
         descriptors[34] = aging_descriptor(rp, root, apply, 31 if apply == 32 else 32, 3)
     allocated = {n: images[n] for n in range(9, 19) if n in images}
-    allocator_lsn = 40 if v['a_row7'] else capture if v['system'] or create else 30
+    allocator_lsn = 40 if page18 else capture if v['system'] or create else 30
     images[0] = relsn(image(INITIAL, 0), allocator_lsn)
-    active = 1 + int(v['catalog_terminal']) + int(d_active)
+    active = int(not v['a_q']) + int(v['catalog_terminal']) + int(d_active)
     header = [(88, 2, 8), (96, capture, 8), (248, capture, 8), (104, 1, 8), (152, 65536, 8),
               (192, 4 if v['catalog_terminal'] or create else 3, 8),
-              (208, 6 if v['system'] or v['a_row7'] else 5, 8), (224, 1, 8),
+              (208, 6 if v['system'] or page18 else 5, 8), (224, 1, 8),
               (256, active, 4), (260, 1 + int(v['system']), 4), (264, (1 << 9) | (1 << 14), 8),
               (272, leased, 8), (280, ready, 8), (288, revision, 8), (296, revision - 1, 8),
               (304, v['system_terminal'] if v['system'] else 3, 1)]
@@ -643,6 +679,14 @@ def main():
         ('committed-row-before-create', dict(create='retained', d_commit=True, f_table7=True)),
         ('committed-row-before-pruned-create', dict(c_q=2, f_q=1)),
         ('row-reserved-mixed', dict(row_reserve=True, system=True)),
+        ('state-ready-writer', dict(a_q=3)),
+        ('ready-writer-before-pruned-create', dict(a_q=1, c_q=2, f_q=3)),
+        ('state-ready-writer-row7', dict(create='retained', d_commit=True, a_row7=True, a_q=4)),
+        ('ready-writer-before-create', dict(create='retained', d_commit=True, a_row7=True, a_q=2,
+                                            f_q=4)),
+        ('state-compensated-writer', dict(create='retained', d_commit=True, a_comp7=True, a_q=4)),
+        ('compensated-writer-before-create', dict(create='retained', d_commit=True, a_comp7=True,
+                                                  a_q=2, f_q=4)),
     ]:
         variants.append((name, 'live', live(gd, **change)))
     for name, data in bases.items():

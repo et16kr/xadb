@@ -228,6 +228,13 @@ pub(in crate::storage) fn creator_chain() -> usize {
         + terminal_frame()
         + job_chain()
 }
+/// Graph::table_creator_q: a pruned record's q, else the creator lookup.
+pub(in crate::storage) fn table_creator_chain() -> usize {
+    size_of::<(&Graph<'_>, VersionStamp)>()
+        + 2 * size_of::<Result<u64>>()
+        + slack()
+        + creator_chain()
+}
 /// Graph::row_reserved over the 64 Jobs.
 pub(in crate::storage) fn reserved_chain() -> usize {
     size_of::<(&Graph<'_>, Option<TxnRef>)>()
@@ -630,12 +637,14 @@ pub(in crate::storage) fn source_census() -> SourceCensus {
         + job_chain().max(header_read()).max(actor_observe());
     // each_row nests inside each_row and commits inside commits; each level
     // keeps its Table or record while the inner level decodes.
-    // The row visitor also keeps the header bound and the creator q.
+    // The row visitor also keeps the header bound, the creator q and the
+    // writer's Terminal.
     let rows = each_row_chain(
         visitor()
-            + size_of::<(&Header, VersionStamp, u64, Result<Option<u64>>)>()
+            + size_of::<(&Header, VersionStamp, u64, Result<u64>)>()
+            + size_of::<(JobView<'_>, Result<Option<JobView<'_>>>)>()
             + record_chain()
-                .max(creator_chain())
+                .max(table_creator_chain())
                 .max(terminal_frame() + job_chain())
                 .max(each_row_chain(visitor())),
     );
@@ -648,6 +657,17 @@ pub(in crate::storage) fn source_census() -> SourceCensus {
                     .max(job_chain())
                     .max(each_row_chain(2 * visitor())),
         );
+    // The compensated-root pass: Job, Terminal, table record, creator q.
+    let compensated = 2 * size_of::<(JobView<'_>, Result<JobView<'_>>)>()
+        + size_of::<(Option<JobView<'_>>, Result<Option<JobView<'_>>>)>()
+        + size_of::<(TxnRef, ObjectId, Result<u64>)>()
+        + size_of::<(CatalogRecordView<'_>, &[u8])>()
+        + size_of::<BaseResult<Option<(CatalogRecordView<'_>, &[u8])>>>()
+        + slack()
+        + job_chain()
+            .max(terminal_frame() + job_chain())
+            .max(record_for_chain())
+            .max(table_creator_chain());
     let tables = 2 * size_of::<Record<'_>>()
         + 2 * size_of::<Result<Record<'_>>>()
         + 2 * size_of::<CatalogHeader>()
@@ -663,7 +683,8 @@ pub(in crate::storage) fn source_census() -> SourceCensus {
             .max(table_chain())
             .max(job_chain())
             .max(rows)
-            .max(commits);
+            .max(commits)
+            .max(compensated);
     let descriptor = size_of::<(LayoutView<'_>, DescriptorSpec, Option<DescriptorSpec>)>()
         + size_of::<Result<Option<DescriptorSpec>>>()
         + size_of::<Result<DescriptorSpec>>()

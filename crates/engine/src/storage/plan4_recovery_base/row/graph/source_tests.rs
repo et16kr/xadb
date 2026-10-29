@@ -321,6 +321,26 @@ fn creator_measured() -> usize {
         + size_of::<(Option<JobView<'_>>, Option<u64>, Result<Option<u64>>)>()
         + terminal_measured()
 }
+/// Graph::table_creator_q.
+fn table_creator_measured() -> usize {
+    size_of::<(&Graph<'_>, VersionStamp)>()
+        + size_of::<(Option<u64>, Result<Option<u64>>, Result<u64>)>()
+        + creator_measured()
+}
+/// The compensated-root pass of Graph::tables.
+fn compensated_measured() -> usize {
+    size_of::<(Range<usize>, usize)>()
+        + size_of::<(JobView<'_>, BaseResult<JobView<'_>>)>()
+        + size_of::<(TxnRef, Option<JobView<'_>>, BaseResult<Option<JobView<'_>>>)>()
+        + size_of::<(JobView<'_>, ObjectId)>()
+        + size_of::<(CatalogRecordView<'_>, &[u8])>()
+        + size_of::<BaseResult<Option<(CatalogRecordView<'_>, &[u8])>>>()
+        + size_of::<(CatalogHeader, Result<u64>)>()
+        + job_measured()
+            .max(terminal_measured())
+            .max(record_for_measured())
+            .max(table_creator_measured())
+}
 /// Graph::row_reserved.
 fn reserved_measured() -> usize {
     size_of::<(&Graph<'_>, Option<TxnRef>)>()
@@ -336,7 +356,7 @@ fn commit_visitor(captures: usize) -> usize {
     captures + size_of::<(TxnId, u64)>() + size_of::<Result<()>>()
 }
 
-fn tables_measured() -> [(&'static str, usize); 4] {
+fn tables_measured() -> [(&'static str, usize); 5] {
     let refs = |count: usize| count * size_of::<&()>();
     let frame = size_of::<&Graph<'_>>()
         + size_of::<Header>()
@@ -355,7 +375,7 @@ fn tables_measured() -> [(&'static str, usize); 4] {
     let outer_visitor = row_visitor(refs(4))
         + size_of::<(TxnId, Range<usize>, usize)>()
         + size_of::<(Result<Record<'_>>, CatalogHeader, VersionStamp)>()
-        + size_of::<(TxnRef, u64, Result<Option<u64>>)>()
+        + size_of::<(TxnRef, u64, Result<u64>, JobState)>()
         + size_of::<(
             BaseResult<Option<JobView<'_>>>,
             Option<JobView<'_>>,
@@ -368,7 +388,7 @@ fn tables_measured() -> [(&'static str, usize); 4] {
             refs(4),
             outer_visitor
                 + record_measured()
-                    .max(creator_measured())
+                    .max(table_creator_measured())
                     .max(terminal_measured())
                     .max(each_row_measured(refs(3), row_visitor(refs(3)))),
         );
@@ -397,6 +417,7 @@ fn tables_measured() -> [(&'static str, usize); 4] {
         ("tables_nested_rows", rows),
         ("tables_nested_commits", commits),
         ("tables_terminal", frame + terminal_measured()),
+        ("tables_compensated", frame + compensated_measured()),
     ]
 }
 

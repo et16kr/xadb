@@ -371,7 +371,10 @@ fn base4_closure_relation_variants() {
             | "committed-writer-bound"
             | "create-uncommitted-committed-row"
             | "committed-row-before-create"
-            | "committed-row-before-pruned-create" => RowBaseError::Order,
+            | "committed-row-before-pruned-create"
+            | "ready-writer-before-pruned-create"
+            | "ready-writer-before-create"
+            | "compensated-writer-before-create" => RowBaseError::Order,
             "catalog-row-mixing" => RowBaseError::Identity,
             "init-initial-digest" => B(BaseError::ProvenanceMismatch),
             "descriptor-last-mutation" => RowBaseError::Ledger(Ledger::OrderMismatch),
@@ -405,7 +408,71 @@ fn base4_closure_relation_variants() {
             "{name}"
         );
     }
-    assert_eq!(seen, 30);
+    assert_eq!(seen, 33);
+}
+
+#[test]
+fn base4_closure_orders_ready_row_writer_after_creator() {
+    // A committed Row actor still on its Ready Terminal follows its table's
+    // creator: the pruned record's q, a not yet pruned CREATE's Ready q, and
+    // the table of a compensated write alike.
+    let mut scratch = scratch();
+    for (name, actors, tables) in [
+        ("state-ready-writer", [1, 2, 0], Ok([1, 3])),
+        (
+            "ready-writer-before-pruned-create",
+            [1, 2, 0],
+            Err(RowBaseError::Order),
+        ),
+        ("state-ready-writer-row7", [1, 3, 0], Ok([2, 4])),
+        (
+            "ready-writer-before-create",
+            [1, 3, 0],
+            Err(RowBaseError::Order),
+        ),
+        ("state-compensated-writer", [1, 2, 1], Ok([2, 3])),
+        (
+            "compensated-writer-before-create",
+            [1, 2, 1],
+            Err(RowBaseError::Order),
+        ),
+    ] {
+        let bytes = state(name);
+        let graph = Graph::new(decode_layout(&*bytes, expected()).unwrap()).unwrap();
+        graph.check_queue(&mut scratch).unwrap();
+        assert_eq!(
+            seam::validate_relations(&graph),
+            Ok(ReservedInventory::None),
+            "{name}"
+        );
+        assert_eq!(graph.actors(&mut scratch), Ok(actors), "{name}");
+        assert_eq!(graph.tables(), tables, "{name}");
+    }
+    // Over the pruned table alone the Ready actor needs no ATT owner.
+    let census = RowCensus {
+        transactions: 0,
+        inventory: InventoryObservation { owners: 1, ..EMPTY },
+        ..LIVE_CENSUS
+    };
+    let bytes = state("state-ready-writer");
+    assert_eq!(
+        decode(&*bytes, expected(), &mut scratch).map(|view| view.census()),
+        Ok(census)
+    );
+    let (output, packed) = encoded(&bytes);
+    assert_eq!(*output, *bytes);
+    assert_eq!(packed, Ok(census));
+    for name in ["state-ready-writer-row7", "state-compensated-writer"] {
+        let bytes = state(name);
+        assert_eq!(
+            decode(&*bytes, expected(), &mut scratch).err(),
+            Some(RowBaseError::CatalogUnwired),
+            "{name}"
+        );
+        let (output, encoded) = encoded(&bytes);
+        assert_eq!(*output, *bytes, "{name}");
+        assert_eq!(encoded, Err(RowBaseError::CatalogUnwired), "{name}");
+    }
 }
 
 /// Borrowed rows of one accepted literal for the Profile3 XOI mode.

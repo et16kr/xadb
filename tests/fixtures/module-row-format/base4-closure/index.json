@@ -274,6 +274,42 @@
    "parent": "live",
    "runs": 81,
    "sha256": "abbcfd4dcf885794418b22c435379a2f9fcfe3e102e952a19ab58939245ec16c"
+  },
+  {
+   "name": "state-ready-writer",
+   "parent": "live",
+   "runs": 51,
+   "sha256": "965d688a00dcd80ee5686702f3f9259fc6c843045da7880c39636a80f25a9f89"
+  },
+  {
+   "name": "ready-writer-before-pruned-create",
+   "parent": "live",
+   "runs": 57,
+   "sha256": "bd2f216a80cc6dde1c537461f83a51ec164fd9583a6bebd5f4e06416484d4a24"
+  },
+  {
+   "name": "state-ready-writer-row7",
+   "parent": "live",
+   "runs": 117,
+   "sha256": "d0b4f4b0d16aaf3de87ccdb3b6b0784416bdd2831069b5b4898c81f815ac7c73"
+  },
+  {
+   "name": "ready-writer-before-create",
+   "parent": "live",
+   "runs": 120,
+   "sha256": "3a7fb9cb99de8bffe5900d3435cb4d45b85468974bb485431ac97f67ec250d08"
+  },
+  {
+   "name": "state-compensated-writer",
+   "parent": "live",
+   "runs": 116,
+   "sha256": "a213a6583d867d29f43ad671cfa6333d93163afef45ed39822bd620407824fad"
+  },
+  {
+   "name": "compensated-writer-before-create",
+   "parent": "live",
+   "runs": 119,
+   "sha256": "7e2faa9c473a19dc1ea82ecd7caf3fa436584783df869e3a3cbcaf6a454b4f40"
   }
  ],
  "envelopes": [
