@@ -2868,3 +2868,404 @@ fn s1d_borrowed_producer_source_bound_covers_measured_frames() {
     assert_eq!(owned + wrapper, bound + owned_outer());
     assert!(bound + ROW_REPLAY_SCRATCH_BYTES <= owned + wrapper);
 }
+
+// ---- S1-g: replay-only ReserveAdopted (contract row-reserve-replay) --------
+
+/// A canonical inline row of A's two columns (n Int64, t Utf8 nullable), as
+/// N1's `canonical` (checked against its H-505/H-507 literals).
+fn canonical(number: i64, text: Option<&[u8]>) -> Vec<u8> {
+    let mut out = 2u32.to_le_bytes().to_vec();
+    out.push(2);
+    out.extend_from_slice(&number.to_le_bytes());
+    match text {
+        None => out.push(0),
+        Some(text) => {
+            out.push(3);
+            out.extend_from_slice(&(text.len() as u32).to_le_bytes());
+            out.extend_from_slice(text);
+        }
+    }
+    out
+}
+/// The replay selectors of a live plan.
+fn adopted(plan: &ReservePlan<'_>) -> Change<'static> {
+    Change::ReserveAdopted {
+        terminal: plan.terminal,
+        container: plan.container,
+        table: plan.table,
+        statement: plan.statement,
+    }
+}
+/// `leaf` with `rows` removed, through the production leaf edit at its LSN.
+fn without_rows(leaf: &Page, rows: &[u64]) -> Box<Page> {
+    let mut page = Box::new(*leaf);
+    for row in rows {
+        let next = {
+            let expected = TreeExpectation {
+                identity: PageIdentity {
+                    database: namespace().database,
+                    page: leaf_ref(&page),
+                    owner: table().object,
+                    owner_generation: table().generation,
+                },
+                kind: PageKind::RowLeaf,
+                level: 0,
+                arity: 0,
+            };
+            let view = tree_page::decode_tree_page(&page[..], expected).unwrap();
+            let key = row.to_be_bytes();
+            let mut refs: Vec<&[u8]> = vec![&[]; MAX_LEAF_EDIT_CELLS];
+            let mut next: Box<Page> = vec![0; PAGE_BYTES].into_boxed_slice().try_into().unwrap();
+            view.prepare_leaf_edit(LeafEdit::Remove(&key), &mut refs[..])
+                .unwrap()
+                .encode(PageLsn(u64_at(&page[..], 64)), &mut next[..])
+                .unwrap();
+            next
+        };
+        page = next;
+    }
+    page
+}
+/// Free bytes of a slotted page (upper - lower).
+fn free_bytes(page: &Page) -> usize {
+    usize::from(u16::from_le_bytes([page[76], page[77]]))
+        - usize::from(u16::from_le_bytes([page[74], page[75]]))
+}
+
+/// H11 body: `produce(Reserve(plan))`, then the produced frame observed as
+/// `ReserveAdopted` through `observe_borrowed` over a lent tail gives the same
+/// Observation and the same after page for every output role (and owned
+/// `observe(Reserve(plan))` too). `history::row::record` takes only the
+/// frame, that Observation and the Job after (history/row.rs), so its bytes
+/// are equal as well; H04 compares them directly on H-505/H-507.
+fn adopted_equals_produced(label: &str, live: &Inputs<'_>, replay: &Inputs<'_>) -> Vec<u8> {
+    let Change::Reserve(plan) = live.change else {
+        panic!("{label}: live Reserve");
+    };
+    assert!(
+        matches!(replay.change, Change::ReserveAdopted { terminal, container, table, statement }
+            if terminal == plan.terminal && container == plan.container
+                && table == plan.table && statement == plan.statement),
+        "{label}: selectors"
+    );
+    let mut after = loans(0xa5);
+    let mut frame = vec![0xa5; FRAME_BYTES];
+    let produced = produce(live, &mut after, &mut frame)
+        .unwrap_or_else(|error| panic!("{label}: produce {error:?}"));
+    let bytes = &frame[..produced.frame_bytes];
+    let mut owned = loans(0);
+    assert_eq!(observe(live, bytes, &mut owned), Ok(produced), "{label}");
+    let mut lane = new_lane();
+    let mut replayed = loans(0x5a);
+    let observed = observe_borrowed(replay, bytes, &mut replayed, lent(&mut lane));
+    restored(label, &lane);
+    assert_eq!(observed, Ok(produced), "{label}: adopted");
+    for &role in &produced.order[..usize::from(produced.count)] {
+        let role = usize::from(role);
+        same(
+            &format!("{label} role{role}"),
+            &replayed[role],
+            &after[role],
+        );
+        same(
+            &format!("{label} owned role{role}"),
+            &owned[role],
+            &after[role],
+        );
+    }
+    let ordinal = produced.job_ordinal.expect("Reserve Job");
+    let job = cell(&after[JOB], ordinal % 15);
+    let c = u32::from_le_bytes(job[280..284].try_into().unwrap()) as usize;
+    assert_eq!(c, 180 + plan.canonical.len(), "{label}: C");
+    let h = u64_at(job, 784) == 311_736 + 2 * c as u64;
+    assert_eq!(
+        u64_at(job, 784),
+        311_608 + 2 * c as u64 + 128 * u64::from(h)
+    );
+    println!(
+        "S1G_ADOPTED\t{label}\tC={c}\th={}\tbytes={}",
+        u8::from(h),
+        produced.frame_bytes
+    );
+    bytes.to_vec()
+}
+
+/// A's noh-300 after a produced (not literal) Cancel of its Reserved root 3:
+/// an Active actor without roots, so its next Reserve has no H (h0).
+fn noh_cancelled() -> Box<World> {
+    let mut world = noh_300();
+    let (observation, after, frame) = {
+        let inputs = world.inputs(
+            Change::Cancel { ordinal: 3 },
+            Pages {
+                jobs: Some(0),
+                status: Some(9),
+                undo: Some(11),
+                ..pages()
+            },
+        );
+        let mut after = loans(0);
+        let mut frame = vec![0; FRAME_BYTES];
+        let observation = produce(&inputs, &mut after, &mut frame).expect("noh Cancel");
+        frame.truncate(observation.frame_bytes);
+        (observation, after, frame)
+    };
+    world.install("noh-cancel", &observation, &after, &frame);
+    world
+}
+
+/// H11: a produced Reserve observed as `ReserveAdopted` equals the producer
+/// at N1's plans and the boundaries C185/C2228, h0/h1 and a RowLeaf exactly
+/// full after the insert (C+4 = free bytes; C+1 is refused before output).
+#[test]
+fn s1g_reserve_adopted_equals_produced() {
+    assert_eq!(canonical(10, Some(b"ten")), blob("H-505-canonical"));
+    assert_eq!(canonical(11, None), blob("H-507-canonical"));
+
+    // h0: A's noh-300 after a produced Cancel of its Reserved root 3, an
+    // Active actor without roots (no Status head) over A's three-cell leaf.
+    // (Genesis E cannot host table 6: its Root object high is below it.)
+    let world = noh_cancelled();
+    let noh = Pages {
+        jobs: Some(0),
+        status: Some(9),
+        undo: Some(11),
+        table: true,
+        ..pages()
+    };
+    let long = [b'x'; 2030];
+    for (label, value, c) in [
+        ("noh-h0", canonical(10, Some(b"ten")), 201),
+        ("noh-C2228", canonical(10, Some(&long)), 2228),
+    ] {
+        let plan = ReservePlan {
+            terminal: 2,
+            container: page_ref(11, 2),
+            table: table(),
+            statement: 1,
+            canonical: &value,
+        };
+        assert_eq!(180 + value.len(), c);
+        adopted_equals_produced(
+            label,
+            &world.inputs(Change::Reserve(&plan), noh),
+            &world.inputs(adopted(&plan), noh),
+        );
+    }
+    // C185: one nullable Utf8 column holding NULL over an empty RowLeaf.
+    let one = [Column {
+        name: "t".into(),
+        data_type: DataType::Utf8,
+        nullable: true,
+    }];
+    let empty = without_rows(scope3!("noh-300-leaf.bin"), &[2, 9]);
+    let value = [1, 0, 0, 0, 0];
+    let plan = ReservePlan {
+        terminal: 2,
+        container: page_ref(11, 2),
+        table: table(),
+        statement: 1,
+        canonical: &value,
+    };
+    let narrow = |change| {
+        let mut inputs = world.inputs(change, noh);
+        let source = inputs.table.as_mut().expect("table");
+        source.schema = RowSchemaInput::Columns(&one);
+        source.leaf_image = Some(&empty);
+        inputs
+    };
+    adopted_equals_produced(
+        "noh-C185",
+        &narrow(Change::Reserve(&plan)),
+        &narrow(adopted(&plan)),
+    );
+
+    // H (h1): N1's H-505 plan at h-504, byte-equal to its literal.
+    let mut world = h_501();
+    h_statement_rollback(&mut world);
+    World::replace(&mut world.undo, 14, &page_of(blob("H-undo14-0")));
+    let reserve = Pages {
+        jobs: Some(1),
+        status: Some(9),
+        undo: Some(14),
+        table: true,
+        ..pages()
+    };
+    let plan = ReservePlan {
+        terminal: 14,
+        container: page_ref(14, 2),
+        table: table(),
+        statement: 3,
+        canonical: blob("H-505-canonical"),
+    };
+    let produced = adopted_equals_produced(
+        "H-505",
+        &world.inputs(Change::Reserve(&plan), reserve),
+        &world.inputs(adopted(&plan), reserve),
+    );
+    same("H-505", &produced, blob("H-505"));
+    // A RowLeaf exactly full after the insert: A's full leaf without row 10.
+    let roomy = without_rows(scope3!("noh-300-leaf-full.bin"), &[10]);
+    let free = free_bytes(&roomy);
+    let fits = free - 4 - 180 - 18;
+    let text = vec![b'y'; fits + 1];
+    let values = [
+        canonical(10, Some(&text[..fits])),
+        canonical(10, Some(&text)),
+    ];
+    assert_eq!(180 + values[0].len() + 4, free);
+    let over = ReservePlan {
+        canonical: &values[1],
+        ..plan
+    };
+    let mut inputs = world.inputs(Change::Reserve(&over), reserve);
+    inputs.table.as_mut().expect("table").leaf_image = Some(&roomy);
+    refuses(
+        "Reserve one byte over a full RowLeaf",
+        &inputs,
+        FRAME_BYTES,
+        Error::OrderMismatch,
+    );
+    let exact = ReservePlan {
+        canonical: &values[0],
+        ..plan
+    };
+    let with_roomy = |change| {
+        let mut inputs = world.inputs(change, reserve);
+        inputs.table.as_mut().expect("table").leaf_image = Some(&roomy);
+        inputs
+    };
+    adopted_equals_produced(
+        "H-exact-full",
+        &with_roomy(Change::Reserve(&exact)),
+        &with_roomy(adopted(&exact)),
+    );
+
+    // H-507 (h1) after H-505 and its Cancel, byte-equal to its literal.
+    world.produce("H-505", Change::Reserve(&plan), reserve);
+    world.produce(
+        "H-506",
+        Change::Cancel { ordinal: 17 },
+        Pages {
+            jobs: Some(1),
+            status: Some(9),
+            undo: Some(14),
+            ..pages()
+        },
+    );
+    let plan = ReservePlan {
+        statement: 4,
+        canonical: blob("H-507-canonical"),
+        ..plan
+    };
+    let produced = adopted_equals_produced(
+        "H-507",
+        &world.inputs(Change::Reserve(&plan), reserve),
+        &world.inputs(adopted(&plan), reserve),
+    );
+    same("H-507", &produced, blob("H-507"));
+}
+
+/// H12: `ReserveAdopted` is reachable only through `observe_borrowed`:
+/// `produce` and owned `observe` return Unsupported before writing any after
+/// or frame byte. Owned `observe(Reserve(plan))` over N1's H-505 gets
+/// `inserted` None and passes the full recomputation. `prepare` called with
+/// the pairs the carriage rule never builds, (Reserve(plan), Some) and
+/// (ReserveAdopted, None), is InvalidInput; the matching pairs pass it.
+#[test]
+fn s1g_reserve_adopted_not_producible() {
+    let mut world = h_501();
+    h_statement_rollback(&mut world);
+    World::replace(&mut world.undo, 14, &page_of(blob("H-undo14-0")));
+    let reserve = Pages {
+        jobs: Some(1),
+        status: Some(9),
+        undo: Some(14),
+        table: true,
+        ..pages()
+    };
+    let plan = ReservePlan {
+        terminal: 14,
+        container: page_ref(14, 2),
+        table: table(),
+        statement: 3,
+        canonical: blob("H-505-canonical"),
+    };
+    let live = world.inputs(Change::Reserve(&plan), reserve);
+    let replay = world.inputs(adopted(&plan), reserve);
+    let literal = blob("H-505");
+
+    let mut after = loans(0xa5);
+    let mut frame = vec![0xa5; FRAME_BYTES];
+    assert_eq!(
+        produce(&replay, &mut after, &mut frame).map(|_| ()),
+        Err(Error::Unsupported)
+    );
+    assert!(
+        after
+            .iter()
+            .all(|page| page.iter().all(|byte| *byte == 0xa5))
+    );
+    assert!(frame.iter().all(|byte| *byte == 0xa5));
+    let mut after = loans(0xa5);
+    assert_eq!(
+        observe(&replay, literal, &mut after).map(|_| ()),
+        Err(Error::Unsupported)
+    );
+    assert!(
+        after
+            .iter()
+            .all(|page| page.iter().all(|byte| *byte == 0xa5))
+    );
+
+    let mut owned = loans(0);
+    let observed = observe(&live, literal, &mut owned).expect("owned Reserve(plan)");
+    assert_eq!(
+        observed.issued,
+        Some(Issued {
+            row: RowId::new(10).unwrap(),
+            undo: undo_ref(14, 3),
+            sequence: 3,
+            mutation: 3,
+        })
+    );
+    let mut lane = new_lane();
+    let mut borrowed = loans(0);
+    assert_eq!(
+        observe_borrowed(&replay, literal, &mut borrowed, lent(&mut lane)),
+        Ok(observed)
+    );
+    restored("H-505 adopted", &lane);
+    assert!(*borrowed == *owned);
+
+    let layout = decode_layout(literal, live.frame, profile()).unwrap();
+    let cell = layout
+        .native_records()
+        .find(|native| native.kind() == 9)
+        .and_then(|native| native.after())
+        .unwrap();
+    for (label, inputs, inserted, expected) in [
+        (
+            "Reserve(plan), Some",
+            &live,
+            Some(cell),
+            Err(Error::InvalidInput),
+        ),
+        (
+            "ReserveAdopted, None",
+            &replay,
+            None,
+            Err(Error::InvalidInput),
+        ),
+        ("Reserve(plan), None", &live, None, Ok(())),
+        ("ReserveAdopted, Some", &replay, Some(cell), Ok(())),
+    ] {
+        let mut backing = [0; ROW_REPLAY_SCRATCH_BYTES];
+        let mut prepared = prepare::new_prepared(inputs, &mut backing);
+        assert_eq!(
+            prepare::prepare(inputs, inserted, &mut prepared),
+            expected,
+            "{label}"
+        );
+    }
+}
