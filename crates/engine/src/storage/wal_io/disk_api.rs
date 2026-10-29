@@ -30,6 +30,7 @@ pub(crate) use super::bootstrap::doublewrite_install::mutable_storage::plan4_pag
 };
 
 pub(in crate::storage) use super::bootstrap::doublewrite_install::mutable_storage::plan4_pages::apply::InstallGrant;
+pub(in crate::storage) use crate::transaction::concurrency::Owner;
 pub(in crate::storage::wal_io) use super::bootstrap::doublewrite_install::mutable_storage::plan4_pages::apply::legacy::from_legacy as legacy_install;
 
 pub(crate) use super::bootstrap::doublewrite_install::mutable_storage::plan4_pages::apply::{

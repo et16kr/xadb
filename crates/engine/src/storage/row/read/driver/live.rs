@@ -8,18 +8,15 @@ use super::{
     CursorCredit, CursorStep, Observed, PointRead, ReadSource, ReadView, RowCursor, RowReadError,
     SearchPage, Step, read_point,
 };
-use crate::{
-    storage::{
-        disk::{
-            CallerCredit, CheckedTable, MissingRowEvidence, Plan4ResidencyCursor, Plan4Target,
-            ReadPort, ReadStep, RetentionError, RowCandidate, RowCopyObservation, RowReadOperation,
-            RowSearchPage, RowStatementView,
-        },
-        row_record::RecordVersion,
-        transaction_record::{TransactionState, TxnRef},
-        tree_page::TreePageView,
+use crate::storage::{
+    disk::{
+        CallerCredit, CheckedTable, MissingRowEvidence, Owner, Plan4ResidencyCursor, Plan4Target,
+        ReadPort, ReadStep, RetentionError, RowCandidate, RowCopyObservation, RowReadOperation,
+        RowSearchPage, RowStatementView,
     },
-    transaction::concurrency::Owner,
+    row_record::RecordVersion,
+    transaction_record::{TransactionState, TxnRef},
+    tree_page::TreePageView,
 };
 use foundation::{identity::RowId, namespace::WriterNamespace, runtime::Cancellation};
 
