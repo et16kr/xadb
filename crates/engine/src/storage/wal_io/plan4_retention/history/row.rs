@@ -531,6 +531,24 @@ pub(in super::super) fn record(
         (None, None) => None,
         _ => return Err(invalid()),
     };
+    // The slot's own precondition, one guard for replay and the live
+    // install: Begin takes an all-zero row; every other Tx op finds this
+    // actor's STABLE row at this Status, with the unused tail clear. A wrong
+    // slot is refused here instead of overwriting another actor's row.
+    if let Some(slot) = slot {
+        let row = control::row(bank, slot);
+        let own = if op == Operation::Begin {
+            row.iter().all(|byte| *byte == 0)
+        } else {
+            row[PHASE] == STABLE
+                && row[ACTOR] == actor
+                && row[LOCATION] == status
+                && row[PHASE + 1..].iter().all(|byte| *byte == 0)
+        };
+        if !own {
+            return Err(invalid());
+        }
+    }
     // Every fallible check is above.
     if let Some(slot) = slot {
         let row = control::row_mut(bank, slot);

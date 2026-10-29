@@ -1545,3 +1545,81 @@ fn s1b_row_begin_shares_adopted_local() {
     r.step("E-104", blob("E-104"), begin(8, 3), status20);
     assert_eq!(r.cursor.adopted_local(), 8);
 }
+
+/// `record` owns its slot precondition (review A2): a Begin slot must be an
+/// all-zero row, and any other Tx op must find this actor's own STABLE row
+/// at this Status with a clear tail. Each refusal leaves the bank and cells
+/// untouched; the actor's own row is accepted.
+#[test]
+fn s1d_record_guards_its_own_slot() {
+    let status20 = Pages {
+        jobs: Some(0),
+        status: Some(20),
+        ..pages()
+    };
+    let record =
+        |r: &Replay, frame: &[u8], change: Change<'static>, slot: usize, rows: &mut Vec<u8>| {
+            let inputs = r.inputs(change, status20);
+            let mut afters = Box::new([[0; PAGE_BYTES]; 5]);
+            let observation = transition::observe(&inputs, frame, &mut afters).unwrap();
+            let layout = decode_layout(frame, inputs.frame, profile()).unwrap();
+            let mut jobs = r.cells.clone();
+            let result = history::row::record(
+                rows,
+                &mut jobs,
+                layout,
+                &observation,
+                Some(&afters[JOB]),
+                Some(slot),
+                profile(),
+            );
+            (result, jobs == r.cells)
+        };
+    let mut r = genesis(Mode::default());
+    r.step("E-100", blob("E-100"), Change::AgingStart, pages());
+    let begin = Change::Begin {
+        actor: actor(7, 2),
+        status: slot(20, 2),
+        scope: job3::JobScope::Row,
+    };
+    for at in [0, ledger::PHASE, ledger::SLOT_BYTES - 1] {
+        let mut rows = r.bank.clone();
+        rows[at] = 1;
+        let before = rows.clone();
+        let (result, cells) = record(&r, blob("E-101"), begin, 0, &mut rows);
+        assert!(
+            result.is_err() && cells && rows == before,
+            "Begin row byte {at}"
+        );
+    }
+    let mut rows = r.bank.clone();
+    assert!(record(&r, blob("E-101"), begin, 0, &mut rows).0.is_ok());
+    r.step("E-101", blob("E-101"), begin, status20);
+    let commit = Change::Commit { terminal: 0 };
+    let own = ledger::row(&r.bank, 0).to_vec();
+    let mut wrong: Vec<(&str, usize, Vec<u8>)> = vec![("empty slot", 1, r.bank.clone())];
+    for (label, at) in [
+        ("phase", ledger::PHASE),
+        ("tail", ledger::PHASE + 1),
+        ("location", ledger::LOCATION.start + 8),
+        ("actor", ledger::ACTOR.start + 8),
+    ] {
+        let mut rows = r.bank.clone();
+        rows[at] ^= 1;
+        wrong.push((label, 0, rows));
+    }
+    // Another actor's row copied into slot 1 is still not this actor's.
+    let mut rows = r.bank.clone();
+    rows[ledger::SLOT_BYTES..2 * ledger::SLOT_BYTES].copy_from_slice(&own);
+    rows[ledger::SLOT_BYTES + ledger::ACTOR.start + 8] ^= 1;
+    wrong.push(("foreign actor", 1, rows));
+    for (label, slot, mut rows) in wrong {
+        let before = rows.clone();
+        let (result, cells) = record(&r, blob("E-102"), commit, slot, &mut rows);
+        assert!(result.is_err() && cells && rows == before, "{label}");
+    }
+    let mut rows = r.bank.clone();
+    let (result, _) = record(&r, blob("E-102"), commit, 0, &mut rows);
+    assert!(result.is_ok());
+    assert!(ledger::row(&rows, 0).iter().all(|byte| *byte == 0));
+}
