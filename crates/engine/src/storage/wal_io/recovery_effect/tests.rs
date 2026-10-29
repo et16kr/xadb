@@ -1196,5 +1196,5 @@ mod operational;
 #[path = "empty_transaction_tests.rs"]
 mod empty;
 
-#[path = "../mixed_system_recovery_tests.rs"]
+#[path = "mixed_system_tests.rs"]
 mod mixed;

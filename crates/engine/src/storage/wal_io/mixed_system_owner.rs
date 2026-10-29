@@ -8,15 +8,15 @@ use super::super::{
 use super::*;
 use crate::storage::dirty_frame::{FrameStamp, StatusCandidateKind};
 
-#[path = "mixed_system_history.rs"]
+#[path = "mixed_system_owner/history.rs"]
 mod history;
-#[path = "mixed_system_load.rs"]
+#[path = "mixed_system_owner/load.rs"]
 mod load;
-#[path = "mixed_system_resources.rs"]
+#[path = "mixed_system_owner/resources.rs"]
 mod resources;
 pub(in super::super) use resources::fits;
 #[cfg(test)]
-#[path = "mixed_system_owner_tests.rs"]
+#[path = "mixed_system_owner/tests.rs"]
 mod tests;
 pub(super) use load::MixedLoadInstall;
 pub(crate) use load::{SystemLoadError, SystemLoadObservation, SystemResidencyStep};

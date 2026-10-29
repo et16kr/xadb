@@ -1129,7 +1129,7 @@ scenario!(
 );
 
 #[cfg(target_os = "linux")]
-#[path = "mixed_system_owner_native_tests.rs"]
+#[path = "tests/native.rs"]
 mod native;
 
 // Historical independent U19 chunk literal SHA-256 2221bcbac40ed59d5849c11eeb1b05376747052b581af53bed838a49473ea77e.
@@ -1763,5 +1763,5 @@ scenario!(
     waiting_wal_continuation(SystemPageKind::UndoRoot)
 );
 
-#[path = "mixed_system_owner_load_tests.rs"]
+#[path = "tests/load_addendum.rs"]
 mod load_addendum;

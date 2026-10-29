@@ -2962,3 +2962,38 @@ r2의 scoped static2와 선택4개는 모두 PASS다. 고유10개는 r1 source�
 두 cargo 명령은 scratchpad의 별도 `CARGO_TARGET_DIR`을 썼다. tracked 파일만 내보낸 tree의 source fingerprint는 이동 전 `81ed7353f7c8302b4f859fba7a76b7771a700b33780ca94d39503bcf82c4fa40`(L1 이동 후 값과 같음), 이동 후 `a6ae9251c773c418c67ae24058a2d5dc405fc3feb4b91a6b0e46ef9ec66d1b19`다. 로그·이동 전후 시험 목록·파일별 hash·fingerprint를 로컬 `artifacts/module-l2-concurrency-20261029/`(`manifest.sha256` SHA-256 `3877a1a85f8727aabe48b0410c13ae9736f5c44924f07a598961a4faacca7400`)에 보존했고, build target 1.9G와 임시 export는 삭제했다.
 
 독립 검토(L1과 같은 읽기 전용 subagent)는 이동표·실제 diff·문서·JSON·artifact를 대조해 **ACCEPT WITH REQUIRED FIXES**로 판정했다. 파일 집합, `#[path]` 해석, `include_str!`이 같은 저장소 루트 fixture를 가리킴, 위치 의존 참조 0, 링크 검사 오류 0, JSON 경로26개, 시험 목록 동일(22개), manifest·fingerprint 재계산 일치를 확인했다. 필수 지적1건은 rustfmt PASS의 로그 부재였고 위 재실행 로그로 보완했다. 선택 지적 중 이동표의 줄 번호, 시험 구성 행, 소비자 범위 표기를 반영했다. 관리 JSON의 `status`는 계획 채택 상태이므로 그대로 두고 단위별 상태는 `implementation_status`에 둔다. 이 반영은 다시 검토받지 않았다. L3–L5와 전체 M4/M5는 미완료다.
+
+<a id="l3-mixed-system-move"></a>
+## 2026-10-29 L3 `mixed_system_*` 논리 부모별 폴더 배치
+
+[L3 이동표](../plans/module-independence-plan.md#l3-move-table)를 기준 `main` `d251b8f62b77e16ca92cffefc691bbe13511ffe8`(tree `8f3143a67cedebb7cb48479a432dab91079972fe`)에 적용했다. 사용자는 L3의 두 안 중 “권장으로 진행”을 선택했고, 이어 권장안이 있으면 묻지 않고 진행하도록 지시했다. push는 모든 작업과 추가 리뷰 뒤로 미룬 상태다. 작성·통합은 이 Claude 세션이며 착수 때 checkout은 clean이었다. 기능 본문·논리 모듈 경로·visibility·cfg·시험 selector는 바꾸지 않았다.
+
+| 원 경로(`crates/engine/src/storage/wal_io/`) | 현재 경로 | 논리 경로(`…::mutable_storage::`) |
+| --- | --- | --- |
+| `mixed_system_owner.rs` | 유지, `#[path]` 4줄만 변경 | `status_init::status_flush::mixed` |
+| `mixed_system_history.rs` | `mixed_system_owner/history.rs` | `…::mixed::history` |
+| `mixed_system_load.rs` | `mixed_system_owner/load.rs` | `…::mixed::load` |
+| `mixed_system_resources.rs` | `mixed_system_owner/resources.rs` | `…::mixed::resources` |
+| `mixed_system_owner_tests.rs` | `mixed_system_owner/tests.rs`, `#[path]` 2줄 변경 | `…::mixed::tests` |
+| `mixed_system_owner_native_tests.rs` | `mixed_system_owner/tests/native.rs` | `…::mixed::tests::native` |
+| `mixed_system_owner_load_tests.rs` | `mixed_system_owner/tests/load_addendum.rs` | `…::mixed::tests::load_addendum` |
+| `mixed_system_recovery_tests.rs` | `recovery_effect/mixed_system_tests.rs`, 선언한 `recovery_effect/tests.rs`의 `#[path]` 1줄 변경 | `recovery_prefix::effect::tests::mixed` |
+| `mixed_system_init.rs`, `mixed_system_init_tests.rs` | 유지. 형제를 가진 평면 부모 아래이므로 L5에서 판단 | `status_init_operation::mixed`, `status_bootstrap_tests::undo::mixed_init` |
+
+현재 fixture inventory `crates/engine/tests/fixtures/dev3-mixed-system-owner/runtime-manifest.json`의 case별 `path` 151개를 새 위치로 바꿨다. 같은 case 수와 순서에서 `path` 외 필드와 최상위 필드가 같고, 각 case의 `function`이 이동 전 HEAD의 원 경로 파일과 새 경로 파일 모두에 있음을 대조했다. 이 inventory를 읽는 script·시험은 없다. 원 SHA-256을 기록한 증거 JSON 2개는 그대로 두었다. `scripts/dev3_mixed_owner_continue.py`의 `WORKER`·`FORMAT_ONLY_TEST`는 보존된 원/continuation source 두 root 안의 경로라 바꾸지 않았다.
+
+관리 JSON의 경로 문자열 8개를 현재 경로로 바꾸고 `module_folder_reorganization`의 상태와 `l3_evidence_ref`를 갱신했다. 이동 파일을 가리키는 현재 Markdown 링크·본문 표기는 없었다. 증거 JSON 5개의 원 경로 표기는 그대로다. 현재 상태 문구는 `devdoc/README.md`, `plans/README.md`, 저장소 정책 §5.2, `dev3-module-boundaries.md`와 계획 13절에서 갱신했다.
+
+| 검증 | 실제 범위·결과 |
+| --- | --- |
+| 정적 대응 | `crates/` diff는 rename 7개, `#[path]` 7줄(owner 4·이동한 `tests.rs` 2·`recovery_effect/tests.rs` 1), inventory `path` 151줄뿐이다. 이동만 한 6개는 기준 SHA-256과 같고 init 두 파일과 `status_home_flush.rs`·`status_init_operation.rs`·`undo_bootstrap_tests.rs`는 바뀌지 않았다. 대상 파일에 위치 의존 macro는 없다 |
+| 컴파일 | `cargo check -p xadb-engine --all-targets --all-features --locked` PASS, warning 0. rustc/cargo 1.95.0 |
+| 시험 발견 | 이동 전 `d251b8f`와 이동 후 `cargo test -p xadb-engine --lib --all-features --locked -- --list` 출력 1585줄이 byte 단위로 같다(SHA-256 `601bd166c6b31b8bdd9e7361eecb15d5939e7b1153b323f10f9fd5308f30259a`). `status_flush::mixed::` 88개(tests 78·native 3·load_addendum 6·resources 1), `effect::tests::mixed::` 9개, `undo::mixed_init::` 9개가 그대로다 |
+| 시험 본문 | NOT_RUN. 본문이 그대로다. native script는 논리 `PREFIX`와 case ID만 쓰고, borrow probe 2종은 probe 위치·주입 anchor·논리 경로가 같아 NOT_RUN |
+| fmt | `rustfmt --edition 2024 --check`를 `mixed_system_owner.rs`·`recovery_effect/tests.rs`에 적용해 하위 모듈까지 차이 0(`logs/rustfmt-check.log`). 전체 fmt·Clippy·문서 검사는 기존 push gate에서 수행한다 |
+
+두 cargo 명령은 scratchpad의 별도 `CARGO_TARGET_DIR`을 썼다. tracked 파일만 내보낸 tree의 source fingerprint는 이동 전 `a6ae9251c773c418c67ae24058a2d5dc405fc3feb4b91a6b0e46ef9ec66d1b19`(L2 이동 후 값과 같음), 이동 후 `0fcb9877149b2a13cd3ec959185c73ed18a68f866a0ad2774c2ab14570104b72`다. 로그·이동 전후 시험 목록·파일별 hash·fingerprint를 로컬 `artifacts/module-l3-mixed-system-20261029/`(`manifest.sha256` SHA-256 `c4c4372d6f90d940be4d68a7c442966c9401295c36eea4e60386df856b27287e`)에 보존했고, build target 1.9G와 임시 export는 삭제했다.
+
+로그의 한계: `check.log`·`list-*.err`에는 L1·L2와 달리 종료 코드 줄이 없다. 두 cargo 명령과 rustfmt의 종료 코드 0은 실행 콘솔에서 관측했고, `rustfmt-check.log`에는 결과 줄만 있다. rustfmt 명령은 `rustfmt --edition 2024 --check crates/engine/src/storage/wal_io/mixed_system_owner.rs crates/engine/src/storage/wal_io/recovery_effect/tests.rs`였다. 착수 때 `git status --short`의 빈 출력도 콘솔 관측이며 `base.txt`에는 HEAD·tree만 있다.
+
+독립 검토(L1·L2와 같은 읽기 전용 subagent)는 이동표·실제 diff·문서·JSON·artifact를 대조해 **ACCEPT, 필수 지적 0**으로 판정했다. 확인 범위는 `#[path]` 해석과 논리 경로 유지, 이동만 한 6개의 byte 동일, `crates/` diff 범위, init 두 파일을 유지한 근거, 참조 탐색의 완전성, inventory `path` 151개와 `function` 존재, 소비자 표, 모든 수치, manifest·fingerprint 재계산, 링크 검사 오류 0이다. 선택 지적 7건 중 owner 제공 목록에서 빠진 `MixedSystemFlusher`, 직접 논리 부모 수(6곳), continuation 상수에 대한 실패 지점 서술, `../` 경로 서술의 범위, 시험 수 표기의 다섯 건을 계획에 반영했다. 로그 한계는 위 문단에 적었다. 관리 JSON의 `status`는 계획 채택 상태이므로 그대로 둔다. 이 반영은 다시 검토받지 않았다. L4·L5와 전체 M4/M5는 미완료다.

@@ -22,941 +22,941 @@
     {
       "id": "MO-BIND-001",
       "function": "mixed_owner_plan2_refusal_preserves_original_status_binding",
-      "path": "crates/engine/src/storage/wal_io/mixed_system_owner_tests.rs",
+      "path": "crates/engine/src/storage/wal_io/mixed_system_owner/tests.rs",
       "kind": "mandatory-memory"
     },
     {
       "id": "MO-BIND-002",
       "function": "mixed_owner_plan3_refuses_old_status_before_mixed_binding",
-      "path": "crates/engine/src/storage/wal_io/mixed_system_owner_tests.rs",
+      "path": "crates/engine/src/storage/wal_io/mixed_system_owner/tests.rs",
       "kind": "mandatory-memory"
     },
     {
       "id": "MO-CANCEL-001",
       "function": "mixed_owner_cancel_preserves_prior_mixed_pages",
-      "path": "crates/engine/src/storage/wal_io/mixed_system_owner_tests.rs",
+      "path": "crates/engine/src/storage/wal_io/mixed_system_owner/tests.rs",
       "kind": "mandatory-memory"
     },
     {
       "id": "MO-DROP-001",
       "function": "mixed_owner_dropped_status_reservation_fences",
-      "path": "crates/engine/src/storage/wal_io/mixed_system_owner_tests.rs",
+      "path": "crates/engine/src/storage/wal_io/mixed_system_owner/tests.rs",
       "kind": "mandatory-memory"
     },
     {
       "id": "MO-DROP-002",
       "function": "mixed_owner_dropped_undo_reservation_fences",
-      "path": "crates/engine/src/storage/wal_io/mixed_system_owner_tests.rs",
+      "path": "crates/engine/src/storage/wal_io/mixed_system_owner/tests.rs",
       "kind": "mandatory-memory"
     },
     {
       "id": "MO-FLUSH-001",
       "function": "mixed_owner_status_flush_writes_exact_home_and_retires",
-      "path": "crates/engine/src/storage/wal_io/mixed_system_owner_tests.rs",
+      "path": "crates/engine/src/storage/wal_io/mixed_system_owner/tests.rs",
       "kind": "mandatory-memory"
     },
     {
       "id": "MO-FLUSH-002",
       "function": "mixed_owner_undo_flush_writes_exact_home_and_retires",
-      "path": "crates/engine/src/storage/wal_io/mixed_system_owner_tests.rs",
+      "path": "crates/engine/src/storage/wal_io/mixed_system_owner/tests.rs",
       "kind": "mandatory-memory"
     },
     {
       "id": "MO-FLUSH-003",
       "function": "mixed_owner_status_first_dwb_error_keeps_dirty_obligation",
-      "path": "crates/engine/src/storage/wal_io/mixed_system_owner_tests.rs",
+      "path": "crates/engine/src/storage/wal_io/mixed_system_owner/tests.rs",
       "kind": "mandatory-memory"
     },
     {
       "id": "MO-FLUSH-004",
       "function": "mixed_owner_undo_first_dwb_error_keeps_dirty_obligation",
-      "path": "crates/engine/src/storage/wal_io/mixed_system_owner_tests.rs",
+      "path": "crates/engine/src/storage/wal_io/mixed_system_owner/tests.rs",
       "kind": "mandatory-memory"
     },
     {
       "id": "MO-INIT-BEFORE-S",
       "function": "mixed_owner_status_init_before_failure_retains_exact_reservation",
-      "path": "crates/engine/src/storage/wal_io/mixed_system_owner_tests.rs",
+      "path": "crates/engine/src/storage/wal_io/mixed_system_owner/tests.rs",
       "kind": "mandatory-memory"
     },
     {
       "id": "MO-INIT-BEFORE-U",
       "function": "mixed_owner_undo_init_before_failure_retains_exact_reservation",
-      "path": "crates/engine/src/storage/wal_io/mixed_system_owner_tests.rs",
+      "path": "crates/engine/src/storage/wal_io/mixed_system_owner/tests.rs",
       "kind": "mandatory-memory"
     },
     {
       "id": "MO-INIT-S-01",
       "function": "mixed_owner_status_init_stage_owned_unwind",
-      "path": "crates/engine/src/storage/wal_io/mixed_system_owner_tests.rs",
+      "path": "crates/engine/src/storage/wal_io/mixed_system_owner/tests.rs",
       "kind": "mandatory-memory"
     },
     {
       "id": "MO-INIT-S-02",
       "function": "mixed_owner_status_init_allocator_image_unwind",
-      "path": "crates/engine/src/storage/wal_io/mixed_system_owner_tests.rs",
+      "path": "crates/engine/src/storage/wal_io/mixed_system_owner/tests.rs",
       "kind": "mandatory-memory"
     },
     {
       "id": "MO-INIT-S-03",
       "function": "mixed_owner_status_init_payload_image_unwind",
-      "path": "crates/engine/src/storage/wal_io/mixed_system_owner_tests.rs",
+      "path": "crates/engine/src/storage/wal_io/mixed_system_owner/tests.rs",
       "kind": "mandatory-memory"
     },
     {
       "id": "MO-INIT-S-04",
       "function": "mixed_owner_status_init_metadata_unwind",
-      "path": "crates/engine/src/storage/wal_io/mixed_system_owner_tests.rs",
+      "path": "crates/engine/src/storage/wal_io/mixed_system_owner/tests.rs",
       "kind": "mandatory-memory"
     },
     {
       "id": "MO-INIT-S-05",
       "function": "mixed_owner_status_init_registry_unwind",
-      "path": "crates/engine/src/storage/wal_io/mixed_system_owner_tests.rs",
+      "path": "crates/engine/src/storage/wal_io/mixed_system_owner/tests.rs",
       "kind": "mandatory-memory"
     },
     {
       "id": "MO-INIT-S-06",
       "function": "mixed_owner_status_init_publication_unwind",
-      "path": "crates/engine/src/storage/wal_io/mixed_system_owner_tests.rs",
+      "path": "crates/engine/src/storage/wal_io/mixed_system_owner/tests.rs",
       "kind": "mandatory-memory"
     },
     {
       "id": "MO-INIT-S-07",
       "function": "mixed_owner_status_init_dpt_guard_unwind",
-      "path": "crates/engine/src/storage/wal_io/mixed_system_owner_tests.rs",
+      "path": "crates/engine/src/storage/wal_io/mixed_system_owner/tests.rs",
       "kind": "mandatory-memory"
     },
     {
       "id": "MO-INIT-S-08",
       "function": "mixed_owner_status_init_dpt_precheck_unwind",
-      "path": "crates/engine/src/storage/wal_io/mixed_system_owner_tests.rs",
+      "path": "crates/engine/src/storage/wal_io/mixed_system_owner/tests.rs",
       "kind": "mandatory-memory"
     },
     {
       "id": "MO-INIT-U-01",
       "function": "mixed_owner_undo_init_stage_owned_unwind",
-      "path": "crates/engine/src/storage/wal_io/mixed_system_owner_tests.rs",
+      "path": "crates/engine/src/storage/wal_io/mixed_system_owner/tests.rs",
       "kind": "mandatory-memory"
     },
     {
       "id": "MO-INIT-U-02",
       "function": "mixed_owner_undo_init_allocator_image_unwind",
-      "path": "crates/engine/src/storage/wal_io/mixed_system_owner_tests.rs",
+      "path": "crates/engine/src/storage/wal_io/mixed_system_owner/tests.rs",
       "kind": "mandatory-memory"
     },
     {
       "id": "MO-INIT-U-03",
       "function": "mixed_owner_undo_init_payload_image_unwind",
-      "path": "crates/engine/src/storage/wal_io/mixed_system_owner_tests.rs",
+      "path": "crates/engine/src/storage/wal_io/mixed_system_owner/tests.rs",
       "kind": "mandatory-memory"
     },
     {
       "id": "MO-INIT-U-04",
       "function": "mixed_owner_undo_init_metadata_unwind",
-      "path": "crates/engine/src/storage/wal_io/mixed_system_owner_tests.rs",
+      "path": "crates/engine/src/storage/wal_io/mixed_system_owner/tests.rs",
       "kind": "mandatory-memory"
     },
     {
       "id": "MO-INIT-U-05",
       "function": "mixed_owner_undo_init_registry_unwind",
-      "path": "crates/engine/src/storage/wal_io/mixed_system_owner_tests.rs",
+      "path": "crates/engine/src/storage/wal_io/mixed_system_owner/tests.rs",
       "kind": "mandatory-memory"
     },
     {
       "id": "MO-INIT-U-06",
       "function": "mixed_owner_undo_init_publication_unwind",
-      "path": "crates/engine/src/storage/wal_io/mixed_system_owner_tests.rs",
+      "path": "crates/engine/src/storage/wal_io/mixed_system_owner/tests.rs",
       "kind": "mandatory-memory"
     },
     {
       "id": "MO-INIT-U-07",
       "function": "mixed_owner_undo_init_dpt_guard_unwind",
-      "path": "crates/engine/src/storage/wal_io/mixed_system_owner_tests.rs",
+      "path": "crates/engine/src/storage/wal_io/mixed_system_owner/tests.rs",
       "kind": "mandatory-memory"
     },
     {
       "id": "MO-INIT-U-08",
       "function": "mixed_owner_undo_init_dpt_precheck_unwind",
-      "path": "crates/engine/src/storage/wal_io/mixed_system_owner_tests.rs",
+      "path": "crates/engine/src/storage/wal_io/mixed_system_owner/tests.rs",
       "kind": "mandatory-memory"
     },
     {
       "id": "MO-INIT-WAL-S-PARTIAL",
       "function": "mixed_owner_status_init_partial_wal_keeps_published_obligation",
-      "path": "crates/engine/src/storage/wal_io/mixed_system_owner_tests.rs",
+      "path": "crates/engine/src/storage/wal_io/mixed_system_owner/tests.rs",
       "kind": "mandatory-memory"
     },
     {
       "id": "MO-INIT-WAL-S-SYNC",
       "function": "mixed_owner_status_init_sync_error_keeps_published_obligation",
-      "path": "crates/engine/src/storage/wal_io/mixed_system_owner_tests.rs",
+      "path": "crates/engine/src/storage/wal_io/mixed_system_owner/tests.rs",
       "kind": "mandatory-memory"
     },
     {
       "id": "MO-INIT-WAL-U-PARTIAL",
       "function": "mixed_owner_undo_init_partial_wal_keeps_published_obligation",
-      "path": "crates/engine/src/storage/wal_io/mixed_system_owner_tests.rs",
+      "path": "crates/engine/src/storage/wal_io/mixed_system_owner/tests.rs",
       "kind": "mandatory-memory"
     },
     {
       "id": "MO-INIT-WAL-U-SYNC",
       "function": "mixed_owner_undo_init_sync_error_keeps_published_obligation",
-      "path": "crates/engine/src/storage/wal_io/mixed_system_owner_tests.rs",
+      "path": "crates/engine/src/storage/wal_io/mixed_system_owner/tests.rs",
       "kind": "mandatory-memory"
     },
     {
       "id": "MO-LAYOUT-001",
       "function": "mixed_owner_layout_observations",
-      "path": "crates/engine/src/storage/wal_io/mixed_system_owner_tests.rs",
+      "path": "crates/engine/src/storage/wal_io/mixed_system_owner/tests.rs",
       "kind": "static-layout-observation"
     },
     {
       "id": "MO-LIVE-001",
       "function": "mixed_owner_three_frames_status_undo_pressure_continuation",
-      "path": "crates/engine/src/storage/wal_io/mixed_system_owner_tests.rs",
+      "path": "crates/engine/src/storage/wal_io/mixed_system_owner/tests.rs",
       "kind": "mandatory-memory"
     },
     {
       "id": "MO-LOAD-001",
       "function": "mixed_owner_load_exact_status_and_undo_keeps_dirty_allocator",
-      "path": "crates/engine/src/storage/wal_io/mixed_system_owner_tests.rs",
+      "path": "crates/engine/src/storage/wal_io/mixed_system_owner/tests.rs",
       "kind": "mandatory-memory"
     },
     {
       "id": "MO-LOAD-002",
       "function": "mixed_owner_residency_hit_and_flush_candidate_preserve_cursor_rules",
-      "path": "crates/engine/src/storage/wal_io/mixed_system_owner_tests.rs",
+      "path": "crates/engine/src/storage/wal_io/mixed_system_owner/tests.rs",
       "kind": "mandatory-memory"
     },
     {
       "id": "MO-LOAD-003",
       "function": "mixed_owner_load_wrong_class_is_no_effect",
-      "path": "crates/engine/src/storage/wal_io/mixed_system_owner_tests.rs",
+      "path": "crates/engine/src/storage/wal_io/mixed_system_owner/tests.rs",
       "kind": "mandatory-memory"
     },
     {
       "id": "MO-LOAD-004",
       "function": "mixed_owner_load_absent_member_is_no_effect",
-      "path": "crates/engine/src/storage/wal_io/mixed_system_owner_tests.rs",
+      "path": "crates/engine/src/storage/wal_io/mixed_system_owner/tests.rs",
       "kind": "mandatory-memory"
     },
     {
       "id": "MO-LOAD-005",
       "function": "mixed_owner_load_stale_member_is_no_effect",
-      "path": "crates/engine/src/storage/wal_io/mixed_system_owner_tests.rs",
+      "path": "crates/engine/src/storage/wal_io/mixed_system_owner/tests.rs",
       "kind": "mandatory-memory"
     },
     {
       "id": "MO-LOAD-006",
       "function": "mixed_owner_load_resident_address_is_no_effect",
-      "path": "crates/engine/src/storage/wal_io/mixed_system_owner_tests.rs",
+      "path": "crates/engine/src/storage/wal_io/mixed_system_owner/tests.rs",
       "kind": "mandatory-memory"
     },
     {
       "id": "MO-LOAD-007",
       "function": "mixed_owner_load_cannot_replace_allocator",
-      "path": "crates/engine/src/storage/wal_io/mixed_system_owner_tests.rs",
+      "path": "crates/engine/src/storage/wal_io/mixed_system_owner/tests.rs",
       "kind": "mandatory-memory"
     },
     {
       "id": "MO-LOAD-008",
       "function": "mixed_owner_load_home_before_error_preserves_generation_then_retries",
-      "path": "crates/engine/src/storage/wal_io/mixed_system_owner_tests.rs",
+      "path": "crates/engine/src/storage/wal_io/mixed_system_owner/tests.rs",
       "kind": "mandatory-memory"
     },
     {
       "id": "MO-LOAD-009",
       "function": "mixed_owner_load_wal_before_error_preserves_generation_then_retries",
-      "path": "crates/engine/src/storage/wal_io/mixed_system_owner_tests.rs",
+      "path": "crates/engine/src/storage/wal_io/mixed_system_owner/tests.rs",
       "kind": "mandatory-memory"
     },
     {
       "id": "MO-LOAD-010",
       "function": "mixed_owner_load_required_wal_eof_fences",
-      "path": "crates/engine/src/storage/wal_io/mixed_system_owner_tests.rs",
+      "path": "crates/engine/src/storage/wal_io/mixed_system_owner/tests.rs",
       "kind": "mandatory-memory"
     },
     {
       "id": "MO-LOAD-011",
       "function": "mixed_owner_load_required_wal_prefix_eof_fences",
-      "path": "crates/engine/src/storage/wal_io/mixed_system_owner_tests.rs",
+      "path": "crates/engine/src/storage/wal_io/mixed_system_owner/tests.rs",
       "kind": "mandatory-memory"
     },
     {
       "id": "MO-LOAD-012",
       "function": "mixed_owner_load_required_wal_invalid_count_fences",
-      "path": "crates/engine/src/storage/wal_io/mixed_system_owner_tests.rs",
+      "path": "crates/engine/src/storage/wal_io/mixed_system_owner/tests.rs",
       "kind": "mandatory-memory"
     },
     {
       "id": "MO-LOAD-013",
       "function": "mixed_owner_load_home_invalid_count_fences",
-      "path": "crates/engine/src/storage/wal_io/mixed_system_owner_tests.rs",
+      "path": "crates/engine/src/storage/wal_io/mixed_system_owner/tests.rs",
       "kind": "mandatory-memory"
     },
     {
       "id": "MO-LOAD-014",
       "function": "mixed_owner_load_rehashed_old_status_lsn_is_not_original_init",
-      "path": "crates/engine/src/storage/wal_io/mixed_system_owner_tests.rs",
+      "path": "crates/engine/src/storage/wal_io/mixed_system_owner/tests.rs",
       "kind": "mandatory-memory"
     },
     {
       "id": "MO-LOAD-015",
       "function": "mixed_owner_load_rehashed_undo_free_generation6_is_rejected",
-      "path": "crates/engine/src/storage/wal_io/mixed_system_owner_tests.rs",
+      "path": "crates/engine/src/storage/wal_io/mixed_system_owner/tests.rs",
       "kind": "mandatory-memory"
     },
     {
       "id": "MO-LOAD-016",
       "function": "mixed_owner_load_rehashed_undo_free_generation_max_is_rejected",
-      "path": "crates/engine/src/storage/wal_io/mixed_system_owner_tests.rs",
+      "path": "crates/engine/src/storage/wal_io/mixed_system_owner/tests.rs",
       "kind": "mandatory-memory"
     },
     {
       "id": "MO-LOAD-017",
       "function": "mixed_owner_load_rehashed_undo_c_image_cannot_replace_b",
-      "path": "crates/engine/src/storage/wal_io/mixed_system_owner_tests.rs",
+      "path": "crates/engine/src/storage/wal_io/mixed_system_owner/tests.rs",
       "kind": "mandatory-memory"
     },
     {
       "id": "MO-LOAD-018",
       "function": "mixed_owner_load_status_home_cannot_replace_undo",
-      "path": "crates/engine/src/storage/wal_io/mixed_system_owner_tests.rs",
+      "path": "crates/engine/src/storage/wal_io/mixed_system_owner/tests.rs",
       "kind": "mandatory-memory"
     },
     {
       "id": "MO-LOAD-019",
       "function": "mixed_owner_load_occupied_undo_root_is_rejected",
-      "path": "crates/engine/src/storage/wal_io/mixed_system_owner_tests.rs",
+      "path": "crates/engine/src/storage/wal_io/mixed_system_owner/tests.rs",
       "kind": "mandatory-memory"
     },
     {
       "id": "MO-LOAD-020",
       "function": "mixed_owner_load_chunk_bearing_undo_envelope_is_rejected",
-      "path": "crates/engine/src/storage/wal_io/mixed_system_owner_tests.rs",
+      "path": "crates/engine/src/storage/wal_io/mixed_system_owner/tests.rs",
       "kind": "mandatory-memory"
     },
     {
       "id": "MO-LOAD-021",
       "function": "mixed_owner_final_status_home_drift_fences_without_install",
-      "path": "crates/engine/src/storage/wal_io/mixed_system_owner_tests.rs",
+      "path": "crates/engine/src/storage/wal_io/mixed_system_owner/tests.rs",
       "kind": "mandatory-memory"
     },
     {
       "id": "MO-LOAD-022",
       "function": "mixed_owner_final_undo_home_drift_fences_without_install",
-      "path": "crates/engine/src/storage/wal_io/mixed_system_owner_tests.rs",
+      "path": "crates/engine/src/storage/wal_io/mixed_system_owner/tests.rs",
       "kind": "mandatory-memory"
     },
     {
       "id": "MO-NATIVE-PRODUCE",
       "function": "mixed_owner_native_producer",
-      "path": "crates/engine/src/storage/wal_io/mixed_system_owner_native_tests.rs",
+      "path": "crates/engine/src/storage/wal_io/mixed_system_owner/tests/native.rs",
       "kind": "mandatory-native-phase"
     },
     {
       "id": "MO-NATIVE-RECOVER",
       "function": "mixed_owner_native_recovery",
-      "path": "crates/engine/src/storage/wal_io/mixed_system_owner_native_tests.rs",
+      "path": "crates/engine/src/storage/wal_io/mixed_system_owner/tests/native.rs",
       "kind": "mandatory-native-phase"
     },
     {
       "id": "MO-NATIVE-REENTRY",
       "function": "mixed_owner_native_reentry",
-      "path": "crates/engine/src/storage/wal_io/mixed_system_owner_native_tests.rs",
+      "path": "crates/engine/src/storage/wal_io/mixed_system_owner/tests/native.rs",
       "kind": "mandatory-native-phase"
     },
     {
       "id": "MO-ORIGIN-001",
       "function": "mixed_owner_foreign_reserver_has_no_effect",
-      "path": "crates/engine/src/storage/wal_io/mixed_system_owner_tests.rs",
+      "path": "crates/engine/src/storage/wal_io/mixed_system_owner/tests.rs",
       "kind": "mandatory-memory"
     },
     {
       "id": "MO-ORIGIN-002",
       "function": "mixed_owner_health_precedes_foreign_reserver",
-      "path": "crates/engine/src/storage/wal_io/mixed_system_owner_tests.rs",
+      "path": "crates/engine/src/storage/wal_io/mixed_system_owner/tests.rs",
       "kind": "mandatory-memory"
     },
     {
       "id": "MO-PRESSURE-001",
       "function": "mixed_owner_prepared_empty_slot_preserves_bytes_and_generation",
-      "path": "crates/engine/src/storage/wal_io/mixed_system_owner_tests.rs",
+      "path": "crates/engine/src/storage/wal_io/mixed_system_owner/tests.rs",
       "kind": "mandatory-memory"
     },
     {
       "id": "MO-PRESSURE-002",
       "function": "mixed_owner_pressure_oldest_dirty_keeps_original_slots",
-      "path": "crates/engine/src/storage/wal_io/mixed_system_owner_tests.rs",
+      "path": "crates/engine/src/storage/wal_io/mixed_system_owner/tests.rs",
       "kind": "mandatory-memory"
     },
     {
       "id": "MO-PRESSURE-003",
       "function": "mixed_owner_pressure_dirty_tie_selects_cursor_undo",
-      "path": "crates/engine/src/storage/wal_io/mixed_system_owner_tests.rs",
+      "path": "crates/engine/src/storage/wal_io/mixed_system_owner/tests.rs",
       "kind": "mandatory-memory"
     },
     {
       "id": "MO-PRESSURE-004",
       "function": "mixed_owner_pressure_late_busy_cannot_hide_behind_status",
-      "path": "crates/engine/src/storage/wal_io/mixed_system_owner_tests.rs",
+      "path": "crates/engine/src/storage/wal_io/mixed_system_owner/tests.rs",
       "kind": "mandatory-memory"
     },
     {
       "id": "MO-PRESSURE-005",
       "function": "mixed_owner_pressure_late_duplicate_registration_fences",
-      "path": "crates/engine/src/storage/wal_io/mixed_system_owner_tests.rs",
+      "path": "crates/engine/src/storage/wal_io/mixed_system_owner/tests.rs",
       "kind": "mandatory-memory"
     },
     {
       "id": "MO-PRESSURE-006",
       "function": "mixed_owner_pressure_generation_exhaustion_has_no_effect",
-      "path": "crates/engine/src/storage/wal_io/mixed_system_owner_tests.rs",
+      "path": "crates/engine/src/storage/wal_io/mixed_system_owner/tests.rs",
       "kind": "mandatory-memory"
     },
     {
       "id": "MO-PRESSURE-007",
       "function": "mixed_owner_pressure_late_undo_poison_fences",
-      "path": "crates/engine/src/storage/wal_io/mixed_system_owner_tests.rs",
+      "path": "crates/engine/src/storage/wal_io/mixed_system_owner/tests.rs",
       "kind": "mandatory-memory"
     },
     {
       "id": "MO-PRESSURE-008",
       "function": "mixed_owner_pressure_late_undo_counter_corruption_fences",
-      "path": "crates/engine/src/storage/wal_io/mixed_system_owner_tests.rs",
+      "path": "crates/engine/src/storage/wal_io/mixed_system_owner/tests.rs",
       "kind": "mandatory-memory"
     },
     {
       "id": "MO-READ-001",
       "function": "mixed_owner_status_typed_read_full_bytes_and_release",
-      "path": "crates/engine/src/storage/wal_io/mixed_system_owner_tests.rs",
+      "path": "crates/engine/src/storage/wal_io/mixed_system_owner/tests.rs",
       "kind": "mandatory-memory"
     },
     {
       "id": "MO-READ-002",
       "function": "mixed_owner_undo_typed_read_full_bytes_and_release",
-      "path": "crates/engine/src/storage/wal_io/mixed_system_owner_tests.rs",
+      "path": "crates/engine/src/storage/wal_io/mixed_system_owner/tests.rs",
       "kind": "mandatory-memory"
     },
     {
       "id": "MO-READ-003",
       "function": "mixed_owner_status_cannot_be_read_as_undo",
-      "path": "crates/engine/src/storage/wal_io/mixed_system_owner_tests.rs",
+      "path": "crates/engine/src/storage/wal_io/mixed_system_owner/tests.rs",
       "kind": "mandatory-memory"
     },
     {
       "id": "MO-READ-004",
       "function": "mixed_owner_undo_cannot_be_read_as_status",
-      "path": "crates/engine/src/storage/wal_io/mixed_system_owner_tests.rs",
+      "path": "crates/engine/src/storage/wal_io/mixed_system_owner/tests.rs",
       "kind": "mandatory-memory"
     },
     {
       "id": "MO-READ-005",
       "function": "mixed_owner_absent_page_read_has_no_effect",
-      "path": "crates/engine/src/storage/wal_io/mixed_system_owner_tests.rs",
+      "path": "crates/engine/src/storage/wal_io/mixed_system_owner/tests.rs",
       "kind": "mandatory-memory"
     },
     {
       "id": "MO-READ-006",
       "function": "mixed_owner_stale_incarnation_read_has_no_effect",
-      "path": "crates/engine/src/storage/wal_io/mixed_system_owner_tests.rs",
+      "path": "crates/engine/src/storage/wal_io/mixed_system_owner/tests.rs",
       "kind": "mandatory-memory"
     },
     {
       "id": "MO-RETAINED-S",
       "function": "mixed_owner_status_retired_view_reentry_does_not_rewrite_home",
-      "path": "crates/engine/src/storage/wal_io/mixed_system_owner_tests.rs",
+      "path": "crates/engine/src/storage/wal_io/mixed_system_owner/tests.rs",
       "kind": "mandatory-memory"
     },
     {
       "id": "MO-RETAINED-U",
       "function": "mixed_owner_undo_retired_view_reentry_does_not_rewrite_home",
-      "path": "crates/engine/src/storage/wal_io/mixed_system_owner_tests.rs",
+      "path": "crates/engine/src/storage/wal_io/mixed_system_owner/tests.rs",
       "kind": "mandatory-memory"
     },
     {
       "id": "MO-RETAINED-U-FENCED",
       "function": "mixed_owner_undo_retired_fence_preserves_obligation",
-      "path": "crates/engine/src/storage/wal_io/mixed_system_owner_tests.rs",
+      "path": "crates/engine/src/storage/wal_io/mixed_system_owner/tests.rs",
       "kind": "mandatory-memory"
     },
     {
       "id": "MO-S5-LIVE-P2",
       "function": "mixed_owner_s5_profile2_three_frame_lifecycle",
-      "path": "crates/engine/src/storage/wal_io/mixed_system_owner_tests.rs",
+      "path": "crates/engine/src/storage/wal_io/mixed_system_owner/tests.rs",
       "kind": "s5-expansion"
     },
     {
       "id": "MO-S5-LIVE-P3",
       "function": "mixed_owner_s5_profile3_three_frame_lifecycle",
-      "path": "crates/engine/src/storage/wal_io/mixed_system_owner_tests.rs",
+      "path": "crates/engine/src/storage/wal_io/mixed_system_owner/tests.rs",
       "kind": "s5-expansion"
     },
     {
       "id": "MO-WAITING-WAL-S",
       "function": "mixed_owner_status_waiting_wal_keeps_capture_through_view_drop",
-      "path": "crates/engine/src/storage/wal_io/mixed_system_owner_tests.rs",
+      "path": "crates/engine/src/storage/wal_io/mixed_system_owner/tests.rs",
       "kind": "mandatory-memory"
     },
     {
       "id": "MO-WAITING-WAL-U",
       "function": "mixed_owner_undo_waiting_wal_keeps_capture_through_view_drop",
-      "path": "crates/engine/src/storage/wal_io/mixed_system_owner_tests.rs",
+      "path": "crates/engine/src/storage/wal_io/mixed_system_owner/tests.rs",
       "kind": "mandatory-memory"
     },
     {
       "id": "MR01-001",
       "function": "mixed_recovery_resource_gate",
-      "path": "crates/engine/src/storage/wal_io/mixed_system_recovery_tests.rs",
+      "path": "crates/engine/src/storage/wal_io/recovery_effect/mixed_system_tests.rs",
       "kind": "static-layout-observation",
       "scenario": "Source-value census for actual memory Writer and exact Linux native tracing Writer; 48-byte target rows, 3072-byte table, fixed arena bounds; no namespace effect."
     },
     {
       "id": "MR02-001",
       "function": "mixed_recovery_complete_and_reentry",
-      "path": "crates/engine/src/storage/wal_io/mixed_system_recovery_tests.rs",
+      "path": "crates/engine/src/storage/wal_io/recovery_effect/mixed_system_tests.rs",
       "kind": "mandatory-memory",
       "scenario": "Profile 1: all four canonical final images from genesis homes, then same-directory reentry with zero applied redo and zero home writes; full allocator, StatusA, UndoB, UndoC, descriptor, masks, ledger, original WAL."
     },
     {
       "id": "MR02-002",
       "function": "mixed_recovery_complete_and_reentry",
-      "path": "crates/engine/src/storage/wal_io/mixed_system_recovery_tests.rs",
+      "path": "crates/engine/src/storage/wal_io/recovery_effect/mixed_system_tests.rs",
       "kind": "mandatory-memory",
       "scenario": "Profile 2: all four canonical final images from genesis homes, then same-directory reentry with zero applied redo and zero home writes; full allocator, StatusA, UndoB, UndoC, descriptor, masks, ledger, original WAL."
     },
     {
       "id": "MR02-003",
       "function": "mixed_recovery_complete_and_reentry",
-      "path": "crates/engine/src/storage/wal_io/mixed_system_recovery_tests.rs",
+      "path": "crates/engine/src/storage/wal_io/recovery_effect/mixed_system_tests.rs",
       "kind": "mandatory-memory",
       "scenario": "Profile 3: all four canonical final images from genesis homes, then same-directory reentry with zero applied redo and zero home writes; full allocator, StatusA, UndoB, UndoC, descriptor, masks, ledger, original WAL."
     },
     {
       "id": "MR03-001",
       "function": "mixed_recovery_older_mixed_and_torn_homes",
-      "path": "crates/engine/src/storage/wal_io/mixed_system_recovery_tests.rs",
+      "path": "crates/engine/src/storage/wal_io/recovery_effect/mixed_system_tests.rs",
       "kind": "mandatory-memory",
       "scenario": "Genesis allocator plus final StatusA home; replay missing allocator/UndoB/UndoC."
     },
     {
       "id": "MR03-002",
       "function": "mixed_recovery_older_mixed_and_torn_homes",
-      "path": "crates/engine/src/storage/wal_io/mixed_system_recovery_tests.rs",
+      "path": "crates/engine/src/storage/wal_io/recovery_effect/mixed_system_tests.rs",
       "kind": "mandatory-memory",
       "scenario": "Final allocator plus final UndoB; replay missing StatusA/UndoC."
     },
     {
       "id": "MR03-003",
       "function": "mixed_recovery_older_mixed_and_torn_homes",
-      "path": "crates/engine/src/storage/wal_io/mixed_system_recovery_tests.rs",
+      "path": "crates/engine/src/storage/wal_io/recovery_effect/mixed_system_tests.rs",
       "kind": "mandatory-memory",
       "scenario": "Genesis allocator plus final StatusA/UndoC; replay missing allocator/UndoB."
     },
     {
       "id": "MR03-004",
       "function": "mixed_recovery_older_mixed_and_torn_homes",
-      "path": "crates/engine/src/storage/wal_io/mixed_system_recovery_tests.rs",
+      "path": "crates/engine/src/storage/wal_io/recovery_effect/mixed_system_tests.rs",
       "kind": "mandatory-memory",
       "scenario": "All four final homes: zero dirty mask and zero home writes."
     },
     {
       "id": "MR03-005",
       "function": "mixed_recovery_older_mixed_and_torn_homes",
-      "path": "crates/engine/src/storage/wal_io/mixed_system_recovery_tests.rs",
+      "path": "crates/engine/src/storage/wal_io/recovery_effect/mixed_system_tests.rs",
       "kind": "mandatory-memory",
       "scenario": "Allocator LSN2 plus final StatusA; replay four allocator records and both Undo payloads."
     },
     {
       "id": "MR03-006",
       "function": "mixed_recovery_older_mixed_and_torn_homes",
-      "path": "crates/engine/src/storage/wal_io/mixed_system_recovery_tests.rs",
+      "path": "crates/engine/src/storage/wal_io/recovery_effect/mixed_system_tests.rs",
       "kind": "mandatory-memory",
       "scenario": "Allocator LSN4 plus final StatusA/UndoB; replay two allocator records and UndoC."
     },
     {
       "id": "MR03-007",
       "function": "mixed_recovery_older_mixed_and_torn_homes",
-      "path": "crates/engine/src/storage/wal_io/mixed_system_recovery_tests.rs",
+      "path": "crates/engine/src/storage/wal_io/recovery_effect/mixed_system_tests.rs",
       "kind": "mandatory-memory",
       "scenario": "Checksum-torn StatusA with genesis allocator: replace from authenticated exact INIT."
     },
     {
       "id": "MR03-008",
       "function": "mixed_recovery_older_mixed_and_torn_homes",
-      "path": "crates/engine/src/storage/wal_io/mixed_system_recovery_tests.rs",
+      "path": "crates/engine/src/storage/wal_io/recovery_effect/mixed_system_tests.rs",
       "kind": "mandatory-memory",
       "scenario": "Checksum-torn UndoB with genesis allocator: replace from authenticated exact INIT."
     },
     {
       "id": "MR03-009",
       "function": "mixed_recovery_older_mixed_and_torn_homes",
-      "path": "crates/engine/src/storage/wal_io/mixed_system_recovery_tests.rs",
+      "path": "crates/engine/src/storage/wal_io/recovery_effect/mixed_system_tests.rs",
       "kind": "mandatory-memory",
       "scenario": "Checksum-torn UndoC with genesis allocator: replace from authenticated exact INIT."
     },
     {
       "id": "MR04-001",
       "function": "mixed_recovery_supported_historical_pending",
-      "path": "crates/engine/src/storage/wal_io/mixed_system_recovery_tests.rs",
+      "path": "crates/engine/src/storage/wal_io/recovery_effect/mixed_system_tests.rs",
       "kind": "mandatory-memory",
       "scenario": "Supported Pending allocator reservation at LSN3, then replay allocator through LSN6 and all payloads."
     },
     {
       "id": "MR04-002",
       "function": "mixed_recovery_supported_historical_pending",
-      "path": "crates/engine/src/storage/wal_io/mixed_system_recovery_tests.rs",
+      "path": "crates/engine/src/storage/wal_io/recovery_effect/mixed_system_tests.rs",
       "kind": "mandatory-memory",
       "scenario": "Supported Pending allocator terminal at LSN4, then replay allocator through LSN6 and all payloads."
     },
     {
       "id": "MR04-003",
       "function": "mixed_recovery_supported_historical_pending",
-      "path": "crates/engine/src/storage/wal_io/mixed_system_recovery_tests.rs",
+      "path": "crates/engine/src/storage/wal_io/recovery_effect/mixed_system_tests.rs",
       "kind": "mandatory-memory",
       "scenario": "Supported Pending StatusA at unique INIT LSN2; apply only remaining dirty homes."
     },
     {
       "id": "MR04-004",
       "function": "mixed_recovery_supported_historical_pending",
-      "path": "crates/engine/src/storage/wal_io/mixed_system_recovery_tests.rs",
+      "path": "crates/engine/src/storage/wal_io/recovery_effect/mixed_system_tests.rs",
       "kind": "mandatory-memory",
       "scenario": "Supported Pending UndoB at unique INIT LSN4; apply only remaining dirty homes."
     },
     {
       "id": "MR04-005",
       "function": "mixed_recovery_supported_historical_pending",
-      "path": "crates/engine/src/storage/wal_io/mixed_system_recovery_tests.rs",
+      "path": "crates/engine/src/storage/wal_io/recovery_effect/mixed_system_tests.rs",
       "kind": "mandatory-memory",
       "scenario": "Supported Pending UndoC at unique INIT LSN6; apply only remaining dirty homes."
     },
     {
       "id": "MR04-006",
       "function": "mixed_recovery_supported_historical_pending",
-      "path": "crates/engine/src/storage/wal_io/mixed_system_recovery_tests.rs",
+      "path": "crates/engine/src/storage/wal_io/recovery_effect/mixed_system_tests.rs",
       "kind": "mandatory-memory",
       "scenario": "Supported Pending UndoB already matches home: skip Pending home write and retire before remaining replay."
     },
     {
       "id": "MR04-007",
       "function": "mixed_recovery_supported_historical_pending",
-      "path": "crates/engine/src/storage/wal_io/mixed_system_recovery_tests.rs",
+      "path": "crates/engine/src/storage/wal_io/recovery_effect/mixed_system_tests.rs",
       "kind": "mandatory-memory",
       "scenario": "Supported Pending allocator LSN4 repairs checksum-torn allocator home before canonical replay."
     },
     {
       "id": "MR05-001",
       "function": "mixed_recovery_rejects_pending_mismatch",
-      "path": "crates/engine/src/storage/wal_io/mixed_system_recovery_tests.rs",
+      "path": "crates/engine/src/storage/wal_io/recovery_effect/mixed_system_tests.rs",
       "kind": "mandatory-memory",
       "scenario": "UndoB Pending metadata claims Status kind9."
     },
     {
       "id": "MR05-002",
       "function": "mixed_recovery_rejects_pending_mismatch",
-      "path": "crates/engine/src/storage/wal_io/mixed_system_recovery_tests.rs",
+      "path": "crates/engine/src/storage/wal_io/recovery_effect/mixed_system_tests.rs",
       "kind": "mandatory-memory",
       "scenario": "UndoB Pending metadata claims Status owner2."
     },
     {
       "id": "MR05-003",
       "function": "mixed_recovery_rejects_pending_mismatch",
-      "path": "crates/engine/src/storage/wal_io/mixed_system_recovery_tests.rs",
+      "path": "crates/engine/src/storage/wal_io/recovery_effect/mixed_system_tests.rs",
       "kind": "mandatory-memory",
       "scenario": "UndoB Pending metadata names page3 while image names page2."
     },
     {
       "id": "MR05-004",
       "function": "mixed_recovery_rejects_pending_mismatch",
-      "path": "crates/engine/src/storage/wal_io/mixed_system_recovery_tests.rs",
+      "path": "crates/engine/src/storage/wal_io/recovery_effect/mixed_system_tests.rs",
       "kind": "mandatory-memory",
       "scenario": "UndoB Pending metadata incarnation3 disagrees with exact image incarnation2."
     },
     {
       "id": "MR05-005",
       "function": "mixed_recovery_rejects_pending_mismatch",
-      "path": "crates/engine/src/storage/wal_io/mixed_system_recovery_tests.rs",
+      "path": "crates/engine/src/storage/wal_io/recovery_effect/mixed_system_tests.rs",
       "kind": "mandatory-memory",
       "scenario": "UndoB Pending metadata claims LSN6 while exact INIT image is LSN4."
     },
     {
       "id": "MR05-006",
       "function": "mixed_recovery_rejects_pending_mismatch",
-      "path": "crates/engine/src/storage/wal_io/mixed_system_recovery_tests.rs",
+      "path": "crates/engine/src/storage/wal_io/recovery_effect/mixed_system_tests.rs",
       "kind": "mandatory-memory",
       "scenario": "Pending slot index1 disagrees with available slot0 placement."
     },
     {
       "id": "MR05-007",
       "function": "mixed_recovery_rejects_pending_mismatch",
-      "path": "crates/engine/src/storage/wal_io/mixed_system_recovery_tests.rs",
+      "path": "crates/engine/src/storage/wal_io/recovery_effect/mixed_system_tests.rs",
       "kind": "mandatory-memory",
       "scenario": "Pending metadata digest differs from exact image digest, while bank/selector/slot outer SHA are sealed."
     },
     {
       "id": "MR05-008",
       "function": "mixed_recovery_rejects_pending_mismatch",
-      "path": "crates/engine/src/storage/wal_io/mixed_system_recovery_tests.rs",
+      "path": "crates/engine/src/storage/wal_io/recovery_effect/mixed_system_tests.rs",
       "kind": "mandatory-memory",
       "scenario": "UndoB Pending metadata claims owner generation2."
     },
     {
       "id": "MR05-009",
       "function": "mixed_recovery_rejects_pending_mismatch",
-      "path": "crates/engine/src/storage/wal_io/mixed_system_recovery_tests.rs",
+      "path": "crates/engine/src/storage/wal_io/recovery_effect/mixed_system_tests.rs",
       "kind": "mandatory-memory",
       "scenario": "SHA-valid UndoB image and matching Pending metadata claim unsupported LSN3."
     },
     {
       "id": "MR05-010",
       "function": "mixed_recovery_rejects_pending_mismatch",
-      "path": "crates/engine/src/storage/wal_io/mixed_system_recovery_tests.rs",
+      "path": "crates/engine/src/storage/wal_io/recovery_effect/mixed_system_tests.rs",
       "kind": "mandatory-memory",
       "scenario": "SHA-valid UndoB image and matching Pending metadata use Free generation6 rather than initial generation1."
     },
     {
       "id": "MR06-001",
       "function": "mixed_recovery_rejects_sha_valid_unsupported_homes",
-      "path": "crates/engine/src/storage/wal_io/mixed_system_recovery_tests.rs",
+      "path": "crates/engine/src/storage/wal_io/recovery_effect/mixed_system_tests.rs",
       "kind": "mandatory-memory",
       "scenario": "UndoB home has unsupported LSN3."
     },
     {
       "id": "MR06-002",
       "function": "mixed_recovery_rejects_sha_valid_unsupported_homes",
-      "path": "crates/engine/src/storage/wal_io/mixed_system_recovery_tests.rs",
+      "path": "crates/engine/src/storage/wal_io/recovery_effect/mixed_system_tests.rs",
       "kind": "mandatory-memory",
       "scenario": "UndoB home has unsupported LSN0."
     },
     {
       "id": "MR06-003",
       "function": "mixed_recovery_rejects_sha_valid_unsupported_homes",
-      "path": "crates/engine/src/storage/wal_io/mixed_system_recovery_tests.rs",
+      "path": "crates/engine/src/storage/wal_io/recovery_effect/mixed_system_tests.rs",
       "kind": "mandatory-memory",
       "scenario": "UndoB Free generation6."
     },
     {
       "id": "MR06-004",
       "function": "mixed_recovery_rejects_sha_valid_unsupported_homes",
-      "path": "crates/engine/src/storage/wal_io/mixed_system_recovery_tests.rs",
+      "path": "crates/engine/src/storage/wal_io/recovery_effect/mixed_system_tests.rs",
       "kind": "mandatory-memory",
       "scenario": "UndoB Free generationMAX."
     },
     {
       "id": "MR06-005",
       "function": "mixed_recovery_rejects_sha_valid_unsupported_homes",
-      "path": "crates/engine/src/storage/wal_io/mixed_system_recovery_tests.rs",
+      "path": "crates/engine/src/storage/wal_io/recovery_effect/mixed_system_tests.rs",
       "kind": "mandatory-memory",
       "scenario": "UndoB occupied state marker."
     },
     {
       "id": "MR06-006",
       "function": "mixed_recovery_rejects_sha_valid_unsupported_homes",
-      "path": "crates/engine/src/storage/wal_io/mixed_system_recovery_tests.rs",
+      "path": "crates/engine/src/storage/wal_io/recovery_effect/mixed_system_tests.rs",
       "kind": "mandatory-memory",
       "scenario": "UndoB chunk-cell XUC1 magic in initial root."
     },
     {
       "id": "MR06-007",
       "function": "mixed_recovery_rejects_sha_valid_unsupported_homes",
-      "path": "crates/engine/src/storage/wal_io/mixed_system_recovery_tests.rs",
+      "path": "crates/engine/src/storage/wal_io/recovery_effect/mixed_system_tests.rs",
       "kind": "mandatory-memory",
       "scenario": "UndoB page header claims TransactionStatus kind9."
     },
     {
       "id": "MR06-008",
       "function": "mixed_recovery_rejects_sha_valid_unsupported_homes",
-      "path": "crates/engine/src/storage/wal_io/mixed_system_recovery_tests.rs",
+      "path": "crates/engine/src/storage/wal_io/recovery_effect/mixed_system_tests.rs",
       "kind": "mandatory-memory",
       "scenario": "UndoB page header claims owner2."
     },
     {
       "id": "MR06-009",
       "function": "mixed_recovery_rejects_sha_valid_unsupported_homes",
-      "path": "crates/engine/src/storage/wal_io/mixed_system_recovery_tests.rs",
+      "path": "crates/engine/src/storage/wal_io/recovery_effect/mixed_system_tests.rs",
       "kind": "mandatory-memory",
       "scenario": "UndoB page header claims owner generation2."
     },
     {
       "id": "MR06-010",
       "function": "mixed_recovery_rejects_sha_valid_unsupported_homes",
-      "path": "crates/engine/src/storage/wal_io/mixed_system_recovery_tests.rs",
+      "path": "crates/engine/src/storage/wal_io/recovery_effect/mixed_system_tests.rs",
       "kind": "mandatory-memory",
       "scenario": "UndoC full valid image is copied into UndoB home."
     },
     {
       "id": "MR06-011",
       "function": "mixed_recovery_rejects_sha_valid_unsupported_homes",
-      "path": "crates/engine/src/storage/wal_io/mixed_system_recovery_tests.rs",
+      "path": "crates/engine/src/storage/wal_io/recovery_effect/mixed_system_tests.rs",
       "kind": "mandatory-memory",
       "scenario": "UndoB root page slot count2 contradicts closed one-slot geometry."
     },
     {
       "id": "MR06-012",
       "function": "mixed_recovery_rejects_sha_valid_unsupported_homes",
-      "path": "crates/engine/src/storage/wal_io/mixed_system_recovery_tests.rs",
+      "path": "crates/engine/src/storage/wal_io/recovery_effect/mixed_system_tests.rs",
       "kind": "mandatory-memory",
       "scenario": "StatusA Free generation6 contradicts initial mixed Free generation1."
     },
     {
       "id": "MR07-001",
       "function": "mixed_recovery_rejects_complete_unsupported_grammar",
-      "path": "crates/engine/src/storage/wal_io/mixed_system_recovery_tests.rs",
+      "path": "crates/engine/src/storage/wal_io/recovery_effect/mixed_system_tests.rs",
       "kind": "mandatory-memory",
       "scenario": "Old Status-init reserve substituted for mixed reserve: valid old budget must not enter mixed scope."
     },
     {
       "id": "MR07-002",
       "function": "mixed_recovery_rejects_complete_unsupported_grammar",
-      "path": "crates/engine/src/storage/wal_io/mixed_system_recovery_tests.rs",
+      "path": "crates/engine/src/storage/wal_io/recovery_effect/mixed_system_tests.rs",
       "kind": "mandatory-memory",
       "scenario": "Old Status-init terminal substituted after mixed reserve: equal class cannot replace exact mixed history provenance."
     },
     {
       "id": "MR07-003",
       "function": "mixed_recovery_rejects_complete_unsupported_grammar",
-      "path": "crates/engine/src/storage/wal_io/mixed_system_recovery_tests.rs",
+      "path": "crates/engine/src/storage/wal_io/recovery_effect/mixed_system_tests.rs",
       "kind": "mandatory-memory",
       "scenario": "Complete SHA-valid Undo INIT changes native kind from root to unsupported chunk."
     },
     {
       "id": "MR07-004",
       "function": "mixed_recovery_rejects_complete_unsupported_grammar",
-      "path": "crates/engine/src/storage/wal_io/mixed_system_recovery_tests.rs",
+      "path": "crates/engine/src/storage/wal_io/recovery_effect/mixed_system_tests.rs",
       "kind": "mandatory-memory",
       "scenario": "Complete SHA-valid Undo INIT native byte count12896 disagrees with canonical13104."
     },
     {
       "id": "MR07-005",
       "function": "mixed_recovery_rejects_complete_unsupported_grammar",
-      "path": "crates/engine/src/storage/wal_io/mixed_system_recovery_tests.rs",
+      "path": "crates/engine/src/storage/wal_io/recovery_effect/mixed_system_tests.rs",
       "kind": "mandatory-memory",
       "scenario": "Complete SHA-valid Undo INIT payload redo index0 disagrees with canonical1."
     },
     {
       "id": "MR07-006",
       "function": "mixed_recovery_rejects_complete_unsupported_grammar",
-      "path": "crates/engine/src/storage/wal_io/mixed_system_recovery_tests.rs",
+      "path": "crates/engine/src/storage/wal_io/recovery_effect/mixed_system_tests.rs",
       "kind": "mandatory-memory",
       "scenario": "Complete SHA-valid Undo INIT allocator redo kind changes from10 to2."
     },
     {
       "id": "MR07-007",
       "function": "mixed_recovery_rejects_complete_unsupported_grammar",
-      "path": "crates/engine/src/storage/wal_io/mixed_system_recovery_tests.rs",
+      "path": "crates/engine/src/storage/wal_io/recovery_effect/mixed_system_tests.rs",
       "kind": "mandatory-memory",
       "scenario": "Complete SHA-valid Undo INIT payload record owner generation changes from1 to2."
     },
     {
       "id": "MR07-008",
       "function": "mixed_recovery_rejects_complete_unsupported_grammar",
-      "path": "crates/engine/src/storage/wal_io/mixed_system_recovery_tests.rs",
+      "path": "crates/engine/src/storage/wal_io/recovery_effect/mixed_system_tests.rs",
       "kind": "mandatory-memory",
       "scenario": "Complete required UndoB INIT has corrupt final frame SHA."
     },
     {
       "id": "MR07-009",
       "function": "mixed_recovery_rejects_complete_unsupported_grammar",
-      "path": "crates/engine/src/storage/wal_io/mixed_system_recovery_tests.rs",
+      "path": "crates/engine/src/storage/wal_io/recovery_effect/mixed_system_tests.rs",
       "kind": "mandatory-memory",
       "scenario": "Plan3 bootstrap high-water field is changed and SHA resealed; full canonical bootstrap equality rejects it."
     },
     {
       "id": "MR07-010",
       "function": "mixed_recovery_rejects_complete_unsupported_grammar",
-      "path": "crates/engine/src/storage/wal_io/mixed_system_recovery_tests.rs",
+      "path": "crates/engine/src/storage/wal_io/recovery_effect/mixed_system_tests.rs",
       "kind": "mandatory-memory",
       "scenario": "Pending UndoC LSN6 requires prefix whose last INIT contains only159 header bytes: required truncation is fatal."
     },
     {
       "id": "MR07-011",
       "function": "mixed_recovery_rejects_complete_unsupported_grammar",
-      "path": "crates/engine/src/storage/wal_io/mixed_system_recovery_tests.rs",
+      "path": "crates/engine/src/storage/wal_io/recovery_effect/mixed_system_tests.rs",
       "kind": "mandatory-memory",
       "scenario": "Checksum-valid Begin envelope with valid transaction identity is rejected explicitly by mixed scope before its carried system payload can be interpreted."
     },
     {
       "id": "MR08-001",
       "function": "mixed_recovery_partial_and_cancel_prefixes",
-      "path": "crates/engine/src/storage/wal_io/mixed_system_recovery_tests.rs",
+      "path": "crates/engine/src/storage/wal_io/recovery_effect/mixed_system_tests.rs",
       "kind": "mandatory-memory",
       "scenario": "Independent exact prefix at LSN0; full expected allocator/descriptor, typed masks, active inventory, remaining budget, replay topup, payload presence and unchanged WAL."
     },
     {
       "id": "MR08-002",
       "function": "mixed_recovery_partial_and_cancel_prefixes",
-      "path": "crates/engine/src/storage/wal_io/mixed_system_recovery_tests.rs",
+      "path": "crates/engine/src/storage/wal_io/recovery_effect/mixed_system_tests.rs",
       "kind": "mandatory-memory",
       "scenario": "Independent exact prefix at LSN1; full expected allocator/descriptor, typed masks, active inventory, remaining budget, replay topup, payload presence and unchanged WAL."
     },
     {
       "id": "MR08-003",
       "function": "mixed_recovery_partial_and_cancel_prefixes",
-      "path": "crates/engine/src/storage/wal_io/mixed_system_recovery_tests.rs",
+      "path": "crates/engine/src/storage/wal_io/recovery_effect/mixed_system_tests.rs",
       "kind": "mandatory-memory",
       "scenario": "Independent exact prefix at LSN2; full expected allocator/descriptor, typed masks, active inventory, remaining budget, replay topup, payload presence and unchanged WAL."
     },
     {
       "id": "MR08-004",
       "function": "mixed_recovery_partial_and_cancel_prefixes",
-      "path": "crates/engine/src/storage/wal_io/mixed_system_recovery_tests.rs",
+      "path": "crates/engine/src/storage/wal_io/recovery_effect/mixed_system_tests.rs",
       "kind": "mandatory-memory",
       "scenario": "Independent exact prefix at LSN3; full expected allocator/descriptor, typed masks, active inventory, remaining budget, replay topup, payload presence and unchanged WAL."
     },
     {
       "id": "MR08-005",
       "function": "mixed_recovery_partial_and_cancel_prefixes",
-      "path": "crates/engine/src/storage/wal_io/mixed_system_recovery_tests.rs",
+      "path": "crates/engine/src/storage/wal_io/recovery_effect/mixed_system_tests.rs",
       "kind": "mandatory-memory",
       "scenario": "Independent exact prefix at LSN4; full expected allocator/descriptor, typed masks, active inventory, remaining budget, replay topup, payload presence and unchanged WAL."
     },
     {
       "id": "MR08-006",
       "function": "mixed_recovery_partial_and_cancel_prefixes",
-      "path": "crates/engine/src/storage/wal_io/mixed_system_recovery_tests.rs",
+      "path": "crates/engine/src/storage/wal_io/recovery_effect/mixed_system_tests.rs",
       "kind": "mandatory-memory",
       "scenario": "Independent exact prefix at LSN5; full expected allocator/descriptor, typed masks, active inventory, remaining budget, replay topup, payload presence and unchanged WAL."
     },
     {
       "id": "MR08-007",
       "function": "mixed_recovery_partial_and_cancel_prefixes",
-      "path": "crates/engine/src/storage/wal_io/mixed_system_recovery_tests.rs",
+      "path": "crates/engine/src/storage/wal_io/recovery_effect/mixed_system_tests.rs",
       "kind": "mandatory-memory",
       "scenario": "Independent exact prefix at LSN7; full expected allocator/descriptor, typed masks, active inventory, remaining budget, replay topup, payload presence and unchanged WAL."
     },
     {
       "id": "MR08-008",
       "function": "mixed_recovery_partial_and_cancel_prefixes",
-      "path": "crates/engine/src/storage/wal_io/mixed_system_recovery_tests.rs",
+      "path": "crates/engine/src/storage/wal_io/recovery_effect/mixed_system_tests.rs",
       "kind": "mandatory-memory",
       "scenario": "Independent exact prefix at LSN8; full expected allocator/descriptor, typed masks, active inventory, remaining budget, replay topup, payload presence and unchanged WAL."
     },
     {
       "id": "MR09-001",
       "function": "mixed_recovery_keeps_old_entries_closed",
-      "path": "crates/engine/src/storage/wal_io/mixed_system_recovery_tests.rs",
+      "path": "crates/engine/src/storage/wal_io/recovery_effect/mixed_system_tests.rs",
       "kind": "mandatory-memory",
       "scenario": "Old effect acquire rejects plan3 with UnsupportedBootstrapPlan and no mutation."
     },
     {
       "id": "MR09-002",
       "function": "mixed_recovery_keeps_old_entries_closed",
-      "path": "crates/engine/src/storage/wal_io/mixed_system_recovery_tests.rs",
+      "path": "crates/engine/src/storage/wal_io/recovery_effect/mixed_system_tests.rs",
       "kind": "mandatory-memory",
       "scenario": "Read-only prefix acquire rejects plan3 with UnsupportedBootstrapPlan and no mutation."
     },
     {
       "id": "MR09-003",
       "function": "mixed_recovery_keeps_old_entries_closed",
-      "path": "crates/engine/src/storage/wal_io/mixed_system_recovery_tests.rs",
+      "path": "crates/engine/src/storage/wal_io/recovery_effect/mixed_system_tests.rs",
       "kind": "mandatory-memory",
       "scenario": "Explicit mixed acquire rejects old plan2 bootstrap and Status-only WAL with no mutation."
     },
     {
       "id": "MO-LOAD-023",
       "function": "mixed_owner_load_home_zero_eof_fences_without_install",
-      "path": "crates/engine/src/storage/wal_io/mixed_system_owner_load_tests.rs",
+      "path": "crates/engine/src/storage/wal_io/mixed_system_owner/tests/load_addendum.rs",
       "kind": "mandatory-memory",
       "scenario": "HOME page1 initial read returns zero; intact original home remains on disk.",
       "input": {
@@ -973,7 +973,7 @@
     {
       "id": "MO-LOAD-024",
       "function": "mixed_owner_load_home_partial_eof_fences_without_install",
-      "path": "crates/engine/src/storage/wal_io/mixed_system_owner_load_tests.rs",
+      "path": "crates/engine/src/storage/wal_io/mixed_system_owner/tests/load_addendum.rs",
       "kind": "mandatory-memory",
       "scenario": "HOME page1 initial read supplies8192 exact bytes then EOF, leaving incomplete read rejected.",
       "input": {
@@ -991,7 +991,7 @@
     {
       "id": "MO-LOAD-025",
       "function": "mixed_owner_load_rejects_sha_valid_later_undo_class",
-      "path": "crates/engine/src/storage/wal_io/mixed_system_owner_load_tests.rs",
+      "path": "crates/engine/src/storage/wal_io/mixed_system_owner/tests/load_addendum.rs",
       "kind": "mandatory-memory",
       "scenario": "Normal StatusA home with later UndoB native class changed from root to unsupported chunk; canonical complete history rejects it.",
       "input": {
@@ -1014,7 +1014,7 @@
     {
       "id": "MO-LOAD-026",
       "function": "mixed_owner_load_rejects_sha_valid_later_undo_geometry",
-      "path": "crates/engine/src/storage/wal_io/mixed_system_owner_load_tests.rs",
+      "path": "crates/engine/src/storage/wal_io/mixed_system_owner/tests/load_addendum.rs",
       "kind": "mandatory-memory",
       "scenario": "Normal StatusA home with later UndoB group native byte count not matching exact closed geometry.",
       "input": {
@@ -1037,7 +1037,7 @@
     {
       "id": "MO-LOAD-027",
       "function": "mixed_owner_load_rejects_sha_valid_terminal_descriptor_budget",
-      "path": "crates/engine/src/storage/wal_io/mixed_system_owner_load_tests.rs",
+      "path": "crates/engine/src/storage/wal_io/mixed_system_owner/tests/load_addendum.rs",
       "kind": "mandatory-memory",
       "scenario": "Normal StatusA home with final UndoC Finished descriptor consuming59200 Status bytes rather than59408 Undo bytes.",
       "input": {
@@ -1062,7 +1062,7 @@
     {
       "id": "MO-LOAD-028",
       "function": "mixed_owner_load_rejects_sha_valid_wrong_descriptor_predecessor",
-      "path": "crates/engine/src/storage/wal_io/mixed_system_owner_load_tests.rs",
+      "path": "crates/engine/src/storage/wal_io/mixed_system_owner/tests/load_addendum.rs",
       "kind": "mandatory-memory",
       "scenario": "Normal StatusA home with final UndoC predecessor digest replaced by real completed work2 descriptor digest, instead of work3 reserve descriptor.",
       "input": {

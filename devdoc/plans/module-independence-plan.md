@@ -1,5 +1,7 @@
 # XADB 모듈 독립 개발 구조 전환 작업 계획
 
+2026-10-29 [L3 배치 적용](../evidence/module-independence-survey-20261026.md#l3-mixed-system-move): main `d251b8f`에서 [L3 이동표](#l3-move-table)의 권장안대로 `mixed_system_owner`의 자손6개를 `mixed_system_owner/`로, recovery 시험을 선언 폴더 `recovery_effect/`로 옮겼다. init 두 파일은 형제를 가진 평면 부모 아래에 남기고 L5에서 판단한다. `#[path]` 7줄과 fixture inventory의 `path` 151개만 바꿨고, 이동만 한 6개의 byte 동일, `cargo check` PASS, 이동 전후 시험 목록 동일을 확인했다. 시험 본문은 NOT_RUN이다. L4·L5와 전체 M4/M5는 미완료다.
+
 2026-10-29 [L2 배치 적용](../evidence/module-independence-survey-20261026.md#l2-concurrency-move): main `b691fc7`에서 `transaction::concurrency`의 자손7개를 `transaction/concurrency/`로 옮기고 `#[path]` 7줄과 fixture `include_str!` 경로2개만 바꿨다. 이동만 한 5개의 byte 동일, `cargo check` PASS, 이동 전후 시험 목록 동일을 확인했고 시험 본문은 NOT_RUN이다. L3–L5와 전체 M4/M5는 미완료다.
 
 2026-10-29 [L1 배치 적용](../evidence/module-independence-survey-20261026.md#l1-allocation-move): main `feb2b14`에서 확정한 배치 B로 파일7개를 옮기고 `#[path]` 7줄만 바꿨다. 이동만 한 5개의 byte 동일, `cargo check` PASS, 이동 전후 시험 목록 동일을 확인했고 시험 본문은 NOT_RUN이다. L2–L5와 전체 M4/M5는 미완료다.
@@ -410,7 +412,7 @@ Root3/Job3/Profile3·Row scope3·base4는 이름 변경의 부수 효과가 아�
 <a id="folder-reorganization"></a>
 ## 13. 분리 모듈의 폴더 재정리 후속 계획
 
-2026-10-29 · `XADB-MODULE-LAYOUT-001` · **D2 ACCEPTED / 후속 계획 문서 반영 완료 / 제품 이동은 [L1](../evidence/module-independence-survey-20261026.md#l1-allocation-move)·[L2](../evidence/module-independence-survey-20261026.md#l2-concurrency-move)만 적용, 시험 본문 NOT_RUN**
+2026-10-29 · `XADB-MODULE-LAYOUT-001` · **D2 ACCEPTED / 후속 계획 문서 반영 완료 / 제품 이동은 [L1](../evidence/module-independence-survey-20261026.md#l1-allocation-move)·[L2](../evidence/module-independence-survey-20261026.md#l2-concurrency-move)·[L3](../evidence/module-independence-survey-20261026.md#l3-mixed-system-move)만 적용, 시험 본문 NOT_RUN**
 
 사용자는 파일 분리에 비해 폴더 정리가 부족한 부분을 먼저 조사하도록 요청했고, 참조 관계·상태 소유·API가 독립성의 핵심인지 의견을 확인했다. 이어 임시 계획을 저장하고 진행 중인 작업 종료 뒤 기존 문서에 반영하도록 지시했으며, 후속 “진행해 주세요” 요청에 따라 이 절을 작성한다. **이번 실행 범위는 후속 계획과 관련 문서의 정비다.** 제품 파일 이동·참조 변경의 구현은 아직 시작하지 않는다.
 
@@ -595,6 +597,83 @@ Root3/Job3/Profile3·Row scope3·base4는 이름 변경의 부수 효과가 아�
 검증은 L1과 같다. `crates/` diff는 rename 7개, `#[path]` 7줄, `include_str!` 2줄뿐이어야 하고, 이동만 하는 5개(`commit/tests`·`read`·`test_support`·`catalog_test_support`·`tests/resource`)는 기준 SHA-256과 같아야 한다. `cargo check -p xadb-engine --all-targets --all-features --locked`와 이동 전후 `cargo test -p xadb-engine --lib --all-features --locked -- --list` 전체 출력의 동일성을 확인한다. 시험 본문, runtime script, borrow probe는 본문·논리 경로·probe 위치가 같으므로 NOT_RUN이다. `include_str!`이 읽는 fixture byte가 같다는 것은 실제 경로 대조로 확인한다.
 
 기준 SHA-256(`b691fc7`): `concurrency.rs` `1cb7c28602a6b66addf605fa75cf75513931aad0990d659184664ec6a55315cf`, `concurrency_commit.rs` `10c3245ca5d79a43a2a2cefe414c007288c68a5b4e2ae46373e72b75b69aaa47`, `concurrency_commit_tests.rs` `ebe20fc93f0c333ca4e8ffa564322e7f47cd18b5a4a6b7a97c8c4c2959d4c1ee`, `concurrency_read.rs` `b4d77422aa142f57b18b0fa8f8b2e909c4c2374efdeecb850ece9e31c92e0f22`, `concurrency_test_support.rs` `8f6aa2a939cb8c865077fb366a7f661a2485636a5e1c9e16e9bc05914debb5d0`, `concurrency_catalog_test_support.rs` `11ef50fdf68f1f78d42916ba9a2006aa9553796137b0bfedff06ed5bff7c20c5`, `concurrency_tests.rs` `4d0f0176ae71ea4da39991edc82ad4e933afd45f7e1e33cf73021ae35c30c8ff`, `concurrency_resource_tests.rs` `1629d2889b637c4bdf1f106ff8d260ddf4cf14a3c159b4b0f43f8bd44956efe5`, `transaction.rs` `fcbd03dbd368d21483c800820e36350edc5f41aee49ef52151b16eda52b20b4b`.
+
+<a id="l3-move-table"></a>
+### L3 파일별 이동표
+
+2026-10-29 · **이동표 / 논리 부모별 배치(권장안) / 실행 결과는 증거 문서**
+
+L2 뒤 L3의 두 안을 제시했고 사용자는 “권장으로 진행”을 선택했다. 이어 “권장으로 쭉 진행해 주세요, 권장이 없고 결정이 꼭 필요한 경우에만 멈추고 질문해 주세요”라고 지시했다. 기준은 main `d251b8f62b77e16ca92cffefc691bbe13511ffe8`, tree `8f3143a67cedebb7cb48479a432dab91079972fe`이며 checkout은 clean이다. 아래 경로는 `crates/engine/src/storage/wal_io/` 기준이고 `MS`는 논리 경로 `crate::storage::wal_io::bootstrap::doublewrite_install::mutable_storage`다.
+
+**논리 부모.** 위 후보 표는 `mixed_system_*` 10개를 `mixed_system/` 한 폴더에 모으는 안이었다. 실제 선언을 대조하면 10개는 서로 다른 하위 트리 4개(owner·init·init 시험·recovery 시험)에 속하고, 직접 논리 부모는 6곳이다.
+
+| 파일(줄) | 논리 경로 | 선언 위치 | cfg |
+| --- | --- | --- | --- |
+| `mixed_system_owner.rs`(378) | `MS::status_init::status_flush::mixed` | `status_home_flush.rs:36` | production |
+| `mixed_system_history.rs`(392) | `…::mixed::history` | `mixed_system_owner.rs:11` | production |
+| `mixed_system_load.rs`(365) | `…::mixed::load` | `mixed_system_owner.rs:13` | production |
+| `mixed_system_resources.rs`(170) | `…::mixed::resources` | `mixed_system_owner.rs:15` | production(`#[test]` 1) |
+| `mixed_system_owner_tests.rs`(1767) | `…::mixed::tests` | `mixed_system_owner.rs:19` | `test` |
+| `mixed_system_owner_native_tests.rs`(392) | `…::mixed::tests::native` | `mixed_system_owner_tests.rs:1132` | 부모의 `test`·linux |
+| `mixed_system_owner_load_tests.rs`(234) | `…::mixed::tests::load_addendum` | `mixed_system_owner_tests.rs:1766` | 부모의 `test` |
+| `mixed_system_init.rs`(199) | `MS::status_init_operation::mixed` | `status_init_operation.rs:43` | production |
+| `mixed_system_init_tests.rs`(897) | `MS::status_bootstrap_tests::undo::mixed_init` | `undo_bootstrap_tests.rs:7` | `test` |
+| `mixed_system_recovery_tests.rs`(753) | `MS::recovery_prefix::effect::tests::mixed` | `recovery_effect/tests.rs:1199`의 `"../mixed_system_recovery_tests.rs"` | `test` |
+
+**채택: 논리 부모를 따르는 배치.** owner 자손 6개는 owner 진입 파일 옆 `mixed_system_owner/`로 옮긴다(배치 B). recovery 시험은 선언한 `recovery_effect/tests.rs`의 폴더로 옮긴다. 그 부모의 다른 시험 자손 `operational_tests.rs`·`empty_transaction_tests.rs`가 `recovery_effect/`에 `<이름>_tests.rs`로 있으므로 같은 형식의 `mixed_system_tests.rs`로 하고, `recovery_effect/tests.rs`에서 상위 폴더를 가리키던 `../` 경로가 없어진다. `status_home_flush/native_tests.rs:589–598` 등 다른 `../` 선언은 L3 범위가 아니다. init 두 파일은 그대로 둔다. 부모 `status_init_operation.rs`에는 `fixed`(`fixed_system_operation.rs`)·`retention`(`plan4_status_init_operation.rs`) 형제가 있고, `undo_bootstrap_tests.rs`에는 `native_undo` 형제가 있다. `mixed`만 옮기면 형제가 갈라지므로 이 부모들의 폴더화는 설치·Status 책임을 다루는 L5에서 판단한다.
+
+비교한 대안은 후보 표대로 10개를 모두 `mixed_system/`에 모으고 논리 부모를 `#[path]`로 유지하는 것이다. 그러면 init·init 시험·recovery 시험 3곳에서 물리 폴더와 논리 부모가 어긋나고, 선언 파일 `status_init_operation.rs`·`undo_bootstrap_tests.rs`도 고쳐야 한다. 두 안 모두 논리 경로·visibility·cfg·시험 selector는 같다.
+
+#### 이동과 선언
+
+| 현재 파일 | 목표 파일 | 선언 위치와 새 `#[path]` |
+| --- | --- | --- |
+| `mixed_system_owner.rs` | 유지 | `status_home_flush.rs:36`, 변경 없음 |
+| `mixed_system_history.rs` | `mixed_system_owner/history.rs` | `mixed_system_owner.rs:11` → `"mixed_system_owner/history.rs"` |
+| `mixed_system_load.rs` | `mixed_system_owner/load.rs` | `mixed_system_owner.rs:13` → `"mixed_system_owner/load.rs"` |
+| `mixed_system_resources.rs` | `mixed_system_owner/resources.rs` | `mixed_system_owner.rs:15` → `"mixed_system_owner/resources.rs"` |
+| `mixed_system_owner_tests.rs` | `mixed_system_owner/tests.rs` | `mixed_system_owner.rs:19` → `"mixed_system_owner/tests.rs"` |
+| `mixed_system_owner_native_tests.rs` | `mixed_system_owner/tests/native.rs` | 이동한 `tests.rs:1132` → `"tests/native.rs"` |
+| `mixed_system_owner_load_tests.rs` | `mixed_system_owner/tests/load_addendum.rs` | 이동한 `tests.rs:1766` → `"tests/load_addendum.rs"` |
+| `mixed_system_recovery_tests.rs` | `recovery_effect/mixed_system_tests.rs` | `recovery_effect/tests.rs:1199` → `"mixed_system_tests.rs"` |
+| `mixed_system_init.rs`, `mixed_system_init_tests.rs` | 유지(L5에서 판단) | 변경 없음 |
+
+`mixed_system_owner.rs`는 `#[path]`로 읽히므로 그 안의 `#[path]`는 `wal_io/` 기준이고, 이동한 `tests.rs`의 `#[path]`는 새 폴더 `mixed_system_owner/` 기준이다. `recovery_effect/tests.rs`는 `recovery_effect/mod.rs`의 `mod tests;`로 읽히며 inline module 밖의 `#[path]`는 그 파일의 폴더 `recovery_effect/` 기준이다. 세 `#[path]`는 모두 inline module 밖에 있다. 대상 파일에 `include!`·`include_str!`·`file!`·`module_path!`·`cfg_attr(path)`는 없고, fixture는 `env!("CARGO_MANIFEST_DIR")` 기준으로 읽으므로 위치와 무관하다.
+
+#### 소유·제공·소비
+
+소비자는 owner 표면의 타입 이름과 `status_flush::mixed` 경로를 grep으로 모은 파일 목록이며 L3 파일은 뺐다. rustc 이름 해석 결과가 아니므로 확인된 하한이고 실행 때 컴파일로 최종 확인한다.
+
+| 논리 모듈 | 상태 소유 | 제공 | 실제 소비자 | visibility(유지) |
+| --- | --- | --- | --- | --- |
+| `…::mixed`(owner) | static 없음. 원 binding·pool·flush continuation 위의 plan3 actor이며 이전 Status actor나 가변 frame을 밖으로 내지 않는다 | `MixedSystem`·`MixedSystemBinding`·`MixedSystemFlusher`·`MixedSystemWriter`·`MixedSystemReader`·`MixedSystemReadGuard`·`ReservedSystemPage`·`SystemPage`·`SystemPageKind`·`SystemSlotStep`·`SystemResidencyCursor`·`InitializedSystemObservation`, load의 `SystemLoadError`·`SystemLoadObservation`·`SystemResidencyStep`·`MixedLoadInstall`, resources의 `fits` | `status_init.rs:58`의 `pub(crate) use` 재노출을 거쳐 운영 15개 이상: `storage/wal_io.rs`, `bootstrap`, `doublewrite_install`, `mutable_storage`, `status_init`, `status_init_operation`, `status_load`, `recovery_prefix`, `dirty_allocation`, `fixed_system_operation`, `allocation_reservation/operation`, `plan4_retention/population`, `storage/plan4_recovery_base/catalog/graph.rs`, `graph/{ledger,relations}.rs`. L3 안에서는 유지하는 `mixed_system_init`·`mixed_system_init_tests`가 쓴다 | `pub(super) mod`, 항목 `pub(crate)`·`pub(in super::super)` |
+| `…::mixed::history` | 보관 상태 없음. WAL에서 history를 재구성 | `HistoryError`, `History`, `reconstruct`, `call_bytes` | owner | private `mod` |
+| `…::mixed::load` | 보관 상태 없음. 원 load snapshot에서 residency 단계를 진행 | `LoadCause`, `SystemLoadError`, `SystemLoadObservation`, `SystemResidencyStep`, `MixedLoadInstall`, `fits` | owner와 그 재노출 소비자 | private `mod` |
+| `…::mixed::resources` | 상태 없음. activation 크기 census | `ActivationLayout`, `Census`, `census`, `fits` | owner(`fits` 재노출 → `status_init.rs:360`) | private `mod` |
+| `…::mixed::tests`와 `native`·`load_addendum` | 시험 | 시험 78·3·6(scenario macro 생성 포함) | `scripts/dev3_mixed_owner_native.py`의 `PREFIX`(`…::mixed::tests::native::`)와 `XADB_MIXED_OWNER_INCLUDE` case ID | private |
+| `…::effect::tests::mixed` | 시험 | 시험 9 | `XADB_MIXED_RECOVERY_INCLUDE` case ID | private |
+| `MS::status_init_operation::mixed`(유지) | 보관 상태 없음. mixed init plan 준비·검산·materialize | `Kind`, `Plan`, `Expected`, `Prepared`, `prepare`, `validate`, `materialize` | `operation::mixed` 경로로 운영 12개 이상: `status_home_flush`, `status_init`, `status_init_operation`, `status_load`, `recovery_prefix`, `recovery_effect/physical`, `fixed_system_operation`, `plan4_status_init_operation`, `empty_transactions/{load,pressure}`, owner와 `history`. 시험 3개: `mixed_system_init_tests`, `status_init_tests`, `status_home_flush/authority_tests` | `pub(super) mod`, 항목 `pub(in super::super)` |
+| `MS::status_bootstrap_tests::undo::mixed_init`(유지) | 시험 | 시험 9 | — | private |
+
+#### 영향 case와 경로 참조
+
+| 대상 | 처리 |
+| --- | --- |
+| 이동 파일의 시험 87개(owner 78·native 3·load_addendum 6), recovery 9, resources 1 | 시험 발견 목록의 동일성만 확인한다. 본문이 그대로이므로 NOT_RUN |
+| native 실행 `scripts/dev3_mixed_owner_native.py` | 논리 `PREFIX`와 case ID만 쓴다. 목록에서 selector를 확인하고 native 실행 NOT_RUN |
+| borrow probe `check_dev3_mixed_owner_borrows.py`·`check_dev3_mixed_init_borrows.py` | probe는 `wal_io/`에 두고 `mutable_storage.rs`에 주입하며 primary span은 probe 파일이어야 한다. probe 위치·논리 경로가 같으므로 NOT_RUN |
+| 현재 fixture inventory `crates/engine/tests/fixtures/dev3-mixed-system-owner/runtime-manifest.json` | case별 `path` 151개(owner 시험 78·native 3·load_addendum 6·recovery 64)를 새 위치로 바꾼다. 읽는 script·시험은 없지만 [DEV3 시험 계획](dev3-test-plan.md)이 선택 inventory로 연결하는 현재 문서다. 각 case의 `function`이 이동 전 경로와 새 경로의 파일에 있는지, 다른 필드가 같은지를 대조한다. 이 파일의 원 SHA-256을 적은 증거 JSON은 고치지 않는다 |
+| 이력 continuation `scripts/dev3_mixed_owner_continue.py` | `WORKER`·`FORMAT_ONLY_TEST` 상수는 보존된 원/continuation source 두 root 안의 경로를 비교하므로 바꾸지 않는다. 현재 source로 새 continuation을 돌리면 `WORKER`가 없어 `FAIL_NATIVE_WORKER_LINEAGE` 또는 승인 identity 검사에서 멈춘다 |
+| 관리 JSON | `repository-build-plan.json`의 이동 대상 경로 문자열 8개(`dev3_mixed_system_owner` 7개와 다른 단위의 `mixed_system_load.rs` 1개) |
+| Markdown | 이동 파일을 가리키는 현재 링크·본문 표기가 없다. 증거 JSON 5개의 원 경로 표기는 보존 |
+
+검증은 L1·L2와 같다. `crates/` diff는 rename 7개, `#[path]` 7줄, fixture inventory의 `path` 151개뿐이어야 하고, 이동만 하는 6개(`history`·`load`·`resources`·`tests/native`·`tests/load_addendum`·recovery 시험)는 아래 기준 SHA-256과 같아야 한다. 유지하는 init 두 파일과 선언 파일 `status_home_flush.rs`·`status_init_operation.rs`·`undo_bootstrap_tests.rs`는 바뀌지 않는다. `cargo check -p xadb-engine --all-targets --all-features --locked`와 이동 전후 시험 목록 전체 출력의 동일성을 확인한다.
+
+기준 SHA-256(`d251b8f`): `mixed_system_owner.rs` `3063ac137d4fca24a6bc265100e2de4ba8f2724faf3c4cdb1fd03275e8a34d28`, `mixed_system_history.rs` `f7ce83d76b05f882c762215d42173bbe6d28b5646c4784dd7549a076cba2200d`, `mixed_system_load.rs` `2d7fbacc27b1072c7552f7d29626c6dd22ad00d2422ab1ee01a4daeb9fa867de`, `mixed_system_resources.rs` `130fe67d1c4e1a5783a4039a3034a800331e6bfa694355dc12aa9228edffb903`, `mixed_system_owner_tests.rs` `b7992a420ad0aea72b1fa18d5f10585dc7e01715ebf92f142f36fefcbda465d7`, `mixed_system_owner_native_tests.rs` `06f114a632a6e52db99ff67dd78e712d0afa7151930503769da018df8bf43147`, `mixed_system_owner_load_tests.rs` `4ad20e4ef52a49858c22c5dfab28d9d51334cd7da213283a296aa17a25a37b04`, `mixed_system_recovery_tests.rs` `2b2b531eef4eeae61713501ec2f2316405130dd5c18a14d0e486e3928d601536`, `recovery_effect/tests.rs` `bb4dbdac462e7f713a0ee08297e86bc9fae4baf63e68eaa3849c3cf14fcfcc6d`, `runtime-manifest.json` `bac34bd2dacd49410f21419ab53dc59e504c625edfd135ba74577729272ce040`.
+
+#### L3 범위 밖 관찰
+
+owner 표면은 `status_init.rs`의 `pub(crate) use` 재노출을 거쳐 `wal_io` 밖의 `plan4_recovery_base` Catalog graph까지 쓰인다. init 두 파일은 형제를 가진 평면 부모 아래에 남는다. 배치 정리는 이 참조와 부모를 바꾸지 않으며, 둘 다 L5와 위 이행 순서 4단계의 입력이다.
 
 ### 완료 조건과 문서 정본
 
