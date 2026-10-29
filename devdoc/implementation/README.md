@@ -1,5 +1,7 @@
 # 현재 구현
 
+2026-10-29 [A Row INSERT scope3 후보 생산](../evidence/module-independence-survey-20261026.md#consumer-a-scope3-forward-clr): branch `claude/project-thread-h2j8oc`에서 `row/insert/group*`가 Forward·CLR 후보 frame과 다섯 after를 만들고 모든 입력 거부를 첫 출력 전에 끝낸다. MCA00-V06 16 selector PASS, 독립 검토 2회(필수1 해결). 실제 C3 lane·WAL·replay 연결은 미완료다.
+
 2026-10-29 [U2-C1 Profile3 genesis 순수 공급](../evidence/module-independence-survey-20261026.md#row-genesis3-supply): branch `claude/project-thread-h2j8oc`에서 호출자 없는 Row genesis encode/validate와 Row·Profile3 source 상계를 공급했다. 신규6 선택 PASS, 독립 검토 반영 r2 3선택 PASS. current Profile3 전환은 미완료다.
 
 2026-10-29 [C0 Row 소비 경계](../evidence/module-independence-survey-20261026.md#c0-row-boundary): branch `claude/project-thread-h2j8oc`에서 `plan4_apply/row.rs`와 `row/{write,read,rollback}.rs`에 Row write·read operation·live rollback wrapper와 `commit_row`·`finish_aborted`·cursor credit을 공급했다. 본문은 효과 전 Unsupported이며 credit은 view를 빌린다. compiler probe와 runtime 선택이 각 1회 PASS, 독립 검토 필수1 반영. 실제 C2/C3 adapter·C4 recovery 타입·A/B 연결·M4/M5는 미완료다.

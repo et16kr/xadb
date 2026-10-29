@@ -3570,3 +3570,48 @@ artifact는 프로젝트 공유 폴더 `module-independence-20261029/artifacts/m
 artifact는 `module-independence-20261029/artifacts/module-u2c1-20261029/`(`manifest.sha256` SHA-256 `40cefcc1670511fedfcdc23311a38e7b6d5cfcfd6858b26cf0300f4ebbf5445b`)에 r1/r2 manifest·runner·case 로그·build/check 로그·시험 목록·검토 요약을 보존한다. export·target·ELF는 기록 뒤 삭제했다.
 
 **남은 의무.** base4 layout(`plan4_recovery_base/row.rs`) source 계수는 U2-C2에서 공급한다. U2-C4가 실제 caller의 Profile 선택, bootstrap/selection의 Profile2 계수 교체, Row census/Aging/descriptor 결합, shared reader의 grammar 선택을 맡는다. 이 증거는 순수 page/cell 공급과 source-value 계수에 한정되며 current Profile3 설치·선택·base4·복구 증거가 아니다.
+
+<a id="consumer-a-scope3-forward-clr"></a>
+## 2026-10-29 A Row INSERT scope3 Forward/CLR 후보 생산과 MCA00-V06
+
+A 제품 본문이 C0가 준 **권한 없는 관측값**으로 scope3 Row INSERT의 Forward와 CLR 후보 group을 만든다. 범위는 C0_ONLY이며 실제 RowReserve·lane 생성·WAL append·install·ACK·replay는 C3/C4 공급 뒤의 일이다. 작성 기준 `76742f3`, A 전용 worktree의 지역 branch `module-a-producer`에서 A 독점 경로(`storage/row/insert.rs`, `row/insert/**`, `tests/fixtures/module-row-insert/`)만 편집했고 B 코드·fixture를 수입하지 않았다. reservation/pin/install/receipt/lane 생성자는 새로 없고 계약의 untrusted `RowProposal::new`만 쓴다.
+
+| 작성 commit | 통합 commit | 내용 |
+| --- | --- | --- |
+| `ba24925` | `b879808` | Forward 후보: `insert.rs` 어댑터, `insert/group.rs`(`observe`), `group/{images,frame}.rs` |
+| `2d49268` | `ee31593` | CLR 후보: 같은 핵심의 CLR 분기, `leaf::{current,remove}`, `produce_clr` |
+| `1b7c98e` | `55baf64` | MCA00-V06 시험 7개, `make_literals.py`, manifest, `scope3/` literal |
+| `244b156` | `6c180f6` | 독립 검토 필수 지적 수정: 모든 입력 거부를 첫 출력 byte 전으로 이동, 권고 2/3/7 반영 |
+
+**제품 본문.** [`insert.rs`](../../crates/engine/src/storage/row/insert.rs)의 `produce_insert`/`produce_clr`는 `RowProducerLane::parts()`의 getter 값을 평문 `GroupInput`으로 복사하고(Forward는 reserve-sealed canonical digest 재검산) 순수 `group::produce`를 호출해 `RowProposal`을 돌려준다. [`group.rs`](../../crates/engine/src/storage/row/insert/group.rs)의 `observe`는 header/actor, RootJob·TerminalJob 상태·identity, census에서 유도한 H와 lane predecessor, 문장 mark, Root/Jobs 64칸 census, Status(Forward는 Active·head H, CLR은 rollback target·next), C와 Job cell_bytes, Tx 서술자의 owner·chain·inventory·잔여 채무, U(Forward Free 세대, CLR 정확한 Live material), H 증명, anchor→leaf, CLR 현재 행 version·projection, 물리 순서와 `after_order`를 확인한다. `images.rs`가 Root·Job·XSH1 Status·XUR1 U·RowLeaf after와 Tx/Aging 서술자 after를, `frame.rs`가 core256·native5·edge `3+h`·count2·item·Patch redo5·XHG1 header와 tag3 봉투를 쓰고 `semantic_row::decode_layout`으로 다시 읽는다. 길이는 Forward `91304+C+128h`, CLR `91096+C+128h`다.
+
+**독립 literal.** `make_literals.py`는 `struct`·`hashlib`·`pathlib`만 쓰고 engine 코드·Rust 출력·B fixture를 수입하지 않으며 scope3 이력(AgingStart, 빈 거래 terminal 정리, Begin, Reserve, H Forward, 문장/거래 RollbackStart)을 계약 byte 표로 모사한다. H 없음(terminal ordinal2·U ordinal3이 Jobs page2 공유, Forward301→거래 RollbackStart302→CLR303)과 H 있음(H ordinal15·page10·RowId4, U ordinal16·page3, Forward501→문장 RollbackStart502→CLR503), 행 RowId7(Int64 42, Utf8 "xadb", L22·C202)이다.
+
+**r1(작성 세션, `1b7c98e`).** [manifest](../../tests/fixtures/module-row-insert/manifest.json) r1(SHA-256 `76d38a85f65f67e3114f5222622f67a92ffe019e0a260c1e048493c1dc8a2e29`, 입력77)을 17:09:21 KST에 동결한 뒤 `cargo check --all-targets --all-features` 경고0(commit별 8.18/12.81초, 시험 포함 28.59초), test build 77.42초를 거쳐 신규 7 selector를 `--exact`로 각1회 실행해 모두 PASS(0.05–0.22초)했다. **test build는 case당 30초 한도를 넘었다**(빈 target에서 의존성까지 cold build, timeout 미적용). 이 한도에 대한 PASS를 주장하지 않는다. ELF `517bfdc337dc1661c22e974070639dc3536086b50a5c30e23f3cb58b07b3b916`.
+
+**독립 검토 1차(필수1·선택8).** 별도 읽기 전용 subagent가 literal을 다시 생성하고 계약과 대조했다.
+- 필수: Forward RowLeaf의 중복 RowId·overflow·Capacity(`leaf.rs`의 편집이 after 쓰기 뒤 실행), Aging before 서술자 검산(`aging::next`가 다섯 after와 Tx 서술자 뒤), CLR 잔여 `BudgetMismatch`(`observe`는 ≥만 확인)가 출력 byte를 쓴 뒤 거부했다. [obligation 형식](../contracts/dev3-obligation-format.md)의 "거부는 출력 전" 규칙과 `group.rs`의 주장에 어긋난다.
+- 선택: Forward after digest를 새 record의 XRP1과 대조하지 않음(2), page 순서 정렬 미시험(3), 미실행 분기(4: target 없는 문장 CLR, cell 없는 경로, Allocator source, lane adapter `propose`), 해석 (4)는 [group 형식](../contracts/dev3-create-group-format.md)과 obligation §6.4가 고정한 사항(5), 오류형 이름 `InsertError` vs 계약 `RowError`(6), before-LSN0 수용(7), literal 독립성·시간 기록은 정직(8/9).
+
+**r2(수정, `244b156`).** `observe`가 Forward leaf 편집 전체를 새 `leaf::check`로 먼저 실행하고(`leaf::{check,produce,remove}`는 같은 `edit()`를 공유), CLR 제거 계획을 확인하며, CLR 잔여를 actor의 RootReserved/Retained Row root 채무 합(단계당 `91096+C+128h` WAL, protected=WAL, ROW_PEAK)과 **정확히 같음**으로 검산한다. Aging before를 Root before와 대조하고 `images::prepare`가 Root after·U after·Tx after·Aging 전이를 지역 buffer에 먼저 계산한 뒤 쓰기 단계는 배치만 한다. `writer_epoch != 0` 검사도 앞당겼다. 권고 2(Forward XRP1과 RootJob projection 대조), 3(U page14가 leaf page13 뒤에 오는 `ord` 이력, enum 순서 after 목록 거부), 7(before-LSN0 `OrderMismatch`)을 반영했다. 새 literal 20개를 더했고 기존 69개는 byte 동일하다. r2 manifest(SHA-256 `ed4c4001be7f8ecbf8c342758bc1e8cec98ad1d90963e5f3d6fb783bdff1d5a4`, 입력97)를 17:47:28 KST에 동결한 뒤 check(lib 14.24초, tests 40.37초, 경고0), test build 78.29초(cold), ELF `b569bc3f7f1a5b7200a35be8b2cac0b1bba3f4c687891912e7efdcfd69fcff16`에서 다음 16 selector를 각1회(timeout 30초) 실행해 모두 첫 실행 PASS했다. FAIL 기록은 없다.
+
+| 구분 | selector(`storage::row::insert::`) |
+| --- | --- |
+| 신규4 | `group_tests::mca00_v06_{forward_physical_order_differs_from_roles,leaf_refusals_precede_output,descriptor_refusals_precede_output,header_and_zero_lsn_refusals_precede_output}` |
+| 변경7 | `group_tests::mca00_v06_{forward_without_h,forward_with_h,clr_without_h,clr_with_h}_matches_literals`, `…_{forward,clr}_refusals_precede_output`, `…_produced_groups_pass_c_observers` |
+| 공유 함수 변경으로 재실행5 | `tests::mca_leaf_v01..v05` |
+
+새 거부 사례는 중복 RowId7(`LeafEdit(KeyExists)`), 여유 91B leaf(`Capacity`), stale·미래·다른 이력 Aging(`Aging(IdentityMismatch)`), 잔여 +128(CLR H 없음/있음, Forward; `BudgetMismatch`), writer_epoch0(`IdentityMismatch`), LSN0 anchor(`OrderMismatch`)이며 모두 frame과 다섯 after가 그대로임을 확인한다. MCA00-V01..V05는 코드가 같아 반복하지 않았다.
+
+**독립 검토 2차(해결, 새 필수0).** 같은 검토자가 `244b156`에서 `observe → images::prepare → output.fill → frame::write` 순서와, 첫 쓰기 뒤의 실패가 내부 불변식 붕괴뿐임을 확인했다. 정확한 CLR 잔여 규칙은 C의 `semantic_row/ledger.rs`(rows[0] 구성, `debt()`의 protected=WAL·ROW_PEAK, `validate_transaction`의 동등 검산)와 같고 더 엄격하지 않다. literal 전체(scope3 81개+상위 8개)를 `python3 -I`로 다시 만들어 byte 동일함을 확인했다.
+
+**통합.** 네 commit을 `5f6454f` 위로 cherry-pick했다(A 파일 90개 모두 `244b156`과 blob 동일). 통합 tree를 고정 export(fingerprint `a2769e11a0e391e02ddeb4218e8e58592bab374c751d6e4b02668f27d63a5601`)해 `cargo check -p xadb-engine --all-targets --all-features --locked --offline`을 41.4초·경고0으로 통과했다. A 시험은 코드와 입력이 같아 통합 뒤 반복하지 않았다. artifact는 `module-independence-20261029/artifacts/module-a-producer-20261029/`(`manifest.sha256` SHA-256 `f0f770234eed58881ba643cd3a409316e21729ccf314a5cd266195512fec72c6`)에 r1/r2 로그·실행 시간·검토 요약·통합 check를 보존한다.
+
+**해석과 남은 의무.**
+- `RowProducerInput::Clr.current_row_len`은 Job3 `cell_bytes`와 같은 tree cell 길이 C(`180+L`)로 해석했다(계약 §6.6 "current Row/RootJob의 cell"이 지지). 이름 정리는 C 공급 때 결정한다.
+- source cell 결합: Forward RowLeaf는 cell 없음만, CLR RowLeaf와 TerminalJob/TableAnchor/PreviousUndo는 cell 없음 또는 정확한 cell을 받는다(계약 침묵, C adapter가 같은 규칙을 따라야 한다). handoff group은 Root `consumed_wal`을 바꾸지 않는다(scope2 유추, 계약 침묵). count는 U 다음 T, edge는 (native index, role) 정렬로 **계약이 고정**한다.
+- edge/count/item 그래프 증감은 `wire.rs`가 검산하지 않으므로 C 관찰자 교차가 없고 literal 비교만 근거다. Leaf 관찰자는 Catalog record가 필요해 생산 frame에 실행하지 않았다.
+- 미실행 분기: target 없는 문장 CLR, Allocator source, lane adapter `propose`(canonical digest 재검산·Catalog schema). 실제 C3 lane 공급 뒤 MCA01–05에서 실행한다.
+- 오류형 이름은 `row_record::RowError`(codec 오류)와 충돌을 피하려고 `InsertError`를 유지하고 enum 주석에 계약 drift를 적었다. §6.7 `RowRecoveryHandlerError::Producer` 연결 때 정한다.
+- `group::local_source_carrier_bytes`는 r2에서 `Prepared`(약21KB, 16KB Root 사본 포함)와 leaf scratch 4444B를 포함하지만 호출·기록되지 않았다. 검토자 추정 비재귀 frame은 35–40KB이며 65536B 단기 작업 합계와의 대조는 C3 Row write 공급 때 수행한다.
+- 실제 RowReserve·lane/context 생성, 원 owner의 stage·WAL·install·ACK·reopen·replay, MCA01–05·MCI·MI01–06과 M5 완료는 미완료다.

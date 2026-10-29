@@ -8788,5 +8788,32 @@
     "remaining_supply": "base4 closure and layout source bound (U2-C2), Catalog scope2 Profile3 adapter (U2-C3), single current switch with bootstrap/selection budget replacement and fresh fixtures (U2-C4)",
     "source_roots_changed": false,
     "artifact_manifest_sha256": "40cefcc1670511fedfcdc23311a38e7b6d5cfcfd6858b26cf0300f4ebbf5445b"
+  },
+  "dev3_module_a_row_insert_scope3": {
+    "status": "LOCAL_VERIFIED_REVIEWED_C0_ONLY",
+    "contract_ref": "dev3-module-consumers.md#acceptance",
+    "evidence_ref": "module-independence-survey-20261026.md#consumer-a-scope3-forward-clr",
+    "baseline_commit": "76742f3",
+    "integration_base": "5f6454f",
+    "branch": "claude/project-thread-h2j8oc",
+    "implemented_paths": [
+      "crates/engine/src/storage/row/insert/group.rs",
+      "crates/engine/src/storage/row/insert/group/frame.rs",
+      "crates/engine/src/storage/row/insert/group/images.rs",
+      "crates/engine/src/storage/row/insert/group_tests.rs",
+      "tests/fixtures/module-row-insert/scope3/"
+    ],
+    "modified_paths": [
+      "crates/engine/src/storage/row/insert.rs",
+      "crates/engine/src/storage/row/insert/leaf.rs",
+      "crates/engine/src/storage/row/insert/tests.rs",
+      "tests/fixtures/module-row-insert/make_literals.py",
+      "tests/fixtures/module-row-insert/manifest.json"
+    ],
+    "scope": "Pure A producer for scope3 Row INSERT Forward and CLR candidate groups from C0 observations; every input refusal returns before the first output byte; frames re-read by semantic_row::decode_layout",
+    "validation": "r1 7 new MCA00-V06 selectors once PASS; independent review REQUIRED1 (refusals after output) and ADVISORY8; r2 4 new, 7 changed and 5 shared-function selectors once PASS; second review RESOLVED with 0 new REQUIRED; integrated tree cargo check 0 warnings; test builds 77.42 s and 78.29 s exceeded the 30 s case limit as cold builds",
+    "remaining_supply": "actual C3 RowReserve/lane/context, owner stage/WAL/install/ACK/reopen/replay, carrier source-byte accounting, Allocator and propose branches, MCA01-05, MCI and MI01-06",
+    "source_roots_changed": false,
+    "artifact_manifest_sha256": "f0f770234eed58881ba643cd3a409316e21729ccf314a5cd266195512fec72c6"
   }
 }

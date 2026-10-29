@@ -1,5 +1,7 @@
 # XADB 모듈 독립 개발 구조 전환 작업 계획
 
+2026-10-29 [A Row INSERT scope3 Forward/CLR 후보 생산](../evidence/module-independence-survey-20261026.md#consumer-a-scope3-forward-clr): A 독점 경로에서 C0 관측값으로 Forward·CLR 후보 group(observe→prepare→frame)을 만드는 순수 본문과 MCA00-V06 독립 literal을 더했다. r1 신규7 PASS 뒤 독립 검토 필수1(출력 뒤 거부)을 고쳐 모든 입력 거부를 첫 출력 byte 전으로 옮겼고, r2 16 selector 각1회 PASS·재검토 해결(새 필수0)이다. test build는 30초 case 한도를 넘는 cold build였다. 실제 RowReserve·lane·WAL·install·replay와 MCA01–05·MCI는 C3/C4 공급 뒤 남는다.
+
 2026-10-29 [U2-C1 Profile3 genesis 순수 공급](../evidence/module-independence-survey-20261026.md#row-genesis3-supply): `31e4614` 위에서 current 전환 전에는 호출되지 않는 `retention_genesis::{encode,validate}_row_current`와 Row Root3 decode·Row codec·Profile3 codec·genesis source 상계를 더했다. stdlib 독립 author의 genesis page12·거절7과 신규6 선택이 각1회 PASS, 독립 검토 필수1(증거 hash 표기)·선택 반영 뒤 바뀐3 선택 r2 PASS. current는 Profile2 그대로이며 base4 closure(U2-C2)·Catalog Profile3 adapter(U2-C3)·단일 전환(U2-C4)은 미완료다.
 
 2026-10-29 [C0 Row 소비 경계](../evidence/module-independence-survey-20261026.md#c0-row-boundary): `036d4be` 위에서 A/B 본문이 호출할 Row write(preflight→RowReserve→prepare/apply/cancel)·read operation·live rollback wrapper와 Commit/abort 종료, cursor credit을 실제 타입으로 공급했다. 본문은 효과 전 Unsupported이고 cursor credit만 원 slot에512B를 실제 예약한다. 독립 검토의 필수 지적(credit이 view보다 오래 남으면 거래 종료가 fence)을 credit이 view를 빌리도록 고쳐 [계약](../contracts/dev3-module-boundaries.md#c0-row-boundary)에 기록했다. compiler probe r1 14개·r2 바뀐4개, runtime r1 2개·r2 5개가 각 1회 PASS다. recovery 타입·MBC00-P03/N11은 C4로 남겼고 실제 C2/C3 adapter·A/B 연결·전체 M4/M5는 미완료다.
