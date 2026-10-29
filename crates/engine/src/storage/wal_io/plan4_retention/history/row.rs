@@ -622,6 +622,13 @@ pub(in super::super) fn validate_rows(
             return Err(invalid());
         }
         let current = status_home(replay, profile, location)?;
+        // The Status occupant is this Terminal's actor, as on the Catalog
+        // side; the census pair rule and the ledger are not relied on here.
+        if !matches!(current.core(), TransactionStatusCell::Occupied(status)
+            if status.reference() == actor)
+        {
+            return Err(invalid());
+        }
         let att = row_actor(bank, actor)?;
         if terminal.state() == job3::JobState::TerminalLeased {
             let slot = att.ok_or_else(invalid)?;
