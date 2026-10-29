@@ -1,5 +1,8 @@
 //! Current scope2 replay. Candidate native fields supply logical arguments only;
 //! every successor is recomputed from the original accepted before arena.
+//! The Job bank may also hold Row-scope cells: per-actor/per-root Catalog
+//! selection and semantic checks skip them (`queue::decode_catalog_cell`),
+//! while the Root/Job census still covers them through the Row codec.
 use super::*;
 use crate::storage::{
     allocation_page::ReservationOwner,
@@ -29,6 +32,19 @@ fn job<'a>(
     )
     .map_err(RetentionCause::Retention)
 }
+/// Exact Job3 decode of one cell for a whole-bank Catalog scan: a valid Row
+/// cell is `None` (skipped), a corrupt cell is still an error.
+fn catalog_cell<'a>(
+    cells: &'a [[u8; JOB_BYTES]; JOB_COUNT],
+    profile: Profile,
+    ordinal: usize,
+) -> ObservationResult<Option<queue::JobView<'a>>> {
+    queue::decode_catalog_cell(
+        cells.get(ordinal).ok_or_else(invalid)?,
+        profile.spec().namespace,
+    )
+    .map_err(RetentionCause::Retention)
+}
 fn actor_job(
     cells: &[[u8; JOB_BYTES]; JOB_COUNT],
     profile: Profile,
@@ -37,7 +53,9 @@ fn actor_job(
 ) -> ObservationResult<Option<usize>> {
     let mut found = None;
     for i in 0..JOB_COUNT {
-        let value = job(cells, profile, i)?;
+        let Some(value) = catalog_cell(cells, profile, i)? else {
+            continue;
+        };
         if value.source() == Some(actor) && value.state().is_terminal() == terminal {
             if found.is_some() {
                 return Err(invalid());
@@ -47,7 +65,7 @@ fn actor_job(
     }
     Ok(found)
 }
-fn row_actor(bank: &[u8], actor: TxnRef) -> ObservationResult<Option<usize>> {
+pub(super) fn row_actor(bank: &[u8], actor: TxnRef) -> ObservationResult<Option<usize>> {
     let mut found = None;
     for i in 0..32 {
         let row = control::row(bank, i);
@@ -62,7 +80,7 @@ fn row_actor(bank: &[u8], actor: TxnRef) -> ObservationResult<Option<usize>> {
     }
     Ok(found)
 }
-fn image(arena: &[u8], page: PageRef) -> ObservationResult<&[u8; PAGE_BYTES]> {
+pub(super) fn image(arena: &[u8], page: PageRef) -> ObservationResult<&[u8; PAGE_BYTES]> {
     let i = usize::try_from(page.page_no).map_err(|_| invalid())?;
     if i >= 64 {
         return Err(invalid());
@@ -71,7 +89,7 @@ fn image(arena: &[u8], page: PageRef) -> ObservationResult<&[u8; PAGE_BYTES]> {
         .try_into()
         .map_err(|_| invalid())
 }
-fn raw_descriptor(row: &[u8]) -> Option<&[u8; 1536]> {
+pub(super) fn raw_descriptor(row: &[u8]) -> Option<&[u8; 1536]> {
     row[..1536]
         .iter()
         .any(|b| *b != 0)
@@ -246,8 +264,15 @@ pub(in super::super) fn init_record(
 /// The accepted seed and exact semantic transition preserve the full graph.
 /// This bounded closure checks cached queue/ATT/status agreement between frames;
 /// full XOI/current graph validation is repeated by the base4 capture decoder
-/// (`plan4_recovery_base::row`).
-pub(in super::super) fn validate_current(profile: Profile, replay: &[u8]) -> ObservationResult<()> {
+/// (`plan4_recovery_base::row`). It is the Catalog part of the combined
+/// closure (`history::validate_current`): the census covers every cell, but
+/// only Catalog Terminals are matched here; Row Terminals are matched by
+/// `row::validate_rows` and the caller checks the ATT union.
+pub(in super::super) fn validate_current(
+    profile: Profile,
+    replay: &[u8],
+    matched: &mut u32,
+) -> ObservationResult<()> {
     if profile.format() != 3
         || replay.len() < WORK_END
         || replay[AFTER_END + PROVENANCE_BYTES..WORK_END]
@@ -282,9 +307,10 @@ pub(in super::super) fn validate_current(profile: Profile, replay: &[u8]) -> Obs
         namespace,
     )
     .map_err(RetentionCause::Allocation)?;
-    let mut matched = 0u32;
     for ordinal in 0..JOB_COUNT {
-        let terminal = job(cells, profile, ordinal)?;
+        let Some(terminal) = catalog_cell(cells, profile, ordinal)? else {
+            continue;
+        };
         if !terminal.state().is_terminal() {
             continue;
         }
@@ -323,10 +349,10 @@ pub(in super::super) fn validate_current(profile: Profile, replay: &[u8]) -> Obs
         let att = row_actor(bank, actor)?;
         if terminal.state() == queue::JobState::TerminalLeased {
             let slot = att.ok_or_else(invalid)?;
-            if matched & (1 << slot) != 0 {
+            if *matched & (1 << slot) != 0 {
                 return Err(invalid());
             }
-            matched |= 1 << slot;
+            *matched |= 1 << slot;
             let root = actor_job(cells, profile, actor, false)?
                 .map(|i| job(cells, profile, i))
                 .transpose()?;
@@ -352,6 +378,12 @@ pub(in super::super) fn validate_current(profile: Profile, replay: &[u8]) -> Obs
             return Err(invalid());
         }
     }
+    Ok(())
+}
+
+/// ATT union of the combined closure: every occupied ATT row is the stable
+/// row of exactly one checked TerminalLeased actor of either scope.
+pub(in super::super) fn validate_att(bank: &[u8], matched: u32) -> ObservationResult<()> {
     for i in 0..32 {
         let row = control::row(bank, i);
         if row.iter().any(|b| *b != 0)
@@ -507,7 +539,10 @@ pub(in super::super) fn apply(
                 .map_err(RetentionCause::Retention)?;
             (0..JOB_COUNT)
                 .map(|offset| (root.cursor() as usize + offset) % JOB_COUNT)
-                .find(|i| job(cells, profile, *i).is_ok_and(|j| j.state() == queue::JobState::Free))
+                .find(|i| {
+                    matches!(catalog_cell(cells, profile, *i),
+                        Ok(Some(j)) if j.state() == queue::JobState::Free)
+                })
                 .ok_or_else(invalid)?
         } else {
             ordinal

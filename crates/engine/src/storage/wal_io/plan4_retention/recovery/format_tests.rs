@@ -242,7 +242,7 @@ struct Replay {
     bank: Vec<u8>,
     after: Box<[[u8; PAGE_BYTES]; 8]>,
     claims: Box<[[u8; 352]; 64]>,
-    scratch: Box<[u8; history::REPLAY_SCRATCH_BYTES]>,
+    scratch: Box<[u8; history::REPLAY_TAIL_BYTES]>,
 }
 impl Replay {
     fn from_case(case: &Case) -> Self {
@@ -284,7 +284,7 @@ impl Replay {
                 .try_into()
                 .unwrap(),
             claims: vec![[0; 352]; 64].into_boxed_slice().try_into().unwrap(),
-            scratch: vec![0; history::REPLAY_SCRATCH_BYTES]
+            scratch: vec![0; history::REPLAY_TAIL_BYTES]
                 .into_boxed_slice()
                 .try_into()
                 .unwrap(),
@@ -303,7 +303,7 @@ impl Replay {
             case.expectation(),
             frame,
             &mut self.arena,
-            &self.cells,
+            &mut self.cells,
             &mut self.bank,
             &mut self.after,
             &mut self.claims,
@@ -477,18 +477,22 @@ fn mbc40_v01_profile2_binding_rejected_at_owner_grammar_sites() {
         assert!(state.state() == before, "no effect");
         assert_eq!((at.previous_lsn, at.epoch), (case.number(3) - 1, Some(1)));
     }
-    // A Row scope3 group (and any unknown scope) under Profile3 has no runtime
-    // replay owner: the explicit scope arm rejects it before any effect.
+    // An unknown scope under Profile3 has no replay owner: the explicit scope
+    // arm rejects it before any effect. A Catalog group relabelled scope3 is
+    // routed to the Row arm only, whose exact decoder refuses it (S1-b H03);
+    // it is never retried as Catalog or System.
     for scope in [3u16, 0, 4, u16::MAX] {
         let mut frame = case.blob(FRAME).to_vec();
         assert_eq!(u16::from_le_bytes([frame[170], frame[171]]), 2);
         frame[170..172].copy_from_slice(&scope.to_le_bytes());
         let mut at = cursor(case.number(3) - 1);
+        let result = state.apply(p3, &case, &frame, &mut at);
         assert!(
-            matches!(
-                state.apply(p3, &case, &frame, &mut at),
-                Err(RetentionCause::Unsupported)
-            ),
+            if scope == 3 {
+                matches!(result, Err(RetentionCause::RowSemantic(_)))
+            } else {
+                matches!(result, Err(RetentionCause::Unsupported))
+            },
             "scope{scope}"
         );
         assert!(state.state() == before, "no effect");

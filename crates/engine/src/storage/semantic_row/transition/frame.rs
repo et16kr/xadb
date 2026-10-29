@@ -43,6 +43,10 @@ pub(super) fn physical_order(prepared: &Prepared<'_, '_>) -> Result<[Option<usiz
 
 /// Producer: write; observer: compare each computed section in place.
 enum Sink<'o> {
+    #[allow(
+        dead_code,
+        reason = "the scope3 producer path; its live caller is the Row Begin install (S1-d)"
+    )]
     Write(&'o mut [u8]),
     Compare(&'o [u8]),
 }
@@ -295,6 +299,10 @@ fn body(
 
 /// Write the complete frame into `output` (exactly `frame_bytes`), finish the
 /// envelope last and reread it through the shared layout decoder.
+#[allow(
+    dead_code,
+    reason = "the scope3 producer path; its live caller is the Row Begin install (S1-d)"
+)]
 pub(super) fn encode(
     inputs: &Inputs<'_>,
     prepared: &Prepared<'_, '_>,

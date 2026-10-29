@@ -6,12 +6,24 @@ use crate::storage::undo_ref::UndoRef;
 #[derive(Clone, Copy)]
 pub(crate) struct CoreView<'a> {
     bytes: &'a [u8; 256],
+    #[allow(
+        dead_code,
+        reason = "decoded core accessor for the live Row owners; replay reads only the scalars it selects from"
+    )]
     operation: Operation,
 }
 impl<'a> CoreView<'a> {
+    #[allow(
+        dead_code,
+        reason = "decoded core accessor for the live Row owners; replay reads only the scalars it selects from"
+    )]
     pub(crate) fn bytes(self) -> &'a [u8; 256] {
         self.bytes
     }
+    #[allow(
+        dead_code,
+        reason = "decoded core accessor for the live Row owners; replay reads only the scalars it selects from"
+    )]
     pub(crate) fn operation(self) -> Operation {
         self.operation
     }
@@ -39,9 +51,17 @@ impl<'a> CoreView<'a> {
     pub(crate) fn cursors(self) -> (u64, u64) {
         (u64_at(self.bytes, 160), u64_at(self.bytes, 168))
     }
+    #[allow(
+        dead_code,
+        reason = "decoded core accessor for the live Row owners; replay reads only the scalars it selects from"
+    )]
     pub(crate) fn before_digest(self) -> Option<&'a [u8; 32]> {
         self.digest(3, 176)
     }
+    #[allow(
+        dead_code,
+        reason = "decoded core accessor for the live Row owners; replay reads only the scalars it selects from"
+    )]
     pub(crate) fn after_digest(self) -> Option<&'a [u8; 32]> {
         self.digest(4, 208)
     }
@@ -49,6 +69,10 @@ impl<'a> CoreView<'a> {
         (u16_at(self.bytes, 2) & (1 << bit) != 0)
             .then(|| UndoRef::decode(&self.bytes[at..at + 40]).expect("validated core"))
     }
+    #[allow(
+        dead_code,
+        reason = "decoded core accessor for the live Row owners; replay reads only the scalars it selects from"
+    )]
     fn digest(self, bit: u16, at: usize) -> Option<&'a [u8; 32]> {
         (u16_at(self.bytes, 2) & (1 << bit) != 0)
             .then(|| self.bytes[at..at + 32].try_into().expect("fixed digest"))

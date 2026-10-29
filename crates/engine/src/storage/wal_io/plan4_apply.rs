@@ -207,10 +207,13 @@ pub(crate) use read::{
     CatalogCallError, CatalogCallScope, CatalogCandidate, CatalogLookupStep, CatalogReadOperation,
     CatalogStatementCall, MissingCatalogEvidence, ReadStep, RetentionReadGuard, TableStep,
 };
+#[cfg(test)]
+pub(in crate::storage) use recovery::retention_replay_closure;
 pub(in crate::storage) use recovery::{
     RetentionFrameObservation, RetentionRecoveryStep, RetentionReplayCursor,
     observe_recovery_frame, retention_replay_bank, retention_replay_cells, retention_replay_digest,
-    retention_replay_image, retention_replay_provenance, seed_recovery_replay,
+    retention_replay_image, retention_replay_provenance, retention_replay_row_scope,
+    seed_recovery_replay,
 };
 #[allow(
     unused_imports,
@@ -271,6 +274,8 @@ pub(crate) enum RetentionCause {
     Retention(retention_page::RetentionError),
     Semantic(RetentionSemanticError),
     CatalogSemantic(crate::storage::semantic_catalog::Error),
+    /// The scope3 Row replay arm's whole-group observer refusal.
+    RowSemantic(crate::storage::semantic_row::Error),
     #[allow(
         private_interfaces,
         reason = "preserve the original storage visibility failure"
@@ -294,6 +299,12 @@ pub(crate) enum RetentionCause {
     )]
     Flush(super::super::flush_io::FlushIoError),
 }
+// The Row observer cause is no wider than the Catalog one, so adding it keeps
+// `size_of::<RetentionCause>()` and every census that charges it unchanged.
+const _: () = assert!(
+    std::mem::size_of::<crate::storage::semantic_row::Error>()
+        <= std::mem::size_of::<crate::storage::semantic_catalog::Error>()
+);
 #[derive(Debug)]
 pub(crate) struct RetentionError {
     pub(crate) phase: RetentionPhase,

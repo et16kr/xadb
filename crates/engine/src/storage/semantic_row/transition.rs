@@ -109,6 +109,10 @@ pub(crate) enum Change<'a> {
         status: StatusSlotRef,
         scope: JobScope,
     },
+    #[allow(
+        dead_code,
+        reason = "replay refuses RowReserve (no canonical value in its frame); its producer caller is S2"
+    )]
     Reserve(&'a ReservePlan<'a>),
     /// Observe only; A produces Forward.
     Forward {
@@ -273,6 +277,10 @@ struct Prepared<'a, 's> {
 /// Produce one complete C-owned group into caller loans. Every refusal that
 /// depends on the inputs returns before the first `after`/`frame` byte is
 /// written. Forward and CLR are A's and return Unsupported here.
+#[allow(
+    dead_code,
+    reason = "the scope3 producer; its live caller is the Row Begin install (S1-d)"
+)]
 pub(crate) fn produce(
     inputs: &Inputs<'_>,
     after: &mut [[u8; PAGE_BYTES]; 5],
@@ -298,6 +306,10 @@ pub(crate) fn produce(
 /// header, both descriptors, core, natives, Edge/Count/InventoryDelta and
 /// redo. Forward's inserted row cell is the one candidate value adopted, and
 /// only after its record version, length and projection match the Job.
+#[allow(
+    dead_code,
+    reason = "owned-backing observer; replay uses observe_borrowed"
+)]
 pub(crate) fn observe<'a>(
     inputs: &Inputs<'a>,
     bytes: &'a [u8],
@@ -428,6 +440,10 @@ fn body_bytes() -> usize {
 /// Counted nonrecursive source bound of `produce`/`observe`: the local
 /// backing array, the wrapper's arguments and result, then the body. Caller
 /// loans (5 pages, frame) are charged by the caller.
+#[allow(
+    dead_code,
+    reason = "owned produce/observe bound; its live caller is the Row Begin install (S1-d)"
+)]
 pub(crate) fn source_bytes() -> usize {
     use std::mem::size_of;
     size_of::<[u8; ROW_REPLAY_SCRATCH_BYTES]>()
@@ -451,6 +467,18 @@ pub(crate) fn observe_borrowed_source_bytes() -> usize {
         + size_of::<Result<Observation>>()
         + size_of::<(&[u8], std::slice::Iter<'_, u8>, bool)>()
         + body_bytes()
+}
+
+/// Counted bound of `ledger::validate_transaction`/`validate_actor`, the
+/// per-Terminal check of the scope3 replay closure.
+pub(crate) fn ledger_source_bytes() -> usize {
+    source::ledger()
+}
+
+/// Counted bound of a tree page decode/search/entry parse, the scope3 replay
+/// owner's CatalogLeaf schema lookup.
+pub(crate) fn tree_source_bytes() -> usize {
+    source::tree_codec()
 }
 
 #[cfg(test)]

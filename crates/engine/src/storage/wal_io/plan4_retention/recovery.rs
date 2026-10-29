@@ -23,6 +23,9 @@ mod catalog;
 #[cfg(test)]
 #[path = "recovery/format_tests.rs"]
 mod format_tests;
+#[cfg(test)]
+#[path = "recovery/row_tests.rs"]
+mod row_tests;
 
 type ObservationResult<T> = std::result::Result<T, RetentionCause>;
 
@@ -184,6 +187,28 @@ pub(in crate::storage) fn retention_replay_digest(
     replay: &[u8; RETENTION_REPLAY_BYTES],
 ) -> [u8; 32] {
     history::catalog::state_digest(replay)
+}
+/// Whether the accepted replay holds any Row-scope state: a non-Free Row Job
+/// or an ATT row of a Row actor or with the Row peak recipe. This is an
+/// observation for the interim analysis gate only; it grants nothing.
+pub(in crate::storage) fn retention_replay_row_scope(
+    profile: Profile,
+    replay: &[u8; RETENTION_REPLAY_BYTES],
+) -> ObservationResult<bool> {
+    history::row::scope_present(
+        profile,
+        retention_replay_cells(replay),
+        retention_replay_bank(replay),
+    )
+}
+/// Test observation of the combined Profile3 closure over an accepted replay
+/// (S1-b H06); production reaches it only through seed and frame replay.
+#[cfg(test)]
+pub(in crate::storage) fn retention_replay_closure(
+    profile: Profile,
+    replay: &[u8; RETENTION_REPLAY_BYTES],
+) -> ObservationResult<()> {
+    history::validate_current(profile, replay)
 }
 
 pub(super) fn allocator_identity(profile: Profile) -> ObservationResult<PageIdentity> {
@@ -376,7 +401,8 @@ pub(in crate::storage) fn observe_recovery_frame(
         let (prior, scratch) = replay.split_at_mut(history::BANK_END);
         let (arena, rest) = prior.split_at_mut(history::ARENA_END);
         let (cells, bank) = rest.split_at_mut(65536);
-        let cells: &[[u8; 1024]; 64] = cells.as_chunks::<1024>().0.try_into().expect("cells");
+        let cells: &mut [[u8; 1024]; 64] =
+            cells.as_chunks_mut::<1024>().0.try_into().expect("cells");
         let (_, outputs) = scratch.split_at_mut(history::REPLAY_FRAME_BYTES);
         let (pages, claims) = outputs.split_at_mut(8 * PAGE_BYTES);
         let after = pages
@@ -385,9 +411,9 @@ pub(in crate::storage) fn observe_recovery_frame(
             .try_into()
             .expect("eight after pages");
         let (claims, temporary) = claims.split_at_mut(history::PROVENANCE_BYTES);
-        let semantic_scratch = (&mut temporary[..history::REPLAY_SCRATCH_BYTES])
+        let semantic_scratch = (&mut temporary[..history::REPLAY_TAIL_BYTES])
             .try_into()
-            .expect("semantic scratch");
+            .expect("replay tail");
         let claims = claims.as_chunks_mut::<352>().0.try_into().expect("claims");
         apply_frame(
             profile,
@@ -403,7 +429,7 @@ pub(in crate::storage) fn observe_recovery_frame(
         )?
     };
     history::refresh_jobs(profile, replay).map_err(|_| RetentionCause::Invariant)?;
-    history::catalog::validate_current(profile, replay)?;
+    history::validate_current(profile, replay)?;
     Ok(observed)
 }
 
@@ -416,14 +442,16 @@ pub(super) fn apply_frame(
     expected: FrameExpectation,
     input: &[u8],
     arena: &mut [u8],
-    cells: &[[u8; 1024]; 64],
+    cells: &mut [[u8; 1024]; 64],
     bank: &mut [u8],
     after: &mut [[u8; PAGE_BYTES]; 8],
     claims: &mut [[u8; 352]; 64],
-    semantic_scratch: &mut [u8; history::REPLAY_SCRATCH_BYTES],
+    tail: &mut [u8; history::REPLAY_TAIL_BYTES],
     cursor: &mut RetentionReplayCursor,
 ) -> ObservationResult<RetentionFrameObservation> {
-    if semantic_scratch.iter().any(|byte| *byte != 0)
+    // The whole zero tail is checked before either scope arm borrows its
+    // prefix (Catalog 3328B, Row 9076B); a nonzero tail is never cleared here.
+    if tail.iter().any(|byte| *byte != 0)
         || profile.format() != 3
         || expected.previous_lsn != cursor.previous_lsn
         || expected.stream.database != profile.spec().namespace.database
@@ -454,7 +482,29 @@ pub(super) fn apply_frame(
                 bank,
                 after,
                 claims,
-                semantic_scratch,
+                (&mut tail[..history::REPLAY_SCRATCH_BYTES])
+                    .try_into()
+                    .expect("Catalog loan"),
+                &mut cursor.adopted_local,
+            )?
+        }
+        // The Row arm has the Catalog arm's guard and shares its adopted
+        // Begin cursor; it never calls the Catalog observer.
+        3 => {
+            if cursor.allocation.reserved() {
+                return Err(RetentionCause::Invariant);
+            }
+            history::row::apply(
+                profile,
+                expected,
+                input,
+                arena,
+                cells,
+                bank,
+                after,
+                (&mut tail[..crate::storage::semantic_row::transition::ROW_REPLAY_SCRATCH_BYTES])
+                    .try_into()
+                    .expect("Row loan"),
                 &mut cursor.adopted_local,
             )?
         }
@@ -487,9 +537,6 @@ pub(super) fn apply_frame(
             }
             result
         }
-        // Row scope3 groups have no current runtime replay owner; they are
-        // rejected before any effect, never routed to the Catalog or System arm.
-        3 => return Err(RetentionCause::Unsupported),
         _ => return Err(RetentionCause::Unsupported),
     };
     if expected.previous_lsn.checked_add(1) != Some(observed.header.lsn) {

@@ -186,3 +186,6 @@ mod catalog_create;
 
 #[path = "tests/catalog_memory.rs"]
 mod catalog_memory;
+
+#[path = "tests/row_gate.rs"]
+mod row_gate;

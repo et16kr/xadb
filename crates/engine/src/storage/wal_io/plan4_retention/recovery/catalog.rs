@@ -30,8 +30,26 @@ pub(super) enum Selected {
 }
 
 impl<'s, 'c, W: WriterNamespace> Plan4Retention<'_, 's, 'c, '_, '_, '_, '_, '_, W> {
+    /// A Catalog-selected ordinal: a Row cell there is a broken selection.
+    /// Same call depth as the whole-bank scan below (no nested wrapper).
     fn recovery_catalog_job(&self, ordinal: usize) -> Result<queue::JobView<'_>> {
-        queue::decode_job(
+        queue::decode_catalog_cell(
+            &self.control.ledger.jobs()[ordinal],
+            self.inner.storage.profile().spec().namespace,
+        )
+        .map_err(|e| {
+            fatal(
+                self.inner.storage,
+                RetentionPhase::Census,
+                RetentionCause::Retention(e),
+            )
+        })?
+        .ok_or_else(|| self.recovery_catalog_bad())
+    }
+    /// Whole-bank Catalog scans skip a valid Row cell (`None`); a corrupt
+    /// cell is still a census failure.
+    fn recovery_catalog_cell(&self, ordinal: usize) -> Result<Option<queue::JobView<'_>>> {
+        queue::decode_catalog_cell(
             &self.control.ledger.jobs()[ordinal],
             self.inner.storage.profile().spec().namespace,
         )
@@ -42,6 +60,15 @@ impl<'s, 'c, W: WriterNamespace> Plan4Retention<'_, 's, 'c, '_, '_, '_, '_, '_, 
                 RetentionCause::Retention(e),
             )
         })
+    }
+    /// Row cleanup has no recovered handler before C4. The analysis gate
+    /// already refuses every Row state, so this is never reached by READY.
+    fn recovery_row_unsupported(&self) -> RetentionError {
+        fatal(
+            self.inner.storage,
+            RetentionPhase::Census,
+            RetentionCause::Unsupported,
+        )
     }
     fn recovery_catalog_bad(&self) -> RetentionError {
         fatal(
@@ -54,7 +81,10 @@ impl<'s, 'c, W: WriterNamespace> Plan4Retention<'_, 's, 'c, '_, '_, '_, '_, '_, 
     /// selector still rejects ambiguity and never interprets old v1 Job bytes.
     pub(super) fn select_catalog_cleanup(&self) -> Result<Selected> {
         for ordinal in 0..64 {
-            if self.recovery_catalog_job(ordinal)?.state() == queue::JobState::RootReserved {
+            if self
+                .recovery_catalog_cell(ordinal)?
+                .is_some_and(|job| job.state() == queue::JobState::RootReserved)
+            {
                 return Ok(Selected::Cancel { ordinal });
             }
         }
@@ -96,8 +126,12 @@ impl<'s, 'c, W: WriterNamespace> Plan4Retention<'_, 's, 'c, '_, '_, '_, '_, '_, 
             };
             let mut terminal = None;
             let mut root = None;
+            let mut rows = false;
             for ordinal in 0..64 {
-                let job = self.recovery_catalog_job(ordinal)?;
+                let Some(job) = self.recovery_catalog_cell(ordinal)? else {
+                    rows = true;
+                    continue;
+                };
                 if job.source() != Some(actor) {
                     continue;
                 }
@@ -116,7 +150,13 @@ impl<'s, 'c, W: WriterNamespace> Plan4Retention<'_, 's, 'c, '_, '_, '_, '_, '_, 
                     return Err(self.recovery_catalog_bad());
                 }
             }
-            let terminal = terminal.ok_or_else(|| self.recovery_catalog_bad())?;
+            let terminal = terminal.ok_or_else(|| {
+                if rows && root.is_none() {
+                    self.recovery_row_unsupported()
+                } else {
+                    self.recovery_catalog_bad()
+                }
+            })?;
             return match tx.state() {
                 TransactionState::Active => Ok(Selected::Rollback {
                     actor,
@@ -142,8 +182,12 @@ impl<'s, 'c, W: WriterNamespace> Plan4Retention<'_, 's, 'c, '_, '_, '_, '_, '_, 
         }
         // A root must relinquish its incoming references and all three roles
         // before its actor's terminal slot can be freed.
+        let mut rows = false;
         for ordinal in 0..64 {
-            let job = self.recovery_catalog_job(ordinal)?;
+            let Some(job) = self.recovery_catalog_cell(ordinal)? else {
+                rows = true;
+                continue;
+            };
             let operation = match job.state() {
                 queue::JobState::Free | queue::JobState::TerminalReady => continue,
                 queue::JobState::RootRetained => Operation::Prune,
@@ -160,12 +204,20 @@ impl<'s, 'c, W: WriterNamespace> Plan4Retention<'_, 's, 'c, '_, '_, '_, '_, '_, 
             return Ok(Selected::Retire { ordinal, operation });
         }
         for ordinal in 0..64 {
-            if self.recovery_catalog_job(ordinal)?.state() == queue::JobState::TerminalReady {
+            if self
+                .recovery_catalog_cell(ordinal)?
+                .is_some_and(|job| job.state() == queue::JobState::TerminalReady)
+            {
                 return Ok(Selected::Retire {
                     ordinal,
                     operation: Operation::TerminalFinish,
                 });
             }
+        }
+        // Skipped Row cells are not Catalog work, but they are never left
+        // behind a Complete (no READY with Row state; consumers.md:66).
+        if rows {
+            return Err(self.recovery_row_unsupported());
         }
         Ok(Selected::Complete)
     }

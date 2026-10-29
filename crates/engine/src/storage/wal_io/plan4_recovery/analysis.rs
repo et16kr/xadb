@@ -2,7 +2,8 @@
 //! physical before-image to classify; it never seeds a semantic before state.
 use super::super::plan4_pages::{
     observe_recovery_frame, retention_replay_bank, retention_replay_cells, retention_replay_digest,
-    retention_replay_image, retention_replay_provenance, seed_recovery_replay,
+    retention_replay_image, retention_replay_provenance, retention_replay_row_scope,
+    seed_recovery_replay,
 };
 use super::*;
 use crate::storage::{
@@ -701,6 +702,18 @@ impl<W: WriterNamespace> RecoveryState<'_, '_, '_, W> {
             {
                 return Err(error(p, Plan4RecoveryCause::Unsupported));
             }
+        }
+        // Interim Row gate (XADB-MODULE-ROW-BEGIN-001, the section 6.7 policy
+        // gate position): after Row frame replay and the source, home,
+        // Pending and remaining checks, before SourceFacts and the
+        // AnalysisSeal. Any non-Free Row Job or Row-recipe ATT row, a normally
+        // aborted Row TerminalReady included, is Analysis/Unsupported with
+        // nothing mutated; `failure` keeps the original owner and READY stays
+        // absent until C4 replaces this gate.
+        if retention_replay_row_scope(profile, replay)
+            .map_err(|e| error(p, Plan4RecoveryCause::Retention(e)))?
+        {
+            return Err(error(p, Plan4RecoveryCause::Unsupported));
         }
         let facts = if let Some(source) = &self.source {
             SourceFacts {
