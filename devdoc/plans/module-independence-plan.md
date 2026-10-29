@@ -1,5 +1,7 @@
 # XADB 모듈 독립 개발 구조 전환 작업 계획
 
+2026-10-29 [L4 배치 판정](#l4-record): main `08d854d`에서 `plan4_apply/`(10)·`plan4_retention/`(48)이 모두 한 모듈 `plan4_apply.rs`(production `apply`, 시험 `retention`)의 자손이고 소유가 같음을 확인했다. 이행 중 helper의 최종 소유가 미정이고 공유 시험 helper 2개가 외부 `#[path]`로도 쓰이므로, 권장안대로 현재 배치를 유지하고 재검토 조건을 기록했다. 제품·JSON 경로 변경과 시험 실행은 없다. L5와 전체 M4/M5는 미완료다.
+
 2026-10-29 [L3 배치 적용](../evidence/module-independence-survey-20261026.md#l3-mixed-system-move): main `d251b8f`에서 [L3 이동표](#l3-move-table)의 권장안대로 `mixed_system_owner`의 자손6개를 `mixed_system_owner/`로, recovery 시험을 선언 폴더 `recovery_effect/`로 옮겼다. init 두 파일은 형제를 가진 평면 부모 아래에 남기고 L5에서 판단한다. `#[path]` 7줄과 fixture inventory의 `path` 151개만 바꿨고, 이동만 한 6개의 byte 동일, `cargo check` PASS, 이동 전후 시험 목록 동일을 확인했다. 시험 본문은 NOT_RUN이다. L4·L5와 전체 M4/M5는 미완료다.
 
 2026-10-29 [L2 배치 적용](../evidence/module-independence-survey-20261026.md#l2-concurrency-move): main `b691fc7`에서 `transaction::concurrency`의 자손7개를 `transaction/concurrency/`로 옮기고 `#[path]` 7줄과 fixture `include_str!` 경로2개만 바꿨다. 이동만 한 5개의 byte 동일, `cargo check` PASS, 이동 전후 시험 목록 동일을 확인했고 시험 본문은 NOT_RUN이다. L3–L5와 전체 M4/M5는 미완료다.
@@ -412,7 +414,7 @@ Root3/Job3/Profile3·Row scope3·base4는 이름 변경의 부수 효과가 아�
 <a id="folder-reorganization"></a>
 ## 13. 분리 모듈의 폴더 재정리 후속 계획
 
-2026-10-29 · `XADB-MODULE-LAYOUT-001` · **D2 ACCEPTED / 후속 계획 문서 반영 완료 / 제품 이동은 [L1](../evidence/module-independence-survey-20261026.md#l1-allocation-move)·[L2](../evidence/module-independence-survey-20261026.md#l2-concurrency-move)·[L3](../evidence/module-independence-survey-20261026.md#l3-mixed-system-move)만 적용, 시험 본문 NOT_RUN**
+2026-10-29 · `XADB-MODULE-LAYOUT-001` · **D2 ACCEPTED / 후속 계획 문서 반영 완료 / 제품 이동은 [L1](../evidence/module-independence-survey-20261026.md#l1-allocation-move)·[L2](../evidence/module-independence-survey-20261026.md#l2-concurrency-move)·[L3](../evidence/module-independence-survey-20261026.md#l3-mixed-system-move)만 적용, [L4](#l4-record)는 현재 배치 유지, 시험 본문 NOT_RUN**
 
 사용자는 파일 분리에 비해 폴더 정리가 부족한 부분을 먼저 조사하도록 요청했고, 참조 관계·상태 소유·API가 독립성의 핵심인지 의견을 확인했다. 이어 임시 계획을 저장하고 진행 중인 작업 종료 뒤 기존 문서에 반영하도록 지시했으며, 후속 “진행해 주세요” 요청에 따라 이 절을 작성한다. **이번 실행 범위는 후속 계획과 관련 문서의 정비다.** 제품 파일 이동·참조 변경의 구현은 아직 시작하지 않는다.
 
@@ -674,6 +676,38 @@ L2 뒤 L3의 두 안을 제시했고 사용자는 “권장으로 진행”을 �
 #### L3 범위 밖 관찰
 
 owner 표면은 `status_init.rs`의 `pub(crate) use` 재노출을 거쳐 `wal_io` 밖의 `plan4_recovery_base` Catalog graph까지 쓰인다. init 두 파일은 형제를 가진 평면 부모 아래에 남는다. 배치 정리는 이 참조와 부모를 바꾸지 않으며, 둘 다 L5와 위 이행 순서 4단계의 입력이다.
+
+<a id="l4-record"></a>
+### L4 배치 판정 기록
+
+2026-10-29 · **판정: 현재 배치 유지 / 소유·중복·잔여 이유 기록 / 제품 변경 없음**
+
+L2 뒤 L4의 두 안을 제시했고 사용자는 L3와 함께 권장안, 즉 이동하지 않고 기록하는 안을 선택했다. 이 판정의 기준은 L3 적용 commit `08d854da53c8ac9e8398946c4532a9161800af20`(tree `780fb1c17990c6849c55ab52ca0af10ce4de7267`)이며 checkout은 clean이다. 판정은 제품·시험·JSON 경로는 바꾸지 않는다. 아래 경로는 `crates/engine/src/storage/wal_io/` 기준이고 `MS`는 L3와 같다.
+
+**한 모듈의 두 폴더.** `plan4_apply.rs`(1032줄)는 `plan4_pages.rs:23–32`에서 같은 파일을 두 번 선언한다. production은 `cfg(not(test))`의 `MS::plan4_pages::apply`이고, 시험은 `cfg(test)`의 `MS::plan4_pages::retention`에 `use retention as apply`를 더한다. 주석은 frozen selector의 source identity를 지키려는 것이며 동작 차이는 없다고 적는다. 이 한 모듈의 자손이 두 폴더에 나뉘어 있다. 두 폴더 모두 두 cfg 이름으로 함께 컴파일되며, cfg에 따라 나뉜 것이 아니다. `plan4_retention/`은 원래 별도 모듈 `plan4_retention.rs`의 폴더였고, commit `ad0c45f`가 그 모듈을 `plan4_apply.rs`로 합치면서 `retention`을 시험 이름으로만 남겼다. 소유자가 같으므로 L3와 같은 논리 부모 불일치는 없고, 남은 차이는 폴더 이름이다.
+
+| 폴더 | 파일 | `plan4_apply.rs`의 직접 선언 | 묶음과 역할(각 파일 첫 주석 요약) |
+| --- | --- | --- | --- |
+| `plan4_apply/` | 10 | 7줄: `terminal`, `install`, `legacy`, `isolation`, `source`, `transaction`, `owner_tests`. 하위 3개(`source_tests`, `transaction_catalog`, `transaction_write`)는 각 부모 파일이 선언 | 실제 apply producer 쪽이다. Catalog stage/durable/install의 terminal receipt, 읽기 전용 installer 관측, 원 allocation/empty/scope1 producer의 임시 bridge `legacy`, 원 session이 소유하는 isolation ledger와 짧은 source 예약, transaction·statement 소유 |
+| `plan4_retention/` | 48 | 17줄. 하위 31개는 각 부모 파일이 선언 | 원 plan4 owner의 helper 39개와 시험 9개다. CREATE/pool bridge(`create_pair`와 `catalog_*` 8), visibility bookkeeping(+8), byte-backed live ledger `control`(+1), 물리 claim `flush`, durable 구간의 canonical replay `history`(+3), N=0 group `live`, latest-home `load`, reader `lookup_load`, count-one 예약 `population`, read actor `read`(+6), recovery 관측 `recovery`(+1), source-value `resources`. 시험은 `tests`·`lifecycle_tests`·`literal_tests`·`s5_tests`·`free_undo_literal_tests`·`free_undo_tests`·`catalog_source_tests`·`recovery_observation_tests`·`read/catalog_tests` |
+
+**시험 selector.** `MS::plan4_pages::retention::` 아래 시험은 62개다. `plan4_apply/` 쪽이 `source` 16·`owner_tests` 10·`transaction` 2·`install` 1, `plan4_retention/` 쪽이 `read` 14·`tests` 11·`free_undo_tests` 4·`catalog_source_tests` 2·`create_pair` 2다. 두 폴더 모두 시험에서는 `retention` 이름으로 선택된다.
+
+**중복 배치.** `plan4_retention/`의 시험 입력 helper 두 개는 다른 모듈도 `#[path]`로 함께 컴파일한다. 둘 다 `clippy::duplicate_mod` 허용과 이유를 적었다.
+
+| 파일 | `plan4_apply` 쪽 논리 경로 | 다른 선언 |
+| --- | --- | --- |
+| `plan4_retention/free_undo_literal_tests.rs` | `…::retention::free_undo_literals` | `storage/plan4_free_undo_base_tests.rs:7`의 `storage::plan4_recovery_base::free_undo_tests::inputs` |
+| `plan4_retention/literal_tests.rs` | `…::retention::tests::lifecycle::literals` | `plan4_recovery/tests/literals.rs:11`의 `MS::plan4_recovery::tests::literals::population` |
+
+**판정과 이유.** 현재 배치를 유지한다.
+
+1. 두 폴더는 한 모듈의 자손이고 소유가 같다. 옮겨도 논리 경로·visibility·selector는 그대로이며, 바뀌는 것은 폴더 이름뿐이다.
+2. `plan4_apply.rs` 첫 주석은 기존 control/history/flush helper가 이행 동안 private 자손으로 남고, Row producer의 실제 source/reservation/install adapter는 아직 없다고 적는다. `legacy`도 원 producer의 임시 bridge다. 최종 소유가 정해지면 helper별로 다시 옮겨야 하므로, 지금 일괄로 합치면 이동이 두 번 생긴다.
+3. 공유 helper 두 개는 이 모듈 밖 두 곳의 `#[path]`도 함께 바꿔야 한다.
+4. `plan4_retention/`을 `plan4_apply/`로 합치는 대안의 비용은 `#[path]` 19줄(내부 17·외부 2), 관리 JSON 경로 184개, 현재 계약 문서 3개의 Markdown 링크 11개, 증거 링크 4개의 날짜 주석이다. 그에 비해 얻는 것은 이름 정리뿐이다.
+
+**재검토 조건.** 다음 중 하나가 생기면 그 단위에서 소유별로 옮긴다. (1) 이행이 끝나 helper의 최종 소유가 정해짐(`legacy` bridge 제거, Row producer adapter 도입 등). 이때 목표는 [소유 계약](../contracts/dev3-module-boundaries.md)의 계획 배치 `plan4_apply/{state,read,catalog,row,terminal,legacy}*.rs`다. (2) frozen `retention` selector 이름을 바꾸는 별도 결정. (3) 공유 literal helper의 소비자 변경. 그 전에는 13절 후보 표의 “retention 전체를 일괄 재부모화하지 않는다”를 따른다.
 
 ### 완료 조건과 문서 정본
 

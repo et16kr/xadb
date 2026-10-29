@@ -2997,3 +2997,18 @@ r2의 scoped static2와 선택4개는 모두 PASS다. 고유10개는 r1 source�
 로그의 한계: `check.log`·`list-*.err`에는 L1·L2와 달리 종료 코드 줄이 없다. 두 cargo 명령과 rustfmt의 종료 코드 0은 실행 콘솔에서 관측했고, `rustfmt-check.log`에는 결과 줄만 있다. rustfmt 명령은 `rustfmt --edition 2024 --check crates/engine/src/storage/wal_io/mixed_system_owner.rs crates/engine/src/storage/wal_io/recovery_effect/tests.rs`였다. 착수 때 `git status --short`의 빈 출력도 콘솔 관측이며 `base.txt`에는 HEAD·tree만 있다.
 
 독립 검토(L1·L2와 같은 읽기 전용 subagent)는 이동표·실제 diff·문서·JSON·artifact를 대조해 **ACCEPT, 필수 지적 0**으로 판정했다. 확인 범위는 `#[path]` 해석과 논리 경로 유지, 이동만 한 6개의 byte 동일, `crates/` diff 범위, init 두 파일을 유지한 근거, 참조 탐색의 완전성, inventory `path` 151개와 `function` 존재, 소비자 표, 모든 수치, manifest·fingerprint 재계산, 링크 검사 오류 0이다. 선택 지적 7건 중 owner 제공 목록에서 빠진 `MixedSystemFlusher`, 직접 논리 부모 수(6곳), continuation 상수에 대한 실패 지점 서술, `../` 경로 서술의 범위, 시험 수 표기의 다섯 건을 계획에 반영했다. 로그 한계는 위 문단에 적었다. 관리 JSON의 `status`는 계획 채택 상태이므로 그대로 둔다. 이 반영은 다시 검토받지 않았다. L4·L5와 전체 M4/M5는 미완료다.
+
+<a id="l4-plan4-apply-record"></a>
+## 2026-10-29 L4 `plan4_apply`/`plan4_retention` 배치 판정
+
+[L4 판정 기록](../plans/module-independence-plan.md#l4-record)의 근거를 기준 `main` `08d854da53c8ac9e8398946c4532a9161800af20`(tree `780fb1c17990c6849c55ab52ca0af10ce4de7267`, clean)에서 읽기로 확인했다. 사용자는 L3와 함께 L4 권장안(이동 없이 기록)을 선택했다. 제품 source·fixture·script·관리 JSON 경로는 바꾸지 않았고 build·시험은 실행하지 않았다. 바꾼 것은 계획·상태 문구와 JSON의 `implementation_status`·`l4_decision_ref`뿐이다.
+
+| 관측 | 값 |
+| --- | --- |
+| 선언 | `plan4_pages.rs:23–32`. `plan4_apply.rs`를 `cfg(not(test))` `apply`와 `cfg(test)` `retention`으로 선언하고 시험에서 `use retention as apply` |
+| 자손 | `plan4_apply/` 10개(직접 선언 7줄), `plan4_retention/` 48개(직접 선언 17줄, helper 39·시험 9). 모두 `plan4_apply.rs`의 자손 |
+| 시험 selector | `…::plan4_pages::retention::` 62개. 시험 목록은 L3 artifact의 이동 후 목록(SHA-256 `601bd166…`)에서 셌다 |
+| 공유 helper | `plan4_retention/free_undo_literal_tests.rs`(외부 `storage/plan4_free_undo_base_tests.rs:7`), `plan4_retention/literal_tests.rs`(외부 `plan4_recovery/tests/literals.rs:11`) |
+| 경로 참조 | 관리 JSON의 `plan4_retention/` 경로 184개와 `plan4_apply/` 45개, `plan4_retention/` 현재 Markdown 링크 11개(계약 3개 문서)와 증거 링크 4개 |
+
+독립 검토(같은 읽기 전용 subagent)는 위 관측과 계획의 판정 기록을 HEAD source와 대조해 **ACCEPT, 필수 지적 0**으로 판정했다. 확인 범위는 선언·파일 수·묶음 합계·역할 요약, 시험 62개와 구성, 공유 helper의 외부 선언과 논리 경로, 참조 수, 대안의 `#[path]` 19줄, 13절 L4 행과의 부합, 링크·문서 배치·JSON `_ref` 검사 오류 0이다. HEAD의 tracked fingerprint가 L3 이동 후 값 `0fcb9877…`과 같아 L3 시험 목록을 HEAD에 쓸 수 있음도 확인했다. 선택 지적 4건 중 세 건을 반영했다. `plan4_retention/`이 commit `ad0c45f`에서 합쳐진 원 모듈의 폴더라는 설명, 대안의 합치는 방향, 재검토 때의 목표 배치(소유 계약의 `plan4_apply/{state,read,catalog,row,terminal,legacy}*.rs`)다. JSON `status`는 계획 채택 상태라 그대로 둔다. 이 반영은 다시 검토받지 않았다. L5와 전체 M4/M5는 미완료다.
