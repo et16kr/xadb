@@ -230,7 +230,7 @@ impl<W: WriterNamespace> RecoveryState<'_, '_, '_, W> {
             }
         }))
     }
-    pub(super) fn selected_base_view(&mut self) -> Result<base::catalog::CatalogBaseView<'_>> {
+    pub(super) fn selected_base_view(&mut self) -> Result<base::row::RowBaseView<'_>> {
         if self.selected_base.is_none() {
             return Err(error(self.observation.phase, Plan4RecoveryCause::Invariant));
         }
@@ -242,9 +242,9 @@ impl<W: WriterNamespace> RecoveryState<'_, '_, '_, W> {
             .0
             .try_into()
             .expect("base scratch");
-        let view = base::catalog::decode(&prior[..BASE_BYTES], expected, scratch)
-            .map_err(|e| error(phase, Plan4RecoveryCause::Base(e)))?;
-        if view.header().format != base::BaseFormat::V3Catalog {
+        let view = base::row::decode(&prior[..BASE_BYTES], expected, scratch)
+            .map_err(|e| error(phase, row_base(e)))?;
+        if view.header().format != base::BaseFormat::V4RowMissing {
             return Err(error(phase, Plan4RecoveryCause::Unsupported));
         }
         Ok(view)
@@ -259,12 +259,14 @@ impl<W: WriterNamespace> RecoveryState<'_, '_, '_, W> {
             name("d3-profile"),
             &mut self.maintenance[IO_WORK..IO_WORK + CONTROL_BYTES],
         )?;
-        let profile = control::decode_bootstrap_profile(
+        // The current closure is exactly Profile3: every other profile version
+        // is the Row decoder's UnsupportedFormat, never a legacy retry.
+        let profile = control::row_profile::decode_profile(
             &self.maintenance[IO_WORK..IO_WORK + CONTROL_BYTES],
             self.expected_namespace,
         )
         .map_err(|e| error(self.observation.phase, Plan4RecoveryCause::Control(e)))?;
-        if profile.format() != 2
+        if profile.format() != 3
             || profile.spec().generation != 1
             || profile.spec().namespace.timeline != 1
         {
@@ -315,9 +317,8 @@ impl<W: WriterNamespace> RecoveryState<'_, '_, '_, W> {
                 .map_err(|e| error(self.observation.phase, Plan4RecoveryCause::Control(e)))?;
             let [root, work, home] = scratch;
             let mut checked = CheckedRead(&mut self.writer);
-            let mut reader =
-                PageFileReader::open(&mut checked, Some(profile.spec().namespace), root, work)
-                    .map_err(|e| error(self.observation.phase, Plan4RecoveryCause::PageIo(e)))?;
+            let mut reader = PageFileReader::open_profile(&mut checked, profile, root, work)
+                .map_err(|e| error(self.observation.phase, Plan4RecoveryCause::PageIo(e)))?;
             if reader.profile() != profile || reader.selected() != filemap {
                 return Err(error(
                     self.observation.phase,
@@ -354,6 +355,7 @@ impl<W: WriterNamespace> RecoveryState<'_, '_, '_, W> {
                         Plan4RecoveryCause::Missing
                             | Plan4RecoveryCause::ContentMismatch
                             | Plan4RecoveryCause::Base(base::Error::Corrupt)
+                            | Plan4RecoveryCause::RowBase(base::row::RowBaseError::Corrupt)
                     );
                     if !can_fallback || current.current == current.previous {
                         return Err(first);
@@ -385,7 +387,7 @@ impl<W: WriterNamespace> RecoveryState<'_, '_, '_, W> {
             name("d3-profile"),
             &mut self.maintenance[IO_WORK..IO_WORK + CONTROL_BYTES],
         )?;
-        if control::decode_bootstrap_profile(
+        if control::row_profile::decode_profile(
             &self.maintenance[IO_WORK..IO_WORK + CONTROL_BYTES],
             Some(profile.spec().namespace),
         )
@@ -505,9 +507,8 @@ impl<W: WriterNamespace> RecoveryState<'_, '_, '_, W> {
             .map_err(|e| error(p, Plan4RecoveryCause::Control(e)))?;
             let [root, work, home] = scratch;
             let mut checked = CheckedRead(&mut self.writer);
-            let mut reader =
-                PageFileReader::open(&mut checked, Some(profile.spec().namespace), root, work)
-                    .map_err(|e| error(p, Plan4RecoveryCause::PageIo(e)))?;
+            let mut reader = PageFileReader::open_profile(&mut checked, profile, root, work)
+                .map_err(|e| error(p, Plan4RecoveryCause::PageIo(e)))?;
             if reader.profile() != profile || Some(reader.selected()) != self.filemap {
                 return Err(error(p, Plan4RecoveryCause::ContentMismatch));
             }
@@ -864,7 +865,7 @@ impl<W: WriterNamespace> RecoveryState<'_, '_, '_, W> {
             name("d3-profile"),
             &mut self.maintenance[IO_WORK..IO_WORK + CONTROL_BYTES],
         )?;
-        if control::decode_bootstrap_profile(
+        if control::row_profile::decode_profile(
             &self.maintenance[IO_WORK..IO_WORK + CONTROL_BYTES],
             Some(profile.spec().namespace),
         )
@@ -914,9 +915,8 @@ impl<W: WriterNamespace> RecoveryState<'_, '_, '_, W> {
                 .expect("mapping scratch");
             let [root, work, _] = scratch;
             let mut checked = CheckedRead(&mut self.writer);
-            let reader =
-                PageFileReader::open(&mut checked, Some(profile.spec().namespace), root, work)
-                    .map_err(|e| error(p, Plan4RecoveryCause::PageIo(e)))?;
+            let reader = PageFileReader::open_profile(&mut checked, profile, root, work)
+                .map_err(|e| error(p, Plan4RecoveryCause::PageIo(e)))?;
             if reader.profile() != profile || Some(reader.selected()) != self.filemap {
                 return Err(error(p, Plan4RecoveryCause::IdentityMismatch));
             }

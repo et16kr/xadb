@@ -213,6 +213,18 @@ pub(in crate::storage) fn retention_home_source_bytes<W: WriterNamespace>() -> u
         + 2 * size_of::<std::sync::MutexGuard<'_, W>>()
         + 4 * size_of::<foundation::codec::ContentHasher>()
         + 4096 // Original open/profile/mapping nested scalar and codec carriers.
+        + installed_open_source_bytes()
+}
+
+/// Growth of an installed-grammar open over the original legacy open whose
+/// profile decode the 4096B allowance above covers: the
+/// `decode_installed_profile` wrapper over the Row decoder bound (which must
+/// itself fit that allowance) and the wider `ProfileGrammar` argument.
+pub(in crate::storage) fn installed_open_source_bytes() -> usize {
+    use std::mem::size_of;
+    debug_assert!(control::row_profile::source_bytes() <= 4096);
+    (control::installed_profile_source_bytes() - control::row_profile::source_bytes())
+        + size_of::<ProfileGrammar>().saturating_sub(size_of::<Option<Namespace>>())
 }
 
 impl<'a, W: WriterNamespace> PageFileReader<'a, W> {
@@ -236,8 +248,8 @@ impl<'a, W: WriterNamespace> PageFileReader<'a, W> {
 
     /// Same exclusive open, but the caller's bound Profile selects the profile
     /// grammar (`control::decode_installed_profile`) and must equal the file.
-    /// Uncalled before the single current-format switch; `open` stays the
-    /// legacy Profile1/2 entry for its DEV2 owners.
+    /// The plan4 owners call it; `open` stays the legacy discovery entry for
+    /// its DEV2 Profile1 owners.
     pub(crate) fn open_profile(
         writer: &'a mut W,
         profile: Profile,
@@ -254,7 +266,9 @@ impl<'a, W: WriterNamespace> PageFileReader<'a, W> {
     }
 
     /// Borrow the immutable installed selection without holding the namespace lock.
-    /// Every construction compares the complete profile and selected root identity.
+    /// The bound profile selects the profile grammar and must equal the file
+    /// (`Control(IdentityMismatch)` right after `d3-profile`); every
+    /// construction also compares the complete selected root identity.
     pub(super) fn open_shared(
         writer: &'a Mutex<W>,
         fence: &'a SessionFence,
@@ -282,7 +296,7 @@ impl<'a, W: WriterNamespace> PageFileReader<'a, W> {
         });
         Self::open_inner(
             access,
-            ProfileGrammar::Bootstrap(Some(expected_profile.spec().namespace)),
+            ProfileGrammar::Installed(expected_profile),
             Some((expected_profile, expected_selected)),
             root_bytes,
             scratch,

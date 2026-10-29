@@ -529,7 +529,7 @@ fn prepare_system_inventory(
     allocation: &[u8; 1536],
     output: &mut [u8; PAGE_BYTES],
 ) -> std::result::Result<(), crate::storage::plan4_recovery_base::Error> {
-    crate::storage::plan4_recovery_base::catalog::inventory::encode_current(
+    crate::storage::plan4_recovery_base::catalog::inventory::encode_row_current(
         profile,
         generation,
         capture,
@@ -1030,7 +1030,7 @@ impl ReplayAllocation {
         };
         let view = seed.view();
         let h = view.header();
-        if h.format != crate::storage::plan4_recovery_base::BaseFormat::V3Catalog {
+        if h.format != crate::storage::plan4_recovery_base::BaseFormat::V4RowMissing {
             return Err(RetentionCause::Unsupported);
         }
         let high_water = h.system_high_water[0];

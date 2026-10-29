@@ -351,10 +351,15 @@ fn inspect<W: WriterNamespace>(
         Phase::Profile,
     )
     .map_err(existing)?;
+    // The plan4 genesis closure is exactly Profile3; every other profile
+    // version is the Row decoder's UnsupportedFormat, never a legacy retry.
     let profile =
-        control::decode_bootstrap_profile(&scratch[0][..control::PROFILE_BYTES], expected)
+        control::row_profile::decode_profile(&scratch[0][..control::PROFILE_BYTES], expected)
             .map_err(|e| existing(error(Phase::Profile, Cause::Control(e))))?;
-    if profile.spec().generation != 1 || profile.spec().namespace.timeline != 1 {
+    if profile.format() != 3
+        || profile.spec().generation != 1
+        || profile.spec().namespace.timeline != 1
+    {
         return Err(after_lease(
             Plan4SelectPhase::Profile,
             Plan4SelectCause::UnsupportedClosure,

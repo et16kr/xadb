@@ -112,6 +112,14 @@ impl<'a> RowBaseView<'a> {
     pub(in crate::storage) fn descriptor_bank(self) -> &'a [u8; DESCRIPTOR_BYTES] {
         self.layout.descriptor_bank()
     }
+    /// The checked XOI1 inventory page of this observation.
+    pub(in crate::storage) fn inventory(self) -> &'a [u8; PAGE_BYTES] {
+        self.layout.inventory()
+    }
+    /// The arena allocator image (ordinal 0), as the base3 view exposes it.
+    pub(in crate::storage) fn allocator(self) -> &'a [u8; PAGE_BYTES] {
+        image(self.layout.bytes(), 0)
+    }
     pub(in crate::storage) fn header(self) -> Header {
         self.layout.header()
     }

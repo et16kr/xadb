@@ -717,8 +717,8 @@ pub(crate) fn borrowed_source_bytes() -> usize {
 }
 
 /// The same census for the explicit Profile3 adapter (Root3/Job3 through the
-/// Catalog-scope Job3 view and the Root3-bound Aging successor). Uncalled
-/// until the single current-format switch charges it instead of Profile2's.
+/// Catalog-scope Job3 view and the Root3-bound Aging successor): the one the
+/// current runtime charges.
 pub(crate) fn profile3_source_census() -> SourceCensus {
     census(false, Codecs::row3())
 }

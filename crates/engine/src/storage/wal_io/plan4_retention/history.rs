@@ -426,7 +426,21 @@ pub(super) fn validate_live<W: WriterNamespace>(
     {
         return Err(invalid(storage));
     }
-    if storage.profile().format() == 2 {
+    // The bound Profile selects whether the XOI cache exists: Profile3 keeps
+    // the current Row-mode inventory, Profile1 has none. Any other format is
+    // rejected here, never treated as the cache-less Profile1 line.
+    let cached = match recovery::bound_grammar(storage.profile()) {
+        Some(recovery::BoundGrammar::Catalog3) => true,
+        Some(recovery::BoundGrammar::System1) => false,
+        None => {
+            return Err(fatal(
+                storage,
+                RetentionPhase::Source,
+                RetentionCause::Unsupported,
+            ));
+        }
+    };
+    if cached {
         let cache = &control.bytes[131_072..147_456];
         if prefix.complete_lsn == 0 {
             if source.base().is_some() || cache.iter().any(|byte| *byte != 0) {
@@ -442,7 +456,7 @@ pub(super) fn validate_live<W: WriterNamespace>(
             let output: &mut [u8; PAGE_BYTES] = (&mut scratch[..PAGE_BYTES])
                 .try_into()
                 .expect("XOI scratch");
-            crate::storage::plan4_recovery_base::catalog::inventory::encode_current(
+            crate::storage::plan4_recovery_base::catalog::inventory::encode_row_current(
                 storage.profile(),
                 generation,
                 prefix.complete_lsn,
@@ -526,7 +540,11 @@ fn verify_seed_epoch<W: WriterNamespace>(
     metadata(storage, source, prefix.file, 4096)
 }
 
+/// Canonical genesis replay state of the exact Profile3 plan4 namespace.
 pub(super) fn initialize(profile: Profile, replay: &mut [u8]) -> std::result::Result<(), ()> {
+    if profile.format() != 3 {
+        return Err(());
+    }
     replay.fill(0);
     {
         let three: &mut [[u8; PAGE_BYTES]; 3] = replay[..3 * PAGE_BYTES]
@@ -547,7 +565,7 @@ pub(super) fn initialize(profile: Profile, replay: &mut [u8]) -> std::result::Re
             .try_into()
             .map_err(|_| ())?;
         if index <= 6 {
-            retention_genesis::encode_current(
+            retention_genesis::encode_row_current(
                 profile.spec().namespace,
                 if index == 1 {
                     RetentionGenesisPage::Root
@@ -571,11 +589,15 @@ pub(super) fn initialize(profile: Profile, replay: &mut [u8]) -> std::result::Re
     refresh_jobs(profile, replay)?;
     Ok(())
 }
+/// Copies the five canonical Job3 pages into the replay bank (Profile3 only).
 pub(super) fn refresh_jobs(profile: Profile, replay: &mut [u8]) -> std::result::Result<(), ()> {
+    if profile.format() != 3 {
+        return Err(());
+    }
     let (arena, rest) = replay.split_at_mut(ARENA_END);
     let cells = rest[..65_536].as_chunks_mut::<JOB_BYTES>().0;
     for index in 0..5 {
-        let view = retention_page::catalog::decode_jobs_page(
+        let view = retention_page::catalog3::decode_jobs_page(
             &arena[(index + 2) * PAGE_BYTES..(index + 3) * PAGE_BYTES],
             profile.spec().namespace,
             index as u8,
@@ -957,8 +979,12 @@ pub(super) fn replay_rollback(
 /// Pure whole-state bijection. Every occupied Status has one Job; every live
 /// Active/Aborting Status has one ATT row; Ready Aborted owns no ATT row.
 pub(super) fn validate_bijection(profile: Profile, replay: &[u8]) -> std::result::Result<(), ()> {
-    if profile.format() == 2 {
-        return catalog::validate_current(profile, replay).map_err(|_| ());
+    // Exact grammar: Profile3 the current Catalog census, Profile1 the
+    // original v1 census below; any other format is rejected, not v1.
+    match profile.format() {
+        3 => return catalog::validate_current(profile, replay).map_err(|_| ()),
+        1 => {}
+        _ => return Err(()),
     }
     let namespace = profile.spec().namespace;
     let (_, root) =

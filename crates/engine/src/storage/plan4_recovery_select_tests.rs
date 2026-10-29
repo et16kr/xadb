@@ -3,7 +3,9 @@ use super::*;
 use crate::storage::{
     catalog_record::{self, CatalogExpectation},
     page::{PageIdentity, PageKind},
-    retention_genesis::tests as q,
+    // The current plan4 namespace is Profile3; the Profile1 plan4 inputs stay
+    // only for the unchanged DEV2 old-dispatch boundaries (O04..O07).
+    retention_genesis::tests::{self as profile1, current as q},
     tree_page::{self, TreeExpectation},
     wal_frame::{self, FrameExpectation, WalStreamIdentity},
     wal_io::plan4_test_support::{Action, Directory, Fault, Key},
@@ -403,10 +405,12 @@ fn control_error(case: usize, error: &Plan4SelectError) {
                 )
             ))
         )),
+        // Root3 grammar: a set Aging byte whose Aging reference does not
+        // decode is the Row decoder's IdentityMismatch (Root2 was Corrupt).
         31 => assert!(matches!(
             error.cause,
             Plan4SelectCause::Genesis(wal_io::Plan4GenesisCause::Retention(
-                crate::storage::retention_genesis::RetentionGenesisError::Corrupt
+                crate::storage::retention_genesis::RetentionGenesisError::IdentityMismatch
             ))
         )),
         _ => panic!("control error case"),
@@ -552,7 +556,7 @@ fn plan4_owner_and_old_dispatch_boundaries() {
                     assert!(matches!(error.cause, Plan4SelectCause::Genesis(wal_io::Plan4GenesisCause::UnsupportedPlan)));
                 }
                 4..=7 => {
-                    let map = q::files(1);
+                    let map = profile1::files(1);
                     let directory = Directory::from_files(map.clone());
                     if case == 4 {
                         let mut scratch: Box<[[u8; PAGE_BYTES]; 3]> = vec![[0; PAGE_BYTES]; 3].into_boxed_slice().try_into().unwrap();
@@ -623,6 +627,41 @@ fn plan4_owner_and_old_dispatch_boundaries() {
         });
     }
     h.finish();
+}
+
+/// U2-C4c: plan4 selection binds exactly Profile3. The original Profile1
+/// plan4 namespace and a Profile2 ID1 envelope (sha256-pinned DEV3 native
+/// literal) in the current namespace are the Row decoder's
+/// `Control(UnsupportedFormat)` at the Profile phase, never a legacy retry,
+/// with the directory unchanged; the current Profile3 namespace is selected.
+#[test]
+fn plan4_selection_binds_profile3_exactly() {
+    fn unsupported(error: &Plan4SelectError) {
+        assert_eq!(error.phase, Plan4SelectPhase::Profile);
+        assert!(matches!(
+            &error.cause,
+            Plan4SelectCause::Existing(e) if e.phase == Phase::Profile
+                && matches!(e.cause, Cause::Control(ControlError::UnsupportedFormat))
+        ));
+    }
+    unsupported(&reject(&Directory::from_files(profile1::files(1))));
+    let profile2 = std::fs::read(
+        std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join(
+            "../../tests/fixtures/dev3-catalog-create/native/raw/b8aab8141cbc1807844468c353d62b759e5001d5c3f8f82e54c1f4efeadd3b24.bin",
+        ),
+    )
+    .unwrap();
+    assert_eq!(
+        q::hash_hex(&profile2),
+        "b8aab8141cbc1807844468c353d62b759e5001d5c3f8f82e54c1f4efeadd3b24"
+    );
+    let mut map = q::files(1);
+    edit(&mut map, "d3-profile", |raw| *raw = profile2);
+    unsupported(&reject(&Directory::from_files(map)));
+    let map = q::files(1);
+    let directory = Directory::from_files(map.clone());
+    observation(&acquire(&directory).unwrap(), 1);
+    unchanged(&directory, &map);
 }
 
 #[test]

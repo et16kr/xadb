@@ -5,7 +5,7 @@ use super::*;
 use crate::storage::{
     allocation_page::ReservationOwner,
     obligation::{self, OwnerState},
-    retention_page::catalog::{self as queue, JobState},
+    retention_page::catalog3::{self as queue, JobState},
     semantic_catalog::{Observation, Operation},
     transaction_record::{RollbackState, TransactionState},
 };

@@ -949,10 +949,19 @@ fn bootstrap_readback_binds_installed_objects() {
                     f.bytes = b;
                 }
             }
-            assert!(matches!(
-                session.open_reader(root, scratch),
-                Err(PageIoError::IdentityMismatch)
-            ));
+            // The shared reader binds the installed profile grammar first: a
+            // replaced d3-profile is refused right after it is read (case 2),
+            // a replaced selection after the whole root is compared (case 3).
+            let opened = session.open_reader(root, scratch);
+            if case == 2 {
+                assert!(matches!(
+                    opened,
+                    Err(PageIoError::Control(ControlError::IdentityMismatch))
+                ));
+            } else {
+                assert!(matches!(opened, Err(PageIoError::IdentityMismatch)));
+            }
+            drop(opened);
             assert!(
                 !session
                     .core

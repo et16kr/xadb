@@ -7,7 +7,7 @@ use crate::{
             pressure_test_support as pressure_probe, status_load_test_support as slot_probe,
         },
         page::{PageHeader, decode_page},
-        retention_genesis::tests as raw,
+        retention_genesis::tests::current as raw,
         session_fence::SessionFence,
         wal_frame::MAX_FRAME_BYTES,
         wal_io::{FreshStorageSession, plan4_test_support as port},

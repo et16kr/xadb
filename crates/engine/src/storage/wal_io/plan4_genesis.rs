@@ -120,9 +120,9 @@ fn canonical_payload(
     output: &mut [u8; PAGE_BYTES],
 ) -> PureResult<()> {
     match index {
-        1 => retention_genesis::encode_current(namespace, RetentionGenesisPage::Root, output)
+        1 => retention_genesis::encode_row_current(namespace, RetentionGenesisPage::Root, output)
             .map_err(Plan4GenesisCause::Retention),
-        2..=6 => retention_genesis::encode_current(
+        2..=6 => retention_genesis::encode_row_current(
             namespace,
             RetentionGenesisPage::Jobs {
                 index: (index - 2) as u8,
@@ -193,7 +193,7 @@ pub(super) fn prepare<'i>(
     images: &'i mut [[u8; PAGE_BYTES]; 9],
     scratch: &mut [[u8; PAGE_BYTES]; 3],
 ) -> PureResult<PreparedPlan4<'i>> {
-    if profile.format() != 2 {
+    if profile.format() != 3 {
         return Err(Plan4GenesisCause::UnsupportedPlan);
     }
     let plan = BootstrapPlan::prepare_for_kind(
@@ -276,7 +276,7 @@ pub(in crate::storage) fn inspect_bootstrap(
     selected: SelectedControl,
     scratch: &mut [[u8; PAGE_BYTES]; 3],
 ) -> PureResult<Plan4GenesisSeed> {
-    if profile.format() != 2 {
+    if profile.format() != 3 {
         return Err(Plan4GenesisCause::UnsupportedPlan);
     }
     let bytes = &scratch[0][..super::super::CONTROL_BYTES];
@@ -452,13 +452,8 @@ impl BorrowedPlan4<'_> {
     ) -> PureResult<()> {
         let [root, work, output] = scratch;
         let mut checked = CheckedPlan4Namespace(writer);
-        let mut reader = PageFileReader::open(
-            &mut checked,
-            Some(self.plan.profile.spec().namespace),
-            root,
-            work,
-        )
-        .map_err(Plan4GenesisCause::PageIo)?;
+        let mut reader = PageFileReader::open_profile(&mut checked, self.plan.profile, root, work)
+            .map_err(Plan4GenesisCause::PageIo)?;
         if reader.profile() != self.plan.profile || reader.selected() != self.plan.selected {
             return Err(Plan4GenesisCause::IdentityMismatch);
         }
@@ -497,9 +492,13 @@ impl BorrowedPlan4<'_> {
     ) -> PureResult<()> {
         let namespace = self.plan.profile.spec().namespace;
         match index {
-            1 => retention_genesis::validate_current(actual, namespace, RetentionGenesisPage::Root)
-                .map_err(Plan4GenesisCause::Retention)?,
-            2..=6 => retention_genesis::validate_current(
+            1 => retention_genesis::validate_row_current(
+                actual,
+                namespace,
+                RetentionGenesisPage::Root,
+            )
+            .map_err(Plan4GenesisCause::Retention)?,
+            2..=6 => retention_genesis::validate_row_current(
                 actual,
                 namespace,
                 RetentionGenesisPage::Jobs {
@@ -620,7 +619,7 @@ fn readback_seed<W: WriterNamespace>(
 }
 
 fn borrowed_owned(plan: &BootstrapPlan) -> PureResult<BorrowedPlan4<'_>> {
-    if plan.kind != BootstrapPlanKind::RetentionCatalogBootstrap || plan.profile.format() != 2 {
+    if plan.kind != BootstrapPlanKind::RetentionCatalogBootstrap || plan.profile.format() != 3 {
         return Err(Plan4GenesisCause::UnsupportedPlan);
     }
     Ok(BorrowedPlan4 { plan })
@@ -694,13 +693,8 @@ pub(super) fn read_owned_payload<W: WriterNamespace>(
     {
         let [root, work] = scratch;
         let mut checked = CheckedPlan4Namespace(writer);
-        let mut reader = PageFileReader::open(
-            &mut checked,
-            Some(plan.profile.spec().namespace),
-            root,
-            work,
-        )
-        .map_err(Plan4GenesisCause::PageIo)?;
+        let mut reader = PageFileReader::open_profile(&mut checked, plan.profile, root, work)
+            .map_err(Plan4GenesisCause::PageIo)?;
         if reader.profile() != plan.profile || reader.selected() != plan.selected {
             return Err(Plan4GenesisCause::IdentityMismatch);
         }
@@ -714,13 +708,8 @@ pub(super) fn read_owned_payload<W: WriterNamespace>(
     {
         let [root, work] = scratch;
         let mut checked = CheckedPlan4Namespace(writer);
-        let reader = PageFileReader::open(
-            &mut checked,
-            Some(plan.profile.spec().namespace),
-            root,
-            work,
-        )
-        .map_err(Plan4GenesisCause::PageIo)?;
+        let reader = PageFileReader::open_profile(&mut checked, plan.profile, root, work)
+            .map_err(Plan4GenesisCause::PageIo)?;
         if reader.profile() != plan.profile || reader.selected() != plan.selected {
             return Err(Plan4GenesisCause::IdentityMismatch);
         }
@@ -789,7 +778,7 @@ pub(in crate::storage) fn source_census<W: WriterNamespace>() -> Census {
         // 2 BorrowedPlan4 values + 6 references = 64 bytes on this target. No
         // Result<BorrowedPlan4> occurs on the unchanged old constructor path.
         + 1024;
-    let payload = retention_genesis::current_source_bytes()
+    let payload = retention_genesis::row_current_source_bytes()
         + 6 * size_of::<PageHeader>()
         + 4 * size_of::<PageIdentity>()
         + 6 * size_of::<PageRef>()
@@ -819,6 +808,8 @@ pub(in crate::storage) fn source_census<W: WriterNamespace>() -> Census {
         + 1024;
     let readback_nested = child_carriers
         + old.readback_nested.max(payload).max(hash)
+        // Installed-grammar open over the legacy open inside old.readback_nested.
+        + crate::storage::page_io::installed_open_source_bytes()
         + 2 * size_of::<W::File>()
         + 2 * size_of::<PureResult<(W::File, FileMetadata)>>()
         + 6 * size_of::<FileMetadata>()

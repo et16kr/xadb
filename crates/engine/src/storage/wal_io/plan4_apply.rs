@@ -506,7 +506,7 @@ impl<'s, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace> Plan4Pages<'s, 'c, 'p, 'd, 
                     seed_prefix,
                     loan.replay,
                 );
-                ledger.initialize_jobs(storage.profile().spec().namespace);
+                ledger.initialize_jobs(storage.profile());
                 let control = RetentionControl {
                     ledger,
                     isolation: Mutex::new(IsolationLedger::new(

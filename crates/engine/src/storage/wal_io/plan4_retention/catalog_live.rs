@@ -6,7 +6,7 @@ use crate::{
     storage::{
         allocation_page::{self, AllocationEntry},
         page::{PageKind, PageRef},
-        retention_page::catalog::{self as queue, JobState},
+        retention_page::catalog3::{self as queue, JobState},
         semantic_catalog::{self, Change, Inputs, Observation, Operation},
         session_fence::SessionFence,
         wal_frame::FrameExpectation,
@@ -902,7 +902,7 @@ fn prepare_inventory(
         .source
         .base()
         .map_or(1, |base| base.view().header().generation);
-    crate::storage::plan4_recovery_base::catalog::inventory::encode_current(
+    crate::storage::plan4_recovery_base::catalog::inventory::encode_row_current(
         profile,
         generation,
         observation.header.lsn,
@@ -1580,7 +1580,7 @@ pub(in super::super) fn catalog_live_source_bytes<W: WriterNamespace>() -> Catal
                 + size_of::<Inputs<'_>>()
                 + size_of::<crate::storage::allocation_page::AllocationPage<'_>>()
                 + size_of::<Result<Observation>>()
-                + semantic_catalog::source_bytes(),
+                + semantic_catalog::profile3_source_census().total,
         );
     // After cleanup, final role/target arrays have been formed, but no return
     // carrier exists. The exact shared encoder owns no duplicate output page.
@@ -1596,7 +1596,7 @@ pub(in super::super) fn catalog_live_source_bytes<W: WriterNamespace>() -> Catal
         >()
         + size_of::<ProjectedInventory<'_, '_, '_, '_, '_>>()
         + 2 * size_of::<Result<(u64, u64)>>()
-        + crate::storage::plan4_recovery_base::catalog::inventory::current_source_bytes()
+        + crate::storage::plan4_recovery_base::catalog::inventory::row_current_source_bytes()
             .max(semantic_catalog::layout_source_bytes());
     let reader_return = prepare_outer
         + replay_carriers
@@ -1616,7 +1616,7 @@ pub(in super::super) fn catalog_live_source_bytes<W: WriterNamespace>() -> Catal
         + size_of::<[(TargetRequest, u8); 9]>()
         + 640
         + 2 * size_of::<crate::storage::obligation::DescriptorSpec>()
-        + queue::source_bytes().max(semantic_catalog::transaction_source_bytes());
+        + queue::source_bytes().max(semantic_catalog::profile3_transaction_source_bytes());
     let prepare = prepare_replay
         .max(prepare_produce)
         .max(prepare_inventory)
@@ -1630,7 +1630,7 @@ pub(in super::super) fn catalog_live_source_bytes<W: WriterNamespace>() -> Catal
         + size_of::<edit::LeafEditPlan<'_, '_>>()
         + 2 * size_of::<crate::storage::page::PageView<'_>>()
         + dirty_frame::target_set_call_bytes::<7>()
-        + semantic_catalog::source_census().catalog_image;
+        + semantic_catalog::profile3_source_census().catalog_image;
     let physical = crate::storage::wal_io::DURABILITY_CALL_BYTES
         + 2 * size_of::<std::result::Result<WalRequirement<'_>, crate::storage::wal_io::WalIoError>>(
         )

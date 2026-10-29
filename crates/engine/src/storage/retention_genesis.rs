@@ -200,8 +200,11 @@ pub(crate) fn validate(
     Ok(())
 }
 
-/// Current fresh plan4 uses Root/Job version2. The v1 functions above remain
-/// strict test codecs for historical inputs, never an implicit upgrade path.
+/// Historical Profile2 fresh plan4 pages (Root/Job version2). The single
+/// current-format switch moved genesis to the Profile3 functions below. The v1
+/// functions above remain strict test codecs for historical inputs, never an
+/// implicit upgrade path.
+#[allow(dead_code, reason = "historical Profile2 pure codec")]
 pub(crate) fn encode_current(
     namespace: Namespace,
     role: RetentionGenesisPage,
@@ -228,6 +231,7 @@ pub(crate) fn encode_current(
     Ok(())
 }
 
+#[allow(dead_code, reason = "historical Profile2 pure codec")]
 pub(crate) fn validate_current(
     bytes: &[u8],
     namespace: Namespace,
@@ -255,13 +259,8 @@ pub(crate) fn validate_current(
     Ok(())
 }
 
-/// Profile3 genesis pages for the later single current switch: Root3 with
-/// row_high0, exact Free Job3×64 and empty budget digests. Nothing calls this
-/// before that switch; the Profile2 functions above remain the current ones.
-#[allow(
-    dead_code,
-    reason = "pure Profile3 genesis supply awaits the single current-format switch"
-)]
+/// Current Profile3 genesis pages: Root3 with row_high0, exact Free Job3×64
+/// and empty budget digests.
 pub(crate) fn encode_row_current(
     namespace: Namespace,
     role: RetentionGenesisPage,
@@ -290,10 +289,6 @@ pub(crate) fn encode_row_current(
 
 /// Accepts only exact Profile3 genesis pages. Root/Job version1/2/4 and any
 /// other cell, LSN, namespace or generation are rejected, never converted.
-#[allow(
-    dead_code,
-    reason = "pure Profile3 genesis supply awaits the single current-format switch"
-)]
 pub(crate) fn validate_row_current(
     bytes: &[u8],
     namespace: Namespace,
@@ -333,16 +328,13 @@ fn current_error(error: super::retention_page::RetentionError) -> RetentionGenes
     }
 }
 
+#[allow(dead_code, reason = "historical Profile2 pure codec")]
 pub(in crate::storage) fn current_source_bytes() -> usize {
     source_bytes() + super::retention_page::catalog::source_bytes()
 }
 
-/// The same wrapper closure over the separate Row codec count, for the later
-/// switch. The Catalog sum above is unchanged and not reused for Row.
-#[allow(
-    dead_code,
-    reason = "pure Profile3 genesis supply awaits the single current-format switch"
-)]
+/// The same wrapper closure over the separate Row codec count. The historical
+/// Catalog sum above is unchanged and not reused for Row.
 pub(in crate::storage) fn row_current_source_bytes() -> usize {
     source_bytes() + super::retention_page::row::source_bytes()
 }

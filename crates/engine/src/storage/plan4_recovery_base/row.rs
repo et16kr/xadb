@@ -2,10 +2,6 @@
 //! deliberately separate from the full semantic graph/credit/inventory closure
 //! and from the original selected-source owner's provenance verification.
 
-#[allow(
-    unused_imports,
-    reason = "pure Base4 supply awaits current-profile closure"
-)]
 pub(in crate::storage) use super::image_records::encode_certificate;
 use super::image_records::{decode_certificate, validate_provenance};
 use super::{
@@ -20,10 +16,6 @@ use crate::storage::retention_page::row;
 pub(in crate::storage) mod actor;
 #[path = "row/graph.rs"]
 mod graph;
-#[allow(
-    unused_imports,
-    reason = "pure Base4 closure awaits the Profile3 recovery owner"
-)]
 pub(in crate::storage) use graph::{
     RowBaseError, RowBaseView, RowCensus, decode, encode, source_bytes,
 };

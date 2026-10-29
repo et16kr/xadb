@@ -48,9 +48,9 @@ mod tests;
 pub(in crate::storage) use resources::source_census;
 
 pub(crate) const MAINTENANCE_BYTES: usize = 12_582_912;
-// Current Profile v2 selects an exact-image v3 base. The legacy codec keeps
+// Current Profile3 selects an exact-image v4 base. The legacy codec keeps
 // its own 1 MiB geometry; the physical home arena is independently 64 pages.
-const BASE_BYTES: usize = base::catalog::BASE_BYTES;
+const BASE_BYTES: usize = base::row::BASE_BYTES;
 const PHYSICAL_BYTES: usize = 64 * PAGE_BYTES;
 const CONTROL_BYTES: usize = 4096;
 const REPLAY_START: usize = 2 * BASE_BYTES;
@@ -81,7 +81,7 @@ const ISOLATION_AT: usize =
     MAINTENANCE_BYTES - CATALOG_VISIBILITY_BYTES - CATALOG_PRIVATE_BYTES - ISOLATION_BYTES;
 const EPOCH_AT: usize = ISOLATION_AT - EPOCH_BYTES;
 const _: () = assert!(SOURCE_STAMP_AT + 32 <= EPOCH_AT);
-const _: () = assert!(PHYSICAL_BYTES == base::catalog::PAGE_ARENA_BYTES);
+const _: () = assert!(PHYSICAL_BYTES == base::row::PAGE_ARENA_BYTES);
 const _: () = assert!(
     SOURCE_STAMP_AT
         + 32
@@ -143,6 +143,13 @@ pub(crate) enum Plan4RecoveryCause {
         reason = "retain the original private base codec cause without widening its authority scope"
     )]
     Base(base::Error),
+    /// A base4 graph cause other than its layout/shared-body `Base` cause,
+    /// which stays `Base` unnormalized (see `row_base`).
+    #[allow(
+        private_interfaces,
+        reason = "retain the original private base4 graph cause without widening its authority scope"
+    )]
+    RowBase(base::row::RowBaseError),
     #[allow(
         private_interfaces,
         reason = "retain the original private record codec cause without widening its authority scope"
@@ -165,6 +172,15 @@ pub(crate) struct Plan4RecoveryError {
     pub(crate) lease_acquired: bool,
 }
 type Result<T> = std::result::Result<T, Plan4RecoveryError>;
+/// The exact base4 decoder's cause: its raw-layout and shared Catalog-body
+/// failures keep the base codec's own `Base` cause (so base version 0/1/2/3/5
+/// stays `Base(Unsupported)`); every Row-graph cause is carried as is.
+fn row_base(error: base::row::RowBaseError) -> Plan4RecoveryCause {
+    match error {
+        base::row::RowBaseError::Base(error) => Plan4RecoveryCause::Base(error),
+        other => Plan4RecoveryCause::RowBase(other),
+    }
+}
 fn error(phase: Plan4RecoveryPhase, cause: Plan4RecoveryCause) -> Plan4RecoveryError {
     Plan4RecoveryError {
         phase,
@@ -342,11 +358,11 @@ impl RecoveryPoolSeed<'_> {
 /// the actual CURRENT reference, immutable geometry and provenance agree.
 /// Its BaseView borrows the original external caller allocation, not this owner.
 pub(in crate::storage) struct VerifiedPlan4Base<'a> {
-    view: base::catalog::CatalogBaseView<'a>,
+    view: base::row::RowBaseView<'a>,
     digest: [u8; 32],
 }
 impl<'a> VerifiedPlan4Base<'a> {
-    pub(in crate::storage) fn view(&self) -> base::catalog::CatalogBaseView<'a> {
+    pub(in crate::storage) fn view(&self) -> base::row::RowBaseView<'a> {
         self.view
     }
     pub(in crate::storage) fn capture_lsn(&self) -> u64 {
@@ -663,8 +679,8 @@ impl<W: WriterNamespace> RecoveryState<'_, '_, '_, W> {
             .0
             .try_into()
             .expect("base scratch");
-        let view = base::catalog::decode(&before[BASE_BYTES..2 * BASE_BYTES], expected, scratch)
-            .map_err(|e| error(p, Plan4RecoveryCause::Base(e)))?;
+        let view = base::row::decode(&before[BASE_BYTES..2 * BASE_BYTES], expected, scratch)
+            .map_err(|e| error(p, row_base(e)))?;
         if Some(view.digest()) != self.selected_epoch.as_ref().map(|e| e.header.base_digest) {
             return Err(error(p, Plan4RecoveryCause::ContentMismatch));
         }
@@ -719,7 +735,7 @@ impl<'a, 'm, 'w, W: WriterNamespace> RecoveryState<'a, 'm, 'w, W> {
             .expect("retained codec scratch");
         // Same immutable bytes/expected values were decoded immediately before
         // transfer; this repeats no I/O or semantic adoption and cannot fail.
-        let view = base::catalog::decode(new_base, expected, scratch)
+        let view = base::row::decode(new_base, expected, scratch)
             .expect("prechecked immutable base transfer");
         let base = VerifiedPlan4Base {
             view,
@@ -883,7 +899,7 @@ impl<W: WriterNamespace> Plan4RecoveryRuntime<'_, '_, '_, W> {
             .base
             .view
             .certificate(0)
-            .map_err(|e| error(p, Plan4RecoveryCause::Base(e)))?
+            .map_err(|e| error(p, row_base(e)))?
             .ok_or_else(|| error(p, Plan4RecoveryCause::Invariant))?;
         if self.selected.header.base_lsn != self.base.capture_lsn()
             || self.selected.header.base_digest != self.base.digest

@@ -305,8 +305,8 @@ impl<W: WriterNamespace> RecoveryState<'_, '_, '_, W> {
                     .0
                     .try_into()
                     .expect("base scratch");
-                let view = base::catalog::decode(&before[..BASE_BYTES], expected, scratch)
-                    .map_err(|e| error(p, Plan4RecoveryCause::Base(e)))?;
+                let view = base::row::decode(&before[..BASE_BYTES], expected, scratch)
+                    .map_err(|e| error(p, row_base(e)))?;
                 Some(VerifiedPlan4Base {
                     digest: view.digest(),
                     view,
@@ -785,7 +785,7 @@ fn decode_ram_descriptor(
                 .map_err(|_| error(p, Plan4RecoveryCause::Invariant))?,
         )
     } else if slot == RAM_AGING {
-        return retention_obligation::catalog::decode(raw, profile, root)
+        return retention_obligation::row::decode(raw, profile, root)
             .map(|view| view.descriptor())
             .map_err(|_| error(p, Plan4RecoveryCause::Invariant));
     } else {
@@ -935,7 +935,7 @@ fn pack_inventory(
     replay: &[u8; 1_572_864],
     output: &mut [u8; PAGE_BYTES],
 ) -> Result<()> {
-    base::catalog::inventory::encode_current(
+    base::catalog::inventory::encode_row_current(
         profile,
         generation,
         capture,
@@ -974,7 +974,7 @@ impl<W: WriterNamespace> RecoveryState<'_, '_, '_, W> {
             .try_into()
             .expect("base scratch");
         let replay: &[u8; 1_572_864] = (&*replay).try_into().expect("replay");
-        let sections = base::catalog::Sections {
+        let sections = base::row::Sections {
             descriptors: (&pack[..base::DESCRIPTOR_BYTES])
                 .try_into()
                 .expect("packed bank"),
@@ -991,14 +991,14 @@ impl<W: WriterNamespace> RecoveryState<'_, '_, '_, W> {
                 .try_into()
                 .expect("images"),
         };
-        let view = base::catalog::encode(
+        let view = base::row::encode(
             header,
             expected,
             sections,
             output.try_into().expect("new base"),
             scratch,
         )
-        .map_err(|e| error(p, Plan4RecoveryCause::Base(e)))?;
+        .map_err(|e| error(p, row_base(e)))?;
         Ok(view.digest())
     }
 
@@ -1049,7 +1049,7 @@ impl<W: WriterNamespace> RecoveryState<'_, '_, '_, W> {
             let header = page::decode_page(image, req.identity, req.kind)
                 .map_err(|e| error(p, Plan4RecoveryCause::Page(e)))?
                 .header();
-            base::catalog::encode_certificate(
+            base::row::encode_certificate(
                 expected,
                 header,
                 image,
@@ -1061,7 +1061,7 @@ impl<W: WriterNamespace> RecoveryState<'_, '_, '_, W> {
         }
         let inventory: &mut [u8; PAGE_BYTES] = inventory.try_into().expect("inventory");
         pack_inventory(profile, generation, facts.lsn, packed, replay, inventory)?;
-        let root = crate::storage::retention_page::catalog::decode_root_page(
+        let root = crate::storage::retention_page::catalog3::decode_root_page(
             retention_replay_image(replay, 1),
             profile.spec().namespace,
         )
@@ -1075,7 +1075,7 @@ impl<W: WriterNamespace> RecoveryState<'_, '_, '_, W> {
             _ => return Err(error(p, Plan4RecoveryCause::Invariant)),
         };
         let header = base::Header {
-            format: base::BaseFormat::V3Catalog,
+            format: base::BaseFormat::V4RowMissing,
             generation,
             capture_lsn: facts.lsn,
             previous_generation,
@@ -1114,7 +1114,7 @@ impl<W: WriterNamespace> RecoveryState<'_, '_, '_, W> {
 /// Nested capture packing carriers. The caller separately retains RecoveryState,
 /// Header/Expected and its exact original backing; no owner table copy exists.
 pub(super) fn packing_source_bytes() -> usize {
-    use crate::storage::retention_page::catalog as queue;
+    use crate::storage::retention_page::catalog3 as queue;
     use std::mem::size_of;
     let outer = 288 // one normalized/current CREATE XOI item packet
         + 2 * size_of::<[RemainingBudget; 5]>()
@@ -1127,10 +1127,11 @@ pub(super) fn packing_source_bytes() -> usize {
         + 4 * size_of::<Result<()>>()
         + 32 * size_of::<&[u8]>() + 32 * size_of::<u64>();
     let hash = 4 * size_of::<ContentHasher>() + 1536;
-    (size_of::<CaptureInventoryRows<'_>>() + base::catalog::inventory::current_source_bytes()).max(
-        outer
-            + crate::storage::retention_obligation::catalog::source_bytes()
-                .max(queue::source_bytes())
-                .max(hash),
-    )
+    (size_of::<CaptureInventoryRows<'_>>() + base::catalog::inventory::row_current_source_bytes())
+        .max(
+            outer
+                + crate::storage::retention_obligation::row::source_bytes()
+                    .max(queue::source_bytes())
+                    .max(hash),
+        )
 }

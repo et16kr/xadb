@@ -40,6 +40,7 @@ fn charge(total: &mut (u64, u64), rows: &[RemainingBudget; 5]) -> Result<()> {
 /// Returns current remaining WAL/control credit. Aging already owns each Job's
 /// cleanup debt, so Jobs are not charged a second time. Output is discardable
 /// on any error; generation/capture must come from the caller's actual source.
+#[allow(dead_code, reason = "historical Profile2 pure codec")]
 pub(in crate::storage) fn encode_current(
     profile: Profile,
     generation: u64,
@@ -301,15 +302,50 @@ fn row_undo_item(
     Ok(())
 }
 
-/// Typed nested codec closure. Its sum is the Catalog2 mode's; the Profile3
-/// Row mode (Job3 decode, the Catalog-scope Job3 view of a CREATE reservation
-/// or a RowReserve item) has no separate bound yet and no caller outside tests.
-/// Caller-owned rows/adapter, output page and any retained current/projected
-/// views are accounted by the calling phase.
+/// Typed nested codec closure of the historical Catalog2 mode. Caller-owned
+/// rows/adapter, output page and any retained current/projected views are
+/// accounted by the calling phase.
+#[allow(dead_code, reason = "historical Profile2 pure codec")]
 pub(in crate::storage) fn current_source_bytes() -> usize {
     use foundation::codec::ContentHasher;
     use std::mem::size_of;
-    let outer = semantic_catalog::inventory::ITEMS_BYTES
+    let outer = common_outer()
+        + 2 * size_of::<queue::JobView<'_>>()
+        + 2 * size_of::<Result<queue::JobView<'_>>>();
+    outer
+        + retention_obligation::catalog::source_bytes()
+            .max(queue::source_bytes())
+            .max(4 * size_of::<ContentHasher>() + 1536)
+}
+
+/// The current Profile3 Row mode closure: the same outer carriers with the
+/// Job3 decode, its Catalog-scope view and the RowReserve UndoSlot item in
+/// place of the version2 Job view, over the Row Aging decode and the
+/// Root3/Job3 codec (charged through the Catalog-scope wrapper).
+pub(in crate::storage) fn row_current_source_bytes() -> usize {
+    use crate::storage::undo_ref::UndoRef;
+    use foundation::codec::ContentHasher;
+    use std::mem::size_of;
+    let outer = common_outer()
+        + 2 * size_of::<row_queue::JobView<'_>>()
+        + 2 * size_of::<
+            std::result::Result<
+                row_queue::JobView<'_>,
+                crate::storage::retention_page::RetentionError,
+            >,
+        >()
+        + 2 * size_of::<Option<catalog3::JobView<'_>>>()
+        + 2 * size_of::<Option<UndoRef>>()
+        + 2 * size_of::<Result<u16>>();
+    outer
+        + retention_obligation::row::source_bytes()
+            .max(catalog3::source_bytes())
+            .max(4 * size_of::<ContentHasher>() + 1536)
+}
+
+fn common_outer() -> usize {
+    use std::mem::size_of;
+    semantic_catalog::inventory::ITEMS_BYTES
         + 2 * size_of::<obligation::DescriptorSpec>()
         + 2 * size_of::<std::result::Result<obligation::DescriptorSpec, obligation::ObligationError>>(
         )
@@ -324,13 +360,7 @@ pub(in crate::storage) fn current_source_bytes() -> usize {
                 allocation_page::AllocationError,
             >,
         >()
-        + 2 * size_of::<queue::JobView<'_>>()
-        + 2 * size_of::<Result<queue::JobView<'_>>>()
         + 8 * size_of::<Result<()>>()
         + 24 * size_of::<&[u8]>()
-        + 24 * size_of::<u64>();
-    outer
-        + retention_obligation::catalog::source_bytes()
-            .max(queue::source_bytes())
-            .max(4 * size_of::<ContentHasher>() + 1536)
+        + 24 * size_of::<u64>()
 }

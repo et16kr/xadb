@@ -3,7 +3,7 @@
 use super::*;
 use crate::storage::{
     obligation,
-    retention_page::catalog as queue,
+    retention_page::catalog3 as queue,
     semantic_catalog::{Operation, PRIVATE_BYTES},
     transaction_record::{RollbackState, TransactionState},
 };
@@ -304,7 +304,7 @@ impl<'s, 'c, W: WriterNamespace> Plan4Retention<'_, 's, 'c, '_, '_, '_, '_, '_, 
         private: &mut [u8; PRIVATE_BYTES],
     ) -> Result<RetentionRecoveryStep> {
         self.recovery_enter(owner)?;
-        if self.inner.storage.profile().format() != 2 {
+        if self.inner.storage.profile().format() != 3 {
             return Err(unchanged(
                 RetentionPhase::Prepare,
                 RetentionCause::Unsupported,

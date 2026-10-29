@@ -4,7 +4,7 @@
 use super::*;
 use crate::storage::{
     allocation_page::{SystemWorkKind, SystemWorkRef},
-    retention_page::catalog::{self, JobCells, JobState, JobView},
+    retention_page::catalog3::{self as catalog, JobCells, JobState, JobView},
     semantic_catalog::{inventory, ledger},
 };
 use foundation::{codec::content_digest, identity::Generation};
@@ -28,7 +28,7 @@ pub(super) fn check(
     profile: crate::storage::control::Profile,
     prefix: WalPrefix,
 ) -> Result<(u64, u64)> {
-    if profile.format() != 2 || bank.pending.is_some() || bank.adopted_local > bank.issued_local {
+    if profile.format() != 3 || bank.pending.is_some() || bank.adopted_local > bank.issued_local {
         return Err(bad());
     }
     let mut wal = 0u64;

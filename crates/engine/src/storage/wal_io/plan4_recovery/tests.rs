@@ -184,6 +184,3 @@ mod catalog_create;
 
 #[path = "tests/catalog_memory.rs"]
 mod catalog_memory;
-
-#[path = "tests/projected_census.rs"]
-mod projected_census;

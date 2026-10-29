@@ -9,7 +9,7 @@ use crate::storage::{
     catalog_record::{self, CatalogDefinitionView, CatalogExpectation},
     control::Profile,
     page::{PAGE_BYTES, PageIdentity, PageKind, PageRef},
-    retention_page::catalog::{self as queue, JobState},
+    retention_page::catalog3::{self as queue, JobState},
     semantic_catalog::Operation,
     transaction_record::VersionStamp,
     tree_page::{self, EntryPayload, TreeExpectation},
@@ -275,7 +275,7 @@ pub(super) fn seed(
     q: u64,
 ) -> Result<(), ()> {
     let namespace = profile.spec().namespace;
-    if profile.format() != 2 {
+    if profile.format() != 3 {
         return Err(());
     }
     for cell in ledger.jobs() {
@@ -456,7 +456,7 @@ pub(super) fn source_bytes() -> usize {
         + 4 * size_of::<TreeExpectation>()
         + 32 * size_of::<u64>()
         + 32 * size_of::<&[u8]>()
-        + crate::storage::semantic_catalog::source_census()
+        + crate::storage::semantic_catalog::profile3_source_census()
             .catalog_image
             .max(queue::source_bytes())
 }

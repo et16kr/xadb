@@ -5,7 +5,7 @@ use crate::storage::{
     allocation_page::ReservationOwner,
     catalog_record::{CatalogExpectation, CatalogTableInput},
     page::PageRef,
-    retention_page::catalog as queue,
+    retention_page::catalog3 as queue,
     semantic_catalog::{self as semantic, Change, Operation},
     status_home,
     transaction_record::{StatusSlotRef, TransactionState},
@@ -247,7 +247,7 @@ pub(in super::super) fn init_record(
 /// This bounded closure checks cached queue/ATT/status agreement between frames;
 /// full XOI/current graph validation is repeated by the v3 capture decoder.
 pub(in super::super) fn validate_current(profile: Profile, replay: &[u8]) -> ObservationResult<()> {
-    if profile.format() != 2
+    if profile.format() != 3
         || replay.len() < WORK_END
         || replay[AFTER_END + PROVENANCE_BYTES..WORK_END]
             .iter()
@@ -272,12 +272,8 @@ pub(in super::super) fn validate_current(profile: Profile, replay: &[u8]) -> Obs
         return Err(invalid());
     }
     if let Some(aging) = aging {
-        crate::storage::retention_obligation::catalog::decode(
-            aging,
-            profile,
-            arena_page(replay, 1),
-        )
-        .map_err(|e| sem(semantic::Error::Aging(e)))?;
+        crate::storage::retention_obligation::row::decode(aging, profile, arena_page(replay, 1))
+            .map_err(|e| sem(semantic::Error::Aging(e)))?;
     }
     let allocation = allocation_page::decode_allocation_page(
         arena_page(replay, 0),
@@ -718,7 +714,7 @@ pub(in super::super) fn source_bytes() -> SourceCensus {
     // closure, while observe retains the local Change and copied Inputs above.
     let semantic = outer
         + size_of::<&mut [u8; REPLAY_SCRATCH_BYTES]>()
-        + semantic::borrowed_source_bytes().max(semantic::schema_source_bytes());
+        + semantic::profile3_borrowed_source_bytes().max(semantic::schema_source_bytes());
     let finishing = size_of::<semantic::LayoutView<'_>>()
         + size_of::<Operation>()
         + size_of::<Option<TxnRef>>()
@@ -748,11 +744,11 @@ pub(in super::super) fn source_bytes() -> SourceCensus {
         + 24 * size_of::<&[u8]>()
         + 24 * size_of::<u64>();
     // The transaction verifier is a subset of the pure observer's ledger
-    // closure. The actual Root2 Aging decoder and queue census stay explicit.
+    // closure. The actual Root3 Aging decoder and queue census stay explicit.
     let closure = closure_outer
         + queue::source_bytes()
-            .max(crate::storage::retention_obligation::catalog::source_bytes())
-            .max(semantic::transaction_source_bytes() + 2 * size_of::<DescriptorSpec>());
+            .max(crate::storage::retention_obligation::row::source_bytes())
+            .max(semantic::profile3_transaction_source_bytes() + 2 * size_of::<DescriptorSpec>());
     SourceCensus {
         semantic,
         finishing,

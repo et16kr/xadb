@@ -4,7 +4,7 @@ use super::*;
 use crate::storage::{
     allocation_page::ReservationOwner,
     obligation::{self, OwnerState},
-    retention_page::catalog::{self as queue, JobState},
+    retention_page::catalog3::{self as queue, JobState},
     semantic_catalog::{Observation, Operation},
     transaction_record::{RollbackState, TransactionState},
 };
@@ -264,7 +264,7 @@ pub(in super::super) fn source_bytes() -> usize {
         + 640 // original check_ledger aggregate inventory, retained during scans
         + 2 * size_of::<[u8; 48]>()
         + obligation::descriptor_source_bytes()
-            .max(crate::storage::semantic_catalog::transaction_source_bytes())
+            .max(crate::storage::semantic_catalog::profile3_transaction_source_bytes())
             .max(queue::source_bytes())
 }
 

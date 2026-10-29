@@ -2,6 +2,7 @@
 //! deliberately separate from the full semantic graph/credit/inventory closure
 //! and from the original selected-source owner's provenance verification.
 
+#[allow(unused_imports, reason = "historical Profile2 pure codec")]
 pub(in crate::storage) use super::image_records::encode_certificate;
 use super::image_records::{decode_certificate, validate_provenance};
 use super::{
@@ -17,12 +18,12 @@ use crate::storage::retention_page::catalog;
 mod graph;
 #[path = "catalog/inventory.rs"]
 pub(in crate::storage) mod inventory;
+pub(in crate::storage) use graph::ReservedInventory;
 pub(in crate::storage::plan4_recovery_base) use graph::seam;
 #[cfg(test)]
 pub(in crate::storage) use graph::source_census;
-pub(in crate::storage) use graph::{
-    CatalogBaseView, CatalogCensus, ReservedInventory, decode, encode, source_bytes,
-};
+#[allow(unused_imports, reason = "historical Profile2 pure codec")]
+pub(in crate::storage) use graph::{CatalogBaseView, CatalogCensus, decode, encode, source_bytes};
 
 pub(in crate::storage) const BASE_BYTES: usize = 2_097_152;
 pub(in crate::storage) const PAGE_ARENA_BYTES: usize = 64 * PAGE_BYTES;

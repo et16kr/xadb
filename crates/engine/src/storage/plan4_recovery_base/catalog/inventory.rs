@@ -6,12 +6,9 @@ use crate::storage::control::Profile;
 
 #[path = "inventory/current.rs"]
 mod current;
-#[allow(
-    unused_imports,
-    reason = "pure Profile3 XOI mode awaits the base4 recovery owner"
-)]
-pub(in crate::storage) use current::encode_row_current;
-pub(in crate::storage) use current::{InventoryRows, current_source_bytes, encode_current};
+pub(in crate::storage) use current::{InventoryRows, encode_row_current, row_current_source_bytes};
+#[allow(unused_imports, reason = "historical Profile2 pure codec")]
+pub(in crate::storage) use current::{current_source_bytes, encode_current};
 
 pub(in crate::storage) const OWNER_BYTES: usize = 56;
 pub(in crate::storage) const ITEM_BYTES: usize = 96;

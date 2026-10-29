@@ -284,7 +284,9 @@ pub(crate) fn encode_profile(spec: ProfileSpec, output: &mut [u8]) -> Result<&[u
     encode_profile_format(spec, 1, output)
 }
 
-/// Current Catalog CREATE profile. All other control envelopes stay version1.
+/// Historical Profile2 Catalog CREATE profile. The single current-format switch
+/// moved fresh Catalog genesis to `row_profile::encode_profile`; this pure codec
+/// stays for its evidence and tests. All other control envelopes stay version1.
 pub(crate) fn encode_catalog_profile(spec: ProfileSpec, output: &mut [u8]) -> Result<&[u8]> {
     encode_profile_format(spec, 2, output)
 }
@@ -351,7 +353,8 @@ pub(crate) fn decode_bootstrap_profile(
 /// `expected.format()` selects exactly one decoder (1|2 legacy, 3 Row); no
 /// header version is inspected first and a decoder failure is final. The
 /// decoded value must then equal `expected` in every field, digest included.
-/// Uncalled before the single current-format switch; legacy owners keep
+/// The shared installed readers (`PageFileReader::open_profile`/`open_shared`,
+/// flush readback) call it; legacy discovery owners keep
 /// `decode_bootstrap_profile`.
 pub(crate) fn decode_installed_profile(input: &[u8], expected: Profile) -> Result<Profile> {
     let namespace = Some(expected.namespace);
@@ -370,8 +373,8 @@ pub(crate) fn decode_installed_profile(input: &[u8], expected: Profile) -> Resul
 /// values plus one selected decoder closure. The legacy decoder has the Row
 /// decoder's frame shape (same header, prefix and SHA closure; one extra u16
 /// local inside that bound's scalar allowance), so the Row bound covers both.
-/// The wrapper charge (this bound minus the Row bound) is not yet in any real
-/// census; the C4c callers charge it with the decode they replace.
+/// The wrapper charge (this bound minus the Row bound) is charged by the shared
+/// reader censuses (`page_io::retention_home_source_bytes`, flush selection).
 pub(crate) fn installed_profile_source_bytes() -> usize {
     use std::mem::size_of;
     let wrapper = size_of::<(&[u8], Profile)>()

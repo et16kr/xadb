@@ -1,5 +1,5 @@
-//! Pure exact Profile3 supply. Current genesis/selection still uses Profile2.
-//! These bytes do not select a database, validate base4, or grant admission.
+//! Exact Profile3 codec: the current plan4 Catalog genesis and selection grammar.
+//! These bytes alone do not select a database, validate base4, or grant admission.
 use super::{
     ControlError, ControlKind, Envelope, EnvelopeVersion, MapIdentity, Namespace, Profile,
     ProfileSpec, Result, content_digest, encode_profile_format, get32, profile_prefix,

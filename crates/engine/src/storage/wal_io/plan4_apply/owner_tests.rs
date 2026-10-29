@@ -300,11 +300,11 @@ fn catalog_commit_phase_sources_measure_consumed_preparation() {
 #[test]
 fn catalog_aging_source_phases_include_initial_and_malformed_paths() {
     use crate::storage::{obligation, retention_obligation, retention_page, transaction_record};
-    let root = retention_page::catalog::root_decode_source_bytes();
-    let queue = retention_page::catalog::source_bytes();
+    let root = retention_page::catalog3::root_decode_source_bytes();
+    let queue = retention_page::catalog3::source_bytes();
     let descriptor = obligation::descriptor_source_bytes();
     let transaction = transaction_record::status_codec_source_bytes();
-    let aging = retention_obligation::catalog::source_bytes();
+    let aging = retention_obligation::row::source_bytes();
     println!(
         "AGING_SOURCE root={root} whole_queue={queue} descriptor={descriptor} transaction={transaction} aging={aging}"
     );

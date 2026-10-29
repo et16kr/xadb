@@ -18,10 +18,10 @@ import time
 
 SELECTOR = ('storage::wal_io::bootstrap::doublewrite_install::mutable_storage::'
             'plan4_recovery::tests::catalog_create::catalog_create_native_worker')
-INPUT = 'd6306d7396ad70165a291a14208c35b7e6e8091f0a4c67e870ea9e96d34e0a34'
-MANIFEST = '87aa46dd81711cc5080097c674e6fb419e371680ea3e19faa5bafbe3e4847b23'
+INPUT = 'f6e0dd554a91931cc8e048e775a666dacd777f0c1c3285abed6773ec15f21eeb'
+MANIFEST = 'e648b0bc4fb8ccf5f258cec6d521128daef6e59f3f9a20825d19eb81d68555df'
 HOME = 'd3-data-0000000100000001'
-INPUT_DIR = 'tests/fixtures/dev3-catalog-create/native'
+INPUT_DIR = 'tests/fixtures/dev3-catalog-create/native3'
 PHASES = ('produce', 'recover', 'reentry')
 SCHEDULE = {
     'N01': ((9, None, 'A_CREATE_ACK_T'), (19, 9, 'A_CREATE_ACK_U'), (25, 19, None)),
@@ -143,24 +143,24 @@ def audit_cut(rows, cut, wal_end):
 
 
 def audit_inventory(raw, generation, capture):
-    require(len(raw) == 16384 and raw[:8] == b'XOI1\x01\x00\x01\x02', 'Base3 inventory root envelope')
+    require(len(raw) == 16384 and raw[:8] == b'XOI1\x01\x00\x01\x02', 'Base4 inventory root envelope')
     owners, items, chunks, chunk_len = number(raw, 56, 2), number(raw, 72), number(raw, 64), number(raw, 80)
     root_len = 160 + 56 * owners
     require(owners <= 36 and items in (0, 1, 3) and chunks == int(items != 0)
             and chunk_len == (160 + 96 * items if items else 0)
             and number(raw, 12, 4) == root_len and number(raw, 8, 2) == 128
-            and number(raw, 10, 2) == 96, 'Base3 inventory counts/lengths')
+            and number(raw, 10, 2) == 96, 'Base4 inventory counts/lengths')
     require(raw[16:32] == bytes(range(1, 17)) and number(raw, 32) == 1
             and number(raw, 40) == generation and number(raw, 48) == capture
-            and digest(raw[:root_len - 32]) == raw[root_len - 32:root_len], 'Base3 inventory root binding/seal')
+            and digest(raw[:root_len - 32]) == raw[root_len - 32:root_len], 'Base4 inventory root binding/seal')
     chunk = raw[2176:2176 + chunk_len]
     require(raw[88:120] == digest(chunk) and not any(raw[root_len:2176])
-            and not any(raw[2176 + chunk_len:]), 'Base3 inventory chunk digest/padding')
+            and not any(raw[2176 + chunk_len:]), 'Base4 inventory chunk digest/padding')
     if items:
         require(chunk[:8] == b'XOI1\x01\x00\x02\x02' and chunk[16:56] == raw[16:56]
                 and number(chunk, 12, 4) == chunk_len and number(chunk, 80, 4) == items
                 and chunk[88:120] == digest(raw[128:128 + 56 * owners])
-                and digest(chunk[:-32]) == chunk[-32:], 'Base3 inventory chunk binding/seal')
+                and digest(chunk[:-32]) == chunk[-32:], 'Base4 inventory chunk binding/seal')
 
 
 def audit_inventory_owners(inventory, expected_owners):
@@ -168,7 +168,7 @@ def audit_inventory_owners(inventory, expected_owners):
             and number(inventory, 56, 2) == len(expected_owners) // 56
             and inventory[128:128 + len(expected_owners)] == expected_owners
             and number(inventory, 72) == 0 and number(inventory, 64) == 0,
-            'Base3 exact current owner rows and empty Reserved inventory')
+            'Base4 exact current owner rows and empty Reserved inventory')
 
 
 class Oracle:
@@ -305,12 +305,12 @@ class Oracle:
                 and number(closure, 4, 4) == epoch and number(closure, 16) == capture
                 and number(closure, 24, 4) == 2097152 and number(closure, 96) == 4096, 'CURRENT selected closure')
         raw = (db / f'd3-rebase-{closure[2]}').read_bytes()
-        require(len(raw) == 2097152 and raw[:8] == b'XRB1\x03\x00\x01\x00'
+        require(len(raw) == 2097152 and raw[:8] == b'XRB1\x04\x00\x01\x00'
                 and number(raw, 8, 4) == len(raw) and number(raw, 12, 4) == 4096
-                and digest(raw[:-32]) == raw[-32:] and digest(raw) == closure[32:64], 'selected Base3 envelope')
+                and digest(raw[:-32]) == raw[-32:] and digest(raw) == closure[32:64], 'selected Base4 envelope')
         require(raw[16:32] == bytes(range(1, 17)) and number(raw, 32) == 1
                 and raw[48:80] == current[56:88] and number(raw, 88) == number(closure, 8)
-                and number(raw, 96) == capture and number(raw, 248) == capture, 'Base3 namespace/capture')
+                and number(raw, 96) == capture and number(raw, 248) == capture, 'Base4 namespace/capture')
         expected_generation = epoch - 1
         previous_generation, previous_digest = 0, bytes(32)
         if epoch > 2:
@@ -320,10 +320,10 @@ class Oracle:
             previous_digest = prior[288:320]
             require(previous_generation == expected_generation - 1, 'previous selected generation')
         require(number(raw, 88) == expected_generation and number(raw, 104) == previous_generation
-                and raw[112:144] == previous_digest, 'Base3 predecessor chain')
+                and raw[112:144] == previous_digest, 'Base4 predecessor chain')
         old = self.wal(previous, case, capture)
         require(number(raw, 144, 4) == epoch - 1 and number(raw, 152) == len(old)
-                and raw[160:192] == digest(old) and raw[1192:1224] == digest(old[:4096]), 'Base3 original source provenance')
+                and raw[160:192] == digest(old) and raw[1192:1224] == digest(old[:4096]), 'Base4 original source provenance')
         require(not (db / f'd3-wal-{epoch - 1:08x}').exists(), 'old epoch WAL survived')
         specs = ((4096, 55296, 36, 1536), (65536, 6144, 64, 96),
                  (73728, 22528, 64, 352), (98304, 16384, 1, 16384), (262144, 1048576, 64, 16384))
@@ -332,7 +332,7 @@ class Oracle:
             entry = raw[1280 + index * 64:1344 + index * 64]
             require(number(entry, 0, 2) == index + 1 and not any(entry[2:4])
                     and tuple(number(entry, at, 4) for at in (4, 8, 12, 16)) == (offset, length, count, width)
-                    and not any(entry[20:32]) and entry[32:64] == digest(raw[offset:offset + length]), 'Base3 section directory')
+                    and not any(entry[20:32]) and entry[32:64] == digest(raw[offset:offset + length]), 'Base4 section directory')
             sections.append(raw[offset:offset + length])
         bank, certificates, provenance, inventory, arena = sections
         point = self.points[case, capture]
@@ -341,16 +341,16 @@ class Oracle:
                 and number(raw, 260, 4) == 1 and number(raw, 264) == 1 << 9
                 and number(raw, 272) == point['root_masks'][1] and number(raw, 280) == point['root_masks'][2]
                 and number(raw, 288) == point['scalar']['revision']
-                and number(raw, 296) == point['scalar']['aging_groups'], 'Base3 current census/header')
+                and number(raw, 296) == point['scalar']['aging_groups'], 'Base4 current census/header')
         adopted_local = max((number(self.actor(row), 32) for row in self.rows.values()
                              if row['scenario'] == case and row['epoch'] == epoch - 1
                              and row['lsn'] <= capture and row['operation'] == 1), default=0)
-        require(number(raw, 192) == adopted_local, 'Base3 source adopted local')
+        require(number(raw, 192) == adopted_local, 'Base4 source adopted local')
         for index, key in ((0, 'active_transaction'), (32, 'system'), (34, 'aging')):
             expected = self.raw[point[key]] if point[key] else bytes(1536)
-            require(bank[index * 1536:(index + 1) * 1536] == expected, 'Base3 descriptor bank ' + key)
+            require(bank[index * 1536:(index + 1) * 1536] == expected, 'Base4 descriptor bank ' + key)
         require(not any(bank[1536:32 * 1536]) and not any(bank[33 * 1536:34 * 1536])
-                and not any(bank[35 * 1536:]), 'Base3 inactive descriptor rows')
+                and not any(bank[35 * 1536:]), 'Base4 inactive descriptor rows')
         audit_inventory(inventory, number(raw, 88), capture)
         # Every selected cut in this native inventory follows Forward/CLR or
         # terminal Commit, never a Reserved cut. Original System INIT is
@@ -360,15 +360,15 @@ class Oracle:
         audit_inventory_owners(inventory, expected_owners)
         for index in range(64):
             page = self.page(case, capture, index)
-            require(arena[index * 16384:(index + 1) * 16384] == page, f'Base3 arena {index}')
+            require(arena[index * 16384:(index + 1) * 16384] == page, f'Base4 arena {index}')
             certificate = bytearray(96)
             if any(page):
                 certificate[:3] = bytes((1, page[6], 0))
                 certificate[8:32] = page[24:48]
                 certificate[32:56] = page[48:72]
                 certificate[56:88] = digest(page)
-            require(certificates[index * 96:(index + 1) * 96] == certificate, f'Base3 certificate {index}')
-            require(provenance[index * 352:(index + 1) * 352] == self.provenance(case, capture, index), f'Base3 provenance {index}')
+            require(certificates[index * 96:(index + 1) * 96] == certificate, f'Base4 certificate {index}')
+            require(provenance[index * 352:(index + 1) * 352] == self.provenance(case, capture, index), f'Base4 provenance {index}')
         return {'base_sha256': digest(raw).hex(), 'current_sha256': digest(current).hex(), 'capture': capture, 'epoch': epoch}
 
 

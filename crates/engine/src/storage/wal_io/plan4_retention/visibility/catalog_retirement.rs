@@ -9,7 +9,7 @@ use super::*;
 use crate::storage::{
     dirty_frame::{ReadTargets, RetirementTargets},
     page::{PageKind, decode_page},
-    retention_page::catalog,
+    retention_page::catalog3 as catalog,
     semantic_catalog::Operation,
     status_home::StatusHome,
     transaction_record::{

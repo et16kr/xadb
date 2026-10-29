@@ -71,7 +71,7 @@ fn issued_capsule_statement_and_empty_abort_return_original_loans() {
                             .iter()
                             .all(|&b| b == 0)
                     );
-                    let job = crate::storage::retention_page::catalog::decode_job(
+                    let job = crate::storage::retention_page::catalog3::decode_job(
                         &writer.catalog_test_jobs()[0],
                         crate::api::Namespace {
                             database: identity.0.unwrap().id().database,
@@ -82,7 +82,7 @@ fn issued_capsule_statement_and_empty_abort_return_original_loans() {
                     assert_eq!(job.source(), identity.0);
                     assert_eq!(
                         job.state(),
-                        crate::storage::retention_page::catalog::JobState::TerminalReady
+                        crate::storage::retention_page::catalog3::JobState::TerminalReady
                     );
                     assert_eq!(job.outcome(), 2);
                     assert_eq!(reader.catalog_test_references().0.0, 0);

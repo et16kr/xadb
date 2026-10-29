@@ -8,7 +8,7 @@ use crate::transaction::concurrency::catalog_test_support::{
     Point as CatalogPoint, hit as catalog_hook,
 };
 use crate::{
-    storage::{page::PageKind, retention_page::catalog as queue, semantic_catalog::Observation},
+    storage::{page::PageKind, retention_page::catalog3 as queue, semantic_catalog::Observation},
     transaction::concurrency::{InstallationKey, PageConcurrency},
 };
 

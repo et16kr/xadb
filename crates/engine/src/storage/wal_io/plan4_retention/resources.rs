@@ -233,7 +233,7 @@ pub(in crate::storage) fn source_census<W: WriterNamespace>() -> RetentionSource
     // Selection/replay, residency, producer and verification are consecutive.
     let catalog_recovery_cleanup = 3 * size_of::<Result<recovery::RetentionRecoveryStep>>()
         + 2 * size_of::<recovery::RetentionRecoveryStep>()
-        + 2 * size_of::<crate::storage::retention_page::catalog::JobView<'_>>()
+        + 2 * size_of::<crate::storage::retention_page::catalog3::JobView<'_>>()
         + 2 * size_of::<crate::storage::retention_page::JobSlotRef>()
         + 16 * size_of::<&()>()
         + 256

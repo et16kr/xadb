@@ -103,8 +103,10 @@ pub(in crate::storage) fn hash_hex(bytes: &[u8]) -> String {
         .collect()
 }
 pub(in crate::storage) fn raw(id: &str) -> Vec<u8> {
-    let root = fixture_root();
-    let index = std::fs::read_to_string(root.join("raw-index.tsv")).unwrap();
+    raw_in(&fixture_root(), "raw-index.tsv", id)
+}
+fn raw_in(root: &std::path::Path, index: &str, id: &str) -> Vec<u8> {
+    let index = std::fs::read_to_string(root.join(index)).unwrap();
     let rows: Vec<_> = index
         .lines()
         .skip(1)
@@ -141,6 +143,14 @@ pub(in crate::storage) fn files(profile: u32) -> BTreeMap<String, Vec<u8>> {
 }
 /// Published-offset namespace substitution, independent of product encoders.
 pub(in crate::storage) fn files_for(profile: u32, database: [u8; 16]) -> BTreeMap<String, Vec<u8>> {
+    files_with(&raw, profile, database)
+}
+fn files_with(
+    raw: &dyn Fn(&str) -> Vec<u8>,
+    profile: u32,
+    database: [u8; 16],
+) -> BTreeMap<String, Vec<u8>> {
+    let reference = |profile: u32, name: &str| raw(&format!("REF-P{profile}-{name}"));
     assert!((1..=3).contains(&profile) && database.iter().any(|b| *b != 0));
     let mut profile_raw = reference(profile, "d3-profile");
     profile_raw[16..32].copy_from_slice(&database);
@@ -224,6 +234,36 @@ pub(in crate::storage) fn files_for(profile: u32, database: [u8; 16]) -> BTreeMa
     assert_eq!(files.len(), 15);
     assert_eq!(files.values().map(Vec::len).sum::<usize>(), 22_069_248);
     files
+}
+
+/// The current Profile3 namespace (U2-C4b `genesis3-namespace`, root adoption
+/// recorded by U2-C4c): Profile3 envelope, Root3/Job3 genesis pages and the
+/// unchanged allocator, anchor and leaf pages under the same record IDs and
+/// offsets. The Profile1 set above stays the input of the historical pure
+/// codec tests; runtime plan4 consumers read this one.
+pub(in crate::storage) mod current {
+    pub(in crate::storage) use super::{Harness, hash_hex, ids, namespace, put16, put64, resign};
+    use std::{collections::BTreeMap, path::PathBuf};
+
+    pub(in crate::storage) fn fixture_root() -> PathBuf {
+        PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+            .join("../../tests/fixtures/module-row-format/genesis3-namespace")
+    }
+    pub(in crate::storage) fn raw(id: &str) -> Vec<u8> {
+        super::raw_in(&fixture_root(), "index.tsv", id)
+    }
+    pub(in crate::storage) fn reference(profile: u32, name: &str) -> Vec<u8> {
+        raw(&format!("REF-P{profile}-{name}"))
+    }
+    pub(in crate::storage) fn files(profile: u32) -> BTreeMap<String, Vec<u8>> {
+        files_for(profile, namespace().database.bytes())
+    }
+    pub(in crate::storage) fn files_for(
+        profile: u32,
+        database: [u8; 16],
+    ) -> BTreeMap<String, Vec<u8>> {
+        super::files_with(&raw, profile, database)
+    }
 }
 
 #[test]

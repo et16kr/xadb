@@ -4,7 +4,7 @@ use crate::storage::{
     recovery_select::{
         Plan4GenesisSelection, Plan4LeaseEffect, Plan4SelectCause, Plan4SelectPhase,
     },
-    retention_genesis::tests as q,
+    retention_genesis::tests::{self as q, current as cur},
 };
 use foundation::{ErrorCode, namespace::DirectoryPort};
 use std::{
@@ -27,13 +27,13 @@ fn scratch() -> Box<[[u8; PAGE_BYTES]; 3]> {
         .unwrap()
 }
 fn profile(id: u32) -> Profile {
-    control::decode_bootstrap_profile(&q::reference(id, "d3-profile"), Some(q::namespace()))
+    control::row_profile::decode_profile(&cur::reference(id, "d3-profile"), Some(q::namespace()))
         .unwrap()
 }
 fn seed(id: u32, scratch: &mut [[u8; PAGE_BYTES]; 3]) -> Plan4GenesisSeed {
-    scratch[0][..4096].copy_from_slice(&q::raw(&format!("XBS-P{id}")));
+    scratch[0][..4096].copy_from_slice(&cur::raw(&format!("XBS-P{id}")));
     let selected = control::decode_selector(
-        &q::reference(id, "FILEMAP"),
+        &cur::reference(id, "FILEMAP"),
         control::SelectorRole::FileMap,
         profile(id),
     )
@@ -62,7 +62,7 @@ fn produce(
     assert_eq!(owner.core.plan.kind.issued_object_high_water(), 5);
     assert_eq!(owner.core.plan.kind.version(), 4);
     let database = directory.0.lock().unwrap().entropy;
-    let expected = q::files_for(id, database);
+    let expected = cur::files_for(id, database);
     assert_eq!(&maintenance[..IMAGE_BYTES], &expected[DATA][..IMAGE_BYTES]);
     assert!(maintenance[LOAN_BYTES..].iter().all(|byte| *byte == 0xa7));
     if complete {
@@ -83,14 +83,14 @@ fn assert_released(directory: &Directory) {
     assert!(s.peak <= 3);
 }
 fn expected_bootstrap(id: u32) -> BTreeMap<String, Vec<u8>> {
-    q::files(id)
+    cur::files(id)
         .into_iter()
         .filter(|(name, _)| !name.starts_with("d3-dwb-") && name != "DWB")
         .collect()
 }
 fn assert_complete(directory: &Directory, id: u32) {
     let s = directory.0.lock().unwrap();
-    assert_files(&s.images(), &q::files_for(id, s.entropy));
+    assert_files(&s.images(), &cur::files_for(id, s.entropy));
     assert_eq!(s.entropy_calls, 1);
 }
 fn assert_files(actual: &BTreeMap<String, Vec<u8>>, expected: &BTreeMap<String, Vec<u8>>) {
@@ -210,7 +210,7 @@ fn source_name(name: &str) -> &str {
 }
 /// Independent operation-prefix model. It never reads the adapter's event data.
 fn prefix(id: u32, key: &Key, after: bool, partial: Option<usize>) -> BTreeMap<String, Vec<u8>> {
-    let full = q::files(id);
+    let full = cur::files(id);
     let mut result = BTreeMap::from([("LOCK".into(), Vec::new())]);
     let mut seen = 0;
     for op in effects() {
@@ -395,7 +395,9 @@ fn plan4_genesis_page_mutants() {
         h.case(&format!("P4-N{case:02}"), || {
             let (index, page) = mutate_page(case);
             if matches!(case,16|18..=24|43..=48) {
-                let mut files = q::files(1);
+                // Allocator, anchor and leaf pages are byte-identical in the
+                // Profile1 and Profile3 inputs; the namespace is the current one.
+                let mut files = cur::files(1);
                 files.get_mut(DATA).unwrap()[index * PAGE_BYTES..(index + 1) * PAGE_BYTES]
                     .copy_from_slice(&page);
                 let directory = Directory::from_files(files);
@@ -719,7 +721,7 @@ fn plan4_install_and_final_identity_boundaries() {
                     let edit = match case {
                         12 => Edit::Identity(DATA.into()),
                         13 => Edit::Length(DATA.into(), 1),
-                        14 => Edit::Bytes("d3-profile".into(), q::reference(2, "d3-profile")),
+                        14 => Edit::Bytes("d3-profile".into(), cur::reference(2, "d3-profile")),
                         _ => unreachable!(),
                     };
                     directory.0.lock().unwrap().hook = Some(Hook {
@@ -750,7 +752,7 @@ fn plan4_install_and_final_identity_boundaries() {
                 }
                 assert_released(&directory);
             } else {
-                let directory = Directory::from_files(q::files(1));
+                let directory = Directory::from_files(cur::files(1));
                 if case == 20 {
                     directory.0.lock().unwrap().fault = Some(Fault {
                         key: Key::new("open", DATA, 0, 2),
@@ -761,13 +763,13 @@ fn plan4_install_and_final_identity_boundaries() {
                         15 => Edit::Identity(DATA.into()),
                         16 => Edit::Length(DATA.into(), 1),
                         17 => {
-                            let mut bytes = q::reference(1, "FILEMAP");
+                            let mut bytes = cur::reference(1, "FILEMAP");
                             q::put64(&mut bytes, 32, 2);
                             q::resign(&mut bytes);
                             Edit::Bytes("FILEMAP".into(), bytes)
                         }
                         18 => {
-                            let mut bytes = q::reference(1, "WRITER");
+                            let mut bytes = cur::reference(1, "WRITER");
                             bytes[96] ^= 1;
                             q::resign(&mut bytes);
                             Edit::Bytes("WRITER".into(), bytes)
@@ -1061,7 +1063,7 @@ fn plan4_s5_crash_prefixes() {
                     let result = select(&directory);
                     if event == "DWB_PUBLISH" && after {
                         result.unwrap();
-                        assert_files(&files, &q::files(1));
+                        assert_files(&files, &cur::files(1));
                     } else {
                         partial_selection(
                             result.unwrap_err(),

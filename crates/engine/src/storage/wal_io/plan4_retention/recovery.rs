@@ -20,8 +20,29 @@ use foundation::{
 
 #[path = "recovery/catalog.rs"]
 mod catalog;
+#[cfg(test)]
+#[path = "recovery/format_tests.rs"]
+mod format_tests;
 
 type ObservationResult<T> = std::result::Result<T, RetentionCause>;
+
+/// The retention grammar a bound Profile selects for the owner-bound checks
+/// (XOI cache, recovered flush targets and cleanup verification). Exact:
+/// Profile3 is the current Root3/Job3 Catalog line, Profile1 the original
+/// System line; every other format, Profile2 included, selects nothing and
+/// the caller rejects it before any effect, never as the Profile1 line.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub(super) enum BoundGrammar {
+    Catalog3,
+    System1,
+}
+pub(super) fn bound_grammar(profile: Profile) -> Option<BoundGrammar> {
+    match profile.format() {
+        3 => Some(BoundGrammar::Catalog3),
+        1 => Some(BoundGrammar::System1),
+        _ => None,
+    }
+}
 
 /// Both references borrow a runtime-owned selection witness. No wide BaseView
 /// is retained by the live owner, its control ledger or its physical flusher.
@@ -60,7 +81,7 @@ impl<'s> HistorySource<'s> {
         if let Self::Base { base, epoch } = self {
             let view = base.view();
             let h = view.header();
-            if h.format != crate::storage::plan4_recovery_base::BaseFormat::V3Catalog {
+            if h.format != crate::storage::plan4_recovery_base::BaseFormat::V4RowMissing {
                 return Err(RetentionCause::Unsupported);
             }
             let e = epoch.header();
@@ -263,7 +284,7 @@ pub(super) fn seed_replay_slice(
         });
     };
     let view = seed.view();
-    if view.header().format != crate::storage::plan4_recovery_base::BaseFormat::V3Catalog {
+    if view.header().format != crate::storage::plan4_recovery_base::BaseFormat::V4RowMissing {
         return Err(RetentionCause::Unsupported);
     }
     if view.digest() != seed.digest() {
@@ -326,10 +347,10 @@ pub(super) fn seed_replay_slice(
     })
 }
 
-/// Copy only from the original selected witness. The immutable v3 view already
+/// Copy only from the original selected witness. The immutable v4 view already
 /// checked current image and claim grammar; its source owner supplies history.
 fn seed_base_images(
-    view: &crate::storage::plan4_recovery_base::catalog::CatalogBaseView<'_>,
+    view: &crate::storage::plan4_recovery_base::row::RowBaseView<'_>,
     replay: &mut [u8],
 ) -> ObservationResult<()> {
     for i in 0..64 {
@@ -403,7 +424,7 @@ pub(super) fn apply_frame(
     cursor: &mut RetentionReplayCursor,
 ) -> ObservationResult<RetentionFrameObservation> {
     if semantic_scratch.iter().any(|byte| *byte != 0)
-        || profile.format() != 2
+        || profile.format() != 3
         || expected.previous_lsn != cursor.previous_lsn
         || expected.stream.database != profile.spec().namespace.database
         || expected.stream.timeline != profile.spec().namespace.timeline
@@ -438,10 +459,11 @@ pub(super) fn apply_frame(
             )?
         }
         1 => {
+            // Any Reserved Job3 root (either scope) excludes a System frame.
             if cells.iter().any(|cell| {
-                crate::storage::retention_page::catalog::decode_job(cell, profile.spec().namespace)
+                crate::storage::retention_page::row::decode_job(cell, profile.spec().namespace)
                     .is_ok_and(|j| {
-                        j.state() == crate::storage::retention_page::catalog::JobState::RootReserved
+                        j.state() == crate::storage::retention_page::row::JobState::RootReserved
                     })
             }) {
                 return Err(RetentionCause::Invariant);
@@ -465,6 +487,9 @@ pub(super) fn apply_frame(
             }
             result
         }
+        // Row scope3 groups have no current runtime replay owner; they are
+        // rejected before any effect, never routed to the Catalog or System arm.
+        3 => return Err(RetentionCause::Unsupported),
         _ => return Err(RetentionCause::Unsupported),
     };
     if expected.previous_lsn.checked_add(1) != Some(observed.header.lsn) {
@@ -937,8 +962,18 @@ impl<'s, 'c, W: WriterNamespace> Plan4Retention<'_, 's, 'c, '_, '_, '_, '_, '_, 
         }
         self.health()?;
         self.refresh_recovered()?;
-        if self.inner.storage.profile().format() != 2 && matches!(index, 7 | 8) {
-            return Ok(None);
+        // Exact grammar: Profile3 owns the Catalog anchor/leaf targets 7/8,
+        // the Profile1 line has none; any other format is rejected.
+        match bound_grammar(self.inner.storage.profile()) {
+            Some(BoundGrammar::Catalog3) => {}
+            Some(BoundGrammar::System1) if matches!(index, 7 | 8) => return Ok(None),
+            Some(BoundGrammar::System1) => {}
+            None => {
+                return Err(unchanged(
+                    RetentionPhase::Flush,
+                    RetentionCause::Unsupported,
+                ));
+            }
         }
         self.recovery_flush_target_unchecked(index)
     }
@@ -985,10 +1020,17 @@ impl<'s, 'c, W: WriterNamespace> Plan4Retention<'_, 's, 'c, '_, '_, '_, '_, '_, 
         self.recovery_enter(owner)?;
         self.health()?;
         self.refresh_recovered()?;
-        let complete = if self.inner.storage.profile().format() == 2 {
-            matches!(self.select_catalog_cleanup()?, catalog::Selected::Complete)
-        } else {
-            matches!(self.select_cleanup()?, Cleanup::Complete)
+        let complete = match bound_grammar(self.inner.storage.profile()) {
+            Some(BoundGrammar::Catalog3) => {
+                matches!(self.select_catalog_cleanup()?, catalog::Selected::Complete)
+            }
+            Some(BoundGrammar::System1) => matches!(self.select_cleanup()?, Cleanup::Complete),
+            None => {
+                return Err(unchanged(
+                    RetentionPhase::Census,
+                    RetentionCause::Unsupported,
+                ));
+            }
         };
         if !complete {
             return Err(unchanged(
@@ -1133,9 +1175,9 @@ pub(super) fn phase_source_bytes<W: WriterNamespace>() -> RecoveryPhaseCensus {
     use foundation::codec::ContentHasher;
     use std::mem::size_of;
     let hashing = 4 * size_of::<ContentHasher>() + 1536;
-    let views = 2 * size_of::<base::catalog::CatalogBaseView<'_>>()
+    let views = 2 * size_of::<base::row::RowBaseView<'_>>()
         + 3 * size_of::<base::Header>()
-        + 2 * size_of::<base::catalog::CatalogCensus>();
+        + 2 * size_of::<base::row::RowCensus>();
     let small = 32 * size_of::<&[u8]>()
         + 32 * size_of::<u64>()
         + 4 * size_of::<ObservationResult<()>>()
@@ -1148,21 +1190,22 @@ pub(super) fn phase_source_bytes<W: WriterNamespace>() -> RecoveryPhaseCensus {
         + small;
     let descriptor = views
         + 3 * size_of::<DescriptorSpec>()
-        + 3 * size_of::<std::result::Result<Option<DescriptorSpec>, base::Error>>()
+        + 3 * size_of::<std::result::Result<Option<DescriptorSpec>, base::row::RowBaseError>>()
         + 2 * size_of::<std::result::Result<DescriptorSpec, ObligationError>>()
-        + crate::storage::retention_obligation::catalog::source_bytes()
+        + crate::storage::retention_obligation::row::source_bytes()
         + small;
-    // v3 seed images are borrowed exact pages; no Status/Undo or Catalog
+    // v4 seed images are borrowed exact pages; no Status/Undo or Catalog
     // re-encoder runs here. Only certificate/provenance views and the selected
     // current header are decoded before copying into the original arena.
     let image = views
         + 4 * size_of::<base::Certificate>()
-        + 3 * size_of::<std::result::Result<Option<base::Certificate>, base::Error>>()
+        + 3 * size_of::<std::result::Result<Option<base::Certificate>, base::row::RowBaseError>>()
         + 4 * size_of::<PageHeader>()
         + 4 * size_of::<PageView<'_>>()
-        + 4 * size_of::<base::catalog::InitProvenance<'_>>()
-        + 4 * size_of::<std::result::Result<Option<base::catalog::InitProvenance<'_>>, base::Error>>(
-        )
+        + 4 * size_of::<base::row::InitProvenance<'_>>()
+        + 4 * size_of::<
+            std::result::Result<Option<base::row::InitProvenance<'_>>, base::row::RowBaseError>,
+        >()
         + hashing
         + small;
     let seed_outer = 2 * size_of::<RetentionReplayCursor>()

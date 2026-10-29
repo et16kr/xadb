@@ -17,25 +17,21 @@ use super::{
 use crate::storage::undo_ref::UndoRef;
 use foundation::identity::ObjectHandle;
 
+pub(crate) use super::catalog::JobState;
 #[allow(
     unused_imports,
-    reason = "Profile3 Catalog queue supply awaits the single current-format switch"
+    reason = "same-name surface of retention_page::catalog; current callers name these there"
 )]
-pub(crate) use super::catalog::{
-    CREATE_PEAK, JobState, MAX_CATALOG_CELL, MIN_CATALOG_CELL, RELEASE_BYTES,
-};
-#[allow(
-    unused_imports,
-    reason = "Profile3 Catalog queue supply awaits the single current-format switch"
-)]
+pub(crate) use super::catalog::{CREATE_PEAK, MAX_CATALOG_CELL, MIN_CATALOG_CELL, RELEASE_BYTES};
 pub(in crate::storage) use super::row::free_job;
 #[allow(
     unused_imports,
-    reason = "Profile3 Catalog queue supply awaits the single current-format switch"
+    reason = "same-name surface of retention_page::catalog; genesis encodes Root3 itself"
 )]
+pub(crate) use super::row::initial_root;
 pub(crate) use super::row::{
     JobCells, RootView, decode_jobs_page, decode_root, decode_root_page, encode_jobs_page,
-    initial_root, root_decode_source_bytes, summarize_jobs, verify_census, verify_selected_census,
+    root_decode_source_bytes, summarize_jobs, verify_census, verify_selected_census,
 };
 
 /// One exact Job3 cell with Catalog meaning. Constructed only from a decoded

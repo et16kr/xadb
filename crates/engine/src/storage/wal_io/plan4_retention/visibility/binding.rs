@@ -55,7 +55,7 @@ impl<'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
                         cut.seed(),
                     )?;
                     cut.unchanged()?;
-                    let (_, root) = crate::storage::retention_page::catalog::decode_root_page(
+                    let (_, root) = crate::storage::retention_page::catalog3::decode_root_page(
                         &replay.bytes()[crate::storage::page::PAGE_BYTES
                             ..2 * crate::storage::page::PAGE_BYTES],
                         storage.profile().spec().namespace,
@@ -153,7 +153,7 @@ impl<'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
                         prefix,
                     )?;
                     cut.unchanged()?;
-                    let (_, root) = crate::storage::retention_page::catalog::decode_root_page(
+                    let (_, root) = crate::storage::retention_page::catalog3::decode_root_page(
                         history::arena_page(replay.bytes(), 1),
                         storage.profile().spec().namespace,
                     )
@@ -222,17 +222,17 @@ pub(in super::super) fn source_bytes<W: WriterNamespace>() -> usize {
         + size_of::<Result<history::runtime::ReplayLoan<'_, '_, '_, '_>>>()
         + history::source_bytes::<W>().peak;
     let root = size_of::<crate::storage::page::PageHeader>()
-        + size_of::<crate::storage::retention_page::catalog::RootView<'_>>()
+        + size_of::<crate::storage::retention_page::catalog3::RootView<'_>>()
         + size_of::<
             std::result::Result<
                 (
                     crate::storage::page::PageHeader,
-                    crate::storage::retention_page::catalog::RootView<'_>,
+                    crate::storage::retention_page::catalog3::RootView<'_>,
                 ),
                 crate::storage::retention_page::RetentionError,
             >,
         >()
-        + crate::storage::retention_page::catalog::source_bytes();
+        + crate::storage::retention_page::catalog3::source_bytes();
     let publish = size_of::<SourceFrontier<'_, '_>>()
         + size_of::<BoundVisibility<'_, '_, '_>>()
         + size_of::<VisibilityResult<BoundVisibility<'_, '_, '_>>>()
