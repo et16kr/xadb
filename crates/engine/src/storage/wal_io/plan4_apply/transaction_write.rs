@@ -4,7 +4,10 @@ use super::*;
 use crate::storage::{
     allocation_page::ReservationOwner,
     obligation::{self, OwnerState},
-    retention_page::catalog3::{self as queue, JobState},
+    retention_page::{
+        catalog3::{self as queue, JobState},
+        row::{self as job3, JobScope},
+    },
     semantic_catalog::{Observation, Operation},
     transaction_record::{RollbackState, TransactionState},
 };
@@ -35,43 +38,60 @@ impl<'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
                 return merge(Err(error), transaction.close());
             }
         };
-        // Begin has installed an obligation. Every subsequent failure is fatal,
-        // including source/gate cleanup and the binding of the capsule itself.
+        self.bind_writable(
+            &mut transaction,
+            observation.actor,
+            observation.operation == Operation::Begin,
+            CATALOG_KIND,
+        )?;
+        Ok(transaction)
+    }
+
+    /// Bind the actor of an installed Begin to its capsule, writing slot@2
+    /// once. Begin has installed an obligation, so every failure here is
+    /// fatal, including the binding of the capsule itself.
+    fn bind_writable(
+        &self,
+        transaction: &mut RowTransaction<'_, 'a, 'c, 's>,
+        actor: Option<TxnRef>,
+        begun: bool,
+        kind: u8,
+    ) -> Result<()> {
+        let fence = transaction.lease.fence;
         let bound = (|| {
-            let actor = observation
-                .actor
-                .ok_or_else(|| fail(transaction.lease.fence, RetentionCause::Invariant))?;
+            let actor = actor.ok_or_else(|| fail(fence, RetentionCause::Invariant))?;
             // Own the issued identity before any later fallible validation.
             transaction.lease.actor = Some(actor);
-            if observation.operation != Operation::Begin || !self.empty_actor_active(actor)? {
-                return Err(fail(transaction.lease.fence, RetentionCause::Invariant));
+            transaction.lease.kind = kind;
+            if !begun || !self.empty_actor_active(actor, kind)? {
+                return Err(fail(fence, RetentionCause::Invariant));
             }
-            let mut state = entry(self.isolation, transaction.lease.fence)?;
+            let mut state = entry(self.isolation, fence)?;
             check_slot(
                 state.bytes,
                 transaction.lease.slot,
                 transaction.lease.generation,
-                transaction.lease.fence,
+                fence,
             )?;
             let target = row_mut(state.bytes, transaction.lease.slot);
             if target[2] != 0 || target[32..80].iter().any(|&b| b != 0) {
-                return Err(fail(transaction.lease.fence, RetentionCause::Invariant));
+                return Err(fail(fence, RetentionCause::Invariant));
             }
             actor
                 .encode(&mut target[32..80])
-                .map_err(|_| fail(transaction.lease.fence, RetentionCause::Invariant))?;
-            target[2] = 1;
+                .map_err(|_| fail(fence, RetentionCause::Invariant))?;
+            target[2] = kind;
             Ok(())
         })();
-        if bound.is_err() {
-            return Err(fail(transaction.lease.fence, RetentionCause::Invariant));
-        }
-        Ok(transaction)
+        bound.map_err(|_| fail(fence, RetentionCause::Invariant))
     }
 
     /// Observe only the original live ATT and its original terminal Job. This
     /// is a preflight, not a receipt or a constructor of a transaction capsule.
-    pub(super) fn empty_actor_active(&self, actor: TxnRef) -> Result<bool> {
+    /// Every Job of the actor must carry the capsule kind's durable scope
+    /// recipe (Catalog registry9/kind2, Row registry16/kind3); a mismatch is
+    /// the deep check's Fatal(Invariant).
+    pub(super) fn empty_actor_active(&self, actor: TxnRef, kind: u8) -> Result<bool> {
         let fence = self.storage.session_fence();
         let bad = || fail(fence, RetentionCause::Invariant);
         let prefix = self.storage.wal().prefix().map_err(|_| bad())?;
@@ -93,17 +113,24 @@ impl<'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
         if transaction.reference() != actor {
             return Err(bad());
         }
+        let scope = match kind {
+            CATALOG_KIND => JobScope::Catalog,
+            ROW_KIND => JobScope::Row,
+            _ => return Err(bad()),
+        };
         // No root, including a merely Reserved or Compensated root, may be
-        // abandoned by this empty-only operation.
-        // Catalog selection skips every Row-scope cell (another actor's).
+        // abandoned by this empty-only operation. Other actors' cells of
+        // either scope are skipped; this actor's cells are all its scope.
         for bytes in self.control.jobs() {
-            let Some(job) =
-                queue::decode_catalog_cell(bytes, self.storage.profile().spec().namespace)
-                    .map_err(|_| bad())?
-            else {
+            let job = job3::decode_job(bytes, self.storage.profile().spec().namespace)
+                .map_err(|_| bad())?;
+            if job.source() != Some(actor) {
                 continue;
-            };
-            if job.source() == Some(actor) && job.state().is_root() {
+            }
+            if job.scope() != Some(scope) {
+                return Err(bad());
+            }
+            if job.state().is_root() {
                 return Err(unchanged(
                     RetentionPhase::Prepare,
                     RetentionCause::Unsupported,
@@ -142,6 +169,14 @@ impl<'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
     ) -> std::result::Result<(), TransactionFinishError<RowTransaction<'v, 'a, 'c, 's>>> {
         let _unwind = self.storage.session_fence().unwind_guard();
         let checked = (|| {
+            // Dispatch by kind before any check, gate or Job scan. The Row
+            // empty path is not supplied by this entry yet.
+            if transaction.row_scope() {
+                return Err(unchanged(
+                    RetentionPhase::Finalize,
+                    RetentionCause::Unsupported,
+                ));
+            }
             self.transaction_entry(owner)?;
             if !std::ptr::eq(self.isolation, transaction.lease.ledger)
                 || !self
@@ -179,7 +214,7 @@ impl<'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
                     return Err(unchanged(RetentionPhase::Finalize, RetentionCause::Busy));
                 }
             }
-            if self.empty_actor_active(actor)? {
+            if self.empty_actor_active(actor, transaction.lease.kind)? {
                 if transaction.phase.get() != Phase::Active {
                     return Err(fail(transaction.lease.fence, RetentionCause::Invariant));
                 }
@@ -262,6 +297,10 @@ pub(in super::super) fn source_bytes() -> usize {
     use std::mem::size_of;
     lifecycle_caller_bytes()
         + super::source_bytes()
+        // Begin's binding helper (receiver, capsule, actor, begun, kind) and
+        // its result stay live around its nested empty-actor preflight.
+        + size_of::<(&(), &(), Option<TxnRef>, bool, u8)>()
+        + size_of::<Result<()>>()
         + 2 * size_of::<obligation::DescriptorSpec>()
         + 2 * size_of::<Result<obligation::DescriptorSpec>>()
         + 3 * size_of::<queue::JobView<'_>>()

@@ -17,6 +17,11 @@ const HEADER: usize = 64;
 const SLOT: usize = 128;
 pub(super) const HANDLE_BYTES: usize = 512;
 pub(super) const LONG_SOURCE_BYTES: usize = 49_152;
+/// Slot actor kind (slot@2, RAM only): 0 read-only, 1 Catalog writer, 2 Row
+/// writer. Written once when Begin binds the actor; entries dispatch or
+/// refuse by it (XADB-MODULE-ROW-BEGIN-001).
+pub(super) const CATALOG_KIND: u8 = 1;
+pub(super) const ROW_KIND: u8 = 2;
 
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
 pub(crate) enum IsolationLevel {
@@ -46,6 +51,8 @@ struct IsolationLease<'v, 'a, 'c, 's> {
     slot: usize,
     generation: u64,
     actor: Option<TxnRef>,
+    /// The bound actor's kind, equal to slot@2 at every check.
+    kind: u8,
     active: bool,
 }
 /// One fixed source charge, returned only to its original live slot/generation.
@@ -176,6 +183,7 @@ fn check_slot(bytes: &[u8], slot: usize, generation: u64, fence: &SessionFence) 
     if slot >= SLOTS
         || generation == 0
         || !(1..=4).contains(&row(bytes, slot)[0])
+        || row(bytes, slot)[2] > ROW_KIND
         || read64(row(bytes, slot), 16) != generation
     {
         return Err(fail(fence, RetentionCause::Invariant));
@@ -225,6 +233,7 @@ impl<'v, 'a, 'c, 's> IsolationLease<'v, 'a, 'c, 's> {
             slot,
             generation,
             actor: None,
+            kind: 0,
             active: true,
         })
     }
@@ -239,8 +248,17 @@ impl<'v, 'a, 'c, 's> IsolationLease<'v, 'a, 'c, 's> {
         check_slot(bytes, self.slot, self.generation, self.fence)?;
         let target = row(bytes, self.slot);
         let matches = match self.actor {
-            None => target[0] == 1 && target[2] == 0 && target[32..80].iter().all(|&b| b == 0),
-            Some(actor) => target[2] == 1 && TxnRef::decode(&target[32..80]).ok() == Some(actor),
+            None => {
+                self.kind == 0
+                    && target[0] == 1
+                    && target[2] == 0
+                    && target[32..80].iter().all(|&b| b == 0)
+            }
+            Some(actor) => {
+                matches!(self.kind, CATALOG_KIND | ROW_KIND)
+                    && target[2] == self.kind
+                    && TxnRef::decode(&target[32..80]).ok() == Some(actor)
+            }
         };
         if !matches {
             return Err(fail(self.fence, RetentionCause::Invariant));
@@ -333,6 +351,11 @@ impl Drop for CallerCredit<'_, '_, '_, '_> {
     }
 }
 impl RowTransaction<'_, '_, '_, '_> {
+    /// A Row-scope writable capsule (bound kind 2). Catalog entries refuse it
+    /// by this kind before any gate, source or read-set effect.
+    pub(in crate::storage) fn row_scope(&self) -> bool {
+        self.lease.kind == ROW_KIND
+    }
     fn check(&self) -> Result<()> {
         if self.phase.get() != Phase::Active {
             return Err(unchanged(
@@ -421,6 +444,10 @@ impl RowStatementView<'_, '_, '_, '_, '_> {
     }
     pub(in crate::storage) fn own_actor(&self) -> Option<TxnRef> {
         self.transaction.lease.actor
+    }
+    /// The view's transaction is a Row-scope writable capsule.
+    pub(in crate::storage) fn row_scope(&self) -> bool {
+        self.transaction.row_scope()
     }
     pub(in crate::storage) fn revision(&self) -> u64 {
         self.revision.get()
@@ -683,12 +710,20 @@ impl<'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
         owner: &mut Owner<'c, 's>,
         transaction: &'t RowTransaction<'v, 'a, 'c, 's>,
     ) -> Result<RowStatementView<'t, 'v, 'a, 'c, 's>> {
+        // A Row statement (Active, no RowReserved root, ATT undo_head mark)
+        // is not supplied yet: refuse by kind before any credit or mark.
+        if transaction.row_scope() {
+            return Err(unchanged(
+                RetentionPhase::Prepare,
+                RetentionCause::Unsupported,
+            ));
+        }
         self.transaction_entry(owner)?;
         self.transaction_matches(transaction)?;
         if let Some(actor) = transaction.lease.actor {
             // The first writable supply has no mutation/rollback statement
             // adapter. Require actual empty Active state, not a fabricated mark.
-            if !self.empty_actor_active(actor)? {
+            if !self.empty_actor_active(actor, transaction.lease.kind)? {
                 return Err(unchanged(
                     RetentionPhase::Prepare,
                     RetentionCause::WrongState,
@@ -745,6 +780,13 @@ impl<'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
         owner: &mut Owner<'c, 's>,
         mut view: RowStatementView<'t, 'v, 'a, 'c, 's>,
     ) -> std::result::Result<(), StatementFinishError<RowStatementView<'t, 'v, 'a, 'c, 's>>> {
+        // No Row view exists before the Row statement supply; refuse by kind.
+        if view.row_scope() {
+            return Err(StatementFinishError::Before {
+                error: unchanged(RetentionPhase::Finalize, RetentionCause::Unsupported),
+                view,
+            });
+        }
         if view.transaction.lease.actor.is_some() {
             let checked = self.catalog_transaction_check(owner, |writer, owner| {
                 writer.transaction_entry(owner)?;

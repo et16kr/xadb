@@ -384,7 +384,7 @@ impl<'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
     ) -> Result<()> {
         let actor = view.transaction.lease.actor.expect("writable dispatch");
         if view.revision.get() == 0 {
-            return if self.empty_actor_active(actor)? {
+            return if self.empty_actor_active(actor, CATALOG_KIND)? {
                 Ok(())
             } else {
                 Err(unchanged(
@@ -538,6 +538,13 @@ impl<'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
     ) -> std::result::Result<CatalogCommit, TransactionFinishError<RowTransaction<'v, 'a, 'c, 's>>>
     {
         let _unwind = self.storage.session_fence().unwind_guard();
+        // A Row capsule is refused by kind before the gate, source or scan.
+        if transaction.row_scope() {
+            return transaction_error(
+                transaction,
+                unchanged(RetentionPhase::Finalize, RetentionCause::Unsupported),
+            );
+        }
         let checked = self.catalog_transaction_check(owner, |writer, owner| {
             writer.transaction_entry(owner)?;
             let actor = writer.catalog_capsule(&transaction)?;
@@ -617,6 +624,13 @@ impl<'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
         flusher: &mut MaintenancePort<'_, 's, 'c, 'p, 'd, 'm, 'w, W>,
     ) -> std::result::Result<(), TransactionFinishError<RowTransaction<'v, 'a, 'c, 's>>> {
         let _unwind = self.storage.session_fence().unwind_guard();
+        // A Row capsule is refused by kind before the gate, source or scan.
+        if transaction.row_scope() {
+            return transaction_error(
+                transaction,
+                unchanged(RetentionPhase::Finalize, RetentionCause::Unsupported),
+            );
+        }
         let actor = match self.catalog_transaction_check(owner, |writer, owner| {
             writer.transaction_entry(owner)?;
             writer.catalog_capsule(&transaction)
