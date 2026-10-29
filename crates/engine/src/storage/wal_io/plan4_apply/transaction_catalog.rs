@@ -248,6 +248,18 @@ impl<'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
         owner: &mut Owner<'c, 's>,
         check: impl FnOnce(&mut Self, &mut Owner<'c, 's>) -> Result<T>,
     ) -> Result<T> {
+        self.transaction_check(owner, source::OperationClass::CatalogProgress, check)
+    }
+
+    /// The same checked phase under either fixed progress class. Both reserve
+    /// the one CatalogProgressCharge (`OperationSourceAdmission::progress`);
+    /// the class names the capsule kind whose check runs inside.
+    pub(super) fn transaction_check<T>(
+        &mut self,
+        owner: &mut Owner<'c, 's>,
+        class: source::OperationClass,
+        check: impl FnOnce(&mut Self, &mut Owner<'c, 's>) -> Result<T>,
+    ) -> Result<T> {
         let _unwind = self.storage.session_fence().unwind_guard();
         self.storage.health().map_err(|e| {
             fatal(
@@ -282,11 +294,12 @@ impl<'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
                 effect: e.effect,
             })
         };
-        let source = match source::OperationSourceAdmission::catalog_progress(
+        let source = match source::OperationSourceAdmission::progress(
             self.isolation,
             &self.commit_charges,
             &self.progress_charge,
             &gate,
+            class,
         ) {
             Ok(source) => source,
             Err(error) => return merge(Err(RetentionError::from(error)), reopen(gate)),
@@ -753,6 +766,7 @@ pub(in super::super) fn check_source_bytes() -> usize {
         + size_of::<&()>()
         + size_of::<Result<ActorStage>>()
         + source::commit_carrier_bytes()
+        + size_of::<source::OperationClass>() // transaction_check's class
         + 14 * size_of::<&()>()
         + 2 * size_of::<Result<ActorStage>>()
         + 2 * size_of::<Result<TxnRef>>()
