@@ -1,26 +1,30 @@
 //! Thin forwarding of the driver traits to the actual C0 Row write types.
-//! Nothing here constructs a C value: every wrapper, lane, observation and
-//! error comes from the original MutationPort, Owner, statement view and
-//! transaction capsule. The C0 bodies return Unchanged `Unsupported`, so
-//! these entries are compile-checked only until C3 supplies the adapters.
+//! Nothing here constructs a C value: every wrapper, lane, observation,
+//! target and error comes from the original MutationPort, Owner, statement
+//! view and transaction capsule. A writable capsule exists
+//! (`MutationPort::begin_catalog_transaction`) and `begin_statement` accepts
+//! its empty actor, but nothing issues a `CheckedTable` yet and the Row write
+//! bodies return Unchanged `Unsupported`, so these entries are
+//! compile-checked only until C3 supplies the adapters (gap G2).
 use super::{
-    Boundary, DriveError, Loan, Preflight, Prepared, PreparedTask, ProducerLane, Reserved,
-    Rollback, RollbackNext, RollbackTask, StatementView, ValidationLane, abort, carrier_bytes,
-    commit, insert_statement, rollback_statement,
+    Boundary, DriveError, Failure, Loan, Preflight, Prepared, PreparedTask, ProducerLane, Reserved,
+    Rollback, RollbackNext, RollbackStop, RollbackTask, StatementView, Stepped, ValidationLane,
+    carrier_bytes, commit, finish_aborted, finish_rollback, finish_statement, insert_statement,
+    retry_task, rollback_step, start_full_rollback, start_statement_rollback,
 };
 use crate::storage::{
     disk::{
-        CheckedTable, MutationPort, Owner, PreflightRow, PreparedRollbackTask, PreparedRow,
-        ReservedRow, RetentionError, RollbackScope, RollbackStep, RowCommitObservation,
-        RowInputPlan, RowMutationObservation, RowOwnedError, RowProducerLane, RowProposal,
-        RowRollback, RowRollbackTask, RowStatementView, RowTransaction, RowValidationLane,
-        StatementFinishError, TransactionFinishError,
+        CheckedTable, MutationPort, Owner, Plan4Target, PreflightRow, PreparedRollbackTask,
+        PreparedRow, ReservedRow, RetentionError, RollbackScope, RollbackStep,
+        RowCommitObservation, RowInputPlan, RowMutationObservation, RowOwnedError, RowProducerLane,
+        RowProposal, RowRollback, RowRollbackTask, RowStatementView, RowTransaction,
+        RowValidationLane, StatementFinishError, TransactionFinishError,
     },
     row::insert::{InsertError, produce_clr, produce_insert, validate_insert},
     row_record::ValueRef,
 };
 use foundation::namespace::WriterNamespace;
-use std::marker::PhantomData;
+use std::{convert::Infallible, marker::PhantomData};
 
 impl StatementView for RowStatementView<'_, '_, '_, '_, '_> {
     fn check(&self) -> Result<(), RetentionError> {
@@ -99,16 +103,17 @@ impl<'r, 't, 'v, 'i, 'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace> Pre
 impl<'r, 't, 'v, 'i, 'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace> Rollback
     for RowRollback<'r, 't, 'v, 'i, 'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W>
 {
+    type Target = Plan4Target;
     type Task<'x>
         = RowRollbackTask<'x, 'r, 't, 'v, 'i, 'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W>
     where
         Self: 'x;
-    /// FlushRequired's target is not kept: the driver cannot flush while
-    /// this rollback holds the Owner (gap G1) and stops the rollback.
-    fn next(&mut self) -> Result<RollbackNext<Self::Task<'_>>, RetentionError> {
+    /// FlushRequired's target is passed out unchanged with the rollback
+    /// still held (gaps G1 and G5).
+    fn next(&mut self) -> Result<RollbackNext<Self::Task<'_>, Plan4Target>, RetentionError> {
         Ok(match RowRollback::next(self)? {
             RollbackStep::Candidate(task) => RollbackNext::Candidate(task),
-            RollbackStep::FlushRequired { .. } => RollbackNext::Flush,
+            RollbackStep::FlushRequired { target } => RollbackNext::Flush(target),
             RollbackStep::Complete => RollbackNext::Complete,
         })
     }
@@ -240,42 +245,181 @@ impl<'x, 't, 'v, 'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace> Boundar
 type Live<'x, 't, 'v, 'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W> =
     LiveCall<'x, 't, 'v, 'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W>;
 
+/// The rollback `start_*_rollback_live` hands to the caller, which steps it.
+type LiveRollback<'r, 't, 'v, 'i, 'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W> =
+    RowRollback<'r, 't, 'v, 'i, 'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W>;
+
 /// One INSERT statement over the original statement view: see
 /// `insert_statement`. Every row's input is rejected before its Reserve.
 #[allow(
     clippy::result_large_err,
-    reason = "the unchanged or open statement view is returned inline to its caller"
+    reason = "the unchanged or rollback-required statement view is returned inline"
 )]
 pub(in crate::storage) fn insert_live<'t, 'v, 'a, 'c, 's, W: WriterNamespace>(
     call: &mut Live<'_, 't, 'v, '_, 'a, 's, 'c, '_, '_, '_, '_, '_, W>,
-    transaction: &RowTransaction<'v, 'a, 'c, 's>,
     statement: RowStatementView<'t, 'v, 'a, 'c, 's>,
     table: &CheckedTable<'c, 's>,
     private: &mut Loan,
     rows: &[&[ValueRef<'_>]],
     slots: &mut [Option<RowMutationObservation>],
 ) -> Result<usize, DriveError<RowStatementView<'t, 'v, 'a, 'c, 's>>> {
-    insert_statement(call, transaction, statement, table, private, rows, slots)
+    insert_statement(call, statement, table, private, rows, slots)
 }
 
-/// Retry entry for a statement a failed INSERT returned `Open`.
+/// `finish_statement`: also the only retry of a `FinishPending` statement.
 #[allow(
     clippy::result_large_err,
-    reason = "the unchanged or open statement view is returned inline to its caller"
+    reason = "the finish-pending statement view is returned inline"
 )]
-pub(in crate::storage) fn rollback_statement_live<'t, 'v, 'a, 'c, 's, W: WriterNamespace>(
+pub(in crate::storage) fn finish_statement_live<'t, 'v, 'a, 'c, 's, W: WriterNamespace>(
     call: &mut Live<'_, 't, 'v, '_, 'a, 's, 'c, '_, '_, '_, '_, '_, W>,
-    transaction: &RowTransaction<'v, 'a, 'c, 's>,
     statement: RowStatementView<'t, 'v, 'a, 'c, 's>,
-    private: &mut Loan,
-) -> Result<usize, DriveError<RowStatementView<'t, 'v, 'a, 'c, 's>>> {
-    rollback_statement(call, transaction, statement, private)
+) -> Result<(), DriveError<RowStatementView<'t, 'v, 'a, 'c, 's>>> {
+    finish_statement(call, statement)
 }
 
-/// Row Commit; a write conflict is followed by A's full rollback.
+/// RollbackStart for a `RollbackRequired` statement; see `rollback_step_live`.
+pub(in crate::storage) fn start_statement_rollback_live<
+    'r,
+    'i,
+    'x,
+    't,
+    'v,
+    'b,
+    'a,
+    's,
+    'c,
+    'p,
+    'd,
+    'o,
+    'm,
+    'w,
+    W: WriterNamespace,
+>(
+    call: &'r mut Live<'x, 't, 'v, 'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W>,
+    transaction: &'r RowTransaction<'v, 'a, 'c, 's>,
+    statement: &'r RowStatementView<'t, 'v, 'a, 'c, 's>,
+    private: &'i mut Loan,
+) -> Result<LiveRollback<'r, 't, 'v, 'i, 'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W>, Failure> {
+    start_statement_rollback(call, transaction, statement, private)
+}
+
+/// RollbackStart of the full rollback for a `RollbackRequired` transaction.
+pub(in crate::storage) fn start_full_rollback_live<
+    'r,
+    'i,
+    'x,
+    't,
+    'v,
+    'b,
+    'a,
+    's,
+    'c,
+    'p,
+    'd,
+    'o,
+    'm,
+    'w,
+    W: WriterNamespace,
+>(
+    call: &'r mut Live<'x, 't, 'v, 'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W>,
+    transaction: &'r RowTransaction<'v, 'a, 'c, 's>,
+    private: &'i mut Loan,
+) -> Result<LiveRollback<'r, 't, 'v, 'i, 'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W>, Failure> {
+    start_full_rollback(call, transaction, private)
+}
+
+/// One step of the caller's held rollback; a stop hands back what C
+/// returned (the same rollback, the same task, or the flush target).
+pub(in crate::storage) fn rollback_step_live<
+    'x,
+    'r,
+    't,
+    'v,
+    'i,
+    'b,
+    'a,
+    's,
+    'c,
+    'p,
+    'd,
+    'o,
+    'm,
+    'w,
+    W: WriterNamespace,
+>(
+    rollback: &'x mut LiveRollback<'r, 't, 'v, 'i, 'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W>,
+) -> Result<
+    Stepped,
+    RollbackStop<
+        RowRollbackTask<'x, 'r, 't, 'v, 'i, 'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W>,
+        Plan4Target,
+    >,
+> {
+    rollback_step(rollback)
+}
+
+/// Retry of the same task a step handed back.
+pub(in crate::storage) fn retry_task_live<
+    'x,
+    'r,
+    't,
+    'v,
+    'i,
+    'b,
+    'a,
+    's,
+    'c,
+    'p,
+    'd,
+    'o,
+    'm,
+    'w,
+    W: WriterNamespace,
+>(
+    task: RowRollbackTask<'x, 'r, 't, 'v, 'i, 'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W>,
+) -> Result<
+    (),
+    RollbackStop<
+        RowRollbackTask<'x, 'r, 't, 'v, 'i, 'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W>,
+        Infallible,
+    >,
+> {
+    retry_task(task)
+}
+
+/// C's finish of a complete rollback; Before returns the same rollback.
 #[allow(
     clippy::result_large_err,
-    reason = "the unchanged or open transaction capsule is returned inline to its caller"
+    reason = "an unchanged refusal returns the same rollback inline"
+)]
+pub(in crate::storage) fn finish_rollback_live<
+    'r,
+    't,
+    'v,
+    'i,
+    'b,
+    'a,
+    's,
+    'c,
+    'p,
+    'd,
+    'o,
+    'm,
+    'w,
+    W: WriterNamespace,
+>(
+    rollback: LiveRollback<'r, 't, 'v, 'i, 'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W>,
+) -> Result<(), RowOwnedError<LiveRollback<'r, 't, 'v, 'i, 'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W>>>
+{
+    finish_rollback(rollback)
+}
+
+/// Row Commit; a write conflict hands the transaction back for the full
+/// rollback.
+#[allow(
+    clippy::result_large_err,
+    reason = "the unchanged or rollback-required transaction capsule is returned inline"
 )]
 pub(in crate::storage) fn commit_live<'v, 'a, 'c, 's, W: WriterNamespace>(
     call: &mut Live<'_, '_, 'v, '_, 'a, 's, 'c, '_, '_, '_, '_, '_, W>,
@@ -285,21 +429,20 @@ pub(in crate::storage) fn commit_live<'v, 'a, 'c, 's, W: WriterNamespace>(
     commit(call, transaction, private)
 }
 
-/// Full abort of every remaining row, then `finish_aborted`.
+/// `finish_aborted` after the full rollback finished; also its only retry.
 #[allow(
     clippy::result_large_err,
-    reason = "the unchanged or open transaction capsule is returned inline to its caller"
+    reason = "the finish-pending transaction capsule is returned inline"
 )]
-pub(in crate::storage) fn abort_live<'v, 'a, 'c, 's, W: WriterNamespace>(
+pub(in crate::storage) fn finish_aborted_live<'v, 'a, 'c, 's, W: WriterNamespace>(
     call: &mut Live<'_, '_, 'v, '_, 'a, 's, 'c, '_, '_, '_, '_, '_, W>,
     transaction: RowTransaction<'v, 'a, 'c, 's>,
-    private: &mut Loan,
-) -> Result<usize, DriveError<RowTransaction<'v, 'a, 'c, 's>>> {
-    abort(call, transaction, private)
+) -> Result<(), DriveError<RowTransaction<'v, 'a, 'c, 's>>> {
+    finish_aborted(call, transaction)
 }
 
 /// `carrier_bytes` for the actual C0 types (INSERT path, CLR path).
-pub(super) fn live_carrier_bytes<W: WriterNamespace + 'static>() -> (usize, usize) {
+pub(super) const fn live_carrier_bytes<W: WriterNamespace + 'static>() -> (usize, usize) {
     carrier_bytes::<
         Live<
             'static,

@@ -1,4 +1,4 @@
-//! MCA00-D01..12 are C0_ONLY. The driver runs over literal stand-ins of C's
+//! MCA00-D01..13 are C0_ONLY. The driver runs over literal stand-ins of C's
 //! Row write boundary: a non-persistent call log, a row high-water, the
 //! actor's chain of applied rows, the statement mark and scripted
 //! refusals. Refusals are C0's own value: `Unsupported` or another choice
@@ -7,10 +7,13 @@
 //! here, and nothing counts toward MCA01–05. The validation stand-in runs
 //! A's pure `encode_input` into the loan's candidate area. The producer
 //! stand-in returns literal proposals, because A's producer needs C's lane
-//! (it is covered by MCA00-V06). Expected bytes, digests and frame lengths
-//! are independent literals from the contract: canonical rows and SHA-256
-//! by `n2-tools/make_literals.py` (stdlib struct/hashlib), Forward
-//! `91304+C+128h` and CLR `91096+C+128h` with `C=180+L`.
+//! (it is covered by MCA00-V06). A rollback stand-in only goes on from what
+//! it handed back (the same rollback or task); none is started twice.
+//! Expected bytes, digests and frame lengths are independent literals from
+//! the contract: canonical rows and SHA-256 by
+//! `tests/fixtures/module-row-insert/make_driver_literals.py` (stdlib
+//! struct/hashlib), Forward `91304+C+128h` and CLR `91096+C+128h` with
+//! `C=180+L`.
 use super::*;
 use crate::{
     api::{Column, DataType},
@@ -119,7 +122,8 @@ enum Fault {
     Before(Cause),
     Fatal,
     Producer(InsertError),
-    Flush,
+    /// C's FlushRequired with a literal target.
+    Flush(u64),
     RollbackRequired,
     Rejected,
 }
@@ -633,14 +637,15 @@ impl Disarm for LiteralRollback<'_, '_> {
 }
 
 impl<'r, 'i> Rollback for LiteralRollback<'r, 'i> {
+    type Target = u64;
     type Task<'x>
         = LiteralTask<'x, 'r, 'i>
     where
         Self: 'x;
-    fn next(&mut self) -> Result<RollbackNext<LiteralTask<'_, 'r, 'i>>, RetentionError> {
+    fn next(&mut self) -> Result<RollbackNext<LiteralTask<'_, 'r, 'i>, u64>, RetentionError> {
         let mut state = self.state.borrow_mut();
         match state.note(Next) {
-            Some(Fault::Flush) => return Ok(RollbackNext::Flush),
+            Some(Fault::Flush(target)) => return Ok(RollbackNext::Flush(target)),
             fault => factory(Next, fault)?,
         }
         if state.chain.len() <= self.target {
@@ -767,7 +772,6 @@ fn run<'s>(
 ) -> Outcome<'s> {
     insert_statement(
         &mut LiteralCall { state },
-        &LiteralTransaction(1),
         statement(state),
         &LiteralTable,
         loan,
@@ -835,31 +839,52 @@ fn failed<H: std::fmt::Debug>(result: Result<usize, DriveError<H>>) -> DriveErro
     result.expect_err("the call must fail")
 }
 
-fn returned<H>(after: After<H>) -> H {
+fn name<H>(after: &After<H>) -> &'static str {
     match after {
-        After::Returned(handle) => handle,
-        After::Closed => panic!("expected Returned, got Closed"),
-        After::Open(_) => panic!("expected Returned, got Open"),
-        After::MustResolve(_) => panic!("expected Returned, got MustResolve"),
+        After::Returned(_) => "Returned",
+        After::RollbackRequired(_) => "RollbackRequired",
+        After::FinishPending(_) => "FinishPending",
+        After::Closed => "Closed",
+        After::MustResolve(_) => "MustResolve",
     }
 }
 
-fn open<H>(after: After<H>) -> H {
+fn returned<H>(after: After<H>) -> H {
     match after {
-        After::Open(handle) => handle,
-        After::Closed => panic!("expected Open, got Closed"),
-        After::Returned(_) => panic!("expected Open, got Returned"),
-        After::MustResolve(_) => panic!("expected Open, got MustResolve"),
+        After::Returned(handle) => handle,
+        other => panic!("expected Returned, got {}", name(&other)),
+    }
+}
+
+fn rollback_required<H>(after: After<H>) -> H {
+    match after {
+        After::RollbackRequired(handle) => handle,
+        other => panic!("expected RollbackRequired, got {}", name(&other)),
+    }
+}
+
+fn finish_pending<H>(after: After<H>) -> H {
+    match after {
+        After::FinishPending(handle) => handle,
+        other => panic!("expected FinishPending, got {}", name(&other)),
     }
 }
 
 fn must_resolve<H>(after: After<H>) -> Option<H> {
     match after {
         After::MustResolve(handle) => handle,
-        After::Closed => panic!("expected MustResolve, got Closed"),
-        After::Returned(_) => panic!("expected MustResolve, got Returned"),
-        After::Open(_) => panic!("expected MustResolve, got Open"),
+        other => panic!("expected MustResolve, got {}", name(&other)),
     }
+}
+
+fn closed<H>(after: After<H>) {
+    if !matches!(after, After::Closed) {
+        panic!("expected Closed, got {}", name(&after));
+    }
+}
+
+fn cause(error: RetentionError) -> (RetentionPhase, Cause, Effect) {
+    disk(&DriverError::Disk(error))
 }
 
 /// No reservation or rollback is left behind and no rule was broken.
@@ -867,6 +892,98 @@ fn settled(state: &RefCell<State>) {
     let state = state.borrow();
     assert_eq!(state.outstanding, None);
     assert!(state.violations.is_empty(), "{:?}", state.violations);
+}
+
+/// The calls logged so far; the log restarts empty.
+fn take_log(state: &RefCell<State>) -> Vec<Call> {
+    std::mem::take(&mut state.borrow_mut().log)
+}
+
+/// Row 7 applied, row 2 rejected by A: the statement handed back
+/// `RollbackRequired`, with the log cleared.
+fn after_failed_row<'s>(state: &'s RefCell<State>, loan: &mut Loan) -> LiteralStatement<'s> {
+    let error = failed(run(state, &[&V1, &BAD], &mut [None, None], loan));
+    let view = rollback_required(error.after);
+    take_log(state);
+    view
+}
+
+fn started<K>(result: Result<K, Failure>) -> K {
+    match result {
+        Ok(rollback) => rollback,
+        Err(failure) => panic!("rollback start refused: {failure:?}"),
+    }
+}
+
+fn refused<K>(result: Result<K, Failure>) -> Failure {
+    match result {
+        Ok(_) => panic!("the rollback start must be refused"),
+        Err(failure) => failure,
+    }
+}
+
+fn stop_name<T, F>(stop: &RollbackStop<T, F>) -> &'static str {
+    match stop {
+        RollbackStop::Next(_) => "Next",
+        RollbackStop::Flush(_) => "Flush",
+        RollbackStop::Task { .. } => "Task",
+        RollbackStop::MustResolve { .. } => "MustResolve",
+    }
+}
+
+/// Steps the caller's rollback until C reports Complete; any stop fails.
+fn complete<K: Rollback>(rollback: &mut K) -> usize {
+    let mut compensated = 0;
+    loop {
+        match rollback_step(rollback) {
+            Ok(Stepped::Compensated) => compensated += 1,
+            Ok(Stepped::Complete) => return compensated,
+            Err(stop) => panic!("the rollback stopped: {}", stop_name(&stop)),
+        }
+    }
+}
+
+/// The next step's stop; a step that goes on fails the test.
+fn stopped<'x, K: Rollback>(rollback: &'x mut K) -> RollbackStop<K::Task<'x>, K::Target> {
+    match rollback_step(rollback) {
+        Err(stop) => stop,
+        Ok(step) => panic!("expected a stop, got {step:?}"),
+    }
+}
+
+/// The same task a stop handed back.
+fn held_task<T, F>(stop: RollbackStop<T, F>) -> (Stage, DriverError, T) {
+    match stop {
+        RollbackStop::Task { stage, error, task } => (stage, error, task),
+        other => panic!("expected the same task, got {}", stop_name(&other)),
+    }
+}
+
+fn finished<K: Rollback>(rollback: K) {
+    if finish_rollback(rollback).is_err() {
+        panic!("the rollback finish was refused");
+    }
+}
+
+/// The caller's statement rollback of a `RollbackRequired` statement, then
+/// its finish; returns the CLR count.
+fn roll_back_statement<'s>(
+    state: &'s RefCell<State>,
+    view: LiteralStatement<'s>,
+    loan: &mut Loan,
+) -> usize {
+    let mut call = LiteralCall { state };
+    let transaction = LiteralTransaction(1);
+    let mut rollback = started(start_statement_rollback(
+        &mut call,
+        &transaction,
+        &view,
+        loan,
+    ));
+    let compensated = complete(&mut rollback);
+    finished(rollback);
+    finish_statement(&mut call, view).unwrap();
+    compensated
 }
 
 #[test]
@@ -949,7 +1066,6 @@ fn mca00_d03_statement_and_arguments_are_checked_before_any_c_call() {
     };
     let error = failed(insert_statement(
         &mut LiteralCall { state: &state },
-        &LiteralTransaction(1),
         ended,
         &LiteralTable,
         &mut loan,
@@ -1006,7 +1122,6 @@ fn mca00_d04_value_rejections_release_the_preflight_without_reserve() {
         assert_eq!(error.failure.stage, Stage::Validate);
         assert_eq!(insert(&error.failure.error), expected);
         assert!(error.failure.cleanup.is_none() && !error.failure.must_resolve);
-        assert_eq!(error.rolled_back, 0);
         assert!(!returned(error.after).ended);
         assert_eq!(
             state.borrow().log,
@@ -1030,21 +1145,23 @@ fn mca00_d04_value_rejections_release_the_preflight_without_reserve() {
     state.borrow_mut().free = 206;
     assert_eq!(run(&state, &[&V1], &mut [None], &mut loan()).unwrap(), 1);
 
-    // A rejection in row 2 compensates row 1 and finishes the statement.
+    // A rejection in row 2 hands the statement back with row 7 applied; the
+    // driver starts no rollback. The caller's statement rollback compensates
+    // it with the R1 h=0 CLR literal and finishes the statement.
     let state = self::state(&[], &[]);
     let mut slots = [None, None];
-    let error = failed(run(&state, &[&V1, &BAD], &mut slots, &mut loan()));
+    let mut loan = loan();
+    let error = failed(run(&state, &[&V1, &BAD], &mut slots, &mut loan));
     assert_eq!(error.failure.stage, Stage::Validate);
     assert_eq!(
         insert(&error.failure.error),
         InsertError::Row(RowError::SchemaMismatch)
     );
-    assert_eq!(error.rolled_back, 1);
-    assert!(matches!(error.after, After::Closed));
-    assert_eq!(slots, [None, None]);
-    let state = state.into_inner();
+    assert!(error.failure.cleanup.is_none() && !error.failure.must_resolve);
+    let view = rollback_required(error.after);
+    assert_eq!(slots, [Some(LiteralApplied(7)), None]);
     assert_eq!(
-        state.log,
+        take_log(&state),
         calls(&[
             &[Check],
             &applied(7),
@@ -1054,6 +1171,13 @@ fn mca00_d04_value_rejections_release_the_preflight_without_reserve() {
                 Validate,
                 FinishPreflight
             ],
+        ])
+    );
+    assert_eq!(roll_back_statement(&state, view, &mut loan), 1);
+    let state = state.into_inner();
+    assert_eq!(
+        state.log,
+        calls(&[
             &[RollbackStart(RollbackScope::Statement)],
             &compensated(7),
             &[Next, RollbackFinish, FinishStatement],
@@ -1189,7 +1313,6 @@ fn mca00_d06_failures_after_reserve_cancel_the_one_reservation() {
             _ => unreachable!(),
         }
         assert!(error.failure.cleanup.is_none() && !error.failure.must_resolve);
-        assert_eq!(error.rolled_back, 0);
         returned(error.after);
         assert_eq!(state.borrow().log, calls(&[&reserved, &tail]));
         assert!(state.borrow().chain.is_empty());
@@ -1203,30 +1326,38 @@ fn mca00_d07_failed_row_after_applied_rows_rolls_back_to_the_mark() {
     // Row 5 of an earlier statement stays; this statement's mark is 1.
     let state = self::state(&[(5, 22)], &[(Apply(9), Fault::Before(Cause::Busy))]);
     let mut slots = [None, None, None];
+    let mut loan = loan();
     let rows: [&[ValueRef<'_>]; 3] = [&V1, &V2, &V3];
-    let error = failed(run(&state, &rows, &mut slots, &mut loan()));
+    let error = failed(run(&state, &rows, &mut slots, &mut loan));
     assert_eq!(error.failure.stage, Stage::Apply);
     assert_eq!(
         disk(&error.failure.error),
         (RetentionPhase::Prepare, Cause::Busy, Effect::Unchanged)
     );
     assert!(error.failure.cleanup.is_none() && !error.failure.must_resolve);
-    assert_eq!(error.rolled_back, 2);
-    assert!(matches!(error.after, After::Closed));
-    assert_eq!(slots, [None, None, None]);
-    let state = state.into_inner();
+    let view = rollback_required(error.after);
+    // The slots name the applied rows the caller's rollback compensates.
     assert_eq!(
-        state.log,
+        slots,
+        [Some(LiteralApplied(7)), Some(LiteralApplied(8)), None]
+    );
+    assert_eq!(
+        take_log(&state),
         calls(&[
             &[Check],
             &applied(7),
             &applied(8),
             &applied(9),
-            &[
-                Reopen(9),
-                Cancel(9),
-                RollbackStart(RollbackScope::Statement)
-            ],
+            &[Reopen(9), Cancel(9)],
+        ])
+    );
+    // Head first, down to the mark: rows 8 and 7, never row 5.
+    assert_eq!(roll_back_statement(&state, view, &mut loan), 2);
+    let state = state.into_inner();
+    assert_eq!(
+        state.log,
+        calls(&[
+            &[RollbackStart(RollbackScope::Statement)],
             &compensated(8),
             &compensated(7),
             &[Next, RollbackFinish, FinishStatement],
@@ -1258,8 +1389,9 @@ fn mca00_d08_unsupported_c0_wrappers_propagate_unchanged() {
         Cause::Unsupported,
         Effect::Unchanged,
     );
+    let refuse = Fault::Before(Cause::Unsupported);
     // preflight_row as C0 supplies it.
-    let state = self::state(&[], &[(Call::Preflight, Fault::Before(Cause::Unsupported))]);
+    let state = self::state(&[], &[(Call::Preflight, refuse)]);
     let error = failed(run(&state, &[&V1], &mut [None], &mut loan()));
     assert_eq!(
         (error.failure.stage, disk(&error.failure.error)),
@@ -1268,15 +1400,10 @@ fn mca00_d08_unsupported_c0_wrappers_propagate_unchanged() {
     returned(error.after);
     assert_eq!(state.borrow().log, [Check, Call::Preflight]);
 
-    // A refused rollback leaves this call's row applied: Open, then retry.
-    let faults = [
-        (Reserve(8), Fault::Before(Cause::Unsupported)),
-        (
-            RollbackStart(RollbackScope::Statement),
-            Fault::Before(Cause::Unsupported),
-        ),
-    ];
-    let state = self::state(&[], &faults);
+    // A refused RollbackStart starts nothing: the statement stays
+    // RollbackRequired and the start alone is retried.
+    let start = RollbackStart(RollbackScope::Statement);
+    let state = self::state(&[], &[(Reserve(8), refuse), (start, refuse)]);
     let mut slots = [None, None];
     let mut loan = loan();
     let error = failed(run(&state, &[&V1, &V2], &mut slots, &mut loan));
@@ -1284,71 +1411,91 @@ fn mca00_d08_unsupported_c0_wrappers_propagate_unchanged() {
         (error.failure.stage, disk(&error.failure.error)),
         (Stage::Reserve, unsupported)
     );
-    let (stage, cleanup) = error.failure.cleanup.as_ref().unwrap();
-    assert_eq!((*stage, disk(cleanup)), (Stage::RollbackStart, unsupported));
-    assert!(!error.failure.must_resolve);
-    assert_eq!(error.rolled_back, 0);
-    let view = open(error.after);
+    assert!(error.failure.cleanup.is_none() && !error.failure.must_resolve);
+    let view = rollback_required(error.after);
     assert_eq!(slots, [Some(LiteralApplied(7)), None]);
+    let mut call = LiteralCall { state: &state };
+    let transaction = LiteralTransaction(1);
+    let failure = refused(start_statement_rollback(
+        &mut call,
+        &transaction,
+        &view,
+        &mut loan,
+    ));
     assert_eq!(
-        std::mem::take(&mut state.borrow_mut().log),
+        (failure.stage, disk(&failure.error)),
+        (Stage::RollbackStart, unsupported)
+    );
+    assert!(failure.cleanup.is_none() && !failure.must_resolve);
+    assert_eq!(
+        take_log(&state),
         calls(&[
             &[Check],
             &applied(7),
             &[Call::Preflight, Call::ValidationLane, Validate, Reserve(8)],
-            &[FinishPreflight, RollbackStart(RollbackScope::Statement)],
+            &[FinishPreflight, start],
         ])
     );
-    state.borrow_mut().faults.clear();
-    let retried = rollback_statement(
-        &mut LiteralCall { state: &state },
-        &LiteralTransaction(1),
-        view,
+    // C0's next and finish: an unchanged refusal keeps the same rollback,
+    // which is stepped and finished again.
+    state.borrow_mut().faults = vec![(Next, refuse)];
+    let mut rollback = started(start_statement_rollback(
+        &mut call,
+        &transaction,
+        &view,
         &mut loan,
-    );
-    assert_eq!(retried.unwrap(), 1);
+    ));
+    let RollbackStop::Next(error) = stopped(&mut rollback) else {
+        panic!("expected C's refusal of next");
+    };
+    assert_eq!(cause(error), unsupported);
+    state.borrow_mut().faults = vec![(RollbackFinish, refuse)];
+    assert_eq!(complete(&mut rollback), 1);
+    let Err(RowOwnedError::Before { error, owned }) = finish_rollback(rollback) else {
+        panic!("expected the same rollback back");
+    };
+    assert_eq!(cause(error), unsupported);
+    state.borrow_mut().faults.clear();
+    finished(owned);
+    finish_statement(&mut call, view).unwrap();
     assert_eq!(
-        state.borrow().log,
+        take_log(&state),
         calls(&[
-            &[RollbackStart(RollbackScope::Statement)],
+            &[start, Next],
             &compensated(7),
-            &[Next, RollbackFinish, FinishStatement],
+            &[Next, RollbackFinish, RollbackFinish, FinishStatement],
         ])
     );
     settled(&state);
 
-    // commit_row and a full abort's start as C0 supplies them.
-    let state = self::state(&[(5, 22)], &[(Commit, Fault::Before(Cause::Unsupported))]);
-    let error = commit(
-        &mut LiteralCall { state: &state },
-        LiteralTransaction(2),
-        &mut loan,
-    )
-    .unwrap_err();
+    // commit_row and the full rollback's start as C0 supplies them.
+    let state = self::state(&[(5, 22)], &[(Commit, refuse)]);
+    let mut call = LiteralCall { state: &state };
+    let error = commit(&mut call, LiteralTransaction(2), &mut loan).unwrap_err();
     assert_eq!(
         (error.failure.stage, disk(&error.failure.error)),
         (Stage::Commit, finalize)
     );
     assert_eq!(returned(error.after), LiteralTransaction(2));
-    assert_eq!(state.borrow().log, [Commit]);
-    let start = RollbackStart(RollbackScope::Transaction);
-    let state = self::state(&[(5, 22)], &[(start, Fault::Before(Cause::Unsupported))]);
-    let error = failed(abort(
-        &mut LiteralCall { state: &state },
-        LiteralTransaction(3),
-        &mut loan,
-    ));
+    let full = RollbackStart(RollbackScope::Transaction);
+    state.borrow_mut().faults = vec![(full, refuse)];
+    let transaction = LiteralTransaction(3);
+    let failure = refused(start_full_rollback(&mut call, &transaction, &mut loan));
     assert_eq!(
-        (error.failure.stage, disk(&error.failure.error)),
+        (failure.stage, disk(&failure.error)),
         (Stage::RollbackStart, unsupported)
     );
-    assert_eq!(returned(error.after), LiteralTransaction(3));
-    assert_eq!(state.borrow().log, [start]);
+    assert_eq!(state.borrow().log, [Commit, full]);
 }
 
 #[test]
 fn mca00_d09_fatal_and_unreleased_reservations_stop_all_calls() {
     let front = [Check, Call::Preflight, Call::ValidationLane, Validate];
+    let fenced = (
+        RetentionPhase::Install,
+        Cause::Fenced,
+        Effect::CallerMustResolve,
+    );
     let cases = [
         (
             vec![(Apply(7), Fault::Fatal)],
@@ -1368,7 +1515,20 @@ fn mca00_d09_fatal_and_unreleased_reservations_stop_all_calls() {
             None,
             vec![Check, Call::Preflight],
         ),
-        // A CallerMustResolve lane answer: no Cancel effect after it.
+        // A CallerMustResolve validation lane: no finish call; the preflight
+        // is dropped, C's documented no-effect release.
+        (
+            vec![(Call::ValidationLane, Fault::Fatal)],
+            Stage::ValidationLane,
+            None,
+            vec![
+                Check,
+                Call::Preflight,
+                Call::ValidationLane,
+                Call::DropPreflight,
+            ],
+        ),
+        // A CallerMustResolve producer lane: no Cancel effect after it.
         (
             vec![(Call::ProducerLane(7), Fault::Fatal)],
             Stage::ProducerLane,
@@ -1403,7 +1563,6 @@ fn mca00_d09_fatal_and_unreleased_reservations_stop_all_calls() {
             cleanup
         );
         assert!(error.failure.must_resolve);
-        assert_eq!(error.rolled_back, 0);
         assert!(must_resolve(error.after).is_some());
         assert_eq!(state.borrow().log, log);
         assert_eq!(slots, [None]);
@@ -1414,14 +1573,7 @@ fn mca00_d09_fatal_and_unreleased_reservations_stop_all_calls() {
     let error = failed(run(&state, &[&V1, &V2], &mut slots, &mut loan()));
     assert_eq!(
         (error.failure.stage, disk(&error.failure.error)),
-        (
-            Stage::Apply,
-            (
-                RetentionPhase::Install,
-                Cause::Fenced,
-                Effect::CallerMustResolve
-            )
-        )
+        (Stage::Apply, fenced)
     );
     assert!(must_resolve(error.after).is_some());
     assert_eq!(slots, [Some(LiteralApplied(7)), None]);
@@ -1429,116 +1581,211 @@ fn mca00_d09_fatal_and_unreleased_reservations_stop_all_calls() {
         state.borrow().log,
         calls(&[&[Check], &applied(7), &applied(8)])
     );
+
+    // A started rollback C fences: no call after the answer, and the driver
+    // drops neither the rollback nor anything C consumed.
+    let start = RollbackStart(RollbackScope::Statement);
+    let cases = [
+        (Next, Stage::RollbackNext, vec![start, Next]),
+        (ClrLane(7), Stage::ClrLane, vec![start, Next, ClrLane(7)]),
+        (
+            ClrPrepare(7),
+            Stage::ClrPrepare,
+            vec![start, Next, ClrLane(7), Clr(7), ClrPrepare(7)],
+        ),
+        (
+            ClrApply(7),
+            Stage::ClrApply,
+            calls(&[&[start], &compensated(7)]),
+        ),
+    ];
+    for (at, stage, log) in cases {
+        let state = self::state(&[], &[]);
+        let mut loan = loan();
+        let view = after_failed_row(&state, &mut loan);
+        state.borrow_mut().faults = vec![(at, Fault::Fatal)];
+        let mut call = LiteralCall { state: &state };
+        let transaction = LiteralTransaction(1);
+        let mut rollback = started(start_statement_rollback(
+            &mut call,
+            &transaction,
+            &view,
+            &mut loan,
+        ));
+        let RollbackStop::MustResolve { stage: at, error } = stopped(&mut rollback) else {
+            panic!("expected MustResolve");
+        };
+        assert_eq!((at, disk(&error)), (stage, fenced));
+        assert_eq!(take_log(&state), log);
+    }
+    // A Fatal finish: C keeps the rollback; nothing is dropped or called.
+    let state = self::state(&[], &[]);
+    let mut loan = loan();
+    let view = after_failed_row(&state, &mut loan);
+    state.borrow_mut().faults = vec![(RollbackFinish, Fault::Fatal)];
+    let mut call = LiteralCall { state: &state };
+    let transaction = LiteralTransaction(1);
+    let mut rollback = started(start_statement_rollback(
+        &mut call,
+        &transaction,
+        &view,
+        &mut loan,
+    ));
+    assert_eq!(complete(&mut rollback), 1);
+    let Err(RowOwnedError::Fatal(error)) = finish_rollback(rollback) else {
+        panic!("expected a Fatal finish");
+    };
+    assert_eq!(cause(error), fenced);
+    assert_eq!(
+        take_log(&state),
+        calls(&[&[start], &compensated(7), &[Next, RollbackFinish]])
+    );
 }
 
 #[test]
-fn mca00_d10_rollback_stops_without_retry_and_returns_the_statement() {
-    let failed_row = [
-        Call::Preflight,
-        Call::ValidationLane,
-        Validate,
-        FinishPreflight,
-    ];
+fn mca00_d10_rollback_stops_hand_back_the_same_rollback_or_task() {
     let start = RollbackStart(RollbackScope::Statement);
+    let busy = (RetentionPhase::Prepare, Cause::Busy, Effect::Unchanged);
+    let clr7 = [ClrLane(7), Clr(7), ClrPrepare(7), ClrApply(7)];
+    // A task refused unchanged comes back as the same task; only it is
+    // retried, and the rollback is never started again.
     let cases = [
         (
-            (Next, Fault::Flush),
-            Stage::RollbackNext,
-            0,
-            vec![start, Next, DropRollback],
+            ClrLane(7),
+            Fault::Before(Cause::Busy),
+            Stage::ClrLane,
+            vec![start, Next, ClrLane(7)],
         ),
         (
-            (Clr(7), Fault::Producer(InsertError::BudgetMismatch)),
+            Clr(7),
+            Fault::Producer(InsertError::BudgetMismatch),
             Stage::Clr,
-            0,
-            vec![start, Next, ClrLane(7), Clr(7), DropRollback],
+            vec![start, Next, ClrLane(7), Clr(7)],
         ),
         (
-            (ClrApply(7), Fault::Before(Cause::Busy)),
+            ClrPrepare(7),
+            Fault::Before(Cause::Busy),
+            Stage::ClrPrepare,
+            vec![start, Next, ClrLane(7), Clr(7), ClrPrepare(7)],
+        ),
+        (
+            ClrApply(7),
+            Fault::Before(Cause::Busy),
             Stage::ClrApply,
-            0,
-            calls(&[&[start], &compensated(7), &[ClrReopen(7), DropRollback]]),
-        ),
-        (
-            (RollbackFinish, Fault::Before(Cause::Busy)),
-            Stage::RollbackFinish,
-            1,
-            calls(&[
-                &[start],
-                &compensated(7),
-                &[Next, RollbackFinish, DropRollback],
-            ]),
-        ),
-        (
-            (FinishStatement, Fault::Before(Cause::Busy)),
-            Stage::FinishStatement,
-            1,
-            calls(&[
-                &[start],
-                &compensated(7),
-                &[Next, RollbackFinish, FinishStatement],
-            ]),
+            calls(&[&[start], &compensated(7), &[ClrReopen(7)]]),
         ),
     ];
-    for ((at, fault), stage, rolled_back, tail) in cases {
-        let state = self::state(&[], &[(at, fault)]);
-        let mut slots = [None, None];
+    for (at, fault, stage, log) in cases {
+        let state = self::state(&[], &[]);
         let mut loan = loan();
-        let error = failed(run(&state, &[&V1, &BAD], &mut slots, &mut loan));
-        assert_eq!(error.failure.stage, Stage::Validate);
-        let (cleanup, cleanup_error) = error.failure.cleanup.as_ref().unwrap();
-        assert_eq!(*cleanup, stage);
-        match fault {
-            Fault::Flush => assert!(matches!(
-                cleanup_error,
-                DriverError::Gap(Gap::RollbackFlush)
-            )),
-            Fault::Producer(expected) => assert_eq!(insert(cleanup_error), expected),
-            _ => assert_eq!(disk(cleanup_error).1, Cause::Busy),
-        }
-        assert!(!error.failure.must_resolve);
-        assert_eq!(error.rolled_back, rolled_back);
-        let view = open(error.after);
-        assert_eq!(slots, [Some(LiteralApplied(7)), None]);
-        let log = std::mem::take(&mut state.borrow_mut().log);
-        assert_eq!(log, calls(&[&[Check], &applied(7), &failed_row, &tail]));
-        // The caller's retry with the returned statement.
-        state.borrow_mut().faults.clear();
-        let retried = rollback_statement(
-            &mut LiteralCall { state: &state },
-            &LiteralTransaction(1),
-            view,
+        let view = after_failed_row(&state, &mut loan);
+        state.borrow_mut().faults = vec![(at, fault)];
+        let mut call = LiteralCall { state: &state };
+        let transaction = LiteralTransaction(1);
+        let mut rollback = started(start_statement_rollback(
+            &mut call,
+            &transaction,
+            &view,
             &mut loan,
-        );
-        assert_eq!(retried.unwrap(), 1 - rolled_back);
-        let compensations: &[Call] = if rolled_back == 0 {
-            &compensated(7)
-        } else {
-            &[]
-        };
+        ));
+        let (held, error, task) = held_task(stopped(&mut rollback));
+        assert_eq!(held, stage);
+        match fault {
+            Fault::Producer(expected) => assert_eq!(insert(&error), expected),
+            _ => assert_eq!(disk(&error), busy),
+        }
+        assert_eq!(take_log(&state), log);
+        state.borrow_mut().faults.clear();
+        assert!(retry_task(task).is_ok());
+        assert_eq!(complete(&mut rollback), 0);
+        finished(rollback);
+        finish_statement(&mut call, view).unwrap();
         assert_eq!(
-            state.borrow().log,
-            calls(&[
-                &[start],
-                compensations,
-                &[Next, RollbackFinish, FinishStatement]
-            ])
+            take_log(&state),
+            calls(&[&clr7, &[Next, RollbackFinish, FinishStatement]])
         );
         assert!(state.borrow().chain.is_empty());
         settled(&state);
     }
-    // A refused finish after a successful statement keeps its rows.
-    let state = self::state(&[], &[(FinishStatement, Fault::Before(Cause::Busy))]);
-    let mut slots = [None];
-    let error = failed(run(&state, &[&V1], &mut slots, &mut loan()));
-    assert_eq!(error.failure.stage, Stage::FinishStatement);
+
+    // C's unchanged refusal of next keeps the same rollback: step it again.
+    let state = self::state(&[], &[]);
+    let mut loan = loan();
+    let view = after_failed_row(&state, &mut loan);
+    state.borrow_mut().faults = vec![(Next, Fault::Before(Cause::Busy))];
+    let mut call = LiteralCall { state: &state };
+    let transaction = LiteralTransaction(1);
+    let mut rollback = started(start_statement_rollback(
+        &mut call,
+        &transaction,
+        &view,
+        &mut loan,
+    ));
+    let RollbackStop::Next(error) = stopped(&mut rollback) else {
+        panic!("expected C's refusal of next");
+    };
+    assert_eq!(cause(error), busy);
+    state.borrow_mut().faults.clear();
+    assert_eq!(complete(&mut rollback), 1);
+    finished(rollback);
+    finish_statement(&mut call, view).unwrap();
     assert_eq!(
-        disk(&error.failure.error),
-        (RetentionPhase::Census, Cause::Busy, Effect::Unchanged)
+        take_log(&state),
+        calls(&[
+            &[start, Next],
+            &compensated(7),
+            &[Next, RollbackFinish, FinishStatement]
+        ])
     );
-    open(error.after);
-    assert_eq!(slots, [Some(LiteralApplied(7))]);
-    assert_eq!(state.borrow().chain, [(7, 22)]);
+    settled(&state);
+
+    // An unchanged refusal of finish returns the same rollback.
+    let state = self::state(&[], &[]);
+    let view = after_failed_row(&state, &mut loan);
+    state.borrow_mut().faults = vec![(RollbackFinish, Fault::Before(Cause::Busy))];
+    let mut call = LiteralCall { state: &state };
+    let mut rollback = started(start_statement_rollback(
+        &mut call,
+        &transaction,
+        &view,
+        &mut loan,
+    ));
+    assert_eq!(complete(&mut rollback), 1);
+    let Err(RowOwnedError::Before { error, owned }) = finish_rollback(rollback) else {
+        panic!("expected the same rollback back");
+    };
+    assert_eq!(cause(error), busy);
+    state.borrow_mut().faults.clear();
+    finished(owned);
+    finish_statement(&mut call, view).unwrap();
+    assert_eq!(
+        take_log(&state),
+        calls(&[
+            &[start],
+            &compensated(7),
+            &[Next, RollbackFinish, RollbackFinish, FinishStatement]
+        ])
+    );
+    settled(&state);
+
+    // FlushRequired: C's target is carried out with the rollback still the
+    // caller's; nothing is dropped or called (G1: no flush-through while the
+    // rollback holds the Owner; G5: no defined continuation).
+    let state = self::state(&[], &[]);
+    let view = after_failed_row(&state, &mut loan);
+    state.borrow_mut().faults = vec![(Next, Fault::Flush(0x4d2))];
+    let mut call = LiteralCall { state: &state };
+    let mut rollback = started(start_statement_rollback(
+        &mut call,
+        &transaction,
+        &view,
+        &mut loan,
+    ));
+    let RollbackStop::Flush(target) = stopped(&mut rollback) else {
+        panic!("expected C's flush target");
+    };
+    assert_eq!(target, 0x4d2);
+    assert_eq!(take_log(&state), [start, Next]);
 }
 
 #[test]
@@ -1554,14 +1801,11 @@ fn mca00_d11_commit_and_full_abort_close_the_transaction() {
     assert_eq!(committed.unwrap(), 42);
     assert_eq!(state.borrow().log, [Commit]);
 
-    // A write conflict leaves only A's full rollback.
+    // A write conflict hands the transaction back for A's full rollback
+    // only; the caller runs it and finish_aborted closes the transaction.
     let state = self::state(&[(5, 22), (7, 18)], &[(Commit, Fault::RollbackRequired)]);
-    let error = commit(
-        &mut LiteralCall { state: &state },
-        LiteralTransaction(1),
-        &mut loan,
-    )
-    .unwrap_err();
+    let mut call = LiteralCall { state: &state };
+    let error = commit(&mut call, LiteralTransaction(1), &mut loan).unwrap_err();
     assert_eq!(
         (error.failure.stage, disk(&error.failure.error)),
         (
@@ -1574,8 +1818,12 @@ fn mca00_d11_commit_and_full_abort_close_the_transaction() {
         )
     );
     assert!(error.failure.cleanup.is_none() && !error.failure.must_resolve);
-    assert_eq!(error.rolled_back, 2);
-    assert!(matches!(error.after, After::Closed));
+    let transaction = rollback_required(error.after);
+    assert_eq!(transaction, LiteralTransaction(1));
+    let mut rollback = started(start_full_rollback(&mut call, &transaction, &mut loan));
+    assert_eq!(complete(&mut rollback), 2);
+    finished(rollback);
+    finish_aborted(&mut call, transaction).unwrap();
     let state = state.into_inner();
     assert_eq!(
         state.log,
@@ -1596,7 +1844,7 @@ fn mca00_d11_commit_and_full_abort_close_the_transaction() {
     assert!(state.chain.is_empty() && state.violations.is_empty());
 
     // Rejected closes, Fatal must be resolved; neither calls anything else.
-    for (fault, closed) in [(Fault::Rejected, true), (Fault::Fatal, false)] {
+    for (fault, rejected) in [(Fault::Rejected, true), (Fault::Fatal, false)] {
         let state = self::state(&[(5, 22)], &[(Commit, fault)]);
         let error = commit(
             &mut LiteralCall { state: &state },
@@ -1604,96 +1852,74 @@ fn mca00_d11_commit_and_full_abort_close_the_transaction() {
             &mut loan,
         )
         .unwrap_err();
-        assert_eq!(error.failure.must_resolve, !closed);
-        if closed {
-            assert!(matches!(error.after, After::Closed));
+        assert_eq!(error.failure.must_resolve, !rejected);
+        if rejected {
+            closed(error.after);
         } else {
             assert!(must_resolve(error.after).is_none());
         }
         assert_eq!(state.borrow().log, [Commit]);
     }
-    // A conflict whose abort is refused at its start is Open, not Returned.
-    let state = self::state(
-        &[(5, 22)],
-        &[
-            (Commit, Fault::RollbackRequired),
-            (full, Fault::Before(Cause::Busy)),
-        ],
-    );
-    let error = commit(
-        &mut LiteralCall { state: &state },
-        LiteralTransaction(4),
-        &mut loan,
-    )
-    .unwrap_err();
-    assert_eq!(
-        error.failure.cleanup.as_ref().unwrap().0,
-        Stage::RollbackStart
-    );
-    assert_eq!(open(error.after), LiteralTransaction(4));
-    assert_eq!(state.borrow().log, [Commit, full]);
 
-    // Full abort, and a finish_aborted refused as C0 does.
-    let state = self::state(&[(5, 22)], &[]);
-    let aborted = abort(
-        &mut LiteralCall { state: &state },
-        LiteralTransaction(1),
-        &mut loan,
+    // A full rollback stopping partway: after row 7's CLR, row 5's apply is
+    // refused; the same task is retried and nothing restarts.
+    let busy = (RetentionPhase::Prepare, Cause::Busy, Effect::Unchanged);
+    let state = self::state(
+        &[(5, 22), (7, 18)],
+        &[(ClrApply(5), Fault::Before(Cause::Busy))],
     );
-    assert_eq!(aborted.unwrap(), 1);
+    let mut call = LiteralCall { state: &state };
+    let transaction = LiteralTransaction(4);
+    let mut rollback = started(start_full_rollback(&mut call, &transaction, &mut loan));
+    assert_eq!(
+        rollback_step(&mut rollback).ok(),
+        Some(Stepped::Compensated)
+    );
+    let (stage, error, task) = held_task(stopped(&mut rollback));
+    assert_eq!((stage, disk(&error)), (Stage::ClrApply, busy));
+    state.borrow_mut().faults.clear();
+    assert!(retry_task(task).is_ok());
+    assert_eq!(complete(&mut rollback), 0);
+    finished(rollback);
+    finish_aborted(&mut call, transaction).unwrap();
     assert_eq!(
         state.borrow().log,
         calls(&[
             &[full],
+            &compensated(7),
             &compensated(5),
-            &[Next, RollbackFinish, FinishAborted]
+            &[ClrReopen(5), ClrLane(5), Clr(5), ClrPrepare(5), ClrApply(5)],
+            &[Next, RollbackFinish, FinishAborted],
         ])
     );
+    assert!(state.borrow().chain.is_empty());
     settled(&state);
-    let state = self::state(&[], &[(FinishAborted, Fault::Before(Cause::Unsupported))]);
-    let error = failed(abort(
-        &mut LiteralCall { state: &state },
-        LiteralTransaction(5),
-        &mut loan,
-    ));
-    assert_eq!(
-        (error.failure.stage, disk(&error.failure.error)),
-        (
-            Stage::FinishAborted,
-            (
-                RetentionPhase::Finalize,
-                Cause::Unsupported,
-                Effect::Unchanged
-            )
-        )
-    );
-    assert_eq!(open(error.after), LiteralTransaction(5));
-    assert_eq!(
-        state.borrow().log,
-        [full, Next, RollbackFinish, FinishAborted]
-    );
 }
 
 /// Machine stack below the test frame down to the producer stand-in, for the
-/// INSERT path and for the CLR path of a statement rollback. It covers the
-/// stand-in instantiation in this unoptimized test build only.
+/// INSERT path and for the CLR path of the caller's statement rollback. It
+/// covers the stand-in instantiation in this unoptimized test build only.
 fn measured() -> (usize, usize) {
     let state = self::state(&[], &[]);
     let top = probe();
     run(&state, &[&V1], &mut [None], &mut loan()).unwrap();
     let insert = top - state.borrow().deepest;
     let state = self::state(&[], &[]);
+    let mut loan = loan();
+    let view = after_failed_row(&state, &mut loan);
+    state.borrow_mut().deepest = usize::MAX;
     let top = probe();
-    run(&state, &[&V1, &BAD], &mut [None, None], &mut loan()).unwrap_err();
+    assert_eq!(roll_back_statement(&state, view, &mut loan), 1);
     let clr = top - state.borrow().deepest;
     (insert, clr)
 }
 
 /// The driver's source inventory, for the live C0 types and the stand-ins,
-/// is within its bound, and the bound with A's producer inventory is within
-/// the 65536 B short-source cap. The machine depth of the stand-in run is
-/// printed as an observation only: unoptimized frames keep a slot for every
-/// temporary, so it is not comparable with a source bound (r1 FAIL record).
+/// is within its bound, and the bound with A's deeper producer inventory is
+/// within the 65536 B short-source cap. This is an inventory check, not a
+/// stack proof. The machine depth of the stand-in run is printed as an
+/// observation only: unoptimized frames keep a slot for every temporary, so
+/// it is not comparable with a source bound (r1 FAIL record).
 #[test]
 fn mca00_d12_driver_frames_stay_within_the_driver_source_bound() {
     const SHORT_SOURCE_CAP: usize = 65_536;
@@ -1719,4 +1945,136 @@ fn mca00_d12_driver_frames_stay_within_the_driver_source_bound() {
     assert!(DRIVER_SOURCE_BYTES + deepest_a <= SHORT_SOURCE_CAP);
     // Both paths reached the producer stand-in.
     assert!(machine_insert > 0 && machine_clr > 0);
+}
+
+#[test]
+fn mca00_d13_a_finished_rollback_leaves_only_the_finish_to_retry() {
+    let busy = (RetentionPhase::Census, Cause::Busy, Effect::Unchanged);
+    let fenced = (
+        RetentionPhase::Install,
+        Cause::Fenced,
+        Effect::CallerMustResolve,
+    );
+    let start = RollbackStart(RollbackScope::Statement);
+    // A refused finish after the statement rollback finished: FinishPending,
+    // and the retry is finish_statement alone (one RollbackStart in all).
+    let state = self::state(&[], &[]);
+    let mut loan = loan();
+    let view = after_failed_row(&state, &mut loan);
+    let mut call = LiteralCall { state: &state };
+    let transaction = LiteralTransaction(1);
+    let mut rollback = started(start_statement_rollback(
+        &mut call,
+        &transaction,
+        &view,
+        &mut loan,
+    ));
+    assert_eq!(complete(&mut rollback), 1);
+    finished(rollback);
+    state.borrow_mut().faults = vec![(FinishStatement, Fault::Before(Cause::Busy))];
+    let error = finish_statement(&mut call, view).unwrap_err();
+    assert_eq!(
+        (error.failure.stage, disk(&error.failure.error)),
+        (Stage::FinishStatement, busy)
+    );
+    let view = finish_pending(error.after);
+    state.borrow_mut().faults.clear();
+    finish_statement(&mut call, view).unwrap();
+    assert_eq!(
+        take_log(&state),
+        calls(&[
+            &[start],
+            &compensated(7),
+            &[Next, RollbackFinish, FinishStatement, FinishStatement],
+        ])
+    );
+
+    // The same after a fully applied INSERT; its row stays.
+    let state = self::state(&[], &[(FinishStatement, Fault::Before(Cause::Busy))]);
+    let mut slots = [None];
+    let error = failed(run(&state, &[&V1], &mut slots, &mut loan));
+    assert_eq!(
+        (error.failure.stage, disk(&error.failure.error)),
+        (Stage::FinishStatement, busy)
+    );
+    let view = finish_pending(error.after);
+    state.borrow_mut().faults.clear();
+    finish_statement(&mut LiteralCall { state: &state }, view).unwrap();
+    assert_eq!(slots, [Some(LiteralApplied(7))]);
+    assert_eq!(
+        state.borrow().log,
+        calls(&[&[Check], &applied(7), &[FinishStatement, FinishStatement]])
+    );
+    assert_eq!(state.borrow().chain, [(7, 22)]);
+
+    // A Fatal finish leaves nothing to retry, with or without a rollback.
+    let state = self::state(&[], &[(FinishStatement, Fault::Fatal)]);
+    let error = failed(run(&state, &[&V1], &mut [None], &mut loan));
+    assert!(error.failure.must_resolve);
+    assert_eq!(
+        (error.failure.stage, disk(&error.failure.error)),
+        (Stage::FinishStatement, fenced)
+    );
+    assert!(must_resolve(error.after).is_none());
+    let state = self::state(&[], &[]);
+    let view = after_failed_row(&state, &mut loan);
+    let mut call = LiteralCall { state: &state };
+    let mut rollback = started(start_statement_rollback(
+        &mut call,
+        &transaction,
+        &view,
+        &mut loan,
+    ));
+    assert_eq!(complete(&mut rollback), 1);
+    finished(rollback);
+    state.borrow_mut().faults = vec![(FinishStatement, Fault::Fatal)];
+    let error = finish_statement(&mut call, view).unwrap_err();
+    assert!(error.failure.must_resolve);
+    assert!(must_resolve(error.after).is_none());
+    assert_eq!(
+        take_log(&state),
+        calls(&[
+            &[start],
+            &compensated(7),
+            &[Next, RollbackFinish, FinishStatement]
+        ])
+    );
+
+    // finish_aborted refused after the full rollback finished: only it is
+    // retried.
+    let full = RollbackStart(RollbackScope::Transaction);
+    let state = self::state(
+        &[(5, 22)],
+        &[(FinishAborted, Fault::Before(Cause::Unsupported))],
+    );
+    let mut call = LiteralCall { state: &state };
+    let transaction = LiteralTransaction(5);
+    let mut rollback = started(start_full_rollback(&mut call, &transaction, &mut loan));
+    assert_eq!(complete(&mut rollback), 1);
+    finished(rollback);
+    let error = finish_aborted(&mut call, transaction).unwrap_err();
+    assert_eq!(
+        (error.failure.stage, disk(&error.failure.error)),
+        (
+            Stage::FinishAborted,
+            (
+                RetentionPhase::Finalize,
+                Cause::Unsupported,
+                Effect::Unchanged
+            )
+        )
+    );
+    let transaction = finish_pending(error.after);
+    assert_eq!(transaction, LiteralTransaction(5));
+    state.borrow_mut().faults.clear();
+    finish_aborted(&mut call, transaction).unwrap();
+    assert_eq!(
+        state.borrow().log,
+        calls(&[
+            &[full],
+            &compensated(5),
+            &[Next, RollbackFinish, FinishAborted, FinishAborted]
+        ])
+    );
+    settled(&state);
 }

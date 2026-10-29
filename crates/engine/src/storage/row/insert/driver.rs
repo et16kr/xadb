@@ -5,13 +5,16 @@
 //! preflight → validation lane → A `validate_insert` → RowReserve → producer
 //! lane → A `produce_insert` → prepare → apply. A row failure releases what
 //! that row holds (preflight finish, or Cancel of the one reservation) before
-//! anything else; a statement with applied rows is then compensated to its
-//! mark by C's rollback with A `produce_clr` candidates and finished. Commit
-//! and full abort follow the same consuming wrappers. C is reached only
-//! through the private traits below: `live` forwards them to the actual C0
-//! types and the tests feed literal stand-ins. See
-//! `devdoc/contracts/dev3-module-boundaries.md` (6.2, 6.6, 6.7) and the F02
-//! table in `dev3-task-06-tree-rows.md`.
+//! anything else. A statement whose rows of this call stay applied is handed
+//! back `RollbackRequired`; its rollback is driven by the caller one step at a
+//! time (`start_statement_rollback` → `rollback_step`… → `finish_rollback` →
+//! `finish_statement`), so every wrapper C hands back after a refusal reaches
+//! the caller for retry and none is dropped to restart a started rollback
+//! (gap G5). Commit and the full rollback use the same steps. C is reached
+//! only through the private traits below: `live` forwards them to the actual
+//! C0 types and the tests feed literal stand-ins. See
+//! `devdoc/contracts/dev3-module-boundaries.md` (6.2, 6.6, 6.7),
+//! `dev3-module-consumers.md` 7 and the F02 table in `dev3-task-06-tree-rows.md`.
 use super::InsertError;
 use crate::storage::{
     disk::{
@@ -21,6 +24,7 @@ use crate::storage::{
     row_record::{MAX_ROW_COLUMNS, ValueRef},
 };
 use foundation::error::Effect;
+use std::convert::Infallible;
 
 mod live;
 #[cfg(test)]
@@ -30,10 +34,11 @@ mod tests;
 type Loan = [u8; 425_984];
 
 /// Claimed source bound for the driver's own carriers below A's producer, in
-/// the repository's size_of inventory sense; it is not a machine-stack bound
-/// and not a grant. With A's producer inventory it stays within the 65536 B
-/// short-source cap; the C3 supply's census still owns the aggregate.
-pub(super) const DRIVER_SOURCE_BYTES: usize = 8_192;
+/// the repository's size_of inventory sense (`carrier_bytes`); it is not a
+/// machine-stack bound and not a grant. With A's deeper producer inventory it
+/// stays within the 65536 B short-source cap; the C3 supply's census still
+/// owns the aggregate.
+pub(super) const DRIVER_SOURCE_BYTES: usize = 12_288;
 
 /// The original statement view as the driver uses it.
 trait StatementView {
@@ -93,7 +98,8 @@ trait Preflight: Sized {
     fn validation_lane(&mut self) -> Result<Self::Lane<'_>, RetentionError>;
     /// The row's only first effect; the plan is untrusted.
     fn reserve(self, input: RowInputPlan) -> Result<Self::Reserved, RowOwnedError<Self>>;
-    /// Returns the admission and loan; the observed read set stays.
+    /// Returns the admission and loan; the observed read set stays. C
+    /// documents Drop as the same no-effect release.
     fn finish(self) -> Result<(), RetentionError>;
 }
 
@@ -129,19 +135,21 @@ trait ProducerLane {
 }
 
 /// One rollback step chosen by C.
-enum RollbackNext<T> {
+enum RollbackNext<T, F> {
     Candidate(T),
-    /// C needs a page flushed before the next candidate (see `Gap`).
-    Flush,
+    /// C needs `F` flushed before its next candidate.
+    Flush(F),
     Complete,
 }
 
 /// C's live rollback over the actual head chain; C picks each next U.
 trait Rollback: Sized {
+    /// C's flush target, passed out unchanged.
+    type Target;
     type Task<'x>: RollbackTask
     where
         Self: 'x;
-    fn next(&mut self) -> Result<RollbackNext<Self::Task<'_>>, RetentionError>;
+    fn next(&mut self) -> Result<RollbackNext<Self::Task<'_>, Self::Target>, RetentionError>;
     /// Needs the actual mark/None and the StatementFinish/AbortEnd receipt.
     fn finish(self) -> Result<(), RowOwnedError<Self>>;
 }
@@ -161,21 +169,12 @@ trait PreparedTask: Sized {
     fn reopen(self) -> Self::Task;
 }
 
-/// A step the C0 boundary gives A no means to perform; left unsupported.
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub(crate) enum Gap {
-    /// RowRollback holds the session's only Owner borrow, which a flush
-    /// needs, and offers no flush-through call.
-    RollbackFlush,
-}
-
 /// A driver error: A's own `InsertError`, or C's error kept by value with
 /// its phase, cause (Busy/Capacity/Unsupported stay distinct) and effect.
 #[derive(Debug)]
 pub(crate) enum DriverError {
     Insert(InsertError),
     Disk(RetentionError),
-    Gap(Gap),
 }
 
 impl DriverError {
@@ -217,18 +216,19 @@ pub(crate) enum Stage {
     Clr,
     ClrPrepare,
     ClrApply,
-    RollbackFinish,
     FinishStatement,
     Commit,
     FinishAborted,
 }
 
-/// The first error and, if a release or rollback after it also failed,
-/// that later error.
+/// A failed call's first error and, for a row, the one release after it.
 #[derive(Debug)]
 pub(crate) struct Failure {
     pub(crate) stage: Stage,
     pub(crate) error: DriverError,
+    /// A failed row's release (finish or Cancel) that C also refused. A row
+    /// holds at most one thing to release, and rollback and finish errors
+    /// are returned by their own calls, so nothing here is overwritten.
     pub(crate) cleanup: Option<(Stage, DriverError)>,
     /// C reported Fatal or CallerMustResolve, or refused to release a held
     /// reservation; C keeps the fence and obligations.
@@ -253,28 +253,27 @@ impl Failure {
         }
     }
 
-    fn then(mut self, stage: Stage, error: DriverError, must_resolve: bool) -> Self {
+    fn released(mut self, stage: Stage, error: DriverError, must_resolve: bool) -> Self {
         self.must_resolve |= must_resolve || error.must_resolve();
-        self.cleanup.get_or_insert((stage, error));
+        self.cleanup = Some((stage, error));
         self
-    }
-
-    /// A later failure of the same call keeps only its first error.
-    fn then_failure(self, later: Failure) -> Self {
-        self.then(later.stage, later.error, later.must_resolve)
     }
 }
 
-/// What a failed call leaves with its statement or transaction.
+/// What a failed call leaves with its statement or transaction. Each
+/// variant names the only next step.
 #[derive(Debug)]
 pub(crate) enum After<H> {
     /// Nothing of this call remains; the handle is returned as it was.
     Returned(H),
-    /// C closed the handle; no row of this call remains.
+    /// Rows stay applied and no rollback is started: the next step is
+    /// `start_statement_rollback` (`start_full_rollback` for a transaction).
+    RollbackRequired(H),
+    /// Nothing is left to roll back (or the rollback finished): only
+    /// `finish_statement` (`finish_aborted`) remains, never a new rollback.
+    FinishPending(H),
+    /// C closed the handle.
     Closed,
-    /// Rows or a rollback of this call remain; returned for the caller to
-    /// retry the rollback or the finish named by the failure's stage.
-    Open(H),
     /// Only for dropping into C's fence and recovery obligations.
     MustResolve(Option<H>),
 }
@@ -282,18 +281,23 @@ pub(crate) enum After<H> {
 #[derive(Debug)]
 pub(crate) struct DriveError<H> {
     pub(crate) failure: Failure,
-    /// CLRs C applied for this call before it ended.
-    pub(crate) rolled_back: usize,
     pub(crate) after: After<H>,
 }
 
 impl<H> DriveError<H> {
-    fn new(failure: Failure, rolled_back: usize, after: After<H>) -> Self {
-        Self {
-            failure,
-            rolled_back,
-            after,
-        }
+    fn new(failure: Failure, after: After<H>) -> Self {
+        Self { failure, after }
+    }
+
+    /// A handle C gave back with its error: as `unchanged` says, unless the
+    /// error left C's fence for the caller to resolve.
+    fn kept(failure: Failure, handle: H, unchanged: fn(H) -> After<H>) -> Self {
+        let after = if failure.must_resolve {
+            After::MustResolve(Some(handle))
+        } else {
+            unchanged(handle)
+        };
+        Self::new(failure, after)
     }
 }
 
@@ -314,12 +318,12 @@ fn check_arguments(rows: &[&[ValueRef<'_>]], slots: usize) -> Result<(), InsertE
 /// call arguments; neither calls C. Each row's input is rejected before its
 /// Reserve, and its reservation is consumed by apply or released by Cancel
 /// before the next row's Reserve. On success `slots[i]` holds row i's
-/// observation and the statement is finished. A failure with no row of this
-/// call applied returns the statement as it was; applied rows are
-/// compensated and the statement finished, and the slots are cleared.
+/// observation and the statement is finished. On failure the statement is
+/// `Returned` when no row of this call was applied, otherwise
+/// `RollbackRequired` with `slots` still naming the applied rows, which the
+/// caller's statement rollback compensates. The driver starts no rollback.
 fn insert_statement<B: Boundary>(
     call: &mut B,
-    transaction: &B::Transaction,
     statement: B::Statement,
     table: &B::Table,
     loan: &mut Loan,
@@ -328,11 +332,11 @@ fn insert_statement<B: Boundary>(
 ) -> Result<usize, DriveError<B::Statement>> {
     if let Err(error) = statement.check() {
         let failure = Failure::new(Stage::Statement, error.into());
-        return Err(DriveError::new(failure, 0, After::Returned(statement)));
+        return Err(DriveError::new(failure, After::Returned(statement)));
     }
     if let Err(error) = check_arguments(rows, slots.len()) {
         let failure = Failure::new(Stage::Arguments, error.into());
-        return Err(DriveError::new(failure, 0, After::Returned(statement)));
+        return Err(DriveError::new(failure, After::Returned(statement)));
     }
     let mut failed = None;
     let mut applied_rows = 0;
@@ -349,45 +353,16 @@ fn insert_statement<B: Boundary>(
         }
     }
     let Some(failure) = failed else {
-        return match call.finish_statement(statement) {
-            Ok(()) => Ok(rows.len()),
-            Err(StatementFinishError::Before { error, view }) => Err(DriveError::new(
-                Failure::new(Stage::FinishStatement, error.into()),
-                0,
-                After::Open(view),
-            )),
-            Err(StatementFinishError::Fatal(error)) => Err(DriveError::new(
-                Failure::fatal(Stage::FinishStatement, error),
-                0,
-                After::MustResolve(None),
-            )),
-        };
+        return finish_statement(call, statement).map(|()| rows.len());
     };
-    if failure.must_resolve {
-        return Err(DriveError::new(
-            failure,
-            0,
-            After::MustResolve(Some(statement)),
-        ));
-    }
-    if applied_rows == 0 {
-        return Err(DriveError::new(failure, 0, After::Returned(statement)));
-    }
-    match rollback_statement(call, transaction, statement, loan) {
-        Ok(rolled_back) => {
-            slots.iter_mut().for_each(|slot| *slot = None);
-            Err(DriveError::new(failure, rolled_back, After::Closed))
-        }
-        Err(rollback) => {
-            // Rows of this call stay applied until a rollback completes.
-            let after = match rollback.after {
-                After::Returned(statement) => After::Open(statement),
-                after => after,
-            };
-            let failure = failure.then_failure(rollback.failure);
-            Err(DriveError::new(failure, rollback.rolled_back, after))
-        }
-    }
+    let after = if failure.must_resolve {
+        After::MustResolve(Some(statement))
+    } else if applied_rows == 0 {
+        After::Returned(statement)
+    } else {
+        After::RollbackRequired(statement)
+    };
+    Err(DriveError::new(failure, after))
 }
 
 /// One row through the consuming wrappers. On failure nothing this row took
@@ -448,11 +423,17 @@ fn insert_row<B: Boundary>(
     }
 }
 
-/// Explicit no-effect release before the first Reserve.
+/// Explicit no-effect release before the first Reserve. After a
+/// CallerMustResolve answer no further C call is made; the preflight is
+/// dropped, which C documents as the same no-effect release.
 fn finish_preflight<P: Preflight>(preflight: P, failure: Failure) -> Failure {
+    if failure.must_resolve {
+        drop(preflight);
+        return failure;
+    }
     match preflight.finish() {
         Ok(()) => failure,
-        Err(error) => failure.then(Stage::FinishPreflight, error.into(), false),
+        Err(error) => failure.released(Stage::FinishPreflight, error.into(), false),
     }
 }
 
@@ -469,130 +450,174 @@ fn cancel<R: Reserved>(reserved: R, failure: Failure) -> Failure {
         Ok(()) => failure,
         Err(RowOwnedError::Before { error, owned }) => {
             drop(owned);
-            failure.then(Stage::Cancel, error.into(), true)
+            failure.released(Stage::Cancel, error.into(), true)
         }
-        Err(RowOwnedError::Fatal(error)) => failure.then(Stage::Cancel, error.into(), true),
+        Err(RowOwnedError::Fatal(error)) => failure.released(Stage::Cancel, error.into(), true),
     }
 }
 
-/// Compensates the statement's rows to its mark, then finishes it. Also the
-/// caller's retry entry for a statement returned `Open`.
-fn rollback_statement<B: Boundary>(
+/// Finishes a statement whose rows are all applied, or whose rollback has
+/// finished. A refusal hands it back `FinishPending`: the retry is this call
+/// alone, never another rollback.
+fn finish_statement<B: Boundary>(
     call: &mut B,
-    transaction: &B::Transaction,
     statement: B::Statement,
-    loan: &mut Loan,
-) -> Result<usize, DriveError<B::Statement>> {
-    let rolled_back = match roll_back(
-        call,
-        transaction,
-        Some(&statement),
-        RollbackScope::Statement,
-        loan,
-    ) {
-        Ok(rolled_back) => rolled_back,
-        Err((rolled_back, failure)) => {
-            let after = stopped(&failure, rolled_back, statement);
-            return Err(DriveError::new(failure, rolled_back, after));
-        }
-    };
+) -> Result<(), DriveError<B::Statement>> {
     match call.finish_statement(statement) {
-        Ok(()) => Ok(rolled_back),
-        Err(StatementFinishError::Before { error, view }) => Err(DriveError::new(
+        Ok(()) => Ok(()),
+        Err(StatementFinishError::Before { error, view }) => Err(DriveError::kept(
             Failure::new(Stage::FinishStatement, error.into()),
-            rolled_back,
-            After::Open(view),
+            view,
+            After::FinishPending,
         )),
         Err(StatementFinishError::Fatal(error)) => Err(DriveError::new(
             Failure::fatal(Stage::FinishStatement, error),
-            rolled_back,
             After::MustResolve(None),
         )),
     }
 }
 
-/// The handle after a rollback that did not complete.
-fn stopped<H>(failure: &Failure, rolled_back: usize, handle: H) -> After<H> {
-    if failure.must_resolve {
-        After::MustResolve(Some(handle))
-    } else if rolled_back == 0 && failure.stage == Stage::RollbackStart {
-        After::Returned(handle)
-    } else {
-        After::Open(handle)
-    }
+/// Starts C's statement rollback to the statement's mark (RollbackStart). A
+/// refusal starts nothing, so the statement stays `RollbackRequired` and the
+/// start may be retried; a started rollback is never started again.
+fn start_statement_rollback<'r, 'i, B: Boundary>(
+    call: &'r mut B,
+    transaction: &'r B::Transaction,
+    statement: &'r B::Statement,
+    loan: &'i mut Loan,
+) -> Result<B::Rollback<'r, 'i>, Failure> {
+    call.start_rollback(transaction, Some(statement), RollbackScope::Statement, loan)
+        .map_err(|error| Failure::new(Stage::RollbackStart, error.into()))
 }
 
-/// C's rollback loop: each candidate C selects gets A's CLR, prepare and
-/// apply; `finish` requires C's mark/None and terminal receipt. Any refusal
-/// stops the loop without retry and returns the CLR count so far.
-fn roll_back<B: Boundary>(
-    call: &mut B,
-    transaction: &B::Transaction,
-    statement: Option<&B::Statement>,
-    scope: RollbackScope,
-    loan: &mut Loan,
-) -> Result<usize, (usize, Failure)> {
-    let mut rollback = call
-        .start_rollback(transaction, statement, scope, loan)
-        .map_err(|error| (0, Failure::new(Stage::RollbackStart, error.into())))?;
-    let mut rolled_back = 0;
-    loop {
-        let task = match rollback.next() {
-            Ok(RollbackNext::Candidate(task)) => task,
-            Ok(RollbackNext::Flush) => {
-                let gap = DriverError::Gap(Gap::RollbackFlush);
-                return Err((rolled_back, Failure::new(Stage::RollbackNext, gap)));
-            }
-            Ok(RollbackNext::Complete) => break,
-            Err(error) => {
-                return Err((rolled_back, Failure::new(Stage::RollbackNext, error.into())));
-            }
-        };
-        compensate(task).map_err(|failure| (rolled_back, failure))?;
-        rolled_back += 1;
-    }
-    match rollback.finish() {
-        Ok(()) => Ok(rolled_back),
-        Err(RowOwnedError::Before { error, owned }) => {
-            drop(owned);
-            Err((
-                rolled_back,
-                Failure::new(Stage::RollbackFinish, error.into()),
-            ))
+/// Starts the full rollback of every remaining row, the only step after a
+/// commit C answered `RollbackRequired`. Refusals are as for a statement.
+fn start_full_rollback<'r, 'i, B: Boundary>(
+    call: &'r mut B,
+    transaction: &'r B::Transaction,
+    loan: &'i mut Loan,
+) -> Result<B::Rollback<'r, 'i>, Failure> {
+    call.start_rollback(transaction, None, RollbackScope::Transaction, loan)
+        .map_err(|error| Failure::new(Stage::RollbackStart, error.into()))
+}
+
+/// One rollback step's progress.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub(crate) enum Stepped {
+    /// C's candidate got A's CLR, was prepared and applied.
+    Compensated,
+    /// C reports the mark (or None) reached; `finish_rollback` is next.
+    Complete,
+}
+
+/// Where a rollback step stopped (gap G5). The contract gives a started live
+/// rollback no resume or drop meaning, so the driver drops nothing C hands
+/// back in order to restart: an unchanged refusal leaves the caller holding
+/// the same rollback or the same task for retry, a flush target is passed
+/// out unchanged, and a Fatal or CallerMustResolve answer ends every call.
+pub(crate) enum RollbackStop<T, F> {
+    /// C refused `next` unchanged; the caller's rollback is as it was and
+    /// `rollback_step` may be called on it again.
+    Next(RetentionError),
+    /// C needs this target flushed before its next candidate. The rollback
+    /// holds the session's only Owner borrow and offers no flush-through
+    /// call (G1), so the caller keeps both; nothing is dropped here.
+    Flush(F),
+    /// The same task after an unchanged refusal of its lane, A's CLR, its
+    /// prepare, or its apply (then reopened): retry it with `retry_task`.
+    Task {
+        stage: Stage,
+        error: DriverError,
+        task: T,
+    },
+    /// C answered Fatal or CallerMustResolve: no further call; the rollback
+    /// and the handle go to C's fence and recovery obligations.
+    MustResolve { stage: Stage, error: DriverError },
+}
+
+/// C's next candidate and, for a candidate, A's CLR through prepare and
+/// apply. The caller owns the rollback and loops; a stopped step hands back
+/// what C returned, borrowing the caller's rollback.
+fn rollback_step<'x, K: Rollback>(
+    rollback: &'x mut K,
+) -> Result<Stepped, RollbackStop<K::Task<'x>, K::Target>> {
+    let task = match rollback.next() {
+        Ok(RollbackNext::Candidate(task)) => task,
+        Ok(RollbackNext::Flush(target)) => return Err(RollbackStop::Flush(target)),
+        Ok(RollbackNext::Complete) => return Ok(Stepped::Complete),
+        Err(error) if error.effect == Effect::CallerMustResolve => {
+            return Err(RollbackStop::MustResolve {
+                stage: Stage::RollbackNext,
+                error: error.into(),
+            });
         }
-        Err(RowOwnedError::Fatal(error)) => {
-            Err((rolled_back, Failure::fatal(Stage::RollbackFinish, error)))
-        }
-    }
+        Err(error) => return Err(RollbackStop::Next(error)),
+    };
+    compensate(task).map(|()| Stepped::Compensated)
+}
+
+/// Retries the same task a step handed back: lane → A's CLR → prepare →
+/// apply again. It has no flush step.
+fn retry_task<T: RollbackTask>(task: T) -> Result<(), RollbackStop<T, Infallible>> {
+    compensate(task)
 }
 
 /// One CLR for the head C selected.
-fn compensate<T: RollbackTask>(mut task: T) -> Result<(), Failure> {
+fn compensate<T: RollbackTask, F>(mut task: T) -> Result<(), RollbackStop<T, F>> {
     let proposal = match task.producer_lane() {
         Ok(lane) => lane
             .clr()
-            .map_err(|error| Failure::new(Stage::Clr, error.into())),
-        Err(error) => Err(Failure::new(Stage::ClrLane, error.into())),
-    }?;
+            .map_err(|error| (Stage::Clr, DriverError::from(error))),
+        Err(error) => Err((Stage::ClrLane, error.into())),
+    };
+    let proposal = match proposal {
+        Ok(proposal) => proposal,
+        Err((stage, error)) => return Err(held(stage, error, task)),
+    };
     let prepared = match task.prepare(proposal) {
         Ok(prepared) => prepared,
-        Err(RowOwnedError::Before { error, .. }) => {
-            return Err(Failure::new(Stage::ClrPrepare, error.into()));
+        Err(RowOwnedError::Before { error, owned }) => {
+            return Err(held(Stage::ClrPrepare, error.into(), owned));
         }
-        Err(RowOwnedError::Fatal(error)) => return Err(Failure::fatal(Stage::ClrPrepare, error)),
+        Err(RowOwnedError::Fatal(error)) => {
+            return Err(RollbackStop::MustResolve {
+                stage: Stage::ClrPrepare,
+                error: error.into(),
+            });
+        }
     };
     match prepared.apply() {
         Ok(()) => Ok(()),
         Err(RowOwnedError::Before { error, owned }) => {
-            drop(owned.reopen());
-            Err(Failure::new(Stage::ClrApply, error.into()))
+            Err(held(Stage::ClrApply, error.into(), owned.reopen()))
         }
-        Err(RowOwnedError::Fatal(error)) => Err(Failure::fatal(Stage::ClrApply, error)),
+        Err(RowOwnedError::Fatal(error)) => Err(RollbackStop::MustResolve {
+            stage: Stage::ClrApply,
+            error: error.into(),
+        }),
     }
 }
 
-/// Commit; a write conflict leaves A only the full rollback, which this
-/// call then performs.
+/// An unchanged refusal hands the same task back; after a CallerMustResolve
+/// answer it is dropped into C's fence and nothing else is called.
+fn held<T, F>(stage: Stage, error: DriverError, task: T) -> RollbackStop<T, F> {
+    if error.must_resolve() {
+        drop(task);
+        RollbackStop::MustResolve { stage, error }
+    } else {
+        RollbackStop::Task { stage, error, task }
+    }
+}
+
+/// C's finish of a complete rollback. Before returns the same rollback for
+/// retry; after it succeeds only `finish_statement` / `finish_aborted`
+/// remains.
+fn finish_rollback<K: Rollback>(rollback: K) -> Result<(), RowOwnedError<K>> {
+    rollback.finish()
+}
+
+/// Commit. A write conflict (`RollbackRequired`) leaves A only the full
+/// rollback: the transaction is handed back for `start_full_rollback`.
 fn commit<B: Boundary>(
     call: &mut B,
     transaction: B::Transaction,
@@ -600,130 +625,129 @@ fn commit<B: Boundary>(
 ) -> Result<B::Committed, DriveError<B::Transaction>> {
     match call.commit(transaction, loan) {
         Ok(committed) => Ok(committed),
-        Err(TransactionFinishError::Before { error, transaction }) => Err(DriveError::new(
+        Err(TransactionFinishError::Before { error, transaction }) => Err(DriveError::kept(
             Failure::new(Stage::Commit, error.into()),
-            0,
-            After::Returned(transaction),
+            transaction,
+            After::Returned,
         )),
         Err(TransactionFinishError::RollbackRequired { error, transaction }) => {
-            let failure = Failure::new(Stage::Commit, error.into());
-            match abort(call, transaction, loan) {
-                Ok(rolled_back) => Err(DriveError::new(failure, rolled_back, After::Closed)),
-                Err(abort) => {
-                    let after = match abort.after {
-                        After::Returned(transaction) => After::Open(transaction),
-                        after => after,
-                    };
-                    let failure = failure.then_failure(abort.failure);
-                    Err(DriveError::new(failure, abort.rolled_back, after))
-                }
-            }
+            Err(DriveError::kept(
+                Failure::new(Stage::Commit, error.into()),
+                transaction,
+                After::RollbackRequired,
+            ))
         }
         Err(TransactionFinishError::Rejected(error)) => Err(DriveError::new(
             Failure::new(Stage::Commit, error.into()),
-            0,
             After::Closed,
         )),
         Err(TransactionFinishError::Fatal(error)) => Err(DriveError::new(
             Failure::fatal(Stage::Commit, error),
-            0,
             After::MustResolve(None),
         )),
     }
 }
 
-/// Full abort: every remaining row of the transaction is compensated, then
-/// the capsule is consumed by `finish_aborted`.
-fn abort<B: Boundary>(
+/// Consumes the transaction after its full rollback finished. A Before is
+/// retried by this call alone; C's own `RollbackRequired` is passed on.
+fn finish_aborted<B: Boundary>(
     call: &mut B,
     transaction: B::Transaction,
-    loan: &mut Loan,
-) -> Result<usize, DriveError<B::Transaction>> {
-    let rolled_back = match roll_back(call, &transaction, None, RollbackScope::Transaction, loan) {
-        Ok(rolled_back) => rolled_back,
-        Err((rolled_back, failure)) => {
-            let after = stopped(&failure, rolled_back, transaction);
-            return Err(DriveError::new(failure, rolled_back, after));
-        }
-    };
+) -> Result<(), DriveError<B::Transaction>> {
     match call.finish_aborted(transaction) {
-        Ok(()) => Ok(rolled_back),
-        Err(
-            TransactionFinishError::Before { error, transaction }
-            | TransactionFinishError::RollbackRequired { error, transaction },
-        ) => Err(DriveError::new(
+        Ok(()) => Ok(()),
+        Err(TransactionFinishError::Before { error, transaction }) => Err(DriveError::kept(
             Failure::new(Stage::FinishAborted, error.into()),
-            rolled_back,
-            After::Open(transaction),
+            transaction,
+            After::FinishPending,
         )),
+        Err(TransactionFinishError::RollbackRequired { error, transaction }) => {
+            Err(DriveError::kept(
+                Failure::new(Stage::FinishAborted, error.into()),
+                transaction,
+                After::RollbackRequired,
+            ))
+        }
         Err(TransactionFinishError::Rejected(error)) => Err(DriveError::new(
             Failure::new(Stage::FinishAborted, error.into()),
-            rolled_back,
             After::Closed,
         )),
         Err(TransactionFinishError::Fatal(error)) => Err(DriveError::new(
             Failure::fatal(Stage::FinishAborted, error),
-            rolled_back,
             After::MustResolve(None),
         )),
     }
 }
 
-/// Nonrecursive inventory of the driver's own carriers at the deepest point
-/// of the INSERT path (A's Forward producer running) and of the CLR path
-/// (A's CLR producer running inside a statement rollback): the values whose
-/// scope encloses that call, each counted once. It is a source/type count,
-/// not a machine-stack measurement; unoptimized code keeps a slot for every
-/// temporary and is several times larger. A's producer frame and C's
-/// internals are not included and are added by the C3 supply's census.
-fn carrier_bytes<B: Boundary + 'static>() -> (usize, usize) {
+/// Nonrecursive size_of inventory, in the repository's source-bound sense, of
+/// the driver's carriers at the deepest point of the INSERT path (A's
+/// Forward producer under `insert_statement` → `insert_row` → the forwarding
+/// `forward`) and of the CLR path (A's CLR producer under the caller's held
+/// rollback → `rollback_step` → `compensate` → the forwarding `clr`).
+/// Wrapper results passed by value count twice (the driver's slot and the
+/// forwarding frame's return), the lane moved into the forwarding frame is
+/// counted there, and the standard pointer/result/scalar slack is added once
+/// per path. It is not a machine-stack measurement: unoptimized frames keep a
+/// slot for every temporary and are several times larger (r1 record). C0's
+/// three cut types are zero-sized placeholders, so this count grows when C
+/// supplies them and must be rechecked. A's producer frame and C's internals
+/// are not included.
+const fn carrier_bytes<B: Boundary + 'static>() -> (usize, usize) {
     use std::mem::size_of;
     type P<B> = <B as Boundary>::Preflight<'static, 'static>;
+    type V<B> = <P<B> as Preflight>::Lane<'static>;
     type R<B> = <P<B> as Preflight>::Reserved;
+    type L<B> = <R<B> as Reserved>::Lane<'static>;
     type D<B> = <R<B> as Reserved>::Prepared;
     type A<B> = <B as Boundary>::Applied;
     type S<B> = <B as Boundary>::Statement;
     type K<B> = <B as Boundary>::Rollback<'static, 'static>;
+    type F<B> = <K<B> as Rollback>::Target;
     type T<B> = <K<B> as Rollback>::Task<'static>;
+    type M<B> = <T<B> as RollbackTask>::Lane<'static>;
     type Q<B> = <T<B> as RollbackTask>::Prepared;
-    let arguments = size_of::<&mut B>()
-        + size_of::<&B::Transaction>()
+    let slack = 32 * size_of::<&()>() + 16 * size_of::<Result<(), RetentionError>>() + 512;
+    let statement = size_of::<&mut B>()
         + size_of::<&B::Table>()
         + size_of::<&mut Loan>()
         + 2 * size_of::<&[&[ValueRef<'static>]]>()
-        + size_of::<&[ValueRef<'static>]>();
-    let statement = arguments
+        + size_of::<&[ValueRef<'static>]>()
         + size_of::<S<B>>()
         + size_of::<Result<(), RetentionError>>()
         + size_of::<Result<(), InsertError>>()
         + size_of::<Option<Failure>>()
         + size_of::<Result<A<B>, Failure>>()
-        + size_of::<Result<(), StatementFinishError<S<B>>>>()
+        + size_of::<Result<(), DriveError<S<B>>>>()
         + size_of::<Result<usize, DriveError<S<B>>>>()
         + 2 * size_of::<usize>();
-    let row = size_of::<Result<P<B>, RetentionError>>()
+    let row = 2 * size_of::<Result<P<B>, RetentionError>>()
         + size_of::<P<B>>()
-        + size_of::<Result<<P<B> as Preflight>::Lane<'static>, RetentionError>>()
+        + size_of::<Result<V<B>, RetentionError>>()
         + 2 * size_of::<Result<RowInputPlan, Failure>>()
-        + size_of::<Result<R<B>, RowOwnedError<P<B>>>>()
+        + 2 * size_of::<Result<R<B>, RowOwnedError<P<B>>>>()
         + size_of::<R<B>>()
-        + size_of::<Result<<R<B> as Reserved>::Lane<'static>, RetentionError>>()
+        + size_of::<Result<L<B>, RetentionError>>()
         + 2 * size_of::<Result<RowProposal, Failure>>()
-        + size_of::<Result<D<B>, RowOwnedError<R<B>>>>()
-        + size_of::<Result<A<B>, RowOwnedError<D<B>>>>()
-        + 2 * size_of::<Failure>();
-    let rollback = size_of::<Result<usize, (usize, Failure)>>()
-        + size_of::<Result<(), StatementFinishError<S<B>>>>()
-        + size_of::<After<S<B>>>()
-        + size_of::<Result<K<B>, RetentionError>>()
+        + 2 * size_of::<Result<D<B>, RowOwnedError<R<B>>>>()
+        + 2 * size_of::<Result<A<B>, RowOwnedError<D<B>>>>()
+        + 2 * size_of::<Failure>()
+        + size_of::<L<B>>()
+        + size_of::<Result<RowProposal, InsertError>>();
+    let held = size_of::<&mut B>()
+        + 2 * size_of::<&()>()
+        + size_of::<&mut Loan>()
+        + size_of::<Result<K<B>, Failure>>()
         + size_of::<K<B>>()
-        + size_of::<Result<RollbackNext<T<B>>, RetentionError>>()
-        + size_of::<Result<(), RowOwnedError<K<B>>>>()
+        + size_of::<Result<Stepped, RollbackStop<T<B>, F<B>>>>();
+    let step = size_of::<&mut K<B>>()
+        + 2 * size_of::<Result<RollbackNext<T<B>, F<B>>, RetentionError>>()
         + size_of::<T<B>>()
-        + size_of::<Result<<T<B> as RollbackTask>::Lane<'static>, RetentionError>>()
-        + size_of::<Result<RowProposal, Failure>>()
-        + size_of::<Result<Q<B>, RowOwnedError<T<B>>>>()
-        + size_of::<Result<(), RowOwnedError<Q<B>>>>()
-        + 3 * size_of::<Failure>();
-    (statement + row, statement + rollback)
+        + size_of::<Result<M<B>, RetentionError>>()
+        + 2 * size_of::<Result<RowProposal, (Stage, DriverError)>>()
+        + 2 * size_of::<Result<Q<B>, RowOwnedError<T<B>>>>()
+        + 2 * size_of::<Result<(), RowOwnedError<Q<B>>>>()
+        + 2 * size_of::<Result<(), RollbackStop<T<B>, F<B>>>>()
+        + size_of::<M<B>>()
+        + size_of::<Result<RowProposal, InsertError>>();
+    (statement + row + slack, held + step + slack)
 }
