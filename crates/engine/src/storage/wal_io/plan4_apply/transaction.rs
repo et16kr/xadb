@@ -1060,3 +1060,26 @@ impl RowStatementView<'_, '_, '_, '_, '_> {
         )
     }
 }
+
+#[cfg(test)]
+impl<W: WriterNamespace> ReadPort<'_, '_, '_, '_, '_, '_, '_, '_, W> {
+    /// Synthetic long-class occupancy (MBC10-V07): add `bytes` to the
+    /// original long total while `run` executes, then remove exactly them.
+    /// No slot, credit or snapshot is issued.
+    pub(in crate::storage) fn catalog_test_with_held_long<T>(
+        &self,
+        bytes: u64,
+        run: impl FnOnce() -> T,
+    ) -> T {
+        let adjust = |add: bool| {
+            let mut state = self.isolation.lock().unwrap();
+            let used = read64(state.bytes, 16);
+            let next = if add { used + bytes } else { used - bytes };
+            write64(state.bytes, 16, next);
+        };
+        adjust(true);
+        let result = run();
+        adjust(false);
+        result
+    }
+}

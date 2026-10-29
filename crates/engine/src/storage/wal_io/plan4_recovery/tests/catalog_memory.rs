@@ -1219,3 +1219,6 @@ mod create_admission;
 
 #[path = "catalog_memory/own_catalog_read.rs"]
 mod own_catalog_read;
+
+#[path = "catalog_memory/row_transactions.rs"]
+mod row_transactions;

@@ -393,6 +393,11 @@ impl RowTransaction<'_, '_, '_, '_> {
             read64(state.bytes, 16),
         )
     }
+    /// The capsule's bound kind and the slot's kind byte (slot@2).
+    pub(in crate::storage) fn test_write_kind(&self) -> (u8, u8) {
+        let state = self.lease.ledger.lock().unwrap();
+        (self.lease.kind, row(state.bytes, self.lease.slot)[2])
+    }
     pub(in crate::storage) fn test_corrupt_readonly_phase(&self, phase: u8) {
         assert!(self.lease.actor.is_none());
         assert!(matches!(phase, 2..=4));
@@ -416,10 +421,12 @@ mod tests {
             let phases = create_pair::catalog_live::catalog_live_source_bytes::<W>();
             let handles = super::super::handle_census();
             println!(
-                "WRITABLE_SOURCE handles={handles:?} wrapper={} helper={} lifecycle={} retirement={} peak={}",
+                "WRITABLE_SOURCE handles={handles:?} wrapper={} row_wrapper={} helper={} lifecycle={} row_lifecycle={} retirement={} peak={}",
                 lifecycle_caller_bytes(),
+                row_lifecycle_caller_bytes(),
                 source_bytes(),
                 phases.lifecycle,
+                phases.row_lifecycle,
                 phases.retirement,
                 live.peak
             );
@@ -429,6 +436,14 @@ mod tests {
                     >= super::super::super::source::lifecycle_carrier_bytes::<W>()
                         + lifecycle_caller_bytes()
             );
+            // The Row wrapper and its lifecycle are counted inside the one
+            // RowProgress (= CatalogProgressCharge) term (ROW-BEGIN-001).
+            assert!(
+                phases.row_lifecycle
+                    >= super::super::super::source::commit_carrier_bytes()
+                        + row_lifecycle_caller_bytes()
+            );
+            assert!(phases.row_lifecycle <= phases.retirement.max(phases.lifecycle));
             assert!(live.peak <= 65536);
         }
         check::<crate::storage::wal_io::plan4_test_support::Writer>();

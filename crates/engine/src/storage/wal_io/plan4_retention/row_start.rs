@@ -777,3 +777,59 @@ pub(in super::super) fn row_lifecycle_terms<W: WriterNamespace>() -> RowLifecycl
         caller,
     }
 }
+
+#[cfg(test)]
+impl<'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
+    RetentionWriter<'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W>
+{
+    /// Live-versus-replay fixture: run the original `history::validate_live`
+    /// on the current control and return, beside its result, the replayed
+    /// ATT rows and Job cells and the live ones. It reads only; the replay
+    /// loan and audit are returned checked. No authority is produced.
+    pub(in crate::storage) fn row_test_live_replay(
+        &self,
+        owner: &mut Owner<'c, 's>,
+    ) -> (Result<()>, [Vec<u8>; 4]) {
+        let prefix = self.storage.wal().prefix().unwrap();
+        let mut audit = self.history.replay_scope(owner).unwrap();
+        let mut replay = audit.checkout().unwrap();
+        let checked =
+            history::validate_live(self.storage, self.control, replay.bytes_mut(), prefix);
+        let copied = [
+            recovery::retention_replay_bank(replay.bytes())
+                [..control::ATT_SLOTS * control::SLOT_BYTES + 4 * control::SLOT_BYTES]
+                .to_vec(),
+            recovery::retention_replay_cells(replay.bytes())
+                .as_flattened()
+                .to_vec(),
+            self.control.bytes
+                [..control::ATT_SLOTS * control::SLOT_BYTES + 4 * control::SLOT_BYTES]
+                .to_vec(),
+            self.control.bytes[BANK_END..JOB_END].to_vec(),
+        ];
+        let returned = merge(checked, replay.return_checked());
+        (merge(returned, audit.finish_checked()), copied)
+    }
+
+    /// Corrupt one live control byte (fault fixtures only).
+    pub(in crate::storage) fn row_test_flip_control(&mut self, offset: usize) {
+        self.control.bytes[offset] ^= 1;
+    }
+
+    /// The S1-c Catalog scan sites and the ledger over the current mixed
+    /// bank: the Catalog actor's Terminal by `actor_catalog_job`, the Row
+    /// actor's cells skipped by it, and `check_ledger`.
+    pub(in crate::storage) fn row_test_mixed_scans(
+        &self,
+        catalog: TxnRef,
+        row: TxnRef,
+    ) -> (Result<usize>, Result<usize>, Result<(u64, u64)>) {
+        let preparation = self.catalog_preparation();
+        let prefix = self.storage.wal().prefix().unwrap();
+        (
+            preparation.actor_catalog_job(catalog, true),
+            preparation.actor_catalog_job(row, true),
+            self.control.check_ledger(self.storage.profile(), prefix),
+        )
+    }
+}
