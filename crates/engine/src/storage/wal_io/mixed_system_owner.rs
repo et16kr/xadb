@@ -19,7 +19,7 @@ pub(in super::super) use resources::fits;
 #[path = "mixed_system_owner/tests.rs"]
 mod tests;
 pub(super) use load::MixedLoadInstall;
-pub(crate) use load::{SystemLoadError, SystemLoadObservation, SystemResidencyStep};
+pub(crate) use load::{SystemLoadError, SystemResidencyStep};
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub(crate) enum SystemPageKind {

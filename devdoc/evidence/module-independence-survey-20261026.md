@@ -3309,3 +3309,177 @@ tracked 파일만 내보낸 tree의 source fingerprint는 이동 전 `6ac6c8ab72
 - push하지 않았고 시험 본문을 실행하지 않았다는 기록
 
 이로써 13절의 물리 배치 단위(L1–L3, L5-A–D, L6)를 적용하고 L4는 현재 배치 유지로 판정했다. 논리 경계 재설계 R1–R3과 전체 M4/M5 인수는 미완료다. fmt·Clippy·문서 검사는 push gate에서 수행하며 아직 push하지 않았다.
+
+<a id="r123-logical-boundaries"></a>
+## 2026-10-29 R1–R3 논리 경계 판정과 R2 재노출 정리
+
+[R1–R3 판정](../plans/module-independence-plan.md#r123-logical-boundaries)의 조사와 적용 기록이다.
+
+- **조사:** R1·R2와 R3는 각각 별도 클라우드 작업 worktree에서 기준 `85ceef3b35c5c2d0ef1a43056dcea0ba6a1443ea`의 clean checkout으로 수행했다.
+- **적용:** R2 diff는 작업 branch `claude/project-thread-h2j8oc`의 `76742f3c29f6a4f840a27c106440b3672a26c082`(L6, tree `50836f423569a57c80986465d0109db92f340e4c`)에 충돌 없이 적용했다. L6은 `wal_io.rs`의 722–734행 시험 module 선언과 시험 파일 5개의 위치(그중 `test_support.rs`는 본문 일부)만 바꿨다. R2가 고친 6개 파일의 아래 줄 번호는 두 기준에서 같다.
+- push하지 않았다.
+- R1·R3는 제품 변경이 없다. R2는 재노출 줄만 바꿨으며, 기능 본문·타입 정의·field·생성자·seal·cfg·논리 모듈 경로·시험 selector는 그대로다.
+
+### census 방법
+
+13절 L1·L3 표의 소비자 목록은 grep 하한이었다. 이번에는 rustc 이름 해석으로 확정했다. 사용한 도구는 artifact의 `census/tools/`에 있다.
+
+1. **재노출 제거 census.** 재노출 한 층의 이름을 임시로 지우고 `cargo check -p xadb-engine --all-targets --all-features --locked --keep-going --message-format=json`을 실행했다. 오류 위치와 새로 미사용이 된 아래층 재노출을 기록했다. production과 test 두 unit에 모두 나오면 운영, 한 unit에만 나오면 시험 전용으로 본다.
+2. **deprecation census.** 정의 파일의 최상위 항목마다 임시 `#[deprecated(note = "<tag>:<name>")]`를 붙였다. all-targets와 `--lib`를 각각 검사해, 그 차이로 production과 test 전용을 나눴다. deprecation은 variant와 field에 상속되므로 이 census는 이름·variant·field 접근을 함께 센다.
+3. **임시 편집 복원.** 모든 임시 편집은 `git checkout -- crates`로 되돌렸다. 마지막 worktree diff가 `r12.patch`와 같다는 것을 SHA-256으로 확인했다.
+
+R3는 별도 도구로 조사했다. module/`#[path]`/cfg tree, `super` 사슬 해석, 진입 선언을 형제로 옮기는 실험을 썼으며 보고서와 함께 artifact의 `r3/`에 있다.
+
+### R1 — `AR::operation` 결과
+
+재노출 제거 census 결과는 다음과 같다.
+
+- **`wal_io.rs` 루트 재노출 삭제:** 오류 14건이 아래 4개 파일에서 났다. `bootstrap.rs:43·1209·1235`의 중계가 미사용으로 보고됐다.
+- **`bootstrap.rs` 중계까지 삭제:** 같은 오류 14건에 더해 `doublewrite_install.rs:32·695`가 미사용으로 보고됐다. 따라서 아래 4개 파일이 중계 경로의 소비자 전부다.
+
+| 파일 | 쓰는 항목(줄) | 위치 | 구분 |
+| --- | --- | --- | --- |
+| `storage/plan4_recovery_base.rs` | `CatalogAllocationError`(91, 113), `validate_plan4_base_allocation`(1553), `validate_plan4_system_base_allocation`(1554), `plan4_base_allocation_source_bytes`(1668, 1682), `plan4_system_base_allocation_source_bytes`(1669, 1683) | `wal_io` 밖 | 운영 |
+| `storage/plan4_recovery_base/catalog/graph/ledger.rs` | `validate_catalog_base_allocation`(115), `plan4_system_base_allocation_source_bytes`(519) | `wal_io` 밖 | 운영 |
+| `storage/plan4_recovery_base_bridge_tests.rs` | `Plan4TestSemanticError as SemanticError`(4), `validate_plan4_base_allocation`(122), `plan4_base_allocation_source_bytes`(271) | `wal_io` 밖 | 시험 |
+| `storage/wal_io/plan4_genesis/tests.rs` | `Plan4TestSemanticError`(1264, 루트 `wal_io::` 경로) | `wal_io` 안, `doublewrite_install` 밖 | 시험 |
+
+deprecation census(`census/r1-dep-agg.txt`)로 본 L1 밖 사용처는 다음과 같다.
+
+| 구분 | 파일 | 항목 |
+| --- | --- | --- |
+| 재노출 중계(운영 3) | `wal_io.rs`, `bootstrap.rs`, `doublewrite_install.rs` | 경계를 넘는 6개 |
+| `doublewrite_install` 자손(운영 23) | `dirty_allocation`, `empty_transactions/{history,load,pressure}`, `flush_io`, `mixed_system_owner`와 `/{history,load}`, `operational_status`와 `/load`, `plan4_apply`, `plan4_retention/{history,population}`, `recovery_effect/{physical,types}`, `recovery_prefix`와 `/transactions`, `status_home_flush`, `status_init`, `status_init_operation`과 `/{fixed,mixed,plan4_retention}` | `Batch`, `SemanticError`, `AllocationPopulation`, `MixedInitKind`, `TerminalOutcome`, `OperationBudget`, `AnalysisExpected`, `Plan`, `prepare*`·`validate*`·`materialize*`, `finished_*_descriptor`, `retention::*` producer·상한 |
+| `doublewrite_install` 자손(시험 15) | `dirty_allocation/{test_support,tests}`, `mutable_storage/status_bootstrap_tests/undo/mixed_init`, `operational_status/tests`, `plan4_apply/owner_tests`, `recovery_effect/{mixed_system_tests,operational_tests}`, `recovery_prefix/tests`, `resident_status/tests`, `status_home_flush/{authority_tests,home_tests}`, `status_init/tests`와 `/{protocol,resources}`, `status_init_operation/tests` | 같은 계열 |
+| `wal_io` 밖(운영 2, 시험 1)과 `plan4_genesis` 시험 | 위 표 | 경계를 넘는 6개와 시험 별칭 |
+
+`doublewrite_install` 자손이 쓰는 항목은 rustc가 그 subtree 안으로 제한한다. `operation`이 `pub(super) mod`이고 항목이 `pub(in super::super)`이기 때문이다. 권한을 가진 `pub(crate) mod retention`의 producer도 같은 module privacy로 막혀 있다.
+
+참고용으로 적용하지 않은 A′ patch(`disk_api`가 `doublewrite_install` 재노출을 받는 안)는 R2 위에서 `cargo check --all-targets` exit 0, warning 0이었다(`logs/85ceef3-base/r1alt-check.log`). 그 위에 시험 목록은 만들지 않았다.
+
+### R2 — mixed owner 표면 결과
+
+15개 이름을 중계 층마다 지우며 모든 target을 다시 검사한 결과다. 이름은 `InitializedSystemObservation`, `MixedSystem`, `MixedSystemBinding`, `MixedSystemFlusher`, `MixedSystemReadGuard`, `MixedSystemReader`, `MixedSystemWriter`, `ReservedSystemPage`, `SystemLoadError`, `SystemLoadObservation`, `SystemPage`, `SystemPageKind`, `SystemResidencyCursor`, `SystemResidencyStep`, `SystemSlotStep`이다.
+
+| 단계(누적 삭제) | 오류 | 새 미사용 보고 |
+| --- | --- | --- |
+| `wal_io.rs:56–68` | 0 | 0(`#[allow(unused_imports)]` 블록) |
+| + `bootstrap.rs:68–80` | 0 | 0(같은 allow) |
+| + `doublewrite_install.rs:41–53` | 0 | `mutable_storage.rs` 중계 15개 전부(두 unit) |
+| + `mutable_storage.rs:48–59` | 0 | `status_init.rs:58` 재노출 15개 전부(두 unit) |
+
+`census/tools/summ.py`의 요약은 message를170자에서 잘라 이름 7개만 보인다. 15개 전부는 원 rustc JSON(`raw-r2/r2-e5-dwi.json`, `r2-e6-ms.json`)에서 확인할 수 있다.
+
+deprecation census(`census/r2-dep-agg.txt`)에서 이름·field를 쓰는 곳은 다음뿐이다.
+
+- owner `mixed_system_owner.rs`와 자손 `history`·`load`·`resources`·`tests`·`tests/native`·`tests/load_addendum`
+- `operational_status/load.rs`: `MixedLoadInstall`을 owner의 `pub(super)` 재노출로 쓴다
+- 재노출 줄 자체
+
+`wal_io` 밖 사용은 0이다.
+
+13절 L3 표의 grep 일치는 다음과 같이 확인했다.
+
+- `plan4_recovery_base/catalog/graph.rs`·`graph/{ledger,relations}.rs`·`plan4_retention/population.rs`: `ReservedInventory::SystemPage`(`graph.rs:33`의 다른 enum variant)
+- `dirty_allocation`·`recovery_prefix`·`status_init_operation`과 `/{fixed,mixed}`·`allocation_reservation/operation`: `AllocationPopulation::MixedSystem`
+
+경로를 쓰는 것은 frozen compiler probe뿐이다. `crates/engine/tests/fixtures/dev3-mixed-system-owner/compiler/`의 `positive`·`core_escape`·`old_actor`·`guard_owner_reuse`·`reservation_owner_reuse`(MOC00/01/05/07/08)가 `super::status_init::{MixedSystem, SystemPage, SystemPageKind}`를 쓴다. checker `scripts/check_dev3_mixed_owner_borrows.py`는 이 probe를 `wal_io/mutable_storage.rs`에 주입한다. 다른 fixture·script에는 R1·R2 항목 이름이나 바꾼 경로가 없다. `tests/fixtures/dev3-module-c3/install-grant/legacy_factory_private.rs`의 `disk_api::legacy_install`은 바꾸지 않았다.
+
+**변경 목록.** `76742f3` 기준 줄 번호다. diff는 6개 파일, +22/−35다.
+
+| 파일 | 줄 | 변경 | SHA-256 전 → 후 |
+| --- | --- | --- | --- |
+| `crates/engine/src/storage/wal_io.rs` | 56–68 | 중계 블록에서 15개 이름 삭제(26개 유지) | `7d54dd29…` → `4b7946d1…` |
+| `…/wal_io/bootstrap.rs` | 68–80 | 같음 | `efcc5e13…` → `39b54bb5…` |
+| `…/wal_io/doublewrite_install.rs` | 41–53 | 같음 | `93cd568d…` → `1ec9ecc2…` |
+| `…/wal_io/mutable_storage.rs` | 48–59 | 같음 | `8e949e91…` → `f6d9e7aa…` |
+| `…/wal_io/status_init.rs` | 58–63 | `pub(crate) use status_flush::mixed::{15개}` → `#[allow(unused_imports, reason = "frozen mixed-owner compiler probes name these from mutable_storage")] pub(super) use status_flush::mixed::{MixedSystem, SystemPage, SystemPageKind};` | `6b7100dc…` → `dbd17356…` |
+| `…/wal_io/mixed_system_owner.rs` | 22 | `pub(crate) use load::{SystemLoadError, SystemLoadObservation, SystemResidencyStep};`에서 `SystemLoadObservation` 삭제 | `8e70f75e…` → `993979e4…` |
+
+전체 64자리 값은 artifact의 `file-hashes.txt`에 있다. 처음 적용에서 owner 22행을 고치지 않았을 때는 `SystemLoadObservation` unused import warning이 1건 생겼다. 유일한 소비자였던 `status_init` 중계를 지웠기 때문이며, 이 이름을 owner 재노출에서 빼서 0으로 돌렸다.
+
+**probe 컴파일 동등 확인.** 기준 `85ceef3`에 같은 R2 diff를 둔 상태에서 위 probe 5개를 확인했다. checker와 같은 명령 `cargo check -p xadb-engine --lib --locked --offline --message-format=json`을 쓰고, checker와 같은 위치·주입 문장으로 하나씩 컴파일했다. 결과는 frozen 기대와 같다.
+
+| probe | 결과 |
+| --- | --- |
+| positive | 오류 0 |
+| core_escape | E0616 @5 |
+| old_actor | E0308 @6 |
+| guard_owner_reuse | E0499 @9 |
+| reservation_owner_reuse | E0499 @9 |
+
+모두 오류 1건이며 primary span이 probe 파일의 해당 줄이다. 주입한 두 파일은 복원했다. frozen checker 자체를 실행한 것은 아니다. report JSON과 90초 예산 경로는 거치지 않았고, 출력은 원 로그 파일 없이 터미널 출력을 전사했다(`census/r2-probe-compile.txt`). 나머지 mixed owner probe 4개(MOC02/03/04/06)는 바꾼 경로를 쓰지 않는다.
+
+### R3 — 초기화 사슬 결과
+
+R3 조사 보고(`r3/r3-report.md`)의 요지다. 기준은 `85ceef3`이고, baseline `cargo check`는 warning 0이었다.
+
+- **사슬 아래 규모:** `wal_io` 아래 module 선언 304개(229파일). 이 중 `bootstrap` 아래 296개, `doublewrite_install` 아래 289개, `mutable_storage` 아래 279개이며 시험을 포함해 약 117k줄 중 103k줄이다.
+- **깊이에 묶인 visibility:**
+  - `pub(in super::super)` 274개, 깊이 3은 15개, 깊이 4는 10개
+  - `pub(super)` 825개
+  - `pub(in crate::storage::wal_io)` 30개
+  - `pub(in crate::storage::wal_io::bootstrap::doublewrite_install)` 1개
+- **`super` 사슬:** 깊이 2 이상이 132파일에 511개다. 그중 88파일의 279개가 사슬 owner에 직접 닿는다(MS 154, BS 53, DI 42, `wal_io` 30).
+- **절대 경로:** 사슬 안에서 `crate::storage::wal_io::bootstrap…` 21개(13파일).
+- **자손의 private field 접근:** `git grep` 줄 수이며 패턴이 겹치므로 지시값이다. `.core.plan` 64, `.core.wal` 56, `.fresh.core` 42, `storage.binding` 68, `storage.workspace` 20, `.wal()` 197.
+- **네 단계 모두 재노출되는 이름:** 126개(R2의 15개 포함). `pub use` 문은 `wal_io.rs` 23, `bootstrap.rs` 26, `doublewrite_install.rs` 19, `mutable_storage.rs` 19다.
+- **사슬 안 경로를 이름으로 쓰는 `wal_io` 밖 파일:** 0개. `wal_io::` 재노출을 쓰는 밖 파일은 23개다.
+
+**rustc 형제 이동 실험.** 각 진입의 `mod` 선언을 `wal_io` 아래 형제로 옮기고, 원 부모에는 `use`를 두었다. 하위 트리를 벗어나는 `super` 사슬을 `crate::storage::…`로 바꾼 뒤 고유 오류 위치를 셌다. struct private 오류 뒤에 field literal 오류가 숨으므로 하한이다.
+
+| 진입 | 위치/파일 | 넓혀야 하는 주요 private 항목 |
+| --- | --- | --- |
+| MS::status_init | 261/32 | MS field 4개, `wal`/`profile`/`health`/`fatal`, binding 상수 4개, `BindingClaim`, `unchanged`, `BootstrapPlan`/Kind, private 형제 모듈 6개 |
+| MS::status_init_operation | 169/4 | 원 부모를 가리키는 visibility 86곳과 private `allocation_reservation::operation`에서 이어지는 75곳 |
+| MS::plan4_recovery | 43/7 | `from_plan4_recovery`, `InstallPlan`, `WORKSPACE_BYTES`, `BootstrapPlan`/Kind, binding 상수, `SelectedEpochParts` seal의 `pub(super)` 11개 |
+| MS::recovery_prefix | 66/6 | `BootstrapPlan` field, `prepare_for_kind`, `prepare_recovery_bootstrap` |
+| MS::plan4_pages | 376/49 | `profile` 117, `wal` 74, `binding` 48, `core` 33; MS를 지나는 `disk_api` 경로 |
+| MS::dirty_allocation | 82/4 | `BoundAllocation` field |
+| MS::allocator_flush | 47/2 | `BoundAllocation` field |
+| MS::flush_io | 60/1 | `profile`/`wal`, `binding`, `MS.plan` |
+| MS::allocator_residency | 146/5 | `BoundAllocation`·allocation writer/flusher field |
+| DI::allocation_reservation | 114/6 | `DoublewriteStorageSession.fresh` 45; DI 범위 항목 57(R1과 겹침) |
+| BS::plan4_genesis | 42/2 | `FreshStorageSession.core`, install helper |
+| BS::undo_bootstrap | 21/1 | `StatusRole.{plan,fence}`, `create_for_kind` |
+
+합계는 최소 1,427곳이고, 순수 배치 변경으로 옮겨지는 진입은 0개다. frozen 입력도 함께 대조했다.
+
+- fixture 88개 파일의 논리 경로 문자열 약 6,014개(`crates/engine/tests/fixtures` 4,868, `tests/` 1,146). 54개 이상의 파일이 FROZEN·`INPUT_ONLY_NOT_RUN`·`…NOT_RUN` 상태다.
+- script 24개의 26개 문자열
+- `mutable_storage.rs`를 anchor로 쓰는 probe script 4개
+
+조사용 임시 편집은 모두 되돌렸고 R3 worktree의 build target은 삭제했다.
+
+### 검증
+
+| 검증 | 범위·결과 |
+| --- | --- |
+| 컴파일 | `76742f3`+R2 tree에서 `CARGO_TARGET_DIR=<worktree>/target cargo check -p xadb-engine --all-targets --all-features --locked`를 실행했다. exit 0, warning 0, error 0(`logs/check.log`, SHA-256 `ae600b877cba3fd8169abfc1b25fd59e5445e5eb75b4398c43b7a12a2e21d02c`). rustc/cargo 1.95.0 |
+| 시험 발견 | `cargo test -p xadb-engine --lib --all-features --locked -- --list`는 목록만 출력했다. exit 0, stderr warning 0이고 1585줄이 L6 목록과 byte 단위로 같다(SHA-256 `601bd166c6b31b8bdd9e7361eecb15d5939e7b1153b323f10f9fd5308f30259a`, `logs/test-list.txt`). 기준 `85ceef3`에서 새로 만든 목록도 같은 값이다(`logs/test-list-85ceef3-baseline.txt`) |
+| 시험 본문 | NOT_RUN. 바뀐 것은 재노출 줄뿐이고 시험 본문과 selector는 그대로다 |
+| fmt | 변경한 Rust 6개 파일에 `rustfmt --edition 2024 --check`. exit 0(`logs/rustfmt-check.log`, SHA-256 `22b1957f11969ab1a86377bd77d5a06c6ae24366d4764bcedbc0ad8501de44fa`) |
+| 공백 | commit 직전 staged 전체에 `git diff --cached --check`. exit 0, 출력 0(`logs/git-diff-check.log`) |
+| 추가 확인(기준 `85ceef3`+같은 R2 diff) | `cargo clippy -p xadb-engine --all-targets --all-features --locked -- -D warnings` exit 0(`logs/85ceef3-base/clippy.log`). 위 probe 5개 동등 확인. `cargo check` warning 0(`logs/85ceef3-base/final-check.log`). 전체 fmt·Clippy·문서 검사는 기존 push gate에서 수행한다 |
+
+tracked 파일만 내보낸 tree의 source fingerprint(`scripts/check_dev0.py`의 `source_fingerprint`)는 다음과 같다. 문서는 fingerprint 범위 밖이다.
+
+- 변경 전 `76742f3`: `45be88cdf5ff439d81fbdb3bcd47a2d88ff9e70ff39c5f584c4714b77472eea8`. L6 이동 후 값과 같다.
+- 변경 후, crates를 staged한 index: `33a9ac1b2e92f27ed02a4cb8df4488b3967818df79772f700ded9b0df6649416`
+
+patch SHA-256은 다음과 같다.
+
+- `76742f3` 대비 `crates/` diff(`patch/crates-r2.patch`): `88979bf135155fedcb34e8bdbe95dedba3a2670fc1b6cc2819d97273786a7373`
+- 기준 `85ceef3`에서 만든 원 patch(`patch/r12.patch`): `a2c1ace929672fc744367e7148acf60c0be11ae23bfe00042b21c565779071b4`
+- 적용하지 않은 A′ 참고 patch: `d2e24b4015e49b9b8a70c3f6b84054af290299f934ef47e5663d86bd776a2258`
+
+로그·census 표·도구·patch·파일별 hash·fingerprint·R3 보고와 도구는 프로젝트 공유 폴더 `module-independence-20261029/artifacts/module-r123-20261029/`에 보존했다(`manifest.sha256` SHA-256 `ebb62008c2e8dec43a8f456ec33cebe55a25c71b90e3009d48dd41a884327844`, 검토 반영의 `probe-commit/`·`raw-r2/` 추가 뒤 값). 로컬 `artifacts/`로 옮길 때 manifest로 대조한다. 클라우드 작업 공간의 build target은 결과 기록 뒤 삭제한다.
+
+**독립 검토.** 이 세션이 띄운 별도 읽기 전용 subagent가 commit 전체를 대조해 **ACCEPT, 필수 수정0, 선택 지적5**로 판정했다. 검토자는 15개 이름을 crates·tests·scripts 전체(`#[path]` 자손·fixture·script selector 포함)에서 다시 찾아, owner와 자손 밖의 일치가 같은 이름의 enum variant와 frozen probe뿐임을 확인했다. 남긴 `pub(super)` 재노출이 probe 5개에 정확히 필요한 범위이고 visibility를 넓힌 곳이 없으며, 파일 SHA-256 12쌍·patch 2개·`manifest.sha256`·로그·시험 목록·fingerprint 두 값·링크71개가 기록과 같다고 확인했다. 선택 지적은 모두 반영했다.
+
+- 15개 전부의 근거가 된 원 rustc JSON을 artifact `raw-r2/`에 추가했다(위 R2 표).
+- `logs/85ceef3-base/{clippy,final-check,r1alt-check}.log`에는 명령·종료 줄이 없다. 명령은 위 표 그대로이며 exit 0은 실행 당시 셸에서 확인한 값이다. 로그만으로는 확인할 수 없음을 기록한다.
+- probe 동등 확인이 `85ceef3`+R2의 수동 실행이었으므로 원 checker를 commit tree에서 한 번 실행했다. `scripts/check_dev3_mixed_owner_borrows.py --case positive --case core_escape --case old_actor --case guard_owner_reuse --case reservation_owner_reuse`가 baseline과 MOC00/01/05/07/08을 모두 PASS로 판정했다(compiler 74.27초, 전체 94.26초, checker source digest `5de2601ced07ca36ba9ca62e016906a3e108a3deead51b7c5ab393ff6e210c09`, fixture manifest `4014f082…`). report·result·사례별 compiler JSON/stderr·probe patch는 artifact `probe-commit/`에 있고 사례별 source 사본과 target은 삭제했다.
+- 계획의 시험 목록 문구를 lib 목록으로 한정하고, L3 정정에 `mixed_init` 시험의 variant 일치를, R1의 28개에 census 기준을 덧붙였다.
+
+통합 담당이 이 반영을 확인했다. 13절 폴더 재정리는 배치 단위 L1–L3·L5-A–D·L6를 적용했고, L4·R1·R3는 유지로, R2는 미사용 재노출 제거로 판정했다. 전체 M4/M5 인수는 미완료다. fmt·Clippy·문서 검사는 push gate에서 수행하며 아직 push하지 않았다.

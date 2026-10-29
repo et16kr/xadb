@@ -42,14 +42,11 @@ pub(crate) use mutable_storage::{
 pub(crate) use mutable_storage::{
     BeforeEffectError, BoundStatusBootstrap, BoundStatusWithFlush, EMPTY_TRANSACTION_BANK_BYTES,
     EmptyTransactionSnapshot, EmptyTransactions, InitAttemptError, InitializedStatusObservation,
-    InitializedSystemObservation, IntoEmptyTransactionsError, IntoFlushError,
-    IntoOperationalStatusError, MixedSystem, MixedSystemBinding, MixedSystemFlusher,
-    MixedSystemReadGuard, MixedSystemReader, MixedSystemWriter, OperationalStatus,
+    IntoEmptyTransactionsError, IntoFlushError, IntoOperationalStatusError, OperationalStatus,
     OperationalStatusReader, OperationalStatusWriter, ReadStatusSet, ReservedStatus,
-    ReservedSystemPage, ResidentReadAdmission, ResidentStatus, ResidentStatusBinding,
-    ResidentStatusReader, StatusBootstrapWriter, StatusFlushError, StatusFlusher, StatusInitError,
-    StatusReadGuard, StatusReader, SystemLoadError, SystemLoadObservation, SystemPage,
-    SystemPageKind, SystemResidencyCursor, SystemResidencyStep, SystemSlotStep,
+    ResidentReadAdmission, ResidentStatus, ResidentStatusBinding, ResidentStatusReader,
+    StatusBootstrapWriter, StatusFlushError, StatusFlusher, StatusInitError, StatusReadGuard,
+    StatusReader,
 };
 pub(crate) use mutable_storage::{
     ClosedRecovery, RecoveryAcquireError, RecoveryCause, RecoveryError, RecoveryFailure,

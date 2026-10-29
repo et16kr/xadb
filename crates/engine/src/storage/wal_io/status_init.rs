@@ -55,12 +55,11 @@ pub(crate) use status_flush::{
     StatusFlushError, StatusFlusher,
 };
 
-pub(crate) use status_flush::mixed::{
-    InitializedSystemObservation, MixedSystem, MixedSystemBinding, MixedSystemFlusher,
-    MixedSystemReadGuard, MixedSystemReader, MixedSystemWriter, ReservedSystemPage,
-    SystemLoadError, SystemLoadObservation, SystemPage, SystemPageKind, SystemResidencyCursor,
-    SystemResidencyStep, SystemSlotStep,
-};
+#[allow(
+    unused_imports,
+    reason = "frozen mixed-owner compiler probes name these from mutable_storage"
+)]
+pub(super) use status_flush::mixed::{MixedSystem, SystemPage, SystemPageKind};
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub(crate) enum Phase {
