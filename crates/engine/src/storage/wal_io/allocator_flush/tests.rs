@@ -24,11 +24,11 @@ const INPUT: &str = concat!(
     "/../../tests/fixtures/dev3-allocator-flush-one"
 );
 const CASES: &str =
-    include_str!("../../../../../tests/fixtures/dev3-allocator-flush-one/mandatory-cases.tsv");
+    include_str!("../../../../../../tests/fixtures/dev3-allocator-flush-one/mandatory-cases.tsv");
 const FAULTS: &str =
-    include_str!("../../../../../tests/fixtures/dev3-allocator-flush-one/fault-files.tsv");
+    include_str!("../../../../../../tests/fixtures/dev3-allocator-flush-one/fault-files.tsv");
 const EXPANDED: &str =
-    include_str!("../../../../../tests/fixtures/dev3-allocator-flush-one/expanded-cases.tsv");
+    include_str!("../../../../../../tests/fixtures/dev3-allocator-flush-one/expanded-cases.tsv");
 const WRITES: [usize; 11] = [1, 3, 6, 10, 12, 14, 17, 21, 23, 25, 28];
 type State = Arc<Mutex<port::State>>;
 type Inventory = BTreeMap<String, (u64, [u8; 32])>;
@@ -1379,7 +1379,8 @@ fn check_witness(fields: &[&str]) -> std::result::Result<(), &'static str> {
     Ok(())
 }
 fn negative_oracle() {
-    let rows = include_str!("../../../../../tests/fixtures/dev3-allocator-flush-one/known-bad.tsv");
+    let rows =
+        include_str!("../../../../../../tests/fixtures/dev3-allocator-flush-one/known-bad.tsv");
     let mut rejected = 0;
     for row in rows.lines().skip(1) {
         let fields: Vec<_> = row.split('\t').collect();
@@ -1670,8 +1671,9 @@ fn hex(bytes: &[u8]) -> String {
     bytes.iter().map(|b| format!("{b:02x}")).collect()
 }
 fn expanded_bytes(state: &State, id: &str, before: &Inventory) {
-    let rows =
-        include_str!("../../../../../tests/fixtures/dev3-allocator-flush-one/expanded-files.tsv");
+    let rows = include_str!(
+        "../../../../../../tests/fixtures/dev3-allocator-flush-one/expanded-files.tsv"
+    );
     let s = state.lock().unwrap();
     let mut names = Vec::new();
     for row in rows.lines().skip(1) {

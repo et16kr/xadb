@@ -1,5 +1,7 @@
 # XADB 모듈 독립 개발 구조 전환 작업 계획
 
+2026-10-29 [L5-A 할당 배치 적용](../evidence/module-independence-survey-20261026.md#l5a-allocation-move): main `b8099bf`에서 `allocator_residency`·`allocator_flush`·`dirty_allocation`의 평면 자손 9개를 각 진입 폴더로 옮겼다. `#[path]` 9줄과 위치 기준 `include_str!` 7개만 바꿨다. 이동만 한 6개의 byte 동일, `cargo check` PASS, 이동 전후 시험 목록 동일을 확인했고 시험 본문은 NOT_RUN이다. L5-B–D와 전체 M4/M5는 미완료다.
+
 2026-10-29 [L5 책임별 분류](#l5-classification): main `af50b46`에서 `wal_io/` 직속 63개를 책임별로 분류했다. 진입은 유지하고, 평면 자손 40개를 진입 폴더로 옮기는 물리 이동 4단위(L5-A–D)를 정했다. 원 source를 고정한 입력·checker 상수는 바꾸지 않으며, 논리 경계 재설계 R1–R3은 입력만 기록했다. 이 분류 작성 때 제품 변경과 시험 실행은 없다. L5-A–D 이동과 전체 M4/M5는 미완료다.
 
 2026-10-29 [L4 배치 판정](#l4-record): main `08d854d`에서 `plan4_apply/`(10)·`plan4_retention/`(48)이 모두 한 모듈 `plan4_apply.rs`(production `apply`, 시험 `retention`)의 자손이고 소유가 같음을 확인했다. 이행 중 helper의 최종 소유가 미정이고 공유 시험 helper 2개가 외부 `#[path]`로도 쓰이므로, 권장안대로 현재 배치를 유지하고 재검토 조건을 기록했다. 제품·JSON 경로 변경과 시험 실행은 없다. L5와 전체 M4/M5는 미완료다.
@@ -416,7 +418,7 @@ Root3/Job3/Profile3·Row scope3·base4는 이름 변경의 부수 효과가 아�
 <a id="folder-reorganization"></a>
 ## 13. 분리 모듈의 폴더 재정리 후속 계획
 
-2026-10-29 · `XADB-MODULE-LAYOUT-001` · **D2 ACCEPTED / 후속 계획 문서 반영 완료 / 제품 이동은 [L1](../evidence/module-independence-survey-20261026.md#l1-allocation-move)·[L2](../evidence/module-independence-survey-20261026.md#l2-concurrency-move)·[L3](../evidence/module-independence-survey-20261026.md#l3-mixed-system-move)만 적용, [L4](#l4-record)는 현재 배치 유지, [L5](#l5-classification)는 분류 완료·이동 단위 미실행, 시험 본문 NOT_RUN**
+2026-10-29 · `XADB-MODULE-LAYOUT-001` · **D2 ACCEPTED / 후속 계획 문서 반영 완료 / 제품 이동은 [L1](../evidence/module-independence-survey-20261026.md#l1-allocation-move)·[L2](../evidence/module-independence-survey-20261026.md#l2-concurrency-move)·[L3](../evidence/module-independence-survey-20261026.md#l3-mixed-system-move)만 적용, [L4](#l4-record)는 현재 배치 유지, [L5](#l5-classification)는 분류 완료·[L5-A](../evidence/module-independence-survey-20261026.md#l5a-allocation-move)만 이동, 시험 본문 NOT_RUN**
 
 사용자는 파일 분리에 비해 폴더 정리가 부족한 부분을 먼저 조사하도록 요청했고, 참조 관계·상태 소유·API가 독립성의 핵심인지 의견을 확인했다. 이어 임시 계획을 저장하고 진행 중인 작업 종료 뒤 기존 문서에 반영하도록 지시했으며, 후속 “진행해 주세요” 요청에 따라 이 절을 작성한다. **이번 실행 범위는 후속 계획과 관련 문서의 정비다.** 제품 파일 이동·참조 변경의 구현은 아직 시작하지 않는다.
 

@@ -27,18 +27,18 @@ const BEFORE_END: usize = FRAME_WORK_BYTES + PAGE_BYTES;
 const PROTECTED_LIMIT: u64 = 1 << 30;
 
 #[cfg(test)]
-#[path = "dirty_allocation_test_support.rs"]
+#[path = "dirty_allocation/test_support.rs"]
 mod test_support;
 
 #[cfg(test)]
 pub(super) use test_support::BeforeSyncPause;
 
 #[cfg(test)]
-#[path = "dirty_allocation_native_tests.rs"]
+#[path = "dirty_allocation/native_tests.rs"]
 mod native_tests;
 
 #[cfg(test)]
-#[path = "dirty_allocation_tests.rs"]
+#[path = "dirty_allocation/tests.rs"]
 mod tests;
 
 #[cfg(test)]

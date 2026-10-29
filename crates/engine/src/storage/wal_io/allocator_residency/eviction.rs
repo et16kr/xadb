@@ -166,5 +166,5 @@ pub(super) fn fits<W: WriterNamespace>() -> bool {
 }
 
 #[cfg(test)]
-#[path = "allocator_eviction_tests.rs"]
+#[path = "eviction/tests.rs"]
 mod tests;

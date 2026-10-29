@@ -18,7 +18,7 @@ use foundation::{
 };
 use std::mem::size_of;
 
-#[path = "allocator_eviction.rs"]
+#[path = "allocator_residency/eviction.rs"]
 mod eviction;
 
 #[derive(Debug)]
@@ -290,8 +290,8 @@ fn fits<W: WriterNamespace>() -> bool {
 }
 
 #[cfg(all(test, target_os = "linux"))]
-#[path = "allocator_residency_native_tests.rs"]
+#[path = "allocator_residency/native_tests.rs"]
 mod native_tests;
 #[cfg(test)]
-#[path = "allocator_residency_tests.rs"]
+#[path = "allocator_residency/tests.rs"]
 mod tests;

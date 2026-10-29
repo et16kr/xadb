@@ -73,7 +73,7 @@ fn request(identity: PageIdentity) -> TargetRequest {
 fn case(group: &str, number: usize) {
     let id = format!("{group}-{number:02}");
     let fixture =
-        include_str!("../../../../../tests/fixtures/dev3-dirty-allocation/normal-cases.tsv");
+        include_str!("../../../../../../tests/fixtures/dev3-dirty-allocation/normal-cases.tsv");
     assert_eq!(
         fixture
             .lines()
@@ -621,7 +621,7 @@ fn dirty_da02_allocator_consumer() {
 #[ignore = "DEV3 S5 expanded 3 profiles x 1->8->63 only"]
 fn dirty_s5_expanded_history() {
     let mut rows =
-        include_str!("../../../../../tests/fixtures/dev3-dirty-allocation/expanded-history.tsv")
+        include_str!("../../../../../../tests/fixtures/dev3-dirty-allocation/expanded-history.tsv")
             .lines()
             .skip(1);
     for profile in 1..=3 {

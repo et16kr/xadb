@@ -21,10 +21,10 @@ const CAPTURE_FINALIZE_BYTES: usize = 8192;
 const IO_NESTED_BYTES: usize = 8192;
 
 #[cfg(all(test, target_os = "linux"))]
-#[path = "allocator_flush_native_tests.rs"]
+#[path = "allocator_flush/native_tests.rs"]
 mod native_tests;
 #[cfg(test)]
-#[path = "allocator_flush_tests.rs"]
+#[path = "allocator_flush/tests.rs"]
 mod tests;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]

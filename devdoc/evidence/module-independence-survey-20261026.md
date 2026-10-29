@@ -3043,3 +3043,57 @@ r2의 scoped static2와 선택4개는 모두 PASS다. 고유10개는 r1 source�
 - `dev3_recovery_prefix.py`의 고정 줄이 21행이라는 지적은 실제로 22행이라서 반영하지 않았다.
 
 이 반영은 다시 검토받지 않았다. 물리 이동 L5-A–D와 전체 M4/M5는 미완료다.
+
+<a id="l5a-allocation-move"></a>
+## 2026-10-29 L5-A 할당 책임 폴더 배치
+
+[L5 분류](../plans/module-independence-plan.md#l5-classification)의 L5-A를 기준 `main` `b8099bfde34e73c03c963c9c8c3439bcfa39f811`(tree `c6f4fe1ecbb9237cb8461c7f58647726cc7fd7bd`, 착수 때 `git status --short` 빈 출력을 `base.txt`에 기록)에 적용했다. 사용자의 권장안 진행 지시에 따른 것이며 push는 모든 작업과 추가 리뷰 뒤로 미룬 상태다. 진입 `allocator_residency.rs`·`allocator_flush.rs`·`dirty_allocation.rs`는 유지했다. 기능 본문·논리 모듈 경로·visibility·cfg·시험 selector는 바꾸지 않았다.
+
+| 원 경로(`crates/engine/src/storage/wal_io/`) | 현재 경로 | 논리 경로(`…::mutable_storage::`) |
+| --- | --- | --- |
+| `allocator_eviction.rs` | `allocator_residency/eviction.rs`, `#[path]` 1줄 변경 | `allocator_residency::eviction` |
+| `allocator_eviction_tests.rs` | `allocator_residency/eviction/tests.rs` | `allocator_residency::eviction::tests` |
+| `allocator_residency_native_tests.rs` | `allocator_residency/native_tests.rs` | `allocator_residency::native_tests` |
+| `allocator_residency_tests.rs` | `allocator_residency/tests.rs` | `allocator_residency::tests` |
+| `allocator_flush_native_tests.rs` | `allocator_flush/native_tests.rs` | `allocator_flush::native_tests` |
+| `allocator_flush_tests.rs` | `allocator_flush/tests.rs`, `include_str!` 5개 변경 | `allocator_flush::tests` |
+| `dirty_allocation_test_support.rs` | `dirty_allocation/test_support.rs` | `dirty_allocation::test_support` |
+| `dirty_allocation_native_tests.rs` | `dirty_allocation/native_tests.rs` | `dirty_allocation::native_tests` |
+| `dirty_allocation_tests.rs` | `dirty_allocation/tests.rs`, `include_str!` 2개 변경 | `dirty_allocation::tests` |
+
+진입 세 파일에서 `#[path]` 8줄을 바꿨다(residency 3·flush 2·dirty 3). 이동한 `eviction.rs`의 `#[path]` 1줄도 바꿨다.
+
+`include_str!` 7개는 파일 위치 기준이라 `../`를 하나 더했다. 7개 모두 이동 전과 같은 저장소 루트 `tests/fixtures/dev3-allocator-flush-one/`·`tests/fixtures/dev3-dirty-allocation/` 파일로 해석됨을 실제 경로로 대조했다. `crates/engine/tests/fixtures/dev3-allocator-flush-one/`·`crates/engine/tests/fixtures/dev3-dirty-allocation/`에는 `compiler/`만 있어, 잘못 해석되면 컴파일이 실패한다. 길어진 두 줄은 `rustfmt --check`가 제시한 형식으로 줄바꿈했다.
+
+L5 분류 기준 4에 따라 다음은 바꾸지 않았다. 이 파일들은 보존 source의 원 경로를 적는다.
+
+| 파일 | 원 경로 기록 | 현재 위치 |
+| --- | --- | --- |
+| `scripts/check_dev3_dirty_runtime.py:83–84` | `wal_io/dirty_allocation_tests.rs`, `wal_io/dirty_allocation_test_support.rs` | `wal_io/dirty_allocation/tests.rs`, `wal_io/dirty_allocation/test_support.rs` |
+| `scripts/test_check_dev3_dirty_runtime.py:80–81` | 위와 같음(합성 root) | 위와 같음 |
+| `tests/fixtures/dev3-dirty-allocation/runtime-manifest.json`의 `implementation_files` | 위와 같음 | 위와 같음 |
+
+관리 JSON의 경로 문자열 13개를 현재 경로로 바꾸고 `module_folder_reorganization`의 상태와 `l5a_evidence_ref`를 갱신했다. 이동 파일을 가리키는 현재 Markdown 링크·본문 표기는 없다. 상태 문구는 `devdoc/README.md`, `plans/README.md`, 저장소 정책 §5.2와 계획 13절에서 갱신했다.
+
+| 검증 | 실제 범위·결과 |
+| --- | --- |
+| 정적 대응 | `crates/` diff는 rename 9개, `#[path]` 9줄, `include_str!` 7개(그중 2개는 rustfmt 줄바꿈)뿐이다. 이동만 한 6개는 기준 SHA-256과 같고 `mutable_storage.rs`는 바뀌지 않았다 |
+| 컴파일 | `cargo check -p xadb-engine --all-targets --all-features --locked` PASS, warning 0, 종료 코드 0(`logs/check.log`). rustc/cargo 1.95.0 |
+| 시험 발견 | 이동 후 `cargo test -p xadb-engine --lib --all-features --locked -- --list` 출력 1585줄이 이동 전 목록과 byte 단위로 같다(SHA-256 `601bd166c6b31b8bdd9e7361eecb15d5939e7b1153b323f10f9fd5308f30259a`). 이동 전 목록은 다시 build하지 않았다. 기준 tracked fingerprint가 `0fcb9877…`로 L3 이동 후와 같으므로, L3 artifact의 이동 후 목록을 복사하고 그 출처를 `logs/list-before.SOURCE.txt`에 적었다. `allocator_residency::` 43개(eviction 20·native 2 포함), `allocator_flush::` 9개, `dirty_allocation::` 15개가 그대로다 |
+| 시험 본문 | NOT_RUN. 본문은 그대로이고 `include_str!`도 같은 fixture를 읽는다. runtime·native script는 논리 `PREFIX`·selector만 쓴다 |
+| fmt | `rustfmt --edition 2024 --check`를 진입 세 파일에 적용해 하위 모듈까지 차이 0, 종료 코드 0(`logs/rustfmt-check.log`, 명령 포함). 전체 fmt·Clippy·문서 검사는 기존 push gate에서 수행한다 |
+
+tracked 파일만 내보낸 tree의 source fingerprint는 이동 전 `0fcb9877149b2a13cd3ec959185c73ed18a68f866a0ad2774c2ab14570104b72`, 이동 후 `4eae9c646174b05f9dfdad03b5ebe3c11667173599149e4a08dff4e6dc47b35b`다. 로그·시험 목록·파일별 hash·fingerprint는 로컬 `artifacts/module-l5a-allocation-20261029/`에 보존했다(`manifest.sha256` SHA-256 `95bed18c240ddb4412af95baee63081274335094b9d2dddceb0724de58ab894c`). build target 1.5G와 임시 export는 삭제했다. 이동 뒤 `wal_io/` 직속 Rust 파일은 54개다.
+
+`logs/check.log`에는 명령 줄과 종료 코드가 있고, `logs/list-after.err`에는 종료 코드만 있다. 시험 목록 명령은 위 표의 형식 그대로다.
+
+독립 검토(같은 읽기 전용 subagent)는 staged diff·artifact·문서를 대조해 **ACCEPT, 필수 지적 0**으로 판정했다. 확인한 것은 다음과 같다.
+
+- rename 9개와 L5-A 행의 일치, `#[path]` 9줄의 해석(평범한 `mod`로 읽히는 non-mod-rs `allocator_residency.rs` 포함)
+- `include_str!` 7개가 같은 fixture로 해석됨, 줄바꿈이 배치만 바꿈(공백·경로 문자열을 빼면 동일)
+- 이동만 한 6개의 byte 동일
+- 이동 전 목록 재사용의 유효성(HEAD tree fingerprint `0fcb98…` 재계산)
+- 시험 수, 기준 4로 유지한 입력의 서술, index에서 다시 계산한 이동 후 fingerprint와 manifest
+- JSON 13개, 링크·문서 배치 검사 오류 0
+
+선택 지적 2건(dirty fixture 폴더 서술, 로그의 명령 줄)은 위 두 문장에 반영했다. 이 반영은 다시 검토받지 않았다. L5-B–D와 전체 M4/M5는 미완료다.
