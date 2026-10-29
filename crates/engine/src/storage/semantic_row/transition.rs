@@ -346,3 +346,7 @@ pub(crate) fn source_bytes() -> usize {
             .max(frame::source_bytes())
             .max(prepare::write_source_bytes())
 }
+
+#[cfg(test)]
+#[path = "transition_tests.rs"]
+mod tests;
