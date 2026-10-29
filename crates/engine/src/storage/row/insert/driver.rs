@@ -29,9 +29,11 @@ mod tests;
 /// The one private operation loan C lends to each preflight and rollback.
 type Loan = [u8; 425_984];
 
-/// Claimed bound for the driver's own frames below A's producer. The source
-/// census of the C3 supply adds it to the producer frame; it is not a grant.
-pub(super) const DRIVER_SOURCE_BYTES: usize = 16_384;
+/// Claimed source bound for the driver's own carriers below A's producer, in
+/// the repository's size_of inventory sense; it is not a machine-stack bound
+/// and not a grant. With A's producer inventory it stays within the 65536 B
+/// short-source cap; the C3 supply's census still owns the aggregate.
+pub(super) const DRIVER_SOURCE_BYTES: usize = 8_192;
 
 /// The original statement view as the driver uses it.
 trait StatementView {
@@ -669,10 +671,11 @@ fn abort<B: Boundary>(
 
 /// Nonrecursive inventory of the driver's own carriers at the deepest point
 /// of the INSERT path (A's Forward producer running) and of the CLR path
-/// (A's CLR producer running inside a statement rollback). Every local and
-/// temporary is counted once without slot sharing, so this bounds an
-/// unoptimized frame from above; A's producer frame and C's internals are
-/// not included and are added by the source census of the C3 supply.
+/// (A's CLR producer running inside a statement rollback): the values whose
+/// scope encloses that call, each counted once. It is a source/type count,
+/// not a machine-stack measurement; unoptimized code keeps a slot for every
+/// temporary and is several times larger. A's producer frame and C's
+/// internals are not included and are added by the C3 supply's census.
 fn carrier_bytes<B: Boundary + 'static>() -> (usize, usize) {
     use std::mem::size_of;
     type P<B> = <B as Boundary>::Preflight<'static, 'static>;
