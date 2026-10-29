@@ -9152,5 +9152,28 @@
     "remaining_supply": "S2 live RowReserve producer and direct replay_durable test; S2 entry test for check_ledger Row subset over a replayed RootReserved root (A11); C4 retired-table Clr/Prune",
     "source_roots_changed": false,
     "artifact_manifest_sha256": "031dfcdd7b98cf98cc91a3befd6cb0bd88210057593a799127ec4c632c4d2278"
+  },
+  "dev3_module_s1e_statement_mark": {
+    "status": "LOCAL_VERIFIED_REVIEWED",
+    "contract_ref": "dev3-module-boundaries.md#row-begin-capsule",
+    "evidence_ref": "module-independence-survey-20261026.md#s1e-statement-mark",
+    "baseline_commit": "d067c4b",
+    "integration_base": "753d7b5",
+    "branch": "claude/project-thread-h2j8oc",
+    "commits": [
+      "518b2d4",
+      "113d2f0",
+      "951a6bd",
+      "5499b72",
+      "2435f78",
+      "8bcf76d",
+      "b16e630"
+    ],
+    "rollback": "revert b16e630 back to 518b2d4 (newest first) before any S1-d commit",
+    "scope": "Row statement mark codec at slot bytes 88..128, one statement_slot sequence+mark comparison at every boundary including record_catalog_read and record_table_read, Row begin_statement from the ATT undo_head, Row finish_statement under RowProgress with Before(WrongState) for Reserved/Aborting actors and WAL0 clean end, second statement, Catalog transaction check shell parameterised by class, CatalogProgressCharge without the Row max fold",
+    "validation": "r0 201 and r1 212 selectors: 11 new PASS, 13 failures identical to base; integrated i1 40 selectors on the S1-g head 33 PASS with 7 known census failures unchanged; handle 408 <= 512; check 0 warnings; one independent review, REQUIRED 0, ADVISORY 10",
+    "remaining_supply": "S2: Some-mark live path, Reserved finish refusal, full-rollback entry taking the statement view by value (ADV-07), no second reservation of the carried 6080 B credit; MBC10-V09 nested sum partial; ADV-02/03/04/08/09/10 cleanup",
+    "source_roots_changed": false,
+    "artifact_manifest_sha256": "7eb73277637e65f756c0d48fb293757fb106ecb44644f02edc812f1a0443ccff"
   }
 }

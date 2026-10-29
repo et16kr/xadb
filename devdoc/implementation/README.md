@@ -1,5 +1,7 @@
 # 현재 구현
 
+2026-10-29 [S1-e Row statement mark와 두 번째 문장](../evidence/module-independence-survey-20261026.md#s1e-statement-mark): Row 거래가 statement를 열고 닫으며 두 번째 statement를 시작할 수 있다. S1이 모두 끝났고 Row 쓰기·읽기 본문은 S2·S5다.
+
 2026-10-29 [S1-g RowReserve replay 값 commitment 채택](../evidence/module-independence-survey-20261026.md#s1g-reserve-replay): `Change::ReserveAdopted`는 replay 전용이며 producer에서는 Unsupported다. RowReserve frame은 이제 recovery·live 검증에서 거절되지 않는다.
 
 2026-10-29 [S1-d Row Begin과 빈 Row 철회](../evidence/module-independence-survey-20261026.md#s1d-row-begin): `begin_row_transaction`과 scope별 `abort_empty_transaction`이 Row 거래를 열고 빈 채로 닫는다. Row Begin이 남은 재시작은 S6 전까지 분석 gate에서 멈춘다.

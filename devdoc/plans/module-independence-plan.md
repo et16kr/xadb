@@ -1,5 +1,7 @@
 # XADB 모듈 독립 개발 구조 전환 작업 계획
 
+2026-10-29 [S1-e Row statement mark와 두 번째 문장](../evidence/module-independence-survey-20261026.md#s1e-statement-mark): Row 문장이 ATT `undo_head`를 slot 88..128에 mark로 쓰고, 매 경계에서 sequence·mark를 하나의 비교로 대조하며, 깨끗한 종료 뒤 두 번째 문장을 연다. cap 불변(handle 408 ≤ 512). 신규 11 PASS, 통합 round 33 PASS. 독립 검토 필수0. 이로써 S1(S1-a~S1-g)이 모두 공급됐고 다음은 S2-0 Q06 개정이다.
+
 2026-10-29 [S1-g RowReserve replay 값 commitment 채택](../evidence/module-independence-survey-20261026.md#s1g-reserve-replay): recovery가 RowReserve frame에서 C와 projection만 채택하고 나머지를 다시 계산해 replay하며, Row root의 U allocator 항목을 Reserve arm과 결합 closure에서 검산한다. 새 counted 항 없음(history_row 25707/25743). 신규 7 selector PASS, 통합 round 2회. 독립 검토 필수0. S2가 live RowReserve를 쓰기 위한 선행 조건이 갖춰졌다.
 
 2026-10-29 [S1-d Row Begin과 빈 Row 철회](../evidence/module-independence-survey-20261026.md#s1d-row-begin): Row Begin과 빈 full abort를 Catalog lifecycle과 같은 gate/progress shell과 설치 본문으로 공급하고, Row control byte는 replay와 같은 `history::row::record`만 쓴다. slot kind 2, RowProgress class, Catalog 진입점의 Row capsule 거절, S1-b 검토의 A1·A2·A3·A9·A13을 닫았다. cap 불변(Catalog lifecycle native 44253/44304). 신규 14 PASS, 실패 16은 base와 같음. 독립 검토 필수0.

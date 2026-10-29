@@ -4233,3 +4233,34 @@ v2 `native`(221파일, 5,794,810B), `memory-gap`(137, 3,382,130B), `memory-retir
 - 판마다 manifest를 build 전에 동결하고 selector마다 1회 실행했으며 check 경고0, 바꾼 .rs의 rustfmt check와 `git diff --check`를 통과했다. 작성자가 round 밖 개발 사본에서 돌린 module 단위 sweep은 증거로 인용하지 않는다(검토 A9).
 
 **독립 검토.** 읽기 전용 검토자 1회(컨테이너 재시작으로 끊긴 뒤 재개), 필수0·권고11이며 통합 diff도 올바르고 완전하다고 판정했다. 반영: A1 `validate_rows` U allocator loop를 실제로 거절시키는 시험(loop를 끈 개발 build에서 실패 확인), A10 문서 정정. 기록만: A2 H11의 `record` 동치는 서명 논증(H04가 byte로 확인), A3 H13의 "fence하지 않음"은 frame별 본문으로 충분하며 `replay_durable` 직접 호출은 S2가 필요, A5 allocator 검산이 `table_source` 뒤(계약은 observer 전만 요구), A6 Reserve arm의 Unsupported → Invariant 일괄 변환, A11 재생된 RootReserved root 위의 `check_ledger` Row 부분 검산은 S2 진입 시험. 되돌림: S2가 있으면 S2 먼저, S1-b를 되돌리려면 S1-g 먼저(`96de0ba`부터 `27c34bf`까지 최신부터). artifact는 `module-independence-20261029/artifacts/module-s1g-20261029/`(`manifest-all.sha256` SHA-256 `031dfcdd7b98cf98cc91a3befd6cb0bd88210057593a799127ec4c632c4d2278`)에 있다.
+
+<a id="s1e-statement-mark"></a>
+## 2026-10-29 S1-e Row statement mark·두 번째 문장과 매 경계 mark 대조
+
+기준은 S1-d의 원 head `d067c4b`, branch는 `module-s1e-statement-mark`이고 작성 commit은 `508a23e`..`b2bd14b` 7개다. 이 branch에는 S1-g 문서 `753d7b5` 위로 충돌 없이 cherry-pick했다(`518b2d4`, `113d2f0`, `951a6bd`, `5499b72`, `2435f78`, `8bcf76d`, `b16e630`). 계약은 [ROW-BEGIN-001](../contracts/dev3-module-boundaries.md#row-begin-capsule)의 "statement mark" 문단과 `dev3-task-10-concurrency.md`의 slot 배치(88..128)다. 이 단위로 S1(S1-a~S1-g)의 공급이 모두 끝났다.
+
+**공급**
+
+- mark는 slot bytes 88..128의 UndoRef wire 식별이고 None은 40B 0이다. `decode_mark`는 모두 0을 None으로, 그 밖에는 canonical UndoRef만 받으므로 decode 값 비교가 byte 비교와 같고 canonical이 아닌 byte는 어떤 view와도 맞지 않는다.
+- `statement_slot`(`plan4_apply/transaction.rs`) 하나가 view의 `check`, `record_catalog_read`, `record_table_read`, begin의 idle slot 검사에서 slot의 sequence와 mark가 view와 같음을 요구한다. Catalog와 읽기 전용 view는 `mark: None`이며 이것이 계약의 "Catalog의 빈 mark" 특수형이다. 어긋나면 fence되는 Fatal(Invariant)다.
+- Row `begin_statement`는 capsule kind로 분기하고, `row_statement_head`가 actor가 Active이고 RootReserved Job이 없을 때만 ATT descriptor의 `undo_head`를 mark로 돌려준다. 아니면 Unchanged WrongState다. WAL·ATT·Job byte는 쓰지 않는다.
+- Row `finish_statement`는 RowProgress class의 `transaction_check` 안에서 돈다. Reserved나 Aborting actor는 같은 view를 돌려주는 Before(WrongState, Finalize)이고 slot은 그대로다. 깨끗한 종료는 sequence와 mark를 닫으며 WAL0이다. 문장 경계에서 durable 변화가 없으므로 쓰지 않은 6080B 문장 credit의 이월은 S1에서 할 일이 없다.
+- refactor `113d2f0`: Catalog 거래 검산 shell이 진행 class를 인자로 받는다(`transaction_check(owner, class, check)`). Catalog의 순서·byte는 그대로다.
+- S1-d 검토 권고: ADV-06(`8bcf76d`) `CatalogProgressCharge::new`에서 `.max(row_lifecycle)`를 빼고 `debug_assert!(row_lifecycle <= charge)`와 기존 시험 `row_progress_reserves_the_same_catalog_progress_charge`로 확인한다(charge 44304 불변). ADV-04(`b16e630`) R1D-R02가 첫 세 거절의 원인(Membership/Prepare, Visibility(Concurrency(InvalidRole))/Census, Frame(BindingMismatch)/Census)과 점유된 Status의 Begin(WrongState/Prepare/Unchanged)을 단언한다.
+
+**계수(cap 불변).** handle(capsule, view) (416, 328) → (416, 408) ≤ 512, short source 4932 → 5149, `writable::source_bytes` 22665 → 23027, `check_source_bytes` 24611 → 25030, statement wrapper 12058 → 12275, own-catalog 검사 6424 → 6641. Catalog lifecycle 43229/44253(retirement 44304), Row lifecycle 42089/43113, writable peak 64000/64136, commit window pending_full 65452/66612(memory 여유 84B)는 그대로다. A driver의 live insert frame은 9955B(한도 12288)다.
+
+**시험과 실행**
+
+| 판 | head | 범위 | 결과 |
+| --- | --- | --- | --- |
+| r0 | `d067c4b` | 변경 경로의 기존 201 selector | 188 PASS, 기존 실패 13 |
+| r1 | `b2bd14b` | 신규 11 + 기존 201 | 199 PASS, 실패 13은 r0와 같음 |
+| i1 | `b16e630` | 검토가 정한 통합 40 selector | 33 PASS, 실패 7은 알려진 census(출력 r1과 같음) |
+
+- 신규 selector: `retention::transaction::mark_tests::{s1e_mark_codec_round_trips_none_and_some_and_refuses_noncanonical_bytes, s1e_statement_slot_requires_the_exact_sequence_and_mark, s1e_view_with_mark_fits_its_handle_and_progress_charge}`, `catalog_memory::row_statements::{row_statement_mark_is_the_att_undo_head_and_writes_no_wal, second_row_statement_after_clean_finish_carries_the_credit, row_statements_issue_a_checked_table_and_register_missing, stale_statement_mark_is_refused_at_every_boundary, row_view_is_refused_by_catalog_create_before_any_effect, aborting_row_actor_refuses_statement_finish_and_begin, row_view_and_cursor_long_class_boundary, row_statement_end_progress_admission_boundary_and_two_resident_readers}`.
+- MBC10-V07(view·cursor long class 511/512/513)과 V09(RowProgress 문장 종료 −1/0/+1, resident reader 둘이 끝난 뒤에만 writer 수용, 늦은 reader 거절)는 부분 공급이다. read gate가 진행 class writer를 reader와 배타로 만들므로 중첩 합은 shared + max(writer, 2 × resident)이고, Some mark의 live 경로는 S2의 Forward가 필요하다. RowReserve 뒤 Reserved 거절도 S2다.
+- r0/r1 실패 13: `catalog_source_*`, `retention_source_*`, `runtime_core_source_*`, `catalog_commit_windows_fit_beside_admitted_readers`(rc 101), 30초 timeout의 느린 `catalog_memory` 6개. 201개 중 195개는 출력이 같고 6개는 위 census 값만 다르다. i1은 S1-g 통합 head에서 S1-e 신규 11, Row capsule 9, 두 단위의 항이 만나는 census 12, 알려진 실패 census 7, 검토 ADV-01의 `mca00_d12_driver_frames_stay_within_the_driver_source_bound`을 돌렸다.
+- 판마다 manifest를 build 전에 동결하고 selector마다 1회 실행했으며 check 경고0, 바꾼 8개 .rs의 rustfmt check와 `git diff --check`를 통과했다. 컨테이너 재시작은 round 시작 전이라 끊긴 round는 없다.
+
+**독립 검토.** 읽기 전용 검토자 1회, 필수0·권고10이다. ADV-01은 i1로 닫았다. 기록: ADV-02 거래 종료 경계는 sequence만 보고 idle mark는 보지 않음, ADV-03 mark codec callee frame 약 150–170B 미계수(cap 여유 큼), ADV-04 `row_statement_head`와 `empty_actor_active` 중복, ADV-06 OCR01은 두 판 모두 30초 timeout, ADV-07 Aborting actor에서 finish가 거절된 view는 drop으로만 끝나 fence되므로 S2의 full rollback 진입이 `Option<RowStatementView>`를 값으로 받아 RollbackStart가 durable해진 뒤 sequence·mark를 닫아야 함, ADV-08 주석의 검토·단위 ID, ADV-09 Row `bind_writable` Fatal 경로 미시험, ADV-10 설계 메모의 "revision" 해석. S2의 첫 Reserve는 이월된 6080B를 다시 확보하지 않아야 한다. 되돌림은 S1-e 전체를 최신부터(`b16e630` → `518b2d4`) 되돌린 뒤에만 S1-d를 건드린다. artifact는 `module-independence-20261029/artifacts/module-s1e-20261029/`(`manifest-all.sha256` SHA-256 `7eb73277637e65f756c0d48fb293757fb106ecb44644f02edc812f1a0443ccff`)에 있다.
