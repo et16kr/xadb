@@ -41,7 +41,7 @@ const INIT_EXCLUSIVE: usize = 8192;
 const READ_CALL: usize = 3648;
 
 #[cfg(test)]
-#[path = "status_init_tests.rs"]
+#[path = "status_init/tests.rs"]
 mod tests;
 
 #[path = "status_home_flush.rs"]

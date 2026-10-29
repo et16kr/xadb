@@ -3157,3 +3157,70 @@ tracked 파일만 내보낸 tree의 source fingerprint는 이동 전 `4eae9c6461
 - JSON 22개, 링크·문서 배치 검사 오류 0
 
 L5-C·D와 전체 M4/M5는 미완료다.
+
+<a id="l5c-status-move"></a>
+## 2026-10-29 L5-C Status 책임 폴더 배치
+
+[L5 분류](../plans/module-independence-plan.md#l5-classification)의 L5-C를 기준 `main` `ff77992e9f27d20b606d0253d8e121d0b08b7eda`(tree `87a5698d303fbca94dc52f07ad95b90b536efaac`, 착수 때 `git status --short` 빈 출력)에 적용했다. 진입 `status_init.rs`·`status_init_operation.rs`·`status_home_flush.rs`·`operational_status.rs`·`resident_status.rs`와 기존 `status_home_flush/native_tests.rs`는 유지했다. 기능 본문·논리 모듈 경로·visibility·cfg·시험 selector는 바꾸지 않았다.
+
+| 원 경로(`crates/engine/src/storage/wal_io/`) | 현재 경로 | 논리 경로(`…::mutable_storage::`) |
+| --- | --- | --- |
+| `status_init_tests.rs` | `status_init/tests.rs`, `#[path]` 3줄 변경 | `status_init::tests` |
+| `status_init_native_tests.rs` | `status_init/tests/native.rs` | `status_init::tests::native` |
+| `status_init_protocol_tests.rs` | `status_init/tests/protocol.rs` | `status_init::tests::protocol` |
+| `status_init_resource_tests.rs` | `status_init/tests/resources.rs` | `status_init::tests::resources` |
+| `fixed_system_operation.rs` | `status_init_operation/fixed.rs` | `status_init_operation::fixed` |
+| `mixed_system_init.rs` | `status_init_operation/mixed.rs` | `status_init_operation::mixed` |
+| `plan4_status_init_operation.rs` | `status_init_operation/plan4_retention.rs` | `status_init_operation::retention` |
+| `status_init_operation_tests.rs` | `status_init_operation/tests.rs` | `status_init_operation::tests` |
+| `operational_status_native_tests.rs` | `status_home_flush/native_tests/operational.rs` | `status_init::status_flush::tests::native::operational` |
+| `status_load_native_tests.rs` | `status_home_flush/native_tests/status_load.rs` | `…::tests::native::status_load` |
+| `empty_history_native_tests.rs` | `status_home_flush/native_tests/empty_history.rs` | `…::tests::native::empty_history` |
+| `empty_load_native_tests.rs` | `status_home_flush/native_tests/empty_load.rs` | `…::tests::native::empty_load` |
+| `operational_status_tests.rs` | `operational_status/tests.rs` | `…::status_flush::operational::tests` |
+| `status_load.rs` | `operational_status/load.rs`, `#[path]` 1줄 변경 | `…::status_flush::operational::load` |
+| `status_load_tests.rs` | `operational_status/load/tests.rs` | `…::operational::load::tests` |
+| `resident_status_tests.rs` | `resident_status/tests.rs` | `…::status_flush::resident::tests` |
+
+`#[path]` 16줄의 분포는 다음과 같다.
+
+- 진입: `status_init.rs` 1, `status_init_operation.rs` 4, `operational_status.rs` 2, `resident_status.rs` 1
+- `status_home_flush/native_tests.rs` 4: `../` 상위 참조 4개가 없어졌다
+- 이동한 `status_init/tests.rs` 3, 이동한 `operational_status/load.rs` 1
+
+분류표의 `status_flush` 행에 있는 native 시험 4개의 실제 논리 부모는 `status_flush::tests::native`다. 그 선언 파일 `status_home_flush/native_tests.rs`(`status_home_flush/tests.rs:470`이 선언) 옆의 `native_tests/`로 옮겼다. 대상 파일에 위치 기준 macro는 없다. compiler probe anchor `status_init_operation.rs`·`status_home_flush.rs`는 유지했다.
+
+현재 링크 1개(`plans/dev3-test-plan.md:454`)를 현재 경로로 바꿨다. 관리 JSON의 경로 문자열 29개를 현재 경로로 바꾸고 `module_folder_reorganization`의 상태와 `l5c_evidence_ref`를 갱신했다. 상태 문구는 `devdoc/README.md`, `plans/README.md`, 저장소 정책 §5.2와 계획 13절에서 갱신했다.
+
+L5 분류 기준 4에 따라 `crates/engine/tests/fixtures/dev3-resident-status/manifest.json`은 바꾸지 않았다. 상태가 `FROZEN_INPUTS_NOT_EXECUTION_EVIDENCE`이고, 이동 전후 SHA-256이 같음을 대조했다.
+
+| 원 경로 기록(`changed_path`) | 개수 | 현재 위치 |
+| --- | --- | --- |
+| `wal_io/resident_status_tests.rs` | 30 | `wal_io/resident_status/tests.rs` |
+| `wal_io/status_load_tests.rs` | 1 | `wal_io/operational_status/load/tests.rs` |
+
+| 검증 | 실제 범위·결과 |
+| --- | --- |
+| 정적 대응 | `crates/` diff는 rename 16개와 `#[path]` 16줄뿐이다. 이동만 한 14개는 기준 SHA-256과 같고, `status_home_flush.rs`와 resident manifest는 바뀌지 않았다 |
+| 컴파일 | `cargo check -p xadb-engine --all-targets --all-features --locked` PASS, warning 0, 종료 코드 0(`logs/check.log`, 명령 포함). rustc/cargo 1.95.0 |
+| 시험 발견 | 이동 후 시험 목록 1585줄이 이동 전 목록과 byte 단위로 같다(SHA-256 `601bd166c6b31b8bdd9e7361eecb15d5939e7b1153b323f10f9fd5308f30259a`). 이동 전 목록은 L5-B artifact의 이동 후 목록이다. 기준 HEAD tree에서 다시 계산한 tracked fingerprint가 `9cc0be96…`로 그 목록의 source와 같다(`logs/list-before.SOURCE.txt`) |
+| 시험 수 | 다음이 그대로다. `status_init::tests::` 22(native 1·protocol 10·resources 2), `status_init_operation::tests::` 34, `status_flush::tests::native::` 7(옮기지 않은 `native_tests.rs` 자체 1·operational 1·status_load 2·empty_history 2·empty_load 1), `operational::tests::` 15, `operational::load::tests::` 69, `resident::tests::` 37 |
+| 시험 본문 | NOT_RUN. 본문은 그대로다. script는 논리 selector만 쓴다 |
+| fmt | `rustfmt --edition 2024 --check`를 `status_init.rs`·`status_init_operation.rs`에 적용해 하위 모듈까지 차이 0, 종료 코드 0(`logs/rustfmt-check.log`, 명령 포함). 전체 fmt·Clippy·문서 검사는 기존 push gate에서 수행한다 |
+
+tracked 파일만 내보낸 tree의 source fingerprint는 이동 전 `9cc0be961f944a96afcc54ec8e47de1f94f556cd521d57d6de4b86a6a260bc3f`, 이동 후 `91163921c22807297403bd96a827e8de876ec217ba815c4923c3cf969acf0fd2`다. 로그·시험 목록·파일별 hash·fingerprint는 로컬 `artifacts/module-l5c-status-20261029/`에 보존했다(`manifest.sha256` SHA-256 `fbdcae4e3bcdc5e374eb5daa87062bc2b8d6fb99f4dafd09a0ce302a89ce4d5c`). build target 1.5G와 임시 export는 삭제했다. 이동 뒤 `wal_io/` 직속 Rust 파일은 27개다.
+
+독립 검토(같은 읽기 전용 subagent)는 staged diff·artifact·문서를 대조해 **ACCEPT, 필수 지적 0**으로 판정했다. 확인한 것은 다음과 같다.
+
+- rename 16개와 L5-C 행의 일치
+- `#[path]` 16줄의 해석: `status_home_flush/tests.rs:470`이 선언하는 `native_tests.rs`의 `../` 제거 포함
+- 이동만 한 14개의 byte 동일
+- `status_home_flush.rs`와 frozen resident manifest(SHA-256 `c36252…`)가 바뀌지 않음
+- 이동 전 목록 재사용의 유효성: HEAD tree fingerprint `9cc0be…` 재계산
+- 시험 수, probe anchor와 script·fixture가 논리 selector만 쓰는 것
+- resident manifest 대응(30·1)
+- 현재 문서에 옛 경로가 남지 않음
+- index에서 다시 계산한 이동 후 fingerprint와 manifest
+- JSON 29개, 링크·문서 배치 검사 오류 0
+
+선택 지적 1건(native 시험 7개의 구성)은 위 표에 반영했다. 이 반영은 다시 검토받지 않았다. L5-D와 전체 M4/M5는 미완료다.

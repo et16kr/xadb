@@ -14,12 +14,12 @@ use crate::transaction::concurrency::Owner;
 use foundation::{error::Effect, namespace::WriterNamespace};
 use std::mem::size_of;
 
-#[path = "status_load.rs"]
+#[path = "operational_status/load.rs"]
 pub(in super::super) mod load;
 pub(in crate::storage) use load::StatusLoadPermit;
 
 #[cfg(test)]
-#[path = "operational_status_tests.rs"]
+#[path = "operational_status/tests.rs"]
 mod tests;
 
 pub(crate) enum IntoOperationalStatusError<B> {

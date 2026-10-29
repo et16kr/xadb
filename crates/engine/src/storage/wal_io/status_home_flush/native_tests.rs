@@ -586,14 +586,14 @@ fn worker_status_home_flush_native() {
     );
 }
 
-#[path = "../operational_status_native_tests.rs"]
+#[path = "native_tests/operational.rs"]
 mod operational;
 
-#[path = "../status_load_native_tests.rs"]
+#[path = "native_tests/status_load.rs"]
 mod status_load;
 
-#[path = "../empty_history_native_tests.rs"]
+#[path = "native_tests/empty_history.rs"]
 mod empty_history;
 
-#[path = "../empty_load_native_tests.rs"]
+#[path = "native_tests/empty_load.rs"]
 mod empty_load;

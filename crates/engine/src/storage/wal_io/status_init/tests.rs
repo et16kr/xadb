@@ -125,11 +125,11 @@ macro_rules! fixture {
     }};
 }
 
-#[path = "status_init_native_tests.rs"]
+#[path = "tests/native.rs"]
 mod native;
-#[path = "status_init_protocol_tests.rs"]
+#[path = "tests/protocol.rs"]
 mod protocol;
-#[path = "status_init_resource_tests.rs"]
+#[path = "tests/resources.rs"]
 mod resources;
 
 #[test]

@@ -451,7 +451,7 @@ live owner 인수 당시 반복 sequence current-build recovery는 미구현이�
 최종 S5 확정 inventory에는 이번 신규14개 runtime selector와
 `storage::wal_io::bootstrap::doublewrite_install::mutable_storage::status_init::status_flush::tests::native::operational::worker_operational_status_native`,
 compiler manifest의semantic5, 새 checker4를 포함한다. runtime14의 정확 이름은
-[해당 Rust 입력](../../crates/engine/src/storage/wal_io/operational_status_tests.rs)의
+[해당 Rust 입력](../../crates/engine/src/storage/wal_io/operational_status/tests.rs)의
 `operational_status_resource_gate`를 제외한14개 `#[test]`이며 정적 gate1은 별도로 포함한다.
 source별 선택 원문은 [receipt 색인](../evidence/dev3-operational-status-20261023.json)의
 r2/r4/r5/r7 selection에 연결한다. 기존 closed CF15-01/02는 원 inventory와 중복 집계하지 않는다.

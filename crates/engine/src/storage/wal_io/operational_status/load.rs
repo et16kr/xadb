@@ -319,5 +319,5 @@ pub(in super::super) fn fits<W: WriterNamespace>() -> bool {
 }
 
 #[cfg(test)]
-#[path = "status_load_tests.rs"]
+#[path = "load/tests.rs"]
 mod tests;

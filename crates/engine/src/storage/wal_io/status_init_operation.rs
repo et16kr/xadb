@@ -38,11 +38,11 @@ const PATCH: std::ops::Range<usize> = 15248..21520;
 const INIT: std::ops::Range<usize> = 21520..37968;
 const HOME: std::ops::Range<usize> = 16128..16352;
 
-#[path = "fixed_system_operation.rs"]
+#[path = "status_init_operation/fixed.rs"]
 pub(super) mod fixed;
-#[path = "mixed_system_init.rs"]
+#[path = "status_init_operation/mixed.rs"]
 pub(super) mod mixed;
-#[path = "plan4_status_init_operation.rs"]
+#[path = "status_init_operation/plan4_retention.rs"]
 pub(crate) mod retention;
 
 /// The legacy wrappers can construct only Status. Mixed scope is selected by
@@ -1298,5 +1298,5 @@ pub(super) fn fits() -> bool {
 }
 
 #[cfg(test)]
-#[path = "status_init_operation_tests.rs"]
+#[path = "status_init_operation/tests.rs"]
 mod tests;
