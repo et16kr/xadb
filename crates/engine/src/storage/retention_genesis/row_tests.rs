@@ -114,9 +114,12 @@ fn row_genesis_rejects_versions_identity_and_noncanonical() {
             Err(UnsupportedFormat)
         );
     }
-    // A valid active Root3 page at its own LSN is not genesis.
+    // A valid active Root3 page at its own LSN is not genesis: the Root3 page
+    // decoder accepts it, and only the genesis header/Aging check refuses it.
+    let active = literal(REJECTS, 6);
+    assert!(crate::storage::retention_page::row::decode_root_page(&active, ns(0)).is_ok());
     assert_eq!(
-        validate_row_current(&literal(REJECTS, 6), ns(0), RetentionGenesisPage::Root),
+        validate_row_current(&active, ns(0), RetentionGenesisPage::Root),
         Err(Corrupt)
     );
     for (number, role) in ROLES.into_iter().enumerate() {
@@ -328,4 +331,6 @@ fn row_genesis_source_bound_covers_measured_frames() {
         bound,
         source_bytes() + crate::storage::retention_page::row::source_bytes()
     );
+    // The switch replaces the Catalog genesis charge; it must not need more.
+    assert!(bound <= current_source_bytes());
 }

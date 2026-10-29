@@ -520,4 +520,6 @@ fn row_codec_source_bounds_cover_measured_frames() {
     assert!(root >= 2 * ROOT_BYTES + JOB_BYTES + SHA);
     assert!(root >= root_max);
     assert!(whole >= root && whole >= job_max);
+    // The switch replaces the Catalog codec charges; it must not need more.
+    assert!(root <= catalog_root && whole <= catalog_whole);
 }
