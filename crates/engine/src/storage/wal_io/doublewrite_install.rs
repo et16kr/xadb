@@ -692,6 +692,7 @@ pub(in crate::storage) use allocation_reservation::operation::{
     SemanticError as CatalogAllocationError, plan4_base_allocation_source_bytes,
     plan4_system_base_allocation_source_bytes, validate_catalog_base_allocation,
     validate_plan4_base_allocation, validate_plan4_system_base_allocation,
+    validate_row_base_allocation,
 };
 
 pub(in crate::storage) use mutable_storage::{

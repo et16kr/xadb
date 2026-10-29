@@ -4,7 +4,7 @@ use super::super::super::{
 };
 use super::*;
 
-pub(super) fn raw(layout: LayoutView<'_>, slot: usize) -> Result<&[u8; 1536]> {
+pub(super) fn raw<'a, L: SeamLayout<'a>>(layout: L, slot: usize) -> Result<&'a [u8; 1536]> {
     if slot >= 36 {
         return Err(Error::InvalidInput);
     }
@@ -12,20 +12,16 @@ pub(super) fn raw(layout: LayoutView<'_>, slot: usize) -> Result<&[u8; 1536]> {
         .try_into()
         .expect("fixed descriptor"))
 }
-pub(super) fn descriptor(layout: LayoutView<'_>, slot: usize) -> Result<Option<DescriptorSpec>> {
+pub(in crate::storage::plan4_recovery_base) fn descriptor<'a, L: SeamLayout<'a>>(
+    layout: L,
+    slot: usize,
+) -> Result<Option<DescriptorSpec>> {
     let bytes = raw(layout, slot)?;
     if zero(bytes) {
         return Ok(None);
     }
     if slot == 34 {
-        return Ok(Some(
-            retention_obligation::catalog::decode(
-                bytes,
-                layout.expected.profile,
-                image(layout.bytes, 1),
-            )?
-            .descriptor(),
-        ));
+        return Ok(Some(layout.aging(bytes)?));
     }
     let owner = if slot < 32 {
         ReservationOwner::Transaction(TxnRef::decode(&bytes[24..72])?)
@@ -35,10 +31,13 @@ pub(super) fn descriptor(layout: LayoutView<'_>, slot: usize) -> Result<Option<D
     Ok(Some(obligation::decode_descriptor(
         bytes,
         owner,
-        retention_obligation::profile_reference(layout.expected.profile),
+        retention_obligation::profile_reference(layout.expected().profile),
     )?))
 }
-pub(super) fn active_descriptor(layout: LayoutView<'_>, ordinal: usize) -> Result<DescriptorSpec> {
+pub(in crate::storage::plan4_recovery_base) fn active_descriptor<'a, L: SeamLayout<'a>>(
+    layout: L,
+    ordinal: usize,
+) -> Result<DescriptorSpec> {
     let mut selected = 0;
     for slot in 0..36 {
         if let Some(spec) = descriptor(layout, slot)? {
@@ -56,15 +55,15 @@ pub(super) fn active_descriptor(layout: LayoutView<'_>, ordinal: usize) -> Resul
 
 // End the owned last-descriptor lifetime before invoking the original System
 // algebra. Provenance is an observation, never an allocation/INIT authority.
-fn system_provenance(
-    graph: &Graph<'_>,
+fn system_provenance<'a, G: Seam<'a>>(
+    graph: &G,
     reserved: ReservedInventory,
 ) -> Result<Option<(PageRef, PageKind, u64)>> {
-    let header = graph.layout.header();
-    let current = descriptor(graph.layout, 32)?;
+    let header = graph.layout().header();
+    let current = descriptor(graph.layout(), 32)?;
     let mut initialized = None;
     for ordinal in 9..64 {
-        let Some(claim) = graph.layout.provenance(ordinal)? else {
+        let Some(claim) = graph.layout().provenance(ordinal)? else {
             continue;
         };
         let ReservationOwner::System(source) = claim.source() else {
@@ -81,7 +80,7 @@ fn system_provenance(
             initialized = Some((
                 claim.page(),
                 graph
-                    .layout
+                    .layout()
                     .certificate(ordinal)?
                     .ok_or(Error::IdentityMismatch)?
                     .header
@@ -94,7 +93,7 @@ fn system_provenance(
         }
         for previous in 9..ordinal {
             if graph
-                .layout
+                .layout()
                 .provenance(previous)?
                 .is_some_and(|old| old.source() == claim.source())
             {
@@ -108,25 +107,22 @@ fn system_provenance(
     Ok(initialized)
 }
 
-fn system_allocation(graph: &Graph<'_>, reserved: ReservedInventory) -> Result<()> {
+fn system_allocation<'a, G: Seam<'a>>(graph: &G, reserved: ReservedInventory) -> Result<()> {
     let initialized = system_provenance(graph, reserved)?;
-    let header = graph.layout.header();
-    let raw = raw(graph.layout, 32)?;
-    crate::storage::wal_io::validate_catalog_base_allocation(
-        image(graph.layout.bytes, 0),
-        graph.layout.expected.profile,
+    let header = graph.layout().header();
+    let raw = raw(graph.layout(), 32)?;
+    graph.allocation(
         (!zero(raw)).then_some(raw),
         header.system_high_water[0],
         header.allocation_terminal.byte(),
         initialized,
-    )?;
-    Ok(())
+    )
 }
 
-fn validate_rows(graph: &Graph<'_>) -> Result<(usize, usize)> {
-    let header = graph.layout.header();
-    if graph.root.aging().is_some() != (header.system_high_water[2] == 1)
-        || graph.root.apply() > header.capture_lsn
+fn validate_rows<'a, G: Seam<'a>>(graph: &G) -> Result<(usize, usize)> {
+    let header = graph.layout().header();
+    if graph.aging_active() != (header.system_high_water[2] == 1)
+        || graph.apply() > header.capture_lsn
     {
         return Err(Error::IdentityMismatch);
     }
@@ -135,10 +131,10 @@ fn validate_rows(graph: &Graph<'_>) -> Result<(usize, usize)> {
     let mut previous = None;
     let mut aggregate = [RemainingBudget::default(); 5];
     for slot in 0..36 {
-        let Some(spec) = descriptor(graph.layout, slot)? else {
+        let Some(spec) = descriptor(graph.layout(), slot)? else {
             if slot < header.active_transactions as usize
                 || slot == 32 && header.system_high_water[0] != 0
-                || slot == 34 && graph.root.aging().is_some()
+                || slot == 34 && graph.aging_active()
             {
                 return Err(Error::IdentityMismatch);
             }
@@ -154,11 +150,15 @@ fn validate_rows(graph: &Graph<'_>) -> Result<(usize, usize)> {
             let OwnerState::Transaction(status) = spec.owner else {
                 return Err(Error::IdentityMismatch);
             };
-            if !matches!(
+            let catalog_state = matches!(
                 status.state(),
                 TransactionState::Active
                     | TransactionState::Aborting(RollbackState::Transaction { .. })
-            ) {
+            );
+            // Only a base4 Row actor may also be in a statement/full rollback.
+            if !catalog_state
+                && !(G::ROWS && matches!(status.state(), TransactionState::Aborting(_)))
+            {
                 return Err(Error::Unsupported);
             }
             let actor = status.reference();
@@ -174,24 +174,26 @@ fn validate_rows(graph: &Graph<'_>) -> Result<(usize, usize)> {
             }
             previous = Some(key);
             let terminal = graph
-                .jobs
                 .for_actor(actor, true)?
                 .ok_or(Error::IdentityMismatch)?;
-            if terminal.state() != queue::JobState::TerminalLeased
-                || spec.chain.birth != terminal.lease_lsn()
+            if terminal.phase() != Phase::TerminalLeased || spec.chain.birth != terminal.lease_lsn()
             {
                 return Err(Error::IdentityMismatch);
             }
-            let root = graph.jobs.for_actor(actor, false)?;
-            semantic_catalog::ledger::validate_transaction(
-                raw(graph.layout, slot)?,
-                graph.layout.expected.profile,
-                graph.home(terminal)?,
-                root,
-            )?;
+            // A Row actor's residual ledger is the base4 Row owner's check.
+            if terminal.row_scope() {
+                transactions += 1;
+                add_budget(&mut aggregate, &spec.remaining)?;
+                continue;
+            }
+            if !catalog_state {
+                return Err(Error::Unsupported);
+            }
+            let root = graph.for_actor(actor, false)?;
+            graph.catalog_transaction(raw(graph.layout(), slot)?, graph.home(terminal)?, root)?;
             if let Some(root) = root
                 && (spec.chain.apply < root.last_step()
-                    || root.state() == queue::JobState::RootReserved
+                    || root.phase() == Phase::RootReserved
                         && (spec.chain.apply != root.lease_lsn()
                             || spec.inventory.change_lsn != root.lease_lsn()))
             {
@@ -204,7 +206,8 @@ fn validate_rows(graph: &Graph<'_>) -> Result<(usize, usize)> {
             };
             if !matches!(slot, 32 | 34)
                 || progress.reference.kind() as usize != slot - 31
-                || progress.reference.namespace() != graph.layout.expected.profile.spec().namespace
+                || progress.reference.namespace()
+                    != graph.layout().expected().profile.spec().namespace
                 || progress.reference.generation() != one()
                 || progress.reference.id() != header.system_high_water[slot - 32]
             {
@@ -226,30 +229,33 @@ fn validate_rows(graph: &Graph<'_>) -> Result<(usize, usize)> {
     Ok((transactions, systems))
 }
 
-fn validate_reverse(graph: &Graph<'_>, transactions: usize) -> Result<()> {
+fn validate_reverse<'a, G: Seam<'a>>(graph: &G, transactions: usize) -> Result<()> {
     // Reverse ATT check: every leased Terminal has exactly one active row.
     for index in 0..JOB_COUNT {
-        let job = graph.jobs.job(index)?;
-        if !job.state().is_terminal() {
+        let job = graph.job(index)?;
+        if !job.phase().is_terminal() {
             continue;
         }
         let mut count = 0;
         for slot in 0..transactions {
-            if descriptor(graph.layout, slot)?.is_some_and(|d| {
+            if descriptor(graph.layout(), slot)?.is_some_and(|d| {
                 d.owner.reference()
                     == ReservationOwner::Transaction(job.source().expect("terminal"))
             }) {
                 count += 1;
             }
         }
-        if count != usize::from(job.state() == queue::JobState::TerminalLeased) {
+        if count != usize::from(job.phase() == Phase::TerminalLeased) {
             return Err(Error::IdentityMismatch);
         }
     }
     Ok(())
 }
 
-pub(super) fn validate(graph: &Graph<'_>, reserved: ReservedInventory) -> Result<(usize, usize)> {
+pub(in crate::storage::plan4_recovery_base) fn validate<'a, G: Seam<'a>>(
+    graph: &G,
+    reserved: ReservedInventory,
+) -> Result<(usize, usize)> {
     let counts = validate_rows(graph)?;
     validate_reverse(graph, counts.0)?;
     system_allocation(graph, reserved)?;
@@ -276,14 +282,14 @@ impl InventorySource for Embedded<'_> {
     }
 }
 
-fn inventory_observation(
-    graph: &Graph<'_>,
+fn inventory_observation<'a, G: Seam<'a>>(
+    graph: &G,
     reserved: ReservedInventory,
     owners: usize,
     scratch: &mut [[u8; PAGE_BYTES]; 4],
 ) -> Result<InventoryObservation> {
-    let header = graph.layout.header();
-    let bank = graph.layout.inventory();
+    let header = graph.layout().header();
+    let bank = graph.layout().inventory();
     let items = match reserved {
         ReservedInventory::None => 0,
         ReservedInventory::SystemPage => 1,
@@ -301,7 +307,7 @@ fn inventory_observation(
         return Err(Error::Corrupt);
     }
     let expected = InventoryExpected {
-        namespace: graph.layout.expected.profile.spec().namespace,
+        namespace: graph.layout().expected().profile.spec().namespace,
         reference: ControlRef {
             kind: ControlKind::OwnershipRoot,
             slot: 2,
@@ -311,7 +317,7 @@ fn inventory_observation(
             digest: content_digest(&bank[..root_length]),
         },
         capture_lsn: header.capture_lsn,
-        profile: retention_obligation::profile_reference(graph.layout.expected.profile),
+        profile: retention_obligation::profile_reference(graph.layout().expected().profile),
         item_limit: 3,
     };
     let mut source = Embedded { bytes: bank, items };
@@ -319,7 +325,7 @@ fn inventory_observation(
         &bank[..root_length],
         expected,
         owners,
-        |ordinal| active_descriptor(graph.layout, ordinal).map_err(|_| InventoryError::Corrupt),
+        |ordinal| active_descriptor(graph.layout(), ordinal).map_err(|_| InventoryError::Corrupt),
         &mut source,
         scratch,
     )?;
@@ -329,24 +335,24 @@ fn inventory_observation(
     Ok(observed)
 }
 
-fn inventory_items(graph: &Graph<'_>, reserved: ReservedInventory) -> Result<()> {
-    let bank = graph.layout.inventory();
+fn inventory_items<'a, G: Seam<'a>>(graph: &G, reserved: ReservedInventory) -> Result<()> {
+    let bank = graph.layout().inventory();
     let items = match reserved {
         ReservedInventory::None => 0,
         ReservedInventory::SystemPage => 1,
         ReservedInventory::CatalogCreate => 3,
     };
     let allocation = allocation_page::decode_allocation_page(
-        image(graph.layout.bytes, 0),
-        identity(graph.layout.expected, 0, one(), 1),
-        graph.layout.expected.profile.spec().namespace,
+        image(graph.layout().bytes(), 0),
+        identity(graph.layout().expected(), 0, one(), 1),
+        graph.layout().expected().profile.spec().namespace,
     )?;
     let mut pair_seen = 0u8;
     let mut undo_seen = false;
     for index in 0..items {
         let item = &bank
             [INVENTORY_ROOT_CAP + 128 + index * 96..INVENTORY_ROOT_CAP + 128 + (index + 1) * 96];
-        let descriptor = active_descriptor(graph.layout, get16(item, 2) as usize)?;
+        let descriptor = active_descriptor(graph.layout(), get16(item, 2) as usize)?;
         if get(item, 72) != descriptor.inventory.change_lsn {
             return Err(Error::IdentityMismatch);
         }
@@ -358,7 +364,7 @@ fn inventory_items(graph: &Graph<'_>, reserved: ReservedInventory) -> Result<()>
                     || reference.file != allocation.header().identity.page.file
                     || !matches!(allocation.entry(reference.page_no as usize)?, AllocationEntry::Reserved { generation, claimant }
                     if generation == reference.incarnation && claimant == descriptor.owner.reference())
-                    || descriptor.owner.reference() != descriptor_for_system(graph.layout)?
+                    || descriptor.owner.reference() != descriptor_for_system(graph.layout())?
                 {
                     return Err(Error::IdentityMismatch);
                 }
@@ -368,10 +374,9 @@ fn inventory_items(graph: &Graph<'_>, reserved: ReservedInventory) -> Result<()>
                     return Err(Error::IdentityMismatch);
                 };
                 let job = graph
-                    .jobs
                     .for_actor(status.reference(), false)?
                     .ok_or(Error::IdentityMismatch)?;
-                if job.state() != queue::JobState::RootReserved
+                if job.phase() != Phase::RootReserved
                     || item[1] != 2
                     || get(item, 72) != job.lease_lsn()
                 {
@@ -409,8 +414,8 @@ fn inventory_items(graph: &Graph<'_>, reserved: ReservedInventory) -> Result<()>
     Ok(())
 }
 
-pub(super) fn inventory(
-    graph: &Graph<'_>,
+pub(in crate::storage::plan4_recovery_base) fn inventory<'a, G: Seam<'a>>(
+    graph: &G,
     reserved: ReservedInventory,
     owners: usize,
     scratch: &mut [[u8; PAGE_BYTES]; 4],
@@ -422,7 +427,7 @@ pub(super) fn inventory(
     Ok(observed)
 }
 
-fn descriptor_for_system(layout: LayoutView<'_>) -> Result<ReservationOwner> {
+fn descriptor_for_system<'a, L: SeamLayout<'a>>(layout: L) -> Result<ReservationOwner> {
     Ok(descriptor(layout, 32)?
         .ok_or(Error::IdentityMismatch)?
         .owner
@@ -432,9 +437,9 @@ fn descriptor_for_system(layout: LayoutView<'_>) -> Result<ReservationOwner> {
 /// The generic inventory checker calls back into `active_descriptor`. This
 /// closure remains additive with that checker; its nested Aging decoder is not
 /// replaced by a candidate descriptor or a borrowed, unchecked owner header.
-fn descriptor_source_bytes() -> usize {
+fn descriptor_source_bytes<'a, L: SeamLayout<'a>>() -> usize {
     use std::mem::size_of;
-    let outer = 2 * size_of::<LayoutView<'_>>()
+    let outer = 2 * size_of::<L>()
         + 2 * size_of::<ReservationOwner>()
         + 4 * size_of::<Result<()>>()
         + 8 * size_of::<&[u8]>()
@@ -443,7 +448,7 @@ fn descriptor_source_bytes() -> usize {
     // validation/remaining/hash temporaries and the additional Root2 check.
     // Regular Tx/System decode has no wider closure. `descriptor()` following
     // a checked AgingView runs that original decoder again, sequentially.
-    let decode = retention_obligation::catalog::source_bytes();
+    let decode = L::aging_source_bytes();
     let returned = 2 * size_of::<DescriptorSpec>()
         + 2 * size_of::<Option<DescriptorSpec>>()
         + 2 * size_of::<Result<Option<DescriptorSpec>>>()
@@ -451,32 +456,32 @@ fn descriptor_source_bytes() -> usize {
     outer + decode.max(returned)
 }
 
-fn active_descriptor_source_bytes() -> usize {
+fn active_descriptor_source_bytes<'a, L: SeamLayout<'a>>() -> usize {
     use std::mem::size_of;
-    let outer = 2 * size_of::<LayoutView<'_>>() + size_of::<[usize; 8]>() + 4 * size_of::<&[u8]>();
+    let outer = 2 * size_of::<L>() + size_of::<[usize; 8]>() + 4 * size_of::<&[u8]>();
     // Each loop iteration ends before another descriptor is decoded. At the
     // successful return, retain both extracted values and their Result slots.
     let returned = 2 * size_of::<DescriptorSpec>()
         + size_of::<Option<DescriptorSpec>>()
         + size_of::<Result<Option<DescriptorSpec>>>()
         + 2 * size_of::<Result<DescriptorSpec>>();
-    outer + descriptor_source_bytes().max(returned)
+    outer + descriptor_source_bytes::<L>().max(returned)
 }
 
 #[derive(Clone, Copy, Debug)]
-pub(super) struct SourceCensus {
-    pub(super) descriptor: usize,
-    pub(super) rows: usize,
-    pub(super) reverse: usize,
-    pub(super) system: usize,
-    pub(super) inventory: usize,
-    pub(super) peak: usize,
+pub(in crate::storage::plan4_recovery_base) struct SourceCensus {
+    pub(in crate::storage::plan4_recovery_base) descriptor: usize,
+    pub(in crate::storage::plan4_recovery_base) rows: usize,
+    pub(in crate::storage::plan4_recovery_base) reverse: usize,
+    pub(in crate::storage::plan4_recovery_base) system: usize,
+    pub(in crate::storage::plan4_recovery_base) inventory: usize,
+    pub(in crate::storage::plan4_recovery_base) peak: usize,
 }
 
-pub(super) fn source_census() -> SourceCensus {
+pub(in crate::storage::plan4_recovery_base) fn source_census<'a, G: Seam<'a>>() -> SourceCensus {
     use std::mem::size_of;
-    let descriptor = descriptor_source_bytes();
-    let active = active_descriptor_source_bytes();
+    let descriptor = descriptor_source_bytes::<G::Layout>();
+    let active = active_descriptor_source_bytes::<G::Layout>();
     let scalar =
         4 * size_of::<Result<()>>() + 16 * size_of::<u64>() + 16 * size_of::<&[u8]>() + 512; // narrow reference codecs, iterators and conversion results
     let rows_outer = size_of::<Header>()
@@ -486,18 +491,18 @@ pub(super) fn source_census() -> SourceCensus {
         + scalar;
     let transaction = size_of::<DescriptorSpec>()
         + size_of::<Result<Option<DescriptorSpec>>>()
-        + 3 * size_of::<queue::JobView<'_>>()
-        + 2 * size_of::<Result<Option<queue::JobView<'_>>>>()
+        + 3 * size_of::<G::Job>()
+        + 2 * size_of::<Result<Option<G::Job>>>()
         + 2 * size_of::<StatusHome>()
         + size_of::<Result<StatusHome>>()
         + 2 * size_of::<crate::storage::transaction_record::TransactionStatus>()
         + 2 * size_of::<TxnRef>()
         + size_of::<(u32, u64, u64)>()
-        + semantic_catalog::transaction_source_bytes();
+        + G::transaction_source_bytes();
     let rows = rows_outer + descriptor.max(transaction);
     let reverse = scalar
-        + 2 * size_of::<queue::JobView<'_>>()
-        + size_of::<Result<queue::JobView<'_>>>()
+        + 2 * size_of::<G::Job>()
+        + size_of::<Result<G::Job>>()
         + size_of::<Result<Option<DescriptorSpec>>>()
         + descriptor;
     let provenance = scalar
@@ -510,7 +515,7 @@ pub(super) fn source_census() -> SourceCensus {
         + 2 * size_of::<Certificate>()
         + 2 * size_of::<Result<Option<Certificate>>>()
         + 2 * size_of::<PageHeader>()
-        + descriptor.max(queue::source_bytes());
+        + descriptor.max(G::codec_source_bytes());
     // system_provenance returns before the old allocation algebra starts, so
     // its owned last descriptor cannot overlap that validator's descriptors.
     let system = scalar
@@ -529,12 +534,12 @@ pub(super) fn source_census() -> SourceCensus {
         + size_of::<allocation_page::AllocationPage<'_>>()
         + 2 * size_of::<DescriptorSpec>()
         + 2 * size_of::<Result<DescriptorSpec>>()
-        + 2 * size_of::<queue::JobView<'_>>()
-        + 2 * size_of::<Result<Option<queue::JobView<'_>>>>()
+        + 2 * size_of::<G::Job>()
+        + 2 * size_of::<Result<Option<G::Job>>>()
         + 4 * size_of::<PageRef>()
         + 2 * size_of::<UndoRef>()
         + 2 * size_of::<AllocationEntry>()
-        + active.max(queue::source_bytes());
+        + active.max(G::codec_source_bytes());
     let inventory = size_of::<InventoryObservation>()
         + size_of::<Result<InventoryObservation>>()
         + inventory_verify.max(inventory_items);

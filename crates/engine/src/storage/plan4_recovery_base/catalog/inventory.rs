@@ -6,6 +6,11 @@ use crate::storage::control::Profile;
 
 #[path = "inventory/current.rs"]
 mod current;
+#[allow(
+    unused_imports,
+    reason = "pure Profile3 XOI mode awaits the base4 recovery owner"
+)]
+pub(in crate::storage) use current::encode_row_current;
 pub(in crate::storage) use current::{InventoryRows, current_source_bytes, encode_current};
 
 pub(in crate::storage) const OWNER_BYTES: usize = 56;
@@ -15,6 +20,15 @@ pub(in crate::storage) const MAX_ITEMS: usize = 3;
 const OWNERS: usize = 128;
 const CHUNK: usize = 2176;
 const ITEMS: usize = CHUNK + 128;
+
+/// One exact XOI owner tuple. The byte layout is shared; each mode admits only
+/// its own Profile format and its own Aging/Job codecs, never a range.
+#[derive(Clone, Copy, PartialEq, Eq)]
+#[repr(u8)]
+enum Mode {
+    Catalog2 = 2,
+    Row3 = 3,
+}
 
 pub(in crate::storage) fn owner_slot(
     output: &mut [u8; PAGE_BYTES],
@@ -51,7 +65,8 @@ fn seal(bytes: &mut [u8]) {
 /// must already be staged through owner_slot/item_slot. Generation and capture
 /// belong to the original selected owner, not to this codec. Bounds failure
 /// leaves the page unchanged; successful packing zeroes every unused byte.
-pub(in crate::storage) fn finish(
+fn finish(
+    mode: Mode,
     profile: Profile,
     generation: u64,
     capture: u64,
@@ -59,7 +74,7 @@ pub(in crate::storage) fn finish(
     item_count: usize,
     output: &mut [u8; PAGE_BYTES],
 ) -> Result<()> {
-    if profile.format() != 2
+    if profile.format() != u16::from(mode as u8)
         || generation == 0
         || capture == 0
         || owner_count > MAX_OWNERS

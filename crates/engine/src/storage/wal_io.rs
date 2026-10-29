@@ -766,4 +766,9 @@ pub(in crate::storage) use bootstrap::{
     VisibilityResult,
 };
 
+#[allow(
+    unused_imports,
+    reason = "pure Profile3 entry awaits the base4 Row graph"
+)]
+pub(in crate::storage) use bootstrap::validate_row_base_allocation;
 pub(in crate::storage) use bootstrap::{CatalogAllocationError, validate_catalog_base_allocation};

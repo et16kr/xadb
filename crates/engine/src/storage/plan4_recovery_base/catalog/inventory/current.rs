@@ -1,6 +1,6 @@
 //! Canonical current XOI projection from borrowed original/projected rows. This
 //! codec neither authenticates the rows nor issues inventory or INIT authority.
-use super::{finish, item_slot, owner_slot};
+use super::{Mode, finish, item_slot, owner_slot};
 use crate::storage::{
     allocation_page::{self, AllocationEntry, ReservationOwner, SystemWorkRef},
     control::Profile,
@@ -8,7 +8,7 @@ use crate::storage::{
     page::{PageIdentity, PageRef},
     plan4_recovery_base::{Error, PAGE_BYTES, Result, first_file, one, put, put16},
     retention_obligation,
-    retention_page::catalog as queue,
+    retention_page::{catalog as queue, row as row_queue},
     semantic_catalog,
     transaction_record::TxnRef,
 };
@@ -47,6 +47,29 @@ pub(in crate::storage) fn encode_current(
     rows: &impl InventoryRows,
     output: &mut [u8; PAGE_BYTES],
 ) -> Result<(u64, u64)> {
+    encode(Mode::Catalog2, profile, generation, capture, rows, output)
+}
+
+/// The exact Profile3 entry: `rows` carries a Root3 page and Job3 cells.
+pub(in crate::storage) fn encode_row_current(
+    profile: Profile,
+    generation: u64,
+    capture: u64,
+    rows: &impl InventoryRows,
+    output: &mut [u8; PAGE_BYTES],
+) -> Result<(u64, u64)> {
+    encode(Mode::Row3, profile, generation, capture, rows, output)
+}
+
+fn encode(
+    mode: Mode,
+    profile: Profile,
+    generation: u64,
+    capture: u64,
+    rows: &impl InventoryRows,
+    output: &mut [u8; PAGE_BYTES],
+) -> Result<(u64, u64)> {
+    // The exact format gate stays in `finish`, as in the original order.
     output.fill(0);
     let mut future = (0, 0);
     let mut used = 0u32;
@@ -96,7 +119,14 @@ pub(in crate::storage) fn encode_current(
     for (is_aging, bytes) in [(false, rows.allocation()), (true, rows.aging())] {
         let Some(bytes) = bytes else { continue };
         let decoded = if is_aging {
-            retention_obligation::catalog::decode(bytes, profile, rows.root())?.descriptor()
+            match mode {
+                Mode::Catalog2 => {
+                    retention_obligation::catalog::decode(bytes, profile, rows.root())?.descriptor()
+                }
+                Mode::Row3 => {
+                    retention_obligation::row::decode(bytes, profile, rows.root())?.descriptor()
+                }
+            }
         } else {
             let owner = SystemWorkRef::decode(&bytes[24..72])?;
             obligation::decode_descriptor(
@@ -125,6 +155,15 @@ pub(in crate::storage) fn encode_current(
     }
     let mut count = 0;
     for ordinal in 0..64 {
+        if mode == Mode::Row3 {
+            // Job3 Catalog-scope items need the Profile3 semantic projection
+            // (U2-C3); a Row-scope Reserved cell is not a base4 state.
+            let job = row_queue::decode_job(rows.job(ordinal)?, profile.spec().namespace)?;
+            if job.state() == row_queue::JobState::RootReserved {
+                return Err(Error::Unsupported);
+            }
+            continue;
+        }
         let job = queue::decode_job(rows.job(ordinal)?, profile.spec().namespace)?;
         if job.state() != queue::JobState::RootReserved {
             continue;
@@ -203,7 +242,7 @@ pub(in crate::storage) fn encode_current(
     if allocation.is_some_and(|(_, _, _, items)| items != system_items) {
         return Err(Error::IdentityMismatch);
     }
-    finish(profile, generation, capture, owners, count, output)?;
+    finish(mode, profile, generation, capture, owners, count, output)?;
     Ok(future)
 }
 

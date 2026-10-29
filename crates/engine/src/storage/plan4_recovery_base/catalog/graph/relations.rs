@@ -9,29 +9,27 @@ fn actor_bound(actor: TxnRef, h: &Header) -> Result<()> {
     Ok(())
 }
 
-fn terminal(graph: &Graph<'_>, job: queue::JobView<'_>) -> Result<()> {
+fn terminal<'a, G: Seam<'a>>(graph: &G, job: G::Job) -> Result<()> {
     let home = graph.home(job)?;
     let TransactionStatusCell::Occupied(status) = home.core() else {
         return Err(Error::IdentityMismatch);
     };
     let actor = job.source().ok_or(Error::IdentityMismatch)?;
-    actor_bound(actor, &graph.layout.header())?;
-    let root = graph.jobs.for_actor(actor, false)?;
-    semantic_catalog::ledger::transaction_remaining(status, root)?;
-    if home.incoming()
-        != u64::from(root.is_some_and(|j| j.state() == queue::JobState::RootRetained))
-    {
+    actor_bound(actor, &graph.layout().header())?;
+    let root = graph.for_actor(actor, false)?;
+    graph.catalog_remaining(status, root)?;
+    if home.incoming() != u64::from(root.is_some_and(|j| j.phase() == Phase::RootRetained)) {
         return Err(Error::IdentityMismatch);
     }
-    let valid = match job.state() {
-        queue::JobState::TerminalLeased => matches!(
+    let valid = match job.phase() {
+        Phase::TerminalLeased => matches!(
             status.state(),
             TransactionState::Active
                 | TransactionState::Aborting(RollbackState::Transaction { .. })
         ),
-        queue::JobState::TerminalReady => match status.state() {
+        Phase::TerminalReady => match status.state() {
             TransactionState::Committed(q) => {
-                job.outcome() == 1 && q.get() == job.commit_q() && q.get() <= graph.root.commit_c()
+                job.outcome() == 1 && q.get() == job.commit_q() && q.get() <= graph.commit_c()
             }
             TransactionState::Aborted => job.outcome() == 2,
             _ => false,
@@ -41,11 +39,11 @@ fn terminal(graph: &Graph<'_>, job: queue::JobView<'_>) -> Result<()> {
     if !valid {
         return Err(Error::OrderMismatch);
     }
-    if job.state() == queue::JobState::TerminalReady {
+    if job.phase() == Phase::TerminalReady {
         if job.outcome() == 1 {
             for index in 0..JOB_COUNT {
-                let other = graph.jobs.job(index)?;
-                if other.state() == queue::JobState::TerminalReady
+                let other = graph.job(index)?;
+                if other.phase() == Phase::TerminalReady
                     && other.outcome() == 1
                     && other.source() != Some(actor)
                     && other.commit_q() == job.commit_q()
@@ -66,7 +64,7 @@ fn terminal(graph: &Graph<'_>, job: queue::JobView<'_>) -> Result<()> {
     Ok(())
 }
 
-fn root_job(graph: &Graph<'_>, job: queue::JobView<'_>) -> Result<()> {
+fn root_job<'a, G: Seam<'a>>(graph: &G, job: G::Job) -> Result<()> {
     let actor = job.source().ok_or(Error::IdentityMismatch)?;
     let undo = job.undo().ok_or(Error::IdentityMismatch)?;
     let object = job.object().ok_or(Error::IdentityMismatch)?;
@@ -76,15 +74,15 @@ fn root_job(graph: &Graph<'_>, job: queue::JobView<'_>) -> Result<()> {
         return Err(Error::IdentityMismatch);
     }
     let raw = page.cell(0).ok_or(Error::Corrupt)?;
-    if job.state() == queue::JobState::RootReserved {
+    if job.phase() == Phase::RootReserved {
         undo_record::decode_free_undo_record(raw, undo.generation())?;
         if graph.record(object.object)?.is_some() || header.lsn.0 != job.lease_lsn() {
             return Err(Error::OrderMismatch);
         }
         let allocation = allocation_page::decode_allocation_page(
-            image(graph.layout.bytes, 0),
-            identity(graph.layout.expected, 0, one(), 1),
-            graph.layout.expected.profile.spec().namespace,
+            image(graph.layout().bytes(), 0),
+            identity(graph.layout().expected(), 0, one(), 1),
+            graph.layout().expected().profile.spec().namespace,
         )?;
         for reference in job.pair().ok_or(Error::IdentityMismatch)? {
             if !matches!(allocation.entry(reference.page_no as usize)?, AllocationEntry::Reserved { generation, claimant }
@@ -94,7 +92,7 @@ fn root_job(graph: &Graph<'_>, job: queue::JobView<'_>) -> Result<()> {
             }
         }
         if allocation.header().lsn.0 != job.lease_lsn()
-            || job.lease_lsn() != graph.layout.header().capture_lsn
+            || job.lease_lsn() != graph.layout().header().capture_lsn
         {
             return Err(Error::OrderMismatch);
         }
@@ -111,7 +109,7 @@ fn root_job(graph: &Graph<'_>, job: queue::JobView<'_>) -> Result<()> {
     let decoded = undo_record::decode_undo_record(
         raw,
         UndoRecordExpectation {
-            namespace: graph.layout.expected.profile.spec().namespace,
+            namespace: graph.layout().expected().profile.spec().namespace,
             reference: undo,
             target,
         },
@@ -130,7 +128,7 @@ fn root_job(graph: &Graph<'_>, job: queue::JobView<'_>) -> Result<()> {
     {
         return Err(Error::IdentityMismatch);
     }
-    if job.state() == queue::JobState::RootRetained {
+    if job.phase() == Phase::RootRetained {
         let (record, value) = graph
             .record(object.object)?
             .ok_or(Error::IdentityMismatch)?;
@@ -146,7 +144,7 @@ fn root_job(graph: &Graph<'_>, job: queue::JobView<'_>) -> Result<()> {
             || current.anchor != job.pair().ok_or(Error::IdentityMismatch)?[0]
             || value.len() + 12 != job.catalog_bytes() as usize
             || semantic_catalog::catalog_projection_digest(
-                graph.layout.expected.profile.spec().namespace,
+                graph.layout().expected().profile.spec().namespace,
                 object.object,
                 Some(value),
             )? != *job.projection_digest()
@@ -172,8 +170,8 @@ fn root_job(graph: &Graph<'_>, job: queue::JobView<'_>) -> Result<()> {
         {
             return Err(Error::OrderMismatch);
         }
-        match (job.state(), graph.record(object.object)?) {
-            (queue::JobState::RootReleasingCommitted, Some((record, _))) => {
+        match (job.phase(), graph.record(object.object)?) {
+            (Phase::RootReleasingCommitted, Some((record, _))) => {
                 let h = record.header();
                 if !matches!(h.stamp, VersionStamp::Committed(q) if q.get() == job.commit_q())
                     || h.undo.is_some()
@@ -183,28 +181,28 @@ fn root_job(graph: &Graph<'_>, job: queue::JobView<'_>) -> Result<()> {
                     return Err(Error::IdentityMismatch);
                 }
             }
-            (queue::JobState::RootReleasingCompensated, None) => (),
+            (Phase::RootReleasingCompensated, None) => (),
             _ => return Err(Error::IdentityMismatch),
         }
     }
     Ok(())
 }
 
-fn catalog(graph: &Graph<'_>) -> Result<()> {
-    let namespace = graph.layout.expected.profile.spec().namespace;
+fn catalog<'a, G: Seam<'a>>(graph: &G) -> Result<()> {
+    let namespace = graph.layout().expected().profile.spec().namespace;
     let anchor = anchor::decode_anchor(
-        image(graph.layout.bytes, 7),
-        identity(graph.layout.expected, 7, one(), 5),
+        image(graph.layout().bytes(), 7),
+        identity(graph.layout().expected(), 7, one(), 5),
     )?;
     let root = anchor.root();
     if root.tree != TreeKind::Catalog
-        || root.page != identity(graph.layout.expected, 8, one(), 5).page
+        || root.page != identity(graph.layout().expected(), 8, one(), 5).page
         || root.level != 0
         || root.revision != 1
     {
         return Err(Error::IdentityMismatch);
     }
-    anchor.decode_root(image(graph.layout.bytes, 8))?;
+    anchor.decode_root(image(graph.layout().bytes(), 8))?;
     let tree = graph.catalog()?;
     for index in 0..tree.len() {
         let entry = tree.entry(index)?;
@@ -217,7 +215,7 @@ fn catalog(graph: &Graph<'_>) -> Result<()> {
             catalog_record::decode_catalog_record(value, CatalogExpectation { namespace, object })?;
         let h = record.header();
         if object.get() < 6
-            || object.get() > graph.root.object_high()
+            || object.get() > graph.object_high()
             || h.identity.generation != one()
             || h.identity.schema_epoch.get() != 1
             || h.retired
@@ -227,7 +225,7 @@ fn catalog(graph: &Graph<'_>) -> Result<()> {
             return Err(Error::Unsupported);
         }
         let provenance = graph
-            .layout
+            .layout()
             .provenance(h.anchor.page_no as usize)?
             .ok_or(Error::ProvenanceMismatch)?;
         let pair = provenance.pair().ok_or(Error::ProvenanceMismatch)?;
@@ -263,7 +261,8 @@ fn catalog(graph: &Graph<'_>) -> Result<()> {
                 arity: 0,
             },
         )?;
-        if row.len() != 0 {
+        // Base3 tables are empty; the base4 Row owner validates actual rows.
+        if !G::ROWS && row.len() != 0 {
             return Err(Error::Unsupported);
         }
         // One independent CREATE can publish at most one Catalog object.
@@ -293,11 +292,10 @@ fn catalog(graph: &Graph<'_>) -> Result<()> {
         match h.stamp {
             VersionStamp::Transaction(stamped) => {
                 let job = graph
-                    .jobs
                     .for_actor(stamped, false)?
                     .ok_or(Error::IdentityMismatch)?;
                 if actor != stamped
-                    || job.state() != queue::JobState::RootRetained
+                    || job.phase() != Phase::RootRetained
                     || job.object() != Some(h.identity)
                     || job.undo() != h.undo
                     || job.pair() != Some(pair)
@@ -306,32 +304,32 @@ fn catalog(graph: &Graph<'_>) -> Result<()> {
                 }
             }
             VersionStamp::Committed(q) => {
-                if q.get() > graph.root.commit_c() || h.undo.is_some() {
+                if q.get() > graph.commit_c() || h.undo.is_some() {
                     return Err(Error::OrderMismatch);
                 }
                 for index in 0..JOB_COUNT {
-                    let terminal = graph.jobs.job(index)?;
-                    if !terminal.state().is_terminal() {
+                    let terminal = graph.job(index)?;
+                    if !terminal.phase().is_terminal() {
                         continue;
                     }
                     let other = terminal.source().expect("terminal");
                     if other.id() == actor.id() {
                         if other != actor
-                            || terminal.state() != queue::JobState::TerminalReady
+                            || terminal.phase() != Phase::TerminalReady
                             || terminal.outcome() != 1
                             || terminal.commit_q() != q.get()
                         {
                             return Err(Error::OrderMismatch);
                         }
-                    } else if terminal.state() == queue::JobState::TerminalReady
+                    } else if terminal.phase() == Phase::TerminalReady
                         && terminal.outcome() == 1
                         && terminal.commit_q() == q.get()
                     {
                         return Err(Error::OrderMismatch);
                     }
                 }
-                if let Some(job) = graph.jobs.for_actor(actor, false)?
-                    && (job.state() != queue::JobState::RootReleasingCommitted
+                if let Some(job) = graph.for_actor(actor, false)?
+                    && (job.phase() != Phase::RootReleasingCommitted
                         || job.object() != Some(h.identity)
                         || job.commit_q() != q.get())
                 {
@@ -343,17 +341,17 @@ fn catalog(graph: &Graph<'_>) -> Result<()> {
     Ok(())
 }
 
-fn payloads(graph: &Graph<'_>, begins: u64) -> Result<()> {
+fn payloads<'a, G: Seam<'a>>(graph: &G, begins: u64) -> Result<()> {
     for ordinal in 9..64 {
-        let Some(cert) = graph.layout.certificate(ordinal)? else {
+        let Some(cert) = graph.layout().certificate(ordinal)? else {
             continue;
         };
         let bytes = graph
-            .layout
+            .layout()
             .image(ordinal)?
             .ok_or(Error::IdentityMismatch)?;
         let provenance = graph
-            .layout
+            .layout()
             .provenance(ordinal)?
             .ok_or(Error::ProvenanceMismatch)?;
         let page = page::decode_page(bytes, cert.header.identity, cert.header.kind)?;
@@ -362,7 +360,7 @@ fn payloads(graph: &Graph<'_>, begins: u64) -> Result<()> {
                 let homes = status_home::decode_status_home_page(
                     bytes,
                     cert.header.identity,
-                    graph.layout.expected.profile.spec().namespace,
+                    graph.layout().expected().profile.spec().namespace,
                 )?;
                 if homes.len() != 1 {
                     return Err(Error::Unsupported);
@@ -377,7 +375,6 @@ fn payloads(graph: &Graph<'_>, begins: u64) -> Result<()> {
                         }
                         for index in 0..JOB_COUNT {
                             if graph
-                                .jobs
                                 .job(index)?
                                 .status()
                                 .is_some_and(|s| s.page().page_no == ordinal as u64)
@@ -388,7 +385,6 @@ fn payloads(graph: &Graph<'_>, begins: u64) -> Result<()> {
                     }
                     TransactionStatusCell::Occupied(status) => {
                         let job = graph
-                            .jobs
                             .for_actor(status.reference(), true)?
                             .ok_or(Error::IdentityMismatch)?;
                         if job.status().expect("terminal").page() != cert.header.identity.page
@@ -408,12 +404,12 @@ fn payloads(graph: &Graph<'_>, begins: u64) -> Result<()> {
                     return Err(Error::Unsupported);
                 }
                 let generation = Generation::new(get(raw, 8)).map_err(|_| Error::Corrupt)?;
-                if generation.get() - 1 > graph.root.undo_high() {
+                if generation.get() - 1 > graph.undo_high() {
                     return Err(Error::OrderMismatch);
                 }
                 let mut root = None;
                 for index in 0..JOB_COUNT {
-                    let job = graph.jobs.job(index)?;
+                    let job = graph.job(index)?;
                     if job
                         .undo()
                         .is_some_and(|u| u.page().page_no == ordinal as u64)
@@ -429,7 +425,7 @@ fn payloads(graph: &Graph<'_>, begins: u64) -> Result<()> {
                 }
                 if raw[6] == 0 {
                     undo_record::decode_free_undo_record(raw, generation)?;
-                    if root.is_some_and(|j| j.state() != queue::JobState::RootReserved)
+                    if root.is_some_and(|j| j.phase() != Phase::RootReserved)
                         || generation == one() && cert.header.lsn.0 != provenance.init_lsn()
                     {
                         return Err(Error::OrderMismatch);
@@ -456,39 +452,47 @@ fn payloads(graph: &Graph<'_>, begins: u64) -> Result<()> {
     Ok(())
 }
 
-pub(super) fn validate(graph: &Graph<'_>) -> Result<ReservedInventory> {
-    // Current CREATE-only grammar issues one Object and one UndoSequence per
-    // Reserve, including canceled attempts. This is a necessary arithmetic
+pub(in crate::storage::plan4_recovery_base) fn validate<'a, G: Seam<'a>>(
+    graph: &G,
+) -> Result<ReservedInventory> {
+    // Current grammar issues one Object (CREATE) or RowId (INSERT) and one
+    // UndoSequence per Reserve, including canceled attempts; Root2 has no Row
+    // issuer, so base3 reads row_high as zero. This is a necessary arithmetic
     // constraint; only original capture provenance proves the actual history.
-    let creates = graph.root.object_high() - 5; // Root codec checked >= 5.
-    let begins = graph.root.issued().checked_sub(graph.root.undo_high());
-    if graph.root.undo_high() != creates
-        || graph.root.canceled() > creates
-        || begins.is_none_or(|count| graph.root.commit_c() > count)
+    let creates = graph.object_high() - 5; // Root codec checked >= 5.
+    let begins = graph.issued().checked_sub(graph.undo_high());
+    if creates.checked_add(graph.row_high()) != Some(graph.undo_high())
+        || graph.canceled() > graph.undo_high()
+        || begins.is_none_or(|count| graph.commit_c() > count)
     {
         return Err(Error::OrderMismatch);
     }
     for index in 0..JOB_COUNT {
-        let job = graph.jobs.job(index)?;
-        if job.generation().get() - 1 > graph.root.issued() {
+        let job = graph.job(index)?;
+        if job.generation().get() - 1 > graph.issued() {
             return Err(Error::OrderMismatch);
         }
-        if job.state().is_terminal() {
+        // A Row-scope Job is the base4 Row owner's actor graph.
+        if job.row_scope() {
+            continue;
+        }
+        if job.phase().is_terminal() {
             terminal(graph, job)?;
-        } else if job.state().is_root() {
+        } else if job.phase().is_root() {
             root_job(graph, job)?;
         }
     }
     catalog(graph)?;
     payloads(graph, begins.ok_or(Error::OrderMismatch)?)?;
     let allocation = allocation_page::decode_allocation_page(
-        image(graph.layout.bytes, 0),
-        identity(graph.layout.expected, 0, one(), 1),
-        graph.layout.expected.profile.spec().namespace,
+        image(graph.layout().bytes(), 0),
+        identity(graph.layout().expected(), 0, one(), 1),
+        graph.layout().expected().profile.spec().namespace,
     )?;
     let mut system = 0;
     let mut tx = 0;
-    let generations = u128::from(graph.layout.header().system_high_water[0]) + u128::from(creates);
+    let generations =
+        u128::from(graph.layout().header().system_high_water[0]) + u128::from(creates);
     for ordinal in 9..64 {
         let entry = allocation.entry(ordinal)?;
         if u128::from(entry.incarnation().get() - 1) > generations {
@@ -507,10 +511,9 @@ pub(super) fn validate(graph: &Graph<'_>) -> Result<ReservedInventory> {
                 ReservationOwner::Transaction(actor) => {
                     tx += 1;
                     let job = graph
-                        .jobs
                         .for_actor(actor, false)?
                         .ok_or(Error::IdentityMismatch)?;
-                    if job.state() != queue::JobState::RootReserved
+                    if job.phase() != Phase::RootReserved
                         || !job
                             .pair()
                             .ok_or(Error::IdentityMismatch)?
@@ -524,9 +527,7 @@ pub(super) fn validate(graph: &Graph<'_>) -> Result<ReservedInventory> {
         }
     }
     let roots = (0..JOB_COUNT).try_fold(0, |count, index| {
-        Ok::<_, Error>(
-            count + usize::from(graph.jobs.job(index)?.state() == queue::JobState::RootReserved),
-        )
+        Ok::<_, Error>(count + usize::from(graph.job(index)?.phase() == Phase::RootReserved))
     })?;
     let reserved = match (system, tx, roots) {
         (0, 0, 0) => ReservedInventory::None,
@@ -539,21 +540,24 @@ pub(super) fn validate(graph: &Graph<'_>) -> Result<ReservedInventory> {
         }
     };
     if reserved != ReservedInventory::None
-        && allocation.header().lsn.0 != graph.layout.header().capture_lsn
+        && allocation.header().lsn.0 != graph.layout().header().capture_lsn
     {
         return Err(Error::OrderMismatch);
     }
     Ok(reserved)
 }
 
-pub(super) fn provenance(graph: &Graph<'_>, output: &mut [u8; PAGE_BYTES]) -> Result<()> {
-    let header = graph.layout.header();
+pub(in crate::storage::plan4_recovery_base) fn provenance<'a, G: Seam<'a>>(
+    graph: &G,
+    output: &mut [u8; PAGE_BYTES],
+) -> Result<()> {
+    let header = graph.layout().header();
     for ordinal in 9..64 {
-        let Some(provenance) = graph.layout.provenance(ordinal)? else {
+        let Some(provenance) = graph.layout().provenance(ordinal)? else {
             continue;
         };
         let cert = graph
-            .layout
+            .layout()
             .certificate(ordinal)?
             .ok_or(Error::ProvenanceMismatch)?;
         if provenance.writer_epoch() > header.source_epoch
@@ -616,14 +620,14 @@ pub(super) fn provenance(graph: &Graph<'_>, output: &mut [u8; PAGE_BYTES]) -> Re
     Ok(())
 }
 
-pub(super) fn source_bytes() -> usize {
+pub(in crate::storage::plan4_recovery_base) fn source_bytes<'a, G: Seam<'a>>() -> usize {
     use std::mem::size_of;
     432 + 224
         + 32
         + 2048
         + 2 * size_of::<u128>()
         + 4 * size_of::<Header>()
-        + 8 * size_of::<queue::JobView<'_>>()
+        + 8 * size_of::<G::Job>()
         + 4 * size_of::<StatusHome>()
         + 4 * size_of::<TreePageView<'_>>()
         + 4 * size_of::<CatalogRecordView<'_>>()

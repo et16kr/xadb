@@ -636,6 +636,15 @@ pub(crate) fn validate_plan4_system_base_allocation(
     validate_plan4_population(bytes, profile, raw, high_water, terminal, true)
 }
 
+/// Exact base/profile tuple of one original System count-one algebra. The
+/// byte is the profile format; no other value or `>=` widening exists.
+#[derive(Clone, Copy, PartialEq, Eq)]
+#[repr(u8)]
+enum BaseMode {
+    Catalog2 = 2,
+    Row3 = 3,
+}
+
 /// V3 graph callers validate every current membership separately. This checks
 /// the original last System count-one descriptor without treating a later Tx
 /// allocator pageLSN as the System INIT/cancel LSN. `initialized` is a raw
@@ -648,7 +657,51 @@ pub(crate) fn validate_catalog_base_allocation(
     terminal: u8,
     initialized: Option<(PageRef, PageKind, u64)>,
 ) -> Result<()> {
-    require(profile.format() == 2, SemanticError::IdentityMismatch)?;
+    validate_base_allocation(
+        BaseMode::Catalog2,
+        bytes,
+        profile,
+        raw,
+        high_water,
+        terminal,
+        initialized,
+    )
+}
+
+/// The same algebra for exact Profile3/base4. The Row graph caller owns every
+/// other membership; this grants no source, INIT or reservation authority.
+pub(crate) fn validate_row_base_allocation(
+    bytes: &[u8; PAGE_BYTES],
+    profile: Profile,
+    raw: Option<&[u8; 1536]>,
+    high_water: u64,
+    terminal: u8,
+    initialized: Option<(PageRef, PageKind, u64)>,
+) -> Result<()> {
+    validate_base_allocation(
+        BaseMode::Row3,
+        bytes,
+        profile,
+        raw,
+        high_water,
+        terminal,
+        initialized,
+    )
+}
+
+fn validate_base_allocation(
+    mode: BaseMode,
+    bytes: &[u8; PAGE_BYTES],
+    profile: Profile,
+    raw: Option<&[u8; 1536]>,
+    high_water: u64,
+    terminal: u8,
+    initialized: Option<(PageRef, PageKind, u64)>,
+) -> Result<()> {
+    require(
+        profile.format() == u16::from(mode as u8),
+        SemanticError::IdentityMismatch,
+    )?;
     let namespace = profile.spec().namespace;
     let fixed = super::super::super::fixed_entry().map_err(|_| SemanticError::IdentityMismatch)?;
     let identity = fixed

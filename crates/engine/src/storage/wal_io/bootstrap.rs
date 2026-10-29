@@ -1229,5 +1229,5 @@ pub(in crate::storage) use doublewrite_install::{
 };
 
 pub(in crate::storage) use doublewrite_install::{
-    CatalogAllocationError, validate_catalog_base_allocation,
+    CatalogAllocationError, validate_catalog_base_allocation, validate_row_base_allocation,
 };
