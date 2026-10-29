@@ -841,6 +841,55 @@ fn one() -> Generation {
     Generation::new(1).expect("one")
 }
 
+/// Prepay bounded native/RAM progress of one prepared group of either scope
+/// through all outstanding credit: WAL file room and LSN for its frame and
+/// every future step its successor inventory owes, each changed target's
+/// modification counter, and the after Root revision.
+fn check_progress_room(
+    prefix: WalPrefix,
+    (lsn, frame_bytes): (u64, usize),
+    (future_wal, future_steps): (u64, u64),
+    (roles, stamps): (&[u8], &[Option<FrameStamp>]),
+    order: &[u8],
+    root: &[u8; PAGE_BYTES],
+    profile: crate::storage::control::Profile,
+) -> Result<()> {
+    if prefix
+        .complete_offset
+        .checked_add(frame_bytes as u64)
+        .and_then(|value| value.checked_add(future_wal))
+        .is_none_or(|value| value > crate::storage::wal_io::WAL_FILE_CAP)
+        || lsn.checked_add(future_steps).is_none()
+    {
+        return Err(unchanged(RetentionPhase::Prepare, RetentionCause::Capacity));
+    }
+    for (role, stamp) in roles.iter().zip(stamps) {
+        if order.contains(role)
+            && stamp.is_some_and(|stamp| {
+                stamp
+                    .modification_counter
+                    .checked_add(1)
+                    .and_then(|value| value.checked_add(future_steps))
+                    .is_none()
+            })
+        {
+            return Err(unchanged(
+                RetentionPhase::Prepare,
+                RetentionCause::Exhausted,
+            ));
+        }
+    }
+    let (_, root) =
+        queue::decode_root_page(root, profile.spec().namespace).map_err(queue_error)?;
+    if root.revision().checked_add(future_steps).is_none() {
+        return Err(unchanged(
+            RetentionPhase::Prepare,
+            RetentionCause::Exhausted,
+        ));
+    }
+    Ok(())
+}
+
 /// Nested check/mark/control-apply source values only. The caller separately
 /// retains PreparedCatalog, its original write continuation and borrowed loans.
 /// The full producer, schema and inventory preparation have already returned.
@@ -1149,6 +1198,148 @@ struct CatalogPreparation<'b, 'a, 's, 'c, 'p, 'd, 'm, 'w, W: WriterNamespace> {
 impl<'b, 'a, 's, 'c, 'p, 'd, 'm, 'w, W: WriterNamespace>
     CatalogPreparation<'b, 'a, 's, 'c, 'p, 'd, 'm, 'w, W>
 {
+    /// Entry checks of an existing-group preparation of either scope: health,
+    /// no pending/population, the bound visibility core, an idle original
+    /// owner and reader, its identity, the WAL prefix and the whole ledger.
+    fn existing_entry(&self, owner: &mut Owner<'c, 's>) -> Result<(OwnerIdentity, WalPrefix)> {
+        let storage = self.storage;
+        health(storage, self.pool)?;
+        if self.control.pending.is_some() || self.control.population.reserved() {
+            return Err(fatal(
+                storage,
+                RetentionPhase::Prepare,
+                RetentionCause::Invariant,
+            ));
+        }
+        if self
+            .visibility
+            .is_none_or(|visibility| !visibility.matches_core(self.pool.bound_core()))
+        {
+            return Err(unchanged(
+                RetentionPhase::Prepare,
+                RetentionCause::BindingMismatch,
+            ));
+        }
+        owner.check_idle().map_err(|error| RetentionError {
+            phase: RetentionPhase::Prepare,
+            effect: error.effect,
+            cause: RetentionCause::Concurrency(error),
+        })?;
+        self.pool
+            .check_retention_reader(owner)
+            .map_err(|error| frame(RetentionPhase::Prepare, error))?;
+        let owner_identity =
+            owner
+                .visibility_identity(self.pool.bound_core())
+                .map_err(|error| RetentionError {
+                    phase: RetentionPhase::Prepare,
+                    effect: error.effect,
+                    cause: RetentionCause::Concurrency(error),
+                })?;
+        let prefix = storage
+            .wal()
+            .prefix()
+            .map_err(|error| fatal(storage, RetentionPhase::Prepare, RetentionCause::Wal(error)))?;
+        self.control.check_ledger(storage.profile(), prefix)?;
+        Ok((owner_identity, prefix))
+    }
+
+    /// Under the original read of either scope's selected targets: copy each
+    /// before image into the loan its role names (a proof-only target is
+    /// observed in place), prove it equals the canonical replay arena page,
+    /// and prove every target's allocator membership from the before loan
+    /// `allocator` names.
+    fn observe_targets<const N: usize>(
+        &self,
+        read: &targets::CatalogRead<'_, '_, '_, 'c, 's, '_, '_, N>,
+        selected: &[(TargetRequest, u8); N],
+        before: &mut [[u8; PAGE_BYTES]; 8],
+        arena: &[u8],
+        stamps: &mut [Option<FrameStamp>; 9],
+        allocator: u8,
+    ) -> Result<()> {
+        let storage = self.storage;
+        for (at, (target, role)) in selected.iter().enumerate() {
+            if *role == PROOF_ROLE {
+                let image = read
+                    .bytes(at)
+                    .map_err(|e| frame(RetentionPhase::Prepare, e))?;
+                stamps[at] = Some(
+                    read.observe(at)
+                        .map_err(|e| frame(RetentionPhase::Prepare, e))?
+                        .frame,
+                );
+                if image != history::arena_page(arena, target.identity.page.page_no as usize) {
+                    return Err(fatal(
+                        storage,
+                        RetentionPhase::Census,
+                        RetentionCause::Invariant,
+                    ));
+                }
+                continue;
+            }
+            if usize::from(*role) >= before.len() {
+                return Err(unchanged(
+                    RetentionPhase::Prepare,
+                    RetentionCause::Unsupported,
+                ));
+            }
+            let output = &mut before[usize::from(*role)];
+            stamps[at] = Some(
+                read.copy_snapshot(at, output)
+                    .map_err(|error| frame(RetentionPhase::Prepare, error))?,
+            );
+            if output != history::arena_page(arena, target.identity.page.page_no as usize) {
+                return Err(fatal(
+                    storage,
+                    RetentionPhase::Census,
+                    RetentionCause::Invariant,
+                ));
+            }
+        }
+        let identity = selected
+            .iter()
+            .find(|(_, role)| *role == allocator)
+            .ok_or_else(|| unchanged(RetentionPhase::Prepare, RetentionCause::Invariant))?
+            .0
+            .identity;
+        let allocator = allocation_page::decode_allocation_page(
+            &before[usize::from(allocator)],
+            identity,
+            storage.profile().spec().namespace,
+        )
+        .map_err(|error| {
+            fatal(
+                storage,
+                RetentionPhase::Census,
+                RetentionCause::Allocation(error),
+            )
+        })?;
+        for (target, _) in selected {
+            let page = usize::try_from(target.identity.page.page_no)
+                .map_err(|_| unchanged(RetentionPhase::Prepare, RetentionCause::Membership))?;
+            if allocator.entry(page).map_err(|error| {
+                fatal(
+                    storage,
+                    RetentionPhase::Census,
+                    RetentionCause::Allocation(error),
+                )
+            })? != (AllocationEntry::Allocated {
+                generation: target.identity.page.incarnation,
+                object: target.identity.owner,
+                object_generation: target.identity.owner_generation,
+                kind: target.kind,
+            }) {
+                return Err(fatal(
+                    storage,
+                    RetentionPhase::Census,
+                    RetentionCause::Membership,
+                ));
+            }
+        }
+        Ok(())
+    }
+
     fn prepare_catalog_commit<'i>(
         &self,
         owner: &mut Owner<'c, 's>,
@@ -1245,44 +1436,7 @@ impl<'b, 'a, 's, 'c, 'p, 'd, 'm, 'w, W: WriterNamespace>
         }
         let storage = self.storage;
         let _unwind = storage.session_fence().unwind_guard();
-        health(storage, self.pool)?;
-        if self.control.pending.is_some() || self.control.population.reserved() {
-            return Err(fatal(
-                storage,
-                RetentionPhase::Prepare,
-                RetentionCause::Invariant,
-            ));
-        }
-        if self
-            .visibility
-            .is_none_or(|visibility| !visibility.matches_core(self.pool.bound_core()))
-        {
-            return Err(unchanged(
-                RetentionPhase::Prepare,
-                RetentionCause::BindingMismatch,
-            ));
-        }
-        owner.check_idle().map_err(|error| RetentionError {
-            phase: RetentionPhase::Prepare,
-            effect: error.effect,
-            cause: RetentionCause::Concurrency(error),
-        })?;
-        self.pool
-            .check_retention_reader(owner)
-            .map_err(|error| frame(RetentionPhase::Prepare, error))?;
-        let owner_identity =
-            owner
-                .visibility_identity(self.pool.bound_core())
-                .map_err(|error| RetentionError {
-                    phase: RetentionPhase::Prepare,
-                    effect: error.effect,
-                    cause: RetentionCause::Concurrency(error),
-                })?;
-        let prefix = storage
-            .wal()
-            .prefix()
-            .map_err(|error| fatal(storage, RetentionPhase::Prepare, RetentionCause::Wal(error)))?;
-        self.control.check_ledger(storage.profile(), prefix)?;
+        let (owner_identity, prefix) = self.existing_entry(owner)?;
         selected.sort_unstable_by_key(|(target, _)| target_rank(*target));
         let (frame_space, pages) = private.split_at_mut(semantic_catalog::FRAME_BYTES);
         let (after_space, before_space) = pages.split_at_mut(8 * PAGE_BYTES);
@@ -1316,89 +1470,7 @@ impl<'b, 'a, 's, 'c, 'p, 'd, 'm, 'w, W: WriterNamespace>
                     .read(self.pool, owner, &requests)
                     .map_err(|error| frame(RetentionPhase::Prepare, error))?;
                 let observed = (|| {
-                    for (at, (target, role)) in selected.iter().enumerate() {
-                        if *role == PROOF_ROLE {
-                            let image = read
-                                .bytes(at)
-                                .map_err(|e| frame(RetentionPhase::Prepare, e))?;
-                            stamps[at] = Some(
-                                read.observe(at)
-                                    .map_err(|e| frame(RetentionPhase::Prepare, e))?
-                                    .frame,
-                            );
-                            if image
-                                != history::arena_page(
-                                    replay.bytes(),
-                                    target.identity.page.page_no as usize,
-                                )
-                            {
-                                return Err(fatal(
-                                    storage,
-                                    RetentionPhase::Census,
-                                    RetentionCause::Invariant,
-                                ));
-                            }
-                            continue;
-                        }
-                        if usize::from(*role) >= before.len() {
-                            return Err(unchanged(
-                                RetentionPhase::Prepare,
-                                RetentionCause::Unsupported,
-                            ));
-                        }
-                        let output = &mut before[usize::from(*role)];
-                        stamps[at] = Some(
-                            read.copy_snapshot(at, output)
-                                .map_err(|error| frame(RetentionPhase::Prepare, error))?,
-                        );
-                        if output
-                            != history::arena_page(
-                                replay.bytes(),
-                                target.identity.page.page_no as usize,
-                            )
-                        {
-                            return Err(fatal(
-                                storage,
-                                RetentionPhase::Census,
-                                RetentionCause::Invariant,
-                            ));
-                        }
-                    }
-                    let allocator = allocation_page::decode_allocation_page(
-                        &before[0],
-                        requests[0].identity,
-                        storage.profile().spec().namespace,
-                    )
-                    .map_err(|error| {
-                        fatal(
-                            storage,
-                            RetentionPhase::Census,
-                            RetentionCause::Allocation(error),
-                        )
-                    })?;
-                    for (target, _) in &selected {
-                        let page = usize::try_from(target.identity.page.page_no).map_err(|_| {
-                            unchanged(RetentionPhase::Prepare, RetentionCause::Membership)
-                        })?;
-                        if allocator.entry(page).map_err(|error| {
-                            fatal(
-                                storage,
-                                RetentionPhase::Census,
-                                RetentionCause::Allocation(error),
-                            )
-                        })? != (AllocationEntry::Allocated {
-                            generation: target.identity.page.incarnation,
-                            object: target.identity.owner,
-                            object_generation: target.identity.owner_generation,
-                            kind: target.kind,
-                        }) {
-                            return Err(fatal(
-                                storage,
-                                RetentionPhase::Census,
-                                RetentionCause::Membership,
-                            ));
-                        }
-                    }
+                    self.observe_targets(&read, &selected, before, replay.bytes(), &mut stamps, 0)?;
                     let has = |role| selected.iter().any(|(_, actual)| *actual == role);
                     let inputs = Inputs {
                         profile: storage.profile(),
@@ -1516,45 +1588,19 @@ impl<'b, 'a, 's, 'c, 'p, 'd, 'm, 'w, W: WriterNamespace>
                 )?
             }
         };
-        if prefix
-            .complete_offset
-            .checked_add(observation.frame_bytes as u64)
-            .and_then(|value| value.checked_add(future_wal))
-            .is_none_or(|value| value > crate::storage::wal_io::WAL_FILE_CAP)
-            || observation.header.lsn.checked_add(future_steps).is_none()
-        {
-            return Err(unchanged(RetentionPhase::Prepare, RetentionCause::Capacity));
-        }
-        // Prepay bounded native/RAM progress through all outstanding credit.
-        for at in 0..N {
-            if observation.order[..usize::from(observation.count)].contains(&roles[at])
-                && stamps[at].is_some_and(|stamp| {
-                    stamp
-                        .modification_counter
-                        .checked_add(1)
-                        .and_then(|value| value.checked_add(future_steps))
-                        .is_none()
-                })
-            {
-                return Err(unchanged(
-                    RetentionPhase::Prepare,
-                    RetentionCause::Exhausted,
-                ));
-            }
-        }
-        let root_image = if observation.order[..usize::from(observation.count)].contains(&1) {
-            &after[1]
-        } else {
-            &before[1]
-        };
-        let (_, root) = queue::decode_root_page(root_image, storage.profile().spec().namespace)
-            .map_err(queue_error)?;
-        if root.revision().checked_add(future_steps).is_none() {
-            return Err(unchanged(
-                RetentionPhase::Prepare,
-                RetentionCause::Exhausted,
-            ));
-        }
+        check_progress_room(
+            prefix,
+            (observation.header.lsn, observation.frame_bytes),
+            (future_wal, future_steps),
+            (&roles[..N], &stamps[..N]),
+            &observation.order[..usize::from(observation.count)],
+            if observation.order[..usize::from(observation.count)].contains(&1) {
+                &after[1]
+            } else {
+                &before[1]
+            },
+            storage.profile(),
+        )?;
         let inventory = if in_before {
             &before[6]
         } else {
@@ -1683,20 +1729,31 @@ pub(in super::super) fn catalog_live_source_bytes<W: WriterNamespace>() -> Catal
         + size_of::<Option<usize>>();
     let prepare_outer =
         validation_outer + size_of::<[TargetRequest; 9]>() + size_of::<[Option<FrameStamp>; 9]>();
-    let replay_carriers = size_of::<history::runtime::ReplayScope<'_, '_, '_, '_>>()
+    let scope_carriers = size_of::<history::runtime::ReplayScope<'_, '_, '_, '_>>()
         + size_of::<history::runtime::ReplayLoan<'_, '_, '_, '_>>()
         + 2 * size_of::<Result<history::runtime::ReplayScope<'_, '_, '_, '_>>>()
-        + 2 * size_of::<Result<history::runtime::ReplayLoan<'_, '_, '_, '_>>>()
-        + 3 * size_of::<Result<Observation>>();
-    let prepare_replay = validation_outer + replay_carriers + history::source_bytes::<W>().peak;
+        + 2 * size_of::<Result<history::runtime::ReplayLoan<'_, '_, '_, '_>>>();
+    let replay_carriers = scope_carriers + 3 * size_of::<Result<Observation>>();
+    let history_peak = history::source_bytes::<W>().peak;
+    let prepare_replay = validation_outer + replay_carriers + history_peak;
+    // The shared target observation (`observe_targets`) is a completed call
+    // before the producer; both run under the typed read.
+    let observe = 8 * size_of::<&()>()
+        + size_of::<u8>()
+        + 2 * size_of::<Result<()>>()
+        + size_of::<crate::storage::allocation_page::AllocationPage<'_>>()
+        + size_of::<PageIdentity>()
+        + 2 * size_of::<Result<FrameStamp>>();
     let prepare_produce = prepare_outer
         + replay_carriers
         + targets::call_bytes::<9>().max(
             size_of::<targets::CatalogRead<'_, '_, '_, '_, '_, '_, '_, 9>>()
-                + size_of::<Inputs<'_>>()
-                + size_of::<crate::storage::allocation_page::AllocationPage<'_>>()
-                + size_of::<Result<Observation>>()
-                + semantic_catalog::profile3_source_census().total,
+                + observe.max(
+                    size_of::<Inputs<'_>>()
+                        + size_of::<crate::storage::allocation_page::AllocationPage<'_>>()
+                        + size_of::<Result<Observation>>()
+                        + semantic_catalog::profile3_source_census().total,
+                ),
         );
     // After cleanup, final role/target arrays have been formed, but no return
     // carrier exists. The exact shared encoder owns no duplicate output page.
@@ -1728,8 +1785,11 @@ pub(in super::super) fn catalog_live_source_bytes<W: WriterNamespace>() -> Catal
     .max(reader_return);
     // check_ledger precedes array/replay setup. Its descriptor transaction,
     // Aging and queue scans are sequential and bounded by this existing leaf.
+    // check_ledger runs inside the shared entry helper of either scope.
     let ledger = scalar
         + size_of::<[(TargetRequest, u8); 9]>()
+        + size_of::<Result<(OwnerIdentity, WalPrefix)>>()
+        + 2 * size_of::<&()>()
         + 640
         + 2 * size_of::<crate::storage::obligation::DescriptorSpec>()
         + queue::source_bytes()
