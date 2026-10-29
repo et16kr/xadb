@@ -8815,5 +8815,32 @@
     "remaining_supply": "actual C3 RowReserve/lane/context, owner stage/WAL/install/ACK/reopen/replay, carrier source-byte accounting, Allocator and propose branches, MCA01-05, MCI and MI01-06",
     "source_roots_changed": false,
     "artifact_manifest_sha256": "f0f770234eed58881ba643cd3a409316e21729ccf314a5cd266195512fec72c6"
+  },
+  "dev3_module_b_row_read_driver": {
+    "status": "LOCAL_VERIFIED_REVIEWED_C0_ONLY",
+    "contract_ref": "dev3-module-consumers.md#acceptance",
+    "evidence_ref": "module-independence-survey-20261026.md#b-read-driver",
+    "baseline_commit": "31e4614",
+    "integration_base": "f0e2d66",
+    "branch": "claude/project-thread-h2j8oc",
+    "implemented_paths": [
+      "crates/engine/src/storage/row/read/driver.rs",
+      "crates/engine/src/storage/row/read/driver/live.rs",
+      "crates/engine/src/storage/row/read/driver/tests.rs",
+      "tests/fixtures/module-row-read/driver-cells.txt",
+      "tests/fixtures/module-row-read/driver-manifest.json",
+      "tests/fixtures/module-row-read/driver-manifest-r2.json",
+      "tests/fixtures/module-row-read/make_driver_cells.py"
+    ],
+    "modified_paths": [
+      "crates/engine/src/storage/row/read.rs",
+      "crates/engine/src/storage/disk.rs",
+      "crates/engine/src/storage/wal_io/disk_api.rs"
+    ],
+    "scope": "B point read and RowCursor over the C0 Row read boundary through private seam traits; operations opened by B on the same view (and cursor table) it judges with; live entries compile-checked only",
+    "validation": "r1 MCB00-D01..09 once PASS; independent review REQUIRED2 (cursor open error order, view/table binding); r2 D01..D12 once PASS on a frozen C0_ONLY manifest; second review RESOLVED with 0 new REQUIRED; Owner type re-exported via disk API at integration; integrated tree cargo check 0 warnings",
+    "remaining_supply": "actual C2 Row read source, live entry statement caller and dead_code allowance removal, optional RowReadOperation::check_statement, cursor borrow negative probes, MCB01-05, MCI and MI01-06",
+    "source_roots_changed": false,
+    "artifact_manifest_sha256": "2ee884e6621cd95773fb0e7b47b15c7ce56e97e61395445772ba086d41b753fb"
   }
 }

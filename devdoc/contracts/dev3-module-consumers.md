@@ -374,6 +374,8 @@ fixture의 추가 입력은 `catalog_negative={variant:P|S,parent_binding,object
 
 C0의 첫 선택은 `MCA00-V01..06`과 `MCB00-V01..03`이며 아래 actual MCA/MCB와 별도 ID다. MCA00은 nullable Bool, Int64 MIN/MAX, 다중 byte UTF8, zero byte를 포함한 Binary, 잘못된 type/null/L2049 거절, H 없음/있음의 Forward·CLR 후보 literal 대조라는6개 입력이다. MCB00은 lower-bound의 miss/first/middle, own/foreign/q 관계의 순수 선택, invisible→OutputTooSmall/취소 뒤 진행 key라는3개 입력이다. 모두 C0가 준 **권한 없는 관측값**과 독립 literal을 사용하며 실제 pin/저장/ACK/READY 증거는0이다. C 공급 뒤 unchanged MCA00/MCB00를 반복하지 않고 아래 actual 연결 case를 처음 선택한다. MAX의5개 음성 입력도 MCA04에 명시한 C0 범위로만 센다.
 
+2026-10-29 등록: B 읽기 driver가 C0 대역(literal source·view·credit 계수)으로 소비 경계를 검사하는 `MCB00-D01..12`를 C0_ONLY 하위 family로 둔다. selector는 `storage::row::read::driver::tests::mcb00_dNN_*`이고 MCB00-V01..03의 분모나 actual MCB01–05의 PASS로 세지 않는다. A의 MCA00-V06 Forward/CLR 후보 literal 대조는 `storage::row::insert::group_tests::mca00_v06_*` 경로에 둔다(위 A 기본 경로와 다른 하위 모듈). 근거는 [A 증거](../evidence/module-independence-survey-20261026.md#consumer-a-scope3-forward-clr)와 [B 증거](../evidence/module-independence-survey-20261026.md#b-read-driver)다.
+
 | ID·변형 분모 | fixed 입력과 oracle | 원 요구 |
 | --- | --- | --- |
 | MCA01-V01..12,총13개 memory(1개 C0 포함) | V01..04 Bool/Int64/Utf8/Binary nonnull, V05 nullable null 최소L5, V06 mixed32열, V07 L2048, V08 두 statement×3INSERT 성공. V09 타입 불일치,V10 nonnullable null,V11 L2049. V12-P는 valid Index 정의의 pure census Unsupported, V12-S는 실제 FileIo stored Index 입력의 canonical mismatch 거절로 [입구/정답을 분리](#index-negative-input). V01..08 실제 bytes/logical identity/count/값 일치, V09..12 첫 effect0·각 exact typed 오류 | DIR03,T06-01/07/14 |

@@ -3615,3 +3615,33 @@ A 제품 본문이 C0가 준 **권한 없는 관측값**으로 scope3 Row INSERT
 - 오류형 이름은 `row_record::RowError`(codec 오류)와 충돌을 피하려고 `InsertError`를 유지하고 enum 주석에 계약 drift를 적었다. §6.7 `RowRecoveryHandlerError::Producer` 연결 때 정한다.
 - `group::local_source_carrier_bytes`는 r2에서 `Prepared`(약21KB, 16KB Root 사본 포함)와 leaf scratch 4444B를 포함하지만 호출·기록되지 않았다. 검토자 추정 비재귀 frame은 35–40KB이며 65536B 단기 작업 합계와의 대조는 C3 Row write 공급 때 수행한다.
 - 실제 RowReserve·lane/context 생성, 원 owner의 stage·WAL·install·ACK·reopen·replay, MCA01–05·MCI·MI01–06과 M5 완료는 미완료다.
+
+<a id="b-read-driver"></a>
+## 2026-10-29 B Row 읽기 driver의 C0 경계 소비
+
+[C0 Row 소비 경계](../contracts/dev3-module-boundaries.md#c0-row-boundary) 위에 B의 point read와 cursor 제품 본문을 올렸다. 작성 기준 `31e4614`, branch `module-b-read`의 별도 worktree에서 B 독점 경로(`storage/row/read.rs`, `row/read/**`, `tests/fixtures/module-row-read/`)만 편집했다. C0 본문이 아직 Unchanged `Unsupported`이므로 실제 Row 저장·가시성·credit 회수의 runtime 성공은 주장하지 않는다.
+
+| 작성 commit | 통합 commit | 내용 |
+| --- | --- | --- |
+| `38364bb` | `f06ec6b` | r1: `read/driver.rs`(경계 trait, `read_point`, `RowCursor::{open,next,close}`, C와 같은 `merge`), `driver/live.rs`, `driver/tests.rs`, literal cell과 r1 manifest. `read.rs`는 module 설명과 `mod driver;`만 바꿨다 |
+| `c194694` | `01c5a50` | r2: 독립 검토 필수2 수정과 시험 D10–D12, r2 manifest |
+| — | `68dd01c` | 통합: `Owner` 형식을 disk API로 재노출하고 B 수입 경로 정리 |
+
+**본문.** point read는 statement·fence와 호출 전 취소를 먼저 보고, 같은 view에서 operation 하나를 열어 page→leaf→B `seek_point`→capture를 거친다. transaction stamp일 때만 Status를, 보이지 않을 때만 Missing-before를 읽는다. 출력 길이와 취소는 copy 전에 판정하고, Found/Missing은 candidate 해제와 finish가 모두 성공한 뒤에만 반환한다. Undo 누락과 Missing-before 실패는 Missing이 아니라 오류다. FlushRequired는 정리 뒤 같은 target으로 돌려준다. 오류와 정리 실패의 우선순위는 C의 `merge`(CallerMustResolve 우선, 그 밖에는 정리 실패가 결과를 대체)와 같다. `RowCursor<'r, V, T>`는 복제할 수 없고 view·table borrow, view의 cursor credit, 생성 revision의 `CursorProgress`를 보유한다. `open`은 statement·fence→range→credit, `next`는 statement→revision→End→취소 순으로 보고 통과한 뒤에만 cursor 자신의 view·table로 operation을 열어 마지막 검사 RowId에서 full key로 재탐색한다. `close`는 자기 credit만 반환한다. source·view 호출은 driver 모듈 private trait(`ReadSource`, `SearchPage`, `ReadView`, `CursorCredit`) 뒤에 있고 flush target·candidate·Missing 증거·copy 관측은 연관 타입이라 driver가 만들 수 없다. live 입구는 `LiveCall`(`&ReadPort`, `&mut Owner`, private loan, residency cursor)로 `ReadPort::row_operation`을 직접 호출한다.
+
+**시험 대역.** literal cell은 표준 byte packing(`make_driver_cells.py`, pathlib/struct만)으로 독립 작성했다. 대역은 C 역할로 page를 감싸고 읽을 때 생산 `encode_page`·`decode_tree_page`·`decode_row_record_with_schema`를 쓰므로 그 codec 결함은 대역도 공유할 수 있다. 기대값(출력 bytes·호출 순서·진행점)은 시험 안의 literal이다. check 경고0은 `read.rs`의 기존 module 전체 `#![allow(dead_code)]`에 기대며 live 입구는 아직 호출자가 없다.
+
+**r1(`38364bb`).** [r1 manifest](../../tests/fixtures/module-row-read/driver-manifest.json)(SHA-256 `d6ad7eb8b1e1a7813fe3b317b884061330fab349f39740980b25d521fadd8e12`, 당시 source_kind `C0_SEAM`)를 08:23:15Z에 동결한 뒤 check 47.07초·경고0, test build 74.31초·경고0, ELF `2d51389a0b922b313d4c2287374adbb3bcf5481937bb08bfaa70120f7a491dc9`에서 MCB00-D01..09를 각1회 실행해 모두 PASS(0.08–0.13초)했다. 시험 목록은 1594개(1596은 줄 수였다는 정정 포함)다. rustfmt·diff-check는 시험 실행 뒤에 했고 로그에 명령이 없었다.
+
+**독립 검토 1차(필수2).** 별도 읽기 전용 subagent가 계약과 대조하고 cell 생성기를 다시 실행했다.
+- 필수 R1: cursor open이 range를 statement·fence보다 먼저 검사했다. 종료 statement에 역순 range를 주면 [소비자 계약 §7](../contracts/dev3-module-consumers.md)의 순서와 달리 WrongState 대신 InvalidRange가 났다.
+- 필수 R2: live 입구가 다른 곳에서 연 operation과 별도 view·table을 받아, 한 view로 가시성을 판정하면서 C는 다른 view로 읽거나, cursor를 다른 table로 진행할 수 있었다.
+- 확인: `merge` 우선순위는 C와 같고, 권한 타입을 만들 수 없으며, 생성기 출력이 byte 동일하고, 시험이 tautology가 아니다. 선택: 시험 ID 등록, 미시험 분기, 증거 수치 정정, 대역의 생산 codec 사용 기록.
+
+**r2(`c194694`).** `open`이 `view.q()?`를 range·credit보다 먼저 보고, point/cursor가 판정에 쓰는 같은 view(cursor면 저장된 view·table)를 opener closure에 넘겨 operation을 연다. 거절된 호출은 operation을 열지 않으므로 D04/D05/D07/D08의 기대 호출 기록 6곳이 `[Finish]`에서 `[]`로 바뀌었다. [r2 manifest](../../tests/fixtures/module-row-read/driver-manifest-r2.json)(SHA-256 `ffbb95abfc3c5979578dfc183c9246bae63ffa445f3d17240cc5b5e73281eca7`, `C0_ONLY`)를 08:49:11Z에 동결한 뒤 rustfmt check·diff-check, check 40.15초·경고0, test build 73.85초·경고0, ELF `4885e4db133b70d18ff37875ba6102be4fba264c88b20697b51f2db1f1160669`에서 D01..D12를 `RUST_MIN_STACK=33554432 --exact --test-threads=1`로 각1회 실행해 모두 PASS(0.08–0.13초)했다. D01..09는 opener API·statement 우선 검사·거절 시 미개방 경로가 바뀌어 다시 실행했다. 신규는 D10(종료 statement가 range·credit·operation보다 먼저, charge0), D11(매 next가 cursor 자신의 view·table과 포인터가 같은 값으로 열림, 소진 cursor+취소는 End, opener 거절 뒤 key 유지), D12(정리 실패가 Flush를 대체, cursor scan 안의 Status 실패와 MissingUndo가 진행점을 보존)다. 시험 목록은 1597개(+3)다.
+
+**독립 검토 2차(해결, 새 필수0).** 같은 검토자가 R1의 순서와 R2의 결속을 file:line으로 확인했다. 남은 한계는 opener가 인자를 쓰도록 타입이 강제하지 않는다는 점이며 driver가 private이고 두 live closure가 B 소유여서 성립한다. C 쪽 `RowReadOperation::check_statement`는 이를 강제하는 선택 보강으로 C2 Row read source 공급 때 검토한다. 선택 지적: 대역이 Open 사건을 기록하지 않아 "열지 않음"을 Finish 부재로 추론한다, SourceMismatch·leaf/seek/capture 오류·point opener 거절은 미시험이다, r1 `result.json`과 r1 `manifest.sha256`을 제자리에서 고쳤다(원 결과는 `result-r1-original.json`으로 보존, 원 r1 `manifest.sha256`은 따로 남지 않음).
+
+**통합.** 두 commit을 `f0e2d66` 위로 cherry-pick했다. 검토의 수입 경계 권고에 따라 `68dd01c`에서 `wal_io::disk_api`와 `storage::disk`가 `Owner` 형식만 `pub(in crate::storage)`로 재노출하고 `driver/live.rs`가 `storage::disk`에서 수입하게 했다. `Owner`는 private 필드와 `try_owner`로만 만들어지므로 새 권한은 없다. 통합 tree 고정 export(fingerprint `371fa510e15e0e0a92a6d6f4c0fcd88f0d3d9c845773f842c48570709a724c6d`)에서 `cargo check -p xadb-engine --all-targets --all-features --locked --offline`이 43.6초·경고0이다. 수입 경로만 바뀌어 B 시험은 반복하지 않았다. 시험 ID는 [§9.1 등록](../contracts/dev3-module-consumers.md#acceptance)에 C0_ONLY 하위 family `MCB00-D01..12`로 적었다. artifact는 `module-independence-20261029/artifacts/module-b-read-20261029/`(`manifest-all.sha256` SHA-256 `2ee884e6621cd95773fb0e7b47b15c7ce56e97e61395445772ba086d41b753fb`)에 r1/r2 manifest·로그·결과·검토 요약·통합 check를 보존한다. target과 ELF는 기록 뒤 삭제했다.
+
+**남은 의무.** 실제 C2 Row read source와 live 입구의 statement caller 연결(그때 `dead_code` 허용 제거), cursor borrow 음성 probe(`open_cursor_live` 뒤 `finish_statement` E0505, `cursor.clone()` E0599; `RowCursor`가 private이라 driver 자식 모듈 위치가 필요), actual MCB01–05·MCI 인수와 M4/M5는 미완료다.
