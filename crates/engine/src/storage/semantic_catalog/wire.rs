@@ -1,6 +1,8 @@
 //! Exact bounded scope2 section layout. This validates framing and individual
 //! record shapes, not the stable native graph or owner accounting transition.
-use super::{CoreView, Error, Operation, Result, Shape, decode_core, u16_at, u32_at, u64_at, zero};
+use super::{
+    CoreView, Error, Operation, Result, Shape, decode_core, format, u16_at, u32_at, u64_at, zero,
+};
 use crate::storage::{
     allocation_page::{ReservationOwner, SystemWorkKind, SystemWorkRef},
     catalog_record::{self, CatalogDefinitionView, CatalogExpectation, TableDefinitionView},
@@ -204,7 +206,9 @@ pub(crate) fn decode_layout(
     expected: FrameExpectation,
     profile: Profile,
 ) -> Result<LayoutView<'_>> {
-    if profile.format() != 2
+    // Scope2 keeps the version2/flags2 grammar under exactly Profile2 and the
+    // explicit Profile3 adapter; only the Row observer uses flags3.
+    if format::select(profile).is_err()
         || profile.spec().namespace.database != expected.stream.database
         || profile.spec().namespace.timeline != expected.stream.timeline
     {

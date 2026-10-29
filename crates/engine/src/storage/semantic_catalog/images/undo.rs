@@ -1,4 +1,4 @@
-use super::{Error, Operation, PAGE_BYTES, Result, RootContext};
+use super::{CatalogJob, Error, Operation, PAGE_BYTES, Result, RootContext};
 use crate::storage::{
     page::{self, PageKind},
     undo_record::{
@@ -10,7 +10,11 @@ use foundation::identity::{Generation, ObjectId};
 
 /// Canonical Missing material has no chunks or previous edges. Releasing keeps
 /// that material until each of its three exact role steps has completed.
-fn material(context: RootContext<'_>, incoming: u64, cursor: u8) -> UndoRecord<'static> {
+fn material<'a, J: CatalogJob<'a>>(
+    context: RootContext<J>,
+    incoming: u64,
+    cursor: u8,
+) -> UndoRecord<'static> {
     let actor = context.job.source().expect("validated root");
     UndoRecord {
         creator: UndoCreator {
@@ -52,9 +56,9 @@ fn material(context: RootContext<'_>, incoming: u64, cursor: u8) -> UndoRecord<'
     }
 }
 
-pub(crate) fn change_undo(
+pub(crate) fn change_undo<'a, J: CatalogJob<'a>>(
     operation: Operation,
-    context: RootContext<'_>,
+    context: RootContext<J>,
     before: &[u8; PAGE_BYTES],
     after: &mut [u8; PAGE_BYTES],
 ) -> Result<()> {
@@ -158,8 +162,8 @@ pub(crate) fn change_undo(
 
 /// RollbackStart emits no Undo redo, but its head and sequence must be proved
 /// by the actual retained Live cell before the Status may become Aborting.
-pub(crate) fn validate_retained_undo(
-    context: RootContext<'_>,
+pub(crate) fn validate_retained_undo<'a, J: CatalogJob<'a>>(
+    context: RootContext<J>,
     before: &[u8; PAGE_BYTES],
 ) -> Result<()> {
     context.validate(Operation::RollbackStart)?;

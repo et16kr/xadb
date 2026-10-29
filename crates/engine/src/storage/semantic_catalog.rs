@@ -11,8 +11,11 @@ use super::{
     wal_frame::{FrameKind, WalError},
 };
 
+#[cfg(test)]
+mod catalog3_tests;
 mod core;
 mod effects;
+mod format;
 mod frame;
 pub(crate) mod images;
 pub(crate) mod inventory;

@@ -310,7 +310,7 @@ fn cleanup_chain() -> usize {
     cleanup + previous
 }
 /// decode_job's deepest nested branch.
-fn job_cell_chain() -> usize {
+pub(in crate::storage) fn job_cell_chain() -> usize {
     decode_job_frame()
         + (validate_root_frame() + (undo_decode_frame() + page_ref_decode_frame()))
             .max(validate_root_frame() + object_frame())

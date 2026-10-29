@@ -1,13 +1,13 @@
-use super::{Error, Operation, PAGE_BYTES, Result, RootContext};
+use super::{CatalogJob, Error, Operation, PAGE_BYTES, Result, RootContext};
 use crate::storage::{
     allocation_page::{self, AllocationEntry, ReservationOwner},
     page::PageKind,
 };
 use foundation::identity::Generation;
 
-pub(crate) fn change_pair(
+pub(crate) fn change_pair<'a, J: CatalogJob<'a>>(
     operation: Operation,
-    context: RootContext<'_>,
+    context: RootContext<J>,
     before: &[u8; PAGE_BYTES],
     after: &mut [u8; PAGE_BYTES],
 ) -> Result<()> {

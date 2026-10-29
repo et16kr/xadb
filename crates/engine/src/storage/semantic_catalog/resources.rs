@@ -23,7 +23,9 @@ use super::{
 use crate::{
     api::Namespace,
     storage::{
-        allocation_page::{AllocationEntry, AllocationError, AllocationPage, ReservationOwner},
+        allocation_page::{
+            AllocationEntry, AllocationError, AllocationPage, ReservationOwner, SystemWorkRef,
+        },
         anchor::{AnchorRoot, TreeAnchor},
         catalog_record::{
             CatalogColumn, CatalogDefinition, CatalogDefinitionView, CatalogError,
@@ -40,6 +42,7 @@ use crate::{
         retention_page::{
             RetentionError,
             catalog::{self, JobCells, JobView, RootView},
+            catalog3,
         },
         status_home::{StatusHome, StatusHomePage},
         transaction_record::{
@@ -77,6 +80,36 @@ type Computed<'a> = (Observation, [bool; 8], Option<JobView<'a>>, usize);
 /// Including both deliberately does not rely on return-value optimization.
 fn returned<T, E>() -> usize {
     size_of::<T>() + size_of::<CodecResult<T, E>>()
+}
+
+/// The codec terms that differ between the exact Profile2 and Profile3
+/// instances of the one transition body. Every type term below is written
+/// with the Profile2 views; the Profile3 views have the same sizes, which the
+/// Profile3 census test checks, so only these function terms change.
+#[derive(Clone, Copy)]
+struct Codecs {
+    /// Root/Job cells, both page wrappers and the selected 64-cell census.
+    queue: usize,
+    /// Root-bound Aging descriptor encode/decode.
+    aging: usize,
+    /// The Root-bound Aging successor that compute calls.
+    aging_next: fn(Codecs) -> usize,
+}
+impl Codecs {
+    fn catalog2() -> Self {
+        Self {
+            queue: catalog::source_bytes(),
+            aging: retention_obligation::catalog::source_bytes(),
+            aging_next,
+        }
+    }
+    fn row3() -> Self {
+        Self {
+            queue: catalog3::source_bytes(),
+            aging: retention_obligation::row::source_bytes(),
+            aging_next: row_aging_next,
+        }
+    }
 }
 
 /// Scalar/reference temporaries in the common page envelope, including the
@@ -167,7 +200,7 @@ fn projection() -> usize {
 
 fn catalog_image() -> usize {
     let common = size_of::<CatalogChange<'_>>()
-        + size_of::<RootContext<'_>>()
+        + size_of::<RootContext<JobView<'_>>>()
         + size_of::<(&[u8; 16384], &[u8; 16384], &mut [u8; 16384])>()
         + size_of::<(Operation, PageHeader, TreeAnchor, TreePageView<'_>)>()
         + size_of::<(
@@ -233,7 +266,7 @@ fn undo_codec() -> usize {
 }
 
 fn undo_image() -> usize {
-    size_of::<(Operation, RootContext<'_>, &[u8; 16384], &mut [u8; 16384])>()
+    size_of::<(Operation, RootContext<JobView<'_>>, &[u8; 16384], &mut [u8; 16384])>()
         + size_of::<(UndoRef, PageHeader, PageView<'_>, &[u8], UndoRecordExpectation<'_>)>()
         + size_of::<[u8; 432]>() // candidate or retained canonical, in different functions
         + size_of::<UndoRecord<'_>>() // validate_retained_undo::record
@@ -271,7 +304,7 @@ fn status_image() -> usize {
 }
 
 fn allocation_image() -> usize {
-    size_of::<(Operation, RootContext<'_>, &[u8; 16384], &mut [u8; 16384])>()
+    size_of::<(Operation, RootContext<JobView<'_>>, &[u8; 16384], &mut [u8; 16384])>()
         + size_of::<(PageHeader, AllocationPage<'_>, [PageRef; 2], ObjectHandle, TxnRef)>()
         + size_of::<[AllocationEntry; 64]>()
         + size_of::<[u8; crate::storage::allocation_page::ALLOCATION_CELL_BYTES]>()
@@ -287,7 +320,7 @@ fn allocation_image() -> usize {
 }
 
 fn initialize_pair() -> usize {
-    size_of::<(RootContext<'_>, &mut [u8; 16384], &mut [u8; 16384])>()
+    size_of::<(RootContext<JobView<'_>>, &mut [u8; 16384], &mut [u8; 16384])>()
         + size_of::<([PageRef; 2], ObjectHandle, AnchorRoot, PageHeader)>()
         + size_of::<[u8; 48]>() // anchor encoder cell
         + size_of::<[u8; 32]>() // row metadata
@@ -362,7 +395,7 @@ fn aging_budget() -> usize {
         + page_codec()
 }
 
-fn aging_predecessor() -> usize {
+fn aging_predecessor(codecs: Codecs) -> usize {
     size_of::<(Profile, Option<&[u8; 1536]>, &[u8; 16384], RootView<'_>)>()
         + size_of::<DescriptorSpec>()
         + returned::<DescriptorSpec, ObligationError>()
@@ -373,10 +406,10 @@ fn aging_predecessor() -> usize {
         // catalog::decode validates the predecessor, then descriptor() decodes
         // it again. Both calls finish in this helper, but their real return
         // carriers remain charged rather than treating the view as the value.
-        + descriptor_codec().max(retention_obligation::catalog::source_bytes())
+        + descriptor_codec().max(codecs.aging)
 }
 
-fn aging_next() -> usize {
+fn aging_next(codecs: Codecs) -> usize {
     let wrapper = size_of::<(
         Profile,
         Option<&[u8; 1536]>,
@@ -394,11 +427,40 @@ fn aging_next() -> usize {
     // row, but no predecessor descriptor or canonical aggregate buffer.
     let encode = size_of::<DescriptorSpec>()
         + size_of::<[RemainingBudget; 5]>() // final descriptor array construction
-        + retention_obligation::catalog::source_bytes();
-    wrapper + aging_budget().max(aging_predecessor()).max(encode)
+        + codecs.aging;
+    wrapper + aging_budget().max(aging_predecessor(codecs)).max(encode)
 }
 
-fn queue() -> usize {
+/// Profile3 successor, counted like `aging_next`: format::Row3::next_aging
+/// builds the selected Job cells (its AgingStep carrier is the same forward
+/// as Profile2's and is not itemized in either instance) and calls
+/// retention_obligation::row::next. That function's arguments, decoded after
+/// Root, reference, chain/inventory pair and budget scalars stay live; its
+/// Job3 census, predecessor decode and final encode are separate calls. The
+/// predecessor's decoded spec or before Root is branch-local, and the final
+/// descriptor exists only for the encode call, as in `aging_next`.
+fn row_aging_next(codecs: Codecs) -> usize {
+    let wrapper = 2 * size_of::<JobCells<'_>>()
+        + size_of::<(
+            retention_obligation::row::AgingTransition<'_>,
+            &mut [u8; 640],
+            &mut [u8],
+        )>()
+        + size_of::<(Namespace, PageHeader, RootView<'_>, SystemWorkRef)>()
+        + size_of::<(OwnerChain, InventoryClaim)>()
+        + size_of::<([u64; 2], RemainingBudget)>()
+        + returned::<(), AgingObligationError>()
+        + 3 * size_of::<Result<()>>();
+    let predecessor = size_of::<(PageHeader, RootView<'_>)>()
+        + size_of::<DescriptorSpec>()
+        + returned::<DescriptorSpec, ObligationError>()
+        + returned::<AgingDescriptorView<'_>, AgingObligationError>()
+        + descriptor_codec().max(codecs.aging);
+    let encode = size_of::<DescriptorSpec>() + size_of::<[RemainingBudget; 5]>() + codecs.aging;
+    wrapper + codecs.queue.max(predecessor).max(encode)
+}
+
+fn queue(codecs: Codecs) -> usize {
     size_of::<(QueueChange<'_>, Namespace, RootView<'_>, &[[u8; 1024]; 64], u64, &mut [u8; 512], &mut [u8; 1024], &mut [u8; 640])>()
         + 2 * size_of::<JobCells<'_>>() // original/selected
         + size_of::<(Operation, Option<usize>, usize, JobView<'_>, RootView<'_>)>()
@@ -409,7 +471,7 @@ fn queue() -> usize {
         + size_of::<[RemainingBudget; 5]>() // fill_budget rows, not caller 640 aggregate
         + size_of::<RemainingBudget>()
         + 4 * size_of::<Result<()>>()
-        + catalog::source_bytes()
+        + codecs.queue
 }
 
 fn inventory() -> usize {
@@ -424,7 +486,7 @@ fn inventory() -> usize {
 }
 
 fn core() -> usize {
-    size_of::<(CoreInput<'_>, &mut [u8; 256])>()
+    size_of::<(CoreInput<JobView<'_>>, &mut [u8; 256])>()
         + size_of::<(Operation, JobView<'_>, UndoRef, u16, [bool; 3])>()
         + size_of::<([u8; 32], [u8; 32])>() // copied projection tuple
         + returned::<CoreView<'_>, Error>()
@@ -433,7 +495,7 @@ fn core() -> usize {
         + 3 * size_of::<Result<()>>()
 }
 
-fn compute() -> usize {
+fn compute(codecs: Codecs) -> usize {
     // All function-scope named values, including later small result holders,
     // remain charged throughout. The 1536-byte descriptor arguments and eight
     // output pages are references here: run/caller already own that backing.
@@ -443,7 +505,7 @@ fn compute() -> usize {
         + size_of::<(Option<TxnRef>, Option<StatusSlotRef>, bool)>()
         + 2 * size_of::<Option<StatusHome>>() // old_status/new_status
         + size_of::<(u64, [u8; 32], [u8; 512], [u8; 1024], [u8; 640], [bool; 8])>()
-        + size_of::<(Option<usize>, Option<RootContext<'_>>, Option<([u8; 32], [u8; 32])>, usize)>()
+        + size_of::<(Option<usize>, Option<RootContext<JobView<'_>>>, Option<([u8; 32], [u8; 32])>, usize)>()
         + size_of::<(Option<StatusChange>, [u64; 2], WalFrameHeader)>()
         + size_of::<Change<'_>>() // queue_change/match by-value copy
         // map + transpose + extracted output; not one Result substituted for
@@ -459,14 +521,12 @@ fn compute() -> usize {
         + 6 * size_of::<Result<()>>(); // image/queue/ledger/core result boundaries
     let precondition = size_of::<(StatusSlotRef, PageHeader, StatusHomePage<'_>)>()
         + size_of::<(JobView<'_>, TransactionStatus, bool)>()
-        + status_codec()
-            .max(transaction_validate())
-            .max(catalog::source_bytes());
-    let queue_call = size_of::<QueueChange<'_>>() + queue();
+        + status_codec().max(transaction_validate()).max(codecs.queue);
+    let queue_call = size_of::<QueueChange<'_>>() + queue(codecs);
     let job_page = size_of::<[&[u8]; 15]>()
         + size_of::<(PageView<'_>, [usize; 4], &[u8; 1024])>()
         + size_of::<Enumerate<IterMut<'_, &[u8]>>>()
-        + catalog::source_bytes();
+        + codecs.queue;
     let reserve_check = size_of::<(
         JobView<'_>,
         PageIdentity,
@@ -497,7 +557,7 @@ fn compute() -> usize {
             .max(reserve_check)
             .max(image_call)
             .max(transaction_call)
-            .max(aging_next())
+            .max((codecs.aging_next)(codecs))
             .max(core())
 }
 
@@ -631,17 +691,27 @@ pub(crate) struct SourceCensus {
 }
 
 pub(crate) fn source_census() -> SourceCensus {
-    census(false)
+    census(false, Codecs::catalog2())
 }
 
 /// Actual replay entry borrows its original descriptor/core lane. It retains
 /// the loan, checked constructor and return carriers; it owns no local arrays.
 pub(crate) fn borrowed_source_bytes() -> usize {
-    census(true).total
+    census(true, Codecs::catalog2()).total
 }
 
-fn census(borrowed: bool) -> SourceCensus {
-    let compute = compute();
+/// The same census for the explicit Profile3 adapter (Root3/Job3 through the
+/// Catalog-scope Job3 view and the Root3-bound Aging successor). Uncalled
+/// until the single current-format switch charges it instead of Profile2's.
+pub(crate) fn profile3_source_census() -> SourceCensus {
+    census(false, Codecs::row3())
+}
+pub(crate) fn profile3_borrowed_source_bytes() -> usize {
+    census(true, Codecs::row3()).total
+}
+
+fn census(borrowed: bool, codecs: Codecs) -> SourceCensus {
+    let compute = compute(codecs);
     let frame = frame();
     let run_retained = size_of::<(
         &Inputs<'_>,
@@ -688,7 +758,7 @@ fn census(borrowed: bool) -> SourceCensus {
         schema: schema_source_bytes(),
         total: entry
             + run_retained
-            + compute.max(ordered + frame.max(page_change()).max(catalog::source_bytes())),
+            + compute.max(ordered + frame.max(page_change()).max(codecs.queue)),
     }
 }
 
@@ -757,9 +827,9 @@ pub(crate) fn source_branches() -> [(&'static str, usize); 12] {
         ("transaction_next", transaction_next()),
         ("transaction_validate", transaction_validate()),
         ("aging_budget", aging_budget()),
-        ("aging_predecessor", aging_predecessor()),
-        ("aging_next", aging_next()),
-        ("compute", compute()),
+        ("aging_predecessor", aging_predecessor(Codecs::catalog2())),
+        ("aging_next", aging_next(Codecs::catalog2())),
+        ("compute", compute(Codecs::catalog2())),
         ("frame", frame()),
     ]
 }

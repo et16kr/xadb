@@ -1,7 +1,7 @@
 //! Exact edge multiset for the single Missing Catalog root. The selected
 //! native indices come from the actual sorted changed page/cell set.
-use super::{Error, Operation, Result, put16, put64};
-use crate::storage::retention_page::catalog::{JobState, JobView};
+use super::{Error, Operation, Result, format::CatalogJob, put16, put64};
+use crate::storage::retention_page::catalog::JobState;
 
 #[derive(Clone, Copy)]
 pub(crate) struct EffectIndices {
@@ -10,9 +10,9 @@ pub(crate) struct EffectIndices {
     pub(crate) undo: u16,
 }
 
-pub(crate) fn reference_changes(
+pub(crate) fn reference_changes<'a, J: CatalogJob<'a>>(
     operation: Operation,
-    job: JobView<'_>,
+    job: J,
     indices: EffectIndices,
     edges: &mut [u8; 384],
     counts: &mut [u8; 192],

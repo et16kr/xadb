@@ -1,7 +1,11 @@
 //! Unpublished queue transitions shared by the original live and replay paths.
 //! A QueueChange is a calculation request, never a source, reservation or
 //! cleanup capability. Status/allocator/Undo and pin checks remain mandatory.
-use super::{Error, Operation, Result, put32, put64};
+use super::{
+    Error, Operation, Result,
+    format::{CatalogJob, CatalogRoot, Format, Scan},
+    put32, put64,
+};
 use crate::{
     api::Namespace,
     storage::{
@@ -10,7 +14,7 @@ use crate::{
         page::PageRef,
         retention_page::{
             JOB_BYTES, JOB_COUNT, ROOT_BYTES,
-            catalog::{self, JobCells, JobState, JobView, RootView},
+            catalog::{self, JobState},
         },
         transaction_record::{StatusSlotRef, TxnRef},
         undo_ref::UndoRef,
@@ -101,32 +105,39 @@ impl QueueChange<'_> {
 fn next(value: u64) -> Result<u64> {
     value.checked_add(1).ok_or(Error::Exhausted)
 }
-fn require_state(job: JobView<'_>, state: JobState) -> Result<()> {
+fn require_state<'a, J: CatalogJob<'a>>(job: J, state: JobState) -> Result<()> {
     if job.state() == state {
         Ok(())
     } else {
         Err(Error::OrderMismatch)
     }
 }
-fn first_free(root: RootView<'_>, cells: JobCells<'_>, namespace: Namespace) -> Result<usize> {
+fn first_free<F: Format>(
+    root: F::Root<'_>,
+    cells: F::Cells<'_>,
+    namespace: Namespace,
+) -> Result<usize> {
     for offset in 0..JOB_COUNT {
         let ordinal = (root.cursor() as usize + offset) % JOB_COUNT;
-        if catalog::decode_job(cells.cell(ordinal), namespace)?.state() == JobState::Free {
+        // A Row cell is never free and never a Catalog lease target.
+        if let Scan::Catalog(job) = F::scan_job(F::cell(cells, ordinal), namespace)?
+            && job.state() == JobState::Free
+        {
             return Ok(ordinal);
         }
     }
     Err(Error::BudgetMismatch)
 }
-fn lease(
+fn lease<F: Format>(
     bytes: &mut [u8; JOB_BYTES],
-    before: JobView<'_>,
+    before: F::Job<'_>,
     actor: TxnRef,
     status: StatusSlotRef,
     lsn: u64,
     root: bool,
 ) -> Result<()> {
     require_state(before, JobState::Free)?;
-    catalog::free_job(
+    F::free_job(
         Generation::new(next(before.generation().get())?).map_err(|_| Error::Exhausted)?,
         bytes,
     );
@@ -145,24 +156,24 @@ fn lease(
     clippy::too_many_arguments,
     reason = "separate borrowed before-images and caller-owned output buffers keep preparation allocation-free"
 )]
-pub(crate) fn prepare(
+pub(crate) fn prepare<F: Format>(
     change: QueueChange<'_>,
     namespace: Namespace,
-    before: RootView<'_>,
+    before: F::Root<'_>,
     cells: &[[u8; JOB_BYTES]; JOB_COUNT],
     lsn: u64,
     root_after: &mut [u8; ROOT_BYTES],
     job_after: &mut [u8; JOB_BYTES],
     aggregate: &mut [u8; 640],
 ) -> Result<Option<usize>> {
-    let original = JobCells::original(cells);
-    catalog::verify_selected_census(before, namespace, original, aggregate)?;
+    let original = F::cells(cells);
+    F::verify_selected_census(before, namespace, original, aggregate)?;
     let operation = change.operation();
     if lsn <= before.apply() || (before.aging().is_none()) != (operation == Operation::AgingStart) {
         return Err(Error::OrderMismatch);
     }
     let ordinal = if matches!(operation, Operation::Begin | Operation::Reserve) {
-        Some(first_free(before, original, namespace)?)
+        Some(first_free::<F>(before, original, namespace)?)
     } else {
         change.ordinal()
     };
@@ -174,11 +185,11 @@ pub(crate) fn prepare(
     put64(root_after, 80, lsn);
     let mut c = 0usize;
     if let Some(ordinal) = ordinal {
-        let prior = catalog::decode_job(original.cell(ordinal), namespace)?;
+        let prior = F::decode_job(F::cell(original, ordinal), namespace)?;
         job_after.copy_from_slice(prior.bytes());
         match change {
             QueueChange::Begin { actor, status } => {
-                lease(job_after, prior, actor, status, lsn, false)?;
+                lease::<F>(job_after, prior, actor, status, lsn, false)?;
                 put64(root_after, 88, next(before.issued())?);
             }
             QueueChange::Reserve(plan) => {
@@ -187,7 +198,7 @@ pub(crate) fn prepare(
                 {
                     return Err(Error::InvalidInput);
                 }
-                lease(job_after, prior, plan.actor, plan.status, lsn, true)?;
+                lease::<F>(job_after, prior, plan.actor, plan.status, lsn, true)?;
                 plan.undo.encode(&mut job_after[128..168])?;
                 let sequence = next(before.undo_high())?;
                 let object = next(before.object_high())?;
@@ -214,7 +225,7 @@ pub(crate) fn prepare(
             }
             QueueChange::Cancel { .. } => {
                 require_state(prior, JobState::RootReserved)?;
-                catalog::free_job(prior.generation(), job_after);
+                F::free_job(prior.generation(), job_after);
                 put64(root_after, 384, next(before.canceled())?);
             }
             QueueChange::Commit { sender, .. } | QueueChange::AbortEnd { sender, .. } => {
@@ -254,19 +265,29 @@ pub(crate) fn prepare(
                 if !prior.state().is_releasing() || prior.release_cursor() != 3 {
                     return Err(Error::OrderMismatch);
                 }
-                catalog::free_job(prior.generation(), job_after);
+                F::free_job(prior.generation(), job_after);
                 put64(root_after, 376, next(before.completed())?);
             }
             QueueChange::TerminalFinish { .. } => {
                 require_state(prior, JobState::TerminalReady)?;
                 // An outstanding RootJob owns actual cleanup after terminal.
                 for other in 0..JOB_COUNT {
-                    let job = catalog::decode_job(original.cell(other), namespace)?;
-                    if job.state().is_root() && job.source() == prior.source() {
-                        return Err(Error::OrderMismatch);
+                    match F::scan_job(F::cell(original, other), namespace)? {
+                        Scan::Catalog(job)
+                            if job.state().is_root() && job.source() == prior.source() =>
+                        {
+                            return Err(Error::OrderMismatch);
+                        }
+                        // One actor never owns Jobs of both scopes.
+                        Scan::Row(source)
+                            if prior.source().map(|s| s.id()) == Some(source.id()) =>
+                        {
+                            return Err(Error::Unsupported);
+                        }
+                        _ => {}
                     }
                 }
-                catalog::free_job(prior.generation(), job_after);
+                F::free_job(prior.generation(), job_after);
                 put64(root_after, 376, next(before.completed())?);
             }
             QueueChange::AgingStart => return Err(Error::InvalidInput),
@@ -275,7 +296,7 @@ pub(crate) fn prepare(
             put64(job_after, 376, lsn);
             fill_budget(job_after)?;
         }
-        catalog::decode_job(job_after, namespace)?;
+        F::decode_job(job_after, namespace)?;
     } else {
         if operation != Operation::AgingStart {
             return Err(Error::InvalidInput);
@@ -306,18 +327,18 @@ pub(crate) fn prepare(
         }
     }
     let selected = if let Some(ordinal) = ordinal {
-        original.replace(ordinal, job_after)?
+        F::replace(original, ordinal, job_after)?
     } else {
         original
     };
-    let (masks, digest) = catalog::summarize_jobs(selected, namespace, aggregate)?;
+    let (masks, digest) = F::summarize_jobs(selected, namespace, aggregate)?;
     for (index, mask) in masks.into_iter().enumerate() {
         put64(root_after, 96 + index * 8, mask);
     }
     root_after[128..160].copy_from_slice(&digest);
     root_after[160..192].copy_from_slice(&content_digest(aggregate));
-    let root = catalog::decode_root(root_after, namespace)?;
-    catalog::verify_selected_census(root, namespace, selected, aggregate)?;
+    let root = F::decode_root(root_after, namespace)?;
+    F::verify_selected_census(root, namespace, selected, aggregate)?;
     Ok(ordinal)
 }
 

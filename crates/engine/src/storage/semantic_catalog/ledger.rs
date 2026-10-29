@@ -1,7 +1,7 @@
 //! Exact per-owner residuals for the single Missing Catalog root. These are
 //! arithmetic/byte checks. Global inventory closure and admission still belong
 //! to the original owner or selected recovery source.
-use super::{Error, Operation, Result};
+use super::{Error, Operation, Result, format::CatalogJob};
 use crate::storage::{
     allocation_page::ReservationOwner,
     control::Profile,
@@ -24,9 +24,9 @@ fn debt(bytes: u64) -> RemainingBudget {
     }
 }
 
-pub(crate) fn transaction_remaining(
+pub(crate) fn transaction_remaining<'a, J: CatalogJob<'a>>(
     status: TransactionStatus,
-    root: Option<JobView<'_>>,
+    root: Option<J>,
 ) -> Result<[RemainingBudget; 5]> {
     if root.is_some_and(|job| !job.state().is_root() || job.source() != Some(status.reference())) {
         return Err(Error::IdentityMismatch);
@@ -110,13 +110,13 @@ pub(crate) fn transaction_remaining(
 /// Current closure only. Previous-owner hashes and exact consumed deltas need
 /// the actual transition or accepted capture/WAL history; current bytes alone
 /// cannot establish historical accounting, especially after a Root clears C.
-pub(crate) fn validate_transaction(
+pub(crate) fn validate_transaction<'a, J: CatalogJob<'a>>(
     bytes: &[u8; 1536],
     profile: Profile,
     current: StatusHome,
-    root: Option<JobView<'_>>,
+    root: Option<J>,
 ) -> Result<()> {
-    if profile.format() != 2 {
+    if profile.format() != J::VERSION {
         return Err(Error::IdentityMismatch);
     }
     let TransactionStatusCell::Occupied(status) = current.core() else {
@@ -166,19 +166,19 @@ pub(crate) fn validate_transaction(
 
 /// Both live production and replay use the same explicit predecessor. A parsed
 /// after descriptor cannot replace this transition or establish its own history.
-pub(crate) struct TransactionTransition<'a> {
+pub(crate) struct TransactionTransition<'a, J = JobView<'a>> {
     pub(crate) operation: Operation,
     pub(crate) profile: Profile,
     pub(crate) lsn: u64,
     pub(crate) before: Option<&'a [u8; 1536]>,
     pub(crate) status: StatusHome,
-    pub(crate) root: Option<JobView<'a>>,
+    pub(crate) root: Option<J>,
     pub(crate) inventory: obligation::InventoryClaim,
     pub(crate) catalog_bytes: usize,
 }
 
-pub(crate) fn next_transaction(
-    input: TransactionTransition<'_>,
+pub(crate) fn next_transaction<'a, J: CatalogJob<'a>>(
+    input: TransactionTransition<'_, J>,
     output: &mut [u8; 1536],
 ) -> Result<()> {
     encode_next_transaction(&input, output)?;
@@ -187,15 +187,15 @@ pub(crate) fn next_transaction(
     validate_transaction(output, input.profile, input.status, input.root)
 }
 
-fn encode_next_transaction(
-    input: &TransactionTransition<'_>,
+fn encode_next_transaction<'a, J: CatalogJob<'a>>(
+    input: &TransactionTransition<'_, J>,
     output: &mut [u8; 1536],
 ) -> Result<()> {
     use obligation::{DescriptorSpec, OwnerChain};
     let TransactionStatusCell::Occupied(status) = input.status.core() else {
         return Err(Error::IdentityMismatch);
     };
-    if input.profile.format() != 2
+    if input.profile.format() != J::VERSION
         || input.lsn == 0
         || input.operation == Operation::AgingStart
         || !matches!(

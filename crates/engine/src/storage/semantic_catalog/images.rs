@@ -1,12 +1,12 @@
 //! Canonical candidate images for scope2, with exact native preconditions.
 //! Inputs are borrowed observations. No function installs a page or grants a
 //! reservation; the original producer couples all candidates before staging.
-use super::{Error, Operation, Result};
+use super::{Error, Operation, Result, format::CatalogJob};
 use crate::{
     api::Namespace,
     storage::{
         page::{FileId, PAGE_BYTES, PageHeader, PageIdentity, PageKind, PageLsn, PageRef},
-        retention_page::catalog::{JobState, JobView},
+        retention_page::catalog::JobState,
     },
 };
 use foundation::identity::{Generation, ObjectId};
@@ -23,12 +23,12 @@ pub(crate) use status::{StatusChange, StatusContext, change_status};
 pub(crate) use undo::{change_undo, validate_retained_undo};
 
 #[derive(Clone, Copy)]
-pub(crate) struct RootContext<'a> {
+pub(crate) struct RootContext<J> {
     pub(crate) namespace: Namespace,
-    pub(crate) job: JobView<'a>,
+    pub(crate) job: J,
     pub(crate) lsn: PageLsn,
 }
-impl RootContext<'_> {
+impl<'a, J: CatalogJob<'a>> RootContext<J> {
     fn validate(self, operation: Operation) -> Result<()> {
         let state = self.job.state();
         let valid = match operation {

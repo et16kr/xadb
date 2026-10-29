@@ -1,11 +1,8 @@
 //! The three original XOI1 items of one Catalog reservation. A group-local
 //! ordinal is always zero; the original global inventory resolves its own
 //! owner ordinal separately. These bytes are observations, never reservations.
-use super::{Error, Operation, Result, put16, put64};
-use crate::storage::{
-    obligation::InventoryClaim,
-    retention_page::catalog::{JobState, JobView},
-};
+use super::{Error, Operation, Result, format::CatalogJob, put16, put64};
+use crate::storage::{obligation::InventoryClaim, retention_page::catalog::JobState};
 use foundation::codec::{ContentHasher, content_digest};
 
 pub(crate) const ITEM_BYTES: usize = 96;
@@ -15,7 +12,10 @@ pub(crate) const DELTAS_BYTES: usize = 3 * 208;
 /// Each identity and its change LSN come from the same stable Reserved job.
 /// The caller must additionally prove its actual allocator/Free Undo before
 /// image and original inventory closure before admitting a transition.
-pub(crate) fn items(job: JobView<'_>, output: &mut [u8; ITEMS_BYTES]) -> Result<InventoryClaim> {
+pub(crate) fn items<'a, J: CatalogJob<'a>>(
+    job: J,
+    output: &mut [u8; ITEMS_BYTES],
+) -> Result<InventoryClaim> {
     if job.state() != JobState::RootReserved || job.lease_lsn() != job.last_step() {
         return Err(Error::OrderMismatch);
     }
@@ -64,9 +64,9 @@ pub(crate) fn empty(change_lsn: u64) -> Result<InventoryClaim> {
 /// Reserve emits absent -> item, Forward consumes item -> absent, and Cancel
 /// releases item -> absent. Bytes are reconstructed from the original job,
 /// never copied from a purported candidate delta.
-pub(crate) fn deltas(
+pub(crate) fn deltas<'a, J: CatalogJob<'a>>(
     operation: Operation,
-    job: JobView<'_>,
+    job: J,
     output: &mut [u8; DELTAS_BYTES],
 ) -> Result<InventoryClaim> {
     let action = match operation {
@@ -92,8 +92,8 @@ pub(crate) fn deltas(
 
 /// Rewrite only the global owner ordinal. The digest remains normalized to
 /// ordinal zero, as required by the original ownership verifier.
-pub(crate) fn global_items(
-    job: JobView<'_>,
+pub(crate) fn global_items<'a, J: CatalogJob<'a>>(
+    job: J,
     owner_ordinal: u16,
     output: &mut [u8; ITEMS_BYTES],
 ) -> Result<InventoryClaim> {
