@@ -9046,5 +9046,24 @@
     "remaining_supply": "CR1 on the user's machine: catalog native N01-N03 (60 GiB floor, independent admission) and F05 plan4 recovery native (independent gate, pre-existing support.rs:260); commit-window memory margin 84 B; advisories A5 format gate in preflight_empty_retention and A7 fits check",
     "source_roots_changed": false,
     "artifact_manifest_sha256": "30c4ab322770370b2d0b765ed258154f8f8dddad86acaf36e108ec47c523972f"
+  },
+  "dev3_module_s1f_finish_table": {
+    "status": "LOCAL_VERIFIED_REVIEWED",
+    "contract_ref": "dev3-module-boundaries.md#row-begin-capsule",
+    "evidence_ref": "module-independence-survey-20261026.md#s1f-finish-table",
+    "baseline_commit": "5135e16",
+    "integration_base": "b5f7c9b",
+    "branch": "claude/project-thread-h2j8oc",
+    "commits": [
+      "06a8ddd",
+      "ad7ff98",
+      "d92533a",
+      "76d3d52"
+    ],
+    "scope": "Limited sole issuer CatalogStatementCall::finish_table for CheckedTable: lookup-key-only object, Found-record identity and anchor, table_slot under publication then read bit and catalog flag under the isolation leaf, Missing/Unsupported/Fatal/FlushRequired outcomes",
+    "validation": "r1 build-script failure kept; r2 and r3 8 selectors PASS; integrated round on the switched format 8 PASS; class values unchanged; check 0 warnings; two independent reviews, REQUIRED 2 resolved",
+    "remaining_supply": "use-side MBC20-V09 stale handle rejection, Row class charge for held CheckedTable, S1-e mark check in both register paths, CatalogReadOperation::finish_table of §6.4",
+    "source_roots_changed": false,
+    "artifact_manifest_sha256": "920be89dc7a195b43441fe836ef84955ba37f255e9e8d35a04cd02400c99aaa4"
   }
 }

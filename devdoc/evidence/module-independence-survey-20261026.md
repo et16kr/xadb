@@ -4084,3 +4084,32 @@ v2 `native`(221파일, 5,794,810B), `memory-gap`(137, 3,382,130B), `memory-retir
 **CR1(사용자 로컬에서 할 일, main이나 공유 remote에 올리기 전).** 통합 head의 source·ELF로 (a) `scripts/dev3_catalog_native.py` N01/N02/N03을 60GiB+reserve 여유와 독립 ACCEPTED admission을 갖춰 돌리고, (b) F05 plan4 recovery native를 독립 gate가 생기고 기존 `support.rs:260` 실패가 고쳐진 뒤 돌린다. 이 cloud container는 여유가 약 30GB라 (a)를 돌릴 수 없고 (b)의 gate는 단위가 스스로 발급할 수 없다. 실패하면 위 되돌림 단위로 되돌린다.
 
 **남은 권고.** preflight_empty_retention의 명시 형식 gate(A5), `page_io.rs:197-228`의 debug_assert를 `fits` 검사로(A7), commit window 소유자의 84B 여유 기록(A1). artifact는 `module-independence-20261029/artifacts/module-u2c4c-20261029/`(`manifest-all.sha256` SHA-256 `30c4ab322770370b2d0b765ed258154f8f8dddad86acaf36e108ec47c523972f`)에 있다.
+
+<a id="s1f-finish-table"></a>
+## 2026-10-29 S1-f `CatalogStatementCall::finish_table` — CheckedTable 유일 발급자
+
+기준은 `5135e16`, branch는 `module-s1f-finish-table`이고 작성 commit은 `3f2046e`, `38610ae`, 검토 반영 `7633578`, `fdec19f`다. 이 branch에는 U2-C4 전환 뒤에 cherry-pick했다(`06a8ddd8dde2655b1f123a61afe987ba6ca0a08d`, `ad7ff98b4cf0701f8602256cf2ee4e3e85d88006`, `d92533a62ee5e9369a024b72a4f1267ed26ab644`, `76d3d5204ce7f06affa8a44c8a72a76cd79af88d`). 계약은 [ROW-BEGIN-001](../contracts/dev3-module-boundaries.md#row-begin-capsule)의 "CheckedTable 발급" 문단과 그 2026-10-29 정정이다.
+
+**공급**
+
+- `finish_table(self, object, cursor, private) -> Result<TableStep<'c,'s>, RetentionError>`, `TableStep::{Table(CheckedTable), Missing, FlushRequired{target}}`(`plan4_retention/read/statement.rs`). `CheckedTable`은 derive가 없고 필드가 private이며, 생성자는 statement 모듈만 만들 수 있는 `TableIssue` 증인을 받는 `CheckedTable::issue` 하나다(`plan4_apply/row.rs`).
+- `object`는 lookup key일 뿐이다. identity·generation·SchemaEpoch·anchor는 같은 호출의 `catalog::read::lookup` Found record header에서 온다. lookup은 `finish_table` 자기 frame에서 explicit `match`로 돌고, 결과를 빌림 없는 `TableLookup`으로 바꾼 뒤에만 helper가 돈다.
+- `BoundVisibility::table_slot`이 publication lock만 잡고 놓은 뒤, `record_table_read`가 isolation leaf에서 read bit(@4)와 catalog flag(@3)를 등록한다. 두 lock은 동시에 잡지 않는다.
+- 결과: Missing(retired 포함)은 catalog flag만, Found non-Table과 자기 Reserved slot은 catalog flag 등록 뒤 Unsupported(read bit 없음), 다른 actor의 Reserved나 slot 부재는 Fatal, FlushRequired는 등록 없음이다. 범위 밖(write bit, Row epoch, RowWrite/RowRead class, Row Begin, mark)은 공급하지 않았다.
+
+**계수.** `table_source_bytes` 3520B로 statement wrapper는 8538 → 12058B이고 held 48B는 그대로다. census 시험이 두 writer에서 wrapper+held(12106)가 Full·Resident보다 작음을 확인하므로 Full(전환 뒤 34570/35594)·Resident 17880·live/recovered peak는 바뀌지 않는다. `CheckedTable` 112B, `TableStep`·`Result<TableStep>` 120B다.
+
+**시험과 실행**
+
+| 판 | head | 결과 |
+| --- | --- | --- |
+| r1 | `38610ae` | build 전 실패 보존(runner의 `/usr/bin/time` 부재, rc127, cargo 미실행) |
+| r2 | `38610ae` | 8 selector PASS |
+| r3 | `fdec19f` | 8 selector PASS(검토 R1·R2·A3·A4 반영) |
+| 통합 | `919a272` | 전환된 Profile3 형식에서 8 selector PASS |
+
+- selector: `read::statement::tests::{finish_table_carriers_leave_both_fixed_classes_unchanged, found_non_table_definition_is_unsupported_before_issue, statement_validation_and_result_carriers_fit_fixed_classes, own_catalog_observations_fit_full_resident_and_original_limits}`, `catalog_memory::table_issue::{committed_table_issues_only_after_read_bit_and_catalog_flag, missing_object_registers_only_the_catalog_flag, own_reserved_create_slot_is_unsupported_until_published, flush_required_carries_the_lookup_target_and_registers_nothing}`.
+- T01_CUT는 slot 확인 뒤·등록 전 절단점에서 시험 전용 `LeafProbe`로 두 lock이 모두 비어 있음을 확인한다. 판마다 manifest를 build 전에 동결하고 selector마다 1회 실행했으며 check 경고0, rustfmt·`git diff --check`를 통과했다.
+- 지금 제품으로 만들 수 없는 경로: retired record(DROP 없음), non-Table record(Index를 쓰는 producer 없음; 분류 unit test만), slot 부재 Fatal(손상 epoch 필요).
+
+**독립 검토.** 같은 읽기 전용 검토자가 두 번 보았다. r1은 필수2(non-Table 거절 전 catalog flag 등록, 중첩 lookup을 감싼 helper frame 미계수)와 권고6, r2는 둘 다 해소된 필수0이다. 오류 형식 `RetentionError`는 계약 문구의 오기를 바로잡는 올바른 읽기로 판정되어 계약에 날짜 정정을 달았다. 남은 일: 사용 쪽 MBC20-V09 stale handle 거절, Row class(S2/S3/S5)의 `CheckedTable` 보유 계수, S1-e의 zero-mark 검사를 `record_catalog_read`·`record_table_read` 둘 다에서 바꾸기. artifact는 `module-independence-20261029/artifacts/module-s1f-20261029/`(`manifest-all.sha256` SHA-256 `920be89dc7a195b43441fe836ef84955ba37f255e9e8d35a04cd02400c99aaa4`)에 있다.

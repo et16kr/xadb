@@ -1,5 +1,7 @@
 # XADB 모듈 독립 개발 구조 전환 작업 계획
 
+2026-10-29 [S1-f CheckedTable 발급자](../evidence/module-independence-survey-20261026.md#s1f-finish-table): `CatalogStatementCall::finish_table`을 `CheckedTable`의 유일 발급자로 공급했다. 같은 호출의 lookup Found만 근거로 하고, publication과 isolation lock을 겹치지 않게 잡으며 read bit·catalog flag를 반환 전에 등록한다. 전환된 형식에서 8 selector PASS, 독립 검토 2회(필수2 반영). 오류 형식 정정과 미공급 문구를 계약에 반영했다.
+
 2026-10-29 [U2-C4 단일 current 전환](../evidence/module-independence-survey-20261026.md#u2-single-current): Profile3 → Root3/Job3 → base4를 유일한 current 형식으로 바꿨다. 이전 Profile2-current 지점은 모두 정확한 `{3, 1, 명시 거절}` 분기이고 `>=`·dual-current·fallback은 없으며 순수 Profile2 codec은 남겼다. recovered peak native 65504·memory 65368(cap 65536). r1 304·r3 30 selector가 동결 기대와 일치하고, base 실패 34개는 main `85ceef3`에서도 같은 위치로 실패한다. genesis native PASS. 독립 검토 2회 수용. Catalog native와 F05 recovery native는 사용자 로컬의 남은 요구(CR1)다.
 
 2026-10-29 [C3 scope3 Row 전이 producer·observer](../evidence/module-independence-survey-20261026.md#c3-row-transition): `semantic_row::transition`에 Row 거래의 C 소유 group producer(AgingStart·Begin·Reserve·Cancel·RollbackStart·StatementFinish·Commit·AbortEnd·Prune·ReleaseRole·RootFree·TerminalFinish)와 A Forward·CLR까지 받는 borrowed whole-group observer를 미호출 공급으로 더했다. Reserve는 첫 효과 전 RowLeaf proof를 한다. 독립 literal 바이트 비교 7 selector PASS(r1 FAIL2 보존), 독립 검토 2회 필수0, source bound 35256B. 연결은 U2-C4 전환 뒤 S1이다.
