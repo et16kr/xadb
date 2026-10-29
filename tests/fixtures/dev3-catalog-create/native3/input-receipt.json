@@ -1,0 +1,108 @@
+{
+  "status": "FROZEN_INPUTS_NOT_EXECUTED_AGAINST_PRODUCT",
+  "plan_freeze": {
+    "sha256": "f6e0dd554a91931cc8e048e775a666dacd777f0c1c3285abed6773ec15f21eeb",
+    "frozen_by": "U2-C4b before generation; parent adoption pending"
+  },
+  "generator_runs": 1,
+  "auditor_runs": 1,
+  "projection_runs": 1,
+  "product_executions": 0,
+  "raw_count": 221,
+  "raw_bytes": 5794810,
+  "rows": 56,
+  "checkpoints": 16,
+  "profile": "f49d4bb26a5c0e1bd66dec9a2b0f77aa24e3fafadf54f27e5db9ab9a960e204e",
+  "files": {
+    "input-plan.json": {
+      "bytes": 10860,
+      "sha256": "f6e0dd554a91931cc8e048e775a666dacd777f0c1c3285abed6773ec15f21eeb"
+    },
+    "generate_literals.py": {
+      "bytes": 15538,
+      "sha256": "bb3a71e439f0f96071893721824164dbe7b0333176e1dc965a426b55b5f261b7"
+    },
+    "audit_literals.py": {
+      "bytes": 13852,
+      "sha256": "9ee360940db8703b7315f23978a713e295ecb0d0368979c9a2cba57d3e0dcb6d"
+    },
+    "project_checkpoints.py": {
+      "bytes": 3614,
+      "sha256": "8bfddf4af9dcb06190fb250d82334b2f491b5d64e3c4e1d9c99da8dd6aa518e7"
+    },
+    "manifest.json": {
+      "bytes": 229597,
+      "sha256": "e648b0bc4fb8ccf5f258cec6d521128daef6e59f3f9a20825d19eb81d68555df"
+    },
+    "raw-index.tsv": {
+      "bytes": 31800,
+      "sha256": "5c649d47ac0b381fbf0e772498adf2fa6420daa2bb550af291fcc96965686fb2"
+    },
+    "steps.tsv": {
+      "bytes": 64651,
+      "sha256": "780fe934e8d48ff054e9a436030ddc176e63d3483edad0f38345565307ffe205"
+    },
+    "generation-result.json": {
+      "bytes": 332,
+      "sha256": "69db0c79390fef195c90761778d738af0a3b0029cf9941d10170fcd65210a384"
+    },
+    "generation.stdout": {
+      "bytes": 316,
+      "sha256": "70f149ba48e73a8ddfbd379a4de9574cafbe24164f90f45c950c8f3885942299"
+    },
+    "generation.stderr": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "audit.stdout": {
+      "bytes": 248,
+      "sha256": "e54b5cdc5fb31ed6b35348b427b587282220822356a1047df0930468759d3ea7"
+    },
+    "audit.stderr": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "checkpoints.tsv": {
+      "bytes": 73647,
+      "sha256": "9501a6934c5c7c759b86250286e2b695a51622ba275e6263b8639612d45d2f5c"
+    },
+    "checkpoint-projection-receipt.json": {
+      "bytes": 763,
+      "sha256": "a86129544f87d01aa5f381069edf1e26bf348202059e313a5a25a65b9cba3b1e"
+    }
+  },
+  "runtime_admission": "NOT_ADMITTED: executable only after the single current-format switch (U2-C4c) with the U2-C2 base4 capture; exact hooks/source/ELF/controller re-freeze still required.",
+  "pinned_inputs_unchanged": {
+    "tests/fixtures/module-row-format/catalog3/serializer3.py": {
+      "expected": "0b23d146ef7fa5a1ba712baee37c60c882011f36832ef11b5f1d2b49dea70de1",
+      "actual": "0b23d146ef7fa5a1ba712baee37c60c882011f36832ef11b5f1d2b49dea70de1"
+    },
+    "tests/fixtures/dev3-plan4-free-undo/generate_literals.py": {
+      "expected": "a9a646f5fd047b1fbd73d743d99d56cde9a8217bf65587d08e9dd1f892e6bb42",
+      "actual": "a9a646f5fd047b1fbd73d743d99d56cde9a8217bf65587d08e9dd1f892e6bb42"
+    },
+    "tests/fixtures/dev3-catalog-create/transition/generate_literals.py": {
+      "expected": "3716f9d63f099051363bebeeaf0ebe4586ccd0984aa91735a7de82eba7d23b7e",
+      "actual": "3716f9d63f099051363bebeeaf0ebe4586ccd0984aa91735a7de82eba7d23b7e"
+    },
+    "tests/fixtures/dev3-catalog-create/native/manifest.json": {
+      "expected": "87aa46dd81711cc5080097c674e6fb419e371680ea3e19faa5bafbe3e4847b23",
+      "actual": "87aa46dd81711cc5080097c674e6fb419e371680ea3e19faa5bafbe3e4847b23"
+    },
+    "tests/fixtures/dev3-catalog-create/native/checkpoints.tsv": {
+      "expected": "0d1abf8d70b01cbaeea218f3cdcb49194e1e17f0b65f362f7f83877b8d98551e",
+      "actual": "0d1abf8d70b01cbaeea218f3cdcb49194e1e17f0b65f362f7f83877b8d98551e"
+    },
+    "tests/fixtures/dev3-catalog-create/transition/manifest.json": {
+      "expected": "6da4346527580f3988deb480546fd6e4ee6aa57201a4bedbb7dec60c4f1509eb",
+      "actual": "6da4346527580f3988deb480546fd6e4ee6aa57201a4bedbb7dec60c4f1509eb"
+    },
+    "tests/fixtures/module-row-format/catalog3/manifest.json": {
+      "expected": "714d6583459998b8bee50992ec39e55c3eb05a750b9116533e9d52cd24816adf",
+      "actual": "714d6583459998b8bee50992ec39e55c3eb05a750b9116533e9d52cd24816adf"
+    }
+  },
+  "launch_note": "A first launch under an absent /usr/bin/time exited 127 in the shell before the generator started; no output existed and the generator then ran once.",
+  "v2_schedule_equivalence": "audited: 56 rows, ids/LSN/epoch/kind/operation/bytes/WAL offsets/page-role sets/checkpoint scalars equal to native v2; every frame differs",
+  "n03": "N01 prefix raw reused as in v2; separate API UNKNOWN, absence of ACK, and process history required"
+}
