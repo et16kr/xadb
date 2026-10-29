@@ -23,6 +23,8 @@ use crate::storage::{
 use foundation::error::Effect;
 
 mod live;
+#[cfg(test)]
+mod tests;
 
 /// The one private operation loan C lends to each preflight and rollback.
 type Loan = [u8; 425_984];
