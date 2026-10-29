@@ -518,6 +518,13 @@ core의 기존 offset/flag 폭은 유지하고 아래 presence를 명시한다. 
 
 [source별 선택 증거](../evidence/module-independence-survey-20261026.md#row-scope3-wire)는 r1의8개·r2의신규2개로 고유10개를 기록한다. 최종 source에서 전체10개를 반복한 증거가 아니며 순수 framing을 actual 권한/복구 인수로 올리지 않는다.
 
+**2026-10-29 개정(Q1, RowReserve의 값 commitment).** 독립 D2 검토 2회(r1 필수 4·권고 12, r2 필수 1·권고 5), 필수 전부 반영·코드 미공급(S1-g). **이 grammar는 바꾸지 않는다.**
+- RowReserve에는 값 section이 없고 core digest flag bit3/4는 0이다. 57336B 고정 모양·[row-shape 표](#row-shape)·opcode/native/inventory/redo 규칙은 그대로다.
+- canonical row 값은 frame에 없다. 값의 영향은 kind9 native after의 Job `C=cell_bytes`@280..284와 `projection`(XRP1)@288..320 두 field로만 실린다. 같은 frame의 그 native header after digest·Jobs page redo·Root `job_digest`/`budget_digest`·Tx descriptor의 Reserved-Forward 잔여 `91304+C+128h`가 이를 다시 운반한다.
+- 이 묶음을 값 commitment라 부른다. 다음 Forward가 원 schema decode·`record.len+12==C`·XRP1 일치로 열고, Cancel·C4 CancelReserved는 읽지 않고 버린다.
+- 복구 replay가 이 commitment와 다른 입력을 어디서 얻는지는 [ROW-BEGIN-001 개정](dev3-module-boundaries.md#row-reserve-replay)이 정한다.
+- 값 section(C1)과 값 digest(C2) 추가는 그 개정의 거절 대안이다. 이 결정의 frame 수치와 영향 행은 바뀌지 않는다.
+
 <a id="row-status-images"></a>
 ### Scope3 실제 Status before/after 관측 — 2026-10-29
 
@@ -570,3 +577,5 @@ Begin/Reserve의 Free(g)→TerminalLeased/RootReserved는 checked g+1·leaseLSN=
 원64 bank에서 같은 TxnId의 다른 full generation을 거절하고 동일 actor는 Row scope와 exact Status 위치를 요구한다. Begin에는 원 actor Job이 없고 나머지는 terminal 정확히1개다. 발급/Forward/Cancel/CLR/Commit/AbortEnd는 Leased, maintenance는 Ready를 요구한다. Reserve/Commit의 Reserved0, AbortEnd의 모든 root Compensated, TerminalFinish의 모든 releasing을 포함한 root0, maintenance의 Reserved0, Prune terminal outcome/q, Committed cleanup q 일치를 검산한다. q0 Compensated root는 최종 Committed 또는 Aborted outcome과 공존할 수 있다. root의 current U/sequence와 planned opcode의 stmt/mutation을 core에 대조하고 maintenance의 cursor-after=(ordinal+1)%64만 확인한다. Root의 원 cursor-before 선택은 여기서 인증하지 않는다.
 
 sender1536B는 SHA를 frame prior0와 after Job.sender 양쪽에 묶는 **opaque 원 입력**이다. descriptor의 canonical 의미·residual/history/owner chain을 검산했다고 주장하지 않는다. Root commitment·first-free/issuer high-water·원 전체 graph/Job 유일성 및 nonfree≤55·실제 Status/U/Row·q 발급/horizon/pins·descriptor/edge/count/inventory·source 상계/admission·current Profile3/live/recovery·M4/M5는 미공급이다. 별도 scalar 성공 표시를 전체 권한으로 합치지 않으며 확장 시 owner와 D2를 재검토한다. [독립 raw26쌍과 신규10개 선택 결과](../evidence/module-independence-survey-20261026.md#row-job-images)는 원 source별로 보존한다.
+
+2026-10-29 참조(Q1): 위 Reserve의 원 계획 C/projection 입력과 역발급 금지는 이 국소 `jobs::observe`의 입력 계약이며 그대로다. 이 함수는 복구 replay 경로에 없고 N1 교차 시험만 부른다. whole-group replay의 입력 출처는 [ROW-BEGIN-001 개정](dev3-module-boundaries.md#row-reserve-replay)이 정한다.
