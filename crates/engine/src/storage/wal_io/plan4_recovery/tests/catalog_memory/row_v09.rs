@@ -45,6 +45,11 @@ const ABSENT: u64 = 7;
 /// The fixture's WAL complete LSN before the reserve: the RowReserve and its
 /// Cancel are the next two LSNs (`row_cancel.rs`).
 const PREVIOUS_LSN: u64 = 14;
+/// How long the first return is left alone before the writer is checked. A
+/// writer that waited for only one return would recheck the read set within
+/// it (the gate's wait rechecks every 10 ms, `FENCE_RECHECK`) and then show
+/// up: at RowPreflightResident, or with the gate reopened after its refusal.
+const STILL: std::time::Duration = std::time::Duration::from_millis(200);
 
 /// The WAL file's length in the directory: the ReservedRow borrows the
 /// writer, so the reserve's effect is read from the files.
@@ -82,6 +87,11 @@ macro_rules! refused_reader {
 ///   writer holds no charge;
 /// - a new reader is Unchanged InstallationPending and changes no charge.
 ///
+/// The readers return one at a time. After the first, the writer still
+/// waits: for `STILL` it reaches no RowPreflightResident, and then the gate
+/// is closed, one read is active and the ledger holds the held loan and one
+/// resident, with no writer charge. Only then is the second released.
+///
 /// After both readers return:
 /// - `over = -1` is Unchanged (Census, Capacity), with the gate reopened,
 ///   nothing registered and no WAL or file effect;
@@ -92,6 +102,11 @@ macro_rules! refused_reader {
 /// `over = 1` reserves (the WAL grows) and cancels (the complete LSN is then
 /// the fixture's plus the RowReserve and the Cancel). The cancel returns the
 /// charge with no fence.
+///
+/// The equal round relies on a returning reader closing its source before
+/// its read operation ends (`finish_checked`, source-before-progress in
+/// `plan4_retention/read/scope.rs`). Otherwise the woken writer could still
+/// see that reader's resident charge and be refused Capacity.
 #[test]
 fn mbc10_v09_row_write_waits_for_two_resident_readers_then_reserves() {
     case("MBC10-V09", || {
@@ -187,12 +202,23 @@ fn mbc10_v09_row_write_waits_for_two_resident_readers_then_reserves() {
                                     (checking, resume)
                                 });
                                 resume_wait.send(Resume::Continue).unwrap();
-                                for resume in releases {
-                                    resume.send(Resume::Continue).unwrap();
+                                // One return: the writer still waits at the gate.
+                                let mut releases = releases.into_iter();
+                                let mut readers = readers.into_iter();
+                                releases.next().unwrap().send(Resume::Continue).unwrap();
+                                readers.next().unwrap().join().unwrap();
+                                match &admission {
+                                    Some((checking, _)) => assert!(
+                                        checking.recv_timeout(STILL).is_err(),
+                                        "admitted with a read still active"
+                                    ),
+                                    None => std::thread::sleep(STILL),
                                 }
-                                for reading in readers {
-                                    reading.join().unwrap();
-                                }
+                                let after_one = hook::observe(core);
+                                let source_after_one = reader_ref.catalog_test_source_used();
+                                // The second return.
+                                releases.next().unwrap().send(Resume::Continue).unwrap();
+                                readers.next().unwrap().join().unwrap();
                                 // Admitted only after both readers returned.
                                 let admitted = admission.map(|(checking, resume)| {
                                     checking.recv_timeout(WAIT).unwrap();
@@ -201,15 +227,25 @@ fn mbc10_v09_row_write_waits_for_two_resident_readers_then_reserves() {
                                     resume.send(Resume::Continue).unwrap();
                                     (observed, source)
                                 });
-                                (at_wait, source_at_wait, late, source_after_late, admitted)
+                                let one = (after_one, source_after_one);
+                                (
+                                    at_wait,
+                                    source_at_wait,
+                                    late,
+                                    source_after_late,
+                                    one,
+                                    admitted,
+                                )
                             });
                             let result =
                                 writer.preflight_row(owner, &view, &table, private, &mut flush);
-                            let (at_wait, source_at_wait, late, source_after_late, admitted) =
+                            let (at_wait, source_at_wait, late, source_after_late, one, admitted) =
                                 controlling.join().unwrap();
+                            let (after_one, source_after_one) = one;
                             println!(
                                 "MBC10_V09 over={over} held={held} at_wait={at_wait:?} \
                                  source_at_wait={source_at_wait} late_reader={late:?} \
+                                 after_one={after_one:?} source_after_one={source_after_one} \
                                  admitted={admitted:?}"
                             );
                             assert!(at_wait.read_gate_closed);
@@ -220,6 +256,11 @@ fn mbc10_v09_row_write_waits_for_two_resident_readers_then_reserves() {
                             assert!(matches!(late.cause, RetentionCause::Concurrency(error)
                                 if error.cause == concurrency::Cause::InstallationPending));
                             assert_eq!(source_after_late, source_at_wait);
+                            // After one return: still waiting, no writer charge.
+                            assert!(after_one.read_gate_closed);
+                            assert_eq!(after_one.active_read_operations, 1);
+                            assert!(!after_one.fenced);
+                            assert_eq!(source_after_one, held_used + resident as u64);
                             match result {
                                 Err(error) => {
                                     println!("MBC10_V09 over={over} refusal={error:?}");
