@@ -1,7 +1,7 @@
 {
   "schema_version": 2,
   "product": "XADB",
-  "date": "2026-10-30T10:32:31.840284+09:00",
+  "date": "2026-10-30T10:37:52.355418+09:00",
   "status": "PASS",
   "errors": [],
   "markdown_documents": [
@@ -583,9 +583,9 @@
     },
     {
       "file": "devdoc/evidence/README.md",
-      "links": 375,
+      "links": 376,
       "duplicate_ids": 0,
-      "sha256": "3be8504621c8a303728b20f4dbd8aa52578e35c7ed16c6aeb1432f0e43f7bd65"
+      "sha256": "0641df0f6dd0c2be08382bc9f79db29d8172e7b243bec3adb6b71b2299c450a1"
     },
     {
       "file": "devdoc/evidence/comm-acceptance-resume-20261023.md",
@@ -1278,10 +1278,16 @@
       "sha256": "52d10a0d19d0fabdb994c700a7b8ad9ae868172d02dfcdb9ab87e1642639e097"
     },
     {
-      "file": "devdoc/evidence/module-independence-survey-20261026.md",
-      "links": 221,
+      "file": "devdoc/evidence/main-preexisting-failures-20261030.md",
+      "links": 3,
       "duplicate_ids": 0,
-      "sha256": "7e198b65e74adba6162732e5e59c7fdbe91b527212bbc6b8a5e031038bcb02b5"
+      "sha256": "377143e554df12420adeadc102dcc4b48ca55c8b151ca8a4cb4aa50f65b18dd5"
+    },
+    {
+      "file": "devdoc/evidence/module-independence-survey-20261026.md",
+      "links": 222,
+      "duplicate_ids": 0,
+      "sha256": "1a7e1fc12fc9ff23b65a62b332aff0888915c6e32676c8a785f868d02bf64329"
     },
     {
       "file": "devdoc/evidence/naming-cleanup-20261025.md",

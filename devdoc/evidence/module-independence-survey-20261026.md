@@ -4302,7 +4302,7 @@ S1(S1-a~S1-g) 뒤의 다음 단계인 S2(C3 Row Reserve·Forward·Cancel)와 S5(
 <a id="native-adapter-file-cr1-scope"></a>
 ## 2026-10-30 native 시험 adapter File 정정 반영과 CR1 범위 변경(F05 제외)
 
-같은 project의 기존 main 실패 조사(PR #3, branch `claude/project-thread-4dsfsh`, `e97ef86`·`98a227b`, 증거 `main-preexisting-failures-20261030.md`)가 두 결과를 냈고, 이 branch는 그중 시험 adapter 정정을 같은 내용으로 받았다(`94ede44`).
+같은 project의 기존 main 실패 조사(PR #3, branch `claude/project-thread-4dsfsh`, `e97ef86`·`98a227b`, 증거 [main 기존 실패 디버깅](main-preexisting-failures-20261030.md), 이 branch에는 `18f33f5`로 옮김)가 두 결과를 냈고, 이 branch는 그중 시험 adapter 정정을 같은 내용으로 받았다(`94ede44`).
 
 **commit window native 초과의 원인과 정정.** 시험 전용 native adapter(`plan4_pages/native_tests.rs`)의 `File`이 129B trace 이름을 값 안에 들고 있어 native W의 `File`이 160B(memory 32B)였다. Full 조회 census가 `W::File`을 8번 세므로 native만 1024B가 더해졌고, 이것이 [U2-C4 전환](#u2-single-current) 이후 남은 native pending_full 66612B > 65536B의 원인이었다(main `85ceef3`의 66280B도 같은 원인). 이름을 `Box<FileName>`으로 옮기고 `runtime_core_source_native`의 고정값을 984에서 856으로 바꿨다. 제품 코드·cap·charge는 바뀌지 않았고 두 파일은 `e97ef86`과 byte 같다.
 
