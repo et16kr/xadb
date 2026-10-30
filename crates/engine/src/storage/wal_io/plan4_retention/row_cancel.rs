@@ -20,7 +20,8 @@
 //! Root keeps its RowId and Undo sequence high-water, and the Undo container
 //! keeps its generation. The table write bit stays (§6). Every refusal
 //! before the stage is Unchanged, so the wrapper returns the same
-//! ReservedRow; every failure after the stage is Fatal.
+//! ReservedRow, except a contradiction of the wrapper's own proof or of the
+//! ledger check (Fatal Census); every failure after the stage is Fatal.
 //!
 //! One suspended caller level holds a Row group return carrier while the
 //! group is prepared (S2-0b decision 2): `cancel_group`'s `group`, the slot
@@ -115,8 +116,11 @@ impl<'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
     /// head is not checked as reserve checks it: this actor is RootReserved
     /// by the reservation, and the draft commitment folds every Job row, so
     /// any change of them since the Reserve is Stale. The RootJob's Undo
-    /// sequence, which the commitment folds, is read from that Job; a row
-    /// that no longer decodes is such a change.
+    /// sequence, which the commitment folds, is read from that Job. The whole
+    /// ledger check above has already decoded every Job cell (an undecodable
+    /// one is its Unchanged refusal), so a RootJob that does not decode here
+    /// contradicts that check under the exclusive writer: the control's
+    /// corruption, Fatal as every other deep check's Job decode.
     fn cancel_entry(
         &self,
         owner: &mut Owner<'c, 's>,
@@ -156,7 +160,13 @@ impl<'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
             &self.control.jobs()[ordinal],
             storage.profile().spec().namespace,
         )
-        .map_err(|_| stale())?
+        .map_err(|error| {
+            fatal(
+                storage,
+                RetentionPhase::Census,
+                RetentionCause::Retention(error),
+            )
+        })?
         .undo_sequence();
         Ok(CancelEntry {
             owner: identity,
