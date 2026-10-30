@@ -42,8 +42,9 @@ const VALUE: i64 = 7;
 /// An object no Catalog record has (the fixture commits T as object 6): a
 /// resident lookup of it captures its absence and returns Missing.
 const ABSENT: u64 = 7;
-/// The fixture's WAL complete LSN before the reserve: the RowReserve and its
-/// Cancel are the next two LSNs (`row_cancel.rs`).
+/// The fixture's WAL complete LSN after it settles, before any round
+/// (`row_cancel.rs`). Each round counts its own RowReserve and Cancel from
+/// its start.
 const PREVIOUS_LSN: u64 = 14;
 /// How long the first return is left alone before the writer is checked. A
 /// writer that waited for only one return would recheck the read set within
@@ -100,13 +101,26 @@ macro_rules! refused_reader {
 ///
 /// `over = 0` fills the ledger to exactly `65536 − shared` and finishes.
 /// `over = 1` reserves (the WAL grows) and cancels (the complete LSN is then
-/// the fixture's plus the RowReserve and the Cancel). The cancel returns the
+/// the round's plus the RowReserve and the Cancel). The cancel returns the
 /// charge with no fence.
 ///
 /// The equal round relies on a returning reader closing its source before
 /// its read operation ends (`finish_checked`, source-before-progress in
 /// `plan4_retention/read/scope.rs`). Otherwise the woken writer could still
 /// see that reader's resident charge and be refused Capacity.
+///
+/// Round order:
+/// - A Ready round leaves its read bits registered in the view, and the
+///   `over = -1` refusal checks that it registered none (`(0, 0, 0)`). Each
+///   round therefore starts with the view's catalog flag and read mask
+///   cleared, so `-1` and `0` run in either order.
+/// - `over = 1` must run last. Its reserve registers T's write bit, which
+///   the transaction keeps until it ends and no test helper clears
+///   (`test_clear_reads` leaves the write mask by design). A `-1` round after
+///   it would see `(0, 0, 1)`.
+/// - `over = 1` alone writes (RowReserve, Cancel). Its LSN check counts from
+///   the round's start, and the fixture's LSN is checked once, before the
+///   rounds.
 #[test]
 fn mbc10_v09_row_write_waits_for_two_resident_readers_then_reserves() {
     case("MBC10-V09", || {
@@ -120,7 +134,7 @@ fn mbc10_v09_row_write_waits_for_two_resident_readers_then_reserves() {
                 row_statement!(live, owner, flusher, private, reader_private, row_status
                     => writer, reader, flush, row, view, table);
                 let _ = settle!(writer, owner, view, table, private, flush, flusher);
-                view.test_clear_reads();
+                assert_eq!(effects!(writer, state).0, PREVIOUS_LSN);
                 let shared = writer.catalog_test_commit_charges()[0];
                 let charge = writer.catalog_test_retirement_charge();
                 let [reader_shared, _, resident] = reader.catalog_test_fixed_charges();
@@ -138,6 +152,9 @@ fn mbc10_v09_row_write_waits_for_two_resident_readers_then_reserves() {
                 let mut second_private = boxed::<PRIVATE_BYTES>();
                 let mut late_private = boxed::<PRIVATE_BYTES>();
                 for over in [-1_i64, 0, 1] {
+                    // Each round starts with no read registered; `1` stays
+                    // last for its write bit (see above).
+                    view.test_clear_reads();
                     let held = ((65_536 - shared - charge) as i64 - used as i64 - over) as usize;
                     let held_used = used + held as u64;
                     let before = effects!(writer, state);
@@ -310,7 +327,7 @@ fn mbc10_v09_row_write_waits_for_two_resident_readers_then_reserves() {
                                                 panic!("cancel {error:?}")
                                             }
                                         }
-                                        assert_eq!(effects!(writer, state).0, PREVIOUS_LSN + 2);
+                                        assert_eq!(effects!(writer, state).0, before.0 + 2);
                                     }
                                     let closed = hook::observe(core);
                                     assert!(!closed.read_gate_closed);
