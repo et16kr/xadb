@@ -2,10 +2,13 @@
 //! Nothing here constructs a C value: every wrapper, lane, observation,
 //! target and error comes from the original MutationPort, Owner, statement
 //! view and transaction capsule. A writable capsule exists
-//! (`MutationPort::begin_catalog_transaction`) and `begin_statement` accepts
-//! its empty actor, but nothing issues a `CheckedTable` yet and the Row write
-//! bodies return Unchanged `Unsupported`, so these entries are
-//! compile-checked only until C3 supplies the adapters (gap G2).
+//! (`MutationPort::begin_catalog_transaction`), `begin_statement` accepts its
+//! empty actor, the Catalog statement call issues a `CheckedTable`
+//! (`finish_table`) and `MutationPort::preflight_row` runs the actual
+//! preflight. Which later Row write bodies are actual is stated by the C0
+//! boundary (`plan4_apply/row.rs`); a body not supplied yet returns Unchanged
+//! `Unsupported` before any effect, so its entry here is compile-checked only
+//! until C supplies it (gap G2).
 use super::{
     Boundary, CALL_SITES, CallSite, DriveError, Failure, FlushStep, Loan, PendingRollback,
     Preflight, PreflightNext, Prepared, PreparedTask, ProducerLane, Reserved, Rollback,
