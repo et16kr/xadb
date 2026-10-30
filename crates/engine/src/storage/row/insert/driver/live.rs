@@ -6,9 +6,14 @@
 //! empty actor, the Catalog statement call issues a `CheckedTable`
 //! (`finish_table`) and `MutationPort::preflight_row` runs the actual
 //! preflight. Which later Row write bodies are actual is stated by the C0
-//! boundary (`plan4_apply/row.rs`); a body not supplied yet returns Unchanged
-//! `Unsupported` before any effect, so its entry here is compile-checked only
-//! until C supplies it (gap G2).
+//! boundary (`plan4_apply/row.rs`). `PreflightRow::reserve` is actual
+//! (S2-b2): a call that reaches it writes a durable RowReserve, and the
+//! `ReservedRow` it returns fences the session when it is dropped while its
+//! reservation is active, so a call that stops after a successful reserve
+//! ends fenced until apply and cancel are supplied (S2-c, S2-d). A body not
+//! supplied yet returns Unchanged `Unsupported` before any effect of its own.
+//! `insert_live` therefore stays without a product caller until S2-e (gap
+//! G2).
 use super::{
     Boundary, CALL_SITES, CallSite, DriveError, Failure, FlushStep, Loan, PendingRollback,
     Preflight, PreflightNext, Prepared, PreparedTask, ProducerLane, Reserved, Rollback,
