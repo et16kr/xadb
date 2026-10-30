@@ -17,7 +17,9 @@
 //! Drop). A body not supplied yet (the Row read source, rollback and Commit
 //! adapters) returns Unchanged `Unsupported` before any effect of its own.
 //! `insert_live` therefore stays without a product caller until S2-e (gap
-//! G2).
+//! G2). A preflight refusal, Busy included (a LOAD claim held by another
+//! owner, a moved WAL prefix), ends the row holding nothing and is not
+//! retried; only a `FlushRequired` is flushed and the row tried again.
 use super::{
     Boundary, CALL_SITES, CallSite, DriveError, Failure, FlushStep, Loan, PendingRollback,
     Preflight, PreflightNext, Prepared, PreparedTask, ProducerLane, Reserved, Rollback,

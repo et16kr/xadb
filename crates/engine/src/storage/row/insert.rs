@@ -4,7 +4,7 @@
 //! and apply belong to the original disk owner; no candidate is a grant.
 #![allow(
     dead_code,
-    reason = "actual Row reservation/group adapter is not supplied yet"
+    reason = "no product caller in S2: the driver's live mode and the producers are reached from tests only"
 )]
 
 pub(in crate::storage) mod driver;

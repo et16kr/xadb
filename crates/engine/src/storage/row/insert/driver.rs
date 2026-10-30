@@ -531,6 +531,9 @@ fn insert_row<B: Boundary>(
         let target = match call.preflight(statement, table, loan) {
             Ok(PreflightNext::Ready(preflight)) => break preflight,
             Ok(PreflightNext::Flush(target)) => target,
+            // A refusal, Busy included (a LOAD claim held by another owner,
+            // a moved WAL prefix), ends the row: C returned what it took, and
+            // only a FlushRequired is retried.
             Err(error) => return Err(Failure::new(Stage::Preflight, error.into())),
         };
         // Nothing is held and nothing took effect, so the same row is tried
