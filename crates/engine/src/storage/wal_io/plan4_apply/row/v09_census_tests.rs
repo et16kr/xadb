@@ -9,7 +9,12 @@
 //! - (i) shared + the RowWrite phase with the largest total. The total is
 //!   C total (body + return carriers) + the caller bound of its call site
 //!   (`row_write_phases`, the S2W-C01/C02 terms). Also shared + the charge
-//!   that admits that phase.
+//!   that admits that phase. The contract's wording, "반환 오류가 최대인
+//!   writer phase", names the phase whose Err hands back the largest
+//!   wrapper (today apply's `RowOwnedError<PreparedRow>`). That phase is
+//!   printed too, picked by its Err type's size. Its total is at most the
+//!   largest total, so the PASS holds under both readings: the largest total
+//!   bounds the phase the wording names.
 //! - (ii) shared + two resident Catalog readers (`CatalogSourceCharges`,
 //!   the ReadPort's split-time charges).
 //! - (iii) The two sets are not admitted together: RowWrite is a gated class.
@@ -38,6 +43,34 @@ fn total(phase: &RowWritePhase) -> usize {
     phase.body + phase.carriers + phase.bound
 }
 
+/// The Err type a phase returns, as `row_write_phases` charges its return
+/// carriers: the wrapper handed back inside `RowOwnedError`, or a bare
+/// `RetentionError`. A phase this table does not name fails here by name.
+fn err_type<W: WriterNamespace>(name: &str) -> (&'static str, usize) {
+    use std::mem::size_of;
+    type Pre<'a, W> = PreflightRow<'a, 'a, 'a, 'a, 'a, 'a, 'a, 'a, 'a, 'a, 'a, 'a, 'a, W>;
+    type Res<'a, W> = ReservedRow<'a, 'a, 'a, 'a, 'a, 'a, 'a, 'a, 'a, 'a, 'a, 'a, 'a, W>;
+    type Prep<'a, W> = PreparedRow<'a, 'a, 'a, 'a, 'a, 'a, 'a, 'a, 'a, 'a, 'a, 'a, 'a, W>;
+    match name {
+        "preflight" | "validation_lane" | "producer_lane" | "finish" => {
+            ("RetentionError", size_of::<RetentionError>())
+        }
+        "reserve" => (
+            "RowOwnedError<PreflightRow>",
+            size_of::<RowOwnedError<Pre<'_, W>>>(),
+        ),
+        "prepare" | "cancel" => (
+            "RowOwnedError<ReservedRow>",
+            size_of::<RowOwnedError<Res<'_, W>>>(),
+        ),
+        "apply" => (
+            "RowOwnedError<PreparedRow>",
+            size_of::<RowOwnedError<Prep<'_, W>>>(),
+        ),
+        other => panic!("RowWrite phase {other} has no Err type in this census"),
+    }
+}
+
 fn v09_census<W: WriterNamespace>(writer: &str) {
     let [shared, full, resident] =
         super::super::source::CatalogSourceCharges::new::<W>().observations();
@@ -47,7 +80,7 @@ fn v09_census<W: WriterNamespace>(writer: &str) {
     for phase in &phases {
         println!(
             "MBC40_V09 writer={writer} (i) phase={} body={} carriers={} c_total={} bound={} \
-             total={} shared_plus_total={}",
+             total={} shared_plus_total={} err_type={} err_bytes={}",
             phase.name,
             phase.body,
             phase.carriers,
@@ -55,6 +88,8 @@ fn v09_census<W: WriterNamespace>(writer: &str) {
             phase.bound,
             total(phase),
             shared + total(phase),
+            err_type::<W>(phase.name).0,
+            err_type::<W>(phase.name).1,
         );
     }
     let peak = phases.iter().max_by_key(|phase| total(phase)).unwrap();
@@ -75,6 +110,25 @@ fn v09_census<W: WriterNamespace>(writer: &str) {
     // shared (S2W-C01/C02 check every phase; this is their maximum).
     assert!(total(peak) <= charge);
     assert!(writer_sum <= shared + charge && shared + charge <= CAP);
+    // The contract's reading: the phase whose Err hands back the largest
+    // wrapper. The largest total above bounds it.
+    let named = phases
+        .iter()
+        .max_by_key(|phase| err_type::<W>(phase.name).1)
+        .unwrap();
+    let (named_type, named_bytes) = err_type::<W>(named.name);
+    println!(
+        "MBC40_V09 writer={writer} (i) largest_err_phase={} err_type={named_type} \
+         err_bytes={named_bytes} c_total={} bound={} total={} shared_plus_phase={} \
+         bounded_by={} shared_plus_bound={writer_sum}",
+        named.name,
+        named.body + named.carriers,
+        named.bound,
+        total(named),
+        shared + total(named),
+        peak.name,
+    );
+    assert!(total(named) <= total(peak));
     let readers = shared + 2 * resident;
     println!(
         "MBC40_V09 writer={writer} (ii) shared={shared} resident={resident} full={full} \
