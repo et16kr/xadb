@@ -51,8 +51,8 @@ use crate::storage::{
 };
 
 /// The issued identity a ReservedRow holds (its RowSlotReservation's scalars):
-/// what every Forward step checks the control against. Scalars only; no pin,
-/// loan or authority.
+/// what every Forward step and the Cancel check the control against. Scalars
+/// only; no pin, loan or authority.
 #[derive(Clone, Copy)]
 pub(in super::super::super::super::super::super) struct RowIssued {
     pub(in super::super::super::super::super::super) actor: TxnRef,
@@ -62,18 +62,19 @@ pub(in super::super::super::super::super::super) struct RowIssued {
     pub(in super::super::super::super::super::super) reserve_lsn: u64,
 }
 
-/// The deep checks' scalars a Forward step carries into its group: the
-/// draft's issued values (the Undo sequence is the RootJob's), the RootJob
-/// ordinal, the Terminal and its Status, the ATT slot and the statement.
+/// The deep checks' scalars an effect step on a reservation (a Forward step
+/// or the Cancel) carries into its group: the draft's issued values (the
+/// Undo sequence is the RootJob's), the RootJob ordinal, the Terminal and its
+/// Status, the ATT slot and the statement.
 #[derive(Clone, Copy)]
-struct ForwardEntry {
-    owner: OwnerIdentity,
-    prefix: WalPrefix,
-    issued: DraftIssued,
-    ordinal: usize,
-    status: StatusSlotRef,
-    slot: usize,
-    statement: u64,
+pub(super) struct ReservedEntry {
+    pub(super) owner: OwnerIdentity,
+    pub(super) prefix: WalPrefix,
+    pub(super) issued: DraftIssued,
+    pub(super) ordinal: usize,
+    pub(super) status: StatusSlotRef,
+    pub(super) slot: usize,
+    pub(super) statement: u64,
 }
 
 /// The private ranges a Forward step uses (`RowLoanLayout`): A's frame and
@@ -193,7 +194,7 @@ fn unpack_roles(packed: u16, count: u8) -> Option<[u8; 5]> {
 /// scalars and the checked frame: what the observer reports for it, and what
 /// `apply` reassembles without the observer.
 fn forward_observation(
-    entry: &ForwardEntry,
+    entry: &ReservedEntry,
     header: WalFrameHeader,
     order: [u8; 5],
     frame_bytes: usize,
@@ -439,27 +440,31 @@ impl<'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
         Ok(found)
     }
 
-    /// The deep checks of a Forward step, as the Cancel's (`cancel_entry`):
-    /// the entry of an existing-group preparation (health, idle owner, WAL
-    /// prefix, whole ledger), the view and its statement, the actor (the
-    /// reservation's), its Terminal and ATT slot, and the table's epoch slot.
-    /// A complete LSN other than the draft's is Before(Stale) without
-    /// rehashing. The actor's statement head is not checked as reserve checks
-    /// it: this actor is RootReserved by the reservation, and the draft
-    /// commitment folds every Job row and the actor's ATT row, so any change
-    /// of them since the Reserve is Stale. A view whose actor is not the
-    /// reservation's, or a draft that is not a Reserve's, contradicts the
-    /// wrapper (Fatal Census). The RootJob's Undo sequence, which the
-    /// commitment folds, is read from that Job; the whole ledger check has
-    /// already decoded every Job cell, so one that does not decode here is
-    /// the control's corruption (Fatal Census).
-    fn forward_entry(
+    /// The deep checks of an effect step on a reservation, one helper for
+    /// the Forward `prepare` and `apply` and the Cancel: the entry of an
+    /// existing-group preparation (health, idle owner, WAL prefix, whole
+    /// ledger), the view and its statement, the actor (the reservation's),
+    /// its Terminal and ATT slot, and the table's epoch slot. A complete LSN
+    /// other than the draft's is Before(Stale) without rehashing. The actor's
+    /// statement head is not checked as reserve checks it: this actor is
+    /// RootReserved by the reservation, and the draft commitment folds every
+    /// Job row and the actor's ATT row, so any change of them since the
+    /// Reserve is Stale. A view whose actor is not the reservation's, or a
+    /// draft that is not a Reserve's, contradicts the wrapper (Fatal Census).
+    /// The RootJob's Undo sequence, which the commitment folds, is read from
+    /// that Job. Its Fatal(Census, Retention) arm is defensive: the whole
+    /// ledger check above has already decoded every Job cell and refuses an
+    /// undecodable one as Unchanged(Census, Retention), so under the
+    /// exclusive writer the arm is not reached; a RootJob that did not decode
+    /// here would be the control's corruption, Fatal as every other deep
+    /// check's Job decode (S2-c review A6, S2-d review A4).
+    pub(super) fn reserved_entry(
         &self,
         owner: &mut Owner<'c, 's>,
         statement: &RowStatementView<'_, '_, 'a, 'c, 's>,
         table: RowTableSource,
         (draft, issued): (&RowDraftCut, RowIssued),
-    ) -> Result<ForwardEntry> {
+    ) -> Result<ReservedEntry> {
         let storage = self.storage;
         let invariant = || fatal(storage, RetentionPhase::Census, RetentionCause::Invariant);
         let preparation = self.catalog_preparation();
@@ -494,7 +499,7 @@ impl<'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
             )
         })?
         .undo_sequence();
-        Ok(ForwardEntry {
+        Ok(ReservedEntry {
             owner: identity,
             prefix,
             issued: DraftIssued {
@@ -525,7 +530,7 @@ impl<'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
     ) -> Result<RowPreparedCut> {
         let storage = self.storage;
         let _unwind = storage.session_fence().unwind_guard();
-        let entry = self.forward_entry(owner, statement, table, (draft, issued))?;
+        let entry = self.reserved_entry(owner, statement, table, (draft, issued))?;
         self.catalog_preparation().prepare_forward(
             owner,
             &entry,
@@ -548,7 +553,7 @@ impl<'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
     ) -> Result<()> {
         let storage = self.storage;
         let _unwind = storage.session_fence().unwind_guard();
-        let entry = self.forward_entry(owner, statement, table, (draft, issued))?;
+        let entry = self.reserved_entry(owner, statement, table, (draft, issued))?;
         self.forward_group(owner, statement, &entry, (table, draft, cut), private)?;
         // The group is durable: the view's revision may not stay behind.
         statement
@@ -565,7 +570,7 @@ impl<'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
         &mut self,
         owner: &mut Owner<'c, 's>,
         statement: &RowStatementView<'_, '_, 'a, 'c, 's>,
-        entry: &ForwardEntry,
+        entry: &ReservedEntry,
         (table, draft, cut): (RowTableSource, &RowDraftCut, &RowPreparedCut),
         private: &mut [u8; 425_984],
     ) -> Result<()> {
@@ -608,7 +613,7 @@ impl<'b, 'a, 's, 'c, 'p, 'd, 'm, 'w, W: WriterNamespace>
     fn prepare_forward(
         &self,
         owner: &mut Owner<'c, 's>,
-        entry: &ForwardEntry,
+        entry: &ReservedEntry,
         (table, draft, proposal): (RowTableSource, &RowDraftCut, &RowProposal),
         lanes: ForwardLanes<'_>,
     ) -> Result<RowPreparedCut> {
@@ -786,7 +791,7 @@ impl<'b, 'a, 's, 'c, 'p, 'd, 'm, 'w, W: WriterNamespace>
     fn prepare_forward_apply<'i>(
         &self,
         owner: &mut Owner<'c, 's>,
-        entry: &ForwardEntry,
+        entry: &ReservedEntry,
         (draft, cut): (&RowDraftCut, &RowPreparedCut),
         before: &mut [[u8; PAGE_BYTES]; 9],
         (frame, after, inventory): (
@@ -1026,7 +1031,7 @@ impl<'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
         private: &mut [u8; 425_984],
     ) -> Result<[u8; 32]> {
         let storage = self.storage;
-        let entry = self.forward_entry(owner, statement, table, (draft, issued))?;
+        let entry = self.reserved_entry(owner, statement, table, (draft, issued))?;
         let ForwardLanes { before, .. } = ForwardLanes::split(private);
         let mut requests = [target_from_source(storage, Plan4Page::CatalogLeaf)?.request; 9];
         let count = before_targets(storage.profile(), before, draft.roles, &mut requests)
@@ -1047,7 +1052,7 @@ impl<'b, 'a, 's, 'c, 'p, 'd, 'm, 'w, W: WriterNamespace>
     fn test_draft_fold<const N: usize>(
         &self,
         owner: &mut Owner<'c, 's>,
-        entry: &ForwardEntry,
+        entry: &ReservedEntry,
         (targets, draft): (&[TargetRequest; 9], &RowDraftCut),
         before: &mut [[u8; PAGE_BYTES]; 9],
     ) -> Result<[u8; 32]> {
@@ -1107,7 +1112,7 @@ pub(in super::super::super::super::super::super) struct RowForwardBody {
     /// The kind-2 recompute (`draft_recompute` with `draft_read::<9>`): the
     /// typed read of T, the copies' stamps and the draft commitment.
     pub(in super::super::super::super::super::super) recompute: usize,
-    /// `forward_entry`: its own values, then the deep checks (preflight's
+    /// `reserved_entry`: its own values, then the deep checks (preflight's
     /// `check` term) and the RootJob decode one after another.
     pub(in super::super::super::super::super::super) entry: usize,
     /// The S2-a′ shell and `producer_lane`'s own values: the sources, the
@@ -1123,10 +1128,10 @@ pub(in super::super::super::super::super::super) struct RowForwardBody {
     pub(in super::super::super::super::super::super) producer_lane: usize,
     /// The S2-a′ shell and `ReservedRow::prepare`'s own values.
     pub(in super::super::super::super::super::super) prepare_shell: usize,
-    /// `prepare`'s Fatal arm after the body (`forward_fatal`, which takes
+    /// `prepare`'s Fatal arm after the body (`reserved_fatal`, which takes
     /// the ReservedRow by value).
     pub(in super::super::super::super::super::super) prepare_arms: usize,
-    /// `row_prepare_forward`'s own values. It calls `forward_entry` and
+    /// `row_prepare_forward`'s own values. It calls `reserved_entry` and
     /// `prepare_forward` one after another.
     pub(in super::super::super::super::super::super) prepare_frame: usize,
     /// The suspended level (`PREPARE_SUSPENDED_LEVEL`) times its carrier: the
@@ -1151,7 +1156,7 @@ pub(in super::super::super::super::super::super) struct RowForwardBody {
     /// the observation and `release_discharged`) or its Fatal arm, after the
     /// body.
     pub(in super::super::super::super::super::super) apply_arms: usize,
-    /// `row_apply_forward`'s own values. It calls `forward_entry`,
+    /// `row_apply_forward`'s own values. It calls `reserved_entry`,
     /// `forward_group` and the statement's revision one after another.
     pub(in super::super::super::super::super::super) apply_frame: usize,
     /// The suspended level (`APPLY_SUSPENDED_LEVEL`) times its return slot:
@@ -1268,7 +1273,7 @@ pub(in super::super::super::super) fn row_forward_body<W: WriterNamespace>(
         + size_of::<job3::JobView<'_>>()
         + size_of::<Job<'_>>()
         + size_of::<Result<u64>>()
-        + size_of::<ForwardEntry>()
+        + size_of::<ReservedEntry>()
         + 2 * size_of::<RetentionError>()
         + 10 * reference
         // The deep checks, then the RootJob decode.
@@ -1344,7 +1349,7 @@ pub(in super::super::super::super) fn row_forward_body<W: WriterNamespace>(
         + 2 * size_of::<Result<RowPreparedCut>>()
         + 2 * size_of::<RetentionError>()
         + 8 * reference;
-    // `forward_fatal`: the ReservedRow it takes, the cleanup and the merge.
+    // `reserved_fatal`: the ReservedRow it takes, the cleanup and the merge.
     let fatal = size_of::<Res<'_, W>>()
         + 2 * size_of::<Result<()>>()
         + 2 * size_of::<RetentionError>()
@@ -1353,8 +1358,8 @@ pub(in super::super::super::super) fn row_forward_body<W: WriterNamespace>(
     let prepare_frame = size_of::<RowTableSource>()
         + size_of::<RowIssued>()
         + size_of::<UnwindFence<'_>>()
-        + size_of::<ForwardEntry>()
-        + size_of::<Result<ForwardEntry>>()
+        + size_of::<ReservedEntry>()
+        + size_of::<Result<ReservedEntry>>()
         + size_of::<ForwardLanes<'_>>()
         + size_of::<CatalogPreparation<'_, '_, '_, '_, '_, '_, '_, '_, W>>()
         + size_of::<Result<RowPreparedCut>>()
@@ -1428,8 +1433,8 @@ pub(in super::super::super::super) fn row_forward_body<W: WriterNamespace>(
     let apply_frame = size_of::<RowTableSource>()
         + size_of::<RowIssued>()
         + size_of::<UnwindFence<'_>>()
-        + size_of::<ForwardEntry>()
-        + size_of::<Result<ForwardEntry>>()
+        + size_of::<ReservedEntry>()
+        + size_of::<Result<ReservedEntry>>()
         + 3 * size_of::<Result<()>>()
         + 2 * size_of::<RetentionError>()
         // Receiver, five arguments and storage.

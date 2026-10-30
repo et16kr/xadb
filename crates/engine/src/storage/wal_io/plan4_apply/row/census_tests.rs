@@ -495,13 +495,14 @@ fn s2w_c06_row_write_c_margins_against_both_bounds() {
             - ROW_WRITE_CALLER_BYTES as i64;
         println!(
             "S2W_C06 writer={writer} cancel_body actual={} estimate={} actual_minus_estimate={} \
-             shell={} frame={} entry={} held={} suspended_level=\"{}\" levels={} group={} \
-             recompute={} sources={} produce={} prepare={} install={} carriers={} c_total={} \
-             bound={ROW_WRITE_CALLER_BYTES} charge={charge} c_margin={cancel_margin}",
+             shell={} arms={} frame={} entry={} held={} suspended_level=\"{}\" levels={} \
+             group={} recompute={} sources={} produce={} prepare={} install={} carriers={} \
+             c_total={} bound={ROW_WRITE_CALLER_BYTES} charge={charge} c_margin={cancel_margin}",
             cancel.body,
             terms.cancel_estimate,
             cancel.body as i64 - terms.cancel_estimate as i64,
             cancel.shell,
+            cancel.arms,
             cancel.frame,
             cancel.entry,
             cancel.held,

@@ -2390,13 +2390,12 @@ pub(in super::super) fn row_write_bodies<W: WriterNamespace>() -> RowWriteBodies
     let prepare = forward_body.prepare;
     let apply = forward_body.apply;
     // S2-d supplies the Cancel body: its census replaces the estimate (until
-    // then reserve's), with preflight's deep-check term and the Forward's
-    // recompute term for the same calls.
+    // then reserve's), with the Forward's entry and recompute terms for the
+    // two helpers it shares with the Forward steps.
     let cancel_estimate = reserve_estimate;
     let cancel_body = lifecycle::row::write::cancel::row_cancel_body::<W>(
         shell,
-        preflight_body.check,
-        forward_body.recompute,
+        (forward_body.entry, forward_body.recompute),
         (group_install, group.inventory),
     );
     let cancel = cancel_body.body;

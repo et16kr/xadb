@@ -5,8 +5,9 @@
 //! `RowSlotReservation` of the row; this body opens no replay scope and
 //! inherits preflight's one `history::validate_live` through the digest
 //! chain. In order:
-//! 1. the deep checks of an effect step (entry, view, actor, Terminal, ATT
-//!    slot, table slot), the reservation's actor and RootJob slot;
+//! 1. the deep checks of an effect step on a reservation (`reserved_entry`,
+//!    the Forward steps' own: entry, view, the reservation's actor,
+//!    Terminal, ATT slot, table slot, the RootJob's Undo sequence);
 //! 2. under one typed read of T, the draft commitment again through the
 //!    shared kind-2 recompute (`draft_recompute`, the Forward's), copying T
 //!    into the before range; a difference is Before(Stale);
@@ -30,27 +31,8 @@
 //! them returns the group or an Observation, and the entry checks run beside
 //! `cancel_group`, not under it; the body census (`row_cancel_body`) names
 //! that level (`CANCEL_SUSPENDED_LEVEL`).
+use super::forward::{ReservedEntry, RowIssued};
 use super::*;
-
-/// The reservation a Cancel discharges, as the wrapper's one
-/// `RowSlotReservation` holds it: scalars only, no pin, loan or authority.
-#[derive(Clone, Copy)]
-pub(in super::super::super::super::super::super) struct RowCancelIssued {
-    pub(in super::super::super::super::super::super) actor: TxnRef,
-    pub(in super::super::super::super::super::super) root_job: JobSlotRef,
-    pub(in super::super::super::super::super::super) row: RowId,
-    pub(in super::super::super::super::super::super) undo: UndoRef,
-}
-
-/// The deep checks' scalars the Cancel carries into its preparation.
-#[derive(Clone, Copy)]
-struct CancelEntry {
-    owner: OwnerIdentity,
-    prefix: WalPrefix,
-    slot: usize,
-    ordinal: usize,
-    issued: DraftIssued,
-}
 
 impl<'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
     RetentionWriter<'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W>
@@ -58,18 +40,19 @@ impl<'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
     /// The Cancel body (module doc). `draft` is the ReservedRow's cut and
     /// `issued` its reservation. An Unchanged error is a Before: nothing was
     /// staged. Any other error is Fatal and the fence stays. The entry
-    /// checks and the group are two calls one after another, so the group's
-    /// return slot (`cancel_group`) is not held across the deep checks.
+    /// checks (`reserved_entry`, the Forward steps' own) and the group are
+    /// two calls one after another, so the group's return slot
+    /// (`cancel_group`) is not held across the deep checks.
     pub(in super::super::super::super::super::super) fn row_cancel(
         &mut self,
         owner: &mut Owner<'c, 's>,
         statement: &RowStatementView<'_, '_, 'a, 'c, 's>,
-        (table, draft, issued): (RowTableSource, &RowDraftCut, RowCancelIssued),
+        (table, draft, issued): (RowTableSource, &RowDraftCut, RowIssued),
         private: &mut [u8; 425_984],
     ) -> Result<()> {
         let storage = self.storage;
         let _unwind = storage.session_fence().unwind_guard();
-        let entry = self.cancel_entry(owner, statement, table, (draft, issued))?;
+        let entry = self.reserved_entry(owner, statement, table, (draft, issued))?;
         self.cancel_group(owner, &entry, draft, private)
     }
 
@@ -80,7 +63,7 @@ impl<'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
     fn cancel_group(
         &mut self,
         owner: &mut Owner<'c, 's>,
-        entry: &CancelEntry,
+        entry: &ReservedEntry,
         draft: &RowDraftCut,
         private: &mut [u8; 425_984],
     ) -> Result<()> {
@@ -108,82 +91,6 @@ impl<'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
         self.catalog_application()
             .apply_existing(owner, ExistingGroup::RowWrite(prepared))
     }
-
-    /// The deep checks of an effect step, in preflight's order: the entry of
-    /// an existing-group preparation (health, idle owner, WAL prefix, whole
-    /// ledger), the view and its statement, the actor (the reservation's),
-    /// its Terminal and ATT slot, and the table's epoch slot. A complete LSN
-    /// other than the cut's is Before(Stale) without rehashing. The actor's
-    /// head is not checked as reserve checks it: this actor is RootReserved
-    /// by the reservation, and the draft commitment folds every Job row, so
-    /// any change of them since the Reserve is Stale. The RootJob's Undo
-    /// sequence, which the commitment folds, is read from that Job. The whole
-    /// ledger check above has already decoded every Job cell (an undecodable
-    /// one is its Unchanged refusal), so a RootJob that does not decode here
-    /// contradicts that check under the exclusive writer: the control's
-    /// corruption, Fatal as every other deep check's Job decode.
-    fn cancel_entry(
-        &self,
-        owner: &mut Owner<'c, 's>,
-        statement: &RowStatementView<'_, '_, 'a, 'c, 's>,
-        table: RowTableSource,
-        (draft, issued): (&RowDraftCut, RowCancelIssued),
-    ) -> Result<CancelEntry> {
-        let storage = self.storage;
-        let preparation = self.catalog_preparation();
-        let (identity, prefix) = preparation.existing_entry(owner)?;
-        statement.check_catalog_read()?;
-        let actor = statement
-            .own_actor()
-            .ok_or_else(|| unchanged(RetentionPhase::Prepare, RetentionCause::WrongState))?;
-        // The reservation was issued to this statement's actor; another one
-        // contradicts the wrapper's own proof.
-        if actor != issued.actor {
-            return Err(fatal(
-                storage,
-                RetentionPhase::Census,
-                RetentionCause::Invariant,
-            ));
-        }
-        preparation.row_terminal(actor)?;
-        let slot = self.control.slot(actor).ok_or_else(|| {
-            unchanged(RetentionPhase::Prepare, RetentionCause::MissingTransaction)
-        })?;
-        self.check_table_slot(table)?;
-        if prefix.complete_lsn != draft.complete_lsn {
-            return Err(stale());
-        }
-        let ordinal = issued
-            .root_job
-            .ordinal()
-            .map_err(|_| fatal(storage, RetentionPhase::Census, RetentionCause::Invariant))?;
-        let sequence = job3::decode_job(
-            &self.control.jobs()[ordinal],
-            storage.profile().spec().namespace,
-        )
-        .map_err(|error| {
-            fatal(
-                storage,
-                RetentionPhase::Census,
-                RetentionCause::Retention(error),
-            )
-        })?
-        .undo_sequence();
-        Ok(CancelEntry {
-            owner: identity,
-            prefix,
-            slot,
-            ordinal,
-            issued: DraftIssued {
-                actor,
-                root_job: issued.root_job,
-                row: issued.row,
-                undo: issued.undo,
-                sequence,
-                mutation: draft.planned_mutation,
-            },
-        })
-    }
 }
 
 impl<'b, 'a, 's, 'c, 'p, 'd, 'm, 'w, W: WriterNamespace>
@@ -199,7 +106,7 @@ impl<'b, 'a, 's, 'c, 'p, 'd, 'm, 'w, W: WriterNamespace>
     fn prepare_cancel<'i>(
         &self,
         owner: &mut Owner<'c, 's>,
-        entry: &CancelEntry,
+        entry: &ReservedEntry,
         draft: &RowDraftCut,
         before: &'i mut [[u8; PAGE_BYTES]; 9],
         output: ReserveOutput<'i>,
@@ -344,7 +251,7 @@ impl<'b, 'a, 's, 'c, 'p, 'd, 'm, 'w, W: WriterNamespace>
     fn cancel_sources(
         &self,
         owner: &mut Owner<'c, 's>,
-        entry: &CancelEntry,
+        entry: &ReservedEntry,
         draft: &RowDraftCut,
         before: &mut [[u8; PAGE_BYTES]; 9],
         (requests, stamps): (
@@ -394,13 +301,18 @@ pub(in super::super::super::super::super::super) const CANCEL_SUSPENDED_LEVEL: &
 #[derive(Clone, Copy, Debug)]
 pub(in super::super::super::super::super::super) struct RowCancelBody {
     /// The S2-a′ shell (admission, gate, their carriers and the unwind
-    /// fences) and `ReservedRow::cancel`'s own values, its release included.
+    /// fences) and `ReservedRow::cancel`'s own values.
     pub(in super::super::super::super::super::super) shell: usize,
+    /// `cancel`'s arms after the body, the larger of: the success arm's
+    /// in-place release (`release_discharged`) with the loan and
+    /// `RowCancelled`, and the Fatal arm (`reserved_fatal`, which takes the
+    /// ReservedRow by value), as the Forward census charges them.
+    pub(in super::super::super::super::super::super) arms: usize,
     /// `row_cancel`'s own values: arguments, the entry and the Results. It
-    /// calls `cancel_entry` and `cancel_group` one after another.
+    /// calls `reserved_entry` and `cancel_group` one after another.
     pub(in super::super::super::super::super::super) frame: usize,
-    /// `cancel_entry`: its own values, the deep checks (preflight's `check`
-    /// term) and the RootJob decode after them.
+    /// The shared `reserved_entry`: the Forward census's `entry` term (its
+    /// own values, then the deep checks and the RootJob decode).
     pub(in super::super::super::super::super::super) entry: usize,
     /// The suspended level (`CANCEL_SUSPENDED_LEVEL`) times its return slot:
     /// `cancel_group`'s `group`, held from the preparation through the
@@ -426,27 +338,31 @@ pub(in super::super::super::super::super::super) struct RowCancelBody {
     /// The existing-group install at nine targets (the S2-a′
     /// `group_install`).
     pub(in super::super::super::super::super::super) install: usize,
-    /// `shell + frame + max(entry, held + group + max(prepare, install))`.
+    /// `shell + max(frame + max(entry, held + group + max(prepare,
+    /// install)), arms)`.
     pub(in super::super::super::super::super::super) body: usize,
 }
 
-/// The actual Cancel census. `check` is preflight's callee term of the same
-/// deep checks (`RowPreflightBody`); `recompute` is the Forward census's term
-/// of the shared kind-2 recompute (`RowForwardBody::recompute`); `install`
-/// and `inventory` are the S2-a′ install and shared inventory terms at nine
+/// The actual Cancel census. `entry` and `recompute` are the Forward
+/// census's terms of the two helpers the Cancel shares with the Forward
+/// steps (`RowForwardBody::entry` for `reserved_entry`,
+/// `RowForwardBody::recompute` for `draft_recompute`); `install` and
+/// `inventory` are the S2-a′ install and shared inventory terms at nine
 /// targets, which this body calls unchanged. The helper terms (`fold`,
 /// `identity`, `targets`, `roles`, `assembled`) are charged as
 /// `row_reserve_body` charges the same calls.
 pub(in super::super::super::super) fn row_cancel_body<W: WriterNamespace>(
     shell: usize,
-    check: usize,
-    recompute: usize,
+    (entry, recompute): (usize, usize),
     (install, inventory): (usize, usize),
 ) -> RowCancelBody {
-    use crate::storage::{retention_page::RetentionError as JobError, session_fence::UnwindFence};
+    use super::super::super::super::super::super::{ReservedRow, RowCancelled};
+    use crate::storage::session_fence::UnwindFence;
     use std::mem::size_of;
     type Group<'a> = PreparedRowGroup<'a, 'a, 'a, ROW_WRITE_TARGETS>;
     type Cause<T> = std::result::Result<T, RetentionCause>;
+    type Res<'a, W> = ReservedRow<'a, 'a, 'a, 'a, 'a, 'a, 'a, 'a, 'a, 'a, 'a, 'a, 'a, W>;
+    type Loan<'a> = &'a mut [u8; 425_984];
     let reference = size_of::<&()>();
     // ControlCut::capture and a commitment: hashers, the pinned SHA block
     // closure, the encoded actor and references and the digests.
@@ -469,41 +385,36 @@ pub(in super::super::super::super) fn row_cancel_body<W: WriterNamespace>(
         + 2 * size_of::<Result<Group<'_>>>()
         + size_of::<RowPayload<'_, '_, '_>>()
         + fold;
-    // The wrapper: the table source and the reservation it passes, the
-    // body's Result, the in-place release's admission, gate and cleanup
-    // Results and the returned loan, the Fatal carriers and its references.
+    // The wrapper: the table source and the reservation it passes
+    // (`reserved_source`), the body's Result and the Fatal error.
     let shell = shell
-        + size_of::<RowTableSource>()
-        + size_of::<RowCancelIssued>()
-        + 4 * size_of::<Result<()>>()
-        + 2 * size_of::<Result<&mut [u8; 425_984]>>()
+        + size_of::<(RowTableSource, RowIssued)>()
+        + size_of::<Result<()>>()
         + 2 * size_of::<RetentionError>()
-        + 10 * reference;
+        + 8 * reference;
+    // After the body: the success arm releases in place
+    // (`release_discharged`: the admission, gate and cleanup Results and the
+    // loan) and returns `RowCancelled`; the Fatal arm is `reserved_fatal`
+    // with the ReservedRow it takes, the cleanup and the merge.
+    let discharged = size_of::<RowCancelled<'_>>()
+        + 2 * size_of::<Result<Loan<'_>>>()
+        + 3 * size_of::<Result<()>>()
+        + 2 * size_of::<RetentionError>()
+        + 6 * reference;
+    let fatal = size_of::<Res<'_, W>>()
+        + 2 * size_of::<Result<()>>()
+        + 2 * size_of::<RetentionError>()
+        + 4 * reference;
+    let arms = discharged.max(fatal);
     let frame = size_of::<RowTableSource>()
-        + size_of::<RowCancelIssued>()
+        + size_of::<RowIssued>()
         + size_of::<UnwindFence<'_>>()
-        + size_of::<CancelEntry>()
-        + size_of::<Result<CancelEntry>>()
+        + size_of::<ReservedEntry>()
+        + size_of::<Result<ReservedEntry>>()
         + size_of::<Result<()>>()
         + 2 * size_of::<RetentionError>()
         // Receiver, three arguments, the cut and storage.
         + 6 * reference;
-    let entry = size_of::<RowTableSource>()
-        + size_of::<RowCancelIssued>()
-        + size_of::<CatalogPreparation<'_, '_, '_, '_, '_, '_, '_, '_, W>>()
-        + size_of::<Result<(OwnerIdentity, WalPrefix)>>()
-        + size_of::<Option<TxnRef>>()
-        + size_of::<Result<(usize, StatusSlotRef)>>()
-        + size_of::<Option<usize>>()
-        + 2 * size_of::<Result<()>>()
-        + size_of::<std::result::Result<usize, JobError>>()
-        + size_of::<job3::JobView<'_>>()
-        + size_of::<std::result::Result<job3::JobView<'_>, JobError>>()
-        + size_of::<CancelEntry>()
-        + 2 * size_of::<RetentionError>()
-        + 8 * reference
-        // The deep checks, then the RootJob decode.
-        + check.max(job3::source_bytes());
     let held = ROW_WRITE_SUSPENDED_LEVELS * size_of::<Result<Group<'_>>>();
     let group = size_of::<ReserveLanes<'_>>()
         + size_of::<CatalogPreparation<'_, '_, '_, '_, '_, '_, '_, '_, W>>()
@@ -554,9 +465,10 @@ pub(in super::super::super::super) fn row_cancel_body<W: WriterNamespace>(
             .max(identity)
             .max(inventory)
             .max(assembled);
-    let body = shell + frame + entry.max(held + group + prepare.max(install));
+    let body = shell + (frame + entry.max(held + group + prepare.max(install))).max(arms);
     RowCancelBody {
         shell,
+        arms,
         frame,
         entry,
         held,

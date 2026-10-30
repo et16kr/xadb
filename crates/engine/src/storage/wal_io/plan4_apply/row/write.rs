@@ -2,7 +2,6 @@
 //! consumes the previous wrapper; one source admission, one terminal read
 //! gate, one flush lease and one reservation move through the chain instead
 //! of being acquired again (S2-0 Row write amendment §1).
-use super::super::create_pair::catalog_live::lifecycle::row::write::cancel::RowCancelIssued;
 use super::super::create_pair::catalog_live::lifecycle::row::write::forward::RowIssued;
 use super::super::create_pair::catalog_live::row_preflight::{RowPreflightOutcome, RowTableSource};
 use super::super::flush::RetentionFlushControl;
@@ -736,7 +735,7 @@ impl<'r, 't, 'v, 'i, 'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
     /// recompute refuses any change.
     pub(in crate::storage) fn producer_lane<'l>(&'l mut self) -> Result<RowProducerLane<'l>> {
         let storage = self.mutation.storage;
-        let (table, issued) = self.forward_source();
+        let (table, issued) = self.reserved_source();
         let private = self
             .private
             .as_deref_mut()
@@ -796,7 +795,7 @@ impl<'r, 't, 'v, 'i, 'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
         RowOwnedError<Self>,
     > {
         let storage = self.mutation.storage;
-        let (table, issued) = self.forward_source();
+        let (table, issued) = self.reserved_source();
         let checked = match self.private.as_deref_mut() {
             Some(private) => self.mutation.row_prepare_forward(
                 self.owner,
@@ -819,7 +818,7 @@ impl<'r, 't, 'v, 'i, 'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
             Err(error) if error.effect == Effect::Unchanged => {
                 Err(RowOwnedError::Before { error, owned: self })
             }
-            Err(error) => Err(RowOwnedError::Fatal(self.forward_fatal(error))),
+            Err(error) => Err(RowOwnedError::Fatal(self.reserved_fatal(error))),
         }
     }
     /// The Cancel of this reservation (`row_cancel`, S2-0 Row write
@@ -845,18 +844,7 @@ impl<'r, 't, 'v, 'i, 'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
         mut self,
     ) -> std::result::Result<RowCancelled<'i>, RowOwnedError<Self>> {
         let storage = self.mutation.storage;
-        let table = RowTableSource {
-            handle: self.table.table,
-            slot: self.table.slot,
-            anchor: self.table.anchor,
-        };
-        let reservation = &self.reservation;
-        let issued = RowCancelIssued {
-            actor: reservation.actor,
-            root_job: reservation.root_job,
-            row: reservation.row,
-            undo: reservation.undo,
-        };
+        let (table, issued) = self.reserved_source();
         let cancelled = match self.private.as_deref_mut() {
             Some(private) => self.mutation.row_cancel(
                 self.owner,
@@ -883,19 +871,7 @@ impl<'r, 't, 'v, 'i, 'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
             Err(error) if error.effect == Effect::Unchanged => {
                 Err(RowOwnedError::Before { error, owned: self })
             }
-            Err(error) => {
-                let ReservedRow { source, gate, .. } = self;
-                let cleanup = match gate {
-                    Some(gate) => release(source, gate),
-                    None => source.finish_checked().map_err(RetentionError::from),
-                };
-                // `merge` keeps a CallerMustResolve error over the cleanup's.
-                let error = match merge(Err(error), cleanup) {
-                    Err(error) => error,
-                    Ok(()) => fatal(storage, RetentionPhase::Prepare, RetentionCause::Invariant),
-                };
-                Err(RowOwnedError::Fatal(error))
-            }
+            Err(error) => Err(RowOwnedError::Fatal(self.reserved_fatal(error))),
         }
     }
 
@@ -956,7 +932,7 @@ impl<'r, 't, 'v, 'i, 'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
         mut self,
     ) -> std::result::Result<RowApplied<'i>, RowOwnedError<Self>> {
         let storage = self.reserved.mutation.storage;
-        let (table, issued) = self.reserved.forward_source();
+        let (table, issued) = self.reserved.reserved_source();
         let reserved = &mut self.reserved;
         let applied = match reserved.private.as_deref_mut() {
             Some(private) => reserved.mutation.row_apply_forward(
@@ -994,7 +970,7 @@ impl<'r, 't, 'v, 'i, 'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
             Err(error) if error.effect == Effect::Unchanged => {
                 Err(RowOwnedError::Before { error, owned: self })
             }
-            Err(error) => Err(RowOwnedError::Fatal(self.reserved.forward_fatal(error))),
+            Err(error) => Err(RowOwnedError::Fatal(self.reserved.reserved_fatal(error))),
         }
     }
     /// Before stage only: drop the checked cut and return the same reservation
@@ -1010,8 +986,8 @@ impl<'r, 't, 'v, 'i, 'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
     ReservedRow<'r, 't, 'v, 'i, 'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W>
 {
     /// The CheckedTable's scalars and the reservation's issued identity the
-    /// Forward steps check against.
-    fn forward_source(&self) -> (RowTableSource, RowIssued) {
+    /// Forward steps and the Cancel check against.
+    fn reserved_source(&self) -> (RowTableSource, RowIssued) {
         let reservation = &self.reservation;
         (
             RowTableSource {
@@ -1029,11 +1005,12 @@ impl<'r, 't, 'v, 'i, 'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
         )
     }
 
-    /// A Forward step's Fatal arm: the admission, then the gate, returned
-    /// checked; the lease ends; the still active reservation drops last and
-    /// keeps the fence. `merge` keeps a CallerMustResolve error over the
-    /// cleanup's.
-    fn forward_fatal(self, error: RetentionError) -> RetentionError {
+    /// The Fatal arm of a Forward step or the Cancel: the admission, then the
+    /// gate, returned checked (the fenced ledger refuses the admission's
+    /// release and keeps its charge visible); the lease ends; the still
+    /// active reservation drops last and keeps the fence. `merge` keeps a
+    /// CallerMustResolve error over the cleanup's.
+    fn reserved_fatal(self, error: RetentionError) -> RetentionError {
         let storage = self.mutation.storage;
         let ReservedRow { source, gate, .. } = self;
         let cleanup = match gate {
@@ -1071,7 +1048,7 @@ impl<W: WriterNamespace> ReservedRow<'_, '_, '_, '_, '_, '_, '_, '_, '_, '_, '_,
     /// current pool and control (`row_test_draft_source`), so the changed
     /// Root and Aging row are the draft's.
     pub(in crate::storage) fn test_refold_draft(&mut self) -> Result<()> {
-        let (table, issued) = self.forward_source();
+        let (table, issued) = self.reserved_source();
         let private = self.private.as_deref_mut().expect("the loan");
         self.draft.source = self.mutation.row_test_draft_source(
             self.owner,
