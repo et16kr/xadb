@@ -1683,30 +1683,56 @@ pub(in super::super) struct CatalogLiveSource {
 }
 
 /// Upper estimates of the RowWrite C bodies (S2-0 Row write amendment §4–5,
-/// S2W-C01/C02), composed before any Row write effect body exists from the
-/// existing census terms at the whole write target set (nine targets). Each
-/// phase value here is the C body plus the progress shell; the
-/// wrapper/step/Result carriers and the caller share
-/// (`ROW_WRITE_CALLER_BYTES`) are added by the Row write census, which checks
-/// every phase against CatalogProgressCharge by name. Only the Row write
-/// census computes them (`row_write_bodies`); the split census, `peak` and
-/// every charge do not. An S2 unit that supplies a body replaces its estimate.
+/// S2W-C01/C02/C06), composed before any Row write effect body exists from
+/// the existing census terms at the whole write target set (nine targets).
+/// Each phase value here is the C body plus the progress shell; the
+/// wrapper/step/Result carriers and the A share bound of the phase
+/// (`ROW_PREFLIGHT_CALLER_BYTES` at preflight, `ROW_WRITE_CALLER_BYTES`
+/// elsewhere) are added by the Row write census, which checks every phase
+/// against CatalogProgressCharge by name. Only the Row write census computes
+/// them (`row_write_bodies`); the split census, `peak` and every charge do
+/// not. An S2 unit that supplies a body replaces its estimate.
+///
+/// The phases are composed as the S2-0b amendment (Row write validate-once)
+/// decides:
+/// - B: `history::validate_live` and the arena comparison of the write
+///   target set T run once per row, in preflight (`validate`, `arena`).
+///   Reserve, prepare and cancel open no replay scope and inherit the proof
+///   through the digest chain of the cut commitments, so their group
+///   preparation is `group_typed`, without a scope or the history peak.
+/// - D: the prepared group's carriers (`group_carriers`) are added only to
+///   the install or return sub-phase of reserve, prepare, apply and cancel.
+///   Their deep check, chain recheck and group preparation hold instead one
+///   return slot (`return_slot`) per suspended caller level
+///   (`suspended_levels`, at least one).
+/// - d2: preflight's lease check is a completed call and is max-combined.
 ///
 /// Recorded constraints for the units that supply the bodies:
-/// - `apply` rechecks at the stage by recomputing the draft commitment and
-///   comparing the prepared frame/after digests only. It does not run the
-///   observer, `validate_live` or the XOI inventory again: with
-///   `group_prepare` in its max, apply is 1146 + 7328 + 34404 + 1544 =
-///   44422 B, over the charge before any caller share (S2-d).
+/// - S2-b2, S2-c and S2-d: during the group preparation and the deep check
+///   at most one suspended level holds a Row group return carrier, the
+///   wrapper body's slot for the preparer's result. No helper between the
+///   wrapper body and the preparer returns the group or an Observation across
+///   the preparation, and each unit's body census names its suspended
+///   levels. A body that needs more levels counts them
+///   (`ROW_WRITE_SUSPENDED_LEVELS`); each costs a whole `return_slot`.
+/// - `apply` rechecks at the stage by recomputing the draft commitment, with
+///   its page and control digests, and comparing the prepared frame/after
+///   digests only. It does not run `validate_live`, the observer or the XOI
+///   inventory again (S2-d).
 /// - `validation_lane` rebuilds `RowPreflightContext` from the current
 ///   frames and the private copies; its decode is not a term yet (S2-b).
+///   Neither lane checks the digest chain.
+/// - The Row lifecycle keeps its accepted count; `lifecycle_check` must stay
+///   equal to the split value (S2W-C03).
 #[derive(Clone, Copy, Debug)]
 pub(in super::super) struct RowWriteBodies {
     /// Held through every phase: the admission, gate and their Result,
     /// failure and release/reopen carriers (`commit_carrier_bytes`, as the
     /// lifecycle shell) and the two unwind fences.
     pub(in super::super) shell: usize,
-    /// `check_catalog_pair_io` for the lease (CREATE's lease check term).
+    /// `check_catalog_pair_io` for the lease (CREATE's lease check term). It
+    /// returns before the deep checks start, so preflight max-combines it
+    /// (d2).
     pub(in super::super) lease_check: usize,
     /// The preflight's target set: requests/roles and before stamps of T.
     pub(in super::super) target_set: usize,
@@ -1731,17 +1757,32 @@ pub(in super::super) struct RowWriteBodies {
     pub(in super::super) commit: usize,
     /// The existing start selection phases (RootJob/Status choice analog).
     pub(in super::super) select: usize,
-    /// Row group preparation at nine targets: `validate_live`'s history peak
-    /// or C's producer or the observer of A's frame, the XOI inventory, the
-    /// assembled group, or `check_ledger`.
-    pub(in super::super) group_prepare: usize,
+    /// Preflight's one `history::validate_live` (B): the replay scope and
+    /// loan carriers, the history census peak and two `Result<()>` over the
+    /// shell scalars.
+    pub(in super::super) validate: usize,
+    /// Preflight's typed read of T compared with the replay arena (B), as
+    /// `observe_targets` does: the scope carriers, the nine-target typed read
+    /// and the shared target observation over the shell scalars.
+    pub(in super::super) arena: usize,
+    /// Row group preparation at nine targets without a replay scope (B): C's
+    /// producer or the observer of A's frame under the typed read, the XOI
+    /// inventory, the assembled group, or `check_ledger`.
+    pub(in super::super) group_typed: usize,
+    /// One suspended caller level's return carrier (D):
+    /// `Result<PreparedRowGroup>` at nine targets.
+    pub(in super::super) return_slot: usize,
+    /// Suspended caller levels counted across the deep check, the chain
+    /// recheck and the group preparation (D): `ROW_WRITE_SUSPENDED_LEVELS`.
+    pub(in super::super) suspended_levels: usize,
     /// Apply's re-assembly of the prepared group from the cut and the
     /// checked frame/after, without the observer or `validate_live`.
     pub(in super::super) group_reassemble: usize,
     /// The existing-group install at nine targets: stage, page install,
     /// durable wait and the control record.
     pub(in super::super) group_install: usize,
-    /// Prepared-group and Observation carriers across prepare and install.
+    /// Prepared-group and Observation carriers, from assembly to install or
+    /// return; added to that sub-phase only (D).
     pub(in super::super) group_carriers: usize,
     /// The Row lifecycle recomputed here from the same repeated terms; S2W-C03
     /// requires it to equal `catalog_live_source_bytes().row_lifecycle`.
@@ -1757,6 +1798,13 @@ pub(in super::super) struct RowWriteBodies {
     pub(in super::super) cancel: usize,
     pub(in super::super) finish: usize,
 }
+
+/// Suspended caller levels that hold a Row group return carrier across the
+/// deep check, the chain recheck and the group preparation of one RowWrite
+/// effect step (S2-0b amendment, decision 2): the wrapper body's slot for the
+/// preparer's result. S2-b2, S2-c and S2-d keep it at one; a body that needs
+/// more levels raises it, and the census then counts each one.
+const ROW_WRITE_SUSPENDED_LEVELS: usize = 1;
 
 /// Original public entry locals that survive into the common preparer or
 /// installer. Begin's read is consumed before this boundary; the Rollback
@@ -2093,7 +2141,9 @@ pub(in super::super) fn catalog_live_source_bytes<W: WriterNamespace>() -> Catal
 /// `ledger`, `physical`, the start selection and CREATE's lease check) repeat
 /// that function's expressions, and the Row lifecycle is recomputed from them
 /// as `lifecycle_check`, which S2W-C03 compares with the split census value,
-/// so the two copies cannot drift apart unnoticed.
+/// so the two copies cannot drift apart unnoticed. The shared target
+/// observation (`observe`) is repeated too; the lifecycle does not use it, so
+/// only the shared expression keeps it equal.
 pub(in super::super) fn row_write_bodies<W: WriterNamespace>() -> RowWriteBodies {
     use crate::storage::dirty_frame;
     use std::mem::size_of;
@@ -2186,24 +2236,49 @@ pub(in super::super) fn row_write_bodies<W: WriterNamespace>() -> RowWriteBodies
         + 4 * 32
         + 8 * size_of::<&()>();
     let select = start_health.max(start_root).max(start_status);
-    let group_prepare = (scalar
-        + group.outer
+    // B: the one replay of the row and the arena comparison of T, in
+    // preflight only. `observe` is `catalog_live_source_bytes`'s shared target
+    // observation (`observe_targets`).
+    let validate = scalar + scope_carriers + history_peak + 2 * size_of::<Result<()>>();
+    let observe = 8 * size_of::<&()>()
+        + size_of::<u8>()
+        + 2 * size_of::<Result<()>>()
+        + size_of::<crate::storage::allocation_page::AllocationPage<'_>>()
+        + size_of::<PageIdentity>()
+        + 2 * size_of::<Result<FrameStamp>>();
+    let arena = scalar
         + scope_carriers
-        + history_peak.max(group.produce).max(group.observer))
-    .max(scalar + group.outer + group.inventory)
-    .max(scalar + group.outer + group.assembled)
-    .max(ledger);
+        + size_of::<targets::CatalogRead<'_, '_, '_, '_, '_, '_, '_, 9>>()
+        + observe;
+    // B: reserve, prepare and cancel prepare the group under the typed read
+    // with no replay scope.
+    let group_typed = (scalar + group.outer + group.produce.max(group.observer))
+        .max(scalar + group.outer + group.inventory)
+        .max(scalar + group.outer + group.assembled)
+        .max(ledger);
+    // D: one suspended level's `Result<PreparedRowGroup>` at nine targets. The
+    // group type holds the lifecycle's four targets; `row_group_terms` charges
+    // each further target as one wider element in each of its three Result
+    // carriers, so a third of the nine- and four-target carrier difference is
+    // the wider part of one Result.
+    let return_slot = size_of::<Result<lifecycle::row::PreparedRowGroup<'_, '_, '_>>>()
+        + (group.carriers - row.carriers) / 3;
+    let suspended_levels = ROW_WRITE_SUSPENDED_LEVELS;
+    let held = suspended_levels * return_slot;
     let group_reassemble = scalar + group.outer + group.assembled;
     let group_install = install(targets::call_bytes::<9>(), group.control);
     let group_carriers = group.carriers;
     // Sequential steps of one call are max-combined; what one call holds
-    // throughout is added. Every phase holds the shell.
+    // throughout is added. Every phase holds the shell. The lease check is a
+    // completed call (d2).
     let preflight = shell
-        + lease_check
         + target_set
-        + check
+        + lease_check
+            .max(check)
             .max(table_census)
             .max(load)
+            .max(validate)
+            .max(arena)
             .max(undo_select)
             .max(register)
             .max(commit)
@@ -2211,28 +2286,27 @@ pub(in super::super) fn row_write_bodies<W: WriterNamespace>() -> RowWriteBodies
     let lane = shell + commit;
     let validation_lane = lane + 2 * size_of::<RowPreflightContext>();
     let producer_lane = lane + 2 * size_of::<RowProducerContext>();
+    // D: the deep check, the chain recheck and the group preparation hold the
+    // suspended return slots; the group carriers exist only from assembly to
+    // the install or return.
     let reserve = shell
-        + group_carriers
         + check
             .max(commit)
             .max(register)
-            .max(group_prepare)
-            .max(group_install);
-    let prepare = shell + group_carriers + check.max(commit).max(group_prepare);
+            .max(group_typed + held)
+            .max(group_carriers + group_install);
+    let prepare = shell
+        + check
+            .max(commit)
+            .max(group_typed + held)
+            .max(group_carriers + group_reassemble);
     let apply = shell
-        + group_carriers
         + check
             .max(commit)
             .max(register)
-            .max(group_reassemble)
-            .max(group_install);
-    let cancel = shell
-        + group_carriers
-        + check
-            .max(commit)
-            .max(register)
-            .max(group_prepare)
-            .max(group_install);
+            .max(held + group_reassemble)
+            .max(group_carriers + group_install);
+    let cancel = reserve;
     RowWriteBodies {
         shell,
         lease_check,
@@ -2244,7 +2318,11 @@ pub(in super::super) fn row_write_bodies<W: WriterNamespace>() -> RowWriteBodies
         register,
         commit,
         select,
-        group_prepare,
+        validate,
+        arena,
+        group_typed,
+        return_slot,
+        suspended_levels,
         group_reassemble,
         group_install,
         group_carriers,

@@ -40,8 +40,9 @@ fn phase_census<W: WriterNamespace>(id: &str, writer: &str) {
     );
     println!(
         "{id} terms shell={} lease_check={} target_set={} check={} table_census={} load={} \
-         undo_select={} register={} commit={} select={} group_prepare={} group_reassemble={} \
-         group_install={} group_carriers={} lifecycle_check={}",
+         undo_select={} register={} commit={} select={} validate={} arena={} group_typed={} \
+         return_slot={} suspended_levels={} group_reassemble={} group_install={} \
+         group_carriers={} lifecycle_check={}",
         terms.shell,
         terms.lease_check,
         terms.target_set,
@@ -52,7 +53,11 @@ fn phase_census<W: WriterNamespace>(id: &str, writer: &str) {
         terms.register,
         terms.commit,
         terms.select,
-        terms.group_prepare,
+        terms.validate,
+        terms.arena,
+        terms.group_typed,
+        terms.return_slot,
+        terms.suspended_levels,
         terms.group_reassemble,
         terms.group_install,
         terms.group_carriers,
