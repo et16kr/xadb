@@ -606,10 +606,11 @@ fn s2w_r19_live_preflight_busy_ends_the_row_without_retry() {
 /// the R09 literals. The second row's preflight finds no Free Undo candidate
 /// (the fixture's one Free Undo, 14, is leased by the first row) and is
 /// Unchanged Capacity, before validation. With a row applied, the statement
-/// is RollbackRequired and the applied row's slot is kept. The statement rollback is the next step, and its start is C's
-/// Unchanged Unsupported (S4 is out of scope): the pending statement stays
-/// as it was, with no fence. Dropping it hands it to C's fence, which is the
-/// only end this branch has for it.
+/// is RollbackRequired and the applied row's slot is kept. The statement
+/// rollback is the next step, and its start is C's Unchanged Unsupported (S4
+/// is out of scope): the pending statement stays as it was, with no fence.
+/// Dropping it hands it to C's fence, which is the only end this branch has
+/// for it.
 #[test]
 fn s2e_e09_applied_then_rejected_row_is_rollback_required_up_to_the_s4_start() {
     case("S2E-E09", || {
