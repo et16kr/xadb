@@ -492,6 +492,38 @@ impl<W: WriterNamespace> PreflightRow<'_, '_, '_, '_, '_, '_, '_, '_, '_, '_, '_
     }
 }
 
+/// S2-e: the Row write one-shots armed before a call that runs several steps
+/// (A's live driver), on this thread, until the returned guard drops. Each
+/// fires at its first consumer, or, aimed with `at_reserve`, `at_prepare`,
+/// `at_apply` or `at_cancel`, at its first consumer in that step. No page,
+/// control or WAL byte changes.
+#[cfg(test)]
+impl<W: WriterNamespace> MutationPort<'_, '_, '_, '_, '_, '_, '_, '_, '_, W> {
+    /// The stale stamp of S2W-R07 (reserve) and S2W-R21(1) (prepare, apply,
+    /// cancel): T's first stamp seen with its modification counter moved by
+    /// one, once.
+    pub(in crate::storage) fn test_row_stale_stamp_once(
+        &self,
+    ) -> super::super::create_pair::catalog_live::lifecycle::row::write::TestAimed {
+        super::super::create_pair::catalog_live::lifecycle::row::write::test_stale_stamp_aimed()
+    }
+    /// The pre-stage refusal of S2W-R11 (reserve, apply): Unchanged (Stage,
+    /// Busy) after the table write bit and before the install, once.
+    pub(in crate::storage) fn test_row_stage_refusal_once(
+        &self,
+    ) -> super::super::create_pair::catalog_live::lifecycle::row::write::TestAimed {
+        super::super::create_pair::catalog_live::lifecycle::row::write::test_stage_refusal_aimed()
+    }
+    /// The missing write target of S2W-R21(2) (prepare, apply, cancel): the
+    /// draft recompute's typed read reports a target of T not resident,
+    /// once.
+    pub(in crate::storage) fn test_row_missing_target_once(
+        &self,
+    ) -> super::super::create_pair::catalog_live::lifecycle::row::write::TestAimed {
+        super::super::create_pair::catalog_live::lifecycle::row::write::forward::test_missing_target_aimed()
+    }
+}
+
 #[cfg(test)]
 impl<W: WriterNamespace> ReservedRow<'_, '_, '_, '_, '_, '_, '_, '_, '_, '_, '_, '_, '_, W> {
     /// S2W-R06: the issued identity (actor, RootJob slot, RowId, UndoRef,

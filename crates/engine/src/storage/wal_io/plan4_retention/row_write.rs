@@ -428,6 +428,96 @@ impl<'x, P: Iterator<Item = &'x [u8; PAGE_BYTES]>> DraftSource<'x, P> {
     }
 }
 
+// S2-e: the Row write step (reserve, prepare, apply, cancel) whose body runs
+// on this thread now, and the step each one-shot below is aimed at; 0 is none.
+// An unaimed one-shot fires at its first consumer. A's driver runs every step
+// of a row in one call, so a test of the live driver arms a one-shot before
+// the call and aims it at a step (`TestAimed`).
+#[cfg(test)]
+thread_local! {
+    static TEST_STEP: std::cell::Cell<u8> = const { std::cell::Cell::new(0) };
+    static TEST_STALE_STAMP_AT: std::cell::Cell<u8> = const { std::cell::Cell::new(0) };
+    static TEST_STAGE_REFUSAL_AT: std::cell::Cell<u8> = const { std::cell::Cell::new(0) };
+}
+#[cfg(test)]
+const TEST_RESERVE: u8 = 1;
+#[cfg(test)]
+const TEST_PREPARE: u8 = 2;
+#[cfg(test)]
+const TEST_APPLY: u8 = 3;
+#[cfg(test)]
+const TEST_CANCEL: u8 = 4;
+#[cfg(test)]
+type TestOnce = super::super::super::super::super::transaction::writable::TestOnce;
+#[cfg(test)]
+type TestHook = &'static std::thread::LocalKey<std::cell::Cell<bool>>;
+#[cfg(test)]
+type TestAim = &'static std::thread::LocalKey<std::cell::Cell<u8>>;
+
+/// Marks a Row write step's body as running on this thread until it drops.
+#[cfg(test)]
+struct TestStep(u8);
+#[cfg(test)]
+impl TestStep {
+    fn enter(step: u8) -> Self {
+        Self(TEST_STEP.with(|running| running.replace(step)))
+    }
+}
+#[cfg(test)]
+impl Drop for TestStep {
+    fn drop(&mut self) {
+        TEST_STEP.with(|running| running.set(self.0));
+    }
+}
+
+/// Takes a one-shot that is armed for any step or for the step running now;
+/// one aimed at another step stays armed.
+#[cfg(test)]
+fn test_take(hook: TestHook, at: TestAim) -> bool {
+    let aimed = at.with(std::cell::Cell::get);
+    (aimed == 0 || aimed == TEST_STEP.with(std::cell::Cell::get)) && TestOnce::take(hook)
+}
+
+/// A Row write one-shot armed on this thread for a later call (S2-e): it
+/// fires at its first consumer, or, once `at_*` aimed it, at its first
+/// consumer in that step. Dropping it disarms the one-shot and its aim.
+#[cfg(test)]
+pub(in crate::storage) struct TestAimed {
+    _once: TestOnce,
+    at: TestAim,
+}
+#[cfg(test)]
+impl TestAimed {
+    fn arm(hook: TestHook, at: TestAim) -> Self {
+        Self {
+            _once: TestOnce::arm(hook),
+            at,
+        }
+    }
+    fn aim(self, step: u8) -> Self {
+        self.at.with(|at| at.set(step));
+        self
+    }
+    pub(in crate::storage) fn at_reserve(self) -> Self {
+        self.aim(TEST_RESERVE)
+    }
+    pub(in crate::storage) fn at_prepare(self) -> Self {
+        self.aim(TEST_PREPARE)
+    }
+    pub(in crate::storage) fn at_apply(self) -> Self {
+        self.aim(TEST_APPLY)
+    }
+    pub(in crate::storage) fn at_cancel(self) -> Self {
+        self.aim(TEST_CANCEL)
+    }
+}
+#[cfg(test)]
+impl Drop for TestAimed {
+    fn drop(&mut self) {
+        self.at.with(|at| at.set(0));
+    }
+}
+
 // S2W-R07, S2W-R21(1): the next reserve recompute or kind-2 recompute
 // (`draft_recompute`) on this thread sees T's first stamp with its
 // modification counter moved by one, once. No page, control or WAL byte
@@ -437,9 +527,12 @@ thread_local! {
     static TEST_STALE_STAMP: std::cell::Cell<bool> = const { std::cell::Cell::new(false) };
 }
 #[cfg(test)]
-pub(in super::super::super::super::super) fn test_stale_stamp_once()
--> super::super::super::super::super::transaction::writable::TestOnce {
-    super::super::super::super::super::transaction::writable::TestOnce::arm(&TEST_STALE_STAMP)
+pub(in super::super::super::super::super) fn test_stale_stamp_once() -> TestOnce {
+    TestOnce::arm(&TEST_STALE_STAMP)
+}
+#[cfg(test)]
+pub(in super::super::super::super::super) fn test_stale_stamp_aimed() -> TestAimed {
+    TestAimed::arm(&TEST_STALE_STAMP, &TEST_STALE_STAMP_AT)
 }
 
 // The next Row write install on this thread (reserve's or apply's) is refused
@@ -451,14 +544,16 @@ thread_local! {
     static TEST_STAGE_REFUSAL: std::cell::Cell<bool> = const { std::cell::Cell::new(false) };
 }
 #[cfg(test)]
-pub(in super::super::super::super::super) fn test_stage_refusal_once()
--> super::super::super::super::super::transaction::writable::TestOnce {
-    super::super::super::super::super::transaction::writable::TestOnce::arm(&TEST_STAGE_REFUSAL)
+pub(in super::super::super::super::super) fn test_stage_refusal_once() -> TestOnce {
+    TestOnce::arm(&TEST_STAGE_REFUSAL)
+}
+#[cfg(test)]
+pub(in super::super::super::super::super) fn test_stage_refusal_aimed() -> TestAimed {
+    TestAimed::arm(&TEST_STAGE_REFUSAL, &TEST_STAGE_REFUSAL_AT)
 }
 #[cfg(test)]
 fn test_stage_refusal() -> Result<()> {
-    if super::super::super::super::super::transaction::writable::TestOnce::take(&TEST_STAGE_REFUSAL)
-    {
+    if test_take(&TEST_STAGE_REFUSAL, &TEST_STAGE_REFUSAL_AT) {
         return Err(unchanged(RetentionPhase::Stage, RetentionCause::Busy));
     }
     Ok(())
@@ -483,6 +578,8 @@ impl<'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
     ) -> Result<RowReserved> {
         let storage = self.storage;
         let _unwind = storage.session_fence().unwind_guard();
+        #[cfg(test)]
+        let _step = TestStep::enter(TEST_RESERVE);
         let entry = self.reserve_entry(owner, statement, table, cut)?;
         let installed =
             self.reserve_group(owner, statement, &entry, (table, cut, input), private)?;
@@ -1084,9 +1181,8 @@ impl<'b, 'a, 's, 'c, 'p, 'd, 'm, 'w, W: WriterNamespace>
                 at_before += 1;
             }
             #[cfg(test)]
-            if super::super::super::super::super::transaction::writable::TestOnce::take(
-                &TEST_STALE_STAMP,
-            ) && let Some(stamp) = &mut observed[0]
+            if test_take(&TEST_STALE_STAMP, &TEST_STALE_STAMP_AT)
+                && let Some(stamp) = &mut observed[0]
             {
                 stamp.modification_counter = stamp.modification_counter.wrapping_add(1);
             }

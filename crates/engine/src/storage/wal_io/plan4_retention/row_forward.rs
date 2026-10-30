@@ -215,17 +215,20 @@ fn forward_observation(
 
 // S2W-R21(2): the next Forward recompute's typed read on this thread reports
 // a write target of T not resident, once. No page, control or WAL byte
-// changes.
+// changes. The aim (S2-e) is `TestAimed`'s.
 #[cfg(test)]
 thread_local! {
     static TEST_MISSING_TARGET: std::cell::Cell<bool> = const { std::cell::Cell::new(false) };
+    static TEST_MISSING_TARGET_AT: std::cell::Cell<u8> = const { std::cell::Cell::new(0) };
 }
 #[cfg(test)]
 pub(in super::super::super::super::super::super) fn test_missing_target_once() -> TestOnce {
     TestOnce::arm(&TEST_MISSING_TARGET)
 }
 #[cfg(test)]
-type TestOnce = super::super::super::super::super::super::transaction::writable::TestOnce;
+pub(in super::super::super::super::super::super) fn test_missing_target_aimed() -> TestAimed {
+    TestAimed::arm(&TEST_MISSING_TARGET, &TEST_MISSING_TARGET_AT)
+}
 
 impl<'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
     RetentionWriter<'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W>
@@ -531,6 +534,8 @@ impl<'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
     ) -> Result<RowPreparedCut> {
         let storage = self.storage;
         let _unwind = storage.session_fence().unwind_guard();
+        #[cfg(test)]
+        let _step = TestStep::enter(TEST_PREPARE);
         let entry = self.reserved_entry(owner, statement, table, (draft, issued))?;
         self.catalog_preparation().prepare_forward(
             owner,
@@ -554,6 +559,8 @@ impl<'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
     ) -> Result<()> {
         let storage = self.storage;
         let _unwind = storage.session_fence().unwind_guard();
+        #[cfg(test)]
+        let _step = TestStep::enter(TEST_APPLY);
         let entry = self.reserved_entry(owner, statement, table, (draft, issued))?;
         self.forward_group(owner, statement, &entry, (table, draft, cut), private)?;
         // The group is durable: the view's revision may not stay behind.
@@ -911,7 +918,7 @@ impl<'b, 'a, 's, 'c, 'p, 'd, 'm, 'w, W: WriterNamespace>
         let storage = self.storage;
         let requests: [TargetRequest; N] = std::array::from_fn(|at| targets[at]);
         #[cfg(test)]
-        if TestOnce::take(&TEST_MISSING_TARGET) {
+        if test_take(&TEST_MISSING_TARGET, &TEST_MISSING_TARGET_AT) {
             let error = dirty_frame::DirtyError {
                 cause: dirty_frame::Cause::MissingTarget,
                 effect: Effect::Unchanged,
@@ -936,7 +943,7 @@ impl<'b, 'a, 's, 'c, 'p, 'd, 'm, 'w, W: WriterNamespace>
             #[cfg(test)]
             let folded = {
                 let mut folded = folded;
-                if TestOnce::take(&TEST_STALE_STAMP) {
+                if test_take(&TEST_STALE_STAMP, &TEST_STALE_STAMP_AT) {
                     folded[0].modification_counter = folded[0].modification_counter.wrapping_add(1);
                 }
                 folded
