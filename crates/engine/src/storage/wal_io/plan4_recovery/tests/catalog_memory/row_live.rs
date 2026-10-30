@@ -13,8 +13,12 @@
 //! retried from preflight (MCA05-V31); a reserve Before is finished without a
 //! retry (R07, R11); a prepare or apply Before is cancelled by the driver
 //! (R10, R11) and the Cancel lands the S2-d literal; a write target missing
-//! after Ready is Fatal and must be resolved (R21(2)); a preflight Busy ends
-//! the row without a retry (R19). `s2e_e09_…` is not a contract row: a
+//! after Ready is Fatal and must be resolved (R21(2)); a stale stamp at apply
+//! is reopened and cancelled, and one at the Cancel after a refused apply
+//! leaves the reservation to C's fence and the statement must be resolved
+//! (R21(1)); a preflight Busy ends the row without a retry (R19). The S2W-R07
+//! and R21(1) apply cases end their Returned statement through A's
+//! `finish_statement_live`. `s2e_e09_…` is not a contract row: a
 //! statement with an applied row and then a refused row is RollbackRequired,
 //! and its rollback start is C's Unsupported (S4), so it ends in C's fence.
 //! One-shots armed before the call are aimed at a step (`TestAimed`). A Row
@@ -35,7 +39,7 @@ use crate::storage::{
     retention_page::row::{self as job3, JobState},
     row::insert::driver::{
         After, DriveError, DriverError, Failure, PendingRollback, Stage,
-        live::{LiveCall, insert_live, start_statement_rollback_live},
+        live::{LiveCall, finish_statement_live, insert_live, start_statement_rollback_live},
     },
     row_record::ValueRef,
 };
@@ -60,6 +64,13 @@ fn rows_inserted<H>(result: std::result::Result<usize, DriveError<H>>) -> usize 
     match result {
         Ok(rows) => rows,
         Err(refused) => panic!("insert_live refused {:?}", refused.failure),
+    }
+}
+
+/// A statement finish, which must have succeeded.
+fn finished<H>(result: std::result::Result<(), DriveError<H>>) {
+    if let Err(refused) = result {
+        panic!("finish_statement_live refused {:?}", refused.failure);
     }
 }
 
@@ -112,6 +123,26 @@ macro_rules! drive {
         let mut call = LiveCall::new(&mut $writer, $owner, &mut $flush, $flusher);
         insert_live(&mut call, $view, &$table, $private, $rows, $slots)
     }};
+}
+
+/// `close_row!` with the statement finished through A's
+/// `finish_statement_live` over a `LiveCall`: the statement slot is closed,
+/// then the empty transaction ends.
+macro_rules! close_live {
+    ($writer:ident, $owner:ident, $flush:ident, $flusher:ident, $row:ident, $view:ident,
+     $private:ident) => {
+        finished({
+            let mut call = LiveCall::new(&mut $writer, $owner, &mut $flush, $flusher);
+            finish_statement_live(&mut call, $view)
+        });
+        assert_eq!($row.test_statement_slot().0, 0);
+        assert!(
+            $writer
+                .abort_empty_transaction($owner, $row, $private, &mut $flush)
+                .is_ok()
+        );
+        $owner.check_idle().unwrap();
+    };
 }
 
 /// S2W-R09 through A's driver: one row, every source resident. The call
@@ -273,7 +304,8 @@ fn mca05_v31_live_dirty_victim_flush_retries_the_same_row() {
 /// driver does not retry (gap G3): it finishes the preflight and the
 /// statement is Returned with no row applied. No WAL or file byte changed,
 /// no write bit was registered, the admission, the gate and the lease are
-/// returned, and the statement and the empty transaction then end.
+/// returned. The statement then ends through A's `finish_statement_live`,
+/// and the empty transaction after it.
 #[test]
 fn s2w_r07_live_reserve_stale_ends_the_row_with_finish() {
     case("S2W-R07", || {
@@ -309,7 +341,7 @@ fn s2w_r07_live_reserve_stale_ends_the_row_with_finish() {
                 assert!(!hook::observe(core).read_gate_closed);
                 assert_eq!(reader.catalog_test_source_used(), used);
                 assert!(!fence.is_fenced());
-                close_row!(writer, owner, row, view, private, flush);
+                close_live!(writer, owner, flush, flusher, row, view, private);
                 assert!(!fence.is_fenced());
             }
         );
@@ -524,6 +556,126 @@ fn s2w_r21_live_missing_target_is_must_resolve() {
                 );
                 assert!(matches!(error.cause, RetentionCause::Invariant));
                 assert!(failure.must_resolve && failure.cleanup.is_none());
+                let view = must_resolve(after);
+                assert!(slots[0].is_none());
+                let written_wal = wal_since(state, wal);
+                assert_eq!(
+                    (written_wal.len(), hex(&written_wal).as_str()),
+                    (RESERVE_FRAME.0, RESERVE_FRAME.1)
+                );
+                assert!(fence.is_fenced());
+                assert!(!hook::observe(core).read_gate_closed);
+                assert_eq!(reader.catalog_test_source_used(), used + charge);
+                assert_eq!(view.test_table_masks().1, 1 << slot);
+                drop(view);
+                drop(row);
+            }
+        );
+    });
+}
+
+/// S2W-R21(1) at apply through A's driver: apply's draft recompute sees one
+/// stale stamp, a Before Unchanged (Prepare, Frame Stale) with the same
+/// PreparedRow (the cut commitment of apply). The driver reopens the
+/// ReservedRow and cancels it: the WAL gained the RowReserve and the Cancel
+/// literals and no Forward, the write bit stays, and the statement is
+/// Returned. It then ends through A's `finish_statement_live`, and the empty
+/// transaction after it.
+#[test]
+fn s2w_r21_live_apply_stale_is_reopened_and_cancelled() {
+    case("S2W-R21", || {
+        let oracle = Oracle::new();
+        with_fresh!(
+            oracle,
+            frames = 12,
+            |live, owner, flusher, status, undo, private, reader_private, core, fence, state| {
+                let (row_status, _) =
+                    create_table(live, owner, flusher, status, undo, private, true);
+                row_statement!(live, owner, flusher, private, reader_private, row_status
+                    => writer, reader, flush, row, view, table);
+                let _ = settle!(writer, owner, view, table, private, flush, flusher);
+                let (_, slot, _) = table.test_identity();
+                let used = reader.catalog_test_source_used();
+                let (wal, _) = files(state);
+                let values = [ValueRef::Int64(VALUE)];
+                let rows: [&[ValueRef<'_>]; 1] = [&values];
+                let mut slots: [Option<RowMutationObservation>; 1] = [None];
+                let once = writer.test_row_stale_stamp_once().at_apply();
+                let inserted = drive!(
+                    writer, owner, flush, flusher, view, table, private, &rows, &mut slots
+                );
+                drop(once);
+                let (failure, after) = refused(inserted);
+                println!("S2W_R21_LIVE apply_stale failure={failure:?}");
+                assert_eq!(failure.stage, Stage::Apply);
+                assert!(stale(disk(&failure)));
+                assert!(failure.cleanup.is_none() && !failure.must_resolve);
+                let view = returned(after);
+                assert!(slots[0].is_none());
+                cancelled_literals(state, wal);
+                assert_eq!(view.test_table_masks(), (1 << slot, 1 << slot));
+                assert!(!hook::observe(core).read_gate_closed);
+                assert_eq!(reader.catalog_test_source_used(), used);
+                assert_eq!(flush.phase(), RetentionFlushPhase::Ready);
+                assert!(!fence.is_fenced());
+                close_live!(writer, owner, flush, flusher, row, view, private);
+                assert!(!fence.is_fenced());
+            }
+        );
+    });
+}
+
+/// S2W-R11 (apply half) and then S2W-R21(1) at the Cancel, through A's
+/// driver: apply's install is refused Unchanged (Stage, Busy), so the driver
+/// reopens the ReservedRow and cancels it, and the Cancel's recompute sees
+/// one stale stamp: Before Unchanged (Prepare, Frame Stale) with the same
+/// ReservedRow. The driver does not retry the Cancel, and Drop does not
+/// stand in for it: the reservation is dropped into C's fence and the
+/// release is reported refused. The failure is apply's Busy with the
+/// Cancel's Stale as its cleanup, it must be resolved, and so must the
+/// statement. The WAL has the RowReserve literal and nothing after it, the
+/// RowWrite charge stays visible under the fence and the write bit stays.
+#[test]
+fn s2w_r21_live_refused_cancel_is_fenced_and_must_resolve() {
+    case("S2W-R21", || {
+        let oracle = Oracle::new();
+        with_fresh!(
+            oracle,
+            frames = 12,
+            |live, owner, flusher, status, undo, private, reader_private, core, fence, state| {
+                let (row_status, _) =
+                    create_table(live, owner, flusher, status, undo, private, true);
+                row_statement!(live, owner, flusher, private, reader_private, row_status
+                    => writer, reader, flush, row, view, table);
+                let _ = settle!(writer, owner, view, table, private, flush, flusher);
+                let (_, slot, _) = table.test_identity();
+                let used = reader.catalog_test_source_used();
+                let charge = writer.catalog_test_retirement_charge() as u64;
+                let (wal, _) = files(state);
+                let values = [ValueRef::Int64(VALUE)];
+                let rows: [&[ValueRef<'_>]; 1] = [&values];
+                let mut slots: [Option<RowMutationObservation>; 1] = [None];
+                let refusal = writer.test_row_stage_refusal_once().at_apply();
+                let stale_once = writer.test_row_stale_stamp_once().at_cancel();
+                let inserted = drive!(
+                    writer, owner, flush, flusher, view, table, private, &rows, &mut slots
+                );
+                drop(stale_once);
+                drop(refusal);
+                let (failure, after) = refused(inserted);
+                println!("S2W_R21_LIVE refused_cancel failure={failure:?}");
+                assert_eq!(failure.stage, Stage::Apply);
+                let error = disk(&failure);
+                assert_eq!(
+                    (error.phase, error.effect),
+                    (RetentionPhase::Stage, Effect::Unchanged)
+                );
+                assert!(matches!(error.cause, RetentionCause::Busy));
+                match &failure.cleanup {
+                    Some((Stage::Cancel, DriverError::Disk(error))) => assert!(stale(error)),
+                    cleanup => panic!("not the Cancel's Stale: {cleanup:?}"),
+                }
+                assert!(failure.must_resolve);
                 let view = must_resolve(after);
                 assert!(slots[0].is_none());
                 let written_wal = wal_since(state, wal);
