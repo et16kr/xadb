@@ -32,7 +32,7 @@ use crate::storage::{
 use foundation::error::Effect;
 use std::convert::Infallible;
 
-mod live;
+pub(in crate::storage) mod live;
 #[cfg(test)]
 mod tests;
 

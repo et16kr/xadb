@@ -7,7 +7,7 @@
     reason = "actual Row reservation/group adapter is not supplied yet"
 )]
 
-mod driver;
+pub(in crate::storage) mod driver;
 mod group;
 #[cfg(test)]
 mod group_tests;
