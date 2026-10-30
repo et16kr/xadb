@@ -49,6 +49,9 @@ use crate::storage::{
 };
 use foundation::{codec::ContentHasher, identity::RowId};
 
+#[path = "row_cancel.rs"]
+pub(in super::super::super::super::super) mod cancel;
+
 /// The smallest canonical row the RowReserve producer accepts (its
 /// `5..=INLINE_ROW_BYTES` bound); a plan outside it is a forged candidate.
 const MIN_CANONICAL: usize = 5;

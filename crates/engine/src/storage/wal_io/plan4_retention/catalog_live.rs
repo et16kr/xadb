@@ -1699,8 +1699,8 @@ pub(in super::super) struct CatalogLiveSource {
 /// for `reserve` (`reserve_body`, `reserve_estimate`) and `validation_lane`
 /// (`validation_lane_estimate`); S2-c did the same for `producer_lane`,
 /// `prepare` and `apply` (`forward_body`, `producer_lane_estimate`,
-/// `prepare_estimate`, `apply_estimate`). `cancel` keeps reserve's estimate
-/// until S2-d supplies its body.
+/// `prepare_estimate`, `apply_estimate`), and S2-d for `cancel`
+/// (`cancel_body`, `cancel_estimate`).
 ///
 /// The phases are composed as the S2-0b amendment (Row write validate-once)
 /// decides:
@@ -1729,7 +1729,9 @@ pub(in super::super) struct CatalogLiveSource {
 ///   The Forward `prepare`'s level is `prepare_forward`'s `observation`, an
 ///   Observation carrier (`PREPARE_SUSPENDED_LEVEL`), and `apply`'s is
 ///   `forward_group`'s `group` (`APPLY_SUSPENDED_LEVEL`); the deep checks
-///   of both run beside them, and the producer lane has none.
+///   of both run beside them, and the producer lane has none. The Cancel's
+///   level is `cancel_group`'s `group` (`CANCEL_SUSPENDED_LEVEL`); its deep
+///   checks run beside it.
 /// - `apply` rechecks at the stage by recomputing the draft commitment, with
 ///   its page and control digests, and comparing the prepared frame/after
 ///   digests only. It does not run `validate_live`, the observer or the XOI
@@ -1841,6 +1843,13 @@ pub(in super::super) struct RowWriteBodies {
     pub(in super::super) prepare: usize,
     /// The charged `PreparedRow::apply`: `forward_body.apply`.
     pub(in super::super) apply: usize,
+    /// The S2-a′ upper estimate of the Cancel body (reserve's estimate);
+    /// printed beside the actual census, no longer charged.
+    pub(in super::super) cancel_estimate: usize,
+    /// The actual Cancel body census (S2-d, `row_cancel_body`), with its
+    /// suspended level (`CANCEL_SUSPENDED_LEVEL`).
+    pub(in super::super) cancel_body: lifecycle::row::write::cancel::RowCancelBody,
+    /// The charged Cancel body: `cancel_body.body`.
     pub(in super::super) cancel: usize,
     pub(in super::super) finish: usize,
 }
@@ -2380,8 +2389,15 @@ pub(in super::super) fn row_write_bodies<W: WriterNamespace>() -> RowWriteBodies
     let producer_lane = forward_body.producer_lane;
     let prepare = forward_body.prepare;
     let apply = forward_body.apply;
-    // Cancel's body is S2-d's; until then it keeps reserve's estimate.
-    let cancel = reserve_estimate;
+    // S2-d supplies the Cancel body: its census replaces the estimate (until
+    // then reserve's), with preflight's deep-check term for the same calls.
+    let cancel_estimate = reserve_estimate;
+    let cancel_body = lifecycle::row::write::cancel::row_cancel_body::<W>(
+        shell,
+        preflight_body.check,
+        (group_install, group.inventory),
+    );
+    let cancel = cancel_body.body;
     RowWriteBodies {
         shell,
         lease_check,
@@ -2417,6 +2433,8 @@ pub(in super::super) fn row_write_bodies<W: WriterNamespace>() -> RowWriteBodies
         producer_lane,
         prepare,
         apply,
+        cancel_estimate,
+        cancel_body,
         cancel,
         finish: shell,
     }

@@ -4,10 +4,10 @@
 //! stack measurements. The preflight phase is the census of its actual body
 //! (S2-b1, `row_preflight_body`), and so are `validation_lane` and
 //! `reserve` (S2-b2, `row_validation_lane_body`, `row_reserve_body`) and
-//! `producer_lane`, `prepare` and `apply` (S2-c, `row_forward_body`); every
-//! other C phase is still an upper estimate composed from existing census
-//! terms and the final S2-a types (`RowWriteBodies`), printed with its terms;
-//! it is not a measured phase.
+//! `producer_lane`, `prepare` and `apply` (S2-c, `row_forward_body`) and
+//! `cancel` (S2-d, `row_cancel_body`); every other C phase is still an upper
+//! estimate composed from existing census terms and the final S2-a types
+//! (`RowWriteBodies`), printed with its terms; it is not a measured phase.
 //! Every phase must still fit with the caller share: a later unit that
 //! replaces an estimate commits only while these selectors pass.
 use super::write::{RowIoLease, row_write_phases};
@@ -97,7 +97,13 @@ fn phase_census<W: WriterNamespace>(id: &str, writer: &str) {
             phase.name,
             if matches!(
                 phase.name,
-                "preflight" | "validation_lane" | "reserve" | "producer_lane" | "prepare" | "apply"
+                "preflight"
+                    | "validation_lane"
+                    | "reserve"
+                    | "producer_lane"
+                    | "prepare"
+                    | "apply"
+                    | "cancel"
             ) {
                 "actual"
             } else {
@@ -480,6 +486,41 @@ fn s2w_c06_row_write_c_margins_against_both_bounds() {
                 "S2W_C06 {writer} {name} body margin {margin} < 0"
             );
         }
+        // The actual Cancel body (S2-d) beside its S2-a′ estimate (reserve's),
+        // with the one suspended level that holds the Row group return
+        // carrier.
+        let cancel = terms.cancel_body;
+        let cancel_margin = charge as i64
+            - (cancel.body + carriers("cancel")) as i64
+            - ROW_WRITE_CALLER_BYTES as i64;
+        println!(
+            "S2W_C06 writer={writer} cancel_body actual={} estimate={} actual_minus_estimate={} \
+             shell={} frame={} entry={} held={} suspended_level=\"{}\" levels={} group={} \
+             recompute={} sources={} produce={} prepare={} install={} carriers={} c_total={} \
+             bound={ROW_WRITE_CALLER_BYTES} charge={charge} c_margin={cancel_margin}",
+            cancel.body,
+            terms.cancel_estimate,
+            cancel.body as i64 - terms.cancel_estimate as i64,
+            cancel.shell,
+            cancel.frame,
+            cancel.entry,
+            cancel.held,
+            super::super::create_pair::catalog_live::lifecycle::row::write::cancel::CANCEL_SUSPENDED_LEVEL,
+            terms.suspended_levels,
+            cancel.group,
+            cancel.recompute,
+            cancel.sources,
+            cancel.produce,
+            cancel.prepare,
+            cancel.install,
+            carriers("cancel"),
+            cancel.body + carriers("cancel"),
+        );
+        assert_eq!(terms.cancel, cancel.body);
+        assert!(
+            cancel_margin >= 0,
+            "S2W_C06 {writer} cancel body margin {cancel_margin} < 0"
+        );
         for phase in row_write_phases::<W>() {
             let c_total = phase.body + phase.carriers;
             let margin = charge as i64 - c_total as i64 - phase.bound as i64;

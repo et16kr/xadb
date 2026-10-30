@@ -2,6 +2,7 @@
 //! consumes the previous wrapper; one source admission, one terminal read
 //! gate, one flush lease and one reservation move through the chain instead
 //! of being acquired again (S2-0 Row write amendment §1).
+use super::super::create_pair::catalog_live::lifecycle::row::write::cancel::RowCancelIssued;
 use super::super::create_pair::catalog_live::lifecycle::row::write::forward::RowIssued;
 use super::super::create_pair::catalog_live::row_preflight::{RowPreflightOutcome, RowTableSource};
 use super::super::flush::RetentionFlushControl;
@@ -173,8 +174,9 @@ pub(in crate::storage) fn row_write_phases<W: WriterNamespace>() -> [RowWritePha
 /// creates it after the Root/Job/Undo before checks, the original WAL Reserve
 /// and whole installation. Not Clone and not transferable to another actor.
 /// While active it is a durable obligation only a completed apply or cancel
-/// discharges (S2-c, S2-d); dropping it active fences the session
-/// (S2W-R12, S2W-R23(2)). It does no I/O.
+/// discharges (S2-c, S2-d; a durable Cancel clears `active` before the
+/// release); dropping it active fences the session (S2W-R12, S2W-R23(2)). It
+/// does no I/O.
 struct RowSlotReservation<'c, 's> {
     core: &'c PageConcurrency<'s>,
     binding: &'s AtomicU8,
@@ -805,17 +807,79 @@ impl<'r, 't, 'v, 'i, 'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
             Err(error) => Err(RowOwnedError::Fatal(self.forward_fatal(error))),
         }
     }
+    /// The Cancel of this reservation (`row_cancel`, S2-0 Row write
+    /// amendment §1 and §6, `#row-write-validate-once`): the deep checks, the
+    /// draft commitment recomputed with no replay, and the one Cancel group
+    /// install with its durable wait. An Unchanged refusal (the recompute's
+    /// Before(Stale) included) is Before with the same ReservedRow, which
+    /// keeps its reservation, admission, gate, lease and loan. Any other
+    /// failure is Fatal: the admission's checked release (which the fenced
+    /// ledger refuses, keeping its charge visible) and the gate's reopen, the
+    /// lease ends and the fence stays, and the reservation, still active,
+    /// fences again in its Drop. A durable Cancel discharges the reservation,
+    /// so its Drop does not fence, then returns the admission, the gate and
+    /// the lease in that order and the loan once. Nothing the Reserve issued
+    /// is returned (RowId, Undo sequence, high-water), and the table write
+    /// bit stays (§6).
     #[allow(
         clippy::result_large_err,
         reason = "unchanged failure returns the same reservation"
     )]
     pub(in crate::storage) fn cancel(
-        self,
+        mut self,
     ) -> std::result::Result<RowCancelled<'i>, RowOwnedError<Self>> {
-        Err(RowOwnedError::Before {
-            error: unsupported(),
-            owned: self,
-        })
+        let storage = self.mutation.storage;
+        let table = RowTableSource {
+            handle: self.table.table,
+            slot: self.table.slot,
+            anchor: self.table.anchor,
+        };
+        let reservation = &self.reservation;
+        let issued = RowCancelIssued {
+            actor: reservation.actor,
+            root_job: reservation.root_job,
+            row: reservation.row,
+            undo: reservation.undo,
+        };
+        let cancelled = match self.private.as_deref_mut() {
+            Some(private) => self.mutation.row_cancel(
+                self.owner,
+                self.statement,
+                (table, &self.draft, issued),
+                private,
+            ),
+            None => Err(fatal(
+                storage,
+                RetentionPhase::Prepare,
+                RetentionCause::Invariant,
+            )),
+        };
+        match cancelled {
+            Ok(()) => {
+                // The durable Cancel discharged the reservation: its Drop
+                // must not fence.
+                self.reservation.active = false;
+                self.release_discharged()
+                    .map(|private| RowCancelled { private })
+                    .map_err(RowOwnedError::Fatal)
+            }
+            Err(error) if error.effect == Effect::Unchanged => {
+                Err(RowOwnedError::Before { error, owned: self })
+            }
+            Err(error) => {
+                let ReservedRow { source, gate, .. } = self;
+                let cleanup = match gate {
+                    Some(gate) => release(source, gate),
+                    None => source.finish_checked().map_err(RetentionError::from),
+                };
+                // `merge` keeps a CallerMustResolve error over the cleanup's.
+                let error = match merge(Err(error), cleanup) {
+                    Err(error) => error,
+                    Ok(()) => fatal(storage, RetentionPhase::Prepare, RetentionCause::Invariant),
+                };
+                Err(RowOwnedError::Fatal(error))
+            }
+        }
     }
 
     /// After a discharged reservation, in place as `PreflightRow::finish`:

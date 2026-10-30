@@ -122,11 +122,13 @@ impl<'i, 'c, 's, const T: usize> PreparedRowGroup<'i, 'c, 's, T> {
         )
     }
     /// The supplied Row write operations over the whole write target set:
-    /// RowReserve (S2-b2) and Forward (S2-c). Cancel is a later unit's.
+    /// RowReserve (S2-b2), Forward (S2-c) and Cancel (S2-d).
     pub(super) fn row_write(&self) -> bool {
         matches!(
             self.payload.observation.operation,
-            row_semantic::Operation::Reserve | row_semantic::Operation::Forward
+            row_semantic::Operation::Reserve
+                | row_semantic::Operation::Forward
+                | row_semantic::Operation::Cancel
         )
     }
     pub(super) fn check(
