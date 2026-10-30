@@ -616,12 +616,24 @@ impl<'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
             let root = read
                 .bytes(root_at)
                 .map_err(|e| frame(RetentionPhase::Prepare, e))?;
+            // No Free Job is the producer's own refusal and changes nothing;
+            // a Root or Job that does not decode is the resident page's or
+            // the control's corruption, Fatal as a deep check's decode.
             let root_job = row_group::reserve_job(
                 root,
                 self.control.jobs(),
                 storage.profile().spec().namespace,
             )
-            .map_err(|e| unchanged(RetentionPhase::Prepare, RetentionCause::RowSemantic(e)))?;
+            .map_err(|e| match e {
+                crate::storage::semantic_row::Error::BudgetMismatch => {
+                    unchanged(RetentionPhase::Prepare, RetentionCause::RowSemantic(e))
+                }
+                _ => fatal(
+                    storage,
+                    RetentionPhase::Census,
+                    RetentionCause::RowSemantic(e),
+                ),
+            })?;
             let anchor = read
                 .bytes(anchor_at)
                 .map_err(|e| frame(RetentionPhase::Prepare, e))?;
