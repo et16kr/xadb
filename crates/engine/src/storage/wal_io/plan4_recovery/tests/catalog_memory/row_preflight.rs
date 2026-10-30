@@ -18,6 +18,7 @@ use crate::storage::{
     undo_record,
 };
 use crate::transaction::concurrency::catalog_test_support::{self as hook, Point, Resume};
+use foundation::codec::ContentHasher;
 use std::sync::mpsc::sync_channel;
 use std::time::Duration;
 
@@ -396,14 +397,161 @@ fn s2w_r03_preflight_registers_reads_and_finish_returns_the_lease() {
                 // down to Root (1).
                 assert_eq!(roles, (7 << 36) | 0xF_4056_3221);
                 assert_eq!(leaf_free, 16_188);
-                // The first Free Job cell from the Root cursor (one of the
-                // 64 cells); its ordinal is the fixture's and is printed.
-                assert!(root_job < 64);
+                // The RootJob is the first Free cell (state and kind bytes
+                // 6..8 zero) from the Root cursor (Root cell 0, bytes
+                // 72..80), read here from the Root page and the control.
+                let pool = reader.catalog_test_pool();
+                let expected_job = fixture_root_job(pool, writer.catalog_test_jobs());
+                println!("S2W_R03 fixture_root_job={expected_job}");
+                assert_eq!(root_job, expected_job);
+                // The kind-1 commitment, folded again here from independent
+                // reads in the cut doc's order (A2a pins this format).
+                let independent = xrwc_preflight(
+                    pool,
+                    writer.free_undo_test_state().unwrap().0,
+                    (writer.recovery_test_bank(), writer.row_test_locals()),
+                    (roles, root_job, leaf_free),
+                );
+                assert_eq!(source, independent);
                 close_row!(writer, owner, row, view, private, flush);
                 assert!(!fence.is_fenced());
             }
         );
     });
+}
+
+/// T of the fixture's row in rank order (S2W-R03): allocator, Root, Jobs 0,
+/// Status, table anchor, RowLeaf and the Free Undo.
+pub(super) const FIXTURE_T: [u64; 7] = [0, 1, 2, 11, 12, 13, 14];
+/// The Catalog leaf, beside T in the preflight's typed read.
+const CATALOG_LEAF: u64 = 8;
+
+/// The RootJob of the fixture's next RowReserve, from the Root page in the
+/// pool and the control's Job cells: the first cell from the Root cursor
+/// whose state and kind bytes (6, 7) are zero, the Free encoding.
+pub(super) fn fixture_root_job(
+    pool: &crate::storage::dirty_frame::SharedPool<'_, '_, '_, '_>,
+    jobs: &[[u8; 1024]; 64],
+) -> u8 {
+    let (index, request) = resident(pool, 1);
+    let mut bytes = boxed::<PAGE_BYTES>();
+    probe::diagnose(pool, index, &mut bytes);
+    let root = page::decode_page(&bytes[..], request.identity, PageKind::RetentionRoot).unwrap();
+    let cursor = u64_at(root.cell(0).unwrap(), 72) as usize;
+    (0..64)
+        .map(|offset| (cursor + offset) % 64)
+        .find(|ordinal| jobs[*ordinal][6..8] == [0, 0])
+        .unwrap() as u8
+}
+
+/// A resident page's frame index and registration.
+fn resident(
+    pool: &crate::storage::dirty_frame::SharedPool<'_, '_, '_, '_>,
+    number: u64,
+) -> (usize, crate::storage::dirty_frame::TargetRequest) {
+    let index = probe::registered_index(pool, number).unwrap();
+    (index, pool.target_request(index).unwrap())
+}
+
+fn fold_identity(hasher: &mut ContentHasher, identity: crate::storage::page::PageIdentity) {
+    let mut page = [0; 24];
+    identity.page.encode(&mut page).unwrap();
+    hasher.update(&identity.database.bytes());
+    hasher.update(&page);
+    hasher.update(&identity.owner.get().to_le_bytes());
+    hasher.update(&identity.owner_generation.get().to_le_bytes());
+}
+
+fn fold_stamp(hasher: &mut ContentHasher, stamp: &crate::storage::dirty_frame::FrameStamp) {
+    fold_identity(hasher, stamp.identity);
+    hasher.update(&stamp.generation.to_le_bytes());
+    hasher.update(&stamp.page_lsn.0.to_le_bytes());
+    hasher.update(&stamp.modification_counter.to_le_bytes());
+    match stamp.rec_lsn {
+        None => hasher.update(&[0; 9]),
+        Some(lsn) => {
+            hasher.update(&[1]);
+            hasher.update(&lsn.0.to_le_bytes());
+        }
+    }
+}
+
+/// The XRWC kind-1 commitment of the fixture's row, recomputed from
+/// independent reads in the order the cut doc gives (`RowPreflightCut`):
+/// the WAL prefix (no synced position); each T frame's registration, kind,
+/// level and stamp from the pool; the role map; the Free Undo's incarnation
+/// twice and its slot0 generation from the Undo page's one cell; the RootJob;
+/// the Catalog leaf stamp and the digest of the table's record value; the
+/// RowLeaf free bytes; the page digests of T from the pool; the control's
+/// bank, Jobs and inventory digests and its issued and adopted locals.
+pub(super) fn xrwc_preflight(
+    pool: &crate::storage::dirty_frame::SharedPool<'_, '_, '_, '_>,
+    prefix: crate::storage::wal_io::WalPrefix,
+    (control, (issued, adopted)): (&[u8], (u64, u64)),
+    (roles, root_job, leaf_free): (u64, u8, u16),
+) -> [u8; 32] {
+    let mut hasher = ContentHasher::new();
+    hasher.update(b"XRWC");
+    hasher.update(&[1, 1]);
+    hasher.update(&prefix.stream.database.bytes());
+    hasher.update(&prefix.stream.timeline.to_le_bytes());
+    hasher.update(&prefix.stream.writer_epoch.to_le_bytes());
+    hasher.update(&prefix.file.device.to_le_bytes());
+    hasher.update(&prefix.file.inode.to_le_bytes());
+    hasher.update(&prefix.complete_lsn.to_le_bytes());
+    hasher.update(&prefix.complete_offset.to_le_bytes());
+    let mut pages = Vec::new();
+    for number in FIXTURE_T {
+        let (index, request) = resident(pool, number);
+        let mut bytes = boxed::<PAGE_BYTES>();
+        let snapshot = probe::diagnose(pool, index, &mut bytes);
+        assert_eq!(snapshot.frame.identity, request.identity);
+        fold_identity(&mut hasher, request.identity);
+        hasher.update(&[request.kind as u8, request.level]);
+        fold_stamp(&mut hasher, &snapshot.frame);
+        pages.push((request, bytes));
+    }
+    hasher.update(&roles.to_le_bytes());
+    let (undo, undo_bytes) = &pages[6];
+    let incarnation = undo.identity.page.incarnation.get();
+    hasher.update(&incarnation.to_le_bytes());
+    hasher.update(&incarnation.to_le_bytes());
+    let cell = page::decode_page(&undo_bytes[..], undo.identity, PageKind::Undo).unwrap();
+    assert_eq!(cell.len(), 1);
+    hasher.update(&cell.cell(0).unwrap()[8..16]);
+    hasher.update(&[root_job]);
+    let (index, request) = resident(pool, CATALOG_LEAF);
+    let mut leaf = boxed::<PAGE_BYTES>();
+    let snapshot = probe::diagnose(pool, index, &mut leaf);
+    fold_stamp(&mut hasher, &snapshot.frame);
+    let view = crate::storage::tree_page::decode_tree_page(
+        &leaf[..],
+        crate::storage::tree_page::TreeExpectation {
+            identity: request.identity,
+            kind: PageKind::CatalogLeaf,
+            level: 0,
+            arity: 0,
+        },
+    )
+    .unwrap();
+    let found = view.lower_bound(&6u64.to_be_bytes()).unwrap();
+    assert!(found.equal);
+    let crate::storage::tree_page::EntryPayload::Value(value) =
+        view.entry(found.index).unwrap().payload
+    else {
+        panic!("the table record is a Value");
+    };
+    hasher.update(&content_digest(value));
+    hasher.update(&leaf_free.to_le_bytes());
+    for (_, bytes) in &pages {
+        hasher.update(&content_digest(&bytes[..]));
+    }
+    hasher.update(&content_digest(&control[..65_536]));
+    hasher.update(&content_digest(&control[65_536..131_072]));
+    hasher.update(&content_digest(&control[131_072..147_456]));
+    hasher.update(&issued.to_le_bytes());
+    hasher.update(&adopted.to_le_bytes());
+    hasher.digest()
 }
 
 /// The preflight sources (page numbers) of the fixture's row: Root, Jobs 0,

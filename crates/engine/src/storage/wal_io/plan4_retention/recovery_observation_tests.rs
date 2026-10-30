@@ -230,6 +230,11 @@ pub(in crate::storage) struct CatalogCommitTestState {
     epochs: (bool, u64, Vec<(u8, u64, u64)>),
 }
 impl<W: WriterNamespace> RetentionWriter<'_, '_, '_, '_, '_, '_, '_, '_, '_, W> {
+    /// S2W-R03: the control's (issued local, adopted local). Scalars only.
+    pub(in crate::storage) fn row_test_locals(&self) -> (u64, u64) {
+        (self.control.issued_local, self.control.adopted_local)
+    }
+
     pub(in crate::storage) fn catalog_test_commit_state(&self) -> CatalogCommitTestState {
         let wal = self.storage.wal();
         let visibility = self.visibility.expect("original visibility");
