@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
-"""S2W-R06 independent RowReserve literal; run as `python3 -I author.py`.
+"""S2W-R06 independent RowReserve and S2W-R08 Cancel literals; run as
+`python3 -I author.py`.
 
 The live fixture of the S2-b2 Row write cases (catalog_memory/row_write.rs):
 table T (object 6) committed by the Catalog actor, the Row actor begun on
@@ -17,7 +18,14 @@ the live DatabaseId (1..16), the live Profile, the actor's Status page 11,
 the ATT slot 0 of the Row actor and the canonical row of T's one Int64
 column, encoded by N1's canonical layout (column count, type tag 2, i64).
 
-Writes expected.json beside this file and prints it.
+The S2W-R08 Cancel is the next group after that RowReserve, LSN 16, of the
+same RootJob, computed by the same model from the state its reserve left.
+Its frame and after images go to expected-cancel.json, with the Root's RowId
+and Undo sequence high-water and the Free Undo's page, which a Cancel does
+not return.
+
+Writes expected.json and expected-cancel.json beside this file and prints
+them.
 """
 import importlib.util
 import json
@@ -132,6 +140,34 @@ def main():
     }
     text = json.dumps(expected, indent=2, sort_keys=True) + '\n'
     (HERE / 'expected.json').write_text(text)
+    print(text, end='')
+    reserved = {'undo14': sha256(h.undo_page(FREE_UNDO)).hexdigest(),
+                'row_high_water': a.get(h.root, 432),
+                'sequence_high_water': a.get(h.root, 392),
+                'reserved_count': a.get(h.root, 88),
+                'cancelled_count': a.get(h.root, 384)}
+    frame = h.cancel(PREVIOUS_LSN + 2, ordinal)
+    job = h.bank[ordinal]
+    cancelled = {
+        'case': 'S2W-R08',
+        'lsn': PREVIOUS_LSN + 2,
+        'frame_bytes': len(frame),
+        'frame_sha256': sha256(frame).hexdigest(),
+        'root_job': {'ordinal': ordinal, 'state': job[6], 'generation': a.get(job, 8)},
+        'after_reserve': reserved,
+        'after_cancel': {'undo14': sha256(h.undo_page(FREE_UNDO)).hexdigest(),
+                         'row_high_water': a.get(h.root, 432),
+                         'sequence_high_water': a.get(h.root, 392),
+                         'reserved_count': a.get(h.root, 88),
+                         'cancelled_count': a.get(h.root, 384)},
+        'after_sha256': {'root1': sha256(h.root_page()).hexdigest(),
+                         'jobs2': sha256(h.jobs_page(0)).hexdigest(),
+                         'bank': sha256(b''.join(map(bytes, h.bank))).hexdigest(),
+                         'tx': sha256(h.tx_descriptor()).hexdigest(),
+                         'aging': sha256(h.aging_descriptor()).hexdigest()},
+    }
+    text = json.dumps(cancelled, indent=2, sort_keys=True) + '\n'
+    (HERE / 'expected-cancel.json').write_text(text)
     print(text, end='')
 
 

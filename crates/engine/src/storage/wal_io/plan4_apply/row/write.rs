@@ -537,6 +537,21 @@ impl<W: WriterNamespace> ReservedRow<'_, '_, '_, '_, '_, '_, '_, '_, '_, '_, '_,
     }
 }
 
+#[cfg(test)]
+impl<'i, W: WriterNamespace> ReservedRow<'_, '_, '_, 'i, '_, '_, '_, '_, '_, '_, '_, '_, '_, W> {
+    /// S2W-R18's fixture: the reservation is given up with no Cancel group,
+    /// so the actor stays RootReserved in the pool and the control, and the
+    /// wrapper is released as a durable Cancel releases it (admission, gate,
+    /// lease, then the loan), without the fence. No healthy path reaches
+    /// that state: the reservation is a durable obligation of the session.
+    pub(in crate::storage) fn test_release_keeping_reservation(
+        mut self,
+    ) -> Result<&'i mut [u8; 425_984]> {
+        self.reservation.active = false;
+        self.release_discharged()
+    }
+}
+
 /// Reopen a terminal read gate with its Census error, as `finish` does.
 fn reopen(gate: TerminalReadGate<'_, '_>) -> Result<()> {
     gate.reopen_checked().map_err(|error| RetentionError {

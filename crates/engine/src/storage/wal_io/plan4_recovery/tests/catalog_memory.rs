@@ -1235,3 +1235,6 @@ mod row_write;
 
 #[path = "catalog_memory/row_forward.rs"]
 mod row_forward;
+
+#[path = "catalog_memory/row_cancel.rs"]
+mod row_cancel;
