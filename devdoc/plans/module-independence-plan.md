@@ -1,5 +1,9 @@
 # XADB 모듈 독립 개발 구조 전환 작업 계획
 
+2026-10-30 [S2-f V09 대체 oracle과 S2 마감](../evidence/module-independence-survey-20261026.md#s2f-closeout): RowWrite writer가 resident reader 둘의 반환을 기다린 뒤 admission 경계를 지키는 MBC10-V09와 MBC40-V09 census(부분 공급)를 더했고, S2-e와 합친 통합 시험 186건이 통과했다. 실제 census와 계약 읽기는 [S2 공급 기록](../contracts/dev3-module-boundaries.md#row-write-s2-supply)에 있다. 사용자 지시로 S2에서 멈추며 다음은 S3다.
+
+2026-10-30 [S2-e A INSERT driver live 경로와 frame-static D15](../evidence/module-independence-survey-20261026.md#s2e-live-driver): A driver가 실제 C wrapper로 행을 넣고 거절·Cancel·FlushRequired 재시도를 처리하는 live 시험 11건으로 G2를 닫았다. A driver를 단계별 frame으로 나눠 모든 C 호출 지점에서 A frame 전체가 상한 안이다(가장 작은 여유 preflight 813B).
+
 2026-10-30 [S2-d Row Cancel 본문과 S2-c 위 통합](../evidence/module-independence-survey-20261026.md#s2d-row-cancel): Reserve한 행을 replay 없이 취소하고, Forward와 entry·재계산·반환을 공유하도록 합쳤다. 통합 시험 170건이 통과했고 cancel의 C 쪽 여유는 1579B다. finish를 빼고 쓰기 단계가 모두 실제 본문이다. 다음은 S2-e(A driver live 경로)다.
 
 2026-10-30 [S2-c Row Forward 경로](../evidence/module-independence-survey-20261026.md#s2c-row-forward): producer_lane·prepare·apply가 replay 없이 draft commitment를 다시 계산하며 Forward를 설치한다. 실제 census는 C 쪽 여유 producer_lane 6023·prepare 1946·apply 1842B이고, 시험 156건이 통과했다. 다음은 같은 base에서 병렬로 만든 S2-d(cancel) 통합이다.

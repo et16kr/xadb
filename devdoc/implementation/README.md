@@ -1,5 +1,9 @@
 # 현재 구현
 
+2026-10-30 [S2-f V09 대체 oracle과 S2 마감](../evidence/module-independence-survey-20261026.md#s2f-closeout): Row 쓰기(S2)가 끝났다. 첫 Row INSERT의 쓰기 단계가 finish를 빼고 모두 실제 본문이며, S3 전에서 멈춘다.
+
+2026-10-30 [S2-e A INSERT driver live 경로와 frame-static D15](../evidence/module-independence-survey-20261026.md#s2e-live-driver): A의 INSERT driver가 시험에서 실제 C Row 쓰기 단계를 끝까지 부른다. 제품 호출자는 아직 없다.
+
 2026-10-30 [S2-d Row Cancel 본문과 S2-c 위 통합](../evidence/module-independence-survey-20261026.md#s2d-row-cancel): 첫 Row INSERT의 예약을 fence 없이 취소할 수 있다. Forward와 Cancel이 같은 검산·반환 코드를 쓴다.
 
 2026-10-30 [S2-c Row Forward 경로](../evidence/module-independence-survey-20261026.md#s2c-row-forward): 첫 Row INSERT가 Reserve 뒤 A의 producer, prepare, apply까지 실제로 진행해 행을 설치한다.

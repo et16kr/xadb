@@ -1694,6 +1694,102 @@ impl<'l> RowProducerLane<'l> {
   - S2-0b는 S2-a′까지 되돌린 뒤 단독으로 되돌린다. S2-0b는 S2-0보다 먼저 되돌린다.
   - S2-0b를 되돌리면 S2-0의 기준(단계마다 `validate_live`를 실행한다는 가정, `ROW_WRITE_CALLER_BYTES` 58B)이 다시 적용된다.
 
+<a id="row-write-s2-supply"></a>
+#### 2026-10-30 S2 공급 기록 — 실제 census, 계약 읽기와 문언 정정, 뒤 단계 의무
+
+**2026-10-30 · S2-a′~S2-f 공급 기록 · 독립 검토 수용(2026-10-30, r2; r1 ACCEPT WITH REQUIRED CHANGES 필수 4·권고 11, r2 필수 1 반영).** 이 기록은 [replay 검산 재배치](#row-write-validate-once)·[Row 쓰기 개정](#row-write-budget)의 공급 단위(S2-a~S2-f, A-W1) 증거가 "다음 계약 수정 때" 적기로 한 값과 읽기를 모은다. 새로 정하는 것은 아래 "C 자기 검산" 거절 행과 MCA00-D15의 frame-static coordinator 규칙 둘뿐이다. 그 밖에 단위 검토가 받아들인 두 문언을 고친다: [replay 검산 재배치](#row-write-validate-once) digest 연쇄의 reserve 항목(읽기 1)과 S2W-R23(1)의 Root 기대(읽기 3)다. 넷 모두 이미 적용한 코드를 문서로 고정한다. 공급 증거는 [S2 증거](../evidence/module-independence-survey-20261026.md#s2f-closeout)에 있다.
+
+**실제 효과(memory = native, charge 44304).** 위 "효과(분석 상계)" 표를 다음 census 출력이 대체한다(S2W-C01·C02·C06). finish는 S3의 단계라 상계 그대로다.
+
+| 단계 | 실제 C total | A 몫 상한 | C 쪽 여유 | 중단 단계(결정 2) |
+| --- | ---: | ---: | ---: | --- |
+| preflight | 37048 | 6144 | 1112 | — |
+| validation_lane | 15400 | 11520 | 17384 | — |
+| reserve | 31989 | 11520 | 795 | `reserve_group.group` |
+| producer_lane | 26761 | 11520 | 6023 | 없음 |
+| prepare(Forward) | 30838 | 11520 | 1946 | `prepare_forward.observation` |
+| apply | 31366 | 11520 | 1418 | `forward_group.group` |
+| cancel | 31205 | 11520 | 1579 | `cancel_group.group` |
+| finish(상계) | 1658 | 11520 | 31126 | — |
+
+- 상수·cap·charge는 바꾸지 않았다. 사다리((E)·(d4)·(d3))는 쓰지 않았고 결정 4의 M7 조건은 성립하지 않았다(A-W1 MCA00-D15).
+- 관례: 본문이 끝난 뒤 갈래(`arms`)는 그 단계가 부르는 함수 frame과 반환값만 max로 결합한다. 본문 동안 frame에 사는 wrapper 지역값은 shell에 더한다(apply의 `reserved`·`observation`). 이는 결정 2가 적은 §6.9 적용의 관례이며(S2-c·S2-d 통합 검토 A1, `cb9df49`), apply의 31366/1418은 그 뒤 값이다.
+- 가장 작은 쓰기 단계는 reserve(795B)다.
+
+**MCA00-D15(최종 타입, caller 항 포함).** S2-e 시험 호출자(`insert_live`) 모양으로 잰 출력이다(memory = native, round e3). caller 항 1296B는 driver frame 아래 호출자가 가진 값이다(행 2개·값 1개, Owner 둘 48B 포함, 행 하나마다 96B). 모든 `insert.*` site에 더하고, rollback·transaction site에는 더하지 않는다(그 호출자는 S3·S4의 것이다).
+
+| site | 상한 | 호출 지점별 + caller | 여유 | frame-static + caller | 여유 |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| `insert.check` | 11520 | 3936 | 7584 | 4651 | 6869 |
+| `insert.preflight` | 6144 | 4560 | 1584 | 5331 | 813 |
+| `insert.try_flush` | 11520 | 4624 | 6896 | 5716 | 5804 |
+| `insert.continue_flush` | 11520 | 4616 | 6904 | 5708 | 5812 |
+| `insert.validation_lane` | 11520 | 5704 | 5816 | 7419 | 4101 |
+| `insert.reserve` | 11520 | 5560 | 5960 | 6971 | 4549 |
+| `insert.finish_preflight` | 11520 | 5240 | 6280 | 6747 | 4773 |
+| `insert.producer_lane` | 11520 | 8032 | 3488 | 9163 | 2357 |
+| `insert.forward`(A, charge, A producer 19260 포함) | 44304 | 25708 | 18596 | 26815 | 17489 |
+| `insert.prepare` | 11520 | 5528 | 5992 | 7091 | 4429 |
+| `insert.apply` | 11520 | 5728 | 5792 | 8371 | 3149 |
+| `insert.reopen` | 11520 | 5496 | 6024 | 8219 | 3301 |
+| `insert.cancel` | 11520 | 5808 | 5712 | 8731 | 2789 |
+| `insert.finish_statement` | 11520 | 4576 | 6944 | 5779 | 5741 |
+
+가장 작은 여유는 frame-static + caller의 `insert.preflight` 813B(행 약 8개)이고, 쓰기 site에서는 `insert.producer_lane` 2357B, `insert.cancel` 2789B다. rollback·transaction site의 호출 지점별 몫은 S2에서 바뀌지 않았다(가장 작은 여유 `rollback.clr_lane` 5296B). frame-static은 S2-e부터 단언하며 가장 작은 여유는 같은 site의 3776B다(caller 항 없음). `insert.validate`·`rollback.clr`(A)은 출력만 한다.
+
+`insert.try_flush`·`insert.continue_flush`는 결정 3의 어느 목록에도 없고 D15가 "나머지 C 호출 지점"으로 11520과 견준다(A-W1 검토 A4). 둘 다 6144 안이다(frame-static + caller 여유 428·436B).
+
+- 계약의 몫은 M3의 호출 지점별 몫이다(그 호출에서 죽은 slot은 빼고 caller frame은 빼지 않는다). D15는 이를 계약 oracle로 계속 단언한다.
+- **coordinator 규칙(M3보다 엄격).** 함수 frame은 진입 때 잡히므로, 각 C 호출 지점의 frame-static 몫도 그 상한 안이어야 한다. frame-static 몫은 slack, 그 호출에 이르는 경로의 A frame마다의 자기 slot 전부(그 호출에서 죽은 slot 포함), forwarding frame의 인수와 반환의 합이다. 경로 밖 callee frame은 max로 결합하므로 결정 3이 비교에서 뺀 경로 전체 inventory(D12 `carrier_bytes`)가 아니다. 자기 slot을 세는 규칙은 A의 `call_sites` 문서가 정한다. D15는 단언하는 모든 site에서 이 몫을 caller 항 없이 단언하고, `insert.*` site에서는 caller 항을 더해서도 단언한다.
+- 이 규칙은 Q06 기록이나 M7 조건이 아니며 상수·cap·charge를 바꾸지 않았다. A는 Ready 뒤 단계(`write_row`)와 그 각 단계(`reserve_row`·`validate_row`·`forward_row`·`produce_row`·`prepare_row`·`apply_row`), statement 끝(`end_statement`)을 inline되지 않는 함수로 나눠 각 호출 지점의 frame에 다른 단계의 slot이 남지 않게 했다(나머지 never-inline frame은 `call_sites` 문서). 이 규칙은 뒤 A 호출 지점(S3·S4·제품 호출자)에도 같다.
+- caller 항은 시험 호출자(행 2개를 stack에 가진 모양)에 맞춘 값이다. 제품 호출자가 생기면 그 단위가 D15를 다시 돌린다.
+
+**계약 읽기와 문언 정정.**
+1. **(문언 정정, 보장 같음) [replay 검산 재배치](#row-write-validate-once) digest 연쇄의 reserve 재계산.** "T를 typed read로 before 구간에 다시 복사하며 digest를 계산하고"를 "T를 typed read 하나로 pool page에서 읽어 같은 `PreflightSource::commitment`를 접고(BEFORE·SCHEMA는 쓰지 않는다)"로 고친다. digest가 같고 BEFORE는 타입으로 쓰기가 막혀 있으므로 같은 보장이다. prepare·cancel의 kind-2 재계산(`draft_recompute`)은 문언대로 BEFORE에 다시 복사한다.
+2. **S2W-R14.** 거절은 reserve 입구의 기존 깊은 검산(Fatal(Census, Invariant), fence)이다. live 경로에서 Row actor가 Catalog Job을 가질 수 없어 cfg(test) hook으로 닿는다.
+3. **(selector 기대 정정) S2W-R23(1) Root.** Root byte의 기대 "다음 preflight를 부르면 arena 비교에서 Fatal(Census, Invariant)"를 "다음 preflight의 Root 해독에서 Fatal(Census, RowSemantic)"로 고친다. page 해독이 끝 SHA-256을 검산하고 preflight가 arena 비교 전에 Root에서 RootJob을 고르기 때문이다. arena 비교의 Fatal(Census, Invariant)은 같은 주입을 Row Status page에 한 사례와 preflight 단독 사례(`s2w_r23_preflight_arena_mismatch_is_fatal`)가 보인다. reserve의 Before(Stale)·효과 0과 fence는 그대로다.
+4. **S2W-R05 reserve 절반.** commitment 재계산이 Free Undo 재검산보다 먼저이므로 Stale이다.
+5. **index 수.** reserve는 retired index까지 센다. "A producer가 읽는 전체 데이터와 borrowed codec"의 `index_count` 문장("table identity에 맞춰 계산")보다 크거나 같은 보수값이며 producer capacity 입력에만 쓴다. index 수가 capacity 밖의 판정에 쓰이면 다시 정한다.
+6. **statement head.** prepare·apply·cancel은 statement head를 검산하지 않는다. actor가 이 예약으로 RootReserved이고, draft commitment가 ATT 행과 Job 64행을 접으므로 Reserve 뒤 변화는 Stale이 된다. Forward·Cancel은 같은 `reserved_entry`를 쓴다.
+7. **S2W-R18.** 건강한 session에서는 도달하지 않는 방어 검산이므로 예약을 남긴 채 wrapper를 놓는 cfg(test) fixture로 닿는다.
+8. **Fatal 뒤 charge.** Fatal cancel·apply 뒤 admission charge는 fence된 ledger가 checked release를 거절하므로 보인 채 남는다([Row 쓰기 개정](#row-write-budget) 1항(gate)의 "원 Fatal은 fence 아래 charge를 보존한다"). durable 효과 뒤 반환 오류는 fence 아래에서만 생긴다(`release_discharged` 문서).
+9. **S2W-R12·R23(2).** R12는 단계를 정하지 않으므로 apply와 cancel 두 절반을 둔다. R23(2)의 control byte는 XOI 구간 첫 byte(131072)다.
+10. **S2W-R24.** 바꾸는 byte는 Root cell offset 72의 free cursor다. cursor는 Aging 서술자(control 32행)에 사본과 work digest가 있어 Reserve 안의 권장형 hook은 Reserve 자신이 Before(Prepare, Base(Aging(IdentityMismatch)))로 잡는다. 그래서 대안형을 Root page와 그 control 사본(Aging 서술자)에 적용한다: durable Reserve 뒤 pool Root cursor 이동, Aging 서술자 재encode, draft commitment 재접기. "다른 원천과 묶지 않는 byte" 조건은 사본을 함께 바꿔 맞춘다(S2-0b r3 A1 메모의 후보, S2-c가 정함). live 다음 행 preflight와 frame별 durable replay와 재시작 분석 모두 RowSemantic(Corrupt)다. C4가 interim gate를 바꿀 때 이 byte·주입형·cause를 다시 쓴다.
+11. **MCA05-V31.** A driver의 live preflight 재시도는 C 시험 `row_live::mca05_v31_live_dirty_victim_flush_retries_the_same_row`가 공급한다(A의 소비자 selector를 C 시험 tree에서 공급).
+12. **MBC10-V09·MBC40-V09 대체 oracle([Row 쓰기 개정](#row-write-budget) 7항).**
+    - MBC10-V09(RowWrite writer)는 `catalog_memory::row_v09`이 공급한다. resident reader 둘이 admitted된 동안 writer가 gate에서 기다리고, 그동안 새 reader는 InstallationPending이며, reader를 하나씩 놓아 둘 다 반환한 뒤에야 writer admission의 −1·같음·+1이 정해진다(같음은 65536 − shared = memory 45352). RowProgress writer는 S1E-V09와 `row_progress_reserves_the_same_catalog_progress_charge`가 맡는다. CatalogProgress writer의 V09 사례는 NOT_RUN이다.
+    - MBC40-V09는 `plan4_apply::row::v09_census_tests`가 census 코드에서 읽어 출력한다(cap은 ledger 상수 `SHORT_BYTES`). "반환 오류가 최대인 writer phase"는 두 읽기로 출력한다. Err 타입이 가장 큰 단계는 apply(`RowOwnedError<PreparedRow>` 520B)이고, C total + 그 상한이 가장 큰 단계는 reserve(31989 + 11520 = 43509)다. 단계 carrier가 Err 반환 slot을 포함하므로 뒤가 앞을 덮으며, 시험은 total(apply) ≤ total(reserve)를 단언한다. shared + reserve는 memory 63693·native 63701, shared + resident 둘은 55944·55952(여유 9592·9584)다.
+    - (iii) RowWrite와 reader의 배제는 측정이 아니라 class 사실로 출력하며, 증명은 S2A-T01(구조)과 MBC10-V09·S2W-R15(동작)다. (iv)는 `floor=NOT_SUPPLIED`로 출력하고 PASS로 세지 않는다(WRITER-PROGRESS-001). 그래서 MBC40-V09는 부분 공급이다. rollback·복구 task 부분은 S4·C4다.
+    - 소비자 MCI03-V02의 대체 검산은 S2W-R21이다. 실제 MCI03-V02 실행은 B의 Row 읽기(S5) 뒤라 NOT_RUN이다.
+13. **insert_live.** S2에서는 제품 호출자가 없다. S2-e가 C 시험에서 A driver live mode를 실제 C wrapper로 돌려 G2를 닫는다.
+14. **apply의 독립 재계산.** [Row 쓰기 개정](#row-write-budget) 3항의 "(§6.6 prepare·stage 직전 재검산)"은 다음으로 읽는다. apply는 observer 없이 loan에서 group을 재조립하고 prepared `after` digest로 검산한다. observer의 독립 재계산은 prepare에서 한다. S2-0b의 apply census(`group_reassemble`)가 이미 이를 전제한다.
+
+**native 수치(측정 갱신).** `94ede44`가 native 시험 adapter의 `File`을 160 → 32B로 줄인 뒤 native shared는 20320 → 20192B다([Row 쓰기 개정](#row-write-budget) 5항의 "2026-10-30 정정(기존 초과)"과 같은 원인). 그래서 이 문서의 native 값은 다음처럼 측정값으로 읽는다. memory 값은 모두 그대로다.
+- shared 20320 → 20192(Row 쓰기 개정 머리말), Row lifecycle 43113 → 42089(머리말·5항·S2W-C03, memory와 같다), RowRead full 35594 → 34570(머리말·4항), retention LOAD 34388 → 33364(5항·거절한 대안).
+- native class 상한 45216 → 45344(5항, §11 2026-10-29 Q06 재검토 기록), writer 여유 9456 → 9584(7항·거절한 대안 Q3, §9 2026-10-29 개정의 MBC10-V09 행).
+- native recovered 여유 32 → 160B(4항·거절한 대안 Q2), "charge max 접기"의 native 912 → 1040B와 `catalog_live` 한도 44336 → 44464B(여유 32 → 160B), 상주 적재 분리 대안에서 RowWrite에 남는 몫 9916–10940 → 10940B.
+- S2W-C03의 Row lifecycle은 memory·native 모두 42089B 불변으로, S2W-C04의 native peak는 64136/65504 → 64008/65376으로 읽는다([RowReserve replay 개정](#row-reserve-replay)의 "그대로" 목록도 같다).
+
+**시험 표 보충.** S2W-N01(compiler 거절)은 계약 표에 공급 단위가 없었다. S2-a가 C0 boundary-compiler manifest에 더해 공급했다(E0499 1건).
+
+**C 자기 검산 거절(보충).** [Row 쓰기 개정](#row-write-budget)의 거절 표(와 S2-0b 보충)에 다음 행을 더한다. 두 행 모두 지금 C가 그런 출력을 만들지 않아 시험이 닿지 않는다(S2-d 통합 열린 점). "prepare·apply·cancel의 stage 전 거절" 행은 A의 입력과 상태의 거절(Stale·Busy·Capacity·InvalidInput·A proposal의 RowSemantic)이다.
+
+| 경로 | phase | cause | effect·반환 |
+| --- | --- | --- | --- |
+| reserve·prepare·cancel에서 C가 만든 출력의 자기 검산 불일치(producer observation, T 밖 role 변화, T target과 다른 after image identity, 범위보다 긴 frame, C 출력 page·layout 해독과 commitment가 증명한 before image 해독) | Prepare | Invariant(해독은 원 cause) | Fatal·fence. stage 전이라도 Before로 바꾸지 않는다 |
+| 예약 entry의 RootJob 해독 실패 | Census | Retention(…) | Fatal·fence. 전체 ledger 검산 뒤이므로 방어 갈래다 |
+
+**[Row 쓰기 개정](#row-write-budget) 2항 `flush_then_retry`의 C 표면.** A는 phase를 `MaintenancePort::phase()`로 읽고 그 반환형 `RetentionFlushPhase`를 `storage::disk` 재노출로 쓴다(A-W1 `c21f5f4`).
+
+**뒤 단계 의무.**
+- **S3·S4 공통.** rollback·transaction site와 제품 호출자는 자기 caller 항으로 MCA00-D15(호출 지점별·frame-static)를 다시 돌린다.
+- **S3.** finish 본문과 census. Cancel 뒤 statement 종료와 `abort_empty_transaction`이 fence 없이 성공하는 동작을 명시할지 정한다. Forward 뒤 건강한 transaction 끝(commit)이 없으므로 S2 시험은 statement를 끝낸 뒤 transaction을 버린다.
+- **S4.** `reserved_entry`는 Forward(INSERT) draft만 받는다. 취소할 수 있는 CLR 예약을 들이면 기대 연산을 인수로 받는다. CLR producer phase(MCA00-D15 출력)를 진입 측정한다. MBC10-V09·MBC40-V09의 rollback task 부분([Row 쓰기 개정](#row-write-budget) 7항)도 S4다.
+- **C4.** S2W-H01..H05의 crash 정지 부분과 S2W-R24의 재시작 기대는 interim gate가 바뀐 뒤 다시 돌린다. [§7](#common-deliveries) 표 뒤 2026-10-30 문단의 진입 의무(S2-0b 뒤 `validate_live` 배치)와 MBC10-V09·MBC40-V09의 복구 task 부분([Row 쓰기 개정](#row-write-budget) 7항)도 C4다.
+- **S5·MCI.** MCI03-V02의 실제 실행과 B/MCI의 InstallationPending 재시도 수용은 B의 Row 읽기 뒤다.
+- **담당 미정.** MBC10-V09의 CatalogProgress writer 사례는 NOT_RUN이며 담당 단위가 없다. MBC40-V09 (iv) floor는 [WRITER-PROGRESS-001](#writer-progress)의 미공급 의무다.
+- **열린 의무(A-W1 검토 A4, 담당 미정).** flush 동안 RowWrite admission은 없고 flusher의 65536B census에는 호출자 carrier 항이 없다. 그 census가 A의 flush 지점 몫(frame-static + caller 5716B)을 포함하는지는 S2-b 증거가 정하기로 했으나 S2 증거에 그 결정이 없다. C와 coordinator가 정한다.
+
 ### 6.7 live rollback과 C/A recovery handler
 
 앞선 성공 statement 보존과 full abort는 실제 Row head chain으로 수행하며 [소비자 상태표](dev3-module-consumers.md#row-states)를 정본으로 삼는다. C는 원 actor/statement mark와 reserved obligations에서 RollbackStart를 적용하고 다음 currentU를 고른다. A는 C가 actual source에서 획득한 before/key/nextU 문맥으로 **CLR 후보**를 생산한다. 원 target/read pins와2-reference handoff, stage/whole install, head 인계, StatementFinish/AbortEnd는 C가 검산·소비한다.

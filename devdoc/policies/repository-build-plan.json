@@ -9440,5 +9440,63 @@
     "remaining_supply": "S2-e (A driver live path through LiveCall, apply locals into the shell, t_frames dedupe); next contract edit: refusal-table row for C self-checks (integration A2), effect table actuals; S3: finish body and the empty abort after Cancel; S4: reserved_entry expected operation for CLR reservations",
     "source_roots_changed": false,
     "artifact_manifest_sha256": "277309dd2abd4d8c7c612e49a0f89615e2e092a036f1f51db7d8c35b261452cc"
+  },
+  "dev3_module_s2e_live_driver": {
+    "status": "LOCAL_VERIFIED_REVIEWED",
+    "contract_ref": "dev3-module-boundaries.md#row-write-s2-supply",
+    "evidence_ref": "module-independence-survey-20261026.md#s2e-live-driver",
+    "baseline_commit": "854ad2a",
+    "integration_base": "db52be8",
+    "branch": "claude/project-thread-h2j8oc",
+    "commits": [
+      "1a62803",
+      "0733b39",
+      "689137c",
+      "b4a681a",
+      "5e539a6",
+      "aa19cf6",
+      "a6f7566",
+      "f5b687c",
+      "0093646",
+      "45df7ce",
+      "ae99bf7",
+      "5ebae1c",
+      "c8801a1",
+      "fc195ad",
+      "97c865d",
+      "5f54e10",
+      "65ef1e1",
+      "1630842"
+    ],
+    "source_branch": "module-s2e a8b7bc9",
+    "rollback": "git revert 1630842 65ef1e1 5f54e10 97c865d fc195ad c8801a1 5ebae1c ae99bf7 45df7ce 0093646 f5b687c a6f7566 aa19cf6 5e539a6 b4a681a 689137c 0733b39 1a62803, after S2-f is reverted",
+    "scope": "S2-e: A INSERT driver live mode over the actual C wrappers from C tests (row_live E1-E9, A4a, A4b; MCA05-V31 supplied in C's tree), step-aimed cfg(test) hooks and preflight counter, joint A visibility and docs, per-step inline(never) split of the driver, MCA00-D15 caller term 1296 and frame-static assertions at every site; S2-c/S2-d integration review A1 and A6",
+    "validation": "independent reviews: S2-e ACCEPT WITH REQUIRED CHANGES (1 required, 9 advisory; all handled), delta ACCEPT as interim (0 required), final delta see evidence; rounds b0 170/170, e1 179/179, e2 181/181, e3 a8b7bc9 181/181 with compiler inputs 17/17; check, workspace check, gate Clippy clean; D15 frame-static with caller preflight margin 813 B; D12 live_insert margin 885 B; apply C margin 1418 B; R13 25.68 s",
+    "remaining_supply": "a product caller (S3/S4/SQL) reruns MCA00-D15 with its own caller term; S3/S4 statement and transaction ends",
+    "source_roots_changed": false,
+    "artifact_manifest_sha256": "2371524908437c952aaa5ec93f3209a90bbf0e12bf290a860c18db9fe4eafe61"
+  },
+  "dev3_module_s2f_closeout": {
+    "status": "LOCAL_VERIFIED_REVIEWED",
+    "contract_ref": "dev3-module-boundaries.md#row-write-s2-supply",
+    "evidence_ref": "module-independence-survey-20261026.md#s2f-closeout",
+    "baseline_commit": "854ad2a",
+    "integration_base": "db52be8",
+    "branch": "claude/project-thread-h2j8oc",
+    "commits": [
+      "cfe6123",
+      "4a20002",
+      "ca3a489",
+      "0602638",
+      "58ee951",
+      "8a394c4"
+    ],
+    "source_branch": "module-s2f 1f446f7",
+    "rollback": "revert the docs commit, then git revert 8a394c4 58ee951 0602638 ca3a489 4a20002 cfe6123, then S2-e",
+    "scope": "S2-f: MBC10-V09 replacement oracle (RowWrite writer, two resident readers, -1/equal/+1), MBC40-V09 replacement census (RowWrite share; (iv) NOT_SUPPLIED), review follow-ups A1 A2 A4 A5; S2 closeout: combined S2-e + S2-f round j1 and the contract S2 supply record (actual census, D15 figures and the frame-static coordinator rule, readings, native figure updates, C self-check refusal rows)",
+    "validation": "independent reviews: S2-f ACCEPT (0 required, 8 advisory), contract record see evidence; rounds b0 16/16, h1 19/19, h2 1f446f7 20/20; integration j1 see evidence",
+    "remaining_supply": "MBC40-V09 (iv) writer entry floor (WRITER-PROGRESS-001); MBC10-V09 CatalogProgress writer as a V09 oracle; rollback and recovery-task V09 parts (S4, C4); actual MCI03-V02 run (S5); S3 finish body",
+    "source_roots_changed": false,
+    "artifact_manifest_sha256": "b703c69b94ef22a716b8347eab1062654c0e960f27f083cd23f434a56350e985"
   }
 }

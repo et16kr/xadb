@@ -4853,3 +4853,158 @@ S2-0 1항의 cancel 순서와 [S2-0b](#s2-0b-validate-once) 결정 1·2를 공�
 **남은 일.** finish는 S3의 단계라 아직 상계다. LiveCall을 거치는 end-to-end 사례(insert_live, MCA05-V31, 행 거절 뒤 statement 결과)는 S2-e다. `t_frames`가 Forward·Cancel 시험 파일에 두 번 있다.
 
 **되돌림.** 최신부터 되돌린다. 통합 commit은 S2-d cherry-pick보다 먼저 되돌린다. S2-d를 되돌려도 S2-c는 남는다(`row_write()`는 Reserve·Forward로 돌아간다). artifact는 `module-independence-20261029/artifacts/module-s2d-20261030/`(검토서 둘, 증거 원문, b0·h1·h2·i1 로그와 probe, 도구, `manifest-all.sha256` SHA-256 `277309dd2abd4d8c7c612e49a0f89615e2e092a036f1f51db7d8c35b261452cc`)에 있다.
+
+<a id="s2e-live-driver"></a>
+## 2026-10-30 S2-e A INSERT driver live 경로와 frame-static D15
+
+S2-0 1항의 A driver live mode(`LiveCall`·`insert_live`·`finish_statement_live`·`start_statement_rollback_live`)를 실제 C wrapper와 실제 committed CREATE T 위에서 C 시험이 부르게 해 G2를 닫았다. 제품·SQL 호출자는 없다. MCA00-D15에 시험 호출자 항과 frame-static 단언을 더했고, 이를 위해 A driver의 Ready 뒤 단계를 inline되지 않는 frame으로 나눴다. 상수·cap·charge는 바꾸지 않았다. S2-d 통합 head `854ad2a`에서 S2-f와 병렬로 만들었고(branch `module-s2e`), S2-f와 함께 `db52be8` 위로 옮겼다. 통합 판 j1과 계약 기록은 [S2 마감](#s2f-closeout)에 있다.
+
+| 이 branch | 원 commit | 내용 |
+| --- | --- | --- |
+| `1a62803` | `55e9cdd` | C의 cfg(test) 한 번 hook 셋을 단계(reserve·prepare·apply·cancel)에 겨눌 수 있게 함 |
+| `0733b39` | `a6d2f0c` | A 공동: `mod driver`·`mod live`를 `pub(in crate::storage)`로(시험이 live 입구를 부름) |
+| `689137c` | `38db21d` | live 종단 시험 `catalog_memory/row_live.rs`(E1–E9) |
+| `b4a681a` | `e43ae01` | A 공동: MCA00-D15에 `insert_live` 호출자 항 |
+| `5e539a6` | `ca23021` | A 공동: preflight Busy 비재시도와 dead_code 이유 문서 |
+| `aa19cf6` | `cb9df49` | S2-c·S2-d 통합 검토 후속 A1: apply 성공 arm의 지역값을 shell에 셈 |
+| `a6f7566` | `b1349f3` | 통합 검토 후속 A6: 시험 모듈 문서 줄 |
+| `f5b687c` | `f2f00ea` | 통합 검토 후속 A6: `t_frames`를 `row_preflight.rs`의 공유 helper 하나로 |
+| `0093646` | `8ff514c` | E9 문서 줄 |
+| `45df7ce` | `c9b514e` | A 공동: `insert_row`의 Ready 뒤 단계를 `write_row` frame으로 |
+| `ae99bf7` | `889f6c7` | A 공동: D15 frame-static을 site마다 합 관례로 세고 단언 |
+| `5ebae1c` | `8a925ab` | A 공동: live.rs의 G2 문장 |
+| `c8801a1` | `8ad2345` | `preflight_row` 호출을 thread마다 세는 cfg(test) 계수기 |
+| `fc195ad` | `c27ab6a` | live apply stale·Cancel 거절·`finish_statement_live` 사례 |
+| `97c865d` | `c217280` | E2·E8·E9 oracle을 양성으로 |
+| `5f54e10` | `3d210e8` | A 공동: `write_row` 단계와 statement 끝을 `#[inline(never)]` frame으로 |
+| `65ef1e1` | `5e9e48f` | A 공동: frame-static을 호출자 항과 함께 모든 site에서 단언 |
+| `1630842` | `a8b7bc9` | A 공동: 호출자 항에 Owner 둘(48B)을 세고 행 여유를 적음 |
+
+**공급.**
+- **hook 겨눔(설계 결정 2).** `TEST_STALE_STAMP`·`TEST_STAGE_REFUSAL`·`TEST_MISSING_TARGET`을 `TestAimed`(`at_reserve`·`at_prepare`·`at_apply`·`at_cancel`)로 한 단계에 겨눈다. 각 단계 본문이 thread에 자기 단계를 표시하고, 소비자는 겨누지 않았거나 지금 단계에 겨눈 one-shot만 가져간다. 기존 `test_*_once`는 겨누지 않으므로 첫 소비자 동작이 그대로다.
+- **preflight 계수기(cfg(test)).** `preflight_row`가 거절을 포함해 호출을 센다. byte·결과는 바뀌지 않는다.
+- **A 공개(공동).** 설계는 시험에 A 파일 수정이 필요 없다고 했으나 두 module 선언이 private이라 공동 commit 하나가 필요했다.
+- **A 문서(공동).** preflight 거절은 Busy도 행을 끝내고 재시도하지 않으며, FlushRequired만 flush 뒤 같은 행을 preflight부터 다시 한다. live.rs의 G2 문장은 "S2에는 `insert_live`의 제품 호출자가 없고 C 시험이 live driver를 돌린다"로 고쳤다.
+- **단계 분할(공동).** `insert_row`는 preflight·flush 반복만 갖고 `write_row`를 꼬리로 부른다. `write_row`·`reserve_row`·`validate_row`·`forward_row`·`produce_row`·`prepare_row`·`apply_row`·`end_statement`는 `#[inline(never)]`이며 본문을 그대로 옮겼다. C 호출 순서, `cancel(owned.reopen(), …)`의 평가 순서, `finish_preflight`·`cancel`에 닿는 갈래와 Failure, statement 끝의 Returned·RollbackRequired·MustResolve 선택이 같다. D01–D11·D13·D14, AW1-F01/F02, row_live 11건, C01/C02/C06의 출력이 분할 전(e2)과 같고, D12·D15는 아래 수치만 바뀐다(e3).
+- **통합 검토 후속 A1.** apply 성공 arm이 `row_apply_forward` 동안 frame에 두는 `ReservedRow`(368)와 observation(56)을 arms max가 아니라 shell에 센다. apply C total 30942 → 31366, C 쪽 여유 1842 → 1418B다. prepare·cancel은 max 아래에 callee frame과 반환값만 있어 바뀌지 않는다. reserve 795B가 여전히 가장 작다. apply 본문 29822B는 S2-0b 상계 29760B보다 62B 크며 단언 대상은 아니다.
+
+**시험(`plan4_recovery::tests::catalog_memory::row_live`, 11건).**
+
+| 사례 | 계약 행 | 보이는 것 |
+| --- | --- | --- |
+| E1 | S2W-R09 live | `Ok(1)`. WAL은 RESERVE·FORWARD literal, slot은 RootJob의 RowId·UndoRef, statement는 driver가 끝냄, fence 없음 |
+| E2 | **MCA05-V31** | R16 fixture에서 첫 preflight FlushRequired, 전용 flusher Owner로 flush, 같은 행을 preflight부터 재시도. preflight 정확히 2회, dirty victim 정확히 1개 기록, 같은 literal |
+| E3 | S2W-R07 live | reserve Before(Stale), driver가 preflight를 finish, 재시도 없음, `Returned`, 효과 0. statement는 `finish_statement_live`로 끝남 |
+| E4 | S2W-R11 reserve 절반 live | stage 거절, E3과 같고 write bit 유지 |
+| E5 | S2W-R10 live | prepare Before, driver가 Cancel, Cancel literal |
+| E6 | S2W-R11 apply 절반 live | apply Before, reopen 뒤 Cancel, Cancel literal |
+| A4b | S2W-R21(1) apply live | apply Before(Stale), reopen 뒤 Cancel, `finish_statement_live`, fence 없음 |
+| A4a | S2W-R11 apply 뒤 S2W-R21(1) Cancel live | apply Unchanged 뒤 Cancel Before(Stale)를 재시도하지 않음. cleanup `(Cancel, Disk(Stale))`, `MustResolve`, WAL은 RESERVE까지, C의 fence, charge가 보인 채 남음 |
+| E7 | S2W-R21(2) live | target 없음: Fatal(Prepare, Invariant, CallerMustResolve), `MustResolve(Some(view))` |
+| E8 | S2W-R19 live | LOAD claim Busy: preflight 정확히 1회, Unchanged(Load, Frame Busy), `Returned` |
+| E9 | 계약 행 아님(설계 결정 5) | 1행 적용(RESERVE·FORWARD hex 대조), 2행 preflight Unchanged Capacity, `RollbackRequired`, `start_statement_rollback_live`는 C의 Unchanged Unsupported(S4), slot 0이 RootJob과 같음 |
+
+- MCA05-V31은 계약이 A의 시험 tree에 둔 selector지만 fixture가 C의 module 지역 macro라 C 시험 tree에서 공급한다(설계 결정 4).
+- 설계와 다른 점: E9의 2행은 validate가 아니라 preflight에서 거절된다. fixture의 Free Undo 하나를 1행이 lease하므로 S2W-R05의 거절(RowReserve마다 Free Undo 하나)이다. 시험하는 statement 결과는 설계대로다.
+- 더하지 않은 것(설계 결정 6): MBC30-V01..03, MCA01-V09..11, MCA04-V01.
+
+**MCA00-D15.** 수치 표는 [S2 공급 기록](../contracts/dev3-module-boundaries.md#row-write-s2-supply)의 MCA00-D15 문단에 있다.
+- 호출 지점별 몫(M3)이 계약 oracle이며 계산법은 그대로다. 분할 뒤 `reserve_row`·`validate_row`·`produce_row` 아래 site는 그 frame의 인수와 진행 중 결과 slot도 센다(validation_lane 3840 → 4408, producer_lane 6568 → 6736).
+- frame-static 몫은 coordinator 규칙(M3보다 엄격)이다. C와 같은 합 관례로 한 함수의 자기 slot은 본문 전체에 세고 callee frame만 경로로 max 결합한다. 모든 검산 site에서 호출자 항 없이와 함께 단언하며, 출력만 하는 site는 없다.
+- 호출자 항 1296B는 `insert_live` 호출자가 driver frame 아래에 가진 값이다: statement 결과 두 번, 전달 frame 인수, RowTransaction capsule, CheckedTable, `LiveCall`, Owner 둘(48), 행마다 값·slice·slot(행 2개·값 1개, 행마다 96B). port와 loan은 이 stack에 없다.
+- 가장 작은 여유는 frame-static + 호출자의 preflight 813B(행 약 8개), 쓰기 site의 producer_lane 2357·cancel 2789B다. 분할 전 e2에서 preflight는 173B였다. 제품 호출자(S3·S4·SQL)는 자기 호출자 항으로 D15를 다시 돌린다(`CALLER_ROWS` 옆 문서).
+- D12 live_insert는 11371 → 11403B(상한 12288, 여유 885B)다. 기계 probe(debug, 출력만): insert 12112 → 6800, preflight 6032 → 5280B다.
+
+**독립 검토.** 읽기 전용 검토자 3회.
+- S2-e(`8ff514c`): ACCEPT WITH REQUIRED CHANGES(필수 1·권고 9). 필수 R1은 frame-static을 Q06 기록이나 M7이 아니라 계약 oracle(호출 지점별)과 따로 단언하는 coordinator 규칙으로 적으라는 것이며, 이 단위의 D15와 [S2 공급 기록](../contracts/dev3-module-boundaries.md#row-write-s2-supply)이 반영했다. A1–A6은 이 branch의 commit으로 반영했고, A7(계약 기록)은 S2 공급 기록, A9(`db52be8` 위로 옮기기)는 통합에서 했다.
+- 중간 delta(`c217280`): 중간 상태로 ACCEPT(필수 0). 분할의 조건 5–9(단계마다 inline되지 않는 frame과 같은 합 관례, 순수 이동, 모든 site 단언, 재실행, 시험용 probe 미commit)를 정했다.
+- 최종 delta(`c217280..a8b7bc9`): PASS(필수 0·선택 4). 분할이 순수 이동이고(같은 호출·갈래·Failure, 예약은 값으로 이동하며 암묵 drop이 없음), frame별 표가 출력 수치와 정확히 닫히며, 상수·상한·charge가 그대로이고, `#[inline(never)]` 14개가 `call_sites` 문서 목록과 같음을 확인했다. 선택 후속 가운데 증거 문구 둘은 반영했다. 코드 문서 문구 둘(`insert_row` 문서의 "`write_row` 자기 frame", `CALLER_ROWS` 문서의 S2-e 수치)은 시험한 tree를 바꾸지 않으려고 두었다.
+
+**실행.** 각 판은 build 전 manifest 고정, git archive export에서 build, selector마다 한 번 실행(`RUST_MIN_STACK=33554432 timeout 30 … --exact --test-threads=1`)이다.
+
+| 판 | rev | 결과 |
+| --- | --- | --- |
+| b0 | `854ad2a` | 170/170 PASS, S2-d 통합 i1과 같음. R13 27.78초 |
+| e1 | `8ff514c` | 179/179 PASS, b0와 5건이 예상대로 다름 |
+| e2 | `c217280` | 181/181 PASS, e1과 5건이 예상대로 다름(D12, D15 둘, E2·E8 계수) |
+| e3 | `a8b7bc9` | **181/181 PASS**. e2와 3건(D12, D15 memory·native)만 다르고 모두 위 수치 변화다. compiler 입력 17/17 PASS. R13 25.68초 |
+
+- e3에서 engine check·workspace check 경고 0, gate Clippy 오류·경고 0, 바뀐 .rs 22개 rustfmt check, `git diff --check 67d889f..a8b7bc9`가 통과했다.
+- R13은 28초 기준 아래이고 공유 30초 `case` 상한은 그대로다.
+
+**남은 일.** 제품 호출자가 생기면 그 단위가 D15를 다시 돌린다. S3·S4의 끝(commit, rollback)이 없어 Forward 사례는 transaction을 버리며 끝난다. hook 겨눔과 계수기는 cfg(test) 전용이며 census 타입 밖이다.
+
+**되돌림.** 최신부터 되돌린다. 단계 분할과 그 D15 단언은 짝으로 되돌린다(`1630842`·`65ef1e1`·`5f54e10`, 그다음 `ae99bf7`·`45df7ce`). 통합 검토 후속(`aa19cf6`·`a6f7566`·`f5b687c`)은 따로 되돌릴 수 있다. artifact는 `module-independence-20261029/artifacts/module-s2e-20261030/`(설계, 검토서 셋, 증거 원문, b0·e1·e2·e3 로그와 probe, 도구, `manifest-all.sha256` SHA-256 `2371524908437c952aaa5ec93f3209a90bbf0e12bf290a860c18db9fe4eafe61`)에 있다.
+
+<a id="s2f-closeout"></a>
+## 2026-10-30 S2-f V09 대체 oracle과 S2 마감
+
+S2-0 7항이 RowWrite에 맞춰 바꾼 MBC10-V09·MBC40-V09의 대체 oracle을 시험으로 공급하고, S2-e와 함께 통합한 판 j1로 S2를 마감했다. 계약이 "다음 계약 수정 때" 적기로 한 실제 census와 읽기는 [S2 공급 기록](../contracts/dev3-module-boundaries.md#row-write-s2-supply)에 넣었다. S2-f는 S2-d 통합 head `854ad2a`에서 S2-e와 병렬로 만들었다(branch `module-s2f`). 사용자 지시대로 S2에서 멈추며 S5는 시작하지 않는다.
+
+| 이 branch | 원 commit | 내용 |
+| --- | --- | --- |
+| `cfe6123` | `25334a2` | MBC10-V09 대체 oracle `catalog_memory/row_v09.rs`(RowWrite writer와 resident reader 둘) |
+| `4a20002` | `5f5de9a` | MBC40-V09 대체 census `plan4_apply/row/v09_census_tests.rs`((iv) 미공급) |
+| `ca3a489` | `5e85472` | 검토 후속 A1: 반환 오류가 최대인 단계를 코드에서 골라 출력 |
+| `0602638` | `815f9cc` | 검토 후속 A5: cap을 ledger 상수 `SHORT_BYTES`에서 읽음(가시성만, 65536 그대로) |
+| `58ee951` | `207408f` | 검토 후속 A2: reader를 하나씩 놓아 두 반환을 기다림을 단계마다 확인 |
+| `8a394c4` | `1f446f7` | 검토 후속 A4: round 순서 의존을 줄이고 남은 의존과 이유를 적음 |
+
+**MBC10-V09(RowWrite writer).** S2W-R02·R15의 T fixture에서 −1·같음·+1 세 round를 돈다.
+- test 전용 held loan이 마지막 admission에 `charge + over`만 남긴다. Catalog resident reader 둘이 각자 Owner·thread에서 admitted되어 `LookupCaptured`에서 멈춘다.
+- `preflight_row`가 terminal read gate를 닫고 `ReadGateWaiting`에서 기다린다. 이때 gate는 닫혔고 read 2개가 활성이며 fence가 없고 writer charge가 아직 없다. 그동안 새 reader는 Unchanged(Census, Concurrency(InstallationPending))다.
+- reader 하나를 놓으면 writer는 200ms 동안 움직이지 않는다(gate 재검사 주기 10ms). 그때 read 1개, writer charge 없음을 본 뒤 둘째 reader를 놓는다.
+- −1은 Unchanged(Census, Capacity)이고 gate가 다시 열리며 ledger·WAL·file이 그대로다. 같음은 admission 뒤 ledger가 정확히 65536 − shared(memory 45352)이고 `finish`로 효과 없이 끝난다. +1은 reserve로 WAL이 늘고 실제 Cancel로 끝나 charge가 돌아온다.
+- 같음 round는 반환하는 reader가 read operation을 끝내기 전에 source를 닫는 순서(`finish_checked`)에 기댄다. +1은 write bit가 transaction에 남으므로 마지막이어야 한다. 둘 다 시험 문서에 적었다.
+
+**MBC40-V09(RowWrite 몫).** 모든 수치를 census 코드(`row_write_phases`·`row_write_charge`·`CatalogSourceCharges`)와 `SHORT_BYTES`에서 읽는다.
+
+| 부분 | memory | native |
+| --- | ---: | ---: |
+| shared | 20184 | 20192 |
+| (i) C total + 상한이 가장 큰 단계(reserve 31989 + 11520 = 43509), shared + 그 값 | 63693 | 63701 |
+| (i) Err 타입이 가장 큰 단계(apply, `RowOwnedError<PreparedRow>` 520B, total 42886), shared + 그 값 | 63070 | 63078 |
+| (ii) resident 17880, shared + resident 둘 | 55944(여유 9592) | 55952(여유 9584) |
+| (iii) shared + max(charge, resident 둘) | 64488 | 64496 |
+| (iv) floor + shared + resident 둘 | NOT_SUPPLIED | NOT_SUPPLIED |
+
+- 단계 carrier가 Err 반환 slot을 포함하므로 (i)의 두 읽기 가운데 total이 큰 쪽이 다른 쪽을 덮는다. 시험은 total(apply) ≤ total(reserve)를 단언한다.
+- (iii)의 배제는 ledger만으로 보이지 않으므로 class 사실로 출력하고 합만 계산한다. 증명은 S2A-T01(구조)과 MBC10-V09·S2W-R15(동작)다.
+- 설계 조사의 "2×resident 17880"은 틀렸다. 17880은 reader 하나의 값이고 코드와 계약(9592)이 맞다.
+- 계약의 native 9456은 `94ede44` 전 값이다. 측정값 9584와 함께 stale한 native 수치 넷을 S2 공급 기록에 고쳐 적었다.
+
+**selector 대응.**
+
+| ID | 공급 | 결과 |
+| --- | --- | --- |
+| MBC10-V09 RowWrite writer | `row_v09::mbc10_v09_row_write_waits_for_two_resident_readers_then_reserves` | PASS |
+| MBC10-V09 RowProgress writer | S1E-V09와 `source::tests::row_progress_reserves_the_same_catalog_progress_charge` | PASS |
+| MBC10-V09 CatalogProgress writer | 조각(MCLP01·MCLP02, retirement 준비)만 있다 | NOT_RUN |
+| MBC40-V09 (i)–(iii) | `row::v09_census_tests::mbc40_v09_row_write_census_{memory,native}` | PASS |
+| MBC40-V09 (iv) | WRITER-PROGRESS-001의 미공급 floor | NOT_SUPPLIED, PASS로 세지 않음 |
+| MBC40-V09 rollback·복구 task | S4·C4 | NOT_RUN |
+| MBC40-V09 전체 | — | **부분 공급** |
+| MCI03-V02 대체 검산 | S2W-R21(1)·R21(1) cancel 끝·R21(2)와 S2-e live 셋 | PASS(S2-d i1, j1) |
+| MCI03-V02 실제 실행 | B의 Row 읽기(S5) 뒤 | NOT_RUN |
+
+**독립 검토.** S2-f(`1f446f7`의 앞 판): ACCEPT(필수 0·권고 8). A1·A2·A4·A5는 위 commit, A6(stale native 수치)·A7(대응 표)·A8(통합 판)은 이 기록과 S2 공급 기록이 반영했다. A3(같음 round에서 reserve·cancel까지)은 하지 않았다. 같음에서 admitted charge가 단계에 충분함은 C01/C02/C06 census가 보인다.
+
+**실행(S2-f 단독).** b0(`854ad2a`) 16/16, h1(`5f5de9a`) 19/19, h2(`1f446f7`) **20/20 PASS**. h2에서 check·workspace check·gate Clippy·rustfmt·`diff --check`가 깨끗하고 compiler 입력 17/17 PASS, 뒤 commit 넷이 각자 `cargo check --all-targets --all-features` 경고 0이다. h2와 h1의 차이는 더한 출력 field뿐이다.
+
+**통합 판 j1(S2-e + S2-f, `8a394c4`).**
+- 대상은 `db52be8` 위에 S2-e 18개와 S2-f 6개를 cherry-pick한 24 commit이다. crates/·tests/ tree는 `module-s2e`와 `module-s2f`의 merge-tree와 같다(검토자 확인). 두 단위가 함께 바꾼 파일은 `catalog_memory.rs`의 mount 줄뿐이다.
+- selector 186개(e3 181개와 h2 20개의 합집합, 겹침 15개): **186/186 PASS**, 시간 초과 없음. R13은 24.97초(e3 25.68초)이고 다른 selector는 모두 15초 이하다.
+- engine check·workspace check 경고 0, gate Clippy 오류·경고 0, 바뀐 .rs 17개 rustfmt check, `git diff --check db52be8..8a394c4`, compiler 입력 17/17 PASS다.
+- 24 commit 각각을 자기 archive 추출에서 `cargo check --all-targets --all-features`(경고 0)와 gate Clippy(오류·경고 0)로 확인했다. 첫 시도는 추출 파일의 mtime이 오래되어 23개가 다시 build되지 않았으므로 무효로 표시해 남기고, 각 log에서 engine 재build를 확인하며 다시 했다.
+- e3와는 181개 출력이 모두 같다. h2와는 13개가 같고 7개가 S2-e 변화만큼 다르다: C01/C02/C06의 apply(31366/1418), D15 memory·native, MBC40-V09 memory·native의 apply 줄(total 42886, shared + total 63070·63078). reserve(43509)가 여전히 가장 크므로 (i)은 두 읽기 모두 그대로다. MBC10-V09는 h2와 같다.
+
+**계약 기록.** [S2 공급 기록](../contracts/dev3-module-boundaries.md#row-write-s2-supply)은 실제 census 표, MCA00-D15 수치와 frame-static coordinator 규칙, 계약 읽기 13개, native 측정 수치 갱신, C 자기 검산 거절 두 행, `flush_then_retry`의 C 표면, 뒤 단계 의무를 적는다. 새로 정하는 것은 거절 두 행과 coordinator 규칙뿐이며 둘 다 이미 적용한 코드를 문서로 고정한다. 독립 검토: r1 ACCEPT WITH REQUIRED CHANGES(필수 4·권고 11), r2 ACCEPT WITH REQUIRED CHANGES(필수 1). 수치, 거절 행과 코드의 대응, frame-static 규칙의 틀(M3보다 엄격, Q06·M7 아님, 호출 지점별 몫이 계약 oracle)은 r1에서 맞았다. 필수는 frame-static 정의를 A의 `call_sites` 문서대로 좁히기, native 측정 갱신 완성(Row lifecycle 42089, LOAD 33364 등)과 S2W-N01 공급 단위, 읽기 1·3을 문언 정정으로 표시, 담당 없이 남은 A-W1 검토 A4(flusher census) 의무 기록, 그리고 r2의 항 번호 하나였다. 선택 A6(d)를 빼고 모두 반영했다.
+
+**S2 마감 상태.**
+- 쓰기 단계는 finish를 빼고 모두 실제 본문이며 모든 단계의 C 쪽 여유가 양수다(가장 작은 reserve 795B).
+- A driver는 시험에서 실제 C wrapper로 행을 넣는다(G2). 제품 호출자는 없다.
+- V09 대체 oracle은 RowWrite·RowProgress writer에서 PASS이고 MBC40-V09는 부분 공급이다.
+- 상수·cap·charge는 S2 동안 바꾸지 않았다.
+- 다음은 S3(finish 본문, statement·transaction 끝)이지만 사용자 지시로 여기서 멈춘다.
+
+**되돌림.** 최신부터 되돌린다. 문서 commit을 먼저, 그다음 S2-f, 그다음 S2-e다. S2-f와 S2-e는 서로 다른 파일만 바꿨다(mount 줄 위치를 나눴다). artifact는 `module-independence-20261029/artifacts/module-s2f-20261030/`(검토서, 증거 원문, b0·h1·h2와 통합 j1 로그와 probe, 계약 기록 원문, 도구, `manifest-all.sha256` SHA-256 `b703c69b94ef22a716b8347eab1062654c0e960f27f083cd23f434a56350e985`)에 있다.
