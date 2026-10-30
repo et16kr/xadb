@@ -30,20 +30,21 @@ fn put(bytes: &mut [u8], at: usize, value: u64) {
     bytes[at..at + 8].copy_from_slice(&value.to_le_bytes());
 }
 
-/// RootJob after: Forward adopts it (Retained), CLR starts its compensated
-/// release at cursor0. Unchanged fields keep the reserve-sealed bytes.
-pub(super) fn job(observed: &Observed<'_>) -> Result<[u8; JOB_BYTES]> {
+/// RootJob after, written into `cell` (an A scratch region, M2): Forward
+/// adopts it (Retained), CLR starts its compensated release at cursor0.
+/// Unchanged fields keep the reserve-sealed bytes.
+pub(super) fn job(observed: &Observed<'_>, cell: &mut [u8; JOB_BYTES]) -> Result<()> {
     let lsn = observed.header.lsn;
-    let mut cell = *observed.job.bytes();
+    cell.copy_from_slice(observed.job.bytes());
     if observed.forward {
         cell[6] = 2;
-        put(&mut cell, 72, lsn);
+        put(cell, 72, lsn);
         cell[328..360].copy_from_slice(&content_digest(observed.transaction_bytes));
     } else {
         cell[6] = 4;
         cell[200..248].fill(0);
         cell[280..320].fill(0);
-        put(&mut cell, 272, lsn);
+        put(cell, 272, lsn);
         let wal = 4 * RELEASE_BYTES;
         let mut rows = [RemainingBudget::default(); 5];
         rows[3] = RemainingBudget {
@@ -56,9 +57,9 @@ pub(super) fn job(observed: &Observed<'_>) -> Result<[u8; JOB_BYTES]> {
         let budget: &mut [u8; 640] = (&mut cell[384..1024]).try_into().expect("fixed budget");
         obligation::encode_budget_rows(&rows, budget);
     }
-    put(&mut cell, 376, lsn);
-    row::decode_job(&cell, observed.namespace)?;
-    Ok(cell)
+    put(cell, 376, lsn);
+    row::decode_job(cell, observed.namespace)?;
+    Ok(())
 }
 
 /// Status after: Forward pushes U; CLR pops it back to H (or empty).
@@ -106,22 +107,27 @@ pub(super) const DESCRIPTORS_BYTES: usize = 2 * 1536;
 
 /// After values computed from the observation before any output byte. The
 /// Root after page itself is not kept here (M1): `root_page` encodes `root`
-/// straight into the Root's `after` slot in the write pass.
-pub(super) struct Prepared {
-    pub(super) job: [u8; JOB_BYTES],
+/// straight into the Root's `after` slot in the write pass. Every byte
+/// buffer is an A scratch region (M2); only `status` is a stack value.
+pub(super) struct Prepared<'s> {
+    pub(super) job: &'s mut [u8; JOB_BYTES],
     pub(super) status: StatusHome,
     /// Root after cell; the Aging after binds the page encoded from it.
-    pub(super) root: [u8; ROOT_BYTES],
-    pub(super) undo: [u8; UNDO_RECORD_BYTES],
-    pub(super) descriptors: [u8; DESCRIPTORS_BYTES],
+    pub(super) root: &'s mut [u8; ROOT_BYTES],
+    pub(super) undo: &'s mut [u8; UNDO_RECORD_BYTES],
+    pub(super) descriptors: &'s mut [u8; DESCRIPTORS_BYTES],
+    /// Status after cell that `pages` encodes.
+    pub(super) status_cell: &'s mut [u8; STATUS_HOME_BYTES],
+    /// Job census aggregate of `root` and `root_page`.
+    pub(super) aggregate: &'s mut [u8; 640],
 }
 
 /// Root after cell, U after cell and the Tx descriptor after. Root revision,
 /// the after Job census summary, Tx chain/consumed arithmetic and the CLR
 /// residual step are checked here; the Aging before was checked by `observe`.
-pub(super) fn prepare(observed: &Observed<'_>, prepared: &mut Prepared) -> Result<()> {
-    root(observed, &prepared.job, &mut prepared.root)?;
-    encode_material(observed, observed.forward, &mut prepared.undo)?;
+pub(super) fn prepare(observed: &Observed<'_>, prepared: &mut Prepared<'_>) -> Result<()> {
+    root(observed, prepared.job, prepared.root, prepared.aggregate)?;
+    encode_material(observed, observed.forward, prepared.undo)?;
     let (transaction, _) = prepared.descriptors.split_at_mut(1536);
     descriptor(observed, prepared.status, transaction)?;
     Ok(())
@@ -136,33 +142,37 @@ pub(super) fn prepare(observed: &Observed<'_>, prepared: &mut Prepared) -> Resul
 /// frame/after unspecified, which C ignores after a producer error.
 pub(super) fn root_page(
     observed: &Observed<'_>,
-    prepared: &mut Prepared,
+    prepared: &mut Prepared<'_>,
     after: &mut [[u8; PAGE_BYTES]; 5],
 ) -> Result<()> {
     let index = role_index(observed, RowPageRole::Root);
-    row::encode_root_page(&prepared.root, observed.namespace, &mut after[index])?;
+    row::encode_root_page(prepared.root, observed.namespace, &mut after[index])?;
     let (_, aging_after) = prepared.descriptors.split_at_mut(1536);
-    let mut aggregate = [0; 640];
     aging::next(
         AgingTransition {
             profile: observed.profile,
             before_descriptor: Some(observed.aging),
             before_root: observed.pages[index].before,
             after_root: &after[index],
-            jobs: JobCells::original(observed.jobs).replace(observed.ordinal, &prepared.job)?,
+            jobs: JobCells::original(observed.jobs).replace(observed.ordinal, prepared.job)?,
         },
-        &mut aggregate,
+        prepared.aggregate,
         aging_after,
     )?;
     Ok(())
 }
 
 /// Root after cell: revision+1, apply LSN, and the after Job census summary.
-fn root(observed: &Observed<'_>, job: &[u8; JOB_BYTES], cell: &mut [u8; ROOT_BYTES]) -> Result<()> {
+fn root(
+    observed: &Observed<'_>,
+    job: &[u8; JOB_BYTES],
+    cell: &mut [u8; ROOT_BYTES],
+    aggregate: &mut [u8; 640],
+) -> Result<()> {
     let namespace = observed.namespace;
     let page = observed.pages[role_index(observed, RowPageRole::Root)];
     let (_, root) = row::decode_root_page(page.before, namespace)?;
-    *cell = *root.bytes();
+    cell.copy_from_slice(root.bytes());
     put(
         cell,
         64,
@@ -172,13 +182,12 @@ fn root(observed: &Observed<'_>, job: &[u8; JOB_BYTES], cell: &mut [u8; ROOT_BYT
     );
     put(cell, 80, observed.header.lsn);
     let cells = JobCells::original(observed.jobs).replace(observed.ordinal, job)?;
-    let mut aggregate = [0; 640];
-    let (masks, digest) = row::summarize_jobs(cells, namespace, &mut aggregate)?;
+    let (masks, digest) = row::summarize_jobs(cells, namespace, aggregate)?;
     for (at, mask) in [96, 104, 112].into_iter().zip(masks) {
         put(cell, at, mask);
     }
     cell[128..160].copy_from_slice(&digest);
-    cell[160..192].copy_from_slice(&content_digest(&aggregate));
+    cell[160..192].copy_from_slice(&content_digest(&aggregate[..]));
     Ok(())
 }
 
@@ -199,13 +208,13 @@ fn header(observed: &Observed<'_>, index: usize) -> PageHeader {
 pub(super) fn pages(
     observed: &Observed<'_>,
     input: &GroupInput<'_>,
-    prepared: &Prepared,
+    prepared: &mut Prepared<'_>,
     scratch: &mut [u8],
     after: &mut [[u8; PAGE_BYTES]; 5],
 ) -> Result<()> {
     let namespace = observed.namespace;
     let lsn = observed.header.lsn;
-    let job = &prepared.job;
+    let job: &[u8] = &prepared.job[..];
     for (index, output) in after.iter_mut().enumerate() {
         let page = observed.pages[index];
         match page.role {
@@ -224,12 +233,15 @@ pub(super) fn pages(
                 row::encode_jobs_page(namespace, (base / 15) as u8, lsn, &cells[..count], output)?;
             }
             RowPageRole::Status => {
-                let mut cell = [0; STATUS_HOME_BYTES];
-                prepared.status.encode(&mut cell)?;
-                page::encode_page(header(observed, index), &[&cell], output)?;
+                prepared.status.encode(&mut prepared.status_cell[..])?;
+                page::encode_page(
+                    header(observed, index),
+                    &[&prepared.status_cell[..]],
+                    output,
+                )?;
             }
             RowPageRole::Undo => {
-                page::encode_page(header(observed, index), &[&prepared.undo], output)?;
+                page::encode_page(header(observed, index), &[&prepared.undo[..]], output)?;
             }
             RowPageRole::RowLeaf => {
                 let lsn = PageLsn(lsn);
@@ -346,18 +358,19 @@ fn descriptor(observed: &Observed<'_>, status: StatusHome, output: &mut [u8]) ->
 }
 
 /// Locals of this module; the caller's `Prepared`, which holds the Root
-/// after cell, is counted by its owner.
+/// after cell, is counted by its owner. The Job, aggregate and Status cell
+/// buffers are A scratch regions (M2), so only the four reference parameters
+/// that reach them count. `job`'s CLR budget rows stay on the stack.
 #[allow(
     clippy::manual_bits,
     reason = "eight u64 scalar slots, counted in bytes"
 )]
 pub(super) fn local_source_carrier_bytes() -> usize {
     use std::mem::size_of;
-    size_of::<[u8; JOB_BYTES]>()
-        + size_of::<Result<[u8; JOB_BYTES]>>()
-        + 2 * size_of::<[u8; 640]>()
+    size_of::<Result<()>>()
+        + 4 * size_of::<&mut [u8; 640]>()
         + size_of::<[&[u8]; 15]>()
-        + size_of::<[u8; STATUS_HOME_BYTES]>()
+        + size_of::<[RemainingBudget; 5]>()
         + size_of::<obligation::DescriptorSpec>()
         + size_of::<AgingTransition<'_>>()
         + 2 * size_of::<StatusHome>()

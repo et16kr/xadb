@@ -290,7 +290,7 @@ pub(in crate::storage) fn produce_clr(lane: RowProducerLane<'_>) -> Result<RowPr
 
 /// Thin adapter: copy lane getters into plain inputs, then call the pure core.
 fn propose(lane: RowProducerLane<'_>, operation: RowOperation) -> Result<RowProposal> {
-    let (context, control, before, schema_bytes, frame, after, candidate, _scratch) = lane.parts();
+    let (context, control, before, schema_bytes, frame, after, candidate, scratch) = lane.parts();
     if context.operation() != operation {
         return Err(InsertError::Unsupported);
     }
@@ -366,7 +366,7 @@ fn propose(lane: RowProducerLane<'_>, operation: RowOperation) -> Result<RowProp
         aging: control.aging(),
         change,
     };
-    let produced = group::produce(&input, frame, after)?;
+    let produced = group::produce(&input, frame, after, scratch)?;
     Ok(RowProposal::new(
         operation,
         produced.frame_len,

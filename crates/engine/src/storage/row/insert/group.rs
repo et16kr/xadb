@@ -25,7 +25,7 @@ use crate::{
         },
         row_record::RowSchemaInput,
         semantic_row::Operation,
-        status_home::StatusHome,
+        status_home::{STATUS_HOME_BYTES, StatusHome},
         transaction_record::{
             RollbackState, StatusSlotRef, TransactionState, TransactionStatusCell, TxnRef,
         },
@@ -45,6 +45,8 @@ use foundation::{
 };
 
 pub(super) const FRAME_BYTES: usize = 98_304;
+/// The lane's A scratch part (`RowProducerLane::parts`, eighth element).
+pub(super) const SCRATCH_BYTES: usize = 32_768;
 /// RowSourceRole order of `GroupInput::sources`; the lane's own index is private.
 pub(super) const SOURCE_ROLES: [RowSourceRole; 9] = [
     RowSourceRole::Root,
@@ -136,6 +138,63 @@ struct Changed<'a> {
     lsn: u64,
 }
 
+/// M2: the producer's byte buffers, carved from the lane's A scratch part
+/// instead of the stack (S2-0 Row write amendment §3 and M2). Bytes only:
+/// every Rust reference to them stays on A's stack, and C never reads them.
+/// `carve` zeroes the regions, as the stack arrays they replace were, so
+/// nothing depends on what the scratch held before the lane was issued.
+struct Scratch<'s> {
+    /// `observe`'s Forward RowLeaf check (record and cell).
+    leaf: &'s mut [u8; leaf::LEAF_SCRATCH_BYTES],
+    /// Job census aggregate of `observe`, then of `images::root` and
+    /// `images::root_page`, one after another.
+    aggregate: &'s mut [u8; 640],
+    /// `observe`'s expected CLR U before cell.
+    check: &'s mut [u8; undo_record::UNDO_RECORD_BYTES],
+    job: &'s mut [u8; JOB_BYTES],
+    root: &'s mut [u8; ROOT_BYTES],
+    undo: &'s mut [u8; undo_record::UNDO_RECORD_BYTES],
+    status: &'s mut [u8; STATUS_HOME_BYTES],
+    descriptors: &'s mut [u8; images::DESCRIPTORS_BYTES],
+}
+
+/// Bytes the regions of `Scratch` take, from offset0 in this order.
+const SCRATCH_USED: usize = leaf::LEAF_SCRATCH_BYTES
+    + 640
+    + undo_record::UNDO_RECORD_BYTES
+    + JOB_BYTES
+    + ROOT_BYTES
+    + undo_record::UNDO_RECORD_BYTES
+    + STATUS_HOME_BYTES
+    + images::DESCRIPTORS_BYTES;
+const _: () = assert!(SCRATCH_USED <= SCRATCH_BYTES);
+
+/// The next `N` bytes of `rest` as an array.
+fn take<'s, const N: usize>(rest: &mut &'s mut [u8]) -> &'s mut [u8; N] {
+    let (head, tail) = std::mem::take(rest)
+        .split_first_chunk_mut::<N>()
+        .expect("SCRATCH_USED fits SCRATCH_BYTES");
+    *rest = tail;
+    head
+}
+
+impl<'s> Scratch<'s> {
+    fn carve(bytes: &'s mut [u8; SCRATCH_BYTES]) -> Self {
+        let mut rest: &mut [u8] = &mut bytes[..SCRATCH_USED];
+        rest.fill(0);
+        Self {
+            leaf: take(&mut rest),
+            aggregate: take(&mut rest),
+            check: take(&mut rest),
+            job: take(&mut rest),
+            root: take(&mut rest),
+            undo: take(&mut rest),
+            status: take(&mut rest),
+            descriptors: take(&mut rest),
+        }
+    }
+}
+
 /// Facts checked from the inputs before any output byte is written.
 struct Observed<'a> {
     forward: bool,
@@ -175,23 +234,28 @@ pub(super) fn produce(
     input: &GroupInput<'_>,
     frame: &mut [u8; FRAME_BYTES],
     after: &mut [[u8; PAGE_BYTES]; 5],
+    scratch: &mut [u8; SCRATCH_BYTES],
 ) -> Result<Produced> {
-    let observed = observe(input)?;
+    let scratch = Scratch::carve(scratch);
+    let observed = observe(input, scratch.leaf, scratch.aggregate, scratch.check)?;
+    images::job(&observed, scratch.job)?;
     let mut prepared = images::Prepared {
-        job: images::job(&observed)?,
+        job: scratch.job,
         status: images::status(&observed)?,
-        root: [0; ROOT_BYTES],
-        undo: [0; undo_record::UNDO_RECORD_BYTES],
-        descriptors: [0; images::DESCRIPTORS_BYTES],
+        root: scratch.root,
+        undo: scratch.undo,
+        descriptors: scratch.descriptors,
+        status_cell: scratch.status,
+        aggregate: scratch.aggregate,
     };
     images::prepare(&observed, &mut prepared)?;
 
     // Write pass: every input refusal has already returned above.
     images::root_page(&observed, &mut prepared, after)?;
-    images::pages(&observed, input, &prepared, frame, after)?;
+    images::pages(&observed, input, &mut prepared, frame, after)?;
     let output = &mut frame[..observed.frame_len];
     output.fill(0);
-    output[416..416 + images::DESCRIPTORS_BYTES].copy_from_slice(&prepared.descriptors);
+    output[416..416 + images::DESCRIPTORS_BYTES].copy_from_slice(&prepared.descriptors[..]);
     frame::write(&observed, after, output)?;
     let mut roles = [RowPageRole::Root; 5];
     for (role, page) in roles.iter_mut().zip(observed.pages) {
@@ -418,7 +482,14 @@ fn rank(page: PageRef) -> Result<(u64, u64)> {
     ))
 }
 
-fn observe<'a>(input: &GroupInput<'a>) -> Result<Observed<'a>> {
+/// Every input check, before any output byte. `record`, `aggregate` and
+/// `check` are A scratch regions (M2) used only as check buffers here.
+fn observe<'a>(
+    input: &GroupInput<'a>,
+    record: &mut [u8; leaf::LEAF_SCRATCH_BYTES],
+    aggregate: &mut [u8; 640],
+    check: &mut [u8; undo_record::UNDO_RECORD_BYTES],
+) -> Result<Observed<'a>> {
     let forward = matches!(input.change, Change::Forward { .. });
     let profile = input.profile;
     let namespace = profile.spec().namespace;
@@ -566,8 +637,7 @@ fn observe<'a>(input: &GroupInput<'a>) -> Result<Observed<'a>> {
         root_header.lsn.0 <= header.previous_lsn,
         InsertError::OrderMismatch,
     )?;
-    let mut aggregate = [0; 640];
-    row::verify_census(root, namespace, input.jobs, &mut aggregate)?;
+    row::verify_census(root, namespace, input.jobs, aggregate)?;
     let (jobs_bytes, jobs_identity) =
         bind_jobs(input, RowSourceRole::RootJob, ordinal, true, namespace)?;
     bind_jobs(
@@ -838,7 +908,6 @@ fn observe<'a>(input: &GroupInput<'a>) -> Result<Observed<'a>> {
     let version = current_version(actor, input.row, job, input.undo.reference)?;
     match input.change {
         Change::Forward { canonical } => {
-            let mut scratch = [0; leaf::LEAF_SCRATCH_BYTES];
             let candidate = leaf::check(
                 leaf::LeafInput {
                     namespace,
@@ -849,9 +918,9 @@ fn observe<'a>(input: &GroupInput<'a>) -> Result<Observed<'a>> {
                     version,
                     lsn: PageLsn(header.lsn),
                 },
-                &mut scratch,
+                record,
             )?;
-            let record = &scratch[..candidate.record_bytes];
+            let record = &record[..candidate.record_bytes];
             require(
                 record.len() + 12 == cell
                     && projection(input.table, input.row, Some(record))?
@@ -941,7 +1010,6 @@ fn observe<'a>(input: &GroupInput<'a>) -> Result<Observed<'a>> {
         InsertError::IdentityMismatch,
     )?;
     if !forward {
-        let expected = &mut [0; undo_record::UNDO_RECORD_BYTES];
         let partial = Observed {
             forward,
             namespace,
@@ -965,9 +1033,9 @@ fn observe<'a>(input: &GroupInput<'a>) -> Result<Observed<'a>> {
             jobs: input.jobs,
             pages,
         };
-        encode_material(&partial, true, expected)?;
+        encode_material(&partial, true, check)?;
         require(
-            undo_cell == &expected[..] && undo_page.header().lsn.0 >= job.last_step(),
+            undo_cell == &check[..] && undo_page.header().lsn.0 >= job.last_step(),
             InsertError::IdentityMismatch,
         )?;
     }
@@ -1019,22 +1087,21 @@ fn current_version(
 }
 
 /// Rough nonrecursive carrier inventory of this module; caller loans excluded.
+/// The byte buffers of `Scratch` are A scratch regions of the lane (M2), a
+/// loan, so only their references count. The 256 B allowance stands for the
+/// module's small byte arrays (projection prefix, Undo item, page rank);
+/// no 256 B buffer exists to move to the A scratch.
 pub(super) fn local_source_carrier_bytes() -> usize {
     use std::mem::size_of;
     size_of::<GroupInput<'_>>()
         + size_of::<Observed<'_>>()
         + size_of::<Result<Observed<'_>>>()
         + size_of::<Produced>()
-        + size_of::<[u8; 640]>()
-        + size_of::<[u8; JOB_BYTES]>()
-        + size_of::<[u8; 512]>()
-        + size_of::<[u8; 224]>()
-        + size_of::<[u8; undo_record::UNDO_RECORD_BYTES]>()
+        + size_of::<Scratch<'_>>()
         + size_of::<[u8; 256]>()
         + size_of::<[&[u8]; 15]>()
         + 2 * size_of::<DescriptorSpec>()
-        + size_of::<images::Prepared>()
-        + size_of::<[u8; leaf::LEAF_SCRATCH_BYTES]>()
+        + size_of::<images::Prepared<'_>>()
         + size_of::<leaf::LeafInput<'_>>()
         + size_of::<RemainingBudget>()
         + images::local_source_carrier_bytes()

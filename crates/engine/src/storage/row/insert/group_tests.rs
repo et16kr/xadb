@@ -463,8 +463,17 @@ impl Fixture {
         frame: &mut [u8; FRAME_BYTES],
         after: &mut [[u8; PAGE_BYTES]; 5],
     ) -> Result<group::Produced, InsertError> {
-        group::produce(&self.input(), frame, after)
+        group::produce(&self.input(), frame, after, &mut scratch())
     }
+}
+
+/// The A scratch lane part, filled with a non-zero pattern: a production run
+/// must not depend on what the lane held before.
+fn scratch() -> Box<[u8; group::SCRATCH_BYTES]> {
+    vec![0x5a; group::SCRATCH_BYTES]
+        .into_boxed_slice()
+        .try_into()
+        .expect("scratch length")
 }
 
 /// Byte equality reporting only the first difference, so a failing log
@@ -598,7 +607,7 @@ fn mca00_v06_forward_refusals_precede_output() {
     let mut frame = [0xa5; FRAME_BYTES];
     let mut after = [[0xa5; PAGE_BYTES]; 5];
     assert_eq!(
-        group::produce(&input, &mut frame, &mut after),
+        group::produce(&input, &mut frame, &mut after, &mut scratch()),
         Err(InvalidInput)
     );
     assert!(frame.iter().all(|byte| *byte == 0xa5));
