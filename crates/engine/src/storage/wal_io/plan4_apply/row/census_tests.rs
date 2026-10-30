@@ -1,4 +1,5 @@
-//! Row write census selectors of the S2-0 Row write amendment (S2W-C01..C05).
+//! Row write census selectors of the S2-0 Row write amendment (S2W-C01..C05)
+//! and of the S2-0b amendment (S2W-C06).
 //! These are size_of inventories in the repository's source-bound sense, not
 //! stack measurements. No Row write effect body exists yet, so every C phase
 //! below is an upper estimate composed from existing census terms and the
@@ -267,4 +268,56 @@ fn s2w_c05_private_lane_ranges_and_cut_sizes() {
         size_of::<&mut [u8; 32_768]>(),
         crate::storage::semantic_row::transition::ROW_REPLAY_SCRATCH_BYTES
     );
+}
+
+/// S2W-C06 (S2-0b amendment): per phase and per W, the C total (body and
+/// phase carriers), the A share bound of the phase's call site and the C
+/// margin (charge − C total − bound), with the terms the amendment's
+/// estimate rested on: the suspended levels L and the return slot r, the
+/// group preparation without a replay (G''), and preflight's validate term V
+/// beside its LOAD term. Every C margin is non-negative, as S2W-C01/C02
+/// assert; a negative one is a Q06 overrun for the amendment's ladder, never
+/// a smaller bound.
+#[test]
+fn s2w_c06_row_write_c_margins_against_both_bounds() {
+    fn inspect<W: WriterNamespace>(writer: &str) {
+        let charge = row_write_charge::<W>();
+        let terms = super::super::create_pair::catalog_live::row_write_bodies::<W>();
+        println!(
+            "S2W_C06 writer={writer} charge={charge} preflight_bound={ROW_PREFLIGHT_CALLER_BYTES} \
+             write_bound={ROW_WRITE_CALLER_BYTES} levels_L={} return_slot_r={} held_L_r={} \
+             group_typed_G={} group_typed_plus_L_r={} validate_V={} load={} arena={} \
+             validate_below_load={}",
+            terms.suspended_levels,
+            terms.return_slot,
+            terms.suspended_levels * terms.return_slot,
+            terms.group_typed,
+            terms.group_typed + terms.suspended_levels * terms.return_slot,
+            terms.validate,
+            terms.load,
+            terms.arena,
+            if terms.validate <= terms.load {
+                "yes"
+            } else {
+                "no"
+            },
+        );
+        for phase in row_write_phases::<W>() {
+            let c_total = phase.body + phase.carriers;
+            let margin = charge as i64 - c_total as i64 - phase.bound as i64;
+            println!(
+                "S2W_C06 writer={writer} phase={} c_total={c_total} bound={} c_margin={margin}",
+                phase.name, phase.bound,
+            );
+            assert!(
+                margin >= 0,
+                "S2W_C06 {writer} phase {}: C margin {margin} < 0",
+                phase.name
+            );
+        }
+        // At least one suspended level is always counted (S2-0b decision 2).
+        assert!(terms.suspended_levels >= 1);
+    }
+    inspect::<Memory>("memory");
+    inspect::<Native>("native");
 }
