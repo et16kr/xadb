@@ -453,7 +453,10 @@ pub(super) fn resident(
     (index, pool.target_request(index).unwrap())
 }
 
-fn fold_identity(hasher: &mut ContentHasher, identity: crate::storage::page::PageIdentity) {
+pub(super) fn fold_identity(
+    hasher: &mut ContentHasher,
+    identity: crate::storage::page::PageIdentity,
+) {
     let mut page = [0; 24];
     identity.page.encode(&mut page).unwrap();
     hasher.update(&identity.database.bytes());
@@ -462,7 +465,10 @@ fn fold_identity(hasher: &mut ContentHasher, identity: crate::storage::page::Pag
     hasher.update(&identity.owner_generation.get().to_le_bytes());
 }
 
-fn fold_stamp(hasher: &mut ContentHasher, stamp: &crate::storage::dirty_frame::FrameStamp) {
+pub(super) fn fold_stamp(
+    hasher: &mut ContentHasher,
+    stamp: &crate::storage::dirty_frame::FrameStamp,
+) {
     fold_identity(hasher, stamp.identity);
     hasher.update(&stamp.generation.to_le_bytes());
     hasher.update(&stamp.page_lsn.0.to_le_bytes());

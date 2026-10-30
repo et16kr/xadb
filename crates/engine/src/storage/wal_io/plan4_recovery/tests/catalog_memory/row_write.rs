@@ -9,7 +9,9 @@
 //! Drop rule). The expected values are fixture facts, the independent
 //! literal of `tests/fixtures/dev3-module-c3/row-write/` and the refusal
 //! table's (phase, cause, effect), never values copied from the body.
-use super::row_preflight::{FREE_UNDO, create_table, resident};
+use super::row_preflight::{
+    FIXTURE_T, FREE_UNDO, create_table, fold_identity, fold_stamp, resident,
+};
 use super::*;
 use crate::storage::{
     dirty_frame::{self, SharedPool, status_load_test_support},
@@ -18,13 +20,17 @@ use crate::storage::{
         RowOwnedError, RowPreflightStep, TableStep,
     },
     page::{self, PageKind},
+    retention_page::JobSlotRef,
     row::insert::validate_insert,
     row_record::ValueRef,
+    transaction_record::TxnRef,
+    undo_ref::UndoRef,
 };
 use crate::transaction::concurrency::{
     self,
     catalog_test_support::{self as hook, Point, Resume},
 };
+use foundation::{codec::ContentHasher, identity::RowId};
 use std::sync::mpsc::sync_channel;
 
 /// The one value of T's row (`i`, Int64, not null).
@@ -115,6 +121,9 @@ const AGING: usize = 32 * 1664;
 /// The fixture's WAL complete LSN before the reserve; the RowReserve is the
 /// next LSN.
 const PREVIOUS_LSN: u64 = 14;
+/// The literal's Undo sequence and planned mutation of the reserved row.
+const SEQUENCE: u64 = 2;
+const MUTATION: u64 = 1;
 
 /// A refused reserve's error, with its PreflightRow back.
 macro_rules! before {
@@ -219,6 +228,8 @@ fn author_literal() {
         format!("\"lsn\": {}", PREVIOUS_LSN + 1),
         "\"ordinal\": 3".to_string(),
         "\"row\": 1".to_string(),
+        format!("\"sequence\": {SEQUENCE}"),
+        format!("\"mutation\": {MUTATION}"),
     ];
     facts.extend(
         AFTER
@@ -235,6 +246,92 @@ fn author_literal() {
             "{name}"
         );
     }
+}
+
+/// One pool page of T: its registration, bytes and stamp.
+type PoolTarget = (
+    crate::storage::dirty_frame::TargetRequest,
+    Box<[u8; PAGE_BYTES]>,
+    crate::storage::dirty_frame::FrameStamp,
+);
+
+/// T (`FIXTURE_T`, the before order) as the pool holds it now.
+fn pool_t(pool: &SharedPool<'_, '_, '_, '_>) -> Vec<PoolTarget> {
+    FIXTURE_T
+        .iter()
+        .map(|number| {
+            let (index, request) = resident(pool, *number);
+            let mut bytes = boxed::<PAGE_BYTES>();
+            let snapshot = probe::diagnose(pool, index, &mut bytes);
+            assert_eq!(snapshot.frame.identity, request.identity);
+            (request, bytes, snapshot.frame)
+        })
+        .collect()
+}
+
+/// The XRWC kind-2 (draft) commitment of the fixture's reserved row,
+/// recomputed from independent reads in the order the draft cut doc gives
+/// (`RowDraftCut::source`, S2-b2 review A8): the prefix after the
+/// RowReserve; T (`FIXTURE_T`, the before order) with each identity, kind,
+/// level and stamp from the pool; the role map; the actor (48 B), the
+/// RootJob slot (40 B), the RowId, the UndoRef (40 B), the literal's
+/// sequence and planned mutation; the actor's ATT row (slot 0), then the
+/// Aging presence byte and descriptor; the 64 Jobs rows; the page digests of
+/// T from the pool; the control's bank, Jobs and inventory digests and its
+/// issued and adopted locals. `pages` is `pool_t`'s read, taken while the
+/// session is not fenced.
+fn xrwc_draft(
+    pages: &[PoolTarget],
+    prefix: crate::storage::wal_io::WalPrefix,
+    (control, (issued, adopted)): (&[u8], (u64, u64)),
+    roles: u64,
+    (actor, root_job, row, undo): (TxnRef, JobSlotRef, RowId, UndoRef),
+) -> [u8; 32] {
+    let mut hasher = ContentHasher::new();
+    hasher.update(b"XRWC");
+    hasher.update(&[1, 2]);
+    hasher.update(&prefix.stream.database.bytes());
+    hasher.update(&prefix.stream.timeline.to_le_bytes());
+    hasher.update(&prefix.stream.writer_epoch.to_le_bytes());
+    hasher.update(&prefix.file.device.to_le_bytes());
+    hasher.update(&prefix.file.inode.to_le_bytes());
+    hasher.update(&prefix.complete_lsn.to_le_bytes());
+    hasher.update(&prefix.complete_offset.to_le_bytes());
+    for (request, _, stamp) in pages {
+        fold_identity(&mut hasher, request.identity);
+        hasher.update(&[request.kind as u8, request.level]);
+        fold_stamp(&mut hasher, stamp);
+    }
+    hasher.update(&roles.to_le_bytes());
+    let mut actor_bytes = [0; 48];
+    actor.encode(&mut actor_bytes).unwrap();
+    hasher.update(&actor_bytes);
+    let mut reference = [0; 40];
+    root_job.encode(&mut reference).unwrap();
+    hasher.update(&reference);
+    hasher.update(&row.get().to_le_bytes());
+    undo.encode(&mut reference).unwrap();
+    hasher.update(&reference);
+    hasher.update(&SEQUENCE.to_le_bytes());
+    hasher.update(&MUTATION.to_le_bytes());
+    hasher.update(&control[..1536]);
+    // The Aging row's phase byte (1624 of its 1664) is its presence.
+    if control[AGING + 1624] == 0 {
+        hasher.update(&[0]);
+    } else {
+        hasher.update(&[1]);
+        hasher.update(&control[AGING..AGING + 1536]);
+    }
+    hasher.update(&control[65_536..131_072]);
+    for (_, bytes, _) in pages {
+        hasher.update(&content_digest(&bytes[..]));
+    }
+    hasher.update(&content_digest(&control[..65_536]));
+    hasher.update(&content_digest(&control[65_536..131_072]));
+    hasher.update(&content_digest(&control[131_072..147_456]));
+    hasher.update(&issued.to_le_bytes());
+    hasher.update(&adopted.to_le_bytes());
+    hasher.digest()
 }
 
 /// S2W-R04: a forged candidate plan (its digest, its length or its schema
@@ -360,7 +457,9 @@ fn s2w_r05_reserve_recompute_change_is_before() {
 /// LSN 15) and the actor is the transaction's; the draft cut is the next
 /// step's (complete LSN 15, planned mutation 1, the preflight's role map, the
 /// 13-byte canonical row of the plan, operation 0). The pool's after images
-/// and the control's Job cells, ATT row and Aging row equal the literal's.
+/// and the control's Job cells, ATT row and Aging row equal the literal's,
+/// and the draft commitment equals its independent recompute from the pool
+/// and the control (`xrwc_draft`, S2-b2 review A8).
 #[test]
 fn s2w_r06_reserve_installs_the_row_reserve_group() {
     case("S2W-R06", || {
@@ -395,11 +494,10 @@ fn s2w_r06_reserve_installs_the_row_reserve_group() {
                 for ((name, pin), live) in LIVE.iter().zip(&inputs) {
                     assert_eq!(live, pin, "live input {name}");
                 }
-                assert_eq!(
-                    writer.free_undo_test_state().unwrap().0.complete_lsn,
-                    PREVIOUS_LSN
-                );
+                let prefix = writer.free_undo_test_state().unwrap().0;
+                assert_eq!(prefix.complete_lsn, PREVIOUS_LSN);
                 let (wal, _) = files(state);
+                assert_eq!(prefix.complete_offset, wal as u64);
                 let mut preflight = ready!(writer, owner, view, table, private, flush);
                 let input = plan!(preflight);
                 let (length, _, digest) = input.test_parts();
@@ -462,6 +560,7 @@ fn s2w_r06_reserve_installs_the_row_reserve_group() {
                     hex(&page_of(pool, 2)[..]),
                     hex(&page_of(pool, FREE_UNDO)[..]),
                 ];
+                let t = pool_t(pool);
                 assert!(!fence.is_fenced());
                 drop(reserved);
                 assert!(fence.is_fenced());
@@ -477,6 +576,22 @@ fn s2w_r06_reserve_installs_the_row_reserve_group() {
                 for ((name, pin), live) in AFTER.iter().zip(after) {
                     assert_eq!(live, pin, "after {name}");
                 }
+                // The draft commitment (kind 2) from independent reads of the
+                // pool and the control after the install (S2-b2 review A8):
+                // the prefix is the one before the reserve with the
+                // RowReserve frame appended.
+                let mut after_prefix = prefix;
+                after_prefix.complete_lsn = PREVIOUS_LSN + 1;
+                after_prefix.complete_offset += frame.len() as u64;
+                let independent = xrwc_draft(
+                    &t,
+                    after_prefix,
+                    (writer.recovery_test_bank(), writer.row_test_locals()),
+                    cut.2,
+                    (actor, root_job, row_id, undo_ref),
+                );
+                println!("S2W_R06 xrwc_draft={}", raw(&independent));
+                assert_eq!(draft.0, independent);
                 let _ = reader;
                 drop(view);
                 drop(row);
