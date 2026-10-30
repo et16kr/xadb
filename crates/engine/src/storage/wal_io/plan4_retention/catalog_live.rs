@@ -1695,7 +1695,10 @@ pub(in super::super) struct CatalogLiveSource {
 /// them (`row_write_bodies`); the split census, `peak` and every charge do
 /// not. An S2 unit that supplies a body replaces its estimate: S2-b1 replaced
 /// preflight's with the actual body census (`preflight_body`), and keeps the
-/// estimate beside it (`preflight_estimate`) for S2W-C06.
+/// estimate beside it (`preflight_estimate`) for S2W-C06; S2-b2 did the same
+/// for `reserve` (`reserve_body`, `reserve_estimate`) and `validation_lane`
+/// (`validation_lane_estimate`). `cancel` keeps reserve's estimate until
+/// S2-d supplies its body.
 ///
 /// The phases are composed as the S2-0b amendment (Row write validate-once)
 /// decides:
@@ -1719,6 +1722,8 @@ pub(in super::super) struct CatalogLiveSource {
 ///   the preparation, and each unit's body census names its suspended
 ///   levels. A body that needs more levels counts them
 ///   (`ROW_WRITE_SUSPENDED_LEVELS`); each costs a whole `return_slot`.
+///   RowReserve's level is `reserve_group`'s `group`
+///   (`RESERVE_SUSPENDED_LEVEL`); its deep checks and draft run beside it.
 /// - `apply` rechecks at the stage by recomputing the draft commitment, with
 ///   its page and control digests, and comparing the prepared frame/after
 ///   digests only. It does not run `validate_live`, the observer or the XOI
@@ -1726,8 +1731,8 @@ pub(in super::super) struct CatalogLiveSource {
 /// - `validation_lane` rebuilds `RowPreflightContext` from the private
 ///   copies preflight leaves (the schema range, the role map and the RowLeaf
 ///   before image) and re-observes the Catalog leaf stamp (S2-b decision A7,
-///   `RowPreflightCut`); its decode is not a term yet (S2-b2). Neither lane
-///   checks the digest chain.
+///   `RowPreflightCut`); S2-b2's census counts that decode
+///   (`row_validation_lane_body`). Neither lane checks the digest chain.
 /// - The Row lifecycle keeps its accepted count; `lifecycle_check` must stay
 ///   equal to the split value (S2W-C03).
 #[derive(Clone, Copy, Debug)]
@@ -1800,7 +1805,19 @@ pub(in super::super) struct RowWriteBodies {
     pub(in super::super) preflight_body: row_preflight::RowPreflightBody,
     /// The charged preflight body: `preflight_body.body`.
     pub(in super::super) preflight: usize,
+    /// The S2-a′ upper estimate of `validation_lane`, without the context
+    /// decode; printed beside the actual census.
+    pub(in super::super) validation_lane_estimate: usize,
+    /// The actual `validation_lane` census (S2-b2,
+    /// `row_validation_lane_body`).
     pub(in super::super) validation_lane: usize,
+    /// The S2-a′ upper estimate of the RowReserve body; printed beside the
+    /// actual census, no longer charged.
+    pub(in super::super) reserve_estimate: usize,
+    /// The actual RowReserve body census (S2-b2, `row_reserve_body`), with
+    /// its suspended level (`RESERVE_SUSPENDED_LEVEL`).
+    pub(in super::super) reserve_body: lifecycle::row::write::RowReserveBody,
+    /// The charged RowReserve body: `reserve_body.body`.
     pub(in super::super) reserve: usize,
     pub(in super::super) producer_lane: usize,
     /// The Forward `ReservedRow::prepare`. The CLR task's prepare is S4's own
@@ -2307,22 +2324,35 @@ pub(in super::super) fn row_write_bodies<W: WriterNamespace>() -> RowWriteBodies
     );
     let preflight = preflight_body.body;
     let lane = shell + commit;
-    let validation_lane = lane + 2 * size_of::<RowPreflightContext>();
+    let validation_lane_estimate = lane + 2 * size_of::<RowPreflightContext>();
+    // S2-b2 supplies the lane body: its census, with the context decode,
+    // replaces the estimate.
+    let validation_lane = lifecycle::row::write::row_validation_lane_body::<W>(shell);
     let producer_lane = lane + 2 * size_of::<RowProducerContext>();
     // D: the deep check, the chain recheck and the group preparation hold the
     // suspended return slots; the group carriers exist only from assembly to
     // the install or return.
-    let reserve = shell
+    let reserve_estimate = shell
         + (held + check.max(commit).max(group_typed))
             .max(register)
             .max(group_carriers + group_install);
+    // S2-b2 supplies the RowReserve body: its census replaces the estimate,
+    // with preflight's deep-check and registration terms for the same calls.
+    let reserve_body = lifecycle::row::write::row_reserve_body::<W>(
+        shell,
+        preflight_body.check,
+        preflight_body.register,
+        (group_install, group.inventory),
+    );
+    let reserve = reserve_body.body;
     let prepare =
         shell + (held + check.max(commit).max(group_typed)).max(group_carriers + group_reassemble);
     let apply = shell
         + (held + check.max(commit).max(group_reassemble))
             .max(register)
             .max(group_carriers + group_install);
-    let cancel = reserve;
+    // Cancel's body is S2-d's; until then it keeps reserve's estimate.
+    let cancel = reserve_estimate;
     RowWriteBodies {
         shell,
         lease_check,
@@ -2346,7 +2376,10 @@ pub(in super::super) fn row_write_bodies<W: WriterNamespace>() -> RowWriteBodies
         preflight_estimate,
         preflight_body,
         preflight,
+        validation_lane_estimate,
         validation_lane,
+        reserve_estimate,
+        reserve_body,
         reserve,
         producer_lane,
         prepare,

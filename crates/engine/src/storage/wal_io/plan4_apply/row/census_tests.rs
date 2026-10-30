@@ -2,9 +2,11 @@
 //! and of the S2-0b amendment (S2W-C06).
 //! These are size_of inventories in the repository's source-bound sense, not
 //! stack measurements. The preflight phase is the census of its actual body
-//! (S2-b1, `row_preflight_body`); every other C phase is still an upper
-//! estimate composed from existing census terms and the final S2-a types
-//! (`RowWriteBodies`), printed with its terms; it is not a measured phase.
+//! (S2-b1, `row_preflight_body`), and so are `validation_lane` and
+//! `reserve` (S2-b2, `row_validation_lane_body`, `row_reserve_body`); every
+//! other C phase is still an upper estimate composed from existing census
+//! terms and the final S2-a types (`RowWriteBodies`), printed with its terms;
+//! it is not a measured phase.
 //! Every phase must still fit with the caller share: a later unit that
 //! replaces an estimate commits only while these selectors pass.
 use super::write::{RowIoLease, row_write_phases};
@@ -92,7 +94,7 @@ fn phase_census<W: WriterNamespace>(id: &str, writer: &str) {
             "{id} phase={} kind={} body={} carriers={} c_total={c_total} bound={} \
              total={total} charge={charge} room_for_caller={room} c_margin={} fits={}",
             phase.name,
-            if phase.name == "preflight" {
+            if matches!(phase.name, "preflight" | "validation_lane" | "reserve") {
                 "actual"
             } else {
                 "estimate"
@@ -340,6 +342,58 @@ fn s2w_c06_row_write_c_margins_against_both_bounds() {
             body.register,
             body.finish,
             body.body + carriers,
+        );
+        // The actual RowReserve body (S2-b2) beside its S2-a′ estimate, with
+        // the one suspended level that holds the Row group return carrier,
+        // and the actual validation_lane beside its estimate.
+        let reserve = terms.reserve_body;
+        let carriers = |name| {
+            row_write_phases::<W>()
+                .iter()
+                .find(|phase| phase.name == name)
+                .expect("RowWrite phase")
+                .carriers
+        };
+        let reserve_margin = charge as i64
+            - (reserve.body + carriers("reserve")) as i64
+            - ROW_WRITE_CALLER_BYTES as i64;
+        println!(
+            "S2W_C06 writer={writer} reserve_body actual={} estimate={} actual_minus_estimate={} \
+             shell={} frame={} entry={} held={} suspended_level=\"{}\" levels={} group={} \
+             recompute={} sources={} produce={} prepare={} register={} install={} draft={} \
+             carriers={} c_total={} \
+             bound={ROW_WRITE_CALLER_BYTES} charge={charge} c_margin={reserve_margin}",
+            reserve.body,
+            terms.reserve_estimate,
+            reserve.body as i64 - terms.reserve_estimate as i64,
+            reserve.shell,
+            reserve.frame,
+            reserve.entry,
+            reserve.held,
+            super::super::create_pair::catalog_live::lifecycle::row::write::RESERVE_SUSPENDED_LEVEL,
+            terms.suspended_levels,
+            reserve.group,
+            reserve.recompute,
+            reserve.sources,
+            reserve.produce,
+            reserve.prepare,
+            reserve.register,
+            reserve.install,
+            reserve.draft,
+            carriers("reserve"),
+            reserve.body + carriers("reserve"),
+        );
+        println!(
+            "S2W_C06 writer={writer} validation_lane_body actual={} estimate={} \
+             actual_minus_estimate={}",
+            terms.validation_lane,
+            terms.validation_lane_estimate,
+            terms.validation_lane as i64 - terms.validation_lane_estimate as i64,
+        );
+        assert_eq!(terms.reserve, reserve.body);
+        assert!(
+            reserve_margin >= 0,
+            "S2W_C06 {writer} reserve body margin {reserve_margin} < 0"
         );
         for phase in row_write_phases::<W>() {
             let c_total = phase.body + phase.carriers;

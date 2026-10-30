@@ -52,9 +52,9 @@ pub(in super::super::super) struct RowTableSource {
 /// The selected Free Undo container: its request (the page incarnation is the
 /// allocator entry generation) and the slot0 Free record's generation.
 #[derive(Clone, Copy)]
-struct FreeUndo {
-    request: TargetRequest,
-    slot0: Generation,
+pub(super) struct FreeUndo {
+    pub(super) request: TargetRequest,
+    pub(super) slot0: Generation,
 }
 
 /// Every role absent in a `RowRoleMap` (nine nibbles, count zero).
@@ -225,35 +225,31 @@ impl<'l> PreflightLanes<'l> {
 }
 
 /// The values the preflight commitment folds (`RowPreflightCut::source`), in
-/// the order the comment before the cuts gives.
-struct PreflightSource<'x> {
-    prefix: WalPrefix,
-    targets: &'x [TargetRequest],
-    stamps: &'x [FrameStamp],
-    roles: RowRoleMap,
-    undo: FreeUndo,
-    root_job: u8,
-    catalog: (FrameStamp, [u8; 32]),
-    leaf_free: u16,
-    pages: &'x [[u8; PAGE_BYTES]],
-    control: ControlCut,
+/// the order the comment before the cuts gives. `pages` yields T's page
+/// images in before order: the before copies in preflight, the pool pages
+/// under `reserve`'s typed read (S2-b2), so that both fold through this one
+/// body (S2-b1 review A2a).
+pub(super) struct PreflightSource<'x, P> {
+    pub(super) prefix: WalPrefix,
+    pub(super) targets: &'x [TargetRequest],
+    pub(super) stamps: &'x [FrameStamp],
+    pub(super) roles: RowRoleMap,
+    pub(super) undo: FreeUndo,
+    pub(super) root_job: u8,
+    pub(super) catalog: (FrameStamp, [u8; 32]),
+    pub(super) leaf_free: u16,
+    pub(super) pages: P,
+    pub(super) control: ControlCut,
 }
-impl PreflightSource<'_> {
+impl<'x, P: Iterator<Item = &'x [u8; PAGE_BYTES]>> PreflightSource<'x, P> {
     /// Kind 1 of the XRWC commitment. WAL prefix: stream, file and the
     /// complete position (the synced position is durability progress, not
     /// source content).
-    fn commitment(&self) -> [u8; 32] {
+    pub(super) fn commitment(self) -> [u8; 32] {
         let mut hasher = ContentHasher::new();
         hasher.update(b"XRWC");
         hasher.update(&[1, 1]);
-        let prefix = self.prefix;
-        hasher.update(&prefix.stream.database.bytes());
-        hasher.update(&prefix.stream.timeline.to_le_bytes());
-        hasher.update(&prefix.stream.writer_epoch.to_le_bytes());
-        hasher.update(&prefix.file.device.to_le_bytes());
-        hasher.update(&prefix.file.inode.to_le_bytes());
-        hasher.update(&prefix.complete_lsn.to_le_bytes());
-        hasher.update(&prefix.complete_offset.to_le_bytes());
+        fold_prefix(&mut hasher, self.prefix);
         for (request, stamp) in self.targets.iter().zip(self.stamps) {
             fold_identity(&mut hasher, request.identity);
             hasher.update(&[request.kind as u8, request.level]);
@@ -296,7 +292,19 @@ pub(super) fn same_source_prefix(current: WalPrefix, expected: WalPrefix) -> boo
         && current.complete_offset == expected.complete_offset
 }
 
-fn fold_identity(hasher: &mut ContentHasher, identity: PageIdentity) {
+/// The WAL prefix fields a commitment folds (`same_source_prefix`'s), in
+/// the order of both kinds.
+pub(super) fn fold_prefix(hasher: &mut ContentHasher, prefix: WalPrefix) {
+    hasher.update(&prefix.stream.database.bytes());
+    hasher.update(&prefix.stream.timeline.to_le_bytes());
+    hasher.update(&prefix.stream.writer_epoch.to_le_bytes());
+    hasher.update(&prefix.file.device.to_le_bytes());
+    hasher.update(&prefix.file.inode.to_le_bytes());
+    hasher.update(&prefix.complete_lsn.to_le_bytes());
+    hasher.update(&prefix.complete_offset.to_le_bytes());
+}
+
+pub(super) fn fold_identity(hasher: &mut ContentHasher, identity: PageIdentity) {
     let mut page = [0; 24];
     identity
         .page
@@ -308,7 +316,7 @@ fn fold_identity(hasher: &mut ContentHasher, identity: PageIdentity) {
     hasher.update(&identity.owner_generation.get().to_le_bytes());
 }
 
-fn fold_stamp(hasher: &mut ContentHasher, stamp: &FrameStamp) {
+pub(super) fn fold_stamp(hasher: &mut ContentHasher, stamp: &FrameStamp) {
     fold_identity(hasher, stamp.identity);
     hasher.update(&stamp.generation.to_le_bytes());
     hasher.update(&stamp.page_lsn.0.to_le_bytes());
@@ -337,7 +345,7 @@ fn undo_request(allocator: PageIdentity, page: PageRef) -> TargetRequest {
 
 /// The slot0 Free generation of a one-slot Undo page whose only cell is the
 /// initial Free record, or None for any other page.
-fn free_slot0(bytes: &[u8; PAGE_BYTES], identity: PageIdentity) -> Option<Generation> {
+pub(super) fn free_slot0(bytes: &[u8; PAGE_BYTES], identity: PageIdentity) -> Option<Generation> {
     let page = crate::storage::page::decode_page(bytes, identity, PageKind::Undo).ok()?;
     if page.len() != 1 || page.cell_range(0) != Some(undo_record::INITIAL_UNDO_CELL) {
         return None;
@@ -553,7 +561,7 @@ impl<'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
     /// The table's epoch slot is still the issued one. A CheckedTable is
     /// issued only for a Published slot, which this open never unpublishes,
     /// so any other answer is the issuer's census contradiction.
-    fn check_table_slot(&self, table: RowTableSource) -> Result<()> {
+    pub(super) fn check_table_slot(&self, table: RowTableSource) -> Result<()> {
         let storage = self.storage;
         let visibility = self
             .visibility
@@ -920,7 +928,7 @@ impl<'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
                 root_job,
                 catalog: (catalog_stamp, schema),
                 leaf_free,
-                pages: &lanes.before[..targets.count],
+                pages: lanes.before[..targets.count].iter(),
                 control: ControlCut::capture(self.control),
             }
             .commitment();
@@ -977,7 +985,8 @@ impl<'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
     }
 
     /// The table record in the Catalog leaf copy is the issued Table, live and
-    /// at the issued anchor. Returns the schema cell digest.
+    /// at the issued anchor (`table_value`). Returns the schema cell digest.
+    /// Any cause is the copy's contradiction of the issued table: Fatal.
     fn check_table_record(
         &self,
         schema: &[u8; PAGE_BYTES],
@@ -985,65 +994,110 @@ impl<'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
         table: RowTableSource,
     ) -> Result<[u8; 32]> {
         let storage = self.storage;
-        let namespace = storage.profile().spec().namespace;
-        let census = |cause| fatal(storage, RetentionPhase::Census, cause);
-        let view = read::catalog_leaf_view(schema, identity, namespace).map_err(census)?;
-        let position = view
-            .lower_bound(&table.handle.object.get().to_be_bytes())
-            .map_err(|e| census(RetentionCause::Tree(e)))?;
-        if !position.equal {
-            return Err(census(RetentionCause::Invariant));
-        }
-        let entry = view
-            .entry(position.index)
-            .map_err(|e| census(RetentionCause::Tree(e)))?;
-        let EntryPayload::Value(value) = entry.payload else {
-            return Err(census(RetentionCause::Invariant));
-        };
-        let record = read::catalog_leaf_record(entry, namespace).map_err(census)?;
-        let header = record.header();
-        if header.identity != table.handle
-            || header.retired
-            || header.anchor != table.anchor.page
-            || !matches!(record.definition(), CatalogDefinitionView::Table(_))
-        {
-            return Err(census(RetentionCause::Invariant));
-        }
-        Ok(content_digest(value))
+        table_value(schema, identity, table, storage.profile().spec().namespace)
+            .map(content_digest)
+            .map_err(|cause| fatal(storage, RetentionPhase::Census, cause))
     }
 
-    /// The RowLeaf's free entry bytes, by A's leaf rule (each Value costs its
-    /// length plus 16). A non-Value entry is a leaf A does not write.
+    /// The RowLeaf's free entry bytes (`leaf_free_bytes`). A leaf A does not
+    /// write is Unchanged Unsupported; any other cause is Fatal.
     fn leaf_free(&self, bytes: &[u8; PAGE_BYTES], leaf: TargetRequest) -> Result<u16> {
         let storage = self.storage;
-        let census = |cause| fatal(storage, RetentionPhase::Census, cause);
-        let view = tree_page::decode_tree_page(
-            bytes,
-            TreeExpectation {
-                identity: leaf.identity,
-                kind: PageKind::RowLeaf,
-                level: 0,
-                arity: 0,
-            },
-        )
-        .map_err(|e| census(RetentionCause::Tree(e)))?;
-        let mut free = TREE_ENTRY_CAPACITY;
-        for index in 0..view.len() {
-            let entry = view
-                .entry(index)
-                .map_err(|e| census(RetentionCause::Tree(e)))?;
-            let EntryPayload::Value(value) = entry.payload else {
-                return Err(unchanged(
-                    RetentionPhase::Prepare,
-                    RetentionCause::Unsupported,
-                ));
-            };
-            free = free
-                .checked_sub(value.len() + 16)
-                .ok_or_else(|| census(RetentionCause::Invariant))?;
-        }
-        u16::try_from(free).map_err(|_| census(RetentionCause::Invariant))
+        leaf_free_bytes(bytes, leaf).map_err(|cause| match cause {
+            RetentionCause::Unsupported => {
+                unchanged(RetentionPhase::Prepare, RetentionCause::Unsupported)
+            }
+            cause => fatal(storage, RetentionPhase::Census, cause),
+        })
     }
+}
+
+/// The issued Table's record in a Catalog leaf image: found under its
+/// object, live, at the issued anchor and a Table definition. Returns the
+/// record's value bytes (the schema cell). A cause only, never a fence:
+/// preflight fences on its own copy, `reserve` and `validation_lane` read
+/// the cause as a changed source (S2-b2).
+pub(super) fn table_value(
+    leaf: &[u8; PAGE_BYTES],
+    identity: PageIdentity,
+    table: RowTableSource,
+    namespace: crate::api::Namespace,
+) -> std::result::Result<&[u8], RetentionCause> {
+    let view = read::catalog_leaf_view(leaf, identity, namespace)?;
+    let position = view
+        .lower_bound(&table.handle.object.get().to_be_bytes())
+        .map_err(RetentionCause::Tree)?;
+    if !position.equal {
+        return Err(RetentionCause::Invariant);
+    }
+    let entry = view.entry(position.index).map_err(RetentionCause::Tree)?;
+    let EntryPayload::Value(value) = entry.payload else {
+        return Err(RetentionCause::Invariant);
+    };
+    let record = read::catalog_leaf_record(entry, namespace)?;
+    let header = record.header();
+    if header.identity != table.handle
+        || header.retired
+        || header.anchor != table.anchor.page
+        || !matches!(record.definition(), CatalogDefinitionView::Table(_))
+    {
+        return Err(RetentionCause::Invariant);
+    }
+    Ok(value)
+}
+
+/// The Index records of the issued table in a Catalog leaf image: every
+/// Index definition whose parent is the table's object, retired or not (the
+/// conservative count; `RowPreflightContext::index_count`, which A refuses
+/// as Unsupported when it is not zero). A cause only, as `table_value`.
+pub(super) fn table_index_count(
+    leaf: &[u8; PAGE_BYTES],
+    identity: PageIdentity,
+    table: RowTableSource,
+    namespace: crate::api::Namespace,
+) -> std::result::Result<u16, RetentionCause> {
+    let view = read::catalog_leaf_view(leaf, identity, namespace)?;
+    let mut count = 0u16;
+    for index in 0..view.len() {
+        let entry = view.entry(index).map_err(RetentionCause::Tree)?;
+        let record = read::catalog_leaf_record(entry, namespace)?;
+        if let CatalogDefinitionView::Index(definition) = record.definition()
+            && definition.parent.object == table.handle.object
+        {
+            count = count.checked_add(1).ok_or(RetentionCause::Invariant)?;
+        }
+    }
+    Ok(count)
+}
+
+/// The RowLeaf's free entry bytes, by A's leaf rule (each Value costs its
+/// length plus 16). A non-Value entry is a leaf A does not write
+/// (`Unsupported`). A cause only, as `table_value`.
+pub(super) fn leaf_free_bytes(
+    bytes: &[u8; PAGE_BYTES],
+    leaf: TargetRequest,
+) -> std::result::Result<u16, RetentionCause> {
+    let view = tree_page::decode_tree_page(
+        bytes,
+        TreeExpectation {
+            identity: leaf.identity,
+            kind: PageKind::RowLeaf,
+            level: 0,
+            arity: 0,
+        },
+    )
+    .map_err(RetentionCause::Tree)?;
+    let mut free = TREE_ENTRY_CAPACITY;
+    for index in 0..view.len() {
+        let entry = view.entry(index).map_err(RetentionCause::Tree)?;
+        let EntryPayload::Value(value) = entry.payload else {
+            return Err(RetentionCause::Unsupported);
+        };
+        free = free
+            .checked_sub(value.len() + 16)
+            .ok_or(RetentionCause::Invariant)?;
+    }
+    u16::try_from(free).map_err(|_| RetentionCause::Invariant)
 }
 
 /// Source-bound inventory of the actual preflight, in the repository's
@@ -1252,7 +1306,7 @@ pub(in super::super) fn row_preflight_body<W: WriterNamespace>(
         + 6 * size_of::<usize>()
         + size_of::<[u8; 32]>()
         + size_of::<FreeUndo>()
-        + size_of::<PreflightSource<'_>>()
+        + size_of::<PreflightSource<'_, std::slice::Iter<'_, [u8; PAGE_BYTES]>>>()
         + size_of::<ControlCut>()
         + 2 * size_of::<Result<Observed>>()
         + 2 * size_of::<dirty_frame::Result<FrameStamp>>()
@@ -1260,8 +1314,18 @@ pub(in super::super) fn row_preflight_body<W: WriterNamespace>(
     let observe_calls = (size_of::<AllocationPage<'_>>()
         + 2 * size_of::<Allocation<'_>>()
         + 2 * size_of::<Allocated>())
-    .max(super::super::super::read::catalog_source_bytes::<W>() + 2 * size_of::<Result<[u8; 32]>>())
-    .max(row_group::tree_source_bytes() + 2 * size_of::<Result<u16>>())
+    // The table record and the leaf measure: each core's cause carriers
+    // beside its wrapper's.
+    .max(
+        super::super::super::read::catalog_source_bytes::<W>()
+            + 2 * size_of::<Result<[u8; 32]>>()
+            + 2 * size_of::<std::result::Result<&[u8], RetentionCause>>(),
+    )
+    .max(
+        row_group::tree_source_bytes()
+            + 2 * size_of::<Result<u16>>()
+            + 2 * size_of::<std::result::Result<u16, RetentionCause>>(),
+    )
     .max(super::super::super::read::undo_decode_source_bytes())
     // ControlCut::capture and the commitment: hashers, the pinned SHA block
     // closure and the digests.

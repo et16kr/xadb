@@ -223,10 +223,18 @@ impl<'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
             return Err(bad());
         }
         let mut reserved = false;
+        #[cfg(test)]
+        let mut adopt = TestOnce::take(&TEST_CATALOG_SCOPE);
         for bytes in self.control.jobs() {
             let job = job3::decode_job(bytes, self.storage.profile().spec().namespace)
                 .map_err(|_| bad())?;
-            if job.source() != Some(actor) {
+            let source = job.source();
+            #[cfg(test)]
+            let source = match source {
+                Some(_) if std::mem::take(&mut adopt) => Some(actor),
+                source => source,
+            };
+            if source != Some(actor) {
                 continue;
             }
             if job.scope() != Some(JobScope::Row) {
@@ -440,8 +448,9 @@ pub(in super::super) fn source_bytes() -> usize {
 }
 
 // S2W-R18: the next `row_statement_head` on this thread sees the actor's
-// Row Job as RootReserved, beside its decoded Jobs (no live Reserve exists
-// before S2-b2). It changes no ledger, control or page byte.
+// Row Job as RootReserved, beside its decoded Jobs (a live RootReserved
+// actor that preflights again needs its ReservedRow cancelled, S2-d). It
+// changes no ledger, control or page byte.
 #[cfg(test)]
 thread_local! {
     static TEST_ROOT_RESERVED: std::cell::Cell<bool> = const { std::cell::Cell::new(false) };
@@ -449,6 +458,19 @@ thread_local! {
 #[cfg(test)]
 pub(in crate::storage) fn test_root_reserved_once() -> TestOnce {
     TestOnce::arm(&TEST_ROOT_RESERVED)
+}
+
+// S2W-R14: the next `row_statement_head` on this thread reads the first Job
+// that has a source as the actor's own, with that Job's own scope (in the
+// Row write fixture, the committed CREATE's Catalog Job). It changes no
+// ledger, control or page byte.
+#[cfg(test)]
+thread_local! {
+    static TEST_CATALOG_SCOPE: std::cell::Cell<bool> = const { std::cell::Cell::new(false) };
+}
+#[cfg(test)]
+pub(in crate::storage) fn test_catalog_scope_once() -> TestOnce {
+    TestOnce::arm(&TEST_CATALOG_SCOPE)
 }
 
 /// A one-shot cfg(test) hook on this thread. The check that reads it

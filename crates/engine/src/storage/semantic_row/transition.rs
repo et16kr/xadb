@@ -109,10 +109,8 @@ pub(crate) enum Change<'a> {
         status: StatusSlotRef,
         scope: JobScope,
     },
-    #[allow(
-        dead_code,
-        reason = "the live RowReserve producer; replay observes RowReserve through ReserveAdopted"
-    )]
+    /// The live RowReserve producer (`reserve`, S2-b2); replay observes
+    /// RowReserve through `ReserveAdopted`.
     Reserve(&'a ReservePlan<'a>),
     /// Replay-only RowReserve (contract row-reserve-replay): the three
     /// selectors the original owner chose, bound and checked by the Row

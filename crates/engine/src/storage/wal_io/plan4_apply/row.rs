@@ -2,15 +2,19 @@
 //!
 //! These wrappers fix the borrow, lifetime and ownership shape that the A and B
 //! product bodies call. `MutationPort::preflight_row` runs the actual
-//! preflight (S2-b1, `#row-write-validate-once`); every other factory returns
-//! an effect-free `Unsupported` before any source guard, pin, admission, WAL or
-//! page effect: the actual RowReserve, Row read source, rollback and Commit
-//! adapters are later C2/C3 supplies. No constructor accepts a raw
-//! TxnRef/UndoRef/RowId/q, and no value here is an install, terminal or READY
-//! receipt.
+//! preflight (S2-b1, `#row-write-validate-once`), and
+//! `PreflightRow::validation_lane` and `PreflightRow::reserve` the actual lane
+//! and RowReserve (S2-b2). Every other factory returns an effect-free
+//! `Unsupported` before any source guard, pin, admission, WAL or page effect:
+//! the actual producer lane, prepare, apply, cancel, Row read source, rollback
+//! and Commit adapters are later C2/C3 supplies. A `ReservedRow` dropped while
+//! its reservation is active fences the session (S2W-R23(2)), so until cancel
+//! is supplied (S2-d) a driver that stops after a successful reserve ends
+//! fenced. No constructor accepts a raw TxnRef/UndoRef/RowId/q, and no value
+//! here is an install, terminal or READY receipt.
 #![allow(
     dead_code,
-    reason = "actual Row source, reservation and rollback adapters are not supplied yet"
+    reason = "actual Row source, producer, cancel and rollback adapters are not supplied yet"
 )]
 
 use super::*;
@@ -227,7 +231,7 @@ pub(super) struct RowPreflightCut {
 /// selection (CLR); carried by ReservedRow and RowRollbackTask and checked by
 /// `prepare`, `apply` and `cancel`. `producer_lane` reads it but does not
 /// check the chain.
-struct RowDraftCut {
+pub(super) struct RowDraftCut {
     /// SHA-256 (kind 2, in the order the comment before the cuts gives) over
     /// the WAL prefix after the last installed group, T in before order with
     /// its current stamps, the role map, the issued identity (actor, RootJob,
@@ -241,20 +245,20 @@ struct RowDraftCut {
     /// it with no replay, and so does `apply` if its stage-time recheck
     /// recomputes it. A difference is Before/Stale on the same wrapper
     /// (S2W-R07, S2W-R21 first hook).
-    source: [u8; 32],
+    pub(super) source: [u8; 32],
     /// The sealed input: canonical row digest (Forward) or current row
     /// projection (CLR). The observer compares A's frame against it.
-    input: [u8; 32],
+    pub(super) input: [u8; 32],
     /// WAL complete LSN after the last installed group: the Forward/CLR
     /// frame's expected previous LSN.
-    complete_lsn: u64,
+    pub(super) complete_lsn: u64,
     /// Logical mutation number of the row version this step writes.
-    planned_mutation: u64,
-    roles: RowRoleMap,
+    pub(super) planned_mutation: u64,
+    pub(super) roles: RowRoleMap,
     /// Canonical length (Forward) or current row length (CLR).
-    input_len: u16,
+    pub(super) input_len: u16,
     /// 0 Forward, 1 CLR (`RowOperation`).
-    operation: u8,
+    pub(super) operation: u8,
 }
 
 /// Recorded by `prepare` after the observer independently recomputed and

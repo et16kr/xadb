@@ -20,12 +20,22 @@ use crate::storage::{
     },
 };
 
+#[path = "row_write.rs"]
+pub(in super::super::super::super) mod write;
+
 /// The before loan of the Allocation proof image. The producer's own output
 /// roles (Root 0, Jobs 1, Status 2, Undo 3, Leaf 4) name the other loans.
 const ALLOCATOR_ROLE: u8 = 7;
 /// Most targets of a supplied Row lifecycle group: Begin and AbortEnd take
 /// Allocation, Root, Jobs and Status; the empty RollbackStart takes no Jobs.
 const ROW_TARGETS: usize = 4;
+/// Most targets of a Row write group: the whole write target set T (S2-0 Row
+/// write amendment §1 "residency", at most nine after physical
+/// de-duplication).
+pub(in super::super) const ROW_WRITE_TARGETS: usize = 9;
+/// The group role of a T member that is a proof only: its stamp is checked
+/// under the install's write set and no after image names it.
+const PROOF_ROLE: u8 = 8;
 const ROOT: u8 = row_group::ROOT as u8;
 const JOB: u8 = row_group::JOB as u8;
 const STATUS: u8 = row_group::STATUS as u8;
@@ -87,17 +97,19 @@ impl<'c, 's> GroupPayload<'c, 's> for RowPayload<'_, 'c, 's> {
 }
 
 /// One prepared Row group with its original targets and stamps. No
-/// Clone/Copy and no raw constructor: only `prepare_existing_row` builds it
-/// and the install body borrows it once.
-pub(in super::super) struct PreparedRowGroup<'i, 'c, 's> {
+/// Clone/Copy and no raw constructor: only `prepare_existing_row` (the
+/// lifecycle, `T` = `ROW_TARGETS`) and `write::prepare_reserve` (`T` =
+/// `ROW_WRITE_TARGETS`) build it, and the install body borrows it once. The
+/// default keeps the lifecycle's type, and so its census, unchanged.
+pub(in super::super) struct PreparedRowGroup<'i, 'c, 's, const T: usize = ROW_TARGETS> {
     payload: RowPayload<'i, 'c, 's>,
     owner: OwnerIdentity,
-    requests: [TargetRequest; ROW_TARGETS],
-    roles: [u8; ROW_TARGETS],
+    requests: [TargetRequest; T],
+    roles: [u8; T],
     count: usize,
-    stamps: [Option<FrameStamp>; ROW_TARGETS],
+    stamps: [Option<FrameStamp>; T],
 }
-impl<'i, 'c, 's> PreparedRowGroup<'i, 'c, 's> {
+impl<'i, 'c, 's, const T: usize> PreparedRowGroup<'i, 'c, 's, T> {
     /// The supplied Row lifecycle operations; any other Row group has no
     /// caller here and is refused by the install body.
     pub(super) fn lifecycle(&self) -> bool {
@@ -107,6 +119,11 @@ impl<'i, 'c, 's> PreparedRowGroup<'i, 'c, 's> {
                 | row_semantic::Operation::RollbackStart
                 | row_semantic::Operation::AbortEnd
         )
+    }
+    /// The supplied Row write operations over the whole write target set:
+    /// RowReserve (S2-b2). Forward and Cancel are later units'.
+    pub(super) fn row_write(&self) -> bool {
+        self.payload.observation.operation == row_semantic::Operation::Reserve
     }
     pub(super) fn check(
         &self,
@@ -248,15 +265,14 @@ impl<'b, 'a, 's, 'c, 'p, 'd, 'm, 'w, W: WriterNamespace>
         let storage = self.storage;
         let mut found = None;
         for (ordinal, bytes) in self.control.jobs().iter().enumerate() {
-            let job = job3::decode_job(bytes, storage.profile().spec().namespace).map_err(
-                |error| {
+            let job =
+                job3::decode_job(bytes, storage.profile().spec().namespace).map_err(|error| {
                     fatal(
                         storage,
                         RetentionPhase::Census,
                         RetentionCause::Retention(error),
                     )
-                },
-            )?;
+                })?;
             if job.scope() == Some(JobScope::Row)
                 && job.source() == Some(actor)
                 && job.state() == job3::JobState::TerminalLeased
@@ -690,10 +706,12 @@ pub(in super::super) fn row_lifecycle_terms() -> RowLifecycleTerms {
 /// The same terms for a Row group over `N` targets. Every target-indexed
 /// array, the typed read and the prepared group's own request/role/stamp
 /// arrays are taken at N; at `ROW_TARGETS` this is exactly the lifecycle's.
-/// The RowWrite census (S2-0 Row write amendment §4) takes N = 9, the whole
-/// write target set; no group of that size is prepared yet, so its
+/// The RowWrite estimates (S2-0 Row write amendment §4) take N = 9, the
+/// whole write target set; they predate the nine-target group type, so its
 /// prepared-group arrays are charged as one (request, role, stamp) element
-/// per target beyond `ROW_TARGETS`.
+/// per target beyond `ROW_TARGETS`. The actual RowReserve census
+/// (`write::row_reserve_body`) takes `PreparedRowGroup<…, ROW_WRITE_TARGETS>`
+/// itself.
 pub(in super::super) fn row_group_terms<const N: usize>() -> RowLifecycleTerms {
     use crate::storage::page::{PageHeader, PageView};
     use foundation::codec::ContentHasher;

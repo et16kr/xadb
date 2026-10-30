@@ -983,6 +983,13 @@ impl RowInputPlan {
         }
     }
 }
+#[cfg(test)]
+impl RowInputPlan {
+    /// S2W-R04: the plan's (length, SchemaEpoch, digest), to forge one field.
+    pub(in crate::storage) fn test_parts(&self) -> (usize, SchemaEpoch, [u8; 32]) {
+        (self.encoded_len, self.schema_epoch, self.digest)
+    }
+}
 
 /// The Row write layout of the one 425984-byte private loan: the five ranges
 /// of the resource owner's Row table (`row-missing-module-budget`) and the
@@ -990,14 +997,10 @@ impl RowInputPlan {
 /// Byte ranges only: no range is an authority or owner store. The Catalog
 /// layout and the Row lifecycle's own split of the loan are separate and
 /// unchanged.
-#[allow(
-    dead_code,
-    reason = "the Row write adapters that carve these ranges are later S2 units"
-)]
 pub(crate) struct RowLoanLayout;
 #[allow(
     dead_code,
-    reason = "the Row write adapters that carve these ranges are later S2 units"
+    reason = "the producer lane and prepare (S2-c) carve XOI, C_SCRATCH and A_SCRATCH by name"
 )]
 impl RowLoanLayout {
     /// Row frame (largest Row frame 94080 B; Forward ≤ 93660 B, CLR ≤ 93452

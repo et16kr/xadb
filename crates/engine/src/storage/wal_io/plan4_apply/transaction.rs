@@ -636,6 +636,37 @@ impl<'t, 'v, 'a, 'c, 's> RowStatementView<'t, 'v, 'a, 'c, 's> {
         target[3] |= 1;
         Ok(())
     }
+
+    /// The live statement's sequence: the RowReserve plan's statement
+    /// (S2-b2), which the producer requires nonzero and not below the
+    /// actor's recorded statement.
+    pub(super) fn row_sequence(&self) -> Result<u64> {
+        self.check()?;
+        Ok(self.sequence)
+    }
+
+    /// Register the checked table's write bit (T10 write mask @8) for a Row
+    /// write: in `reserve` after the table recheck and before the WAL stage,
+    /// and again in `apply` before its stage (S2-0 Row write amendment §6).
+    /// A Before after it keeps the conservative bit; no Before, Cancel,
+    /// Fatal or statement end clears it, so an effect always has its bit.
+    /// One isolation leaf; no other guard is held here.
+    pub(super) fn record_table_write(&self, slot: u8) -> Result<()> {
+        self.check()?;
+        let lease = &self.transaction.lease;
+        let bit = 1u32
+            .checked_shl(u32::from(slot))
+            .ok_or_else(|| fail(lease.fence, RetentionCause::Invariant))?;
+        let mut state = entry(lease.ledger, lease.fence)?;
+        lease.check(state.bytes)?;
+        let target = row_mut(state.bytes, lease.slot);
+        if !statement_slot(target, self.sequence, self.mark) {
+            return Err(fail(lease.fence, RetentionCause::Invariant));
+        }
+        let mask = read32(target, 8) | bit;
+        write32(target, 8, mask);
+        Ok(())
+    }
 }
 
 impl Drop for RowStatementView<'_, '_, '_, '_, '_> {
@@ -1103,6 +1134,13 @@ impl RowStatementView<'_, '_, '_, '_, '_> {
     /// until the returned guard drops.
     pub(in crate::storage) fn test_root_reserved_once(&self) -> writable::TestOnce {
         writable::test_root_reserved_once()
+    }
+
+    /// S2W-R14: the next Row statement head check on this thread reads the
+    /// first Job that has a source as the actor's own, with its own scope
+    /// (`writable::test_catalog_scope_once`), until the returned guard drops.
+    pub(in crate::storage) fn test_catalog_scope_once(&self) -> writable::TestOnce {
+        writable::test_catalog_scope_once()
     }
 
     /// S2W-R03/R16: clears the transaction's catalog flag and table read mask
