@@ -1004,7 +1004,10 @@ pub(super) const CALL_SITES: usize = 26;
 /// `Result<RowPreflightStep>`) belongs to C's census. The flush entries are
 /// MaintenancePort calls; their share is held to the write bound as well.
 /// The rollback path starts from the caller's frame holding the call, the
-/// transaction, the pending statement and the loan, then the rollback.
+/// transaction, the pending statement and the loan, then the rollback. As in
+/// `carrier_bytes`, what the driver's own caller keeps by value (the
+/// transaction capsule, a pending handle) is outside the driver's frames
+/// and not counted; that caller is not supplied yet.
 const fn call_sites<B: Boundary + 'static>() -> [CallSite; CALL_SITES] {
     use std::{
         iter::Zip,
