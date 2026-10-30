@@ -7,11 +7,11 @@
 //! bodies return Unchanged `Unsupported`, so these entries are
 //! compile-checked only until C3 supplies the adapters (gap G2).
 use super::{
-    Boundary, DriveError, Failure, Loan, PendingRollback, Preflight, PreflightNext, Prepared,
-    PreparedTask, ProducerLane, Reserved, Rollback, RollbackNext, RollbackStop, RollbackTask,
-    StartedRollback, StatementView, Stepped, ValidationLane, carrier_bytes, commit, finish_aborted,
-    finish_rollback, finish_statement, insert_statement, retry_task, rollback_step,
-    start_full_rollback, start_statement_rollback,
+    Boundary, CALL_SITES, CallSite, DriveError, Failure, Loan, PendingRollback, Preflight,
+    PreflightNext, Prepared, PreparedTask, ProducerLane, Reserved, Rollback, RollbackNext,
+    RollbackStop, RollbackTask, StartedRollback, StatementView, Stepped, ValidationLane,
+    call_sites, carrier_bytes, commit, finish_aborted, finish_rollback, finish_statement,
+    insert_statement, retry_task, rollback_step, start_full_rollback, start_statement_rollback,
 };
 use crate::storage::{
     disk::{
@@ -497,6 +497,27 @@ pub(in crate::storage) fn finish_aborted_live<'v, 'a, 'c, 's, W: WriterNamespace
 /// `carrier_bytes` for the actual C0 types (INSERT path, CLR path).
 pub(super) const fn live_carrier_bytes<W: WriterNamespace + 'static>() -> (usize, usize) {
     carrier_bytes::<
+        Live<
+            'static,
+            'static,
+            'static,
+            'static,
+            'static,
+            'static,
+            'static,
+            'static,
+            'static,
+            'static,
+            'static,
+            'static,
+            W,
+        >,
+    >()
+}
+
+/// `call_sites` for the actual C0 types.
+pub(super) const fn live_call_sites<W: WriterNamespace + 'static>() -> [CallSite; CALL_SITES] {
+    call_sites::<
         Live<
             'static,
             'static,

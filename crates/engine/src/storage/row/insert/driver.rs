@@ -894,7 +894,11 @@ fn finish_aborted<B: Boundary>(
 /// slot for every temporary and are several times larger (r1 record). The
 /// wrappers carry their final cuts, read gate and flush lease and the lane
 /// its eighth part (S2-a), so this count reads the actual types. A's
-/// producer frame and C's internals are not included.
+/// producer frame and C's internals are not included. The caller bounds of
+/// the RowWrite census are compared with the share at each call site
+/// (`call_sites`, MCA00-D15), not with this path inventory. The flush of a
+/// FlushRequired preflight is never on the stack with the producer, so it
+/// does not reach these deepest points.
 const fn carrier_bytes<B: Boundary + 'static>() -> (usize, usize) {
     use std::mem::size_of;
     type P<B> = <B as Boundary>::Preflight<'static, 'static>;
@@ -954,4 +958,284 @@ const fn carrier_bytes<B: Boundary + 'static>() -> (usize, usize) {
         + size_of::<M<B>>()
         + size_of::<Result<RowProposal, InsertError>>();
     (statement + row + slack, held + step + slack)
+}
+
+/// What bounds A's share at a call site (MCA00-D15).
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub(super) enum Bound {
+    /// The preflight call: `ROW_PREFLIGHT_CALLER_BYTES`.
+    Preflight,
+    /// Every other C call: `ROW_WRITE_CALLER_BYTES`.
+    Write,
+    /// An A stage (validate, Forward, CLR): the share plus A's own frames
+    /// is that phase, compared with the charge.
+    A,
+}
+
+/// A's share at one call site of the driver (S2-0 Row write amendment §4
+/// M3, S2-0b decision 3).
+#[derive(Clone, Copy, Debug)]
+pub(super) struct CallSite {
+    pub(super) name: &'static str,
+    pub(super) bound: Bound,
+    pub(super) bytes: usize,
+}
+
+impl CallSite {
+    const fn new(name: &'static str, bound: Bound, bytes: usize) -> Self {
+        Self { name, bound, bytes }
+    }
+}
+
+pub(super) const CALL_SITES: usize = 26;
+
+/// A's share at each call site, in the size_of inventory sense of
+/// `carrier_bytes` and with its conventions: a C call's result counts twice
+/// (the driver's slot and the forwarding frame's return; three times for a
+/// rollback `next`, which `StartedRollback` forwards once more), a value
+/// moved into a call counts once where it is, and the standard slack is
+/// added at every site. Unlike `carrier_bytes`, which adds every slot of the
+/// path, a site counts only what holds a value at that call: the values a
+/// frame still uses after the call returns, the result slot of each call in
+/// progress (the statement's, the row's, a helper's), and the arguments of
+/// the forwarding frame. A slot that is dead there (a moved-from wrapper, an
+/// earlier or later result, the `Result<(), RetentionError>` of a check
+/// already passed) is not counted (M3). C's own return carrier (for example
+/// `Result<RowPreflightStep>`) belongs to C's census. The flush entries are
+/// MaintenancePort calls; their share is held to the write bound as well.
+/// The rollback path starts from the caller's frame holding the call, the
+/// transaction, the pending statement and the loan, then the rollback.
+const fn call_sites<B: Boundary + 'static>() -> [CallSite; CALL_SITES] {
+    use std::{
+        iter::Zip,
+        mem::size_of,
+        slice::{Iter, IterMut},
+    };
+    type P<B> = <B as Boundary>::Preflight<'static, 'static>;
+    type G<B> = <B as Boundary>::Target;
+    type V<B> = <P<B> as Preflight>::Lane<'static>;
+    type R<B> = <P<B> as Preflight>::Reserved;
+    type L<B> = <R<B> as Reserved>::Lane<'static>;
+    type D<B> = <R<B> as Reserved>::Prepared;
+    type A<B> = <B as Boundary>::Applied;
+    type S<B> = <B as Boundary>::Statement;
+    type X<B> = <B as Boundary>::Transaction;
+    type C<B> = <B as Boundary>::Committed;
+    type J<B> = <B as Boundary>::Rollback<'static, 'static>;
+    type K<B> = StartedRollback<'static, J<B>>;
+    type F<B> = <K<B> as Rollback>::Target;
+    type T<B> = <K<B> as Rollback>::Task<'static>;
+    type M<B> = <T<B> as RollbackTask>::Lane<'static>;
+    type Q<B> = <T<B> as RollbackTask>::Prepared;
+    type Rows = &'static [&'static [ValueRef<'static>]];
+    type Values = &'static [ValueRef<'static>];
+    let r = size_of::<&()>();
+    let slack = 32 * r + 16 * size_of::<Result<(), RetentionError>>() + 512;
+    use CallSite as Site;
+
+    // insert_statement: its arguments and its own result.
+    let statement = slack
+        + size_of::<&mut B>()
+        + size_of::<&B::Table>()
+        + size_of::<&mut Loan>()
+        + size_of::<Rows>()
+        + size_of::<&mut [Option<A<B>>]>()
+        + size_of::<S<B>>()
+        + size_of::<Result<usize, DriveError<S<B>>>>();
+    // ... while insert_row runs: the loop state, the row's result slot and
+    // insert_row's arguments.
+    let row = statement
+        + size_of::<Option<Failure>>()
+        + size_of::<usize>()
+        + size_of::<Zip<Iter<'static, Values>, IterMut<'static, Option<A<B>>>>>()
+        + size_of::<&Values>()
+        + size_of::<&mut Option<A<B>>>()
+        + size_of::<Result<A<B>, Failure>>()
+        + 4 * r
+        + size_of::<Values>();
+    // `flush`: the target insert_row holds, flush's arguments and result.
+    let flushing = row + size_of::<G<B>>() + 2 * r + size_of::<Result<(), Failure>>();
+    // The caller's held rollback path.
+    let held = slack + 4 * r;
+    let stepping =
+        held + size_of::<K<B>>() + size_of::<Result<Stepped, RollbackStop<T<B>, F<B>>>>() + r;
+    let compensating = stepping + size_of::<Result<(), RollbackStop<T<B>, F<B>>>>();
+    [
+        Site::new(
+            "insert.check",
+            Bound::Write,
+            statement + 2 * size_of::<Result<(), RetentionError>>() + r,
+        ),
+        Site::new(
+            "insert.preflight",
+            Bound::Preflight,
+            row + 2 * size_of::<Result<PreflightNext<P<B>, G<B>>, RetentionError>>() + 4 * r,
+        ),
+        Site::new(
+            "insert.try_flush",
+            Bound::Write,
+            flushing + 2 * size_of::<Result<(), RetentionError>>() + 2 * r,
+        ),
+        Site::new(
+            "insert.continue_flush",
+            Bound::Write,
+            flushing + 2 * size_of::<Result<(), RetentionError>>() + r,
+        ),
+        Site::new(
+            "insert.validation_lane",
+            Bound::Write,
+            row + size_of::<P<B>>() + 2 * size_of::<Result<V<B>, RetentionError>>() + r,
+        ),
+        Site::new(
+            "insert.validate",
+            Bound::A,
+            row + size_of::<P<B>>()
+                + size_of::<V<B>>()
+                + size_of::<Values>()
+                + 2 * size_of::<Result<RowInputPlan, InsertError>>(),
+        ),
+        Site::new(
+            "insert.reserve",
+            Bound::Write,
+            row + size_of::<P<B>>()
+                + size_of::<RowInputPlan>()
+                + 2 * size_of::<Result<R<B>, RowOwnedError<P<B>>>>(),
+        ),
+        Site::new(
+            "insert.finish_preflight",
+            Bound::Write,
+            row + size_of::<P<B>>()
+                + 2 * size_of::<Failure>()
+                + 2 * size_of::<Result<(), RetentionError>>(),
+        ),
+        Site::new(
+            "insert.producer_lane",
+            Bound::Write,
+            row + size_of::<R<B>>() + 2 * size_of::<Result<L<B>, RetentionError>>() + r,
+        ),
+        Site::new(
+            "insert.forward",
+            Bound::A,
+            row + size_of::<R<B>>()
+                + size_of::<L<B>>()
+                + 2 * size_of::<Result<RowProposal, InsertError>>(),
+        ),
+        Site::new(
+            "insert.prepare",
+            Bound::Write,
+            row + size_of::<R<B>>()
+                + size_of::<RowProposal>()
+                + 2 * size_of::<Result<D<B>, RowOwnedError<R<B>>>>(),
+        ),
+        Site::new(
+            "insert.apply",
+            Bound::Write,
+            row + size_of::<D<B>>() + 2 * size_of::<Result<A<B>, RowOwnedError<D<B>>>>(),
+        ),
+        Site::new(
+            "insert.reopen",
+            Bound::Write,
+            row + size_of::<D<B>>() + size_of::<RetentionError>() + 2 * size_of::<R<B>>(),
+        ),
+        Site::new(
+            "insert.cancel",
+            Bound::Write,
+            row + size_of::<R<B>>()
+                + 2 * size_of::<Failure>()
+                + 2 * size_of::<Result<(), RowOwnedError<R<B>>>>(),
+        ),
+        Site::new(
+            "insert.finish_statement",
+            Bound::Write,
+            slack
+                + size_of::<&mut B>()
+                + size_of::<Rows>()
+                + size_of::<Result<usize, DriveError<S<B>>>>()
+                + size_of::<Result<(), DriveError<S<B>>>>()
+                + size_of::<S<B>>()
+                + 2 * size_of::<Result<(), StatementFinishError<S<B>>>>()
+                + r,
+        ),
+        Site::new(
+            "rollback.start",
+            Bound::Write,
+            held + size_of::<Result<K<B>, Failure>>()
+                + 6 * r
+                + 4 * r
+                + size_of::<Option<&S<B>>>()
+                + size_of::<RollbackScope>()
+                + 2 * size_of::<Result<J<B>, RetentionError>>(),
+        ),
+        Site::new(
+            "rollback.next",
+            Bound::Write,
+            stepping + 2 * r + 3 * size_of::<Result<RollbackNext<T<B>, F<B>>, RetentionError>>(),
+        ),
+        Site::new(
+            "rollback.clr_lane",
+            Bound::Write,
+            compensating + size_of::<T<B>>() + 2 * size_of::<Result<M<B>, RetentionError>>() + r,
+        ),
+        Site::new(
+            "rollback.clr",
+            Bound::A,
+            compensating
+                + size_of::<T<B>>()
+                + size_of::<M<B>>()
+                + 2 * size_of::<Result<RowProposal, InsertError>>(),
+        ),
+        Site::new(
+            "rollback.clr_prepare",
+            Bound::Write,
+            compensating
+                + size_of::<T<B>>()
+                + size_of::<RowProposal>()
+                + 2 * size_of::<Result<Q<B>, RowOwnedError<T<B>>>>(),
+        ),
+        Site::new(
+            "rollback.clr_apply",
+            Bound::Write,
+            compensating + size_of::<Q<B>>() + 2 * size_of::<Result<(), RowOwnedError<Q<B>>>>(),
+        ),
+        Site::new(
+            "rollback.clr_reopen",
+            Bound::Write,
+            compensating + size_of::<Q<B>>() + size_of::<DriverError>() + 2 * size_of::<T<B>>(),
+        ),
+        Site::new(
+            "rollback.finish",
+            Bound::Write,
+            held + 2 * size_of::<Result<(), RowOwnedError<K<B>>>>()
+                + size_of::<J<B>>()
+                + r
+                + 2 * size_of::<Result<(), RowOwnedError<J<B>>>>(),
+        ),
+        Site::new(
+            "rollback.finish_statement",
+            Bound::Write,
+            slack
+                + 2 * r
+                + size_of::<Result<(), DriveError<S<B>>>>()
+                + size_of::<S<B>>()
+                + 2 * size_of::<Result<(), StatementFinishError<S<B>>>>(),
+        ),
+        Site::new(
+            "transaction.commit",
+            Bound::Write,
+            slack
+                + 4 * r
+                + size_of::<Result<C<B>, DriveError<X<B>>>>()
+                + size_of::<X<B>>()
+                + 2 * size_of::<Result<C<B>, TransactionFinishError<X<B>>>>(),
+        ),
+        Site::new(
+            "transaction.finish_aborted",
+            Bound::Write,
+            slack
+                + 2 * r
+                + size_of::<Result<(), DriveError<X<B>>>>()
+                + size_of::<X<B>>()
+                + 2 * size_of::<Result<(), TransactionFinishError<X<B>>>>(),
+        ),
+    ]
 }

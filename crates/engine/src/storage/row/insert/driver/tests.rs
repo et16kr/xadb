@@ -1,4 +1,4 @@
-//! MCA00-D01..14 and AW1-F01..02 are C0_ONLY. The driver runs over literal
+//! MCA00-D01..15 and AW1-F01..02 are C0_ONLY. The driver runs over literal
 //! stand-ins of C's Row write boundary and flusher: a non-persistent call
 //! log, a row high-water, the actor's chain of applied rows, the statement
 //! mark, the flusher's phase and scripted refusals. Refusals are C0's own
@@ -19,7 +19,12 @@ use super::*;
 use crate::{
     api::{Column, DataType},
     storage::{
-        disk::{RetentionCause, RetentionPhase, RowOperation, RowPageRole},
+        disk::{
+            Plan4Target, PreflightRow, PreparedRow, ROW_PREFLIGHT_CALLER_BYTES,
+            ROW_WRITE_CALLER_BYTES, ReservedRow, RetentionCause, RetentionPhase, RowOperation,
+            RowPageRole, RowProducerLane, RowRollback, RowRollbackTask, RowStatementView,
+            RowValidationLane, row_write_charge,
+        },
         row::insert::encode_input,
         row_record::{RowError, RowSchemaInput},
     },
@@ -29,7 +34,7 @@ use Call::{
     DropReserved, DropRollback, FinishAborted, FinishPreflight, FinishStatement, Forward, Next,
     Prepare, Reopen, Reserve, RollbackFinish, RollbackStart, TryFlush, Validate,
 };
-use foundation::identity::SchemaEpoch;
+use foundation::{identity::SchemaEpoch, namespace::WriterNamespace};
 use std::cell::RefCell;
 
 const CANDIDATE: usize = 16_384;
@@ -2237,13 +2242,97 @@ fn mca00_d12_driver_frames_stay_within_the_driver_source_bound() {
         live_clr.max(live_insert) + deepest_a,
         DRIVER_SOURCE_BYTES + deepest_a,
     );
-    for bytes in [live_insert, live_clr, stand_insert, stand_clr] {
+    // M3: the same driver's share at each call site (MCA00-D15 compares them
+    // with the caller bounds in both writers).
+    let sites = live::live_call_sites::<platform::namespace::LinuxWriterLease>();
+    let shares: Vec<String> = sites
+        .iter()
+        .map(|site| format!("{}={}", site.name, site.bytes))
+        .collect();
+    println!("MCA00_D12 call_sites {}", shares.join(" "));
+    let sites = sites.iter().map(|site| site.bytes);
+    for bytes in [live_insert, live_clr, stand_insert, stand_clr]
+        .into_iter()
+        .chain(sites)
+    {
         assert!(bytes <= DRIVER_SOURCE_BYTES, "{bytes}");
     }
     // A's validation and producer are never on the stack together.
     assert!(DRIVER_SOURCE_BYTES + deepest_a <= SHORT_SOURCE_CAP);
     // Both paths reached the producer stand-in.
     assert!(machine_insert > 0 && machine_clr > 0);
+}
+
+/// MCA00-D15 for one writer W over the live C0 types: A's share at each call
+/// site (M3, `call_sites`) within its bound, and the Forward producer phase
+/// (the share at the producer call plus A's producer) within the RowWrite
+/// charge, with its margin. The CLR producer phase (the same producer under
+/// the caller's rollback) and the validation phase are printed for S4 and
+/// are not asserted here. These are size_of inventories, not stack proofs.
+fn call_site_census<W: WriterNamespace + 'static>(writer: &str) {
+    let charge = row_write_charge::<W>();
+    let (validation, producer) = super::super::local_source_carrier_bytes();
+    let sites = live::live_call_sites::<W>();
+    println!(
+        "MCA00_D15 writer={writer} charge={charge} preflight_bound={ROW_PREFLIGHT_CALLER_BYTES} \
+         write_bound={ROW_WRITE_CALLER_BYTES} a_validation={validation} a_producer={producer}"
+    );
+    type Live<'x, W> = live::LiveCall<'x, 'x, 'x, 'x, 'x, 'x, 'x, 'x, 'x, 'x, 'x, 'x, W>;
+    type Step<'x, W> = Result<
+        PreflightNext<<Live<'x, W> as Boundary>::Preflight<'x, 'x>, Plan4Target>,
+        RetentionError,
+    >;
+    println!(
+        "MCA00_D15 writer={writer} types statement={} preflight_row={} reserved_row={} \
+         prepared_row={} validation_lane={} producer_lane={} preflight_step={} failure={} \
+         retention_error={} rollback={} rollback_task={}",
+        size_of::<RowStatementView<'_, '_, '_, '_, '_>>(),
+        size_of::<PreflightRow<'_, '_, '_, '_, '_, '_, '_, '_, '_, '_, '_, '_, '_, W>>(),
+        size_of::<ReservedRow<'_, '_, '_, '_, '_, '_, '_, '_, '_, '_, '_, '_, '_, W>>(),
+        size_of::<PreparedRow<'_, '_, '_, '_, '_, '_, '_, '_, '_, '_, '_, '_, '_, W>>(),
+        size_of::<RowValidationLane<'_>>(),
+        size_of::<RowProducerLane<'_>>(),
+        size_of::<Step<'_, W>>(),
+        size_of::<Failure>(),
+        size_of::<RetentionError>(),
+        size_of::<RowRollback<'_, '_, '_, '_, '_, '_, '_, '_, '_, '_, '_, '_, '_, W>>(),
+        size_of::<RowRollbackTask<'_, '_, '_, '_, '_, '_, '_, '_, '_, '_, '_, '_, '_, '_, W>>(),
+    );
+    let mut over = Vec::new();
+    for site in sites {
+        let (bound, body) = match site.bound {
+            Bound::Preflight => (ROW_PREFLIGHT_CALLER_BYTES, 0),
+            Bound::Write => (ROW_WRITE_CALLER_BYTES, 0),
+            Bound::A if site.name == "insert.validate" => (charge, validation),
+            Bound::A => (charge, producer),
+        };
+        let total = site.bytes + body;
+        let margin = bound as i64 - total as i64;
+        println!(
+            "MCA00_D15 writer={writer} site={} kind={:?} share={} a_body={body} total={total} \
+             bound={bound} margin={margin}",
+            site.name, site.bound, site.bytes,
+        );
+        let checked = site.bound != Bound::A || site.name == "insert.forward";
+        if checked && margin < 0 {
+            over.push(site.name);
+        }
+    }
+    let names: std::collections::BTreeSet<_> = sites.iter().map(|site| site.name).collect();
+    assert_eq!(names.len(), CALL_SITES);
+    let bound = |bound| sites.iter().filter(|site| site.bound == bound).count();
+    assert_eq!((bound(Bound::Preflight), bound(Bound::A)), (1, 3));
+    assert!(over.is_empty(), "{writer}: over the bound at {over:?}");
+}
+
+#[test]
+fn mca00_d15_memory_call_site_shares_fit_the_caller_bounds() {
+    call_site_census::<crate::storage::wal_io::plan4_test_support::Writer>("memory");
+}
+
+#[test]
+fn mca00_d15_native_call_site_shares_fit_the_caller_bounds() {
+    call_site_census::<platform::namespace::LinuxWriterLease>("native");
 }
 
 #[test]
