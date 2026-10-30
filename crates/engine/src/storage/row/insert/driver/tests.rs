@@ -1,8 +1,9 @@
-//! MCA00-D01..14 are C0_ONLY. The driver runs over literal stand-ins of C's
-//! Row write boundary: a non-persistent call log, a row high-water, the
-//! actor's chain of applied rows, the statement mark and scripted
-//! refusals. Refusals are C0's own value: `Unsupported` or another choice
-//! with `Unchanged`, or a `CallerMustResolve` fatal. No PreflightRow,
+//! MCA00-D01..14 and AW1-F01..02 are C0_ONLY. The driver runs over literal
+//! stand-ins of C's Row write boundary and flusher: a non-persistent call
+//! log, a row high-water, the actor's chain of applied rows, the statement
+//! mark, the flusher's phase and scripted refusals. Refusals are C0's own
+//! value: `Unsupported` or another choice with `Unchanged`, or a
+//! `CallerMustResolve` fatal. No PreflightRow,
 //! ReservedRow, RowRollback, lane, pin, WAL, receipt, ACK or READY exists
 //! here, and nothing counts toward MCA01–05. The validation stand-in runs
 //! A's pure `encode_input` into the loan's candidate area. The producer
@@ -24,9 +25,9 @@ use crate::{
     },
 };
 use Call::{
-    Apply, Cancel, Check, Clr, ClrApply, ClrLane, ClrPrepare, ClrReopen, Commit, DropReserved,
-    DropRollback, FinishAborted, FinishPreflight, FinishStatement, Forward, Next, Prepare, Reopen,
-    Reserve, RollbackFinish, RollbackStart, Validate,
+    Apply, Cancel, Check, Clr, ClrApply, ClrLane, ClrPrepare, ClrReopen, Commit, ContinueFlush,
+    DropReserved, DropRollback, FinishAborted, FinishPreflight, FinishStatement, Forward, Next,
+    Prepare, Reopen, Reserve, RollbackFinish, RollbackStart, TryFlush, Validate,
 };
 use foundation::identity::SchemaEpoch;
 use std::cell::RefCell;
@@ -104,6 +105,9 @@ enum Call {
     FinishStatement,
     Commit,
     FinishAborted,
+    /// The dedicated flusher's `try_flush` of a target, and its continues.
+    TryFlush(u64),
+    ContinueFlush,
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -122,8 +126,12 @@ enum Fault {
     Before(Cause),
     Fatal,
     Producer(InsertError),
-    /// C's FlushRequired with a literal target.
+    /// C's FlushRequired with a literal target (rollback `next`; a
+    /// preflight's comes from `State::flushes`).
     Flush(u64),
+    /// `try_flush` succeeds with the flusher this many `continue_flush`
+    /// calls away from Ready (WaitingWal, WaitingSource, finalize).
+    Steps(u8),
     RollbackRequired,
     Rejected,
 }
@@ -134,6 +142,7 @@ fn refusal(call: Call, cause: Cause) -> RetentionError {
     let phase = match call {
         Commit | FinishAborted => RetentionPhase::Finalize,
         Check | FinishStatement => RetentionPhase::Census,
+        TryFlush(_) | ContinueFlush => RetentionPhase::Flush,
         _ => RetentionPhase::Prepare,
     };
     let cause = match cause {
@@ -211,6 +220,13 @@ struct State {
     inputs: Vec<String>,
     proposals: Vec<String>,
     deepest: usize,
+    /// Dirty victims, as (RowId the preflight is for, target): a preflight
+    /// for that row answers FlushRequired once per entry, in order.
+    flushes: Vec<(u64, u64)>,
+    /// The FlushRequired target not flushed yet.
+    dirty: Option<u64>,
+    /// `continue_flush` calls left before the flusher is Ready.
+    waiting: u8,
 }
 
 impl State {
@@ -249,6 +265,9 @@ fn state(chain: &[(u64, usize)], faults: &[(Call, Fault)]) -> RefCell<State> {
         inputs: Vec::new(),
         proposals: Vec::new(),
         deepest: usize::MAX,
+        flushes: Vec::new(),
+        dirty: None,
+        waiting: 0,
     })
 }
 
@@ -303,10 +322,25 @@ impl<'s> Boundary for LiteralCall<'s> {
         _table: &'r LiteralTable,
         loan: &'i mut Loan,
     ) -> Result<PreflightNext<LiteralPreflight<'r, 'i>, u64>, RetentionError> {
-        let fault = self.state.borrow_mut().note(Call::Preflight);
-        if let Some(Fault::Flush(target)) = fault {
+        let mut state = self.state.borrow_mut();
+        let fault = state.note(Call::Preflight);
+        // C refuses a flusher that is not Ready before anything else.
+        if state.waiting > 0 {
+            state.violations.push("preflight with a flusher not Ready");
+            return Err(refusal(Call::Preflight, Cause::Busy));
+        }
+        if state.dirty.is_some() {
+            state
+                .violations
+                .push("preflight before the named victim was flushed");
+        }
+        let row = state.row_high + 1;
+        if let Some(at) = state.flushes.iter().position(|(at, _)| *at == row) {
+            let (_, target) = state.flushes.remove(at);
+            state.dirty = Some(target);
             return Ok(PreflightNext::Flush(target));
         }
+        drop(state);
         factory(Call::Preflight, fault)?;
         Ok(PreflightNext::Ready(LiteralPreflight {
             state: self.state,
@@ -392,6 +426,42 @@ impl<'s> Boundary for LiteralCall<'s> {
             Some(Fault::Fatal) => Err(TransactionFinishError::Fatal(fatal())),
             Some(other) => panic!("unscripted {other:?}"),
         }
+    }
+    /// Flushing the named victim cleans it whether the flush completes here
+    /// or after `Steps` continues; any other target is a driver error.
+    fn try_flush(&mut self, target: &u64) -> Result<(), RetentionError> {
+        let mut state = self.state.borrow_mut();
+        let fault = state.note(TryFlush(*target));
+        if state.waiting > 0 {
+            state.violations.push("try_flush with a flusher not Ready");
+        }
+        if state.dirty != Some(*target) {
+            state.violations.push("flush of a target C did not name");
+        }
+        if let Some(Fault::Steps(steps)) = fault {
+            state.dirty = None;
+            state.waiting = steps;
+            return Ok(());
+        }
+        drop(state);
+        factory(TryFlush(*target), fault)?;
+        self.state.borrow_mut().dirty = None;
+        Ok(())
+    }
+    fn continue_flush(&mut self) -> Result<(), RetentionError> {
+        let mut state = self.state.borrow_mut();
+        let fault = state.note(ContinueFlush);
+        if state.waiting == 0 {
+            state.violations.push("continue_flush with a Ready flusher");
+            return Err(refusal(ContinueFlush, Cause::WrongState));
+        }
+        drop(state);
+        factory(ContinueFlush, fault)?;
+        self.state.borrow_mut().waiting -= 1;
+        Ok(())
+    }
+    fn flush_ready(&self) -> bool {
+        self.state.borrow().waiting == 0
     }
 }
 
@@ -1534,20 +1604,182 @@ fn mca00_d08_unsupported_c0_wrappers_propagate_unchanged() {
     assert_eq!(state.borrow().log, [Commit, Commit, full]);
 }
 
-/// S2A-T02 (S2-a unit test, not in the contract's table). C's preflight
-/// FlushRequired (S2-0 Row write amendment §3): until the
-/// flush and the retry of the same row from preflight are supplied (A-W1),
-/// the row ends at Stage::Preflight holding nothing. No finish, Cancel or
-/// drop record follows and the statement is returned as it was.
+/// A fresh literal C state whose preflights answer FlushRequired for the
+/// given (RowId, target) victims.
+fn flushing(flushes: &[(u64, u64)], faults: &[(Call, Fault)]) -> RefCell<State> {
+    let state = state(&[], faults);
+    state.borrow_mut().flushes = flushes.to_vec();
+    state
+}
+
+/// AW1-F01 (A-W1 unit test, not in the contract's table; replaces S2A-T02).
+/// C's preflight FlushRequired holds nothing (S2-0 Row write amendment §2):
+/// the driver flushes the named victim with the dedicated flusher Owner,
+/// continues the flush until the flusher is Ready, and tries the same row
+/// again from preflight in the same statement (MCA05-V31 reading). No
+/// issuance is used up: the row gets the RowId, input and proposal it gets
+/// without a flush (MCA00-D01), and no later preflight sees a flusher that
+/// is not Ready (the stand-in records that as a violation).
 #[test]
-fn s2a_t02_interim_flush_required_preflight_ends_the_row_holding_nothing() {
-    let state = self::state(&[], &[(Call::Preflight, Fault::Flush(9))]);
-    let error = failed(run(&state, &[&V1], &mut [None], &mut loan()));
-    assert_eq!(error.failure.stage, Stage::Preflight);
-    assert_eq!(insert(&error.failure.error), InsertError::Unsupported);
+fn aw1_f01_flush_required_flushes_and_retries_the_same_row_from_preflight() {
+    let mut loan = loan();
+    // The flush completes in try_flush (Complete or NoDirty).
+    let state = flushing(&[(7, 9)], &[]);
+    let mut slots = [None];
+    assert_eq!(run(&state, &[&V1], &mut slots, &mut loan).unwrap(), 1);
+    assert_eq!(slots, [Some(LiteralApplied(7))]);
+    assert_eq!(
+        take_log(&state),
+        calls(&[
+            &[Check, Call::Preflight, TryFlush(9)],
+            &applied(7),
+            &[FinishStatement]
+        ])
+    );
+    {
+        let state = state.borrow();
+        assert_eq!(state.inputs, [plan(22, R1_SHA)]);
+        assert_eq!(state.proposals, [proposal(RowOperation::Forward, 91_506)]);
+        assert_eq!(state.chain, [(7, 22)]);
+        assert_eq!((state.dirty, state.waiting), (None, 0));
+    }
+    settled(&state);
+
+    // The flush waits (WaitingWal, WaitingSource, finalize): continue_flush
+    // runs until the flusher is Ready, and only then is preflight retried.
+    let state = flushing(&[(7, 9)], &[(TryFlush(9), Fault::Steps(3))]);
+    assert_eq!(run(&state, &[&V1], &mut [None], &mut loan).unwrap(), 1);
+    assert_eq!(
+        take_log(&state),
+        calls(&[
+            &[Check, Call::Preflight, TryFlush(9)],
+            &[ContinueFlush, ContinueFlush, ContinueFlush],
+            &applied(7),
+            &[FinishStatement]
+        ])
+    );
+    assert_eq!(state.borrow().chain, [(7, 22)]);
+    settled(&state);
+
+    // One flush per dirty victim, on any row of the statement.
+    let state = flushing(
+        &[(7, 9), (7, 10), (8, 11)],
+        &[(TryFlush(10), Fault::Steps(1))],
+    );
+    let mut slots = [None, None];
+    assert_eq!(run(&state, &[&V1, &V2], &mut slots, &mut loan).unwrap(), 2);
+    assert_eq!(slots, [Some(LiteralApplied(7)), Some(LiteralApplied(8))]);
+    assert_eq!(
+        take_log(&state),
+        calls(&[
+            &[Check, Call::Preflight, TryFlush(9)],
+            &[Call::Preflight, TryFlush(10), ContinueFlush],
+            &applied(7),
+            &[Call::Preflight, TryFlush(11)],
+            &applied(8),
+            &[FinishStatement]
+        ])
+    );
+    assert_eq!(state.borrow().chain, [(7, 22), (8, 18)]);
+    settled(&state);
+}
+
+/// AW1-F02 (A-W1 unit test). A refused flush ends the row with nothing held,
+/// as any refusal before Reserve: no finish, Cancel or drop record follows,
+/// C's error is kept with its phase, cause and effect, and the statement is
+/// handed back as the refusal table and the applied rows decide. A refused
+/// continue leaves the flusher in the phase C left it in; the caller
+/// continues it and the returned statement retries the row.
+#[test]
+fn aw1_f02_flush_refusals_end_the_row_holding_nothing() {
+    let mut loan = loan();
+    let busy = (RetentionPhase::Flush, Cause::Busy, Effect::Unchanged);
+    let fenced = (
+        RetentionPhase::Install,
+        Cause::Fenced,
+        Effect::CallerMustResolve,
+    );
+    let front = [Check, Call::Preflight, TryFlush(9)];
+
+    let state = flushing(&[(7, 9)], &[(TryFlush(9), Fault::Before(Cause::Busy))]);
+    let error = failed(run(&state, &[&V1], &mut [None], &mut loan));
+    assert_eq!(
+        (error.failure.stage, disk(&error.failure.error)),
+        (Stage::Flush, busy)
+    );
     assert!(error.failure.cleanup.is_none() && !error.failure.must_resolve);
     returned(error.after);
-    assert_eq!(state.borrow().log, [Check, Call::Preflight]);
+    assert_eq!(take_log(&state), front);
+    assert_eq!(state.borrow().row_high, 6);
+    settled(&state);
+
+    let state = flushing(&[(7, 9)], &[(TryFlush(9), Fault::Fatal)]);
+    let error = failed(run(&state, &[&V1], &mut [None], &mut loan));
+    assert_eq!(
+        (error.failure.stage, disk(&error.failure.error)),
+        (Stage::Flush, fenced)
+    );
+    assert!(error.failure.cleanup.is_none() && error.failure.must_resolve);
+    assert!(must_resolve(error.after).is_some());
+    assert_eq!(take_log(&state), front);
+    settled(&state);
+
+    // A refused continue: the flusher still waits, so the driver stops
+    // without another preflight. The caller continues the flush, and the
+    // statement handed back retries the row with the same RowId.
+    let state = flushing(
+        &[(7, 9)],
+        &[
+            (TryFlush(9), Fault::Steps(2)),
+            (ContinueFlush, Fault::Before(Cause::Busy)),
+        ],
+    );
+    let error = failed(run(&state, &[&V1], &mut [None], &mut loan));
+    assert_eq!(
+        (error.failure.stage, disk(&error.failure.error)),
+        (Stage::ContinueFlush, busy)
+    );
+    assert!(error.failure.cleanup.is_none() && !error.failure.must_resolve);
+    let view = returned(error.after);
+    assert_eq!(take_log(&state), calls(&[&front, &[ContinueFlush]]));
+    assert_eq!(state.borrow().waiting, 2);
+    state.borrow_mut().faults.clear();
+    let mut call = LiteralCall { state: &state };
+    while !call.flush_ready() {
+        call.continue_flush().unwrap();
+    }
+    let mut slots = [None];
+    let rows: [&[ValueRef<'_>]; 1] = [&V1];
+    assert_eq!(
+        insert_statement(&mut call, view, &LiteralTable, &mut loan, &rows, &mut slots).unwrap(),
+        1
+    );
+    assert_eq!(slots, [Some(LiteralApplied(7))]);
+    assert_eq!(
+        take_log(&state),
+        calls(&[
+            &[ContinueFlush, ContinueFlush, Check],
+            &applied(7),
+            &[FinishStatement]
+        ])
+    );
+    settled(&state);
+
+    // A refused flush on a later row: the applied row stays, so the
+    // statement is RollbackRequired, as after any later row's refusal.
+    let state = flushing(&[(8, 11)], &[(TryFlush(11), Fault::Before(Cause::Busy))]);
+    let mut slots = [None, None];
+    let error = failed(run(&state, &[&V1, &V2], &mut slots, &mut loan));
+    assert_eq!(
+        (error.failure.stage, disk(&error.failure.error)),
+        (Stage::Flush, busy)
+    );
+    rollback_required(error.after);
+    assert_eq!(slots, [Some(LiteralApplied(7)), None]);
+    assert_eq!(
+        take_log(&state),
+        calls(&[&[Check], &applied(7), &[Call::Preflight, TryFlush(11)]])
+    );
     settled(&state);
 }
 

@@ -3,7 +3,10 @@
 //! A owns the statement flow; C owns every source, reservation, stage,
 //! install, rollback head and terminal effect. Per row the driver calls
 //! preflight → validation lane → A `validate_insert` → RowReserve → producer
-//! lane → A `produce_insert` → prepare → apply. A row failure releases what
+//! lane → A `produce_insert` → prepare → apply. A preflight that answers
+//! FlushRequired holds nothing: the driver flushes C's target with the
+//! call's dedicated flusher Owner, continues the flush until the flusher is
+//! Ready, and tries the same row again from preflight. A row failure releases what
 //! that row holds (preflight finish, or Cancel of the one reservation) before
 //! anything else. A statement whose rows of this call stay applied is handed
 //! back `RollbackRequired` inside a `PendingRollback`, which gives the
@@ -51,6 +54,8 @@ trait StatementView {
 
 /// C's entries over the caller's original MutationPort, Owner and flusher.
 /// Each wrapper borrows them until it is consumed; nothing is acquired twice.
+/// The flush entries use the flusher with the dedicated flusher Owner
+/// (FLUSHER_SLOT, `require_flusher`), never the statement's Owner.
 trait Boundary {
     type Transaction;
     type Statement: StatementView;
@@ -91,6 +96,12 @@ trait Boundary {
         &mut self,
         transaction: Self::Transaction,
     ) -> Result<(), TransactionFinishError<Self::Transaction>>;
+    /// `try_flush(flush_owner, &target)` on the call's flusher.
+    fn try_flush(&mut self, target: &Self::Target) -> Result<(), RetentionError>;
+    /// `continue_flush(flush_owner)` on the call's flusher.
+    fn continue_flush(&mut self) -> Result<(), RetentionError>;
+    /// The flusher's phase is Ready; preflight refuses any other with Busy.
+    fn flush_ready(&self) -> bool;
 }
 
 /// What C's preflight returned.
@@ -215,6 +226,10 @@ pub(crate) enum Stage {
     Statement,
     Arguments,
     Preflight,
+    /// `try_flush` of a preflight's FlushRequired target.
+    Flush,
+    /// `continue_flush` until the flusher is Ready.
+    ContinueFlush,
     ValidationLane,
     Validate,
     Reserve,
@@ -484,7 +499,9 @@ fn insert_statement<B: Boundary>(
 
 /// One row through the consuming wrappers. On failure nothing this row took
 /// is left held: the preflight is finished, or the reservation cancelled,
-/// unless C answered Fatal/CallerMustResolve or refused the release.
+/// unless C answered Fatal/CallerMustResolve or refused the release. A
+/// FlushRequired preflight is flushed and the same row tried again from
+/// preflight (`flush`); a Ready preflight leaves no flush step in the row.
 #[allow(
     clippy::result_large_err,
     reason = "Failure keeps the stage, the error and any refused cleanup inline, without allocation"
@@ -496,17 +513,17 @@ fn insert_row<B: Boundary>(
     loan: &mut Loan,
     values: &[ValueRef<'_>],
 ) -> Result<B::Applied, Failure> {
-    let mut preflight = match call.preflight(statement, table, loan) {
-        Ok(PreflightNext::Ready(preflight)) => preflight,
-        // The flush and the retry of the same row from preflight are not
-        // supplied yet (A-W1): the row ends here with nothing held.
-        Ok(PreflightNext::Flush(_)) => {
-            return Err(Failure::new(
-                Stage::Preflight,
-                InsertError::Unsupported.into(),
-            ));
-        }
-        Err(error) => return Err(Failure::new(Stage::Preflight, error.into())),
+    let mut preflight = loop {
+        // C's answer is dropped at the end of this statement, so the flush
+        // below may borrow the call again.
+        let target = match call.preflight(statement, table, loan) {
+            Ok(PreflightNext::Ready(preflight)) => break preflight,
+            Ok(PreflightNext::Flush(target)) => target,
+            Err(error) => return Err(Failure::new(Stage::Preflight, error.into())),
+        };
+        // Nothing is held and nothing took effect, so the same row is tried
+        // again from preflight in this statement (MCA05-V31).
+        flush(call, &target)?;
     };
     let input = match preflight.validation_lane() {
         Ok(lane) => lane
@@ -551,6 +568,28 @@ fn insert_row<B: Boundary>(
         )),
         Err(RowOwnedError::Fatal(error)) => Err(Failure::fatal(Stage::Apply, error)),
     }
+}
+
+/// Flushes a preflight's FlushRequired target and continues the flush until
+/// the flusher is Ready, since preflight refuses a flusher in any other phase
+/// with Busy. Each round flushes one dirty victim, which no other foreground
+/// writer dirties again under the exclusive MutationPort, so the preflight
+/// retries are bounded by the dirty pages of that moment (S2-0 Row write
+/// amendment, rejected alternative "separate residency load"). A refusal ends
+/// the row with nothing held; the flusher stays in the phase C left it in,
+/// and its next preflight answers Busy until the caller continues the flush.
+#[allow(
+    clippy::result_large_err,
+    reason = "Failure keeps the stage, the error and any refused cleanup inline, without allocation"
+)]
+fn flush<B: Boundary>(call: &mut B, target: &B::Target) -> Result<(), Failure> {
+    call.try_flush(target)
+        .map_err(|error| Failure::new(Stage::Flush, error.into()))?;
+    while !call.flush_ready() {
+        call.continue_flush()
+            .map_err(|error| Failure::new(Stage::ContinueFlush, error.into()))?;
+    }
+    Ok(())
 }
 
 /// Explicit no-effect release before the first Reserve. After a

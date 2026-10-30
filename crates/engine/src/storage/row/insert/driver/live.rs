@@ -16,10 +16,10 @@ use super::{
 use crate::storage::{
     disk::{
         CheckedTable, MaintenancePort, MutationPort, Owner, Plan4Target, PreflightRow,
-        PreparedRollbackTask, PreparedRow, ReservedRow, RetentionError, RollbackScope,
-        RollbackStep, RowCommitObservation, RowInputPlan, RowMutationObservation, RowOwnedError,
-        RowPreflightStep, RowProducerLane, RowProposal, RowRollback, RowRollbackTask,
-        RowStatementView, RowTransaction, RowValidationLane, StatementFinishError,
+        PreparedRollbackTask, PreparedRow, ReservedRow, RetentionError, RetentionFlushPhase,
+        RollbackScope, RollbackStep, RowCommitObservation, RowInputPlan, RowMutationObservation,
+        RowOwnedError, RowPreflightStep, RowProducerLane, RowProposal, RowRollback,
+        RowRollbackTask, RowStatementView, RowTransaction, RowValidationLane, StatementFinishError,
         TransactionFinishError,
     },
     row::insert::{InsertError, produce_clr, produce_insert, validate_insert},
@@ -152,10 +152,11 @@ impl<'x, 'r, 't, 'v, 'i, 'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
     }
 }
 
-/// The caller's original port, Owner and flusher for one driver call;
-/// `capsule` names the transaction lifetime the statement view borrows.
-/// Nothing is kept. A Row preflight borrows the flusher as its flush lease
-/// until the row ends.
+/// The caller's original port, Owner, flusher and dedicated flusher Owner
+/// (FLUSHER_SLOT) for one driver call; `capsule` names the transaction
+/// lifetime the statement view borrows. Nothing is kept. A Row preflight
+/// borrows the flusher as its flush lease until the row ends; after a
+/// FlushRequired the driver flushes with `flush_owner` before retrying.
 pub(in crate::storage) struct LiveCall<
     'x,
     't,
@@ -174,6 +175,7 @@ pub(in crate::storage) struct LiveCall<
     port: &'x mut MutationPort<'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W>,
     owner: &'x mut Owner<'c, 's>,
     flusher: &'x mut MaintenancePort<'b, 's, 'c, 'p, 'd, 'm, 'w, W>,
+    flush_owner: &'x mut Owner<'c, 's>,
     capsule: PhantomData<&'t RowTransaction<'v, 'a, 'c, 's>>,
 }
 
@@ -184,11 +186,13 @@ impl<'x, 't, 'v, 'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
         port: &'x mut MutationPort<'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W>,
         owner: &'x mut Owner<'c, 's>,
         flusher: &'x mut MaintenancePort<'b, 's, 'c, 'p, 'd, 'm, 'w, W>,
+        flush_owner: &'x mut Owner<'c, 's>,
     ) -> Self {
         Self {
             port,
             owner,
             flusher,
+            flush_owner,
             capsule: PhantomData,
         }
     }
@@ -255,6 +259,16 @@ impl<'x, 't, 'v, 'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace> Boundar
         transaction: Self::Transaction,
     ) -> Result<(), TransactionFinishError<Self::Transaction>> {
         self.port.finish_aborted(self.owner, transaction)
+    }
+    /// The step is not needed: the driver reads the phase after each call.
+    fn try_flush(&mut self, target: &Plan4Target) -> Result<(), RetentionError> {
+        self.flusher.try_flush(self.flush_owner, target).map(|_| ())
+    }
+    fn continue_flush(&mut self) -> Result<(), RetentionError> {
+        self.flusher.continue_flush(self.flush_owner).map(|_| ())
+    }
+    fn flush_ready(&self) -> bool {
+        self.flusher.phase() == RetentionFlushPhase::Ready
     }
 }
 
