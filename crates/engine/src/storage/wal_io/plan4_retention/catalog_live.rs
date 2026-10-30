@@ -1680,19 +1680,26 @@ pub(in super::super) struct CatalogLiveSource {
     pub(in super::super) row_lifecycle: usize,
     pub(in super::super) retirement: usize,
     pub(in super::super) peak: usize,
-    /// RowWrite C bodies. Not part of `peak` or of any charge.
-    pub(in super::super) row_write: RowWriteBodies,
 }
 
 /// Upper estimates of the RowWrite C bodies (S2-0 Row write amendment §4–5,
 /// S2W-C01/C02), composed before any Row write effect body exists from the
-/// existing terms of `catalog_live_source_bytes` at the whole write target
-/// set (nine targets). Each phase value here is the C body plus the progress
-/// shell; the wrapper/step/Result carriers and the caller share
+/// existing census terms at the whole write target set (nine targets). Each
+/// phase value here is the C body plus the progress shell; the
+/// wrapper/step/Result carriers and the caller share
 /// (`ROW_WRITE_CALLER_BYTES`) are added by the Row write census, which checks
-/// every phase against CatalogProgressCharge by name. These terms are kept out
-/// of `peak` so that the Catalog charge and the recovery cleanup term do not
-/// change with them. An S2 unit that supplies a body replaces its estimate.
+/// every phase against CatalogProgressCharge by name. Only the Row write
+/// census computes them (`row_write_bodies`); the split census, `peak` and
+/// every charge do not. An S2 unit that supplies a body replaces its estimate.
+///
+/// Recorded constraints for the units that supply the bodies:
+/// - `apply` rechecks at the stage by recomputing the draft commitment and
+///   comparing the prepared frame/after digests only. It does not run the
+///   observer, `validate_live` or the XOI inventory again: with
+///   `group_prepare` in its max, apply is 1146 + 7328 + 34404 + 1544 =
+///   44422 B, over the charge before any caller share (S2-d).
+/// - `validation_lane` rebuilds `RowPreflightContext` from the current
+///   frames and the private copies; its decode is not a term yet (S2-b).
 #[derive(Clone, Copy, Debug)]
 pub(in super::super) struct RowWriteBodies {
     /// Held through every phase: the admission, gate and their Result,
@@ -1704,8 +1711,13 @@ pub(in super::super) struct RowWriteBodies {
     /// The preflight's target set: requests/roles and before stamps of T.
     pub(in super::super) target_set: usize,
     /// Deep checks: `check_ledger` with the Row admission subset, or the
-    /// shared transaction/statement check over the shell scalars.
+    /// shared transaction/statement check over the shell scalars. Every
+    /// effect step repeats the open/view/source/statement checks.
     pub(in super::super) check: usize,
+    /// Preflight's Catalog leaf, anchor and table record decode for the
+    /// schema, index-count and RowLeaf checks and the private copies: the
+    /// Catalog source census over the shell scalars.
+    pub(in super::super) table_census: usize,
     /// One retention LOAD of a nonresident target over the shell scalars.
     pub(in super::super) load: usize,
     /// Free Undo container selection: the two-target allocator/Undo read and
@@ -1723,15 +1735,23 @@ pub(in super::super) struct RowWriteBodies {
     /// or C's producer or the observer of A's frame, the XOI inventory, the
     /// assembled group, or `check_ledger`.
     pub(in super::super) group_prepare: usize,
+    /// Apply's re-assembly of the prepared group from the cut and the
+    /// checked frame/after, without the observer or `validate_live`.
+    pub(in super::super) group_reassemble: usize,
     /// The existing-group install at nine targets: stage, page install,
     /// durable wait and the control record.
     pub(in super::super) group_install: usize,
     /// Prepared-group and Observation carriers across prepare and install.
     pub(in super::super) group_carriers: usize,
+    /// The Row lifecycle recomputed here from the same repeated terms; S2W-C03
+    /// requires it to equal `catalog_live_source_bytes().row_lifecycle`.
+    pub(in super::super) lifecycle_check: usize,
     pub(in super::super) preflight: usize,
     pub(in super::super) validation_lane: usize,
     pub(in super::super) reserve: usize,
     pub(in super::super) producer_lane: usize,
+    /// The Forward `ReservedRow::prepare`. The CLR task's prepare is S4's own
+    /// entry census.
     pub(in super::super) prepare: usize,
     pub(in super::super) apply: usize,
     pub(in super::super) cancel: usize,
@@ -2038,95 +2058,6 @@ pub(in super::super) fn catalog_live_source_bytes<W: WriterNamespace>() -> Catal
         .max(retirement::selection_source_bytes())
         + source::retirement_prepare_carrier_bytes())
     .max(source::retirement_source_peak());
-    let row_write = {
-        // The Row group over the whole write target set T (≤ 9 targets).
-        let group = lifecycle::row::row_group_terms::<9>();
-        let shell = source::commit_carrier_bytes()
-            + 2 * size_of::<crate::storage::session_fence::UnwindFence<'_>>();
-        let target_set = size_of::<[(TargetRequest, u8); 9]>()
-            + size_of::<[Option<FrameStamp>; 9]>()
-            + size_of::<Option<usize>>();
-        let check = ledger.max(scalar + transaction::catalog::check_source_bytes());
-        let load = scalar
-            + super::super::lookup_load::source_bytes::<W>()
-            + size_of::<Plan4Target>()
-            + 2 * size_of::<Result<Option<RetentionResidencyStep>>>();
-        let undo_select = scalar
-            + super::super::read::undo_read_source_bytes()
-            + 2 * size_of::<crate::storage::undo_ref::UndoRef>()
-            + 2 * size_of::<Result<()>>();
-        let register = scalar + transaction::catalog_read_source_bytes();
-        let commit = scalar
-            + size_of::<[TargetRequest; 9]>()
-            + size_of::<[Option<FrameStamp>; 9]>()
-            + 2 * size_of::<foundation::codec::ContentHasher>()
-            + 2 * size_of::<Result<FrameStamp>>()
-            + 4 * 32
-            + 8 * size_of::<&()>();
-        let select = start_health.max(start_root).max(start_status);
-        let group_prepare = (scalar
-            + group.outer
-            + scope_carriers
-            + history_peak.max(group.produce).max(group.observer))
-        .max(scalar + group.outer + group.inventory)
-        .max(scalar + group.outer + group.assembled)
-        .max(ledger);
-        let group_install = lifecycle::application_carrier_bytes::<W>()
-            + visibility::epoch_change_carriers()
-            + scalar
-            + size_of::<[Option<dirty_frame::DptStamp<'_>>; 9]>()
-            + 3 * size_of::<WalRequirement<'_>>()
-            + 2 * size_of::<DurableWal<'_>>()
-            + 2 * size_of::<InstallGrant<'_, '_, '_>>()
-            + targets::call_bytes::<9>()
-            + group
-                .control
-                .max(physical)
-                .max(visibility::epoch_transition_source_bytes());
-        let group_carriers = group.carriers;
-        // Sequential steps of one call are max-combined; what one call holds
-        // throughout is added. Every phase holds the shell.
-        let preflight = shell
-            + lease_check
-            + target_set
-            + check
-                .max(load)
-                .max(undo_select)
-                .max(register)
-                .max(commit)
-                .max(select);
-        let lane = shell + commit;
-        let validation_lane = lane + 2 * size_of::<RowPreflightContext>();
-        let producer_lane = lane + 2 * size_of::<RowProducerContext>();
-        let reserve =
-            shell + group_carriers + commit.max(register).max(group_prepare).max(group_install);
-        let prepare = shell + group_carriers + commit.max(group_prepare);
-        let apply = shell + group_carriers + commit.max(register).max(group_install);
-        let cancel =
-            shell + group_carriers + commit.max(register).max(group_prepare).max(group_install);
-        RowWriteBodies {
-            shell,
-            lease_check,
-            target_set,
-            check,
-            load,
-            undo_select,
-            register,
-            commit,
-            select,
-            group_prepare,
-            group_install,
-            group_carriers,
-            preflight,
-            validation_lane,
-            reserve,
-            producer_lane,
-            prepare,
-            apply,
-            cancel,
-            finish: shell,
-        }
-    };
     CatalogLiveSource {
         prepare,
         prepare_replay,
@@ -2153,7 +2084,179 @@ pub(in super::super) fn catalog_live_source_bytes<W: WriterNamespace>() -> Catal
             .max(lifecycle)
             .max(row_lifecycle)
             .max(retirement),
-        row_write,
+    }
+}
+
+/// The RowWrite C body estimates (`RowWriteBodies`), for the Row write census
+/// only; nothing on the split path calls this. The terms it shares with
+/// `catalog_live_source_bytes` (`scalar`, `scope_carriers`, the history peak,
+/// `ledger`, `physical`, the start selection and CREATE's lease check) repeat
+/// that function's expressions, and the Row lifecycle is recomputed from them
+/// as `lifecycle_check`, which S2W-C03 compares with the split census value,
+/// so the two copies cannot drift apart unnoticed.
+pub(in super::super) fn row_write_bodies<W: WriterNamespace>() -> RowWriteBodies {
+    use crate::storage::dirty_frame;
+    use std::mem::size_of;
+    let scalar = size_of::<CatalogPreparation<'_, '_, '_, '_, '_, '_, '_, '_, W>>()
+        + 2 * size_of::<&()>() // temporary view receiver and wrapper argument
+        + 2 * size_of::<WalPrefix>()
+        + size_of::<OwnerIdentity>()
+        + 6 * size_of::<Result<()>>()
+        + 4 * size_of::<RetentionError>()
+        + size_of::<crate::storage::session_fence::UnwindFence<'_>>()
+        + 24 * size_of::<usize>()
+        + 20 * size_of::<&[u8]>();
+    let scope_carriers = size_of::<history::runtime::ReplayScope<'_, '_, '_, '_>>()
+        + size_of::<history::runtime::ReplayLoan<'_, '_, '_, '_>>()
+        + 2 * size_of::<Result<history::runtime::ReplayScope<'_, '_, '_, '_>>>()
+        + 2 * size_of::<Result<history::runtime::ReplayLoan<'_, '_, '_, '_>>>();
+    let history_peak = history::source_bytes::<W>().peak;
+    let ledger = scalar
+        + size_of::<[(TargetRequest, u8); 9]>()
+        + size_of::<Result<(OwnerIdentity, WalPrefix)>>()
+        + 2 * size_of::<&()>()
+        + 640
+        + 2 * size_of::<crate::storage::obligation::DescriptorSpec>()
+        + queue::source_bytes()
+            .max(semantic_catalog::profile3_transaction_source_bytes())
+            .max(crate::storage::semantic_row::ledger::admission_source_bytes());
+    let physical = crate::storage::wal_io::DURABILITY_CALL_BYTES
+        + 2 * size_of::<std::result::Result<WalRequirement<'_>, crate::storage::wal_io::WalIoError>>(
+        )
+        + 2 * size_of::<std::result::Result<DurableWal<'_>, crate::storage::wal_io::WalIoError>>();
+    let (start_health, start_root, start_status) = lifecycle::start_selection_source_phases::<W>();
+    let reference = size_of::<&()>();
+    let lease_check = 12 * reference
+        + 2 * size_of::<Result<()>>()
+        + 2 * size_of::<super::super::super::super::flush_io::IoObservation>();
+    // The existing-group install of a Row group with `call` for its target
+    // array and `control` for its control part.
+    let install = |call: usize, control: usize| {
+        lifecycle::application_carrier_bytes::<W>()
+            + visibility::epoch_change_carriers()
+            + scalar
+            + size_of::<[Option<dirty_frame::DptStamp<'_>>; 9]>()
+            + 3 * size_of::<WalRequirement<'_>>()
+            + 2 * size_of::<DurableWal<'_>>()
+            + 2 * size_of::<InstallGrant<'_, '_, '_>>()
+            + call
+            + control
+                .max(physical)
+                .max(visibility::epoch_transition_source_bytes())
+    };
+    // The Row lifecycle (four targets) from the same terms: the drift check.
+    let row = lifecycle::row::row_lifecycle_terms();
+    let row_prepare = (scalar + row.outer + scope_carriers + history_peak.max(row.produce))
+        .max(scalar + row.outer + row.inventory)
+        .max(scalar + row.outer + row.assembled)
+        .max(ledger);
+    let lifecycle_check = (row.caller
+        + row_prepare.max(install(targets::call_bytes::<4>(), row.control)))
+    .max(start_health)
+    .max(start_root)
+    .max(start_status)
+        + source::commit_carrier_bytes()
+        + 2 * size_of::<crate::storage::session_fence::UnwindFence<'_>>()
+        + lifecycle::entry_carrier_bytes::<W>()
+        + row.carriers
+        + transaction::writable::row_lifecycle_caller_bytes();
+    // The Row group over the whole write target set T (≤ 9 targets).
+    let group = lifecycle::row::row_group_terms::<9>();
+    let shell = source::commit_carrier_bytes()
+        + 2 * size_of::<crate::storage::session_fence::UnwindFence<'_>>();
+    let target_set = size_of::<[(TargetRequest, u8); 9]>()
+        + size_of::<[Option<FrameStamp>; 9]>()
+        + size_of::<Option<usize>>();
+    let check = ledger.max(scalar + transaction::catalog::check_source_bytes());
+    let table_census = scalar + super::super::read::catalog_source_bytes::<W>();
+    let load = scalar
+        + super::super::lookup_load::source_bytes::<W>()
+        + size_of::<Plan4Target>()
+        + 2 * size_of::<Result<Option<RetentionResidencyStep>>>();
+    let undo_select = scalar
+        + super::super::read::undo_read_source_bytes()
+        + 2 * size_of::<crate::storage::undo_ref::UndoRef>()
+        + 2 * size_of::<Result<()>>();
+    let register = scalar + transaction::catalog_read_source_bytes();
+    let commit = scalar
+        + size_of::<[TargetRequest; 9]>()
+        + size_of::<[Option<FrameStamp>; 9]>()
+        + 2 * size_of::<foundation::codec::ContentHasher>()
+        + 2 * size_of::<Result<FrameStamp>>()
+        + 4 * 32
+        + 8 * size_of::<&()>();
+    let select = start_health.max(start_root).max(start_status);
+    let group_prepare = (scalar
+        + group.outer
+        + scope_carriers
+        + history_peak.max(group.produce).max(group.observer))
+    .max(scalar + group.outer + group.inventory)
+    .max(scalar + group.outer + group.assembled)
+    .max(ledger);
+    let group_reassemble = scalar + group.outer + group.assembled;
+    let group_install = install(targets::call_bytes::<9>(), group.control);
+    let group_carriers = group.carriers;
+    // Sequential steps of one call are max-combined; what one call holds
+    // throughout is added. Every phase holds the shell.
+    let preflight = shell
+        + lease_check
+        + target_set
+        + check
+            .max(table_census)
+            .max(load)
+            .max(undo_select)
+            .max(register)
+            .max(commit)
+            .max(select);
+    let lane = shell + commit;
+    let validation_lane = lane + 2 * size_of::<RowPreflightContext>();
+    let producer_lane = lane + 2 * size_of::<RowProducerContext>();
+    let reserve = shell
+        + group_carriers
+        + check
+            .max(commit)
+            .max(register)
+            .max(group_prepare)
+            .max(group_install);
+    let prepare = shell + group_carriers + check.max(commit).max(group_prepare);
+    let apply = shell
+        + group_carriers
+        + check
+            .max(commit)
+            .max(register)
+            .max(group_reassemble)
+            .max(group_install);
+    let cancel = shell
+        + group_carriers
+        + check
+            .max(commit)
+            .max(register)
+            .max(group_prepare)
+            .max(group_install);
+    RowWriteBodies {
+        shell,
+        lease_check,
+        target_set,
+        check,
+        table_census,
+        load,
+        undo_select,
+        register,
+        commit,
+        select,
+        group_prepare,
+        group_reassemble,
+        group_install,
+        group_carriers,
+        lifecycle_check,
+        preflight,
+        validation_lane,
+        reserve,
+        producer_lane,
+        prepare,
+        apply,
+        cancel,
+        finish: shell,
     }
 }
 

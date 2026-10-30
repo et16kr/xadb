@@ -3,7 +3,8 @@
 //! stack measurements. No Row write effect body exists yet, so every C phase
 //! below is an upper estimate composed from existing census terms and the
 //! final S2-a types (`RowWriteBodies`), printed with its terms; it is not a
-//! measured phase and not acceptance of any later body.
+//! measured phase. Every phase must still fit with the caller share: a later
+//! unit that replaces an estimate commits only while these selectors pass.
 use super::write::{RowIoLease, row_write_phases};
 use super::*;
 use crate::storage::page::PAGE_BYTES;
@@ -14,8 +15,8 @@ type Memory = crate::storage::wal_io::plan4_test_support::Writer;
 type Native = super::super::super::native::Writer;
 
 /// Charge minus body and carriers of the tightest phase, signed: the largest
-/// A share at every C call that the estimates leave. Negative is an overrun
-/// of the C side alone, before any A share.
+/// A share at every C call that the estimates currently leave. Negative is an
+/// overrun of the C side alone, before any A share.
 fn caller_room<W: WriterNamespace>() -> i64 {
     let charge = row_write_charge::<W>() as i64;
     row_write_phases::<W>()
@@ -29,7 +30,7 @@ fn phase_census<W: WriterNamespace>(id: &str, writer: &str) {
     let charge = row_write_charge::<W>();
     let shared = super::super::source::shared_bytes::<W>();
     let bodies = super::super::create_pair::catalog_live::catalog_live_source_bytes::<W>();
-    let terms = bodies.row_write;
+    let terms = super::super::create_pair::catalog_live::row_write_bodies::<W>();
     println!(
         "{id} writer={writer} charge={charge} shared={shared} shared_plus_charge={} \
          caller={ROW_WRITE_CALLER_BYTES} row_lifecycle={} catalog_live_peak={}",
@@ -38,20 +39,24 @@ fn phase_census<W: WriterNamespace>(id: &str, writer: &str) {
         bodies.peak,
     );
     println!(
-        "{id} terms shell={} lease_check={} target_set={} check={} load={} undo_select={} \
-         register={} commit={} select={} group_prepare={} group_install={} group_carriers={}",
+        "{id} terms shell={} lease_check={} target_set={} check={} table_census={} load={} \
+         undo_select={} register={} commit={} select={} group_prepare={} group_reassemble={} \
+         group_install={} group_carriers={} lifecycle_check={}",
         terms.shell,
         terms.lease_check,
         terms.target_set,
         terms.check,
+        terms.table_census,
         terms.load,
         terms.undo_select,
         terms.register,
         terms.commit,
         terms.select,
         terms.group_prepare,
+        terms.group_reassemble,
         terms.group_install,
         terms.group_carriers,
+        terms.lifecycle_check,
     );
     println!(
         "{id} types gate={} lease={} step={} preflight_row={} reserved_row={} prepared_row={} \
@@ -68,7 +73,8 @@ fn phase_census<W: WriterNamespace>(id: &str, writer: &str) {
         size_of::<RowDraftCut>(),
         size_of::<RowPreparedCut>(),
     );
-    for phase in row_write_phases::<W>() {
+    let phases = row_write_phases::<W>();
+    for phase in phases {
         let total = phase.body + phase.carriers + ROW_WRITE_CALLER_BYTES;
         println!(
             "{id} phase={} kind=estimate body={} carriers={} caller={ROW_WRITE_CALLER_BYTES} \
@@ -91,10 +97,23 @@ fn phase_census<W: WriterNamespace>(id: &str, writer: &str) {
     // short-source cap beside shared.
     assert_eq!(charge, super::super::source::progress_charge_bytes::<W>());
     assert!(shared + charge <= 65_536);
-    // The constant is, by its definition, the largest A share that every
-    // estimated C phase leaves in both writers, floored at zero. The phase
-    // lines above are estimates and are printed, not accepted.
-    assert_eq!(ROW_WRITE_CALLER_BYTES as i64, both.max(0));
+    // S2-0 §4: every C phase, with its carriers, fits beside the caller
+    // share in this writer. An overrun fails here; it is never absorbed into
+    // a smaller constant.
+    for phase in phases {
+        assert!(
+            phase.body + phase.carriers + ROW_WRITE_CALLER_BYTES <= charge,
+            "{id} {writer} phase {}: body {} + carriers {} + caller {ROW_WRITE_CALLER_BYTES} \
+             > charge {charge}",
+            phase.name,
+            phase.body,
+            phase.carriers,
+        );
+    }
+    // The same bound in both writers: the constant is no larger than the
+    // smallest room the estimates leave. A body that later shrinks raises the
+    // room without forcing a new constant.
+    assert!(ROW_WRITE_CALLER_BYTES as i64 <= both);
 }
 
 /// S2W-C01: memory W, every RowWrite C phase as body + carriers +
@@ -114,18 +133,26 @@ fn s2w_c02_row_write_phase_census_native() {
 /// Row write layout: the lifecycle keeps its own split of the loan, and its
 /// terms are the generic Row group terms at its four targets. The contract's
 /// native 43113 B was taken with the test adapter's 160-byte File; with the
-/// 32-byte File (94ede44) native equals memory, 42089 B.
+/// 32-byte File (94ede44) native equals memory, 42089 B. The Row write
+/// census repeats some split census terms; its own recomputation of the Row
+/// lifecycle must equal the split value, so the copies cannot drift.
 #[test]
 fn s2w_c03_row_lifecycle_unchanged_beside_the_row_write_layout() {
     fn inspect<W: WriterNamespace>(writer: &str, lifecycle: usize) {
         let phases = super::super::create_pair::catalog_live::catalog_live_source_bytes::<W>();
+        let write = super::super::create_pair::catalog_live::row_write_bodies::<W>();
         let charge = row_write_charge::<W>();
         println!(
             "S2W_C03 writer={writer} row_lifecycle={} lifecycle={} retirement={} \
-             catalog_progress_charge={charge} catalog_live_peak={}",
-            phases.row_lifecycle, phases.lifecycle, phases.retirement, phases.peak
+             catalog_progress_charge={charge} catalog_live_peak={} row_write_lifecycle_check={}",
+            phases.row_lifecycle,
+            phases.lifecycle,
+            phases.retirement,
+            phases.peak,
+            write.lifecycle_check
         );
         assert_eq!(phases.row_lifecycle, lifecycle);
+        assert_eq!(write.lifecycle_check, phases.row_lifecycle);
         assert_eq!(charge, 44_304);
         assert!(phases.row_lifecycle <= charge);
     }

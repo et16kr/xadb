@@ -55,12 +55,14 @@ pub(crate) enum RowPreflightStep<
 /// finish runs (S2-0 Row write amendment §4). Every RowWrite C phase is checked
 /// as `C body + carriers + ROW_WRITE_CALLER_BYTES ≤ CatalogProgressCharge` in
 /// both writers (S2W-C01/C02); A checks its own call-site shares against it
-/// (MCA00-D15). The value is the largest that the C phase estimates leave in
-/// both writers, floored at zero. At S2-a the tightest phase is Forward/CLR
-/// prepare, which leaves 58 B in both writers (Reserve 218 B, Cancel 178 B):
-/// far below the A driver's measured share, so A's call-site check cannot
-/// pass until the C bodies or the A driver shrink (Q06). Changing it reruns
-/// the census of every committed RowWrite phase.
+/// (MCA00-D15). It must not exceed the smallest room that the C phase
+/// estimates leave in either writer; a negative room is a Q06 overrun, never
+/// a reason for a smaller constant. At S2-a the tightest phase is the Forward
+/// prepare (`ReservedRow::prepare`), which leaves 58 B in both writers
+/// (Reserve 218 B, Cancel 178 B): far below the A driver's measured share, so
+/// A's call-site check cannot pass until the C bodies or the A driver shrink
+/// (Q06). The CLR task's prepare is S4's own entry census, not a phase here.
+/// Changing the value reruns the census of every committed RowWrite phase.
 pub(crate) const ROW_WRITE_CALLER_BYTES: usize = 58;
 
 /// The fixed RowWrite charge: the split-time CatalogProgressCharge that
@@ -82,7 +84,8 @@ pub(in crate::storage) struct RowWritePhase {
 }
 
 /// The eight RowWrite C phases (S2-0 Row write amendment §4): the six effect
-/// and release steps and the two lane issues. A's share at each call is
+/// and release steps and the two lane issues. `prepare` is the Forward
+/// `ReservedRow::prepare`; the CLR task's prepare is S4's. A's share at each call is
 /// `ROW_WRITE_CALLER_BYTES`, added by the caller of this census.
 pub(in crate::storage) fn row_write_phases<W: WriterNamespace>() -> [RowWritePhase; 8] {
     use std::mem::size_of;
@@ -91,8 +94,7 @@ pub(in crate::storage) fn row_write_phases<W: WriterNamespace>() -> [RowWritePha
     type Prep<'a, W> = PreparedRow<'a, 'a, 'a, 'a, 'a, 'a, 'a, 'a, 'a, 'a, 'a, 'a, 'a, W>;
     type Step<'a, W> = RowPreflightStep<'a, 'a, 'a, 'a, 'a, 'a, 'a, 'a, 'a, 'a, 'a, 'a, 'a, W>;
     type Loan<'a> = &'a mut [u8; 425_984];
-    let bodies =
-        super::super::create_pair::catalog_live::catalog_live_source_bytes::<W>().row_write;
+    let bodies = super::super::create_pair::catalog_live::row_write_bodies::<W>();
     let reference = size_of::<&()>();
     // Receiver, Owner, statement, table, private and flusher; the cut being
     // recorded; the wrapper assembled into the Ready step.
