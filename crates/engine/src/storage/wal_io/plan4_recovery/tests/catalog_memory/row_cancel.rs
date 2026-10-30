@@ -2,9 +2,11 @@
 //! amendment §1 "order", the refusal table and §6, S2-0b
 //! `#row-write-validate-once`) over the actual committed CREATE of table T
 //! that the preflight and reserve cases use. Only the cases a reserve and its
-//! cancel exercise are here: S2W-R08, the cancel halves of R12, R15, R22 and
-//! R23(2), R18 over a live reservation, and the Reserve and Cancel parts of
-//! S2W-H01..H05. The halves that need prepare or apply are S2-c's. The
+//! cancel exercise are here: S2W-R08 (with a non-Stale Before and its retry,
+//! the refusal table's "cancel의 stage 전 거절"), the cancel halves of R12,
+//! R15, R22 and R23(2), R18 over a live reservation, and the Reserve and
+//! Cancel parts of S2W-H01..H05. The halves that need prepare or apply are
+//! S2-c's. The
 //! expected values are fixture facts, the independent literal of
 //! `tests/fixtures/dev3-module-c3/row-write/` (expected.json and
 //! expected-cancel.json) and the refusal table's (phase, cause, effect),
@@ -15,7 +17,7 @@ use super::super::super::super::plan4_pages::{
 };
 use super::super::faults::{rejected, unchanged_error};
 use super::super::support::namespace;
-use super::row_preflight::{FREE_UNDO, create_table, resident};
+use super::row_preflight::{FIXTURE_T, FREE_UNDO, create_table, resident, with_pins};
 use super::*;
 use crate::storage::{
     control::row_profile,
@@ -189,6 +191,23 @@ fn page_of(pool: &SharedPool<'_, '_, '_, '_>, number: u64) -> Box<[u8; PAGE_BYTE
     let mut bytes = boxed::<PAGE_BYTES>();
     probe::diagnose(pool, index, &mut bytes);
     bytes
+}
+
+/// Every page of T in the pool (`FIXTURE_T`, rank order): its bytes, frame
+/// stamp and dirty flag, through the diagnostic probe alone, so it also reads
+/// a fenced pool.
+fn t_frames(
+    pool: &SharedPool<'_, '_, '_, '_>,
+) -> Vec<(u64, Box<[u8; PAGE_BYTES]>, dirty_frame::FrameStamp, bool)> {
+    FIXTURE_T
+        .iter()
+        .map(|number| {
+            let index = probe::registered_index(pool, *number).unwrap();
+            let mut bytes = boxed::<PAGE_BYTES>();
+            let snapshot = probe::diagnose(pool, index, &mut bytes);
+            (*number, bytes, snapshot.frame, snapshot.dirty)
+        })
+        .collect()
 }
 
 /// The pool Root's cell 0 at `ROOT_COUNTS`, read as the author reads it.
@@ -404,6 +423,85 @@ fn s2w_r08_cancel_returns_nothing_issued_and_keeps_the_write_bit() {
                 assert_eq!(hook::observe(core).active_read_operations, 0);
                 assert_eq!(reader.catalog_test_source_used(), used);
                 assert_eq!(flush.phase(), RetentionFlushPhase::Ready);
+                assert!(!fence.is_fenced());
+                close_row!(writer, owner, row, view, private, flush);
+                assert!(!fence.is_fenced());
+            }
+        );
+    });
+}
+
+/// S2W-R08 with a refusal before the stage other than Stale (the refusal
+/// table's "cancel의 stage 전 거절 → Before(같은 wrapper)"): a second
+/// Foreground owner holds a target-set read of the Root's frame, so the
+/// install's write acquisition of the Cancel's targets is refused Unchanged
+/// (Install, Frame Busy) before the stage. The cancel is Before on the same
+/// ReservedRow (same
+/// issued identity) with no WAL, file, page (every page of T with its stamp)
+/// or fence change, the gate still closed and the admission still charged.
+/// Once the read is returned, the retried cancel on that ReservedRow lands
+/// the literal's Cancel frame and Root, returns the same loan once and leaves
+/// no fence.
+#[test]
+fn s2w_r08_busy_target_cancel_is_before_then_retry_lands_the_literal() {
+    case("S2W-R08", || {
+        let oracle = Oracle::new();
+        with_fresh!(
+            oracle,
+            frames = 12,
+            |live, owner, flusher, status, undo, private, reader_private, core, fence, state| {
+                let (row_status, _) =
+                    create_table(live, owner, flusher, status, undo, private, true);
+                row_statement!(live, owner, flusher, private, reader_private, row_status
+                    => writer, reader, flush, row, view, table);
+                let _ = settle!(writer, owner, view, table, private, flush, flusher);
+                let (_, slot, _) = table.test_identity();
+                let pool = reader.catalog_test_pool();
+                let used = reader.catalog_test_source_used();
+                let charge = writer.catalog_test_retirement_charge() as u64;
+                let loan = private.as_ptr();
+                let mut preflight = ready!(writer, owner, view, table, private, flush);
+                let input = plan!(preflight);
+                let reserved = reserved!(preflight.reserve(input));
+                let issued = reserved.test_issued();
+                let effects = files(state);
+                let frames = t_frames(pool);
+                let mut holder = core.try_owner(OwnerRole::Foreground).unwrap();
+                let (root, _) = resident(pool, 1);
+                let (error, owned) =
+                    with_pins(pool, &mut holder, &[root], || before!(reserved.cancel()));
+                println!("S2W_R08 busy_root_read cancel={error:?}");
+                assert_eq!(
+                    (error.phase, error.effect),
+                    (RetentionPhase::Install, Effect::Unchanged)
+                );
+                assert!(!stale(&error));
+                assert!(matches!(error.cause, RetentionCause::Frame(frame)
+                    if frame.cause == dirty_frame::Cause::Busy));
+                assert_eq!(owned.test_issued(), issued);
+                assert_eq!(files(state), effects);
+                for (before, after) in frames.iter().zip(t_frames(pool)) {
+                    assert_eq!(*before, after, "page {}", before.0);
+                }
+                assert_eq!(root_counts(pool), ROOT_RESERVED);
+                assert!(hook::observe(core).read_gate_closed);
+                assert_eq!(reader.catalog_test_source_used(), used + charge);
+                assert!(!fence.is_fenced());
+                holder.check_idle().unwrap();
+                drop(holder);
+                let returned = cancelled!(owned.cancel());
+                assert_eq!(returned.as_ptr(), loan);
+                let frame = wal_since(state, effects.0);
+                println!(
+                    "S2W_R08 retry frame_bytes={} frame_sha={}",
+                    frame.len(),
+                    hex(&frame)
+                );
+                assert_eq!((frame.len(), hex(&frame).as_str()), CANCEL_FRAME);
+                assert_eq!(root_counts(pool), ROOT_CANCELLED);
+                assert_eq!(view.test_table_masks(), (1 << slot, 1 << slot));
+                assert!(!hook::observe(core).read_gate_closed);
+                assert_eq!(reader.catalog_test_source_used(), used);
                 assert!(!fence.is_fenced());
                 close_row!(writer, owner, row, view, private, flush);
                 assert!(!fence.is_fenced());
@@ -717,9 +815,12 @@ fn s2w_r22_cancel_checks_out_no_replay() {
 /// S2W-R23(2) (cancel half): after the Reserve's install, one control byte
 /// (`XOI_BYTE`) changed with the draft commitment not folded again. The
 /// cancel is Before Unchanged (Prepare, Frame Stale) on the same
-/// ReservedRow, with no WAL, file, page or issuer change (the transaction
-/// issuer's locals, the Root's high-waters, the Job cells the Reserve left);
-/// that ReservedRow's Drop leaves the fence.
+/// ReservedRow, with no WAL, file, page or issuer change (every page of T in
+/// the pool with its stamp, the transaction issuer's locals, the Root's
+/// high-waters, the Job cells the Reserve left); the wrapper keeps its
+/// admission charge. That ReservedRow's Drop leaves the fence, and the
+/// fenced ledger keeps the charge visible (§1 gate: an original Fatal keeps
+/// its charge under the fence).
 #[test]
 fn s2w_r23_control_byte_after_reserve_is_stale_cancel_then_drop_fences() {
     case("S2W-R23", || {
@@ -736,27 +837,37 @@ fn s2w_r23_control_byte_after_reserve_is_stale_cancel_then_drop_fences() {
                 let (_, slot, _) = table.test_identity();
                 let pool = reader.catalog_test_pool();
                 let locals = writer.row_test_locals();
+                let used = reader.catalog_test_source_used();
+                let charge = writer.catalog_test_retirement_charge() as u64;
                 let mut preflight = ready!(writer, owner, view, table, private, flush);
                 let input = plan!(preflight);
                 let mut reserved = reserved!(preflight.reserve(input));
                 let issued = reserved.test_issued();
                 let effects = files(state);
-                let pages = [1, 2, FREE_UNDO].map(|number| page_of(pool, number));
+                let frames = t_frames(pool);
                 reserved.test_flip_control(XOI_BYTE);
                 let (error, owned) = before!(reserved.cancel());
-                println!("S2W_R23 control_byte={XOI_BYTE} cancel={error:?}");
+                println!(
+                    "S2W_R23 control_byte={XOI_BYTE} cancel={error:?} t_pages={:?}",
+                    frames.iter().map(|frame| frame.0).collect::<Vec<_>>()
+                );
                 assert!(stale(&error));
                 assert_eq!(owned.test_issued(), issued);
                 assert_eq!(files(state), effects);
-                for (number, page) in [1, 2, FREE_UNDO].iter().zip(&pages) {
-                    assert_eq!(page_of(pool, *number), *page, "page {number}");
+                for (before, after) in frames.iter().zip(t_frames(pool)) {
+                    assert_eq!(*before, after, "page {}", before.0);
                 }
                 assert_eq!(root_counts(pool), ROOT_RESERVED);
                 assert!(hook::observe(core).read_gate_closed);
+                assert_eq!(reader.catalog_test_source_used(), used + charge);
                 assert!(!fence.is_fenced());
                 drop(owned);
                 assert!(fence.is_fenced());
                 assert!(!hook::observe(core).read_gate_closed);
+                assert_eq!(reader.catalog_test_source_used(), used + charge);
+                for (before, after) in frames.iter().zip(t_frames(pool)) {
+                    assert_eq!(*before, after, "page {}", before.0);
+                }
                 assert_eq!(writer.row_test_locals(), locals);
                 assert_eq!(
                     hex(writer.catalog_test_jobs().as_flattened()),
