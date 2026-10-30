@@ -1200,8 +1200,14 @@ pub(in super::super::super) fn row_reserve_body<W: WriterNamespace>(
     // ControlCut::capture and a commitment: hashers, the pinned SHA block
     // closure, the encoded actor and references and the digests.
     let fold = 2 * size_of::<ContentHasher>() + 1536 + 24 + 48 + 40 + 4 * size_of::<[u8; 32]>();
-    // One `request_from_image`.
-    let identity = 2 * size_of::<TargetRequest>() + 2 * size_of::<Cause<TargetRequest>>();
+    // One `request_from_image` with its page decode, as the lifecycle's
+    // `identity` term counts it.
+    let identity = 2 * size_of::<TargetRequest>()
+        + 2 * size_of::<Cause<TargetRequest>>()
+        + 4 * size_of::<crate::storage::page::PageHeader>()
+        + 2 * size_of::<crate::storage::page::PageView<'_>>()
+        + 4 * size_of::<ContentHasher>()
+        + 1536;
     // `before_targets` into a caller array.
     let targets = identity + 2 * size_of::<usize>() + 4 * reference;
     let shell = shell
@@ -1284,9 +1290,13 @@ pub(in super::super::super) fn row_reserve_body<W: WriterNamespace>(
     // The candidate digest beside its plan.
     let candidate = 2 * size_of::<ContentHasher>() + 2 * size_of::<[u8; 32]>() + 6 * reference;
     let roles = size_of::<Option<[u8; ROW_WRITE_TARGETS]>>() + 6 * size_of::<usize>();
-    // The group literal is built in the caller's slot (`held`); its payload
-    // values, the cut capture and the frame digest.
-    let assembled = size_of::<RowPayload<'_, '_, '_>>() + fold;
+    // The group's assembly as the lifecycle counts it (`row_start`'s
+    // `assembled`): the group literal and its Result twice in the assembling
+    // call, beside the payload values, the cut capture and the frame digest.
+    let assembled = size_of::<Group<'_>>()
+        + 2 * size_of::<Result<Group<'_>>>()
+        + size_of::<RowPayload<'_, '_, '_>>()
+        + fold;
     // `reserve_sources`: its own values, then T, the roles, the recompute,
     // the candidate and the table definition one after another.
     let sources_frame = size_of::<RowTableSource>()
