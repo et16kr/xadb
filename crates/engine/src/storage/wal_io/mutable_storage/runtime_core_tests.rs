@@ -123,7 +123,9 @@ fn runtime_core_source_memory() {
 #[test]
 fn runtime_core_source_native() {
     selected("RC-ST02", || {
-        static_source::<super::plan4_pages::native::Writer>("runtime-core-native", 984);
+        // 984 before the native adapter File stopped holding its 128-byte
+        // trace name inline; the owner retains one File.
+        static_source::<super::plan4_pages::native::Writer>("runtime-core-native", 856);
     });
 }
 
