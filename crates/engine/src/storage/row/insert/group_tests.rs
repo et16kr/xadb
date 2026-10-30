@@ -715,6 +715,43 @@ fn mca00_v06_descriptor_refusals_precede_output() {
     });
 }
 
+thread_local! {
+    /// Armed by a test: `before_aging` breaks the next Aging transition.
+    static BREAK_AGING: std::cell::Cell<bool> = const { std::cell::Cell::new(false) };
+}
+
+/// Test seam of `images::prepare`, called with the after Job cell just before
+/// the Aging transition reads it. When armed, it raises the cell's last step
+/// above the after Root's apply LSN, a relation only the Aging after census
+/// (`verify_selected_census`) checks, so `aging::next` itself refuses.
+pub(super) fn before_aging(job: &mut [u8; JOB_BYTES]) {
+    if BREAK_AGING.with(|armed| armed.replace(false)) {
+        job[376..384].copy_from_slice(&u64::MAX.to_le_bytes());
+    }
+}
+
+/// A1 of the A-W1 review: an Aging after census refusal, like every other
+/// refusal, comes before the first output byte. M1 had moved the transition
+/// after the Root after page was written into `after`; `prepare` now encodes
+/// that page into the A scratch and runs the transition there.
+#[test]
+fn mca00_v06_aging_after_census_refusals_precede_output() {
+    let census = InsertError::Aging(AgingObligationError::Retention(
+        crate::storage::retention_page::RetentionError::OrderMismatch,
+    ));
+    for case in [
+        Case::ForwardNoH,
+        Case::ForwardH,
+        Case::ClrNoH,
+        Case::ClrH,
+        Case::ForwardOrd,
+    ] {
+        refuses(case, census, |_| BREAK_AGING.with(|armed| armed.set(true)));
+        // The seam was reached, so the refusal came from the transition.
+        assert!(!BREAK_AGING.with(std::cell::Cell::get), "{case:?}");
+    }
+}
+
 /// writer_epoch0 would fail the envelope; LSN0 pages are genesis images.
 #[test]
 fn mca00_v06_header_and_zero_lsn_refusals_precede_output() {

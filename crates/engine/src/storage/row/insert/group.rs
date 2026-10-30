@@ -146,8 +146,8 @@ struct Changed<'a> {
 struct Scratch<'s> {
     /// `observe`'s Forward RowLeaf check (record and cell).
     leaf: &'s mut [u8; leaf::LEAF_SCRATCH_BYTES],
-    /// Job census aggregate of `observe`, then of `images::root` and
-    /// `images::root_page`, one after another.
+    /// Job census aggregate of `observe`, then of `images::root` and of the
+    /// Aging transition in `images::prepare`, one after another.
     aggregate: &'s mut [u8; 640],
     /// `observe`'s expected CLR U before cell.
     check: &'s mut [u8; undo_record::UNDO_RECORD_BYTES],
@@ -156,6 +156,8 @@ struct Scratch<'s> {
     undo: &'s mut [u8; undo_record::UNDO_RECORD_BYTES],
     status: &'s mut [u8; STATUS_HOME_BYTES],
     descriptors: &'s mut [u8; images::DESCRIPTORS_BYTES],
+    /// The Root after page, encoded and checked by `images::prepare`.
+    page: &'s mut [u8; PAGE_BYTES],
 }
 
 /// Bytes the regions of `Scratch` take, from offset0 in this order.
@@ -166,7 +168,8 @@ const SCRATCH_USED: usize = leaf::LEAF_SCRATCH_BYTES
     + ROOT_BYTES
     + undo_record::UNDO_RECORD_BYTES
     + STATUS_HOME_BYTES
-    + images::DESCRIPTORS_BYTES;
+    + images::DESCRIPTORS_BYTES
+    + PAGE_BYTES;
 const _: () = assert!(SCRATCH_USED <= SCRATCH_BYTES);
 
 /// The next `N` bytes of `rest` as an array.
@@ -191,6 +194,7 @@ impl<'s> Scratch<'s> {
             undo: take(&mut rest),
             status: take(&mut rest),
             descriptors: take(&mut rest),
+            page: take(&mut rest),
         }
     }
 }
@@ -226,9 +230,11 @@ struct Observed<'a> {
 /// the Forward record projection, the Root after cell, the exact Tx residual
 /// and the Aging before. A refusal therefore leaves frame/after untouched.
 /// The write pass only places prepared values and re-encodes checked images:
-/// first the Root after page, encoded straight into its `after` slot, and the
-/// Aging after bound to it (M1: no Root page copy is kept), then the other
-/// four pages and the frame. An error there is a broken internal invariant
+/// the Root after page, which `prepare` encoded into the A scratch and bound
+/// the Aging after to, is copied into its `after` slot (M1: no Root page is
+/// kept on the stack), then the other four pages and the frame are written.
+/// Every refusal, the Aging after census included, returns before the first
+/// output byte; an error in the write pass is a broken internal invariant
 /// and leaves frame/after unspecified.
 pub(super) fn produce(
     input: &GroupInput<'_>,
@@ -247,11 +253,11 @@ pub(super) fn produce(
         descriptors: scratch.descriptors,
         status_cell: scratch.status,
         aggregate: scratch.aggregate,
+        page: scratch.page,
     };
     images::prepare(&observed, &mut prepared)?;
 
     // Write pass: every input refusal has already returned above.
-    images::root_page(&observed, &mut prepared, after)?;
     images::pages(&observed, input, &mut prepared, frame, after)?;
     let output = &mut frame[..observed.frame_len];
     output.fill(0);

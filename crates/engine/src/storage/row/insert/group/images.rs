@@ -1,8 +1,8 @@
 //! Five changed page after images and both handoff descriptors. `prepare`
-//! computes every fallible after value before the first output byte. The
-//! write pass then encodes the Root after page straight into its `after` slot
-//! and binds the Aging after to it (`root_page`), and `pages` places the other
-//! four images; both only re-encode values `observe` and `prepare` checked.
+//! computes every fallible after value before the first output byte, the
+//! Root after page (in the A scratch) and the Aging transition bound to it
+//! included; `pages` then only places them and re-encodes images whose
+//! inputs `observe` checked.
 
 use super::{
     CLR_FIXED, Change, GroupInput, InsertError, Observed, Result, debt, encode_material, leaf,
@@ -105,55 +105,45 @@ pub(super) fn status(observed: &Observed<'_>) -> Result<StatusHome> {
 /// Tx then Aging descriptor after, frame bytes [416..3488).
 pub(super) const DESCRIPTORS_BYTES: usize = 2 * 1536;
 
-/// After values computed from the observation before any output byte. The
-/// Root after page itself is not kept here (M1): `root_page` encodes `root`
-/// straight into the Root's `after` slot in the write pass. Every byte
-/// buffer is an A scratch region (M2); only `status` is a stack value.
+/// After values computed from the observation before any output byte. Every
+/// byte buffer is an A scratch region (M2); only `status` is a stack value.
 pub(super) struct Prepared<'s> {
     pub(super) job: &'s mut [u8; JOB_BYTES],
     pub(super) status: StatusHome,
-    /// Root after cell; the Aging after binds the page encoded from it.
+    /// Root after cell, encoded into `page`.
     pub(super) root: &'s mut [u8; ROOT_BYTES],
     pub(super) undo: &'s mut [u8; UNDO_RECORD_BYTES],
     pub(super) descriptors: &'s mut [u8; DESCRIPTORS_BYTES],
     /// Status after cell that `pages` encodes.
     pub(super) status_cell: &'s mut [u8; STATUS_HOME_BYTES],
-    /// Job census aggregate of `root` and `root_page`.
+    /// Job census aggregate of `root` and of the Aging transition.
     pub(super) aggregate: &'s mut [u8; 640],
+    /// Root after page: encoded here, bound to the Aging after, and copied
+    /// into its `after` slot by `pages` (M1 keeps no Root page on the stack).
+    pub(super) page: &'s mut [u8; PAGE_BYTES],
 }
 
-/// Root after cell, U after cell and the Tx descriptor after. Root revision,
-/// the after Job census summary, Tx chain/consumed arithmetic and the CLR
-/// residual step are checked here; the Aging before was checked by `observe`.
+/// Root after cell and page, U after cell, the Tx descriptor after and the
+/// whole Aging transition bound to that page. Root revision, the after Job
+/// census summary, Tx chain/consumed arithmetic, the CLR residual step and
+/// the Aging after census (`aging::next`: high-waters, terminal and pair
+/// relations of the changed Job) are all checked here, before the write pass
+/// writes any output byte; the Aging before was checked by `observe`.
 pub(super) fn prepare(observed: &Observed<'_>, prepared: &mut Prepared<'_>) -> Result<()> {
     root(observed, prepared.job, prepared.root, prepared.aggregate)?;
+    row::encode_root_page(prepared.root, observed.namespace, prepared.page)?;
     encode_material(observed, observed.forward, prepared.undo)?;
-    let (transaction, _) = prepared.descriptors.split_at_mut(1536);
+    let (transaction, aging_after) = prepared.descriptors.split_at_mut(1536);
     descriptor(observed, prepared.status, transaction)?;
-    Ok(())
-}
-
-/// First write of the write pass: the Root after page, encoded from the
-/// prepared cell straight into its `after` slot (M1; `encode_root_page`
-/// checks the cell before it writes), then the whole Aging transition bound
-/// to that page into the Aging descriptor after. Its before was checked by
-/// `observe` and its Root and Job inputs by `prepare`, so an Aging refusal
-/// here is a broken internal invariant like any write-pass error: it leaves
-/// frame/after unspecified, which C ignores after a producer error.
-pub(super) fn root_page(
-    observed: &Observed<'_>,
-    prepared: &mut Prepared<'_>,
-    after: &mut [[u8; PAGE_BYTES]; 5],
-) -> Result<()> {
+    #[cfg(test)]
+    super::super::group_tests::before_aging(prepared.job);
     let index = role_index(observed, RowPageRole::Root);
-    row::encode_root_page(prepared.root, observed.namespace, &mut after[index])?;
-    let (_, aging_after) = prepared.descriptors.split_at_mut(1536);
     aging::next(
         AgingTransition {
             profile: observed.profile,
             before_descriptor: Some(observed.aging),
             before_root: observed.pages[index].before,
-            after_root: &after[index],
+            after_root: prepared.page,
             jobs: JobCells::original(observed.jobs).replace(observed.ordinal, prepared.job)?,
         },
         prepared.aggregate,
@@ -201,8 +191,8 @@ fn header(observed: &Observed<'_>, index: usize) -> PageHeader {
     }
 }
 
-/// Write the other four after images in physical order; `root_page` wrote
-/// the Root's. The frame is used only as row/cell scratch here and is cleared
+/// Write the five after images in physical order, the Root's as a copy of
+/// the page `prepare` checked. The frame is used only as row/cell scratch here and is cleared
 /// by the caller before framing. Every input refusal already returned from
 /// `observe` or `prepare`.
 pub(super) fn pages(
@@ -218,7 +208,7 @@ pub(super) fn pages(
     for (index, output) in after.iter_mut().enumerate() {
         let page = observed.pages[index];
         match page.role {
-            RowPageRole::Root => {}
+            RowPageRole::Root => output.copy_from_slice(&prepared.page[..]),
             RowPageRole::RootJob => {
                 let base = observed.ordinal / 15 * 15;
                 let count = if base == 60 { JOB_COUNT - 60 } else { 15 };
