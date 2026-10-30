@@ -36,15 +36,15 @@ use crate::storage::{
 use crate::transaction::concurrency::catalog_test_support as hook;
 
 /// The one value of T's row (`i`, Int64, not null).
-const VALUE: i64 = 7;
+pub(super) const VALUE: i64 = 7;
 /// The S2W-R06 and S2W-R09 authors (stdlib Python that imports the pinned N1
 /// author and no product code) and their outputs, from the repository root.
 const AUTHOR: &str = "tests/fixtures/dev3-module-c3/row-write";
 /// The fixture's WAL complete LSN before the reserve; the RowReserve is the
 /// next LSN and its Forward the one after.
-const PREVIOUS_LSN: u64 = 14;
+pub(super) const PREVIOUS_LSN: u64 = 14;
 /// The literal RowReserve frame (expected.json): its bytes and SHA-256.
-const RESERVE_FRAME: (usize, &str) = (
+pub(super) const RESERVE_FRAME: (usize, &str) = (
     57_336,
     "6e3badc82e1864c405f846a05372e2367f6a266a10e0a4e0c8c3d28267870fbe",
 );
@@ -202,13 +202,13 @@ macro_rules! live_replay {
 
 /// (WAL file length, every file image) of the directory: an effect is any
 /// change of either.
-fn files(state: &State) -> (usize, Images) {
+pub(super) fn files(state: &State) -> (usize, Images) {
     let state = state.lock().unwrap();
     (state.files["d3-wal-00000001"].bytes.len(), state.images())
 }
 
 /// The bytes the WAL file gained from `from` on.
-fn wal_since(state: &State, from: usize) -> Vec<u8> {
+pub(super) fn wal_since(state: &State, from: usize) -> Vec<u8> {
     state.lock().unwrap().files["d3-wal-00000001"].bytes[from..].to_vec()
 }
 
@@ -238,7 +238,7 @@ fn t_frames(
 }
 
 /// The commitment refusal: Before Unchanged (Prepare, Frame Stale).
-fn stale(error: &RetentionError) -> bool {
+pub(super) fn stale(error: &RetentionError) -> bool {
     (error.phase, error.effect) == (RetentionPhase::Prepare, Effect::Unchanged)
         && matches!(error.cause, RetentionCause::Frame(frame)
             if frame.cause == dirty_frame::Cause::Stale)

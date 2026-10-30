@@ -55,7 +55,7 @@ const RESERVE_FRAME: (usize, &str) = (
 /// SHA-256 of the 64 Job cells the RowReserve leaves (expected.json `bank`).
 const RESERVED_JOBS: &str = "e74d3a7218763061365b3261373e41506f2537f82fb07951000f8049e41438cf";
 /// The literal Cancel frame (expected-cancel.json): its bytes and SHA-256.
-const CANCEL_FRAME: (usize, &str) = (
+pub(super) const CANCEL_FRAME: (usize, &str) = (
     40_000,
     "c2b02eaa12afa2c12eb0427ad8a6deb9746ccb884571ab3157928fa6ba6aee4b",
 );

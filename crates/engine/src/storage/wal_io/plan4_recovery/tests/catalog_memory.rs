@@ -1238,3 +1238,6 @@ mod row_forward;
 
 #[path = "catalog_memory/row_cancel.rs"]
 mod row_cancel;
+
+#[path = "catalog_memory/row_live.rs"]
+mod row_live;
