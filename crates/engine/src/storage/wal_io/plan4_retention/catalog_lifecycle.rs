@@ -516,7 +516,7 @@ impl<'b, 'a, 's, 'c, 'p, 'd, 'm, 'w, W: WriterNamespace>
         // Live Cancel retains its delta in the linear reservation until pair
         // cleanup; the closed recovery Cancel has no active epoch map yet.
         // Row Begin/RollbackStart/AbortEnd publish no epoch (ROW-BEGIN-001),
-        // nor does RowReserve (the Row epoch is Commit's, S3).
+        // nor do RowReserve and its Forward (the Row epoch is Commit's, S3).
         let epoch_change = match group {
             ExistingGroup::Catalog(prepared) if prepared.operation() != Operation::Cancel => {
                 visibility
@@ -652,7 +652,8 @@ impl<'b, 'a, 's, 'c, 'p, 'd, 'm, 'w, W: WriterNamespace>
 pub(super) enum ExistingGroup<'p, 'i, 'c, 's> {
     Catalog(&'p PreparedCatalog<'i, 'c, 's>),
     Row(&'p row::PreparedRowGroup<'i, 'c, 's>),
-    /// A Row write group over the whole write target set (S2-b2: RowReserve).
+    /// A Row write group over the whole write target set (S2-b2: RowReserve;
+    /// S2-c: its Forward).
     RowWrite(&'p row::PreparedRowGroup<'i, 'c, 's, { row::ROW_WRITE_TARGETS }>),
 }
 impl<'p, 'i, 'c, 's> ExistingGroup<'p, 'i, 'c, 's> {

@@ -3,7 +3,8 @@
 //! These are size_of inventories in the repository's source-bound sense, not
 //! stack measurements. The preflight phase is the census of its actual body
 //! (S2-b1, `row_preflight_body`), and so are `validation_lane` and
-//! `reserve` (S2-b2, `row_validation_lane_body`, `row_reserve_body`); every
+//! `reserve` (S2-b2, `row_validation_lane_body`, `row_reserve_body`) and
+//! `producer_lane`, `prepare` and `apply` (S2-c, `row_forward_body`); every
 //! other C phase is still an upper estimate composed from existing census
 //! terms and the final S2-a types (`RowWriteBodies`), printed with its terms;
 //! it is not a measured phase.
@@ -94,7 +95,10 @@ fn phase_census<W: WriterNamespace>(id: &str, writer: &str) {
             "{id} phase={} kind={} body={} carriers={} c_total={c_total} bound={} \
              total={total} charge={charge} room_for_caller={room} c_margin={} fits={}",
             phase.name,
-            if matches!(phase.name, "preflight" | "validation_lane" | "reserve") {
+            if matches!(
+                phase.name,
+                "preflight" | "validation_lane" | "reserve" | "producer_lane" | "prepare" | "apply"
+            ) {
                 "actual"
             } else {
                 "estimate"
@@ -395,6 +399,87 @@ fn s2w_c06_row_write_c_margins_against_both_bounds() {
             reserve_margin >= 0,
             "S2W_C06 {writer} reserve body margin {reserve_margin} < 0"
         );
+        // The actual Forward bodies (S2-c) beside their S2-a′ estimates, with
+        // the one suspended level of `prepare` (an Observation carrier) and of
+        // `apply` (the Row group return carrier); the producer lane has none.
+        let forward = terms.forward_body;
+        let margin_of = |name, body: usize| {
+            charge as i64 - (body + carriers(name)) as i64 - ROW_WRITE_CALLER_BYTES as i64
+        };
+        let lane_margin = margin_of("producer_lane", forward.producer_lane);
+        let prepare_margin = margin_of("prepare", forward.prepare);
+        let apply_margin = margin_of("apply", forward.apply);
+        println!(
+            "S2W_C06 writer={writer} producer_lane_body actual={} estimate={} \
+             actual_minus_estimate={} lane_shell={} context={} control={} carriers={} \
+             c_total={} bound={ROW_WRITE_CALLER_BYTES} charge={charge} c_margin={lane_margin}",
+            forward.producer_lane,
+            terms.producer_lane_estimate,
+            forward.producer_lane as i64 - terms.producer_lane_estimate as i64,
+            forward.lane_shell,
+            forward.lane_context,
+            forward.lane_control,
+            carriers("producer_lane"),
+            forward.producer_lane + carriers("producer_lane"),
+        );
+        println!(
+            "S2W_C06 writer={writer} prepare_body actual={} estimate={} actual_minus_estimate={} \
+             shell={} arms={} frame={} entry={} held={} suspended_level=\"{}\" levels={} \
+             group={} recompute={} observe={} calls={} carriers={} c_total={} \
+             bound={ROW_WRITE_CALLER_BYTES} charge={charge} c_margin={prepare_margin}",
+            forward.prepare,
+            terms.prepare_estimate,
+            forward.prepare as i64 - terms.prepare_estimate as i64,
+            forward.prepare_shell,
+            forward.prepare_arms,
+            forward.prepare_frame,
+            forward.entry,
+            forward.prepare_held,
+            super::super::create_pair::catalog_live::lifecycle::row::write::forward::PREPARE_SUSPENDED_LEVEL,
+            terms.suspended_levels,
+            forward.prepare_group,
+            forward.recompute,
+            forward.observe,
+            forward.prepare_calls,
+            carriers("prepare"),
+            forward.prepare + carriers("prepare"),
+        );
+        println!(
+            "S2W_C06 writer={writer} apply_body actual={} estimate={} actual_minus_estimate={} \
+             shell={} arms={} frame={} entry={} held={} suspended_level=\"{}\" levels={} \
+             group={} recompute={} reassemble={} register={} install={} carriers={} c_total={} \
+             bound={ROW_WRITE_CALLER_BYTES} charge={charge} c_margin={apply_margin}",
+            forward.apply,
+            terms.apply_estimate,
+            forward.apply as i64 - terms.apply_estimate as i64,
+            forward.apply_shell,
+            forward.apply_arms,
+            forward.apply_frame,
+            forward.entry,
+            forward.apply_held,
+            super::super::create_pair::catalog_live::lifecycle::row::write::forward::APPLY_SUSPENDED_LEVEL,
+            terms.suspended_levels,
+            forward.apply_group,
+            forward.recompute,
+            forward.reassemble,
+            forward.register,
+            forward.install,
+            carriers("apply"),
+            forward.apply + carriers("apply"),
+        );
+        assert_eq!(terms.producer_lane, forward.producer_lane);
+        assert_eq!(terms.prepare, forward.prepare);
+        assert_eq!(terms.apply, forward.apply);
+        for (name, margin) in [
+            ("producer_lane", lane_margin),
+            ("prepare", prepare_margin),
+            ("apply", apply_margin),
+        ] {
+            assert!(
+                margin >= 0,
+                "S2W_C06 {writer} {name} body margin {margin} < 0"
+            );
+        }
         for phase in row_write_phases::<W>() {
             let c_total = phase.body + phase.carriers;
             let margin = charge as i64 - c_total as i64 - phase.bound as i64;

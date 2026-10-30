@@ -98,9 +98,10 @@ impl<'c, 's> GroupPayload<'c, 's> for RowPayload<'_, 'c, 's> {
 
 /// One prepared Row group with its original targets and stamps. No
 /// Clone/Copy and no raw constructor: only `prepare_existing_row` (the
-/// lifecycle, `T` = `ROW_TARGETS`) and `write::prepare_reserve` (`T` =
-/// `ROW_WRITE_TARGETS`) build it, and the install body borrows it once. The
-/// default keeps the lifecycle's type, and so its census, unchanged.
+/// lifecycle, `T` = `ROW_TARGETS`), `write::prepare_reserve` and
+/// `write::forward::prepare_forward_apply` (`T` = `ROW_WRITE_TARGETS`) build
+/// it, and the install body borrows it once. The default keeps the
+/// lifecycle's type, and so its census, unchanged.
 pub(in super::super) struct PreparedRowGroup<'i, 'c, 's, const T: usize = ROW_TARGETS> {
     payload: RowPayload<'i, 'c, 's>,
     owner: OwnerIdentity,
@@ -121,9 +122,12 @@ impl<'i, 'c, 's, const T: usize> PreparedRowGroup<'i, 'c, 's, T> {
         )
     }
     /// The supplied Row write operations over the whole write target set:
-    /// RowReserve (S2-b2). Forward and Cancel are later units'.
+    /// RowReserve (S2-b2) and Forward (S2-c). Cancel is a later unit's.
     pub(super) fn row_write(&self) -> bool {
-        self.payload.observation.operation == row_semantic::Operation::Reserve
+        matches!(
+            self.payload.observation.operation,
+            row_semantic::Operation::Reserve | row_semantic::Operation::Forward
+        )
     }
     pub(super) fn check(
         &self,

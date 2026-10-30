@@ -57,6 +57,9 @@ const MIN_CANONICAL: usize = 5;
 #[path = "row_write_tests.rs"]
 mod tests;
 
+#[path = "row_forward.rs"]
+pub(in super::super::super::super::super) mod forward;
+
 /// What a completed RowReserve hands `PreflightRow::reserve`: the issued
 /// identity of the one `RowSlotReservation` and the draft cut. Scalars only;
 /// no pin, loan or authority.
@@ -406,9 +409,10 @@ impl<'x, P: Iterator<Item = &'x [u8; PAGE_BYTES]>> DraftSource<'x, P> {
     }
 }
 
-// S2W-R07: the next reserve recompute on this thread sees T's first stamp
-// with its modification counter moved by one, once. No page, control or WAL
-// byte changes; the next recompute sees the pool again.
+// S2W-R07, S2W-R21(1): the next reserve recompute or kind-2 recompute
+// (`draft_recompute`) on this thread sees T's first stamp with its
+// modification counter moved by one, once. No page, control or WAL byte
+// changes; the next recompute sees the pool again.
 #[cfg(test)]
 thread_local! {
     static TEST_STALE_STAMP: std::cell::Cell<bool> = const { std::cell::Cell::new(false) };
@@ -714,12 +718,15 @@ impl<'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
     /// nothing against the cut's commitment: `reserve`'s recompute refuses any
     /// change before an effect. A copy that does not decode contradicts
     /// preflight's own checks of it (Fatal); nothing is written. Returns the
-    /// context and the RowLeaf's before position.
+    /// context and the RowLeaf's before position. `roles` and `leaf_free` are
+    /// the preflight cut's, or the draft's role map and the RowLeaf free
+    /// bytes of its before image for the producer lane (S2-c), which rebuilds
+    /// the same context from the same copies.
     pub(in super::super::super::super::super) fn row_validation_context(
         &self,
         owner: &mut Owner<'c, 's>,
         table: RowTableSource,
-        cut: &RowPreflightCut,
+        (roles, leaf_free): (RowRoleMap, u16),
         private: &[u8; 425_984],
     ) -> Result<(RowPreflightContext, usize)> {
         let storage = self.storage;
@@ -752,8 +759,8 @@ impl<'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
         let length = u16::try_from(value.len()).map_err(|_| invariant())?;
         let index_count = table_index_count(schema, catalog.identity, table, namespace)
             .map_err(|_| invariant())?;
-        let count = usize::try_from(cut.roles >> 36).map_err(|_| invariant())?;
-        let leaf_at = role_position(cut.roles, RowSourceRole::RowLeaf)
+        let count = usize::try_from(roles >> 36).map_err(|_| invariant())?;
+        let leaf_at = role_position(roles, RowSourceRole::RowLeaf)
             .filter(|at| *at < count && count <= 9)
             .ok_or_else(invariant)?;
         let start = RowLoanLayout::BEFORE.start + leaf_at * PAGE_BYTES;
@@ -781,7 +788,7 @@ impl<'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
                 level: 0,
                 arity: 0,
             },
-            leaf_free_bytes: usize::from(cut.leaf_free),
+            leaf_free_bytes: usize::from(leaf_free),
             canonical_capacity: INLINE_ROW_BYTES,
             index_count,
             catalog_source: (stamp, content_digest(value)),

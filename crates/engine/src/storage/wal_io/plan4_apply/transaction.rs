@@ -645,6 +645,27 @@ impl<'t, 'v, 'a, 'c, 's> RowStatementView<'t, 'v, 'a, 'c, 's> {
         Ok(self.sequence)
     }
 
+    /// The live statement's mark (the ATT `undo_head` its begin wrote): the
+    /// Forward producer context's statement mark (S2-c).
+    pub(super) fn row_mark(&self) -> Result<Option<UndoRef>> {
+        self.check()?;
+        Ok(self.mark)
+    }
+
+    /// A durable Forward of this statement (S2-c): the view's revision moves
+    /// by one, so a B cursor of the same statement sees its own mutation
+    /// (MCB04-V06/V11). RAM only; only C changes it.
+    pub(super) fn row_applied(&self) -> Result<()> {
+        self.check()?;
+        let next = self
+            .revision
+            .get()
+            .checked_add(1)
+            .ok_or_else(|| fail(self.transaction.lease.fence, RetentionCause::Invariant))?;
+        self.revision.set(next);
+        Ok(())
+    }
+
     /// Register the checked table's write bit (T10 write mask @8) for a Row
     /// write: in `reserve` after the table recheck and before the WAL stage,
     /// and again in `apply` before its stage (S2-0 Row write amendment §6).

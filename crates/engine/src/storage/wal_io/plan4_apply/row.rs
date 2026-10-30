@@ -2,19 +2,21 @@
 //!
 //! These wrappers fix the borrow, lifetime and ownership shape that the A and B
 //! product bodies call. `MutationPort::preflight_row` runs the actual
-//! preflight (S2-b1, `#row-write-validate-once`), and
+//! preflight (S2-b1, `#row-write-validate-once`),
 //! `PreflightRow::validation_lane` and `PreflightRow::reserve` the actual lane
-//! and RowReserve (S2-b2). Every other factory returns an effect-free
-//! `Unsupported` before any source guard, pin, admission, WAL or page effect:
-//! the actual producer lane, prepare, apply, cancel, Row read source, rollback
-//! and Commit adapters are later C2/C3 supplies. A `ReservedRow` dropped while
-//! its reservation is active fences the session (S2W-R23(2)), so until cancel
-//! is supplied (S2-d) a driver that stops after a successful reserve ends
-//! fenced. No constructor accepts a raw TxnRef/UndoRef/RowId/q, and no value
-//! here is an install, terminal or READY receipt.
+//! and RowReserve (S2-b2), and `ReservedRow::producer_lane`,
+//! `ReservedRow::prepare` and `PreparedRow::apply` the actual Forward path
+//! (S2-c). Every other factory returns an effect-free `Unsupported` before
+//! any source guard, pin, admission, WAL or page effect: the actual cancel,
+//! Row read source, rollback and Commit adapters are later C2/C3 supplies. A
+//! `ReservedRow` dropped while its reservation is active fences the session
+//! (S2W-R23(2)), so until cancel is supplied (S2-d) a driver that stops after
+//! a successful reserve without a Forward ends fenced. No constructor accepts
+//! a raw TxnRef/UndoRef/RowId/q, and no value here is an install, terminal or
+//! READY receipt.
 #![allow(
     dead_code,
-    reason = "actual Row source, producer, cancel and rollback adapters are not supplied yet"
+    reason = "actual Row source, cancel and rollback adapters are not supplied yet"
 )]
 
 use super::*;
@@ -265,21 +267,25 @@ pub(super) struct RowDraftCut {
 /// compared the whole declared frame and every after page; checked by `apply`
 /// before the stage. The source cut it was checked against is the draft's,
 /// held by the same reservation.
-struct RowPreparedCut {
+pub(super) struct RowPreparedCut {
     /// SHA-256 of the checked frame bytes `[0, frame_len)`.
-    frame: [u8; 32],
-    /// SHA-256 over the after count, roles and every checked after page.
-    after: [u8; 32],
+    pub(super) frame: [u8; 32],
+    /// SHA-256 over the after count, roles and every checked after page in
+    /// physical order, then the XOI successor page `prepare` encoded beside
+    /// them (S2-c): `apply` reassembles the group from the loan without the
+    /// observer or the inventory projection, so this digest covers every
+    /// byte the install takes from the loan besides the frame.
+    pub(super) after: [u8; 32],
     /// LSN the frame header claims; the stage requires it to be next.
-    lsn: u64,
+    pub(super) lsn: u64,
     /// Checked frame length: the WAL bytes the stage consumes.
-    frame_len: u32,
+    pub(super) frame_len: u32,
     /// `RowPageRole` of each after page in physical order, three bits each.
-    after_roles: u16,
+    pub(super) after_roles: u16,
     /// Changed pages (≤ 5).
-    after_count: u8,
+    pub(super) after_count: u8,
     /// 0 Forward, 1 CLR (`RowOperation`).
-    operation: u8,
+    pub(super) operation: u8,
 }
 
 /// Most bytes of any one cut (S2-0 Row write amendment §4, S2W-C05).

@@ -1697,8 +1697,10 @@ pub(in super::super) struct CatalogLiveSource {
 /// preflight's with the actual body census (`preflight_body`), and keeps the
 /// estimate beside it (`preflight_estimate`) for S2W-C06; S2-b2 did the same
 /// for `reserve` (`reserve_body`, `reserve_estimate`) and `validation_lane`
-/// (`validation_lane_estimate`). `cancel` keeps reserve's estimate until
-/// S2-d supplies its body.
+/// (`validation_lane_estimate`); S2-c did the same for `producer_lane`,
+/// `prepare` and `apply` (`forward_body`, `producer_lane_estimate`,
+/// `prepare_estimate`, `apply_estimate`). `cancel` keeps reserve's estimate
+/// until S2-d supplies its body.
 ///
 /// The phases are composed as the S2-0b amendment (Row write validate-once)
 /// decides:
@@ -1724,6 +1726,10 @@ pub(in super::super) struct CatalogLiveSource {
 ///   (`ROW_WRITE_SUSPENDED_LEVELS`); each costs a whole `return_slot`.
 ///   RowReserve's level is `reserve_group`'s `group`
 ///   (`RESERVE_SUSPENDED_LEVEL`); its deep checks and draft run beside it.
+///   The Forward `prepare`'s level is `prepare_forward`'s `observation`, an
+///   Observation carrier (`PREPARE_SUSPENDED_LEVEL`), and `apply`'s is
+///   `forward_group`'s `group` (`APPLY_SUSPENDED_LEVEL`); the deep checks
+///   of both run beside them, and the producer lane has none.
 /// - `apply` rechecks at the stage by recomputing the draft commitment, with
 ///   its page and control digests, and comparing the prepared frame/after
 ///   digests only. It does not run `validate_live`, the observer or the XOI
@@ -1819,10 +1825,21 @@ pub(in super::super) struct RowWriteBodies {
     pub(in super::super) reserve_body: lifecycle::row::write::RowReserveBody,
     /// The charged RowReserve body: `reserve_body.body`.
     pub(in super::super) reserve: usize,
+    /// The S2-a′ upper estimates of `producer_lane`, `prepare` and `apply`;
+    /// printed beside the actual census, no longer charged.
+    pub(in super::super) producer_lane_estimate: usize,
+    pub(in super::super) prepare_estimate: usize,
+    pub(in super::super) apply_estimate: usize,
+    /// The actual Forward census (S2-c, `row_forward_body`), with the
+    /// suspended levels of `prepare` and `apply` (`PREPARE_SUSPENDED_LEVEL`,
+    /// `APPLY_SUSPENDED_LEVEL`).
+    pub(in super::super) forward_body: lifecycle::row::write::forward::RowForwardBody,
+    /// The charged producer lane: `forward_body.producer_lane`.
     pub(in super::super) producer_lane: usize,
-    /// The Forward `ReservedRow::prepare`. The CLR task's prepare is S4's own
-    /// entry census.
+    /// The Forward `ReservedRow::prepare`, charged as `forward_body.prepare`.
+    /// The CLR task's prepare is S4's own entry census.
     pub(in super::super) prepare: usize,
+    /// The charged `PreparedRow::apply`: `forward_body.apply`.
     pub(in super::super) apply: usize,
     pub(in super::super) cancel: usize,
     pub(in super::super) finish: usize,
@@ -2328,7 +2345,7 @@ pub(in super::super) fn row_write_bodies<W: WriterNamespace>() -> RowWriteBodies
     // S2-b2 supplies the lane body: its census, with the context decode,
     // replaces the estimate.
     let validation_lane = lifecycle::row::write::row_validation_lane_body::<W>(shell);
-    let producer_lane = lane + 2 * size_of::<RowProducerContext>();
+    let producer_lane_estimate = lane + 2 * size_of::<RowProducerContext>();
     // D: the deep check, the chain recheck and the group preparation hold the
     // suspended return slots; the group carriers exist only from assembly to
     // the install or return.
@@ -2345,12 +2362,24 @@ pub(in super::super) fn row_write_bodies<W: WriterNamespace>() -> RowWriteBodies
         (group_install, group.inventory),
     );
     let reserve = reserve_body.body;
-    let prepare =
+    let prepare_estimate =
         shell + (held + check.max(commit).max(group_typed)).max(group_carriers + group_reassemble);
-    let apply = shell
+    let apply_estimate = shell
         + (held + check.max(commit).max(group_reassemble))
             .max(register)
             .max(group_carriers + group_install);
+    // S2-c supplies the Forward bodies: their census replaces the three
+    // estimates, with preflight's deep-check and registration terms for the
+    // same calls.
+    let forward_body = lifecycle::row::write::forward::row_forward_body::<W>(
+        shell,
+        preflight_body.check,
+        preflight_body.register,
+        (group_install, group.inventory),
+    );
+    let producer_lane = forward_body.producer_lane;
+    let prepare = forward_body.prepare;
+    let apply = forward_body.apply;
     // Cancel's body is S2-d's; until then it keeps reserve's estimate.
     let cancel = reserve_estimate;
     RowWriteBodies {
@@ -2381,6 +2410,10 @@ pub(in super::super) fn row_write_bodies<W: WriterNamespace>() -> RowWriteBodies
         reserve_estimate,
         reserve_body,
         reserve,
+        producer_lane_estimate,
+        prepare_estimate,
+        apply_estimate,
+        forward_body,
         producer_lane,
         prepare,
         apply,
