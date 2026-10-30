@@ -1,5 +1,7 @@
 # 현재 구현
 
+2026-10-30 [S2-b1 Row 쓰기 preflight 본문](../evidence/module-independence-survey-20261026.md#s2b1-row-preflight): Row INSERT의 preflight가 실제로 동작한다(상주 적재, flush 요구, Free Undo 선택, 행당 한 번의 검증). reserve 이후는 아직 Unsupported다.
+
 2026-10-30 [A-W1 A driver 축소와 호출 지점별 몫](../evidence/module-independence-survey-20261026.md#a-w1-driver): first Row INSERT의 A driver가 Row 쓰기 charge 안에 든다. preflight가 flush를 요구하면 flush한 뒤 같은 행을 다시 시도한다.
 
 2026-10-30 [S2-a′ RowWrite census 재계수](../evidence/module-independence-survey-20261026.md#s2a-prime-census): Row 쓰기 C 단계가 A driver 몫(preflight 6144B, 나머지 11520B)을 남기고 charge 안에 든다. 동작은 아직 Unsupported다.

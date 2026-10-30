@@ -9333,5 +9333,28 @@
     "remaining_supply": "rerun D15 on top of S2-b1 (preflight cut scalars); the unit that supplies the driver's caller reruns D15 with its frame; S2-b evidence decides whether the flusher census covers A's flush-site share; name MaintenancePort::phase and RetentionFlushPhase in the next contract edit",
     "source_roots_changed": false,
     "artifact_manifest_sha256": "69d1890e5dbcc9e8e8a8e392977df11ef42d82374eb04ddec7dfa6e4dfe396c7"
+  },
+  "dev3_module_s2b1_row_preflight": {
+    "status": "LOCAL_VERIFIED_REVIEWED",
+    "contract_ref": "dev3-module-boundaries.md#row-write-validate-once",
+    "evidence_ref": "module-independence-survey-20261026.md#s2b1-row-preflight",
+    "baseline_commit": "fa622d5",
+    "integration_base": "be79fa9",
+    "branch": "claude/project-thread-h2j8oc",
+    "commits": [
+      "768bdbf",
+      "3404879",
+      "38bc4f1",
+      "21b56f4",
+      "6a233e2",
+      "5767b2e"
+    ],
+    "source_branch": "module-s2b1 f845c77",
+    "rollback": "git revert 5767b2e 6a233e2 21b56f4 38bc4f1 3404879 768bdbf, after S2-b2..S2-d are reverted",
+    "scope": "S2-b1: real preflight_row body (gate-before checks, close_reads_for_terminal, RowWrite admission, deep checks, residency with FlushRequired, Free Undo selection, one validate_live and T arena compare, SCHEMA/BEFORE copies, XRWC commitment, registration, cut); LOAD body shared through RetentionLoadPort; A7 decision (no new cut scalars); actual preflight census",
+    "validation": "independent review ACCEPT (0 required, 12 advisory; routed to S2-b2 or recorded); rounds b0 98/4, b2 98/4 (same pre-existing 4) with compiler inputs 17/17, integration i1 at 5767b2e 127/127 with compiler inputs 17/17 and MCA00-D15 unchanged; check, workspace check, gate Clippy clean; actual preflight C total 37048, C margin +1112 B",
+    "remaining_supply": "S2-b2 (validation_lane, reserve) with review follow-ups A1-A7 A10-A12 and conditions A2; contract effect table preflight values to be replaced by the actual census in the next contract edit; LiveCall end-to-end FlushRequired test in S2-d",
+    "source_roots_changed": false,
+    "artifact_manifest_sha256": "53e651c4a0eab40e65a95dbb6ba6f69f0f0b809f52d8359c28abe1b6314da271"
   }
 }

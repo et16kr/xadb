@@ -1,5 +1,7 @@
 # XADB 모듈 독립 개발 구조 전환 작업 계획
 
+2026-10-30 [S2-b1 Row 쓰기 preflight 본문](../evidence/module-independence-survey-20261026.md#s2b1-row-preflight): 행당 한 번의 `validate_live`·arena 검산과 commitment를 가진 실제 preflight가 들어갔다. 실제 census는 C 쪽 여유 +1112B로 상한 안이고, 새 시험 17건과 통합 시험 127건이 통과했다. 다음은 S2-b2(reserve)다.
+
 2026-10-30 [A-W1 A driver 축소와 호출 지점별 몫](../evidence/module-independence-survey-20261026.md#a-w1-driver): M1·M2로 A producer가 50790 → 19260B로 줄었고, MCA00-D15에서 모든 C 호출 지점의 A 몫이 상한 안이다(preflight 3264/6144, 나머지 최대 6552/11520). M7은 필요 없다. `FlushRequired` 뒤 flush와 재시도가 들어갔다.
 
 2026-10-30 [S2-a′ RowWrite census 재계수](../evidence/module-independence-survey-20261026.md#s2a-prime-census): S2-0b대로 C 단계 상계를 다시 세고 A 몫 상한을 preflight 6144B·나머지 11520B로 나눴다. 모든 단계의 C 쪽 여유가 양수다(최소 prepare 1147B). 다음은 S2-b1과 A-W1이다.

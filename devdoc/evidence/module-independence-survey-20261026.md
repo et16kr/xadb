@@ -4556,3 +4556,45 @@ manifest는 `plans/s2-0b/manifest-s2-0b.sha256`(SHA-256 `d029d5ce98a2bd60060e046
 - 남은 일: S2-b1이 들어오면 그 위에서 D15를 다시 돌린다(preflight cut의 scalar가 바뀔 수 있다).
 
 **되돌림.** 최신부터 되돌린다. A-W1은 S2-e 전 진입 조건이므로 S2-e를 되돌린 뒤에 되돌린다. artifact는 `module-independence-20261029/artifacts/module-aw1-20261030/`(검토서, 증거 원문, b0·h1·h2·i1 로그, 도구, `manifest-all.sha256` SHA-256 `69d1890e5dbcc9e8e8a8e392977df11ef42d82374eb04ddec7dfa6e4dfe396c7`)에 있다.
+
+<a id="s2b1-row-preflight"></a>
+## 2026-10-30 S2-b1 Row 쓰기 preflight 본문과 실제 census
+
+S2-0 1항의 preflight 순서와 [S2-0b](#s2-0b-validate-once) 결정 1(행당 한 번의 `validate_live`·T arena 검산과 XRWC commitment)을 공급했다. `preflight_row`가 Unsupported 대신 Ready, `FlushRequired{target}`, 거절 표의 오류를 돌려준다. 그래서 [A-W1](#a-w1-driver)의 flush·재시도 경로가 이제 실제로 닿는다. 별도 worktree(branch `module-s2b1`, base `ccab15c` + `eb19bc0`)에서 만든 뒤 `be79fa9` 위로 옮겼다.
+
+| 이 branch | 원 commit | 내용 |
+| --- | --- | --- |
+| `768bdbf` | `30afb02` | retention LOAD 본문을 ReadPort와 MutationPort가 함께 쓰는 trait(`RetentionLoadPort`)로 옮김. 동작 변화 없음 |
+| `3404879` | `b3f3028` | preflight 본문(`plan4_retention/row_preflight.rs`)과 그 실제 census, A7 결정 |
+| `38bc4f1` | `706ea3e` | S2W-C01/C02/C06이 실제 preflight 본문 census를 출력 |
+| `21b56f4` | `b99d0d2` | S2W-R01·R02·R03·R05·R16–R20·R22(preflight 절반) 사례와 cfg(test) 보조 |
+| `6a233e2` | `343b9f4` | R05·R17·R19를 변형마다 한 selector로 나눔(R17 한 시험이 30초 경계 27–28초였다) |
+| `5767b2e` | `f845c77` | preflight의 Root·Job 해독 실패를 Unchanged가 아닌 Fatal(Census, RowSemantic)로. "Free Job 없음"은 Unchanged/Prepare/RowSemantic 그대로 |
+
+**본문.** gate 전 검산(health·origin, view 종류, CheckedTable, flusher의 pool·storage, `check_catalog_pair_io`), `close_reads_for_terminal`, RowWrite admission, 깊은 검산(statement head, terminal, table slot), 상주(각 target의 원 retention LOAD, dirty victim이면 `FlushRequired{target}`), Free Undo 선택(allocator 사본에서 slot0이 초기 Free인 첫 Allocated Undo container), 그리고 replay scope·checkout 아래 `validate_live` 1회, T page마다 arena 비교, SCHEMA·BEFORE 사본, XRWC commitment, WAL prefix 재확인, read bit·catalog flag 등록, cut 순이다. Ready이면 PreflightRow가 admission·gate·flusher control을 보유하고, 그 밖에는 source→gate 순으로 반환하며 등록은 없다.
+
+**A7 결정.** `RowPreflightCut`은 다섯 field(`source`, `complete_lsn`, `roles`, `leaf_free`, `root_job`, 56B) 그대로이며 scalar를 더하지 않는다. `validation_lane`은 SCHEMA 구간의 Catalog leaf 사본에서 schema cell과 index 수를, `roles`와 RowLeaf before header에서 leaf 기대값을 다시 만들고, 같은 gate·lease 아래에서 Catalog leaf stamp를 다시 관측한다. A가 기대는 서명·`PreflightRow`·cut 크기는 바뀌지 않았다.
+
+**실제 census(memory = native).** preflight 본문 36488B(S2-a′ 상계 35526보다 +962), carriers 560, C total 37048, A 몫 상한 6144, charge 44304로 C 쪽 여유는 **+1112B**다. 지배 항은 본문 끝(31502, LOAD 31492보다 10B 큼)이다. 첫 초안은 −3505B였고 상수가 아닌 본문 구조만 바꿔 +1112B로 맞췄다. 이제 preflight가 C 쪽 여유가 가장 작은 단계다(다음은 prepare 1147B). 계약 S2-0b 효과 표의 preflight 값(36086 / 2074)은 분석값이며 이 census가 대체한다. 다른 일곱 단계의 출력은 바뀌지 않았고, [A-W1](#a-w1-driver)의 MCA00-D15 출력도 통합 뒤 byte까지 같다.
+
+**시험.** 새 selector 17건(`plan4_recovery/tests/catalog_memory/row_preflight.rs`): R01(Catalog·읽기 전용·끝난 view), R02(1B 부족 Capacity와 gate 재개), R03(등록과 finish 반환 순서, roles·leaf_free·complete_lsn·charge 독립 literal), R05×3(Free Undo 없음, allocator 세대 불일치, slot0 비Free), R16(dirty victim `FlushRequired`, flush 뒤 Ready), R17×4(origin 불일치 fence, WaitingWal Busy, Ready 잔존 capture fence, I/O preflight 오류), R18(RootReserved, cfg(test) 한 번 주입), R19×3(claim Busy, read 오류 Fatal, 손상 page Fatal), R20(gate 아래 read operation 0), R22 preflight 절반(모두 상주이면 checkout 1). R04·R06–R15·R21·R23·R24·H01–H05와 R05·R22의 나머지 절반은 reserve·prepare·apply·cancel이 필요해 S2-b2~S2-d에서 한다.
+
+**독립 검토.** 읽기 전용 검토자 1회, ACCEPT(필수 0·권고 12). 순서·거절, 1회 실행, census 재계산(+1112B), LOAD trait 이동의 동작 보존, A7 계획, A-W1과의 상호작용을 확인했다. 권고는 다음처럼 넘긴다.
+- S2-b2가 첫 commit들로 고친다: A3 Undo incarnation 이중 접기, A4 typed read 해제 뒤 등록 순서의 문서·코드 정렬, A5 prefix 재확인이 commitment 밖의 `synced_*`까지 비교함, A6 `queue_error` 경로의 Job 해독 오류 Unchanged, A7 R18 thread-local 누수, A10 R03의 `root_job`·commitment 고정, A12 A의 `driver/live.rs` 낡은 문서.
+- S2-b2 안에서 한다: A1 arena 불일치 음성 시험(S2W-R23(1)의 preflight 절반, 개발 build에서는 Census/Invariant와 fence를 확인했다), A2 S2-b2~S2-d 조건(같은 `PreflightSource::commitment` 코드로 재계산, reserve 재읽기가 SCHEMA·BEFORE를 바꾸지 않음, lane이 그 구간을 쓰지 않음, Free Undo 재검산은 allocator BEFORE image를 읽음), A11 preflight Busy는 재시도하지 않음을 문서화.
+- A8: 다른 pool의 flusher 사례는 한 fixture로 만들 수 없어 시험하지 않았다. 코드로는 gate 전 Unchanged BindingMismatch다.
+- A9: 위 census 값이 계약 표의 분석값을 대체한다는 기록(이 항목). 다음 계약 수정 때 표를 고친다.
+- LiveCall을 거치는 end-to-end `FlushRequired` 시험은 S2-d에서 한다.
+
+**실행.**
+
+| 판 | rev | 결과 |
+| --- | --- | --- |
+| b0 | `fa622d5`(module-s2b1 base) | 98 PASS, 4 FAIL(그때의 기존 4건) |
+| b2 | `f845c77` | 98 PASS, 4 FAIL(같은 4건, b0와 같은 출력). b0→b2에서 바뀐 출력은 C01/C02/C06의 preflight 줄과 새 시험뿐이다. compiler 입력 17/17 PASS |
+| i1 | `5767b2e`(이 branch) | 127 selector(b2 목록에서 대체된 S2A-T02를 빼고 A-W1 통합 목록을 더함) **127 PASS**. compiler 입력 17/17 PASS. MCA00-D15 memory·native 출력은 A-W1 i1과 같다 |
+
+- 각 round에서 engine check와 workspace check 경고 0, gate Clippy 오류 0, 바뀐 .rs rustfmt check, `git diff --check`가 통과했다. i1은 `be79fa9..5767b2e`다.
+- 가장 긴 selector는 11.7초다.
+
+**되돌림.** 최신부터 되돌린다. S2-b1은 S2-b2~S2-d를 되돌린 뒤에만 되돌린다. `768bdbf`는 단독으로도 되돌릴 수 있다. artifact는 `module-independence-20261029/artifacts/module-s2b1-20261030/`(검토서, 증거 원문, b0·b2·i1 로그, 도구, `manifest-all.sha256` SHA-256 `53e651c4a0eab40e65a95dbb6ba6f69f0f0b809f52d8359c28abe1b6314da271`)에 있다. 개발 전용 `devcheck` 출력은 옮기지 않았다.
