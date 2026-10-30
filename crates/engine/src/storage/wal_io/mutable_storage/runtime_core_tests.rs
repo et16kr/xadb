@@ -108,7 +108,9 @@ fn static_source<W: WriterNamespace>(label: &str, historical_owner: usize) {
     assert!(genesis_return <= 65536 && fresh_return <= 65536);
     assert!(conversion <= 65536 && retained + conversion <= 196608 && handoff);
     assert_eq!(g5.owner, owner);
-    assert_eq!(g5.old_common_delta, 0);
+    // The G5 owner forbids only growth; the registry leaf's Option slots leave
+    // the directory 64 x 8 bytes below its pre-G5 shape.
+    assert_eq!(g5.old_common_delta, 512);
     assert!(g5.peak <= 65536 && g5.whole <= 262144);
     assert_eq!(g5.caller_operation, 114688);
     assert_eq!(g5.caller_flush, 4 << 20);
@@ -116,7 +118,8 @@ fn static_source<W: WriterNamespace>(label: &str, historical_owner: usize) {
 #[test]
 fn runtime_core_source_memory() {
     selected("RC-ST01", || {
-        static_source::<port::Writer>("runtime-core-memory", 848)
+        // 848 before the WAL runtime gained its 8-byte first-write marker.
+        static_source::<port::Writer>("runtime-core-memory", 856)
     });
 }
 #[cfg(target_os = "linux")]
@@ -124,8 +127,9 @@ fn runtime_core_source_memory() {
 fn runtime_core_source_native() {
     selected("RC-ST02", || {
         // 984 before the native adapter File stopped holding its 128-byte
-        // trace name inline; the owner retains one File.
-        static_source::<super::plan4_pages::native::Writer>("runtime-core-native", 856);
+        // trace name inline (the owner retains one File) and before the WAL
+        // runtime gained its 8-byte first-write marker.
+        static_source::<super::plan4_pages::native::Writer>("runtime-core-native", 864);
     });
 }
 
