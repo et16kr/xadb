@@ -4508,3 +4508,51 @@ manifest는 `plans/s2-0b/manifest-s2-0b.sha256`(SHA-256 `d029d5ce98a2bd60060e046
 **뒤 단위.** S2-b1~S2-d는 자기 단계의 실제 본문 census가 위 상한으로 통과해야 그 경로를 commit하고, S2-b2·S2-c·S2-d는 중단 단계를 이름으로 적는다. A-W1의 MCA00-D15는 `storage::disk`의 두 상수와 호출 지점별로 견준다.
 
 **되돌림.** 최신부터 되돌린다. S2-a′는 이에 기댄 S2-b1~S2-d와 A-W1의 D15 적응을 되돌린 뒤에만 되돌린다. artifact는 `module-independence-20261029/artifacts/module-s2ap-20261030/`(검토서, 증거 원문, p0·p1·p2 로그, 도구, `manifest-all.sha256` SHA-256 `9f3aa0c504b4f22aac177e32c7bc565162de476352ebcd811e661b46d214f3d5`)에 있다.
+
+<a id="a-w1-driver"></a>
+## 2026-10-30 A-W1 A driver 축소(M1·M2)·호출 지점별 몫(M3)·MCA00-D15·FlushRequired 재시도
+
+[S2-0 개정](#s2-0-q06-amendment)과 [S2-0b](#s2-0b-validate-once)가 A에 정한 공급 단위다. A의 producer·driver를 줄이고, A 몫을 C 호출 지점마다 재서 [S2-a′](#s2a-prime-census)의 두 상한과 견주고, preflight의 `FlushRequired` 뒤 재시도를 넣었다. 별도 worktree(branch `module-a-w1`, base `ccab15c`)에서 만든 뒤 이 branch에 옮겼다.
+
+| 이 branch | 원 commit | 내용 |
+| --- | --- | --- |
+| `e14a52f` | `7b192fa` | M1: Root after page를 `images::Prepared` 사본 없이 `after[Root]`에 직접 기록 |
+| `fb492da` | `d3d6b9d` | M2: A producer의 byte buffer 여덟 개(leaf 4444, aggregate 640, CLR U 432, Job 1024, Root cell 512, U 432, Status 224, descriptor 3072)를 lane의 A scratch로 옮김. 구간은 0으로 채워 이전 내용에 기대지 않는다 |
+| `c21f5f4` | `9f6e982` | C 표면: 이미 `pub(crate)`이고 `MaintenancePort::phase()`의 반환형인 `RetentionFlushPhase`를 `storage::disk`로 재노출 |
+| `9433bf0` | `eb99847` | `FlushRequired{target}` 뒤 `try_flush(flush_owner, &target)`, Ready까지 `continue_flush`, 같은 행을 preflight부터 재시도. 시험 AW1-F01·F02가 S2A-T02를 대체 |
+| `8335067` | `d3ca3dd` | M3 호출 지점별 몫(`driver::call_sites`), MCA00-D15(memory·native), D12의 지점별 출력 |
+| `ccc1d15` | `857896f` | 문서: 지점별 몫은 driver 호출자의 값을 세지 않음 |
+| `7d4e2bf` | `c458a1e` | 검토 A1: `prepare`가 Root page를 A scratch에 encode하고 `aging::next`도 그 page로 돌려, Aging after census 거절까지 모든 거절이 첫 출력 전에 온다. 회귀 시험 `mca00_v06_aging_after_census_refusals_precede_output` |
+| `3909bbf` | `9e0ff0a` | 검토 A5·A6: phase가 그대로인 `continue_flush` 뒤 `yield_now()`, continue Fatal·정체 시험 |
+| `4adcf63` | `6abcc30` | 검토 A2: D15가 preflight·flush의 frame-static 몫도 출력 |
+
+**축소(D12 `a_producer`).** 50790B에서 M1 뒤 34406B(−16384), M2 뒤 19244B(−15162, 빠져 있던 `[RemainingBudget; 5]` +560B 포함), 검토 A1 뒤 19260B다. 계약의 추정(M1 −16384, M2 약 −10500)보다 M2가 큰 것은 이전 inventory가 `Prepared` field와 `images::job` 반환 slot을 따로 셌기 때문이다. D12 경로 inventory(live_insert 11355, live_clr 8224 ≤ 12288)는 그대로다.
+
+**MCA00-D15(memory = native, charge 44304).**
+- preflight 호출 지점: 3264 ≤ `ROW_PREFLIGHT_CALLER_BYTES` 6144(여유 2880). frame에 이미 있는 `insert_row`의 뒤 단계 slot 2016B를 더한 frame-static 몫은 5280B(여유 864B)다.
+- 그 밖의 C 호출 지점 22곳: 가장 큰 producer_lane 6552, clr_lane 6224, rollback finish 4904, cancel 4496, apply 4416, prepare 4216 등 모두 ≤ `ROW_WRITE_CALLER_BYTES` 11520이다.
+- flush 두 지점(try_flush 3328, continue_flush 3320, frame-static 5344·5336)은 계약 상한이 없어 이 단위가 11520과 견줬다. flush 동안 RowWrite admission은 없다.
+- Forward producer phase 4968 + 19260 = 24228 ≤ 44304(여유 20076, S2-e 기준 2048 이상). CLR producer phase 23900(여유 20404)은 S4 입력으로 출력만 한다.
+- 따라서 S2-0b 결정 4의 M7 조건("preflight 밖 C 호출 지점에서 `ROW_WRITE_CALLER_BYTES`를 넘거나, preflight 호출 지점에서 (E)·(d4)를 거친 뒤에도 `ROW_PREFLIGHT_CALLER_BYTES`를 넘을 때")은 성립하지 않아 M7을 하지 않았다. S2-e 진입 조건 (a)·(b)는 지금 타입으로 충족되며, S2-b1이 preflight cut을 정한 뒤 다시 확인한다.
+
+**재시도.** 재시도한 행은 flush 없는 MCA00-D01과 같은 RowId·input·proposal을 얻는다(issuance 소비 없음). `try_flush` 거절은 `Failure(Stage::Flush, C 오류 그대로)`, `continue_flush` 거절은 `Failure(Stage::ContinueFlush, …)`이며 행은 보유 자원 없이 끝나고 statement는 다른 행 거절과 같은 규칙(Returned, RollbackRequired, MustResolve)으로 돌아간다. flusher는 C가 남긴 phase에 둔다. 계약대로 Ready까지 상한 없이 진행하고, phase가 그대로인 continue 뒤에는 다른 thread에 양보한다. 실제 live 재시도는 driver의 live 호출자가 생기는 S2-b·S2-e에서 처음 실행된다.
+
+**독립 검토.** 읽기 전용 검토자 1회, ACCEPT(필수 0·권고 7). A1·A2·A5·A6은 위 세 commit으로 반영했다. 기록으로 남긴 것:
+- A3: 지점별 몫은 아직 없는 driver 호출자의 값과 frame을 세지 않는다. 그 호출자를 공급하는 단위가 D15를 그 frame과 함께 다시 돌리거나 고정 허용치를 더한다. frame-static preflight 여유가 864B이므로 preflight부터 확인한다.
+- A4: flush 지점의 11520은 이 단위가 고른 비교값이다. flusher census(65536B, foreground 합과 분리)가 A의 flush 지점 몫을 포함하는지는 S2-b 증거에서 정한다.
+- A7: C 표면 재노출 `c21f5f4`는 검토자가 C 소유자로서 받아들였다. 다음 계약 수정 때 §2 `flush_then_retry` 문단에 `MaintenancePort::phase()`와 `RetentionFlushPhase`를 적는다.
+
+**실행.** 방식은 S2-a와 같다.
+
+| 판 | rev | 결과 |
+| --- | --- | --- |
+| b0 | `ccab15c` | 32/32 PASS |
+| h1 | `857896f` | 45/45 PASS, compiler 입력 17/17 PASS |
+| h2 | `6abcc30` | 46/46 PASS(새 V06 aging 시험 포함). compiler 입력·`storage::disk` 표면이 h1과 같아 probe는 h1 결과를 쓴다 |
+| i1 | `4adcf63`(이 branch) | 50/50 PASS. h2의 46 selector는 출력이 같고, PR #4가 고친 `retention_source_*`·`runtime_core_source_*` 4건이 A-W1과 함께 통과한다 |
+
+- 각 round에서 engine check와 workspace check 경고 0, gate Clippy 오류 0, 바뀐 .rs rustfmt check와 `git diff --check`가 통과했다.
+- 이 branch의 `crates/`·`tests/` tree는 `6abcc30`과 PR #4의 시험 파일 두 개만 다르다.
+- 남은 일: S2-b1이 들어오면 그 위에서 D15를 다시 돌린다(preflight cut의 scalar가 바뀔 수 있다).
+
+**되돌림.** 최신부터 되돌린다. A-W1은 S2-e 전 진입 조건이므로 S2-e를 되돌린 뒤에 되돌린다. artifact는 `module-independence-20261029/artifacts/module-aw1-20261030/`(검토서, 증거 원문, b0·h1·h2·i1 로그, 도구, `manifest-all.sha256` SHA-256 `69d1890e5dbcc9e8e8a8e392977df11ef42d82374eb04ddec7dfa6e4dfe396c7`)에 있다.

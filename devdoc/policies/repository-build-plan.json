@@ -9307,5 +9307,31 @@
     "remaining_supply": "S2-b1..S2-d body censuses against these bounds with the L <= 1 obligation; A-W1 MCA00-D15 per call site against 6144/11520",
     "source_roots_changed": false,
     "artifact_manifest_sha256": "9f3aa0c504b4f22aac177e32c7bc565162de476352ebcd811e661b46d214f3d5"
+  },
+  "dev3_module_a_w1_driver": {
+    "status": "LOCAL_VERIFIED_REVIEWED",
+    "contract_ref": "dev3-module-boundaries.md#row-write-validate-once",
+    "evidence_ref": "module-independence-survey-20261026.md#a-w1-driver",
+    "baseline_commit": "ccab15c",
+    "integration_base": "097cefd",
+    "branch": "claude/project-thread-h2j8oc",
+    "commits": [
+      "e14a52f",
+      "fb492da",
+      "c21f5f4",
+      "9433bf0",
+      "8335067",
+      "ccc1d15",
+      "7d4e2bf",
+      "3909bbf",
+      "4adcf63"
+    ],
+    "source_branch": "module-a-w1 6abcc30",
+    "rollback": "git revert 4adcf63 3909bbf 7d4e2bf ccc1d15 8335067 9433bf0 c21f5f4 fb492da e14a52f, after S2-e is reverted",
+    "scope": "A-W1: M1 Root after page written into after[Root] via A scratch, M2 producer buffers carved from the lane A scratch, M3 per-call-site A shares, MCA00-D15 (memory and native), FlushRequired retry with try_flush/continue_flush and yield on no progress, RetentionFlushPhase re-export; M7 not needed",
+    "validation": "independent review ACCEPT (0 required, 7 advisory; A1 A2 A5 A6 fixed, A3 A4 A7 recorded); rounds b0 32/32, h1 45/45 with compiler inputs 17/17, h2 46/46, integration i1 see evidence; check, workspace check, gate Clippy clean; D15 preflight 3264/6144 (frame-static 5280), other C sites max 6552/11520, Forward producer phase margin 20076",
+    "remaining_supply": "rerun D15 on top of S2-b1 (preflight cut scalars); the unit that supplies the driver's caller reruns D15 with its frame; S2-b evidence decides whether the flusher census covers A's flush-site share; name MaintenancePort::phase and RetentionFlushPhase in the next contract edit",
+    "source_roots_changed": false,
+    "artifact_manifest_sha256": "69d1890e5dbcc9e8e8a8e392977df11ef42d82374eb04ddec7dfa6e4dfe396c7"
   }
 }

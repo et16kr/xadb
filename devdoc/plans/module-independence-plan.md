@@ -1,5 +1,7 @@
 # XADB 모듈 독립 개발 구조 전환 작업 계획
 
+2026-10-30 [A-W1 A driver 축소와 호출 지점별 몫](../evidence/module-independence-survey-20261026.md#a-w1-driver): M1·M2로 A producer가 50790 → 19260B로 줄었고, MCA00-D15에서 모든 C 호출 지점의 A 몫이 상한 안이다(preflight 3264/6144, 나머지 최대 6552/11520). M7은 필요 없다. `FlushRequired` 뒤 flush와 재시도가 들어갔다.
+
 2026-10-30 [S2-a′ RowWrite census 재계수](../evidence/module-independence-survey-20261026.md#s2a-prime-census): S2-0b대로 C 단계 상계를 다시 세고 A 몫 상한을 preflight 6144B·나머지 11520B로 나눴다. 모든 단계의 C 쪽 여유가 양수다(최소 prepare 1147B). 다음은 S2-b1과 A-W1이다.
 
 2026-10-30 [S2-0b Row 쓰기 replay 검산 재배치 반영](../evidence/module-independence-survey-20261026.md#s2-0b-validate-once): Q06 2차 개정을 독립 D2 r3 ACCEPT 뒤 계약에 넣었다. 개정 내용은 다음과 같다. `validate_live`는 행당 preflight 한 번만 하고 digest 연쇄로 잇는다. group carrier 계수를 정정한다. A 몫 상한을 6144·11520B 둘로 나눈다. 다음은 S2-a′(census 구조와 두 상수)이고, A-W1과 S2-b1~S2-d가 그 뒤를 잇는다.
