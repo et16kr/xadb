@@ -26,7 +26,7 @@ const WAIT: Duration = Duration::from_secs(10);
 
 /// One System INIT (Status or Undo) through the original exclusive owner
 /// (row_gate's `system_init`); the page is the allocator's choice.
-fn system_init<'s, 'c, W: WriterNamespace>(
+pub(super) fn system_init<'s, 'c, W: WriterNamespace>(
     live: &mut Live<'_, 's, 'c, '_, '_, '_, '_, '_, W>,
     owner: &mut Owner<'c, 's>,
     flusher: &mut Owner<'c, 's>,
@@ -70,7 +70,7 @@ fn system_init<'s, 'c, W: WriterNamespace>(
 /// Commit on Status 9 with Undo 10 (its root keeps Undo 10). With
 /// `free_undo`, one more Undo INIT after the Commit is the Row actor's Free
 /// Undo container (row_gate's fixture order).
-fn create_table<'s, 'c, W: WriterNamespace>(
+pub(super) fn create_table<'s, 'c, W: WriterNamespace>(
     live: &mut Live<'_, 's, 'c, '_, '_, '_, '_, '_, W>,
     owner: &mut Owner<'c, 's>,
     flusher: &mut Owner<'c, 's>,
@@ -117,7 +117,7 @@ fn create_table<'s, 'c, W: WriterNamespace>(
 /// Makes a clean resident Undo or Status page non-resident: flush it, then
 /// load a non-resident genesis Jobs page into its frame (resident_faults'
 /// `evict`).
-fn evict<'s, 'c, W: WriterNamespace>(
+pub(super) fn evict<'s, 'c, W: WriterNamespace>(
     live: &mut Live<'_, 's, 'c, '_, '_, '_, '_, '_, W>,
     flusher: &mut Owner<'c, 's>,
     target: &Plan4Target,
@@ -216,7 +216,7 @@ macro_rules! settle {
 /// Runs `run` while a separate Foreground owner holds a target-set read of
 /// the given frames (MCL03's pinned Root), so no LOAD may take one of them as
 /// its victim.
-fn with_pins<'c, 's, R>(
+pub(super) fn with_pins<'c, 's, R>(
     pool: &crate::storage::dirty_frame::SharedPool<'c, 's, '_, '_>,
     holder: &mut Owner<'c, 's>,
     indices: &[usize],
@@ -246,7 +246,7 @@ fn with_pins<'c, 's, R>(
 }
 
 /// Registered frames (index, page number, dirty) among the first `count`.
-fn frames(
+pub(super) fn frames(
     pool: &crate::storage::dirty_frame::SharedPool<'_, '_, '_, '_>,
     count: usize,
 ) -> Vec<(usize, u64, bool)> {
@@ -424,7 +424,7 @@ fn s2w_r03_preflight_registers_reads_and_finish_returns_the_lease() {
 /// Status, table anchor, RowLeaf and the Free Undo.
 pub(super) const FIXTURE_T: [u64; 7] = [0, 1, 2, 11, 12, 13, 14];
 /// The Catalog leaf, beside T in the preflight's typed read.
-const CATALOG_LEAF: u64 = 8;
+pub(super) const CATALOG_LEAF: u64 = 8;
 
 /// The RootJob of the fixture's next RowReserve, from the Root page in the
 /// pool and the control's Job cells: the first cell from the Root cursor
@@ -445,7 +445,7 @@ pub(super) fn fixture_root_job(
 }
 
 /// A resident page's frame index and registration.
-fn resident(
+pub(super) fn resident(
     pool: &crate::storage::dirty_frame::SharedPool<'_, '_, '_, '_>,
     number: u64,
 ) -> (usize, crate::storage::dirty_frame::TargetRequest) {
@@ -557,8 +557,8 @@ pub(super) fn xrwc_preflight(
 /// The preflight sources (page numbers) of the fixture's row: Root, Jobs 0,
 /// the Catalog leaf, the Row Status, the table anchor and the RowLeaf; the
 /// Free Undo 14 is the one source a test makes non-resident.
-const SOURCES: [u64; 6] = [1, 2, 8, 11, 12, 13];
-const FREE_UNDO: u64 = 14;
+pub(super) const SOURCES: [u64; 6] = [1, 2, 8, 11, 12, 13];
+pub(super) const FREE_UNDO: u64 = 14;
 
 /// S2W-R01: a Catalog view and a read-only view are the mixed refusal
 /// (Prepare, Unsupported) and an ended view is the view boundary's (Census,
@@ -994,9 +994,10 @@ fn r17(kind: u8) {
 }
 
 /// S2W-R18: an actor whose Row Job is RootReserved (a one-shot cfg(test)
-/// view of its decoded Jobs; no live Reserve exists before S2-b2) is
-/// Unchanged (Prepare, WrongState) after the gate, and the refusal returns
-/// the source, then the gate, then the lease. The next preflight is Ready.
+/// view of its decoded Jobs; a live one needs its ReservedRow cancelled
+/// first, S2-d) is Unchanged (Prepare, WrongState) after the gate, and the
+/// refusal returns the source, then the gate, then the lease. The next
+/// preflight is Ready.
 #[test]
 fn s2w_r18_root_reserved_actor_is_wrong_state() {
     case("S2W-R18", || {

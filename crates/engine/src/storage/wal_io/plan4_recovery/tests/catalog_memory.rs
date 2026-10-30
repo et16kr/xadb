@@ -1227,4 +1227,8 @@ mod row_transactions;
 mod row_statements;
 
 #[path = "catalog_memory/row_preflight.rs"]
+#[macro_use]
 mod row_preflight;
+
+#[path = "catalog_memory/row_write.rs"]
+mod row_write;

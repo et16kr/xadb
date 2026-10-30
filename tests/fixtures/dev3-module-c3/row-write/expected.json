@@ -1,0 +1,30 @@
+{
+  "after_sha256": {
+    "aging": "001a88935dcabad5a90e9021e663cf8e3326f7f2a15fdbc779a573083aa2ce16",
+    "bank": "e74d3a7218763061365b3261373e41506f2537f82fb07951000f8049e41438cf",
+    "jobs2": "fabcd952b03412782bf444eceb5cc132ee75b43bdba6521b76046433e533bd1f",
+    "root1": "b3d4f28c5b26dae538bfaec36e1ca8320ac868571ffd84482f0670f7fd5d8ba5",
+    "tx": "024083b72dbc49f3e3f21cc147c3caf0b7ddd4a4d49b74aa31221cbb8e5a955d",
+    "undo14": "b975e67e40072ca7edf708059869743acea9bd078e513cbd07d4e3d8e7d8de4e"
+  },
+  "canonical_sha256": "fae2df78d78985674f9e83253255b062c3bbee012bc876f26e4342520ae04b38",
+  "case": "S2W-R06",
+  "frame_bytes": 57336,
+  "frame_sha256": "6e3badc82e1864c405f846a05372e2367f6a266a10e0a4e0c8c3d28267870fbe",
+  "lsn": 15,
+  "mutation": 1,
+  "root_cursor_before": 0,
+  "root_job": {
+    "generation": 2,
+    "jobs_page": 2,
+    "ordinal": 3,
+    "slot": 3
+  },
+  "row": 1,
+  "sequence": 2,
+  "undo": {
+    "generation": 2,
+    "page": 14,
+    "slot": 0
+  }
+}
