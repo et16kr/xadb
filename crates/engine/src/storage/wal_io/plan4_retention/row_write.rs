@@ -170,6 +170,25 @@ fn resident_read<W: WriterNamespace>(
     }
 }
 
+/// C's decode of a page it produced (an after image) or of a before image the
+/// commitment proved, before the stage: a failure is C's defect, not a
+/// refusal, so it is Fatal with its own cause, as the deep checks' decodes are
+/// (S2-b2 review A5, 5767b2e). The shared XOI and progress-room helpers report
+/// such a decode as an Unchanged `Retention` cause; only the Row write path
+/// maps it here, so the Catalog and Row lifecycle callers keep their mapping.
+/// Their Capacity, Exhausted and `Base` refusals stay as they are.
+fn produced<W: WriterNamespace>(
+    storage: &MutableStorageOwner<'_, '_, W>,
+    error: RetentionError,
+) -> RetentionError {
+    match error.cause {
+        RetentionCause::Retention(_) if error.effect == Effect::Unchanged => {
+            fatal(storage, RetentionPhase::Prepare, error.cause)
+        }
+        _ => error,
+    }
+}
+
 /// The before position of a logical source role in a role map.
 fn role_position(roles: RowRoleMap, role: RowSourceRole) -> Option<usize> {
     let at = (roles >> (4 * role.index())) & 0xF;
@@ -848,7 +867,7 @@ impl<'b, 'a, 's, 'c, 'p, 'd, 'm, 'w, W: WriterNamespace>
             let target = requests[at(*role)
                 .map_err(|_| unchanged(RetentionPhase::Prepare, RetentionCause::Invariant))?];
             let image = recovery::request_from_image(profile, &after[usize::from(*role)])
-                .map_err(|cause| unchanged(RetentionPhase::Prepare, cause))?;
+                .map_err(|cause| fatal(storage, RetentionPhase::Prepare, cause))?;
             if image != target {
                 return Err(unchanged(
                     RetentionPhase::Prepare,
@@ -865,8 +884,14 @@ impl<'b, 'a, 's, 'c, 'p, 'd, 'm, 'w, W: WriterNamespace>
             .get(..observation.frame_bytes)
             .ok_or_else(|| unchanged(RetentionPhase::Prepare, RetentionCause::Invariant))?;
         let future = {
-            let layout = row_semantic::decode_layout(bytes, expected, profile)
-                .map_err(row_semantic_error)?;
+            let layout =
+                row_semantic::decode_layout(bytes, expected, profile).map_err(|error| {
+                    fatal(
+                        storage,
+                        RetentionPhase::Prepare,
+                        RetentionCause::RowSemantic(error),
+                    )
+                })?;
             // The allocator BEFORE image, whose digest the commitment folds
             // (S2-b1 review A2d); XOI is written here, after it.
             prepare_inventory(
@@ -878,7 +903,8 @@ impl<'b, 'a, 's, 'c, 'p, 'd, 'm, 'w, W: WriterNamespace>
                 &before[at(ALLOCATOR_ROLE)?],
                 observation.job_ordinal.map(|_| &after[usize::from(JOB)]),
                 inventory,
-            )?
+            )
+            .map_err(|error| produced(storage, error))?
         };
         check_progress_room(
             entry.prefix,
@@ -888,7 +914,8 @@ impl<'b, 'a, 's, 'c, 'p, 'd, 'm, 'w, W: WriterNamespace>
             order,
             root,
             profile,
-        )?;
+        )
+        .map_err(|error| produced(storage, error))?;
         Ok(PreparedRowGroup {
             payload: RowPayload {
                 core: self.pool.bound_core(),
