@@ -2,8 +2,8 @@
 //! "order" and §6, S2-0b `#row-write-validate-once`) over the actual
 //! committed CREATE of table T that the preflight cases use. Only the cases
 //! reserve can exercise are here: S2W-R04, R06, R07, R14, the reserve halves
-//! of R05, R15 and R22, and R23(1) with its preflight arena half (the S2-b1
-//! review's A1). The cases that need cancel, prepare or apply are later
+//! of R05, R11, R15 and R22, and R23(1) with its preflight arena half (the
+//! S2-b1 review's A1). The cases that need cancel, prepare or apply are later
 //! units'. A ReservedRow has no supplied cancel yet, so every successful
 //! reserve here ends with its Drop, which fences the session (S2W-R23(2)'s
 //! Drop rule). The expected values are fixture facts, the independent
@@ -547,7 +547,9 @@ fn s2w_r07_one_stale_stamp_is_before_then_retry_reserves() {
 /// reads the fixture's first Job with a source (the committed CREATE's
 /// Catalog Job) as the actor's own; reserve's entry check is then the deep
 /// check's Fatal (Census, Invariant), CallerMustResolve, with the fence, no
-/// write bit and no WAL or file change.
+/// write bit and no WAL or file change. The Fatal arm still releases the
+/// read gate, and the RowWrite charge stays under the fence (a fenced ledger
+/// refuses the return), as S2W-R19 shows for preflight (S2-b2 review A6).
 #[test]
 fn s2w_r14_catalog_job_actor_is_refused_before_reserve() {
     case("S2W-R14", || {
@@ -556,15 +558,18 @@ fn s2w_r14_catalog_job_actor_is_refused_before_reserve() {
             oracle,
             frames = 12,
             |live, owner, flusher, status, undo, private, reader_private, core, fence, state| {
-                let _ = core;
                 let (row_status, _) =
                     create_table(live, owner, flusher, status, undo, private, true);
                 row_statement!(live, owner, flusher, private, reader_private, row_status
                     => writer, reader, flush, row, view, table);
                 let _ = settle!(writer, owner, view, table, private, flush, flusher);
                 let effects = files(state);
+                let used = reader.catalog_test_source_used();
+                let charge = writer.catalog_test_retirement_charge() as u64;
                 let mut preflight = ready!(writer, owner, view, table, private, flush);
                 let input = plan!(preflight);
+                assert!(hook::observe(core).read_gate_closed);
+                assert_eq!(reader.catalog_test_source_used(), used + charge);
                 let once = view.test_catalog_scope_once();
                 let result = preflight.reserve(input);
                 drop(once);
@@ -580,11 +585,61 @@ fn s2w_r14_catalog_job_actor_is_refused_before_reserve() {
                 );
                 assert!(matches!(error.cause, RetentionCause::Invariant));
                 assert!(fence.is_fenced());
+                assert!(!hook::observe(core).read_gate_closed);
+                assert_eq!(reader.catalog_test_source_used(), used + charge);
                 assert_eq!(view.test_table_masks().1, 0);
                 assert_eq!(files(state), effects);
-                let _ = reader;
                 drop(view);
                 drop(row);
+            }
+        );
+    });
+}
+
+/// S2W-R11's pre-stage refusal at reserve (S2-b2 review A6): a one-shot
+/// cfg(test) refusal after the table write bit and before the existing-group
+/// install makes reserve Before Unchanged (Stage, Busy) on the same
+/// PreflightRow. The write bit stays (a Before after the registration keeps
+/// the conservative bit, §6), and no WAL or file byte changes; `finish` then
+/// returns the source and the gate with no fence.
+#[test]
+fn s2w_r11_reserve_stage_refusal_keeps_the_write_bit() {
+    case("S2W-R11", || {
+        let oracle = Oracle::new();
+        with_fresh!(
+            oracle,
+            frames = 12,
+            |live, owner, flusher, status, undo, private, reader_private, core, fence, state| {
+                let (row_status, _) =
+                    create_table(live, owner, flusher, status, undo, private, true);
+                row_statement!(live, owner, flusher, private, reader_private, row_status
+                    => writer, reader, flush, row, view, table);
+                let _ = settle!(writer, owner, view, table, private, flush, flusher);
+                let (_, slot, _) = table.test_identity();
+                let effects = files(state);
+                let used = reader.catalog_test_source_used();
+                let mut preflight = ready!(writer, owner, view, table, private, flush);
+                let input = plan!(preflight);
+                let once = preflight.test_stage_refusal_once();
+                let (error, owned) = before!(preflight.reserve(input));
+                drop(once);
+                println!("S2W_R11 reserve_half refusal={error:?}");
+                assert_eq!(
+                    (error.phase, error.effect),
+                    (RetentionPhase::Stage, Effect::Unchanged)
+                );
+                assert!(matches!(error.cause, RetentionCause::Busy));
+                assert_eq!(view.test_table_masks(), (1 << slot, 1 << slot));
+                assert_eq!(files(state), effects);
+                assert!(!fence.is_fenced());
+                assert!(hook::observe(core).read_gate_closed);
+                owned.finish().unwrap();
+                assert!(!hook::observe(core).read_gate_closed);
+                assert_eq!(reader.catalog_test_source_used(), used);
+                assert_eq!(view.test_table_masks(), (1 << slot, 1 << slot));
+                assert_eq!(files(state), effects);
+                close_row!(writer, owner, row, view, private, flush);
+                assert!(!fence.is_fenced());
             }
         );
     });

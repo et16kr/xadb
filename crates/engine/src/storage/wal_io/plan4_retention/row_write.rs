@@ -53,6 +53,10 @@ use foundation::{codec::ContentHasher, identity::RowId};
 /// `5..=INLINE_ROW_BYTES` bound); a plan outside it is a forged candidate.
 const MIN_CANONICAL: usize = 5;
 
+#[cfg(test)]
+#[path = "row_write_tests.rs"]
+mod tests;
+
 /// What a completed RowReserve hands `PreflightRow::reserve`: the issued
 /// identity of the one `RowSlotReservation` and the draft cut. Scalars only;
 /// no pin, loan or authority.
@@ -415,6 +419,28 @@ pub(in super::super::super::super::super) fn test_stale_stamp_once()
     super::super::super::super::super::transaction::writable::TestOnce::arm(&TEST_STALE_STAMP)
 }
 
+// The next Row write install on this thread (reserve's or apply's) is refused
+// Unchanged (Stage, Busy) after the table write bit and before the
+// existing-group install, once: a pre-stage refusal after the registration
+// (S2-b2 review A6, S2W-R11). No page, control or WAL byte changes.
+#[cfg(test)]
+thread_local! {
+    static TEST_STAGE_REFUSAL: std::cell::Cell<bool> = const { std::cell::Cell::new(false) };
+}
+#[cfg(test)]
+pub(in super::super::super::super::super) fn test_stage_refusal_once()
+-> super::super::super::super::super::transaction::writable::TestOnce {
+    super::super::super::super::super::transaction::writable::TestOnce::arm(&TEST_STAGE_REFUSAL)
+}
+#[cfg(test)]
+fn test_stage_refusal() -> Result<()> {
+    if super::super::super::super::super::transaction::writable::TestOnce::take(&TEST_STAGE_REFUSAL)
+    {
+        return Err(unchanged(RetentionPhase::Stage, RetentionCause::Busy));
+    }
+    Ok(())
+}
+
 impl<'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
     RetentionWriter<'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W>
 {
@@ -496,6 +522,8 @@ impl<'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
         // The table write bit, after the table recheck and before the stage
         // (§6): a Before after it keeps the conservative bit.
         statement.record_table_write(table.slot)?;
+        #[cfg(test)]
+        test_stage_refusal()?;
         self.catalog_application()
             .apply_existing(owner, ExistingGroup::RowWrite(prepared))?;
         Ok(installed)

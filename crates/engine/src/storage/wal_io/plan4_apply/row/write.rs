@@ -462,6 +462,14 @@ impl<W: WriterNamespace> PreflightRow<'_, '_, '_, '_, '_, '_, '_, '_, '_, '_, '_
     ) -> super::super::transaction::writable::TestOnce {
         super::super::create_pair::catalog_live::lifecycle::row::write::test_stale_stamp_once()
     }
+    /// S2-b2 review A6: the next Row write install on this thread is refused
+    /// Unchanged (Stage, Busy) after its table write bit and before the
+    /// existing-group install, once, until the returned guard drops.
+    pub(in crate::storage) fn test_stage_refusal_once(
+        &self,
+    ) -> super::super::transaction::writable::TestOnce {
+        super::super::create_pair::catalog_live::lifecycle::row::write::test_stage_refusal_once()
+    }
 }
 
 #[cfg(test)]
