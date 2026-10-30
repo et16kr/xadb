@@ -347,6 +347,8 @@ impl<'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
         private: &'i mut [u8; 425_984],
         flusher: &'r mut MaintenancePort<'_, 's, 'c, 'p, 'd, 'm, 'w, W>,
     ) -> Result<RowPreflightStep<'r, 't, 'v, 'i, 'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W>> {
+        #[cfg(test)]
+        TEST_ROW_PREFLIGHTS.with(|count| count.set(count.get() + 1));
         let storage = self.storage;
         let _unwind = storage.session_fence().unwind_guard();
         // Guardless health and origin.
@@ -522,6 +524,18 @@ impl<W: WriterNamespace> MutationPort<'_, '_, '_, '_, '_, '_, '_, '_, '_, W> {
     ) -> super::super::create_pair::catalog_live::lifecycle::row::write::TestAimed {
         super::super::create_pair::catalog_live::lifecycle::row::write::forward::test_missing_target_aimed()
     }
+    /// The Row preflights called on this thread so far, refused ones
+    /// included: a live case counts the driver's preflight calls by the
+    /// difference across its call.
+    pub(in crate::storage) fn test_row_preflights(&self) -> u64 {
+        TEST_ROW_PREFLIGHTS.with(std::cell::Cell::get)
+    }
+}
+
+// S2-e: every `preflight_row` call on this thread (`test_row_preflights`).
+#[cfg(test)]
+thread_local! {
+    static TEST_ROW_PREFLIGHTS: std::cell::Cell<u64> = const { std::cell::Cell::new(0) };
 }
 
 #[cfg(test)]
