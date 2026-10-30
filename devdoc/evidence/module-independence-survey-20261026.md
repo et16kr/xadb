@@ -4277,3 +4277,24 @@ S1(S1-a~S1-g) 뒤의 다음 단계인 S2(C3 Row Reserve·Forward·Cancel)와 S5(
 **남은 판단(사용자 또는 로컬 작업).** (1) 위 Q06 개정을 받아들일지, 다른 방식(예: exclusive writer window만으로의 재정의, A producer의 추가 축소)을 고를지. (2) A의 Forward 단계를 M1/M2 뒤 실측하는 A 단위(S2-e 진입 조건: 단계 ≤ charge와 MCA00-D15 PASS). (3) commit window native 66612B 초과의 별도 Q06 기록. (4) [U2-C4 전환](#u2-single-current)의 CR1(Catalog native·F05 recovery native 로컬 실행).
 
 **자료.** 설계 `module-independence-20261029/plans/s2s5-design.md`·`s2s5-open-questions.md`(결정 19개와 권장), 개정 초안 `module-independence-20261029/plans/s2-0/`(r1·r2 초안, 18 insertion block, `apply.py`, D2 검토 r1, 대응표 `changes-r2.md`). 묶음 manifest는 `module-independence-20261029/plans/s2-handoff-manifest.sha256`(SHA-256 `5f1848f2066b18b50f0f5173a0dc98cee414642b7c77d3e4dfa5f8cfbac30689`)다. `apply.py`는 D2 placeholder와 대기 상태 문구가 남아 있으면 적용을 거절한다.
+
+<a id="s2-0-q06-amendment"></a>
+## 2026-10-30 S2-0 Row 쓰기 자원·lane·preflight 계약 개정(Q06) 반영
+
+[S2/S5 설계와 Row 쓰기 예산 판정](#s2-design-q06)에 문서로만 남겼던 S2-0 개정 초안을 독립 D2 검토 3회 뒤 계약에 넣었다. 기준 head는 `9c56a3a`이고, 이 증거 항목과 계약 반영은 같은 commit이다. 사용자는 2026-10-29 두 번째 결정 카드에서 "S2까지 이어서 진행"을 골랐고, 2026-10-30 "S2까지 진행하고 멈추어 주세요"라고 범위를 정했다. 따라서 이 개정이 정한 공급 단위 가운데 이 branch는 Q12 정정·S2-a·A-W1·S2-b1~S2-f까지만 진행하고 S5-a~S5-d는 진행하지 않는다.
+
+**반영 내용.** [Row 쓰기 개정](../contracts/dev3-module-boundaries.md#row-write-budget)의 열한 결정이다. 성공 statement 종료 WAL0, RowWrite는 `CatalogProgressCharge`·RowRead는 Full charge 재사용(port field 없음), preflight부터 행 종료까지 terminal read gate(`close_reads_for_terminal`)와 원 flush lease 보유, preflight의 상주 보장과 dirty victim의 `FlushRequired{target}` step, 미사용 lane `[360448,425984)`의 XOI page·C scratch·A scratch 세 구간과 `RowProducerLane` 8번째 part, phase별 C 본문 + A 호출 지점 몫 계수와 `ROW_WRITE_CALLER_BYTES`, 128B 이하 cut 셋, Forward producer 초과의 Q06 기록과 S2-e 진입 조건(A의 Forward producer phase ≤ charge, MCA00-D15 PASS), stage 전 table write bit, actor당 live 예약 하나, MBC10-V09·MBC40-V09 oracle과 소비자 MCI03-V02 barrier의 대체다. 블록 18개를 `apply.py`가 원 문단의 정확한 부분 문자열 뒤에 넣었고 boundaries +257행, resource-bounds +11행, consumers +12행이며 모두 추가다. 같은 기록에 native Pending+Full 66612B > 65536B(main `85ceef3`부터 66280B)를 Commit 창 owner의 별도 Q06 사안으로 남겼고 이 개정은 cap·charge를 바꾸지 않는다.
+
+**D2 검토.** 읽기 전용 독립 검토자가 회차마다 새로 읽었다.
+
+| 회차 | 판정 | 필수·권고 | 주요 대응 |
+| --- | --- | --- | --- |
+| r1 | ACCEPT WITH REQUIRED CHANGES | 5·16 | R1 MCA00-D15의 호출 지점별 몫을 S2-e 진입 조건에 추가, R2 V09 oracle을 "대체"로 기록하고 MCI03-V02 추가, R3 native Pending+Full 초과를 Q06 기록에 명시, R4 M1 근거를 observer 전체 재계산으로 정정, R5 Free Undo 부족의 phase를 Prepare/Capacity로 정정 |
+| r2 | ACCEPT WITH REQUIRED CHANGES | 1·7 | N1 apply 직전 재검산을 S2W-R07이 아닌 새 S2W-R21의 두 hook으로 검산, B1 Q06 기록 위치, B2 그 밖의 LOAD 오류 행, B4 gate 입구가 의도한 선택임을 명시, B5 `apply.py`의 원자 교체와 복원 |
+| r3 | ACCEPT | 0·4 | C1 S2W-R07·R21의 변화는 cfg(test) 주입으로만 만들 수 있고 한 번만 보인다, C2 MCI03-V02의 barrier 위치별 oracle, C3 이 증거 항목, C4 WRITER-PROGRESS-001 (c)의 정확한 인용. C1·C2·C4는 r4 블록에, C3은 이 항목으로 반영했다 |
+
+**B·MCI 재시도 의무.** 행 진행 중 `InstallationPending`을 받은 Row 읽기의 재시도는 이 개정이 소비자에게 더한 새 의무다. 이 branch는 사용자 결정으로 S5와 MCI 공급을 진행하지 않으므로 B·MCI 담당의 수용은 아직 기록되지 않았다. S5나 MCI 단위가 시작되기 전, 또는 B의 Row 읽기가 행 진행 중 read를 주장하기 전에 그 담당의 검토로 수용을 기록해야 한다.
+
+**적용 검산.** `apply.py`는 D2 자리표시자·초안 상태 문구가 남으면 거절하고, 남은 `.s2-0.tmp`·`.s2-0.bak`을 거절하며, 모든 검산 뒤에만 출력하고, 새 본문을 임시 파일에 쓴 뒤 원본을 백업하고 rename하며 실패하면 이미 바꾼 계약을 백업에서 되돌린다. 링크 검산은 새 링크 `#s2-0-q06-amendment`(이 항목)와 `#s2-design-q06`을 해석한다. 검토자는 r3에서 rename 실패·복원 실패 주입, 남은 `.bak`, 깨진 고정 문자열, 제거한 증거 anchor, 재실행 "applied already"를 사본에서 확인했다. 계약에는 dry-run 뒤 한 번 적용했다.
+
+**자료.** 공유 폴더 `module-independence-20261029/plans/s2-0/`에 r1~r4 블록, 설계 `design-r3.md`, 초안 `amendment-draft-r3.md`(r3 블록을 그대로 포함하며 r4와의 차이는 위 C1·C2·C4와 채운 D2 기록뿐이다), 검토 `review-r1.md`~`review-r3.md`, 대응표 `changes-r2.md`·`changes-r3.md`, `apply.py`(r4)와 이전 applier가 있다. manifest는 `plans/s2-0/manifest-s2-0.sha256`(SHA-256 `3235d2edea67d5f72a1f5752156808b84b964b611c8ecede94d9efaeb7a554e5`)이다. 코드와 시험은 바뀌지 않았다.

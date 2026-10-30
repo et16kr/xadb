@@ -1032,6 +1032,8 @@ pub(in crate::storage) fn validate_insert(values: &[ValueRef<'_>], lane: RowVali
 
 C preflight는 actual source를 read-set에 자동 등록하고 index0/profile·schema·identity를 검산해 private에 복사한 뒤 guards를 반환한다. A는 type/null/길이/leaf 필요 공간을 검산하고 candidate lane에 canonical 값을 기록한다. `reserve(self,input)`는 same open/view/source/schema/leaf capacity와 encoded candidate의 digest/길이·profile을 다시 검산한 후만 actual RowReserve를 실행한다. RowInputPlan은 untrusted 값이며 pin/issuer 권한이 아니다. preflight 오류·명시 finish 또는 효과 전 Drop은 no-I/O로 source admission/loan을 반환하고 WAL/page/issuer 변경0이며 실제 관측한 read-set은 유지한다. C는 A의 schema/value 제품 encoder를 대신하지 않지만 forged candidate를 effect로 승격하지 않도록 canonical/schema 일치를 observer에서 검산한다. Before는 같은 preflight를 반환하고 source가 바뀌면 validation_lane부터 재준비한다. 완결 Reserve 뒤의 origin/issued proof와 검산한 input cut는 ReservedRow로 이동하며 private bytes를 자기참조하지 않는다.
 
+2026-10-29 개정(S2-0, [Row 쓰기 개정](#row-write-budget)): 위 `preflight_row`는 마지막 인수로 원 `flusher`를 받고 `RowPreflightStep`(`Ready`·`FlushRequired{target}`)을 반환한다. PreflightRow와 ReservedRow는 terminal read gate와 flush lease를 비공개 field로 더 보유한다. preflight는 쓰기 target의 상주와 Free Undo container 선택까지 마친다. 그 안의 LOAD는 읽기 I/O이며 WAL·page·issuer 효과가 아니다. gate 뒤에는 read operation을 열지 않고 retention LOAD claim과 content admission만 쓴다. dirty victim이 필요하면 효과·read-set 등록 없이 `FlushRequired`를 반환한다. 위 오류·finish·Drop의 no-I/O 반환과 read-set 유지 규칙은 그대로이며 반환 순서는 source→gate→lease다.
+
 Row reservation은 actual control의 Root/Job/UndoSlot 상태를 나타내는 `RowSlotReservation<'c,'s>`를 하나만 보유한다. 그 private 값은 원 core/binding/fence, actor, RootJob identity/generation, RowId, UndoRef, actual Reserve LSN와 active 여부다. 일반 consumer는 scalar issued identity를 읽을 수 있지만 proof를 생성·복제·다른 actor로 옮길 수 없다. 실제 Root/Job/Undo before 검산→원 WAL Reserve→whole installation을 통과한 C만 생성하며, Cancel/Forward는 같은 값과 원 ledger를 대조한다.
 
 ```rust
@@ -1163,6 +1165,8 @@ Insert input은 preflight가 검산한 canonical length/digest를, CLR input은 
 
 `RowControlObservation`은 원 `RetentionLedger::jobs()`와 actual actor/AGING row의 첫1536B를 같은 `'l`로 재대여한다. Reserved/rollback task가 원 ledger를 배타 보유하고 private frame/after와 ledger는 disjoint 필드이므로 한 lane 안에서 immutable descriptor와 mutable output을 함께 빌릴 수 있다. 64KiB Jobs를 복사하거나 별도 ledger를 만들지 않는다. 반환된 descriptor borrow가 끝나기 전에는 prepare/apply로 parent를 소비할 수 없다. A는 이 값으로 multi-root debt/descriptor/inventory/Aging after를 계산하며 C는 lane 종료 뒤 원 source revision/prefix/before/descriptor/Jobs를 모두 다시 검산한다. getter/Result/role map/borrow carrier의 동시 비용도 source census에 포함한다.
 
+2026-10-29 개정(S2-0, [Row 쓰기 개정](#row-write-budget)): 위 "동시 비용"은 RowWrite class의 phase별 census에 들어간다. producer phase는 A driver의 producer 호출 지점 몫과 A producer의 합이고, C 단계는 C 본문과 A driver의 그 호출 지점 몫의 합이다. 빌린 Jobs 64KiB와 descriptor는 source 값으로 다시 세지 않는다. A driver 몫의 상한은 C가 정한 `ROW_WRITE_CALLER_BYTES`다.
+
 공통 pure codec `RowSchemaInput::{Columns(&[Column]),Catalog(TableDefinitionView)}`와 `&[ValueRef]` adapter를 C0 공급에 포함한다. 기존 소유형 함수도 동일 pure 규칙에 위임하고 format·오류·output/tail 보존을 바꾸지 않는다. 이름/값/columns를 heap에 복사하지 않는다. first Missing Undo는 actual Missing/payloadNone 경로에서 columns를 사용하지 않으므로 기존 encode/decode에 `&[]`를 전달하며, CLR의 current Row는 borrowed schema로 검산한다. occupied RowValue schema와 일반3pin은 이번 선행이 아니다.
 
 실제 C0 부분공급의 함수는 [row 표현의 borrowed 입력](dev3-row-format.md#borrowed-schema)에 등록했다. `canonical_row_len_borrowed`·`encode_canonical_row_borrowed`와 canonical/record의 `_with_schema` 진입점은 구현·선택6 검증·독립 코드 검토를 마쳤다. 후속 `plan4_apply.rs`는 위 producer context·getter·consuming lane·untrusted 후보 타입을 구현하고 `wal_io::disk_api → storage::disk`에서 선택 재노출한다. private cell tuple은 세 좌표의 동시 존재를 보장하며 위 두 enum은 A의 Forward/CLR 관측만 분류한다. 실제 context/lane 생성·source 포착·예약/설치 adapter는 미공급이다. 타입 경계의 compiler 결과와 원 판정기 실패는 [별도 부분공급 증거](../evidence/module-independence-survey-20261026.md#c0-producer-types)에 둔다.
@@ -1202,6 +1206,8 @@ pub(in crate::storage) fn produce_insert(
 
 `parts(self)`는 C가 제공한 lane의 같은 수명/서로 겹치지 않는 slice를 sibling A에 넘기는 데이터 접근이다. private field를 직접 읽게 하지 않는다. 두 context는 effect 권한 없는 issued/schema/identity의 읽기 getter를 제공하고, RowInputPlan/RowProposal의 `new`는 **untrusted 후보**만 만든다. raw reservation/pin/install/terminal receipt constructor는 여전히 없다. 전체 getter/role/presence와 producer 입력 대조는 위 동결안 및 [소비자 입력](dev3-module-consumers.md#producer-inputs)으로 연결한다. 이 문서상의 일치를 compiler 완료로 주장하지 않는다. producer가 candidate를 바꿔도 reserve가 봉인한 input digest와 schema를 C가 재검산하므로 다른 값을 승인한 것으로 처리하지 않는다. 상기 private 배치는 frame98304+before/proof147456+after81920+candidate16384+schema16384+unused65536=`425984`다. unused lane은 추가 authority/owner 저장소가 아니다. RowProposal은 untrusted scalar이며 raw 생성 가능한 후보여도 C의 effect 권한이 아니다. actual after-role 순서/identity·native/edge/count/inventory·frame size·before digest/obligation·reserved issue 및 statement revision은 prepare와 stage 직전에 다시 검산한다. source stamp가 바뀌면 Before로 같은 Reserved/Prepared를 반환해 producer_lane 재취득부터 반복한다. stored draft/checked carrier 비용은 private backing과 별개로 source envelope에 포함한다.
 
+2026-10-29 개정(S2-0, [Row 쓰기 개정](#row-write-budget)): 위 `parts(self)`는 8번째 원소 `&'l mut [u8;32_768]`(A scratch)를 더 반환한다. 위 private 배치의 unused65536은 XOI page `[360448,376832)`·C scratch `[376832,393216)`·A scratch `[393216,425984)`로 이름과 수명을 고정했고, authority·owner 저장소가 아니라는 규칙은 그대로다. stored draft/checked carrier인 세 cut은 각각 128B 이하이며 여러 page의 stamp를 하나의 digest commitment로 담는다.
+
 A의 실제 호출은 다음과 같다. producer error에도 예약이 남아 있으므로 A는 cancel 또는 현재 statement의 rollback을 명시적으로 수행한다.
 
 ```rust
@@ -1218,7 +1224,245 @@ let applied = prepared.apply()?;            // 같은 proof/loan, 별도 port �
 
 위 `?` 표기는 호출 모양이며 A 제품의 실제 error branch는 `RowOwnedError::Before`에서 반환된 owner를 회수하여 retry/reopen/cancel을 선택해야 한다. `producer_lane` 실패도 `reserved`를 caller가 계속 소유한다. automatic Drop이 성공 Cancel을 대신하지 않는다. stage 전 실제 Unchanged이면 원 pending intent와 targets를 checked 반환한 뒤 같은 wrapper를 반환한다. Reserve의 complete stage/whole apply와 그 예약 소유는 이미 성립했으므로 이 Before는 **새 Forward/Cancel 단계의 Unchanged**이며 Reserve/issuer가 되감겼다는 뜻이 아니다. complete stage/partial install/sync Unknown 이후는 Fatal이며 원 active proof Drop/fence·obligation을 보존하고 정상 retry wrapper를 발급하지 않는다.
 
+2026-10-29 개정(S2-0, [Row 쓰기 개정](#row-write-budget)): 위 호출 모양은 `preflight_row(owner, statement, table, private, flusher)`와 `RowPreflightStep::FlushRequired{target}` 분기를 더한 형태로 대체한다. 그 분기는 효과 전이며, A가 전용 flusher Owner와 같은 flusher로 flush하고 phase를 Ready까지 진행한 뒤 같은 행을 preflight부터 다시 시도한다. preflight가 Ready를 반환한 뒤에는 gate와 lease가 eviction을 막으므로 행 중간의 flush 단계가 없다. 위 Before·Fatal·Drop 규칙은 그대로다.
+
 apply 성공은 원 Slot/RootJob을 Retained로 전환하고 transaction/aging ledger에 같은 obligation을 인계한 다음 proof를 inactive로 만든다. private는 `take()`로 RowApplied에 한 번 반환하고 mutation/Owner reborrow는 끝난다. Cancel 성공도 actual Cancel의 complete stage/whole apply와 원 claim 반환을 확인한 뒤만 proof를 닫고 private를 돌려준다. RowId/UndoSequence/slot generation/mutation high-water·소비한 WAL은 반환하지 않는다. Reserve/Cancel마다 별도 WAL force를 추가하지 않으며 원 WAL-before-page와 terminal durability 규약을 유지한다. 성공/실패 statement의 read/write set 역시 유지한다. C는 이 흐름에서 INSERT 값 검산·row/Undo/leaf encoding이나 A의 오류 정책을 대신 구현하지 않는다.
+
+<a id="row-write-budget"></a>
+#### 2026-10-29 개정 — Row 쓰기 자원·lane·preflight 개정(Q06)
+
+**2026-10-29 · S2-0 계약 개정 · 독립 D2 수용(2026-10-30, r3) · 코드 미공급(공급 단위 S2-a~S2-f·S5-a~S5-d, A 단위 A-W1).** 위 §6.6 동결안의 `preflight_row` 서명·`RowProducerLane::parts`·A 호출 모양, [자원 정본](dev3-resource-bounds.md#row-missing-module-budget)의 미사용 lane, §6.9의 class 규칙을 S2(C3 Row Reserve·Forward·Cancel)와 S5(C2 Row 읽기) 공급 전에 보충하고 바꾼다. 측정 근거는 A의 D12 r4(`live_insert=9835`·`live_clr=7184`·`a_validation=1112`·`a_producer=50790`·`live_plus_a=60625`, native W), S1-e 증거의 A driver live insert 9955B, S1-d r1 census(shared retained memory20184/native20320B, `CatalogProgressCharge`44304B, Row lifecycle42089/43113B, Full34570/35594B, Resident17880B)다. 그 밖의 수치는 분석 상계이며 판정 기준이 아니다.
+
+**D2 검토 기록.** 독립 읽기 전용 검토 3회다. r1은 ACCEPT WITH REQUIRED CHANGES(필수5·권고16), r2는 ACCEPT WITH REQUIRED CHANGES(필수1·권고7), r3는 ACCEPT(필수0·권고4)이며 r3 권고 C1·C2·C4는 이 본문에 반영했다. 회차별 대응·반영 commit·B·MCI 재시도 의무의 수용 상태는 [S2-0 계약 반영](../evidence/module-independence-survey-20261026.md#s2-0-q06-amendment)에 있다. 설계와 Q06 판정의 증거는 [S2/S5 설계와 Row 쓰기 예산 판정](../evidence/module-independence-survey-20261026.md#s2-design-q06)이다.
+
+**결정.** 다음 열한 항목을 고정한다. 각 항목의 규칙은 아래 문단이 정한다.
+1. 성공 statement 종료는 WAL0이며 영속 operation이 없다(Q1).
+2. RowWrite는 `CatalogProgressCharge`, RowRead는 Full lookup charge를 재사용한다. port field를 더하지 않는다(Q2).
+3. RowWrite는 preflight부터 finish·apply 성공·cancel 성공까지 terminal read gate와 원 flush lease를 보유한다(Q6·Q7).
+4. preflight가 쓰기 target의 상주를 보장하고 dirty victim만 효과 전 `FlushRequired{target}`로 돌려준다(Q7).
+5. 미사용 lane을 세 구간으로 나누어 이름·수명·선예약을 고정하고 `RowProducerLane`에 8번째 part를 더한다(Q4 M2).
+6. RowWrite census는 phase마다 C 본문과 A driver의 그 호출 지점 몫을 합한다(Q4 M3).
+7. 세 cut은 각각 128B 이하다(Q4 M6, Q17).
+8. Forward producer 초과를 Q06 재검토로 기록하고 S2-e 진입 조건을 둔다(Q4).
+9. table write bit는 Reserve와 apply의 stage 전에 등록한다(Q5).
+10. actor당 live Row 예약은 하나다(Q19).
+11. MBC10-V09·MBC40-V09의 oracle과 소비자 MCI03-V02의 barrier를 gate 배타에 맞게 대체하고, 소비자 계약의 "합계" 한도는 gate 배타로 읽는다(Q3).
+
+**1. preflight 서명·gate·flush lease(Q6·Q7).** §6.6의 `preflight_row`를 다음으로 대체한다. 다른 wrapper 메서드의 서명은 그대로다.
+
+```rust
+pub(crate) enum RowPreflightStep<'r,'t,'v,'i,'b,'a,'s,'c,'p,'d,'o,'m,'w,W: WriterNamespace> {
+    Ready(PreflightRow<'r,'t,'v,'i,'b,'a,'s,'c,'p,'d,'o,'m,'w,W>),
+    FlushRequired { target: Plan4Target }, // 효과·read-set 등록0, source·gate·lease 반환 뒤
+}
+impl<'b,'a,'s,'c,'p,'d,'o,'m,'w,W: WriterNamespace>
+    MutationPort<'b,'a,'s,'c,'p,'d,'o,'m,'w,W>
+{
+    pub(in crate::storage) fn preflight_row<'r,'t,'v,'i>(
+        &'r mut self, owner: &'r mut Owner<'c,'s>,
+        statement: &'r RowStatementView<'t,'v,'a,'c,'s>,
+        table: &'r CheckedTable<'c,'s>, private: &'i mut [u8;425_984],
+        flusher: &'r mut MaintenancePort<'_,'s,'c,'p,'d,'m,'w,W>,
+    ) -> Result<RowPreflightStep<'r,'t,'v,'i,'b,'a,'s,'c,'p,'d,'o,'m,'w,W>, RetentionError>;
+}
+// PreflightRow·ReservedRow의 비공개 field 추가(PreparedRow는 ReservedRow를 통해 보유).
+// source field 뒤에 gate, io 순서로 선언하여 암묵 Drop도 source→gate→lease 순서다.
+//   gate: Option<TerminalReadGate<'c,'s>>,  // CatalogCreateAdmission 선례
+//   io: Option<RowIoLease<'r,'c,'s,'w>>,    // 원 RetentionFlushControl의 &'r mut 하나. Drop impl 없음
+```
+
+- **순서.** [ADMISSION-002](#operation-source-admission)를 따른다. guardless health·origin → kind와 view(Catalog·읽기 전용 view는 [혼합 거절](#row-begin-capsule)대로 Unsupported) → CheckedTable origin → flusher의 pool/storage binding, flush I/O origin, phase Ready와 잔존 부재(`check_catalog_pair_io`와 같은 검산) → `Owner::close_reads_for_terminal`로 terminal read gate 닫기와 admitted read 반환 대기 → `OperationSourceAdmission::progress(RowWrite)` → 깊은 검산·상주 보장·Free Undo 선택 → read bit·catalog flag 등록 → cut 기록 → source guard 해제 순서다. gate 뒤의 깊은 검산·schema/leaf 복사·LOAD는 read operation을 열지 않고 content/apply admission과 retention LOAD claim(`check_retention_reader`·`try_content`)만 쓴다. 자기 gate가 `try_read_operation`을 거절하기 때문이다.
+- **flush lease.** lease는 원 flush의 단 하나인 mutable borrow를 preflight부터 finish·apply 성공·cancel 성공까지 연속 보유하며 Before 반환에서도 놓지 않는다([CREATE-LEASE-001](#catalog-create-lease)·[LIFECYCLE-PROGRESS-001](#lifecycle-progress) 선례). 획득은 `check_catalog_pair_io`와 같은 검산을 쓴다. 원 binding 일치와 phase Ready를 요구하고, flush I/O origin 불일치와 capture·durable·authority·retired가 남은 Ready는 원 fence(CallerMustResolve)이며, flush I/O preflight 오류는 `Flush(…)`로 보고한다. CREATE와 달리 pair·selected generation을 동결하지 않는다. 목적은 행 하나가 끝날 때까지 flush capture와 eviction이 쓰기 target에 닿지 않게 하는 것이며, lease 아래에서 C는 flush I/O를 하지 않는다. `RowIoLease`는 `CatalogPairIoLease`처럼 Drop impl을 두지 않는다. Drop impl이 있으면 step의 match 끝까지 `'r`이 살아 `FlushRequired` 분기에서 flusher를 다시 빌릴 수 없다.
+- **gate.** 같은 구간 동안 terminal read gate를 보유한다([원 statement CREATE 예약](#catalog-shared-create)의 admission 선례). gate는 `Owner::close_reads_for_terminal`(foreground Owner만)로 닫는다. 이 입구는 의도한 선택이다. 기존 progress 경로(Row lifecycle·`transaction_check`·shared CREATE·retire)는 maintenance Owner도 받는 `close_reads_for_retirement`를 쓰지만, Row 쓰기는 foreground statement 전용이므로 Commit([WRITER-PROGRESS-001](#writer-progress))과 같은 입구를 쓰고 maintenance Owner는 InvalidRole이다. S2-a는 이 입구를 retirement 입구로 바꾸지 않는다. 이 동안 gate를 가진 Owner를 포함한 모든 새 read operation은 Unchanged `InstallationPending`이며, wrapper가 `&mut Owner`를 보유하므로 같은 Owner의 read는 생기지 않는다. 정상 정리는 source→gate→lease 순서이고, 원 Fatal은 fence 아래 charge를 보존한다(§6.9). 효과 전 Drop과 `finish`는 I/O 없이 같은 순서로 반환한다. active Reserved/Prepared의 Drop은 fence이며 Cancel을 대신하지 않는다. gate와 lease는 latch가 아니므로 위 lane 대여의 "latch0" 조건과 충돌하지 않는다.
+- **상주 보장.** preflight는 쓰기 target 집합 T(Root, Reserve RootJob의 Jobs page, TerminalJob page, Status, 선택한 U, RowLeaf, allocator, tableAnchor, actor head의 H Undo page; 물리 중복 제거 뒤 최대9)를 상주시킨다. Free Undo container 선택(위 2026-10-29 참조(Q1) 문단의 allocator·incarnation·slot0 Free 검산)은 preflight에서 하여 cut에 기록하고, Reserve는 같은 container를 다시 검산한다. 비상주 target은 원 retention LOAD 본문(조회 경로와 같은 claim·검산·설치, protected는 이미 상주한 T)으로 적재한다. LOAD scratch 6page는 private의 frame 구간 `[0,98304)`이며 preflight 안에서만, frame 생산 전에 쓴다. 이 적재는 읽기 I/O이며 WAL·page·issuer 효과가 아니다. LOAD가 dirty victim을 요구하면 read bit·catalog flag 등록과 cut 기록 전에 source→gate를 checked 반환하고 lease를 놓은 뒤 `FlushRequired{target}`(그 victim)을 반환한다. 관측이 아니므로 아무것도 등록하지 않는다([S1-f](#row-begin-capsule) 선례).
+- **preflight Ready 뒤의 비상주.** preflight가 Ready를 반환한 뒤에는 gate·lease·배타 MutationPort 아래이므로 정상 경로가 T를 evict하지 않는다. reserve·producer_lane·prepare·apply·cancel이 T의 비상주를 관측하면 Unchanged가 아니라 Fatal(Invariant)이며 원 fence를 유지한다. S2-b는 evict할 수 있는 모든 경로(reader LOAD claim·flush capture·allocator residency·Status pressure)가 gate나 lease 아래에 있음을 증거에 적는다. 하나라도 밖에 있으면 이 개정을 다시 연다.
+- **관측 동작.** 한 행이 진행되는 동안 다른 thread의 새 Row·Catalog 읽기는 `InstallationPending`이고, preflight는 admitted read의 반환을 기다린다. 같은 thread가 다른 Owner의 read operation을 보유한 채 `preflight_row`를 부르면 미반환 의존이므로 A와 B는 그 operation을 먼저 반환한다([회수 progress](#retirement-progress) 선례). 행 진행 중 A는 flusher를 쓸 수 없다.
+
+**2. A의 호출 모양.** §6.6 끝의 호출 모양을 다음으로 대체한다. `?`의 뜻과 Before·Fatal·Drop 규칙은 §6.6 그대로다.
+
+```rust
+let mut preflight = match mutation.preflight_row(owner, statement, table, private, flusher)? {
+    RowPreflightStep::Ready(preflight) => preflight,
+    // 효과0. A는 전용 flusher Owner와 같은 flusher로 target을 flush하고 같은 행을 preflight부터 다시 시도한다.
+    RowPreflightStep::FlushRequired { target } => return flush_then_retry(flusher, flush_owner, target),
+};
+let input = row::insert::validate_insert(values, preflight.validation_lane()?)?;
+let mut reserved = preflight.reserve(input)?; // 여기서만 첫 Reserve 효과
+let proposal = {
+    let lane = reserved.producer_lane()?;
+    row::insert::produce_insert(lane)?
+}; // frame/after/scratch의 짧은 mutable borrow 종료
+let prepared = reserved.prepare(proposal)?; // Reserved 전체 이동
+let applied = prepared.apply()?;            // 같은 proof/loan/gate/lease
+```
+
+`flush_then_retry`는 FLUSHER_SLOT Owner(`require_flusher`)와 MaintenancePort를 함께 쓴다. `try_flush(flush_owner, &target)` 뒤 phase가 Ready가 될 때까지 `continue_flush`를 진행한 다음 다시 시도한다. preflight는 Ready가 아닌 flusher를 Busy로 거절하기 때문이다. preflight가 Ready를 반환한 뒤에는 행 중간의 flush 단계가 없다. prepare·apply의 Before는 실제 거절이므로 A의 기존 reopen·cancel 정책을 유지하며, Cancel의 Before도 상주 부족에서 생기지 않는다.
+
+**3. private lane과 8번째 part(Q4 M2).** [자원 정본](dev3-resource-bounds.md#row-missing-module-budget)의 미사용 `[360448,425984)`를 다음 세 구간으로 고정한다. 선예약은 caller가 이미 보유한 425984B loan 자체이며 새 할당·owner·authority는 없다. 여덟 구간의 비중첩과 합425984는 const assert로 확인한다.
+
+| 구간 | bytes | 이름·사용자 | 수명 |
+| --- | ---: | --- | --- |
+| `[360448,376832)` | 16384 | XOI page(C) | Row layout의 Reserve·Forward·Cancel·CLR 준비에서 XOI inventory projection. 한 C 단계 안 |
+| `[376832,393216)` | 16384 | C scratch(C) | `produce_borrowed`·`observe_borrowed`의 `ROW_REPLAY_SCRATCH_BYTES` scratch(9076B, 나머지 미사용). 한 C 단계 안, 진입 때 0 |
+| `[393216,425984)` | 32768 | A scratch(A) | `producer_lane`이 발급한 lane borrow 동안만. 발급 전 C가 0으로 채운다 |
+
+- Row layout에서는 Forward frame(최대93660B)의 tail 4644B가 XOI page 16384B보다 작으므로 XOI를 frame tail에 두지 않는다. Catalog layout과 Row lifecycle의 기존 배치는 그대로다.
+- frame 구간 `[0,98304)`(6page)은 preflight의 retention LOAD scratch가 먼저 쓰고, Reserve 이후의 frame 생산이 이어 쓴다. 두 사용은 시간상 겹치지 않으며 preflight 반환 뒤 그 bytes는 의미가 없다.
+- `RowProducerLane`에 `scratch: &'l mut [u8;32_768]`을 더하고 `parts(self)`는 이를 8번째 원소로 반환한다. 이 규칙은 `RowProducerLane`을 발급하는 모든 곳(§6.6 ReservedRow, §6.7 RowRollbackTask, 복구 task)에 같다.
+
+```rust
+pub(crate) struct RowProducerLane<'l> {
+    context: RowProducerContext,
+    control: RowControlObservation<'l>,
+    before: &'l [[u8;16_384];9],
+    schema: &'l [u8;16_384],
+    frame: &'l mut [u8;98_304],
+    after: &'l mut [[u8;16_384];5],
+    candidate: &'l mut [u8;16_384],
+    scratch: &'l mut [u8;32_768],             // A 전용, lane borrow 동안만
+}
+impl<'l> RowProducerLane<'l> {
+    pub(in crate::storage) fn parts(self)
+        -> (RowProducerContext, RowControlObservation<'l>, &'l [[u8;16_384];9], &'l [u8;16_384],
+            &'l mut [u8;98_304], &'l mut [[u8;16_384];5], &'l mut [u8;16_384], &'l mut [u8;32_768]);
+}
+```
+
+- A scratch는 authority·owner 저장소가 아니며 byte만 담는다. slice reference 배열 같은 Rust reference 값은 A의 stack에 두고 raw loan에 unsafe cast하지 않는다([자원 정본](dev3-resource-bounds.md#row-missing-module-budget)의 raw loan 규칙). C는 lane 반환 뒤 A scratch를 읽거나 검산 근거로 쓰지 않는다.
+- frame·after·A scratch의 이전 내용과 proposal이 선언한 길이 밖의 bytes는 의미가 없다. C의 observer는 선언한 길이·순서 안의 frame과 after page 전부를 원 before·issued identity에서 독립 재계산해 byte 단위로 대조하며(§6.6 prepare·stage 직전 재검산), A scratch는 읽지 않는다. 따라서 A가 Root after page를 `after`에 직접 써도(M1) 검산 강도는 같다.
+- 8-tuple 전환은 A의 기존 두 destructuring 지점을, `preflight_row` 서명 변경은 A의 `Boundary::preflight`와 `LiveCall`(flusher 전달, step 처리)을 깨뜨린다. S2-a의 한 commit이 C 표면과 A의 적응을 함께 바꾸고 A 검토 서명을 받는다. 그 적응은 새 원소를 받아 두고, flusher를 전달하며, A-W1 전까지 `FlushRequired`를 보유 자원 없이 `Failure(Stage::Preflight)`로 끝낸다. C 본문이 Unsupported인 동안 이 분기에는 도달하지 않는다. flush 뒤 재시도 정책은 A-W1이 공급한다.
+
+**4. 계수 규칙(Q2·Q4 M3·M6).**
+- RowWrite class는 split 때 계산한 `CatalogProgressCharge`(현재 44304B)를 `OperationSourceAdmission::progress`로 예약한다. RowRead class는 `charges.full`(현재 memory34570/native35594B)을 예약한다. `catalog()`는 RowWrite를 0(fenced Invariant)으로, RowRead를 full로 매핑한다. MutationPort·ReadPort·DiskSession에 field를 더하지 않는다. field 하나는 shared를 늘리며 지금 native recovered 여유는 32B, memory `pending_full` 여유는 84B다.
+- RowWrite의 각 phase census는 다음과 같다. 실제 배타 phase만 max로 결합한다(§6.9).
+  - C 단계(preflight·reserve·prepare·apply·cancel·finish): C 본문 + wrapper·Result·return carrier + A driver의 그 호출 지점 몫.
+  - A 단계(validate·producer): A driver의 그 호출 지점 몫 + A 본문. lane 값은 driver 몫에 들어 있다. control borrow의 Jobs 64KiB와 private 구간은 loan이며 source 값으로 다시 세지 않는다.
+- A driver의 몫은 deepest point 하나가 아니라 C 호출 지점과 producer 호출 지점마다 따로 보고한다(M3). C는 그 몫의 상한 `ROW_WRITE_CALLER_BYTES`를 source census 상수로 두고, C 단계마다 `C 본문 + ROW_WRITE_CALLER_BYTES ≤ charge`를 memory·native W에서 확인한다. A는 D12 계열 selector에서 각 C 호출 지점 몫 ≤ `ROW_WRITE_CALLER_BYTES`와 `producer 호출 지점 몫 + A producer ≤ charge`를 확인한다. 상수와 charge 계산 함수는 C가 정의하고 `storage::disk`로 선택 재노출하며, 상수 값은 S2-a가 C 본문 상계와 함께 고정한다. 상수를 바꾸면 이미 commit한 S2-b1~S2-d의 census(S2W-C01·C02)를 새 값으로 다시 통과해야 한다. C는 A의 producer를 계수하지 않고 A는 C census를 계수하지 않는다.
+- 세 cut(`RowPreflightCut`·`RowDraftCut`·`RowPreparedCut`)은 각각 128B 이하이며 const assert로 확인한다. scalar와 32B digest만 담고, 여러 page의 stamp·identity는 하나의 SHA-256 commitment로 접어 담는다. raw stamp 배열은 금지한다. A driver가 wrapper 값을 여러 번 계수하므로(현재 구조에서 preflight cut 3회·draft cut 7회·prepared cut 4회, gate·lease 약10회) cut 1B가 RowWrite에서는 여러 B가 된다.
+- S2-a는 세 cut·gate·lease·8번째 part를 최종 배치로 먼저 공급하여 A가 실제 타입으로 측정하게 한다.
+
+**5. Q06 재검토 기록(Q4).** 측정 Forward producer phase는 60625B(A driver 9835 + A producer 50790, D12 r4)이고, S1-e 증거의 driver 9955B로는 60745B다. 둘 다 재사용 charge 44304B와 class 상한 memory45352/native45216B를 넘는다. cap은 올리지 않고 caller frame을 class에서 빼지 않는다(§6.9, 자원 정본의 "caller carrier의 동시 합"). 대응과 분석 상계(native)는 다음과 같다.
+
+| 항목 | 내용 | 담당 | Forward producer phase |
+| --- | --- | --- | ---: |
+| 측정 | driver 9955(S1-e) + producer 50790 | A | 60745 |
+| M1 | Root after page를 `images::Prepared.root` 대신 `after`에 직접 기록 | A | −16384 |
+| M2 | leaf scratch4444·Job1024·StatusHome224·Undo432·descriptor3072·`[u8;640]`·`[u8;512]`·`[u8;256]`을 A scratch로 이동(slice reference 약+100) | A(+C lane) | 약−10500 |
+| M6 | 세 cut 128B·gate·lease·8번째 part에 따른 driver 증가(S1-e view mark는 9955에 포함) | C 타입, A 계수 | 약+2200 |
+| 합 | M1·M2·M6 뒤 | | 약36070(여유 약8230) |
+| M7(조건부) | driver를 단계마다 한 wrapper slot만 사는 모양으로 재구성. 아래 C 단계 조건에서 필수 | A | 약−6700 |
+
+- **CLR producer phase.** 같은 producer(`propose`)를 쓰는 CLR phase는 `live_clr` 7184 + 50790 = 57974B로 charge를 넘는다(D12 r4). M1·M2가 함께 줄이며, S4(C4 rollback)의 공급도 아래와 같은 진입 측정(memory·native, 호출 지점 몫 포함)을 조건으로 한다.
+- **S2-e 진입 조건.** A-W1이 S2-a의 최종 타입으로 memory·native W 모두 (a) Forward producer phase ≤ charge와 그 margin, (b) MCA00-D15의 C 호출 지점별 몫 ≤ `ROW_WRITE_CALLER_BYTES`를 PASS로 보고한다. margin이 2048B 미만이면 coordinator가 S2-e 착수 전 추가 slimming을 정한다. (b)가 M7 뒤에도 실패하면 새 Q06 기록이며, `ROW_WRITE_CALLER_BYTES`를 바꾸면 이미 commit한 S2-b1~S2-d의 census(S2W-C01·C02)를 새 값으로 다시 통과해야 한다.
+- **C 단계 phase의 위험.** Reserve·Forward 준비·Cancel의 C 본문은 Row lifecycle(43113B native)과 같은 준비 본문(`validate_live`의 history peak 29124B 포함)을 쓰므로 분석 상계가 37–43KB이고, preflight는 retention LOAD 본문(측정 33364/34388B)을 포함해 약35.6–37.6KB다. 여기에 A driver의 그 호출 지점 몫이 더해진다. 현재의 경로 전체 inventory(C 호출 지점 약10.9KB)를 그대로 쓰면 분석 상계로는 모든 효과 단계가 charge를 넘을 수 있으나, 호출 지점별 몫은 그보다 작으므로 초과가 확정된 것은 아니다. 특히 preflight는 A가 아직 wrapper를 갖지 않은 첫 호출이다. M7(C 호출 지점 몫 약4.2KB)이면 preflight·apply는 들어가고 Reserve·Forward 준비·Cancel은 ±3KB 경계다. S2-a는 effect 본문을 쓰기 전에 각 C 단계의 상계를 기존 항과 새 타입으로 계산해 출력한다. S2-b1·S2-b2·S2-c·S2-d·S2-e는 자기 phase의 census가 통과해야 그 경로를 commit한다. S2-a 상계와 A-W1의 호출 지점 몫의 합이 charge를 넘으면 A-W1은 M7을 공급한다. 그래도 넘으면 cap이나 charge field가 아니라 새 Q06 기록으로 C 본문 축소(예: 한 행 안에서 `validate_live`의 위치 재배치, 별도 D2)나 class 재구성을 정한다. 그 기록이 먼저 검토할 선택지는 아래 거절한 대안의 "charge max 접기"다.
+- **기존 초과(Pending+Full).** native W의 shared+Pending+Full=66612B>65536B이다(memory 65452B, 여유84B). 따라서 [WRITER-PROGRESS-001](#writer-progress) (c)의 "한 Full read는 들어가고"는 native에서 성립하지 않는다. 정정은 Commit 창 owner의 별도 Q06 기록이며, 이 개정은 cap·charge와 그 문장을 바꾸지 않는다.
+- **RowRead.** Full 본문 상계에 B driver의 호출 지점 몫을 더한다. B는 호출 지점 inventory를 공급한다(Q14). census가 full을 넘으면 새 Q06 기록 뒤 전용 charge field(+8B shared)나 축소를 정한다. 쓰기 charge 44304B를 읽기에 재사용하지 않는다. Full을 재사용하므로 Commit Pending 창과의 합은 위 기존 초과를 따른다(native Capacity).
+
+**6. statement 종료·write bit·한 예약·durable wait(Q1·Q5·Q19·Q15).**
+- 성공 statement 종료는 WAL0이며 sequence·mark를 RAM slot에서 닫고 쓰지 않은 6080B 문장 credit을 다음 statement로 넘긴다. 별도 StatementFinish-success group은 없다([소비자 계약](dev3-module-consumers.md#row-shape)의 조건문을 이 결정으로 닫는다). 복구에는 live statement가 없고(§6.6 producer 입력 문단) 다음 mark는 다음 statement 시작의 ATT `undo_head`다.
+- table write bit는 reserve에서 table 재검산 뒤 WAL stage 전에 등록하고, apply에서 stage 전에 다시 등록한다. 등록 뒤의 Before는 보수 bit를 남긴다. bit는 Before·Cancel·Fatal·statement 종료에서도 지우지 않는다([격리 owner](dev3-task-10-concurrency.md#module-row-isolation)의 read/write bit 규칙). 따라서 효과가 있으면 bit가 있다.
+- actor당 live Row 예약은 하나다([Job3 census](dev3-module-consumers.md#job3-census)의 Reserved≤1). preflight는 source 예약 뒤 깊은 검산에서 RootReserved Job을 가진 actor를 Unchanged WrongState로 거절하고 source→gate→lease를 반환한다. 건강한 session에서는 wrapper의 배타 borrow 때문에 도달하지 않는 방어 검산이다.
+- Reserve·Forward·Cancel은 기존 ordinary 설치 본문을 그대로 쓴다. 그 본문은 group마다 설치 뒤 durable wait를 하며 이는 Row가 더한 force가 아니다(Catalog CREATE Reserve와 같은 기존 규칙, §6.6의 "별도 WAL force를 추가하지 않으며"). 소비자 RamOnly cut은 이 wait 동안의 kill로 도달한다. 지연은 후속 관측 항목이며 S3이 Commit ACK durability를 정한다.
+
+**7. V09·MCI03-V02의 oracle 대체와 "합계" 한도의 읽기(Q3).** 진행 class writer(RowWrite·RowProgress·CatalogProgress)는 terminal read gate로 reader와 배타다([WRITER-PROGRESS-001](#writer-progress)의 "선택한 수명"). 그 구간의 동시 합은 `shared + max(writer charge, Σ admitted reader)`에 gate 대기 중 writer 진입 floor를 더한 값이다. 그 floor는 WRITER-PROGRESS-001의 미공급 의무로 남는다. 소비자 계약의 "합계" 한도는 이 뜻으로 읽으며 한도 자체는 그대로 참이다. 반면 MBC10-V09·MBC40-V09의 원 문언(겹친 nested sum·동시 생존)은 writer ≤ memory9592/native9456B를 요구하여 어떤 RowWrite phase도 맞지 않고 gate 결정과 양립하지 않는다. 그래서 **두 selector의 oracle을 다음으로 대체**하고 원 문언은 폐기한다. 대체 oracle의 PASS는 writer와 resident reader 2개의 겹친 admission을 증명하지 않는다.
+- MBC10-V09(대체 oracle): resident reader 2개가 admitted된 뒤 writer 요청은 gate에서 두 반환을 기다리고, 그동안 새 reader는 `InstallationPending`이며, 반환 뒤 writer가 예약한다. −1/동일/+1은 시험 전용 ledger charge로 남은 몫을 제한해 마지막 admission에 적용한다(소비자 MCA05의 "test admission의 남은 몫을 제한" 선례). cap 변경은 없다.
+- MBC40-V09(대체 oracle): census는 (i) shared + 반환 오류가 최대인 writer phase(caller carrier 포함), (ii) shared + resident 2개, (iii) 두 집합이 gate로 동시에 admitted되지 않음, (iv) gate 대기 중 writer 진입 floor + shared + resident 2개를 따로 출력한다. (iv)는 floor 공급 전 PASS로 세지 않는다. rollback·recovery task의 같은 대체는 S4와 C4가 정한다.
+- 소비자 MCI03-V02(barrier 대체): 행 진행 중 B의 read operation은 `InstallationPending`이므로 문언의 "B dirty load와 A apply 재검사" 교차는 행 안에서 생기지 않는다. barrier는 A preflight 전(preflight는 B의 반환을 기다린다)이나 apply 뒤에 둔다. prepare와 apply 사이의 변화는 S2W-R21의 두 시험 hook으로 검산한다. source stamp가 바뀌면 같은 Prepared의 Before 뒤 reopen·cancel이고, 원 시나리오의 결과에 해당하는 쓰기 target 비상주는 Fatal(Invariant)이며 fence가 남는다. 두 변화 모두 gate·lease·배타 MutationPort 아래에서는 cfg(test) 주입으로만 만들 수 있다([소비자 합류 표](dev3-module-consumers.md#acceptance)).
+- 행 진행 중 `InstallationPending`을 받은 Row 읽기의 재시도는 이 개정이 소비자(B·MCI)에게 새로 더하는 의무이며, 그 담당의 수용을 D2 기록에 적는다.
+
+**거절한 대안.**
+- (Q1) StatementFinish-success group — 바뀌는 영속 상태가 없고, 소비자 계약이 가짜 동일 before/after Native를 금지한다.
+- (Q2) 새 charge field — shared를 늘려 native recovered 여유 32B와 memory `pending_full` 여유 84B를 줄이고 모든 class 상한을 낮춘다. 측정 초과가 남을 때의 마지막 대안이다.
+- (Q3) V09 문언 유지 — writer ≤ native9456B가 필요해 어떤 RowWrite phase도 맞지 않는다.
+- (Q4) cap 증액 — §11 Q06이 금지한다. caller frame 제외 — §6.9와 자원 정본에 어긋난다.
+- (Q6) gate 없이 source만 예약 — 이미 admitted된 reader가 writer를 Capacity로 굶기고, 뒤에 온 reader도 Capacity라 동시성 이득이 없다.
+- (Q7 b) 서명을 유지하고 A가 Before 뒤 flush — Reserve 뒤 eviction이 남아 Cancel의 Before가 A driver에서 Drop·fence로 이어진다.
+- (Q7 c) producer 동안 pin 유지 — 대여 전 guard 해제 규칙(§6.6 lane 문단)에 어긋난다.
+- lease 아래 C가 victim을 직접 flush — 쓰기 gate·source 창 안에 flush I/O와 durable wait를 넣고, CREATE lease의 "lease 아래 flush I/O 불가" 성질을 깬다.
+- `FlushRequired`를 `RetentionError`에 실음 — target을 실을 수 없다. `TableStep`·`RollbackStep`·`ReadStep`과 같은 step 값을 쓴다.
+- C가 상주를 적재하지 않고 비상주 target을 그대로 반환 — A에는 LOAD 경로가 없고 flusher는 dirty victim만 처리한다.
+- XOI를 크기에 따라 frame tail이나 lane에 둠 — 한 단계가 두 배치를 가진다. Row layout은 언제나 lane이다.
+- 7-tuple을 유지하고 별도 accessor를 더함 — 동결 표면이 둘이 되고, 나중의 이름 정리가 다시 A를 깨뜨린다.
+- Forward observer scratch로 replay WORK_END tail 재사용 — history의 borrowed workspace를 live 단계에 섞는다. writer 자신의 loan 구간이 있다.
+- cut에 raw stamp 배열 — 128B를 넘고 A driver에서 여러 배로 늘어난다.
+- (Q19) gate 전 actor 검산 — ADMISSION-002의 깊은 검산 순서와 S1-e `transaction_check` 선례에 어긋난다.
+- M2 scratch를 candidate 구간의 남는 tail(약14KB)에 둠 — 8번째 part를 피하지만 `preflight_row` 서명 변경 때문에 A와의 공동 commit은 어차피 필요하다. A scratch의 크기가 cell 최대(자원 정본의 2228B, profile에 따라 바뀜)에 묶이고, 남는 약3.5KB로는 M2′(4072B)를 담지 못하며, observer가 선언 길이만큼 검산하는 입력 구간에 무관한 bytes를 섞는다.
+- 상주 적재를 gate 전의 별도 read 단계로 분리 — LOAD는 어느 class에서든 그 호출 지점의 A 몫과 함께 admission되어야 한다. Full은 LOAD 본문 위로 1206B(34570−33364, 35594−34388)만 남고 RowWrite는 9916–10940B가 남는다. 그 호출 지점의 A 몫과 단계 carrier가 1206B를 넘는다면(측정 전의 추론이며 MCA00-D15의 preflight 몫이 확인한다) LOAD를 preflight에서 빼는 것은 더 좁은 class로 옮기는 것이고, 그 class를 넓히려면 새 field나 gate 없는 progress admission(Q6에서 거절)이 필요하다. 거절은 다음 재시도 논거만으로도 선다. 그 단계와 gate 사이에 admitted reader의 LOAD가 clean target을 evict할 수 있어 재시도에 상한이 없다. gate 아래에서는 dirty victim만 preflight를 멈추고 flush가 하나씩 정리하며, 배타 MutationPort 아래에서 다른 foreground writer가 그 victim을 다시 dirty로 만들지 않으므로 재시도가 그때의 dirty page 수로 유한하다. C 단계 위험을 정하는 것은 Reserve·Forward 준비·Cancel이며 preflight가 아니다. gate 안의 읽기 I/O는 최대9page이고 같은 gate가 group마다의 durable wait(6항)도 덮으므로, 그 지연은 후속 관측 항목으로 둔다.
+- RowWrite phase를 `CatalogProgressCharge`의 max에 접고 `charge ≤ 65536 − shared`를 명시 검산("charge max 접기") — field·cap 변경 없이 memory1048/native912B를 더 쓰게 한다. 그러나 S1-e가 `.max(row_lifecycle)`를 빼고 상수 확인으로 바꾼 결정(커진 Row 본문이 모든 Catalog progress 예약을 조용히 올리지 않고 이름으로 실패)과 반대다. RowWrite 항을 `catalog_live` peak에 두면 recovery cleanup 항(약880B를 더함)의 한도 memory44472/native44336B에 걸려 여유가 168/32B로 준다. 여유가 ±3KB 불확실성보다 작아 계획(M7·단위별 census)도 바꾸지 않는다. 측정 초과가 이 범위 안이면 새 Q06 기록이 먼저 검토할 선택지로 남긴다(명시 검산과 `catalog_live` 밖의 census 배치를 조건으로).
+
+**거절 결과.** 효과 전 거절은 WAL·page·issuer·Jobs 변경0이며 실제 관측한 read-set은 유지한다.
+
+| 경로 | phase | cause | effect·반환 |
+| --- | --- | --- | --- |
+| Catalog view·읽기 전용 view | Prepare | Unsupported | Unchanged. gate·source·read-set 전 |
+| 다른 pool/storage의 flusher | Prepare | BindingMismatch | Unchanged. gate 전 |
+| flush I/O origin 불일치 | Prepare | BindingMismatch | CallerMustResolve·fence. gate 전 |
+| flush phase가 Ready가 아님 | Prepare | Busy | Unchanged. gate 전 |
+| Ready인데 capture·durable·authority·retired 잔존 | Prepare | Invariant | CallerMustResolve·fence |
+| flush I/O preflight 오류 | Prepare | `Flush(…)`(원 오류) | 원 effect. gate 전 |
+| gate(`close_reads_for_terminal`) | Prepare | Concurrency(InvalidRole·Busy·InstallationPending) | Unchanged |
+| source 부족 | Census | Capacity | Unchanged. gate 재개 |
+| preflight의 Free Undo 없음 | Prepare | Capacity | Unchanged. source→gate→lease 반환 |
+| 상주에 dirty victim 필요 | — | — | `Ok(FlushRequired{target})`. 효과·등록0 |
+| preflight LOAD의 Unchanged claim·frame 거절 | Load | Busy·Membership·Stale 등 원 cause | Unchanged. source→gate→lease 반환 |
+| preflight LOAD의 page I/O 오류 | Load | PageIo | Fatal·fence |
+| 그 밖의 preflight LOAD 오류 | Load | 원 cause(page decode `Page(…)`, frame stamp 누락·검증 불일치의 Invariant, frame 오류의 Fenced·Poisoned 등) | 원 effect(Fatal·fence). Unchanged로 바꾸지 않는다 |
+| RootReserved를 가진 actor | Prepare | WrongState | Unchanged. source→gate→lease 반환 |
+| stored Index(MBC30-V04-S) | Load | Invariant | Fatal·fence |
+| preflight Ready 뒤 target 비상주 | 그 단계 | Invariant | Fatal·fence |
+| reserve의 위조 candidate·leaf 부족·바뀐 source | Prepare | InvalidInput·Capacity·Stale | Before(같은 PreflightRow) |
+| prepare·apply·cancel의 stage 전 거절 | 그 단계 | 원 cause | Before(같은 wrapper) |
+| complete stage·partial install·sync Unknown 뒤 | Stage·Install·Durable | 원 cause | Fatal. active proof Drop은 fence |
+
+**이 개정의 자원.** cap·class 상한·private425984B·long49152B·metadata188544B·whole254080B를 바꾸지 않는다. 더하는 것은 wrapper field 둘(gate 약32B·lease 8B), 128B 이하 cut 셋, lane reference 하나(8B), `RowPreflightStep` carrier다. 모두 RowWrite phase census와 A driver 계수에 들어가며 shared는 바뀌지 않는다. preflight의 LOAD scratch는 기존 frame 구간을 먼저 쓰므로 새 bytes가 아니다.
+
+**시험.** 신규 selector는 다음과 같다. 이름은 ID 접두 test 함수이며 모두 NOT_RUN이다.
+
+| ID | 사례 |
+| --- | --- |
+| S2W-R01 | Catalog view·읽기 전용 view·stale view의 preflight가 gate·source 전에 Unchanged이고 read-set이 그대로다 |
+| S2W-R02 | 시험 전용 charge로 source 부족: gate가 다시 열리고 효과0 |
+| S2W-R03 | preflight가 read bit·catalog flag를 등록하고 finish가 source→gate→lease를 반환하며 효과0 |
+| S2W-R04 | 위조 candidate(digest·길이·schema epoch)의 reserve가 Before이고 효과0 |
+| S2W-R05 | Free Undo container가 없거나 후보가 allocator generation 불일치·slot0 비Free로 모두 제외되면 preflight가 Unchanged/Prepare/Capacity이고 source→gate→lease를 반환한다. reserve 재검산 변화는 Before |
+| S2W-R06 | reserve 성공: RowReserve frame SHA가 독립 literal과 같고 write bit와 issued identity가 맞다 |
+| S2W-R07 | reserve의 재검산에 한 번만 다른 source stamp를 보이는 cfg(test) 주입이면 reserve가 같은 PreflightRow의 Before(Stale, 효과0)이고 validation_lane부터 재시도해 성공한다 |
+| S2W-R08 | Reserve→Cancel: frame SHA, RowId·sequence·high-water 미반환, write bit 유지, private 1회 반환 |
+| S2W-R09 | Reserve→producer_lane→A produce→prepare→apply: Forward SHA = literal, Retained, view의 mark·sequence |
+| S2W-R10 | A frame·after·roles를 변조한 prepare가 같은 Reserved로 Before이고 이어서 cancel한다 |
+| S2W-R11 | apply stage 전 fault가 Before→reopen→cancel이고 같은 예약이다 |
+| S2W-R12 | stage 뒤 fault가 Fatal이고 fence가 남으며 active proof Drop이 fence한다 |
+| S2W-R13 | 두 statement×3행: 둘째 statement mark = ATT head, 6080 credit은 첫 statement의 첫 Reserve에서 확보하고 둘째 statement는 넘겨받는다 |
+| S2W-R14 | Catalog Job을 가진 Row actor가 Reserve 전에 거절된다 |
+| S2W-R15 | Reserved 보유 중 reader가 InstallationPending이고 preflight가 admitted reader의 반환을 기다린다 |
+| S2W-R16 | 비상주 target은 C가 적재하고, dirty victim이면 `FlushRequired{target}`·효과0·read bit0·source/gate/lease 반환, flush 뒤 Ready |
+| S2W-R17 | flusher binding 불일치 Unchanged, flush I/O origin 불일치 fence, phase WaitingWal Busy, Ready인데 capture 잔존이면 fence, I/O preflight 오류는 `Flush(…)` |
+| S2W-R18 | 시험 fixture의 RootReserved actor가 WrongState이고 source→gate→lease를 반환한다 |
+| S2W-R19 | preflight LOAD의 claim 거절(Busy 등)은 Unchanged/Load로 source→gate→lease를 반환하고, page I/O 오류와 page decode 오류는 각각 원 cause의 Fatal/Load이며 fence가 남는다 |
+| S2W-R20 | preflight는 gate 뒤 read operation을 열지 않는다. 진행 중 같은 core의 read operation 표시가 0이고 LOAD claim은 성공한다 |
+| S2W-R21 | prepare와 apply 사이의 두 cfg(test) 주입. gate·lease·배타 MutationPort 아래에서는 C 밖의 어떤 경로도 이 변화를 만들 수 없다. (1) apply의 stage 직전 재검산에 한 번만 다른 source stamp를 보이면 apply가 같은 Prepared의 Before(Stale, WAL·page·issuer 변화0)이고, A는 reopen 뒤 cancel하며 cancel은 성공한다. (2) clean 쓰기 target 하나의 frame을 비우면 apply가 Fatal(Invariant)이고 fence가 남는다. 소비자 MCI03-V02의 대체 검산이다 |
+| S2W-N01 | compiler 거절: Row wrapper가 사는 동안 같은 flusher 사용 |
+| S2W-H01..H05 | Reserve·Forward·Cancel 뒤 `validate_live`, Reserved·Forward 상태 crash의 interim gate 정지, Forward·Cancel의 durable replay = live |
+| S2W-C01·C02 | memory·native W에서 RowWrite phase별 census와 `C 본문 + ROW_WRITE_CALLER_BYTES ≤ charge` 출력 |
+| S2W-C03 | `RowLoanLayout` 분리 뒤 Row lifecycle 42089/43113B 불변 |
+| S2W-C04 | live peak 64000/64136B·recovered peak 65368/65504B 불변 또는 변화 근거 |
+| S2W-C05 | private 여덟 구간의 비중첩·합425984, 세 cut ≤128B const assert |
+| MCA00-D15(A) | A driver의 C 호출 지점별 몫 ≤ `ROW_WRITE_CALLER_BYTES`, Forward producer phase ≤ charge와 margin(memory·native, S2-a 실제 타입). CLR producer phase도 출력한다(S4 입력). S2-e 진입 조건 |
+| MCB00-D13(B) | B driver의 C 호출 지점별 몫(S5 census 입력) |
+| S5R-R01..R08·S5R-C01..C03 | Row 읽기 admission·빈 table·FlushRequired·capture·sequence overflow·status/missing·copy·Catalog 불변, RowRead census ≤ full |
+
+읽기가 바뀌는 기존 selector는 MBC00-P01(flusher 인수와 step 두 분기, lease의 Drop impl 부재), MBC00-P05(A scratch mutable borrow), 소비자 MCA05-V31(preflight 재시도), `catalog_source_memory`·`catalog_source_native`(기대값 9792)다. oracle을 대체하는 기존 selector는 MBC10-V09·MBC40-V09와 소비자 MCI03-V02다(위 7항). MCI03-V02의 대체 검산은 S2W-R21이다. 독립 literal은 `tests/fixtures/dev3-module-c3/row-write/`와 `tests/fixtures/dev3-module-c2/row-read/`의 stdlib author가 만든다. author는 N1 author를 import할 수 있고 제품 코드는 import하지 않는다.
+
+**공급 단위와 순서.**
+- **S2-0.** 이 개정과 아래 참조 문단·자원 정본·소비자 계약 문단이다. 문서만 바꾸며 독립 D2를 받는다.
+- **Q12 정정.** `catalog_source_*` 기대값 정정(자원 정본의 2026-10-29 판정)은 S2-a 전의 작은 시험 commit이다.
+- **S2-a(C).** S1-e 병합과 S2-0 수용 뒤. class와 arm, 최종 wrapper field·cut 배치·lane 상수, 8-tuple·서명과 A의 `Boundary::preflight`·`LiveCall` 적응(위 3항의 한 commit), `ROW_WRITE_CALLER_BYTES`, effect 본문 전 C 단계별 상계 출력이다.
+- **A-W1(A).** S2-a 뒤. M1·M2, 위 5항 조건의 M7, D12 호출 지점 보고(M3), MCA00-D15, 전용 flusher Owner와 `continue_flush`를 쓰는 `FlushRequired` 뒤 재시도다.
+- **S2-b1·S2-b2·S2-c·S2-d(C).** S2-a 뒤 차례로. 각 단위는 자기 phase census가 통과해야 그 경로를 commit한다. S2-c는 S1-g에도 기댄다.
+- **S2-e(C).** S2-d와 위 5항 진입 조건((a) Forward producer phase, (b) MCA00-D15 PASS) 뒤.
+- **S2-f(C).** S2-e 뒤의 시험·census·증거다.
+- **S5-a~S5-d(C).** S2-a 뒤 병렬이다. S5-d는 B inventory(MCB00-D13)가, 행을 가진 읽기 사례는 S2-e가 필요하다.
+- **되돌림.** 새 것부터 되돌린다. S2-a는 S2-b~f·S5-a~d·A-W1을 모두 되돌린 뒤에만 되돌리며, 위 3항의 공동 commit은 A 적응과 함께 되돌린다. S2-0은 이에 기댄 코드 단위를 모두 되돌린 뒤 단독으로 되돌린다.
 
 ### 6.7 live rollback과 C/A recovery handler
 
@@ -1422,6 +1666,8 @@ isolation header는 aggregate-used, slot12..16은 source-owned-bytes를 보유�
 
 [자원 owner](dev3-resource-bounds.md#row-missing-module-budget)의65536B는 **shared retained 한 번 + 동시에 살아 있는 모든 operation의 nested charge 합**이다. `max(writer,reader)`로 병렬 전체를 대신하지 않는다. 각 class의 charge는 구현 source의 fixed `source_census` 표현식으로 산출하여 entry에서 고정하고 실행 도중 늘리지 않는다. 표현식에는 wrapper/내부 helper/Result·오류/return carrier/선택 caller의 동시값을 합하고, 실제 배타 phase에만 max를 사용한다. 이 값은 M4에 실제 타입으로 검산할 계산 결과이며 그때 설계 예산을 새로 정하는 항목이 아니다. `shared_retained + charge > 65536`인 class는 빌드 인수 실패다.
 
+2026-10-29 적용(S2-0, [Row 쓰기 개정](#row-write-budget)): RowWrite class는 `CatalogProgressCharge`를, RowRead class는 Full lookup charge를 재사용하며 port field를 더하지 않는다. 위 "선택 caller의 동시값"은 Row 쓰기에서 A driver의, Row 읽기에서 B driver의 호출 지점별 몫이다. deepest point 하나로 모든 phase를 대신하지 않고 phase마다 그 호출 지점의 몫을 더한다. 측정이 charge를 넘으면 빌드 인수 실패이며 cap이나 charge field가 아니라 Q06 재검토로 간다.
+
 private `OperationSourceAdmission<'b,'a,'c,'s>`는 원 `&'b Mutex<IsolationLedger<'a,'c,'s>>`, fixed class/charge와 active flag만 보유한다. C public entry의 첫 source guard/pin/effect 전에 원 progress admission과 함께 예약한다. RowReadOperation/CatalogReadOperation은 operation부터 checked finish까지, PreflightRow→ReservedRow→PreparedRow는 같은 한 예약을 이동하여 성공/취소까지, RowRollback/RecoveryRowTask는 선택된 완료 단위까지 보유한다. Before가 wrapper를 반환하면 같은 admission도 남으며 retry 때 중복 청구하지 않는다. 메서드 내부 helper는 상위의 nested charge 안에서 실행하고 새 예약을 요구하지 않는다. typed wrapper를 caller가 오래 보유하면 source 용량도 계속 점유하므로 합계를 벗어나는 재진입은 첫 효과 전에 Busy/Capacity다. primitive Result 반환 함수는 고정 entry/exit carrier 비용까지 예약한 뒤 출구에서 반환한다. 독립 capability가 없는 Result마다 generic credit을 만들지 않는다.
 
 #### XADB-MODULE-ADMISSION-002 — 원 admission 뒤 깊은 검산
@@ -1598,6 +1844,8 @@ source 상계는 deep health/registry, Root ReadTargets+Root decode/Job scan, St
 
 lease는 원 flush의 단 하나인 mutable borrow를 planner 종료부터 Reserve·Forward/Cancel·Before 반환까지 연속 보유한다. 원 core/binding/fence·pair와 selected generation을 동결한다. acquisition은 actual FlushIo origin, Ready, capture/durable/authority/retired 부재와 실제 `preflight`를 검산한다. Forward/Cancel은 동결 identity/generation을 원 owner와 다시 대조하고 호출 동안 같은 borrow를 재대여한다. Cancel 때 generation을 새로 골라 lease를 다시 만드는 대안은 채택하지 않는다. 원 body의 짧은 PairIoQuiescence는 이 연속 lease 아래 만들어지며 flush I/O나 generation 변경은 불가능하다. active Drop은 fence/notify 뒤 claim을 미완료로 보존한다. 정상·Before·Fatal 및 allocator/epoch 종료 의미는 유지한다.
 
+2026-10-29 참조(S2-0): [Row 쓰기 개정](#row-write-budget)의 Row flush lease는 이 연속 대여 규칙을 PreflightRow→ReservedRow→PreparedRow에 적용한다. 획득은 같은 binding·flush I/O origin·Ready·capture/durable/authority/retired 부재를 검산하며 pair와 selected generation은 동결하지 않는다. Row lease도 Drop impl을 두지 않는다. 목적은 행이 끝날 때까지 쓰기 target에 flush capture와 eviction이 닿지 않게 하는 것이고, lease 아래에서 flush I/O는 하지 않는다.
+
 원 pending/population/deep health와 planner 오류는 lease admission보다 먼저다. 그 뒤 flush preflight를 기존-target preparation보다 앞에서 수행하여 lease를 획득하므로, 미관측 preparation 오류와 flush 오류가 함께 있으면 flush 오류가 먼저다. 이는 내부 admission 경계의 한정 D2 구체화이며 Format/WAL 의미는 바꾸지 않는다. 단순 scalar lease나 whole bound+alias 대안은 선택하지 않는다. 원 mutable borrow를 분리한 실제 자원만 저장하며 새 owner/manager/registry는 없다.
 
 source는 확대 reservation과 Result/Before, lease 획득/반환·IoObservation·검산 helper, 원 reserve tuple 및 caller/view를 보수 추가한다. 변경 없는 retirement peak가 더 크더라도 새 CREATE phase를 누락하지 않는다. cap 증액·optimizer 할인은 없다. test-only `CatalogTestState`는 원 pool/bank/jobs를 관측하므로 reservation에 전체 bound를 다시 구성하지 않는다. 독립 oracle의 원 byte/hash/기대값은 유지한다.
@@ -1683,6 +1931,13 @@ B fixture는 checksum/grammar decode만으로 live 권한을 얻지 않는다. C
 | C4 gate MCB05-N01..06 수신, native6개 | [소비자 no-loser 입력](dev3-module-consumers.md#acceptance)의 Active Forward, Row Reserved, Active headNone, Aborting nextNone, SystemPage Reserved-only, CatalogCreate Reserved | 각2PID·180초 negative. canonical 전체 검산 뒤 Analysis/Unsupported·CallerMustResolve, 별도 database_effect=Unchanged/mutations0/READY0. 정상 committed cleanup은 MBC40-N01의3PID. legacy recover의 새 Row scope 차단도 같은 source의 memory gate 검사에 포함. 중복 실행0 |
 | C5 MCI01-V01..14·MCI02-N01..03·MCI03-V01..04 | [합류 exact inventory](dev3-module-consumers.md#acceptance)의 실제 A→B·isolation·publication·recovery 입력/cut를 그대로 수신 | C1–C4와 두 소비자 단독 완료만으로 합류PASS를 만들지 않음. 새로운 상호작용/diff만 실행하며 기존 완료case 반복0 |
 
+2026-10-29 개정(S2-0, [Row 쓰기 개정](#row-write-budget)): 위 표의 다음 행을 이렇게 바꾼다.
+- MBC00-P01은 `preflight_row`에 flusher를 넘기고 `RowPreflightStep`의 두 분기를 컴파일하며, lease에 Drop impl이 없어 `FlushRequired` 분기에서 flusher를 다시 빌릴 수 있음을 함께 확인한다. P05의 mutable borrow에는 A scratch가 들어간다.
+- MBC10-V09의 oracle을 다음으로 대체한다. 원 문언(writer1+resident reader2의 겹친 nested sum)은 RowWrite의 gate 결정과 양립하지 않고 writer ≤ memory9592/native9456B를 요구하므로 폐기한다. 대체 oracle: resident reader 2개가 admitted된 뒤 writer는 gate에서 두 반환을 기다리고, 그동안 새 reader는 `InstallationPending`이다. 마지막 admission의 −1/동일/+1은 시험 전용 ledger charge로 남은 몫을 제한해 적용하며 cap을 바꾸지 않는다.
+- MBC40-V09의 "동시 생존"을 다음으로 대체한다. census는 writer phase(반환 오류 최대·caller carrier 포함)와 resident 2개를 각각 shared에 더해 출력하고, 둘이 동시에 admitted되지 않음을 검산하며, gate 대기 중 writer 진입 floor를 따로 출력한다. 그 floor는 [WRITER-PROGRESS-001](#writer-progress)의 미공급 의무이므로 공급 전에는 PASS로 세지 않는다.
+- 두 대체 oracle의 PASS는 writer와 resident reader 2개의 겹친 admission을 증명하지 않는다. 같은 이유로 소비자 MCI03-V02의 barrier도 바뀐다([Row 쓰기 개정](#row-write-budget) 7항).
+- selector 이름 대응. 위 계획 경로와 다른 이름으로 실행된 MBC20·MBC30·MBC31 사례는 증거에 대응표 하나(ID → 실제 test 경로 → round/artifact → 결과 → source commit)를 둔다. 대응된 행은 기존 실행을 인용하고, 대응되지 않은 ID는 NOT_RUN이며, 이름을 맞추려고 다시 실행하지 않는다. 신규 S2/S5 시험은 ID 접두 이름(`mbc30_v01_…`, `s2w_r06_…`, `s5r_r02_…`)을 쓴다.
+
 물리 fault와 crash oracle는 stage 성공을 durable로 간주하지 않는다. native cut마다 actual write/sync·same requirement의 witness 유무를 입력에 명시하고, RAM-only stage는 유실될 수 있는 prefix로 판정한다. product API에 매 Reserve force를 추가하여 fixture를 통과시키지 않는다. append/latch 아래 임의 callback·sleep/wait를 삽입하지 않으며 필요한 scheduler hook은 실제 C 효과 경계를 가진 새 fixture 코드로 검토한다.
 
 선택 source·case input/expected hash·ELF·controller ACK·PID/cut를 [소비자 입력 schema](dev3-module-consumers.md#independent-fixtures)에 맞춰 기록한다. 각 compiler/memory case30초, native180초(감사/정리 포함), 공통 C source당45분, C+A/C+B 각각45분, 합류20분을 상한으로 한다. native 정상3PID, 중간복구 재장애는 최대4PID와 마지막새ACK 재진입을 사용한다. cut/known-bad는1회이며 performance반복0. 결과 JSON/trace는 case당16MiB, source 묶음512MiB로 제한하고 cap 초과/TIMEOUT은 실패 또는 미완료로 보존한다. worker namespace/disk·FD는 원 profile cap을 그대로 적용하고 시험아티팩트용512MiB를 제품예산으로 빼지 않는다. 필수 분모를 줄이지 않고 다음 허용 실행으로 분리한다.
@@ -1723,6 +1978,8 @@ Q01–Q08은 아래 설계로 독립 D2 검토를 수신해 채택했다. 앞선
 | Q08 | §7의 C0–C5 유한 공급·제외·되돌림, §8과 [소비자 분담](dev3-module-consumers.md#division)의 전용 source/fixture·C0 순수 대역/actual 수신 시점 | root/C/A/B; [M2 인계표](../plans/module-independence-plan.md#m2-handoff)의 담당/기준 source와 대기·충돌·합류 증거 등록. build inventory는 실제 구현 시 등록 |
 
 독립 검토자가 원 source와 정상/실패/복구 반례 및 소비자·자원 owner의 정합을 확인하여 **D2 검토 수용·필수 수정0**으로 판정했다. [검토 기록](../evidence/module-independence-survey-20261026.md#final-design-review)을 수신해 채택 상태를 ACCEPTED로 반영했으며 M2는 완료다. 확정된 C의 미구현·미실행은 M4/M5 의무로 남으며 M2에서 제품 prototype·컴파일·시험을 수행할 이유가 되지 않는다.
+
+2026-10-29 Q06 재검토 기록(S2-0, D2 수용): A의 측정 Forward producer phase 60625B(S1-e 뒤 driver 9955B로 60745B)가 RowWrite charge 44304B와 class 상한 memory45352/native45216B를 넘었다. 같은 producer를 쓰는 CLR phase도 57974B로 넘으며 S4의 진입 측정 대상이다. cap 증액이나 caller frame 제외 없이 A slimming(M1·M2, 조건부 M7)·lane 8번째 part·호출 지점별 계수·128B cut으로 대응한다. S2-e는 A가 실제 타입으로 memory·native 모두 측정한 Forward producer phase가 charge 이하이고 MCA00-D15의 C 호출 지점 몫이 `ROW_WRITE_CALLER_BYTES` 이하일 때만 착수한다. C 단계 phase는 경로 전체 inventory로 계산한 분석 상계로는 M7 없이 charge를 넘을 수 있고 M7로도 Reserve·Forward 준비·Cancel이 경계이므로, S2-a의 상계 출력과 각 단위의 census 통과가 그 경로 commit의 조건이다. 같은 재검토에서 기존 초과 하나를 그대로 남긴다. native W의 shared+Pending+Full=66612B>65536B(memory 65452B, 여유84B)이므로 [WRITER-PROGRESS-001](#writer-progress) (c)의 "한 Full read는 들어가고"는 native에서 성립하지 않으며 Full을 재사용하는 RowRead도 그 창에서 Capacity다. 정정은 Commit 창 owner의 별도 Q06 기록이고 이 개정은 cap·charge를 바꾸지 않는다. 세부는 [Row 쓰기 개정](#row-write-budget)에 있다.
 
 [실제 replay 작업 공간 대여](../evidence/module-independence-survey-20261026.md#c2-borrowed-replay-workspace)는 원 WORK_END zero tail의3328B를 semantic observer에 빌리고, 정상/오류/unwind 뒤 원 zero tail을 복원한다. producer의 local 배열과 wire/claims/hash·전체 backing은 유지한다. 실제 guard/반환/helper 계수 뒤 Full33980B·Resident16936B/shared22256B다. Pending 관측까지61556B의3980B 여유는 전체 entry/tail·독립 guard leaf·writer ticket을 제외한 값이며 전체 admission 미완료다. source별 선택9 PASS·import-only build와 원 compile FAIL을 구별해 보존한다.
 

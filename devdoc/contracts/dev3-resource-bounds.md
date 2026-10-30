@@ -143,6 +143,13 @@ first Row 전용 private backing은 **425984B**이며 다음처럼 배분한다.
 | `[344064,360448)` table/schema copy |16384|실제 Catalog에서 받은 qualified table/schema의 최대4588B와 검증된 문맥. RAM-only table 대용 아님 |
 | `[360448,425984)` 미사용 |65536|다른 원 owner의 비용을 숨기지 않음. 추가 사용 시 이름·수명·선예약을 다시 고정 |
 
+2026-10-29 개정(S2-0, [Row 쓰기 개정](dev3-module-boundaries.md#row-write-budget)): Row 쓰기(S2)는 위 미사용 65536B를 다음처럼 이름·수명·선예약을 고정해 쓴다. 선예약은 caller가 이미 보유한 이 loan 자체이며 새 할당·owner·authority는 없다. 한 구간을 두 사용자가 동시에 쓰지 않는다.
+- `[360448,376832)` XOI page 16384B: Row layout의 Reserve·Forward·Cancel·CLR 준비에서 XOI inventory projection을 둔다. 한 C 단계 안에서만 산다. Forward frame 최대93660B의 tail 4644B가 page 하나보다 작기 때문이다.
+- `[376832,393216)` C scratch 16384B: C의 `produce_borrowed`·`observe_borrowed` scratch(9076B)다. 한 C 단계 안에서만 살고 진입 때 0이다.
+- `[393216,425984)` A scratch 32768B: `RowProducerLane`의 8번째 part다. lane borrow 동안만 A가 쓰며, 발급 전 C가 0으로 채우고 반환 뒤에는 읽지 않는다. byte만 담고 Rust reference 배열은 아래 규칙대로 두지 않는다.
+
+frame 구간 `[0,98304)`은 Row 쓰기의 preflight 안에서 retention LOAD scratch 6page로 먼저 쓰이고, Reserve 이후의 frame 생산이 이어 쓴다. 두 사용은 시간상 겹치지 않는다. Catalog layout과 Row lifecycle의 기존 배치, B 읽기 loan의 분할은 바뀌지 않는다.
+
 위 raw byte loan에 Rust reference 배열을 unsafe cast하지 않는다. 유효 Row entry는 최소189B이므로 한 leaf의 실제 행은≤85다. metadata1+삽입 후보1을 포함한 **87개 borrowed cell reference**로 `LeafEditPlan`을 구성할 수 있다. 현재64-bit target에서 slice reference16B이면1392B다. 이 typed scratch와 view/Result/return carrier는 raw loan과 별도로 source-value census에 포함한다. 적용 전 모든 기존 row의 canonical shape를 검산하여 최소 크기 전제가 깨진 입력은 손상으로 거절한다. generic tree의1013-reference scratch16208B를 작은 Row profile에 자동 적용하거나, 표현 검산 없이 작은 배열을 사용하는 두 대안을 모두 피한다.
 
 B의 읽기 loan은 기존 실제 loader에 필요한 disjoint prefix `[0,409600)`와 copy tail `[409600,425984)`를 유지하는 후보로 정한다. tail에는 현재 row record 최대2216B와 qualified schema 최대4588B가 함께 들어가며 loader가 이를 덮지 않는다. B는 A의 candidate/after loan을 공유하지 않는다. 호출별 allocation 대신 caller가 선예약한 loan을 사용한다. A와 B가 동시에 소유하면 각각 합산하고, 원 단일 maintenance operation만 상호 배타성이 증명된 scratch의 max를 사용한다.
@@ -163,6 +170,8 @@ files5는 단일 step recipe이며 병렬 lane 전체가5라는 주장이 아니
 
 [격리 공급](dev3-task-10-concurrency.md#module-row-isolation)의 epoch1600B와 isolation4160B, 합계**5760B**를 원 metadata/cache8MiB에서 disjoint loan으로 확보한다. 기존 visibility8192B와 ATT padding은 그대로다. actual source의 고정 ledger/registry subtotal은 `36×1664+8192=68096B`이고 새 backing 포함**73856B**다. Root/Job/page 데이터 backing과 source-value를 혼동하지 않는다.
 
+2026-10-29 판정(S2-0, Q12): `VisibilitySourceCensus.backing`은 visibility 8192B와 epoch 1600B를 함께 빌린 loan이므로 9792B다. metadata 합계는 `VISIBILITY_BYTES`와 `EPOCH_BYTES`를 따로 더하고 backing을 읽지 않으므로 epoch는 한 번만 센다. 따라서 위 73856B와 "기존 visibility8192B 그대로"는 맞다. `catalog_source_*`의 기대값 8192는 epoch loan 이전 값이므로 9792로 고친다. 9792와 metadata 항등식은 이미 `owner_tests`가 단언하므로 정정은 그 기대값 하나다. 이는 시험 기대값 정정이며 cap이나 의미의 변경이 아니다. 코드 변경은 별도 단위가 한다.
+
 capsule·statement·cursor처럼 호출 뒤에도 사는 engine handle에는 **전체49152B**의 source envelope를 별도 배정한다. 원 isolation header/actor slot의 checked byte ledger가 이 비용을 추적한다. 각 class의 고정 요금은512B이며 실제 type·생성/반환 carrier와 필요한 caller 동시 보유가 그 안에 드는지 source census로 확인하고, token/source guard/effect를 만들기 전에 예약한다. 32×3×512=49152는 배정 산술이지32개 최대 거래의 동시 성공 보장이 아니다. 여러 cursor도 각각512B를 청구하며 Clone으로 무료 복제하지 않는다. 한 거래 한 cursor라는 기능 제한으로 대체하지 않는다. view/cursor가 transaction을 borrow하므로 terminal에서 capsule을 소비하기 전에 정리되며 반환은 원 slot/generation에 한 번만 적용한다. 이 byte credit은 저장 권한을 생성하지 않는다.
 
 현재 [C1 read-only capsule/view 공급](../evidence/module-independence-survey-20261026.md#c1-read-only-capsules)은 장기 ledger와 각512B 요금을 구현했다. 생성·반환 carrier를 포함한 transaction400B/view328B, live metadata187082B/whole252618B로 기존 한도 안이다. 이는 해당 source의 정적 회계와 선택 lifecycle 결과이며 cursor·short aggregate admission·병렬 reader 합의 완료를 뜻하지 않는다.
@@ -170,6 +179,8 @@ capsule·statement·cursor처럼 호출 뒤에도 사는 engine handle에는 **�
 짧은 operation·Result·error·return 임시값은 기존 component source census에 포함하며 각각 별도 runtime credit 계층을 만들지 않는다. generic `W::File`·owner/controller·publication/terminal receipt·typed scratch87·fixture receiver의 실제 반환 복사도 누락하지 않는다. borrowing으로 큰 배열 복사를 줄이는 것과 이미 살아 있는 caller 값의 회계를 생략하는 것은 구분한다.
 
 여기서 **65536B는 허용한 writer/reader의 모든 짧은 실행·retained source·caller carrier의 동시 합**이다. 원 `active.max(...)`를 그대로 병렬 전체 합으로 사용하지 않는다. source 공통 retained는 한 번, 동시에 살아 있는 operation charge는 합으로 세고, max는 실제 배타적인 phase에만 적용한다. C의 원 admission 입구에서 source census로 동결한 operation별 nested peak를 선예약하고 출구에서 반환한다. source guard/pin/효과를 보유한 채 부족한 credit을 기다리지 않는다. 예약된 rollback/terminal은 원 progress admission으로 신규 foreground를 닫고 이미 실행 중인 유한 reader가 반환한 뒤 전용 source 몫을 사용하므로 새 선택적 foreground admission에 의존하지 않는다. 장기 snapshot/cursor를 강제 해제하여 이 공간을 만들지 않는다. flusher의 별도65536B는 이 합과 disjoint이며 기존 준비 중 flush 허용을 유지한다.
+
+2026-10-29 적용(S2-0, [Row 쓰기 개정](dev3-module-boundaries.md#row-write-budget)): Row 쓰기의 caller carrier는 A driver가 각 C 호출과 producer 호출에서 보유한 값이다. 측정 Forward producer phase 60625B(S1-e 뒤 60745B)는 이 합으로 계산한 값이며, 한도를 올리거나 caller를 빼는 대신 A slimming과 private A scratch로 줄인다. 진행 class writer와 reader는 terminal read gate로 배타이므로 그 구간의 동시 합은 shared에 writer charge와 admitted reader 합 가운데 큰 값을 더한 것이다. gate 대기 중 writer 진입 floor는 별도의 미공급 의무다.
 
 위 동시 합≤65536B를 만족할 때 `metadata≤73856+65536+49152=188544B≤196608B`, 원 flush component65536을 더한 `whole≤254080B≤262144B`다. 남는8064B를 미등록 상태·새 예약의 여유로 사용하지 않는다. 총 metadata8MiB·private8MiB/transaction 및 전체64MiB·flush4MiB·maintenance12MiB도 유지한다. 이는 새 **설계 상계**이며 실제 size_of/caller 동시 생존량·기존 visibility/controller 세부 cap은 M4의 변경 source에서 검사해야 한다. source census 실패를 한도 증액·검사 생략으로 해결하지 않는다.
 

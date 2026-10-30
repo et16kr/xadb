@@ -1,21 +1,21 @@
 {
   "schema_version": 2,
   "product": "XADB",
-  "date": "2026-10-22T01:10:49.620384+09:00",
+  "date": "2026-10-30T09:21:00.421418+09:00",
   "status": "PASS",
   "errors": [],
   "markdown_documents": [
     {
       "file": "devdoc/README.md",
-      "links": 109,
+      "links": 270,
       "duplicate_ids": 0,
-      "sha256": "d3315e95c5bf0bd4673d146d2a8625bc720ed4940f3386af2c8d6ea96c79df72"
+      "sha256": "56b29bf582428d125066eccee67658d62e327c41e657039b0c90485b09d3a4d5"
     },
     {
       "file": "devdoc/contracts/README.md",
-      "links": 77,
+      "links": 131,
       "duplicate_ids": 0,
-      "sha256": "d7315e5d9d333a7d41b6c87b59861debe2e578ba3991c2c6d3a9d026401ee88a"
+      "sha256": "9f7345fa7864c05aca273df2613ce7d14d4566b93696d51c894057e8bb7f5549"
     },
     {
       "file": "devdoc/contracts/ai-performance-engineering.md",
@@ -43,21 +43,81 @@
     },
     {
       "file": "devdoc/contracts/dev3-allocation-reservation.md",
-      "links": 8,
+      "links": 11,
       "duplicate_ids": 0,
-      "sha256": "ee14fa00fcd641cf06807fe058c61f5d6222b8e02c8160aea3c3c83b1da986a3"
+      "sha256": "99d04110d1f2ee55a189c96fc60517562bddc93867dace6e1535ad78b7b39aec"
+    },
+    {
+      "file": "devdoc/contracts/dev3-allocator-flush.md",
+      "links": 7,
+      "duplicate_ids": 0,
+      "sha256": "a87af8777351818b308d78791a301caa15c4f24d4ad7f85e03bb1c623132ff21"
+    },
+    {
+      "file": "devdoc/contracts/dev3-allocator-residency.md",
+      "links": 5,
+      "duplicate_ids": 0,
+      "sha256": "de372ba68cb4f16077660fd1c275f613927f1f985266e42e06157dc45d1ae660"
+    },
+    {
+      "file": "devdoc/contracts/dev3-catalog-create.md",
+      "links": 9,
+      "duplicate_ids": 0,
+      "sha256": "2bb9f655ccdc45f1d503886395f153cae64bb3f6ff8026b3b97d2e549e24d1fe"
     },
     {
       "file": "devdoc/contracts/dev3-catalog-format.md",
-      "links": 5,
+      "links": 8,
       "duplicate_ids": 0,
-      "sha256": "7edfa2d594c7518b07abeb8474ef4c4f4a2f42160288657825896607f01608ce"
+      "sha256": "d39c7c070f5fe03eeff9420ecb54bdd2c0fd755110c68591cfb2cfa4fee0de82"
+    },
+    {
+      "file": "devdoc/contracts/dev3-commit-continuation.md",
+      "links": 3,
+      "duplicate_ids": 0,
+      "sha256": "6f86b1adc9adac993b085eeb923527072d2309514a4480cbedbaa0432f77a4fa"
+    },
+    {
+      "file": "devdoc/contracts/dev3-concurrency-admission.md",
+      "links": 13,
+      "duplicate_ids": 0,
+      "sha256": "b0b3ae346a620846c5f5e99153edac8fa17408f254eb80b455a2053723f2ecae"
     },
     {
       "file": "devdoc/contracts/dev3-control-format.md",
       "links": 14,
       "duplicate_ids": 0,
       "sha256": "d68d24493c64f39cad7035a66a0b0e33854a7ef1e2b7ebcf80f0cf952b32acf3"
+    },
+    {
+      "file": "devdoc/contracts/dev3-create-group-format.md",
+      "links": 1,
+      "duplicate_ids": 0,
+      "sha256": "dfa039a02ada15155b01a58439a6e19d60964f9b43867be5a8b7f9b9f4a3e414"
+    },
+    {
+      "file": "devdoc/contracts/dev3-create-job-format.md",
+      "links": 1,
+      "duplicate_ids": 0,
+      "sha256": "13219e3337b2ce57a299a6281ab9ba4323a1efa84aaaea4ee093e66df7ff7111"
+    },
+    {
+      "file": "devdoc/contracts/dev3-create-recovery-base.md",
+      "links": 1,
+      "duplicate_ids": 0,
+      "sha256": "12a162cfa96388619d10c1999c6bb77233c8610444a5718439692cbef81f5844"
+    },
+    {
+      "file": "devdoc/contracts/dev3-create-root-format.md",
+      "links": 1,
+      "duplicate_ids": 0,
+      "sha256": "7bd8172fe9b103782a8be04a869686ac00d600f1e9158d5adfd371ef9c650f65"
+    },
+    {
+      "file": "devdoc/contracts/dev3-dirty-stage.md",
+      "links": 7,
+      "duplicate_ids": 0,
+      "sha256": "e1d9c57fd618a8ce4880f4ebbcf56d3b331a1467dda7403872e4b9af5565523e"
     },
     {
       "file": "devdoc/contracts/dev3-doublewrite-format.md",
@@ -78,16 +138,40 @@
       "sha256": "b496f51ca7b9080149c6769d102301b402dca0c67c3f1e59b3b9ca92262875cc"
     },
     {
+      "file": "devdoc/contracts/dev3-empty-retention-semantics.md",
+      "links": 11,
+      "duplicate_ids": 0,
+      "sha256": "85b1ca3f8eca5d96eae05657149f15818ffeab7233ddc4fd61c64d513b3b9a58"
+    },
+    {
       "file": "devdoc/contracts/dev3-key-format.md",
       "links": 3,
       "duplicate_ids": 0,
       "sha256": "234432e7e09e0d4a878db3726bdbf9f76f698c775783e6baf7639ddd9b13cf5e"
     },
     {
-      "file": "devdoc/contracts/dev3-obligation-format.md",
-      "links": 24,
+      "file": "devdoc/contracts/dev3-mixed-system-owner.md",
+      "links": 4,
       "duplicate_ids": 0,
-      "sha256": "88df442bb4e9caf29abe7c3719f84e0a339aaf9cb1d9c097c8e2ea183d6c0643"
+      "sha256": "a076fe0b58db2910527c6fae97c695a3e6e2061bf51f98d163173bc6dc342047"
+    },
+    {
+      "file": "devdoc/contracts/dev3-module-boundaries.md",
+      "links": 222,
+      "duplicate_ids": 0,
+      "sha256": "81c00980bdc4d06f75d90ece0c5e46f894249b9438033610e278f7b854554a85"
+    },
+    {
+      "file": "devdoc/contracts/dev3-module-consumers.md",
+      "links": 89,
+      "duplicate_ids": 0,
+      "sha256": "70264065b2c0ee935f9e6d80675a2a929303f89f8cd673803b6c9522c96062fb"
+    },
+    {
+      "file": "devdoc/contracts/dev3-obligation-format.md",
+      "links": 34,
+      "duplicate_ids": 0,
+      "sha256": "9e1cbaca3e484306f26c0be364c431d0eedb2ebf860859ca6e89e8cac7c6c41d"
     },
     {
       "file": "devdoc/contracts/dev3-overflow-format.md",
@@ -105,13 +189,37 @@
       "file": "devdoc/contracts/dev3-page-format.md",
       "links": 2,
       "duplicate_ids": 0,
-      "sha256": "145acea1f16da02d6868d0cc38e05f696c3b1b18aed356e8842e11e4d01e5fab"
+      "sha256": "0d53e26ea03d97d684fc9d36035ff3da7db7eff832ef49f901655641e2f65fb0"
     },
     {
       "file": "devdoc/contracts/dev3-page-io.md",
       "links": 6,
       "duplicate_ids": 0,
       "sha256": "0002d7b251b981a4ee3e3b159bc7ae99a2700b0957fb466d7b775933608193cf"
+    },
+    {
+      "file": "devdoc/contracts/dev3-plan4-clean-owner.md",
+      "links": 6,
+      "duplicate_ids": 0,
+      "sha256": "39600b19761a0f3c1bfe283de9a1bdb01718fa2eb332274fc589dd0d74469408"
+    },
+    {
+      "file": "devdoc/contracts/dev3-plan4-free-undo.md",
+      "links": 5,
+      "duplicate_ids": 0,
+      "sha256": "b546025abbfaa2653ad69861415867c933c3e8b24de5050d7507c15cb5821437"
+    },
+    {
+      "file": "devdoc/contracts/dev3-plan4-genesis.md",
+      "links": 3,
+      "duplicate_ids": 0,
+      "sha256": "eff61b89922152297ef7dcea8afb1987b8734f4dfdf0d9634f3fec7280dd3bd9"
+    },
+    {
+      "file": "devdoc/contracts/dev3-plan4-recovery-owner.md",
+      "links": 8,
+      "duplicate_ids": 0,
+      "sha256": "2664bc31701f69f7eac7196fcd262f35522ce2878051c0f8f16d382598f11d87"
     },
     {
       "file": "devdoc/contracts/dev3-progress-model.md",
@@ -126,10 +234,34 @@
       "sha256": "6e87a0efe26344de942a8f0207258efd9b5eb2d247667ce2f3977db3ad9587ad"
     },
     {
+      "file": "devdoc/contracts/dev3-recovery-control-base.md",
+      "links": 4,
+      "duplicate_ids": 0,
+      "sha256": "76ab1a145dfd1780f483e843d69357d1cc0bcaeb2082c0a40afb1b22f69dcb18"
+    },
+    {
+      "file": "devdoc/contracts/dev3-recovery-effects.md",
+      "links": 8,
+      "duplicate_ids": 0,
+      "sha256": "eb2691ff37bf1089cebfad584dc1591414720d08a95fa67510223e98098c9920"
+    },
+    {
       "file": "devdoc/contracts/dev3-recovery-model.md",
       "links": 4,
       "duplicate_ids": 0,
       "sha256": "538c3da2fb359a790d52757665f6dc86787837348b198fb1a494a57f245047b6"
+    },
+    {
+      "file": "devdoc/contracts/dev3-recovery-prefix.md",
+      "links": 7,
+      "duplicate_ids": 0,
+      "sha256": "1aae6ff1230e0713e29b4a8605ed5d227fafa27b9115c9946818839b2e16f22f"
+    },
+    {
+      "file": "devdoc/contracts/dev3-recovery-select.md",
+      "links": 10,
+      "duplicate_ids": 0,
+      "sha256": "58849c7e3a78781667103ec546aba86cee2be1b2abbd642058bc7f5b1bbe4fdf"
     },
     {
       "file": "devdoc/contracts/dev3-reference-format.md",
@@ -145,15 +277,21 @@
     },
     {
       "file": "devdoc/contracts/dev3-resource-bounds.md",
-      "links": 20,
+      "links": 32,
       "duplicate_ids": 0,
-      "sha256": "6028076e79bd328bfdf6e876f2ebc775037c30dcd42e0d3b0635f2935b65c933"
+      "sha256": "feb72a1709f058b2cd2cf54b2d12d6aeafaa99ad222d8f16b1b9dad7cec49709"
+    },
+    {
+      "file": "devdoc/contracts/dev3-retention-live.md",
+      "links": 2,
+      "duplicate_ids": 0,
+      "sha256": "5946c10224b9f3d4a19c31b74d44e537855f3f367d2ed80814c348547a421214"
     },
     {
       "file": "devdoc/contracts/dev3-row-format.md",
-      "links": 9,
+      "links": 11,
       "duplicate_ids": 0,
-      "sha256": "aa4c88a461ef0f1f771c47eef16c6a644d6627a119325bfbb03874c9f3c25f79"
+      "sha256": "e51d854801434c0de6df56594ceb5ff2ae31304514d77a9938d6d45966db8a6f"
     },
     {
       "file": "devdoc/contracts/dev3-selector-port.md",
@@ -168,16 +306,34 @@
       "sha256": "f0d4cc2484b60fd3830464271a7a72c453f2e5615b856a27c7a9fb1e03cd7e3a"
     },
     {
+      "file": "devdoc/contracts/dev3-status-bootstrap.md",
+      "links": 10,
+      "duplicate_ids": 0,
+      "sha256": "3dba59399bc8c5c57a7de7a6e34dbaf33c3e8690c6d1669cdb25139b1461a20c"
+    },
+    {
+      "file": "devdoc/contracts/dev3-status-home-flush.md",
+      "links": 10,
+      "duplicate_ids": 0,
+      "sha256": "d1b2e9dafe77865dc930166416aa369d576d81b310978409e00612f522b21c44"
+    },
+    {
       "file": "devdoc/contracts/dev3-status-home.md",
       "links": 6,
       "duplicate_ids": 0,
       "sha256": "2e65df7184d6a0d8ad0f87f65cf3ead2bf35fe40e4e5e5e2ed2ffdbeba5d7b6b"
     },
     {
-      "file": "devdoc/contracts/dev3-storage-session.md",
-      "links": 14,
+      "file": "devdoc/contracts/dev3-status-init.md",
+      "links": 9,
       "duplicate_ids": 0,
-      "sha256": "382210af6b750de6fefa0ca5103c7a0dec9997e0e21c6dd2f95c260e3994b7a8"
+      "sha256": "8755a49d9ae708ae668e84c2e33b2b3abf6d7ebfc6a8944ad4de3e37ba7df897"
+    },
+    {
+      "file": "devdoc/contracts/dev3-storage-session.md",
+      "links": 18,
+      "duplicate_ids": 0,
+      "sha256": "ced854357e50c72d5edbe6612c11d4e3910003f72f82b945f5b5543165b4a733"
     },
     {
       "file": "devdoc/contracts/dev3-task-01-formats.md",
@@ -193,93 +349,93 @@
     },
     {
       "file": "devdoc/contracts/dev3-task-03-allocation.md",
-      "links": 11,
+      "links": 12,
       "duplicate_ids": 0,
-      "sha256": "969c90a36b31334bb21369b0e97f8e99752446af39ff9febfc3d1b38c9941adc"
+      "sha256": "88ce3cdc91258caac5c7cbb090ae5b93803ead11f4eac366eecf33c56dfcbd3e"
     },
     {
       "file": "devdoc/contracts/dev3-task-04-wal.md",
-      "links": 9,
+      "links": 11,
       "duplicate_ids": 0,
-      "sha256": "aa358c68e744768e426ae15ff283786ff945f9b2b7f047e6cc9f28075922eb93"
+      "sha256": "670c786783e570164aad81f0f27a9a546413ee7897952763cf1fbfeb3719b416"
     },
     {
       "file": "devdoc/contracts/dev3-task-05-buffer-flush.md",
-      "links": 23,
+      "links": 44,
       "duplicate_ids": 0,
-      "sha256": "cd9a3b050980c2bf61dea1093fb9f28745e8df387f5096cee66ac486700721f7"
+      "sha256": "078ae7920596a845bc2146a9e8522201dd3df58ca09cefad0a1db5c158053661"
     },
     {
       "file": "devdoc/contracts/dev3-task-06-tree-rows.md",
-      "links": 24,
+      "links": 32,
       "duplicate_ids": 0,
-      "sha256": "fae77bc2cee18baf21d1fe93232fe9bea25b74c5c42dbd1ea8c7e9b0741d71c6"
+      "sha256": "37795f84dff30001040f52a9a38817a57865f97d8be99488b5b4be822d0f8bec"
     },
     {
       "file": "devdoc/contracts/dev3-task-07-indexes.md",
       "links": 16,
       "duplicate_ids": 0,
-      "sha256": "fe0fa91e8571aaf5ae3993f611f7337b16b3f4f6c22736fd89d33b9c0729b8a3"
+      "sha256": "e21c8f311efe38f1cb3c8bd551b61e5dc7ecd0bc8771fd0f008776ff4143ecc6"
     },
     {
       "file": "devdoc/contracts/dev3-task-08-catalog-ddl.md",
-      "links": 7,
+      "links": 9,
       "duplicate_ids": 0,
-      "sha256": "df2fe7d6875d489b66925b475b60f9104b69eef91fbf376999d08177313a412c"
+      "sha256": "e95d83584ce717a74ab6b7279510d8f0aeaf061ad2751c2823534f1e2842c97f"
     },
     {
       "file": "devdoc/contracts/dev3-task-09-undo-rollback.md",
-      "links": 23,
+      "links": 26,
       "duplicate_ids": 0,
-      "sha256": "75fa36115af4a38d708f100699358b026c5cd4c83b3c49af60f315f54e740d42"
+      "sha256": "209bc136c2640ad7c5e420f96fce91b1ec0a5fa7517084c4a497743a3091b469"
     },
     {
       "file": "devdoc/contracts/dev3-task-10-concurrency.md",
-      "links": 20,
+      "links": 38,
       "duplicate_ids": 0,
-      "sha256": "22e141b4e119dc16a37f374cc2d5b9329e8619fdaead4576028d9755b452229d"
+      "sha256": "c405474a76b4a4b99c806fff31c523018f8fbbf1245ac9e788df69e2ffd6d65d"
     },
     {
       "file": "devdoc/contracts/dev3-task-11-commit.md",
-      "links": 20,
+      "links": 30,
       "duplicate_ids": 0,
-      "sha256": "d5fc612662f1c12112d306212c5b640787f984774ccc9ea4f0188cb0098db669"
+      "sha256": "90d511136c35ab5821df2bc243daa0444235e8aec18cbcce4900ec4a6291a107"
     },
     {
       "file": "devdoc/contracts/dev3-task-12-recovery.md",
-      "links": 10,
+      "links": 26,
       "duplicate_ids": 0,
-      "sha256": "27606f1b78e948596003ebac28f6c6eec99a01decab4a8a2783a18000e836086"
+      "sha256": "d87a727f68682dcdf32c1f6b0c8518db0248b4080212914d4abc7f688eb3ebcf"
     },
     {
       "file": "devdoc/contracts/dev3-task-13-checkpoint.md",
-      "links": 17,
+      "links": 19,
       "duplicate_ids": 0,
-      "sha256": "244369ce25bff05c7aa16cdf2b89031dcee9413b7533a3f24588826d17d9aedf"
+      "sha256": "7e43b2bfa9fc6dc69411308b8cd725538fc752b34ab3af655b5dd5e512911a21"
     },
     {
       "file": "devdoc/contracts/dev3-task-14-reclamation.md",
       "links": 19,
       "duplicate_ids": 0,
-      "sha256": "a2e2a311633746b03874270c8f999cdc3201faeeb16245a50c2f5c5cb5e0067a"
+      "sha256": "89af46b35200e72063ce436eaede1aa5a9b750ff985eaa197ca16481ec69035e"
     },
     {
       "file": "devdoc/contracts/dev3-task-15-backup-integrity.md",
-      "links": 21,
+      "links": 22,
       "duplicate_ids": 0,
-      "sha256": "eb4707bfe0b9beb5150038d86275038ea9cfd45a9056ac864b8bfaaa5e897231"
+      "sha256": "64281b128116e0c1c62a99e6b492cd474c277dd06ac76a950562b6c8e925e973"
     },
     {
       "file": "devdoc/contracts/dev3-task-16-qualification.md",
-      "links": 7,
+      "links": 14,
       "duplicate_ids": 0,
-      "sha256": "634a076617e96261d866b52a146ed1f05daf5d6a2d0157513b61c377c3491679"
+      "sha256": "dbf4dc0c79b8fc7f204c0328990f95e92ef0de8b4a3e6ad7412832318e52aa5a"
     },
     {
       "file": "devdoc/contracts/dev3-task-designs.md",
-      "links": 26,
+      "links": 41,
       "duplicate_ids": 0,
-      "sha256": "52067784ffb0df35f691ce735bc04ed7858d967ec716df695f4552f8487a9aac"
+      "sha256": "a22c52ed4c2d37fcadf7dd345b50eb958f852a583113534e564da997a8f44657"
     },
     {
       "file": "devdoc/contracts/dev3-transaction-format.md",
@@ -289,21 +445,27 @@
     },
     {
       "file": "devdoc/contracts/dev3-tree-format.md",
-      "links": 4,
+      "links": 5,
       "duplicate_ids": 0,
-      "sha256": "eec1da65d0a939d262c3f0ec988d73bcb8f9a99162fc59748286d59dd9790394"
+      "sha256": "7b1ef62c9db60b4e47a63117d9d2b4b8bb3e6a9fd2f6286e7e6fa48836f8e7c1"
     },
     {
       "file": "devdoc/contracts/dev3-undo-format.md",
-      "links": 13,
+      "links": 18,
       "duplicate_ids": 0,
-      "sha256": "adb5791c6f87b2cec6558ff4c67a0d0fbd32165fbb2a0d2cd379f57348df482c"
+      "sha256": "b4e4c037d1469396fa92866540f28c01930f4e2d1bce30db6fd3966b789fcac4"
     },
     {
       "file": "devdoc/contracts/dev3-undo-model.md",
       "links": 4,
       "duplicate_ids": 0,
       "sha256": "1ef4165e3e407f1e5a6be567f4ba185c1885b08f501287c75d83c3c252ad795a"
+    },
+    {
+      "file": "devdoc/contracts/dev3-visibility-retirement.md",
+      "links": 4,
+      "duplicate_ids": 0,
+      "sha256": "9231ab56afe1ab4bc5fa57c2df42510e705ed47855410ca76d088e00f3aa3ec3"
     },
     {
       "file": "devdoc/contracts/dev3-wal-format.md",
@@ -313,39 +475,81 @@
     },
     {
       "file": "devdoc/contracts/dev3-wal-io.md",
-      "links": 7,
+      "links": 8,
       "duplicate_ids": 0,
-      "sha256": "9ea9df81eeb7f76965ba22534ff0081e0d1bb6c42244081d2687c2680e68c119"
+      "sha256": "60aa346ba3cc890ec4a095214171fe94dc3f22f168a7f2db39c2ceefd98cbd42"
+    },
+    {
+      "file": "devdoc/contracts/dev4-independent-frontend.md",
+      "links": 21,
+      "duplicate_ids": 0,
+      "sha256": "bef152668539ffbea608a61c5bdcdd310e37c4860a24a38599f5fb451ded87e5"
+    },
+    {
+      "file": "devdoc/contracts/dev4-lifecycle-assembler.md",
+      "links": 11,
+      "duplicate_ids": 0,
+      "sha256": "b66a560ad32f02283a3a9c3ef28284fc260f6f5ef5f07de578bcd593d55d005e"
+    },
+    {
+      "file": "devdoc/contracts/dev4-lifecycle-checker.md",
+      "links": 4,
+      "duplicate_ids": 0,
+      "sha256": "004cb1103192ffd8ea6a31e1779e89b27f9fe077bd0eca00d0a8de57444dc037"
+    },
+    {
+      "file": "devdoc/contracts/dev4-lifecycle-codec.md",
+      "links": 6,
+      "duplicate_ids": 0,
+      "sha256": "ebdd8b2ec433d2e13ca4e76bc11093e0e0d07b5e16c648ff3d4dfbd08df970f2"
+    },
+    {
+      "file": "devdoc/contracts/dev4-lifecycle-explorer.md",
+      "links": 4,
+      "duplicate_ids": 0,
+      "sha256": "f69db1ab30179fb937da98f122066c575b39f38b322f253b351760bbb855258f"
+    },
+    {
+      "file": "devdoc/contracts/dev4-lifecycle-model.md",
+      "links": 11,
+      "duplicate_ids": 0,
+      "sha256": "1efbe32e9cfba32b10d504de3e036a61406c96cac60dafa70964f6b38f3623c5"
+    },
+    {
+      "file": "devdoc/contracts/dev4-lifecycle-raw-selection.md",
+      "links": 6,
+      "duplicate_ids": 0,
+      "sha256": "93174ce0eefa289a786a5a53afcaed4b475357a7fe1c0683bf30f36d3d52203e"
     },
     {
       "file": "devdoc/contracts/dev4-sql-design.md",
-      "links": 33,
+      "links": 36,
       "duplicate_ids": 0,
-      "sha256": "f10f2a72555a784e705ec867d3e2c1b57a5934cc8d8a34683219c71cfc7a2001"
+      "sha256": "f9c5b0b349ddf496b53da661cff9051bb368df740808f653ddf92aaa4d4e12f1"
     },
     {
       "file": "devdoc/contracts/dev5-server-design.md",
-      "links": 19,
+      "links": 23,
       "duplicate_ids": 0,
-      "sha256": "444a672a319e25a37cfd25dfa724bfd3d775a79f3edddefda86fb917967568b1"
+      "sha256": "160e5920003d971898ed6b517da926ab0b599b590b32daa2972deca25fbf5a38"
     },
     {
       "file": "devdoc/contracts/dev6-client-design.md",
-      "links": 13,
+      "links": 17,
       "duplicate_ids": 0,
-      "sha256": "996dd73ddca7593c63d88adaa293d5cf5d2db6a17ef8c41b02adc067f846616a"
+      "sha256": "fce0b378644dad1af045b3430bb00fdd7839cfd1625e7306a9e6f44b43fe1717"
     },
     {
       "file": "devdoc/contracts/dev7-sql-extensions-design.md",
       "links": 19,
       "duplicate_ids": 0,
-      "sha256": "d21d890628f0b6ea105fe7c1ab0d50a05d626d350a1cae0ddd2f83e2f51226aa"
+      "sha256": "8c50d0a03c15e98f75ddbf4debe2b6d57b7769ca211a56a35f7dff282fa3c31d"
     },
     {
       "file": "devdoc/contracts/dev8-operations-design.md",
       "links": 12,
       "duplicate_ids": 0,
-      "sha256": "524e9195090f0f6b77b5055f5b2d10d5568b7a99983162ff97fe73b577d5c610"
+      "sha256": "d13d427dc9a3bb6d63ee74e75a1059d81160aad9abbcb89a6c596a07535665bf"
     },
     {
       "file": "devdoc/contracts/dev9-qualification-design.md",
@@ -355,15 +559,15 @@
     },
     {
       "file": "devdoc/contracts/disk-storage-design.md",
-      "links": 39,
+      "links": 59,
       "duplicate_ids": 0,
-      "sha256": "f83140b1f5f0d4899ead85905346415cbcfdf77b25d8d7c51fcb7c3c7344ea01"
+      "sha256": "467e73fdc6f43d610adfdd052209d3e1bd7f1449121041784e5e921138ff2f6a"
     },
     {
       "file": "devdoc/contracts/implementation-contracts.md",
-      "links": 39,
+      "links": 42,
       "duplicate_ids": 0,
-      "sha256": "552525dd59f50852e6d0a8648b10105958177bb8ea8a70426858cfa249926df3"
+      "sha256": "87d3c9eaaedf2872b801aa58eb8299f01a4176479f97e22c4c0c782dbef3dd62"
     },
     {
       "file": "devdoc/contracts/recovery-logging-design.md",
@@ -379,15 +583,39 @@
     },
     {
       "file": "devdoc/evidence/README.md",
-      "links": 160,
+      "links": 375,
       "duplicate_ids": 0,
-      "sha256": "98bfe2b37637178c774f8bbc0ea6d8236ca7518bf8551cc25167a871ebf61d4b"
+      "sha256": "3be8504621c8a303728b20f4dbd8aa52578e35c7ed16c6aeb1432f0e43f7bd65"
+    },
+    {
+      "file": "devdoc/evidence/comm-acceptance-resume-20261023.md",
+      "links": 6,
+      "duplicate_ids": 0,
+      "sha256": "4a9836c895a12767c743bb7e66776e30f397a14bb5dae9f8189c1b050d996d2c"
+    },
+    {
+      "file": "devdoc/evidence/comm-artifact-cleanup-20261025.md",
+      "links": 3,
+      "duplicate_ids": 0,
+      "sha256": "b2ef0aa6a4326c90daa7af923b2a161791fbd02d657a5e1c52a2246c40b25b09"
     },
     {
       "file": "devdoc/evidence/comm-code-review-20261019.md",
       "links": 6,
       "duplicate_ids": 0,
       "sha256": "320f9ca085b0c7f6c9bd2feb0640994fedf99131889fa784cb7e063723e93b35"
+    },
+    {
+      "file": "devdoc/evidence/comm-failure-fix-20261024.md",
+      "links": 5,
+      "duplicate_ids": 0,
+      "sha256": "ae222ae666deefd7756ce76954cf24859dd9d38842f29aa21fadd483b581d6b7"
+    },
+    {
+      "file": "devdoc/evidence/comm-performance-batch-20261023.md",
+      "links": 5,
+      "duplicate_ids": 0,
+      "sha256": "6f58f07fa30e558f1474dbd5da93fe6a6ebd31bf6e93d91ad727f23cb4e04afd"
     },
     {
       "file": "devdoc/evidence/comm-source-research.md",
@@ -402,10 +630,358 @@
       "sha256": "de1500e71fe65812e294e8c1541951589371ee8919b4e3f57c8709bc366b47ef"
     },
     {
+      "file": "devdoc/evidence/dev2-pf04-analysis-20261025.md",
+      "links": 13,
+      "duplicate_ids": 0,
+      "sha256": "ef84e1523a80d66f1cf6010bba4a0169e60a7d27b903d98b0c6eef4092f78e6e"
+    },
+    {
+      "file": "devdoc/evidence/dev2-pf04-boundary-comparison-20261025.md",
+      "links": 4,
+      "duplicate_ids": 0,
+      "sha256": "05818548bfe4564d9e3f3895d89812d58f424fa3a75ee436617be2e33735f258"
+    },
+    {
+      "file": "devdoc/evidence/dev2-pf04-c3-s2-20261026.md",
+      "links": 4,
+      "duplicate_ids": 0,
+      "sha256": "25e65589a94c826e9c633e3609140bb523b17e3ac8f948dfe74e5f3f85f6aa81"
+    },
+    {
+      "file": "devdoc/evidence/dev2-pf04-controller-placement-20261025.md",
+      "links": 3,
+      "duplicate_ids": 0,
+      "sha256": "64f3332ca50d3337f9703b14e291d9568ba9971dfac25acfbe576a7a1a31031b"
+    },
+    {
+      "file": "devdoc/evidence/dev2-pf04-cpu-accounting-20261025.md",
+      "links": 3,
+      "duplicate_ids": 0,
+      "sha256": "e183a27ace858be995481a4091ab61c36fbc9a39b5d77426f0eb8602d3e5ba53"
+    },
+    {
+      "file": "devdoc/evidence/dev2-pf04-cpu-split-20261025.md",
+      "links": 3,
+      "duplicate_ids": 0,
+      "sha256": "3fe2d20b8531392ed012e1084b002f5c2c298204000aad664adc4c60a48f3b1d"
+    },
+    {
+      "file": "devdoc/evidence/dev2-pf04-flush-provenance-20261025.md",
+      "links": 8,
+      "duplicate_ids": 0,
+      "sha256": "57c2de4e88ddaef7197df3aa59d66d1585a9a8da1804c706592a867eb9247db6"
+    },
+    {
+      "file": "devdoc/evidence/dev2-pf04-frequency-control-20261025.md",
+      "links": 5,
+      "duplicate_ids": 0,
+      "sha256": "70c504aaa2465fad7bba21948009edcb78af610ae47d7eb0f5c30ea23a3fd2ca"
+    },
+    {
+      "file": "devdoc/evidence/dev2-pf04-hotpath-20261025.md",
+      "links": 4,
+      "duplicate_ids": 0,
+      "sha256": "e75efd13a79d1fb8ccba190300894c0c5cc915f597fb15a45952a60b5c92e07c"
+    },
+    {
+      "file": "devdoc/evidence/dev2-pf04-io-cause-20261025.md",
+      "links": 10,
+      "duplicate_ids": 0,
+      "sha256": "ccf5f05776720cc8869e195fd486cb86c35ec30cc0410d2c8a4c127f487b0693"
+    },
+    {
+      "file": "devdoc/evidence/dev2-pf04-k0-owner-20261025.md",
+      "links": 4,
+      "duplicate_ids": 0,
+      "sha256": "ce9f58bb8627e36d7e3f3fa9a95b807dbcb2336bcbfcadbf29fed93fab1d6f88"
+    },
+    {
+      "file": "devdoc/evidence/dev2-pf04-mode-attribution-20261025.md",
+      "links": 4,
+      "duplicate_ids": 0,
+      "sha256": "8f894110bc94c3d7928e1ceeff59af83867dff56655daf15515b0c6d3bf02fa8"
+    },
+    {
+      "file": "devdoc/evidence/dev2-pf04-off-classification-20261025.md",
+      "links": 6,
+      "duplicate_ids": 0,
+      "sha256": "4389363893baac81380309416ae4b4e21878fe9b2e50a0221f3c2097803ec8ed"
+    },
+    {
+      "file": "devdoc/evidence/dev2-pf04-pmu-20261025.md",
+      "links": 5,
+      "duplicate_ids": 0,
+      "sha256": "49cdfb1c28c4361a81b2535c5d464903406d5a1328efd717466f167997730307"
+    },
+    {
+      "file": "devdoc/evidence/dev2-pf04-prewarmup-20261025.md",
+      "links": 4,
+      "duplicate_ids": 0,
+      "sha256": "c8dad8f7d0e953a34ec02e303f4d56116592c33fe694127f856c20981dc6ff87"
+    },
+    {
+      "file": "devdoc/evidence/dev2-pf04-profile-b-s1-20261026.md",
+      "links": 12,
+      "duplicate_ids": 0,
+      "sha256": "9a983c3df91e960afa471e962c64bb0349954c8a9e69181921b68578359dda40"
+    },
+    {
+      "file": "devdoc/evidence/dev2-pf04-single-writer-20261025.md",
+      "links": 3,
+      "duplicate_ids": 0,
+      "sha256": "abba870d92c6a77a57ddb6c2d49a72caf765a4b0e1110507b12f328daa6eccfd"
+    },
+    {
+      "file": "devdoc/evidence/dev2-pf04-window-20261025.md",
+      "links": 10,
+      "duplicate_ids": 0,
+      "sha256": "d5dda15124b5ee16b2d0e997fb58eb2f37c93cbb97a2381549627748230c9d6e"
+    },
+    {
+      "file": "devdoc/evidence/dev3-allocation-reservation-acceptance-20261022.md",
+      "links": 7,
+      "duplicate_ids": 0,
+      "sha256": "eed9d9f2a5cf237c6a0c5fca290198da79d444a2b06c3b0a0ac17c6e9f5c2d29"
+    },
+    {
+      "file": "devdoc/evidence/dev3-allocation-resource-review-20261022.md",
+      "links": 6,
+      "duplicate_ids": 0,
+      "sha256": "9626b80acc7f3681d7294011bcc948fb898a1bd30f94f9abd5e248e06515326d"
+    },
+    {
+      "file": "devdoc/evidence/dev3-allocator-eviction-20261023.md",
+      "links": 4,
+      "duplicate_ids": 0,
+      "sha256": "fa2cdc0b964a6d4124c367d761b3da52fb89f46d32cd5c822ea6a2ae41df0d87"
+    },
+    {
+      "file": "devdoc/evidence/dev3-allocator-flush-20261022.md",
+      "links": 3,
+      "duplicate_ids": 0,
+      "sha256": "735e176df8151a885f71d4a9ce48dc69b9af761163f663a968f1abd2a88f3c85"
+    },
+    {
+      "file": "devdoc/evidence/dev3-allocator-residency-20261023.md",
+      "links": 3,
+      "duplicate_ids": 0,
+      "sha256": "e23d4214f6f6bc0c8cb138f10b7467a9ba4ebf6343c65ec4de539570b35fb2d4"
+    },
+    {
+      "file": "devdoc/evidence/dev3-catalog-before-20261024.md",
+      "links": 4,
+      "duplicate_ids": 0,
+      "sha256": "4ccfca54c08c2830bf7f59967ade3c6796e4c123b1ae1a3342065790187b72f7"
+    },
+    {
+      "file": "devdoc/evidence/dev3-catalog-input-controller-20261025.md",
+      "links": 2,
+      "duplicate_ids": 0,
+      "sha256": "7c6e1e0c6f75d8cd897adbf00158f0b2ca8cfcf6dc957a8c80cf46ae0a6f1d65"
+    },
+    {
+      "file": "devdoc/evidence/dev3-catalog-live-milestone-20261025.md",
+      "links": 5,
+      "duplicate_ids": 0,
+      "sha256": "6c0a147de08182622d602eae1f1fdad413d7f4b2a57e774d2a571167d617d259"
+    },
+    {
+      "file": "devdoc/evidence/dev3-catalog-reader-20261025.md",
+      "links": 2,
+      "duplicate_ids": 0,
+      "sha256": "59229cf81341f72e528aaad03a2eb7069e6c426dd44df58217109cd18e66c6ac"
+    },
+    {
+      "file": "devdoc/evidence/dev3-catalog-remaining-20261026.md",
+      "links": 5,
+      "duplicate_ids": 0,
+      "sha256": "b5bfc4b44f6405677f922cd5a3abab75940dbc8f1746e65328781fa40b3db583"
+    },
+    {
+      "file": "devdoc/evidence/dev3-catalog-review-fix-20261026.md",
+      "links": 2,
+      "duplicate_ids": 0,
+      "sha256": "b1ba33009d32715d130483bba5ccf90eb912d84bb9e0861a1d261d2c0a75a736"
+    },
+    {
+      "file": "devdoc/evidence/dev3-catalog-transition-20261025.md",
+      "links": 3,
+      "duplicate_ids": 0,
+      "sha256": "8ef39b60e9b7671eff1b87a688c60ebf962851cb531f4db452b38e1bbde1ff73"
+    },
+    {
+      "file": "devdoc/evidence/dev3-code-review-20261023.md",
+      "links": 15,
+      "duplicate_ids": 0,
+      "sha256": "53aaa048fb7c0c7045c069d1649cd6fe52988ae7ca1c9823c51864e2bd4d7623"
+    },
+    {
+      "file": "devdoc/evidence/dev3-commit-continuation-20261025.md",
+      "links": 3,
+      "duplicate_ids": 0,
+      "sha256": "8afedf533b7df6248efb09b7fa4dcd70fea9c09a5e2c277c9d055e6309ba3fe3"
+    },
+    {
+      "file": "devdoc/evidence/dev3-comparison-adoption-20261025.md",
+      "links": 16,
+      "duplicate_ids": 0,
+      "sha256": "7ebbab861ef156765bbebc75697c73e84ce67c1d31d35edf2daa3b28714eb196"
+    },
+    {
+      "file": "devdoc/evidence/dev3-concurrency-admission-20261022.md",
+      "links": 5,
+      "duplicate_ids": 0,
+      "sha256": "8ad24506d09807cbcc2bf496f5f80a46fdf9dc3eaef8824268363de27fb278e9"
+    },
+    {
       "file": "devdoc/evidence/dev3-dev4-architecture-review.md",
       "links": 7,
       "duplicate_ids": 0,
       "sha256": "6bead8f96c9e0167893bd5138155876ef80700cf7a4abd950f1a38ca38039a0e"
+    },
+    {
+      "file": "devdoc/evidence/dev3-direction-review-20261022.md",
+      "links": 38,
+      "duplicate_ids": 0,
+      "sha256": "2a9ce23e1e061e22265dd3282bac9f05222ed00d847b55b88d3e046ad9997d81"
+    },
+    {
+      "file": "devdoc/evidence/dev3-dirty-stage-20261022.md",
+      "links": 5,
+      "duplicate_ids": 0,
+      "sha256": "d44ab165bb9adc6d7d4168c1223d3d05a1fd145f2c15d19b6800e9f5eb815272"
+    },
+    {
+      "file": "devdoc/evidence/dev3-empty-retention-semantics-20261024.md",
+      "links": 3,
+      "duplicate_ids": 0,
+      "sha256": "5882d4be2adbb5a8d068a72077bc22d76fdf206922683b9bdba046e01ab186c1"
+    },
+    {
+      "file": "devdoc/evidence/dev3-empty-transaction-20261023.md",
+      "links": 13,
+      "duplicate_ids": 0,
+      "sha256": "837e1a0eaf70d451f13de6c1b8900f659e100f408757fd00c7e63e57d56483ad"
+    },
+    {
+      "file": "devdoc/evidence/dev3-leaf-edit-20261025.md",
+      "links": 3,
+      "duplicate_ids": 0,
+      "sha256": "84deff6b32307d753107e696fc492d8710b7ebe3b1594ddd88676db56f6f8ecc"
+    },
+    {
+      "file": "devdoc/evidence/dev3-mixed-system-init-20261024.md",
+      "links": 5,
+      "duplicate_ids": 0,
+      "sha256": "2a9784bccab55f10661b0d79bf690ee870d72b3d9fb2bd67a3332e941af98139"
+    },
+    {
+      "file": "devdoc/evidence/dev3-mixed-system-owner-20261024.md",
+      "links": 4,
+      "duplicate_ids": 0,
+      "sha256": "4e603c178b54826616110758512c72b7995e456db22d73c24647cf82eb7ac23d"
+    },
+    {
+      "file": "devdoc/evidence/dev3-operational-recovery-20261023.md",
+      "links": 3,
+      "duplicate_ids": 0,
+      "sha256": "d11b9cb45e9bc67cded40b519c00c720e8a7bf55f2d708f5bab04135b3010440"
+    },
+    {
+      "file": "devdoc/evidence/dev3-operational-registration-20261023.md",
+      "links": 3,
+      "duplicate_ids": 0,
+      "sha256": "3de5b1693075acab9096e9604804741965f57363628396974e0a21cdb5db4ab5"
+    },
+    {
+      "file": "devdoc/evidence/dev3-operational-status-20261023.md",
+      "links": 2,
+      "duplicate_ids": 0,
+      "sha256": "dbced2ed412aaca7a4a25f820bd57a80bf0e3bf1e4e547dda8f1e7749288148e"
+    },
+    {
+      "file": "devdoc/evidence/dev3-plan4-clean-owner-20261024.md",
+      "links": 4,
+      "duplicate_ids": 0,
+      "sha256": "a4023c62e8b15b97c1f9e4fdcbc10d8f55bd95dbf7a3d0c0c9fb2e1685f271d3"
+    },
+    {
+      "file": "devdoc/evidence/dev3-plan4-free-undo-20261025.md",
+      "links": 3,
+      "duplicate_ids": 0,
+      "sha256": "744d975200964ec7ca89c63ec00d270da4473aaeed7387aaec8fe71416bae5a6"
+    },
+    {
+      "file": "devdoc/evidence/dev3-plan4-genesis-20261024.md",
+      "links": 4,
+      "duplicate_ids": 0,
+      "sha256": "5742a1d882837e2c02bc5e636bba9d02cbbaf7079d3c7e657857d52550320d53"
+    },
+    {
+      "file": "devdoc/evidence/dev3-progress-review-20261023.md",
+      "links": 5,
+      "duplicate_ids": 0,
+      "sha256": "ba368d2434867a6d95f8973cfe367244150694dbb271029cab22fb108c55351f"
+    },
+    {
+      "file": "devdoc/evidence/dev3-recovery-control-base-20261024.md",
+      "links": 3,
+      "duplicate_ids": 0,
+      "sha256": "4aa4e6fe5374d4c6986506366dc94dea5ae2772f6b7f20c37b6619e99d33f922"
+    },
+    {
+      "file": "devdoc/evidence/dev3-recovery-effects-20261023.md",
+      "links": 3,
+      "duplicate_ids": 0,
+      "sha256": "d6cbf0feb224d614dc46c420ef3643fe6aa88e41c8ac0b44682d981e45f1275b"
+    },
+    {
+      "file": "devdoc/evidence/dev3-recovery-paused-20261025.md",
+      "links": 2,
+      "duplicate_ids": 0,
+      "sha256": "edba9a11288c83f2e3d2a0cac788aaae93fb73b05af1301cebe0b3fa262dda8c"
+    },
+    {
+      "file": "devdoc/evidence/dev3-recovery-prefix-20261022.md",
+      "links": 3,
+      "duplicate_ids": 0,
+      "sha256": "21cd9b7c1f6ea1b3d63c30f6bd19201190198f73358f9a935ea4df6768c5f16a"
+    },
+    {
+      "file": "devdoc/evidence/dev3-recovery-resumed-20261025.md",
+      "links": 3,
+      "duplicate_ids": 0,
+      "sha256": "edb95fb47e99507be6d3bec1a2aeef18d9d070fd75302adbf5e9958f71de51b7"
+    },
+    {
+      "file": "devdoc/evidence/dev3-recovery-select-20261022.md",
+      "links": 3,
+      "duplicate_ids": 0,
+      "sha256": "a74e738fb5b3c38598d1e54690280c20043ff3860704e642a0c188f6ed054e9e"
+    },
+    {
+      "file": "devdoc/evidence/dev3-registration-core-20261023.md",
+      "links": 3,
+      "duplicate_ids": 0,
+      "sha256": "b2f1f5893f3898cbda0e05196c53c40fb30b1ebcfff5f300508c3eee0c19e78d"
+    },
+    {
+      "file": "devdoc/evidence/dev3-resident-status-20261023.md",
+      "links": 3,
+      "duplicate_ids": 0,
+      "sha256": "04b163fd9e6e959aaebf5aeb7c3e01b080c73e60e4797b84a151aea3c46d068b"
+    },
+    {
+      "file": "devdoc/evidence/dev3-retention-live-20261025.md",
+      "links": 3,
+      "duplicate_ids": 0,
+      "sha256": "5091fbd4c90c20cf6c8334477454721441e647f4f78e116177a8436ae794f3e6"
+    },
+    {
+      "file": "devdoc/evidence/dev3-runtime-core-20261024.md",
+      "links": 3,
+      "duplicate_ids": 0,
+      "sha256": "9d03b95d147f76c5b0a4ba87e771f6a0abbaded526e6401e0ac856c6a41b7413"
     },
     {
       "file": "devdoc/evidence/dev3-source-research.md",
@@ -414,16 +990,196 @@
       "sha256": "2d58b1d0401a6cde3158023613019e443d98609aa23aa47f5cd163966531181d"
     },
     {
+      "file": "devdoc/evidence/dev3-status-begin-20261023.md",
+      "links": 4,
+      "duplicate_ids": 0,
+      "sha256": "7191a97f5476f100d49039eb810dfc58deb540b1615601eab1a6e9b948ea46a7"
+    },
+    {
+      "file": "devdoc/evidence/dev3-status-bootstrap-20261022.md",
+      "links": 3,
+      "duplicate_ids": 0,
+      "sha256": "5545084c950d4deb04d9f659119d9d0d9204774a1c1fa0f007eb537385ae88d4"
+    },
+    {
+      "file": "devdoc/evidence/dev3-status-home-flush-20261022.md",
+      "links": 3,
+      "duplicate_ids": 0,
+      "sha256": "73ffbba26f9ff9948d24616bcf45a8fffe8b42f8cf3c82ca3b6cac214771a7d1"
+    },
+    {
+      "file": "devdoc/evidence/dev3-status-init-20261022.md",
+      "links": 3,
+      "duplicate_ids": 0,
+      "sha256": "c97826855cd446483c2ba9a37d30675f5ff8713f5bf5b8bb001fd1f4125d20d4"
+    },
+    {
+      "file": "devdoc/evidence/dev3-status-load-20261023.md",
+      "links": 3,
+      "duplicate_ids": 0,
+      "sha256": "db9086b8ed64244c5bcfb33c59ce80c8d7f813afe2081b97920b4a2ded8ef5bd"
+    },
+    {
+      "file": "devdoc/evidence/dev3-status-pressure-20261024.md",
+      "links": 3,
+      "duplicate_ids": 0,
+      "sha256": "c9483baeaf2f6f5aff89b2b7b0fa9282ab097a3f1e620602f3f558ef4f76351b"
+    },
+    {
+      "file": "devdoc/evidence/dev3-target-set-20261023.md",
+      "links": 3,
+      "duplicate_ids": 0,
+      "sha256": "ef00ef40930ec952563b6fca4213a952a1b0824d080f478f427a566e7823b7e0"
+    },
+    {
+      "file": "devdoc/evidence/dev3-task-design-review-20261022-r2.md",
+      "links": 17,
+      "duplicate_ids": 0,
+      "sha256": "0d80fc31948d5d89d0d55fda8a21b10d267b4ba64345bade32533c4f60ce3c14"
+    },
+    {
+      "file": "devdoc/evidence/dev3-task-design-review-20261022.md",
+      "links": 34,
+      "duplicate_ids": 0,
+      "sha256": "24047f46cf419a97d29fd39ee0c678d6c0d4d7eb411ae9268fa359a14c4423aa"
+    },
+    {
+      "file": "devdoc/evidence/dev3-test-plan-review-20261022.md",
+      "links": 22,
+      "duplicate_ids": 0,
+      "sha256": "561a1d5562f4f0cc38a0d8037ac0fdd2d0670a49c38f3b244cd69b4bfe44ca7a"
+    },
+    {
+      "file": "devdoc/evidence/dev3-undo-bootstrap-20261024.md",
+      "links": 3,
+      "duplicate_ids": 0,
+      "sha256": "e4a230b5aeece883152e49e542d435e2d7a48c1a81b16d15fd402db3c90bde0f"
+    },
+    {
+      "file": "devdoc/evidence/dev3-undo-free-page-20261024.md",
+      "links": 4,
+      "duplicate_ids": 0,
+      "sha256": "262b3cc54ef3af4e19e06f0db12fa14b52950135c1554a41d005302254bec852"
+    },
+    {
       "file": "devdoc/evidence/dev3-wal-undo-research.md",
       "links": 9,
       "duplicate_ids": 0,
       "sha256": "366414bd39eff914d666cb165d710d9179c1b0bd94fa864b18fe3cf91e410a04"
     },
     {
-      "file": "devdoc/evidence/dev4-source-research.md",
-      "links": 26,
+      "file": "devdoc/evidence/dev4-frontend-20261024.md",
+      "links": 3,
       "duplicate_ids": 0,
-      "sha256": "40ff500f9cef64887e27c10a40ea855d8ed94940cdcf732cb7c07ea90e582a5c"
+      "sha256": "2557e889116f83c24c8dbc4319696807eb31ff67deb11126b242f957055b2759"
+    },
+    {
+      "file": "devdoc/evidence/dev4-lifecycle-assembler-20261025.md",
+      "links": 2,
+      "duplicate_ids": 0,
+      "sha256": "a18525a9b665741a0d2247c82156d393a7f685840e26514f60e40b291ba2691f"
+    },
+    {
+      "file": "devdoc/evidence/dev4-lifecycle-assembly-inputs-20261025.md",
+      "links": 4,
+      "duplicate_ids": 0,
+      "sha256": "5ecd72f1b310f084d961d675ef7773c4a757ca0c26ec74b3062792b2d015e4c9"
+    },
+    {
+      "file": "devdoc/evidence/dev4-lifecycle-checker-20261025.md",
+      "links": 2,
+      "duplicate_ids": 0,
+      "sha256": "1895480be063c2bbee10c7b3f4ded8f42533a723eeb5034a823fbe1fcc40fdca"
+    },
+    {
+      "file": "devdoc/evidence/dev4-lifecycle-codec-20261024.md",
+      "links": 4,
+      "duplicate_ids": 0,
+      "sha256": "80939373cec12e04d850c65fa324038ec69ca867d548930128d57837131b1da3"
+    },
+    {
+      "file": "devdoc/evidence/dev4-lifecycle-explorer-20261025.md",
+      "links": 2,
+      "duplicate_ids": 0,
+      "sha256": "6f319a0c70a0517d132ccf5a08eeb2d05a553be2df89d047bf1529c9e4d4ebfa"
+    },
+    {
+      "file": "devdoc/evidence/dev4-lifecycle-inputs-20261024.md",
+      "links": 5,
+      "duplicate_ids": 0,
+      "sha256": "fceaa64e48eaa61dc53f9507103b3b82b7df2fea20cae5af2c4ba52a93175f66"
+    },
+    {
+      "file": "devdoc/evidence/dev4-lifecycle-model-20261025.md",
+      "links": 1,
+      "duplicate_ids": 0,
+      "sha256": "962d9a172de7569df76427e350aaa2f927c1e185c0db7c68ab8b96272794ed84"
+    },
+    {
+      "file": "devdoc/evidence/dev4-lifecycle-raw-selection-20261025.md",
+      "links": 1,
+      "duplicate_ids": 0,
+      "sha256": "bb06a2f1af13203bc62da4a4295f524bd881efa4a3e4efea12683ee6241768c6"
+    },
+    {
+      "file": "devdoc/evidence/dev4-merge-review-20261026.md",
+      "links": 4,
+      "duplicate_ids": 0,
+      "sha256": "debe13d77258fc4bc2194e15ab9d9957281af405a6bfb34c7fc6a495c8dc7b2c"
+    },
+    {
+      "file": "devdoc/evidence/dev4-parser-20261024.md",
+      "links": 3,
+      "duplicate_ids": 0,
+      "sha256": "8f37f97595f13d0a22a92edaac00d9c5c2acc79ddc387366a52866e98c512f9b"
+    },
+    {
+      "file": "devdoc/evidence/dev4-predicate-20261024.md",
+      "links": 3,
+      "duplicate_ids": 0,
+      "sha256": "31944c16d18bc6d6b263faf0cb97d22e73e736def6ef8244b6287d6ec131ef9a"
+    },
+    {
+      "file": "devdoc/evidence/dev4-preparation-research-20261024.md",
+      "links": 22,
+      "duplicate_ids": 0,
+      "sha256": "546394c39138783537224c664787be71bc92b8776e4467f8e9e87fe55207cd42"
+    },
+    {
+      "file": "devdoc/evidence/dev4-remaining-parser-20261024.md",
+      "links": 3,
+      "duplicate_ids": 0,
+      "sha256": "dfe5b9f6edaceff1ae44aeaa421ea5859c3d015c969168a00e5bb87310cf9461"
+    },
+    {
+      "file": "devdoc/evidence/dev4-scalar-20261024.md",
+      "links": 3,
+      "duplicate_ids": 0,
+      "sha256": "804b1b1ce98b95b747d5d5a87bf2137ba48caea34119d505749d9efe78260f0f"
+    },
+    {
+      "file": "devdoc/evidence/dev4-source-research.md",
+      "links": 92,
+      "duplicate_ids": 0,
+      "sha256": "85adf5490471780151c5eb6b54cd4f966bb0726afb95f698c7ec994508201654"
+    },
+    {
+      "file": "devdoc/evidence/dev4-splitter-20261024.md",
+      "links": 4,
+      "duplicate_ids": 0,
+      "sha256": "48f3b2f23ee7426e1abab0f3d9339d3ab65ae1935c11bf72c2210e3c31d94348"
+    },
+    {
+      "file": "devdoc/evidence/dev4-supply-handoff-20261024.md",
+      "links": 16,
+      "duplicate_ids": 0,
+      "sha256": "da5ca7d6c22e97acfc8b32d1f97fcf61a18450e2ab5f26c87f170a0566351e43"
+    },
+    {
+      "file": "devdoc/evidence/dev4-typed-predicate-20261024.md",
+      "links": 3,
+      "duplicate_ids": 0,
+      "sha256": "ebf3cf699667cb8a187d5ad742ade3c85ee62dccb6e7d503ccbcb4a5c3617dcc"
     },
     {
       "file": "devdoc/evidence/dev5-oracle-source-review.md",
@@ -438,22 +1194,70 @@
       "sha256": "f3afcfc8dad60c32caac5386a6c1b6516be2630b03b63d9a98df78ca3f312eeb"
     },
     {
+      "file": "devdoc/evidence/dev5-work-breakdown-research-20261022.md",
+      "links": 12,
+      "duplicate_ids": 0,
+      "sha256": "bd9b4584919a6e9831897287ed1d3065643aeb074c05c2ad92537a3795de9e27"
+    },
+    {
+      "file": "devdoc/evidence/dev5-work-breakdown-review-20261022.md",
+      "links": 17,
+      "duplicate_ids": 0,
+      "sha256": "7534763d37aa7c14cbe564c8a8ee3e1de205f73f82678b1eae5c29cf3070ea6c"
+    },
+    {
       "file": "devdoc/evidence/dev6-source-research.md",
       "links": 45,
       "duplicate_ids": 0,
       "sha256": "e8bd1ba24855c3d90199c4b7006ae324c5631d5d21fd82de5430c2893b75d302"
     },
     {
+      "file": "devdoc/evidence/dev6-work-breakdown-research-20261022.md",
+      "links": 15,
+      "duplicate_ids": 0,
+      "sha256": "42c64d85e53385e15527ecd2f73a413a7ac4cc6cec318f81b3b4028ab7042372"
+    },
+    {
+      "file": "devdoc/evidence/dev6-work-breakdown-review-20261022-r2.md",
+      "links": 18,
+      "duplicate_ids": 0,
+      "sha256": "12fbbb7db082008d211eaa4b48f852921c5502d6ed83a426ed917bae7d89c8f8"
+    },
+    {
+      "file": "devdoc/evidence/dev6-work-breakdown-review-20261022.md",
+      "links": 10,
+      "duplicate_ids": 0,
+      "sha256": "8662475f14d54daca6fd41c703b2ea0a4a3dfd406ec649ac4b8ed9df96b81fb3"
+    },
+    {
       "file": "devdoc/evidence/dev7-review-002.md",
       "links": 7,
       "duplicate_ids": 0,
-      "sha256": "ed7cc486f60778f549871659728d484b289fb13717f61b9824176ae010565b7d"
+      "sha256": "c34bd1db93c5bc94e31e73752000d016e8a0bb986ce6f667675c150daef59533"
     },
     {
       "file": "devdoc/evidence/dev7-source-research.md",
-      "links": 15,
+      "links": 9,
       "duplicate_ids": 0,
-      "sha256": "95a29beeb26f720799ab8a1e33a33795e10176348c7516b3c40bc66d6c2098a6"
+      "sha256": "86b475e050614364fda1a341773ab20f09fa5cafc0de900ac3734d0bd2b74405"
+    },
+    {
+      "file": "devdoc/evidence/dev7-work-breakdown-research.md",
+      "links": 12,
+      "duplicate_ids": 0,
+      "sha256": "4801d69ded546883790670816ee957e60ee99724bcd3c340a6a99b4482cdced2"
+    },
+    {
+      "file": "devdoc/evidence/dev7-work-breakdown-review-20261022-r2.md",
+      "links": 11,
+      "duplicate_ids": 0,
+      "sha256": "593c279c597c8d96683d82329617c919fcf1dbb74ab0763b38146eff80e4c321"
+    },
+    {
+      "file": "devdoc/evidence/dev7-work-breakdown-review-20261022.md",
+      "links": 14,
+      "duplicate_ids": 0,
+      "sha256": "9497486e2ea1df720f925fe699591197a8222248b6b49529a87e92545b386f9c"
     },
     {
       "file": "devdoc/evidence/dev8-review-002.md",
@@ -474,10 +1278,28 @@
       "sha256": "52d10a0d19d0fabdb994c700a7b8ad9ae868172d02dfcdb9ab87e1642639e097"
     },
     {
+      "file": "devdoc/evidence/module-independence-survey-20261026.md",
+      "links": 217,
+      "duplicate_ids": 0,
+      "sha256": "7245c23eedcec9576d1bc1881da50aec0cf5d2269e7317107894f5ced7adbd3c"
+    },
+    {
+      "file": "devdoc/evidence/naming-cleanup-20261025.md",
+      "links": 3,
+      "duplicate_ids": 0,
+      "sha256": "bddfd8821ddd652d37164d004d1417c8b6fd17b12af55d54bfc31294fff964d0"
+    },
+    {
+      "file": "devdoc/evidence/xadb-direction-review-20261025.md",
+      "links": 45,
+      "duplicate_ids": 0,
+      "sha256": "1ff8645198689d4162e0ef6373f7639c5bf3ddfcd5dab70959254e37d9a2f680"
+    },
+    {
       "file": "devdoc/examples/AGENT_WORKFLOW.example.md",
       "links": 3,
       "duplicate_ids": 0,
-      "sha256": "656f679093247cb7882cd153f8bcc74e4c1034b89f9f6865fad81b05f931e8ed"
+      "sha256": "7f3f67782f8a25e70b142f1d712f2d788f78e84ba1651ba6b73b00bce5bada31"
     },
     {
       "file": "devdoc/examples/README.md",
@@ -499,57 +1321,63 @@
     },
     {
       "file": "devdoc/implementation/README.md",
-      "links": 46,
+      "links": 193,
       "duplicate_ids": 0,
-      "sha256": "f7edf0fe5a9101d31b2110240891bffc10214c39b7ff49c0686af48cb80a246e"
+      "sha256": "c7a65ade1bc77bcaa1f3fa1ad33dafbff04b6ae3e604e8bdc00cf2a8b68a91a0"
     },
     {
       "file": "devdoc/implementation/comm-implementation.md",
-      "links": 19,
+      "links": 43,
       "duplicate_ids": 0,
-      "sha256": "507cdd7872eb633fdb4f975959a886e2f98d3f3173856b81636dac88beeb77d3"
+      "sha256": "13f59883ae84c4d1689629d0abc8ab1d6f1ff8f390775ff2939eb8e98ba6c89f"
     },
     {
       "file": "devdoc/implementation/dev0-implementation.md",
-      "links": 9,
+      "links": 10,
       "duplicate_ids": 0,
-      "sha256": "0a8d251e7e4aeb587983febf44d937f66d7464143eeeec60734343ae14789fa8"
+      "sha256": "7edaadaa04fcf052f7fd486eecafb164d03f24173e7a3aa2c251c43f2c93e5b8"
     },
     {
       "file": "devdoc/implementation/dev1-implementation.md",
       "links": 9,
       "duplicate_ids": 0,
-      "sha256": "7cdab57fb03e3e083a4bafef1fcc16e644b36b97ddd88b0dbaef311494113a9f"
+      "sha256": "51a34579e73426ec6e408b2b965ea9db47e76149499c8d50fb4106d39394ea4d"
     },
     {
       "file": "devdoc/implementation/dev2-implementation.md",
-      "links": 39,
+      "links": 60,
       "duplicate_ids": 0,
-      "sha256": "440ce5b76149ac841ad989817bbb7189479eb264377c93893b6827d6876cd5a6"
+      "sha256": "2e16a6b8ef4747ea6677586cfebcb8f9ff984905fb1651d4ede6509d871fc455"
     },
     {
       "file": "devdoc/implementation/dev3-implementation.md",
-      "links": 119,
+      "links": 264,
       "duplicate_ids": 0,
-      "sha256": "a1dfeb317d5d8d6eae3c3f3edaa079cd9189afd3c5939a1c2435b0db8aa79f21"
+      "sha256": "ccddc89f2c4ac308c30868004de7a367de5f5772f74787def8a7d59452224a63"
+    },
+    {
+      "file": "devdoc/implementation/dev4-implementation.md",
+      "links": 25,
+      "duplicate_ids": 0,
+      "sha256": "693a0d8bd7fdd24fb37e751448382de1b8771003b6ce63745dbdbc3d12f2c4a6"
     },
     {
       "file": "devdoc/plans/README.md",
-      "links": 28,
+      "links": 68,
       "duplicate_ids": 0,
-      "sha256": "dbf4ac50c35b5c6ea8c2df0e628b97d67aed0626f6bb3183e6216db188560b76"
+      "sha256": "355c75f28983d11367d80ecddd07e165d13e529a298e1e095946c0cf141f93f2"
     },
     {
       "file": "devdoc/plans/bottom-up-development.md",
-      "links": 7,
+      "links": 8,
       "duplicate_ids": 0,
-      "sha256": "fb6a88676bb8704e92a3821acb8cd8a0a84f2aedf70e4e58cb848ca416837efc"
+      "sha256": "0fd5643f99ec7bdb547c7f10f6c66cf16a090e5e2e09329e9ae8369bbc991835"
     },
     {
       "file": "devdoc/plans/comm-implementation-plan.md",
-      "links": 8,
+      "links": 17,
       "duplicate_ids": 0,
-      "sha256": "3617a11a6a849469fe98805f68419c83b421b17a1e55bdea4f67dfb2c081bd56"
+      "sha256": "48434193adb16df578ede3687c0388de597f042959f3959749f8d3f871e663f9"
     },
     {
       "file": "devdoc/plans/dev2-implementation-plan.md",
@@ -558,58 +1386,100 @@
       "sha256": "322dc6a60056c214da39d091f1da0137230b9525f937a3cb25e51f1a9ad2b4c1"
     },
     {
-      "file": "devdoc/plans/dev3-implementation-plan.md",
-      "links": 81,
+      "file": "devdoc/plans/dev2-pf04-resolution-plan.md",
+      "links": 46,
       "duplicate_ids": 0,
-      "sha256": "1f126b12c8f0b338dab0b3ee4491ae8e2a1779ac80a80a332f1ead4b115f6b34"
+      "sha256": "e94291731cd389a77818a9b87402e20ea3213a1c273786b0167c5639dd651a51"
+    },
+    {
+      "file": "devdoc/plans/dev3-ai-throughput-improvement.md",
+      "links": 36,
+      "duplicate_ids": 0,
+      "sha256": "f79f77f1ba85a6484e9ab8d170e1d40977efca9bec4ad7d130505c3eafa8a17d"
+    },
+    {
+      "file": "devdoc/plans/dev3-implementation-plan.md",
+      "links": 122,
+      "duplicate_ids": 0,
+      "sha256": "087e09066acdc876b292c9bbaea244a4a0c4593d34be6f6cb976cda8ac9f7e5f"
     },
     {
       "file": "devdoc/plans/dev3-test-plan.md",
-      "links": 38,
+      "links": 159,
       "duplicate_ids": 0,
-      "sha256": "15f06f18182232986b55a00b9c25b280f005d3f586c76552c4087ccebc3ab3f4"
+      "sha256": "d53f92848bf066ec60f328bb2e5cd661f1b5175aec152e48858af462e7c00b18"
     },
     {
       "file": "devdoc/plans/dev4-implementation-plan.md",
-      "links": 13,
+      "links": 30,
       "duplicate_ids": 0,
-      "sha256": "f3c4216ac962ebb84957e90cbe5ce591d019c6bb57cec8b99f297c06ac86c070"
+      "sha256": "415056ad5365d2a9f7d8e44e73f25dee4eab7065576504895f1e83893d40b112"
+    },
+    {
+      "file": "devdoc/plans/dev4-preparation-plan.md",
+      "links": 26,
+      "duplicate_ids": 0,
+      "sha256": "d8d61a81c349c1317dd6dfb1531adbe7ad275bb937cb6c786deab187b6ffcf70"
+    },
+    {
+      "file": "devdoc/plans/dev4-work-breakdown.md",
+      "links": 84,
+      "duplicate_ids": 0,
+      "sha256": "f1ba5ad725888bd92986adc942ddcd3c9a5875c6b4903ab5d1fca37ceb5a020e"
     },
     {
       "file": "devdoc/plans/dev5-implementation-plan.md",
-      "links": 7,
+      "links": 20,
       "duplicate_ids": 0,
-      "sha256": "22d05738325cf48c214f66ad726b26d967ce561937c3d0ce18e4828a0b76c3b4"
+      "sha256": "5a9877a2112da44a20c0333db0af197443afcf85615587153f1a60ef94534b94"
+    },
+    {
+      "file": "devdoc/plans/dev5-work-breakdown.md",
+      "links": 53,
+      "duplicate_ids": 0,
+      "sha256": "8efbbf2e35822d13ed861b750a1639198d34c93113b57f9d9bfd46baa26c3fda"
     },
     {
       "file": "devdoc/plans/dev6-implementation-plan.md",
-      "links": 11,
+      "links": 23,
       "duplicate_ids": 0,
-      "sha256": "46335ef4f07e46b6cedd6240c97c26034d8a7ca6d3d881a7ba10216338bffebf"
+      "sha256": "be9d911003e82eaad1a86f1d21abfae528fbedbfcfbe050d23fca4338b12c449"
+    },
+    {
+      "file": "devdoc/plans/dev6-work-breakdown.md",
+      "links": 58,
+      "duplicate_ids": 0,
+      "sha256": "29972707025d75ff1ef4972cafd3babb8464a1b503934860fc8d618a092ebf8e"
     },
     {
       "file": "devdoc/plans/dev7-implementation-plan.md",
-      "links": 72,
+      "links": 82,
       "duplicate_ids": 0,
-      "sha256": "aa531cf3ae767d2b6ba24eb928c98238c6e0b795108b8825b59d62f66c23229a"
+      "sha256": "a5a01097159428b678a84b4e70f02610a28ecce55b40bf89da511f5e170ac34f"
+    },
+    {
+      "file": "devdoc/plans/dev7-work-breakdown.md",
+      "links": 32,
+      "duplicate_ids": 0,
+      "sha256": "e7ef79cfa809c38882b4f73176a3ced547aa05e3047f942dc9ac390b2984cd58"
     },
     {
       "file": "devdoc/plans/dev8-implementation-plan.md",
       "links": 38,
       "duplicate_ids": 0,
-      "sha256": "2b158ddcac81b68526c141c3d126506a296006bba3a13de5cedf789514564138"
+      "sha256": "23a3209bc7f901ef35bd2edd1c63e9f0e4515b19f4bc12c255602d56198bb549"
     },
     {
       "file": "devdoc/plans/dev9-implementation-plan.md",
-      "links": 13,
+      "links": 14,
       "duplicate_ids": 0,
-      "sha256": "9428e8a0cd3d2698e8646a2dcd7cad30705a432b44c3becd4193f35fd6192933"
+      "sha256": "5916a475e795d98ac243cf86c2e4a205c4d1179c6ff9425b0eabe74ee3b8676f"
     },
     {
       "file": "devdoc/plans/development-stages.md",
-      "links": 32,
+      "links": 36,
       "duplicate_ids": 0,
-      "sha256": "3fad6ecf2436ce660ceda2d5be7cdf14721b9a8db8d7a5369caa137728ce2a9a"
+      "sha256": "c46f0e9dbb1623d4b803bd3de364f6339c475c6e1d69389beb250408c71bf974"
     },
     {
       "file": "devdoc/plans/feature-design-inventory.md",
@@ -618,64 +1488,70 @@
       "sha256": "c707bf25819d541464daa32c31c9abeb749c44837051c39ce3404eb3eeea9fd8"
     },
     {
+      "file": "devdoc/plans/module-independence-plan.md",
+      "links": 251,
+      "duplicate_ids": 0,
+      "sha256": "b53eaa5da2fdf7535945a4e6f81a71f7a20d6e5690f03789c01f2ab8755004be"
+    },
+    {
       "file": "devdoc/plans/phase1-product-baseline.md",
       "links": 5,
       "duplicate_ids": 0,
-      "sha256": "e6c7c466c5dd025386d0a6b10d1e9e7f987ef45a707fbaa38d01663d23bc1be5"
+      "sha256": "aa27fad9725daff78c16fadee85e4f3950b0d481b57acf0e9bfc1ae49f49e189"
     },
     {
       "file": "devdoc/plans/product-requirements.md",
       "links": 5,
       "duplicate_ids": 0,
-      "sha256": "c6338e2ee76a2752cd2669d30c4dc67a865f926f9bb1e052e1dffec4f5ba7370"
+      "sha256": "2f722ef1566df63a320ba9bff48f64f2df95d5dc9a875293a0a2628f00268d85"
     },
     {
       "file": "devdoc/plans/project-direction.md",
       "links": 3,
       "duplicate_ids": 0,
-      "sha256": "74f6c2b5be805c53f6142d9c55a0ccf724d9476d7874cd16127250de7d2cd320"
+      "sha256": "d695251a0a704f502c28050a601f0e9e38c63553d66fa75d64649160ef3a5261"
     },
     {
       "file": "devdoc/policies/README.md",
-      "links": 12,
+      "links": 15,
       "duplicate_ids": 0,
-      "sha256": "412887323fa72868b78d179a8f1475f703a4adf03cf463d861304a3aaf85809a"
+      "sha256": "e9ae07681000f1d727e057f67685eb0ea9ed7ccd0af30d62f8b05813e3f137d2"
     },
     {
       "file": "devdoc/policies/ai-development-method.md",
-      "links": 19,
+      "links": 21,
       "duplicate_ids": 0,
-      "sha256": "8c743569a67c469d7c6ad81bfdbd118c8a110070ae4e5afd264a5d480f6819bb"
+      "sha256": "4aaef7a07b35fb1b8fe256c4f562ef081b6185b2997c809f0a3e2ae6706ff0fe"
     },
     {
       "file": "devdoc/policies/coding-convention.md",
-      "links": 30,
+      "links": 36,
       "duplicate_ids": 0,
-      "sha256": "ed9d576cc7246457f3dfc279d65f6f1107cf4aa5b2390527d7a8579a4e1232ee"
+      "sha256": "c69e55a2f10646cfadbbd816b5683136ebb7aa651cbc679da47ca0cc56fbf6b2"
     },
     {
       "file": "devdoc/policies/development-policy.md",
-      "links": 10,
+      "links": 11,
       "duplicate_ids": 0,
-      "sha256": "7d7f90246535900f9b085b1e8c9b5e62a38304a979211d406747264e019c9f55"
+      "sha256": "8dd6627f621685f1882b5e7112ab1b03f0e64190bf3e50ebb827c68bea9b1b86"
     },
     {
       "file": "devdoc/policies/documentation-policy.md",
-      "links": 7,
+      "links": 9,
       "duplicate_ids": 0,
-      "sha256": "8723afdcc8706f0b0bc85ecedc6bf5be8179dce015a2836c04806d747e4f0780"
+      "sha256": "46cd09090953daa4dee9dde65a4e11d9b47509edf175a0ad610537074bbe1948"
     },
     {
       "file": "devdoc/policies/parallel-development-policy.md",
-      "links": 7,
+      "links": 12,
       "duplicate_ids": 0,
-      "sha256": "089f48d3fa438ea204570d79b918f3fd8eda3d34caeec55aaa77bc41c9572ed0"
+      "sha256": "e96a56d755ca438a0eb05e7d862d4826d1c8c605c9758488f96cbf3df7bb9fd0"
     },
     {
       "file": "devdoc/policies/repository-build-plan.md",
-      "links": 38,
+      "links": 191,
       "duplicate_ids": 0,
-      "sha256": "0aac44b4ff6a925b53631c1b3dd78b2efcfebe91482468ce66f3c3199ba4ee06"
+      "sha256": "3c5310abcff8988b3d297d105e4668d25ae464daa801f804edb620bef2017e5d"
     },
     {
       "file": "devdoc/reference/README.md",
@@ -687,13 +1563,13 @@
       "file": "devdoc/reference/architecture-overview.md",
       "links": 66,
       "duplicate_ids": 0,
-      "sha256": "145192e055d474a946f2a42c735b751d134fd734594e7c2792b3483f8c9278b4"
+      "sha256": "ba98c0f8a03a4f3c071a918ded408d4d79ac16a60c971a75e086047224add216"
     },
     {
       "file": "devdoc/reference/commercial-dbms-extensibility-assessment.md",
       "links": 44,
       "duplicate_ids": 0,
-      "sha256": "07039992ae73fb847773f1a4a3716ea7f0de302eaf438287a9ca4e1844de3e52"
+      "sha256": "e352c6dfd77dfd01d99bfadf1f1c7f43757f33b99e70e45f905e1346f8355585"
     },
     {
       "file": "devdoc/reference/feature-design-leaf-index.md",
@@ -705,7 +1581,7 @@
       "file": "devdoc/reference/interface-experience-plan.md",
       "links": 18,
       "duplicate_ids": 0,
-      "sha256": "8c9ec5e4c84f50275ce8e6d45df7890689eb691ed5bda7831bfbacc79dec43d1"
+      "sha256": "d778fed7784ec6a913b2561c3f8e55ea5f9f516c6c10555ea9a91709c902e6ea"
     },
     {
       "file": "devdoc/reference/manual-review.md",
@@ -715,9 +1591,9 @@
     },
     {
       "file": "devdoc/reference/opensource-references.md",
-      "links": 23,
+      "links": 25,
       "duplicate_ids": 0,
-      "sha256": "689d233fe3bdbcabdea83631e76cad5f215d24c67acdb1366c7791ad31d2cabd"
+      "sha256": "c7329b07b117e17cd7ce56f1ccd379afb9e01208173550e5b8faca3da829af4b"
     },
     {
       "file": "devdoc/reference/review/README.md",
@@ -729,25 +1605,25 @@
       "file": "devdoc/reference/sql-language-draft.md",
       "links": 8,
       "duplicate_ids": 0,
-      "sha256": "dffa4de92afb5ab50a9a938158408f25166392d1f07148458d328e2feb5e54e4"
+      "sha256": "fe3af081eb5baa8e4dcd03ba67488c8a490754c822f74341a1e9c1db6c3b637e"
     },
     {
       "file": "devdoc/reference/user-manual-draft.md",
       "links": 20,
       "duplicate_ids": 0,
-      "sha256": "f2e783ae74529552ea3aced26462629ba3b8db26eed35612e896a3385fb14763"
+      "sha256": "4d0fd954925253764b5068ac148c0c2465cce4452ba9f8697210c72df118db27"
     },
     {
       "file": "README.md",
-      "links": 9,
+      "links": 16,
       "duplicate_ids": 0,
-      "sha256": "c16d2397fa4ffa006a39c454740a4e9b1c63350c1a5cc8c21e8ef9cbc5637e2a"
+      "sha256": "e6a8f76254d9c8fb34523649fed18775a48039c9b6a5a8ce02c84d0528bd346b"
     },
     {
       "file": "AGENTS.md",
-      "links": 2,
+      "links": 8,
       "duplicate_ids": 0,
-      "sha256": "6d83fba684cfde2d8576bf42384a7aa1c215ce8e45d64098b7e7b3801a20ba06"
+      "sha256": "b24685ab732a02ac8dcef88c00d234dfc3a1d4f410fa4ef3421e4b745c9f236b"
     }
   ],
   "scope": "Markdown/JSON/navigation, stage/task/case/package contracts and current source evidence identity; no product tests or historical measurements executed"

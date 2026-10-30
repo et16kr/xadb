@@ -1,5 +1,7 @@
 # XADB 모듈 독립 개발 구조 전환 작업 계획
 
+2026-10-30 [S2-0 Row 쓰기 계약 개정 반영](../evidence/module-independence-survey-20261026.md#s2-0-q06-amendment): Q06 개정(gate·flush lease를 보유하는 preflight와 `FlushRequired` step, lane 8번째 part, phase별 호출 지점 계수, 128B cut, S2-e 진입 조건, V09·MCI03-V02 oracle 대체)을 독립 D2 r3 ACCEPT 뒤 계약에 넣었다. 사용자 지시에 따라 이 branch는 S2(S2-a·A-W1·S2-b1~S2-f)까지만 진행하고 S5는 진행하지 않는다.
+
 2026-10-29 [S2/S5 설계와 Row 쓰기 예산 판정](../evidence/module-independence-survey-20261026.md#s2-design-q06): S2의 Forward producer 단계가 60625B로 진행 charge 44304B를 넘어 Q06 재검토가 필요하다. lane 8부분·preflight flusher를 담은 개정 초안(D2 r1 필수 5 반영)을 만들었으나, 사용자 결정(S1까지만 마무리)에 따라 계약에는 넣지 않았고 S2 구현은 시작하지 않았다.
 
 2026-10-29 [S1-e Row statement mark와 두 번째 문장](../evidence/module-independence-survey-20261026.md#s1e-statement-mark): Row 문장이 ATT `undo_head`를 slot 88..128에 mark로 쓰고, 매 경계에서 sequence·mark를 하나의 비교로 대조하며, 깨끗한 종료 뒤 두 번째 문장을 연다. cap 불변(handle 408 ≤ 512). 신규 11 PASS, 통합 round 33 PASS. 독립 검토 필수0. 이로써 S1(S1-a~S1-g)이 모두 공급됐고 다음은 S2-0 Q06 개정이다.

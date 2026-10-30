@@ -9189,5 +9189,19 @@
     "remaining_supply": "user decision on the Q06 amendment; A unit measuring the Forward phase after M1/M2 and MCA00-D15; separate Q06 record for the native commit-window overrun 66612 B; S2, S5, S3, S4, S6, S7, C+A, C+B, MI01-06",
     "source_roots_changed": false,
     "artifact_manifest_sha256": "5f1848f2066b18b50f0f5173a0dc98cee414642b7c77d3e4dfa5f8cfbac30689"
+  },
+  "dev3_module_s2_0_q06_amendment": {
+    "status": "CONTRACT_APPLIED_D2_ACCEPTED",
+    "contract_ref": "dev3-module-boundaries.md#row-write-budget",
+    "evidence_ref": "module-independence-survey-20261026.md#s2-0-q06-amendment",
+    "baseline_commit": "9c56a3a",
+    "branch": "claude/project-thread-h2j8oc",
+    "commits": [],
+    "commit_note": "the contract change and this record are one docs commit",
+    "scope": "S2-0 Q06 amendment: RowWrite/RowRead charge reuse, gate and flush lease from preflight to row end, preflight residency and FlushRequired step, 3-range lane split and 8th RowProducerLane part, per-call-site RowWrite census with ROW_WRITE_CALLER_BYTES, cuts <= 128 B, Q06 record and S2-e entry condition, table write bit before stage, one live reservation per actor, V09 and MCI03-V02 oracle replacement, Q12 9792 ruling",
+    "validation": "independent D2 r1 ACCEPT WITH REQUIRED CHANGES (5 required, 16 advisory), r2 ACCEPT WITH REQUIRED CHANGES (1, 7), r3 ACCEPT (0, 4; C1 C2 C4 applied in r4, C3 by this record); apply.py dry-run then one apply, additions only (boundaries +257, resource-bounds +11, consumers +12)",
+    "remaining_supply": "Q12 test expectation, S2-a, A-W1, S2-b1..S2-f on this branch; B and MCI acceptance of the InstallationPending retry duty before any S5 or MCI unit; S5-a..d not started by user decision; separate Q06 record for the native commit-window overrun 66612 B",
+    "source_roots_changed": false,
+    "artifact_manifest_sha256": "3235d2edea67d5f72a1f5752156808b84b964b611c8ecede94d9efaeb7a554e5"
   }
 }
