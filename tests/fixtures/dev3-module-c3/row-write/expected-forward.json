@@ -1,0 +1,25 @@
+{
+  "after_sha256": {
+    "aging": "229676a8c452119a07c6517808b235dc9c5d2426d548d36882d055349b8e123a",
+    "bank": "71ed8b07fb2594d20befccc3d2ad6c30c5674546e374cb5608e66e0ed5fe84d7",
+    "jobs2": "f5627aa6bf03b8b05c068f99d3405624fad788d64fbda3557307d319128356df",
+    "leaf13": "0c3689d98f178c24eb75ff3276bbed2ee7bb410ca38103a00d6708d1ee4e8ff4",
+    "root1": "32e2fe6450e9b2fe0cbf07707e6a568cf6d193b6f5383365240e979f3fe49a40",
+    "status11": "8371f123e181f5bc9d4c437a7b51282f84a24f2c9dd350ef07b577c7d14f5162",
+    "tx": "5ce42256ee656bb794c65387dc8dc548be29f7d0677271af2b81911993ae9ce2",
+    "undo14": "801bbcfb6457e6e86916422054ef035475038c644786723d7cd600ee2b954cb8"
+  },
+  "case": "S2W-R09",
+  "frame_bytes": 91497,
+  "frame_sha256": "0ee305722bff97a71161e2111bb7a15059b3a35b8a941c603a45e2fc5de81043",
+  "lsn": 16,
+  "root_job": {
+    "adoption_lsn": 16,
+    "generation": 2,
+    "lease_lsn": 15,
+    "ordinal": 3,
+    "state": 2,
+    "statement": 1
+  },
+  "row": 1
+}
