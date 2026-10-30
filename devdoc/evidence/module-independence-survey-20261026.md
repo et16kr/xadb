@@ -4081,7 +4081,7 @@ v2 `native`(221파일, 5,794,810B), `memory-gap`(137, 3,382,130B), `memory-retir
 
 **독립 검토.** 같은 읽기 전용 검토자가 두 번 보았다. r1은 필수 R1–R4(native, 변경 경로 7개 재실행, transition3 root 채택, B31 근거 정정)와 권고7이었고, r2는 R2–R4와 권고 A2/A3/A4/A6 해소를 확인하고 문서 정정 Q1만 요구했다. Q1은 반영했다. **되돌림 단위는 `git revert b5f7c9b 1dd9dec c4516a9 bbca0cb`(최신부터, 원 branch의 `3d7bb32 fc8dfb9 665e7bd 26fbe71`)이며, 불활성 receipt·fixture commit은 남긴다.** 전환 commit 하나만 되돌리면 뒤 commit이 RowBase arm·format_tests·B31 줄에 기대므로 Profile2 current로 돌아가지 않는다.
 
-**CR1(사용자 로컬에서 할 일, main이나 공유 remote에 올리기 전).** 통합 head의 source·ELF로 (a) `scripts/dev3_catalog_native.py` N01/N02/N03을 60GiB+reserve 여유와 독립 ACCEPTED admission을 갖춰 돌리고, (b) F05 plan4 recovery native를 독립 gate가 생기고 기존 `support.rs:260` 실패가 고쳐진 뒤 돌린다. 이 cloud container는 여유가 약 30GB라 (a)를 돌릴 수 없고 (b)의 gate는 단위가 스스로 발급할 수 없다. 실패하면 위 되돌림 단위로 되돌린다.
+**CR1(사용자 로컬에서 할 일, main이나 공유 remote에 올리기 전).** 통합 head의 source·ELF로 (a) `scripts/dev3_catalog_native.py` N01/N02/N03을 60GiB+reserve 여유와 독립 ACCEPTED admission을 갖춰 돌리고, (b) F05 plan4 recovery native를 독립 gate가 생기고 기존 `support.rs:260` 실패가 고쳐진 뒤 돌린다. 이 cloud container는 여유가 약 30GB라 (a)를 돌릴 수 없고 (b)의 gate는 단위가 스스로 발급할 수 없다. 실패하면 위 되돌림 단위로 되돌린다. 2026-10-30 갱신: 사용자 결정으로 (b) F05를 CR1에서 뺐고 CR1은 (a)만 남는다([native 시험 adapter 정정과 CR1 범위 변경](#native-adapter-file-cr1-scope)).
 
 **남은 권고.** preflight_empty_retention의 명시 형식 gate(A5), `page_io.rs:197-228`의 debug_assert를 `fits` 검사로(A7), commit window 소유자의 84B 여유 기록(A1). artifact는 `module-independence-20261029/artifacts/module-u2c4c-20261029/`(`manifest-all.sha256` SHA-256 `30c4ab322770370b2d0b765ed258154f8f8dddad86acaf36e108ec47c523972f`)에 있다.
 
@@ -4298,3 +4298,24 @@ S1(S1-a~S1-g) 뒤의 다음 단계인 S2(C3 Row Reserve·Forward·Cancel)와 S5(
 **적용 검산.** `apply.py`는 D2 자리표시자·초안 상태 문구가 남으면 거절하고, 남은 `.s2-0.tmp`·`.s2-0.bak`을 거절하며, 모든 검산 뒤에만 출력하고, 새 본문을 임시 파일에 쓴 뒤 원본을 백업하고 rename하며 실패하면 이미 바꾼 계약을 백업에서 되돌린다. 링크 검산은 새 링크 `#s2-0-q06-amendment`(이 항목)와 `#s2-design-q06`을 해석한다. 검토자는 r3에서 rename 실패·복원 실패 주입, 남은 `.bak`, 깨진 고정 문자열, 제거한 증거 anchor, 재실행 "applied already"를 사본에서 확인했다. 계약에는 dry-run 뒤 한 번 적용했다.
 
 **자료.** 공유 폴더 `module-independence-20261029/plans/s2-0/`에 r1~r4 블록, 설계 `design-r3.md`, 초안 `amendment-draft-r3.md`(r3 블록을 그대로 포함하며 r4와의 차이는 위 C1·C2·C4와 채운 D2 기록뿐이다), 검토 `review-r1.md`~`review-r3.md`, 대응표 `changes-r2.md`·`changes-r3.md`, `apply.py`(r4)와 이전 applier가 있다. manifest는 `plans/s2-0/manifest-s2-0.sha256`(SHA-256 `3235d2edea67d5f72a1f5752156808b84b964b611c8ecede94d9efaeb7a554e5`)이다. 코드와 시험은 바뀌지 않았다.
+
+<a id="native-adapter-file-cr1-scope"></a>
+## 2026-10-30 native 시험 adapter File 정정 반영과 CR1 범위 변경(F05 제외)
+
+같은 project의 기존 main 실패 조사(PR #3, branch `claude/project-thread-4dsfsh`, `e97ef86`·`98a227b`, 증거 `main-preexisting-failures-20261030.md`)가 두 결과를 냈고, 이 branch는 그중 시험 adapter 정정을 같은 내용으로 받았다(`94ede44`).
+
+**commit window native 초과의 원인과 정정.** 시험 전용 native adapter(`plan4_pages/native_tests.rs`)의 `File`이 129B trace 이름을 값 안에 들고 있어 native W의 `File`이 160B(memory 32B)였다. Full 조회 census가 `W::File`을 8번 세므로 native만 1024B가 더해졌고, 이것이 [U2-C4 전환](#u2-single-current) 이후 남은 native pending_full 66612B > 65536B의 원인이었다(main `85ceef3`의 66280B도 같은 원인). 이름을 `Box<FileName>`으로 옮기고 `runtime_core_source_native`의 고정값을 984에서 856으로 바꿨다. 제품 코드·cap·charge는 바뀌지 않았고 두 파일은 `e97ef86`과 byte 같다.
+
+**실행.** 동결 manifest(SHA-256 `4d2dc014ccdc3f034b08e844f299be5bd0e3a627158715577a0388efee57aa90`)의 28 selector는 `plan4_pages::native::Writer`로 census를 만드는 모든 시험이다. 실제 native 파일 I/O 시험은 이름 저장 위치만 바뀌고 Deref로 동작이 같으며 PR #3이 main에서 adapter 시험 92개를 전후로 비교했으므로 넣지 않았다. r0는 기준 `52aa882`, r1은 `94ede44`에서 selector마다 1회 실행했다.
+
+| 판 | head | 결과 |
+| --- | --- | --- |
+| r0 | `52aa882` | 25 PASS, 3 FAIL(`catalog_commit_windows_fit_beside_admitted_readers` native pending_full 66612, `retention_source_native` tests.rs:140, `runtime_core_source_native` 992 ≠ 984) |
+| r1 | `94ede44` | 26 PASS, 2 FAIL(`retention_source_native` tests.rs:140, `runtime_core_source_native` 864 ≠ 856) |
+
+- rc가 바뀐 것은 commit window 시험 하나다(native pending_full 65460, memory 65452). 남은 두 실패는 main `85ceef3`에서도 실패하는 기존 실패이며 값만 native File 차이만큼 줄었다(runtime core는 memory와 같은 별도 +8B 차이).
+- native census가 memory + 8B(shared)로 내려왔다. shared 20320 → 20192, Full 35594 → 34570, live peak 64136 → 64008, recovered peak 65504 → 65376(native 여유 32 → 160B), Catalog lifecycle 44253 → 43229, Row lifecycle 43113 → 42089, shared CREATE reserve 42998 → 41974. memory 값과 `CatalogProgressCharge` 44304는 그대로다.
+- [S2-0 계약 개정](#s2-0-q06-amendment)과 그 이전 증거의 native 수치(Full 35594, shared 20320, recovered 65504 등)는 이 adapter 차이를 포함한 당시 측정값이다. 개정의 판정은 memory W에서도 같은 결론이고 cap·charge를 바꾸지 않으므로 그대로 두며, S2 단위의 census는 `94ede44` 이후 값을 출력한다.
+- check 경고0, 두 .rs의 rustfmt check와 `git diff --check` 통과. artifact는 `module-independence-20261029/artifacts/module-nfix-20261030/`(`manifest-all.sha256` SHA-256 `ced8fe2d3e9e2d14e0455d3e8128c9b4a531c911cc27c97c45640a3f692e52e4`)에 있다.
+
+**CR1 범위 변경(사용자 결정).** 2026-10-30 사용자는 기존 main 실패 조사의 결정 카드에서 "CR1에서 F05 빼기"를 골랐다. F05와 `plan4_recovery`의 P4-REC 시험(`support.rs:260` 실패 포함)은 Profile1 형식과 옛 빈 거래 producer에 묶인, 현재 형식으로 이관되지 않은 시험이다. 고치거나 끄지 않고 이관 전 시험으로 남기며 PASS로 세지 않는다. 따라서 [U2-C4 전환](#u2-single-current)의 CR1은 Catalog native N01–N03만 남는다. 2026-10-30 사용자 PC에서 `9c56a3a`로 시도한 CR1은 독립 admission이 거절되어 실행하지 않았다(commit window 초과, `catalog_source_native` 8192 기대값, 그 ELF의 source-bound 증거 부재). 앞의 두 원인은 Q12(`52aa882`)와 이 정정으로 해소됐고, 다시 실행할 때는 그 ELF에서 source census 시험을 먼저 돌린 뒤 새 독립 admission을 받는다.

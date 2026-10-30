@@ -9043,7 +9043,7 @@
     "rollback": "git revert b5f7c9b 1dd9dec c4516a9 bbca0cb (inert receipt/fixture commits stay)",
     "scope": "Single current format switch Profile3 -> Root3/Job3 -> base4: exact {3 current, 1 DEV2 v1, explicit reject} dispatch at every former Profile2-current site, installed ProfileGrammar binding for open_shared and flush selection, RowBase recovery cause with symmetric Corrupt fallback, Root3 encode guard, transition3 Profile3 corpus, pure Profile2 codecs kept",
     "validation": "r1 304 selectors and r3 30 selectors match frozen expectations; 34 base failures and status_flush_rf reproduced on main 85ceef3; genesis native PASS; integrated round with S1-f and S1-a 21 PASS plus expected commit-window FAIL; check 0 warnings each round; two independent reviews, REQUIRED resolved",
-    "remaining_supply": "CR1 on the user's machine: catalog native N01-N03 (60 GiB floor, independent admission) and F05 plan4 recovery native (independent gate, pre-existing support.rs:260); commit-window memory margin 84 B; advisories A5 format gate in preflight_empty_retention and A7 fits check",
+    "remaining_supply": "CR1 on the user's machine: catalog native N01-N03 (60 GiB floor, source census on the same ELF, fresh independent admission); F05 plan4 recovery native dropped from CR1 by user decision 2026-10-30 (un-migrated Profile1 tests, support.rs:260 kept as is); advisories A5 format gate in preflight_empty_retention and A7 fits check",
     "source_roots_changed": false,
     "artifact_manifest_sha256": "30c4ab322770370b2d0b765ed258154f8f8dddad86acaf36e108ec47c523972f"
   },
@@ -9203,5 +9203,21 @@
     "remaining_supply": "Q12 test expectation, S2-a, A-W1, S2-b1..S2-f on this branch; B and MCI acceptance of the InstallationPending retry duty before any S5 or MCI unit; S5-a..d not started by user decision; separate Q06 record for the native commit-window overrun 66612 B",
     "source_roots_changed": false,
     "artifact_manifest_sha256": "3235d2edea67d5f72a1f5752156808b84b964b611c8ecede94d9efaeb7a554e5"
+  },
+  "dev3_module_native_adapter_file_cr1_scope": {
+    "status": "LOCAL_VERIFIED",
+    "evidence_ref": "module-independence-survey-20261026.md#native-adapter-file-cr1-scope",
+    "baseline_commit": "52aa882",
+    "branch": "claude/project-thread-h2j8oc",
+    "commits": [
+      "94ede44"
+    ],
+    "same_change_as": "PR #3 e97ef86 (claude/project-thread-4dsfsh)",
+    "rollback": "git revert 94ede44",
+    "scope": "Test-only native adapter File keeps its trace name boxed so native census no longer counts 128 B per retained file; runtime_core_source_native pin 984 -> 856; CR1 reduced to catalog native N01-N03 by user decision (F05 and P4-REC tests stay as un-migrated Profile1 tests)",
+    "validation": "28 native-census selectors, r0 at 52aa882 25 PASS 3 FAIL, r1 at 94ede44 26 PASS 2 FAIL; only commit-window rc changed (native pending_full 66612 -> 65460); retention_source_native and runtime_core_source_native stay pre-existing failures; check 0 warnings, rustfmt and diff-check clean",
+    "remaining_supply": "CR1 catalog native N01-N03 on the user's machine with source census on the same ELF and a fresh independent admission",
+    "source_roots_changed": false,
+    "artifact_manifest_sha256": "ced8fe2d3e9e2d14e0455d3e8128c9b4a531c911cc27c97c45640a3f692e52e4"
   }
 }

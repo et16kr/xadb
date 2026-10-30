@@ -1,5 +1,7 @@
 # 현재 구현
 
+2026-10-30 [native 시험 adapter 정정과 CR1 범위 변경](../evidence/module-independence-survey-20261026.md#native-adapter-file-cr1-scope): commit window census가 native에서도 cap 안에 들어간다. 로컬 CR1은 Catalog native N01–N03만 남았다.
+
 2026-10-30 [S2-0 Row 쓰기 계약 개정 반영](../evidence/module-independence-survey-20261026.md#s2-0-q06-amendment): Row 쓰기의 자원·lane·preflight 규칙이 계약에 들어갔다. 코드는 아직 바뀌지 않았고 다음은 S2-a 표면 공급이다.
 
 2026-10-29 [S2/S5 설계와 Row 쓰기 예산 판정](../evidence/module-independence-survey-20261026.md#s2-design-q06): Row 쓰기(S2)는 Q06 예산 개정이 정해질 때까지 멈춘다. 설계와 개정 초안은 공유 폴더 `module-independence-20261029/plans/`에 있다.
