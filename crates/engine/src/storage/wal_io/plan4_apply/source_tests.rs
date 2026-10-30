@@ -463,13 +463,14 @@ fn row_progress_reserves_the_same_catalog_progress_charge() {
     });
 }
 
-/// S2-0 Row write amendment §4: RowWrite reserves the one fixed
+/// S2A-T01 (S2-a unit test, not in the contract's table). S2-0 Row write
+/// amendment §4: RowWrite reserves the one fixed
 /// CatalogProgressCharge, only through the gated progress entry. The reader
 /// entry refuses it as a zero charge (fenced Invariant); one byte short is
 /// Capacity before any ledger change; exactly the charge is admitted and its
 /// checked release returns it.
 #[test]
-fn row_write_class_reserves_the_progress_charge_through_progress_only() {
+fn s2a_t01_row_write_class_reserves_the_progress_charge_through_progress_only() {
     with_ledger(|ledger, fence| {
         let core = ledger.lock().unwrap().core;
         let mut owner = core

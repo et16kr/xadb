@@ -152,6 +152,18 @@ type RowRoleMap = u64;
 /// Recorded by preflight after residency, Free Undo selection and read-set
 /// registration, before the source guards are released. Read by
 /// `validation_lane`, `reserve` and `finish`.
+///
+/// No field records the registration: the cut is written only after the read
+/// bit and catalog flag are registered, and every refusal and FlushRequired
+/// returns before that, so every PreflightRow has registered both.
+///
+/// `validation_lane` has only the `source` commitment for the Catalog leaf
+/// stamp and cell digest, the schema cell, the leaf expectation and the index
+/// count, so it rebuilds `RowPreflightContext` from the current frames and the
+/// private copies and checks the result against `source`. Whether S2-b keeps
+/// any of them as a scalar instead (72 B are free under the 128 B bound, and
+/// the A driver counts each cut several times) is S2-b's decision, made before
+/// A-W1 measures with these types.
 struct RowPreflightCut {
     /// SHA-256 over the WAL prefix, the physical write target set T in before
     /// order (identity, kind, level and FrameStamp of each), the role map,
@@ -172,9 +184,6 @@ struct RowPreflightCut {
     leaf_free: u16,
     /// The Jobs ordinal of the RootJob slot preflight chose for RowReserve.
     root_job: u8,
-    /// Bit 0 read bit, bit 1 catalog flag: registered, so `finish` and every
-    /// Before keep the observed read set.
-    registered: u8,
 }
 
 /// Recorded by RowReserve's completed install (Forward) or by the rollback

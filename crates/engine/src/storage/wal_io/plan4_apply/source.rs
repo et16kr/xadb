@@ -25,8 +25,9 @@ pub(super) enum OperationClass {
     /// (`RowProgress ≤ CatalogProgressCharge`, ROW-BEGIN-001 "자원").
     RowProgress,
     /// One Row write from preflight to finish, apply or cancel, under the
-    /// terminal read gate and flush lease the wrapper holds (S2-0 Row write
-    /// amendment §1, §4). Exclusive with the other progress classes; it
+    /// terminal read gate (`Owner::close_reads_for_terminal`, foreground
+    /// only) and flush lease the wrapper holds (S2-0 Row write amendment §1,
+    /// §4). Exclusive with the other progress classes; it
     /// reserves the same fixed CatalogProgressCharge, which the RowWrite
     /// census checks per C phase by name instead of folding a Row term in.
     #[allow(

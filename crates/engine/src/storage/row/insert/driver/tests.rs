@@ -1534,12 +1534,13 @@ fn mca00_d08_unsupported_c0_wrappers_propagate_unchanged() {
     assert_eq!(state.borrow().log, [Commit, Commit, full]);
 }
 
-/// C's preflight FlushRequired (S2-0 Row write amendment §3): until the
+/// S2A-T02 (S2-a unit test, not in the contract's table). C's preflight
+/// FlushRequired (S2-0 Row write amendment §3): until the
 /// flush and the retry of the same row from preflight are supplied (A-W1),
 /// the row ends at Stage::Preflight holding nothing. No finish, Cancel or
 /// drop record follows and the statement is returned as it was.
 #[test]
-fn interim_flush_required_preflight_ends_the_row_holding_nothing() {
+fn s2a_t02_interim_flush_required_preflight_ends_the_row_holding_nothing() {
     let state = self::state(&[], &[(Call::Preflight, Fault::Flush(9))]);
     let error = failed(run(&state, &[&V1], &mut [None], &mut loan()));
     assert_eq!(error.failure.stage, Stage::Preflight);

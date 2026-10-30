@@ -25,7 +25,8 @@ pub(crate) struct RowIoLease<'r, 'c, 's, 'w> {
 /// effect or read-set registration, after the source, gate and lease were
 /// returned: the residency of the write targets needs `target`, a dirty
 /// victim, flushed first; the caller flushes it and tries the same row again
-/// from preflight.
+/// from preflight. Neither this step nor `PreflightRow` has a Drop impl, for
+/// the reason given at `RowIoLease`.
 #[allow(
     clippy::large_enum_variant,
     reason = "the preflight wrapper is returned inline as the contract's Ready value"
@@ -156,6 +157,16 @@ struct RowSlotReservation<'c, 's> {
 /// finish or Drop return the admission, gate and lease in that order (field
 /// order is the implicit drop order) and the loan, with no I/O and no
 /// WAL/page/issuer change.
+///
+/// The gate is closed with `Owner::close_reads_for_terminal`, the foreground
+/// entry Commit uses, so a maintenance Owner is refused as InvalidRole; not
+/// with `close_reads_for_retirement`, which the lifecycle progress shell uses
+/// (S2-0 Row write amendment §1 "gate").
+///
+/// No Drop impl, for the reason given at `RowIoLease`: a Drop impl here, or on
+/// any field that carries `'r`, keeps `'r` alive to the end of the preflight
+/// step match, and the `FlushRequired` arm can no longer borrow the flusher
+/// (MBC00-P01). A Drop on ReservedRow or PreparedRow is not limited by this.
 pub(crate) struct PreflightRow<
     'r,
     't,
