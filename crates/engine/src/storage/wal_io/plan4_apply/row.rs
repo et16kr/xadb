@@ -139,19 +139,37 @@ impl RowCommitObservation {
 
 // Scalar cuts recorded by the actual adapters (S2-0 Row write amendment §4):
 // scalars and 32-byte SHA-256 digests only. Every multi-page identity/stamp
-// set is folded into one commitment that the next step recomputes from the
-// current pool, WAL prefix, control ledger and the private before images
-// (which A only ever borrows immutably); no raw stamp array is kept. They
-// never borrow the private loan, so a wrapper does not refer to its own bytes.
-// The A driver holds wrapper values several times, so each cut is bounded.
+// set is folded into one commitment that the next effect step recomputes
+// from the current pool, WAL prefix, control ledger and the private before
+// images (which A only ever borrows immutably); no raw stamp array is kept.
+// They never borrow the private loan, so a wrapper does not refer to its own
+// bytes. The A driver holds wrapper values several times, so each cut is
+// bounded.
+//
+// The S2-0b amendment (Row write validate-once) runs `history::validate_live`
+// once per row, in preflight. Reserve, prepare and cancel open no replay
+// scope and inherit that proof through the two `source` commitments (the
+// digest chain). Each `source` is a `ContentHasher` SHA-256 over, in order:
+// 1. the domain tag `XRWC` (4 bytes), version 1 (1 byte) and the kind
+//    (1 byte: 1 preflight source, 2 draft source);
+// 2. the fields its doc lists, in that doc's order;
+// 3. the page digest (32 bytes) of each target of T, in before order;
+// 4. the `ControlCut` fields in declaration order: the bank, jobs and
+//    inventory digests, issued and adopted.
+// A difference is Before(Stale) on the same wrapper, before any effect. The
+// lanes do not check the chain: they compute no page or control digest, and
+// a change before or after a lane issue is refused by the next effect step's
+// recompute. The cut sizes do not change.
 
 /// Pack of `RowSourceRole` → before index, one nibble per role in role order
 /// (0xF absent), and the physical before count (≤ 9) in nibble 9.
 type RowRoleMap = u64;
 
-/// Recorded by preflight after residency, Free Undo selection and read-set
-/// registration, before the source guards are released. Read by
-/// `validation_lane`, `reserve` and `finish`.
+/// Recorded by preflight after residency, Free Undo selection, the row's one
+/// `history::validate_live`, the typed read of T compared with the replay
+/// arena, and read-set registration, before the source guards are released.
+/// Read by `validation_lane`, `reserve` and `finish`; only `reserve` checks
+/// it.
 ///
 /// No field records the registration: the cut is written only after the read
 /// bit and catalog flag are registered, and every refusal and FlushRequired
@@ -160,18 +178,24 @@ type RowRoleMap = u64;
 /// `validation_lane` has only the `source` commitment for the Catalog leaf
 /// stamp and cell digest, the schema cell, the leaf expectation and the index
 /// count, so it rebuilds `RowPreflightContext` from the current frames and the
-/// private copies and checks the result against `source`. Whether S2-b keeps
-/// any of them as a scalar instead (72 B are free under the 128 B bound, and
-/// the A driver counts each cut several times) is S2-b's decision, made before
-/// A-W1 measures with these types.
+/// private copies. It does not check the result against `source`: it computes
+/// no page or control digest, and `reserve`'s commitment recompute and
+/// candidate checks refuse any change before an effect (S2W-R04). Whether S2-b
+/// keeps any of those values as a scalar instead (72 B are free under the
+/// 128 B bound, and the A driver counts each cut several times) is S2-b's
+/// decision, made before A-W1 measures with these types.
 struct RowPreflightCut {
-    /// SHA-256 over the WAL prefix, the physical write target set T in before
-    /// order (identity, kind, level and FrameStamp of each), the role map,
-    /// the selected Free Undo container (allocator entry generation, page
+    /// SHA-256 (kind 1, in the order the comment before the cuts gives) over
+    /// the WAL prefix, the physical write target set T in before order
+    /// (identity, kind, level and FrameStamp of each), the role map, the
+    /// selected Free Undo container (allocator entry generation, page
     /// incarnation, slot0 Free), the RootJob slot, the Catalog leaf stamp and
-    /// schema cell digest, and the RowLeaf free bytes. `reserve` recomputes it;
-    /// any difference is Before/Stale and the row is prepared again from
-    /// `validation_lane` (S2W-R05, S2W-R07).
+    /// schema cell digest, and the RowLeaf free bytes; then the page digests
+    /// of T, taken from the before copies that were compared with the replay
+    /// arena, and the `ControlCut` fields. `reserve` recomputes it over a new
+    /// typed read of T into `before`, with no replay; any difference is
+    /// Before/Stale and the row is prepared again from `validation_lane`
+    /// (S2W-R05, S2W-R07).
     source: [u8; 32],
     /// WAL complete LSN of the commitment: the RowReserve frame's expected
     /// previous LSN and a cheap stale check before rehashing.
@@ -188,14 +212,22 @@ struct RowPreflightCut {
 
 /// Recorded by RowReserve's completed install (Forward) or by the rollback
 /// selection (CLR); carried by ReservedRow and RowRollbackTask and checked by
-/// `producer_lane`, `prepare`, `apply` and `cancel`.
+/// `prepare`, `apply` and `cancel`. `producer_lane` reads it but does not
+/// check the chain.
 struct RowDraftCut {
-    /// SHA-256 over the WAL prefix after the last installed group, T in before
-    /// order with its current stamps, the role map, the issued identity
-    /// (actor, RootJob, RowId, UndoRef/sequence, planned mutation), the
-    /// actor/Aging descriptor bytes and the Jobs rows the producer lane
-    /// borrows. A difference is Before/Stale on the same wrapper (S2W-R07,
-    /// S2W-R21 first hook).
+    /// SHA-256 (kind 2, in the order the comment before the cuts gives) over
+    /// the WAL prefix after the last installed group, T in before order with
+    /// its current stamps, the role map, the issued identity (actor, RootJob,
+    /// RowId, UndoRef/sequence, planned mutation), the actor/Aging descriptor
+    /// bytes and the Jobs rows the producer lane borrows; then the page
+    /// digests of T and the `ControlCut` fields. The page digests come from a
+    /// typed read of the pool pages after the install, under the gate and the
+    /// lease, not from the after images in the private loan, so `prepare` and
+    /// `cancel`, which read the pool, compare like with like; the same read
+    /// refreshes `before` for the next step. `prepare` and `cancel` recompute
+    /// it with no replay, and so does `apply` if its stage-time recheck
+    /// recomputes it. A difference is Before/Stale on the same wrapper
+    /// (S2W-R07, S2W-R21 first hook).
     source: [u8; 32],
     /// The sealed input: canonical row digest (Forward) or current row
     /// projection (CLR). The observer compares A's frame against it.
