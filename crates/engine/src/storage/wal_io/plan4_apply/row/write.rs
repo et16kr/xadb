@@ -875,14 +875,16 @@ impl<'r, 't, 'v, 'i, 'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
         }
     }
 
-    /// After a discharged reservation, in place as `PreflightRow::finish`:
+    /// After a discharged reservation (a durable Forward apply or Cancel; the
+    /// one release both success arms use), in place as `PreflightRow::finish`:
     /// the checked admission release, the gate reopen and the lease end, in
     /// that order and with no I/O, then the loan, which leaves the wrapper
     /// here once. An active reservation is never released here; the caller
     /// drops the wrapper and its Drop fences.
     ///
-    /// Every error here is CallerMustResolve with the session fenced, so the
-    /// caller reports it as Fatal and no reservation fence is lost: the
+    /// Every error here is CallerMustResolve with the session fenced, so
+    /// either caller reports it as Fatal whatever its effect field says and
+    /// no reservation fence is lost (S2-c review A8, S2-d review A9): the
     /// admission's `release_checked` fails only through `failed` (which
     /// fences) or its ledger `check` (Fenced when the session already is,
     /// otherwise `failed`); `TerminalReadGate::reopen_checked` fails only
@@ -923,7 +925,8 @@ impl<'r, 't, 'v, 'i, 'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
     /// active reservation's Drop keeps the fence. On success the
     /// reservation is discharged (its Drop does not fence), then the
     /// admission, the gate and the lease are returned in that order and the
-    /// loan comes back with the scalar observation.
+    /// loan comes back with the scalar observation; a release failure there
+    /// is Fatal with the session already fenced (`release_discharged`).
     #[allow(
         clippy::result_large_err,
         reason = "unchanged failure returns the same prepared reservation"
@@ -952,7 +955,8 @@ impl<'r, 't, 'v, 'i, 'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
             Ok(()) => {
                 let PreparedRow { mut reserved, .. } = self;
                 // The durable Forward discharged the reservation: its Drop
-                // must not fence.
+                // must not fence. A release error after it is Fatal and the
+                // failing release has already fenced (`release_discharged`).
                 reserved.reservation.active = false;
                 let observation = RowMutationObservation {
                     operation: RowOperation::Forward,
