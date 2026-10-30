@@ -303,3 +303,7 @@ const _: () = {
 #[cfg(test)]
 #[path = "row/census_tests.rs"]
 mod census_tests;
+
+#[cfg(test)]
+#[path = "row/v09_census_tests.rs"]
+mod v09_census_tests;
