@@ -386,6 +386,8 @@ C0의 첫 선택은 `MCA00-V01..06`과 `MCB00-V01..03`이며 아래 actual MCA/M
 
 2026-10-29 등록(S2-0, [Row 쓰기 개정](dev3-module-boundaries.md#row-write-budget)): 위 두 family에 다음을 더한다. `MCA00-D15`는 A driver가 C의 S2-a 실제 wrapper 타입으로 C 호출 지점별 몫과 Forward·CLR producer phase를 memory·native W에서 계수하는 inventory selector이며, 몫 ≤ `ROW_WRITE_CALLER_BYTES`와 Forward producer phase ≤ charge가 S2-e 진입 조건이다. selector는 `storage::row::insert::driver::tests::mca00_d15_*`다. `MCB00-D13`은 B driver가 각 C 호출 지점에서 보유한 값을 보고하는 inventory selector이며 S5-d의 RowRead census 입력이다. selector는 `storage::row::read::driver::tests::mcb00_d13_*`다. 둘 다 size_of inventory이며 actual MCA01–05·MCB01–05의 PASS로 세지 않는다.
 
+2026-10-30 개정(S2-0b, [replay 검산 재배치](dev3-module-boundaries.md#row-write-validate-once)): `MCA00-D15`의 C 호출 지점 몫은 preflight에서 `ROW_PREFLIGHT_CALLER_BYTES`(6144B)와, 나머지 C 호출 지점에서 `ROW_WRITE_CALLER_BYTES`(11520B)와 memory·native W로 비교한다. 몫은 호출 지점마다 세며(M3) 경로 전체 inventory로 대신하지 않는다. M7은 MCA00-D15에서 A 몫이 preflight 밖의 C 호출 지점에서 `ROW_WRITE_CALLER_BYTES`를 넘거나, preflight 호출 지점에서 (E)·(d4)를 거친 뒤에도 `ROW_PREFLIGHT_CALLER_BYTES`를 넘을 때만 필수다. 소비자가 보는 Row 쓰기의 결과·오류 의미는 바뀌지 않는다. 새 거절 경로(cut commitment 차이)는 gate·lease·배타 MutationPort 아래 cfg(test) 주입으로만 도달하며 효과 전의 Before(Stale)이므로 A의 기존 Before 정책(finish·cancel)으로 끝난다.
+
 | ID·변형 분모 | fixed 입력과 oracle | 원 요구 |
 | --- | --- | --- |
 | MCA01-V01..12,총13개 memory(1개 C0 포함) | V01..04 Bool/Int64/Utf8/Binary nonnull, V05 nullable null 최소L5, V06 mixed32열, V07 L2048, V08 두 statement×3INSERT 성공. V09 타입 불일치,V10 nonnullable null,V11 L2049. V12-P는 valid Index 정의의 pure census Unsupported, V12-S는 실제 FileIo stored Index 입력의 canonical mismatch 거절로 [입구/정답을 분리](#index-negative-input). V01..08 실제 bytes/logical identity/count/값 일치, V09..12 첫 effect0·각 exact typed 오류 | DIR03,T06-01/07/14 |

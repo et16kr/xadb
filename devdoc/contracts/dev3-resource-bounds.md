@@ -182,6 +182,8 @@ capsule·statement·cursor처럼 호출 뒤에도 사는 engine handle에는 **�
 
 2026-10-29 적용(S2-0, [Row 쓰기 개정](dev3-module-boundaries.md#row-write-budget)): Row 쓰기의 caller carrier는 A driver가 각 C 호출과 producer 호출에서 보유한 값이다. 측정 Forward producer phase 60625B(S1-e 뒤 60745B)는 이 합으로 계산한 값이며, 한도를 올리거나 caller를 빼는 대신 A slimming과 private A scratch로 줄인다. 진행 class writer와 reader는 terminal read gate로 배타이므로 그 구간의 동시 합은 shared에 writer charge와 admitted reader 합 가운데 큰 값을 더한 것이다. gate 대기 중 writer 진입 floor는 별도의 미공급 의무다.
 
+2026-10-30 개정(S2-0b, [replay 검산 재배치](dev3-module-boundaries.md#row-write-validate-once)): Row 쓰기의 caller carrier 상한은 preflight 호출 지점(6144B)과 나머지 C 호출 지점(11520B)으로 나뉜다. 두 상한 모두 그 호출 지점의 A 몫 전체를 class 안에서 세며 caller를 빼지 않는다. RowWrite C 본문이 줄어든 까닭은 한 행의 replay 검산을 preflight 한 번으로 모은 것과, group carrier를 가진 단계의 carrier 계수 정정(중단 호출 단계마다의 반환 carrier)이다. 이 정본의 한도·`CatalogProgressCharge`·private 425984B 배치는 바뀌지 않는다.
+
 위 동시 합≤65536B를 만족할 때 `metadata≤73856+65536+49152=188544B≤196608B`, 원 flush component65536을 더한 `whole≤254080B≤262144B`다. 남는8064B를 미등록 상태·새 예약의 여유로 사용하지 않는다. 총 metadata8MiB·private8MiB/transaction 및 전체64MiB·flush4MiB·maintenance12MiB도 유지한다. 이는 새 **설계 상계**이며 실제 size_of/caller 동시 생존량·기존 visibility/controller 세부 cap은 M4의 변경 source에서 검사해야 한다. source census 실패를 한도 증액·검사 생략으로 해결하지 않는다.
 
 ### WAL·남은 종료 의무

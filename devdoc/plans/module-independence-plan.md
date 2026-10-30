@@ -1,5 +1,7 @@
 # XADB 모듈 독립 개발 구조 전환 작업 계획
 
+2026-10-30 [S2-0b Row 쓰기 replay 검산 재배치 반영](../evidence/module-independence-survey-20261026.md#s2-0b-validate-once): Q06 2차 개정을 독립 D2 r3 ACCEPT 뒤 계약에 넣었다. 개정 내용은 다음과 같다. `validate_live`는 행당 preflight 한 번만 하고 digest 연쇄로 잇는다. group carrier 계수를 정정한다. A 몫 상한을 6144·11520B 둘로 나눈다. 다음은 S2-a′(census 구조와 두 상수)이고, A-W1과 S2-b1~S2-d가 그 뒤를 잇는다.
+
 2026-10-30 [S2-a Row 쓰기 최종 표면](../evidence/module-independence-survey-20261026.md#s2a-row-write-surface): RowWrite class, preflight step·gate·lease·cut·8번째 lane part와 A 적응을 넣었다(본문은 Unsupported). 단계 census로 `ROW_WRITE_CALLER_BYTES`가 58B로 정해졌고, A-W1 전에 C 본문을 줄이는 Q06 2차 개정이 필요하다.
 
 2026-10-30 [CR1 Catalog native 로컬 실행](../evidence/module-independence-survey-20261026.md#cr1-catalog-native-r2): 사용자 PC에서 `2bc18d1`로 사전 census 4건 PASS, 독립 admission ACCEPTED 뒤 Catalog native N01·N02·N03이 모두 PASS했다. U2-C4 전환의 로컬 요구가 끝났다.

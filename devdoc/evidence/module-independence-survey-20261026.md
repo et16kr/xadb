@@ -4403,3 +4403,59 @@ S1(S1-a~S1-g) 뒤의 다음 단계인 S2(C3 Row Reserve·Forward·Cancel)와 S5(
 **열린 문제.** 계약의 S2W-C03 "43113"과 S2W-C04 "64136/65504"는 adapter 정정 전 native 값이며 지금은 42089와 64008/65376이다. S2W-N01은 계약 표에 단위가 없어 S2-a의 C0 manifest에 더했다. 둘 다 다음 계약 개정 때 고친다.
 
 **되돌림.** 최신부터 되돌린다. 공동 commit `10097ae`는 A 적응과 함께만 되돌린다(계약 :1465). artifact는 `module-independence-20261029/artifacts/module-s2a-20261030/`(검토서, 증거 원문, round별 로그, 도구, `manifest-all.sha256` SHA-256 `fba0e9c0b4a03a45ae08a5bda30a19f92184f124ded2ad13ed2d3ad0d3c30676`)에 있다.
+
+<a id="s2-0b-validate-once"></a>
+## 2026-10-30 S2-0b Row 쓰기 replay 검산 재배치와 A 몫 상한 분리(Q06 재검토) 반영
+
+[S2-a](#s2a-row-write-surface)의 단계 census가 reserve·prepare(Forward)·cancel에 A 몫 여유 218·58·178B만 남겨 `ROW_WRITE_CALLER_BYTES`가 58B가 되었다. 그래서 [S2-0 개정](#s2-0-q06-amendment)이 예고한 새 Q06 기록을 독립 D2 검토 3회 뒤 계약에 넣었다. 기준 head는 `b77015e`(S2-a 통합 `bbfec10..dd9bd31`과 그 docs commit)이고, 측정 근거는 S2-a `9aeff2a`의 r5와 이 branch `dd9bd31`의 i1이다(S2W-C01..C05 줄이 같다). 이 증거 항목과 계약 반영은 같은 commit이다. 코드와 시험은 바뀌지 않았고 다음 공급은 S2-a′다.
+
+**결정.** [replay 검산 재배치](../contracts/dev3-module-boundaries.md#row-write-validate-once)의 네 결정이다.
+1. `history::validate_live`와 쓰기 target 집합 T의 arena 검산을 한 행에 한 번 preflight에서 한다. reserve·prepare·cancel은 replay scope를 열지 않고, 기존 cut commitment에 접은 digest 연쇄(domain tag `"XRWC"`, T page digest, `ControlCut`)로 그 증명을 이어받는다. 차이는 효과 전 Before(Stale)다. cut 크기는 그대로다.
+2. group carrier는 설치·반환 부분 단계에만 더하고, 준비·깊은 검산 부분 단계에는 중단된 호출 단계마다 그 반환 carrier를 더한다. 중단 단계가 하나뿐이라는 것은 S2-b2·S2-c·S2-d의 본문 의무다. preflight의 lease 검산은 완결 호출이므로 max로 결합한다.
+3. A 몫 상한을 `ROW_PREFLIGHT_CALLER_BYTES = 6144`(preflight 호출 지점)와 `ROW_WRITE_CALLER_BYTES = 11520`(나머지 C 호출 지점)으로 나눈다.
+4. M7은 MCA00-D15에서 A 몫이 그 상한을 넘을 때만 필수다(preflight는 (E)·(d4)를 거친 뒤).
+
+| 단계 | S2-a C total | 이 기록 뒤 C total | A 몫 상한 | C 쪽 여유 |
+| --- | ---: | ---: | ---: | ---: |
+| preflight | 36742 | 36086 | 6144 | 2074 |
+| reserve | 44086 | 31467 | 11520 | 1317 |
+| prepare(Forward) | 44246 | 31627 | 11520 | 1157 |
+| apply | 36528 | 29200 | 11520 | 3584 |
+| cancel | 44126 | 31507 | 11520 | 1277 |
+
+- validation_lane·producer_lane·finish는 바뀌지 않는다(여유 26678·21750·31126B). 위 값은 memory = native 분석 상계이며 S2-a′의 census 출력이 대체한다.
+- 여유가 음수이면 preflight는 (E)·(d4)를 각자 별도 D2로, 나머지 단계는 미리 승인한 (d3)를 거치고, 그래도 음수이면 새 Q06 기록이다.
+- cap·class 상한·`CatalogProgressCharge`·port field·private 배치·cut 크기는 바뀌지 않고 caller frame도 class에서 빼지 않는다.
+- 행마다 F2 전 검산을 지키는 대안 넷((H) 단계마다의 `validate_live`를 준비 함수 밖으로 올림, (B′), (ii) `ReservedRow::validate()`, (i) 단일 frame 증분 replay)은 여유가 더 작거나 맞지 않아 거절·보류했고 C4가 다시 볼 후보로 남겼다.
+
+**D2 검토.** 읽기 전용 독립 검토자가 회차마다 새로 읽었다.
+
+| 회차 | 판정 | 필수·권고 | 주요 대응 |
+| --- | --- | --- | --- |
+| r1 | ACCEPT WITH REQUIRED CHANGES | 4·12 | R1 수치를 S2-a head `9aeff2a`로 다시 세우고 D를 apply와 깊은 검산에도 적용(apply 초과 해소), R2 C4 뒤 live·replay 동치 주장을 받아들인 위험으로 고치고 C4 진입 의무와 S2W-R24 추가, R3 중단 단계마다 반환 carrier와 본문 의무, R4 M7 조건을 한 문장으로 통일. 권고로 대안 (H)·(B′)·(ii)·(i), 거절 결과 행, S3 의무를 더했다 |
+| r2 | ACCEPT WITH REQUIRED CHANGES | 1·3 | R1 S2W-R24를 live끼리 맞는 주입과 F2의 replay cause c 기대(Fatal(Source, c), 재시작 `Retention(c)`)로 다시 설계, A1·A2 거절 행의 인용과 cause 목록, A3 받아들인 위험을 live끼리 맞는 갈래로 좁히고 live 대조를 다섯째 근거로 추가 |
+| r3 | ACCEPT | 0·5 | A2 ATT 예시를 frame 밖 값(`Observation.actor`·`status`, ATT slot)으로 정정, A3 C4 의무의 선행사, A4 `validate_live`의 lock 경합 Busy(Unchanged)와 checkout의 건강 검산, A5 도구 정정을 r4에 반영했다. A1(S2W-R24 주입의 실행 세부)은 S2-c가 쓸 설계 메모로 두었다 |
+
+**받아들인 위험과 다른 단위의 의무.**
+- **위험.** 한 행의 Reserve frame(F1)은 같은 행의 Forward·Cancel frame(F2) 전에 replay로 다시 증명되지 않는다. live page와 control은 서로 맞고 replay와만 다른 Reserve 설치의 코드 결함이 F2가 before로 접는 bytes에 있으면, C4가 임시 분석 gate를 대체한 뒤에는 replay할 수 없는 durable F2가 남아 CallerMustResolve다. 지금은 F1이 replay되어 READY에 이른다. live끼리 맞지 않는 어긋남은 live Forward·Cancel 준비의 census digest·Jobs page 대조가 F2 전에 여전히 거절한다. 임시 gate가 있는 동안 재시작 결과는 지금과 같은 READY0·CallerMustResolve다.
+- **C4.** [§7 공통 공급](../contracts/dev3-module-boundaries.md#common-deliveries) 표 뒤 문단의 진입 의무다. 착수 전 D2로 이 위험을 받아들이거나 F2 전 행 단위 검산을 되살리며, S2W-R24가 출력한 cause와 재시작 결과를 입력으로 쓴다.
+- **S3.** [ROW-BEGIN-001](../contracts/dev3-module-boundaries.md#row-begin-capsule) "범위 밖" 뒤 문단의 의무다. `commit_row`의 group 준비는 `validate_live`를 유지하거나 자기 D2를 남긴다. 그래서 replay할 수 없는 WAL을 덮는 Commit ACK는 없다.
+- **S2-c.** S2W-R24의 주입 byte를 시험과 함께 정한다. 검토 r3 A1의 다섯 점(Jobs page도 다시 encode, hook은 `produce_borrowed` 뒤 after image 대여 전, 검산 범위는 Reserve 설치 끝부터 Forward apply까지, Root free cursor(cell offset 72) 후보, flush 순서)은 설계 `design.md` §7 7항 "Notes for S2-c"에 있다.
+- C4·S3 담당의 수용은 아직 기록되지 않았다. 그 단위가 시작되기 전에 기록한다.
+- **B·MCI 재시도 의무.** [S2-0](#s2-0-q06-amendment)이 더한 `InstallationPending` 재시도 의무는 이 개정으로 바뀌지 않는다. 그 수용도 아직 기록되지 않았으며, S5나 MCI 단위 전에 기록한다.
+
+**적용 검산.** `apply-s2-0b.py`는 S2-0의 `apply.py`(r4)를 옮긴 것이다.
+- 이 항목의 anchor `s2-0b-validate-once`가 survey에 정확히 한 번 있지 않으면 거절한다. 그래서 이 항목을 먼저 넣는다.
+- D2 자리표시자·초안 상태 문구, 남은 `.s2-0b.tmp`·`.s2-0b.bak`, 이미 적용된 marker, 계획과 다른 착지 문단을 거절한다.
+- 모든 검산 뒤에만 쓰며, 임시 파일·백업·rename 순서와 실패 때의 복원은 S2-0과 같다.
+- `check_plan.py`는 census 항으로 모든 S2-a 본문과 효과 표를 다시 계산해 r5·i1 census 로그와 대조한다. 블록 12개의 착지·marker·링크, M7 문장, S2W-R24 기대, 채운 D2 결과도 검산한다.
+- 사본에서 이 항목 추가, dry-run, 적용, `verify_documents.py` PASS를 확인했다. 같은 사본들에서 거절 경우(증거 anchor 없음, 재실행 "applied already", 남은 `.bak`, 자리표시자)와 rename 실패 주입 뒤 복원도 확인했다.
+- 계약에는 dry-run 뒤 한 번 적용했다. boundaries +233행, resource-bounds +2행, consumers +2행이며 모두 추가다.
+
+**자료.** 공유 폴더 `module-independence-20261029/plans/s2-0b/`에 다음이 있다.
+- 설계 `design.md`(r4), 블록 `draft-blocks/ins01…ins12`.
+- 이전 회차 `r1/`~`r3/`. 각 폴더에 `SHA256SUMS.txt`가 있다.
+- 검토 `review-r1.md`~`review-r3.md`, 대응표 `changes-r4.md`. r1·r2 검토의 대응표는 `r2/`·`r3/` 안에 있다.
+- `apply-plan.md`, `check_plan.py`, `apply-s2-0b.py`.
+
+manifest는 `plans/s2-0b/manifest-s2-0b.sha256`(SHA-256 `d029d5ce98a2bd60060e0460008762a0ed8c05d4af2203374a466b20a8dc5049`)이다. 코드와 시험은 바뀌지 않았다.

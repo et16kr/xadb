@@ -1,7 +1,7 @@
 {
   "schema_version": 2,
   "product": "XADB",
-  "date": "2026-10-30T12:48:02.732538+09:00",
+  "date": "2026-10-30T13:20:05.183497+09:00",
   "status": "PASS",
   "errors": [],
   "markdown_documents": [
@@ -157,15 +157,15 @@
     },
     {
       "file": "devdoc/contracts/dev3-module-boundaries.md",
-      "links": 225,
+      "links": 243,
       "duplicate_ids": 0,
-      "sha256": "5c4cc9bd37e7ae5fb92c627ca47042ca77a9b12318be308f607e300bf7d1d415"
+      "sha256": "1ba20e0482eac72dc9ac560da97764251a2a5337f32b01068432122df04cf08c"
     },
     {
       "file": "devdoc/contracts/dev3-module-consumers.md",
-      "links": 89,
+      "links": 90,
       "duplicate_ids": 0,
-      "sha256": "70264065b2c0ee935f9e6d80675a2a929303f89f8cd673803b6c9522c96062fb"
+      "sha256": "39ab275ed573f7be46a7052c8f9c5dc16caf7e4177382d24da878c651bc567d1"
     },
     {
       "file": "devdoc/contracts/dev3-obligation-format.md",
@@ -277,9 +277,9 @@
     },
     {
       "file": "devdoc/contracts/dev3-resource-bounds.md",
-      "links": 32,
+      "links": 33,
       "duplicate_ids": 0,
-      "sha256": "feb72a1709f058b2cd2cf54b2d12d6aeafaa99ad222d8f16b1b9dad7cec49709"
+      "sha256": "1931cde144950a15a153e5e19095c979f577f23fa846d88a66e0913a08919c2c"
     },
     {
       "file": "devdoc/contracts/dev3-retention-live.md",
@@ -1285,9 +1285,9 @@
     },
     {
       "file": "devdoc/evidence/module-independence-survey-20261026.md",
-      "links": 228,
+      "links": 234,
       "duplicate_ids": 0,
-      "sha256": "d1d5153f391b65b447a1503bf60c0b951e2fb402b80ce5611b6b86f8de49bc25"
+      "sha256": "40b9a4f3e6382c7fc8b887453b169c70ff75ce3582b0e4ca32ec98a2702ae545"
     },
     {
       "file": "devdoc/evidence/naming-cleanup-20261025.md",
@@ -1327,9 +1327,9 @@
     },
     {
       "file": "devdoc/implementation/README.md",
-      "links": 197,
+      "links": 198,
       "duplicate_ids": 0,
-      "sha256": "03de023382448846ae6e212f9307127e00eea3c1e1ade6bdef76a4bf0143d172"
+      "sha256": "cc2f10ad3856c45a457fa4e434bde41958854c8f5ca2b32c99bb630e2c85c01f"
     },
     {
       "file": "devdoc/implementation/comm-implementation.md",
@@ -1495,9 +1495,9 @@
     },
     {
       "file": "devdoc/plans/module-independence-plan.md",
-      "links": 255,
+      "links": 256,
       "duplicate_ids": 0,
-      "sha256": "7b12cc7de6f7b7c1294677bc1a83363cad5e33087420fe48523e4eb6056967d5"
+      "sha256": "c4500425c980debfff9b176ef72617cd864be8dcca20e3af9e50ffad5a9459a4"
     },
     {
       "file": "devdoc/plans/phase1-product-baseline.md",

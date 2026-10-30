@@ -9269,5 +9269,21 @@
     "remaining_supply": "Q06 second amendment (validate_live once per row, carrier counting, split caller bounds) under D2 before A-W1; then A-W1, S2-b1..S2-f; contract native numbers for S2W-C03/C04 and the S2W-N01 unit to be corrected in the next contract amendment",
     "source_roots_changed": false,
     "artifact_manifest_sha256": "fba0e9c0b4a03a45ae08a5bda30a19f92184f124ded2ad13ed2d3ad0d3c30676"
+  },
+  "dev3_module_s2_0b_validate_once": {
+    "status": "CONTRACT_APPLIED_D2_ACCEPTED",
+    "contract_ref": "dev3-module-boundaries.md#row-write-validate-once",
+    "evidence_ref": "module-independence-survey-20261026.md#s2-0b-validate-once",
+    "baseline_commit": "b77015e",
+    "census_source": "S2-a 9aeff2a r5 = this branch dd9bd31 i1 (S2W-C01..C05 identical)",
+    "branch": "claude/project-thread-h2j8oc",
+    "commits": [],
+    "commit_note": "the contract change and this record are one docs commit",
+    "scope": "S2-0b Q06 second amendment: validate_live and the write-target arena check once per row in preflight, reserve/prepare/cancel inherit the proof through an XRWC digest chain folded into the existing cut commitments (difference = Before(Stale), cut sizes unchanged); group carriers counted only in the install/return sub-phase plus one return carrier per suspended caller level (body obligation on S2-b2, S2-c, S2-d); preflight lease check max-combined; ROW_PREFLIGHT_CALLER_BYTES 6144 and ROW_WRITE_CALLER_BYTES 11520; M7 only when D15 exceeds them; tests S2W-R22..R24 and S2W-C06; C4 entry obligation and S3 commit_row obligation; refusal rows",
+    "validation": "independent D2 r1 ACCEPT WITH REQUIRED CHANGES (4 required, 12 advisory), r2 ACCEPT WITH REQUIRED CHANGES (1, 3), r3 ACCEPT (0, 5; A2 A3 A4 applied in the r4 blocks, A5 tooling fixed, A1 kept as S2-c design notes); check_plan.py ALL OK; apply-s2-0b.py dry-run then one apply, additions only (boundaries +233, resource-bounds +2, consumers +2)",
+    "accepted_risk": "after C4 replaces the interim analysis gate, a self-consistent Reserve install divergence in bytes F2 folds leaves an unreplayable durable F2 (CallerMustResolve instead of READY); carried by the C4 entry obligation",
+    "remaining_supply": "S2-a' (census structure and the two constants) before S2-b1; then A-W1 and S2-b1..S2-d; S2-c names the S2W-R24 byte; C4 and S3 owners acknowledge their obligations before those units; E and d4 only if S2-a' or A-W1 measurement asks, each with its own D2; B and MCI acceptance of the S2-0 InstallationPending retry duty still open",
+    "source_roots_changed": false,
+    "artifact_manifest_sha256": "d029d5ce98a2bd60060e0460008762a0ed8c05d4af2203374a466b20a8dc5049"
   }
 }

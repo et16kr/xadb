@@ -1,5 +1,7 @@
 # 현재 구현
 
+2026-10-30 [S2-0b Row 쓰기 replay 검산 재배치 반영](../evidence/module-independence-survey-20261026.md#s2-0b-validate-once): Row 쓰기 C 단계의 replay 검산을 행당 한 번으로 줄이고 A 몫 상한을 둘로 나누는 계약 개정이 들어갔다. 코드는 아직 바뀌지 않았다.
+
 2026-10-30 [S2-a Row 쓰기 최종 표면](../evidence/module-independence-survey-20261026.md#s2a-row-write-surface): Row 쓰기의 최종 서명과 lane 배치가 들어갔다. 동작은 아직 Unsupported다.
 
 2026-10-30 [CR1 Catalog native 로컬 실행](../evidence/module-independence-survey-20261026.md#cr1-catalog-native-r2): 현재 형식의 Catalog CREATE 장애·복구·재진입 native 시험 N01–N03이 사용자 PC에서 통과했다.
