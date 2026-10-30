@@ -51,20 +51,35 @@ pub(crate) enum RowPreflightStep<
     FlushRequired { target: Plan4Target },
 }
 
-/// Upper bound of A's driver share at each C call of a Row write: what the
-/// driver holds while preflight, the lanes, reserve, prepare, apply, cancel or
-/// finish runs (S2-0 Row write amendment §4). Every RowWrite C phase is checked
-/// as `C body + carriers + ROW_WRITE_CALLER_BYTES ≤ CatalogProgressCharge` in
-/// both writers (S2W-C01/C02); A checks its own call-site shares against it
-/// (MCA00-D15). It must not exceed the smallest room that the C phase
-/// estimates leave in either writer; a negative room is a Q06 overrun, never
-/// a reason for a smaller constant. At S2-a the tightest phase is the Forward
-/// prepare (`ReservedRow::prepare`), which leaves 58 B in both writers
-/// (Reserve 218 B, Cancel 178 B): far below the A driver's measured share, so
-/// A's call-site check cannot pass until the C bodies or the A driver shrink
-/// (Q06). The CLR task's prepare is S4's own entry census, not a phase here.
-/// Changing the value reruns the census of every committed RowWrite phase.
-pub(crate) const ROW_WRITE_CALLER_BYTES: usize = 58;
+/// Upper bound of A's driver share at the preflight call of a Row write: what
+/// the driver holds while `preflight_row` runs, before it holds any Row
+/// wrapper (S2-0b amendment, decision 3). The preflight phase is checked as
+/// `C body + carriers + ROW_PREFLIGHT_CALLER_BYTES ≤ CatalogProgressCharge` in
+/// both writers (S2W-C01/C02/C06), and A checks its preflight call-site share
+/// against it (MCA00-D15, counted per call site). The value is fixed from A's
+/// side: the estimated 4.0–4.5 KB preflight share plus at least 1.6 KB for
+/// A-W1's flush retry and slice references, rounded to 1 KiB. It is not the
+/// largest value that fits. A negative C margin is a Q06 overrun, never a
+/// reason for a smaller constant; preflight's ladder is (E), then (d4), each
+/// through its own D2. Changing the value reruns the census of every
+/// committed RowWrite phase.
+pub(crate) const ROW_PREFLIGHT_CALLER_BYTES: usize = 6144;
+
+/// Upper bound of A's driver share at every other C call of a Row write: what
+/// the driver holds while the lanes, reserve, prepare, apply, cancel or
+/// finish runs (S2-0 Row write amendment §4, S2-0b amendment decision 3).
+/// Each of those phases is checked as `C body + carriers +
+/// ROW_WRITE_CALLER_BYTES ≤ CatalogProgressCharge` in both writers
+/// (S2W-C01/C02/C06), and A checks each of those call-site shares against it
+/// (MCA00-D15, counted per call site), not its path-wide inventory. The value
+/// is fixed from A's side: the A driver's path-wide inventory (D12, 11355 B)
+/// rounded up to 256 B. It is not the largest value that fits. A negative C
+/// margin is a Q06 overrun, never a reason for a smaller constant; the ladder
+/// is (d3), the group terms at each phase's largest actual target count.
+/// `prepare` is the Forward `ReservedRow::prepare`; the CLR task's prepare is
+/// S4's own entry census, not a phase here. Changing the value reruns the
+/// census of every committed RowWrite phase.
+pub(crate) const ROW_WRITE_CALLER_BYTES: usize = 11520;
 
 /// The fixed RowWrite charge: the split-time CatalogProgressCharge that
 /// `OperationSourceAdmission::progress(RowWrite)` reserves, as a byte count
@@ -73,7 +88,8 @@ pub(crate) fn row_write_charge<W: WriterNamespace>() -> usize {
     super::super::source::progress_charge_bytes::<W>()
 }
 
-/// One RowWrite C phase as the Row write census charges it (S2W-C01/C02).
+/// One RowWrite C phase as the Row write census charges it
+/// (S2W-C01/C02/C06).
 #[derive(Clone, Copy, Debug)]
 pub(in crate::storage) struct RowWritePhase {
     pub(in crate::storage) name: &'static str,
@@ -82,12 +98,15 @@ pub(in crate::storage) struct RowWritePhase {
     /// The step's own receiver/argument values and its Result/return
     /// carriers, counted twice for a by-value result (callee and forward).
     pub(in crate::storage) carriers: usize,
+    /// The A share bound at this phase's call site: `ROW_PREFLIGHT_CALLER_BYTES`
+    /// for preflight, `ROW_WRITE_CALLER_BYTES` for every other phase.
+    pub(in crate::storage) bound: usize,
 }
 
 /// The eight RowWrite C phases (S2-0 Row write amendment §4): the six effect
 /// and release steps and the two lane issues. `prepare` is the Forward
-/// `ReservedRow::prepare`; the CLR task's prepare is S4's. A's share at each call is
-/// `ROW_WRITE_CALLER_BYTES`, added by the caller of this census.
+/// `ReservedRow::prepare`; the CLR task's prepare is S4's. A's share at each
+/// call is the phase's `bound`, added by the caller of this census.
 pub(in crate::storage) fn row_write_phases<W: WriterNamespace>() -> [RowWritePhase; 8] {
     use std::mem::size_of;
     type Pre<'a, W> = PreflightRow<'a, 'a, 'a, 'a, 'a, 'a, 'a, 'a, 'a, 'a, 'a, 'a, 'a, W>;
@@ -121,20 +140,27 @@ pub(in crate::storage) fn row_write_phases<W: WriterNamespace>() -> [RowWritePha
         + 2 * size_of::<std::result::Result<RowCancelled<'_>, RowOwnedError<Res<'_, W>>>>();
     let finish =
         size_of::<Pre<'_, W>>() + 2 * size_of::<Result<Loan<'_>>>() + 3 * size_of::<Result<()>>();
-    let phase = |name, body, carriers| RowWritePhase {
+    let phase = |name, body, carriers, bound| RowWritePhase {
         name,
         body,
         carriers,
+        bound,
     };
+    let (first, other) = (ROW_PREFLIGHT_CALLER_BYTES, ROW_WRITE_CALLER_BYTES);
     [
-        phase("preflight", bodies.preflight, preflight),
-        phase("validation_lane", bodies.validation_lane, validation_lane),
-        phase("reserve", bodies.reserve, reserve),
-        phase("producer_lane", bodies.producer_lane, producer_lane),
-        phase("prepare", bodies.prepare, prepare),
-        phase("apply", bodies.apply, apply),
-        phase("cancel", bodies.cancel, cancel),
-        phase("finish", bodies.finish, finish),
+        phase("preflight", bodies.preflight, preflight, first),
+        phase(
+            "validation_lane",
+            bodies.validation_lane,
+            validation_lane,
+            other,
+        ),
+        phase("reserve", bodies.reserve, reserve, other),
+        phase("producer_lane", bodies.producer_lane, producer_lane, other),
+        phase("prepare", bodies.prepare, prepare, other),
+        phase("apply", bodies.apply, apply, other),
+        phase("cancel", bodies.cancel, cancel, other),
+        phase("finish", bodies.finish, finish, other),
     ]
 }
 

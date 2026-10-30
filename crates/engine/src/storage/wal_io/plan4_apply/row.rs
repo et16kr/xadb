@@ -28,8 +28,8 @@ pub(crate) use rollback::{
     RowRollbackTask,
 };
 pub(crate) use write::{
-    PreflightRow, PreparedRow, ROW_WRITE_CALLER_BYTES, ReservedRow, RowApplied, RowCancelled,
-    RowPreflightStep, row_write_charge,
+    PreflightRow, PreparedRow, ROW_PREFLIGHT_CALLER_BYTES, ROW_WRITE_CALLER_BYTES, ReservedRow,
+    RowApplied, RowCancelled, RowPreflightStep, row_write_charge,
 };
 
 fn unsupported() -> RetentionError {

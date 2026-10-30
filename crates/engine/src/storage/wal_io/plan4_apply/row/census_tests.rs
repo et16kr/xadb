@@ -14,16 +14,18 @@ use std::mem::size_of;
 type Memory = crate::storage::wal_io::plan4_test_support::Writer;
 type Native = super::super::super::native::Writer;
 
-/// Charge minus body and carriers of the tightest phase, signed: the largest
-/// A share at every C call that the estimates currently leave. Negative is an
-/// overrun of the C side alone, before any A share.
-fn caller_room<W: WriterNamespace>() -> i64 {
+/// Charge minus body and carriers of the tightest phase among the preflight
+/// phase (`preflight`) or the other seven, signed: the largest A share those
+/// C calls currently leave. Negative is an overrun of the C side alone,
+/// before any A share.
+fn caller_room<W: WriterNamespace>(preflight: bool) -> i64 {
     let charge = row_write_charge::<W>() as i64;
     row_write_phases::<W>()
         .iter()
+        .filter(|phase| (phase.name == "preflight") == preflight)
         .map(|phase| charge - (phase.body + phase.carriers) as i64)
         .min()
-        .expect("eight phases")
+        .expect("a phase under each bound")
 }
 
 fn phase_census<W: WriterNamespace>(id: &str, writer: &str) {
@@ -33,7 +35,8 @@ fn phase_census<W: WriterNamespace>(id: &str, writer: &str) {
     let terms = super::super::create_pair::catalog_live::row_write_bodies::<W>();
     println!(
         "{id} writer={writer} charge={charge} shared={shared} shared_plus_charge={} \
-         caller={ROW_WRITE_CALLER_BYTES} row_lifecycle={} catalog_live_peak={}",
+         preflight_bound={ROW_PREFLIGHT_CALLER_BYTES} write_bound={ROW_WRITE_CALLER_BYTES} \
+         row_lifecycle={} catalog_live_peak={}",
         shared + charge,
         bodies.row_lifecycle,
         bodies.peak,
@@ -80,49 +83,73 @@ fn phase_census<W: WriterNamespace>(id: &str, writer: &str) {
     );
     let phases = row_write_phases::<W>();
     for phase in phases {
-        let total = phase.body + phase.carriers + ROW_WRITE_CALLER_BYTES;
+        let c_total = phase.body + phase.carriers;
+        let total = c_total + phase.bound;
+        let room = charge as i64 - c_total as i64;
         println!(
-            "{id} phase={} kind=estimate body={} carriers={} caller={ROW_WRITE_CALLER_BYTES} \
-             total={total} charge={charge} room_for_caller={} fits={}",
+            "{id} phase={} kind=estimate body={} carriers={} c_total={c_total} bound={} \
+             total={total} charge={charge} room_for_caller={room} c_margin={} fits={}",
             phase.name,
             phase.body,
             phase.carriers,
-            charge as i64 - (phase.body + phase.carriers) as i64,
+            phase.bound,
+            room - phase.bound as i64,
             if total <= charge { "yes" } else { "no" },
         );
     }
-    let (memory, native) = (caller_room::<Memory>(), caller_room::<Native>());
-    let both = memory.min(native);
+    let rooms = |preflight| {
+        let (memory, native) = (
+            caller_room::<Memory>(preflight),
+            caller_room::<Native>(preflight),
+        );
+        (memory, native, memory.min(native))
+    };
+    let (first, other) = (rooms(true), rooms(false));
     println!(
-        "{id} caller_room memory={memory} native={native} both={both} \
-         constant={ROW_WRITE_CALLER_BYTES} overrun_before_caller={}",
-        (-both).max(0)
+        "{id} caller_room preflight memory={} native={} both={} bound={ROW_PREFLIGHT_CALLER_BYTES} \
+         other memory={} native={} both={} bound={ROW_WRITE_CALLER_BYTES} \
+         overrun_before_caller={}",
+        first.0,
+        first.1,
+        first.2,
+        other.0,
+        other.1,
+        other.2,
+        (-first.2.min(other.2)).max(0)
     );
     // The charge is the one split-time CatalogProgressCharge and fits the
     // short-source cap beside shared.
     assert_eq!(charge, super::super::source::progress_charge_bytes::<W>());
     assert!(shared + charge <= 65_536);
-    // S2-0 §4: every C phase, with its carriers, fits beside the caller
-    // share in this writer. An overrun fails here; it is never absorbed into
-    // a smaller constant.
+    // S2-0 §4 with the S2-0b bounds: every C phase, with its carriers, fits
+    // beside the A share bound of its own call site in this writer. An
+    // overrun fails here; it is never absorbed into a smaller bound.
     for phase in phases {
+        let bound = if phase.name == "preflight" {
+            ROW_PREFLIGHT_CALLER_BYTES
+        } else {
+            ROW_WRITE_CALLER_BYTES
+        };
+        assert_eq!(phase.bound, bound, "{id} phase {} bound", phase.name);
         assert!(
-            phase.body + phase.carriers + ROW_WRITE_CALLER_BYTES <= charge,
-            "{id} {writer} phase {}: body {} + carriers {} + caller {ROW_WRITE_CALLER_BYTES} \
-             > charge {charge}",
+            phase.body + phase.carriers + phase.bound <= charge,
+            "{id} {writer} phase {}: body {} + carriers {} + bound {} > charge {charge}",
             phase.name,
             phase.body,
             phase.carriers,
+            phase.bound,
         );
     }
-    // The same bound in both writers: the constant is no larger than the
-    // smallest room the estimates leave. A body that later shrinks raises the
-    // room without forcing a new constant.
-    assert!(ROW_WRITE_CALLER_BYTES as i64 <= both);
+    // The same in both writers: each bound is no larger than the smallest
+    // room its phases leave. A body that later shrinks raises the room without
+    // forcing a new constant.
+    assert!(ROW_PREFLIGHT_CALLER_BYTES as i64 <= first.2);
+    assert!(ROW_WRITE_CALLER_BYTES as i64 <= other.2);
 }
 
-/// S2W-C01: memory W, every RowWrite C phase as body + carriers +
-/// `ROW_WRITE_CALLER_BYTES` against the RowWrite charge.
+/// S2W-C01: memory W, every RowWrite C phase as body + carriers + the A
+/// share bound of its call site (`ROW_PREFLIGHT_CALLER_BYTES` at preflight,
+/// `ROW_WRITE_CALLER_BYTES` elsewhere) against the RowWrite charge.
 #[test]
 fn s2w_c01_row_write_phase_census_memory() {
     phase_census::<Memory>("S2W_C01", "memory");
