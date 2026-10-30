@@ -966,6 +966,12 @@ impl<W: WriterNamespace> ReservedRow<'_, '_, '_, '_, '_, '_, '_, '_, '_, '_, '_,
         self.mutation.row_test_replay_counts()
     }
 
+    /// S2W-R13: the live control bank (ATT rows and the rest of the first
+    /// 64 KiB) while the reservation is held; it reads only.
+    pub(in crate::storage) fn test_control_bank(&self) -> &[u8] {
+        self.mutation.recovery_test_bank()
+    }
+
     /// S2W-R24's control half: the live Aging descriptor re-encoded over
     /// `root_page`, the pool Root the fixture changed (`row_test_mirror_aging`).
     pub(in crate::storage) fn test_mirror_aging(&mut self, root_page: &[u8; PAGE_BYTES]) {

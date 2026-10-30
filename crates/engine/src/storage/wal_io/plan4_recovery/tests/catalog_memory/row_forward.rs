@@ -1296,9 +1296,10 @@ fn s2w_r24_root_cursor_is_found_late_and_stops_restart() {
 /// so no later Reserve takes it again. The second statement's mark is the
 /// actor's ATT undo head when it begins: the first statement's last row's
 /// Undo, which the view and the slot both hold, and every Forward of a
-/// statement carries that statement's sequence. The first Reserve is live
-/// == replay (H01) while held, and the credit is read there, at the
-/// statement end and after every Forward.
+/// statement carries that statement's sequence. The credit is read from
+/// the live control while each Reserve is held, at the statement end and
+/// after every Forward. Live == replay is S2W-H01's (a replay per row would
+/// exceed the case's time bound).
 #[test]
 fn s2w_r13_two_statements_of_three_rows_inherit_the_statement_credit() {
     case("S2W-R13", || {
@@ -1348,12 +1349,7 @@ fn s2w_r13_two_statements_of_three_rows_inherit_the_statement_credit() {
                         let mut preflight = ready!(writer, owner, view, table, private, flush);
                         let input = plan!(preflight, VALUE + rows.len() as i64);
                         let mut reserved = done!(preflight.reserve(input));
-                        // H01 at the first Reserve only: a replay per
-                        // Reserve exceeds the case's time bound.
-                        if (statement, at) == (1, 0) {
-                            let copies = live_replay!(reserved.test_live_replay());
-                            credits.push(("reserve", credit(&copies[2])));
-                        }
+                        credits.push(("reserve", credit(reserved.test_control_bank())));
                         let (_, root_job, row_id, undo_ref, _) = reserved.test_issued();
                         let proposal = produce!(reserved);
                         let prepared = done!(reserved.prepare(proposal));
