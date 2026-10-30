@@ -598,92 +598,89 @@ fn s2w_r02_source_shortage_reopens_the_gate_with_no_effect() {
 /// effect. The two corruptions are re-encoded in the resident frame only.
 #[test]
 fn s2w_r05_no_free_undo_is_unchanged_capacity() {
-    case("S2W-R05", || {
-        for variant in ["none", "incarnation", "slot0"] {
-            let oracle = Oracle::new();
-            with_fresh!(
-                oracle,
-                frames = 12,
-                |live,
-                 owner,
-                 flusher,
-                 status,
-                 undo,
-                 private,
-                 reader_private,
-                 core,
-                 fence,
-                 state| {
-                    let (row_status, row_undo) = create_table(
-                        live,
-                        owner,
-                        flusher,
-                        status,
-                        undo,
-                        private,
-                        variant != "none",
-                    );
-                    row_statement!(live, owner, flusher, private, reader_private, row_status
-                        => writer, reader, flush, row, view, table);
-                    if let Some(row_undo) = row_undo {
-                        let _ = settle!(writer, owner, view, table, private, flush, flusher);
-                        let identity = row_undo.identity();
-                        let index = resident_index(&writer, FREE_UNDO).unwrap();
-                        status_load_test_support::edit_content(
-                            reader.catalog_test_pool(),
-                            index,
-                            |bytes| {
-                                let lsn =
-                                    undo_record::initial_undo_page_lsn(bytes, identity).unwrap();
-                                if variant == "incarnation" {
-                                    let mut moved = identity;
-                                    moved.page.incarnation =
-                                        Generation::new(identity.page.incarnation.get() + 1)
-                                            .unwrap();
-                                    undo_record::encode_initial_undo_page(moved, lsn, bytes)
-                                        .unwrap();
-                                } else {
-                                    let page =
-                                        page::decode_page(bytes, identity, PageKind::Undo).unwrap();
-                                    let header = page.header();
-                                    let mut cell = page.cell(0).unwrap().to_vec();
-                                    cell[6] = 1;
-                                    page::encode_page(header, &[&cell], bytes).unwrap();
-                                }
-                            },
-                        );
-                    } else {
-                        // Settle residency up to the Free Undo selection.
-                        for _ in 0..16 {
-                            match writer.preflight_row(owner, &view, &table, private, &mut flush) {
-                                Ok(RowPreflightStep::FlushRequired { target }) => {
-                                    flush_target!(flush, flusher, target)
-                                }
-                                Ok(RowPreflightStep::Ready(_)) => panic!("no Free Undo"),
-                                Err(_) => break,
-                            }
-                        }
-                    }
-                    view.test_clear_reads();
-                    let used = reader.catalog_test_source_used();
-                    let before = effects!(writer, state);
-                    let error = writer
-                        .preflight_row(owner, &view, &table, private, &mut flush)
-                        .err()
-                        .unwrap();
-                    println!("S2W_R05 variant={variant} refusal={error:?}");
-                    assert_eq!(
-                        (error.phase, error.effect),
-                        (RetentionPhase::Prepare, Effect::Unchanged)
-                    );
-                    assert!(matches!(error.cause, RetentionCause::Capacity));
-                    returned_unchanged!(writer, reader, view, state, core, fence, used, before);
-                    assert_eq!(flush.phase(), RetentionFlushPhase::Ready);
-                    close_row!(writer, owner, row, view, private, flush);
-                }
+    case("S2W-R05", || r05("none"));
+}
+
+#[test]
+fn s2w_r05_incarnation_off_its_entry_is_unchanged_capacity() {
+    case("S2W-R05", || r05("incarnation"));
+}
+
+#[test]
+fn s2w_r05_slot0_not_free_is_unchanged_capacity() {
+    case("S2W-R05", || r05("slot0"));
+}
+
+fn r05(variant: &str) {
+    let oracle = Oracle::new();
+    with_fresh!(
+        oracle,
+        frames = 12,
+        |live, owner, flusher, status, undo, private, reader_private, core, fence, state| {
+            let (row_status, row_undo) = create_table(
+                live,
+                owner,
+                flusher,
+                status,
+                undo,
+                private,
+                variant != "none",
             );
+            row_statement!(live, owner, flusher, private, reader_private, row_status
+                => writer, reader, flush, row, view, table);
+            if let Some(row_undo) = row_undo {
+                let _ = settle!(writer, owner, view, table, private, flush, flusher);
+                let identity = row_undo.identity();
+                let index = resident_index(&writer, FREE_UNDO).unwrap();
+                status_load_test_support::edit_content(
+                    reader.catalog_test_pool(),
+                    index,
+                    |bytes| {
+                        let lsn = undo_record::initial_undo_page_lsn(bytes, identity).unwrap();
+                        if variant == "incarnation" {
+                            let mut moved = identity;
+                            moved.page.incarnation =
+                                Generation::new(identity.page.incarnation.get() + 1).unwrap();
+                            undo_record::encode_initial_undo_page(moved, lsn, bytes).unwrap();
+                        } else {
+                            let page = page::decode_page(bytes, identity, PageKind::Undo).unwrap();
+                            let header = page.header();
+                            let mut cell = page.cell(0).unwrap().to_vec();
+                            cell[6] = 1;
+                            page::encode_page(header, &[&cell], bytes).unwrap();
+                        }
+                    },
+                );
+            } else {
+                // Settle residency up to the Free Undo selection.
+                for _ in 0..16 {
+                    match writer.preflight_row(owner, &view, &table, private, &mut flush) {
+                        Ok(RowPreflightStep::FlushRequired { target }) => {
+                            flush_target!(flush, flusher, target)
+                        }
+                        Ok(RowPreflightStep::Ready(_)) => panic!("no Free Undo"),
+                        Err(_) => break,
+                    }
+                }
+            }
+            view.test_clear_reads();
+            let used = reader.catalog_test_source_used();
+            let before = effects!(writer, state);
+            let error = writer
+                .preflight_row(owner, &view, &table, private, &mut flush)
+                .err()
+                .unwrap();
+            println!("S2W_R05 variant={variant} refusal={error:?}");
+            assert_eq!(
+                (error.phase, error.effect),
+                (RetentionPhase::Prepare, Effect::Unchanged)
+            );
+            assert!(matches!(error.cause, RetentionCause::Capacity));
+            returned_unchanged!(writer, reader, view, state, core, fence, used, before);
+            assert_eq!(flush.phase(), RetentionFlushPhase::Ready);
+            close_row!(writer, owner, row, view, private, flush);
         }
-    });
+    );
 }
 
 /// S2W-R16: the Free Undo 14 is not resident and every clean frame that is
@@ -761,88 +758,91 @@ fn s2w_r16_dirty_victim_is_flush_required_then_ready() {
 /// `Flush(…)` (here Unchanged Capacity: no selector generation headroom).
 /// None of them closes the gate, takes the source or registers anything.
 #[test]
-fn s2w_r17_flush_lease_refusals_precede_the_gate() {
-    case("S2W-R17", || {
-        for kind in [1u8, 2, 0, 3] {
-            let oracle = Oracle::new();
-            with_fresh!(
-                oracle,
-                frames = 12,
-                |live,
-                 owner,
-                 flusher,
-                 status,
-                 undo,
-                 private,
-                 reader_private,
-                 core,
-                 fence,
-                 state| {
-                    let (row_status, _) =
-                        create_table(live, owner, flusher, status, undo, private, true);
-                    let root = live.target(Plan4Page::Root).unwrap();
-                    row_statement!(live, owner, flusher, private, reader_private, row_status
-                        => writer, reader, flush, row, view, table);
-                    let _ = settle!(writer, owner, view, table, private, flush, flusher);
-                    if kind == 0 {
-                        // A pinned dirty Root retires its flush pending
-                        // finalize: the capture stays (MCL03).
-                        let index = resident_index(&writer, 1).unwrap();
-                        let mut holder = core.try_owner(OwnerRole::Foreground).unwrap();
-                        let step =
-                            with_pins(reader.catalog_test_pool(), &mut holder, &[index], || {
-                                flush.try_flush(flusher, &root).unwrap()
-                            });
-                        assert!(matches!(step, RetentionFlushStep::RetiredPendingFinalize));
-                        holder.check_idle().unwrap();
+fn s2w_r17_flush_origin_mismatch_fences_before_the_gate() {
+    case("S2W-R17", || r17(1));
+}
+
+#[test]
+fn s2w_r17_flush_waiting_wal_is_unchanged_busy() {
+    case("S2W-R17", || r17(2));
+}
+
+#[test]
+fn s2w_r17_flush_ready_over_retained_capture_fences() {
+    case("S2W-R17", || r17(0));
+}
+
+#[test]
+fn s2w_r17_flush_io_preflight_refusal_is_its_own() {
+    case("S2W-R17", || r17(3));
+}
+
+fn r17(kind: u8) {
+    let oracle = Oracle::new();
+    with_fresh!(
+        oracle,
+        frames = 12,
+        |live, owner, flusher, status, undo, private, reader_private, core, fence, state| {
+            let (row_status, _) = create_table(live, owner, flusher, status, undo, private, true);
+            let root = live.target(Plan4Page::Root).unwrap();
+            row_statement!(live, owner, flusher, private, reader_private, row_status
+                => writer, reader, flush, row, view, table);
+            let _ = settle!(writer, owner, view, table, private, flush, flusher);
+            if kind == 0 {
+                // A pinned dirty Root retires its flush pending
+                // finalize: the capture stays (MCL03).
+                let index = resident_index(&writer, 1).unwrap();
+                let mut holder = core.try_owner(OwnerRole::Foreground).unwrap();
+                let step = with_pins(reader.catalog_test_pool(), &mut holder, &[index], || {
+                    flush.try_flush(flusher, &root).unwrap()
+                });
+                assert!(matches!(step, RetentionFlushStep::RetiredPendingFinalize));
+                holder.check_idle().unwrap();
+            }
+            flush.row_test_flush_fault(kind);
+            view.test_clear_reads();
+            let used = reader.catalog_test_source_used();
+            let before = effects!(writer, state);
+            let error = writer
+                .preflight_row(owner, &view, &table, private, &mut flush)
+                .err()
+                .unwrap();
+            println!("S2W_R17 kind={kind} refusal={error:?}");
+            assert_eq!(error.phase, RetentionPhase::Prepare);
+            assert!(!hook::observe(core).read_gate_closed);
+            assert_eq!(reader.catalog_test_source_used(), used);
+            assert_eq!(reads!(view), (0, 0, 0));
+            assert_eq!(state.lock().unwrap().images(), before.1);
+            match kind {
+                1 | 0 => {
+                    assert_eq!(error.effect, Effect::CallerMustResolve);
+                    if kind == 1 {
+                        assert!(matches!(error.cause, RetentionCause::BindingMismatch));
+                    } else {
+                        assert!(matches!(error.cause, RetentionCause::Invariant));
                     }
-                    flush.row_test_flush_fault(kind);
-                    view.test_clear_reads();
-                    let used = reader.catalog_test_source_used();
-                    let before = effects!(writer, state);
-                    let error = writer
-                        .preflight_row(owner, &view, &table, private, &mut flush)
-                        .err()
-                        .unwrap();
-                    println!("S2W_R17 kind={kind} refusal={error:?}");
-                    assert_eq!(error.phase, RetentionPhase::Prepare);
-                    assert!(!hook::observe(core).read_gate_closed);
-                    assert_eq!(reader.catalog_test_source_used(), used);
-                    assert_eq!(reads!(view), (0, 0, 0));
-                    assert_eq!(state.lock().unwrap().images(), before.1);
-                    match kind {
-                        1 | 0 => {
-                            assert_eq!(error.effect, Effect::CallerMustResolve);
-                            if kind == 1 {
-                                assert!(matches!(error.cause, RetentionCause::BindingMismatch));
-                            } else {
-                                assert!(matches!(error.cause, RetentionCause::Invariant));
-                            }
-                            assert!(fence.is_fenced());
-                            drop(view);
-                            drop(row);
-                        }
-                        _ => {
-                            assert_eq!(error.effect, Effect::Unchanged);
-                            if kind == 2 {
-                                assert!(matches!(error.cause, RetentionCause::Busy));
-                                flush.row_test_flush_fault(0);
-                            } else {
-                                assert!(matches!(error.cause, RetentionCause::Flush(_)));
-                            }
-                            assert!(!fence.is_fenced());
-                            assert_eq!(effects!(writer, state), before);
-                            if kind == 2 {
-                                let _ =
-                                    settle!(writer, owner, view, table, private, flush, flusher);
-                            }
-                            close_row!(writer, owner, row, view, private, flush);
-                        }
-                    }
+                    assert!(fence.is_fenced());
+                    drop(view);
+                    drop(row);
                 }
-            );
+                _ => {
+                    assert_eq!(error.effect, Effect::Unchanged);
+                    if kind == 2 {
+                        assert!(matches!(error.cause, RetentionCause::Busy));
+                        flush.row_test_flush_fault(0);
+                    } else {
+                        assert!(matches!(error.cause, RetentionCause::Flush(_)));
+                    }
+                    assert!(!fence.is_fenced());
+                    assert_eq!(effects!(writer, state), before);
+                    if kind == 2 {
+                        let _ = settle!(writer, owner, view, table, private, flush, flusher);
+                    }
+                    close_row!(writer, owner, row, view, private, flush);
+                }
+            }
         }
-    });
+    );
 }
 
 /// S2W-R18: an actor whose Row Job is RootReserved (a one-shot cfg(test)
@@ -890,107 +890,108 @@ fn s2w_r18_root_reserved_actor_is_wrong_state() {
 /// source and the gate; a page read error is Fatal (Load, PageIo) and a
 /// corrupt home page is Fatal (Load) of its own cause, each with the fence.
 #[test]
-fn s2w_r19_load_refusals_keep_their_cause() {
-    case("S2W-R19", || {
-        for variant in ["busy", "io", "decode"] {
-            let oracle = Oracle::new();
-            with_fresh!(
-                oracle,
-                frames = 12,
-                |live,
-                 owner,
-                 flusher,
-                 status,
-                 undo,
-                 private,
-                 reader_private,
-                 core,
-                 fence,
-                 state| {
-                    let (row_status, row_undo) =
-                        create_table(live, owner, flusher, status, undo, private, true);
-                    evict(live, flusher, &row_undo.unwrap());
-                    row_statement!(live, owner, flusher, private, reader_private, row_status
-                        => writer, reader, flush, row, view, table);
-                    view.test_clear_reads();
-                    let pool = reader.catalog_test_pool();
-                    let others: Vec<usize> = frames(pool, 12)
-                        .iter()
-                        .filter(|(_, page, _)| !SOURCES.contains(page))
-                        .map(|(index, ..)| *index)
-                        .collect();
-                    let offset = FREE_UNDO * PAGE_BYTES as u64;
-                    match variant {
-                        "io" => {
-                            let mut io = state.lock().unwrap();
-                            io.events.clear();
-                            io.fault_hits = 0;
-                            io.fault = Some(port::Fault {
-                                key: port::Key::new("read", HOME_NAME, offset, 1),
-                                action: port::Action::BeforeError,
-                            });
-                        }
-                        "decode" => {
-                            let mut io = state.lock().unwrap();
-                            io.files.get_mut(HOME_NAME).unwrap().bytes[offset as usize + 1000] ^= 1;
-                        }
-                        _ => {}
-                    }
-                    let used = reader.catalog_test_source_used();
-                    let before = effects!(writer, state);
-                    let mut holder = core.try_owner(OwnerRole::Foreground).unwrap();
-                    let pinned: &[usize] = if variant == "busy" { &others } else { &[] };
-                    let error = with_pins(pool, &mut holder, pinned, || {
-                        writer
-                            .preflight_row(owner, &view, &table, private, &mut flush)
-                            .err()
-                            .unwrap()
+fn s2w_r19_load_claim_busy_is_unchanged() {
+    case("S2W-R19", || r19("busy"));
+}
+
+#[test]
+fn s2w_r19_load_page_io_is_fatal() {
+    case("S2W-R19", || r19("io"));
+}
+
+#[test]
+fn s2w_r19_load_corrupt_page_keeps_its_cause() {
+    case("S2W-R19", || r19("decode"));
+}
+
+fn r19(variant: &str) {
+    let oracle = Oracle::new();
+    with_fresh!(
+        oracle,
+        frames = 12,
+        |live, owner, flusher, status, undo, private, reader_private, core, fence, state| {
+            let (row_status, row_undo) =
+                create_table(live, owner, flusher, status, undo, private, true);
+            evict(live, flusher, &row_undo.unwrap());
+            row_statement!(live, owner, flusher, private, reader_private, row_status
+                => writer, reader, flush, row, view, table);
+            view.test_clear_reads();
+            let pool = reader.catalog_test_pool();
+            let others: Vec<usize> = frames(pool, 12)
+                .iter()
+                .filter(|(_, page, _)| !SOURCES.contains(page))
+                .map(|(index, ..)| *index)
+                .collect();
+            let offset = FREE_UNDO * PAGE_BYTES as u64;
+            match variant {
+                "io" => {
+                    let mut io = state.lock().unwrap();
+                    io.events.clear();
+                    io.fault_hits = 0;
+                    io.fault = Some(port::Fault {
+                        key: port::Key::new("read", HOME_NAME, offset, 1),
+                        action: port::Action::BeforeError,
                     });
-                    // The fatal variants fence the core, so only the busy
-                    // holder is checked idle; a fenced core reports Fenced.
-                    let idle = holder.check_idle();
-                    if variant == "busy" {
-                        idle.unwrap();
-                    } else {
-                        assert!(idle.is_err());
-                    }
-                    println!("S2W_R19 variant={variant} refusal={error:?}");
-                    assert_eq!(error.phase, RetentionPhase::Load);
-                    assert!(!hook::observe(core).read_gate_closed);
-                    assert_eq!(reads!(view), (0, 0, 0));
-                    if variant == "busy" {
-                        assert_eq!(error.effect, Effect::Unchanged);
-                        assert!(matches!(error.cause, RetentionCause::Frame(ref frame)
-                            if frame.cause == crate::storage::dirty_frame::Cause::Busy));
-                        returned_unchanged!(writer, reader, view, state, core, fence, used, before);
-                        let _ = settle!(writer, owner, view, table, private, flush, flusher);
-                        close_row!(writer, owner, row, view, private, flush);
-                    } else {
-                        assert_eq!(error.effect, Effect::CallerMustResolve);
-                        // A fenced ledger refuses the return, so the RowWrite
-                        // charge stays visible (Fatal keeps its bookkeeping).
-                        let charge = writer.catalog_test_retirement_charge() as u64;
-                        assert_eq!(reader.catalog_test_source_used(), used + charge);
-                        if variant == "io" {
-                            assert_eq!(state.lock().unwrap().fault_hits, 1);
-                            assert!(matches!(error.cause, RetentionCause::PageIo(_)));
-                        } else {
-                            // The home page fails its check before a decode:
-                            // the original cause, a page decode or the
-                            // verification Invariant, never a Busy or Stale.
-                            assert!(matches!(
-                                error.cause,
-                                RetentionCause::Page(_) | RetentionCause::Invariant
-                            ));
-                        }
-                        assert!(fence.is_fenced());
-                        drop(view);
-                        drop(row);
-                    }
                 }
-            );
+                "decode" => {
+                    let mut io = state.lock().unwrap();
+                    io.files.get_mut(HOME_NAME).unwrap().bytes[offset as usize + 1000] ^= 1;
+                }
+                _ => {}
+            }
+            let used = reader.catalog_test_source_used();
+            let before = effects!(writer, state);
+            let mut holder = core.try_owner(OwnerRole::Foreground).unwrap();
+            let pinned: &[usize] = if variant == "busy" { &others } else { &[] };
+            let error = with_pins(pool, &mut holder, pinned, || {
+                writer
+                    .preflight_row(owner, &view, &table, private, &mut flush)
+                    .err()
+                    .unwrap()
+            });
+            // The fatal variants fence the core, so only the busy
+            // holder is checked idle; a fenced core reports Fenced.
+            let idle = holder.check_idle();
+            if variant == "busy" {
+                idle.unwrap();
+            } else {
+                assert!(idle.is_err());
+            }
+            println!("S2W_R19 variant={variant} refusal={error:?}");
+            assert_eq!(error.phase, RetentionPhase::Load);
+            assert!(!hook::observe(core).read_gate_closed);
+            assert_eq!(reads!(view), (0, 0, 0));
+            if variant == "busy" {
+                assert_eq!(error.effect, Effect::Unchanged);
+                assert!(matches!(error.cause, RetentionCause::Frame(ref frame)
+                    if frame.cause == crate::storage::dirty_frame::Cause::Busy));
+                returned_unchanged!(writer, reader, view, state, core, fence, used, before);
+                let _ = settle!(writer, owner, view, table, private, flush, flusher);
+                close_row!(writer, owner, row, view, private, flush);
+            } else {
+                assert_eq!(error.effect, Effect::CallerMustResolve);
+                // A fenced ledger refuses the return, so the RowWrite
+                // charge stays visible (Fatal keeps its bookkeeping).
+                let charge = writer.catalog_test_retirement_charge() as u64;
+                assert_eq!(reader.catalog_test_source_used(), used + charge);
+                if variant == "io" {
+                    assert_eq!(state.lock().unwrap().fault_hits, 1);
+                    assert!(matches!(error.cause, RetentionCause::PageIo(_)));
+                } else {
+                    // The home page fails its check before a decode:
+                    // the original cause, a page decode or the
+                    // verification Invariant, never a Busy or Stale.
+                    assert!(matches!(
+                        error.cause,
+                        RetentionCause::Page(_) | RetentionCause::Invariant
+                    ));
+                }
+                assert!(fence.is_fenced());
+                drop(view);
+                drop(row);
+            }
         }
-    });
+    );
 }
 
 /// S2W-R20: preflight opens no read operation under its gate. Paused after
