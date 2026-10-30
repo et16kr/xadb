@@ -21,7 +21,8 @@
 //! keeps its generation. The table write bit stays (§6). Every refusal
 //! before the stage is Unchanged, so the wrapper returns the same
 //! ReservedRow, except a contradiction of the wrapper's own proof or of the
-//! ledger check (Fatal Census); every failure after the stage is Fatal.
+//! ledger check (Fatal Census) and C's decode of its own output (Fatal
+//! Prepare); every failure after the stage is Fatal.
 //!
 //! One suspended caller level holds a Row group return carrier while the
 //! group is prepared (S2-0b decision 2): `cancel_group`'s `group`, the slot
@@ -191,8 +192,10 @@ impl<'b, 'a, 's, 'c, 'p, 'd, 'm, 'w, W: WriterNamespace>
     /// The Cancel group over the whole write target set T, steps 2 and 3 of
     /// the module doc. Every refusal is Unchanged before any stage, except a
     /// contradiction of the draft's role map or the reservation (Fatal
-    /// Census). T, its stamps and the roles are filled in place, in the
-    /// arrays the group keeps.
+    /// Census) and C's own decode of a page or frame it produced (Fatal
+    /// Prepare with the decode's cause, as `prepare_reserve` maps it through
+    /// `produced`, S2-b2 review A5). T, its stamps and the roles are filled
+    /// in place, in the arrays the group keeps.
     fn prepare_cancel<'i>(
         &self,
         owner: &mut Owner<'c, 's>,
@@ -263,7 +266,7 @@ impl<'b, 'a, 's, 'c, 'p, 'd, 'm, 'w, W: WriterNamespace>
             let target = requests[at(*role)
                 .map_err(|_| unchanged(RetentionPhase::Prepare, RetentionCause::Invariant))?];
             let image = recovery::request_from_image(profile, &after[usize::from(*role)])
-                .map_err(|cause| unchanged(RetentionPhase::Prepare, cause))?;
+                .map_err(|cause| fatal(storage, RetentionPhase::Prepare, cause))?;
             if image != target {
                 return Err(unchanged(
                     RetentionPhase::Prepare,
@@ -280,8 +283,14 @@ impl<'b, 'a, 's, 'c, 'p, 'd, 'm, 'w, W: WriterNamespace>
             .get(..observation.frame_bytes)
             .ok_or_else(|| unchanged(RetentionPhase::Prepare, RetentionCause::Invariant))?;
         let future = {
-            let layout = row_semantic::decode_layout(bytes, expected, profile)
-                .map_err(row_semantic_error)?;
+            let layout =
+                row_semantic::decode_layout(bytes, expected, profile).map_err(|error| {
+                    fatal(
+                        storage,
+                        RetentionPhase::Prepare,
+                        RetentionCause::RowSemantic(error),
+                    )
+                })?;
             prepare_inventory(
                 self.control,
                 profile,
@@ -291,7 +300,8 @@ impl<'b, 'a, 's, 'c, 'p, 'd, 'm, 'w, W: WriterNamespace>
                 &before[at(ALLOCATOR_ROLE)?],
                 observation.job_ordinal.map(|_| &after[usize::from(JOB)]),
                 inventory,
-            )?
+            )
+            .map_err(|error| produced(storage, error))?
         };
         check_progress_room(
             entry.prefix,
@@ -301,7 +311,8 @@ impl<'b, 'a, 's, 'c, 'p, 'd, 'm, 'w, W: WriterNamespace>
             order,
             root,
             profile,
-        )?;
+        )
+        .map_err(|error| produced(storage, error))?;
         Ok(PreparedRowGroup {
             payload: RowPayload {
                 core: self.pool.bound_core(),
