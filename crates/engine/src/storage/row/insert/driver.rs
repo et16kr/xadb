@@ -98,10 +98,22 @@ trait Boundary {
     ) -> Result<(), TransactionFinishError<Self::Transaction>>;
     /// `try_flush(flush_owner, &target)` on the call's flusher.
     fn try_flush(&mut self, target: &Self::Target) -> Result<(), RetentionError>;
-    /// `continue_flush(flush_owner)` on the call's flusher.
-    fn continue_flush(&mut self) -> Result<(), RetentionError>;
+    /// `continue_flush(flush_owner)` on the call's flusher, and whether it
+    /// moved the flusher's phase on.
+    fn continue_flush(&mut self) -> Result<FlushStep, RetentionError>;
     /// The flusher's phase is Ready; preflight refuses any other with Busy.
     fn flush_ready(&self) -> bool;
+}
+
+/// What one `continue_flush` did to the flusher's phase.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+enum FlushStep {
+    /// The phase moved on (to Ready when the flush finished).
+    Advanced,
+    /// The phase is unchanged: the flush waits on another thread's progress
+    /// (the WAL owner's sync, a WAL writer, file or replay lock, a retryable
+    /// finalize).
+    Waiting,
 }
 
 /// What C's preflight returned.
@@ -575,7 +587,10 @@ fn insert_row<B: Boundary>(
 /// with Busy. Each round flushes one dirty victim, which no other foreground
 /// writer dirties again under the exclusive MutationPort, so the preflight
 /// retries are bounded by the dirty pages of that moment (S2-0 Row write
-/// amendment, rejected alternative "separate residency load"). A refusal ends
+/// amendment, rejected alternative "separate residency load"). The flush is
+/// completed to Ready here, as the contract requires, without a cap; a
+/// continue that leaves the phase unchanged yields the thread before the
+/// next one, so the thread the flush waits on can run. A refusal ends
 /// the row with nothing held; the flusher stays in the phase C left it in,
 /// and its next preflight answers Busy until the caller continues the flush.
 #[allow(
@@ -586,8 +601,12 @@ fn flush<B: Boundary>(call: &mut B, target: &B::Target) -> Result<(), Failure> {
     call.try_flush(target)
         .map_err(|error| Failure::new(Stage::Flush, error.into()))?;
     while !call.flush_ready() {
-        call.continue_flush()
+        let step = call
+            .continue_flush()
             .map_err(|error| Failure::new(Stage::ContinueFlush, error.into()))?;
+        if step == FlushStep::Waiting {
+            std::thread::yield_now();
+        }
     }
     Ok(())
 }
@@ -1082,7 +1101,7 @@ const fn call_sites<B: Boundary + 'static>() -> [CallSite; CALL_SITES] {
         Site::new(
             "insert.continue_flush",
             Bound::Write,
-            flushing + 2 * size_of::<Result<(), RetentionError>>() + r,
+            flushing + 2 * size_of::<Result<FlushStep, RetentionError>>() + r,
         ),
         Site::new(
             "insert.validation_lane",

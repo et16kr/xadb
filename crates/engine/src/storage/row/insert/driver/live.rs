@@ -7,11 +7,12 @@
 //! bodies return Unchanged `Unsupported`, so these entries are
 //! compile-checked only until C3 supplies the adapters (gap G2).
 use super::{
-    Boundary, CALL_SITES, CallSite, DriveError, Failure, Loan, PendingRollback, Preflight,
-    PreflightNext, Prepared, PreparedTask, ProducerLane, Reserved, Rollback, RollbackNext,
-    RollbackStop, RollbackTask, StartedRollback, StatementView, Stepped, ValidationLane,
-    call_sites, carrier_bytes, commit, finish_aborted, finish_rollback, finish_statement,
-    insert_statement, retry_task, rollback_step, start_full_rollback, start_statement_rollback,
+    Boundary, CALL_SITES, CallSite, DriveError, Failure, FlushStep, Loan, PendingRollback,
+    Preflight, PreflightNext, Prepared, PreparedTask, ProducerLane, Reserved, Rollback,
+    RollbackNext, RollbackStop, RollbackTask, StartedRollback, StatementView, Stepped,
+    ValidationLane, call_sites, carrier_bytes, commit, finish_aborted, finish_rollback,
+    finish_statement, insert_statement, retry_task, rollback_step, start_full_rollback,
+    start_statement_rollback,
 };
 use crate::storage::{
     disk::{
@@ -264,8 +265,17 @@ impl<'x, 't, 'v, 'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace> Boundar
     fn try_flush(&mut self, target: &Plan4Target) -> Result<(), RetentionError> {
         self.flusher.try_flush(self.flush_owner, target).map(|_| ())
     }
-    fn continue_flush(&mut self) -> Result<(), RetentionError> {
-        self.flusher.continue_flush(self.flush_owner).map(|_| ())
+    /// C's step is the phase it leaves the flusher in; its type is not
+    /// exported (it carries storage-private finalize data), so the phase
+    /// before and after the call is compared.
+    fn continue_flush(&mut self) -> Result<FlushStep, RetentionError> {
+        let before = self.flusher.phase();
+        self.flusher.continue_flush(self.flush_owner)?;
+        Ok(if self.flusher.phase() == before {
+            FlushStep::Waiting
+        } else {
+            FlushStep::Advanced
+        })
     }
     fn flush_ready(&self) -> bool {
         self.flusher.phase() == RetentionFlushPhase::Ready

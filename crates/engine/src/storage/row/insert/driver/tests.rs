@@ -137,6 +137,12 @@ enum Fault {
     /// `try_flush` succeeds with the flusher this many `continue_flush`
     /// calls away from Ready (WaitingWal, WaitingSource, finalize).
     Steps(u8),
+    /// Like `Steps(steps)`, but the first `stalls` continues leave the
+    /// phase unchanged (another thread holds what the flush waits on).
+    Stalled {
+        stalls: u8,
+        steps: u8,
+    },
     RollbackRequired,
     Rejected,
 }
@@ -232,6 +238,8 @@ struct State {
     dirty: Option<u64>,
     /// `continue_flush` calls left before the flusher is Ready.
     waiting: u8,
+    /// `continue_flush` calls left that make no progress.
+    stalls: u8,
 }
 
 impl State {
@@ -273,6 +281,7 @@ fn state(chain: &[(u64, usize)], faults: &[(Call, Fault)]) -> RefCell<State> {
         flushes: Vec::new(),
         dirty: None,
         waiting: 0,
+        stalls: 0,
     })
 }
 
@@ -443,9 +452,12 @@ impl<'s> Boundary for LiteralCall<'s> {
         if state.dirty != Some(*target) {
             state.violations.push("flush of a target C did not name");
         }
-        if let Some(Fault::Steps(steps)) = fault {
+        if let Some(Fault::Steps(steps) | Fault::Stalled { steps, .. }) = fault {
             state.dirty = None;
             state.waiting = steps;
+            if let Some(Fault::Stalled { stalls, .. }) = fault {
+                state.stalls = stalls;
+            }
             return Ok(());
         }
         drop(state);
@@ -453,7 +465,7 @@ impl<'s> Boundary for LiteralCall<'s> {
         self.state.borrow_mut().dirty = None;
         Ok(())
     }
-    fn continue_flush(&mut self) -> Result<(), RetentionError> {
+    fn continue_flush(&mut self) -> Result<FlushStep, RetentionError> {
         let mut state = self.state.borrow_mut();
         let fault = state.note(ContinueFlush);
         if state.waiting == 0 {
@@ -462,8 +474,13 @@ impl<'s> Boundary for LiteralCall<'s> {
         }
         drop(state);
         factory(ContinueFlush, fault)?;
-        self.state.borrow_mut().waiting -= 1;
-        Ok(())
+        let mut state = self.state.borrow_mut();
+        if state.stalls > 0 {
+            state.stalls -= 1;
+            return Ok(FlushStep::Waiting);
+        }
+        state.waiting -= 1;
+        Ok(FlushStep::Advanced)
     }
     fn flush_ready(&self) -> bool {
         self.state.borrow().waiting == 0
@@ -1666,6 +1683,32 @@ fn aw1_f01_flush_required_flushes_and_retries_the_same_row_from_preflight() {
     assert_eq!(state.borrow().chain, [(7, 22)]);
     settled(&state);
 
+    // Continues that leave the phase unchanged (the flush waits on another
+    // thread) are followed by more continues, uncapped, until it is Ready;
+    // the driver yields the thread after each of them.
+    let state = flushing(
+        &[(7, 9)],
+        &[(
+            TryFlush(9),
+            Fault::Stalled {
+                stalls: 4,
+                steps: 2,
+            },
+        )],
+    );
+    assert_eq!(run(&state, &[&V1], &mut [None], &mut loan).unwrap(), 1);
+    assert_eq!(
+        take_log(&state),
+        calls(&[
+            &[Check, Call::Preflight, TryFlush(9)],
+            &[ContinueFlush; 6],
+            &applied(7),
+            &[FinishStatement]
+        ])
+    );
+    assert_eq!((state.borrow().stalls, state.borrow().waiting), (0, 0));
+    settled(&state);
+
     // One flush per dirty victim, on any row of the statement.
     let state = flushing(
         &[(7, 9), (7, 10), (8, 11)],
@@ -1727,6 +1770,24 @@ fn aw1_f02_flush_refusals_end_the_row_holding_nothing() {
     assert!(error.failure.cleanup.is_none() && error.failure.must_resolve);
     assert!(must_resolve(error.after).is_some());
     assert_eq!(take_log(&state), front);
+    settled(&state);
+
+    // A Fatal continue: C keeps the fence, so the statement goes to it.
+    let state = flushing(
+        &[(7, 9)],
+        &[
+            (TryFlush(9), Fault::Steps(2)),
+            (ContinueFlush, Fault::Fatal),
+        ],
+    );
+    let error = failed(run(&state, &[&V1], &mut [None], &mut loan));
+    assert_eq!(
+        (error.failure.stage, disk(&error.failure.error)),
+        (Stage::ContinueFlush, fenced)
+    );
+    assert!(error.failure.cleanup.is_none() && error.failure.must_resolve);
+    assert!(must_resolve(error.after).is_some());
+    assert_eq!(take_log(&state), calls(&[&front, &[ContinueFlush]]));
     settled(&state);
 
     // A refused continue: the flusher still waits, so the driver stops
