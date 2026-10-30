@@ -28,7 +28,10 @@ pub(crate) use crate::storage::catalog::read::CatalogLookupStep;
     reason = "typed guard name for the following catalog consumer"
 )]
 pub(crate) use catalog::RetentionCatalogGuard;
-pub(super) use catalog::{CATALOG_READ_SOURCE_BYTES, catalog_source_bytes};
+pub(super) use catalog::{
+    CATALOG_READ_SOURCE_BYTES, catalog_source_bytes, leaf_view as catalog_leaf_view,
+    record as catalog_leaf_record,
+};
 pub(super) use lookup::resident_source_bytes as resident_lookup_source_bytes;
 pub(super) use lookup::source_bytes as lookup_source_bytes;
 pub(crate) use operation::{

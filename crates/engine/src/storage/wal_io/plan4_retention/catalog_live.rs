@@ -25,6 +25,8 @@ pub(in super::super) mod lifecycle;
 #[path = "catalog_retire.rs"]
 pub(in super::super) mod retirement;
 
+#[path = "row_preflight.rs"]
+pub(in super::super) mod row_preflight;
 #[path = "catalog_targets.rs"]
 mod targets;
 use targets::CatalogTargetAccess;
@@ -1691,7 +1693,9 @@ pub(in super::super) struct CatalogLiveSource {
 /// elsewhere) are added by the Row write census, which checks every phase
 /// against CatalogProgressCharge by name. Only the Row write census computes
 /// them (`row_write_bodies`); the split census, `peak` and every charge do
-/// not. An S2 unit that supplies a body replaces its estimate.
+/// not. An S2 unit that supplies a body replaces its estimate: S2-b1 replaced
+/// preflight's with the actual body census (`preflight_body`), and keeps the
+/// estimate beside it (`preflight_estimate`) for S2W-C06.
 ///
 /// The phases are composed as the S2-0b amendment (Row write validate-once)
 /// decides:
@@ -1719,9 +1723,11 @@ pub(in super::super) struct CatalogLiveSource {
 ///   its page and control digests, and comparing the prepared frame/after
 ///   digests only. It does not run `validate_live`, the observer or the XOI
 ///   inventory again (S2-d).
-/// - `validation_lane` rebuilds `RowPreflightContext` from the current
-///   frames and the private copies; its decode is not a term yet (S2-b).
-///   Neither lane checks the digest chain.
+/// - `validation_lane` rebuilds `RowPreflightContext` from the private
+///   copies preflight leaves (the schema range, the role map and the RowLeaf
+///   before image) and re-observes the Catalog leaf stamp (S2-b decision A7,
+///   `RowPreflightCut`); its decode is not a term yet (S2-b2). Neither lane
+///   checks the digest chain.
 /// - The Row lifecycle keeps its accepted count; `lifecycle_check` must stay
 ///   equal to the split value (S2W-C03).
 #[derive(Clone, Copy, Debug)]
@@ -1787,6 +1793,12 @@ pub(in super::super) struct RowWriteBodies {
     /// The Row lifecycle recomputed here from the same repeated terms; S2W-C03
     /// requires it to equal `catalog_live_source_bytes().row_lifecycle`.
     pub(in super::super) lifecycle_check: usize,
+    /// The S2-a′ upper estimate of the preflight body, from the terms above;
+    /// printed beside the actual census, no longer charged.
+    pub(in super::super) preflight_estimate: usize,
+    /// The actual preflight body census (S2-b1, `row_preflight_body`).
+    pub(in super::super) preflight_body: row_preflight::RowPreflightBody,
+    /// The charged preflight body: `preflight_body.body`.
     pub(in super::super) preflight: usize,
     pub(in super::super) validation_lane: usize,
     pub(in super::super) reserve: usize,
@@ -2272,7 +2284,7 @@ pub(in super::super) fn row_write_bodies<W: WriterNamespace>() -> RowWriteBodies
     // Sequential steps of one call are max-combined; what one call holds
     // throughout is added. Every phase holds the shell. The lease check is a
     // completed call (d2).
-    let preflight = shell
+    let preflight_estimate = shell
         + target_set
         + lease_check
             .max(check)
@@ -2284,6 +2296,16 @@ pub(in super::super) fn row_write_bodies<W: WriterNamespace>() -> RowWriteBodies
             .max(register)
             .max(commit)
             .max(select);
+    // S2-b1 supplies the preflight body: its census replaces the estimate.
+    let preflight_body = row_preflight::row_preflight_body::<W>(
+        shell,
+        lease_check,
+        check - scalar,
+        register - scalar,
+        scope_carriers,
+        history_peak,
+    );
+    let preflight = preflight_body.body;
     let lane = shell + commit;
     let validation_lane = lane + 2 * size_of::<RowPreflightContext>();
     let producer_lane = lane + 2 * size_of::<RowProducerContext>();
@@ -2321,6 +2343,8 @@ pub(in super::super) fn row_write_bodies<W: WriterNamespace>() -> RowWriteBodies
         group_install,
         group_carriers,
         lifecycle_check,
+        preflight_estimate,
+        preflight_body,
         preflight,
         validation_lane,
         reserve,

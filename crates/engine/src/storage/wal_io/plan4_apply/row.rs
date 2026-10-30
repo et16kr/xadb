@@ -1,11 +1,13 @@
 //! C0 consuming Row boundary of the original disk session.
 //!
 //! These wrappers fix the borrow, lifetime and ownership shape that the A and B
-//! product bodies call. Their factories return an effect-free `Unsupported`
-//! before any source guard, pin, admission, WAL or page effect: the actual
-//! preflight/RowReserve, Row read source, rollback and Commit adapters are later
-//! C2/C3 supplies. No constructor accepts a raw TxnRef/UndoRef/RowId/q, and no
-//! value here is an install, terminal or READY receipt.
+//! product bodies call. `MutationPort::preflight_row` runs the actual
+//! preflight (S2-b1, `#row-write-validate-once`); every other factory returns
+//! an effect-free `Unsupported` before any source guard, pin, admission, WAL or
+//! page effect: the actual RowReserve, Row read source, rollback and Commit
+//! adapters are later C2/C3 supplies. No constructor accepts a raw
+//! TxnRef/UndoRef/RowId/q, and no value here is an install, terminal or READY
+//! receipt.
 #![allow(
     dead_code,
     reason = "actual Row source, reservation and rollback adapters are not supplied yet"
@@ -163,7 +165,7 @@ impl RowCommitObservation {
 
 /// Pack of `RowSourceRole` → before index, one nibble per role in role order
 /// (0xF absent), and the physical before count (≤ 9) in nibble 9.
-type RowRoleMap = u64;
+pub(super) type RowRoleMap = u64;
 
 /// Recorded by preflight after residency, Free Undo selection, the row's one
 /// `history::validate_live`, the typed read of T compared with the replay
@@ -180,11 +182,17 @@ type RowRoleMap = u64;
 /// count, so it rebuilds `RowPreflightContext` from the current frames and the
 /// private copies. It does not check the result against `source`: it computes
 /// no page or control digest, and `reserve`'s commitment recompute and
-/// candidate checks refuse any change before an effect (S2W-R04). Whether S2-b
-/// keeps any of those values as a scalar instead (72 B are free under the
-/// 128 B bound, and the A driver counts each cut several times) is S2-b's
-/// decision, made before A-W1 measures with these types.
-struct RowPreflightCut {
+/// candidate checks refuse any change before an effect (S2W-R04).
+///
+/// S2-b decision (A7): the cut keeps exactly these five fields and adds no
+/// scalar for those values. Preflight leaves the whole Catalog leaf in the
+/// SCHEMA range and T's before images in the BEFORE range, so the lane
+/// rebuilds the schema cell and index count from that copy, the leaf
+/// expectation from `roles` and the RowLeaf before header, and re-observes the
+/// Catalog leaf stamp under the same gate and lease. A scalar would only
+/// repeat what the copy and the commitment already fix, while the A driver
+/// holds each cut several times on its narrowest path.
+pub(super) struct RowPreflightCut {
     /// SHA-256 (kind 1, in the order the comment before the cuts gives) over
     /// the WAL prefix, the physical write target set T in before order
     /// (identity, kind, level and FrameStamp of each), the role map, the
@@ -196,18 +204,18 @@ struct RowPreflightCut {
     /// typed read of T into `before`, with no replay; any difference is
     /// Before/Stale and the row is prepared again from `validation_lane`
     /// (S2W-R05, S2W-R07).
-    source: [u8; 32],
+    pub(super) source: [u8; 32],
     /// WAL complete LSN of the commitment: the RowReserve frame's expected
     /// previous LSN and a cheap stale check before rehashing.
-    complete_lsn: u64,
+    pub(super) complete_lsn: u64,
     /// Where each logical source role's before image is; the identities are
     /// read back from those images' headers.
-    roles: RowRoleMap,
+    pub(super) roles: RowRoleMap,
     /// RowLeaf free bytes reported by the validation lane; `reserve` refuses a
     /// candidate that does not fit them (Capacity).
-    leaf_free: u16,
+    pub(super) leaf_free: u16,
     /// The Jobs ordinal of the RootJob slot preflight chose for RowReserve.
-    root_job: u8,
+    pub(super) root_job: u8,
 }
 
 /// Recorded by RowReserve's completed install (Forward) or by the rollback

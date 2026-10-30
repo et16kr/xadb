@@ -196,7 +196,7 @@ impl<'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
     /// `empty_actor_active`; a Job of the actor without the Row recipe is the
     /// deep check's Fatal(Invariant). A Reserved or Aborting actor is
     /// Unchanged WrongState in the caller's phase. Nothing is written.
-    pub(super) fn row_statement_head(
+    pub(in super::super) fn row_statement_head(
         &self,
         actor: TxnRef,
         phase: RetentionPhase,

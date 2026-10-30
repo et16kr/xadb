@@ -24,7 +24,8 @@ pub(crate) struct RetentionCatalogGuard<'a, 'b, 'c, 's, 'p, 'd, 'm, 'w, W: Write
     core: &'c PageConcurrency<'s>,
 }
 
-fn leaf_view(
+/// Shared with the Row write preflight's census of the Catalog leaf copy.
+pub(in super::super) fn leaf_view(
     bytes: &[u8],
     identity: PageIdentity,
     namespace: Namespace,
@@ -48,7 +49,7 @@ fn leaf_view(
     Ok(view)
 }
 
-fn record(
+pub(in super::super) fn record(
     entry: TreeEntry<'_>,
     namespace: Namespace,
 ) -> std::result::Result<CatalogRecordView<'_>, RetentionCause> {

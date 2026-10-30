@@ -243,7 +243,7 @@ impl<'b, 'a, 's, 'c, 'p, 'd, 'm, 'w, W: WriterNamespace>
 {
     /// The actor's unique Row-scope TerminalLeased Job and its Status. A
     /// Catalog actor has none.
-    fn row_terminal(&self, actor: TxnRef) -> Result<(usize, StatusSlotRef)> {
+    pub(in super::super) fn row_terminal(&self, actor: TxnRef) -> Result<(usize, StatusSlotRef)> {
         let mut found = None;
         for (ordinal, bytes) in self.control.jobs().iter().enumerate() {
             let job = job3::decode_job(bytes, self.storage.profile().spec().namespace)

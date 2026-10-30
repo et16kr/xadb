@@ -2,8 +2,9 @@
 //! consumes the previous wrapper; one source admission, one terminal read
 //! gate, one flush lease and one reservation move through the chain instead
 //! of being acquired again (S2-0 Row write amendment §1).
+use super::super::create_pair::catalog_live::row_preflight::{RowPreflightOutcome, RowTableSource};
 use super::super::flush::RetentionFlushControl;
-use super::super::source::OperationSourceAdmission;
+use super::super::source::{OperationClass, OperationSourceAdmission};
 use super::*;
 use crate::transaction::concurrency::TerminalReadGate;
 
@@ -293,20 +294,142 @@ impl<'i> RowCancelled<'i> {
 impl<'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
     MutationPort<'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W>
 {
-    /// Unsupported before any source read, flush check, gate, admission or
-    /// effect until the actual schema/index/leaf/residency preflight adapter
-    /// is supplied. The flusher is the session's original MaintenancePort;
-    /// a Ready preflight keeps its flush control as the row's lease.
+    /// The Row write preflight (S2-0 Row write amendment §1 "order", S2-0b
+    /// amendment `#row-write-validate-once`). Before the gate: the guardless
+    /// health and origin, the view's kind (a Catalog or read-only view is
+    /// Unsupported), origin and phase, the CheckedTable's origin, and the
+    /// flusher's binding with `check_catalog_pair_io`. Then the terminal read
+    /// gate, the RowWrite admission, and the body (`row_preflight`): deep
+    /// checks, residency through the retention LOAD, Free Undo selection, the
+    /// row's one `validate_live` and the arena comparison of T, registration
+    /// and the cut. A Ready preflight keeps the admission, the gate and the
+    /// flusher's control as the row's lease. A refusal after the gate and a
+    /// `FlushRequired` return the admission and the gate checked, in that
+    /// order, before the lease borrow ends; neither registers anything.
     pub(in crate::storage) fn preflight_row<'r, 't, 'v, 'i>(
         &'r mut self,
-        _owner: &'r mut Owner<'c, 's>,
-        _statement: &'r RowStatementView<'t, 'v, 'a, 'c, 's>,
-        _table: &'r CheckedTable<'c, 's>,
-        _private: &'i mut [u8; 425_984],
-        _flusher: &'r mut MaintenancePort<'_, 's, 'c, 'p, 'd, 'm, 'w, W>,
+        owner: &'r mut Owner<'c, 's>,
+        statement: &'r RowStatementView<'t, 'v, 'a, 'c, 's>,
+        table: &'r CheckedTable<'c, 's>,
+        private: &'i mut [u8; 425_984],
+        flusher: &'r mut MaintenancePort<'_, 's, 'c, 'p, 'd, 'm, 'w, W>,
     ) -> Result<RowPreflightStep<'r, 't, 'v, 'i, 'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W>> {
-        Err(unsupported())
+        let storage = self.storage;
+        let _unwind = storage.session_fence().unwind_guard();
+        // Guardless health and origin.
+        storage.health().map_err(|error| {
+            fatal(
+                storage,
+                RetentionPhase::Prepare,
+                RetentionCause::Storage(error),
+            )
+        })?;
+        self.pool
+            .check_retention_entry_health()
+            .map_err(|error| frame(RetentionPhase::Prepare, error))?;
+        if !self
+            .pool
+            .uses_storage_origin(&storage.binding, storage.session_fence())
+        {
+            return Err(fatal(
+                storage,
+                RetentionPhase::Prepare,
+                RetentionCause::BindingMismatch,
+            ));
+        }
+        // Kind and view: a Catalog or read-only view is the mixed refusal;
+        // a foreign or ended view is the view boundary's own refusal.
+        if !statement.row_scope() {
+            return Err(unsupported());
+        }
+        statement.catalog_snapshot(self.isolation, self.visibility)?;
+        statement.check_catalog_read()?;
+        if !std::ptr::eq(table.core, self.pool.bound_core())
+            || !std::ptr::eq(table.binding, &storage.binding)
+            || !std::ptr::eq(table.fence, storage.session_fence())
+        {
+            return Err(unchanged(
+                RetentionPhase::Prepare,
+                RetentionCause::BindingMismatch,
+            ));
+        }
+        if !std::ptr::eq(flusher.pool, self.pool) || !std::ptr::eq(flusher.storage, storage) {
+            return Err(unchanged(
+                RetentionPhase::Prepare,
+                RetentionCause::BindingMismatch,
+            ));
+        }
+        flusher
+            .control
+            .check_catalog_pair_io::<W>(&storage.binding, storage.session_fence())?;
+        let gate = owner
+            .close_reads_for_terminal(self.pool.bound_core())
+            .map_err(|error| RetentionError {
+                phase: RetentionPhase::Prepare,
+                cause: RetentionCause::Concurrency(error),
+                effect: error.effect,
+            })?;
+        let source = match OperationSourceAdmission::progress(
+            self.isolation,
+            &self.commit_charges,
+            &self.progress_charge,
+            &gate,
+            OperationClass::RowWrite,
+        ) {
+            Ok(source) => source,
+            Err(error) => return merge(Err(RetentionError::from(error)), reopen(gate)),
+        };
+        let outcome = self.row_preflight(
+            owner,
+            statement,
+            RowTableSource {
+                handle: table.table,
+                slot: table.slot,
+                anchor: table.anchor,
+            },
+            private,
+        );
+        match outcome {
+            Ok(RowPreflightOutcome::Ready(source_cut)) => {
+                Ok(RowPreflightStep::Ready(PreflightRow {
+                    mutation: self,
+                    owner,
+                    statement,
+                    table,
+                    private: Some(private),
+                    source_cut,
+                    source,
+                    gate: Some(gate),
+                    io: Some(RowIoLease {
+                        original: &mut *flusher.control,
+                    }),
+                }))
+            }
+            Ok(RowPreflightOutcome::FlushRequired(target)) => {
+                release(source, gate).map(|()| RowPreflightStep::FlushRequired { target })
+            }
+            Err(error) => merge(Err(error), release(source, gate)),
+        }
     }
+}
+
+/// Reopen a terminal read gate with its Census error, as `finish` does.
+fn reopen(gate: TerminalReadGate<'_, '_>) -> Result<()> {
+    gate.reopen_checked().map_err(|error| RetentionError {
+        phase: RetentionPhase::Census,
+        cause: RetentionCause::Concurrency(error),
+        effect: error.effect,
+    })
+}
+
+/// Return a preflight's admission, then its gate, checked; the lease borrow
+/// ends with the caller's frame after both.
+fn release(
+    source: OperationSourceAdmission<'_, '_, '_, '_>,
+    gate: TerminalReadGate<'_, '_>,
+) -> Result<()> {
+    let source = source.finish_checked().map_err(RetentionError::from);
+    merge(source, reopen(gate))
 }
 
 impl<'r, 't, 'v, 'i, 'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
@@ -337,13 +460,7 @@ impl<'r, 't, 'v, 'i, 'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
     /// registered by the actual source stays with the statement.
     pub(in crate::storage) fn finish(mut self) -> Result<&'i mut [u8; 425_984]> {
         let source = self.source.release_checked().map_err(RetentionError::from);
-        let gate = self.gate.take().map_or(Ok(()), |gate| {
-            gate.reopen_checked().map_err(|error| RetentionError {
-                phase: RetentionPhase::Census,
-                cause: RetentionCause::Concurrency(error),
-                effect: error.effect,
-            })
-        });
+        let gate = self.gate.take().map_or(Ok(()), reopen);
         self.io = None;
         let cleanup = merge(source, gate);
         let private = self.private.take().ok_or_else(|| {

@@ -324,6 +324,18 @@ pub(crate) fn produce_borrowed(
     produce_with(inputs, after, frame, scratch)
 }
 
+/// The RootJob a live RowReserve leases: the first Free Job from the stable
+/// Root cursor, the selection `prepare` makes for `Change::Reserve`. The Row
+/// write preflight calls this, so it and the producer pick the same Job.
+pub(crate) fn reserve_job(
+    root: &[u8; PAGE_BYTES],
+    jobs: &[[u8; JOB_BYTES]; JOB_COUNT],
+    namespace: crate::api::Namespace,
+) -> Result<usize> {
+    let (_, root) = crate::storage::retention_page::row::decode_root_page(root, namespace)?;
+    cells::first_free(root, jobs, namespace)
+}
+
 /// Forward and CLR are A's; ReserveAdopted is replay-only. Both producers
 /// refuse them before writing any loan, `produce_borrowed` before clearing
 /// its scratch.
@@ -555,6 +567,31 @@ pub(crate) fn observe_borrowed_source_bytes() -> usize {
         + size_of::<Result<Observation>>()
         + size_of::<(&[u8], std::slice::Iter<'_, u8>, bool)>()
         + body_bytes()
+}
+
+/// Counted bound of `reserve_job`: its arguments and result, the decoded
+/// Root header and view, then either the Root3 decode closure or the
+/// `first_free` scan (its own scalars beside one Job3 decode).
+pub(crate) fn reserve_job_source_bytes() -> usize {
+    use crate::storage::{page::PageHeader, retention_page::row as job3};
+    use std::mem::size_of;
+    size_of::<(
+        &[u8; PAGE_BYTES],
+        &[[u8; JOB_BYTES]; JOB_COUNT],
+        crate::api::Namespace,
+    )>() + 2 * size_of::<Result<usize>>()
+        + size_of::<(PageHeader, job3::RootView<'_>)>()
+        + job3::root_decode_source_bytes().max(
+            size_of::<(job3::RootView<'_>, crate::api::Namespace)>()
+                + 3 * size_of::<usize>()
+                + 2 * size_of::<
+                    std::result::Result<
+                        job3::JobView<'_>,
+                        crate::storage::retention_page::RetentionError,
+                    >,
+                >()
+                + job3::source_bytes(),
+        )
 }
 
 /// Counted bound of `decode_layout`, the live Row install's XOI projection
