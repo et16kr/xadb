@@ -13,6 +13,11 @@
       "role": "contracts",
       "title": "DEV3 모듈 독립 개발을 위한 원 소유·소비 경계"
     },
+    "main-preexisting-failures-20261030.md": {
+      "path": "evidence/main-preexisting-failures-20261030.md",
+      "role": "evidence",
+      "title": "main 기존 실패 디버깅: commit window native 초과와 F05 recovery oracle"
+    },
     "module-independence-survey-20261026.md": {
       "path": "evidence/module-independence-survey-20261026.md",
       "role": "evidence",
