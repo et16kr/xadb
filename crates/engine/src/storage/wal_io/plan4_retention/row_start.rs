@@ -98,9 +98,10 @@ impl<'c, 's> GroupPayload<'c, 's> for RowPayload<'_, 'c, 's> {
 
 /// One prepared Row group with its original targets and stamps. No
 /// Clone/Copy and no raw constructor: only `prepare_existing_row` (the
-/// lifecycle, `T` = `ROW_TARGETS`), `write::prepare_reserve` and
-/// `write::forward::prepare_forward_apply` (`T` = `ROW_WRITE_TARGETS`) build
-/// it, and the install body borrows it once. The default keeps the
+/// lifecycle, `T` = `ROW_TARGETS`), and `write::prepare_reserve`,
+/// `write::forward::prepare_forward_apply` and `write::cancel::prepare_cancel`
+/// (`T` = `ROW_WRITE_TARGETS`, the three operations `row_write` admits)
+/// build it, and the install body borrows it once. The default keeps the
 /// lifecycle's type, and so its census, unchanged.
 pub(in super::super) struct PreparedRowGroup<'i, 'c, 's, const T: usize = ROW_TARGETS> {
     payload: RowPayload<'i, 'c, 's>,
@@ -122,7 +123,8 @@ impl<'i, 'c, 's, const T: usize> PreparedRowGroup<'i, 'c, 's, T> {
         )
     }
     /// The supplied Row write operations over the whole write target set:
-    /// RowReserve (S2-b2), Forward (S2-c) and Cancel (S2-d).
+    /// RowReserve (S2-b2), Forward (S2-c) and Cancel (S2-d); any other Row
+    /// write group is refused by the install body.
     pub(super) fn row_write(&self) -> bool {
         matches!(
             self.payload.observation.operation,
