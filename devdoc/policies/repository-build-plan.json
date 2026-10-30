@@ -9247,5 +9247,27 @@
     "validation": "pre-census 4/4 PASS (native recovered 65376, live 64008, pending_full 65460; catalog_source memory/native 9792); admission ACCEPTED; N01 PASS 26.215 s, N02 PASS 16.868 s, N03 PASS 13.162 s; first attempt at 9c56a3a rejected before any run",
     "result_sha256": "74e862bae10e389c276bfef2068f74c5378155cdd06ce6ff2fddcedfd1e575c9",
     "source_roots_changed": false
+  },
+  "dev3_module_s2a_row_write_surface": {
+    "status": "LOCAL_VERIFIED_REVIEWED",
+    "evidence_ref": "module-independence-survey-20261026.md#s2a-row-write-surface",
+    "contract_ref": "dev3-module-boundaries.md#row-write-budget",
+    "baseline_commit": "9c56a3a",
+    "integration_base": "0d5f97c",
+    "branch": "claude/project-thread-h2j8oc",
+    "commits": [
+      "bbfec10",
+      "10097ae",
+      "8edf980",
+      "cf9d40c",
+      "dd9bd31"
+    ],
+    "source_branch": "module-s2a-surface 9aeff2a (dc3cec7 0c5f24a 64ffcaf 975a3da 9ab3dfb a9bb902 9aeff2a, folded per review A10)",
+    "rollback": "git revert dd9bd31 cf9d40c 8edf980 10097ae bbfec10 (10097ae only together with the A adaptation it carries)",
+    "scope": "S2-a: RowWrite operation class reserving CatalogProgressCharge through progress only; preflight_row flusher argument and RowPreflightStep; gate and RowIoLease fields; RowPreflightCut 56 B, RowDraftCut 96 B, RowPreparedCut 80 B; RowLoanLayout eight ranges and eighth RowProducerLane part; A adaptation with interim FlushRequired failure; RowWrite phase census and ROW_WRITE_CALLER_BYTES = 58; bodies remain Unsupported",
+    "validation": "independent review ACCEPT WITH REQUIRED CHANGES (1 required, 11 advisory, all handled); r5 at 9aeff2a 220 PASS 10 FAIL (all pre-existing), 7 new tests PASS, compiler inputs 17/17, workspace check and gate Clippy clean; integration round i1 at dd9bd31 17 selectors, catalog_source_memory/native now PASS, S2-a census output equal to r5, pre-existing failures unchanged; four intermediate commits check clean",
+    "remaining_supply": "Q06 second amendment (validate_live once per row, carrier counting, split caller bounds) under D2 before A-W1; then A-W1, S2-b1..S2-f; contract native numbers for S2W-C03/C04 and the S2W-N01 unit to be corrected in the next contract amendment",
+    "source_roots_changed": false,
+    "artifact_manifest_sha256": "fba0e9c0b4a03a45ae08a5bda30a19f92184f124ded2ad13ed2d3ad0d3c30676"
   }
 }

@@ -4351,3 +4351,55 @@ S1(S1-a~S1-g) 뒤의 다음 단계인 S2(C3 Row Reserve·Forward·Cancel)와 S5(
 - reviewer의 부차 지적: 계약의 66612 초과 문구(이 commit에서 dated 정정을 더함), `plan4_retention/tests.rs:180`이 File 160·owner 984를 옛 값으로 고정(기존 실패 `retention_source_native`의 일부), `old_common_delta == 0` 단언과 실제 512, `pending_two_resident` 66650은 출력만 하고 단언하지 않음(계약상 Full 하나와만 겹침), 여유 76/84/160B가 얇음, census runner가 build 뒤에 작성됨(hash로 고정).
 
 이로써 U2-C4 전환의 CR1(Catalog native)이 끝났다. F05와 P4-REC 시험은 [CR1 범위 변경](#native-adapter-file-cr1-scope)대로 Profile1 이관 전 시험으로 남는다.
+
+<a id="s2a-row-write-surface"></a>
+## 2026-10-30 S2-a Row 쓰기 최종 표면·A 적응·RowWrite 단계 census
+
+[S2-0 Row 쓰기 개정](#s2-0-q06-amendment)의 첫 공급 단위다. C의 Row 쓰기 표면을 최종 배치로 바꾸고, 계약이 한 commit으로 묶은 A의 적응을 함께 넣고, RowWrite 단계별 census로 A 호출 지점 몫의 상한 `ROW_WRITE_CALLER_BYTES`를 정했다. 본문은 그대로 Unsupported이며 effect·WAL·page 변화는 없다. 별도 worktree(branch `module-s2a-surface`, base `9c56a3a`, 최종 `9aeff2a`)에서 만든 뒤 이 branch에 다섯 commit으로 다시 쌓았다.
+
+| 이 branch | 원 commit | 내용 |
+| --- | --- | --- |
+| `bbfec10` | `dc3cec7` | `OperationClass::RowWrite`가 split 때의 `CatalogProgressCharge`(44304B)를 progress 입구로만 예약한다. port·session field는 없다. 시험 S2A-T01 |
+| `10097ae` | `0c5f24a` + `9ab3dfb`의 A 쪽 allow | `preflight_row`가 flusher를 받고 `RowPreflightStep{Ready, FlushRequired{target}}`를 반환한다. `PreflightRow`·`ReservedRow`의 source 뒤 gate·lease field, Drop 없는 `RowIoLease`, cut 셋(56/96/80B), `RowLoanLayout` 여덟 구간과 `RowProducerLane` 8번째 part. A 적응(8-tuple, `PreflightNext`, flusher 전달, A-W1 전까지 `FlushRequired`는 보유 자원 없이 `Failure(Stage::Preflight)`, 시험 S2A-T02). compiler 입력 MBC00-P01/P02/P05/P06/N10 갱신과 새 S2W-N01 |
+| `8edf980` | `64ffcaf` + `975a3da` + `9ab3dfb`의 W 제거 | `ROW_WRITE_CALLER_BYTES`·`row_write_charge`, `row_group_terms<N>`, `row_write_phases`, 시험 S2W-C01..C05 |
+| `cf9d40c` | `a9bb902` | 검토 R1·A1·A2·A3·A5 |
+| `dd9bd31` | `9aeff2a` | 검토 A6·A7·A8·A9·A11 |
+
+**RowWrite 단계 상계(memory = native).** `RowWriteBodies`는 effect 본문 전에 기존 census 항을 쓰기 target 집합 전체(N=9)로 접은 분석 상계이며 측정값이 아니다. 계산은 Row 쓰기 census와 시험만 부르는 `row_write_bodies::<W>()`에 있고, split 경로의 `catalog_live_source_bytes`·`CatalogLiveSource`·peak·모든 charge는 바뀌지 않는다(검토 A1).
+
+| 단계 | C 본문 | carriers | charge 44304 대비 여유 |
+| ---: | ---: | ---: | ---: |
+| preflight | 36182 | 560 | 7562 |
+| validation_lane | 5362 | 744 | 38198 |
+| reserve | 42878 | 1208 | 218 |
+| producer_lane | 7778 | 3256 | 33270 |
+| prepare(Forward) | 42878 | 1368 | **58** |
+| apply | 34984 | 1544 | 7776 |
+| cancel | 42878 | 1248 | 178 |
+| finish | 1146 | 512 | 42646 |
+
+- 지배 항은 reserve·prepare·cancel이 다시 여는 Row group 준비의 `validate_live` history peak 29124B와 준비 sub-phase에 더한 group carrier 7328B다.
+- `ROW_WRITE_CALLER_BYTES = 58`이다. S2W-C01/C02는 두 W의 모든 단계에서 `본문 + carriers + 58 ≤ charge`와 `58 ≤ 최소 여유`를 단언한다(검토 R1, 상수를 59로 바꾸면 C01이 실패함을 개발 build에서 확인).
+- **Q06.** 58B는 계약이 예고한 약 4.2KB와 A driver의 측정 몫(D12 `live_insert` 11355B)보다 훨씬 작다. 따라서 A-W1의 MCA00-D15(b)는 C 본문이 줄기 전에는 통과할 수 없다. cap·charge·항은 바꾸지 않았다. 다음 Q06 기록(행당 `validate_live` 한 번으로 C 본문 축소, group carrier 계수 정정, preflight·나머지 호출 몫 분리)은 설계 r2가 독립 D2 검토 중이며, 계약에 반영되기 전에는 A-W1을 시작하지 않는다.
+
+**뒤 단위가 지킬 구속.** apply의 stage 직전 재검산은 draft commitment와 prepared frame/after digest만으로 한다(S2-d). `group_prepare`를 다시 돌면 apply가 44422B로 charge를 넘는다(검토 A2). `validation_lane`은 cut에 scalar로 없는 Catalog source stamp·schema cell·leaf 기대값·index 수를 자기 gate 아래에서 다시 읽고 `source` commitment로 검증해야 하며, 일부를 cut scalar로 둘지는 A-W1이 재기 전에 S2-b가 정한다(검토 A7). 두 구속은 `RowWriteBodies`와 `RowPreflightCut` 문서에도 있다.
+
+**독립 검토.** 읽기 전용 검토자 1회, ACCEPT WITH REQUIRED CHANGES(필수 1·권고 11). R1(C01/C02가 단계별 ≤ charge를 단언하지 않고 `64ffcaf`에서 native 초과를 상수 0으로 접어 통과함)과 A1·A3·A5·A6·A8·A9·A11은 코드·문서로, A2·A4·A7은 기록으로 반영했다. A10(공동 commit의 Clippy hunk와 낡은 native 단언을 접고 Q12를 S2-a 앞에 둠)은 이 통합에서 처리했다. 계약 :1333의 "A 검토 서명"은 검토의 A sign-off 절이 공동 commit을 Acceptable로 판정한 것으로 기록한다. A 쪽 담당자가 따로 없는 이 branch에서는 독립 검토자가 A 쪽 diff를 읽은 것이 그 서명이다.
+
+**실행.** 방식은 S1-e와 같다(build 전 manifest 동결, `git archive` export build, selector마다 timeout 30초로 한 번, identity env).
+
+| 판 | rev | 결과 |
+| --- | --- | --- |
+| r0 | `43e8abd`(`9c56a3a` + `94ede44`의 시험 파일, branch 밖) | 211 PASS, 12 FAIL(기존) |
+| r3 | `f6b6897`(검토 전) | 218 PASS, 12 FAIL(같은 12건), Clippy 0 |
+| r4 | `9aeff2a` | container 재시작으로 selector 134번째에서 끊김. 로그는 보존하고 판정에 쓰지 않음 |
+| r5 | `9aeff2a` | 220 PASS, 10 FAIL. 실패는 모두 기존 12건에 들고 rc가 같다. 나머지 2건(`completed_catalog_capsules_recover_in_current_build`, `shared_create_outputs_recover_in_current_build`)은 30초 경계에서 통과했고, r0 rev를 다시 build한 대조 round에서도 통과해 S2-a와 무관하다. 새·바뀐 시험 7건 PASS, compiler 입력 17/17 PASS, workspace check·gate Clippy 0 |
+| i1 | `dd9bd31`(이 branch) | 17 selector. `catalog_source_memory`·`native`가 Q12와 만나 처음 PASS. S2W-C01..C05, S2A-T01/T02, Debug 줄 비교 시험 4건의 출력은 r5와 같다. 기존 실패 4건(`retention_source_*`, `runtime_core_source_*`)은 identity 줄 외에 r5와 같다 |
+
+- 통합 tree의 `crates/`·`tests/`는 `9aeff2a`와 Q12 한 줄(`catalog_source_tests.rs:60`)만 다르다. 그래서 compiler 입력과 나머지 selector는 r5 결과를 그대로 쓴다.
+- i1 rev에서 engine check 경고 0, pre-push gate Clippy 명령 rc0·오류 0, 바뀐 .rs rustfmt check, `git diff --check 0d5f97c..dd9bd31`이 통과했다. 중간 commit 넷(`bbfec10`·`10097ae`·`8edf980`·`cf9d40c`)도 각각 check 경고 0이다.
+- r0→r5에서 바뀐 출력은 D12 하나다(`live_insert` 9955 → 11355, `live_clr` 7184 → 8224, bound 12288 이하).
+
+**열린 문제.** 계약의 S2W-C03 "43113"과 S2W-C04 "64136/65504"는 adapter 정정 전 native 값이며 지금은 42089와 64008/65376이다. S2W-N01은 계약 표에 단위가 없어 S2-a의 C0 manifest에 더했다. 둘 다 다음 계약 개정 때 고친다.
+
+**되돌림.** 최신부터 되돌린다. 공동 commit `10097ae`는 A 적응과 함께만 되돌린다(계약 :1465). artifact는 `module-independence-20261029/artifacts/module-s2a-20261030/`(검토서, 증거 원문, round별 로그, 도구, `manifest-all.sha256` SHA-256 `fba0e9c0b4a03a45ae08a5bda30a19f92184f124ded2ad13ed2d3ad0d3c30676`)에 있다.

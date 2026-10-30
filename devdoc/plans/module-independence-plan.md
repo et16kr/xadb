@@ -1,5 +1,7 @@
 # XADB 모듈 독립 개발 구조 전환 작업 계획
 
+2026-10-30 [S2-a Row 쓰기 최종 표면](../evidence/module-independence-survey-20261026.md#s2a-row-write-surface): RowWrite class, preflight step·gate·lease·cut·8번째 lane part와 A 적응을 넣었다(본문은 Unsupported). 단계 census로 `ROW_WRITE_CALLER_BYTES`가 58B로 정해졌고, A-W1 전에 C 본문을 줄이는 Q06 2차 개정이 필요하다.
+
 2026-10-30 [CR1 Catalog native 로컬 실행](../evidence/module-independence-survey-20261026.md#cr1-catalog-native-r2): 사용자 PC에서 `2bc18d1`로 사전 census 4건 PASS, 독립 admission ACCEPTED 뒤 Catalog native N01·N02·N03이 모두 PASS했다. U2-C4 전환의 로컬 요구가 끝났다.
 
 2026-10-30 [branch Clippy 정리](../evidence/module-independence-survey-20261026.md#branch-clippy-20261030): pre-push gate의 Clippy 31건을 사유를 단 allow와 동작이 같은 작은 수정으로 정리했다(`dd81d85`). 이후 단위는 round마다 Clippy도 돌린다.

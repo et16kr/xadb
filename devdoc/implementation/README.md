@@ -1,5 +1,7 @@
 # 현재 구현
 
+2026-10-30 [S2-a Row 쓰기 최종 표면](../evidence/module-independence-survey-20261026.md#s2a-row-write-surface): Row 쓰기의 최종 서명과 lane 배치가 들어갔다. 동작은 아직 Unsupported다.
+
 2026-10-30 [CR1 Catalog native 로컬 실행](../evidence/module-independence-survey-20261026.md#cr1-catalog-native-r2): 현재 형식의 Catalog CREATE 장애·복구·재진입 native 시험 N01–N03이 사용자 PC에서 통과했다.
 
 2026-10-30 [branch Clippy 정리](../evidence/module-independence-survey-20261026.md#branch-clippy-20261030): branch가 저장소 pre-push gate(fmt·Clippy·문서)를 통과한다.
