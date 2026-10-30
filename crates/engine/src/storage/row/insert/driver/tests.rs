@@ -231,6 +231,8 @@ struct State {
     inputs: Vec<String>,
     proposals: Vec<String>,
     deepest: usize,
+    /// The deepest stack address seen inside the preflight stand-in.
+    at_preflight: usize,
     /// Dirty victims, as (RowId the preflight is for, target): a preflight
     /// for that row answers FlushRequired once per entry, in order.
     flushes: Vec<(u64, u64)>,
@@ -278,6 +280,7 @@ fn state(chain: &[(u64, usize)], faults: &[(Call, Fault)]) -> RefCell<State> {
         inputs: Vec::new(),
         proposals: Vec::new(),
         deepest: usize::MAX,
+        at_preflight: usize::MAX,
         flushes: Vec::new(),
         dirty: None,
         waiting: 0,
@@ -338,6 +341,7 @@ impl<'s> Boundary for LiteralCall<'s> {
     ) -> Result<PreflightNext<LiteralPreflight<'r, 'i>, u64>, RetentionError> {
         let mut state = self.state.borrow_mut();
         let fault = state.note(Call::Preflight);
+        state.at_preflight = state.at_preflight.min(probe());
         // C refuses a flusher that is not Ready before anything else.
         if state.waiting > 0 {
             state.violations.push("preflight with a flusher not Ready");
@@ -2262,13 +2266,15 @@ fn mca00_d11_commit_and_full_abort_close_the_transaction() {
 }
 
 /// Machine stack below the test frame down to the producer stand-in, for the
-/// INSERT path and for the CLR path of the caller's statement rollback. It
-/// covers the stand-in instantiation in this unoptimized test build only.
-fn measured() -> (usize, usize) {
+/// INSERT path and for the CLR path of the caller's statement rollback, and
+/// down to the preflight stand-in on the INSERT path. It covers the stand-in
+/// instantiation in this unoptimized test build only.
+fn measured() -> (usize, usize, usize) {
     let state = self::state(&[], &[]);
     let top = probe();
     run(&state, &[&V1], &mut [None], &mut loan()).unwrap();
     let insert = top - state.borrow().deepest;
+    let preflight = top - state.borrow().at_preflight;
     let state = self::state(&[], &[]);
     let mut loan = loan();
     let view = after_failed_row(&state, &mut loan);
@@ -2276,7 +2282,7 @@ fn measured() -> (usize, usize) {
     let top = probe();
     assert_eq!(roll_back_statement(&state, view, &mut loan), 1);
     let clr = top - state.borrow().deepest;
-    (insert, clr)
+    (insert, clr, preflight)
 }
 
 /// The driver's source inventory, for the live C0 types and the stand-ins,
@@ -2292,14 +2298,14 @@ fn mca00_d12_driver_frames_stay_within_the_driver_source_bound() {
         live::live_carrier_bytes::<platform::namespace::LinuxWriterLease>();
     let (stand_insert, stand_clr) = carrier_bytes::<LiteralCall<'static>>();
     let (validation, producer) = super::super::local_source_carrier_bytes();
-    let (machine_insert, machine_clr) = measured();
+    let (machine_insert, machine_clr, machine_preflight) = measured();
     let deepest_a = validation.max(producer);
     println!(
         "MCA00_D12 bound={DRIVER_SOURCE_BYTES} cap={SHORT_SOURCE_CAP} live_insert={live_insert} \
          live_clr={live_clr} stand_insert={stand_insert} stand_clr={stand_clr} \
          a_validation={validation} a_producer={producer} \
          live_plus_a={} bound_plus_a={} machine_debug_insert={machine_insert} \
-         machine_debug_clr={machine_clr}",
+         machine_debug_clr={machine_clr} machine_debug_preflight={machine_preflight}",
         live_clr.max(live_insert) + deepest_a,
         DRIVER_SOURCE_BYTES + deepest_a,
     );
@@ -2321,7 +2327,7 @@ fn mca00_d12_driver_frames_stay_within_the_driver_source_bound() {
     // A's validation and producer are never on the stack together.
     assert!(DRIVER_SOURCE_BYTES + deepest_a <= SHORT_SOURCE_CAP);
     // Both paths reached the producer stand-in.
-    assert!(machine_insert > 0 && machine_clr > 0);
+    assert!(machine_insert > 0 && machine_clr > 0 && machine_preflight > 0);
 }
 
 /// MCA00-D15 for one writer W over the live C0 types: A's share at each call
@@ -2329,11 +2335,16 @@ fn mca00_d12_driver_frames_stay_within_the_driver_source_bound() {
 /// (the share at the producer call plus A's producer) within the RowWrite
 /// charge, with its margin. The CLR producer phase (the same producer under
 /// the caller's rollback) and the validation phase are printed for S4 and
-/// are not asserted here. At the preflight and its flush the frame-static
-/// share (with insert_row's slots for its later steps) is printed as well.
-/// S2-e adds the term of `insert_live`'s caller (`caller_bytes`, A-W1 review
-/// A3) at every `insert.*` site: the share with it is asserted within the
-/// same bounds and the frame-static reading with it is printed. These are
+/// are not asserted here. The frame-static share (`CallSite::dead`: every
+/// own slot of the driver frames on the path, laid out for the frame's whole
+/// body) is printed at every site and bounded at every site the share is,
+/// except the sites `FRAME_STATIC_OPEN` lists, which are printed only. S2-e
+/// adds the term of `insert_live`'s caller (`caller_bytes`, A-W1 review A3)
+/// at every `insert.*` site: the share with it is bounded the same way, and
+/// so is the frame-static share with it, except at the sites
+/// `FRAME_STATIC_OPEN_WITH_CALLER` lists. The per-call share is the
+/// contract's oracle (M3); the frame-static share is a second, separate
+/// assertion, the coordinator's reading of D15, stricter than M3. These are
 /// size_of inventories, not stack proofs.
 fn call_site_census<W: WriterNamespace + 'static>(writer: &str) {
     let charge = row_write_charge::<W>();
@@ -2370,7 +2381,10 @@ fn call_site_census<W: WriterNamespace + 'static>(writer: &str) {
         Bound::A if site.name == "insert.validate" => (charge, validation),
         Bound::A => (charge, producer),
     };
+    // The A stages bounded here: the Forward producer phase only.
+    let checked = |site: &CallSite| site.bound != Bound::A || site.name == "insert.forward";
     let mut over = Vec::new();
+    let mut frame_over = Vec::new();
     for site in sites {
         let (bound, body) = limit(&site);
         let total = site.bytes + body;
@@ -2380,66 +2394,95 @@ fn call_site_census<W: WriterNamespace + 'static>(writer: &str) {
              bound={bound} margin={margin}",
             site.name, site.bound, site.bytes,
         );
-        // Before the row's preflight returned Ready, the frame-static
-        // reading also counts insert_row's slots for its later steps. It is
-        // printed beside the per-call share, which alone is asserted (M3).
-        if site.later > 0 {
-            let frame_static = site.bytes + site.later;
-            println!(
-                "MCA00_D15 writer={writer} site={} frame_static={frame_static} later={} \
-                 bound={bound} frame_static_margin={}",
-                site.name,
-                site.later,
-                bound as i64 - frame_static as i64,
-            );
-        }
-        let checked = site.bound != Bound::A || site.name == "insert.forward";
-        if checked && margin < 0 {
+        let frame_static = total + site.dead;
+        let frame_margin = bound as i64 - frame_static as i64;
+        let open = FRAME_STATIC_OPEN.contains(&site.name);
+        println!(
+            "MCA00_D15 writer={writer} site={} frame_static={frame_static} dead={} bound={bound} \
+             frame_static_margin={frame_margin} frame_static_open={open}",
+            site.name, site.dead,
+        );
+        if checked(&site) && margin < 0 {
             over.push(site.name);
+        }
+        if checked(&site) && !open && frame_margin < 0 {
+            frame_over.push(site.name);
         }
     }
     // A-W1 review A3 (S2-e): `insert_live`'s caller holds its values below
-    // every `insert.*` site. Its term is added to the per-call share, which
-    // is asserted (M3), and to the frame-static reading, which is printed.
+    // every `insert.*` site. Its term is added to both readings.
     let (caller, per_row) = live::live_caller_bytes::<W>(CALLER_ROWS, CALLER_VALUES);
     println!(
         "MCA00_D15 writer={writer} caller={caller} rows={CALLER_ROWS} values={CALLER_VALUES} \
          per_row={per_row}"
     );
     let mut over_with_caller = Vec::new();
+    let mut frame_over_with_caller = Vec::new();
     for site in sites.iter().filter(|site| site.name.starts_with("insert.")) {
         let (bound, body) = limit(site);
         let total = site.bytes + body + caller;
         let margin = bound as i64 - total as i64;
-        print!(
-            "MCA00_D15 writer={writer} site={} with_caller={total} bound={bound} margin={margin}",
+        let frame_static = total + site.dead;
+        let frame_margin = bound as i64 - frame_static as i64;
+        let open = FRAME_STATIC_OPEN_WITH_CALLER.contains(&site.name);
+        println!(
+            "MCA00_D15 writer={writer} site={} with_caller={total} bound={bound} margin={margin} \
+             frame_static_with_caller={frame_static} frame_static_margin={frame_margin} \
+             frame_static_open={open}",
             site.name,
         );
-        if site.later > 0 {
-            let frame_static = site.bytes + site.later + caller;
-            print!(
-                " frame_static_with_caller={frame_static} frame_static_margin={}",
-                bound as i64 - frame_static as i64,
-            );
-        }
-        println!();
-        let checked = site.bound != Bound::A || site.name == "insert.forward";
-        if checked && margin < 0 {
+        if checked(site) && margin < 0 {
             over_with_caller.push(site.name);
         }
+        if checked(site) && !open && frame_margin < 0 {
+            frame_over_with_caller.push(site.name);
+        }
     }
-    let before_ready = sites.iter().filter(|site| site.later > 0).count();
-    assert_eq!(before_ready, 3);
     let names: std::collections::BTreeSet<_> = sites.iter().map(|site| site.name).collect();
     assert_eq!(names.len(), CALL_SITES);
+    assert!(
+        FRAME_STATIC_OPEN
+            .iter()
+            .chain(&FRAME_STATIC_OPEN_WITH_CALLER)
+            .all(|name| names.contains(name))
+    );
     let bound = |bound| sites.iter().filter(|site| site.bound == bound).count();
     assert_eq!((bound(Bound::Preflight), bound(Bound::A)), (1, 3));
+    // The contract's oracle: the per-call share (M3).
     assert!(over.is_empty(), "{writer}: over the bound at {over:?}");
     assert!(
         over_with_caller.is_empty(),
         "{writer}: over the bound with the caller at {over_with_caller:?}"
     );
+    // The coordinator's reading: the frame-static share.
+    assert!(
+        frame_over.is_empty(),
+        "{writer}: frame-static share over the bound at {frame_over:?}"
+    );
+    assert!(
+        frame_over_with_caller.is_empty(),
+        "{writer}: frame-static share over the bound with the caller at \
+         {frame_over_with_caller:?}"
+    );
 }
+
+/// The sites whose frame-static share is over its bound, printed and not
+/// asserted (S2-e; the coordinator decides their remedy): at each C call
+/// made under `write_row`, its frame holds the slots of all its steps (the
+/// producer lane's result among them), with insert_statement's and
+/// insert_row's below it. The preflight and its flush are not among them.
+const FRAME_STATIC_OPEN: [&str; 2] = ["insert.producer_lane", "insert.cancel"];
+/// ... and with `insert_live`'s caller: every C call `write_row` makes.
+const FRAME_STATIC_OPEN_WITH_CALLER: [&str; 8] = [
+    "insert.validation_lane",
+    "insert.reserve",
+    "insert.finish_preflight",
+    "insert.producer_lane",
+    "insert.prepare",
+    "insert.apply",
+    "insert.reopen",
+    "insert.cancel",
+];
 
 /// The statement the S2-e callers of `insert_live` pass at most
 /// (`catalog_memory::row_live`): two rows of T's one value.

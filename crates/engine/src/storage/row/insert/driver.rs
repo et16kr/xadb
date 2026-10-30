@@ -516,6 +516,7 @@ fn insert_statement<B: Boundary>(
 /// preflight (`flush`); a Ready preflight leaves no flush step in the row.
 /// The steps after a Ready preflight run in `write_row`'s own frame, so the
 /// frame live at the preflight and its flush holds none of their slots.
+#[inline(never)]
 #[allow(
     clippy::result_large_err,
     reason = "Failure keeps the stage, the error and any refused cleanup inline, without allocation"
@@ -616,6 +617,7 @@ fn write_row<P: Preflight>(
 /// next one, so the thread the flush waits on can run. A refusal ends
 /// the row with nothing held; the flusher stays in the phase C left it in,
 /// and its next preflight answers Busy until the caller continues the flush.
+#[inline(never)]
 #[allow(
     clippy::result_large_err,
     reason = "Failure keeps the stage, the error and any refused cleanup inline, without allocation"
@@ -637,6 +639,7 @@ fn flush<B: Boundary>(call: &mut B, target: &B::Target) -> Result<(), Failure> {
 /// Explicit no-effect release before the first Reserve. After a
 /// CallerMustResolve answer no further C call is made; the preflight is
 /// dropped, which C documents as the same no-effect release.
+#[inline(never)]
 fn finish_preflight<P: Preflight>(preflight: P, failure: Failure) -> Failure {
     if failure.must_resolve {
         drop(preflight);
@@ -652,6 +655,7 @@ fn finish_preflight<P: Preflight>(preflight: P, failure: Failure) -> Failure {
 /// CallerMustResolve failure no Cancel effect is attempted. A reservation C
 /// refuses to cancel is dropped into C's fence and reported as must-resolve;
 /// Drop never stands in for a successful Cancel.
+#[inline(never)]
 fn cancel<R: Reserved>(reserved: R, failure: Failure) -> Failure {
     if failure.must_resolve {
         drop(reserved);
@@ -671,6 +675,7 @@ fn cancel<R: Reserved>(reserved: R, failure: Failure) -> Failure {
 /// finished (`PendingRollback::rolled_back`); a `RollbackRequired` statement
 /// cannot reach it otherwise. A refusal hands it back `FinishPending`: the
 /// retry is this call alone, never another rollback.
+#[inline(never)]
 #[allow(
     clippy::result_large_err,
     reason = "Failure keeps the stage, the error and any refused cleanup inline, without allocation"
@@ -796,6 +801,7 @@ fn retry_task<T: RollbackTask>(task: T) -> Result<(), RollbackStop<T, Infallible
 }
 
 /// One CLR for the head C selected.
+#[inline(never)]
 fn compensate<T: RollbackTask, F>(mut task: T) -> Result<(), RollbackStop<T, F>> {
     let proposal = match task.producer_lane() {
         Ok(lane) => lane
@@ -1019,37 +1025,33 @@ pub(super) enum Bound {
 }
 
 /// A's share at one call site of the driver (S2-0 Row write amendment §4
-/// M3, S2-0b decision 3).
+/// M3, S2-0b decision 3), with the frame-static share there.
 #[derive(Clone, Copy, Debug)]
 pub(super) struct CallSite {
     pub(super) name: &'static str,
     pub(super) bound: Bound,
     pub(super) bytes: usize,
-    /// For a call made before the row's preflight returned Ready (preflight
-    /// and its flush): the peak of insert_row's own slots for the later
-    /// steps. They hold no value yet, so `bytes` leaves them out (M3), but a
-    /// frame is laid out on entry, so `bytes + later` is the frame-static
-    /// share there. Zero elsewhere.
-    pub(super) later: usize,
+    /// The own slots of the driver's frames on the path that are laid out
+    /// but hold no value at this call. `bytes` leaves them out (M3), but a
+    /// frame is laid out on entry, so `bytes + dead` is the frame-static
+    /// share there.
+    pub(super) dead: usize,
 }
 
 impl CallSite {
-    const fn new(name: &'static str, bound: Bound, bytes: usize) -> Self {
+    /// `frame` is the frame-static share, which holds the per-call share.
+    const fn new(name: &'static str, bound: Bound, bytes: usize, frame: usize) -> Self {
+        assert!(
+            frame >= bytes,
+            "a frame-static share below the per-call share"
+        );
         Self {
             name,
             bound,
             bytes,
-            later: 0,
+            dead: frame - bytes,
         }
     }
-
-    const fn before_ready(self, later: usize) -> Self {
-        Self { later, ..self }
-    }
-}
-
-const fn larger(a: usize, b: usize) -> usize {
-    if a > b { a } else { b }
 }
 
 pub(super) const CALL_SITES: usize = 26;
@@ -1072,10 +1074,37 @@ pub(super) const CALL_SITES: usize = 26;
 /// transaction, the pending statement and the loan, then the rollback. As in
 /// `carrier_bytes`, what the driver's own caller keeps by value (the
 /// transaction capsule, a pending handle) is outside the driver's frames
-/// and not counted; that caller is not supplied yet. At the calls before the
-/// row's preflight returned Ready, `CallSite::later` adds the frame-static
-/// reading: insert_row's slots for its later steps are already laid out in
-/// its frame there. MCA00-D15 prints both and bounds the per-call share.
+/// and not counted here; `caller_bytes` is that term for `insert_live`'s
+/// caller.
+///
+/// The frame-static share (`CallSite::dead`, A-W1 review A2; S2-e) adds the
+/// slots that are dead at the call. A frame is laid out on entry, so every
+/// driver frame on the path holds all its own slots there: as C's census
+/// does, a function's own slots count for its whole body, and only callee
+/// frames are max-combined, here by counting just the frames on the path to
+/// the call. A frame's own slots are its reference and slice arguments,
+/// each `let` binding, and its slot for each call's result (C's, through the
+/// forwarding frame, or another driver frame's, `map_err` and `map`
+/// included) unless the call is its tail and writes its own result. A value
+/// it takes by value counts once, in its caller, where it is; a value a
+/// match arm moves out of a result stays in that result's slot; a value
+/// built in place (a Failure, a handle, a `DriveError`) counts where it is
+/// put: a binding, a call's argument, or the frame's result, which its
+/// caller counts. The frame-static share at a call is the slack, those
+/// frames' slots, and the forwarding frame's arguments and return.
+///
+/// It relies on which frames are separate: `insert_row`, `write_row`,
+/// `flush`, `finish_preflight`, `cancel`, `finish_statement` and
+/// `compensate` are never inlined, so none of their slots is laid out in
+/// their caller's frame (none of `write_row`'s is on the stack at the
+/// preflight and its flush). A frame that may be inlined holds nothing of
+/// its own but its arguments and result, which are counted where they are
+/// (`insert_live` and the other forwards to the driver, the live.rs forwards
+/// to C, `StartedRollback`'s `next`, `held`, the constructors), or holds
+/// only references and scalars within the slack (`check_arguments`).
+/// MCA00-D15 bounds the per-call share (the contract's reading) and the
+/// frame-static share (a coordinator decision on D15's reading, stricter
+/// than M3).
 const fn call_sites<B: Boundary + 'static>() -> [CallSite; CALL_SITES] {
     use std::{
         iter::Zip,
@@ -1102,6 +1131,7 @@ const fn call_sites<B: Boundary + 'static>() -> [CallSite; CALL_SITES] {
     type Values = &'static [ValueRef<'static>];
     let r = size_of::<&()>();
     let slack = 32 * r + 16 * size_of::<Result<(), RetentionError>>() + 512;
+    let failure = size_of::<Failure>();
     use CallSite as Site;
 
     // insert_statement: its arguments and its own result.
@@ -1113,150 +1143,243 @@ const fn call_sites<B: Boundary + 'static>() -> [CallSite; CALL_SITES] {
         + size_of::<&mut [Option<A<B>>]>()
         + size_of::<S<B>>()
         + size_of::<Result<usize, DriveError<S<B>>>>();
-    // ... while insert_row runs: the loop state, the row's result slot and
-    // insert_row's arguments.
-    let row = statement
-        + size_of::<Option<Failure>>()
+    // ... while insert_row runs: the loop state and the row's result slot,
+    // and insert_row's arguments.
+    let rows_state = size_of::<Option<Failure>>()
         + size_of::<usize>()
         + size_of::<Zip<Iter<'static, Values>, IterMut<'static, Option<A<B>>>>>()
         + size_of::<&Values>()
         + size_of::<&mut Option<A<B>>>()
-        + size_of::<Result<A<B>, Failure>>()
-        + 4 * r
-        + size_of::<Values>();
-    // insert_row's own slots at each step after a Ready preflight: the
-    // wrappers it holds, values moved into a call (by-value arguments stay in
-    // the caller's frame) and the driver's slot for the call's result. Their
-    // peak is already in the frame at the preflight and its flush.
-    let later = larger(
-        larger(
-            larger(
-                size_of::<P<B>>() + size_of::<Result<V<B>, RetentionError>>(),
-                size_of::<P<B>>()
-                    + size_of::<V<B>>()
-                    + size_of::<Result<RowInputPlan, InsertError>>(),
-            ),
-            larger(
-                size_of::<P<B>>()
-                    + size_of::<RowInputPlan>()
-                    + size_of::<Result<R<B>, RowOwnedError<P<B>>>>(),
-                size_of::<P<B>>() + 2 * size_of::<Failure>(),
-            ),
-        ),
-        larger(
-            larger(
-                larger(
-                    size_of::<R<B>>() + size_of::<Result<L<B>, RetentionError>>(),
-                    size_of::<R<B>>()
-                        + size_of::<L<B>>()
-                        + size_of::<Result<RowProposal, InsertError>>(),
-                ),
-                larger(
-                    size_of::<R<B>>()
-                        + size_of::<RowProposal>()
-                        + size_of::<Result<D<B>, RowOwnedError<R<B>>>>(),
-                    size_of::<D<B>>() + size_of::<Result<A<B>, RowOwnedError<D<B>>>>(),
-                ),
-            ),
-            larger(
-                size_of::<D<B>>() + size_of::<RetentionError>() + size_of::<R<B>>(),
-                size_of::<R<B>>() + 2 * size_of::<Failure>(),
-            ),
-        ),
-    );
-    // `flush`: the target insert_row holds, flush's arguments and result.
+        + size_of::<Result<A<B>, Failure>>();
+    let row_arguments = 4 * r + size_of::<Values>();
+    let row = statement + rows_state + row_arguments;
+    // ... and, after a Ready preflight, write_row's values (the preflight it
+    // takes by value stays in insert_row's frame and counts there).
+    let writing = row + size_of::<Values>();
+    // `flush`: the target insert_row holds, flush's arguments and its result
+    // slot in insert_row.
     let flushing = row + size_of::<G<B>>() + 2 * r + size_of::<Result<(), Failure>>();
     // The caller's held rollback path.
     let held = slack + 4 * r;
     let stepping =
         held + size_of::<K<B>>() + size_of::<Result<Stepped, RollbackStop<T<B>, F<B>>>>() + r;
     let compensating = stepping + size_of::<Result<(), RollbackStop<T<B>, F<B>>>>();
+
+    // The frames' own slots for the frame-static share.
+    // insert_statement: its arguments and result; the checks' results and
+    // the Failure each refusal binds; the rows' loop state and the row's
+    // result; finish_statement's result (moved into `map`); the Failure the
+    // end binds out of `failed` and its handle.
+    let statement_frame = statement - slack
+        + size_of::<Result<(), RetentionError>>()
+        + size_of::<Result<(), InsertError>>()
+        + rows_state
+        + size_of::<Result<(), DriveError<S<B>>>>()
+        + 3 * failure
+        + size_of::<After<S<B>>>();
+    // insert_row: its arguments; C's preflight answer; the Ready preflight
+    // and the flush target it takes out of the answer, which is dropped at
+    // the end of its statement; flush's result. write_row's result is its
+    // own (a tail call), and a refused preflight's Failure is built in it.
+    let row_frame = row_arguments
+        + size_of::<Result<PreflightNext<P<B>, G<B>>, RetentionError>>()
+        + size_of::<P<B>>()
+        + size_of::<G<B>>()
+        + size_of::<Result<(), Failure>>();
+    // flush: its arguments; try_flush's and continue_flush's results and
+    // their `map_err` results; the step.
+    let flush_frame = 2 * r
+        + size_of::<Result<(), RetentionError>>()
+        + size_of::<Result<(), Failure>>()
+        + size_of::<Result<FlushStep, RetentionError>>()
+        + size_of::<Result<FlushStep, Failure>>()
+        + size_of::<FlushStep>();
+    // write_row: its values; the results of validation_lane, validate, the
+    // Reserve, producer_lane, Forward, prepare, apply and reopen; the input
+    // as `map_err` left it and the plan; the reservation; the proposal as
+    // `map_err` left it and the proposal; the prepared row; the results of
+    // the two finishes and three Cancels; the refused Reserve's Failure and
+    // the Failures a refused prepare or apply passes to `cancel`.
+    let write_frame = size_of::<Values>()
+        + size_of::<Result<V<B>, RetentionError>>()
+        + size_of::<Result<RowInputPlan, InsertError>>()
+        + size_of::<Result<RowInputPlan, Failure>>()
+        + size_of::<RowInputPlan>()
+        + size_of::<Result<R<B>, RowOwnedError<P<B>>>>()
+        + size_of::<R<B>>()
+        + size_of::<Result<L<B>, RetentionError>>()
+        + size_of::<Result<RowProposal, InsertError>>()
+        + size_of::<Result<RowProposal, Failure>>()
+        + size_of::<RowProposal>()
+        + size_of::<Result<D<B>, RowOwnedError<R<B>>>>()
+        + size_of::<D<B>>()
+        + size_of::<Result<A<B>, RowOwnedError<D<B>>>>()
+        + size_of::<R<B>>()
+        + 8 * failure;
+    // finish_preflight, cancel: C's answer (their arguments are counted in
+    // write_row, where they are). finish_statement: its call and C's answer.
+    let finish_preflight_frame = size_of::<Result<(), RetentionError>>();
+    let cancel_frame = size_of::<Result<(), RowOwnedError<R<B>>>>();
+    let finish_statement_frame = r + size_of::<Result<(), StatementFinishError<S<B>>>>();
+    // The frames below each kind of insert call.
+    let in_statement = slack + statement_frame;
+    let in_row = in_statement + row_frame;
+    let in_flush = in_row + flush_frame;
+    let in_write = in_row + write_frame;
+    // rollback_step's slots beside its share: the task it binds out of C's
+    // answer and compensate's result while `next` runs, C's answer while
+    // compensate runs.
+    let next_dead = size_of::<T<B>>() + size_of::<Result<(), RollbackStop<T<B>, F<B>>>>();
+    let step_dead = size_of::<Result<RollbackNext<T<B>, F<B>>, RetentionError>>();
+    // compensate: the results of producer_lane, the CLR, prepare, apply,
+    // reopen and the three `held`; the proposal as `map_err` left it and the
+    // proposal; the prepared task (the task it takes is counted in
+    // rollback_step, where it is).
+    let compensate_frame = size_of::<Result<M<B>, RetentionError>>()
+        + size_of::<Result<RowProposal, InsertError>>()
+        + size_of::<Result<RowProposal, (Stage, DriverError)>>()
+        + size_of::<RowProposal>()
+        + size_of::<Result<Q<B>, RowOwnedError<T<B>>>>()
+        + size_of::<Q<B>>()
+        + size_of::<Result<(), RowOwnedError<Q<B>>>>()
+        + size_of::<T<B>>()
+        + 3 * size_of::<RollbackStop<T<B>, F<B>>>();
+    let in_compensate = compensating + size_of::<T<B>>() + step_dead + compensate_frame;
+    // start_*_rollback: the pending's answer and what it binds out of it,
+    // the `map_err` result of C's answer and the rollback it binds.
+    let start_dead = size_of::<Result<(&S<B>, &mut Progress), Failure>>()
+        + size_of::<(&S<B>, &mut Progress)>()
+        + size_of::<Result<J<B>, Failure>>()
+        + size_of::<J<B>>();
+    // Shares that the frame-static reading of the same site reuses.
+    let start = held
+        + size_of::<Result<K<B>, Failure>>()
+        + 6 * r
+        + 4 * r
+        + size_of::<Option<&S<B>>>()
+        + size_of::<RollbackScope>()
+        + 2 * size_of::<Result<J<B>, RetentionError>>();
+    let next = stepping + 2 * r + 3 * size_of::<Result<RollbackNext<T<B>, F<B>>, RetentionError>>();
+    let finish = held
+        + 2 * size_of::<Result<(), RowOwnedError<K<B>>>>()
+        + size_of::<J<B>>()
+        + r
+        + 2 * size_of::<Result<(), RowOwnedError<J<B>>>>();
+    let finish_statement = slack
+        + 2 * r
+        + size_of::<Result<(), DriveError<S<B>>>>()
+        + size_of::<S<B>>()
+        + 2 * size_of::<Result<(), StatementFinishError<S<B>>>>();
+    let commit = slack
+        + 4 * r
+        + size_of::<Result<C<B>, DriveError<X<B>>>>()
+        + size_of::<X<B>>()
+        + 2 * size_of::<Result<C<B>, TransactionFinishError<X<B>>>>();
+    let finish_aborted = slack
+        + 2 * r
+        + size_of::<Result<(), DriveError<X<B>>>>()
+        + size_of::<X<B>>()
+        + 2 * size_of::<Result<(), TransactionFinishError<X<B>>>>();
     [
         Site::new(
             "insert.check",
             Bound::Write,
             statement + 2 * size_of::<Result<(), RetentionError>>() + r,
+            in_statement + size_of::<Result<(), RetentionError>>() + r,
         ),
         Site::new(
             "insert.preflight",
             Bound::Preflight,
             row + 2 * size_of::<Result<PreflightNext<P<B>, G<B>>, RetentionError>>() + 4 * r,
-        )
-        .before_ready(later),
+            in_row + size_of::<Result<PreflightNext<P<B>, G<B>>, RetentionError>>() + 4 * r,
+        ),
         Site::new(
             "insert.try_flush",
             Bound::Write,
             flushing + 2 * size_of::<Result<(), RetentionError>>() + 2 * r,
-        )
-        .before_ready(later),
+            in_flush + size_of::<Result<(), RetentionError>>() + 2 * r,
+        ),
         Site::new(
             "insert.continue_flush",
             Bound::Write,
             flushing + 2 * size_of::<Result<FlushStep, RetentionError>>() + r,
-        )
-        .before_ready(later),
+            in_flush + size_of::<Result<FlushStep, RetentionError>>() + r,
+        ),
         Site::new(
             "insert.validation_lane",
             Bound::Write,
-            row + size_of::<P<B>>() + 2 * size_of::<Result<V<B>, RetentionError>>() + r,
+            writing + size_of::<P<B>>() + 2 * size_of::<Result<V<B>, RetentionError>>() + r,
+            in_write + size_of::<Result<V<B>, RetentionError>>() + r,
         ),
         Site::new(
             "insert.validate",
             Bound::A,
-            row + size_of::<P<B>>()
+            writing
+                + size_of::<P<B>>()
                 + size_of::<V<B>>()
                 + size_of::<Values>()
                 + 2 * size_of::<Result<RowInputPlan, InsertError>>(),
+            in_write + size_of::<Values>() + size_of::<Result<RowInputPlan, InsertError>>(),
         ),
         Site::new(
             "insert.reserve",
             Bound::Write,
-            row + size_of::<P<B>>()
+            writing
+                + size_of::<P<B>>()
                 + size_of::<RowInputPlan>()
                 + 2 * size_of::<Result<R<B>, RowOwnedError<P<B>>>>(),
+            in_write + size_of::<Result<R<B>, RowOwnedError<P<B>>>>(),
         ),
         Site::new(
             "insert.finish_preflight",
             Bound::Write,
-            row + size_of::<P<B>>()
-                + 2 * size_of::<Failure>()
-                + 2 * size_of::<Result<(), RetentionError>>(),
+            writing + size_of::<P<B>>() + 2 * failure + 2 * size_of::<Result<(), RetentionError>>(),
+            in_write + finish_preflight_frame + size_of::<Result<(), RetentionError>>(),
         ),
         Site::new(
             "insert.producer_lane",
             Bound::Write,
-            row + size_of::<R<B>>() + 2 * size_of::<Result<L<B>, RetentionError>>() + r,
+            writing + size_of::<R<B>>() + 2 * size_of::<Result<L<B>, RetentionError>>() + r,
+            in_write + size_of::<Result<L<B>, RetentionError>>() + r,
         ),
         Site::new(
             "insert.forward",
             Bound::A,
-            row + size_of::<R<B>>()
+            writing
+                + size_of::<R<B>>()
                 + size_of::<L<B>>()
                 + 2 * size_of::<Result<RowProposal, InsertError>>(),
+            in_write + size_of::<Result<RowProposal, InsertError>>(),
         ),
         Site::new(
             "insert.prepare",
             Bound::Write,
-            row + size_of::<R<B>>()
+            writing
+                + size_of::<R<B>>()
                 + size_of::<RowProposal>()
                 + 2 * size_of::<Result<D<B>, RowOwnedError<R<B>>>>(),
+            in_write + size_of::<Result<D<B>, RowOwnedError<R<B>>>>(),
         ),
         Site::new(
             "insert.apply",
             Bound::Write,
-            row + size_of::<D<B>>() + 2 * size_of::<Result<A<B>, RowOwnedError<D<B>>>>(),
+            writing + size_of::<D<B>>() + 2 * size_of::<Result<A<B>, RowOwnedError<D<B>>>>(),
+            in_write + size_of::<Result<A<B>, RowOwnedError<D<B>>>>(),
         ),
         Site::new(
             "insert.reopen",
             Bound::Write,
-            row + size_of::<D<B>>() + size_of::<RetentionError>() + 2 * size_of::<R<B>>(),
+            writing + size_of::<D<B>>() + size_of::<RetentionError>() + 2 * size_of::<R<B>>(),
+            in_write + size_of::<R<B>>(),
         ),
         Site::new(
             "insert.cancel",
             Bound::Write,
-            row + size_of::<R<B>>()
-                + 2 * size_of::<Failure>()
+            writing
+                + size_of::<R<B>>()
+                + 2 * failure
                 + 2 * size_of::<Result<(), RowOwnedError<R<B>>>>(),
+            in_write + cancel_frame + size_of::<Result<(), RowOwnedError<R<B>>>>(),
         ),
         Site::new(
             "insert.finish_statement",
@@ -1269,26 +1392,18 @@ const fn call_sites<B: Boundary + 'static>() -> [CallSite; CALL_SITES] {
                 + size_of::<S<B>>()
                 + 2 * size_of::<Result<(), StatementFinishError<S<B>>>>()
                 + r,
+            in_statement
+                + finish_statement_frame
+                + size_of::<Result<(), StatementFinishError<S<B>>>>()
+                + r,
         ),
-        Site::new(
-            "rollback.start",
-            Bound::Write,
-            held + size_of::<Result<K<B>, Failure>>()
-                + 6 * r
-                + 4 * r
-                + size_of::<Option<&S<B>>>()
-                + size_of::<RollbackScope>()
-                + 2 * size_of::<Result<J<B>, RetentionError>>(),
-        ),
-        Site::new(
-            "rollback.next",
-            Bound::Write,
-            stepping + 2 * r + 3 * size_of::<Result<RollbackNext<T<B>, F<B>>, RetentionError>>(),
-        ),
+        Site::new("rollback.start", Bound::Write, start, start + start_dead),
+        Site::new("rollback.next", Bound::Write, next, next + next_dead),
         Site::new(
             "rollback.clr_lane",
             Bound::Write,
             compensating + size_of::<T<B>>() + 2 * size_of::<Result<M<B>, RetentionError>>() + r,
+            in_compensate + size_of::<Result<M<B>, RetentionError>>() + r,
         ),
         Site::new(
             "rollback.clr",
@@ -1297,6 +1412,7 @@ const fn call_sites<B: Boundary + 'static>() -> [CallSite; CALL_SITES] {
                 + size_of::<T<B>>()
                 + size_of::<M<B>>()
                 + 2 * size_of::<Result<RowProposal, InsertError>>(),
+            in_compensate + size_of::<Result<RowProposal, InsertError>>(),
         ),
         Site::new(
             "rollback.clr_prepare",
@@ -1305,51 +1421,38 @@ const fn call_sites<B: Boundary + 'static>() -> [CallSite; CALL_SITES] {
                 + size_of::<T<B>>()
                 + size_of::<RowProposal>()
                 + 2 * size_of::<Result<Q<B>, RowOwnedError<T<B>>>>(),
+            in_compensate + size_of::<Result<Q<B>, RowOwnedError<T<B>>>>(),
         ),
         Site::new(
             "rollback.clr_apply",
             Bound::Write,
             compensating + size_of::<Q<B>>() + 2 * size_of::<Result<(), RowOwnedError<Q<B>>>>(),
+            in_compensate + size_of::<Result<(), RowOwnedError<Q<B>>>>(),
         ),
         Site::new(
             "rollback.clr_reopen",
             Bound::Write,
             compensating + size_of::<Q<B>>() + size_of::<DriverError>() + 2 * size_of::<T<B>>(),
+            in_compensate + size_of::<T<B>>(),
         ),
-        Site::new(
-            "rollback.finish",
-            Bound::Write,
-            held + 2 * size_of::<Result<(), RowOwnedError<K<B>>>>()
-                + size_of::<J<B>>()
-                + r
-                + 2 * size_of::<Result<(), RowOwnedError<J<B>>>>(),
-        ),
+        // StartedRollback's finish binds the rollback and the progress out of
+        // itself and builds a refusal in its result; finish_rollback's call
+        // is its tail. Nothing of theirs is dead at C's finish.
+        Site::new("rollback.finish", Bound::Write, finish, finish),
+        // finish_statement, commit and finish_aborted hold nothing but their
+        // arguments and C's answer, whose arms build their results in place.
         Site::new(
             "rollback.finish_statement",
             Bound::Write,
-            slack
-                + 2 * r
-                + size_of::<Result<(), DriveError<S<B>>>>()
-                + size_of::<S<B>>()
-                + 2 * size_of::<Result<(), StatementFinishError<S<B>>>>(),
+            finish_statement,
+            finish_statement,
         ),
-        Site::new(
-            "transaction.commit",
-            Bound::Write,
-            slack
-                + 4 * r
-                + size_of::<Result<C<B>, DriveError<X<B>>>>()
-                + size_of::<X<B>>()
-                + 2 * size_of::<Result<C<B>, TransactionFinishError<X<B>>>>(),
-        ),
+        Site::new("transaction.commit", Bound::Write, commit, commit),
         Site::new(
             "transaction.finish_aborted",
             Bound::Write,
-            slack
-                + 2 * r
-                + size_of::<Result<(), DriveError<X<B>>>>()
-                + size_of::<X<B>>()
-                + 2 * size_of::<Result<(), TransactionFinishError<X<B>>>>(),
+            finish_aborted,
+            finish_aborted,
         ),
     ]
 }
