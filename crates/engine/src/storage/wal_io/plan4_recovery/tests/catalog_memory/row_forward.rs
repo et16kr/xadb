@@ -858,7 +858,9 @@ fn s2w_r21_one_stale_stamp_at_apply_is_before_then_reopen() {
 /// S2W-R21(2): a write target of T reported not resident to apply's typed
 /// read (a one-shot cfg(test) refusal of that read, the frame the contract
 /// empties) is Fatal (Prepare, Invariant), CallerMustResolve, with the
-/// fence and no WAL or file change.
+/// fence and no WAL or file change. The gate is reopened; the admission's
+/// checked release is refused by the fenced ledger, which keeps its charge
+/// visible, and the table's write bit stays (as R12 and R23(2) assert).
 #[test]
 fn s2w_r21_missing_target_at_apply_is_fatal() {
     case("S2W-R21", || {
@@ -872,6 +874,9 @@ fn s2w_r21_missing_target_at_apply_is_fatal() {
                 row_statement!(live, owner, flusher, private, reader_private, row_status
                     => writer, reader, flush, row, view, table);
                 let _ = settle!(writer, owner, view, table, private, flush, flusher);
+                let (_, slot, _) = table.test_identity();
+                let used = reader.catalog_test_source_used();
+                let charge = writer.catalog_test_retirement_charge() as u64;
                 let mut preflight = ready!(writer, owner, view, table, private, flush);
                 let input = plan!(preflight);
                 let mut reserved = done!(preflight.reserve(input));
@@ -889,6 +894,8 @@ fn s2w_r21_missing_target_at_apply_is_fatal() {
                 assert!(matches!(error.cause, RetentionCause::Invariant));
                 assert!(fence.is_fenced());
                 assert!(!hook::observe(core).read_gate_closed);
+                assert_eq!(reader.catalog_test_source_used(), used + charge);
+                assert_eq!(view.test_table_masks().1, 1 << slot);
                 assert_eq!(files(state), effects);
                 drop(view);
                 drop(row);
