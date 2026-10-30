@@ -7,9 +7,9 @@
 //! chain. In order:
 //! 1. the deep checks of an effect step (entry, view, actor, Terminal, ATT
 //!    slot, table slot), the reservation's actor and RootJob slot;
-//! 2. under one typed read of T, the draft commitment again through
-//!    `DraftSource::commitment`, copying T into the before range; a
-//!    difference is Before(Stale);
+//! 2. under one typed read of T, the draft commitment again through the
+//!    shared kind-2 recompute (`draft_recompute`, the Forward's), copying T
+//!    into the before range; a difference is Before(Stale);
 //! 3. C's Cancel producer (`Change::Cancel` of the reserved RootJob) over
 //!    those before images, the changed-target identity, the XOI successor
 //!    and the progress room;
@@ -338,8 +338,9 @@ impl<'b, 'a, 's, 'c, 'p, 'd, 'm, 'w, W: WriterNamespace>
     /// Step 2 of the module doc, before the producer: T in before order into
     /// `requests` and its group roles, the reservation's RootJob page and
     /// Undo container at their roles, then the draft recompute (T's stamps
-    /// into `stamps`, T's pool pages into `before`). Returns |T| and the
-    /// roles.
+    /// into `stamps`, T's pool pages into `before`) through `draft_recompute`,
+    /// the one kind-2 recompute the Forward `prepare` and `apply` use, so the
+    /// two never fold the inputs differently. Returns |T| and the roles.
     fn cancel_sources(
         &self,
         owner: &mut Owner<'c, 's>,
@@ -368,78 +369,14 @@ impl<'b, 'a, 's, 'c, 'p, 'd, 'm, 'w, W: WriterNamespace>
         {
             return Err(invariant());
         }
-        let targets = &requests[..count];
-        match count {
-            7 => self.cancel_recompute::<7>(owner, entry, (targets, draft), before, stamps),
-            8 => self.cancel_recompute::<8>(owner, entry, (targets, draft), before, stamps),
-            9 => self.cancel_recompute::<9>(owner, entry, (targets, draft), before, stamps),
-            _ => Err(invariant()),
-        }?;
+        self.draft_recompute(
+            owner,
+            (entry.prefix, entry.slot, entry.issued),
+            (&requests[..count], draft),
+            before,
+            stamps,
+        )?;
         Ok((count, roles))
-    }
-
-    /// The kind-2 recompute (S2-0b "digest chain", prepare(Forward)·cancel):
-    /// under one typed read of T (`N` = |T|), with no replay, each pool page
-    /// is copied into the before range and the same `DraftSource::commitment`
-    /// the Reserve recorded is folded over those copies, the WAL prefix, the
-    /// issued identity and the control. On equality it writes T's stamps into
-    /// `stamps` for the install's recheck. A difference is Before(Stale); a
-    /// target that is not resident is Fatal(Invariant).
-    fn cancel_recompute<const N: usize>(
-        &self,
-        owner: &mut Owner<'c, 's>,
-        entry: &CancelEntry,
-        (targets, draft): (&[TargetRequest], &RowDraftCut),
-        before: &mut [[u8; PAGE_BYTES]; 9],
-        stamps: &mut [Option<FrameStamp>; ROW_WRITE_TARGETS],
-    ) -> Result<()> {
-        let storage = self.storage;
-        let requests: [TargetRequest; N] = std::array::from_fn(|at| targets[at]);
-        let read = self
-            .access
-            .read(self.pool, owner, &requests)
-            .map_err(|error| resident_read(storage, RetentionPhase::Prepare, error))?;
-        let folded = (|| {
-            let first = read
-                .copy_snapshot(0, &mut before[0])
-                .map_err(|error| frame(RetentionPhase::Prepare, error))?;
-            let mut observed = [first; N];
-            for (at, stamp) in observed.iter_mut().enumerate().skip(1) {
-                *stamp = read
-                    .copy_snapshot(at, &mut before[at])
-                    .map_err(|error| frame(RetentionPhase::Prepare, error))?;
-            }
-            let aging = self.control.row(control::AGING_SLOT);
-            let source = DraftSource {
-                prefix: entry.prefix,
-                targets: &requests,
-                stamps: &observed,
-                roles: draft.roles,
-                issued: entry.issued,
-                transaction: self.control.row(entry.slot)[..1536]
-                    .try_into()
-                    .expect("original transaction descriptor"),
-                aging: (aging[control::PHASE] != 0)
-                    .then(|| aging[..1536].try_into().expect("original Aging descriptor")),
-                jobs: self.control.jobs(),
-                pages: before[..N].iter(),
-                control: ControlCut::capture(self.control),
-            }
-            .commitment()
-            .map_err(|cause| fatal(storage, RetentionPhase::Census, cause))?;
-            if source != draft.source {
-                return Err(stale());
-            }
-            for (stamp, observed) in stamps.iter_mut().zip(observed) {
-                *stamp = Some(observed);
-            }
-            Ok(())
-        })();
-        merge(
-            folded,
-            read.release_checked()
-                .map_err(|error| frame(RetentionPhase::Prepare, error)),
-        )
     }
 }
 
@@ -472,8 +409,9 @@ pub(in super::super::super::super::super::super) struct RowCancelBody {
     /// `cancel_group`'s own values other than `held`: arguments, lanes, the
     /// install's group argument and Results.
     pub(in super::super::super::super::super::super) group: usize,
-    /// `cancel_recompute::<9>`: the typed read of T, the copies' stamps and
-    /// the draft commitment.
+    /// The shared kind-2 recompute (`draft_recompute` with
+    /// `draft_read::<9>`): the Forward census's `recompute` term, one helper
+    /// and one term.
     pub(in super::super::super::super::super::super) recompute: usize,
     /// `cancel_sources`: its own values and the largest of T, the roles and
     /// `recompute`.
@@ -493,32 +431,44 @@ pub(in super::super::super::super::super::super) struct RowCancelBody {
 }
 
 /// The actual Cancel census. `check` is preflight's callee term of the same
-/// deep checks (`RowPreflightBody`); `install` and `inventory` are the S2-a′
-/// install and shared inventory terms at nine targets, which this body calls
-/// unchanged. The helper terms (`fold`, `identity`, `targets`, `roles`,
-/// `assembled`) are charged as `row_reserve_body` charges the same calls.
+/// deep checks (`RowPreflightBody`); `recompute` is the Forward census's term
+/// of the shared kind-2 recompute (`RowForwardBody::recompute`); `install`
+/// and `inventory` are the S2-a′ install and shared inventory terms at nine
+/// targets, which this body calls unchanged. The helper terms (`fold`,
+/// `identity`, `targets`, `roles`, `assembled`) are charged as
+/// `row_reserve_body` charges the same calls.
 pub(in super::super::super::super) fn row_cancel_body<W: WriterNamespace>(
     shell: usize,
     check: usize,
+    recompute: usize,
     (install, inventory): (usize, usize),
 ) -> RowCancelBody {
     use crate::storage::{retention_page::RetentionError as JobError, session_fence::UnwindFence};
     use std::mem::size_of;
-    type Read<'a, const N: usize> = targets::CatalogRead<'a, 'a, 'a, 'a, 'a, 'a, 'a, N>;
     type Group<'a> = PreparedRowGroup<'a, 'a, 'a, ROW_WRITE_TARGETS>;
     type Cause<T> = std::result::Result<T, RetentionCause>;
     let reference = size_of::<&()>();
     // ControlCut::capture and a commitment: hashers, the pinned SHA block
     // closure, the encoded actor and references and the digests.
     let fold = 2 * size_of::<ContentHasher>() + 1536 + 24 + 48 + 40 + 4 * size_of::<[u8; 32]>();
-    // One `request_from_image`.
-    let identity = 2 * size_of::<TargetRequest>() + 2 * size_of::<Cause<TargetRequest>>();
+    // One `request_from_image` with its page decode, as the lifecycle's
+    // `identity` term counts it.
+    let identity = 2 * size_of::<TargetRequest>()
+        + 2 * size_of::<Cause<TargetRequest>>()
+        + 4 * size_of::<crate::storage::page::PageHeader>()
+        + 2 * size_of::<crate::storage::page::PageView<'_>>()
+        + 4 * size_of::<ContentHasher>()
+        + 1536;
     // `before_targets` into a caller array.
     let targets = identity + 2 * size_of::<usize>() + 4 * reference;
     let roles = size_of::<Option<[u8; ROW_WRITE_TARGETS]>>() + 6 * size_of::<usize>();
-    // The group literal is built in the caller's slot (`held`); its payload
-    // values, the cut capture and the frame digest.
-    let assembled = size_of::<RowPayload<'_, '_, '_>>() + fold;
+    // The group's assembly as the lifecycle counts it (`row_start`'s
+    // `assembled`): the group literal and its Result twice in the assembling
+    // call, beside the payload values, the cut capture and the frame digest.
+    let assembled = size_of::<Group<'_>>()
+        + 2 * size_of::<Result<Group<'_>>>()
+        + size_of::<RowPayload<'_, '_, '_>>()
+        + fold;
     // The wrapper: the table source and the reservation it passes, the
     // body's Result, the in-place release's admission, gate and cleanup
     // Results and the returned loan, the Fatal carriers and its references.
@@ -562,27 +512,12 @@ pub(in super::super::super::super) fn row_cancel_body<W: WriterNamespace>(
         + 2 * size_of::<RetentionError>()
         // Receiver, four arguments, the prepared and observation references.
         + 7 * reference;
-    let recompute_frame = size_of::<[TargetRequest; 9]>()
-        + 2 * size_of::<Result<()>>()
-        + 2 * size_of::<FrameStamp>()
-        + size_of::<[FrameStamp; 9]>()
-        + 2 * size_of::<dirty_frame::Result<FrameStamp>>()
-        + size_of::<DraftSource<'_, std::slice::Iter<'_, [u8; PAGE_BYTES]>>>()
-        + size_of::<ControlCut>()
-        + size_of::<Cause<[u8; 32]>>()
-        + size_of::<[u8; 32]>()
-        + 2 * size_of::<dirty_frame::Result<()>>()
-        + 4 * size_of::<RetentionError>()
-        // Receiver, arguments, storage, the closure capture and the Aging row.
-        + 12 * reference;
-    let recompute = recompute_frame
-        + targets::call_bytes::<9>()
-            .max(size_of::<Read<'_, 9>>() + fold.max(size_of::<Cause<[u8; 32]>>()));
     let sources_frame = size_of::<crate::storage::control::Profile>()
         + size_of::<usize>()
         + size_of::<Cause<usize>>()
         + size_of::<[u8; ROW_WRITE_TARGETS]>()
         + 2 * size_of::<Option<PageRef>>()
+        + size_of::<(WalPrefix, usize, DraftIssued)>()
         + 2 * size_of::<Result<()>>()
         + size_of::<Result<(usize, [u8; ROW_WRITE_TARGETS])>>()
         + 4 * size_of::<RetentionError>()
