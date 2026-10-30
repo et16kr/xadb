@@ -1,5 +1,9 @@
 # XADB 모듈 독립 개발 구조 전환 작업 계획
 
+2026-10-30 [S2-d Row Cancel 본문과 S2-c 위 통합](../evidence/module-independence-survey-20261026.md#s2d-row-cancel): Reserve한 행을 replay 없이 취소하고, Forward와 entry·재계산·반환을 공유하도록 합쳤다. 통합 시험 170건이 통과했고 cancel의 C 쪽 여유는 1579B다. finish를 빼고 쓰기 단계가 모두 실제 본문이다. 다음은 S2-e(A driver live 경로)다.
+
+2026-10-30 [S2-c Row Forward 경로](../evidence/module-independence-survey-20261026.md#s2c-row-forward): producer_lane·prepare·apply가 replay 없이 draft commitment를 다시 계산하며 Forward를 설치한다. 실제 census는 C 쪽 여유 producer_lane 6023·prepare 1946·apply 1842B이고, 시험 156건이 통과했다. 다음은 같은 base에서 병렬로 만든 S2-d(cancel) 통합이다.
+
 2026-10-30 [S2-b2 validation_lane·RowReserve 본문](../evidence/module-independence-survey-20261026.md#s2b2-row-reserve): reserve가 replay 없이 preflight commitment를 다시 계산하고 RowReserve를 설치한다. 실제 census는 C 쪽 여유 +795B(가장 작은 단계)로 상한 안이고, 시험 144건이 통과했다. 다음은 S2-c(producer_lane·prepare·apply)와 S2-d(cancel)다.
 
 2026-10-30 [S2-b1 Row 쓰기 preflight 본문](../evidence/module-independence-survey-20261026.md#s2b1-row-preflight): 행당 한 번의 `validate_live`·arena 검산과 commitment를 가진 실제 preflight가 들어갔다. 실제 census는 C 쪽 여유 +1112B로 상한 안이고, 새 시험 17건과 통합 시험 127건이 통과했다. 다음은 S2-b2(reserve)다.

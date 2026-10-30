@@ -1,5 +1,9 @@
 # 현재 구현
 
+2026-10-30 [S2-d Row Cancel 본문과 S2-c 위 통합](../evidence/module-independence-survey-20261026.md#s2d-row-cancel): 첫 Row INSERT의 예약을 fence 없이 취소할 수 있다. Forward와 Cancel이 같은 검산·반환 코드를 쓴다.
+
+2026-10-30 [S2-c Row Forward 경로](../evidence/module-independence-survey-20261026.md#s2c-row-forward): 첫 Row INSERT가 Reserve 뒤 A의 producer, prepare, apply까지 실제로 진행해 행을 설치한다.
+
 2026-10-30 [S2-b2 validation_lane·RowReserve 본문](../evidence/module-independence-survey-20261026.md#s2b2-row-reserve): Row INSERT가 preflight에서 Reserve 설치까지 실제로 진행한다. producer·prepare·apply·cancel은 아직 Unsupported다.
 
 2026-10-30 [S2-b1 Row 쓰기 preflight 본문](../evidence/module-independence-survey-20261026.md#s2b1-row-preflight): Row INSERT의 preflight가 실제로 동작한다(상주 적재, flush 요구, Free Undo 선택, 행당 한 번의 검증). reserve 이후는 아직 Unsupported다.

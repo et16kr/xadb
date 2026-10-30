@@ -4680,3 +4680,176 @@ S2-0 1항의 validation_lane·reserve 순서와 [S2-0b](#s2-0b-validate-once) �
 - 이 branch의 `crates/`·`tests/` tree는 `805723f`과 byte까지 같다(`f3006c4`는 S2-b1 문서 commit). 그래서 [S2-a′](#s2a-prime-census)처럼 통합 round를 따로 돌리지 않았다.
 
 **되돌림.** 최신부터 되돌린다. S2-b2는 S2-c·S2-d를 되돌린 뒤에만 되돌린다. 검토 후속 다섯 commit은 각각 단독으로 되돌릴 수 있다. artifact는 `module-independence-20261029/artifacts/module-s2b2-20261030/`(검토서, 증거 원문, b0·h1 로그와 probe, 도구, `manifest-all.sha256` SHA-256 `aec1aa907e7a47b7b428e9e394f9c7d8929bebd3d0751723ee74caa594f9f6e3`)에 있다.
+
+<a id="s2c-row-forward"></a>
+## 2026-10-30 S2-c Row Forward 경로(producer_lane·prepare·apply) 본문과 census
+
+S2-0 1항의 producer_lane·prepare·apply 순서, [S2-0b](#s2-0b-validate-once) 결정 1(prepare·apply는 replay 없이 draft commitment를 다시 계산)과 결정 2의 본문 의무를 공급했다. Reserve 뒤 A의 producer가 lane에서 proposal을 만들고, prepare가 Forward frame을 준비하고, apply가 설치·durable 대기 뒤 예약을 해제한다. 별도 worktree(branch `module-s2c`, base `a58af35`)에서 만든 뒤 `67d889f` 위로 옮겼다. 같은 base에서 병렬로 만든 [S2-d](#s2d-row-cancel)는 이 위에 통합했다.
+
+| 이 branch | 원 commit | 내용 |
+| --- | --- | --- |
+| `95e3cf3` | `96e1299` | [S2-b2](#s2b2-row-reserve) 검토 후속 A2: reserve가 producer의 RootJob ordinal을 cut의 `root_job`과 대조 |
+| `bc4122a` | `e0719fb` | 검토 후속 A5: Row 쓰기 경로의 출력 쪽 decode(`prepare_inventory`의 Jobs, `check_progress_room`의 Root, `prepare_reserve`의 layout·request)를 Fatal로. Catalog 출력은 그대로 |
+| `0aa6b7d` | `9149292` | 검토 후속 A6: R14의 gate 재개·charge, write bit 뒤 Before의 보수 bit(R11 reserve 절반), `check_candidate`의 leaf 부족 Capacity |
+| `429327e` | `3aeecf3` | 검토 후속 A7: A driver live 모듈 문서 |
+| `55eeb9d` | `6ec852f` | 검토 후속 A8: R06에 kind-2 draft commitment 독립 재계산 |
+| `b2e7936` | `49ad8e5` | Forward 본문(`plan4_retention/row_forward.rs`), wrapper, `row_write()` 허용, census |
+| `1a5d682` | `af58734` | Forward 독립 literal author(`tests/fixtures/dev3-module-c3/row-write/forward.py`) |
+| `ec52301` | `39cf663` | Forward 시험(`catalog_memory/row_forward.rs`) |
+| `0cf6aeb` | `8e5e347` | 검토 후속 A3: census `identity`·`assembled` 항을 lifecycle 관례로. C06 수치 변화 없음 |
+| `dd1e877` | `3b37c22` | R13이 credit을 live control에서 읽고 live replay를 뺌(시간 여유) |
+
+**본문.**
+- producer_lane: 여덟 part lane을 서로 겹치지 않는 private 구간으로 빌려준다. 문맥은 preflight의 SCHEMA 사본에서 다시 만들고 다시 읽지 않는다.
+- prepare: proposal 검산, `CatalogPreparation::draft_recompute`(T 한 typed read로 BEFORE에 다시 복사하고 `DraftSource::commitment` kind 2를 접음), observer의 독립 재계산, identity·XOI·progress 검산, Forward cut 순이다. Unchanged 거절은 같은 ReservedRow의 Before다. Before(Stale) 뒤에는 BEFORE가 pool에서 다시 채워졌다는 것을 ReservedRow 문서가 적는다.
+- apply: 같은 entry 검산, loan에서 group 재조립(observer·XOI projection 없이 prepared `after` digest로 검산), stage 전 write bit 재등록, 설치, durable 대기, `RowStatementView::row_applied`(revision +1) 뒤에만 `active`를 지우고 `release_discharged`(admission → gate → lease, 그다음 loan)를 부른다. stage 전 거절은 Before이고 `reopen`이 같은 `RowDraftCut`을 가진 ReservedRow를 돌려준다.
+- prepare·apply는 statement head 검산을 하지 않는다. actor가 이 예약으로 RootReserved이기 때문이며, draft commitment가 ATT 행과 Job 64행을 모두 접으므로 Reserve 뒤의 변화는 Stale이 된다.
+
+**census(memory = native, 상한 11520, charge 44304).**
+
+| 단계 | 본문 | S2-a′ 상계 | carriers | C total | C 쪽 여유 | 중단 단계 |
+| --- | ---: | ---: | ---: | ---: | ---: | --- |
+| producer_lane | 23505 | 7778 | 3256 | 26761 | **6023** | 없음 |
+| prepare | 29470 | 30269 | 1368 | 30838 | **1946** | `prepare_forward.observation: Result<Observation>`(592) |
+| apply | 29398 | 29760 | 1544 | 30942 | **1842** | `forward_group.group: Result<PreparedRowGroup<ROW_WRITE_TARGETS>>`(2072) |
+
+- prepare·apply를 정하는 항은 entry 검산(26460)이다. producer_lane 본문이 상계보다 큰 것은 상계에 없던 검증 문맥 재구성 때문이며 여유는 충분하다.
+- 상수·cap·charge는 바꾸지 않았다. reserve(795B)가 여전히 가장 작은 쓰기 단계다.
+
+**S2W-R24.** 바꾸는 byte는 Root cell offset 72의 free cursor다.
+- S2-0b 설계 메모 §7의 권장형(Reserve after image 안의 stage 전 hook)은 Reserve 자신이 Before(Prepare, Base(Aging(IdentityMismatch)))로 잡았다. cursor는 Aging 서술자(control 32행)에 사본과 work digest가 있으므로 메모 4번의 "control 사본 없음"은 이 코드에 맞지 않는다.
+- 그래서 계약의 대안형을 썼다. durable Reserve 뒤 fixture가 pool Root cursor를 1 옮기고(stamp 그대로), 그 Root로 Aging 서술자를 다시 encode하고, draft commitment를 다시 접는다.
+- live: producer_lane·produce·prepare·apply가 성공하고 F2가 durable이다. 다음 행의 preflight는 Fatal(Source, RowSemantic(Corrupt)), CallerMustResolve, fence, 효과 0이다.
+- durable: genesis부터 `observe_recovery_frame`으로 frame별로 지나가면 F1(LSN 17)은 받아들이고 F2(LSN 18)는 같은 RowSemantic(Corrupt)로 거절한다.
+- 재시작: Analysis·Retention(RowSemantic(Corrupt))·CallerMustResolve·database Unchanged·mutations 0이다. c는 출력하고 비교하며 Invariant로 고정하지 않는다.
+- C4가 interim gate를 바꿀 때 이 byte·주입형·cause를 다시 쓴다.
+
+**시험.** 새 selector 12건(`plan4_recovery/tests/catalog_memory/row_forward.rs`)과 검토 후속 시험 2건.
+- R09: Forward frame = 독립 literal(91497B, SHA-256 `0ee30572…1043`, LSN 16). Root·Jobs·Status 11·RowLeaf 13·Undo 14·Job cell·ATT 행·Aging이 literal과 같고, RootJob은 RootRetained(lease_lsn 15, adoption_lsn 16)이며 loan은 한 번 돌아온다.
+- R10: 변조 일곱 형태(operation, frame 길이 −1, 범위 밖 길이, after 수, roles, frame 1byte, after page 1byte)가 각각 같은 ReservedRow의 Before Unchanged(Prepare, RowSemantic)이고 효과 0이다. 이어서 새 proposal이 literal을 설치한다(cancel 끝은 S2-d 통합).
+- R11: apply stage 전 거절이 Before(Stage, Busy)이고 `reopen`이 같은 예약·draft cut을 준다.
+- R12: stage 뒤 write·sync fault가 Fatal(Durable, Wal)이고 fence가 남는다.
+- R13: 두 statement × 세 행. credit은 시작 (1, 3040), 첫 Reserve부터 (3, 9120)이다. 둘째 statement의 mark는 ATT undo head(첫 statement의 마지막 Undo)이고, RowId는 1..6이다.
+- R21: (1) apply 재검산의 one-shot stamp가 Before(Stale) 뒤 `reopen`, (2) apply typed read의 target 누락이 Fatal(Prepare, Invariant)이다.
+- R22: producer_lane·prepare·apply의 replay scope·checkout이 각각 0이다.
+- R23(2) prepare 절반: Reserve 설치 뒤 control byte 131072(XOI 구간 첫 byte)를 바꾸면 prepare가 Before(Stale)이고 WAL·page·issuer 변화가 없으며 Drop이 fence한다.
+- H01–H05 Forward 부분: Reserve·Forward 뒤 live = replay, frame별 durable replay가 LSN 16까지 live와 같고, Reserved·Forward crash image가 interim gate에서 멈춘다.
+- 독립 literal `forward.py`는 stdlib과 SHA로 고정한 N1 author만 쓴다. 검토자가 scratch 사본에서 다시 돌려 `expected-forward.json`과 byte까지 같음을 확인했다.
+
+**계약 읽기.**
+- kind-2 접기의 Aging 존재는 PHASE byte(`aging[PHASE] != 0`)로 판단한다(Reserve와 같다).
+- Forward observer의 `Inputs.mark`는 None이고 statement mark는 producer 문맥에만 들어간다.
+- apply는 observer 없이 loan에서 group을 재조립하고 prepared `after` digest로 설치할 byte를 모두 검산한다.
+- statement revision은 durable 설치 뒤 1 오른다.
+- R21(2)의 "target 비상주"는 apply typed read의 MissingTarget 주입이다.
+- RootJob의 `lease_lsn`(offset 64)은 Reserve LSN, `adoption_lsn`(offset 72)은 Forward LSN이다.
+- R13은 두 statement × 세 행, 행마다 Reserve → produce → prepare → apply로 읽었다.
+
+**독립 검토.** 읽기 전용 검토자 1회, ACCEPT WITH REQUIRED CHANGES(필수 1·권고 10). 순서·거절, 결정 1(`draft_recompute`가 reserve의 draft 접기와 같은 입력), census 재계산, R24의 byte와 대안형 사용, literal 독립성, S2-b2 후속 해소를 확인했다.
+- R1(필수): 검토 후속 A6의 시험 2건(`row_write::s2w_r11_reserve_stage_refusal_keeps_the_write_bit`, `lifecycle::row::write::tests::s2b2_a6_check_candidate_leaf_shortage_is_capacity`)이 고정된 round에 없었다. S2-d 통합 round i1에 넣어 둘 다 통과했다.
+- S2-d 통합에서 반영했다: A2(통합 항목과 Forward·Cancel 공통 `reserved_entry`), A4(C 자기 검산 분류 통일), A5(R21(2)의 fence 아래 charge·write bit), A6(도달하지 않는 RootJob 해독 Fatal arm은 방어용으로 문서화), A7(A driver 문서), A8(durable 뒤 반환 오류는 fence 아래에서만).
+- 이 기록이 반영한다: A3(R24 위 문단), A9(조치 없음).
+- 다음 계약 수정 때 반영한다: A10(효과 표 실제 값).
+- A1(R13 시간): 공유 `case` 상한 30초(`catalog_memory.rs:491`)는 바꾸지 않는다. 매 round R13 시간을 기록하고 28초를 넘으면 따로 적는다. c1 29.51초, c2 26.54초, S2-d 통합 i1 26.61초다.
+
+**실행.** 방식은 앞 단위와 같다.
+
+| 판 | rev | 결과 |
+| --- | --- | --- |
+| c1 | `8e5e347` | 156/156 PASS(h1의 144 + 새 12) |
+| c2 | `3b37c22` | 156/156 PASS. h1과 공유 144 selector 가운데 바뀐 출력은 C01/C02/C06(세 단계 actual)과 A8이 더한 R06 줄뿐이다. c1과는 R13만 다르다. compiler 입력 17/17 PASS |
+| S2-d 통합 i1 | `854ad2a` | 170/170 PASS(검토 R1의 두 시험 포함). [S2-d](#s2d-row-cancel) 참조 |
+
+- c2에서 engine check와 workspace check 경고 0, gate Clippy와 all-features Clippy 오류 0, 바뀐 .rs 15개 rustfmt check, `git diff --check`가 통과했다.
+- 이 branch의 `dd1e877` tree는 `crates/`·`tests/`에서 `3b37c22`과 같다.
+
+**남은 일.** commit·rollback(S3·S4)이 없으므로 Forward 사례는 statement를 끝낸 뒤 transaction을 버린다. LiveCall을 거치는 end-to-end 사례는 S2-e다.
+
+**되돌림.** 최신부터 되돌린다. S2-c는 S2-d 통합을 되돌린 뒤에만 되돌린다. 검토 후속 commit은 각각 단독으로 되돌릴 수 있다. artifact는 `module-independence-20261029/artifacts/module-s2c-20261030/`(검토서, 증거 원문, c1·c2 로그와 probe, 도구, `manifest-all.sha256` SHA-256 `a25f47b39af7003426ba18a77835b895916b7553076fd88cb3db0d1df1052699`)에 있다.
+
+<a id="s2d-row-cancel"></a>
+## 2026-10-30 S2-d Row Cancel 본문과 S2-c 위 통합
+
+S2-0 1항의 cancel 순서와 [S2-0b](#s2-0b-validate-once) 결정 1·2를 공급했다. Reserve한 행을 RowId·sequence·high-water를 돌려주지 않고 취소하며, write bit는 남기고 loan을 한 번 돌려준다. [S2-c](#s2c-row-forward)와 같은 base(`a58af35`)에서 병렬로 만들었고(branch `module-s2d`), S2-c 통합 head `dd1e877` 위로 옮기며 두 단위의 공유 부분을 합쳤다. 통합 뒤 이 branch의 쓰기 단계는 finish(S3)를 빼고 모두 실제 본문이다.
+
+| 이 branch | 원 commit | 내용 |
+| --- | --- | --- |
+| `7b2de7c` | `124e0c9` | Cancel 본문(`plan4_retention/row_cancel.rs`), `ReservedRow::cancel`, `release_discharged`, cancel census |
+| `1645d30` | `bac4ff0` | S2W-R08·R18 live와 R12·R15·R22·R23(2)의 cancel 절반, H01–H05의 Reserve·Cancel 부분, R08 독립 literal(`author.py`의 `expected-cancel.json`) |
+| `0e6fd35` | `0eb6022` | S2-d 검토 후속 A4: cancel entry의 RootJob 해독 실패를 Fatal로 |
+| `88f008f` | `29a51dc` | 검토 후속 A9: durable Cancel 뒤 반환 오류는 fence 아래에서만 생긴다는 문서 |
+| `e63de40` | `31f0bce` | 검토 후속 A7: 오래된 문서 |
+| `0c4a0e1` | `089198b` | 검토 후속 A6: R23(2)의 T 전체·charge 검산, stage 전 비Stale 거절(Busy target) 뒤 재시도 |
+| `317ff78` | — | 통합 A1: `row_write()`가 Reserve·Forward·Cancel을 받고 builder 문서가 셋을 적는다 |
+| `e082acb` | — | 통합 A2: `prepare_cancel`의 출력 쪽 decode를 Fatal로(reserve와 byte까지 같은 꼬리) |
+| `12fa784` | — | 통합 A3: cancel이 S2-c의 공유 kind-2 재계산 `draft_recompute`를 쓴다 |
+| `a7a9655` | — | S2-c 검토 후속 A2(e)·A6: Forward와 Cancel의 entry를 `reserved_entry` 하나로, cancel census에 `arms` 항 |
+| `828da6f` | — | S2-c 검토 후속 A4: C 자신의 stage 전 자기 검산을 세 단계 모두 Fatal(Prepare, Invariant)로(`own_output`) |
+| `3cfa2f4` | — | 통합 시험: R10·R11·R21(1)의 cancel 끝, R23(2)를 prepare → cancel 순서로(이름 `…_is_stale_prepare_then_cancel_then_drop_fences`) |
+| `e1080ac` | — | S2-c 검토 후속 A5: R21(2)에 fence 아래 charge와 write bit 단언 |
+| `1c6a61f` | — | S2-c 검토 후속 A8: apply·cancel 공유 `release_discharged` 문서 |
+| `fb80b0c` | — | S2-c 검토 후속 A7: A driver `driver/live.rs` 모듈 문서만 |
+| `854ad2a` | — | 통합 문서: 공유 helper와 자기 검산 분류 |
+
+**본문.** `reserved_entry`(Forward와 공유) → `cancel_group` → `prepare_cancel` 순이다. entry는 예약 actor·Terminal·ATT slot·table slot·complete_lsn·RootJob의 Undo sequence를 검산하고 statement head는 검산하지 않는다(actor가 이 예약으로 RootReserved). `draft_recompute`가 T를 한 typed read로 BEFORE에 다시 복사해 draft commitment를 다시 접고, 다르면 같은 ReservedRow의 Before(Stale)다. replay는 없다. group은 `Change::Cancel{ordinal}`로 만들고 `apply_existing(ExistingGroup::RowWrite)`로 설치한다. 성공하면 durable 대기 뒤 `active`를 지우고 `release_discharged`(admission → gate → lease, 그다음 loan)를 부른다. Fatal이면 release를 시도하고 fence가 남으며, 활성 예약의 Drop이 다시 fence한다.
+
+**census(memory = native, 상한 11520, charge 44304).**
+- cancel 본문 = shell + max(frame + max(entry, held + group + max(prepare, install)), arms) = 1658 + max(1128 + max(26460, 2072 + 472 + max(24627, 18935)), 688) = 29957이다. C total은 31205이고 **C 쪽 여유는 1579B**다(S2-a′ 상계 여유 1267).
+- 중단 단계는 `cancel_group.group: Result<PreparedRowGroup<ROW_WRITE_TARGETS>>`(2072B) 하나다. 정하는 항은 설치 경로 27171이다. `12fa784`의 commit 문장은 entry(26316)를 정하는 항으로 잘못 적었다. 코드와 수치는 맞다.
+- 단독 판(h1·h2)은 1315B였다. 통합에서 post-body arm이 max 아래로 가며 shell이 368 줄고 `ReservedEntry` 때문에 frame이 104 늘어 +264B다.
+- 통합 뒤 쓰기 단계 전체:
+
+| 단계 | C total | C 쪽 여유 | arm 값을 모두 더한 보수 여유 |
+| --- | ---: | ---: | ---: |
+| preflight(상한 6144) | 37048 | 1112 | — |
+| validation_lane | 15400 | 17384 | — |
+| reserve | 31989 | **795** | 795 |
+| producer_lane | 26761 | 6023 | — |
+| prepare | 30838 | 1946 | 1258 |
+| apply | 30942 | 1842 | 866 |
+| cancel | 31205 | 1579 | 891 |
+| finish | 1658(상계) | 31126 | — |
+
+- 통합 검토 A1: S2-c 관례(post-body arm을 max)는 apply 본문 동안 frame에 사는 지역값 두 개(`reserved`, `observation`)를 max 아래에 둔다. reserve는 arm 값을 더한다. 오른쪽 열처럼 모두 더해도 모든 여유가 양수이며 reserve가 가장 작다. apply의 두 값을 shell로 옮기는 정리는 S2-e가 한다.
+
+**C 자기 검산 분류(계약 읽기).** 거절 표에는 C가 자기 출력을 검산하는 행이 없다. "stage 전 거절 → Before" 행은 A의 입력과 상태(Stale, Busy, Capacity, InvalidInput, A proposal의 RowSemantic)의 거절로 읽었다. C 자신의 모순(producer observation 불일치, T 밖 role 변화, T target과 다른 after image identity, 범위보다 긴 frame)은 S2-b2 A5의 출력 decode 규칙과 표의 자기 결함 행(arena 불일치 Fatal 등)을 따라 reserve·prepare·cancel 모두 Fatal(Prepare, Invariant)이다. 지금 본문으로는 도달하지 않아 시험이 없다. 다음 계약 수정 때 표에 행을 더한다(통합 검토 A2).
+
+**다른 계약 읽기.**
+- S2W-R18 live: 건강한 session에서는 도달하지 않는 방어 검산(계약 1379)이므로, 예약을 남긴 채 wrapper를 놓는 cfg(test) fixture(`test_release_keeping_reservation`)로 닿는다. 다음 preflight는 Unchanged(Prepare, WrongState)이고 source → gate → lease를 반환한다.
+- Fatal cancel 뒤 admission charge는 fence된 ledger가 checked release를 거절하므로 보인 채 남는다(§1 "원 Fatal은 fence 아래 charge를 보존한다").
+- Cancel 뒤 statement가 끝나고 `abort_empty_transaction`이 fence 없이 성공한다. S3가 이를 명시할지 정한다.
+- R12는 단계를 정하지 않으므로 cancel 절반을 여기서 한다.
+- R23(2)의 byte는 131072(XOI 구간 첫 byte)다. `ControlCut::capture`가 접고 `check_ledger`는 읽지 않으므로 commitment 비교가 처음 본다.
+- `reserved_entry`는 Forward draft만 받는다. S4가 취소할 수 있는 CLR 예약을 들이면 기대 연산을 인수로 받아야 한다(통합 검토 A3).
+
+**시험.** S2-d 새 selector 9건(`catalog_memory/row_cancel.rs`)과 통합 시험 3건.
+- R08: Cancel frame = 독립 literal(40000B, SHA-256 `c2b02eaa…`, LSN 16). RootJob 3은 세대 2의 Free, RowId high-water 1과 sequence high-water 2는 그대로, Undo 14 불변, write bit 유지, 같은 loan 한 번 반환, fence 없음이다. Busy target 사례는 stage 전 Unchanged(Install, Frame Busy) 뒤 같은 wrapper로 재시도해 literal을 설치한다.
+- R12 cancel 절반: stage 뒤 write·sync fault가 Fatal(Durable, Wal), fence, gate 재개, write bit 유지다.
+- R15 끝: cancel 뒤 새 read operation이 admitted이고 fence가 없다.
+- R18 live: 위 읽기.
+- R22 cancel 절반: preflight·lane·reserve·cancel 전체의 replay checkout이 preflight의 1회뿐이다.
+- R23(2): prepare Before(Stale) → 같은 wrapper의 cancel Before(Stale) → Drop fence 순서이고, 그 사이 WAL·file·T page 전체·issuer 변화가 없으며 charge가 남는다.
+- R10·R11·R21(1) cancel 끝: 각 Before 뒤 같은 예약을 cancel해 Cancel literal을 설치한다.
+- H01–H05 Reserve·Cancel 부분: Reserve·Cancel 뒤 `validate_live`, genesis부터의 durable replay가 LSN 16까지 live와 같음, Reserved·Cancel 뒤 crash image가 interim gate에서 멈춤. interim gate는 Row Begin에서 이미 멈추므로 crash 부분은 C4가 gate를 바꾼 뒤 다시 돌린다.
+- 독립 literal `author.py`는 stdlib과 고정한 N1 author(자체 `cancel()` 모형)만 쓴다. 검토자가 scratch 사본에서 다시 돌려 `expected-cancel.json`과 `expected.json`이 byte까지 같음을 확인했다.
+
+**독립 검토.** 읽기 전용 검토자 2회.
+- S2-d 단독(`bac4ff0`): ACCEPT(필수 0·권고 9). A4·A6·A7·A9는 단독 branch에서, A1–A3은 통합에서 반영했다. A5(census 근사, 결정 경로 밖)와 A8(읽기 기록)은 이 기록이 반영한다.
+- 통합(`dd1e877..854ad2a`): ACCEPT(필수 0·권고 7). 충돌 해소에서 잃은 것이 없음(검토자가 scratch clone에서 병합을 다시 만들어 대조), `reserved_entry`의 동작 보존, cancel census 재계산(1579B), 자기 검산 Fatal 분류의 타당성과 도달 경로 불변, i1과 h2·c2의 출력 비교를 확인했다. 권고: A1(위 보수 여유, apply 지역값 정리는 S2-e), A2(거절 표 행, 다음 계약 수정), A3(S4 기록, 위), A4(이 기록), A5(R13 28초 규칙 유지), A6(문서 한 줄 정리와 `t_frames` 중복, S2-e), A7(공유 재계산 항의 안쪽 frame 둘, 결정 경로에서 멀다).
+
+**실행.**
+
+| 판 | rev | 결과 |
+| --- | --- | --- |
+| b0 | `a58af35`(module-s2d base) | 144/144 PASS |
+| h1 | `bac4ff0` | 152/152 PASS(+8). b0와 바뀐 출력은 C01/C02/C06의 cancel 줄뿐. compiler 입력 17/17 PASS, MCA00-D15 출력 불변 |
+| h2 | `089198b` | 153/153 PASS(+1). h1과 다른 출력은 R23(2)의 T page 목록 한 줄 |
+| i1 | `854ad2a`(이 branch) | **170/170 PASS**: S2-c c2의 156(R23(2) 새 이름) + S2-d 전용 9 + 통합 cancel 끝 3 + S2-c 검토 R1의 2. compiler 입력 17/17 PASS. R13 26.61초 |
+
+- i1과 h2(153): 149 같음. C01/C02/C06(S2-c 단계 actual, cancel 여유 1315 → 1579)과 R06(S2-c A8 줄)만 다르다.
+- i1과 c2(156): 152 같음. C01/C02/C06의 cancel 줄과 R23(2)의 cancel 한 줄만 다르다.
+- i1에서 engine check와 workspace check 경고 0, gate Clippy 오류 0, 바뀐 .rs 18개 rustfmt check, `git diff --check 67d889f..854ad2a`가 통과했고, `dd1e877..854ad2a`의 commit마다 `cargo check --all-targets --all-features`가 경고 0이다.
+
+**남은 일.** finish는 S3의 단계라 아직 상계다. LiveCall을 거치는 end-to-end 사례(insert_live, MCA05-V31, 행 거절 뒤 statement 결과)는 S2-e다. `t_frames`가 Forward·Cancel 시험 파일에 두 번 있다.
+
+**되돌림.** 최신부터 되돌린다. 통합 commit은 S2-d cherry-pick보다 먼저 되돌린다. S2-d를 되돌려도 S2-c는 남는다(`row_write()`는 Reserve·Forward로 돌아간다). artifact는 `module-independence-20261029/artifacts/module-s2d-20261030/`(검토서 둘, 증거 원문, b0·h1·h2·i1 로그와 probe, 도구, `manifest-all.sha256` SHA-256 `277309dd2abd4d8c7c612e49a0f89615e2e092a036f1f51db7d8c35b261452cc`)에 있다.
