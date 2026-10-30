@@ -317,6 +317,7 @@ fn s2w_c06_row_write_c_margins_against_both_bounds() {
         }
         // At least one suspended level is always counted (S2-0b decision 2).
         assert!(terms.suspended_levels >= 1);
+        assert!(terms.arena < terms.load);
     }
     inspect::<Memory>("memory");
     inspect::<Native>("native");

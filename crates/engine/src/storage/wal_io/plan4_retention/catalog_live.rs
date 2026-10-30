@@ -1805,6 +1805,7 @@ pub(in super::super) struct RowWriteBodies {
 /// preparer's result. S2-b2, S2-c and S2-d keep it at one; a body that needs
 /// more levels raises it, and the census then counts each one.
 const ROW_WRITE_SUSPENDED_LEVELS: usize = 1;
+const _: () = assert!(ROW_WRITE_SUSPENDED_LEVELS >= 1);
 
 /// Original public entry locals that survive into the common preparer or
 /// installer. Begin's read is consumed before this boundary; the Rollback
@@ -2248,8 +2249,8 @@ pub(in super::super) fn row_write_bodies<W: WriterNamespace>() -> RowWriteBodies
         + 2 * size_of::<Result<FrameStamp>>();
     let arena = scalar
         + scope_carriers
-        + size_of::<targets::CatalogRead<'_, '_, '_, '_, '_, '_, '_, 9>>()
-        + observe;
+        + targets::call_bytes::<9>()
+            .max(size_of::<targets::CatalogRead<'_, '_, '_, '_, '_, '_, '_, 9>>() + observe);
     // B: reserve, prepare and cancel prepare the group under the typed read
     // with no replay scope.
     let group_typed = (scalar + group.outer + group.produce.max(group.observer))
@@ -2290,21 +2291,14 @@ pub(in super::super) fn row_write_bodies<W: WriterNamespace>() -> RowWriteBodies
     // suspended return slots; the group carriers exist only from assembly to
     // the install or return.
     let reserve = shell
-        + check
-            .max(commit)
+        + (held + check.max(commit).max(group_typed))
             .max(register)
-            .max(group_typed + held)
             .max(group_carriers + group_install);
-    let prepare = shell
-        + check
-            .max(commit)
-            .max(group_typed + held)
-            .max(group_carriers + group_reassemble);
+    let prepare =
+        shell + (held + check.max(commit).max(group_typed)).max(group_carriers + group_reassemble);
     let apply = shell
-        + check
-            .max(commit)
+        + (held + check.max(commit).max(group_reassemble))
             .max(register)
-            .max(held + group_reassemble)
             .max(group_carriers + group_install);
     let cancel = reserve;
     RowWriteBodies {
