@@ -2337,12 +2337,10 @@ fn mca00_d12_driver_frames_stay_within_the_driver_source_bound() {
 /// the caller's rollback) and the validation phase are printed for S4 and
 /// are not asserted here. The frame-static share (`CallSite::dead`: every
 /// own slot of the driver frames on the path, laid out for the frame's whole
-/// body) is printed at every site and bounded at every site the share is,
-/// except the sites `FRAME_STATIC_OPEN` lists, which are printed only. S2-e
-/// adds the term of `insert_live`'s caller (`caller_bytes`, A-W1 review A3)
-/// at every `insert.*` site: the share with it is bounded the same way, and
-/// so is the frame-static share with it, except at the sites
-/// `FRAME_STATIC_OPEN_WITH_CALLER` lists. The per-call share is the
+/// body) is printed at every site and bounded at every site the share is.
+/// S2-e adds the term of `insert_live`'s caller (`caller_bytes`, A-W1 review
+/// A3) at every `insert.*` site: the share with it and the frame-static
+/// share with it are bounded the same way. The per-call share is the
 /// contract's oracle (M3); the frame-static share is a second, separate
 /// assertion, the coordinator's reading of D15, stricter than M3. These are
 /// size_of inventories, not stack proofs.
@@ -2396,16 +2394,15 @@ fn call_site_census<W: WriterNamespace + 'static>(writer: &str) {
         );
         let frame_static = total + site.dead;
         let frame_margin = bound as i64 - frame_static as i64;
-        let open = FRAME_STATIC_OPEN.contains(&site.name);
         println!(
             "MCA00_D15 writer={writer} site={} frame_static={frame_static} dead={} bound={bound} \
-             frame_static_margin={frame_margin} frame_static_open={open}",
+             frame_static_margin={frame_margin}",
             site.name, site.dead,
         );
         if checked(&site) && margin < 0 {
             over.push(site.name);
         }
-        if checked(&site) && !open && frame_margin < 0 {
+        if checked(&site) && frame_margin < 0 {
             frame_over.push(site.name);
         }
     }
@@ -2424,28 +2421,20 @@ fn call_site_census<W: WriterNamespace + 'static>(writer: &str) {
         let margin = bound as i64 - total as i64;
         let frame_static = total + site.dead;
         let frame_margin = bound as i64 - frame_static as i64;
-        let open = FRAME_STATIC_OPEN_WITH_CALLER.contains(&site.name);
         println!(
             "MCA00_D15 writer={writer} site={} with_caller={total} bound={bound} margin={margin} \
-             frame_static_with_caller={frame_static} frame_static_margin={frame_margin} \
-             frame_static_open={open}",
+             frame_static_with_caller={frame_static} frame_static_margin={frame_margin}",
             site.name,
         );
         if checked(site) && margin < 0 {
             over_with_caller.push(site.name);
         }
-        if checked(site) && !open && frame_margin < 0 {
+        if checked(site) && frame_margin < 0 {
             frame_over_with_caller.push(site.name);
         }
     }
     let names: std::collections::BTreeSet<_> = sites.iter().map(|site| site.name).collect();
     assert_eq!(names.len(), CALL_SITES);
-    assert!(
-        FRAME_STATIC_OPEN
-            .iter()
-            .chain(&FRAME_STATIC_OPEN_WITH_CALLER)
-            .all(|name| names.contains(name))
-    );
     let bound = |bound| sites.iter().filter(|site| site.bound == bound).count();
     assert_eq!((bound(Bound::Preflight), bound(Bound::A)), (1, 3));
     // The contract's oracle: the per-call share (M3).
@@ -2465,24 +2454,6 @@ fn call_site_census<W: WriterNamespace + 'static>(writer: &str) {
          {frame_over_with_caller:?}"
     );
 }
-
-/// The sites whose frame-static share is over its bound, printed and not
-/// asserted (S2-e; the coordinator decides their remedy): at each C call
-/// made under `write_row`, its frame holds the slots of all its steps (the
-/// producer lane's result among them), with insert_statement's and
-/// insert_row's below it. The preflight and its flush are not among them.
-const FRAME_STATIC_OPEN: [&str; 2] = ["insert.producer_lane", "insert.cancel"];
-/// ... and with `insert_live`'s caller: every C call `write_row` makes.
-const FRAME_STATIC_OPEN_WITH_CALLER: [&str; 8] = [
-    "insert.validation_lane",
-    "insert.reserve",
-    "insert.finish_preflight",
-    "insert.producer_lane",
-    "insert.prepare",
-    "insert.apply",
-    "insert.reopen",
-    "insert.cancel",
-];
 
 /// The statement the S2-e callers of `insert_live` pass at most
 /// (`catalog_memory::row_live`): two rows of T's one value.
