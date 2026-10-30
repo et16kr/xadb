@@ -9,10 +9,11 @@
 //! reservation with a successful Forward on the same reservation; their
 //! cancel ends are in `row_cancel.rs` (S2-d). A Row transaction with a
 //! durable Forward has no healthy end before S3/S4 (commit, rollback), so
-//! these cases stop with the statement ended and the transaction dropped. The expected values are fixture facts, the
-//! independent literal of `tests/fixtures/dev3-module-c3/row-write/`
-//! (expected.json and expected-forward.json) and the refusal table's (phase,
-//! cause, effect), never values copied from the body.
+//! these cases stop with the statement ended and the transaction dropped.
+//! The expected values are fixture facts, the independent literal of
+//! `tests/fixtures/dev3-module-c3/row-write/` (expected.json and
+//! expected-forward.json) and the refusal table's (phase, cause, effect),
+//! never values copied from the body.
 use super::super::super::super::plan4_pages::{
     RetentionCause as ReplayCause, RetentionFlushPhase, observe_recovery_frame,
     retention_replay_bank, retention_replay_cells, retention_replay_image, seed_recovery_replay,
