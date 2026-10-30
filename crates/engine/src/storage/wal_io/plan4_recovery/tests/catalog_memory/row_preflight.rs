@@ -865,11 +865,12 @@ fn s2w_r18_root_reserved_actor_is_wrong_state() {
                 view.test_clear_reads();
                 let used = reader.catalog_test_source_used();
                 let before = effects!(writer, state);
-                view.test_root_reserved_once();
+                let once = view.test_root_reserved_once();
                 let error = writer
                     .preflight_row(owner, &view, &table, private, &mut flush)
                     .err()
                     .unwrap();
+                drop(once);
                 assert_eq!(
                     (error.phase, error.effect),
                     (RetentionPhase::Prepare, Effect::Unchanged)

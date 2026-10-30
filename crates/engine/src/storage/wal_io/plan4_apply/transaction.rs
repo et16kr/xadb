@@ -1099,9 +1099,10 @@ impl RowStatementView<'_, '_, '_, '_, '_> {
     }
 
     /// S2W-R18: the next Row statement head check on this thread sees the
-    /// actor's Row Job as RootReserved (`writable::test_root_reserved_once`).
-    pub(in crate::storage) fn test_root_reserved_once(&self) {
-        writable::test_root_reserved_once();
+    /// actor's Row Job as RootReserved (`writable::test_root_reserved_once`),
+    /// until the returned guard drops.
+    pub(in crate::storage) fn test_root_reserved_once(&self) -> writable::TestOnce {
+        writable::test_root_reserved_once()
     }
 
     /// S2W-R03/R16: clears the transaction's catalog flag and table read mask

@@ -236,7 +236,7 @@ impl<'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
         }
         #[cfg(test)]
         {
-            reserved |= TEST_ROOT_RESERVED.with(|once| once.replace(false));
+            reserved |= TestOnce::take(&TEST_ROOT_RESERVED);
         }
         if reserved || transaction.state() != TransactionState::Active {
             return Err(unchanged(phase, RetentionCause::WrongState));
@@ -447,8 +447,35 @@ thread_local! {
     static TEST_ROOT_RESERVED: std::cell::Cell<bool> = const { std::cell::Cell::new(false) };
 }
 #[cfg(test)]
-pub(in crate::storage) fn test_root_reserved_once() {
-    TEST_ROOT_RESERVED.with(|once| once.set(true));
+pub(in crate::storage) fn test_root_reserved_once() -> TestOnce {
+    TestOnce::arm(&TEST_ROOT_RESERVED)
+}
+
+/// A one-shot cfg(test) hook on this thread. The check that reads it
+/// consumes it (`take`); dropping the guard clears it on every other exit, so
+/// a call that stops before the check cannot leave it for a later one.
+#[cfg(test)]
+#[must_use = "the hook is cleared when the guard drops"]
+pub(in crate::storage) struct TestOnce(&'static std::thread::LocalKey<std::cell::Cell<bool>>);
+#[cfg(test)]
+impl TestOnce {
+    pub(in crate::storage) fn arm(
+        hook: &'static std::thread::LocalKey<std::cell::Cell<bool>>,
+    ) -> Self {
+        hook.with(|once| once.set(true));
+        Self(hook)
+    }
+    pub(in crate::storage) fn take(
+        hook: &'static std::thread::LocalKey<std::cell::Cell<bool>>,
+    ) -> bool {
+        hook.with(|once| once.replace(false))
+    }
+}
+#[cfg(test)]
+impl Drop for TestOnce {
+    fn drop(&mut self) {
+        self.0.with(|once| once.set(false));
+    }
 }
 
 #[cfg(test)]
