@@ -514,6 +514,8 @@ fn insert_statement<B: Boundary>(
 /// unless C answered Fatal/CallerMustResolve or refused the release. A
 /// FlushRequired preflight is flushed and the same row tried again from
 /// preflight (`flush`); a Ready preflight leaves no flush step in the row.
+/// The steps after a Ready preflight run in `write_row`'s own frame, so the
+/// frame live at the preflight and its flush holds none of their slots.
 #[allow(
     clippy::result_large_err,
     reason = "Failure keeps the stage, the error and any refused cleanup inline, without allocation"
@@ -525,7 +527,7 @@ fn insert_row<B: Boundary>(
     loan: &mut Loan,
     values: &[ValueRef<'_>],
 ) -> Result<B::Applied, Failure> {
-    let mut preflight = loop {
+    let preflight = loop {
         // C's answer is dropped at the end of this statement, so the flush
         // below may borrow the call again.
         let target = match call.preflight(statement, table, loan) {
@@ -540,6 +542,24 @@ fn insert_row<B: Boundary>(
         // again from preflight in this statement (MCA05-V31).
         flush(call, &target)?;
     };
+    write_row(preflight, values)
+}
+
+/// The row after a Ready preflight: validation, the Reserve, A's Forward
+/// producer, prepare and apply, with the finish or Cancel of a failed step.
+/// It is never inlined into `insert_row`: its wrappers, lanes and results
+/// are laid out only once C's preflight has returned Ready, so the frame on
+/// the stack at the preflight and its flush (C's 6144-byte caller bound)
+/// does not hold them (S2-e, MCA00-D15 frame-static reading).
+#[inline(never)]
+#[allow(
+    clippy::result_large_err,
+    reason = "Failure keeps the stage, the error and any refused cleanup inline, without allocation"
+)]
+fn write_row<P: Preflight>(
+    mut preflight: P,
+    values: &[ValueRef<'_>],
+) -> Result<P::Applied, Failure> {
     let input = match preflight.validation_lane() {
         Ok(lane) => lane
             .validate(values)
@@ -906,9 +926,10 @@ fn finish_aborted<B: Boundary>(
 
 /// Nonrecursive size_of inventory, in the repository's source-bound sense, of
 /// the driver's carriers at the deepest point of the INSERT path (A's
-/// Forward producer under `insert_statement` → `insert_row` → the forwarding
-/// `forward`) and of the CLR path (A's CLR producer under the caller's held
-/// rollback → `rollback_step` → `compensate` → the forwarding `clr`).
+/// Forward producer under `insert_statement` → `insert_row` → `write_row` →
+/// the forwarding `forward`) and of the CLR path (A's CLR producer under the
+/// caller's held rollback → `rollback_step` → `compensate` → the forwarding
+/// `clr`).
 /// Wrapper results passed by value count twice (the driver's slot and the
 /// forwarding frame's return), the lane moved into the forwarding frame is
 /// counted there, and the standard pointer/result/scalar slack is added once
@@ -950,7 +971,10 @@ const fn carrier_bytes<B: Boundary + 'static>() -> (usize, usize) {
         + size_of::<Result<(), DriveError<S<B>>>>()
         + size_of::<Result<usize, DriveError<S<B>>>>()
         + 2 * size_of::<usize>();
+    // insert_row and write_row (its values argument; the preflight it takes
+    // by value counts once, where it is).
     let row = 2 * size_of::<Result<PreflightNext<P<B>, G<B>>, RetentionError>>()
+        + size_of::<&[ValueRef<'static>]>()
         + size_of::<P<B>>()
         + size_of::<Result<V<B>, RetentionError>>()
         + 2 * size_of::<Result<RowInputPlan, Failure>>()
