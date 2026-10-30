@@ -11,7 +11,7 @@ use crate::transaction::concurrency::Owner;
 use foundation::namespace::WriterNamespace;
 
 fn produce(lane: RowProducerLane<'_>) -> RowProposal {
-    let (_context, _control, _before, _schema, frame, _after, _candidate) = lane.parts();
+    let (_context, _control, _before, _schema, frame, _after, _candidate, _scratch) = lane.parts();
     frame[0] = 1;
     RowProposal::new(RowOperation::Clr, 1, 1, [RowPageRole::RowLeaf; 5])
 }

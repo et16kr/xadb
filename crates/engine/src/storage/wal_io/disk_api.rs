@@ -15,10 +15,10 @@ pub(crate) use super::bootstrap::doublewrite_install::mutable_storage::plan4_pag
     RetentionError, RetentionPhase, RollbackScope, RollbackStep, RowApplied, RowCancelled,
     RowCandidate, RowCommitObservation, RowControlObservation, RowCopyObservation, RowInputPlan,
     RowMutationObservation, RowOperation, RowOwnedError, RowPageRole, RowPreflightContext,
-    RowProducerContext, RowProducerInput, RowProducerLane, RowProposal, RowReadOperation,
-    RowRollback, RowRollbackDone, RowRollbackTask, RowSearchPage, RowSourceBinding, RowSourceRole,
-    RowStatementView, RowTransaction, RowValidationLane, StatementFinishError, TableStep,
-    TransactionFinishError, TransactionOptions,
+    RowPreflightStep, RowProducerContext, RowProducerInput, RowProducerLane, RowProposal,
+    RowReadOperation, RowRollback, RowRollbackDone, RowRollbackTask, RowSearchPage,
+    RowSourceBinding, RowSourceRole, RowStatementView, RowTransaction, RowValidationLane,
+    StatementFinishError, TableStep, TransactionFinishError, TransactionOptions,
 };
 
 #[allow(unused_imports)]

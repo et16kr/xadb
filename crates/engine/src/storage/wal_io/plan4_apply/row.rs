@@ -27,7 +27,9 @@ pub(crate) use rollback::{
     PreparedRollbackTask, RollbackScope, RollbackStep, RowRollback, RowRollbackDone,
     RowRollbackTask,
 };
-pub(crate) use write::{PreflightRow, PreparedRow, ReservedRow, RowApplied, RowCancelled};
+pub(crate) use write::{
+    PreflightRow, PreparedRow, ReservedRow, RowApplied, RowCancelled, RowPreflightStep,
+};
 
 fn unsupported() -> RetentionError {
     unchanged(RetentionPhase::Prepare, RetentionCause::Unsupported)
@@ -134,14 +136,100 @@ impl RowCommitObservation {
     }
 }
 
-// Scalar cuts recorded by the actual adapters. They never borrow the private
-// loan, so a wrapper does not refer to its own bytes.
+// Scalar cuts recorded by the actual adapters (S2-0 Row write amendment §4):
+// scalars and 32-byte SHA-256 digests only. Every multi-page identity/stamp
+// set is folded into one commitment that the next step recomputes from the
+// current pool, WAL prefix, control ledger and the private before images
+// (which A only ever borrows immutably); no raw stamp array is kept. They
+// never borrow the private loan, so a wrapper does not refer to its own bytes.
+// The A driver holds wrapper values several times, so each cut is bounded.
+
+/// Pack of `RowSourceRole` → before index, one nibble per role in role order
+/// (0xF absent), and the physical before count (≤ 9) in nibble 9.
+type RowRoleMap = u64;
+
+/// Recorded by preflight after residency, Free Undo selection and read-set
+/// registration, before the source guards are released. Read by
+/// `validation_lane`, `reserve` and `finish`.
 struct RowPreflightCut {
-    _pending: (),
+    /// SHA-256 over the WAL prefix, the physical write target set T in before
+    /// order (identity, kind, level and FrameStamp of each), the role map,
+    /// the selected Free Undo container (allocator entry generation, page
+    /// incarnation, slot0 Free), the RootJob slot, the Catalog leaf stamp and
+    /// schema cell digest, and the RowLeaf free bytes. `reserve` recomputes it;
+    /// any difference is Before/Stale and the row is prepared again from
+    /// `validation_lane` (S2W-R05, S2W-R07).
+    source: [u8; 32],
+    /// WAL complete LSN of the commitment: the RowReserve frame's expected
+    /// previous LSN and a cheap stale check before rehashing.
+    complete_lsn: u64,
+    /// Where each logical source role's before image is; the identities are
+    /// read back from those images' headers.
+    roles: RowRoleMap,
+    /// RowLeaf free bytes reported by the validation lane; `reserve` refuses a
+    /// candidate that does not fit them (Capacity).
+    leaf_free: u16,
+    /// The Jobs ordinal of the RootJob slot preflight chose for RowReserve.
+    root_job: u8,
+    /// Bit 0 read bit, bit 1 catalog flag: registered, so `finish` and every
+    /// Before keep the observed read set.
+    registered: u8,
 }
+
+/// Recorded by RowReserve's completed install (Forward) or by the rollback
+/// selection (CLR); carried by ReservedRow and RowRollbackTask and checked by
+/// `producer_lane`, `prepare`, `apply` and `cancel`.
 struct RowDraftCut {
-    _pending: (),
+    /// SHA-256 over the WAL prefix after the last installed group, T in before
+    /// order with its current stamps, the role map, the issued identity
+    /// (actor, RootJob, RowId, UndoRef/sequence, planned mutation), the
+    /// actor/Aging descriptor bytes and the Jobs rows the producer lane
+    /// borrows. A difference is Before/Stale on the same wrapper (S2W-R07,
+    /// S2W-R21 first hook).
+    source: [u8; 32],
+    /// The sealed input: canonical row digest (Forward) or current row
+    /// projection (CLR). The observer compares A's frame against it.
+    input: [u8; 32],
+    /// WAL complete LSN after the last installed group: the Forward/CLR
+    /// frame's expected previous LSN.
+    complete_lsn: u64,
+    /// Logical mutation number of the row version this step writes.
+    planned_mutation: u64,
+    roles: RowRoleMap,
+    /// Canonical length (Forward) or current row length (CLR).
+    input_len: u16,
+    /// 0 Forward, 1 CLR (`RowOperation`).
+    operation: u8,
 }
+
+/// Recorded by `prepare` after the observer independently recomputed and
+/// compared the whole declared frame and every after page; checked by `apply`
+/// before the stage. The source cut it was checked against is the draft's,
+/// held by the same reservation.
 struct RowPreparedCut {
-    _pending: (),
+    /// SHA-256 of the checked frame bytes `[0, frame_len)`.
+    frame: [u8; 32],
+    /// SHA-256 over the after count, roles and every checked after page.
+    after: [u8; 32],
+    /// LSN the frame header claims; the stage requires it to be next.
+    lsn: u64,
+    /// Checked frame length: the WAL bytes the stage consumes.
+    frame_len: u32,
+    /// `RowPageRole` of each after page in physical order, three bits each.
+    after_roles: u16,
+    /// Changed pages (≤ 5).
+    after_count: u8,
+    /// 0 Forward, 1 CLR (`RowOperation`).
+    operation: u8,
 }
+
+/// Most bytes of any one cut (S2-0 Row write amendment §4, S2W-C05).
+const ROW_CUT_MAX_BYTES: usize = 128;
+const _: () = {
+    use std::mem::size_of;
+    assert!(size_of::<RowPreflightCut>() <= ROW_CUT_MAX_BYTES);
+    assert!(size_of::<RowDraftCut>() <= ROW_CUT_MAX_BYTES);
+    assert!(size_of::<RowPreparedCut>() <= ROW_CUT_MAX_BYTES);
+    // Nine roles and the count fit the role map.
+    assert!(10 * 4 <= RowRoleMap::BITS as usize);
+};

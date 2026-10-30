@@ -49,14 +49,16 @@ trait StatementView {
     fn check(&self) -> Result<(), RetentionError>;
 }
 
-/// C's entries over the caller's original MutationPort and Owner. Each
-/// wrapper borrows them until it is consumed; nothing is acquired twice.
+/// C's entries over the caller's original MutationPort, Owner and flusher.
+/// Each wrapper borrows them until it is consumed; nothing is acquired twice.
 trait Boundary {
     type Transaction;
     type Statement: StatementView;
     type Table;
     type Applied;
     type Committed;
+    /// C's preflight flush target, passed out unchanged.
+    type Target;
     type Preflight<'r, 'i>: Preflight<Applied = Self::Applied>
     where
         Self: 'r;
@@ -68,7 +70,7 @@ trait Boundary {
         statement: &'r Self::Statement,
         table: &'r Self::Table,
         loan: &'i mut Loan,
-    ) -> Result<Self::Preflight<'r, 'i>, RetentionError>;
+    ) -> Result<PreflightNext<Self::Preflight<'r, 'i>, Self::Target>, RetentionError>;
     fn start_rollback<'r, 'i>(
         &'r mut self,
         transaction: &'r Self::Transaction,
@@ -89,6 +91,15 @@ trait Boundary {
         &mut self,
         transaction: Self::Transaction,
     ) -> Result<(), TransactionFinishError<Self::Transaction>>;
+}
+
+/// What C's preflight returned.
+enum PreflightNext<P, F> {
+    Ready(P),
+    /// C needs `F` flushed before the same row is tried again from
+    /// preflight. Nothing is held: C has returned its source, gate and flush
+    /// lease, and nothing took effect.
+    Flush(F),
 }
 
 /// Checked source state before the row's first effect.
@@ -485,9 +496,18 @@ fn insert_row<B: Boundary>(
     loan: &mut Loan,
     values: &[ValueRef<'_>],
 ) -> Result<B::Applied, Failure> {
-    let mut preflight = call
-        .preflight(statement, table, loan)
-        .map_err(|error| Failure::new(Stage::Preflight, error.into()))?;
+    let mut preflight = match call.preflight(statement, table, loan) {
+        Ok(PreflightNext::Ready(preflight)) => preflight,
+        // The flush and the retry of the same row from preflight are not
+        // supplied yet (A-W1): the row ends here with nothing held.
+        Ok(PreflightNext::Flush(_)) => {
+            return Err(Failure::new(
+                Stage::Preflight,
+                InsertError::Unsupported.into(),
+            ));
+        }
+        Err(error) => return Err(Failure::new(Stage::Preflight, error.into())),
+    };
     let input = match preflight.validation_lane() {
         Ok(lane) => lane
             .validate(values)
@@ -832,13 +852,14 @@ fn finish_aborted<B: Boundary>(
 /// forwarding frame's return), the lane moved into the forwarding frame is
 /// counted there, and the standard pointer/result/scalar slack is added once
 /// per path. It is not a machine-stack measurement: unoptimized frames keep a
-/// slot for every temporary and are several times larger (r1 record). C0's
-/// three cut types are zero-sized placeholders, so this count grows when C
-/// supplies them and must be rechecked. A's producer frame and C's internals
-/// are not included.
+/// slot for every temporary and are several times larger (r1 record). The
+/// wrappers carry their final cuts, read gate and flush lease and the lane
+/// its eighth part (S2-a), so this count reads the actual types. A's
+/// producer frame and C's internals are not included.
 const fn carrier_bytes<B: Boundary + 'static>() -> (usize, usize) {
     use std::mem::size_of;
     type P<B> = <B as Boundary>::Preflight<'static, 'static>;
+    type G<B> = <B as Boundary>::Target;
     type V<B> = <P<B> as Preflight>::Lane<'static>;
     type R<B> = <P<B> as Preflight>::Reserved;
     type L<B> = <R<B> as Reserved>::Lane<'static>;
@@ -864,7 +885,7 @@ const fn carrier_bytes<B: Boundary + 'static>() -> (usize, usize) {
         + size_of::<Result<(), DriveError<S<B>>>>()
         + size_of::<Result<usize, DriveError<S<B>>>>()
         + 2 * size_of::<usize>();
-    let row = 2 * size_of::<Result<P<B>, RetentionError>>()
+    let row = 2 * size_of::<Result<PreflightNext<P<B>, G<B>>, RetentionError>>()
         + size_of::<P<B>>()
         + size_of::<Result<V<B>, RetentionError>>()
         + 2 * size_of::<Result<RowInputPlan, Failure>>()

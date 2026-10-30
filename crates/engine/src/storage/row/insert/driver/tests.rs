@@ -288,6 +288,7 @@ impl<'s> Boundary for LiteralCall<'s> {
     type Table = LiteralTable;
     type Applied = LiteralApplied;
     type Committed = u64;
+    type Target = u64;
     type Preflight<'r, 'i>
         = LiteralPreflight<'r, 'i>
     where
@@ -301,14 +302,17 @@ impl<'s> Boundary for LiteralCall<'s> {
         _statement: &'r LiteralStatement<'s>,
         _table: &'r LiteralTable,
         loan: &'i mut Loan,
-    ) -> Result<LiteralPreflight<'r, 'i>, RetentionError> {
+    ) -> Result<PreflightNext<LiteralPreflight<'r, 'i>, u64>, RetentionError> {
         let fault = self.state.borrow_mut().note(Call::Preflight);
+        if let Some(Fault::Flush(target)) = fault {
+            return Ok(PreflightNext::Flush(target));
+        }
         factory(Call::Preflight, fault)?;
-        Ok(LiteralPreflight {
+        Ok(PreflightNext::Ready(LiteralPreflight {
             state: self.state,
             loan: Some(loan),
             done: false,
-        })
+        }))
     }
     fn start_rollback<'r, 'i>(
         &'r mut self,
@@ -1528,6 +1532,22 @@ fn mca00_d08_unsupported_c0_wrappers_propagate_unchanged() {
     );
     withheld(transaction);
     assert_eq!(state.borrow().log, [Commit, Commit, full]);
+}
+
+/// C's preflight FlushRequired (S2-0 Row write amendment §3): until the
+/// flush and the retry of the same row from preflight are supplied (A-W1),
+/// the row ends at Stage::Preflight holding nothing. No finish, Cancel or
+/// drop record follows and the statement is returned as it was.
+#[test]
+fn interim_flush_required_preflight_ends_the_row_holding_nothing() {
+    let state = self::state(&[], &[(Call::Preflight, Fault::Flush(9))]);
+    let error = failed(run(&state, &[&V1], &mut [None], &mut loan()));
+    assert_eq!(error.failure.stage, Stage::Preflight);
+    assert_eq!(insert(&error.failure.error), InsertError::Unsupported);
+    assert!(error.failure.cleanup.is_none() && !error.failure.must_resolve);
+    returned(error.after);
+    assert_eq!(state.borrow().log, [Check, Call::Preflight]);
+    settled(&state);
 }
 
 #[test]

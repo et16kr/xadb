@@ -208,7 +208,7 @@ pub(crate) struct InsertLeafCandidate {
 pub(in crate::storage) fn produce_insert_leaf(
     lane: RowProducerLane<'_>,
 ) -> Result<InsertLeafCandidate> {
-    let (context, _control, before, schema_bytes, frame, after, candidate) = lane.parts();
+    let (context, _control, before, schema_bytes, frame, after, candidate, _scratch) = lane.parts();
     if context.operation() != RowOperation::Forward {
         return Err(InsertError::Unsupported);
     }
@@ -290,7 +290,7 @@ pub(in crate::storage) fn produce_clr(lane: RowProducerLane<'_>) -> Result<RowPr
 
 /// Thin adapter: copy lane getters into plain inputs, then call the pure core.
 fn propose(lane: RowProducerLane<'_>, operation: RowOperation) -> Result<RowProposal> {
-    let (context, control, before, schema_bytes, frame, after, candidate) = lane.parts();
+    let (context, control, before, schema_bytes, frame, after, candidate, _scratch) = lane.parts();
     if context.operation() != operation {
         return Err(InsertError::Unsupported);
     }

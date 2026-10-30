@@ -1,15 +1,16 @@
 #![allow(dead_code)]
 //! MBC00-P02: a Before returns the same wrapper; reopen keeps the same
-//! reservation; cancel returns the private loan.
+//! reservation; cancel returns the private loan. A FlushRequired step holds
+//! nothing and ends the call.
 use crate::storage::disk::{
-    CheckedTable, MutationPort, RetentionError, RowInputPlan, RowOperation, RowOwnedError,
-    RowPageRole, RowProducerLane, RowProposal, RowStatementView,
+    CheckedTable, MaintenancePort, MutationPort, RetentionError, RowInputPlan, RowOperation,
+    RowOwnedError, RowPageRole, RowPreflightStep, RowProducerLane, RowProposal, RowStatementView,
 };
 use crate::transaction::concurrency::Owner;
 use foundation::namespace::WriterNamespace;
 
 fn produce(lane: RowProducerLane<'_>) -> RowProposal {
-    let (_context, _control, _before, _schema, frame, _after, _candidate) = lane.parts();
+    let (_context, _control, _before, _schema, frame, _after, _candidate, _scratch) = lane.parts();
     frame[0] = 1;
     RowProposal::new(RowOperation::Forward, 1, 1, [RowPageRole::RowLeaf; 5])
 }
@@ -20,8 +21,12 @@ fn flow<'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>(
     view: &RowStatementView<'_, '_, 'a, 'c, 's>,
     table: &CheckedTable<'c, 's>,
     private: &mut [u8; 425_984],
+    flusher: &mut MaintenancePort<'_, 's, 'c, 'p, 'd, 'm, 'w, W>,
 ) -> Result<(), RetentionError> {
-    let mut preflight = mutation.preflight_row(owner, view, table, private)?;
+    let mut preflight = match mutation.preflight_row(owner, view, table, private, flusher)? {
+        RowPreflightStep::Ready(preflight) => preflight,
+        RowPreflightStep::FlushRequired { .. } => return Ok(()),
+    };
     let plan = {
         let (context, _schema, _leaf, _candidate) = preflight.validation_lane()?.parts();
         RowInputPlan::new(1, context.schema_epoch(), [0; 32])

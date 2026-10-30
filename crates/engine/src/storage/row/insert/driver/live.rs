@@ -7,19 +7,20 @@
 //! bodies return Unchanged `Unsupported`, so these entries are
 //! compile-checked only until C3 supplies the adapters (gap G2).
 use super::{
-    Boundary, DriveError, Failure, Loan, PendingRollback, Preflight, Prepared, PreparedTask,
-    ProducerLane, Reserved, Rollback, RollbackNext, RollbackStop, RollbackTask, StartedRollback,
-    StatementView, Stepped, ValidationLane, carrier_bytes, commit, finish_aborted, finish_rollback,
-    finish_statement, insert_statement, retry_task, rollback_step, start_full_rollback,
-    start_statement_rollback,
+    Boundary, DriveError, Failure, Loan, PendingRollback, Preflight, PreflightNext, Prepared,
+    PreparedTask, ProducerLane, Reserved, Rollback, RollbackNext, RollbackStop, RollbackTask,
+    StartedRollback, StatementView, Stepped, ValidationLane, carrier_bytes, commit, finish_aborted,
+    finish_rollback, finish_statement, insert_statement, retry_task, rollback_step,
+    start_full_rollback, start_statement_rollback,
 };
 use crate::storage::{
     disk::{
-        CheckedTable, MutationPort, Owner, Plan4Target, PreflightRow, PreparedRollbackTask,
-        PreparedRow, ReservedRow, RetentionError, RollbackScope, RollbackStep,
-        RowCommitObservation, RowInputPlan, RowMutationObservation, RowOwnedError, RowProducerLane,
-        RowProposal, RowRollback, RowRollbackTask, RowStatementView, RowTransaction,
-        RowValidationLane, StatementFinishError, TransactionFinishError,
+        CheckedTable, MaintenancePort, MutationPort, Owner, Plan4Target, PreflightRow,
+        PreparedRollbackTask, PreparedRow, ReservedRow, RetentionError, RollbackScope,
+        RollbackStep, RowCommitObservation, RowInputPlan, RowMutationObservation, RowOwnedError,
+        RowPreflightStep, RowProducerLane, RowProposal, RowRollback, RowRollbackTask,
+        RowStatementView, RowTransaction, RowValidationLane, StatementFinishError,
+        TransactionFinishError,
     },
     row::insert::{InsertError, produce_clr, produce_insert, validate_insert},
     row_record::ValueRef,
@@ -151,8 +152,10 @@ impl<'x, 'r, 't, 'v, 'i, 'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
     }
 }
 
-/// The caller's original port and Owner for one driver call; `capsule` names
-/// the transaction lifetime the statement view borrows. Nothing is kept.
+/// The caller's original port, Owner and flusher for one driver call;
+/// `capsule` names the transaction lifetime the statement view borrows.
+/// Nothing is kept. A Row preflight borrows the flusher as its flush lease
+/// until the row ends.
 pub(in crate::storage) struct LiveCall<
     'x,
     't,
@@ -170,6 +173,7 @@ pub(in crate::storage) struct LiveCall<
 > {
     port: &'x mut MutationPort<'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W>,
     owner: &'x mut Owner<'c, 's>,
+    flusher: &'x mut MaintenancePort<'b, 's, 'c, 'p, 'd, 'm, 'w, W>,
     capsule: PhantomData<&'t RowTransaction<'v, 'a, 'c, 's>>,
 }
 
@@ -179,10 +183,12 @@ impl<'x, 't, 'v, 'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
     pub(in crate::storage) fn new(
         port: &'x mut MutationPort<'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W>,
         owner: &'x mut Owner<'c, 's>,
+        flusher: &'x mut MaintenancePort<'b, 's, 'c, 'p, 'd, 'm, 'w, W>,
     ) -> Self {
         Self {
             port,
             owner,
+            flusher,
             capsule: PhantomData,
         }
     }
@@ -196,6 +202,7 @@ impl<'x, 't, 'v, 'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace> Boundar
     type Table = CheckedTable<'c, 's>;
     type Applied = RowMutationObservation;
     type Committed = RowCommitObservation;
+    type Target = Plan4Target;
     type Preflight<'r, 'i>
         = PreflightRow<'r, 't, 'v, 'i, 'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W>
     where
@@ -209,8 +216,16 @@ impl<'x, 't, 'v, 'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace> Boundar
         statement: &'r Self::Statement,
         table: &'r CheckedTable<'c, 's>,
         loan: &'i mut Loan,
-    ) -> Result<Self::Preflight<'r, 'i>, RetentionError> {
-        self.port.preflight_row(self.owner, statement, table, loan)
+    ) -> Result<PreflightNext<Self::Preflight<'r, 'i>, Plan4Target>, RetentionError> {
+        Ok(
+            match self
+                .port
+                .preflight_row(self.owner, statement, table, loan, self.flusher)?
+            {
+                RowPreflightStep::Ready(preflight) => PreflightNext::Ready(preflight),
+                RowPreflightStep::FlushRequired { target } => PreflightNext::Flush(target),
+            },
+        )
     }
     fn start_rollback<'r, 'i>(
         &'r mut self,
@@ -345,6 +360,10 @@ pub(in crate::storage) fn start_full_rollback_live<
 
 /// One step of the caller's held rollback; a stop hands back what C
 /// returned (the same rollback, the same task, or the flush target).
+#[allow(
+    clippy::result_large_err,
+    reason = "a stopped step returns C's same task, with its draft cut, inline"
+)]
 pub(in crate::storage) fn rollback_step_live<
     'x,
     'r,
@@ -374,6 +393,10 @@ pub(in crate::storage) fn rollback_step_live<
 }
 
 /// Retry of the same task a step handed back.
+#[allow(
+    clippy::result_large_err,
+    reason = "a stopped retry returns C's same task, with its draft cut, inline"
+)]
 pub(in crate::storage) fn retry_task_live<
     'x,
     'r,

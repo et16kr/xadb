@@ -110,8 +110,8 @@ mod row;
 pub(crate) use row::{
     CheckedTable, MissingRowEvidence, PreflightRow, PreparedRollbackTask, PreparedRow, ReservedRow,
     RollbackScope, RollbackStep, RowApplied, RowCancelled, RowCandidate, RowCommitObservation,
-    RowCopyObservation, RowMutationObservation, RowOwnedError, RowReadOperation, RowRollback,
-    RowRollbackDone, RowRollbackTask, RowSearchPage,
+    RowCopyObservation, RowMutationObservation, RowOwnedError, RowPreflightStep, RowReadOperation,
+    RowRollback, RowRollbackDone, RowRollbackTask, RowSearchPage,
 };
 
 #[allow(unused_imports)]
@@ -983,6 +983,90 @@ impl RowInputPlan {
     }
 }
 
+/// The Row write layout of the one 425984-byte private loan: the five ranges
+/// of the resource owner's Row table (`row-missing-module-budget`) and the
+/// three named ranges of its former unused tail (S2-0 Row write amendment §3).
+/// Byte ranges only: no range is an authority or owner store. The Catalog
+/// layout and the Row lifecycle's own split of the loan are separate and
+/// unchanged.
+#[allow(
+    dead_code,
+    reason = "the Row write adapters that carve these ranges are later S2 units"
+)]
+pub(crate) struct RowLoanLayout;
+#[allow(
+    dead_code,
+    reason = "the Row write adapters that carve these ranges are later S2 units"
+)]
+impl RowLoanLayout {
+    /// Row frame (largest Row frame 94080 B; Forward ≤ 93660 B, CLR ≤ 93452
+    /// B). Inside preflight, before any frame is produced, it is first the
+    /// retention LOAD scratch of six pages.
+    pub(crate) const FRAME: std::ops::Range<usize> = 0..98_304;
+    /// Nine stable before/proof images of the write target set T.
+    pub(crate) const BEFORE: std::ops::Range<usize> = 98_304..245_760;
+    /// Five changed after images.
+    pub(crate) const AFTER: std::ops::Range<usize> = 245_760..327_680;
+    /// Canonical row candidate.
+    pub(crate) const CANDIDATE: std::ops::Range<usize> = 327_680..344_064;
+    /// Qualified table/schema copy.
+    pub(crate) const SCHEMA: std::ops::Range<usize> = 344_064..360_448;
+    /// C's XOI inventory projection page; lives inside one C step.
+    pub(crate) const XOI: std::ops::Range<usize> = 360_448..376_832;
+    /// C's producer/observer scratch (`ROW_REPLAY_SCRATCH_BYTES`); lives
+    /// inside one C step and is zero on entry.
+    pub(crate) const C_SCRATCH: std::ops::Range<usize> = 376_832..393_216;
+    /// A's scratch, the eighth producer lane part; zeroed by C before the
+    /// lane is issued and never read by C after it returns.
+    pub(crate) const A_SCRATCH: std::ops::Range<usize> = 393_216..425_984;
+    /// In address order.
+    pub(crate) const RANGES: [std::ops::Range<usize>; 8] = [
+        Self::FRAME,
+        Self::BEFORE,
+        Self::AFTER,
+        Self::CANDIDATE,
+        Self::SCHEMA,
+        Self::XOI,
+        Self::C_SCRATCH,
+        Self::A_SCRATCH,
+    ];
+}
+// The eight ranges are nonempty, disjoint and contiguous from 0, and their
+// lengths sum to the whole loan.
+const _: () = {
+    let ranges = RowLoanLayout::RANGES;
+    let mut at = 0;
+    let mut sum = 0;
+    let mut i = 0;
+    while i < ranges.len() {
+        assert!(ranges[i].start == at && ranges[i].start < ranges[i].end);
+        sum += ranges[i].end - ranges[i].start;
+        at = ranges[i].end;
+        i += 1;
+    }
+    assert!(at == 425_984 && sum == 425_984);
+};
+const fn range_len(range: std::ops::Range<usize>) -> usize {
+    range.end - range.start
+}
+// Each lane slice has exactly its range's length.
+const _: () = {
+    use std::mem::size_of;
+    assert!(size_of::<[u8; 98_304]>() == range_len(RowLoanLayout::FRAME));
+    assert!(size_of::<[[u8; PAGE_BYTES]; 9]>() == range_len(RowLoanLayout::BEFORE));
+    assert!(size_of::<[[u8; PAGE_BYTES]; 5]>() == range_len(RowLoanLayout::AFTER));
+    assert!(PAGE_BYTES == range_len(RowLoanLayout::CANDIDATE));
+    assert!(PAGE_BYTES == range_len(RowLoanLayout::SCHEMA));
+    assert!(PAGE_BYTES == range_len(RowLoanLayout::XOI));
+    assert!(
+        crate::storage::semantic_row::transition::ROW_REPLAY_SCRATCH_BYTES
+            <= range_len(RowLoanLayout::C_SCRATCH)
+    );
+    assert!(size_of::<[u8; 32_768]>() == range_len(RowLoanLayout::A_SCRATCH));
+    // The preflight LOAD scratch (six pages) fits the frame range it borrows.
+    assert!(6 * PAGE_BYTES <= range_len(RowLoanLayout::FRAME));
+};
+
 /// Disjoint slices borrowed from one private loan. Consuming this lane neither
 /// advances WAL nor installs pages; those effects require the original owner.
 pub(crate) struct RowProducerLane<'l> {
@@ -993,9 +1077,14 @@ pub(crate) struct RowProducerLane<'l> {
     frame: &'l mut [u8; 98_304],
     after: &'l mut [[u8; PAGE_BYTES]; 5],
     candidate: &'l mut [u8; PAGE_BYTES],
+    /// A only, for the lane borrow only (`RowLoanLayout::A_SCRATCH`). Bytes,
+    /// never Rust references; C never reads it after the lane returns.
+    scratch: &'l mut [u8; 32_768],
 }
 
 impl<'l> RowProducerLane<'l> {
+    /// The same eight parts at every issuer (ReservedRow, RowRollbackTask and
+    /// the recovery task).
     #[allow(
         clippy::type_complexity,
         reason = "one consuming split preserves all disjoint loan lifetimes"
@@ -1010,6 +1099,7 @@ impl<'l> RowProducerLane<'l> {
         &'l mut [u8; 98_304],
         &'l mut [[u8; PAGE_BYTES]; 5],
         &'l mut [u8; PAGE_BYTES],
+        &'l mut [u8; 32_768],
     ) {
         (
             self.context,
@@ -1019,6 +1109,7 @@ impl<'l> RowProducerLane<'l> {
             self.frame,
             self.after,
             self.candidate,
+            self.scratch,
         )
     }
 }

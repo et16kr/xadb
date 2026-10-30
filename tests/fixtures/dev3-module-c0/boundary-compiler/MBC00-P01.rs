@@ -2,10 +2,13 @@
 //! MBC00-P01: preflight -> validation lane end -> reserve -> producer lane end
 //! -> prepare -> apply -> statement end -> transaction end. Invalid type, null,
 //! length and index inputs take the effect-free preflight finish branch.
+//! S2-0: preflight takes the flusher and returns a step. The FlushRequired arm
+//! borrows the same flusher again and retries the same row from preflight; this
+//! compiles only because the Row I/O lease has no Drop impl.
 use crate::storage::disk::{
-    CheckedTable, MutationPort, RetentionError, RowApplied, RowInputPlan, RowOperation,
-    RowOwnedError, RowPageRole, RowProducerLane, RowProposal, RowTransaction, RowValidationLane,
-    StatementFinishError, TransactionFinishError,
+    CheckedTable, MaintenancePort, MutationPort, Plan4Target, RetentionError, RowApplied,
+    RowInputPlan, RowOperation, RowOwnedError, RowPageRole, RowPreflightStep, RowProducerLane,
+    RowProposal, RowTransaction, RowValidationLane, StatementFinishError, TransactionFinishError,
 };
 use crate::transaction::concurrency::Owner;
 use foundation::namespace::WriterNamespace;
@@ -30,24 +33,45 @@ fn validate(lane: RowValidationLane<'_>, input: Input) -> Option<RowInputPlan> {
 }
 
 fn produce(lane: RowProducerLane<'_>) -> RowProposal {
-    let (context, _control, _before, _schema, frame, after, _candidate) = lane.parts();
-    frame[0] = 1;
+    let (context, _control, _before, _schema, frame, after, _candidate, scratch) = lane.parts();
+    scratch[0] = 1;
+    frame[0] = scratch[0];
     after[0][0] = 1;
     let count = context.after_order().len();
     RowProposal::new(RowOperation::Forward, 1, count, [RowPageRole::RowLeaf; 5])
 }
 
+fn flush_target<'s, 'c, W: WriterNamespace>(
+    flusher: &mut MaintenancePort<'_, 's, 'c, '_, '_, '_, '_, W>,
+    flush_owner: &mut Owner<'c, 's>,
+    target: Plan4Target,
+) -> Result<(), RetentionError> {
+    let _step = flusher.try_flush(flush_owner, &target)?;
+    let _phase = flusher.phase();
+    Ok(())
+}
+
+#[allow(clippy::too_many_arguments)]
 fn flow<'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>(
     mutation: &mut MutationPort<'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W>,
     owner: &mut Owner<'c, 's>,
     transaction: RowTransaction<'b, 'a, 'c, 's>,
     table: &CheckedTable<'c, 's>,
     private: &mut [u8; 425_984],
+    flusher: &mut MaintenancePort<'_, 's, 'c, 'p, 'd, 'm, 'w, W>,
+    flush_owner: &mut Owner<'c, 's>,
     input: Input,
 ) -> Result<u64, RetentionError> {
     let view = mutation.begin_statement(owner, &transaction)?;
     let applied: Option<RowApplied<'_>> = {
-        let mut preflight = mutation.preflight_row(owner, &view, table, &mut *private)?;
+        let mut preflight = loop {
+            match mutation.preflight_row(owner, &view, table, &mut *private, &mut *flusher)? {
+                RowPreflightStep::Ready(preflight) => break preflight,
+                RowPreflightStep::FlushRequired { target } => {
+                    flush_target(flusher, flush_owner, target)?;
+                }
+            }
+        };
         match validate(preflight.validation_lane()?, input) {
             None => {
                 preflight.finish()?;

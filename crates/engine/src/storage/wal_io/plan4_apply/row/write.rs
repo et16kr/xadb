@@ -1,8 +1,54 @@
 //! Preflight, RowReserve, producer lane, prepare/apply and cancel. Each step
-//! consumes the previous wrapper; one source admission and one reservation
-//! move through the chain instead of being acquired again.
+//! consumes the previous wrapper; one source admission, one terminal read
+//! gate, one flush lease and one reservation move through the chain instead
+//! of being acquired again (S2-0 Row write amendment §1).
+use super::super::flush::RetentionFlushControl;
 use super::super::source::OperationSourceAdmission;
 use super::*;
+use crate::transaction::concurrency::TerminalReadGate;
+
+/// The original flush control's one mutable borrow, held from preflight to
+/// finish, apply success or cancel success and kept across every Before
+/// (CREATE-LEASE-001 precedent). Its acquisition is `check_catalog_pair_io`'s
+/// check; no pair or selected generation is frozen and C performs no flush
+/// I/O under it. Its purpose is that no flush capture or eviction reaches a
+/// write target until the row ends.
+///
+/// Deliberately no Drop impl, like `CatalogPairIoLease`: with one, `'r` would
+/// stay alive to the end of the preflight step match and the `FlushRequired`
+/// arm could not borrow the flusher again.
+pub(crate) struct RowIoLease<'r, 'c, 's, 'w> {
+    original: &'r mut RetentionFlushControl<'c, 's, 'w>,
+}
+
+/// What `preflight_row` returns. `FlushRequired` is returned before any
+/// effect or read-set registration, after the source, gate and lease were
+/// returned: the residency of the write targets needs `target`, a dirty
+/// victim, flushed first; the caller flushes it and tries the same row again
+/// from preflight.
+#[allow(
+    clippy::large_enum_variant,
+    reason = "the preflight wrapper is returned inline as the contract's Ready value"
+)]
+pub(crate) enum RowPreflightStep<
+    'r,
+    't,
+    'v,
+    'i,
+    'b,
+    'a,
+    's,
+    'c,
+    'p,
+    'd,
+    'o,
+    'm,
+    'w,
+    W: WriterNamespace,
+> {
+    Ready(PreflightRow<'r, 't, 'v, 'i, 'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W>),
+    FlushRequired { target: Plan4Target },
+}
 
 /// The one actual Root/Job/UndoSlot reservation of a ReservedRow. Only C
 /// creates it after the Root/Job/Undo before checks, the original WAL Reserve
@@ -20,7 +66,9 @@ struct RowSlotReservation<'c, 's> {
 }
 
 /// Validated source state before the first Row effect. Errors, an explicit
-/// finish or Drop return the admission and loan with no WAL/page/issuer change.
+/// finish or Drop return the admission, gate and lease in that order (field
+/// order is the implicit drop order) and the loan, with no I/O and no
+/// WAL/page/issuer change.
 pub(crate) struct PreflightRow<
     'r,
     't,
@@ -44,6 +92,8 @@ pub(crate) struct PreflightRow<
     private: Option<&'i mut [u8; 425_984]>,
     source_cut: RowPreflightCut,
     source: OperationSourceAdmission<'b, 'a, 'c, 's>,
+    gate: Option<TerminalReadGate<'c, 's>>,
+    io: Option<RowIoLease<'r, 'c, 's, 'w>>,
 }
 
 pub(crate) struct ReservedRow<
@@ -70,10 +120,13 @@ pub(crate) struct ReservedRow<
     reservation: RowSlotReservation<'c, 's>,
     draft: RowDraftCut,
     source: OperationSourceAdmission<'b, 'a, 'c, 's>,
+    gate: Option<TerminalReadGate<'c, 's>>,
+    io: Option<RowIoLease<'r, 'c, 's, 'w>>,
 }
 
-/// Holds the whole reservation and a scalar cut of the checked proposal, not a
-/// borrowed frame slice; reopen discards only that cut.
+/// Holds the whole reservation, with its admission, gate and lease, and a
+/// scalar cut of the checked proposal, not a borrowed frame slice; reopen
+/// discards only that cut.
 pub(crate) struct PreparedRow<
     'r,
     't,
@@ -116,15 +169,18 @@ impl<'i> RowCancelled<'i> {
 impl<'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
     MutationPort<'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W>
 {
-    /// Unsupported before any source read, admission or effect until the
-    /// actual schema/index/leaf preflight adapter is supplied.
+    /// Unsupported before any source read, flush check, gate, admission or
+    /// effect until the actual schema/index/leaf/residency preflight adapter
+    /// is supplied. The flusher is the session's original MaintenancePort;
+    /// a Ready preflight keeps its flush control as the row's lease.
     pub(in crate::storage) fn preflight_row<'r, 't, 'v, 'i>(
         &'r mut self,
         _owner: &'r mut Owner<'c, 's>,
         _statement: &'r RowStatementView<'t, 'v, 'a, 'c, 's>,
         _table: &'r CheckedTable<'c, 's>,
         _private: &'i mut [u8; 425_984],
-    ) -> Result<PreflightRow<'r, 't, 'v, 'i, 'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W>> {
+        _flusher: &'r mut MaintenancePort<'_, 's, 'c, 'p, 'd, 'm, 'w, W>,
+    ) -> Result<RowPreflightStep<'r, 't, 'v, 'i, 'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W>> {
         Err(unsupported())
     }
 }
@@ -152,10 +208,20 @@ impl<'r, 't, 'v, 'i, 'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
             owned: self,
         })
     }
-    /// Returns the loan after the checked admission release. The read set
-    /// already registered by the actual source stays with the statement.
+    /// Returns the loan after the checked admission release, the gate reopen
+    /// and the lease end, in that order and with no I/O. The read set already
+    /// registered by the actual source stays with the statement.
     pub(in crate::storage) fn finish(mut self) -> Result<&'i mut [u8; 425_984]> {
-        let cleanup = self.source.release_checked().map_err(RetentionError::from);
+        let source = self.source.release_checked().map_err(RetentionError::from);
+        let gate = self.gate.take().map_or(Ok(()), |gate| {
+            gate.reopen_checked().map_err(|error| RetentionError {
+                phase: RetentionPhase::Census,
+                cause: RetentionCause::Concurrency(error),
+                effect: error.effect,
+            })
+        });
+        self.io = None;
+        let cleanup = merge(source, gate);
         let private = self.private.take().ok_or_else(|| {
             fatal(
                 self.mutation.storage,

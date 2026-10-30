@@ -1,6 +1,7 @@
 #![allow(dead_code)]
 //! MBC00-P05: the producer split borrows control/schema/before immutably and
-//! frame/after/candidate mutably at once; the lane ends before prepare.
+//! frame/after/candidate and the A scratch mutably at once; the lane ends
+//! before prepare.
 use crate::storage::disk::{
     ReservedRow, RetentionError, RowOperation, RowOwnedError, RowPageRole, RowProposal,
     RowSourceRole,
@@ -12,13 +13,14 @@ fn flow<'r, 't, 'v, 'i, 'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>(
 ) -> Result<(), RetentionError> {
     let proposal = {
         let lane = reserved.producer_lane()?;
-        let (context, control, before, schema, frame, after, candidate) = lane.parts();
+        let (context, control, before, schema, frame, after, candidate, scratch) = lane.parts();
         let jobs = control.jobs();
         let index = context
             .source(RowSourceRole::RowLeaf)
             .map_or(0, |source| usize::from(source.before_index()));
-        frame[0] = before[index][0] ^ schema[0] ^ jobs[0][0];
-        after[0].copy_from_slice(&before[index]);
+        scratch[..16_384].copy_from_slice(&before[index]);
+        frame[0] = scratch[0] ^ schema[0] ^ jobs[0][0];
+        after[0].copy_from_slice(&scratch[..16_384]);
         candidate[0] = control.transaction().map_or(0, |bytes| bytes[0]);
         let roles = context.after_order();
         let mut declared = [RowPageRole::RowLeaf; 5];
