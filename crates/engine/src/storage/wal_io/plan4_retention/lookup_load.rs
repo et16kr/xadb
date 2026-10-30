@@ -78,13 +78,28 @@ fn page_io<W: WriterNamespace>(
     }
 }
 
-impl<'b, 'a, 's, 'c, 'p, 'd, 'm, 'w, W: WriterNamespace>
-    ReadPort<'b, 'a, 's, 'c, 'p, 'd, 'm, 'w, W>
+/// The original resources the one retention LOAD body borrows. The reader's
+/// lookup and the Row write preflight (S2-0 Row write amendment §1
+/// "residency") both run this body: the same claim, replay, verification and
+/// install, with the same frames (the receiver is one reference either way).
+pub(super) trait RetentionLoadPort<'b, 'a: 'b, 's, 'c, 'p, 'd, 'm, 'w, W: WriterNamespace>
+where
+    W: 's,
+    'm: 's,
+    'w: 's,
+    's: 'c,
+    'c: 'b,
+    'p: 'b,
+    'd: 'p,
 {
+    fn load_storage(&self) -> &'s MutableStorageOwner<'m, 'w, W>;
+    fn load_pool(&self) -> &'b SharedPool<'c, 's, 'p, 'd>;
+    fn load_history(&self) -> &'b history::runtime::RuntimeHistory<'a, 'c, 's>;
+
     /// A finite original-pool residency step. The caller's copied Catalog and
     /// transient Txn/Undo refs live outside `scratch`; this prefix uses six
     /// pages and never touches the Catalog copy in the lookup loan's tail.
-    pub(super) fn load_lookup_target(
+    fn load_lookup_target(
         &self,
         owner: &mut Owner<'c, 's>,
         request: TargetRequest,
@@ -92,18 +107,18 @@ impl<'b, 'a, 's, 'c, 'p, 'd, 'm, 'w, W: WriterNamespace>
         protected: &[TargetRequest],
         scratch: &mut [u8],
     ) -> Result<RetentionResidencyStep> {
-        let storage = self.storage;
+        let storage = self.load_storage();
         let _unwind = storage.session_fence().unwind_guard();
         if scratch.len() < 6 * PAGE_BYTES {
             return Err(unchanged(RetentionPhase::Load, RetentionCause::Capacity));
         }
-        let mut outer = CatalogLookupOp::new(owner, self.pool)?;
+        let mut outer = CatalogLookupOp::new(owner, self.load_pool())?;
         // This creates only the separate attempt audit. Checkout and installed
         // source capture happen after the successful physical target claim.
-        let mut replay_audit = self.history.replay_scope(outer.owner)?;
+        let mut replay_audit = self.load_history().replay_scope(outer.owner)?;
         let result = (|| {
             let step = self
-                .pool
+                .load_pool()
                 .claim_retention_load(outer.owner, request, cursor.next, protected)
                 .map_err(|error| frame(RetentionPhase::Load, error))?;
             match step {
@@ -119,7 +134,7 @@ impl<'b, 'a, 's, 'c, 'p, 'd, 'm, 'w, W: WriterNamespace>
                         fatal(storage, RetentionPhase::Load, RetentionCause::Invariant)
                     })?;
                     let request = self
-                        .pool
+                        .load_pool()
                         .target_request(candidate.index)
                         .map_err(frame_error)?;
                     Ok(RetentionResidencyStep::FlushRequired {
@@ -170,7 +185,7 @@ impl<'b, 'a, 's, 'c, 'p, 'd, 'm, 'w, W: WriterNamespace>
         audit: &mut history::runtime::ReplayScope<'_, 'a, 'c, 's>,
         scratch: &mut [u8],
     ) -> Result<FrameStamp> {
-        let storage = self.storage;
+        let storage = self.load_storage();
         let identity = claim.identity();
         let request = identity.request();
         let page_no = usize::try_from(request.identity.page.page_no)
@@ -193,7 +208,7 @@ impl<'b, 'a, 's, 'c, 'p, 'd, 'm, 'w, W: WriterNamespace>
         ] = pages;
         claim.capture_victim().map_err(frame_error)?;
         let allocator_stamp = claim.copy_allocator(allocator).map_err(frame_error)?;
-        let cut = self.history.source_cut()?;
+        let cut = self.load_history().source_cut()?;
         let durable = cut.ensure_durable(storage)?;
         let mut token = audit.checkout()?;
         let copied = (|| {
@@ -262,6 +277,35 @@ impl<'b, 'a, 's, 'c, 'p, 'd, 'm, 'w, W: WriterNamespace>
             namespace: storage.profile().spec().namespace,
         };
         claim.install(&permit).map_err(frame_error)
+    }
+}
+
+impl<'b, 'a: 'b, 's, 'c, 'p, 'd, 'm, 'w, W: WriterNamespace>
+    RetentionLoadPort<'b, 'a, 's, 'c, 'p, 'd, 'm, 'w, W>
+    for ReadPort<'b, 'a, 's, 'c, 'p, 'd, 'm, 'w, W>
+{
+    fn load_storage(&self) -> &'s MutableStorageOwner<'m, 'w, W> {
+        self.storage
+    }
+    fn load_pool(&self) -> &'b SharedPool<'c, 's, 'p, 'd> {
+        self.pool
+    }
+    fn load_history(&self) -> &'b history::runtime::RuntimeHistory<'a, 'c, 's> {
+        self.history
+    }
+}
+impl<'b, 'a: 'b, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
+    RetentionLoadPort<'b, 'a, 's, 'c, 'p, 'd, 'm, 'w, W>
+    for MutationPort<'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W>
+{
+    fn load_storage(&self) -> &'s MutableStorageOwner<'m, 'w, W> {
+        self.storage
+    }
+    fn load_pool(&self) -> &'b SharedPool<'c, 's, 'p, 'd> {
+        self.pool
+    }
+    fn load_history(&self) -> &'b history::runtime::RuntimeHistory<'a, 'c, 's> {
+        self.history
     }
 }
 
