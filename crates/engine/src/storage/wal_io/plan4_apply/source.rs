@@ -151,6 +151,12 @@ impl CatalogProgressCharge {
     }
 }
 
+/// The fixed progress charge in bytes, computed as at split: the RowWrite
+/// charge of the Row write census and of its A-side counterpart.
+pub(super) fn progress_charge_bytes<W: WriterNamespace>() -> usize {
+    CatalogProgressCharge::new::<W>().0
+}
+
 /// The synchronous writer keeps the admission and gate through preparation,
 /// application and result cleanup. Prepared is constructed and consumed inside
 /// that call; no preparation receipt escapes to an uncharged caller.

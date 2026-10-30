@@ -668,20 +668,41 @@ pub(in super::super) struct RowLifecycleTerms {
     pub(in super::super) carriers: usize,
     /// Entry packets that survive into common preparation/installation.
     pub(in super::super) caller: usize,
+    /// `produce` with the borrowed observer of a producer-supplied frame
+    /// (`observe_borrowed`) in place of C's producer. No lifecycle group
+    /// observes a foreign frame, so `row_lifecycle` does not use it.
+    pub(in super::super) observer: usize,
 }
 
 pub(in super::super) fn row_lifecycle_terms() -> RowLifecycleTerms {
+    row_group_terms::<ROW_TARGETS>()
+}
+
+/// The same terms for a Row group over `N` targets. Every target-indexed
+/// array, the typed read and the prepared group's own request/role/stamp
+/// arrays are taken at N; at `ROW_TARGETS` this is exactly the lifecycle's.
+/// The RowWrite census (S2-0 Row write amendment §4) takes N = 9, the whole
+/// write target set; no group of that size is prepared yet, so its
+/// prepared-group arrays are charged as one (request, role, stamp) element
+/// per target beyond `ROW_TARGETS`.
+pub(in super::super) fn row_group_terms<const N: usize>() -> RowLifecycleTerms {
     use crate::storage::page::{PageHeader, PageView};
     use foundation::codec::ContentHasher;
     use std::mem::size_of;
     type Prepared<'a> = PreparedRowGroup<'a, 'a, 'a>;
+    const {
+        assert!(N >= ROW_TARGETS && N <= 9);
+    }
+    // Zero at ROW_TARGETS. Each tuple carries its own padding, so this is no
+    // less than the growth of the group and of its Result carriers.
+    let wider = (N - ROW_TARGETS) * size_of::<(TargetRequest, u8, Option<FrameStamp>)>();
     let observation =
         size_of::<row_group::Observation>() + 3 * size_of::<Result<row_group::Observation>>();
-    let outer = size_of::<[(TargetRequest, u8); ROW_TARGETS]>()
+    let outer = size_of::<[(TargetRequest, u8); N]>()
         + size_of::<row_group::Change<'_>>()
         + size_of::<Option<usize>>()
         + size_of::<FrameExpectation>()
-        + size_of::<[TargetRequest; ROW_TARGETS]>()
+        + size_of::<[TargetRequest; N]>()
         + size_of::<[Option<FrameStamp>; 9]>()
         + observation;
     // Sequential under the typed read: the shared target observation, then
@@ -692,12 +713,20 @@ pub(in super::super) fn row_lifecycle_terms() -> RowLifecycleTerms {
         + size_of::<crate::storage::allocation_page::AllocationPage<'_>>()
         + size_of::<PageIdentity>()
         + 2 * size_of::<Result<FrameStamp>>();
-    let produce = targets::call_bytes::<ROW_TARGETS>().max(
-        size_of::<targets::CatalogRead<'_, '_, '_, '_, '_, '_, '_, ROW_TARGETS>>()
+    let produce = targets::call_bytes::<N>().max(
+        size_of::<targets::CatalogRead<'_, '_, '_, '_, '_, '_, '_, N>>()
             + observe.max(
                 size_of::<row_group::Inputs<'_>>()
                     + size_of::<&mut [u8; ROW_REPLAY_SCRATCH_BYTES]>()
                     + row_group::produce_borrowed_source_bytes(),
+            ),
+    );
+    let observer = targets::call_bytes::<N>().max(
+        size_of::<targets::CatalogRead<'_, '_, '_, '_, '_, '_, '_, N>>()
+            + observe.max(
+                size_of::<row_group::Inputs<'_>>()
+                    + size_of::<&mut [u8; ROW_REPLAY_SCRATCH_BYTES]>()
+                    + row_group::observe_borrowed_source_bytes(),
             ),
     );
     // Changed-target identity, layout decode and the shared XOI projection,
@@ -719,10 +748,11 @@ pub(in super::super) fn row_lifecycle_terms() -> RowLifecycleTerms {
                 crate::storage::plan4_recovery_base::catalog::inventory::row_current_source_bytes(),
             )
             .max(queue::root_decode_source_bytes() + 8 * size_of::<&()>());
-    let assembled = size_of::<[TargetRequest; ROW_TARGETS]>()
-        + size_of::<[u8; ROW_TARGETS]>()
+    let assembled = size_of::<[TargetRequest; N]>()
+        + size_of::<[u8; N]>()
         + size_of::<Prepared<'_>>()
         + 2 * size_of::<Result<Prepared<'_>>>()
+        + 3 * wider
         + 2 * size_of::<ControlCut>()
         + 3 * size_of::<ContentHasher>()
         + 1536;
@@ -748,6 +778,7 @@ pub(in super::super) fn row_lifecycle_terms() -> RowLifecycleTerms {
         + 6 * size_of::<&()>()
         + row_group::layout_source_bytes().max(record);
     let carriers = 3 * size_of::<Result<Prepared<'_>>>()
+        + 3 * wider
         + 3 * size_of::<Result<row_group::Observation>>()
         + 2 * size_of::<RowLifecycle<'_>>()
         + size_of::<ExistingGroup<'_, '_, '_, '_>>();
@@ -775,6 +806,7 @@ pub(in super::super) fn row_lifecycle_terms() -> RowLifecycleTerms {
         control,
         carriers,
         caller,
+        observer,
     }
 }
 

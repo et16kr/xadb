@@ -1,0 +1,211 @@
+//! Row write census selectors of the S2-0 Row write amendment (S2W-C01..C05).
+//! These are size_of inventories in the repository's source-bound sense, not
+//! stack measurements. No Row write effect body exists yet, so every C phase
+//! below is an upper estimate composed from existing census terms and the
+//! final S2-a types (`RowWriteBodies`), printed with its terms; it is not a
+//! measured phase and not acceptance of any later body.
+use super::write::{RowIoLease, row_write_phases};
+use super::*;
+use crate::storage::page::PAGE_BYTES;
+use crate::transaction::concurrency::TerminalReadGate;
+use std::mem::size_of;
+
+type Memory = crate::storage::wal_io::plan4_test_support::Writer;
+type Native = super::super::super::native::Writer;
+
+/// Charge minus body and carriers of the tightest phase, signed: the largest
+/// A share at every C call that the estimates leave. Negative is an overrun
+/// of the C side alone, before any A share.
+fn caller_room<W: WriterNamespace>() -> i64 {
+    let charge = row_write_charge::<W>() as i64;
+    row_write_phases::<W>()
+        .iter()
+        .map(|phase| charge - (phase.body + phase.carriers) as i64)
+        .min()
+        .expect("eight phases")
+}
+
+fn phase_census<W: WriterNamespace>(id: &str, writer: &str) {
+    let charge = row_write_charge::<W>();
+    let shared = super::super::source::shared_bytes::<W>();
+    let bodies = super::super::create_pair::catalog_live::catalog_live_source_bytes::<W>();
+    let terms = bodies.row_write;
+    println!(
+        "{id} writer={writer} charge={charge} shared={shared} shared_plus_charge={} \
+         caller={ROW_WRITE_CALLER_BYTES} row_lifecycle={} catalog_live_peak={}",
+        shared + charge,
+        bodies.row_lifecycle,
+        bodies.peak,
+    );
+    println!(
+        "{id} terms shell={} lease_check={} target_set={} check={} load={} undo_select={} \
+         register={} commit={} select={} group_prepare={} group_install={} group_carriers={}",
+        terms.shell,
+        terms.lease_check,
+        terms.target_set,
+        terms.check,
+        terms.load,
+        terms.undo_select,
+        terms.register,
+        terms.commit,
+        terms.select,
+        terms.group_prepare,
+        terms.group_install,
+        terms.group_carriers,
+    );
+    println!(
+        "{id} types gate={} lease={} step={} preflight_row={} reserved_row={} prepared_row={} \
+         producer_lane={} validation_lane={} cuts=({}, {}, {})",
+        size_of::<Option<TerminalReadGate<'_, '_>>>(),
+        size_of::<Option<RowIoLease<'_, '_, '_, '_>>>(),
+        size_of::<RowPreflightStep<'_, '_, '_, '_, '_, '_, '_, '_, '_, '_, '_, '_, '_, W>>(),
+        size_of::<PreflightRow<'_, '_, '_, '_, '_, '_, '_, '_, '_, '_, '_, '_, '_, W>>(),
+        size_of::<ReservedRow<'_, '_, '_, '_, '_, '_, '_, '_, '_, '_, '_, '_, '_, W>>(),
+        size_of::<PreparedRow<'_, '_, '_, '_, '_, '_, '_, '_, '_, '_, '_, '_, '_, W>>(),
+        size_of::<RowProducerLane<'_>>(),
+        size_of::<RowValidationLane<'_>>(),
+        size_of::<RowPreflightCut>(),
+        size_of::<RowDraftCut>(),
+        size_of::<RowPreparedCut>(),
+    );
+    for phase in row_write_phases::<W>() {
+        let total = phase.body + phase.carriers + ROW_WRITE_CALLER_BYTES;
+        println!(
+            "{id} phase={} kind=estimate body={} carriers={} caller={ROW_WRITE_CALLER_BYTES} \
+             total={total} charge={charge} room_for_caller={} fits={}",
+            phase.name,
+            phase.body,
+            phase.carriers,
+            charge as i64 - (phase.body + phase.carriers) as i64,
+            if total <= charge { "yes" } else { "no" },
+        );
+    }
+    let (memory, native) = (caller_room::<Memory>(), caller_room::<Native>());
+    let both = memory.min(native);
+    println!(
+        "{id} caller_room memory={memory} native={native} both={both} \
+         constant={ROW_WRITE_CALLER_BYTES} overrun_before_caller={}",
+        (-both).max(0)
+    );
+    // The charge is the one split-time CatalogProgressCharge and fits the
+    // short-source cap beside shared.
+    assert_eq!(charge, super::super::source::progress_charge_bytes::<W>());
+    assert!(shared + charge <= 65_536);
+    // The constant is, by its definition, the largest A share that every
+    // estimated C phase leaves in both writers, floored at zero. The phase
+    // lines above are estimates and are printed, not accepted.
+    assert_eq!(ROW_WRITE_CALLER_BYTES as i64, both.max(0));
+}
+
+/// S2W-C01: memory W, every RowWrite C phase as body + carriers +
+/// `ROW_WRITE_CALLER_BYTES` against the RowWrite charge.
+#[test]
+fn s2w_c01_row_write_phase_census_memory() {
+    phase_census::<Memory>("S2W_C01", "memory");
+}
+
+/// S2W-C02: the same for the native writer.
+#[test]
+fn s2w_c02_row_write_phase_census_native() {
+    phase_census::<Native>("S2W_C02", "native");
+}
+
+/// S2W-C03: the Row lifecycle term and the charge are unchanged beside the
+/// Row write layout: the lifecycle keeps its own split of the loan, and its
+/// terms are the generic Row group terms at its four targets. The contract's
+/// native 43113 B was taken with the test adapter's 160-byte File; with the
+/// 32-byte File (94ede44) native equals memory, 42089 B.
+#[test]
+fn s2w_c03_row_lifecycle_unchanged_beside_the_row_write_layout() {
+    fn inspect<W: WriterNamespace>(writer: &str, lifecycle: usize) {
+        let phases = super::super::create_pair::catalog_live::catalog_live_source_bytes::<W>();
+        let charge = row_write_charge::<W>();
+        println!(
+            "S2W_C03 writer={writer} row_lifecycle={} lifecycle={} retirement={} \
+             catalog_progress_charge={charge} catalog_live_peak={}",
+            phases.row_lifecycle, phases.lifecycle, phases.retirement, phases.peak
+        );
+        assert_eq!(phases.row_lifecycle, lifecycle);
+        assert_eq!(charge, 44_304);
+        assert!(phases.row_lifecycle <= charge);
+    }
+    inspect::<Memory>("memory", 42_089);
+    inspect::<Native>("native", 42_089);
+}
+
+/// S2W-C04: the live and recovered short-source peaks are unchanged. No port
+/// or session field was added, so shared is unchanged, and the RowWrite
+/// bodies are kept out of the Catalog live peak. Native 64136/65504 B in the
+/// contract count the test adapter's 160-byte File; with the 32-byte File
+/// (94ede44) they are 64008/65376 B, before and after S2-a alike.
+#[test]
+fn s2w_c04_live_and_recovered_peaks_unchanged() {
+    fn inspect<W: WriterNamespace>(writer: &str, live: usize, recovered: usize) {
+        let census = super::super::resources::source_census::<W>();
+        let recovery = super::super::super::super::plan4_recovery::source_census::<W>();
+        println!(
+            "S2W_C04 writer={writer} live_peak={} recovered_peak={} shared={} split_ports={}",
+            census.peak,
+            recovery.peak,
+            super::super::source::shared_bytes::<W>(),
+            super::super::source::split_port_bytes::<W>(),
+        );
+        assert_eq!((census.peak, recovery.peak), (live, recovered));
+    }
+    inspect::<Memory>("memory", 64_000, 65_368);
+    inspect::<Native>("native", 64_008, 65_376);
+}
+
+/// S2W-C05: the eight private ranges are disjoint and contiguous and sum to
+/// the loan, each lane part has its range's size, and each cut is ≤ 128 B.
+/// The same facts are const assertions; this selector prints them.
+#[test]
+fn s2w_c05_private_lane_ranges_and_cut_sizes() {
+    let names = [
+        "frame",
+        "before",
+        "after",
+        "candidate",
+        "schema",
+        "xoi",
+        "c_scratch",
+        "a_scratch",
+    ];
+    let mut at = 0;
+    for (name, range) in names.iter().zip(RowLoanLayout::RANGES) {
+        println!(
+            "S2W_C05 range={name} start={} end={} bytes={}",
+            range.start,
+            range.end,
+            range.len()
+        );
+        assert_eq!(range.start, at);
+        assert!(range.start < range.end);
+        at = range.end;
+    }
+    assert_eq!(at, 425_984);
+    assert_eq!(
+        RowLoanLayout::RANGES
+            .iter()
+            .map(|range| range.len())
+            .sum::<usize>(),
+        425_984
+    );
+    assert_eq!(RowLoanLayout::XOI.len(), PAGE_BYTES);
+    assert_eq!(RowLoanLayout::C_SCRATCH.len(), 16_384);
+    assert_eq!(RowLoanLayout::A_SCRATCH.len(), size_of::<[u8; 32_768]>());
+    let cuts = [
+        ("preflight", size_of::<RowPreflightCut>()),
+        ("draft", size_of::<RowDraftCut>()),
+        ("prepared", size_of::<RowPreparedCut>()),
+    ];
+    for (name, bytes) in cuts {
+        println!("S2W_C05 cut={name} bytes={bytes} limit={ROW_CUT_MAX_BYTES}");
+        assert!(bytes <= ROW_CUT_MAX_BYTES);
+    }
+    println!(
+        "S2W_C05 lane_part=a_scratch reference={} c_scratch_used={}",
+        size_of::<&mut [u8; 32_768]>(),
+        crate::storage::semantic_row::transition::ROW_REPLAY_SCRATCH_BYTES
+    );
+}

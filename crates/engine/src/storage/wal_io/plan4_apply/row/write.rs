@@ -50,6 +50,91 @@ pub(crate) enum RowPreflightStep<
     FlushRequired { target: Plan4Target },
 }
 
+/// Upper bound of A's driver share at each C call of a Row write: what the
+/// driver holds while preflight, the lanes, reserve, prepare, apply, cancel or
+/// finish runs (S2-0 Row write amendment §4). Every RowWrite C phase is checked
+/// as `C body + carriers + ROW_WRITE_CALLER_BYTES ≤ CatalogProgressCharge` in
+/// both writers (S2W-C01/C02); A checks its own call-site shares against it
+/// (MCA00-D15). The value is the largest that the C phase estimates leave in
+/// both writers, floored at zero. At S2-a the tightest phase is Forward/CLR
+/// prepare, which leaves 58 B in both writers (Reserve 218 B, Cancel 178 B):
+/// far below the A driver's measured share, so A's call-site check cannot
+/// pass until the C bodies or the A driver shrink (Q06). Changing it reruns
+/// the census of every committed RowWrite phase.
+pub(crate) const ROW_WRITE_CALLER_BYTES: usize = 58;
+
+/// The fixed RowWrite charge: the split-time CatalogProgressCharge that
+/// `OperationSourceAdmission::progress(RowWrite)` reserves, as a byte count
+/// for the A-side census. Not a grant and not an admission.
+pub(crate) fn row_write_charge<W: WriterNamespace>() -> usize {
+    super::super::source::progress_charge_bytes::<W>()
+}
+
+/// One RowWrite C phase as the Row write census charges it (S2W-C01/C02).
+#[derive(Clone, Copy, Debug)]
+pub(in crate::storage) struct RowWritePhase {
+    pub(in crate::storage) name: &'static str,
+    /// The C body upper estimate with the progress shell (`RowWriteBodies`).
+    pub(in crate::storage) body: usize,
+    /// The step's own receiver/argument values and its Result/return
+    /// carriers, counted twice for a by-value result (callee and forward).
+    pub(in crate::storage) carriers: usize,
+}
+
+/// The eight RowWrite C phases (S2-0 Row write amendment §4): the six effect
+/// and release steps and the two lane issues. A's share at each call is
+/// `ROW_WRITE_CALLER_BYTES`, added by the caller of this census.
+pub(in crate::storage) fn row_write_phases<W: WriterNamespace>() -> [RowWritePhase; 8] {
+    use std::mem::size_of;
+    type Pre<'a, W> = PreflightRow<'a, 'a, 'a, 'a, 'a, 'a, 'a, 'a, 'a, 'a, 'a, 'a, 'a, W>;
+    type Res<'a, W> = ReservedRow<'a, 'a, 'a, 'a, 'a, 'a, 'a, 'a, 'a, 'a, 'a, 'a, 'a, W>;
+    type Prep<'a, W> = PreparedRow<'a, 'a, 'a, 'a, 'a, 'a, 'a, 'a, 'a, 'a, 'a, 'a, 'a, W>;
+    type Step<'a, W> = RowPreflightStep<'a, 'a, 'a, 'a, 'a, 'a, 'a, 'a, 'a, 'a, 'a, 'a, 'a, W>;
+    type Loan<'a> = &'a mut [u8; 425_984];
+    let bodies =
+        super::super::create_pair::catalog_live::catalog_live_source_bytes::<W>().row_write;
+    let reference = size_of::<&()>();
+    // Receiver, Owner, statement, table, private and flusher; the cut being
+    // recorded; the wrapper assembled into the Ready step.
+    let preflight = 6 * reference
+        + size_of::<RowPreflightCut>()
+        + size_of::<Pre<'_, W>>()
+        + 2 * size_of::<Result<Step<'_, W>>>();
+    let validation_lane = reference + 2 * size_of::<Result<RowValidationLane<'_>>>();
+    let reserve = size_of::<Pre<'_, W>>()
+        + size_of::<RowInputPlan>()
+        + size_of::<RowSlotReservation<'_, '_>>()
+        + size_of::<RowDraftCut>()
+        + 2 * size_of::<std::result::Result<Res<'_, W>, RowOwnedError<Pre<'_, W>>>>();
+    let producer_lane = reference + 2 * size_of::<Result<RowProducerLane<'_>>>();
+    let prepare = size_of::<Res<'_, W>>()
+        + size_of::<RowProposal>()
+        + size_of::<RowPreparedCut>()
+        + 2 * size_of::<std::result::Result<Prep<'_, W>, RowOwnedError<Res<'_, W>>>>();
+    let apply = size_of::<Prep<'_, W>>()
+        + size_of::<RowMutationObservation>()
+        + 2 * size_of::<std::result::Result<RowApplied<'_>, RowOwnedError<Prep<'_, W>>>>();
+    let cancel = size_of::<Res<'_, W>>()
+        + 2 * size_of::<std::result::Result<RowCancelled<'_>, RowOwnedError<Res<'_, W>>>>();
+    let finish =
+        size_of::<Pre<'_, W>>() + 2 * size_of::<Result<Loan<'_>>>() + 3 * size_of::<Result<()>>();
+    let phase = |name, body, carriers| RowWritePhase {
+        name,
+        body,
+        carriers,
+    };
+    [
+        phase("preflight", bodies.preflight, preflight),
+        phase("validation_lane", bodies.validation_lane, validation_lane),
+        phase("reserve", bodies.reserve, reserve),
+        phase("producer_lane", bodies.producer_lane, producer_lane),
+        phase("prepare", bodies.prepare, prepare),
+        phase("apply", bodies.apply, apply),
+        phase("cancel", bodies.cancel, cancel),
+        phase("finish", bodies.finish, finish),
+    ]
+}
+
 /// The one actual Root/Job/UndoSlot reservation of a ReservedRow. Only C
 /// creates it after the Root/Job/Undo before checks, the original WAL Reserve
 /// and whole installation. Not Clone and not transferable to another actor.

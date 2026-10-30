@@ -28,7 +28,8 @@ pub(crate) use rollback::{
     RowRollbackTask,
 };
 pub(crate) use write::{
-    PreflightRow, PreparedRow, ReservedRow, RowApplied, RowCancelled, RowPreflightStep,
+    PreflightRow, PreparedRow, ROW_WRITE_CALLER_BYTES, ReservedRow, RowApplied, RowCancelled,
+    RowPreflightStep, row_write_charge,
 };
 
 fn unsupported() -> RetentionError {
@@ -233,3 +234,7 @@ const _: () = {
     // Nine roles and the count fit the role map.
     assert!(10 * 4 <= RowRoleMap::BITS as usize);
 };
+
+#[cfg(test)]
+#[path = "row/census_tests.rs"]
+mod census_tests;
