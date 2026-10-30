@@ -1,34 +1,35 @@
 //! S2-d: the Cancel of a first Row INSERT's reservation (S2-0 Row write
 //! amendment §1 "order", the refusal table and §6, S2-0b
 //! `#row-write-validate-once`) over the actual committed CREATE of table T
-//! that the preflight and reserve cases use. Only the cases a reserve and its
-//! cancel exercise are here: S2W-R08 (with a non-Stale Before and its retry,
-//! the refusal table's "cancel의 stage 전 거절"), the cancel halves of R12,
-//! R15, R22 and R23(2), R18 over a live reservation, and the Reserve and
-//! Cancel parts of S2W-H01..H05. The halves that need prepare or apply are
-//! S2-c's. The
-//! expected values are fixture facts, the independent literal of
-//! `tests/fixtures/dev3-module-c3/row-write/` (expected.json and
-//! expected-cancel.json) and the refusal table's (phase, cause, effect),
-//! never values copied from the body.
+//! that the preflight and reserve cases use. Here are S2W-R08 (with a
+//! non-Stale Before and its retry, the refusal table's "cancel의 stage 전
+//! 거절"), the cancel ends of R10, R11 and R21(1) after a refused Forward step
+//! (S2-c's prepare and apply), the cancel halves of R12, R15, R22 and R23(2)
+//! (a cancel alone; the prepare-then-cancel order of R23(2) is in
+//! `row_forward.rs`), R18 over a live reservation, and the Reserve and Cancel
+//! parts of S2W-H01..H05. The expected values are fixture facts, the
+//! independent literal of `tests/fixtures/dev3-module-c3/row-write/`
+//! (expected.json and expected-cancel.json) and the refusal table's (phase,
+//! cause, effect), never values copied from the body.
 use super::super::super::super::plan4_pages::{
     RetentionFlushPhase, observe_recovery_frame, retention_replay_bank, retention_replay_cells,
     retention_replay_image, seed_recovery_replay,
 };
 use super::super::faults::{rejected, unchanged_error};
 use super::super::support::namespace;
+use super::row_forward::{FORWARD_FRAME, ORDER};
 use super::row_preflight::{FIXTURE_T, FREE_UNDO, create_table, resident, with_pins};
 use super::*;
 use crate::storage::{
     control::row_profile,
     dirty_frame::{self, SharedPool},
     disk::{
-        IsolationLevel, RetentionCause, RetentionError, RetentionPhase, RowOwnedError,
-        RowPreflightStep, StatementFinishError, TableStep,
+        IsolationLevel, RetentionCause, RetentionError, RetentionPhase, RowOperation,
+        RowOwnedError, RowPreflightStep, RowProposal, StatementFinishError, TableStep,
     },
     page::{self, PageKind},
     retention_page::row::{self as job3, JobState},
-    row::insert::validate_insert,
+    row::insert::{produce_insert, validate_insert},
     row_record::ValueRef,
     wal_frame::{FrameExpectation, WalStreamIdentity},
 };
@@ -133,6 +134,25 @@ macro_rules! cancelled {
                 panic!("cancel {error:?}")
             }
         }
+    };
+}
+
+/// A successful prepare's PreparedRow.
+macro_rules! prepared {
+    ($result:expr) => {
+        match $result {
+            Ok(prepared) => prepared,
+            Err(RowOwnedError::Before { error, .. }) | Err(RowOwnedError::Fatal(error)) => {
+                panic!("prepare {error:?}")
+            }
+        }
+    };
+}
+
+/// A's Forward proposal through the actual producer lane (S2-c).
+macro_rules! produce {
+    ($reserved:ident) => {
+        produce_insert($reserved.producer_lane().unwrap()).unwrap()
     };
 }
 
@@ -503,6 +523,250 @@ fn s2w_r08_busy_target_cancel_is_before_then_retry_lands_the_literal() {
                 assert!(!hook::observe(core).read_gate_closed);
                 assert_eq!(reader.catalog_test_source_used(), used);
                 assert!(!fence.is_fenced());
+                close_row!(writer, owner, row, view, private, flush);
+                assert!(!fence.is_fenced());
+            }
+        );
+    });
+}
+
+/// The Cancel that ends a reservation after a refused Forward step lands
+/// the literal's Cancel frame (LSN 16) and Root counts, returns the same loan
+/// once, keeps the table's write bit, returns the admission charge, reopens
+/// the gate and leaves no fence (S2W-R10, R11 and R21(1)'s cancel ends).
+macro_rules! cancel_lands {
+    ($reserved:expr, $case:literal, $state:ident, $from:expr, $pool:ident, $loan:ident,
+     $view:ident, $slot:ident, $core:ident, $reader:ident, $used:ident, $fence:ident) => {{
+        let returned = cancelled!($reserved.cancel());
+        assert_eq!(returned.as_ptr(), $loan);
+        let frame = wal_since($state, $from);
+        println!(
+            "{} cancel frame_bytes={} frame_sha={}",
+            $case,
+            frame.len(),
+            hex(&frame)
+        );
+        assert_eq!((frame.len(), hex(&frame).as_str()), CANCEL_FRAME);
+        assert_eq!(root_counts($pool), ROOT_CANCELLED);
+        assert_eq!($view.test_table_masks(), (1 << $slot, 1 << $slot));
+        assert!(!hook::observe($core).read_gate_closed);
+        assert_eq!($reader.catalog_test_source_used(), $used);
+        assert!(!$fence.is_fenced());
+    }};
+}
+
+/// S2W-R10 (cancel end): A's proposal tampered in the three forms the
+/// contract row names (one byte of A's frame and of A's first after page,
+/// written in the loan after A's produce, and the physical roles swapped) is
+/// Before Unchanged (Prepare, RowSemantic), not Stale, on the same
+/// ReservedRow (issued identity and draft cut), with no WAL, file, page
+/// (every page of T with its stamp) or fence change, the gate still closed
+/// and the admission still charged. The cancel that follows on that
+/// ReservedRow lands the literal's Cancel. The declared-metadata forms and
+/// the Forward end are S2-c's
+/// (`row_forward::s2w_r10_tampered_proposal_is_before_on_the_same_reservation`).
+#[test]
+fn s2w_r10_tampered_proposal_is_before_then_cancel_lands_the_literal() {
+    case("S2W-R10", || {
+        let oracle = Oracle::new();
+        with_fresh!(
+            oracle,
+            frames = 12,
+            |live, owner, flusher, status, undo, private, reader_private, core, fence, state| {
+                let (row_status, _) =
+                    create_table(live, owner, flusher, status, undo, private, true);
+                row_statement!(live, owner, flusher, private, reader_private, row_status
+                    => writer, reader, flush, row, view, table);
+                let _ = settle!(writer, owner, view, table, private, flush, flusher);
+                let (_, slot, _) = table.test_identity();
+                let pool = reader.catalog_test_pool();
+                let used = reader.catalog_test_source_used();
+                let charge = writer.catalog_test_retirement_charge() as u64;
+                let loan = private.as_ptr();
+                let mut preflight = ready!(writer, owner, view, table, private, flush);
+                let input = plan!(preflight);
+                let mut reserved = reserved!(preflight.reserve(input));
+                let issued = reserved.test_issued();
+                let draft = reserved.test_draft();
+                let effects = files(state);
+                let frames = t_frames(pool);
+                let mut swapped = ORDER;
+                swapped.swap(0, 1);
+                let mut refusals = Vec::new();
+                for name in ["frame_byte", "after_byte", "roles"] {
+                    let proposal = produce!(reserved);
+                    let proposal = if name == "roles" {
+                        RowProposal::new(RowOperation::Forward, FORWARD_FRAME.0, 5, swapped)
+                    } else {
+                        let (_, _, _, _, frame, after, ..) =
+                            reserved.producer_lane().unwrap().parts();
+                        if name == "frame_byte" {
+                            frame[FORWARD_FRAME.0 / 2] ^= 1;
+                        } else {
+                            after[0][PAGE_BYTES / 2] ^= 1;
+                        }
+                        proposal
+                    };
+                    let (error, owned) = before!(reserved.prepare(proposal));
+                    reserved = owned;
+                    refusals.push((name, error));
+                }
+                for (name, error) in &refusals {
+                    println!("S2W_R10 tampered={name} prepare={error:?}");
+                    assert_eq!(
+                        (error.phase, error.effect),
+                        (RetentionPhase::Prepare, Effect::Unchanged),
+                        "{name}"
+                    );
+                    assert!(
+                        matches!(error.cause, RetentionCause::RowSemantic(_)),
+                        "{name}"
+                    );
+                }
+                assert_eq!(reserved.test_issued(), issued);
+                assert_eq!(reserved.test_draft(), draft);
+                assert_eq!(files(state), effects);
+                for (before, after) in frames.iter().zip(t_frames(pool)) {
+                    assert_eq!(*before, after, "page {}", before.0);
+                }
+                assert!(hook::observe(core).read_gate_closed);
+                assert_eq!(reader.catalog_test_source_used(), used + charge);
+                assert!(!fence.is_fenced());
+                cancel_lands!(
+                    reserved, "S2W_R10", state, effects.0, pool, loan, view, slot, core, reader,
+                    used, fence
+                );
+                close_row!(writer, owner, row, view, private, flush);
+                assert!(!fence.is_fenced());
+            }
+        );
+    });
+}
+
+/// S2W-R11 (cancel end): a refusal before apply's stage (S2-c's one-shot
+/// cfg(test) refusal after the table write bit and before the install) is
+/// Before Unchanged (Stage, Busy) on the same PreparedRow; `reopen` returns
+/// the same ReservedRow (issued identity and draft cut), with no WAL, file,
+/// page or fence change, the write bit kept, the statement's revision
+/// unmoved and the gate still closed. The cancel on that ReservedRow lands
+/// the literal's Cancel and leaves the revision where it was. The Forward
+/// end is S2-c's
+/// (`row_forward::s2w_r11_apply_stage_refusal_reopens_the_same_reservation`).
+#[test]
+fn s2w_r11_apply_stage_refusal_reopens_then_cancel_lands_the_literal() {
+    case("S2W-R11", || {
+        let oracle = Oracle::new();
+        with_fresh!(
+            oracle,
+            frames = 12,
+            |live, owner, flusher, status, undo, private, reader_private, core, fence, state| {
+                let (row_status, _) =
+                    create_table(live, owner, flusher, status, undo, private, true);
+                row_statement!(live, owner, flusher, private, reader_private, row_status
+                    => writer, reader, flush, row, view, table);
+                let _ = settle!(writer, owner, view, table, private, flush, flusher);
+                let (_, slot, _) = table.test_identity();
+                let pool = reader.catalog_test_pool();
+                let used = reader.catalog_test_source_used();
+                let charge = writer.catalog_test_retirement_charge() as u64;
+                let loan = private.as_ptr();
+                let mut preflight = ready!(writer, owner, view, table, private, flush);
+                let input = plan!(preflight);
+                let mut reserved = reserved!(preflight.reserve(input));
+                let issued = reserved.test_issued();
+                let draft = reserved.test_draft();
+                let proposal = produce!(reserved);
+                let prepared = prepared!(reserved.prepare(proposal));
+                let effects = files(state);
+                let frames = t_frames(pool);
+                let revision = view.revision();
+                let once = prepared.test_forward_stage_refusal_once();
+                let (error, prepared) = before!(prepared.apply());
+                drop(once);
+                println!("S2W_R11 apply={error:?}");
+                assert_eq!(
+                    (error.phase, error.effect),
+                    (RetentionPhase::Stage, Effect::Unchanged)
+                );
+                assert!(matches!(error.cause, RetentionCause::Busy));
+                let reserved = prepared.reopen();
+                assert_eq!(reserved.test_issued(), issued);
+                assert_eq!(reserved.test_draft(), draft);
+                assert_eq!(files(state), effects);
+                for (before, after) in frames.iter().zip(t_frames(pool)) {
+                    assert_eq!(*before, after, "page {}", before.0);
+                }
+                assert_eq!(view.test_table_masks(), (1 << slot, 1 << slot));
+                assert_eq!(view.revision(), revision);
+                assert!(hook::observe(core).read_gate_closed);
+                assert_eq!(reader.catalog_test_source_used(), used + charge);
+                assert!(!fence.is_fenced());
+                cancel_lands!(
+                    reserved, "S2W_R11", state, effects.0, pool, loan, view, slot, core, reader,
+                    used, fence
+                );
+                assert_eq!(view.revision(), revision);
+                close_row!(writer, owner, row, view, private, flush);
+                assert!(!fence.is_fenced());
+            }
+        );
+    });
+}
+
+/// S2W-R21(1) (cancel end): one source stamp shown changed once to apply's
+/// recompute before its stage (S2-c's cfg(test) one-shot of the shared
+/// kind-2 recompute, armed right before apply) makes apply Before Unchanged
+/// (Prepare, Frame Stale) on the same PreparedRow, with no WAL, file, page or
+/// issuer change. A reopens and cancels, and the cancel succeeds on the same
+/// reservation: it lands the literal's Cancel and issues no transaction. The
+/// Forward end is S2-c's
+/// (`row_forward::s2w_r21_one_stale_stamp_at_apply_is_before_then_reopen`).
+#[test]
+fn s2w_r21_one_stale_stamp_at_apply_is_before_then_cancel_lands_the_literal() {
+    case("S2W-R21", || {
+        let oracle = Oracle::new();
+        with_fresh!(
+            oracle,
+            frames = 12,
+            |live, owner, flusher, status, undo, private, reader_private, core, fence, state| {
+                let (row_status, _) =
+                    create_table(live, owner, flusher, status, undo, private, true);
+                row_statement!(live, owner, flusher, private, reader_private, row_status
+                    => writer, reader, flush, row, view, table);
+                let _ = settle!(writer, owner, view, table, private, flush, flusher);
+                let (_, slot, _) = table.test_identity();
+                let pool = reader.catalog_test_pool();
+                let used = reader.catalog_test_source_used();
+                let locals = writer.row_test_locals();
+                let loan = private.as_ptr();
+                let mut preflight = ready!(writer, owner, view, table, private, flush);
+                let input = plan!(preflight);
+                let mut reserved = reserved!(preflight.reserve(input));
+                let issued = reserved.test_issued();
+                let proposal = produce!(reserved);
+                let prepared = prepared!(reserved.prepare(proposal));
+                let effects = files(state);
+                let frames = t_frames(pool);
+                let once = prepared.test_forward_stale_stamp_once();
+                let (error, prepared) = before!(prepared.apply());
+                drop(once);
+                println!("S2W_R21 stale_stamp apply={error:?}");
+                assert!(stale(&error));
+                assert_eq!(files(state), effects);
+                for (before, after) in frames.iter().zip(t_frames(pool)) {
+                    assert_eq!(*before, after, "page {}", before.0);
+                }
+                assert!(hook::observe(core).read_gate_closed);
+                assert!(!fence.is_fenced());
+                let reserved = prepared.reopen();
+                assert_eq!(reserved.test_issued(), issued);
+                cancel_lands!(
+                    reserved, "S2W_R21", state, effects.0, pool, loan, view, slot, core, reader,
+                    used, fence
+                );
+                // Neither the refused apply nor the Cancel issues a
+                // transaction.
+                assert_eq!(writer.row_test_locals(), locals);
                 close_row!(writer, owner, row, view, private, flush);
                 assert!(!fence.is_fenced());
             }

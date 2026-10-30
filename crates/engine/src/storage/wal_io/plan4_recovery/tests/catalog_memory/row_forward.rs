@@ -4,13 +4,12 @@
 //! `ReservedRow::prepare` and `PreparedRow::apply`, over the actual committed
 //! CREATE of table T that the preflight and reserve cases use. Here are
 //! S2W-R09, R10, R11, R12, R13, R21, R24, the producer_lane, prepare and
-//! apply halves of R22, the prepare half of R23(2), and the Forward parts of
-//! S2W-H01..H05. The cancel ends of R10, R11 and R21(1) and the cancel half
-//! of R23(2) need the Cancel (S2-d): each case here ends its reservation
-//! with a successful Forward instead, on the same reservation. A Row
-//! transaction with a durable Forward has no healthy end before S3/S4
-//! (commit, rollback), so these cases stop with the statement ended and the
-//! transaction dropped. The expected values are fixture facts, the
+//! apply halves of R22, R23(2) in its prepare-then-cancel order, and the
+//! Forward parts of S2W-H01..H05. R10, R11 and R21(1) here end their
+//! reservation with a successful Forward on the same reservation; their
+//! cancel ends are in `row_cancel.rs` (S2-d). A Row transaction with a
+//! durable Forward has no healthy end before S3/S4 (commit, rollback), so
+//! these cases stop with the statement ended and the transaction dropped. The expected values are fixture facts, the
 //! independent literal of `tests/fixtures/dev3-module-c3/row-write/`
 //! (expected.json and expected-forward.json) and the refusal table's (phase,
 //! cause, effect), never values copied from the body.
@@ -52,7 +51,7 @@ const RESERVE_FRAME: (usize, &str) = (
 /// SHA-256 of the 64 Job cells the RowReserve leaves (expected.json `bank`).
 const RESERVED_JOBS: &str = "e74d3a7218763061365b3261373e41506f2537f82fb07951000f8049e41438cf";
 /// The literal Forward frame (expected-forward.json): its bytes and SHA-256.
-const FORWARD_FRAME: (usize, &str) = (
+pub(super) const FORWARD_FRAME: (usize, &str) = (
     91_497,
     "0ee305722bff97a71161e2111bb7a15059b3a35b8a941c603a45e2fc5de81043",
 );
@@ -100,7 +99,7 @@ const ROOT_JOB: (usize, u8, u64, u64, (u64, u64)) =
     (3, 2, 2, 1, (PREVIOUS_LSN + 1, PREVIOUS_LSN + 2));
 /// A's physical order of the five changed pages: Root 1, Jobs 2, Status 11,
 /// RowLeaf 13, the Undo 14 (rank order of T).
-const ORDER: [RowPageRole; 5] = [
+pub(super) const ORDER: [RowPageRole; 5] = [
     RowPageRole::Root,
     RowPageRole::RootJob,
     RowPageRole::Status,
@@ -506,8 +505,8 @@ fn s2w_r09_forward_lands_the_literal_and_retains_the_root() {
 /// the physical roles) and A's bytes in the loan (one frame byte, one after
 /// page byte, written through a second producer lane after A's produce). A
 /// fresh produce on that ReservedRow then prepares and applies the literal's
-/// Forward. The Cancel that also ends such a reservation is S2-d's
-/// (`ReservedRow::cancel`).
+/// Forward. The Cancel that also ends such a reservation is
+/// `row_cancel::s2w_r10_tampered_proposal_is_before_then_cancel_lands_the_literal`.
 #[test]
 fn s2w_r10_tampered_proposal_is_before_on_the_same_reservation() {
     case("S2W-R10", || {
@@ -642,7 +641,8 @@ fn s2w_r10_tampered_proposal_is_before_on_the_same_reservation() {
 /// the same ReservedRow (issued identity and draft cut), with no WAL, file,
 /// page or fence change, the write bit kept and the gate still closed. On
 /// that ReservedRow a fresh produce, prepare and apply land the literal's
-/// Forward. The Cancel after `reopen` is S2-d's.
+/// Forward. The Cancel after `reopen` is
+/// `row_cancel::s2w_r11_apply_stage_refusal_reopens_then_cancel_lands_the_literal`.
 #[test]
 fn s2w_r11_apply_stage_refusal_reopens_the_same_reservation() {
     case("S2W-R11", || {
@@ -801,7 +801,8 @@ fn r12(sync: bool) {
 /// Stale) on the same PreparedRow, with no WAL, file, page or issuer change
 /// (every page of T with its stamp, the transaction issuer's locals). A then
 /// reopens: the same ReservedRow's next produce, prepare and apply land the
-/// literal's Forward. The Cancel after `reopen` is S2-d's.
+/// literal's Forward. The Cancel after `reopen` is
+/// `row_cancel::s2w_r21_one_stale_stamp_at_apply_is_before_then_cancel_lands_the_literal`.
 #[test]
 fn s2w_r21_one_stale_stamp_at_apply_is_before_then_reopen() {
     case("S2W-R21", || {
@@ -957,18 +958,19 @@ fn s2w_r22_forward_checks_out_no_replay() {
     });
 }
 
-/// S2W-R23(2) (prepare half): after the Reserve's install, one control byte
-/// (`XOI_BYTE`) changed with the draft commitment not folded again. The
-/// producer lane checks no chain and lends it; A's produce proposes; the
-/// prepare is Before Unchanged (Prepare, Frame Stale) on the same
-/// ReservedRow, with no WAL, file, page or issuer change (every page of T in
-/// the pool with its stamp, the transaction issuer's locals, the Job cells
-/// the Reserve left), and the wrapper keeps its admission charge. That
-/// ReservedRow's Drop leaves the fence, and the fenced ledger keeps the
-/// charge visible. The Cancel half, between this prepare and the Drop, is
-/// S2-d's.
+/// S2W-R23(2): after the Reserve's install, one control byte (`XOI_BYTE`)
+/// changed with the draft commitment not folded again. The producer lane
+/// checks no chain and lends it; A's produce proposes; the prepare is Before
+/// Unchanged (Prepare, Frame Stale) on the same ReservedRow, and the cancel
+/// that follows on it is Before (Prepare, Frame Stale) too, on the same
+/// ReservedRow. Between them and after them there is no WAL, file, page or
+/// issuer change (every page of T in the pool with its stamp, the
+/// transaction issuer's locals, the Job cells the Reserve left), and the
+/// wrapper keeps its admission charge. That ReservedRow's Drop leaves the
+/// fence, and the fenced ledger keeps the charge visible. The cancel alone
+/// is `row_cancel::s2w_r23_control_byte_after_reserve_is_stale_cancel_then_drop_fences`.
 #[test]
-fn s2w_r23_control_byte_after_reserve_is_stale_prepare_then_drop_fences() {
+fn s2w_r23_control_byte_after_reserve_is_stale_prepare_then_cancel_then_drop_fences() {
     case("S2W-R23", || {
         let oracle = Oracle::new();
         with_fresh!(
@@ -995,6 +997,18 @@ fn s2w_r23_control_byte_after_reserve_is_stale_prepare_then_drop_fences() {
                 let proposal = produce!(reserved);
                 let (error, owned) = before!(reserved.prepare(proposal));
                 println!("S2W_R23 control_byte={XOI_BYTE} prepare={error:?}");
+                assert!(stale(&error));
+                assert_eq!(owned.test_issued(), issued);
+                assert_eq!(files(state), effects);
+                for (before, after) in frames.iter().zip(t_frames(pool)) {
+                    assert_eq!(*before, after, "page {}", before.0);
+                }
+                assert!(hook::observe(core).read_gate_closed);
+                assert_eq!(reader.catalog_test_source_used(), used + charge);
+                assert!(!fence.is_fenced());
+                // The cancel on the same ReservedRow sees the same change.
+                let (error, owned) = before!(owned.cancel());
+                println!("S2W_R23 control_byte={XOI_BYTE} cancel={error:?}");
                 assert!(stale(&error));
                 assert_eq!(owned.test_issued(), issued);
                 assert_eq!(files(state), effects);
@@ -1034,7 +1048,7 @@ fn s2w_r23_control_byte_after_reserve_is_stale_prepare_then_drop_fences() {
 /// and the Root 1, Jobs 2, Status 11, RowLeaf 13 and Undo 14 pool pages. A
 /// crash image in the Reserved state and one after the Forward each stop at
 /// the interim analysis gate with every file unchanged. The Cancel parts are
-/// S2-d's.
+/// `row_cancel::s2w_h01_h05_reserve_and_cancel_replay_equal_live_and_stop_at_the_gate`.
 #[test]
 fn s2w_h01_h05_forward_replay_equals_live_and_stops_at_the_gate() {
     case("S2W-H01..H05", || {
