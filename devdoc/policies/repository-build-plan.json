@@ -9356,5 +9356,29 @@
     "remaining_supply": "S2-b2 (validation_lane, reserve) with review follow-ups A1-A7 A10-A12 and conditions A2; contract effect table preflight values to be replaced by the actual census in the next contract edit; LiveCall end-to-end FlushRequired test in S2-d",
     "source_roots_changed": false,
     "artifact_manifest_sha256": "53e651c4a0eab40e65a95dbb6ba6f69f0f0b809f52d8359c28abe1b6314da271"
+  },
+  "dev3_module_s2b2_row_reserve": {
+    "status": "LOCAL_VERIFIED_REVIEWED",
+    "contract_ref": "dev3-module-boundaries.md#row-write-validate-once",
+    "evidence_ref": "module-independence-survey-20261026.md#s2b2-row-reserve",
+    "baseline_commit": "5767b2e",
+    "integration_base": "f3006c4",
+    "branch": "claude/project-thread-h2j8oc",
+    "commits": [
+      "b286699",
+      "2667962",
+      "bba345d",
+      "1cd622e",
+      "9a87150",
+      "e4304dd",
+      "a58af35"
+    ],
+    "source_branch": "module-s2b2 805723f",
+    "rollback": "git revert a58af35 e4304dd 9a87150 1cd622e bba345d 2667962 b286699, after S2-c and S2-d are reverted",
+    "scope": "S2-b2: S2-b1 review follow-ups A3-A7 A10 A12; validation_lane body with the A7 context rebuild; RowReserve body (commitment recompute without replay, candidate check, write bit, Free Undo, RowReserve frame and install, issued identity, history, draft commitment); RowSlotReservation fences on drop while active; actual reserve and validation_lane census",
+    "validation": "independent review ACCEPT (0 required, 10 advisory; routed to S2-c follow-ups, this record, or the next contract edit); rounds b0 5767b2e 134/134, h1 805723f 144/144 with compiler inputs 17/17; integrated crates/tests tree equals 805723f; check, workspace check, gate Clippy clean; reserve C total 31989, C margin +795 B, one suspended level reserve_group.group",
+    "remaining_supply": "S2-c (producer_lane, prepare, apply) with review follow-ups A2 A3 A5 A6 A7 A8; S2-d (cancel, R08, live R18, R23(2), R15 end); next contract edit: effect table actuals (A4) and the readings A9 and decision-1 no-copy recompute (A1)",
+    "source_roots_changed": false,
+    "artifact_manifest_sha256": "aec1aa907e7a47b7b428e9e394f9c7d8929bebd3d0751723ee74caa594f9f6e3"
   }
 }
