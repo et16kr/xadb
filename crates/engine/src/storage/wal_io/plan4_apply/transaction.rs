@@ -1091,6 +1091,32 @@ impl LeafProbe<'_, '_, '_, '_> {
 
 #[cfg(test)]
 impl RowStatementView<'_, '_, '_, '_, '_> {
+    /// S2W-R01: an ended (stale) view while `stale`, the same Active view
+    /// again after; only the view's own phase cell changes, never the slot.
+    pub(in crate::storage) fn test_set_stale(&self, stale: bool) {
+        self.phase
+            .set(if stale { Phase::Ended } else { Phase::Active });
+    }
+
+    /// S2W-R18: the next Row statement head check on this thread sees the
+    /// actor's Row Job as RootReserved (`writable::test_root_reserved_once`).
+    pub(in crate::storage) fn test_root_reserved_once(&self) {
+        writable::test_root_reserved_once();
+    }
+
+    /// S2W-R03/R16: clears the transaction's catalog flag and table read mask
+    /// so that a later registration is observable; write mask untouched.
+    pub(in crate::storage) fn test_clear_reads(&self) {
+        let lease = &self.transaction.lease;
+        let mut state = lease
+            .ledger
+            .lock()
+            .unwrap_or_else(|poison| poison.into_inner());
+        let target = row_mut(state.bytes, lease.slot);
+        target[3] = 0;
+        write32(target, 4, 0);
+    }
+
     pub(in crate::storage) fn test_catalog_reads(&self) -> u8 {
         let lease = &self.transaction.lease;
         let state = lease

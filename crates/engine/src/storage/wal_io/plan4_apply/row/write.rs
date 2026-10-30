@@ -413,6 +413,22 @@ impl<'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
     }
 }
 
+#[cfg(test)]
+impl<W: WriterNamespace> PreflightRow<'_, '_, '_, '_, '_, '_, '_, '_, '_, '_, '_, '_, '_, W> {
+    /// S2W-R03: the cut's scalars (source commitment, complete LSN, role map,
+    /// RowLeaf free bytes, RootJob); it cannot change the cut.
+    pub(in crate::storage) fn test_cut(&self) -> ([u8; 32], u64, u64, u16, u8) {
+        let cut = &self.source_cut;
+        (
+            cut.source,
+            cut.complete_lsn,
+            cut.roles,
+            cut.leaf_free,
+            cut.root_job,
+        )
+    }
+}
+
 /// Reopen a terminal read gate with its Census error, as `finish` does.
 fn reopen(gate: TerminalReadGate<'_, '_>) -> Result<()> {
     gate.reopen_checked().map_err(|error| RetentionError {

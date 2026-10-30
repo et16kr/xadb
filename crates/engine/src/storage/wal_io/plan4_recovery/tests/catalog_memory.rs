@@ -1225,3 +1225,6 @@ mod row_transactions;
 
 #[path = "catalog_memory/row_statements.rs"]
 mod row_statements;
+
+#[path = "catalog_memory/row_preflight.rs"]
+mod row_preflight;

@@ -234,6 +234,10 @@ impl<'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
             }
             reserved |= job.state() == JobState::RootReserved;
         }
+        #[cfg(test)]
+        {
+            reserved |= TEST_ROOT_RESERVED.with(|once| once.replace(false));
+        }
         if reserved || transaction.state() != TransactionState::Active {
             return Err(unchanged(phase, RetentionCause::WrongState));
         }
@@ -433,6 +437,18 @@ pub(in super::super) fn source_bytes() -> usize {
             .max(crate::storage::semantic_catalog::profile3_transaction_source_bytes())
             .max(crate::storage::semantic_row::ledger::admission_source_bytes())
             .max(queue::source_bytes())
+}
+
+// S2W-R18: the next `row_statement_head` on this thread sees the actor's
+// Row Job as RootReserved, beside its decoded Jobs (no live Reserve exists
+// before S2-b2). It changes no ledger, control or page byte.
+#[cfg(test)]
+thread_local! {
+    static TEST_ROOT_RESERVED: std::cell::Cell<bool> = const { std::cell::Cell::new(false) };
+}
+#[cfg(test)]
+pub(in crate::storage) fn test_root_reserved_once() {
+    TEST_ROOT_RESERVED.with(|once| once.set(true));
 }
 
 #[cfg(test)]
