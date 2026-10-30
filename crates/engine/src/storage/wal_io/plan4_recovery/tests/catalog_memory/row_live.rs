@@ -220,9 +220,10 @@ fn s2w_r09_live_driver_inserts_one_row_and_finishes_the_statement() {
 /// Ready and tries the same row again from preflight in the same statement.
 /// The row then lands the same RowReserve and Forward literals (LSN 15, 16)
 /// as a row that needed no flush, so nothing was issued or consumed by the
-/// first attempt: same RowId, UndoRef and RootJob. One of the dirty pages is
-/// no longer dirty (it was written; its frame may hold the Undo 14 now) and
-/// the Undo 14 is resident.
+/// first attempt: same RowId, UndoRef and RootJob. The driver called the
+/// preflight twice, and exactly one of the dirty pages is no longer dirty
+/// (the one flush target, written; its frame may hold the Undo 14 now); the
+/// Undo 14 is resident.
 #[test]
 fn mca05_v31_live_dirty_victim_flush_retries_the_same_row() {
     case("MCA05-V31", || {
@@ -257,11 +258,13 @@ fn mca05_v31_live_dirty_victim_flush_retries_the_same_row() {
                 let rows: [&[ValueRef<'_>]; 1] = [&values];
                 let mut slots: [Option<RowMutationObservation>; 1] = [None];
                 let mut holder = core.try_owner(OwnerRole::Foreground).unwrap();
+                let preflights = writer.test_row_preflights();
                 let count = with_pins(pool, &mut holder, &clean, || {
                     rows_inserted(drive!(
                         writer, owner, flush, flusher, view, table, private, &rows, &mut slots
                     ))
                 });
+                let preflights = writer.test_row_preflights() - preflights;
                 holder.check_idle().unwrap();
                 let after = frames(pool, 12);
                 let written: Vec<u64> = dirty
@@ -274,12 +277,13 @@ fn mca05_v31_live_dirty_victim_flush_retries_the_same_row() {
                 let jobs = writer.catalog_test_jobs();
                 let job = job3::decode_job(&jobs[ROOT_JOB], namespace()).unwrap();
                 println!(
-                    "MCA05_V31_LIVE rows={count} dirty={dirty:?} written={written:?} \
-                     wal_bytes={} observation={observation:?}",
+                    "MCA05_V31_LIVE rows={count} preflights={preflights} dirty={dirty:?} \
+                     written={written:?} wal_bytes={} observation={observation:?}",
                     written_wal.len()
                 );
                 assert_eq!(count, 1);
-                assert!(!written.is_empty(), "a dirty victim was flushed");
+                assert_eq!(preflights, 2, "FlushRequired once, then Ready");
+                assert_eq!(written.len(), 1, "exactly one dirty victim was flushed");
                 assert!(resident_index(&writer, FREE_UNDO).is_some());
                 assert_eq!(written_wal.len(), RESERVE_FRAME.0 + FORWARD_FRAME.0);
                 let (reserve, forward) = written_wal.split_at(RESERVE_FRAME.0);
@@ -697,9 +701,10 @@ fn s2w_r21_live_refused_cancel_is_fenced_and_must_resolve() {
 /// S2W-R19 (Busy) through A's driver: the Free Undo 14 is not resident and
 /// every frame that is not a source is pinned by another owner, so the
 /// preflight's LOAD claim is refused Unchanged (Load, Busy). The driver ends
-/// the row with that error and no retry (a retry under the held pins could
-/// not return): the statement is Returned, nothing was registered or
-/// written, and the admission, the gate and the lease are returned. After
+/// the row with that error and no retry: it called the preflight once (and
+/// a retry under the held pins could not return). The statement is
+/// Returned, nothing was registered or written, and the admission, the gate
+/// and the lease are returned. After
 /// the pins are released the residency settles and the statement and the
 /// empty transaction end.
 #[test]
@@ -728,13 +733,16 @@ fn s2w_r19_live_preflight_busy_ends_the_row_without_retry() {
                 let rows: [&[ValueRef<'_>]; 1] = [&values];
                 let mut slots: [Option<RowMutationObservation>; 1] = [None];
                 let mut holder = core.try_owner(OwnerRole::Foreground).unwrap();
+                let preflights = writer.test_row_preflights();
                 let (failure, after) = with_pins(pool, &mut holder, &others, || {
                     refused(drive!(
                         writer, owner, flush, flusher, view, table, private, &rows, &mut slots
                     ))
                 });
+                let preflights = writer.test_row_preflights() - preflights;
                 holder.check_idle().unwrap();
-                println!("S2W_R19_LIVE busy failure={failure:?}");
+                println!("S2W_R19_LIVE busy preflights={preflights} failure={failure:?}");
+                assert_eq!(preflights, 1, "no retry");
                 assert_eq!(failure.stage, Stage::Preflight);
                 let error = disk(&failure);
                 assert_eq!(
@@ -755,10 +763,12 @@ fn s2w_r19_live_preflight_busy_ends_the_row_without_retry() {
 }
 
 /// Not a contract row (S2-e): a statement of two rows whose first row lands
-/// the R09 literals. The second row's preflight finds no Free Undo candidate
-/// (the fixture's one Free Undo, 14, is leased by the first row) and is
-/// Unchanged Capacity, before validation. With a row applied, the statement
-/// is RollbackRequired and the applied row's slot is kept. The statement
+/// the R09 literals (both halves) with the R09 identity in its slot. The
+/// second row's preflight finds no Free Undo candidate and is Unchanged
+/// Capacity, before validation: S2W-R05's refusal, one Free Undo container
+/// per RowReserve, and the fixture's one Free Undo, 14, is leased by the
+/// first row. With a row applied, the statement is RollbackRequired and the
+/// applied row's slot is kept. The statement
 /// rollback is the next step, and its start is C's Unchanged Unsupported (S4
 /// is out of scope): the pending statement stays as it was, with no fence.
 /// Dropping it hands it to C's fence, which is the only end this branch has
@@ -795,10 +805,14 @@ fn s2e_e09_applied_then_rejected_row_is_rollback_required_up_to_the_s4_start() {
                 assert!(matches!(error.cause, RetentionCause::Capacity));
                 assert!(failure.cleanup.is_none() && !failure.must_resolve);
                 let mut pending = rollback_required(after);
-                assert!(slots[0].is_some() && slots[1].is_none());
+                assert!(slots[1].is_none());
+                let observation = slots[0].as_ref().unwrap();
+                assert_eq!(observation.operation(), RowOperation::Forward);
                 let written_wal = wal_since(state, wal);
                 assert_eq!(written_wal.len(), RESERVE_FRAME.0 + FORWARD_FRAME.0);
-                assert_eq!(hex(&written_wal[RESERVE_FRAME.0..]), FORWARD_FRAME.1);
+                let (reserve, forward) = written_wal.split_at(RESERVE_FRAME.0);
+                assert_eq!(hex(reserve), RESERVE_FRAME.1);
+                assert_eq!(hex(forward), FORWARD_FRAME.1);
                 assert!(!hook::observe(core).read_gate_closed);
                 assert_eq!(reader.catalog_test_source_used(), used);
                 let effects = files(state);
@@ -815,6 +829,14 @@ fn s2e_e09_applied_then_rejected_row_is_rollback_required_up_to_the_s4_start() {
                 assert!(matches!(error.cause, RetentionCause::Unsupported));
                 assert!(!start.must_resolve);
                 assert_eq!(files(state), effects);
+                // The call is done with the writer. The Unchanged start left
+                // the RootJob as the first row's apply did: slot 0's RowId and
+                // UndoRef, RootRetained in statement 1.
+                let jobs = writer.catalog_test_jobs();
+                let job = job3::decode_job(&jobs[ROOT_JOB], namespace()).unwrap();
+                assert_eq!(job.row_id(), Some(observation.row()));
+                assert_eq!(job.undo(), Some(observation.undo()));
+                assert_eq!((job.state(), job.statement()), (JobState::RootRetained, 1));
                 assert!(!fence.is_fenced());
                 abandon(pending);
                 assert!(fence.is_fenced());
