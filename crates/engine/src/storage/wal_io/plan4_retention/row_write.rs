@@ -354,8 +354,9 @@ pub(super) struct DraftIssued {
 /// The values the draft commitment folds (`RowDraftCut::source`, kind 2), in
 /// the order its doc gives. `pages` yields T's pages in before order from a
 /// typed read of the pool after the last installed group (never the after
-/// images in the private loan), so `prepare` and `cancel`, which read the
-/// pool, recompute it with this same body (S2-c, S2-d).
+/// images in the private loan), so `prepare`, `apply` and `cancel`, which
+/// read the pool, recompute it with this same body through one helper
+/// (`draft_recompute`, S2-c and S2-d).
 pub(super) struct DraftSource<'x, P> {
     pub(super) prefix: WalPrefix,
     pub(super) targets: &'x [TargetRequest],
@@ -815,9 +816,11 @@ impl<'b, 'a, 's, 'c, 'p, 'd, 'm, 'w, W: WriterNamespace>
 {
     /// The RowReserve group over the whole write target set T, steps 2 to 4
     /// of the module doc. Every refusal is Unchanged before any stage, except
-    /// a contradiction of preflight's own copies or role map (Fatal Census).
-    /// T, its stamps and the roles are filled in place, in the arrays the
-    /// group keeps, so no by-value array is carried between the steps.
+    /// a contradiction of preflight's own copies or role map (Fatal Census)
+    /// and C's decode or self-check of its own output (Fatal Prepare,
+    /// `produced` and `own_output`). T, its stamps and the roles are filled
+    /// in place, in the arrays the group keeps, so no by-value array is
+    /// carried between the steps.
     fn prepare_reserve<'i>(
         &self,
         owner: &mut Owner<'c, 's>,

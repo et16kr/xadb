@@ -9,12 +9,13 @@
 //! Before(Stale) with no effect. The producer lane checks no chain.
 //!
 //! `prepare`, in order:
-//! 1. the deep checks of an effect step, as the Cancel's (entry, view, the
-//!    reservation's actor, Terminal, ATT slot, table slot, the RootJob's Undo
-//!    sequence), with no statement-head check;
+//! 1. the deep checks of an effect step on a reservation (`reserved_entry`,
+//!    the Cancel's too: entry, view, the reservation's actor, Terminal, ATT
+//!    slot, table slot, the RootJob's Undo sequence), with no statement-head
+//!    check;
 //! 2. A's declared metadata (operation, frame length, after count, roles);
-//! 3. the draft commitment recompute (`draft_recompute`, the kind-2
-//!    recompute a Cancel folds the same way);
+//! 3. the draft commitment recompute (`draft_recompute`, the one kind-2
+//!    recompute `apply` and the Cancel also use);
 //! 4. C's observer over the before images that recompute proved equal to the
 //!    pool, comparing A's whole declared frame byte for byte, then A's after
 //!    pages against the observer's (a difference is Before);
@@ -607,7 +608,8 @@ impl<'b, 'a, 's, 'c, 'p, 'd, 'm, 'w, W: WriterNamespace>
 {
     /// Steps 2 to 6 of `prepare` (module doc). Every refusal is Unchanged
     /// before any stage, except a contradiction of C's own copies, role map
-    /// or observer (Fatal). The one suspended level: `observation`, the
+    /// or observer and C's decode or self-check of its own output (Fatal;
+    /// `produced` and `own_output`). The one suspended level: `observation`, the
     /// observer's result, held through the identity, inventory and progress
     /// checks.
     fn prepare_forward(

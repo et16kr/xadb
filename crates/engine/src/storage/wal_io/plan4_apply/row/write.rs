@@ -173,9 +173,9 @@ pub(in crate::storage) fn row_write_phases<W: WriterNamespace>() -> [RowWritePha
 /// creates it after the Root/Job/Undo before checks, the original WAL Reserve
 /// and whole installation. Not Clone and not transferable to another actor.
 /// While active it is a durable obligation only a completed apply or cancel
-/// discharges (S2-c, S2-d; a durable Cancel clears `active` before the
-/// release); dropping it active fences the session (S2W-R12, S2W-R23(2)). It
-/// does no I/O.
+/// discharges (S2-c, S2-d; a durable Forward apply or Cancel clears `active`
+/// before `release_discharged`); dropping it active fences the session
+/// (S2W-R12, S2W-R23(2)). It does no I/O.
 struct RowSlotReservation<'c, 's> {
     core: &'c PageConcurrency<'s>,
     binding: &'s AtomicU8,
