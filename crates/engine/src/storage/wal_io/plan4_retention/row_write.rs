@@ -199,6 +199,21 @@ fn produced<W: WriterNamespace>(
     }
 }
 
+/// C's own pre-stage self-check of its producer's or observer's output, in
+/// every Row write step (reserve, the Forward `prepare`, the Cancel): a
+/// changed role outside T, an after image whose identity is not its T
+/// target, a frame length past the frame range, or an observation whose
+/// scalars are not the step's. None depends on A's input or on the state;
+/// each contradicts C's own proof, so it is Fatal(Prepare, Invariant) as C's
+/// decode of its output is (`produced`, S2-b2 review A5), and the fence
+/// stays (S2-c review A4). The S2-0 refusal table has no row for it: its
+/// "prepare·apply·cancel의 stage 전 거절 → Before(같은 wrapper)" row is read as
+/// a refusal of A's input or of the state, and its own-defect rows (an
+/// arena or RootReserved mismatch, Invariant) are Fatal.
+fn own_output<W: WriterNamespace>(storage: &MutableStorageOwner<'_, '_, W>) -> RetentionError {
+    fatal(storage, RetentionPhase::Prepare, RetentionCause::Invariant)
+}
+
 /// The before position of a logical source role in a role map.
 fn role_position(roles: RowRoleMap, role: RowSourceRole) -> Option<usize> {
     let at = (roles >> (4 * role.index())) & 0xF;
@@ -519,12 +534,7 @@ impl<'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
                     lsn: observation.header.lsn,
                 }
             }
-            _ => {
-                return Err(unchanged(
-                    RetentionPhase::Prepare,
-                    RetentionCause::Invariant,
-                ));
-            }
+            _ => return Err(own_output(self.storage)),
         };
         // The table write bit, after the table recheck and before the stage
         // (§6): a Before after it keeps the conservative bit.
@@ -900,17 +910,14 @@ impl<'b, 'a, 's, 'c, 'p, 'd, 'm, 'w, W: WriterNamespace>
         let after: &'i [[u8; PAGE_BYTES]; 5] = after;
         let frame: &'i [u8] = frame;
         let order = &observation.order[..usize::from(observation.count)];
-        // Every changed page is a T member at that identity.
+        // Every changed page is a T member at that identity (C's own output:
+        // `own_output`).
         for role in order {
-            let target = requests[at(*role)
-                .map_err(|_| unchanged(RetentionPhase::Prepare, RetentionCause::Invariant))?];
+            let target = requests[at(*role).map_err(|_| own_output(storage))?];
             let image = recovery::request_from_image(profile, &after[usize::from(*role)])
                 .map_err(|cause| fatal(storage, RetentionPhase::Prepare, cause))?;
             if image != target {
-                return Err(unchanged(
-                    RetentionPhase::Prepare,
-                    RetentionCause::Invariant,
-                ));
+                return Err(own_output(storage));
             }
         }
         let root = if order.contains(&ROOT) {
@@ -920,7 +927,7 @@ impl<'b, 'a, 's, 'c, 'p, 'd, 'm, 'w, W: WriterNamespace>
         };
         let bytes = frame
             .get(..observation.frame_bytes)
-            .ok_or_else(|| unchanged(RetentionPhase::Prepare, RetentionCause::Invariant))?;
+            .ok_or_else(|| own_output(storage))?;
         let future = {
             let layout =
                 row_semantic::decode_layout(bytes, expected, profile).map_err(|error| {

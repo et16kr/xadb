@@ -718,25 +718,18 @@ impl<'b, 'a, 's, 'c, 'p, 'd, 'm, 'w, W: WriterNamespace>
             ));
         }
         // The observer's own scalars are the reservation's: `apply` rebuilds
-        // this observation from them.
+        // this observation from them (C's own output: `own_output`).
         if observation != forward_observation(entry, observation.header, order, frame_len) {
-            return Err(fatal(
-                storage,
-                RetentionPhase::Prepare,
-                RetentionCause::Invariant,
-            ));
+            return Err(own_output(storage));
         }
-        // Every changed page is a T member at that identity.
+        // Every changed page is a T member at that identity (C's own output:
+        // `own_output`).
         for role in &order {
-            let target = requests[at(*role)
-                .map_err(|_| unchanged(RetentionPhase::Prepare, RetentionCause::Invariant))?];
+            let target = requests[at(*role).map_err(|_| own_output(storage))?];
             let image = recovery::request_from_image(profile, &after[usize::from(*role)])
                 .map_err(|cause| fatal(storage, RetentionPhase::Prepare, cause))?;
             if image != target {
-                return Err(unchanged(
-                    RetentionPhase::Prepare,
-                    RetentionCause::Invariant,
-                ));
+                return Err(own_output(storage));
             }
         }
         let root = &after[usize::from(ROOT)];

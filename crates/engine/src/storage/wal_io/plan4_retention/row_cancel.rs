@@ -22,8 +22,9 @@
 //! keeps its generation. The table write bit stays (§6). Every refusal
 //! before the stage is Unchanged, so the wrapper returns the same
 //! ReservedRow, except a contradiction of the wrapper's own proof or of the
-//! ledger check (Fatal Census) and C's decode of its own output (Fatal
-//! Prepare); every failure after the stage is Fatal.
+//! ledger check (Fatal Census) and C's decode or self-check of its own
+//! output (Fatal Prepare, `produced` and `own_output`); every failure after
+//! the stage is Fatal.
 //!
 //! One suspended caller level holds a Row group return carrier while the
 //! group is prepared (S2-0b decision 2): `cancel_group`'s `group`, the slot
@@ -76,17 +77,14 @@ impl<'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
             Err(error) => return Err(error),
         };
         // The producer's own Cancel output: the reserved RootJob and the
-        // caller's actor, nothing issued.
+        // caller's actor, nothing issued (C's own output: `own_output`).
         let observation = &prepared.payload.observation;
         if observation.operation != row_semantic::Operation::Cancel
             || observation.job_ordinal != Some(entry.ordinal)
             || observation.actor != Some(entry.issued.actor)
             || observation.issued.is_some()
         {
-            return Err(unchanged(
-                RetentionPhase::Prepare,
-                RetentionCause::Invariant,
-            ));
+            return Err(own_output(self.storage));
         }
         self.catalog_application()
             .apply_existing(owner, ExistingGroup::RowWrite(prepared))
@@ -99,10 +97,11 @@ impl<'b, 'a, 's, 'c, 'p, 'd, 'm, 'w, W: WriterNamespace>
     /// The Cancel group over the whole write target set T, steps 2 and 3 of
     /// the module doc. Every refusal is Unchanged before any stage, except a
     /// contradiction of the draft's role map or the reservation (Fatal
-    /// Census) and C's own decode of a page or frame it produced (Fatal
-    /// Prepare with the decode's cause, as `prepare_reserve` maps it through
-    /// `produced`, S2-b2 review A5). T, its stamps and the roles are filled
-    /// in place, in the arrays the group keeps.
+    /// Census) and C's own decode or self-check of a page or frame it
+    /// produced (Fatal Prepare: `produced` with the decode's cause, as
+    /// `prepare_reserve` maps it, S2-b2 review A5; `own_output` for a
+    /// self-check, S2-c review A4). T, its stamps and the roles are filled in
+    /// place, in the arrays the group keeps.
     fn prepare_cancel<'i>(
         &self,
         owner: &mut Owner<'c, 's>,
@@ -168,17 +167,14 @@ impl<'b, 'a, 's, 'c, 'p, 'd, 'm, 'w, W: WriterNamespace>
         let after: &'i [[u8; PAGE_BYTES]; 5] = after;
         let frame: &'i [u8] = frame;
         let order = &observation.order[..usize::from(observation.count)];
-        // Every changed page is a T member at that identity.
+        // Every changed page is a T member at that identity (C's own output:
+        // `own_output`).
         for role in order {
-            let target = requests[at(*role)
-                .map_err(|_| unchanged(RetentionPhase::Prepare, RetentionCause::Invariant))?];
+            let target = requests[at(*role).map_err(|_| own_output(storage))?];
             let image = recovery::request_from_image(profile, &after[usize::from(*role)])
                 .map_err(|cause| fatal(storage, RetentionPhase::Prepare, cause))?;
             if image != target {
-                return Err(unchanged(
-                    RetentionPhase::Prepare,
-                    RetentionCause::Invariant,
-                ));
+                return Err(own_output(storage));
             }
         }
         let root = if order.contains(&ROOT) {
@@ -188,7 +184,7 @@ impl<'b, 'a, 's, 'c, 'p, 'd, 'm, 'w, W: WriterNamespace>
         };
         let bytes = frame
             .get(..observation.frame_bytes)
-            .ok_or_else(|| unchanged(RetentionPhase::Prepare, RetentionCause::Invariant))?;
+            .ok_or_else(|| own_output(storage))?;
         let future = {
             let layout =
                 row_semantic::decode_layout(bytes, expected, profile).map_err(|error| {
