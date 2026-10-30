@@ -9285,5 +9285,27 @@
     "remaining_supply": "S2-a' (census structure and the two constants) before S2-b1; then A-W1 and S2-b1..S2-d; S2-c names the S2W-R24 byte; C4 and S3 owners acknowledge their obligations before those units; E and d4 only if S2-a' or A-W1 measurement asks, each with its own D2; B and MCI acceptance of the S2-0 InstallationPending retry duty still open",
     "source_roots_changed": false,
     "artifact_manifest_sha256": "d029d5ce98a2bd60060e0460008762a0ed8c05d4af2203374a466b20a8dc5049"
+  },
+  "dev3_module_s2a_prime_census": {
+    "status": "LOCAL_VERIFIED_REVIEWED",
+    "contract_ref": "dev3-module-boundaries.md#row-write-validate-once",
+    "evidence_ref": "module-independence-survey-20261026.md#s2a-prime-census",
+    "baseline_commit": "b77015e",
+    "integration_base": "06a260e",
+    "branch": "claude/project-thread-h2j8oc",
+    "commits": [
+      "d4d2e2c",
+      "04a172b",
+      "4d98a29",
+      "ccab15c",
+      "fbcad07"
+    ],
+    "source_branch": "module-s2a-prime eb19bc0 (9e51f66 69a342f f9f0e27 8ed281b eb19bc0)",
+    "rollback": "git revert fbcad07 ccab15c 4d98a29 04a172b d4d2e2c, only after S2-b1..S2-d and the A-W1 D15 adaptation are reverted",
+    "scope": "S2-a' census-only unit: RowWriteBodies recounted under S2-0b B (validate_live and arena once in preflight), D (group carriers only in install/return, L*r return slot across check, commit and group preparation), d2; ROW_PREFLIGHT_CALLER_BYTES 6144 and ROW_WRITE_CALLER_BYTES 11520 with per-phase assertion; S2W-C06; cut docs; product bodies unchanged",
+    "validation": "independent review ACCEPT WITH REQUIRED CHANGES (1 required, 5 advisory; R1 A1 A2 A4 fixed in eb19bc0); rounds p0 b77015e 48/4, p1 8ed281b 49/4, p2 eb19bc0 49/4 (same 4 pre-existing failures), only S2W-C01/C02/C06 output changed; check and workspace check 0 warnings, gate Clippy 0, rustfmt and diff-check clean, compiler inputs 17/17 at p1; all C margins positive (min prepare 1147 B)",
+    "remaining_supply": "S2-b1..S2-d body censuses against these bounds with the L <= 1 obligation; A-W1 MCA00-D15 per call site against 6144/11520",
+    "source_roots_changed": false,
+    "artifact_manifest_sha256": "9f3aa0c504b4f22aac177e32c7bc565162de476352ebcd811e661b46d214f3d5"
   }
 }

@@ -4459,3 +4459,52 @@ S1(S1-a~S1-g) 뒤의 다음 단계인 S2(C3 Row Reserve·Forward·Cancel)와 S5(
 - `apply-plan.md`, `check_plan.py`, `apply-s2-0b.py`.
 
 manifest는 `plans/s2-0b/manifest-s2-0b.sha256`(SHA-256 `d029d5ce98a2bd60060e0460008762a0ed8c05d4af2203374a466b20a8dc5049`)이다. 코드와 시험은 바뀌지 않았다.
+
+<a id="s2a-prime-census"></a>
+## 2026-10-30 S2-a′ RowWrite census를 S2-0b대로 다시 계수하고 A 몫 상한을 둘로 나눔
+
+[S2-0b 개정](#s2-0b-validate-once)이 정한 첫 공급 단위다. 제품 본문은 바뀌지 않았고, census 코드·두 상수·재노출·cut 문서만 바뀌었다. 별도 worktree(branch `module-s2a-prime`, base `b77015e`)에서 만든 뒤 `06a260e` 위로 옮겼다.
+
+| 이 branch | 원 commit | 내용 |
+| --- | --- | --- |
+| `d4d2e2c` | `9e51f66` | `row_write_bodies`를 B(preflight에서만 `validate_live`·T arena 검산, reserve·prepare·cancel은 replay 없는 `group_typed`), D(group carrier는 설치·반환 부분 단계에만, 깊은 검산·연쇄 재검산·준비는 중단 단계의 반환 carrier `L·r`), d2(lease 검산 max)로 다시 계수 |
+| `04a172b` | `69a342f` | `ROW_PREFLIGHT_CALLER_BYTES = 6144`, `ROW_WRITE_CALLER_BYTES = 11520`, 단계마다 자기 상한으로 `본문 + carriers + 상한 ≤ charge`를 단언(S2W-C01/C02), `storage::disk` 재노출 |
+| `4d98a29` | `f9f0e27` | S2W-C06: 단계·W마다 C total, 상한, C 쪽 여유, L, r, G'', V, LOAD 출력과 여유 ≥ 0 단언 |
+| `ccab15c` | `8ed281b` | cut 문서: commitment의 XRWC 순서, draft digest는 pool read, lane은 연쇄를 검산하지 않음 |
+| `fbcad07` | `eb19bc0` | 독립 검토 R1: 깊은 검산(`check`)과 commitment 재검산(`commit`)에도 `L·r`을 더함. A1 arena 항에 typed read 호출(`call_bytes::<9>`)을 max로 결합, A2 S2W-C06이 arena < LOAD 단언, A4 L ≥ 1 const assert |
+
+**단계별 C 여유(memory = native, charge 44304).**
+
+| 단계 | C total | A 몫 상한 | C 쪽 여유 | S2-0b 분석값 |
+| --- | ---: | ---: | ---: | ---: |
+| preflight | 36086 | 6144 | 2074 | 2074 |
+| validation_lane | 6106 | 11520 | 26678 | 26678 |
+| reserve | 31477 | 11520 | 1307 | 1317 |
+| producer_lane | 11034 | 11520 | 21750 | 21750 |
+| prepare(Forward) | 31637 | 11520 | 1147 | 1157 |
+| apply | 31304 | 11520 | 1480 | 3584 |
+| cancel | 31517 | 11520 | 1267 | 1277 |
+| finish | 1658 | 11520 | 31126 | 31126 |
+
+- 항: L = 1, r = 2104(`Result<PreparedRowGroup>` 1264 + 9 target 확장 840), G'' = 27019, G'' + L·r = 29123, V = 31124, LOAD = 32852, arena = 7931.
+- reserve·prepare·cancel은 G'' + L·r, apply는 `check` 26510 + L·r, preflight는 LOAD가 정한다. 모든 단계의 C 쪽 여유가 양수이므로 사다리((d3), (E)·(d4))는 쓰지 않았다. 상수·cap·charge는 바꾸지 않았다.
+- S2-0b의 분석값과의 차이는 r 실측(설계 약 2120)과 V의 `Result<()>` 크기다. apply의 차이는 S2-0b 분석식도 `check`에 `L·r`을 빠뜨린 탓이며(검토 R1), 계약이 정한 대로 census 출력이 분석값을 대체한다.
+- 중단 단계가 하나 더 있으면(L = 2) reserve·prepare·cancel이 −797·−957·−837B로 음수다. S2-b2·S2-c·S2-d의 L ≤ 1 본문 의무가 이 여유를 지킨다.
+
+**독립 검토.** 읽기 전용 검토자 1회, ACCEPT WITH REQUIRED CHANGES(필수 1·권고 5). R1은 위 `fbcad07`로 고쳤다. A1·A2·A4도 같은 commit에 넣었다. A3(r의 9 target 확장을 `(9 − ROW_TARGETS) × wider`로 직접 계산)은 값이 같아 그대로 두었고, A5(상수 문서의 사다리 세부)는 계약 문단을 가리키는 현재 문서로 충분하다고 보았다. 보고된 설계와의 차이 여섯 가지(branch, r 계산, arena 식의 사본, `group_prepare` 항 제거, L 상수, C06의 V ≤ LOAD 출력)는 모두 받아들일 수 있다고 판정했다.
+
+**실행.** 방식은 S2-a와 같다(build 전 manifest 동결, `git archive` export build, selector마다 timeout 30초로 한 번, identity env). 53 selector는 S2-a r5의 census 31건, S2W-C01..C06, S2A-T01/T02, MCA00 D01–D14다.
+
+| 판 | rev | 결과 |
+| --- | --- | --- |
+| p0 | `b77015e` | 48 PASS, 4 FAIL(기존). S2W-C06은 이 build에 없다. S2W-C01..C05와 D12 출력은 S2-a r5와 같다 |
+| p1 | `8ed281b` | 49 PASS, 4 FAIL(같은 4건). p0→p1에서 바뀐 출력은 S2W-C01/C02뿐이다 |
+| p2 | `eb19bc0` | 49 PASS, 4 FAIL(같은 4건). p1→p2에서 바뀐 출력은 S2W-C01/C02/C06뿐이다(apply 줄과 arena 항) |
+
+- 기존 실패 4건은 `retention_source_memory`·`native`(`plan4_retention/tests.rs:140`)와 `runtime_core_source_memory`·`native`(`runtime_core_tests.rs:93`)이며 main `85ceef3`에서도 같은 위치에서 실패한다. 이 project의 다른 작업이 따로 고치고 있다.
+- p2에서 engine check와 workspace `cargo check --all-targets --all-features`의 경고 0, pre-push gate Clippy 명령 오류 0, 바뀐 .rs rustfmt check, `git diff --check b77015e..eb19bc0`이 통과했다. p1의 compiler 입력 17/17 PASS는 compiler 입력이 바뀌지 않아 그대로 쓴다.
+- 이 branch의 `crates/`·`tests/` tree는 `eb19bc0`과 같다. 그래서 통합 round를 따로 돌리지 않았다.
+
+**뒤 단위.** S2-b1~S2-d는 자기 단계의 실제 본문 census가 위 상한으로 통과해야 그 경로를 commit하고, S2-b2·S2-c·S2-d는 중단 단계를 이름으로 적는다. A-W1의 MCA00-D15는 `storage::disk`의 두 상수와 호출 지점별로 견준다.
+
+**되돌림.** 최신부터 되돌린다. S2-a′는 이에 기댄 S2-b1~S2-d와 A-W1의 D15 적응을 되돌린 뒤에만 되돌린다. artifact는 `module-independence-20261029/artifacts/module-s2ap-20261030/`(검토서, 증거 원문, p0·p1·p2 로그, 도구, `manifest-all.sha256` SHA-256 `9f3aa0c504b4f22aac177e32c7bc565162de476352ebcd811e661b46d214f3d5`)에 있다.

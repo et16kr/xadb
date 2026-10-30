@@ -1,5 +1,7 @@
 # 현재 구현
 
+2026-10-30 [S2-a′ RowWrite census 재계수](../evidence/module-independence-survey-20261026.md#s2a-prime-census): Row 쓰기 C 단계가 A driver 몫(preflight 6144B, 나머지 11520B)을 남기고 charge 안에 든다. 동작은 아직 Unsupported다.
+
 2026-10-30 [S2-0b Row 쓰기 replay 검산 재배치 반영](../evidence/module-independence-survey-20261026.md#s2-0b-validate-once): Row 쓰기 C 단계의 replay 검산을 행당 한 번으로 줄이고 A 몫 상한을 둘로 나누는 계약 개정이 들어갔다. 코드는 아직 바뀌지 않았다.
 
 2026-10-30 [S2-a Row 쓰기 최종 표면](../evidence/module-independence-survey-20261026.md#s2a-row-write-surface): Row 쓰기의 최종 서명과 lane 배치가 들어갔다. 동작은 아직 Unsupported다.
