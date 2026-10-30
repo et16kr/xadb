@@ -1952,7 +1952,7 @@ pub(in super::super) fn catalog_live_source_bytes<W: WriterNamespace>() -> Catal
     let cancel = cancel.max(checked) + shared;
     // The Row lifecycle: the same shell, entry/ledger/replay validation and
     // install body with the Row producer, payload and control part.
-    let row = lifecycle::row::row_lifecycle_terms::<W>();
+    let row = lifecycle::row::row_lifecycle_terms();
     let row_prepare = (scalar + row.outer + scope_carriers + history_peak.max(row.produce))
         .max(scalar + row.outer + row.inventory)
         .max(scalar + row.outer + row.assembled)

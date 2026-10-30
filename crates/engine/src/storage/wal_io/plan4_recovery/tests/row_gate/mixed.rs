@@ -111,6 +111,7 @@ fn s1c_ledger_check_admits_mixed_bank_with_row_debt() {
 /// Row codec in both directions, and ATT damage on the Row side is refused
 /// with no effect, exactly like Catalog ATT damage.
 #[test]
+#[allow(clippy::type_complexity, reason = "one test observation tuple")]
 fn s1c_ledger_check_matches_row_terminals_to_att() {
     let genesis = fixture(GENESIS);
     let p = profile();
@@ -187,6 +188,7 @@ fn s1c_ledger_check_matches_row_terminals_to_att() {
 /// the Row recipe of every debt row. Each re-encoded (still well-formed)
 /// descriptor change is an Unchanged Census Invariant.
 #[test]
+#[allow(clippy::type_complexity, reason = "one test observation tuple")]
 fn s1d_ledger_check_applies_row_admission_subset() {
     let genesis = fixture(GENESIS);
     let p = profile();

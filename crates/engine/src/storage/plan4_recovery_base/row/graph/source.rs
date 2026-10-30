@@ -41,6 +41,10 @@ type Pages<'a> = (&'a [u8; PAGE_BYTES], PageHeader);
 type Record<'a> = (ObjectId, CatalogRecordView<'a>);
 
 /// Scalars, indexes, borrowed slices and `?` carriers of one frame.
+#[allow(
+    clippy::manual_bits,
+    reason = "eight u64 scalar slots, counted in bytes"
+)]
 pub(in crate::storage) fn slack() -> usize {
     8 * size_of::<u64>() + 8 * size_of::<&[u8]>() + 4 * size_of::<Result<()>>()
 }

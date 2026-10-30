@@ -142,12 +142,12 @@ pub(super) fn status_before(
 }
 
 /// One-slot Undo page before image at the exact `INITIAL_UNDO_CELL`.
-pub(super) fn undo_before<'a>(
-    bytes: &'a [u8; PAGE_BYTES],
+pub(super) fn undo_before(
+    bytes: &[u8; PAGE_BYTES],
     namespace: Namespace,
     page: PageRef,
     frame: FrameExpectation,
-) -> Result<&'a [u8]> {
+) -> Result<&[u8]> {
     same(dynamic(page))?;
     let view = before_page(
         bytes,

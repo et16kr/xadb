@@ -378,6 +378,10 @@ fn transaction_inventory<'a, J: CatalogJob<'a>>(
 
 /// Output roles are fixed so the caller can retain only one eight-page loan.
 /// Ordering for the WAL/pool is computed at the end from actual identities.
+#[allow(
+    clippy::type_complexity,
+    reason = "one observation tuple returned to its single caller"
+)]
 fn compute<'a, F: Format>(
     inputs: &Inputs<'a>,
     after: &mut [[u8; PAGE_BYTES]; 8],

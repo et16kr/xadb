@@ -156,8 +156,8 @@ fn validate_rows<'a, G: Seam<'a>>(graph: &G) -> Result<(usize, usize)> {
                     | TransactionState::Aborting(RollbackState::Transaction { .. })
             );
             // Only a base4 Row actor may also be in a statement/full rollback.
-            if !catalog_state
-                && !(G::ROWS && matches!(status.state(), TransactionState::Aborting(_)))
+            if !(catalog_state
+                || (G::ROWS && matches!(status.state(), TransactionState::Aborting(_))))
             {
                 return Err(Error::Unsupported);
             }

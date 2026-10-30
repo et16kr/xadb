@@ -105,6 +105,10 @@ fn row_genesis_pages_match_independent_literals() {
 }
 
 #[test]
+#[allow(
+    clippy::needless_range_loop,
+    reason = "the index is also the page number passed to mutated"
+)]
 fn row_genesis_rejects_versions_identity_and_noncanonical() {
     use RetentionGenesisError::{Corrupt, IdentityMismatch, InvalidInput, UnsupportedFormat};
     // Profile2-current Root2/Job2 genesis pages are never accepted as Row.

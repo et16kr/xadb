@@ -352,6 +352,10 @@ fn check_record<'a>(
 }
 
 /// Row native slot and the after cell plan; also the core projections.
+#[allow(
+    clippy::type_complexity,
+    reason = "one leaf result tuple returned to its single caller"
+)]
 fn prepare_leaf<'a>(
     inputs: &Inputs<'a>,
     out: &mut Prepared<'a, '_>,

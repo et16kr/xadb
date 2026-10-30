@@ -518,6 +518,10 @@ impl<'m, W: WriterNamespace> GenesisWalSession<'m, W> {
         Self::create_with_profile(writer, profile_id, true, slot, scratch)
     }
 
+    #[allow(
+        clippy::type_complexity,
+        reason = "one pair of control codec function pointers chosen per arm"
+    )]
     fn create_with_profile(
         mut writer: W,
         profile_id: u32,

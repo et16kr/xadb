@@ -144,6 +144,7 @@ fn row_actor(replay: &[u8; RETENTION_REPLAY_BYTES]) -> (TxnRef, StatusSlotRef, u
 /// state is observed by the gate; Catalog-only genesis and AgingStart are
 /// not. Ledger damage on the Row side is refused by the same closure.
 #[test]
+#[allow(clippy::type_complexity, reason = "one test observation tuple")]
 fn s1b_mixed_bank_passes_combined_closure_and_gate_observation() {
     let genesis = fixture(GENESIS);
     let p = profile();

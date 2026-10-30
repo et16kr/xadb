@@ -330,6 +330,10 @@ impl<H> PendingRollback<H> {
     /// The handle for C's RollbackStart and the progress the started
     /// rollback will move on. Refused, with no C call, unless no rollback
     /// was started yet; after an abandoned start it must be resolved.
+    #[allow(
+        clippy::result_large_err,
+        reason = "Failure keeps the stage, the error and any refused cleanup inline, without allocation"
+    )]
     fn start(&mut self) -> Result<(&H, &mut Progress), Failure> {
         match self.progress {
             Progress::Required => Ok((&self.handle, &mut self.progress)),
@@ -420,6 +424,10 @@ fn check_arguments(rows: &[&[ValueRef<'_>]], slots: usize) -> Result<(), InsertE
 /// `Returned` when no row of this call was applied, otherwise
 /// `RollbackRequired` with `slots` still naming the applied rows, which the
 /// caller's statement rollback compensates. The driver starts no rollback.
+#[allow(
+    clippy::result_large_err,
+    reason = "Failure keeps the stage, the error and any refused cleanup inline, without allocation"
+)]
 fn insert_statement<B: Boundary>(
     call: &mut B,
     statement: B::Statement,
@@ -466,6 +474,10 @@ fn insert_statement<B: Boundary>(
 /// One row through the consuming wrappers. On failure nothing this row took
 /// is left held: the preflight is finished, or the reservation cancelled,
 /// unless C answered Fatal/CallerMustResolve or refused the release.
+#[allow(
+    clippy::result_large_err,
+    reason = "Failure keeps the stage, the error and any refused cleanup inline, without allocation"
+)]
 fn insert_row<B: Boundary>(
     call: &mut B,
     statement: &B::Statement,
@@ -558,6 +570,10 @@ fn cancel<R: Reserved>(reserved: R, failure: Failure) -> Failure {
 /// finished (`PendingRollback::rolled_back`); a `RollbackRequired` statement
 /// cannot reach it otherwise. A refusal hands it back `FinishPending`: the
 /// retry is this call alone, never another rollback.
+#[allow(
+    clippy::result_large_err,
+    reason = "Failure keeps the stage, the error and any refused cleanup inline, without allocation"
+)]
 fn finish_statement<B: Boundary>(
     call: &mut B,
     statement: B::Statement,
@@ -580,6 +596,10 @@ fn finish_statement<B: Boundary>(
 /// refusal starts nothing, so the statement stays `RollbackRequired` and the
 /// start may be retried; a started rollback is never started again (the
 /// pending refuses a second start without calling C).
+#[allow(
+    clippy::result_large_err,
+    reason = "Failure keeps the stage, the error and any refused cleanup inline, without allocation"
+)]
 fn start_statement_rollback<'r, 'i, B: Boundary>(
     call: &'r mut B,
     transaction: &'r B::Transaction,
@@ -596,6 +616,10 @@ fn start_statement_rollback<'r, 'i, B: Boundary>(
 
 /// Starts the full rollback of every remaining row, the only step after a
 /// commit C answered `RollbackRequired`. Refusals are as for a statement.
+#[allow(
+    clippy::result_large_err,
+    reason = "Failure keeps the stage, the error and any refused cleanup inline, without allocation"
+)]
 fn start_full_rollback<'r, 'i, B: Boundary>(
     call: &'r mut B,
     pending: &'r mut PendingRollback<B::Transaction>,
@@ -728,6 +752,10 @@ fn finish_rollback<K: Rollback>(rollback: K) -> Result<(), RowOwnedError<K>> {
 /// Commit. A write conflict (`RollbackRequired`) leaves A only the full
 /// rollback: the transaction is handed back inside a `PendingRollback` for
 /// `start_full_rollback`.
+#[allow(
+    clippy::result_large_err,
+    reason = "Failure keeps the stage, the error and any refused cleanup inline, without allocation"
+)]
 fn commit<B: Boundary>(
     call: &mut B,
     transaction: B::Transaction,
@@ -763,6 +791,10 @@ fn commit<B: Boundary>(
 /// that rollback finished, has no defined continuation: a second full
 /// RollbackStart would restart a finished rollback (G5), so the transaction
 /// is kept for C's fence (`MustResolve`).
+#[allow(
+    clippy::result_large_err,
+    reason = "Failure keeps the stage, the error and any refused cleanup inline, without allocation"
+)]
 fn finish_aborted<B: Boundary>(
     call: &mut B,
     transaction: B::Transaction,

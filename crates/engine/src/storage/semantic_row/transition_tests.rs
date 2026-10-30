@@ -2813,7 +2813,7 @@ fn s1a_borrowed_observer_source_bound_covers_measured_frames() {
     for (name, bytes) in callees {
         println!("S1A_SOURCE_CALLEE\t{name}\t{bytes}");
     }
-    assert!(ROW_REPLAY_SCRATCH_BYTES <= 2 * PAGE_BYTES - 64 * 352);
+    const { assert!(ROW_REPLAY_SCRATCH_BYTES <= 2 * PAGE_BYTES - 64 * 352) };
     assert!(
         bound <= FRAME_PHASE_MAX,
         "borrowed Row observer above the frame-phase max"

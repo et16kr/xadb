@@ -128,6 +128,10 @@ fn native_kind(kind: PageKind) -> Result<u8> {
 }
 
 /// The group header fields fixed by the owners, shape and descriptors.
+#[allow(
+    clippy::needless_range_loop,
+    reason = "the ordinal also selects the descriptor and the fixed offsets"
+)]
 fn group_header(prepared: &Prepared<'_, '_>, output: &mut [u8; 256]) -> Result<usize> {
     let op = prepared.op;
     let shape = op.shape(prepared.row_cell, prepared.predecessor)?;

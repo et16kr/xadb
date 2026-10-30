@@ -206,6 +206,7 @@ struct Fixture {
 }
 
 impl Fixture {
+    #[allow(clippy::type_complexity, reason = "one test observation tuple")]
     fn new(case: Case) -> Self {
         let h = matches!(case, Case::ForwardH | Case::ClrH);
         let forward = matches!(case, Case::ForwardNoH | Case::ForwardH | Case::ForwardOrd);

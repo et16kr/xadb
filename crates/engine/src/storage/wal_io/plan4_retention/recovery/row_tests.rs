@@ -1384,6 +1384,7 @@ fn s1b_row_arm_replays_n1_and_a_literals() {
 /// refused before any effect: arena, Jobs, bank, provenance, tail and cursor
 /// are byte-identical afterwards (a dirty tail is refused, never cleared).
 #[test]
+#[allow(clippy::type_complexity, reason = "one test observation tuple")]
 fn s1b_row_arm_refuses_mutations_without_effect() {
     let mode = Mode {
         rejects: true,
@@ -1761,7 +1762,7 @@ fn s1g_closure_refuses_row_root_without_its_u_allocation() {
     });
     let check = |r: &mut Replay, at: &str| {
         for name in ["G-allocator-free14", "G-allocator-inc14"] {
-            r.set_page(&page_of(g(name)));
+            r.set_page(page_of(g(name)));
             assert_eq!(
                 format!("{:?}", r.closure().err()),
                 "Some(Invariant)",
@@ -1769,7 +1770,7 @@ fn s1g_closure_refuses_row_root_without_its_u_allocation() {
             );
             println!("S1G_CLOSURE_ALLOCATOR\t{at}\t{name}\tInvariant");
         }
-        r.set_page(&page_of(g("G-allocator")));
+        r.set_page(page_of(g("G-allocator")));
         r.closure().expect("original allocator");
     };
     r.step(
@@ -1824,6 +1825,7 @@ type Refusal<'a> = (&'a str, &'a [u8], &'a str);
 /// (retired and non-Table included, unlike Clr/Prune); every value-free
 /// step and byte comparison `RowSemantic(..)`.
 #[test]
+#[allow(clippy::type_complexity, reason = "one test observation tuple")]
 fn s1g_row_reserve_refuses_without_effect() {
     let mut r = h_504(Mode::default());
     let base = r.saved();

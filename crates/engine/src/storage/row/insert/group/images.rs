@@ -329,6 +329,10 @@ fn descriptor(observed: &Observed<'_>, status: StatusHome, output: &mut [u8]) ->
 }
 
 /// Locals of this module; the caller's `Prepared` is counted by its owner.
+#[allow(
+    clippy::manual_bits,
+    reason = "eight u64 scalar slots, counted in bytes"
+)]
 pub(super) fn local_source_carrier_bytes() -> usize {
     use std::mem::size_of;
     size_of::<[u8; JOB_BYTES]>()

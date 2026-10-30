@@ -768,6 +768,10 @@ fn statement(state: &RefCell<State>) -> LiteralStatement<'_> {
 
 type Outcome<'s> = Result<usize, DriveError<LiteralStatement<'s>>>;
 
+#[allow(
+    clippy::result_large_err,
+    reason = "the test harness returns the driver Failure unchanged"
+)]
 fn run<'s>(
     state: &'s RefCell<State>,
     rows: &[&[ValueRef<'_>]],

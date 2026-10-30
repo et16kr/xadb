@@ -107,6 +107,10 @@ fn with_version(mut bytes: [u8; PROFILE_BYTES], version: u16) -> [u8; PROFILE_BY
 }
 
 #[test]
+#[allow(
+    clippy::needless_range_loop,
+    reason = "the index is the envelope and expectation selector"
+)]
 fn installed_profile_accepts_only_bound_grammar() {
     // Full offered x expected matrix with an independent oracle: grammar is
     // chosen by the expectation; inside one grammar only an equal value passes.

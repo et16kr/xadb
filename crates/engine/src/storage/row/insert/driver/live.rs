@@ -284,6 +284,10 @@ pub(in crate::storage) fn finish_statement_live<'t, 'v, 'a, 'c, 's, W: WriterNam
 
 /// RollbackStart for a `RollbackRequired` statement, borrowing its
 /// `PendingRollback`; see `rollback_step_live`.
+#[allow(
+    clippy::result_large_err,
+    reason = "Failure keeps the stage, the error and any refused cleanup inline, without allocation"
+)]
 pub(in crate::storage) fn start_statement_rollback_live<
     'r,
     'i,
@@ -311,6 +315,10 @@ pub(in crate::storage) fn start_statement_rollback_live<
 
 /// RollbackStart of the full rollback for a `RollbackRequired` transaction,
 /// borrowing its `PendingRollback`.
+#[allow(
+    clippy::result_large_err,
+    reason = "Failure keeps the stage, the error and any refused cleanup inline, without allocation"
+)]
 pub(in crate::storage) fn start_full_rollback_live<
     'r,
     'i,

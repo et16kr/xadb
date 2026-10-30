@@ -670,7 +670,7 @@ pub(in super::super) struct RowLifecycleTerms {
     pub(in super::super) caller: usize,
 }
 
-pub(in super::super) fn row_lifecycle_terms<W: WriterNamespace>() -> RowLifecycleTerms {
+pub(in super::super) fn row_lifecycle_terms() -> RowLifecycleTerms {
     use crate::storage::page::{PageHeader, PageView};
     use foundation::codec::ContentHasher;
     use std::mem::size_of;
