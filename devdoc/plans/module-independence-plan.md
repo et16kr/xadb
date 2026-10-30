@@ -1,5 +1,7 @@
 # XADB 모듈 독립 개발 구조 전환 작업 계획
 
+2026-10-30 [CR1 Catalog native 로컬 실행](../evidence/module-independence-survey-20261026.md#cr1-catalog-native-r2): 사용자 PC에서 `2bc18d1`로 사전 census 4건 PASS, 독립 admission ACCEPTED 뒤 Catalog native N01·N02·N03이 모두 PASS했다. U2-C4 전환의 로컬 요구가 끝났다.
+
 2026-10-30 [branch Clippy 정리](../evidence/module-independence-survey-20261026.md#branch-clippy-20261030): pre-push gate의 Clippy 31건을 사유를 단 allow와 동작이 같은 작은 수정으로 정리했다(`dd81d85`). 이후 단위는 round마다 Clippy도 돌린다.
 
 2026-10-30 [native 시험 adapter 정정과 CR1 범위 변경](../evidence/module-independence-survey-20261026.md#native-adapter-file-cr1-scope): 시험 전용 native adapter의 `File` 크기 차이가 commit window native 초과의 원인이었다(PR #3과 같은 정정 `94ede44`, native pending_full 66612 → 65460). native census가 memory + 8B로 내려왔다. 사용자 결정으로 F05를 CR1에서 뺐고 CR1은 Catalog native N01–N03만 남는다.

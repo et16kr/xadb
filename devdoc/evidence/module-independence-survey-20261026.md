@@ -4328,3 +4328,26 @@ S1(S1-a~S1-g) 뒤의 다음 단계인 S2(C3 Row Reserve·Forward·Cancel)와 S5(
 **정리(`dd81d85`).** 의도한 형태는 저장소 관례대로 사유를 단 `#[allow(lint, reason = ...)]`로 남겼다. `result_large_err` 11건(A driver의 `Failure`가 단계·오류·거절된 정리를 할당 없이 inline으로 돌려줌), `type_complexity` 10건(단일 호출자에게 돌려주는 관측 tuple과 control codec 함수 pointer 쌍), `needless_range_loop` 3건(색인이 다른 선택자도 겸함), `manual_bits` 2건(u64 칸을 byte로 셈)이다. 나머지는 고쳤다. `plan4_recovery_base/catalog/graph/ledger.rs`의 조건을 De Morgan 형태 `!(a || b)`로 바꿨고(같은 진리표), `semantic_row/transition/cells.rs::undo_before`의 수명을 생략했고, 쓰지 않는 `W`를 `row_lifecycle_terms`에서 뺐으며(호출자 하나), 상수 단언을 `const` 블록으로, 시험의 불필요한 참조 두 곳을 지웠다. 동작 변경은 없다.
 
 **검산.** `cargo clippy -p xadb-engine ... -D warnings`(offline)와 workspace 전체 Clippy(online) 모두 0건, `cargo fmt --all --check` 통과, 바뀐 .rs의 rustfmt check와 `git diff --check` 통과. 바뀐 코드 경로의 27 selector를 `dd81d85`에서 1회 실행해 15 PASS다: base4 closure 시험 9개(ledger의 Row 분기 포함), `xrb_s5_reserved_header_bytes`, `s1a_borrowed_observer_source_bound_covers_measured_frames`(const 단언), `s1g_closure_refuses_row_root_without_its_u_allocation`(참조 정리), `row_progress_reserves_the_same_catalog_progress_charge`·`writable_capsule_and_wrappers_stay_within_original_limits`(Row lifecycle 항, 42089/43229 등 값 동일). 나머지 12개는 Profile2 base(xrb) 시험으로, 사례 ID·XRB identity·generator가 만드는 고정 fixture 디렉터리를 요구한다. 세 차례 precondition을 채웠으나(r1b·r1c·r1d) generator 산출 `raw-index.tsv`가 tree 밖이라 10개는 시험 대상 코드에 닿지 못해 NOT_RUN이고, source layout 2개는 PASS다. ledger 변경은 진리표가 같은 재배열이며 Row 분기를 지나는 base4 시험이 모두 통과했다. artifact는 `module-independence-20261029/artifacts/module-clippy-20261030/`(`manifest-all.sha256` SHA-256 `fa3587e0683397a0af0ad897aafa8412cd42de1248ed252e15b09c4b7ade10e3`)에 있다.
+
+<a id="cr1-catalog-native-r2"></a>
+## 2026-10-30 CR1 Catalog native N01–N03 로컬 실행(사용자 PC) PASS
+
+[U2-C4 단일 current 전환](#u2-single-current)의 남은 로컬 요구 CR1을 사용자 PC(`et16-msi`, worktree `/home/et16/work/xadb-cr1`)에서 실행했다. 범위는 [CR1 범위 변경](#native-adapter-file-cr1-scope)에 따라 Catalog native N01·N02·N03뿐이며 F05는 실행하지 않았다.
+
+**1차 시도(거절, `9c56a3a`).** 독립 admission이 REJECTED였다. 사유는 그 ELF의 source-bound 증거 부재(R1), precedent의 fits 전제 9경로 중 8개 변경(R2), commit window native 66612B 초과(R3), `catalog_source_native` 8192 기대값(R4)이었다. R3·R4는 [Q12](#s2-0-q06-amendment)(`52aa882`)와 [native adapter 정정](#native-adapter-file-cr1-scope)(`94ede44`)으로 해소됐다.
+
+**2차 실행(`2bc18d1`, tree `c48b8b35`).** detached HEAD로 받아 branch ref는 옮기지 않았다. export 7462파일, source fingerprint `4d5f06a629582c4ea226f7bed30c5bdf8157e3f57bbf0cf2fd2406d39d69a811`(6943파일), `cargo check --lib`과 `cargo test --lib --no-run`(`--locked --offline`)은 error·warning 0, ELF SHA-256 `81a4a0f8cf81e04006ad301d5729c8b63a6770f9628d0c3f1df15b1e4266f657`, controller는 1차와 같다.
+
+| 단계 | 결과 |
+| --- | --- |
+| 사전 census(같은 ELF, 동결 manifest `66ca2a42…`, 각 1회) | `consumed_preparation_has_bounded_pending_image` PASS(native live 64008, recovered 65376), `catalog_commit_windows_fit_beside_admitted_readers` PASS(native pending_full 65460, memory 65452), `catalog_source_memory`·`catalog_source_native` PASS(backing 9792) |
+| 독립 admission(계획을 쓰지 않은 reviewer) | ACCEPTED. 증거 hash 23건 일치, 여유 141652246528B ≥ 64613253120B. R1은 같은 ELF census로, R2는 바뀐 경로의 fits 술어가 이 ELF의 native census에서 모두 성립하므로, R3·R4는 위 정정으로 해소. `retention_source_native`·`runtime_core_source_native`(기존 실패)는 Catalog native admission과 무관 |
+| N01 | PASS 26.215초. produce가 `A_CREATE_ACK_T`에서, recover가 capture9·epoch2 복구 뒤 `A_CREATE_ACK_U`에서 kill −9, reentry capture19·epoch3 exit0 |
+| N02 | PASS 16.868초. produce `A_CREATE_BEFORE_CATALOG_HOME` kill, recover capture8·epoch2 뒤 `A_CREATE_AFTER_CLR_DURABLE` kill, reentry capture10·epoch3 exit0 |
+| N03 | PASS 13.162초. produce가 commit WAL sync 성공 뒤 `A_CREATE_UNKNOWN_AFTER_SYNC`(UNKNOWN 1회, ACK 없음)에서 kill, recover capture9·epoch2·query 6/1/true exit0 |
+
+- N01→N02→N03을 차례로 1회씩, 재시도 없이 실행했다. N01의 26.2초는 사례 한도 30초에 가깝다(기능 검증 경과 시간이며 성능 수치가 아님).
+- 사용자 PC의 결과는 `/home/et16/work/xadb-cr1-artifacts/`에 있다(native 출력 259파일 포함 약274MB, build target·export·ELF 사본은 기록 뒤 삭제). `cr1-r2-result.json` SHA-256 `74e862bae10e389c276bfef2068f74c5378155cdd06ce6ff2fddcedfd1e575c9`, N01/N02/N03 `result.json` `4bb9eee3…`·`85ad292f…`·`ae693a75…`, `admission.json` `5c1a7da0…`, `native-output-inventory.json` `398e6a44…`.
+- reviewer의 부차 지적: 계약의 66612 초과 문구(이 commit에서 dated 정정을 더함), `plan4_retention/tests.rs:180`이 File 160·owner 984를 옛 값으로 고정(기존 실패 `retention_source_native`의 일부), `old_common_delta == 0` 단언과 실제 512, `pending_two_resident` 66650은 출력만 하고 단언하지 않음(계약상 Full 하나와만 겹침), 여유 76/84/160B가 얇음, census runner가 build 뒤에 작성됨(hash로 고정).
+
+이로써 U2-C4 전환의 CR1(Catalog native)이 끝났다. F05와 P4-REC 시험은 [CR1 범위 변경](#native-adapter-file-cr1-scope)대로 Profile1 이관 전 시험으로 남는다.

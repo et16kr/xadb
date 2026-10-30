@@ -1,7 +1,7 @@
 {
   "schema_version": 2,
   "product": "XADB",
-  "date": "2026-10-30T10:37:52.355418+09:00",
+  "date": "2026-10-30T11:03:14.513188+09:00",
   "status": "PASS",
   "errors": [],
   "markdown_documents": [
@@ -157,9 +157,9 @@
     },
     {
       "file": "devdoc/contracts/dev3-module-boundaries.md",
-      "links": 222,
+      "links": 225,
       "duplicate_ids": 0,
-      "sha256": "81c00980bdc4d06f75d90ece0c5e46f894249b9438033610e278f7b854554a85"
+      "sha256": "5c4cc9bd37e7ae5fb92c627ca47042ca77a9b12318be308f607e300bf7d1d415"
     },
     {
       "file": "devdoc/contracts/dev3-module-consumers.md",
@@ -1285,9 +1285,9 @@
     },
     {
       "file": "devdoc/evidence/module-independence-survey-20261026.md",
-      "links": 222,
+      "links": 227,
       "duplicate_ids": 0,
-      "sha256": "1a7e1fc12fc9ff23b65a62b332aff0888915c6e32676c8a785f868d02bf64329"
+      "sha256": "040482870f59105c6a5e904f90047bbbd84926b5afdfe915b0171cc5ff73cebd"
     },
     {
       "file": "devdoc/evidence/naming-cleanup-20261025.md",
@@ -1327,9 +1327,9 @@
     },
     {
       "file": "devdoc/implementation/README.md",
-      "links": 195,
+      "links": 196,
       "duplicate_ids": 0,
-      "sha256": "84f25731cf0b55439782fbac35e6e927a261465f875129bfe90f5862e73f9424"
+      "sha256": "5b0e797f7971191eba91fd12ccb3c97606b240af32841b06d13405f11753b77d"
     },
     {
       "file": "devdoc/implementation/comm-implementation.md",
@@ -1495,9 +1495,9 @@
     },
     {
       "file": "devdoc/plans/module-independence-plan.md",
-      "links": 253,
+      "links": 254,
       "duplicate_ids": 0,
-      "sha256": "e98b16441c206fd0cadcfa83dc29b230be0b9c0ce25d3e45274becf7d189fa3d"
+      "sha256": "84ec965448dc4ac3eee48dd5631b11e64fada3adaf913081d5b085ccefc373ea"
     },
     {
       "file": "devdoc/plans/phase1-product-baseline.md",

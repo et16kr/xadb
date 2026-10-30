@@ -9043,7 +9043,7 @@
     "rollback": "git revert b5f7c9b 1dd9dec c4516a9 bbca0cb (inert receipt/fixture commits stay)",
     "scope": "Single current format switch Profile3 -> Root3/Job3 -> base4: exact {3 current, 1 DEV2 v1, explicit reject} dispatch at every former Profile2-current site, installed ProfileGrammar binding for open_shared and flush selection, RowBase recovery cause with symmetric Corrupt fallback, Root3 encode guard, transition3 Profile3 corpus, pure Profile2 codecs kept",
     "validation": "r1 304 selectors and r3 30 selectors match frozen expectations; 34 base failures and status_flush_rf reproduced on main 85ceef3; genesis native PASS; integrated round with S1-f and S1-a 21 PASS plus expected commit-window FAIL; check 0 warnings each round; two independent reviews, REQUIRED resolved",
-    "remaining_supply": "CR1 on the user's machine: catalog native N01-N03 (60 GiB floor, source census on the same ELF, fresh independent admission); F05 plan4 recovery native dropped from CR1 by user decision 2026-10-30 (un-migrated Profile1 tests, support.rs:260 kept as is); advisories A5 format gate in preflight_empty_retention and A7 fits check",
+    "remaining_supply": "CR1 done 2026-10-30: catalog native N01-N03 PASS on the user's machine at 2bc18d1 (module-independence-survey-20261026.md#cr1-catalog-native-r2); F05 plan4 recovery native dropped from CR1 by user decision (un-migrated Profile1 tests, support.rs:260 kept as is); advisories A5 format gate in preflight_empty_retention and A7 fits check",
     "source_roots_changed": false,
     "artifact_manifest_sha256": "30c4ab322770370b2d0b765ed258154f8f8dddad86acaf36e108ec47c523972f"
   },
@@ -9186,7 +9186,7 @@
     "commits": [],
     "scope": "Read-only S2 (C3 Row Reserve/Forward/Cancel) and S5 (C2 Row read source) design; Row write budget verdict; S2-0 Q06 contract amendment draft (M1/M2/M3/M6/M7, 8-part RowProducerLane, preflight flusher and Row IO lease, class rules, V09 replacement oracles) kept outside the contracts",
     "validation": "Forward producer phase measured 60625 B (60745 B with the S1-e driver) against the 44304 B charge; amendment D2 review r1 ACCEPT WITH REQUIRED CHANGES (5 required, 16 advisory), r2 resolves the 5 required; r2 re-review stopped by the user's decision",
-    "remaining_supply": "user decision on the Q06 amendment; A unit measuring the Forward phase after M1/M2 and MCA00-D15; separate Q06 record for the native commit-window overrun 66612 B; S2, S5, S3, S4, S6, S7, C+A, C+B, MI01-06",
+    "remaining_supply": "user decision on the Q06 amendment; A unit measuring the Forward phase after M1/M2 and MCA00-D15; the native commit-window overrun 66612 B was a test-adapter artifact, fixed by 94ede44 (native 65460 B), no Q06 record needed; S2, S5, S3, S4, S6, S7, C+A, C+B, MI01-06",
     "source_roots_changed": false,
     "artifact_manifest_sha256": "5f1848f2066b18b50f0f5173a0dc98cee414642b7c77d3e4dfa5f8cfbac30689"
   },
@@ -9200,7 +9200,7 @@
     "commit_note": "the contract change and this record are one docs commit",
     "scope": "S2-0 Q06 amendment: RowWrite/RowRead charge reuse, gate and flush lease from preflight to row end, preflight residency and FlushRequired step, 3-range lane split and 8th RowProducerLane part, per-call-site RowWrite census with ROW_WRITE_CALLER_BYTES, cuts <= 128 B, Q06 record and S2-e entry condition, table write bit before stage, one live reservation per actor, V09 and MCI03-V02 oracle replacement, Q12 9792 ruling",
     "validation": "independent D2 r1 ACCEPT WITH REQUIRED CHANGES (5 required, 16 advisory), r2 ACCEPT WITH REQUIRED CHANGES (1, 7), r3 ACCEPT (0, 4; C1 C2 C4 applied in r4, C3 by this record); apply.py dry-run then one apply, additions only (boundaries +257, resource-bounds +11, consumers +12)",
-    "remaining_supply": "Q12 test expectation, S2-a, A-W1, S2-b1..S2-f on this branch; B and MCI acceptance of the InstallationPending retry duty before any S5 or MCI unit; S5-a..d not started by user decision; separate Q06 record for the native commit-window overrun 66612 B",
+    "remaining_supply": "Q12 test expectation, S2-a, A-W1, S2-b1..S2-f on this branch; B and MCI acceptance of the InstallationPending retry duty before any S5 or MCI unit; S5-a..d not started by user decision; the native commit-window overrun 66612 B was a test-adapter artifact, fixed by 94ede44 (native 65460 B), no Q06 record needed",
     "source_roots_changed": false,
     "artifact_manifest_sha256": "3235d2edea67d5f72a1f5752156808b84b964b611c8ecede94d9efaeb7a554e5"
   },
@@ -9233,5 +9233,19 @@
     "validation": "engine and workspace Clippy -D warnings 0, cargo fmt --all --check PASS; 27 changed-path selectors: 15 PASS, 10 xrb fixture tests NOT_RUN (generated fixture directory outside the tree), 2 xrb source-layout tests PASS",
     "source_roots_changed": false,
     "artifact_manifest_sha256": "fa3587e0683397a0af0ad897aafa8412cd42de1248ed252e15b09c4b7ade10e3"
+  },
+  "dev3_module_cr1_catalog_native_r2": {
+    "status": "LOCAL_NATIVE_PASS",
+    "evidence_ref": "module-independence-survey-20261026.md#cr1-catalog-native-r2",
+    "baseline_commit": "2bc18d1",
+    "branch": "claude/project-thread-h2j8oc",
+    "commits": [],
+    "machine": "user machine et16-msi, worktree /home/et16/work/xadb-cr1 (detached HEAD)",
+    "source_fingerprint": "4d5f06a629582c4ea226f7bed30c5bdf8157e3f57bbf0cf2fd2406d39d69a811",
+    "elf_sha256": "81a4a0f8cf81e04006ad301d5729c8b63a6770f9628d0c3f1df15b1e4266f657",
+    "scope": "CR1 reduced to catalog native N01-N03 (F05 dropped by user decision); same-ELF source census, fresh independent admission, one run per case",
+    "validation": "pre-census 4/4 PASS (native recovered 65376, live 64008, pending_full 65460; catalog_source memory/native 9792); admission ACCEPTED; N01 PASS 26.215 s, N02 PASS 16.868 s, N03 PASS 13.162 s; first attempt at 9c56a3a rejected before any run",
+    "result_sha256": "74e862bae10e389c276bfef2068f74c5378155cdd06ce6ff2fddcedfd1e575c9",
+    "source_roots_changed": false
   }
 }
