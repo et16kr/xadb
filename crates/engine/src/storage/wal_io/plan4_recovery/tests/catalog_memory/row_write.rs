@@ -3,12 +3,13 @@
 //! committed CREATE of table T that the preflight cases use. Only the cases
 //! reserve can exercise are here: S2W-R04, R06, R07, R14, the reserve halves
 //! of R05, R11, R15 and R22, and R23(1) with its preflight arena half (the
-//! S2-b1 review's A1). The cases that need cancel, prepare or apply are later
-//! units'. A ReservedRow has no supplied cancel yet, so every successful
-//! reserve here ends with its Drop, which fences the session (S2W-R23(2)'s
-//! Drop rule). The expected values are fixture facts, the independent
-//! literal of `tests/fixtures/dev3-module-c3/row-write/` and the refusal
-//! table's (phase, cause, effect), never values copied from the body.
+//! S2-b1 review's A1). The cases that need prepare or apply are in
+//! `row_forward.rs` (S2-c), and those that need cancel in `row_cancel.rs`
+//! (S2-d). Every successful reserve here ends with its Drop, which fences
+//! the session (S2W-R23(2)'s Drop rule). The expected values are fixture
+//! facts, the independent literal of `tests/fixtures/dev3-module-c3/row-write/`
+//! and the refusal table's (phase, cause, effect), never values copied from
+//! the body.
 use super::row_preflight::{
     FIXTURE_T, FREE_UNDO, create_table, fold_identity, fold_stamp, resident,
 };
@@ -765,7 +766,7 @@ fn s2w_r11_reserve_stage_refusal_keeps_the_write_bit() {
 /// one read operation) until the reader returns; the preflight is then Ready.
 /// While the ReservedRow is held, a new read operation on the same core is
 /// Unchanged InstallationPending. The cancel that ends a reservation without
-/// the fence is S2-d's.
+/// the fence is `row_cancel::s2w_r15_cancel_ends_the_reservation_without_the_fence`.
 #[test]
 fn s2w_r15_reader_waits_and_is_installation_pending_while_reserved() {
     case("S2W-R15", || {

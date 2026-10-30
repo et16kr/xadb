@@ -448,8 +448,9 @@ pub(in super::super) fn source_bytes() -> usize {
 }
 
 // S2W-R18: the next `row_statement_head` on this thread sees the actor's
-// Row Job as RootReserved, beside its decoded Jobs (a live RootReserved
-// actor that preflights again needs its ReservedRow cancelled, S2-d). It
+// Row Job as RootReserved, beside its decoded Jobs. A live RootReserved
+// actor needs its ReservedRow given up with the reservation kept, a cfg(test)
+// fixture (`s2w_r18_live_root_reserved_actor_is_wrong_state`, S2-d). It
 // changes no ledger, control or page byte.
 #[cfg(test)]
 thread_local! {

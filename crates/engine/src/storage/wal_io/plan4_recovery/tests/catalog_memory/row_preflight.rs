@@ -1000,8 +1000,9 @@ fn r17(kind: u8) {
 }
 
 /// S2W-R18: an actor whose Row Job is RootReserved (a one-shot cfg(test)
-/// view of its decoded Jobs; a live one needs its ReservedRow cancelled
-/// first, S2-d) is Unchanged (Prepare, WrongState) after the gate, and the
+/// view of its decoded Jobs; the live one, a ReservedRow given up with its
+/// reservation kept, is `row_cancel::s2w_r18_live_root_reserved_actor_is_wrong_state`,
+/// S2-d) is Unchanged (Prepare, WrongState) after the gate, and the
 /// refusal returns the source, then the gate, then the lease. The next
 /// preflight is Ready.
 #[test]

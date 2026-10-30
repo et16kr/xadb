@@ -4,19 +4,20 @@
 //! product bodies call. `MutationPort::preflight_row` runs the actual
 //! preflight (S2-b1, `#row-write-validate-once`),
 //! `PreflightRow::validation_lane` and `PreflightRow::reserve` the actual lane
-//! and RowReserve (S2-b2), and `ReservedRow::producer_lane`,
+//! and RowReserve (S2-b2), `ReservedRow::producer_lane`,
 //! `ReservedRow::prepare` and `PreparedRow::apply` the actual Forward path
-//! (S2-c). Every other factory returns an effect-free `Unsupported` before
-//! any source guard, pin, admission, WAL or page effect: the actual cancel,
-//! Row read source, rollback and Commit adapters are later C2/C3 supplies. A
+//! (S2-c), and `ReservedRow::cancel` the actual Cancel of that reservation
+//! (S2-d). Every other factory returns an effect-free `Unsupported` before
+//! any source guard, pin, admission, WAL or page effect: the actual Row read
+//! source, rollback and Commit adapters are later C2/C3 supplies. A
 //! `ReservedRow` dropped while its reservation is active fences the session
-//! (S2W-R23(2)), so until cancel is supplied (S2-d) a driver that stops after
-//! a successful reserve without a Forward ends fenced. No constructor accepts
-//! a raw TxnRef/UndoRef/RowId/q, and no value here is an install, terminal or
-//! READY receipt.
+//! (S2W-R23(2)); a driver that stops after a successful reserve without a
+//! Forward ends it with `cancel`, which discharges the reservation without
+//! the fence. No constructor accepts a raw TxnRef/UndoRef/RowId/q, and no
+//! value here is an install, terminal or READY receipt.
 #![allow(
     dead_code,
-    reason = "actual Row source, cancel and rollback adapters are not supplied yet"
+    reason = "actual Row source and rollback adapters are not supplied yet"
 )]
 
 use super::*;
