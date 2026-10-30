@@ -1602,13 +1602,19 @@ const fn call_sites<B: Boundary + 'static>() -> [CallSite; CALL_SITES] {
 /// caller's slot; the forwarding frame's arguments (the statement view moved
 /// through it is counted in `insert_statement`'s); and what the caller keeps
 /// by value across the call: the transaction capsule the view borrows, the
-/// CheckedTable, the call itself (its references to the ports and Owners)
-/// and, per row, its values, the row's slice and the row's slot. The ports
-/// and Owners the call refers to and the loan are not on this stack: the
-/// split ports are in C's shared census and the loan is the private raw
-/// loan. No slack is added; each share already has it. Returns (the term,
-/// the part each further row adds).
-const fn caller_bytes<B: Boundary + 'static>(rows: usize, values: usize) -> (usize, usize) {
+/// CheckedTable, the call itself (its references to the ports and Owners),
+/// the Owners the call refers to (`owners`, their bytes: the Boundary does
+/// not name their type; the live call's statement Owner and dedicated
+/// flusher Owner, S2-e review A3) and, per row, its values, the row's slice
+/// and the row's slot. The ports the call refers to and the loan are not on
+/// this stack: the split ports are in C's shared census and the loan is the
+/// private raw loan. No slack is added; each share already has it. Returns
+/// (the term, the part each further row adds).
+const fn caller_bytes<B: Boundary + 'static>(
+    rows: usize,
+    values: usize,
+    owners: usize,
+) -> (usize, usize) {
     use std::mem::size_of;
     type A<B> = <B as Boundary>::Applied;
     type S<B> = <B as Boundary>::Statement;
@@ -1625,6 +1631,7 @@ const fn caller_bytes<B: Boundary + 'static>(rows: usize, values: usize) -> (usi
         + size_of::<&mut [Option<A<B>>]>()
         + size_of::<X<B>>()
         + size_of::<B::Table>()
-        + size_of::<B>();
+        + size_of::<B>()
+        + owners;
     (held + rows * row, row)
 }

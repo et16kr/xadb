@@ -540,8 +540,9 @@ pub(super) const fn live_carrier_bytes<W: WriterNamespace + 'static>() -> (usize
     >()
 }
 
-/// `caller_bytes` for the actual C0 types: (the term for a statement of
-/// `rows` rows of `values` values, the part each further row adds).
+/// `caller_bytes` for the actual C0 types and the `LiveCall`'s two Owners:
+/// (the term for a statement of `rows` rows of `values` values, the part
+/// each further row adds).
 pub(super) const fn live_caller_bytes<W: WriterNamespace + 'static>(
     rows: usize,
     values: usize,
@@ -562,7 +563,11 @@ pub(super) const fn live_caller_bytes<W: WriterNamespace + 'static>(
             'static,
             W,
         >,
-    >(rows, values)
+    >(
+        rows,
+        values,
+        2 * std::mem::size_of::<Owner<'static, 'static>>(),
+    )
 }
 
 /// `call_sites` for the actual C0 types.
