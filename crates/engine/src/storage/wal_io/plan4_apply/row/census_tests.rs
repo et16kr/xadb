@@ -1,11 +1,12 @@
 //! Row write census selectors of the S2-0 Row write amendment (S2W-C01..C05)
 //! and of the S2-0b amendment (S2W-C06).
 //! These are size_of inventories in the repository's source-bound sense, not
-//! stack measurements. No Row write effect body exists yet, so every C phase
-//! below is an upper estimate composed from existing census terms and the
-//! final S2-a types (`RowWriteBodies`), printed with its terms; it is not a
-//! measured phase. Every phase must still fit with the caller share: a later
-//! unit that replaces an estimate commits only while these selectors pass.
+//! stack measurements. The preflight phase is the census of its actual body
+//! (S2-b1, `row_preflight_body`); every other C phase is still an upper
+//! estimate composed from existing census terms and the final S2-a types
+//! (`RowWriteBodies`), printed with its terms; it is not a measured phase.
+//! Every phase must still fit with the caller share: a later unit that
+//! replaces an estimate commits only while these selectors pass.
 use super::write::{RowIoLease, row_write_phases};
 use super::*;
 use crate::storage::page::PAGE_BYTES;
@@ -88,9 +89,14 @@ fn phase_census<W: WriterNamespace>(id: &str, writer: &str) {
         let total = c_total + phase.bound;
         let room = charge as i64 - c_total as i64;
         println!(
-            "{id} phase={} kind=estimate body={} carriers={} c_total={c_total} bound={} \
+            "{id} phase={} kind={} body={} carriers={} c_total={c_total} bound={} \
              total={total} charge={charge} room_for_caller={room} c_margin={} fits={}",
             phase.name,
+            if phase.name == "preflight" {
+                "actual"
+            } else {
+                "estimate"
+            },
             phase.body,
             phase.carriers,
             phase.bound,
@@ -302,6 +308,39 @@ fn s2w_c06_row_write_c_margins_against_both_bounds() {
                 "no"
             },
         );
+        // The actual preflight body (S2-b1) beside the S2-a′ estimate it
+        // replaced, and its margin with the preflight share bound.
+        let body = terms.preflight_body;
+        let carriers = row_write_phases::<W>()
+            .iter()
+            .find(|phase| phase.name == "preflight")
+            .expect("preflight phase")
+            .carriers;
+        let margin =
+            charge as i64 - (body.body + carriers) as i64 - ROW_PREFLIGHT_CALLER_BYTES as i64;
+        println!(
+            "S2W_C06 writer={writer} preflight_body actual={} estimate={} actual_minus_estimate={} \
+             shell={} frame={} lease_check={} check={} load={} select={} shape={} \
+             undo_scan={} finish_frame={} observe={} register={} finish={} \
+             carriers={carriers} c_total={} bound={ROW_PREFLIGHT_CALLER_BYTES} charge={charge} \
+             c_margin={margin}",
+            body.body,
+            terms.preflight_estimate,
+            body.body as i64 - terms.preflight_estimate as i64,
+            body.shell,
+            body.frame,
+            body.lease_check,
+            body.check,
+            body.load,
+            body.select,
+            body.shape,
+            body.undo_scan,
+            body.finish_frame,
+            body.observe,
+            body.register,
+            body.finish,
+            body.body + carriers,
+        );
         for phase in row_write_phases::<W>() {
             let c_total = phase.body + phase.carriers;
             let margin = charge as i64 - c_total as i64 - phase.bound as i64;
@@ -315,6 +354,11 @@ fn s2w_c06_row_write_c_margins_against_both_bounds() {
                 phase.name
             );
         }
+        assert_eq!(terms.preflight, body.body);
+        assert!(
+            margin >= 0,
+            "S2W_C06 {writer} preflight body margin {margin} < 0"
+        );
         // At least one suspended level is always counted (S2-0b decision 2).
         assert!(terms.suspended_levels >= 1);
         assert!(terms.arena < terms.load);
