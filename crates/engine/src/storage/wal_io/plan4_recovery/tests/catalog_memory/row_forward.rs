@@ -20,7 +20,7 @@ use super::super::super::super::plan4_pages::{
 };
 use super::super::faults::{rejected, unchanged_error};
 use super::super::support::namespace;
-use super::row_preflight::{FIXTURE_T, FREE_UNDO, create_table, resident, system_init};
+use super::row_preflight::{FREE_UNDO, create_table, resident, system_init, t_frames};
 use super::*;
 use crate::storage::{
     control::row_profile,
@@ -219,23 +219,6 @@ fn page_of(pool: &SharedPool<'_, '_, '_, '_>, number: u64) -> Box<[u8; PAGE_BYTE
     let mut bytes = boxed::<PAGE_BYTES>();
     probe::diagnose(pool, index, &mut bytes);
     bytes
-}
-
-/// Every page of T in the pool (`FIXTURE_T`, rank order): its bytes, frame
-/// stamp and dirty flag, through the diagnostic probe alone, so it also reads
-/// a fenced pool.
-fn t_frames(
-    pool: &SharedPool<'_, '_, '_, '_>,
-) -> Vec<(u64, Box<[u8; PAGE_BYTES]>, dirty_frame::FrameStamp, bool)> {
-    FIXTURE_T
-        .iter()
-        .map(|number| {
-            let index = probe::registered_index(pool, *number).unwrap();
-            let mut bytes = boxed::<PAGE_BYTES>();
-            let snapshot = probe::diagnose(pool, index, &mut bytes);
-            (*number, bytes, snapshot.frame, snapshot.dirty)
-        })
-        .collect()
 }
 
 /// The commitment refusal: Before Unchanged (Prepare, Frame Stale).

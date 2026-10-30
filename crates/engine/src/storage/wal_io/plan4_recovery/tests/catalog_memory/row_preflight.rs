@@ -426,6 +426,28 @@ pub(super) const FIXTURE_T: [u64; 7] = [0, 1, 2, 11, 12, 13, 14];
 /// The Catalog leaf, beside T in the preflight's typed read.
 pub(super) const CATALOG_LEAF: u64 = 8;
 
+/// Every page of T in the pool (`FIXTURE_T`, rank order): its bytes, frame
+/// stamp and dirty flag, through the diagnostic probe alone, so it also reads
+/// a fenced pool (the Forward and Cancel cases).
+pub(super) fn t_frames(
+    pool: &crate::storage::dirty_frame::SharedPool<'_, '_, '_, '_>,
+) -> Vec<(
+    u64,
+    Box<[u8; PAGE_BYTES]>,
+    crate::storage::dirty_frame::FrameStamp,
+    bool,
+)> {
+    FIXTURE_T
+        .iter()
+        .map(|number| {
+            let index = probe::registered_index(pool, *number).unwrap();
+            let mut bytes = boxed::<PAGE_BYTES>();
+            let snapshot = probe::diagnose(pool, index, &mut bytes);
+            (*number, bytes, snapshot.frame, snapshot.dirty)
+        })
+        .collect()
+}
+
 /// The RootJob of the fixture's next RowReserve, from the Root page in the
 /// pool and the control's Job cells: the first cell from the Root cursor
 /// whose state and kind bytes (6, 7) are zero, the Free encoding.
