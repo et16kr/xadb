@@ -1232,3 +1232,6 @@ mod row_preflight;
 
 #[path = "catalog_memory/row_write.rs"]
 mod row_write;
+
+#[path = "catalog_memory/row_forward.rs"]
+mod row_forward;
