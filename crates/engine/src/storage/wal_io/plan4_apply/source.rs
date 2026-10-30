@@ -6,7 +6,7 @@ use crate::storage::session_fence::SessionFence;
 use crate::transaction::concurrency::{TerminalReadGate, terminal_gate_source_bytes};
 use std::{mem::size_of, sync::atomic::Ordering};
 
-const SHORT_BYTES: u64 = 65_536;
+pub(super) const SHORT_BYTES: u64 = 65_536;
 const USED: std::ops::Range<usize> = 24..32;
 
 #[derive(Clone, Copy)]

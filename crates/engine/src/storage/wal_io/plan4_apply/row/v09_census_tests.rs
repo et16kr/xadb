@@ -22,6 +22,8 @@
 //!     gives it no charge (S2A-T01).
 //!   - The behavioural proof is MBC10-V09 (`row_v09.rs`) and S2W-R15.
 //!   - The overlap sum is printed only to show that it is not claimed.
+//!   - The (iii) line states the class facts and points to those tests; it
+//!     computes only the sums.
 //! - (iv) The gate-waiting entry floor + shared + two residents. The floor is
 //!   WRITER-PROGRESS-001's unsupplied obligation: it is printed
 //!   `NOT_SUPPLIED` and not counted as a PASS.
@@ -34,8 +36,8 @@ use super::*;
 type Memory = crate::storage::wal_io::plan4_test_support::Writer;
 type Native = super::super::super::native::Writer;
 
-/// The short-source cap of the isolation ledger.
-const CAP: usize = 65_536;
+/// The short-source cap of the isolation ledger, from the ledger itself.
+const CAP: usize = super::super::source::SHORT_BYTES as usize;
 
 /// A phase's C total (body + return carriers) plus its call site's caller
 /// bound: what the phase holds of the RowWrite charge at its worst.
