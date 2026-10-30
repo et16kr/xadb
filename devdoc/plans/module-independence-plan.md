@@ -1,5 +1,7 @@
 # XADB 모듈 독립 개발 구조 전환 작업 계획
 
+2026-10-30 [branch Clippy 정리](../evidence/module-independence-survey-20261026.md#branch-clippy-20261030): pre-push gate의 Clippy 31건을 사유를 단 allow와 동작이 같은 작은 수정으로 정리했다(`dd81d85`). 이후 단위는 round마다 Clippy도 돌린다.
+
 2026-10-30 [native 시험 adapter 정정과 CR1 범위 변경](../evidence/module-independence-survey-20261026.md#native-adapter-file-cr1-scope): 시험 전용 native adapter의 `File` 크기 차이가 commit window native 초과의 원인이었다(PR #3과 같은 정정 `94ede44`, native pending_full 66612 → 65460). native census가 memory + 8B로 내려왔다. 사용자 결정으로 F05를 CR1에서 뺐고 CR1은 Catalog native N01–N03만 남는다.
 
 2026-10-30 [S2-0 Row 쓰기 계약 개정 반영](../evidence/module-independence-survey-20261026.md#s2-0-q06-amendment): Q06 개정(gate·flush lease를 보유하는 preflight와 `FlushRequired` step, lane 8번째 part, phase별 호출 지점 계수, 128B cut, S2-e 진입 조건, V09·MCI03-V02 oracle 대체)을 독립 D2 r3 ACCEPT 뒤 계약에 넣었다. 사용자 지시에 따라 이 branch는 S2(S2-a·A-W1·S2-b1~S2-f)까지만 진행하고 S5는 진행하지 않는다.

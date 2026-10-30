@@ -1,5 +1,7 @@
 # 현재 구현
 
+2026-10-30 [branch Clippy 정리](../evidence/module-independence-survey-20261026.md#branch-clippy-20261030): branch가 저장소 pre-push gate(fmt·Clippy·문서)를 통과한다.
+
 2026-10-30 [native 시험 adapter 정정과 CR1 범위 변경](../evidence/module-independence-survey-20261026.md#native-adapter-file-cr1-scope): commit window census가 native에서도 cap 안에 들어간다. 로컬 CR1은 Catalog native N01–N03만 남았다.
 
 2026-10-30 [S2-0 Row 쓰기 계약 개정 반영](../evidence/module-independence-survey-20261026.md#s2-0-q06-amendment): Row 쓰기의 자원·lane·preflight 규칙이 계약에 들어갔다. 코드는 아직 바뀌지 않았고 다음은 S2-a 표면 공급이다.

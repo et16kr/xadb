@@ -9219,5 +9219,19 @@
     "remaining_supply": "CR1 catalog native N01-N03 on the user's machine with source census on the same ELF and a fresh independent admission",
     "source_roots_changed": false,
     "artifact_manifest_sha256": "ced8fe2d3e9e2d14e0455d3e8128c9b4a531c911cc27c97c45640a3f692e52e4"
+  },
+  "dev3_module_branch_clippy_20261030": {
+    "status": "LOCAL_VERIFIED",
+    "evidence_ref": "module-independence-survey-20261026.md#branch-clippy-20261030",
+    "baseline_commit": "ff4fc8b",
+    "branch": "claude/project-thread-h2j8oc",
+    "commits": [
+      "dd81d85"
+    ],
+    "rollback": "git revert dd81d85",
+    "scope": "Lint-only: reasoned allows for result_large_err, type_complexity, needless_range_loop and manual_bits; De Morgan form in the base ledger, elided lifetime, unused W removed from row_lifecycle_terms, const assertion, two needless borrows",
+    "validation": "engine and workspace Clippy -D warnings 0, cargo fmt --all --check PASS; 27 changed-path selectors: 15 PASS, 10 xrb fixture tests NOT_RUN (generated fixture directory outside the tree), 2 xrb source-layout tests PASS",
+    "source_roots_changed": false,
+    "artifact_manifest_sha256": "fa3587e0683397a0af0ad897aafa8412cd42de1248ed252e15b09c4b7ade10e3"
   }
 }
