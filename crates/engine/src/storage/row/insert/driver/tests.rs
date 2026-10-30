@@ -2331,7 +2331,10 @@ fn mca00_d12_driver_frames_stay_within_the_driver_source_bound() {
 /// the caller's rollback) and the validation phase are printed for S4 and
 /// are not asserted here. At the preflight and its flush the frame-static
 /// share (with insert_row's slots for its later steps) is printed as well.
-/// These are size_of inventories, not stack proofs.
+/// S2-e adds the term of `insert_live`'s caller (`caller_bytes`, A-W1 review
+/// A3) at every `insert.*` site: the share with it is asserted within the
+/// same bounds and the frame-static reading with it is printed. These are
+/// size_of inventories, not stack proofs.
 fn call_site_census<W: WriterNamespace + 'static>(writer: &str) {
     let charge = row_write_charge::<W>();
     let (validation, producer) = super::super::local_source_carrier_bytes();
@@ -2361,14 +2364,15 @@ fn call_site_census<W: WriterNamespace + 'static>(writer: &str) {
         size_of::<RowRollback<'_, '_, '_, '_, '_, '_, '_, '_, '_, '_, '_, '_, '_, W>>(),
         size_of::<RowRollbackTask<'_, '_, '_, '_, '_, '_, '_, '_, '_, '_, '_, '_, '_, '_, W>>(),
     );
+    let limit = |site: &CallSite| match site.bound {
+        Bound::Preflight => (ROW_PREFLIGHT_CALLER_BYTES, 0),
+        Bound::Write => (ROW_WRITE_CALLER_BYTES, 0),
+        Bound::A if site.name == "insert.validate" => (charge, validation),
+        Bound::A => (charge, producer),
+    };
     let mut over = Vec::new();
     for site in sites {
-        let (bound, body) = match site.bound {
-            Bound::Preflight => (ROW_PREFLIGHT_CALLER_BYTES, 0),
-            Bound::Write => (ROW_WRITE_CALLER_BYTES, 0),
-            Bound::A if site.name == "insert.validate" => (charge, validation),
-            Bound::A => (charge, producer),
-        };
+        let (bound, body) = limit(&site);
         let total = site.bytes + body;
         let margin = bound as i64 - total as i64;
         println!(
@@ -2394,6 +2398,36 @@ fn call_site_census<W: WriterNamespace + 'static>(writer: &str) {
             over.push(site.name);
         }
     }
+    // A-W1 review A3 (S2-e): `insert_live`'s caller holds its values below
+    // every `insert.*` site. Its term is added to the per-call share, which
+    // is asserted (M3), and to the frame-static reading, which is printed.
+    let (caller, per_row) = live::live_caller_bytes::<W>(CALLER_ROWS, CALLER_VALUES);
+    println!(
+        "MCA00_D15 writer={writer} caller={caller} rows={CALLER_ROWS} values={CALLER_VALUES} \
+         per_row={per_row}"
+    );
+    let mut over_with_caller = Vec::new();
+    for site in sites.iter().filter(|site| site.name.starts_with("insert.")) {
+        let (bound, body) = limit(site);
+        let total = site.bytes + body + caller;
+        let margin = bound as i64 - total as i64;
+        print!(
+            "MCA00_D15 writer={writer} site={} with_caller={total} bound={bound} margin={margin}",
+            site.name,
+        );
+        if site.later > 0 {
+            let frame_static = site.bytes + site.later + caller;
+            print!(
+                " frame_static_with_caller={frame_static} frame_static_margin={}",
+                bound as i64 - frame_static as i64,
+            );
+        }
+        println!();
+        let checked = site.bound != Bound::A || site.name == "insert.forward";
+        if checked && margin < 0 {
+            over_with_caller.push(site.name);
+        }
+    }
     let before_ready = sites.iter().filter(|site| site.later > 0).count();
     assert_eq!(before_ready, 3);
     let names: std::collections::BTreeSet<_> = sites.iter().map(|site| site.name).collect();
@@ -2401,7 +2435,16 @@ fn call_site_census<W: WriterNamespace + 'static>(writer: &str) {
     let bound = |bound| sites.iter().filter(|site| site.bound == bound).count();
     assert_eq!((bound(Bound::Preflight), bound(Bound::A)), (1, 3));
     assert!(over.is_empty(), "{writer}: over the bound at {over:?}");
+    assert!(
+        over_with_caller.is_empty(),
+        "{writer}: over the bound with the caller at {over_with_caller:?}"
+    );
 }
+
+/// The statement the S2-e callers of `insert_live` pass at most
+/// (`catalog_memory::row_live`): two rows of T's one value.
+const CALLER_ROWS: usize = 2;
+const CALLER_VALUES: usize = 1;
 
 #[test]
 fn mca00_d15_memory_call_site_shares_fit_the_caller_bounds() {

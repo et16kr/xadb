@@ -22,9 +22,9 @@ use super::{
     Boundary, CALL_SITES, CallSite, DriveError, Failure, FlushStep, Loan, PendingRollback,
     Preflight, PreflightNext, Prepared, PreparedTask, ProducerLane, Reserved, Rollback,
     RollbackNext, RollbackStop, RollbackTask, StartedRollback, StatementView, Stepped,
-    ValidationLane, call_sites, carrier_bytes, commit, finish_aborted, finish_rollback,
-    finish_statement, insert_statement, retry_task, rollback_step, start_full_rollback,
-    start_statement_rollback,
+    ValidationLane, call_sites, caller_bytes, carrier_bytes, commit, finish_aborted,
+    finish_rollback, finish_statement, insert_statement, retry_task, rollback_step,
+    start_full_rollback, start_statement_rollback,
 };
 use crate::storage::{
     disk::{
@@ -535,6 +535,31 @@ pub(super) const fn live_carrier_bytes<W: WriterNamespace + 'static>() -> (usize
             W,
         >,
     >()
+}
+
+/// `caller_bytes` for the actual C0 types: (the term for a statement of
+/// `rows` rows of `values` values, the part each further row adds).
+pub(super) const fn live_caller_bytes<W: WriterNamespace + 'static>(
+    rows: usize,
+    values: usize,
+) -> (usize, usize) {
+    caller_bytes::<
+        Live<
+            'static,
+            'static,
+            'static,
+            'static,
+            'static,
+            'static,
+            'static,
+            'static,
+            'static,
+            'static,
+            'static,
+            'static,
+            W,
+        >,
+    >(rows, values)
 }
 
 /// `call_sites` for the actual C0 types.

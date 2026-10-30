@@ -1326,3 +1326,39 @@ const fn call_sites<B: Boundary + 'static>() -> [CallSite; CALL_SITES] {
         ),
     ]
 }
+
+/// What the driver's caller holds below the driver's frames at every
+/// `insert.*` call site of one statement of `rows` rows of `values` values
+/// each (A-W1 review A3: the unit that supplies the caller counts its frame;
+/// S2-e supplies `insert_live`'s callers). In `call_sites`' inventory sense
+/// and conventions: the statement's result, which `insert_statement`'s share
+/// counts once, counts twice more, as the forwarding frame's return and the
+/// caller's slot; the forwarding frame's arguments (the statement view moved
+/// through it is counted in `insert_statement`'s); and what the caller keeps
+/// by value across the call: the transaction capsule the view borrows, the
+/// CheckedTable, the call itself (its references to the ports and Owners)
+/// and, per row, its values, the row's slice and the row's slot. The ports
+/// and Owners the call refers to and the loan are not on this stack: the
+/// split ports are in C's shared census and the loan is the private raw
+/// loan. No slack is added; each share already has it. Returns (the term,
+/// the part each further row adds).
+const fn caller_bytes<B: Boundary + 'static>(rows: usize, values: usize) -> (usize, usize) {
+    use std::mem::size_of;
+    type A<B> = <B as Boundary>::Applied;
+    type S<B> = <B as Boundary>::Statement;
+    type X<B> = <B as Boundary>::Transaction;
+    type Rows = &'static [&'static [ValueRef<'static>]];
+    let row = size_of::<&[ValueRef<'static>]>()
+        + size_of::<Option<A<B>>>()
+        + values * size_of::<ValueRef<'static>>();
+    let held = 2 * size_of::<Result<usize, DriveError<S<B>>>>()
+        + size_of::<&mut B>()
+        + size_of::<&B::Table>()
+        + size_of::<&mut Loan>()
+        + size_of::<Rows>()
+        + size_of::<&mut [Option<A<B>>]>()
+        + size_of::<X<B>>()
+        + size_of::<B::Table>()
+        + size_of::<B>();
+    (held + rows * row, row)
+}
