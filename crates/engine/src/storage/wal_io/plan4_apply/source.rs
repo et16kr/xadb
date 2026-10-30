@@ -24,6 +24,16 @@ pub(super) enum OperationClass {
     /// `check_source_bytes` term, the statement end check
     /// (`RowProgress ≤ CatalogProgressCharge`, ROW-BEGIN-001 "자원").
     RowProgress,
+    /// One Row write from preflight to finish, apply or cancel, under the
+    /// terminal read gate and flush lease the wrapper holds (S2-0 Row write
+    /// amendment §1, §4). Exclusive with the other progress classes; it
+    /// reserves the same fixed CatalogProgressCharge, which the RowWrite
+    /// census checks per C phase by name instead of folding a Row term in.
+    #[allow(
+        dead_code,
+        reason = "the Row write preflight admission body is a later S2 unit"
+    )]
+    RowWrite,
 }
 
 /// Fixed type-derived costs, computed once while DiskSession is exclusively
@@ -277,7 +287,8 @@ impl<'b, 'a, 'c, 's> OperationSourceAdmission<'b, 'a, 'c, 's> {
             // reserve_class rejects the zero charge as a fenced Invariant.
             OperationClass::CommitProgress
             | OperationClass::CatalogProgress
-            | OperationClass::RowProgress => 0,
+            | OperationClass::RowProgress
+            | OperationClass::RowWrite => 0,
         };
         Self::reserve_class(ledger, charges.shared, charge, class)
     }
@@ -334,9 +345,9 @@ impl<'b, 'a, 'c, 's> OperationSourceAdmission<'b, 'a, 'c, 's> {
         )
     }
 
-    /// Fixed progress of either lifecycle class, Catalog or Row. Both reserve
-    /// the one split-time CatalogProgressCharge; any other class is refused as
-    /// a fenced Invariant before the ledger changes.
+    /// Fixed progress of a lifecycle class, Catalog or Row, or of a Row
+    /// write. All reserve the one split-time CatalogProgressCharge; any other
+    /// class is refused as a fenced Invariant before the ledger changes.
     pub(super) fn progress(
         ledger: &'b Mutex<IsolationLedger<'a, 'c, 's>>,
         charges: &CatalogCommitCharges,
@@ -351,7 +362,9 @@ impl<'b, 'a, 'c, 's> OperationSourceAdmission<'b, 'a, 'c, 's> {
             if !gate.belongs_to(state.core)
                 || !matches!(
                     class,
-                    OperationClass::CatalogProgress | OperationClass::RowProgress
+                    OperationClass::CatalogProgress
+                        | OperationClass::RowProgress
+                        | OperationClass::RowWrite
                 )
             {
                 return Err(failed(state.fence, SourceCause::Invariant));
@@ -488,6 +501,7 @@ impl<'b, 'a, 'c, 's> OperationSourceAdmission<'b, 'a, 'c, 's> {
             | OperationClass::CommitProgress
             | OperationClass::CatalogProgress
             | OperationClass::RowProgress
+            | OperationClass::RowWrite
                 if self.charge != 0 && u64::from(self.charge) <= SHORT_BYTES => {}
             _ => return Err(failed(state.fence, SourceCause::Invariant)),
         }
