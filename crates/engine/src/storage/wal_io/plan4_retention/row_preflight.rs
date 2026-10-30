@@ -297,6 +297,16 @@ impl PreflightSource<'_> {
     }
 }
 
+/// The WAL prefix fields the commitment folds: stream, file and the complete
+/// position. A sync moves only the synced position, which is durability
+/// progress and not source content, so it is no source change.
+pub(super) fn same_source_prefix(current: WalPrefix, expected: WalPrefix) -> bool {
+    current.stream == expected.stream
+        && current.file == expected.file
+        && current.complete_lsn == expected.complete_lsn
+        && current.complete_offset == expected.complete_offset
+}
+
 fn fold_identity(hasher: &mut ContentHasher, identity: PageIdentity) {
     let mut page = [0; 24];
     identity
@@ -536,7 +546,7 @@ impl<'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
             .wal()
             .prefix()
             .map_err(|error| fatal(storage, RetentionPhase::Prepare, RetentionCause::Wal(error)))?;
-        if current != prefix {
+        if !same_source_prefix(current, prefix) {
             return Err(unchanged(RetentionPhase::Prepare, RetentionCause::Busy));
         }
         // Registration, then the cut: every refusal above registered nothing.
@@ -698,9 +708,12 @@ impl<'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
     }
 
     /// The pages (below 64) a Free Undo candidate must not be: every Undo
-    /// page a root Job of any actor leases, and every queued source.
+    /// page a root Job of any actor leases, and every queued source. A Job
+    /// that does not decode is the control's corruption, Fatal as every
+    /// other deep check's decode.
     fn leased_undo_pages(&self, sources: &RowSources) -> Result<u64> {
-        let namespace = self.storage.profile().spec().namespace;
+        let storage = self.storage;
+        let namespace = storage.profile().spec().namespace;
         let mut leased = 0u64;
         for source in sources.queued() {
             if source.identity.page.page_no < 64 {
@@ -708,7 +721,13 @@ impl<'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
             }
         }
         for bytes in self.control.jobs() {
-            let job = job3::decode_job(bytes, namespace).map_err(queue_error)?;
+            let job = job3::decode_job(bytes, namespace).map_err(|error| {
+                fatal(
+                    storage,
+                    RetentionPhase::Census,
+                    RetentionCause::Retention(error),
+                )
+            })?;
             if job.state().is_root()
                 && let Some(undo) = job.undo()
                 && undo.page().page_no < 64

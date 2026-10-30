@@ -242,12 +242,21 @@ impl<'b, 'a, 's, 'c, 'p, 'd, 'm, 'w, W: WriterNamespace>
     CatalogPreparation<'b, 'a, 's, 'c, 'p, 'd, 'm, 'w, W>
 {
     /// The actor's unique Row-scope TerminalLeased Job and its Status. A
-    /// Catalog actor has none.
+    /// Catalog actor has none. A control Job that does not decode is the
+    /// control's corruption: Fatal, never Unchanged.
     pub(in super::super) fn row_terminal(&self, actor: TxnRef) -> Result<(usize, StatusSlotRef)> {
+        let storage = self.storage;
         let mut found = None;
         for (ordinal, bytes) in self.control.jobs().iter().enumerate() {
-            let job = job3::decode_job(bytes, self.storage.profile().spec().namespace)
-                .map_err(queue_error)?;
+            let job = job3::decode_job(bytes, storage.profile().spec().namespace).map_err(
+                |error| {
+                    fatal(
+                        storage,
+                        RetentionPhase::Census,
+                        RetentionCause::Retention(error),
+                    )
+                },
+            )?;
             if job.scope() == Some(JobScope::Row)
                 && job.source() == Some(actor)
                 && job.state() == job3::JobState::TerminalLeased
