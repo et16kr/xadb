@@ -1131,7 +1131,9 @@ pub(in super::super::super::super::super::super) struct RowForwardBody {
     /// The S2-a′ shell and `ReservedRow::prepare`'s own values.
     pub(in super::super::super::super::super::super) prepare_shell: usize,
     /// `prepare`'s Fatal arm after the body (`reserved_fatal`, which takes
-    /// the ReservedRow by value).
+    /// the ReservedRow by value): a callee frame, so it is max-combined with
+    /// the body. The wrapper's own bindings in its arms (the prepared cut and
+    /// the error) are in `prepare_shell`.
     pub(in super::super::super::super::super::super) prepare_arms: usize,
     /// `row_prepare_forward`'s own values. It calls `reserved_entry` and
     /// `prepare_forward` one after another.
@@ -1152,11 +1154,14 @@ pub(in super::super::super::super::super::super) struct RowForwardBody {
     /// `prepare_shell + max(prepare_frame + max(entry, prepare_held +
     /// prepare_group + prepare_calls), prepare_arms)`.
     pub(in super::super::super::super::super::super) prepare: usize,
-    /// The S2-a′ shell and `PreparedRow::apply`'s own values.
+    /// The S2-a′ shell and `PreparedRow::apply`'s own values, with the
+    /// success arm's bindings (the ReservedRow moved out of the PreparedRow
+    /// and the observation): they are the wrapper's locals, in its frame
+    /// while `row_apply_forward` runs, so they are added, not maxed.
     pub(in super::super::super::super::super::super) apply_shell: usize,
-    /// `apply`'s success arm (the ReservedRow moved out of the PreparedRow,
-    /// the observation and `release_discharged`) or its Fatal arm, after the
-    /// body.
+    /// `apply`'s success arm (`release_discharged` and the returns) or its
+    /// Fatal arm (`reserved_fatal`), after the body: callee frames, so they
+    /// are max-combined with the body.
     pub(in super::super::super::super::super::super) apply_arms: usize,
     /// `row_apply_forward`'s own values. It calls `reserved_entry`,
     /// `forward_group` and the statement's revision one after another.
@@ -1417,17 +1422,19 @@ pub(in super::super::super::super) fn row_forward_body<W: WriterNamespace>(
         + (prepare_frame + entry.max(prepare_held + prepare_group + prepare_calls))
             .max(prepare_arms);
 
-    // apply.
+    // apply. The success arm's bindings, the ReservedRow moved out of the
+    // PreparedRow and the observation, are `apply`'s locals: they sit in
+    // its frame while the body runs, so the shell adds them.
     let apply_shell = shell
         + size_of::<(RowTableSource, RowIssued)>()
         + size_of::<Result<()>>()
         + 2 * size_of::<RetentionError>()
-        + 8 * reference;
-    // The success arm: the ReservedRow moved out of the PreparedRow, the
-    // observation and the in-place release with its Results and the loan.
-    let discharged = size_of::<Res<'_, W>>()
+        + size_of::<Res<'_, W>>()
         + size_of::<RowMutationObservation>()
-        + 2 * size_of::<Result<Loan<'_>>>()
+        + 8 * reference;
+    // The success arm after the body: the in-place release with its Results
+    // and the loan.
+    let discharged = 2 * size_of::<Result<Loan<'_>>>()
         + 3 * size_of::<Result<()>>()
         + 2 * size_of::<RetentionError>()
         + 6 * reference;

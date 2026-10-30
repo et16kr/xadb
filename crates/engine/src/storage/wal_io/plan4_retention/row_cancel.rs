@@ -304,7 +304,10 @@ pub(in super::super::super::super::super::super) struct RowCancelBody {
     /// `cancel`'s arms after the body, the larger of: the success arm's
     /// in-place release (`release_discharged`) with the loan and
     /// `RowCancelled`, and the Fatal arm (`reserved_fatal`, which takes the
-    /// ReservedRow by value), as the Forward census charges them.
+    /// ReservedRow by value), as the Forward census charges them. Both are
+    /// callee frames and returns, so they are max-combined with the body;
+    /// the wrapper binds nothing in its arms but the error, which `shell`
+    /// counts.
     pub(in super::super::super::super::super::super) arms: usize,
     /// `row_cancel`'s own values: arguments, the entry and the Results. It
     /// calls `reserved_entry` and `cancel_group` one after another.
