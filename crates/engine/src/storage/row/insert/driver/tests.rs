@@ -2329,7 +2329,9 @@ fn mca00_d12_driver_frames_stay_within_the_driver_source_bound() {
 /// (the share at the producer call plus A's producer) within the RowWrite
 /// charge, with its margin. The CLR producer phase (the same producer under
 /// the caller's rollback) and the validation phase are printed for S4 and
-/// are not asserted here. These are size_of inventories, not stack proofs.
+/// are not asserted here. At the preflight and its flush the frame-static
+/// share (with insert_row's slots for its later steps) is printed as well.
+/// These are size_of inventories, not stack proofs.
 fn call_site_census<W: WriterNamespace + 'static>(writer: &str) {
     let charge = row_write_charge::<W>();
     let (validation, producer) = super::super::local_source_carrier_bytes();
@@ -2374,11 +2376,26 @@ fn call_site_census<W: WriterNamespace + 'static>(writer: &str) {
              bound={bound} margin={margin}",
             site.name, site.bound, site.bytes,
         );
+        // Before the row's preflight returned Ready, the frame-static
+        // reading also counts insert_row's slots for its later steps. It is
+        // printed beside the per-call share, which alone is asserted (M3).
+        if site.later > 0 {
+            let frame_static = site.bytes + site.later;
+            println!(
+                "MCA00_D15 writer={writer} site={} frame_static={frame_static} later={} \
+                 bound={bound} frame_static_margin={}",
+                site.name,
+                site.later,
+                bound as i64 - frame_static as i64,
+            );
+        }
         let checked = site.bound != Bound::A || site.name == "insert.forward";
         if checked && margin < 0 {
             over.push(site.name);
         }
     }
+    let before_ready = sites.iter().filter(|site| site.later > 0).count();
+    assert_eq!(before_ready, 3);
     let names: std::collections::BTreeSet<_> = sites.iter().map(|site| site.name).collect();
     assert_eq!(names.len(), CALL_SITES);
     let bound = |bound| sites.iter().filter(|site| site.bound == bound).count();

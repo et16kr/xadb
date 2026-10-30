@@ -998,12 +998,31 @@ pub(super) struct CallSite {
     pub(super) name: &'static str,
     pub(super) bound: Bound,
     pub(super) bytes: usize,
+    /// For a call made before the row's preflight returned Ready (preflight
+    /// and its flush): the peak of insert_row's own slots for the later
+    /// steps. They hold no value yet, so `bytes` leaves them out (M3), but a
+    /// frame is laid out on entry, so `bytes + later` is the frame-static
+    /// share there. Zero elsewhere.
+    pub(super) later: usize,
 }
 
 impl CallSite {
     const fn new(name: &'static str, bound: Bound, bytes: usize) -> Self {
-        Self { name, bound, bytes }
+        Self {
+            name,
+            bound,
+            bytes,
+            later: 0,
+        }
     }
+
+    const fn before_ready(self, later: usize) -> Self {
+        Self { later, ..self }
+    }
+}
+
+const fn larger(a: usize, b: usize) -> usize {
+    if a > b { a } else { b }
 }
 
 pub(super) const CALL_SITES: usize = 26;
@@ -1026,7 +1045,10 @@ pub(super) const CALL_SITES: usize = 26;
 /// transaction, the pending statement and the loan, then the rollback. As in
 /// `carrier_bytes`, what the driver's own caller keeps by value (the
 /// transaction capsule, a pending handle) is outside the driver's frames
-/// and not counted; that caller is not supplied yet.
+/// and not counted; that caller is not supplied yet. At the calls before the
+/// row's preflight returned Ready, `CallSite::later` adds the frame-static
+/// reading: insert_row's slots for its later steps are already laid out in
+/// its frame there. MCA00-D15 prints both and bounds the per-call share.
 const fn call_sites<B: Boundary + 'static>() -> [CallSite; CALL_SITES] {
     use std::{
         iter::Zip,
@@ -1075,6 +1097,46 @@ const fn call_sites<B: Boundary + 'static>() -> [CallSite; CALL_SITES] {
         + size_of::<Result<A<B>, Failure>>()
         + 4 * r
         + size_of::<Values>();
+    // insert_row's own slots at each step after a Ready preflight: the
+    // wrappers it holds, values moved into a call (by-value arguments stay in
+    // the caller's frame) and the driver's slot for the call's result. Their
+    // peak is already in the frame at the preflight and its flush.
+    let later = larger(
+        larger(
+            larger(
+                size_of::<P<B>>() + size_of::<Result<V<B>, RetentionError>>(),
+                size_of::<P<B>>()
+                    + size_of::<V<B>>()
+                    + size_of::<Result<RowInputPlan, InsertError>>(),
+            ),
+            larger(
+                size_of::<P<B>>()
+                    + size_of::<RowInputPlan>()
+                    + size_of::<Result<R<B>, RowOwnedError<P<B>>>>(),
+                size_of::<P<B>>() + 2 * size_of::<Failure>(),
+            ),
+        ),
+        larger(
+            larger(
+                larger(
+                    size_of::<R<B>>() + size_of::<Result<L<B>, RetentionError>>(),
+                    size_of::<R<B>>()
+                        + size_of::<L<B>>()
+                        + size_of::<Result<RowProposal, InsertError>>(),
+                ),
+                larger(
+                    size_of::<R<B>>()
+                        + size_of::<RowProposal>()
+                        + size_of::<Result<D<B>, RowOwnedError<R<B>>>>(),
+                    size_of::<D<B>>() + size_of::<Result<A<B>, RowOwnedError<D<B>>>>(),
+                ),
+            ),
+            larger(
+                size_of::<D<B>>() + size_of::<RetentionError>() + size_of::<R<B>>(),
+                size_of::<R<B>>() + 2 * size_of::<Failure>(),
+            ),
+        ),
+    );
     // `flush`: the target insert_row holds, flush's arguments and result.
     let flushing = row + size_of::<G<B>>() + 2 * r + size_of::<Result<(), Failure>>();
     // The caller's held rollback path.
@@ -1092,17 +1154,20 @@ const fn call_sites<B: Boundary + 'static>() -> [CallSite; CALL_SITES] {
             "insert.preflight",
             Bound::Preflight,
             row + 2 * size_of::<Result<PreflightNext<P<B>, G<B>>, RetentionError>>() + 4 * r,
-        ),
+        )
+        .before_ready(later),
         Site::new(
             "insert.try_flush",
             Bound::Write,
             flushing + 2 * size_of::<Result<(), RetentionError>>() + 2 * r,
-        ),
+        )
+        .before_ready(later),
         Site::new(
             "insert.continue_flush",
             Bound::Write,
             flushing + 2 * size_of::<Result<FlushStep, RetentionError>>() + r,
-        ),
+        )
+        .before_ready(later),
         Site::new(
             "insert.validation_lane",
             Bound::Write,
