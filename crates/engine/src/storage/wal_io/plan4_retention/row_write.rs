@@ -452,10 +452,15 @@ impl<'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
             Err(error) => return Err(error),
         };
         // The producer's own Reserve output: its issued values, its RootJob
-        // ordinal and the caller's actor.
+        // ordinal, which is the cut's RootJob (preflight chose it by the
+        // producer's rule over the Root and Jobs the commitment proved), and
+        // the caller's actor (S2-b2 review A2).
         let observation = &prepared.payload.observation;
         let installed = match (observation.issued, observation.job_ordinal) {
-            (Some(issued), Some(ordinal)) if observation.actor == Some(entry.actor) => {
+            (Some(issued), Some(ordinal))
+                if observation.actor == Some(entry.actor)
+                    && ordinal == usize::from(cut.root_job) =>
+            {
                 ReserveInstalled {
                     issued,
                     ordinal,
