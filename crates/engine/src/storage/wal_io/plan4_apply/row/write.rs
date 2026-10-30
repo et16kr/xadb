@@ -833,9 +833,10 @@ impl<'r, 't, 'v, 'i, 'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
     /// lease ends and the fence stays, and the reservation, still active,
     /// fences again in its Drop. A durable Cancel discharges the reservation,
     /// so its Drop does not fence, then returns the admission, the gate and
-    /// the lease in that order and the loan once. Nothing the Reserve issued
-    /// is returned (RowId, Undo sequence, high-water), and the table write
-    /// bit stays (§6).
+    /// the lease in that order and the loan once; a release failure there is
+    /// Fatal with the session already fenced (`release_discharged`). Nothing
+    /// the Reserve issued is returned (RowId, Undo sequence, high-water), and
+    /// the table write bit stays (§6).
     #[allow(
         clippy::result_large_err,
         reason = "unchanged failure returns the same reservation"
@@ -872,7 +873,8 @@ impl<'r, 't, 'v, 'i, 'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
         match cancelled {
             Ok(()) => {
                 // The durable Cancel discharged the reservation: its Drop
-                // must not fence.
+                // must not fence. A release error after it is Fatal and the
+                // failing release has already fenced (`release_discharged`).
                 self.reservation.active = false;
                 self.release_discharged()
                     .map(|private| RowCancelled { private })
@@ -902,6 +904,14 @@ impl<'r, 't, 'v, 'i, 'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
     /// that order and with no I/O, then the loan, which leaves the wrapper
     /// here once. An active reservation is never released here; the caller
     /// drops the wrapper and its Drop fences.
+    ///
+    /// Every error here is CallerMustResolve with the session fenced, so the
+    /// caller reports it as Fatal and no reservation fence is lost: the
+    /// admission's `release_checked` fails only through `failed` (which
+    /// fences) or its ledger `check` (Fenced when the session already is,
+    /// otherwise `failed`); `TerminalReadGate::reopen_checked` fails only
+    /// with the core's `fatal` (which fences) or the `live` check's Fenced;
+    /// a missing loan is this module's `fatal`. None of them is Unchanged.
     fn release_discharged(&mut self) -> Result<&'i mut [u8; 425_984]> {
         let storage = self.mutation.storage;
         if self.reservation.active {
