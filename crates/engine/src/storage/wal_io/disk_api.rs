@@ -12,14 +12,14 @@ pub(crate) use super::bootstrap::doublewrite_install::mutable_storage::plan4_pag
     IsolationLevel, MaintenancePort, MissingCatalogEvidence, MissingRowEvidence, MutationPort,
     Plan4Recovered, PreflightRow, PreparedCatalog, PreparedRollbackTask, PreparedRow,
     ROW_PREFLIGHT_CALLER_BYTES, ROW_WRITE_CALLER_BYTES, ReadOnlyCommit, ReadPort, ReadStep,
-    ReservedCatalogCreate, ReservedRow, RetentionCause, RetentionError, RetentionPhase,
-    RollbackScope, RollbackStep, RowApplied, RowCancelled, RowCandidate, RowCommitObservation,
-    RowControlObservation, RowCopyObservation, RowInputPlan, RowMutationObservation, RowOperation,
-    RowOwnedError, RowPageRole, RowPreflightContext, RowPreflightStep, RowProducerContext,
-    RowProducerInput, RowProducerLane, RowProposal, RowReadOperation, RowRollback, RowRollbackDone,
-    RowRollbackTask, RowSearchPage, RowSourceBinding, RowSourceRole, RowStatementView,
-    RowTransaction, RowValidationLane, StatementFinishError, TableStep, TransactionFinishError,
-    TransactionOptions, row_write_charge,
+    ReservedCatalogCreate, ReservedRow, RetentionCause, RetentionError, RetentionFlushPhase,
+    RetentionPhase, RollbackScope, RollbackStep, RowApplied, RowCancelled, RowCandidate,
+    RowCommitObservation, RowControlObservation, RowCopyObservation, RowInputPlan,
+    RowMutationObservation, RowOperation, RowOwnedError, RowPageRole, RowPreflightContext,
+    RowPreflightStep, RowProducerContext, RowProducerInput, RowProducerLane, RowProposal,
+    RowReadOperation, RowRollback, RowRollbackDone, RowRollbackTask, RowSearchPage,
+    RowSourceBinding, RowSourceRole, RowStatementView, RowTransaction, RowValidationLane,
+    StatementFinishError, TableStep, TransactionFinishError, TransactionOptions, row_write_charge,
 };
 
 #[allow(unused_imports)]
