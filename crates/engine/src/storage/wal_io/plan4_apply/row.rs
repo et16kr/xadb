@@ -169,9 +169,13 @@ pub(super) type RowRoleMap = u64;
 
 /// Recorded by preflight after residency, Free Undo selection, the row's one
 /// `history::validate_live`, the typed read of T compared with the replay
-/// arena, and read-set registration, before the source guards are released.
-/// Read by `validation_lane`, `reserve` and `finish`; only `reserve` checks
-/// it.
+/// arena, the WAL prefix recheck and read-set registration. The typed read's
+/// pins are released before the prefix recheck and the registration, since
+/// the isolation leaf is taken with no other guard held
+/// (`record_table_read`); the gate, the RowWrite admission and the lease stay
+/// held throughout, so no page, WAL or control change can come between the
+/// read and the registration. Read by `validation_lane`, `reserve` and
+/// `finish`; only `reserve` checks it.
 ///
 /// No field records the registration: the cut is written only after the read
 /// bit and catalog flag are registered, and every refusal and FlushRequired
@@ -197,7 +201,8 @@ pub(super) struct RowPreflightCut {
     /// the WAL prefix, the physical write target set T in before order
     /// (identity, kind, level and FrameStamp of each), the role map, the
     /// selected Free Undo container (allocator entry generation, page
-    /// incarnation, slot0 Free), the RootJob slot, the Catalog leaf stamp and
+    /// incarnation, slot0 Free; the first two are the same value, folded once
+    /// each), the RootJob slot, the Catalog leaf stamp and
     /// schema cell digest, and the RowLeaf free bytes; then the page digests
     /// of T, taken from the before copies that were compared with the replay
     /// arena, and the `ControlCut` fields. `reserve` recomputes it over a new

@@ -260,26 +260,15 @@ impl PreflightSource<'_> {
             fold_stamp(&mut hasher, stamp);
         }
         hasher.update(&self.roles.to_le_bytes());
-        hasher.update(
-            &self
-                .undo
-                .request
-                .identity
-                .page
-                .incarnation
-                .get()
-                .to_le_bytes(),
-        );
-        hasher.update(
-            &self
-                .undo
-                .request
-                .identity
-                .page
-                .incarnation
-                .get()
-                .to_le_bytes(),
-        );
+        // The Free Undo's allocator entry generation, then its page
+        // incarnation. They are one value: the request's incarnation is the
+        // entry generation, which the membership proof found in the allocator
+        // BEFORE image and the allocator page digest below fixes for every
+        // later step. It is folded twice, once per item the cut doc names, so
+        // that every recomputation reproduces this exact byte sequence.
+        let incarnation = self.undo.request.identity.page.incarnation.get();
+        hasher.update(&incarnation.to_le_bytes());
+        hasher.update(&incarnation.to_le_bytes());
         hasher.update(&self.undo.slot0.get().to_le_bytes());
         hasher.update(&[self.root_job]);
         fold_stamp(&mut hasher, &self.catalog.0);
