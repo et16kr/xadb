@@ -1,6 +1,8 @@
 //! Five changed page after images and both handoff descriptors. `prepare`
-//! computes every fallible after value before the first output byte; `pages`
-//! then only places them and re-encodes images whose inputs `observe` checked.
+//! computes every fallible after value before the first output byte. The
+//! write pass then encodes the Root after page straight into its `after` slot
+//! and binds the Aging after to it (`root_page`), and `pages` places the other
+//! four images; both only re-encode values `observe` and `prepare` checked.
 
 use super::{
     CLR_FIXED, Change, GroupInput, InsertError, Observed, Result, debt, encode_material, leaf,
@@ -12,7 +14,7 @@ use crate::storage::{
     page::{self, PAGE_BYTES, PageHeader, PageKind, PageLsn},
     retention_obligation::row::{self as aging, AgingTransition},
     retention_page::{
-        JOB_BYTES, JOB_COUNT,
+        JOB_BYTES, JOB_COUNT, ROOT_BYTES,
         catalog::RELEASE_BYTES,
         row::{self, JobCells},
     },
@@ -102,32 +104,51 @@ pub(super) fn status(observed: &Observed<'_>) -> Result<StatusHome> {
 /// Tx then Aging descriptor after, frame bytes [416..3488).
 pub(super) const DESCRIPTORS_BYTES: usize = 2 * 1536;
 
-/// After values computed from the observation before any output byte.
+/// After values computed from the observation before any output byte. The
+/// Root after page itself is not kept here (M1): `root_page` encodes `root`
+/// straight into the Root's `after` slot in the write pass.
 pub(super) struct Prepared {
     pub(super) job: [u8; JOB_BYTES],
     pub(super) status: StatusHome,
-    /// Complete Root after page; the Aging after binds its digest.
-    pub(super) root: [u8; PAGE_BYTES],
+    /// Root after cell; the Aging after binds the page encoded from it.
+    pub(super) root: [u8; ROOT_BYTES],
     pub(super) undo: [u8; UNDO_RECORD_BYTES],
     pub(super) descriptors: [u8; DESCRIPTORS_BYTES],
 }
 
-/// Root after page, U after cell and both descriptor afters. Root revision,
-/// Tx chain/consumed arithmetic, the CLR residual step, the after Job census
-/// and the whole Aging transition (its before included) are checked here.
+/// Root after cell, U after cell and the Tx descriptor after. Root revision,
+/// the after Job census summary, Tx chain/consumed arithmetic and the CLR
+/// residual step are checked here; the Aging before was checked by `observe`.
 pub(super) fn prepare(observed: &Observed<'_>, prepared: &mut Prepared) -> Result<()> {
     root(observed, &prepared.job, &mut prepared.root)?;
     encode_material(observed, observed.forward, &mut prepared.undo)?;
-    let (transaction, aging_after) = prepared.descriptors.split_at_mut(1536);
+    let (transaction, _) = prepared.descriptors.split_at_mut(1536);
     descriptor(observed, prepared.status, transaction)?;
+    Ok(())
+}
+
+/// First write of the write pass: the Root after page, encoded from the
+/// prepared cell straight into its `after` slot (M1; `encode_root_page`
+/// checks the cell before it writes), then the whole Aging transition bound
+/// to that page into the Aging descriptor after. Its before was checked by
+/// `observe` and its Root and Job inputs by `prepare`, so an Aging refusal
+/// here is a broken internal invariant like any write-pass error: it leaves
+/// frame/after unspecified, which C ignores after a producer error.
+pub(super) fn root_page(
+    observed: &Observed<'_>,
+    prepared: &mut Prepared,
+    after: &mut [[u8; PAGE_BYTES]; 5],
+) -> Result<()> {
     let index = role_index(observed, RowPageRole::Root);
+    row::encode_root_page(&prepared.root, observed.namespace, &mut after[index])?;
+    let (_, aging_after) = prepared.descriptors.split_at_mut(1536);
     let mut aggregate = [0; 640];
     aging::next(
         AgingTransition {
             profile: observed.profile,
             before_descriptor: Some(observed.aging),
             before_root: observed.pages[index].before,
-            after_root: &prepared.root,
+            after_root: &after[index],
             jobs: JobCells::original(observed.jobs).replace(observed.ordinal, &prepared.job)?,
         },
         &mut aggregate,
@@ -136,33 +157,28 @@ pub(super) fn prepare(observed: &Observed<'_>, prepared: &mut Prepared) -> Resul
     Ok(())
 }
 
-/// Root after: revision+1, apply LSN, and the after Job census summary.
-fn root(
-    observed: &Observed<'_>,
-    job: &[u8; JOB_BYTES],
-    output: &mut [u8; PAGE_BYTES],
-) -> Result<()> {
+/// Root after cell: revision+1, apply LSN, and the after Job census summary.
+fn root(observed: &Observed<'_>, job: &[u8; JOB_BYTES], cell: &mut [u8; ROOT_BYTES]) -> Result<()> {
     let namespace = observed.namespace;
     let page = observed.pages[role_index(observed, RowPageRole::Root)];
     let (_, root) = row::decode_root_page(page.before, namespace)?;
-    let mut cell = *root.bytes();
+    *cell = *root.bytes();
     put(
-        &mut cell,
+        cell,
         64,
         root.revision()
             .checked_add(1)
             .ok_or(InsertError::OrderMismatch)?,
     );
-    put(&mut cell, 80, observed.header.lsn);
+    put(cell, 80, observed.header.lsn);
     let cells = JobCells::original(observed.jobs).replace(observed.ordinal, job)?;
     let mut aggregate = [0; 640];
     let (masks, digest) = row::summarize_jobs(cells, namespace, &mut aggregate)?;
     for (at, mask) in [96, 104, 112].into_iter().zip(masks) {
-        put(&mut cell, at, mask);
+        put(cell, at, mask);
     }
     cell[128..160].copy_from_slice(&digest);
     cell[160..192].copy_from_slice(&content_digest(&aggregate));
-    row::encode_root_page(&cell, namespace, output)?;
     Ok(())
 }
 
@@ -176,9 +192,10 @@ fn header(observed: &Observed<'_>, index: usize) -> PageHeader {
     }
 }
 
-/// Write all five after images in physical order. The frame is used only as
-/// row/cell scratch here and is cleared by the caller before framing. Every
-/// input refusal already returned from `observe` or `prepare`.
+/// Write the other four after images in physical order; `root_page` wrote
+/// the Root's. The frame is used only as row/cell scratch here and is cleared
+/// by the caller before framing. Every input refusal already returned from
+/// `observe` or `prepare`.
 pub(super) fn pages(
     observed: &Observed<'_>,
     input: &GroupInput<'_>,
@@ -192,7 +209,7 @@ pub(super) fn pages(
     for (index, output) in after.iter_mut().enumerate() {
         let page = observed.pages[index];
         match page.role {
-            RowPageRole::Root => *output = prepared.root,
+            RowPageRole::Root => {}
             RowPageRole::RootJob => {
                 let base = observed.ordinal / 15 * 15;
                 let count = if base == 60 { JOB_COUNT - 60 } else { 15 };
@@ -328,7 +345,8 @@ fn descriptor(observed: &Observed<'_>, status: StatusHome, output: &mut [u8]) ->
     Ok(())
 }
 
-/// Locals of this module; the caller's `Prepared` is counted by its owner.
+/// Locals of this module; the caller's `Prepared`, which holds the Root
+/// after cell, is counted by its owner.
 #[allow(
     clippy::manual_bits,
     reason = "eight u64 scalar slots, counted in bytes"
@@ -338,7 +356,6 @@ pub(super) fn local_source_carrier_bytes() -> usize {
     size_of::<[u8; JOB_BYTES]>()
         + size_of::<Result<[u8; JOB_BYTES]>>()
         + 2 * size_of::<[u8; 640]>()
-        + size_of::<[u8; 512]>()
         + size_of::<[&[u8]; 15]>()
         + size_of::<[u8; STATUS_HOME_BYTES]>()
         + size_of::<obligation::DescriptorSpec>()

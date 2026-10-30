@@ -20,7 +20,7 @@ use crate::{
         retention_genesis::{self, RetentionGenesisPage},
         retention_obligation::{profile_reference, row as aging_row},
         retention_page::{
-            JOB_BYTES, JOB_COUNT,
+            JOB_BYTES, JOB_COUNT, ROOT_BYTES,
             row::{self, JobScope, JobState, JobView},
         },
         row_record::RowSchemaInput,
@@ -164,10 +164,13 @@ struct Observed<'a> {
 /// Produce the whole Forward/CLR candidate. `observe` and `images::prepare`
 /// run every check over the inputs before the first output byte: header and
 /// page LSNs, the leaf insert/remove plan with duplicate RowId and capacity,
-/// the Forward record projection, the exact Tx residual and both Aging
-/// descriptors. A refusal therefore leaves frame/after untouched. The write
-/// pass only places prepared values and re-encodes checked images; an error
-/// there is a broken internal invariant and leaves frame/after unspecified.
+/// the Forward record projection, the Root after cell, the exact Tx residual
+/// and the Aging before. A refusal therefore leaves frame/after untouched.
+/// The write pass only places prepared values and re-encodes checked images:
+/// first the Root after page, encoded straight into its `after` slot, and the
+/// Aging after bound to it (M1: no Root page copy is kept), then the other
+/// four pages and the frame. An error there is a broken internal invariant
+/// and leaves frame/after unspecified.
 pub(super) fn produce(
     input: &GroupInput<'_>,
     frame: &mut [u8; FRAME_BYTES],
@@ -177,13 +180,14 @@ pub(super) fn produce(
     let mut prepared = images::Prepared {
         job: images::job(&observed)?,
         status: images::status(&observed)?,
-        root: [0; PAGE_BYTES],
+        root: [0; ROOT_BYTES],
         undo: [0; undo_record::UNDO_RECORD_BYTES],
         descriptors: [0; images::DESCRIPTORS_BYTES],
     };
     images::prepare(&observed, &mut prepared)?;
 
     // Write pass: every input refusal has already returned above.
+    images::root_page(&observed, &mut prepared, after)?;
     images::pages(&observed, input, &prepared, frame, after)?;
     let output = &mut frame[..observed.frame_len];
     output.fill(0);
