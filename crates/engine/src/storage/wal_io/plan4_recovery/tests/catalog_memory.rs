@@ -1275,7 +1275,11 @@ mod catalog_progress_v09;
 mod row_join;
 
 #[path = "catalog_memory/row_literal.rs"]
+#[macro_use]
 mod row_literal;
+
+#[path = "catalog_memory/row_literal_two.rs"]
+mod row_literal_two;
 
 #[path = "catalog_memory/row_read_census.rs"]
 mod row_read_census;

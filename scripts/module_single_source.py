@@ -32,7 +32,8 @@ REGISTRY = f'{ENGINE}/wal_io/plan4_recovery/tests/catalog_memory.rs'
 LINKS_A = ['row_write', 'row_v09', 'row_forward', 'row_cancel', 'row_live', 'row_commit',
            'row_rollback', 'row_recovery', 'row_recovery_read', 'row_read_live', 'row_native_a',
            'row_join']
-LINKS_B = ['row_read_live', 'row_recovery_read', 'row_join', 'row_literal', 'row_read_census']
+LINKS_B = ['row_read_live', 'row_recovery_read', 'row_join', 'row_literal', 'row_literal_two',
+           'row_read_census']
 
 SIDES = {
     # C+A: B removed.

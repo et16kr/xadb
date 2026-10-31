@@ -134,6 +134,79 @@ fn unhex(text: &str) -> Vec<u8> {
         .collect()
 }
 
+/// The known-bad variant `case` of the literal in `root`: its patch file
+/// (`known-bad/<case>.patch`, the S8 format) pinned by `digest` here and in
+/// `expected`, applied to the files `base` returns. A same-length file is
+/// byte runs `start end hex` over the literal; a file whose length changes
+/// is named whole. Each patched file must have the length and SHA-256 its
+/// `file` line states. Returns the patched files.
+pub(super) fn patched(
+    root: &Path,
+    expected: &str,
+    case: &str,
+    digest: &str,
+    base: &dyn Fn(&str) -> Vec<u8>,
+) -> Vec<(String, Vec<u8>)> {
+    let text = read(
+        &root.join("known-bad").join(format!("{case}.patch")),
+        1 << 15,
+    );
+    assert_eq!(hex(&text), digest, "{case}.patch");
+    let pin = format!("\"sha256\": \"{digest}\"");
+    assert!(expected.contains(&pin), "expected.json pin of {case}");
+    let text = String::from_utf8(text).unwrap();
+    let mut lines = text.lines().filter(|line| !line.starts_with('#'));
+    assert_eq!(
+        lines.next(),
+        Some(format!("XADB-S8-KNOWN-BAD-V1 {case}").as_str())
+    );
+    // (file, its stated length and SHA-256, the patched bytes)
+    let mut files: Vec<(String, usize, String, Vec<u8>)> = Vec::new();
+    // The literal offset the current file is copied up to.
+    let mut at = 0;
+    for line in lines {
+        let fields: Vec<&str> = line.split(' ').collect();
+        if fields[0] == "file" || fields[0] == "end" {
+            if let Some((name, _, _, data)) = files.last_mut()
+                && at != usize::MAX
+            {
+                data.extend_from_slice(&base(name)[at..]);
+            }
+            if fields[0] == "end" {
+                break;
+            }
+            let (name, bytes, sha) = (fields[1], fields[2].parse().unwrap(), fields[3]);
+            let data = match fields.get(4) {
+                Some(&"whole") => {
+                    at = usize::MAX;
+                    read(&root.join("known-bad").join(fields[5]), 1 << 17)
+                }
+                None => {
+                    at = 0;
+                    Vec::new()
+                }
+                Some(mode) => panic!("patch mode {mode}"),
+            };
+            files.push((name.into(), bytes, sha.into(), data));
+            continue;
+        }
+        let (start, end): (usize, usize) = (fields[0].parse().unwrap(), fields[1].parse().unwrap());
+        let (name, _, _, data) = files.last_mut().expect("a run inside a file");
+        assert!(at <= start && start <= end, "ordered runs");
+        data.extend_from_slice(&base(name)[at..start]);
+        data.extend_from_slice(&unhex(fields[2]));
+        at = end;
+    }
+    assert!(!files.is_empty(), "{case} changes a file");
+    files
+        .into_iter()
+        .map(|(name, bytes, sha, data)| {
+            assert_eq!((data.len(), hex(&data)), (bytes, sha), "{case} {name}");
+            (name, data)
+        })
+        .collect()
+}
+
 impl Literal {
     fn load() -> Self {
         let root = author();
@@ -173,68 +246,14 @@ impl Literal {
         }
     }
 
-    /// The known-bad variant `case`: its patch file pinned by `digest` here
-    /// and in expected.json, applied to this literal's files. A same-length
-    /// file is byte runs `start end hex` over the literal; a file whose
-    /// length changes is named whole. Each patched file must have the
-    /// length and SHA-256 its `file` line states.
+    /// The known-bad variant `case` (`patched`) applied to this literal's
+    /// files.
     fn known_bad(&self, case: &str, digest: &str) -> Self {
-        let root = author();
-        let text = read(
-            &root.join("known-bad").join(format!("{case}.patch")),
-            1 << 15,
-        );
-        assert_eq!(hex(&text), digest, "{case}.patch");
-        let pin = format!("\"sha256\": \"{digest}\"");
-        assert!(expected().contains(&pin), "expected.json pin of {case}");
-        let text = String::from_utf8(text).unwrap();
-        let mut lines = text.lines().filter(|line| !line.starts_with('#'));
-        assert_eq!(
-            lines.next(),
-            Some(format!("XADB-S8-KNOWN-BAD-V1 {case}").as_str())
-        );
-        // (file, its stated length and SHA-256, the patched bytes)
-        let mut files: Vec<(String, usize, String, Vec<u8>)> = Vec::new();
-        // The literal offset the current file is copied up to.
-        let mut at = 0;
         let mut out = self.clone();
-        for line in lines {
-            let fields: Vec<&str> = line.split(' ').collect();
-            if fields[0] == "file" || fields[0] == "end" {
-                if let Some((name, _, _, data)) = files.last_mut()
-                    && at != usize::MAX
-                {
-                    data.extend_from_slice(&out.file(name)[at..]);
-                }
-                if fields[0] == "end" {
-                    break;
-                }
-                let (name, bytes, sha) = (fields[1], fields[2].parse().unwrap(), fields[3]);
-                let data = match fields.get(4) {
-                    Some(&"whole") => {
-                        at = usize::MAX;
-                        read(&root.join("known-bad").join(fields[5]), 1 << 17)
-                    }
-                    None => {
-                        at = 0;
-                        Vec::new()
-                    }
-                    Some(mode) => panic!("patch mode {mode}"),
-                };
-                files.push((name.into(), bytes, sha.into(), data));
-                continue;
-            }
-            let (start, end): (usize, usize) =
-                (fields[0].parse().unwrap(), fields[1].parse().unwrap());
-            let (name, _, _, data) = files.last_mut().expect("a run inside a file");
-            assert!(at <= start && start <= end, "ordered runs");
-            data.extend_from_slice(&out.file(name)[at..start]);
-            data.extend_from_slice(&unhex(fields[2]));
-            at = end;
-        }
-        assert!(!files.is_empty(), "{case} changes a file");
-        for (name, bytes, sha, data) in files {
-            assert_eq!((data.len(), hex(&data)), (bytes, sha), "{case} {name}");
+        let base = self.clone();
+        for (name, data) in patched(&author(), &expected(), case, digest, &|name| {
+            base.clone().file(name).clone()
+        }) {
             *out.file(&name) = data;
         }
         out
@@ -297,7 +316,7 @@ macro_rules! done {
 }
 
 /// The Int64 value of T's one column in a copied canonical row.
-fn int_of(output: &[u8], len: usize) -> i64 {
+pub(super) fn int_of(output: &[u8], len: usize) -> i64 {
     let row = crate::storage::row_record::decode_canonical_row(
         &output[..len],
         &[Column {
@@ -397,7 +416,7 @@ macro_rules! read_only {
 }
 
 /// The WAL file's length and the bytes it gained from `from` on.
-fn wal(state: &State) -> Vec<u8> {
+pub(super) fn wal(state: &State) -> Vec<u8> {
     state.lock().unwrap().files["d3-wal-00000001"].bytes.clone()
 }
 
@@ -565,7 +584,7 @@ fn mcb05_l01_literal_forward_is_read_by_b_after_c_commit() {
 }
 
 /// The WAL length and every file image: a refusal's effect is none.
-fn effects(state: &State) -> (usize, Images) {
+pub(super) fn effects(state: &State) -> (usize, Images) {
     let state = state.lock().unwrap();
     (state.files["d3-wal-00000001"].bytes.len(), state.images())
 }
@@ -577,8 +596,14 @@ fn effects(state: &State) -> (usize, Images) {
 /// explicit cancel then lands the S2 Cancel literal, and the statement and
 /// the now empty transaction end (RollbackStart, AbortEnd).
 fn known_bad(name: &str, digest: &str) {
+    refused(name, &|literal, _| literal.known_bad(name, digest));
+}
+
+/// `known_bad` with the offered Forward built by `offer` from the literal
+/// and the session's state after the CREATE (before the Row actor begins).
+fn refused(name: &str, offer: &dyn Fn(&Literal, &State) -> Literal) {
     case(&format!("MCB05-{name}"), || {
-        let bad = Literal::load().known_bad(name, digest);
+        let literal = Literal::load();
         let expected = expected();
         assert!(expected.contains(&format!("\"frame_bytes\": {}", CANCEL_FRAME.0)));
         assert!(expected.contains(&format!("\"frame_sha256\": \"{}\"", CANCEL_FRAME.1)));
@@ -589,6 +614,7 @@ fn known_bad(name: &str, digest: &str) {
             |live, owner, flusher, status, undo, private, reader_private, _core, fence, state| {
                 let (row_status, _) =
                     create_table(live, owner, flusher, status, undo, private, true);
+                let bad = offer(&literal, state);
                 row_statement!(live, owner, flusher, private, reader_private, row_status
                     => writer, reader, flush, row, view, table);
                 let _ = settle!(writer, owner, view, table, private, flush, flusher);
@@ -742,4 +768,62 @@ fn mcb05_k12_scope2_group_is_before_then_cancel() {
         "K12",
         "3f43e361436e5133b1bcebfb86738455be3d35da2e2224fa08fdb79d889d9d8b",
     );
+}
+
+/// The WAL's frames from the first `XWF1` on: (offset, length, LSN, group
+/// op, group scope), read from the outer and group headers (frame length
+/// at 12, LSN at 56, group op at 166 and scope at 170).
+fn wal_frames(wal: &[u8]) -> Vec<(usize, usize, u64, u16, u16)> {
+    let u16_at = |at: usize| u16::from_le_bytes(wal[at..at + 2].try_into().unwrap());
+    let mut at = wal.windows(4).position(|w| w == b"XWF1").unwrap();
+    let mut frames = Vec::new();
+    while at + 192 <= wal.len() && &wal[at..at + 4] == b"XWF1" {
+        let length = u32::from_le_bytes(wal[at + 12..at + 16].try_into().unwrap()) as usize;
+        let lsn = u64::from_le_bytes(wal[at + 56..at + 64].try_into().unwrap());
+        frames.push((at, length, lsn, u16_at(at + 166), u16_at(at + 170)));
+        at += length;
+    }
+    assert_eq!(at, wal.len(), "the WAL is whole frames");
+    frames
+}
+
+/// The Row producer lane's frame capacity (the slice C lends).
+const LANE_FRAME: usize = 98_304;
+
+/// MCB05-K12 (original form): an actual valid scope2 frame offered to the
+/// Row ingress. This session's C wrote and committed the Catalog actor's
+/// scope2 groups of T (AgingStart, Begin, Reserve, Forward, Commit). Its
+/// scope2 Forward (group op 2) is larger than the Row lane's frame, so it
+/// cannot be offered at all; the largest scope2 frame that fits is the
+/// Catalog Reserve (group op 11), which goes byte for byte into the producer
+/// lane in place of the literal Forward, the after images staying the
+/// literal's.
+#[test]
+fn mcb05_k12_actual_catalog_scope2_frame_is_before_then_cancel() {
+    refused("K12-CATALOG", &|literal, state| {
+        let wal = wal(state);
+        let frames = wal_frames(&wal);
+        println!("MCB05_K12_CATALOG frames={frames:?}");
+        let scope2: Vec<_> = frames.iter().filter(|(.., scope)| *scope == 2).collect();
+        let forward: Vec<_> = scope2.iter().filter(|(.., op, _)| *op == 2).collect();
+        assert_eq!(forward.len(), 1, "one scope2 Forward");
+        assert!(
+            forward[0].1 > LANE_FRAME,
+            "the scope2 Forward fits no Row lane"
+        );
+        let (at, length, lsn, op, _) = **scope2
+            .iter()
+            .filter(|(_, length, ..)| *length <= LANE_FRAME)
+            .max_by_key(|(_, length, ..)| *length)
+            .unwrap();
+        assert_eq!(op, 11, "the Catalog Reserve");
+        let frame = wal[at..at + length].to_vec();
+        println!(
+            "MCB05_K12_CATALOG offered lsn={lsn} op={op} bytes={length} sha={}",
+            hex(&frame)
+        );
+        let mut bad = literal.clone();
+        bad.frame = frame;
+        bad
+    });
 }
