@@ -10,6 +10,7 @@ use super::super::super::{Plan4RecoveryAcquireFailure, RowRecoveryPolicy};
 use super::row_forward::VALUE;
 use super::row_preflight::{create_table, system_init};
 use super::row_recovery::leaf_rows;
+use super::row_reopen::wal_witness;
 use super::*;
 use crate::storage::{
     disk::{
@@ -296,105 +297,6 @@ pub(super) fn check_epochs(joined: &Joined, q: u64) {
 
 /// The value of the row each recovery process commits after READY.
 pub(super) const NEW: i64 = VALUE + 10;
-
-/// A fresh retention catalog over `directory`, with the original Status and
-/// Undo INIT of every fresh case (S5 native produce's setup).
-macro_rules! with_directory {
-    ($directory:expr, |$live:ident, $owner:ident, $flusher:ident, $status:ident, $undo:ident,
-        $private:ident, $reader_private:ident, $core:ident, $fence:ident| $body:block) => {{
-        let mut slot = boxed::<1_048_576>();
-        let mut maintenance = boxed::<12_582_912>();
-        let mut dwb = boxed::<4_194_304>();
-        let storage = FreshStorageSession::create_retention_catalog(
-            $directory.acquire_writer().unwrap(),
-            1,
-            &mut slot,
-            &mut maintenance,
-        )
-        .unwrap()
-        .install_doublewrite(&mut dwb)
-        .unwrap()
-        .into_mutable_storage();
-        let core = PageConcurrency::new(storage.session_fence()).unwrap();
-        let mut owner = core.try_owner(OwnerRole::Foreground).unwrap();
-        let mut flusher = core.try_owner(OwnerRole::DedicatedFlusher).unwrap();
-        let mut backing = vec![[0xa7; PAGE_BYTES]; 16];
-        let mut frames: Vec<_> = backing.iter_mut().map(DirtyFrame::new).collect();
-        let mut operation = boxed::<114_688>();
-        let (prefix, visibility) = maintenance.split_at_mut(12_574_720);
-        let (prefix, private) = prefix.split_at_mut(12_148_736);
-        let (prefix, isolation) = prefix.split_at_mut(12_144_576);
-        let (prefix, epochs) = prefix.split_at_mut(12_142_976);
-        let (prefix, control) = prefix.split_at_mut(6_815_744);
-        let (reader_private, prefix) = prefix.split_at_mut(PRIVATE_BYTES);
-        let replay: &mut [u8; RETENTION_REPLAY_BYTES] = (&mut prefix
-            [4_194_304 - PRIVATE_BYTES..5_767_168 - PRIVATE_BYTES])
-            .try_into()
-            .unwrap();
-        let control: &mut [u8; RETENTION_CONTROL_BYTES] = (&mut control[..RETENTION_CONTROL_BYTES])
-            .try_into()
-            .unwrap();
-        let private: &mut [u8; PRIVATE_BYTES] = private.try_into().unwrap();
-        let reader_private: &mut [u8; PRIVATE_BYTES] = reader_private.try_into().unwrap();
-        let pages = storage
-            .bind_plan4_pages(&core, &mut frames, &mut operation)
-            .unwrap();
-        let mut live = match pages.into_empty_retention(
-            &mut owner,
-            EmptyRetentionControlLoan {
-                control,
-                replay,
-                isolation: isolation.try_into().unwrap(),
-            },
-        ) {
-            Ok(live) => live,
-            Err(IntoRetentionError::Before { error, .. })
-            | Err(IntoRetentionError::Fatal(error)) => panic!("{error:?}"),
-        };
-        live.enable_catalog_visibility(
-            &mut owner,
-            VisibilityLoan {
-                bytes: visibility.try_into().unwrap(),
-                epochs: epochs.try_into().unwrap(),
-            },
-        )
-        .unwrap();
-        assert_eq!(
-            live.catalog_aging_start(&mut owner, private)
-                .unwrap()
-                .header
-                .lsn,
-            1
-        );
-        let status = initialize(&mut live, &mut owner, &mut flusher, false);
-        let undo = initialize(&mut live, &mut owner, &mut flusher, true);
-        let ($live, $owner, $flusher, $status, $undo, $private, $reader_private, $core, $fence) = (
-            &mut live,
-            &mut owner,
-            &mut flusher,
-            &status,
-            &undo,
-            private,
-            reader_private,
-            &core,
-            storage.session_fence(),
-        );
-        $body
-    }};
-}
-
-/// SHA-256 of the namespace's WAL file and its length (the exact-prefix
-/// witness the controller compares with its own digest of the file).
-pub(super) fn wal_witness(db: &Path) -> (String, usize) {
-    let mut names: Vec<_> = fs::read_dir(db)
-        .unwrap()
-        .map(|entry| entry.unwrap().file_name().into_string().unwrap())
-        .filter(|name| name.starts_with("d3-wal-"))
-        .collect();
-    names.sort();
-    let bytes = fs::read(db.join(names.last().unwrap())).unwrap();
-    (hex(&bytes), bytes.len())
-}
 
 /// PID1: the actual native writer history of `id`, stopped at its cut. The
 /// receipt holds the ACKed q and the WAL witness at the cut; the process

@@ -322,7 +322,10 @@ impl Literal {
 }
 
 /// One pool page's bytes, through the diagnostic probe.
-fn page(pool: &crate::storage::dirty_frame::SharedPool<'_, '_, '_, '_>, number: u64) -> String {
+pub(super) fn page(
+    pool: &crate::storage::dirty_frame::SharedPool<'_, '_, '_, '_>,
+    number: u64,
+) -> String {
     let index = probe::registered_index(pool, number).unwrap();
     let mut bytes = boxed::<PAGE_BYTES>();
     probe::diagnose(pool, index, &mut bytes);

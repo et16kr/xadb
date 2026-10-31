@@ -1,0 +1,71 @@
+{
+  "case": "MCB05-L03",
+  "files": {
+    "after-jobs.bin": {
+      "bytes": 16384,
+      "sha256": "09d1a594f289507b0581c2e4359593ada44250c3ab9c1a4322b1649b7c3971f2"
+    },
+    "after-leaf.bin": {
+      "bytes": 16384,
+      "sha256": "684456f31c8884bfb6c758ce4999ea644e60746c72a72be9ccc78816019cb06e"
+    },
+    "after-root.bin": {
+      "bytes": 16384,
+      "sha256": "03f74b8656b5341c8ce0f3c400bcb984cfaf46de236b49bc7e01e3d3de50ff0c"
+    },
+    "after-status.bin": {
+      "bytes": 16384,
+      "sha256": "86be0d3d17ec4578bc5629d906dcacff5b080fbebe2ccf4cc29da2cc0373a53b"
+    },
+    "after-undo.bin": {
+      "bytes": 16384,
+      "sha256": "f963c0783d3c9ec7ae646de0f00e1a74b3ae42ca7cf0e8a15f4b410ba37dbe93"
+    },
+    "canonical.bin": {
+      "bytes": 13,
+      "sha256": "fae2df78d78985674f9e83253255b062c3bbee012bc876f26e4342520ae04b38"
+    },
+    "forward-frame.bin": {
+      "bytes": 91497,
+      "sha256": "5f84263ce475066475c095e76a9a0d9693afeab9af3422af02d30552db88c2d7"
+    }
+  },
+  "forward_lsn": 22,
+  "free_undo": 10,
+  "ordinal": 2,
+  "pages": {
+    "after-jobs.bin": 2,
+    "after-leaf.bin": 13,
+    "after-root.bin": 1,
+    "after-status.bin": 11,
+    "after-undo.bin": 10
+  },
+  "previous_lsn": 20,
+  "provenance": {
+    "author": "dev3-module-c2/row-read-reopen/author.py (run as python3 -I author.py)",
+    "no_xadb_code": "no XADB encoder, decoder, A producer or B reader is run",
+    "pinned_inputs": {
+      "dev3-module-c2/row-read-reopen/live/aging.bin": "df632162d6196501cc70ecc310ebbf48d43ec6b65b8d39545fd06e611abf9d9a",
+      "dev3-module-c2/row-read-reopen/live/bank.bin": "63984ecee4d90f49a7838bba2c5f5d748c6a2829059bb79dd17d5376df0f23d5",
+      "dev3-module-c2/row-read-reopen/live/jobs2.bin": "fa17df47a7e82af55001274aa717481c0e0a3b04a9e010ea7eb51ab95d251a0e",
+      "dev3-module-c2/row-read-reopen/live/leaf13.bin": "30b625850232dac524dda502796d7e3b0c2679cfc55346cab807b1579b465396",
+      "dev3-module-c2/row-read-reopen/live/profile.bin": "f49d4bb26a5c0e1bd66dec9a2b0f77aa24e3fafadf54f27e5db9ab9a960e204e",
+      "dev3-module-c2/row-read-reopen/live/root1.bin": "808882c278e81121c51d285dd690f6e4d35475b43cf6a6ff71f5b81d8c8c409e",
+      "dev3-module-c2/row-read-reopen/live/status11.bin": "6d2ef6534c8229c097c47c79f9c3333a50593382a7d58933f9f512763dc19b82",
+      "dev3-module-c2/row-read-reopen/live/tx.bin": "5007191f2a5b4ee8cf932a532e286cc4bfb782d89eaf4b6ebebdfd251b2356a3",
+      "dev3-module-c2/row-read-reopen/live/undo10.bin": "8a4a1464e63518e84b23042d936990dca3d29e3da59e0842e0bd5b6cf748eb6c",
+      "dev3-module-c3/row-write/forward.py": "cbab5fcf089099524ea31fa1da1b6673b617973623bc7c59b7334ef45064cd9f",
+      "module-row-format/transition/author.py": "076ea2f2767851bd8046becbba6b1d05a00a6cd7838a9c9e052b6b2e033beec4"
+    }
+  },
+  "reserve": {
+    "bytes": 57336,
+    "lsn": 21,
+    "sha256": "4094194f8f08c5c9c520b49be2382efc2a016f8d439b07a229568d36b55672ee"
+  },
+  "row": 1,
+  "schema": "xadb-module-row-v1",
+  "source_kind": "C+B",
+  "stream": 2,
+  "value": 7
+}

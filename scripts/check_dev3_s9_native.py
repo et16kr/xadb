@@ -1,18 +1,25 @@
 #!/usr/bin/env python3
-"""Run only the S9 native C+A cases S9A-N01..03 (MI03 native P1-P3 of C+A).
+"""Run only the S9 native cases of MI03: C+A S9A-N01..03 and C+B S9B-N01.
 
-The histories are S7's MCI02-N01..03 with no B. Each case is three
-processes of one immutable test ELF over its own namespace: `produce` (P1)
-runs the actual native writer (CREATE, A's driver) and stops the process at
-its cut (after the Commit ACK, or after the first durable CLR of a full
-rollback); `recover` (P2) runs C's recovery with A's recovered CLR handler
-to READY, C's page reader over the READY files, and a new A row with its
-Commit ACK; `reenter` (P3) runs the recovery again (RejectInitialLosers) and
-the page read of both ACKs. The controller runs from the full tree (source
-identity from git) or from a single-source export (`--root` with the
-export's `--manifest`, checked file by file against the root). Snapshots
-are stdlib SHA-256 only; no product decoder or output-generated oracle is
-used here.
+S9A (consumers §8.2 native P1-P3 of C+A) replays S7's MCI02-N01..03 with
+no B. Each case is three processes of one immutable test ELF over its own
+namespace: `produce` (P1) runs the actual native writer (CREATE, A's
+driver) and stops the process at its cut (after the Commit ACK, or after
+the first durable CLR of a full rollback); `recover` (P2) runs C's recovery
+with A's recovered CLR handler to READY, C's page reader over the READY
+files, and a new A row with its Commit ACK; `reenter` (P3) runs the
+recovery again (RejectInitialLosers) and the page read of both ACKs.
+
+S9B-N01 (consumers §8.3 native P1-P3 of C+B) is MCB05-L03 with no A:
+`produce` is C's install, CREATE and Commit (q 1), stopped there; `recover`
+is C's recovery to READY, the live pins, the author's late-bound RowReserve,
+the independent literal Forward and C's Commit (q 2); `reenter` recovers
+again and B reads the row by point and cursor.
+
+The controller runs from the full tree (source identity from git) or from a
+single-source export (`--root` with the export's `--manifest`, checked file
+by file against the root). Snapshots are stdlib SHA-256 only; no product
+decoder or output-generated oracle is used here.
 """
 import argparse
 import hashlib
@@ -23,7 +30,13 @@ import subprocess
 import time
 
 PHASES = ['produce', 'recover', 'reenter']
-CASES = {case: PHASES for case in ('S9A-N01', 'S9A-N02', 'S9A-N03')}
+# case -> (worker, phases, produce result)
+CASES = {
+    'S9A-N01': ('s9a_native_worker', PHASES, 'acked'),
+    'S9A-N02': ('s9a_native_worker', PHASES, 'acked'),
+    'S9A-N03': ('s9a_native_worker', PHASES, 'crashed'),
+    'S9B-N01': ('s9b_native_worker', PHASES, 'created'),
+}
 
 
 def digest(raw):
@@ -74,27 +87,36 @@ def main():
     (out / 'source-files.sha256').write_text(manifest)
     source_hash, elf_hash = digest(manifest.encode()), digest(elf.read_bytes())
     input_hash = digest(args.input.resolve(strict=True).read_bytes())
-    names = [line[:-6] for line in subprocess.check_output([str(elf), '--list', '--ignored'],
-                                                           text=True).splitlines()
-             if line.endswith('::s9a_native_worker: test')]
-    assert len(names) == 1, names
-    plan = dict(selector=names[0], root=str(root), cases={c: CASES[c] for c in selected},
+    listed = [line[:-6] for line in subprocess.check_output([str(elf), '--list', '--ignored'],
+                                                            text=True).splitlines()]
+    selectors = {}
+    for worker in sorted({CASES[case][0] for case in selected}):
+        names = [name for name in listed if name.endswith(f'::{worker}')]
+        assert len(names) == 1, (worker, names)
+        selectors[worker] = names[0]
+    plan = dict(selectors=selectors, root=str(root),
+                cases={c: CASES[c][1] for c in selected},
                 source=source_hash,
                 elf=elf_hash, input=input_hash, per_process_seconds=180,
                 log_bytes_cap=16777216, rust_stack=33554432,
-                expected='produce stops at its cut with the ACK (N01/N02) or CLR1 '
+                expected='S9A: produce stops at its cut with the ACK (N01/N02) or CLR1 '
                          '(N03) receipt; recover is READY with the page reader '
                          'finding only committed rows and a new ACK; reenter '
-                         'reads both ACKs; no B module is linked or run')
+                         'reads both ACKs; no B module is linked or run. '
+                         'S9B: produce stops after the CREATE Commit (q 1); recover '
+                         'is READY at q 1, the literal row commits at q 2; reenter '
+                         'is READY at q 2 and B reads (1, 7); no A module is linked '
+                         'or run')
     (out / 'execution-plan.json').write_text(json.dumps(plan, indent=2) + '\n')
     env = dict(os.environ, RUST_MIN_STACK='33554432', XADB_CATALOG_SOURCE_SHA256=source_hash,
                XADB_CATALOG_ELF_SHA256=elf_hash, XADB_CATALOG_INPUT_SHA256=input_hash)
     results, complete = [], {}
     for case in selected:
+        worker, phases, produced = CASES[case]
         db = out / case / 'db'
         db.mkdir(parents=True)
         pids, previous, acks = [], None, []
-        for phase in CASES[case]:
+        for phase in phases:
             output = out / case / phase
             output.mkdir()
             env.update(XADB_S9_NATIVE_CASE=case, XADB_S9_NATIVE_PHASE=phase,
@@ -103,7 +125,7 @@ def main():
             start = time.monotonic()
             try:
                 with (output / 'test.log').open('wb') as log:
-                    code = subprocess.run([str(elf), names[0], '--exact', '--ignored',
+                    code = subprocess.run([str(elf), selectors[worker], '--exact', '--ignored',
                                            '--nocapture', '--test-threads=1'], env=env, cwd=root,
                                           stdout=log, stderr=subprocess.STDOUT,
                                           timeout=180).returncode
@@ -124,7 +146,7 @@ def main():
             current = snapshot(db)
             (output / 'files.json').write_text(json.dumps(current, indent=2) + '\n')
             if phase == 'produce':
-                assert receipt['result'] == ('crashed' if case == 'S9A-N03' else 'acked')
+                assert receipt['result'] == produced
                 acks.append(receipt['q'])
                 # The exact durable prefix at the cut: the in-process WAL
                 # witness equals this controller's own digest of the WAL
@@ -152,7 +174,7 @@ def main():
                 if phase == 'recover':
                     acks.append(receipt['ack_q'])
             previous = current
-        assert len(set(pids)) == len(CASES[case]), pids
+        assert len(set(pids)) == len(phases), pids
         complete[case] = dict(pids=pids, acks=acks, result='PASS')
         (out / 'complete.json').write_text(json.dumps(complete, indent=2) + '\n')
 

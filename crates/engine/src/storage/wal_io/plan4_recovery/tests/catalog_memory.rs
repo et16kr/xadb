@@ -1261,6 +1261,9 @@ mod row_commit;
 #[path = "catalog_memory/row_rollback.rs"]
 mod row_rollback;
 
+#[path = "catalog_memory/row_reopen.rs"]
+#[macro_use]
+mod row_reopen;
 #[path = "catalog_memory/row_recovery.rs"]
 mod row_recovery;
 #[path = "catalog_memory/row_recovery_read.rs"]
@@ -1283,6 +1286,9 @@ mod row_literal_two;
 
 #[path = "catalog_memory/row_read_literal.rs"]
 mod row_read_literal;
+
+#[path = "catalog_memory/row_reopen_literal.rs"]
+mod row_reopen_literal;
 
 #[path = "catalog_memory/row_read_census.rs"]
 mod row_read_census;

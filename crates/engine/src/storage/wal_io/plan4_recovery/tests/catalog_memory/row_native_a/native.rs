@@ -7,22 +7,9 @@
 //! whose recovery (RejectInitialLosers) and page read find both ACKs' rows.
 //! The expected rows, CLR counts and READY Q are fixed by the history.
 use super::super::super::super::super::plan4_pages::native;
+use super::super::row_reopen::db_images as images;
 use super::*;
 use std::{path::PathBuf, time::Duration};
-
-/// The namespace's files (the READY read's input), read from `db`.
-fn images(db: &Path) -> Images {
-    fs::read_dir(db)
-        .unwrap()
-        .map(|entry| {
-            let entry = entry.unwrap();
-            (
-                entry.file_name().into_string().unwrap(),
-                fs::read(entry.path()).unwrap(),
-            )
-        })
-        .collect()
-}
 
 #[test]
 #[ignore = "bounded S9 native controller supplies isolated paths and identity"]
