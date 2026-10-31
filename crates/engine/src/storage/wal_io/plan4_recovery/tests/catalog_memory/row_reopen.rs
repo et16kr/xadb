@@ -109,9 +109,10 @@ pub(super) fn ready_row_sources<'s, 'c, W: WriterNamespace>(
 }
 
 /// A fresh retention catalog over `directory`, with the original Status and
-/// Undo INIT of every fresh case (S5 native produce's setup).
+/// Undo INIT of every fresh case (S5 native produce's setup), in 16 frames
+/// or `frames`.
 macro_rules! with_directory {
-    ($directory:expr, |$live:ident, $owner:ident, $flusher:ident, $status:ident, $undo:ident,
+    ($directory:expr $(, frames = $frame_count:expr)?, |$live:ident, $owner:ident, $flusher:ident, $status:ident, $undo:ident,
         $private:ident, $reader_private:ident, $core:ident, $fence:ident| $body:block) => {{
         let mut slot = boxed::<1_048_576>();
         let mut maintenance = boxed::<12_582_912>();
@@ -129,7 +130,8 @@ macro_rules! with_directory {
         let core = PageConcurrency::new(storage.session_fence()).unwrap();
         let mut owner = core.try_owner(OwnerRole::Foreground).unwrap();
         let mut flusher = core.try_owner(OwnerRole::DedicatedFlusher).unwrap();
-        let mut backing = vec![[0xa7; PAGE_BYTES]; 16];
+        let frame_count = 16 $(+ ($frame_count - 16))?;
+        let mut backing = vec![[0xa7; PAGE_BYTES]; frame_count];
         let mut frames: Vec<_> = backing.iter_mut().map(DirtyFrame::new).collect();
         let mut operation = boxed::<114_688>();
         let (prefix, visibility) = maintenance.split_at_mut(12_574_720);

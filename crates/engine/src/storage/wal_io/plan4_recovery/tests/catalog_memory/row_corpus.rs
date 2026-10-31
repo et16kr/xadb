@@ -255,6 +255,22 @@ impl Corpus {
     }
 }
 
+/// The files the corpus statement checks: C's WAL and the profile, from the
+/// memory namespace's state or a native namespace's directory.
+pub(super) trait CorpusFiles {
+    fn wal_bytes(&self) -> Vec<u8>;
+    fn profile(&self) -> Vec<u8>;
+}
+
+impl CorpusFiles for State {
+    fn wal_bytes(&self) -> Vec<u8> {
+        wal(self)
+    }
+    fn profile(&self) -> Vec<u8> {
+        self.lock().unwrap().files["d3-profile"].bytes.clone()
+    }
+}
+
 /// B's point read of `row` on `view`: Ok(value or None) or B's error.
 macro_rules! point_of {
     ($reader:expr, $owner:expr, $private:expr, $view:expr, $table:expr, $row:expr) => {{
@@ -420,7 +436,7 @@ macro_rules! corpus {
             inputs.push($writer.catalog_test_jobs().as_flattened().to_vec());
             inputs.push(bank[..1536].to_vec());
             inputs.push(bank[AGING..AGING + 1536].to_vec());
-            inputs.push($state.lock().unwrap().files["d3-profile"].bytes.clone());
+            inputs.push($state.profile());
             for (name, live) in LIVE.iter().zip(&inputs) {
                 assert_eq!(
                     hex(live),
@@ -449,7 +465,7 @@ macro_rules! corpus_steps {
      $table:ident, $private:ident, $flush:ident, $flusher:ident, $issued:ident, $lsn:ident,
      $steps:expr) => {
         for (step, undo) in STEPS[$steps].iter().copied() {
-            let from = wal($state).len();
+            let from = $state.wal_bytes().len();
             let _ = settle!($writer, $owner, $view, $table, $private, $flush, $flusher);
             let mut preflight = match $writer
                 .preflight_row($owner, &$view, &$table, $private, &mut $flush)
@@ -467,14 +483,21 @@ macro_rules! corpus_steps {
                 (row, undo_ref.page().page_no, issued),
                 (step.map_or(GAP, |index| ROWS[index].1), undo, $lsn)
             );
-            $corpus.step("reserve", $lsn, row, None, Some(undo), &wal($state)[from..]);
-            let from = wal($state).len();
+            $corpus.step(
+                "reserve",
+                $lsn,
+                row,
+                None,
+                Some(undo),
+                &$state.wal_bytes()[from..],
+            );
+            let from = $state.wal_bytes().len();
             $lsn += 1;
             let Some(index) = step else {
                 if reserved.cancel().is_err() {
                     panic!("C's Cancel of the gap reservation refused");
                 }
-                $corpus.step("cancel", $lsn, row, None, None, &wal($state)[from..]);
+                $corpus.step("cancel", $lsn, row, None, None, &$state.wal_bytes()[from..]);
                 continue;
             };
             let proposal = $corpus.forward(index, reserved.producer_lane().unwrap());
@@ -484,7 +507,7 @@ macro_rules! corpus_steps {
             assert_eq!(observation.operation(), RowOperation::Forward);
             assert_eq!((observation.row(), observation.undo()), (row_id, undo_ref));
             $issued.push((row_id, undo_ref));
-            let gained = wal($state)[from..].to_vec();
+            let gained = $state.wal_bytes()[from..].to_vec();
             assert_eq!(
                 gained,
                 $corpus.file(&format!("forward{}-frame.bin", index + 1)),
@@ -2820,3 +2843,7 @@ fn mcb04_v13_wrong_undo_target_is_refused() {
 fn mcb04_v14_occupied_before_is_out_of_scope() {
     damaged("MCB04-V14", 14);
 }
+
+// After every macro above, which the native worker uses.
+#[path = "row_corpus/native.rs"]
+mod native;
