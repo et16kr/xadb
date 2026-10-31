@@ -2206,10 +2206,10 @@
  },
  "mi03": "see the evidence #s9-module-completion M5 table",
  "mi04": "MCI01-V09 origin stale PASS (f1 row_join); generation stale and aging stay N/A (no DROP producer or new epoch: DEV3)",
- "mi06": "pending: independent re-check of the S9 review fixes (2cc5f154, 660fd99e and the records)",
+ "mi06": "MI06 PASS: no unresolved REQUIRED finding from the S9 independent reviews (R1-R5 in s9-d1d2-independent-review.md, NR1-NR3 in s9-fix-recheck.md, RR1 in s9-record-recheck.md; re-check of 65a77336 found 0); MI03 stays PARTIAL",
  "artifacts": {
   "path": "/mnt/project-files/module-independence-20261029/artifacts/module-s9-20261031",
-  "manifest_sha256": null
+  "manifest_sha256": "3da9bbc687297ca001660519b00d04a6c552e31be4e529a49745d848431abebe"
  },
  "inventory_note": "the frozen inventory's not_run: [] describes the frozen selection only; what is not supplied is listed under not_run here and in the contract limits; the addendum adds MCB05-L06 without changing the inventory",
  "not_run": {
