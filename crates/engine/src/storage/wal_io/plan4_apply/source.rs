@@ -183,6 +183,19 @@ pub(super) fn lifecycle_carrier_bytes<W: WriterNamespace>() -> usize {
         + create_pair::catalog_live::lifecycle::entry_carrier_bytes::<W>()
 }
 
+/// The part of `lifecycle_carrier_bytes` live while `progress_lifecycle`
+/// waits at the gate (WRITER-PROGRESS-001, S9 boundaries `#row-m4-s9`): the
+/// gate and admission carriers, the unwind guards, the Observation Result
+/// slots and the entry packet. The three typed Prepared results exist only
+/// in the admitted body, after the wait.
+#[cfg(test)]
+pub(super) fn lifecycle_entry_bytes<W: WriterNamespace>() -> usize {
+    commit_carrier_bytes()
+        + 2 * size_of::<crate::storage::session_fence::UnwindFence<'_>>()
+        + 3 * size_of::<Result<crate::storage::semantic_catalog::Observation>>()
+        + create_pair::catalog_live::lifecycle::entry_carrier_bytes::<W>()
+}
+
 /// The unified caller's ordinal/operation and borrowed arguments survive into
 /// either closure. Count both by-value arguments and caller packet copies.
 fn retirement_entry_bytes() -> usize {

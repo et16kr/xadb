@@ -2455,14 +2455,10 @@ fn call_site_census<W: WriterNamespace + 'static>(writer: &str) {
     );
 }
 
-/// The statement the S2-e callers of `insert_live` pass at most
-/// (`catalog_memory::row_live`): two rows of T's one value. The term covers
-/// these test callers only: a product caller (S3/S4, SQL) must rerun this
-/// census with its own term. At S2-e the preflight's frame-static margin
-/// with this term (813 B) is worth about eight more rows of one value (96 B
-/// each), and its per-call margin (1584 B) about sixteen.
-const CALLER_ROWS: usize = 2;
-const CALLER_VALUES: usize = 1;
+// The statement the S2-e callers of `insert_live` pass at most
+// (`live::CALLER_ROWS`, `live::CALLER_VALUES`; S9 moved them there so C's
+// gate-wait census uses the same term).
+use live::{CALLER_ROWS, CALLER_VALUES};
 
 #[test]
 fn mca00_d15_memory_call_site_shares_fit_the_caller_bounds() {

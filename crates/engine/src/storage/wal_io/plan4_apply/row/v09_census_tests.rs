@@ -39,9 +39,10 @@
 //!
 //! The rollback and recovery-task parts of the same replacement are S4's
 //! and C4's; S7 adds the rollback start's first gate wait to S4's census.
-//! The rollback's re-close after each flush (`RowRollback::admit`) and the
-//! Commit, RowProgress and CatalogProgress gate waits remain
-//! WRITER-PROGRESS-001 obligations. The recovery task has no reader to wait
+//! S9 (boundaries `#row-m4-s9`) counts the rest of WRITER-PROGRESS-001: the
+//! rollback's re-close after each flush (`RowRollback::admit`, S4_C01) and
+//! the Commit, RowProgress and CatalogProgress gate waits
+//! (`writer_gate_census_tests`). The recovery task has no reader to wait
 //! for: recovery is exclusive before READY.
 use super::write::{RowWritePhase, row_write_phases};
 use super::*;
@@ -181,8 +182,8 @@ fn v09_census<W: WriterNamespace>(writer: &str) {
     assert!(waiting <= CAP);
     println!(
         "MBC40_V09 writer={writer} counted=(i),(ii),(iii),(iv)_first_gate_wait \
-         rollback_start=S4_C01 rollback_reclose=NOT_SUPPLIED \
-         commit_progress_gates=WRITER-PROGRESS-001 recovery_task=exclusive_before_READY"
+         rollback_start=S4_C01 rollback_reclose=S4_C01 \
+         commit_progress_gates=WRITER_GATE recovery_task=exclusive_before_READY"
     );
 }
 

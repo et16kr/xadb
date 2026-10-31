@@ -204,6 +204,24 @@ pub(in super::super) fn check_source_bytes() -> usize {
         + 4 * size_of::<&[u8]>()
 }
 
+/// The part of `check_source_bytes` live while `transaction_check` waits at
+/// the terminal read gate (WRITER-PROGRESS-001, S9 boundaries
+/// `#row-m4-s9`): the gate and admission carriers, the consuming caller's
+/// packet, the class, the closure captures, the Result slots and the check's
+/// own unwind guard. The scans, the state tuple, the Observation, the Job
+/// and page views and the visibility closure run only after admission.
+#[cfg(test)]
+pub(in super::super) fn check_entry_bytes() -> usize {
+    use std::mem::size_of;
+    source::commit_carrier_bytes()
+        + terminal_caller_bytes()
+        + size_of::<source::OperationClass>()
+        + 16 * size_of::<&()>()
+        + 2 * size_of::<Result<super::super::row::RowCommitObservation>>()
+        + 4 * size_of::<Result<()>>()
+        + size_of::<crate::storage::session_fence::UnwindFence<'_>>()
+}
+
 #[cfg(test)]
 impl RowTransaction<'_, '_, '_, '_> {
     pub(in crate::storage) fn test_commit_reserved_once(&self) -> writable::TestOnce {
