@@ -779,7 +779,7 @@ fn failed_statement_reads(id: &str, read: bool) {
                     .unwrap();
                 let s1 = writer.begin_statement(owner, &x).unwrap();
                 let u = issue_object!(reader, owner, s1, reader_private, flush, flusher, 7);
-                let t = (read).then(|| {
+                let _t = (read).then(|| {
                     let t = issue_object!(reader, owner, s1, reader_private, flush, flusher, 6);
                     assert_eq!(
                         scan!(reader, owner, reader_private, &s1, &t, flush, flusher),
@@ -897,7 +897,6 @@ fn failed_statement_reads(id: &str, read: bool) {
                 }
                 assert!(writer.finish_statement(b_owner, new).is_ok());
                 assert!(writer.finish_read_only(b_owner, b).is_ok());
-                drop(t);
                 assert_eq!(reader.catalog_test_source_used(), 0);
                 assert!(!fence.is_fenced() && !hook::observe(core).read_gate_closed);
                 println!("MCI01_FAILED_READS {id} read={read} masks={masks:?} u={in_u:?}");
@@ -1196,7 +1195,6 @@ fn gate_barrier(id: &str, barrier: Barrier) {
                         "MCI03_GATE {id} barrier={barrier:?} pins={pins:?} at_wait={at_wait:?}"
                     );
                 });
-                drop(cell);
                 assert!(pending.is_none() && s2.is_none());
                 drop((pending, s2));
                 assert_eq!(reader.catalog_test_source_used(), used);
@@ -1335,7 +1333,6 @@ fn mci03_v03_old_snapshot_before_q_publication() {
                     println!("MCI03_V03 at_publish={at_publish:?} during={during:?}");
                     assert!(matches!(during, Ok(None)), "{during:?}");
                 });
-                drop(cell);
                 assert_eq!(q, 2);
                 let mut b_owner = core.try_owner(OwnerRole::Foreground).unwrap();
                 let b_owner = &mut b_owner;
