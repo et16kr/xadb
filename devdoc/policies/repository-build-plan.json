@@ -69,7 +69,16 @@
     "rust_dependencies": "Cargo.lock",
     "workspace_publish": false,
     "unsafe_code": "forbid",
-    "custom_cargo_profiles_configured": false,
+    "custom_cargo_profiles_configured": true,
+    "custom_cargo_profiles": [
+      {
+        "profile": "dev",
+        "package": "sha2",
+        "opt-level": 3,
+        "reason": "debug recovery validation hashing; workspace crates and release profile unchanged",
+        "evidence_ref": "main-preexisting-failures-20261030.md#debug-hash-timeout"
+      }
+    ],
     "remote_ci_execution": "NOT_RUN",
     "protected_ci_qualification": "NOT_RUN"
   },
