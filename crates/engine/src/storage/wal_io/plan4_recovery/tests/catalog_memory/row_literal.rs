@@ -13,13 +13,21 @@
 //! in the validation lane, the frame and the five after images in the
 //! producer lane, placed by C's declared after order. Expected values come
 //! from the author's expected.json and the history, never from C or B.
-use super::row_preflight::create_table;
+//!
+//! MCB05-K (consumers §8.3 known-bad): the same reservation is offered one
+//! known-bad Forward per case, each the author's single semantic change to
+//! that literal with its own pinned SHA-256 (`known-bad/Kxx.patch`). C's
+//! prepare refuses it Before (Prepare, Unchanged, RowSemantic) on the same
+//! ReservedRow: no stage, no WAL, file or page change, the issued identity
+//! and draft cut kept. The explicit cancel that follows lands the S2 Cancel
+//! literal of that reservation.
+use super::row_preflight::{create_table, t_frames};
 use super::*;
 use crate::storage::{
     disk::{
-        IsolationLevel, ReadStep, RetentionCause, RowInputPlan, RowOperation, RowOwnedError,
-        RowPageRole, RowPreflightStep, RowProducerLane, RowProposal, RowValidationLane, TableStep,
-        TransactionFinishError, TransactionOptions,
+        IsolationLevel, ReadStep, RetentionCause, RetentionPhase, RowInputPlan, RowOperation,
+        RowOwnedError, RowPageRole, RowPreflightStep, RowProducerLane, RowProposal,
+        RowValidationLane, TableStep, TransactionFinishError, TransactionOptions,
     },
     row::read::driver::{
         CursorStep, PointRead,
@@ -81,6 +89,12 @@ const FILES: [(&str, usize, &str); 7] = [
         "0c3689d98f178c24eb75ff3276bbed2ee7bb410ca38103a00d6708d1ee4e8ff4",
     ),
 ];
+/// The S2 Cancel literal of this reservation (expected.json `cancel`, from
+/// `dev3-module-c3/row-write/expected-cancel.json`): bytes and SHA-256.
+const CANCEL_FRAME: (usize, &str) = (
+    40_000,
+    "c2b02eaa12afa2c12eb0427ad8a6deb9746ccb884571ab3157928fa6ba6aee4b",
+);
 /// The page a Forward after image of each role replaces (expected.json
 /// `pages`), with its literal file.
 const AFTER: [(RowPageRole, u64, &str); 5] = [
@@ -92,18 +106,38 @@ const AFTER: [(RowPageRole, u64, &str); 5] = [
 ];
 
 /// The literal's bytes, each checked against its pin when loaded.
+#[derive(Clone)]
 struct Literal {
     canonical: Vec<u8>,
     frame: Vec<u8>,
     after: Vec<(RowPageRole, Vec<u8>)>,
 }
 
+/// The author's directory.
+fn author() -> std::path::PathBuf {
+    Path::new(env!("CARGO_MANIFEST_DIR"))
+        .join("../..")
+        .join(AUTHOR)
+}
+
+/// The author's expected.json.
+fn expected() -> String {
+    String::from_utf8(read(&author().join("expected.json"), 1 << 16)).unwrap()
+}
+
+/// Lowercase hex to bytes.
+fn unhex(text: &str) -> Vec<u8> {
+    assert!(text.len() % 2 == 0, "hex length");
+    (0..text.len())
+        .step_by(2)
+        .map(|at| u8::from_str_radix(&text[at..at + 2], 16).unwrap())
+        .collect()
+}
+
 impl Literal {
     fn load() -> Self {
-        let root = Path::new(env!("CARGO_MANIFEST_DIR"))
-            .join("../..")
-            .join(AUTHOR);
-        let expected = String::from_utf8(read(&root.join("expected.json"), 1 << 16)).unwrap();
+        let root = author();
+        let expected = expected();
         for fact in [
             "\"case\": \"MCB05-L01\"".to_string(),
             format!("\"row\": {ROW}"),
@@ -137,6 +171,85 @@ impl Literal {
                 .map(|(role, _, name)| (*role, file(name)))
                 .collect(),
         }
+    }
+
+    /// The known-bad variant `case`: its patch file pinned by `digest` here
+    /// and in expected.json, applied to this literal's files. A same-length
+    /// file is byte runs `start end hex` over the literal; a file whose
+    /// length changes is named whole. Each patched file must have the
+    /// length and SHA-256 its `file` line states.
+    fn known_bad(&self, case: &str, digest: &str) -> Self {
+        let root = author();
+        let text = read(
+            &root.join("known-bad").join(format!("{case}.patch")),
+            1 << 15,
+        );
+        assert_eq!(hex(&text), digest, "{case}.patch");
+        let pin = format!("\"sha256\": \"{digest}\"");
+        assert!(expected().contains(&pin), "expected.json pin of {case}");
+        let text = String::from_utf8(text).unwrap();
+        let mut lines = text.lines().filter(|line| !line.starts_with('#'));
+        assert_eq!(
+            lines.next(),
+            Some(format!("XADB-S8-KNOWN-BAD-V1 {case}").as_str())
+        );
+        // (file, its stated length and SHA-256, the patched bytes)
+        let mut files: Vec<(String, usize, String, Vec<u8>)> = Vec::new();
+        // The literal offset the current file is copied up to.
+        let mut at = 0;
+        let mut out = self.clone();
+        for line in lines {
+            let fields: Vec<&str> = line.split(' ').collect();
+            if fields[0] == "file" || fields[0] == "end" {
+                if let Some((name, _, _, data)) = files.last_mut()
+                    && at != usize::MAX
+                {
+                    data.extend_from_slice(&out.file(name)[at..]);
+                }
+                if fields[0] == "end" {
+                    break;
+                }
+                let (name, bytes, sha) = (fields[1], fields[2].parse().unwrap(), fields[3]);
+                let data = match fields.get(4) {
+                    Some(&"whole") => {
+                        at = usize::MAX;
+                        read(&root.join("known-bad").join(fields[5]), 1 << 17)
+                    }
+                    None => {
+                        at = 0;
+                        Vec::new()
+                    }
+                    Some(mode) => panic!("patch mode {mode}"),
+                };
+                files.push((name.into(), bytes, sha.into(), data));
+                continue;
+            }
+            let (start, end): (usize, usize) =
+                (fields[0].parse().unwrap(), fields[1].parse().unwrap());
+            let (name, _, _, data) = files.last_mut().expect("a run inside a file");
+            assert!(at <= start && start <= end, "ordered runs");
+            data.extend_from_slice(&out.file(name)[at..start]);
+            data.extend_from_slice(&unhex(fields[2]));
+            at = end;
+        }
+        assert!(!files.is_empty(), "{case} changes a file");
+        for (name, bytes, sha, data) in files {
+            assert_eq!((data.len(), hex(&data)), (bytes, sha), "{case} {name}");
+            *out.file(&name) = data;
+        }
+        out
+    }
+
+    /// The literal file `name` (frame or an after image).
+    fn file(&mut self, name: &str) -> &mut Vec<u8> {
+        if name == "forward-frame.bin" {
+            return &mut self.frame;
+        }
+        let (role, ..) = AFTER
+            .iter()
+            .find(|(_, _, file)| *file == name)
+            .unwrap_or_else(|| panic!("patched file {name}"));
+        &mut self.after.iter_mut().find(|(r, _)| r == role).unwrap().1
     }
 
     /// The validation lane gets the literal canonical row; the plan names
@@ -439,4 +552,182 @@ fn mcb05_l01_literal_forward_is_read_by_b_after_c_commit() {
             }
         );
     });
+}
+
+/// The WAL length and every file image: a refusal's effect is none.
+fn effects(state: &State) -> (usize, Images) {
+    let state = state.lock().unwrap();
+    (state.files["d3-wal-00000001"].bytes.len(), state.images())
+}
+
+/// One MCB05-K case: C Begin and RowReserve, then the known-bad Forward
+/// through C's prepare on that reservation: Before (Prepare, Unchanged,
+/// RowSemantic) with the same ReservedRow, its issued identity and draft
+/// cut, and no WAL, file, T page (bytes and stamp) or fence change. The
+/// explicit cancel then lands the S2 Cancel literal, and the statement and
+/// the now empty transaction end (RollbackStart, AbortEnd).
+fn known_bad(name: &str, digest: &str) {
+    case(&format!("MCB05-{name}"), || {
+        let bad = Literal::load().known_bad(name, digest);
+        let expected = expected();
+        assert!(expected.contains(&format!("\"frame_bytes\": {}", CANCEL_FRAME.0)));
+        assert!(expected.contains(&format!("\"frame_sha256\": \"{}\"", CANCEL_FRAME.1)));
+        let oracle = Oracle::new();
+        with_fresh!(
+            oracle,
+            frames = 16,
+            |live, owner, flusher, status, undo, private, reader_private, _core, fence, state| {
+                let (row_status, _) =
+                    create_table(live, owner, flusher, status, undo, private, true);
+                row_statement!(live, owner, flusher, private, reader_private, row_status
+                    => writer, reader, flush, row, view, table);
+                let _ = settle!(writer, owner, view, table, private, flush, flusher);
+                let pool = reader.catalog_test_pool();
+                let mut preflight = match writer
+                    .preflight_row(owner, &view, &table, private, &mut flush)
+                    .unwrap()
+                {
+                    RowPreflightStep::Ready(preflight) => preflight,
+                    RowPreflightStep::FlushRequired { .. } => panic!("settled sources"),
+                };
+                let plan = bad.plan(preflight.validation_lane().unwrap());
+                let mut reserved = done!(preflight.reserve(plan));
+                let issued = reserved.test_issued();
+                let draft = reserved.test_draft();
+                assert_eq!(issued.2.get(), ROW);
+                let before = effects(state);
+                let pages = t_frames(pool);
+                let proposal = bad.forward(reserved.producer_lane().unwrap());
+                let (error, reserved) = match reserved.prepare(proposal) {
+                    Err(RowOwnedError::Before { error, owned }) => (error, owned),
+                    Err(RowOwnedError::Fatal(error)) => panic!("{name} Fatal {error:?}"),
+                    Ok(_) => panic!("{name} prepared"),
+                };
+                println!("MCB05_{name} prepare={error:?}");
+                assert_eq!(
+                    (error.phase, error.effect),
+                    (RetentionPhase::Prepare, Effect::Unchanged)
+                );
+                assert!(matches!(error.cause, RetentionCause::RowSemantic(_)));
+                assert_eq!(reserved.test_issued(), issued);
+                assert_eq!(reserved.test_draft(), draft);
+                assert_eq!(effects(state), before, "no WAL or file effect");
+                for (old, new) in pages.iter().zip(t_frames(pool)) {
+                    assert_eq!(*old, new, "page {}", old.0);
+                }
+                assert!(!fence.is_fenced());
+                if reserved.cancel().is_err() {
+                    panic!("{name} cancel refused");
+                }
+                let cancel = wal(state)[before.0..].to_vec();
+                println!(
+                    "MCB05_{name} cancel frame_bytes={} frame_sha={}",
+                    cancel.len(),
+                    hex(&cancel)
+                );
+                assert_eq!((cancel.len(), hex(&cancel).as_str()), CANCEL_FRAME);
+                close_row!(writer, owner, row, view, private, flush);
+                assert!(!fence.is_fenced());
+            }
+        );
+    });
+}
+
+/// MCB05-K01: foreign table generation (Job, U target, projection).
+#[test]
+fn mcb05_k01_foreign_table_generation_is_before_then_cancel() {
+    known_bad(
+        "K01",
+        "e6168679a6320f6c131808db1dd82ced695a8c0d60762cac3f9d8201c661fc19",
+    );
+}
+
+/// MCB05-K02: forged RowId 2, the Reserve issued 1.
+#[test]
+fn mcb05_k02_forged_row_id_is_before_then_cancel() {
+    known_bad(
+        "K02",
+        "7977833f604796c72eb5ae42ac532a5f45cdd4740a7152b4243a13d07bbc22bd",
+    );
+}
+
+/// MCB05-K03: wrong U generation.
+#[test]
+fn mcb05_k03_wrong_undo_generation_is_before_then_cancel() {
+    known_bad(
+        "K03",
+        "96a478a7bb5fa2b3fd25af09fb5c88c63c44ec5a42cbf36eb1364d8cc17495dd",
+    );
+}
+
+/// MCB05-K04: planned mutation consumed again (descriptor last mutation 2).
+#[test]
+fn mcb05_k04_planned_mutation_consumed_again_is_before_then_cancel() {
+    known_bad(
+        "K04",
+        "c9e825ba9853c1947a0913b758d62e40ea09f84b53e840cdb5c221dd911249b5",
+    );
+}
+
+/// MCB05-K05: predecessor H claimed, the actual predecessor is none.
+#[test]
+fn mcb05_k05_predecessor_claimed_without_one_is_before_then_cancel() {
+    known_bad(
+        "K05",
+        "ed20accd34f86e3e8a2ed284e8e394d1913fbdb41bc133cc164254f1d556605e",
+    );
+}
+
+/// MCB05-K06: U incoming 1 (the graph gives 2).
+#[test]
+fn mcb05_k06_undo_incoming_one_is_before_then_cancel() {
+    known_bad(
+        "K06",
+        "a0d74cc80326f48a74f8f46f244824ac80a54a90737c0657bc9a047a25a51c05",
+    );
+}
+
+/// MCB05-K08: row Transaction stamp is not the actor.
+#[test]
+fn mcb05_k08_row_stamp_not_the_actor_is_before_then_cancel() {
+    known_bad(
+        "K08",
+        "8d613595e008bb96edc00c6a1af93f523d2e87a5bd8b8381addf4476cd65b30c",
+    );
+}
+
+/// MCB05-K09: leaf redo row bytes differ from the native after cell.
+#[test]
+fn mcb05_k09_redo_row_bytes_differ_from_native_is_before_then_cancel() {
+    known_bad(
+        "K09",
+        "b7d29da13b55fb0ee4231ddfd58bd375597a0bd5a214a2d48784f96b864e1da9",
+    );
+}
+
+/// MCB05-K10: Reserved inventory item not consumed (no InventoryDelta).
+#[test]
+fn mcb05_k10_reserved_inventory_not_consumed_is_before_then_cancel() {
+    known_bad(
+        "K10",
+        "9092e06a334ff8eae6d9a1c8d27e01bc639e10a94a8637fd94a11b315ebbb2eb",
+    );
+}
+
+/// MCB05-K11: full-abort CLR WAL debt decremented by one.
+#[test]
+fn mcb05_k11_full_abort_debt_decremented_is_before_then_cancel() {
+    known_bad(
+        "K11",
+        "373410e106ab63809d1f75e9e8571281aaaae3bf2233422b97df82cd1d08e0c9",
+    );
+}
+
+/// MCB05-K12: valid frame resubmitted as a scope2 group.
+#[test]
+fn mcb05_k12_scope2_group_is_before_then_cancel() {
+    known_bad(
+        "K12",
+        "5c2699f29446fe500acdf0ad92d4d6e34921d3ceb5563fcdb5dc7f5f9504c98d",
+    );
 }

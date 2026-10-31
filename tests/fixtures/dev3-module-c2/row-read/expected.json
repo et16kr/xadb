@@ -1,4 +1,10 @@
 {
+  "cancel": {
+    "frame_bytes": 40000,
+    "frame_sha256": "c2b02eaa12afa2c12eb0427ad8a6deb9746ccb884571ab3157928fa6ba6aee4b",
+    "lsn": 16,
+    "source": "dev3-module-c3/row-write/expected-cancel.json"
+  },
   "canonical_sha256": "fae2df78d78985674f9e83253255b062c3bbee012bc876f26e4342520ae04b38",
   "case": "MCB05-L01",
   "files": {
@@ -32,6 +38,214 @@
     }
   },
   "forward_lsn": 16,
+  "known_bad": {
+    "K01": {
+      "files": {
+        "after-jobs.bin": {
+          "bytes": 16384,
+          "sha256": "1e70017d43b9ccd91d92f92465f5d5c58585a8469c38c2d9676614bec4b45003"
+        },
+        "after-root.bin": {
+          "bytes": 16384,
+          "sha256": "5a62c228d377e1ea0525ca1ab704dc4a8d33cfbee688315d4c348c1134c24f9a"
+        },
+        "after-undo.bin": {
+          "bytes": 16384,
+          "sha256": "283f7b268c0d273f4c8feed859046e292fbdd7fd004b59f277edc7c2cae81941"
+        },
+        "forward-frame.bin": {
+          "bytes": 91497,
+          "sha256": "565d434b542ec57fb673a6b6182f7345257f6bdd03ce7e51fa9d30fc56c5c81e"
+        }
+      },
+      "patch": {
+        "bytes": 1881,
+        "sha256": "e6168679a6320f6c131808db1dd82ced695a8c0d60762cac3f9d8201c661fc19"
+      },
+      "what": "foreign table generation (Job, U target, projection)"
+    },
+    "K02": {
+      "files": {
+        "after-jobs.bin": {
+          "bytes": 16384,
+          "sha256": "3423ecf42babd852f3ab03d8b45d95b87e8f6747d024338c2ab0d207fdaf7a23"
+        },
+        "after-leaf.bin": {
+          "bytes": 16384,
+          "sha256": "8d70106744debce999bbb12c73b8098d23912e21e8ae7d22418021bd13007017"
+        },
+        "after-root.bin": {
+          "bytes": 16384,
+          "sha256": "315c1789613e9ecc193e1f5e491c424ffba255364fa798ba6b2b4f584e4042bc"
+        },
+        "after-undo.bin": {
+          "bytes": 16384,
+          "sha256": "5a90473bbc6e28c44f44fc198924f5d7bc267275bf50dc55cd52441effe38fd7"
+        },
+        "forward-frame.bin": {
+          "bytes": 91497,
+          "sha256": "3823de3e514b64dc4423267d43802ad360b8a32d0685afafa88511278c0612b0"
+        }
+      },
+      "patch": {
+        "bytes": 2168,
+        "sha256": "7977833f604796c72eb5ae42ac532a5f45cdd4740a7152b4243a13d07bbc22bd"
+      },
+      "what": "forged RowId 2, the Reserve issued 1"
+    },
+    "K03": {
+      "files": {
+        "after-jobs.bin": {
+          "bytes": 16384,
+          "sha256": "e68edff46e69aa51f2597fb5905f8f76bc18381ce8b47542f2a147006ea2a6c0"
+        },
+        "after-leaf.bin": {
+          "bytes": 16384,
+          "sha256": "387046703e4289fac52298c279f5ebcecc396ecf83693146d90ccbb3964d798b"
+        },
+        "after-root.bin": {
+          "bytes": 16384,
+          "sha256": "293bcf98647a8ce26eaf947d27f01389a214e630e5ab47a84eddf4102459373c"
+        },
+        "after-status.bin": {
+          "bytes": 16384,
+          "sha256": "043650a54ad14f359fe2cabb725d833180daba2894680407370559689e7dbd97"
+        },
+        "after-undo.bin": {
+          "bytes": 16384,
+          "sha256": "d6e37e210f0632528a7a68918d53d541c12b332cb1e2e23d630ffb308fae7ef8"
+        },
+        "forward-frame.bin": {
+          "bytes": 91497,
+          "sha256": "45674ea46ebfe8c5264f011857ff03e5f8fad571bcde7dfa427a171f8efcc9bc"
+        }
+      },
+      "patch": {
+        "bytes": 2506,
+        "sha256": "96a478a7bb5fa2b3fd25af09fb5c88c63c44ec5a42cbf36eb1364d8cc17495dd"
+      },
+      "what": "wrong U generation"
+    },
+    "K04": {
+      "files": {
+        "forward-frame.bin": {
+          "bytes": 91497,
+          "sha256": "7c64c24d29c1012ef9328488f2c45ca5137339e49002c173d169515bf1e7d2c7"
+        }
+      },
+      "patch": {
+        "bytes": 351,
+        "sha256": "c9e825ba9853c1947a0913b758d62e40ea09f84b53e840cdb5c221dd911249b5"
+      },
+      "what": "planned mutation consumed again (descriptor last mutation 2)"
+    },
+    "K05": {
+      "files": {
+        "after-undo.bin": {
+          "bytes": 16384,
+          "sha256": "a52dfe2ac295229e4ffbfdfa84e04508aa5a8deddc766a6dc017be3fc8be5843"
+        },
+        "forward-frame.bin": {
+          "bytes": 91625,
+          "sha256": "4befb1e854f455d71a694cf9e3b385119f5837d68740973acf263d915233e276"
+        }
+      },
+      "patch": {
+        "bytes": 485,
+        "sha256": "ed20accd34f86e3e8a2ed284e8e394d1913fbdb41bc133cc164254f1d556605e"
+      },
+      "what": "predecessor H claimed, the actual predecessor is none"
+    },
+    "K06": {
+      "files": {
+        "after-undo.bin": {
+          "bytes": 16384,
+          "sha256": "ad26abc2afe69ad2359a602173b40be4f17b1361636b5e1cdf4bc67e38fdcd05"
+        },
+        "forward-frame.bin": {
+          "bytes": 91497,
+          "sha256": "aab118e83f3353d198be1f952bcffd8840abee49b15cd82c683ade73d5380267"
+        }
+      },
+      "patch": {
+        "bytes": 521,
+        "sha256": "a0d74cc80326f48a74f8f46f244824ac80a54a90737c0657bc9a047a25a51c05"
+      },
+      "what": "U incoming 1 (the graph gives 2)"
+    },
+    "K08": {
+      "files": {
+        "after-leaf.bin": {
+          "bytes": 16384,
+          "sha256": "443c7b3801f51189f2763a6b96e44e8bba963e208c319ca7277e9dfe54b979df"
+        },
+        "forward-frame.bin": {
+          "bytes": 91497,
+          "sha256": "594c1bd4143b5ae47c17f880674764df5d4bdf12eb55a464cc16fff76aa9dcd7"
+        }
+      },
+      "patch": {
+        "bytes": 527,
+        "sha256": "8d613595e008bb96edc00c6a1af93f523d2e87a5bd8b8381addf4476cd65b30c"
+      },
+      "what": "row Transaction stamp is not the actor"
+    },
+    "K09": {
+      "files": {
+        "forward-frame.bin": {
+          "bytes": 91497,
+          "sha256": "a5f9f1cdc12db017ed0ea0769d6f58f6214ec135008d591da4219f80536565da"
+        }
+      },
+      "patch": {
+        "bytes": 271,
+        "sha256": "b7d29da13b55fb0ee4231ddfd58bd375597a0bd5a214a2d48784f96b864e1da9"
+      },
+      "what": "leaf redo row bytes differ from the native after cell"
+    },
+    "K10": {
+      "files": {
+        "forward-frame.bin": {
+          "bytes": 91289,
+          "sha256": "4b51169b6c11207c55749fbc88db20ca2f8f54626ed04f5b618fc37060cba82d"
+        }
+      },
+      "patch": {
+        "bytes": 210,
+        "sha256": "9092e06a334ff8eae6d9a1c8d27e01bc639e10a94a8637fd94a11b315ebbb2eb"
+      },
+      "what": "Reserved inventory item not consumed (no InventoryDelta)"
+    },
+    "K11": {
+      "files": {
+        "forward-frame.bin": {
+          "bytes": 91497,
+          "sha256": "9e557fba8ee192248c275dd99d976ca0940c88e755711fdcdeaeb25267e5a391"
+        }
+      },
+      "patch": {
+        "bytes": 333,
+        "sha256": "373410e106ab63809d1f75e9e8571281aaaae3bf2233422b97df82cd1d08e0c9"
+      },
+      "what": "full-abort CLR WAL debt decremented by one"
+    },
+    "K12": {
+      "files": {
+        "forward-frame.bin": {
+          "bytes": 91497,
+          "sha256": "985fdf8128512063264327f9123445d3c33cab42044b747e98e85e7d3ff700ca"
+        }
+      },
+      "patch": {
+        "bytes": 255,
+        "sha256": "5c2699f29446fe500acdf0ad92d4d6e34921d3ceb5563fcdb5dc7f5f9504c98d"
+      },
+      "what": "valid frame resubmitted as a scope2 group"
+    }
+  },
+  "known_bad_not_run": {
+    "K07": "H before count 0 with a net-0 move needs an actual predecessor H (a second root of the same actor); this one-row history has none"
+  },
   "pages": {
     "after-jobs.bin": 2,
     "after-leaf.bin": 13,
