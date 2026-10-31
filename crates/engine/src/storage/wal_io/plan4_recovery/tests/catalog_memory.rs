@@ -1249,7 +1249,11 @@ mod row_forward;
 mod row_cancel;
 
 #[path = "catalog_memory/row_live.rs"]
+#[macro_use]
 mod row_live;
+
+#[path = "catalog_memory/row_read_live.rs"]
+mod row_read_live;
 
 #[path = "catalog_memory/row_commit.rs"]
 mod row_commit;
@@ -1264,3 +1268,9 @@ mod row_recovery;
 mod catalog_progress_v09;
 #[path = "catalog_memory/row_join.rs"]
 mod row_join;
+
+#[path = "catalog_memory/row_literal.rs"]
+mod row_literal;
+
+#[path = "catalog_memory/row_read_census.rs"]
+mod row_read_census;

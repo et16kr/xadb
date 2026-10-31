@@ -1,6 +1,8 @@
 # XADB 개발 문서
 
-2026-10-31 [S7 C5 합류와 M5 판정](evidence/module-independence-survey-20261026.md#s7-row-join): main `76b3627`의 별도 branch `claude/project-thread-1jfdtk`에서 A INSERT와 B 읽기의 합류 시험(memory 11개, native 3 case)과 S4 잔여를 공급했다. 최종 r2에서 memory 36/36과 native 9 process가 통과했다. S6 시간 한도는 30초로 되돌려 다시 실행했다. S6·S7 독립 D1/D2는 조건부 ACCEPT다. M5는 미완료다(MI03 미충족, MI06은 S6 shared 144B 수정 대기).
+2026-10-31 [S8 MI03 단독 source 인수](evidence/module-independence-survey-20261026.md#s8-single-source): 별도 branch `claude/project-thread-1jfdtk-s8`에서 A·B 단독 export와 C+B literal ingress(MCB05-L01, K01–K12 중 K07 제외)를 공급했다. C+A export 134/134, C+B export 32/32, 전체 트리 21/21이 통과했다. 제품 source 변경은 없다. M5는 미완료다(MI03 PARTIAL·미충족, MI06 PASS).
+
+2026-10-31 [S7 C5 합류와 M5 판정](evidence/module-independence-survey-20261026.md#s7-row-join): main `76b3627`의 별도 branch `claude/project-thread-1jfdtk`에서 A INSERT와 B 읽기의 합류 시험(memory 11개, native 3 case)과 S4 잔여를 공급했다. 최종 r2에서 memory 36/36과 native 9 process가 통과했다. S6 시간 한도는 30초로 되돌려 다시 실행했다. S6·S7 독립 D1/D2는 조건부 ACCEPT다. M5는 미완료다(MI03 미충족, MI06은 S6 shared 144B 수정 대기). → S8 갱신: S6 shared 수정은 PR #10으로 병합됐고 MI06은 PASS다.
 
 2026-10-31 [S6 C4 Row 복구 READY](evidence/module-independence-survey-20261026.md#s6-row-recovery): S5가 병합된 main `8d5e48b`의 별도 branch `claude/project-thread-a7onu7`에서 Row 복구 policy gate, 닫힌 facade의 Row 정리, A의 복구 CLR task를 구현했다. 최종 commit ELF에서 memory 43개 중 42개, native 9 case·21 process, compiler 4건이 통과했다. 남은 1개는 main에도 있는 30초 시간 한도 실패다. 독립 D1/D2 리뷰, live Row 정리 retirement, DEV3 최종 인수, 전체 M4/M5는 미완료다.
 

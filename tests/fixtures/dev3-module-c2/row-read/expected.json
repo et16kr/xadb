@@ -1,0 +1,279 @@
+{
+  "cancel": {
+    "frame_bytes": 40000,
+    "frame_sha256": "c2b02eaa12afa2c12eb0427ad8a6deb9746ccb884571ab3157928fa6ba6aee4b",
+    "lsn": 16,
+    "source": "dev3-module-c3/row-write/expected-cancel.json"
+  },
+  "canonical_sha256": "fae2df78d78985674f9e83253255b062c3bbee012bc876f26e4342520ae04b38",
+  "case": "MCB05-L01",
+  "files": {
+    "after-jobs.bin": {
+      "bytes": 16384,
+      "sha256": "f5627aa6bf03b8b05c068f99d3405624fad788d64fbda3557307d319128356df"
+    },
+    "after-leaf.bin": {
+      "bytes": 16384,
+      "sha256": "0c3689d98f178c24eb75ff3276bbed2ee7bb410ca38103a00d6708d1ee4e8ff4"
+    },
+    "after-root.bin": {
+      "bytes": 16384,
+      "sha256": "32e2fe6450e9b2fe0cbf07707e6a568cf6d193b6f5383365240e979f3fe49a40"
+    },
+    "after-status.bin": {
+      "bytes": 16384,
+      "sha256": "8371f123e181f5bc9d4c437a7b51282f84a24f2c9dd350ef07b577c7d14f5162"
+    },
+    "after-undo.bin": {
+      "bytes": 16384,
+      "sha256": "801bbcfb6457e6e86916422054ef035475038c644786723d7cd600ee2b954cb8"
+    },
+    "canonical.bin": {
+      "bytes": 13,
+      "sha256": "fae2df78d78985674f9e83253255b062c3bbee012bc876f26e4342520ae04b38"
+    },
+    "forward-frame.bin": {
+      "bytes": 91497,
+      "sha256": "0ee305722bff97a71161e2111bb7a15059b3a35b8a941c603a45e2fc5de81043"
+    }
+  },
+  "forward_lsn": 16,
+  "known_bad": {
+    "K01": {
+      "files": {
+        "after-jobs.bin": {
+          "bytes": 16384,
+          "sha256": "1e70017d43b9ccd91d92f92465f5d5c58585a8469c38c2d9676614bec4b45003"
+        },
+        "after-root.bin": {
+          "bytes": 16384,
+          "sha256": "5a62c228d377e1ea0525ca1ab704dc4a8d33cfbee688315d4c348c1134c24f9a"
+        },
+        "after-undo.bin": {
+          "bytes": 16384,
+          "sha256": "283f7b268c0d273f4c8feed859046e292fbdd7fd004b59f277edc7c2cae81941"
+        },
+        "forward-frame.bin": {
+          "bytes": 91497,
+          "sha256": "565d434b542ec57fb673a6b6182f7345257f6bdd03ce7e51fa9d30fc56c5c81e"
+        }
+      },
+      "patch": {
+        "bytes": 1881,
+        "sha256": "e6168679a6320f6c131808db1dd82ced695a8c0d60762cac3f9d8201c661fc19"
+      },
+      "what": "foreign table generation (Job, U target, projection)"
+    },
+    "K02": {
+      "files": {
+        "after-jobs.bin": {
+          "bytes": 16384,
+          "sha256": "3423ecf42babd852f3ab03d8b45d95b87e8f6747d024338c2ab0d207fdaf7a23"
+        },
+        "after-leaf.bin": {
+          "bytes": 16384,
+          "sha256": "8d70106744debce999bbb12c73b8098d23912e21e8ae7d22418021bd13007017"
+        },
+        "after-root.bin": {
+          "bytes": 16384,
+          "sha256": "315c1789613e9ecc193e1f5e491c424ffba255364fa798ba6b2b4f584e4042bc"
+        },
+        "after-undo.bin": {
+          "bytes": 16384,
+          "sha256": "5a90473bbc6e28c44f44fc198924f5d7bc267275bf50dc55cd52441effe38fd7"
+        },
+        "forward-frame.bin": {
+          "bytes": 91497,
+          "sha256": "3823de3e514b64dc4423267d43802ad360b8a32d0685afafa88511278c0612b0"
+        }
+      },
+      "patch": {
+        "bytes": 2168,
+        "sha256": "7977833f604796c72eb5ae42ac532a5f45cdd4740a7152b4243a13d07bbc22bd"
+      },
+      "what": "forged RowId 2, the Reserve issued 1"
+    },
+    "K03": {
+      "files": {
+        "after-jobs.bin": {
+          "bytes": 16384,
+          "sha256": "e68edff46e69aa51f2597fb5905f8f76bc18381ce8b47542f2a147006ea2a6c0"
+        },
+        "after-leaf.bin": {
+          "bytes": 16384,
+          "sha256": "387046703e4289fac52298c279f5ebcecc396ecf83693146d90ccbb3964d798b"
+        },
+        "after-root.bin": {
+          "bytes": 16384,
+          "sha256": "293bcf98647a8ce26eaf947d27f01389a214e630e5ab47a84eddf4102459373c"
+        },
+        "after-status.bin": {
+          "bytes": 16384,
+          "sha256": "043650a54ad14f359fe2cabb725d833180daba2894680407370559689e7dbd97"
+        },
+        "after-undo.bin": {
+          "bytes": 16384,
+          "sha256": "d6e37e210f0632528a7a68918d53d541c12b332cb1e2e23d630ffb308fae7ef8"
+        },
+        "forward-frame.bin": {
+          "bytes": 91497,
+          "sha256": "45674ea46ebfe8c5264f011857ff03e5f8fad571bcde7dfa427a171f8efcc9bc"
+        }
+      },
+      "patch": {
+        "bytes": 2506,
+        "sha256": "96a478a7bb5fa2b3fd25af09fb5c88c63c44ec5a42cbf36eb1364d8cc17495dd"
+      },
+      "what": "wrong U generation"
+    },
+    "K04": {
+      "files": {
+        "forward-frame.bin": {
+          "bytes": 91497,
+          "sha256": "7c64c24d29c1012ef9328488f2c45ca5137339e49002c173d169515bf1e7d2c7"
+        }
+      },
+      "patch": {
+        "bytes": 351,
+        "sha256": "c9e825ba9853c1947a0913b758d62e40ea09f84b53e840cdb5c221dd911249b5"
+      },
+      "what": "planned mutation consumed again (descriptor last mutation 2)"
+    },
+    "K05": {
+      "files": {
+        "after-undo.bin": {
+          "bytes": 16384,
+          "sha256": "a52dfe2ac295229e4ffbfdfa84e04508aa5a8deddc766a6dc017be3fc8be5843"
+        },
+        "forward-frame.bin": {
+          "bytes": 91625,
+          "sha256": "4befb1e854f455d71a694cf9e3b385119f5837d68740973acf263d915233e276"
+        }
+      },
+      "patch": {
+        "bytes": 485,
+        "sha256": "ed20accd34f86e3e8a2ed284e8e394d1913fbdb41bc133cc164254f1d556605e"
+      },
+      "what": "predecessor H claimed, the actual predecessor is none"
+    },
+    "K06": {
+      "files": {
+        "after-undo.bin": {
+          "bytes": 16384,
+          "sha256": "ad26abc2afe69ad2359a602173b40be4f17b1361636b5e1cdf4bc67e38fdcd05"
+        },
+        "forward-frame.bin": {
+          "bytes": 91497,
+          "sha256": "aab118e83f3353d198be1f952bcffd8840abee49b15cd82c683ade73d5380267"
+        }
+      },
+      "patch": {
+        "bytes": 521,
+        "sha256": "a0d74cc80326f48a74f8f46f244824ac80a54a90737c0657bc9a047a25a51c05"
+      },
+      "what": "U incoming 1 (the graph gives 2)"
+    },
+    "K08": {
+      "files": {
+        "after-leaf.bin": {
+          "bytes": 16384,
+          "sha256": "6aa4b4bb4ce7e11a985916081c576fb9325b57e4f041b5024c7a510d91e0e35d"
+        },
+        "forward-frame.bin": {
+          "bytes": 91497,
+          "sha256": "b2519f87a02cc5f8b5a88c13c76bdc81864c55eba6d7c4964505b922ef8ca482"
+        }
+      },
+      "patch": {
+        "bytes": 550,
+        "sha256": "704a564662d58e8850a174a2bfe4462c637e67f127b8bcac5891a2e5ec80d4c8"
+      },
+      "what": "row Transaction stamp is another transaction (TxnId local +1)"
+    },
+    "K09": {
+      "files": {
+        "forward-frame.bin": {
+          "bytes": 91497,
+          "sha256": "a5f9f1cdc12db017ed0ea0769d6f58f6214ec135008d591da4219f80536565da"
+        }
+      },
+      "patch": {
+        "bytes": 271,
+        "sha256": "b7d29da13b55fb0ee4231ddfd58bd375597a0bd5a214a2d48784f96b864e1da9"
+      },
+      "what": "leaf redo row bytes differ from the native after cell"
+    },
+    "K10": {
+      "files": {
+        "forward-frame.bin": {
+          "bytes": 91289,
+          "sha256": "5e95bdc2349c415ea443d808eecb4715e57c33a7ec61b4c000d1f0b3554d2fe0"
+        }
+      },
+      "patch": {
+        "bytes": 234,
+        "sha256": "5f26f7e86b54c98c67161b59596449d45fd072ef6243ca396f8dd16935973ef4"
+      },
+      "what": "Reserved inventory item left unconsumed (no InventoryDelta, descriptor keeps it)"
+    },
+    "K11": {
+      "files": {
+        "forward-frame.bin": {
+          "bytes": 91497,
+          "sha256": "9e557fba8ee192248c275dd99d976ca0940c88e755711fdcdeaeb25267e5a391"
+        }
+      },
+      "patch": {
+        "bytes": 333,
+        "sha256": "373410e106ab63809d1f75e9e8571281aaaae3bf2233422b97df82cd1d08e0c9"
+      },
+      "what": "full-abort CLR WAL debt decremented by one"
+    },
+    "K12": {
+      "files": {
+        "forward-frame.bin": {
+          "bytes": 91497,
+          "sha256": "985fdf8128512063264327f9123445d3c33cab42044b747e98e85e7d3ff700ca"
+        }
+      },
+      "patch": {
+        "bytes": 279,
+        "sha256": "3f43e361436e5133b1bcebfb86738455be3d35da2e2224fa08fdb79d889d9d8b"
+      },
+      "what": "the valid Row frame declared as a scope2 group (scope field only)"
+    }
+  },
+  "known_bad_not_run": {
+    "K07": "H before count 0 with a net-0 move needs an actual predecessor H (a second root of the same actor); this one-row history has none"
+  },
+  "pages": {
+    "after-jobs.bin": 2,
+    "after-leaf.bin": 13,
+    "after-root.bin": 1,
+    "after-status.bin": 11,
+    "after-undo.bin": 14
+  },
+  "provenance": {
+    "author": "dev3-module-c2/row-read/author.py (run as python3 -I author.py)",
+    "no_xadb_code": "no XADB encoder, decoder, A producer or B reader is run",
+    "pinned_inputs": {
+      "dev3-module-c3/row-write/expected-cancel.json": "a66479c326b77dcccf4b9ae63e5e83a1e3eaa6b079adcea0bb4570a56aa9dc36",
+      "dev3-module-c3/row-write/forward.py": "cbab5fcf089099524ea31fa1da1b6673b617973623bc7c59b7334ef45064cd9f",
+      "dev3-module-c3/row-write/live/aging.bin": "7670867ac62398be66282adf9f8b670c73d56c571c700919a232f5d489f4b266",
+      "dev3-module-c3/row-write/live/bank.bin": "1f89dcdb2e244f6d2cbf33cf72a030df2daf18b72e8f7cd9b3a463de18382bdb",
+      "dev3-module-c3/row-write/live/jobs2.bin": "a2aa825f6e3af848a07559ea6d15bc590825c28127e4862c80c13835d7b32312",
+      "dev3-module-c3/row-write/live/leaf13.bin": "30b625850232dac524dda502796d7e3b0c2679cfc55346cab807b1579b465396",
+      "dev3-module-c3/row-write/live/profile.bin": "f49d4bb26a5c0e1bd66dec9a2b0f77aa24e3fafadf54f27e5db9ab9a960e204e",
+      "dev3-module-c3/row-write/live/root1.bin": "700ee5b8e8ceb843789fad495a6bade5917c6d92ae21f3d2e4d2abdcd6b156bc",
+      "dev3-module-c3/row-write/live/status11.bin": "9d52d6d97261aec98b2050edba42173bbb385a56e90abb9ade352bb8a3e6c4b5",
+      "dev3-module-c3/row-write/live/tx.bin": "20abdcb33ae7095e2c6a335b5f3a5020bd13f53668c2a8ab1ba8b4eefcf3c3a6",
+      "dev3-module-c3/row-write/live/undo14.bin": "7fe328b11b1d505fa2f35c0297e5cfcc369143ea7e8272298d564fe751774eab",
+      "module-row-format/transition/author.py": "076ea2f2767851bd8046becbba6b1d05a00a6cd7838a9c9e052b6b2e033beec4"
+    }
+  },
+  "reserve_lsn": 15,
+  "row": 1,
+  "schema": "xadb-module-row-v1",
+  "source_kind": "C+B",
+  "value": 7
+}

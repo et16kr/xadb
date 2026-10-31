@@ -1,0 +1,6 @@
+XADB-S8-KNOWN-BAD-V1 K09
+# leaf redo row bytes differ from the native after cell
+file forward-frame.bin 91497 a5f9f1cdc12db017ed0ea0769d6f58f6214ec135008d591da4219f80536565da
+75076 75077 00
+91465 91497 c6bca79da3e7c8adae54976173d924dff082ef26a74ed5ece92dd4a2d680c7d8
+end

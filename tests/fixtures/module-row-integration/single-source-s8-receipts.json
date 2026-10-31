@@ -1,0 +1,1132 @@
+{
+ "schema": "XADB_S8_EXECUTION_RECEIPTS_V1",
+ "status": "S8 final at 14f7eaa2: C+A export 134/134 PASS (a2), C+B export 32/32 PASS (b2: MCB05-L01 and K01-K06, K08-K12), full tree 21/21 PASS (f2: moved row_read_live and row_literal). MI03 is PARTIAL / not met: C+A recovery (memory and native), C+B MCB01-MCB04 on literal rows, native P1-P3, MCB05-N01..06, K07 and the original forms of K01/K04/K05/K12 are not supplied or NOT_RUN. M5 does not count MI03 as met. MI06 is met after the independent re-check of the S6/S7 REQUIRED findings.",
+ "baseline_commit": "c427def8",
+ "branch": "claude/project-thread-1jfdtk-s8",
+ "final_commit": "14f7eaa28e",
+ "inventory_sha256": "8efc9c3f63111563f614fbfb66b9b6ab85b7947b963c60d27b743306c1f71822",
+ "literal_expected_sha256": "755e0fcb9596bdad9c4e850dbd02a8c8b8932cf58eda2fcb0b304553ef74ed18",
+ "exports": {
+  "C+A": {
+   "commit": "14f7eaa28ee28fa58a16637636026bd8486e4f97",
+   "files": 7547,
+   "source_manifest_sha256": "9bbc29a83cbf8ef9a7db9d71e1fdaed297445e187c5ad6544cd789d6aaa6cfb4",
+   "removed_files": 19,
+   "patches": 6,
+   "remaining_references": [],
+   "other_text_references": [
+    "devdoc/contracts/dev3-module-boundaries.md: 3",
+    "devdoc/contracts/dev3-module-consumers.md: 4",
+    "devdoc/evidence/module-independence-survey-20261026.md: 6",
+    "devdoc/policies/repository-build-plan.json: 6",
+    "scripts/module_single_source.py: 2",
+    "tests/fixtures/dev3-module-c3/row-read/execution-receipts.json: 1",
+    "tests/fixtures/module-row-insert/manifest.json: 1",
+    "tests/fixtures/module-row-integration/test-inventory.json: 2"
+   ],
+   "inventory_sha256": "40bbaeb06c1f181f6d17ce5aa99d6798c94d04f1fbcc39b75562600e649672c9"
+  },
+  "C+B": {
+   "commit": "14f7eaa28ee28fa58a16637636026bd8486e4f97",
+   "files": 7437,
+   "source_manifest_sha256": "79f177096a5439bf0efae64a48464900392dac9b4272e4ea7e6a2dd749a4607b",
+   "removed_files": 129,
+   "patches": 16,
+   "remaining_references": [],
+   "other_text_references": [
+    "devdoc/contracts/dev3-module-boundaries.md: 6",
+    "devdoc/contracts/dev3-module-consumers.md: 5",
+    "devdoc/evidence/module-independence-survey-20261026.md: 8",
+    "devdoc/policies/repository-build-plan.json: 19",
+    "scripts/module_single_source.py: 2",
+    "tests/fixtures/dev3-module-c0/boundary-compiler/MBC00-N11.rs: 1",
+    "tests/fixtures/dev3-module-c0/boundary-compiler/MBC00-P03.rs: 1",
+    "tests/fixtures/dev3-module-c3/row-commit/execution-receipts.json: 5",
+    "tests/fixtures/module-row-format/reserve-replay/author.py: 2",
+    "tests/fixtures/module-row-format/reserve-replay/input-plan.json: 1",
+    "tests/fixtures/module-row-format/transition/author.py: 62",
+    "tests/fixtures/module-row-format/transition/input-plan.json: 61"
+   ],
+   "inventory_sha256": "a373600f7a8073f5935f1c5c80b4111864c990cbd9ec912c7386255e6e38158f"
+  }
+ },
+ "exports_80c0f883": {
+  "C+A": {
+   "commit": "80c0f8831754f6209769d87828983a7f5c89ee19",
+   "files": 7547,
+   "source_manifest_sha256": "94174e5f30f49b15b8b44a07d7c67d7f7f77b234764b680f787ddfc447935813",
+   "removed_files": 19,
+   "patches": 6,
+   "remaining_references": [],
+   "inventory_sha256": "a37e7114d357c12b2ef07a39b169db6275f28baa404eb08496ad448b9361b529"
+  },
+  "C+B": {
+   "commit": "80c0f8831754f6209769d87828983a7f5c89ee19",
+   "files": 7437,
+   "source_manifest_sha256": "0a8b90cb10ff9cf67d1bd6dd9bd6fedc75792bb777e30e90c5e372731e09ad97",
+   "removed_files": 129,
+   "patches": 16,
+   "remaining_references": [],
+   "inventory_sha256": "d8577828237be3b74dabeaa068e75570e42e139911f8abeff0137328b125a9b4"
+  }
+ },
+ "runs": {
+  "a2": {
+   "tree": "C+A export",
+   "commit": "80c0f883",
+   "what": "single-source C+A final selection",
+   "source_manifest_sha256": "94174e5f30f49b15b8b44a07d7c67d7f7f77b234764b680f787ddfc447935813",
+   "elf_sha256": "02b0a0b85bf39d821cf271614443cb73363ce24ff79b338214420fdffb2ed08e",
+   "input_sha256": "a37e7114d357c12b2ef07a39b169db6275f28baa404eb08496ad448b9361b529",
+   "plan_sha256": "68c957a11a7a86ac0f966dba5bdbee81cfaf81f1ad719181e82d590abaf36dcd",
+   "passed": 134,
+   "selected": 134,
+   "max_seconds": 3.53,
+   "results": [
+    {
+     "test": "row_write::s2w_r04_forged_candidate_is_before_with_no_effect",
+     "exit": 0,
+     "seconds": 1.27
+    },
+    {
+     "test": "row_write::s2w_r05_reserve_recompute_change_is_before",
+     "exit": 0,
+     "seconds": 1.37
+    },
+    {
+     "test": "row_write::s2w_r06_reserve_installs_the_row_reserve_group",
+     "exit": 0,
+     "seconds": 1.07
+    },
+    {
+     "test": "row_write::s2w_r07_one_stale_stamp_is_before_then_retry_reserves",
+     "exit": 0,
+     "seconds": 0.92
+    },
+    {
+     "test": "row_write::s2w_r11_reserve_stage_refusal_keeps_the_write_bit",
+     "exit": 0,
+     "seconds": 1.22
+    },
+    {
+     "test": "row_write::s2w_r14_catalog_job_actor_is_refused_before_reserve",
+     "exit": 0,
+     "seconds": 1.08
+    },
+    {
+     "test": "row_write::s2w_r15_reader_waits_and_is_installation_pending_while_reserved",
+     "exit": 0,
+     "seconds": 1.02
+    },
+    {
+     "test": "row_write::s2w_r22_reserve_checks_out_no_replay",
+     "exit": 0,
+     "seconds": 1.07
+    },
+    {
+     "test": "row_write::s2w_r23_preflight_arena_mismatch_is_fatal",
+     "exit": 0,
+     "seconds": 1.07
+    },
+    {
+     "test": "row_write::s2w_r23_root_byte_is_stale_then_preflight_fatal",
+     "exit": 0,
+     "seconds": 0.97
+    },
+    {
+     "test": "row_write::s2w_r23_status_byte_is_stale_then_arena_fatal",
+     "exit": 0,
+     "seconds": 1.12
+    },
+    {
+     "test": "row_v09::mbc10_v09_row_write_waits_for_two_resident_readers_then_reserves",
+     "exit": 0,
+     "seconds": 2.02
+    },
+    {
+     "test": "row_forward::s2w_h01_h05_forward_replay_equals_live_and_stops_at_the_gate",
+     "exit": 0,
+     "seconds": 1.52
+    },
+    {
+     "test": "row_forward::s2w_r09_forward_lands_the_literal_and_retains_the_root",
+     "exit": 0,
+     "seconds": 0.97
+    },
+    {
+     "test": "row_forward::s2w_r10_tampered_proposal_is_before_on_the_same_reservation",
+     "exit": 0,
+     "seconds": 0.97
+    },
+    {
+     "test": "row_forward::s2w_r11_apply_stage_refusal_reopens_the_same_reservation",
+     "exit": 0,
+     "seconds": 1.12
+    },
+    {
+     "test": "row_forward::s2w_r12_apply_sync_fault_after_stage_is_fatal",
+     "exit": 0,
+     "seconds": 1.22
+    },
+    {
+     "test": "row_forward::s2w_r12_apply_write_fault_after_stage_is_fatal",
+     "exit": 0,
+     "seconds": 0.97
+    },
+    {
+     "test": "row_forward::s2w_r13_two_statements_of_three_rows_inherit_the_statement_credit",
+     "exit": 0,
+     "seconds": 2.85
+    },
+    {
+     "test": "row_forward::s2w_r21_missing_target_at_apply_is_fatal",
+     "exit": 0,
+     "seconds": 0.92
+    },
+    {
+     "test": "row_forward::s2w_r21_one_stale_stamp_at_apply_is_before_then_reopen",
+     "exit": 0,
+     "seconds": 1.07
+    },
+    {
+     "test": "row_forward::s2w_r22_forward_checks_out_no_replay",
+     "exit": 0,
+     "seconds": 1.02
+    },
+    {
+     "test": "row_forward::s2w_r23_control_byte_after_reserve_is_stale_prepare_then_cancel_then_drop_fences",
+     "exit": 0,
+     "seconds": 0.92
+    },
+    {
+     "test": "row_forward::s2w_r24_root_cursor_is_found_late_and_stops_restart",
+     "exit": 0,
+     "seconds": 1.47
+    },
+    {
+     "test": "row_cancel::s2w_h01_h05_reserve_and_cancel_replay_equal_live_and_stop_at_the_gate",
+     "exit": 0,
+     "seconds": 1.72
+    },
+    {
+     "test": "row_cancel::s2w_r08_busy_target_cancel_is_before_then_retry_lands_the_literal",
+     "exit": 0,
+     "seconds": 1.22
+    },
+    {
+     "test": "row_cancel::s2w_r08_cancel_returns_nothing_issued_and_keeps_the_write_bit",
+     "exit": 0,
+     "seconds": 1.17
+    },
+    {
+     "test": "row_cancel::s2w_r10_tampered_proposal_is_before_then_cancel_lands_the_literal",
+     "exit": 0,
+     "seconds": 1.22
+    },
+    {
+     "test": "row_cancel::s2w_r11_apply_stage_refusal_reopens_then_cancel_lands_the_literal",
+     "exit": 0,
+     "seconds": 1.17
+    },
+    {
+     "test": "row_cancel::s2w_r12_cancel_sync_fault_after_stage_is_fatal",
+     "exit": 0,
+     "seconds": 1.22
+    },
+    {
+     "test": "row_cancel::s2w_r12_cancel_write_fault_after_stage_is_fatal",
+     "exit": 0,
+     "seconds": 1.02
+    },
+    {
+     "test": "row_cancel::s2w_r15_cancel_ends_the_reservation_without_the_fence",
+     "exit": 0,
+     "seconds": 1.17
+    },
+    {
+     "test": "row_cancel::s2w_r18_live_root_reserved_actor_is_wrong_state",
+     "exit": 0,
+     "seconds": 1.12
+    },
+    {
+     "test": "row_cancel::s2w_r21_one_stale_stamp_at_apply_is_before_then_cancel_lands_the_literal",
+     "exit": 0,
+     "seconds": 1.17
+    },
+    {
+     "test": "row_cancel::s2w_r22_cancel_checks_out_no_replay",
+     "exit": 0,
+     "seconds": 1.22
+    },
+    {
+     "test": "row_cancel::s2w_r23_control_byte_after_reserve_is_stale_cancel_then_drop_fences",
+     "exit": 0,
+     "seconds": 1.22
+    },
+    {
+     "test": "row_live::mca05_v31_live_dirty_victim_flush_retries_the_same_row",
+     "exit": 0,
+     "seconds": 1.23
+    },
+    {
+     "test": "row_live::s2e_e09_applied_then_rejected_row_is_rollback_required_up_to_the_s4_start",
+     "exit": 0,
+     "seconds": 1.47
+    },
+    {
+     "test": "row_live::s2w_r07_live_reserve_stale_ends_the_row_with_finish",
+     "exit": 0,
+     "seconds": 1.32
+    },
+    {
+     "test": "row_live::s2w_r09_live_driver_inserts_one_row_and_finishes_the_statement",
+     "exit": 0,
+     "seconds": 0.92
+    },
+    {
+     "test": "row_live::s2w_r10_live_prepare_before_is_cancelled_by_the_driver",
+     "exit": 0,
+     "seconds": 1.07
+    },
+    {
+     "test": "row_live::s2w_r11_live_apply_before_is_reopened_and_cancelled",
+     "exit": 0,
+     "seconds": 1.02
+    },
+    {
+     "test": "row_live::s2w_r11_live_reserve_stage_refusal_ends_the_row_with_finish",
+     "exit": 0,
+     "seconds": 1.07
+    },
+    {
+     "test": "row_live::s2w_r19_live_preflight_busy_ends_the_row_without_retry",
+     "exit": 0,
+     "seconds": 1.17
+    },
+    {
+     "test": "row_live::s2w_r21_live_apply_stale_is_reopened_and_cancelled",
+     "exit": 0,
+     "seconds": 1.37
+    },
+    {
+     "test": "row_live::s2w_r21_live_missing_target_is_must_resolve",
+     "exit": 0,
+     "seconds": 1.07
+    },
+    {
+     "test": "row_live::s2w_r21_live_refused_cancel_is_fenced_and_must_resolve",
+     "exit": 0,
+     "seconds": 1.07
+    },
+    {
+     "test": "row_commit::s3_r01_read_committed_insert_commit_matches_independent_frame",
+     "exit": 0,
+     "seconds": 1.02
+    },
+    {
+     "test": "row_commit::s3_r01_serializable_insert_commit_matches_independent_frame",
+     "exit": 0,
+     "seconds": 1.02
+    },
+    {
+     "test": "row_commit::s3_r02_cancel_statement_can_empty_abort",
+     "exit": 0,
+     "seconds": 1.17
+    },
+    {
+     "test": "row_commit::s3_r02_empty_cancel_and_duplicate_table_roots",
+     "exit": 0,
+     "seconds": 3.38
+    },
+    {
+     "test": "row_commit::s3_r03_active_statement_is_before_busy",
+     "exit": 0,
+     "seconds": 0.77
+    },
+    {
+     "test": "row_commit::s3_r03_scope_foreign_capacity_reserved_and_aborting_refusals",
+     "exit": 0,
+     "seconds": 3.53
+    },
+    {
+     "test": "row_commit::s3_r04_read_committed_same_table_commits",
+     "exit": 0,
+     "seconds": 2.73
+    },
+    {
+     "test": "row_commit::s3_r04_serializable_other_table_commits",
+     "exit": 0,
+     "seconds": 2.62
+    },
+    {
+     "test": "row_commit::s3_r04_serializable_same_table_requires_rollback",
+     "exit": 0,
+     "seconds": 2.93
+    },
+    {
+     "test": "row_commit::s3_r05_commit_replays_divergent_forward_before_stage",
+     "exit": 0,
+     "seconds": 1.17
+    },
+    {
+     "test": "row_commit::s3_r06_actual_wal_capacity_restores_unstaged_then_retries",
+     "exit": 0,
+     "seconds": 1.17
+    },
+    {
+     "test": "row_commit::s3_r06_before_publication_is_fatal",
+     "exit": 0,
+     "seconds": 0.72
+    },
+    {
+     "test": "row_commit::s3_r06_cleanup_failure_is_fatal",
+     "exit": 0,
+     "seconds": 0.77
+    },
+    {
+     "test": "row_commit::s3_r06_partial_install_is_fatal",
+     "exit": 0,
+     "seconds": 0.72
+    },
+    {
+     "test": "row_commit::s3_r06_partial_write_fences_without_ack",
+     "exit": 0,
+     "seconds": 0.72
+    },
+    {
+     "test": "row_commit::s3_r06_stale_preparation_returns_same_capsule_then_retry",
+     "exit": 0,
+     "seconds": 0.97
+    },
+    {
+     "test": "row_commit::s3_r06_sync_after_error_fences_without_ack",
+     "exit": 0,
+     "seconds": 0.72
+    },
+    {
+     "test": "row_commit::s3_r07_pending_full_read_drain_flusher_and_old_q",
+     "exit": 0,
+     "seconds": 1.17
+    },
+    {
+     "test": "row_rollback::s4_r01_statement_suffix_then_commit",
+     "exit": 0,
+     "seconds": 2.78
+    },
+    {
+     "test": "row_rollback::s4_r02_full_abort_one_row",
+     "exit": 0,
+     "seconds": 1.17
+    },
+    {
+     "test": "row_rollback::s4_r03_premature_finish_bad_proposal_and_actual_stage_retry",
+     "exit": 0,
+     "seconds": 1.17
+    },
+    {
+     "test": "row_rollback::s4_r04_unfinished_drop_fences_without_more_io",
+     "exit": 0,
+     "seconds": 1.17
+    },
+    {
+     "test": "row_rollback::s4_r05_clr_sync_uncertainty_is_fatal",
+     "exit": 0,
+     "seconds": 1.12
+    },
+    {
+     "test": "row_rollback::s4_r05_partial_clr_write_is_fatal",
+     "exit": 0,
+     "seconds": 1.22
+    },
+    {
+     "test": "row_rollback::s4_r06_empty_statement_and_empty_full_abort",
+     "exit": 0,
+     "seconds": 0.92
+    },
+    {
+     "test": "row_rollback::s4_r07_flush_before_error_preserves_a_retryable_rollback",
+     "exit": 0,
+     "seconds": 1.37
+    },
+    {
+     "test": "row_rollback::s4_r08_serializable_conflict_then_full_abort",
+     "exit": 0,
+     "seconds": 2.17
+    },
+    {
+     "test": "row_rollback::s4_r09_wrong_after_digest_is_unchanged_and_same_task_retries",
+     "exit": 0,
+     "seconds": 1.42
+    },
+    {
+     "test": "row_rollback::s4_r10_full_abort_three_roots_from_two_statements",
+     "exit": 0,
+     "seconds": 2.43
+    },
+    {
+     "test": "row_rollback::s4_r11_wrong_capsule_view_and_scope_are_unchanged",
+     "exit": 0,
+     "seconds": 1.97
+    },
+    {
+     "test": "v09::s4_v09_exact",
+     "exit": 0,
+     "seconds": 1.52
+    },
+    {
+     "test": "v09::s4_v09_minus_one",
+     "exit": 0,
+     "seconds": 1.27
+    },
+    {
+     "test": "v09::s4_v09_plus_one",
+     "exit": 0,
+     "seconds": 1.47
+    },
+    {
+     "test": "tests::aw1_f01_flush_required_flushes_and_retries_the_same_row_from_preflight",
+     "exit": 0,
+     "seconds": 0.01
+    },
+    {
+     "test": "tests::aw1_f02_flush_refusals_end_the_row_holding_nothing",
+     "exit": 0,
+     "seconds": 0.01
+    },
+    {
+     "test": "tests::mca00_d01_one_row_statement_reserves_produces_applies_and_finishes",
+     "exit": 0,
+     "seconds": 0.01
+    },
+    {
+     "test": "tests::mca00_d02_rows_take_one_reservation_at_a_time",
+     "exit": 0,
+     "seconds": 0.01
+    },
+    {
+     "test": "tests::mca00_d03_statement_and_arguments_are_checked_before_any_c_call",
+     "exit": 0,
+     "seconds": 0.02
+    },
+    {
+     "test": "tests::mca00_d04_value_rejections_release_the_preflight_without_reserve",
+     "exit": 0,
+     "seconds": 0.02
+    },
+    {
+     "test": "tests::mca00_d05_c_refusals_keep_busy_capacity_unsupported_distinct",
+     "exit": 0,
+     "seconds": 0.01
+    },
+    {
+     "test": "tests::mca00_d06_failures_after_reserve_cancel_the_one_reservation",
+     "exit": 0,
+     "seconds": 0.01
+    },
+    {
+     "test": "tests::mca00_d07_failed_row_after_applied_rows_rolls_back_to_the_mark",
+     "exit": 0,
+     "seconds": 0.01
+    },
+    {
+     "test": "tests::mca00_d08_unsupported_c0_wrappers_propagate_unchanged",
+     "exit": 0,
+     "seconds": 0.02
+    },
+    {
+     "test": "tests::mca00_d09_fatal_and_unreleased_reservations_stop_all_calls",
+     "exit": 0,
+     "seconds": 0.01
+    },
+    {
+     "test": "tests::mca00_d10_rollback_stops_hand_back_the_same_rollback_or_task",
+     "exit": 0,
+     "seconds": 0.01
+    },
+    {
+     "test": "tests::mca00_d11_commit_and_full_abort_close_the_transaction",
+     "exit": 0,
+     "seconds": 0.01
+    },
+    {
+     "test": "tests::mca00_d12_driver_frames_stay_within_the_driver_source_bound",
+     "exit": 0,
+     "seconds": 0.01
+    },
+    {
+     "test": "tests::mca00_d13_a_finished_rollback_leaves_only_the_finish_to_retry",
+     "exit": 0,
+     "seconds": 0.01
+    },
+    {
+     "test": "tests::mca00_d14_a_rollback_required_handle_is_released_only_by_its_finished_rollback",
+     "exit": 0,
+     "seconds": 0.01
+    },
+    {
+     "test": "tests::mca00_d15_memory_call_site_shares_fit_the_caller_bounds",
+     "exit": 0,
+     "seconds": 0.01
+    },
+    {
+     "test": "tests::mca00_d15_native_call_site_shares_fit_the_caller_bounds",
+     "exit": 0,
+     "seconds": 0.01
+    },
+    {
+     "test": "group_tests::mca00_v06_aging_after_census_refusals_precede_output",
+     "exit": 0,
+     "seconds": 0.06
+    },
+    {
+     "test": "group_tests::mca00_v06_clr_refusals_precede_output",
+     "exit": 0,
+     "seconds": 0.06
+    },
+    {
+     "test": "group_tests::mca00_v06_clr_with_h_matches_literals",
+     "exit": 0,
+     "seconds": 0.02
+    },
+    {
+     "test": "group_tests::mca00_v06_clr_without_h_matches_literals",
+     "exit": 0,
+     "seconds": 0.03
+    },
+    {
+     "test": "group_tests::mca00_v06_descriptor_refusals_precede_output",
+     "exit": 0,
+     "seconds": 0.03
+    },
+    {
+     "test": "group_tests::mca00_v06_forward_physical_order_differs_from_roles",
+     "exit": 0,
+     "seconds": 0.02
+    },
+    {
+     "test": "group_tests::mca00_v06_forward_refusals_precede_output",
+     "exit": 0,
+     "seconds": 0.06
+    },
+    {
+     "test": "group_tests::mca00_v06_forward_with_h_matches_literals",
+     "exit": 0,
+     "seconds": 0.03
+    },
+    {
+     "test": "group_tests::mca00_v06_forward_without_h_matches_literals",
+     "exit": 0,
+     "seconds": 0.03
+    },
+    {
+     "test": "group_tests::mca00_v06_header_and_zero_lsn_refusals_precede_output",
+     "exit": 0,
+     "seconds": 0.03
+    },
+    {
+     "test": "group_tests::mca00_v06_leaf_refusals_precede_output",
+     "exit": 0,
+     "seconds": 0.03
+    },
+    {
+     "test": "group_tests::mca00_v06_produced_groups_pass_c_observers",
+     "exit": 0,
+     "seconds": 0.06
+    },
+    {
+     "test": "tests::mca00_v01_nullable_bool_literals",
+     "exit": 0,
+     "seconds": 0.01
+    },
+    {
+     "test": "tests::mca00_v02_int64_extrema_literals",
+     "exit": 0,
+     "seconds": 0.01
+    },
+    {
+     "test": "tests::mca00_v03_multibyte_utf8_literal",
+     "exit": 0,
+     "seconds": 0.01
+    },
+    {
+     "test": "tests::mca00_v04_binary_zero_literal",
+     "exit": 0,
+     "seconds": 0.01
+    },
+    {
+     "test": "tests::mca00_v05_invalid_input_preserves_candidate",
+     "exit": 0,
+     "seconds": 0.01
+    },
+    {
+     "test": "tests::mca_leaf_v01_inline_and_capacity_boundaries",
+     "exit": 0,
+     "seconds": 0.01
+    },
+    {
+     "test": "tests::mca_leaf_v02_row_key_and_page_match_independent_literals",
+     "exit": 0,
+     "seconds": 0.01
+    },
+    {
+     "test": "tests::mca_leaf_v03_maximum_minimal_rows_use_bounded_scratch",
+     "exit": 0,
+     "seconds": 0.01
+    },
+    {
+     "test": "tests::mca_leaf_v04_duplicate_and_corrupt_existing_row_preserve_output",
+     "exit": 0,
+     "seconds": 0.01
+    },
+    {
+     "test": "tests::mca_leaf_v05_stale_lsn_wrong_owner_and_small_scratch_preserve_output",
+     "exit": 0,
+     "seconds": 0.01
+    },
+    {
+     "test": "row_census::s3_c01_row_commit_windows_and_actual_a_caller_fit_fixed_charges",
+     "exit": 0,
+     "seconds": 0.01
+    },
+    {
+     "test": "census_tests::s2w_c01_row_write_phase_census_memory",
+     "exit": 0,
+     "seconds": 0.01
+    },
+    {
+     "test": "census_tests::s2w_c02_row_write_phase_census_native",
+     "exit": 0,
+     "seconds": 0.01
+    },
+    {
+     "test": "census_tests::s2w_c03_row_lifecycle_unchanged_beside_the_row_write_layout",
+     "exit": 0,
+     "seconds": 0.0
+    },
+    {
+     "test": "census_tests::s2w_c05_private_lane_ranges_and_cut_sizes",
+     "exit": 0,
+     "seconds": 0.01
+    },
+    {
+     "test": "census_tests::s2w_c06_row_write_c_margins_against_both_bounds",
+     "exit": 0,
+     "seconds": 0.01
+    },
+    {
+     "test": "census::s4_c01_memory_rollback_census",
+     "exit": 0,
+     "seconds": 0.01
+    },
+    {
+     "test": "census::s4_c01_native_rollback_census",
+     "exit": 0,
+     "seconds": 0.01
+    },
+    {
+     "test": "v09_census_tests::mbc40_v09_row_write_census_memory",
+     "exit": 0,
+     "seconds": 0.01
+    },
+    {
+     "test": "v09_census_tests::mbc40_v09_row_write_census_native",
+     "exit": 0,
+     "seconds": 0.01
+    },
+    {
+     "test": "census_tests::s2w_c04_live_and_recovered_peaks_unchanged",
+     "exit": 0,
+     "seconds": 0.01
+    },
+    {
+     "test": "census::s6r_c01_memory_recovery_row_census",
+     "exit": 0,
+     "seconds": 0.01
+    },
+    {
+     "test": "census::s6r_c02_native_recovery_row_census",
+     "exit": 0,
+     "seconds": 0.01
+    },
+    {
+     "test": "census::s6r_c03_recovered_facade_carriers",
+     "exit": 0,
+     "seconds": 0.0
+    }
+   ],
+   "note": "run on the 80c0f883 C+A export; valid for 14f7eaa2: the C+A export Rust sources under crates/ are identical (14f7eaa2 changed only row_literal.rs, which C+A removes, plus fixtures and the tool docstring) and the rebuilt 14f7eaa2 C+A ELF has the same SHA-256 02b0a0b8..."
+  },
+  "b2": {
+   "tree": "C+B export",
+   "commit": "14f7eaa2",
+   "what": "single-source C+B final selection after the review fixes",
+   "source_manifest_sha256": "79f177096a5439bf0efae64a48464900392dac9b4272e4ea7e6a2dd749a4607b",
+   "elf_sha256": "f0dee6cf19ba0b94738e88b553277f4ec3dafa81e462931f576c4fdc9034613e",
+   "input_sha256": "a373600f7a8073f5935f1c5c80b4111864c990cbd9ec912c7386255e6e38158f",
+   "plan_sha256": "53d2051688897d45992e24d79402d5392875c5f402cc4a345c36ae90326350ad",
+   "passed": 32,
+   "selected": 32,
+   "max_seconds": 1.92,
+   "results": [
+    {
+     "test": "tests::mcb00_d01_point_found_and_absent_key",
+     "exit": 0,
+     "seconds": 0.01
+    },
+    {
+     "test": "tests::mcb00_d02_point_status_and_missing_before_select_the_version",
+     "exit": 0,
+     "seconds": 0.01
+    },
+    {
+     "test": "tests::mcb00_d03_flush_required_passes_through_after_cleanup",
+     "exit": 0,
+     "seconds": 0.01
+    },
+    {
+     "test": "tests::mcb00_d04_point_output_cancel_and_cleanup_never_publish",
+     "exit": 0,
+     "seconds": 0.01
+    },
+    {
+     "test": "tests::mcb00_d05_cursor_next_returns_rows_in_order_then_end",
+     "exit": 0,
+     "seconds": 0.01
+    },
+    {
+     "test": "tests::mcb00_d06_cursor_reseeks_by_full_row_id_after_a_gap",
+     "exit": 0,
+     "seconds": 0.01
+    },
+    {
+     "test": "tests::mcb00_d07_cursor_output_cancel_and_cleanup_keep_the_visible_row",
+     "exit": 0,
+     "seconds": 0.01
+    },
+    {
+     "test": "tests::mcb00_d08_statement_and_revision_precede_end_and_cancel",
+     "exit": 0,
+     "seconds": 0.01
+    },
+    {
+     "test": "tests::mcb00_d09_close_returns_only_its_own_credit",
+     "exit": 0,
+     "seconds": 0.01
+    },
+    {
+     "test": "tests::mcb00_d10_ended_statement_precedes_range_credit_and_operation",
+     "exit": 0,
+     "seconds": 0.0
+    },
+    {
+     "test": "tests::mcb00_d11_cursor_operations_open_on_its_own_view_and_table",
+     "exit": 0,
+     "seconds": 0.01
+    },
+    {
+     "test": "tests::mcb00_d12_cleanup_failure_replaces_flush_and_scan_errors_keep_progress",
+     "exit": 0,
+     "seconds": 0.01
+    },
+    {
+     "test": "tests::mcb00_d13_memory_call_inventory",
+     "exit": 0,
+     "seconds": 0.0
+    },
+    {
+     "test": "tests::mcb00_d13_native_call_inventory",
+     "exit": 0,
+     "seconds": 0.0
+    },
+    {
+     "test": "tests::mcb00_v01_literal_point_and_reseek_bounds",
+     "exit": 0,
+     "seconds": 0.0
+    },
+    {
+     "test": "tests::mcb00_v02_literal_visibility_requires_status_and_missing_before",
+     "exit": 0,
+     "seconds": 0.0
+    },
+    {
+     "test": "tests::mcb00_v03_invisible_output_retry_cancel_and_revision_progress",
+     "exit": 0,
+     "seconds": 0.0
+    },
+    {
+     "test": "census_tests::s2w_c04_live_and_recovered_peaks_unchanged",
+     "exit": 0,
+     "seconds": 0.01
+    },
+    {
+     "test": "row_literal::mcb05_k01_foreign_table_generation_is_before_then_cancel",
+     "exit": 0,
+     "seconds": 1.17
+    },
+    {
+     "test": "row_literal::mcb05_k02_forged_row_id_is_before_then_cancel",
+     "exit": 0,
+     "seconds": 1.12
+    },
+    {
+     "test": "row_literal::mcb05_k03_wrong_undo_generation_is_before_then_cancel",
+     "exit": 0,
+     "seconds": 1.17
+    },
+    {
+     "test": "row_literal::mcb05_k04_planned_mutation_consumed_again_is_before_then_cancel",
+     "exit": 0,
+     "seconds": 1.17
+    },
+    {
+     "test": "row_literal::mcb05_k05_predecessor_claimed_without_one_is_before_then_cancel",
+     "exit": 0,
+     "seconds": 1.12
+    },
+    {
+     "test": "row_literal::mcb05_k06_undo_incoming_one_is_before_then_cancel",
+     "exit": 0,
+     "seconds": 1.22
+    },
+    {
+     "test": "row_literal::mcb05_k08_row_stamp_not_the_actor_is_before_then_cancel",
+     "exit": 0,
+     "seconds": 1.27
+    },
+    {
+     "test": "row_literal::mcb05_k09_redo_row_bytes_differ_from_native_is_before_then_cancel",
+     "exit": 0,
+     "seconds": 1.32
+    },
+    {
+     "test": "row_literal::mcb05_k10_reserved_inventory_not_consumed_is_before_then_cancel",
+     "exit": 0,
+     "seconds": 1.37
+    },
+    {
+     "test": "row_literal::mcb05_k11_full_abort_debt_decremented_is_before_then_cancel",
+     "exit": 0,
+     "seconds": 1.22
+    },
+    {
+     "test": "row_literal::mcb05_k12_scope2_group_is_before_then_cancel",
+     "exit": 0,
+     "seconds": 1.12
+    },
+    {
+     "test": "row_literal::mcb05_l01_literal_forward_is_read_by_b_after_c_commit",
+     "exit": 0,
+     "seconds": 1.92
+    },
+    {
+     "test": "row_read_census::s5r_c01_memory_source_inventory",
+     "exit": 0,
+     "seconds": 0.01
+    },
+    {
+     "test": "row_read_census::s5r_c02_native_source_inventory",
+     "exit": 0,
+     "seconds": 0.01
+    }
+   ]
+  },
+  "f2": {
+   "tree": "full tree (clean, 14f7eaa2)",
+   "commit": "14f7eaa2",
+   "what": "row_literal (12) and the moved S5 row_read_live selectors (9, C+A+B); native worker excluded",
+   "source_manifest_sha256": "c4c02afa053c2c6954924b03794b12c0113b77ba03708eb5816c5031168e2e37",
+   "elf_sha256": "ec8499f30320180e9621bbb691a511f8d783daa0cdd9a48743d4416ef31a0fb4",
+   "input_sha256": "755e0fcb9596bdad9c4e850dbd02a8c8b8932cf58eda2fcb0b304553ef74ed18",
+   "plan_sha256": "7c6df375a5f0151bbf5ddd4b63f049323175602b9ea41f15d8188cf8dc9dbb0b",
+   "passed": 21,
+   "selected": 21,
+   "max_seconds": 1.67,
+   "results": [
+    {
+     "test": "row_literal::mcb05_k01_foreign_table_generation_is_before_then_cancel",
+     "exit": 0,
+     "seconds": 1.12
+    },
+    {
+     "test": "row_literal::mcb05_k02_forged_row_id_is_before_then_cancel",
+     "exit": 0,
+     "seconds": 1.07
+    },
+    {
+     "test": "row_literal::mcb05_k03_wrong_undo_generation_is_before_then_cancel",
+     "exit": 0,
+     "seconds": 1.07
+    },
+    {
+     "test": "row_literal::mcb05_k04_planned_mutation_consumed_again_is_before_then_cancel",
+     "exit": 0,
+     "seconds": 0.97
+    },
+    {
+     "test": "row_literal::mcb05_k05_predecessor_claimed_without_one_is_before_then_cancel",
+     "exit": 0,
+     "seconds": 1.07
+    },
+    {
+     "test": "row_literal::mcb05_k06_undo_incoming_one_is_before_then_cancel",
+     "exit": 0,
+     "seconds": 1.17
+    },
+    {
+     "test": "row_literal::mcb05_k08_row_stamp_not_the_actor_is_before_then_cancel",
+     "exit": 0,
+     "seconds": 1.07
+    },
+    {
+     "test": "row_literal::mcb05_k09_redo_row_bytes_differ_from_native_is_before_then_cancel",
+     "exit": 0,
+     "seconds": 1.02
+    },
+    {
+     "test": "row_literal::mcb05_k10_reserved_inventory_not_consumed_is_before_then_cancel",
+     "exit": 0,
+     "seconds": 1.07
+    },
+    {
+     "test": "row_literal::mcb05_k11_full_abort_debt_decremented_is_before_then_cancel",
+     "exit": 0,
+     "seconds": 1.12
+    },
+    {
+     "test": "row_literal::mcb05_k12_scope2_group_is_before_then_cancel",
+     "exit": 0,
+     "seconds": 1.02
+    },
+    {
+     "test": "row_literal::mcb05_l01_literal_forward_is_read_by_b_after_c_commit",
+     "exit": 0,
+     "seconds": 1.67
+    },
+    {
+     "test": "row_read_live::s5r_c03_original_full_admission_boundary_and_foreign_owner",
+     "exit": 0,
+     "seconds": 0.87
+    },
+    {
+     "test": "row_read_live::s5r_r01_pending_preflight_precedes_read_source_reservation",
+     "exit": 0,
+     "seconds": 1.07
+    },
+    {
+     "test": "row_read_live::s5r_r01_read_admission_returns_original_resources",
+     "exit": 0,
+     "seconds": 0.82
+    },
+    {
+     "test": "row_read_live::s5r_r02_empty_table_and_r04_actual_capture_copy",
+     "exit": 0,
+     "seconds": 1.42
+    },
+    {
+     "test": "row_read_live::s5r_r03_cold_catalog_anchor_loads_before_schema",
+     "exit": 0,
+     "seconds": 1.02
+    },
+    {
+     "test": "row_read_live::s5r_r03_dirty_victim_flush_retries_the_same_snapshot",
+     "exit": 0,
+     "seconds": 1.52
+    },
+    {
+     "test": "row_read_live::s5r_r05_r07_retiring_capture_and_corrupt_undo",
+     "exit": 0,
+     "seconds": 1.02
+    },
+    {
+     "test": "row_read_live::s5r_r06_old_and_new_statement_snapshot",
+     "exit": 0,
+     "seconds": 1.32
+    },
+    {
+     "test": "row_read_live::s5r_r08_corrupt_row_tree_fences_and_preserves_cause",
+     "exit": 0,
+     "seconds": 0.82
+    }
+   ]
+  }
+ },
+ "superseded_runs": {
+  "b1": {
+   "tree": "C+B export",
+   "commit": "80c0f883",
+   "what": "single-source C+B final selection",
+   "source_manifest_sha256": "0a8b90cb10ff9cf67d1bd6dd9bd6fedc75792bb777e30e90c5e372731e09ad97",
+   "elf_sha256": "0bbb39fda3e4892a779f9d7b798ceb5e58b88ff77e609bbda0f79a3c1d8de8b2",
+   "input_sha256": "d8577828237be3b74dabeaa068e75570e42e139911f8abeff0137328b125a9b4",
+   "plan_sha256": "d673c3cb6a3fc2b2453aaa71c886384ea7a06a0ba6b86e6373af5891a835f318",
+   "passed": 32,
+   "selected": 32,
+   "max_seconds": 1.87,
+   "note": "C+B export at 80c0f883, 32/32 PASS before the review fixes (K08, K10, L01 changed in 14f7eaa2)"
+  },
+  "f1": {
+   "tree": "full tree",
+   "commit": "80c0f883",
+   "what": "moved S5 row_read_live selectors (C+A+B), native worker excluded",
+   "source_manifest_sha256": "122ff460adf2c61793686696a52ca0842f02feaf5a07701ad2c065d3676661a9",
+   "elf_sha256": "530a73439b04dd29534cd097d2949fb2fd16a5025fa6c23730a22fb08ce2e963",
+   "input_sha256": "601a261744a8d12c1a18947f6658a4b46d2a93d7ba8cb826c33e40915f4582ec",
+   "plan_sha256": "0bc8f1a845bc69f97bdd75090591890f0f651d1113a1c3a20bc031d4370469ef",
+   "passed": 9,
+   "selected": 9,
+   "max_seconds": 1.42,
+   "note": "full tree at 80c0f883, moved row_read_live 9/9 PASS; replaced by f2"
+  }
+ },
+ "development_runs": {
+  "a1": {
+   "commit": "1c5e8a6a (before the rebase onto c427def8)",
+   "source_manifest_sha256": "54129deb02ec4dc1cec4c6e6002bb039c4b5d0a1d3ed44df0b5bea5c255083df",
+   "elf_sha256": "8d8adaa096725efd5a2c64caf5586f6e3fded7c0dc74c70fa2211a7dfa8f600c",
+   "passed": 129,
+   "selected": 130,
+   "failed": [
+    "s3_r07_pending_full_read_drain_flusher_and_old_q"
+   ],
+   "note": "the one failure is s3_r07, the S6 shared +144 B regression also on main; fixed by PR #10 (c427def8) and PASS in a2"
+  },
+  "dev-k1": {
+   "tree": "full tree working copy at f838e865",
+   "source_manifest_sha256": "d4dcda55e9f87140eed20ebec528911b0bd3bc7612deee1572ad672d5d6f2cd0",
+   "elf_sha256": "8ee0eb47156bcc432ab306389310acb5023c8cd5f6ea1dea5e79ba0f8be7f1aa",
+   "passed": 12,
+   "selected": 12
+  },
+  "b0": {
+   "note": "first C+B export builds failed: A scope3 include_bytes in semantic_row transition_tests and plan4_retention recovery row_tests, and a doc comment left above a removed census registration; both are now declared removals"
+  }
+ },
+ "known_bad_causes": {
+  "K01": "RowSemantic(Corrupt)",
+  "K02": "RowSemantic(IdentityMismatch)",
+  "K03": "RowSemantic(IdentityMismatch)",
+  "K04": "RowSemantic(Corrupt)",
+  "K05": "RowSemantic(Corrupt)",
+  "K06": "RowSemantic(Corrupt)",
+  "K08": "RowSemantic(Row(IdentityMismatch))",
+  "K09": "RowSemantic(Corrupt)",
+  "K10": "RowSemantic(Corrupt)",
+  "K11": "RowSemantic(Corrupt)",
+  "K12": "RowSemantic(Unsupported)"
+ },
+ "mi03": "PARTIAL / not met (see the inventory mi03 and not_run)",
+ "mi06": "met: independent read-only re-checks found 0 unresolved REQUIRED findings: S6 and S7 reviews at c427def8 (reviews/mi06-recheck.md; S6 R1 fixed by PR #10 f267b577) and the S8 review R1/R2 fixes 80c0f883..7b6e815f (reviews/s8-fix-recheck.md)",
+ "artifacts": {
+  "path": "/mnt/project-files/module-independence-20261029/artifacts/module-s8-20261031",
+  "manifest_sha256": "8e315280c653ec360b6fc917007314a479cb047ca5711345111fef873d8df03b"
+ },
+ "not_run": {
+  "C+A recovery, memory and native (consumers 8.2)": "the S6 restart harness (row_recovery) reads READY values through B read_point_live, so the whole module is outside the C+A export; s6r_m01..m03 and A handle_recovered_clr never run in C+A; of row_forward only S2W-R24 remains",
+  "C+B MCB01-MCB04 on literal rows (consumers 8.3)": "the S5 B actual-C cases build rows with A INSERT and moved to row_read_live (C+A+B); the C+B selection has B unit tests, census and one positive B read (L01)",
+  "native C+A P1-P3 (consumers 8.2)": "the C+A restart harness (row_recovery) reads READY values through B, so no C+A native case is in the export",
+  "native C+B P1-P3 (consumers 8.3)": "P2 needs the literal late-bound to the recovered open and stream identity; the N1 model fixes open 1",
+  "C+B reopen fixture MCB05-N01..06": "B read after RejectInitialLosers over literal rows, not authored",
+  "C+B failed statement, CLR and Prune literal transitions": "not authored",
+  "K07 and the original forms of K01, K04, K05, K12": "need a two-root history of one actor (K04, K05, K07), another existing table (K01) or an actual scope2 frame (K12); K05 and K10 also carry a size confound (C derives the Forward length from cell and H)"
+ }
+}

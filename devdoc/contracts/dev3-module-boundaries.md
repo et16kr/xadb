@@ -2505,7 +2505,7 @@ S5 후속 D2 보완: `RowCandidate<'b>`는 원 visibility binding의 borrow life
   - S7 MCI02-N01·N02는 실제 native writer, READY 뒤 A Commit, RejectInitialLosers 재진입을 실행한다([합류 기록](#row-join-s7)). 다만 A가 만든 합류 입력이므로 MCB05의 literal 조건은 계속 충족되지 않는다.
 - **시간 한도.** S6 case의 `READY_BOUND` 150 s(`32de380`)와 240 s(`192c900`)는 실패 뒤 올린 사후 완화다. 그래서 S6 PASS의 근거로 세지 않는다. S7은 한도를 30 s로 되돌리고 debug hash 수정(PR #9) build에서 S6 selector 12개를 다시 실행했다([증거](../evidence/module-independence-survey-20261026.md#s7-row-join)).
 - **memory S6R-M01의 legacy 재시작.** "다음 legacy 재시작도 READY"는 B 읽기 전에 잡은 파일로 확인했다. B의 빈 aborted Row 거래가 남기는 Row TerminalReady는 legacy가 거절한다. native S6 n2가 이 경우를 만났다.
-- **shared 144B 회귀(R1).** `RowRecoveryAdmission`(padding 뒤 72B)을 담은 RestoredRetention이 shared에서 두 번 세어진다. 하나는 runtime의 대여분이고 다른 하나는 DiskSession의 recovery binding이다. 그래서 Pending Catalog commit 옆 Full read가 Census/Capacity로 거절된다. 검토 보고서는 RecoveryState 사본을 꼽았지만 그 값은 shared에 들지 않는다(수정 thread의 정정). 사용자 규칙에 따라 별도 thread가 수정하고 이 S7 branch로 합친다(main 직접 수정 아님).
+- **shared 144B 회귀(R1).** `RowRecoveryAdmission`(padding 뒤 72B)을 담은 RestoredRetention이 shared에서 두 번 세어진다. 하나는 runtime의 대여분이고 다른 하나는 DiskSession의 recovery binding이다. 그래서 Pending Catalog commit 옆 Full read가 Census/Capacity로 거절된다. 검토 보고서는 RecoveryState 사본을 꼽았지만 그 값은 shared에 들지 않는다(수정 thread의 정정). 사용자 규칙에 따라 별도 thread가 수정하고 이 S7 branch로 합친다(main 직접 수정 아님). → S8 갱신: PR #10(`f267b577`, S7 branch 병합 `c427def8`)이 RestoredRetention에 Row policy만 남겨 해결했다. shared는 memory 20200B, native 20208B다. 독립 재확인은 [S8](#row-single-source-s8)의 MI06 기록에 있다.
 - **후속(미구현).**
   - C1: `ExistingGroup::RowRecovery` 설치나 `recovery_rows()`에서 epoch 활성 뒤를 거절한다. 지금은 도달할 수 없는 경화이며 제품 변경이므로 사용자 승인이 필요하다.
   - C3: losers gate의 양성 대조, RootReserved만 있는 입력, 거절 뒤 lease fence 단언을 더한다.
@@ -2590,6 +2590,104 @@ MCI02의 각 case는 같은 ELF의 세 process다.
 - MI03(단독 인수)은 실제 C 공급에서 충족되지 않았다. S5의 B 인수 시험은 A의 INSERT로 행을 만들었다. [소비자 §8.3](dev3-module-consumers.md#independent-fixtures)의 C+B literal ingress(MCB05-K01..12 포함)는 구현되지 않았다. 이는 [§7](#common-deliveries) C4 행의 "독립 authored row corpus를 원 owner에 적용하는 제한 경로"이며 S6에서 공급되지 않은 부분이다. A의 실제 C 인수도 B source가 있는 전체 트리에서만 실행됐다. C0 단독 export(A10/B3)는 PASS다.
 - live Row retirement, DROP·stale CheckedTable, 병렬 writer는 범위 밖이다.
 - MCI01-V11은 복구의 물리 정리만 다룬다.
-- main의 S6 `32de380`에서 shared가 144B 늘어 Pending Catalog commit 옆 Full read가 Census/Capacity로 거절되는 회귀가 별도로 보고됐다. 이 branch의 선택 시험 경로는 그 조합을 쓰지 않는다. 별도 thread가 수정해 이 branch로 합친다([S6 보정](#row-recovery-s6)).
+- main의 S6 `32de380`에서 shared가 144B 늘어 Pending Catalog commit 옆 Full read가 Census/Capacity로 거절되는 회귀가 별도로 보고됐다. 이 branch의 선택 시험 경로는 그 조합을 쓰지 않는다. 별도 thread가 수정해 이 branch로 합친다([S6 보정](#row-recovery-s6)). → S8 갱신: PR #10으로 해결됐다. 위 (iv) 값은 수정 전 build의 값이며 수정 뒤 값은 [S8 증거](../evidence/module-independence-survey-20261026.md#s8-single-source)에 있다.
+- → S8 갱신: MI03은 [S8](#row-single-source-s8)이 일부 공급했고 여전히 PARTIAL·미충족이다.
 
 이 기록은 계약과 선택의 정의다. 실행 결과는 [증거](../evidence/module-independence-survey-20261026.md#s7-row-join)에 둔다.
+
+<a id="row-single-source-s8"></a>
+## XADB-MODULE-ROW-SINGLE-001 — S8 MI03 단독 source 인수
+
+2026-10-31. S7 branch(`claude/project-thread-1jfdtk`, S6 shared 수정 PR #10을 병합한 `c427def8`) 위의 별도 branch `claude/project-thread-1jfdtk-s8`에서 진행한다. S7은 MI03을 충족하지 못했다([S7 한계](#row-join-s7)). 사용자는 S7 PR 뒤 같은 thread에서 S8로 이어 가기로 골랐다. 범위는 둘이다.
+
+- C+A 단독 export: B가 없는 고정 source에서 A의 실제 C 인수를 선택 실행한다.
+- C+B literal ingress: A 없이 독립 literal로 Row를 쓰고 B가 읽는다. [소비자 §8.3](dev3-module-consumers.md#independent-fixtures)의 known-bad(MCB05-K01..12)를 포함한다.
+
+DEV3 기능은 하지 않는다. 제품 source, 공개 wire, format 번호, cap, charge, API는 바꾸지 않는다. 바뀐 것은 시험, fixture, script뿐이다.
+
+**단독 export(`scripts/module_single_source.py`).** commit의 `git archive`에서 시작해 선언한 것만 지운다.
+- 상대 module의 제품 source와 fixture, `storage/row.rs`의 등록 한 줄. C+A는 `row/read.rs`·`row/read/`·`tests/fixtures/module-row-read/`와 `pub(crate) mod read;`를, C+B는 `row/insert.rs`·`row/insert/`·`tests/fixtures/module-row-insert/`와 `pub(crate) mod insert;`를 지운다.
+- 상대를 링크하는 `catalog_memory` 시험 모듈의 등록과 파일. A를 링크하는 모듈은 row_write, row_v09, row_forward, row_cancel, row_live, row_commit, row_rollback, row_recovery, row_read_live, row_join이다. B를 링크하는 모듈은 row_read_live, row_recovery, row_join, row_literal, row_read_census다.
+- C+B에서만, A를 링크하거나 A fixture를 읽는 C의 cfg(test) 모듈 다섯. 등록 블록(바로 위 doc comment 포함)과 파일을 함께 지운다.
+  - A 호출 frame을 재는 census 셋: `plan4_apply/row/rollback_census_tests.rs`, `plan4_recovery/row_action_census_tests.rs`, `plan4_retention/catalog_commit/row_census.rs`
+  - A의 MCA00-V06 scope3 literal을 읽는 N1·S1-b 시험 둘: `semantic_row/transition_tests.rs`, `plan4_retention/recovery/row_tests.rs`
+
+그 밖의 byte는 바꾸지 않는다. 지운 뒤 `crates/` 아래 Rust source에 `row::read`/`row::insert` 경로나 상대 fixture 경로가 남으면 실패한다(주석 줄은 제외).
+- 이 검사는 이름 정규식이고 범위는 `crates/**/*.rs`뿐이다. 결정적 검사는 export 빌드다. 두 export 모두 상대를 부르는 `cfg(feature)` 경로나 build script는 없다.
+- 그 밖의 text file에서 상대를 부르는 줄은 실패로 세지 않고 `other_text_references`에 파일별 줄 수로 적는다. 문서, receipts, build plan JSON, compile-fail fixture, N1 author와 그 `input-plan.json`(A의 scope3을 pin한다)이다. C+B의 `MBC00-P03.rs`·`MBC00-N11.rs`는 `row::insert::driver::recovered`를 쓰므로 C+B에서는 그 compiler manifest를 실행할 수 없다. N1 author도 C+B에서 다시 실행할 수 없다.
+- 그래서 `remaining_references: []`는 crates의 Rust 경로가 남지 않았다는 뜻이고, 상대의 흔적이 전혀 없다는 뜻은 아니다.
+
+`inventory.json`(schema `XADB_S8_SINGLE_SOURCE_V1`)은 지운 파일, 지운 등록, 두 참조 목록, 파일 수와 source manifest SHA-256을 적는다. export는 그 안에서 `cargo test -p xadb-engine --lib --no-run --locked`로 빌드한다. C+B export에는 지운 census만 쓰던 cfg(test) import 경고 3개가 남는다. 이는 export에만 있고 전체 트리의 clippy gate와 무관하다. 고정한 제거 목록과 선택은 `tests/fixtures/module-row-integration/single-source-s8-inventory.json`에 둔다.
+
+**시험 위치 변경.** 내용은 바꾸지 않고 옮겼다.
+- S5의 B 읽기 시험(A의 INSERT로 행을 만든다): `row_live::s5r_*` → `row_read_live::s5r_*`. C+A+B이며 두 export 모두에서 빠지므로 전체 트리에서 실행한다. `row_live`에는 A의 S2-e driver 시험 11개만 남는다.
+- S5 RowRead census: `row_read_live::s5r_c01/c02` → `row_read_census::s5r_c01/c02`. B와 C만 링크하므로 C+B에 남는다.
+- `rollback.rs`·`row_action.rs`의 inline `mod census`를 `rollback_census_tests.rs`·`row_action_census_tests.rs`로 분리했다. selector는 그대로다.
+- S7의 동결 inventory는 원 기록이므로 옛 이름을 그대로 둔다. `module-row-integration/test-inventory.json`의 4개와 `dev3-module-c3/row-read/execution-receipts.json`의 3개가 `row_live::s5r_*`를 부른다. 그 이름은 지금 시험 0개에 맞고, `cargo test <filter>`는 0개로도 통과한다. 그래서 다시 실행할 때는 새 이름을 쓰고 selector마다 정확히 1개가 맞는지 확인한다. S8 runner는 이를 확인한다.
+
+**C+B literal ingress(MCB05-L01).** [§8.3](dev3-module-consumers.md#independent-fixtures)의 live fixture를 memory에서 공급한다. C의 실제 CREATE, Begin, RowReserve가 행을 발급한다. 독립 literal(`tests/fixtures/dev3-module-c2/row-read/`)은 그 예약 아래 canonical row와 Forward를 제안하고, C가 다른 producer와 같은 방식으로 모든 byte를 검산해 설치한다. 그다음 C의 Commit이 q를 공개하고 B의 point/cursor driver가 읽는다.
+- literal은 S2 fixture의 행이다(T object 6, RowId 1, Int64 7, RowReserve LSN 15, Forward LSN 16). lane을 채우는 방식은 다른 producer와 같다. validation lane에는 후보 bytes와 신뢰하지 않는 RowInputPlan을, producer lane에는 frame과 after image 다섯을 C가 선언한 물리 순서로 넣는다.
+- 기대값: WAL은 S2 RowReserve literal과 author의 Forward를 그대로 얻는다. apply 뒤 상주 T page 1, 2, 11, 13, 14는 literal의 after image와 byte 단위로 같다. commit 전 own statement는 7을 읽고, write 전에 잡은 foreign Serializable statement는 읽지 못한다. Commit q는 2다. 그 뒤 old snapshot은 빈 scan이고 그 transaction의 finish_read_only는 SerializationConflict다. 새 read-only transaction은 point와 cursor 모두 (1, 7)을 읽는다. 모든 값은 author의 expected.json과 S2 literal에서 오며 C·B 출력에서 가져오지 않는다.
+
+**known-bad(MCB05-K).** 각 K는 같은 literal Forward에 넣은 단일 의미 변조다. author가 N1 모델 안에서 `row_change` 전에 또는 그 둘레에 변조를 넣는다. 변조가 함축하는 cell, native, redo, descriptor, digest, frame SHA는 모델이 다시 쓰고 틀린 사실 하나만 남긴다. before image와 두 descriptor(transaction, Aging)는 변조 전 실제 값을 `row_change`의 첫 읽기로 넘긴다. 변경 없이 같은 경로를 거친 대조군은 literal과 byte 단위로 같다. 각 K는 `known-bad/Kxx.patch`(같은 길이는 byte run, 길이가 바뀌는 frame은 파일 전체)와 바뀐 파일마다 길이·SHA-256으로 고정한다.
+
+| K | 변조 | selector(`row_literal::`) |
+| --- | --- | --- |
+| K01 | Job·U target·projection의 table generation 1→2 | `mcb05_k01_foreign_table_generation_is_before_then_cancel` |
+| K02 | RowId 2(Reserve는 1을 발급) | `mcb05_k02_forged_row_id_is_before_then_cancel` |
+| K03 | U generation +1 | `mcb05_k03_wrong_undo_generation_is_before_then_cancel` |
+| K04 | Forward가 planned mutation을 다시 소모(descriptor last mutation 2) | `mcb05_k04_planned_mutation_consumed_again_is_before_then_cancel` |
+| K05 | 실제 선행이 없는데 H를 주장(Linked edge, next) | `mcb05_k05_predecessor_claimed_without_one_is_before_then_cancel` |
+| K06 | Live U의 incoming 1(graph는 2) | `mcb05_k06_undo_incoming_one_is_before_then_cancel` |
+| K07 | NOT_RUN: H before count 0과 net 0 이동은 실제 선행 H(같은 actor의 두 번째 root)가 있어야 한다 | — |
+| K08 | row의 Transaction stamp가 다른 거래(TxnId local +1) | `mcb05_k08_row_stamp_not_the_actor_is_before_then_cancel` |
+| K09 | leaf redo의 canonical byte 하나가 native after cell과 다름 | `mcb05_k09_redo_row_bytes_differ_from_native_is_before_then_cancel` |
+| K10 | Reserved inventory item을 소비하지 않음(InventoryDelta 없음, descriptor가 item 유지). 거래의 consumed WAL은 짧아진 frame 길이로 맞춘다 | `mcb05_k10_reserved_inventory_not_consumed_is_before_then_cancel` |
+| K11 | full-abort CLR WAL debt를 1 감소 | `mcb05_k11_full_abort_debt_decremented_is_before_then_cancel` |
+| K12 | 유효 Row frame의 group scope 필드만 2로 바꿈(frame 재봉인) | `mcb05_k12_scope2_group_is_before_then_cancel` |
+
+각 K의 oracle은 다음과 같다.
+- C의 prepare가 같은 ReservedRow로 Before를 돌려준다(phase Prepare, effect Unchanged, cause RowSemantic). 세부 cause는 C의 값이므로 기록만 하고 정답으로 쓰지 않는다.
+- 발급 identity와 draft cut이 그대로다. WAL, 모든 파일, T page(bytes와 stamp), fence가 바뀌지 않는다. 즉 stage가 없다.
+- 이어지는 명시 cancel이 S2 Cancel literal(40000B, `c2b02eaa…`)과 같다. 예약이 손상 없이 반환됐다는 뜻이다. 그 뒤 statement와 빈 transaction을 닫는다.
+
+oracle은 거절, 효과 0, 정확한 cancel을 확인한다. 거절이 선언한 사실 때문이라는 귀속은 author의 구성(단일 변조, 변경 없는 대조군이 literal과 byte 동일, K마다 바뀐 offset이 그 사실의 field에 한정)에 기댄다. C가 고른 세부 cause는 K01, K04, K05, K06, K09, K10, K11이 Corrupt, K02·K03이 IdentityMismatch, K08이 Row(IdentityMismatch), K12가 Unsupported다.
+
+K01, K04, K05, K12는 원 문언보다 좁거나 약하고, K05와 K10에는 크기 교란이 있다.
+- K01: 같은 object 6의 generation을 1→2로 바꾸며 Job after image도 바뀐다. 그래서 거절이 target table 검사가 아니라 "Forward는 예약된 Job을 바꿀 수 없다"는 일반 검사에서 왔을 수 있다. 실제로 있는 다른 table을 쓰거나 Job은 그대로 두고 target·U만 바꾸는 형태가 더 강하다.
+- K04: 한 행 이력에서 "중복"은 descriptor가 같은 Forward에서 mutation을 다시 계획하는 형태뿐이다(descriptor의 last mutation과 그 SHA만 바뀐다). 같은 actor의 이전 root mutation을 재사용하는 형태는 두 번째 root가 필요해 K07과 함께 미공급이다.
+- K05: 없는 H를 주장하면 frame이 128B 커진다. 예약의 Forward debt와 Job budget은 H 없이 정해졌으므로, C가 선행 검사 전에 크기로 거절했을 수 있다. 실제 H가 있을 때 다른 H를 고르는 같은 크기의 형태는 두 번째 root가 필요해 미공급이다.
+- K10: InventoryDelta가 없으면 frame이 208B 짧아진다. C는 Forward 길이를 cell과 H에서 계산하고 예약의 Forward debt는 91497B이므로, inventory 검사 전에 길이나 모양으로 거절했을 수 있다. 이 교란은 "InventoryDelta 없음"에 내재한다. frame 자체는 내부적으로 일관된다(consumed = 114048 + 91289).
+- K12: scope 필드만 바꾼 frame은 어느 observer에서도 유효하지 않다. 그래서 Row 입구가 scope2 Catalog observer로 넘어가는 변이도 이 시험을 통과한다. 실제 scope2 frame(예: 같은 session의 CREATE Catalog frame)을 producer lane에 넣는 형태가 원 문언이다.
+
+K07과 K04·K05의 원 형태는 한 actor의 두 root 이력(Begin, Reserve, L01 Forward, 두 번째 Reserve, 실제 H를 가진 두 번째 Forward)으로 함께 공급할 수 있다. N1 모델은 H를 이미 모의한다.
+
+**신뢰 경계.** literal과 K는 N1 History 모델(`module-row-format/transition/author.py`)과 S2W-R09 author(`dev3-module-c3/row-write/forward.py`)를 SHA로 고정해 import한다. XADB encoder·decoder, A producer, B reader는 쓰지 않는다. 모델의 입력은 S2 live fixture(SHA 고정)다. N1은 A의 MCA00-V06 scope3 snapshot을 codec 교차 검산의 고정 parent로 읽는다. 이것은 author 실행 때의 입력이고, C+B export의 Rust 시험은 A fixture를 읽지 않는다. 그래도 literal이 A의 산출물과 같은 format을 쓴다는 근거의 일부가 A snapshot이므로 한계로 적는다.
+
+**선택.** selector는 inventory 파일에 고정한다.
+- C+A 134개
+  - A unit `storage::row::insert::*` 40개
+  - A를 링크하는 catalog_memory 시험 중 native 파일을 쓰지 않는 것: row_write, row_v09, row_forward, row_cancel, row_live, row_commit, row_rollback(v09 포함)
+  - A 호출 frame census: s2w_c01..c06, mbc40_v09 memory·native, s3_c01, s4_c01 memory·native, s6r_c01..c03
+- C+B 32개
+  - B unit `storage::row::read::*` 17개
+  - row_literal 12개(L01과 K 11개)
+  - row_read_census 2개
+  - C의 shared census s2w_c04
+- 전체 트리: 옮긴 `row_read_live::*` 9개와 같은 `row_literal` 12개
+
+**한계와 MI03 판정.** MI03은 **PARTIAL이며 미충족**이다. M5에서 충족으로 세지 않는다.
+
+보인 것은 셋이다.
+- C+A와 C+B 각각 상대 source 없이 compile·link된다.
+- memory C+A에서 A 경로의 실제 C 인수가 통과한다(쓰기, Commit, rollback, census).
+- memory C+B에서 literal ingress가 통과한다(L01, K01–K06, K08–K12. K01·K04·K05·K12는 위처럼 좁고 K05·K10에는 크기 교란이 있다).
+
+미공급과 NOT_RUN은 다음과 같다.
+- **C+A 복구 전체(memory 포함).** S6의 restart harness(`row_recovery`)는 READY 뒤 값을 B의 `read_point_live`로 읽으므로 모듈 전체가 C+A export에서 빠진다. 그래서 memory s6r_m01..m03(WithRowClr, RejectInitialLosers)도 빠지고, [§8.2](dev3-module-consumers.md#independent-fixtures)가 C 복구가 소비해야 한다고 정한 A의 `handle_recovered_clr`는 C+A에서 한 번도 실행되지 않는다. `row_forward`에서는 S2W-R24(재시작이 Analysis에서 멈춤)만 남는다. READY 뒤 값 확인을 B 대신 독립 leaf page decoder로 나누면 C+A로 옮길 수 있다(후속).
+- **C+B의 B 실제 C 인수 MCB01–04.** S5 사례는 A의 INSERT로 행을 만들므로 `row_read_live`(C+A+B)로 옮겼고 두 export 모두에 없다. C+B 선택의 B 사례는 B unit 17개(MCB00 C0 계열), census 3개, 그리고 양성 B 읽기 L01 하나다. literal 행 위의 MCB01–04는 미공급이다.
+- **native P1–P3(양쪽).** C+A는 위 restart harness 때문에 빠진다. C+B([§8.3](dev3-module-consumers.md#independent-fixtures))는 P2 recovery 뒤 literal을 실제 open·stream identity에 late-bind해야 하는데 N1 모델은 open 1로 고정돼 있다.
+- **C+B reopen fixture MCB05-N01..06**(`RejectInitialLosers` 뒤 B 읽기), 실패 statement·CLR·Prune literal 전이, fixed-q·publication gap 관측.
+- **K07**(NOT_RUN)과 K01·K04·K05·K12의 원 형태.
+
+이 기록은 계약과 선택의 정의다. 실행 결과는 [증거](../evidence/module-independence-survey-20261026.md#s8-single-source)에 둔다.

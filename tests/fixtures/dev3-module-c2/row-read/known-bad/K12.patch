@@ -1,0 +1,6 @@
+XADB-S8-KNOWN-BAD-V1 K12
+# the valid Row frame declared as a scope2 group (scope field only)
+file forward-frame.bin 91497 985fdf8128512063264327f9123445d3c33cab42044b747e98e85e7d3ff700ca
+170 171 02
+91465 91497 81826abcf2f0159f9158474876a55a324e83c6f1b17d35d18325fa6015996b27
+end
