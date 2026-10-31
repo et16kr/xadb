@@ -711,3 +711,66 @@ fn catalog_commit_windows_fit_beside_admitted_readers() {
     inspect::<crate::storage::wal_io::plan4_test_support::Writer>("MEMORY");
     inspect::<super::super::super::native::Writer>("NATIVE_TYPE");
 }
+
+/// REPRO (found on main `76b3627`, not fixed here): the contract admits one
+/// Full Catalog read beside a Catalog commit in Pending ("Pending and
+/// publication overlap one admitted Full read"). With the charges the product
+/// actually computes, the read is refused with Unchanged Capacity: S6 grew
+/// `shared` by 144 B (S2/S5 merges: memory 20184, native 20192), so
+/// `shared + pending + full` is 65588/65596 B > the 65536 B short-source loan.
+/// The same refusal fails MCW01, MT03, S3-R07 and the call_scope,
+/// source_entry and source_return reader cases.
+#[test]
+fn repro_full_read_beside_pending_commit_fits_actual_charges() {
+    use crate::transaction::concurrency::OwnerRole;
+    fn inspect<W: WriterNamespace>(kind: &str) -> Option<String> {
+        let commit = CatalogCommitCharges::new::<W>();
+        let read = CatalogSourceCharges::new::<W>();
+        let [shared, _, pending, _, _] = commit.observations();
+        let [_, full, _] = read.observations();
+        println!(
+            "REPRO_PENDING_FULL_{kind} shared={shared} pending={pending} full={full} sum={} cap={SHORT_BYTES}",
+            shared + pending + full
+        );
+        let mut refused = None;
+        with_ledger(|ledger, fence| {
+            let core = ledger.lock().unwrap().core;
+            let mut owner = core.try_owner(OwnerRole::Foreground).unwrap();
+            let gate = owner.close_reads_for_terminal(core).unwrap();
+            let mut writer =
+                OperationSourceAdmission::catalog_commit(ledger, &commit, &gate).unwrap();
+            writer.enter_commit_pending(&commit).unwrap();
+            let before = used(ledger);
+            match OperationSourceAdmission::catalog(ledger, &read, OperationClass::CatalogFull) {
+                Ok(reader) => drop(reader),
+                Err(error) => {
+                    // The refusal itself is clean: nothing moved, no fence.
+                    assert!(matches!(error.cause, SourceCause::Capacity));
+                    assert_eq!(error.effect, Effect::Unchanged);
+                    assert_eq!(used(ledger), before);
+                    refused = Some(format!(
+                        "{kind}: Full read refused beside Pending ({shared}+{pending}+{full}={} > {SHORT_BYTES})",
+                        shared + pending + full
+                    ));
+                }
+            }
+            writer
+                .transition(commit.shared, commit.pending, commit.install, true)
+                .unwrap();
+            writer.enter_commit_publish(&commit).unwrap();
+            writer.finish_checked().unwrap();
+            gate.reopen_checked().unwrap();
+            owner.check_idle().unwrap();
+            assert!(!fence.is_fenced());
+        });
+        refused
+    }
+    let refused: Vec<String> = [
+        inspect::<crate::storage::wal_io::plan4_test_support::Writer>("MEMORY"),
+        inspect::<super::super::super::native::Writer>("NATIVE_TYPE"),
+    ]
+    .into_iter()
+    .flatten()
+    .collect();
+    assert!(refused.is_empty(), "{refused:?}");
+}
