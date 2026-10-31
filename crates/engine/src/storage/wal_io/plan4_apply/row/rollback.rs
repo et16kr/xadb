@@ -669,14 +669,18 @@ mod census {
             size_of::<T<W>>(),
             size_of::<P<W>>()
         );
-        // MBC40-V09 (iv) for the rollback writer (S7, boundaries
-        // `#row-join-s7`): while `start_row_rollback` waits at the terminal
-        // read gate it holds no charge, only A's rollback.start call site
-        // (its frame-static share), the start's own argument references and
-        // Result<RowRollback> slots, and the gate with its close/wait closure
-        // (`commit_carrier_bytes`, which also counts the admission carrier
-        // taken after the wait: an upper bound). Two resident readers and
-        // shared are admitted beside it.
+        // MBC40-V09 (iv) for the rollback writer's first gate wait (S7,
+        // boundaries `#row-join-s7`): while `start_row_rollback` waits at
+        // the terminal read gate it holds no charge. The floor is an upper
+        // bound through slack: A's rollback.start call site (its
+        // frame-static share), the start's own argument references and
+        // Result<RowRollback> slots (not built yet during the wait), and the
+        // gate with its close/wait closure (`commit_carrier_bytes`, which
+        // also counts the admission carrier taken after the wait). Small
+        // live locals (the actor and the statement boundary) fit in that
+        // slack. Two resident readers and shared are admitted beside it. The
+        // re-close after each flush (`RowRollback::admit`) is not counted
+        // here and remains a WRITER-PROGRESS-001 obligation.
         let start = sites
             .iter()
             .find(|(name, _, _)| *name == "rollback.start")

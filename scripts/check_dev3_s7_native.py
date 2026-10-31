@@ -105,6 +105,23 @@ def main():
             if phase == 'produce':
                 assert receipt['result'] == ('crashed' if case == 'MCI02-N03' else 'acked')
                 acks.append(receipt['q'])
+                # The exact durable prefix at the cut: the in-process WAL
+                # witness equals this controller's own digest of the WAL
+                # file, and no write follows the last successful sync (Drop
+                # only releases the lease and closes handles).
+                wal = sorted(name for name in current if name.startswith('d3-wal-'))[-1]
+                assert receipt['wal_cut'] == current[wal]['sha256'], 'WAL witness'
+                assert int(receipt['wal_cut_bytes']) == current[wal]['bytes'], 'WAL length'
+                if case == 'MCI02-N03':
+                    assert receipt['wal_before_clr'] != receipt['wal_cut'], 'CLR1 durable'
+                effects = [line.split('\t') for line in
+                           (output / 'effects.tsv').read_text().splitlines()]
+                writes = [i for i, row in enumerate(effects) if row[1] == 'write']
+                syncs = [i for i, row in enumerate(effects)
+                         if row[1] == 'sync' and row[5] == 'Ok(())']
+                assert writes and syncs and writes[-1] < syncs[-1], 'last write synced'
+                tail = {row[1] for row in effects[syncs[-1] + 1:]}
+                assert tail <= {'drop_lease', 'close'}, tail
             else:
                 assert receipt['result'] == 'ready'
                 assert current != previous, 'the process wrote nothing'

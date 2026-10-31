@@ -25,18 +25,24 @@
 //!   - The (iii) line states the class facts and points to those tests; it
 //!     computes only the sums.
 //! - (iv) The gate-waiting entry floor + shared + two residents. S7
-//!   (boundaries `#row-join-s7`) supplies the floor of this writer: while
-//!   `preflight_row` waits in `close_reads_for_terminal`, the writer holds
-//!   no charge, only A's preflight call-site bound, the preflight wrapper's
-//!   own frame (`row_write_phases`' preflight carriers: its argument
-//!   references, the cut and the Ready wrapper slots) and the gate with its
-//!   close/wait closure (`commit_carrier_bytes`, which also counts the
-//!   admission carrier taken after the wait, so it is an upper bound).
-//!   Earlier it was WRITER-PROGRESS-001's unsupplied obligation and printed
-//!   `NOT_SUPPLIED`.
+//!   (boundaries `#row-join-s7`) supplies the floor of this writer's first
+//!   gate wait: while `preflight_row` waits in `close_reads_for_terminal`,
+//!   the writer holds no charge. The floor is an upper bound through slack,
+//!   not an enumeration of every live local: A's preflight call-site bound,
+//!   the preflight wrapper's frame (`row_write_phases`' preflight carriers:
+//!   its argument references, the cut and the Ready wrapper slots, which
+//!   are not built yet during the wait) and the gate with its close/wait
+//!   closure (`commit_carrier_bytes`, which also counts the admission
+//!   carriers taken only after the wait). Small live locals such as the
+//!   unwind guard and the storage reference fit in that slack. Earlier this
+//!   line printed `NOT_SUPPLIED`.
 //!
 //! The rollback and recovery-task parts of the same replacement are S4's
-//! and C4's; S7 adds the rollback start's floor to S4's census.
+//! and C4's; S7 adds the rollback start's first gate wait to S4's census.
+//! The rollback's re-close after each flush (`RowRollback::admit`) and the
+//! Commit, RowProgress and CatalogProgress gate waits remain
+//! WRITER-PROGRESS-001 obligations. The recovery task has no reader to wait
+//! for: recovery is exclusive before READY.
 use super::write::{RowWritePhase, row_write_phases};
 use super::*;
 
@@ -174,8 +180,9 @@ fn v09_census<W: WriterNamespace>(writer: &str) {
     );
     assert!(waiting <= CAP);
     println!(
-        "MBC40_V09 writer={writer} counted=(i),(ii),(iii),(iv) \
-         rollback=S4_C01 recovery_task=exclusive_before_READY"
+        "MBC40_V09 writer={writer} counted=(i),(ii),(iii),(iv)_first_gate_wait \
+         rollback_start=S4_C01 rollback_reclose=NOT_SUPPLIED \
+         commit_progress_gates=WRITER-PROGRESS-001 recovery_task=exclusive_before_READY"
     );
 }
 

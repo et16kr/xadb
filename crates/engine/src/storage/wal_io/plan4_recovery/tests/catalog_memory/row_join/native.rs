@@ -2,7 +2,11 @@
 //! process per phase over controller-owned paths. `produce` runs the actual
 //! native writer — CREATE of T, then A's driver — and stops the process at
 //! its cut without any shutdown: after the Commit ACK (N01, N02) or after
-//! the first durable CLR of A's full rollback (N03). `recover` runs C's
+//! the first durable CLR of A's full rollback (N03). The session's Drop
+//! then only releases the lease and closes the handles; the controller
+//! asserts from the effect trace that no write follows the last successful
+//! sync, and that the in-process WAL witness at the cut equals its own
+//! digest of the WAL file (the exact durable prefix). `recover` runs C's
 //! recovery with A's recovered CLR handler to READY, B's cursor reads T, then
 //! A's new row and its Commit ACK; `reenter` is a third process whose C+B
 //! recovery (RejectInitialLosers) and B cursor read both ACKs' rows. Every
@@ -100,7 +104,8 @@ macro_rules! with_directory {
     }};
 }
 
-/// SHA-256 of the namespace's WAL file (the exact-prefix witness).
+/// SHA-256 of the namespace's WAL file and its length (the exact-prefix
+/// witness the controller compares with its own digest of the file).
 fn wal_witness(db: &Path) -> (String, usize) {
     let mut names: Vec<_> = fs::read_dir(db)
         .unwrap()
@@ -109,12 +114,13 @@ fn wal_witness(db: &Path) -> (String, usize) {
         .collect();
     names.sort();
     let bytes = fs::read(db.join(names.last().unwrap())).unwrap();
-    (hex(&content_digest(&bytes)), bytes.len())
+    (hex(&bytes), bytes.len())
 }
 
 /// PID1: the actual native writer history of `id`, stopped at its cut. The
 /// receipt holds the ACKed q and the WAL witness at the cut; the process
-/// then exits with no Drop, flush or further write.
+/// then exits with no flush or further write (Drop releases the lease and
+/// closes the handles only, which the controller checks).
 fn produce<D: DirectoryPort>(id: &str, directory: &D, db: &Path) -> String {
     with_directory!(directory, |live,
                                 owner,
@@ -159,7 +165,13 @@ fn produce<D: DirectoryPort>(id: &str, directory: &D, db: &Path) -> String {
                     [VALUE]
                 );
                 let q = a_commit!(&mut writer, owner, flush, flusher, a, private);
-                format!("result\tacked\nq\t{q}\nrows\t{}\n", rows[0].row().get())
+                let cut = wal_witness(db);
+                format!(
+                    "result\tacked\nq\t{q}\nrows\t{}\nwal_cut\t{}\nwal_cut_bytes\t{}\n",
+                    rows[0].row().get(),
+                    cut.0,
+                    cut.1
+                )
             }
             "MCI02-N02" => {
                 let kept = a_insert!(
@@ -217,10 +229,13 @@ fn produce<D: DirectoryPort>(id: &str, directory: &D, db: &Path) -> String {
                     assert!(finish_statement_live(&mut call, s2).is_ok());
                 }
                 let q = a_commit!(&mut writer, owner, flush, flusher, a, private);
+                let cut = wal_witness(db);
                 format!(
-                    "result\tacked\nq\t{q}\nrows\t{},{}\n",
+                    "result\tacked\nq\t{q}\nrows\t{},{}\nwal_cut\t{}\nwal_cut_bytes\t{}\n",
                     kept[0].row().get(),
-                    slots[0].as_ref().unwrap().row().get()
+                    slots[0].as_ref().unwrap().row().get(),
+                    cut.0,
+                    cut.1
                 )
             }
             "MCI02-N03" => {
@@ -281,13 +296,15 @@ fn produce<D: DirectoryPort>(id: &str, directory: &D, db: &Path) -> String {
                 let after = wal_witness(db);
                 assert_ne!(before, after, "CLR1 reached the WAL file");
                 let summary = format!(
-                    "result\tcrashed\nq\t{y_q}\nrows\t{},{},{},{}\nwal_before_clr\t{}\nwal_after_clr\t{}\n",
+                    "result\tcrashed\nq\t{y_q}\nrows\t{},{},{},{}\nwal_before_clr\t{}\n\
+                     wal_cut\t{}\nwal_cut_bytes\t{}\n",
                     rows[0].row().get(),
                     rows[1].row().get(),
                     rows[2].row().get(),
                     y_rows[0].row().get(),
                     before.0,
-                    after.0
+                    after.0,
+                    after.1
                 );
                 let _ = (fence, core);
                 return summary;
@@ -344,7 +361,8 @@ fn s7j_native_worker() {
         });
         fs::write(output.join("receipt.tsv"), format!("{head}{summary}")).unwrap();
         println!("S7J_NATIVE {id} produce {summary:?}");
-        // The cut: no Drop, flush or shutdown write after the ACK/CLR.
+        // The cut: no flush or shutdown write after the ACK/CLR (the
+        // controller checks the effect trace and the WAL witness).
         std::process::exit(0);
     }
     let mut summary = String::new();
@@ -361,11 +379,12 @@ fn s7j_native_worker() {
             ref rows,
             acked,
             ref ready,
+            row_cells,
             ref after,
         } = joined;
         println!(
             "S7J_NATIVE {id} {phase} steps={steps} clrs={clrs} rows={rows:?} acked={acked:?} \
-             ready={ready:?} after={after:?}"
+             ready={ready:?} row_cells={row_cells} after={after:?}"
         );
         let values: Vec<i64> = rows.iter().map(|(_, value)| *value).collect();
         assert_eq!(values, expected(&id, &phase));

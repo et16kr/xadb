@@ -1,7 +1,7 @@
 //! S7 C5 join (XADB-MODULE-ROW-JOIN-001, boundaries `#row-join-s7`): A's
 //! INSERT driver and B's point/cursor driver over the actual C supply of
 //! S2–S6 in one session, for the MCI01/MCI03 interactions the module plan
-//! leaves to the join (consumers `#index-negative-input`). Values, RowIds,
+//! leaves to the join (consumers `#acceptance`, §9.3). Values, RowIds,
 //! q and visibility are fixed here from the history each case runs; B's
 //! output is never the oracle of A's write or the other way round.
 //!
@@ -20,6 +20,7 @@ use crate::storage::{
         RowMutationObservation, RowOwnedError, RowPreflightStep, TableStep, TransactionFinishError,
         TransactionOptions,
     },
+    retention_page::row::{self as job3, JobScope, JobState},
     row::{
         insert::{
             driver::{
@@ -987,8 +988,8 @@ enum Barrier {
     Preflight,
 }
 
-/// MCI03-V01/V02 under the S2-0 terminal read gate (consumers
-/// `#index-negative-input` amendment; boundaries `#row-join-s7`). B1's Row
+/// MCI03-V01/V02 under the S2-0 terminal read gate (the S2-0 Row write
+/// amendment §7, boundaries `#row-write-budget`; `#row-join-s7`). B1's Row
 /// read of A's Active row 1 is paused after its source capture, holding the
 /// row's Txn/U pins. A's next progress step — the statement rollback (V01)
 /// or the next row's preflight (V02) — closes the gate and waits for B1;
@@ -1502,6 +1503,9 @@ struct Joined {
     acked: Option<(u64, u64)>,
     /// The published Q and the epochs at the READY handoff.
     ready: (u64, Epochs),
+    /// The Row Job cells left (not Free) at the READY handoff: every Row
+    /// root and terminal was cleaned before READY when this is 0.
+    row_cells: usize,
     /// The epochs after B's read and A's Commit (if any).
     after: Epochs,
 }
@@ -1566,6 +1570,14 @@ fn join_restart<D: DirectoryPort>(
         Err(_) => panic!("original READY handoff"),
     };
     let at_ready = (live.catalog_test_q(), live.catalog_test_epochs());
+    let row_cells = live
+        .catalog_test_jobs()
+        .iter()
+        .filter(|bytes| {
+            let job = job3::decode_job(&bytes[..], super::super::support::namespace()).unwrap();
+            job.scope() == Some(JobScope::Row) && job.state() != JobState::Free
+        })
+        .count();
     let row_status = live.recovery_test_expected_target(11).unwrap();
     let first_jobs = crate::storage::retention_page::JobSlotRef::new(
         page_ref(2, 1),
@@ -1641,6 +1653,7 @@ fn join_restart<D: DirectoryPort>(
         rows,
         acked,
         ready: at_ready,
+        row_cells,
         after,
     }
 }
@@ -1650,9 +1663,13 @@ fn join_restart<D: DirectoryPort>(
 /// epoch and T's epoch with the published Q (task-10
 /// `#module-row-isolation`), and that Q is still `q` after every physical
 /// cleanup the recovery ran (Prune, ReleaseRole, RootFree, TerminalFinish,
-/// and a loser's CLRs and AbortEnd): none of them publishes a q. A later Row
-/// Commit at `q'` moves only T's epoch (V10).
+/// and a loser's CLRs and AbortEnd), all of which completed before READY
+/// (no Row Job cell is left). The epoch ledger is inactive during recovery,
+/// so V11 holds there by construction; what this checks is that no cleanup
+/// step published a q. A later Row Commit at `q'` moves only T's epoch
+/// (V10).
 fn check_epochs(joined: &Joined, q: u64) {
+    assert_eq!(joined.row_cells, 0, "Row cleanup finished before READY");
     assert_eq!(joined.ready, (q, (true, q, vec![(2, 6, q)])));
     let t = joined.acked.map_or(q, |(_, acked)| acked);
     assert_eq!(joined.after, (true, q, vec![(2, 6, t)]));
@@ -1669,7 +1686,7 @@ fn check_epochs(joined: &Joined, q: u64) {
 /// only physical Row cleanup there is to run.
 #[test]
 fn mci01_v11_recovered_cleanup_keeps_logical_epochs() {
-    case_within("MCI01-V11", Duration::from_secs(240), || {
+    case("MCI01-V11", || {
         let oracle = Oracle::new();
         let (images, q, row) = with_fresh!(
             oracle,
@@ -1723,7 +1740,8 @@ fn mci01_v11_recovered_cleanup_keeps_logical_epochs() {
         assert_eq!(joined.rows, vec![(row, VALUE)]);
         let (new, acked) = joined.acked.unwrap();
         assert!(new > row);
-        assert_eq!(acked, q + 1);
+        // The history: CREATE published q 1 and A's Commit q 2.
+        assert_eq!((q, acked), (2, 3));
         check_epochs(&joined, q);
     });
 }

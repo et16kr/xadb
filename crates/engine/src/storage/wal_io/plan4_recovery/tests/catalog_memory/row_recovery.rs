@@ -118,11 +118,14 @@ macro_rules! rolled_back {
     }};
 }
 
-/// The frozen bound of a case with recovered READY restarts: the debug
-/// ELF's closed step costs about 1.5 s (each validates the whole history),
-/// and the longest case (S6R-M06-S, twenty traced steps) took 133 s in its
-/// first run.
-const READY_BOUND: Duration = Duration::from_secs(240);
+/// The bound of a case with recovered READY restarts: `case`'s 30 s.
+/// S6 first ran these cases at 30 s, failed it and then raised the bound to
+/// 150 s and 240 s after the runs (the debug ELF's closed step then cost
+/// about 1.5 s); the independent S6 review (S7, boundaries `#row-join-s7`)
+/// found that after-the-fact relaxation against the development policy.
+/// The debug hash fix (sha2 at opt-level 3) removed that cost, so S7
+/// restores 30 s before its execution and reruns the cases under it.
+const READY_BOUND: Duration = Duration::from_secs(30);
 
 /// The Row cells of the bank: (ordinal, state, release cursor).
 type Cells = Vec<(usize, JobState, u8)>;

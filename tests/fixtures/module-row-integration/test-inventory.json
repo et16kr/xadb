@@ -143,10 +143,11 @@
   "reason": "no public API or lifetime change"
  },
  "limits": {
-  "memory_case_seconds": 240,
+  "memory_case_seconds": 30,
   "controller_timeout_seconds": 300,
   "short_cap_bytes": 65536,
-  "catalog_progress_charge_bytes": 44304
+  "catalog_progress_charge_bytes": 44304,
+  "note": "every S7 case uses case()'s 30 s; MCI01-V11 was tightened from 240 s to 30 s before the final execution (r1 ran it under 240 s)"
  },
  "source_specific": true,
  "notes": [
@@ -154,5 +155,24 @@
   "Each selector runs alone in its own process with one test thread.",
   "MI03 standalone C+A / C+B acceptance is not part of this selection (contract #row-join-s7 limits).",
   "Failures are preserved and never relabelled as PASS."
- ]
+ ],
+ "s6_review_reruns": {
+  "reason": "independent S6 review R2: S6 raised its READY case bound 30 s -> 150 s -> 240 s after failing runs (development-policy forbids after-the-fact relaxation). S7 restores case()'s 30 s before this execution and reruns every READY_BOUND case on the PR #9 (sha2 opt-level 3) build; failures are kept as failures",
+  "bound_seconds": 30,
+  "selectors": [
+   "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_recovery::s6r_m01_one_committed_row_with_row_clr",
+   "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_recovery::s6r_m01_one_committed_row_reject_initial_losers",
+   "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_recovery::s6r_m01_three_committed_rows_with_row_clr",
+   "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_recovery::s6r_m01_three_committed_rows_reject_initial_losers",
+   "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_recovery::s6r_m02_reserved_row_recovers_with_row_clr",
+   "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_recovery::s6r_m04_active_chain_recovers_through_row_clr",
+   "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_recovery::s6r_m04_aborting_statement_recovers_as_full_rollback",
+   "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_recovery::s6r_m05_wrong_proposal_returns_the_same_task",
+   "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_recovery::s6r_m06_statement_rollback_then_commit",
+   "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_recovery::s6r_m06_full_abort",
+   "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_recovery::s6r_m07_partial_recovery_then_crash",
+   "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_recovery::s6r_m08_reject_initial_losers_inputs"
+  ]
+ },
+ "revision": "r2: after the independent S7/S6 reviews (MCI02 cut witness, V11 oracle, 30 s bounds, S6 reruns)"
 }
