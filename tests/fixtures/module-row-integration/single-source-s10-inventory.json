@@ -1,0 +1,607 @@
+{
+ "schema": "XADB_S10_SINGLE_SOURCE_INVENTORY_V1",
+ "status": "FROZEN_SELECTION_NOT_EXECUTION_EVIDENCE",
+ "baseline": "25a8ef0c (S9 branch head, PR #14 open)",
+ "contract_ref": [
+  "devdoc/contracts/dev3-module-consumers.md#9",
+  "devdoc/contracts/dev3-module-boundaries.md#row-mi03-s10"
+ ],
+ "export_tool": "scripts/module_single_source.py (LINKS_A adds row_inventory_a; LINKS_B adds row_corpus)",
+ "sides": {
+  "C+A": {
+   "export": "--side a",
+   "selectors": [
+    "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_inventory_a::mca01_v01_bool_nonnull",
+    "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_inventory_a::mca01_v02_int64_nonnull",
+    "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_inventory_a::mca01_v03_utf8_nonnull",
+    "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_inventory_a::mca01_v04_binary_nonnull",
+    "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_inventory_a::mca01_v05_nullable_null_is_five_bytes",
+    "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_inventory_a::mca01_v06_mixed_32_columns",
+    "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_inventory_a::mca01_v07_canonical_2048",
+    "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_inventory_a::mca01_v08_two_statements_of_three",
+    "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_inventory_a::mca01_v09_type_mismatch_is_refused_before_any_effect",
+    "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_inventory_a::mca01_v10_null_in_nonnullable_is_refused_before_any_effect",
+    "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_inventory_a::mca01_v11_canonical_2049_is_refused_before_any_effect",
+    "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_inventory_a::mca02_v01_failed_statement_then_e_commits",
+    "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_inventory_a::mca02_v02_failed_statement_then_full_abort",
+    "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_inventory_a::mca02_v03_failed_statement_then_e_and_full_abort",
+    "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_inventory_a::mca02_v04_statement_refused_before_its_first_effect",
+    "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_inventory_a::mca02_v05_reserved_row_cancelled_then_e_commits",
+    "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_inventory_a::mca02_v06_three_failed_statements_then_refused_and_full_abort",
+    "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_inventory_a::mca04_v03_full_abort_then_the_next_issuer",
+    "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_inventory_a::mca05_v07_owned_pages_one_under",
+    "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_inventory_a::mca05_v08_owned_pages_equal",
+    "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_inventory_a::mca05_v09_owned_pages_one_over",
+    "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_inventory_a::mca05_v10_undo_slots_one_under",
+    "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_inventory_a::mca05_v11_undo_slots_equal",
+    "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_inventory_a::mca05_v12_undo_slots_one_over",
+    "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_inventory_a::mca05_v30_leaf_maximum_then_the_split_is_refused",
+    "storage::semantic_row::transition::tests::mca04_v04_v08_issuer_max_is_exhausted_before_output",
+    "storage::row::insert::group_tests::mca05_v29_h_net0_with_before_count_zero_is_refused",
+    "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_cancel::s2w_r08_cancel_returns_nothing_issued_and_keeps_the_write_bit",
+    "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_cancel::s2w_r15_cancel_ends_the_reservation_without_the_fence",
+    "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_live::mca05_v31_live_dirty_victim_flush_retries_the_same_row",
+    "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_live::s2w_r10_live_prepare_before_is_cancelled_by_the_driver",
+    "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_preflight::s2w_r03_preflight_registers_reads_and_finish_returns_the_lease",
+    "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_rollback::s4_r01_statement_suffix_then_commit",
+    "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::catalog_progress_v09::mbc10_v09_catalog_progress_minus_one",
+    "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::catalog_progress_v09::mbc10_v09_catalog_progress_exact",
+    "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::catalog_progress_v09::mbc10_v09_catalog_progress_plus_one"
+   ],
+   "counts": {
+    "new": 27,
+    "cited": 6,
+    "hook_regression": 3
+   },
+   "native": [
+    {
+     "controller": "scripts/check_dev3_s10a_native.py",
+     "cases": [
+      "MCA03-N01",
+      "MCA03-N02",
+      "MCA03-N03-RamOnly",
+      "MCA03-N03-Durable",
+      "MCA03-N04",
+      "MCA03-N05-RamOnly",
+      "MCA03-N05-Durable",
+      "MCA03-N06",
+      "MCA03-N07",
+      "MCA03-N08",
+      "MCA03-N09-V01-RamOnly",
+      "MCA03-N09-V01-Durable",
+      "MCA03-N09-V02-RamOnly",
+      "MCA03-N09-V02-Durable",
+      "MCA03-N09-V03-RamOnly",
+      "MCA03-N09-V03-Durable",
+      "MCA03-R01",
+      "MCA03-R02",
+      "MCA03-R03",
+      "MCA03-R04",
+      "MCA03-R05",
+      "MCA03-R06",
+      "MCA03-R07",
+      "MCA03-R08",
+      "MCA03-R09",
+      "MCA03-R10",
+      "MCA03-R11",
+      "MCA03-R12",
+      "MCA04-N01"
+     ]
+    },
+    {
+     "controller": "scripts/check_dev3_s9_native.py",
+     "cases": [
+      "S9A-N01",
+      "S9A-N02",
+      "S9A-N03"
+     ],
+     "reason": "native test adapter changed (Row cuts)"
+    }
+   ]
+  },
+  "C+B": {
+   "export": "--side b",
+   "selectors": [
+    "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_corpus::mcb01_v01_empty_table_point_and_cursor",
+    "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_corpus::mcb01_v02_gap_point_is_missing",
+    "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_corpus::mcb01_v03_first_row_point",
+    "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_corpus::mcb01_v04_middle_row_point",
+    "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_corpus::mcb01_v05_last_row_point",
+    "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_corpus::mcb01_v06_full_scan_in_order",
+    "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_corpus::mcb01_v07_half_open_range_scan",
+    "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_corpus::mcb01_v08_empty_and_reversed_range",
+    "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_corpus::mcb02_v01_own_active_point_and_cursor",
+    "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_corpus::mcb02_v02_foreign_active_point_and_cursor",
+    "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_corpus::mcb02_v03_committed_q_above_snapshot_point_and_cursor",
+    "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_corpus::mcb02_v04_committed_q_equal_snapshot_point_and_cursor",
+    "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_corpus::mcb02_v05_committed_q_below_snapshot_point_and_cursor",
+    "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_corpus::mcb02_v08_publication_gap_point_and_cursor",
+    "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_corpus::mcb03_v01_capture_under_retirement_is_busy",
+    "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_corpus::mcb03_v02_clr_of_pinned_undo_waits_for_the_read",
+    "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_corpus::mcb03_v03_row_leaf_nonresident_loads",
+    "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_corpus::mcb03_v04_status_nonresident_loads",
+    "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_corpus::mcb03_v05_undo_nonresident_loads",
+    "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_corpus::mcb03_v06_dirty_victim_flush_required_then_same_snapshot",
+    "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_corpus::mcb03_v07_damaged_required_undo_is_not_missing",
+    "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_corpus::mcb03_v08_two_pins_then_extra_claim_refused",
+    "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_corpus::mcb04_v01_foreign_database_table_is_refused",
+    "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_corpus::mcb04_v02_old_open_table_is_refused",
+    "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_corpus::mcb04_v05_ended_statement_is_refused",
+    "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_corpus::mcb04_v06_own_revision_change_invalidates_the_cursor",
+    "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_corpus::mcb04_v07_output_one_short_then_the_same_row",
+    "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_corpus::mcb04_v08_output_exact",
+    "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_corpus::mcb04_v09_cancel_after_invisible_rows_keeps_progress",
+    "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_corpus::mcb04_v10_end_then_end_again",
+    "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_corpus::mcb04_v11_own_mutation_after_end_invalidates_before_end",
+    "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_corpus::mcb04_v12_valid_page_wrong_row_id_is_refused",
+    "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_corpus::mcb04_v13_wrong_undo_target_is_refused",
+    "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_literal_rollback::mcb05_l04_failed_statement_literal_clr_then_commit",
+    "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_reopen_literal::mcb05_l03_literal_after_reopen_is_read_by_b_after_recovery"
+   ],
+   "counts": {
+    "new": 33,
+    "cited": 2
+   },
+   "ignored_expected_fail": [
+    "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_corpus::mcb04_v14_occupied_before_is_out_of_scope"
+   ],
+   "native": [
+    {
+     "controller": "scripts/check_dev3_s10_native.py",
+     "cases": [
+      "MCB01-N01"
+     ]
+    },
+    {
+     "controller": "scripts/check_dev3_s9_native.py",
+     "cases": [
+      "S9B-N01"
+     ],
+     "reason": "native test adapter changed (Row cuts)"
+    }
+   ]
+  }
+ },
+ "map": {
+  "MCA01-V01": {
+   "status": "NEW",
+   "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_inventory_a::mca01_v01_bool_nonnull"
+  },
+  "MCA01-V02": {
+   "status": "NEW",
+   "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_inventory_a::mca01_v02_int64_nonnull"
+  },
+  "MCA01-V03": {
+   "status": "NEW",
+   "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_inventory_a::mca01_v03_utf8_nonnull"
+  },
+  "MCA01-V04": {
+   "status": "NEW",
+   "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_inventory_a::mca01_v04_binary_nonnull"
+  },
+  "MCA01-V05": {
+   "status": "NEW",
+   "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_inventory_a::mca01_v05_nullable_null_is_five_bytes"
+  },
+  "MCA01-V06": {
+   "status": "NEW",
+   "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_inventory_a::mca01_v06_mixed_32_columns"
+  },
+  "MCA01-V07": {
+   "status": "NEW",
+   "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_inventory_a::mca01_v07_canonical_2048"
+  },
+  "MCA01-V08": {
+   "status": "NEW",
+   "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_inventory_a::mca01_v08_two_statements_of_three"
+  },
+  "MCA01-V09": {
+   "status": "NEW",
+   "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_inventory_a::mca01_v09_type_mismatch_is_refused_before_any_effect"
+  },
+  "MCA01-V10": {
+   "status": "NEW",
+   "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_inventory_a::mca01_v10_null_in_nonnullable_is_refused_before_any_effect"
+  },
+  "MCA01-V11": {
+   "status": "NEW",
+   "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_inventory_a::mca01_v11_canonical_2049_is_refused_before_any_effect"
+  },
+  "MCA02-V01": {
+   "status": "NEW",
+   "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_inventory_a::mca02_v01_failed_statement_then_e_commits"
+  },
+  "MCA02-V02": {
+   "status": "NEW",
+   "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_inventory_a::mca02_v02_failed_statement_then_full_abort"
+  },
+  "MCA02-V03": {
+   "status": "NEW",
+   "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_inventory_a::mca02_v03_failed_statement_then_e_and_full_abort"
+  },
+  "MCA02-V04": {
+   "status": "NEW",
+   "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_inventory_a::mca02_v04_statement_refused_before_its_first_effect"
+  },
+  "MCA02-V05": {
+   "status": "NEW",
+   "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_inventory_a::mca02_v05_reserved_row_cancelled_then_e_commits"
+  },
+  "MCA02-V06": {
+   "status": "NEW",
+   "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_inventory_a::mca02_v06_three_failed_statements_then_refused_and_full_abort"
+  },
+  "MCA03-N01": {
+   "status": "NEW",
+   "native": "scripts/check_dev3_s10a_native.py"
+  },
+  "MCA03-N02": {
+   "status": "NEW",
+   "native": "scripts/check_dev3_s10a_native.py"
+  },
+  "MCA03-N03-RamOnly": {
+   "status": "NEW",
+   "native": "scripts/check_dev3_s10a_native.py"
+  },
+  "MCA03-N03-Durable": {
+   "status": "NEW",
+   "native": "scripts/check_dev3_s10a_native.py"
+  },
+  "MCA03-N04": {
+   "status": "NEW",
+   "native": "scripts/check_dev3_s10a_native.py"
+  },
+  "MCA03-N05-RamOnly": {
+   "status": "NEW",
+   "native": "scripts/check_dev3_s10a_native.py"
+  },
+  "MCA03-N05-Durable": {
+   "status": "NEW",
+   "native": "scripts/check_dev3_s10a_native.py"
+  },
+  "MCA03-N06": {
+   "status": "NEW",
+   "native": "scripts/check_dev3_s10a_native.py"
+  },
+  "MCA03-N07": {
+   "status": "NEW",
+   "native": "scripts/check_dev3_s10a_native.py"
+  },
+  "MCA03-N08": {
+   "status": "NEW",
+   "native": "scripts/check_dev3_s10a_native.py"
+  },
+  "MCA03-N09-V01-RamOnly": {
+   "status": "NEW",
+   "native": "scripts/check_dev3_s10a_native.py"
+  },
+  "MCA03-N09-V01-Durable": {
+   "status": "NEW",
+   "native": "scripts/check_dev3_s10a_native.py"
+  },
+  "MCA03-N09-V02-RamOnly": {
+   "status": "NEW",
+   "native": "scripts/check_dev3_s10a_native.py"
+  },
+  "MCA03-N09-V02-Durable": {
+   "status": "NEW",
+   "native": "scripts/check_dev3_s10a_native.py"
+  },
+  "MCA03-N09-V03-RamOnly": {
+   "status": "NEW",
+   "native": "scripts/check_dev3_s10a_native.py"
+  },
+  "MCA03-N09-V03-Durable": {
+   "status": "NEW",
+   "native": "scripts/check_dev3_s10a_native.py"
+  },
+  "MCA03-R01": {
+   "status": "NEW",
+   "native": "scripts/check_dev3_s10a_native.py"
+  },
+  "MCA03-R02": {
+   "status": "NEW",
+   "native": "scripts/check_dev3_s10a_native.py"
+  },
+  "MCA03-R03": {
+   "status": "NEW",
+   "native": "scripts/check_dev3_s10a_native.py"
+  },
+  "MCA03-R04": {
+   "status": "NEW",
+   "native": "scripts/check_dev3_s10a_native.py"
+  },
+  "MCA03-R05": {
+   "status": "NEW",
+   "native": "scripts/check_dev3_s10a_native.py"
+  },
+  "MCA03-R06": {
+   "status": "NEW",
+   "native": "scripts/check_dev3_s10a_native.py"
+  },
+  "MCA03-R07": {
+   "status": "NEW",
+   "native": "scripts/check_dev3_s10a_native.py"
+  },
+  "MCA03-R08": {
+   "status": "NEW",
+   "native": "scripts/check_dev3_s10a_native.py"
+  },
+  "MCA03-R09": {
+   "status": "NEW",
+   "native": "scripts/check_dev3_s10a_native.py"
+  },
+  "MCA03-R10": {
+   "status": "NEW",
+   "native": "scripts/check_dev3_s10a_native.py"
+  },
+  "MCA03-R11": {
+   "status": "NEW",
+   "native": "scripts/check_dev3_s10a_native.py"
+  },
+  "MCA03-R12": {
+   "status": "NEW",
+   "native": "scripts/check_dev3_s10a_native.py"
+  },
+  "MCA04-V03": {
+   "status": "NEW",
+   "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_inventory_a::mca04_v03_full_abort_then_the_next_issuer"
+  },
+  "MCA04-V04": {
+   "status": "NEW (C0)",
+   "selector": "storage::semantic_row::transition::tests::mca04_v04_v08_issuer_max_is_exhausted_before_output"
+  },
+  "MCA04-V05": {
+   "status": "NEW (C0)",
+   "selector": "storage::semantic_row::transition::tests::mca04_v04_v08_issuer_max_is_exhausted_before_output"
+  },
+  "MCA04-V06": {
+   "status": "NEW (C0)",
+   "selector": "storage::semantic_row::transition::tests::mca04_v04_v08_issuer_max_is_exhausted_before_output"
+  },
+  "MCA04-V07": {
+   "status": "NEW (C0)",
+   "selector": "storage::semantic_row::transition::tests::mca04_v04_v08_issuer_max_is_exhausted_before_output"
+  },
+  "MCA04-V08": {
+   "status": "NEW (C0)",
+   "selector": "storage::semantic_row::transition::tests::mca04_v04_v08_issuer_max_is_exhausted_before_output"
+  },
+  "MCA04-N01": {
+   "status": "NEW",
+   "native": "scripts/check_dev3_s10a_native.py"
+  },
+  "MCA05-V07": {
+   "status": "NEW",
+   "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_inventory_a::mca05_v07_owned_pages_one_under"
+  },
+  "MCA05-V08": {
+   "status": "NEW",
+   "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_inventory_a::mca05_v08_owned_pages_equal"
+  },
+  "MCA05-V09": {
+   "status": "NEW",
+   "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_inventory_a::mca05_v09_owned_pages_one_over"
+  },
+  "MCA05-V10": {
+   "status": "NEW",
+   "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_inventory_a::mca05_v10_undo_slots_one_under"
+  },
+  "MCA05-V11": {
+   "status": "NEW",
+   "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_inventory_a::mca05_v11_undo_slots_equal"
+  },
+  "MCA05-V12": {
+   "status": "NEW",
+   "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_inventory_a::mca05_v12_undo_slots_one_over"
+  },
+  "MCA05-V30": {
+   "status": "NEW",
+   "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_inventory_a::mca05_v30_leaf_maximum_then_the_split_is_refused"
+  },
+  "MCA05-V29": {
+   "status": "NEW (A producer)",
+   "selector": "storage::row::insert::group_tests::mca05_v29_h_net0_with_before_count_zero_is_refused"
+  },
+  "MCA04-V01": {
+   "status": "CITED",
+   "selectors": [
+    "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_cancel::s2w_r08_cancel_returns_nothing_issued_and_keeps_the_write_bit",
+    "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_live::s2w_r10_live_prepare_before_is_cancelled_by_the_driver"
+   ]
+  },
+  "MCA04-V02": {
+   "status": "CITED",
+   "selectors": [
+    "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_rollback::s4_r01_statement_suffix_then_commit"
+   ]
+  },
+  "MCA05-V31": {
+   "status": "CITED",
+   "selectors": [
+    "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_live::mca05_v31_live_dirty_victim_flush_retries_the_same_row"
+   ]
+  },
+  "MCA05-V32": {
+   "status": "CITED",
+   "selectors": [
+    "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_cancel::s2w_r15_cancel_ends_the_reservation_without_the_fence",
+    "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_live::s2w_r10_live_prepare_before_is_cancelled_by_the_driver",
+    "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_preflight::s2w_r03_preflight_registers_reads_and_finish_returns_the_lease"
+   ]
+  },
+  "MCB02-V06": {
+   "status": "CITED",
+   "selectors": [
+    "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_literal_rollback::mcb05_l04_failed_statement_literal_clr_then_commit"
+   ]
+  },
+  "MCB02-V07": {
+   "status": "CITED",
+   "selectors": [
+    "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_reopen_literal::mcb05_l03_literal_after_reopen_is_read_by_b_after_recovery"
+   ]
+  },
+  "MCB01-V01": {
+   "status": "NEW",
+   "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_corpus::mcb01_v01_empty_table_point_and_cursor"
+  },
+  "MCB01-V02": {
+   "status": "NEW",
+   "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_corpus::mcb01_v02_gap_point_is_missing"
+  },
+  "MCB01-V03": {
+   "status": "NEW",
+   "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_corpus::mcb01_v03_first_row_point"
+  },
+  "MCB01-V04": {
+   "status": "NEW",
+   "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_corpus::mcb01_v04_middle_row_point"
+  },
+  "MCB01-V05": {
+   "status": "NEW",
+   "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_corpus::mcb01_v05_last_row_point"
+  },
+  "MCB01-V06": {
+   "status": "NEW",
+   "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_corpus::mcb01_v06_full_scan_in_order"
+  },
+  "MCB01-V07": {
+   "status": "NEW",
+   "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_corpus::mcb01_v07_half_open_range_scan"
+  },
+  "MCB01-V08": {
+   "status": "NEW",
+   "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_corpus::mcb01_v08_empty_and_reversed_range"
+  },
+  "MCB02-V01": {
+   "status": "NEW",
+   "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_corpus::mcb02_v01_own_active_point_and_cursor"
+  },
+  "MCB02-V02": {
+   "status": "NEW",
+   "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_corpus::mcb02_v02_foreign_active_point_and_cursor"
+  },
+  "MCB02-V03": {
+   "status": "NEW",
+   "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_corpus::mcb02_v03_committed_q_above_snapshot_point_and_cursor"
+  },
+  "MCB02-V04": {
+   "status": "NEW",
+   "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_corpus::mcb02_v04_committed_q_equal_snapshot_point_and_cursor"
+  },
+  "MCB02-V05": {
+   "status": "NEW",
+   "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_corpus::mcb02_v05_committed_q_below_snapshot_point_and_cursor"
+  },
+  "MCB02-V08": {
+   "status": "NEW",
+   "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_corpus::mcb02_v08_publication_gap_point_and_cursor"
+  },
+  "MCB03-V01": {
+   "status": "NEW",
+   "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_corpus::mcb03_v01_capture_under_retirement_is_busy"
+  },
+  "MCB03-V02": {
+   "status": "NEW",
+   "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_corpus::mcb03_v02_clr_of_pinned_undo_waits_for_the_read"
+  },
+  "MCB03-V03": {
+   "status": "NEW",
+   "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_corpus::mcb03_v03_row_leaf_nonresident_loads"
+  },
+  "MCB03-V04": {
+   "status": "NEW",
+   "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_corpus::mcb03_v04_status_nonresident_loads"
+  },
+  "MCB03-V05": {
+   "status": "NEW",
+   "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_corpus::mcb03_v05_undo_nonresident_loads"
+  },
+  "MCB03-V06": {
+   "status": "NEW",
+   "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_corpus::mcb03_v06_dirty_victim_flush_required_then_same_snapshot"
+  },
+  "MCB03-V07": {
+   "status": "NEW",
+   "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_corpus::mcb03_v07_damaged_required_undo_is_not_missing"
+  },
+  "MCB03-V08": {
+   "status": "NEW",
+   "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_corpus::mcb03_v08_two_pins_then_extra_claim_refused"
+  },
+  "MCB04-V01": {
+   "status": "NEW",
+   "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_corpus::mcb04_v01_foreign_database_table_is_refused"
+  },
+  "MCB04-V02": {
+   "status": "NEW",
+   "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_corpus::mcb04_v02_old_open_table_is_refused"
+  },
+  "MCB04-V05": {
+   "status": "NEW",
+   "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_corpus::mcb04_v05_ended_statement_is_refused"
+  },
+  "MCB04-V06": {
+   "status": "NEW",
+   "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_corpus::mcb04_v06_own_revision_change_invalidates_the_cursor"
+  },
+  "MCB04-V07": {
+   "status": "NEW",
+   "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_corpus::mcb04_v07_output_one_short_then_the_same_row"
+  },
+  "MCB04-V08": {
+   "status": "NEW",
+   "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_corpus::mcb04_v08_output_exact"
+  },
+  "MCB04-V09": {
+   "status": "NEW",
+   "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_corpus::mcb04_v09_cancel_after_invisible_rows_keeps_progress"
+  },
+  "MCB04-V10": {
+   "status": "NEW",
+   "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_corpus::mcb04_v10_end_then_end_again"
+  },
+  "MCB04-V11": {
+   "status": "NEW",
+   "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_corpus::mcb04_v11_own_mutation_after_end_invalidates_before_end"
+  },
+  "MCB04-V12": {
+   "status": "NEW",
+   "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_corpus::mcb04_v12_valid_page_wrong_row_id_is_refused"
+  },
+  "MCB04-V13": {
+   "status": "NEW",
+   "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_corpus::mcb04_v13_wrong_undo_target_is_refused"
+  },
+  "MCB01-N01": {
+   "status": "NEW",
+   "native": "scripts/check_dev3_s10_native.py"
+  }
+ },
+ "not_applicable": {
+  "MCA05-V01..V03 (WAL)": "WAL bytes are accounted into the Tx descriptor and Root3 (remaining[], consumed_wal) with checked arithmetic only; no WAL-space share refuses a Row step before its first effect. C's Row write path keeps no runtime admission share for this dimension, so -1 has no refusal point to restrict; the dimension is a static step recipe (resource bounds #row-missing-module-budget, P_R) checked by source census. A runtime share needs the F05 resource admission, which is DEV3 work (Codex) and was dropped from CR1 by the user.",
+  "MCA05-V04..V06 (protected)": "protected bytes are descriptor accounting (remaining[].protected), not an admission share. C's Row write path keeps no runtime admission share for this dimension, so -1 has no refusal point to restrict; the dimension is a static step recipe (resource bounds #row-missing-module-budget, P_R) checked by source census. A runtime share needs the F05 resource admission, which is DEV3 work (Codex) and was dropped from CR1 by the user.",
+  "MCA05-V13..V15 (RootJob slot)": "the binding limit is Root3 non-free <= 55. Reaching 54/55 non-free Jobs needs that many retained roots and active terminals, but each root needs its own Undo container and each further actor its own Status page, all from the first extent's 50 owned pages after table T (MCA05-V07..V09 measure 50), so at most 51 non-free Jobs exist before owned pages run out; more needs extent growth (DEV3).",
+  "MCA05-V19..V21 (private bytes)": "the 425984 B private loan is fixed and caller-held; C keeps no private-credit ledger for a Row step (the per-transaction private credit is not a runtime ledger). C's Row write path keeps no runtime admission share for this dimension, so -1 has no refusal point to restrict; the dimension is a static step recipe (resource bounds #row-missing-module-budget, P_R) checked by source census. A runtime share needs the F05 resource admission, which is DEV3 work (Codex) and was dropped from CR1 by the user.",
+  "MCA05-V22..V24 (reference registry)": "registry16 is a static per-step sum over separate registries (pool targets, source references, snapshot handoff, user admission, isolation actor, retirement intent); no registry-share ledger exists for a Row step. C's Row write path keeps no runtime admission share for this dimension, so -1 has no refusal point to restrict; the dimension is a static step recipe (resource bounds #row-missing-module-budget, P_R) checked by source census. A runtime share needs the F05 resource admission, which is DEV3 work (Codex) and was dropped from CR1 by the user.",
+  "MCA05-V25..V27 (files)": "the Row write path opens no file and keeps no FD ledger (files5 is a static recipe). C's Row write path keeps no runtime admission share for this dimension, so -1 has no refusal point to restrict; the dimension is a static step recipe (resource bounds #row-missing-module-budget, P_R) checked by source census. A runtime share needs the F05 resource admission, which is DEV3 work (Codex) and was dropped from CR1 by the user.",
+  "MCA05-V28": "the 6080 statement credit is taken again for every statement with no admission that can refuse it (MCA02-V01 commits a statement after a failed one); a refusal needs the WAL/protected share of V01..V06. The C0 refusal of a statement rollback without credit is transition_tests n1_producer_refusals_precede_output (\"statement rollback without statement credit\").",
+  "MCA05-V33": "no FD/file ledger on the Row path (as V25..V27).",
+  "MCA05-V34": "no DWB-slot admission on the Row path: a dirty target is FlushRequired to A, which flushes through the flusher (whose single DWB slot is its own) and retries (V31); no Forward waits on a DWB slot.",
+  "MCB04-V03, MCB04-V04": "table generation and schema epoch change need DROP/ALTER TABLE, which do not exist (DEV3)."
+ },
+ "not_run": {
+  "MCA01-V12-P": "the pure census is C's table_index_count (pub(super) in row_preflight, 0 on every actual MCA01 row); A's Unsupported needs a RowPreflightContext only C's preflight builds, and consumers §8.4 forbids a context factory; no independent Catalog-leaf author exists.",
+  "MCA05-V16..V18 (frame)": "C has no frame-share admission: the Row Begin and statement issue need their targets resident without LOAD and the preflight LOADs with a protected list. Varying the fixture pool changes the total, which consumers §9 forbids. Observed on this fixture (dev, not PASS): 9-10 frames Begin Unchanged (Prepare, MissingTarget), 11 statement issue Unchanged (Census, MissingTarget), 12 and 13 the full Reserve-Forward-failed statement-full abort."
+ },
+ "not_reached": {
+  "MCA01-V12-S": "a stored Index entry in a non-resident Catalog leaf is read by the Row statement's issue without LOAD (Census, Frame MissingTarget, Unchanged); the only Row-path LOAD of that leaf needs an issued CheckedTable, and the leaf can be made non-resident only through the whole Live, which the split ports borrow. The exact cut needs a new C cfg(test) eviction hook (design re-review; §8.4 forbids taking another error as PASS)."
+ },
+ "fail": {
+  "MCB04-V14": {
+   "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_corpus::mcb04_v14_occupied_before_is_out_of_scope",
+   "reason": "C's read_missing returns (Census, Invariant, CallerMustResolve) and fences for a valid occupied before; the contract oracle is Unsupported. The test is #[ignore] with the contract oracle; the fix is a C product change awaiting the user's decision."
+  }
+ }
+}
