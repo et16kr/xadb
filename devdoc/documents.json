@@ -18,11 +18,6 @@
       "role": "evidence",
       "title": "main 기존 실패 디버깅: commit window native 초과와 F05 recovery oracle"
     },
-    "module-gate-plan-review-20261031.md": {
-      "path": "evidence/module-gate-plan-review-20261031.md",
-      "role": "evidence",
-      "title": "모듈 분리 강제 계획 리뷰 — 시행 전 점검"
-    },
     "module-independence-survey-20261026.md": {
       "path": "evidence/module-independence-survey-20261026.md",
       "role": "evidence",
