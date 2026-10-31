@@ -203,5 +203,5 @@ fn s9r_b03_active_chain_is_missing_for_b() {
 
 /// The S6 native cases keep B's read after READY (C+A+B), so they live here.
 #[cfg(target_os = "linux")]
-#[path = "row_recovery/native.rs"]
+#[path = "row_recovery_read/native.rs"]
 mod native;
