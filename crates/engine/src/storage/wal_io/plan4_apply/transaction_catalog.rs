@@ -609,7 +609,7 @@ impl<'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
             Err(error) => return transaction_error(transaction, error),
         };
         // The same exclusive control borrow spans validation through publication.
-        let observation = match self.catalog_commit(owner, actor, private) {
+        let observation = match self.commit_group::<PreparedCatalog>(owner, actor, private) {
             Ok(observation) => observation,
             Err(error) => return transaction_error(transaction, error),
         };
@@ -718,7 +718,7 @@ impl<'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
     clippy::result_large_err,
     reason = "same original capsule is returned inline"
 )]
-fn transaction_error<'v, 'a, 'c, 's, T>(
+pub(super) fn transaction_error<'v, 'a, 'c, 's, T>(
     transaction: RowTransaction<'v, 'a, 'c, 's>,
     error: RetentionError,
 ) -> std::result::Result<T, TransactionFinishError<RowTransaction<'v, 'a, 'c, 's>>> {

@@ -1793,7 +1793,7 @@ impl<'l> RowProducerLane<'l> {
 <a id="row-commit-s3"></a>
 #### XADB-MODULE-ROW-COMMIT-001 — S3 Row Commit과 종료
 
-2026-10-31 · **D2 ACCEPTED / 구현·시험 NOT_RUN**. 사용자 S3 클라우드 개발 지시와 별도 branch·단계별 commit 지시에 따라 `6ec2d343`에서 `codex/s3-row-commit`을 만들었다. 설계·구현·계약·통합 담당 `/root`, 독립 검토 `/root/s3_independent_review`다. 이 절은 S2 마감의 다음 공급 단위이며 S4 rollback, S5 Row 읽기, C4/S6 READY 복구 또는 전체 M4/M5 인수를 시작하지 않는다.
+2026-10-31 · **S3-b 구현·선택 검증 / 최종 수합 중**. 사용자 S3 클라우드 개발 지시와 별도 branch·단계별 commit 지시에 따라 `6ec2d343`에서 `codex/s3-row-commit`을 만들었다. 설계·구현·계약·통합 담당 `/root`, 독립 검토 `/root/s3_independent_review`다. 이 절은 S2 마감의 다음 공급 단위이며 S4 rollback, S5 Row 읽기, C4/S6 READY 복구 또는 전체 M4/M5 인수를 시작하지 않는다.
 
 **기존 공급과 변경.** `PreflightRow::finish`의 source→gate→lease 반환과 Row `finish_statement`의 원 actor/mark 검산·WAL0 종료는 이미 구현되어 있다. S3는 그 실제 census와 Cancel 뒤 종료 의미를 확정하고, 현재 Unsupported인 `commit_row`를 실제 Commit에 연결한다. 공개 wire·format 번호·상수·cap·charge는 바꾸지 않는다.
 
@@ -1824,6 +1824,17 @@ impl<'l> RowProducerLane<'l> {
 **단계별 commit.** S3-a 설계·검증 범위, S3-b 공통 Commit과 Row 준비·epoch·capsule 구현 및 해당 선택 검증, S3-c 실제 consumer/native·census·오류 증거와 독립 최종 리뷰를 각 검토 가능한 commit으로 남긴다. 실제 diff가 다른 유한 단위를 요구하면 owner·시험 대응을 기록하고 나눈다. 통합·기존 검증 반복·원격 push/merge를 자동 실행하지 않는다.
 
 **독립 검토.** `/root/s3_independent_review`가 실제 계약·코드와 이 절의 diff를 읽기 대조하여 S3-a 설계에 한정한 D2 ACCEPT·필수 수정0으로 판정했다. 검토 HEAD `6ec2d3432344f2353e319c7a0eec1955d5a3420a`, 판정 반영 전 파일 SHA-256 `cfc3d017f26411bff3f71a92aae2d0f01de65a333c89b76ccc68c674592c8c9a`. 권고는 실제 두 타입의 봉인과 terminal operation 검산, 두 image의 별도 census, 실행 전 selector/variant manifest 및 실제 Drain 대기 schedule이며 구현·검증 입력에 반영한다. 빌드·시험·자동 문서 검사는 실행하지 않았다.
+
+**S3-b 자원 설계 보완(2026-10-31, 검증 중).** 최초 S3-C01은 Row 창 `[45118,14802,26880,9340]B`가 기존 `[39038,10690,24620,5228]B`를 넘어서 FAIL했다(`artifacts/module-s3-20261031/v1`, memory). 이 실행은 첫 실패에서 중단했으며 R01을 실행한 것으로 표시하지 않는다. 독립 검토에서 일반 Row lifecycle의 `RowLifecycle`/`ExistingGroup`/Observation 반환과9-target ledger 항이 Commit 전용 census에 중복 편입된 점, full Row Observation의 불필요한 `issued` 등 필드를 반환하는 점을 확인했다. 다음 보완은 고정 cap·charge를 바꾸지 않는다.
+
+- 준비는 실제4-target Commit의 selection·replay·producer·inventory·반환 packet만 계수한다. 원 `history::validate_live`는 유지한다.
+- Row completion은 원 immutable Jobs after page 참조·terminal ordinal·LSN의 private 요약이다. actor/status는 compact install image에 원 producer 값 그대로 보존하고 원 frame의 Commit/LSN을 해독해 Observation을 복원한다. 완료 authority나 공개 q 생성자가 아니며 ATT·TerminalReady의 전체 expected cell·Status·Q를 checked 종료에서 검산한다.
+- `commit_staged`와 `publish_commit`을 non-inline 함수로 분리한다. image·물리 target·install receipt frame은 전자 반환에서 끝나며 후자는 실제 `CatalogCommitInstalled` 완료 증명에서만 투영한 `InstalledFrontier`·`DurableWal`·epochs·요약을 전달받는다. 같은 mutable ledger와 source admission을 계속 보유하고 각 helper의 반환 slot도 계수한다.
+- 실제 A `commit_live`는 원 C의 consuming call 뒤 별도 non-inline `map_commit_result`를 호출한다. generic driver도 같은 mapper를 쓰므로 Before/충돌/Fatal 의미는 한 곳이다. mapper는 C 실행 중 호출되지 않는다. 실제 live census는 원 capsule·두 C Result slot·caller 결과·LiveCall·두 Owner와 참조 인수를 센다. tail 전달 결과는 같은 저장 위치의 소유자를 한 번 기록하며 LLVM 최적화를 가정하지 않는다. 기존 generic D15 상계·slack와 원512B long lease는 유지한다.
+- Pending의 실제 memory/native WAL wait 호출, 새 install 반환 handoff, 공개만 하는 epoch helper를 별도 계수한다. 기존 광범위 상계와 차이를 출력하고 각 고정 창 및65536B를 단언한다. v8의 memory/native 관측은 Row `[39036,10679,19556,5082]B`, 고정 charge `[39038,10690,24620,5228]B`로 통과했다. 각 source별 실패와 후속 확장 관측은 [실행 증거](../evidence/module-independence-survey-20261026.md#s3-row-commit)에 보존한다.
+
+- Pending은 원 physical backing을 보유한 채 실제 `wait_ready`가 반환한 private borrowed Drain proof만 전달한다. unfinished Drop은 원 core abandon/fence·version 해제 뒤 pin을 반환하고 resume은 동일 pin/stable identity를 한 번만 옮긴다. 원 parent의 고정 배열은 resume·install 동안 별도 계수한다. 물리 leaf와 이후 control/history/completion leaf는 순차 max이며 source 검산·실패 정리 상계는 남긴다. Catalog와 Row를 각각 관측하고 기존 charge 계산은 바꾸지 않는다.
+- Serializable 충돌은 capsule을 MustAbort로 바꾸지만 durable 빈 Row actor는 Active다. empty-abort는 scope·ATT·root/undo 부재 검산 뒤 이 조합에서 원 RollbackStart→AbortEnd를 수행한다. durable Aborting 재시도와 Catalog 조건은 유지하며 비어 있지 않은 S4 rollback을 공급하지 않는다.
 
 **재검토 조건.** Row phase가 고정 charge를 넘음, 공개 타입/형식 변경 필요, replay 생략 필요, 실제 producer가 위 빈/다중 root 의미를 지원하지 않음, caller의 보유값 증가, 원 receipt/복구 gate 의미 변경. 필수 결과가 없는 항목은 NOT_RUN이며 단계를 완료로 올리지 않는다.
 

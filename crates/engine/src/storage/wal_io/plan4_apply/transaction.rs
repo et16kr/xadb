@@ -15,6 +15,9 @@ pub(super) mod catalog;
 #[path = "transaction_write.rs"]
 pub(super) mod writable;
 
+#[path = "transaction/row.rs"]
+pub(super) mod row_commit;
+
 const SLOTS: usize = 32;
 const HEADER: usize = 64;
 const SLOT: usize = 128;
@@ -1011,26 +1014,6 @@ impl<'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
         _owner: &mut Owner<'c, 's>,
         transaction: RowTransaction<'v, 'a, 'c, 's>,
     ) -> std::result::Result<(), TransactionFinishError<RowTransaction<'v, 'a, 'c, 's>>> {
-        Err(TransactionFinishError::Before {
-            error: unchanged(RetentionPhase::Finalize, RetentionCause::Unsupported),
-            transaction,
-        })
-    }
-    /// Row Commit keeps the durable ledger borrow from validation to Q
-    /// publication. Not supplied yet: Before with the same capsule, no effect.
-    #[allow(
-        clippy::result_large_err,
-        reason = "unchanged failure returns the same inline transaction; its return carrier is charged to the 512-byte source envelope"
-    )]
-    pub(in crate::storage) fn commit_row<'v>(
-        &mut self,
-        _owner: &mut Owner<'c, 's>,
-        transaction: RowTransaction<'v, 'a, 'c, 's>,
-        _private: &mut [u8; 425_984],
-    ) -> std::result::Result<
-        super::row::RowCommitObservation,
-        TransactionFinishError<RowTransaction<'v, 'a, 'c, 's>>,
-    > {
         Err(TransactionFinishError::Before {
             error: unchanged(RetentionPhase::Finalize, RetentionCause::Unsupported),
             transaction,

@@ -373,7 +373,7 @@ pub(in super::super) struct CatalogPayload<'i, 'c, 's> {
 /// Consuming stage continuation. Canonical physical after order is captured
 /// before the preparation arrays end; Allocation's proof-only entry is None.
 /// No Clone/Copy, raw constructor or PreparedCatalog reconstruction exists.
-pub(super) struct CatalogCommitImage<'i, 'c, 's> {
+pub(in super::super) struct CatalogCommitImage<'i, 'c, 's> {
     payload: CatalogPayload<'i, 'c, 's>,
     after: [Option<&'i [u8; PAGE_BYTES]>; 4],
 }
@@ -2518,4 +2518,62 @@ impl<'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
         self.catalog_statement_created(owner, view, object)?;
         Ok(object)
     }
+}
+
+/// S3 preparation: original four-target Row replay/producer/inventory, plus
+/// terminal/ATT target selection and trait forwarding. No ordinary installer
+/// participates in Commit. This observation never raises an admission charge.
+#[cfg(test)]
+pub(in super::super) fn row_commit_prepare_source_bytes<W: WriterNamespace>() -> usize {
+    use std::mem::size_of;
+    let scalar = size_of::<CatalogPreparation<'_, '_, '_, '_, '_, '_, '_, '_, W>>()
+        // The temporary view receiver and trait-wrapper arguments are
+        // counted by the six explicit outer references below, once.
+        + 2 * size_of::<WalPrefix>()
+        + size_of::<OwnerIdentity>()
+        + 6 * size_of::<Result<()>>()
+        + 4 * size_of::<RetentionError>()
+        + size_of::<crate::storage::session_fence::UnwindFence<'_>>()
+        + 24 * size_of::<usize>()
+        + 20 * size_of::<&[u8]>();
+    let scope_carriers = size_of::<history::runtime::ReplayScope<'_, '_, '_, '_>>()
+        + size_of::<history::runtime::ReplayLoan<'_, '_, '_, '_>>()
+        + 2 * size_of::<Result<history::runtime::ReplayScope<'_, '_, '_, '_>>>()
+        + 2 * size_of::<Result<history::runtime::ReplayLoan<'_, '_, '_, '_>>>();
+    let history_peak = history::source_bytes::<W>().peak;
+    let ledger = scalar
+        + size_of::<[(TargetRequest, u8); 4]>()
+        + size_of::<Result<(OwnerIdentity, WalPrefix)>>()
+        + 2 * size_of::<&()>()
+        + 640
+        + 2 * size_of::<crate::storage::obligation::DescriptorSpec>()
+        + queue::source_bytes()
+            .max(semantic_catalog::profile3_transaction_source_bytes())
+            .max(crate::storage::semantic_row::ledger::admission_source_bytes());
+    let row = lifecycle::row::row_lifecycle_terms();
+    let body = (scalar + row.outer + scope_carriers + history_peak.max(row.produce))
+        .max(scalar + row.outer + row.inventory)
+        .max(scalar + row.outer + row.assembled)
+        .max(ledger);
+    // Only prepare_row_commit and its trait forwarding return surround the
+    // shared preparer. No ordinary RowLifecycle/ExistingGroup or apply result.
+    // One common output owner is commit_group's match slot. The trait's
+    // prepare and prepare_row_commit are tail forwards of prepare_existing_row
+    // to that slot. This Result stays outside max, including replay/producer.
+    // row.assembled's Prepared + two Result terms remain conservative extras
+    // only in that final assembly arm; no other arm relies on those extras.
+    body + size_of::<Result<lifecycle::row::PreparedRowGroup<'_, '_, '_>>>()
+        + 6 * size_of::<&()>() // trait(writer,owner,private) + helper(self,owner,private)
+        + size_of::<TxnRef>() + size_of::<StatusSlotRef>()
+        + 2 * size_of::<usize>() + size_of::<Option<usize>>()
+        // Requests are built directly into the selected array counted by
+        // row.outer; no independent allocator/root/job request locals survive.
+        + size_of::<Result<Plan4Target>>()
+        + size_of::<Result<(usize, StatusSlotRef)>>()
+}
+
+#[cfg(test)]
+pub(in super::super) fn row_commit_control_source_bytes() -> usize {
+    lifecycle::row::row_lifecycle_terms().control
+        + std::mem::size_of::<crate::storage::semantic_row::transition::Observation>()
 }

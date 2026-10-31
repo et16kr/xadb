@@ -961,7 +961,20 @@ fn commit<B: Boundary>(
     transaction: B::Transaction,
     loan: &mut Loan,
 ) -> Result<B::Committed, DriveError<B::Transaction>> {
-    match call.commit(transaction, loan) {
+    map_commit_result(call.commit(transaction, loan))
+}
+
+/// Mapping runs after the C call has returned. It shares exactly the same
+/// Before/RollbackRequired/Fatal interpretation with the direct live adapter.
+#[inline(never)]
+#[allow(
+    clippy::result_large_err,
+    reason = "the original capsule is returned inline"
+)]
+fn map_commit_result<T, C>(
+    result: Result<C, TransactionFinishError<T>>,
+) -> Result<C, DriveError<T>> {
+    match result {
         Ok(committed) => Ok(committed),
         Err(TransactionFinishError::Before { error, transaction }) => Err(DriveError::kept(
             Failure::new(Stage::Commit, error.into()),

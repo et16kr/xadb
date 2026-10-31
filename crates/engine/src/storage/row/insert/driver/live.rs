@@ -14,7 +14,8 @@
 //! reservation is active. A call that ends the reservation with a durable
 //! Forward apply or a Cancel discharges it and ends without the fence; a call
 //! that stops after a successful reserve without either ends fenced (the
-//! Drop). A body not supplied yet (the Row read source, rollback and Commit
+//! Drop). `commit_live` reaches the original durable Row Commit and capsule
+//! cleanup (S3). A body not supplied yet (the Row read source and rollback
 //! adapters) returns Unchanged `Unsupported` before any effect of its own.
 //! `insert_live` has no product caller in S2: S2-e runs the live driver from
 //! C's tests (`catalog_memory/row_live.rs`), which closes gap G2. A preflight
@@ -25,8 +26,8 @@ use super::{
     Boundary, CALL_SITES, CallSite, DriveError, Failure, FlushStep, Loan, PendingRollback,
     Preflight, PreflightNext, Prepared, PreparedTask, ProducerLane, Reserved, Rollback,
     RollbackNext, RollbackStop, RollbackTask, StartedRollback, StatementView, Stepped,
-    ValidationLane, call_sites, caller_bytes, carrier_bytes, commit, finish_aborted,
-    finish_rollback, finish_statement, insert_statement, retry_task, rollback_step,
+    ValidationLane, call_sites, caller_bytes, carrier_bytes, finish_aborted, finish_rollback,
+    finish_statement, insert_statement, map_commit_result, retry_task, rollback_step,
     start_full_rollback, start_statement_rollback,
 };
 use crate::storage::{
@@ -502,7 +503,7 @@ pub(in crate::storage) fn commit_live<'v, 'a, 'c, 's, W: WriterNamespace>(
     transaction: RowTransaction<'v, 'a, 'c, 's>,
     private: &mut Loan,
 ) -> Result<RowCommitObservation, DriveError<RowTransaction<'v, 'a, 'c, 's>>> {
-    commit(call, transaction, private)
+    map_commit_result(call.port.commit_row(call.owner, transaction, private))
 }
 
 /// `finish_aborted` of the transaction `PendingRollback::rolled_back`
@@ -589,4 +590,39 @@ pub(super) const fn live_call_sites<W: WriterNamespace + 'static>() -> [CallSite
             W,
         >,
     >()
+}
+
+/// S3 direct live call: the separate result mapper has returned only after
+/// C returns. Inventory counts the unique moved capsule, both C result slots,
+/// the outer caller's output, LiveCall, two Owners, and actual reference args.
+/// Tail-forwarded outputs have one named owner, not duplicate placeholders.
+#[cfg(test)]
+pub(in crate::storage) fn commit_caller_source<W: WriterNamespace + 'static>() -> (usize, usize) {
+    use std::mem::size_of;
+    type T = RowTransaction<'static, 'static, 'static, 'static>;
+    let slack = 32 * size_of::<&()>() + 16 * size_of::<Result<(), RetentionError>>() + 512;
+    let held = slack
+        + size_of::<
+            LiveCall<
+                'static,
+                'static,
+                'static,
+                'static,
+                'static,
+                'static,
+                'static,
+                'static,
+                'static,
+                'static,
+                'static,
+                'static,
+                W,
+            >,
+        >()
+        + 2 * size_of::<Owner<'static, 'static>>()
+        + 2 * size_of::<&()>()
+        + size_of::<T>()
+        + size_of::<Result<RowCommitObservation, DriveError<T>>>()
+        + 2 * size_of::<Result<RowCommitObservation, TransactionFinishError<T>>>();
+    (held, held)
 }

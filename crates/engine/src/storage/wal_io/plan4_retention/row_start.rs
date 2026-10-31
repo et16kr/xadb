@@ -29,6 +29,12 @@ const ALLOCATOR_ROLE: u8 = 7;
 /// Most targets of a supplied Row lifecycle group: Begin and AbortEnd take
 /// Allocation, Root, Jobs and Status; the empty RollbackStart takes no Jobs.
 const ROW_TARGETS: usize = 4;
+
+#[path = "row_start/commit.rs"]
+mod commit;
+#[cfg(test)]
+pub(in super::super::super::super) use commit::RowCommitImage;
+pub(in super::super::super::super) use commit::RowCommitSummary;
 /// Most targets of a Row write group: the whole write target set T (S2-0 Row
 /// write amendment §1 "residency", at most nine after physical
 /// de-duplication).
@@ -103,7 +109,8 @@ impl<'c, 's> GroupPayload<'c, 's> for RowPayload<'_, 'c, 's> {
 /// (`T` = `ROW_WRITE_TARGETS`, the three operations `row_write` admits)
 /// build it, and the install body borrows it once. The default keeps the
 /// lifecycle's type, and so its census, unchanged.
-pub(in super::super) struct PreparedRowGroup<'i, 'c, 's, const T: usize = ROW_TARGETS> {
+pub(in super::super::super::super) struct PreparedRowGroup<'i, 'c, 's, const T: usize = ROW_TARGETS>
+{
     payload: RowPayload<'i, 'c, 's>,
     owner: OwnerIdentity,
     requests: [TargetRequest; T],
@@ -188,7 +195,18 @@ impl<'i, 'c, 's, const T: usize> PreparedRowGroup<'i, 'c, 's, T> {
         profile: crate::storage::control::Profile,
         requirement: WalRequirement<'_>,
     ) -> Result<()> {
-        let payload = &self.payload;
+        self.payload.apply_control(control, profile, requirement)
+    }
+}
+
+impl RowPayload<'_, '_, '_> {
+    fn apply_control(
+        &self,
+        control: &mut control::RetentionLedger<'_, '_, '_>,
+        profile: crate::storage::control::Profile,
+        requirement: WalRequirement<'_>,
+    ) -> Result<()> {
+        let payload = self;
         check_staged_group(payload, control, requirement)?;
         let layout = row_semantic::decode_layout(
             payload.frame,
@@ -199,37 +217,49 @@ impl<'i, 'c, 's, const T: usize> PreparedRowGroup<'i, 'c, 's, T> {
             profile,
         )
         .map_err(|e| unchanged(RetentionPhase::Install, RetentionCause::RowSemantic(e)))?;
-        let (bank, rest) = control.bytes.split_at_mut(BANK_END);
-        let jobs: &mut [[u8; JOB_BYTES]; JOB_COUNT] = rest[..JOB_END - BANK_END]
-            .as_chunks_mut::<JOB_BYTES>()
-            .0
-            .try_into()
-            .expect("64 job loan");
-        history::row::record(
-            bank,
-            jobs,
+        apply_row_control(
+            control,
+            profile,
             layout,
             &payload.observation,
-            payload
-                .observation
-                .job_ordinal
-                .map(|_| &payload.after[row_group::JOB]),
+            &payload.after[row_group::JOB],
             payload.slot,
-            profile,
+            payload.inventory,
         )
-        .map_err(|cause| unchanged(RetentionPhase::Install, cause))?;
-        // Every fallible check is above; record has checked the Begin actor.
-        if payload.observation.operation == row_semantic::Operation::Begin {
-            control.adopted_local = payload
-                .observation
-                .actor
-                .expect("recorded Begin actor")
-                .id()
-                .local;
-        }
-        control.bytes[JOB_END..INVENTORY_END].copy_from_slice(payload.inventory);
-        Ok(())
     }
+}
+
+fn apply_row_control(
+    control: &mut control::RetentionLedger<'_, '_, '_>,
+    profile: crate::storage::control::Profile,
+    layout: row_semantic::LayoutView<'_>,
+    observation: &row_group::Observation,
+    jobs_after: &[u8; PAGE_BYTES],
+    slot: Option<usize>,
+    inventory: &[u8; PAGE_BYTES],
+) -> Result<()> {
+    let (bank, rest) = control.bytes.split_at_mut(BANK_END);
+    let jobs: &mut [[u8; JOB_BYTES]; JOB_COUNT] = rest[..JOB_END - BANK_END]
+        .as_chunks_mut::<JOB_BYTES>()
+        .0
+        .try_into()
+        .expect("64 job loan");
+    history::row::record(
+        bank,
+        jobs,
+        layout,
+        observation,
+        observation.job_ordinal.map(|_| jobs_after),
+        slot,
+        profile,
+    )
+    .map_err(|cause| unchanged(RetentionPhase::Install, cause))?;
+    // Every fallible check is above; record has checked the Begin actor.
+    if observation.operation == row_semantic::Operation::Begin {
+        control.adopted_local = observation.actor.expect("recorded Begin actor").id().local;
+    }
+    control.bytes[JOB_END..INVENTORY_END].copy_from_slice(inventory);
+    Ok(())
 }
 
 impl<'i> GroupRows<'i> {
@@ -805,6 +835,15 @@ pub(in super::super) fn row_group_terms<const N: usize>() -> RowLifecycleTerms {
         + 2 * size_of::<std::result::Result<(), RetentionCause>>()
         + job3::source_bytes().max(4 * size_of::<ContentHasher>() + 1536);
     let control = 2 * size_of::<ControlCut>()
+        + std::mem::size_of::<(
+            &mut control::RetentionLedger<'_, '_, '_>,
+            crate::storage::control::Profile,
+            row_semantic::LayoutView<'_>,
+            &row_group::Observation,
+            &[u8; PAGE_BYTES],
+            Option<usize>,
+            &[u8; PAGE_BYTES],
+        )>()
         + 3 * size_of::<ContentHasher>()
         + size_of::<row_semantic::LayoutView<'_>>()
         + 2 * size_of::<std::result::Result<row_semantic::LayoutView<'_>, row_semantic::Error>>()

@@ -30,9 +30,9 @@ pub(super) use epochs::{
     transition_source_bytes as epoch_transition_source_bytes,
 };
 
-pub(super) use epochs::TableSlot;
 #[cfg(test)]
 pub(super) use epochs::commit_retained_carrier as epoch_commit_retained_carrier;
+pub(super) use epochs::{CommitEpochs, TableSlot};
 
 #[path = "visibility/authority.rs"]
 mod authority;
@@ -564,3 +564,9 @@ impl BoundVisibility<'_, '_, '_> {
         )
     }
 }
+
+#[cfg(test)]
+pub(super) use epochs::row_commit_source_bytes;
+
+#[cfg(test)]
+pub(super) use epochs::commit_publication_source_bytes;

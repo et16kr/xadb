@@ -1,6 +1,6 @@
 # 현재 구현
 
-2026-10-31 [S3 Row Commit](../contracts/dev3-module-boundaries.md#row-commit-s3): 병합 기준 `6ec2d343`에서 클라우드 별도 branch `codex/s3-row-commit`으로 착수했다. S3-a 설계는 독립 D2 ACCEPT·필수 수정0이며 제품 구현·선택 검증은 NOT_RUN이다. S4–S6·전체 M4/M5는 미완료다.
+2026-10-31 [S3 Row Commit](../contracts/dev3-module-boundaries.md#row-commit-s3): 병합 기준 `6ec2d343`에서 클라우드 별도 branch `codex/s3-row-commit`으로 착수했다. S3-a 설계와 S3-b 구현의 독립 검토는 ACCEPT·필수 코드 수정0이다. 실제 Row Commit·선택 검증을 진행했으며 [source별 실행 증거](../evidence/module-independence-survey-20261026.md#s3-row-commit)에 원 실패와 후속 결과를 수합한다. S4–S6·전체 M4/M5는 미완료다.
 
 2026-10-30 [S2-f V09 대체 oracle과 S2 마감](../evidence/module-independence-survey-20261026.md#s2f-closeout): Row 쓰기(S2)가 끝났다. 첫 Row INSERT의 쓰기 단계가 finish를 빼고 모두 실제 본문이며, S3 전에서 멈춘다.
 

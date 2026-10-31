@@ -741,3 +741,6 @@ impl Drop for VersionEditGuard<'_, '_, '_> {
 #[cfg(test)]
 #[path = "concurrency/tests.rs"]
 mod tests;
+
+#[cfg(test)]
+pub(crate) use commit::drain_call_source_observation as commit_drain_source_observation;

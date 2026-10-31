@@ -1,4 +1,4 @@
-//! Private epoch bookkeeping fed only by the original checked Catalog adapters.
+//! Private epoch bookkeeping fed only by the original checked Catalog and Row adapters.
 //! Decoded identities are observations; activation remains inside exclusive
 //! source validation and changes remain inside the original writer borrow.
 use super::super::{PreparedCatalog, control, history, recovery};
@@ -62,6 +62,7 @@ pub(in super::super) struct EpochChange {
 }
 pub(in super::super) struct CommitEpochs {
     mask: u32,
+    catalog: bool,
     q: u64,
     digest: [u8; 32],
 }
@@ -230,6 +231,73 @@ impl BoundVisibility<'_, '_, '_> {
         }
         Ok(CommitEpochs {
             mask,
+            catalog: true,
+            q,
+            digest: prepared.frame_digest(),
+        })
+    }
+
+    /// Only surviving logical Row roots contribute. Conservative read/write
+    /// dependency bits and compensated roots never become publication deltas.
+    pub(in super::super) fn prepare_row_commit_epochs(
+        &self,
+        prepared: &super::super::create_pair::catalog_live::lifecycle::row::PreparedRowGroup<
+            '_,
+            '_,
+            '_,
+        >,
+        ledger: &control::RetentionLedger<'_, '_, '_>,
+        profile: Profile,
+        q: u64,
+    ) -> VisibilityResult<CommitEpochs> {
+        use super::super::create_pair::catalog_commit::CommitPreparation;
+        if !self.origin.same(&Origin {
+            core: prepared.core(),
+            binding: prepared.binding(),
+            fence: prepared.fence(),
+        }) {
+            return Err(unchanged(VisibilityCause::BindingMismatch));
+        }
+        self.origin.health()?;
+        let publication = self.publication()?;
+        if !publication.epochs_active
+            || !prepared.is_commit()
+            || publication.q.checked_add(1) != Some(q)
+        {
+            return Err(self.origin.fatal(VisibilityCause::Invariant));
+        }
+        let actor = prepared
+            .actor()
+            .ok_or_else(|| self.origin.fatal(VisibilityCause::Invariant))?;
+        let mut mask = 0u32;
+        for cell in ledger.jobs() {
+            let job = job3::decode_job(cell, profile.spec().namespace)
+                .map_err(|_| self.origin.fatal(VisibilityCause::Invariant))?;
+            if job.source() != Some(actor) {
+                continue;
+            }
+            if job.scope() != Some(job3::JobScope::Row) {
+                return Err(self.origin.fatal(VisibilityCause::Invariant));
+            }
+            if !job.state().is_root() || job.state() == job3::JobState::RootReleasingCompensated {
+                continue;
+            }
+            if job.state() != job3::JobState::RootRetained {
+                return Err(self.origin.fatal(VisibilityCause::Invariant));
+            }
+            let object = job
+                .object()
+                .ok_or_else(|| self.origin.fatal(VisibilityCause::Invariant))?;
+            let slot = find(publication.epochs, object)
+                .ok_or_else(|| self.origin.fatal(VisibilityCause::Invariant))?;
+            if row(publication.epochs, slot)[0] != PUBLISHED {
+                return Err(self.origin.fatal(VisibilityCause::Invariant));
+            }
+            mask |= 1 << slot;
+        }
+        Ok(CommitEpochs {
+            mask,
+            catalog: false,
             q,
             digest: prepared.frame_digest(),
         })
@@ -252,7 +320,10 @@ impl BoundVisibility<'_, '_, '_> {
             return Err(self.origin.fatal(VisibilityCause::Invariant));
         }
         for slot in 0..TABLES {
-            if epochs.mask & (1 << slot) != 0 && row(publication.epochs, slot)[0] != RESERVED {
+            if epochs.mask & (1 << slot) != 0
+                && row(publication.epochs, slot)[0]
+                    != if epochs.catalog { RESERVED } else { PUBLISHED }
+            {
                 return Err(self.origin.fatal(VisibilityCause::Invariant));
             }
         }
@@ -263,7 +334,7 @@ impl BoundVisibility<'_, '_, '_> {
                 put_u64(row, 32, installed.q);
             }
         }
-        if epochs.mask != 0 {
+        if epochs.catalog && epochs.mask != 0 {
             put_u64(publication.epochs, 0, installed.q);
         }
         publication.q = installed.q;
@@ -557,4 +628,31 @@ impl BoundVisibility<'_, '_, '_> {
 #[cfg(test)]
 pub(in super::super) fn commit_retained_carrier() -> usize {
     std::mem::size_of::<CommitEpochs>()
+}
+
+/// S3 Row epoch selection scans Row Job views; publication itself is shared.
+#[cfg(test)]
+pub(in super::super) fn row_commit_source_bytes() -> usize {
+    use std::mem::size_of;
+    publication_source_bytes()
+        + 2 * size_of::<job3::JobView<'_>>()
+        + 2 * size_of::<Result<job3::JobView<'_>, crate::storage::retention_page::RetentionError>>()
+        + size_of::<u32>()
+        + 4 * size_of::<&()>()
+        + job3::source_bytes()
+}
+
+/// The actual publish helper calls only publication/health and epoch row
+/// scans. ObjectHandle/TxnRef/Profile/EpochChange belong to preparation and
+/// ordinary transitions, not to this post-install helper.
+#[cfg(test)]
+pub(in super::super) fn commit_publication_source_bytes() -> usize {
+    use std::mem::size_of;
+    size_of::<std::sync::LockResult<MutexGuard<'_, Publication<'_>>>>()
+        + 2 * size_of::<VisibilityResult<MutexGuard<'_, Publication<'_>>>>()
+        + size_of::<MutexGuard<'_, Publication<'_>>>()
+        + 4 * size_of::<VisibilityError>()
+        + 8 * size_of::<VisibilityResult<()>>()
+        + 16 * size_of::<&()>()
+        + 16 * size_of::<u64>()
 }

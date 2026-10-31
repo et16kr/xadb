@@ -214,7 +214,7 @@ pub(super) fn wal_since(state: &State, from: usize) -> Vec<u8> {
 }
 
 /// A copy of one resident pool page.
-fn page_of(pool: &SharedPool<'_, '_, '_, '_>, number: u64) -> Box<[u8; PAGE_BYTES]> {
+pub(super) fn page_of(pool: &SharedPool<'_, '_, '_, '_>, number: u64) -> Box<[u8; PAGE_BYTES]> {
     let (index, _) = resident(pool, number);
     let mut bytes = boxed::<PAGE_BYTES>();
     probe::diagnose(pool, index, &mut bytes);
@@ -1118,7 +1118,7 @@ fn root_cursor(pool: &SharedPool<'_, '_, '_, '_>) -> u64 {
 /// The pool Root with its free cursor (Root cell offset 72) moved by one,
 /// modulo 64, re-encoded with the same header (its LSN) in place; the frame's
 /// stamp is not touched.
-fn move_root_cursor(pool: &SharedPool<'_, '_, '_, '_>) {
+pub(super) fn move_root_cursor(pool: &SharedPool<'_, '_, '_, '_>) {
     let (index, request) = resident(pool, 1);
     dirty_frame::status_load_test_support::edit_content(pool, index, |bytes| {
         let (header, mut cell) = {
