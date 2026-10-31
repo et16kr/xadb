@@ -2809,3 +2809,154 @@ memory는 cut의 image에서, native는 worker가 cut 직전 WAL 파일을 읽�
 **live Row retirement.** 실행 중의 Row 물리 정리(Prune·RootFree 등의 live 입구, aging horizon 검사)는 C0–C5 공급 단위에 없다. 실제로는 Row MVCC 정리라는 DEV3 기능이다. module-plan thread는 DEV3 기능을 하지 않는다는 사용자 규칙에 따라 S9는 이를 구현하지 않고 **범위 밖(N/A, DEV3)**으로 기록한다. 2026-10-31 사용자에게 결정 카드로 물었고(권장: 범위 밖), 이 기록은 답을 받기 전 권장안을 따른 것이다. 사용자가 구현을 고르면 이 항목을 다시 연다. 그래서 MCI01-V11처럼 Row 물리 정리를 전제하는 관측은 복구 정리로만 확인한다([S7](#row-join-s7)).
 
 실행 결과는 [증거](../evidence/module-independence-survey-20261026.md#s9-module-completion)에 둔다.
+
+<a id="row-mi03-s10"></a>
+## XADB-MODULE-ROW-MI03-S10 — S10 소비자 §9 동결 inventory의 ID별 공급과 대응
+
+2026-10-31. S9 독립 재확인(NR1)은 [소비자 §9](dev3-module-consumers.md#acceptance)의 동결 inventory(A의 MCA01–05 memory 61개·native 29개, B의 MCB01–04 memory 38개·native 1개, 모두 129 ID)가 어느 tree에서도 ID별로 구현되거나 변형별로 대응된 적이 없다고 지적했다. S10은 S9 branch head `25a8ef0c`(PR #14 열림)에서 만든 `claude/project-thread-1jfdtk-s10`에서 129 ID 각각을 다음 중 하나로 정한다.
+- NEW: 이 단계에서 같은 ID로 쓴 시험
+- CITED: 같은 의미를 이미 실행하는 기존 시험. 인용 근거를 ID마다 적는다.
+- N/A: 이 범위에서 입력을 만들 수 없음(DEV3 기능, 또는 C에 그 경계의 runtime admission이 없음)
+- NOT_RUN, NOT_REACHED: 공급하지 못함. 이유를 적는다.
+- FAIL: 계약 oracle로 썼고 C가 다르게 답함
+
+대응표는 [S10 동결 inventory](../../tests/fixtures/module-row-integration/single-source-s10-inventory.json)(`map`, `not_applicable`, `not_run`, `not_reached`, `fail`)다.
+
+DEV3 기능은 하지 않는다. 제품 동작, 공개 wire, format 번호, cap, charge, API는 바꾸지 않는다. 제품 파일에 더한 것은 cfg(test) 코드뿐이다.
+- `plan4_retention/catalog_lifecycle.rs`: 기존 group 설치에서 번호가 가장 작은 변경 page가 처음 설치된 직후의 hook 지점 `ExistingInstalledFirstPage`. 그 page가 설치 순서에서도 처음일 때만 hit한다.
+- `catalog_test_support.rs`·`test_support.rs`: `arm_abort(point, skip)`. 지점의 (skip+1)번째 hit에서 process를 `abort`한다. 할당, I/O, 대기가 없다. native worker process에서만 arm한다.
+
+시험 쪽 변경은 다음과 같다.
+- 시험 native adapter(`plan4_pages/native_tests.rs`)의 Row cut. 단계 번호로 arm하며 한 syscall의 앞 또는 뒤, 첫 byte write, 주입 write·sync 오류를 고른다.
+- `row_preflight`의 `create_table_with`(CREATE spec을 받음)와 기존 시험 module 몇 개의 가시성
+- A 전용 경로에서 바뀐 것은 시험 파일 `row/insert/group_tests.rs`에 시험 하나(MCA05-V29)를 더한 것뿐이다. A·B의 제품 파일과 B의 `row/read` 아래는 바뀌지 않았다.
+
+**C+B 6행 corpus(`row_corpus`, MCB01–04).** 독립 author `tests/fixtures/dev3-module-c2/row-read-six/`(N1 History 모델)가 C의 실제 live 상태를 pin하고 행을 쓴다.
+- C의 실제 Begin, RowReserve 7개, Cancel 1개가 identity를 발급한다. 행은 a..f 6개(RowId 1, 2, 4, 5, 6, 7, Int64 10..60)와 취소된 gap RowId 3이다.
+- author의 Forward와 after image를 C의 checked ingress가 검산해 설치하고 C의 Commit이 q 2를 공개한다. RowReserve와 Cancel frame은 모델과 byte 단위로 같다. A는 링크하지 않는다.
+- 기대값은 author의 행과 gap이다. 순서, 값, RowId, 중복·누락 없음을 typed 목록 전체로 비교한다. MCB02의 각 답은 point와 한 행 cursor `[row, row+1)`가 같아야 한다.
+
+MCB 행의 해석과 한계는 다음과 같다.
+- MCB01-V01..V08, MCB02-V01..V05, MCB04-V01·V06..V13은 계약 문언 그대로다. V08의 reversed range는 open에서 InvalidRange이고 cursor credit을 잡지 않는다.
+- MCB02-V06(CLR Missing)은 S9의 MCB05-L04, V07(PrunedCommitted)은 MCB05-L03(복구 정리 Prune 뒤 B 읽기)을 인용한다.
+- MCB02-V08(publication gap)은 C의 Commit을 기존 hook `BeforePublish`에서 멈춘다. c의 status q 2가 공개 Q 1보다 큰 창에서 Commit 전에 잡은 foreign Serializable statement(q 1)가 point와 한 행 cursor 모두로 c를 Missing으로 읽는다. 그 거래 끝은 SerializationConflict이고 새 snapshot(q 2)은 c를 읽는다. S9의 L06이 보지 않던 point와 cursor 일치를 여기서 본다.
+- MCB03-V02·V08은 [S2-0 terminal read gate](#row-write-budget) 아래에서 읽는다(MCI03-V01과 같다). S8 literal 행과 L04 literal CLR을 쓴다.
+  - foreign reader B1을 source capture 뒤(`RowReadCaptured`)에서 멈춰 행의 Txn·U pin을 잡게 한다. C의 statement rollback은 gate를 닫고 B1을 기다린다(`ReadGateWaiting`). 그동안 WAL frame은 없다.
+  - 그 사이 늦은 reader B2는 Unchanged InstallationPending으로 거절되고 pin을 하나도 잡지 않는다. B1이 돌아온 뒤 rollback이 author의 RollbackStart, CLR, StatementFinish를 쓴다. B2의 재시도는 Missing이다.
+  - 원 문언의 "U pin 보유 CLR Busy"는 S2-0 개정으로 "gate 대기"가 된다. V08의 "추가 claim Busy"는 gate가 닫힌 동안의 추가 claim 거절(InstallationPending, pin 0)로 읽는다. gate가 열린 상태에서 pin 수 한도로 거절되는 claim은 보지 않는다.
+- MCB03-V03..V06: pool은 corpus database 20 page보다 하나 적은 19 frame이다. 대상 page를 C 자신의 flush 뒤 다른 clean frame을 모두 pin하고 실제 checked LOAD 하나(`test_load`)로 내보낸다. V06은 dirty victim만 남겨 B가 FlushRequired를 받고, C의 flusher가 flush한 뒤 같은 view(같은 q)로 다시 LOAD한다.
+- MCB03-V07: 필요한 U cell을 frame 안에서 손상시킨다. page identity, LSN, envelope, checksum은 유효하다. C는 Census/CallerMustResolve(Undo)로 거절하고 fence한다. B는 Missing이 아니라 그 오류를 돌려준다.
+- MCB04-V02(old open): 6행 corpus 대신 S8 literal 한 행 DB를 다시 연다. 6행 corpus(40 LSN 이력)의 C 복구만으로 약 28초가 걸려 30초 한도에 들지 않기 때문이다. 같은 database·이력을 C가 복구해 READY가 된 Y에서, 아직 살아 있는 X의 CheckedTable(Y의 T와 scalar가 같고 origin만 다름)은 Census/Unchanged/BindingMismatch로 거절된다.
+- MCB04-V05(ended statement): `finish_statement`는 statement를 소비하므로 그 뒤의 statement를 이름으로 부를 수 없다. 그래서 C의 statement rollback이 끝낸 statement에서 point, 새 cursor, 그 전에 연 cursor의 next가 각각 거절됨을 본다.
+- MCB04-V03·V04는 N/A다. table generation과 schema epoch 변경에는 DROP·ALTER TABLE이 필요하고 이는 DEV3 기능이다.
+- **MCB04-V14는 FAIL이다.** c의 U를 occupied before(RowDeleted, before stamp와 같은 actor의 앞선 mutation의 logical version)로 바꾸고 나머지는 유효하게 둔다. 계약 oracle은 Unsupported(이 범위 밖)이지만 C의 `read_missing`은 (Census, Invariant, CallerMustResolve)를 돌려주고 fence한다. 시험은 계약 oracle로 작성해 `#[ignore]`로 두었다. 고치려면 C 제품 변경이 필요하므로 사용자 결정(2026-10-31 결정 카드)을 기다린다.
+- MCB01-N01(native, `scripts/check_dev3_s10_native.py`): P1은 C 설치, CREATE, corpus statement, Commit(q 2) 뒤 process를 끝낸다. P2는 RejectInitialLosers 복구로 READY가 된 뒤 B가 RowId 1..7을 point와 cursor로 읽는다. controller는 author의 `expected.json`에서 기대값을 따로 계산한다.
+
+**C+A(`row_inventory_a`, MCA01·MCA02·MCA04·MCA05).** A의 live driver(`insert_live`, `commit_live`, statement·transaction rollback 입구)를 실제 C 위에서 쓴다. B는 링크하지 않는다.
+- MCA01-V01..V11: 이 module의 독립 canonical encoder(row format 계약에서 작성. A의 encoder나 C의 row decoder를 쓰지 않음)의 bytes와 RowLeaf 13 cell의 raw bytes(key, record header, canonical bytes)를 비교한다. V09..V11은 Validate에서 첫 효과 전에 거절된다. 다음 statement의 행이 RowId 1을 받으므로 거절된 행이 issuance를 쓰지 않았음도 본다.
+- MCA01-V12-P는 NOT_RUN이다. 순수 census는 C의 `table_index_count`이고 실제 MCA01 행에서는 늘 0이다. A의 Unsupported 입구에는 C의 preflight만 만드는 `RowPreflightContext`가 필요한데, [§8.4](dev3-module-consumers.md#independent-fixtures)는 context factory를 금지한다. 독립 Catalog leaf author도 없다.
+- MCA01-V12-S는 NOT_REACHED다. 비상주 Catalog leaf의 stored Index는 Row statement issue가 LOAD 없이 읽으므로 (Census, MissingTarget, Unchanged)로 먼저 멈춘다. 그 leaf를 비상주로 만들려면 분할 port가 빌린 Live 전체가 필요하다. 정확한 cut에는 C의 새 cfg(test) eviction hook과 설계 재검토가 필요하다. 다른 오류를 PASS로 세지 않는다.
+- MCA02-V01..V06: S1(a, b) 성공, S2(c, d) 실패 뒤 c, d만 CLR, 그 뒤 각 변형이다. 각 단계 뒤 actor의 Job census(state, count), root별 Undo-free mutation, 보상 root의 q 0, RowLeaf 13을 이력의 수와 비교한다.
+- MCA04-V01은 S2W-R08·R10, V02는 S4-R01을 인용한다. V03(full abort 뒤 다음 issuer)은 NEW다. 중단된 terminal이 정리 전까지 Status 11을 쥐므로 새 거래는 자기 Status에서 RowId 3을 받는다.
+- MCA04-V04..V08은 C0 producer 음성 입력이다(`semantic_row::transition_tests`, C+A export). fresh DB에서 u64 MAX까지 발급한 것으로 꾸미지 않는다. 일관된 입력에서 RowId(Root3 row_high), Undo sequence, mutation, Undo slot generation, RootJob generation 하나만 MAX−1이면 정확히 MAX를 발급하고, MAX이면 출력 전에 Exhausted다. 출력 영역의 이웃 byte는 그대로다.
+  - Root3 cell을 바꾸면 Aging descriptor가 묶은 Root page·cell digest(work bytes 384..480)를 다시 묶고 descriptor seal을 다시 계산한다. 그러지 않으면 IdentityMismatch가 먼저 거절하기 때문이다.
+
+**MCA05 자원 차원.** C의 Row 쓰기 경로에 실제로 있는 runtime admission은 다음이 전부다.
+- source ledger의 RowWrite charge
+- terminal read gate
+- Free Undo 선택(Capacity)
+- Free RootJob(BudgetMismatch)
+- RowLeaf 빈 bytes(Capacity)
+- LOAD를 통한 상주(FlushRequired, MissingTarget)
+- issuer의 checked add
+
+차원별 판정은 다음과 같다.
+
+| 차원 | ID | 판정 |
+| --- | --- | --- |
+| WAL, protected, private bytes, reference registry, files | V01..V06, V19..V27 | N/A. 이 차원들은 Tx descriptor·Root3의 회계(checked 산술)와 정적 step recipe([자원](dev3-resource-bounds.md#row-missing-module-budget)의 P_R, source census가 검산)일 뿐 Row 단계를 첫 효과 전에 거절하는 runtime share가 없다. −1을 줄 거절 지점이 없다. runtime share는 F05 자원 admission이 필요하며 이는 DEV3(Codex)이고 사용자가 F05를 뺐다 |
+| owned page | V07..V09 | NEW. Row의 Free Undo를 선행 System INIT이 공급한다. 그 INIT은 dynamic page 하나를 소유한다. 다른 page는 Status INIT으로 먼저 채워 `left` = 0, 1, 2를 남긴다(이 fixture에서 T 뒤 50 page를 실측하고 매 변형이 다시 센다). 0이면 INIT과 행의 preflight가 모두 Unchanged Capacity이고 파일 변화가 없다. 1, 2이면 a가 들어가고 statement가 실패해 rollback과 full abort가 끝난다. 끝에서 정확히 left−1개의 INIT이 더 들어간다 |
+| UndoSlot | V10..V12 | NEW. Free Undo 0, 1, 2. 0이면 첫 행 preflight가 Unchanged Capacity, 1이면 둘째 행 preflight가 Capacity로 실패해 rollback과 full abort, 2이면 Null 행이 Validate에서 실패해 같은 정리 |
+| RootJob slot | V13..V15 | N/A. 한도는 Root3 non-free ≤ 55다. root마다 자기 Undo 용기, actor마다 자기 Status page가 필요하고 모두 첫 extent의 owned page 50개에서 나오므로 non-free Job은 최대 51개다. 54·55개에는 extent 확장이 필요하다(DEV3) |
+| frame | V16..V18 | NOT_RUN. C에 frame share admission이 없다. pool 크기를 바꾸면 총량이 바뀌는데 소비자 §9가 이를 금지한다. 개발 관측(PASS 아님): 9–10 frame에서 Begin이 Unchanged(Prepare, MissingTarget), 11에서 statement issue가 Unchanged(Census, MissingTarget), 12·13에서 전체 흐름 |
+
+V28..V34는 다음과 같다.
+- V28: N/A. 6080 statement credit은 statement마다 다시 잡히며 거절하는 admission이 없다(MCA02-V01은 실패 statement 뒤 다음 statement를 commit한다). C0 거절은 `n1_producer_refusals_precede_output`의 "statement rollback without statement credit"이다.
+- V29: NEW(A producer). `row/insert/group_tests.rs`에서 H의 before count를 0으로 바꿔 다시 seal하면 출력 전에 OrderMismatch이고, count 1은 그대로 생산된다. A producer에 literal fixture를 준 순수 시험이며 실제 C 위의 실행이 아니다. C의 ingress 쪽 거절은 S9의 K07(C+B, 크기 교란 있음)이 맡는다.
+- V30: NEW. 정규 길이 2048 행은 record(168+2048)와 entry slot 16B를 쓰므로 entry 용량/2232개가 한 statement에 들어간다. 다음 statement의 행은 A가 Validate에서 Capacity로 Reserve 전에 거절하고, Commit(q 2)은 그 행들만 공개한다.
+- V31: S2-0 개정의 dirty victim flush 재시도를 인용한다(`row_live::mca05_v31_*`).
+- V32: S2W-R15, R10, R03을 인용한다(API cancel·drop의 권한 반환).
+- V33, V34: N/A. Row 경로에 FD·파일 ledger와 DWB slot admission이 없다. dirty target은 A에 FlushRequired로 돌아가고, A가 flusher(자기 DWB slot 하나)로 flush한 뒤 재시도한다(V31). Forward가 DWB slot을 기다리는 일은 없다.
+
+**MCA03 native(`row_inventory_a/native.rs`, `scripts/check_dev3_s10a_native.py`).** 각 case는 같은 ELF와 자기 namespace를 쓰며 phase마다 process가 다르다.
+- produce(P1)는 실제 native writer(CREATE, A의 driver)가 case의 cut에서 `abort`(SIGABRT)로 끝난다. Drop, flush, 더 이상의 namespace syscall은 없다.
+- recover는 C 복구(WithRowClr)로 READY에 이른다. 그 뒤 page reader로 행을 읽고, A가 새 행을 넣어 ACK를 받는다.
+- reenter는 다시 복구(RejectInitialLosers)하고 ACK된 행을 모두 읽는다.
+- R01..R11은 그 사이에 crash(P2)를 둔다. A의 CLR handler를 쓰는 C 복구를 barrier에서 끊는다. 그래서 P1..P4의 4 PID다.
+- 기대 행, CLR 수, RowId 비재사용, UNKNOWN Commit의 winner·loser는 controller가 정한다. 근거는 이력과 controller 자신의 WAL frame reader(XWF1 header만 읽는 stdlib)다. XADB 출력에서 가져오지 않는다.
+
+cut은 셋 중 하나다.
+- adapter cut: 단계 번호로 arm한 syscall의 앞·뒤, 첫 byte write, 주입 write·sync 오류
+- C hook(`arm_abort`): N05-RamOnly의 `ExistingInstalledFirstPage`, N08의 `BeforePublish`
+- worker cut: N01·MCA04-N01의 ACK 수신 뒤, N06·N07의 UNKNOWN Commit 반환 뒤, R input 완성 뒤
+
+**RamOnly 규칙(§9.4 "guard 아래 log I/O 없음").**
+- N03·N09-RamOnly의 cut은 대상 frame F의 WAL write syscall 앞이다. C는 page·version·append·registry guard를 놓은 뒤 그 write를 호출한다. 그래서 그 호출에서 남기는 adapter trace 행은 guard 밖이고, F의 native write는 0이다.
+- N05-RamOnly는 C hook이 guard 아래(설치 도중)에서 I/O 없이 abort한다. 그 표지는 이력 전에 쓴 arm 행이다.
+- Durable 변형은 F의 성공 sync 뒤에 끊는다(N03, N09). N02와 N05-Durable은 Forward WAL의 마지막 sync 뒤 home page write 하나(16384B)와 그 sync 뒤에 끊는다.
+
+| case | cut | controller 판정 |
+| --- | --- | --- |
+| N01 | Commit ACK 뒤(worker) | WAL 끝 Row frame이 Forward, Commit. READY 행 (1,7),(2,8), 새 ACK RowId 3 |
+| N02 | Active RowLeaf home sync 뒤 | 끝 Reserve, Forward. home write는 WAL sync 뒤 1 page. loser CLR 2, 행 (1,7) |
+| N03-RamOnly | Reserve의 WAL write 앞 | 끝 Commit, Begin(Reserve 없음). 새 행 RowId ≥ 2(유실된 예약 번호는 다시 쓰일 수 있음) |
+| N03-Durable | Reserve의 WAL sync 뒤 | 끝 Begin, Reserve. 채택 Reserve의 Cancel, 새 행 RowId 3(비재사용) |
+| N04 | Forward의 첫 byte write 뒤 | 끝 Begin, Reserve, 불완전 tail 1B. 새 행 RowId 3 |
+| N05-RamOnly | C hook, 첫 변경 RAM page 설치 직후 | 끝 Begin, Reserve. 유실 Forward의 REDO를 요구하지 않음 |
+| N05-Durable | Forward WAL sync 뒤 첫 home page sync 뒤 | 끝 Reserve, Forward. 나머지 page REDO와 loser CLR 1 |
+| N06 | Commit write에 주입 오류 | A는 UNKNOWN. WAL에 Commit이 없어 loser(CLR 1, 행 (1,7)) |
+| N07 | Commit 전체 write 뒤 sync 오류 | A는 UNKNOWN. WAL에 완전한 Commit이 있어 winner(행 (1,7),(2,8)) |
+| N08 | C hook `BeforePublish` | ACK 없음. winner |
+| N09-V0k-RamOnly | k번째 CLR의 WAL write 앞 | RollbackStart 뒤 CLR k−1개. 복구 CLR 4−k개 |
+| N09-V0k-Durable | k번째 CLR의 WAL sync 뒤 | RollbackStart 뒤 CLR k개. 복구 CLR 3−k개(보상된 root를 다시 undo하지 않음) |
+
+N06·N07·N08의 winner는 WAL에 완전한 두 번째 Commit frame이 있을 때만 winner다. controller는 READY q가 그 판정과 맞는지 본다.
+
+**REBASE barrier R01..R12.** R input은 P1에서 만든다. winner 행 1(Commit, ACK)과 loser의 Reserve·Forward(DurableExact)를 쓴 뒤 끝낸다. crash phase의 cut은 C 복구 trace에서 다음 위치다.
+
+| cut | 계약 사건 | adapter cut | 앞선 mutation, 그 전 CURRENT 공개 수 |
+| --- | --- | --- | --- |
+| R01 | 새 base 전체 write, sync 전 | `d3-rebase-*` sync 앞 | base write, 1 |
+| R02 | 새 base sync와 readback 완료 | `d3-current-stage` create 앞 | base sync, dirsync, 1 |
+| R03 | CURRENT 첫 copy `new/old` sync | 둘째 공개 뒤 dirsync 뒤 | 2 |
+| R04 | 두 copy `new/new` sync | 셋째 공개 뒤 dirsync 뒤 | 3 |
+| R05 | 둘째 copy closure readback | 옛 WAL remove 앞 | 넷째 공개, dirsync, 4 |
+| R06 | 옛 WAL unlink, dirsync 전 | 옛 WAL remove 뒤 | 4 |
+| R07 | 옛 WAL dirsync 완료 | remove 뒤 dirsync 뒤 | 4 |
+| R08 | 새 epoch intent sync, create 전 | 새 `d3-wal-*` create 앞 | 여섯째 공개, dirsync, 6 |
+| R09 | 새 epoch header sync, WRITER 공개 전 | `d3-writer-stage` 공개 앞 | writer stage sync, 6 |
+| R10 | WalOpen 최종 dirsync·readback, UNDO 전 | 새 WAL 첫 write 앞 | 일곱째 공개, dirsync, 7 |
+| R11 | UNDO 완료, VERIFY 전 | 새 WAL sync 뒤 | 마지막 write가 loser AbortEnd이고 정리 frame(Prune, ReleaseRole, RootFree, TerminalFinish)이 없음, 7 |
+| R12 | READY 뒤 새 ACK 수신 | worker cut(ACK sync 뒤 mutation 없음) | — |
+
+R01..R11은 P3가 복구를 끝내고(R11은 UNDO가 이미 끝나 CLR 0) 새 ACK(RowId 4)를 만들며 P4가 그것을 읽는다. R12는 P3가 P2의 ACK를 읽는다.
+
+한계는 다음과 같다.
+- readback은 읽기라 adapter cut이 될 수 없다. 그래서 R02, R05, R10의 "readback 완료"는 그 뒤 첫 mutation 앞에서 끊고, 순서(그 mutation이 readback 뒤에 온다)로만 확인한다.
+- barrier와 adapter 단계의 대응은 손으로 정한 표다. C 복구의 단계가 바뀌면 controller의 앞선 mutation·공개 수 검사가 실패한다.
+
+**MCA04-N01(native 4 PID).**
+- produce는 Commit ACK 뒤에서 끝난다.
+- recover는 복구 정리 frame(Prune, RootFree, TerminalFinish)을 쓰고 옛 WAL `d3-wal-00000001`을 지운다. 그 뒤 새 ACK(RowId 3)를 만든다.
+- again은 다시 복구한 뒤 다음 행이 RowId 4(직전 + 1)를 받는다.
+- reenter가 모든 ACK 행을 읽는다.
+
+**export 선언.** `LINKS_A`에 `row_inventory_a`(native 하위 module 포함)를, `LINKS_B`에 `row_corpus`를 더했다. `semantic_row/transition_tests.rs`와 `row/insert/group_tests.rs`는 C+A export에만 있다.
+
+**선택.** [동결 inventory](../../tests/fixtures/module-row-integration/single-source-s10-inventory.json)를 쓴다.
+- C+A 36개: NEW 27개, CITED 6개(MCA04-V01·V02, MCA05-V31·V32의 인용 시험), C의 cfg(test) hook과 `catalog_lifecycle.rs`가 바뀌어 그 경로를 쓰는 MBC10-V09 CatalogProgress −1/=/+1 회귀 3개다. native는 s10a controller의 29 case(MCA03 28, MCA04-N01)와 S9A-N01..N03(adapter가 바뀌어 회귀)이다.
+- C+B 35개: NEW 33개, CITED 2개(MCB02-V06·V07)다. MCB04-V14는 기대 FAIL로 `--ignored` 따로 실행한다. native는 MCB01-N01과 S9B-N01(회귀)이다.
+- memory case 한도는 30초, native case는 180초이며 줄이지 않는다.
+- selector 경로는 소비자 §9의 배정(`storage::row::insert::tests::<case>`, `storage::row::read::tests::<case>`, native `module-row-insert/<ID>` 등)과 다르다. 실제 C fixture와 case harness가 `plan4_recovery::tests::catalog_memory` 아래에 있어 S2–S9의 실제 C 시험과 같은 곳에 두었다. native는 controller의 case ID로 고른다. ID와 selector의 대응은 inventory의 `map`이 정한다.
+
+실행 결과와 MI03 재판정은 [증거](../evidence/module-independence-survey-20261026.md#s10-frozen-inventory)에 둔다.
