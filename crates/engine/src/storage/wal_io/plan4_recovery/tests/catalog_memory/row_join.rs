@@ -19,8 +19,9 @@ use super::row_preflight::{create_table, system_init};
 use super::*;
 use crate::storage::{
     disk::{
-        IsolationLevel, ReadStep, RetentionCause, RetentionError, RowMutationObservation,
-        RowOwnedError, RowPreflightStep, TableStep, TransactionFinishError, TransactionOptions,
+        IsolationLevel, ReadStep, RetentionCause, RetentionError, RetentionPhase,
+        RowMutationObservation, RowOwnedError, RowPreflightStep, TableStep, TransactionFinishError,
+        TransactionOptions,
     },
     row::{
         insert::{
@@ -862,6 +863,233 @@ fn mci01_v08_failed_statement_reads_survive() {
 #[test]
 fn mci01_v05_writers_of_different_tables_both_commit() {
     failed_statement_reads("MCI01-V05", false);
+}
+
+/// B's refusal of a CheckedTable of another origin: C's core identity check
+/// (Census, Unchanged, BindingMismatch).
+fn origin_refused(error: &RowReadError) -> bool {
+    matches!(
+        error,
+        RowReadError::Source(RetentionError {
+            phase: RetentionPhase::Census,
+            cause: RetentionCause::BindingMismatch,
+            effect: Effect::Unchanged,
+            ..
+        })
+    )
+}
+
+/// MCI01-V09 (origin stale, boundaries `#row-mi03-s9`): session X and
+/// session Y are two opens of two namespaces with the same history (CREATE
+/// of T), alive at once. X's CheckedTable of T has the same scalars as Y's
+/// own (object, slot, anchor) and another origin (core, binding, fence).
+/// Given to Y's statement it is refused by C's core identity check on both
+/// paths: B's point read and cursor (Census, Unchanged, BindingMismatch) and
+/// A's driver statement, whose C preflight refuses it (Prepare, Unchanged,
+/// BindingMismatch) before any reservation, the view returned. No file of
+/// either namespace changes and neither session is fenced. Y's own table
+/// then takes A's row (q 2) and B reads it; X's table still reads in X.
+#[test]
+fn mci01_v09_origin_stale_checked_table_is_refused_by_a_and_b() {
+    case("MCI01-V09-ORIGIN", || {
+        let oracle_x = Oracle::new();
+        with_fresh!(
+            oracle_x,
+            frames = 16,
+            |live_x,
+             owner_x,
+             flusher_x,
+             status_x,
+             undo_x,
+             private_x,
+             reader_private_x,
+             core_x,
+             fence_x,
+             state_x| {
+                let (row_status_x, _) = create_table(
+                    live_x, owner_x, flusher_x, status_x, undo_x, private_x, true,
+                );
+                let (mut writer_x, reader_x, mut flush_x) = live_x.split();
+                let x = read_only!(
+                    writer_x,
+                    owner_x,
+                    IsolationLevel::Serializable,
+                    reader_private_x
+                );
+                let view_x = writer_x.begin_statement(owner_x, &x).unwrap();
+                let stale = issue_table!(
+                    reader_x,
+                    owner_x,
+                    view_x,
+                    reader_private_x,
+                    flush_x,
+                    flusher_x
+                );
+                let _ = row_status_x;
+                let files_x = state_x.lock().unwrap().images();
+                let oracle_y = Oracle::new();
+                with_fresh!(
+                    oracle_y,
+                    frames = 16,
+                    |live,
+                     owner,
+                     flusher,
+                     status,
+                     undo,
+                     private,
+                     reader_private,
+                     core,
+                     fence,
+                     state| {
+                        let (row_status, _) =
+                            create_table(live, owner, flusher, status, undo, private, true);
+                        let (mut writer, reader, mut flush) = live.split();
+                        let y = writer
+                            .begin_row_transaction(
+                                owner,
+                                IsolationLevel::Serializable,
+                                &row_status,
+                                private,
+                                &mut flush,
+                            )
+                            .unwrap();
+                        let view = writer.begin_statement(owner, &y).unwrap();
+                        let own = issue_table!(reader, owner, view, reader_private, flush, flusher);
+                        assert_eq!(stale.test_identity(), own.test_identity());
+                        assert!(own.test_same_origin(core, fence));
+                        assert!(!stale.test_same_origin(core, fence));
+                        assert!(stale.test_same_origin(core_x, fence_x));
+                        let before = state.lock().unwrap().images();
+                        let cancel = Cancellation::default();
+                        let mut output = [0xA5; 64];
+                        let point = read_point_live(
+                            ReadCall {
+                                port: &reader,
+                                owner,
+                                private: reader_private,
+                                residency: &mut Plan4ResidencyCursor::new(),
+                            },
+                            &view,
+                            &stale,
+                            RowId::new(1).unwrap(),
+                            &mut output,
+                            &cancel,
+                        );
+                        match point {
+                            Err(ref error) if origin_refused(error) => {}
+                            Err(error) => panic!("B's point {error:?}"),
+                            Ok(_) => panic!("B's point read X's table in Y"),
+                        }
+                        assert_eq!(output, [0xA5; 64], "no bytes published");
+                        let mut cursor = open_cursor_live(&view, &stale, None, None).unwrap();
+                        let next = next_live(
+                            &mut cursor,
+                            ReadCall {
+                                port: &reader,
+                                owner,
+                                private: reader_private,
+                                residency: &mut Plan4ResidencyCursor::new(),
+                            },
+                            &mut output,
+                            &cancel,
+                        );
+                        match next {
+                            Err(ref error) if origin_refused(error) => {}
+                            Err(error) => panic!("B's cursor {error:?}"),
+                            Ok(_) => panic!("B's cursor read X's table in Y"),
+                        }
+                        let _ = cursor.close();
+                        let row = [ValueRef::Int64(VALUE)];
+                        let input: [&[ValueRef<'_>]; 1] = [&row];
+                        let mut slots: [Option<RowMutationObservation>; 1] = [None];
+                        let view = {
+                            let mut call = LiveCall::new(&mut writer, owner, &mut flush, flusher);
+                            match insert_live(&mut call, view, &stale, private, &input, &mut slots)
+                            {
+                                Err(DriveError { failure, after }) => {
+                                    let error = disk(&failure);
+                                    println!("MCI01_V09_ORIGIN A {error:?}");
+                                    assert_eq!(
+                                        (error.phase, error.effect),
+                                        (RetentionPhase::Prepare, Effect::Unchanged)
+                                    );
+                                    assert!(matches!(error.cause, RetentionCause::BindingMismatch));
+                                    match after {
+                                        After::Returned(view) => view,
+                                        _ => panic!("the refused statement is not returned"),
+                                    }
+                                }
+                                Ok(n) => panic!("A inserted {n} rows through X's table"),
+                            }
+                        };
+                        assert!(slots[0].is_none());
+                        assert_eq!(
+                            state.lock().unwrap().images(),
+                            before,
+                            "no file of Y changed"
+                        );
+                        assert_eq!(
+                            state_x.lock().unwrap().images(),
+                            files_x,
+                            "no file of X changed"
+                        );
+                        assert!(!fence.is_fenced() && !fence_x.is_fenced());
+                        // Y's own table still serves A and B.
+                        let rows = a_insert!(
+                            &mut writer,
+                            owner,
+                            flush,
+                            flusher,
+                            view,
+                            &own,
+                            private,
+                            [VALUE]
+                        );
+                        assert_eq!(rows[0].row().get(), 1);
+                        let q = a_commit!(&mut writer, owner, flush, flusher, y, private);
+                        assert_eq!(q, 2);
+                        let b =
+                            read_only!(writer, owner, IsolationLevel::Serializable, reader_private);
+                        let fresh = writer.begin_statement(owner, &b).unwrap();
+                        let table =
+                            issue_table!(reader, owner, fresh, reader_private, flush, flusher);
+                        assert_eq!(
+                            scan!(
+                                reader,
+                                owner,
+                                reader_private,
+                                &fresh,
+                                &table,
+                                flush,
+                                flusher
+                            ),
+                            vec![(1, VALUE)]
+                        );
+                        assert!(writer.finish_statement(owner, fresh).is_ok());
+                        assert!(writer.finish_read_only(owner, b).is_ok());
+                        owner.check_idle().unwrap();
+                    }
+                );
+                // X's table is not stale in X.
+                assert_eq!(
+                    scan!(
+                        reader_x,
+                        owner_x,
+                        reader_private_x,
+                        &view_x,
+                        &stale,
+                        flush_x,
+                        flusher_x
+                    ),
+                    vec![]
+                );
+                assert!(writer_x.finish_statement(owner_x, view_x).is_ok());
+                assert!(writer_x.finish_read_only(owner_x, x).is_ok());
+                owner_x.check_idle().unwrap();
+                assert!(!fence_x.is_fenced());
+            }
+        );
+    });
 }
 
 /// T's CheckedTable issued on a thread's own `view`; the sources are
