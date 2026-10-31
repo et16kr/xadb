@@ -84,11 +84,7 @@ trait SearchPage {
 
 /// A source phase or driver result; `Flush` is passed back unchanged after
 /// the candidate and the operation have been released.
-#[derive(Debug)]
-enum Step<T, F> {
-    Ready(T),
-    Flush(F),
-}
+type Step<T, F> = crate::storage::disk::ReadStep<T, F>;
 
 #[derive(Debug)]
 pub(in crate::storage) enum PointRead<O> {
@@ -167,9 +163,63 @@ impl ViewSample {
     }
 }
 
-/// One captured candidate: `Some` is a complete copy of a visible version and
-/// `None` an invisible version with C's Missing-before evidence. Errors, such
-/// as a missing Undo, are never turned into absence.
+/// Keep version and copied-value slots out of source LOCATION/LOAD frames.
+#[inline(never)]
+fn decide<C: Observed>(
+    candidate: &C,
+    sample: &ViewSample,
+    status: Option<TransactionState>,
+) -> Result<Visibility, RowReadError> {
+    visible(sample.q, sample.own_actor, candidate.version(), status).map_err(Into::into)
+}
+#[inline(never)]
+fn check_selected<C: Observed>(candidate: &C, at: SeekPosition) -> Result<(), RowReadError> {
+    if candidate.version().row != at.row {
+        return Err(RowReadError::SourceMismatch);
+    }
+    Ok(())
+}
+#[inline(never)]
+fn resolve_visibility<S: ReadSource>(
+    source: &mut S,
+    candidate: &S::Candidate,
+    sample: &ViewSample,
+) -> Result<Step<Visibility, S::Target>, RowReadError> {
+    let choice = decide(candidate, sample, None)?;
+    if choice != Visibility::ReadStatus {
+        return Ok(Step::Ready(choice));
+    }
+    let state = match source.status(candidate)? {
+        Step::Ready(state) => state,
+        Step::FlushRequired { target } => {
+            return Ok(Step::FlushRequired { target });
+        }
+    };
+    decide(candidate, sample, Some(state)).map(Step::Ready)
+}
+#[inline(never)]
+fn copy_selected<S: ReadSource>(
+    source: &mut S,
+    candidate: &S::Candidate,
+    output: &mut [u8],
+    cancel: &Cancellation,
+    copied_slot: &mut Option<S::Copied>,
+) -> Result<(), RowReadError> {
+    check_output(candidate.canonical_len(), output.len())?;
+    if cancelled(cancel) {
+        return Err(ReadError::Cancelled.into());
+    }
+    let copied = source.copy_candidate(candidate, output)?;
+    if copied.version() != candidate.version()
+        || copied.canonical_len() != candidate.canonical_len()
+    {
+        return Err(RowReadError::SourceMismatch);
+    }
+    *copied_slot = Some(copied);
+    Ok(())
+}
+/// One private result slot is published only after checked candidate/operation
+/// cleanup. An invisible INSERT still requires C's Missing-before evidence.
 #[inline(never)]
 fn select_row<S: ReadSource>(
     source: &mut S,
@@ -178,40 +228,24 @@ fn select_row<S: ReadSource>(
     sample: ViewSample,
     output: &mut [u8],
     cancel: &Cancellation,
-) -> Result<Step<Option<S::Copied>, S::Target>, RowReadError> {
-    let version = candidate.version();
-    if version.row != at.row {
-        return Err(RowReadError::SourceMismatch);
-    }
-    let mut choice = visible(sample.q, sample.own_actor, version, None)?;
-    if choice == Visibility::ReadStatus {
-        let state = match source.status(candidate)? {
-            Step::Ready(state) => state,
-            Step::Flush(target) => return Ok(Step::Flush(target)),
-        };
-        choice = visible(sample.q, sample.own_actor, version, Some(state))?;
-    }
-    match choice {
-        Visibility::Current => {}
-        Visibility::ReadMissingBefore => {
+    copied_slot: &mut Option<S::Copied>,
+) -> Result<Step<bool, S::Target>, RowReadError> {
+    check_selected(candidate, at)?;
+    match resolve_visibility(source, candidate, &sample)? {
+        Step::FlushRequired { target } => {
+            return Ok(Step::FlushRequired { target });
+        }
+        Step::Ready(Visibility::Current) => {}
+        Step::Ready(Visibility::ReadMissingBefore) => {
             return Ok(match source.missing_before(candidate)? {
-                Step::Ready(_evidence) => Step::Ready(None),
-                Step::Flush(target) => Step::Flush(target),
+                Step::Ready(_) => Step::Ready(false),
+                Step::FlushRequired { target } => Step::FlushRequired { target },
             });
         }
-        // A resolved status never asks for another one.
-        Visibility::ReadStatus => return Err(ReadError::UnexpectedStatus.into()),
+        Step::Ready(Visibility::ReadStatus) => return Err(ReadError::UnexpectedStatus.into()),
     }
-    // Shortage and cancellation are decided before C writes the output.
-    check_output(candidate.canonical_len(), output.len())?;
-    if cancelled(cancel) {
-        return Err(ReadError::Cancelled.into());
-    }
-    let copied = source.copy_candidate(candidate, output)?;
-    if copied.version() != version || copied.canonical_len() != candidate.canonical_len() {
-        return Err(RowReadError::SourceMismatch);
-    }
-    Ok(Step::Ready(Some(copied)))
+    copy_selected(source, candidate, output, cancel, copied_slot)?;
+    Ok(Step::Ready(true))
 }
 
 /// Point read over one operation that `open` creates on this same view and
@@ -231,8 +265,37 @@ fn read_point<'r, V: ReadView, S: ReadSource>(
         return Err(ReadError::Cancelled.into());
     }
     let mut source = open(view)?;
-    let selected = select_point(&mut source, sample, row, output, cancel);
-    merge(selected, source.finish())
+    let mut copied_slot = None;
+    let selected = select_point(&mut source, sample, row, output, cancel, &mut copied_slot);
+    let selected = merge(selected, source.finish())?;
+    publish_point(selected, copied_slot)
+}
+
+#[inline(never)]
+fn publish_point<O, F>(
+    selected: Step<bool, F>,
+    mut copied_slot: Option<O>,
+) -> Result<Step<PointRead<O>, F>, RowReadError> {
+    match selected {
+        Step::Ready(true) => Ok(Step::Ready(PointRead::Found(
+            copied_slot.take().ok_or(RowReadError::SourceMismatch)?,
+        ))),
+        Step::Ready(false) => Ok(Step::Ready(PointRead::Missing)),
+        Step::FlushRequired { target } => Ok(Step::FlushRequired { target }),
+    }
+}
+/// Candidate extraction and its consuming cleanup happen after the resolver
+/// has returned, so their large carrier is absent from LOCATION/LOAD frames.
+#[inline(never)]
+fn release_selected<S: ReadSource>(
+    source: &mut S,
+    candidate: &mut Option<S::Candidate>,
+    selected: Result<Step<bool, S::Target>, RowReadError>,
+) -> Result<Step<bool, S::Target>, RowReadError> {
+    merge(
+        selected,
+        source.release_candidate(candidate.take().ok_or(RowReadError::SourceMismatch)?),
+    )
 }
 
 // Keep page and seek slots out of the later Status/Undo LOAD frame.
@@ -240,11 +303,23 @@ fn read_point<'r, V: ReadView, S: ReadSource>(
 fn capture_point<S: ReadSource>(
     source: &mut S,
     row: RowId,
-) -> Result<Step<Option<(S::Candidate, SeekPosition)>, S::Target>, RowReadError> {
+    candidate: &mut Option<S::Candidate>,
+) -> Result<Step<Option<SeekPosition>, S::Target>, RowReadError> {
     let page = match source.page()? {
         Step::Ready(page) => page,
-        Step::Flush(target) => return Ok(Step::Flush(target)),
+        Step::FlushRequired { target } => {
+            return Ok(Step::FlushRequired { target });
+        }
     };
+    capture_point_page(page, row, candidate).map(Step::Ready)
+}
+
+#[inline(never)]
+fn capture_point_page<P: SearchPage>(
+    page: P,
+    row: RowId,
+    candidate: &mut Option<P::Candidate>,
+) -> Result<Option<SeekPosition>, RowReadError> {
     let selected = match page.leaf() {
         Ok(leaf) => seek_point(&leaf, row).map_err(RowReadError::from),
         Err(error) => Err(error.into()),
@@ -252,11 +327,11 @@ fn capture_point<S: ReadSource>(
     let at = match selected {
         Ok(Some(at)) => at,
         // The actual leaf has no such key: an ordinary checked absence.
-        Ok(None) => return merge(Ok(Step::Ready(None)), page.release_checked()),
+        Ok(None) => return merge(Ok(None), page.release_checked()),
         Err(error) => return merge(Err(error), page.release_checked()),
     };
-    let candidate = page.capture(at.index)?;
-    Ok(Step::Ready(Some((candidate, at))))
+    *candidate = Some(page.capture(at.index)?);
+    Ok(Some(at))
 }
 
 #[inline(never)]
@@ -266,24 +341,30 @@ fn select_point<S: ReadSource>(
     row: RowId,
     output: &mut [u8],
     cancel: &Cancellation,
-) -> Result<Step<PointRead<S::Copied>, S::Target>, RowReadError> {
-    let (candidate, at) = match capture_point(source, row)? {
-        Step::Ready(Some(pair)) => pair,
-        Step::Ready(None) => return Ok(Step::Ready(PointRead::Missing)),
-        Step::Flush(target) => return Ok(Step::Flush(target)),
+    copied_slot: &mut Option<S::Copied>,
+) -> Result<Step<bool, S::Target>, RowReadError> {
+    let mut candidate = None;
+    let at = match capture_point(source, row, &mut candidate)? {
+        Step::Ready(Some(at)) => at,
+        Step::Ready(None) => return Ok(Step::Ready(false)),
+        Step::FlushRequired { target } => {
+            return Ok(Step::FlushRequired { target });
+        }
     };
-    let selected = select_row(source, &candidate, at, sample, output, cancel);
-    Ok(
-        match merge(selected, source.release_candidate(candidate))? {
-            Step::Ready(Some(copied)) => Step::Ready(PointRead::Found(copied)),
-            Step::Ready(None) => Step::Ready(PointRead::Missing),
-            Step::Flush(target) => Step::Flush(target),
-        },
-    )
+    let selected = select_row(
+        source,
+        candidate.as_ref().ok_or(RowReadError::SourceMismatch)?,
+        at,
+        sample,
+        output,
+        cancel,
+        copied_slot,
+    );
+    release_selected(source, &mut candidate, selected)
 }
 
-enum Scan<O> {
-    Returned(RowId, O),
+enum Scan {
+    Returned(RowId),
     End,
 }
 
@@ -347,14 +428,23 @@ impl<'r, V: ReadView + 'r, T: 'r> RowCursor<'r, V, T> {
             return Err(ReadError::Cancelled.into());
         }
         let mut source = open(self.view, self.table)?;
-        let scanned = self.scan(&mut source, sample, revision, output, cancel);
+        let mut copied_slot = None;
+        let scanned = self.scan(
+            &mut source,
+            sample,
+            revision,
+            output,
+            cancel,
+            &mut copied_slot,
+        );
         match merge(scanned, source.finish())? {
-            Step::Flush(target) => Ok(Step::Flush(target)),
+            Step::FlushRequired { target } => Ok(Step::FlushRequired { target }),
             Step::Ready(Scan::End) => {
                 self.progress.finish_end(revision)?;
                 Ok(Step::Ready(CursorStep::End))
             }
-            Step::Ready(Scan::Returned(row, copied)) => {
+            Step::Ready(Scan::Returned(row)) => {
+                let copied = copied_slot.take().ok_or(RowReadError::SourceMismatch)?;
                 self.progress.finish_returned(row, revision)?;
                 Ok(Step::Ready(CursorStep::Row(copied)))
             }
@@ -367,11 +457,26 @@ impl<'r, V: ReadView + 'r, T: 'r> RowCursor<'r, V, T> {
         source: &mut S,
         revision: u64,
         cancel: &Cancellation,
-    ) -> Result<Step<Option<(S::Candidate, SeekPosition)>, S::Target>, RowReadError> {
+        candidate: &mut Option<S::Candidate>,
+    ) -> Result<Step<Option<SeekPosition>, S::Target>, RowReadError> {
         let page = match source.page()? {
             Step::Ready(page) => page,
-            Step::Flush(target) => return Ok(Step::Flush(target)),
+            Step::FlushRequired { target } => {
+                return Ok(Step::FlushRequired { target });
+            }
         };
+        self.capture_next_page(page, revision, cancel, candidate)
+            .map(Step::Ready)
+    }
+
+    #[inline(never)]
+    fn capture_next_page<P: SearchPage>(
+        &self,
+        page: P,
+        revision: u64,
+        cancel: &Cancellation,
+        candidate: &mut Option<P::Candidate>,
+    ) -> Result<Option<SeekPosition>, RowReadError> {
         let selected = match page.leaf() {
             Ok(leaf) => self
                 .progress
@@ -381,11 +486,11 @@ impl<'r, V: ReadView + 'r, T: 'r> RowCursor<'r, V, T> {
         };
         let at = match selected {
             Ok(Some(at)) => at,
-            Ok(None) => return merge(Ok(Step::Ready(None)), page.release_checked()),
+            Ok(None) => return merge(Ok(None), page.release_checked()),
             Err(error) => return merge(Err(error), page.release_checked()),
         };
-        let candidate = page.capture(at.index)?;
-        Ok(Step::Ready(Some((candidate, at))))
+        *candidate = Some(page.capture(at.index)?);
+        Ok(Some(at))
     }
 
     #[inline(never)]
@@ -396,24 +501,40 @@ impl<'r, V: ReadView + 'r, T: 'r> RowCursor<'r, V, T> {
         revision: u64,
         output: &mut [u8],
         cancel: &Cancellation,
-    ) -> Result<Step<Scan<S::Copied>, S::Target>, RowReadError> {
+        copied_slot: &mut Option<S::Copied>,
+    ) -> Result<Step<Scan, S::Target>, RowReadError> {
         loop {
-            let (candidate, at) = match self.capture_next(source, revision, cancel)? {
-                Step::Ready(Some(pair)) => pair,
+            let mut candidate = None;
+            let at = match self.capture_next(source, revision, cancel, &mut candidate)? {
+                Step::Ready(Some(at)) => at,
                 Step::Ready(None) => return Ok(Step::Ready(Scan::End)),
-                Step::Flush(target) => return Ok(Step::Flush(target)),
+                Step::FlushRequired { target } => {
+                    return Ok(Step::FlushRequired { target });
+                }
             };
             let selected = self
                 .progress
                 .check_advance(at.row, revision)
                 .map_err(RowReadError::from)
-                .and_then(|()| select_row(source, &candidate, at, sample, output, cancel));
-            match merge(selected, source.release_candidate(candidate))? {
-                Step::Ready(Some(copied)) => {
-                    return Ok(Step::Ready(Scan::Returned(at.row, copied)));
+                .and_then(|()| {
+                    select_row(
+                        source,
+                        candidate.as_ref().ok_or(RowReadError::SourceMismatch)?,
+                        at,
+                        sample,
+                        output,
+                        cancel,
+                        copied_slot,
+                    )
+                });
+            match release_selected(source, &mut candidate, selected)? {
+                Step::Ready(true) => {
+                    return Ok(Step::Ready(Scan::Returned(at.row)));
                 }
-                Step::Ready(None) => self.progress.finish_invisible(at.row, revision)?,
-                Step::Flush(target) => return Ok(Step::Flush(target)),
+                Step::Ready(false) => self.progress.finish_invisible(at.row, revision)?,
+                Step::FlushRequired { target } => {
+                    return Ok(Step::FlushRequired { target });
+                }
             }
         }
     }

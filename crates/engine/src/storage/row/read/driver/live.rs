@@ -84,20 +84,6 @@ struct LiveSource<'x, 'u, 'r, 't, 'v, 'i, 'b, 'a, 's, 'c, 'p, 'd, 'm, 'w, W: Wri
     residency: &'x mut Plan4ResidencyCursor,
 }
 
-fn source_step<T>(step: ReadStep<T>) -> Step<T, Plan4Target> {
-    match step {
-        ReadStep::Ready(value) => Step::Ready(value),
-        ReadStep::FlushRequired { target } => Step::Flush(target),
-    }
-}
-
-fn read_step<T>(step: Step<T, Plan4Target>) -> ReadStep<T> {
-    match step {
-        Step::Ready(value) => ReadStep::Ready(value),
-        Step::Flush(target) => ReadStep::FlushRequired { target },
-    }
-}
-
 impl<'b, 'a, 's, 'c, 'p, 'd, W: WriterNamespace> ReadSource
     for LiveSource<'_, '_, '_, '_, '_, '_, 'b, 'a, 's, 'c, 'p, 'd, '_, '_, W>
 {
@@ -112,25 +98,19 @@ impl<'b, 'a, 's, 'c, 'p, 'd, W: WriterNamespace> ReadSource
     fn page(
         &mut self,
     ) -> Result<Step<RowSearchPage<'_, 'b, 'a, 's, 'c, 'p, 'd>, Plan4Target>, RetentionError> {
-        self.operation
-            .page(self.table, self.residency)
-            .map(source_step)
+        self.operation.page(self.table, self.residency)
     }
     fn status(
         &mut self,
         candidate: &RowCandidate,
     ) -> Result<Step<TransactionState, Plan4Target>, RetentionError> {
-        self.operation
-            .status(candidate, self.residency)
-            .map(source_step)
+        self.operation.status(candidate, self.residency)
     }
     fn missing_before(
         &mut self,
         candidate: &RowCandidate,
     ) -> Result<Step<MissingRowEvidence, Plan4Target>, RetentionError> {
-        self.operation
-            .missing_before(candidate, self.residency)
-            .map(source_step)
+        self.operation.missing_before(candidate, self.residency)
     }
     fn copy_candidate(
         &mut self,
@@ -184,7 +164,6 @@ pub(in crate::storage) fn read_point_live<'a, 'c, 's, W: WriterNamespace>(
         output,
         cancel,
     )
-    .map(read_step)
 }
 
 pub(in crate::storage) struct LiveCursor<'r, 't, 'v, 'a, 'c, 's> {
@@ -219,18 +198,15 @@ pub(in crate::storage) fn next_live<'a, 'c, 's, W: WriterNamespace>(
         private,
         residency,
     } = call;
-    cursor
-        .inner
-        .next(
-            move |view, table| {
-                Ok(LiveSource {
-                    operation: port.row_operation(owner, view, private)?,
-                    table,
-                    residency,
-                })
-            },
-            output,
-            cancel,
-        )
-        .map(read_step)
+    cursor.inner.next(
+        move |view, table| {
+            Ok(LiveSource {
+                operation: port.row_operation(owner, view, private)?,
+                table,
+                residency,
+            })
+        },
+        output,
+        cancel,
+    )
 }

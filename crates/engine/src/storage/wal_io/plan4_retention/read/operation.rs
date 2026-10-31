@@ -19,9 +19,10 @@ use crate::storage::{
 };
 use foundation::identity::Generation;
 
-pub(crate) enum ReadStep<T> {
+#[derive(Debug)]
+pub(crate) enum ReadStep<T, Target = Plan4Target> {
     Ready(T),
-    FlushRequired { target: Plan4Target },
+    FlushRequired { target: Target },
 }
 /// A source observation, not a pin, grant or caller-constructible capability.
 pub(crate) struct CatalogCandidate {

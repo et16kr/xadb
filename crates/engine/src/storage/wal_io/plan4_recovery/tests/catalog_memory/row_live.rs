@@ -1024,10 +1024,206 @@ fn s5r_r02_empty_table_and_r04_actual_capture_copy() {
                     assert!(page.capture(0).is_err());
                     op.finish().unwrap();
                 }
+                {
+                    use crate::storage::row::read::driver::{
+                        CursorStep,
+                        live::{next_live, open_cursor_live},
+                    };
+                    let mut cursor =
+                        open_cursor_live(&view, &table, Some(observation.row()), None).unwrap();
+                    let mut short = [0xB1; 1];
+                    assert!(
+                        next_live(
+                            &mut cursor,
+                            ReadCall {
+                                port: &reader,
+                                owner,
+                                private: reader_private,
+                                residency: &mut residency
+                            },
+                            &mut short,
+                            &cancel
+                        )
+                        .is_err()
+                    );
+                    assert_eq!(short, [0xB1]);
+                    let cancelled = Cancellation::default();
+                    cancelled.cancel();
+                    assert!(
+                        next_live(
+                            &mut cursor,
+                            ReadCall {
+                                port: &reader,
+                                owner,
+                                private: reader_private,
+                                residency: &mut residency
+                            },
+                            &mut output,
+                            &cancelled
+                        )
+                        .is_err()
+                    );
+                    let found = next_live(
+                        &mut cursor,
+                        ReadCall {
+                            port: &reader,
+                            owner,
+                            private: reader_private,
+                            residency: &mut residency,
+                        },
+                        &mut output,
+                        &cancel,
+                    )
+                    .unwrap();
+                    assert!(
+                        matches!(found,ReadStep::Ready(CursorStep::Row(ref copy)) if copy.version().row==observation.row())
+                    );
+                    assert!(matches!(
+                        next_live(
+                            &mut cursor,
+                            ReadCall {
+                                port: &reader,
+                                owner,
+                                private: reader_private,
+                                residency: &mut residency
+                            },
+                            &mut output,
+                            &cancel
+                        )
+                        .unwrap(),
+                        ReadStep::Ready(CursorStep::End)
+                    ));
+                    cursor.close().unwrap();
+                }
                 assert!(writer.finish_statement(owner, view).is_ok());
                 assert!(writer.commit_row(owner, row, private).is_ok());
                 assert!(!fence.is_fenced());
                 let _ = core;
+            }
+        );
+    });
+}
+
+#[test]
+fn s5r_r06_old_and_new_statement_snapshot() {
+    use crate::storage::{
+        disk::{Plan4ResidencyCursor, ReadStep, TransactionOptions},
+        row::{
+            insert::{produce_insert, validate_insert},
+            read::driver::{
+                PointRead,
+                live::{LiveCall as ReadCall, read_point_live},
+            },
+        },
+    };
+    use foundation::runtime::Cancellation;
+    case("S5R-R06", || {
+        let oracle = Oracle::new();
+        with_fresh!(
+            oracle,
+            frames = 12,
+            |live, owner, flusher, status, undo, private, reader_private, core, fence, state| {
+                let (row_status, _) =
+                    create_table(live, owner, flusher, status, undo, private, true);
+                row_statement!(live,owner,flusher,private,reader_private,row_status=>writer,reader,flush,row,view,table);
+                let _ = settle!(writer, owner, view, table, private, flush, flusher);
+                let mut preflight = match writer
+                    .preflight_row(owner, &view, &table, private, &mut flush)
+                    .unwrap()
+                {
+                    RowPreflightStep::Ready(p) => p,
+                    _ => panic!("resident"),
+                };
+                let input =
+                    validate_insert(&[ValueRef::Int64(7)], preflight.validation_lane().unwrap())
+                        .unwrap();
+                let mut reserved = preflight
+                    .reserve(input)
+                    .unwrap_or_else(|_| panic!("reserve"));
+                let proposal = produce_insert(reserved.producer_lane().unwrap()).unwrap();
+                let applied = reserved
+                    .prepare(proposal)
+                    .unwrap_or_else(|_| panic!("prepare"))
+                    .apply()
+                    .unwrap_or_else(|_| panic!("apply"));
+                let (observation, _) = applied.into_parts();
+                let mut read_owner = core.try_owner(OwnerRole::Foreground).unwrap();
+                let transaction = writer
+                    .begin_transaction(
+                        &mut read_owner,
+                        TransactionOptions {
+                            read_only: true,
+                            isolation: IsolationLevel::ReadCommitted,
+                        },
+                        reader_private,
+                    )
+                    .unwrap();
+                let old = writer
+                    .begin_statement(&mut read_owner, &transaction)
+                    .unwrap();
+                let q = old.q().unwrap();
+                let cancel = Cancellation::default();
+                let mut output = [0xAA; 64];
+                let mut residency = Plan4ResidencyCursor::new();
+                // Another actor's still Active INSERT is invisible, proven Missing.
+                assert!(matches!(
+                    read_point_live(
+                        ReadCall {
+                            port: &reader,
+                            owner: &mut read_owner,
+                            private: reader_private,
+                            residency: &mut residency
+                        },
+                        &old,
+                        &table,
+                        observation.row(),
+                        &mut output,
+                        &cancel
+                    )
+                    .unwrap(),
+                    ReadStep::Ready(PointRead::Missing)
+                ));
+                assert!(writer.finish_statement(owner, view).is_ok());
+                let committed = writer
+                    .commit_row(owner, row, private)
+                    .unwrap_or_else(|_| panic!("commit"));
+                assert!(committed.q() > q);
+                // The same ReadCommitted statement retains its original q.
+                assert!(matches!(
+                    read_point_live(
+                        ReadCall {
+                            port: &reader,
+                            owner: &mut read_owner,
+                            private: reader_private,
+                            residency: &mut residency
+                        },
+                        &old,
+                        &table,
+                        observation.row(),
+                        &mut output,
+                        &cancel
+                    )
+                    .unwrap(),
+                    ReadStep::Ready(PointRead::Missing)
+                ));
+                assert_eq!(old.q().unwrap(), q);
+                assert_eq!(output, [0xAA; 64]);
+                assert!(writer.finish_statement(&mut read_owner, old).is_ok());
+                let new = writer
+                    .begin_statement(&mut read_owner, &transaction)
+                    .unwrap();
+                assert_eq!(new.q().unwrap(), committed.q());
+                assert!(
+                    matches!(read_point_live(ReadCall{port:&reader,owner:&mut read_owner,private:reader_private,residency:&mut residency},&new,&table,observation.row(),&mut output,&cancel).unwrap(),ReadStep::Ready(PointRead::Found(ref copy)) if copy.version().row==observation.row())
+                );
+                assert!(writer.finish_statement(&mut read_owner, new).is_ok());
+                assert!(
+                    writer
+                        .finish_read_only(&mut read_owner, transaction)
+                        .is_ok()
+                );
+                assert!(!fence.is_fenced());
+                let _ = state;
             }
         );
     });

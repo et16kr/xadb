@@ -5139,3 +5139,11 @@ B는 point/visibility/cursor 결정을 유지한다. `capture_point`/`capture_ne
 4. source별 최종 inventory/receipt·계약·상태를 확정하고 독립 최종 D1/D2 검토를 받는다. commit 후 pre-push fmt/Clippy/문서 gate를 거쳐 push 및 PR 등록한다. S5 완료 전에는 완료·PR-ready로 표시하지 않는다.
 
 클라우드 재개 환경은 `/workspace/xadb`, branch `codex/s5-row-read`다. Rust1.95 도구는 `CARGO_HOME=/workspace/.xadb-env/cargo`, `RUSTUP_HOME=/workspace/.xadb-env/rustup`, PATH 앞 `/workspace/.xadb-env/cargo/bin`이다. 선택 실행 helper `/workspace/s5-run.py`는 실행마다 source manifest/ELF/input hash와 selector를 기록한다. 최종 도구/fixture로 확정한 것은 아니며 원 r1/r2 초안의 실행을 현재 commit 증거로 소급 바꾸지 않는다.
+
+### 후속 B 호출 단계 분리와 actual snapshot/cursor
+
+B는 candidate와 copy observation을 각각 한 개의 내부 Option slot으로 전달하고, page/seek·visibility·copy·release·publish 단계를 never-inline 함수로 분리했다. checked candidate/operation cleanup 뒤에만 결과를 공개한다. C `ReadStep<T, Target = Plan4Target>`와 B alias가 같은 반환 carrier를 사용하여 순수 adapter 변환을 제거했다. C의 production target 기본값·variant·layout은 유지한다. Catalog LOAD의 request 생성도 별도 함수로 분리했다.
+
+독립 D2 읽기 리뷰는 이 변경의 정확성·cleanup·visibility에 한해 수용·필수 수정0이다. 전체 census 및 S5 완료 인증은 아니다. 이전 `s5-census2.log`의 page3160/status2873 진단은 수정 전 공식이며 인수 근거가 아니다. 후속 source에 맞지 않는 진단 함수는 제거했고 원 로그는 보존한다.
+
+`/workspace/s5-evidence/b2,r4,r5`에 동결 selector·plan·source manifest·결과를 보존했다. manifest `35ca224e311594827c28c4a0ed03e25317c43f523c708c99e4dd554862b26155`, ELF `36d7cda98752c48bd0110832b886010cafe3f66ad424f1be35d0e3a05263938a`에서 변경 B12 **12 PASS**, 실제 R02/R04의 cursor short-output→cancel→Row→End **1 PASS**, 신규 R06 다른 actor Active INSERT 및 commit 전후 동일 statement q 유지·새 statement 가시성 **1 PASS**다. R02/R04는14.43초, R06은14.42초였다. 전체 workspace 및 무변경 factory 시험은 실행하지 않았다. 이 실행 뒤 변경은 사용하지 않는 진단 함수 제거와 문서 기록뿐이다. 남은 census·비상주/실패 경계·native·compiler·최종 리뷰/PR 의무는 유지한다.

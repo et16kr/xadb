@@ -306,34 +306,34 @@ impl<'u, 'r, 't, 'v, 'i, 'b, 'a, 's, 'c, 'p, 'd, 'm, 'w, W: WriterNamespace>
         Ok(())
     }
     #[inline(never)]
+    fn catalog_request(&self, index: usize) -> Result<TargetRequest> {
+        let header =
+            super::super::super::genesis::owned_header(&self.backend.storage.core.plan, index)
+                .map_err(|_| {
+                    fatal(
+                        self.backend.storage,
+                        RetentionPhase::Census,
+                        RetentionCause::Invariant,
+                    )
+                })?;
+        Ok(TargetRequest {
+            identity: header.identity,
+            kind: header.kind,
+            level: 0,
+        })
+    }
+    #[inline(never)]
     fn load_catalog(&mut self, residency: &mut Plan4ResidencyCursor) -> Result<ReadStep<()>> {
-        let bad = || {
-            fatal(
-                self.backend.storage,
-                RetentionPhase::Census,
-                RetentionCause::Invariant,
-            )
-        };
-        let catalog_anchor_header =
-            super::super::super::genesis::owned_header(&self.backend.storage.core.plan, 7)
-                .map_err(|_| bad())?;
-        let catalog_anchor = TargetRequest {
-            identity: catalog_anchor_header.identity,
-            kind: catalog_anchor_header.kind,
-            level: 0,
-        };
-        let catalog_header =
-            super::super::super::genesis::owned_header(&self.backend.storage.core.plan, 8)
-                .map_err(|_| bad())?;
-        let catalog = TargetRequest {
-            identity: catalog_header.identity,
-            kind: catalog_header.kind,
-            level: 0,
-        };
-        for (request, protected) in [(catalog_anchor, &[][..]), (catalog, &[catalog_anchor][..])] {
-            if let RetentionResidencyStep::FlushRequired { target, .. } = self
-                .backend
-                .load_lookup_target(self.owner, request, residency, protected, self.loader)?
+        let requests = [self.catalog_request(7)?, self.catalog_request(8)?];
+        for at in 0..requests.len() {
+            if let RetentionResidencyStep::FlushRequired { target, .. } =
+                self.backend.load_lookup_target(
+                    self.owner,
+                    requests[at],
+                    residency,
+                    &requests[..at],
+                    self.loader,
+                )?
             {
                 self.stopped = true;
                 return Ok(ReadStep::FlushRequired { target });
