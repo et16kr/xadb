@@ -155,9 +155,11 @@ impl<W: WriterNamespace> RecoveryState<'_, '_, '_, W> {
         if self.restored.is_some() {
             return Err(error(p, Plan4RecoveryCause::Invariant));
         }
-        // The admission moves with the digests it was issued for; a policy
-        // entry without one, or a state or SourceFacts digest that differs,
-        // is this owner's own invariant.
+        // The admission is consumed here, against the digests it was issued
+        // for; a policy entry without one, or a state or SourceFacts digest
+        // that differs, is this owner's own invariant. Only its policy moves
+        // on (RestoredRetention is counted twice in the short source shared
+        // bytes, runtime loan and recovered binding).
         let row_admission = self.row_admission.take();
         if row_admission.is_some() != self.row_policy.is_some()
             || row_admission.is_some_and(|admission| {
@@ -177,7 +179,7 @@ impl<W: WriterNamespace> RecoveryState<'_, '_, '_, W> {
             remaining_steps: analyzed.remaining_steps,
             physical_topup: topup,
             metadata_growth: growth,
-            row_admission,
+            row_policy: row_admission.map(|admission| admission.policy),
         });
         Ok(())
     }

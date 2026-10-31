@@ -110,7 +110,7 @@ impl<'s, 'c, W: WriterNamespace> Plan4Retention<'_, 's, 'c, '_, '_, '_, '_, '_, 
         if self
             .recovery_binding
             .as_ref()
-            .is_some_and(|binding| matches!(binding.row_policy(), Ok(None)))
+            .is_some_and(|binding| binding.row_policy().is_none())
         {
             return Err(self.recovery_row_unsupported());
         }
@@ -131,19 +131,14 @@ impl<'s, 'c, W: WriterNamespace> Plan4Retention<'_, 's, 'c, '_, '_, '_, '_, '_, 
         Ok(job)
     }
     /// The admitted Row policy of this recovered binding. Legacy has none and
-    /// keeps Row work Unsupported; an admission that no longer matches its
-    /// restored digest is the binding's invariant.
+    /// keeps Row work Unsupported. The admission's digests were compared
+    /// when the binding's RestoredRetention was built.
     pub(super) fn recovery_rows(&self) -> Result<RowRecoveryPolicy> {
-        match self
-            .recovery_binding
+        self.recovery_binding
             .as_ref()
             .ok_or_else(|| unchanged(RetentionPhase::Prepare, RetentionCause::WrongState))?
             .row_policy()
-        {
-            Ok(Some(policy)) => Ok(policy),
-            Ok(None) => Err(self.recovery_row_unsupported()),
-            Err(()) => Err(self.recovery_catalog_bad()),
-        }
+            .ok_or_else(|| self.recovery_row_unsupported())
     }
     /// A Row loser step needs WithRowClr: RejectInitialLosers admitted no
     /// loser, and recovery creates none.

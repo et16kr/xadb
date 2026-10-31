@@ -1,0 +1,178 @@
+{
+ "schema": "XADB_S7_TEST_INVENTORY_V1",
+ "status": "FROZEN_SELECTION_NOT_EXECUTION_EVIDENCE",
+ "baseline": "76b3627",
+ "contract_ref": "devdoc/contracts/dev3-module-boundaries.md#row-join-s7",
+ "cases": [
+  {
+   "id": "MCI01-V01/V06/V09/V10",
+   "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::mci01_v01_v06_v09_v10_serializable_old_snapshot",
+   "purpose": "Serializable B old statement unchanged after A Commit, new transaction sees the row, read-only conflict, auto table dependency, catalog epoch kept and T epoch moved"
+  },
+  {
+   "id": "MCI01-V04",
+   "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::mci01_v04_read_committed_statement_snapshot",
+   "purpose": "ReadCommitted B statement stable, next statement takes the new q"
+  },
+  {
+   "id": "MCI01-V02",
+   "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::mci01_v02_own_cursor_is_invalidated_by_a_row_apply",
+   "purpose": "own B cursor invalidated by A's next applied row"
+  },
+  {
+   "id": "MCI01-V03",
+   "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::mci01_v03_two_serializable_writers_of_one_absence",
+   "purpose": "two Serializable writers of one absence: first Commit, second conflict and A full abort"
+  },
+  {
+   "id": "MCI01-V05",
+   "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::mci01_v05_writers_of_different_tables_both_commit",
+   "purpose": "writers of different tables both commit"
+  },
+  {
+   "id": "MCI01-V08",
+   "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::mci01_v08_failed_statement_reads_survive",
+   "purpose": "failed statement keeps its read set: Commit conflict and A full abort"
+  },
+  {
+   "id": "MCI01-V11",
+   "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::mci01_v11_recovered_cleanup_keeps_logical_epochs",
+   "purpose": "recovery physical cleanup publishes no q: READY Q and seeded epochs equal the last ACK q"
+  },
+  {
+   "id": "MCI03-V01",
+   "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::mci03_v01_rollback_waits_for_the_captured_read",
+   "purpose": "A statement rollback waits at the terminal read gate for B's captured read; late reader InstallationPending"
+  },
+  {
+   "id": "MCI03-V02",
+   "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::mci03_v02_preflight_waits_for_the_admitted_read",
+   "purpose": "A next-row preflight waits for B's admitted read (barrier replacement)"
+  },
+  {
+   "id": "MCI03-V03",
+   "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::mci03_v03_old_snapshot_before_q_publication",
+   "purpose": "B old snapshot between Status install and Q publication"
+  },
+  {
+   "id": "MCI03-V04",
+   "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::mci03_v04_poststage_fault_fences_a_and_b",
+   "purpose": "post-stage WAL fault fences; A and B both refused, files unchanged"
+  },
+  {
+   "id": "MBC10-V09-CP-1",
+   "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::catalog_progress_v09::mbc10_v09_catalog_progress_minus_one",
+   "purpose": "CatalogProgress writer waits for two resident readers; one byte short is Census/Capacity Unchanged, retry reaches R04"
+  },
+  {
+   "id": "MBC10-V09-CP0",
+   "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::catalog_progress_v09::mbc10_v09_catalog_progress_exact",
+   "purpose": "CatalogProgress admission at exactly the charge after both returns, R04"
+  },
+  {
+   "id": "MBC10-V09-CP+1",
+   "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::catalog_progress_v09::mbc10_v09_catalog_progress_plus_one",
+   "purpose": "CatalogProgress admission one byte over, R04"
+  },
+  {
+   "id": "MBC40-V09-iv-M",
+   "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::row::v09_census_tests::mbc40_v09_row_write_census_memory",
+   "purpose": "RowWrite (iv) gate-waiting floor + shared + two residents within the short cap (memory)"
+  },
+  {
+   "id": "MBC40-V09-iv-N",
+   "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::row::v09_census_tests::mbc40_v09_row_write_census_native",
+   "purpose": "the same (native instrumented writer)"
+  },
+  {
+   "id": "S4-C01-iv-M",
+   "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::row::rollback::census::s4_c01_memory_rollback_census",
+   "purpose": "rollback start (iv) floor added to the S4 census (memory)"
+  },
+  {
+   "id": "S4-C01-iv-N",
+   "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::row::rollback::census::s4_c01_native_rollback_census",
+   "purpose": "the same (native)"
+  }
+ ],
+ "regression": {
+  "reason": "the one changed product path is the cfg(test) RowReadCaptured hit in RowReadOperation::status: its Status/Undo-pin callers and the Row read source and B caller census",
+  "selectors": [
+   "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_live::s5r_r02_empty_table_and_r04_actual_capture_copy",
+   "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_live::s5r_r05_r07_retiring_capture_and_corrupt_undo",
+   "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_live::s5r_c01_memory_source_inventory",
+   "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_live::s5r_c02_native_source_inventory",
+   "storage::row::read::driver::tests::mcb00_d13_memory_call_inventory",
+   "storage::row::read::driver::tests::mcb00_d13_native_call_inventory"
+  ]
+ },
+ "native": {
+  "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::native::s7j_native_worker",
+  "controller": "scripts/check_dev3_s7_native.py",
+  "cases": {
+   "MCI02-N01": [
+    "produce",
+    "recover",
+    "reenter"
+   ],
+   "MCI02-N02": [
+    "produce",
+    "recover",
+    "reenter"
+   ],
+   "MCI02-N03": [
+    "produce",
+    "recover",
+    "reenter"
+   ]
+  },
+  "seconds_per_process": 180,
+  "expected": "produce stops at the ACK (N01/N02) or CLR1 (N03) cut; recover READY (N03 with 2 new CLRs), B reads only committed rows, READY Q equals the produce ACK q, new ACK; reenter (RejectInitialLosers) READY Q equals the recover ACK q and B reads both ACKs"
+ },
+ "cited": {
+  "MCI01-V07": "OCR01 own_catalog_read::original_own_create_and_other_snapshot_keep_distinct_visibility",
+  "MCI01-V12": "S4-R11, S4-R09, S6R-M05",
+  "MCI01-V13": "S4-R01, S4-R10, S6R-M04/M06 compensated_tail",
+  "MCI01-V14": "S3-R03 (durable slot shortage unreachable)"
+ },
+ "unreachable": {
+  "MCI01-V09-stale": "no DROP producer (DEV3); table slots are not reused in one open (S1F_T02)"
+ },
+ "compiler": {
+  "cases": [],
+  "reason": "no public API or lifetime change"
+ },
+ "limits": {
+  "memory_case_seconds": 30,
+  "controller_timeout_seconds": 300,
+  "short_cap_bytes": 65536,
+  "catalog_progress_charge_bytes": 44304,
+  "note": "every S7 case uses case()'s 30 s; MCI01-V11 was tightened from 240 s to 30 s before the final execution (r1 ran it under 240 s)"
+ },
+ "source_specific": true,
+ "notes": [
+  "Only the new S7 cases, the changed census tests and the hook's read path are selected; no workspace or unchanged lower test run (AGENTS.md).",
+  "Each selector runs alone in its own process with one test thread.",
+  "MI03 standalone C+A / C+B acceptance is not part of this selection (contract #row-join-s7 limits).",
+  "Failures are preserved and never relabelled as PASS."
+ ],
+ "s6_review_reruns": {
+  "reason": "independent S6 review R2: S6 raised its READY case bound 30 s -> 150 s -> 240 s after failing runs (development-policy forbids after-the-fact relaxation). S7 restores case()'s 30 s before this execution and reruns every READY_BOUND case on the PR #9 (sha2 opt-level 3) build; failures are kept as failures",
+  "bound_seconds": 30,
+  "selectors": [
+   "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_recovery::s6r_m01_one_committed_row_with_row_clr",
+   "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_recovery::s6r_m01_one_committed_row_reject_initial_losers",
+   "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_recovery::s6r_m01_three_committed_rows_with_row_clr",
+   "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_recovery::s6r_m01_three_committed_rows_reject_initial_losers",
+   "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_recovery::s6r_m02_reserved_row_recovers_with_row_clr",
+   "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_recovery::s6r_m04_active_chain_recovers_through_row_clr",
+   "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_recovery::s6r_m04_aborting_statement_recovers_as_full_rollback",
+   "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_recovery::s6r_m05_wrong_proposal_returns_the_same_task",
+   "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_recovery::s6r_m06_statement_rollback_then_commit",
+   "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_recovery::s6r_m06_full_abort",
+   "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_recovery::s6r_m07_partial_recovery_then_crash",
+   "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_recovery::s6r_m08_reject_initial_losers_inputs"
+  ]
+ },
+ "revision": "r2: after the independent S7/S6 reviews (MCI02 cut witness, V11 oracle, 30 s bounds, S6 reruns)"
+}

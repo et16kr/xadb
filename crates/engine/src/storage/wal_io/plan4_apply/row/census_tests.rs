@@ -216,6 +216,11 @@ fn s2w_c03_row_lifecycle_unchanged_beside_the_row_write_layout() {
 /// bodies are kept out of the Catalog live peak. Native 64136/65504 B in the
 /// contract count the test adapter's 160-byte File; with the 32-byte File
 /// (94ede44) they are 64008/65376 B, before and after S2-a alike.
+///
+/// S6 (`row-recovery-s6`) added the admitted Row policy to RestoredRetention,
+/// one 8-byte-aligned byte that lives in both the recovered binding inside
+/// DiskSession (live +8 B) and the runtime loan (recovered +16 B). The
+/// earlier memory 64000/65368 and native 64008/65376 B were S2-S5's values.
 #[test]
 fn s2w_c04_live_and_recovered_peaks_unchanged() {
     fn inspect<W: WriterNamespace>(writer: &str, live: usize, recovered: usize) {
@@ -230,8 +235,8 @@ fn s2w_c04_live_and_recovered_peaks_unchanged() {
         );
         assert_eq!((census.peak, recovery.peak), (live, recovered));
     }
-    inspect::<Memory>("memory", 64_000, 65_368);
-    inspect::<Native>("native", 64_008, 65_376);
+    inspect::<Memory>("memory", 64_008, 65_384);
+    inspect::<Native>("native", 64_016, 65_392);
 }
 
 /// S2W-C05: the eight private ranges are disjoint and contiguous and sum to

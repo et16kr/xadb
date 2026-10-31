@@ -1790,6 +1790,7 @@ impl<'l> RowProducerLane<'l> {
 - **C4.** S2W-H01..H05의 crash 정지 부분과 S2W-R24의 재시작 기대는 interim gate가 바뀐 뒤 다시 돌린다. [§7](#common-deliveries) 표 뒤 2026-10-30 문단의 진입 의무(S2-0b 뒤 `validate_live` 배치)와 MBC10-V09·MBC40-V09의 복구 task 부분([Row 쓰기 개정](#row-write-budget) 7항)도 C4다.
 - **S5·MCI.** MCI03-V02의 실제 실행과 B/MCI의 InstallationPending 재시도 수용은 B의 Row 읽기 뒤다.
 - **담당 미정.** MBC10-V09의 CatalogProgress writer 사례는 NOT_RUN이며 담당 단위가 없다. MBC40-V09 (iv) floor는 [WRITER-PROGRESS-001](#writer-progress)의 미공급 의무다.
+- **2026-10-31 S7 갱신([합류 기록](#row-join-s7)).** 위 12항과 이 목록의 NOT_RUN·미공급 가운데 다음을 S7이 공급했다. MBC10-V09 CatalogProgress writer 사례, RowWrite preflight와 rollback start의 첫 gate 대기 (iv) floor, MCI03-V02의 실제 실행과 InstallationPending 뒤 B 재시도다. rollback의 flush 뒤 재대기와 Commit·RowProgress·CatalogProgress의 gate 대기 floor는 계속 WRITER-PROGRESS-001의 미공급 의무다. 원 문장은 당시 상태로 보존한다.
 - **열린 의무(A-W1 검토 A4, 담당 미정).** flush 동안 RowWrite admission은 없고 flusher의 65536B census에는 호출자 carrier 항이 없다. 그 census가 A의 flush 지점 몫(frame-static + caller 5716B)을 포함하는지는 S2-b 증거가 정하기로 했으나 S2 증거에 그 결정이 없다. C와 coordinator가 정한다.
 
 <a id="row-commit-s3"></a>
@@ -2029,7 +2030,7 @@ public enum은 순수 요청 값이다. actual `recover_with_policy` 내부로 �
 
 RejectInitialLosers는 final canonical allocator·원 ReservedInventory 관계와 같은 replay의32 ATT/64 Jobs/status graph 전체를 bounded 순회하여 **모든 ReservedInventory=None, Reserved root0, ATT Active/Aborting0**를 요구한다. RowReserved뿐 아니라 기존 SystemPage-only·CatalogCreate Reserved도 거절한다. head가 None인 Active, next가 None인 Aborting도 해당 상태이므로 허용하지 않는다. canonical committed/aborted의 retained cleanup은 허용한다. home page의 겉보기 상태·caller count·부분 Job 목록으로 검사하지 않는다. source 재구성/관계 검산 전에 Unsupported를 먼저 반환하여 corruption을 가리는 순서도 아니다.
 
-정책 통과 때만 같은 actual AnalysisSeal.state_digest와 SourceFacts의 전체 epoch/header_digest/prefix_digest/lsn/end/adopted_local을 canonical 순서로 해시한 값에 policy를 결합해 private admission을 발급한다. raw count/bool/digest를 consumer가 제출해 발급하는 함수는 없다. 원 pre-effect source 재검산도 유지한다. 이 값은 원 runtime→selected binding→Plan4Recovered로 소비 이동하고 first next_action이 actual analyzed/selected handoff와 동일함을 검산한다. 새 owner·별도 replay bank·추가 file lease가 아니며 SourceFacts 전체 복사본을 추가하지 않는다. source fingerprint와 generation이 다른 재진입에는 재사용할 수 없다.
+정책 통과 때만 같은 actual AnalysisSeal.state_digest와 SourceFacts의 전체 epoch/header_digest/prefix_digest/lsn/end/adopted_local을 canonical 순서로 해시한 값에 policy를 결합해 private admission을 발급한다. raw count/bool/digest를 consumer가 제출해 발급하는 함수는 없다. 원 pre-effect source 재검산도 유지한다. 이 값은 원 runtime→selected binding→Plan4Recovered로 소비 이동하고 first next_action이 actual analyzed/selected handoff와 동일함을 검산한다. (2026-10-31 [S6 정정](#row-recovery-s6-shared): 원 owner가 RestoredRetention을 만들 때 digest를 대조하고 그 뒤로는 policy만 이동한다.) 새 owner·별도 replay bank·추가 file lease가 아니며 SourceFacts 전체 복사본을 추가하지 않는다. source fingerprint와 generation이 다른 재진입에는 재사용할 수 없다.
 
 실패는 기존 `Plan4RecoveryFailure`에 원 acquired owner/loan을 보존하고 `phase=Analysis,cause=Unsupported,effect=CallerMustResolve`다. 이 gate는 physical reserve/REBASE/CancelReserved/AbortEnd보다 앞이므로 observation의 **database_effect=Unchanged, mutations=0, READY=0**을 별도로 요구한다. 원 lease/fence 실패 정책을 유지하며 같은 실패 owner를 WithRowClr로 바꿔 healthy 재시도하지 않는다. WithRowClr 재시도는 새 정상 acquire/analysis다. C+B의 live own-write fixture와 재시작 no-loser fixture는 다른 인수이며 이 gate가 live source 의미를 대체하지 않는다.
 
@@ -2466,6 +2467,9 @@ S5 후속 D2 보완: `RowCandidate<'b>`는 원 visibility binding의 borrow life
 
 **Entry와 policy gate.** §6.7의 `RowRecoveryPolicy {WithRowClr, RejectInitialLosers}`와 `Plan4Recovery::recover_with_rows(policy)`를 공급한다. 원 recover 본문은 private `recover_with_policy(Option<policy>)`로 모은다. legacy `recover()`는 policy가 없으며, ROW-BEGIN-001의 임시 gate가 같은 위치·같은 실패 모양(Analysis/Unsupported·CallerMustResolve·database Unchanged·mutations0)의 **legacy Row scope 차단**이 된다. 그래서 S1–S5의 gate 시험은 legacy 차단의 회귀 시험으로 그대로 남는다. `RejectInitialLosers`는 같은 위치(canonical 전체 검산 뒤, SourceFacts·AnalysisSeal 직전)에서 final replay의 allocator Reserved entry0(ReservedInventory None), 두 scope의 RootReserved Job0, ATT 32행의 Active/Aborting 거래0을 요구한다. SystemPage-only·CatalogCreate Reserved도 거절하고 committed/aborted의 retained cleanup은 허용한다. `WithRowClr`는 loser를 거절하지 않는다. 통과한 entry만 private `RowRecoveryAdmission{policy, state_digest, source_facts_digest}`를 발급한다. `source_facts_digest`는 SourceFacts의 epoch/header_digest/prefix_digest/lsn/end/adopted_local을 그 순서로 해시한 값이다. admission은 AnalysisSeal 옆에서 RestoredRetention→RecoveryRetentionBinding→DiskSession의 recovery binding으로 소비 이동하며 복사본이나 공개 생성 함수는 없다. RestoredRetention을 만들 때 admission의 policy·state_digest·source_facts_digest를 원 entry의 policy·AnalysisSeal digest·실제 분석 SourceFacts의 digest와 대조한다. Row cleanup은 매 단계 `row_policy()`로 admission의 state_digest가 restored digest와 같음을 검산한 뒤에만 진행한다(첫 next_action만이 아니라 매 Row 단계). admission이 없는 binding(legacy)의 Row cell은 Row decode 전에 원 Unsupported 그대로다.
 
+<a id="row-recovery-s6-shared"></a>
+**2026-10-31 정정: admission은 RestoredRetention을 만들 때 소비한다.** 위 문단대로 admission 전체(policy와 두 digest, 정렬 포함 72B)를 RestoredRetention에 두었더니 short source의 `shared`가 memory 20184→20328B, Linux 타입 20192→20336B로 144B 커졌다. `shared`는 RestoredRetention을 runtime의 대여분과 DiskSession의 recovery binding에서 한 번씩, 모두 두 번 센다. 그 결과 계약이 허용하는 Catalog commit Pending 옆 admitted Full 조회 1개가 65588/65596B로 65536B를 넘어 Census/Capacity로 거절됐고 main `76b3627`에서 기존 시험 11개가 실패했다([원인·실행](../evidence/main-preexisting-failures-20261030.md#s6-shared-growth)). 그래서 RestoredRetention을 만드는 자리의 세 대조(policy·state_digest·source_facts_digest)는 그대로 두고, 그 뒤로는 policy(1B)만 RestoredRetention→RecoveryRetentionBinding→DiskSession으로 이동한다. 위의 "매 단계 admission의 state_digest가 restored digest와 같음을 검산"은 없앤다. 두 값은 같은 private 값 안에서 생성 때 대조한 불변 복사본이라 그 뒤에는 이 검산이 실패할 수 없었다. Row cleanup은 매 단계 `row_policy()`로 policy를 읽고, admission이 없는 legacy binding의 Row cell은 그대로 Row decode 전 Unsupported다. cap·charge·wire는 바꾸지 않는다. `shared`는 S5보다 16B 큰 20200/20208B, Pending+Full 합은 65460/65468B다.
+
 **복구 진행 상태와 action.** `Plan4Recovered`의 phase/observation/waiting/ready를 `RecoveryProgressState` 한 값으로 옮긴다. 원 `step`은 유지하고 `next_action(owner, flusher)`을 더한다. **계약 편차 1:** `next_action`은 원 `step`처럼 flusher Owner를 받아 flush 계속을 스스로 수행하므로 `FlushRequired`를 반환하지 않는다(variant 생략). `RecoveryAction`은 `Progress`·`RowClr(RecoveryRowTask)`·`Ready`다. task는 `inner.split()`의 MutationPort, owner, private, progress를 disjoint 대여하고, 선택 때의 C draft cut(`RollbackCandidate`)과 terminal read gate·RowWrite source admission을 apply 성공까지 보유한다. **계약 편차 2:** `refs`(ReferenceLease/UndoPin)는 두지 않는다. 복구 facade는 READY 전에 foreground reader를 받지 않고 retirement도 같은 driver에서 순차이므로 live pin이 막는 경합이 없다. `PreparedRecoveryRow`·`RecoveryOwnedError{Before, Fatal}`·`RowRecoveryHandlerError{Source, Producer, Prepare, Apply}`는 frozen 모양이다. A의 `handle_recovered_clr(task)`는 lane→`produce_clr`→prepare→apply만 호출한다. Before는 같은 task를 돌려주고 Fatal은 원 fence를 남긴다. task가 apply 없이 버려지면 admission은 checked 반환되고 원 session은 fence된다.
 
 **복구 table 식별.** 복구에서는 epoch가 활성화 전이므로 `table_slot`이 Published를 줄 수 없다. Row CLR 선택은 epoch 비활성(=복구 인스턴스)일 때 `RowTableSource.slot`에 복구 표지(`u8::MAX`)를 쓰고, `check_table_slot`은 epoch가 비활성일 때만 그 표지를 받는다. table 자체는 typed read의 CatalogLeaf record 검산(`check_table_record`)과 producer의 table definition으로 인증한다. 복구에는 statement가 없으므로 read/write mask 등록이 없다.
@@ -2491,3 +2495,101 @@ S5 후속 D2 보완: `RowCandidate<'b>`는 원 visibility binding의 borrow life
 | MBC40-N01..03·MCB05-N01..06 | native | committed READY 3PID, Reserved/CLR 중 재장애, no-loser negative 2PID |
 
 이 착수 기록은 구현/실행 PASS가 아니다.
+
+**2026-10-31 S7 독립 검토 보정.** S7이 S6(`8d5e48b..76b3627`)를 독립 D1/D2로 검토했다. D1과 D2 모두 아래 REQUIRED 보정을 조건으로 ACCEPT다. 위 원문은 당시 기록으로 보존하고 다음을 덧붙인다.
+- **계약 편차 3.** admission을 실제 분석과 대조하는 곳은 RestoredRetention을 만들 때 한 번뿐이다. 위 "매 Row 단계 `row_policy()` 검산"은 한 struct 안의 같은 digest 두 사본과 0 아님을 비교하므로 실패할 수 없다. 첫 next_action에서 실제 분석·선택 인계와 대조하는 의무(§6.7의 [policy gate](#row-recovery-policy), [소비자 §8.3](dev3-module-consumers.md#independent-fixtures))는 이 restore 대조로 대신한다.
+- **Cancel의 class.** Row Cancel(5 target)도 RowWrite class를 쓴다. 위 "9-target 단계는 RowWrite"와 문언이 다르지만 더 큰 charge이므로 상계는 그대로다.
+- **PARTIAL 두 줄.**
+  - MCB05-N01..06은 A 없는 C+B literal 입력을 요구한다([소비자 §8.3](dev3-module-consumers.md#independent-fixtures)). S6 입력은 A의 validate/produce_insert/produce_clr로 만들었다. native produce도 원 물리 WAL write·sync 대신 memory writer image를 native namespace에 복사했다.
+  - MBC40-N01은 C+B committed READY 뒤 새 ACK와 재진입을 요구한다. S6 native 시험은 WithRowClr로 복구한 뒤 Commit하지 않는다.
+  - S7 MCI02-N01·N02는 실제 native writer, READY 뒤 A Commit, RejectInitialLosers 재진입을 실행한다([합류 기록](#row-join-s7)). 다만 A가 만든 합류 입력이므로 MCB05의 literal 조건은 계속 충족되지 않는다.
+- **시간 한도.** S6 case의 `READY_BOUND` 150 s(`32de380`)와 240 s(`192c900`)는 실패 뒤 올린 사후 완화다. 그래서 S6 PASS의 근거로 세지 않는다. S7은 한도를 30 s로 되돌리고 debug hash 수정(PR #9) build에서 S6 selector 12개를 다시 실행했다([증거](../evidence/module-independence-survey-20261026.md#s7-row-join)).
+- **memory S6R-M01의 legacy 재시작.** "다음 legacy 재시작도 READY"는 B 읽기 전에 잡은 파일로 확인했다. B의 빈 aborted Row 거래가 남기는 Row TerminalReady는 legacy가 거절한다. native S6 n2가 이 경우를 만났다.
+- **shared 144B 회귀(R1).** `RowRecoveryAdmission`(padding 뒤 72B)을 담은 RestoredRetention이 shared에서 두 번 세어진다. 하나는 runtime의 대여분이고 다른 하나는 DiskSession의 recovery binding이다. 그래서 Pending Catalog commit 옆 Full read가 Census/Capacity로 거절된다. 검토 보고서는 RecoveryState 사본을 꼽았지만 그 값은 shared에 들지 않는다(수정 thread의 정정). 사용자 규칙에 따라 별도 thread가 수정하고 이 S7 branch로 합친다(main 직접 수정 아님).
+- **후속(미구현).**
+  - C1: `ExistingGroup::RowRecovery` 설치나 `recovery_rows()`에서 epoch 활성 뒤를 거절한다. 지금은 도달할 수 없는 경화이며 제품 변경이므로 사용자 승인이 필요하다.
+  - C3: losers gate의 양성 대조, RootReserved만 있는 입력, 거절 뒤 lease fence 단언을 더한다.
+  - C4: RowClr task drop의 runtime 시험, RejectInitialLosers의 보상 q0 root·Aborted actor 수용, Prune→ReleaseRole×3→RootFree 순서 단언을 더한다.
+  - N2: `recovered.rs`·`row_action.rs`의 "product open driver" 주석을 고친다. A 경로이므로 기록만 한다.
+  - N3: S6 refactor 뒤 Catalog 복구 회귀는 support.rs:260 사전 실패 때문에 소수 `catalog_memory` selector에만 기댄다.
+
+<a id="row-join-s7"></a>
+## XADB-MODULE-ROW-JOIN-001 — S7 C5 합류와 M5 인수
+
+2026-10-31. main `76b3627`(S6 PR #8·#9 병합)에서 별도 branch `claude/project-thread-1jfdtk`로 이어간다. 사용자 지시는 모듈 분해를 끝까지 진행하는 것이다. 범위는 다음 넷이다.
+
+- [§7](#common-deliveries)의 마지막 공통 공급인 C5 합류
+- A(Row INSERT)와 B(point/cursor)의 M5 합류 판정(MI01–MI06)
+- S4 잔여: MBC40-V09 (iv) writer floor와 MBC10-V09 CatalogProgress writer
+- 독립 D1/D2 검토
+
+DEV3 기능(DROP producer, BOOT, 새 epoch 등)은 하지 않는다(Codex 담당). 공개 wire·format 번호·cap·charge·제품 API는 바꾸지 않는다. 제품 source 변경은 아래 cfg(test) hook 한 줄뿐이다. foreground reader retirement protocol, 계획 §12 자동화, §13 폴더 배치는 선행 조건이 아니다.
+
+**C5 합류 adapter.** 새 제품 adapter는 만들지 않는다. A의 `row::insert::driver::live`(insert_live·commit_live·statement/full rollback 입구)와 B의 `row::read::driver::live`(read_point_live·open_cursor_live·next_live)는 S2–S6에서 이미 같은 원 MutationPort와 ReadPort를 소비한다. 그래서 합류는 한 session에서 둘을 함께 부르는 시험 조립으로 공급한다. 연결 변경은 `catalog_test_support::Point::RowReadCaptured`(cfg(test)) 하나다. `RowReadOperation::status`는 후보 검산 뒤 Txn/Undo pin을 보유한 채 이 지점에서 멈출 수 있고, MCI03-V01/V02의 barrier가 이를 쓴다.
+
+**합류의 읽기(oracle 해석).**
+- insert_live는 statement view를 소비하므로 A driver statement 너머로 own cursor를 열어 둘 수 없다. MCI01-V02는 같은 view에서 A의 validate/produce와 C의 reserve/prepare/apply로 행을 적용한다. driver 대신 A의 생산자를 부르는 유일한 사례다.
+- MCI03-V01 원 문언의 "Busy"는 S2-0 terminal read gate 뒤 성립하지 않는다([Row 쓰기 개정](#row-write-budget) §7). A의 statement rollback은 B의 captured read가 반환될 때까지 gate에서 기다리며, B의 pin 옆에서 CLR을 실행하지 않는다. 그동안 새 reader는 `InstallationPending`이다. aging 부분은 live Row retirement가 미공급이므로 N/A다.
+- MCI03-V02는 같은 개정의 barrier 대체를 따른다. A의 다음 행 preflight가 B의 반환을 기다린다. prepare와 apply 사이 재검사는 S2W-R21의 두 hook이 맡는다. B의 load가 비상주로 만든 target을 대기 뒤 preflight가 다시 상주시키는 재시도(FlushRequired)는 A 단독 MCA05-V31이 맡는다. 합류 시험은 대기 전에 residency를 settle하므로 eviction을 만들지 않는다.
+- MCI01-V09의 stale 거절은 둘로 나눈다.
+  - generation stale(DROP·identity 교체 뒤의 CheckedTable)은 N/A다. table slot은 이번 open에서 evict·재사용하지 않고 DROP·기존 identity 교체는 profile 밖이다([격리 owner](dev3-task-10-concurrency.md#module-row-isolation)). DROP producer도 없다(S1F_T02 주석, DEV3 범위).
+  - 다른 session의 CheckedTable(origin stale)은 도달할 수 있다. C의 core 동일성 검사(`plan4_apply/row/write.rs`의 preflight, `row/read.rs`의 읽기 open)가 BindingMismatch로 거절하지만 이번 합류 선택은 이 사례를 실행하지 않는다(NOT_RUN, 후속).
+  - 자동 의존 등록은 snapshot 사례가 검산한다.
+- MCI01-V11: live Row 물리 정리는 미공급이므로([S6](#row-recovery-s6)) 이 profile의 Row 물리 정리는 복구뿐이다. READY의 exclusive activation은 namespace epoch와 table epoch를 그때의 Q로 seed한다([격리 owner](dev3-task-10-concurrency.md#module-row-isolation)). 그래서 oracle은 다음 셋이다.
+  - READY의 Q가 이력의 마지막 ACK q와 같다.
+  - seed epoch가 그 q다.
+  - 다음 Row Commit은 T의 epoch만 옮긴다.
+  Prune·ReleaseRole·RootFree·TerminalFinish·loser CLR·AbortEnd 가운데 하나라도 q를 공개하면 첫 조건이 깨진다. READY에서 Row Job cell이 남지 않아 정리가 끝났음도 확인한다. 복구 중 epoch ledger는 비활성이므로 V11은 구조상 성립하며, 시험이 잡는 것은 복구 단계의 q 공개다.
+- MCI01-V14: Row Commit은 CREATE가 등록한 기존 table entry만 갱신한다. table 수 ≤27이 32 entry에 들어가므로 durable 뒤 table slot 부족은 N/A다(같은 격리 owner 근거). receipt·source capacity의 효과 전 거절은 S3-R03이 맡는다.
+- MCI01-V12·V13의 인용은 간접이다. 잘못된 입력의 거절(S4-R09는 임의 after byte를 바꾼다)과 구조(C가 CLR 대상을 고르고 보상 root를 terminal까지 보유)로 성질을 보이며, 해당 mutant를 직접 만들어 거절하는 시험은 아니다.
+
+**MCI 대응.** selector는 `storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::` 아래의 이름이다.
+
+| ID | 구분 | selector·근거 |
+| --- | --- | --- |
+| MCI01-V01·V06·V09(자동 의존)·V10 | NEW | `row_join::mci01_v01_v06_v09_v10_serializable_old_snapshot` |
+| MCI01-V04 | NEW | `row_join::mci01_v04_read_committed_statement_snapshot` |
+| MCI01-V02 | NEW | `row_join::mci01_v02_own_cursor_is_invalidated_by_a_row_apply` |
+| MCI01-V03 | NEW | `row_join::mci01_v03_two_serializable_writers_of_one_absence` |
+| MCI01-V05 | NEW | `row_join::mci01_v05_writers_of_different_tables_both_commit` |
+| MCI01-V08 | NEW | `row_join::mci01_v08_failed_statement_reads_survive` |
+| MCI01-V11 | NEW | `row_join::mci01_v11_recovered_cleanup_keeps_logical_epochs`, native MCI02 receipt의 `q_ready` |
+| MCI01-V07 | CITED | OCR01 `own_catalog_read::original_own_create_and_other_snapshot_keep_distinct_visibility`(관측한 CREATE 뒤 Serializable observer의 finish_read_only가 SerializationConflict) |
+| MCI01-V09 generation stale | N/A | slot 재사용·DROP이 profile 밖, DROP producer 없음(DEV3), S1F_T02 |
+| MCI01-V09 origin stale | NOT_RUN | C의 core 동일성 검사로 거절하나 합류 선택 밖(후속) |
+| MCI01-V12 | CITED | S4-R11(다른 capsule·view·scope의 rollback이 Unchanged), S4-R09(잘못된 after digest가 Unchanged이고 같은 task 재시도), S6R-M05. CLR 대상은 C가 선택하며 raw actor/RowId 입구가 없다 |
+| MCI01-V13 | CITED | S4-R01·S4-R10(보상 root가 terminal까지 RootReleasingCompensated), S6R-M04·M06(TerminalReady 뒤에만 ReleaseRole×3→RootFree) |
+| MCI01-V14 | CITED·N/A | S3-R03. durable 뒤 slot 부족은 위 산술로 N/A |
+| MCI02-N01..03 | NEW native | `row_join::native::s7j_native_worker`, controller `scripts/check_dev3_s7_native.py` |
+| MCI03-V01 | NEW | `row_join::mci03_v01_rollback_waits_for_the_captured_read` |
+| MCI03-V02 | NEW | `row_join::mci03_v02_preflight_waits_for_the_admitted_read` |
+| MCI03-V03 | NEW | `row_join::mci03_v03_old_snapshot_before_q_publication` |
+| MCI03-V04 | NEW | `row_join::mci03_v04_poststage_fault_fences_a_and_b` |
+
+MCI02의 각 case는 같은 ELF의 세 process다.
+- produce는 실제 native writer로 CREATE와 A driver 이력을 쓰고 cut에서 flush·shutdown 없이 끝난다. N01·N02는 Commit ACK 뒤, N03은 full rollback의 첫 durable CLR 뒤가 cut이다. session의 Drop은 lease 반환과 handle close만 한다. controller는 process 안의 WAL witness(파일 SHA-256·길이)가 자기 digest와 같고, 마지막 성공 sync 뒤 write가 없음을 effect trace로 확인한다. N03은 CLR 전후 witness가 다름도 확인한다.
+- recover는 `recover_with_rows(WithRowClr)`와 A의 recovered CLR handler로 READY에 이른다. 이어서 B cursor가 T를 읽고, A가 새 행을 Commit한다.
+- reenter는 `RejectInitialLosers`로 READY에 이른 뒤 B cursor가 두 ACK의 행을 읽는다.
+기대 행·CLR 수·READY Q는 이력에서 미리 정한다. controller는 READY Q를 이전 process receipt의 ACK q와 대조한다.
+
+**S4 잔여 공급.**
+- MBC40-V09 (iv)는 RowWrite preflight의 첫 gate 대기 중 writer 진입 floor다. floor = A 호출 지점 bound + preflight wrapper carrier(인자 참조·cut·Ready wrapper slot) + gate와 close/wait closure다. 마지막 항은 `commit_carrier_bytes`로 세며 대기 뒤에야 쓰는 admission carrier까지 포함한다. 그래서 이 floor는 살아 있는 지역값을 모두 나열한 값이 아니라 여유를 통한 상계다. unwind guard·storage 참조(preflight), actor·statement boundary(rollback start) 같은 작은 지역값은 아직 만들지 않은 wrapper·Result slot과 admission carrier 몫 안에 들어간다.
+  - memory floor는 7834B(6144+560+1130)다. shared와 resident 2개를 더하면 63922B이고 cap 여유는 1614B다.
+  - native는 63930B이고 여유는 1606B다.
+  - rollback start floor(S4_C01)는 6739B(site 4721 + 인자 참조 9개 + Result 2개 + gate 1130)다. 합은 memory 62827B, native 62835B다.
+  - 복구 task의 (iv)는 READY 전 exclusive이고 foreground reader가 없으므로 N/A다.
+  - rollback이 flush 뒤 gate를 다시 닫는 대기(`RowRollback::admit`)와 Commit·RowProgress·CatalogProgress의 gate 대기는 세지 않았다. 계속 [WRITER-PROGRESS-001](#writer-progress)의 미공급 의무다. census 출력도 `(iv)_first_gate_wait`·`rollback_reclose=NOT_SUPPLIED`로 이 범위를 적는다.
+- MBC10-V09 CatalogProgress writer: `catalog_progress_v09::mbc10_v09_catalog_progress_{minus_one,exact,plus_one}`. 원 CREATE(R03) 뒤 `catalog_rollback_start`를 쓴다.
+  - resident reader 2개가 admitted된 뒤 writer는 gate에서 두 반환을 기다린다. 새 reader는 InstallationPending이다.
+  - 첫 반환 뒤 200ms 동안 LifecyclePreparing에 이르지 않는다.
+  - 두 반환 뒤에만 `CatalogProgressCharge`(44304B)를 예약한다.
+  - 시험 전용 held loan으로 남은 몫을 −1·같음·+1로 둔다. −1은 Census/Capacity·Unchanged이고 파일·참조·pin이 그대로이며, loan 없이 재시도하면 R04에 이른다. 같음과 +1은 LifecyclePreparing에서 ledger가 `65536 − shared − over`이고 R04 oracle을 통과한다.
+  - RowWrite(`row_v09`)와 RowProgress(S1E-V09)를 더해 세 progress class가 같은 대체 oracle을 갖는다. PASS가 writer와 reader 2개의 겹친 admission을 증명하지는 않는다.
+
+**한계.**
+- MI03(단독 인수)은 실제 C 공급에서 충족되지 않았다. S5의 B 인수 시험은 A의 INSERT로 행을 만들었다. [소비자 §8.3](dev3-module-consumers.md#independent-fixtures)의 C+B literal ingress(MCB05-K01..12 포함)는 구현되지 않았다. 이는 [§7](#common-deliveries) C4 행의 "독립 authored row corpus를 원 owner에 적용하는 제한 경로"이며 S6에서 공급되지 않은 부분이다. A의 실제 C 인수도 B source가 있는 전체 트리에서만 실행됐다. C0 단독 export(A10/B3)는 PASS다.
+- live Row retirement, DROP·stale CheckedTable, 병렬 writer는 범위 밖이다.
+- MCI01-V11은 복구의 물리 정리만 다룬다.
+- main의 S6 `32de380`에서 shared가 144B 늘어 Pending Catalog commit 옆 Full read가 Census/Capacity로 거절되는 회귀가 별도로 보고됐다. 이 branch의 선택 시험 경로는 그 조합을 쓰지 않는다. 별도 thread가 수정해 이 branch로 합친다([S6 보정](#row-recovery-s6)).
+
+이 기록은 계약과 선택의 정의다. 실행 결과는 [증거](../evidence/module-independence-survey-20261026.md#s7-row-join)에 둔다.
