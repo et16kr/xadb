@@ -1281,5 +1281,8 @@ mod row_literal;
 #[path = "catalog_memory/row_literal_two.rs"]
 mod row_literal_two;
 
+#[path = "catalog_memory/row_read_literal.rs"]
+mod row_read_literal;
+
 #[path = "catalog_memory/row_read_census.rs"]
 mod row_read_census;

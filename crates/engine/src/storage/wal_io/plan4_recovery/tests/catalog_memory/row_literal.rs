@@ -107,7 +107,7 @@ const AFTER: [(RowPageRole, u64, &str); 5] = [
 
 /// The literal's bytes, each checked against its pin when loaded.
 #[derive(Clone)]
-struct Literal {
+pub(super) struct Literal {
     canonical: Vec<u8>,
     frame: Vec<u8>,
     after: Vec<(RowPageRole, Vec<u8>)>,
@@ -208,7 +208,7 @@ pub(super) fn patched(
 }
 
 impl Literal {
-    fn load() -> Self {
+    pub(super) fn load() -> Self {
         let root = author();
         let expected = expected();
         for fact in [
@@ -274,7 +274,7 @@ impl Literal {
     /// The validation lane gets the literal canonical row; the plan names
     /// its length, its SHA-256 and the lane's SchemaEpoch (the plan is
     /// untrusted: C's reserve rechecks it).
-    fn plan(&self, lane: RowValidationLane<'_>) -> RowInputPlan {
+    pub(super) fn plan(&self, lane: RowValidationLane<'_>) -> RowInputPlan {
         let (context, _schema, _leaf, candidate) = lane.parts();
         candidate[..self.canonical.len()].copy_from_slice(&self.canonical);
         RowInputPlan::new(
@@ -286,7 +286,7 @@ impl Literal {
 
     /// The producer lane gets the literal frame and after images, the
     /// images in C's declared physical order; the proposal declares them.
-    fn forward(&self, lane: RowProducerLane<'_>) -> RowProposal {
+    pub(super) fn forward(&self, lane: RowProducerLane<'_>) -> RowProposal {
         let (context, _control, _before, _schema, frame, after, _candidate, _scratch) =
             lane.parts();
         assert_eq!(context.operation(), RowOperation::Forward);
