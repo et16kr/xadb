@@ -1,0 +1,2221 @@
+{
+ "schema": "XADB_S9_EXECUTION_RECEIPTS_V1",
+ "status": "S9 final: C+A export 150/150 (a1, a62fc7c9), C+B export 53/53 plus addendum 1 (b1 a62fc7c9 for 34, b2 2cc5f154 for the 6 selectors of row_literal_two.rs and row_no_loser.rs, b3 660fd99e for row_literal 13 and MCB05-L06), full tree 16/16 (f1), native C+A S9A-N01..03 9 processes (na1, na2), C+B S9B-N01 and MCB05-N01..06 15 processes (nb1, nb2), S6 21 and S7 9 processes (n6, n7): all PASS. Limits (contract #row-mi03-s9, #row-m4-s9): C+B covers the S5 actual-C read range and MCB05-L01..L06, not the frozen MCB01-04 matrix; the publication gap case does not start a statement inside the window; no live Prune literal; K07 size confound; K12 original refused Wal(OrderMismatch) on an unpinned C frame; the C+A READY reader is C's decoder; WRITER-PROGRESS-001 Row floors fit with A's measured share, not A's declared 11520 B Write bound.",
+ "baseline_commit": "3c046e98",
+ "branch": "claude/project-thread-1jfdtk-s9",
+ "final_commit": "a62fc7c9",
+ "review_fix_commits": [
+  "2cc5f154",
+  "660fd99e"
+ ],
+ "inventory_sha256": "6d109018ff98f3d3f4ede0c322ee4d873a56ca8811d64440b8fbc0ed0fdee26e",
+ "addendum_sha256": "959037b418dd0a5852e2284419bb58d4845aeddc612b84a93246e43c57e54f7b",
+ "exports_660fd99e": {
+  "C+A": {
+   "commit": "660fd99ebccdd79718f9ed9e181e9b8c4b02d992",
+   "files": 7627,
+   "source_manifest_sha256": "2f3ef2729d5431ba1815011bb1cd41abd519ff3a8c676a4d72b598d9be059fa8",
+   "removed_files": 26,
+   "patches": 11,
+   "remaining_references": [],
+   "other_text_references": [
+    "devdoc/contracts/dev3-module-boundaries.md: 6",
+    "devdoc/contracts/dev3-module-consumers.md: 4",
+    "devdoc/evidence/module-independence-survey-20261026.md: 6",
+    "devdoc/policies/repository-build-plan.json: 6",
+    "scripts/module_single_source.py: 2",
+    "tests/fixtures/dev3-module-c3/row-read/execution-receipts.json: 1",
+    "tests/fixtures/module-row-insert/manifest.json: 1",
+    "tests/fixtures/module-row-integration/single-source-s8-inventory.json: 18",
+    "tests/fixtures/module-row-integration/single-source-s9-inventory.json: 17",
+    "tests/fixtures/module-row-integration/test-inventory.json: 2"
+   ],
+   "inventory_sha256": "d9ae77439b24ffdaf449fb04710ba3ddac5dd8c1c109bacc502645541507ecf2"
+  },
+  "C+B": {
+   "commit": "660fd99ebccdd79718f9ed9e181e9b8c4b02d992",
+   "files": 7521,
+   "source_manifest_sha256": "4c9ebd3c8df718ba84837527fb5b9840b138a44175b3c2642b4af52ddbb2ef1f",
+   "removed_files": 132,
+   "patches": 18,
+   "remaining_references": [],
+   "other_text_references": [
+    "devdoc/contracts/dev3-module-boundaries.md: 10",
+    "devdoc/contracts/dev3-module-consumers.md: 5",
+    "devdoc/evidence/module-independence-survey-20261026.md: 8",
+    "devdoc/policies/repository-build-plan.json: 19",
+    "scripts/module_single_source.py: 2",
+    "tests/fixtures/dev3-module-c0/boundary-compiler/MBC00-N11.rs: 1",
+    "tests/fixtures/dev3-module-c0/boundary-compiler/MBC00-P03.rs: 1",
+    "tests/fixtures/dev3-module-c3/row-commit/execution-receipts.json: 5",
+    "tests/fixtures/module-row-format/reserve-replay/author.py: 2",
+    "tests/fixtures/module-row-format/reserve-replay/input-plan.json: 1",
+    "tests/fixtures/module-row-format/transition/author.py: 62",
+    "tests/fixtures/module-row-format/transition/input-plan.json: 61",
+    "tests/fixtures/module-row-integration/single-source-s8-inventory.json: 41",
+    "tests/fixtures/module-row-integration/single-source-s8-receipts.json: 1",
+    "tests/fixtures/module-row-integration/single-source-s9-inventory.json: 40"
+   ],
+   "inventory_sha256": "4a7d5b4e79c9730839936f8ca826336e32ba010c9316d498e02964ea2b611be4"
+  }
+ },
+ "exports_2cc5f154": {
+  "C+A": {
+   "commit": "2cc5f154d3675051724c565e7baddf90b1ebc7cc",
+   "files": 7626,
+   "source_manifest_sha256": "316195644e15925ebb858ac59bbe23f6834f47357d9f182f9ffc16a0ce542ab1",
+   "removed_files": 26,
+   "patches": 11,
+   "remaining_references": [],
+   "other_text_references": [
+    "devdoc/contracts/dev3-module-boundaries.md: 6",
+    "devdoc/contracts/dev3-module-consumers.md: 4",
+    "devdoc/evidence/module-independence-survey-20261026.md: 6",
+    "devdoc/policies/repository-build-plan.json: 6",
+    "scripts/module_single_source.py: 2",
+    "tests/fixtures/dev3-module-c3/row-read/execution-receipts.json: 1",
+    "tests/fixtures/module-row-insert/manifest.json: 1",
+    "tests/fixtures/module-row-integration/single-source-s8-inventory.json: 18",
+    "tests/fixtures/module-row-integration/single-source-s9-inventory.json: 17",
+    "tests/fixtures/module-row-integration/test-inventory.json: 2"
+   ],
+   "inventory_sha256": "4be61a3c6bdda745ba1936c2ccc64b4f095d03d5f22d67356d225ac71ef1b189"
+  },
+  "C+B": {
+   "commit": "2cc5f154d3675051724c565e7baddf90b1ebc7cc",
+   "files": 7520,
+   "source_manifest_sha256": "a570e507875e30d44a33c7a060f8a4c8a10f101f1c7578e32260fed31acebc4d",
+   "removed_files": 132,
+   "patches": 18,
+   "remaining_references": [],
+   "other_text_references": [
+    "devdoc/contracts/dev3-module-boundaries.md: 10",
+    "devdoc/contracts/dev3-module-consumers.md: 5",
+    "devdoc/evidence/module-independence-survey-20261026.md: 8",
+    "devdoc/policies/repository-build-plan.json: 19",
+    "scripts/module_single_source.py: 2",
+    "tests/fixtures/dev3-module-c0/boundary-compiler/MBC00-N11.rs: 1",
+    "tests/fixtures/dev3-module-c0/boundary-compiler/MBC00-P03.rs: 1",
+    "tests/fixtures/dev3-module-c3/row-commit/execution-receipts.json: 5",
+    "tests/fixtures/module-row-format/reserve-replay/author.py: 2",
+    "tests/fixtures/module-row-format/reserve-replay/input-plan.json: 1",
+    "tests/fixtures/module-row-format/transition/author.py: 62",
+    "tests/fixtures/module-row-format/transition/input-plan.json: 61",
+    "tests/fixtures/module-row-integration/single-source-s8-inventory.json: 41",
+    "tests/fixtures/module-row-integration/single-source-s8-receipts.json: 1",
+    "tests/fixtures/module-row-integration/single-source-s9-inventory.json: 40"
+   ],
+   "inventory_sha256": "fd883aad87f943e1c99e49105fc8a0d8cc9c469162e430ba62738ab0adb69b3b"
+  }
+ },
+ "exports": {
+  "C+A": {
+   "commit": "a62fc7c98f28a3aa157afe46058baa82b618d91e",
+   "files": 7626,
+   "source_manifest_sha256": "57e98849597d953e2a47730b8c471d719bf4613710e1e0429790832afada08ed",
+   "removed_files": 26,
+   "patches": 11,
+   "remaining_references": [],
+   "other_text_references": [
+    "devdoc/contracts/dev3-module-boundaries.md: 6",
+    "devdoc/contracts/dev3-module-consumers.md: 4",
+    "devdoc/evidence/module-independence-survey-20261026.md: 6",
+    "devdoc/policies/repository-build-plan.json: 6",
+    "scripts/module_single_source.py: 2",
+    "tests/fixtures/dev3-module-c3/row-read/execution-receipts.json: 1",
+    "tests/fixtures/module-row-insert/manifest.json: 1",
+    "tests/fixtures/module-row-integration/single-source-s8-inventory.json: 18",
+    "tests/fixtures/module-row-integration/single-source-s9-inventory.json: 17",
+    "tests/fixtures/module-row-integration/test-inventory.json: 2"
+   ],
+   "inventory_sha256": "1fa749263feca7e5a6033ca98ce4bab8c6f621102a4fc75aa45d129d53c0e381"
+  },
+  "C+B": {
+   "commit": "a62fc7c98f28a3aa157afe46058baa82b618d91e",
+   "files": 7520,
+   "source_manifest_sha256": "1112a444177cbc0a592fa4feb6e830e85d9fba6e6d3c132f952c3945c93ff0a1",
+   "removed_files": 132,
+   "patches": 18,
+   "remaining_references": [],
+   "other_text_references": [
+    "devdoc/contracts/dev3-module-boundaries.md: 10",
+    "devdoc/contracts/dev3-module-consumers.md: 5",
+    "devdoc/evidence/module-independence-survey-20261026.md: 8",
+    "devdoc/policies/repository-build-plan.json: 19",
+    "scripts/module_single_source.py: 2",
+    "tests/fixtures/dev3-module-c0/boundary-compiler/MBC00-N11.rs: 1",
+    "tests/fixtures/dev3-module-c0/boundary-compiler/MBC00-P03.rs: 1",
+    "tests/fixtures/dev3-module-c3/row-commit/execution-receipts.json: 5",
+    "tests/fixtures/module-row-format/reserve-replay/author.py: 2",
+    "tests/fixtures/module-row-format/reserve-replay/input-plan.json: 1",
+    "tests/fixtures/module-row-format/transition/author.py: 62",
+    "tests/fixtures/module-row-format/transition/input-plan.json: 61",
+    "tests/fixtures/module-row-integration/single-source-s8-inventory.json: 41",
+    "tests/fixtures/module-row-integration/single-source-s8-receipts.json: 1",
+    "tests/fixtures/module-row-integration/single-source-s9-inventory.json: 40"
+   ],
+   "inventory_sha256": "b48fd0cda62b8d593c8479096bbb5d9b11a897284bb30b31a2f39755037c55f2"
+  },
+  "full tree": {
+   "commit": "a62fc7c98f28a3aa157afe46058baa82b618d91e",
+   "files": 7652,
+   "manifest_file_sha256": "6c118ab8e52e5dcdbf22585eaa57f8f36fb67250c4d021f25aef0abb32cb6b0c",
+   "note": "clean working tree of a62fc7c9 (the contract edit was parked outside the tree)"
+  }
+ },
+ "runs": {
+  "a1": {
+   "tree": "C+A export",
+   "commit": "a62fc7c9",
+   "what": "single-source C+A final selection",
+   "source_manifest_sha256": "57e98849597d953e2a47730b8c471d719bf4613710e1e0429790832afada08ed",
+   "elf_sha256": "608a25a209189c760a688031269f47d546f1783756b025309242816aa742dc79",
+   "input_sha256": "6d109018ff98f3d3f4ede0c322ee4d873a56ca8811d64440b8fbc0ed0fdee26e",
+   "plan_sha256": "af3b7a65691fac02e248d64b887d33841d63b9339e64844a07054d7d8662ae9a",
+   "passed": 150,
+   "selected": 150,
+   "max_seconds": 15.27,
+   "results": [
+    {
+     "test": "row_write::s2w_r04_forged_candidate_is_before_with_no_effect",
+     "exit": 0,
+     "seconds": 1.22
+    },
+    {
+     "test": "row_write::s2w_r05_reserve_recompute_change_is_before",
+     "exit": 0,
+     "seconds": 1.22
+    },
+    {
+     "test": "row_write::s2w_r06_reserve_installs_the_row_reserve_group",
+     "exit": 0,
+     "seconds": 1.07
+    },
+    {
+     "test": "row_write::s2w_r07_one_stale_stamp_is_before_then_retry_reserves",
+     "exit": 0,
+     "seconds": 0.92
+    },
+    {
+     "test": "row_write::s2w_r11_reserve_stage_refusal_keeps_the_write_bit",
+     "exit": 0,
+     "seconds": 1.07
+    },
+    {
+     "test": "row_write::s2w_r14_catalog_job_actor_is_refused_before_reserve",
+     "exit": 0,
+     "seconds": 0.87
+    },
+    {
+     "test": "row_write::s2w_r15_reader_waits_and_is_installation_pending_while_reserved",
+     "exit": 0,
+     "seconds": 0.92
+    },
+    {
+     "test": "row_write::s2w_r22_reserve_checks_out_no_replay",
+     "exit": 0,
+     "seconds": 1.12
+    },
+    {
+     "test": "row_write::s2w_r23_preflight_arena_mismatch_is_fatal",
+     "exit": 0,
+     "seconds": 1.02
+    },
+    {
+     "test": "row_write::s2w_r23_root_byte_is_stale_then_preflight_fatal",
+     "exit": 0,
+     "seconds": 0.97
+    },
+    {
+     "test": "row_write::s2w_r23_status_byte_is_stale_then_arena_fatal",
+     "exit": 0,
+     "seconds": 1.07
+    },
+    {
+     "test": "row_v09::mbc10_v09_row_write_waits_for_two_resident_readers_then_reserves",
+     "exit": 0,
+     "seconds": 1.97
+    },
+    {
+     "test": "row_forward::s2w_h01_h05_forward_replay_equals_live_and_stops_at_the_gate",
+     "exit": 0,
+     "seconds": 1.52
+    },
+    {
+     "test": "row_forward::s2w_r09_forward_lands_the_literal_and_retains_the_root",
+     "exit": 0,
+     "seconds": 1.17
+    },
+    {
+     "test": "row_forward::s2w_r10_tampered_proposal_is_before_on_the_same_reservation",
+     "exit": 0,
+     "seconds": 1.07
+    },
+    {
+     "test": "row_forward::s2w_r11_apply_stage_refusal_reopens_the_same_reservation",
+     "exit": 0,
+     "seconds": 1.02
+    },
+    {
+     "test": "row_forward::s2w_r12_apply_sync_fault_after_stage_is_fatal",
+     "exit": 0,
+     "seconds": 1.07
+    },
+    {
+     "test": "row_forward::s2w_r12_apply_write_fault_after_stage_is_fatal",
+     "exit": 0,
+     "seconds": 0.97
+    },
+    {
+     "test": "row_forward::s2w_r13_two_statements_of_three_rows_inherit_the_statement_credit",
+     "exit": 0,
+     "seconds": 3.03
+    },
+    {
+     "test": "row_forward::s2w_r21_missing_target_at_apply_is_fatal",
+     "exit": 0,
+     "seconds": 0.92
+    },
+    {
+     "test": "row_forward::s2w_r21_one_stale_stamp_at_apply_is_before_then_reopen",
+     "exit": 0,
+     "seconds": 0.92
+    },
+    {
+     "test": "row_forward::s2w_r22_forward_checks_out_no_replay",
+     "exit": 0,
+     "seconds": 1.07
+    },
+    {
+     "test": "row_forward::s2w_r23_control_byte_after_reserve_is_stale_prepare_then_cancel_then_drop_fences",
+     "exit": 0,
+     "seconds": 1.02
+    },
+    {
+     "test": "row_forward::s2w_r24_root_cursor_is_found_late_and_stops_restart",
+     "exit": 0,
+     "seconds": 1.52
+    },
+    {
+     "test": "row_cancel::s2w_h01_h05_reserve_and_cancel_replay_equal_live_and_stop_at_the_gate",
+     "exit": 0,
+     "seconds": 1.77
+    },
+    {
+     "test": "row_cancel::s2w_r08_busy_target_cancel_is_before_then_retry_lands_the_literal",
+     "exit": 0,
+     "seconds": 1.17
+    },
+    {
+     "test": "row_cancel::s2w_r08_cancel_returns_nothing_issued_and_keeps_the_write_bit",
+     "exit": 0,
+     "seconds": 1.22
+    },
+    {
+     "test": "row_cancel::s2w_r10_tampered_proposal_is_before_then_cancel_lands_the_literal",
+     "exit": 0,
+     "seconds": 1.17
+    },
+    {
+     "test": "row_cancel::s2w_r11_apply_stage_refusal_reopens_then_cancel_lands_the_literal",
+     "exit": 0,
+     "seconds": 1.12
+    },
+    {
+     "test": "row_cancel::s2w_r12_cancel_sync_fault_after_stage_is_fatal",
+     "exit": 0,
+     "seconds": 0.92
+    },
+    {
+     "test": "row_cancel::s2w_r12_cancel_write_fault_after_stage_is_fatal",
+     "exit": 0,
+     "seconds": 1.02
+    },
+    {
+     "test": "row_cancel::s2w_r15_cancel_ends_the_reservation_without_the_fence",
+     "exit": 0,
+     "seconds": 1.12
+    },
+    {
+     "test": "row_cancel::s2w_r18_live_root_reserved_actor_is_wrong_state",
+     "exit": 0,
+     "seconds": 1.02
+    },
+    {
+     "test": "row_cancel::s2w_r21_one_stale_stamp_at_apply_is_before_then_cancel_lands_the_literal",
+     "exit": 0,
+     "seconds": 1.12
+    },
+    {
+     "test": "row_cancel::s2w_r22_cancel_checks_out_no_replay",
+     "exit": 0,
+     "seconds": 1.12
+    },
+    {
+     "test": "row_cancel::s2w_r23_control_byte_after_reserve_is_stale_cancel_then_drop_fences",
+     "exit": 0,
+     "seconds": 0.97
+    },
+    {
+     "test": "row_live::mca05_v31_live_dirty_victim_flush_retries_the_same_row",
+     "exit": 0,
+     "seconds": 1.22
+    },
+    {
+     "test": "row_live::s2e_e09_applied_then_rejected_row_is_rollback_required_up_to_the_s4_start",
+     "exit": 0,
+     "seconds": 1.37
+    },
+    {
+     "test": "row_live::s2w_r07_live_reserve_stale_ends_the_row_with_finish",
+     "exit": 0,
+     "seconds": 1.22
+    },
+    {
+     "test": "row_live::s2w_r09_live_driver_inserts_one_row_and_finishes_the_statement",
+     "exit": 0,
+     "seconds": 1.17
+    },
+    {
+     "test": "row_live::s2w_r10_live_prepare_before_is_cancelled_by_the_driver",
+     "exit": 0,
+     "seconds": 1.22
+    },
+    {
+     "test": "row_live::s2w_r11_live_apply_before_is_reopened_and_cancelled",
+     "exit": 0,
+     "seconds": 1.17
+    },
+    {
+     "test": "row_live::s2w_r11_live_reserve_stage_refusal_ends_the_row_with_finish",
+     "exit": 0,
+     "seconds": 1.17
+    },
+    {
+     "test": "row_live::s2w_r19_live_preflight_busy_ends_the_row_without_retry",
+     "exit": 0,
+     "seconds": 1.53
+    },
+    {
+     "test": "row_live::s2w_r21_live_apply_stale_is_reopened_and_cancelled",
+     "exit": 0,
+     "seconds": 1.47
+    },
+    {
+     "test": "row_live::s2w_r21_live_missing_target_is_must_resolve",
+     "exit": 0,
+     "seconds": 1.12
+    },
+    {
+     "test": "row_live::s2w_r21_live_refused_cancel_is_fenced_and_must_resolve",
+     "exit": 0,
+     "seconds": 1.02
+    },
+    {
+     "test": "row_commit::s3_r01_read_committed_insert_commit_matches_independent_frame",
+     "exit": 0,
+     "seconds": 1.23
+    },
+    {
+     "test": "row_commit::s3_r01_serializable_insert_commit_matches_independent_frame",
+     "exit": 0,
+     "seconds": 1.37
+    },
+    {
+     "test": "row_commit::s3_r02_cancel_statement_can_empty_abort",
+     "exit": 0,
+     "seconds": 1.52
+    },
+    {
+     "test": "row_commit::s3_r02_empty_cancel_and_duplicate_table_roots",
+     "exit": 0,
+     "seconds": 3.93
+    },
+    {
+     "test": "row_commit::s3_r03_active_statement_is_before_busy",
+     "exit": 0,
+     "seconds": 0.62
+    },
+    {
+     "test": "row_commit::s3_r03_scope_foreign_capacity_reserved_and_aborting_refusals",
+     "exit": 0,
+     "seconds": 3.44
+    },
+    {
+     "test": "row_commit::s3_r04_read_committed_same_table_commits",
+     "exit": 0,
+     "seconds": 2.98
+    },
+    {
+     "test": "row_commit::s3_r04_serializable_other_table_commits",
+     "exit": 0,
+     "seconds": 3.03
+    },
+    {
+     "test": "row_commit::s3_r04_serializable_same_table_requires_rollback",
+     "exit": 0,
+     "seconds": 2.83
+    },
+    {
+     "test": "row_commit::s3_r05_commit_replays_divergent_forward_before_stage",
+     "exit": 0,
+     "seconds": 1.02
+    },
+    {
+     "test": "row_commit::s3_r06_actual_wal_capacity_restores_unstaged_then_retries",
+     "exit": 0,
+     "seconds": 1.27
+    },
+    {
+     "test": "row_commit::s3_r06_before_publication_is_fatal",
+     "exit": 0,
+     "seconds": 0.67
+    },
+    {
+     "test": "row_commit::s3_r06_cleanup_failure_is_fatal",
+     "exit": 0,
+     "seconds": 0.67
+    },
+    {
+     "test": "row_commit::s3_r06_partial_install_is_fatal",
+     "exit": 0,
+     "seconds": 0.67
+    },
+    {
+     "test": "row_commit::s3_r06_partial_write_fences_without_ack",
+     "exit": 0,
+     "seconds": 0.72
+    },
+    {
+     "test": "row_commit::s3_r06_stale_preparation_returns_same_capsule_then_retry",
+     "exit": 0,
+     "seconds": 0.98
+    },
+    {
+     "test": "row_commit::s3_r06_sync_after_error_fences_without_ack",
+     "exit": 0,
+     "seconds": 0.72
+    },
+    {
+     "test": "row_commit::s3_r07_pending_full_read_drain_flusher_and_old_q",
+     "exit": 0,
+     "seconds": 1.17
+    },
+    {
+     "test": "row_rollback::s4_r01_statement_suffix_then_commit",
+     "exit": 0,
+     "seconds": 2.83
+    },
+    {
+     "test": "row_rollback::s4_r02_full_abort_one_row",
+     "exit": 0,
+     "seconds": 1.17
+    },
+    {
+     "test": "row_rollback::s4_r03_premature_finish_bad_proposal_and_actual_stage_retry",
+     "exit": 0,
+     "seconds": 1.37
+    },
+    {
+     "test": "row_rollback::s4_r04_unfinished_drop_fences_without_more_io",
+     "exit": 0,
+     "seconds": 1.02
+    },
+    {
+     "test": "row_rollback::s4_r05_clr_sync_uncertainty_is_fatal",
+     "exit": 0,
+     "seconds": 1.07
+    },
+    {
+     "test": "row_rollback::s4_r05_partial_clr_write_is_fatal",
+     "exit": 0,
+     "seconds": 1.17
+    },
+    {
+     "test": "row_rollback::s4_r06_empty_statement_and_empty_full_abort",
+     "exit": 0,
+     "seconds": 0.92
+    },
+    {
+     "test": "row_rollback::s4_r07_flush_before_error_preserves_a_retryable_rollback",
+     "exit": 0,
+     "seconds": 1.32
+    },
+    {
+     "test": "row_rollback::s4_r08_serializable_conflict_then_full_abort",
+     "exit": 0,
+     "seconds": 2.18
+    },
+    {
+     "test": "row_rollback::s4_r09_wrong_after_digest_is_unchanged_and_same_task_retries",
+     "exit": 0,
+     "seconds": 1.22
+    },
+    {
+     "test": "row_rollback::s4_r10_full_abort_three_roots_from_two_statements",
+     "exit": 0,
+     "seconds": 2.47
+    },
+    {
+     "test": "row_rollback::s4_r11_wrong_capsule_view_and_scope_are_unchanged",
+     "exit": 0,
+     "seconds": 1.92
+    },
+    {
+     "test": "v09::s4_v09_exact",
+     "exit": 0,
+     "seconds": 1.52
+    },
+    {
+     "test": "v09::s4_v09_minus_one",
+     "exit": 0,
+     "seconds": 1.47
+    },
+    {
+     "test": "v09::s4_v09_plus_one",
+     "exit": 0,
+     "seconds": 1.57
+    },
+    {
+     "test": "tests::aw1_f01_flush_required_flushes_and_retries_the_same_row_from_preflight",
+     "exit": 0,
+     "seconds": 0.01
+    },
+    {
+     "test": "tests::aw1_f02_flush_refusals_end_the_row_holding_nothing",
+     "exit": 0,
+     "seconds": 0.01
+    },
+    {
+     "test": "tests::mca00_d01_one_row_statement_reserves_produces_applies_and_finishes",
+     "exit": 0,
+     "seconds": 0.01
+    },
+    {
+     "test": "tests::mca00_d02_rows_take_one_reservation_at_a_time",
+     "exit": 0,
+     "seconds": 0.01
+    },
+    {
+     "test": "tests::mca00_d03_statement_and_arguments_are_checked_before_any_c_call",
+     "exit": 0,
+     "seconds": 0.01
+    },
+    {
+     "test": "tests::mca00_d04_value_rejections_release_the_preflight_without_reserve",
+     "exit": 0,
+     "seconds": 0.02
+    },
+    {
+     "test": "tests::mca00_d05_c_refusals_keep_busy_capacity_unsupported_distinct",
+     "exit": 0,
+     "seconds": 0.01
+    },
+    {
+     "test": "tests::mca00_d06_failures_after_reserve_cancel_the_one_reservation",
+     "exit": 0,
+     "seconds": 0.01
+    },
+    {
+     "test": "tests::mca00_d07_failed_row_after_applied_rows_rolls_back_to_the_mark",
+     "exit": 0,
+     "seconds": 0.01
+    },
+    {
+     "test": "tests::mca00_d08_unsupported_c0_wrappers_propagate_unchanged",
+     "exit": 0,
+     "seconds": 0.01
+    },
+    {
+     "test": "tests::mca00_d09_fatal_and_unreleased_reservations_stop_all_calls",
+     "exit": 0,
+     "seconds": 0.01
+    },
+    {
+     "test": "tests::mca00_d10_rollback_stops_hand_back_the_same_rollback_or_task",
+     "exit": 0,
+     "seconds": 0.01
+    },
+    {
+     "test": "tests::mca00_d11_commit_and_full_abort_close_the_transaction",
+     "exit": 0,
+     "seconds": 0.01
+    },
+    {
+     "test": "tests::mca00_d12_driver_frames_stay_within_the_driver_source_bound",
+     "exit": 0,
+     "seconds": 0.01
+    },
+    {
+     "test": "tests::mca00_d13_a_finished_rollback_leaves_only_the_finish_to_retry",
+     "exit": 0,
+     "seconds": 0.01
+    },
+    {
+     "test": "tests::mca00_d14_a_rollback_required_handle_is_released_only_by_its_finished_rollback",
+     "exit": 0,
+     "seconds": 0.01
+    },
+    {
+     "test": "tests::mca00_d15_memory_call_site_shares_fit_the_caller_bounds",
+     "exit": 0,
+     "seconds": 0.01
+    },
+    {
+     "test": "tests::mca00_d15_native_call_site_shares_fit_the_caller_bounds",
+     "exit": 0,
+     "seconds": 0.01
+    },
+    {
+     "test": "group_tests::mca00_v06_aging_after_census_refusals_precede_output",
+     "exit": 0,
+     "seconds": 0.03
+    },
+    {
+     "test": "group_tests::mca00_v06_clr_refusals_precede_output",
+     "exit": 0,
+     "seconds": 0.03
+    },
+    {
+     "test": "group_tests::mca00_v06_clr_with_h_matches_literals",
+     "exit": 0,
+     "seconds": 0.03
+    },
+    {
+     "test": "group_tests::mca00_v06_clr_without_h_matches_literals",
+     "exit": 0,
+     "seconds": 0.02
+    },
+    {
+     "test": "group_tests::mca00_v06_descriptor_refusals_precede_output",
+     "exit": 0,
+     "seconds": 0.03
+    },
+    {
+     "test": "group_tests::mca00_v06_forward_physical_order_differs_from_roles",
+     "exit": 0,
+     "seconds": 0.03
+    },
+    {
+     "test": "group_tests::mca00_v06_forward_refusals_precede_output",
+     "exit": 0,
+     "seconds": 0.03
+    },
+    {
+     "test": "group_tests::mca00_v06_forward_with_h_matches_literals",
+     "exit": 0,
+     "seconds": 0.02
+    },
+    {
+     "test": "group_tests::mca00_v06_forward_without_h_matches_literals",
+     "exit": 0,
+     "seconds": 0.02
+    },
+    {
+     "test": "group_tests::mca00_v06_header_and_zero_lsn_refusals_precede_output",
+     "exit": 0,
+     "seconds": 0.02
+    },
+    {
+     "test": "group_tests::mca00_v06_leaf_refusals_precede_output",
+     "exit": 0,
+     "seconds": 0.02
+    },
+    {
+     "test": "group_tests::mca00_v06_produced_groups_pass_c_observers",
+     "exit": 0,
+     "seconds": 0.06
+    },
+    {
+     "test": "tests::mca00_v01_nullable_bool_literals",
+     "exit": 0,
+     "seconds": 0.01
+    },
+    {
+     "test": "tests::mca00_v02_int64_extrema_literals",
+     "exit": 0,
+     "seconds": 0.01
+    },
+    {
+     "test": "tests::mca00_v03_multibyte_utf8_literal",
+     "exit": 0,
+     "seconds": 0.01
+    },
+    {
+     "test": "tests::mca00_v04_binary_zero_literal",
+     "exit": 0,
+     "seconds": 0.01
+    },
+    {
+     "test": "tests::mca00_v05_invalid_input_preserves_candidate",
+     "exit": 0,
+     "seconds": 0.01
+    },
+    {
+     "test": "tests::mca_leaf_v01_inline_and_capacity_boundaries",
+     "exit": 0,
+     "seconds": 0.01
+    },
+    {
+     "test": "tests::mca_leaf_v02_row_key_and_page_match_independent_literals",
+     "exit": 0,
+     "seconds": 0.01
+    },
+    {
+     "test": "tests::mca_leaf_v03_maximum_minimal_rows_use_bounded_scratch",
+     "exit": 0,
+     "seconds": 0.01
+    },
+    {
+     "test": "tests::mca_leaf_v04_duplicate_and_corrupt_existing_row_preserve_output",
+     "exit": 0,
+     "seconds": 0.01
+    },
+    {
+     "test": "tests::mca_leaf_v05_stale_lsn_wrong_owner_and_small_scratch_preserve_output",
+     "exit": 0,
+     "seconds": 0.01
+    },
+    {
+     "test": "row_census::s3_c01_row_commit_windows_and_actual_a_caller_fit_fixed_charges",
+     "exit": 0,
+     "seconds": 0.01
+    },
+    {
+     "test": "census_tests::s2w_c01_row_write_phase_census_memory",
+     "exit": 0,
+     "seconds": 0.01
+    },
+    {
+     "test": "census_tests::s2w_c02_row_write_phase_census_native",
+     "exit": 0,
+     "seconds": 0.01
+    },
+    {
+     "test": "census_tests::s2w_c03_row_lifecycle_unchanged_beside_the_row_write_layout",
+     "exit": 0,
+     "seconds": 0.01
+    },
+    {
+     "test": "census_tests::s2w_c05_private_lane_ranges_and_cut_sizes",
+     "exit": 0,
+     "seconds": 0.0
+    },
+    {
+     "test": "census_tests::s2w_c06_row_write_c_margins_against_both_bounds",
+     "exit": 0,
+     "seconds": 0.01
+    },
+    {
+     "test": "census::s4_c01_memory_rollback_census",
+     "exit": 0,
+     "seconds": 0.01
+    },
+    {
+     "test": "census::s4_c01_native_rollback_census",
+     "exit": 0,
+     "seconds": 0.01
+    },
+    {
+     "test": "v09_census_tests::mbc40_v09_row_write_census_memory",
+     "exit": 0,
+     "seconds": 0.01
+    },
+    {
+     "test": "v09_census_tests::mbc40_v09_row_write_census_native",
+     "exit": 0,
+     "seconds": 0.01
+    },
+    {
+     "test": "census_tests::s2w_c04_live_and_recovered_peaks_unchanged",
+     "exit": 0,
+     "seconds": 0.01
+    },
+    {
+     "test": "census::s6r_c01_memory_recovery_row_census",
+     "exit": 0,
+     "seconds": 0.01
+    },
+    {
+     "test": "census::s6r_c02_native_recovery_row_census",
+     "exit": 0,
+     "seconds": 0.01
+    },
+    {
+     "test": "census::s6r_c03_recovered_facade_carriers",
+     "exit": 0,
+     "seconds": 0.0
+    },
+    {
+     "test": "row_recovery::s6r_m01_one_committed_row_with_row_clr",
+     "exit": 0,
+     "seconds": 5.13
+    },
+    {
+     "test": "row_recovery::s6r_m01_one_committed_row_reject_initial_losers",
+     "exit": 0,
+     "seconds": 5.13
+    },
+    {
+     "test": "row_recovery::s6r_m01_three_committed_rows_with_row_clr",
+     "exit": 0,
+     "seconds": 12.83
+    },
+    {
+     "test": "row_recovery::s6r_m01_three_committed_rows_reject_initial_losers",
+     "exit": 0,
+     "seconds": 12.57
+    },
+    {
+     "test": "row_recovery::s6r_m02_reserved_row_is_refused_without_row_clr",
+     "exit": 0,
+     "seconds": 1.83
+    },
+    {
+     "test": "row_recovery::s6r_m02_reserved_row_recovers_with_row_clr",
+     "exit": 0,
+     "seconds": 3.63
+    },
+    {
+     "test": "row_recovery::s6r_m03_active_chain_and_legacy_committed_are_refused",
+     "exit": 0,
+     "seconds": 3.33
+    },
+    {
+     "test": "row_recovery::s6r_m04_active_chain_recovers_through_row_clr",
+     "exit": 0,
+     "seconds": 13.88
+    },
+    {
+     "test": "row_recovery::s6r_m04_aborting_statement_recovers_as_full_rollback",
+     "exit": 0,
+     "seconds": 8.35
+    },
+    {
+     "test": "row_recovery::s6r_m05_wrong_proposal_returns_the_same_task",
+     "exit": 0,
+     "seconds": 5.03
+    },
+    {
+     "test": "row_recovery::s6r_m06_statement_rollback_then_commit",
+     "exit": 0,
+     "seconds": 15.27
+    },
+    {
+     "test": "row_recovery::s6r_m06_full_abort",
+     "exit": 0,
+     "seconds": 9.75
+    },
+    {
+     "test": "row_recovery::s6r_m07_partial_recovery_then_crash",
+     "exit": 0,
+     "seconds": 11.61
+    },
+    {
+     "test": "row_recovery::s6r_m08_reject_initial_losers_inputs",
+     "exit": 0,
+     "seconds": 4.64
+    },
+    {
+     "test": "writer_gate_census_tests::writer_progress_gate_wait_floors_memory",
+     "exit": 0,
+     "seconds": 0.01
+    },
+    {
+     "test": "writer_gate_census_tests::writer_progress_gate_wait_floors_native",
+     "exit": 0,
+     "seconds": 0.01
+    }
+   ]
+  },
+  "b1": {
+   "tree": "C+B export",
+   "commit": "a62fc7c9",
+   "what": "single-source C+B final selection",
+   "source_manifest_sha256": "1112a444177cbc0a592fa4feb6e830e85d9fba6e6d3c132f952c3945c93ff0a1",
+   "elf_sha256": "9b7480503a1ab642d86e309850c8fc1dedadaa0556dffce0f3b0e3d4df73d34d",
+   "input_sha256": "6d109018ff98f3d3f4ede0c322ee4d873a56ca8811d64440b8fbc0ed0fdee26e",
+   "plan_sha256": "ab05082e90f674c2ae5bbbc9ead0906ccfbf877edd393585508f097564e5de5f",
+   "passed": 53,
+   "selected": 53,
+   "max_seconds": 4.68,
+   "results": [
+    {
+     "test": "tests::mcb00_d01_point_found_and_absent_key",
+     "exit": 0,
+     "seconds": 0.01
+    },
+    {
+     "test": "tests::mcb00_d02_point_status_and_missing_before_select_the_version",
+     "exit": 0,
+     "seconds": 0.02
+    },
+    {
+     "test": "tests::mcb00_d03_flush_required_passes_through_after_cleanup",
+     "exit": 0,
+     "seconds": 0.01
+    },
+    {
+     "test": "tests::mcb00_d04_point_output_cancel_and_cleanup_never_publish",
+     "exit": 0,
+     "seconds": 0.02
+    },
+    {
+     "test": "tests::mcb00_d05_cursor_next_returns_rows_in_order_then_end",
+     "exit": 0,
+     "seconds": 0.01
+    },
+    {
+     "test": "tests::mcb00_d06_cursor_reseeks_by_full_row_id_after_a_gap",
+     "exit": 0,
+     "seconds": 0.01
+    },
+    {
+     "test": "tests::mcb00_d07_cursor_output_cancel_and_cleanup_keep_the_visible_row",
+     "exit": 0,
+     "seconds": 0.01
+    },
+    {
+     "test": "tests::mcb00_d08_statement_and_revision_precede_end_and_cancel",
+     "exit": 0,
+     "seconds": 0.01
+    },
+    {
+     "test": "tests::mcb00_d09_close_returns_only_its_own_credit",
+     "exit": 0,
+     "seconds": 0.01
+    },
+    {
+     "test": "tests::mcb00_d10_ended_statement_precedes_range_credit_and_operation",
+     "exit": 0,
+     "seconds": 0.0
+    },
+    {
+     "test": "tests::mcb00_d11_cursor_operations_open_on_its_own_view_and_table",
+     "exit": 0,
+     "seconds": 0.01
+    },
+    {
+     "test": "tests::mcb00_d12_cleanup_failure_replaces_flush_and_scan_errors_keep_progress",
+     "exit": 0,
+     "seconds": 0.01
+    },
+    {
+     "test": "tests::mcb00_d13_memory_call_inventory",
+     "exit": 0,
+     "seconds": 0.0
+    },
+    {
+     "test": "tests::mcb00_d13_native_call_inventory",
+     "exit": 0,
+     "seconds": 0.0
+    },
+    {
+     "test": "tests::mcb00_v01_literal_point_and_reseek_bounds",
+     "exit": 0,
+     "seconds": 0.01
+    },
+    {
+     "test": "tests::mcb00_v02_literal_visibility_requires_status_and_missing_before",
+     "exit": 0,
+     "seconds": 0.0
+    },
+    {
+     "test": "tests::mcb00_v03_invisible_output_retry_cancel_and_revision_progress",
+     "exit": 0,
+     "seconds": 0.01
+    },
+    {
+     "test": "census_tests::s2w_c04_live_and_recovered_peaks_unchanged",
+     "exit": 0,
+     "seconds": 0.01
+    },
+    {
+     "test": "row_literal::mcb05_k01_foreign_table_generation_is_before_then_cancel",
+     "exit": 0,
+     "seconds": 1.27
+    },
+    {
+     "test": "row_literal::mcb05_k02_forged_row_id_is_before_then_cancel",
+     "exit": 0,
+     "seconds": 1.23
+    },
+    {
+     "test": "row_literal::mcb05_k03_wrong_undo_generation_is_before_then_cancel",
+     "exit": 0,
+     "seconds": 1.22
+    },
+    {
+     "test": "row_literal::mcb05_k04_planned_mutation_consumed_again_is_before_then_cancel",
+     "exit": 0,
+     "seconds": 1.17
+    },
+    {
+     "test": "row_literal::mcb05_k05_predecessor_claimed_without_one_is_before_then_cancel",
+     "exit": 0,
+     "seconds": 1.12
+    },
+    {
+     "test": "row_literal::mcb05_k06_undo_incoming_one_is_before_then_cancel",
+     "exit": 0,
+     "seconds": 1.22
+    },
+    {
+     "test": "row_literal::mcb05_k08_row_stamp_not_the_actor_is_before_then_cancel",
+     "exit": 0,
+     "seconds": 1.07
+    },
+    {
+     "test": "row_literal::mcb05_k09_redo_row_bytes_differ_from_native_is_before_then_cancel",
+     "exit": 0,
+     "seconds": 1.07
+    },
+    {
+     "test": "row_literal::mcb05_k10_reserved_inventory_not_consumed_is_before_then_cancel",
+     "exit": 0,
+     "seconds": 1.17
+    },
+    {
+     "test": "row_literal::mcb05_k11_full_abort_debt_decremented_is_before_then_cancel",
+     "exit": 0,
+     "seconds": 1.17
+    },
+    {
+     "test": "row_literal::mcb05_k12_scope2_group_is_before_then_cancel",
+     "exit": 0,
+     "seconds": 1.12
+    },
+    {
+     "test": "row_literal::mcb05_l01_literal_forward_is_read_by_b_after_c_commit",
+     "exit": 0,
+     "seconds": 1.93
+    },
+    {
+     "test": "row_read_census::s5r_c01_memory_source_inventory",
+     "exit": 0,
+     "seconds": 0.01
+    },
+    {
+     "test": "row_read_census::s5r_c02_native_source_inventory",
+     "exit": 0,
+     "seconds": 0.01
+    },
+    {
+     "test": "row_literal_two::mcb05_l02_two_literal_roots_with_actual_h_are_read_by_b",
+     "exit": 0,
+     "seconds": 2.52
+    },
+    {
+     "test": "row_literal_two::mcb05_k07_h_count_before_zero_net_zero_is_before_then_cancel",
+     "exit": 0,
+     "seconds": 2.42
+    },
+    {
+     "test": "row_literal_two::mcb05_k01_undo_target_table_generation_only_is_before_then_cancel",
+     "exit": 0,
+     "seconds": 2.47
+    },
+    {
+     "test": "row_literal_two::mcb05_k04_previous_root_mutation_consumed_again_is_before_then_cancel",
+     "exit": 0,
+     "seconds": 2.27
+    },
+    {
+     "test": "row_literal_two::mcb05_k05_wrong_predecessor_same_size_is_before_then_cancel",
+     "exit": 0,
+     "seconds": 1.92
+    },
+    {
+     "test": "row_literal::mcb05_k12_actual_catalog_scope2_frame_is_before_then_cancel",
+     "exit": 0,
+     "seconds": 1.12
+    },
+    {
+     "test": "row_read_literal::s9b_r01_read_admission_returns_original_resources",
+     "exit": 0,
+     "seconds": 0.92
+    },
+    {
+     "test": "row_read_literal::s9b_r01_pending_preflight_precedes_read_source_reservation",
+     "exit": 0,
+     "seconds": 1.07
+    },
+    {
+     "test": "row_read_literal::s9b_r02_empty_table_and_r04_actual_capture_copy",
+     "exit": 0,
+     "seconds": 1.47
+    },
+    {
+     "test": "row_read_literal::s9b_r03_cold_catalog_anchor_loads_before_schema",
+     "exit": 0,
+     "seconds": 1.07
+    },
+    {
+     "test": "row_read_literal::s9b_r03_dirty_victim_flush_retries_the_same_snapshot",
+     "exit": 0,
+     "seconds": 1.27
+    },
+    {
+     "test": "row_read_literal::s9b_r05_r07_retiring_capture_and_corrupt_undo",
+     "exit": 0,
+     "seconds": 1.07
+    },
+    {
+     "test": "row_read_literal::s9b_r06_old_and_new_statement_snapshot",
+     "exit": 0,
+     "seconds": 1.42
+    },
+    {
+     "test": "row_read_literal::s9b_r08_corrupt_row_tree_fences_and_preserves_cause",
+     "exit": 0,
+     "seconds": 0.82
+    },
+    {
+     "test": "row_read_literal::s9b_c03_original_full_admission_boundary_and_foreign_owner",
+     "exit": 0,
+     "seconds": 1.07
+    },
+    {
+     "test": "row_reopen_literal::mcb05_l03_literal_after_reopen_is_read_by_b_after_recovery",
+     "exit": 0,
+     "seconds": 4.08
+    },
+    {
+     "test": "row_no_loser::s9b_m08_reject_initial_losers_c_b_inputs",
+     "exit": 0,
+     "seconds": 4.68
+    },
+    {
+     "test": "row_literal_rollback::mcb05_l04_failed_statement_literal_clr_then_commit",
+     "exit": 0,
+     "seconds": 1.42
+    },
+    {
+     "test": "row_literal_rollback::mcb05_l05_full_rollback_literal_clr_then_abort_end",
+     "exit": 0,
+     "seconds": 1.22
+    },
+    {
+     "test": "writer_gate_census_tests::writer_progress_gate_wait_floors_memory",
+     "exit": 0,
+     "seconds": 0.01
+    },
+    {
+     "test": "writer_gate_census_tests::writer_progress_gate_wait_floors_native",
+     "exit": 0,
+     "seconds": 0.01
+    }
+   ]
+  },
+  "f1": {
+   "tree": "full tree",
+   "commit": "a62fc7c9",
+   "what": "row_recovery_read (B reads after recovery) and row_join (C5 join, V09 origin stale)",
+   "source_manifest_sha256": "6c118ab8e52e5dcdbf22585eaa57f8f36fb67250c4d021f25aef0abb32cb6b0c",
+   "elf_sha256": "a4f5ac3754080377300c6d3916cd391d7711f76aee84cd193152ae699c8daead",
+   "input_sha256": "6d109018ff98f3d3f4ede0c322ee4d873a56ca8811d64440b8fbc0ed0fdee26e",
+   "plan_sha256": "7849202cd118865dcc4f3c992f4b930a7e136ab1131b1812ec06df25105914bc",
+   "passed": 16,
+   "selected": 16,
+   "max_seconds": 25.51,
+   "results": [
+    {
+     "test": "row_recovery_read::s9r_b01_one_committed_row_read_by_b",
+     "exit": 0,
+     "seconds": 9.01
+    },
+    {
+     "test": "row_recovery_read::s9r_b01_three_committed_rows_read_by_b",
+     "exit": 0,
+     "seconds": 25.51
+    },
+    {
+     "test": "row_recovery_read::s9r_b02_reserved_row_is_missing_for_b",
+     "exit": 0,
+     "seconds": 3.68
+    },
+    {
+     "test": "row_recovery_read::s9r_b03_active_chain_is_missing_for_b",
+     "exit": 0,
+     "seconds": 13.77
+    },
+    {
+     "test": "row_join::mci01_v01_v06_v09_v10_serializable_old_snapshot",
+     "exit": 0,
+     "seconds": 1.72
+    },
+    {
+     "test": "row_join::mci01_v04_read_committed_statement_snapshot",
+     "exit": 0,
+     "seconds": 1.67
+    },
+    {
+     "test": "row_join::mci01_v02_own_cursor_is_invalidated_by_a_row_apply",
+     "exit": 0,
+     "seconds": 1.72
+    },
+    {
+     "test": "row_join::mci01_v03_two_serializable_writers_of_one_absence",
+     "exit": 0,
+     "seconds": 2.17
+    },
+    {
+     "test": "row_join::mci01_v08_failed_statement_reads_survive",
+     "exit": 0,
+     "seconds": 5.09
+    },
+    {
+     "test": "row_join::mci01_v05_writers_of_different_tables_both_commit",
+     "exit": 0,
+     "seconds": 4.78
+    },
+    {
+     "test": "row_join::mci01_v09_origin_stale_checked_table_is_refused_by_a_and_b",
+     "exit": 0,
+     "seconds": 1.72
+    },
+    {
+     "test": "row_join::mci03_v01_rollback_waits_for_the_captured_read",
+     "exit": 0,
+     "seconds": 2.07
+    },
+    {
+     "test": "row_join::mci03_v02_preflight_waits_for_the_admitted_read",
+     "exit": 0,
+     "seconds": 2.17
+    },
+    {
+     "test": "row_join::mci03_v03_old_snapshot_before_q_publication",
+     "exit": 0,
+     "seconds": 1.42
+    },
+    {
+     "test": "row_join::mci03_v04_poststage_fault_fences_a_and_b",
+     "exit": 0,
+     "seconds": 1.67
+    },
+    {
+     "test": "row_join::mci01_v11_recovered_cleanup_keeps_logical_epochs",
+     "exit": 0,
+     "seconds": 4.93
+    }
+   ]
+  },
+  "na1": {
+   "tree": "C+A export",
+   "commit": "a62fc7c9",
+   "controller": "scripts/check_dev3_s9_native.py (export copy)",
+   "source_manifest_sha256": "57e98849597d953e2a47730b8c471d719bf4613710e1e0429790832afada08ed",
+   "elf_sha256": "608a25a209189c760a688031269f47d546f1783756b025309242816aa742dc79",
+   "input_sha256": "6d109018ff98f3d3f4ede0c322ee4d873a56ca8811d64440b8fbc0ed0fdee26e",
+   "plan_sha256": "dd0eaefd35619d8ec9ea3ef18880c611f8e9eae0064cc6d40fb703236251484d",
+   "complete_sha256": "d3adb3f575cb7b9da95cb191dde0aa274b6b212945732e8e7efa7508baf0a56e",
+   "cases": [
+    "S9A-N01",
+    "S9A-N02",
+    "S9A-N03"
+   ],
+   "processes": 9,
+   "passed": 9,
+   "max_seconds": 20.74,
+   "results": [
+    {
+     "case": "S9A-N01",
+     "phase": "produce",
+     "exit": 0,
+     "seconds": 1.12
+    },
+    {
+     "case": "S9A-N01",
+     "phase": "recover",
+     "exit": 0,
+     "seconds": 4.81
+    },
+    {
+     "case": "S9A-N01",
+     "phase": "reenter",
+     "exit": 0,
+     "seconds": 1.92
+    },
+    {
+     "case": "S9A-N02",
+     "phase": "produce",
+     "exit": 0,
+     "seconds": 2.43
+    },
+    {
+     "case": "S9A-N02",
+     "phase": "recover",
+     "exit": 0,
+     "seconds": 7.14
+    },
+    {
+     "case": "S9A-N02",
+     "phase": "reenter",
+     "exit": 0,
+     "seconds": 1.77
+    },
+    {
+     "case": "S9A-N03",
+     "phase": "produce",
+     "exit": 0,
+     "seconds": 3.03
+    },
+    {
+     "case": "S9A-N03",
+     "phase": "recover",
+     "exit": 0,
+     "seconds": 20.74
+    },
+    {
+     "case": "S9A-N03",
+     "phase": "reenter",
+     "exit": 0,
+     "seconds": 2.07
+    }
+   ]
+  },
+  "nb1": {
+   "tree": "C+B export",
+   "commit": "a62fc7c9",
+   "controller": "scripts/check_dev3_s9_native.py (export copy)",
+   "source_manifest_sha256": "1112a444177cbc0a592fa4feb6e830e85d9fba6e6d3c132f952c3945c93ff0a1",
+   "elf_sha256": "9b7480503a1ab642d86e309850c8fc1dedadaa0556dffce0f3b0e3d4df73d34d",
+   "input_sha256": "6d109018ff98f3d3f4ede0c322ee4d873a56ca8811d64440b8fbc0ed0fdee26e",
+   "plan_sha256": "e0cea3e30c30e4f2e468fbf4a63daff3d3d525e16aa109c8a50a8186fd53669a",
+   "complete_sha256": "a15b3afd440e98a6b8948de267e49e83c31652000947d638af955970c9f8fc6d",
+   "cases": [
+    "MCB05-N01",
+    "MCB05-N02",
+    "MCB05-N03",
+    "MCB05-N04",
+    "MCB05-N05",
+    "MCB05-N06",
+    "S9B-N01"
+   ],
+   "processes": 15,
+   "passed": 15,
+   "max_seconds": 2.17,
+   "results": [
+    {
+     "case": "S9B-N01",
+     "phase": "produce",
+     "exit": 0,
+     "seconds": 0.82
+    },
+    {
+     "case": "S9B-N01",
+     "phase": "recover",
+     "exit": 0,
+     "seconds": 2.17
+    },
+    {
+     "case": "S9B-N01",
+     "phase": "reenter",
+     "exit": 0,
+     "seconds": 1.62
+    },
+    {
+     "case": "MCB05-N01",
+     "phase": "produce",
+     "exit": 0,
+     "seconds": 1.02
+    },
+    {
+     "case": "MCB05-N01",
+     "phase": "reject",
+     "exit": 0,
+     "seconds": 0.11
+    },
+    {
+     "case": "MCB05-N02",
+     "phase": "produce",
+     "exit": 0,
+     "seconds": 1.07
+    },
+    {
+     "case": "MCB05-N02",
+     "phase": "reject",
+     "exit": 0,
+     "seconds": 0.11
+    },
+    {
+     "case": "MCB05-N03",
+     "phase": "produce",
+     "exit": 0,
+     "seconds": 0.87
+    },
+    {
+     "case": "MCB05-N03",
+     "phase": "reject",
+     "exit": 0,
+     "seconds": 0.11
+    },
+    {
+     "case": "MCB05-N04",
+     "phase": "produce",
+     "exit": 0,
+     "seconds": 0.97
+    },
+    {
+     "case": "MCB05-N04",
+     "phase": "reject",
+     "exit": 0,
+     "seconds": 0.11
+    },
+    {
+     "case": "MCB05-N05",
+     "phase": "produce",
+     "exit": 0,
+     "seconds": 0.47
+    },
+    {
+     "case": "MCB05-N05",
+     "phase": "reject",
+     "exit": 0,
+     "seconds": 0.06
+    },
+    {
+     "case": "MCB05-N06",
+     "phase": "produce",
+     "exit": 0,
+     "seconds": 0.47
+    },
+    {
+     "case": "MCB05-N06",
+     "phase": "reject",
+     "exit": 0,
+     "seconds": 0.06
+    }
+   ]
+  },
+  "n6": {
+   "tree": "full tree",
+   "commit": "a62fc7c9",
+   "controller": "scripts/check_dev3_s6_native.py",
+   "source_manifest_sha256": "6c118ab8e52e5dcdbf22585eaa57f8f36fb67250c4d021f25aef0abb32cb6b0c",
+   "elf_sha256": "a4f5ac3754080377300c6d3916cd391d7711f76aee84cd193152ae699c8daead",
+   "input_sha256": "6d109018ff98f3d3f4ede0c322ee4d873a56ca8811d64440b8fbc0ed0fdee26e",
+   "plan_sha256": "13422f97fe02ea0144f65110730ecdb47f58ca6fc23c9a7463641e404ba7d00a",
+   "complete_sha256": "c45bee9394bd25b3ad012924bd4d2cc9486971a5d96ea453225e4c794ea2c5ea",
+   "cases": [
+    "MBC40-N01",
+    "MBC40-N02",
+    "MBC40-N03",
+    "MCB05-N01",
+    "MCB05-N02",
+    "MCB05-N03",
+    "MCB05-N04",
+    "MCB05-N05",
+    "MCB05-N06"
+   ],
+   "processes": 21,
+   "passed": 21,
+   "max_seconds": 10.89,
+   "results": [
+    {
+     "case": "MBC40-N01",
+     "phase": "produce",
+     "exit": 0,
+     "seconds": 1.22
+    },
+    {
+     "case": "MBC40-N01",
+     "phase": "recover",
+     "exit": 0,
+     "seconds": 4.53
+    },
+    {
+     "case": "MBC40-N01",
+     "phase": "reenter",
+     "exit": 0,
+     "seconds": 0.87
+    },
+    {
+     "case": "MBC40-N02",
+     "phase": "produce",
+     "exit": 0,
+     "seconds": 0.97
+    },
+    {
+     "case": "MBC40-N02",
+     "phase": "crash",
+     "exit": 0,
+     "seconds": 0.57
+    },
+    {
+     "case": "MBC40-N02",
+     "phase": "recover",
+     "exit": 0,
+     "seconds": 2.68
+    },
+    {
+     "case": "MBC40-N03",
+     "phase": "produce",
+     "exit": 0,
+     "seconds": 1.62
+    },
+    {
+     "case": "MBC40-N03",
+     "phase": "crash",
+     "exit": 0,
+     "seconds": 0.87
+    },
+    {
+     "case": "MBC40-N03",
+     "phase": "recover",
+     "exit": 0,
+     "seconds": 10.89
+    },
+    {
+     "case": "MCB05-N01",
+     "phase": "produce",
+     "exit": 0,
+     "seconds": 1.02
+    },
+    {
+     "case": "MCB05-N01",
+     "phase": "reject",
+     "exit": 0,
+     "seconds": 0.16
+    },
+    {
+     "case": "MCB05-N02",
+     "phase": "produce",
+     "exit": 0,
+     "seconds": 0.97
+    },
+    {
+     "case": "MCB05-N02",
+     "phase": "reject",
+     "exit": 0,
+     "seconds": 0.17
+    },
+    {
+     "case": "MCB05-N03",
+     "phase": "produce",
+     "exit": 0,
+     "seconds": 0.87
+    },
+    {
+     "case": "MCB05-N03",
+     "phase": "reject",
+     "exit": 0,
+     "seconds": 0.17
+    },
+    {
+     "case": "MCB05-N04",
+     "phase": "produce",
+     "exit": 0,
+     "seconds": 0.92
+    },
+    {
+     "case": "MCB05-N04",
+     "phase": "reject",
+     "exit": 0,
+     "seconds": 0.16
+    },
+    {
+     "case": "MCB05-N05",
+     "phase": "produce",
+     "exit": 0,
+     "seconds": 0.47
+    },
+    {
+     "case": "MCB05-N05",
+     "phase": "reject",
+     "exit": 0,
+     "seconds": 0.12
+    },
+    {
+     "case": "MCB05-N06",
+     "phase": "produce",
+     "exit": 0,
+     "seconds": 0.57
+    },
+    {
+     "case": "MCB05-N06",
+     "phase": "reject",
+     "exit": 0,
+     "seconds": 0.11
+    }
+   ]
+  },
+  "n7": {
+   "tree": "full tree",
+   "commit": "a62fc7c9",
+   "controller": "scripts/check_dev3_s7_native.py",
+   "source_manifest_sha256": "6c118ab8e52e5dcdbf22585eaa57f8f36fb67250c4d021f25aef0abb32cb6b0c",
+   "elf_sha256": "a4f5ac3754080377300c6d3916cd391d7711f76aee84cd193152ae699c8daead",
+   "input_sha256": "6d109018ff98f3d3f4ede0c322ee4d873a56ca8811d64440b8fbc0ed0fdee26e",
+   "plan_sha256": "cf913b1ce7828e0948c93f791675611c92b5152a414858e18e475dd4f6939e92",
+   "complete_sha256": "ec4a7d1129f68a735944344f80ec2665e7eaa02d3bcf98f5ef2b7006a5bb6d54",
+   "cases": [
+    "MCI02-N01",
+    "MCI02-N02",
+    "MCI02-N03"
+   ],
+   "processes": 9,
+   "passed": 9,
+   "max_seconds": 20.21,
+   "results": [
+    {
+     "case": "MCI02-N01",
+     "phase": "produce",
+     "exit": 0,
+     "seconds": 1.07
+    },
+    {
+     "case": "MCI02-N01",
+     "phase": "recover",
+     "exit": 0,
+     "seconds": 5.04
+    },
+    {
+     "case": "MCI02-N01",
+     "phase": "reenter",
+     "exit": 0,
+     "seconds": 2.06
+    },
+    {
+     "case": "MCI02-N02",
+     "phase": "produce",
+     "exit": 0,
+     "seconds": 2.12
+    },
+    {
+     "case": "MCI02-N02",
+     "phase": "recover",
+     "exit": 0,
+     "seconds": 7.19
+    },
+    {
+     "case": "MCI02-N02",
+     "phase": "reenter",
+     "exit": 0,
+     "seconds": 1.79
+    },
+    {
+     "case": "MCI02-N03",
+     "phase": "produce",
+     "exit": 0,
+     "seconds": 3.03
+    },
+    {
+     "case": "MCI02-N03",
+     "phase": "recover",
+     "exit": 0,
+     "seconds": 20.21
+    },
+    {
+     "case": "MCI02-N03",
+     "phase": "reenter",
+     "exit": 0,
+     "seconds": 2.27
+    }
+   ]
+  },
+  "b2": {
+   "tree": "C+B export",
+   "commit": "2cc5f154",
+   "what": "review fixes: row_literal (13), row_literal_two (5), row_no_loser (1)",
+   "source_manifest_sha256": "a570e507875e30d44a33c7a060f8a4c8a10f101f1c7578e32260fed31acebc4d",
+   "elf_sha256": "defa0aa0aa5721f6f35bf59651e7e8dde28fd427754836b92a26903266fcedb4",
+   "input_sha256": "6d109018ff98f3d3f4ede0c322ee4d873a56ca8811d64440b8fbc0ed0fdee26e",
+   "plan_sha256": "340415331f3bbdb59d807a51d4162c58121512b9c7fff2334faf80a22ba0d5cd",
+   "passed": 19,
+   "selected": 19,
+   "max_seconds": 4.53,
+   "results": [
+    {
+     "test": "row_literal::mcb05_k01_foreign_table_generation_is_before_then_cancel",
+     "exit": 0,
+     "seconds": 1.17
+    },
+    {
+     "test": "row_literal::mcb05_k02_forged_row_id_is_before_then_cancel",
+     "exit": 0,
+     "seconds": 1.07
+    },
+    {
+     "test": "row_literal::mcb05_k03_wrong_undo_generation_is_before_then_cancel",
+     "exit": 0,
+     "seconds": 1.42
+    },
+    {
+     "test": "row_literal::mcb05_k04_planned_mutation_consumed_again_is_before_then_cancel",
+     "exit": 0,
+     "seconds": 1.32
+    },
+    {
+     "test": "row_literal::mcb05_k05_predecessor_claimed_without_one_is_before_then_cancel",
+     "exit": 0,
+     "seconds": 1.27
+    },
+    {
+     "test": "row_literal::mcb05_k06_undo_incoming_one_is_before_then_cancel",
+     "exit": 0,
+     "seconds": 1.22
+    },
+    {
+     "test": "row_literal::mcb05_k08_row_stamp_not_the_actor_is_before_then_cancel",
+     "exit": 0,
+     "seconds": 1.12
+    },
+    {
+     "test": "row_literal::mcb05_k09_redo_row_bytes_differ_from_native_is_before_then_cancel",
+     "exit": 0,
+     "seconds": 1.12
+    },
+    {
+     "test": "row_literal::mcb05_k10_reserved_inventory_not_consumed_is_before_then_cancel",
+     "exit": 0,
+     "seconds": 1.17
+    },
+    {
+     "test": "row_literal::mcb05_k11_full_abort_debt_decremented_is_before_then_cancel",
+     "exit": 0,
+     "seconds": 1.42
+    },
+    {
+     "test": "row_literal::mcb05_k12_scope2_group_is_before_then_cancel",
+     "exit": 0,
+     "seconds": 1.22
+    },
+    {
+     "test": "row_literal::mcb05_l01_literal_forward_is_read_by_b_after_c_commit",
+     "exit": 0,
+     "seconds": 1.77
+    },
+    {
+     "test": "row_literal_two::mcb05_l02_two_literal_roots_with_actual_h_are_read_by_b",
+     "exit": 0,
+     "seconds": 2.48
+    },
+    {
+     "test": "row_literal_two::mcb05_k07_h_count_before_zero_net_zero_is_before_then_cancel",
+     "exit": 0,
+     "seconds": 1.97
+    },
+    {
+     "test": "row_literal_two::mcb05_k01_undo_target_table_generation_only_is_before_then_cancel",
+     "exit": 0,
+     "seconds": 1.92
+    },
+    {
+     "test": "row_literal_two::mcb05_k04_previous_root_mutation_consumed_again_is_before_then_cancel",
+     "exit": 0,
+     "seconds": 1.87
+    },
+    {
+     "test": "row_literal_two::mcb05_k05_wrong_predecessor_same_size_is_before_then_cancel",
+     "exit": 0,
+     "seconds": 2.28
+    },
+    {
+     "test": "row_literal::mcb05_k12_actual_catalog_scope2_frame_is_before_then_cancel",
+     "exit": 0,
+     "seconds": 1.46
+    },
+    {
+     "test": "row_no_loser::s9b_m08_reject_initial_losers_c_b_inputs",
+     "exit": 0,
+     "seconds": 4.53
+    }
+   ]
+  },
+  "nb2": {
+   "tree": "C+B export",
+   "commit": "2cc5f154",
+   "controller": "scripts/check_dev3_s9_native.py (export copy, per-case WAL tail)",
+   "source_manifest_sha256": "a570e507875e30d44a33c7a060f8a4c8a10f101f1c7578e32260fed31acebc4d",
+   "elf_sha256": "defa0aa0aa5721f6f35bf59651e7e8dde28fd427754836b92a26903266fcedb4",
+   "input_sha256": "6d109018ff98f3d3f4ede0c322ee4d873a56ca8811d64440b8fbc0ed0fdee26e",
+   "plan_sha256": "cd5ff71d205c407dd77cf545caaaa5369d9c3633a0fa94964e9ff573020ec04b",
+   "complete_sha256": "cbfff21c483bf6070d2ff3563b73cc3dc22742c6bfa83dc873df468be69e87e8",
+   "cases": [
+    "MCB05-N01",
+    "MCB05-N02",
+    "MCB05-N03",
+    "MCB05-N04",
+    "MCB05-N05",
+    "MCB05-N06",
+    "S9B-N01"
+   ],
+   "processes": 15,
+   "passed": 15,
+   "max_seconds": 2.32,
+   "results": [
+    {
+     "case": "S9B-N01",
+     "phase": "produce",
+     "exit": 0,
+     "seconds": 0.77
+    },
+    {
+     "case": "S9B-N01",
+     "phase": "recover",
+     "exit": 0,
+     "seconds": 2.32
+    },
+    {
+     "case": "S9B-N01",
+     "phase": "reenter",
+     "exit": 0,
+     "seconds": 1.82
+    },
+    {
+     "case": "MCB05-N01",
+     "phase": "produce",
+     "exit": 0,
+     "seconds": 1.27
+    },
+    {
+     "case": "MCB05-N01",
+     "phase": "reject",
+     "exit": 0,
+     "seconds": 0.11
+    },
+    {
+     "case": "MCB05-N02",
+     "phase": "produce",
+     "exit": 0,
+     "seconds": 1.12
+    },
+    {
+     "case": "MCB05-N02",
+     "phase": "reject",
+     "exit": 0,
+     "seconds": 0.11
+    },
+    {
+     "case": "MCB05-N03",
+     "phase": "produce",
+     "exit": 0,
+     "seconds": 0.92
+    },
+    {
+     "case": "MCB05-N03",
+     "phase": "reject",
+     "exit": 0,
+     "seconds": 0.17
+    },
+    {
+     "case": "MCB05-N04",
+     "phase": "produce",
+     "exit": 0,
+     "seconds": 1.17
+    },
+    {
+     "case": "MCB05-N04",
+     "phase": "reject",
+     "exit": 0,
+     "seconds": 0.12
+    },
+    {
+     "case": "MCB05-N05",
+     "phase": "produce",
+     "exit": 0,
+     "seconds": 0.42
+    },
+    {
+     "case": "MCB05-N05",
+     "phase": "reject",
+     "exit": 0,
+     "seconds": 0.06
+    },
+    {
+     "case": "MCB05-N06",
+     "phase": "produce",
+     "exit": 0,
+     "seconds": 0.57
+    },
+    {
+     "case": "MCB05-N06",
+     "phase": "reject",
+     "exit": 0,
+     "seconds": 0.06
+    }
+   ]
+  },
+  "na2": {
+   "tree": "C+A export",
+   "commit": "2cc5f154",
+   "controller": "scripts/check_dev3_s9_native.py (export copy, per-file WAL sync)",
+   "source_manifest_sha256": "316195644e15925ebb858ac59bbe23f6834f47357d9f182f9ffc16a0ce542ab1",
+   "elf_sha256": "5b62da0ac4080d3c65e1fc2136809f0a746a55c02b36a39ec52e2d42ec20736e",
+   "input_sha256": "6d109018ff98f3d3f4ede0c322ee4d873a56ca8811d64440b8fbc0ed0fdee26e",
+   "plan_sha256": "0243e22a1f9636ecb960b1298cca79af908956c1c32e679e39c560d2ab59435d",
+   "complete_sha256": "0d2ff4fbb6edbf5043276ba01ca4d1aefe6973e334a98b21136f1dbbe30ae493",
+   "cases": [
+    "S9A-N01",
+    "S9A-N02",
+    "S9A-N03"
+   ],
+   "processes": 9,
+   "passed": 9,
+   "max_seconds": 20.43,
+   "results": [
+    {
+     "case": "S9A-N01",
+     "phase": "produce",
+     "exit": 0,
+     "seconds": 1.22
+    },
+    {
+     "case": "S9A-N01",
+     "phase": "recover",
+     "exit": 0,
+     "seconds": 5.44
+    },
+    {
+     "case": "S9A-N01",
+     "phase": "reenter",
+     "exit": 0,
+     "seconds": 2.07
+    },
+    {
+     "case": "S9A-N02",
+     "phase": "produce",
+     "exit": 0,
+     "seconds": 2.43
+    },
+    {
+     "case": "S9A-N02",
+     "phase": "recover",
+     "exit": 0,
+     "seconds": 7.95
+    },
+    {
+     "case": "S9A-N02",
+     "phase": "reenter",
+     "exit": 0,
+     "seconds": 2.12
+    },
+    {
+     "case": "S9A-N03",
+     "phase": "produce",
+     "exit": 0,
+     "seconds": 3.53
+    },
+    {
+     "case": "S9A-N03",
+     "phase": "recover",
+     "exit": 0,
+     "seconds": 20.43
+    },
+    {
+     "case": "S9A-N03",
+     "phase": "reenter",
+     "exit": 0,
+     "seconds": 2.02
+    }
+   ]
+  },
+  "b3": {
+   "tree": "C+B export",
+   "commit": "660fd99e",
+   "what": "review fix R4: row_literal (13 frozen) and MCB05-L06 publication gap, addendum selection",
+   "source_manifest_sha256": "4c9ebd3c8df718ba84837527fb5b9840b138a44175b3c2642b4af52ddbb2ef1f",
+   "elf_sha256": "67a422bad8495aaa807095c0fee69743d9d1fcaa59b445b5176a5cbeac3ee535",
+   "input_sha256": "959037b418dd0a5852e2284419bb58d4845aeddc612b84a93246e43c57e54f7b",
+   "plan_sha256": "d7c888a8efcea7a445a90afb768cfad2f2621ef9ec813ebcf08bbcc9ae2b2572",
+   "passed": 14,
+   "selected": 14,
+   "max_seconds": 1.72,
+   "results": [
+    {
+     "test": "row_literal::mcb05_k01_foreign_table_generation_is_before_then_cancel",
+     "exit": 0,
+     "seconds": 1.22
+    },
+    {
+     "test": "row_literal::mcb05_k02_forged_row_id_is_before_then_cancel",
+     "exit": 0,
+     "seconds": 1.12
+    },
+    {
+     "test": "row_literal::mcb05_k03_wrong_undo_generation_is_before_then_cancel",
+     "exit": 0,
+     "seconds": 1.12
+    },
+    {
+     "test": "row_literal::mcb05_k04_planned_mutation_consumed_again_is_before_then_cancel",
+     "exit": 0,
+     "seconds": 1.17
+    },
+    {
+     "test": "row_literal::mcb05_k05_predecessor_claimed_without_one_is_before_then_cancel",
+     "exit": 0,
+     "seconds": 1.12
+    },
+    {
+     "test": "row_literal::mcb05_k06_undo_incoming_one_is_before_then_cancel",
+     "exit": 0,
+     "seconds": 1.17
+    },
+    {
+     "test": "row_literal::mcb05_k08_row_stamp_not_the_actor_is_before_then_cancel",
+     "exit": 0,
+     "seconds": 1.12
+    },
+    {
+     "test": "row_literal::mcb05_k09_redo_row_bytes_differ_from_native_is_before_then_cancel",
+     "exit": 0,
+     "seconds": 1.12
+    },
+    {
+     "test": "row_literal::mcb05_k10_reserved_inventory_not_consumed_is_before_then_cancel",
+     "exit": 0,
+     "seconds": 1.17
+    },
+    {
+     "test": "row_literal::mcb05_k11_full_abort_debt_decremented_is_before_then_cancel",
+     "exit": 0,
+     "seconds": 1.22
+    },
+    {
+     "test": "row_literal::mcb05_k12_scope2_group_is_before_then_cancel",
+     "exit": 0,
+     "seconds": 1.17
+    },
+    {
+     "test": "row_literal::mcb05_l01_literal_forward_is_read_by_b_after_c_commit",
+     "exit": 0,
+     "seconds": 1.72
+    },
+    {
+     "test": "row_literal::mcb05_k12_actual_catalog_scope2_frame_is_before_then_cancel",
+     "exit": 0,
+     "seconds": 1.12
+    },
+    {
+     "test": "row_literal::mcb05_l06_publication_gap_old_snapshot_reads_missing",
+     "exit": 0,
+     "seconds": 1.47
+    }
+   ]
+  }
+ },
+ "result_sources": {
+  "C+A selection (150)": "a1 at a62fc7c9; the 2cc5f154 C+A export differs only in scripts/check_dev3_s9_native.py and the 660fd99e one further only in the addendum JSON; crates/ and the other fixtures are identical",
+  "C+A native S9A-N01..03": "na2 at 2cc5f154 (controller changed); na1 at a62fc7c9 kept",
+  "C+B selection (53 + addendum 1)": "b3 at 660fd99e for row_literal (13) and MCB05-L06; b2 at 2cc5f154 for the 6 selectors of row_literal_two.rs and row_no_loser.rs (unchanged since); b1 at a62fc7c9 for the other 34 (their files are unchanged)",
+  "C+B native S9B-N01, MCB05-N01..06": "nb2 at 2cc5f154; nb1 at a62fc7c9 kept",
+  "full tree (16) and S6/S7 natives": "f1, n6, n7 at a62fc7c9; 2cc5f154 and 660fd99e changed only C+B test modules, the S9 controller and the addendum, none of which their selectors or workers use",
+  "ELF identity across directories": "a debug ELF embeds its build path (77 occurrences), so the same crates built under s9/final2 hash differently from s9/final"
+ },
+ "development_runs": {
+  "attempt-1 (f575c1f0, before the amend)": {
+   "a1": "C+A export 150/150 PASS; same ELF as the final a1 (608a25a2...), superseded by the final run",
+   "f1": "full tree 16/16 PASS; same ELF as the final f1 (a4f5ac37...), superseded by the final run",
+   "b1": "runner refused before running: the K12 original selector named module row_literal_two, the test is in row_literal; the inventory was fixed and the commit amended to a62fc7c9",
+   "na1": "S9A-N01 3/3 PASS, S9A-N02 recover exit -6: the native test adapter got Os code 28 StorageFull (No space left on device, plan4_pages/native_tests.rs:50); old scratch targets were deleted and the whole native set rerun",
+   "nb1, n6, n7": "failed on the same full disk; rerun"
+  }
+ },
+ "known_bad_causes": {
+  "K01": [
+   {
+    "log": "018-mcb05_k01_foreign_table_generation_is_before_then_cancel.log",
+    "cause": "RowSemantic(Corrupt)"
+   },
+   {
+    "log": "034-mcb05_k01_undo_target_table_generation_only_is_before_then_cancel.log",
+    "cause": "RowSemantic(Corrupt)"
+   }
+  ],
+  "K02": [
+   {
+    "log": "019-mcb05_k02_forged_row_id_is_before_then_cancel.log",
+    "cause": "RowSemantic(IdentityMismatch)"
+   }
+  ],
+  "K03": [
+   {
+    "log": "020-mcb05_k03_wrong_undo_generation_is_before_then_cancel.log",
+    "cause": "RowSemantic(IdentityMismatch)"
+   }
+  ],
+  "K04": [
+   {
+    "log": "021-mcb05_k04_planned_mutation_consumed_again_is_before_then_cancel.log",
+    "cause": "RowSemantic(Corrupt)"
+   },
+   {
+    "log": "035-mcb05_k04_previous_root_mutation_consumed_again_is_before_then_cancel.log",
+    "cause": "RowSemantic(IdentityMismatch)"
+   }
+  ],
+  "K05": [
+   {
+    "log": "022-mcb05_k05_predecessor_claimed_without_one_is_before_then_cancel.log",
+    "cause": "RowSemantic(Corrupt)"
+   },
+   {
+    "log": "036-mcb05_k05_wrong_predecessor_same_size_is_before_then_cancel.log",
+    "cause": "RowSemantic(Corrupt)"
+   }
+  ],
+  "K06": [
+   {
+    "log": "023-mcb05_k06_undo_incoming_one_is_before_then_cancel.log",
+    "cause": "RowSemantic(Corrupt)"
+   }
+  ],
+  "K08": [
+   {
+    "log": "024-mcb05_k08_row_stamp_not_the_actor_is_before_then_cancel.log",
+    "cause": "RowSemantic(Row(IdentityMismatch))"
+   }
+  ],
+  "K09": [
+   {
+    "log": "025-mcb05_k09_redo_row_bytes_differ_from_native_is_before_then_cancel.log",
+    "cause": "RowSemantic(Corrupt)"
+   }
+  ],
+  "K10": [
+   {
+    "log": "026-mcb05_k10_reserved_inventory_not_consumed_is_before_then_cancel.log",
+    "cause": "RowSemantic(Corrupt)"
+   }
+  ],
+  "K11": [
+   {
+    "log": "027-mcb05_k11_full_abort_debt_decremented_is_before_then_cancel.log",
+    "cause": "RowSemantic(Corrupt)"
+   }
+  ],
+  "K12": [
+   {
+    "log": "028-mcb05_k12_scope2_group_is_before_then_cancel.log",
+    "cause": "RowSemantic(Unsupported)"
+   },
+   {
+    "log": "037-mcb05_k12_actual_catalog_scope2_frame_is_before_then_cancel.log",
+    "cause": "RowSemantic(Wal(OrderMismatch))"
+   }
+  ],
+  "K07": [
+   {
+    "log": "033-mcb05_k07_h_count_before_zero_net_zero_is_before_then_cancel.log",
+    "cause": "RowSemantic(Corrupt)"
+   }
+  ]
+ },
+ "mi03": "see the evidence #s9-module-completion M5 table",
+ "mi04": "MCI01-V09 origin stale PASS (f1 row_join); generation stale and aging stay N/A (no DROP producer or new epoch: DEV3)",
+ "mi06": "pending: independent re-check of the S9 review fixes (2cc5f154, 660fd99e and the records)",
+ "artifacts": {
+  "path": "/mnt/project-files/module-independence-20261029/artifacts/module-s9-20261031",
+  "manifest_sha256": null
+ },
+ "inventory_note": "the frozen inventory's not_run: [] describes the frozen selection only; what is not supplied is listed under not_run here and in the contract limits; the addendum adds MCB05-L06 without changing the inventory",
+ "not_run": {
+  "live Row retirement": "runtime Row physical cleanup (live Prune/RootFree entry, aging horizon) is Row MVCC cleanup, a DEV3 feature outside C0-C5; recorded N/A (DEV3) per the user rule that module-plan threads do no DEV3 feature work",
+  "C+B concurrent read inside the Commit Pending window": "covered by C+A+B MCI03-V02 only; the publication gap (MCI03-V03 form) has the C+B case MCB05-L06",
+  "C+B frozen MCB01-04 matrix on actual C": "C+B runs the S5 actual-C range (9) and MCB05-L01..L06 on literal rows; the frozen matrix runs on the C0 double (MCB00-D01..D13) and the full tree",
+  "live Prune literal": "no live Row Prune entry exists (live Row retirement, DEV3); C+B observes recovery Prune frames (L03)"
+ }
+}

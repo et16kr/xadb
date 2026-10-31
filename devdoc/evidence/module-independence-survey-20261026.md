@@ -5469,3 +5469,155 @@ MI01, MI02, MI04, MI05는 S7 판정 그대로다. S8은 A·B 전용 경로의 �
 ### 되돌림
 
 되돌림은 이 기록을 더한 문서 commit, `14f7eaa2`, `80c0f883`, `f838e865`, `f8e96768`, `c4c257da`, `2f93a0bf`, `280a4de1`의 역순이다. 제품 경로는 바뀌지 않았다.
+
+<a id="s9-module-completion"></a>
+## S9 MI03 나머지·MI04 origin stale·M4 잔여와 M5 판정
+
+2026-10-31. S8 PR #12가 병합된 main `3c046e98`에서 별도 branch `claude/project-thread-1jfdtk-s9`를 만들었다. 사용자는 S9를 이어 가라고 한 뒤 "문서 분리 작업 계획 전부"를 끝내라고 지시했다. S9는 [S9 계약](../contracts/dev3-module-boundaries.md#row-mi03-s9)(XADB-MODULE-ROW-MI03-001)과 [M4 잔여 계약](../contracts/dev3-module-boundaries.md#row-m4-s9)(XADB-MODULE-ROW-M4-S9)을 따른다. commit은 다음과 같다.
+- C+A 복구의 READY 값을 C page reader로 확인 `0fc1264a`
+- S6 native worker를 `row_recovery_read` 아래로 이동 `9a2461d2`
+- C+A native P1–P3(S9A-N01..N03) `261c4e2c`
+- C+B 두 root literal과 K07, K01·K04·K05·K12 원형 `b7ae5281`
+- S5 B 읽기 사례의 literal 행 판(S9B-R01..R08, C03) `4eda3592`
+- C+B literal 재시작 MCB05-L03(memory, native S9B-N01) `68a10d36`
+- C+B no-loser 입력 MCB05-N01..06(memory, native 각 2 process) `b031ed15`
+- MI04 MCI01-V09 origin stale `047be7e3`
+- C+B literal 실패 statement·전체 rollback·Prune 관측(MCB05-L04·L05, L03 보강) `0c65e536`
+- WRITER-PROGRESS-001 gate 대기 floor census `fd874b0b`
+- 선택 inventory 동결 `a62fc7c9`(push 전 `f575c1f0`의 K12 selector를 고쳐 amend)
+- 독립 검토 반영(MCB05-N01..06 cut별 WAL 끝 frame, 두 root K의 page 15, controller 파일별 sync) `2cc5f154`
+- 독립 검토 반영(C+B publication gap MCB05-L06과 선택 addendum) `660fd99e`
+- main `702deded`(§12 수용안, 문서만) 병합 `04197e77`
+
+제품 동작은 바꾸지 않았다. 제품 파일에 더한 것은 cfg(test) census 함수(`check_entry_bytes` 둘, `lifecycle_entry_bytes`, A의 `statement_end_caller_source`)와 A 시험 상수의 이동(값 그대로)뿐이다. B의 `row/read` 아래는 바뀌지 않았다. DEV3 기능은 하지 않았다.
+
+**결론.** MI03은 PASS(한정)다. S8이 남긴 MI03 목록(C+A 복구, literal 행 위의 C+B B 읽기, 양쪽 native P1–P3, MCB05-N01..06, K07과 K 원형)을 모두 공급했고 아래 선택 실행이 통과했다. 한정은 C+B의 실제 C 읽기가 S5 범위와 MCB05-L01..L06이며 동결 MCB01–04 행렬이 아니라는 것 등이다([M5 판정](#s9-m5)). MI04의 MCI01-V09 origin stale도 PASS다. M4의 남은 공급(C+B literal reopen·실패 statement·CLR·Prune, gate 대기 floor)을 닫았고 live Row retirement는 DEV3 기능이므로 범위 밖(N/A)으로 적었다. M5 판정은 [아래 표](#s9-m5)다.
+
+### 실제 공급
+
+계약의 정의를 그대로 쓴다. 요약은 다음과 같다.
+- **C+A 복구.** `row_recovery`(s6r_m01..m08)가 READY 뒤 값을 B 대신 C의 순수 codec page reader로 읽는다. 그래서 C+A export에서 A의 `handle_recovered_clr`가 실행된다. B의 원 읽기는 `row_recovery_read`(C+A+B, S9R-B01..B03)로 옮겼고 같은 재시작을 B와 page reader로 함께 읽는다. native는 S9A-N01..N03(produce, recover, reenter 3 process)이다.
+- **C+B 두 root literal.** C의 실제 live 상태를 pin하고 N1 모델로 한 actor의 두 root를 작성했다(MCB05-L02). known-bad K07과 K01·K04·K05·K12 원형을 두 번째 Forward에 넣었다.
+- **literal 행 위의 C+B B 읽기.** S5의 B 실제 C 사례 9개를 A INSERT 대신 literal ingress로 만든 행 위에서 실행한다(`row_read_literal`). publication gap은 검토 R4 뒤 더한 MCB05-L06이 C+B로 읽는다(C+A+B MCI03-V03의 C+B 판). 동결 MCB01–04 행렬의 C+B 판은 아니다([계약](../contracts/dev3-module-boundaries.md#row-mi03-s9)의 §8.3 대응).
+- **C+B 재시작.** MCB05-L03(P1 C 설치·CREATE·Commit, P2 복구 뒤 late-bind literal과 Commit, P3 복구 뒤 B 읽기)과 MCB05-N01..06(RejectInitialLosers가 각 입력을 Analysis에서 거절)이다. native는 S9B-N01(3 process)과 N01..N06(각 produce, reject 2 process)이다.
+- **MI04 origin stale.** 같은 이력의 두 namespace에서 다른 session의 CheckedTable을 B는 Census/BindingMismatch, A는 Prepare/BindingMismatch로 예약 전에 거절한다.
+- **M4 잔여.** C+B 실패 statement·전체 rollback의 literal CLR(MCB05-L04·L05), 복구 Prune frame 관측(L03), gate 대기 floor 전부([자원](#s9-resources))다.
+
+### 단독 export
+
+`scripts/module_single_source.py`로 `a62fc7c9`에서 만들었다. 두 export 모두 `crates/` 아래 Rust source에 남은 상대 참조가 0이다.
+
+| export(`a62fc7c9`) | 파일 수 | 지운 파일 | 지운 등록 | source manifest |
+| --- | --- | --- | --- | --- |
+| C+A | 7626 | 26 | 11 | `57e98849597d953e2a47730b8c471d719bf4613710e1e0429790832afada08ed` |
+| C+B | 7520 | 132 | 18 | `1112a444177cbc0a592fa4feb6e830e85d9fba6e6d3c132f952c3945c93ff0a1` |
+
+검토 반영 `2cc5f154`의 export manifest는 C+A `316195644e15925ebb858ac59bbe23f6834f47357d9f182f9ffc16a0ce542ab1`, C+B `a570e507875e30d44a33c7a060f8a4c8a10f101f1c7578e32260fed31acebc4d`다. C+A export의 차이는 controller script 하나이고 `crates/`와 fixture는 같다. `660fd99e`의 export manifest는 C+A `2f3ef2729d5431ba1815011bb1cd41abd519ff3a8c676a4d72b598d9be059fa8`(7627개 파일), C+B `4c9ebd3c8df718ba84837527fb5b9840b138a44175b3c2642b4af52ddbb2ef1f`(7521개)다. C+A export는 `2cc5f154`에 addendum JSON 하나가 더해진 것뿐이다.
+
+그 밖의 text file이 상대를 부르는 줄은 receipts의 `other_text_references`에 적었다(C+A 10개 파일, C+B 15개 파일). 문서, inventory·receipts JSON, C+B의 compile-fail fixture 둘과 N1 author·`input-plan.json`이다. 전체 트리 실행은 같은 commit의 깨끗한 working tree(파일 7652개, manifest 파일 SHA-256 `6c118ab8e52e5dcdbf22585eaa57f8f36fb67250c4d021f25aef0abb32cb6b0c`)를 썼다.
+
+### 선택 실행
+
+[동결 inventory](../../tests/fixtures/module-row-integration/single-source-s9-inventory.json)(SHA-256 `6d109018ff98f3d3f4ede0c322ee4d873a56ca8811d64440b8fbc0ed0fdee26e`)와 [receipts](../../tests/fixtures/module-row-integration/single-source-s9-receipts.json)를 쓴다. 원 plan, 로그, export inventory, 리뷰 보고서는 `/mnt/project-files/module-independence-20261029/artifacts/module-s9-20261031/`에 있다. runner는 selector마다 정확히 시험 1개가 맞는지 확인하고, 시험 하나를 단일 thread로 실행한다. native controller는 export root에서 그 export의 manifest로 source identity를 잡는다.
+
+| 실행 | 결과 |
+| --- | --- |
+| 첫 시도 a1 (C+A export, amend 전 `f575c1f0`) | 150/150 PASS. ELF가 최종 a1과 같다(`608a25a2…`). 최종 실행으로 대체했다 |
+| 첫 시도 f1 (전체 트리, `f575c1f0`) | 16/16 PASS. ELF가 최종 f1과 같다(`a4f5ac37…`). 최종 실행으로 대체했다 |
+| 첫 시도 b1 (C+B export) | runner가 실행 전에 거절했다. K12 원형 selector가 module을 `row_literal_two`로 적었으나 시험은 `row_literal`에 있다. inventory를 고쳐 `a62fc7c9`로 amend했다 |
+| 첫 시도 na1 (C+A native) | S9A-N01 3 process PASS, S9A-N02 recover가 exit −6으로 FAIL했다. 시험 native adapter가 `Os code 28 StorageFull`(`plan4_pages/native_tests.rs:50`)을 받았다. 이어진 nb1, n6, n7도 같은 disk 부족으로 FAIL했다. 같은 시각(19:00–19:02 UTC) 독립 검토자가 공유 scratch에 export 사본을 만들다 disk를 채웠다고 보고했다. 지난 단계의 scratch build를 지우고 native 전부를 다시 실행했다 |
+| **a1** (C+A export) | **150/150 PASS**, 가장 긴 것 15.27초(`s6r_m06`, case 한도 30초) |
+| **b1** (C+B export) | **53/53 PASS**, 가장 긴 것 4.68초 |
+| **f1** (깨끗한 전체 트리) | **16/16 PASS**. `row_recovery_read` 4개와 `row_join` 12개, 가장 긴 것 25.51초 |
+| **na1** (C+A export native) | S9A-N01..N03 **9 process PASS**. 각 case의 세 PID가 다르고 ACK q2, q3이다 |
+| **nb1** (C+B export native) | S9B-N01 3 process(ACK q1, q2)와 MCB05-N01..N06 12 process, **15 process PASS** |
+| **n6** (전체 트리, S6 controller) | MBC40-N01..N03과 C+A+B의 MCB05-N01..N06, **21 process PASS** |
+| **n7** (전체 트리, S7 controller) | MCI02-N01..N03 **9 process PASS** |
+| 개발 dev-r1 (작업 tree, 검토 반영 전 commit) | 바뀐 C+B 파일의 selector 19/19 PASS. 이어 clippy가 `TAILS`의 `type_complexity` 1건으로 FAIL해 type 별칭을 두었다(동작 변화 없음) |
+| **b2** (C+B export, `2cc5f154`) | 바뀐 파일(`row_literal.rs`, `row_literal_two.rs`, `row_no_loser.rs`)의 selector **19/19 PASS**. 각 cut의 끝 frame이 `S9B_CUT`로 기록됐다 |
+| **nb2** (C+B export native, `2cc5f154`) | S9B-N01과 MCB05-N01..N06 **15 process PASS**. worker와 controller가 끝 frame, literal SHA, WAL 파일별 sync, reject의 mutations 0을 확인했다 |
+| **na2** (C+A export native, `2cc5f154`) | S9A-N01..N03 **9 process PASS**. 바뀐 controller의 WAL 파일별 sync 검사를 거쳤다 |
+| **b3** (C+B export, `660fd99e`, addendum) | `row_literal`의 동결 selector 13개와 MCB05-L06, **14/14 PASS**, 가장 긴 것 1.72초. L06은 BeforePublish에서 WAL이 자란 것을 확인했고 그 창과 Commit 반환 뒤 옛 statement의 읽기가 모두 Missing(`during=Ok(None) after=Ok(None)`)이다 |
+
+identity는 다음과 같다. 모두 같은 input(inventory) `6d109018…`을 쓴다.
+- a1, na1: source manifest `57e98849597d953e2a47730b8c471d719bf4613710e1e0429790832afada08ed`, ELF `608a25a209189c760a688031269f47d546f1783756b025309242816aa742dc79`
+- b1, nb1: source manifest `1112a444177cbc0a592fa4feb6e830e85d9fba6e6d3c132f952c3945c93ff0a1`, ELF `9b7480503a1ab642d86e309850c8fc1dedadaa0556dffce0f3b0e3d4df73d34d`
+- f1, n6, n7: source manifest `6c118ab8e52e5dcdbf22585eaa57f8f36fb67250c4d021f25aef0abb32cb6b0c`, ELF `a4f5ac3754080377300c6d3916cd391d7711f76aee84cd193152ae699c8daead`
+
+- b2, nb2: source manifest `a570e507875e30d44a33c7a060f8a4c8a10f101f1c7578e32260fed31acebc4d`, ELF `defa0aa0aa5721f6f35b…`(receipts에 전체 값)
+- na2: source manifest `316195644e15925ebb858ac59bbe23f6834f47357d9f182f9ffc16a0ce542ab1`, ELF `5b62da0ac4080d3c65e1…`
+- b3: source manifest `4c9ebd3c8df718ba84837527fb5b9840b138a44175b3c2642b4af52ddbb2ef1f`, ELF `67a422bad8495aaa807095c0fee69743d9d1fcaa59b445b5176a5cbeac3ee535`, input은 [addendum](../../tests/fixtures/module-row-integration/single-source-s9-addendum.json) `959037b418dd0a5852e2284419bb58d4845aeddc612b84a93246e43c57e54f7b`이다. addendum은 동결 inventory의 SHA를 담는다
+
+receipt의 현재 결과는 다음에서 가져온다. C+A 선택 150개는 a1이다. 그 뒤 C+A export는 controller script와 addendum JSON만 다르다. C+B 선택은 `row_literal` 13개와 L06을 b3에서, `row_literal_two`·`row_no_loser`의 6개를 b2에서, 나머지 34개를 b1에서 가져온다. 각 묶음의 파일은 그 실행 뒤 바뀌지 않았다. native는 na2·nb2가 현재 결과이고 na1·nb1은 보존한다. 전체 트리 f1·n6·n7은 `a62fc7c9` 결과다. `2cc5f154`와 `660fd99e`는 C+B 시험 module, S9 controller, addendum만 바꿨고, 그 selector와 worker는 그것을 쓰지 않는다. 같은 `crates/`를 다른 디렉터리에서 빌드한 debug ELF는 hash가 다르다. ELF가 build 경로를 77곳에 담기 때문이다.
+
+native는 같은 ELF의 별도 process이며 전원 장애 인수는 아니다. runner의 240초와 controller의 process 한도는 바깥 한도다. PASS를 정하는 한도는 시험 안의 case 한도와 `READY_BOUND`다.
+
+### known-bad 관측
+
+b1의 K 16개 모두 C의 prepare가 같은 ReservedRow로 Before를 돌려줬다(Prepare, Unchanged). 효과 0과 이어진 명시 cancel은 [S8](#s8-single-source)의 oracle과 같다. 아래 cause는 C의 값이며 정답으로 쓰지 않았다.
+- 한 root의 S8 사례 11개는 S8과 같다. Corrupt는 K01, K04, K05, K06, K09, K10, K11이다. IdentityMismatch는 K02, K03이다. Row(IdentityMismatch)는 K08, Unsupported는 K12다.
+- 두 root의 원형 5개는 다음과 같다. K07은 Corrupt, K01 원형은 Corrupt, K04 원형은 IdentityMismatch, K05 원형은 Corrupt, K12 원형은 Wal(OrderMismatch)다.
+
+K12 원형은 같은 session WAL의 실제 Catalog Reserve frame(LSN 9, op 11, 86640B)을 그대로 Row 입구에 냈다. C는 그 frame을 LSN 순서에서 먼저 거절했다. 그래서 이 사례는 실제 Catalog frame이 Row 입구를 통과하지 못함을 보인다. 다만 scope 검사가 거절했다는 귀속은 S8의 K12(scope 필드만 바꿈, Unsupported)가 맡는다. 다른 K의 귀속이 author의 구성에 기댄다는 한계는 S8과 같다.
+
+<a id="s9-resources"></a>
+### 자원: WRITER-PROGRESS-001 gate 대기 floor
+
+shared는 memory 20200B, native 20208B, resident는 17880B다. 검산식은 `floor + shared + 2×resident ≤ 65536`이다. 아래 값은 a1의 census 로그(`S3_C01_GATE`, `S4_C01 ... (iv)`, `WRITER_GATE`)이며 b1의 `WRITER_GATE`도 같다. 여유는 memory 값이고 native는 8B 작다.
+
+| gate 대기 | census | floor | 합(memory) | 여유 |
+| --- | --- | --- | --- | --- |
+| RowWrite preflight 첫 대기(S7 (iv)) | MBC40_V09 | 7834 | 63794 | 1742 |
+| rollback start(S7) | S4_C01 | 6739 | 62699 | 2837 |
+| rollback flush 뒤 재대기 | S4_C01 | 3386 | 59346 | 6190 |
+| `rollback.finish_statement` | S4_C01 | 5491 | 61451 | 4085 |
+| `transaction.finish_aborted` | S4_C01 | 5507 | 61467 | 4069 |
+| Row Commit gate | S3_C01 | 4618 | 60578 | 4958 |
+| Row Commit RowProgress check | S3_C01 | 5131 | 61091 | 4445 |
+| `insert.finish_statement` RowProgress | S3_C01 | 7886 | 63846 | 1690 |
+| Catalog Commit | WRITER_GATE | 1778 | 57738 | 7798 |
+| CatalogProgress `transaction_check` | WRITER_GATE | 1675 | 57635 | 7901 |
+| `progress_lifecycle` | WRITER_GATE | 3549 | 59509 | 6027 |
+| shared CREATE 예약 | WRITER_GATE | 2194 | 58154 | 7382 |
+| `retire_catalog` | WRITER_GATE | 8318 | 64278 | 1258 |
+
+- Row 쪽 항은 A의 실제 share다. Commit 호출은 `a.1` 3024B, `insert.finish_statement`는 frame-static share와 S2-e caller 항(2행 1값)을 더한 5779B다. check entry는 Row·Catalog 중 큰 값 2107B, gate와 close/wait closure는 1130B다.
+- `progress_lifecycle`은 lifecycle entry 2323B와 C의 begin·abort wrapper 1226B다. 원 carrier 전체로 세면 cap을 45B(memory)·53B(native) 넘는다. 대기 중에는 typed Prepared가 없으므로 entry 부분으로 센다는 것이 [계약](../contracts/dev3-module-boundaries.md#row-m4-s9)의 한계다.
+- A의 Write bound 11520B로 세면 어느 RowProgress floor도 들어가지 않는다. 그래서 A 호출 아래 floor는 A의 그 호출 실제 share로 센다. `insert.finish_statement`는 S2-e 시험 caller에 한정된다(MCA00-D15와 같은 범위).
+- 복구 task의 gate는 READY 전 exclusive라 기다릴 foreground reader가 없다(N/A).
+
+### 독립 검토와 처리
+
+검토 보고서 원문은 artifacts의 `reviews/`에 있다. 검토는 읽기 전용이며 cargo는 실행하지 않았다.
+
+**S9 D1/D2(`3c046e98..f575c1f0`).** 조건부 ACCEPT다. 검토자는 S9 author 네 개를 A fixture가 없는 tree에서 `python3 -I`로 다시 실행해 byte 단위로 같음을 확인했다(22, 31, 20, 19개 파일). 두 단독 export는 `remaining_references: []`로 만들어졌고 LINKS 목록이 맞다. 운영 코드의 `close_reads_for_terminal`·`close_reads_for_retirement` 호출은 모두 census에 세어졌거나 복구 task처럼 면제된다. 당시에는 S9 실행 기록이 없었으므로 MI03·MI04를 충족으로 볼 수 없다고 했다. 필수 지적과 처리는 다음과 같다.
+- R1(필수): MCB05-N01..06의 cut이 사례별로 확인되지 않았다. 여섯 사례가 같은 거절 oracle만 써서, 예를 들어 N01의 Forward가 WAL에 닿지 않아도 통과했다. controller의 "마지막 write 뒤 sync"도 파일별이 아니었다. `2cc5f154`에서 각 cut의 WAL 끝 frame(group op, scope, LSN, bytes)을 memory와 native worker에서 확인하고, N01·N02의 RowReserve와 N01의 Forward를 독립 literal과 byte 단위로 대조한다. controller는 stdlib로 WAL을 다시 parse해 같은 끝 frame을 대조하고, WAL 파일별 sync와 reject의 mutations 0을 확인한다. 각 사례의 검사는 다른 다섯 사례의 WAL을 모두 거절한다(`a62fc7c9` nb1의 WAL로 확인). System·Catalog 예약 frame 안의 field는 decode하지 않는다.
+- R2(필수): 두 root K의 효과 0 비교가 root 2의 Undo page 15를 빼먹었다. `2cc5f154`에서 page 15의 bytes, stamp, dirty를 거절 전후로 비교한다.
+- R3(필수): WRITER-PROGRESS-001의 Row floor는 A의 선언 bound(11520B)가 아니라 A의 실측 share로만 들어간다. `insert.finish_statement`는 S2-e 시험 caller(2행 1값)에 한정된다. 선언 bound로 닫으려면 계약 결정이 필요하다. 사용자에게 결정 카드로 물었고 답을 받기 전에는 권장안(실측 share로 닫고 한계를 기록)을 따랐다. 한계는 [계약](../contracts/dev3-module-boundaries.md#row-m4-s9)과 위 자원 절에 적었다. A의 `driver/live.rs` 수정(cfg(test) +25줄)은 MI02·MI05에 적었다.
+- R4(필수): C+B의 B 읽기는 S5 실제 C 사례 9개와 L01–L05이며 동결된 MCB01–04 행렬이 아니다. publication gap(MCB02-V08)의 C+B 사례가 없고 live Prune literal도 없다. 계약에 §8.3 항목별 C+B 대응표를 적고 "MCB01–04 C+B 동등"을 주장하지 않는다. publication gap은 `660fd99e`의 MCB05-L06으로 공급했다(b3). C의 Commit을 `BeforePublish`에서 멈춘 창과 Commit 반환 뒤, Commit 전에 잡은 다른 owner의 Serializable statement가 literal 행을 Missing으로 읽는다. 창 안에서 새로 시작하는 statement는 보지 않는다(MCI03-V03과 같은 범위). live Prune literal은 live Row retirement(N/A, DEV3)에 묶여 없다.
+- R5(필수): K07은 patch frame이 96B 커서 크기로 거절됐을 수 있다. K12 원형은 pin하지 않은 C의 Catalog Reserve frame이라 거절 원인을 scope에 귀속할 수 없다. inventory의 `not_run: []`은 동결 선택만 뜻한다. 셋 다 계약과 receipts에 한계로 적었다.
+- NOTE: N1(C+A page reader는 C의 decoder), N2(L03의 live 상태는 C의 출력이고 late binding은 stream·header SHA·seal에 한정), N3(`refused_in`은 fence를 보지 않음), N4(controller 공백, R1에서 일부 보강), N5(floor는 손 합이고 새 gate 지점을 잡는 기계 장치가 없음), N6(C+B에는 Row gate floor가 없음), N7(inventory 항목 이름), N8(anchor는 이 기록으로 생김), N9(제품 파일 변경은 모두 cfg(test))는 계약에 적거나 기록만 한다.
+
+검토자는 공유 scratch에서 두 가지 사고를 보고했다. S9 작업 디렉터리에 `git archive`를 풀어 파일을 덮어썼고(저장소는 건드리지 않음), export 사본으로 disk를 채웠다. 최종 실행은 그 뒤 별도 디렉터리(`s9/final`)에서 다시 만들었으며, 첫 시도의 native 실패는 이 disk 부족 때문이다.
+
+**검토 반영의 독립 재확인.** 대기 중이다. 결과는 이 자리와 MI06 행에 적는다.
+
+<a id="s9-m5"></a>
+### M5 판정
+
+판정 기준은 [계획 §8](../plans/module-independence-plan.md#acceptance)의 MI01–MI06이며 실행 전에 동결된 문언 그대로 쓴다. S7·S8 판정에서 바뀐 행과 그 근거를 적는다.
+
+| 기준 | 판정 | 근거 |
+| --- | --- | --- |
+| MI01 독립 착수 | PASS(한정) | [S7 판정](#s7-row-join) 그대로다. 착수 기록은 소급해 바꾸지 않는다. S8·S9의 literal ingress로 B의 실제 C 시험 입력이 A 없이 생겼지만, 착수 시점에 "각자의 시험 입력"이 C0 단계까지만 성립했다는 사실은 그대로다 |
+| MI02 국소성 | PASS | S9에서 A·B 전용 경로를 바꾼 commit은 `fd874b0b` 하나다. A의 `driver/live.rs`(+25줄)와 `driver/tests.rs`에서 cfg(test) census 접근 함수 `statement_end_caller_source`를 더하고 시험 상수 `CALLER_ROWS`·`CALLER_VALUES`를 값 그대로 옮겼다. 통합 쪽이 C의 gate 대기 census가 A와 같은 caller 항을 읽게 한 시험 전용 수정이며 [M4 잔여 계약](../contracts/dev3-module-boundaries.md#row-m4-s9)에 적었다. A 제품 동작은 바뀌지 않았고 B의 `row/read` 아래는 바뀌지 않았다. 두 경로를 함께 바꾼 commit은 없다 |
+| MI03 독립 인수 | **PASS(한정)** | 상대 source가 없는 고정 export에서 C+A 150개와 native 9 process, C+B 53개와 addendum 1개, native 15 process가 독립 기대값으로 통과했다. S8이 남긴 미공급 목록을 모두 공급했다. 한정은 다섯이다. (1) C+B의 실제 C 읽기는 S5 범위 9개와 MCB05-L01..L06이며, 동결 MCB01–04 행렬은 C0 double 위의 B 단위 시험과 전체 트리가 맡는다. (2) K07은 크기 교란이 있고, K12 원형은 거절 원인을 scope에 귀속할 수 없다. (3) C+A의 READY 값 확인은 C의 codec을 쓴다. (4) C+B에는 Row gate floor census가 없다. (5) live Prune literal은 live Row retirement(N/A, DEV3)에 묶여 없다 |
+| MI04 실제 합류 | PASS(선택 범위), N/A 2 | S7의 memory 11개와 native 3 case에 더해 MCI01-V09 origin stale(f1 `row_join`)이 PASS다. generation stale과 aging은 DROP producer와 새 epoch가 없어 N/A(DEV3)다. 최신 통합 기준과의 차이는 다음과 같다. S9 기준 `3c046e98` 뒤 main은 문서 commit(§12 수용안 `702deded`와 PR #13)만 더했고 `crates/`·`scripts/`·`tests/` 차이는 0이다. 병합에 text 충돌은 없었다 |
+| MI05 보호와 추적 | PASS | 다른 담당의 변경과 원 결과를 덮어쓰지 않았다. S5 `row_read_live`, S6R-M08의 C+A+B 입력, S8 기록은 그대로 두고 S9 판을 더했다. 계약 재개방은 WRITER-PROGRESS-001 floor의 기준(검토 R3)이다. 사용자 결정 카드에 답이 오기 전에는 권장안으로 기록했다. 재작업은 inventory selector 오류의 amend(`f575c1f0`→`a62fc7c9`, push 전), 검토 R1·R2(`2cc5f154`), R4 publication gap(`660fd99e`)이다. 사고는 검토자가 공유 scratch를 덮어쓰고 disk를 채운 것이다. 그 때문에 native 첫 시도가 ENOSPC로 실패했고 다시 실행했다. 저장소와 원 증거는 영향을 받지 않았다. C 공급 대기는 없었다 |
+| MI06 별도 판정 | 대기 | S9 검토 반영(`2cc5f154`, `660fd99e`)과 이 기록의 독립 재확인 전이다 |
+
+MI06 판정 전이므로 M5는 아직 완료로 적지 않는다.
+
+### 되돌림
+
+되돌림은 이 기록을 더한 문서 commit, `660fd99e`, `2cc5f154`, `a62fc7c9`, `fd874b0b`, `0c65e536`, `047be7e3`, `b031ed15`, `68a10d36`, `4eda3592`, `b7ae5281`, `261c4e2c`, `9a2461d2`, `0fc1264a`의 역순이다. 제품 동작은 바뀌지 않았고 fixture는 매 시험에서 새로 만든다.
