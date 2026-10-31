@@ -1271,3 +1271,6 @@ mod row_join;
 
 #[path = "catalog_memory/row_literal.rs"]
 mod row_literal;
+
+#[path = "catalog_memory/row_read_census.rs"]
+mod row_read_census;

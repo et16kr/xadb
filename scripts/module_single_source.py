@@ -28,33 +28,39 @@ REGISTRY = f'{ENGINE}/wal_io/plan4_recovery/tests/catalog_memory.rs'
 # Test modules of catalog_memory that link A, B or both (registration name).
 LINKS_A = ['row_write', 'row_v09', 'row_forward', 'row_cancel', 'row_live', 'row_commit',
            'row_rollback', 'row_recovery', 'row_read_live', 'row_join']
-LINKS_B = ['row_read_live', 'row_recovery', 'row_join']
+LINKS_B = ['row_read_live', 'row_recovery', 'row_join', 'row_literal', 'row_read_census']
 
 SIDES = {
     # C+A: B removed.
     'a': dict(module='read', removed=[f'{ENGINE}/row/read.rs', f'{ENGINE}/row/read',
                                       'tests/fixtures/module-row-read'],
-              tests=LINKS_B, forbidden=re.compile(r'row::read\b|row::read::')),
+              tests=LINKS_B,
+              forbidden=re.compile(r'row::read\b|row::read::|module-row-read')),
     # C+B: A removed.
     'b': dict(module='insert', removed=[f'{ENGINE}/row/insert.rs', f'{ENGINE}/row/insert',
                                        'tests/fixtures/module-row-insert'],
-              tests=LINKS_A, forbidden=re.compile(r'row::insert\b|row::insert::'),
-              census=[
-                  (f'{ENGINE}/wal_io/plan4_apply/row/rollback.rs',
-                   '#[cfg(test)]\n#[path = "rollback_census_tests.rs"]\nmod census;\n',
-                   f'{ENGINE}/wal_io/plan4_apply/row/rollback_census_tests.rs'),
-                  (f'{ENGINE}/wal_io/plan4_recovery/row_action.rs',
-                   '#[cfg(test)]\n#[path = "row_action_census_tests.rs"]\nmod census;\n',
-                   f'{ENGINE}/wal_io/plan4_recovery/row_action_census_tests.rs'),
+              tests=LINKS_A,
+              forbidden=re.compile(r'row::insert\b|row::insert::|module-row-insert'),
+              tests_c=[
+                  # C census tests that measure A's caller frames.
+                  (f'{ENGINE}/wal_io/plan4_apply/row/rollback.rs', 'rollback_census_tests.rs',
+                   'census', f'{ENGINE}/wal_io/plan4_apply/row/rollback_census_tests.rs'),
+                  (f'{ENGINE}/wal_io/plan4_recovery/row_action.rs', 'row_action_census_tests.rs',
+                   'census', f'{ENGINE}/wal_io/plan4_recovery/row_action_census_tests.rs'),
                   (f'{ENGINE}/wal_io/plan4_retention/catalog_commit.rs',
-                   '#[cfg(test)]\n#[path = "catalog_commit/row_census.rs"]\nmod row_census;\n',
+                   'catalog_commit/row_census.rs', 'row_census',
                    f'{ENGINE}/wal_io/plan4_retention/catalog_commit/row_census.rs'),
+                  # C observer and replay tests over A's MCA00-V06 scope3 literals.
+                  (f'{ENGINE}/semantic_row/transition.rs', 'transition_tests.rs', 'tests',
+                   f'{ENGINE}/semantic_row/transition_tests.rs'),
+                  (f'{ENGINE}/wal_io/plan4_retention/recovery.rs', 'recovery/row_tests.rs',
+                   'row_tests', f'{ENGINE}/wal_io/plan4_retention/recovery/row_tests.rs'),
               ]),
 }
-# Each census entry: (registering file, exact cfg(test) registration block,
-# the census file). These C census tests measure A's caller frames.
-
-
+# Each `tests_c` entry: (registering file, its `#[path]`, module name, the
+# test file). These are C's own cfg(test) modules that link the removed side's
+# code or fixtures; the registration (with any doc comment directly above it)
+# and the file are removed together.
 
 
 def sha(data):
@@ -120,13 +126,16 @@ def export(commit, out, side):
                 removed.append(rel)
                 path.unlink()
     registry.write_text(text)
-    for rel, block, census in spec.get('census', []):
+    for rel, attr, name, census in spec.get('tests_c', []):
         path = out / rel
         text = path.read_text()
-        if text.count(block) != 1:
-            raise SystemExit(f'census registration in {rel}')
-        path.write_text(text.replace(block, ''))
-        patches.append(dict(file=rel, removed=block))
+        pattern = re.compile(r'(?:///[^\n]*\n)*#\[cfg\(test\)\]\n#\[path = "'
+                             + re.escape(attr) + r'"\]\nmod ' + re.escape(name) + r';\n')
+        found = pattern.findall(text)
+        if len(found) != 1:
+            raise SystemExit(f'cfg(test) registration in {rel}: {len(found)} matches')
+        path.write_text(pattern.sub('', text))
+        patches.append(dict(file=rel, removed=found[0]))
         (out / census).unlink()
         removed.append(census)
     # No remaining Rust path to the removed module.
