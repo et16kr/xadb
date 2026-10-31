@@ -603,6 +603,11 @@ impl<'u, 'r, 't, 'v, 'i, 'b, 'a, 's, 'c, 'p, 'd, 'm, 'w, W: WriterNamespace>
     ) -> Result<ReadStep<TransactionState>> {
         use crate::storage::transaction_record::VersionStamp;
         self.check_candidate(candidate)?;
+        #[cfg(test)]
+        crate::transaction::concurrency::catalog_test_support::hit(
+            self.backend.pool.bound_core(),
+            crate::transaction::concurrency::catalog_test_support::Point::RowReadCaptured,
+        );
         let bad = || {
             fatal(
                 self.backend.storage,

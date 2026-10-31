@@ -1259,3 +1259,6 @@ mod row_rollback;
 
 #[path = "catalog_memory/row_recovery.rs"]
 mod row_recovery;
+
+#[path = "catalog_memory/row_join.rs"]
+mod row_join;
