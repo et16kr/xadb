@@ -1,0 +1,211 @@
+{
+  "schema": "XADB_S6_TEST_INVENTORY_V1",
+  "status": "FROZEN_SELECTION_NOT_EXECUTION_EVIDENCE",
+  "baseline": "8d5e48b",
+  "contract_ref": "devdoc/contracts/dev3-module-boundaries.md#row-recovery-s6",
+  "cases": [
+    {
+      "id": "S6R-M01-1W",
+      "selector": "s6r_m01_one_committed_row_with_row_clr",
+      "purpose": "one committed Row: WithRowClr Prune/ReleaseRole/RootFree/TerminalFinish to READY, B reads the row"
+    },
+    {
+      "id": "S6R-M01-1R",
+      "selector": "s6r_m01_one_committed_row_reject_initial_losers",
+      "purpose": "the same committed cleanup under RejectInitialLosers"
+    },
+    {
+      "id": "S6R-M01-3W",
+      "selector": "s6r_m01_three_committed_rows_with_row_clr",
+      "purpose": "three committed roots in head order under WithRowClr"
+    },
+    {
+      "id": "S6R-M01-3R",
+      "selector": "s6r_m01_three_committed_rows_reject_initial_losers",
+      "purpose": "three committed roots under RejectInitialLosers"
+    },
+    {
+      "id": "S6R-M02-W",
+      "selector": "s6r_m02_reserved_row_recovers_with_row_clr",
+      "purpose": "RootReserved Row cancel under WithRowClr"
+    },
+    {
+      "id": "S6R-M02-R",
+      "selector": "s6r_m02_reserved_row_is_refused_without_row_clr",
+      "purpose": "the reserved loser is refused by RejectInitialLosers and legacy"
+    },
+    {
+      "id": "S6R-M03",
+      "selector": "s6r_m03_active_chain_and_legacy_committed_are_refused",
+      "purpose": "Active chain refused without WithRowClr; legacy keeps Row Unsupported"
+    },
+    {
+      "id": "S6R-M04",
+      "selector": "s6r_m04_active_chain_recovers_through_row_clr",
+      "purpose": "Active three-row chain: full RollbackStart, A handler CLR x3, AbortEnd, compensated cleanup; legacy restart of READY files"
+    },
+    {
+      "id": "S6R-M04-S",
+      "selector": "s6r_m04_aborting_statement_recovers_as_full_rollback",
+      "purpose": "crash inside a statement rollback after one CLR: AbortingStatement takes the full RollbackStart, one recovered CLR"
+    },
+    {
+      "id": "S6R-M05",
+      "selector": "s6r_m05_wrong_proposal_returns_the_same_task",
+      "purpose": "MBC40-V06 wrong after image: Unchanged Before, no file change or fence, same task retried"
+    },
+    {
+      "id": "S6R-M06-S",
+      "selector": "s6r_m06_statement_rollback_then_commit",
+      "purpose": "S4 statement rollback then Commit: committed Prune and compensated release, no CLR"
+    },
+    {
+      "id": "S6R-M06-A",
+      "selector": "s6r_m06_full_abort",
+      "purpose": "S4 full abort with finish_aborted: compensated cleanup only"
+    },
+    {
+      "id": "S6R-M07",
+      "selector": "s6r_m07_partial_recovery_then_crash",
+      "purpose": "a recovered process stops after one CLR; a new process continues with two CLRs from the original binding"
+    },
+    {
+      "id": "S6R-M08",
+      "selector": "s6r_m08_reject_initial_losers_inputs",
+      "purpose": "MCB05-N01..06 memory inputs are refused by RejectInitialLosers before READY"
+    },
+    {
+      "id": "S6R-C01",
+      "selector": "s6r_c01_memory_recovery_row_census",
+      "purpose": "memory Writer recovered Row call-site census within short65536/charge44304"
+    },
+    {
+      "id": "S6R-C02",
+      "selector": "s6r_c02_native_recovery_row_census",
+      "purpose": "the same census over the native Writer type"
+    },
+    {
+      "id": "S6R-C03",
+      "selector": "s6r_c03_recovered_facade_carriers",
+      "purpose": "recovered facade/task/prepared carrier sizes"
+    },
+    {
+      "id": "S2W-R24",
+      "selector": "s2w_r24_root_cursor_is_found_late_and_stops_restart",
+      "purpose": "changed: also checks the WithRowClr restart of the late root cursor"
+    }
+  ],
+  "regression": {
+    "reason": "changed shared paths only: closed-facade step/advance split, recovery selection, analysis gate, row_rollback_select and check_table_slot",
+    "selectors": [
+      "mc04_reserved_drop_fence_fresh_recovery",
+      "mc03_issued_local_gap_recovers",
+      "commit_preparation_unwind_recovers_original_prefix",
+      "catalog_mf14_clr_first_page_unwind",
+      "catalog_mt07_drain_content_guard_fence",
+      "s1b_row_state_stops_at_interim_analysis_gate",
+      "s1g_reserve_tail_stops_at_interim_gate",
+      "recovery_source_memory",
+      "recovery_source_native",
+      "s1b_row_arm_census_memory",
+      "s1b_row_arm_census_native",
+      "s4_c01_memory_rollback_census",
+      "s4_c01_native_rollback_census",
+      "s4_r01_statement_suffix_then_commit",
+      "s4_r02_full_abort_one_row",
+      "s4_r03_premature_finish_bad_proposal_and_actual_stage_retry",
+      "s4_r04_unfinished_drop_fences_without_more_io",
+      "s4_r05_partial_clr_write_is_fatal",
+      "s4_r05_clr_sync_uncertainty_is_fatal",
+      "s4_r06_empty_statement_and_empty_full_abort",
+      "s4_r07_flush_before_error_preserves_a_retryable_rollback",
+      "s4_r08_serializable_conflict_then_full_abort",
+      "s4_r09_wrong_after_digest_is_unchanged_and_same_task_retries",
+      "s4_r10_full_abort_three_roots_from_two_statements",
+      "s4_r11_wrong_capsule_view_and_scope_are_unchanged"
+    ],
+    "excluded": [
+      {
+        "selectors": [
+          "recovery_closure",
+          "recovery_lifecycle",
+          "recovery_binding"
+        ],
+        "reason": "known pre-existing failure on main and S2-S5 bases at support.rs:260 before any recovery code; a run gives no signal for S6 (module-independence-survey r2b/r2h)"
+      }
+    ]
+  },
+  "native": {
+    "selector": "s6r_native_worker",
+    "controller": "scripts/check_dev3_s6_native.py",
+    "cases": {
+      "MBC40-N01": [
+        "produce",
+        "recover",
+        "reenter"
+      ],
+      "MBC40-N02": [
+        "produce",
+        "crash",
+        "recover"
+      ],
+      "MBC40-N03": [
+        "produce",
+        "crash",
+        "recover"
+      ],
+      "MCB05-N01": [
+        "produce",
+        "reject"
+      ],
+      "MCB05-N02": [
+        "produce",
+        "reject"
+      ],
+      "MCB05-N03": [
+        "produce",
+        "reject"
+      ],
+      "MCB05-N04": [
+        "produce",
+        "reject"
+      ],
+      "MCB05-N05": [
+        "produce",
+        "reject"
+      ],
+      "MCB05-N06": [
+        "produce",
+        "reject"
+      ]
+    },
+    "seconds_per_process": 300,
+    "snapshot_bound": {
+      "files": 24,
+      "bytes": 50331648
+    }
+  },
+  "compiler": {
+    "manifest": "tests/fixtures/dev3-module-c0/boundary-compiler/manifest.json",
+    "cases": [
+      "baseline",
+      "MBC00-P03",
+      "MBC00-N11",
+      "MBC00-N11-held"
+    ]
+  },
+  "limits": {
+    "memory_case_seconds": 240,
+    "controller_timeout_seconds": 300,
+    "short_cap_bytes": 65536,
+    "row_charge_bytes": 44304,
+    "caller_private_bytes": 425984
+  },
+  "source_specific": true,
+  "notes": [
+    "Only changed Row recovery and shared recovery/rollback paths are selected; no workspace or wrapper test run.",
+    "The 240 s case bound is the debug ELF's recovered READY restarts: each closed step validates the whole history (about 1.5 s); it is not a product latency claim.",
+    "Native produce writes the actual memory writer run's durable images to the native namespace as the crash cut; every restart process runs recovery on the native Writer/File.",
+    "No READY claim for RejectInitialLosers inputs with losers; they stop at the analysis gate."
+  ]
+}
