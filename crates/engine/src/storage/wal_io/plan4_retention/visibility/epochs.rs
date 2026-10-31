@@ -607,6 +607,8 @@ pub(in super::super) enum TableSlot {
 /// has no epoch lane yet (boundaries `#row-recovery-s6`), so its table is
 /// authenticated by the Catalog proof and the producer, never by a slot.
 pub(in super::super) const RECOVERY_TABLE_SLOT: u8 = u8::MAX;
+// The sentinel never names a real epoch row.
+const _: () = assert!((RECOVERY_TABLE_SLOT as usize) >= TABLES);
 
 impl BoundVisibility<'_, '_, '_> {
     /// Whether the epoch lane is open: false only on the closed recovered

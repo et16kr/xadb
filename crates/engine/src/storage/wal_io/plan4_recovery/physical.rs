@@ -155,14 +155,18 @@ impl<W: WriterNamespace> RecoveryState<'_, '_, '_, W> {
         if self.restored.is_some() {
             return Err(error(p, Plan4RecoveryCause::Invariant));
         }
-        // The admission moves with the digest it was issued for; a policy
-        // entry without one, or a digest that differs, is this owner's own
-        // invariant.
+        // The admission moves with the digests it was issued for; a policy
+        // entry without one, or a state or SourceFacts digest that differs,
+        // is this owner's own invariant.
         let row_admission = self.row_admission.take();
         if row_admission.is_some() != self.row_policy.is_some()
             || row_admission.is_some_and(|admission| {
                 admission.state_digest != analyzed.state_digest
                     || Some(admission.policy) != self.row_policy
+                    || self
+                        .source_facts
+                        .as_ref()
+                        .is_none_or(|facts| facts.digest() != admission.source_facts_digest)
             })
         {
             return Err(error(p, Plan4RecoveryCause::Invariant));

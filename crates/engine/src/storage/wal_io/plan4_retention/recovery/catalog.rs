@@ -61,18 +61,6 @@ pub(super) enum Selected {
     },
     Complete,
 }
-impl Selected {
-    pub(super) fn row(self) -> bool {
-        matches!(
-            self,
-            Self::RowCancel { .. }
-                | Self::RowRollback { .. }
-                | Self::RowClr { .. }
-                | Self::RowAbort { .. }
-                | Self::RowRetire { .. }
-        )
-    }
-}
 
 impl<'s, 'c, W: WriterNamespace> Plan4Retention<'_, 's, 'c, '_, '_, '_, '_, '_, W> {
     /// A Catalog-selected ordinal: a Row cell there is a broken selection.
@@ -116,7 +104,16 @@ impl<'s, 'c, W: WriterNamespace> Plan4Retention<'_, 's, 'c, '_, '_, '_, '_, '_, 
         )
     }
     /// A whole-bank cell that is not Catalog's, under the Row codec.
+    /// Under the legacy binding every Row cell stays Unsupported before any
+    /// Row decode, the refusal cause the pre-C4 scan returned.
     pub(super) fn recovery_row_job(&self, ordinal: usize) -> Result<job3::JobView<'_>> {
+        if self
+            .recovery_binding
+            .as_ref()
+            .is_some_and(|binding| matches!(binding.row_policy(), Ok(None)))
+        {
+            return Err(self.recovery_row_unsupported());
+        }
         let job = job3::decode_job(
             &self.control.ledger.jobs()[ordinal],
             self.inner.storage.profile().spec().namespace,

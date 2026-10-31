@@ -932,8 +932,11 @@ impl<'s, 'a> RecoveryRetentionBinding<'s, 'a> {
         self.restored.state_digest
     }
     /// The admitted Row policy, re-checked against the restored analysis
-    /// digest the admission was issued with. A legacy binding has none; a
-    /// contradiction is Err (the caller's census invariant).
+    /// digest the admission was issued with. Its SourceFacts digest was
+    /// compared with the analyzed source when RestoredRetention was built;
+    /// the runtime holds no source facts, so here a zero digest is the only
+    /// contradiction left. A legacy binding has none; a contradiction is Err
+    /// (the caller's census invariant).
     pub(in crate::storage) fn row_policy(
         &self,
     ) -> std::result::Result<Option<RowRecoveryPolicy>, ()> {

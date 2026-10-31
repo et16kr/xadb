@@ -150,6 +150,9 @@ enum Ending {
     /// `rows` applied rows, the full RollbackStart, no CLR or AbortEnd: with
     /// no row the Aborting transaction's next is None (MCB05-N04).
     AbortingFull,
+    /// `rows` applied rows of one statement, its statement RollbackStart and
+    /// one CLR of that suffix, no finish: the Status is AbortingStatement.
+    AbortingStatement,
 }
 
 /// The durable file set after an actual Row run on table T: `rows` Free
@@ -240,6 +243,42 @@ fn image(rows: usize, ending: Ending) -> Images {
                     // unfinished rollback fences the session when dropped.
                     let images = state.lock().unwrap().images();
                     drop(rollback);
+                    drop(tx);
+                    images
+                }
+                Ending::AbortingStatement => {
+                    let mut rollback = writer
+                        .start_row_rollback(
+                            owner,
+                            &tx,
+                            Some(&view),
+                            RollbackScope::Statement,
+                            private,
+                            &mut flush,
+                            flusher,
+                        )
+                        .unwrap();
+                    loop {
+                        let target = match rollback.next().unwrap() {
+                            RollbackStep::Candidate(mut task) => {
+                                let proposal = produce_clr(task.producer_lane().unwrap()).unwrap();
+                                let prepared = accepted!(task.prepare(proposal));
+                                assert_eq!(
+                                    accepted!(prepared.apply()).operation(),
+                                    RowOperation::Clr
+                                );
+                                break;
+                            }
+                            RollbackStep::FlushRequired { target } => target,
+                            RollbackStep::Complete => panic!("statement suffix is empty"),
+                        };
+                        rollback.flush(&target).unwrap();
+                    }
+                    // The crash point: the statement RollbackStart and one
+                    // CLR are durable, the statement rollback unfinished.
+                    let images = state.lock().unwrap().images();
+                    drop(rollback);
+                    drop(view);
                     drop(tx);
                     images
                 }
@@ -861,6 +900,43 @@ fn s6r_m04_active_chain_recovers_through_row_clr() {
         // The READY files restart READY through the legacy entry.
         let again = restart(&restarted.images, None, Drive::Step, 3);
         assert_eq!((again.trace.len(), again.reads), (1, vec![None; 3]));
+    });
+}
+
+/// S6R-M04-S (C+A loser): a crash inside a statement rollback of a
+/// two-row statement, after its first CLR. The recovered AbortingStatement
+/// actor takes the full RollbackStart (consumers `#row-states`), A's
+/// handler compensates the remaining head, then AbortEnd and the
+/// compensated cleanup of both roots; B finds the table empty.
+#[test]
+fn s6r_m04_aborting_statement_recovers_as_full_rollback() {
+    case_within("S6R-M04-S", READY_BOUND, || {
+        let images = image(2, Ending::AbortingStatement);
+        let restarted = restart(
+            &images,
+            Some(RowRecoveryPolicy::WithRowClr),
+            Drive::Action,
+            2,
+        );
+        println!("S6R_M04S trace={:?}", restarted.trace);
+        assert_eq!(restarted.clrs, 1);
+        assert_eq!(restarted.reads, vec![None; 2]);
+        let traced = states(&restarted.trace);
+        assert!(traced[0].contains(&JobState::TerminalLeased), "{traced:#?}");
+        // The statement's CLR compensated its head before the crash; the
+        // other root is still retained.
+        let count = |state| traced[0].iter().filter(|s| **s == state).count();
+        assert_eq!(
+            (
+                count(JobState::RootRetained),
+                count(JobState::RootReleasingCompensated)
+            ),
+            (1, 1),
+            "{traced:#?}"
+        );
+        // One CLR, the AbortEnd, then 2 × 4 releases and TerminalFinish.
+        assert_eq!(restarted.trace.len(), 1 + 1 + 1 + 8 + 1, "{traced:#?}");
+        compensated_tail(&restarted.trace, 2);
     });
 }
 
