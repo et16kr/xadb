@@ -10,7 +10,7 @@
 //! consumes the statement view a cursor borrows, so a cursor cannot stay
 //! open across an A driver statement; that case applies the row through A's
 //! validate/produce and C's reserve/prepare/apply on the same view.
-use super::row_forward::VALUE;
+use super::row_forward::{VALUE, files};
 use super::row_preflight::{create_table, system_init};
 use super::*;
 use crate::storage::{
@@ -908,4 +908,577 @@ fn mci01_v08_failed_statement_reads_survive() {
 #[test]
 fn mci01_v05_writers_of_different_tables_both_commit() {
     failed_statement_reads("MCI01-V05", false);
+}
+
+/// T's CheckedTable issued on a thread's own `view`; the sources are
+/// resident in these cases (no flush is available off the main thread).
+macro_rules! thread_table {
+    ($reader:expr, $owner:expr, $view:expr, $private:expr) => {
+        match $reader
+            .catalog_statement_call($owner, $view)
+            .unwrap()
+            .finish_table(
+                ObjectId::new(6).unwrap(),
+                &mut Plan4ResidencyCursor::new(),
+                $private,
+            )
+            .unwrap()
+        {
+            TableStep::Table(table) => table,
+            _ => panic!("resident committed T"),
+        }
+    };
+}
+
+/// A thread's point read of `row`: Ok(value or None) or B's error.
+fn thread_point<'a, 'c, 's, W: WriterNamespace>(
+    reader: &crate::storage::disk::ReadPort<'_, 'a, 's, 'c, '_, '_, '_, '_, W>,
+    owner: &mut Owner<'c, 's>,
+    private: &mut [u8; PRIVATE_BYTES],
+    view: &crate::storage::disk::RowStatementView<'_, '_, 'a, 'c, 's>,
+    table: &crate::storage::disk::CheckedTable<'c, 's>,
+    row: RowId,
+) -> std::result::Result<Option<i64>, RowReadError> {
+    let mut residency = Plan4ResidencyCursor::new();
+    let mut output = [0xA5; 64];
+    match read_point_live(
+        ReadCall {
+            port: reader,
+            owner,
+            private,
+            residency: &mut residency,
+        },
+        view,
+        table,
+        row,
+        &mut output,
+        &Cancellation::default(),
+    )? {
+        ReadStep::Ready(PointRead::Found(copy)) => Ok(Some(int_of(&output, copy.len()))),
+        ReadStep::Ready(PointRead::Missing) => {
+            assert_eq!(output, [0xA5; 64]);
+            Ok(None)
+        }
+        ReadStep::FlushRequired { .. } => panic!("resident read sources"),
+    }
+}
+
+/// B's refusal while a progress-class writer holds the terminal read gate.
+fn installation_pending(error: &RowReadError) -> bool {
+    matches!(
+        error,
+        RowReadError::Source(RetentionError {
+            cause: RetentionCause::Concurrency(error),
+            effect: Effect::Unchanged,
+            ..
+        }) if error.cause == crate::transaction::concurrency::Cause::InstallationPending
+    )
+}
+
+/// The A step a MCI03 barrier holds back.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+enum Barrier {
+    /// V01: A's statement rollback (its CLR) of the row B has captured.
+    Rollback,
+    /// V02: A's next row, whose preflight starts while B's read is admitted.
+    Preflight,
+}
+
+/// MCI03-V01/V02 under the S2-0 terminal read gate (consumers
+/// `#index-negative-input` amendment; boundaries `#row-join-s7`). B1's Row
+/// read of A's Active row 1 is paused after its source capture, holding the
+/// row's Txn/U pins. A's next progress step — the statement rollback (V01)
+/// or the next row's preflight (V02) — closes the gate and waits for B1;
+/// it is neither Busy nor run beside B1's pins. A late reader B2 is
+/// InstallationPending meanwhile. Once B1 returns, A's step runs; B2's
+/// retry then reads the row by the original snapshot rules.
+fn gate_barrier(id: &str, barrier: Barrier) {
+    case(id, || {
+        let oracle = Oracle::new();
+        with_fresh!(
+            oracle,
+            frames = 16,
+            |live, owner, flusher, status, undo, private, reader_private, core, fence, state| {
+                let _ = state;
+                let (row_status, _) =
+                    create_table(live, owner, flusher, status, undo, private, true);
+                system_init(live, owner, flusher, true);
+                let (mut writer, reader, mut flush) = live.split();
+                let a = writer
+                    .begin_row_transaction(
+                        owner,
+                        IsolationLevel::Serializable,
+                        &row_status,
+                        private,
+                        &mut flush,
+                    )
+                    .unwrap();
+                let s1 = writer.begin_statement(owner, &a).unwrap();
+                let table = issue_table!(reader, owner, s1, reader_private, flush, flusher);
+                let _ = settle!(writer, owner, s1, table, private, flush, flusher);
+                let good = [ValueRef::Int64(VALUE)];
+                let bad = [ValueRef::Null];
+                let mut slots: [Option<RowMutationObservation>; 2] = [None, None];
+                let (mut pending, mut s2) = match barrier {
+                    Barrier::Rollback => {
+                        let input: [&[ValueRef<'_>]; 2] = [&good, &bad];
+                        let mut call = LiveCall::new(&mut writer, owner, &mut flush, flusher);
+                        match insert_live(&mut call, s1, &table, private, &input, &mut slots) {
+                            Err(DriveError { after, .. }) => (Some(rollback_required(after)), None),
+                            Ok(n) => panic!("{n} rows inserted"),
+                        }
+                    }
+                    Barrier::Preflight => {
+                        let input: [&[ValueRef<'_>]; 1] = [&good];
+                        {
+                            let mut call = LiveCall::new(&mut writer, owner, &mut flush, flusher);
+                            assert!(matches!(
+                                insert_live(
+                                    &mut call,
+                                    s1,
+                                    &table,
+                                    private,
+                                    &input,
+                                    &mut slots[..1]
+                                ),
+                                Ok(1)
+                            ));
+                        }
+                        (None, Some(writer.begin_statement(owner, &a).unwrap()))
+                    }
+                };
+                let row = slots[0].as_ref().unwrap().row();
+                let mut b1_private = boxed::<PRIVATE_BYTES>();
+                let mut b2_private = boxed::<PRIVATE_BYTES>();
+                let cell = Mutex::new(&mut writer);
+                let used = reader.catalog_test_source_used();
+                let mut second = None;
+                std::thread::scope(|scope| {
+                    let (cell, reader) = (&cell, &reader);
+                    let (b1_in, b1_captured) = sync_channel(1);
+                    let (b1_go, b1_release) = sync_channel(1);
+                    let (gate_in, gate_waiting) = sync_channel(1);
+                    let (gate_go, gate_release) = sync_channel(1);
+                    let (ready_tx, ready) = sync_channel(1);
+                    let (done_tx, done) = sync_channel::<()>(1);
+                    // B2 issues its table before B1's read is admitted: a
+                    // second admitted read source does not fit beside B1's.
+                    let b2_private = &mut *b2_private;
+                    let b2 = scope.spawn(move || {
+                        let mut o = core.try_owner(OwnerRole::Foreground).unwrap();
+                        let tx = read_only!(
+                            cell.lock().unwrap(),
+                            &mut o,
+                            IsolationLevel::ReadCommitted,
+                            b2_private
+                        );
+                        let view = cell.lock().unwrap().begin_statement(&mut o, &tx).unwrap();
+                        let table = thread_table!(reader, &mut o, &view, b2_private);
+                        ready_tx.send(()).unwrap();
+                        gate_waiting.recv_timeout(WAIT).unwrap();
+                        let at_wait = hook::observe(core);
+                        assert_eq!(at_wait.active_read_operations, 1);
+                        assert!(at_wait.read_gate_closed && !at_wait.fenced);
+                        let late = thread_point(reader, &mut o, b2_private, &view, &table, row)
+                            .err()
+                            .unwrap();
+                        assert!(installation_pending(&late), "{late:?}");
+                        gate_go.send(Resume::Continue).unwrap();
+                        // A's step keeps waiting while B1 is admitted: no
+                        // WAL, the gate closed, B1's operation still counted.
+                        let wal = files(state).0;
+                        std::thread::sleep(Duration::from_millis(200));
+                        assert_eq!(files(state).0, wal, "A's step waits for B1");
+                        let still = hook::observe(core);
+                        assert!(still.read_gate_closed && still.active_read_operations == 1);
+                        b1_go.send(Resume::Continue).unwrap();
+                        done.recv_timeout(WAIT).unwrap();
+                        // The retry after A's step: the row is A's Active
+                        // (V02) or compensated (V01) one, Missing either way.
+                        let retry = thread_point(reader, &mut o, b2_private, &view, &table, row);
+                        assert!(matches!(retry, Ok(None)), "{retry:?}");
+                        let mut w = cell.lock().unwrap();
+                        assert!(w.finish_statement(&mut o, view).is_ok());
+                        assert!(w.finish_read_only(&mut o, tx).is_ok());
+                        o.check_idle().unwrap();
+                        at_wait
+                    });
+                    ready.recv_timeout(WAIT).unwrap();
+                    hook::install(core, Point::RowReadCaptured, b1_in, b1_release);
+                    let b1_private = &mut *b1_private;
+                    let b1 = scope.spawn(move || {
+                        let mut o = core.try_owner(OwnerRole::Foreground).unwrap();
+                        let tx = read_only!(
+                            cell.lock().unwrap(),
+                            &mut o,
+                            IsolationLevel::ReadCommitted,
+                            b1_private
+                        );
+                        let view = cell.lock().unwrap().begin_statement(&mut o, &tx).unwrap();
+                        let table = thread_table!(reader, &mut o, &view, b1_private);
+                        // Paused at RowReadCaptured; A's row is Active.
+                        let read = thread_point(reader, &mut o, b1_private, &view, &table, row);
+                        assert!(matches!(read, Ok(None)), "{read:?}");
+                        let mut w = cell.lock().unwrap();
+                        assert!(w.finish_statement(&mut o, view).is_ok());
+                        assert!(w.finish_read_only(&mut o, tx).is_ok());
+                        o.check_idle().unwrap();
+                    });
+                    b1_captured.recv_timeout(WAIT).unwrap();
+                    let at_capture = hook::observe(core);
+                    assert_eq!(at_capture.active_read_operations, 1);
+                    assert!(!at_capture.read_gate_closed);
+                    let pins = reader.catalog_test_references();
+                    assert_ne!(pins.0, (0, 0, 0), "B1 holds the captured row's pins");
+                    hook::install(core, Point::ReadGateWaiting, gate_in, gate_release);
+                    {
+                        let mut w = cell.lock().unwrap();
+                        let mut call = LiveCall::new(&mut **w, owner, &mut flush, flusher);
+                        match barrier {
+                            Barrier::Rollback => {
+                                let mut pending = pending.take().unwrap();
+                                {
+                                    let mut rollback = match start_statement_rollback_live(
+                                        &mut call,
+                                        &a,
+                                        &mut pending,
+                                        private,
+                                    ) {
+                                        Ok(rollback) => rollback,
+                                        Err(failure) => {
+                                            panic!("statement RollbackStart {failure:?}")
+                                        }
+                                    };
+                                    assert!(matches!(
+                                        rollback_step_live(&mut rollback),
+                                        Ok(Stepped::Compensated)
+                                    ));
+                                    assert!(matches!(
+                                        rollback_step_live(&mut rollback),
+                                        Ok(Stepped::Complete)
+                                    ));
+                                    assert!(finish_rollback_live(rollback).is_ok());
+                                }
+                                let s1 = match pending.rolled_back() {
+                                    Ok(view) => view,
+                                    Err(_) => panic!("statement rollback incomplete"),
+                                };
+                                assert!(finish_statement_live(&mut call, s1).is_ok());
+                            }
+                            Barrier::Preflight => {
+                                let next = [ValueRef::Int64(VALUE + 1)];
+                                let input: [&[ValueRef<'_>]; 1] = [&next];
+                                let mut slot = [None];
+                                match insert_live(
+                                    &mut call,
+                                    s2.take().unwrap(),
+                                    &table,
+                                    private,
+                                    &input,
+                                    &mut slot,
+                                ) {
+                                    Ok(1) => second = Some(slot[0].take().unwrap().row()),
+                                    Ok(n) => panic!("{n} rows"),
+                                    Err(error) => panic!("A's next row {:?}", error.failure),
+                                }
+                            }
+                        }
+                        assert!(!hook::observe(core).read_gate_closed);
+                    }
+                    done_tx.send(()).unwrap();
+                    b1.join().unwrap();
+                    let at_wait = b2.join().unwrap();
+                    println!(
+                        "MCI03_GATE {id} barrier={barrier:?} pins={pins:?} at_wait={at_wait:?}"
+                    );
+                });
+                drop(cell);
+                assert!(pending.is_none() && s2.is_none());
+                drop((pending, s2));
+                assert_eq!(reader.catalog_test_source_used(), used);
+                assert!(!fence.is_fenced());
+                let q = a_commit!(&mut writer, owner, flush, flusher, a, private);
+                let mut b_owner = core.try_owner(OwnerRole::Foreground).unwrap();
+                let b_owner = &mut b_owner;
+                let b = read_only!(
+                    writer,
+                    b_owner,
+                    IsolationLevel::Serializable,
+                    reader_private
+                );
+                let new = writer.begin_statement(b_owner, &b).unwrap();
+                let expected = match second {
+                    Some(second) => vec![(row.get(), VALUE), (second.get(), VALUE + 1)],
+                    None => vec![],
+                };
+                assert_eq!(
+                    scan!(
+                        reader,
+                        b_owner,
+                        reader_private,
+                        &new,
+                        &table,
+                        flush,
+                        flusher
+                    ),
+                    expected
+                );
+                assert!(writer.finish_statement(b_owner, new).is_ok());
+                assert!(writer.finish_read_only(b_owner, b).is_ok());
+                assert_eq!(reader.catalog_test_source_used(), 0);
+                assert!(!fence.is_fenced());
+                println!("MCI03_GATE {id} q={q} rows={expected:?}");
+            }
+        );
+    });
+}
+#[test]
+fn mci03_v01_rollback_waits_for_the_captured_read() {
+    gate_barrier("MCI03-V01", Barrier::Rollback);
+}
+#[test]
+fn mci03_v02_preflight_waits_for_the_admitted_read() {
+    gate_barrier("MCI03-V02", Barrier::Preflight);
+}
+
+/// MCI03-V03: A's Commit stops after its WAL is durable and its Status is
+/// installed, before Q is published (BeforePublish). B's statement from
+/// before the Commit reads A's row Missing there and after the Commit
+/// returns; a new transaction then reads it.
+#[test]
+fn mci03_v03_old_snapshot_before_q_publication() {
+    case("MCI03-V03", || {
+        let oracle = Oracle::new();
+        with_fresh!(
+            oracle,
+            frames = 16,
+            |live, owner, flusher, status, undo, private, reader_private, core, fence, state| {
+                let (row_status, _) =
+                    create_table(live, owner, flusher, status, undo, private, true);
+                let (mut writer, reader, mut flush) = live.split();
+                let a = writer
+                    .begin_row_transaction(
+                        owner,
+                        IsolationLevel::Serializable,
+                        &row_status,
+                        private,
+                        &mut flush,
+                    )
+                    .unwrap();
+                let s1 = writer.begin_statement(owner, &a).unwrap();
+                let table = issue_table!(reader, owner, s1, reader_private, flush, flusher);
+                let rows = a_insert!(
+                    &mut writer,
+                    owner,
+                    flush,
+                    flusher,
+                    s1,
+                    &table,
+                    private,
+                    [VALUE]
+                );
+                let row = rows[0].row();
+                let mut b_private = boxed::<PRIVATE_BYTES>();
+                let cell = Mutex::new(&mut writer);
+                let mut q = 0;
+                std::thread::scope(|scope| {
+                    let (cell, reader) = (&cell, &reader);
+                    let (publish_in, publishing) = sync_channel(1);
+                    let (publish_go, publish_release) = sync_channel(1);
+                    hook::install(core, Point::BeforePublish, publish_in, publish_release);
+                    let (ready_tx, ready) = sync_channel(1);
+                    let (done_tx, done) = sync_channel::<()>(1);
+                    let b_private = &mut *b_private;
+                    let wal = files(state).0;
+                    let b = scope.spawn(move || {
+                        let mut o = core.try_owner(OwnerRole::Foreground).unwrap();
+                        let tx = read_only!(
+                            cell.lock().unwrap(),
+                            &mut o,
+                            IsolationLevel::Serializable,
+                            b_private
+                        );
+                        let view = cell.lock().unwrap().begin_statement(&mut o, &tx).unwrap();
+                        assert_eq!(view.q().unwrap(), 1);
+                        let table = thread_table!(reader, &mut o, &view, b_private);
+                        ready_tx.send(()).unwrap();
+                        publishing.recv_timeout(WAIT).unwrap();
+                        let at_publish = hook::observe(core);
+                        assert!(files(state).0 > wal, "the Commit frame is durable");
+                        let during = thread_point(reader, &mut o, b_private, &view, &table, row);
+                        publish_go.send(Resume::Continue).unwrap();
+                        done.recv_timeout(WAIT).unwrap();
+                        let after = thread_point(reader, &mut o, b_private, &view, &table, row);
+                        assert!(matches!(after, Ok(None)), "{after:?}");
+                        let mut w = cell.lock().unwrap();
+                        assert!(w.finish_statement(&mut o, view).is_ok());
+                        let end = w.finish_read_only(&mut o, tx);
+                        assert!(matches!(
+                            end,
+                            Err(TransactionFinishError::Rejected(ref error))
+                                if matches!(error.cause, RetentionCause::SerializationConflict)
+                        ));
+                        o.check_idle().unwrap();
+                        (at_publish, during)
+                    });
+                    ready.recv_timeout(WAIT).unwrap();
+                    {
+                        let mut w = cell.lock().unwrap();
+                        q = a_commit!(&mut **w, owner, flush, flusher, a, private);
+                    }
+                    done_tx.send(()).unwrap();
+                    let (at_publish, during) = b.join().unwrap();
+                    println!("MCI03_V03 at_publish={at_publish:?} during={during:?}");
+                    assert!(matches!(during, Ok(None)), "{during:?}");
+                });
+                drop(cell);
+                assert_eq!(q, 2);
+                let mut b_owner = core.try_owner(OwnerRole::Foreground).unwrap();
+                let b_owner = &mut b_owner;
+                let b = read_only!(
+                    writer,
+                    b_owner,
+                    IsolationLevel::Serializable,
+                    reader_private
+                );
+                let new = writer.begin_statement(b_owner, &b).unwrap();
+                assert_eq!(new.q().unwrap(), 2);
+                assert_eq!(
+                    point!(reader, b_owner, reader_private, &new, &table, row),
+                    Some(VALUE)
+                );
+                assert!(writer.finish_statement(b_owner, new).is_ok());
+                assert!(writer.finish_read_only(b_owner, b).is_ok());
+                assert_eq!(reader.catalog_test_source_used(), 0);
+                assert!(!fence.is_fenced());
+            }
+        );
+    });
+}
+
+/// MCI03-V04: A's Commit frame is staged and its WAL write fails after a
+/// prefix, so C fences the session (S3-R06's fault). B's statement taken
+/// before the fault and A's next statement are both refused afterwards,
+/// with no file change and the fatal Commit's accounting kept for cleanup.
+#[test]
+fn mci03_v04_poststage_fault_fences_a_and_b() {
+    case("MCI03-V04", || {
+        let oracle = Oracle::new();
+        with_fresh!(
+            oracle,
+            frames = 16,
+            |live, owner, flusher, status, undo, private, reader_private, core, fence, state| {
+                let (row_status, _) =
+                    create_table(live, owner, flusher, status, undo, private, true);
+                let other_status = system_init(live, owner, flusher, false);
+                system_init(live, owner, flusher, true);
+                let (mut writer, reader, mut flush) = live.split();
+                let a = writer
+                    .begin_row_transaction(
+                        owner,
+                        IsolationLevel::Serializable,
+                        &row_status,
+                        private,
+                        &mut flush,
+                    )
+                    .unwrap();
+                let s1 = writer.begin_statement(owner, &a).unwrap();
+                let table = issue_table!(reader, owner, s1, reader_private, flush, flusher);
+                let rows = a_insert!(
+                    &mut writer,
+                    owner,
+                    flush,
+                    flusher,
+                    s1,
+                    &table,
+                    private,
+                    [VALUE]
+                );
+                let row = rows[0].row();
+                let next = writer
+                    .begin_row_transaction(
+                        owner,
+                        IsolationLevel::Serializable,
+                        &other_status,
+                        private,
+                        &mut flush,
+                    )
+                    .unwrap();
+                let next_view = writer.begin_statement(owner, &next).unwrap();
+                let mut b_owner = core.try_owner(OwnerRole::Foreground).unwrap();
+                let b_owner = &mut b_owner;
+                let b = read_only!(
+                    writer,
+                    b_owner,
+                    IsolationLevel::ReadCommitted,
+                    reader_private
+                );
+                let b_view = writer.begin_statement(b_owner, &b).unwrap();
+                assert_eq!(
+                    point!(reader, b_owner, reader_private, &b_view, &table, row),
+                    None
+                );
+                let at = files(state).0;
+                {
+                    let mut state = state.lock().unwrap();
+                    state.events.clear();
+                    state.fault_hits = 0;
+                    state.fault = Some(port::Fault {
+                        key: port::Key::new("write", "d3-wal-00000001", at as u64, 1),
+                        action: port::Action::PrefixErrorBytes(96),
+                    });
+                }
+                {
+                    let mut call = LiveCall::new(&mut writer, owner, &mut flush, flusher);
+                    match commit_live(&mut call, a, private) {
+                        Err(DriveError { failure, after }) => {
+                            assert!(failure.must_resolve, "{failure:?}");
+                            assert!(matches!(after, After::MustResolve(_)));
+                        }
+                        Ok(_) => panic!("a failed Commit write was acknowledged"),
+                    }
+                }
+                assert!(fence.is_fenced());
+                assert_eq!(state.lock().unwrap().fault_hits, 1);
+                let used = reader.catalog_test_source_used();
+                assert!(used > 0, "the fatal Commit keeps its accounting");
+                let after_fault = files(state);
+                let mut residency = Plan4ResidencyCursor::new();
+                let mut output = [0xC3; 64];
+                let read = read_point_live(
+                    ReadCall {
+                        port: &reader,
+                        owner: b_owner,
+                        private: reader_private,
+                        residency: &mut residency,
+                    },
+                    &b_view,
+                    &table,
+                    row,
+                    &mut output,
+                    &Cancellation::default(),
+                );
+                assert!(read.is_err(), "B read in a fenced session");
+                assert_eq!(output, [0xC3; 64]);
+                let more = [ValueRef::Int64(VALUE + 1)];
+                let input: [&[ValueRef<'_>]; 1] = [&more];
+                let mut slot = [None];
+                {
+                    let mut call = LiveCall::new(&mut writer, owner, &mut flush, flusher);
+                    assert!(
+                        insert_live(&mut call, next_view, &table, private, &input, &mut slot)
+                            .is_err(),
+                        "A write in a fenced session"
+                    );
+                }
+                assert!(slot[0].is_none());
+                assert!(files(state) == after_fault, "refusals change no file");
+                assert_eq!(reader.catalog_test_source_used(), used);
+                println!("MCI03_V04 fault_at={at} used={used} read={:?}", read.err());
+                drop(b_view);
+                drop(b);
+                drop(next);
+            }
+        );
+    });
 }
