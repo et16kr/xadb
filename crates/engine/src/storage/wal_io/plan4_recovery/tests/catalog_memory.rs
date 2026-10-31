@@ -1265,6 +1265,9 @@ mod row_rollback;
 mod row_recovery;
 #[path = "catalog_memory/row_recovery_read.rs"]
 mod row_recovery_read;
+#[path = "catalog_memory/row_native_a.rs"]
+#[macro_use]
+mod row_native_a;
 
 #[path = "catalog_memory/catalog_progress_v09.rs"]
 mod catalog_progress_v09;

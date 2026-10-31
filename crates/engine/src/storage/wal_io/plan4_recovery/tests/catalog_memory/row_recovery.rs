@@ -518,11 +518,11 @@ impl ReadyRead for PageRead {
     }
 }
 
-/// The committed values of RowId 1..=`reads` in the READY files, read from
-/// the T RowLeaf (page 13) of the home file with C's tree-page and
-/// row-record decoders, not B: a committed cell must carry a Committed stamp
-/// and no Undo (the recovered cleanup is complete); an absent key is None.
-pub(super) fn leaf_values(images: &Images, reads: u64) -> Vec<Option<i64>> {
+/// The committed rows (RowId, value) of the READY files, in key order, read
+/// from the T RowLeaf (page 13) of the home file with C's tree-page and
+/// row-record decoders, not B. After READY the recovered cleanup is
+/// complete, so every cell must carry a Committed stamp and no Undo.
+pub(super) fn leaf_rows(images: &Images) -> Vec<(u64, i64)> {
     use crate::storage::{
         page::{PageIdentity, PageKind},
         row_record::{RecordExpectation, RowPayload, decode_row_record},
@@ -552,13 +552,11 @@ pub(super) fn leaf_values(images: &Images, reads: u64) -> Vec<Option<i64>> {
         data_type: crate::api::DataType::Int64,
         nullable: false,
     }];
-    (1..=reads)
-        .map(|row| {
-            let position = leaf.lower_bound(&row.to_be_bytes()).unwrap();
-            if !position.equal {
-                return None;
-            }
-            let EntryPayload::Value(bytes) = leaf.entry(position.index).unwrap().payload else {
+    (0..leaf.len())
+        .map(|index| {
+            let entry = leaf.entry(index).unwrap();
+            let row = u64::from_be_bytes(entry.key.try_into().unwrap());
+            let EntryPayload::Value(bytes) = entry.payload else {
                 panic!("RowLeaf entry {row} has a child");
             };
             let record = decode_row_record(
@@ -576,12 +574,25 @@ pub(super) fn leaf_values(images: &Images, reads: u64) -> Vec<Option<i64>> {
                 "row {row} after READY: {version:?}"
             );
             match record.payload() {
-                RowPayload::Inline(row) => match row.value(0).unwrap() {
-                    ValueRef::Int64(value) => Some(value),
-                    other => panic!("{other:?}"),
+                RowPayload::Inline(canonical) => match canonical.value(0).unwrap() {
+                    ValueRef::Int64(value) => (row, value),
+                    other => panic!("row {row}: {other:?}"),
                 },
                 other => panic!("row {row}: {other:?}"),
             }
+        })
+        .collect()
+}
+
+/// RowId 1..=`reads` of `leaf_rows`: the value, or None when the key is
+/// absent.
+pub(super) fn leaf_values(images: &Images, reads: u64) -> Vec<Option<i64>> {
+    let rows = leaf_rows(images);
+    (1..=reads)
+        .map(|row| {
+            rows.iter()
+                .find(|(id, _)| *id == row)
+                .map(|(_, value)| *value)
         })
         .collect()
 }
