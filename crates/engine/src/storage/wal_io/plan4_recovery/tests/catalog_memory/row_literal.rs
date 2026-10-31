@@ -30,12 +30,17 @@ use crate::storage::{
         RowValidationLane, TableStep, TransactionFinishError, TransactionOptions,
     },
     row::read::driver::{
-        CursorStep, PointRead,
+        CursorStep, PointRead, RowReadError,
         live::{LiveCall as ReadCall, next_live, open_cursor_live, read_point_live},
     },
     row_record::ValueRef,
 };
+use crate::transaction::concurrency::catalog_test_support::{self as hook, Point, Resume};
 use foundation::{identity::RowId, runtime::Cancellation};
+use std::{
+    sync::{Mutex, mpsc::sync_channel},
+    time::Duration,
+};
 
 /// The literal directory, from the repository root.
 const AUTHOR: &str = "tests/fixtures/dev3-module-c2/row-read";
@@ -592,6 +597,184 @@ fn mcb05_l01_literal_forward_is_read_by_b_after_c_commit() {
 pub(super) fn effects(state: &State) -> (usize, Images) {
     let state = state.lock().unwrap();
     (state.files["d3-wal-00000001"].bytes.len(), state.images())
+}
+
+/// MCB05-L06 (consumers §8.3 publication gap, MCB02-V08 on a literal row,
+/// S9 review R4): the literal row of L01 through C's checked ingress, then
+/// C's Commit stopped after its WAL is durable and its Status is installed,
+/// before Q is published (`Point::BeforePublish`): the row's status q 2 is
+/// above the published Q 1. A foreign Serializable statement taken before
+/// the Commit (q 1) reads RowId 1 Missing on its own thread there and after
+/// the Commit returns, and its transaction ends Rejected
+/// (SerializationConflict); a new transaction then reads (1, 7). The C+B
+/// form of C+A+B MCI03-V03: no A module is linked.
+#[test]
+fn mcb05_l06_publication_gap_old_snapshot_reads_missing() {
+    const WAIT: Duration = Duration::from_secs(10);
+    case("MCB05-L06", || {
+        let literal = Literal::load();
+        let oracle = Oracle::new();
+        with_fresh!(
+            oracle,
+            frames = 16,
+            |live, owner, flusher, status, undo, private, reader_private, core, fence, state| {
+                let (row_status, _) =
+                    create_table(live, owner, flusher, status, undo, private, true);
+                let (mut writer, reader, mut flush) = live.split();
+                let tx = writer
+                    .begin_row_transaction(
+                        owner,
+                        IsolationLevel::Serializable,
+                        &row_status,
+                        private,
+                        &mut flush,
+                    )
+                    .unwrap();
+                let view = writer.begin_statement(owner, &tx).unwrap();
+                let table = issue_table!(reader, owner, view, reader_private, flush, flusher);
+                let _ = settle!(writer, owner, view, table, private, flush, flusher);
+                let mut preflight = match writer
+                    .preflight_row(owner, &view, &table, private, &mut flush)
+                    .unwrap()
+                {
+                    RowPreflightStep::Ready(preflight) => preflight,
+                    RowPreflightStep::FlushRequired { .. } => panic!("settled sources"),
+                };
+                let plan = literal.plan(preflight.validation_lane().unwrap());
+                let mut reserved = done!(preflight.reserve(plan));
+                let proposal = literal.forward(reserved.producer_lane().unwrap());
+                let prepared = done!(reserved.prepare(proposal));
+                let applied = done!(prepared.apply());
+                assert_eq!(applied.into_parts().0.operation(), RowOperation::Forward);
+                assert!(writer.finish_statement(owner, view).is_ok());
+                let row = RowId::new(ROW).unwrap();
+                let mut b_private = boxed::<PRIVATE_BYTES>();
+                let cell = Mutex::new(&mut writer);
+                let mut q = 0;
+                std::thread::scope(|scope| {
+                    let (cell, reader) = (&cell, &reader);
+                    let (publish_in, publishing) = sync_channel(1);
+                    let (publish_go, publish_release) = sync_channel(1);
+                    hook::install(core, Point::BeforePublish, publish_in, publish_release);
+                    let (ready_tx, ready) = sync_channel(1);
+                    let (done_tx, done) = sync_channel::<()>(1);
+                    let b_private = &mut *b_private;
+                    let before = wal(state).len();
+                    let b = scope.spawn(move || {
+                        let mut o = core.try_owner(OwnerRole::Foreground).unwrap();
+                        let tx = read_only!(
+                            cell.lock().unwrap(),
+                            &mut o,
+                            IsolationLevel::Serializable,
+                            b_private
+                        );
+                        let view = cell.lock().unwrap().begin_statement(&mut o, &tx).unwrap();
+                        assert_eq!(view.q().unwrap(), 1);
+                        let table = match reader
+                            .catalog_statement_call(&mut o, &view)
+                            .unwrap()
+                            .finish_table(
+                                ObjectId::new(6).unwrap(),
+                                &mut Plan4ResidencyCursor::new(),
+                                b_private,
+                            )
+                            .unwrap()
+                        {
+                            TableStep::Table(table) => table,
+                            _ => panic!("resident committed T"),
+                        };
+                        ready_tx.send(()).unwrap();
+                        publishing.recv_timeout(WAIT).unwrap();
+                        let at_publish = hook::observe(core);
+                        assert!(wal(state).len() > before, "the Commit frame is durable");
+                        let during = gap_point(reader, &mut o, b_private, &view, &table, row);
+                        publish_go.send(Resume::Continue).unwrap();
+                        done.recv_timeout(WAIT).unwrap();
+                        let after = gap_point(reader, &mut o, b_private, &view, &table, row);
+                        let mut w = cell.lock().unwrap();
+                        assert!(w.finish_statement(&mut o, view).is_ok());
+                        let end = w.finish_read_only(&mut o, tx);
+                        assert!(matches!(
+                            end,
+                            Err(TransactionFinishError::Rejected(ref error))
+                                if matches!(error.cause, RetentionCause::SerializationConflict)
+                        ));
+                        o.check_idle().unwrap();
+                        (at_publish, during, after)
+                    });
+                    ready.recv_timeout(WAIT).unwrap();
+                    {
+                        let mut w = cell.lock().unwrap();
+                        q = match w.commit_row(owner, tx, private) {
+                            Ok(committed) => committed.q(),
+                            Err(_) => panic!("C's Commit of the literal row refused"),
+                        };
+                    }
+                    done_tx.send(()).unwrap();
+                    let (at_publish, during, after) = b.join().unwrap();
+                    println!(
+                        "MCB05_L06 at_publish={at_publish:?} during={during:?} after={after:?}"
+                    );
+                    assert!(matches!(during, Ok(None)), "{during:?}");
+                    assert!(matches!(after, Ok(None)), "{after:?}");
+                });
+                assert_eq!(q, 2);
+                let mut b_owner = core.try_owner(OwnerRole::Foreground).unwrap();
+                let b_owner = &mut b_owner;
+                let c = read_only!(
+                    writer,
+                    b_owner,
+                    IsolationLevel::Serializable,
+                    reader_private
+                );
+                let new = writer.begin_statement(b_owner, &c).unwrap();
+                assert_eq!(new.q().unwrap(), 2);
+                assert_eq!(
+                    point!(reader, b_owner, reader_private, &new, &table, ROW),
+                    Some(VALUE)
+                );
+                assert!(writer.finish_statement(b_owner, new).is_ok());
+                assert!(writer.finish_read_only(b_owner, c).is_ok());
+                b_owner.check_idle().unwrap();
+                assert!(!fence.is_fenced());
+            }
+        );
+    });
+}
+
+/// A point read of `row` on a thread's own owner and view (L06): Ok(value
+/// or None) or B's error. The sources are resident (no flush off the main
+/// thread).
+fn gap_point<'a, 'c, 's, W: WriterNamespace>(
+    reader: &crate::storage::disk::ReadPort<'_, 'a, 's, 'c, '_, '_, '_, '_, W>,
+    owner: &mut Owner<'c, 's>,
+    private: &mut [u8; PRIVATE_BYTES],
+    view: &crate::storage::disk::RowStatementView<'_, '_, 'a, 'c, 's>,
+    table: &crate::storage::disk::CheckedTable<'c, 's>,
+    row: RowId,
+) -> std::result::Result<Option<i64>, RowReadError> {
+    let mut residency = Plan4ResidencyCursor::new();
+    let mut output = [0xA5; 64];
+    match read_point_live(
+        ReadCall {
+            port: reader,
+            owner,
+            private,
+            residency: &mut residency,
+        },
+        view,
+        table,
+        row,
+        &mut output,
+        &Cancellation::default(),
+    )? {
+        ReadStep::Ready(PointRead::Found(copy)) => Ok(Some(int_of(&output, copy.len()))),
+        ReadStep::Ready(PointRead::Missing) => {
+            assert_eq!(output, [0xA5; 64]);
+            Ok(None)
+        }
+        ReadStep::FlushRequired { .. } => panic!("resident read sources"),
+    }
 }
 
 /// One MCB05-K case: C Begin and RowReserve, then the known-bad Forward
