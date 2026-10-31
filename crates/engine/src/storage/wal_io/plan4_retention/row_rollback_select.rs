@@ -87,17 +87,21 @@ impl<'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
         let job = job3::decode_job(&self.control.jobs()[ordinal], namespace).map_err(|_| bad())?;
         let handle = job.object().ok_or_else(bad)?;
         let pair = job.pair().ok_or_else(bad)?;
-        let slot = match self
-            .visibility
-            .ok_or_else(bad)?
-            .table_slot(handle)
-            .map_err(|e| RetentionError {
-                phase: RetentionPhase::Prepare,
-                effect: e.effect,
-                cause: RetentionCause::Visibility(e),
-            })? {
-            TableSlot::Published(slot) => slot,
-            _ => return Err(bad()),
+        let visibility = self.visibility.ok_or_else(bad)?;
+        let visibility_error = |e: VisibilityError| RetentionError {
+            phase: RetentionPhase::Prepare,
+            effect: e.effect,
+            cause: RetentionCause::Visibility(e),
+        };
+        // The closed recovered facade has no epoch lane: its CLR names the
+        // recovery sentinel (boundaries `#row-recovery-s6`).
+        let slot = if !visibility.epochs_active().map_err(visibility_error)? {
+            RECOVERY_TABLE_SLOT
+        } else {
+            match visibility.table_slot(handle).map_err(visibility_error)? {
+                TableSlot::Published(slot) => slot,
+                _ => return Err(bad()),
+            }
         };
         let allocator = self
             .pool

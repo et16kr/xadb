@@ -201,6 +201,20 @@ pub(in crate::storage) fn retention_replay_row_scope(
         retention_replay_bank(replay),
     )
 }
+/// The RejectInitialLosers census of the final canonical replay (boundaries
+/// `#row-recovery-s6`), at the same analysis position as the Row scope
+/// check above.
+pub(in crate::storage) fn retention_replay_losers(
+    profile: Profile,
+    replay: &[u8; RETENTION_REPLAY_BYTES],
+) -> ObservationResult<bool> {
+    history::row::losers_present(
+        profile,
+        &replay[..],
+        retention_replay_cells(replay),
+        retention_replay_bank(replay),
+    )
+}
 /// Test observation of the combined Profile3 closure over an accepted replay
 /// (S1-b H06); production reaches it only through seed and frame replay.
 #[cfg(test)]
@@ -751,6 +765,16 @@ pub(in crate::storage) enum RetentionRecoveryStep {
     CatalogAdvanced {
         job: JobSlotRef,
         operation: crate::storage::semantic_catalog::Operation,
+    },
+    /// A recovered Row cleanup group (boundaries `#row-recovery-s6`).
+    RowAdvanced {
+        job: JobSlotRef,
+        operation: crate::storage::semantic_row::Operation,
+    },
+    /// The selected Row loser's next undo is A's CLR: the recovered action
+    /// hands the CLR task to A's handler; the legacy step refuses it.
+    RowClrRequired {
+        actor: TxnRef,
     },
     FlushRequired {
         target: Plan4Target,

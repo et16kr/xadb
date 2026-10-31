@@ -2456,3 +2456,38 @@ Q01–Q08은 아래 설계로 독립 D2 검토를 수신해 채택했다. 앞선
 선택 검증은 S5R-R01..R08·C01..C03 및 MCB00-D13의 새 경로다. 빈 table·own/other actor·snapshot 경계·잘못된 Undo·stale/foreign candidate·retirement Busy·sequence overflow·OutputTooSmall·취소·FlushRequired 동일 snapshot 재시도·InstallationPending을 포함한다. 공유 경로가 바뀐 경우에만 관련 Catalog/visibility 회귀를 선택한다. 실행 전 입력·선택·source identity를 동결하고 실패를 보존한다. 이 착수 기록은 구현/실행 PASS가 아니다.
 
 S5 후속 D2 보완: `RowCandidate<'b>`는 원 visibility binding의 borrow lifetime을 가진다. page의 짧은 latch lifetime이나 operation의 mutable borrow에 묶지 않으므로 Status/Undo/copy 후속 호출은 가능하지만, candidate가 살아 있는 동안 원 binding을 해제·재bind할 수 없다. binding 주소만으로 재open을 구별하지 않는다. 현재 capture 검산은 원 lease identity/generation·단조 capture sequence·captured refs 존재 여부로 한다. 봉인된 candidate에 저장한 actual version/length를 operation에 중복 저장하지 않는다. source charge·공개 형식은 바꾸지 않는다.
+
+<a id="row-recovery-s6"></a>
+## XADB-MODULE-ROW-RECOVERY-001 — S6 C4 Row 복구 READY
+
+2026-10-31. main `8d5e48b`(S5 병합)에서 별도 branch `claude/project-thread-a7onu7`로 이어간다. 사용자 지시는 S6까지 구현하고 적당한 간격으로 commit한 뒤 코드 리뷰·시험을 거쳐 PR을 등록하는 것이다. S6는 [§7](#common-deliveries) C4 행의 공급이며 DEV3 최종 전수 인수가 아니다. 공개 wire·format 번호·cap·charge(short 65536, capsule 512, private 425984, Row charge 44304, A caller 6144/11520)는 바꾸지 않는다. 새 disk wire는 없다.
+
+**C4 진입 의무 결정(§7 2026-10-30 문단).** (1) 위험 수용을 택한다. 대상은 live page와 control은 서로 맞고 replay와만 다른 Reserve 설치 불일치(코드 결함)뿐이다. 그 결과는 S6 뒤에도 그 Forward·Cancel frame에서 분석이 `Retention(c)`·CallerMustResolve·database Unchanged·READY0으로 멈추는 fail-closed다. policy gate는 frame replay 뒤에 있으므로 replay할 수 없는 frame이 먼저 분석을 멈추고, 잘못된 READY나 page 변경은 생기지 않는다. (2)의 후보는 분석 상계에 약10.2–12KB를 더하거나(H·B′) A 호출 모양을 바꾼다(ii). S2W-R24의 재시작 기대는 새 entry `recover_with_rows(WithRowClr)`로 다시 돌려 같은 cause에서 멈춤을 확인한다.
+
+**Entry와 policy gate.** §6.7의 `RowRecoveryPolicy {WithRowClr, RejectInitialLosers}`와 `Plan4Recovery::recover_with_rows(policy)`를 공급한다. 원 recover 본문은 private `recover_with_policy(Option<policy>)`로 모은다. legacy `recover()`는 policy가 없으며, ROW-BEGIN-001의 임시 gate가 같은 위치·같은 실패 모양(Analysis/Unsupported·CallerMustResolve·database Unchanged·mutations0)의 **legacy Row scope 차단**이 된다. 그래서 S1–S5의 gate 시험은 legacy 차단의 회귀 시험으로 그대로 남는다. `RejectInitialLosers`는 같은 위치(canonical 전체 검산 뒤, SourceFacts·AnalysisSeal 직전)에서 final replay의 allocator Reserved entry0(ReservedInventory None), 두 scope의 RootReserved Job0, ATT 32행의 Active/Aborting 거래0을 요구한다. SystemPage-only·CatalogCreate Reserved도 거절하고 committed/aborted의 retained cleanup은 허용한다. `WithRowClr`는 loser를 거절하지 않는다. 통과한 entry만 private `RowRecoveryAdmission{policy, state_digest, source_facts_digest}`를 발급한다. `source_facts_digest`는 SourceFacts의 epoch/header_digest/prefix_digest/lsn/end/adopted_local을 그 순서로 해시한 값이다. admission은 AnalysisSeal 옆에서 RestoredRetention→RecoveryRetentionBinding→DiskSession의 recovery binding으로 소비 이동하며 복사본이나 공개 생성 함수는 없다. RestoredRetention을 만들 때 admission의 policy·state_digest·source_facts_digest를 원 entry의 policy·AnalysisSeal digest·실제 분석 SourceFacts의 digest와 대조한다. Row cleanup은 매 단계 `row_policy()`로 admission의 state_digest가 restored digest와 같음을 검산한 뒤에만 진행한다(첫 next_action만이 아니라 매 Row 단계). admission이 없는 binding(legacy)의 Row cell은 Row decode 전에 원 Unsupported 그대로다.
+
+**복구 진행 상태와 action.** `Plan4Recovered`의 phase/observation/waiting/ready를 `RecoveryProgressState` 한 값으로 옮긴다. 원 `step`은 유지하고 `next_action(owner, flusher)`을 더한다. **계약 편차 1:** `next_action`은 원 `step`처럼 flusher Owner를 받아 flush 계속을 스스로 수행하므로 `FlushRequired`를 반환하지 않는다(variant 생략). `RecoveryAction`은 `Progress`·`RowClr(RecoveryRowTask)`·`Ready`다. task는 `inner.split()`의 MutationPort, owner, private, progress를 disjoint 대여하고, 선택 때의 C draft cut(`RollbackCandidate`)과 terminal read gate·RowWrite source admission을 apply 성공까지 보유한다. **계약 편차 2:** `refs`(ReferenceLease/UndoPin)는 두지 않는다. 복구 facade는 READY 전에 foreground reader를 받지 않고 retirement도 같은 driver에서 순차이므로 live pin이 막는 경합이 없다. `PreparedRecoveryRow`·`RecoveryOwnedError{Before, Fatal}`·`RowRecoveryHandlerError{Source, Producer, Prepare, Apply}`는 frozen 모양이다. A의 `handle_recovered_clr(task)`는 lane→`produce_clr`→prepare→apply만 호출한다. Before는 같은 task를 돌려주고 Fatal은 원 fence를 남긴다. task가 apply 없이 버려지면 admission은 checked 반환되고 원 session은 fence된다.
+
+**복구 table 식별.** 복구에서는 epoch가 활성화 전이므로 `table_slot`이 Published를 줄 수 없다. Row CLR 선택은 epoch 비활성(=복구 인스턴스)일 때 `RowTableSource.slot`에 복구 표지(`u8::MAX`)를 쓰고, `check_table_slot`은 epoch가 비활성일 때만 그 표지를 받는다. table 자체는 typed read의 CatalogLeaf record 검산(`check_table_record`)과 producer의 table definition으로 인증한다. 복구에는 statement가 없으므로 read/write mask 등록이 없다.
+
+**선택 순서(C).** 원 `recovery_catalog_step`의 선택을 두 scope로 넓힌다. (1) allocator CancelReserved(기존). (2) RootReserved: Catalog는 기존 Cancel, Row는 C producer의 `Change::Cancel`(allocator·Root·RootJob page·Status·U 5 target). (3) ATT actor: Row actor가 Active 또는 AbortingStatement이면 full RollbackStart(원 `row_rollback_control`, 상태표의 "복구된 AbortingStatement→AbortingFull"), AbortingFull next Some이면 `RowClr` action(WithRowClr만, RejectInitialLosers에서는 Invariant), next None이면 AbortEnd. (4) root 정리: Row RootRetained는 그 actor의 현재 head U일 때만 Prune(allocator·Root·RootJob page·Status·U·RowLeaf와 proof TableAnchor·CatalogLeaf·H Undo, 8–9 target), Releasing은 cursor<3이면 ReleaseRole, 3이면 RootFree(allocator·Root·RootJob page·U 4 target). (5) TerminalReady는 TerminalFinish(allocator·Root·Terminal Jobs page·Status 4 target). (6) 남은 일이 없으면 기존 flush→VERIFY. 각 단계는 원 `progress_lifecycle`의 terminal read gate·source admission(RowProgress, 9-target 단계는 RowWrite) 안에서 준비·설치하며, 모든 producer 입력은 원 typed read의 before와 같음이 증명된 canonical replay arena에서 얻는다.
+
+**설치 승인.** Row Cancel·Prune·ReleaseRole·RootFree·TerminalFinish는 원 existing-group 설치 본문의 새 payload 종류 `RowRecovery`로만 설치한다. 그 종류는 복구 준비 함수만 만든다. Prune·RootFree·TerminalFinish는 live retirement intent 대신 **닫힌 복구 facade 검산**을 준비 전과 설치 직전에 수행한다: epoch 비활성, retirement marker0, 활성 snapshot0, 그 target(U 또는 actor)의 pin0, Prune은 committed q ≤ published Q. foreground reader가 있는 live Row 정리는 S6 공급이 아니며, 공급할 때는 retirement protocol을 써야 한다.
+
+**시험(선택 inventory).** 실행 전 입력·선택·source identity를 동결하고 실패를 보존한다.
+
+| ID | 내용 | 기대 |
+| --- | --- | --- |
+| S6R-M01 (MBC40-V03) | 실제 S3 Commit 1행·3행 뒤 재시작 | 두 policy 모두 Prune→ReleaseRole×3→RootFree→TerminalFinish→actual READY, Job 모두 Free, B 읽기가 committed 행을 봄, 다음 legacy 재시작도 READY |
+| S6R-M02 (MBC40-V04) | Reserve만 durable인 crash | WithRowClr: Cancel→RollbackStart→AbortEnd→TerminalFinish→READY. RejectInitialLosers: Analysis/Unsupported |
+| S6R-M03 (MBC40-V05·legacy 차단) | Active chain, committed Row DB | RejectInitialLosers는 Analysis/Unsupported·database Unchanged·mutations0·READY0. legacy recover는 committed Row DB도 같은 모양으로 거절 |
+| S6R-M04 (C+A loser) | 3행 Active chain crash | WithRowClr: A handler CLR×3→AbortEnd→보상 정리→READY, table 빈 결과 |
+| S6R-M04-S (C+A loser) | 2행 statement rollback 중 CLR1 뒤 crash | 복구된 AbortingStatement가 full RollbackStart→A handler CLR×1→AbortEnd→보상 정리2 root→READY, table 빈 결과 |
+| S6R-M05 (MBC40-V06) | CLR task의 잘못된 proposal | Before가 같은 task를 돌려주고 재시도 성공 |
+| S6R-M06 | S4 full abort·statement rollback 뒤 Commit | 보상 q0 root와 committed root 정리→READY |
+| S6R-M07 | 부분 복구 뒤 재장애(memory) | 새 process가 원 binding에서 나머지 chain을 선택해 READY, 적용된 LSN 재소비0 |
+| S6R-C01..C03 (MBC40-V07..09) | 복구 task·단계 census | memory/native W/File, 원 cap 안 |
+| MBC00-P03·N11 | compiler | disjoint borrow→A handler→next_action 재호출 성공, task 보유 중 next_action 거절 |
+| MBC40-N01..03·MCB05-N01..06 | native | committed READY 3PID, Reserved/CLR 중 재장애, no-loser negative 2PID |
+
+이 착수 기록은 구현/실행 PASS가 아니다.

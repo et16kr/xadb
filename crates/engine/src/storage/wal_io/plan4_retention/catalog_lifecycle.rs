@@ -656,6 +656,10 @@ pub(super) enum ExistingGroup<'p, 'i, 'c, 's> {
     /// A Row write group over the whole write target set (S2-b2: RowReserve;
     /// S2-c: its Forward; S2-d: its Cancel).
     RowWrite(&'p row::PreparedRowGroup<'i, 'c, 's, { row::ROW_WRITE_TARGETS }>),
+    /// A recovered Row cleanup group of the closed facade (boundaries
+    /// `#row-recovery-s6`): Cancel, Prune, ReleaseRole, RootFree and
+    /// TerminalFinish, built only by the recovered preparation.
+    RowRecovery(&'p row::PreparedRowGroup<'i, 'c, 's, { row::ROW_WRITE_TARGETS }>),
 }
 impl<'p, 'i, 'c, 's> ExistingGroup<'p, 'i, 'c, 's> {
     fn ordinary(self) -> bool {
@@ -671,6 +675,7 @@ impl<'p, 'i, 'c, 's> ExistingGroup<'p, 'i, 'c, 's> {
             ),
             Self::Row(prepared) => prepared.lifecycle(),
             Self::RowWrite(prepared) => prepared.row_write(),
+            Self::RowRecovery(prepared) => prepared.recovery(),
         }
     }
     fn check(
@@ -684,6 +689,7 @@ impl<'p, 'i, 'c, 's> ExistingGroup<'p, 'i, 'c, 's> {
             Self::Catalog(prepared) => prepared.check(owner, pool, control, prefix),
             Self::Row(prepared) => prepared.check(owner, pool, control, prefix),
             Self::RowWrite(prepared) => prepared.check(owner, pool, control, prefix),
+            Self::RowRecovery(prepared) => prepared.check(owner, pool, control, prefix),
         }
     }
     fn targets(self) -> &'p [TargetRequest] {
@@ -691,6 +697,7 @@ impl<'p, 'i, 'c, 's> ExistingGroup<'p, 'i, 'c, 's> {
             Self::Catalog(prepared) => prepared.targets(),
             Self::Row(prepared) => prepared.targets(),
             Self::RowWrite(prepared) => prepared.targets(),
+            Self::RowRecovery(prepared) => prepared.targets(),
         }
     }
     fn stamp(self, at: usize) -> Option<FrameStamp> {
@@ -698,6 +705,7 @@ impl<'p, 'i, 'c, 's> ExistingGroup<'p, 'i, 'c, 's> {
             Self::Catalog(prepared) => prepared.stamp(at),
             Self::Row(prepared) => prepared.stamp(at),
             Self::RowWrite(prepared) => prepared.stamp(at),
+            Self::RowRecovery(prepared) => prepared.stamp(at),
         }
     }
     fn after(self, at: usize) -> Option<&'i [u8; PAGE_BYTES]> {
@@ -705,6 +713,7 @@ impl<'p, 'i, 'c, 's> ExistingGroup<'p, 'i, 'c, 's> {
             Self::Catalog(prepared) => prepared.after(at),
             Self::Row(prepared) => prepared.after(at),
             Self::RowWrite(prepared) => prepared.after(at),
+            Self::RowRecovery(prepared) => prepared.after(at),
         }
     }
     fn stage_parts(
@@ -722,6 +731,7 @@ impl<'p, 'i, 'c, 's> ExistingGroup<'p, 'i, 'c, 's> {
             ),
             Self::Row(prepared) => prepared.stage_parts(),
             Self::RowWrite(prepared) => prepared.stage_parts(),
+            Self::RowRecovery(prepared) => prepared.stage_parts(),
         }
     }
     fn mark_staged(
@@ -733,6 +743,7 @@ impl<'p, 'i, 'c, 's> ExistingGroup<'p, 'i, 'c, 's> {
             Self::Catalog(prepared) => catalog_mark_staged(prepared, control, requirement),
             Self::Row(prepared) => prepared.mark_staged(control, requirement),
             Self::RowWrite(prepared) => prepared.mark_staged(control, requirement),
+            Self::RowRecovery(prepared) => prepared.mark_staged(control, requirement),
         }
     }
     fn apply_control(
@@ -747,6 +758,7 @@ impl<'p, 'i, 'c, 's> ExistingGroup<'p, 'i, 'c, 's> {
             }
             Self::Row(prepared) => prepared.apply_control(control, profile, requirement),
             Self::RowWrite(prepared) => prepared.apply_control(control, profile, requirement),
+            Self::RowRecovery(prepared) => prepared.apply_control(control, profile, requirement),
         }
     }
 }

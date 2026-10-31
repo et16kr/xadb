@@ -1,5 +1,7 @@
 # XADB 개발 문서
 
+2026-10-31 [S6 C4 Row 복구 READY](evidence/module-independence-survey-20261026.md#s6-row-recovery): S5가 병합된 main `8d5e48b`의 별도 branch `claude/project-thread-a7onu7`에서 Row 복구 policy gate, 닫힌 facade의 Row 정리, A의 복구 CLR task를 구현했다. 최종 commit ELF에서 memory 43개 중 42개, native 9 case·21 process, compiler 4건이 통과했다. 남은 1개는 main에도 있는 30초 시간 한도 실패다. 독립 D1/D2 리뷰, live Row 정리 retirement, DEV3 최종 인수, 전체 M4/M5는 미완료다.
+
 2026-10-31 [S4 live Row rollback](evidence/module-independence-survey-20261026.md#s4-row-rollback): main `139a05f4`의 별도 branch `codex/s4-row-rollback`에서 statement/full rollback·원 CLR/receipt·flusher/pin 인계를 구현했다. source별 선택20개·변경 compiler1개·native2process를 검증했으며 최종 독립 D1/D2 ACCEPT·필수 수정0을 확인했다. S5/C4/S6·전체 M4/M5는 미완료다.
 
 2026-10-31 [S3 Row Commit](evidence/module-independence-survey-20261026.md#s3-row-commit): 클라우드 별도 branch에서 실제 Commit·논리 table epoch·capsule 종료를 연결했다. source별 선택 실행·native 두 process를 확인하고 원 실패를 보존했다. 최종 독립 D1/D2 ACCEPT·필수 수정0이다. S4–S6·전체 M4/M5는 미완료다.

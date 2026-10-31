@@ -265,7 +265,7 @@ DISK는 물리 저장 방식만 분리한다. 공통 RowUID, snapshot, catalog, 
 
 ## 7. 빌드와 검사 진입점
 
-현재 기준은 Rust 1.95.0, edition 2024, `x86_64-unknown-linux-gnu`다. 실제 검사 스크립트·문서 검증에는 Python 3.11 이상을 사용한다. Rust dependency는 `Cargo.lock`, toolchain은 `rust-toolchain.toml`로 고정한다. 현재 `Cargo.toml`은 사용자 정의 profile 없이 Cargo 기본 dev/release profile을 사용한다. 이 플랫폼을 확인했다는 것과 Linux 배포판·kernel·filesystem·장치 조합 전체를 제품 지원한다는 것은 다르다.
+현재 기준은 Rust 1.95.0, edition 2024, `x86_64-unknown-linux-gnu`다. 실제 검사 스크립트·문서 검증에는 Python 3.11 이상을 사용한다. Rust dependency는 `Cargo.lock`, toolchain은 `rust-toolchain.toml`로 고정한다. `Cargo.toml`은 Cargo 기본 dev/release profile을 쓰되, 2026-10-31부터 dev profile에서 외부 dependency `sha2` 하나만 `opt-level = 3`으로 build한다. 복구 검증은 Row base 2MiB와 page마다 SHA-256을 다시 계산하는데, opt-level 0의 `sha2`가 debug 시험 시간의 약 2/3를 차지해 30초 case 한도를 넘겼다. 제품 의미·workspace crate의 opt-level·release profile·`Cargo.lock`은 바뀌지 않는다. 대안이던 시험 한도 완화는 [개발 정책](development-policy.md)의 사후 완화 금지에, digest cache는 새 불변식이 필요한 복잡화에 해당해 택하지 않았다. 원인과 측정은 [기존 실패 디버깅 §5](../evidence/main-preexisting-failures-20261030.md#debug-hash-timeout)에 있다. 다른 dependency를 추가로 최적화하거나 release profile을 정할 때 이 결정을 다시 검토한다. 이 플랫폼을 확인했다는 것과 Linux 배포판·kernel·filesystem·장치 조합 전체를 제품 지원한다는 것은 다르다.
 
 | ID | 명령 | 상태 / 실행 근거 | 출력 |
 | --- | --- | --- | --- |

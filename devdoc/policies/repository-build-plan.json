@@ -69,7 +69,16 @@
     "rust_dependencies": "Cargo.lock",
     "workspace_publish": false,
     "unsafe_code": "forbid",
-    "custom_cargo_profiles_configured": false,
+    "custom_cargo_profiles_configured": true,
+    "custom_cargo_profiles": [
+      {
+        "profile": "dev",
+        "package": "sha2",
+        "opt-level": 3,
+        "reason": "debug recovery validation hashing; workspace crates and release profile unchanged",
+        "evidence_ref": "main-preexisting-failures-20261030.md#debug-hash-timeout"
+      }
+    ],
     "remote_ci_execution": "NOT_RUN",
     "protected_ci_qualification": "NOT_RUN"
   },
@@ -9562,5 +9571,35 @@
     "source_roots_changed": false,
     "remaining_supply": "Committed-tip pre-push gate and PR registration; S6 READY remains separate.",
     "review": "Independent D1/D2 ACCEPT; required changes 0; source-specific receipts verified."
+  },
+  "dev3_module_s6_row_recovery": {
+    "status": "LOCAL_VERIFIED_SELF_REVIEWED",
+    "contract_ref": "dev3-module-boundaries.md#row-recovery-s6",
+    "evidence_ref": "module-independence-survey-20261026.md#s6-row-recovery",
+    "baseline_commit": "8d5e48b",
+    "branch": "claude/project-thread-a7onu7",
+    "paths": [
+      "crates/engine/src/storage/wal_io/plan4_recovery/row_action.rs",
+      "crates/engine/src/storage/wal_io/plan4_apply/row/recovery.rs",
+      "crates/engine/src/storage/row/insert/driver/recovered.rs",
+      "crates/engine/src/storage/wal_io/plan4_retention/row_start/recovery.rs",
+      "crates/engine/src/storage/wal_io/plan4_retention/recovery/catalog.rs",
+      "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_recovery.rs",
+      "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_recovery/native.rs",
+      "scripts/check_dev3_s6_native.py",
+      "tests/fixtures/dev3-module-c3/row-recovery"
+    ],
+    "scope": "C4 Row recovery READY: recover_with_rows(WithRowClr|RejectInitialLosers) admission over the original analysis; closed-facade Row Cancel/RollbackStart/AbortEnd/Prune/ReleaseRole/RootFree/TerminalFinish via the RowRecovery install kind; next_action with RecoveryRowTask handed to A's handle_recovered_clr; legacy recover keeps the Row Unsupported gate",
+    "validation": "final ELF on d965611: memory 42/43 PASS (S6 18 + changed shared regressions 25; commit_preparation_unwind_recovers_original_prefix FAILs its 30 s bound on main 8d5e48b too); native 9 cases / 21 processes PASS; compiler baseline+P03+N11+N11-held PASS; development failures retained; self-review only, no independent D1/D2",
+    "remaining_supply": "Independent D1/D2 review; live Row cleanup with foreground readers via the retirement protocol; DEV3 final acceptance; full M4/M5",
+    "source_roots_changed": false,
+    "rollback": "Revert d965611, 34af66a, 192c900, 32de380, 7f45994 in reverse order; no published format or dependency changed",
+    "implementation_commits": [
+      "32de380",
+      "192c900",
+      "34af66a"
+    ],
+    "receipt_sha256": "c712f34e470fbfdfb24ee8444d8bf9fe3a364d15907027752e8f6113e149b0b0",
+    "artifact_manifest_sha256": "aa61e28cf001b3f14a82175e587f26eb4ee06d19ac84e8502e3a505f52c6fbbf"
   }
 }

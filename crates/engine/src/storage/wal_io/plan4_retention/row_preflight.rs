@@ -11,7 +11,7 @@
 //! registration, so a refused or `FlushRequired` preflight registers nothing.
 use super::super::super::lookup_load::RetentionLoadPort as _;
 use super::super::super::row::{RowPreflightCut, RowRoleMap};
-use super::super::super::visibility::TableSlot;
+use super::super::super::visibility::{RECOVERY_TABLE_SLOT, TableSlot};
 use super::*;
 use crate::storage::{
     anchor::{self, TreeKind},
@@ -566,13 +566,24 @@ impl<'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
         let visibility = self
             .visibility
             .ok_or_else(|| unchanged(RetentionPhase::Prepare, RetentionCause::BindingMismatch))?;
-        let slot = visibility
-            .table_slot(table.handle)
-            .map_err(|e| RetentionError {
-                phase: RetentionPhase::Census,
-                effect: e.effect,
-                cause: RetentionCause::Visibility(e),
-            })?;
+        let census = |e: VisibilityError| RetentionError {
+            phase: RetentionPhase::Census,
+            effect: e.effect,
+            cause: RetentionCause::Visibility(e),
+        };
+        // Only the closed recovered facade (no epoch lane) issues the
+        // recovery sentinel, and only it accepts one.
+        if !visibility.epochs_active().map_err(census)? {
+            if table.slot != RECOVERY_TABLE_SLOT {
+                return Err(fatal(
+                    storage,
+                    RetentionPhase::Census,
+                    RetentionCause::Invariant,
+                ));
+            }
+            return Ok(());
+        }
+        let slot = visibility.table_slot(table.handle).map_err(census)?;
         if !matches!(slot, TableSlot::Published(actual) if actual == table.slot) {
             return Err(fatal(
                 storage,

@@ -3,7 +3,10 @@
 //! migration. Row producer data types carry observations and untrusted
 //! candidates; their actual source/reservation/install adapters are pending.
 
-pub(crate) use super::super::plan4_recovery::Plan4Recovered;
+pub(crate) use super::super::plan4_recovery::{
+    Plan4Recovered, Plan4RecoveryError, Plan4RecoveryProgress, PreparedRecoveryRow, RecoveryAction,
+    RecoveryOwnedError, RecoveryRowTask,
+};
 use super::{Plan4Page, Plan4Pages, Plan4ResidencyCursor, Plan4Target};
 use crate::storage::session_fence::SessionFence;
 use crate::{
@@ -115,6 +118,10 @@ pub(crate) use row::{
     RowMutationObservation, RowOwnedError, RowPreflightStep, RowReadOperation, RowRollback,
     RowRollbackDone, RowRollbackTask, RowSearchPage, row_write_charge,
 };
+#[allow(unused_imports)]
+pub(in crate::storage) use row::{PreparedRecoveredClr, RecoveredClr, RecoveredClrStep};
+#[cfg(test)]
+pub(in crate::storage) use row::{recovered_clr_bytes, recovered_row_census};
 
 #[allow(unused_imports)]
 pub(crate) use transaction::catalog::CatalogCommit;
@@ -212,8 +219,8 @@ pub(crate) use read::{
 pub(in crate::storage) use recovery::{
     RetentionFrameObservation, RetentionRecoveryStep, RetentionReplayCursor,
     observe_recovery_frame, retention_replay_bank, retention_replay_cells, retention_replay_digest,
-    retention_replay_image, retention_replay_provenance, retention_replay_row_scope,
-    seed_recovery_replay,
+    retention_replay_image, retention_replay_losers, retention_replay_provenance,
+    retention_replay_row_scope, seed_recovery_replay,
 };
 #[cfg(test)]
 pub(in crate::storage) use recovery::{retention_ledger_check, retention_replay_closure};

@@ -42,6 +42,15 @@
       "checks": "preflight with the flusher (FlushRequired holds nothing), prepare Before/reopen, second prepare, apply Before/reopen, cancel and the same private loan"
     },
     {
+      "id": "MBC00-P03",
+      "path": "MBC00-P03.rs",
+      "sha256": "858ad71cf3f7f8f150b8c0f79253384b1fbbdc7767d6728513d05da4a24d6b68",
+      "bytes": 2581,
+      "expected_code": null,
+      "primary_line": null,
+      "checks": "recovered next_action lends port, Owner, private lane and progress disjointly to one RowClr task; A's handle_recovered_clr consumes it, a Before returns the same task for retry, and the same facade's next_action is called again until READY (boundaries #row-recovery-s6)"
+    },
+    {
       "id": "MBC00-P04",
       "path": "MBC00-P04.rs",
       "sha256": "42262588cceb81db902239a2a8ba5fd63cb384281d8ec4b2cb81dd2c893b77a8",
@@ -159,6 +168,24 @@
       "checks": "private loan cannot be touched while a PreparedRow holds it"
     },
     {
+      "id": "MBC00-N11",
+      "path": "MBC00-N11.rs",
+      "sha256": "e1fc697dec40e2eed2a24d8ddc46181abfa9159d7bc04bf99fd536ec2090ece6",
+      "bytes": 556,
+      "expected_code": "E0382",
+      "primary_line": 7,
+      "checks": "a RecoveryRowTask is consumed by A's handler and cannot be handled twice"
+    },
+    {
+      "id": "MBC00-N11-held",
+      "path": "MBC00-N11-held.rs",
+      "sha256": "7ab469c9fd3325f28b3b03493e54adaa901cc87bcba3548b0e98f2c96357a2d3",
+      "bytes": 450,
+      "expected_code": "E0499",
+      "primary_line": 5,
+      "checks": "while a RecoveryRowTask lives the recovered facade and its Owner stay borrowed: no second next_action"
+    },
+    {
       "id": "MBC00-N12",
       "path": "MBC00-N12.rs",
       "sha256": "a860f91b8daa7906a28068c196f2f0884f1d62d73a482eb99ad312f32361ea8f",
@@ -219,16 +246,6 @@
       "note": "read and write keys of one pair are exclusive; existing frozen input, not re-run"
     }
   ],
-  "deferred_to_C4": [
-    {
-      "id": "MBC00-P03",
-      "reason": "recovery next_action/RecoveryRowTask needs the Plan4Recovered RecoveryProgressState split"
-    },
-    {
-      "id": "MBC00-N11",
-      "reason": "RowRecoveryPolicy/recover_with_rows is supplied with C4"
-    }
-  ],
   "runs": [
     {
       "run": "r1",
@@ -261,6 +278,16 @@
         "S2W-N01"
       ],
       "reason": "S2-0 Row write amendment: preflight_row takes the flusher and returns RowPreflightStep; RowProducerLane::parts returns the A scratch as its 8th part. The runs above used the earlier inputs and are not re-read as runs of these."
+    },
+    {
+      "unit": "S6",
+      "changed": [],
+      "added": [
+        "MBC00-P03",
+        "MBC00-N11",
+        "MBC00-N11-held"
+      ],
+      "reason": "C4 Row recovery READY (XADB-MODULE-ROW-RECOVERY-001) supplies RowRecoveryPolicy/recover_with_rows, next_action and RecoveryRowTask, so the two cases deferred to C4 are frozen; N11's held-borrow arm is its own case. Their runs are recorded in tests/fixtures/dev3-module-c3/row-recovery/execution-receipts.json."
     }
   ]
 }

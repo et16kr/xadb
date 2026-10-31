@@ -32,9 +32,12 @@ const ROW_TARGETS: usize = 4;
 
 #[path = "row_start/commit.rs"]
 mod commit;
+#[path = "row_start/recovery.rs"]
+mod row_recovery;
 #[cfg(test)]
 pub(in super::super::super::super) use commit::RowCommitImage;
 pub(in super::super::super::super) use commit::RowCommitSummary;
+pub(in super::super::super::super) use row_recovery::recovery_predecessor;
 /// Most targets of a Row write group: the whole write target set T (S2-0 Row
 /// write amendment §1 "residency", at most nine after physical
 /// de-duplication).

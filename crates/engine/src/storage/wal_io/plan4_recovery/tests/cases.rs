@@ -303,7 +303,10 @@ fn recovery_lifecycle() {
                         observations::remaining(&oracle, stop)
                     );
                     if case == 2 {
-                        assert_eq!(closed.phase, Plan4RecoveryPhase::CancelReservedFirst);
+                        assert_eq!(
+                            closed.progress.phase,
+                            Plan4RecoveryPhase::CancelReservedFirst
+                        );
                     }
                     finish_closed(&mut closed, &mut owner, &mut flusher);
                     observations::bank(

@@ -33,6 +33,7 @@ use foundation::error::Effect;
 use std::convert::Infallible;
 
 pub(in crate::storage) mod live;
+pub(in crate::storage) mod recovered;
 #[cfg(test)]
 mod tests;
 

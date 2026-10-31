@@ -22,3 +22,10 @@ transport = { package = "xadb-transport", path = "crates/transport" }
 
 [workspace.lints.rust]
 unsafe_code = "forbid"
+
+# Debug builds only: optimize the SHA-256 dependency. Recovery validation
+# hashes whole Row bases and pages; at opt-level 0 the hash dominated debug
+# recovery cases. Workspace crates keep opt-level 0 and the release profile is
+# unchanged. See repository-build-plan.md#section-9.
+[profile.dev.package.sha2]
+opt-level = 3

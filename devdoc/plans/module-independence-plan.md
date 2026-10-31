@@ -1,5 +1,7 @@
 # XADB 모듈 독립 개발 구조 전환 작업 계획
 
+2026-10-31 [S6 C4 Row 복구 READY](../evidence/module-independence-survey-20261026.md#s6-row-recovery): S5가 병합된 main `8d5e48b`의 별도 branch `claude/project-thread-a7onu7`에서 Row 복구 policy gate, 닫힌 facade의 Row 정리, A의 복구 CLR task를 구현했다. 최종 commit ELF에서 memory 42/43, native 9 case, compiler 4건이 통과했다. 남은 1개는 main에도 있는 30초 시간 한도 실패다. C5 합류 adapter와 M5 인수, 독립 D1/D2 리뷰는 남았다.
+
 2026-10-31 [S5 Row 읽기 구현·선택 검증](../evidence/module-independence-survey-20261026.md#s5-row-read-completion): 원 Row source와 B point/cursor 연결, 실제 native 읽기 및 전체 source census를 검증했다. 최종 증거 리뷰·pre-push gate·PR 등록을 마무리하며 S6 READY·전체 M4/M5·DEV3 최종 전수는 별도다.
 
 2026-10-31 [S4 live Row rollback](../evidence/module-independence-survey-20261026.md#s4-row-rollback): main `139a05f4`의 별도 branch `codex/s4-row-rollback`에서 statement/full rollback·원 CLR/receipt·flusher/pin 인계를 구현했다. source별 선택20개·변경 compiler1개·native2process를 검증했으며 최종 독립 D1/D2 ACCEPT·필수 수정0을 확인했다. S5/C4/S6·전체 M4/M5는 미완료다.

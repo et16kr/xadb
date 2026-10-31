@@ -71,6 +71,40 @@ pub(super) fn rejected(
     drop(failed);
     assert_closed(state);
 }
+/// `rejected` through `recover_with_rows(policy)`: the same refusal shape
+/// (S6: S2W-R24's restart stops at the same cause under WithRowClr).
+pub(super) fn rejected_with_rows(
+    directory: &port::Directory,
+    state: &State,
+    policy: super::super::RowRecoveryPolicy,
+    check: impl FnOnce(&Plan4RecoveryError, &Plan4RecoveryObservation),
+) {
+    let mut maintenance = boxed::<12_582_912>();
+    let mut dwb = boxed::<4_194_304>();
+    let mut slot = boxed::<1_048_576>();
+    let failed = match Plan4Recovery::acquire(
+        directory,
+        Some(namespace()),
+        &mut maintenance,
+        &mut dwb,
+        &mut slot,
+    ) {
+        Err(Plan4RecoveryAcquireFailure::Acquired(failed)) => failed,
+        Err(Plan4RecoveryAcquireFailure::Before { error, .. }) => {
+            panic!("unexpected prelease error: {error:?}")
+        }
+        Ok(owner) => match owner.recover_with_rows(policy) {
+            Err(failed) => failed,
+            Ok(_) => panic!("negative recovery input succeeded under {policy:?}"),
+        },
+    };
+    assert_eq!(failed.error().effect, Effect::CallerMustResolve);
+    assert!(failed.error().lease_acquired);
+    assert!(failed.owner.fence.is_fenced());
+    check(failed.error(), failed.observation());
+    drop(failed);
+    assert_closed(state);
+}
 pub(super) fn unchanged_error(
     error: &Plan4RecoveryError,
     observation: &Plan4RecoveryObservation,

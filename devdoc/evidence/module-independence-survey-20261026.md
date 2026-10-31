@@ -5185,3 +5185,51 @@ S5는 아직 PARTIAL이다. retirement 원자 거절·손상 Undo 등 남은 오
 이전 중간 checkpoint의 PARTIAL 및 잔여 목록은 당시 상태로 보존하며 이 최종 기록이 S5 상태를 갱신한다. 전체 census는34524≤34570B, native 실제 읽기는409→409mutations다. 원 wire·cap·charge·공개 API 변경0이며 일반 SQL 연결·S6 READY·전체 M4/M5·DEV3 최종 전수 인수는 별도 미완료다. D1/D2 독립 코드 검토는 필수 수정0·시험 영수증/문서 확인 조건부 수용이며 최종 증거 검토와 pre-push gate/PR 등록은 다음 기록으로 확정한다.
 
 최종 D1/D2 증거 리뷰는 **ACCEPT·남은 blocker0**이다. 독립 `/root/s5_review`가 receipts의 모든 artifact SHA-256 대조·불일치0, r13/r14 혼합 PASS/FAIL 보존, r15 manifest와 현재 crates 일치, c1/native2 이후 production 변경0을 확인했다. 원 판정은 `/workspace/s5-evidence/review-final.txt`에 보존한다. runtime target/ELF 약2.58GB는 hash/결과 기록 후 삭제했고 `/workspace/s5-evidence/final-runtime-cleanup.json`에 기록했다. 원 로그·실패·namespace fixture는 삭제하지 않았다. S5 구현·검증·독립 리뷰 완료이며 commit tip의 push gate와 PR 등록을 진행한다.
+
+
+<a id="s6-row-recovery"></a>
+## S6 C4 Row 복구 READY — 별도 branch와 source별 검증
+
+2026-10-31. 사용자 지시에 따라 S5가 병합된 main `8d5e48b`에서 `claude/project-thread-a7onu7`을 만들었다. 계약 `7f45994`, policy gate·닫힌 facade Row 정리 `32de380`, 복구 action·task·A handler와 시험 `192c900`, 리뷰 반영 `34af66a`, 시험 inventory 동결 `d965611`을 단계별로 commit했다. [S6 계약](../contracts/dev3-module-boundaries.md#row-recovery-s6)(XADB-MODULE-ROW-RECOVERY-001)을 따른다. 공개 wire·format 번호·cap·charge는 바꾸지 않았다. DEV3 최종 전수 인수, live Row 정리의 retirement protocol, 전체 M4/M5는 미완료다.
+
+### 실제 공급
+
+`recover_with_rows(policy)`가 원 recover 본문을 policy와 함께 실행한다. legacy `recover()`는 기존 Analysis/Unsupported gate를 그대로 유지한다. RejectInitialLosers는 canonical 전체 검산 뒤 같은 위치에서 allocator Reserved, 두 scope의 RootReserved, Active/Aborting 거래가 없음을 final replay로 확인한다. 통과한 entry만 `RowRecoveryAdmission`을 발급한다. 이 admission은 RestoredRetention을 만들 때 원 policy·AnalysisSeal digest·실제 분석 SourceFacts digest와 대조된다. 닫힌 facade의 Row 단계는 매번 `row_policy()`로 restored digest를 다시 확인한다. admission이 없는 legacy binding은 Row cell을 decode하기 전에 원 Unsupported를 반환한다.
+
+원 복구 선택을 Row scope로 넓혔다. 순서는 Row Cancel, Active·AbortingStatement의 full RollbackStart, AbortingFull의 CLR(A의 task), AbortEnd, head 순서 Prune, ReleaseRole, RootFree, TerminalFinish다. 설치는 원 existing-group 본문의 새 payload `RowRecovery`로만 한다. Prune·RootFree·TerminalFinish는 설치 전후에 닫힌 facade 검산(epoch 비활성, retirement marker0, 활성 snapshot0, 대상 pin0, Prune q ≤ published Q)을 거친다. `next_action`은 `Progress`·`RowClr(RecoveryRowTask)`·`Ready`를 돌려준다. task는 원 MutationPort·Owner·private loan·진행 상태를 disjoint 대여하고 terminal gate와 RowWrite source admission을 apply까지 보유한다. A의 `handle_recovered_clr`는 lane→produce→prepare→apply만 호출한다. Before는 같은 task를 돌려주고, apply 없이 버린 task는 admission을 checked 반환한 뒤 fence한다. 계약 편차 2건(flush 계속은 `next_action`이 직접 수행, 복구 task에는 ReferenceLease/UndoPin 없음)과 복구 table 표지 `u8::MAX`는 계약에 기록했다. 표지가 실제 epoch row(32개)와 겹치지 않음을 const assertion으로 확인한다.
+
+### 선택 실행과 원 실패
+
+[동결 inventory](../../tests/fixtures/dev3-module-c3/row-recovery/test-inventory.json)(SHA-256 `32406b3c207d25595b1d3c7541fe8f59d394d952a87e8b81aeddad9f61d42718`)는 S6 선택 18개, 변경 공유 경로의 회귀 25개, native 9 case, compiler 4건이다. [source별 receipts](../../tests/fixtures/dev3-module-c3/row-recovery/execution-receipts.json)는 각 실행의 source manifest·ELF·input·plan·로그 hash를 보존한다. 원 plan·로그는 `/mnt/project-files/module-independence-20261029/artifacts/module-s6-20261031/`에 있다(`manifest-all.sha256` 370개 파일). 이 manifest 파일의 SHA-256은 `aa61e28cf001b3f14a82175e587f26eb4ee06d19ac84e8502e3a505f52c6fbbf`이다. ELF와 native namespace image는 hash를 기록한 뒤 보존하지 않는다. 무변경 하위 wrapper와 workspace 전체 시험은 실행하지 않았다. 각 선택 시험은 시험 하나를 단일 thread로 실행했다.
+
+| 실행 | 원 결과·후속 범위 |
+| --- | --- |
+| dev1–dev7 | M01/M02 초기 실패: READY 인계 뒤 fence 검사, CancelReservedFirst Invariant, 30초 case 한도, READY 뒤 B 준비의 MissingTarget. 원인을 고친 뒤 후속 실행 |
+| dev8, c1 | M01 4개·M02 2개·M03 **7 PASS** |
+| d1, d2 | M04·M05·M06 2개 PASS. M07은 새 epoch에서 source_end를 잘못 기대해 FAIL |
+| e1, f1 | e1 M07은 memory port의 WAL 이름 허용(3 epoch)에서 FAIL, M08 PASS. M07 기대를 source_lsn +2(24→26)로 고친 f1 PASS |
+| g1 | 변경한 S2W-R24 PASS |
+| n1, n2(콘솔 기록만) | n1은 snapshot 16 file 한도에서 FAIL했다(실제 18–20 file). n2는 RejectInitialLosers 대신 legacy 재진입을 기대해 FAIL했다(B의 읽기가 Row 이력을 남김). 한도를 24 file/48 MiB로, 재진입을 RejectInitialLosers로 고침 |
+| n3 | native 9 case **PASS** |
+| p1, p2 | p1 N11/N11-held는 생략한 lifetime의 추가 진단으로 FAIL. 이름 있는 lifetime으로 고친 p2 **PASS**. p1 P03·baseline PASS |
+| h1 | 리뷰 반영 뒤 새 M04-S, 영향받은 M02-R/M03/M08 **4 PASS** |
+| m1 (최종, `d965611`) | **43 중 40 PASS**. recovery_source 2개는 `XADB_PLAN4_RECOVERY_*` identity 누락 harness FAIL. commit_preparation_unwind는 기능 검산 뒤 30초 case 한도(43.64초) FAIL |
+| m2 | harness identity만 보완(문서 미commit 수정만 다른 source, 같은 ELF), recovery_source 2 **PASS** |
+| m3 (`d965611`) | recovery_source 2 **PASS**, commit_preparation_unwind는 41.82초로 다시 FAIL |
+| b1 (main `8d5e48b`) | 같은 unwind selector가 같은 30초 한도에서 41.6초로 FAIL. main에도 있는 기존 시간 실패이므로 별도 thread 처리로 넘김 |
+| n1 (최종) | native 9 case·21 process **PASS** |
+| p1 (최종) | `d965611` export에서 baseline, P03, N11(E0382·7행), N11-held(E0499·5행) **4 PASS** |
+
+최종 ELF는 `05bf2d6d1e57791cd60908574d23d6f6bd894f006c01200cc177110ceac8ee30`, source manifest는 `9b13aa871809fc0f7f2bcdd600ca939a58cad65734118a2119e00b48af26e104`, input은 inventory hash다. 최종 selector 43개 중 42개가 현재 PASS다. 원 실패와 harness 실패는 덮지 않는다. `recovery_closure`·`recovery_lifecycle`·`recovery_binding`은 main과 S2–S5 base 모두에서 복구 코드 전의 `support.rs:260`에서 실패하므로 선택하지 않았다.
+
+S6 memory 시간은 M01 1행 약 51초, 3행 약 105초, M04 110초, M06-S 130초다. debug ELF의 닫힌 step은 history 전체를 검산해 1회 약 1.5초가 걸린다. 그래서 READY 재시작을 포함하는 case의 한도를 240초로 정했다. 제품 지연 주장이 아니다. trace는 M04가 1+3+1+12+1, M04-S가 1+1+1+8+1, M06-S가 1+2+16+1, M06-A가 1+12+1이다. M07은 첫 process가 CLR1 뒤 멈추고, 새 process가 원 binding에서 나머지 CLR2를 선택해 READY에 도달했다. source_lsn은 24에서 26이 된다.
+
+### 자원·native 경계
+
+memory와 실제 계측 native Writer 모두 Row charge 44304B·short 65536B 안이다. 최대 호출 지점은 recovery.cleanup 41248B(frame 1824 + body 39424)다. 그 밖에 control 39086, select 38940, CLR apply 37494, prepare 36966, lane 33481(A handler 보유 5496 포함), A CLR producer 24756B다. shared는 memory 20328B, native 20336B다. flush 계속은 52988/52996B이며 short 안이다. 닫힌 facade는 17288B로 기존 필드 합 17283B에 정렬만 더한 값이다. progress는 232B, task는 608B, prepared는 688B이며 heap을 쓰지 않는다. 이 값은 Rust source-value/carrier 상계이며 RSS나 실측 stack이 아니다.
+
+native의 produce process는 memory writer의 실제 durable image를 native namespace에 써서 crash 지점으로 삼는다(fsync). 이후 각 restart process는 native Writer/File 위에서 실제 복구 entry를 실행한다. MBC40-N01은 READY(trace7, B가 7을 읽음) 뒤 RejectInitialLosers 재진입이 trace2로 READY다. N02는 복구 Cancel 뒤 crash하고, 새 process가 trace3으로 READY다. N03은 CLR1 뒤 crash하고, 새 process가 CLR2와 trace17로 READY이며 B는 3행 모두 Missing을 읽는다. MCB05-N01..06은 RejectInitialLosers가 거절하고 파일 hash가 그대로다. restart process 12개 모두 handles0·peak3·FD peak6이다. 전원 장애 인수는 아니다.
+
+### 리뷰와 되돌림
+
+자체 diff 리뷰의 10개 지적을 분류했다. admission SourceFacts digest를 0이 아님만 확인하던 부분을 실제 digest 대조로 강화했다. legacy Row 거절 원인(Unsupported)을 decode 전으로 복원했다. 사용하지 않는 `Selected::row()`를 제거하고, 표지 충돌을 정적으로 검사한다. 시험이 없던 복구 AbortingStatement 경로에는 S6R-M04-S를 추가했다. flush 분기의 release 오류는 원 `failed`가 이미 fence하고 `bound_error`가 Unchanged가 아닌 효과를 fence하므로 바꾸지 않았다. 준비 본문 중복과 O(64²) head 탐색은 동작 변경 없는 정리 후보로 남긴다. 독립 D1/D2 reviewer는 실행하지 않았다. 되돌림은 `d965611`, `34af66a`, `192c900`, `32de380`, `7f45994`의 역순이다. 개발 fixture는 매 시험에서 새로 만든다.

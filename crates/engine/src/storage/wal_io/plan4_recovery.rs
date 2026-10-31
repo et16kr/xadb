@@ -39,6 +39,8 @@ mod epoch;
 mod physical;
 #[path = "plan4_recovery/resources.rs"]
 mod resources;
+#[path = "plan4_recovery/row_action.rs"]
+mod row_action;
 #[path = "plan4_recovery/select.rs"]
 mod selection;
 #[cfg(test)]
@@ -46,6 +48,9 @@ mod selection;
 mod tests;
 #[cfg(test)]
 pub(in crate::storage) use resources::source_census;
+pub(crate) use row_action::{
+    PreparedRecoveryRow, RecoveryAction, RecoveryOwnedError, RecoveryRowTask,
+};
 
 pub(crate) const MAINTENANCE_BYTES: usize = 12_582_912;
 // Current Profile3 selects an exact-image v4 base. The legacy codec keeps
@@ -320,6 +325,43 @@ struct RestoredRetention {
     remaining_steps: u64,
     physical_topup: u64,
     metadata_growth: u64,
+    row_admission: Option<RowRecoveryAdmission>,
+}
+
+/// The requested Row recovery policy (boundaries `#row-recovery-s6`). A
+/// pure request value: only the analysis gate of the original owner issues
+/// the admission that lets recovered Row cleanup run.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub(crate) enum RowRecoveryPolicy {
+    /// C+A: every canonical Row state, losers included; Row CLR candidates
+    /// are handed to A's handler through `RecoveryAction::RowClr`.
+    WithRowClr,
+    /// C+B: the final canonical analysis must hold no loser (no Reserved
+    /// inventory or root, no Active/Aborting transaction).
+    RejectInitialLosers,
+}
+/// Issued by the original analysis only after the policy gate passed, then
+/// moved with the AnalysisSeal digest into RestoredRetention and the
+/// recovered binding. No constructor takes consumer-supplied counts.
+#[derive(Clone, Copy)]
+struct RowRecoveryAdmission {
+    policy: RowRecoveryPolicy,
+    state_digest: [u8; 32],
+    source_facts_digest: [u8; 32],
+}
+impl SourceFacts {
+    /// The canonical-order hash of every SourceFacts field (epoch,
+    /// header_digest, prefix_digest, lsn, end, adopted_local).
+    fn digest(&self) -> [u8; 32] {
+        let mut hasher = ContentHasher::new();
+        hasher.update(&self.epoch.to_le_bytes());
+        hasher.update(&self.header_digest);
+        hasher.update(&self.prefix_digest);
+        hasher.update(&self.lsn.to_le_bytes());
+        hasher.update(&self.end.to_le_bytes());
+        hasher.update(&self.adopted_local.to_le_bytes());
+        hasher.digest()
+    }
 }
 
 /// Issued only by the selected runtime after physical VERIFY, a durable new
@@ -456,6 +498,9 @@ struct RecoveryState<'a, 'm, 'w, W: WriterNamespace> {
     analysis: Option<AnalysisSeal>,
     restored: Option<RestoredRetention>,
     selected_epoch: Option<SelectedNewEpoch>,
+    /// None is the legacy entry, which refuses every Row scope.
+    row_policy: Option<RowRecoveryPolicy>,
+    row_admission: Option<RowRecoveryAdmission>,
 }
 
 #[allow(
@@ -557,6 +602,8 @@ impl<'a, 'm, 'w, W: WriterNamespace> Plan4Recovery<'a, 'm, 'w, W> {
             analysis: None,
             restored: None,
             selected_epoch: None,
+            row_policy: None,
+            row_admission: None,
         };
         let mut owner = Self {
             state,
@@ -593,9 +640,35 @@ impl<'a, 'm, 'w, W: WriterNamespace> Plan4Recovery<'a, 'm, 'w, W> {
         reason = "failure retains the exact inline recovery owner and its writer lease"
     )]
     pub(crate) fn recover(
-        mut self,
+        self,
     ) -> std::result::Result<Plan4RecoveryRuntime<'a, 'm, 'w, W>, Plan4RecoveryFailure<'a, 'm, 'w, W>>
     {
+        self.recover_with_policy(None)
+    }
+    /// The Row-aware entry (boundaries `#row-recovery-s6`): the same
+    /// recovery body, with the policy gate at the analysis position the
+    /// legacy entry uses for its Row scope refusal.
+    #[allow(
+        clippy::result_large_err,
+        reason = "failure retains the exact inline recovery owner and its writer lease"
+    )]
+    pub(crate) fn recover_with_rows(
+        self,
+        policy: RowRecoveryPolicy,
+    ) -> std::result::Result<Plan4RecoveryRuntime<'a, 'm, 'w, W>, Plan4RecoveryFailure<'a, 'm, 'w, W>>
+    {
+        self.recover_with_policy(Some(policy))
+    }
+    #[allow(
+        clippy::result_large_err,
+        reason = "failure retains the exact inline recovery owner and its writer lease"
+    )]
+    fn recover_with_policy(
+        mut self,
+        policy: Option<RowRecoveryPolicy>,
+    ) -> std::result::Result<Plan4RecoveryRuntime<'a, 'm, 'w, W>, Plan4RecoveryFailure<'a, 'm, 'w, W>>
+    {
+        self.state.row_policy = policy;
         let outcome = {
             let _unwind = self.fence.unwind_guard();
             self.state.recover_physical_and_open()
@@ -858,6 +931,26 @@ impl<'s, 'a> RecoveryRetentionBinding<'s, 'a> {
     pub(in crate::storage) fn state_digest(&self) -> [u8; 32] {
         self.restored.state_digest
     }
+    /// The admitted Row policy, re-checked against the restored analysis
+    /// digest the admission was issued with. Its SourceFacts digest was
+    /// compared with the analyzed source when RestoredRetention was built;
+    /// the runtime holds no source facts, so here a zero digest is the only
+    /// contradiction left. A legacy binding has none; a contradiction is Err
+    /// (the caller's census invariant).
+    pub(in crate::storage) fn row_policy(
+        &self,
+    ) -> std::result::Result<Option<RowRecoveryPolicy>, ()> {
+        match self.restored.row_admission {
+            None => Ok(None),
+            Some(admission)
+                if admission.state_digest == self.restored.state_digest
+                    && admission.source_facts_digest != [0; 32] =>
+            {
+                Ok(Some(admission.policy))
+            }
+            Some(_) => Err(()),
+        }
+    }
 }
 struct MaintenanceRemainder<'a> {
     old_base: &'a mut [u8; BASE_BYTES],
@@ -974,18 +1067,31 @@ impl<'a, W: WriterNamespace> Plan4RecoveryRuntime<'a, '_, '_, W> {
 pub(crate) struct Plan4Recovered<'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace> {
     runtime: &'s Plan4RecoveryRuntime<'a, 'm, 'w, W>,
     inner: crate::storage::disk::DiskSession<'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W>,
+    progress: RecoveryProgressState,
+    private: &'a mut [u8; CATALOG_PRIVATE_BYTES],
+    visibility: Option<super::plan4_pages::VisibilityLoan<'a>>,
+}
+/// The closed facade's one progress value (boundaries `#row-recovery-s6`):
+/// the original phase, observation, flush continuation and READY, moved out
+/// of `Plan4Recovered` so that a recovered Row task borrows it disjointly
+/// from the session ports and the private lane. It is not a second owner.
+pub(crate) struct RecoveryProgressState {
     phase: Plan4RecoveryPhase,
     observation: Plan4RecoveryObservation,
     waiting_flush: bool,
     ready: bool,
-    private: &'a mut [u8; CATALOG_PRIVATE_BYTES],
-    visibility: Option<super::plan4_pages::VisibilityLoan<'a>>,
 }
 /// READY handoff reuses the exact recovery private lane for the next lookup.
 pub(crate) type RecoveredLiveParts<'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W> = (
     crate::storage::disk::DiskSession<'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W>,
     &'a mut [u8; CATALOG_PRIVATE_BYTES],
 );
+/// One `advance` of the closed facade: the original progress, or the
+/// selected Row loser whose next U is A's CLR.
+enum Advanced {
+    Progress(Plan4RecoveryProgress),
+    RowClr(crate::storage::transaction_record::TxnRef),
+}
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub(crate) struct Plan4RecoveryProgress {
     pub(crate) phase: Plan4RecoveryPhase,
@@ -1092,10 +1198,12 @@ impl<'a, 'm, 'w, W: WriterNamespace> Plan4RecoveryRuntime<'a, 'm, 'w, W> {
         Ok(Plan4Recovered {
             runtime: self,
             inner,
-            phase,
-            observation: self.observation,
-            waiting_flush: false,
-            ready: false,
+            progress: RecoveryProgressState {
+                phase,
+                observation: self.observation,
+                waiting_flush: false,
+                ready: false,
+            },
             private,
             visibility: Some(visibility),
         })
@@ -1127,24 +1235,43 @@ impl<'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
     Plan4Recovered<'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W>
 {
     pub(crate) fn observation(&self) -> &Plan4RecoveryObservation {
-        &self.observation
+        &self.progress.observation
     }
+    /// The original closed step. A Row loser's CLR has no handler here: on
+    /// a WithRowClr binding it is refused Unchanged and `next_action` hands it
+    /// to A.
     pub(crate) fn step(
         &mut self,
         owner: &mut crate::transaction::concurrency::Owner<'c, 's>,
         flusher: &mut crate::transaction::concurrency::Owner<'c, 's>,
     ) -> Result<Plan4RecoveryProgress> {
+        match self.advance(owner, flusher)? {
+            Advanced::Progress(progress) => Ok(progress),
+            Advanced::RowClr(_) => Err(self.runtime.bound_error(
+                self.progress.phase,
+                Plan4RecoveryCause::Retention(super::plan4_pages::RetentionCause::Unsupported),
+                Effect::Unchanged,
+            )),
+        }
+    }
+    /// One selection and effect of the closed facade, or the Row loser whose
+    /// next U is A's CLR. Flush continuation stays inside (deviation 1).
+    fn advance(
+        &mut self,
+        owner: &mut crate::transaction::concurrency::Owner<'c, 's>,
+        flusher: &mut crate::transaction::concurrency::Owner<'c, 's>,
+    ) -> Result<Advanced> {
         use super::plan4_pages::{RetentionFlushStep, RetentionRecoveryStep};
-        if self.ready {
-            return Ok(Plan4RecoveryProgress {
+        if self.progress.ready {
+            return Ok(Advanced::Progress(Plan4RecoveryProgress {
                 phase: Plan4RecoveryPhase::Handoff,
                 progressed: false,
                 ready: true,
-            });
+            }));
         }
         let runtime = self.runtime;
         let _unwind = runtime.session_fence().unwind_guard();
-        self.observation.phase = self.phase;
+        self.progress.observation.phase = self.progress.phase;
         if let Some(loan) = self.visibility.take() {
             // This metadata enables the recovery's own horizon/pin protocol.
             // The public facade remains closed until cleanup and STABILIZE.
@@ -1152,56 +1279,75 @@ impl<'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
                 .enable_catalog_visibility(owner, loan)
                 .map_err(|e| {
                     runtime.bound_error(
-                        self.phase,
+                        self.progress.phase,
                         Plan4RecoveryCause::Retention(e.cause),
                         Effect::CallerMustResolve,
                     )
                 })?;
         }
-        if self.waiting_flush {
+        if self.progress.waiting_flush {
             let (_, _, mut flush) = self.inner.split();
             let step = flush.continue_flush(flusher).map_err(|e| {
-                runtime.bound_error(self.phase, Plan4RecoveryCause::Retention(e.cause), e.effect)
+                runtime.bound_error(
+                    self.progress.phase,
+                    Plan4RecoveryCause::Retention(e.cause),
+                    e.effect,
+                )
             })?;
-            self.waiting_flush = matches!(
+            self.progress.waiting_flush = matches!(
                 step,
                 RetentionFlushStep::WaitingWal
                     | RetentionFlushStep::WaitingSource
                     | RetentionFlushStep::RetiredPendingFinalize
             );
-            return Ok(Plan4RecoveryProgress {
-                phase: self.phase,
-                progressed: !self.waiting_flush,
+            return Ok(Advanced::Progress(Plan4RecoveryProgress {
+                phase: self.progress.phase,
+                progressed: !self.progress.waiting_flush,
                 ready: false,
-            });
+            }));
         }
         let step = self
             .inner
             .recovery_catalog_step(owner, self.private)
             .map_err(|e| {
-                runtime.bound_error(self.phase, Plan4RecoveryCause::Retention(e.cause), e.effect)
+                runtime.bound_error(
+                    self.progress.phase,
+                    Plan4RecoveryCause::Retention(e.cause),
+                    e.effect,
+                )
             })?;
         match step {
             RetentionRecoveryStep::CancelledReserved => {
-                self.phase = Plan4RecoveryPhase::Losers;
+                self.progress.phase = Plan4RecoveryPhase::Losers;
             }
-            RetentionRecoveryStep::RollbackStarted { .. }
-            | RetentionRecoveryStep::Aborted { .. }
-            | RetentionRecoveryStep::Finished { .. }
-            | RetentionRecoveryStep::CatalogAdvanced { .. } => {
-                if self.phase == Plan4RecoveryPhase::CancelReservedFirst {
+            RetentionRecoveryStep::RowClrRequired { actor } => {
+                if self.progress.phase == Plan4RecoveryPhase::CancelReservedFirst {
                     return Err(runtime.bound_error(
-                        self.phase,
+                        self.progress.phase,
                         Plan4RecoveryCause::Invariant,
                         Effect::CallerMustResolve,
                     ));
                 }
-                self.phase = Plan4RecoveryPhase::Losers;
+                return Ok(Advanced::RowClr(actor));
+            }
+            RetentionRecoveryStep::RollbackStarted { .. }
+            | RetentionRecoveryStep::Aborted { .. }
+            | RetentionRecoveryStep::Finished { .. }
+            | RetentionRecoveryStep::CatalogAdvanced { .. }
+            | RetentionRecoveryStep::RowAdvanced { .. } => {
+                if self.progress.phase == Plan4RecoveryPhase::CancelReservedFirst {
+                    return Err(runtime.bound_error(
+                        self.progress.phase,
+                        Plan4RecoveryCause::Invariant,
+                        Effect::CallerMustResolve,
+                    ));
+                }
+                self.progress.phase = Plan4RecoveryPhase::Losers;
             }
             RetentionRecoveryStep::FlushRequired { target, .. } => {
-                if self.phase == Plan4RecoveryPhase::CancelReservedFirst {
+                if self.progress.phase == Plan4RecoveryPhase::CancelReservedFirst {
                     return Err(runtime.bound_error(
-                        self.phase,
+                        self.progress.phase,
                         Plan4RecoveryCause::Invariant,
                         Effect::CallerMustResolve,
                     ));
@@ -1209,12 +1355,12 @@ impl<'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
                 let (_, _, mut flush) = self.inner.split();
                 let step = flush.try_flush(flusher, &target).map_err(|e| {
                     runtime.bound_error(
-                        self.phase,
+                        self.progress.phase,
                         Plan4RecoveryCause::Retention(e.cause),
                         e.effect,
                     )
                 })?;
-                self.waiting_flush = matches!(
+                self.progress.waiting_flush = matches!(
                     step,
                     RetentionFlushStep::WaitingWal
                         | RetentionFlushStep::WaitingSource
@@ -1222,17 +1368,17 @@ impl<'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
                 );
             }
             RetentionRecoveryStep::Verified => {
-                if self.phase == Plan4RecoveryPhase::CancelReservedFirst {
+                if self.progress.phase == Plan4RecoveryPhase::CancelReservedFirst {
                     return Err(runtime.bound_error(
-                        self.phase,
+                        self.progress.phase,
                         Plan4RecoveryCause::Invariant,
                         Effect::CallerMustResolve,
                     ));
                 }
-                self.phase = Plan4RecoveryPhase::Verify;
+                self.progress.phase = Plan4RecoveryPhase::Verify;
                 self.inner.recovery_verify(owner).map_err(|e| {
                     runtime.bound_error(
-                        self.phase,
+                        self.progress.phase,
                         Plan4RecoveryCause::Retention(e.cause),
                         e.effect,
                     )
@@ -1240,41 +1386,41 @@ impl<'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
                 let (selected, last_issued) =
                     self.inner.recovery_doublewrite_selection().map_err(|e| {
                         runtime.bound_error(
-                            self.phase,
+                            self.progress.phase,
                             Plan4RecoveryCause::Retention(e.cause),
                             e.effect,
                         )
                     })?;
-                self.phase = Plan4RecoveryPhase::Stabilize;
+                self.progress.phase = Plan4RecoveryPhase::Stabilize;
                 runtime
-                    .stabilize_live(&mut self.observation, selected, last_issued)
+                    .stabilize_live(&mut self.progress.observation, selected, last_issued)
                     .map_err(|e| {
                         runtime.bound_error(e.phase, e.cause, Effect::CallerMustResolve)
                     })?;
                 self.inner.recovery_verify(owner).map_err(|e| {
                     runtime.bound_error(
-                        self.phase,
+                        self.progress.phase,
                         Plan4RecoveryCause::Retention(e.cause),
                         e.effect,
                     )
                 })?;
                 self.inner.activate_recovered_epochs(owner).map_err(|e| {
                     runtime.bound_error(
-                        self.phase,
+                        self.progress.phase,
                         Plan4RecoveryCause::Retention(e.cause),
                         Effect::CallerMustResolve,
                     )
                 })?;
-                self.phase = Plan4RecoveryPhase::Handoff;
-                self.ready = true;
+                self.progress.phase = Plan4RecoveryPhase::Handoff;
+                self.progress.ready = true;
             }
         }
-        self.observation.phase = self.phase;
-        Ok(Plan4RecoveryProgress {
-            phase: self.phase,
-            progressed: !self.waiting_flush,
-            ready: self.ready,
-        })
+        self.progress.observation.phase = self.progress.phase;
+        Ok(Advanced::Progress(Plan4RecoveryProgress {
+            phase: self.progress.phase,
+            progressed: !self.progress.waiting_flush,
+            ready: self.progress.ready,
+        }))
     }
     /// Same READY condition and same original owner as into_live. The private
     /// cleanup lane moves back to the caller for snapshot lookup; no second
@@ -1286,7 +1432,7 @@ impl<'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
     pub(crate) fn into_live_with_private(
         self,
     ) -> std::result::Result<RecoveredLiveParts<'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W>, Self> {
-        if self.ready {
+        if self.progress.ready {
             Ok((self.inner, self.private))
         } else {
             Err(self)
@@ -1304,7 +1450,7 @@ impl<'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
         crate::storage::disk::DiskSession<'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W>,
         Self,
     > {
-        if self.ready {
+        if self.progress.ready {
             Ok(self.inner)
         } else {
             Err(self)

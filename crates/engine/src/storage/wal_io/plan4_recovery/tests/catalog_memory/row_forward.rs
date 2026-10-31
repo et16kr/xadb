@@ -1154,7 +1154,8 @@ pub(super) fn move_root_cursor(pool: &SharedPool<'_, '_, '_, '_>) {
 /// fence and no effect; c is the cause `observe_recovery_frame` reports for
 /// F2 when the same WAL is walked frame by frame from the genesis seed,
 /// which accepts F1. Restart stops at F2: Analysis, Retention(c), database
-/// Unchanged, no mutation and no READY.
+/// Unchanged, no mutation and no READY, through the legacy entry and, since
+/// S6, through `recover_with_rows(WithRowClr)` as well.
 #[test]
 fn s2w_r24_root_cursor_is_found_late_and_stops_restart() {
     case("S2W-R24", || {
@@ -1285,6 +1286,24 @@ fn s2w_r24_root_cursor_is_found_late_and_stops_restart() {
                 cause => panic!("restart cause {cause:?}"),
             }
         });
+        // S6 (boundaries `#row-recovery-s6`, C4 entry decision (1)): the
+        // Row recovery entry replays F2 before its policy gate and stops at
+        // the same frame and cause.
+        super::super::faults::rejected_with_rows(
+            &directory,
+            &state,
+            super::super::super::RowRecoveryPolicy::WithRowClr,
+            |error, observation| {
+                println!("S2W_R24 with_row_clr={error:?} observation={observation:?}");
+                unchanged_error(error, observation, Plan4RecoveryPhase::Analysis);
+                match &error.cause {
+                    Plan4RecoveryCause::Retention(cause) => {
+                        assert_eq!(format!("{cause:?}"), live_cause)
+                    }
+                    cause => panic!("restart cause {cause:?}"),
+                }
+            },
+        );
         assert_eq!(
             &state.lock().unwrap().images(),
             &image,
