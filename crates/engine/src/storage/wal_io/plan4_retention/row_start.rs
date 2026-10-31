@@ -127,6 +127,7 @@ impl<'i, 'c, 's, const T: usize> PreparedRowGroup<'i, 'c, 's, T> {
             row_semantic::Operation::Begin
                 | row_semantic::Operation::RollbackStart
                 | row_semantic::Operation::AbortEnd
+                | row_semantic::Operation::StatementFinish
         )
     }
     /// The supplied Row write operations over the whole write target set:
@@ -138,6 +139,7 @@ impl<'i, 'c, 's, const T: usize> PreparedRowGroup<'i, 'c, 's, T> {
             row_semantic::Operation::Reserve
                 | row_semantic::Operation::Forward
                 | row_semantic::Operation::Cancel
+                | row_semantic::Operation::Clr
         )
     }
     pub(super) fn check(
@@ -485,7 +487,7 @@ impl<'b, 'a, 's, 'c, 'p, 'd, 'm, 'w, W: WriterNamespace>
                         root: &before[usize::from(ROOT)],
                         jobs_page: has(JOB).then_some(&before[usize::from(JOB)]),
                         status: has(STATUS).then_some(&before[usize::from(STATUS)]),
-                        undo: None,
+                        undo: has(row_group::UNDO as u8).then_some(&before[row_group::UNDO]),
                         previous: None,
                         table: None,
                         transaction: slot
@@ -598,6 +600,128 @@ impl<'b, 'a, 's, 'c, 'p, 'd, 'm, 'w, W: WriterNamespace>
             count: N,
             stamps: std::array::from_fn(|at| stamps[at]),
         })
+    }
+}
+
+impl<'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
+    RetentionWriter<'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W>
+{
+    pub(in super::super::super::super) fn row_rollback_control(
+        &mut self,
+        owner: &mut Owner<'c, 's>,
+        actor: TxnRef,
+        statement: Option<row_semantic::status::StatementBoundary>,
+        operation: row_semantic::Operation,
+        private: &mut [u8; PRIVATE_BYTES],
+    ) -> Result<row_group::Observation> {
+        let prep = self.catalog_preparation();
+        let (terminal, status) = prep.row_terminal(actor)?;
+        let slot = self.control.slot(actor).ok_or_else(|| {
+            unchanged(RetentionPhase::Prepare, RetentionCause::MissingTransaction)
+        })?;
+        let allocator = self
+            .pool
+            .target_request(0)
+            .map_err(|e| frame(RetentionPhase::Prepare, e))?;
+        let root = target_from_source(self.storage, Plan4Page::Root)?.request;
+        let status = prep.catalog_status_request(status);
+        let change = match operation {
+            row_semantic::Operation::RollbackStart => row_group::Change::RollbackStart {
+                terminal,
+                statement,
+            },
+            row_semantic::Operation::StatementFinish => row_group::Change::StatementFinish {
+                terminal,
+                statement: statement.ok_or_else(|| {
+                    unchanged(RetentionPhase::Prepare, RetentionCause::WrongState)
+                })?,
+            },
+            row_semantic::Operation::AbortEnd => row_group::Change::AbortEnd { terminal },
+            _ => {
+                return Err(unchanged(
+                    RetentionPhase::Prepare,
+                    RetentionCause::WrongState,
+                ));
+            }
+        };
+        let descriptor = crate::storage::obligation::decode_descriptor(
+            self.control.row(slot)[..1536]
+                .try_into()
+                .expect("descriptor"),
+            crate::storage::allocation_page::ReservationOwner::Transaction(actor),
+            crate::storage::retention_obligation::profile_reference(self.storage.profile()),
+        )
+        .map_err(|_| {
+            fatal(
+                self.storage,
+                RetentionPhase::Census,
+                RetentionCause::Invariant,
+            )
+        })?;
+        let crate::storage::obligation::OwnerState::Transaction(tx) = descriptor.owner else {
+            return Err(fatal(
+                self.storage,
+                RetentionPhase::Census,
+                RetentionCause::Invariant,
+            ));
+        };
+        let group = if operation == row_semantic::Operation::AbortEnd {
+            let jobs = target_from_source(
+                self.storage,
+                Plan4Page::Jobs {
+                    index: (terminal / 15) as u8,
+                },
+            )?
+            .request;
+            prep.prepare_existing_row::<4>(
+                owner,
+                change,
+                Some(slot),
+                [
+                    (allocator, ALLOCATOR_ROLE),
+                    (root, ROOT),
+                    (status, STATUS),
+                    (jobs, JOB),
+                ],
+                private,
+            )
+        } else if operation == row_semantic::Operation::RollbackStart
+            && let Some(head) = tx.undo_head()
+        {
+            let undo = request(
+                PageIdentity {
+                    database: allocator.identity.database,
+                    page: head.page(),
+                    owner: ObjectId::new(3).expect("Undo object"),
+                    owner_generation: one(),
+                },
+                PageKind::Undo,
+            );
+            prep.prepare_existing_row::<4>(
+                owner,
+                change,
+                Some(slot),
+                [
+                    (allocator, ALLOCATOR_ROLE),
+                    (root, ROOT),
+                    (status, STATUS),
+                    (undo, row_group::UNDO as u8),
+                ],
+                private,
+            )
+        } else {
+            prep.prepare_existing_row::<3>(
+                owner,
+                change,
+                Some(slot),
+                [(allocator, ALLOCATOR_ROLE), (root, ROOT), (status, STATUS)],
+                private,
+            )
+        }?;
+        let result = group.payload.observation;
+        self.catalog_application()
+            .apply_existing(owner, ExistingGroup::Row(&group))?;
+        Ok(result)
     }
 }
 

@@ -255,8 +255,15 @@ impl<'x, 't, 'v, 'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace> Boundar
         scope: RollbackScope,
         loan: &'i mut Loan,
     ) -> Result<Self::Rollback<'r, 'i>, RetentionError> {
-        self.port
-            .start_row_rollback(self.owner, transaction, statement, scope, loan)
+        self.port.start_row_rollback(
+            self.owner,
+            transaction,
+            statement,
+            scope,
+            loan,
+            self.flusher,
+            self.flush_owner,
+        )
     }
     fn finish_statement(
         &mut self,
@@ -625,4 +632,27 @@ pub(in crate::storage) fn commit_caller_source<W: WriterNamespace + 'static>() -
         + size_of::<Result<RowCommitObservation, DriveError<T>>>()
         + 2 * size_of::<Result<RowCommitObservation, TransactionFinishError<T>>>();
     (held, held)
+}
+
+/// Flush continuation using the original disjoint flusher held by C.
+pub(in crate::storage) fn flush_rollback_live<
+    'r,
+    't,
+    'v,
+    'i,
+    'b,
+    'a,
+    's,
+    'c,
+    'p,
+    'd,
+    'o,
+    'm,
+    'w,
+    W: WriterNamespace,
+>(
+    rollback: &mut LiveRollback<'r, 't, 'v, 'i, 'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W>,
+    target: &Plan4Target,
+) -> Result<(), RetentionError> {
+    rollback.rollback.flush(target)
 }

@@ -49,6 +49,7 @@ pub(crate) struct TransactionOptions {
 enum Phase {
     Active,
     MustAbort,
+    FailedFinished,
     Aborted,
     Committed,
     Ended,
@@ -496,7 +497,7 @@ impl RowStatementView<'_, '_, '_, '_, '_> {
         if self.phase.get() == Phase::Ended {
             return Ok(());
         }
-        self.check()?;
+        self.check_finish()?;
         let lease = &self.transaction.lease;
         {
             let mut state = entry(lease.ledger, lease.fence)?;
@@ -708,7 +709,7 @@ impl Drop for RowStatementView<'_, '_, '_, '_, '_> {
 impl<'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
     MutationPort<'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W>
 {
-    fn transaction_entry(
+    pub(in super::super) fn transaction_entry(
         &self,
         owner: &mut Owner<'c, 's>,
     ) -> Result<&'b BoundVisibility<'a, 'c, 's>> {
@@ -730,7 +731,10 @@ impl<'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
         visibility.isolation_frontier().map_err(vis)?;
         Ok(visibility)
     }
-    fn transaction_matches(&self, transaction: &RowTransaction<'_, 'a, 'c, 's>) -> Result<()> {
+    pub(in super::super) fn transaction_origin_matches(
+        &self,
+        transaction: &RowTransaction<'_, 'a, 'c, 's>,
+    ) -> Result<()> {
         if !std::ptr::eq(self.isolation, transaction.lease.ledger)
             || !self
                 .visibility
@@ -741,6 +745,13 @@ impl<'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
                 RetentionCause::BindingMismatch,
             ));
         }
+        Ok(())
+    }
+    pub(in super::super) fn transaction_matches(
+        &self,
+        transaction: &RowTransaction<'_, 'a, 'c, 's>,
+    ) -> Result<()> {
+        self.transaction_origin_matches(transaction)?;
         transaction.check()
     }
     /// Read-only enters the original slot/credit/snapshot state. Writable Begin
@@ -901,7 +912,7 @@ impl<'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
             let checked = self.transaction_check(owner, class, |writer, owner| {
                 writer.transaction_entry(owner)?;
                 writer.transaction_matches(view.transaction)?;
-                view.check()?;
+                view.check_finish()?;
                 if row_scope {
                     // A Reserved or Aborting actor is Before(WrongState). A
                     // clean end writes no WAL and keeps the unused 6080-byte
@@ -1003,21 +1014,49 @@ impl<'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
             }
         }
     }
-    /// Consumes the capsule only after the actual AbortEnd and terminal close
-    /// of a Row rollback. That adapter is not supplied: Before, no effect.
+    /// Consumes only the original Aborted Row capsule after checked AbortEnd.
     #[allow(
         clippy::result_large_err,
-        reason = "unchanged failure returns the same inline transaction; its return carrier is charged to the 512-byte source envelope"
+        reason = "returns the same inline capsule before any effect"
     )]
     pub(in crate::storage) fn finish_aborted<'v>(
         &mut self,
-        _owner: &mut Owner<'c, 's>,
-        transaction: RowTransaction<'v, 'a, 'c, 's>,
+        owner: &mut Owner<'c, 's>,
+        mut transaction: RowTransaction<'v, 'a, 'c, 's>,
     ) -> std::result::Result<(), TransactionFinishError<RowTransaction<'v, 'a, 'c, 's>>> {
-        Err(TransactionFinishError::Before {
-            error: unchanged(RetentionPhase::Finalize, RetentionCause::Unsupported),
-            transaction,
-        })
+        let result =
+            self.transaction_check(
+                owner,
+                source::OperationClass::RowProgress,
+                |writer, owner| {
+                    writer.transaction_entry(owner)?;
+                    writer.transaction_origin_matches(&transaction)?;
+                    if !transaction.row_scope() || transaction.phase.get() != Phase::Aborted {
+                        return Err(unchanged(
+                            RetentionPhase::Finalize,
+                            RetentionCause::WrongState,
+                        ));
+                    }
+                    {
+                        let state = entry(transaction.lease.ledger, transaction.lease.fence)?;
+                        transaction.lease.check(state.bytes)?;
+                        if row(state.bytes, transaction.lease.slot)[0] != 3 {
+                            return Err(fail(transaction.lease.fence, RetentionCause::Invariant));
+                        }
+                    }
+                    writer.row_aborted_terminal(transaction.lease.actor.ok_or_else(|| {
+                        fail(transaction.lease.fence, RetentionCause::Invariant)
+                    })?)?;
+                    transaction.close()
+                },
+            );
+        match result {
+            Ok(()) => Ok(()),
+            Err(error) if error.effect == Effect::Unchanged => {
+                Err(TransactionFinishError::Before { error, transaction })
+            }
+            Err(error) => Err(TransactionFinishError::Fatal(error)),
+        }
     }
 }
 
@@ -1245,5 +1284,136 @@ impl<W: WriterNamespace> ReadPort<'_, '_, '_, '_, '_, '_, '_, '_, W> {
         let result = run();
         adjust(false);
         result
+    }
+}
+
+impl RowStatementView<'_, '_, '_, '_, '_> {
+    fn check_finish(&self) -> Result<()> {
+        if self.phase.get() != Phase::FailedFinished {
+            return self.check();
+        }
+        self.transaction.check()?;
+        let lease = &self.transaction.lease;
+        let state = entry(lease.ledger, lease.fence)?;
+        lease.check(state.bytes)?;
+        if !statement_slot(row(state.bytes, lease.slot), self.sequence, self.mark) {
+            return Err(fail(lease.fence, RetentionCause::Invariant));
+        }
+        Ok(())
+    }
+}
+impl<'v, 'a, 'c, 's> RowTransaction<'v, 'a, 'c, 's> {
+    pub(in super::super) fn rollback_entry(
+        &self,
+        statement: Option<&RowStatementView<'_, 'v, 'a, 'c, 's>>,
+        scope: super::row::RollbackScope,
+    ) -> Result<(
+        TxnRef,
+        Option<crate::storage::semantic_row::status::StatementBoundary>,
+    )> {
+        if !self.row_scope() {
+            return Err(unchanged(
+                RetentionPhase::Prepare,
+                RetentionCause::Unsupported,
+            ));
+        }
+        if !matches!(self.phase.get(), Phase::Active | Phase::MustAbort) {
+            return Err(unchanged(
+                RetentionPhase::Prepare,
+                RetentionCause::WrongState,
+            ));
+        }
+        let state = entry(self.lease.ledger, self.lease.fence)?;
+        self.lease.check(state.bytes)?;
+        let target = row(state.bytes, self.lease.slot);
+        let actor = self
+            .lease
+            .actor
+            .ok_or_else(|| fail(self.lease.fence, RetentionCause::Invariant))?;
+        match (scope, statement) {
+            (super::row::RollbackScope::Statement, Some(view)) => {
+                if !std::ptr::eq(self, view.transaction) || self.phase.get() != Phase::Active {
+                    return Err(unchanged(
+                        RetentionPhase::Prepare,
+                        RetentionCause::BindingMismatch,
+                    ));
+                }
+                if view.phase.get() != Phase::Active
+                    || !statement_slot(target, view.sequence, view.mark)
+                {
+                    return Err(unchanged(
+                        RetentionPhase::Prepare,
+                        RetentionCause::WrongState,
+                    ));
+                }
+                Ok((
+                    actor,
+                    Some(crate::storage::semantic_row::status::StatementBoundary {
+                        sequence: view.sequence,
+                        mark: view.mark,
+                    }),
+                ))
+            }
+            (super::row::RollbackScope::Transaction, None) => {
+                if read64(target, 80) != 0 {
+                    return Err(unchanged(RetentionPhase::Prepare, RetentionCause::Busy));
+                }
+                Ok((actor, None))
+            }
+            _ => Err(unchanged(
+                RetentionPhase::Prepare,
+                RetentionCause::WrongState,
+            )),
+        }
+    }
+    pub(in super::super) fn rollback_completed(
+        &self,
+        statement: Option<&RowStatementView<'_, 'v, 'a, 'c, 's>>,
+        scope: super::row::RollbackScope,
+    ) -> Result<()> {
+        self.rollback_entry(statement, scope)?;
+        if let Some(view) = statement {
+            view.phase.set(Phase::FailedFinished);
+            Ok(())
+        } else {
+            self.set_abort_phase(Phase::Aborted)
+        }
+    }
+}
+impl<'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
+    MutationPort<'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W>
+{
+    pub(in super::super) fn row_aborted_terminal(&self, actor: TxnRef) -> Result<()> {
+        use crate::storage::retention_page::row::{self as job3, JobScope, JobState};
+        let bad = || fail(self.storage.session_fence(), RetentionCause::Invariant);
+        if self.control.slot(actor).is_some() {
+            return Err(bad());
+        }
+        let prefix = self.storage.wal().prefix().map_err(|_| bad())?;
+        self.control
+            .check_ledger(self.storage.profile(), prefix)
+            .map_err(|_| bad())?;
+        let mut terminals = 0;
+        for bytes in self.control.jobs() {
+            let job = job3::decode_job(bytes, self.storage.profile().spec().namespace)
+                .map_err(|_| bad())?;
+            if job.source() != Some(actor) {
+                continue;
+            }
+            if job.scope() != Some(JobScope::Row) {
+                return Err(bad());
+            }
+            match job.state() {
+                JobState::TerminalReady if job.outcome() == 2 && job.commit_q() == 0 => {
+                    terminals += 1
+                }
+                JobState::RootReleasingCompensated if job.commit_q() == 0 => {}
+                _ => return Err(bad()),
+            }
+        }
+        if terminals != 1 {
+            return Err(bad());
+        }
+        Ok(())
     }
 }

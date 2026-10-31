@@ -9523,5 +9523,21 @@
     "implementation_commit": "021959c7",
     "receipt_manifest_sha256": "4e5961eb5a604f5fd15121bf8f7bd8fe9209573da8eb62407f961d5aec505b20",
     "artifact_manifest_sha256": "14c55399946475f53f8b9f86492532f09d46e2f5249d133b19bc075754f0547c"
+  },
+  "dev3_module_s4_row_rollback": {
+    "status": "IN_PROGRESS",
+    "contract_ref": "dev3-module-boundaries.md#row-rollback-s4",
+    "baseline_commit": "139a05f4",
+    "branch": "codex/s4-row-rollback",
+    "paths": [
+      "crates/engine/src/storage/wal_io/plan4_apply/row/rollback.rs",
+      "crates/engine/src/storage/wal_io/plan4_retention/row_clr.rs",
+      "crates/engine/src/storage/wal_io/plan4_retention/row_rollback_select.rs",
+      "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_rollback.rs"
+    ],
+    "scope": "Original live Row statement/full rollback, CLR observer/install, FailedFinished/Aborted capsule completion; disjoint original flusher and Status-latch reference handoff",
+    "validation": "v3: full abort, suffix rollback/new statement/Commit, changed A call-site census and common Row write memory census PASS; additional fault/native/resource review pending",
+    "remaining_supply": "S4 errors/native/explicit rollback body census and final review; C4/S6 recovery READY; S5 Row reads; full M4/M5",
+    "source_roots_changed": false
   }
 }

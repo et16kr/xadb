@@ -345,3 +345,73 @@ pub(super) fn test_census(bytes: &[u8]) -> (usize, usize, usize) {
     }
     census
 }
+
+impl<'v, 'a, 'c, 's> ReferenceLease<'v, 'a, 'c, 's> {
+    /// Capture the current head under the original pool's actual Status latch.
+    /// Used after CLR too: the old U pin remains live until this H pin exists.
+    pub(in crate::storage) fn capture_row_head(
+        &mut self,
+        pool: &crate::storage::dirty_frame::SharedPool<'c, 's, '_, '_>,
+        owner: &mut Owner<'c, 's>,
+        target: crate::storage::dirty_frame::TargetRequest,
+        actor: TxnRef,
+    ) -> super::super::Result<Option<UndoPin<'v, 'a, 'c, 's>>> {
+        use super::super::{RetentionCause, RetentionPhase, frame, unchanged as refusal};
+        use crate::storage::{
+            page::{self, PageKind},
+            status_home::StatusHome,
+            transaction_record::{RollbackState, TransactionState, TransactionStatusCell},
+        };
+        let bad = || refusal(RetentionPhase::Prepare, RetentionCause::Invariant);
+        if !std::ptr::eq(pool.bound_core(), self.visibility.origin.core)
+            || !pool
+                .uses_storage_origin(self.visibility.origin.binding, self.visibility.origin.fence)
+        {
+            return Err(refusal(
+                RetentionPhase::Prepare,
+                RetentionCause::BindingMismatch,
+            ));
+        }
+        let read = pool
+            .reserve_target_set(owner, &[target])
+            .and_then(|set| set.try_read())
+            .map_err(|e| frame(RetentionPhase::Prepare, e))?;
+        let result = (|| {
+            let bytes = read
+                .bytes(0)
+                .map_err(|e| frame(RetentionPhase::Prepare, e))?;
+            let page = page::decode_page(bytes, target.identity, PageKind::TransactionStatus)
+                .map_err(|_| bad())?;
+            let home = StatusHome::decode(page.cell(0).ok_or_else(bad)?).map_err(|_| bad())?;
+            let TransactionStatusCell::Occupied(status) = home.core() else {
+                return Err(bad());
+            };
+            if status.reference() != actor
+                || !matches!(status.state(),TransactionState::Aborting(RollbackState::Statement{next,..}|RollbackState::Transaction{next}) if next==status.undo_head())
+            {
+                return Err(bad());
+            }
+            status
+                .undo_head()
+                .map(|current| {
+                    self.capture_rollback(RollbackSource {
+                        origin: self.visibility.origin,
+                        actor,
+                        current,
+                        source: std::marker::PhantomData,
+                    })
+                })
+                .transpose()
+                .map_err(|e| super::super::RetentionError {
+                    phase: RetentionPhase::Prepare,
+                    cause: RetentionCause::Visibility(e),
+                    effect: e.effect,
+                })
+        })();
+        super::super::merge(
+            result,
+            read.release_checked()
+                .map_err(|e| frame(RetentionPhase::Prepare, e)),
+        )
+    }
+}

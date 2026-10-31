@@ -1376,3 +1376,6 @@ impl<W: WriterNamespace> RetentionWriter<'_, '_, '_, '_, '_, '_, '_, '_, '_, W> 
         )
     }
 }
+
+#[path = "row_rollback_select.rs"]
+pub(in super::super::super) mod rollback;
