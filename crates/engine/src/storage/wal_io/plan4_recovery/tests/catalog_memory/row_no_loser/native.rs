@@ -4,7 +4,9 @@
 //! process at the cut, after the receipt with the WAL witness (no flush,
 //! shutdown or drop follows); `reject` (P2) presents those files to
 //! `RejectInitialLosers`, which refuses at Analysis. The controller checks
-//! that the cut's last write was synced and that P2 changed no file.
+//! that the cut's last WAL write was synced, that the WAL ends with the
+//! case's frames (`TAILS`, parsed again by the controller) and that P2
+//! changed no file.
 use super::super::super::super::super::plan4_pages::native;
 use super::super::row_reopen::wal_witness;
 use super::*;
@@ -36,6 +38,15 @@ fn s9b_no_loser_worker() {
         "produce" => case_within(&format!("{id}-produce"), BOUND, || {
             produce(&id, &directory, &mut || {
                 let cut = wal_witness(&db);
+                // A read, not a mutation: the same exact-prefix check as the
+                // memory form, on the WAL file the process leaves behind.
+                let mut names: Vec<_> = fs::read_dir(&db)
+                    .unwrap()
+                    .map(|entry| entry.unwrap().file_name().into_string().unwrap())
+                    .filter(|name| name.starts_with("d3-wal-"))
+                    .collect();
+                names.sort();
+                check_cut(&id, &fs::read(db.join(names.last().unwrap())).unwrap());
                 fs::write(
                     output.join("receipt.tsv"),
                     format!(

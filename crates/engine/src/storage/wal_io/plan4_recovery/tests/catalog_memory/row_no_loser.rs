@@ -17,7 +17,7 @@
 //! keeps its C+A+B inputs (A's INSERT) unchanged.
 use super::super::super::RowRecoveryPolicy;
 use super::super::support::{assert_closed, clone_directory};
-use super::row_literal::Literal;
+use super::row_literal::{Literal, RESERVE_FRAME, wal_frames};
 use super::row_preflight::create_table;
 use super::row_reopen::refused_in;
 use super::*;
@@ -168,6 +168,72 @@ pub(super) fn produce<D: DirectoryPort>(id: &str, directory: &D, cut: &mut dyn F
     })
 }
 
+/// One WAL frame as the cut check reads it: (group op, group scope, LSN,
+/// frame bytes).
+type Frame = (u16, u16, u64, usize);
+
+/// The frames each input's WAL ends with at its cut, as (group op, group
+/// scope, LSN, frame bytes): the write that tells the input apart is the
+/// last durable frame. Row frames are scope 3, Catalog scope 2, the
+/// System page frames scope 1. N01 ends with the Row Begin, C's
+/// RowReserve and the literal Forward, N02 with the Row Begin and the
+/// RowReserve, N03 with the Row Begin alone (a statement writes no frame),
+/// N04 with the Row Begin and the transaction RollbackStart, N05 with the
+/// fresh installation's SystemPage reservation, N06 with the Catalog Begin
+/// and the Catalog CREATE reservation.
+const TAILS: [(&str, &[Frame]); 6] = [
+    (
+        "MCB05-N01",
+        &[(1, 3, 14, 56_712), (11, 3, 15, 57_336), (2, 3, 16, 91_497)],
+    ),
+    ("MCB05-N02", &[(1, 3, 14, 56_712), (11, 3, 15, 57_336)]),
+    ("MCB05-N03", &[(1, 3, 14, 56_712)]),
+    ("MCB05-N04", &[(1, 3, 14, 56_712), (3, 3, 15, 3_040)]),
+    ("MCB05-N05", &[(8, 1, 6, 21_200)]),
+    ("MCB05-N06", &[(1, 2, 6, 56_712), (11, 2, 7, 86_640)]),
+];
+
+/// The exact durable prefix of input `id` (consumers §9.2), checked on the
+/// WAL bytes at its cut: the case's tail (`TAILS`), with N01's and N02's
+/// RowReserve equal to the S2 literal and N01's Forward equal to the S8
+/// independent literal frame. N05 holds no actor Begin (group op 1) and no
+/// Row frame: no Row or Catalog actor began (the installation's own scope2
+/// frame at LSN 1 is in every input). N06 holds no Row frame. Fields inside
+/// the System and Catalog reservations are not decoded here.
+pub(super) fn check_cut(id: &str, wal: &[u8]) {
+    let frames = wal_frames(wal);
+    let (_, tail) = TAILS.iter().find(|(case, _)| *case == id).unwrap();
+    let at = frames.len() - tail.len();
+    let got: Vec<_> = frames[at..]
+        .iter()
+        .map(|&(_, length, lsn, op, scope)| (op, scope, lsn, length))
+        .collect();
+    assert_eq!(got.as_slice(), *tail, "{id}: the WAL's last frames");
+    let bytes = |index: usize| {
+        let (offset, length, ..) = frames[index];
+        &wal[offset..offset + length]
+    };
+    match id {
+        "MCB05-N01" | "MCB05-N02" => {
+            assert_eq!(hex(bytes(at + 1)), RESERVE_FRAME.1, "{id}: S2 RowReserve");
+            if id == "MCB05-N01" {
+                assert_eq!(bytes(at + 2), Literal::load().frame(), "{id}: literal");
+            }
+        }
+        "MCB05-N05" => assert!(
+            frames.iter().all(|frame| frame.3 != 1 && frame.4 != 3),
+            "{id}: an actor Begin or a Row frame"
+        ),
+        "MCB05-N06" => assert!(frames.iter().all(|frame| frame.4 != 3), "{id}: Row"),
+        _ => {}
+    }
+    println!(
+        "S9B_CUT {id} frames={} wal_bytes={} tail={got:?}",
+        frames.len(),
+        wal.len()
+    );
+}
+
 /// The memory files of `produce(id)` at its cut.
 fn input(id: &str) -> Images {
     let directory = port::Directory::fresh();
@@ -181,7 +247,9 @@ fn input(id: &str) -> Images {
     produce(id, &directory, &mut || {
         images = Some(state.lock().unwrap().images())
     });
-    images.expect("the run reached its cut")
+    let images = images.expect("the run reached its cut");
+    check_cut(id, &images["d3-wal-00000001"]);
+    images
 }
 
 /// MCB05-N01..06 in memory (the C+B form of S6R-M08): RejectInitialLosers

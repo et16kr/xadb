@@ -47,7 +47,7 @@ const VALUE: i64 = 7;
 const PREVIOUS_LSN: u64 = 14;
 /// The S2 RowReserve literal C writes for this reservation
 /// (`dev3-module-c3/row-write/expected.json`): bytes and SHA-256.
-const RESERVE_FRAME: (usize, &str) = (
+pub(super) const RESERVE_FRAME: (usize, &str) = (
     57_336,
     "6e3badc82e1864c405f846a05372e2367f6a266a10e0a4e0c8c3d28267870fbe",
 );
@@ -208,6 +208,11 @@ pub(super) fn patched(
 }
 
 impl Literal {
+    /// The literal Forward frame's bytes (`forward-frame.bin`).
+    pub(super) fn frame(&self) -> &[u8] {
+        &self.frame
+    }
+
     pub(super) fn load() -> Self {
         let root = author();
         let expected = expected();
@@ -773,7 +778,7 @@ fn mcb05_k12_scope2_group_is_before_then_cancel() {
 /// The WAL's frames from the first `XWF1` on: (offset, length, LSN, group
 /// op, group scope), read from the outer and group headers (frame length
 /// at 12, LSN at 56, group op at 166 and scope at 170).
-fn wal_frames(wal: &[u8]) -> Vec<(usize, usize, u64, u16, u16)> {
+pub(super) fn wal_frames(wal: &[u8]) -> Vec<(usize, usize, u64, u16, u16)> {
     let u16_at = |at: usize| u16::from_le_bytes(wal[at..at + 2].try_into().unwrap());
     let mut at = wal.windows(4).position(|w| w == b"XWF1").unwrap();
     let mut frames = Vec::new();

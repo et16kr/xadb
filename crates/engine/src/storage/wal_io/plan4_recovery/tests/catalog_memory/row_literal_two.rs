@@ -322,6 +322,19 @@ impl Literal {
 }
 
 /// One pool page's bytes, through the diagnostic probe.
+/// Root 2's Undo page in the pool (`RESERVE[1]`, page 15): its bytes, frame
+/// stamp and dirty flag. A partial prepare of the second root would write
+/// it, and it is outside T (`FIXTURE_T`), so the K oracle compares it apart.
+fn second_undo(
+    pool: &crate::storage::dirty_frame::SharedPool<'_, '_, '_, '_>,
+) -> (String, crate::storage::dirty_frame::FrameStamp, bool) {
+    assert_eq!(RESERVE[1].2, 15);
+    let index = probe::registered_index(pool, RESERVE[1].2).unwrap();
+    let mut bytes = boxed::<PAGE_BYTES>();
+    let snapshot = probe::diagnose(pool, index, &mut bytes);
+    (hex(&bytes[..]), snapshot.frame, snapshot.dirty)
+}
+
 pub(super) fn page(
     pool: &crate::storage::dirty_frame::SharedPool<'_, '_, '_, '_>,
     number: u64,
@@ -340,7 +353,8 @@ pub(super) fn page(
 /// statement, C's Commit returns q 2, and a new read-only transaction reads
 /// both by point and cursor. With `bad`, C's prepare refuses it Before
 /// (Prepare, Unchanged, RowSemantic) on the same ReservedRow with no WAL,
-/// file or T page change; its cancel is the model's Cancel; the statement
+/// file, T page or root 2 Undo page (15) change; its cancel is the model's
+/// Cancel; the statement
 /// ends and the Commit (q 2) publishes root 1 alone.
 fn two_roots(case_id: &str, bad: Option<(&str, &str)>) {
     case(case_id, || {
@@ -426,6 +440,7 @@ fn two_roots(case_id: &str, bad: Option<(&str, &str)>) {
                         let draft = reserved.test_draft();
                         let before = effects(state);
                         let pages = t_frames(pool);
+                        let second = second_undo(pool);
                         let proposal = offered.forward(2, reserved.producer_lane().unwrap());
                         let (error, reserved) = match reserved.prepare(proposal) {
                             Err(RowOwnedError::Before { error, owned }) => (error, owned),
@@ -444,6 +459,7 @@ fn two_roots(case_id: &str, bad: Option<(&str, &str)>) {
                         for (old, new) in pages.iter().zip(t_frames(pool)) {
                             assert_eq!(*old, new, "page {}", old.0);
                         }
+                        assert_eq!(second_undo(pool), second, "root 2's Undo page");
                         assert!(!fence.is_fenced());
                         if reserved.cancel().is_err() {
                             panic!("{name} cancel refused");

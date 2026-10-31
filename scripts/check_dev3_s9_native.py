@@ -48,8 +48,52 @@ CASES = {
 }
 
 
+# MCB05-N0x: the frames the WAL ends with at the cut, (group op, scope,
+# LSN, bytes); N01/N02's RowReserve and N01's Forward are the independent
+# S2/S8 literal frames (row_no_loser.rs `TAILS`, consumers §9.2).
+TAILS = {
+    'MCB05-N01': [(1, 3, 14, 56712), (11, 3, 15, 57336), (2, 3, 16, 91497)],
+    'MCB05-N02': [(1, 3, 14, 56712), (11, 3, 15, 57336)],
+    'MCB05-N03': [(1, 3, 14, 56712)],
+    'MCB05-N04': [(1, 3, 14, 56712), (3, 3, 15, 3040)],
+    'MCB05-N05': [(8, 1, 6, 21200)],
+    'MCB05-N06': [(1, 2, 6, 56712), (11, 2, 7, 86640)],
+}
+RESERVE_SHA = '6e3badc82e1864c405f846a05372e2367f6a266a10e0a4e0c8c3d28267870fbe'
+FORWARD_SHA = '0ee305722bff97a71161e2111bb7a15059b3a35b8a941c603a45e2fc5de81043'
+
+
 def digest(raw):
     return hashlib.sha256(raw).hexdigest()
+
+
+def wal_frames(wal):
+    """(offset, bytes, LSN, group op, group scope) of each XWF1 frame."""
+    at, frames = wal.index(b'XWF1'), []
+    while at + 192 <= len(wal) and wal[at:at + 4] == b'XWF1':
+        length = int.from_bytes(wal[at + 12:at + 16], 'little')
+        frames.append((at, length, int.from_bytes(wal[at + 56:at + 64], 'little'),
+                       int.from_bytes(wal[at + 166:at + 168], 'little'),
+                       int.from_bytes(wal[at + 170:at + 172], 'little')))
+        at += length
+    assert at == len(wal), 'the WAL is whole frames'
+    return frames
+
+
+def check_tail(case, wal):
+    frames = wal_frames(wal)
+    tail = TAILS[case]
+    got = [(op, scope, lsn, length) for _, length, lsn, op, scope in frames[-len(tail):]]
+    assert got == tail, (case, got)
+    sha = [digest(wal[at:at + length]) for at, length, *_ in frames[-len(tail):]]
+    if case in ('MCB05-N01', 'MCB05-N02'):
+        assert sha[1] == RESERVE_SHA, case
+    if case == 'MCB05-N01':
+        assert sha[2] == FORWARD_SHA, case
+    if case == 'MCB05-N05':
+        assert all(frame[3] != 1 and frame[4] != 3 for frame in frames), 'N05 holds an actor'
+    if case == 'MCB05-N06':
+        assert all(frame[4] != 3 for frame in frames), 'N06 holds a Row frame'
 
 
 def snapshot(root):
@@ -174,6 +218,14 @@ def main():
                 syncs = [i for i, row in enumerate(effects)
                          if row[1] == 'sync' and row[5] == 'Ok(())']
                 assert writes and syncs and writes[-1] < syncs[-1], 'last write synced'
+                # Per file: the WAL's last write precedes a successful sync of
+                # the WAL file itself.
+                wal_writes = [i for i in writes if effects[i][2] == wal]
+                wal_syncs = [i for i in syncs if effects[i][2] == wal]
+                assert wal_writes and wal_syncs and wal_writes[-1] < wal_syncs[-1], \
+                    'last WAL write synced'
+                if case in TAILS:
+                    check_tail(case, (db / wal).read_bytes())
                 tail = {row[1] for row in effects[syncs[-1] + 1:]}
                 if produced == 'cut':
                     # The process exits at the cut: reads may follow the
@@ -185,6 +237,7 @@ def main():
                 # RejectInitialLosers at Analysis: database_effect Unchanged,
                 # every file byte-equal to the cut.
                 assert receipt['result'] == 'refused'
+                assert receipt['mutations'] == '0', receipt['mutations']
                 assert current == previous, 'the refusal changed a file'
             else:
                 assert receipt['result'] == 'ready'
