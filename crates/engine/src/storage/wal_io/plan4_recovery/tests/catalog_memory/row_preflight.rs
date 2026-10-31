@@ -79,6 +79,31 @@ pub(super) fn create_table<'s, 'c, W: WriterNamespace>(
     private: &mut [u8; PRIVATE_BYTES],
     free_undo: bool,
 ) -> (Plan4Target, Option<Plan4Target>) {
+    create_table_with(
+        live,
+        owner,
+        flusher,
+        status,
+        undo,
+        private,
+        free_undo,
+        &table_spec("T"),
+    )
+}
+
+/// `create_table` with the CREATE's table `spec` (the same object 6, Row
+/// Status 11 and pages).
+#[allow(clippy::too_many_arguments)]
+pub(super) fn create_table_with<'s, 'c, W: WriterNamespace>(
+    live: &mut Live<'_, 's, 'c, '_, '_, '_, '_, '_, W>,
+    owner: &mut Owner<'c, 's>,
+    flusher: &mut Owner<'c, 's>,
+    status: &Plan4Target,
+    undo: &Plan4Target,
+    private: &mut [u8; PRIVATE_BYTES],
+    free_undo: bool,
+    spec: &TableSpec,
+) -> (Plan4Target, Option<Plan4Target>) {
     let row_status = second_status(live, owner, flusher);
     assert_eq!(row_status.identity().page, page_ref(11, 2));
     prepare_create(live, owner, flusher, status, undo);
@@ -95,14 +120,7 @@ pub(super) fn create_table<'s, 'c, W: WriterNamespace>(
             .unwrap();
         let view = writer.begin_statement(owner, &tx).unwrap();
         writer
-            .catalog_test_forward_in_statement(
-                owner,
-                &view,
-                undo,
-                &table_spec("T"),
-                private,
-                &mut flush,
-            )
+            .catalog_test_forward_in_statement(owner, &view, undo, spec, private, &mut flush)
             .unwrap();
         assert!(writer.finish_statement(owner, view).is_ok());
         match writer.commit_catalog_transaction(owner, tx, private) {

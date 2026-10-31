@@ -1,0 +1,1306 @@
+//! S10 C+A frozen inventory (consumers §9.1; boundaries `#row-mi03-s10`):
+//! A's INSERT, statement and transaction ends through its live driver
+//! (`insert_live`, `commit_live` and the rollback entries) over the actual
+//! C supply, for the MCA rows no earlier selection ran by ID. Nothing here
+//! links B: the module is in the C+A single-source export.
+//!
+//! Expected values come from the history each case runs and from this
+//! module's own canonical encoder (`canon`, written from the row format
+//! contract: u32 LE count, then per value the tag 0 Null, 1 Bool, 2 Int64
+//! LE, 3 Utf8 or 4 Binary with a u32 LE length), never from A's encoder or
+//! C's row decoder. The RowLeaf is read from the pool as page cells (the
+//! generic page codec) and each cell's key, record header fields and
+//! canonical bytes are compared as raw bytes.
+use super::row_forward::files;
+use super::row_native_a::{disk, rollback_required};
+use super::row_preflight::{create_table, create_table_with, system_init};
+use super::*;
+use crate::storage::{
+    disk::{
+        IsolationLevel, RetentionCause, RetentionPhase, RollbackScope, RollbackStep,
+        RowMutationObservation, RowOperation, TableStep,
+    },
+    page::{PageKind, decode_page},
+    retention_page::row::{self as job3, JobState},
+    row::insert::{
+        InsertError,
+        driver::{
+            After, DriveError, DriverError, Failure, Stage, Stepped,
+            live::{
+                LiveCall, commit_live, finish_aborted_live, finish_rollback_live,
+                finish_statement_live, insert_live, rollback_step_live,
+                start_statement_rollback_live,
+            },
+        },
+        produce_clr,
+    },
+    row_record::{RowError, ValueRef},
+};
+use std::collections::BTreeMap;
+
+/// One value of an input row, independent of A's `ValueRef` lane.
+#[derive(Clone, Debug)]
+enum Lit {
+    Null,
+    Bool(bool),
+    Int(i64),
+    Text(&'static str),
+    Bin(Vec<u8>),
+}
+
+impl Lit {
+    fn value(&self) -> ValueRef<'_> {
+        match self {
+            Lit::Null => ValueRef::Null,
+            Lit::Bool(value) => ValueRef::Bool(*value),
+            Lit::Int(value) => ValueRef::Int64(*value),
+            Lit::Text(value) => ValueRef::Utf8(value),
+            Lit::Bin(value) => ValueRef::Binary(value),
+        }
+    }
+}
+
+/// The canonical row of `values` by the row format contract.
+fn canon(values: &[Lit]) -> Vec<u8> {
+    let mut out = u32::try_from(values.len()).unwrap().to_le_bytes().to_vec();
+    for value in values {
+        match value {
+            Lit::Null => out.push(0),
+            Lit::Bool(value) => out.extend([1, u8::from(*value)]),
+            Lit::Int(value) => {
+                out.push(2);
+                out.extend(value.to_le_bytes());
+            }
+            Lit::Text(value) => {
+                out.push(3);
+                out.extend(u32::try_from(value.len()).unwrap().to_le_bytes());
+                out.extend(value.as_bytes());
+            }
+            Lit::Bin(value) => {
+                out.push(4);
+                out.extend(u32::try_from(value.len()).unwrap().to_le_bytes());
+                out.extend(value);
+            }
+        }
+    }
+    out
+}
+
+fn column(name: &str, data_type: DataType, nullable: bool) -> Column {
+    Column {
+        name: name.to_owned(),
+        data_type,
+        nullable,
+    }
+}
+
+fn spec(columns: Vec<Column>) -> TableSpec {
+    TableSpec {
+        name: "T".to_owned(),
+        columns,
+    }
+}
+
+/// RowLeaf 13's cells, from the pool (generic page codec, no row decoder).
+fn leaf_cells(pool: &crate::storage::dirty_frame::SharedPool<'_, '_, '_, '_>) -> Vec<Vec<u8>> {
+    let index = probe::registered_index(pool, 13).unwrap();
+    let identity = pool.target_request(index).unwrap().identity;
+    assert_eq!(identity.page, page_ref(13, 2));
+    assert_eq!(identity.owner, ObjectId::new(6).unwrap());
+    let mut bytes = boxed::<PAGE_BYTES>();
+    probe::diagnose(pool, index, &mut bytes);
+    let page = decode_page(&bytes[..], identity, PageKind::RowLeaf).unwrap();
+    (0..page.len())
+        .map(|i| page.cell(i).unwrap().to_vec())
+        .collect()
+}
+
+/// The leaf holds exactly `expected` (RowId, canonical row), in key order:
+/// after the tree header cell, each cell is the RowId key (big-endian),
+/// then the record whose magic,
+/// RowId, inline flag, payload length and payload are the expected bytes.
+fn assert_leaf(cells: &[Vec<u8>], expected: &[(u64, Vec<u8>)]) {
+    // Cell 0 is the tree page's own header cell, never a row record.
+    assert!(!cells.is_empty() && cells[0].get(12..16) != Some(&b"XRW1"[..]));
+    let cells = &cells[1..];
+    let found: Vec<u64> = cells
+        .iter()
+        .map(|cell| u64::from_be_bytes(cell[4..12].try_into().unwrap()))
+        .collect();
+    let wanted: Vec<u64> = expected.iter().map(|(row, _)| *row).collect();
+    assert_eq!(found, wanted, "the leaf's RowIds, in order, with no other");
+    for (cell, (row, canonical)) in cells.iter().zip(expected) {
+        let record = &cell[12..];
+        assert_eq!(&record[..4], b"XRW1", "row {row} record magic");
+        assert_eq!(record[8..16], row.to_le_bytes(), "row {row} record RowId");
+        assert_eq!(record[7], 1, "row {row} inline payload");
+        assert_eq!(
+            record[160..164],
+            u32::try_from(canonical.len()).unwrap().to_le_bytes(),
+            "row {row} payload length"
+        );
+        assert_eq!(
+            record.len(),
+            168 + canonical.len(),
+            "row {row} record length"
+        );
+        assert_eq!(
+            hex(&record[168..]),
+            hex(canonical),
+            "row {row} canonical bytes"
+        );
+    }
+}
+
+/// MCA01 V01..V08: `statements` of rows into a fresh T of `columns`, each
+/// statement through `insert_live` (which finishes it), then `commit_live`.
+/// The observations are Forwards of RowIds 1.. in issue order with distinct
+/// Undo references; the Commit is q 2; RowLeaf 13 holds exactly those rows
+/// with this module's canonical bytes.
+fn inserts(id: &str, columns: Vec<Column>, statements: &[Vec<Vec<Lit>>]) {
+    case(id, || {
+        let total: usize = statements.iter().map(Vec::len).sum();
+        let oracle = Oracle::new();
+        with_fresh!(
+            oracle,
+            frames = 24,
+            |live, owner, flusher, status, undo, private, reader_private, core, fence, state| {
+                let _ = (core, state);
+                let (row_status, _) = create_table_with(
+                    live,
+                    owner,
+                    flusher,
+                    status,
+                    undo,
+                    private,
+                    true,
+                    &spec(columns.clone()),
+                );
+                for _ in 1..total {
+                    system_init(live, owner, flusher, true);
+                }
+                let (mut writer, reader, mut flush) = live.split();
+                let tx = writer
+                    .begin_row_transaction(
+                        owner,
+                        IsolationLevel::Serializable,
+                        &row_status,
+                        private,
+                        &mut flush,
+                    )
+                    .unwrap();
+                let mut table = None;
+                let mut observed: Vec<RowMutationObservation> = Vec::new();
+                let mut actor = None;
+                for rows in statements {
+                    let view = writer.begin_statement(owner, &tx).unwrap();
+                    assert_eq!(
+                        *actor.get_or_insert(view.own_actor().unwrap()),
+                        view.own_actor().unwrap()
+                    );
+                    if table.is_none() {
+                        table = Some(issue_table!(
+                            reader,
+                            owner,
+                            view,
+                            reader_private,
+                            flush,
+                            flusher
+                        ));
+                    }
+                    let values: Vec<Vec<ValueRef<'_>>> = rows
+                        .iter()
+                        .map(|row| row.iter().map(Lit::value).collect())
+                        .collect();
+                    let input: Vec<&[ValueRef<'_>]> = values.iter().map(Vec::as_slice).collect();
+                    let mut slots: Vec<Option<RowMutationObservation>> =
+                        input.iter().map(|_| None).collect();
+                    let mut call = LiveCall::new(&mut writer, owner, &mut flush, flusher);
+                    match insert_live(
+                        &mut call,
+                        view,
+                        table.as_ref().unwrap(),
+                        private,
+                        &input,
+                        &mut slots,
+                    ) {
+                        Ok(count) => assert_eq!(count, rows.len()),
+                        Err(error) => panic!("{id} statement refused {:?}", error.failure),
+                    }
+                    observed.extend(slots.into_iter().map(Option::unwrap));
+                    assert_eq!(tx.test_statement_slot().0, 0);
+                }
+                let committed = {
+                    let mut call = LiveCall::new(&mut writer, owner, &mut flush, flusher);
+                    match commit_live(&mut call, tx, private) {
+                        Ok(committed) => committed,
+                        Err(error) => panic!("{id} Commit refused {:?}", error.failure),
+                    }
+                };
+                assert_eq!((committed.actor(), committed.q()), (actor.unwrap(), 2));
+                let rows: Vec<u64> = observed.iter().map(|o| o.row().get()).collect();
+                assert_eq!(rows, (1..=total as u64).collect::<Vec<_>>());
+                assert!(
+                    observed
+                        .iter()
+                        .all(|o| o.operation() == RowOperation::Forward)
+                );
+                let mut undo: Vec<_> = observed.iter().map(|o| o.undo()).collect();
+                undo.sort_by_key(|u| format!("{u:?}"));
+                undo.dedup();
+                assert_eq!(undo.len(), total, "distinct Undo references");
+                let expected: Vec<(u64, Vec<u8>)> = statements
+                    .iter()
+                    .flatten()
+                    .zip(1..)
+                    .map(|(row, id)| (id, canon(row)))
+                    .collect();
+                assert_leaf(&leaf_cells(reader.catalog_test_pool()), &expected);
+                println!(
+                    "{id} rows={} statements={} q={} lengths={:?}",
+                    total,
+                    statements.len(),
+                    committed.q(),
+                    expected.iter().map(|(_, c)| c.len()).collect::<Vec<_>>()
+                );
+                owner.check_idle().unwrap();
+                assert!(!fence.is_fenced());
+            }
+        );
+    });
+}
+
+#[test]
+fn mca01_v01_bool_nonnull() {
+    inserts(
+        "MCA01-V01",
+        vec![column("b", DataType::Bool, false)],
+        &[vec![vec![Lit::Bool(true)]]],
+    );
+}
+
+#[test]
+fn mca01_v02_int64_nonnull() {
+    inserts(
+        "MCA01-V02",
+        vec![column("i", DataType::Int64, false)],
+        &[vec![vec![Lit::Int(i64::MIN + 1)]]],
+    );
+}
+
+#[test]
+fn mca01_v03_utf8_nonnull() {
+    inserts(
+        "MCA01-V03",
+        vec![column("s", DataType::Utf8, false)],
+        &[vec![vec![Lit::Text("A\0한글")]]],
+    );
+}
+
+#[test]
+fn mca01_v04_binary_nonnull() {
+    inserts(
+        "MCA01-V04",
+        vec![column("x", DataType::Binary, false)],
+        &[vec![vec![Lit::Bin(vec![0, 255, 0, 128, 0])]]],
+    );
+}
+
+/// The smallest row: one nullable column holding Null, canonical length 5.
+#[test]
+fn mca01_v05_nullable_null_is_five_bytes() {
+    assert_eq!(canon(&[Lit::Null]).len(), 5);
+    inserts(
+        "MCA01-V05",
+        vec![column("n", DataType::Int64, true)],
+        &[vec![vec![Lit::Null]]],
+    );
+}
+
+/// 32 columns (the row format's maximum), the four types in turn and every
+/// other column nullable; the row holds a value of each type and Nulls.
+#[test]
+fn mca01_v06_mixed_32_columns() {
+    let types = [
+        DataType::Bool,
+        DataType::Int64,
+        DataType::Utf8,
+        DataType::Binary,
+    ];
+    let columns: Vec<Column> = (0..32)
+        .map(|i| column(&format!("c{i}"), types[i % 4], i % 2 == 1))
+        .collect();
+    let row: Vec<Lit> = (0..32)
+        .map(|i| match (i % 4, i % 8 >= 4 && i % 2 == 1) {
+            (_, true) => Lit::Null,
+            (0, _) => Lit::Bool(i % 3 == 0),
+            (1, _) => Lit::Int(-(i as i64) * 1_000_003),
+            (2, _) => Lit::Text("가a"),
+            _ => Lit::Bin(vec![i as u8, 0, 0xff]),
+        })
+        .collect();
+    assert_eq!(row.iter().filter(|v| matches!(v, Lit::Null)).count(), 8);
+    inserts("MCA01-V06", columns, &[vec![row]]);
+}
+
+/// The inline maximum: a Binary row of canonical length 2048.
+#[test]
+fn mca01_v07_canonical_2048() {
+    let row = vec![Lit::Bin(vec![0x3c; 2039])];
+    assert_eq!(canon(&row).len(), 2048);
+    inserts(
+        "MCA01-V07",
+        vec![column("x", DataType::Binary, false)],
+        &[vec![row]],
+    );
+}
+
+/// Two statements of three INSERTs each, then one Commit.
+#[test]
+fn mca01_v08_two_statements_of_three() {
+    let rows = |base: i64| (0..3).map(|i| vec![Lit::Int(base + i)]).collect::<Vec<_>>();
+    inserts(
+        "MCA01-V08",
+        vec![column("i", DataType::Int64, false)],
+        &[rows(100), rows(200)],
+    );
+}
+
+/// MCA01 V09..V11: one refused row in its own statement. A refuses it at
+/// Validate with `error` before any effect: the call returns the statement
+/// unchanged, the WAL and every file are byte-equal, RowLeaf 13 is
+/// unchanged and nothing is left to release. The statement then finishes
+/// and a new statement inserts `then`, which takes RowId 1: the refused row
+/// consumed no issuance. The transaction commits it (q 2).
+fn refused(id: &str, column: Column, value: Lit, error: InsertError, then: Lit) {
+    case(id, || {
+        let oracle = Oracle::new();
+        with_fresh!(
+            oracle,
+            frames = 16,
+            |live, owner, flusher, status, undo, private, reader_private, core, fence, state| {
+                let _ = core;
+                let (row_status, _) = create_table_with(
+                    live,
+                    owner,
+                    flusher,
+                    status,
+                    undo,
+                    private,
+                    true,
+                    &spec(vec![column.clone()]),
+                );
+                let (mut writer, reader, mut flush) = live.split();
+                let tx = writer
+                    .begin_row_transaction(
+                        owner,
+                        IsolationLevel::Serializable,
+                        &row_status,
+                        private,
+                        &mut flush,
+                    )
+                    .unwrap();
+                let view = writer.begin_statement(owner, &tx).unwrap();
+                let table = issue_table!(reader, owner, view, reader_private, flush, flusher);
+                let before = files(state);
+                let leaf = leaf_cells(reader.catalog_test_pool());
+                let values = [value.value()];
+                let input: [&[ValueRef<'_>]; 1] = [&values];
+                let mut slots: [Option<RowMutationObservation>; 1] = [None];
+                let mut call = LiveCall::new(&mut writer, owner, &mut flush, flusher);
+                let view = match insert_live(&mut call, view, &table, private, &input, &mut slots) {
+                    Err(DriveError { failure, after }) => {
+                        println!("{id} refusal={failure:?}");
+                        assert_eq!(failure.stage, Stage::Validate);
+                        assert!(
+                            matches!(&failure.error, DriverError::Insert(found) if *found == error),
+                            "{failure:?}"
+                        );
+                        assert!(failure.cleanup.is_none());
+                        assert!(!failure.must_resolve);
+                        match after {
+                            After::Returned(view) => view,
+                            _ => panic!("{id} statement not Returned"),
+                        }
+                    }
+                    Ok(n) => panic!("{id} inserted {n}"),
+                };
+                assert!(slots[0].is_none());
+                let after = files(state);
+                assert_eq!(after.0, before.0, "{id} WAL length");
+                assert!(after.1 == before.1, "{id} files changed");
+                assert_eq!(leaf_cells(reader.catalog_test_pool()), leaf);
+                assert!(finish_statement_live(&mut call, view).is_ok());
+                let view = writer.begin_statement(owner, &tx).unwrap();
+                let values = [then.value()];
+                let input: [&[ValueRef<'_>]; 1] = [&values];
+                let mut call = LiveCall::new(&mut writer, owner, &mut flush, flusher);
+                match insert_live(&mut call, view, &table, private, &input, &mut slots) {
+                    Ok(1) => {}
+                    other => panic!("{id} follow-up {:?}", other.err().map(|e| e.failure)),
+                }
+                assert_eq!(slots[0].as_ref().unwrap().row().get(), 1);
+                let mut call = LiveCall::new(&mut writer, owner, &mut flush, flusher);
+                let q = match commit_live(&mut call, tx, private) {
+                    Ok(committed) => committed.q(),
+                    Err(error) => panic!("{id} Commit refused {:?}", error.failure),
+                };
+                assert_eq!(q, 2);
+                assert_leaf(
+                    &leaf_cells(reader.catalog_test_pool()),
+                    &[(1, canon(&[then]))],
+                );
+                owner.check_idle().unwrap();
+                assert!(!fence.is_fenced());
+            }
+        );
+    });
+}
+
+#[test]
+fn mca01_v09_type_mismatch_is_refused_before_any_effect() {
+    refused(
+        "MCA01-V09",
+        column("i", DataType::Int64, false),
+        Lit::Bool(true),
+        InsertError::Row(RowError::SchemaMismatch),
+        Lit::Int(9),
+    );
+}
+
+#[test]
+fn mca01_v10_null_in_nonnullable_is_refused_before_any_effect() {
+    refused(
+        "MCA01-V10",
+        column("i", DataType::Int64, false),
+        Lit::Null,
+        InsertError::Row(RowError::SchemaMismatch),
+        Lit::Int(10),
+    );
+}
+
+/// Canonical length 2049, one byte over the inline maximum.
+#[test]
+fn mca01_v11_canonical_2049_is_refused_before_any_effect() {
+    let value = Lit::Bin(vec![0x3c; 2040]);
+    assert_eq!(canon(std::slice::from_ref(&value)).len(), 2049);
+    refused(
+        "MCA01-V11",
+        column("x", DataType::Binary, false),
+        value,
+        InsertError::Unsupported,
+        Lit::Bin(vec![1, 2, 3]),
+    );
+}
+
+/// The actor's Row Jobs: (state, count) of every Job whose source is the
+/// actor, the Undo-free mutation of each root (in RowId order) and the
+/// Commit q each compensated root holds.
+macro_rules! census {
+    ($writer:ident, $actor:expr) => {{
+        let mut states = BTreeMap::new();
+        let mut mutations = Vec::new();
+        let mut compensated_q = Vec::new();
+        for bytes in $writer.catalog_test_jobs() {
+            let job = job3::decode_job(bytes, super::super::support::namespace()).unwrap();
+            if job.source() != Some($actor) {
+                continue;
+            }
+            *states.entry(format!("{:?}", job.state())).or_insert(0usize) += 1;
+            if let Some(row) = job.row_id() {
+                mutations.push((row.get(), job.mutation()));
+            }
+            if job.state() == JobState::RootReleasingCompensated {
+                compensated_q.push(job.commit_q());
+            }
+        }
+        mutations.sort();
+        (states, mutations, compensated_q)
+    }};
+}
+
+/// The preflight's refusal when no Free Undo container is left: Unchanged
+/// (Prepare, Capacity), C's.
+fn no_free_undo(failure: &Failure) -> bool {
+    let error = disk(failure);
+    (error.phase, error.effect) == (RetentionPhase::Prepare, Effect::Unchanged)
+        && matches!(error.cause, RetentionCause::Capacity)
+}
+
+/// The expected census states.
+fn states(expected: &[(&str, usize)]) -> BTreeMap<String, usize> {
+    expected
+        .iter()
+        .map(|(name, n)| ((*name).to_owned(), *n))
+        .collect()
+}
+
+/// One failed statement through A's driver: `good` Int64 rows, then a Null
+/// row that fails after the good rows applied. Its own preflight selects a
+/// Free Undo container before A validates the row, so with a container
+/// left it is refused at Validate (the non-nullable column), and with the
+/// containers full at the preflight (Unchanged Capacity, `$full`). The
+/// statement is RollbackRequired; A's statement rollback compensates every
+/// good row (one CLR each) and the statement finishes. The good rows'
+/// observations.
+macro_rules! failed_suffix {
+    ($writer:ident, $owner:ident, $flush:ident, $flusher:ident, $tx:ident, $table:expr, $private:ident, $good:expr) => {
+        failed_suffix!(
+            $writer, $owner, $flush, $flusher, $tx, $table, $private, $good, false
+        )
+    };
+    ($writer:ident, $owner:ident, $flush:ident, $flusher:ident, $tx:ident, $table:expr, $private:ident, $good:expr, $full:expr) => {{
+        let good: &[i64] = &$good;
+        let view = $writer.begin_statement($owner, &$tx).unwrap();
+        let values: Vec<[ValueRef<'static>; 1]> = good
+            .iter()
+            .map(|v| [ValueRef::Int64(*v)])
+            .chain([[ValueRef::Null]])
+            .collect();
+        let input: Vec<&[ValueRef<'_>]> = values.iter().map(|v| &v[..]).collect();
+        let mut slots: Vec<Option<RowMutationObservation>> = input.iter().map(|_| None).collect();
+        let mut call = LiveCall::new(&mut $writer, $owner, &mut $flush, $flusher);
+        let mut pending = match insert_live(&mut call, view, $table, $private, &input, &mut slots) {
+            Err(DriveError { failure, after }) => {
+                if $full {
+                    assert_eq!(failure.stage, Stage::Preflight, "{failure:?}");
+                    assert!(no_free_undo(&failure), "{failure:?}");
+                } else {
+                    assert_eq!(failure.stage, Stage::Validate, "{failure:?}");
+                    assert!(
+                        matches!(
+                            failure.error,
+                            DriverError::Insert(InsertError::Row(RowError::SchemaMismatch))
+                        ),
+                        "{failure:?}"
+                    );
+                }
+                assert!(failure.cleanup.is_none() && !failure.must_resolve);
+                rollback_required(after)
+            }
+            Ok(n) => panic!("{n} rows inserted"),
+        };
+        {
+            let mut rollback =
+                match start_statement_rollback_live(&mut call, &$tx, &mut pending, $private) {
+                    Ok(rollback) => rollback,
+                    Err(failure) => panic!("statement RollbackStart {failure:?}"),
+                };
+            for _ in good {
+                assert!(matches!(
+                    rollback_step_live(&mut rollback),
+                    Ok(Stepped::Compensated)
+                ));
+            }
+            assert!(matches!(
+                rollback_step_live(&mut rollback),
+                Ok(Stepped::Complete)
+            ));
+            assert!(finish_rollback_live(rollback).is_ok());
+        }
+        let view = match pending.rolled_back() {
+            Ok(view) => view,
+            Err(_) => panic!("statement rollback incomplete"),
+        };
+        assert!(finish_statement_live(&mut call, view).is_ok());
+        slots
+            .into_iter()
+            .take(good.len())
+            .map(Option::unwrap)
+            .collect::<Vec<_>>()
+    }};
+}
+
+/// The full abort of `tx`: C's transaction RollbackStart with A's CLR
+/// producer for each candidate (A's driver starts a full rollback only from
+/// a refused Commit), C's finish, then A's `finish_aborted_live`. The CLRs.
+macro_rules! full_abort {
+    ($writer:ident, $owner:ident, $flush:ident, $flusher:ident, $tx:ident, $private:ident) => {{
+        let mut clrs = 0;
+        {
+            let mut rollback = $writer
+                .start_row_rollback(
+                    $owner,
+                    &$tx,
+                    None,
+                    RollbackScope::Transaction,
+                    $private,
+                    &mut $flush,
+                    $flusher,
+                )
+                .unwrap();
+            loop {
+                let target = match rollback.next().unwrap() {
+                    RollbackStep::Candidate(mut task) => {
+                        let proposal = produce_clr(task.producer_lane().unwrap()).unwrap();
+                        let Ok(prepared) = task.prepare(proposal) else {
+                            panic!("CLR prepare refused")
+                        };
+                        let Ok(clr) = prepared.apply() else {
+                            panic!("CLR apply refused")
+                        };
+                        assert_eq!(clr.operation(), RowOperation::Clr);
+                        clrs += 1;
+                        None
+                    }
+                    RollbackStep::FlushRequired { target } => Some(target),
+                    RollbackStep::Complete => break,
+                };
+                if let Some(target) = target {
+                    rollback.flush(&target).unwrap();
+                }
+                assert!(clrs <= 8);
+            }
+            assert!(rollback.finish().is_ok());
+        }
+        let mut call = LiveCall::new(&mut $writer, $owner, &mut $flush, $flusher);
+        assert!(finish_aborted_live(&mut call, $tx).is_ok());
+        clrs
+    }};
+}
+
+/// The leaf holds exactly these (RowId, Int64) rows.
+fn int_rows(rows: &[(u64, i64)]) -> Vec<(u64, Vec<u8>)> {
+    rows.iter()
+        .map(|(row, value)| (*row, canon(&[Lit::Int(*value)])))
+        .collect()
+}
+
+const A: i64 = 10;
+const B: i64 = 20;
+const C: i64 = 30;
+const D: i64 = 40;
+const E: i64 = 50;
+
+/// MCA02: statement S1 inserts a, b (RowIds 1, 2) through A's driver; then
+/// `variant`. Every RowId, Undo reference and mutation is issued once
+/// (Cancel and CLR return none), compensated roots keep q 0 beside the
+/// source's Commit or abort, and the actor's Job census and RowLeaf 13 are
+/// checked after each step against the history's own counts.
+fn mca02(id: &str, variant: u8) {
+    case(id, || {
+        let oracle = Oracle::new();
+        with_fresh!(
+            oracle,
+            frames = 28,
+            |live, owner, flusher, status, undo, private, reader_private, core, fence, state| {
+                let _ = core;
+                let (row_status, _) =
+                    create_table(live, owner, flusher, status, undo, private, true);
+                // Free Undo containers: T's own and one per System INIT. V06
+                // has exactly the six its rows take (a, b and the three failed
+                // suffixes' c, d, x, y), so the fourth statement finds the
+                // containers full; every other variant has one more.
+                for _ in 0..if variant == 6 { 5 } else { 6 } {
+                    system_init(live, owner, flusher, true);
+                }
+                let (mut writer, reader, mut flush) = live.split();
+                let tx = writer
+                    .begin_row_transaction(
+                        owner,
+                        IsolationLevel::Serializable,
+                        &row_status,
+                        private,
+                        &mut flush,
+                    )
+                    .unwrap();
+                let s1 = writer.begin_statement(owner, &tx).unwrap();
+                let actor = s1.own_actor().unwrap();
+                let table = issue_table!(reader, owner, s1, reader_private, flush, flusher);
+                let kept = a_insert!(
+                    &mut writer,
+                    owner,
+                    flush,
+                    flusher,
+                    s1,
+                    &table,
+                    private,
+                    [A, B]
+                );
+                let rows = |o: &[RowMutationObservation]| {
+                    o.iter().map(|o| o.row().get()).collect::<Vec<_>>()
+                };
+                assert_eq!(rows(&kept), [1, 2]);
+                assert_leaf(
+                    &leaf_cells(reader.catalog_test_pool()),
+                    &int_rows(&[(1, A), (2, B)]),
+                );
+                assert_eq!(
+                    census!(writer, actor).0,
+                    states(&[("TerminalLeased", 1), ("RootRetained", 2)])
+                );
+                // The prefix every failed-statement variant shares: S2 c, d,
+                // then the refused row; only c and d are compensated.
+                let suffix = matches!(variant, 1 | 2 | 3 | 6);
+                if suffix {
+                    let undone =
+                        failed_suffix!(writer, owner, flush, flusher, tx, &table, private, [C, D]);
+                    assert_eq!(rows(&undone), [3, 4]);
+                    assert_leaf(
+                        &leaf_cells(reader.catalog_test_pool()),
+                        &int_rows(&[(1, A), (2, B)]),
+                    );
+                    let (found, _, compensated_q) = census!(writer, actor);
+                    assert_eq!(
+                        found,
+                        states(&[
+                            ("TerminalLeased", 1),
+                            ("RootRetained", 2),
+                            ("RootReleasingCompensated", 2)
+                        ])
+                    );
+                    assert_eq!(compensated_q, [0, 0]);
+                }
+                let (outcome, leaf, end) = match variant {
+                    // S3 e, then Commit.
+                    1 => {
+                        let s3 = writer.begin_statement(owner, &tx).unwrap();
+                        assert_eq!(
+                            s3.test_mark(),
+                            Some(kept[1].undo()),
+                            "the new mark is b's U"
+                        );
+                        let e =
+                            a_insert!(&mut writer, owner, flush, flusher, s3, &table, private, [E]);
+                        assert_eq!(rows(&e), [5]);
+                        let q = a_commit!(&mut writer, owner, flush, flusher, tx, private);
+                        (
+                            Some(q),
+                            vec![(1, A), (2, B), (5, E)],
+                            states(&[
+                                ("TerminalReady", 1),
+                                ("RootRetained", 3),
+                                ("RootReleasingCompensated", 2),
+                            ]),
+                        )
+                    }
+                    // Full abort right after the failed statement.
+                    2 => {
+                        assert_eq!(full_abort!(writer, owner, flush, flusher, tx, private), 2);
+                        (
+                            None,
+                            vec![],
+                            states(&[("TerminalReady", 1), ("RootReleasingCompensated", 4)]),
+                        )
+                    }
+                    // S3 e, then full abort.
+                    3 => {
+                        let s3 = writer.begin_statement(owner, &tx).unwrap();
+                        assert_eq!(s3.test_mark(), Some(kept[1].undo()));
+                        let e =
+                            a_insert!(&mut writer, owner, flush, flusher, s3, &table, private, [E]);
+                        assert_eq!(rows(&e), [5]);
+                        assert_eq!(full_abort!(writer, owner, flush, flusher, tx, private), 3);
+                        (
+                            None,
+                            vec![],
+                            states(&[("TerminalReady", 1), ("RootReleasingCompensated", 5)]),
+                        )
+                    }
+                    // S2's first row refused before any effect, then Commit.
+                    4 => {
+                        let before = files(state);
+                        let s2 = writer.begin_statement(owner, &tx).unwrap();
+                        let bad = [ValueRef::Null];
+                        let input: [&[ValueRef<'_>]; 1] = [&bad];
+                        let mut slots: [Option<RowMutationObservation>; 1] = [None];
+                        let mut call = LiveCall::new(&mut writer, owner, &mut flush, flusher);
+                        let s2 =
+                            match insert_live(&mut call, s2, &table, private, &input, &mut slots) {
+                                Err(DriveError {
+                                    failure,
+                                    after: After::Returned(view),
+                                }) => {
+                                    assert_eq!(failure.stage, Stage::Validate);
+                                    view
+                                }
+                                Err(error) => panic!("{:?}", error.failure),
+                                Ok(n) => panic!("{n} rows inserted"),
+                            };
+                        assert!(finish_statement_live(&mut call, s2).is_ok());
+                        let after = files(state);
+                        assert!(
+                            after.0 == before.0 && after.1 == before.1,
+                            "S2 changed a file"
+                        );
+                        assert_eq!(
+                            census!(writer, actor).0,
+                            states(&[("TerminalLeased", 1), ("RootRetained", 2)])
+                        );
+                        let q = a_commit!(&mut writer, owner, flush, flusher, tx, private);
+                        (
+                            Some(q),
+                            vec![(1, A), (2, B)],
+                            states(&[("TerminalReady", 1), ("RootRetained", 2)]),
+                        )
+                    }
+                    // S2's row reserved and then cancelled by A's driver (a
+                    // stale stamp at prepare); S3 e takes RowId 4; Commit.
+                    5 => {
+                        let (wal, _) = files(state);
+                        let s2 = writer.begin_statement(owner, &tx).unwrap();
+                        let c = [ValueRef::Int64(C)];
+                        let input: [&[ValueRef<'_>]; 1] = [&c];
+                        let mut slots: [Option<RowMutationObservation>; 1] = [None];
+                        let once = writer.test_row_stale_stamp_once().at_prepare();
+                        let mut call = LiveCall::new(&mut writer, owner, &mut flush, flusher);
+                        let result =
+                            insert_live(&mut call, s2, &table, private, &input, &mut slots);
+                        drop(once);
+                        let s2 = match { result } {
+                            Err(DriveError {
+                                failure,
+                                after: After::Returned(view),
+                            }) => {
+                                assert_eq!(failure.stage, Stage::Prepare);
+                                assert!(failure.cleanup.is_none() && !failure.must_resolve);
+                                view
+                            }
+                            Err(error) => panic!("{:?}", error.failure),
+                            Ok(n) => panic!("{n} rows inserted"),
+                        };
+                        assert!(slots[0].is_none());
+                        assert!(finish_statement_live(&mut call, s2).is_ok());
+                        assert!(files(state).0 > wal, "the RowReserve and its Cancel");
+                        assert_leaf(
+                            &leaf_cells(reader.catalog_test_pool()),
+                            &int_rows(&[(1, A), (2, B)]),
+                        );
+                        assert_eq!(
+                            census!(writer, actor).0,
+                            states(&[("TerminalLeased", 1), ("RootRetained", 2)])
+                        );
+                        let s3 = writer.begin_statement(owner, &tx).unwrap();
+                        let e =
+                            a_insert!(&mut writer, owner, flush, flusher, s3, &table, private, [E]);
+                        assert_eq!(rows(&e), [4], "the cancelled RowId 3 is not issued again");
+                        let q = a_commit!(&mut writer, owner, flush, flusher, tx, private);
+                        (
+                            Some(q),
+                            vec![(1, A), (2, B), (4, E)],
+                            states(&[("TerminalReady", 1), ("RootRetained", 3)]),
+                        )
+                    }
+                    // Two more failed statements (three in all). V06 has
+                    // exactly the six containers a, b, c, d, x and y take, so
+                    // the third statement's refused row finds them full at
+                    // its preflight; the containers of compensated roots are
+                    // not freed before the actor's terminal, so a new
+                    // statement's row is refused alike, and the full abort
+                    // still completes.
+                    6 => {
+                        let x =
+                            failed_suffix!(writer, owner, flush, flusher, tx, &table, private, [E]);
+                        assert_eq!(rows(&x), [5]);
+                        let y = failed_suffix!(
+                            writer,
+                            owner,
+                            flush,
+                            flusher,
+                            tx,
+                            &table,
+                            private,
+                            [E + 1],
+                            true
+                        );
+                        assert_eq!(rows(&y), [6]);
+                        assert_eq!(
+                            census!(writer, actor).0,
+                            states(&[
+                                ("TerminalLeased", 1),
+                                ("RootRetained", 2),
+                                ("RootReleasingCompensated", 4)
+                            ])
+                        );
+                        let before = files(state);
+                        {
+                            let s5 = writer.begin_statement(owner, &tx).unwrap();
+                            let f = [ValueRef::Int64(E + 2)];
+                            let input: [&[ValueRef<'_>]; 1] = [&f];
+                            let mut slots: [Option<RowMutationObservation>; 1] = [None];
+                            let mut call = LiveCall::new(&mut writer, owner, &mut flush, flusher);
+                            let s5 = match insert_live(
+                                &mut call, s5, &table, private, &input, &mut slots,
+                            ) {
+                                Err(DriveError {
+                                    failure,
+                                    after: After::Returned(view),
+                                }) => {
+                                    assert_eq!(failure.stage, Stage::Preflight);
+                                    assert!(no_free_undo(&failure), "{failure:?}");
+                                    assert!(failure.cleanup.is_none() && !failure.must_resolve);
+                                    view
+                                }
+                                Err(error) => panic!("{id} new statement {:?}", error.failure),
+                                Ok(n) => panic!("{id} new statement inserted {n}"),
+                            };
+                            assert!(slots[0].is_none());
+                            assert!(finish_statement_live(&mut call, s5).is_ok());
+                        }
+                        let after = files(state);
+                        assert!(
+                            after.0 == before.0 && after.1 == before.1,
+                            "the refused statement changed a file"
+                        );
+                        assert_eq!(full_abort!(writer, owner, flush, flusher, tx, private), 2);
+                        (
+                            None,
+                            vec![],
+                            states(&[("TerminalReady", 1), ("RootReleasingCompensated", 6)]),
+                        )
+                    }
+                    _ => unreachable!(),
+                };
+                if let Some(q) = outcome {
+                    assert_eq!(q, 2);
+                }
+                assert_leaf(&leaf_cells(reader.catalog_test_pool()), &int_rows(&leaf));
+                let (found, mutations, compensated_q) = census!(writer, actor);
+                println!(
+                    "{id} census={found:?} mutations={mutations:?} compensated_q={compensated_q:?}"
+                );
+                assert_eq!(found, end);
+                assert!(compensated_q.iter().all(|q| *q == 0));
+                assert!(
+                    mutations.windows(2).all(|w| w[0].1 < w[1].1),
+                    "mutations issued once, in RowId order"
+                );
+                owner.check_idle().unwrap();
+                assert!(!fence.is_fenced());
+            }
+        );
+    });
+}
+
+#[test]
+fn mca02_v01_failed_statement_then_e_commits() {
+    mca02("MCA02-V01", 1);
+}
+
+#[test]
+fn mca02_v02_failed_statement_then_full_abort() {
+    mca02("MCA02-V02", 2);
+}
+
+#[test]
+fn mca02_v03_failed_statement_then_e_and_full_abort() {
+    mca02("MCA02-V03", 3);
+}
+
+#[test]
+fn mca02_v04_statement_refused_before_its_first_effect() {
+    mca02("MCA02-V04", 4);
+}
+
+#[test]
+fn mca02_v05_reserved_row_cancelled_then_e_commits() {
+    mca02("MCA02-V05", 5);
+}
+
+#[test]
+fn mca02_v06_three_failed_statements_then_refused_and_full_abort() {
+    mca02("MCA02-V06", 6);
+}
+
+/// MCA04-V03: after a full abort the issuer goes on. Transaction 1 inserts
+/// a, b (RowIds 1, 2) and is fully aborted (two CLRs, AbortEnd); a new Row
+/// transaction (on its own Status, as the aborted terminal keeps Status 11
+/// until its cleanup) takes RowId 3 in a container the compensated roots do
+/// not hold, and commits (q 2). The leaf holds that row only.
+#[test]
+fn mca04_v03_full_abort_then_the_next_issuer() {
+    case("MCA04-V03", || {
+        let oracle = Oracle::new();
+        with_fresh!(
+            oracle,
+            frames = 24,
+            |live, owner, flusher, status, undo, private, reader_private, core, fence, state| {
+                let _ = (core, state);
+                let (row_status, _) =
+                    create_table(live, owner, flusher, status, undo, private, true);
+                for _ in 0..2 {
+                    system_init(live, owner, flusher, true);
+                }
+                // The second Row actor's own Status: the aborted actor's
+                // terminal keeps Status 11 until its cleanup.
+                let other_status = system_init(live, owner, flusher, false);
+                let (mut writer, reader, mut flush) = live.split();
+                let tx = writer
+                    .begin_row_transaction(
+                        owner,
+                        IsolationLevel::Serializable,
+                        &row_status,
+                        private,
+                        &mut flush,
+                    )
+                    .unwrap();
+                let s1 = writer.begin_statement(owner, &tx).unwrap();
+                let actor = s1.own_actor().unwrap();
+                let table = issue_table!(reader, owner, s1, reader_private, flush, flusher);
+                let kept = a_insert!(
+                    &mut writer,
+                    owner,
+                    flush,
+                    flusher,
+                    s1,
+                    &table,
+                    private,
+                    [A, B]
+                );
+                assert_eq!(
+                    kept.iter().map(|o| o.row().get()).collect::<Vec<_>>(),
+                    [1, 2]
+                );
+                assert_eq!(full_abort!(writer, owner, flush, flusher, tx, private), 2);
+                assert_eq!(
+                    census!(writer, actor).0,
+                    states(&[("TerminalReady", 1), ("RootReleasingCompensated", 2)])
+                );
+                assert_leaf(&leaf_cells(reader.catalog_test_pool()), &[]);
+                let held: Vec<u64> = kept.iter().map(|o| o.undo().page().page_no).collect();
+                let tx2 = writer
+                    .begin_row_transaction(
+                        owner,
+                        IsolationLevel::Serializable,
+                        &other_status,
+                        private,
+                        &mut flush,
+                    )
+                    .unwrap();
+                let s2 = writer.begin_statement(owner, &tx2).unwrap();
+                assert_ne!(s2.own_actor().unwrap(), actor);
+                let c = a_insert!(&mut writer, owner, flush, flusher, s2, &table, private, [C]);
+                assert_eq!(c[0].row().get(), 3, "RowIds 1 and 2 are not issued again");
+                assert!(!held.contains(&c[0].undo().page().page_no));
+                let q = a_commit!(&mut writer, owner, flush, flusher, tx2, private);
+                assert_eq!(q, 2);
+                assert_leaf(
+                    &leaf_cells(reader.catalog_test_pool()),
+                    &int_rows(&[(3, C)]),
+                );
+                owner.check_idle().unwrap();
+                assert!(!fence.is_fenced());
+            }
+        );
+    });
+}
+
+/// MCA05, the UndoSlot dimension (the fourth of the nine, V10..V12): Free
+/// Undo containers one under, equal to and one over what a statement of
+/// one applied row and one refused row needs. One row's Reserve takes a
+/// container, and every row's preflight selects one before A validates it.
+/// - `free = 0` (V10, under): the first row's preflight is refused
+///   Unchanged Capacity; no effect, the statement is Returned and the empty
+///   transaction ends.
+/// - `free = 1` (V11, equal): a lands; the next row's preflight finds the
+///   containers full (Unchanged Capacity); the statement is
+///   RollbackRequired, A's statement rollback compensates a, then the full
+///   abort ends the transaction (TerminalReady, one compensated root).
+/// - `free = 2` (V12, over): a lands; the Null row is refused at Validate;
+///   the same rollback and full abort follow.
+fn undo_slots(id: &str, free: usize) {
+    case(id, || {
+        let oracle = Oracle::new();
+        with_fresh!(
+            oracle,
+            frames = 16,
+            |live, owner, flusher, status, undo, private, reader_private, core, fence, state| {
+                let _ = core;
+                let (row_status, _) =
+                    create_table(live, owner, flusher, status, undo, private, free > 0);
+                for _ in 1..free {
+                    system_init(live, owner, flusher, true);
+                }
+                let (mut writer, reader, mut flush) = live.split();
+                let tx = writer
+                    .begin_row_transaction(
+                        owner,
+                        IsolationLevel::Serializable,
+                        &row_status,
+                        private,
+                        &mut flush,
+                    )
+                    .unwrap();
+                let s1 = writer.begin_statement(owner, &tx).unwrap();
+                let actor = s1.own_actor().unwrap();
+                let table = issue_table!(reader, owner, s1, reader_private, flush, flusher);
+                if free == 0 {
+                    let before = files(state);
+                    let a = [ValueRef::Int64(A)];
+                    let input: [&[ValueRef<'_>]; 1] = [&a];
+                    let mut slots: [Option<RowMutationObservation>; 1] = [None];
+                    let mut call = LiveCall::new(&mut writer, owner, &mut flush, flusher);
+                    let s1 = match insert_live(&mut call, s1, &table, private, &input, &mut slots) {
+                        Err(DriveError {
+                            failure,
+                            after: After::Returned(view),
+                        }) => {
+                            assert_eq!(failure.stage, Stage::Preflight);
+                            assert!(no_free_undo(&failure), "{failure:?}");
+                            view
+                        }
+                        Err(error) => panic!("{:?}", error.failure),
+                        Ok(n) => panic!("{n} rows inserted"),
+                    };
+                    assert!(finish_statement_live(&mut call, s1).is_ok());
+                    let after = files(state);
+                    assert!(after.0 == before.0 && after.1 == before.1, "first effect");
+                    assert!(
+                        writer
+                            .abort_empty_transaction(owner, tx, private, &mut flush)
+                            .is_ok()
+                    );
+                    assert_leaf(&leaf_cells(reader.catalog_test_pool()), &[]);
+                } else {
+                    // The statement's own refused row: the containers are
+                    // full (equal) or the Null fails Validate (over).
+                    assert!(writer.finish_statement(owner, s1).is_ok());
+                    let a = failed_suffix!(
+                        writer,
+                        owner,
+                        flush,
+                        flusher,
+                        tx,
+                        &table,
+                        private,
+                        [A],
+                        free == 1
+                    );
+                    assert_eq!(a[0].row().get(), 1);
+                    assert_eq!(
+                        census!(writer, actor).0,
+                        states(&[("TerminalLeased", 1), ("RootReleasingCompensated", 1)])
+                    );
+                    assert_eq!(full_abort!(writer, owner, flush, flusher, tx, private), 0);
+                    assert_eq!(
+                        census!(writer, actor).0,
+                        states(&[("TerminalReady", 1), ("RootReleasingCompensated", 1)])
+                    );
+                    assert_leaf(&leaf_cells(reader.catalog_test_pool()), &[]);
+                }
+                owner.check_idle().unwrap();
+                assert!(!fence.is_fenced());
+            }
+        );
+    });
+}
+
+#[test]
+fn mca05_v10_undo_slots_one_under() {
+    undo_slots("MCA05-V10", 0);
+}
+
+#[test]
+fn mca05_v11_undo_slots_equal() {
+    undo_slots("MCA05-V11", 1);
+}
+
+#[test]
+fn mca05_v12_undo_slots_one_over() {
+    undo_slots("MCA05-V12", 2);
+}
+
+/// MCA05-V30: the RowLeaf up to its admitted maximum, then the next row,
+/// which would split the leaf, is refused. Each inline row of canonical
+/// length 2048 costs its record (168 + 2048) and a 16-byte entry slot of
+/// the tree page's entry capacity, so `rows` = capacity / 2232 rows land in
+/// one statement; a second statement's row is refused by A at Validate
+/// (Capacity) before its Reserve, with no effect, and the Commit (q 2)
+/// publishes exactly those rows.
+#[test]
+fn mca05_v30_leaf_maximum_then_the_split_is_refused() {
+    let cost = 2048 + 168 + 16;
+    let rows = crate::storage::tree_page::TREE_ENTRY_CAPACITY / cost;
+    case("MCA05-V30", || {
+        let oracle = Oracle::new();
+        with_fresh!(
+            oracle,
+            frames = 28,
+            |live, owner, flusher, status, undo, private, reader_private, core, fence, state| {
+                let _ = core;
+                let (row_status, _) = create_table_with(
+                    live,
+                    owner,
+                    flusher,
+                    status,
+                    undo,
+                    private,
+                    true,
+                    &spec(vec![column("x", DataType::Binary, false)]),
+                );
+                // One container per landed row and one the refused row's
+                // preflight selects.
+                for _ in 0..rows {
+                    system_init(live, owner, flusher, true);
+                }
+                let (mut writer, reader, mut flush) = live.split();
+                let tx = writer
+                    .begin_row_transaction(
+                        owner,
+                        IsolationLevel::Serializable,
+                        &row_status,
+                        private,
+                        &mut flush,
+                    )
+                    .unwrap();
+                let s1 = writer.begin_statement(owner, &tx).unwrap();
+                let table = issue_table!(reader, owner, s1, reader_private, flush, flusher);
+                let payload = |i: usize| Lit::Bin(vec![i as u8; 2039]);
+                let lits: Vec<Lit> = (0..=rows).map(payload).collect();
+                let refs: Vec<[ValueRef<'_>; 1]> = lits.iter().map(|l| [l.value()]).collect();
+                let input: Vec<&[ValueRef<'_>]> = refs[..rows].iter().map(|v| &v[..]).collect();
+                let mut slots: Vec<Option<RowMutationObservation>> =
+                    input.iter().map(|_| None).collect();
+                {
+                    let mut call = LiveCall::new(&mut writer, owner, &mut flush, flusher);
+                    match insert_live(&mut call, s1, &table, private, &input, &mut slots) {
+                        Ok(n) => assert_eq!(n, rows),
+                        Err(error) => panic!(
+                            "row {} refused {:?}",
+                            slots.iter().flatten().count() + 1,
+                            error.failure
+                        ),
+                    }
+                }
+                let before = files(state);
+                let s2 = writer.begin_statement(owner, &tx).unwrap();
+                let last: [&[ValueRef<'_>]; 1] = [&refs[rows][..]];
+                let mut slot: [Option<RowMutationObservation>; 1] = [None];
+                let mut call = LiveCall::new(&mut writer, owner, &mut flush, flusher);
+                let s2 = match insert_live(&mut call, s2, &table, private, &last, &mut slot) {
+                    Err(DriveError {
+                        failure,
+                        after: After::Returned(view),
+                    }) => {
+                        println!("MCA05-V30 rows={rows} refusal={failure:?}");
+                        assert_eq!(failure.stage, Stage::Validate);
+                        assert!(
+                            matches!(failure.error, DriverError::Insert(InsertError::Capacity)),
+                            "{failure:?}"
+                        );
+                        view
+                    }
+                    Err(error) => panic!("{:?}", error.failure),
+                    Ok(n) => panic!("the split row inserted {n}"),
+                };
+                assert!(finish_statement_live(&mut call, s2).is_ok());
+                let after = files(state);
+                assert!(
+                    after.0 == before.0 && after.1 == before.1,
+                    "the refused row changed a file"
+                );
+                let mut call = LiveCall::new(&mut writer, owner, &mut flush, flusher);
+                match commit_live(&mut call, tx, private) {
+                    Ok(committed) => assert_eq!(committed.q(), 2),
+                    Err(error) => panic!("Commit refused {:?}", error.failure),
+                }
+                let expected: Vec<(u64, Vec<u8>)> = (0..rows)
+                    .map(|i| (i as u64 + 1, canon(&[payload(i)])))
+                    .collect();
+                assert_leaf(&leaf_cells(reader.catalog_test_pool()), &expected);
+                owner.check_idle().unwrap();
+                assert!(!fence.is_fenced());
+            }
+        );
+    });
+}

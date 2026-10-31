@@ -1299,3 +1299,6 @@ mod row_read_census;
 
 #[path = "catalog_memory/row_corpus.rs"]
 mod row_corpus;
+
+#[path = "catalog_memory/row_inventory_a.rs"]
+mod row_inventory_a;
