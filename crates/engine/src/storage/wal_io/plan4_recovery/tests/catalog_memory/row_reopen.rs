@@ -3,7 +3,8 @@
 //! step on the READY Live. C+B has no A, so a RowClr action is a failure
 //! here; the module links neither A nor B and is in both single-source
 //! exports.
-use super::super::super::{CATALOG_PRIVATE_BYTES, RowRecoveryPolicy};
+use super::super::super::{CATALOG_PRIVATE_BYTES, Plan4RecoveryAcquireFailure, RowRecoveryPolicy};
+use super::super::faults::unchanged_error;
 use super::super::support::namespace;
 use super::*;
 use crate::storage::disk::RecoveryAction;
@@ -218,4 +219,45 @@ pub(super) fn db_images(db: &Path) -> Images {
             )
         })
         .collect()
+}
+
+/// The restart refusal of `policy` (None: the legacy entry) over
+/// `directory`: Analysis/Unsupported, CallerMustResolve with the lease
+/// acquired, database Unchanged and no mutation (S6, moved here so the C+B
+/// export keeps it); the caller checks its files.
+pub(super) fn refused_in<D: DirectoryPort>(directory: &D, policy: Option<RowRecoveryPolicy>) {
+    let mut maintenance = boxed::<12_582_912>();
+    let mut dwb = boxed::<4_194_304>();
+    let mut slot = boxed::<1_048_576>();
+    let owner = match Plan4Recovery::acquire(
+        directory,
+        Some(namespace()),
+        &mut maintenance,
+        &mut dwb,
+        &mut slot,
+    ) {
+        Ok(owner) => owner,
+        Err(Plan4RecoveryAcquireFailure::Acquired(_))
+        | Err(Plan4RecoveryAcquireFailure::Before { .. }) => panic!("acquire"),
+    };
+    let result = match policy {
+        None => owner.recover(),
+        Some(policy) => owner.recover_with_rows(policy),
+    };
+    let failed = match result {
+        Err(failed) => failed,
+        Ok(_) => panic!("{policy:?} admitted a refused Row image"),
+    };
+    assert_eq!(failed.error().effect, Effect::CallerMustResolve);
+    assert!(failed.error().lease_acquired);
+    unchanged_error(
+        failed.error(),
+        failed.observation(),
+        Plan4RecoveryPhase::Analysis,
+    );
+    assert!(matches!(
+        failed.error().cause,
+        Plan4RecoveryCause::Unsupported
+    ));
+    println!("S6R_REFUSED policy={policy:?} {:?}", failed.error());
 }

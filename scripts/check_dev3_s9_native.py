@@ -10,6 +10,11 @@ with A's recovered CLR handler to READY, C's page reader over the READY
 files, and a new A row with its Commit ACK; `reenter` (P3) runs the
 recovery again (RejectInitialLosers) and the page read of both ACKs.
 
+MCB05-N01..06 (consumers §8.3 `#acceptance`, C+B) are two processes each:
+`produce` is C's actual native writer run to the no-loser cut, exiting the
+process there; `reject` presents the files to RejectInitialLosers, which
+refuses at Analysis with no file change.
+
 S9B-N01 (consumers §8.3 native P1-P3 of C+B) is MCB05-L03 with no A:
 `produce` is C's install, CREATE and Commit (q 1), stopped there; `recover`
 is C's recovery to READY, the live pins, the author's late-bound RowReserve,
@@ -30,12 +35,16 @@ import subprocess
 import time
 
 PHASES = ['produce', 'recover', 'reenter']
+# Trace events that change the namespace.
+MUTATIONS = {'create', 'write', 'sync', 'dirsync', 'publish', 'resize', 'remove'}
 # case -> (worker, phases, produce result)
 CASES = {
     'S9A-N01': ('s9a_native_worker', PHASES, 'acked'),
     'S9A-N02': ('s9a_native_worker', PHASES, 'acked'),
     'S9A-N03': ('s9a_native_worker', PHASES, 'crashed'),
     'S9B-N01': ('s9b_native_worker', PHASES, 'created'),
+    **{f'MCB05-N0{n}': ('s9b_no_loser_worker', ['produce', 'reject'], 'cut')
+       for n in range(1, 7)},
 }
 
 
@@ -105,8 +114,9 @@ def main():
                          'reads both ACKs; no B module is linked or run. '
                          'S9B: produce stops after the CREATE Commit (q 1); recover '
                          'is READY at q 1, the literal row commits at q 2; reenter '
-                         'is READY at q 2 and B reads (1, 7); no A module is linked '
-                         'or run')
+                         'is READY at q 2 and B reads (1, 7); MCB05-N0x: produce exits '
+                         'at the cut with its last write synced, reject refuses with '
+                         'every file unchanged; no A module is linked or run')
     (out / 'execution-plan.json').write_text(json.dumps(plan, indent=2) + '\n')
     env = dict(os.environ, RUST_MIN_STACK='33554432', XADB_CATALOG_SOURCE_SHA256=source_hash,
                XADB_CATALOG_ELF_SHA256=elf_hash, XADB_CATALOG_INPUT_SHA256=input_hash)
@@ -147,7 +157,8 @@ def main():
             (output / 'files.json').write_text(json.dumps(current, indent=2) + '\n')
             if phase == 'produce':
                 assert receipt['result'] == produced
-                acks.append(receipt['q'])
+                if 'q' in receipt:
+                    acks.append(receipt['q'])
                 # The exact durable prefix at the cut: the in-process WAL
                 # witness equals this controller's own digest of the WAL
                 # file, and no write follows the last successful sync (Drop
@@ -164,7 +175,17 @@ def main():
                          if row[1] == 'sync' and row[5] == 'Ok(())']
                 assert writes and syncs and writes[-1] < syncs[-1], 'last write synced'
                 tail = {row[1] for row in effects[syncs[-1] + 1:]}
-                assert tail <= {'drop_lease', 'close'}, tail
+                if produced == 'cut':
+                    # The process exits at the cut: reads may follow the
+                    # last sync, no mutation does.
+                    assert not tail & MUTATIONS, tail
+                else:
+                    assert tail <= {'drop_lease', 'close'}, tail
+            elif phase == 'reject':
+                # RejectInitialLosers at Analysis: database_effect Unchanged,
+                # every file byte-equal to the cut.
+                assert receipt['result'] == 'refused'
+                assert current == previous, 'the refusal changed a file'
             else:
                 assert receipt['result'] == 'ready'
                 assert current != previous, 'the process wrote nothing'

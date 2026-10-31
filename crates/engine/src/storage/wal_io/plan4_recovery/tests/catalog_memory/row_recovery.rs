@@ -8,11 +8,11 @@
 //! row-record decoders (`leaf_values`), not B, so this module is part of the
 //! C+A single-source export (S9, `#row-mi03-s9`); `row_recovery_read` adds
 //! B's read under a new Row snapshot after the same restarts (C+A+B).
-use super::super::super::{Plan4RecoveryAcquireFailure, RowRecoveryPolicy};
-use super::super::faults::unchanged_error;
+use super::super::super::RowRecoveryPolicy;
 use super::super::support::namespace;
 use super::row_forward::VALUE;
 use super::row_preflight::{create_table, system_init};
+pub(super) use super::row_reopen::refused_in;
 use super::*;
 use crate::storage::{
     disk::{
@@ -381,44 +381,6 @@ fn refused(images: &Images, policy: Option<RowRecoveryPolicy>) {
         images,
         "every file unchanged"
     );
-}
-
-/// `refused` over any directory port; the caller checks its files.
-pub(super) fn refused_in<D: DirectoryPort>(directory: &D, policy: Option<RowRecoveryPolicy>) {
-    let mut maintenance = boxed::<12_582_912>();
-    let mut dwb = boxed::<4_194_304>();
-    let mut slot = boxed::<1_048_576>();
-    let owner = match Plan4Recovery::acquire(
-        directory,
-        Some(namespace()),
-        &mut maintenance,
-        &mut dwb,
-        &mut slot,
-    ) {
-        Ok(owner) => owner,
-        Err(Plan4RecoveryAcquireFailure::Acquired(_))
-        | Err(Plan4RecoveryAcquireFailure::Before { .. }) => panic!("acquire"),
-    };
-    let result = match policy {
-        None => owner.recover(),
-        Some(policy) => owner.recover_with_rows(policy),
-    };
-    let failed = match result {
-        Err(failed) => failed,
-        Ok(_) => panic!("{policy:?} admitted a refused Row image"),
-    };
-    assert_eq!(failed.error().effect, Effect::CallerMustResolve);
-    assert!(failed.error().lease_acquired);
-    unchanged_error(
-        failed.error(),
-        failed.observation(),
-        Plan4RecoveryPhase::Analysis,
-    );
-    assert!(matches!(
-        failed.error().cause,
-        Plan4RecoveryCause::Unsupported
-    ));
-    println!("S6R_REFUSED policy={policy:?} {:?}", failed.error());
 }
 
 /// How a restart drives the closed facade.
