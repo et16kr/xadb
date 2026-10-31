@@ -60,6 +60,9 @@ PREVIOUS_LSN = 20
 STATEMENT = 1
 FREE_UNDO = 10
 VALUE = 7
+# P3's recovery writes stream 3; the Prune group op.
+REENTER_STREAM = 3
+PRUNE = 20
 AFTER = (('after-root.bin', 'root', 1), ('after-jobs.bin', 'jobs', 2),
          ('after-status.bin', 'status', 11), ('after-undo.bin', 'undo', FREE_UNDO),
          ('after-leaf.bin', 'leaf', 13))
@@ -114,12 +117,12 @@ def live_history(f, a, live):
     return h
 
 
-def restream(a, frame):
-    """The frame with header stream STREAM (offset 48), its header SHA-256
+def restream(a, frame, stream=STREAM):
+    """The frame with header stream `stream` (offset 48), its header SHA-256
     (128..160) and its seal recomputed; the model wrote stream 1."""
     assert a.get(frame, 48, 4) == 1
     out = bytearray(frame)
-    a.put(out, 48, STREAM, 4)
+    a.put(out, 48, stream, 4)
     out[128:160] = a.sha(bytes(out[:128]))
     return a.reseal(bytes(out))
 
@@ -136,13 +139,24 @@ def main():
     pages = {'root': h.root_page(), 'jobs': h.jobs_page(0),
              'status': h.status_page(f.STATUS_PAGE), 'undo': h.undo_page(FREE_UNDO),
              'leaf': h.leaf()}
+    row = a.get(h.bank[ordinal], 320)
+    terminal = h.terminal_of(h.tx['actor'])
+    # P2's Commit (stream 2) and P3's recovered cleanup of the committed
+    # root and terminal (stream 3): Prune, three ReleaseRole, RootFree,
+    # TerminalFinish, which C's recovery writes itself.
+    lsn = PREVIOUS_LSN + 3
+    commit = restream(a, h.end(lsn, True))
+    cleanup = [h.row_change(PRUNE, lsn + 1, ordinal)]
+    cleanup += [h.release(lsn + 2 + i, ordinal, False) for i in range(3)]
+    cleanup += [h.release(lsn + 5, ordinal, True), h.terminal_finish(lsn + 6, terminal)]
+    cleanup = [restream(a, frame, REENTER_STREAM) for frame in cleanup]
     files = {'canonical.bin': canonical, 'forward-frame.bin': forward,
+             'commit-frame.bin': commit, 'cleanup-frames.bin': b''.join(cleanup),
              **{name: pages[role] for name, role, _ in AFTER}}
     out = HERE / 'literal'
     out.mkdir(exist_ok=True)
     for name, data in files.items():
         (out / name).write_bytes(data)
-    job = h.bank[ordinal]
     pins = {FORWARD[0]: FORWARD[1], f.N1[0]: f.N1[1],
             **{'dev3-module-c2/row-read-reopen/live/' + name: digest
                for name, digest in LIVE.items()}}
@@ -157,12 +171,16 @@ def main():
         'case': 'MCB05-L03',
         'stream': STREAM,
         'previous_lsn': PREVIOUS_LSN,
-        'row': a.get(job, 320),
+        'row': row,
         'value': VALUE,
         'ordinal': ordinal,
         'free_undo': FREE_UNDO,
         'reserve': dict(frame(reserve), lsn=PREVIOUS_LSN + 1),
         'forward_lsn': PREVIOUS_LSN + 2,
+        'commit': dict(frame(commit), lsn=lsn, q=a.get(h.root, 408)),
+        'cleanup': [dict(frame(data), lsn=lsn + 1 + i, op=a.get(data, 166, 2),
+                         stream=REENTER_STREAM)
+                    for i, data in enumerate(cleanup)],
         'files': {name: frame(data) for name, data in sorted(files.items())},
         'pages': {name: page for name, _, page in AFTER},
     }

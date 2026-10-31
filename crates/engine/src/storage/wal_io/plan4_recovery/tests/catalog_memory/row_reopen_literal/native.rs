@@ -4,7 +4,8 @@
 //! of T and its Commit, stopped there without shutdown; `recover` (P2) is
 //! C's recovery (RejectInitialLosers) to READY, the live pins, the author's
 //! late-bound RowReserve, the literal Forward and C's Commit; `reenter` (P3)
-//! is a third recovery and B's point and cursor read. The expected values
+//! is a third recovery, whose cleanup of the committed root is the author's
+//! frames, and B's point and cursor read. The expected values
 //! are the history's (`expected_written`, `expected_reread`).
 use super::super::super::super::super::plan4_pages::native;
 use super::super::row_reopen::wal_witness;
@@ -76,7 +77,14 @@ fn s9b_native_worker() {
                 )
             }
             "reenter" => {
-                let reread = reopen(&directory, &mut Read);
+                let literal = Literal::load();
+                let reread = reopen(
+                    &directory,
+                    &mut Read {
+                        literal: &literal,
+                        file: &file,
+                    },
+                );
                 println!("S9B_NATIVE {id} reenter {reread:?}");
                 assert_eq!(reread, expected_reread());
                 format!(

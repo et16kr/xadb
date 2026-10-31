@@ -1,5 +1,55 @@
 {
   "case": "MCB05-L03",
+  "cleanup": [
+    {
+      "bytes": 89882,
+      "lsn": 24,
+      "op": 20,
+      "sha256": "a80feaeda197fc0d9dab3e1f611f45d6828d285e8386c4780c69c378f610a908",
+      "stream": 3
+    },
+    {
+      "bytes": 55528,
+      "lsn": 25,
+      "op": 21,
+      "sha256": "0d4194c69b43ddfbb331558ab72488f189a146be9e2649e27bf16113dd370d8f",
+      "stream": 3
+    },
+    {
+      "bytes": 55528,
+      "lsn": 26,
+      "op": 21,
+      "sha256": "08fcff9150b36502221dea36e6db3855dec4a1c71d27a3a639cc151dcb8c54f7",
+      "stream": 3
+    },
+    {
+      "bytes": 55528,
+      "lsn": 27,
+      "op": 21,
+      "sha256": "d168fa50908efd6835ea0dc1773ad1c7e23c3f5802847c610e21db9a898eb3b4",
+      "stream": 3
+    },
+    {
+      "bytes": 55528,
+      "lsn": 28,
+      "op": 22,
+      "sha256": "0ce5db28fd18de368bcd470af81f167ed79fc5fea971e6b36048a31098053e91",
+      "stream": 3
+    },
+    {
+      "bytes": 55112,
+      "lsn": 29,
+      "op": 17,
+      "sha256": "075811a31e533b9dcc3d807b15454b55d768818b9522a3c5d2dad8bd4e6f084b",
+      "stream": 3
+    }
+  ],
+  "commit": {
+    "bytes": 56712,
+    "lsn": 23,
+    "q": 2,
+    "sha256": "a4521df73d0e59206c6e890588f4db908fac5b624103fb496176f6c3740b5ce2"
+  },
   "files": {
     "after-jobs.bin": {
       "bytes": 16384,
@@ -24,6 +74,14 @@
     "canonical.bin": {
       "bytes": 13,
       "sha256": "fae2df78d78985674f9e83253255b062c3bbee012bc876f26e4342520ae04b38"
+    },
+    "cleanup-frames.bin": {
+      "bytes": 367106,
+      "sha256": "ffa8b29a5419c9c9bb38c71b8b17ac838084ee1d5f326c504a9b51f8d07bc13a"
+    },
+    "commit-frame.bin": {
+      "bytes": 56712,
+      "sha256": "a4521df73d0e59206c6e890588f4db908fac5b624103fb496176f6c3740b5ce2"
     },
     "forward-frame.bin": {
       "bytes": 91497,

@@ -15,7 +15,13 @@
 //! complete LSN 20, Free Undo 10), pinned by the author and checked here
 //! against the pool and control before the reserve. The author's RowReserve
 //! (the model's frame with only the header stream bound to 2) is what C must
-//! write; the Forward and the five after images are the literal's.
+//! write; the Forward and the five after images are the literal's. C's
+//! Commit (LSN 23) is the author's frame too. P3's recovery cleans the
+//! committed root up itself (the C supply consumers §8.3 allows): its WAL
+//! stream 3 holds exactly the author's Prune, three ReleaseRole, RootFree
+//! and TerminalFinish (LSN 24..29), so this is the C+B Prune observation;
+//! B then reads the pruned row. A live Prune ingress does not exist (no live
+//! Row retirement).
 //!
 //! The same three phases run in memory (`mcb05_l03_*`) and as three native
 //! processes (`native::s9b_native_worker`, controller
@@ -61,8 +67,14 @@ const RESERVE: (usize, &str) = (
     57_336,
     "4094194f8f08c5c9c520b49be2382efc2a016f8d439b07a229568d36b55672ee",
 );
+/// P3's WAL file: the second recovery's stream (expected.json `cleanup`).
+pub(super) const WAL3: &str = "d3-wal-00000003";
+/// The recovered cleanup of the committed root C's P3 recovery writes:
+/// (LSN, group op) of Prune, three ReleaseRole, RootFree, TerminalFinish
+/// (expected.json `cleanup`; the frames are `cleanup-frames.bin`).
+const CLEANUP: [(u64, u16); 6] = [(24, 20), (25, 21), (26, 21), (27, 21), (28, 22), (29, 17)];
 /// expected.json `files`: (name, bytes, SHA-256).
-const FILES: [(&str, usize, &str); 7] = [
+const FILES: [(&str, usize, &str); 9] = [
     (
         "after-jobs.bin",
         PAGE_BYTES,
@@ -92,6 +104,16 @@ const FILES: [(&str, usize, &str); 7] = [
         "canonical.bin",
         13,
         "fae2df78d78985674f9e83253255b062c3bbee012bc876f26e4342520ae04b38",
+    ),
+    (
+        "cleanup-frames.bin",
+        367_106,
+        "ffa8b29a5419c9c9bb38c71b8b17ac838084ee1d5f326c504a9b51f8d07bc13a",
+    ),
+    (
+        "commit-frame.bin",
+        56_712,
+        "a4521df73d0e59206c6e890588f4db908fac5b624103fb496176f6c3740b5ce2",
     ),
     (
         "forward-frame.bin",
@@ -179,8 +201,13 @@ impl Literal {
                 PREVIOUS_LSN + 1,
                 RESERVE.1
             ),
+            format!("\"lsn\": {},\n    \"q\": 2", PREVIOUS_LSN + 3),
         ] {
             assert!(expected.contains(&fact), "expected.json lacks {fact}");
+        }
+        for (lsn, op) in CLEANUP {
+            let fact = format!("\"lsn\": {lsn},\n      \"op\": {op},");
+            assert!(expected.contains(&fact), "expected.json cleanup {lsn}");
         }
         for (name, digest) in LIVE {
             assert_eq!(
@@ -199,7 +226,7 @@ impl Literal {
             FILES
                 .iter()
                 .map(|(name, bytes, digest)| {
-                    let data = read(&root.join("literal").join(name), 1 << 17);
+                    let data = read(&root.join("literal").join(name), 1 << 19);
                     assert_eq!(
                         (data.len(), hex(&data).as_str()),
                         (*bytes, *digest),
@@ -382,6 +409,12 @@ impl AtReady for Write<'_> {
             Ok(committed) => committed.q(),
             Err(_) => panic!("C's Commit of the literal row refused"),
         };
+        let forward = self.literal.file("forward-frame.bin").len();
+        assert_eq!(
+            (self.file)(WAL)[from + RESERVE.0 + forward..],
+            *self.literal.file("commit-frame.bin"),
+            "C's Commit is the author's"
+        );
         owner.check_idle().unwrap();
         Written {
             ready_q,
@@ -391,10 +424,16 @@ impl AtReady for Write<'_> {
     }
 }
 
-/// P3 at READY: B's point read of RowId 1 and 2 and its cursor over T
-/// under a new read-only Serializable snapshot. Returns the READY Q, the
-/// snapshot q, the point reads and the cursor rows.
-pub(super) struct Read;
+/// P3 at READY: C's recovery wrote the author's cleanup of the committed
+/// root (Prune, three ReleaseRole, RootFree, TerminalFinish) into WAL
+/// stream 3, byte for byte; then B's point read of RowId 1 and 2 and its
+/// cursor over T under a new read-only Serializable snapshot read the
+/// pruned row. Returns the READY Q, the snapshot q, the point reads and the
+/// cursor rows.
+pub(super) struct Read<'a> {
+    pub(super) literal: &'a Literal,
+    pub(super) file: &'a dyn Fn(&str) -> Vec<u8>,
+}
 
 /// What P3 read.
 #[derive(Debug, PartialEq)]
@@ -405,7 +444,7 @@ pub(super) struct Reread {
     pub(super) rows: Vec<(u64, i64)>,
 }
 
-impl AtReady for Read {
+impl AtReady for Read<'_> {
     type Out = Reread;
     fn at_ready<'s, 'c, W: WriterNamespace>(
         &mut self,
@@ -414,6 +453,24 @@ impl AtReady for Read {
         flusher: &mut Owner<'c, 's>,
         _: &mut [u8; CATALOG_PRIVATE_BYTES],
     ) -> Reread {
+        let wal = (self.file)(WAL3);
+        let mut at = wal.windows(4).position(|w| w == b"XWF1").unwrap();
+        assert_eq!(
+            &wal[at..],
+            self.literal.file("cleanup-frames.bin"),
+            "C's recovered cleanup is the author's"
+        );
+        for (lsn, op) in CLEANUP {
+            let length = u32::from_le_bytes(wal[at + 12..at + 16].try_into().unwrap()) as usize;
+            assert_eq!(
+                (
+                    u64::from_le_bytes(wal[at + 56..at + 64].try_into().unwrap()),
+                    u16::from_le_bytes(wal[at + 166..at + 168].try_into().unwrap()),
+                ),
+                (lsn, op)
+            );
+            at += length;
+        }
         let ready_q = live.catalog_test_q();
         let _ = ready_row_sources(live, owner, flusher);
         let mut reader_private = boxed::<PRIVATE_BYTES>();
@@ -488,7 +545,15 @@ fn mcb05_l03_literal_after_reopen_is_read_by_b_after_recovery() {
         assert_eq!(written, expected_written());
         let after = state.lock().unwrap().images();
         let directory = clone_directory(&after);
-        let reread = reopen(&directory, &mut Read);
+        let state = directory.state();
+        let file = |name: &str| state.lock().unwrap().files[name].bytes.clone();
+        let reread = reopen(
+            &directory,
+            &mut Read {
+                literal: &literal,
+                file: &file,
+            },
+        );
         assert_eq!(reread, expected_reread());
         println!("MCB05_L03 written={written:?} reread={reread:?}");
     });
