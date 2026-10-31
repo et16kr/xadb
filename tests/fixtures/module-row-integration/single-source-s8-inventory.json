@@ -1,7 +1,7 @@
 {
  "schema": "XADB_S8_SINGLE_SOURCE_INVENTORY_V1",
  "status": "FROZEN_SELECTION_NOT_EXECUTION_EVIDENCE",
- "mi03": "PARTIAL / not met: single-source compile and link for C+A and C+B; memory C+A A-path acceptance; memory C+B literal ingress (L01, K01-K06, K08-K12 with K01/K04/K05/K12 narrowed). M5 does not count MI03 as met.",
+ "mi03": "PARTIAL / not met: single-source compile and link for C+A and C+B; memory C+A A-path acceptance; memory C+B literal ingress (L01, K01-K06, K08-K12 with K01/K04/K05/K12 narrowed, K05/K10 size confound). M5 does not count MI03 as met.",
  "baseline": "c427def8 (S7 branch claude/project-thread-1jfdtk with PR #10 merged)",
  "contract_ref": "devdoc/contracts/dev3-module-boundaries.md#row-single-source-s8",
  "export_tool": "scripts/module_single_source.py",
@@ -292,9 +292,10 @@
  "not_run": {
   "C+A recovery, memory and native (consumers 8.2)": "the S6 restart harness (row_recovery) reads READY values through B read_point_live, so the whole module is outside the C+A export; s6r_m01..m03 and A handle_recovered_clr never run in C+A; of row_forward only S2W-R24 remains",
   "C+B MCB01-MCB04 on literal rows (consumers 8.3)": "the S5 B actual-C cases build rows with A INSERT and moved to row_read_live (C+A+B); the C+B selection has B unit tests, census and one positive B read (L01)",
+  "native C+A P1-P3 (consumers 8.2)": "the C+A restart harness (row_recovery) reads READY values through B, so no C+A native case is in the export",
   "native C+B P1-P3 (consumers 8.3)": "P2 needs the literal late-bound to the recovered open and stream identity; the N1 model fixes open 1",
   "C+B reopen fixture MCB05-N01..06": "B read after RejectInitialLosers over literal rows, not authored",
   "C+B failed statement, CLR and Prune literal transitions": "not authored",
-  "K07 and the original forms of K01, K04, K05, K12": "need a two-root history of one actor (K04, K05, K07), another existing table (K01) or an actual scope2 frame (K12)"
+  "K07 and the original forms of K01, K04, K05, K12": "need a two-root history of one actor (K04, K05, K07), another existing table (K01) or an actual scope2 frame (K12); K05 and K10 also carry a size confound (C derives the Forward length from cell and H)"
  }
 }

@@ -2653,10 +2653,11 @@ DEV3 기능은 하지 않는다. 제품 source, 공개 wire, format 번호, cap,
 
 oracle은 거절, 효과 0, 정확한 cancel을 확인한다. 거절이 선언한 사실 때문이라는 귀속은 author의 구성(단일 변조, 변경 없는 대조군이 literal과 byte 동일, K마다 바뀐 offset이 그 사실의 field에 한정)에 기댄다. C가 고른 세부 cause는 K01, K04, K05, K06, K09, K10, K11이 Corrupt, K02·K03이 IdentityMismatch, K08이 Row(IdentityMismatch), K12가 Unsupported다.
 
-K01, K04, K05, K12는 원 문언보다 좁거나 약하다.
+K01, K04, K05, K12는 원 문언보다 좁거나 약하고, K05와 K10에는 크기 교란이 있다.
 - K01: 같은 object 6의 generation을 1→2로 바꾸며 Job after image도 바뀐다. 그래서 거절이 target table 검사가 아니라 "Forward는 예약된 Job을 바꿀 수 없다"는 일반 검사에서 왔을 수 있다. 실제로 있는 다른 table을 쓰거나 Job은 그대로 두고 target·U만 바꾸는 형태가 더 강하다.
 - K04: 한 행 이력에서 "중복"은 descriptor가 같은 Forward에서 mutation을 다시 계획하는 형태뿐이다(descriptor의 last mutation과 그 SHA만 바뀐다). 같은 actor의 이전 root mutation을 재사용하는 형태는 두 번째 root가 필요해 K07과 함께 미공급이다.
 - K05: 없는 H를 주장하면 frame이 128B 커진다. 예약의 Forward debt와 Job budget은 H 없이 정해졌으므로, C가 선행 검사 전에 크기로 거절했을 수 있다. 실제 H가 있을 때 다른 H를 고르는 같은 크기의 형태는 두 번째 root가 필요해 미공급이다.
+- K10: InventoryDelta가 없으면 frame이 208B 짧아진다. C는 Forward 길이를 cell과 H에서 계산하고 예약의 Forward debt는 91497B이므로, inventory 검사 전에 길이나 모양으로 거절했을 수 있다. 이 교란은 "InventoryDelta 없음"에 내재한다. frame 자체는 내부적으로 일관된다(consumed = 114048 + 91289).
 - K12: scope 필드만 바꾼 frame은 어느 observer에서도 유효하지 않다. 그래서 Row 입구가 scope2 Catalog observer로 넘어가는 변이도 이 시험을 통과한다. 실제 scope2 frame(예: 같은 session의 CREATE Catalog frame)을 producer lane에 넣는 형태가 원 문언이다.
 
 K07과 K04·K05의 원 형태는 한 actor의 두 root 이력(Begin, Reserve, L01 Forward, 두 번째 Reserve, 실제 H를 가진 두 번째 Forward)으로 함께 공급할 수 있다. N1 모델은 H를 이미 모의한다.
@@ -2680,7 +2681,7 @@ K07과 K04·K05의 원 형태는 한 actor의 두 root 이력(Begin, Reserve, L0
 보인 것은 셋이다.
 - C+A와 C+B 각각 상대 source 없이 compile·link된다.
 - memory C+A에서 A 경로의 실제 C 인수가 통과한다(쓰기, Commit, rollback, census).
-- memory C+B에서 literal ingress가 통과한다(L01, K01–K06, K08–K12. K01·K04·K05·K12는 위처럼 좁다).
+- memory C+B에서 literal ingress가 통과한다(L01, K01–K06, K08–K12. K01·K04·K05·K12는 위처럼 좁고 K05·K10에는 크기 교란이 있다).
 
 미공급과 NOT_RUN은 다음과 같다.
 - **C+A 복구 전체(memory 포함).** S6의 restart harness(`row_recovery`)는 READY 뒤 값을 B의 `read_point_live`로 읽으므로 모듈 전체가 C+A export에서 빠진다. 그래서 memory s6r_m01..m03(WithRowClr, RejectInitialLosers)도 빠지고, [§8.2](dev3-module-consumers.md#independent-fixtures)가 C 복구가 소비해야 한다고 정한 A의 `handle_recovered_clr`는 C+A에서 한 번도 실행되지 않는다. `row_forward`에서는 S2W-R24(재시작이 Analysis에서 멈춤)만 남는다. READY 뒤 값 확인을 B 대신 독립 leaf page decoder로 나누면 C+A로 옮길 수 있다(후속).

@@ -5372,7 +5372,7 @@ r2 memory의 source manifest는 `1627a7f5f551c2940c591cc2e4a836b03b7a36ae0a67f47
 
 제품 source는 바꾸지 않았다. 시험, fixture, script만 바뀌었다. DEV3 기능은 하지 않았다.
 
-**결론: MI03은 PARTIAL이며 미충족이다.** C+A와 C+B가 각각 상대 source 없이 compile·link되고, memory C+A의 A 경로 인수와 memory C+B의 literal ingress가 통과했다. C+A 복구, literal 행 위의 C+B MCB01–04, native P1–P3, MCB05-N01..06, K07은 미공급이거나 NOT_RUN이다([계약 한계](../contracts/dev3-module-boundaries.md#row-single-source-s8)). MI06은 S6·S7 필수 지적의 독립 재확인으로 충족됐다. M5는 MI03 때문에 여전히 완료가 아니다.
+**결론: MI03은 PARTIAL이며 미충족이다.** C+A와 C+B가 각각 상대 source 없이 compile·link되고, memory C+A의 A 경로 인수와 memory C+B의 literal ingress가 통과했다. C+A 복구, literal 행 위의 C+B MCB01–04, native P1–P3(양쪽), MCB05-N01..06, K07과 K01·K04·K05·K12의 원 형태는 미공급이거나 NOT_RUN이다([계약 한계](../contracts/dev3-module-boundaries.md#row-single-source-s8)). MI06은 S6·S7 필수 지적의 독립 재확인과 S8 필수 지적 반영의 독립 재확인으로 충족됐다. M5는 MI03 때문에 여전히 완료가 아니다.
 
 ### 실제 공급
 
@@ -5384,11 +5384,11 @@ r2 memory의 source manifest는 `1627a7f5f551c2940c591cc2e4a836b03b7a36ae0a67f47
   | C+B | 7437 | 129 | 16 | `79f177096a5439bf0efae64a48464900392dac9b4272e4ea7e6a2dd749a4607b` |
 
   `80c0f883`의 export manifest는 C+A `94174e5f…`, C+B `0a8b90cb…`다. 두 export 모두 그 안에서 `cargo test -p xadb-engine --lib --no-run --locked`로 빌드된다. C+B에는 지운 census만 쓰던 cfg(test) import 경고 3개가 남는다.
-- **C+B literal ingress.** MCB05-L01과 known-bad 11개(K01–K06, K08–K12)다. K07은 NOT_RUN이다. literal과 K patch의 SHA는 [expected.json](../../tests/fixtures/dev3-module-c2/row-read/expected.json)(`755e0fcb…`)에 있다. author를 C+B export 안에서 `python3 -I`로 다시 실행하면 literal, known-bad, expected.json이 byte 단위로 같다(검토자 확인, `80c0f883` 기준).
+- **C+B literal ingress.** MCB05-L01과 known-bad 11개(K01–K06, K08–K12)다. K07은 NOT_RUN이다. literal과 K patch의 SHA는 [expected.json](../../tests/fixtures/dev3-module-c2/row-read/expected.json)(`755e0fcb…`)에 있다. author를 A fixture 없이 `python3 -I`로 다시 실행하면 literal, known-bad, expected.json이 byte 단위로 같다(검토자는 `80c0f883`, 재확인자는 `14f7eaa2`에서 22개 파일 확인).
 
 ### 선택 실행
 
-[동결 inventory](../../tests/fixtures/module-row-integration/single-source-s8-inventory.json)와 [receipts](../../tests/fixtures/module-row-integration/single-source-s8-receipts.json)를 쓴다. 원 plan, 로그, export inventory, 리뷰 보고서는 `/mnt/project-files/module-independence-20261029/artifacts/module-s8-20261031/`에 있다. runner는 selector마다 정확히 시험 1개가 맞는지 확인하고 identity env를 그 실행의 source·ELF·input SHA로 둔다.
+[동결 inventory](../../tests/fixtures/module-row-integration/single-source-s8-inventory.json)와 [receipts](../../tests/fixtures/module-row-integration/single-source-s8-receipts.json)를 쓴다. 원 plan, 로그, export inventory, 리뷰 보고서는 `/mnt/project-files/module-independence-20261029/artifacts/module-s8-20261031/`에 있다. 그 폴더의 `manifest-all.sha256`(파일 431개) SHA-256은 `8e315280c653ec360b6fc917007314a479cb047ca5711345111fef873d8df03b`이고 receipts에도 적었다. runner는 selector마다 정확히 시험 1개가 맞는지 확인하고 identity env를 그 실행의 source·ELF·input SHA로 둔다.
 
 | 실행 | 결과 |
 | --- | --- |
@@ -5418,7 +5418,7 @@ K 11개 모두 C의 prepare가 같은 ReservedRow로 Before를 돌려줬다(Prep
 - RowSemantic(Row(IdentityMismatch)): K08
 - RowSemantic(Unsupported): K12
 
-거절이 선언한 사실 때문이라는 귀속은 author의 구성에 기댄다. 검토자는 K마다 바뀐 frame offset을 field에 대응시켜 변경이 그 사실이 함축하는 field에 한정됨을 확인했다(K10은 아래 R1로 고친 뒤, K05는 아래 N2의 크기 교란이 남는다).
+거절이 선언한 사실 때문이라는 귀속은 author의 구성에 기댄다. S8 검토자는 `80c0f883`의 K마다 바뀐 frame offset을 field에 대응시켜 변경이 그 사실이 함축하는 field에 한정됨을 확인했다. 예외였던 K10(R1)과 바뀐 K08은 재확인자가 `14f7eaa2`에서 같은 방식으로 확인했다. K05와 K10에는 크기 교란이 남는다. 없는 H는 frame을 128B 늘리고 InventoryDelta 누락은 208B 줄이므로, C가 사실 검사 전에 길이로 거절했을 수 있다([계약](../contracts/dev3-module-boundaries.md#row-single-source-s8)).
 
 ### 자원(PR #10 뒤)
 
@@ -5442,6 +5442,13 @@ S7의 (iv) 값은 S6 수정 전 build의 값이다. a2(PR #10이 들어간 `80c0
 - N8: S7 동결 inventory의 옛 selector 이름과 재실행 규칙을 계약에 적었다.
 - N9: C+A 복구를 B 대신 독립 page decoder로 확인하는 분리는 후속이다.
 
+**S8 반영의 독립 재확인(`80c0f883..7b6e815f`).** 읽기 전용 재확인자가 R1·R2를 byte와 기록으로 대조했다. 둘 다 해결됐고 미해결 필수 지적은 0개다. 보고서는 `reviews/s8-fix-recheck.md`다.
+- R1: K10은 이제 선언한 사실만 다르다. InventoryDelta가 없고 거래 descriptor가 Forward 전 Reserved inventory(15, 1)를 그대로 가지며 consumed는 205337 = 114048 + 91289다. ledger 행, Aging descriptor, after image 다섯은 그대로다. K08은 stamp의 TxnId local 2→3 하나다. 11개 K의 Rust pin, expected.json, patch 파일이 일치한다.
+- N5: L01은 page 1, 2, 11, 13, 14를 고정된 author 파일과 비교하며 C 출력과 비교하지 않는다.
+- R2: 모든 기록이 MI03을 PARTIAL·미충족으로 적고 M5에서 세지 않는다.
+- identity: a2, b2, f2의 plan, 결과, export inventory가 receipts와 같다. a2의 `14f7eaa2` 유효성(`crates/` 1227줄과 ELF 동일)도 확인했다.
+- 권고 반영: K10의 크기 교란(N-A), 이 재확인의 인용(N-B), 계획의 a2 문언(N-C), artifacts manifest(N-D), native C+A P1–P3 명시(N-E), 결론의 K 원 형태(N-F)를 이 기록에 반영했다. L01이 정확히 5 page를 비교했다는 단언이 없다는 점(N-G)은 FIXTURE_T가 상수이므로 기록만 한다.
+
 **S6·S7 필수 지적의 독립 재확인(`c427def8`).** 읽기 전용 재확인자가 S6 R1·R2·R3과 S7 R1·R2를 코드, 계약, 보존 artifact와 대조했다. 미해결 필수 지적은 0개다.
 - S6 R1: PR #10(`f267b577`, 병합 `c427def8`)이 RestoredRetention에 `row_policy`만 남겨 두 counting site를 함께 고쳤다. 72B·136B 산술과 `s2w_c04` 고정값 이동(memory 64008/65384, native 64016/65392)이 맞고, restore 대조와 loser policy 검사는 그대로다.
 - S6 R2·R3, S7 R1·R2: 해결 상태를 확인했다.
@@ -5455,7 +5462,7 @@ S7의 (iv) 값은 S6 수정 전 build의 값이다. a2(PR #10이 들어간 `80c0
 | 기준 | 판정 | 근거 |
 | --- | --- | --- |
 | MI03 독립 인수 | **PARTIAL(미충족)** | 위 결론과 [계약 한계](../contracts/dev3-module-boundaries.md#row-single-source-s8) |
-| MI06 별도 판정 | PASS | S6·S7 필수 지적 미해결 0(독립 재확인). S8 검토의 필수 R1·R2는 반영했다. SKIP·NOT_RUN·PARTIAL을 PASS로 바꾸지 않았다 |
+| MI06 별도 판정 | PASS | S6·S7 필수 지적 미해결 0(`mi06-recheck.md`). S8 검토의 필수 R1·R2도 해결됐다(`s8-fix-recheck.md`, 미해결 0). 두 재확인 모두 작성자가 아닌 독립 검토다. SKIP·NOT_RUN·PARTIAL을 PASS로 바꾸지 않았다 |
 
 MI01, MI02, MI04, MI05는 S7 판정 그대로다. S8은 A·B 전용 경로의 제품 source를 바꾸지 않았다(MI02). **M5는 완료가 아니다.** 남은 것은 MI03의 미공급 목록과 MI04의 MCI01-V09 origin stale(NOT_RUN)이다.
 
