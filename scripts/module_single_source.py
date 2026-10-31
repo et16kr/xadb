@@ -38,8 +38,22 @@ SIDES = {
     # C+B: A removed.
     'b': dict(module='insert', removed=[f'{ENGINE}/row/insert.rs', f'{ENGINE}/row/insert',
                                        'tests/fixtures/module-row-insert'],
-              tests=LINKS_A, forbidden=re.compile(r'row::insert\b|row::insert::')),
+              tests=LINKS_A, forbidden=re.compile(r'row::insert\b|row::insert::'),
+              census=[
+                  (f'{ENGINE}/wal_io/plan4_apply/row/rollback.rs',
+                   '#[cfg(test)]\n#[path = "rollback_census_tests.rs"]\nmod census;\n',
+                   f'{ENGINE}/wal_io/plan4_apply/row/rollback_census_tests.rs'),
+                  (f'{ENGINE}/wal_io/plan4_recovery/row_action.rs',
+                   '#[cfg(test)]\n#[path = "row_action_census_tests.rs"]\nmod census;\n',
+                   f'{ENGINE}/wal_io/plan4_recovery/row_action_census_tests.rs'),
+                  (f'{ENGINE}/wal_io/plan4_retention/catalog_commit.rs',
+                   '#[cfg(test)]\n#[path = "catalog_commit/row_census.rs"]\nmod row_census;\n',
+                   f'{ENGINE}/wal_io/plan4_retention/catalog_commit/row_census.rs'),
+              ]),
 }
+# Each census entry: (registering file, exact cfg(test) registration block,
+# the census file). These C census tests measure A's caller frames.
+
 
 
 
@@ -106,6 +120,15 @@ def export(commit, out, side):
                 removed.append(rel)
                 path.unlink()
     registry.write_text(text)
+    for rel, block, census in spec.get('census', []):
+        path = out / rel
+        text = path.read_text()
+        if text.count(block) != 1:
+            raise SystemExit(f'census registration in {rel}')
+        path.write_text(text.replace(block, ''))
+        patches.append(dict(file=rel, removed=block))
+        (out / census).unlink()
+        removed.append(census)
     # No remaining Rust path to the removed module.
     left = []
     for path in sorted((out / 'crates').rglob('*.rs')):
