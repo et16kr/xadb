@@ -1,7 +1,7 @@
 {
   "schema_version": 2,
   "product": "XADB",
-  "date": "2026-11-01T00:28:58.083993+09:00",
+  "date": "2026-11-01T00:31:38.661138+09:00",
   "status": "PASS",
   "errors": [],
   "markdown_documents": [
@@ -157,9 +157,9 @@
     },
     {
       "file": "devdoc/contracts/dev3-module-boundaries.md",
-      "links": 280,
+      "links": 282,
       "duplicate_ids": 0,
-      "sha256": "f0a2bc229216a01c1d07abe976043b0b610c09f7ecd3e578b7cbf79111145caa"
+      "sha256": "78e16cb7846d49c9ff3f0beb5d8df9448fed999382f93773e415a2d039724d83"
     },
     {
       "file": "devdoc/contracts/dev3-module-consumers.md",
@@ -583,9 +583,9 @@
     },
     {
       "file": "devdoc/evidence/README.md",
-      "links": 378,
+      "links": 379,
       "duplicate_ids": 0,
-      "sha256": "8585f737d86c6227b1348cf6cef05c69fd2d3a572e979e137d9d32fb76661ee0"
+      "sha256": "2cec94d631f5bfee31c06e27ff5f4fac23fa05e7013f6871e0bf359c7df3f21e"
     },
     {
       "file": "devdoc/evidence/comm-acceptance-resume-20261023.md",
@@ -1279,9 +1279,9 @@
     },
     {
       "file": "devdoc/evidence/main-preexisting-failures-20261030.md",
-      "links": 14,
+      "links": 15,
       "duplicate_ids": 0,
-      "sha256": "1f36a86dd2a1082bc5155f7e310812db9652f068334be431c0fd419ccbd05aa7"
+      "sha256": "f8885e105f0bad5dce55a98b50e700b9527e591c5f38818350d0c0bdfba731ea"
     },
     {
       "file": "devdoc/evidence/module-independence-survey-20261026.md",

@@ -325,7 +325,12 @@ struct RestoredRetention {
     remaining_steps: u64,
     physical_topup: u64,
     metadata_growth: u64,
-    row_admission: Option<RowRecoveryAdmission>,
+    /// The policy of the admission that was compared with the entry policy,
+    /// this AnalysisSeal digest and the analyzed SourceFacts when this value
+    /// was built. None is the legacy entry. Only the policy moves on: this
+    /// value lives in both the runtime loan and the recovered binding, which
+    /// are counted in the short source `shared` bytes.
+    row_policy: Option<RowRecoveryPolicy>,
 }
 
 /// The requested Row recovery policy (boundaries `#row-recovery-s6`). A
@@ -340,9 +345,12 @@ pub(crate) enum RowRecoveryPolicy {
     /// inventory or root, no Active/Aborting transaction).
     RejectInitialLosers,
 }
-/// Issued by the original analysis only after the policy gate passed, then
-/// moved with the AnalysisSeal digest into RestoredRetention and the
-/// recovered binding. No constructor takes consumer-supplied counts.
+/// Issued by the original analysis only after the policy gate passed. It is
+/// consumed when RestoredRetention is built: its policy, state digest and
+/// SourceFacts digest are compared there with the entry policy, the
+/// AnalysisSeal and the analyzed SourceFacts, and only the policy moves on
+/// into RestoredRetention and the recovered binding. No constructor takes
+/// consumer-supplied counts.
 #[derive(Clone, Copy)]
 struct RowRecoveryAdmission {
     policy: RowRecoveryPolicy,
@@ -931,25 +939,13 @@ impl<'s, 'a> RecoveryRetentionBinding<'s, 'a> {
     pub(in crate::storage) fn state_digest(&self) -> [u8; 32] {
         self.restored.state_digest
     }
-    /// The admitted Row policy, re-checked against the restored analysis
-    /// digest the admission was issued with. Its SourceFacts digest was
-    /// compared with the analyzed source when RestoredRetention was built;
-    /// the runtime holds no source facts, so here a zero digest is the only
-    /// contradiction left. A legacy binding has none; a contradiction is Err
-    /// (the caller's census invariant).
-    pub(in crate::storage) fn row_policy(
-        &self,
-    ) -> std::result::Result<Option<RowRecoveryPolicy>, ()> {
-        match self.restored.row_admission {
-            None => Ok(None),
-            Some(admission)
-                if admission.state_digest == self.restored.state_digest
-                    && admission.source_facts_digest != [0; 32] =>
-            {
-                Ok(Some(admission.policy))
-            }
-            Some(_) => Err(()),
-        }
+    /// The admitted Row policy. The admission's policy, state digest and
+    /// SourceFacts digest were compared with the entry policy, the restored
+    /// AnalysisSeal digest and the analyzed source once, when
+    /// RestoredRetention was built; nothing changes them afterwards, so only
+    /// the policy is kept here. A legacy binding has none.
+    pub(in crate::storage) fn row_policy(&self) -> Option<RowRecoveryPolicy> {
+        self.restored.row_policy
     }
 }
 struct MaintenanceRemainder<'a> {
