@@ -5321,7 +5321,7 @@ r2 memory의 source manifest는 `1627a7f5f551c2940c591cc2e4a836b03b7a36ae0a67f47
 검토 보고서 원문은 artifacts의 `reviews/`에 있다. 두 검토 모두 읽기 전용이며 실행은 하지 않았다.
 
 **S6 D1/D2(`8d5e48b..76b3627`).** D1과 D2 모두 REQUIRED 보정을 조건으로 ACCEPT다.
-- R1: shared 144B는 `RowRecoveryAdmission`이 두 번 저장된 결과다. 사용자 규칙대로 별도 thread가 수정해 이 branch로 합친다. **아직 미해결이다.**
+- R1: shared 144B는 `RowRecoveryAdmission`을 담은 RestoredRetention이 runtime 대여분과 DiskSession recovery binding에서 두 번 세어진 결과다. 사용자 규칙대로 별도 thread가 수정해 이 branch로 합친다. 그 수정은 별도 branch에 push됐고 이 branch로의 PR은 아직 없다. **아직 미해결이다.**
 - R2: 240초 사후 한도. 30초로 되돌리고 r2에서 다시 실행해 해결했다.
 - R3: MCB05-N01..06·MBC40-N01 과다 주장. 계약에 PARTIAL로 적어 해결했다.
 - C2(편차 3)와 N1·N4는 계약에 적었다. C1·C3·C4·N2·N3은 후속으로 적었다. C1은 제품 변경이므로 사용자 승인이 필요하다.

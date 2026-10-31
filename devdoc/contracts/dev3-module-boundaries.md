@@ -2502,7 +2502,7 @@ S5 후속 D2 보완: `RowCandidate<'b>`는 원 visibility binding의 borrow life
   - S7 MCI02-N01·N02는 실제 native writer, READY 뒤 A Commit, RejectInitialLosers 재진입을 실행한다([합류 기록](#row-join-s7)). 다만 A가 만든 합류 입력이므로 MCB05의 literal 조건은 계속 충족되지 않는다.
 - **시간 한도.** S6 case의 `READY_BOUND` 150 s(`32de380`)와 240 s(`192c900`)는 실패 뒤 올린 사후 완화다. 그래서 S6 PASS의 근거로 세지 않는다. S7은 한도를 30 s로 되돌리고 debug hash 수정(PR #9) build에서 S6 selector 12개를 다시 실행했다([증거](../evidence/module-independence-survey-20261026.md#s7-row-join)).
 - **memory S6R-M01의 legacy 재시작.** "다음 legacy 재시작도 READY"는 B 읽기 전에 잡은 파일로 확인했다. B의 빈 aborted Row 거래가 남기는 Row TerminalReady는 legacy가 거절한다. native S6 n2가 이 경우를 만났다.
-- **shared 144B 회귀(R1).** `RowRecoveryAdmission`(padding 뒤 72B)이 RecoveryState와 RestoredRetention에 두 번 저장된다. 그래서 Pending Catalog commit 옆 Full read가 Census/Capacity로 거절된다. 사용자 규칙에 따라 별도 thread가 수정하고 이 S7 branch로 합친다(main 직접 수정 아님).
+- **shared 144B 회귀(R1).** `RowRecoveryAdmission`(padding 뒤 72B)을 담은 RestoredRetention이 shared에서 두 번 세어진다. 하나는 runtime의 대여분이고 다른 하나는 DiskSession의 recovery binding이다. 그래서 Pending Catalog commit 옆 Full read가 Census/Capacity로 거절된다. 검토 보고서는 RecoveryState 사본을 꼽았지만 그 값은 shared에 들지 않는다(수정 thread의 정정). 사용자 규칙에 따라 별도 thread가 수정하고 이 S7 branch로 합친다(main 직접 수정 아님).
 - **후속(미구현).**
   - C1: `ExistingGroup::RowRecovery` 설치나 `recovery_rows()`에서 epoch 활성 뒤를 거절한다. 지금은 도달할 수 없는 경화이며 제품 변경이므로 사용자 승인이 필요하다.
   - C3: losers gate의 양성 대조, RootReserved만 있는 입력, 거절 뒤 lease fence 단언을 더한다.
