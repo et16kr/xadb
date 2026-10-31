@@ -1088,8 +1088,9 @@ macro_rules! census {
 }
 /// The residency cases' pool: 19 frames for the corpus database's 20 pages.
 const FRAMES: usize = 20;
-const IDLE: (u64, ((usize, usize, usize), bool), u16, usize, bool) =
-    (0, ((0, 0, 0), false), 0, 0, false);
+/// The `census!` tuple (its fields are named there).
+type Census = (u64, ((usize, usize, usize), bool), u16, usize, bool);
+const IDLE: Census = (0, ((0, 0, 0), false), 0, 0, false);
 
 /// Makes the resident page `number` non-resident inside the split: C's own
 /// flush of its target (now clean), then, with every other clean frame

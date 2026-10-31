@@ -847,6 +847,10 @@ fn mca02(id: &str, variant: u8) {
                         let result =
                             insert_live(&mut call, s2, &table, private, &input, &mut slots);
                         drop(once);
+                        #[allow(
+                            clippy::blocks_in_conditions,
+                            reason = "the block moves the result so its borrow of tx ends here"
+                        )]
                         let s2 = match { result } {
                             Err(DriveError {
                                 failure,
@@ -1368,6 +1372,7 @@ const NO_OWNED_PAGE: &str = "RetentionError { phase: Prepare, cause: Capacity, e
 ///   lands; the Null row's preflight finds the containers full, so the
 ///   statement fails, its rollback compensates a and the full abort ends
 ///   the transaction (TerminalReady, one compensated root).
+///
 /// At the end exactly `left - 1` (V07: 0) more INITs land, then the next
 /// is refused: the variant consumed the one page its INIT owned.
 fn owned_pages(id: &str, left: usize) {
