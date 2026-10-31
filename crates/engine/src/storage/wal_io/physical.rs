@@ -139,7 +139,11 @@ impl<'m, W: WriterNamespace> WalRuntime<'m, W> {
         }
         let end = interval_end(snapshot.complete_offset, bytes.len())
             .map_err(|e| unchanged(Phase::Stage, e))?;
-        if end > WAL_FILE_CAP {
+        let capacity_exhausted = end > WAL_FILE_CAP;
+        #[cfg(test)]
+        let capacity_exhausted =
+            capacity_exhausted || durability_test_support::take_stage_capacity_once();
+        if capacity_exhausted {
             return Err(unchanged(Phase::Stage, Cause::Capacity));
         }
         let frame = WalFrameLocation {

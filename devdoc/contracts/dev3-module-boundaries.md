@@ -334,6 +334,8 @@ finish_read_only는 원 durable ledger borrow를 유지한 채 active statement0
 
 현재 [읽기 전용 수명 부분공급](../evidence/module-independence-survey-20261026.md#c1-read-only-capsules)은 위 begin/statement/finish_read_only의 원 slot·512B credit·Serializable/RC snapshot·Before/Drop을 연결했다. writable 옵션은 효과 전 Unsupported이며 finish_aborted/commit_row는 아직 없다. actual source adapter/자동 read-set이 없어 현재 종료 인수는 빈 read-set만 해당한다. 거래·view에서 legacy snapshot guard를 꺼내 조회하는 우회는 공급하지 않는다. short aggregate admission·cursor·쓰기 statement/mark·실제 conflict 인수는 남아 있다.
 
+2026-10-31 후속: 위 C1 당시의 공급 범위와 구분하여 [S3 Row Commit](#row-commit-s3)의 실제 consuming Commit·격리 충돌·table epoch·capsule 종료를 공급했다. `finish_aborted`와 비어 있지 않은 Row rollback/READY recovery는 여전히 후속 단계다.
+
 <a id="writable-empty-capsule"></a>
 #### XADB-MODULE-WRITABLE-EMPTY-001 — 실제 Begin과 빈 쓰기 capsule
 
@@ -1793,9 +1795,9 @@ impl<'l> RowProducerLane<'l> {
 <a id="row-commit-s3"></a>
 #### XADB-MODULE-ROW-COMMIT-001 — S3 Row Commit과 종료
 
-2026-10-31 · **S3-b 구현·선택 검증 / 최종 수합 중**. 사용자 S3 클라우드 개발 지시와 별도 branch·단계별 commit 지시에 따라 `6ec2d343`에서 `codex/s3-row-commit`을 만들었다. 설계·구현·계약·통합 담당 `/root`, 독립 검토 `/root/s3_independent_review`다. 이 절은 S2 마감의 다음 공급 단위이며 S4 rollback, S5 Row 읽기, C4/S6 READY 복구 또는 전체 M4/M5 인수를 시작하지 않는다.
+2026-10-31 · **S3 한정 구현·선택 검증·최종 D1/D2 ACCEPT**. 사용자 S3 클라우드 개발 지시와 별도 branch·단계별 commit 지시에 따라 `6ec2d343`에서 `codex/s3-row-commit`을 만들었다. 설계·구현·계약·통합 담당 `/root`, 독립 검토 `/root/s3_independent_review`다. 이 절은 S2 마감의 다음 공급 단위이며 S4 rollback, S5 Row 읽기, C4/S6 READY 복구 또는 전체 M4/M5 인수를 시작하지 않는다.
 
-**기존 공급과 변경.** `PreflightRow::finish`의 source→gate→lease 반환과 Row `finish_statement`의 원 actor/mark 검산·WAL0 종료는 이미 구현되어 있다. S3는 그 실제 census와 Cancel 뒤 종료 의미를 확정하고, 현재 Unsupported인 `commit_row`를 실제 Commit에 연결한다. 공개 wire·format 번호·상수·cap·charge는 바꾸지 않는다.
+**기존 공급과 변경.** `PreflightRow::finish`의 source→gate→lease 반환과 Row `finish_statement`의 원 actor/mark 검산·WAL0 종료는 이미 구현되어 있다. S3는 그 실제 census와 Cancel 뒤 종료 의미를 확정하고, 착수 기준에서 Unsupported였던 `commit_row`를 실제 Commit에 연결했다. 공개 wire·format 번호·상수·cap·charge는 바꾸지 않는다.
 
 1. **capsule 검산.** Catalog/read-only capsule은 gate·source 이전 Unsupported, 원 origin/slot generation 불일치와 active statement는 효과 전 거절이다. Row Active, 원 ATT/TerminalLeased와 일치하는 actor, Reserved root 없음이 필요하다. Serializable은 원 read/write mask와 catalog 관측을 실제 table/catalog epoch로 검증한다. 충돌은 같은 capsule을 MustAbort로 고정한 RollbackRequired이며 S4의 full abort 의무를 유지한다. RC는 Serializable 검사를 생략하되 같은 source·terminal·epoch 검산을 수행한다. 유일 `&mut RetentionLedger`를 검증부터 종료까지 보유한다.
 2. **준비와 한 Commit 본문.** 기존 `prepare_existing_row`의 `Change::Commit`은 반드시 `history::validate_live` 뒤 실제 Root·Jobs·Status와 Allocation proof를 읽고 독립 Row producer로 frame을 만든다. Catalog Commit의 StageCallStarted→Pending→durable→Drain→whole install→epoch/Q publication 본문을 private 타입 경계로 함께 쓴다. Row를 Catalog observation으로 위장하지 않으며 ordinary installer로 Commit을 대체하지 않는다. 준비 배열은 stage 뒤 소멸하고 Pending에는 immutable payload·물리 after 참조4개와 원 receipt만 남긴다. 원 stage만 Unstaged proof를 발급하고 완전 설치만 Installed proof를 발급한다.
@@ -1835,6 +1837,8 @@ impl<'l> RowProducerLane<'l> {
 
 - Pending은 원 physical backing을 보유한 채 실제 `wait_ready`가 반환한 private borrowed Drain proof만 전달한다. unfinished Drop은 원 core abandon/fence·version 해제 뒤 pin을 반환하고 resume은 동일 pin/stable identity를 한 번만 옮긴다. 원 parent의 고정 배열은 resume·install 동안 별도 계수한다. 물리 leaf와 이후 control/history/completion leaf는 순차 max이며 source 검산·실패 정리 상계는 남긴다. Catalog와 Row를 각각 관측하고 기존 charge 계산은 바꾸지 않는다.
 - Serializable 충돌은 capsule을 MustAbort로 바꾸지만 durable 빈 Row actor는 Active다. empty-abort는 scope·ATT·root/undo 부재 검산 뒤 이 조합에서 원 RollbackStart→AbortEnd를 수행한다. durable Aborting 재시도와 Catalog 조건은 유지하며 비어 있지 않은 S4 rollback을 공급하지 않는다.
+
+**S3 최종 증거.** 신규 memory 기능18개·census1개와 변경된 공통 경로6개 selector를 source별로 검증했고 native 두 process를 확인했다. 원 실패9개·NOT_RUN을 보존하며 최종 독립 D1/D2 ACCEPT·필수 수정0이다. [실행·한계·정리 기록](../evidence/module-independence-survey-20261026.md#s3-row-commit)을 따른다.
 
 **재검토 조건.** Row phase가 고정 charge를 넘음, 공개 타입/형식 변경 필요, replay 생략 필요, 실제 producer가 위 빈/다중 root 의미를 지원하지 않음, caller의 보유값 증가, 원 receipt/복구 gate 의미 변경. 필수 결과가 없는 항목은 NOT_RUN이며 단계를 완료로 올리지 않는다.
 

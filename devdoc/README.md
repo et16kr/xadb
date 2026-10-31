@@ -1,6 +1,6 @@
 # XADB 개발 문서
 
-2026-10-31 [S3 Row Commit](evidence/module-independence-survey-20261026.md#s3-row-commit): 클라우드 별도 branch에서 실제 Commit·논리 table epoch·capsule 종료를 연결했다. source별 선택 실행과 원 실패를 보존하며 독립 최종 수합 중이다. S4–S6·전체 M4/M5는 미완료다.
+2026-10-31 [S3 Row Commit](evidence/module-independence-survey-20261026.md#s3-row-commit): 클라우드 별도 branch에서 실제 Commit·논리 table epoch·capsule 종료를 연결했다. source별 선택 실행·native 두 process를 확인하고 원 실패를 보존했다. 최종 독립 D1/D2 ACCEPT·필수 수정0이다. S4–S6·전체 M4/M5는 미완료다.
 
 2026-10-29 [실제 Job page·원 bank 전이](evidence/module-independence-survey-20261026.md#row-job-images): main `21592e9`에서 Job11개 전이·원64 bank·실제 page/native/redo를 결합했다. raw26쌍·source별 신규10개 선택 검증과 최종 독립 D1/D2 한정 수용·필수 수정0을 확인했다. 전체 M4/M5는 미완료다.
 

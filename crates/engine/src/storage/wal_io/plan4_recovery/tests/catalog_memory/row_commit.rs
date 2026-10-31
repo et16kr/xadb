@@ -1033,3 +1033,119 @@ fn s3_r07_pending_full_read_drain_flusher_and_old_q() {
 #[cfg(target_os = "linux")]
 #[path = "row_commit/native.rs"]
 mod native;
+
+#[test]
+fn s3_r06_actual_wal_capacity_restores_unstaged_then_retries() {
+    case("S3-R06-stage", || {
+        let oracle = Oracle::new();
+        with_fresh!(
+            oracle,
+            frames = 12,
+            |live, owner, flusher, status, undo, private, reader_private, core, fence, state| {
+                let (row_status, _) =
+                    create_table(live, owner, flusher, status, undo, private, true);
+                let epochs = live.catalog_test_epochs();
+                {
+                    let (mut writer, reader, mut flush) = live.split();
+                    let tx = writer
+                        .begin_row_transaction(
+                            owner,
+                            IsolationLevel::Serializable,
+                            &row_status,
+                            private,
+                            &mut flush,
+                        )
+                        .unwrap();
+                    let view = writer.begin_statement(owner, &tx).unwrap();
+                    let table = issue_table!(reader, owner, view, reader_private, flush, flusher);
+                    inserted!(writer, owner, view, table, private, flush, flusher);
+                    assert!(writer.finish_statement(owner, view).is_ok());
+                    let identity = tx.test_write_identity();
+                    let before = files(state);
+                    let original_commit_state = writer.catalog_test_commit_state();
+                    let prefix = writer.free_undo_test_state().unwrap().0;
+                    let bank = writer.recovery_test_bank().to_vec();
+                    let jobs = writer.catalog_test_jobs().to_vec();
+                    let mut originals = Vec::new();
+                    for page in [0, 1, 2, 11] {
+                        let index = resident_index(&writer, page).unwrap();
+                        let mut bytes = boxed::<PAGE_BYTES>();
+                        let stamp = probe::diagnose(reader.catalog_test_pool(), index, &mut bytes);
+                        originals.push((index, stamp, bytes));
+                    }
+                    let once =
+                        crate::storage::wal_io::durability_test_support::stage_capacity_once();
+                    let tx = match writer.commit_row(owner, tx, private) {
+                        Err(TransactionFinishError::Before { error, transaction }) => {
+                            assert_eq!(
+                                (error.phase, error.effect),
+                                (RetentionPhase::Stage, Effect::Unchanged)
+                            );
+                            assert!(matches!(error.cause,RetentionCause::Wal(error)
+                            if error.phase==crate::storage::wal_io::Phase::Stage
+                            && matches!(error.cause,crate::storage::wal_io::Cause::Capacity)
+                            && error.effect==Effect::Unchanged));
+                            transaction
+                        }
+                        _ => panic!("actual physical stage must return Unchanged Capacity"),
+                    };
+                    assert_eq!(once.hits(), 1);
+                    drop(once);
+                    assert_eq!(tx.test_write_identity(), identity);
+                    assert_eq!(files(state), before);
+                    assert_eq!(writer.free_undo_test_state().unwrap().0, prefix);
+                    assert_eq!(writer.catalog_test_commit_state(), original_commit_state);
+                    assert_eq!(writer.recovery_test_bank(), bank);
+                    assert_eq!(writer.catalog_test_jobs().as_slice(), jobs);
+                    assert_eq!(reader.catalog_test_source_used(), 0);
+                    assert_eq!(writer.catalog_test_physical_pins(), 0);
+                    let observed = hook::observe(core);
+                    assert_eq!(
+                        (
+                            observed.installation,
+                            observed.active_apply,
+                            observed.active_content
+                        ),
+                        ("Open", 0, 0)
+                    );
+                    assert!(!observed.read_gate_closed && !fence.is_fenced());
+                    owner.check_idle().unwrap();
+                    for (index, before, bytes) in originals {
+                        let mut after = boxed::<PAGE_BYTES>();
+                        let actual = probe::diagnose(reader.catalog_test_pool(), index, &mut after);
+                        assert_eq!(after, bytes);
+                        assert_eq!(
+                            (
+                                actual.frame,
+                                actual.dirty,
+                                actual.entry,
+                                actual.pins,
+                                actual.total
+                            ),
+                            (
+                                before.frame,
+                                before.dirty,
+                                before.entry,
+                                before.pins,
+                                before.total
+                            )
+                        );
+                    }
+                    assert_eq!(reader.catalog_test_horizon().0, 1);
+                    // One fresh attempt after removing the fault; no staged frame
+                    // or physical obligation was erased to make retry possible.
+                    assert_eq!(committed!(writer.commit_row(owner, tx, private)).q(), 2);
+                    assert_eq!(wal_since(state, before.0), COMMIT_FRAME);
+                    assert_eq!(reader.catalog_test_source_used(), 0);
+                }
+                assert_eq!(
+                    live.catalog_test_epochs(),
+                    (true, epochs.1, vec![(2, 6, 2)])
+                );
+                println!(
+                    "S3_R06 actual WAL Capacity branch hit=1; Unstaged restored; exact one retry ACK=2"
+                );
+            }
+        );
+    });
+}

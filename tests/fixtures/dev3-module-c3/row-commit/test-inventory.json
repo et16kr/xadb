@@ -83,6 +83,12 @@
         "produce",
         "restart"
       ]
+    },
+    {
+      "id": "S3-R06",
+      "selector_suffix": "s3_r06_actual_wal_capacity_restores_unstaged_then_retries",
+      "fault": "scoped cfg(test) one-shot at original WAL Capacity predicate; not a full-file limit test",
+      "retry_count": 1
     }
   ]
 }
