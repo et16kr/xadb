@@ -1790,6 +1790,43 @@ impl<'l> RowProducerLane<'l> {
 - **담당 미정.** MBC10-V09의 CatalogProgress writer 사례는 NOT_RUN이며 담당 단위가 없다. MBC40-V09 (iv) floor는 [WRITER-PROGRESS-001](#writer-progress)의 미공급 의무다.
 - **열린 의무(A-W1 검토 A4, 담당 미정).** flush 동안 RowWrite admission은 없고 flusher의 65536B census에는 호출자 carrier 항이 없다. 그 census가 A의 flush 지점 몫(frame-static + caller 5716B)을 포함하는지는 S2-b 증거가 정하기로 했으나 S2 증거에 그 결정이 없다. C와 coordinator가 정한다.
 
+<a id="row-commit-s3"></a>
+#### XADB-MODULE-ROW-COMMIT-001 — S3 Row Commit과 종료
+
+2026-10-31 · **D2 ACCEPTED / 구현·시험 NOT_RUN**. 사용자 S3 클라우드 개발 지시와 별도 branch·단계별 commit 지시에 따라 `6ec2d343`에서 `codex/s3-row-commit`을 만들었다. 설계·구현·계약·통합 담당 `/root`, 독립 검토 `/root/s3_independent_review`다. 이 절은 S2 마감의 다음 공급 단위이며 S4 rollback, S5 Row 읽기, C4/S6 READY 복구 또는 전체 M4/M5 인수를 시작하지 않는다.
+
+**기존 공급과 변경.** `PreflightRow::finish`의 source→gate→lease 반환과 Row `finish_statement`의 원 actor/mark 검산·WAL0 종료는 이미 구현되어 있다. S3는 그 실제 census와 Cancel 뒤 종료 의미를 확정하고, 현재 Unsupported인 `commit_row`를 실제 Commit에 연결한다. 공개 wire·format 번호·상수·cap·charge는 바꾸지 않는다.
+
+1. **capsule 검산.** Catalog/read-only capsule은 gate·source 이전 Unsupported, 원 origin/slot generation 불일치와 active statement는 효과 전 거절이다. Row Active, 원 ATT/TerminalLeased와 일치하는 actor, Reserved root 없음이 필요하다. Serializable은 원 read/write mask와 catalog 관측을 실제 table/catalog epoch로 검증한다. 충돌은 같은 capsule을 MustAbort로 고정한 RollbackRequired이며 S4의 full abort 의무를 유지한다. RC는 Serializable 검사를 생략하되 같은 source·terminal·epoch 검산을 수행한다. 유일 `&mut RetentionLedger`를 검증부터 종료까지 보유한다.
+2. **준비와 한 Commit 본문.** 기존 `prepare_existing_row`의 `Change::Commit`은 반드시 `history::validate_live` 뒤 실제 Root·Jobs·Status와 Allocation proof를 읽고 독립 Row producer로 frame을 만든다. Catalog Commit의 StageCallStarted→Pending→durable→Drain→whole install→epoch/Q publication 본문을 private 타입 경계로 함께 쓴다. Row를 Catalog observation으로 위장하지 않으며 ordinary installer로 Commit을 대체하지 않는다. 준비 배열은 stage 뒤 소멸하고 Pending에는 immutable payload·물리 after 참조4개와 원 receipt만 남긴다. 원 stage만 Unstaged proof를 발급하고 완전 설치만 Installed proof를 발급한다.
+3. **epoch.** 실제 actor의 Row RootRetained가 가리키는 table을 중복 제거하여 준비한다. RootReleasingCompensated는 publication 목록에서 제외하고, Reserved 또는 scope/identity 불일치는 거절한다. 기존 Published table slot만 허용하고 새 slot을 만들지 않는다. conservative write mask는 격리 검증용이며 publication 목록으로 쓰지 않는다. 정확 frame digest/q와 whole-install proof를 결합한 뒤 한 publication lock 안에서 해당 table epoch와 Q를 갱신한다. Row Commit은 catalog namespace epoch를 올리지 않는다. 빈/Cancel-only Row transaction도 같은 Commit 경로를 허용하며 변경 table mask는0이다.
+4. **종료·오류.** stage 이전 Unchanged는 원 capsule의 Before, 충돌은 RollbackRequired다. stage 이후 불확실성·부분 설치·publication/반환 실패는 Fatal·fence이고 ACK가 없다. TerminalReady의 scope/actor/status/outcome1/q/LSN, ATT 제거와 공개 Q를 대조한 뒤 capsule slot·snapshot·credit을 checked 반환해야 성공 관측을 만든다. Cancel 뒤 성공 statement 종료와 기존 `abort_empty_transaction`은 정상 동작으로 유지한다. `finish_aborted`와 nonempty rollback은 S4까지 Unsupported다.
+5. **자원.** 기존 short65536, capsule512, private425984, A 호출 상한6144/11520을 유지한다. Row prepare/stage/Pending/install/publish/종료와 실제 A caller(호출 지점별·frame-static)를 각각 계수한다. 각 Row phase가 기존 고정 Commit/Progress charge 안인지 이름별 단언하며, 초과를 max 편입이나 cap 상승으로 숨기지 않는다. source→gate 순서·Pending reader 공존·Drain 뒤 install 예약과 latch 없는 durable wait를 유지한다.
+
+**대안.** ordinary Row installer는 Commit 장벽·Q 공개가 없으므로 거절한다. 별도 복사 Commit 본문은 오류·receipt·reader 수명의 이중 소유를 만들므로 거절한다. 공통 public factory나 임의 observation 생성자는 봉인을 깨므로 거절한다. private Commit 준비/설치 타입만 기존 알고리즘의 실제 두 소비에 맞춰 추출한다. 준비와 publisher가 공유하는 의미만 추출하고 Row producer·epoch 선택은 각 owner에 남긴다.
+
+**선택 검증 계획(실행 전 고정).** 새 `s3_` 사례는 아래 분모로 작성한다. 변경이 있는 기존 Catalog Commit의 선택 사례는 shared continuation/terminal/epoch diff와 연결하고, 이미 완료한 Row S1/S2·전체 workspace·wrapper는 반복하지 않는다. compile은 engine lib·test 대상, 기능 실행은 아래 selector만이다. 각 runtime case90초, 실제 thread case180초, native worker/재시작 case180초, compile1200초, 전체 선택 실행1800초, 로그16MiB, Rust 시험 stack32MiB, 첫 실패에서 중단한다. 실패를 보존하고 수정 뒤 해당 실패·영향 diff만 다시 실행한다.
+
+| 묶음 | 새 검증 의무 |
+| --- | --- |
+| S3-R01 | 실제 INSERT→문장 끝→Commit: Serializable/RC, 독립 기대 Commit frame/Status/Terminal/ATT, q/table epoch/catalog epoch, slot·snapshot·credit 반환 |
+| S3-R02 | 빈/Cancel-only Commit과 Cancel 뒤 문장 종료·empty abort; 같은 table의 여러 root publication 중복 제거 |
+| S3-R03 | 혼합 scope·origin·active statement·Reserved/Aborting·MustAbort·source capacity의 효과 전 거절과 동일 capsule |
+| S3-R04 | 같은 table Serializable 충돌·다른 table 비충돌·RC 허용; conservative mask와 실제 logical 변경 목록 구별 |
+| S3-R05 | Commit 이전 replay 불일치 거절: 새 Commit frame0·ACK0·fence; S2W-R24의 원 실패 이력 보존 |
+| S3-R06 | stage Unchanged 재시도, 부분 write·sync 오류·부분 install·publication/cleanup 오류의 Fatal·ACK0 |
+| S3-R07 | Pending 동안 old Q/read 허용, Drain·완전 install 전 ACK0, Q 공개 전 old snapshot, reader/전용 flusher 진행 |
+| S3-C01 | memory/native Row phase census·capsule512·finish 실제 비용·A transaction caller와 frame-static |
+| S3-N01 | 실제 파일 I/O의 ACK 뒤 complete/durable Commit prefix, frame별 독립 검산과 별도 재시작에서 현재 Analysis/Unsupported·READY0·mutation0 확인 |
+
+**복구 한계.** S3-N01은 C4/S6 전 Row gate를 유지한다. ACK 뒤 winner를 READY로 복구하는 MCA03-N01/N06–08의 3-process 인수를 PASS로 바꾸지 않는다. native 파일 I/O 결과는 관측한 클라우드 filesystem의 결과이며 전원 장애·공식 ext4 배포 인수를 뜻하지 않는다. 저장한 로그·source hash·실패·review는 새 증거 절에 연결하고 이번에 생성한 build target/export/ELF만 기록 뒤 삭제한다.
+
+**단계별 commit.** S3-a 설계·검증 범위, S3-b 공통 Commit과 Row 준비·epoch·capsule 구현 및 해당 선택 검증, S3-c 실제 consumer/native·census·오류 증거와 독립 최종 리뷰를 각 검토 가능한 commit으로 남긴다. 실제 diff가 다른 유한 단위를 요구하면 owner·시험 대응을 기록하고 나눈다. 통합·기존 검증 반복·원격 push/merge를 자동 실행하지 않는다.
+
+**독립 검토.** `/root/s3_independent_review`가 실제 계약·코드와 이 절의 diff를 읽기 대조하여 S3-a 설계에 한정한 D2 ACCEPT·필수 수정0으로 판정했다. 검토 HEAD `6ec2d3432344f2353e319c7a0eec1955d5a3420a`, 판정 반영 전 파일 SHA-256 `cfc3d017f26411bff3f71a92aae2d0f01de65a333c89b76ccc68c674592c8c9a`. 권고는 실제 두 타입의 봉인과 terminal operation 검산, 두 image의 별도 census, 실행 전 selector/variant manifest 및 실제 Drain 대기 schedule이며 구현·검증 입력에 반영한다. 빌드·시험·자동 문서 검사는 실행하지 않았다.
+
+**재검토 조건.** Row phase가 고정 charge를 넘음, 공개 타입/형식 변경 필요, replay 생략 필요, 실제 producer가 위 빈/다중 root 의미를 지원하지 않음, caller의 보유값 증가, 원 receipt/복구 gate 의미 변경. 필수 결과가 없는 항목은 NOT_RUN이며 단계를 완료로 올리지 않는다.
+
 ### 6.7 live rollback과 C/A recovery handler
 
 앞선 성공 statement 보존과 full abort는 실제 Row head chain으로 수행하며 [소비자 상태표](dev3-module-consumers.md#row-states)를 정본으로 삼는다. C는 원 actor/statement mark와 reserved obligations에서 RollbackStart를 적용하고 다음 currentU를 고른다. A는 C가 actual source에서 획득한 before/key/nextU 문맥으로 **CLR 후보**를 생산한다. 원 target/read pins와2-reference handoff, stage/whole install, head 인계, StatementFinish/AbortEnd는 C가 검산·소비한다.

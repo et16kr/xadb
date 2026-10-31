@@ -1,5 +1,7 @@
 # XADB 모듈 독립 개발 구조 전환 작업 계획
 
+2026-10-31 [S3 Row Commit](../contracts/dev3-module-boundaries.md#row-commit-s3): 병합 기준 `6ec2d343`에서 클라우드 별도 branch `codex/s3-row-commit`으로 착수했다. S3-a 설계는 독립 D2 ACCEPT·필수 수정0이며 제품 구현·선택 검증은 NOT_RUN이다. S4–S6·전체 M4/M5는 미완료다.
+
 2026-10-30 [S2-f V09 대체 oracle과 S2 마감](../evidence/module-independence-survey-20261026.md#s2f-closeout): RowWrite writer가 resident reader 둘의 반환을 기다린 뒤 admission 경계를 지키는 MBC10-V09와 MBC40-V09 census(부분 공급)를 더했고, S2-e와 합친 통합 시험 186건이 통과했다. 실제 census와 계약 읽기는 [S2 공급 기록](../contracts/dev3-module-boundaries.md#row-write-s2-supply)에 있다. 사용자 지시로 S2에서 멈추며 다음은 S3다.
 
 2026-10-30 [S2-e A INSERT driver live 경로와 frame-static D15](../evidence/module-independence-survey-20261026.md#s2e-live-driver): A driver가 실제 C wrapper로 행을 넣고 거절·Cancel·FlushRequired 재시도를 처리하는 live 시험 11건으로 G2를 닫았다. A driver를 단계별 frame으로 나눠 모든 C 호출 지점에서 A frame 전체가 상한 안이다(가장 작은 여유 preflight 813B).
