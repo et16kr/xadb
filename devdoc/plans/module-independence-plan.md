@@ -501,6 +501,8 @@ Root3/Job3/Profile3·Row scope3·base4는 이름 변경의 부수 효과가 아�
 
 2026-10-29 `/root/module_gate_plan_review`가 이 절·상단 안내와 `AGENTS.md`·두 README의 실제4파일 diff를 MI01–06·DP01/DP02·DOC-002·병렬 인계 정책과 읽기 대조하여 **후속 계획 저장에 한정한 독립 D2 수용·필수 수정0**으로 판정했다. 검토 기준 HEAD는 `09173aae2da1a8d43000881d9cebc5ab442cd2cc`, 이 판정 문구 반영 전 계획 파일 SHA-256은 `b70566e67bda3511b23112bde9bb770c9b80f8daa3a90e44048c8517863d1857`이다. `/root`가 판정을 수신해 기록했으며 후속 검사 설계·구현·원격 적용과 M4/M5 인수는 이 검토의 범위가 아니다. 제품·시험·빌드·자동 문서 검사·push는 실행하지 않았다.
 
+2026-10-31 [시행 전 리뷰](../evidence/module-gate-plan-review-20261031.md)가 이 절을 현재 push 검사·workflow·GitHub 설정과 대조해 승인 신원, 기계 판독 경계 정본과 legacy 예외, 증거 등급의 선결 결정과 구체 설계안을 제안했다. 제안이며 이 절의 계획·적용 조건을 바꾸지 않는다. 채택 여부는 시행 전 D2 설계에서 판단한다.
+
 <a id="folder-reorganization"></a>
 ## 13. 분리 모듈의 폴더 재정리 후속 계획
 

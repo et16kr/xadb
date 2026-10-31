@@ -1,5 +1,7 @@
 # XADB 조사·실행 증거
 
+2026-10-31 [모듈 분리 강제 계획 리뷰](module-gate-plan-review-20261031.md): [모듈 독립 계획 12절](../plans/module-independence-plan.md#post-separation-gates)의 push·merge 강제 계획을 현재 push 검사·workflow·GitHub 설정과 대조했다. 원칙은 유지하되, 시행 전에 승인 신원(PR 작성자가 모두 같은 계정), 기계 판독 경계 정본과 legacy 예외 처리, CI에서 보이지 않는 증거와 native 결과의 등급을 정해야 한다고 판단했다. 정적 검토·제안이며 계획 변경 채택·검사기 구현·원격 설정 변경은 없다.
+
 2026-10-31 [S4 live Row rollback](module-independence-survey-20261026.md#s4-row-rollback): main `139a05f4`의 별도 branch `codex/s4-row-rollback`에서 statement/full rollback·원 CLR/receipt·flusher/pin 인계를 구현했다. source별 선택20개·변경 compiler1개·native2process를 검증했으며 최종 독립 D1/D2 ACCEPT·필수 수정0을 확인했다. S5/C4/S6·전체 M4/M5는 미완료다.
 
 2026-10-31 [S3 Row Commit](module-independence-survey-20261026.md#s3-row-commit): 클라우드 별도 branch에서 실제 Commit·논리 table epoch·capsule 종료를 연결했다. source별 선택 실행·native 두 process를 확인하고 원 실패를 보존했다. 최종 독립 D1/D2 ACCEPT·필수 수정0이다. S4–S6·전체 M4/M5는 미완료다.
