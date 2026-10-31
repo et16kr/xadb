@@ -5111,3 +5111,31 @@ MBC10-V09의 rollback writer와 MBC40-V09 rollback task 부분을 공급했다. 
 별도 리뷰가 찾은 admission 없는 재진입, durable 뒤 Unchanged 반환, flusher Before 뒤 refs 부재, 종료 precheck 순서, ordinary install/shared/pin/종료 census 누락을 반영했다. 마지막 검토와 push gate 결과를 아래에 이어 기록한다. 되돌림은 최신 증거·시험 보완부터 `70b39457`, `f5272121`, `e05957aa`의 역순이다. 공개 형식·dependency를 바꾸지 않았으며 fresh development fixtures를 사용한다.
 
 최종 독립 읽기 리뷰는 **S4 한정 D1/D2 ACCEPT·필수 수정0**이다. 판정 원문 `artifacts/module-s4-20261031/review-final.md` SHA-256 `326daa53dbbf41a1deecd26350608abfd1c3acc8436b2f67d9a56673b7233967`, source별 receipts SHA-256 `6211145504e2f8673a379912e74c42025d1fdc6cbf8c148cba3d546e84ac34dc`를 보존한다. 리뷰어는 코드 수정·빌드·시험을 실행하지 않았다. pre-push gate는 최종 commit에서 별도로 실행하며 그 전 결과를 PASS로 기록하지 않는다.
+
+
+<a id="s5-row-read-checkpoint"></a>
+## 2026-10-31 S5 Row 읽기 중간 구현
+
+**IMPLEMENTED PARTIAL / S5 미완료 / PR 미등록.** 사용자 지시로 main `2ed254ac`에서 `codex/s5-row-read`를 만들고 [S5 착수](../contracts/dev3-module-boundaries.md#row-read-s5)를 `b93f18fb`에 기록했다. S3/S4는 이미 main에 병합되어 재구현하지 않았다. 담당 `/root`, 독립 구조 검토 `/root/s5_review`다.
+
+공급한 경로는 원 read progress→Full source 예약→reference lease, Catalog/schema·table slot/origin 검산, Catalog anchor 보호 적재와 index0 거절, Row allocator/anchor/leaf whole-set·LSN·root 검산, 실제 latch 아래 Txn/U capture, Status/Missing Undo, actual canonical copy와 checked cleanup이다. candidate는 visibility registry 주소·owner slot·lease generation·capture sequence·actual version/length를 함께 대조한다. caller의425984B loan은409600B LOAD와16384B copy로 나누며 copy 앞8192B는 Catalog record, 뒤8192B는 최대2048B canonical row다. RowRead는 기존 Full charge를 예약하며 port의 필드를 늘리지 않았다. source bytes는 progress ticket보다 먼저 반환한다.
+
+B는 point/visibility/cursor 결정을 유지한다. `capture_point`/`capture_next`와 C의 `check_table`/`load_catalog`/`capture_schema`/`load_leaf`/`issue_page`를 never-inline 단계로 분리했다. actual point 진입과 opaque live cursor 진입을 storage 내부에서 사용할 수 있게 연결했다. 일반 SQL 연결이나 S6 READY 복구 공급은 아니다.
+
+### 실행과 검토
+
+- 최초 compile의 helper 이름·PageKind 이름 오류와 첫 실행의 `XADB_CATALOG_SOURCE_SHA256` 누락을 보존했다. 실행 준비 실패를 기능 PASS로 세지 않는다. 로그는 클라우드 `/workspace/s5-check*.log`, `/workspace/s5-build*.log`, `/workspace/s5-r01.log`에 있다.
+- r1: 신규 `s5r_r01_read_admission_returns_original_resources`, `s5r_r02_empty_table_and_r04_actual_capture_copy` 2개 PASS. 원 source manifest hash `01111a75d444ead4fc1cc924512b41e1bc24f8c727e69d6ef534039b185e1bd4`, ELF `15aad7a1c3bf6e7e1c9310f8218016cd4ddc40c66f63993ce885cd6d4f4465f4`.
+- r2: Catalog anchor/index 검사 보완과 stale·sequence overflow·Status/Missing·short output 검증을 추가한 source에서 같은2개 PASS. manifest `ed8e6f3a5428316a1683e0130778374f5f44e1e619aa63299060e3eb4e9aaeda`, ELF `0bb1fb1546d7427f813bbacbf8e0110468b69889dd1ecaf19d063831ebe506a6`.
+- r3/b1: C/B phase 분리 뒤 변경 관련 actual R02 한 개와 B `mcb00_d01`–`mcb00_d12` 12개 PASS. 무변경 factory R01은 반복하지 않았다. manifest `fcb15d2eadbf0ae455a7d15b31709675ef44eaaf38e5b6cc2740c0278a5483d5`, ELF `c26464928dffd708ed2af1516cadc13e7858b244944d12841b92280a1620f2f6`. 원 입력은 row-write `expected.json` hash `3d72aa664e984f4f36c41495012fb3f55797187d14deea238b4716b170ae84e1`이다. 각 실행의 동결 selector·120초 한도·source hash manifest·원 출력은 `/workspace/s5-evidence/{r1,r2,r3,b1}`에 보존한다.
+- `cargo check -p xadb-engine --locked`와 시험 ELF의 compile을 통과했다. workspace 테스트나 무변경 S3/S4 시험은 실행하지 않았다. 마지막 후속은 private LiveSource 필드의 불필요한 visibility와 주석 정리뿐이며 동작을 바꾸지 않는다.
+- 독립 검토에서 Drop의 source/progress 순서, Catalog anchor 비상주/보호 적재, index0 검산3건을 반영했다. phase 분리 뒤 중간 구조 검토는 수용 가능·신규 필수 수정0이다. **이는 S5 최종 D1/D2 수용이 아니다.**
+
+### 재개할 작업
+
+1. S5R-C01..C03·MCB00-D13의 memory/native 전체 호출 지점 census를 구현·검증한다. r2의 실제 sizeof 관측은 Full34570B, lookup LOAD31084B, operation632B, page232B, candidate192B다. 이 다섯 숫자는 전체 상계 PASS가 아니다. operation을 한 번 세고 C/B의 caller frame·Result carrier·source helper peak를 더해야 한다. 이전 retention LOAD33364B를 lookup LOAD와 혼동하지 않는다. 필요하면 C/B 단계 분리를 추가하며 cap/charge를 조용히 올리지 않는다.
+2. 비상주 Catalog anchor/Row leaf·dirty victim FlushRequired 및 동일 snapshot 재시도, foreign origin/candidate·retirement Busy의 atomic pin, 잘못된 Undo, old/new snapshot·다른 actor, actual cursor/취소/출력 부족·재진입, InstallationPending 수신을 실제 C 경로로 검증한다. 기존 generic B12 PASS는 이 actual 인수를 대신하지 않는다.
+3. native 실제 경로와 native 타입 census, 영향받은 shared Catalog/visibility의 선택 회귀·compiler 경계를 완료한다. 새 오류는 원 실패를 보존하고 관련 diff만 재검증한다.
+4. source별 최종 inventory/receipt·계약·상태를 확정하고 독립 최종 D1/D2 검토를 받는다. commit 후 pre-push fmt/Clippy/문서 gate를 거쳐 push 및 PR 등록한다. S5 완료 전에는 완료·PR-ready로 표시하지 않는다.
+
+클라우드 재개 환경은 `/workspace/xadb`, branch `codex/s5-row-read`다. Rust1.95 도구는 `CARGO_HOME=/workspace/.xadb-env/cargo`, `RUSTUP_HOME=/workspace/.xadb-env/rustup`, PATH 앞 `/workspace/.xadb-env/cargo/bin`이다. 선택 실행 helper `/workspace/s5-run.py`는 실행마다 source manifest/ELF/input hash와 selector를 기록한다. 최종 도구/fixture로 확정한 것은 아니며 원 r1/r2 초안의 실행을 현재 commit 증거로 소급 바꾸지 않는다.

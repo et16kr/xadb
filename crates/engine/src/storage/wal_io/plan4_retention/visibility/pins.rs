@@ -75,6 +75,11 @@ impl<'a, 'c, 's> BoundVisibility<'a, 'c, 's> {
     }
 }
 impl<'v, 'a, 'c, 's> ReferenceLease<'v, 'a, 'c, 's> {
+    /// Observation for a candidate; this scalar alone grants no pin authority.
+    pub(in super::super) fn row_generation(&self) -> u64 {
+        self.generations[0]
+    }
+
     fn check(&self, bytes: &[u8], at: usize, expected: u8) -> VisibilityResult<()> {
         let row = reference_row(bytes, self.owner.index() * 2 + at);
         if !self.active
@@ -413,5 +418,107 @@ impl<'v, 'a, 'c, 's> ReferenceLease<'v, 'a, 'c, 's> {
             read.release_checked()
                 .map_err(|e| frame(RetentionPhase::Prepare, e)),
         )
+    }
+}
+
+impl<'v, 'a, 'c, 's> ReferenceLease<'v, 'a, 'c, 's> {
+    pub(in super::super) fn row_identity(&self) -> (usize, usize, u64) {
+        (
+            std::ptr::from_ref(self.visibility).addr(),
+            self.owner.index(),
+            self.generations[0],
+        )
+    }
+
+    /// Only a held original RowLeaf can issue these pins. Decode and retirement
+    /// validation finish before either registry row is changed.
+    pub(in super::super) fn capture_row<'g>(
+        &mut self,
+        read: &'g crate::storage::dirty_frame::ReadTargets<'_, '_, '_, '_, '_, '_, 3>,
+        at: usize,
+        namespace: crate::api::Namespace,
+        schema: crate::storage::row_record::RowSchemaInput<'_>,
+    ) -> super::super::Result<(
+        CapturedCatalogRefs<'v, 'a, 'c, 's>,
+        crate::storage::row_record::RowRecordView<'g>,
+    )> {
+        use super::super::{RetentionCause, RetentionError, RetentionPhase, frame};
+        use crate::storage::{
+            page::PageKind,
+            row_record::{self, RecordExpectation, RowPayload},
+            transaction_record::VersionStamp,
+            tree_page::{self, EntryPayload, TreeExpectation},
+        };
+        let bad = || RetentionError {
+            phase: RetentionPhase::Source,
+            effect: Effect::CallerMustResolve,
+            cause: RetentionCause::Invariant,
+        };
+        let result = (|| {
+            if !read.confirms_origin(
+                self.visibility.origin.core,
+                self.visibility.origin.binding,
+                self.visibility.origin.fence,
+            ) {
+                return Err(bad());
+            }
+            let request = read
+                .target_request(2)
+                .map_err(|e| frame(RetentionPhase::Source, e))?;
+            if request.kind != PageKind::RowLeaf || request.level != 0 {
+                return Err(bad());
+            }
+            let leaf = tree_page::decode_tree_page(
+                read.bytes(2)
+                    .map_err(|e| frame(RetentionPhase::Source, e))?,
+                TreeExpectation {
+                    identity: request.identity,
+                    kind: PageKind::RowLeaf,
+                    level: 0,
+                    arity: 0,
+                },
+            )
+            .map_err(|_| bad())?;
+            let entry = leaf.entry(at).map_err(|_| bad())?;
+            let key: [u8; 8] = entry.key.try_into().map_err(|_| bad())?;
+            let row =
+                foundation::identity::RowId::new(u64::from_be_bytes(key)).map_err(|_| bad())?;
+            let EntryPayload::Value(bytes) = entry.payload else {
+                return Err(bad());
+            };
+            let record = row_record::decode_row_record_with_schema(
+                bytes,
+                RecordExpectation { namespace, row },
+                schema,
+            )
+            .map_err(|_| bad())?;
+            if !matches!(record.payload(),RowPayload::Inline(value) if (5..=2048).contains(&value.as_bytes().len()))
+            {
+                return Err(bad());
+            }
+            let version = record.version();
+            let source = CatalogSource {
+                origin: self.visibility.origin,
+                transaction: match version.stamp {
+                    VersionStamp::Transaction(tx) => Some(tx),
+                    VersionStamp::Committed(_) => None,
+                },
+                undo: version.undo,
+                source: std::marker::PhantomData,
+            };
+            let refs = self.capture_catalog(source).map_err(|e| RetentionError {
+                phase: RetentionPhase::Census,
+                effect: e.effect,
+                cause: RetentionCause::Visibility(e),
+            })?;
+            Ok((refs, record))
+        })();
+        if result
+            .as_ref()
+            .is_err_and(|e| e.effect == Effect::CallerMustResolve)
+        {
+            self.visibility.origin.fence.fence();
+        }
+        result
     }
 }

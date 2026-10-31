@@ -856,3 +856,179 @@ fn s2e_e09_applied_then_rejected_row_is_rollback_required_up_to_the_s4_start() {
         );
     });
 }
+
+/// S5 factory retains exactly one Full charge until checked finish. Reopening
+/// the same original Owner proves both reference rows and read progress return.
+#[test]
+fn s5r_r01_read_admission_returns_original_resources() {
+    case("S5R-R01", || {
+        let oracle = Oracle::new();
+        with_fresh!(
+            oracle,
+            frames = 12,
+            |live, owner, flusher, status, undo, private, reader_private, core, fence, state| {
+                let (row_status, _) =
+                    create_table(live, owner, flusher, status, undo, private, true);
+                row_statement!(live, owner, flusher, private, reader_private, row_status
+                    => writer, reader, flush, row, view, table);
+                let used = reader.catalog_test_source_used();
+                println!(
+                    "S5_SOURCE_OBSERVATIONS full/load/operation/page/candidate={:?}",
+                    reader.row_test_source_observations()
+                );
+                let before = files(state);
+                for _ in 0..2 {
+                    let operation = reader
+                        .row_operation(owner, &view, reader_private)
+                        .unwrap_or_else(|e| panic!("read entry: {e:?}"));
+                    assert!(reader.catalog_test_source_used() > used);
+                    operation.finish().unwrap();
+                    assert_eq!(reader.catalog_test_source_used(), used);
+                    owner.check_idle().unwrap();
+                }
+                assert_eq!(files(state), before);
+                close_live!(writer, owner, flush, flusher, row, view, private);
+                assert!(!fence.is_fenced());
+                let _ = (core, table);
+            }
+        );
+    });
+}
+
+#[test]
+fn s5r_r02_empty_table_and_r04_actual_capture_copy() {
+    use crate::storage::disk::{Plan4ResidencyCursor, ReadStep};
+    use crate::storage::row::{
+        insert::{produce_insert, validate_insert},
+        read::driver::{
+            PointRead,
+            live::{LiveCall as ReadCall, read_point_live},
+        },
+    };
+    use foundation::{identity::RowId, runtime::Cancellation};
+    case("S5R-R02-R04", || {
+        let oracle = Oracle::new();
+        with_fresh!(
+            oracle,
+            frames = 12,
+            |live, owner, flusher, status, undo, private, reader_private, core, fence, state| {
+                let (row_status, _) =
+                    create_table(live, owner, flusher, status, undo, private, true);
+                row_statement!(live, owner, flusher, private, reader_private, row_status
+                    => writer, reader, flush, row, view, table);
+                let _ = settle!(writer, owner, view, table, private, flush, flusher);
+                let mut residency = Plan4ResidencyCursor::new();
+                let cancel = Cancellation::default();
+                let mut output = [0xA5; 64];
+                let before = files(state);
+                let read = read_point_live(
+                    ReadCall {
+                        port: &reader,
+                        owner,
+                        private: reader_private,
+                        residency: &mut residency,
+                    },
+                    &view,
+                    &table,
+                    RowId::new(1).unwrap(),
+                    &mut output,
+                    &cancel,
+                )
+                .unwrap();
+                assert!(matches!(read, ReadStep::Ready(PointRead::Missing)));
+                assert_eq!(output, [0xA5; 64]);
+                assert_eq!(files(state), before);
+                let mut preflight = match writer
+                    .preflight_row(owner, &view, &table, private, &mut flush)
+                    .unwrap()
+                {
+                    RowPreflightStep::Ready(p) => p,
+                    _ => panic!("resident"),
+                };
+                let input =
+                    validate_insert(&[ValueRef::Int64(7)], preflight.validation_lane().unwrap())
+                        .unwrap();
+                let mut reserved = preflight
+                    .reserve(input)
+                    .unwrap_or_else(|_| panic!("reserve"));
+                let proposal = produce_insert(reserved.producer_lane().unwrap()).unwrap();
+                let applied = reserved
+                    .prepare(proposal)
+                    .unwrap_or_else(|_| panic!("prepare"))
+                    .apply()
+                    .unwrap_or_else(|_| panic!("apply"));
+                let (observation, _) = applied.into_parts();
+                let read = read_point_live(
+                    ReadCall {
+                        port: &reader,
+                        owner,
+                        private: reader_private,
+                        residency: &mut residency,
+                    },
+                    &view,
+                    &table,
+                    observation.row(),
+                    &mut output,
+                    &cancel,
+                )
+                .unwrap();
+                let ReadStep::Ready(PointRead::Found(copied)) = read else {
+                    panic!("own row")
+                };
+                assert_eq!(copied.version().row, observation.row());
+                let expected = crate::storage::row_record::decode_canonical_row(
+                    &output[..copied.len()],
+                    &[crate::api::Column {
+                        name: "i".into(),
+                        data_type: crate::api::DataType::Int64,
+                        nullable: false,
+                    }],
+                )
+                .unwrap();
+                assert_eq!(expected.value(0).unwrap(), ValueRef::Int64(7));
+                // Capture is source-backed; short output, stale candidate and
+                // sequence exhaustion do not publish bytes or leak references.
+                let stale = {
+                    let mut op = reader.row_operation(owner, &view, reader_private).unwrap();
+                    let page = match op.page(&table, &mut residency).unwrap() {
+                        ReadStep::Ready(p) => p,
+                        _ => panic!("resident"),
+                    };
+                    let candidate = page.capture(0).unwrap();
+                    assert!(matches!(
+                        op.status(&candidate, &mut residency).unwrap(),
+                        ReadStep::Ready(
+                            crate::storage::transaction_record::TransactionState::Active
+                        )
+                    ));
+                    assert!(matches!(
+                        op.missing_before(&candidate, &mut residency).unwrap(),
+                        ReadStep::Ready(_)
+                    ));
+                    let mut short = [0xBC; 1];
+                    assert!(op.copy_candidate(&candidate, &mut short).is_err());
+                    assert_eq!(short, [0xBC]);
+                    let stale = candidate.test_duplicate();
+                    op.release_candidate(candidate).unwrap();
+                    op.finish().unwrap();
+                    stale
+                };
+                {
+                    let mut op = reader.row_operation(owner, &view, reader_private).unwrap();
+                    assert!(op.copy_candidate(&stale, &mut output).is_err());
+                    op.test_set_sequence(u64::MAX);
+                    let page = match op.page(&table, &mut residency).unwrap() {
+                        ReadStep::Ready(p) => p,
+                        _ => panic!("resident"),
+                    };
+                    assert!(page.capture(0).is_err());
+                    op.finish().unwrap();
+                }
+                assert!(writer.finish_statement(owner, view).is_ok());
+                assert!(writer.commit_row(owner, row, private).is_ok());
+                assert!(!fence.is_fenced());
+                let _ = core;
+            }
+        );
+    });
+}

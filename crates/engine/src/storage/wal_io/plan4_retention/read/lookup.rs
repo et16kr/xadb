@@ -108,7 +108,7 @@ impl<'b, 'a, 's, 'c, 'p, 'd, 'm, 'w, W: WriterNamespace>
         call.finish_result(result)
     }
 
-    pub(super) fn lookup_resident(
+    pub(in super::super) fn lookup_resident(
         &self,
         owner: &mut Owner<'c, 's>,
         request: TargetRequest,
@@ -123,7 +123,7 @@ impl<'b, 'a, 's, 'c, 'p, 'd, 'm, 'w, W: WriterNamespace>
 
     /// Resolve a location from the installed source while the actual TxnPin is
     /// held by lookup. This is a location observation, never an install permit.
-    pub(super) fn catalog_status_location(
+    pub(in super::super) fn catalog_status_location(
         &self,
         owner: &mut Owner<'c, 's>,
         reference: TxnRef,
@@ -142,7 +142,7 @@ impl<'b, 'a, 's, 'c, 'p, 'd, 'm, 'w, W: WriterNamespace>
             Ok(found)
         })
     }
-    pub(super) fn catalog_undo_location(
+    pub(in super::super) fn catalog_undo_location(
         &self,
         owner: &mut Owner<'c, 's>,
         reference: UndoRef,

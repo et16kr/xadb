@@ -22,7 +22,7 @@ use crate::storage::{
 };
 use foundation::{error::Effect, identity::RowId, runtime::Cancellation};
 
-mod live;
+pub(in crate::storage) mod live;
 
 /// The statement observations B reads. The original view validates itself on
 /// each call; a credit is RAM accounting only, never snapshot or pin authority.
@@ -91,19 +91,19 @@ enum Step<T, F> {
 }
 
 #[derive(Debug)]
-enum PointRead<O> {
+pub(in crate::storage) enum PointRead<O> {
     Found(O),
     Missing,
 }
 
 #[derive(Debug)]
-enum CursorStep<O> {
+pub(in crate::storage) enum CursorStep<O> {
     Row(O),
     End,
 }
 
 #[derive(Debug)]
-enum RowReadError {
+pub(in crate::storage) enum RowReadError {
     /// B's own decision; no source effect remains.
     Read(ReadError),
     /// The source answered for another row or version than B selected.
@@ -170,6 +170,7 @@ impl ViewSample {
 /// One captured candidate: `Some` is a complete copy of a visible version and
 /// `None` an invisible version with C's Missing-before evidence. Errors, such
 /// as a missing Undo, are never turned into absence.
+#[inline(never)]
 fn select_row<S: ReadSource>(
     source: &mut S,
     candidate: &S::Candidate,
@@ -216,6 +217,7 @@ fn select_row<S: ReadSource>(
 /// Point read over one operation that `open` creates on this same view and
 /// that is always finished before returning. Found and Missing are published
 /// only after the checked cleanup succeeds.
+#[inline(never)]
 fn read_point<'r, V: ReadView, S: ReadSource>(
     view: &'r V,
     open: impl FnOnce(&'r V) -> Result<S, RetentionError>,
@@ -233,13 +235,12 @@ fn read_point<'r, V: ReadView, S: ReadSource>(
     merge(selected, source.finish())
 }
 
-fn select_point<S: ReadSource>(
+// Keep page and seek slots out of the later Status/Undo LOAD frame.
+#[inline(never)]
+fn capture_point<S: ReadSource>(
     source: &mut S,
-    sample: ViewSample,
     row: RowId,
-    output: &mut [u8],
-    cancel: &Cancellation,
-) -> Result<Step<PointRead<S::Copied>, S::Target>, RowReadError> {
+) -> Result<Step<Option<(S::Candidate, SeekPosition)>, S::Target>, RowReadError> {
     let page = match source.page()? {
         Step::Ready(page) => page,
         Step::Flush(target) => return Ok(Step::Flush(target)),
@@ -251,10 +252,26 @@ fn select_point<S: ReadSource>(
     let at = match selected {
         Ok(Some(at)) => at,
         // The actual leaf has no such key: an ordinary checked absence.
-        Ok(None) => return merge(Ok(Step::Ready(PointRead::Missing)), page.release_checked()),
+        Ok(None) => return merge(Ok(Step::Ready(None)), page.release_checked()),
         Err(error) => return merge(Err(error), page.release_checked()),
     };
     let candidate = page.capture(at.index)?;
+    Ok(Step::Ready(Some((candidate, at))))
+}
+
+#[inline(never)]
+fn select_point<S: ReadSource>(
+    source: &mut S,
+    sample: ViewSample,
+    row: RowId,
+    output: &mut [u8],
+    cancel: &Cancellation,
+) -> Result<Step<PointRead<S::Copied>, S::Target>, RowReadError> {
+    let (candidate, at) = match capture_point(source, row)? {
+        Step::Ready(Some(pair)) => pair,
+        Step::Ready(None) => return Ok(Step::Ready(PointRead::Missing)),
+        Step::Flush(target) => return Ok(Step::Flush(target)),
+    };
     let selected = select_row(source, &candidate, at, sample, output, cancel);
     Ok(
         match merge(selected, source.release_candidate(candidate))? {
@@ -344,6 +361,34 @@ impl<'r, V: ReadView + 'r, T: 'r> RowCursor<'r, V, T> {
         }
     }
 
+    #[inline(never)]
+    fn capture_next<S: ReadSource>(
+        &self,
+        source: &mut S,
+        revision: u64,
+        cancel: &Cancellation,
+    ) -> Result<Step<Option<(S::Candidate, SeekPosition)>, S::Target>, RowReadError> {
+        let page = match source.page()? {
+            Step::Ready(page) => page,
+            Step::Flush(target) => return Ok(Step::Flush(target)),
+        };
+        let selected = match page.leaf() {
+            Ok(leaf) => self
+                .progress
+                .seek(&leaf, revision, cancelled(cancel))
+                .map_err(RowReadError::from),
+            Err(error) => Err(error.into()),
+        };
+        let at = match selected {
+            Ok(Some(at)) => at,
+            Ok(None) => return merge(Ok(Step::Ready(None)), page.release_checked()),
+            Err(error) => return merge(Err(error), page.release_checked()),
+        };
+        let candidate = page.capture(at.index)?;
+        Ok(Step::Ready(Some((candidate, at))))
+    }
+
+    #[inline(never)]
     fn scan<S: ReadSource>(
         &mut self,
         source: &mut S,
@@ -353,23 +398,11 @@ impl<'r, V: ReadView + 'r, T: 'r> RowCursor<'r, V, T> {
         cancel: &Cancellation,
     ) -> Result<Step<Scan<S::Copied>, S::Target>, RowReadError> {
         loop {
-            let page = match source.page()? {
-                Step::Ready(page) => page,
+            let (candidate, at) = match self.capture_next(source, revision, cancel)? {
+                Step::Ready(Some(pair)) => pair,
+                Step::Ready(None) => return Ok(Step::Ready(Scan::End)),
                 Step::Flush(target) => return Ok(Step::Flush(target)),
             };
-            let selected = match page.leaf() {
-                Ok(leaf) => self
-                    .progress
-                    .seek(&leaf, revision, cancelled(cancel))
-                    .map_err(RowReadError::from),
-                Err(error) => Err(error.into()),
-            };
-            let at = match selected {
-                Ok(Some(at)) => at,
-                Ok(None) => return merge(Ok(Step::Ready(Scan::End)), page.release_checked()),
-                Err(error) => return merge(Err(error), page.release_checked()),
-            };
-            let candidate = page.capture(at.index)?;
             let selected = self
                 .progress
                 .check_advance(at.row, revision)

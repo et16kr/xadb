@@ -149,15 +149,15 @@ impl<'b, 'a, 's, 'c, 'p, 'd, W: WriterNamespace> ReadSource
 
 /// The caller's original port, Owner, private loan and residency cursor for
 /// one call. The entry opens the operation from them; none is kept.
-struct LiveCall<'x, 'b, 'a, 's, 'c, 'p, 'd, 'm, 'w, W: WriterNamespace> {
-    port: &'x ReadPort<'b, 'a, 's, 'c, 'p, 'd, 'm, 'w, W>,
-    owner: &'x mut Owner<'c, 's>,
-    private: &'x mut [u8; 425_984],
-    residency: &'x mut Plan4ResidencyCursor,
+pub(in crate::storage) struct LiveCall<'x, 'b, 'a, 's, 'c, 'p, 'd, 'm, 'w, W: WriterNamespace> {
+    pub(in crate::storage) port: &'x ReadPort<'b, 'a, 's, 'c, 'p, 'd, 'm, 'w, W>,
+    pub(in crate::storage) owner: &'x mut Owner<'c, 's>,
+    pub(in crate::storage) private: &'x mut [u8; 425_984],
+    pub(in crate::storage) residency: &'x mut Plan4ResidencyCursor,
 }
 
 /// Live point read on an operation opened here on `view`.
-fn read_point_live<'a, 'c, 's, W: WriterNamespace>(
+pub(in crate::storage) fn read_point_live<'a, 'c, 's, W: WriterNamespace>(
     call: LiveCall<'_, '_, 'a, 's, 'c, '_, '_, '_, '_, W>,
     view: &RowStatementView<'_, '_, 'a, 'c, 's>,
     table: &CheckedTable<'c, 's>,
@@ -187,21 +187,27 @@ fn read_point_live<'a, 'c, 's, W: WriterNamespace>(
     .map(read_step)
 }
 
-type LiveCursor<'r, 't, 'v, 'a, 'c, 's> =
-    RowCursor<'r, RowStatementView<'t, 'v, 'a, 'c, 's>, CheckedTable<'c, 's>>;
+pub(in crate::storage) struct LiveCursor<'r, 't, 'v, 'a, 'c, 's> {
+    inner: RowCursor<'r, RowStatementView<'t, 'v, 'a, 'c, 's>, CheckedTable<'c, 's>>,
+}
+impl LiveCursor<'_, '_, '_, '_, '_, '_> {
+    pub(in crate::storage) fn close(self) -> Result<(), RetentionError> {
+        self.inner.close()
+    }
+}
 
-fn open_cursor_live<'r, 't, 'v, 'a, 'c, 's>(
+pub(in crate::storage) fn open_cursor_live<'r, 't, 'v, 'a, 'c, 's>(
     view: &'r RowStatementView<'t, 'v, 'a, 'c, 's>,
     table: &'r CheckedTable<'c, 's>,
     start: Option<RowId>,
     end: Option<RowId>,
 ) -> Result<LiveCursor<'r, 't, 'v, 'a, 'c, 's>, RowReadError> {
-    RowCursor::open(view, table, start, end)
+    RowCursor::open(view, table, start, end).map(|inner| LiveCursor { inner })
 }
 
 /// Live cursor step on an operation opened here on the cursor's own view,
 /// reading the table the cursor was opened on.
-fn next_live<'a, 'c, 's, W: WriterNamespace>(
+pub(in crate::storage) fn next_live<'a, 'c, 's, W: WriterNamespace>(
     cursor: &mut LiveCursor<'_, '_, '_, 'a, 'c, 's>,
     call: LiveCall<'_, '_, 'a, 's, 'c, '_, '_, '_, '_, W>,
     output: &mut [u8],
@@ -214,6 +220,7 @@ fn next_live<'a, 'c, 's, W: WriterNamespace>(
         residency,
     } = call;
     cursor
+        .inner
         .next(
             move |view, table| {
                 Ok(LiveSource {

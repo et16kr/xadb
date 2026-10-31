@@ -1,19 +1,30 @@
 //! Row read operation: the original Owner is reborrowed for one source phase at
 //! a time. Candidates carry observations, never a pin or a source slice.
-use super::super::source::OperationSourceAdmission;
+use super::super::lookup_load::RetentionLoadPort as _;
+use super::super::source::{OperationClass, OperationSourceAdmission};
+use super::super::visibility::TableSlot;
 use super::super::visibility::{ReferenceLease, TxnPin, UndoPin};
 use super::*;
+use crate::storage::{
+    anchor::{self, TreeKind},
+    catalog_record::{self, CatalogDefinitionView, CatalogExpectation},
+    page::PageKind,
+    tree_page::{self, TreeExpectation},
+};
 use crate::storage::{
     dirty_frame::ReadTargets,
     row_record::{RecordExpectation, RecordVersion},
     transaction_record::TransactionState,
     tree_page::TreePageView,
 };
+use crate::transaction::concurrency::ReadOperationAdmission;
 
 /// Source-issued Txn and U pins of the last capture; held by the operation.
 struct CapturedRowRefs<'b, 'a, 'c, 's> {
     transaction: Option<TxnPin<'b, 'a, 'c, 's>>,
     undo: Option<UndoPin<'b, 'a, 'c, 's>>,
+    version: RecordVersion,
+    len: usize,
 }
 
 pub(crate) struct RowReadOperation<
@@ -38,13 +49,16 @@ pub(crate) struct RowReadOperation<
     loader: &'i mut [u8; 409_600],
     copy: &'i mut [u8; PAGE_BYTES],
     // Field order is the implicit drop order and matches `finish`: captured
-    // refs before their lease, and the admission last.
+    // refs before their lease, then source bytes before reader progress.
     captured: Option<CapturedRowRefs<'b, 'a, 'c, 's>>,
     lease: Option<ReferenceLease<'b, 'a, 'c, 's>>,
     lease_generation: u64,
     capture_sequence: u64,
     stopped: bool,
+    schema_len: usize,
+    table: Option<ObjectHandle>,
     source: OperationSourceAdmission<'b, 'a, 'c, 's>,
+    progress: ReadOperationAdmission<'c, 's>,
 }
 
 /// The validated anchor/leaf/allocation set. Its guards reborrow the Owner for
@@ -56,10 +70,13 @@ pub(crate) struct RowSearchPage<'g, 'b, 'a, 's, 'c, 'p, 'd> {
     copy: &'g mut [u8; PAGE_BYTES],
     capture_sequence: &'g mut u64,
     expectation: RecordExpectation,
+    schema_len: usize,
+    table: ObjectHandle,
 }
 
 /// Lease generation, capture sequence and the observed row; not Copy.
 pub(crate) struct RowCandidate {
+    lease_identity: (usize, usize, u64),
     lease_generation: u64,
     capture_sequence: u64,
     version: RecordVersion,
@@ -96,6 +113,13 @@ impl RowCopyObservation {
     }
 }
 
+fn progress_error(error: crate::transaction::concurrency::ConcurrencyError) -> RetentionError {
+    RetentionError {
+        phase: RetentionPhase::Census,
+        effect: error.effect,
+        cause: RetentionCause::Concurrency(error),
+    }
+}
 fn visibility_error(error: super::super::visibility::VisibilityError) -> RetentionError {
     RetentionError {
         phase: RetentionPhase::Census,
@@ -116,58 +140,653 @@ fn release_refs(refs: CapturedRowRefs<'_, '_, '_, '_>) -> Result<()> {
 impl<'b, 'a, 's, 'c, 'p, 'd, 'm, 'w, W: WriterNamespace>
     ReadPort<'b, 'a, 's, 'c, 'p, 'd, 'm, 'w, W>
 {
-    /// Unsupported before any admission, lease or source read until C2.
+    /// Reserve original reader progress and the Full source budget before
+    /// touching the reference registry. The private loan remains caller-owned.
     pub(in crate::storage) fn row_operation<'u, 'r, 't, 'v, 'i>(
         &self,
-        _owner: &'u mut Owner<'c, 's>,
-        _view: &'r RowStatementView<'t, 'v, 'a, 'c, 's>,
-        _private: &'i mut [u8; 425_984],
+        owner: &'u mut Owner<'c, 's>,
+        view: &'r RowStatementView<'t, 'v, 'a, 'c, 's>,
+        private: &'i mut [u8; 425_984],
     ) -> Result<RowReadOperation<'u, 'r, 't, 'v, 'i, 'b, 'a, 's, 'c, 'p, 'd, 'm, 'w, W>> {
-        Err(unsupported())
+        self.storage.health().map_err(|e| {
+            fatal(
+                self.storage,
+                RetentionPhase::Prepare,
+                RetentionCause::Storage(e),
+            )
+        })?;
+        self.pool
+            .check_retention_entry_health()
+            .map_err(|e| frame(RetentionPhase::Prepare, e))?;
+        if !self
+            .pool
+            .uses_storage_origin(&self.storage.binding, self.storage.session_fence())
+        {
+            return Err(fatal(
+                self.storage,
+                RetentionPhase::Prepare,
+                RetentionCause::BindingMismatch,
+            ));
+        }
+        let snapshot = view.catalog_snapshot(self.isolation, self.visibility)?;
+        let visibility = self
+            .visibility
+            .ok_or_else(|| unchanged(RetentionPhase::Census, RetentionCause::WrongState))?;
+        if !snapshot
+            .confirms_origin(visibility)
+            .map_err(visibility_error)?
+        {
+            return Err(unchanged(
+                RetentionPhase::Census,
+                RetentionCause::BindingMismatch,
+            ));
+        }
+        let progress = owner
+            .try_read_operation(self.pool.bound_core())
+            .map_err(progress_error)?;
+        let mut source = match OperationSourceAdmission::catalog(
+            self.isolation,
+            &self.source_charges,
+            OperationClass::RowRead,
+        ) {
+            Ok(source) => source,
+            Err(error) => {
+                return merge(
+                    Err(error.into()),
+                    progress.finish_checked().map_err(progress_error),
+                );
+            }
+        };
+        let lease = (|| {
+            health(self.storage, self.pool)?;
+            self.pool
+                .check_retention_reader(owner)
+                .map_err(|e| frame(RetentionPhase::Census, e))?;
+            if !snapshot.confirms(visibility).map_err(visibility_error)? {
+                return Err(unchanged(
+                    RetentionPhase::Census,
+                    RetentionCause::WrongState,
+                ));
+            }
+            view.check_catalog_read()?;
+            visibility
+                .reserve_references(owner)
+                .map_err(visibility_error)
+        })();
+        let lease = match lease {
+            Ok(lease) => lease,
+            Err(error) => {
+                let returned = source.release_checked().map_err(RetentionError::from);
+                return merge(
+                    merge(Err(error), returned),
+                    progress.finish_checked().map_err(progress_error),
+                );
+            }
+        };
+        let lease_generation = lease.row_generation();
+        let (loader, copy) = private.split_at_mut(409_600);
+        Ok(RowReadOperation {
+            backend: ReadPort {
+                source_charges: self.source_charges,
+                storage: self.storage,
+                pool: self.pool,
+                history: self.history,
+                isolation: self.isolation,
+                visibility: self.visibility,
+            },
+            owner,
+            statement: view,
+            loader: loader.try_into().expect("fixed loader partition"),
+            copy: copy.try_into().expect("fixed copy partition"),
+            captured: None,
+            lease: Some(lease),
+            lease_generation,
+            capture_sequence: 0,
+            stopped: false,
+            schema_len: 0,
+            table: None,
+            progress,
+            source,
+        })
     }
 }
 
 impl<'u, 'r, 't, 'v, 'i, 'b, 'a, 's, 'c, 'p, 'd, 'm, 'w, W: WriterNamespace>
     RowReadOperation<'u, 'r, 't, 'v, 'i, 'b, 'a, 's, 'c, 'p, 'd, 'm, 'w, W>
 {
+    #[inline(never)]
     pub(in crate::storage) fn page<'g>(
         &'g mut self,
-        _table: &CheckedTable<'c, 's>,
-        _residency: &mut Plan4ResidencyCursor,
+        table: &CheckedTable<'c, 's>,
+        residency: &mut Plan4ResidencyCursor,
     ) -> Result<ReadStep<RowSearchPage<'g, 'b, 'a, 's, 'c, 'p, 'd>>> {
-        Err(unsupported())
+        self.check_table(table)?;
+        if let ReadStep::FlushRequired { target } = self.load_catalog(residency)? {
+            return Ok(ReadStep::FlushRequired { target });
+        }
+        self.capture_schema(table)?;
+        let leaf = match self.load_leaf(table, residency)? {
+            ReadStep::Ready(leaf) => leaf,
+            ReadStep::FlushRequired { target } => return Ok(ReadStep::FlushRequired { target }),
+        };
+        self.issue_page(table, leaf)
+    }
+    #[inline(never)]
+    fn check_table(&self, table: &CheckedTable<'c, 's>) -> Result<()> {
+        if self.stopped || self.captured.is_some() {
+            return Err(unchanged(
+                RetentionPhase::Census,
+                RetentionCause::WrongState,
+            ));
+        }
+        self.statement
+            .catalog_snapshot(self.backend.isolation, self.backend.visibility)?;
+        self.statement.check_catalog_read()?;
+        let bad = || {
+            fatal(
+                self.backend.storage,
+                RetentionPhase::Census,
+                RetentionCause::Invariant,
+            )
+        };
+        if !std::ptr::eq(table.core, self.backend.pool.bound_core())
+            || !std::ptr::eq(table.binding, &self.backend.storage.binding)
+            || !std::ptr::eq(table.fence, self.backend.storage.session_fence())
+        {
+            return Err(unchanged(
+                RetentionPhase::Census,
+                RetentionCause::BindingMismatch,
+            ));
+        }
+        let visibility = self.backend.visibility.ok_or_else(bad)?;
+        if !matches!(visibility.table_slot(table.table).map_err(visibility_error)?, TableSlot::Published(slot) if slot == table.slot)
+        {
+            return Err(bad());
+        }
+        Ok(())
+    }
+    #[inline(never)]
+    fn load_catalog(&mut self, residency: &mut Plan4ResidencyCursor) -> Result<ReadStep<()>> {
+        let bad = || {
+            fatal(
+                self.backend.storage,
+                RetentionPhase::Census,
+                RetentionCause::Invariant,
+            )
+        };
+        let catalog_anchor_header =
+            super::super::super::genesis::owned_header(&self.backend.storage.core.plan, 7)
+                .map_err(|_| bad())?;
+        let catalog_anchor = TargetRequest {
+            identity: catalog_anchor_header.identity,
+            kind: catalog_anchor_header.kind,
+            level: 0,
+        };
+        let catalog_header =
+            super::super::super::genesis::owned_header(&self.backend.storage.core.plan, 8)
+                .map_err(|_| bad())?;
+        let catalog = TargetRequest {
+            identity: catalog_header.identity,
+            kind: catalog_header.kind,
+            level: 0,
+        };
+        for (request, protected) in [(catalog_anchor, &[][..]), (catalog, &[catalog_anchor][..])] {
+            if let RetentionResidencyStep::FlushRequired { target, .. } = self
+                .backend
+                .load_lookup_target(self.owner, request, residency, protected, self.loader)?
+            {
+                self.stopped = true;
+                return Ok(ReadStep::FlushRequired { target });
+            }
+        }
+        Ok(ReadStep::Ready(()))
+    }
+    #[inline(never)]
+    fn capture_schema(&mut self, table: &CheckedTable<'c, 's>) -> Result<()> {
+        let bad = || {
+            fatal(
+                self.backend.storage,
+                RetentionPhase::Census,
+                RetentionCause::Invariant,
+            )
+        };
+        let guard = self.backend.read_catalog(self.owner)?;
+        let schema = (|| {
+            if guard.has_table_indexes(table.table.object)? {
+                return Err(unchanged(
+                    RetentionPhase::Census,
+                    RetentionCause::Unsupported,
+                ));
+            }
+            let record = guard.lookup(table.table.object)?.ok_or_else(bad)?;
+            let header = record.header();
+            if header.identity != table.table
+                || header.anchor != table.anchor.page
+                || header.retired
+                || !matches!(record.definition(), CatalogDefinitionView::Table(_))
+            {
+                return Err(bad());
+            }
+            let bytes = guard.value(table.table.object)?.ok_or_else(bad)?;
+            if bytes.len() > 8192 {
+                return Err(bad());
+            }
+            self.copy[..bytes.len()].copy_from_slice(bytes);
+            Ok(bytes.len())
+        })();
+        self.schema_len = merge(schema, guard.release_checked())?;
+        self.table = Some(table.table);
+        Ok(())
+    }
+    #[inline(never)]
+    fn load_leaf(
+        &mut self,
+        table: &CheckedTable<'c, 's>,
+        residency: &mut Plan4ResidencyCursor,
+    ) -> Result<ReadStep<TargetRequest>> {
+        let bad = || {
+            fatal(
+                self.backend.storage,
+                RetentionPhase::Census,
+                RetentionCause::Invariant,
+            )
+        };
+        let allocator = self
+            .backend
+            .pool
+            .target_request(0)
+            .map_err(|e| frame(RetentionPhase::Source, e))?;
+        let anchor_request = TargetRequest {
+            identity: table.anchor,
+            kind: PageKind::TreeAnchor,
+            level: 0,
+        };
+        if let Some(target) =
+            self.backend
+                .lookup_resident(self.owner, anchor_request, residency, self.loader)?
+        {
+            self.stopped = true;
+            return Ok(ReadStep::FlushRequired { target });
+        }
+        let anchor_guard = self
+            .backend
+            .pool
+            .reserve_target_set(self.owner, &[allocator, anchor_request])
+            .and_then(|set| set.try_read())
+            .map_err(|e| frame(RetentionPhase::Source, e))?;
+        let root = (|| {
+            super::super::read::membership(
+                self.backend.storage,
+                allocator,
+                anchor_guard
+                    .bytes(0)
+                    .map_err(|e| frame(RetentionPhase::Source, e))?,
+                anchor_request,
+            )?;
+            anchor::decode_anchor(
+                anchor_guard
+                    .bytes(1)
+                    .map_err(|e| frame(RetentionPhase::Source, e))?,
+                table.anchor,
+            )
+            .map(|a| a.root())
+            .map_err(|e| {
+                fatal(
+                    self.backend.storage,
+                    RetentionPhase::Source,
+                    RetentionCause::Page(e),
+                )
+            })
+        })();
+        let root = merge(
+            root,
+            anchor_guard
+                .release_checked()
+                .map_err(|e| frame(RetentionPhase::Source, e)),
+        )?;
+        if root.tree != TreeKind::Row || root.level != 0 || root.revision != 1 {
+            return Err(bad());
+        }
+        let leaf = TargetRequest {
+            identity: PageIdentity {
+                page: root.page,
+                ..table.anchor
+            },
+            kind: PageKind::RowLeaf,
+            level: 0,
+        };
+        match self.backend.load_lookup_target(
+            self.owner,
+            leaf,
+            residency,
+            &[anchor_request],
+            self.loader,
+        )? {
+            RetentionResidencyStep::FlushRequired { target, .. } => {
+                self.stopped = true;
+                return Ok(ReadStep::FlushRequired { target });
+            }
+            RetentionResidencyStep::Resident { .. } => {}
+        }
+        Ok(ReadStep::Ready(leaf))
+    }
+    #[inline(never)]
+    fn issue_page<'g>(
+        &'g mut self,
+        table: &CheckedTable<'c, 's>,
+        leaf: TargetRequest,
+    ) -> Result<ReadStep<RowSearchPage<'g, 'b, 'a, 's, 'c, 'p, 'd>>> {
+        let bad = || {
+            fatal(
+                self.backend.storage,
+                RetentionPhase::Census,
+                RetentionCause::Invariant,
+            )
+        };
+        let allocator = self
+            .backend
+            .pool
+            .target_request(0)
+            .map_err(|e| frame(RetentionPhase::Source, e))?;
+        let anchor_request = TargetRequest {
+            identity: table.anchor,
+            kind: PageKind::TreeAnchor,
+            level: 0,
+        };
+        self.statement.record_table_read(table.slot)?;
+        let source = self
+            .backend
+            .pool
+            .reserve_target_set(&mut *self.owner, &[allocator, anchor_request, leaf])
+            .and_then(|set| set.try_read())
+            .map_err(|e| frame(RetentionPhase::Source, e))?;
+        let checked = (|| {
+            for (at, request) in [(1, anchor_request), (2, leaf)] {
+                super::super::read::membership(
+                    self.backend.storage,
+                    allocator,
+                    source
+                        .bytes(0)
+                        .map_err(|e| frame(RetentionPhase::Source, e))?,
+                    request,
+                )?;
+                let observed = source
+                    .observe(at)
+                    .map_err(|e| frame(RetentionPhase::Source, e))?;
+                let envelope = crate::storage::page::decode_page(
+                    source
+                        .bytes(at)
+                        .map_err(|e| frame(RetentionPhase::Source, e))?,
+                    request.identity,
+                    request.kind,
+                )
+                .map_err(|e| {
+                    fatal(
+                        self.backend.storage,
+                        RetentionPhase::Source,
+                        RetentionCause::Page(e),
+                    )
+                })?;
+                if envelope.header().lsn != observed.frame.page_lsn {
+                    return Err(bad());
+                }
+            }
+            let current = anchor::decode_anchor(
+                source
+                    .bytes(1)
+                    .map_err(|e| frame(RetentionPhase::Source, e))?,
+                table.anchor,
+            )
+            .map_err(|e| {
+                fatal(
+                    self.backend.storage,
+                    RetentionPhase::Source,
+                    RetentionCause::Page(e),
+                )
+            })?;
+            if current.root().tree != TreeKind::Row
+                || current.root().page != leaf.identity.page
+                || current.root().level != 0
+                || current.root().revision != 1
+            {
+                return Err(bad());
+            }
+            current
+                .decode_root(
+                    source
+                        .bytes(2)
+                        .map_err(|e| frame(RetentionPhase::Source, e))?,
+                )
+                .map_err(|e| {
+                    fatal(
+                        self.backend.storage,
+                        RetentionPhase::Source,
+                        RetentionCause::Page(e),
+                    )
+                })?;
+            Ok(())
+        })();
+        if let Err(error) = checked {
+            return merge(
+                Err(error),
+                source
+                    .release_checked()
+                    .map_err(|e| frame(RetentionPhase::Source, e)),
+            );
+        }
+        Ok(ReadStep::Ready(RowSearchPage {
+            source,
+            lease: self.lease.as_mut().ok_or_else(bad)?,
+            captured: &mut self.captured,
+            copy: self.copy,
+            capture_sequence: &mut self.capture_sequence,
+            expectation: RecordExpectation {
+                namespace: self.backend.storage.profile().spec().namespace,
+                row: RowId::new(1).expect("nonzero"),
+            },
+            schema_len: self.schema_len,
+            table: table.table,
+        }))
     }
     pub(in crate::storage) fn status(
         &mut self,
-        _candidate: &RowCandidate,
-        _residency: &mut Plan4ResidencyCursor,
+        candidate: &RowCandidate,
+        residency: &mut Plan4ResidencyCursor,
     ) -> Result<ReadStep<TransactionState>> {
-        Err(unsupported())
+        use crate::storage::transaction_record::{TransactionStatusCell, VersionStamp};
+        self.check_candidate(candidate)?;
+        let bad = || {
+            fatal(
+                self.backend.storage,
+                RetentionPhase::Census,
+                RetentionCause::Invariant,
+            )
+        };
+        let VersionStamp::Transaction(reference) = candidate.version.stamp else {
+            return Err(bad());
+        };
+        if self
+            .captured
+            .as_ref()
+            .and_then(|r| r.transaction.as_ref())
+            .map(|p| p.reference())
+            != Some(reference)
+        {
+            return Err(bad());
+        }
+        let (request, location) = self
+            .backend
+            .catalog_status_location(self.owner, reference)?;
+        if let Some(target) =
+            self.backend
+                .lookup_resident(self.owner, request, residency, self.loader)?
+        {
+            self.stopped = true;
+            return Ok(ReadStep::FlushRequired { target });
+        }
+        let guard = self.backend.read(self.owner, &Plan4Target { request })?;
+        let result = (|| {
+            let page = crate::storage::status_home::decode_status_home_page(
+                guard.bytes()?,
+                request.identity,
+                self.backend.storage.profile().spec().namespace,
+            )
+            .map_err(|e| {
+                fatal(
+                    self.backend.storage,
+                    RetentionPhase::Census,
+                    RetentionCause::Page(e),
+                )
+            })?;
+            let home = page.lookup(reference, location).map_err(|e| {
+                fatal(
+                    self.backend.storage,
+                    RetentionPhase::Census,
+                    RetentionCause::Page(e),
+                )
+            })?;
+            let TransactionStatusCell::Occupied(status) = home.core() else {
+                return Err(bad());
+            };
+            if status.reference() != reference {
+                return Err(bad());
+            }
+            Ok(status.state())
+        })();
+        let state = merge(result, guard.release_checked())?;
+        self.statement.check_catalog_read()?;
+        Ok(ReadStep::Ready(state))
     }
     pub(in crate::storage) fn missing_before(
         &mut self,
-        _candidate: &RowCandidate,
-        _residency: &mut Plan4ResidencyCursor,
+        candidate: &RowCandidate,
+        residency: &mut Plan4ResidencyCursor,
     ) -> Result<ReadStep<MissingRowEvidence>> {
-        Err(unsupported())
+        use crate::storage::{
+            transaction_record::VersionStamp,
+            undo_record::{
+                self, UndoBeforeKind, UndoPayload, UndoRecordExpectation, UndoTargetKind,
+                UndoTargetView,
+            },
+        };
+        self.check_candidate(candidate)?;
+        let bad = || {
+            fatal(
+                self.backend.storage,
+                RetentionPhase::Census,
+                RetentionCause::Invariant,
+            )
+        };
+        let reference = candidate.version.undo.ok_or_else(bad)?;
+        if self
+            .captured
+            .as_ref()
+            .and_then(|r| r.undo.as_ref())
+            .map(|p| p.reference())
+            != Some(reference)
+        {
+            return Err(bad());
+        }
+        let table = self.table.ok_or_else(bad)?;
+        let request = self.backend.catalog_undo_location(self.owner, reference)?;
+        if let Some(target) =
+            self.backend
+                .lookup_resident(self.owner, request, residency, self.loader)?
+        {
+            self.stopped = true;
+            return Ok(ReadStep::FlushRequired { target });
+        }
+        let guard = self
+            .backend
+            .read_catalog_undo(self.owner, &Plan4Target { request })?;
+        let result = (|| {
+            let page =
+                crate::storage::page::decode_page(guard.bytes()?, request.identity, PageKind::Undo)
+                    .map_err(|e| {
+                        fatal(
+                            self.backend.storage,
+                            RetentionPhase::Census,
+                            RetentionCause::Page(e),
+                        )
+                    })?;
+            let cell = page.cell(usize::from(reference.slot())).ok_or_else(bad)?;
+            let expected = UndoRecordExpectation {
+                namespace: self.backend.storage.profile().spec().namespace,
+                reference,
+                target: UndoTargetView {
+                    kind: UndoTargetKind::Row,
+                    owner: table.object,
+                    generation: table.generation,
+                    entity: candidate.version.row.get(),
+                    arity: 0,
+                    key: &[],
+                },
+            };
+            let record = undo_record::decode_undo_record(cell, expected, &[])
+                .and_then(|view| view.live_before())
+                .map_err(|e| {
+                    fatal(
+                        self.backend.storage,
+                        RetentionPhase::Census,
+                        RetentionCause::Undo(e),
+                    )
+                })?;
+            if record.creator.id != candidate.version.logical.transaction()
+                || matches!(candidate.version.stamp,VersionStamp::Transaction(actor) if actor.id()!=record.creator.id || actor.generation()!=record.creator.status_generation)
+                || record.mutation_sequence != candidate.version.logical.mutation_sequence()
+                || record.sequence == 0
+                || record.before_kind != UndoBeforeKind::Missing
+                || record.before_stamp.is_some()
+                || record.before_logical.is_some()
+                || !matches!(record.payload, UndoPayload::None)
+            {
+                return Err(bad());
+            }
+            Ok(MissingRowEvidence { _private: () })
+        })();
+        merge(result, guard.release_checked()).map(ReadStep::Ready)
     }
-    /// The visible decision stays with B; this only copies the actual capture.
-    pub(in crate::storage) fn copy_candidate(
-        &mut self,
-        _candidate: &RowCandidate,
-        _output: &mut [u8],
-    ) -> Result<RowCopyObservation> {
-        Err(unsupported())
-    }
-    pub(in crate::storage) fn release_candidate(&mut self, candidate: RowCandidate) -> Result<()> {
-        if candidate.lease_generation != self.lease_generation
+    fn check_candidate(&self, candidate: &RowCandidate) -> Result<()> {
+        if self.stopped
+            || self.lease.as_ref().map(|l| l.row_identity()) != Some(candidate.lease_identity)
+            || candidate.lease_generation != self.lease_generation
             || candidate.capture_sequence != self.capture_sequence
+            || !self
+                .captured
+                .as_ref()
+                .is_some_and(|r| r.version == candidate.version && r.len == candidate.canonical_len)
         {
             return Err(unchanged(
                 RetentionPhase::Census,
                 RetentionCause::WrongState,
             ));
         }
+        self.statement.check_catalog_read()
+    }
+    /// The visible decision stays with B; this only copies the actual capture.
+    pub(in crate::storage) fn copy_candidate(
+        &mut self,
+        candidate: &RowCandidate,
+        output: &mut [u8],
+    ) -> Result<RowCopyObservation> {
+        self.check_candidate(candidate)?;
+        if output.len() < candidate.canonical_len {
+            return Err(unchanged(RetentionPhase::Census, RetentionCause::Capacity));
+        }
+        output[..candidate.canonical_len]
+            .copy_from_slice(&self.copy[8192..8192 + candidate.canonical_len]);
+        Ok(RowCopyObservation {
+            version: candidate.version,
+            len: candidate.canonical_len,
+        })
+    }
+    pub(in crate::storage) fn release_candidate(&mut self, candidate: RowCandidate) -> Result<()> {
+        // FlushRequired stops new source work but does not prevent cleanup.
+        let stopped = self.stopped;
+        self.stopped = false;
+        let check = self.check_candidate(&candidate);
+        self.stopped = stopped;
+        check?;
         self.captured.take().map_or(Ok(()), release_refs)
     }
     /// Checked cleanup in source order: captured refs, lease, then admission.
@@ -178,21 +797,123 @@ impl<'u, 'r, 't, 'v, 'i, 'b, 'a, 's, 'c, 'p, 'd, 'm, 'w, W: WriterNamespace>
             lease.release_checked().map_err(visibility_error)
         });
         let source = self.source.release_checked().map_err(RetentionError::from);
-        merge(merge(refs, lease), source)
+        let progress = self.progress.finish_checked().map_err(progress_error);
+        merge(merge(merge(refs, lease), source), progress)
     }
 }
 
 impl<'g, 'b, 'a, 's, 'c, 'p, 'd> RowSearchPage<'g, 'b, 'a, 's, 'c, 'p, 'd> {
     pub(in crate::storage) fn leaf(&self) -> Result<TreePageView<'_>> {
-        Err(unsupported())
+        let request = self
+            .source
+            .target_request(2)
+            .map_err(|e| frame(RetentionPhase::Source, e))?;
+        tree_page::decode_tree_page(
+            self.source
+                .bytes(2)
+                .map_err(|e| frame(RetentionPhase::Source, e))?,
+            TreeExpectation {
+                identity: request.identity,
+                kind: PageKind::RowLeaf,
+                level: 0,
+                arity: 0,
+            },
+        )
+        .map_err(|e| unchanged(RetentionPhase::Source, RetentionCause::Tree(e)))
     }
     /// Checks the slot chosen by B against the latched row before any pin.
-    pub(in crate::storage) fn capture(self, _at: usize) -> Result<RowCandidate> {
-        merge(Err(unsupported()), self.release_checked())
+    pub(in crate::storage) fn capture(self, at: usize) -> Result<RowCandidate> {
+        let result = (|| {
+            if self.captured.is_some() {
+                return Err(unchanged(
+                    RetentionPhase::Census,
+                    RetentionCause::WrongState,
+                ));
+            }
+            let sequence = self
+                .capture_sequence
+                .checked_add(1)
+                .ok_or_else(|| unchanged(RetentionPhase::Census, RetentionCause::Capacity))?;
+            let (schema, copy) = self.copy.split_at_mut(8192);
+            let record = catalog_record::decode_catalog_record(
+                &schema[..self.schema_len],
+                CatalogExpectation {
+                    namespace: self.expectation.namespace,
+                    object: self.table.object,
+                },
+            )
+            .map_err(|e| unchanged(RetentionPhase::Census, RetentionCause::Catalog(e)))?;
+            let CatalogDefinitionView::Table(schema) = record.definition() else {
+                return Err(unchanged(RetentionPhase::Census, RetentionCause::Invariant));
+            };
+            let (refs, record) = self.lease.capture_row(
+                &self.source,
+                at,
+                self.expectation.namespace,
+                crate::storage::row_record::RowSchemaInput::Catalog(schema),
+            )?;
+            let version = record.version();
+            let crate::storage::row_record::RowPayload::Inline(value) = record.payload() else {
+                unreachable!("capture validated Inline");
+            };
+            let len = value.as_bytes().len();
+            copy[..len].copy_from_slice(value.as_bytes());
+            *self.captured = Some(CapturedRowRefs {
+                transaction: refs.transaction,
+                undo: refs.undo,
+                version,
+                len,
+            });
+            *self.capture_sequence = sequence;
+            Ok(RowCandidate {
+                lease_identity: self.lease.row_identity(),
+                lease_generation: self.lease.row_generation(),
+                capture_sequence: sequence,
+                version,
+                canonical_len: len,
+            })
+        })();
+        merge(result, self.release_checked())
     }
     pub(in crate::storage) fn release_checked(self) -> Result<()> {
         self.source
             .release_checked()
             .map_err(|e| frame(RetentionPhase::Source, e))
+    }
+}
+
+#[cfg(test)]
+impl<W: WriterNamespace> ReadPort<'_, '_, '_, '_, '_, '_, '_, '_, W> {
+    /// Raw size observations, not an acceptance assertion or a replacement for
+    /// the phase census. Loader and operation necessarily coexist at LOAD.
+    pub(in crate::storage) fn row_test_source_observations(&self) -> [usize; 5] {
+        [
+            self.source_charges.observations()[1],
+            super::super::lookup_load::source_bytes::<W>(),
+            std::mem::size_of::<
+                RowReadOperation<'_, '_, '_, '_, '_, '_, '_, '_, '_, '_, '_, '_, '_, W>,
+            >(),
+            std::mem::size_of::<RowSearchPage<'_, '_, '_, '_, '_, '_, '_>>(),
+            std::mem::size_of::<RowCandidate>(),
+        ]
+    }
+}
+
+#[cfg(test)]
+impl RowCandidate {
+    pub(in crate::storage) fn test_duplicate(&self) -> Self {
+        Self {
+            lease_identity: self.lease_identity,
+            lease_generation: self.lease_generation,
+            capture_sequence: self.capture_sequence,
+            version: self.version,
+            canonical_len: self.canonical_len,
+        }
+    }
+}
+#[cfg(test)]
+impl<W: WriterNamespace> RowReadOperation<'_, '_, '_, '_, '_, '_, '_, '_, '_, '_, '_, '_, '_, W> {
+    pub(in crate::storage) fn test_set_sequence(&mut self, sequence: u64) {
+        self.capture_sequence = sequence;
     }
 }

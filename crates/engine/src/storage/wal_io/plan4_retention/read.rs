@@ -57,7 +57,7 @@ impl RetentionReadGuard<'_, '_, '_, '_, '_, '_> {
             .map_err(|e| frame(RetentionPhase::Census, e))
     }
 }
-fn membership<W: WriterNamespace>(
+pub(super) fn membership<W: WriterNamespace>(
     storage: &MutableStorageOwner<'_, '_, W>,
     allocator: TargetRequest,
     allocation_bytes: &[u8; PAGE_BYTES],
@@ -127,7 +127,7 @@ impl<'b, 'arena, 's, 'c, 'p, 'd, W: WriterNamespace>
         self.read_shaped(owner, target, UndoShape::InitialFree)
     }
     /// Catalog lookup reads the referenced Undo root of a live CREATE.
-    fn read_catalog_undo<'a>(
+    pub(super) fn read_catalog_undo<'a>(
         &self,
         owner: &'a mut Owner<'c, 's>,
         target: &Plan4Target,
