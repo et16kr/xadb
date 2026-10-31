@@ -176,10 +176,10 @@ def k06(a):  # the Live U's incoming count 1 (the graph adds 2)
     return change
 
 
-def k08(a):  # the row's Transaction stamp is the actor's next generation
+def k08(a):  # the row's Transaction stamp is another transaction (TxnId local +1)
     def change(h, ordinal, canonical, stash):
         actor = h.tx['actor']
-        other = actor[:40] + a.u64(a.get(actor, 40) + 1)
+        other = actor[:32] + a.u64(a.get(actor, 32) + 1) + actor[40:]
 
         def record(original):
             def stamped(row, canon, who, mutation, undo):
@@ -198,15 +198,26 @@ def k08(a):  # the row's Transaction stamp is the actor's next generation
     return change
 
 
-def k10(a):  # the Forward's InventoryDelta (Reserved item consumed) left out
+def k10(a):  # the Forward leaves the Reserved inventory item unconsumed
+    """No InventoryDelta, and the transaction descriptor after keeps the
+    Reserved inventory (change LSN, one item) and charges the 208 B shorter
+    frame, so the frame is consistent except that the Forward does not
+    consume its Reserved item."""
     def change(h, ordinal, canonical, stash):
         emit = h.emit
+        reserved = h.tx['inventory']
 
         def without(op, lsn, roles, before, txn=None, owners=None, core=None, aux=(),
                     items=0, counts=0, edges=0):
             frame = emit(op, lsn, roles, before, txn, owners, core, aux, items, counts, edges)
-            stash['frame'] = emit(op, lsn, roles, before, txn, owners, core,
-                                  lambda at: aux(at)[:-1], 0, counts, edges)
+            kept, consumed = h.tx['inventory'], h.tx['consumed']
+            h.tx['inventory'], h.tx['consumed'] = reserved, consumed - 208
+            descriptor = h.tx_descriptor()
+            h.tx['inventory'], h.tx['consumed'] = kept, consumed
+            befores, afters = owners
+            stash['frame'] = emit(op, lsn, roles, before, txn, (befores, [descriptor, afters[1]]),
+                                  core, lambda at: aux(at)[:-1], 0, counts, edges)
+            assert len(stash['frame']) == len(frame) - 208
             return frame
         h.emit = without
         return [lambda: setattr(h, 'emit', emit)]
@@ -259,11 +270,11 @@ KNOWN_BAD = [
     ('K04', 'planned mutation consumed again (descriptor last mutation 2)', k04),
     ('K05', 'predecessor H claimed, the actual predecessor is none', k05),
     ('K06', 'U incoming 1 (the graph gives 2)', k06),
-    ('K08', 'row Transaction stamp is not the actor', k08),
+    ('K08', 'row Transaction stamp is another transaction (TxnId local +1)', k08),
     ('K09', 'leaf redo row bytes differ from the native after cell', 'k09'),
-    ('K10', 'Reserved inventory item not consumed (no InventoryDelta)', k10),
+    ('K10', 'Reserved inventory item left unconsumed (no InventoryDelta, descriptor keeps it)', k10),
     ('K11', 'full-abort CLR WAL debt decremented by one', k11),
-    ('K12', 'valid frame resubmitted as a scope2 group', 'k12'),
+    ('K12', 'the valid Row frame declared as a scope2 group (scope field only)', 'k12'),
 ]
 NOT_RUN = {'K07': 'H before count 0 with a net-0 move needs an actual predecessor H '
                   '(a second root of the same actor); this one-row history has none'}
@@ -351,7 +362,14 @@ def main():
                       for name, data in sorted(variant.items()) if data != valid[name]},
         }
     cancel = json.loads(load_json(*CANCEL))
+    pins = {FORWARD[0]: FORWARD[1], f.N1[0]: f.N1[1], CANCEL[0]: CANCEL[1],
+            **{'dev3-module-c3/row-write/live/' + name: digest for name, digest in f.LIVE.items()}}
     expected = {
+        'schema': 'xadb-module-row-v1',
+        'source_kind': 'C+B',
+        'provenance': {'author': 'dev3-module-c2/row-read/author.py (run as python3 -I author.py)',
+                       'pinned_inputs': dict(sorted(pins.items())),
+                       'no_xadb_code': 'no XADB encoder, decoder, A producer or B reader is run'},
         'case': 'MCB05-L01',
         'row': a.get(h.bank[ordinal], 320),
         'value': f.VALUE,

@@ -5,8 +5,11 @@
 with every test module that links B. `--side b` is C+B: the same for A.
 Each removal is a physical delete of a declared path or a declared one-line
 or one-block registration patch (contract `#row-single-source-s8`); nothing
-else in the committed tree changes. The export is then checked for any
-remaining path to the removed module, and its inventory is written.
+else in the committed tree changes. The export's Rust sources under crates/
+are then checked for any remaining path to the removed module or its
+fixtures (a hit fails); other text files that still name it (never compiled
+into the crates: compile-fail fixtures, fixture authors' pins, documents) are
+listed in the inventory. The inventory is then written.
 
 Only builds the export directory and its inventory. Compiling and running
 selectors are separate steps over the export.
@@ -138,17 +141,33 @@ def export(commit, out, side):
         patches.append(dict(file=rel, removed=found[0]))
         (out / census).unlink()
         removed.append(census)
-    # No remaining Rust path to the removed module.
+    # No remaining Rust path to the removed module or its fixtures (fails).
     left = []
     for path in sorted((out / 'crates').rglob('*.rs')):
         for number, content in enumerate(path.read_text().splitlines(), 1):
             if spec['forbidden'].search(content) and not content.lstrip().startswith('//'):
                 left.append(f'{path.relative_to(out)}:{number}: {content.strip()}')
+    # Every other text file that still names it: never compiled into the
+    # export's crates (compile-fail fixtures, fixture authors' pins, docs).
+    # Reported, not failed.
+    other = []
+    for path in sorted(p for p in out.rglob('*') if p.is_file()):
+        rel = path.relative_to(out)
+        if rel.parts[0] == 'crates' and path.suffix == '.rs':
+            continue
+        try:
+            text = path.read_text()
+        except (UnicodeDecodeError, ValueError):
+            continue
+        hits = sum(1 for line in text.splitlines() if spec['forbidden'].search(line))
+        if hits:
+            other.append(f'{rel}: {hits}')
     files = {str(p.relative_to(out)): sha(p.read_bytes())
              for p in sorted(out.rglob('*')) if p.is_file()}
     manifest = ''.join(f'{digest}  {name}\n' for name, digest in files.items())
     inventory = dict(schema='XADB_S8_SINGLE_SOURCE_V1', side=side, commit=full,
                      removed=removed, patches=patches, remaining_references=left,
+                     other_text_references=other,
                      files=len(files), source_manifest_sha256=sha(manifest.encode()))
     return inventory, manifest
 
@@ -165,7 +184,8 @@ def main():
     args.record.mkdir(parents=True, exist_ok=True)
     (args.record / 'source-files.sha256').write_text(manifest)
     (args.record / 'inventory.json').write_text(json.dumps(inventory, indent=1) + '\n')
-    print(json.dumps({k: v for k, v in inventory.items() if k != 'removed'}, indent=1))
+    print(json.dumps({k: (v if k != 'other_text_references' else len(v))
+                      for k, v in inventory.items() if k != 'removed'}, indent=1))
     if inventory['remaining_references']:
         raise SystemExit('remaining references to the removed module')
 

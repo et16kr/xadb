@@ -404,7 +404,8 @@ fn wal(state: &State) -> Vec<u8> {
 /// MCB05-L01: C Begin and RowReserve, then the literal Forward through C's
 /// prepare and apply. The WAL gains exactly the S2 RowReserve literal and
 /// the author's Forward frame (LSN 15, 16); the slot observes a Forward of
-/// RowId 1. Before the Commit, B reads the row on the writer's own
+/// RowId 1, and the five pages C installed are the author's after images.
+/// Before the Commit, B reads the row on the writer's own
 /// statement (own Active write) and not on a foreign Serializable statement
 /// taken before the write. C's Commit returns q 2. After it, the foreign
 /// statement still reads nothing (its snapshot q 1) and its transaction
@@ -462,6 +463,15 @@ fn mcb05_l01_literal_forward_is_read_by_b_after_c_commit() {
                     let applied = done!(prepared.apply());
                     let (observation, _) = applied.into_parts();
                     assert_eq!(observation.operation(), RowOperation::Forward);
+                    // The five pages C installed are the author's after images.
+                    for (number, bytes, ..) in t_frames(reader.catalog_test_pool()) {
+                        if let Some((role, _, file)) =
+                            AFTER.iter().find(|(_, page, _)| *page == number)
+                        {
+                            let (_, image) = literal.after.iter().find(|(r, _)| r == role).unwrap();
+                            assert_eq!(&bytes[..], &image[..], "{file}");
+                        }
+                    }
                     assert_eq!((observation.row(), observation.undo()), (row_id, undo_ref));
                     let gained = wal(state)[from..].to_vec();
                     let (reserve, forward) = gained.split_at(RESERVE_FRAME.0);
@@ -687,12 +697,12 @@ fn mcb05_k06_undo_incoming_one_is_before_then_cancel() {
     );
 }
 
-/// MCB05-K08: row Transaction stamp is not the actor.
+/// MCB05-K08: row Transaction stamp is another transaction (TxnId local +1).
 #[test]
 fn mcb05_k08_row_stamp_not_the_actor_is_before_then_cancel() {
     known_bad(
         "K08",
-        "8d613595e008bb96edc00c6a1af93f523d2e87a5bd8b8381addf4476cd65b30c",
+        "704a564662d58e8850a174a2bfe4462c637e67f127b8bcac5891a2e5ec80d4c8",
     );
 }
 
@@ -705,12 +715,13 @@ fn mcb05_k09_redo_row_bytes_differ_from_native_is_before_then_cancel() {
     );
 }
 
-/// MCB05-K10: Reserved inventory item not consumed (no InventoryDelta).
+/// MCB05-K10: Reserved inventory item left unconsumed (no InventoryDelta,
+/// descriptor keeps it).
 #[test]
 fn mcb05_k10_reserved_inventory_not_consumed_is_before_then_cancel() {
     known_bad(
         "K10",
-        "9092e06a334ff8eae6d9a1c8d27e01bc639e10a94a8637fd94a11b315ebbb2eb",
+        "5f26f7e86b54c98c67161b59596449d45fd072ef6243ca396f8dd16935973ef4",
     );
 }
 
@@ -723,11 +734,12 @@ fn mcb05_k11_full_abort_debt_decremented_is_before_then_cancel() {
     );
 }
 
-/// MCB05-K12: valid frame resubmitted as a scope2 group.
+/// MCB05-K12: the valid Row frame declared as a scope2 group (scope field
+/// only).
 #[test]
 fn mcb05_k12_scope2_group_is_before_then_cancel() {
     known_bad(
         "K12",
-        "5c2699f29446fe500acdf0ad92d4d6e34921d3ceb5563fcdb5dc7f5f9504c98d",
+        "3f43e361436e5133b1bcebfb86738455be3d35da2e2224fa08fdb79d889d9d8b",
     );
 }

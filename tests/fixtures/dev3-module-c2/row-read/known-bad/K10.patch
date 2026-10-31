@@ -1,4 +1,4 @@
 XADB-S8-KNOWN-BAD-V1 K10
-# Reserved inventory item not consumed (no InventoryDelta)
-file forward-frame.bin 91289 4b51169b6c11207c55749fbc88db20ca2f8f54626ed04f5b618fc37060cba82d whole K10-forward-frame.bin
+# Reserved inventory item left unconsumed (no InventoryDelta, descriptor keeps it)
+file forward-frame.bin 91289 5e95bdc2349c415ea443d808eecb4715e57c33a7ec61b4c000d1f0b3554d2fe0 whole K10-forward-frame.bin
 end
