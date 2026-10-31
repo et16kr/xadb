@@ -23,6 +23,8 @@ use super::*;
 
 #[path = "row/read.rs"]
 mod read;
+#[path = "row/recovery.rs"]
+mod recovery;
 #[path = "row/rollback.rs"]
 mod rollback;
 #[path = "row/write.rs"]
@@ -31,6 +33,9 @@ mod write;
 pub(crate) use read::{
     MissingRowEvidence, RowCandidate, RowCopyObservation, RowReadOperation, RowSearchPage,
 };
+pub(crate) use recovery::{PreparedRecoveredClr, RecoveredClr, RecoveredClrStep};
+#[cfg(test)]
+pub(in crate::storage) use recovery::{recovered_clr_bytes, recovered_row_census};
 pub(crate) use rollback::{
     PreparedRollbackTask, RollbackScope, RollbackStep, RowRollback, RowRollbackDone,
     RowRollbackTask,

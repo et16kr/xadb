@@ -3,7 +3,10 @@
 //! migration. Row producer data types carry observations and untrusted
 //! candidates; their actual source/reservation/install adapters are pending.
 
-pub(crate) use super::super::plan4_recovery::Plan4Recovered;
+pub(crate) use super::super::plan4_recovery::{
+    Plan4Recovered, Plan4RecoveryError, Plan4RecoveryProgress, PreparedRecoveryRow, RecoveryAction,
+    RecoveryOwnedError, RecoveryRowTask,
+};
 use super::{Plan4Page, Plan4Pages, Plan4ResidencyCursor, Plan4Target};
 use crate::storage::session_fence::SessionFence;
 use crate::{
@@ -115,6 +118,10 @@ pub(crate) use row::{
     RowMutationObservation, RowOwnedError, RowPreflightStep, RowReadOperation, RowRollback,
     RowRollbackDone, RowRollbackTask, RowSearchPage, row_write_charge,
 };
+#[allow(unused_imports)]
+pub(in crate::storage) use row::{PreparedRecoveredClr, RecoveredClr, RecoveredClrStep};
+#[cfg(test)]
+pub(in crate::storage) use row::{recovered_clr_bytes, recovered_row_census};
 
 #[allow(unused_imports)]
 pub(crate) use transaction::catalog::CatalogCommit;

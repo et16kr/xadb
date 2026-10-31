@@ -104,7 +104,7 @@ fn recovery_closure() {
                 }
                 assert!(runtime.session_fence().is_fenced());
                 assert_eq!(images(&state), before);
-                assert!(!closed.ready);
+                assert!(!closed.progress.ready);
                 assert!(closed.into_live().is_err());
             });
             assert_closed(&state);
