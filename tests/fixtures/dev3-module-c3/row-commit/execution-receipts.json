@@ -1,0 +1,927 @@
+{
+  "baseline": "6ec2d3432344f2353e319c7a0eec1955d5a3420a",
+  "branch": "codex/s3-row-commit",
+  "design_commit": "bf0b6a2681a6d98c7252dc022212f550b5c2a9d2",
+  "implementation_commit": "021959c7",
+  "counts": {
+    "new_memory_function_selectors": 18,
+    "new_census_selectors": 1,
+    "changed_existing_selectors": 6,
+    "native_processes": 2
+  },
+  "interpretation": "Each PASS belongs only to its recorded source and executed scope. Earlier failures and NOT_RUN selectors are preserved. No whole workspace or lower regression wrapper ran. Native restart proves the current unsupported Row gate, not READY.",
+  "runs": [
+    {
+      "run": "v1",
+      "source": "ba92fc1cc4a3da6531925f4839b890eaf6d93d64541ce6432f4754ef23399682",
+      "elf": "f7beae33aa28575893e47b524ac8368c8e24cae320e3f397d837ac92efa2cfaa",
+      "input": "f46afda68e47c0ad2397097cd8ab9dcd408f1bc0937b01e15e23da6ef44bb596",
+      "base": "bf0b6a2681a6d98c7252dc022212f550b5c2a9d2",
+      "plan_sha256": "cb1c72c8c7de6c1acb1d8feac080d11263aeacb22b49d785973397b59aaa418e",
+      "source_manifest_sha256": "ba92fc1cc4a3da6531925f4839b890eaf6d93d64541ce6432f4754ef23399682",
+      "results": [
+        {
+          "test": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::create_pair::catalog_commit::row_census::s3_c01_row_commit_windows_and_actual_a_caller_fit_fixed_charges",
+          "exit": 101,
+          "seconds": 0.007890509999924689,
+          "log": "00-s3_c01_row_commit_windows_and_actual_a_caller_fit_fixed_charges.log",
+          "status": "FAIL",
+          "log_sha256": "276ea9701881421800d278dc9c82906e426486bbac6faeae26b0bfc498200415"
+        }
+      ],
+      "not_run": [
+        "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_commit::s3_r01_serializable_insert_commit_matches_independent_frame",
+        "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_commit::s3_r01_read_committed_insert_commit_matches_independent_frame"
+      ],
+      "artifact_directory": "artifacts/module-s3-20261031/v1"
+    },
+    {
+      "run": "v2",
+      "source": "a756cc7d3eba7bd01781f4cf48e83ab8a099ed03434e4c8ba4c5ee4b925886c0",
+      "elf": "380035bf0145f79b4c9660ffa1ff535fab8086f0e2856244d973263f5c3da14a",
+      "input": "f46afda68e47c0ad2397097cd8ab9dcd408f1bc0937b01e15e23da6ef44bb596",
+      "base": "bf0b6a2681a6d98c7252dc022212f550b5c2a9d2",
+      "plan_sha256": "1c6e17f3086d01cedac611cc51248208713cff5e0d01683db8188540ade05881",
+      "source_manifest_sha256": "a756cc7d3eba7bd01781f4cf48e83ab8a099ed03434e4c8ba4c5ee4b925886c0",
+      "results": [
+        {
+          "test": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::create_pair::catalog_commit::row_census::s3_c01_row_commit_windows_and_actual_a_caller_fit_fixed_charges",
+          "exit": 101,
+          "seconds": 0.007862927000132913,
+          "log": "00-s3_c01_row_commit_windows_and_actual_a_caller_fit_fixed_charges.log",
+          "status": "FAIL",
+          "log_sha256": "cfad514a9cfa223fc1b156e427452a06bf6f7a5fb61557d8116df9201fd097b8"
+        }
+      ],
+      "not_run": [
+        "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_commit::s3_r01_serializable_insert_commit_matches_independent_frame",
+        "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_commit::s3_r01_read_committed_insert_commit_matches_independent_frame"
+      ],
+      "artifact_directory": "artifacts/module-s3-20261031/v2"
+    },
+    {
+      "run": "v3",
+      "source": "fadabc5fbc34944ce971bc1caeae197589978be1265826809f0f0999927e53bd",
+      "elf": "01cf5991f578c615c915e421cf84474f2949d92b36fa383c18645eb1f45b5f07",
+      "input": "f46afda68e47c0ad2397097cd8ab9dcd408f1bc0937b01e15e23da6ef44bb596",
+      "base": "bf0b6a2681a6d98c7252dc022212f550b5c2a9d2",
+      "plan_sha256": "87bd4b7151c70a6f5860d2c199225489688635b51e9e014facd05f23f283f6e3",
+      "source_manifest_sha256": "fadabc5fbc34944ce971bc1caeae197589978be1265826809f0f0999927e53bd",
+      "results": [
+        {
+          "test": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::create_pair::catalog_commit::row_census::s3_c01_row_commit_windows_and_actual_a_caller_fit_fixed_charges",
+          "exit": 101,
+          "seconds": 0.007979619999787246,
+          "log": "00-s3_c01_row_commit_windows_and_actual_a_caller_fit_fixed_charges.log",
+          "status": "FAIL",
+          "log_sha256": "d1846a91b675ac7359b62c66bcd78decac199e877715f0e53c297b7bfb16705d"
+        }
+      ],
+      "not_run": [
+        "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_commit::s3_r01_serializable_insert_commit_matches_independent_frame",
+        "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_commit::s3_r01_read_committed_insert_commit_matches_independent_frame"
+      ],
+      "artifact_directory": "artifacts/module-s3-20261031/v3"
+    },
+    {
+      "run": "v4",
+      "source": "1f50a8e5d3135b151591ef9c300f6b59bb53ab0a5d285f32744ccb616e59b5ad",
+      "elf": "6474ef736544f0d65981f96548e83d3a30fbdfdb97b2ab5a67b7d0df91df3950",
+      "input": "f46afda68e47c0ad2397097cd8ab9dcd408f1bc0937b01e15e23da6ef44bb596",
+      "base": "bf0b6a2681a6d98c7252dc022212f550b5c2a9d2",
+      "plan_sha256": "4e474a041d3a2ca37b5657cd46a790bfd7ce9fe0edaba60fa3245af750a5b957",
+      "source_manifest_sha256": "1f50a8e5d3135b151591ef9c300f6b59bb53ab0a5d285f32744ccb616e59b5ad",
+      "results": [
+        {
+          "test": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::create_pair::catalog_commit::row_census::s3_c01_row_commit_windows_and_actual_a_caller_fit_fixed_charges",
+          "exit": 101,
+          "seconds": 0.007999540000128036,
+          "log": "00-s3_c01_row_commit_windows_and_actual_a_caller_fit_fixed_charges.log",
+          "status": "FAIL",
+          "log_sha256": "eee0922cc1577f002234fd4f25c7e9f0239f6ea78559c3dcdb920ebb170dc34a"
+        }
+      ],
+      "not_run": [
+        "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_commit::s3_r01_serializable_insert_commit_matches_independent_frame",
+        "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_commit::s3_r01_read_committed_insert_commit_matches_independent_frame"
+      ],
+      "artifact_directory": "artifacts/module-s3-20261031/v4"
+    },
+    {
+      "run": "v5",
+      "source": "b7d4399ff6f4f8260f09869b9b53b8d92986bc0587c8d0bef63df519c8823141",
+      "elf": "b20c61e2f84c9d6a1d5f903a403b5f65c8f655b2e2f395758c0f35d54bb44ce3",
+      "input": "f46afda68e47c0ad2397097cd8ab9dcd408f1bc0937b01e15e23da6ef44bb596",
+      "base": "bf0b6a2681a6d98c7252dc022212f550b5c2a9d2",
+      "plan_sha256": "1c5fbd91cbaafec62fdbee4cb06f6f5e28d050df7b8763c568532bb437385be0",
+      "source_manifest_sha256": "b7d4399ff6f4f8260f09869b9b53b8d92986bc0587c8d0bef63df519c8823141",
+      "results": [
+        {
+          "test": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::create_pair::catalog_commit::row_census::s3_c01_row_commit_windows_and_actual_a_caller_fit_fixed_charges",
+          "exit": 101,
+          "seconds": 0.016500718999850505,
+          "log": "00-s3_c01_row_commit_windows_and_actual_a_caller_fit_fixed_charges.log",
+          "status": "FAIL",
+          "log_sha256": "e692164789a37ccb130eb4c520d134684537bb1c413a3273d1c85a2e35480c6c"
+        }
+      ],
+      "not_run": [
+        "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_commit::s3_r01_serializable_insert_commit_matches_independent_frame",
+        "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_commit::s3_r01_read_committed_insert_commit_matches_independent_frame"
+      ],
+      "artifact_directory": "artifacts/module-s3-20261031/v5"
+    },
+    {
+      "run": "v6",
+      "source": "e8a2a0d54c55c5c469ab6a3c5e8fbd3743f9a858654558fb91dae6d184863ab9",
+      "elf": "77e6917393fbcbcf6c7a4431d4fc196a82a15f48e190a3b126b017882f2d681b",
+      "input": "f46afda68e47c0ad2397097cd8ab9dcd408f1bc0937b01e15e23da6ef44bb596",
+      "base": "bf0b6a2681a6d98c7252dc022212f550b5c2a9d2",
+      "plan_sha256": "0eedc1aca9e1f174fda88158b4bebe4fee063a3c80532417da3645456265a35b",
+      "source_manifest_sha256": "e8a2a0d54c55c5c469ab6a3c5e8fbd3743f9a858654558fb91dae6d184863ab9",
+      "results": [
+        {
+          "test": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::create_pair::catalog_commit::row_census::s3_c01_row_commit_windows_and_actual_a_caller_fit_fixed_charges",
+          "exit": 101,
+          "seconds": 0.008049997000398434,
+          "log": "00-s3_c01_row_commit_windows_and_actual_a_caller_fit_fixed_charges.log",
+          "status": "FAIL",
+          "log_sha256": "6e72380968a0e6ae983c173e347a907bb46872becb6f87899df15ae2cd237e32"
+        }
+      ],
+      "not_run": [
+        "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_commit::s3_r01_serializable_insert_commit_matches_independent_frame",
+        "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_commit::s3_r01_read_committed_insert_commit_matches_independent_frame"
+      ],
+      "artifact_directory": "artifacts/module-s3-20261031/v6"
+    },
+    {
+      "run": "behavior1",
+      "source": "e8a2a0d54c55c5c469ab6a3c5e8fbd3743f9a858654558fb91dae6d184863ab9",
+      "elf": "77e6917393fbcbcf6c7a4431d4fc196a82a15f48e190a3b126b017882f2d681b",
+      "input": "f46afda68e47c0ad2397097cd8ab9dcd408f1bc0937b01e15e23da6ef44bb596",
+      "base": "bf0b6a2681a6d98c7252dc022212f550b5c2a9d2",
+      "plan_sha256": "9111c61ce3e92507847d683bdbd81004a0b1f1a81ac1a517cde946851d07482a",
+      "source_manifest_sha256": "e8a2a0d54c55c5c469ab6a3c5e8fbd3743f9a858654558fb91dae6d184863ab9",
+      "results": [
+        {
+          "test": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_commit::s3_r01_serializable_insert_commit_matches_independent_frame",
+          "exit": 0,
+          "seconds": 7.481927267000174,
+          "log": "00-s3_r01_serializable_insert_commit_matches_independent_frame.log",
+          "status": "PASS",
+          "log_sha256": "4bd23fe6e0fb5d0594103aa5a280a1f97412873f48d7003fe2f08be8a10252fd"
+        },
+        {
+          "test": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_commit::s3_r01_read_committed_insert_commit_matches_independent_frame",
+          "exit": 0,
+          "seconds": 7.5319986019999305,
+          "log": "01-s3_r01_read_committed_insert_commit_matches_independent_frame.log",
+          "status": "PASS",
+          "log_sha256": "bbb8093e3a79ad9d4616f53706bb19bad2707d9c342ceb438bcfe02c9b257d04"
+        },
+        {
+          "test": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_commit::s3_r02_empty_cancel_and_duplicate_table_roots",
+          "exit": 0,
+          "seconds": 23.374326503000248,
+          "log": "02-s3_r02_empty_cancel_and_duplicate_table_roots.log",
+          "status": "PASS",
+          "log_sha256": "ddeb8a5b5d3e9d2a7d364703dbce52064cce0b7085d56fddea1887490adb1ef0"
+        },
+        {
+          "test": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_commit::s3_r03_scope_foreign_capacity_reserved_and_aborting_refusals",
+          "exit": 0,
+          "seconds": 20.415608018999592,
+          "log": "03-s3_r03_scope_foreign_capacity_reserved_and_aborting_refusals.log",
+          "status": "PASS",
+          "log_sha256": "b47426e2d78d90893b6d90d6967bbd0d467f4049ea6fa6032114747ef6deb052"
+        },
+        {
+          "test": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_commit::s3_r06_partial_write_fences_without_ack",
+          "exit": 0,
+          "seconds": 4.226200560000052,
+          "log": "04-s3_r06_partial_write_fences_without_ack.log",
+          "status": "PASS",
+          "log_sha256": "d568ef714172f9e78a9538e1deef8433d685a1228341fdf24df6c4928bbc31bc"
+        },
+        {
+          "test": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_commit::s3_r06_sync_after_error_fences_without_ack",
+          "exit": 101,
+          "seconds": 4.224948788999882,
+          "log": "05-s3_r06_sync_after_error_fences_without_ack.log",
+          "status": "FAIL",
+          "log_sha256": "2f672e20db9a0515214f649ad9020bea0e098379335f48c4bb9e286b6e5f6183"
+        }
+      ],
+      "not_run": [],
+      "artifact_directory": "artifacts/module-s3-20261031/behavior1"
+    },
+    {
+      "run": "v7",
+      "source": "d76b01909be8a3221cfdc4f5beb7c06a527e0846b9dd6ea145bcbc95614dea16",
+      "elf": "d205fd38f765192d3fdd8e6f4f9575dbd07d21a01e43d663d0e6a713557e2d10",
+      "input": "f46afda68e47c0ad2397097cd8ab9dcd408f1bc0937b01e15e23da6ef44bb596",
+      "base": "bf0b6a2681a6d98c7252dc022212f550b5c2a9d2",
+      "plan_sha256": "f7a60246281fe6cb30df90a40740196c1ebfcfd0660310d94704a7c16584ebcf",
+      "source_manifest_sha256": "d76b01909be8a3221cfdc4f5beb7c06a527e0846b9dd6ea145bcbc95614dea16",
+      "results": [
+        {
+          "test": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::create_pair::catalog_commit::row_census::s3_c01_row_commit_windows_and_actual_a_caller_fit_fixed_charges",
+          "exit": 0,
+          "seconds": 0.007974103999913495,
+          "log": "00-s3_c01_row_commit_windows_and_actual_a_caller_fit_fixed_charges.log",
+          "status": "PASS",
+          "log_sha256": "e29df73e693d7a3e45cef80254bc4f225ac2f24a162e6403ef1539cb6094b996"
+        },
+        {
+          "test": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_commit::s3_r06_sync_after_error_fences_without_ack",
+          "exit": 0,
+          "seconds": 4.327779086999726,
+          "log": "01-s3_r06_sync_after_error_fences_without_ack.log",
+          "status": "PASS",
+          "log_sha256": "e795385f8297de5ce1e2c55a727c8d139a2cd6e5935825fa15cfd897772173bb"
+        },
+        {
+          "test": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_commit::s3_r04_serializable_same_table_requires_rollback",
+          "exit": 101,
+          "seconds": 5.332047107000108,
+          "log": "02-s3_r04_serializable_same_table_requires_rollback.log",
+          "status": "FAIL",
+          "log_sha256": "872fcd531db47429c64f38462fe1de1ad7e246ae6a45958e633790646f3507e4"
+        }
+      ],
+      "not_run": [
+        "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_commit::s3_r04_serializable_other_table_commits",
+        "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_commit::s3_r04_read_committed_same_table_commits",
+        "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_commit::s3_r02_cancel_statement_can_empty_abort",
+        "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_commit::s3_r03_active_statement_is_before_busy",
+        "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_commit::s3_r05_commit_replays_divergent_forward_before_stage",
+        "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_commit::s3_r06_stale_preparation_returns_same_capsule_then_retry",
+        "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_commit::s3_r06_partial_install_is_fatal",
+        "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_commit::s3_r06_before_publication_is_fatal",
+        "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_commit::s3_r06_cleanup_failure_is_fatal",
+        "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_commit::s3_r07_pending_full_read_drain_flusher_and_old_q",
+        "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::drained::drained_handoff_has_original_pins_and_no_content_guards",
+        "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::drained::drained_handoff_fence_abandons_before_install",
+        "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::drained::drained_normal_unfinished_drop_fences_before_pin_return",
+        "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::commit_failures::catalog_drained_before_resume_unwind",
+        "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::commit_concurrency::catalog_mt07_drain_content_guard_fence",
+        "storage::row::insert::driver::tests::mca00_d11_commit_and_full_abort_close_the_transaction"
+      ],
+      "artifact_directory": "artifacts/module-s3-20261031/v7"
+    },
+    {
+      "run": "v8",
+      "source": "dd0790a7dec3a3745fb32ab04b73d50213b891a8a7e7e781405a3c171d24bd1d",
+      "elf": "384e493ea532260568d395b9a728aa9ea28c432d809260fcbc1c5175d0af4d27",
+      "input": "f46afda68e47c0ad2397097cd8ab9dcd408f1bc0937b01e15e23da6ef44bb596",
+      "base": "bf0b6a2681a6d98c7252dc022212f550b5c2a9d2",
+      "plan_sha256": "de4a019ff8d65e18b995a0033bd0e6a05d34ef0e39dcdae33df672c66c6ca5c1",
+      "source_manifest_sha256": "dd0790a7dec3a3745fb32ab04b73d50213b891a8a7e7e781405a3c171d24bd1d",
+      "results": [
+        {
+          "test": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::create_pair::catalog_commit::row_census::s3_c01_row_commit_windows_and_actual_a_caller_fit_fixed_charges",
+          "exit": 0,
+          "seconds": 0.007944578000206093,
+          "log": "00-s3_c01_row_commit_windows_and_actual_a_caller_fit_fixed_charges.log",
+          "status": "PASS",
+          "log_sha256": "a96bd4cc8d6a9ae45dfe2f59dca74f8cac08c4f09a71c9966e6f9239f6dabb14"
+        },
+        {
+          "test": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_commit::s3_r04_serializable_same_table_requires_rollback",
+          "exit": 101,
+          "seconds": 21.41356267699939,
+          "log": "01-s3_r04_serializable_same_table_requires_rollback.log",
+          "status": "FAIL",
+          "log_sha256": "50e9eb00a909428d61e749781eb50df84ddc57980c06db4c1f4db546661f7076"
+        }
+      ],
+      "not_run": [
+        "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_commit::s3_r04_serializable_other_table_commits",
+        "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_commit::s3_r04_read_committed_same_table_commits",
+        "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_commit::s3_r02_cancel_statement_can_empty_abort",
+        "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_commit::s3_r03_active_statement_is_before_busy",
+        "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_commit::s3_r05_commit_replays_divergent_forward_before_stage",
+        "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_commit::s3_r06_stale_preparation_returns_same_capsule_then_retry",
+        "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_commit::s3_r06_partial_install_is_fatal",
+        "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_commit::s3_r06_before_publication_is_fatal",
+        "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_commit::s3_r06_cleanup_failure_is_fatal",
+        "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_commit::s3_r07_pending_full_read_drain_flusher_and_old_q",
+        "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::drained::drained_handoff_has_original_pins_and_no_content_guards",
+        "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::drained::drained_handoff_fence_abandons_before_install",
+        "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::drained::drained_normal_unfinished_drop_fences_before_pin_return",
+        "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::commit_failures::catalog_drained_before_resume_unwind",
+        "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::commit_concurrency::catalog_mt07_drain_content_guard_fence",
+        "storage::row::insert::driver::tests::mca00_d11_commit_and_full_abort_close_the_transaction"
+      ],
+      "artifact_directory": "artifacts/module-s3-20261031/v8"
+    },
+    {
+      "run": "native1",
+      "source": "9f5dd7a942ed1e17ad3bb4ee71ec5454b92335dc5d5983f6a42593456fcf5475",
+      "elf": "384e493ea532260568d395b9a728aa9ea28c432d809260fcbc1c5175d0af4d27",
+      "input": "5a2e224034872faa810d76813c997732dd13babef9253dc435a7ef3be3799dc3",
+      "plan_sha256": "25973afdd475c03e655764463f0ad180b39a9fa9577c3283958101b0f55068ee",
+      "source_manifest_sha256": "9f5dd7a942ed1e17ad3bb4ee71ec5454b92335dc5d5983f6a42593456fcf5475",
+      "results": [
+        {
+          "phase": "produce",
+          "exit": 0,
+          "seconds": 9.294225057999938
+        },
+        {
+          "phase": "restart",
+          "exit": 0,
+          "seconds": 1.117754142999729
+        }
+      ],
+      "completion": {
+        "pids": [
+          "9985",
+          "9994"
+        ],
+        "result": "PASS",
+        "ready": false
+      },
+      "artifact_directory": "artifacts/module-s3-20261031/native1"
+    },
+    {
+      "run": "v9",
+      "source": "b12acf0a97ec4f397627dfd6c2da80c42c86ff98fd0ed9f5c2b812f5c32e5f20",
+      "elf": "5e568ee6475db2f91f59141fd9d115da78f1acaf8f7b3fe83584e439d9b70806",
+      "input": "f46afda68e47c0ad2397097cd8ab9dcd408f1bc0937b01e15e23da6ef44bb596",
+      "base": "bf0b6a2681a6d98c7252dc022212f550b5c2a9d2",
+      "plan_sha256": "66d7a9c5df42c4715d62af17f5df3c866f0156fd902b77164a62554a449fe331",
+      "source_manifest_sha256": "b12acf0a97ec4f397627dfd6c2da80c42c86ff98fd0ed9f5c2b812f5c32e5f20",
+      "results": [
+        {
+          "test": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_commit::s3_r04_serializable_same_table_requires_rollback",
+          "exit": 0,
+          "seconds": 22.576047095999456,
+          "log": "00-s3_r04_serializable_same_table_requires_rollback.log",
+          "status": "PASS",
+          "log_sha256": "330fcf35d4824ac569beeaac7f3922a62b048d3cce5b1eda472d74deed9bd28e"
+        },
+        {
+          "test": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_commit::s3_r04_serializable_other_table_commits",
+          "exit": 0,
+          "seconds": 20.119147395000255,
+          "log": "01-s3_r04_serializable_other_table_commits.log",
+          "status": "PASS",
+          "log_sha256": "61600349fc9f50dfa05ddcbf56051f3a255e5de7e977dfe5a6c0625884dbd976"
+        },
+        {
+          "test": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_commit::s3_r04_read_committed_same_table_commits",
+          "exit": 0,
+          "seconds": 21.221643044999837,
+          "log": "02-s3_r04_read_committed_same_table_commits.log",
+          "status": "PASS",
+          "log_sha256": "07d244c22847946cb1f82ef18911bc62f483d5dbacc601fd01424e23c83a61a0"
+        },
+        {
+          "test": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_commit::s3_r02_cancel_statement_can_empty_abort",
+          "exit": 0,
+          "seconds": 9.697176530999968,
+          "log": "03-s3_r02_cancel_statement_can_empty_abort.log",
+          "status": "PASS",
+          "log_sha256": "4273d63623f276ac1f5401a50f828f8ffc1e9daca39845531363bf58f1a3f2e5"
+        },
+        {
+          "test": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_commit::s3_r03_active_statement_is_before_busy",
+          "exit": 0,
+          "seconds": 3.8270139520000157,
+          "log": "04-s3_r03_active_statement_is_before_busy.log",
+          "status": "PASS",
+          "log_sha256": "6eb4ea2219ad5121f98f5f35de7af9e6f81c019b1552ed266d8f31408776b3b2"
+        },
+        {
+          "test": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_commit::s3_r05_commit_replays_divergent_forward_before_stage",
+          "exit": 0,
+          "seconds": 7.489764191999711,
+          "log": "05-s3_r05_commit_replays_divergent_forward_before_stage.log",
+          "status": "PASS",
+          "log_sha256": "300da205be96aa1ba3a520f938f9e1c15a5491390197afeb0903505701153ee7"
+        },
+        {
+          "test": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_commit::s3_r06_stale_preparation_returns_same_capsule_then_retry",
+          "exit": 0,
+          "seconds": 5.528290793000451,
+          "log": "06-s3_r06_stale_preparation_returns_same_capsule_then_retry.log",
+          "status": "PASS",
+          "log_sha256": "f34403746c34df31755daa042343bf59fd2085e53910e4f2029effff64609a40"
+        },
+        {
+          "test": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_commit::s3_r06_partial_install_is_fatal",
+          "exit": 0,
+          "seconds": 4.781587797000611,
+          "log": "07-s3_r06_partial_install_is_fatal.log",
+          "status": "PASS",
+          "log_sha256": "c7da530beb3cf4485afc923e8e9d0508dcbb438747162f4674c66b4e2b62b404"
+        },
+        {
+          "test": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_commit::s3_r06_before_publication_is_fatal",
+          "exit": 0,
+          "seconds": 4.278455739000492,
+          "log": "08-s3_r06_before_publication_is_fatal.log",
+          "status": "PASS",
+          "log_sha256": "d4ba61f5ee0e7387bbdd54a2f17c963d92c49d6bc48d548b2b94d7e63e2b3009"
+        },
+        {
+          "test": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_commit::s3_r06_cleanup_failure_is_fatal",
+          "exit": 0,
+          "seconds": 4.225547011999879,
+          "log": "09-s3_r06_cleanup_failure_is_fatal.log",
+          "status": "PASS",
+          "log_sha256": "99030782c3d0d3eb53ee20d1ce4afdb2bf711b578e04dd20ec8dff675ce22286"
+        },
+        {
+          "test": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_commit::s3_r07_pending_full_read_drain_flusher_and_old_q",
+          "exit": 0,
+          "seconds": 9.438511606000247,
+          "log": "10-s3_r07_pending_full_read_drain_flusher_and_old_q.log",
+          "status": "PASS",
+          "log_sha256": "70c7612ab90ae629bb57a13ed92958dbab22185c4dd06d03610707bf6615d7d7"
+        },
+        {
+          "test": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::drained::drained_handoff_has_original_pins_and_no_content_guards",
+          "exit": 0,
+          "seconds": 2.7247588439995525,
+          "log": "11-drained_handoff_has_original_pins_and_no_content_guards.log",
+          "status": "PASS",
+          "log_sha256": "695691b344cb759b396fa70d76f47d89b72e0556869d839c34460f6d2ad388e3"
+        },
+        {
+          "test": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::drained::drained_handoff_fence_abandons_before_install",
+          "exit": 0,
+          "seconds": 18.714927516999524,
+          "log": "12-drained_handoff_fence_abandons_before_install.log",
+          "status": "PASS",
+          "log_sha256": "c5bfa4c2963e43ac96545bcd78f541ac5cbeda50804d7cb887797690bab50c6a"
+        },
+        {
+          "test": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::drained::drained_normal_unfinished_drop_fences_before_pin_return",
+          "exit": 0,
+          "seconds": 18.464531970999815,
+          "log": "13-drained_normal_unfinished_drop_fences_before_pin_return.log",
+          "status": "PASS",
+          "log_sha256": "1ed206580ffe0efb76d0942a29962d768acaf71d6f77b4ee25af32210eddd524"
+        },
+        {
+          "test": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::commit_failures::catalog_drained_before_resume_unwind",
+          "exit": 0,
+          "seconds": 17.26414141999976,
+          "log": "14-catalog_drained_before_resume_unwind.log",
+          "status": "PASS",
+          "log_sha256": "e89094ed53ce9cf17187f22d5ae1aceb9aaa6f28e14972f44175e97e9b1c47db"
+        },
+        {
+          "test": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::commit_concurrency::catalog_mt07_drain_content_guard_fence",
+          "exit": 0,
+          "seconds": 25.244975362999867,
+          "log": "15-catalog_mt07_drain_content_guard_fence.log",
+          "status": "PASS",
+          "log_sha256": "ddf5fb658665e5cba073516a8591390c35221dec6ee255bb2b3aa400889d2439"
+        },
+        {
+          "test": "storage::row::insert::driver::tests::mca00_d11_commit_and_full_abort_close_the_transaction",
+          "exit": 0,
+          "seconds": 0.016428419000476424,
+          "log": "16-mca00_d11_commit_and_full_abort_close_the_transaction.log",
+          "status": "PASS",
+          "log_sha256": "329e1c072d21ae51e5a967470b176c172cc8992a9b30208a2af3917e357dbf3e"
+        }
+      ],
+      "not_run": [],
+      "artifact_directory": "artifacts/module-s3-20261031/v9"
+    },
+    {
+      "run": "v10",
+      "source": "09a176604f4e64c200a54b1da3ae7af30bb40ab8d3a15b05894d5d661224de7c",
+      "elf": "54d55a0346a16702b6877c3a65ceea1ab6e033cbf80f948974e1dbf910469e27",
+      "input": "526b9c345d87a7fd30abb4c29206b8bda30b405256af0433fb3966e4aa966fde",
+      "base": "bf0b6a2681a6d98c7252dc022212f550b5c2a9d2",
+      "plan_sha256": "740fc451ef7d718518bb97404a881e7c8bd1f6bc0ce243eafe9e858e0035f06a",
+      "source_manifest_sha256": "09a176604f4e64c200a54b1da3ae7af30bb40ab8d3a15b05894d5d661224de7c",
+      "results": [
+        {
+          "test": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::create_pair::catalog_commit::row_census::s3_c01_row_commit_windows_and_actual_a_caller_fit_fixed_charges",
+          "exit": 0,
+          "seconds": 0.007848207000279217,
+          "log": "00-s3_c01_row_commit_windows_and_actual_a_caller_fit_fixed_charges.log",
+          "status": "PASS",
+          "log_sha256": "f54e6d8fcb91bc25263555470185e6935dad40ad83257f4f213a0f7e0a4d031b"
+        }
+      ],
+      "not_run": [],
+      "artifact_directory": "artifacts/module-s3-20261031/v10"
+    },
+    {
+      "run": "v11",
+      "source": "f07fe5121dff0b4e01c40583b6baa85c54fb2251b874574d4f4c0e054c28ec69",
+      "elf": "d73b05b20fc50d15edc4047b1cce7d18dae65a63ebd1092d33b736c3660a0058",
+      "input": "ccd67ba7be5f60893c4a4e9814b22f6f7d188cff3cfd1b65a9f37c746684fb42",
+      "base": "021959c7ce936aaf173b0cd2da091d564430622f",
+      "plan_sha256": "dbcb4ce88c44936522348ed7e2b10196a5f4e51bbf45e8d63f5913d1ec160fc8",
+      "source_manifest_sha256": "f07fe5121dff0b4e01c40583b6baa85c54fb2251b874574d4f4c0e054c28ec69",
+      "results": [
+        {
+          "test": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_commit::s3_r06_actual_wal_capacity_restores_unstaged_then_retries",
+          "exit": 0,
+          "seconds": 8.134146643999884,
+          "log": "00-s3_r06_actual_wal_capacity_restores_unstaged_then_retries.log",
+          "status": "PASS",
+          "log_sha256": "2add39b35263c586ca57c89cf60ee95dc6578eea04c99fbcd273c7a5fe60867d"
+        }
+      ],
+      "not_run": [],
+      "artifact_directory": "artifacts/module-s3-20261031/v11"
+    }
+  ],
+  "latest_by_selector": {
+    "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::create_pair::catalog_commit::row_census::s3_c01_row_commit_windows_and_actual_a_caller_fit_fixed_charges": {
+      "run": "v10",
+      "test": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::create_pair::catalog_commit::row_census::s3_c01_row_commit_windows_and_actual_a_caller_fit_fixed_charges",
+      "exit": 0,
+      "seconds": 0.007848207000279217,
+      "log": "00-s3_c01_row_commit_windows_and_actual_a_caller_fit_fixed_charges.log",
+      "status": "PASS",
+      "log_sha256": "f54e6d8fcb91bc25263555470185e6935dad40ad83257f4f213a0f7e0a4d031b",
+      "source": "09a176604f4e64c200a54b1da3ae7af30bb40ab8d3a15b05894d5d661224de7c",
+      "elf": "54d55a0346a16702b6877c3a65ceea1ab6e033cbf80f948974e1dbf910469e27"
+    },
+    "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_commit::s3_r01_serializable_insert_commit_matches_independent_frame": {
+      "run": "behavior1",
+      "test": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_commit::s3_r01_serializable_insert_commit_matches_independent_frame",
+      "exit": 0,
+      "seconds": 7.481927267000174,
+      "log": "00-s3_r01_serializable_insert_commit_matches_independent_frame.log",
+      "status": "PASS",
+      "log_sha256": "4bd23fe6e0fb5d0594103aa5a280a1f97412873f48d7003fe2f08be8a10252fd",
+      "source": "e8a2a0d54c55c5c469ab6a3c5e8fbd3743f9a858654558fb91dae6d184863ab9",
+      "elf": "77e6917393fbcbcf6c7a4431d4fc196a82a15f48e190a3b126b017882f2d681b"
+    },
+    "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_commit::s3_r01_read_committed_insert_commit_matches_independent_frame": {
+      "run": "behavior1",
+      "test": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_commit::s3_r01_read_committed_insert_commit_matches_independent_frame",
+      "exit": 0,
+      "seconds": 7.5319986019999305,
+      "log": "01-s3_r01_read_committed_insert_commit_matches_independent_frame.log",
+      "status": "PASS",
+      "log_sha256": "bbb8093e3a79ad9d4616f53706bb19bad2707d9c342ceb438bcfe02c9b257d04",
+      "source": "e8a2a0d54c55c5c469ab6a3c5e8fbd3743f9a858654558fb91dae6d184863ab9",
+      "elf": "77e6917393fbcbcf6c7a4431d4fc196a82a15f48e190a3b126b017882f2d681b"
+    },
+    "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_commit::s3_r02_empty_cancel_and_duplicate_table_roots": {
+      "run": "behavior1",
+      "test": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_commit::s3_r02_empty_cancel_and_duplicate_table_roots",
+      "exit": 0,
+      "seconds": 23.374326503000248,
+      "log": "02-s3_r02_empty_cancel_and_duplicate_table_roots.log",
+      "status": "PASS",
+      "log_sha256": "ddeb8a5b5d3e9d2a7d364703dbce52064cce0b7085d56fddea1887490adb1ef0",
+      "source": "e8a2a0d54c55c5c469ab6a3c5e8fbd3743f9a858654558fb91dae6d184863ab9",
+      "elf": "77e6917393fbcbcf6c7a4431d4fc196a82a15f48e190a3b126b017882f2d681b"
+    },
+    "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_commit::s3_r03_scope_foreign_capacity_reserved_and_aborting_refusals": {
+      "run": "behavior1",
+      "test": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_commit::s3_r03_scope_foreign_capacity_reserved_and_aborting_refusals",
+      "exit": 0,
+      "seconds": 20.415608018999592,
+      "log": "03-s3_r03_scope_foreign_capacity_reserved_and_aborting_refusals.log",
+      "status": "PASS",
+      "log_sha256": "b47426e2d78d90893b6d90d6967bbd0d467f4049ea6fa6032114747ef6deb052",
+      "source": "e8a2a0d54c55c5c469ab6a3c5e8fbd3743f9a858654558fb91dae6d184863ab9",
+      "elf": "77e6917393fbcbcf6c7a4431d4fc196a82a15f48e190a3b126b017882f2d681b"
+    },
+    "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_commit::s3_r06_partial_write_fences_without_ack": {
+      "run": "behavior1",
+      "test": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_commit::s3_r06_partial_write_fences_without_ack",
+      "exit": 0,
+      "seconds": 4.226200560000052,
+      "log": "04-s3_r06_partial_write_fences_without_ack.log",
+      "status": "PASS",
+      "log_sha256": "d568ef714172f9e78a9538e1deef8433d685a1228341fdf24df6c4928bbc31bc",
+      "source": "e8a2a0d54c55c5c469ab6a3c5e8fbd3743f9a858654558fb91dae6d184863ab9",
+      "elf": "77e6917393fbcbcf6c7a4431d4fc196a82a15f48e190a3b126b017882f2d681b"
+    },
+    "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_commit::s3_r06_sync_after_error_fences_without_ack": {
+      "run": "v7",
+      "test": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_commit::s3_r06_sync_after_error_fences_without_ack",
+      "exit": 0,
+      "seconds": 4.327779086999726,
+      "log": "01-s3_r06_sync_after_error_fences_without_ack.log",
+      "status": "PASS",
+      "log_sha256": "e795385f8297de5ce1e2c55a727c8d139a2cd6e5935825fa15cfd897772173bb",
+      "source": "d76b01909be8a3221cfdc4f5beb7c06a527e0846b9dd6ea145bcbc95614dea16",
+      "elf": "d205fd38f765192d3fdd8e6f4f9575dbd07d21a01e43d663d0e6a713557e2d10"
+    },
+    "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_commit::s3_r04_serializable_same_table_requires_rollback": {
+      "run": "v9",
+      "test": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_commit::s3_r04_serializable_same_table_requires_rollback",
+      "exit": 0,
+      "seconds": 22.576047095999456,
+      "log": "00-s3_r04_serializable_same_table_requires_rollback.log",
+      "status": "PASS",
+      "log_sha256": "330fcf35d4824ac569beeaac7f3922a62b048d3cce5b1eda472d74deed9bd28e",
+      "source": "b12acf0a97ec4f397627dfd6c2da80c42c86ff98fd0ed9f5c2b812f5c32e5f20",
+      "elf": "5e568ee6475db2f91f59141fd9d115da78f1acaf8f7b3fe83584e439d9b70806"
+    },
+    "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_commit::s3_r04_serializable_other_table_commits": {
+      "run": "v9",
+      "test": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_commit::s3_r04_serializable_other_table_commits",
+      "exit": 0,
+      "seconds": 20.119147395000255,
+      "log": "01-s3_r04_serializable_other_table_commits.log",
+      "status": "PASS",
+      "log_sha256": "61600349fc9f50dfa05ddcbf56051f3a255e5de7e977dfe5a6c0625884dbd976",
+      "source": "b12acf0a97ec4f397627dfd6c2da80c42c86ff98fd0ed9f5c2b812f5c32e5f20",
+      "elf": "5e568ee6475db2f91f59141fd9d115da78f1acaf8f7b3fe83584e439d9b70806"
+    },
+    "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_commit::s3_r04_read_committed_same_table_commits": {
+      "run": "v9",
+      "test": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_commit::s3_r04_read_committed_same_table_commits",
+      "exit": 0,
+      "seconds": 21.221643044999837,
+      "log": "02-s3_r04_read_committed_same_table_commits.log",
+      "status": "PASS",
+      "log_sha256": "07d244c22847946cb1f82ef18911bc62f483d5dbacc601fd01424e23c83a61a0",
+      "source": "b12acf0a97ec4f397627dfd6c2da80c42c86ff98fd0ed9f5c2b812f5c32e5f20",
+      "elf": "5e568ee6475db2f91f59141fd9d115da78f1acaf8f7b3fe83584e439d9b70806"
+    },
+    "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_commit::s3_r02_cancel_statement_can_empty_abort": {
+      "run": "v9",
+      "test": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_commit::s3_r02_cancel_statement_can_empty_abort",
+      "exit": 0,
+      "seconds": 9.697176530999968,
+      "log": "03-s3_r02_cancel_statement_can_empty_abort.log",
+      "status": "PASS",
+      "log_sha256": "4273d63623f276ac1f5401a50f828f8ffc1e9daca39845531363bf58f1a3f2e5",
+      "source": "b12acf0a97ec4f397627dfd6c2da80c42c86ff98fd0ed9f5c2b812f5c32e5f20",
+      "elf": "5e568ee6475db2f91f59141fd9d115da78f1acaf8f7b3fe83584e439d9b70806"
+    },
+    "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_commit::s3_r03_active_statement_is_before_busy": {
+      "run": "v9",
+      "test": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_commit::s3_r03_active_statement_is_before_busy",
+      "exit": 0,
+      "seconds": 3.8270139520000157,
+      "log": "04-s3_r03_active_statement_is_before_busy.log",
+      "status": "PASS",
+      "log_sha256": "6eb4ea2219ad5121f98f5f35de7af9e6f81c019b1552ed266d8f31408776b3b2",
+      "source": "b12acf0a97ec4f397627dfd6c2da80c42c86ff98fd0ed9f5c2b812f5c32e5f20",
+      "elf": "5e568ee6475db2f91f59141fd9d115da78f1acaf8f7b3fe83584e439d9b70806"
+    },
+    "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_commit::s3_r05_commit_replays_divergent_forward_before_stage": {
+      "run": "v9",
+      "test": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_commit::s3_r05_commit_replays_divergent_forward_before_stage",
+      "exit": 0,
+      "seconds": 7.489764191999711,
+      "log": "05-s3_r05_commit_replays_divergent_forward_before_stage.log",
+      "status": "PASS",
+      "log_sha256": "300da205be96aa1ba3a520f938f9e1c15a5491390197afeb0903505701153ee7",
+      "source": "b12acf0a97ec4f397627dfd6c2da80c42c86ff98fd0ed9f5c2b812f5c32e5f20",
+      "elf": "5e568ee6475db2f91f59141fd9d115da78f1acaf8f7b3fe83584e439d9b70806"
+    },
+    "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_commit::s3_r06_stale_preparation_returns_same_capsule_then_retry": {
+      "run": "v9",
+      "test": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_commit::s3_r06_stale_preparation_returns_same_capsule_then_retry",
+      "exit": 0,
+      "seconds": 5.528290793000451,
+      "log": "06-s3_r06_stale_preparation_returns_same_capsule_then_retry.log",
+      "status": "PASS",
+      "log_sha256": "f34403746c34df31755daa042343bf59fd2085e53910e4f2029effff64609a40",
+      "source": "b12acf0a97ec4f397627dfd6c2da80c42c86ff98fd0ed9f5c2b812f5c32e5f20",
+      "elf": "5e568ee6475db2f91f59141fd9d115da78f1acaf8f7b3fe83584e439d9b70806"
+    },
+    "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_commit::s3_r06_partial_install_is_fatal": {
+      "run": "v9",
+      "test": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_commit::s3_r06_partial_install_is_fatal",
+      "exit": 0,
+      "seconds": 4.781587797000611,
+      "log": "07-s3_r06_partial_install_is_fatal.log",
+      "status": "PASS",
+      "log_sha256": "c7da530beb3cf4485afc923e8e9d0508dcbb438747162f4674c66b4e2b62b404",
+      "source": "b12acf0a97ec4f397627dfd6c2da80c42c86ff98fd0ed9f5c2b812f5c32e5f20",
+      "elf": "5e568ee6475db2f91f59141fd9d115da78f1acaf8f7b3fe83584e439d9b70806"
+    },
+    "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_commit::s3_r06_before_publication_is_fatal": {
+      "run": "v9",
+      "test": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_commit::s3_r06_before_publication_is_fatal",
+      "exit": 0,
+      "seconds": 4.278455739000492,
+      "log": "08-s3_r06_before_publication_is_fatal.log",
+      "status": "PASS",
+      "log_sha256": "d4ba61f5ee0e7387bbdd54a2f17c963d92c49d6bc48d548b2b94d7e63e2b3009",
+      "source": "b12acf0a97ec4f397627dfd6c2da80c42c86ff98fd0ed9f5c2b812f5c32e5f20",
+      "elf": "5e568ee6475db2f91f59141fd9d115da78f1acaf8f7b3fe83584e439d9b70806"
+    },
+    "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_commit::s3_r06_cleanup_failure_is_fatal": {
+      "run": "v9",
+      "test": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_commit::s3_r06_cleanup_failure_is_fatal",
+      "exit": 0,
+      "seconds": 4.225547011999879,
+      "log": "09-s3_r06_cleanup_failure_is_fatal.log",
+      "status": "PASS",
+      "log_sha256": "99030782c3d0d3eb53ee20d1ce4afdb2bf711b578e04dd20ec8dff675ce22286",
+      "source": "b12acf0a97ec4f397627dfd6c2da80c42c86ff98fd0ed9f5c2b812f5c32e5f20",
+      "elf": "5e568ee6475db2f91f59141fd9d115da78f1acaf8f7b3fe83584e439d9b70806"
+    },
+    "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_commit::s3_r07_pending_full_read_drain_flusher_and_old_q": {
+      "run": "v9",
+      "test": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_commit::s3_r07_pending_full_read_drain_flusher_and_old_q",
+      "exit": 0,
+      "seconds": 9.438511606000247,
+      "log": "10-s3_r07_pending_full_read_drain_flusher_and_old_q.log",
+      "status": "PASS",
+      "log_sha256": "70c7612ab90ae629bb57a13ed92958dbab22185c4dd06d03610707bf6615d7d7",
+      "source": "b12acf0a97ec4f397627dfd6c2da80c42c86ff98fd0ed9f5c2b812f5c32e5f20",
+      "elf": "5e568ee6475db2f91f59141fd9d115da78f1acaf8f7b3fe83584e439d9b70806"
+    },
+    "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::drained::drained_handoff_has_original_pins_and_no_content_guards": {
+      "run": "v9",
+      "test": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::drained::drained_handoff_has_original_pins_and_no_content_guards",
+      "exit": 0,
+      "seconds": 2.7247588439995525,
+      "log": "11-drained_handoff_has_original_pins_and_no_content_guards.log",
+      "status": "PASS",
+      "log_sha256": "695691b344cb759b396fa70d76f47d89b72e0556869d839c34460f6d2ad388e3",
+      "source": "b12acf0a97ec4f397627dfd6c2da80c42c86ff98fd0ed9f5c2b812f5c32e5f20",
+      "elf": "5e568ee6475db2f91f59141fd9d115da78f1acaf8f7b3fe83584e439d9b70806"
+    },
+    "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::drained::drained_handoff_fence_abandons_before_install": {
+      "run": "v9",
+      "test": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::drained::drained_handoff_fence_abandons_before_install",
+      "exit": 0,
+      "seconds": 18.714927516999524,
+      "log": "12-drained_handoff_fence_abandons_before_install.log",
+      "status": "PASS",
+      "log_sha256": "c5bfa4c2963e43ac96545bcd78f541ac5cbeda50804d7cb887797690bab50c6a",
+      "source": "b12acf0a97ec4f397627dfd6c2da80c42c86ff98fd0ed9f5c2b812f5c32e5f20",
+      "elf": "5e568ee6475db2f91f59141fd9d115da78f1acaf8f7b3fe83584e439d9b70806"
+    },
+    "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::drained::drained_normal_unfinished_drop_fences_before_pin_return": {
+      "run": "v9",
+      "test": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::drained::drained_normal_unfinished_drop_fences_before_pin_return",
+      "exit": 0,
+      "seconds": 18.464531970999815,
+      "log": "13-drained_normal_unfinished_drop_fences_before_pin_return.log",
+      "status": "PASS",
+      "log_sha256": "1ed206580ffe0efb76d0942a29962d768acaf71d6f77b4ee25af32210eddd524",
+      "source": "b12acf0a97ec4f397627dfd6c2da80c42c86ff98fd0ed9f5c2b812f5c32e5f20",
+      "elf": "5e568ee6475db2f91f59141fd9d115da78f1acaf8f7b3fe83584e439d9b70806"
+    },
+    "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::commit_failures::catalog_drained_before_resume_unwind": {
+      "run": "v9",
+      "test": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::commit_failures::catalog_drained_before_resume_unwind",
+      "exit": 0,
+      "seconds": 17.26414141999976,
+      "log": "14-catalog_drained_before_resume_unwind.log",
+      "status": "PASS",
+      "log_sha256": "e89094ed53ce9cf17187f22d5ae1aceb9aaa6f28e14972f44175e97e9b1c47db",
+      "source": "b12acf0a97ec4f397627dfd6c2da80c42c86ff98fd0ed9f5c2b812f5c32e5f20",
+      "elf": "5e568ee6475db2f91f59141fd9d115da78f1acaf8f7b3fe83584e439d9b70806"
+    },
+    "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::commit_concurrency::catalog_mt07_drain_content_guard_fence": {
+      "run": "v9",
+      "test": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::commit_concurrency::catalog_mt07_drain_content_guard_fence",
+      "exit": 0,
+      "seconds": 25.244975362999867,
+      "log": "15-catalog_mt07_drain_content_guard_fence.log",
+      "status": "PASS",
+      "log_sha256": "ddf5fb658665e5cba073516a8591390c35221dec6ee255bb2b3aa400889d2439",
+      "source": "b12acf0a97ec4f397627dfd6c2da80c42c86ff98fd0ed9f5c2b812f5c32e5f20",
+      "elf": "5e568ee6475db2f91f59141fd9d115da78f1acaf8f7b3fe83584e439d9b70806"
+    },
+    "storage::row::insert::driver::tests::mca00_d11_commit_and_full_abort_close_the_transaction": {
+      "run": "v9",
+      "test": "storage::row::insert::driver::tests::mca00_d11_commit_and_full_abort_close_the_transaction",
+      "exit": 0,
+      "seconds": 0.016428419000476424,
+      "log": "16-mca00_d11_commit_and_full_abort_close_the_transaction.log",
+      "status": "PASS",
+      "log_sha256": "329e1c072d21ae51e5a967470b176c172cc8992a9b30208a2af3917e357dbf3e",
+      "source": "b12acf0a97ec4f397627dfd6c2da80c42c86ff98fd0ed9f5c2b812f5c32e5f20",
+      "elf": "5e568ee6475db2f91f59141fd9d115da78f1acaf8f7b3fe83584e439d9b70806"
+    },
+    "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_commit::s3_r06_actual_wal_capacity_restores_unstaged_then_retries": {
+      "run": "v11",
+      "test": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_commit::s3_r06_actual_wal_capacity_restores_unstaged_then_retries",
+      "exit": 0,
+      "seconds": 8.134146643999884,
+      "log": "00-s3_r06_actual_wal_capacity_restores_unstaged_then_retries.log",
+      "status": "PASS",
+      "log_sha256": "2add39b35263c586ca57c89cf60ee95dc6578eea04c99fbcd273c7a5fe60867d",
+      "source": "f07fe5121dff0b4e01c40583b6baa85c54fb2251b874574d4f4c0e054c28ec69",
+      "elf": "d73b05b20fc50d15edc4047b1cce7d18dae65a63ebd1092d33b736c3660a0058"
+    }
+  },
+  "compiler_logs": [
+    {
+      "path": "artifacts/module-s3-20261031/r1/check.log",
+      "sha256": "d9445a632eb7a3020280a01407df66ae6676afca85e5981f744986b8451e9435"
+    },
+    {
+      "path": "artifacts/module-s3-20261031/r10/build.log",
+      "sha256": "3217b03fe34de40265239dc7473166b067c0970b7a01d87ad88af3681ab97f10"
+    },
+    {
+      "path": "artifacts/module-s3-20261031/r11/build.log",
+      "sha256": "54e941fbe04d6e19e4d5ec824b5b4372d60d8d4eb2b0567b14d26d8333c49df5"
+    },
+    {
+      "path": "artifacts/module-s3-20261031/r12/build.log",
+      "sha256": "387be8936708659726d36f70fb8a682b3c2df2d2796820ce83bf7bd036cf736b"
+    },
+    {
+      "path": "artifacts/module-s3-20261031/r13/build.log",
+      "sha256": "0a3bd1bfd83348d4a07b74f946351484d3dd5dc227f7be9c5ef5c517dd8243e1"
+    },
+    {
+      "path": "artifacts/module-s3-20261031/r14/build.log",
+      "sha256": "65179f2cf5f7da4fda6e43c0ff56efaf712e5a8a33f8483666b9648a65b04db2"
+    },
+    {
+      "path": "artifacts/module-s3-20261031/r15/build.log",
+      "sha256": "d32aa7523d12a668f0c2c2fd7a55d34cbf93e50c953d8ac9164182b51f3bab0d"
+    },
+    {
+      "path": "artifacts/module-s3-20261031/r16/build.log",
+      "sha256": "688e85d399b5cab7ef2c2a95aefdfbba30e50935bf9ee0eb146213df74610a01"
+    },
+    {
+      "path": "artifacts/module-s3-20261031/r17/build.log",
+      "sha256": "4b713a1a36bee739fb4ba80309688c6db2d4ecb25ac6abb3f77d65623ff12b96"
+    },
+    {
+      "path": "artifacts/module-s3-20261031/r18/build.log",
+      "sha256": "9b42a37cdada5dd6e132b13f6cef1cde1d430a0286a2520695c38d727d5179a4"
+    },
+    {
+      "path": "artifacts/module-s3-20261031/r19/build.log",
+      "sha256": "a6ba7edce068a6464ac648db46ba5ae9a00cb3d2e85f893bd147489daf70e521"
+    },
+    {
+      "path": "artifacts/module-s3-20261031/r2/check.log",
+      "sha256": "42faf676898acc41299e4803e4c95033c77dad16c2611efe168f0a4130e8435b"
+    },
+    {
+      "path": "artifacts/module-s3-20261031/r20/build.log",
+      "sha256": "77c7fe2ae3f80e9a401c590631b671ec53fed82feb5d4e9dafde08a763c0d26f"
+    },
+    {
+      "path": "artifacts/module-s3-20261031/r21/build.log",
+      "sha256": "ff781db7009c94947f49436a579df5f6e9ae74c9cae777c2936d2711b3f4998b"
+    },
+    {
+      "path": "artifacts/module-s3-20261031/r22/clippy.log",
+      "sha256": "d8b0360f9f23b781f3d207af7a0441949424553e24abd8b451b73fd85ab1c481"
+    },
+    {
+      "path": "artifacts/module-s3-20261031/r23/clippy.log",
+      "sha256": "bba71b3690b7637ea845b26e065d6fd188f95a256a44f12b92e0fcf68777b1a7"
+    },
+    {
+      "path": "artifacts/module-s3-20261031/r24/build.log",
+      "sha256": "7918d1f8d286f2de0ec78bd519a2f0c919468d1922be93d877f0dc74377096e9"
+    },
+    {
+      "path": "artifacts/module-s3-20261031/r25/build.log",
+      "sha256": "8bc9a04d3c4ee70a54108a32208b8efa5b938341237ee773bfbeee90d310b217"
+    },
+    {
+      "path": "artifacts/module-s3-20261031/r26/clippy.log",
+      "sha256": "4f02a362b35db694ea5dd2f27e782bd4f45b27230bde601925b38d00d973c1df"
+    },
+    {
+      "path": "artifacts/module-s3-20261031/r27/build.log",
+      "sha256": "8aafa419cc5a399ca79cf4614ff045f3b64a3c723fe9c29d13f3c065dacc8c60"
+    },
+    {
+      "path": "artifacts/module-s3-20261031/r3/check.log",
+      "sha256": "0e44cc54e4d28090ddbe4d65849811acb15b06aefb009604b112a6a14efbf772"
+    },
+    {
+      "path": "artifacts/module-s3-20261031/r4/build.log",
+      "sha256": "7390a04507abe1356e04fba2a39383867cd2cd79b8e4f3313c11de9c8047c8cc"
+    },
+    {
+      "path": "artifacts/module-s3-20261031/r5/build.log",
+      "sha256": "ea402772936058325f3d5f78e192c5db585770ab385e3d29e59127c70ddec5f8"
+    },
+    {
+      "path": "artifacts/module-s3-20261031/r6/build.log",
+      "sha256": "f7a834ac220635bc8722b3153b8cd621522fcd5b3b1a9ba8a0b5232407c6102d"
+    },
+    {
+      "path": "artifacts/module-s3-20261031/r7/build.log",
+      "sha256": "d2da4f7dbeeabab2cc0c1f1d8d5f445037abb08ce72ecc8ada8d2b5d677b312f"
+    },
+    {
+      "path": "artifacts/module-s3-20261031/r8/build.log",
+      "sha256": "5c9aa901372b33515702a4e0584cd728fa6d8fa664b4ab1487106d947b5c81f6"
+    },
+    {
+      "path": "artifacts/module-s3-20261031/r9/build.log",
+      "sha256": "0b455b32aa98265eac3513e0827f217ce9235776f088c1ae30d336653ec4e7ba"
+    }
+  ]
+}

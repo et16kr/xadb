@@ -1,0 +1,15 @@
+{
+  "after_sha256": {
+    "bank": "da215cbf9b7a7f05bce7697ca8572b2fc4a3fc0532318c49818fb63b3ea638d5",
+    "jobs2": "de95366ad7b38d6e0e2ed3644788e8464880d8f729aaf77457b40f499478c2a0",
+    "root1": "4d07641d079310eebc47e843101cc2fa53916ba582d7a2d4e26668a273c9a0b8",
+    "status11": "ea1022d5c40ad700adfc20e27561a9f2cc88d769e56deef6a02738aeb58dfdd1"
+  },
+  "case": "S3-R01",
+  "frame_bytes": 56712,
+  "frame_sha256": "5a2e224034872faa810d76813c997732dd13babef9253dc435a7ef3be3799dc3",
+  "input_author_sha256": "cbab5fcf089099524ea31fa1da1b6673b617973623bc7c59b7334ef45064cd9f",
+  "lsn": 17,
+  "model_sha256": "076ea2f2767851bd8046becbba6b1d05a00a6cd7838a9c9e052b6b2e033beec4",
+  "q": 2
+}

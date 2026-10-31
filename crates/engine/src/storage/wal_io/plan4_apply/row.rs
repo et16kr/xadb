@@ -7,9 +7,11 @@
 //! and RowReserve (S2-b2), `ReservedRow::producer_lane`,
 //! `ReservedRow::prepare` and `PreparedRow::apply` the actual Forward path
 //! (S2-c), and `ReservedRow::cancel` the actual Cancel of that reservation
-//! (S2-d). Every other factory returns an effect-free `Unsupported` before
+//! (S2-d). `MutationPort::commit_row` uses the original durable Commit barrier
+//! and checked capsule cleanup (S3). The remaining factories return an effect-free
+//! `Unsupported` before
 //! any source guard, pin, admission, WAL or page effect: the actual Row read
-//! source, rollback and Commit adapters are later C2/C3 supplies. A
+//! source and rollback adapters are later C2/C3 supplies. A
 //! `ReservedRow` dropped while its reservation is active fences the session
 //! (S2W-R23(2)); a driver that stops after a successful reserve without a
 //! Forward ends it with `cancel`, which discharges the reservation without
@@ -134,8 +136,8 @@ impl RowMutationObservation {
 /// Commit observation after epoch and Q publication; not a WAL receipt.
 #[derive(Debug)]
 pub(crate) struct RowCommitObservation {
-    actor: TxnRef,
-    q: u64,
+    pub(super) actor: TxnRef,
+    pub(super) q: u64,
 }
 impl RowCommitObservation {
     pub(in crate::storage) fn actor(&self) -> TxnRef {

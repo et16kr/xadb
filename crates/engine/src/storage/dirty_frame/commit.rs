@@ -42,6 +42,13 @@ pub(in crate::storage) struct DrainedCommitTargets<'a, 'b, 'c, 's, 'p, 'd, const
     stable: [Option<StablePage>; N],
 }
 
+/// Authentic Drain completion borrowing the original physical carrier. Only
+/// wait_ready can create its installation; it owns no second pin/stamp array.
+pub(in crate::storage) struct DrainedCommitBorrow<'r, 'a, 'b, 'c, 's, 'p, 'd, const N: usize> {
+    pending: &'r mut PendingCommitTargets<'a, 'b, 'c, 's, 'p, 'd, N>,
+    installation: Option<CommitInstalling<'a, 'c, 's>>,
+}
+
 pub(in crate::storage) struct CommitInstallTargets<'a, 'b, 'c, 's, 'p, 'd, const N: usize> {
     targets: Option<WriteTargets<'a, 'b, 'c, 's, 'p, 'd, N>>,
     installation: Option<CommitInstalling<'a, 'c, 's>>,
@@ -201,6 +208,60 @@ impl<'a, 'b, 'c, 's, 'p, 'd, const N: usize> PendingCommitTargets<'a, 'b, 'c, 's
             installation: Some(installation),
             stable: self.stable,
         })
+    }
+}
+
+impl<'a, 'b, 'c, 's, 'p, 'd, const N: usize> PendingCommitTargets<'a, 'b, 'c, 's, 'p, 'd, N> {
+    /// The physical backing stays here across the original core Drain. An
+    /// error drops the core continuation first; the caller then drops this
+    /// parent and releases its pins. No incomplete proof is returned.
+    pub(in crate::storage) fn drain_borrowed(
+        &mut self,
+        durable: &DurableCommit<'c, 's>,
+    ) -> Result<DrainedCommitBorrow<'_, 'a, 'b, 'c, 's, 'p, 'd, N>> {
+        let installation = self
+            .pending
+            .take()
+            .expect("owned pending Commit")
+            .begin_drain(durable)
+            .and_then(|drain| drain.wait_ready())
+            .map_err(DirtyError::from)?;
+        Ok(DrainedCommitBorrow {
+            pending: self,
+            installation: Some(installation),
+        })
+    }
+}
+impl<'a, 'b, 'c, 's, 'p, 'd, const N: usize> DrainedCommitBorrow<'_, 'a, 'b, 'c, 's, 'p, 'd, N> {
+    pub(in crate::storage) fn resume(
+        mut self,
+    ) -> Result<CommitInstallTargets<'a, 'b, 'c, 's, 'p, 'd, N>> {
+        let targets = WriteTargets {
+            guards: std::array::from_fn(|_| None),
+            version: None,
+            pins: self.pending.pins.take(),
+        };
+        let mut result = CommitInstallTargets {
+            targets: Some(targets),
+            installation: self.installation.take(),
+            stable: std::mem::replace(&mut self.pending.stable, [None; N]),
+        };
+        result.acquire_and_revalidate()?;
+        Ok(result)
+    }
+}
+impl<const N: usize> Drop for DrainedCommitBorrow<'_, '_, '_, '_, '_, '_, '_, N> {
+    fn drop(&mut self) {
+        // This completes abandonment and releases the original version gate
+        // before physical identities are returned, even on normal Drop.
+        drop(self.installation.take());
+        if let Some(mut pins) = self.pending.pins.take() {
+            #[cfg(test)]
+            if pins.active {
+                test_support::before_release(pins.pool);
+            }
+            let _ = pins.release();
+        }
     }
 }
 
@@ -563,3 +624,16 @@ pub(in crate::storage) fn phase_sources<const N: usize>() -> CommitPhaseSources 
 
 #[cfg(test)]
 mod tests;
+
+/// S3 actual borrowed Drain: the parent is accounted by the caller. No new
+/// physical target value is returned; failure retains the full pin-release
+/// bound and the parent Drop runs after the core's abandonment.
+#[cfg(test)]
+pub(in crate::storage) fn borrowed_drain_source_observation<const N: usize>() -> usize {
+    use std::mem::size_of;
+    let core = crate::transaction::concurrency::commit_drain_source_observation();
+    let result = size_of::<Result<DrainedCommitBorrow<'_, '_, '_, '_, '_, '_, '_, N>>>();
+    let success = 2 * result + core;
+    let failure = result + core.max(super::pin_release_source_bytes());
+    4 * size_of::<&()>() + success.max(failure)
+}

@@ -35,13 +35,16 @@ pub(in crate::storage) use retirement::{
     RetirementApply, RetirementTargets, retirement_source_bytes,
 };
 mod plan4_residency;
+#[cfg(test)]
+pub(in crate::storage) use commit::borrowed_drain_source_observation;
 pub(in crate::storage) use commit::drain_call_source_bytes as commit_drain_call_source_bytes;
 #[cfg(test)]
 pub(in crate::storage) use commit::phase_sources as commit_phase_sources;
 #[allow(unused_imports)] // The actual terminal producer will consume these opaque carriers.
 pub(in crate::storage) use commit::{
-    CommitInstallTargets, CommitStageTargets, DrainedCommitTargets, PendingCommitTargets,
-    source_bytes as commit_source_bytes, source_phases as commit_source_phases,
+    CommitInstallTargets, CommitSourcePhases, CommitStageTargets, DrainedCommitBorrow,
+    DrainedCommitTargets, PendingCommitTargets, source_bytes as commit_source_bytes,
+    source_phases as commit_source_phases,
 };
 mod recovered_plan4;
 mod registration;

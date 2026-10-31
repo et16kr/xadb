@@ -399,6 +399,15 @@ impl<'b, 'a, 'c, 's> OperationSourceAdmission<'b, 'a, 'c, 's> {
         self.transition(charges.shared, charges.pending, charges.install, true)
     }
 
+    /// The same no-wait transition with the actual borrowed Drain proof.
+    pub(super) fn enter_commit_install_borrowed<const N: usize>(
+        &mut self,
+        charges: &CatalogCommitCharges,
+        _drained: &dirty_frame::DrainedCommitBorrow<'_, '_, '_, '_, '_, '_, '_, N>,
+    ) -> SourceResult<()> {
+        self.transition(charges.shared, charges.pending, charges.install, true)
+    }
+
     /// After install.finish reopened reads, before the Q publication. Shrink only.
     pub(super) fn enter_commit_publish(
         &mut self,
@@ -673,4 +682,21 @@ mod tests;
 #[cfg(test)]
 pub(super) fn progress_test_bytes(charge: &CatalogProgressCharge) -> usize {
     charge.0
+}
+
+/// S3 observation: caller slots retained while admission/gate helpers have
+/// returned. The helper-frame part is max-combined at its real call sites.
+#[cfg(test)]
+pub(super) fn commit_retained_source_observation() -> usize {
+    size_of::<OperationSourceAdmission<'_, '_, '_, '_>>()
+        + 2 * size_of::<SourceResult<OperationSourceAdmission<'_, '_, '_, '_>>>()
+        + size_of::<Option<TerminalReadGate<'_, '_>>>()
+        + 2 * size_of::<SourceResult<()>>()
+        + 2 * size_of::<SourceFailure>()
+        + 2 * size_of::<RetentionError>()
+        + 4 * size_of::<&()>()
+}
+#[cfg(test)]
+pub(super) fn commit_leaf_source_observation() -> usize {
+    leaf_source_bytes().max(terminal_gate_source_bytes())
 }

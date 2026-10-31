@@ -5008,3 +5008,60 @@ S2-0 7항이 RowWrite에 맞춰 바꾼 MBC10-V09·MBC40-V09의 대체 oracle을 
 - 다음은 S3(finish 본문, statement·transaction 끝)이지만 사용자 지시로 여기서 멈춘다.
 
 **되돌림.** 최신부터 되돌린다. 문서 commit을 먼저, 그다음 S2-f, 그다음 S2-e다. S2-f와 S2-e는 서로 다른 파일만 바꿨다(mount 줄 위치를 나눴다). artifact는 `module-independence-20261029/artifacts/module-s2f-20261030/`(검토서, 증거 원문, b0·h1·h2와 통합 j1 로그와 probe, 계약 기록 원문, 도구, `manifest-all.sha256` SHA-256 `b703c69b94ef22a716b8347eab1062654c0e960f27f083cd23f434a56350e985`)에 있다.
+
+
+<a id="s3-row-commit"></a>
+## S3 Row Commit — 클라우드 별도 branch
+
+2026-10-31. 사용자 지시에 따라 병합 기준 `6ec2d3432344f2353e319c7a0eec1955d5a3420a`에서 `/workspace/xadb`의 `codex/s3-row-commit`으로 진행한다. S3-a 계약 commit은 `bf0b6a2681a6d98c7252dc022212f550b5c2a9d2`, S3-b 구현·consumer/harness commit은 `021959c7`다. S3-c는 최종 리뷰가 찾은 실제 stage 거절 사례와 source별 증거를 별도 commit으로 묶는다. 작성·통합 `/root`, D1/D2 독립 읽기 리뷰 `/root/s3_independent_review`. [계약과 실행 분모](../contracts/dev3-module-boundaries.md#row-commit-s3)를 따른다. 전체 workspace·S1/S2 wrapper·완료 leaf 전수는 실행하지 않았다.
+
+### 구현과 단계 구분
+
+원 Row producer의 mandatory canonical replay를 거쳐, 봉인된 두 preparation 타입만 하나의 Commit Stage→Pending→durable→Drain→whole install→epoch/Q 공개 경로로 보낸다. Row는 일반 Row installer로 Commit하지 않는다. 같은 mutable ledger를 검산부터 capsule 종료까지 보유하며, 종료는 원 immutable Jobs after와 실제 TerminalReady 전체 cell·Status·ATT 부재·공개 Q를 검산한다. 실제 Row RootRetained의 table만 중복 제거해 epoch를 바꾸고 Catalog namespace epoch는 그대로 둔다. Cancel-only의 conservative write mask는 실제 변경 table 목록을 대체하지 않는다.
+
+메모리 보완은 실제 compact Row image(원 actor/status/order/count와 cut, frame, after)·24B completion 요약, 설치/공개 non-inline 분리, 원 backing을 빌리는 Drain proof, A의 C 호출 뒤 별도 mapper다. 고정 short65536/private425984/capsule512/A preflight6144/write11520과 기존 Commit/Progress charge는 유지한다. 원 source admission·durability/install proof를 새로 제조하지 않는다.
+
+Serializable 충돌로 MustAbort가 되었지만 durable actor가 Active인 빈 Row를 empty-abort가 잘못 거절하는 문제를 R04에서 찾았다. Row scope의 실제 empty 검산 뒤 원 RollbackStart→AbortEnd를 허용하고, Catalog 조건·이미 Aborting인 재시도·비어 있지 않은 거래 거절은 유지했다. S4 rollback·finish_aborted와 S5 Row read는 여전히 미공급이다.
+
+S3-b 독립 중간 구현 리뷰는 ACCEPT·필수 코드 수정0이다. 계약의 completion/publish carrier 설명 두 곳을 실제 타입에 맞춰 정정했다. 원 리뷰는 당시 미실행 항목을 최종 수용하지 않았으며 후속 결과는 아래에서 source별로 구분한다.
+
+### source별 실행과 원 실패
+
+원 로그·ELF hash·입력 hash·파일별 source manifest·선택 계획은 `artifacts/module-s3-20261031/`에 보존한다. 각 batch의 `execution-plan.json`은 실행 전에 selector와 유한 시간/출력 예산을 고정하고 첫 실패에서 중단한다. 중단 뒤 selector는 NOT_RUN이며 새 PASS로 세지 않는다. source/ELF별 상세 대응은 [실행 결과 JSON](../../tests/fixtures/dev3-module-c3/row-commit/execution-receipts.json)에 수합했다. JSON SHA-256 `4e5961eb5a604f5fd15121bf8f7bd8fe9209573da8eb62407f961d5aec505b20`. [선택 inventory](../../tests/fixtures/dev3-module-c3/row-commit/test-inventory.json)는 현재 분모이고, 각 과거 실행의 원 plan을 소급 작성한 것으로 취급하지 않는다.
+
+| 실행 | 실제 결과와 다음 diff |
+| --- | --- |
+| r1–r21 build | module 경로/가시성/lifetime 교정과 successful compile을 원 log별로 보존. build는 test case 실행이 아니다. 원 실패를 후속 compile PASS로 덮지 않는다 |
+| v1–v6 C01 | 각각 FAIL. 최초 Row 창 `[45118,14802,26880,9340]B`; 마지막 v6는 새 borrowed Catalog install 관측25844B>24620B. 기능 R01이 함께 계획됐어도 실행하지 않음 |
+| 자원 교정 | 실제4-target 준비·tail 반환 소유자·full A slack1920·State 검산·원 pin-release failure 상계를 유지. source/terminal leaf의 순차 호출과 physical/control/publication frame 중복을 분리. borrowed parent는 각 install arm에 포함. 임의 cap/charge 증액0 |
+| behavior1 | R01 두 격리수준, R02 빈/Cancel-only/동일 table 여러 root, R03 다섯 사전 거절, R06 partial write PASS. sync AfterError 시험은 FAIL: 앞선 adapter events를 지우지 않아 지정 occurrence가 맞지 않음 |
+| v7 | C01 memory/native PASS, 수정한 sync AfterError PASS. R04는 이미 사용한 Status를 재사용한 fixture WrongState로 FAIL; 원 fresh Status를 별도 할당하도록 교정 |
+| v8 | 공통 helper 인수 비용까지 포함한 C01 PASS. R04는 실제 충돌·MustAbort 재거절 뒤 empty-abort에서 FAIL. 위 빈 MustAbort 처리 제품 diff로 교정 |
+| v9 | 수정한 R04와 남은 신규11개·변경된 공통 Commit/Drain/A mapper 기존6개, 총17개 PASS. 원 결과를 보존하며 완료 항목을 통합 이유로 다시 실행하지 않음 |
+| native1 | 같은 ELF 두 별도 PID의 produce/restart PASS. 아래 범위의 실제 파일 I/O와 현재-build gate 증거 |
+| v10 | 새 finish/statement/handle 단언 및 실제 typed LiveCall의 C01 memory/native PASS. 기능 사례 반복0 |
+| 최종 리뷰 R06 공백 | 기존 Stale 사례는 prepare stamp 거절이며 실제 WAL stage의 Unchanged 복원이 아님을 독립 리뷰가 지적. 두 관측을 합격으로 혼동하지 않고 새 실제 stage Capacity 사례를 추가 |
+| v11 | 원 `stage_verified` Capacity predicate의 scoped cfg(test) fault1회, actual WAL Unchanged→Unstaged 복원/cancel·동일 capsule/전체 commit state/파일/페이지/DPT/pin/source/open 불변, fault 해제 뒤 정확1회 retry와 독립 Commit frame 일치 PASS. WAL_FILE_CAP까지 실제 파일을 채운 시험이 아님 |
+| r22/r23/r26/r27 | r22 Clippy의 unused import·test item 위치·census 표현·큰 반환값 lint FAIL을 보존. r23 및 새 stage seam 뒤 r26 engine lib/tests Clippy `-D warnings` PASS, r27 최종 lib-test compile PASS. 수정 Rust 파일 rustfmt 완료. 문서 검증/pre-push는 요청한 push가 없어 실행하지 않음 |
+
+### 자원 관측
+
+v8 memory/native: 공유20184/20192B, 고정 Commit `[39038,10690,24620,5228]B`, 실제 Row `[39036,10679,19556,5082]B`. stage 여유2B·Pending 여유11B다. 실제 A caller는 dynamic/frame-static 모두3024B이며 원1920B slack을 포함한다. Row Progress 검산+caller36790B≤44304B, transaction/statement handle census416/408B≤512B. compact RowImage440B, PreparedRow1264B, CommitEpochs48B. shared Catalog borrowed install 관측20234B≤24620B. 이는 소스의 타입·동시 보유 frame 상계이며 RSS/실측 stack이나 미래 caller의 합격을 뜻하지 않는다.
+
+v10의 실제 Preflight finish1658B+A 상계11520B≤44304B, statement end25030B≤44304B, helper 교정 뒤 Row lifecycle42089B≤44304B도 통과했다.
+
+`PreflightRow::finish`와 `finish_statement`는 기존 actual body를 사용한다. 실제 R01/R02의 source·gate·WAL 없음/slot·credit 정리를 검산하고 새 S3 census에서 finish·statement 비용을 함께 관측한다. 이미 완료된 S1/S2 기능 시험을 재실행한 증거로 세지 않는다.
+
+### native의 범위
+
+`native1` producer PID9985, restart PID9994, 같은 ELF `384e493ea532260568d395b9a728aa9ea28c432d809260fcbc1c5175d0af4d27`. ACK는 q2, complete/synced LSN17, WAL877399B다. 독립 stdlib model로 미리 고정한 Commit56712B의 SHA-256은 `5a2e224034872faa810d76813c997732dd13babef9253dc435a7ef3be3799dc3`; actual frame은 전체 byte로 일치했다. controller는17개 frame의 순서/길이/header·frame SHA를 검사하고, 바뀐 Row 경계15–17은 독립 literal hash와 비교했다. 앞선1–14 frame의 의미 전체를 새로 인수했다고 주장하지 않는다.
+
+별도 restart는 원 current-build Analysis/Unsupported, CallerMustResolve, database Unchanged, mutation0, entropy0으로 끝났고 namespace의 모든 파일 크기/hash가 producer 종료 뒤와 같았다. 두 process 모두 handles0·peak≤3·native fd_peak≤6·trace≤4MiB다. 실제 cloud filesystem의 결과이며 C4/S6 winner READY·전원 장애·공식 ext4 배포 인수는 아니다. 원 S3 이전 Row gate를 유지한다.
+
+### 최종 수합과 한계
+
+source별 최종 대응은 신규 memory 기능18개·새 census1개·변경된 기존 경로6개 selector PASS, native 별도2process PASS다. 이를 한 source에서 전체 재실행한 것으로 표시하지 않는다. 원 실행9개 FAIL(C01 6·sync fixture1·R04 fixture/제품2)과 각 batch의 NOT_RUN은 원 source에서 유지한다. 검사·cleanup 또는 단계 완료를 이유로 완료 시험을 반복하지 않았다.
+
+구현 checkpoint의 D1/D2 ACCEPT와 마지막 실제 WAL Capacity seam의 D2 ACCEPT·필수 수정0을 확인했다. 최종 문서/receipts까지 별도 agent가 읽기 대조하여 **S3 한정 D1/D2 ACCEPT·필수 수정0**으로 판정했다. 리뷰 중 코드 변경·빌드·시험 실행0이며 판정 원문은 `artifacts/module-s3-20261031/review-final.md`에 보존한다. S3 범위 밖의 S4 nonempty rollback·finish_aborted, S5 Row reads, C4/S6 Row winner READY recovery와 전체 M4/M5는 미완료다. `main` 병합·원격 push는 실행하지 않았으며 기존 `scripts/git-hooks` pre-push 설정을 보존한다.
+
+이번 build target `/tmp/xadb-s3-target`과 ELF를 제거했다(논리 파일 합계3,561,045,097B). 최종 ELF SHA-256 `d73b05b20fc50d15edc4047b1cce7d18dae65a63ebd1092d33b736c3660a0058` 및 source별 hash는 v11에 보존한다. 로그·결과·파일별 source manifest·독립 literal·native namespace는 남겼고 기존 증거는 삭제하지 않았다. 전체 artifact162파일 manifest `artifacts/module-s3-20261031/artifact-files.sha256`의 SHA-256은 `14c55399946475f53f8b9f86492532f09d46e2f5249d133b19bc075754f0547c`다. 실제 toolchain과 cleanup receipt도 그 manifest에 포함한다.

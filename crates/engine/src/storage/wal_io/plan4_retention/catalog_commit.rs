@@ -1,4 +1,4 @@
-//! Actual Catalog Commit continuation on the original pool and WAL runtime.
+//! Actual Catalog and Row Commit continuation on the original pool and WAL runtime.
 //! Immutable private install input survives Pending; no replay/control gate or
 //! content/version latch is held across the original WAL durability call.
 use super::super::*;
@@ -12,12 +12,16 @@ use crate::{
     transaction::concurrency::{InstallationKey, PageConcurrency},
 };
 
+#[path = "catalog_commit/prepared.rs"]
+mod prepared;
+pub(in super::super) use prepared::{CommitImage, CommitPreparation};
+
 const TARGETS: usize = 4;
 
 /// Only this adapter creates the input, immediately after the original
 /// CommitStageTargets has marked its actual WAL call as started.
-impl<'a, 'i, 'c, 's> CatalogCommitAttempt<'a, 'i, 'c, 's> {
-    pub(in super::super) fn into_parts(self) -> (&'a PreparedCatalog<'i, 'c, 's>, InstallationKey) {
+impl<'a, 'i, 'c, 's, P: CommitPreparation<'i, 'c, 's>> CatalogCommitAttempt<'a, 'i, 'c, 's, P> {
+    pub(in super::super) fn into_parts(self) -> (&'a P, InstallationKey) {
         (self.prepared, self.key)
     }
 }
@@ -53,14 +57,26 @@ impl<'c, 's> CatalogCommitInstalled<'c, 's> {
 }
 
 impl<'s, 'c, W: WriterNamespace> RetentionWriter<'_, '_, 's, 'c, '_, '_, '_, '_, '_, W> {
-    /// Prepare and commit inside one original source reservation. The private
-    /// preparation cannot escape between selection and the authentic stage.
+    /// Original raw-actor test adapter. Product callers enter through their
+    /// consuming Catalog/Row capsule and the private specialization below.
+    #[cfg(test)]
     pub(crate) fn catalog_commit(
         &mut self,
         owner: &mut Owner<'c, 's>,
         actor: crate::storage::transaction_record::TxnRef,
-        private: &mut [u8; crate::storage::semantic_catalog::PRIVATE_BYTES],
+        private: &mut [u8; 425_984],
     ) -> Result<Observation> {
+        self.commit_group::<PreparedCatalog>(owner, actor, private)
+    }
+
+    /// Prepare and commit inside one original source reservation. The private
+    /// preparation cannot escape between selection and the authentic stage.
+    pub(in super::super) fn commit_group<'i, P: CommitPreparation<'i, 'c, 's>>(
+        &mut self,
+        owner: &mut Owner<'c, 's>,
+        actor: crate::storage::transaction_record::TxnRef,
+        private: &'i mut [u8; crate::storage::semantic_catalog::PRIVATE_BYTES],
+    ) -> Result<P::Observation> {
         let storage = self.storage;
         let _unwind = storage.session_fence().unwind_guard();
         // Guardless checks precede admission; original deep health and ledger
@@ -116,7 +132,7 @@ impl<'s, 'c, W: WriterNamespace> RetentionWriter<'_, '_, 's, 'c, '_, '_, '_, '_,
         catalog_hook(self.pool.bound_core(), CatalogPoint::CommitPreparing);
         // A consuming match ends the preparation Result before entering the
         // continuation. actor/private remain charged in every writer window.
-        let result = match self.prepare_catalog_commit(owner, actor, private) {
+        let result = match P::prepare(self, owner, actor, private) {
             Ok(prepared) => {
                 #[cfg(test)]
                 catalog_hook(self.pool.bound_core(), CatalogPoint::CommitPrepared);
@@ -197,14 +213,14 @@ impl<'s, 'c, W: WriterNamespace> RetentionWriter<'_, '_, 's, 'c, '_, '_, '_, '_,
         merge(merge(result, source_cleanup), reopen(&mut gate))
     }
 
-    fn commit_admitted(
+    fn commit_admitted<'i, P: CommitPreparation<'i, 'c, 's>>(
         &mut self,
         owner: &mut Owner<'c, 's>,
-        prepared: PreparedCatalog<'_, 'c, 's>,
+        prepared: P,
         visibility: &visibility::BoundVisibility<'_, 'c, 's>,
         source: &mut source::OperationSourceAdmission<'_, '_, 'c, 's>,
         gate: &mut Option<crate::transaction::concurrency::TerminalReadGate<'c, 's>>,
-    ) -> Result<Observation> {
+    ) -> Result<P::Observation> {
         let storage = self.storage;
         {
             let prefix = storage
@@ -213,29 +229,43 @@ impl<'s, 'c, W: WriterNamespace> RetentionWriter<'_, '_, 's, 'c, '_, '_, '_, '_,
                 .map_err(|e| fatal(storage, RetentionPhase::Prepare, RetentionCause::Wal(e)))?;
             prepared.check(owner, self.pool, self.control, prefix)?;
         }
-        if prepared.targets().len() != TARGETS {
+        if !prepared.is_commit() || prepared.targets().len() != TARGETS {
             return Err(unchanged(
                 RetentionPhase::Prepare,
                 RetentionCause::Invariant,
             ));
         }
-        let q = commit_q(&prepared, storage.profile())?;
-        let epochs = visibility
-            .prepare_commit_epochs(&prepared, self.control, storage.profile(), q)
+        let q = prepared.commit_q(storage.profile())?;
+        let epochs = prepared
+            .epochs(visibility, self.control, storage.profile(), q)
             .map_err(|e| RetentionError {
                 phase: RetentionPhase::Prepare,
                 effect: e.effect,
                 cause: RetentionCause::Visibility(e),
             })?;
-        let (
-            prepared,
-            PendingCatalog {
-                pending,
-                wait,
-                key,
-                requirement,
-            },
-        ) = stage_catalog(storage, self.pool, self.control, owner, prepared)?;
+        let (image, staged) = stage_catalog(storage, self.pool, self.control, owner, prepared)?;
+        let publication = self.commit_staged(image, staged, q, source, gate)?;
+        self.publish_commit(visibility, source, epochs, publication)
+    }
+
+    /// This return ends the image, wait, Drain and installation frames before
+    /// publication. No post-install phase retains a full producer observation.
+    #[inline(never)]
+    fn commit_staged<'i, I: CommitImage<'i, 'c, 's>>(
+        &mut self,
+        prepared: I,
+        staged: PendingCatalog<'_, '_, 'c, 's, '_, '_>,
+        q: u64,
+        source: &mut source::OperationSourceAdmission<'_, '_, 'c, 's>,
+        gate: &mut Option<crate::transaction::concurrency::TerminalReadGate<'c, 's>>,
+    ) -> Result<CommitPublication<'c, 's, I::Observation>> {
+        let storage = self.storage;
+        let PendingCatalog {
+            mut pending,
+            wait,
+            key,
+            requirement,
+        } = staged;
         // Shrink to the fixed Pending window before readers may enter again.
         // Both steps follow the WAL stage, so any failure is fatal.
         source
@@ -265,12 +295,12 @@ impl<'s, 'c, W: WriterNamespace> RetentionWriter<'_, '_, 's, 'c, '_, '_, '_, '_,
         #[cfg(test)]
         catalog_hook(prepared.core(), CatalogPoint::Durable);
         let drained = pending
-            .drain_durable(&durable)
+            .drain_borrowed(&durable)
             .map_err(|e| fatal(storage, RetentionPhase::Install, RetentionCause::Frame(e)))?;
         // Drain excluded new readers and waited for admitted ones, which return
         // their loans first; growing into the install window cannot wait.
         source
-            .enter_commit_install(&self.commit_charges, &drained)
+            .enter_commit_install_borrowed(&self.commit_charges, &drained)
             .map_err(|e| {
                 fatal(
                     storage,
@@ -338,13 +368,9 @@ impl<'s, 'c, W: WriterNamespace> RetentionWriter<'_, '_, 's, 'c, '_, '_, '_, '_,
                 .install_dpt(dpt, &permit)
                 .map_err(|e| fatal(storage, RetentionPhase::Install, RetentionCause::Frame(e)))?;
         }
-        catalog_apply(
-            prepared.payload(),
-            self.control,
-            storage.profile(),
-            requirement,
-        )
-        .map_err(|e| fatal(storage, e.phase, e.cause))?;
+        prepared
+            .apply_control(self.control, storage.profile(), requirement)
+            .map_err(|e| fatal(storage, e.phase, e.cause))?;
         self.history
             .installed(requirement)
             .map_err(|e| fatal(storage, e.phase, e.cause))?;
@@ -368,6 +394,27 @@ impl<'s, 'c, W: WriterNamespace> RetentionWriter<'_, '_, 's, 'c, '_, '_, '_, '_,
         install
             .finish(installed)
             .map_err(|e| fatal(storage, RetentionPhase::Install, RetentionCause::Frame(e)))?;
+        Ok(CommitPublication {
+            frontier: visibility::InstalledFrontier::catalog(&completed),
+            durable,
+            observation: prepared.observation(),
+        })
+    }
+
+    #[inline(never)]
+    fn publish_commit<O: Copy>(
+        &mut self,
+        visibility: &visibility::BoundVisibility<'_, 'c, 's>,
+        source: &mut source::OperationSourceAdmission<'_, '_, 'c, 's>,
+        epochs: visibility::CommitEpochs,
+        publication: CommitPublication<'c, 's, O>,
+    ) -> Result<O> {
+        let storage = self.storage;
+        let CommitPublication {
+            frontier,
+            durable,
+            observation,
+        } = publication;
         // finish reopened reads. Shrink to the publication window; a read
         // admitted before this sees the install charge and may get Unchanged
         // Capacity, never a wait.
@@ -381,9 +428,9 @@ impl<'s, 'c, W: WriterNamespace> RetentionWriter<'_, '_, 's, 'c, '_, '_, '_, '_,
                 )
             })?;
         #[cfg(test)]
-        catalog_hook(prepared.core(), CatalogPoint::BeforePublish);
+        catalog_hook(self.pool.bound_core(), CatalogPoint::BeforePublish);
         visibility
-            .publish_catalog_epochs(visibility::InstalledFrontier::catalog(&completed), epochs)
+            .publish_catalog_epochs(frontier, epochs)
             .map_err(|e| {
                 fatal(
                     storage,
@@ -393,8 +440,15 @@ impl<'s, 'c, W: WriterNamespace> RetentionWriter<'_, '_, 's, 'c, '_, '_, '_, '_,
             })?;
         self.control.durable = Some(durable);
         self.control.pending = None;
-        Ok(prepared.observation())
+        Ok(observation)
     }
+}
+
+/// Consuming handoff from installation to publication, not a public authority.
+struct CommitPublication<'c, 's, O> {
+    frontier: visibility::InstalledFrontier<'c, 's>,
+    durable: DurableWal<'s>,
+    observation: O,
 }
 
 /// The actual stage result, retaining only the original pins and WAL bindings.
@@ -406,16 +460,24 @@ struct PendingCatalog<'u, 'b, 'c, 's, 'p, 'd> {
     requirement: WalRequirement<'s>,
 }
 
-fn stage_catalog<'i, 'u, 'b, 'a, 's, 'c, 'p, 'd, W: WriterNamespace>(
+fn stage_catalog<
+    'i,
+    'u,
+    'b,
+    'a,
+    's,
+    'c,
+    'p,
+    'd,
+    W: WriterNamespace,
+    P: CommitPreparation<'i, 'c, 's>,
+>(
     storage: &'s MutableStorageOwner<'_, '_, W>,
     pool: &'b SharedPool<'c, 's, 'p, 'd>,
     control: &mut control::RetentionLedger<'a, 'c, 's>,
     owner: &'u mut Owner<'c, 's>,
-    prepared: PreparedCatalog<'i, 'c, 's>,
-) -> Result<(
-    CatalogCommitImage<'i, 'c, 's>,
-    PendingCatalog<'u, 'b, 'c, 's, 'p, 'd>,
-)> {
+    prepared: P,
+) -> Result<(P::Image, PendingCatalog<'u, 'b, 'c, 's, 'p, 'd>)> {
     let requests: &[TargetRequest; TARGETS] = prepared
         .targets()
         .try_into()
@@ -437,7 +499,7 @@ fn stage_catalog<'i, 'u, 'b, 'a, 's, 'c, 'p, 'd, W: WriterNamespace>(
                 .matches_stamp(at, &stamp)
                 .map_err(|e| frame(RetentionPhase::Prepare, e))?;
             if prepared.after(at).is_some() {
-                if stamp.page_lsn.0 >= prepared.observation().header.lsn {
+                if stamp.page_lsn.0 >= prepared.header().lsn {
                     return Err(unchanged(
                         RetentionPhase::Prepare,
                         RetentionCause::Invariant,
@@ -470,6 +532,7 @@ fn stage_catalog<'i, 'u, 'b, 'a, 's, 'c, 'p, 'd, W: WriterNamespace>(
         match (TerminalWal { wal: storage.wal() }).stage_catalog(CatalogCommitAttempt {
             prepared: &prepared,
             key,
+            lifetimes: std::marker::PhantomData,
         }) {
             Ok(staged) => staged,
             Err(rejected) => {
@@ -499,12 +562,13 @@ fn stage_catalog<'i, 'u, 'b, 'a, 's, 'c, 'p, 'd, W: WriterNamespace>(
     let requirement = wait.requirement();
     // The exact staged requirement is retained before releasing any lock;
     // old ATT/descriptor/Jobs bytes remain stable during Pending.
-    catalog_mark_staged(&prepared, control, requirement)
+    prepared
+        .mark_staged(control, requirement)
         .map_err(|e| fatal(storage, e.phase, e.cause))?;
     let pending = stage
         .suspend(staged)
         .map_err(|e| fatal(storage, RetentionPhase::Stage, RetentionCause::Frame(e)))?;
-    let image = prepared.into_commit_image();
+    let image = prepared.into_image();
     Ok((
         image,
         PendingCatalog {
@@ -601,8 +665,12 @@ pub(in super::super) fn writer_window_sources() -> [usize; 4] {
 /// After install.finish returned content, version/admission and pins: the
 /// completion receipts, epochs and the Q publication with its conversion.
 fn publish_window_source_bytes() -> usize {
+    publish_window_for::<PreparedCatalog>()
+}
+
+fn publish_window_for<P: CommitPreparation<'static, 'static, 'static>>() -> usize {
     use std::mem::size_of;
-    let parent = size_of::<CatalogCommitImage<'_, '_, '_>>()
+    let parent = size_of::<P::Image>()
         + visibility::epoch_commit_carriers()
         + size_of::<WalRequirement<'_>>()
         + size_of::<InstallationKey>()
@@ -612,7 +680,7 @@ fn publish_window_source_bytes() -> usize {
         + size_of::<InstalledCommit<'_, '_>>()
         + size_of::<DurableWal<'_>>()
         + 8 * size_of::<&()>() // self, owner, storage, visibility, source, gate and call borrows
-        + 2 * size_of::<Result<Observation>>()
+        + 2 * size_of::<Result<P::Observation>>()
         + 2 * size_of::<Result<()>>()
         + 2 * size_of::<RetentionError>();
     // The frontier argument and the publication helper's packet, then the
@@ -636,15 +704,19 @@ fn pending_window_source_bytes() -> usize {
 
 /// [parent, WAL wait call, Drain call] of the Pending window.
 pub(in super::super) fn pending_window_parts() -> [usize; 3] {
+    pending_window_for::<PreparedCatalog>()
+}
+
+fn pending_window_for<P: CommitPreparation<'static, 'static, 'static>>() -> [usize; 3] {
     use std::mem::size_of;
-    let parent = size_of::<CatalogCommitImage<'_, '_, '_>>()
+    let parent = size_of::<P::Image>()
         + visibility::epoch_commit_carriers()
         + size_of::<WalRequirement<'_>>()
         + size_of::<InstallationKey>()
         + size_of::<crate::storage::session_fence::UnwindFence<'_>>()
         + size_of::<u64>() // q, prepared before stage
         + 8 * size_of::<&()>() // self, owner, storage, visibility, source, gate and call borrows
-        + 2 * size_of::<Result<Observation>>() // inner and outer returns
+        + 2 * size_of::<Result<P::Observation>>() // inner and outer returns
         + 2 * size_of::<RetentionError>()
         + size_of::<dirty_frame::PendingCommitTargets<'_, '_, '_, '_, '_, '_, TARGETS>>();
     // The WAL wait call alone, then the mapped handoff extracting the
@@ -689,17 +761,68 @@ impl CatalogCommitSourcePhases {
 }
 
 pub(in super::super) fn source_phases() -> CatalogCommitSourcePhases {
+    source_phases_for::<PreparedCatalog>(
+        super::catalog_live::catalog_control_source_bytes(),
+        visibility::epoch_transition_source_bytes(),
+    )
+}
+
+fn source_phases_for<P: CommitPreparation<'static, 'static, 'static>>(
+    control: usize,
+    epoch: usize,
+) -> CatalogCommitSourcePhases {
+    source_phases_with::<P>(
+        control,
+        epoch,
+        dirty_frame::commit_source_phases::<TARGETS>(),
+        std::mem::size_of::<
+            Result<dirty_frame::DrainedCommitTargets<'_, '_, '_, '_, '_, '_, TARGETS>>,
+        >(),
+        false,
+    )
+}
+
+#[cfg(test)]
+fn borrowed_source_phases_for<P: CommitPreparation<'static, 'static, 'static>>(
+    control: usize,
+    epoch: usize,
+) -> CatalogCommitSourcePhases {
+    use std::mem::size_of;
+    let mut physical = dirty_frame::commit_source_phases::<TARGETS>();
+    let parent = size_of::<dirty_frame::PendingCommitTargets<'_, '_, '_, '_, '_, '_, TARGETS>>();
+    let borrowed =
+        size_of::<dirty_frame::DrainedCommitBorrow<'_, '_, '_, '_, '_, '_, '_, TARGETS>>();
+    let old = size_of::<dirty_frame::DrainedCommitTargets<'_, '_, '_, '_, '_, '_, TARGETS>>();
+    physical.drain = parent + dirty_frame::borrowed_drain_source_observation::<TARGETS>();
+    physical.resume = physical.resume - old + parent + borrowed;
+    physical.install += parent;
+    source_phases_with::<P>(
+        control,
+        epoch,
+        physical,
+        size_of::<Result<dirty_frame::DrainedCommitBorrow<'_, '_, '_, '_, '_, '_, '_, TARGETS>>>(),
+        true,
+    )
+}
+
+fn source_phases_with<P: CommitPreparation<'static, 'static, 'static>>(
+    control: usize,
+    epoch: usize,
+    physical: dirty_frame::CommitSourcePhases,
+    mapped_drain: usize,
+    actual_borrowed: bool,
+) -> CatalogCommitSourcePhases {
     use std::mem::size_of;
     type Stage<'c, 's> = std::result::Result<
         (StagedCommit<'c, 's>, CatalogCommitWait<'c, 's>),
         CatalogStageError<'c, 's>,
     >;
     let stage_local = size_of::<PendingCatalog<'_, '_, '_, '_, '_, '_>>()
-        + size_of::<Result<(CatalogCommitImage<'_, '_, '_>, PendingCatalog<'_, '_, '_, '_, '_, '_>)>>()
-        + size_of::<CatalogCommitImage<'_, '_, '_>>()
+        + size_of::<Result<(P::Image, PendingCatalog<'_, '_, '_, '_, '_, '_>)>>()
+        + size_of::<P::Image>()
         + size_of::<[Option<&[u8; PAGE_BYTES]>; TARGETS]>() // extraction output
         + 6 * size_of::<&()>() // stage arguments and canonical target borrow
-        + size_of::<CatalogCommitAttempt<'_, '_, '_, '_>>()
+        + size_of::<CatalogCommitAttempt<'_, 'static, 'static, 'static, P>>()
         + size_of::<StagedCommit<'_, '_>>()
         + size_of::<CatalogCommitWait<'_, '_>>()
         + size_of::<Option<UnstagedCommit<'_, '_>>>()
@@ -709,7 +832,7 @@ pub(in super::super) fn source_phases() -> CatalogCommitSourcePhases {
     // discounted. Only the consuming stage boundary ends PreparedCatalog's
     // target/stamp arrays; its immutable install payload moves into the image.
     let retained = visibility::epoch_commit_carriers()
-        + size_of::<Observation>()
+        + size_of::<P::Observation>()
         + size_of::<WalRequirement<'_>>()
         + size_of::<InstallationKey>()
         + size_of::<CatalogCommitInstalled<'_, '_>>()
@@ -718,7 +841,7 @@ pub(in super::super) fn source_phases() -> CatalogCommitSourcePhases {
         + 2 * size_of::<InstalledCommit<'_, '_>>()
         + size_of::<DurableWal<'_>>()
         + size_of::<crate::storage::wal_io::WalPrefix>()
-        + 4 * size_of::<Result<Observation>>()
+        + 4 * size_of::<Result<P::Observation>>()
         + 8 * size_of::<Result<()>>()
         + 4 * size_of::<RetentionError>()
         + 20 * size_of::<&()>()
@@ -742,28 +865,37 @@ pub(in super::super) fn source_phases() -> CatalogCommitSourcePhases {
         + size_of::<[bool; TARGETS]>()
         + size_of::<Option<u64>>()
         + size_of::<[u64; 8]>();
-    let physical = dirty_frame::commit_source_phases::<TARGETS>();
-    let control = super::catalog_live::catalog_control_source_bytes();
     let bridge = terminal::catalog_source_bytes();
     let publication = history::runtime::source_bytes()
         .max(visibility::source_census().peak_leaf)
-        .max(visibility::epoch_transition_source_bytes())
+        .max(epoch)
         .max(bridge);
+    let installed = if actual_borrowed {
+        // The physical carrier and emptied Pending parent stay live. Their
+        // physical calls return before control/history/completion calls. The
+        // per-page locals are conservatively retained even outside that loop.
+        let parents =
+            size_of::<dirty_frame::CommitInstallTargets<'_, '_, '_, '_, '_, '_, TARGETS>>()
+                + size_of::<dirty_frame::PendingCommitTargets<'_, '_, '_, '_, '_, '_, TARGETS>>();
+        install
+            + physical.install.max(
+                parents
+                    + control
+                        .max(history::runtime::source_bytes())
+                        .max(terminal::catalog_source_bytes()),
+            )
+    } else {
+        physical.install + install.max(control).max(publication)
+    };
     CatalogCommitSourcePhases {
-        preflight: retained
-            + size_of::<PreparedCatalog<'_, '_, '_>>()
-            + root.max(control).max(publication),
+        preflight: retained + size_of::<P>() + root.max(control).max(publication),
         // Both mark_staged and bridge calls run while the stage target set is
         // retained. The stage closure includes its Pending success return.
-        stage: retained
-            + size_of::<PreparedCatalog<'_, '_, '_>>()
-            + stage_local
-            + physical.stage
-            + control.max(bridge),
+        stage: retained + size_of::<P>() + stage_local + physical.stage + control.max(bridge),
         // Original pins and all outer values survive the WAL call, but the
         // stage helper and its Result have returned before this phase starts.
         pending: retained
-            + size_of::<CatalogCommitImage<'_, '_, '_>>()
+            + size_of::<P::Image>()
             + physical.pending
             + size_of::<CatalogCommitWait<'_, '_>>()
             + bridge,
@@ -772,13 +904,10 @@ pub(in super::super) fn source_phases() -> CatalogCommitSourcePhases {
         // Result is counted in addition to the physical drain return layers.
         // Keep the installed physical closure until finish, including errors.
         install: retained
-            + size_of::<CatalogCommitImage<'_, '_, '_>>()
-            + (physical.drain
-                + size_of::<
-                    Result<dirty_frame::DrainedCommitTargets<'_, '_, '_, '_, '_, '_, TARGETS>>,
-                >())
-            .max(physical.resume)
-            .max(physical.install + install.max(control).max(publication)),
+            + size_of::<P::Image>()
+            + (physical.drain + mapped_drain)
+                .max(physical.resume)
+                .max(installed),
     }
 }
 
@@ -953,3 +1082,7 @@ mod tests {
         );
     }
 }
+
+#[cfg(test)]
+#[path = "catalog_commit/row_census.rs"]
+mod row_census;

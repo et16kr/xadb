@@ -56,9 +56,10 @@ struct CatalogStageError<'c, 's> {
     unstaged: Option<UnstagedCommit<'c, 's>>,
 }
 /// Actual input created only after the original core enters StageCallStarted.
-struct CatalogCommitAttempt<'a, 'i, 'c, 's> {
-    prepared: &'a PreparedCatalog<'i, 'c, 's>,
+struct CatalogCommitAttempt<'a, 'i, 'c, 's, P = PreparedCatalog<'i, 'c, 's>> {
+    prepared: &'a P,
     key: InstallationKey,
+    lifetimes: std::marker::PhantomData<(&'i (), &'c (), &'s ())>,
 }
 /// Actual whole page/control/history installation, without a public factory.
 struct CatalogCommitInstalled<'c, 's> {

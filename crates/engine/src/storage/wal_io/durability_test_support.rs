@@ -97,3 +97,37 @@ pub(super) fn before_wait<W: WriterNamespace>(session: &WalRuntime<'_, W>) {
         pause.release.recv_timeout(STEP).unwrap();
     }
 }
+
+// One thread's next physical stage exercises the original Capacity branch.
+// This cannot construct a requirement, change the slot/prefix, or supply an
+// UnstagedCommit. It is armed only after the S3 fixture finishes its setup.
+thread_local! {
+    static STAGE_CAPACITY_ONCE: std::cell::Cell<u8> = const { std::cell::Cell::new(0) };
+}
+pub(super) struct StageCapacityOnce(std::marker::PhantomData<std::rc::Rc<()>>);
+pub(super) fn stage_capacity_once() -> StageCapacityOnce {
+    STAGE_CAPACITY_ONCE.with(|state| {
+        assert_eq!(state.replace(1), 0);
+    });
+    StageCapacityOnce(std::marker::PhantomData)
+}
+impl StageCapacityOnce {
+    pub(super) fn hits(&self) -> u8 {
+        STAGE_CAPACITY_ONCE.with(|state| u8::from(state.get() == 2))
+    }
+}
+impl Drop for StageCapacityOnce {
+    fn drop(&mut self) {
+        STAGE_CAPACITY_ONCE.with(|state| state.set(0));
+    }
+}
+pub(super) fn take_stage_capacity_once() -> bool {
+    STAGE_CAPACITY_ONCE.with(|state| {
+        if state.get() == 1 {
+            state.set(2);
+            true
+        } else {
+            false
+        }
+    })
+}

@@ -308,7 +308,10 @@ impl<'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
                 }
             }
             if self.empty_actor_active(actor, transaction.lease.kind)? {
-                if transaction.phase.get() != Phase::Active {
+                // A Row serialization refusal dooms the capsule before any
+                // WAL effect. Its empty durable actor is still Active; perform
+                // the original RollbackStart before AbortEnd in that case.
+                if transaction.phase.get() != Phase::Active && !row_scope {
                     return Err(fail(transaction.lease.fence, RetentionCause::Invariant));
                 }
                 if row_scope {

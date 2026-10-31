@@ -360,6 +360,33 @@ pub(crate) fn entry_source_observation() -> (usize, usize, usize, usize) {
     (OWNER_SLOTS, waiting, guarded, returning)
 }
 
+/// S3 Drain also executes these State checks; they are not gate-only work.
+#[cfg(test)]
+pub(super) const fn state_validation_source_bytes() -> usize {
+    use std::mem::size_of;
+    let accounting = size_of::<std::slice::Iter<'_, OwnerSlot>>()
+        + size_of::<std::iter::Enumerate<std::slice::Iter<'_, OwnerSlot>>>()
+        + 2 * size_of::<(usize, &OwnerSlot)>()
+        + 5 * size_of::<&()>()
+        + 2 * size_of::<u16>()
+        + size_of::<[usize; 8]>()
+        + 8 * size_of::<bool>();
+    let installation = 2 * size_of::<Installation>()
+        + 2 * size_of::<Option<(InstallationKey, Mode)>>()
+        + 2 * size_of::<InstallationKey>()
+        + 2 * size_of::<Mode>()
+        + 2 * size_of::<std::iter::Enumerate<std::slice::Iter<'_, OwnerSlot>>>()
+        + size_of::<(usize, &OwnerSlot)>()
+        + size_of::<[usize; 8]>()
+        + 6 * size_of::<&()>()
+        + 8 * size_of::<bool>();
+    if accounting > installation {
+        accounting
+    } else {
+        installation
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

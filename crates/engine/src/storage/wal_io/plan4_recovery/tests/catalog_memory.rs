@@ -1244,3 +1244,6 @@ mod row_cancel;
 
 #[path = "catalog_memory/row_live.rs"]
 mod row_live;
+
+#[path = "catalog_memory/row_commit.rs"]
+mod row_commit;

@@ -9498,5 +9498,30 @@
     "remaining_supply": "MBC40-V09 (iv) writer entry floor (WRITER-PROGRESS-001); MBC10-V09 CatalogProgress writer as a V09 oracle; rollback and recovery-task V09 parts (S4, C4); actual MCI03-V02 run (S5); S3 finish body",
     "source_roots_changed": false,
     "artifact_manifest_sha256": "b703c69b94ef22a716b8347eab1062654c0e960f27f083cd23f434a56350e985"
+  },
+  "dev3_module_s3_row_commit": {
+    "status": "LOCAL_VERIFIED_REVIEWED",
+    "contract_ref": "dev3-module-boundaries.md#row-commit-s3",
+    "evidence_ref": "module-independence-survey-20261026.md#s3-row-commit",
+    "baseline_commit": "6ec2d3432344f2353e319c7a0eec1955d5a3420a",
+    "branch": "codex/s3-row-commit",
+    "paths": [
+      "crates/engine/src/storage/wal_io/plan4_apply/transaction/row.rs",
+      "crates/engine/src/storage/wal_io/plan4_retention/row_start/commit.rs",
+      "crates/engine/src/storage/wal_io/plan4_retention/catalog_commit/prepared.rs",
+      "crates/engine/src/storage/wal_io/plan4_retention/catalog_commit/row_census.rs",
+      "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_commit.rs",
+      "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_commit/native.rs",
+      "scripts/check_dev3_s3_native.py",
+      "tests/fixtures/dev3-module-c3/row-commit"
+    ],
+    "scope": "Original sealed Row Commit over shared Stage/Pending/durable/borrowed Drain/install/epochs/Q; actual A caller; checked capsule close; empty MustAbort cleanup; independent memory/native observers",
+    "validation": "new memory18 + census1 + changed shared6 selectors source-specific PASS; native2process PASS; r26 selected engine lib/tests Clippy PASS; original failures/NOT_RUN retained; final independent D1/D2 ACCEPT, required changes 0",
+    "remaining_supply": "S4 nonempty rollback/finish_aborted; S5 Row reads; C4/S6 Row winner READY recovery; full M4/M5",
+    "source_roots_changed": false,
+    "rollback": "Revert S3 closeout first, then S3 implementation; development fixtures are fresh and no published format changed",
+    "implementation_commit": "021959c7",
+    "receipt_manifest_sha256": "4e5961eb5a604f5fd15121bf8f7bd8fe9209573da8eb62407f961d5aec505b20",
+    "artifact_manifest_sha256": "14c55399946475f53f8b9f86492532f09d46e2f5249d133b19bc075754f0547c"
   }
 }

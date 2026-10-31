@@ -487,6 +487,27 @@ pub(crate) const fn call_source_bytes() -> usize {
         + 2 * size_of::<ConcurrencyError>()
 }
 
+/// S3 observation of begin_drain/wait_ready/abandon only. Preparation errors,
+/// CommitStage and Pending-creation return slots belong to completed calls.
+/// Keep both drain/install returns, state wait/cleanup and version-lock slots.
+#[cfg(test)]
+pub(crate) fn drain_call_source_observation() -> usize {
+    use std::mem::size_of;
+    super::read::state_validation_source_bytes()
+        + size_of::<PendingInstallation<'_, '_, '_>>()
+        + size_of::<DrainingInstallation<'_, '_, '_>>()
+        + size_of::<CommitInstalling<'_, '_, '_>>()
+        + 2 * size_of::<Result<DrainingInstallation<'_, '_, '_>>>()
+        + 2 * size_of::<Result<CommitInstalling<'_, '_, '_>>>()
+        + size_of::<std::sync::LockResult<(MutexGuard<'_, State>, std::sync::WaitTimeoutResult)>>()
+        + 2 * size_of::<Result<MutexGuard<'_, State>>>()
+        + 2 * size_of::<InstallationKey>()
+        + 4 * size_of::<ConcurrencyError>()
+        + size_of::<std::sync::TryLockResult<MutexGuard<'_, ()>>>()
+        + 12 * size_of::<&()>()
+        + size_of::<[usize; 8]>()
+}
+
 #[cfg(test)]
 #[path = "commit/tests.rs"]
 mod tests;

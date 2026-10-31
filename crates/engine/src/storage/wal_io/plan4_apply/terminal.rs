@@ -1,5 +1,6 @@
 //! Terminal receipts issued by the actual Catalog stage/durable/install chain.
 //! A physical requirement alone is never semantic Commit installation authority.
+use super::create_pair::catalog_commit::CommitPreparation;
 use super::{
     Binding, CatalogCommitAttempt, CatalogCommitInstalled, CatalogCommitWait, CatalogStageError,
     DurableCommit, DurableWal, InstalledCommit, StagedCommit, TerminalWal, UnstagedCommit,
@@ -29,15 +30,15 @@ impl<'s, W: WriterNamespace> TerminalWal<'s, '_, W> {
     /// Only the actual adapter can create `attempt`, after the original core
     /// has entered StageCallStarted. The unchanged receipt is constructed in
     /// exactly the branch returning the original WAL stage's Unchanged error.
-    pub(super) fn stage_catalog<'c>(
+    pub(super) fn stage_catalog<'i, 'c, P: CommitPreparation<'i, 'c, 's>>(
         &self,
-        attempt: CatalogCommitAttempt<'_, '_, 'c, 's>,
+        attempt: CatalogCommitAttempt<'_, 'i, 'c, 's, P>,
     ) -> std::result::Result<
         (StagedCommit<'c, 's>, CatalogCommitWait<'c, 's>),
         CatalogStageError<'c, 's>,
     > {
         let (prepared, key) = attempt.into_parts();
-        if prepared.operation() != crate::storage::semantic_catalog::Operation::Commit
+        if !prepared.is_commit()
             || !std::ptr::eq(prepared.fence(), &self.wal.fenced)
             || !prepared.core().uses_fence(&self.wal.fenced)
         {
@@ -48,7 +49,7 @@ impl<'s, W: WriterNamespace> TerminalWal<'s, '_, W> {
         }
         let requirement = match self.wal.stage_verified_required(
             prepared.prefix(),
-            prepared.observation().header,
+            prepared.header(),
             prepared.frame(),
         ) {
             Ok(requirement) => requirement,

@@ -1,0 +1,94 @@
+{
+  "contract": "devdoc/contracts/dev3-module-boundaries.md#row-commit-s3",
+  "scope": "S3 only; historical per-run plans and failures remain authoritative",
+  "cases": [
+    {
+      "id": "S3-R01",
+      "selector_suffix": "s3_r01_serializable_insert_commit_matches_independent_frame"
+    },
+    {
+      "id": "S3-R01",
+      "selector_suffix": "s3_r01_read_committed_insert_commit_matches_independent_frame"
+    },
+    {
+      "id": "S3-R02",
+      "selector_suffix": "s3_r02_empty_cancel_and_duplicate_table_roots"
+    },
+    {
+      "id": "S3-R03",
+      "selector_suffix": "s3_r03_scope_foreign_capacity_reserved_and_aborting_refusals"
+    },
+    {
+      "id": "S3-R06",
+      "selector_suffix": "s3_r06_partial_write_fences_without_ack"
+    },
+    {
+      "id": "S3-R06",
+      "selector_suffix": "s3_r06_sync_after_error_fences_without_ack"
+    },
+    {
+      "id": "S3-R04",
+      "selector_suffix": "s3_r04_serializable_same_table_requires_rollback"
+    },
+    {
+      "id": "S3-R04",
+      "selector_suffix": "s3_r04_serializable_other_table_commits"
+    },
+    {
+      "id": "S3-R04",
+      "selector_suffix": "s3_r04_read_committed_same_table_commits"
+    },
+    {
+      "id": "S3-R02",
+      "selector_suffix": "s3_r02_cancel_statement_can_empty_abort"
+    },
+    {
+      "id": "S3-R03",
+      "selector_suffix": "s3_r03_active_statement_is_before_busy"
+    },
+    {
+      "id": "S3-R05",
+      "selector_suffix": "s3_r05_commit_replays_divergent_forward_before_stage"
+    },
+    {
+      "id": "S3-R06",
+      "selector_suffix": "s3_r06_stale_preparation_returns_same_capsule_then_retry"
+    },
+    {
+      "id": "S3-R06",
+      "selector_suffix": "s3_r06_partial_install_is_fatal"
+    },
+    {
+      "id": "S3-R06",
+      "selector_suffix": "s3_r06_before_publication_is_fatal"
+    },
+    {
+      "id": "S3-R06",
+      "selector_suffix": "s3_r06_cleanup_failure_is_fatal"
+    },
+    {
+      "id": "S3-R07",
+      "selector_suffix": "s3_r07_pending_full_read_drain_flusher_and_old_q"
+    },
+    {
+      "id": "S3-C01",
+      "selector_suffix": "s3_c01_row_commit_windows_and_actual_a_caller_fit_fixed_charges"
+    },
+    {
+      "id": "S3-N01",
+      "selector_suffix": "s3_n01_native_worker",
+      "ignored_worker": true,
+      "controller": "scripts/check_dev3_s3_native.py",
+      "phases": [
+        "produce",
+        "restart"
+      ]
+    },
+    {
+      "id": "S3-R06",
+      "selector_suffix": "s3_r06_actual_wal_capacity_restores_unstaged_then_retries",
+      "fault": "scoped cfg(test) one-shot at original WAL Capacity predicate; not a full-file limit test",
+      "retry_count": 1
+    }
+  ]
+}
