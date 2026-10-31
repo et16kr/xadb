@@ -1268,3 +1268,6 @@ mod row_recovery;
 mod catalog_progress_v09;
 #[path = "catalog_memory/row_join.rs"]
 mod row_join;
+
+#[path = "catalog_memory/row_literal.rs"]
+mod row_literal;

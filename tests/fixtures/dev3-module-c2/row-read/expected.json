@@ -1,0 +1,45 @@
+{
+  "canonical_sha256": "fae2df78d78985674f9e83253255b062c3bbee012bc876f26e4342520ae04b38",
+  "case": "MCB05-L01",
+  "files": {
+    "after-jobs.bin": {
+      "bytes": 16384,
+      "sha256": "f5627aa6bf03b8b05c068f99d3405624fad788d64fbda3557307d319128356df"
+    },
+    "after-leaf.bin": {
+      "bytes": 16384,
+      "sha256": "0c3689d98f178c24eb75ff3276bbed2ee7bb410ca38103a00d6708d1ee4e8ff4"
+    },
+    "after-root.bin": {
+      "bytes": 16384,
+      "sha256": "32e2fe6450e9b2fe0cbf07707e6a568cf6d193b6f5383365240e979f3fe49a40"
+    },
+    "after-status.bin": {
+      "bytes": 16384,
+      "sha256": "8371f123e181f5bc9d4c437a7b51282f84a24f2c9dd350ef07b577c7d14f5162"
+    },
+    "after-undo.bin": {
+      "bytes": 16384,
+      "sha256": "801bbcfb6457e6e86916422054ef035475038c644786723d7cd600ee2b954cb8"
+    },
+    "canonical.bin": {
+      "bytes": 13,
+      "sha256": "fae2df78d78985674f9e83253255b062c3bbee012bc876f26e4342520ae04b38"
+    },
+    "forward-frame.bin": {
+      "bytes": 91497,
+      "sha256": "0ee305722bff97a71161e2111bb7a15059b3a35b8a941c603a45e2fc5de81043"
+    }
+  },
+  "forward_lsn": 16,
+  "pages": {
+    "after-jobs.bin": 2,
+    "after-leaf.bin": 13,
+    "after-root.bin": 1,
+    "after-status.bin": 11,
+    "after-undo.bin": 14
+  },
+  "reserve_lsn": 15,
+  "row": 1,
+  "value": 7
+}
