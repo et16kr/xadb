@@ -1,0 +1,322 @@
+{
+ "schema": "xadb-module-row-insert-driver-v1",
+ "revision": "r4",
+ "source_kind": "C0_ONLY",
+ "code_commit": "the commit that adds this manifest (code and manifest committed together; parent f2f1d4c7198846f5086b67de83a6914e3a6e9828)",
+ "base_commit": "49a75783cb22fdf959611013c5d6e85846e9ec13",
+ "registration": "C0-only sub-family MCA00-D01..14; selector path storage::row::insert::driver::tests::mca00_dNN_*; not counted toward MCA00-V01..06 or MCA01-05 (contract 9.1 registration at integration)",
+ "scope": "A INSERT statement driver over the C0 Row write boundary through private traits. insert_statement runs rows and finishes a fully applied statement; a statement with applied rows is handed back RollbackRequired inside PendingRollback<S>, whose private fields allow only start_statement_rollback (start_full_rollback for a transaction from a conflicting commit), release by rolled_back() after the rollback started from it finished, or drop into C's fence; the rollback is caller-driven (start -> rollback_step... -> finish_rollback -> rolled_back -> finish_statement/finish_aborted). Runtime cases use test-only literal stand-ins (call log, row high-water, actor chain, statement mark, scripted refusals); A's pure encode_input runs in the validation stand-in; expected bytes/digests/frame lengths are independent literals from make_driver_literals.py. Live entries are compile-checked only (gap G2).",
+ "status": "FROZEN_INPUTS_NOT_EXECUTION_EVIDENCE",
+ "review_fixes": {
+  "ADV1": "statement atomicity in the type: After::RollbackRequired carries PendingRollback<H> (private handle + progress Required/Started/Finished); start_statement_rollback/start_full_rollback take &mut PendingRollback and return StartedRollback<'r, K>, whose successful finish alone marks it Finished; rolled_back() yields the handle only then; a second start is refused without a C call (OrderMismatch; must-resolve after an abandoned or fenced start). A compile-fail probe is impractical for crate-private items, so the guarantee is documented on the type and D14 tests every reachable path.",
+  "ADV2": "finish_aborted: C's RollbackRequired after a finished full rollback maps to MustResolve(Some(transaction)) with must_resolve, never After::RollbackRequired (no second full RollbackStart); documented under G5; D13 asserts it."
+ },
+ "budget": {
+  "check_seconds": 900,
+  "build_seconds": 900,
+  "case_seconds": 30,
+  "total_seconds": 2400
+ },
+ "order": [
+  "RUSTFMT_CHECK",
+  "DIFF_CHECK",
+  "BUILD",
+  "RUNTIME",
+  "CHECK"
+ ],
+ "static": [
+  {
+   "id": "RUSTFMT_CHECK",
+   "command": [
+    "rustfmt",
+    "--edition",
+    "2024",
+    "--check",
+    "crates/engine/src/storage/row/insert.rs",
+    "crates/engine/src/storage/row/insert/driver.rs",
+    "crates/engine/src/storage/row/insert/driver/live.rs",
+    "crates/engine/src/storage/row/insert/driver/tests.rs"
+   ],
+   "pass": "exit 0, no diff"
+  },
+  {
+   "id": "DIFF_CHECK",
+   "command": [
+    "git",
+    "diff",
+    "--check",
+    "49a7578..HEAD"
+   ],
+   "pass": "exit 0, no output"
+  }
+ ],
+ "compiler": [
+  {
+   "id": "BUILD",
+   "command": [
+    "cargo",
+    "test",
+    "-p",
+    "xadb-engine",
+    "--lib",
+    "--no-run",
+    "--locked",
+    "--offline",
+    "--message-format=json"
+   ],
+   "env": {
+    "CARGO_TARGET_DIR": "<scratch>/n2-target-r4 (fixed git-archive export of HEAD)"
+   },
+   "pass": "exit 0, 0 warnings; ELF = compiler-artifact with target.name engine; record sha256"
+  },
+  {
+   "id": "CHECK",
+   "command": [
+    "cargo",
+    "check",
+    "-p",
+    "xadb-engine",
+    "--all-targets",
+    "--all-features",
+    "--locked",
+    "--offline"
+   ],
+   "env": {
+    "CARGO_TARGET_DIR": "<scratch>/n2-target-r4"
+   },
+   "pass": "exit 0 and 0 warnings; the only compile evidence for driver/live.rs against the actual C0 types"
+  }
+ ],
+ "runtime": {
+  "command": [
+   "timeout",
+   "30",
+   "<ELF>",
+   "--exact",
+   "<selector>",
+   "--test-threads=1",
+   "--nocapture"
+  ],
+  "env": {
+   "RUST_MIN_STACK": "33554432"
+  },
+  "rule": "each selector once; on failure keep the log, fix in a new frozen round, rerun only failing/affected selectors and record both runs",
+  "deviation_note": "--nocapture is part of the frozen command so D12 prints its numbers"
+ },
+ "runtime_tests": [
+  {
+   "selector": "storage::row::insert::driver::tests::mca00_d01_one_row_statement_reserves_produces_applies_and_finishes",
+   "contract_case": "MCA00-D01",
+   "change": "changed",
+   "reason": "test text unchanged; executes insert_statement, whose source changed (the rows-applied branch now wraps the statement in PendingRollback) and whose return type DriveError/After changed",
+   "oracle": "exact call log Check, Preflight, ValidationLane, Validate, Reserve(7), ProducerLane(7), Forward(7), Prepare(7), Apply(7), FinishStatement; RowInputPlan(22, epoch1, R1 sha) and RowProposal(Forward, 91506, 5, roles); candidate bytes = R1 literal and the loan tail untouched",
+   "expected": "PASS"
+  },
+  {
+   "selector": "storage::row::insert::driver::tests::mca00_d02_rows_take_one_reservation_at_a_time",
+   "contract_case": "MCA00-D02",
+   "change": "changed",
+   "reason": "test text unchanged; executes insert_statement, whose source changed (the rows-applied branch now wraps the statement in PendingRollback) and whose return type DriveError/After changed",
+   "oracle": "three rows, each Reserve after the previous Apply; plans R1/R2/R3 and Forward 91506/91630/91633",
+   "expected": "PASS"
+  },
+  {
+   "selector": "storage::row::insert::driver::tests::mca00_d03_statement_and_arguments_are_checked_before_any_c_call",
+   "contract_case": "MCA00-D03",
+   "change": "changed",
+   "reason": "test text unchanged; executes insert_statement, whose source changed (the rows-applied branch now wraps the statement in PendingRollback) and whose return type DriveError/After changed",
+   "oracle": "ended statement wins over bad arguments (WrongState, Census, log [Check]); empty rows, 0 values, 33 values, slot mismatch -> InvalidInput Returned with log [Check]; loan untouched",
+   "expected": "PASS"
+  },
+  {
+   "selector": "storage::row::insert::driver::tests::mca00_d04_value_rejections_release_the_preflight_without_reserve",
+   "contract_case": "MCA00-D04",
+   "change": "changed",
+   "reason": "test text unchanged; RollbackRequired now carries PendingRollback and the roll_back_statement helper starts from &mut pending and finishes the handle rolled_back() released",
+   "oracle": "type/null/L2049/leaf-space rejections finish the preflight without Reserve; L2048 and 206 free bytes pass; row-2 rejection -> RollbackRequired with slots [7,None], no rollback call by the driver; caller rollback: RollbackStart, one CLR (91298), Next, RollbackFinish, FinishStatement",
+   "expected": "PASS"
+  },
+  {
+   "selector": "storage::row::insert::driver::tests::mca00_d05_c_refusals_keep_busy_capacity_unsupported_distinct",
+   "contract_case": "MCA00-D05",
+   "change": "changed",
+   "reason": "test text unchanged; executes insert_statement, whose source changed (the rows-applied branch now wraps the statement in PendingRollback) and whose return type DriveError/After changed",
+   "oracle": "preflight Busy, validation lane Unsupported, reserve Capacity/Unsupported/Busy each released, Returned and distinct; failed FinishPreflight kept as the one cleanup",
+   "expected": "PASS"
+  },
+  {
+   "selector": "storage::row::insert::driver::tests::mca00_d06_failures_after_reserve_cancel_the_one_reservation",
+   "contract_case": "MCA00-D06",
+   "change": "changed",
+   "reason": "test text unchanged; executes insert_statement, whose source changed (the rows-applied branch now wraps the statement in PendingRollback) and whose return type DriveError/After changed",
+   "oracle": "lane Busy, producer error, prepare Unsupported, apply Busy (Reopen then Cancel) each cancel the one reservation; Returned",
+   "expected": "PASS"
+  },
+  {
+   "selector": "storage::row::insert::driver::tests::mca00_d07_failed_row_after_applied_rows_rolls_back_to_the_mark",
+   "contract_case": "MCA00-D07",
+   "change": "changed",
+   "reason": "test text unchanged; RollbackRequired now carries PendingRollback and the roll_back_statement helper starts from &mut pending and finishes the handle rolled_back() released",
+   "oracle": "row 3 apply Busy -> Reopen, Cancel, RollbackRequired with slots [7,8,None]; caller rollback CLRs rows 8 then 7 (91422, 91426), keeps prior row 5, finish, finish_statement",
+   "expected": "PASS"
+  },
+  {
+   "selector": "storage::row::insert::driver::tests::mca00_d08_unsupported_c0_wrappers_propagate_unchanged",
+   "contract_case": "MCA00-D08",
+   "change": "changed",
+   "reason": "ADV1: starts borrow &mut PendingRollback; a refused start leaves the pending withheld; the full rollback start now comes from a conflicting commit (log Commit, Commit, full)",
+   "oracle": "preflight Unsupported Returned; RollbackStart Unsupported starts nothing and only the start is retried; next Unsupported -> Next(error) and the same rollback steps on; finish Unsupported -> the same rollback back, finished again; commit Before -> Returned; full rollback start Unsupported -> refused",
+   "expected": "PASS"
+  },
+  {
+   "selector": "storage::row::insert::driver::tests::mca00_d09_fatal_and_unreleased_reservations_stop_all_calls",
+   "contract_case": "MCA00-D09",
+   "change": "changed",
+   "reason": "ADV1: rollback starts borrow &mut PendingRollback",
+   "oracle": "row path Fatal/CallerMustResolve and a refused Cancel stop all calls (MustResolve(Some)); validation lane CallerMustResolve -> DropPreflight, no FinishPreflight; rollback next/ClrLane/ClrPrepare/ClrApply Fatal -> MustResolve with no later call; Fatal finish -> no drop",
+   "expected": "PASS"
+  },
+  {
+   "selector": "storage::row::insert::driver::tests::mca00_d10_rollback_stops_hand_back_the_same_rollback_or_task",
+   "contract_case": "MCA00-D10",
+   "change": "changed",
+   "reason": "ADV1: starts borrow the pending; finish_statement takes the statement rolled_back() released",
+   "oracle": "ClrLane Before, CLR producer error, ClrPrepare Before, ClrApply Before (reopen) -> Task with the same task, retry_task then Complete, one RollbackStart; next Busy -> Next and the same rollback steps on; finish Busy -> the same rollback; FlushRequired -> Flush(0x4d2) with log [start, Next] and nothing dropped",
+   "expected": "PASS"
+  },
+  {
+   "selector": "storage::row::insert::driver::tests::mca00_d11_commit_and_full_abort_close_the_transaction",
+   "contract_case": "MCA00-D11",
+   "change": "changed",
+   "reason": "ADV1: commit RollbackRequired hands back PendingRollback<transaction>; finish_aborted takes the released transaction; the partway case starts from a conflicting commit",
+   "oracle": "commit Ok 42; RollbackRequired -> RollbackRequired(tx), caller full rollback CLR 91422/91298, finish, finish_aborted; Rejected Closed, Fatal MustResolve(None); full rollback stopped at row 5 apply after row 7 -> same task retried, nothing restarts",
+   "expected": "PASS"
+  },
+  {
+   "selector": "storage::row::insert::driver::tests::mca00_d12_driver_frames_stay_within_the_driver_source_bound",
+   "contract_case": "MCA00-D12",
+   "change": "changed",
+   "reason": "ADV1: StartedRollback wraps C rollback (CLR path) and After grew (INSERT path); compile-time probe before freezing: live INSERT 9835, live CLR 7184, stand-in INSERT 4843, stand-in CLR 3384",
+   "oracle": "live/stand-in inventories <= 12288; 12288 + max(A validation, A producer) <= 65536; machine depth printed only. Probe: live INSERT 9835, live CLR 7184, stand-in INSERT 4843, stand-in CLR 3384",
+   "expected": "PASS"
+  },
+  {
+   "selector": "storage::row::insert::driver::tests::mca00_d13_a_finished_rollback_leaves_only_the_finish_to_retry",
+   "contract_case": "MCA00-D13",
+   "change": "changed",
+   "reason": "ADV2: finish_aborted RollbackRequired after a finished full rollback -> MustResolve(Some(transaction)) with no second RollbackStart; ADV1: transactions come from a conflicting commit",
+   "oracle": "finish_statement Busy after a finished rollback -> FinishPending, retry finish_statement only (one RollbackStart); same after a fully applied INSERT; finish_statement Fatal -> MustResolve(None) with and without a rollback; finish_aborted Unsupported after a full rollback -> FinishPending, retry finish_aborted only; finish_aborted RollbackRequired after the finished full rollback -> failure FinishAborted (Finalize, SerializationConflict, Unchanged), must_resolve, MustResolve(Some(LiteralTransaction(6))), log Commit, full, CLR row 5, Next, RollbackFinish, FinishAborted",
+   "expected": "PASS"
+  },
+  {
+   "selector": "storage::row::insert::driver::tests::mca00_d14_a_rollback_required_handle_is_released_only_by_its_finished_rollback",
+   "contract_case": "MCA00-D14",
+   "change": "new",
+   "reason": "ADV1: PendingRollback typestate, every reachable path",
+   "oracle": "withheld before a start, after an abandoned start (Next stop then drop: log start, Next, DropRollback) and after a Fatal rollback finish; a second start refused (RollbackStart, OrderMismatch, no C call), must-resolve after an abandoned/fenced start and not after a finished one; released after the finished rollback and finish_statement Ok; the same for a conflicting commit's transaction (log Commit, full, CLR rows 7 and 5, ClrReopen(5), DropRollback)",
+   "expected": "PASS"
+  }
+ ],
+ "retired": [
+  {
+   "selector": "storage::row::insert::driver::tests::mca00_d10_rollback_stops_without_retry_and_returns_the_statement",
+   "reason": "R2: it asserted drop-and-restart of a started rollback; replaced by mca00_d10_rollback_stops_hand_back_the_same_rollback_or_task"
+  }
+ ],
+ "not_run": [
+  {
+   "id": "LIVE_RUNTIME",
+   "reason": "C0 Row write/rollback bodies return Unchanged Unsupported and nothing issues a CheckedTable (G2)"
+  },
+  {
+   "selector": "storage::row::insert::group_tests::mca00_v06_*",
+   "reason": "A's producer literals; producer code unchanged"
+  }
+ ],
+ "input_files": {
+  "crates/engine/src/storage/row/insert.rs": {
+   "bytes": 14444,
+   "sha256": "82467fd8b3c05675c41dfa1df5685b8deda4406e71bca35e50ee5a7af544a779"
+  },
+  "crates/engine/src/storage/row/insert/driver.rs": {
+   "bytes": 33259,
+   "sha256": "0e6c8834cc2ddd0d2bfec437d6124f54c2d95edd66b4c63cc8ef48a8e703fee7"
+  },
+  "crates/engine/src/storage/row/insert/driver/live.rs": {
+   "bytes": 15672,
+   "sha256": "0c70febcae35cc3b9be9b03d317534e131b5d9986f785471484d6aca035dd860"
+  },
+  "crates/engine/src/storage/row/insert/driver/tests.rs": {
+   "bytes": 77618,
+   "sha256": "dba7fa2e50d5c1fe558d1f32e0a8c5e13706360fb3b537756022b79354fe17bd"
+  },
+  "tests/fixtures/module-row-insert/make_driver_literals.py": {
+   "bytes": 1017,
+   "sha256": "8cfa18a1548550584982a9e51d46e56660ea17ff3c3490dd776d7450d5ada5a6"
+  },
+  "tests/fixtures/module-row-insert/driver-literals.txt": {
+   "bytes": 1239,
+   "sha256": "9014973650251183aa5bc8dc2e4848e6da9db756a634501d062bb38c777114ff"
+  },
+  "tests/fixtures/module-row-insert/driver-manifest-r1.txt": {
+   "bytes": 2934,
+   "sha256": "a9ebcd36f0c5058429b1bc9a3aab000f3b8136ff2db4ec5bf7553f9d4f6b8308"
+  },
+  "tests/fixtures/module-row-insert/driver-manifest-r2.txt": {
+   "bytes": 3301,
+   "sha256": "5e9694f76357f53542a2dbe9cb21bff039c8f321a5e7847f3c3c23a2bd99e878"
+  },
+  "tests/fixtures/module-row-insert/driver-manifest-r3.json": {
+   "bytes": 16324,
+   "sha256": "289269aaf035f9acbac2ae51a179242e62198d8cbec47bb5a85f16e895229926"
+  },
+  "Cargo.lock": {
+   "bytes": 10115,
+   "sha256": "179b3f55900a130fcb8d37887130de7868b75b8a7e634b496922d7ead1bef2ef"
+  }
+ },
+ "consumed_boundary": {
+  "crates/engine/src/storage/wal_io/plan4_apply/row.rs": {
+   "bytes": 3342,
+   "sha256": "9271f8499a9ab839401af67826f218bcc2acccad119dd142d681d08084cfa5b5"
+  },
+  "crates/engine/src/storage/wal_io/plan4_apply/row/write.rs": {
+   "bytes": 6847,
+   "sha256": "25e91ef67a78d0770490bcbf710801667101987c7beb52419c58c2ab7ee02e5c"
+  },
+  "crates/engine/src/storage/wal_io/plan4_apply/row/rollback.rs": {
+   "bytes": 5688,
+   "sha256": "fdce9a371415312095d3d8ebcadb990bee475a605578910fa3c9251411011b93"
+  },
+  "crates/engine/src/storage/wal_io/plan4_apply/transaction.rs": {
+   "bytes": 35528,
+   "sha256": "62de8a5c2c3b47f5e7c05607a52a60e329d341ccd7e0fa581fc8b6416cc36b50"
+  }
+ },
+ "history": [
+  {
+   "revision": "r1",
+   "manifest": "tests/fixtures/module-row-insert/driver-manifest-r1.txt",
+   "manifest_sha256": "a9ebcd36f0c5058429b1bc9a3aab000f3b8136ff2db4ec5bf7553f9d4f6b8308",
+   "commit": "582ad346a2bbc796504cb09b56ccff05aeea422d",
+   "result": "BUILD exit 0 / 0 warnings; ELF sha256 87ab500ecffbe9c160067d48339672ff3cb8d1d0664dc230c8a7caed3b1c9383; D01-D11 PASS once each; D12 FAIL (exit 101: debug machine stack CLR 17440 > source bound 16384)",
+   "deviation": "runs added --nocapture, which the frozen r1 run line does not show"
+  },
+  {
+   "revision": "r2",
+   "manifest": "tests/fixtures/module-row-insert/driver-manifest-r2.txt",
+   "manifest_sha256": "5e9694f76357f53542a2dbe9cb21bff039c8f321a5e7847f3c3c23a2bd99e878",
+   "commit": "881aa646f645cb2d5e92913f703687d53357522f",
+   "result": "BUILD exit 0 / 0 warnings; ELF sha256 f47ed277fe9ff5b4c0b6dd2f8bd38edf4dedbdd62ab41abebf9fa1be707c1ec2; D01-D12 PASS once each; CHECK all-targets all-features exit 0 / 0 warnings; rustfmt and diff check clean",
+   "deviation": "D01-D11 were rerun although only a constant, a doc comment and D12 changed"
+  },
+  {
+   "revision": "r3",
+   "manifest": "tests/fixtures/module-row-insert/driver-manifest-r3.json",
+   "manifest_sha256": "289269aaf035f9acbac2ae51a179242e62198d8cbec47bb5a85f16e895229926",
+   "commit": "f2f1d4c7198846f5086b67de83a6914e3a6e9828 (code 6db722e64a0e070caa509e6e14ea2ec4db622736)",
+   "result": "BUILD exit 0 / 0 warnings; ELF sha256 febb89713f7517a6614df3e0ba210652ab0272438b162029663dc4bd087de7db; D01-D13 PASS once each; CHECK all-targets all-features exit 0 / 0 warnings; rustfmt and diff check clean; literals reproduced",
+   "deviation": "none"
+  }
+ ]
+}

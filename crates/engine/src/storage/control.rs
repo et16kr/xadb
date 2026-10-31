@@ -202,6 +202,26 @@ impl Profile {
         [4, 16, 64][self.id as usize - 1] << 20
     }
 }
+#[cfg(test)]
+impl Profile {
+    /// Test expectation assembled field by field from pinned literals, so a
+    /// test never derives its expected value from the decoder it checks.
+    pub(crate) const fn literal(
+        namespace: Namespace,
+        generation: u64,
+        id: u32,
+        format: u16,
+        digest: [u8; 32],
+    ) -> Self {
+        Self {
+            namespace,
+            generation,
+            id,
+            format,
+            digest,
+        }
+    }
+}
 
 fn profile_prefix(id: u32, format: u16) -> Result<[u8; 188]> {
     if !matches!(format, 1..=3) {
@@ -264,7 +284,9 @@ pub(crate) fn encode_profile(spec: ProfileSpec, output: &mut [u8]) -> Result<&[u
     encode_profile_format(spec, 1, output)
 }
 
-/// Current Catalog CREATE profile. All other control envelopes stay version1.
+/// Historical Profile2 Catalog CREATE profile. The single current-format switch
+/// moved fresh Catalog genesis to `row_profile::encode_profile`; this pure codec
+/// stays for its evidence and tests. All other control envelopes stay version1.
 pub(crate) fn encode_catalog_profile(spec: ProfileSpec, output: &mut [u8]) -> Result<&[u8]> {
     encode_profile_format(spec, 2, output)
 }
@@ -325,6 +347,42 @@ pub(crate) fn decode_bootstrap_profile(
         format,
         digest: content_digest(input),
     })
+}
+
+/// Re-read an already installed profile under the grammar its caller bound.
+/// `expected.format()` selects exactly one decoder (1|2 legacy, 3 Row); no
+/// header version is inspected first and a decoder failure is final. The
+/// decoded value must then equal `expected` in every field, digest included.
+/// The shared installed readers (`PageFileReader::open_profile`/`open_shared`,
+/// flush readback) call it; legacy discovery owners keep
+/// `decode_bootstrap_profile`.
+pub(crate) fn decode_installed_profile(input: &[u8], expected: Profile) -> Result<Profile> {
+    let namespace = Some(expected.namespace);
+    let profile = match expected.format {
+        1 | 2 => decode_bootstrap_profile(input, namespace)?,
+        3 => row_profile::decode_profile(input, namespace)?,
+        _ => return Err(ControlError::UnsupportedFormat),
+    };
+    if profile != expected {
+        return Err(ControlError::IdentityMismatch);
+    }
+    Ok(profile)
+}
+
+/// Bound over `decode_installed_profile`: its own argument/result/compare
+/// values plus one selected decoder closure. The legacy decoder has the Row
+/// decoder's frame shape (same header, prefix and SHA closure; one extra u16
+/// local inside that bound's scalar allowance), so the Row bound covers both.
+/// The wrapper charge (this bound minus the Row bound) is charged by the shared
+/// reader censuses (`page_io::retention_home_source_bytes`, flush selection).
+pub(crate) fn installed_profile_source_bytes() -> usize {
+    use std::mem::size_of;
+    let wrapper = size_of::<(&[u8], Profile)>()
+        + size_of::<Option<Namespace>>()
+        + 2 * size_of::<Result<Profile>>()
+        + 2 * size_of::<Profile>()
+        + 64; // format tag, comparison and enum carriers
+    wrapper + row_profile::source_bytes()
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -1223,3 +1281,7 @@ fn seal(output: &mut [u8]) {
 #[cfg(test)]
 #[path = "control_tests.rs"]
 mod tests;
+
+#[cfg(test)]
+#[path = "control/installed_profile_tests.rs"]
+mod installed_profile_tests;

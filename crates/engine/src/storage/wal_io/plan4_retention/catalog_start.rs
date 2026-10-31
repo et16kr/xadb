@@ -1,5 +1,6 @@
 //! Begin and AgingStart prepare on original borrowed resources under one
 //! lifecycle reservation. Begin preserves its issued-local gap on rejection.
+//! Begin's slot/Job selection and Status identity are shared with Row Begin.
 use super::*;
 
 impl<'b, 'a, 's, 'c, 'p, 'd, 'm, 'w, W: WriterNamespace>
@@ -44,13 +45,13 @@ impl<'b, 'a, 's, 'c, 'p, 'd, 'm, 'w, W: WriterNamespace>
             .map_err(queue_error)?;
             for offset in 0..64 {
                 let ordinal = (root.cursor() as usize + offset) % 64;
-                if queue::decode_job(
+                // A Row-scope cell is never free and never a Catalog target.
+                if queue::decode_catalog_cell(
                     &self.control.jobs()[ordinal],
                     self.storage.profile().spec().namespace,
                 )
                 .map_err(queue_error)?
-                .state()
-                    == JobState::Free
+                .is_some_and(|job| job.state() == JobState::Free)
                 {
                     return Ok(ordinal);
                 }
@@ -96,6 +97,36 @@ impl<'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
         status: &Plan4Target,
         private: &'i mut [u8; PRIVATE_BYTES],
     ) -> Result<PreparedCatalog<'i, 'c, 's>> {
+        let (slot, ordinal) = self.begin_selection(owner)?;
+        let allocator = self
+            .pool
+            .target_request(0)
+            .map_err(|e| frame(RetentionPhase::Prepare, e))?;
+        let root = target_from_source(self.storage, Plan4Page::Root)?.request;
+        let job = target_from_source(
+            self.storage,
+            Plan4Page::Jobs {
+                index: (ordinal / 15) as u8,
+            },
+        )?
+        .request;
+        let (actor, location) = self.begin_identity(owner, status)?;
+        let prepared = self.catalog_preparation().prepare_existing_catalog(
+            owner,
+            Change::Begin {
+                actor,
+                status: location,
+            },
+            Some(slot),
+            [(allocator, 0), (root, 1), (job, 2), (status.request, 4)],
+            private,
+        )?;
+        Ok(prepared)
+    }
+
+    /// Begin's free ATT slot and the canonical next free Job for either scope,
+    /// selected before any identity is issued.
+    pub(super) fn begin_selection(&self, owner: &mut Owner<'c, 's>) -> Result<(usize, usize)> {
         health(self.storage, self.pool)?;
         if self.control.pending.is_some() || self.control.population.reserved() {
             return Err(fatal(
@@ -109,18 +140,17 @@ impl<'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
             .free_slot()
             .ok_or_else(|| unchanged(RetentionPhase::Prepare, RetentionCause::Capacity))?;
         let ordinal = self.catalog_preparation().first_catalog_job(owner)?;
-        let allocator = self
-            .pool
-            .target_request(0)
-            .map_err(|e| frame(RetentionPhase::Prepare, e))?;
-        let root = target_from_source(self.storage, Plan4Page::Root)?.request;
-        let job = target_from_source(
-            self.storage,
-            Plan4Page::Jobs {
-                index: (ordinal / 15) as u8,
-            },
-        )?
-        .request;
+        Ok((slot, ordinal))
+    }
+
+    /// Begin's identity for either scope: the original exclusive INIT Status
+    /// must be Free; the issued-local high-water advances before the group is
+    /// prepared, so any later rejection keeps the gap.
+    pub(super) fn begin_identity(
+        &mut self,
+        owner: &mut Owner<'c, 's>,
+        status: &Plan4Target,
+    ) -> Result<(TxnRef, StatusSlotRef)> {
         if status.request.kind != PageKind::TransactionStatus
             || status.request.identity.owner.get() != 2
             || status.request.identity.owner_generation != one()
@@ -189,17 +219,7 @@ impl<'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
         .map_err(|e| unchanged(RetentionPhase::Prepare, RetentionCause::Page(e)))?;
         let location = StatusSlotRef::new(status.request.identity.page, 0, generation)
             .map_err(|e| unchanged(RetentionPhase::Prepare, RetentionCause::Page(e)))?;
-        let prepared = self.catalog_preparation().prepare_existing_catalog(
-            owner,
-            Change::Begin {
-                actor,
-                status: location,
-            },
-            Some(slot),
-            [(allocator, 0), (root, 1), (job, 2), (status.request, 4)],
-            private,
-        )?;
-        Ok(prepared)
+        Ok((actor, location))
     }
 }
 

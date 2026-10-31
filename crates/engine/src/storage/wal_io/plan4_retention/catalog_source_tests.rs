@@ -57,7 +57,7 @@ fn inspect<W: WriterNamespace>(kind: &str) {
     );
     assert!(visibility::fits());
     assert_eq!(recovery.caller_maintenance, 12_582_912);
-    assert_eq!(visibility.backing, 8192);
+    assert_eq!(visibility.backing, 9792);
     assert_eq!(visibility.reader_private, 425_984);
     println!("CATALOG_SOURCE_PASS\t{kind}");
 }

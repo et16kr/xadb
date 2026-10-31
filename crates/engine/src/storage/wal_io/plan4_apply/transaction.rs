@@ -1,7 +1,10 @@
 //! Original-session transaction and statement ownership. Durable actors come
 //! only from the original admitted Begin; callers cannot submit a read-set.
 use super::*;
-use crate::storage::session_fence::SessionFence;
+use crate::storage::{
+    session_fence::SessionFence,
+    undo_ref::{UNDO_REF_BYTES, UndoRef},
+};
 use std::{
     cell::Cell,
     sync::{MutexGuard, atomic::Ordering},
@@ -17,6 +20,15 @@ const HEADER: usize = 64;
 const SLOT: usize = 128;
 pub(super) const HANDLE_BYTES: usize = 512;
 pub(super) const LONG_SOURCE_BYTES: usize = 49_152;
+/// Slot actor kind (slot@2, RAM only): 0 read-only, 1 Catalog writer, 2 Row
+/// writer. Written once when Begin binds the actor; entries dispatch or
+/// refuse by it (XADB-MODULE-ROW-BEGIN-001).
+pub(super) const CATALOG_KIND: u8 = 1;
+pub(super) const ROW_KIND: u8 = 2;
+/// Slot bytes 88..128: the active statement's mark, a canonical 40-byte
+/// `Option<UndoRef>` whose None is all zero (T10 slot layout, §6.2).
+const MARK: std::ops::Range<usize> = 88..SLOT;
+const _: () = assert!(MARK.end - MARK.start == UNDO_REF_BYTES);
 
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
 pub(crate) enum IsolationLevel {
@@ -46,10 +58,13 @@ struct IsolationLease<'v, 'a, 'c, 's> {
     slot: usize,
     generation: u64,
     actor: Option<TxnRef>,
+    /// The bound actor's kind, equal to slot@2 at every check.
+    kind: u8,
     active: bool,
 }
 /// One fixed source charge, returned only to its original live slot/generation.
-struct CallerCredit<'v, 'a, 'c, 's> {
+/// RAM accounting only: no pin, WAL, snapshot or statement authority.
+pub(crate) struct CallerCredit<'v, 'a, 'c, 's> {
     ledger: &'v Mutex<IsolationLedger<'a, 'c, 's>>,
     fence: &'s SessionFence,
     slot: usize,
@@ -67,6 +82,10 @@ pub(crate) struct RowStatementView<'t, 'v, 'a, 'c, 's> {
     transaction: &'t RowTransaction<'v, 'a, 'c, 's>,
     rc_snapshot: Option<SnapshotGuard<'v, 'a, 'c, 's>>,
     sequence: u64,
+    /// The mark written to slot bytes 88..128 at begin: a Row statement's
+    /// ATT `undo_head`; None for a Catalog or read-only statement. Every
+    /// boundary compares it with the slot ("view mark == slot mark").
+    mark: Option<UndoRef>,
     phase: Cell<Phase>,
     revision: Cell<u64>,
     source: CallerCredit<'v, 'a, 'c, 's>,
@@ -132,6 +151,33 @@ fn row(bytes: &[u8], slot: usize) -> &[u8] {
 fn row_mut(bytes: &mut [u8], slot: usize) -> &mut [u8] {
     &mut bytes[HEADER + slot * SLOT..HEADER + (slot + 1) * SLOT]
 }
+/// The slot bytes of `mark`: zero for None, the `UndoRef` wire identity for
+/// Some. A valid `UndoRef` never encodes to zero (its file id and both
+/// generations are nonzero), so the two cases cannot alias.
+fn encode_mark(mark: Option<UndoRef>) -> Option<[u8; UNDO_REF_BYTES]> {
+    let mut bytes = [0; UNDO_REF_BYTES];
+    match mark {
+        None => Some(bytes),
+        Some(reference) => reference.encode(&mut bytes).ok().map(|()| bytes),
+    }
+}
+/// The mark held by slot bytes, or None when they are not a canonical mark.
+/// `UndoRef::decode` fixes every byte it accepts, so equal decoded marks
+/// mean equal bytes.
+fn decode_mark(bytes: &[u8]) -> Option<Option<UndoRef>> {
+    if bytes.len() != UNDO_REF_BYTES {
+        return None;
+    }
+    if bytes.iter().all(|&b| b == 0) {
+        return Some(None);
+    }
+    UndoRef::decode(bytes).ok().map(Some)
+}
+/// The slot row holds the active statement `sequence` with exactly `mark`.
+/// The Catalog empty mark is the None special case of this one comparison.
+fn statement_slot(target: &[u8], sequence: u64, mark: Option<UndoRef>) -> bool {
+    read64(target, 80) == sequence && decode_mark(&target[MARK]) == Some(mark)
+}
 fn fail(fence: &SessionFence, cause: RetentionCause) -> RetentionError {
     fence.fence();
     RetentionError {
@@ -175,6 +221,7 @@ fn check_slot(bytes: &[u8], slot: usize, generation: u64, fence: &SessionFence) 
     if slot >= SLOTS
         || generation == 0
         || !(1..=4).contains(&row(bytes, slot)[0])
+        || row(bytes, slot)[2] > ROW_KIND
         || read64(row(bytes, slot), 16) != generation
     {
         return Err(fail(fence, RetentionCause::Invariant));
@@ -224,6 +271,7 @@ impl<'v, 'a, 'c, 's> IsolationLease<'v, 'a, 'c, 's> {
             slot,
             generation,
             actor: None,
+            kind: 0,
             active: true,
         })
     }
@@ -238,8 +286,17 @@ impl<'v, 'a, 'c, 's> IsolationLease<'v, 'a, 'c, 's> {
         check_slot(bytes, self.slot, self.generation, self.fence)?;
         let target = row(bytes, self.slot);
         let matches = match self.actor {
-            None => target[0] == 1 && target[2] == 0 && target[32..80].iter().all(|&b| b == 0),
-            Some(actor) => target[2] == 1 && TxnRef::decode(&target[32..80]).ok() == Some(actor),
+            None => {
+                self.kind == 0
+                    && target[0] == 1
+                    && target[2] == 0
+                    && target[32..80].iter().all(|&b| b == 0)
+            }
+            Some(actor) => {
+                matches!(self.kind, CATALOG_KIND | ROW_KIND)
+                    && target[2] == self.kind
+                    && TxnRef::decode(&target[32..80]).ok() == Some(actor)
+            }
         };
         if !matches {
             return Err(fail(self.fence, RetentionCause::Invariant));
@@ -320,12 +377,23 @@ impl<'v, 'a, 'c, 's> CallerCredit<'v, 'a, 'c, 's> {
         Ok(())
     }
 }
+impl CallerCredit<'_, '_, '_, '_> {
+    /// Explicit cursor close; returns only this credit to its original slot.
+    pub(in crate::storage) fn release_checked(mut self) -> Result<()> {
+        self.close()
+    }
+}
 impl Drop for CallerCredit<'_, '_, '_, '_> {
     fn drop(&mut self) {
         let _ = self.close();
     }
 }
 impl RowTransaction<'_, '_, '_, '_> {
+    /// A Row-scope writable capsule (bound kind 2). Catalog entries refuse it
+    /// by this kind before any gate, source or read-set effect.
+    pub(in crate::storage) fn row_scope(&self) -> bool {
+        self.lease.kind == ROW_KIND
+    }
     fn check(&self) -> Result<()> {
         if self.phase.get() != Phase::Active {
             return Err(unchanged(
@@ -388,8 +456,7 @@ impl RowStatementView<'_, '_, '_, '_, '_> {
         let lease = &self.transaction.lease;
         let state = entry(lease.ledger, lease.fence)?;
         lease.check(state.bytes)?;
-        let target = row(state.bytes, lease.slot);
-        if read64(target, 80) != self.sequence || target[88..].iter().any(|&b| b != 0) {
+        if !statement_slot(row(state.bytes, lease.slot), self.sequence, self.mark) {
             return Err(fail(lease.fence, RetentionCause::Invariant));
         }
         Ok(())
@@ -415,6 +482,10 @@ impl RowStatementView<'_, '_, '_, '_, '_> {
     pub(in crate::storage) fn own_actor(&self) -> Option<TxnRef> {
         self.transaction.lease.actor
     }
+    /// The view's transaction is a Row-scope writable capsule.
+    pub(in crate::storage) fn row_scope(&self) -> bool {
+        self.transaction.row_scope()
+    }
     pub(in crate::storage) fn revision(&self) -> u64 {
         self.revision.get()
     }
@@ -427,7 +498,10 @@ impl RowStatementView<'_, '_, '_, '_, '_> {
         {
             let mut state = entry(lease.ledger, lease.fence)?;
             lease.check(state.bytes)?;
-            write64(row_mut(state.bytes, lease.slot), 80, 0);
+            // The ended statement closes its sequence and its mark.
+            let target = row_mut(state.bytes, lease.slot);
+            write64(target, 80, 0);
+            target[MARK].fill(0);
         }
         self.phase.set(Phase::Ended);
         let snapshot = self
@@ -435,6 +509,18 @@ impl RowStatementView<'_, '_, '_, '_, '_> {
             .take()
             .map_or(Ok(()), |g| g.release_checked().map_err(vis));
         merge(snapshot, self.source.close())
+    }
+}
+impl<'v, 'a, 'c, 's> RowStatementView<'_, 'v, 'a, 'c, 's> {
+    /// A cursor's 512-byte charge on the view's original slot. Each cursor
+    /// holds its own credit; aggregate shortage is Capacity before any effect.
+    /// The credit borrows the view, so neither the statement nor the
+    /// transaction can finish while it still holds a charge on the slot.
+    pub(in crate::storage) fn reserve_cursor_credit<'r>(
+        &'r self,
+    ) -> Result<CallerCredit<'r, 'a, 'c, 's>> {
+        self.check()?;
+        CallerCredit::reserve(&self.transaction.lease)
     }
 }
 // Only the original apply adapter can borrow this guard or register a read.
@@ -522,10 +608,84 @@ impl<'t, 'v, 'a, 'c, 's> RowStatementView<'t, 'v, 'a, 'c, 's> {
         let mut state = entry(lease.ledger, lease.fence)?;
         lease.check(state.bytes)?;
         let target = row_mut(state.bytes, lease.slot);
-        if read64(target, 80) != self.sequence || target[88..].iter().any(|&b| b != 0) {
+        if !statement_slot(target, self.sequence, self.mark) {
             return Err(fail(lease.fence, RetentionCause::Invariant));
         }
         target[3] |= 1;
+        Ok(())
+    }
+
+    /// Register an issued CheckedTable's table read bit (T10 read mask @4)
+    /// with the catalog flag of its actual lookup, in one isolation leaf. The
+    /// issuer released publication first; no other guard is held here. Bits
+    /// are never cleared by statement end, failure or rollback.
+    pub(super) fn record_table_read(&self, slot: u8) -> Result<()> {
+        self.check()?;
+        let lease = &self.transaction.lease;
+        let bit = 1u32
+            .checked_shl(u32::from(slot))
+            .ok_or_else(|| fail(lease.fence, RetentionCause::Invariant))?;
+        let mut state = entry(lease.ledger, lease.fence)?;
+        lease.check(state.bytes)?;
+        let target = row_mut(state.bytes, lease.slot);
+        if !statement_slot(target, self.sequence, self.mark) {
+            return Err(fail(lease.fence, RetentionCause::Invariant));
+        }
+        let mask = read32(target, 4) | bit;
+        write32(target, 4, mask);
+        target[3] |= 1;
+        Ok(())
+    }
+
+    /// The live statement's sequence: the RowReserve plan's statement
+    /// (S2-b2), which the producer requires nonzero and not below the
+    /// actor's recorded statement.
+    pub(super) fn row_sequence(&self) -> Result<u64> {
+        self.check()?;
+        Ok(self.sequence)
+    }
+
+    /// The live statement's mark (the ATT `undo_head` its begin wrote): the
+    /// Forward producer context's statement mark (S2-c).
+    pub(super) fn row_mark(&self) -> Result<Option<UndoRef>> {
+        self.check()?;
+        Ok(self.mark)
+    }
+
+    /// A durable Forward of this statement (S2-c): the view's revision moves
+    /// by one, so a B cursor of the same statement sees its own mutation
+    /// (MCB04-V06/V11). RAM only; only C changes it.
+    pub(super) fn row_applied(&self) -> Result<()> {
+        self.check()?;
+        let next = self
+            .revision
+            .get()
+            .checked_add(1)
+            .ok_or_else(|| fail(self.transaction.lease.fence, RetentionCause::Invariant))?;
+        self.revision.set(next);
+        Ok(())
+    }
+
+    /// Register the checked table's write bit (T10 write mask @8) for a Row
+    /// write: in `reserve` after the table recheck and before the WAL stage,
+    /// and again in `apply` before its stage (S2-0 Row write amendment §6).
+    /// A Before after it keeps the conservative bit; no Before, Cancel,
+    /// Fatal or statement end clears it, so an effect always has its bit.
+    /// One isolation leaf; no other guard is held here.
+    pub(super) fn record_table_write(&self, slot: u8) -> Result<()> {
+        self.check()?;
+        let lease = &self.transaction.lease;
+        let bit = 1u32
+            .checked_shl(u32::from(slot))
+            .ok_or_else(|| fail(lease.fence, RetentionCause::Invariant))?;
+        let mut state = entry(lease.ledger, lease.fence)?;
+        lease.check(state.bytes)?;
+        let target = row_mut(state.bytes, lease.slot);
+        if !statement_slot(target, self.sequence, self.mark) {
+            return Err(fail(lease.fence, RetentionCause::Invariant));
+        }
+        let mask = read32(target, 8) | bit;
+        write32(target, 8, mask);
         Ok(())
     }
 }
@@ -644,16 +804,29 @@ impl<'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
     ) -> Result<RowStatementView<'t, 'v, 'a, 'c, 's>> {
         self.transaction_entry(owner)?;
         self.transaction_matches(transaction)?;
-        if let Some(actor) = transaction.lease.actor {
-            // The first writable supply has no mutation/rollback statement
-            // adapter. Require actual empty Active state, not a fabricated mark.
-            if !self.empty_actor_active(actor)? {
-                return Err(unchanged(
-                    RetentionPhase::Prepare,
-                    RetentionCause::WrongState,
-                ));
+        // The statement mark, chosen by the capsule kind written at Begin.
+        let mark = match transaction.lease.actor {
+            // Row (ROW-BEGIN-001 "statement mark"): an Active actor with no
+            // RowReserved root; the mark is its ATT descriptor's undo_head.
+            Some(actor) if transaction.row_scope() => {
+                self.row_statement_head(actor, RetentionPhase::Prepare)?
             }
-        }
+            // The first Catalog writable supply has no mutation/rollback
+            // statement adapter. Require actual empty Active state, whose
+            // mark is the empty None, not a fabricated mark.
+            Some(actor) => {
+                if !self.empty_actor_active(actor, transaction.lease.kind)? {
+                    return Err(unchanged(
+                        RetentionPhase::Prepare,
+                        RetentionCause::WrongState,
+                    ));
+                }
+                None
+            }
+            None => None,
+        };
+        let encoded = encode_mark(mark)
+            .ok_or_else(|| fail(transaction.lease.fence, RetentionCause::Invariant))?;
         let sequence = transaction.next_statement.get();
         let next = sequence
             .checked_add(1)
@@ -663,6 +836,10 @@ impl<'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
             let target = row(state.bytes, transaction.lease.slot);
             if read64(target, 80) != 0 {
                 return Err(unchanged(RetentionPhase::Census, RetentionCause::Busy));
+            }
+            // An ended statement closed its mark; a live idle mark is corrupt.
+            if !statement_slot(target, 0, None) {
+                return Err(fail(transaction.lease.fence, RetentionCause::Invariant));
             }
             target[1]
         };
@@ -683,13 +860,17 @@ impl<'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
         {
             let mut state = entry(self.isolation, transaction.lease.fence)?;
             transaction.lease.check(state.bytes)?;
-            write64(row_mut(state.bytes, transaction.lease.slot), 80, sequence);
+            // The mark is RAM slot state only: no WAL (ROW-BEGIN-001).
+            let target = row_mut(state.bytes, transaction.lease.slot);
+            write64(target, 80, sequence);
+            target[MARK].copy_from_slice(&encoded);
         }
         transaction.next_statement.set(next);
         Ok(RowStatementView {
             transaction,
             rc_snapshot: snapshot,
             sequence,
+            mark,
             phase: Cell::new(Phase::Active),
             revision: Cell::new(0),
             source,
@@ -704,12 +885,29 @@ impl<'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
         owner: &mut Owner<'c, 's>,
         mut view: RowStatementView<'t, 'v, 'a, 'c, 's>,
     ) -> std::result::Result<(), StatementFinishError<RowStatementView<'t, 'v, 'a, 'c, 's>>> {
-        if view.transaction.lease.actor.is_some() {
-            let checked = self.catalog_transaction_check(owner, |writer, owner| {
+        if let Some(actor) = view.transaction.lease.actor {
+            // A writable statement ends under the fixed progress class of its
+            // capsule kind (ROW-BEGIN-001: finish_statement dispatches by
+            // kind; RowProgress reserves the same CatalogProgressCharge).
+            let row_scope = view.row_scope();
+            let class = if row_scope {
+                source::OperationClass::RowProgress
+            } else {
+                source::OperationClass::CatalogProgress
+            };
+            let checked = self.transaction_check(owner, class, |writer, owner| {
                 writer.transaction_entry(owner)?;
                 writer.transaction_matches(view.transaction)?;
                 view.check()?;
-                writer.check_catalog_statement_finish(&view)?;
+                if row_scope {
+                    // A Reserved or Aborting actor is Before(WrongState). A
+                    // clean end writes no WAL and keeps the unused 6080-byte
+                    // statement credit for the next mark (consumer contract,
+                    // row-shape): nothing durable changes here.
+                    writer.row_statement_head(actor, RetentionPhase::Finalize)?;
+                } else {
+                    writer.check_catalog_statement_finish(&view)?;
+                }
                 view.close()
             });
             return match checked {
@@ -802,6 +1000,42 @@ impl<'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
             }
         }
     }
+    /// Consumes the capsule only after the actual AbortEnd and terminal close
+    /// of a Row rollback. That adapter is not supplied: Before, no effect.
+    #[allow(
+        clippy::result_large_err,
+        reason = "unchanged failure returns the same inline transaction; its return carrier is charged to the 512-byte source envelope"
+    )]
+    pub(in crate::storage) fn finish_aborted<'v>(
+        &mut self,
+        _owner: &mut Owner<'c, 's>,
+        transaction: RowTransaction<'v, 'a, 'c, 's>,
+    ) -> std::result::Result<(), TransactionFinishError<RowTransaction<'v, 'a, 'c, 's>>> {
+        Err(TransactionFinishError::Before {
+            error: unchanged(RetentionPhase::Finalize, RetentionCause::Unsupported),
+            transaction,
+        })
+    }
+    /// Row Commit keeps the durable ledger borrow from validation to Q
+    /// publication. Not supplied yet: Before with the same capsule, no effect.
+    #[allow(
+        clippy::result_large_err,
+        reason = "unchanged failure returns the same inline transaction; its return carrier is charged to the 512-byte source envelope"
+    )]
+    pub(in crate::storage) fn commit_row<'v>(
+        &mut self,
+        _owner: &mut Owner<'c, 's>,
+        transaction: RowTransaction<'v, 'a, 'c, 's>,
+        _private: &mut [u8; 425_984],
+    ) -> std::result::Result<
+        super::row::RowCommitObservation,
+        TransactionFinishError<RowTransaction<'v, 'a, 'c, 's>>,
+    > {
+        Err(TransactionFinishError::Before {
+            error: unchanged(RetentionPhase::Finalize, RetentionCause::Unsupported),
+            transaction,
+        })
+    }
 }
 
 /// Caller-owned handle plus its largest creation/return carrier is charged once
@@ -821,6 +1055,15 @@ pub(super) fn handle_census() -> (usize, usize) {
                         catalog::CatalogCommit,
                         TransactionFinishError<T<'_, '_, '_, '_>>,
                     >,
+                >())
+                .max(size_of::<
+                    std::result::Result<
+                        super::row::RowCommitObservation,
+                        TransactionFinishError<T<'_, '_, '_, '_>>,
+                    >,
+                >())
+                .max(size_of::<
+                    std::result::Result<(), TransactionFinishError<T<'_, '_, '_, '_>>>,
                 >()),
         size_of::<V<'_, '_, '_, '_, '_>>()
             + size_of::<Result<V<'_, '_, '_, '_, '_>>>().max(size_of::<
@@ -840,6 +1083,11 @@ pub(super) fn source_bytes() -> usize {
         + 16 * size_of::<&()>()
         + 2 * size_of::<Result<TxnRef>>()
         + 2 * size_of::<TxnRef>()
+        // The statement mark: the view's copy and begin's chosen value, the
+        // slot's decoded mark at each boundary, and begin's encoded bytes.
+        + 2 * size_of::<Option<UndoRef>>()
+        + 2 * size_of::<Option<Option<UndoRef>>>()
+        + size_of::<Option<[u8; UNDO_REF_BYTES]>>()
         + size_of::<[u64; 4]>()
         + visibility::source_census().peak_leaf
 }
@@ -862,8 +1110,73 @@ pub(super) fn catalog_read_source_bytes() -> usize {
         + 4 * size_of::<bool>()
 }
 
+/// (isolation leaf held, publication leaf held) at the instant of the call.
+/// Each lock is only tried and dropped at once; nothing is read or changed.
+#[cfg(test)]
+pub(in crate::storage) struct LeafProbe<'v, 'a, 'c, 's> {
+    ledger: &'v Mutex<IsolationLedger<'a, 'c, 's>>,
+    visibility: &'v BoundVisibility<'a, 'c, 's>,
+}
+#[cfg(test)]
+impl<'v, 'a, 'c, 's> RowStatementView<'_, 'v, 'a, 'c, 's> {
+    /// Cross-thread probe of this statement's own isolation and publication
+    /// leaves, for exact-cut tests. It carries no bytes, mask or authority.
+    pub(in crate::storage) fn test_leaf_probe(&self) -> LeafProbe<'v, 'a, 'c, 's> {
+        LeafProbe {
+            ledger: self.transaction.lease.ledger,
+            visibility: self.transaction.lease.visibility,
+        }
+    }
+}
+#[cfg(test)]
+impl LeafProbe<'_, '_, '_, '_> {
+    pub(in crate::storage) fn busy(&self) -> (bool, bool) {
+        (
+            matches!(
+                self.ledger.try_lock(),
+                Err(std::sync::TryLockError::WouldBlock)
+            ),
+            self.visibility.test_publication_busy(),
+        )
+    }
+}
+
 #[cfg(test)]
 impl RowStatementView<'_, '_, '_, '_, '_> {
+    /// S2W-R01: an ended (stale) view while `stale`, the same Active view
+    /// again after; only the view's own phase cell changes, never the slot.
+    pub(in crate::storage) fn test_set_stale(&self, stale: bool) {
+        self.phase
+            .set(if stale { Phase::Ended } else { Phase::Active });
+    }
+
+    /// S2W-R18: the next Row statement head check on this thread sees the
+    /// actor's Row Job as RootReserved (`writable::test_root_reserved_once`),
+    /// until the returned guard drops.
+    pub(in crate::storage) fn test_root_reserved_once(&self) -> writable::TestOnce {
+        writable::test_root_reserved_once()
+    }
+
+    /// S2W-R14: the next Row statement head check on this thread reads the
+    /// first Job that has a source as the actor's own, with its own scope
+    /// (`writable::test_catalog_scope_once`), until the returned guard drops.
+    pub(in crate::storage) fn test_catalog_scope_once(&self) -> writable::TestOnce {
+        writable::test_catalog_scope_once()
+    }
+
+    /// S2W-R03/R16: clears the transaction's catalog flag and table read mask
+    /// so that a later registration is observable; write mask untouched.
+    pub(in crate::storage) fn test_clear_reads(&self) {
+        let lease = &self.transaction.lease;
+        let mut state = lease
+            .ledger
+            .lock()
+            .unwrap_or_else(|poison| poison.into_inner());
+        let target = row_mut(state.bytes, lease.slot);
+        target[3] = 0;
+        write32(target, 4, 0);
+    }
+
     pub(in crate::storage) fn test_catalog_reads(&self) -> u8 {
         let lease = &self.transaction.lease;
         let state = lease
@@ -873,7 +1186,81 @@ impl RowStatementView<'_, '_, '_, '_, '_> {
         row(state.bytes, lease.slot)[3]
     }
 
+    /// Scalar (table read mask, table write mask); it cannot set or clear one.
+    pub(in crate::storage) fn test_table_masks(&self) -> (u32, u32) {
+        let lease = &self.transaction.lease;
+        let state = lease
+            .ledger
+            .lock()
+            .unwrap_or_else(|poison| poison.into_inner());
+        let target = row(state.bytes, lease.slot);
+        (read32(target, 4), read32(target, 8))
+    }
+
     pub(in crate::storage) fn test_sequence(&self) -> u64 {
         self.sequence
+    }
+
+    /// The view's own mark; it cannot change the view or the slot.
+    pub(in crate::storage) fn test_mark(&self) -> Option<UndoRef> {
+        self.mark
+    }
+
+    /// Scalar (global used, own slot charge); cannot reserve or return one.
+    pub(in crate::storage) fn test_charges(&self) -> (u64, u32) {
+        let lease = &self.transaction.lease;
+        let state = lease
+            .ledger
+            .lock()
+            .unwrap_or_else(|poison| poison.into_inner());
+        (
+            read64(state.bytes, 16),
+            read32(row(state.bytes, lease.slot), 12),
+        )
+    }
+}
+
+#[cfg(test)]
+impl RowTransaction<'_, '_, '_, '_> {
+    /// Scalar (active statement sequence, slot mark bytes 88..128).
+    pub(in crate::storage) fn test_statement_slot(&self) -> (u64, [u8; UNDO_REF_BYTES]) {
+        let state = self.lease.ledger.lock().unwrap();
+        let target = row(state.bytes, self.lease.slot);
+        (
+            read64(target, 80),
+            target[MARK].try_into().expect("40-byte mark"),
+        )
+    }
+    /// Stale-mark fault fixture: overwrite only the slot's mark bytes.
+    pub(in crate::storage) fn test_write_statement_mark(&self, bytes: [u8; UNDO_REF_BYTES]) {
+        let mut state = self.lease.ledger.lock().unwrap();
+        row_mut(state.bytes, self.lease.slot)[MARK].copy_from_slice(&bytes);
+    }
+}
+
+#[cfg(test)]
+#[path = "transaction_mark_tests.rs"]
+mod mark_tests;
+
+#[cfg(test)]
+impl<W: WriterNamespace> ReadPort<'_, '_, '_, '_, '_, '_, '_, '_, W> {
+    /// Synthetic long-class occupancy (MBC10-V07): add `bytes` to the
+    /// original long total while `run` executes, then remove exactly them.
+    /// No slot, credit or snapshot is issued.
+    pub(in crate::storage) fn catalog_test_with_held_long<T>(
+        &self,
+        bytes: u64,
+        run: impl FnOnce() -> T,
+    ) -> T {
+        let adjust = |add: bool| {
+            let mut state = self.isolation.lock().unwrap();
+            let used = read64(state.bytes, 16);
+            let next = if add { used + bytes } else { used - bytes };
+            write64(state.bytes, 16, next);
+        };
+        adjust(true);
+        let result = run();
+        adjust(false);
+        result
     }
 }

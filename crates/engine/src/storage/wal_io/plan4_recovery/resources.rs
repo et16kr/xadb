@@ -74,14 +74,17 @@ pub(in crate::storage) fn source_census<W: WriterNamespace>() -> RecoverySourceC
         + 3 * size_of::<SelectedControl>()
         + 4 * size_of::<control::ControlRef>()
         + 512;
-    let codec = base::catalog::source_bytes();
+    // B4: the exact base4 decode/encode closure (Profile3 current base).
+    let codec = base::row::source_bytes();
     // These pure-codec phases preserve the existing complete source_bytes
     // bound. Only the proven post-inventory view/Result phase is separated.
     let decode = |outer: usize| {
         (outer + codec).max(
             outer
                 + codec
-                + 2 * size_of::<std::result::Result<base::catalog::CatalogBaseView<'_>, base::Error>>()
+                + 2 * size_of::<
+                    std::result::Result<base::row::RowBaseView<'_>, base::row::RowBaseError>,
+                >()
                 + size_of::<VerifiedPlan4Base<'_>>(),
         )
     };
@@ -148,7 +151,7 @@ pub(in crate::storage) fn source_census<W: WriterNamespace>() -> RecoverySourceC
         .max(owner + common + io + replay_outer + live_census.recovery_frame);
     let capture_outer = 3 * size_of::<base::Header>()
         + 3 * size_of::<base::Expected>()
-        + 2 * size_of::<base::catalog::Sections<'_>>()
+        + 2 * size_of::<base::row::Sections<'_>>()
         + 3 * size_of::<[RemainingBudget; 5]>()
         + 3 * size_of::<Result<(u32, u32, [RemainingBudget; 5])>>()
         + 3 * size_of::<DescriptorSpec>()
@@ -164,7 +167,7 @@ pub(in crate::storage) fn source_census<W: WriterNamespace>() -> RecoverySourceC
             + size_of::<record::Current>()
             + size_of::<base::Header>()
             + size_of::<base::Expected>()
-            + size_of::<base::catalog::Sections<'_>>()
+            + size_of::<base::row::Sections<'_>>()
             + 2 * size_of::<Plan4RecoveryError>()
             + 20 * size_of::<&[u8]>()
             + 16 * size_of::<u64>(),

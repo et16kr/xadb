@@ -91,6 +91,48 @@ pub(crate) fn decode<'a>(
     })
 }
 
+/// Encode/decode closure of this Root3-bound descriptor, counted the same way as
+/// `catalog::source_bytes` over the Root3 view and the Root3 decode closure.
+/// `next` is not included: its Job3 census and wrapper are charged by the
+/// semantic owner that calls it, as the Root2 owner charges its own successor.
+pub(crate) fn source_bytes() -> usize {
+    use crate::storage::{
+        allocation_page::SystemWorkRef,
+        control::ControlRef,
+        obligation::{RemainingBudget, SystemProgress},
+        page::PageHeader,
+    };
+    use foundation::codec::ContentHasher;
+    use std::mem::size_of;
+    let parent = size_of::<(&DescriptorSpec, Profile, &[u8; PAGE_BYTES], &mut [u8])>()
+        + size_of::<(&[u8], &[u8; 1536], Profile, &[u8; PAGE_BYTES])>()
+        + 2 * size_of::<row::RootView<'_>>()
+        + 2 * size_of::<PageHeader>()
+        + size_of::<ReservationOwner>()
+        + size_of::<ControlRef>()
+        + 2 * size_of::<Result<AgingDescriptorView<'_>>>()
+        + 4 * size_of::<Result<()>>();
+    let hashing = 2 * size_of::<ContentHasher>() + 1536 + 2 * size_of::<[u8; 32]>();
+    let work = 2 * 96 + hashing + 4 * size_of::<&()>();
+    let validation = size_of::<(SystemWorkRef, SystemProgress, OwnerState)>()
+        + 4 * size_of::<Result<()>>()
+        // budget_digest's actual bytes and encode_budget_rows current row.
+        + (640 + size_of::<[u64; 14]>() + size_of::<RemainingBudget>() + hashing)
+            .max(obligation::descriptor_source_bytes());
+    let encoding = 96 + obligation::descriptor_source_bytes();
+    // The decoded local spec exists only in its explicit scope and is gone
+    // before work_bytes. Include the callee Result and extracted value once.
+    let decoding = size_of::<DescriptorSpec>()
+        + size_of::<std::result::Result<DescriptorSpec, ObligationError>>()
+        + obligation::descriptor_source_bytes().max(validation);
+    parent
+        + row::root_decode_source_bytes()
+            .max(validation)
+            .max(work)
+            .max(encoding)
+            .max(decoding)
+}
+
 /// Unpublished candidate over a caller-supplied predecessor and stable Job3
 /// census. Original history and each operation's exact consumed delta are
 /// checked by the semantic owner; these byte observations confer no authority.

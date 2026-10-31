@@ -27,6 +27,10 @@ impl<'a> LayoutView<'a> {
     pub(crate) fn operation(self) -> Operation {
         self.operation
     }
+    #[allow(
+        dead_code,
+        reason = "framed section accessor; its observers are the local scope3 checks"
+    )]
     pub(crate) fn shape(self) -> Shape {
         self.shape
     }
@@ -88,16 +92,28 @@ impl<'a> LayoutView<'a> {
         }
     }
     /// Opaque framed records; native graph deltas are unvalidated.
+    #[allow(
+        dead_code,
+        reason = "framed section accessor; its observers are the local scope3 checks"
+    )]
     pub(crate) fn edges(self) -> &'a [u8] {
         let at = self.native_at + self.shape.native_bytes;
         &self.bytes[at..at + usize::from(self.shape.edges) * 128]
     }
     /// Opaque framed records; target counts are unvalidated.
+    #[allow(
+        dead_code,
+        reason = "framed section accessor; its observers are the local scope3 checks"
+    )]
     pub(crate) fn counts(self) -> &'a [u8] {
         let at = self.native_at + self.shape.native_bytes + self.edges().len();
         &self.bytes[at..at + usize::from(self.shape.counts) * 96]
     }
     /// Opaque framed records; reservation inventory is unvalidated.
+    #[allow(
+        dead_code,
+        reason = "framed section accessor; its observers are the local scope3 checks"
+    )]
     pub(crate) fn items(self) -> &'a [u8] {
         let at =
             self.native_at + self.shape.native_bytes + self.edges().len() + self.counts().len();
@@ -118,18 +134,34 @@ impl<'a> NativeView<'a> {
     pub(crate) fn kind(self) -> u8 {
         self.bytes[0]
     }
+    #[allow(
+        dead_code,
+        reason = "framed section accessor; its observers are the local scope3 checks"
+    )]
     pub(crate) fn redo_index(self) -> u16 {
         u16_at(self.bytes, 2)
     }
     pub(crate) fn before_slot(self) -> Option<u16> {
         (self.bytes[1] & 1 != 0).then(|| u16_at(self.bytes, 4))
     }
+    #[allow(
+        dead_code,
+        reason = "framed section accessor; its observers are the local scope3 checks"
+    )]
     pub(crate) fn after_slot(self) -> Option<u16> {
         (self.bytes[1] & 2 != 0).then(|| u16_at(self.bytes, 6))
     }
+    #[allow(
+        dead_code,
+        reason = "framed section accessor; its observers are the local scope3 checks"
+    )]
     pub(crate) fn before_offset(self) -> Option<u16> {
         (self.bytes[1] & 1 != 0).then(|| u16_at(self.bytes, 8))
     }
+    #[allow(
+        dead_code,
+        reason = "framed section accessor; its observers are the local scope3 checks"
+    )]
     pub(crate) fn after_offset(self) -> Option<u16> {
         (self.bytes[1] & 2 != 0).then(|| u16_at(self.bytes, 10))
     }

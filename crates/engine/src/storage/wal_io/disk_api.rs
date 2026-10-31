@@ -6,15 +6,20 @@
     reason = "C0 boundary awaits the separately owned Row consumers"
 )]
 pub(crate) use super::bootstrap::doublewrite_install::mutable_storage::plan4_pages::apply::{
-    CatalogCallError, CatalogCallScope, CatalogCancelled, CatalogCandidate, CatalogCommit,
-    CatalogCreateError, CatalogCreated, CatalogReadOperation, CatalogStatementCall, DiskSession,
-    EmptyRetentionControlLoan, ISOLATION_BYTES, IntoRetentionError, IsolationLevel,
-    MaintenancePort, MissingCatalogEvidence, MutationPort, Plan4Recovered, PreparedCatalog,
-    ReadOnlyCommit, ReadPort, ReadStep, ReservedCatalogCreate, RetentionCause, RetentionError,
-    RetentionPhase, RowControlObservation, RowInputPlan, RowOperation, RowPageRole,
-    RowPreflightContext, RowProducerContext, RowProducerInput, RowProducerLane, RowProposal,
+    CallerCredit, CatalogCallError, CatalogCallScope, CatalogCancelled, CatalogCandidate,
+    CatalogCommit, CatalogCreateError, CatalogCreated, CatalogReadOperation, CatalogStatementCall,
+    CheckedTable, DiskSession, EmptyRetentionControlLoan, ISOLATION_BYTES, IntoRetentionError,
+    IsolationLevel, MaintenancePort, MissingCatalogEvidence, MissingRowEvidence, MutationPort,
+    Plan4Recovered, PreflightRow, PreparedCatalog, PreparedRollbackTask, PreparedRow,
+    ROW_PREFLIGHT_CALLER_BYTES, ROW_WRITE_CALLER_BYTES, ReadOnlyCommit, ReadPort, ReadStep,
+    ReservedCatalogCreate, ReservedRow, RetentionCause, RetentionError, RetentionFlushPhase,
+    RetentionPhase, RollbackScope, RollbackStep, RowApplied, RowCancelled, RowCandidate,
+    RowCommitObservation, RowControlObservation, RowCopyObservation, RowInputPlan,
+    RowMutationObservation, RowOperation, RowOwnedError, RowPageRole, RowPreflightContext,
+    RowPreflightStep, RowProducerContext, RowProducerInput, RowProducerLane, RowProposal,
+    RowReadOperation, RowRollback, RowRollbackDone, RowRollbackTask, RowSearchPage,
     RowSourceBinding, RowSourceRole, RowStatementView, RowTransaction, RowValidationLane,
-    StatementFinishError, TransactionFinishError, TransactionOptions,
+    StatementFinishError, TableStep, TransactionFinishError, TransactionOptions, row_write_charge,
 };
 
 #[allow(unused_imports)]
@@ -26,6 +31,7 @@ pub(crate) use super::bootstrap::doublewrite_install::mutable_storage::plan4_pag
 };
 
 pub(in crate::storage) use super::bootstrap::doublewrite_install::mutable_storage::plan4_pages::apply::InstallGrant;
+pub(in crate::storage) use crate::transaction::concurrency::Owner;
 pub(in crate::storage::wal_io) use super::bootstrap::doublewrite_install::mutable_storage::plan4_pages::apply::legacy::from_legacy as legacy_install;
 
 pub(crate) use super::bootstrap::doublewrite_install::mutable_storage::plan4_pages::apply::{

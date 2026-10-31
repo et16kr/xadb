@@ -2,6 +2,8 @@
 //! Ordinary application borrows the original resources; it creates no owner.
 use super::*;
 
+#[path = "row_start.rs"]
+pub(in super::super::super) mod row;
 #[path = "catalog_start.rs"]
 mod start;
 
@@ -20,9 +22,14 @@ impl<'b, 'a, 's, 'c, 'p, 'd, 'm, 'w, W: WriterNamespace>
 {
     pub(super) fn actor_catalog_job(&self, actor: TxnRef, terminal: bool) -> Result<usize> {
         let mut found = None;
+        // Catalog selection skips every Row-scope cell (another actor's).
         for (ordinal, bytes) in self.control.jobs().iter().enumerate() {
-            let job = queue::decode_job(bytes, self.storage.profile().spec().namespace)
-                .map_err(queue_error)?;
+            let Some(job) =
+                queue::decode_catalog_cell(bytes, self.storage.profile().spec().namespace)
+                    .map_err(queue_error)?
+            else {
+                continue;
+            };
             if job.source() == Some(actor)
                 && job.state().is_terminal() == terminal
                 && found.replace(ordinal).is_some()
@@ -75,8 +82,12 @@ impl<'b, 'a, 's, 'c, 'p, 'd, 'm, 'w, W: WriterNamespace>
         let root = target_from_source(self.storage, Plan4Page::Root)?.request;
         let mut root_job = None;
         for bytes in self.control.jobs() {
-            let job = queue::decode_job(bytes, self.storage.profile().spec().namespace)
-                .map_err(queue_error)?;
+            let Some(job) =
+                queue::decode_catalog_cell(bytes, self.storage.profile().spec().namespace)
+                    .map_err(queue_error)?
+            else {
+                continue;
+            };
             if job.source() == Some(actor)
                 && job.state().is_root()
                 && root_job.replace(job).is_some()
@@ -265,6 +276,54 @@ impl<'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
         private: &mut [u8; PRIVATE_BYTES],
         flusher: &mut RetentionFlusher<'_, 's, 'c, 'p, 'd, 'm, 'w, W>,
     ) -> Result<Observation> {
+        self.progress_lifecycle(
+            owner,
+            source::OperationClass::CatalogProgress,
+            flusher,
+            |writer, owner| {
+                let prepared = match action {
+                    CatalogLifecycle::Begin(status) => {
+                        writer.prepare_catalog_begin(owner, status, private)
+                    }
+                    CatalogLifecycle::AgingStart => writer
+                        .catalog_preparation()
+                        .prepare_catalog_aging_start(owner, private),
+                    CatalogLifecycle::RollbackStart(actor) => writer
+                        .catalog_preparation()
+                        .prepare_catalog_rollback_start(owner, actor, private),
+                    CatalogLifecycle::AbortEnd(actor) => writer
+                        .catalog_preparation()
+                        .prepare_catalog_abort_end(owner, actor, private),
+                    CatalogLifecycle::CancelReserved(ordinal) => writer
+                        .catalog_preparation()
+                        .prepare_catalog_cancel_reserved(owner, ordinal, private),
+                    CatalogLifecycle::ReleaseRole(ordinal) => writer
+                        .catalog_preparation()
+                        .prepare_catalog_release_role(owner, ordinal, private),
+                }?;
+                #[cfg(test)]
+                crate::transaction::concurrency::catalog_test_support::hit(
+                    writer.pool.bound_core(),
+                    crate::transaction::concurrency::catalog_test_support::Point::LifecyclePrepared,
+                );
+                writer
+                    .catalog_application()
+                    .apply_existing_catalog(owner, prepared)
+            },
+        )
+    }
+
+    /// The one gate/progress shell of the synchronous lifecycle calls of
+    /// either scope: guardless health/origin checks, the original closed read
+    /// gate, the fixed progress class (Catalog or Row) and the original flusher
+    /// binding precede `body`, and checked source/gate cleanup follows it.
+    pub(super) fn progress_lifecycle<T>(
+        &mut self,
+        owner: &mut Owner<'c, 's>,
+        class: source::OperationClass,
+        flusher: &mut RetentionFlusher<'_, 's, 'c, 'p, 'd, 'm, 'w, W>,
+        body: impl FnOnce(&mut Self, &mut Owner<'c, 's>) -> Result<T>,
+    ) -> Result<T> {
         let _unwind = self.storage.session_fence().unwind_guard();
         // Only guardless health/origin checks precede source admission. The
         // existing preparer retains the deep registry/control validation.
@@ -302,11 +361,12 @@ impl<'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
                 effect: error.effect,
             })
         };
-        let source = match source::OperationSourceAdmission::catalog_progress(
+        let source = match source::OperationSourceAdmission::progress(
             self.isolation,
             &self.commit_charges,
             &self.progress_charge,
             &gate,
+            class,
         ) {
             Ok(source) => source,
             Err(error) => return merge(Err(RetentionError::from(error)), reopen(gate)),
@@ -325,33 +385,7 @@ impl<'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
                     RetentionCause::BindingMismatch,
                 ));
             }
-            let prepared = match action {
-                CatalogLifecycle::Begin(status) => {
-                    self.prepare_catalog_begin(owner, status, private)
-                }
-                CatalogLifecycle::AgingStart => self
-                    .catalog_preparation()
-                    .prepare_catalog_aging_start(owner, private),
-                CatalogLifecycle::RollbackStart(actor) => self
-                    .catalog_preparation()
-                    .prepare_catalog_rollback_start(owner, actor, private),
-                CatalogLifecycle::AbortEnd(actor) => self
-                    .catalog_preparation()
-                    .prepare_catalog_abort_end(owner, actor, private),
-                CatalogLifecycle::CancelReserved(ordinal) => self
-                    .catalog_preparation()
-                    .prepare_catalog_cancel_reserved(owner, ordinal, private),
-                CatalogLifecycle::ReleaseRole(ordinal) => self
-                    .catalog_preparation()
-                    .prepare_catalog_release_role(owner, ordinal, private),
-            }?;
-            #[cfg(test)]
-            crate::transaction::concurrency::catalog_test_support::hit(
-                self.pool.bound_core(),
-                crate::transaction::concurrency::catalog_test_support::Point::LifecyclePrepared,
-            );
-            self.catalog_application()
-                .apply_existing_catalog(owner, prepared)
+            body(self, owner)
         })();
         #[cfg(test)]
         crate::transaction::concurrency::catalog_test_support::hit(
@@ -427,15 +461,26 @@ impl<'b, 'a, 's, 'c, 'p, 'd, 'm, 'w, W: WriterNamespace>
         owner: &mut Owner<'c, 's>,
         prepared: PreparedCatalog<'_, 'c, 's>,
     ) -> Result<Observation> {
-        match prepared.count {
-            2 => self.apply_existing_catalog_n::<2>(owner, prepared),
-            3 => self.apply_existing_catalog_n::<3>(owner, prepared),
-            4 => self.apply_existing_catalog_n::<4>(owner, prepared),
-            5 => self.apply_existing_catalog_n::<5>(owner, prepared),
-            6 => self.apply_existing_catalog_n::<6>(owner, prepared),
-            7 => self.apply_existing_catalog_n::<7>(owner, prepared),
-            8 => self.apply_existing_catalog_n::<8>(owner, prepared),
-            9 => self.apply_existing_catalog_n::<9>(owner, prepared),
+        self.apply_existing(owner, ExistingGroup::Catalog(&prepared))?;
+        Ok(prepared.payload.observation)
+    }
+
+    /// The one existing-group install body of either scope; the payload kind
+    /// selects only the group-specific values (see `ExistingGroup`).
+    pub(super) fn apply_existing(
+        &mut self,
+        owner: &mut Owner<'c, 's>,
+        group: ExistingGroup<'_, '_, 'c, 's>,
+    ) -> Result<()> {
+        match group.targets().len() {
+            2 => self.apply_existing_n::<2>(owner, group),
+            3 => self.apply_existing_n::<3>(owner, group),
+            4 => self.apply_existing_n::<4>(owner, group),
+            5 => self.apply_existing_n::<5>(owner, group),
+            6 => self.apply_existing_n::<6>(owner, group),
+            7 => self.apply_existing_n::<7>(owner, group),
+            8 => self.apply_existing_n::<8>(owner, group),
+            9 => self.apply_existing_n::<9>(owner, group),
             _ => Err(unchanged(
                 RetentionPhase::Prepare,
                 RetentionCause::Invariant,
@@ -443,24 +488,18 @@ impl<'b, 'a, 's, 'c, 'p, 'd, 'm, 'w, W: WriterNamespace>
         }
     }
 
-    fn apply_existing_catalog_n<const N: usize>(
+    fn apply_existing_n<const N: usize>(
         &mut self,
         owner: &mut Owner<'c, 's>,
-        prepared: PreparedCatalog<'_, 'c, 's>,
-    ) -> Result<Observation> {
+        group: ExistingGroup<'_, '_, 'c, 's>,
+    ) -> Result<()> {
         let storage = self.storage;
         let _unwind = storage.session_fence().unwind_guard();
         // Commit must pass the real durable continuation, and reference removal
-        // must pass original retirement admission. Neither uses this fast path.
-        if matches!(
-            prepared.operation(),
-            Operation::Commit
-                | Operation::Forward
-                | Operation::Clr
-                | Operation::Prune
-                | Operation::RootFree
-                | Operation::TerminalFinish
-        ) {
+        // must pass original retirement admission. Neither uses this fast path;
+        // a Row group installs only the supplied lifecycle and Row write
+        // operations.
+        if !group.ordinary() {
             return Err(unchanged(
                 RetentionPhase::Prepare,
                 RetentionCause::Unsupported,
@@ -470,24 +509,28 @@ impl<'b, 'a, 's, 'c, 'p, 'd, 'm, 'w, W: WriterNamespace>
             .wal()
             .prefix()
             .map_err(|e| fatal(storage, RetentionPhase::Prepare, RetentionCause::Wal(e)))?;
-        prepared.check(owner, self.pool, self.control, prefix)?;
+        group.check(owner, self.pool, self.control, prefix)?;
         let visibility = self
             .visibility
             .ok_or_else(|| unchanged(RetentionPhase::Prepare, RetentionCause::WrongState))?;
         // Live Cancel retains its delta in the linear reservation until pair
         // cleanup; the closed recovery Cancel has no active epoch map yet.
-        let epoch_change = if prepared.operation() == Operation::Cancel {
-            None
-        } else {
-            visibility
-                .prepare_epoch_change(&prepared, storage.profile())
-                .map_err(|e| RetentionError {
-                    phase: RetentionPhase::Prepare,
-                    effect: e.effect,
-                    cause: RetentionCause::Visibility(e),
-                })?
+        // Row Begin/RollbackStart/AbortEnd publish no epoch (ROW-BEGIN-001),
+        // nor do RowReserve, its Forward and its Cancel (the Row epoch is
+        // Commit's, S3).
+        let epoch_change = match group {
+            ExistingGroup::Catalog(prepared) if prepared.operation() != Operation::Cancel => {
+                visibility
+                    .prepare_epoch_change(prepared, storage.profile())
+                    .map_err(|e| RetentionError {
+                        phase: RetentionPhase::Prepare,
+                        effect: e.effect,
+                        cause: RetentionCause::Visibility(e),
+                    })?
+            }
+            _ => None,
         };
-        let requests: &[TargetRequest; N] = prepared
+        let requests: &[TargetRequest; N] = group
             .targets()
             .try_into()
             .map_err(|_| unchanged(RetentionPhase::Prepare, RetentionCause::Invariant))?;
@@ -498,13 +541,13 @@ impl<'b, 'a, 's, 'c, 'p, 'd, 'm, 'w, W: WriterNamespace>
         let installed = (|| {
             let mut dpt = [const { None }; N];
             for (at, dpt_entry) in dpt.iter_mut().enumerate() {
-                let stamp = prepared
+                let stamp = group
                     .stamp(at)
                     .ok_or_else(|| unchanged(RetentionPhase::Install, RetentionCause::Invariant))?;
                 write
                     .matches_stamp(at, &stamp)
                     .map_err(|e| frame(RetentionPhase::Install, e))?;
-                if prepared.after(at).is_some() {
+                if group.after(at).is_some() {
                     *dpt_entry = Some(
                         write
                             .preflight_dpt(at, &stamp)
@@ -517,13 +560,10 @@ impl<'b, 'a, 's, 'c, 'p, 'd, 'm, 'w, W: WriterNamespace>
                 self.pool.bound_core(),
                 crate::transaction::concurrency::catalog_test_support::Point::ExistingStageCallStarted,
             );
+            let (stage_prefix, header, frame_bytes) = group.stage_parts();
             let requirement = storage
                 .wal()
-                .stage_verified_required(
-                    prepared.payload.prefix,
-                    prepared.payload.observation.header,
-                    prepared.payload.frame,
-                )
+                .stage_verified_required(stage_prefix, header, frame_bytes)
                 .map_err(|e| {
                     if e.effect == Effect::Unchanged {
                         RetentionError {
@@ -535,17 +575,17 @@ impl<'b, 'a, 's, 'c, 'p, 'd, 'm, 'w, W: WriterNamespace>
                         fatal(storage, RetentionPhase::Stage, RetentionCause::Wal(e))
                     }
                 })?;
-            catalog_mark_staged(&prepared, self.control, requirement)?;
+            group.mark_staged(self.control, requirement)?;
             for (at, dpt_entry) in dpt.iter_mut().enumerate() {
-                let Some(after) = prepared.after(at) else {
+                let Some(after) = group.after(at) else {
                     continue;
                 };
                 let permit = InstallGrant {
                     kind: InstallKind::Plan4 {
                         core: self.pool.bound_core(),
-                        stamp: prepared.stamp(at).expect("checked existing"),
+                        stamp: group.stamp(at).expect("checked existing"),
                         requirement,
-                        after_counter: prepared
+                        after_counter: group
                             .stamp(at)
                             .expect("checked existing")
                             .modification_counter
@@ -564,12 +604,7 @@ impl<'b, 'a, 's, 'c, 'p, 'd, 'm, 'w, W: WriterNamespace>
                     .install_dpt(dpt_entry.take().expect("preflight DPT"), &permit)
                     .map_err(|e| frame(RetentionPhase::Install, e))?;
             }
-            catalog_apply(
-                &prepared.payload,
-                self.control,
-                storage.profile(),
-                requirement,
-            )?;
+            group.apply_control(self.control, storage.profile(), requirement)?;
             self.history.installed(requirement)?;
             Ok(requirement)
         })();
@@ -606,7 +641,113 @@ impl<'b, 'a, 's, 'c, 'p, 'd, 'm, 'w, W: WriterNamespace>
         })?;
         self.control.durable = Some(durable);
         self.control.pending = None;
-        Ok(prepared.payload.observation)
+        Ok(())
+    }
+}
+
+/// The private payload kind of the one existing-group install body
+/// (ROW-BEGIN-001: one body, payload {Catalog, Row}, no copy). It selects
+/// only the group's own values: its admitted operations, owner/cut check,
+/// targets, stamps, after images, staged frame, stage mark and control part.
+#[derive(Clone, Copy)]
+pub(super) enum ExistingGroup<'p, 'i, 'c, 's> {
+    Catalog(&'p PreparedCatalog<'i, 'c, 's>),
+    Row(&'p row::PreparedRowGroup<'i, 'c, 's>),
+    /// A Row write group over the whole write target set (S2-b2: RowReserve;
+    /// S2-c: its Forward; S2-d: its Cancel).
+    RowWrite(&'p row::PreparedRowGroup<'i, 'c, 's, { row::ROW_WRITE_TARGETS }>),
+}
+impl<'p, 'i, 'c, 's> ExistingGroup<'p, 'i, 'c, 's> {
+    fn ordinary(self) -> bool {
+        match self {
+            Self::Catalog(prepared) => !matches!(
+                prepared.operation(),
+                Operation::Commit
+                    | Operation::Forward
+                    | Operation::Clr
+                    | Operation::Prune
+                    | Operation::RootFree
+                    | Operation::TerminalFinish
+            ),
+            Self::Row(prepared) => prepared.lifecycle(),
+            Self::RowWrite(prepared) => prepared.row_write(),
+        }
+    }
+    fn check(
+        self,
+        owner: &Owner<'c, 's>,
+        pool: &SharedPool<'c, 's, '_, '_>,
+        control: &control::RetentionLedger<'_, 'c, 's>,
+        prefix: WalPrefix,
+    ) -> Result<()> {
+        match self {
+            Self::Catalog(prepared) => prepared.check(owner, pool, control, prefix),
+            Self::Row(prepared) => prepared.check(owner, pool, control, prefix),
+            Self::RowWrite(prepared) => prepared.check(owner, pool, control, prefix),
+        }
+    }
+    fn targets(self) -> &'p [TargetRequest] {
+        match self {
+            Self::Catalog(prepared) => prepared.targets(),
+            Self::Row(prepared) => prepared.targets(),
+            Self::RowWrite(prepared) => prepared.targets(),
+        }
+    }
+    fn stamp(self, at: usize) -> Option<FrameStamp> {
+        match self {
+            Self::Catalog(prepared) => prepared.stamp(at),
+            Self::Row(prepared) => prepared.stamp(at),
+            Self::RowWrite(prepared) => prepared.stamp(at),
+        }
+    }
+    fn after(self, at: usize) -> Option<&'i [u8; PAGE_BYTES]> {
+        match self {
+            Self::Catalog(prepared) => prepared.after(at),
+            Self::Row(prepared) => prepared.after(at),
+            Self::RowWrite(prepared) => prepared.after(at),
+        }
+    }
+    fn stage_parts(
+        self,
+    ) -> (
+        WalPrefix,
+        crate::storage::wal_frame::WalFrameHeader,
+        &'i [u8],
+    ) {
+        match self {
+            Self::Catalog(prepared) => (
+                prepared.payload.prefix,
+                prepared.payload.observation.header,
+                prepared.payload.frame,
+            ),
+            Self::Row(prepared) => prepared.stage_parts(),
+            Self::RowWrite(prepared) => prepared.stage_parts(),
+        }
+    }
+    fn mark_staged(
+        self,
+        control: &mut control::RetentionLedger<'_, '_, 's>,
+        requirement: WalRequirement<'s>,
+    ) -> Result<()> {
+        match self {
+            Self::Catalog(prepared) => catalog_mark_staged(prepared, control, requirement),
+            Self::Row(prepared) => prepared.mark_staged(control, requirement),
+            Self::RowWrite(prepared) => prepared.mark_staged(control, requirement),
+        }
+    }
+    fn apply_control(
+        self,
+        control: &mut control::RetentionLedger<'_, '_, '_>,
+        profile: crate::storage::control::Profile,
+        requirement: WalRequirement<'_>,
+    ) -> Result<()> {
+        match self {
+            Self::Catalog(prepared) => {
+                catalog_apply(&prepared.payload, control, profile, requirement)
+            }
+            Self::Row(prepared) => prepared.apply_control(control, profile, requirement),
+            Self::RowWrite(prepared) => prepared.apply_control(control, profile, requirement),
+        }
     }
 }
 
@@ -617,6 +758,10 @@ pub(super) fn application_carrier_bytes<W: WriterNamespace>() -> usize {
     2 * size_of::<CatalogApplication<'_, '_, '_, '_, '_, '_, '_, '_, W>>()
         + 3 * size_of::<Result<Observation>>()
         + 6 * size_of::<&()>()
+        // The borrowed payload kind of the one install body and its result,
+        // forwarded once more by the count dispatch.
+        + 2 * size_of::<ExistingGroup<'_, '_, '_, '_>>()
+        + 2 * size_of::<Result<()>>()
 }
 
 pub(in super::super::super) fn entry_carrier_bytes<W: WriterNamespace>() -> usize {
@@ -630,6 +775,10 @@ pub(in super::super::super) fn entry_carrier_bytes<W: WriterNamespace>() -> usiz
         + 2 * size_of::<usize>()
         + (4 + 4 + 5 + 3 + 3) * size_of::<&()>()
         + size_of::<CatalogPreparation<'_, '_, '_, '_, '_, '_, '_, '_, W>>()
+        // The shared shell's class and its body closure (action/private
+        // captures, then the writer/owner arguments it is called with).
+        + size_of::<source::OperationClass>()
+        + 4 * size_of::<&()>()
 }
 
 /// Cancel's registry observation is sequential with selection and preparation.

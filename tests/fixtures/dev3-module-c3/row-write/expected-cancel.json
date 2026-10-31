@@ -1,0 +1,32 @@
+{
+  "after_cancel": {
+    "cancelled_count": 1,
+    "reserved_count": 4,
+    "row_high_water": 1,
+    "sequence_high_water": 2,
+    "undo14": "b975e67e40072ca7edf708059869743acea9bd078e513cbd07d4e3d8e7d8de4e"
+  },
+  "after_reserve": {
+    "cancelled_count": 0,
+    "reserved_count": 4,
+    "row_high_water": 1,
+    "sequence_high_water": 2,
+    "undo14": "b975e67e40072ca7edf708059869743acea9bd078e513cbd07d4e3d8e7d8de4e"
+  },
+  "after_sha256": {
+    "aging": "7fa7e3882f2d08834a95d9547301ab83c67aa75f1f1fe12142c709229a1be004",
+    "bank": "f5b2ae1315315650e8f32cd04ed30ef7c49345fc03a14a22a226b8b561e26825",
+    "jobs2": "81098863253704f7300ba72f877abc28a556d37899e210f7cbf52e09bfeea891",
+    "root1": "cb21bb0987e2e099b5b3880deebf2cdec5a6664af2ce96c59e1806d5d490c3c7",
+    "tx": "5aceb6234982016a82df90f2f74032ae2c68edb1806fa14fb8fa6f4646469a5f"
+  },
+  "case": "S2W-R08",
+  "frame_bytes": 40000,
+  "frame_sha256": "c2b02eaa12afa2c12eb0427ad8a6deb9746ccb884571ab3157928fa6ba6aee4b",
+  "lsn": 16,
+  "root_job": {
+    "generation": 2,
+    "ordinal": 3,
+    "state": 0
+  }
+}

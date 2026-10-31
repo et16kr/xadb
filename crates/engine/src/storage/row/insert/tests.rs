@@ -1,5 +1,5 @@
 //! C0_ONLY. Literal byte observations confer no actual source/owner rights.
-//! Full MCA00-V06 Forward/CLR remains unsupplied; leaf cases have separate IDs.
+//! Leaf cases have separate IDs; MCA00-V06 Forward/CLR is in `group_tests`.
 
 use super::*;
 use crate::{

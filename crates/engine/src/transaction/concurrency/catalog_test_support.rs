@@ -42,6 +42,9 @@ pub(crate) enum Point {
     CatalogCreateCompleted,
     RetirementFirstPage,
     ReadGateWaiting,
+    /// The Row write preflight has made its sources resident, before its
+    /// one replay (S2W-R20).
+    RowPreflightResident,
 }
 
 pub(crate) fn install(

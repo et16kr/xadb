@@ -71,23 +71,26 @@ fn analyze<'p>(
             && expected.frame.stream.timeline == namespace.timeline,
         SemanticError::IdentityMismatch,
     )?;
-    if expected.profile.format() == 2 {
-        validate_catalog_base_allocation(
+    // The bound Profile selects the count-one algebra exactly: Profile3 the
+    // base4 Row mode, Profile1 the original System grammar. No other format
+    // (Profile2 included) falls through into the System v2 grammar.
+    match expected.profile.format() {
+        3 => validate_row_base_allocation(
             before,
             expected.profile,
             expected.before_descriptor,
             expected.high_water,
             expected.terminal,
             expected.initialized,
-        )?;
-    } else {
-        validate_plan4_system_base_allocation(
+        )?,
+        1 => validate_plan4_system_base_allocation(
             before,
             expected.profile,
             expected.before_descriptor,
             expected.high_water,
             expected.terminal,
-        )?;
+        )?,
+        _ => return Err(SemanticError::IdentityMismatch),
     }
     let page = allocation_page::decode_allocation_page(before, expected.allocator, namespace)
         .map_err(|_| SemanticError::PageMismatch)?;

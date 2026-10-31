@@ -212,7 +212,7 @@ phase별image수는 createP전후1/2, writeP2/4, syncP4/2, createE2/4, writeE4/8
 
 ## 구현·실행 기록
 
-제품은 `storage/wal_io.rs`, 시험 지원은 `wal_io_test_support.rs`와 `wal_io_tests.rs`, feature-gated native 조립은 `testing/genesis_wal.rs`에 있다. 실제 Linux 시험3개는 `crates/testing/engine-worker/tests/genesis_wal.rs`, compiler4는 `scripts/check_dev3_wal_borrows.py`가 소유한다. 공유 compiler 진단 parser의 기본 buffer probe 의미는 유지하고 WAL의 명시적 probe 경로에도 exact code/primary span을 적용했다. checker 자기시험7개와 WAL 모델 checker3개는 제품 runtime 분모와 분리한다.
+제품은 `storage/wal_io.rs`, 시험 지원은 `storage/wal_io/test_support.rs`와 `storage/wal_io/tests.rs`(2026-10-29 L6에서 `storage/` 직속의 원 `wal_io_test_support.rs`·`wal_io_tests.rs`를 이동), feature-gated native 조립은 `testing/genesis_wal.rs`에 있다. 실제 Linux 시험3개는 `crates/testing/engine-worker/tests/genesis_wal.rs`, compiler4는 `scripts/check_dev3_wal_borrows.py`가 소유한다. 공유 compiler 진단 parser의 기본 buffer probe 의미는 유지하고 WAL의 명시적 probe 경로에도 exact code/primary span을 적용했다. checker 자기시험7개와 WAL 모델 checker3개는 제품 runtime 분모와 분리한다.
 
 `genesis_installs_in_durable_order`의 실제 FileIo/WriterNamespace 14개 effect와 raw write bytes를 `scripts/dev3_wal_durable_model.py`가 D2 때 고정한 `tests/fixtures/dev3-genesis-wal-durable.json`과 대조한다. slot113/1246·mutant4는 별도 `scripts/dev3_wal_slot_model.py`의 추상 유한 계산이다. 실제 trace와의 연결도 28cut/82image의 한정 장애 모델이며 장치 전체 power-loss 증명·recovery 실행으로 확대하지 않는다. native24개 SIGKILL은 별도 pagecache 관측이다.
 

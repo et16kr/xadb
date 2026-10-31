@@ -106,12 +106,11 @@ impl<W: WriterNamespace> Plan4Retention<'_, '_, '_, '_, '_, '_, '_, '_, W> {
 
     /// Corrupt only the exposed Ready label or retained I/O origin. Existing
     /// authentic capture/receipts remain for the lease's validation to reject.
+    /// Kind 2 exposes WaitingWal and kind 3 leaves the I/O no headroom for
+    /// its next selector generation, so its preflight is Unchanged Capacity
+    /// (S2W-R17).
     pub(in crate::storage) fn catalog_test_create_flush_fault(&mut self, kind: u8) {
-        match kind {
-            0 => self.flush.phase = flush::RetentionFlushPhase::Ready,
-            1 => self.flush.io.test_pair_origin_fault(),
-            _ => panic!("unknown flush lease fault"),
-        }
+        flush_fault(&mut self.flush, kind);
     }
 
     /// Fault injection: retain an authentic previous requirement as unexpected
@@ -231,6 +230,11 @@ pub(in crate::storage) struct CatalogCommitTestState {
     epochs: (bool, u64, Vec<(u8, u64, u64)>),
 }
 impl<W: WriterNamespace> RetentionWriter<'_, '_, '_, '_, '_, '_, '_, '_, '_, W> {
+    /// S2W-R03: the control's (issued local, adopted local). Scalars only.
+    pub(in crate::storage) fn row_test_locals(&self) -> (u64, u64) {
+        (self.control.issued_local, self.control.adopted_local)
+    }
+
     pub(in crate::storage) fn catalog_test_commit_state(&self) -> CatalogCommitTestState {
         let wal = self.storage.wal();
         let visibility = self.visibility.expect("original visibility");
@@ -325,5 +329,28 @@ impl<W: WriterNamespace> CatalogTestState for MutationPort<'_, '_, '_, '_, '_, '
             claim,
             pins,
         ))
+    }
+}
+
+fn flush_fault(control: &mut flush::RetentionFlushControl<'_, '_, '_>, kind: u8) {
+    match kind {
+        0 => control.phase = flush::RetentionFlushPhase::Ready,
+        1 => control.io.test_pair_origin_fault(),
+        2 => control.phase = flush::RetentionFlushPhase::WaitingWal,
+        3 => super::super::super::flush_io::test_support::seed_headroom(
+            &mut control.io,
+            None,
+            None,
+            Some(u64::MAX),
+        ),
+        _ => panic!("unknown flush lease fault"),
+    }
+}
+
+impl<W: WriterNamespace> MaintenancePort<'_, '_, '_, '_, '_, '_, '_, W> {
+    /// `catalog_test_create_flush_fault` on a split's flush control, under an
+    /// open Row statement (S2W-R17).
+    pub(in crate::storage) fn row_test_flush_fault(&mut self, kind: u8) {
+        flush_fault(self.control, kind);
     }
 }

@@ -35,8 +35,8 @@ use std::{
 };
 
 const PRIVATE_BYTES: usize = 425_984;
-const NATIVE_INPUT: &str = "d6306d7396ad70165a291a14208c35b7e6e8091f0a4c67e870ea9e96d34e0a34";
-const TRANSITION_INPUT: &str = "7730d42bae88b0ce3ae5fcea96162ae5d8d309050da6820ea09d5bc07572035e";
+const NATIVE_INPUT: &str = "f6e0dd554a91931cc8e048e775a666dacd777f0c1c3285abed6773ec15f21eeb";
+const TRANSITION_INPUT: &str = "4bf20c59207890d66b5b51d06d7778a478f1226e26ce38b7cc803856fbe12181";
 
 fn hex(bytes: &[u8]) -> String {
     content_digest(bytes)
@@ -80,10 +80,10 @@ struct Corpus {
 }
 impl Corpus {
     fn new(kind: &str) -> Self {
-        let native = kind == "native";
-        let retire = kind == "memory-retire";
-        let gap = kind == "memory-gap" || retire;
-        assert!(native || gap || kind == "transition");
+        let native = kind == "native3";
+        let retire = kind == "memory-retire3";
+        let gap = kind == "memory-gap3" || retire;
+        assert!(native || gap || kind == "transition3");
         let root = Path::new(env!("CARGO_MANIFEST_DIR"))
             .join("../..")
             .join("tests/fixtures/dev3-catalog-create")
@@ -92,38 +92,38 @@ impl Corpus {
             [
                 (
                     "input-plan.json",
-                    "2c7315698b92127458110bab7308d8a5c7497bff35ea0b00e4d078f8954ad515",
+                    "0a6efde6c8e0c6e39217765af970802dd7a0a184d93e2aa9f98d97dcbf3a8017",
                 ),
                 (
                     "manifest.json",
-                    "049f4416ceaab3ccb18581f49808aa0d5d526664ad5ef90ca386a62ec8e0199c",
+                    "feb90a36adaf12540f3f618e31820f497e7d1e9241fb67fde5435e522d427ccf",
                 ),
                 (
                     "raw-index.tsv",
-                    "5ea47582d3e897d67cb2588106f7af15ad0097e2cbe6948cab0bafa90024946d",
+                    "84ecaac5ced5adabb523d8f6e3d26af92bd397748fe0ae6fe321fdf648a20ea1",
                 ),
                 (
                     "steps.tsv",
-                    "22ac4014428a4b8160f8f63818dc163e24240c599169e632d3d70683c223fef8",
+                    "19223203be6a8f3495b6d9d4a2dc51663a89c6407bfbdc6772aa73ba872cdf4e",
                 ),
             ]
         } else if gap {
             [
                 (
                     "input-plan.json",
-                    "3c21253e75cb168a34c7f4d054a27e1bbeb536221a96389208052371f4dd9208",
+                    "5286a7f6395aff44d7c49825d574ba69138ffa2a0a1e6e097aeabbd01f1bc336",
                 ),
                 (
                     "manifest.json",
-                    "edfe57082b56540ea5e71f0d5109ca98dc131369d1906388f5dd171f69d3a92b",
+                    "9a484fc975e9d83340729bf1d117431abbeb97944e7031b66be62b8ab4635657",
                 ),
                 (
                     "raw-index.tsv",
-                    "bb484d66484b12b72a8b847ac7da6d8391b4c7fc99ce1b3809ea7d2e5b19de39",
+                    "696c7ba15c4d55f3afef803afd1109a7b3b3ad9527e00de0f4fa65f468e1700d",
                 ),
                 (
                     "steps.tsv",
-                    "8fdf4dcf7b3a5848cba9e5ecf0e6d91ec75f32748b5a33caf3aeaeccb02a9047",
+                    "67cc203ac42fd11e899cee1f8a106673bbf7551596e70874f286c4e79e12c5b9",
                 ),
             ]
         } else if native {
@@ -131,15 +131,15 @@ impl Corpus {
                 ("input-plan.json", NATIVE_INPUT),
                 (
                     "manifest.json",
-                    "87aa46dd81711cc5080097c674e6fb419e371680ea3e19faa5bafbe3e4847b23",
+                    "e648b0bc4fb8ccf5f258cec6d521128daef6e59f3f9a20825d19eb81d68555df",
                 ),
                 (
                     "raw-index.tsv",
-                    "19dc89b4fcfa06942dbe1568a83b45d33af97b6c33cbfd50d6f199242e9d84cd",
+                    "5c649d47ac0b381fbf0e772498adf2fa6420daa2bb550af291fcc96965686fb2",
                 ),
                 (
                     "steps.tsv",
-                    "1b4b8b5b1ae0ee11794f97f643f3605a8a66064a1d57e00094948fe1e5c62f66",
+                    "780fe934e8d48ff054e9a436030ddc176e63d3483edad0f38345565307ffe205",
                 ),
             ]
         } else {
@@ -147,15 +147,15 @@ impl Corpus {
                 ("input-plan.json", TRANSITION_INPUT),
                 (
                     "manifest.json",
-                    "6da4346527580f3988deb480546fd6e4ee6aa57201a4bedbb7dec60c4f1509eb",
+                    "abbe3c3086ce22c89c394a2798a4b5e7479c5af2bfbf5286cb9310aaf4028a6c",
                 ),
                 (
                     "raw-index.tsv",
-                    "5ac2422996fbd8a8371bd396acc9ea8e9e7681563aeabd21848640740b63d964",
+                    "67a5322b5efd72f24a077a792d42fa9dc44d390c2c678314c135187d82cad662",
                 ),
                 (
                     "cases.tsv",
-                    "f5091dfb128b1c49bfe5b00d8e96628b81b9c7ce215c47ae23c44736940fdf26",
+                    "b190ee6458f86995ca36228c58a9e43a5d59f636988b588f7dcdbc130dd2f85f",
                 ),
             ]
         };
@@ -232,11 +232,11 @@ impl Corpus {
             assert_eq!(
                 hex(&bytes),
                 if retire {
-                    "44abad550f706b5c2fffa39cd0ddc7f6d5c352f67ee18e253d7fd31876324164"
+                    "c7be1dcf2802b04c205cbb353b0ccc928f8b2c5d33dc55625b03aebf9a307c66"
                 } else if gap {
-                    "e0cd3791ddb9a7064387a68809cb3cbe8b26e266e2c824271677c2b16c168268"
+                    "2964e48b3a2114dcb8e075074b24aead4a2d44dc05958c0ba2bb4336e4274b23"
                 } else {
-                    "0d1abf8d70b01cbaeea218f3cdcb49194e1e17f0b65f362f7f83877b8d98551e"
+                    "9501a6934c5c7c759b86250286e2b695a51622ba275e6263b8639612d45d2f5c"
                 }
             );
             for line in String::from_utf8(bytes).unwrap().lines().skip(1) {
@@ -280,15 +280,15 @@ struct Oracle {
 impl Oracle {
     fn new() -> Self {
         Self {
-            native: Corpus::new("native"),
-            transition: Corpus::new("transition"),
-            gap: Corpus::new("memory-gap"),
+            native: Corpus::new("native3"),
+            transition: Corpus::new("transition3"),
+            gap: Corpus::new("memory-gap3"),
             retire: None,
         }
     }
     /// Only MF14 depends on the later frozen CLR staged-unwind corpus.
     fn with_retire(mut self) -> Self {
-        self.retire = Some(Corpus::new("memory-retire"));
+        self.retire = Some(Corpus::new("memory-retire3"));
         self
     }
     fn row(&self, id: &str) -> &[String] {
@@ -1157,6 +1157,8 @@ mod retire_failures;
 #[path = "catalog_memory/reader_validation.rs"]
 mod reader_validation;
 
+#[path = "catalog_memory/cursor_credits.rs"]
+mod cursor_credits;
 #[path = "catalog_memory/transactions.rs"]
 mod transactions;
 
@@ -1183,6 +1185,8 @@ mod dpt_lifecycle;
 
 #[path = "catalog_memory/statement_reads.rs"]
 mod statement_reads;
+#[path = "catalog_memory/table_issue.rs"]
+mod table_issue;
 
 #[path = "catalog_memory/install_grant.rs"]
 mod install_grant;
@@ -1215,3 +1219,28 @@ mod create_admission;
 
 #[path = "catalog_memory/own_catalog_read.rs"]
 mod own_catalog_read;
+
+#[path = "catalog_memory/row_transactions.rs"]
+mod row_transactions;
+
+#[path = "catalog_memory/row_statements.rs"]
+mod row_statements;
+
+#[path = "catalog_memory/row_preflight.rs"]
+#[macro_use]
+mod row_preflight;
+
+#[path = "catalog_memory/row_write.rs"]
+mod row_write;
+
+#[path = "catalog_memory/row_v09.rs"]
+mod row_v09;
+
+#[path = "catalog_memory/row_forward.rs"]
+mod row_forward;
+
+#[path = "catalog_memory/row_cancel.rs"]
+mod row_cancel;
+
+#[path = "catalog_memory/row_live.rs"]
+mod row_live;

@@ -64,5 +64,5 @@ impl<'a> Rows<'a> {
 pub(in super::super) fn source_bytes() -> usize {
     std::mem::size_of::<Rows<'_>>()
         + 2 * std::mem::size_of::<std::result::Result<(u64, u64), base::Error>>()
-        + xoi::current_source_bytes()
+        + xoi::row_current_source_bytes()
 }

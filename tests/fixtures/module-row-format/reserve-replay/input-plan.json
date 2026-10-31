@@ -1,0 +1,42 @@
+{
+  "scope": "S1-g RowReserve replay (contract row-reserve-replay H08-H10)",
+  "oracle": "N1 author re-run (frames equal to N1 blobs) and independent byte packing",
+  "parents": {
+    "module-row-format/genesis3-namespace/raw/P00.bin": "077d06af8b37bec32a9472ed498d3fa884fbe5e8fd84c457f6ebfa96e9946cfd",
+    "module-row-format/transition/author.py": "076ea2f2767851bd8046becbba6b1d05a00a6cd7838a9c9e052b6b2e033beec4",
+    "module-row-format/transition/blobs.bin": "96f88af3b8973f97d4bedcb315c47aaa65fffb27027cafefbad37a876e6ded6c",
+    "module-row-format/transition/index.tsv": "9d57952d6afecb04b2b03f1fa3eddd7348c2c8739fb841d9e22ac14a6f189f29",
+    "module-row-insert/scope3/noh-300-leaf-full.bin": "63e019f509565c03d139c60239e964423683b7ad77e1b86feaa1d83bc9bf796c"
+  },
+  "outputs": [
+    "G-allocator",
+    "G-allocator-free14",
+    "G-allocator-inc14",
+    "G-leaf-crowded",
+    "G-leaf-key10",
+    "G-505-projection",
+    "G-505-c",
+    "G-505-c184",
+    "G-505-c2229",
+    "G-505-budget",
+    "G-505-container9",
+    "G-505-container12",
+    "G-505-container13",
+    "G-505-container10",
+    "G-505-container15",
+    "G-505-container-inc3",
+    "G-505-ordinal18",
+    "G-505-jobgen",
+    "G-505-undogen",
+    "G-505-statement1",
+    "G-506-reserve2",
+    "G-503-reserve-aborting",
+    "G-508-y-canonical",
+    "G-507-z-canonical",
+    "G-508-forward-y",
+    "G-508-cancel-x",
+    "G-507-reserve-z",
+    "G-508-cancel-z",
+    "G-508-forward-x-over-z"
+  ]
+}

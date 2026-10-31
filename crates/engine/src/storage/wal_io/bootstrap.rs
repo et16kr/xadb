@@ -69,14 +69,11 @@ pub(crate) use doublewrite_install::{
 pub(crate) use doublewrite_install::{
     BeforeEffectError, BoundStatusBootstrap, BoundStatusWithFlush, EMPTY_TRANSACTION_BANK_BYTES,
     EmptyTransactionSnapshot, EmptyTransactions, InitAttemptError, InitializedStatusObservation,
-    InitializedSystemObservation, IntoEmptyTransactionsError, IntoFlushError,
-    IntoOperationalStatusError, MixedSystem, MixedSystemBinding, MixedSystemFlusher,
-    MixedSystemReadGuard, MixedSystemReader, MixedSystemWriter, OperationalStatus,
+    IntoEmptyTransactionsError, IntoFlushError, IntoOperationalStatusError, OperationalStatus,
     OperationalStatusReader, OperationalStatusWriter, ReadStatusSet, ReservedStatus,
-    ReservedSystemPage, ResidentReadAdmission, ResidentStatus, ResidentStatusBinding,
-    ResidentStatusReader, StatusBootstrapWriter, StatusFlushError, StatusFlusher, StatusInitError,
-    StatusReadGuard, StatusReader, SystemLoadError, SystemLoadObservation, SystemPage,
-    SystemPageKind, SystemResidencyCursor, SystemResidencyStep, SystemSlotStep,
+    ResidentReadAdmission, ResidentStatus, ResidentStatusBinding, ResidentStatusReader,
+    StatusBootstrapWriter, StatusFlushError, StatusFlusher, StatusInitError, StatusReadGuard,
+    StatusReader,
 };
 pub(crate) use doublewrite_install::{
     ClosedRecovery, RecoveryAcquireError, RecoveryCause, RecoveryError, RecoveryFailure,
@@ -807,10 +804,10 @@ struct SourceBudget {
 fn source_budget<W: WriterNamespace>() -> SourceBudget {
     use crate::storage::{
         allocation_page::{AllocationPage, ExtentAddress},
-        control::{ChunkLocation, FileMapChunk, FileMapCursor, FileMapRoot, ProfileSpec},
+        control::{ChunkLocation, FileMapChunk, FileMapCursor, FileMapRoot},
         page::PageView,
     };
-    use foundation::{codec::ContentHasher, namespace::FileMetadata};
+    use foundation::namespace::FileMetadata;
     use std::mem::size_of;
 
     type RoleResult = std::result::Result<StatusRole<'static>, BootstrapError>;
@@ -826,12 +823,8 @@ fn source_budget<W: WriterNamespace>() -> SourceBudget {
     ]
     .into_iter()
     .fold(0, usize::max);
-    // Same pinned SHA-256 source allowance as allocation_budget::HASH.
-    let hash = 4 * size_of::<ContentHasher>() + 1536;
     let common = 2 * size_of::<BootstrapPlan>()
-        + 12 * size_of::<Profile>()
-        + 8 * size_of::<ProfileSpec>()
-        + 8 * size_of::<Namespace>()
+        + profile_codec_allowance()
         + 8 * size_of::<MapIdentity>()
         + 6 * size_of::<MapSummary>()
         + 8 * size_of::<FileMapEntry>()
@@ -844,10 +837,7 @@ fn source_budget<W: WriterNamespace>() -> SourceBudget {
         + 4 * size_of::<ExtentAddress>()
         + 4 * size_of::<PageView<'_>>()
         + 2 * size_of::<AllocationPage<'_>>()
-        + 1024 // Fixed codec byte arrays/field tables; no page image.
-        + 1536 // Bounded refs/scalars/iterators/private envelope and enum tags.
-        + 6 * result_carrier
-        + hash;
+        + 6 * result_carrier;
     // Account for the enclosing reader's padding as well as its non-File fields.
     let reader_control = size_of::<PageFileReader<'_, W>>().saturating_sub(size_of::<W::File>());
     let fresh_role = 2 * size_of::<StatusRole<'_>>()
@@ -880,6 +870,24 @@ fn source_budget<W: WriterNamespace>() -> SourceBudget {
     }
 }
 
+/// The part of `source_budget`'s common allowance that carries the profile
+/// codec: profile values, fixed codec arrays, scalar carriers and the pinned
+/// SHA-256 closure (same allowance as allocation_budget::HASH). It is the
+/// allowance the Profile2 decode used implicitly; the current Profile3 codec
+/// bound must fit it explicitly (`source_budget_fits`).
+fn profile_codec_allowance() -> usize {
+    use crate::storage::control::ProfileSpec;
+    use foundation::codec::ContentHasher;
+    use std::mem::size_of;
+    let hash = 4 * size_of::<ContentHasher>() + 1536;
+    12 * size_of::<Profile>()
+        + 8 * size_of::<ProfileSpec>()
+        + 8 * size_of::<Namespace>()
+        + 1024 // Fixed codec byte arrays/field tables; no page image.
+        + 1536 // Bounded refs/scalars/iterators/private envelope and enum tags.
+        + hash
+}
+
 fn source_budget_fits<W: WriterNamespace>() -> bool {
     use std::mem::size_of;
     let owner = size_of::<FreshStorageSession<'_, W>>();
@@ -888,7 +896,8 @@ fn source_budget_fits<W: WriterNamespace>() -> bool {
         return false;
     }
     let budget = source_budget::<W>();
-    size_of::<BootstrapPlanKind>() <= 8
+    control::row_profile::source_bytes() <= profile_codec_allowance()
+        && size_of::<BootstrapPlanKind>() <= 8
         && size_of::<StatusRole<'_>>() <= 32
         && size_of::<UndoRole<'_>>() <= 32
         && size_of::<[AllocationEntry; EXTENT_PAGES]>() <= 8192
@@ -1232,5 +1241,5 @@ pub(in crate::storage) use doublewrite_install::{
 };
 
 pub(in crate::storage) use doublewrite_install::{
-    CatalogAllocationError, validate_catalog_base_allocation,
+    CatalogAllocationError, validate_catalog_base_allocation, validate_row_base_allocation,
 };

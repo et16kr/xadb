@@ -378,6 +378,160 @@ fn retirement_fixed_charge_fits_and_cannot_use_commit_transitions() {
     });
 }
 
+/// ROW-BEGIN-001 "자원": RowProgress reserves the one fixed
+/// CatalogProgressCharge. The Row lifecycle term is checked as a constant to
+/// be no larger than the Catalog bodies, so the charge is unchanged by it;
+/// the writer admits at exactly the charge and refuses one byte less
+/// (MBC10-V09, RowProgress writer).
+#[test]
+fn row_progress_reserves_the_same_catalog_progress_charge() {
+    fn inspect<W: WriterNamespace>(kind: &str) {
+        let phases = create_pair::catalog_live::catalog_live_source_bytes::<W>();
+        let charge = CatalogProgressCharge::new::<W>();
+        let catalog = phases
+            .retirement
+            .max(phases.lifecycle)
+            .max(phases.reserve)
+            .max(phases.forward)
+            .max(phases.cancel)
+            .max(transaction::catalog::check_source_bytes());
+        println!(
+            "ROW_PROGRESS_{kind} row_lifecycle={} catalog={catalog} charge={}",
+            phases.row_lifecycle, charge.0
+        );
+        assert!(phases.row_lifecycle <= catalog);
+        assert_eq!(charge.0, catalog);
+        assert!(shared_bytes::<W>() + charge.0 <= 65536);
+    }
+    inspect::<crate::storage::wal_io::plan4_test_support::Writer>("MEMORY");
+    inspect::<super::super::super::native::Writer>("NATIVE_TYPE");
+    with_ledger(|ledger, fence| {
+        let core = ledger.lock().unwrap().core;
+        let mut owner = core
+            .try_owner(crate::transaction::concurrency::OwnerRole::Foreground)
+            .unwrap();
+        let gate = owner.close_reads_for_terminal(core).unwrap();
+        let charges = commit_charges();
+        let charge = CatalogProgressCharge(8192);
+        let available = 65536 - charges.shared;
+        // One byte short: Capacity before any ledger change.
+        let held =
+            OperationSourceAdmission::reserve(ledger, charges.shared, available - 8191).unwrap();
+        let error = OperationSourceAdmission::progress(
+            ledger,
+            &charges,
+            &charge,
+            &gate,
+            OperationClass::RowProgress,
+        )
+        .err()
+        .unwrap();
+        assert!(matches!(error.cause, SourceCause::Capacity));
+        assert_eq!(error.effect, Effect::Unchanged);
+        assert_eq!(used(ledger), (available - 8191) as u64);
+        drop(held);
+        // Exactly the charge beside a held loan: admitted and returned.
+        let held =
+            OperationSourceAdmission::reserve(ledger, charges.shared, available - 8192).unwrap();
+        let ticket = OperationSourceAdmission::progress(
+            ledger,
+            &charges,
+            &charge,
+            &gate,
+            OperationClass::RowProgress,
+        )
+        .unwrap();
+        assert_eq!(used(ledger), available as u64);
+        ticket.finish_checked().unwrap();
+        drop(held);
+        assert_eq!(used(ledger), 0);
+        assert!(!fence.is_fenced());
+        // A non-progress class is a fenced Invariant before the ledger changes.
+        let error = OperationSourceAdmission::progress(
+            ledger,
+            &charges,
+            &charge,
+            &gate,
+            OperationClass::CommitProgress,
+        )
+        .err()
+        .unwrap();
+        assert!(matches!(error.cause, SourceCause::Invariant));
+        assert!(fence.is_fenced());
+        assert_eq!(used(ledger), 0);
+        assert!(gate.reopen_checked().is_err());
+    });
+}
+
+/// S2A-T01 (S2-a unit test, not in the contract's table). S2-0 Row write
+/// amendment §4: RowWrite reserves the one fixed
+/// CatalogProgressCharge, only through the gated progress entry. The reader
+/// entry refuses it as a zero charge (fenced Invariant); one byte short is
+/// Capacity before any ledger change; exactly the charge is admitted and its
+/// checked release returns it.
+#[test]
+fn s2a_t01_row_write_class_reserves_the_progress_charge_through_progress_only() {
+    with_ledger(|ledger, fence| {
+        let core = ledger.lock().unwrap().core;
+        let mut owner = core
+            .try_owner(crate::transaction::concurrency::OwnerRole::Foreground)
+            .unwrap();
+        let gate = owner.close_reads_for_terminal(core).unwrap();
+        let charges = commit_charges();
+        let charge = CatalogProgressCharge(8192);
+        let available = 65536 - charges.shared;
+        let held =
+            OperationSourceAdmission::reserve(ledger, charges.shared, available - 8191).unwrap();
+        let error = OperationSourceAdmission::progress(
+            ledger,
+            &charges,
+            &charge,
+            &gate,
+            OperationClass::RowWrite,
+        )
+        .err()
+        .unwrap();
+        assert!(matches!(error.cause, SourceCause::Capacity));
+        assert_eq!(error.effect, Effect::Unchanged);
+        assert_eq!(used(ledger), (available - 8191) as u64);
+        drop(held);
+        let held =
+            OperationSourceAdmission::reserve(ledger, charges.shared, available - 8192).unwrap();
+        let mut ticket = OperationSourceAdmission::progress(
+            ledger,
+            &charges,
+            &charge,
+            &gate,
+            OperationClass::RowWrite,
+        )
+        .unwrap();
+        assert!(!ticket.resident());
+        assert_eq!(used(ledger), available as u64);
+        ticket.release_checked().unwrap();
+        assert_eq!(used(ledger), (available - 8192) as u64);
+        drop(ticket);
+        drop(held);
+        assert_eq!(used(ledger), 0);
+        assert!(!fence.is_fenced());
+        gate.reopen_checked().unwrap();
+        // The reader entry has no RowWrite charge: zero is a fenced Invariant.
+        let error = OperationSourceAdmission::catalog(
+            ledger,
+            &CatalogSourceCharges {
+                shared: 32768,
+                full: 16384,
+                resident: 8192,
+            },
+            OperationClass::RowWrite,
+        )
+        .err()
+        .unwrap();
+        assert!(matches!(error.cause, SourceCause::Invariant));
+        assert!(fence.is_fenced());
+        assert_eq!(used(ledger), 0);
+    });
+}
+
 #[test]
 fn commit_class_moves_only_at_gate_and_drain_boundaries() {
     use crate::transaction::concurrency::OwnerRole;

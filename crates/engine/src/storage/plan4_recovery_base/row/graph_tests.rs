@@ -1,0 +1,625 @@
+use super::super::{ARENA, BANK, CERTIFICATES, INVENTORY, PROVENANCE};
+use super::*;
+use crate::storage::{
+    control,
+    ownership::InventoryError,
+    plan4_recovery_base::{
+        ControlRef, Expected, SelectedControl,
+        catalog::inventory::{InventoryRows, encode_row_current},
+        content_digest,
+    },
+    retention_page::RetentionError,
+    wal_io::CatalogAllocationError,
+};
+
+macro_rules! fixture {
+    ($name:literal) => {
+        include_bytes!(concat!(
+            env!("CARGO_MANIFEST_DIR"),
+            "/../../tests/fixtures/module-row-format/",
+            $name
+        ))
+    };
+}
+const GENESIS: &[u8; BASE_BYTES] = fixture!("base4-closure/genesis.xrb");
+const AGING: &[u8; BASE_BYTES] = fixture!("base4-closure/aging.xrb");
+const LIVE: &[u8; BASE_BYTES] = fixture!("base4-closure/live.xrb");
+const VARIANTS: &[u8] = fixture!("base4-closure/variants.bin");
+const ENVELOPES: &[u8; 5 * 4096] = fixture!("base4-closure/envelopes.bin");
+const NO_INVENTORY: &[u8; BASE_BYTES] = fixture!("base4/initial.xrb");
+const PROFILES: &[u8; 12288] = fixture!("envelopes/profiles.bin");
+
+fn expected() -> Expected {
+    Expected {
+        profile: control::row_profile::decode_profile(&PROFILES[..4096], None).unwrap(),
+        filemap: SelectedControl {
+            generation: 1,
+            reference: ControlRef::decode(&GENESIS[384..448]).unwrap(),
+        },
+        bootstrap_digest: GENESIS[464..496].try_into().unwrap(),
+    }
+}
+fn backing(bytes: &[u8]) -> Box<[u8; BASE_BYTES]> {
+    bytes.to_vec().into_boxed_slice().try_into().unwrap()
+}
+fn scratch() -> Box<[[u8; PAGE_BYTES]; 4]> {
+    Box::new([[0; PAGE_BYTES]; 4])
+}
+fn sections(bytes: &[u8; BASE_BYTES]) -> Sections<'_> {
+    Sections {
+        descriptors: bytes[BANK..BANK + DESCRIPTOR_BYTES].try_into().unwrap(),
+        certificates: bytes[CERTIFICATES..CERTIFICATES + 64 * 96]
+            .as_chunks::<96>()
+            .0
+            .try_into()
+            .unwrap(),
+        provenance: bytes[PROVENANCE..PROVENANCE + 64 * 352]
+            .as_chunks::<352>()
+            .0
+            .try_into()
+            .unwrap(),
+        inventory: bytes[INVENTORY..INVENTORY + PAGE_BYTES].try_into().unwrap(),
+        images: bytes[ARENA..ARENA + 64 * PAGE_BYTES]
+            .as_chunks::<PAGE_BYTES>()
+            .0
+            .try_into()
+            .unwrap(),
+    }
+}
+/// Re-encode exact sections; output must equal the input bytes either way.
+fn encoded(bytes: &[u8; BASE_BYTES]) -> (Box<[u8; BASE_BYTES]>, Result<RowCensus>) {
+    let header = decode_layout(bytes, expected()).unwrap().header();
+    let mut output = backing(&[0; BASE_BYTES]);
+    let census = encode(
+        header,
+        expected(),
+        sections(bytes),
+        &mut output,
+        &mut scratch(),
+    )
+    .map(RowBaseView::census);
+    (output, census)
+}
+
+/// Each authored variant is a run list over one of the three base literals.
+fn variants() -> Vec<(String, Box<[u8; BASE_BYTES]>)> {
+    let bases: [&[u8; BASE_BYTES]; 3] = [GENESIS, AGING, LIVE];
+    let u32_at = |at: usize| u32::from_le_bytes(VARIANTS[at..at + 4].try_into().unwrap()) as usize;
+    let mut out = Vec::new();
+    let mut at = 0;
+    while at < VARIANTS.len() {
+        let (parent, length) = (VARIANTS[at] as usize, VARIANTS[at + 1] as usize);
+        let name = std::str::from_utf8(&VARIANTS[at + 2..at + 2 + length])
+            .unwrap()
+            .to_owned();
+        at += 2 + length;
+        let runs = u32_at(at);
+        at += 4;
+        let mut bytes = backing(bases[parent]);
+        for _ in 0..runs {
+            let (offset, size) = (u32_at(at), u32_at(at + 4));
+            bytes[offset..offset + size].copy_from_slice(&VARIANTS[at + 8..at + 8 + size]);
+            at += 8 + size;
+        }
+        out.push((name, bytes));
+    }
+    out
+}
+fn state(name: &str) -> Box<[u8; BASE_BYTES]> {
+    variants()
+        .into_iter()
+        .find_map(|(n, bytes)| (n == name).then_some(bytes))
+        .unwrap()
+}
+
+const EMPTY: InventoryObservation = InventoryObservation {
+    owners: 0,
+    items: 0,
+    chunks: 0,
+    read_calls: 0,
+};
+/// The live literal: one Row actor with two Retained rows over a committed
+/// CREATE and INSERT, after the last System Undo INIT finished.
+const LIVE_CENSUS: RowCensus = RowCensus {
+    transactions: 1,
+    systems: 1,
+    statuses: 2,
+    actors: 1,
+    retained: 2,
+    releasing: 0,
+    tables: 1,
+    rows: 3,
+    reserved: ReservedInventory::None,
+    inventory: InventoryObservation { owners: 2, ..EMPTY },
+};
+
+#[test]
+fn base4_closure_accepts_genesis_and_aging_start() {
+    let genesis = RowCensus {
+        transactions: 0,
+        systems: 0,
+        statuses: 0,
+        actors: 0,
+        retained: 0,
+        releasing: 0,
+        tables: 0,
+        rows: 0,
+        reserved: ReservedInventory::None,
+        inventory: EMPTY,
+    };
+    let aging = RowCensus {
+        systems: 1,
+        inventory: InventoryObservation { owners: 1, ..EMPTY },
+        ..genesis
+    };
+    for (bytes, census) in [(GENESIS, genesis), (AGING, aging)] {
+        let view = decode(bytes, expected(), &mut scratch()).unwrap();
+        assert!(std::ptr::eq(view.bytes(), bytes));
+        assert_eq!(view.census(), census);
+        assert_eq!(view.digest(), content_digest(bytes));
+        assert_eq!(view.descriptor(32), Ok(None));
+        let (output, encoded) = encoded(bytes);
+        assert_eq!(*output, *bytes);
+        assert_eq!(encoded, Ok(census));
+    }
+    let view = decode(AGING, expected(), &mut scratch()).unwrap();
+    let aging = view.descriptor(34).unwrap().unwrap();
+    assert_eq!(view.active_descriptor(0), Ok(aging));
+    assert_eq!(
+        view.active_descriptor(1),
+        Err(RowBaseError::Base(BaseError::InvalidInput))
+    );
+    assert_eq!(
+        view.descriptor(36),
+        Err(RowBaseError::Base(BaseError::InvalidInput))
+    );
+    assert_eq!(view.header().system_high_water, [0, 0, 1, 0]);
+}
+
+#[test]
+fn base4_closure_accepts_live_system_init_done() {
+    let mut scratch = scratch();
+    let view = decode(LIVE, expected(), &mut scratch).unwrap();
+    assert!(std::ptr::eq(view.bytes(), LIVE));
+    assert_eq!(view.census(), LIVE_CENSUS);
+    // The Finished System row stays in the bank but owns no inventory.
+    let finished = view.descriptor(32).unwrap().unwrap();
+    assert!(matches!(
+        finished.owner,
+        crate::storage::obligation::OwnerState::System(p)
+            if p.phase == crate::storage::obligation::WorkPhase::Finished
+    ));
+    assert_eq!(
+        view.active_descriptor(1),
+        Ok(view.descriptor(34).unwrap().unwrap())
+    );
+    assert_eq!(
+        view.active_descriptor(2),
+        Err(RowBaseError::Base(BaseError::InvalidInput))
+    );
+    assert_eq!(view.header().system_high_water, [5, 0, 1, 0]);
+    // The graph pieces the census is built from.
+    let graph = Graph::new(decode_layout(LIVE, expected()).unwrap()).unwrap();
+    graph.check_queue(&mut scratch).unwrap();
+    assert_eq!(
+        seam::validate_relations(&graph),
+        Ok(ReservedInventory::None)
+    );
+    assert_eq!(graph.actors(&mut scratch), Ok([1, 2, 0]));
+    assert_eq!(graph.tables(), Ok([1, 3]));
+    let (output, encoded) = encoded(LIVE);
+    assert_eq!(*output, *LIVE);
+    assert_eq!(encoded, Ok(LIVE_CENSUS));
+}
+
+#[test]
+fn base4_closure_accepts_system_page_reservation() {
+    let bytes = state("state-system-reserved");
+    let census = RowCensus {
+        systems: 2,
+        reserved: ReservedInventory::SystemPage,
+        inventory: InventoryObservation {
+            owners: 3,
+            items: 1,
+            chunks: 1,
+            read_calls: 5,
+        },
+        ..LIVE_CENSUS
+    };
+    let view = decode(&*bytes, expected(), &mut scratch()).unwrap();
+    assert_eq!(view.census(), census);
+    assert_eq!(view.header().system_high_water, [6, 0, 1, 0]);
+    // The Prepared System row is active ordinal 1, between A and Aging.
+    assert_eq!(
+        view.active_descriptor(1),
+        Ok(view.descriptor(32).unwrap().unwrap())
+    );
+    let (output, encoded) = encoded(&bytes);
+    assert_eq!(*output, *bytes);
+    assert_eq!(encoded, Ok(census));
+}
+
+#[test]
+fn base4_closure_accepts_row_undo_slot_reservation() {
+    // A RowReserve of the free Undo15: the shared pass sees no page
+    // reservation and the Row owner couples the one UndoSlot(U) item.
+    let bytes = state("state-row-reserved");
+    let census = RowCensus {
+        reserved: ReservedInventory::RowUndoSlot,
+        inventory: InventoryObservation {
+            owners: 2,
+            items: 1,
+            chunks: 1,
+            read_calls: 5,
+        },
+        ..LIVE_CENSUS
+    };
+    let mut scratch = scratch();
+    let view = decode(&*bytes, expected(), &mut scratch).unwrap();
+    assert_eq!(view.census(), census);
+    let graph = Graph::new(decode_layout(&*bytes, expected()).unwrap()).unwrap();
+    graph.check_queue(&mut scratch).unwrap();
+    assert_eq!(
+        seam::validate_relations(&graph),
+        Ok(ReservedInventory::None)
+    );
+    assert_eq!(
+        graph.row_reservation(ReservedInventory::None),
+        Ok(ReservedInventory::RowUndoSlot)
+    );
+    assert_eq!(graph.row_item(), Ok(()));
+    let (output, encoded) = encoded(&bytes);
+    assert_eq!(*output, *bytes);
+    assert_eq!(encoded, Ok(census));
+}
+
+#[test]
+fn base4_closure_accepts_catalog_scope_actor() {
+    // Catalog actor D with its CREATE Reserved (three items), Retained and
+    // uncommitted, or committed and not yet pruned under a Retained A row in
+    // its table: the exact Profile3 Catalog ledger closes D's residual.
+    let active = RowCensus {
+        transactions: 2,
+        inventory: InventoryObservation { owners: 3, ..EMPTY },
+        ..LIVE_CENSUS
+    };
+    for (name, census) in [
+        (
+            "state-create-reserved",
+            RowCensus {
+                reserved: ReservedInventory::CatalogCreate,
+                inventory: InventoryObservation {
+                    owners: 3,
+                    items: 3,
+                    chunks: 1,
+                    read_calls: 5,
+                },
+                ..active
+            },
+        ),
+        (
+            "state-create-retained",
+            RowCensus {
+                tables: 2,
+                ..active
+            },
+        ),
+        (
+            "state-create-committed-row",
+            RowCensus {
+                retained: 3,
+                tables: 2,
+                rows: 4,
+                ..LIVE_CENSUS
+            },
+        ),
+    ] {
+        let bytes = state(name);
+        assert_eq!(
+            decode(&*bytes, expected(), &mut scratch()).map(|view| view.census()),
+            Ok(census),
+            "{name}"
+        );
+        let (output, packed) = encoded(&bytes);
+        assert_eq!(*output, *bytes, "{name}");
+        assert_eq!(packed, Ok(census), "{name}");
+    }
+    // A Row-scope root never reaches the Catalog ledger, not even as no root.
+    let graph = Graph::new(decode_layout(LIVE, expected()).unwrap()).unwrap();
+    let (terminal, root) = (graph.job(0).unwrap(), graph.job(1).unwrap());
+    assert!(terminal.row_scope() && root.state() == JobState::RootRetained);
+    let home = graph.home(terminal).unwrap();
+    let crate::storage::transaction_record::TransactionStatusCell::Occupied(status) = home.core()
+    else {
+        panic!("A's Status is occupied");
+    };
+    assert_eq!(
+        graph.catalog_remaining(status, Some(root)),
+        Err(BaseError::IdentityMismatch)
+    );
+    let raw: &[u8; 1536] = LIVE[BANK..BANK + 1536].try_into().unwrap();
+    assert_eq!(
+        graph.catalog_transaction(raw, home, Some(root)),
+        Err(BaseError::IdentityMismatch)
+    );
+}
+
+#[test]
+fn base4_closure_entry_gates_profile_base_root_job() {
+    use RowBaseError::Base;
+    let mut scratch = scratch();
+    for (index, version) in [0u16, 1, 2, 4, u16::MAX].into_iter().enumerate() {
+        let envelope = &ENVELOPES[index * 4096..(index + 1) * 4096];
+        assert!(control::row_profile::decode_profile(envelope, None).is_err());
+        match control::decode_bootstrap_profile(envelope, None) {
+            Ok(profile) => {
+                assert!(matches!(version, 1 | 2));
+                assert_eq!(profile.format(), version);
+                let e = Expected {
+                    profile,
+                    ..expected()
+                };
+                assert_eq!(
+                    decode(GENESIS, e, &mut scratch).err(),
+                    Some(Base(BaseError::Unsupported))
+                );
+            }
+            Err(_) => assert!(matches!(version, 0 | 4 | u16::MAX)),
+        }
+    }
+    let gates = variants();
+    let mut seen = 0;
+    for (name, bytes) in &gates {
+        let expected_error = if name.starts_with("base-version-") {
+            Base(BaseError::Unsupported)
+        } else if name.starts_with("root-version-") || name.starts_with("job-version-") {
+            Base(BaseError::Retention(RetentionError::UnsupportedFormat))
+        } else {
+            continue;
+        };
+        seen += 1;
+        assert_eq!(
+            decode(&**bytes, expected(), &mut scratch).err(),
+            Some(expected_error),
+            "{name}"
+        );
+    }
+    assert_eq!(seen, 10);
+    // The XOI1 shape check runs in the shared Catalog seam.
+    assert_eq!(
+        decode(NO_INVENTORY, expected(), &mut scratch).err(),
+        Some(Base(BaseError::Corrupt))
+    );
+}
+
+#[test]
+fn base4_closure_relation_variants() {
+    use crate::storage::semantic_row::Error as Ledger;
+    use RowBaseError::Base as B;
+    let mut scratch = scratch();
+    let mut seen = 0;
+    for (name, bytes) in &variants() {
+        let expected_error = match name.as_str() {
+            "terminal-without-system"
+            | "allocation-finished-noncanonical"
+            | "system-reserved-terminal" => B(BaseError::CatalogAllocation(
+                CatalogAllocationError::StateMismatch,
+            )),
+            "aging-header-budget" => B(BaseError::BudgetMismatch),
+            "issuer-undo-high" | "free-undo-generation" | "create-undo-lsn" => {
+                B(BaseError::OrderMismatch)
+            }
+            "row-high-global"
+            | "committed-q-collision"
+            | "committed-writer-bound"
+            | "create-uncommitted-committed-row"
+            | "committed-row-before-create"
+            | "committed-row-before-pruned-create"
+            | "ready-writer-before-pruned-create"
+            | "ready-writer-before-create"
+            | "compensated-writer-before-create" => RowBaseError::Order,
+            // D's descriptor residual differs from the exact Profile3 Catalog
+            // ledger's (a CLR byte, the Row peak), or its committed Status head
+            // is not its Retained root's Undo.
+            "d-residual-clr" | "d-residual-peak" => B(BaseError::CatalogSemantic(
+                semantic_catalog::Error::BudgetMismatch,
+            )),
+            "d-committed-head" => B(BaseError::CatalogSemantic(
+                semantic_catalog::Error::IdentityMismatch,
+            )),
+            "catalog-row-mixing" => RowBaseError::Identity,
+            "init-initial-digest" => B(BaseError::ProvenanceMismatch),
+            "descriptor-last-mutation" => RowBaseError::Ledger(Ledger::OrderMismatch),
+            "att-missing"
+            | "aging-descriptor-missing"
+            | "catalog-scope-terminal"
+            | "retained-projection" => B(BaseError::IdentityMismatch),
+            "inventory-generation" | "row-reserved-no-item" | "row-reserved-two-items" => {
+                B(BaseError::Corrupt)
+            }
+            "system-item-owner" | "create-item-order" | "row-reserved-item-kind" => {
+                B(BaseError::Inventory(InventoryError::Corrupt))
+            }
+            // Its Status still counts two incoming Retained roots.
+            "reserved-row-root" => {
+                RowBaseError::Actor(actor::Error::Ledger(Ledger::IdentityMismatch))
+            }
+            // The Row root is ordered after an uncommitted creator's table.
+            "create-uncommitted-row" => RowBaseError::Queue(RetentionError::OrderMismatch),
+            "row-reserved-twice" => RowBaseError::Queue(RetentionError::IdentityMismatch),
+            // A RowReserve beside a System page reservation: no joint item order.
+            "row-reserved-mixed" => RowBaseError::Unsupported,
+            _ => continue,
+        };
+        seen += 1;
+        // Each variant passes the raw layout, so the closure owns the rejection.
+        decode_layout(&**bytes, expected()).unwrap();
+        assert_eq!(
+            decode(&**bytes, expected(), &mut scratch).err(),
+            Some(expected_error),
+            "{name}"
+        );
+    }
+    assert_eq!(seen, 36);
+}
+
+#[test]
+fn base4_closure_orders_ready_row_writer_after_creator() {
+    // A committed Row actor still on its Ready Terminal follows its table's
+    // creator: the pruned record's q, a not yet pruned CREATE's Ready q, and
+    // the table of a compensated write alike.
+    let mut scratch = scratch();
+    for (name, actors, tables) in [
+        ("state-ready-writer", [1, 2, 0], Ok([1, 3])),
+        (
+            "ready-writer-before-pruned-create",
+            [1, 2, 0],
+            Err(RowBaseError::Order),
+        ),
+        ("state-ready-writer-row7", [1, 3, 0], Ok([2, 4])),
+        (
+            "ready-writer-before-create",
+            [1, 3, 0],
+            Err(RowBaseError::Order),
+        ),
+        ("state-compensated-writer", [1, 2, 1], Ok([2, 3])),
+        (
+            "compensated-writer-before-create",
+            [1, 2, 1],
+            Err(RowBaseError::Order),
+        ),
+    ] {
+        let bytes = state(name);
+        let graph = Graph::new(decode_layout(&*bytes, expected()).unwrap()).unwrap();
+        graph.check_queue(&mut scratch).unwrap();
+        assert_eq!(
+            seam::validate_relations(&graph),
+            Ok(ReservedInventory::None),
+            "{name}"
+        );
+        assert_eq!(graph.actors(&mut scratch), Ok(actors), "{name}");
+        assert_eq!(graph.tables(), tables, "{name}");
+    }
+    // Over the pruned table alone the Ready actor needs no ATT owner.
+    let census = RowCensus {
+        transactions: 0,
+        inventory: InventoryObservation { owners: 1, ..EMPTY },
+        ..LIVE_CENSUS
+    };
+    let bytes = state("state-ready-writer");
+    assert_eq!(
+        decode(&*bytes, expected(), &mut scratch).map(|view| view.census()),
+        Ok(census)
+    );
+    let (output, packed) = encoded(&bytes);
+    assert_eq!(*output, *bytes);
+    assert_eq!(packed, Ok(census));
+    // Over D's committed, unpruned table 7 the Catalog ledger closes D too.
+    for (name, census) in [
+        (
+            "state-ready-writer-row7",
+            RowCensus {
+                retained: 3,
+                tables: 2,
+                rows: 4,
+                ..census
+            },
+        ),
+        (
+            "state-compensated-writer",
+            RowCensus {
+                releasing: 1,
+                tables: 2,
+                ..census
+            },
+        ),
+    ] {
+        let bytes = state(name);
+        assert_eq!(
+            decode(&*bytes, expected(), &mut scratch).map(|view| view.census()),
+            Ok(census),
+            "{name}"
+        );
+        let (output, packed) = encoded(&bytes);
+        assert_eq!(*output, *bytes, "{name}");
+        assert_eq!(packed, Ok(census), "{name}");
+    }
+}
+
+/// Borrowed rows of one accepted literal for the Profile3 XOI mode.
+struct Rows<'a> {
+    bytes: &'a [u8; BASE_BYTES],
+    graph: Graph<'a>,
+}
+impl Rows<'_> {
+    fn slot(&self, slot: usize) -> Option<&[u8; 1536]> {
+        let bytes: &[u8; 1536] = self.graph.layout.descriptor_bank()[slot * 1536..][..1536]
+            .try_into()
+            .unwrap();
+        bytes.iter().any(|byte| *byte != 0).then_some(bytes)
+    }
+}
+impl InventoryRows for Rows<'_> {
+    fn transaction(&self, index: usize) -> Option<&[u8; 1536]> {
+        (index < 32).then(|| self.slot(index)).flatten()
+    }
+    fn allocation(&self) -> Option<&[u8; 1536]> {
+        self.slot(32)
+    }
+    fn aging(&self) -> Option<&[u8; 1536]> {
+        self.slot(34)
+    }
+    fn root(&self) -> &[u8; PAGE_BYTES] {
+        image(self.bytes, 1)
+    }
+    fn allocator(&self) -> &[u8; PAGE_BYTES] {
+        image(self.bytes, 0)
+    }
+    fn job(&self, ordinal: usize) -> BaseResult<&[u8]> {
+        self.graph.jobs[ordinal / 15]
+            .cell(ordinal % 15)
+            .ok_or(BaseError::InvalidInput)
+    }
+}
+
+#[test]
+fn base4_closure_row_xoi_mode_reproduces_inventory() {
+    let reserved = state("state-system-reserved");
+    let retained = state("state-create-retained");
+    let create = state("state-create-reserved");
+    let row = state("state-row-reserved");
+    let committed = state("state-create-committed-row");
+    let mut seen = 0;
+    for (name, bytes) in [
+        ("genesis", GENESIS),
+        ("aging", AGING),
+        ("live", LIVE),
+        ("state-system-reserved", &*reserved),
+        ("state-create-retained", &*retained),
+        ("state-create-reserved", &*create),
+        ("state-row-reserved", &*row),
+        ("state-create-committed-row", &*committed),
+    ] {
+        let layout = decode_layout(bytes, expected()).unwrap();
+        let header = layout.header();
+        let rows = Rows {
+            bytes,
+            graph: Graph::new(layout).unwrap(),
+        };
+        let mut output = Box::new([0xa5; PAGE_BYTES]);
+        let result = encode_row_current(
+            expected().profile,
+            header.generation,
+            header.capture_lsn,
+            &rows,
+            &mut output,
+        );
+        // Current credit is every active owner's residual, as in the header.
+        let wal = header.remaining.iter().map(|row| row.wal).sum::<u64>();
+        let steps = header.remaining.iter().map(|row| row.steps).sum::<u64>();
+        assert_eq!(result, Ok((wal, steps)), "{name}");
+        assert_eq!(*output, bytes[INVENTORY..INVENTORY + PAGE_BYTES], "{name}");
+        seen += 1;
+    }
+    assert_eq!(seen, 8);
+}

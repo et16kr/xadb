@@ -1,0 +1,51 @@
+{
+  "id": "D3-CREATE-TRANSITION3-G1",
+  "status": "FROZEN_INPUT_PLAN_NOT_EXECUTED_AGAINST_PRODUCT",
+  "author": "U2-C4c (branch module-u2-switch, base 06d3bd1)",
+  "scope": "Profile3 counterpart of the transition CREATE corpus in its runtime-oracle role (plan u2c4-design.md section 4, regeneration item 2): the same 72 cases (46 positive, 26 negative) produced by the unchanged version2 phase code with serializer3.load() as the only change. Input generation only: no product or recovery execution before the single current-format switch commit.",
+  "output_directory": "tests/fixtures/dev3-catalog-create/transition3",
+  "derived_from": {
+    "tests/fixtures/dev3-catalog-create/transition/input-plan.json": "7730d42bae88b0ce3ae5fcea96162ae5d8d309050da6820ea09d5bc07572035e",
+    "tests/fixtures/dev3-catalog-create/transition/generate_literals.py": "3716f9d63f099051363bebeeaf0ebe4586ccd0984aa91735a7de82eba7d23b7e"
+  },
+  "source_inputs": {
+    "tests/fixtures/module-row-format/catalog3/serializer3.py": "0b23d146ef7fa5a1ba712baee37c60c882011f36832ef11b5f1d2b49dea70de1"
+  },
+  "immutable_existing": {
+    "tests/fixtures/dev3-catalog-create/transition/manifest.json": "6da4346527580f3988deb480546fd6e4ee6aa57201a4bedbb7dec60c4f1509eb",
+    "tests/fixtures/dev3-catalog-create/transition/cases.tsv": "f5091dfb128b1c49bfe5b00d8e96628b81b9c7ce215c47ae23c44736940fdf26",
+    "tests/fixtures/dev3-catalog-create/transition/raw-index.tsv": "5ac2422996fbd8a8371bd396acc9ea8e9e7681563aeabd21848640740b63d964",
+    "tests/fixtures/dev3-catalog-create/native3/manifest.json": "e648b0bc4fb8ccf5f258cec6d521128daef6e59f3f9a20825d19eb81d68555df",
+    "tests/fixtures/dev3-catalog-create/native3/steps.tsv": "780fe934e8d48ff054e9a436030ddc176e63d3483edad0f38345565307ffe205",
+    "tests/fixtures/dev3-catalog-create/native3/raw-index.tsv": "5c649d47ac0b381fbf0e772498adf2fa6420daa2bb550af291fcc96965686fb2",
+    "tests/fixtures/dev3-catalog-create/native/steps.tsv": "1b4b8b5b1ae0ee11794f97f643f3605a8a66064a1d57e00094948fe1e5c62f66"
+  },
+  "profile3_id1_sha256": "f49d4bb26a5c0e1bd66dec9a2b0f77aa24e3fafadf54f27e5db9ab9a960e204e",
+  "expected": {
+    "cases": 72,
+    "positive": 46,
+    "negative": 26,
+    "cases_tsv_fields": 37
+  },
+  "writer_rules": [
+    "Import only the SHA-pinned serializer3 (stdlib; it checks its own version2 parent pin). Call load(), then its profile(), canonical_cases(profile) and mutants(cases) exactly once each. Never call its disabled emit/main or row_job; histories are Catalog scope2 only.",
+    "emit is a copy of the version2 emit with only the output directory, generator id and status text changed: same 37-field cases.tsv order, raw-index.tsv, manifest.json; create-new writes after every bound check.",
+    "Write-once: refuse if raw/, manifest.json or generation-result.json exists. Preserve any failed output; no silent regeneration."
+  ],
+  "auditor_rules": [
+    "Separate stdlib parser; does not import the generator or serializer3.",
+    "Verify raw inventory, hashes, sizes and the 72/46/26 counts; every raw blob hash equals its file name.",
+    "Every Root cell (XQR1) in a raw page is version3 with row_high@432 = 0 and bytes 440..512 zero; every Job cell (XQJ1) is version3 with kind != 3; the profile blob is the Profile3 ID1 literal.",
+    "Schedule equivalence with the frozen version2 cases.tsv: id, expected, operation, LSN, ordinal, plan scalars (fields 0..16), page-role order (field 22) and the presence pattern of every hash field are equal; frame lengths are equal; every positive frame differs from version2.",
+    "Cross-corpus identity: every native3 step in epoch 1 whose pure_reference names a transition case has the same frame hash as this corpus's case; the set of native3 steps with equal frames equals the version2 native/transition equal set (later epochs re-seal the outer XWF epoch, as in version2)."
+  ],
+  "limits": {
+    "generation_runs": 1,
+    "auditor_runs": 1,
+    "raw_corpus_bytes": 20971520,
+    "raw_file_bytes": 163840
+  },
+  "generation_admission": "This plan SHA is the generator and auditor adoption constant before a single generation and a single audit. Self-frozen by U2-C4c; root adoption pending.",
+  "runtime_admission": "NOT_ADMITTED until the single current-format switch (U2-C4c) runs its consumers.",
+  "revision_note": "Revised once before any generation: the first draft (SHA-256 1558b17860029585eb68b63d131982f3ce3908762d236fd72fc55ff83d4eff27) required frame equality for every pure_reference, which version2 itself does not satisfy after epoch 1; it was never used by a generator or auditor run."
+}

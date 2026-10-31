@@ -48,14 +48,11 @@ pub(crate) use recovery_prefix::{
 pub(crate) use status_init::{
     BeforeEffectError, BoundStatusBootstrap, BoundStatusWithFlush, EMPTY_TRANSACTION_BANK_BYTES,
     EmptyTransactionSnapshot, EmptyTransactions, InitAttemptError, InitializedStatusObservation,
-    InitializedSystemObservation, IntoEmptyTransactionsError, IntoFlushError,
-    IntoOperationalStatusError, MixedSystem, MixedSystemBinding, MixedSystemFlusher,
-    MixedSystemReadGuard, MixedSystemReader, MixedSystemWriter, OperationalStatus,
+    IntoEmptyTransactionsError, IntoFlushError, IntoOperationalStatusError, OperationalStatus,
     OperationalStatusReader, OperationalStatusWriter, ReadStatusSet, ReservedStatus,
-    ReservedSystemPage, ResidentReadAdmission, ResidentStatus, ResidentStatusBinding,
-    ResidentStatusReader, StatusBootstrapWriter, StatusFlushError, StatusFlusher, StatusInitError,
-    StatusReadGuard, StatusReader, SystemLoadError, SystemLoadObservation, SystemPage,
-    SystemPageKind, SystemResidencyCursor, SystemResidencyStep, SystemSlotStep,
+    ResidentReadAdmission, ResidentStatus, ResidentStatusBinding, ResidentStatusReader,
+    StatusBootstrapWriter, StatusFlushError, StatusFlusher, StatusInitError, StatusReadGuard,
+    StatusReader,
 };
 pub(in crate::storage) use status_init::{
     CompletedInitAuthority, InitAuthority, InitControlCommit, InitInstallPermit,

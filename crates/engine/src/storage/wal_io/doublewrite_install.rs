@@ -42,14 +42,11 @@ pub(crate) use mutable_storage::{
 pub(crate) use mutable_storage::{
     BeforeEffectError, BoundStatusBootstrap, BoundStatusWithFlush, EMPTY_TRANSACTION_BANK_BYTES,
     EmptyTransactionSnapshot, EmptyTransactions, InitAttemptError, InitializedStatusObservation,
-    InitializedSystemObservation, IntoEmptyTransactionsError, IntoFlushError,
-    IntoOperationalStatusError, MixedSystem, MixedSystemBinding, MixedSystemFlusher,
-    MixedSystemReadGuard, MixedSystemReader, MixedSystemWriter, OperationalStatus,
+    IntoEmptyTransactionsError, IntoFlushError, IntoOperationalStatusError, OperationalStatus,
     OperationalStatusReader, OperationalStatusWriter, ReadStatusSet, ReservedStatus,
-    ReservedSystemPage, ResidentReadAdmission, ResidentStatus, ResidentStatusBinding,
-    ResidentStatusReader, StatusBootstrapWriter, StatusFlushError, StatusFlusher, StatusInitError,
-    StatusReadGuard, StatusReader, SystemLoadError, SystemLoadObservation, SystemPage,
-    SystemPageKind, SystemResidencyCursor, SystemResidencyStep, SystemSlotStep,
+    ResidentReadAdmission, ResidentStatus, ResidentStatusBinding, ResidentStatusReader,
+    StatusBootstrapWriter, StatusFlushError, StatusFlusher, StatusInitError, StatusReadGuard,
+    StatusReader,
 };
 pub(crate) use mutable_storage::{
     ClosedRecovery, RecoveryAcquireError, RecoveryCause, RecoveryError, RecoveryFailure,
@@ -695,6 +692,7 @@ pub(in crate::storage) use allocation_reservation::operation::{
     SemanticError as CatalogAllocationError, plan4_base_allocation_source_bytes,
     plan4_system_base_allocation_source_bytes, validate_catalog_base_allocation,
     validate_plan4_base_allocation, validate_plan4_system_base_allocation,
+    validate_row_base_allocation,
 };
 
 pub(in crate::storage) use mutable_storage::{

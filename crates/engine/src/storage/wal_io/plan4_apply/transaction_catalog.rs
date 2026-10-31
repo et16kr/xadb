@@ -5,7 +5,7 @@ use super::*;
 use crate::storage::{
     allocation_page::ReservationOwner,
     obligation::{self, OwnerState},
-    retention_page::catalog::{self as queue, JobState},
+    retention_page::catalog3::{self as queue, JobState},
     semantic_catalog::{Observation, Operation},
     transaction_record::{RollbackState, TransactionState},
 };
@@ -57,9 +57,13 @@ fn actor_stage<W: WriterNamespace>(
     }
     let mut root = None;
     let mut terminals = 0;
+    // Catalog selection skips every Row-scope cell (another actor's).
     for (ordinal, bytes) in control.jobs().iter().enumerate() {
-        let job =
-            queue::decode_job(bytes, storage.profile().spec().namespace).map_err(|_| bad())?;
+        let Some(job) = queue::decode_catalog_cell(bytes, storage.profile().spec().namespace)
+            .map_err(|_| bad())?
+        else {
+            continue;
+        };
         if job.source() != Some(actor) {
             continue;
         }
@@ -244,6 +248,18 @@ impl<'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
         owner: &mut Owner<'c, 's>,
         check: impl FnOnce(&mut Self, &mut Owner<'c, 's>) -> Result<T>,
     ) -> Result<T> {
+        self.transaction_check(owner, source::OperationClass::CatalogProgress, check)
+    }
+
+    /// The same checked phase under either fixed progress class. Both reserve
+    /// the one CatalogProgressCharge (`OperationSourceAdmission::progress`);
+    /// the class names the capsule kind whose check runs inside.
+    pub(super) fn transaction_check<T>(
+        &mut self,
+        owner: &mut Owner<'c, 's>,
+        class: source::OperationClass,
+        check: impl FnOnce(&mut Self, &mut Owner<'c, 's>) -> Result<T>,
+    ) -> Result<T> {
         let _unwind = self.storage.session_fence().unwind_guard();
         self.storage.health().map_err(|e| {
             fatal(
@@ -278,11 +294,12 @@ impl<'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
                 effect: e.effect,
             })
         };
-        let source = match source::OperationSourceAdmission::catalog_progress(
+        let source = match source::OperationSourceAdmission::progress(
             self.isolation,
             &self.commit_charges,
             &self.progress_charge,
             &gate,
+            class,
         ) {
             Ok(source) => source,
             Err(error) => return merge(Err(RetentionError::from(error)), reopen(gate)),
@@ -380,7 +397,7 @@ impl<'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
     ) -> Result<()> {
         let actor = view.transaction.lease.actor.expect("writable dispatch");
         if view.revision.get() == 0 {
-            return if self.empty_actor_active(actor)? {
+            return if self.empty_actor_active(actor, CATALOG_KIND)? {
                 Ok(())
             } else {
                 Err(unchanged(
@@ -467,8 +484,12 @@ impl<'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
         let mut roots = 0;
         let mut q = 0;
         for (ordinal, bytes) in self.control.jobs().iter().enumerate() {
-            let job = queue::decode_job(bytes, self.storage.profile().spec().namespace)
-                .map_err(|_| bad())?;
+            let Some(job) =
+                queue::decode_catalog_cell(bytes, self.storage.profile().spec().namespace)
+                    .map_err(|_| bad())?
+            else {
+                continue;
+            };
             if job.source() != Some(actor) {
                 continue;
             }
@@ -530,6 +551,13 @@ impl<'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
     ) -> std::result::Result<CatalogCommit, TransactionFinishError<RowTransaction<'v, 'a, 'c, 's>>>
     {
         let _unwind = self.storage.session_fence().unwind_guard();
+        // A Row capsule is refused by kind before the gate, source or scan.
+        if transaction.row_scope() {
+            return transaction_error(
+                transaction,
+                unchanged(RetentionPhase::Finalize, RetentionCause::Unsupported),
+            );
+        }
         let checked = self.catalog_transaction_check(owner, |writer, owner| {
             writer.transaction_entry(owner)?;
             let actor = writer.catalog_capsule(&transaction)?;
@@ -609,6 +637,13 @@ impl<'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
         flusher: &mut MaintenancePort<'_, 's, 'c, 'p, 'd, 'm, 'w, W>,
     ) -> std::result::Result<(), TransactionFinishError<RowTransaction<'v, 'a, 'c, 's>>> {
         let _unwind = self.storage.session_fence().unwind_guard();
+        // A Row capsule is refused by kind before the gate, source or scan.
+        if transaction.row_scope() {
+            return transaction_error(
+                transaction,
+                unchanged(RetentionPhase::Finalize, RetentionCause::Unsupported),
+            );
+        }
         let actor = match self.catalog_transaction_check(owner, |writer, owner| {
             writer.transaction_entry(owner)?;
             writer.catalog_capsule(&transaction)
@@ -731,6 +766,9 @@ pub(in super::super) fn check_source_bytes() -> usize {
         + size_of::<&()>()
         + size_of::<Result<ActorStage>>()
         + source::commit_carrier_bytes()
+        + size_of::<source::OperationClass>() // transaction_check's class
+        // finish_statement's actor and kind dispatch around the check.
+        + size_of::<(TxnRef, bool)>()
         + 14 * size_of::<&()>()
         + 2 * size_of::<Result<ActorStage>>()
         + 2 * size_of::<Result<TxnRef>>()

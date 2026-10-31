@@ -140,8 +140,9 @@ impl<'s, 'c, W: WriterNamespace> RetentionWriter<'_, '_, 's, 'c, '_, '_, '_, '_,
         supplied_job: Option<JobSlotRef>,
     ) -> Result<RetentionObservation> {
         // The legacy N=0 producer owns four scratch pages starting at the
-        // old Job tail. Profile2 uses that first page for its persistent XOI
-        // cache and must enter the separately checked scope2 producer.
+        // old Job tail. The current Profile3 Catalog line uses that first page
+        // for its persistent Row XOI cache and must enter the separately
+        // checked scope2 producer.
         if self.storage.profile().format() != 1 {
             return Err(unchanged(
                 RetentionPhase::Prepare,

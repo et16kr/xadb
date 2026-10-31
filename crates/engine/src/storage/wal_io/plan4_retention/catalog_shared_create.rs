@@ -99,6 +99,14 @@ impl<'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
     > {
         let _unwind = self.storage.session_fence().unwind_guard();
         let admitted = (|| {
+            // A Row capsule's view is refused by kind before the gate, the
+            // source reservation or any read-set registration.
+            if view.row_scope() {
+                return Err(unchanged(
+                    RetentionPhase::Prepare,
+                    RetentionCause::Unsupported,
+                ));
+            }
             self.storage.health().map_err(|error| {
                 fatal(
                     self.storage,

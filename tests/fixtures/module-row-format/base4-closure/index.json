@@ -1,0 +1,340 @@
+{
+ "bases": [
+  "genesis",
+  "aging",
+  "live"
+ ],
+ "variants": [
+  {
+   "name": "base-version-0",
+   "parent": "genesis",
+   "runs": 2,
+   "sha256": "1d310c96ce95739bc4874b98e724fc96d4cb568a3101e2575bc0c128f8c0839e"
+  },
+  {
+   "name": "base-version-1",
+   "parent": "genesis",
+   "runs": 2,
+   "sha256": "1b656b906a38f1dcf18194418097af7b7d038a190bdfef26ef45fb48a77ae064"
+  },
+  {
+   "name": "base-version-2",
+   "parent": "genesis",
+   "runs": 2,
+   "sha256": "d9a091d29877230d966c92d7c23724ddedf58ec8fe2064be765b28d814adb341"
+  },
+  {
+   "name": "base-version-3",
+   "parent": "genesis",
+   "runs": 2,
+   "sha256": "5ee03b3d226c022b9f0ba7338cbccf27543d17583c4f207a0145ea74ff80a019"
+  },
+  {
+   "name": "base-version-5",
+   "parent": "genesis",
+   "runs": 2,
+   "sha256": "6b8342108dced3aa01f8a8a6e1b9783731a721bec102cbbf735865e55c3ae282"
+  },
+  {
+   "name": "base-version-65535",
+   "parent": "genesis",
+   "runs": 2,
+   "sha256": "e9fdecc5d52f59f10a2249ff83c696d560076b60f3cdc6595bb208b660d7e392"
+  },
+  {
+   "name": "root-version-2",
+   "parent": "genesis",
+   "runs": 6,
+   "sha256": "cc6808c7ab1e3c7b2895f8e5b49dafb934c1426a621af9727c4c0d0855945bca"
+  },
+  {
+   "name": "job-version-2",
+   "parent": "genesis",
+   "runs": 6,
+   "sha256": "e908876b303e6b8fbdfd19e095b399db1135dc050723714d62b1e5f2e20a52f8"
+  },
+  {
+   "name": "root-version-4",
+   "parent": "genesis",
+   "runs": 6,
+   "sha256": "39afb208cb3c78013c48ba353e12fbc978e29506c1a432c351f4a2ba785b0a70"
+  },
+  {
+   "name": "job-version-4",
+   "parent": "genesis",
+   "runs": 6,
+   "sha256": "cd049dfd6ab74d24890e00744f99f45174600fb0b207f005cf3c5b93305642ce"
+  },
+  {
+   "name": "terminal-without-system",
+   "parent": "genesis",
+   "runs": 2,
+   "sha256": "1c8ae94d699e0e958910de84d2914846ea7cbced056f5d3898d16509ceb68281"
+  },
+  {
+   "name": "aging-header-budget",
+   "parent": "aging",
+   "runs": 3,
+   "sha256": "db8f4ae888c5b15d676c4d9b2999d5cfa619aeefe7c57e521bc649b7925ec0b7"
+  },
+  {
+   "name": "issuer-undo-high",
+   "parent": "live",
+   "runs": 9,
+   "sha256": "f834d2c21f45181f5bd66b3df8957714fecfc0a51750769a1a44540e23003c7b"
+  },
+  {
+   "name": "row-high-global",
+   "parent": "live",
+   "runs": 14,
+   "sha256": "ccc28dfa5a0d8867e5c98cb9425a5570a72a2ccf625c7aea13d7dbf87e5dcb82"
+  },
+  {
+   "name": "committed-q-collision",
+   "parent": "live",
+   "runs": 6,
+   "sha256": "7566c54dcd41244855428e363a98ce0002e05895babdef9941fa08a9555b1b8a"
+  },
+  {
+   "name": "catalog-row-mixing",
+   "parent": "live",
+   "runs": 6,
+   "sha256": "090f84955ffd69182274ccd4fae969c9ca507f8ff67f0634625936dd476d5436"
+  },
+  {
+   "name": "free-undo-generation",
+   "parent": "live",
+   "runs": 6,
+   "sha256": "8589769760ff7822382d4f129d85219b82e69915f56354a4427e399c6dc52e29"
+  },
+  {
+   "name": "init-initial-digest",
+   "parent": "live",
+   "runs": 3,
+   "sha256": "42aff5b7c468afa55c3a961eba742c1e9f98175e0fc7b2abf3564bee5a9be102"
+  },
+  {
+   "name": "descriptor-last-mutation",
+   "parent": "live",
+   "runs": 4,
+   "sha256": "bb9938c6b1a56f444bdbbb085ad64dfb2081816030084d57496bfb105c729dab"
+  },
+  {
+   "name": "att-missing",
+   "parent": "live",
+   "runs": 11,
+   "sha256": "8b511b3a9d62b111ccae3286dd1e418cb6936c9362b59ac0111c3b75247e248b"
+  },
+  {
+   "name": "inventory-generation",
+   "parent": "live",
+   "runs": 4,
+   "sha256": "ec1cf58b8a3c5e5df9a98b1d7dff21d88ab175d0f628f23b17fbad849fbe74e1"
+  },
+  {
+   "name": "aging-descriptor-missing",
+   "parent": "live",
+   "runs": 12,
+   "sha256": "e37570116651cb26665b8770e9af61e3ce83c3f524b73abf81d5721bc523f077"
+  },
+  {
+   "name": "catalog-scope-terminal",
+   "parent": "live",
+   "runs": 25,
+   "sha256": "d03e5ecca9c92d78ddd1c56f5c26de93e1a9a1ded837d4c34f91cef81baa9344"
+  },
+  {
+   "name": "reserved-row-root",
+   "parent": "live",
+   "runs": 16,
+   "sha256": "a6936687b1c55d5d3d210e9498d63cd90fd4b6e4e0d45d7faec9acd0929281b1"
+  },
+  {
+   "name": "allocation-finished-noncanonical",
+   "parent": "live",
+   "runs": 5,
+   "sha256": "8f2313ac73989e04d9b25c7b76dfdcb076fdd635a13bf6a5e1cb2f16863ae5ae"
+  },
+  {
+   "name": "state-system-reserved",
+   "parent": "live",
+   "runs": 35,
+   "sha256": "ba8876f2d0c61f702d08912b533f7207db53a68cff3a3012cbf4609577709705"
+  },
+  {
+   "name": "system-reserved-terminal",
+   "parent": "live",
+   "runs": 34,
+   "sha256": "dab4dce285710b883e9326ae427c15a6ba430b1f7d33fc53364ad98d32f3cf11"
+  },
+  {
+   "name": "system-item-owner",
+   "parent": "live",
+   "runs": 35,
+   "sha256": "7671958f79284152af6d488ce7675023dfb62dca001d6cb25ba15a274b94bad6"
+  },
+  {
+   "name": "state-create-reserved",
+   "parent": "live",
+   "runs": 82,
+   "sha256": "33cebf12ccada1d921b8566d5187af756a3ecb12c1f40dc8cd3e1bf7620b4d6b"
+  },
+  {
+   "name": "create-undo-lsn",
+   "parent": "live",
+   "runs": 82,
+   "sha256": "de1162166ef01f8d19e4e85dd8f458901c208fb8e37dddf2e6dba8ceda66a080"
+  },
+  {
+   "name": "create-item-order",
+   "parent": "live",
+   "runs": 82,
+   "sha256": "4887d5d21ab9f81438a3b514c31318a6463b277ecdfb749db82cdbcc65df0b6d"
+  },
+  {
+   "name": "state-create-retained",
+   "parent": "live",
+   "runs": 85,
+   "sha256": "1904a93aea7009b9b917f7621b6b0f992b1e8a0382bc04b5f92d87e6a7c9af18"
+  },
+  {
+   "name": "retained-projection",
+   "parent": "live",
+   "runs": 85,
+   "sha256": "1e55147954a18d95089dde82f7d3c37bdb50375777a833c4b82fcf4e6648ab33"
+  },
+  {
+   "name": "committed-writer-bound",
+   "parent": "live",
+   "runs": 6,
+   "sha256": "6012b498268fe778b54c3f87720876f938b361d36a7db5a70e9d165310e11e8c"
+  },
+  {
+   "name": "state-create-committed-row",
+   "parent": "live",
+   "runs": 105,
+   "sha256": "2e923c8178afc2630d3a15fa7051ff6bb5e80b7e7f8b3555ec0365d1e9561ec7"
+  },
+  {
+   "name": "create-uncommitted-row",
+   "parent": "live",
+   "runs": 114,
+   "sha256": "ea75159a4ccedf6dcda1b00d2ce29ffbd299167a427050330483a53a50946ec4"
+  },
+  {
+   "name": "create-uncommitted-committed-row",
+   "parent": "live",
+   "runs": 98,
+   "sha256": "74c72ce3869ffdedd0c1bf70385b580abeafd850c7f74e4d8e12562b3554879d"
+  },
+  {
+   "name": "state-row-reserved",
+   "parent": "live",
+   "runs": 56,
+   "sha256": "aa0b1cbf2e3ad9c1d48e72d754a1d9bebf3e57b95cc31d9dd9958a70afbcd4ae"
+  },
+  {
+   "name": "row-reserved-no-item",
+   "parent": "live",
+   "runs": 50,
+   "sha256": "cd4c698934bd25ad449574f429bdf9c39854d2f968afe45ca9729673e5d1beef"
+  },
+  {
+   "name": "row-reserved-two-items",
+   "parent": "live",
+   "runs": 58,
+   "sha256": "7a566b439d6615e387714d35c8f68585615309542a59a6971c895cb15104e60b"
+  },
+  {
+   "name": "row-reserved-item-kind",
+   "parent": "live",
+   "runs": 56,
+   "sha256": "62bffb228966dd171defebe4e7b7da7231816cbff7f3f11172a22447da954eb1"
+  },
+  {
+   "name": "row-reserved-twice",
+   "parent": "live",
+   "runs": 59,
+   "sha256": "4d54e0592bc5b103655a75255ca2d58644135574921bb99e78242b2c9a6af6de"
+  },
+  {
+   "name": "committed-row-before-create",
+   "parent": "live",
+   "runs": 86,
+   "sha256": "eecf6497b3be43a469c37609dda1d5d33d8d65518ca0b5eedf055bc561284df8"
+  },
+  {
+   "name": "committed-row-before-pruned-create",
+   "parent": "live",
+   "runs": 9,
+   "sha256": "880b4c4778ea2f5348b60c36e35fb0d8083e9111e0785d502193916b22c4c79d"
+  },
+  {
+   "name": "row-reserved-mixed",
+   "parent": "live",
+   "runs": 81,
+   "sha256": "abbcfd4dcf885794418b22c435379a2f9fcfe3e102e952a19ab58939245ec16c"
+  },
+  {
+   "name": "state-ready-writer",
+   "parent": "live",
+   "runs": 51,
+   "sha256": "965d688a00dcd80ee5686702f3f9259fc6c843045da7880c39636a80f25a9f89"
+  },
+  {
+   "name": "ready-writer-before-pruned-create",
+   "parent": "live",
+   "runs": 57,
+   "sha256": "bd2f216a80cc6dde1c537461f83a51ec164fd9583a6bebd5f4e06416484d4a24"
+  },
+  {
+   "name": "state-ready-writer-row7",
+   "parent": "live",
+   "runs": 117,
+   "sha256": "d0b4f4b0d16aaf3de87ccdb3b6b0784416bdd2831069b5b4898c81f815ac7c73"
+  },
+  {
+   "name": "ready-writer-before-create",
+   "parent": "live",
+   "runs": 120,
+   "sha256": "3a7fb9cb99de8bffe5900d3435cb4d45b85468974bb485431ac97f67ec250d08"
+  },
+  {
+   "name": "state-compensated-writer",
+   "parent": "live",
+   "runs": 116,
+   "sha256": "a213a6583d867d29f43ad671cfa6333d93163afef45ed39822bd620407824fad"
+  },
+  {
+   "name": "compensated-writer-before-create",
+   "parent": "live",
+   "runs": 119,
+   "sha256": "7e2faa9c473a19dc1ea82ecd7caf3fa436584783df869e3a3cbcaf6a454b4f40"
+  },
+  {
+   "name": "d-residual-clr",
+   "parent": "live",
+   "runs": 85,
+   "sha256": "85047a4753dc38226ca5f67f0f5fc7237dea555dcde80643dda40c260088ae65"
+  },
+  {
+   "name": "d-residual-peak",
+   "parent": "live",
+   "runs": 82,
+   "sha256": "a1c0f6ae992baf20ea8beff7894a8390cdcc6db1dc87ed976c5f8abd2d1efc84"
+  },
+  {
+   "name": "d-committed-head",
+   "parent": "live",
+   "runs": 105,
+   "sha256": "1fb911d89d435f5baa1628d7716a73a2e885310156e7e57312246f3a5efad368"
+  }
+ ],
+ "envelopes": [
+  0,
+  1,
+  2,
+  4,
+  65535
+ ]
+}

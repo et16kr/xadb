@@ -200,8 +200,11 @@ pub(crate) fn validate(
     Ok(())
 }
 
-/// Current fresh plan4 uses Root/Job version2. The v1 functions above remain
-/// strict test codecs for historical inputs, never an implicit upgrade path.
+/// Historical Profile2 fresh plan4 pages (Root/Job version2). The single
+/// current-format switch moved genesis to the Profile3 functions below. The v1
+/// functions above remain strict test codecs for historical inputs, never an
+/// implicit upgrade path.
+#[allow(dead_code, reason = "historical Profile2 pure codec")]
 pub(crate) fn encode_current(
     namespace: Namespace,
     role: RetentionGenesisPage,
@@ -228,6 +231,7 @@ pub(crate) fn encode_current(
     Ok(())
 }
 
+#[allow(dead_code, reason = "historical Profile2 pure codec")]
 pub(crate) fn validate_current(
     bytes: &[u8],
     namespace: Namespace,
@@ -255,6 +259,64 @@ pub(crate) fn validate_current(
     Ok(())
 }
 
+/// Current Profile3 genesis pages: Root3 with row_high0, exact Free Job3×64
+/// and empty budget digests.
+pub(crate) fn encode_row_current(
+    namespace: Namespace,
+    role: RetentionGenesisPage,
+    output: &mut [u8],
+) -> Result<()> {
+    use super::retention_page::row;
+    let header = expected_header(namespace, role)?;
+    if output.len() != PAGE_BYTES {
+        return Err(RetentionGenesisError::InvalidInput);
+    }
+    match role {
+        RetentionGenesisPage::Root => {
+            let mut cell = [0; 512];
+            row::initial_root(namespace, &mut cell).map_err(current_error)?;
+            page::encode_page(header, &[&cell], output)?;
+        }
+        RetentionGenesisPage::Jobs { index } => {
+            let mut cell = [0; 1024];
+            row::free_job(Generation::new(1).expect("genesis"), &mut cell);
+            let cells: [&[u8]; 15] = [&cell; 15];
+            page::encode_page(header, &cells[..if index == 4 { 4 } else { 15 }], output)?;
+        }
+    }
+    Ok(())
+}
+
+/// Accepts only exact Profile3 genesis pages. Root/Job version1/2/4 and any
+/// other cell, LSN, namespace or generation are rejected, never converted.
+pub(crate) fn validate_row_current(
+    bytes: &[u8],
+    namespace: Namespace,
+    role: RetentionGenesisPage,
+) -> Result<()> {
+    use super::retention_page::row;
+    let expected = expected_header(namespace, role)?;
+    match role {
+        RetentionGenesisPage::Root => {
+            // A non-Aging Root3 cell is compared with the canonical initial
+            // cell: row_high0, Free Job3×64 and empty budget digests.
+            let (header, root) = row::decode_root_page(bytes, namespace).map_err(current_error)?;
+            if header != expected || root.aging().is_some() {
+                return Err(RetentionGenesisError::Corrupt);
+            }
+        }
+        RetentionGenesisPage::Jobs { index } => {
+            let page = row::decode_jobs_page(bytes, namespace, index).map_err(current_error)?;
+            if page.header() != expected {
+                return Err(RetentionGenesisError::Corrupt);
+            }
+            // At LSN0 the Job3 page validator requires Free generation1, whose
+            // zero tail makes every slot the canonical free_job cell.
+        }
+    }
+    Ok(())
+}
+
 fn current_error(error: super::retention_page::RetentionError) -> RetentionGenesisError {
     use super::retention_page::RetentionError;
     match error {
@@ -266,8 +328,15 @@ fn current_error(error: super::retention_page::RetentionError) -> RetentionGenes
     }
 }
 
+#[allow(dead_code, reason = "historical Profile2 pure codec")]
 pub(in crate::storage) fn current_source_bytes() -> usize {
     source_bytes() + super::retention_page::catalog::source_bytes()
+}
+
+/// The same wrapper closure over the separate Row codec count. The historical
+/// Catalog sum above is unchanged and not reused for Row.
+pub(in crate::storage) fn row_current_source_bytes() -> usize {
+    source_bytes() + super::retention_page::row::source_bytes()
 }
 
 /// Conservative source-value call closure. Caller page backing is separate.
@@ -289,3 +358,7 @@ pub(in crate::storage) fn source_bytes() -> usize {
 #[cfg(test)]
 #[path = "retention_genesis_tests.rs"]
 pub(in crate::storage) mod tests;
+
+#[cfg(test)]
+#[path = "retention_genesis/row_tests.rs"]
+mod row_tests;

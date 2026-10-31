@@ -1,0 +1,225 @@
+{
+  "id": "D3-CREATE-MEMORY-RETIRE3-G1",
+  "status": "FROZEN_INPUT_PLAN_NOT_EXECUTED_AGAINST_PRODUCT",
+  "author": "U2-C4b (branch module-u2-switch-prep, base c83771b)",
+  "scope": "Profile3 counterpart of the MF14 CLR staged-unwind recovery expectations; same scenario and final as the v2 plan. Input generation only: no product execution before U2-C4c.",
+  "output_directory": "tests/fixtures/dev3-catalog-create/memory-retire3",
+  "derived_from": {
+    "tests/fixtures/dev3-catalog-create/memory-retire/input-plan.json": "2c7315698b92127458110bab7308d8a5c7497bff35ea0b00e4d078f8954ad515",
+    "tests/fixtures/dev3-catalog-create/memory-retire/generate_literals.py": "4f3487dab4812666f97937d8b23c617933fc652688c3819f6cf8a0803d2e6cf6",
+    "tests/fixtures/dev3-catalog-create/memory-retire/audit_literals.py": "c674b1509fa79b5b5108cd3ee7ad9ca2274aef0ae04637440c2c63a328a37972"
+  },
+  "source_inputs": {
+    "tests/fixtures/dev3-catalog-create/native3/generate_literals.py": "bb3a71e439f0f96071893721824164dbe7b0333176e1dc965a426b55b5f261b7",
+    "tests/fixtures/module-row-format/catalog3/serializer3.py": "0b23d146ef7fa5a1ba712baee37c60c882011f36832ef11b5f1d2b49dea70de1",
+    "tests/fixtures/dev3-plan4-free-undo/generate_literals.py": "a9a646f5fd047b1fbd73d743d99d56cde9a8217bf65587d08e9dd1f892e6bb42"
+  },
+  "serializer_parent": {
+    "tests/fixtures/dev3-catalog-create/transition/generate_literals.py": "3716f9d63f099051363bebeeaf0ebe4586ccd0984aa91735a7de82eba7d23b7e"
+  },
+  "immutable_existing": {
+    "tests/fixtures/dev3-catalog-create/native3/input-plan.json": "f6e0dd554a91931cc8e048e775a666dacd777f0c1c3285abed6773ec15f21eeb",
+    "tests/fixtures/dev3-catalog-create/native3/manifest.json": "e648b0bc4fb8ccf5f258cec6d521128daef6e59f3f9a20825d19eb81d68555df",
+    "tests/fixtures/dev3-catalog-create/memory-retire/input-plan.json": "2c7315698b92127458110bab7308d8a5c7497bff35ea0b00e4d078f8954ad515",
+    "tests/fixtures/dev3-catalog-create/memory-retire/manifest.json": "049f4416ceaab3ccb18581f49808aa0d5d526664ad5ef90ca386a62ec8e0199c",
+    "tests/fixtures/dev3-catalog-create/memory-retire/checkpoints.tsv": "44abad550f706b5c2fffa39cd0ddc7f6d5c352f67ee18e253d7fd31876324164",
+    "tests/fixtures/module-row-format/catalog3/manifest.json": "714d6583459998b8bee50992ec39e55c3eb05a750b9116533e9d52cd24816adf",
+    "tests/fixtures/dev3-catalog-create/memory-gap3/input-plan.json": "5286a7f6395aff44d7c49825d574ba69138ffa2a0a1e6e097aeabbd01f1bc336",
+    "tests/fixtures/dev3-catalog-create/memory-gap3/manifest.json": "9a484fc975e9d83340729bf1d117431abbeb97944e7031b66be62b8ab4635657"
+  },
+  "namespace": {
+    "database_hex": "0102030405060708090a0b0c0d0e0f10",
+    "timeline": 1,
+    "file": 4294967297,
+    "profile_id": 1,
+    "profile_format": 3
+  },
+  "setup": [
+    {
+      "lsn": 1,
+      "operation": "AgingStart",
+      "bytes": 19672
+    },
+    {
+      "lsn": 2,
+      "operation": "StatusReserve",
+      "page": 9,
+      "work": 1,
+      "bytes": 21200
+    },
+    {
+      "lsn": 3,
+      "operation": "StatusInit",
+      "page": 9,
+      "work": 1,
+      "bytes": 38000
+    },
+    {
+      "lsn": 4,
+      "operation": "UndoReserve",
+      "page": 10,
+      "work": 2,
+      "bytes": 21200
+    },
+    {
+      "lsn": 5,
+      "operation": "UndoInit",
+      "page": 10,
+      "work": 2,
+      "bytes": 38208
+    }
+  ],
+  "scenarios": {
+    "MF14": {
+      "purpose": "Live CLR10 is staged only in the in-memory WAL slot after durable RollbackStart9 and unwinds after the first retirement page install; a fresh runtime recovers from capture9 and writes the original CLR/AbortEnd/cleanup",
+      "failure": {
+        "boundary": "CLR staged after RollbackStart9; unwind after first retirement page install",
+        "staged_lsn": 10,
+        "staged_operation": 4,
+        "staged_durable": false,
+        "durable_last_lsn": 9,
+        "durable_wal_end": 442862,
+        "wal_file_delta": 0,
+        "effect": "Fenced",
+        "retirement_marker": "retained",
+        "normal_ack": false
+      },
+      "actor": {
+        "epoch": 1,
+        "local": 1,
+        "generation": 2
+      },
+      "logical": {
+        "object": 6,
+        "undo_sequence": 1,
+        "undo_generation": 2,
+        "pair": [
+          11,
+          12
+        ],
+        "incarnation": 2,
+        "q": 0,
+        "outcome": "aborted",
+        "terminal": 0,
+        "root": 1,
+        "terminal_generation": 2,
+        "root_generation": 2
+      },
+      "phases": [
+        {
+          "epoch": 1,
+          "lsns": [
+            1,
+            9
+          ],
+          "cut": "RollbackStart9 durable; live CLR10 staged in memory only, first retirement page installed in the live pool, then unwind/Fenced with marker retained; WAL file unchanged beyond LSN9"
+        },
+        {
+          "epoch": 2,
+          "lsns": [
+            10,
+            16
+          ],
+          "selected_capture": 9,
+          "end": "Recovery CLR10/AbortEnd11/ReleaseRole12..14/RootFree15/TerminalFinish16 then READY/Missing"
+        }
+      ],
+      "operations": [
+        [
+          1,
+          "begin"
+        ],
+        [
+          11,
+          "reserve"
+        ],
+        [
+          2,
+          "forward"
+        ],
+        [
+          3,
+          "rollback"
+        ],
+        [
+          4,
+          "clr"
+        ],
+        [
+          7,
+          "abort"
+        ],
+        [
+          21,
+          "release1"
+        ],
+        [
+          21,
+          "release2"
+        ],
+        [
+          21,
+          "release3"
+        ],
+        [
+          22,
+          "rootfree"
+        ],
+        [
+          17,
+          "finish"
+        ]
+      ],
+      "checkpoints": [
+        5,
+        9,
+        16
+      ],
+      "final": {
+        "lsn": 16,
+        "revision": 12,
+        "issued": 2,
+        "completed": 2,
+        "canceled": 0,
+        "cursor": 1,
+        "undo_high": 1,
+        "object_high": 6,
+        "C": 0,
+        "Q": 0,
+        "aging_groups": 11,
+        "aging_consumed": 296896,
+        "aging_remaining": 0
+      }
+    }
+  },
+  "writer_rules": [
+    "Import only the three SHA-pinned independent Python inputs (native3 writer, serializer3, Free Undo operation serializer); serializer3 itself executes its SHA-pinned version2 parent. Do not import product, native Rust output, or execute prior serializer main functions. Never write old corpus paths.",
+    "The only change from the v2 writer: the transition module is serializer3.load() (Profile3 ID1 envelope, Job3 free cells, Root3 with row_high@432 = 0 and the Job3 census aggregate) and the reused Inputs mechanics come from native3. serializer3.row_job is not used: every history is Catalog scope2 only.",
+    "Reuse native Inputs setup/blob/row/checkpoint mechanics only. Override scenario iteration with this exact plan and keep output metadata in the fresh directory.",
+    "MF14 uses the first non-canceled logical CREATE plan with the transition ROLLBACK order and outcome aborted. actor remains epoch1/local1/generation2 across epoch2 recovery; q is the declared rollback value0 and changes no rollback byte. Outer WAL epoch changes after RollbackStart9 while logical LSN remains absolute; epoch2 WAL offsets restart at4096.",
+    "The staged live CLR10 never reached the WAL file. No epoch1 CLR row, frame, page image or partially installed retirement page is emitted; the recovery CLR10 is the only CLR row and chains to the durable RollbackStart9 Tx descriptor.",
+    "Write exactly16 rows and3 checkpoints. Whole changed pages, Jobs, before/after descriptors and exact canonical allocated images are independent raw expectations. No raw fixture is installed into the actual pool or home to supply authority.",
+    "MF14 L1..5 must be byte-identical to the preserved native3 N01 prefix and every row state to native3 N02. L1..8 and L10 frames equal native3 N02; L9 and L11..16 differ from native3 N02 only in the outer epoch and its two seals. Checkpoint5 equals memory-gap3 MC04 checkpoint5 and checkpoints 9/16 equal native3 N02. The v2 transition R01..R11 comparison is cross-version and is replaced by schedule equivalence with the frozen v2 memory-retire corpus.",
+    "Checkpoint canonical Free/Reserved arena pages are zero; physical stale freed home bytes are not claimed zero. Selected base/INIT provenance, capture authority, the fenced live pool image and the retained retirement marker remain actual runtime obligations."
+  ],
+  "auditor_rules": [
+    "Separate stdlib-only raw parser; no serializer or product imports. Verify full inventory, source pins, exact row/LSN/op/epoch/WALoffset schedule, every envelope/native/redo hash and page checksum.",
+    "Verify every transaction owner/source uses actor epoch1/local1/generation2 in both outer epochs; reject conflating the outer writer epoch or actor.local with sequence/object/slot generations.",
+    "Check Root/Jobs/descriptor conservation and row continuity, remaining/consumed arithmetic, checkpoint allocator/current image identity and exact final external scalars.",
+    "Check epoch1 ends at RollbackStart9 and durable_wal_end with no CLR bytes, recovery CLR10 chains to the RollbackStart9 Tx descriptor, and T and pair11/12 are absent after CLR10.",
+    "Root3/Job3 version3 cells, row_high 0 with bytes 440..512 zero, no Job kind3, Profile3 profile blob.",
+    "Compare native3 N01/N02 and memory-gap3 MC04 checkpoint5 as the v3 siblings. Compare the v2 memory-retire corpus only for schedule equivalence; the v2 R01..R11 comparison is not carried over.",
+    "Read original manifests/raw for declared byte comparisons only. The generator and auditor are input preparation, never a product/runtime PASS."
+  ],
+  "limits": {
+    "generation_runs": 1,
+    "generation_seconds": 30,
+    "auditor_seconds": 30,
+    "raw_corpus_bytes": 8388608,
+    "raw_file_bytes": 1048576,
+    "output_bytes": 1048576,
+    "transition_input_bytes": 4194304
+  },
+  "generation_admission": "This plan SHA is the generator and auditor adoption constant before a single generation and a single audit. Preserve any failed source/raw/result; no silent regeneration.",
+  "runtime_admission": "NOT_ADMITTED: executable only after the single current-format switch (U2-C4c) with the U2-C2 base4 capture; exact memory hooks/source/ELF and immutable input SHA re-freeze still required."
+}

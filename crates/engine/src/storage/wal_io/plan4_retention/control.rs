@@ -56,12 +56,24 @@ impl<'a, 'c, 's> RetentionLedger<'a, 'c, 's> {
     pub(super) fn jobs(&self) -> &[[u8; JOB_BYTES]; JOB_COUNT] {
         jobs(self.bytes)
     }
-    pub(super) fn initialize_jobs(&mut self, _namespace: crate::api::Namespace) {
-        for cell in jobs_mut(self.bytes) {
-            retention_page::catalog::free_job(
-                foundation::identity::Generation::new(1).expect("genesis generation"),
-                cell,
-            );
+    /// The bound Profile selects the free cell: Job3 for the current Profile3
+    /// Catalog owner; the DEV2 Profile1 line keeps its original free cells,
+    /// which no Profile1 consumer reads. Any other format leaves the zero
+    /// bank, which every later Catalog check rejects; binding admits neither.
+    pub(super) fn initialize_jobs(&mut self, profile: crate::storage::control::Profile) {
+        let generation = foundation::identity::Generation::new(1).expect("genesis generation");
+        match profile.format() {
+            3 => {
+                for cell in jobs_mut(self.bytes) {
+                    retention_page::catalog3::free_job(generation, cell);
+                }
+            }
+            1 => {
+                for cell in jobs_mut(self.bytes) {
+                    retention_page::catalog::free_job(generation, cell);
+                }
+            }
+            _ => {}
         }
     }
     pub(super) fn slot(&self, actor: TxnRef) -> Option<usize> {
@@ -77,8 +89,17 @@ impl<'a, 'c, 's> RetentionLedger<'a, 'c, 's> {
         profile: crate::storage::control::Profile,
         prefix: WalPrefix,
     ) -> Result<(u64, u64)> {
-        if profile.format() == 2 {
-            return catalog::check(self, profile, prefix);
+        // The bound Profile selects the ledger grammar exactly; no format
+        // falls through into the Profile1 v1 arithmetic.
+        match profile.format() {
+            3 => return catalog::check(self, profile, prefix),
+            1 => {}
+            _ => {
+                return Err(unchanged(
+                    RetentionPhase::Census,
+                    RetentionCause::Unsupported,
+                ));
+            }
         }
         if self.pending.is_some() || self.adopted_local > self.issued_local {
             return Err(unchanged(RetentionPhase::Census, RetentionCause::Invariant));

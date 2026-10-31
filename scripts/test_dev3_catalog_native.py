@@ -20,7 +20,7 @@ def selected_fixture(root):
     """Independent fixed-offset controller fixture, not a product encoder.
 
     Its opaque prior WAL header is only a prefix binding input. This fixture
-    tests the controller's Base3 projection and cannot be opened as a database.
+    tests the controller's Base4 projection and cannot be opened as a database.
     """
     oracle = controller.Oracle(Path(__file__).resolve().parents[1])
     db, previous = root / 'db', root / 'previous'
@@ -28,7 +28,7 @@ def selected_fixture(root):
     previous.mkdir()
     raw = bytearray(2097152)
     put = lambda target, at, value, width=8: target.__setitem__(slice(at, at + width), value.to_bytes(width, 'little'))
-    raw[:8] = b'XRB1\x03\x00\x01\x00'
+    raw[:8] = b'XRB1\x04\x00\x01\x00'
     put(raw, 8, len(raw), 4)
     put(raw, 12, 4096, 4)
     raw[16:32] = bytes(range(1, 17))

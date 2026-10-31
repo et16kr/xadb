@@ -385,3 +385,152 @@ fn every_read_fault_preserves_selection_and_bounded_handles() {
     }
     assert_eq!((succeeded, rejected), (28, 28));
 }
+
+/// U2-C4 D1: `open_profile` re-reads the installed profile in the grammar of
+/// the caller's bound Profile; `open` keeps the legacy grammar. The Profile3
+/// envelope is the literal profile with its published version (4) and base
+/// (296) fields changed and resealed; the selector rebinds its digest (48).
+#[test]
+fn open_profile_binds_installed_grammar() {
+    fn relabel(version: u16, base: u64) -> Vec<u8> {
+        let mut bytes = PROFILE.to_vec();
+        put16(&mut bytes, 4, version);
+        put64(&mut bytes, 296, base);
+        seal(&mut bytes);
+        bytes
+    }
+    fn install(writer: &Writer, profile: &[u8], bound: &[u8]) {
+        let mut s = writer.0.lock().unwrap();
+        s.files.insert("d3-profile".into(), profile.to_vec());
+        let selector = s.files.get_mut("FILEMAP").unwrap();
+        selector[48..80].copy_from_slice(&content_digest(bound));
+        seal(selector);
+    }
+    fn read(writer: &mut Writer, profile: Profile) -> Result<Vec<u8>> {
+        let mut root = [0; PAGE_BYTES];
+        let mut scratch = [0; PAGE_BYTES];
+        let mut output = [0; PAGE_BYTES];
+        let mut reader = PageFileReader::open_profile(writer, profile, &mut root, &mut scratch)?;
+        assert_eq!(reader.profile(), profile);
+        assert_eq!(reader.selector_generation(), 29);
+        reader.read_page(expected(), PageKind::RowLeaf, 0, &mut output)?;
+        Ok(output.to_vec())
+    }
+    // A refusal reads only the profile: no selector, root, chunk or data.
+    fn refused(writer: &mut Writer, profile: Profile, cause: control::ControlError) {
+        let before = writer.0.lock().unwrap().reads.len();
+        let result = read(writer, profile);
+        assert!(
+            matches!(result, Err(PageIoError::Control(c)) if c == cause),
+            "{cause:?}"
+        );
+        let s = writer.0.lock().unwrap();
+        assert_eq!(s.reads.len(), before + 1);
+        assert_eq!(s.reads[before].name, "d3-profile");
+    }
+    // Every envelope is pinned by an sha256 literal computed outside the
+    // product (stdlib relabel/reseal of dev3-io-profile.bin: namespace
+    // 0x11../17, generation 19, id 1). Expected values are built field by
+    // field from those literals, never by the decoder under test.
+    fn pinned(bytes: &[u8], hex: &str) -> [u8; 32] {
+        let digest =
+            std::array::from_fn(|i| u8::from_str_radix(&hex[2 * i..2 * i + 2], 16).unwrap());
+        assert_eq!(content_digest(bytes), digest, "{hex}");
+        digest
+    }
+    let profile3 = relabel(3, 2 << 20);
+    let profile2 = relabel(2, 2 << 20);
+    pinned(
+        &profile2,
+        "65660c27d6f2fdc94ce71129bbae95ec5ae9050b3729f9d34cd5acf838c0ae2d",
+    );
+    let p1 = Profile::literal(
+        ns(),
+        19,
+        1,
+        1,
+        pinned(
+            PROFILE,
+            "985651bdbfde061063f76265665c2aff331c9b01486e0be4de60223d6ec327d8",
+        ),
+    );
+    let p3 = Profile::literal(
+        ns(),
+        19,
+        1,
+        3,
+        pinned(
+            &profile3,
+            "6f301e8550b943b84a7412bf57a0985412bf273da7c2087077cb7eaea5e3e832",
+        ),
+    );
+    let other3 = {
+        // Same namespace, Profile3 ID2 (id 128, buffer 168).
+        let mut bytes = profile3.clone();
+        put32(&mut bytes, 128, 2);
+        put64(&mut bytes, 168, 16 << 20);
+        seal(&mut bytes);
+        let digest = pinned(
+            &bytes,
+            "7d6c0105ec4757a32662fc8d1b7eb2c97e3c6ffed744b5a2e832d9d39055acfa",
+        );
+        Profile::literal(ns(), 19, 2, 3, digest)
+    };
+
+    // Profile1 namespace: both entries read the same page; Profile3 bound refused.
+    let mut writer = fixture(65, false);
+    assert_eq!(read(&mut writer, p1).unwrap(), GOLDEN);
+    assert_eq!(
+        attempt(&mut writer, expected(), PageKind::RowLeaf, 0).unwrap(),
+        GOLDEN
+    );
+    refused(&mut writer, p3, control::ControlError::UnsupportedFormat);
+    clean(&writer);
+
+    // Profile3 namespace: only the bound Profile3 value opens it.
+    let mut writer = fixture(65, false);
+    install(&writer, &profile3, &profile3);
+    assert_eq!(read(&mut writer, p3).unwrap(), GOLDEN);
+    assert!(matches!(
+        attempt(&mut writer, expected(), PageKind::RowLeaf, 0),
+        Err(PageIoError::Control(
+            control::ControlError::UnsupportedFormat
+        ))
+    ));
+    refused(&mut writer, p1, control::ControlError::UnsupportedFormat);
+    refused(&mut writer, other3, control::ControlError::IdentityMismatch);
+    clean(&writer);
+
+    // A Profile2 envelope offered under the Profile3 expectation, with the
+    // selector bound to either digest, never reaches the selector.
+    for bound in [&profile2, &profile3] {
+        let mut writer = fixture(65, false);
+        install(&writer, &profile2, bound);
+        refused(&mut writer, p3, control::ControlError::UnsupportedFormat);
+        clean(&writer);
+    }
+    // Header version 0/4/65535 is refused under every bound grammar.
+    for (version, hex) in [
+        (
+            0u16,
+            "a9a23c2e7072dd1f53ab587047e4a5a20a615bc87197725f0ac83af1a7576026",
+        ),
+        (
+            4,
+            "fb3ddab442c33f6efca51bdf295e7698dc7c45cf7b492d98e8e266c7455f7fc3",
+        ),
+        (
+            u16::MAX,
+            "14e50845e8293d03975f023dab13e41c63d006d8512bffa178545bf7fc38ddd6",
+        ),
+    ] {
+        let mut writer = fixture(65, false);
+        let bytes = relabel(version, 2 << 20);
+        pinned(&bytes, hex);
+        install(&writer, &bytes, &bytes);
+        for bound in [p1, p3] {
+            refused(&mut writer, bound, control::ControlError::UnsupportedFormat);
+        }
+        clean(&writer);
+    }
+}

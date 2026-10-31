@@ -32,6 +32,17 @@ impl InstalledSource<'_> {
     }
 }
 
+// S2W-R22: replay scopes opened on this thread, a test-only count beside the
+// checkout count the replay state already keeps (`last_attempt`).
+#[cfg(test)]
+thread_local! {
+    static REPLAY_SCOPES: std::cell::Cell<u64> = const { std::cell::Cell::new(0) };
+}
+#[cfg(test)]
+pub(in crate::storage) fn test_replay_scopes() -> u64 {
+    REPLAY_SCOPES.with(std::cell::Cell::get)
+}
+
 pub(in super::super) struct RuntimeHistory<'a, 'c, 's> {
     core: &'c PageConcurrency<'s>,
     binding: &'s AtomicU8,
@@ -84,6 +95,11 @@ impl<'a, 'c, 's> RuntimeHistory<'a, 'c, 's> {
             return Err(self.fail(RetentionCause::Fenced));
         }
         Ok(())
+    }
+    /// S2W-R22: every checkout so far; each one takes the next attempt.
+    #[cfg(test)]
+    pub(in crate::storage) fn test_replay_checkouts(&self) -> u64 {
+        self.replay.lock().map_or(0, |state| state.last_attempt)
     }
     fn replay_state(&self) -> Result<MutexGuard<'_, ReplayState<'a>>> {
         self.healthy()?;
@@ -144,6 +160,8 @@ impl<'a, 'c, 's> RuntimeHistory<'a, 'c, 's> {
         &'r self,
         owner: &Owner<'c, 's>,
     ) -> Result<ReplayScope<'r, 'a, 'c, 's>> {
+        #[cfg(test)]
+        REPLAY_SCOPES.with(|count| count.set(count.get() + 1));
         self.healthy()?;
         let identity = owner
             .visibility_identity(self.core)

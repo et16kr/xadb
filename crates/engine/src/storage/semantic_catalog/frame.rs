@@ -2,8 +2,8 @@
 //! producer computes every after image/descriptor first. This layer never
 //! supplies a stage/install grant or accepts candidate bytes as a before state.
 use super::{
-    EffectIndices, Error, Operation, Result, decode_core, decode_layout, inventory, put16, put32,
-    put64, reference_changes, u64_at,
+    EffectIndices, Error, Operation, Result, decode_core, decode_layout, format::CatalogJob,
+    inventory, put16, put32, put64, reference_changes, u64_at,
 };
 use crate::storage::{
     control::Profile,
@@ -80,7 +80,7 @@ impl<'a> PageChange<'a> {
     }
 }
 
-pub(super) struct FrameSpec<'a> {
+pub(super) struct FrameSpec<'a, J = JobView<'a>> {
     pub(super) operation: Operation,
     pub(super) profile: Profile,
     pub(super) header: WalFrameHeader,
@@ -90,17 +90,20 @@ pub(super) struct FrameSpec<'a> {
     pub(super) after: [&'a [u8; 1536]; 2],
     pub(super) core: &'a [u8; 256],
     /// Reserved after Job for Reserve, stable before RootJob for the others.
-    pub(super) root_job: Option<JobView<'a>>,
+    pub(super) root_job: Option<J>,
     /// Actual physical order, at most eight pages. One changed cell per page
     /// in the closed operations of this scope; proof-only pages are omitted.
     pub(super) pages: &'a [PageChange<'a>],
 }
 
-fn group_header(spec: &FrameSpec<'_>, output: &mut [u8; 256]) -> Result<usize> {
+fn group_header<'a, J: CatalogJob<'a>>(
+    spec: &FrameSpec<'_, J>,
+    output: &mut [u8; 256],
+) -> Result<usize> {
     let op = spec.operation;
     let shape = op.shape(spec.catalog_bytes)?;
     let size = if op.handoff() { 256 } else { 192 };
-    if spec.profile.format() != 2
+    if spec.profile.format() != J::VERSION
         || spec.profile.spec().namespace.database != spec.header.stream.database
         || spec.profile.spec().namespace.timeline != spec.header.stream.timeline
         || spec.header.kind != op.outer()
@@ -228,7 +231,10 @@ fn native<'a>(change: PageChange<'a>, operation: Operation, index: usize) -> Res
     Ok(native)
 }
 
-fn auxiliaries(spec: &FrameSpec<'_>, output: &mut [u8; 1200]) -> Result<usize> {
+fn auxiliaries<'a, J: CatalogJob<'a>>(
+    spec: &FrameSpec<'_, J>,
+    output: &mut [u8; 1200],
+) -> Result<usize> {
     let shape = spec.operation.shape(spec.catalog_bytes)?;
     let mut at = 0;
     if shape.edges != 0 {
@@ -275,7 +281,10 @@ fn auxiliaries(spec: &FrameSpec<'_>, output: &mut [u8; 1200]) -> Result<usize> {
     Ok(at)
 }
 
-pub(super) fn encode(spec: &FrameSpec<'_>, output: &mut [u8]) -> Result<()> {
+pub(super) fn encode<'a, J: CatalogJob<'a>>(
+    spec: &FrameSpec<'_, J>,
+    output: &mut [u8],
+) -> Result<()> {
     if output.len() != spec.operation.frame_bytes(spec.catalog_bytes)? {
         return Err(Error::InvalidInput);
     }
@@ -359,7 +368,7 @@ fn patch_span(operation: Operation) -> (u16, std::ops::Range<usize>) {
 /// Compare against independently computed state without a second frame-sized
 /// backing. Existing framing is decoded once; each expected cell/redo is then
 /// compared with its exact computed counterpart.
-pub(super) fn verify(spec: &FrameSpec<'_>, bytes: &[u8]) -> Result<()> {
+pub(super) fn verify<'a, J: CatalogJob<'a>>(spec: &FrameSpec<'_, J>, bytes: &[u8]) -> Result<()> {
     let view = decode_layout(
         bytes,
         FrameExpectation {

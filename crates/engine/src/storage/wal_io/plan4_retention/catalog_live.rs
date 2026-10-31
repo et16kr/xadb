@@ -6,7 +6,7 @@ use crate::{
     storage::{
         allocation_page::{self, AllocationEntry},
         page::{PageKind, PageRef},
-        retention_page::catalog::{self as queue, JobState},
+        retention_page::catalog3::{self as queue, JobState},
         semantic_catalog::{self, Change, Inputs, Observation, Operation},
         session_fence::SessionFence,
         wal_frame::FrameExpectation,
@@ -25,6 +25,8 @@ pub(in super::super) mod lifecycle;
 #[path = "catalog_retire.rs"]
 pub(in super::super) mod retirement;
 
+#[path = "row_preflight.rs"]
+pub(in super::super) mod row_preflight;
 #[path = "catalog_targets.rs"]
 mod targets;
 use targets::CatalogTargetAccess;
@@ -526,35 +528,7 @@ impl<'i, 'c, 's> PreparedCatalog<'i, 'c, 's> {
         control: &control::RetentionLedger<'_, 'c, 's>,
         prefix: WalPrefix,
     ) -> Result<()> {
-        let actual = owner
-            .visibility_identity(self.payload.core)
-            .map_err(|error| RetentionError {
-                phase: RetentionPhase::Prepare,
-                effect: error.effect,
-                cause: RetentionCause::Concurrency(error),
-            })?;
-        if actual != self.owner
-            || !std::ptr::eq(self.payload.core, pool.bound_core())
-            || !pool.uses_storage_origin(self.payload.binding, self.payload.fence)
-        {
-            return Err(unchanged(
-                RetentionPhase::Prepare,
-                RetentionCause::BindingMismatch,
-            ));
-        }
-        if prefix != self.payload.prefix
-            || control.pending.is_some()
-            || !self.payload.control.matches(control)
-        {
-            return Err(unchanged(RetentionPhase::Prepare, RetentionCause::Busy));
-        }
-        if content_digest(self.payload.frame) != self.payload.frame_digest {
-            return Err(unchanged(
-                RetentionPhase::Prepare,
-                RetentionCause::Invariant,
-            ));
-        }
-        Ok(())
+        check_group(&self.payload, self.owner, owner, pool, control, prefix)
     }
     pub(in super::super) fn confirms_requirement(&self, requirement: WalRequirement<'_>) -> bool {
         self.payload.confirms_requirement(requirement)
@@ -584,15 +558,7 @@ impl<'i> CatalogPayload<'i, '_, '_> {
         self.inventory
     }
     pub(in super::super) fn confirms_requirement(&self, requirement: WalRequirement<'_>) -> bool {
-        let location = requirement.location();
-        requirement.uses_fence(self.fence)
-            && location.stream == self.prefix.stream
-            && location.file == self.prefix.file
-            && location.previous_lsn == self.prefix.complete_lsn
-            && location.lsn == self.observation.header.lsn
-            && location.start == self.prefix.complete_offset
-            && location.length == self.frame.len()
-            && location.start.checked_add(location.length as u64) == Some(location.end)
+        confirms_group(self, requirement)
     }
     pub(in super::super) fn layout(
         &self,
@@ -618,11 +584,113 @@ pub(in super::super) fn catalog_mark_staged<'s>(
     control: &mut control::RetentionLedger<'_, '_, 's>,
     requirement: WalRequirement<'s>,
 ) -> Result<()> {
-    if !prepared.confirms_requirement(requirement)
-        || control.pending.is_some()
-        || !prepared.payload.control.matches(control)
+    mark_staged_group(&prepared.payload, control, requirement)
+}
+
+/// The scope-neutral cut of a prepared existing group (Catalog or Row
+/// payload): one check, staging relation, mark and apply prelude for both.
+trait GroupPayload<'c, 's> {
+    fn core(&self) -> &'c PageConcurrency<'s>;
+    fn binding(&self) -> &'s AtomicU8;
+    fn fence(&self) -> &'s SessionFence;
+    fn prefix(&self) -> WalPrefix;
+    fn lsn(&self) -> u64;
+    fn frame(&self) -> &[u8];
+    fn frame_digest(&self) -> [u8; 32];
+    fn cut(&self) -> ControlCut;
+}
+impl<'c, 's> GroupPayload<'c, 's> for CatalogPayload<'_, 'c, 's> {
+    fn core(&self) -> &'c PageConcurrency<'s> {
+        self.core
+    }
+    fn binding(&self) -> &'s AtomicU8 {
+        self.binding
+    }
+    fn fence(&self) -> &'s SessionFence {
+        self.fence
+    }
+    fn prefix(&self) -> WalPrefix {
+        self.prefix
+    }
+    fn lsn(&self) -> u64 {
+        self.observation.header.lsn
+    }
+    fn frame(&self) -> &[u8] {
+        self.frame
+    }
+    fn frame_digest(&self) -> [u8; 32] {
+        self.frame_digest
+    }
+    fn cut(&self) -> ControlCut {
+        self.control
+    }
+}
+
+/// The original owner, bound origin, unchanged prefix/control cut and frame
+/// digest, rechecked immediately before the install of either scope.
+fn check_group<'c, 's>(
+    group: &impl GroupPayload<'c, 's>,
+    expected: OwnerIdentity,
+    owner: &Owner<'c, 's>,
+    pool: &SharedPool<'c, 's, '_, '_>,
+    control: &control::RetentionLedger<'_, 'c, 's>,
+    prefix: WalPrefix,
+) -> Result<()> {
+    let actual = owner
+        .visibility_identity(group.core())
+        .map_err(|error| RetentionError {
+            phase: RetentionPhase::Prepare,
+            effect: error.effect,
+            cause: RetentionCause::Concurrency(error),
+        })?;
+    if actual != expected
+        || !std::ptr::eq(group.core(), pool.bound_core())
+        || !pool.uses_storage_origin(group.binding(), group.fence())
     {
-        prepared.payload.fence.fence();
+        return Err(unchanged(
+            RetentionPhase::Prepare,
+            RetentionCause::BindingMismatch,
+        ));
+    }
+    if prefix != group.prefix() || control.pending.is_some() || !group.cut().matches(control) {
+        return Err(unchanged(RetentionPhase::Prepare, RetentionCause::Busy));
+    }
+    if content_digest(group.frame()) != group.frame_digest() {
+        return Err(unchanged(
+            RetentionPhase::Prepare,
+            RetentionCause::Invariant,
+        ));
+    }
+    Ok(())
+}
+
+/// The staged requirement is exactly this group's frame after its prefix.
+fn confirms_group<'c, 's>(
+    group: &impl GroupPayload<'c, 's>,
+    requirement: WalRequirement<'_>,
+) -> bool {
+    let location = requirement.location();
+    let prefix = group.prefix();
+    requirement.uses_fence(group.fence())
+        && location.stream == prefix.stream
+        && location.file == prefix.file
+        && location.previous_lsn == prefix.complete_lsn
+        && location.lsn == group.lsn()
+        && location.start == prefix.complete_offset
+        && location.length == group.frame().len()
+        && location.start.checked_add(location.length as u64) == Some(location.end)
+}
+
+fn mark_staged_group<'c, 'g, 's>(
+    group: &impl GroupPayload<'c, 'g>,
+    control: &mut control::RetentionLedger<'_, '_, 's>,
+    requirement: WalRequirement<'s>,
+) -> Result<()> {
+    if !confirms_group(group, requirement)
+        || control.pending.is_some()
+        || !group.cut().matches(control)
+    {
+        group.fence().fence();
         return Err(RetentionError {
             phase: RetentionPhase::Install,
             effect: Effect::CallerMustResolve,
@@ -630,6 +698,29 @@ pub(in super::super) fn catalog_mark_staged<'s>(
         });
     }
     control.pending = Some(requirement);
+    Ok(())
+}
+
+/// The control-apply prelude: the original cut is still unchanged and the
+/// pending requirement is this group's staged one.
+fn check_staged_group<'c, 's>(
+    group: &impl GroupPayload<'c, 's>,
+    control: &control::RetentionLedger<'_, '_, '_>,
+    requirement: WalRequirement<'_>,
+) -> Result<()> {
+    if !confirms_group(group, requirement)
+        || !group.cut().matches(control)
+        || control.pending.is_none_or(|pending| {
+            !pending.uses_fence(group.fence()) || pending.location() != requirement.location()
+        })
+    {
+        group.fence().fence();
+        return Err(RetentionError {
+            phase: RetentionPhase::Install,
+            effect: Effect::CallerMustResolve,
+            cause: RetentionCause::Invariant,
+        });
+    }
     Ok(())
 }
 
@@ -642,19 +733,7 @@ pub(super) fn catalog_apply(
     profile: crate::storage::control::Profile,
     requirement: WalRequirement<'_>,
 ) -> Result<()> {
-    if !prepared.confirms_requirement(requirement)
-        || !prepared.control.matches(control)
-        || control.pending.is_none_or(|pending| {
-            !pending.uses_fence(prepared.fence) || pending.location() != requirement.location()
-        })
-    {
-        prepared.fence.fence();
-        return Err(RetentionError {
-            phase: RetentionPhase::Install,
-            effect: Effect::CallerMustResolve,
-            cause: RetentionCause::Invariant,
-        });
-    }
+    check_staged_group(prepared, control, requirement)?;
     let view = prepared.layout(profile)?;
     let operation = prepared.operation();
     let inventory = prepared
@@ -764,6 +843,54 @@ fn one() -> Generation {
     Generation::new(1).expect("one")
 }
 
+/// Prepay bounded native/RAM progress of one prepared group of either scope
+/// through all outstanding credit: WAL file room and LSN for its frame and
+/// every future step its successor inventory owes, each changed target's
+/// modification counter, and the after Root revision.
+fn check_progress_room(
+    prefix: WalPrefix,
+    (lsn, frame_bytes): (u64, usize),
+    (future_wal, future_steps): (u64, u64),
+    (roles, stamps): (&[u8], &[Option<FrameStamp>]),
+    order: &[u8],
+    root: &[u8; PAGE_BYTES],
+    profile: crate::storage::control::Profile,
+) -> Result<()> {
+    if prefix
+        .complete_offset
+        .checked_add(frame_bytes as u64)
+        .and_then(|value| value.checked_add(future_wal))
+        .is_none_or(|value| value > crate::storage::wal_io::WAL_FILE_CAP)
+        || lsn.checked_add(future_steps).is_none()
+    {
+        return Err(unchanged(RetentionPhase::Prepare, RetentionCause::Capacity));
+    }
+    for (role, stamp) in roles.iter().zip(stamps) {
+        if order.contains(role)
+            && stamp.is_some_and(|stamp| {
+                stamp
+                    .modification_counter
+                    .checked_add(1)
+                    .and_then(|value| value.checked_add(future_steps))
+                    .is_none()
+            })
+        {
+            return Err(unchanged(
+                RetentionPhase::Prepare,
+                RetentionCause::Exhausted,
+            ));
+        }
+    }
+    let (_, root) = queue::decode_root_page(root, profile.spec().namespace).map_err(queue_error)?;
+    if root.revision().checked_add(future_steps).is_none() {
+        return Err(unchanged(
+            RetentionPhase::Prepare,
+            RetentionCause::Exhausted,
+        ));
+    }
+    Ok(())
+}
+
 /// Nested check/mark/control-apply source values only. The caller separately
 /// retains PreparedCatalog, its original write continuation and borrowed loans.
 /// The full producer, schema and inventory preparation have already returned.
@@ -784,34 +911,42 @@ pub(in super::super) fn catalog_control_source_bytes() -> usize {
         + 4 * size_of::<StatusSlotRef>()
         + 8 * size_of::<Result<()>>()
         + size_of::<([usize; 12], [bool; 8], [&[u8]; 12])>()
+        // The scope-neutral group helpers forward the owner identity, prefix
+        // and their reference arguments one call deeper.
+        + size_of::<OwnerIdentity>()
+        + size_of::<WalPrefix>()
+        + 6 * size_of::<&()>()
         // These are sequential calls; the parent values above remain live.
         + semantic_catalog::layout_source_bytes().max(queue::source_bytes())
 }
 
-/// Borrowed successor projection. The shared encoder is a codec, while this
-/// projection retains the actual verified layout and original control source.
+/// Borrowed successor projection of one group of either scope. The shared
+/// encoder is a codec, while this projection retains the group's verified
+/// successor rows and the original control source for every other row.
 struct ProjectedInventory<'b, 'i, 'a, 'c, 's> {
     control: &'b control::RetentionLedger<'a, 'c, 's>,
-    observation: Observation,
-    slot: Option<usize>,
-    view: semantic_catalog::LayoutView<'i>,
+    rows: GroupRows<'i>,
     root: &'i [u8; PAGE_BYTES],
     allocator: &'i [u8; PAGE_BYTES],
     jobs: Option<crate::storage::page::PageView<'i>>,
+}
+/// The control rows a group changes, read from its verified layout: the
+/// transaction ATT row (slot and successor descriptor, None when cleared),
+/// the successor Aging descriptor when it changes, and the changed Job.
+#[derive(Clone, Copy)]
+struct GroupRows<'i> {
+    transaction: Option<(usize, Option<&'i [u8; 1536]>)>,
+    aging: Option<Option<&'i [u8; 1536]>>,
+    job_ordinal: Option<usize>,
 }
 impl crate::storage::plan4_recovery_base::catalog::inventory::InventoryRows
     for ProjectedInventory<'_, '_, '_, '_, '_>
 {
     fn transaction(&self, index: usize) -> Option<&[u8; 1536]> {
-        let operation = self.observation.operation;
-        if (operation.handoff() || operation == Operation::RollbackStart)
-            && self.slot == Some(index)
+        if let Some((slot, after)) = self.rows.transaction
+            && slot == index
         {
-            if matches!(operation, Operation::Commit | Operation::AbortEnd) {
-                None
-            } else {
-                self.view.descriptor(0)
-            }
+            after
         } else {
             let bytes = &self.control.row(index)[..1536];
             bytes
@@ -828,9 +963,8 @@ impl crate::storage::plan4_recovery_base::catalog::inventory::InventoryRows
             .then(|| bytes.try_into().expect("original descriptor"))
     }
     fn aging(&self) -> Option<&[u8; 1536]> {
-        let operation = self.observation.operation;
-        if operation != Operation::RollbackStart {
-            self.view.descriptor(usize::from(operation.handoff()))
+        if let Some(after) = self.rows.aging {
+            after
         } else {
             let bytes = &self.control.row(control::AGING_SLOT)[..1536];
             bytes
@@ -849,7 +983,7 @@ impl crate::storage::plan4_recovery_base::catalog::inventory::InventoryRows
         &self,
         ordinal: usize,
     ) -> std::result::Result<&[u8], crate::storage::plan4_recovery_base::Error> {
-        if self.observation.job_ordinal == Some(ordinal) {
+        if self.rows.job_ordinal == Some(ordinal) {
             self.jobs
                 .as_ref()
                 .and_then(|page| page.cell(ordinal % 15))
@@ -863,6 +997,36 @@ impl crate::storage::plan4_recovery_base::catalog::inventory::InventoryRows
         }
     }
 }
+impl<'i> GroupRows<'i> {
+    /// A Catalog group: Tx handoffs and RollbackStart own the ATT row, every
+    /// other operation the Aging row.
+    fn catalog(
+        observation: Observation,
+        slot: Option<usize>,
+        view: semantic_catalog::LayoutView<'i>,
+    ) -> Self {
+        let operation = observation.operation;
+        Self {
+            transaction: (operation.handoff() || operation == Operation::RollbackStart)
+                .then_some(slot)
+                .flatten()
+                .map(|slot| {
+                    (
+                        slot,
+                        (!matches!(operation, Operation::Commit | Operation::AbortEnd))
+                            .then(|| view.descriptor(0))
+                            .flatten(),
+                    )
+                }),
+            aging: (operation != Operation::RollbackStart)
+                .then(|| view.descriptor(usize::from(operation.handoff()))),
+            job_ordinal: observation.job_ordinal,
+        }
+    }
+}
+
+/// The XOI successor of one verified group of either scope, encoded before
+/// its stage. `jobs_after` is the changed Jobs page (with `rows.job_ordinal`).
 #[allow(
     clippy::too_many_arguments,
     reason = "borrowed original phase sections"
@@ -870,44 +1034,39 @@ impl crate::storage::plan4_recovery_base::catalog::inventory::InventoryRows
 fn prepare_inventory(
     control: &control::RetentionLedger<'_, '_, '_>,
     profile: crate::storage::control::Profile,
-    observation: Observation,
-    slot: Option<usize>,
-    view: semantic_catalog::LayoutView<'_>,
-    root_before: &[u8; PAGE_BYTES],
-    allocator_before: &[u8; PAGE_BYTES],
-    after: &[[u8; PAGE_BYTES]; 8],
+    lsn: u64,
+    rows: GroupRows<'_>,
+    root: &[u8; PAGE_BYTES],
+    allocator: &[u8; PAGE_BYTES],
+    jobs_after: Option<&[u8; PAGE_BYTES]>,
     output: &mut [u8; PAGE_BYTES],
 ) -> Result<(u64, u64)> {
-    let changed = |role| observation.order[..usize::from(observation.count)].contains(&role);
-    let rows = ProjectedInventory {
+    let jobs = match (rows.job_ordinal, jobs_after) {
+        (Some(ordinal), Some(page)) => Some(
+            queue::decode_jobs_page(page, profile.spec().namespace, (ordinal / 15) as u8)
+                .map_err(queue_error)?,
+        ),
+        (None, _) => None,
+        (Some(_), None) => {
+            return Err(unchanged(
+                RetentionPhase::Prepare,
+                RetentionCause::Invariant,
+            ));
+        }
+    };
+    let projected = ProjectedInventory {
         control,
-        observation,
-        slot,
-        view,
-        root: if changed(1) { &after[1] } else { root_before },
-        allocator: if changed(0) {
-            &after[0]
-        } else {
-            allocator_before
-        },
-        jobs: observation
-            .job_ordinal
-            .map(|ordinal| {
-                queue::decode_jobs_page(&after[2], profile.spec().namespace, (ordinal / 15) as u8)
-            })
-            .transpose()
-            .map_err(queue_error)?,
+        rows,
+        root,
+        allocator,
+        jobs,
     };
     let generation = control
         .source
         .base()
         .map_or(1, |base| base.view().header().generation);
-    crate::storage::plan4_recovery_base::catalog::inventory::encode_current(
-        profile,
-        generation,
-        observation.header.lsn,
-        &rows,
-        output,
+    crate::storage::plan4_recovery_base::catalog::inventory::encode_row_current(
+        profile, generation, lsn, &projected, output,
     )
     .map_err(|error| unchanged(RetentionPhase::Prepare, RetentionCause::Base(error)))
 }
@@ -1040,6 +1199,148 @@ struct CatalogPreparation<'b, 'a, 's, 'c, 'p, 'd, 'm, 'w, W: WriterNamespace> {
 impl<'b, 'a, 's, 'c, 'p, 'd, 'm, 'w, W: WriterNamespace>
     CatalogPreparation<'b, 'a, 's, 'c, 'p, 'd, 'm, 'w, W>
 {
+    /// Entry checks of an existing-group preparation of either scope: health,
+    /// no pending/population, the bound visibility core, an idle original
+    /// owner and reader, its identity, the WAL prefix and the whole ledger.
+    fn existing_entry(&self, owner: &mut Owner<'c, 's>) -> Result<(OwnerIdentity, WalPrefix)> {
+        let storage = self.storage;
+        health(storage, self.pool)?;
+        if self.control.pending.is_some() || self.control.population.reserved() {
+            return Err(fatal(
+                storage,
+                RetentionPhase::Prepare,
+                RetentionCause::Invariant,
+            ));
+        }
+        if self
+            .visibility
+            .is_none_or(|visibility| !visibility.matches_core(self.pool.bound_core()))
+        {
+            return Err(unchanged(
+                RetentionPhase::Prepare,
+                RetentionCause::BindingMismatch,
+            ));
+        }
+        owner.check_idle().map_err(|error| RetentionError {
+            phase: RetentionPhase::Prepare,
+            effect: error.effect,
+            cause: RetentionCause::Concurrency(error),
+        })?;
+        self.pool
+            .check_retention_reader(owner)
+            .map_err(|error| frame(RetentionPhase::Prepare, error))?;
+        let owner_identity =
+            owner
+                .visibility_identity(self.pool.bound_core())
+                .map_err(|error| RetentionError {
+                    phase: RetentionPhase::Prepare,
+                    effect: error.effect,
+                    cause: RetentionCause::Concurrency(error),
+                })?;
+        let prefix = storage
+            .wal()
+            .prefix()
+            .map_err(|error| fatal(storage, RetentionPhase::Prepare, RetentionCause::Wal(error)))?;
+        self.control.check_ledger(storage.profile(), prefix)?;
+        Ok((owner_identity, prefix))
+    }
+
+    /// Under the original read of either scope's selected targets: copy each
+    /// before image into the loan its role names (a proof-only target is
+    /// observed in place), prove it equals the canonical replay arena page,
+    /// and prove every target's allocator membership from the before loan
+    /// `allocator` names.
+    fn observe_targets<const N: usize>(
+        &self,
+        read: &targets::CatalogRead<'_, '_, '_, 'c, 's, '_, '_, N>,
+        selected: &[(TargetRequest, u8); N],
+        before: &mut [[u8; PAGE_BYTES]; 8],
+        arena: &[u8],
+        stamps: &mut [Option<FrameStamp>; 9],
+        allocator: u8,
+    ) -> Result<()> {
+        let storage = self.storage;
+        for (at, (target, role)) in selected.iter().enumerate() {
+            if *role == PROOF_ROLE {
+                let image = read
+                    .bytes(at)
+                    .map_err(|e| frame(RetentionPhase::Prepare, e))?;
+                stamps[at] = Some(
+                    read.observe(at)
+                        .map_err(|e| frame(RetentionPhase::Prepare, e))?
+                        .frame,
+                );
+                if image != history::arena_page(arena, target.identity.page.page_no as usize) {
+                    return Err(fatal(
+                        storage,
+                        RetentionPhase::Census,
+                        RetentionCause::Invariant,
+                    ));
+                }
+                continue;
+            }
+            if usize::from(*role) >= before.len() {
+                return Err(unchanged(
+                    RetentionPhase::Prepare,
+                    RetentionCause::Unsupported,
+                ));
+            }
+            let output = &mut before[usize::from(*role)];
+            stamps[at] = Some(
+                read.copy_snapshot(at, output)
+                    .map_err(|error| frame(RetentionPhase::Prepare, error))?,
+            );
+            if output != history::arena_page(arena, target.identity.page.page_no as usize) {
+                return Err(fatal(
+                    storage,
+                    RetentionPhase::Census,
+                    RetentionCause::Invariant,
+                ));
+            }
+        }
+        let identity = selected
+            .iter()
+            .find(|(_, role)| *role == allocator)
+            .ok_or_else(|| unchanged(RetentionPhase::Prepare, RetentionCause::Invariant))?
+            .0
+            .identity;
+        let allocator = allocation_page::decode_allocation_page(
+            &before[usize::from(allocator)],
+            identity,
+            storage.profile().spec().namespace,
+        )
+        .map_err(|error| {
+            fatal(
+                storage,
+                RetentionPhase::Census,
+                RetentionCause::Allocation(error),
+            )
+        })?;
+        for (target, _) in selected {
+            let page = usize::try_from(target.identity.page.page_no)
+                .map_err(|_| unchanged(RetentionPhase::Prepare, RetentionCause::Membership))?;
+            if allocator.entry(page).map_err(|error| {
+                fatal(
+                    storage,
+                    RetentionPhase::Census,
+                    RetentionCause::Allocation(error),
+                )
+            })? != (AllocationEntry::Allocated {
+                generation: target.identity.page.incarnation,
+                object: target.identity.owner,
+                object_generation: target.identity.owner_generation,
+                kind: target.kind,
+            }) {
+                return Err(fatal(
+                    storage,
+                    RetentionPhase::Census,
+                    RetentionCause::Membership,
+                ));
+            }
+        }
+        Ok(())
+    }
+
     fn prepare_catalog_commit<'i>(
         &self,
         owner: &mut Owner<'c, 's>,
@@ -1067,9 +1368,14 @@ impl<'b, 'a, 's, 'c, 'p, 'd, 'm, 'w, W: WriterNamespace>
             unchanged(RetentionPhase::Prepare, RetentionCause::MissingTransaction)
         })?;
         let mut terminal = None;
+        // Catalog selection skips every Row-scope cell (another actor's).
         for (ordinal, cell) in self.control.jobs().iter().enumerate() {
-            let job = queue::decode_job(cell, self.storage.profile().spec().namespace)
-                .map_err(queue_error)?;
+            let Some(job) =
+                queue::decode_catalog_cell(cell, self.storage.profile().spec().namespace)
+                    .map_err(queue_error)?
+            else {
+                continue;
+            };
             if job.state().is_terminal() && job.source() == Some(actor) {
                 if terminal.is_some() || job.state() != JobState::TerminalLeased {
                     return Err(unchanged(
@@ -1131,44 +1437,7 @@ impl<'b, 'a, 's, 'c, 'p, 'd, 'm, 'w, W: WriterNamespace>
         }
         let storage = self.storage;
         let _unwind = storage.session_fence().unwind_guard();
-        health(storage, self.pool)?;
-        if self.control.pending.is_some() || self.control.population.reserved() {
-            return Err(fatal(
-                storage,
-                RetentionPhase::Prepare,
-                RetentionCause::Invariant,
-            ));
-        }
-        if self
-            .visibility
-            .is_none_or(|visibility| !visibility.matches_core(self.pool.bound_core()))
-        {
-            return Err(unchanged(
-                RetentionPhase::Prepare,
-                RetentionCause::BindingMismatch,
-            ));
-        }
-        owner.check_idle().map_err(|error| RetentionError {
-            phase: RetentionPhase::Prepare,
-            effect: error.effect,
-            cause: RetentionCause::Concurrency(error),
-        })?;
-        self.pool
-            .check_retention_reader(owner)
-            .map_err(|error| frame(RetentionPhase::Prepare, error))?;
-        let owner_identity =
-            owner
-                .visibility_identity(self.pool.bound_core())
-                .map_err(|error| RetentionError {
-                    phase: RetentionPhase::Prepare,
-                    effect: error.effect,
-                    cause: RetentionCause::Concurrency(error),
-                })?;
-        let prefix = storage
-            .wal()
-            .prefix()
-            .map_err(|error| fatal(storage, RetentionPhase::Prepare, RetentionCause::Wal(error)))?;
-        self.control.check_ledger(storage.profile(), prefix)?;
+        let (owner_identity, prefix) = self.existing_entry(owner)?;
         selected.sort_unstable_by_key(|(target, _)| target_rank(*target));
         let (frame_space, pages) = private.split_at_mut(semantic_catalog::FRAME_BYTES);
         let (after_space, before_space) = pages.split_at_mut(8 * PAGE_BYTES);
@@ -1202,89 +1471,7 @@ impl<'b, 'a, 's, 'c, 'p, 'd, 'm, 'w, W: WriterNamespace>
                     .read(self.pool, owner, &requests)
                     .map_err(|error| frame(RetentionPhase::Prepare, error))?;
                 let observed = (|| {
-                    for (at, (target, role)) in selected.iter().enumerate() {
-                        if *role == PROOF_ROLE {
-                            let image = read
-                                .bytes(at)
-                                .map_err(|e| frame(RetentionPhase::Prepare, e))?;
-                            stamps[at] = Some(
-                                read.observe(at)
-                                    .map_err(|e| frame(RetentionPhase::Prepare, e))?
-                                    .frame,
-                            );
-                            if image
-                                != history::arena_page(
-                                    replay.bytes(),
-                                    target.identity.page.page_no as usize,
-                                )
-                            {
-                                return Err(fatal(
-                                    storage,
-                                    RetentionPhase::Census,
-                                    RetentionCause::Invariant,
-                                ));
-                            }
-                            continue;
-                        }
-                        if usize::from(*role) >= before.len() {
-                            return Err(unchanged(
-                                RetentionPhase::Prepare,
-                                RetentionCause::Unsupported,
-                            ));
-                        }
-                        let output = &mut before[usize::from(*role)];
-                        stamps[at] = Some(
-                            read.copy_snapshot(at, output)
-                                .map_err(|error| frame(RetentionPhase::Prepare, error))?,
-                        );
-                        if output
-                            != history::arena_page(
-                                replay.bytes(),
-                                target.identity.page.page_no as usize,
-                            )
-                        {
-                            return Err(fatal(
-                                storage,
-                                RetentionPhase::Census,
-                                RetentionCause::Invariant,
-                            ));
-                        }
-                    }
-                    let allocator = allocation_page::decode_allocation_page(
-                        &before[0],
-                        requests[0].identity,
-                        storage.profile().spec().namespace,
-                    )
-                    .map_err(|error| {
-                        fatal(
-                            storage,
-                            RetentionPhase::Census,
-                            RetentionCause::Allocation(error),
-                        )
-                    })?;
-                    for (target, _) in &selected {
-                        let page = usize::try_from(target.identity.page.page_no).map_err(|_| {
-                            unchanged(RetentionPhase::Prepare, RetentionCause::Membership)
-                        })?;
-                        if allocator.entry(page).map_err(|error| {
-                            fatal(
-                                storage,
-                                RetentionPhase::Census,
-                                RetentionCause::Allocation(error),
-                            )
-                        })? != (AllocationEntry::Allocated {
-                            generation: target.identity.page.incarnation,
-                            object: target.identity.owner,
-                            object_generation: target.identity.owner_generation,
-                            kind: target.kind,
-                        }) {
-                            return Err(fatal(
-                                storage,
-                                RetentionPhase::Census,
-                                RetentionCause::Membership,
-                            ));
-                        }
-                    }
+                    self.observe_targets(&read, &selected, before, replay.bytes(), &mut stamps, 0)?;
                     let has = |role| selected.iter().any(|(_, actual)| *actual == role);
                     let inputs = Inputs {
                         profile: storage.profile(),
@@ -1363,6 +1550,10 @@ impl<'b, 'a, 's, 'c, 'p, 'd, 'm, 'w, W: WriterNamespace>
             // Forward fills nearly the whole frame, but its pair has no before
             // images. Other operations use one page after their exact frame end;
             // CLR therefore keeps both real pair-before pages intact.
+            let changed =
+                |role| observation.order[..usize::from(observation.count)].contains(&role);
+            let rows = GroupRows::catalog(observation, slot, layout);
+            let jobs_after = observation.job_ordinal.map(|_| &after[2]);
             if in_before {
                 if observation.operation != Operation::Forward
                     || roles[..N].iter().any(|role| matches!(role, 6 | 7))
@@ -1376,69 +1567,41 @@ impl<'b, 'a, 's, 'c, 'p, 'd, 'm, 'w, W: WriterNamespace>
                 prepare_inventory(
                     self.control,
                     storage.profile(),
-                    observation,
-                    slot,
-                    layout,
-                    &head[1],
-                    &head[0],
-                    after,
+                    observation.header.lsn,
+                    rows,
+                    if changed(1) { &after[1] } else { &head[1] },
+                    if changed(0) { &after[0] } else { &head[0] },
+                    jobs_after,
                     &mut tail[0],
                 )?
             } else {
                 prepare_inventory(
                     self.control,
                     storage.profile(),
-                    observation,
-                    slot,
-                    layout,
-                    &before[1],
-                    &before[0],
-                    after,
+                    observation.header.lsn,
+                    rows,
+                    if changed(1) { &after[1] } else { &before[1] },
+                    if changed(0) { &after[0] } else { &before[0] },
+                    jobs_after,
                     (&mut spare[..PAGE_BYTES])
                         .try_into()
                         .expect("named inventory page after exact frame"),
                 )?
             }
         };
-        if prefix
-            .complete_offset
-            .checked_add(observation.frame_bytes as u64)
-            .and_then(|value| value.checked_add(future_wal))
-            .is_none_or(|value| value > crate::storage::wal_io::WAL_FILE_CAP)
-            || observation.header.lsn.checked_add(future_steps).is_none()
-        {
-            return Err(unchanged(RetentionPhase::Prepare, RetentionCause::Capacity));
-        }
-        // Prepay bounded native/RAM progress through all outstanding credit.
-        for at in 0..N {
-            if observation.order[..usize::from(observation.count)].contains(&roles[at])
-                && stamps[at].is_some_and(|stamp| {
-                    stamp
-                        .modification_counter
-                        .checked_add(1)
-                        .and_then(|value| value.checked_add(future_steps))
-                        .is_none()
-                })
-            {
-                return Err(unchanged(
-                    RetentionPhase::Prepare,
-                    RetentionCause::Exhausted,
-                ));
-            }
-        }
-        let root_image = if observation.order[..usize::from(observation.count)].contains(&1) {
-            &after[1]
-        } else {
-            &before[1]
-        };
-        let (_, root) = queue::decode_root_page(root_image, storage.profile().spec().namespace)
-            .map_err(queue_error)?;
-        if root.revision().checked_add(future_steps).is_none() {
-            return Err(unchanged(
-                RetentionPhase::Prepare,
-                RetentionCause::Exhausted,
-            ));
-        }
+        check_progress_room(
+            prefix,
+            (observation.header.lsn, observation.frame_bytes),
+            (future_wal, future_steps),
+            (&roles[..N], &stamps[..N]),
+            &observation.order[..usize::from(observation.count)],
+            if observation.order[..usize::from(observation.count)].contains(&1) {
+                &after[1]
+            } else {
+                &before[1]
+            },
+            storage.profile(),
+        )?;
         let inventory = if in_before {
             &before[6]
         } else {
@@ -1515,9 +1678,189 @@ pub(in super::super) struct CatalogLiveSource {
     pub(in super::super) start_root: usize,
     pub(in super::super) start_status: usize,
     pub(in super::super) lifecycle: usize,
+    /// Row Begin/RollbackStart/AbortEnd under RowProgress (ROW-BEGIN-001).
+    pub(in super::super) row_lifecycle: usize,
     pub(in super::super) retirement: usize,
     pub(in super::super) peak: usize,
 }
+
+/// Upper estimates of the RowWrite C bodies (S2-0 Row write amendment §4–5,
+/// S2W-C01/C02/C06), composed before any Row write effect body exists from
+/// the existing census terms at the whole write target set (nine targets).
+/// Each phase value here is the C body plus the progress shell; the
+/// wrapper/step/Result carriers and the A share bound of the phase
+/// (`ROW_PREFLIGHT_CALLER_BYTES` at preflight, `ROW_WRITE_CALLER_BYTES`
+/// elsewhere) are added by the Row write census, which checks every phase
+/// against CatalogProgressCharge by name. Only the Row write census computes
+/// them (`row_write_bodies`); the split census, `peak` and every charge do
+/// not. An S2 unit that supplies a body replaces its estimate: S2-b1 replaced
+/// preflight's with the actual body census (`preflight_body`), and keeps the
+/// estimate beside it (`preflight_estimate`) for S2W-C06; S2-b2 did the same
+/// for `reserve` (`reserve_body`, `reserve_estimate`) and `validation_lane`
+/// (`validation_lane_estimate`); S2-c did the same for `producer_lane`,
+/// `prepare` and `apply` (`forward_body`, `producer_lane_estimate`,
+/// `prepare_estimate`, `apply_estimate`), and S2-d for `cancel`
+/// (`cancel_body`, `cancel_estimate`).
+///
+/// The phases are composed as the S2-0b amendment (Row write validate-once)
+/// decides:
+/// - B: `history::validate_live` and the arena comparison of the write
+///   target set T run once per row, in preflight (`validate`, `arena`).
+///   Reserve, prepare and cancel open no replay scope and inherit the proof
+///   through the digest chain of the cut commitments, so their group
+///   preparation is `group_typed`, without a scope or the history peak.
+/// - D: the prepared group's carriers (`group_carriers`) are added only to
+///   the install or return sub-phase of reserve, prepare, apply and cancel.
+///   Their deep check, chain recheck and group preparation hold instead one
+///   return slot (`return_slot`) per suspended caller level
+///   (`suspended_levels`, at least one).
+/// - d2: preflight's lease check is a completed call and is max-combined.
+///
+/// Recorded constraints for the units that supply the bodies:
+/// - S2-b2, S2-c and S2-d: during the group preparation and the deep check
+///   at most one suspended level holds a Row group return carrier, the
+///   wrapper body's slot for the preparer's result. No helper between the
+///   wrapper body and the preparer returns the group or an Observation across
+///   the preparation, and each unit's body census names its suspended
+///   levels. A body that needs more levels counts them
+///   (`ROW_WRITE_SUSPENDED_LEVELS`); each costs a whole `return_slot`.
+///   RowReserve's level is `reserve_group`'s `group`
+///   (`RESERVE_SUSPENDED_LEVEL`); its deep checks and draft run beside it.
+///   The Forward `prepare`'s level is `prepare_forward`'s `observation`, an
+///   Observation carrier (`PREPARE_SUSPENDED_LEVEL`), and `apply`'s is
+///   `forward_group`'s `group` (`APPLY_SUSPENDED_LEVEL`); the deep checks
+///   of both run beside them, and the producer lane has none. The Cancel's
+///   level is `cancel_group`'s `group` (`CANCEL_SUSPENDED_LEVEL`); its deep
+///   checks run beside it.
+/// - `apply` rechecks at the stage by recomputing the draft commitment, with
+///   its page and control digests, and comparing the prepared frame/after
+///   digests only. It does not run `validate_live`, the observer or the XOI
+///   inventory again (S2-d).
+/// - `validation_lane` rebuilds `RowPreflightContext` from the private
+///   copies preflight leaves (the schema range, the role map and the RowLeaf
+///   before image) and re-observes the Catalog leaf stamp (S2-b decision A7,
+///   `RowPreflightCut`); S2-b2's census counts that decode
+///   (`row_validation_lane_body`). Neither lane checks the digest chain.
+/// - The Row lifecycle keeps its accepted count; `lifecycle_check` must stay
+///   equal to the split value (S2W-C03).
+#[derive(Clone, Copy, Debug)]
+pub(in super::super) struct RowWriteBodies {
+    /// Held through every phase: the admission, gate and their Result,
+    /// failure and release/reopen carriers (`commit_carrier_bytes`, as the
+    /// lifecycle shell) and the two unwind fences.
+    pub(in super::super) shell: usize,
+    /// `check_catalog_pair_io` for the lease (CREATE's lease check term). It
+    /// returns before the deep checks start, so preflight max-combines it
+    /// (d2).
+    pub(in super::super) lease_check: usize,
+    /// The preflight's target set: requests/roles and before stamps of T.
+    pub(in super::super) target_set: usize,
+    /// Deep checks: `check_ledger` with the Row admission subset, or the
+    /// shared transaction/statement check over the shell scalars. Every
+    /// effect step repeats the open/view/source/statement checks.
+    pub(in super::super) check: usize,
+    /// Preflight's Catalog leaf, anchor and table record decode for the
+    /// schema, index-count and RowLeaf checks and the private copies: the
+    /// Catalog source census over the shell scalars.
+    pub(in super::super) table_census: usize,
+    /// One retention LOAD of a nonresident target over the shell scalars.
+    pub(in super::super) load: usize,
+    /// Free Undo container selection: the two-target allocator/Undo read and
+    /// slot0 decode over the shell scalars.
+    pub(in super::super) undo_select: usize,
+    /// Read-set or write-bit registration in the isolation ledger over the
+    /// shell scalars.
+    pub(in super::super) register: usize,
+    /// Commitment recomputation over the shell scalars: T's requests and
+    /// stamps, two hashers and the digests.
+    pub(in super::super) commit: usize,
+    /// The existing start selection phases (RootJob/Status choice analog).
+    pub(in super::super) select: usize,
+    /// Preflight's one `history::validate_live` (B): the replay scope and
+    /// loan carriers, the history census peak and two `Result<()>` over the
+    /// shell scalars.
+    pub(in super::super) validate: usize,
+    /// Preflight's typed read of T compared with the replay arena (B), as
+    /// `observe_targets` does: the scope carriers, the nine-target typed read
+    /// and the shared target observation over the shell scalars.
+    pub(in super::super) arena: usize,
+    /// Row group preparation at nine targets without a replay scope (B): C's
+    /// producer or the observer of A's frame under the typed read, the XOI
+    /// inventory, the assembled group, or `check_ledger`.
+    pub(in super::super) group_typed: usize,
+    /// One suspended caller level's return carrier (D):
+    /// `Result<PreparedRowGroup>` at nine targets.
+    pub(in super::super) return_slot: usize,
+    /// Suspended caller levels counted across the deep check, the chain
+    /// recheck and the group preparation (D): `ROW_WRITE_SUSPENDED_LEVELS`.
+    pub(in super::super) suspended_levels: usize,
+    /// Apply's re-assembly of the prepared group from the cut and the
+    /// checked frame/after, without the observer or `validate_live`.
+    pub(in super::super) group_reassemble: usize,
+    /// The existing-group install at nine targets: stage, page install,
+    /// durable wait and the control record.
+    pub(in super::super) group_install: usize,
+    /// Prepared-group and Observation carriers, from assembly to install or
+    /// return; added to that sub-phase only (D).
+    pub(in super::super) group_carriers: usize,
+    /// The Row lifecycle recomputed here from the same repeated terms; S2W-C03
+    /// requires it to equal `catalog_live_source_bytes().row_lifecycle`.
+    pub(in super::super) lifecycle_check: usize,
+    /// The S2-a′ upper estimate of the preflight body, from the terms above;
+    /// printed beside the actual census, no longer charged.
+    pub(in super::super) preflight_estimate: usize,
+    /// The actual preflight body census (S2-b1, `row_preflight_body`).
+    pub(in super::super) preflight_body: row_preflight::RowPreflightBody,
+    /// The charged preflight body: `preflight_body.body`.
+    pub(in super::super) preflight: usize,
+    /// The S2-a′ upper estimate of `validation_lane`, without the context
+    /// decode; printed beside the actual census.
+    pub(in super::super) validation_lane_estimate: usize,
+    /// The actual `validation_lane` census (S2-b2,
+    /// `row_validation_lane_body`).
+    pub(in super::super) validation_lane: usize,
+    /// The S2-a′ upper estimate of the RowReserve body; printed beside the
+    /// actual census, no longer charged.
+    pub(in super::super) reserve_estimate: usize,
+    /// The actual RowReserve body census (S2-b2, `row_reserve_body`), with
+    /// its suspended level (`RESERVE_SUSPENDED_LEVEL`).
+    pub(in super::super) reserve_body: lifecycle::row::write::RowReserveBody,
+    /// The charged RowReserve body: `reserve_body.body`.
+    pub(in super::super) reserve: usize,
+    /// The S2-a′ upper estimates of `producer_lane`, `prepare` and `apply`;
+    /// printed beside the actual census, no longer charged.
+    pub(in super::super) producer_lane_estimate: usize,
+    pub(in super::super) prepare_estimate: usize,
+    pub(in super::super) apply_estimate: usize,
+    /// The actual Forward census (S2-c, `row_forward_body`), with the
+    /// suspended levels of `prepare` and `apply` (`PREPARE_SUSPENDED_LEVEL`,
+    /// `APPLY_SUSPENDED_LEVEL`).
+    pub(in super::super) forward_body: lifecycle::row::write::forward::RowForwardBody,
+    /// The charged producer lane: `forward_body.producer_lane`.
+    pub(in super::super) producer_lane: usize,
+    /// The Forward `ReservedRow::prepare`, charged as `forward_body.prepare`.
+    /// The CLR task's prepare is S4's own entry census.
+    pub(in super::super) prepare: usize,
+    /// The charged `PreparedRow::apply`: `forward_body.apply`.
+    pub(in super::super) apply: usize,
+    /// The S2-a′ upper estimate of the Cancel body (reserve's estimate);
+    /// printed beside the actual census, no longer charged.
+    pub(in super::super) cancel_estimate: usize,
+    /// The actual Cancel body census (S2-d, `row_cancel_body`), with its
+    /// suspended level (`CANCEL_SUSPENDED_LEVEL`).
+    pub(in super::super) cancel_body: lifecycle::row::write::cancel::RowCancelBody,
+    /// The charged Cancel body: `cancel_body.body`.
+    pub(in super::super) cancel: usize,
+    pub(in super::super) finish: usize,
+}
+
+/// Suspended caller levels that hold a Row group return carrier across the
+/// deep check, the chain recheck and the group preparation of one RowWrite
+/// effect step (S2-0b amendment, decision 2): the wrapper body's slot for the
+/// preparer's result. S2-b2, S2-c and S2-d keep it at one; a body that needs
+/// more levels raises it, and the census then counts each one.
+const ROW_WRITE_SUSPENDED_LEVELS: usize = 1;
+const _: () = assert!(ROW_WRITE_SUSPENDED_LEVELS >= 1);
 
 /// Original public entry locals that survive into the common preparer or
 /// installer. Begin's read is consumed before this boundary; the Rollback
@@ -1567,20 +1910,31 @@ pub(in super::super) fn catalog_live_source_bytes<W: WriterNamespace>() -> Catal
         + size_of::<Option<usize>>();
     let prepare_outer =
         validation_outer + size_of::<[TargetRequest; 9]>() + size_of::<[Option<FrameStamp>; 9]>();
-    let replay_carriers = size_of::<history::runtime::ReplayScope<'_, '_, '_, '_>>()
+    let scope_carriers = size_of::<history::runtime::ReplayScope<'_, '_, '_, '_>>()
         + size_of::<history::runtime::ReplayLoan<'_, '_, '_, '_>>()
         + 2 * size_of::<Result<history::runtime::ReplayScope<'_, '_, '_, '_>>>()
-        + 2 * size_of::<Result<history::runtime::ReplayLoan<'_, '_, '_, '_>>>()
-        + 3 * size_of::<Result<Observation>>();
-    let prepare_replay = validation_outer + replay_carriers + history::source_bytes::<W>().peak;
+        + 2 * size_of::<Result<history::runtime::ReplayLoan<'_, '_, '_, '_>>>();
+    let replay_carriers = scope_carriers + 3 * size_of::<Result<Observation>>();
+    let history_peak = history::source_bytes::<W>().peak;
+    let prepare_replay = validation_outer + replay_carriers + history_peak;
+    // The shared target observation (`observe_targets`) is a completed call
+    // before the producer; both run under the typed read.
+    let observe = 8 * size_of::<&()>()
+        + size_of::<u8>()
+        + 2 * size_of::<Result<()>>()
+        + size_of::<crate::storage::allocation_page::AllocationPage<'_>>()
+        + size_of::<PageIdentity>()
+        + 2 * size_of::<Result<FrameStamp>>();
     let prepare_produce = prepare_outer
         + replay_carriers
         + targets::call_bytes::<9>().max(
             size_of::<targets::CatalogRead<'_, '_, '_, '_, '_, '_, '_, 9>>()
-                + size_of::<Inputs<'_>>()
-                + size_of::<crate::storage::allocation_page::AllocationPage<'_>>()
-                + size_of::<Result<Observation>>()
-                + semantic_catalog::source_bytes(),
+                + observe.max(
+                    size_of::<Inputs<'_>>()
+                        + size_of::<crate::storage::allocation_page::AllocationPage<'_>>()
+                        + size_of::<Result<Observation>>()
+                        + semantic_catalog::profile3_source_census().total,
+                ),
         );
     // After cleanup, final role/target arrays have been formed, but no return
     // carrier exists. The exact shared encoder owns no duplicate output page.
@@ -1596,7 +1950,7 @@ pub(in super::super) fn catalog_live_source_bytes<W: WriterNamespace>() -> Catal
         >()
         + size_of::<ProjectedInventory<'_, '_, '_, '_, '_>>()
         + 2 * size_of::<Result<(u64, u64)>>()
-        + crate::storage::plan4_recovery_base::catalog::inventory::current_source_bytes()
+        + crate::storage::plan4_recovery_base::catalog::inventory::row_current_source_bytes()
             .max(semantic_catalog::layout_source_bytes());
     let reader_return = prepare_outer
         + replay_carriers
@@ -1612,11 +1966,17 @@ pub(in super::super) fn catalog_live_source_bytes<W: WriterNamespace>() -> Catal
     .max(reader_return);
     // check_ledger precedes array/replay setup. Its descriptor transaction,
     // Aging and queue scans are sequential and bounded by this existing leaf.
+    // check_ledger runs inside the shared entry helper of either scope.
     let ledger = scalar
         + size_of::<[(TargetRequest, u8); 9]>()
+        + size_of::<Result<(OwnerIdentity, WalPrefix)>>()
+        + 2 * size_of::<&()>()
         + 640
         + 2 * size_of::<crate::storage::obligation::DescriptorSpec>()
-        + queue::source_bytes().max(semantic_catalog::transaction_source_bytes());
+        + queue::source_bytes()
+            .max(semantic_catalog::profile3_transaction_source_bytes())
+            // The Row admission subset is exclusive with the Catalog branch.
+            .max(crate::storage::semantic_row::ledger::admission_source_bytes());
     let prepare = prepare_replay
         .max(prepare_produce)
         .max(prepare_inventory)
@@ -1630,7 +1990,7 @@ pub(in super::super) fn catalog_live_source_bytes<W: WriterNamespace>() -> Catal
         + size_of::<edit::LeafEditPlan<'_, '_>>()
         + 2 * size_of::<crate::storage::page::PageView<'_>>()
         + dirty_frame::target_set_call_bytes::<7>()
-        + semantic_catalog::source_census().catalog_image;
+        + semantic_catalog::profile3_source_census().catalog_image;
     let physical = crate::storage::wal_io::DURABILITY_CALL_BYTES
         + 2 * size_of::<std::result::Result<WalRequirement<'_>, crate::storage::wal_io::WalIoError>>(
         )
@@ -1770,6 +2130,34 @@ pub(in super::super) fn catalog_live_source_bytes<W: WriterNamespace>() -> Catal
     let reserve = reserve.max(checked) + shared;
     let forward = forward.max(checked) + shared;
     let cancel = cancel.max(checked) + shared;
+    // The Row lifecycle: the same shell, entry/ledger/replay validation and
+    // install body with the Row producer, payload and control part.
+    let row = lifecycle::row::row_lifecycle_terms();
+    let row_prepare = (scalar + row.outer + scope_carriers + history_peak.max(row.produce))
+        .max(scalar + row.outer + row.inventory)
+        .max(scalar + row.outer + row.assembled)
+        .max(ledger);
+    let row_install = lifecycle::application_carrier_bytes::<W>()
+        + visibility::epoch_change_carriers()
+        + scalar
+        + size_of::<[Option<dirty_frame::DptStamp<'_>>; 9]>()
+        + 3 * size_of::<WalRequirement<'_>>()
+        + 2 * size_of::<DurableWal<'_>>()
+        + 2 * size_of::<InstallGrant<'_, '_, '_>>()
+        + targets::call_bytes::<4>()
+        + row
+            .control
+            .max(physical)
+            .max(visibility::epoch_transition_source_bytes());
+    let row_lifecycle = (row.caller + row_prepare.max(row_install))
+        .max(start_health)
+        .max(start_root)
+        .max(start_status)
+        + source::commit_carrier_bytes()
+        + 2 * size_of::<crate::storage::session_fence::UnwindFence<'_>>()
+        + lifecycle::entry_carrier_bytes::<W>()
+        + row.carriers
+        + transaction::writable::row_lifecycle_caller_bytes();
     let retirement = ((retirement::prepare_caller_source_bytes() + prepare)
         .max(retirement::selection_source_bytes())
         + source::retirement_prepare_carrier_bytes())
@@ -1789,6 +2177,7 @@ pub(in super::super) fn catalog_live_source_bytes<W: WriterNamespace>() -> Catal
         start_root,
         start_status,
         lifecycle,
+        row_lifecycle,
         retirement,
         peak: prepare
             .max(plan)
@@ -1797,7 +2186,258 @@ pub(in super::super) fn catalog_live_source_bytes<W: WriterNamespace>() -> Catal
             .max(cancel)
             .max(ordinary)
             .max(lifecycle)
+            .max(row_lifecycle)
             .max(retirement),
+    }
+}
+
+/// The RowWrite C body estimates (`RowWriteBodies`), for the Row write census
+/// only; nothing on the split path calls this. The terms it shares with
+/// `catalog_live_source_bytes` (`scalar`, `scope_carriers`, the history peak,
+/// `ledger`, `physical`, the start selection and CREATE's lease check) repeat
+/// that function's expressions, and the Row lifecycle is recomputed from them
+/// as `lifecycle_check`, which S2W-C03 compares with the split census value,
+/// so the two copies cannot drift apart unnoticed. The shared target
+/// observation (`observe`) is repeated too; the lifecycle does not use it, so
+/// only the shared expression keeps it equal.
+pub(in super::super) fn row_write_bodies<W: WriterNamespace>() -> RowWriteBodies {
+    use crate::storage::dirty_frame;
+    use std::mem::size_of;
+    let scalar = size_of::<CatalogPreparation<'_, '_, '_, '_, '_, '_, '_, '_, W>>()
+        + 2 * size_of::<&()>() // temporary view receiver and wrapper argument
+        + 2 * size_of::<WalPrefix>()
+        + size_of::<OwnerIdentity>()
+        + 6 * size_of::<Result<()>>()
+        + 4 * size_of::<RetentionError>()
+        + size_of::<crate::storage::session_fence::UnwindFence<'_>>()
+        + 24 * size_of::<usize>()
+        + 20 * size_of::<&[u8]>();
+    let scope_carriers = size_of::<history::runtime::ReplayScope<'_, '_, '_, '_>>()
+        + size_of::<history::runtime::ReplayLoan<'_, '_, '_, '_>>()
+        + 2 * size_of::<Result<history::runtime::ReplayScope<'_, '_, '_, '_>>>()
+        + 2 * size_of::<Result<history::runtime::ReplayLoan<'_, '_, '_, '_>>>();
+    let history_peak = history::source_bytes::<W>().peak;
+    let ledger = scalar
+        + size_of::<[(TargetRequest, u8); 9]>()
+        + size_of::<Result<(OwnerIdentity, WalPrefix)>>()
+        + 2 * size_of::<&()>()
+        + 640
+        + 2 * size_of::<crate::storage::obligation::DescriptorSpec>()
+        + queue::source_bytes()
+            .max(semantic_catalog::profile3_transaction_source_bytes())
+            .max(crate::storage::semantic_row::ledger::admission_source_bytes());
+    let physical = crate::storage::wal_io::DURABILITY_CALL_BYTES
+        + 2 * size_of::<std::result::Result<WalRequirement<'_>, crate::storage::wal_io::WalIoError>>(
+        )
+        + 2 * size_of::<std::result::Result<DurableWal<'_>, crate::storage::wal_io::WalIoError>>();
+    let (start_health, start_root, start_status) = lifecycle::start_selection_source_phases::<W>();
+    let reference = size_of::<&()>();
+    let lease_check = 12 * reference
+        + 2 * size_of::<Result<()>>()
+        + 2 * size_of::<super::super::super::super::flush_io::IoObservation>();
+    // The existing-group install of a Row group with `call` for its target
+    // array and `control` for its control part.
+    let install = |call: usize, control: usize| {
+        lifecycle::application_carrier_bytes::<W>()
+            + visibility::epoch_change_carriers()
+            + scalar
+            + size_of::<[Option<dirty_frame::DptStamp<'_>>; 9]>()
+            + 3 * size_of::<WalRequirement<'_>>()
+            + 2 * size_of::<DurableWal<'_>>()
+            + 2 * size_of::<InstallGrant<'_, '_, '_>>()
+            + call
+            + control
+                .max(physical)
+                .max(visibility::epoch_transition_source_bytes())
+    };
+    // The Row lifecycle (four targets) from the same terms: the drift check.
+    let row = lifecycle::row::row_lifecycle_terms();
+    let row_prepare = (scalar + row.outer + scope_carriers + history_peak.max(row.produce))
+        .max(scalar + row.outer + row.inventory)
+        .max(scalar + row.outer + row.assembled)
+        .max(ledger);
+    let lifecycle_check = (row.caller
+        + row_prepare.max(install(targets::call_bytes::<4>(), row.control)))
+    .max(start_health)
+    .max(start_root)
+    .max(start_status)
+        + source::commit_carrier_bytes()
+        + 2 * size_of::<crate::storage::session_fence::UnwindFence<'_>>()
+        + lifecycle::entry_carrier_bytes::<W>()
+        + row.carriers
+        + transaction::writable::row_lifecycle_caller_bytes();
+    // The Row group over the whole write target set T (≤ 9 targets).
+    let group = lifecycle::row::row_group_terms::<9>();
+    let shell = source::commit_carrier_bytes()
+        + 2 * size_of::<crate::storage::session_fence::UnwindFence<'_>>();
+    let target_set = size_of::<[(TargetRequest, u8); 9]>()
+        + size_of::<[Option<FrameStamp>; 9]>()
+        + size_of::<Option<usize>>();
+    let check = ledger.max(scalar + transaction::catalog::check_source_bytes());
+    let table_census = scalar + super::super::read::catalog_source_bytes::<W>();
+    let load = scalar
+        + super::super::lookup_load::source_bytes::<W>()
+        + size_of::<Plan4Target>()
+        + 2 * size_of::<Result<Option<RetentionResidencyStep>>>();
+    let undo_select = scalar
+        + super::super::read::undo_read_source_bytes()
+        + 2 * size_of::<crate::storage::undo_ref::UndoRef>()
+        + 2 * size_of::<Result<()>>();
+    let register = scalar + transaction::catalog_read_source_bytes();
+    let commit = scalar
+        + size_of::<[TargetRequest; 9]>()
+        + size_of::<[Option<FrameStamp>; 9]>()
+        + 2 * size_of::<foundation::codec::ContentHasher>()
+        + 2 * size_of::<Result<FrameStamp>>()
+        + 4 * 32
+        + 8 * size_of::<&()>();
+    let select = start_health.max(start_root).max(start_status);
+    // B: the one replay of the row and the arena comparison of T, in
+    // preflight only. `observe` is `catalog_live_source_bytes`'s shared target
+    // observation (`observe_targets`).
+    let validate = scalar + scope_carriers + history_peak + 2 * size_of::<Result<()>>();
+    let observe = 8 * size_of::<&()>()
+        + size_of::<u8>()
+        + 2 * size_of::<Result<()>>()
+        + size_of::<crate::storage::allocation_page::AllocationPage<'_>>()
+        + size_of::<PageIdentity>()
+        + 2 * size_of::<Result<FrameStamp>>();
+    let arena = scalar
+        + scope_carriers
+        + targets::call_bytes::<9>()
+            .max(size_of::<targets::CatalogRead<'_, '_, '_, '_, '_, '_, '_, 9>>() + observe);
+    // B: reserve, prepare and cancel prepare the group under the typed read
+    // with no replay scope.
+    let group_typed = (scalar + group.outer + group.produce.max(group.observer))
+        .max(scalar + group.outer + group.inventory)
+        .max(scalar + group.outer + group.assembled)
+        .max(ledger);
+    // D: one suspended level's `Result<PreparedRowGroup>` at nine targets. The
+    // group type holds the lifecycle's four targets; `row_group_terms` charges
+    // each further target as one wider element in each of its three Result
+    // carriers, so a third of the nine- and four-target carrier difference is
+    // the wider part of one Result.
+    let return_slot = size_of::<Result<lifecycle::row::PreparedRowGroup<'_, '_, '_>>>()
+        + (group.carriers - row.carriers) / 3;
+    let suspended_levels = ROW_WRITE_SUSPENDED_LEVELS;
+    let held = suspended_levels * return_slot;
+    let group_reassemble = scalar + group.outer + group.assembled;
+    let group_install = install(targets::call_bytes::<9>(), group.control);
+    let group_carriers = group.carriers;
+    // Sequential steps of one call are max-combined; what one call holds
+    // throughout is added. Every phase holds the shell. The lease check is a
+    // completed call (d2).
+    let preflight_estimate = shell
+        + target_set
+        + lease_check
+            .max(check)
+            .max(table_census)
+            .max(load)
+            .max(validate)
+            .max(arena)
+            .max(undo_select)
+            .max(register)
+            .max(commit)
+            .max(select);
+    // S2-b1 supplies the preflight body: its census replaces the estimate.
+    let preflight_body = row_preflight::row_preflight_body::<W>(
+        shell,
+        lease_check,
+        check - scalar,
+        register - scalar,
+        scope_carriers,
+        history_peak,
+    );
+    let preflight = preflight_body.body;
+    let lane = shell + commit;
+    let validation_lane_estimate = lane + 2 * size_of::<RowPreflightContext>();
+    // S2-b2 supplies the lane body: its census, with the context decode,
+    // replaces the estimate.
+    let validation_lane = lifecycle::row::write::row_validation_lane_body::<W>(shell);
+    let producer_lane_estimate = lane + 2 * size_of::<RowProducerContext>();
+    // D: the deep check, the chain recheck and the group preparation hold the
+    // suspended return slots; the group carriers exist only from assembly to
+    // the install or return.
+    let reserve_estimate = shell
+        + (held + check.max(commit).max(group_typed))
+            .max(register)
+            .max(group_carriers + group_install);
+    // S2-b2 supplies the RowReserve body: its census replaces the estimate,
+    // with preflight's deep-check and registration terms for the same calls.
+    let reserve_body = lifecycle::row::write::row_reserve_body::<W>(
+        shell,
+        preflight_body.check,
+        preflight_body.register,
+        (group_install, group.inventory),
+    );
+    let reserve = reserve_body.body;
+    let prepare_estimate =
+        shell + (held + check.max(commit).max(group_typed)).max(group_carriers + group_reassemble);
+    let apply_estimate = shell
+        + (held + check.max(commit).max(group_reassemble))
+            .max(register)
+            .max(group_carriers + group_install);
+    // S2-c supplies the Forward bodies: their census replaces the three
+    // estimates, with preflight's deep-check and registration terms for the
+    // same calls.
+    let forward_body = lifecycle::row::write::forward::row_forward_body::<W>(
+        shell,
+        preflight_body.check,
+        preflight_body.register,
+        (group_install, group.inventory),
+    );
+    let producer_lane = forward_body.producer_lane;
+    let prepare = forward_body.prepare;
+    let apply = forward_body.apply;
+    // S2-d supplies the Cancel body: its census replaces the estimate (until
+    // then reserve's), with the Forward's entry and recompute terms for the
+    // two helpers it shares with the Forward steps.
+    let cancel_estimate = reserve_estimate;
+    let cancel_body = lifecycle::row::write::cancel::row_cancel_body::<W>(
+        shell,
+        (forward_body.entry, forward_body.recompute),
+        (group_install, group.inventory),
+    );
+    let cancel = cancel_body.body;
+    RowWriteBodies {
+        shell,
+        lease_check,
+        target_set,
+        check,
+        table_census,
+        load,
+        undo_select,
+        register,
+        commit,
+        select,
+        validate,
+        arena,
+        group_typed,
+        return_slot,
+        suspended_levels,
+        group_reassemble,
+        group_install,
+        group_carriers,
+        lifecycle_check,
+        preflight_estimate,
+        preflight_body,
+        preflight,
+        validation_lane_estimate,
+        validation_lane,
+        reserve_estimate,
+        reserve_body,
+        reserve,
+        producer_lane_estimate,
+        prepare_estimate,
+        apply_estimate,
+        forward_body,
+        producer_lane,
+        prepare,
+        apply,
+        cancel_estimate,
+        cancel_body,
+        cancel,
+        finish: shell,
     }
 }
 

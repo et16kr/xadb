@@ -5,6 +5,9 @@
 #[path = "retention_page/catalog.rs"]
 pub(crate) mod catalog;
 
+#[path = "retention_page/catalog3.rs"]
+pub(crate) mod catalog3;
+
 #[path = "retention_page/row.rs"]
 pub(crate) mod row;
 

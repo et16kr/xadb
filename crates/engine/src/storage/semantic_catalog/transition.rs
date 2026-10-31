@@ -5,6 +5,7 @@
 use super::{
     Error, Operation, Result,
     core::{self, CoreInput},
+    format::{self, AgingStep, Catalog2, CatalogJob, CatalogRoot, Format, Row3, Scan, Selected},
     frame::{self, FrameSpec, PageChange},
     images::{self, CatalogChange, RootContext, StatusChange, StatusContext},
     inventory, ledger,
@@ -18,10 +19,7 @@ use crate::storage::{
     obligation,
     page::{FileId, PAGE_BYTES, PageHeader, PageIdentity, PageKind, PageLsn, PageRef},
     retention_obligation,
-    retention_page::{
-        JOB_BYTES, JOB_COUNT,
-        catalog::{self, JobState, JobView},
-    },
+    retention_page::{JOB_BYTES, JOB_COUNT, catalog::JobState},
     status_home::{self, StatusHome},
     transaction_record::{StatusSlotRef, TransactionState, TransactionStatusCell, TxnRef},
     tree_page::{self, TreeExpectation},
@@ -171,24 +169,30 @@ fn fixed(profile: Profile, page_no: u64, owner: u64, kind: PageKind, lsn: u64) -
         lsn: PageLsn(lsn),
     }
 }
-fn source_job<'a>(inputs: &Inputs<'a>, ordinal: usize) -> Result<JobView<'a>> {
+fn source_job<'a, F: Format>(inputs: &Inputs<'a>, ordinal: usize) -> Result<F::Job<'a>> {
     if ordinal >= JOB_COUNT {
         return Err(Error::InvalidInput);
     }
-    Ok(catalog::decode_job(
-        &inputs.jobs[ordinal],
-        inputs.profile.spec().namespace,
-    )?)
+    F::decode_job(&inputs.jobs[ordinal], inputs.profile.spec().namespace)
 }
-fn root_for<'a>(inputs: &Inputs<'a>, actor: TxnRef) -> Result<Option<JobView<'a>>> {
+fn root_for<'a, F: Format>(inputs: &Inputs<'a>, actor: TxnRef) -> Result<Option<F::Job<'a>>> {
     let mut found = None;
     for ordinal in 0..JOB_COUNT {
-        let job = source_job(inputs, ordinal)?;
-        if job.state().is_root() && job.source() == Some(actor) {
-            if found.is_some() {
-                return Err(Error::IdentityMismatch);
+        match F::scan_job(&inputs.jobs[ordinal], inputs.profile.spec().namespace)? {
+            Scan::Catalog(job) => {
+                if job.state().is_root() && job.source() == Some(actor) {
+                    if found.is_some() {
+                        return Err(Error::IdentityMismatch);
+                    }
+                    found = Some(job);
+                }
             }
-            found = Some(job);
+            // One actor never owns Jobs of both scopes; never adopt a Row Job.
+            Scan::Row(source) => {
+                if source.id() == actor.id() {
+                    return Err(Error::Unsupported);
+                }
+            }
         }
     }
     Ok(found)
@@ -243,7 +247,7 @@ fn queue_change<'a>(change: Change<'a>, sender: &'a [u8; 32], q: u64) -> Result<
     })
 }
 
-fn write_job_page(
+fn write_job_page<F: Format>(
     inputs: &Inputs<'_>,
     ordinal: usize,
     lsn: u64,
@@ -252,7 +256,7 @@ fn write_job_page(
 ) -> Result<()> {
     let index = ordinal / 15;
     let slot = ordinal % 15;
-    let page = catalog::decode_jobs_page(
+    let page = F::decode_jobs_page(
         required(inputs.jobs_page)?,
         inputs.profile.spec().namespace,
         index as u8,
@@ -271,7 +275,7 @@ fn write_job_page(
             page.cell(current).ok_or(Error::Corrupt)?
         };
     }
-    catalog::encode_jobs_page(
+    F::encode_jobs_page(
         inputs.profile.spec().namespace,
         index as u8,
         lsn,
@@ -281,7 +285,7 @@ fn write_job_page(
     Ok(())
 }
 
-fn check_reservation(inputs: &Inputs<'_>, job: JobView<'_>) -> Result<()> {
+fn check_reservation<'a, J: CatalogJob<'a>>(inputs: &Inputs<'_>, job: J) -> Result<()> {
     let identity = fixed(inputs.profile, 0, 1, PageKind::Allocation, 0).identity;
     let allocation = allocation_page::decode_allocation_page(
         required(inputs.allocator)?,
@@ -336,12 +340,12 @@ fn check_reservation(inputs: &Inputs<'_>, job: JobView<'_>) -> Result<()> {
 
 /// Return only the scalar inventory cut. Predecessor descriptor decoding and
 /// its return carriers finish before the next descriptor is constructed.
-fn transaction_inventory(
+fn transaction_inventory<'a, J: CatalogJob<'a>>(
     inputs: &Inputs<'_>,
     op: Operation,
     actor: TxnRef,
-    root_before: Option<JobView<'_>>,
-    updated_job: Option<JobView<'_>>,
+    root_before: Option<J>,
+    updated_job: Option<J>,
     lsn: u64,
 ) -> Result<obligation::InventoryClaim> {
     let prior = inputs
@@ -374,15 +378,19 @@ fn transaction_inventory(
 
 /// Output roles are fixed so the caller can retain only one eight-page loan.
 /// Ordering for the WAL/pool is computed at the end from actual identities.
-fn compute<'a>(
+#[allow(
+    clippy::type_complexity,
+    reason = "one observation tuple returned to its single caller"
+)]
+fn compute<'a, F: Format>(
     inputs: &Inputs<'a>,
     after: &mut [[u8; PAGE_BYTES]; 8],
     descriptors: &mut [[u8; 1536]; 2],
     core: &mut [u8; 256],
-) -> Result<(Observation, [bool; 8], Option<JobView<'a>>, usize)> {
+) -> Result<(Observation, [bool; 8], Option<F::Job<'a>>, usize)> {
     let op = inputs.change.operation();
     let namespace = inputs.profile.spec().namespace;
-    if inputs.profile.format() != 2
+    if inputs.profile.format() != <F::Job<'a> as CatalogJob<'a>>::VERSION
         || namespace.database != inputs.frame.stream.database
         || namespace.timeline != inputs.frame.stream.timeline
     {
@@ -393,14 +401,14 @@ fn compute<'a>(
         .previous_lsn
         .checked_add(1)
         .ok_or(Error::Exhausted)?;
-    let (_, root) = catalog::decode_root_page(inputs.root, namespace)?;
+    let (_, root) = F::decode_root_page(inputs.root, namespace)?;
     if root.apply() > inputs.frame.previous_lsn {
         return Err(Error::OrderMismatch);
     }
     let selected = inputs
         .change
         .selected()
-        .map(|ordinal| source_job(inputs, ordinal))
+        .map(|ordinal| source_job::<F>(inputs, ordinal))
         .transpose()?;
     let (actor, location) = match inputs.change {
         Change::AgingStart => (None, None),
@@ -409,7 +417,7 @@ fn compute<'a>(
         _ => (required(selected)?.source(), required(selected)?.status()),
     };
     let root_before = actor
-        .map(|actor| root_for(inputs, actor))
+        .map(|actor| root_for::<F>(inputs, actor))
         .transpose()?
         .flatten();
     let is_tx = op.handoff() || op == Operation::RollbackStart;
@@ -479,7 +487,7 @@ fn compute<'a>(
     let mut aggregate = [0; 640];
     let mut changed = [false; 8];
     let job_ordinal = if op == Operation::RollbackStart {
-        catalog::verify_census(root, namespace, inputs.jobs, &mut aggregate)?;
+        F::verify_census(root, namespace, inputs.jobs, &mut aggregate)?;
         if root.aging().is_none()
             || root_before.is_some_and(|job| job.state() != JobState::RootRetained)
         {
@@ -487,7 +495,7 @@ fn compute<'a>(
         }
         None
     } else {
-        let ordinal = queue::prepare(
+        let ordinal = queue::prepare::<F>(
             queue_change(inputs.change, &sender, q)?,
             namespace,
             root,
@@ -497,21 +505,21 @@ fn compute<'a>(
             &mut job_cell,
             &mut aggregate,
         )?;
-        catalog::encode_root_page(&root_cell, namespace, &mut after[ROOT])?;
+        F::encode_root_page(root, &root_cell, namespace, &mut after[ROOT])?;
         changed[ROOT] = true;
         if let Some(ordinal) = ordinal {
-            write_job_page(inputs, ordinal, lsn, &job_cell, &mut after[JOB])?;
+            write_job_page::<F>(inputs, ordinal, lsn, &job_cell, &mut after[JOB])?;
             changed[JOB] = true;
         }
         ordinal
     };
     let updated_job = job_ordinal
-        .map(|_| catalog::decode_job(&job_cell, namespace))
+        .map(|_| F::decode_job(&job_cell, namespace))
         .transpose()?;
     let semantic_root = if op == Operation::Reserve {
         updated_job
     } else {
-        root_before
+        root_before.map(F::shorten)
     };
     if op == Operation::Reserve {
         check_reservation(inputs, required(semantic_root)?)?;
@@ -618,11 +626,18 @@ fn compute<'a>(
     let root_after = match op {
         Operation::Reserve | Operation::Forward | Operation::Clr => updated_job,
         Operation::Cancel => None,
-        _ => root_before,
+        _ => root_before.map(F::shorten),
     };
     if is_tx {
         let actor = required(actor)?;
-        let inventory = transaction_inventory(inputs, op, actor, root_before, updated_job, lsn)?;
+        let inventory = transaction_inventory(
+            inputs,
+            op,
+            actor,
+            root_before.map(F::shorten),
+            updated_job,
+            lsn,
+        )?;
         ledger::next_transaction(
             ledger::TransactionTransition {
                 operation: op,
@@ -638,20 +653,20 @@ fn compute<'a>(
         )?;
     }
     if op != Operation::RollbackStart {
-        ledger::next_aging(
-            inputs.profile,
-            inputs.aging,
-            inputs.root,
-            &after[ROOT],
-            &aggregate,
+        F::next_aging(
+            AgingStep {
+                profile: inputs.profile,
+                before: inputs.aging,
+                before_page: inputs.root,
+                after_page: &after[ROOT],
+                jobs: inputs.jobs,
+                replaced: job_ordinal.map(|ordinal| (ordinal, &job_cell)),
+            },
+            &mut aggregate,
             &mut descriptors[usize::from(op.handoff())],
         )?;
     } else {
-        retention_obligation::catalog::decode(
-            required(inputs.aging)?,
-            inputs.profile,
-            inputs.root,
-        )?;
+        F::check_aging(required(inputs.aging)?, inputs.profile, inputs.root)?;
     }
     let cursors = if matches!(
         op,
@@ -742,10 +757,10 @@ fn catalog_slot(
     Ok(found.equal.then_some((found.index + 1) as u16))
 }
 
-fn page_change<'a>(
+fn page_change<'a, 'j, J: CatalogJob<'j>>(
     inputs: &Inputs<'a>,
     observation: Observation,
-    root: Option<JobView<'a>>,
+    root: Option<J>,
     role: usize,
     image: &'a [u8; PAGE_BYTES],
 ) -> Result<PageChange<'a>> {
@@ -858,6 +873,9 @@ fn run(
     run_with_buffers(inputs, after, output, &mut descriptors, &mut core)
 }
 
+/// The one exact profile dispatch of this observer: Profile2 keeps the
+/// original version2 path, Profile3 the explicit Root/Job3 adapter, and every
+/// other profile keeps the original identity rejection.
 fn run_with_buffers(
     inputs: &Inputs<'_>,
     after: &mut [[u8; PAGE_BYTES]; 8],
@@ -865,21 +883,34 @@ fn run_with_buffers(
     descriptors: &mut [[u8; 1536]; 2],
     core: &mut [u8; 256],
 ) -> Result<Observation> {
+    match format::select(inputs.profile)? {
+        Selected::Catalog2 => run_format::<Catalog2>(inputs, after, output, descriptors, core),
+        Selected::Row3 => run_format::<Row3>(inputs, after, output, descriptors, core),
+    }
+}
+
+fn run_format<F: Format>(
+    inputs: &Inputs<'_>,
+    after: &mut [[u8; PAGE_BYTES]; 8],
+    output: Output<'_>,
+    descriptors: &mut [[u8; 1536]; 2],
+    core: &mut [u8; 256],
+) -> Result<Observation> {
     let (mut observation, changed, original_root, catalog_bytes) =
-        compute(inputs, after, descriptors, core)?;
+        compute::<F>(inputs, after, descriptors, core)?;
     let root = if observation.operation == Operation::Reserve {
         let ordinal = required(observation.job_ordinal)?;
-        let page = catalog::decode_jobs_page(
+        let page = F::decode_jobs_page(
             &after[JOB],
             inputs.profile.spec().namespace,
             (ordinal / 15) as u8,
         )?;
-        Some(catalog::decode_job(
+        Some(F::decode_job(
             required(page.cell(ordinal % 15))?,
             inputs.profile.spec().namespace,
         )?)
     } else {
-        original_root
+        original_root.map(F::shorten)
     };
     let first = changed
         .iter()

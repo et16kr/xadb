@@ -75,7 +75,9 @@ pub(in crate::storage) struct Writer {
 }
 pub(in crate::storage) struct File {
     inner: Option<LinuxNamespaceFile>,
-    name: FileName,
+    // Trace-only name. Boxed so the 129-byte name is not part of the File
+    // value that every source census charges per retained native handle.
+    name: Box<FileName>,
     trace: Arc<Mutex<Trace>>,
 }
 impl Drop for Directory {
@@ -140,7 +142,7 @@ impl Writer {
         trace.event("retain_file", name.as_str(), 0, 0, "OK");
         File {
             inner: Some(inner),
-            name,
+            name: Box::new(name),
             trace: Arc::clone(&self.trace),
         }
     }

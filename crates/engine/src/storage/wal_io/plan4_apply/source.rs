@@ -6,7 +6,7 @@ use crate::storage::session_fence::SessionFence;
 use crate::transaction::concurrency::{TerminalReadGate, terminal_gate_source_bytes};
 use std::{mem::size_of, sync::atomic::Ordering};
 
-const SHORT_BYTES: u64 = 65_536;
+pub(super) const SHORT_BYTES: u64 = 65_536;
 const USED: std::ops::Range<usize> = 24..32;
 
 #[derive(Clone, Copy)]
@@ -17,6 +17,24 @@ pub(super) enum OperationClass {
     /// boundaries, never while an admitted reader could hold a loan.
     CommitProgress,
     CatalogProgress,
+    /// Row Begin/RollbackStart/AbortEnd progress and the Row statement end
+    /// check. Exclusive with Catalog progress under the same exclusive
+    /// control (§6.9); it reserves the same fixed CatalogProgressCharge, which
+    /// already bounds the Row lifecycle and, through the shared
+    /// `check_source_bytes` term, the statement end check
+    /// (`RowProgress ≤ CatalogProgressCharge`, ROW-BEGIN-001 "자원").
+    RowProgress,
+    /// One Row write from preflight to finish, apply or cancel, under the
+    /// terminal read gate (`Owner::close_reads_for_terminal`, foreground
+    /// only) and flush lease the wrapper holds (S2-0 Row write amendment §1,
+    /// §4). Exclusive with the other progress classes; it
+    /// reserves the same fixed CatalogProgressCharge, which the RowWrite
+    /// census checks per C phase by name instead of folding a Row term in.
+    #[allow(
+        dead_code,
+        reason = "the Row write preflight admission body is a later S2 unit"
+    )]
+    RowWrite,
 }
 
 /// Fixed type-derived costs, computed once while DiskSession is exclusively
@@ -113,16 +131,31 @@ pub(super) struct CatalogProgressCharge(usize);
 impl CatalogProgressCharge {
     pub(super) fn new<W: WriterNamespace>() -> Self {
         let bodies = create_pair::catalog_live::catalog_live_source_bytes::<W>();
-        Self(
-            bodies
-                .retirement
-                .max(bodies.lifecycle)
-                .max(bodies.reserve)
-                .max(bodies.forward)
-                .max(bodies.cancel)
-                .max(transaction::catalog::check_source_bytes()),
-        )
+        let charge = bodies
+            .retirement
+            .max(bodies.lifecycle)
+            .max(bodies.reserve)
+            .max(bodies.forward)
+            .max(bodies.cancel)
+            .max(transaction::catalog::check_source_bytes());
+        // RowProgress reserves this same charge (exclusive under one control,
+        // ROW-BEGIN-001 "자원"). The Row lifecycle body is checked against it
+        // as a type-size constant, never folded in: a larger Row body must
+        // fail here by name instead of silently raising every Catalog peak.
+        // The Row statement end check is the check_source_bytes term above.
+        debug_assert!(
+            bodies.row_lifecycle <= charge,
+            "RowProgress Row lifecycle body {} exceeds CatalogProgressCharge {charge}",
+            bodies.row_lifecycle
+        );
+        Self(charge)
     }
+}
+
+/// The fixed progress charge in bytes, computed as at split: the RowWrite
+/// charge of the Row write census and of its A-side counterpart.
+pub(super) fn progress_charge_bytes<W: WriterNamespace>() -> usize {
+    CatalogProgressCharge::new::<W>().0
 }
 
 /// The synchronous writer keeps the admission and gate through preparation,
@@ -259,7 +292,10 @@ impl<'b, 'a, 'c, 's> OperationSourceAdmission<'b, 'a, 'c, 's> {
             OperationClass::CatalogResident => charges.resident,
             // Only the dedicated writer entries, holding a read gate, admit a writer;
             // reserve_class rejects the zero charge as a fenced Invariant.
-            OperationClass::CommitProgress | OperationClass::CatalogProgress => 0,
+            OperationClass::CommitProgress
+            | OperationClass::CatalogProgress
+            | OperationClass::RowProgress
+            | OperationClass::RowWrite => 0,
         };
         Self::reserve_class(ledger, charges.shared, charge, class)
     }
@@ -307,20 +343,41 @@ impl<'b, 'a, 'c, 's> OperationSourceAdmission<'b, 'a, 'c, 's> {
         progress: &CatalogProgressCharge,
         gate: &TerminalReadGate<'_, '_>,
     ) -> SourceResult<Self> {
+        Self::progress(
+            ledger,
+            charges,
+            progress,
+            gate,
+            OperationClass::CatalogProgress,
+        )
+    }
+
+    /// Fixed progress of a lifecycle class, Catalog or Row, or of a Row
+    /// write. All reserve the one split-time CatalogProgressCharge; any other
+    /// class is refused as a fenced Invariant before the ledger changes.
+    pub(super) fn progress(
+        ledger: &'b Mutex<IsolationLedger<'a, 'c, 's>>,
+        charges: &CatalogCommitCharges,
+        progress: &CatalogProgressCharge,
+        gate: &TerminalReadGate<'_, '_>,
+        class: OperationClass,
+    ) -> SourceResult<Self> {
         {
             let state = ledger
                 .lock()
                 .map_err(|poison| failed(poison.into_inner().fence, SourceCause::Poisoned))?;
-            if !gate.belongs_to(state.core) {
+            if !gate.belongs_to(state.core)
+                || !matches!(
+                    class,
+                    OperationClass::CatalogProgress
+                        | OperationClass::RowProgress
+                        | OperationClass::RowWrite
+                )
+            {
                 return Err(failed(state.fence, SourceCause::Invariant));
             }
         }
-        Self::reserve_class(
-            ledger,
-            charges.shared,
-            progress.0,
-            OperationClass::CatalogProgress,
-        )
+        Self::reserve_class(ledger, charges.shared, progress.0, class)
     }
 
     /// After stage returned Pending and before reads reopen. Shrink only.
@@ -450,6 +507,8 @@ impl<'b, 'a, 'c, 's> OperationSourceAdmission<'b, 'a, 'c, 's> {
             | OperationClass::CatalogResident
             | OperationClass::CommitProgress
             | OperationClass::CatalogProgress
+            | OperationClass::RowProgress
+            | OperationClass::RowWrite
                 if self.charge != 0 && u64::from(self.charge) <= SHORT_BYTES => {}
             _ => return Err(failed(state.fence, SourceCause::Invariant)),
         }

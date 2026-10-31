@@ -845,6 +845,13 @@ fn read_file<W: WriterNamespace>(
     read_exact_at(&mut file, output, offset).map_err(Cause::Io)
 }
 
+/// The storage owner's bound Profile selects the profile grammar through
+/// `control::decode_installed_profile`; a valid but different installed
+/// profile reports `Control(IdentityMismatch)`, as a namespace mismatch does.
+fn installed_profile(bytes: &[u8], bound: Profile) -> Inner<Profile> {
+    control::decode_installed_profile(bytes, bound).map_err(Cause::Control)
+}
+
 fn read_selection<W: WriterNamespace>(
     storage: &MutableStorageOwner<'_, '_, W>,
     workspace: &mut [u8; WORKSPACE_BYTES],
@@ -858,14 +865,7 @@ fn read_selection<W: WriterNamespace>(
         &mut selector[..control::PROFILE_BYTES],
         0,
     )?;
-    let profile = control::decode_bootstrap_profile(
-        &selector[..control::PROFILE_BYTES],
-        Some(storage.profile().spec().namespace),
-    )
-    .map_err(Cause::Control)?;
-    if profile != storage.profile() {
-        return Err(Cause::IdentityMismatch);
-    }
+    let profile = installed_profile(&selector[..control::PROFILE_BYTES], storage.profile())?;
     read_file(
         storage,
         &name("DWB"),
@@ -1539,7 +1539,17 @@ fn io_phase_layout() -> [(&'static str, usize, usize); 10] {
         ("EncodeOuter", encode_outer_bytes(), 3072),
         ("ExecuteOuter", execute_outer_bytes(), 4096),
         ("StatusImagePhase", status_codec_bytes() + scaffold, 8192),
-        ("SelectionPhase", scaffold + 3072 + 1536 + 1024, 8192),
+        (
+            "SelectionPhase",
+            // Plus the installed-grammar wrapper over the profile decode.
+            scaffold
+                + 3072
+                + 1536
+                + 1024
+                + (control::installed_profile_source_bytes()
+                    - control::row_profile::source_bytes()),
+            8192,
+        ),
         ("FileMapPhase", scaffold + 3056 + 1536 + 1024, 8192),
         (
             "StatusHomePhase",
@@ -1632,6 +1642,10 @@ impl Drop for FlushIo<'_, '_> {
         }
     }
 }
+
+#[cfg(test)]
+#[path = "flush_io_profile_tests.rs"]
+mod profile_tests;
 
 #[cfg(test)]
 pub(super) mod test_support {

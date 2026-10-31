@@ -1,10 +1,19 @@
-//! Current scope2 admission totals from the original live bank. The caller
-//! first proves that bank against installed history and actual Status pages;
-//! this arithmetic check neither creates a status nor admits an operation.
+//! Current admission totals from the original live mixed bank. A caller that
+//! runs `history::validate_live` first proves that bank against installed
+//! history and actual Status pages; admission-only callers (empty-actor and
+//! Catalog terminal entries) rely on the checks here alone, including the Row
+//! ledger's Status-free subset for a Row ATT descriptor. This arithmetic check
+//! neither creates a status nor admits an operation.
+//! Catalog per-actor selection and semantics skip Row-scope cells; the
+//! Terminal/ATT correspondence and every debt sum read all cells through the
+//! Row codec (XADB-MODULE-ROW-BEGIN-001, "replay와 분석 gate").
 use super::*;
 use crate::storage::{
     allocation_page::{SystemWorkKind, SystemWorkRef},
-    retention_page::catalog::{self, JobCells, JobState, JobView},
+    retention_page::{
+        catalog3::{self as catalog, JobCells, JobState, JobView},
+        row as job3,
+    },
     semantic_catalog::{inventory, ledger},
 };
 use foundation::{codec::content_digest, identity::Generation};
@@ -18,8 +27,9 @@ fn semantic(error: crate::storage::semantic_catalog::Error) -> RetentionError {
         RetentionCause::CatalogSemantic(error),
     )
 }
-fn job(bytes: &[u8], profile: crate::storage::control::Profile) -> Result<JobView<'_>> {
-    catalog::decode_job(bytes, profile.spec().namespace)
+/// Exact Job3 decode of one cell of either scope (the Row codec).
+fn job(bytes: &[u8], profile: crate::storage::control::Profile) -> Result<job3::JobView<'_>> {
+    job3::decode_job(bytes, profile.spec().namespace)
         .map_err(|e| unchanged(RetentionPhase::Census, RetentionCause::Retention(e)))
 }
 
@@ -28,7 +38,7 @@ pub(super) fn check(
     profile: crate::storage::control::Profile,
     prefix: WalPrefix,
 ) -> Result<(u64, u64)> {
-    if profile.format() != 2 || bank.pending.is_some() || bank.adopted_local > bank.issued_local {
+    if profile.format() != 3 || bank.pending.is_some() || bank.adopted_local > bank.issued_local {
         return Err(bad());
     }
     let mut wal = 0u64;
@@ -62,8 +72,13 @@ pub(super) fn check(
                 return Err(bad());
             }
         }
+        // Catalog selection skips Row-scope cells; a Row actor's cells are
+        // matched only to prove its one TerminalLeased at this Status.
         let mut root = None;
         let mut terminal = None;
+        let mut row_terminal = None;
+        let mut row_reserved = 0u64;
+        let mut row_cells = false;
         for cell in bank.jobs() {
             let candidate = job(cell, profile)?;
             if candidate.source() != Some(actor) {
@@ -72,6 +87,14 @@ pub(super) fn check(
             if candidate.status() != Some(status) {
                 return Err(bad());
             }
+            let Some(candidate) = JobView::catalog(candidate) else {
+                row_cells = true;
+                if candidate.state().is_terminal() && row_terminal.replace(candidate).is_some() {
+                    return Err(bad());
+                }
+                row_reserved += u64::from(candidate.state() == job3::JobState::RootReserved);
+                continue;
+            };
             let selected = if candidate.state().is_terminal() {
                 &mut terminal
             } else {
@@ -81,10 +104,18 @@ pub(super) fn check(
                 return Err(bad());
             }
         }
-        if terminal.is_none_or(|selected: JobView<'_>| selected.state() != JobState::TerminalLeased)
-        {
-            return Err(bad());
-        }
+        // One actor never owns Jobs of both scopes.
+        let row_scope = match (terminal, row_cells) {
+            (Some(selected), false) if selected.state() == JobState::TerminalLeased => false,
+            (None, true)
+                if root.is_none()
+                    && row_terminal.map(|job| job.state())
+                        == Some(job3::JobState::TerminalLeased) =>
+            {
+                true
+            }
+            _ => return Err(bad()),
+        };
         let descriptor = obligation::decode_descriptor(
             &row[..1536],
             ReservationOwner::Transaction(actor),
@@ -98,19 +129,36 @@ pub(super) fn check(
             transaction.state(),
             TransactionState::Active | TransactionState::Aborting(_)
         ) || descriptor.chain.apply > prefix.complete_lsn
-            || descriptor.remaining
-                != ledger::transaction_remaining(transaction, root).map_err(semantic)?
         {
             return Err(bad());
         }
-        let expected =
-            if let Some(root) = root.filter(|root| root.state() == JobState::RootReserved) {
-                inventory::items(root, &mut [0; inventory::ITEMS_BYTES]).map_err(semantic)?
-            } else {
-                inventory::empty(descriptor.inventory.change_lsn).map_err(semantic)?
-            };
-        if descriptor.inventory != expected {
-            return Err(bad());
+        // A Row descriptor gets the Row ledger's Status-free subset here:
+        // birth, reserved-root items, the terminal row and the Row recipe of
+        // every debt row. Its Status-dependent rows need the actual Status
+        // page; only callers that run `history::validate_live` (its combined
+        // closure, `history::row::validate_rows`) prove those.
+        if row_scope {
+            crate::storage::semantic_row::ledger::validate_admission(
+                &descriptor,
+                row_terminal.ok_or_else(bad)?,
+                row_reserved,
+            )
+            .map_err(|_| bad())?;
+        } else {
+            if descriptor.remaining
+                != ledger::transaction_remaining(transaction, root).map_err(semantic)?
+            {
+                return Err(bad());
+            }
+            let expected =
+                if let Some(root) = root.filter(|root| root.state() == JobState::RootReserved) {
+                    inventory::items(root, &mut [0; inventory::ITEMS_BYTES]).map_err(semantic)?
+                } else {
+                    inventory::empty(descriptor.inventory.change_lsn).map_err(semantic)?
+                };
+            if descriptor.inventory != expected {
+                return Err(bad());
+            }
         }
         for remaining in descriptor.remaining {
             wal = wal.checked_add(remaining.wal).ok_or_else(bad)?;
@@ -119,11 +167,13 @@ pub(super) fn check(
     }
     // The reverse direction rejects a leased terminal without its original ATT
     // and a finished terminal whose transaction still occupies an ATT slot.
+    // Both, and the cleanup debt sum, cover Terminals and roots of either
+    // scope through the Row codec.
     for cell in bank.jobs() {
         let selected = job(cell, profile)?;
         if selected.state().is_terminal() {
             let present = bank.slot(selected.source().ok_or_else(bad)?).is_some();
-            if present != (selected.state() == JobState::TerminalLeased) {
+            if present != (selected.state() == job3::JobState::TerminalLeased) {
                 return Err(bad());
             }
         }

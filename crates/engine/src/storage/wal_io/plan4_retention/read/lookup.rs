@@ -1,5 +1,6 @@
 //! Snapshot lookup copies the Catalog under its original source latch, pins
 //! both outgoing references, then resolves Status/Undo without Catalog gates.
+use super::super::lookup_load::RetentionLoadPort as _;
 use super::super::visibility::{self, CatalogSource, SnapshotGuard};
 use super::*;
 use crate::storage::{

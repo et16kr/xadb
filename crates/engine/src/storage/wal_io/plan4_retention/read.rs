@@ -28,7 +28,10 @@ pub(crate) use crate::storage::catalog::read::CatalogLookupStep;
     reason = "typed guard name for the following catalog consumer"
 )]
 pub(crate) use catalog::RetentionCatalogGuard;
-pub(super) use catalog::{CATALOG_READ_SOURCE_BYTES, catalog_source_bytes};
+pub(super) use catalog::{
+    CATALOG_READ_SOURCE_BYTES, catalog_source_bytes, leaf_view as catalog_leaf_view,
+    record as catalog_leaf_record,
+};
 pub(super) use lookup::resident_source_bytes as resident_lookup_source_bytes;
 pub(super) use lookup::source_bytes as lookup_source_bytes;
 pub(crate) use operation::{
@@ -36,6 +39,8 @@ pub(crate) use operation::{
 };
 pub(crate) use scope::{CatalogCallError, CatalogCallScope};
 pub(crate) use statement::CatalogStatementCall;
+pub(super) use statement::TableIssue;
+pub(crate) use statement::TableStep;
 
 pub(crate) struct RetentionReadGuard<'a, 'b, 'c, 's, 'p, 'd> {
     read: ReadTargets<'a, 'b, 'c, 's, 'p, 'd, 2>,
@@ -167,51 +172,14 @@ impl<'b, 'arena, 's, 'c, 'p, 'd, W: WriterNamespace>
                 .bytes(1)
                 .map_err(|e| frame(RetentionPhase::Census, e))?;
             match target.request.kind {
-                PageKind::RetentionRoot => {
-                    // The bound Profile selects the grammar. A decoder failure
-                    // must not retry another version and admit mixed pages.
-                    if self.storage.profile().format() == 2 {
-                        retention_page::catalog::decode_root_page(
-                            bytes,
-                            self.storage.profile().spec().namespace,
-                        )
-                        .map(|_| ())
-                    } else {
-                        retention_page::decode_root_page(
-                            bytes,
-                            self.storage.profile().spec().namespace,
-                        )
-                        .map(|_| ())
-                    }
-                    .map_err(|e| {
-                        fatal(
-                            self.storage,
-                            RetentionPhase::Census,
-                            RetentionCause::Retention(e),
-                        )
-                    })?;
-                }
-                PageKind::RetentionJobs => {
-                    if self.storage.profile().format() == 2 {
-                        retention_page::catalog::decode_jobs_page(
-                            bytes,
-                            self.storage.profile().spec().namespace,
-                            (target.request.identity.page.page_no - 2) as u8,
-                        )
-                    } else {
-                        retention_page::decode_jobs_page(
-                            bytes,
-                            self.storage.profile().spec().namespace,
-                            (target.request.identity.page.page_no - 2) as u8,
-                        )
-                    }
-                    .map_err(|e| {
-                        fatal(
-                            self.storage,
-                            RetentionPhase::Census,
-                            RetentionCause::Retention(e),
-                        )
-                    })?;
+                PageKind::RetentionRoot | PageKind::RetentionJobs => {
+                    queue_page_grammar(
+                        self.storage.profile(),
+                        target.request.kind,
+                        target.request.identity.page.page_no,
+                        bytes,
+                    )
+                    .map_err(|cause| fatal(self.storage, RetentionPhase::Census, cause))?;
                 }
                 PageKind::TransactionStatus => {
                     let home = crate::storage::status_home::decode_status_home_page(
@@ -443,8 +411,46 @@ impl<'b, 'arena, 's, 'c, 'p, 'd, W: WriterNamespace>
     }
 }
 
+/// The bound Profile selects the queue page grammar exactly: Profile3 the
+/// Root3/Job3 Catalog view, Profile1 the original v1 pages. A decoder failure
+/// never retries another version, and any other format (Profile2 included) is
+/// `Unsupported` before a decoder runs, never the Profile1 grammar.
+pub(super) fn queue_page_grammar(
+    profile: crate::storage::control::Profile,
+    kind: PageKind,
+    page_no: u64,
+    bytes: &[u8],
+) -> std::result::Result<(), RetentionCause> {
+    let namespace = profile.spec().namespace;
+    let index = || page_no.checked_sub(2).and_then(|i| u8::try_from(i).ok());
+    match (profile.format(), kind) {
+        (3, PageKind::RetentionRoot) => {
+            retention_page::catalog3::decode_root_page(bytes, namespace).map(|_| ())
+        }
+        (3, PageKind::RetentionJobs) => retention_page::catalog3::decode_jobs_page(
+            bytes,
+            namespace,
+            index().ok_or(RetentionCause::Invariant)?,
+        )
+        .map(|_| ()),
+        (1, PageKind::RetentionRoot) => {
+            retention_page::decode_root_page(bytes, namespace).map(|_| ())
+        }
+        (1, PageKind::RetentionJobs) => retention_page::decode_jobs_page(
+            bytes,
+            namespace,
+            index().ok_or(RetentionCause::Invariant)?,
+        )
+        .map(|_| ()),
+        (3 | 1, _) => return Err(RetentionCause::Invariant),
+        _ => return Err(RetentionCause::Unsupported),
+    }
+    .map_err(RetentionCause::Retention)
+}
+
 /// Source values for the two-target reader. Undo and Catalog queue decoders
-/// borrow their cells; charge the larger branch, including v2 Root/Jobs views.
+/// borrow their cells; charge the larger branch, including the Root3/Jobs
+/// Catalog view.
 pub(super) fn undo_read_source_bytes() -> usize {
     use std::mem::size_of;
     type Guard<'a> = RetentionReadGuard<'a, 'a, 'a, 'a, 'a, 'a>;
@@ -452,7 +458,7 @@ pub(super) fn undo_read_source_bytes() -> usize {
         + 2 * size_of::<UndoShape>()
         + 2 * size_of::<Guard<'_>>()
         + 2 * size_of::<Result<Guard<'_>>>()
-        + undo_decode_source_bytes().max(retention_page::catalog::source_bytes())
+        + undo_decode_source_bytes().max(retention_page::catalog3::source_bytes())
         + 2 * size_of::<allocation_page::AllocationPage<'_>>()
         + 2 * size_of::<dirty_frame::DirtyObservation>()
         + 4 * size_of::<TargetRequest>()

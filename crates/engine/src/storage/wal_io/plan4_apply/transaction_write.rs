@@ -4,8 +4,12 @@ use super::*;
 use crate::storage::{
     allocation_page::ReservationOwner,
     obligation::{self, OwnerState},
-    retention_page::catalog::{self as queue, JobState},
+    retention_page::{
+        catalog3 as queue,
+        row::{self as job3, JobScope, JobState},
+    },
     semantic_catalog::{Observation, Operation},
+    semantic_row::{Operation as RowOperation, transition::Observation as RowObservation},
     transaction_record::{RollbackState, TransactionState},
 };
 
@@ -35,43 +39,95 @@ impl<'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
                 return merge(Err(error), transaction.close());
             }
         };
-        // Begin has installed an obligation. Every subsequent failure is fatal,
-        // including source/gate cleanup and the binding of the capsule itself.
+        self.bind_writable(
+            &mut transaction,
+            observation.actor,
+            observation.operation == Operation::Begin,
+            CATALOG_KIND,
+        )?;
+        Ok(transaction)
+    }
+
+    /// Row Begin (XADB-MODULE-ROW-BEGIN-001), in the Catalog entry's order:
+    /// the original slot, 512-byte source and snapshot first, then C's scope3
+    /// Begin group (registry 16) under RowProgress. A rejection before Begin
+    /// returns them checked (Unchanged keeps the issued-local gap); after
+    /// Begin, `bind_writable` writes slot@2 kind 2 or fails fatally. Begin
+    /// publishes no epoch or Q; Row statements are not supplied here.
+    pub(in crate::storage) fn begin_row_transaction(
+        &mut self,
+        owner: &mut Owner<'c, 's>,
+        isolation: IsolationLevel,
+        status: &Plan4Target,
+        private: &mut [u8; 425_984],
+        flusher: &mut MaintenancePort<'_, 's, 'c, 'p, 'd, 'm, 'w, W>,
+    ) -> Result<RowTransaction<'b, 'a, 'c, 's>> {
+        let _unwind = self.storage.session_fence().unwind_guard();
+        let visibility = self.transaction_entry(owner)?;
+        let mut transaction = self.reserve_transaction(owner, isolation, visibility)?;
+        let observation = match self.row_begin(owner, status, private, flusher) {
+            Ok(observation) => observation,
+            Err(error) => {
+                if error.effect != Effect::Unchanged {
+                    transaction.lease.fence.fence();
+                }
+                return merge(Err(error), transaction.close());
+            }
+        };
+        self.bind_writable(
+            &mut transaction,
+            observation.actor,
+            observation.operation == RowOperation::Begin,
+            ROW_KIND,
+        )?;
+        Ok(transaction)
+    }
+
+    /// Bind the actor of an installed Begin to its capsule, writing slot@2
+    /// once. Begin has installed an obligation, so every failure here is
+    /// fatal, including the binding of the capsule itself.
+    fn bind_writable(
+        &self,
+        transaction: &mut RowTransaction<'_, 'a, 'c, 's>,
+        actor: Option<TxnRef>,
+        begun: bool,
+        kind: u8,
+    ) -> Result<()> {
+        let fence = transaction.lease.fence;
         let bound = (|| {
-            let actor = observation
-                .actor
-                .ok_or_else(|| fail(transaction.lease.fence, RetentionCause::Invariant))?;
+            let actor = actor.ok_or_else(|| fail(fence, RetentionCause::Invariant))?;
             // Own the issued identity before any later fallible validation.
             transaction.lease.actor = Some(actor);
-            if observation.operation != Operation::Begin || !self.empty_actor_active(actor)? {
-                return Err(fail(transaction.lease.fence, RetentionCause::Invariant));
+            transaction.lease.kind = kind;
+            if !begun || !self.empty_actor_active(actor, kind)? {
+                return Err(fail(fence, RetentionCause::Invariant));
             }
-            let mut state = entry(self.isolation, transaction.lease.fence)?;
+            let mut state = entry(self.isolation, fence)?;
             check_slot(
                 state.bytes,
                 transaction.lease.slot,
                 transaction.lease.generation,
-                transaction.lease.fence,
+                fence,
             )?;
             let target = row_mut(state.bytes, transaction.lease.slot);
             if target[2] != 0 || target[32..80].iter().any(|&b| b != 0) {
-                return Err(fail(transaction.lease.fence, RetentionCause::Invariant));
+                return Err(fail(fence, RetentionCause::Invariant));
             }
             actor
                 .encode(&mut target[32..80])
-                .map_err(|_| fail(transaction.lease.fence, RetentionCause::Invariant))?;
-            target[2] = 1;
+                .map_err(|_| fail(fence, RetentionCause::Invariant))?;
+            target[2] = kind;
             Ok(())
         })();
-        if bound.is_err() {
-            return Err(fail(transaction.lease.fence, RetentionCause::Invariant));
-        }
-        Ok(transaction)
+        bound.map_err(|_| fail(fence, RetentionCause::Invariant))
     }
 
     /// Observe only the original live ATT and its original terminal Job. This
     /// is a preflight, not a receipt or a constructor of a transaction capsule.
-    pub(super) fn empty_actor_active(&self, actor: TxnRef) -> Result<bool> {
+    /// Every Job of the actor must carry the capsule kind's durable scope
+    /// recipe (Catalog registry9/kind2, Row registry16/kind3); a mismatch is
+    /// the deep check's Fatal(Invariant).
+    pub(super) fn empty_actor_active(&self, actor: TxnRef, kind: u8) -> Result<bool> {
         let fence = self.storage.session_fence();
         let bad = || fail(fence, RetentionCause::Invariant);
         let prefix = self.storage.wal().prefix().map_err(|_| bad())?;
@@ -93,12 +149,24 @@ impl<'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
         if transaction.reference() != actor {
             return Err(bad());
         }
+        let scope = match kind {
+            CATALOG_KIND => JobScope::Catalog,
+            ROW_KIND => JobScope::Row,
+            _ => return Err(bad()),
+        };
         // No root, including a merely Reserved or Compensated root, may be
-        // abandoned by this empty-only operation.
+        // abandoned by this empty-only operation. Other actors' cells of
+        // either scope are skipped; this actor's cells are all its scope.
         for bytes in self.control.jobs() {
-            let job = queue::decode_job(bytes, self.storage.profile().spec().namespace)
+            let job = job3::decode_job(bytes, self.storage.profile().spec().namespace)
                 .map_err(|_| bad())?;
-            if job.source() == Some(actor) && job.state().is_root() {
+            if job.source() != Some(actor) {
+                continue;
+            }
+            if job.scope() != Some(scope) {
+                return Err(bad());
+            }
+            if job.state().is_root() {
                 return Err(unchanged(
                     RetentionPhase::Prepare,
                     RetentionCause::Unsupported,
@@ -121,6 +189,69 @@ impl<'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
         }
     }
 
+    /// A Row statement boundary (ROW-BEGIN-001 "statement mark"): the actor
+    /// must be Active with no RowReserved root, and its mark is the ATT
+    /// descriptor's undo_head. Roots retained or compensated by earlier
+    /// statements stay. The same live ATT/terminal observation as
+    /// `empty_actor_active`; a Job of the actor without the Row recipe is the
+    /// deep check's Fatal(Invariant). A Reserved or Aborting actor is
+    /// Unchanged WrongState in the caller's phase. Nothing is written.
+    pub(in super::super) fn row_statement_head(
+        &self,
+        actor: TxnRef,
+        phase: RetentionPhase,
+    ) -> Result<Option<UndoRef>> {
+        let fence = self.storage.session_fence();
+        let bad = || fail(fence, RetentionCause::Invariant);
+        let prefix = self.storage.wal().prefix().map_err(|_| bad())?;
+        self.control
+            .check_ledger(self.storage.profile(), prefix)
+            .map_err(|_| bad())?;
+        let slot = self.control.slot(actor).ok_or_else(bad)?;
+        let descriptor = obligation::decode_descriptor(
+            self.control.row(slot)[..1536]
+                .try_into()
+                .expect("ATT descriptor"),
+            ReservationOwner::Transaction(actor),
+            crate::storage::retention_obligation::profile_reference(self.storage.profile()),
+        )
+        .map_err(|_| bad())?;
+        let OwnerState::Transaction(transaction) = descriptor.owner else {
+            return Err(bad());
+        };
+        if transaction.reference() != actor {
+            return Err(bad());
+        }
+        let mut reserved = false;
+        #[cfg(test)]
+        let mut adopt = TestOnce::take(&TEST_CATALOG_SCOPE);
+        for bytes in self.control.jobs() {
+            let job = job3::decode_job(bytes, self.storage.profile().spec().namespace)
+                .map_err(|_| bad())?;
+            let source = job.source();
+            #[cfg(test)]
+            let source = match source {
+                Some(_) if std::mem::take(&mut adopt) => Some(actor),
+                source => source,
+            };
+            if source != Some(actor) {
+                continue;
+            }
+            if job.scope() != Some(JobScope::Row) {
+                return Err(bad());
+            }
+            reserved |= job.state() == JobState::RootReserved;
+        }
+        #[cfg(test)]
+        {
+            reserved |= TestOnce::take(&TEST_ROOT_RESERVED);
+        }
+        if reserved || transaction.state() != TransactionState::Active {
+            return Err(unchanged(phase, RetentionCause::WrongState));
+        }
+        Ok(transaction.undo_head())
+    }
+
     /// Consume an empty writer through the actual RollbackStart and AbortEnd.
     /// A pre-effect rejection returns the same capsule; after RollbackStart an
     /// Unchanged rejection retains MustAbort and can retry this operation only.
@@ -136,6 +267,8 @@ impl<'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
         flusher: &mut MaintenancePort<'_, 's, 'c, 'p, 'd, 'm, 'w, W>,
     ) -> std::result::Result<(), TransactionFinishError<RowTransaction<'v, 'a, 'c, 's>>> {
         let _unwind = self.storage.session_fence().unwind_guard();
+        // Dispatch by the capsule kind written once at Begin (slot@2).
+        let row_scope = transaction.row_scope();
         let checked = (|| {
             self.transaction_entry(owner)?;
             if !std::ptr::eq(self.isolation, transaction.lease.ledger)
@@ -174,11 +307,15 @@ impl<'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
                     return Err(unchanged(RetentionPhase::Finalize, RetentionCause::Busy));
                 }
             }
-            if self.empty_actor_active(actor)? {
+            if self.empty_actor_active(actor, transaction.lease.kind)? {
                 if transaction.phase.get() != Phase::Active {
                     return Err(fail(transaction.lease.fence, RetentionCause::Invariant));
                 }
-                self.catalog_rollback_start(owner, actor, private, flusher)?;
+                if row_scope {
+                    self.row_rollback_start(owner, actor, private, flusher)?;
+                } else {
+                    self.catalog_rollback_start(owner, actor, private, flusher)?;
+                }
             }
             transaction.set_abort_phase(Phase::MustAbort)?;
             #[cfg(test)]
@@ -186,24 +323,42 @@ impl<'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
                 self.pool.bound_core(),
                 crate::transaction::concurrency::catalog_test_support::Point::EmptyRollbackCompleted,
             );
-            let observation = self.catalog_abort_end(owner, actor, private, flusher)?;
+            let (ended, status) = if row_scope {
+                let observation = self.row_abort_end(owner, actor, private, flusher)?;
+                (
+                    observation.operation == RowOperation::AbortEnd
+                        && observation.actor == Some(actor),
+                    observation.status,
+                )
+            } else {
+                let observation = self.catalog_abort_end(owner, actor, private, flusher)?;
+                (
+                    observation.operation == Operation::AbortEnd
+                        && observation.actor == Some(actor),
+                    observation.status,
+                )
+            };
             // No-ATT alone is insufficient. This exact successful AbortEnd and
-            // actual TerminalReady/outcome=Aborted must agree before releasing
-            // the snapshot. Physical TerminalFinish remains Aging's obligation.
-            if observation.operation != Operation::AbortEnd
-                || observation.actor != Some(actor)
-                || self.control.slot(actor).is_some()
-            {
+            // actual TerminalReady/outcome=Aborted of the capsule's scope must
+            // agree before releasing the snapshot. Physical TerminalFinish
+            // remains Aging's obligation.
+            if !ended || self.control.slot(actor).is_some() {
                 return Err(fail(transaction.lease.fence, RetentionCause::Invariant));
             }
+            let scope = if row_scope {
+                JobScope::Row
+            } else {
+                JobScope::Catalog
+            };
             let mut terminals = 0;
             for bytes in self.control.jobs() {
-                let job = queue::decode_job(bytes, self.storage.profile().spec().namespace)
+                let job = job3::decode_job(bytes, self.storage.profile().spec().namespace)
                     .map_err(|_| fail(transaction.lease.fence, RetentionCause::Invariant))?;
                 if job.source() == Some(actor) {
-                    if job.state() != JobState::TerminalReady
+                    if job.scope() != Some(scope)
+                        || job.state() != JobState::TerminalReady
                         || job.outcome() != 2
-                        || job.status() != observation.status
+                        || job.status() != status
                         || job.commit_q() != 0
                     {
                         return Err(fail(transaction.lease.fence, RetentionCause::Invariant));
@@ -236,23 +391,46 @@ impl<'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
 
 /// The long-lived capsule and its return carrier are already charged by the
 /// 512-byte lease. Count this new wrapper's other values through the original
-/// synchronous lifecycle call, without last-use/optimizer discounts.
+/// synchronous lifecycle call, without last-use/optimizer discounts. The empty
+/// abort is one frame whichever kind it dispatches, so a Catalog lifecycle
+/// reached from it is charged that frame's larger Row-arm Observation too.
 pub(in super::super) fn lifecycle_caller_bytes() -> usize {
+    caller_bytes::<Observation>()
+        .max(row_lifecycle_caller_bytes())
+        .max(super::catalog::terminal_caller_bytes())
+}
+
+/// The same wrappers around the Row lifecycle (Row Begin and the Row arm of
+/// the empty abort) carry the scope3 Observation instead.
+pub(in super::super) fn row_lifecycle_caller_bytes() -> usize {
+    caller_bytes::<RowObservation>()
+}
+
+/// The empty abort's (ended, status) pair is formed after its Observation
+/// has been dropped, so the two Observation Results bound it.
+fn caller_bytes<O>() -> usize {
     use std::mem::size_of;
-    (12 * size_of::<&()>() // public arguments plus closure capture references
+    12 * size_of::<&()>() // public arguments plus closure capture references
+        + size_of::<bool>() // the abort's capsule kind, captured by its closure
         + size_of::<IsolationLevel>()
         + 2 * size_of::<TxnRef>()
-        + 2 * size_of::<Result<Observation>>()
+        + 2 * size_of::<Result<O>>()
         + 4 * size_of::<Result<()>>()
         + 2 * size_of::<RetentionError>()
-        + size_of::<crate::storage::session_fence::UnwindFence<'_>>())
-    .max(super::catalog::terminal_caller_bytes())
+        + size_of::<crate::storage::session_fence::UnwindFence<'_>>()
 }
 
 pub(in super::super) fn source_bytes() -> usize {
     use std::mem::size_of;
     lifecycle_caller_bytes()
         + super::source_bytes()
+        // Begin's binding helper (receiver, capsule, actor, begun, kind) and
+        // its result stay live around its nested empty-actor preflight.
+        + size_of::<(&(), &(), Option<TxnRef>, bool, u8)>()
+        + size_of::<Result<()>>()
+        // The Row statement boundary's phase argument and mark result.
+        + size_of::<RetentionPhase>()
+        + 2 * size_of::<Result<Option<UndoRef>>>()
         + 2 * size_of::<obligation::DescriptorSpec>()
         + 2 * size_of::<Result<obligation::DescriptorSpec>>()
         + 3 * size_of::<queue::JobView<'_>>()
@@ -264,8 +442,63 @@ pub(in super::super) fn source_bytes() -> usize {
         + 640 // original check_ledger aggregate inventory, retained during scans
         + 2 * size_of::<[u8; 48]>()
         + obligation::descriptor_source_bytes()
-            .max(crate::storage::semantic_catalog::transaction_source_bytes())
+            .max(crate::storage::semantic_catalog::profile3_transaction_source_bytes())
+            .max(crate::storage::semantic_row::ledger::admission_source_bytes())
             .max(queue::source_bytes())
+}
+
+// S2W-R18: the next `row_statement_head` on this thread sees the actor's
+// Row Job as RootReserved, beside its decoded Jobs. A live RootReserved
+// actor needs its ReservedRow given up with the reservation kept, a cfg(test)
+// fixture (`s2w_r18_live_root_reserved_actor_is_wrong_state`, S2-d). It
+// changes no ledger, control or page byte.
+#[cfg(test)]
+thread_local! {
+    static TEST_ROOT_RESERVED: std::cell::Cell<bool> = const { std::cell::Cell::new(false) };
+}
+#[cfg(test)]
+pub(in crate::storage) fn test_root_reserved_once() -> TestOnce {
+    TestOnce::arm(&TEST_ROOT_RESERVED)
+}
+
+// S2W-R14: the next `row_statement_head` on this thread reads the first Job
+// that has a source as the actor's own, with that Job's own scope (in the
+// Row write fixture, the committed CREATE's Catalog Job). It changes no
+// ledger, control or page byte.
+#[cfg(test)]
+thread_local! {
+    static TEST_CATALOG_SCOPE: std::cell::Cell<bool> = const { std::cell::Cell::new(false) };
+}
+#[cfg(test)]
+pub(in crate::storage) fn test_catalog_scope_once() -> TestOnce {
+    TestOnce::arm(&TEST_CATALOG_SCOPE)
+}
+
+/// A one-shot cfg(test) hook on this thread. The check that reads it
+/// consumes it (`take`); dropping the guard clears it on every other exit, so
+/// a call that stops before the check cannot leave it for a later one.
+#[cfg(test)]
+#[must_use = "the hook is cleared when the guard drops"]
+pub(in crate::storage) struct TestOnce(&'static std::thread::LocalKey<std::cell::Cell<bool>>);
+#[cfg(test)]
+impl TestOnce {
+    pub(in crate::storage) fn arm(
+        hook: &'static std::thread::LocalKey<std::cell::Cell<bool>>,
+    ) -> Self {
+        hook.with(|once| once.set(true));
+        Self(hook)
+    }
+    pub(in crate::storage) fn take(
+        hook: &'static std::thread::LocalKey<std::cell::Cell<bool>>,
+    ) -> bool {
+        hook.with(|once| once.replace(false))
+    }
+}
+#[cfg(test)]
+impl Drop for TestOnce {
+    fn drop(&mut self) {
+        self.0.with(|once| once.set(false));
+    }
 }
 
 #[cfg(test)]
@@ -279,6 +512,11 @@ impl RowTransaction<'_, '_, '_, '_> {
             row(state.bytes, self.lease.slot)[0],
             read64(state.bytes, 16),
         )
+    }
+    /// The capsule's bound kind and the slot's kind byte (slot@2).
+    pub(in crate::storage) fn test_write_kind(&self) -> (u8, u8) {
+        let state = self.lease.ledger.lock().unwrap();
+        (self.lease.kind, row(state.bytes, self.lease.slot)[2])
     }
     pub(in crate::storage) fn test_corrupt_readonly_phase(&self, phase: u8) {
         assert!(self.lease.actor.is_none());
@@ -303,10 +541,12 @@ mod tests {
             let phases = create_pair::catalog_live::catalog_live_source_bytes::<W>();
             let handles = super::super::handle_census();
             println!(
-                "WRITABLE_SOURCE handles={handles:?} wrapper={} helper={} lifecycle={} retirement={} peak={}",
+                "WRITABLE_SOURCE handles={handles:?} wrapper={} row_wrapper={} helper={} lifecycle={} row_lifecycle={} retirement={} peak={}",
                 lifecycle_caller_bytes(),
+                row_lifecycle_caller_bytes(),
                 source_bytes(),
                 phases.lifecycle,
+                phases.row_lifecycle,
                 phases.retirement,
                 live.peak
             );
@@ -316,6 +556,14 @@ mod tests {
                     >= super::super::super::source::lifecycle_carrier_bytes::<W>()
                         + lifecycle_caller_bytes()
             );
+            // The Row wrapper and its lifecycle are counted inside the one
+            // RowProgress (= CatalogProgressCharge) term (ROW-BEGIN-001).
+            assert!(
+                phases.row_lifecycle
+                    >= super::super::super::source::commit_carrier_bytes()
+                        + row_lifecycle_caller_bytes()
+            );
+            assert!(phases.row_lifecycle <= phases.retirement.max(phases.lifecycle));
             assert!(live.peak <= 65536);
         }
         check::<crate::storage::wal_io::plan4_test_support::Writer>();

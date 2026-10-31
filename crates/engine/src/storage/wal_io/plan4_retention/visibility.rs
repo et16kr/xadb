@@ -30,6 +30,7 @@ pub(super) use epochs::{
     transition_source_bytes as epoch_transition_source_bytes,
 };
 
+pub(super) use epochs::TableSlot;
 #[cfg(test)]
 pub(super) use epochs::commit_retained_carrier as epoch_commit_retained_carrier;
 
@@ -517,6 +518,14 @@ impl BoundVisibility<'_, '_, '_> {
             .lock()
             .unwrap_or_else(|error| error.into_inner())
             .q
+    }
+    /// Probe only: whether the publication leaf is held at this instant. It
+    /// tries the lock and drops it at once; it reads no state.
+    pub(super) fn test_publication_busy(&self) -> bool {
+        matches!(
+            self.published.try_lock(),
+            Err(std::sync::TryLockError::WouldBlock)
+        )
     }
     /// Observation only: the actual lane identity and activation state.
     pub(super) fn test_epoch_backing(&self) -> (usize, bool) {

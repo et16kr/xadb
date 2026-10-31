@@ -1,4 +1,4 @@
-use super::{Error, Operation, PAGE_BYTES, Result, RootContext};
+use super::{CatalogJob, Error, Operation, PAGE_BYTES, Result, RootContext};
 use crate::storage::{
     anchor::{self, AnchorRoot, TreeKind},
     catalog_record::{
@@ -69,9 +69,9 @@ pub(crate) struct CatalogChangeObservation {
 /// checked here before candidate insertion/removal in the current leaf.
 /// `after` is a caller-owned candidate loan: its prefix is temporary record
 /// scratch until the complete leaf is encoded. On error it is not a page.
-pub(crate) fn change_catalog(
+pub(crate) fn change_catalog<'a, J: CatalogJob<'a>>(
     change: CatalogChange<'_>,
-    context: RootContext<'_>,
+    context: RootContext<J>,
     anchor_before: &[u8; PAGE_BYTES],
     before: &[u8; PAGE_BYTES],
     after: &mut [u8; PAGE_BYTES],
@@ -235,8 +235,8 @@ pub(crate) fn change_catalog(
     Ok(result)
 }
 
-pub(crate) fn initialize_pair(
-    context: RootContext<'_>,
+pub(crate) fn initialize_pair<'a, J: CatalogJob<'a>>(
+    context: RootContext<J>,
     anchor_after: &mut [u8; PAGE_BYTES],
     row_after: &mut [u8; PAGE_BYTES],
 ) -> Result<()> {

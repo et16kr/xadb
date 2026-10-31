@@ -1,0 +1,82 @@
+{
+  "schema": "XADB_MODULE_C0_CURSOR_CREDIT_V1",
+  "status": "FROZEN_INPUTS_NOT_EXECUTION_EVIDENCE",
+  "scope": "actual 512-byte cursor credits from RowStatementView::reserve_cursor_credit and their checked return, plus the 512-byte handle census that now includes the Row finisher returns; no cursor, read source or B body",
+  "build": [
+    "cargo",
+    "test",
+    "-p",
+    "xadb-engine",
+    "--lib",
+    "--all-features",
+    "--locked",
+    "--offline",
+    "--no-run",
+    "--message-format=json"
+  ],
+  "environment": {
+    "RUST_MIN_STACK": "33554432",
+    "XADB_CATALOG_SOURCE_SHA256": "source fingerprint of the fixed export",
+    "XADB_CATALOG_ELF_SHA256": "sha256 of the built test ELF",
+    "XADB_CATALOG_INPUT_SHA256": "sha256 of this manifest"
+  },
+  "budget": {
+    "build_seconds": 1800,
+    "total_seconds": 90,
+    "case_seconds": 30,
+    "output_bytes": 8388608
+  },
+  "runtime_tests": [
+    {
+      "id": "TX_CURSOR_CREDIT",
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::cursor_credits::cursor_credits_return_only_their_own_charge"
+    },
+    {
+      "id": "TX_CURSOR_CAP",
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::cursor_credits::cursor_credit_capacity_is_unchanged_before_any_charge"
+    },
+    {
+      "id": "CENSUS_OWNER",
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::owner_tests::disk_session_isolation_backing_and_carriers_are_accounted",
+      "marker": false
+    },
+    {
+      "id": "CENSUS_WRITABLE",
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::transaction::writable::tests::writable_capsule_and_wrappers_stay_within_original_limits",
+      "marker": false
+    },
+    {
+      "id": "CENSUS_CATALOG",
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::transaction::catalog::tests::consuming_catalog_caller_and_checks_fit_original_limits",
+      "marker": false
+    }
+  ],
+  "expected_list_delta": {
+    "added": [
+      "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::cursor_credits::cursor_credit_capacity_is_unchanged_before_any_charge",
+      "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::cursor_credits::cursor_credits_return_only_their_own_charge"
+    ],
+    "removed": []
+  },
+  "runs": [
+    {
+      "run": "r1",
+      "manifest_sha256": "2be7f82987d7b537914501b32a77397525063c7392d605e9519fdf5851caee08",
+      "selected": [
+        "TX_CURSOR_CREDIT",
+        "TX_CURSOR_CAP"
+      ]
+    },
+    {
+      "run": "r2",
+      "selected": [
+        "TX_CURSOR_CREDIT",
+        "TX_CURSOR_CAP",
+        "CENSUS_OWNER",
+        "CENSUS_WRITABLE",
+        "CENSUS_CATALOG"
+      ],
+      "reason": "test file import changed and handle_census gained the RowCommitObservation and finish_aborted returns"
+    }
+  ]
+}

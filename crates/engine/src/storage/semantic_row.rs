@@ -1,13 +1,29 @@
 //! Scope3 Row observations. These pure inputs do not grant admission, statement
 //! ownership, WAL staging, installation, history or selected recovery authority.
-#![allow(dead_code)] // The current-profile semantic and live owners are pending.
 
 mod core;
+#[allow(
+    dead_code,
+    reason = "local scope3 observers; the N1 transition cross-check is their caller until live Row owners land"
+)]
 pub(crate) mod jobs;
+#[allow(
+    dead_code,
+    reason = "local scope3 observers; the N1 transition cross-check is their caller until live Row owners land"
+)]
 pub(crate) mod leaf;
 pub(crate) mod ledger;
 mod operation;
+#[allow(
+    dead_code,
+    reason = "local scope3 observers; the N1 transition cross-check is their caller until live Row owners land"
+)]
 pub(crate) mod status;
+pub(crate) mod transition;
+#[allow(
+    dead_code,
+    reason = "local scope3 observers; the N1 transition cross-check is their caller until live Row owners land"
+)]
 pub(crate) mod undo;
 mod wire;
 pub(crate) use core::{CoreView, decode_core};

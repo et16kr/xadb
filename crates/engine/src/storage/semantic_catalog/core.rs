@@ -1,18 +1,23 @@
 //! Strict operation core shape; actual references and projection digests are
 //! subsequently compared with stable native before/after state.
-use super::{Error, Operation, Result, put16, put32, put64, u16_at, u32_at, u64_at, zero};
-use crate::storage::{retention_page::catalog::JobView, undo_ref::UndoRef};
+use super::{
+    Error, Operation, Result, format::CatalogJob, put16, put32, put64, u16_at, u32_at, u64_at, zero,
+};
+use crate::storage::undo_ref::UndoRef;
 
-pub(super) struct CoreInput<'a> {
+pub(super) struct CoreInput<J> {
     pub(super) operation: Operation,
     /// Reserved after-image for Reserve; the stable before Job otherwise.
-    pub(super) root: Option<JobView<'a>>,
+    pub(super) root: Option<J>,
     pub(super) q: u64,
     pub(super) cursors: (u64, u64),
     pub(super) projection: Option<([u8; 32], [u8; 32])>,
 }
 
-pub(super) fn encode_core(input: CoreInput<'_>, output: &mut [u8; 256]) -> Result<()> {
+pub(super) fn encode_core<'a, J: CatalogJob<'a>>(
+    input: CoreInput<J>,
+    output: &mut [u8; 256],
+) -> Result<()> {
     let operation = input.operation;
     output.fill(0);
     put16(output, 0, operation as u16);

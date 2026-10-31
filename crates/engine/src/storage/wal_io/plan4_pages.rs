@@ -63,13 +63,14 @@ pub(in crate::storage) use retention::{
     RetentionInitInstall, RetentionInstall, RetentionLoadPermit, RetentionRecoveryStep,
     RetentionReplayCursor, VerifiedLookupLoad, observe_recovery_frame, retention_replay_bank,
     retention_replay_cells, retention_replay_digest, retention_replay_image,
-    retention_replay_provenance, seed_recovery_replay,
+    retention_replay_provenance, retention_replay_row_scope, seed_recovery_replay,
 };
 
 #[cfg(test)]
 pub(in crate::storage) use retention::{
     CatalogLookupStep, IntoRetentionError, RETENTION_CONTROL_BYTES, RETENTION_REPLAY_BYTES,
     RetentionFlushPhase, RetentionPhase, RetentionReservationError, RetentionResidencyStep,
+    retention_ledger_check, retention_replay_closure,
 };
 
 pub(in crate::storage) use retention::source_census as retention_recovery_source_census;

@@ -301,6 +301,12 @@ impl<'u, 'r, 'v, 'j, 'b, 'a, 's, 'c, 'p, 'd, 'm, 'w, W: WriterNamespace>
         merge(result, self.finish_checked().map_err(Into::into))
     }
 
+    /// The admitted original port, for the statement call's CheckedTable
+    /// issuer only. It is a borrow of the same storage/pool/visibility origin.
+    pub(super) fn backend(&self) -> &'r ReadPort<'b, 'a, 's, 'c, 'p, 'd, 'm, 'w, W> {
+        self.backend
+    }
+
     #[cfg(test)]
     pub(super) fn test_record_core(
         &self,

@@ -1,0 +1,224 @@
+{
+  "schema": "XADB_CATALOG3_ADAPTER_V1",
+  "status": "FROZEN_INPUTS_NOT_EXECUTION_EVIDENCE",
+  "baseline": "41b55a9",
+  "scope": "Explicit Profile3 adapter of the scope2 Catalog CREATE observer (semantic_catalog produce/observe/observe_borrowed/decode_layout): exact format dispatch 2 -> original Catalog2 path, 3 -> Root3/Job3 codec + Job kind2 Catalog semantics + Root3-bound Aging descriptor, other -> original IdentityMismatch. Catalog groups carry Root3 row_high@432 unchanged. Current genesis/selection/base/replay/recovery dispatch and every current-format constant are unchanged. Also: retention_page::catalog3 (Catalog-scope Job3/Root3 queue view with the retention_page::catalog names and shapes; Row scope -> UnsupportedState), retention_obligation::row::source_bytes (Root3-bound Aging encode/decode bound, Catalog shape), semantic_catalog Profile3 source census (profile3_source_census / profile3_borrowed_source_bytes) and the ledger entries' exact Job3 instance. No runtime caller is switched. r4 follow-up: catalog3 exports only a guarded Root3 encode (catalog3::encode_root_page(before, cell, namespace, output) refuses a changed row_high with OrderMismatch; Row3 uses it), the Profile3 census is asserted not to exceed Profile2, and mixed Job3 banks with another actor's Row cells are accepted by Catalog groups.",
+  "budget": {
+    "total_seconds": 1800,
+    "compiler_seconds": 900,
+    "case_seconds": 30,
+    "output_bytes": 8388608,
+    "rust_min_stack": 33554432,
+    "runs_per_selector": 1
+  },
+  "runtime_tests": [
+    {
+      "selector": "storage::semantic_catalog::catalog3_tests::profile3_create_path_matches_independent_literals",
+      "expected": "PASS",
+      "reason": "G01/C01/C02/C03/C04-P3 (AgingStart, Begin, Reserve, Forward, Commit): produce from the literal before equals the whole independent frame and every after page; observation op/lsn/actor/status/ordinal/order/kind/txn match the parent base row; observe of the golden reproduces the same after pages; C03-P3 observe_borrowed rejects a dirty scratch with InvalidInput and otherwise restores a zero tail; before/after Root3 row_high are 0/0 for G01 and 7/7 otherwise; decode_layout accepts the C04-P3 frame under Profile3."
+    },
+    {
+      "selector": "storage::semantic_catalog::catalog3_tests::profile2_dispatch_keeps_original_literals",
+      "expected": "PASS",
+      "reason": "G01/C01/C02/C03/C04-P2 are the unmodified parent literals under the parent Profile2: the modified generic code instantiated for Catalog2 produces and observes them byte-equal, with C03-P2 observe_borrowed as above."
+    },
+    {
+      "selector": "storage::semantic_catalog::catalog3_tests::profile3_rejects_other_profiles_and_versions",
+      "expected": "PASS",
+      "reason": "produce and observe both return: C04-P2-UNDER-P3 Queue(UnsupportedFormat) (Profile2 Root2 under the Profile3 binding), C04-P3-UNDER-P2 Queue(UnsupportedFormat) (Root3 under Profile2, no fallback), C04-ROOT-V4 Queue(UnsupportedFormat), C04-JOB-V2-FREE Queue(UnsupportedFormat) (bank scan, ordinal 40), C04-JOB-V4-SELECTED Queue(UnsupportedFormat) (selected ordinal 0); no frame byte is written. A Profile1 binding returns IdentityMismatch from produce, observe, observe_borrowed and decode_layout."
+    },
+    {
+      "selector": "storage::semantic_catalog::catalog3_tests::profile3_rejects_row_scope_jobs",
+      "expected": "PASS",
+      "reason": "produce and observe both return: C03-ROW-RESERVED Unsupported (selected Job3 kind3 RowId1 registry16), C04-ROW-TERMINAL Unsupported (selected Terminal registry16), C04-ROW-SAME-ACTOR Unsupported (Row Job3 of the same actor in the bank scan), C03-KIND2-ROWID Queue(Corrupt) (Job3 kind2 with RowId bytes is never read as kind3)."
+    },
+    {
+      "selector": "storage::semantic_catalog::catalog3_tests::profile3_carries_row_high_and_rejects_change",
+      "expected": "PASS",
+      "reason": "C04-ROW-HIGH-FRAME (fully resealed Commit frame whose after Root3 row_high is 8) observe returns Corrupt; the same before still produces the C04-P3 frame and pages; with the before Root3 (row_high 7) and the moved cell, Row3::encode_root_page returns Queue(OrderMismatch) and the queue view's guarded catalog3::encode_root_page returns OrderMismatch, both leaving a 0xa5 output unchanged; with the C04-P3 after Root cell Row3 returns the C04-P3 after Root page."
+    },
+    {
+      "selector": "storage::semantic_catalog::catalog3_tests::catalog3_queue_view_keeps_catalog_meaning_and_refuses_row_scope",
+      "expected": "PASS",
+      "reason": "For all 64 cells of the C03 and C04 banks, catalog3::decode_job on the Profile3 cell equals catalog::decode_job on the parent cell in state, generation, source, status, undo, object, pair, lease/adoption LSN, outcome, cursor, sequence, statement, mutation, commit_q, release_start, catalog_bytes, projection, last_step, budget and cleanup; only the version byte and nonzero sender digests differ. catalog3::decode_root_page equals the Root2 view in every shared accessor with row_high 7; catalog3::verify_census and decode_jobs_page accept. No fallback: Root2 under catalog3, Root3 under catalog, Job2 under catalog3 and Root version4 are UnsupportedFormat. C03-ROW-RESERVED[1], C04-ROW-TERMINAL[0], C04-ROW-SAME-ACTOR[5] are UnsupportedState (row::decode_job accepts them as JobScope::Row; JobView::catalog gives None); C04-JOB-V2-FREE[40] and C04-JOB-V4-SELECTED[0] UnsupportedFormat; C03-KIND2-ROWID[1] Corrupt."
+    },
+    {
+      "selector": "storage::semantic_catalog::catalog3_tests::ledger_entries_accept_job3_view_by_exact_profile",
+      "expected": "PASS",
+      "reason": "validate_transaction(C04 before Tx descriptor, profile, Status home, Some(root ordinal1)) is Ok for (Profile3, catalog3::JobView) and (Profile2, catalog::JobView), IdentityMismatch for the crossed pairs and for Profile1; transaction_remaining gives equal arrays for both views and IdentityMismatch for a Terminal view."
+    },
+    {
+      "selector": "storage::semantic_catalog::catalog3_tests::catalog3_and_row_aging_source_bounds_cover_their_frames",
+      "expected": "PASS",
+      "reason": "catalog3::source_bytes >= row::source_bytes, the wrapper+Job3 cell chain and every measured Row job/root chain; its Root decode bound is row's; retention_obligation::row::source_bytes >= Root3 decode and descriptor bounds and differs from the Catalog value by at most the Root decode difference; prints the values and deltas."
+    },
+    {
+      "selector": "storage::semantic_catalog::catalog3_tests::profile3_source_census_keeps_type_sizes_and_reports_delta",
+      "expected": "PASS",
+      "reason": "Every retained type term of semantic_catalog/resources.rs has equal size in the Profile2 and Profile3 instances (JobView and its Option/Result nests, RootView, JobCells, RootContext, CoreInput, FrameSpec, TransactionTransition, Computed); source_branches() equals the recorded U1-C0 runtime-r2 C2_SEMANTIC_BRANCHES values; frame/catalog_image/descriptor/run_retained/schema are equal; prints both censuses and the compute/total/borrowed deltas. Asserts the Profile3 compute, total and borrowed totals are at most the Profile2 values (the shared seam forwarding frames are counted in neither instance)."
+    },
+    {
+      "selector": "storage::semantic_catalog::catalog3_tests::profile3_mixed_bank_catalog_groups_skip_other_actor_row_jobs",
+      "expected": "PASS",
+      "reason": "M01-P3 (actor1 TerminalFinish, lsn15, ordinal0), M02-P3 (actor2 Begin, lsn16, ordinal1) and M03-P3 (actor2 Reserve, lsn17, ordinal4) over a Job3 bank where actor3 holds a leased Row Terminal (ordinal2, registry16) and a Retained Row Root (ordinal3, RowId1, table object6): produce equals the whole independent frame and every after page, observe reproduces them (M01 also borrowed), row_high stays 7; every Row cell belongs to another actor and the Catalog view refuses it (UnsupportedState); both Root-bound Aging descriptors of each group decode with remaining[3].peak = row::ROW_PEAK; M03 starts its free-cell search at cursor1 and passes both Row cells to lease ordinal4."
+    }
+  ],
+  "compiler_tests": [],
+  "inputs": {
+    "catalog3/author.py": {
+      "bytes": 35510,
+      "sha256": "6f3a696f8df308a2dbfa9da4563644835d179a3fa6914947ca7a9f716ad39b1a"
+    },
+    "catalog3/serializer3.py": {
+      "bytes": 6769,
+      "sha256": "0b23d146ef7fa5a1ba712baee37c60c882011f36832ef11b5f1d2b49dea70de1"
+    },
+    "catalog3/blobs.bin": {
+      "bytes": 1863950,
+      "sha256": "29810b2fd6a166c731b4cafbe3884dc96351122dc6cac2eba8fb2a5930c64d57"
+    },
+    "catalog3/blobs.tsv": {
+      "bytes": 4469,
+      "sha256": "160995135390158bdfa6cad3dc9e5b0d4443c4c9e84171546d3f5349b0bde8f4"
+    },
+    "catalog3/cases.tsv": {
+      "bytes": 22671,
+      "sha256": "53aae683ed3741e23302b43b7fd20cc106794cbd621e245d3d2c2a3ab376d660"
+    },
+    "catalog3/bases.tsv": {
+      "bytes": 3112,
+      "sha256": "faa076399c6a097a9ea431af75b6a6895aa8af4a729bb9cab4686e518e8f1295"
+    }
+  },
+  "harness": {
+    "crates/engine/src/storage/semantic_catalog/catalog3_tests.rs": {
+      "bytes": 41302,
+      "sha256": "5e5336b07645da65f2b406bfb1dcfe408f18a25426553aa696633c67dcc94639"
+    }
+  },
+  "parent_inputs": {
+    "dev3-catalog-create/transition/cases.tsv": {
+      "bytes": 78160,
+      "sha256": "f5091dfb128b1c49bfe5b00d8e96628b81b9c7ce215c47ae23c44736940fdf26"
+    },
+    "dev3-catalog-create/transition/raw/<PROFILE2>.bin": {
+      "bytes": 4096,
+      "sha256": "b8aab8141cbc1807844468c353d62b759e5001d5c3f8f82e54c1f4efeadd3b24"
+    },
+    "module-row-format/envelopes/profiles.bin": {
+      "bytes": 12288,
+      "sha256": "e8f5b232f8583c50d697db8ba29d920c10e5cc3c81a939f2cd4289edc0d5767a"
+    },
+    "module-row-format/root3/initial-root.bin": {
+      "bytes": 512,
+      "sha256": "d6079c1ea15ea2668be3150c6128d9be4a72e28855336ea7c1d971f73d0b3fc4"
+    },
+    "dev3-catalog-create/transition/raw/<sha256>.bin referenced by cases.tsv": {
+      "count": 50,
+      "keys": [
+        "0431b3698aebe5883b2a86d0954726501c06ed165c00a1d36d04d4c949116e68",
+        "05a6e0bd4200512bb2e23b03b44ac35f99e7a0b595d10714469a5d1409244580",
+        "077d06af8b37bec32a9472ed498d3fa884fbe5e8fd84c457f6ebfa96e9946cfd",
+        "0a7fef83eb1d1d25a5a6cdc83c8b9554a2c247e707940c725d7894104d42ee92",
+        "0c48e6809ef89662cb2407bb76eb1035853f07e4d08d1c3e061f569d0582c2ce",
+        "14ffc0e2cb4ea10d156b0b76eadb7897990ce5ddb231d52e2d919cdd4d14b4d9",
+        "27e9191e8c1d9d084095a267def53097545c73abafc2f3069a95456cf22b018c",
+        "339843eaa430930661f0271555a362f153538613a32b02c21fbe08890fd5623a",
+        "41da2d0c6871a5e8c455328bc7e022681d9c53dd20f952f3308cf9b82d4d84d2",
+        "425d66f0fef15911b7987c3785422eb6402595eef12b1cf791d901b20172736e",
+        "5535161c5b0c237fe9c883fce8b793edd645bf024fecd2246acd8073865186c5",
+        "5fc5fd2e17f92d36c45e4c9aa33fcf222b0ea7fb7fa79eda3d5ecf281c2a6a3c",
+        "6295c80b08938f71f92b74e4f377ce3c776f0e9fcabe92fa203007ec37ad30e4",
+        "646d2c91744594c80afc26e4919dffece69dd996e436a1390191a164c5a68567",
+        "7215e6b18270a58731a15df8d782a365ff24e89c70d64e63ebd8eceadc001640",
+        "75b24d551ecd3a56409fffa981b71a0e04778aa546bb93a98a8f7c8ee3c8156e",
+        "777277faf92a150917ad74245261c8016c5e47000d0e689c57cbfc4623f1ea98",
+        "7860be73c688c34fce2b27d25fe55d74b78fb7ddd249c64898c2ccdd5c82ff60",
+        "84508a533165ead17971e0412e15a5e296a039edfc7f36d1f340fb844e0aeadb",
+        "861812705cc1f3debdadf126949f9550a4777c11ee12ca801477d45595eff975",
+        "87c301cfeeec998f74e9075d986725b9ae27dbb784c996ee2886f60d58c8d7c8",
+        "8e3410c19c14c0428c8962a23a027dc6aa833834e21a304b4acdf34b41694296",
+        "903a04db78a18968042c782842f5e575d8fd45a6398ac6cd852013c05c4e5e05",
+        "9457b0b5d48f2c9a203870081fb7b71f8f82e256dc906d28f2bd4489cc3814a0",
+        "94955c4e56ad8eb628b793d44fe12a225d393888434b5596b9a0dfaaf64a6cd6",
+        "98742c451e399b665bacc2674f90902d2550434a8ca8b96ec9f9b20d49b5998d",
+        "9fdf63020e3743a38068f12d1f0c18beed62cc82595dcef1d2698d3626fc1bf2",
+        "a58159ee4d6d2a6fc80c73250aee92df8cce8b6924ea2111bffc30bc88e724f6",
+        "a6831a30cef2b8f511eb3722620853d692b70c236436b5606bb0f29edd15686b",
+        "b763d3418aa798e9593c4f9e7b27a29e4d6740d2e4fcd9358cc85857b12c07b2",
+        "c069370452146880f36ef1f8d61d72547308393c30272a2e007de4438fc4c05b",
+        "c0ba1f54083c239360e6fca25e8449c4d28c9acf8710652e16ef4d24e0ccab9c",
+        "c666b6d1954d2b19faa83d5bdb381f4edd337af835a47713e31d1efa52bcee90",
+        "ca16fa2a2869199554b3638706d8b2269c757ba4ef510c69667979dfddd4fcad",
+        "cc2d3b9e69c0336c6dda1dea7f542f35c7f36b24cd51875114646b3818e08326",
+        "ce4ac8a3ed36a17b20dcefd611c5b2772411b27e5b7b33bc4edcbcd12977b3ec",
+        "d8646ab2d3450c49cd5c015b95cb4be79dfd94e75048bb1b13b3e13b43a9644a",
+        "d95deff03bac8b2b5dc6fc5dca24347802d47b4321ea53410ba5e39a8306acb4",
+        "e326afad4c03fdea649f77fd7bd968e2c50452a461895e7d4f4d9358fd1c4d46",
+        "e4e85194fa4524a5d9dba8062b7d6a6bcc0729403ab6dc8d21e22127aff60a8e",
+        "e4fb9ecddfe186e5ebc481719fc734a65dac48d78e4bd4fd6193f341fb1a957a",
+        "e8cde2655f880148843dd9c4f4ef7a5c47bdbeb4cb1249e0eb501c9c7312d3af",
+        "e9b514eb1b36109cb58fb77245976bcea763a12bf8c2a12a56e5dd132d55fd1a",
+        "ebaa34a0a6d6f2c70926bfe1f8a32d832b7818362d0e1d9512407a90c80bdb2c",
+        "ed3ad773916d815036d5a6084fe5e8dbc3a9010b4c8b42e9f7cffcb9d4d2279a",
+        "ef06e183547ce3bac36112d5945292b6daffc37e83e330ecb61789e349926765",
+        "f62421bc751962cc45e4670039ec4d4b00e09b94024ea47c6398410714f65267",
+        "f8182387b9f78554cb35cc6d1949b13d811acd895bfd65d1b053474b7c00dc4b",
+        "fac703f604fb6215898f0103c60f92fc6021364e9abf97ce6d894a0bdd3f469d",
+        "fc37f04f3ea203a3d28ecb9ca1cf939b2e4087d7d5ef8d0b452021c226798981"
+      ]
+    },
+    "dev3-catalog-create/transition/generate_literals.py (serializer3 base)": {
+      "bytes": 39564,
+      "sha256": "3716f9d63f099051363bebeeaf0ebe4586ccd0984aa91735a7de82eba7d23b7e"
+    },
+    "module-row-format/job3/cells.bin": {
+      "bytes": 31744,
+      "sha256": "d2ea7dae34cd200c8cf6d75500e669f8ddb54ddbb32f7ab26575648342de8dc7"
+    }
+  },
+  "literal_layout": {
+    "cases.tsv": "header + 23 rows: id, class, profile(2|3), base (a parent cases.tsv id, or a catalog3/bases.tsv id M01..M03, for op/lsn/ordinal/actor/plan/order), jobs, root, jobs_page, allocator, anchor, catalog, status, undo, transaction, aging, frame, after0..after7, expect. Each literal is named by its sha256.",
+    "blobs.tsv/blobs.bin": "57 dense (sha256, offset, bytes) literals including the Profile3 ID1 envelope f49d4bb2...; the first 38 are unchanged from r3; a literal byte-identical to a parent raw blob is not stored and is resolved from the parent raw directory; the harness verifies every sha.",
+    "author": "python3 -I author.py, stdlib pathlib/struct/hashlib only, reads parents as bytes and asserts: Profile3 envelope == envelopes/profiles.bin[:4096]; G01-P3 before Root3 cell == root3/initial-root.bin; parent and Profile3 C01->C04 Root and Aging-descriptor chains hold. r2: maps Job sender digests SHA(tx2)->SHA(tx3) and checks the Profile3 bank chain C01->C04. r4 (same outputs as r2): also asserts every accepted literal of G01 and C01..C04 is byte-equal to the replay of the pinned version2 serializer through serializer3.load() with row_high 7 set on the post-Aging state. r5: emits M01..M03 from serializer3 (C01..C09, then actor3's Row Terminal at ordinal2 and Retained Row Root at ordinal3 with uhigh 1->2 and issued +2, then TerminalFinish/Begin/Reserve); asserts serializer3.row_job reproduces four pinned job3/cells.bin Row literals and the actor3 cells adapted from them; derives M01/M02 independently by inserting those cells into the transformed parent C10/C11 literals and recomputing only Root masks/issued/uhigh/digests, Aging remaining/columns/work bytes/seal, Root native cells, Root/Jobs redo bodies and trailers, and requires byte equality; checks every M Root and Aging descriptor against an independent census of its bank.",
+    "serializer3.py": "Reusable stdlib serializer: load() returns the pinned version2 serializer module with profile(), free_job() and root_page() replaced by their Profile3/Job3/Root3 forms (row_high from state key 'row_high', default 0; Root budget digest and returned aggregate from the Job3 census rule, asserted equal to version2 for Catalog-only banks), plus row_job() for Row-scope Job3 cells and census_aggregate(); emit()/main() disabled.",
+    "bases.tsv": "3 rows in the parent cases.tsv 37-column layout for the mixed-bank groups: M01 = parent C10 and M02 = parent C11 operation fields unchanged, M03 = parent C12 with ordinal 4 (the Row cells occupy ordinals 2 and 3); literal columns name the M literals."
+  },
+  "expected_outcomes": {
+    "ACCEPT (13)": "OK byte-equal produce/observe (10 single-actor + M01..M03 mixed-bank)",
+    "REJECT_INPUT C04-P2-UNDER-P3, C04-P3-UNDER-P2, C04-ROOT-V4, C04-JOB-V2-FREE, C04-JOB-V4-SELECTED": "Queue(UnsupportedFormat)",
+    "REJECT_INPUT C03-ROW-RESERVED, C04-ROW-TERMINAL, C04-ROW-SAME-ACTOR": "Unsupported",
+    "REJECT_INPUT C03-KIND2-ROWID": "Queue(Corrupt)",
+    "REJECT_FRAME C04-ROW-HIGH-FRAME": "observe Corrupt; Row3 Root encode Queue(OrderMismatch); catalog3::encode_root_page OrderMismatch",
+    "Profile1 binding": "IdentityMismatch",
+    "lib_test_list": "differs from base 41b55a9 only by the ten catalog3_tests selectors",
+    "queue view rejects": "Row scope UnsupportedState; version2/4 UnsupportedFormat; kind2 RowId bytes Corrupt",
+    "rerun_existing": "each of the 14 Profile2 selectors PASS"
+  },
+  "preserved_scope": "The 72 Profile2 transition and leaf literals are unchanged. r4 reruns exactly the 14 Profile2 selectors named in rerun_existing (changed 9fbd7c9 bodies no replayed literal reached); no other existing selector is run. selector 2 re-executes five parent literals through the generic Catalog2 instantiation and selector 9 checks the recorded Profile2 source branch values. retention_page::row changes only job_cell_chain visibility in row/source_tests.rs; retention_obligation::row gains source_bytes only; no runtime alias, genesis, selection or recovery dispatch is switched.",
+  "revision": {
+    "r2": "Refrozen after the r1 run. r1 (manifest sha256 c6a1876977bd6bf2e36bebc19ad17b15884687e3e2b192011ad8c6cc7829900c, frozen 2026-10-29T09:08:52Z): selectors 1 and 5 FAILED at whole page role1 of C03-P3/C04-P3 (Root Job digest 128..160 only); selectors 2, 3 and 4 PASSED. Cause: author defect, not product: Forward/Commit/AbortEnd store SHA(before Transaction descriptor) in Job 328..360, and that descriptor carries the Profile digest, so Profile3 sender digests differ from Profile2. The author now maps each sender digest SHA(tx2) -> SHA(tx3); C03-P3, C04-P3 and their variants changed (r2-cases-delta.txt). Integrator scope expansion added the Catalog-scope Job3 queue view (retention_page::catalog3), retention_obligation::row::source_bytes, the Profile3 semantic source census, the reusable serializer3.py and four selectors. All nine selectors run once in r2: 1, 3, 4, 5 because their literals changed; 2 because the Catalog2 CatalogJob impl was rewritten as a shared macro; 6-9 are new.",
+    "r3": "Refrozen after the r2 run (manifest sha256 03581c9f8792b241ba0ca1d00da70a9371f64eb87ed486fba8cb277254c1e0ea, frozen 2026-10-29T09:30:46Z): all nine selectors PASSED; selector 9 reported a Profile3 census delta compute=+1136 (total 24335 -> 25471, every other field 0, every retained type term equal). Cause: the r2 Profile3 Aging successor term summed every local of the format adapter and retention_obligation::row::next and then added one codec max, while the Profile2 term joins its non-overlapping callees (Job census, predecessor decode, final encode) by max with the still-live parent values outside that max. resources.rs row_aging_next is recounted in that same convention; the AgingStep forwarding carrier of the shared seam is itemized in neither instance. No literal, harness or other source changed. Only selector 9 reads resources.rs and is the only selector run in r3.",
+    "r4": "Refrozen after the r3 run (manifest sha256 2de73e4189030cd6c7cd42fa09f41992a38356959e0277eddd4137c1a5ac62a5, frozen 2026-10-29T09:37:54Z; selector 9 PASSED with compute 18875 vs 19351, total 23859 vs 24335) and commit 9fbd7c9. Independent review of 9fbd7c9: ACCEPT with two required items and advisories. R1: 14 Profile2 selectors whose code changed in 9fbd7c9 were not rerun; they run once in r4 (rerun_existing). R2: no selector ran a Profile3 mixed bank where the Catalog transition succeeds; author r5 adds M01..M03 and selector 10. A3: catalog3 no longer re-exports the unguarded row::encode_root_page; its encode_root_page takes the before Root and refuses a changed row_high (Row3 delegates to it, so its refusal is now Queue(OrderMismatch)). A4: selector 9 asserts the Profile3 census bounds. A1: resources.rs states that the seam forwarding frames are counted in neither instance. Every catalog3_tests selector runs once in r4 because the shared harness loader, pins and Change mapping changed (and 5/8 read the changed catalog3 encode/wrapper), plus the new selector 10."
+  },
+  "rerun_existing": {
+    "reason": "Independent review of 9fbd7c9: these Profile2 selectors reach code whose body changed in 9fbd7c9 and that no replayed literal of selector 2 reaches: the TerminalFinish scan rewritten as a Scan match and F::free_job (queue.rs), RollbackStart's F::verify_census/F::check_aging and root_for (transition.rs), and the decode_layout gate (wire.rs). Each runs once with the unchanged parent literals and its own expected result.",
+    "expected": "PASS",
+    "selectors": [
+      "storage::semantic_catalog::transition_tests::k03",
+      "storage::semantic_catalog::transition_tests::k04",
+      "storage::semantic_catalog::transition_tests::r05",
+      "storage::semantic_catalog::transition_tests::k05",
+      "storage::semantic_catalog::transition_tests::c05",
+      "storage::semantic_catalog::transition_tests::c06",
+      "storage::semantic_catalog::transition_tests::c09",
+      "storage::semantic_catalog::transition_tests::c10",
+      "storage::semantic_catalog::transition_tests::n22",
+      "storage::semantic_catalog::transition_tests::n05",
+      "storage::semantic_catalog::transition_tests::n21",
+      "storage::semantic_catalog::transition_tests::borrowed_replay_preserves_independent_operation_and_error_oracles",
+      "storage::semantic_catalog::leaf_tests::wire_w01",
+      "storage::semantic_catalog::leaf_tests::wire_nw01"
+    ]
+  }
+}

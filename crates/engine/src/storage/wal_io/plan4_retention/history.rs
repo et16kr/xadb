@@ -30,6 +30,8 @@ use std::sync::{TryLockError, atomic::AtomicU8};
 pub(super) mod catalog;
 #[path = "history/inventory.rs"]
 pub(super) mod inventory;
+#[path = "history/row.rs"]
+pub(super) mod row;
 #[path = "history/runtime.rs"]
 pub(super) mod runtime;
 
@@ -43,7 +45,15 @@ pub(super) const PROVENANCE_BYTES: usize = 64 * 352;
 pub(super) const REPLAY_SCRATCH_BYTES: usize =
     crate::storage::semantic_catalog::REPLAY_SCRATCH_BYTES;
 pub(super) const WORK_END: usize = AFTER_END + 2 * PAGE_BYTES;
+/// The WORK_END zero tail after provenance. One frame lends it exclusively to
+/// whichever scope arm runs: the Catalog observer's prefix or the Row
+/// observer's prefix. Both observers leave it zero on every exit.
+pub(super) const REPLAY_TAIL_BYTES: usize = 2 * PAGE_BYTES - PROVENANCE_BYTES;
 const _: () = assert!(PROVENANCE_BYTES + REPLAY_SCRATCH_BYTES <= 2 * PAGE_BYTES);
+const _: () = assert!(
+    PROVENANCE_BYTES + crate::storage::semantic_row::transition::ROW_REPLAY_SCRATCH_BYTES
+        <= 2 * PAGE_BYTES
+);
 const HOME_END: usize = WORK_END + PAGE_BYTES;
 const _: () = assert!(HOME_END + 2 * PAGE_BYTES <= RETENTION_REPLAY_BYTES);
 
@@ -58,6 +68,8 @@ pub(super) struct HistorySourceCensus {
     pub(super) rollback: usize,
     pub(super) closure: usize,
     pub(super) frame_return: usize,
+    /// The scope3 Row arm (exclusive with the Catalog/System arms).
+    pub(super) row: usize,
     pub(super) frame: usize,
     pub(super) returning: usize,
     pub(super) peak: usize,
@@ -103,7 +115,7 @@ pub(super) fn source_bytes<W: WriterNamespace>() -> HistorySourceCensus {
     // before the scope observer returns. Its envelope/header lives inside the
     // catalog/System closure; returned observations belong to frame_return.
     // Keep copied profile/expectation arguments at all three dispatch layers.
-    let frame_outer = 3 * size_of::<&mut [u8; REPLAY_SCRATCH_BYTES]>()
+    let frame_outer = 3 * size_of::<&mut [u8; REPLAY_TAIL_BYTES]>()
         + 2 * size_of::<(&mut [u8], &mut [u8])>()
         + 3 * size_of::<FrameExpectation>()
         + 3 * size_of::<Profile>()
@@ -112,20 +124,32 @@ pub(super) fn source_bytes<W: WriterNamespace>() -> HistorySourceCensus {
         + 24 * size_of::<u64>()
         + 4 * size_of::<Result<()>>();
     let current = catalog::source_bytes();
+    let row_census = row::source_bytes();
     let retention = frame_outer + current.semantic;
+    // The Row arm is exclusive with the Catalog/System arms of one frame: it
+    // adds only a max term, over the same caller packet.
+    let row = frame_outer + row_census.semantic;
     let population = frame_outer + super::population::phase_source_bytes().replay;
     // Rollback is now one exact scope2 observer branch, with the same caller
     // packet. No legacy N=0 Rollback parser participates in current history.
     let rollback = retention;
     let observation_return = 2 * size_of::<recovery::RetentionFrameObservation>()
         + 2 * size_of::<std::result::Result<recovery::RetentionFrameObservation, RetentionCause>>();
-    let frame_return = frame_outer + current.finishing;
-    let closure = frame_outer + observation_return + current.closure;
+    let frame_return = frame_outer + current.finishing.max(row_census.finishing);
+    // One combined closure: the Catalog part, then the Row part, then the ATT
+    // union, each completed before the next; only the mask and the result
+    // stay live across them.
+    let closure = frame_outer
+        + observation_return
+        + size_of::<u32>()
+        + 2 * size_of::<std::result::Result<(), RetentionCause>>()
+        + current.closure.max(row_census.closure);
     let frame = retention
         .max(population)
         .max(rollback)
         .max(frame_return)
-        .max(closure);
+        .max(closure)
+        .max(row);
     let file_scope = size_of::<MutexGuard<'_, W::File>>()
         + hashing.max(recovered.header).max(initialize).max(frame);
     // SourceSeal is constructed only after reconstruct/hash and both File and
@@ -152,6 +176,7 @@ pub(super) fn source_bytes<W: WriterNamespace>() -> HistorySourceCensus {
         rollback,
         closure,
         frame_return,
+        row,
         frame,
         returning,
         peak,
@@ -426,7 +451,21 @@ pub(super) fn validate_live<W: WriterNamespace>(
     {
         return Err(invalid(storage));
     }
-    if storage.profile().format() == 2 {
+    // The bound Profile selects whether the XOI cache exists: Profile3 keeps
+    // the current Row-mode inventory, Profile1 has none. Any other format is
+    // rejected here, never treated as the cache-less Profile1 line.
+    let cached = match recovery::bound_grammar(storage.profile()) {
+        Some(recovery::BoundGrammar::Catalog3) => true,
+        Some(recovery::BoundGrammar::System1) => false,
+        None => {
+            return Err(fatal(
+                storage,
+                RetentionPhase::Source,
+                RetentionCause::Unsupported,
+            ));
+        }
+    };
+    if cached {
         let cache = &control.bytes[131_072..147_456];
         if prefix.complete_lsn == 0 {
             if source.base().is_some() || cache.iter().any(|byte| *byte != 0) {
@@ -442,7 +481,7 @@ pub(super) fn validate_live<W: WriterNamespace>(
             let output: &mut [u8; PAGE_BYTES] = (&mut scratch[..PAGE_BYTES])
                 .try_into()
                 .expect("XOI scratch");
-            crate::storage::plan4_recovery_base::catalog::inventory::encode_current(
+            crate::storage::plan4_recovery_base::catalog::inventory::encode_row_current(
                 storage.profile(),
                 generation,
                 prefix.complete_lsn,
@@ -526,7 +565,11 @@ fn verify_seed_epoch<W: WriterNamespace>(
     metadata(storage, source, prefix.file, 4096)
 }
 
+/// Canonical genesis replay state of the exact Profile3 plan4 namespace.
 pub(super) fn initialize(profile: Profile, replay: &mut [u8]) -> std::result::Result<(), ()> {
+    if profile.format() != 3 {
+        return Err(());
+    }
     replay.fill(0);
     {
         let three: &mut [[u8; PAGE_BYTES]; 3] = replay[..3 * PAGE_BYTES]
@@ -547,7 +590,7 @@ pub(super) fn initialize(profile: Profile, replay: &mut [u8]) -> std::result::Re
             .try_into()
             .map_err(|_| ())?;
         if index <= 6 {
-            retention_genesis::encode_current(
+            retention_genesis::encode_row_current(
                 profile.spec().namespace,
                 if index == 1 {
                     RetentionGenesisPage::Root
@@ -571,11 +614,15 @@ pub(super) fn initialize(profile: Profile, replay: &mut [u8]) -> std::result::Re
     refresh_jobs(profile, replay)?;
     Ok(())
 }
+/// Copies the five canonical Job3 pages into the replay bank (Profile3 only).
 pub(super) fn refresh_jobs(profile: Profile, replay: &mut [u8]) -> std::result::Result<(), ()> {
+    if profile.format() != 3 {
+        return Err(());
+    }
     let (arena, rest) = replay.split_at_mut(ARENA_END);
     let cells = rest[..65_536].as_chunks_mut::<JOB_BYTES>().0;
     for index in 0..5 {
-        let view = retention_page::catalog::decode_jobs_page(
+        let view = retention_page::catalog3::decode_jobs_page(
             &arena[(index + 2) * PAGE_BYTES..(index + 3) * PAGE_BYTES],
             profile.spec().namespace,
             index as u8,
@@ -701,16 +748,16 @@ fn reconstruct<W: WriterNamespace>(
         let input = &raw[..length];
         let (arena, rest) = prior.split_at_mut(ARENA_END);
         let (jobs, bank) = rest.split_at_mut(65_536);
-        let jobs: &[[u8; JOB_BYTES]; JOB_COUNT] = jobs
-            .as_chunks::<JOB_BYTES>()
+        let jobs: &mut [[u8; JOB_BYTES]; JOB_COUNT] = jobs
+            .as_chunks_mut::<JOB_BYTES>()
             .0
             .try_into()
             .expect("64 cells");
         let (after, claims) = after.split_at_mut(8 * PAGE_BYTES);
         let (claims, temporary) = claims.split_at_mut(PROVENANCE_BYTES);
-        let semantic_scratch = (&mut temporary[..REPLAY_SCRATCH_BYTES])
+        let semantic_scratch = (&mut temporary[..REPLAY_TAIL_BYTES])
             .try_into()
-            .expect("semantic scratch");
+            .expect("replay tail");
         let claims = claims.as_chunks_mut::<352>().0.try_into().expect("claims");
         let pages: &mut [[u8; PAGE_BYTES]; 8] = after[..8 * PAGE_BYTES]
             .as_chunks_mut::<PAGE_BYTES>()
@@ -954,11 +1001,30 @@ pub(super) fn replay_rollback(
     Ok(header)
 }
 
+/// One combined Profile3 closure over the mixed Job bank, in this order: the
+/// Catalog part (whole Root/Job census, Aging, allocator, Catalog Terminals
+/// with Row cells skipped), the Row part (Row Terminals through the Row
+/// ledger), then the ATT union: every occupied ATT row is the stable row of
+/// one checked TerminalLeased actor of either scope, never both.
+pub(super) fn validate_current(
+    profile: Profile,
+    replay: &[u8],
+) -> std::result::Result<(), RetentionCause> {
+    let mut matched = 0u32;
+    catalog::validate_current(profile, replay, &mut matched)?;
+    row::validate_rows(profile, replay, &mut matched)?;
+    catalog::validate_att(&replay[JOB_END..BANK_END], matched)
+}
+
 /// Pure whole-state bijection. Every occupied Status has one Job; every live
 /// Active/Aborting Status has one ATT row; Ready Aborted owns no ATT row.
 pub(super) fn validate_bijection(profile: Profile, replay: &[u8]) -> std::result::Result<(), ()> {
-    if profile.format() == 2 {
-        return catalog::validate_current(profile, replay).map_err(|_| ());
+    // Exact grammar: Profile3 the current combined Catalog/Row census,
+    // Profile1 the original v1 census below; any other format is rejected.
+    match profile.format() {
+        3 => return validate_current(profile, replay).map_err(|_| ()),
+        1 => {}
+        _ => return Err(()),
     }
     let namespace = profile.spec().namespace;
     let (_, root) =

@@ -1,0 +1,266 @@
+{
+  "schema": "XADB_MODULE_C0_ROW_BOUNDARY_COMPILER_V1",
+  "status": "FROZEN_INPUTS_NOT_EXECUTION_EVIDENCE",
+  "scope": "C0 consuming Row boundary shape (contract 6.2-6.6, live rollback of 6.7, 6.8, 6.9 and 7) with Unsupported bodies; not actual C2/C3/C4 adapters and not runtime evidence",
+  "anchor": "crates/engine/src/storage/mod.rs",
+  "probe": "crates/engine/src/storage/module_c0_compiler_probe.rs",
+  "declaration": "\nmod module_c0_compiler_probe;\n",
+  "command": [
+    "cargo",
+    "check",
+    "-p",
+    "xadb-engine",
+    "--lib",
+    "--profile",
+    "test",
+    "--locked",
+    "--offline",
+    "--message-format=json"
+  ],
+  "budget": {
+    "total_seconds": 2700,
+    "case_seconds": 180,
+    "output_bytes": 8388608
+  },
+  "cases": [
+    {
+      "id": "MBC00-P01",
+      "path": "MBC00-P01.rs",
+      "sha256": "d2c40539db35a6bd7ee551abf520cb277df26e3f2e040559107eb95263644b68",
+      "bytes": 5339,
+      "expected_code": null,
+      "primary_line": null,
+      "checks": "full INSERT shape: begin_statement, preflight with the flusher and both RowPreflightStep arms (FlushRequired borrows the same flusher again and retries from preflight, which needs a Row I/O lease without a Drop impl), validation lane, reserve, producer lane with the A scratch, prepare, apply, finish_statement, commit_row; invalid inputs leave through preflight.finish"
+    },
+    {
+      "id": "MBC00-P02",
+      "path": "MBC00-P02.rs",
+      "sha256": "c308831164ae7714c848d5d6f2b7568381508c44a4e5f40d49434abf70d1fdb9",
+      "bytes": 3037,
+      "expected_code": null,
+      "primary_line": null,
+      "checks": "preflight with the flusher (FlushRequired holds nothing), prepare Before/reopen, second prepare, apply Before/reopen, cancel and the same private loan"
+    },
+    {
+      "id": "MBC00-P04",
+      "path": "MBC00-P04.rs",
+      "sha256": "42262588cceb81db902239a2a8ba5fd63cb384281d8ec4b2cb81dd2c893b77a8",
+      "bytes": 3347,
+      "expected_code": null,
+      "primary_line": null,
+      "checks": "T1 read-only Serializable stays live while T2 Catalog create commits; T1 finishes read-only"
+    },
+    {
+      "id": "MBC00-P05",
+      "path": "MBC00-P05.rs",
+      "sha256": "52512eef6575eedb9e602cbe3a9eaf495578495ce310be4177b33edaef80a975",
+      "bytes": 1705,
+      "expected_code": null,
+      "primary_line": null,
+      "checks": "producer lane immutable and mutable parts together, A scratch among the mutable parts, proposal after the lane ends"
+    },
+    {
+      "id": "MBC00-P06",
+      "path": "MBC00-P06.rs",
+      "sha256": "e5095a2876531522dd550a4d2cc6aa98fe3ea4eb48792d449f07d0ba3d6e8fcc",
+      "bytes": 4206,
+      "expected_code": null,
+      "primary_line": null,
+      "checks": "live statement then full rollback: start_row_rollback, next, CLR task producer lane, prepare, apply/reopen, FlushRequired, finish, then finish_aborted consumes the same transaction"
+    },
+    {
+      "id": "MBC00-N01",
+      "path": "MBC00-N01.rs",
+      "sha256": "90160e3086d972b260fb650e689625f2e18f5d3945320b2c406c11b577b5bdfe",
+      "bytes": 274,
+      "expected_code": "E0616",
+      "primary_line": 5,
+      "checks": "reservation field of ReservedRow is private"
+    },
+    {
+      "id": "MBC00-N04-reserved",
+      "path": "MBC00-N04-reserved.rs",
+      "sha256": "e82e30f59080d2ffcf7f73ba6975466bd6fc48161361b29b383ac4d92f4d4f57",
+      "bytes": 272,
+      "expected_code": "E0599",
+      "primary_line": 5,
+      "checks": "ReservedRow is not Clone"
+    },
+    {
+      "id": "MBC00-N04-credit",
+      "path": "MBC00-N04-credit.rs",
+      "sha256": "71b524465062f38f1db6fcd0c1dd83fb5c1c59620f83e48764d015b4f7d2171b",
+      "bytes": 167,
+      "expected_code": "E0599",
+      "primary_line": 4,
+      "checks": "CallerCredit is not Clone"
+    },
+    {
+      "id": "MBC00-N06",
+      "path": "MBC00-N06.rs",
+      "sha256": "9777abcf923d5331285ac8a8e9c090cd2efd887ed297c852818e706e026d0084",
+      "bytes": 647,
+      "expected_code": "E0499",
+      "primary_line": 9,
+      "checks": "operation cannot be used while a RowSearchPage is alive"
+    },
+    {
+      "id": "MBC00-N07",
+      "path": "MBC00-N07.rs",
+      "sha256": "6232ba8b21a50975041f83e8c95dd53f80e9b3ee7bc4121b76973d575d412939",
+      "bytes": 746,
+      "expected_code": "E0505",
+      "primary_line": 12,
+      "checks": "B cursor pattern: a cursor holding &view and its credit keeps the view from being finished (the probe's own borrow plus the credit's borrow of the view)"
+    },
+    {
+      "id": "MBC00-N07-credit",
+      "path": "MBC00-N07-credit.rs",
+      "sha256": "6c1370cd26e9fa5da0fd24ee12739ec1482793ca2d1fc62f1e62a68baeb14e9e",
+      "bytes": 576,
+      "expected_code": "E0505",
+      "primary_line": 10,
+      "checks": "C0 guarantee: a cursor credit alone borrows the view, so the statement cannot finish while it holds a charge"
+    },
+    {
+      "id": "MBC00-N08",
+      "path": "MBC00-N08.rs",
+      "sha256": "4ee7440f020b052a8f7ed445c2724faaceb8a363cf487655fc31596845fda9e5",
+      "bytes": 599,
+      "expected_code": "E0505",
+      "primary_line": 10,
+      "checks": "transaction cannot commit while a statement view is alive"
+    },
+    {
+      "id": "MBC00-N09-validation",
+      "path": "MBC00-N09-validation.rs",
+      "sha256": "0400f537c51e1a209ffbbb028e242dc12783e05a4dabbc51f9cd200918225f24",
+      "bytes": 457,
+      "expected_code": "E0505",
+      "primary_line": 8,
+      "checks": "preflight cannot reserve while the validation lane is alive"
+    },
+    {
+      "id": "MBC00-N09-producer",
+      "path": "MBC00-N09-producer.rs",
+      "sha256": "7d472e4d808830ec6fc5919eaaa50792fec959a35a837e662dc28219d9a587f4",
+      "bytes": 456,
+      "expected_code": "E0505",
+      "primary_line": 8,
+      "checks": "reservation cannot prepare while the producer lane is alive"
+    },
+    {
+      "id": "MBC00-N10",
+      "path": "MBC00-N10.rs",
+      "sha256": "4625a876874d3625dd2b52943dd54bff44e63e270cf8e149e00115503ee044e1",
+      "bytes": 989,
+      "expected_code": "E0499",
+      "primary_line": 14,
+      "checks": "private loan cannot be touched while a PreparedRow holds it"
+    },
+    {
+      "id": "MBC00-N12",
+      "path": "MBC00-N12.rs",
+      "sha256": "a860f91b8daa7906a28068c196f2f0884f1d62d73a482eb99ad312f32361ea8f",
+      "bytes": 193,
+      "expected_code": "E0277",
+      "primary_line": 5,
+      "checks": "RowStatementView is not Sync"
+    },
+    {
+      "id": "S2W-N01",
+      "path": "S2W-N01.rs",
+      "sha256": "b5c678ffed779ee9d2bbdb5eb4ec6aa264db77a635b3510c3f202f818e3a596b",
+      "bytes": 854,
+      "expected_code": "E0499",
+      "primary_line": 11,
+      "checks": "the flusher cannot be borrowed again while a Ready PreflightRow holds its Row I/O lease"
+    }
+  ],
+  "received_existing": [
+    {
+      "id": "MBC00-N02",
+      "source": "tests/fixtures/dev3-module-c3/install-grant",
+      "case": "private_kind",
+      "expected_code": "E0616",
+      "primary_line": 4,
+      "note": "raw grant field stays private; existing frozen input, not re-run"
+    },
+    {
+      "id": "MBC00-N03",
+      "source": "tests/fixtures/dev3-module-c3/terminal",
+      "case": "raw_grant",
+      "expected_code": "E0599",
+      "primary_line": 5,
+      "note": "no raw terminal grant constructor; existing frozen input, not re-run"
+    },
+    {
+      "id": "MBC00-N05",
+      "source": "tests/fixtures/dev3-module-c1/owner-compiler",
+      "case": "session_borrow",
+      "expected_code": "E0505",
+      "primary_line": 6,
+      "note": "Owner cannot leave while borrowed; existing frozen input, not re-run"
+    },
+    {
+      "id": "MBC00-N13",
+      "source": "tests/fixtures/dev3-module-c3/create-lease",
+      "case": "flush_borrow",
+      "expected_code": "E0506",
+      "primary_line": 9,
+      "note": "flush cannot run under a live create lease; existing frozen input, not re-run"
+    },
+    {
+      "id": "MBC00-N14",
+      "source": "tests/fixtures/dev3-module-c3/pair-existing",
+      "case": "read_key/write_key",
+      "expected_code": "E0502",
+      "primary_line": 8,
+      "note": "read and write keys of one pair are exclusive; existing frozen input, not re-run"
+    }
+  ],
+  "deferred_to_C4": [
+    {
+      "id": "MBC00-P03",
+      "reason": "recovery next_action/RecoveryRowTask needs the Plan4Recovered RecoveryProgressState split"
+    },
+    {
+      "id": "MBC00-N11",
+      "reason": "RowRecoveryPolicy/recover_with_rows is supplied with C4"
+    }
+  ],
+  "runs": [
+    {
+      "run": "r1",
+      "manifest_sha256": "de439ef9aae3e29fb431c4ac24dcc1da070aa6c02831a853d31cc9335f9e339f",
+      "selected": "all 14 cases of that manifest",
+      "note": "N07 input then had credit: CallerCredit<'v,..>; superseded by the r2 input after review"
+    },
+    {
+      "run": "r2",
+      "selected": [
+        "MBC00-N06",
+        "MBC00-N07",
+        "MBC00-N07-credit",
+        "MBC00-P06"
+      ],
+      "reason": "cases whose code changed after review: reserve_cursor_credit lifetime, RowReadOperation field order and lease generation, new rollback probe; other r1 PASS cases are not repeated"
+    }
+  ],
+  "revisions": [
+    {
+      "unit": "S2-a",
+      "changed": [
+        "MBC00-P01",
+        "MBC00-P02",
+        "MBC00-P05",
+        "MBC00-P06",
+        "MBC00-N10"
+      ],
+      "added": [
+        "S2W-N01"
+      ],
+      "reason": "S2-0 Row write amendment: preflight_row takes the flusher and returns RowPreflightStep; RowProducerLane::parts returns the A scratch as its 8th part. The runs above used the earlier inputs and are not re-read as runs of these."
+    }
+  ]
+}

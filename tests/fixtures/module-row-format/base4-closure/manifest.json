@@ -1,0 +1,490 @@
+{
+  "schema": "XADB_ROW_BASE4_CLOSURE_V2",
+  "baseline": "49a7578",
+  "revision": "w1",
+  "previous_revision": {
+    "revision": "r5",
+    "sha256": "875d4ed7aec45019fa4315b621c82871b0ef9d5ca724a319f084173555de9853"
+  },
+  "previous_commits": [
+    "55d63ad",
+    "06b8ad2",
+    "b4773db",
+    "c71baff",
+    "05b3ee5",
+    "fe249d1"
+  ],
+  "rebased_from": [
+    "f1771b6",
+    "a9501a2",
+    "4c4295c",
+    "c24bff4",
+    "20d448d",
+    "288df8f"
+  ],
+  "status": "FROZEN_INPUTS_NOT_EXECUTION_EVIDENCE",
+  "scope": "Pure uncalled Profile3/base4 current-state closure over immutable bytes. r2 accepts System allocation states (Finished INIT, Prepared page reservation) through validate_row_base_allocation, checks Catalog-scope Job3 relations, provenance, ledger rows and XOI inventory through the shared Catalog base seam (r2..r5 failed closed with CatalogUnwired when a Catalog-scope semantic residual was needed; w1 wires the exact Profile3 Catalog ledger through catalog3::JobView instead). r3 admits a row in a Transaction-stamped table only under a committed (TerminalReady outcome 1) creator whose Catalog root is Retained, bounds committed row writers by the header source, and accepts one Row-scope Reserved root per base with exactly one UndoSlot(U) item. r4 orders every committed row after its table creator (row q > the record Committed q, or the creator Ready Terminal q while unpruned) and reports a RowReserve beside another reservation as Unsupported. r5 also orders a committed Row actor still on its Ready Terminal after its table creator (Ready q > creator q) for every Transaction-stamped row and every ReleasingCompensated Row root. Profile3 Row XOI mode reproduces the inventory page. No INIT/WAL history, source selection, replay or Profile2 behaviour change.",
+  "budget": {
+    "total_seconds": 1200,
+    "compiler_seconds": 600,
+    "case_seconds": 60,
+    "output_bytes": 8388608
+  },
+  "independence": "author.py is stdlib-only, imports no engine code and reuses no engine encoder; parents are pinned by sha256 below. Catalog actor D residual rows are the contract Catalog CREATE values for C254 (dev3-catalog-create.md group table; dev3-create-job-format.md 5: Job width 1024 keeps them, Job3 is 1024).",
+  "runtime_tests": [
+    {
+      "selector": "storage::plan4_recovery_base::row::graph::tests::base4_closure_accepts_genesis_and_aging_start",
+      "expected": "PASS",
+      "reason": "genesis (0-owner XOI1) and AgingStart accepted with exact census; encode reproduces bytes; descriptor/active_descriptor accessors."
+    },
+    {
+      "selector": "storage::plan4_recovery_base::row::graph::tests::base4_closure_accepts_live_system_init_done",
+      "expected": "PASS",
+      "reason": "live (System Undo INIT Finished at slot 32, no allocator Reserved entry) accepted: census{1 tx,1 system,2 status,1 actor,2 retained,1 table,3 rows,2 XOI owners}; Finished row excluded from active ordinals; high-water [5,0,1,0]; relations None; actors [1,2,0]; tables [1,3]; Catalog seam not touched; encode reproduces bytes."
+    },
+    {
+      "selector": "storage::plan4_recovery_base::row::graph::tests::base4_closure_accepts_system_page_reservation",
+      "expected": "PASS",
+      "reason": "state-system-reserved (Prepared System AllocationMaintenance reserving one page, one XOI item) accepted with reserved SystemPage, 3 owners/1 item; Prepared row is active ordinal 1; encode reproduces bytes."
+    },
+    {
+      "selector": "storage::plan4_recovery_base::row::graph::tests::base4_closure_accepts_row_undo_slot_reservation",
+      "expected": "PASS",
+      "reason": "state-row-reserved (A RowReserve of the free Undo15 at 33, one UndoSlot(U15) XOI item in the Forward category) accepted with reserved RowUndoSlot, 2 owners/1 item/1 chunk/5 reads; check_queue Ok; validate_relations None; row_reservation(None) RowUndoSlot; row_item Ok; encode reproduces bytes."
+    },
+    {
+      "selector": "storage::plan4_recovery_base::row::graph::tests::base4_closure_accepts_catalog_scope_actor",
+      "expected": "PASS",
+      "reason": "w1: state-create-reserved, state-create-retained and state-create-committed-row decode and encode Ok with census{tx 2, reserved CatalogCreate, owners 3 items 3 chunks 1 reads 5} / {tx 2, tables 2, owners 3} / {tx 1, retained 3, tables 2, rows 4, owners 2} (other fields as LIVE_CENSUS); encode output equals input. On live, catalog_remaining and catalog_transaction given A's Row-scope Retained root both return Base(IdentityMismatch) before any Catalog ledger call."
+    },
+    {
+      "selector": "storage::plan4_recovery_base::row::graph::tests::base4_closure_entry_gates_profile_base_root_job",
+      "expected": "PASS",
+      "reason": "Profile 0/1/2/4/65535 envelopes rejected by row_profile; v1/v2 bootstrap profiles give Base(Unsupported); base 0/1/2/3/5/65535 Base(Unsupported); Root/Job 2/4 Base(Retention(UnsupportedFormat)); legacy base4 initial without XOI1 Base(Corrupt) (r2b: r2 run 1 asserted the r1 row-local Corrupt, but the XOI1 shape check now runs in the shared Catalog seam and reports Base(Corrupt); same check, same rejection)."
+    },
+    {
+      "selector": "storage::plan4_recovery_base::row::graph::tests::base4_closure_relation_variants",
+      "expected": "PASS",
+      "reason": "36 relation variants each pass decode_layout and are rejected by the closure with the listed error (r3 added committed-writer-bound, create-uncommitted-row, create-uncommitted-committed-row, row-reserved-no-item, row-reserved-two-items, row-reserved-item-kind, row-reserved-twice and changed reserved-row-root; r4 adds committed-row-before-create, committed-row-before-pruned-create (Order) and row-reserved-mixed (Unsupported); r5 adds ready-writer-before-pruned-create, ready-writer-before-create and compensated-writer-before-create (Order); w1 adds d-residual-clr, d-residual-peak (Base(CatalogSemantic(BudgetMismatch))) and d-committed-head (Base(CatalogSemantic(IdentityMismatch))))."
+    },
+    {
+      "selector": "storage::plan4_recovery_base::row::graph::tests::base4_closure_orders_ready_row_writer_after_creator",
+      "expected": "PASS",
+      "reason": "r5 R1-c: for state-ready-writer, state-ready-writer-row7 and state-compensated-writer check_queue Ok, validate_relations None, actors [1,2,0]/[1,3,0]/[1,2,1] and tables [1,3]/[2,4]/[2,3]; their negative twins ready-writer-before-pruned-create, ready-writer-before-create and compensated-writer-before-create keep the same actors and tables gives Order; state-ready-writer decodes with census{LIVE_CENSUS, transactions 0, owners 1} and encode reproduces it; w1: the two D-unpruned states now decode and encode Ok with census {transactions 0, retained 3, tables 2, rows 4, owners 1} / {transactions 0, releasing 1, tables 2, owners 1} and encode output equal to input."
+    },
+    {
+      "selector": "storage::plan4_recovery_base::row::graph::tests::base4_closure_row_xoi_mode_reproduces_inventory",
+      "expected": "PASS",
+      "reason": "Profile3 Row XOI mode (encode_row_current over borrowed slots/root/allocator/Job3 cells) reproduces the INVENTORY page and returns (sum wal, sum steps) of header.remaining for genesis, aging, live, state-system-reserved, state-create-retained, state-row-reserved (emits the one UndoSlot item), state-create-committed-row and (w1) state-create-reserved (emits D's three Catalog items through catalog3::JobView and global_items); 8 states."
+    },
+    {
+      "selector": "storage::plan4_recovery_base::row::graph::source::tests::base4_closure_source_bound_covers_measured_frames",
+      "expected": "PASS",
+      "reason": "Production source_bytes phases cover per-frame size_of inventories of every closure chain (frames, seam accessors, phases); prints ROW_BASE_SOURCE with Catalog base3 source_census/layout_source_bytes and ROW_BASE_SIZES. r3 adds the Row reservation/item, creator and header-bound chains; r5 adds the table-creator q chain to the row visitor and the compensated-root pass to tables(); w1 charges both Catalog hooks as their frame plus semantic_catalog::profile3_transaction_source_bytes (asserted <= the Profile2 transaction bound, with equal Option<JobView> sizes) and prints ROW_BASE_CATALOG_HOOK; B4 must stay below the 65536 native cap."
+    },
+    {
+      "selector": "storage::semantic_catalog::catalog3_tests::profile3_source_census_keeps_type_sizes_and_reports_delta",
+      "expected": "PASS",
+      "reason": "U2-C3 selector rerun because w1 made resources::transaction_validate/transaction_remaining generic over the Job view (Profile2 instance unchanged): source_branches keeps transaction_validate 11259 and every recorded Profile2 branch value; Profile3 census <= Profile2."
+    }
+  ],
+  "removed_tests": [
+    {
+      "selector": "storage::plan4_recovery_base::row::graph::tests::base4_closure_live_actor_reaches_allocation_boundary",
+      "reason": "r1 boundary (AllocationUnwired) no longer exists; replaced by base4_closure_accepts_live_system_init_done."
+    },
+    {
+      "selector": "storage::plan4_recovery_base::row::graph::tests::base4_closure_catalog_create_fails_closed_after_structure",
+      "reason": "w1: CatalogUnwired no longer exists; replaced by base4_closure_accepts_catalog_scope_actor."
+    }
+  ],
+  "variants": [
+    {
+      "name": "base-version-0",
+      "parent": "genesis",
+      "sha256": "1d310c96ce95739bc4874b98e724fc96d4cb568a3101e2575bc0c128f8c0839e",
+      "expected": "Base(Unsupported)"
+    },
+    {
+      "name": "base-version-1",
+      "parent": "genesis",
+      "sha256": "1b656b906a38f1dcf18194418097af7b7d038a190bdfef26ef45fb48a77ae064",
+      "expected": "Base(Unsupported)"
+    },
+    {
+      "name": "base-version-2",
+      "parent": "genesis",
+      "sha256": "d9a091d29877230d966c92d7c23724ddedf58ec8fe2064be765b28d814adb341",
+      "expected": "Base(Unsupported)"
+    },
+    {
+      "name": "base-version-3",
+      "parent": "genesis",
+      "sha256": "5ee03b3d226c022b9f0ba7338cbccf27543d17583c4f207a0145ea74ff80a019",
+      "expected": "Base(Unsupported)"
+    },
+    {
+      "name": "base-version-5",
+      "parent": "genesis",
+      "sha256": "6b8342108dced3aa01f8a8a6e1b9783731a721bec102cbbf735865e55c3ae282",
+      "expected": "Base(Unsupported)"
+    },
+    {
+      "name": "base-version-65535",
+      "parent": "genesis",
+      "sha256": "e9fdecc5d52f59f10a2249ff83c696d560076b60f3cdc6595bb208b660d7e392",
+      "expected": "Base(Unsupported)"
+    },
+    {
+      "name": "root-version-2",
+      "parent": "genesis",
+      "sha256": "cc6808c7ab1e3c7b2895f8e5b49dafb934c1426a621af9727c4c0d0855945bca",
+      "expected": "Base(Retention(UnsupportedFormat))"
+    },
+    {
+      "name": "job-version-2",
+      "parent": "genesis",
+      "sha256": "e908876b303e6b8fbdfd19e095b399db1135dc050723714d62b1e5f2e20a52f8",
+      "expected": "Base(Retention(UnsupportedFormat))"
+    },
+    {
+      "name": "root-version-4",
+      "parent": "genesis",
+      "sha256": "39afb208cb3c78013c48ba353e12fbc978e29506c1a432c351f4a2ba785b0a70",
+      "expected": "Base(Retention(UnsupportedFormat))"
+    },
+    {
+      "name": "job-version-4",
+      "parent": "genesis",
+      "sha256": "cd049dfd6ab74d24890e00744f99f45174600fb0b207f005cf3c5b93305642ce",
+      "expected": "Base(Retention(UnsupportedFormat))"
+    },
+    {
+      "name": "terminal-without-system",
+      "parent": "genesis",
+      "sha256": "1c8ae94d699e0e958910de84d2914846ea7cbced056f5d3898d16509ceb68281",
+      "expected": "Base(CatalogAllocation(StateMismatch))",
+      "changed_from": "r1 Identity: System allocation is now validated by validate_row_base_allocation, which rejects terminal!=0 without a System Reserved owner first"
+    },
+    {
+      "name": "aging-header-budget",
+      "parent": "aging",
+      "sha256": "db8f4ae888c5b15d676c4d9b2999d5cfa619aeefe7c57e521bc649b7925ec0b7",
+      "expected": "Base(BudgetMismatch)"
+    },
+    {
+      "name": "issuer-undo-high",
+      "parent": "live",
+      "sha256": "f834d2c21f45181f5bd66b3df8957714fecfc0a51750769a1a44540e23003c7b",
+      "expected": "Base(OrderMismatch)"
+    },
+    {
+      "name": "row-high-global",
+      "parent": "live",
+      "sha256": "ccc28dfa5a0d8867e5c98cb9425a5570a72a2ccf625c7aea13d7dbf87e5dcb82",
+      "expected": "Order"
+    },
+    {
+      "name": "committed-q-collision",
+      "parent": "live",
+      "sha256": "7566c54dcd41244855428e363a98ce0002e05895babdef9941fa08a9555b1b8a",
+      "expected": "Order",
+      "note": "r4: same expected Order, now raised first by the committed-row q > creator q check (row q1 == Catalog record q1) before the q/TxnId one-to-one check"
+    },
+    {
+      "name": "catalog-row-mixing",
+      "parent": "live",
+      "sha256": "090f84955ffd69182274ccd4fae969c9ca507f8ff67f0634625936dd476d5436",
+      "expected": "Identity"
+    },
+    {
+      "name": "free-undo-generation",
+      "parent": "live",
+      "sha256": "8589769760ff7822382d4f129d85219b82e69915f56354a4427e399c6dc52e29",
+      "expected": "Base(OrderMismatch)"
+    },
+    {
+      "name": "init-initial-digest",
+      "parent": "live",
+      "sha256": "42aff5b7c468afa55c3a961eba742c1e9f98175e0fc7b2abf3564bee5a9be102",
+      "expected": "Base(ProvenanceMismatch)"
+    },
+    {
+      "name": "descriptor-last-mutation",
+      "parent": "live",
+      "sha256": "bb9938c6b1a56f444bdbbb085ad64dfb2081816030084d57496bfb105c729dab",
+      "expected": "Ledger(semantic_row::Error::OrderMismatch)"
+    },
+    {
+      "name": "att-missing",
+      "parent": "live",
+      "sha256": "8b511b3a9d62b111ccae3286dd1e418cb6936c9362b59ac0111c3b75247e248b",
+      "expected": "Base(IdentityMismatch)"
+    },
+    {
+      "name": "inventory-generation",
+      "parent": "live",
+      "sha256": "ec1cf58b8a3c5e5df9a98b1d7dff21d88ab175d0f628f23b17fbad849fbe74e1",
+      "expected": "Base(Corrupt)"
+    },
+    {
+      "name": "aging-descriptor-missing",
+      "parent": "live",
+      "sha256": "e37570116651cb26665b8770e9af61e3ce83c3f524b73abf81d5721bc523f077",
+      "expected": "Base(IdentityMismatch)"
+    },
+    {
+      "name": "catalog-scope-terminal",
+      "parent": "live",
+      "sha256": "d03e5ecca9c92d78ddd1c56f5c26de93e1a9a1ded837d4c34f91cef81baa9344",
+      "expected": "Base(IdentityMismatch)",
+      "changed_from": "r1 Unsupported: Catalog-scope Jobs are now checked through the shared Catalog seam instead of being refused, and this orphan Catalog Terminal fails its relation identity"
+    },
+    {
+      "name": "reserved-row-root",
+      "parent": "live",
+      "sha256": "a6936687b1c55d5d3d210e9498d63cd90fd4b6e4e0d45d7faec9acd0929281b1",
+      "expected": "Actor(actor::Error::Ledger(semantic_row::Error::IdentityMismatch))",
+      "changed_from": "r2 Unsupported: a Row-scope Reserved root is now a closed RowUndoSlot reservation; this variant keeps its Status incoming count at two while only one root is Retained, so the semantic_row ledger rejects it"
+    },
+    {
+      "name": "allocation-finished-noncanonical",
+      "parent": "live",
+      "sha256": "8f2313ac73989e04d9b25c7b76dfdcb076fdd635a13bf6a5e1cb2f16863ae5ae",
+      "expected": "Base(CatalogAllocation(StateMismatch))"
+    },
+    {
+      "name": "state-system-reserved",
+      "parent": "live",
+      "sha256": "ba8876f2d0c61f702d08912b533f7207db53a68cff3a3012cbf4609577709705",
+      "expected": "ACCEPT census{systems 2, reserved SystemPage, XOI owners 3 items 1 chunks 1 read_calls 5}; encode reproduces bytes; XOI Row mode reproduces INVENTORY"
+    },
+    {
+      "name": "system-reserved-terminal",
+      "parent": "live",
+      "sha256": "dab4dce285710b883e9326ae427c15a6ba430b1f7d33fc53364ad98d32f3cf11",
+      "expected": "Base(CatalogAllocation(StateMismatch))"
+    },
+    {
+      "name": "system-item-owner",
+      "parent": "live",
+      "sha256": "7671958f79284152af6d488ce7675023dfb62dca001d6cb25ba15a274b94bad6",
+      "expected": "Base(Inventory(InventoryError::Corrupt))"
+    },
+    {
+      "name": "state-create-reserved",
+      "parent": "live",
+      "sha256": "33cebf12ccada1d921b8566d5187af756a3ecb12c1f40dc8cd3e1bf7620b4d6b",
+      "expected": "ACCEPT census{LIVE_CENSUS with transactions 2, reserved CatalogCreate, XOI owners 3 items 3 chunks 1 read_calls 5}: D Active with its CREATE Reserved (residual CLR 119984+C, Forward 153840+C pages 2 undo 1, terminal 56712, rollback 3040, peak P_B; items 3; last mutation 0); encode reproduces bytes; XOI Row mode reproduces INVENTORY with the three Catalog items of D",
+      "changed_from": "r5 CatalogUnwired after structure, XOI Row mode Base(Unsupported): the Profile3 Catalog hooks are now wired and the Row XOI mode emits Catalog Reserved items through catalog3::JobView"
+    },
+    {
+      "name": "create-undo-lsn",
+      "parent": "live",
+      "sha256": "de1162166ef01f8d19e4e85dd8f458901c208fb8e37dddf2e6dba8ceda66a080",
+      "expected": "Base(OrderMismatch)"
+    },
+    {
+      "name": "create-item-order",
+      "parent": "live",
+      "sha256": "4887d5d21ab9f81438a3b514c31318a6463b277ecdfb749db82cdbcc65df0b6d",
+      "expected": "Base(Inventory(InventoryError::Corrupt))"
+    },
+    {
+      "name": "state-create-retained",
+      "parent": "live",
+      "sha256": "1904a93aea7009b9b917f7621b6b0f992b1e8a0382bc04b5f92d87e6a7c9af18",
+      "expected": "ACCEPT census{LIVE_CENSUS with transactions 2, tables 2, XOI owners 3}: D Active with its CREATE Retained (residual CLR 119984+C, terminal 56712, rollback 3040, peak P_B; last mutation 1; incoming 1); encode reproduces bytes; XOI Row mode reproduces INVENTORY",
+      "changed_from": "r5 CatalogUnwired after structure: the Profile3 Catalog hooks are now wired"
+    },
+    {
+      "name": "retained-projection",
+      "parent": "live",
+      "sha256": "1e55147954a18d95089dde82f7d3c37bdb50375777a833c4b82fcf4e6648ab33",
+      "expected": "Base(IdentityMismatch)"
+    },
+    {
+      "name": "committed-writer-bound",
+      "parent": "live",
+      "sha256": "6012b498268fe778b54c3f87720876f938b361d36a7db5a70e9d165310e11e8c",
+      "expected": "Order"
+    },
+    {
+      "name": "state-create-committed-row",
+      "parent": "live",
+      "sha256": "2e923c8178afc2630d3a15fa7051ff6bb5e80b7e7f8b3555ec0365d1e9561ec7",
+      "expected": "ACCEPT census{LIVE_CENSUS with retained 3, tables 2, rows 4}: D committed q3 with its CREATE root still Retained (Catalog ledger: Committed Status head == root Undo, no residual), one Retained A row in table 7; encode reproduces bytes; XOI Row mode reproduces INVENTORY",
+      "changed_from": "r5 CatalogUnwired after structure: the Profile3 Catalog hooks are now wired"
+    },
+    {
+      "name": "create-uncommitted-row",
+      "parent": "live",
+      "sha256": "ea75159a4ccedf6dcda1b00d2ce29ffbd299167a427050330483a53a50946ec4",
+      "expected": "Queue(RetentionError::OrderMismatch)"
+    },
+    {
+      "name": "create-uncommitted-committed-row",
+      "parent": "live",
+      "sha256": "74c72ce3869ffdedd0c1bf70385b580abeafd850c7f74e4d8e12562b3554879d",
+      "expected": "Order"
+    },
+    {
+      "name": "state-row-reserved",
+      "parent": "live",
+      "sha256": "aa0b1cbf2e3ad9c1d48e72d754a1d9bebf3e57b95cc31d9dd9958a70afbcd4ae",
+      "expected": "ACCEPT census{LIVE_CENSUS with reserved RowUndoSlot, XOI owners 2 items 1 chunks 1 read_calls 5}; validate_relations None; row_reservation RowUndoSlot; row_item Ok; encode reproduces bytes; XOI Row mode reproduces INVENTORY"
+    },
+    {
+      "name": "row-reserved-no-item",
+      "parent": "live",
+      "sha256": "cd4c698934bd25ad449574f429bdf9c39854d2f968afe45ca9729673e5d1beef",
+      "expected": "Base(Corrupt)"
+    },
+    {
+      "name": "row-reserved-two-items",
+      "parent": "live",
+      "sha256": "7a566b439d6615e387714d35c8f68585615309542a59a6971c895cb15104e60b",
+      "expected": "Base(Corrupt)"
+    },
+    {
+      "name": "row-reserved-item-kind",
+      "parent": "live",
+      "sha256": "62bffb228966dd171defebe4e7b7da7231816cbff7f3f11172a22447da954eb1",
+      "expected": "Base(Inventory(InventoryError::Corrupt))"
+    },
+    {
+      "name": "row-reserved-twice",
+      "parent": "live",
+      "sha256": "4d54e0592bc5b103655a75255ca2d58644135574921bb99e78242b2c9a6af6de",
+      "expected": "Queue(RetentionError::IdentityMismatch)"
+    },
+    {
+      "name": "committed-row-before-create",
+      "parent": "live",
+      "sha256": "eecf6497b3be43a469c37609dda1d5d33d8d65518ca0b5eedf055bc561284df8",
+      "expected": "Order"
+    },
+    {
+      "name": "committed-row-before-pruned-create",
+      "parent": "live",
+      "sha256": "880b4c4778ea2f5348b60c36e35fb0d8083e9111e0785d502193916b22c4c79d",
+      "expected": "Order"
+    },
+    {
+      "name": "row-reserved-mixed",
+      "parent": "live",
+      "sha256": "abbcfd4dcf885794418b22c435379a2f9fcfe3e102e952a19ab58939245ec16c",
+      "expected": "Unsupported"
+    },
+    {
+      "name": "state-ready-writer",
+      "parent": "live",
+      "sha256": "965d688a00dcd80ee5686702f3f9259fc6c843045da7880c39636a80f25a9f89",
+      "expected": "ACCEPT census{LIVE_CENSUS with transactions 0, XOI owners 1 (Aging only)}: A committed on its Ready Terminal q3 over two Retained rows in the pruned table (C q1); no ATT descriptor; check_queue Ok; validate_relations None; actors [1,2,0]; tables [1,3]; encode reproduces bytes"
+    },
+    {
+      "name": "ready-writer-before-pruned-create",
+      "parent": "live",
+      "sha256": "bd2f216a80cc6dde1c537461f83a51ec164fd9583a6bebd5f4e06416484d4a24",
+      "expected": "Order",
+      "note": "r5 R1-c: A Ready q1 <= pruned C record Committed q2 while its Transaction-stamped rows sit in table 6"
+    },
+    {
+      "name": "state-ready-writer-row7",
+      "parent": "live",
+      "sha256": "d0b4f4b0d16aaf3de87ccdb3b6b0784416bdd2831069b5b4898c81f815ac7c73",
+      "expected": "ACCEPT census{LIVE_CENSUS with transactions 0, retained 3, tables 2, rows 4, XOI owners 1}: D committed q3 unpruned (Catalog ledger closes its Committed Status over the Retained root), A Ready q4 with a third Retained row in table 7; check_queue Ok; validate_relations None; actors [1,3,0]; tables [2,4]; encode reproduces bytes",
+      "changed_from": "r5 CatalogUnwired after structure: the Profile3 Catalog hooks are now wired"
+    },
+    {
+      "name": "ready-writer-before-create",
+      "parent": "live",
+      "sha256": "3a7fb9cb99de8bffe5900d3435cb4d45b85468974bb485431ac97f67ec250d08",
+      "expected": "Order",
+      "note": "r5 R1-c: A Ready q2 <= unpruned creator D Ready q3 while its Transaction-stamped row sits in table 7"
+    },
+    {
+      "name": "state-compensated-writer",
+      "parent": "live",
+      "sha256": "a213a6583d867d29f43ad671cfa6333d93163afef45ed39822bd620407824fad",
+      "expected": "ACCEPT census{LIVE_CENSUS with transactions 0, releasing 1, tables 2, XOI owners 1}: D committed q3 unpruned, A Ready q4 with a ReleasingCompensated cursor-0 Row root on table 7 (no row version); check_queue Ok; validate_relations None; actors [1,2,1]; tables [2,3]; encode reproduces bytes",
+      "changed_from": "r5 CatalogUnwired after structure: the Profile3 Catalog hooks are now wired"
+    },
+    {
+      "name": "compensated-writer-before-create",
+      "parent": "live",
+      "sha256": "7e2faa9c473a19dc1ea82ecd7caf3fa436584783df869e3a3cbcaf6a454b4f40",
+      "expected": "Order",
+      "note": "r5 scan: A Ready q2 <= unpruned creator D Ready q3 for its ReleasingCompensated root on table 7 (no row version left)"
+    },
+    {
+      "name": "d-residual-clr",
+      "parent": "live",
+      "sha256": "85047a4753dc38226ca5f67f0f5fc7237dea555dcde80643dda40c260088ae65",
+      "expected": "Base(CatalogSemantic(semantic_catalog::Error::BudgetMismatch))",
+      "note": "w1: state-create-retained with D CLR residual 120239 (one byte over 119984+C, C254); validate_transaction remaining != transaction_remaining"
+    },
+    {
+      "name": "d-residual-peak",
+      "parent": "live",
+      "sha256": "a1c0f6ae992baf20ea8beff7894a8390cdcc6db1dc87ed976c5f8abd2d1efc84",
+      "expected": "Base(CatalogSemantic(semantic_catalog::Error::BudgetMismatch))",
+      "note": "w1: state-create-reserved with every D residual row peak set to the Row recipe (9,425984,0,16,5,1) instead of P_B; validate_transaction remaining != transaction_remaining"
+    },
+    {
+      "name": "d-committed-head",
+      "parent": "live",
+      "sha256": "1fb911d89d435f5baa1628d7716a73a2e885310156e7e57312246f3a5efad368",
+      "expected": "Base(CatalogSemantic(semantic_catalog::Error::IdentityMismatch))",
+      "note": "w1: state-create-committed-row with D Committed Status head = Undo12 (another actor's Undo) instead of its Retained root Undo15; transaction_remaining in relations::terminal"
+    }
+  ],
+  "inputs": {
+    "author.py": {
+      "bytes": 38448,
+      "sha256": "19842b1dc177b4dd23eb4d436fe01aa98ecac69f3d97a0fc129f8a6ed6769099"
+    },
+    "genesis.xrb": {
+      "bytes": 2097152,
+      "sha256": "9b7c330e6af39c640dfc55b9836d4c7a42c7846c0139af6111b7b30be05e8c32"
+    },
+    "aging.xrb": {
+      "bytes": 2097152,
+      "sha256": "38e96da47fddb73821b9844f6ca36e41df7ab649442727c52df386ab8459e25f"
+    },
+    "live.xrb": {
+      "bytes": 2097152,
+      "sha256": "5a446fbf0fab629b7bfc10b5040e0a54b77ea6e2a993ca58db70482f3f5c94d9"
+    },
+    "variants.bin": {
+      "bytes": 108173,
+      "sha256": "9a3a127435d053f7b4f250f10befb8815f211d67a72c4c981ca4fc6c44abef89"
+    },
+    "envelopes.bin": {
+      "bytes": 20480,
+      "sha256": "7f9331527ec54a7c7e3e332b1ccafd9395d539d265c3d4793468a0ff47e06653"
+    },
+    "index.json": {
+      "bytes": 8777,
+      "sha256": "41f87266ffa53869557be8602f66363fd4a3895ca5eb2ae61ad0ddb630778e05"
+    }
+  },
+  "parents": {
+    "../base4/initial.xrb": {
+      "bytes": 2097152,
+      "sha256": "9473833616a56fbf74fcfc51d14c5eeb2ff96a4ce7cc3889d3f3eb3e809f4df0"
+    },
+    "../job3/cells.bin": {
+      "bytes": 31744,
+      "sha256": "d2ea7dae34cd200c8cf6d75500e669f8ddb54ddbb32f7ab26575648342de8dc7"
+    },
+    "../envelopes/profiles.bin": {
+      "bytes": 12288,
+      "sha256": "e8f5b232f8583c50d697db8ba29d920c10e5cc3c81a939f2cd4289edc0d5767a"
+    },
+    "../../dev3-plan4-recovery-base/vectors/p1/references/profile.bin": {
+      "bytes": 4096,
+      "sha256": "c440c3143d335aad95eeaff540f2918dd7dd16bb0e8cfaf43ca8a8fd8da62bf4"
+    }
+  }
+}

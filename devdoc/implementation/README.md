@@ -1,5 +1,69 @@
 # 현재 구현
 
+2026-10-30 [S2-f V09 대체 oracle과 S2 마감](../evidence/module-independence-survey-20261026.md#s2f-closeout): Row 쓰기(S2)가 끝났다. 첫 Row INSERT의 쓰기 단계가 finish를 빼고 모두 실제 본문이며, S3 전에서 멈춘다.
+
+2026-10-30 [S2-e A INSERT driver live 경로와 frame-static D15](../evidence/module-independence-survey-20261026.md#s2e-live-driver): A의 INSERT driver가 시험에서 실제 C Row 쓰기 단계를 끝까지 부른다. 제품 호출자는 아직 없다.
+
+2026-10-30 [S2-d Row Cancel 본문과 S2-c 위 통합](../evidence/module-independence-survey-20261026.md#s2d-row-cancel): 첫 Row INSERT의 예약을 fence 없이 취소할 수 있다. Forward와 Cancel이 같은 검산·반환 코드를 쓴다.
+
+2026-10-30 [S2-c Row Forward 경로](../evidence/module-independence-survey-20261026.md#s2c-row-forward): 첫 Row INSERT가 Reserve 뒤 A의 producer, prepare, apply까지 실제로 진행해 행을 설치한다.
+
+2026-10-30 [S2-b2 validation_lane·RowReserve 본문](../evidence/module-independence-survey-20261026.md#s2b2-row-reserve): Row INSERT가 preflight에서 Reserve 설치까지 실제로 진행한다. producer·prepare·apply·cancel은 아직 Unsupported다.
+
+2026-10-30 [S2-b1 Row 쓰기 preflight 본문](../evidence/module-independence-survey-20261026.md#s2b1-row-preflight): Row INSERT의 preflight가 실제로 동작한다(상주 적재, flush 요구, Free Undo 선택, 행당 한 번의 검증). reserve 이후는 아직 Unsupported다.
+
+2026-10-30 [A-W1 A driver 축소와 호출 지점별 몫](../evidence/module-independence-survey-20261026.md#a-w1-driver): first Row INSERT의 A driver가 Row 쓰기 charge 안에 든다. preflight가 flush를 요구하면 flush한 뒤 같은 행을 다시 시도한다.
+
+2026-10-30 [S2-a′ RowWrite census 재계수](../evidence/module-independence-survey-20261026.md#s2a-prime-census): Row 쓰기 C 단계가 A driver 몫(preflight 6144B, 나머지 11520B)을 남기고 charge 안에 든다. 동작은 아직 Unsupported다.
+
+2026-10-30 [S2-0b Row 쓰기 replay 검산 재배치 반영](../evidence/module-independence-survey-20261026.md#s2-0b-validate-once): Row 쓰기 C 단계의 replay 검산을 행당 한 번으로 줄이고 A 몫 상한을 둘로 나누는 계약 개정이 들어갔다. 코드는 아직 바뀌지 않았다.
+
+2026-10-30 [S2-a Row 쓰기 최종 표면](../evidence/module-independence-survey-20261026.md#s2a-row-write-surface): Row 쓰기의 최종 서명과 lane 배치가 들어갔다. 동작은 아직 Unsupported다.
+
+2026-10-30 [CR1 Catalog native 로컬 실행](../evidence/module-independence-survey-20261026.md#cr1-catalog-native-r2): 현재 형식의 Catalog CREATE 장애·복구·재진입 native 시험 N01–N03이 사용자 PC에서 통과했다.
+
+2026-10-30 [branch Clippy 정리](../evidence/module-independence-survey-20261026.md#branch-clippy-20261030): branch가 저장소 pre-push gate(fmt·Clippy·문서)를 통과한다.
+
+2026-10-30 [native 시험 adapter 정정과 CR1 범위 변경](../evidence/module-independence-survey-20261026.md#native-adapter-file-cr1-scope): commit window census가 native에서도 cap 안에 들어간다. 로컬 CR1은 Catalog native N01–N03만 남았다.
+
+2026-10-30 [S2-0 Row 쓰기 계약 개정 반영](../evidence/module-independence-survey-20261026.md#s2-0-q06-amendment): Row 쓰기의 자원·lane·preflight 규칙이 계약에 들어갔다. 코드는 아직 바뀌지 않았고 다음은 S2-a 표면 공급이다.
+
+2026-10-29 [S2/S5 설계와 Row 쓰기 예산 판정](../evidence/module-independence-survey-20261026.md#s2-design-q06): Row 쓰기(S2)는 Q06 예산 개정이 정해질 때까지 멈춘다. 설계와 개정 초안은 공유 폴더 `module-independence-20261029/plans/`에 있다.
+
+2026-10-29 [S1-e Row statement mark와 두 번째 문장](../evidence/module-independence-survey-20261026.md#s1e-statement-mark): Row 거래가 statement를 열고 닫으며 두 번째 statement를 시작할 수 있다. S1이 모두 끝났고 Row 쓰기·읽기 본문은 S2·S5다.
+
+2026-10-29 [S1-g RowReserve replay 값 commitment 채택](../evidence/module-independence-survey-20261026.md#s1g-reserve-replay): `Change::ReserveAdopted`는 replay 전용이며 producer에서는 Unsupported다. RowReserve frame은 이제 recovery·live 검증에서 거절되지 않는다.
+
+2026-10-29 [S1-d Row Begin과 빈 Row 철회](../evidence/module-independence-survey-20261026.md#s1d-row-begin): `begin_row_transaction`과 scope별 `abort_empty_transaction`이 Row 거래를 열고 빈 채로 닫는다. Row Begin이 남은 재시작은 S6 전까지 분석 gate에서 멈춘다.
+
+2026-10-29 [S1-b/S1-c Row replay arm과 혼합 bank](../evidence/module-independence-survey-20261026.md#s1b-row-replay): recovery가 Row scope3 frame을 `history/row.rs`로 replay하고, Row 상태가 남은 재시작은 S6 전까지 분석 gate에서 Unsupported·Unchanged로 멈춘다. live Catalog 연산은 Row cell이 섞인 bank를 받아들인다.
+
+2026-10-29 [S1-a Row observer replay tail 대여](../evidence/module-independence-survey-20261026.md#s1a-borrowed-observer): `semantic_row::transition::observe_borrowed`가 replay tail을 빌려 쓰고 모든 출구에서 0으로 복원한다. 미호출이며 S1-b가 Row replay arm에 연결한다.
+
+2026-10-29 [S1-f CheckedTable 발급자](../evidence/module-independence-survey-20261026.md#s1f-finish-table): `read/statement.rs`의 `finish_table`이 `CheckedTable`을 만드는 유일한 경로다. 아직 이를 소비하는 Row 쓰기·읽기 본문은 없다.
+
+2026-10-29 [U2-C4 단일 current 전환](../evidence/module-independence-survey-20261026.md#u2-single-current): branch `claude/project-thread-h2j8oc`에서 Profile3/Root3/Job3/base4가 current 형식이다. Profile1은 DEV2 v1 arm, 그 밖은 명시 거절이다. genesis native PASS, Catalog·recovery native는 로컬 실행이 남았다.
+
+2026-10-29 [C3 scope3 Row 전이 producer·observer](../evidence/module-independence-survey-20261026.md#c3-row-transition): branch `claude/project-thread-h2j8oc`의 `semantic_row/transition*`가 Row 거래의 C 소유 group을 만들고 A Forward·CLR을 포함한 전체 group을 바이트로 검산한다. 아직 어떤 경로도 부르지 않는다. n1 selector 7개 PASS, 독립 검토 2회.
+
+2026-10-29 [A INSERT statement driver](../evidence/module-independence-survey-20261026.md#a-insert-driver): branch `claude/project-thread-h2j8oc`의 `row/insert/driver*`가 C0 경계 위에서 INSERT 문장 흐름과 rollback hand-back을 구현한다. MCA00-D01..14 PASS(C0_ONLY), 독립 검토 3회. live 입구는 컴파일만 확인했다.
+
+2026-10-29 [U2 base4 Catalog 잔여 연결](../evidence/module-independence-survey-20261026.md#base4-catalog-wiring): branch `claude/project-thread-h2j8oc`에서 base4의 Catalog-scope 의미 잔여를 Profile3 ledger로 검증한다. 11개 PASS, 독립 검토 필수0. production 호출은 U2-C4 전환 때 생긴다.
+
+2026-10-29 [U2-C2 base4 closure](../evidence/module-independence-survey-20261026.md#base4-closure): branch `claude/project-thread-h2j8oc`에 공유 Catalog seam과 base4 Row recovery base 관찰자를 더했다. r5 10개·통합 재실행 10개 PASS, 독립 검토 4회. production 호출은 없고 Catalog-scope 잔여 연결은 다음 commit 몫이다.
+
+2026-10-29 [U2-C4a/C4b 전환 준비](../evidence/module-independence-survey-20261026.md#u2-switch-prep): branch `claude/project-thread-h2j8oc`에 설치 Profile 문법 공급과 Profile3 입력 corpus(genesis3-namespace, native3, memory-gap3, memory-retire3)를 더했다. 신규7·재실행5 PASS, 독립 검토 2회. production은 아직 호출하지 않으며 전환은 U2-C4c 몫이다.
+
+2026-10-29 [U2-C3 Catalog scope2 Profile3 adapter](../evidence/module-independence-survey-20261026.md#catalog3-adapter): branch `claude/project-thread-h2j8oc`에서 Catalog 관찰자가 정확한 Profile3 분기로 Root3/Job3와 혼합 Job3 bank를 수용하고 row_high를 보존한다. 신규10·Profile2 재실행14 PASS, 독립 검토 2회. runtime 연결은 U2-C4 전환 때 한다.
+
+2026-10-29 [B Row 읽기 driver](../evidence/module-independence-survey-20261026.md#b-read-driver): branch `claude/project-thread-h2j8oc`에서 `row/read/driver*`가 point read·cursor를 C0 경계 위에 올렸다. MCB00-D01..12 PASS, 독립 검토 2회(필수2 해결). live 입구는 컴파일만 확인했고 실제 source 연결은 미완료다.
+
+2026-10-29 [A Row INSERT scope3 후보 생산](../evidence/module-independence-survey-20261026.md#consumer-a-scope3-forward-clr): branch `claude/project-thread-h2j8oc`에서 `row/insert/group*`가 Forward·CLR 후보 frame과 다섯 after를 만들고 모든 입력 거부를 첫 출력 전에 끝낸다. MCA00-V06 16 selector PASS, 독립 검토 2회(필수1 해결). 실제 C3 lane·WAL·replay 연결은 미완료다.
+
+2026-10-29 [U2-C1 Profile3 genesis 순수 공급](../evidence/module-independence-survey-20261026.md#row-genesis3-supply): branch `claude/project-thread-h2j8oc`에서 호출자 없는 Row genesis encode/validate와 Row·Profile3 source 상계를 공급했다. 신규6 선택 PASS, 독립 검토 반영 r2 3선택 PASS. current Profile3 전환은 미완료다.
+
+2026-10-29 [C0 Row 소비 경계](../evidence/module-independence-survey-20261026.md#c0-row-boundary): branch `claude/project-thread-h2j8oc`에서 `plan4_apply/row.rs`와 `row/{write,read,rollback}.rs`에 Row write·read operation·live rollback wrapper와 `commit_row`·`finish_aborted`·cursor credit을 공급했다. 본문은 효과 전 Unsupported이며 credit은 view를 빌린다. compiler probe와 runtime 선택이 각 1회 PASS, 독립 검토 필수1 반영. 실제 C2/C3 adapter·C4 recovery 타입·A/B 연결·M4/M5는 미완료다.
+
 2026-10-29 [실제 Job page·원 bank 전이](../evidence/module-independence-survey-20261026.md#row-job-images): main `21592e9`에서 Job11개 전이·원64 bank·실제 page/native/redo를 결합했다. raw26쌍·source별 신규10개 선택 검증과 최종 독립 D1/D2 한정 수용·필수 수정0을 확인했다. 전체 M4/M5는 미완료다.
 
 2026-10-29 [실제 RowLeaf·같은 frame Undo/Status](../evidence/module-independence-survey-20261026.md#row-leaf-images): main `7baef05`에서 원 schema/anchor·Job·sealed payload와 Row 전이/이웃 보존을 연결한다. 독립 입력15쌍·source별 신규8개 선택 검증을 통과했다. 최종 독립 D1/D2 한정 수용·필수 수정0이며 전체 M4/M5는 미완료다.

@@ -84,14 +84,19 @@ fn static_source<W: WriterNamespace>(
     let old = super::super::resources::source_census::<W>();
     let core = dirty_frame::plan4_core_census();
     // These are observations of actual types, not copies of a fabricated old
-    // authority. Only the recorded G5 values below have a historical baseline.
+    // authority. Only the recorded G5 values below have a historical baseline,
+    // carried forward through later layout decisions. G5 recorded Plan4Pages
+    // 17240, SharedPool 17216 and LiveDirectory 5160; the single registry
+    // leaf's Option slots are 64 x 8 bytes below the G5 OnceLock slots, the
+    // compact DPT rows save 3072, and the fields added since G5, the LOAD
+    // claim among them, add 216.
     let baseline = [
         ("Writer", size_of::<W>(), old_writer),
         ("File", size_of::<W::File>(), old_file),
         ("MutableStorageOwner", c.original_owner, old_owner),
-        ("Plan4Pages", old.bound, 17_240),
-        ("SharedPool", core.pool, 17_216),
-        ("LiveDirectory", core.directory, 5_160),
+        ("Plan4Pages", old.bound, 13_872),
+        ("SharedPool", core.pool, 13_848),
+        ("LiveDirectory", core.directory, 4_648),
         ("Mode", core.mode, 1),
     ];
     for (name, actual, prior) in baseline {
@@ -137,7 +142,13 @@ fn static_source<W: WriterNamespace>(
     assert!(resources::fits::<W>());
     assert!(c.original_owner <= 32_768 && size_of::<W::File>() <= 16_384);
     assert!(c.peak <= 65_536 && c.metadata <= 196_608 && c.whole <= 262_144);
-    assert_eq!(c.metadata, c.peak + 36 * control::SLOT_BYTES);
+    // D3-ROW-RESOURCE-001 retains the visibility registry 8192, the isolation
+    // and epoch backing 5760 and the long caller-handle envelope 49152 beside
+    // the 36 ledger slots: 73856 + 49152 above the peak.
+    assert_eq!(
+        c.metadata,
+        c.peak + 36 * control::SLOT_BYTES + 8_192 + 5_760 + 49_152
+    );
     assert_eq!(c.whole, c.metadata + 65_536);
     assert_eq!(
         (
@@ -149,7 +160,9 @@ fn static_source<W: WriterNamespace>(
         ),
         (196_608, 1_572_864, 114_688, 4_194_304, 1_572_864),
     );
-    assert_eq!(old.old_common_delta, 0);
+    // The G5 owner forbids only growth; the Option slots leave the directory
+    // 64 x 8 bytes below its pre-G5 shape.
+    assert_eq!(old.old_common_delta, 512);
     for (name, actual, cap) in flush_layout {
         if matches!(
             name,
@@ -167,7 +180,8 @@ fn static_source<W: WriterNamespace>(
 fn retention_source_memory() {
     let mut h = Harness::new(&["P4-LIVE-ST01"]);
     h.case("P4-LIVE-ST01", || {
-        static_source::<port::Writer>("actual-memory", 8, 32, 848)
+        // 848 before the WAL runtime gained its 8-byte first-write marker.
+        static_source::<port::Writer>("actual-memory", 8, 32, 856)
     });
     h.finish();
 }
@@ -177,7 +191,10 @@ fn retention_source_memory() {
 fn retention_source_native() {
     let mut h = Harness::new(&["P4-LIVE-ST02"]);
     h.case("P4-LIVE-ST02", || {
-        static_source::<super::super::native::Writer>("actual-native", 16, 160, 984)
+        // G5 recorded File 160 and owner 984: the native adapter File then held
+        // its 128-byte trace name inline, and the owner, which retains one
+        // File, predates the 8-byte first-write marker.
+        static_source::<super::super::native::Writer>("actual-native", 16, 32, 864)
     });
     h.finish();
 }

@@ -1,12 +1,16 @@
-//! First inline INSERT input and RowLeaf candidate production.
-//! C0 only: these functions neither reserve an identity nor emit a complete
-//! Forward/CLR group. Actual reserve, whole-group validation and apply belong
-//! to the original disk owner; no leaf candidate is an installation grant.
+//! First inline INSERT input, RowLeaf candidate and complete scope3 Forward/CLR
+//! candidate production. C0 only: these functions neither reserve an identity
+//! nor stage, append or install a group. Actual reserve, whole-group validation
+//! and apply belong to the original disk owner; no candidate is a grant.
 #![allow(
     dead_code,
-    reason = "actual Row reservation/group adapter is not supplied yet"
+    reason = "no product caller in S2: the driver's live mode and the producers are reached from tests only"
 )]
 
+pub(in crate::storage) mod driver;
+mod group;
+#[cfg(test)]
+mod group_tests;
 mod leaf;
 #[cfg(test)]
 mod tests;
@@ -15,26 +19,43 @@ use crate::storage::{
     catalog_record::{self, CatalogDefinitionView, CatalogError, TableDefinitionView},
     disk::{
         RowInputPlan, RowOperation, RowPageRole, RowPreflightContext, RowProducerInput,
-        RowProducerLane, RowSourceRole, RowValidationLane,
+        RowProducerLane, RowProposal, RowSourceRole, RowValidationLane,
     },
+    obligation::ObligationError,
     overflow::INLINE_ROW_BYTES,
     page::{PAGE_BYTES, PageError, PageKind, PageLsn},
+    retention_obligation::AgingObligationError,
+    retention_page::RetentionError,
     row_record::{self, RecordVersion, RowError, RowSchemaInput, ValueRef},
+    semantic_row,
     transaction_record::{LogicalRowVersion, VersionStamp},
     tree_page::{TreeError, edit::LeafEditError},
+    undo_record::UndoError,
+    wal_frame::WalError,
 };
 use foundation::codec::content_digest;
 
+/// Contract section 6.6 names this `RowError`; `row_record::RowError` is the
+/// existing codec error wrapped below, so the producer keeps `InsertError`.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub(crate) enum InsertError {
     Unsupported,
     Capacity,
     IdentityMismatch,
+    InvalidInput,
+    OrderMismatch,
+    BudgetMismatch,
     Row(RowError),
     Catalog(CatalogError),
     Page(PageError),
     Tree(TreeError),
     LeafEdit(LeafEditError),
+    Retention(RetentionError),
+    Obligation(ObligationError),
+    Aging(AgingObligationError),
+    Undo(UndoError),
+    Wal(WalError),
+    Layout(semantic_row::Error),
 }
 
 impl From<RowError> for InsertError {
@@ -60,6 +81,36 @@ impl From<TreeError> for InsertError {
 impl From<LeafEditError> for InsertError {
     fn from(value: LeafEditError) -> Self {
         Self::LeafEdit(value)
+    }
+}
+impl From<RetentionError> for InsertError {
+    fn from(value: RetentionError) -> Self {
+        Self::Retention(value)
+    }
+}
+impl From<ObligationError> for InsertError {
+    fn from(value: ObligationError) -> Self {
+        Self::Obligation(value)
+    }
+}
+impl From<AgingObligationError> for InsertError {
+    fn from(value: AgingObligationError) -> Self {
+        Self::Aging(value)
+    }
+}
+impl From<UndoError> for InsertError {
+    fn from(value: UndoError) -> Self {
+        Self::Undo(value)
+    }
+}
+impl From<WalError> for InsertError {
+    fn from(value: WalError) -> Self {
+        Self::Wal(value)
+    }
+}
+impl From<semantic_row::Error> for InsertError {
+    fn from(value: semantic_row::Error) -> Self {
+        Self::Layout(value)
     }
 }
 type Result<T> = std::result::Result<T, InsertError>;
@@ -157,7 +208,7 @@ pub(crate) struct InsertLeafCandidate {
 pub(in crate::storage) fn produce_insert_leaf(
     lane: RowProducerLane<'_>,
 ) -> Result<InsertLeafCandidate> {
-    let (context, _control, before, schema_bytes, frame, after, candidate) = lane.parts();
+    let (context, _control, before, schema_bytes, frame, after, candidate, _scratch) = lane.parts();
     if context.operation() != RowOperation::Forward {
         return Err(InsertError::Unsupported);
     }
@@ -223,6 +274,107 @@ pub(in crate::storage) fn produce_insert_leaf(
     })
 }
 
+/// Complete scope3 INSERT Forward candidate: the whole tag3 frame in `frame`
+/// and five after images in the lane's physical order. The canonical value is
+/// the reserve-sealed candidate prefix. Nothing here reserves, stages, installs
+/// or appends; the original owner must recheck the proposal and every byte.
+pub(in crate::storage) fn produce_insert(lane: RowProducerLane<'_>) -> Result<RowProposal> {
+    propose(lane, RowOperation::Forward)
+}
+
+/// Complete CLR candidate for the U-owned Missing INSERT, using the owner's
+/// actual current Row/RootJob observation and rollback target. Same limits.
+pub(in crate::storage) fn produce_clr(lane: RowProducerLane<'_>) -> Result<RowProposal> {
+    propose(lane, RowOperation::Clr)
+}
+
+/// Thin adapter: copy lane getters into plain inputs, then call the pure core.
+fn propose(lane: RowProducerLane<'_>, operation: RowOperation) -> Result<RowProposal> {
+    let (context, control, before, schema_bytes, frame, after, candidate, scratch) = lane.parts();
+    if context.operation() != operation {
+        return Err(InsertError::Unsupported);
+    }
+    let change = match (operation, context.input()) {
+        (
+            RowOperation::Forward,
+            RowProducerInput::Insert {
+                canonical_len,
+                canonical_digest,
+            },
+        ) => {
+            let canonical = candidate
+                .get(..*canonical_len)
+                .ok_or(InsertError::IdentityMismatch)?;
+            if content_digest(canonical) != *canonical_digest {
+                return Err(InsertError::IdentityMismatch);
+            }
+            group::Change::Forward { canonical }
+        }
+        (
+            RowOperation::Clr,
+            RowProducerInput::Clr {
+                current_row_len,
+                current_projection,
+                rollback_target,
+                next,
+            },
+        ) => group::Change::Clr {
+            cell_bytes: *current_row_len,
+            projection: *current_projection,
+            target: *rollback_target,
+            next: *next,
+        },
+        _ => return Err(InsertError::Unsupported),
+    };
+    let table = schema(context.schema(), schema_bytes)?;
+    let mut sources = [None; 9];
+    for (source, role) in sources.iter_mut().zip(group::SOURCE_ROLES) {
+        *source = context.source(role).map(|binding| {
+            let (identity, kind, level) = binding.expected();
+            group::Source {
+                index: usize::from(binding.before_index()),
+                identity,
+                kind,
+                level,
+                cell: binding.cell(),
+            }
+        });
+    }
+    let input = group::GroupInput {
+        profile: context.schema().profile(),
+        table: context.schema().table(),
+        schema: RowSchemaInput::Catalog(table),
+        leaf: context.schema().leaf_expected(),
+        expected: context.frame_expected(),
+        header: context.header(),
+        actor: context.actor(),
+        status: context.status(),
+        row: context.row(),
+        undo: context.undo(),
+        statement: context.statement_sequence(),
+        mutation: context.planned_mutation(),
+        mark: context.statement_mark(),
+        predecessor: context.predecessor(),
+        root_job: usize::from(context.root_job_ordinal()),
+        terminal_job: usize::from(context.terminal_job_ordinal()),
+        sources,
+        before,
+        before_count: usize::from(context.before_count()),
+        after_order: context.after_order(),
+        jobs: control.jobs(),
+        transaction: control.transaction(),
+        aging: control.aging(),
+        change,
+    };
+    let produced = group::produce(&input, frame, after, scratch)?;
+    Ok(RowProposal::new(
+        operation,
+        produced.frame_len,
+        produced.after_count,
+        produced.roles,
+    ))
+}
+
 /// Nonrecursive inventory of A's local carriers, excluding caller-owned page
 /// and frame loans. Shared codec locals and overlapping caller frames still
 /// require the root's source census; this is not an aggregate peak proof.
@@ -242,6 +394,10 @@ pub(crate) fn local_source_carrier_bytes() -> (usize, usize) {
         + size_of::<crate::storage::disk::RowControlObservation<'_>>()
         + size_of::<leaf::LeafInput<'_>>()
         + size_of::<Result<InsertLeafCandidate>>()
-        + leaf::local_source_carrier_bytes();
+        + leaf::local_source_carrier_bytes()
+        + size_of::<[Option<group::Source>; 9]>()
+        + size_of::<group::Change<'_>>()
+        + size_of::<Result<RowProposal>>()
+        + group::local_source_carrier_bytes();
     (validation, producer)
 }

@@ -1,5 +1,75 @@
 # XADB 모듈 독립 개발 구조 전환 작업 계획
 
+2026-10-30 [S2-f V09 대체 oracle과 S2 마감](../evidence/module-independence-survey-20261026.md#s2f-closeout): RowWrite writer가 resident reader 둘의 반환을 기다린 뒤 admission 경계를 지키는 MBC10-V09와 MBC40-V09 census(부분 공급)를 더했고, S2-e와 합친 통합 시험 186건이 통과했다. 실제 census와 계약 읽기는 [S2 공급 기록](../contracts/dev3-module-boundaries.md#row-write-s2-supply)에 있다. 사용자 지시로 S2에서 멈추며 다음은 S3다.
+
+2026-10-30 [S2-e A INSERT driver live 경로와 frame-static D15](../evidence/module-independence-survey-20261026.md#s2e-live-driver): A driver가 실제 C wrapper로 행을 넣고 거절·Cancel·FlushRequired 재시도를 처리하는 live 시험 11건으로 G2를 닫았다. A driver를 단계별 frame으로 나눠 모든 C 호출 지점에서 A frame 전체가 상한 안이다(가장 작은 여유 preflight 813B).
+
+2026-10-30 [S2-d Row Cancel 본문과 S2-c 위 통합](../evidence/module-independence-survey-20261026.md#s2d-row-cancel): Reserve한 행을 replay 없이 취소하고, Forward와 entry·재계산·반환을 공유하도록 합쳤다. 통합 시험 170건이 통과했고 cancel의 C 쪽 여유는 1579B다. finish를 빼고 쓰기 단계가 모두 실제 본문이다. 다음은 S2-e(A driver live 경로)다.
+
+2026-10-30 [S2-c Row Forward 경로](../evidence/module-independence-survey-20261026.md#s2c-row-forward): producer_lane·prepare·apply가 replay 없이 draft commitment를 다시 계산하며 Forward를 설치한다. 실제 census는 C 쪽 여유 producer_lane 6023·prepare 1946·apply 1842B이고, 시험 156건이 통과했다. 다음은 같은 base에서 병렬로 만든 S2-d(cancel) 통합이다.
+
+2026-10-30 [S2-b2 validation_lane·RowReserve 본문](../evidence/module-independence-survey-20261026.md#s2b2-row-reserve): reserve가 replay 없이 preflight commitment를 다시 계산하고 RowReserve를 설치한다. 실제 census는 C 쪽 여유 +795B(가장 작은 단계)로 상한 안이고, 시험 144건이 통과했다. 다음은 S2-c(producer_lane·prepare·apply)와 S2-d(cancel)다.
+
+2026-10-30 [S2-b1 Row 쓰기 preflight 본문](../evidence/module-independence-survey-20261026.md#s2b1-row-preflight): 행당 한 번의 `validate_live`·arena 검산과 commitment를 가진 실제 preflight가 들어갔다. 실제 census는 C 쪽 여유 +1112B로 상한 안이고, 새 시험 17건과 통합 시험 127건이 통과했다. 다음은 S2-b2(reserve)다.
+
+2026-10-30 [A-W1 A driver 축소와 호출 지점별 몫](../evidence/module-independence-survey-20261026.md#a-w1-driver): M1·M2로 A producer가 50790 → 19260B로 줄었고, MCA00-D15에서 모든 C 호출 지점의 A 몫이 상한 안이다(preflight 3264/6144, 나머지 최대 6552/11520). M7은 필요 없다. `FlushRequired` 뒤 flush와 재시도가 들어갔다.
+
+2026-10-30 [S2-a′ RowWrite census 재계수](../evidence/module-independence-survey-20261026.md#s2a-prime-census): S2-0b대로 C 단계 상계를 다시 세고 A 몫 상한을 preflight 6144B·나머지 11520B로 나눴다. 모든 단계의 C 쪽 여유가 양수다(최소 prepare 1147B). 다음은 S2-b1과 A-W1이다.
+
+2026-10-30 [S2-0b Row 쓰기 replay 검산 재배치 반영](../evidence/module-independence-survey-20261026.md#s2-0b-validate-once): Q06 2차 개정을 독립 D2 r3 ACCEPT 뒤 계약에 넣었다. 개정 내용은 다음과 같다. `validate_live`는 행당 preflight 한 번만 하고 digest 연쇄로 잇는다. group carrier 계수를 정정한다. A 몫 상한을 6144·11520B 둘로 나눈다. 다음은 S2-a′(census 구조와 두 상수)이고, A-W1과 S2-b1~S2-d가 그 뒤를 잇는다.
+
+2026-10-30 [S2-a Row 쓰기 최종 표면](../evidence/module-independence-survey-20261026.md#s2a-row-write-surface): RowWrite class, preflight step·gate·lease·cut·8번째 lane part와 A 적응을 넣었다(본문은 Unsupported). 단계 census로 `ROW_WRITE_CALLER_BYTES`가 58B로 정해졌고, A-W1 전에 C 본문을 줄이는 Q06 2차 개정이 필요하다.
+
+2026-10-30 [CR1 Catalog native 로컬 실행](../evidence/module-independence-survey-20261026.md#cr1-catalog-native-r2): 사용자 PC에서 `2bc18d1`로 사전 census 4건 PASS, 독립 admission ACCEPTED 뒤 Catalog native N01·N02·N03이 모두 PASS했다. U2-C4 전환의 로컬 요구가 끝났다.
+
+2026-10-30 [branch Clippy 정리](../evidence/module-independence-survey-20261026.md#branch-clippy-20261030): pre-push gate의 Clippy 31건을 사유를 단 allow와 동작이 같은 작은 수정으로 정리했다(`dd81d85`). 이후 단위는 round마다 Clippy도 돌린다.
+
+2026-10-30 [native 시험 adapter 정정과 CR1 범위 변경](../evidence/module-independence-survey-20261026.md#native-adapter-file-cr1-scope): 시험 전용 native adapter의 `File` 크기 차이가 commit window native 초과의 원인이었다(PR #3과 같은 정정 `94ede44`, native pending_full 66612 → 65460). native census가 memory + 8B로 내려왔다. 사용자 결정으로 F05를 CR1에서 뺐고 CR1은 Catalog native N01–N03만 남는다.
+
+2026-10-30 [S2-0 Row 쓰기 계약 개정 반영](../evidence/module-independence-survey-20261026.md#s2-0-q06-amendment): Q06 개정(gate·flush lease를 보유하는 preflight와 `FlushRequired` step, lane 8번째 part, phase별 호출 지점 계수, 128B cut, S2-e 진입 조건, V09·MCI03-V02 oracle 대체)을 독립 D2 r3 ACCEPT 뒤 계약에 넣었다. 사용자 지시에 따라 이 branch는 S2(S2-a·A-W1·S2-b1~S2-f)까지만 진행하고 S5는 진행하지 않는다.
+
+2026-10-29 [S2/S5 설계와 Row 쓰기 예산 판정](../evidence/module-independence-survey-20261026.md#s2-design-q06): S2의 Forward producer 단계가 60625B로 진행 charge 44304B를 넘어 Q06 재검토가 필요하다. lane 8부분·preflight flusher를 담은 개정 초안(D2 r1 필수 5 반영)을 만들었으나, 사용자 결정(S1까지만 마무리)에 따라 계약에는 넣지 않았고 S2 구현은 시작하지 않았다.
+
+2026-10-29 [S1-e Row statement mark와 두 번째 문장](../evidence/module-independence-survey-20261026.md#s1e-statement-mark): Row 문장이 ATT `undo_head`를 slot 88..128에 mark로 쓰고, 매 경계에서 sequence·mark를 하나의 비교로 대조하며, 깨끗한 종료 뒤 두 번째 문장을 연다. cap 불변(handle 408 ≤ 512). 신규 11 PASS, 통합 round 33 PASS. 독립 검토 필수0. 이로써 S1(S1-a~S1-g)이 모두 공급됐고 다음은 S2-0 Q06 개정이다.
+
+2026-10-29 [S1-g RowReserve replay 값 commitment 채택](../evidence/module-independence-survey-20261026.md#s1g-reserve-replay): recovery가 RowReserve frame에서 C와 projection만 채택하고 나머지를 다시 계산해 replay하며, Row root의 U allocator 항목을 Reserve arm과 결합 closure에서 검산한다. 새 counted 항 없음(history_row 25707/25743). 신규 7 selector PASS, 통합 round 2회. 독립 검토 필수0. S2가 live RowReserve를 쓰기 위한 선행 조건이 갖춰졌다.
+
+2026-10-29 [S1-d Row Begin과 빈 Row 철회](../evidence/module-independence-survey-20261026.md#s1d-row-begin): Row Begin과 빈 full abort를 Catalog lifecycle과 같은 gate/progress shell과 설치 본문으로 공급하고, Row control byte는 replay와 같은 `history::row::record`만 쓴다. slot kind 2, RowProgress class, Catalog 진입점의 Row capsule 거절, S1-b 검토의 A1·A2·A3·A9·A13을 닫았다. cap 불변(Catalog lifecycle native 44253/44304). 신규 14 PASS, 실패 16은 base와 같음. 독립 검토 필수0.
+
+2026-10-29 [S1-b/S1-c Row replay arm과 혼합 bank](../evidence/module-independence-survey-20261026.md#s1b-row-replay): `apply_frame` scope3 arm을 `history/row.rs`의 단일 Row 본문으로 공급하고 결합 closure와 Row 상태를 거절하는 임시 분석 gate를 더했다. Catalog 선택 loop는 Row cell을 건너뛰고 Job3 오류는 보존한다. recovered peak 불변(65368/65504). 신규 17 selector PASS, 기존 실패 6은 base와 같음. 독립 검토 필수0. RowReserve replay(Q1)는 S2 전에 정한다.
+
+2026-10-29 [S1-a Row observer replay tail 대여](../evidence/module-independence-survey-20261026.md#s1a-borrowed-observer): N1 observer의 큰 배열을 WORK_END tail 9076B로 빌리는 `observe_borrowed`를 더했다. 모든 출구에서 tail을 0으로 되돌린다. borrowed bound 21323B로 S1-b Row arm에 2996B 여유를 남긴다. 11 selector PASS, 독립 검토 3회. 아직 호출되지 않으며 연결은 S1-b다.
+
+2026-10-29 [S1-f CheckedTable 발급자](../evidence/module-independence-survey-20261026.md#s1f-finish-table): `CatalogStatementCall::finish_table`을 `CheckedTable`의 유일 발급자로 공급했다. 같은 호출의 lookup Found만 근거로 하고, publication과 isolation lock을 겹치지 않게 잡으며 read bit·catalog flag를 반환 전에 등록한다. 전환된 형식에서 8 selector PASS, 독립 검토 2회(필수2 반영). 오류 형식 정정과 미공급 문구를 계약에 반영했다.
+
+2026-10-29 [U2-C4 단일 current 전환](../evidence/module-independence-survey-20261026.md#u2-single-current): Profile3 → Root3/Job3 → base4를 유일한 current 형식으로 바꿨다. 이전 Profile2-current 지점은 모두 정확한 `{3, 1, 명시 거절}` 분기이고 `>=`·dual-current·fallback은 없으며 순수 Profile2 codec은 남겼다. recovered peak native 65504·memory 65368(cap 65536). r1 304·r3 30 selector가 동결 기대와 일치하고, base 실패 34개는 main `85ceef3`에서도 같은 위치로 실패한다. genesis native PASS. 독립 검토 2회 수용. Catalog native와 F05 recovery native는 사용자 로컬의 남은 요구(CR1)다.
+
+2026-10-29 [C3 scope3 Row 전이 producer·observer](../evidence/module-independence-survey-20261026.md#c3-row-transition): `semantic_row::transition`에 Row 거래의 C 소유 group producer(AgingStart·Begin·Reserve·Cancel·RollbackStart·StatementFinish·Commit·AbortEnd·Prune·ReleaseRole·RootFree·TerminalFinish)와 A Forward·CLR까지 받는 borrowed whole-group observer를 미호출 공급으로 더했다. Reserve는 첫 효과 전 RowLeaf proof를 한다. 독립 literal 바이트 비교 7 selector PASS(r1 FAIL2 보존), 독립 검토 2회 필수0, source bound 35256B. 연결은 U2-C4 전환 뒤 S1이다.
+
+2026-10-29 [Row Begin·Row 쓰기 capsule 계약 등록](../contracts/dev3-module-boundaries.md#row-begin-capsule): U2-C4 전환 뒤 S1이 공급할 명시 `MutationPort::begin_row_transaction`(registry16 Terminal recipe로 scope를 Begin에 고정), slot actor kind 2(Row, RAM 전용), Catalog/Row capsule 혼합의 효과 전 거절, Row 문장 mark(ATT undo_head), `CatalogStatementCall::finish_table` 한정 공급, live·replay 공용 `history/row.rs` 본문, C4 전까지의 Row scope 분석 gate와 WORK_END tail 차용 자원 규칙을 XADB-MODULE-ROW-BEGIN-001로 등록했다. 독립 D2 검토 2회(필수 7, 재검토 필수 2)를 모두 반영해 수용됐다. 계약 등록만이며 코드·시험은 없다.
+
+2026-10-29 [A INSERT statement driver](../evidence/module-independence-survey-20261026.md#a-insert-driver): A 전용 경로에 C0 Row 경계를 소비하는 문장 driver(행별 preflight→Reserve→produce→prepare/apply, Cancel·caller 구동 문장 rollback·Commit·full abort)를 더하고 C0_ONLY `MCA00-D01..14`를 등록했다. r1 D12 FAIL을 보존하고 r4에서 14개 PASS, 독립 검토 필수2 해결·마지막 필수0이다. live 연결은 C3의 Row Begin/CheckedTable, write·rollback 본문과 flush-through(G1)·rollback drop 의미(G5) 공급 뒤에 한다.
+
+2026-10-29 [U2 base4 Catalog 잔여 연결](../evidence/module-independence-survey-20261026.md#base4-catalog-wiring): base4 Row graph의 Catalog hook을 U2-C3 Profile3 ledger로 연결하고 XOI Row3 모드에 Catalog Reserved item을 투영해 `CatalogUnwired`를 없앴다. Catalog-scope actor가 있는 base4가 이제 끝까지 검증되며, selector 11개 PASS·독립 검토 필수0이다. B4는 59675B다. U2-C4 전환의 선행 P1–P5가 모두 공급되었다.
+
+2026-10-29 [U2-C2 base4 순수 closure](../evidence/module-independence-survey-20261026.md#base4-closure): Catalog base의 relations·ledger·allocation·XOI 본문을 공유 seam 하나로 바꾸고, 그 위에 Profile3 recovery base(base4)의 Row graph·actor·table·Row ledger·Row Reserved 관찰자를 순수 공급했다. 독립 검토 네 번(필수 1·1·1 해결, 마지막 필수0)으로 미 Prune CREATE 행 수용과 creator 뒤 q 순서를 더했고, r5 10개와 통합 tree 재실행 10개가 PASS다. base3 기존 selector의 FAIL11은 main의 기존 실패와 같다. Catalog-scope 의미 잔여는 `CatalogUnwired`로 닫혀 있고 다음 wiring commit이 U2-C3 ledger로 연결한다. B4는 59707B다.
+
+2026-10-29 [U2-C4a/C4b 전환 준비 공급과 Profile3 입력](../evidence/module-independence-survey-20261026.md#u2-switch-prep): 단일 current 전환이 쓸 순수 공급으로 정확한 한 decoder만 고르는 설치 Profile 문법(`decode_installed_profile`, `PageFileReader::open_profile`, flush_io helper)과 전환 뒤 recovery census 투영을 더하고, Profile3 genesis 전체 namespace와 native3·memory-gap3·memory-retire3 입력 corpus를 stdlib generator로 동결했다. 신규7 PASS, 검토 필수1(낡은 U2-C2 입력 인용)·권고8을 반영해 5개 재실행 PASS, 재검토 새 필수0이다. production 호출과 product 실행은 없고, native 투영 여유는 8B(보수 입력)다. 전환(C4c)은 U2-C2 통합 뒤에 한다.
+
+2026-10-29 [U2-C3 Catalog scope2 Profile3 adapter](../evidence/module-independence-survey-20261026.md#catalog3-adapter): `semantic_catalog::format`의 `Format`/`CatalogJob` seam으로 Catalog 관찰자 본문 하나가 정확한 Profile 2/3 분기로 version2와 Root3/Job3를 함께 처리하고, runtime alias 교체용 `retention_page::catalog3` view·guarded Root3 encode·Row Aging 상계를 더했다. r1 FAIL2(author의 sender digest 결함)를 보존하고 r2–r4로 신규10·Profile2 재실행14가 PASS, 독립 검토 필수2 해결·재검토 새 필수0이다. current 전환(U2-C4)은 base4 closure(U2-C2) 뒤에 한다.
+
+2026-10-29 [B Row 읽기 driver](../evidence/module-independence-survey-20261026.md#b-read-driver): B 독점 경로에서 C0 read operation·view·cursor credit을 소비하는 point read와 `RowCursor`를 더했다. 독립 검토 필수2(cursor open 오류 순서, operation·table과 view의 결속)를 고쳐 B가 판정하는 같은 view에서 operation을 직접 열게 했고, r2 MCB00-D01..12 각1회 PASS·재검토 해결(새 필수0)이다. 통합 때 `Owner` 형식을 disk API로 재노출했다. 실제 C2 Row read source와 MCB01–05·MCI는 미완료다.
+
+2026-10-29 [A Row INSERT scope3 Forward/CLR 후보 생산](../evidence/module-independence-survey-20261026.md#consumer-a-scope3-forward-clr): A 독점 경로에서 C0 관측값으로 Forward·CLR 후보 group(observe→prepare→frame)을 만드는 순수 본문과 MCA00-V06 독립 literal을 더했다. r1 신규7 PASS 뒤 독립 검토 필수1(출력 뒤 거부)을 고쳐 모든 입력 거부를 첫 출력 byte 전으로 옮겼고, r2 16 selector 각1회 PASS·재검토 해결(새 필수0)이다. test build는 30초 case 한도를 넘는 cold build였다. 실제 RowReserve·lane·WAL·install·replay와 MCA01–05·MCI는 C3/C4 공급 뒤 남는다.
+
+2026-10-29 [U2-C1 Profile3 genesis 순수 공급](../evidence/module-independence-survey-20261026.md#row-genesis3-supply): `31e4614` 위에서 current 전환 전에는 호출되지 않는 `retention_genesis::{encode,validate}_row_current`와 Row Root3 decode·Row codec·Profile3 codec·genesis source 상계를 더했다. stdlib 독립 author의 genesis page12·거절7과 신규6 선택이 각1회 PASS, 독립 검토 필수1(증거 hash 표기)·선택 반영 뒤 바뀐3 선택 r2 PASS. current는 Profile2 그대로이며 base4 closure(U2-C2)·Catalog Profile3 adapter(U2-C3)·단일 전환(U2-C4)은 미완료다.
+
+2026-10-29 [C0 Row 소비 경계](../evidence/module-independence-survey-20261026.md#c0-row-boundary): `036d4be` 위에서 A/B 본문이 호출할 Row write(preflight→RowReserve→prepare/apply/cancel)·read operation·live rollback wrapper와 Commit/abort 종료, cursor credit을 실제 타입으로 공급했다. 본문은 효과 전 Unsupported이고 cursor credit만 원 slot에512B를 실제 예약한다. 독립 검토의 필수 지적(credit이 view보다 오래 남으면 거래 종료가 fence)을 credit이 view를 빌리도록 고쳐 [계약](../contracts/dev3-module-boundaries.md#c0-row-boundary)에 기록했다. compiler probe r1 14개·r2 바뀐4개, runtime r1 2개·r2 5개가 각 1회 PASS다. recovery 타입·MBC00-P03/N11은 C4로 남겼고 실제 C2/C3 adapter·A/B 연결·전체 M4/M5는 미완료다.
+
+2026-10-29 [R1–R3 논리 경계 판정](#r123-logical-boundaries): `76742f3`에서 L5가 남긴 논리 경계 재설계 입력 셋을 rustc 소비자 census로 닫았다. R1 `AR::operation`이 `wal_io` 경계를 넘는 것은 권한 없는 검산 함수·크기 상한·오류 enum 6개뿐이므로 현재 경로를 유지한다. R2 mixed owner 표면 15개 이름은 crate 전체로 재노출돼 있었지만 이름 경로 소비자가 0이었으므로, 초기화 파일 4곳의 중계와 `status_init`의 `pub(crate)` 재노출을 걷어냈다. 재노출 줄만 6개 파일에서 바꿨고 frozen compiler probe가 쓰는 3개 이름은 `pub(super)`로 남겼다. R3 초기화 사슬은 원 상태의 privacy seal이므로 유지한다. R2 입력과 L3 소비자 표의 grep 오판도 정정했다. [증거](../evidence/module-independence-survey-20261026.md#r123-logical-boundaries)의 `cargo check` warning 0, 시험 목록 동일을 확인했다. 시험 본문은 NOT_RUN이고, 원 checker로 경로 소비 probe 5개를 commit tree에서 PASS했다. 독립 검토는 ACCEPT·필수 수정0이다. 전체 M4/M5는 미완료다.
+
+2026-10-29 [L6 `storage::wal_io` 시험 자손 배치 적용](../evidence/module-independence-survey-20261026.md#l6-wal-io-move): `85ceef3`에서 L5 분류 밖으로 남긴 `storage/` 직속 `wal_io` 시험·지원 자손 5개를 진입 폴더 `storage/wal_io/`로 옮겼다. `#[path]` 5줄과 위치 기준 `include_bytes!` 3줄만 바꿨으며, 이동만 한 4개의 byte 동일, `cargo check` PASS, 이동 전후 시험 목록 동일을 확인했다. 시험 본문은 NOT_RUN이다. 논리 경계 재설계 R1–R3과 전체 M4/M5는 미완료다.
+
 2026-10-29 [L5-D 복구 배치 적용](../evidence/module-independence-survey-20261026.md#l5d-recovery-move): main `47e3994`에서 `recovery_prefix`의 평면 자손 3개와 `plan4_pages`의 `recovered_bind`를 각 진입 폴더로 옮겨 L5 물리 이동 40개를 마쳤다. `#[path]` 4줄만 바꿨으며, 이동만 한 4개의 byte 동일, `cargo check` PASS, 이동 전후 시험 목록 동일을 확인했다. 시험 본문은 NOT_RUN이다. `wal_io/` 직속 Rust 파일은 23개이고 이름에 `test`가 있는 직속 파일은 없다. 논리 경계 재설계 R1–R3과 전체 M4/M5는 미완료다.
 
 2026-10-29 [L5-C Status 배치 적용](../evidence/module-independence-survey-20261026.md#l5c-status-move): main `ff77992`에서 `status_init`·`status_init_operation`·`status_flush::tests::native`·`operational`·`resident`의 평면 자손 16개를 각 선언 파일의 폴더로 옮겼다. L3에서 남긴 `mixed_system_init.rs`도 여기에 포함된다. `#[path]` 16줄만 바꿨으며, 이동만 한 14개의 byte 동일, `cargo check` PASS, 이동 전후 시험 목록 동일을 확인했다. 시험 본문은 NOT_RUN이다. L5-D와 전체 M4/M5는 미완료다.
@@ -48,7 +118,7 @@
 
 2026-10-28 main `9c334fe`의 [Commit 준비·적용 단일 예약](../evidence/module-independence-survey-20261026.md#c2-commit-call)은 source별 runtime11/compiler4·원 N03 2PID를 통과했다. 원3개 FAIL을 보존하며 최종 독립 D1/D2 한정 수용다. CREATE/일반 floor/Row·M4/M5는 미완료다.
 
-2026-10-28 · **D2 ACCEPTED / M0–M3 완료 / M4 C0·C1·C2·C3 부분공급(C2 compact source·statement 읽기·Catalog Commit writer 창, C3 InstallGrant·TerminalWal·Prepared) / M5 Row 순수 codec·ledger 부분구현 / 전체 M4·M5 제품 인수 미완료 / Catalog Commit writer 창을 main에 통합**
+2026-10-29 · **D2 ACCEPTED / M0–M3 완료 / M4 C0·C1·C2·C3 부분공급(C0 Row 소비 경계의 컴파일 공급, C2 compact source·statement 읽기·Catalog Commit writer 창, C3 InstallGrant·TerminalWal·Prepared) / M5 Row 순수 codec·ledger 부분구현 / 전체 M4·M5 제품 인수 미완료 / Catalog Commit writer 창을 main에 통합**
 
 [개발 문서 진입점](../README.md) · [기존 병렬 정책](../policies/parallel-development-policy.md) · [저장소 배치](../policies/repository-build-plan.md) · [DEV3 작업 분해](dev3-implementation-plan.md#remaining-work) · [변경 코드 시험 지시](../../AGENTS.md)
 
@@ -322,7 +392,7 @@ PD01은 이 A/B 사례에 연결한다. PD02/PD03은 작업 중 실제 공통 �
 | M1 | [소유·의존 분류와 소비 후보](../evidence/module-independence-survey-20261026.md#survey)·[원 source 독립 검토](../evidence/module-independence-survey-20261026.md#review) 완료 | 선정 경계의 후속 관련 diff가 생기면 영향만 갱신 |
 | M2 | 완료·ACCEPTED. [최종 독립 D2](../evidence/module-independence-survey-20261026.md#final-design-review) 수용·필수 수정0을 수신해 API·소비자·유한 공급·인수 설계 동결 | M4/M5에서 새 반례 또는 계약 변경이 생기면 영향 행만 재검토 |
 | M3 | 완료·ACCEPTED. 소유 문서·운영/시험 JSON 채택 반영, MBC31 보완의 한정 재확인까지 독립 D2 수용·필수 수정0 | 구현에 따른 실제 공급 상태와 등록을 해당 diff에 맞춰 갱신 |
-| M4 | IN_PROGRESS. C0 borrowed codec 선택6 PASS·[독립 수용](../evidence/module-independence-survey-20261026.md#c0-borrowed-codec), 생산자 타입 compiler4 자동 PASS·수명 거절1 독립 수동 수용·원 판정기 FAIL 보존([증거](../evidence/module-independence-survey-20261026.md#c0-producer-types)). [C1 실제 물리 WAL 분리](../evidence/module-independence-survey-20261026.md#c1-physical-wal)·컴파일3 PASS와 [원 owner/port 이전](../evidence/module-independence-survey-20261026.md#c1-owner-ports)·컴파일4/신규 메모리2 PASS에 이어 [control/isolation backing](../evidence/module-independence-survey-20261026.md#c1-isolation-backing)·컴파일3/변경·신규 runtime4 PASS·독립 한정 수용. [epoch backing 소유](../evidence/module-independence-survey-20261026.md#c1-epoch-backing)·compiler3/변경 runtime3 PASS·독립 D1/D2 한정 수용. [Catalog epoch 활성화](../evidence/module-independence-survey-20261026.md#c1-epoch-activation)는 fresh/최종 복구 seeding·CREATE/Commit을 구현하고 source별 선택 실행·원 FAIL·빈 Commit 범위 정정을 보존했다. [읽기 전용 거래/statement 수명](../evidence/module-independence-survey-20261026.md#c1-read-only-capsules)과 장기 credit을 추가하고 source별 compiler·선택 runtime7 결과를 보존했다. [C2 동기 Catalog 분리](../evidence/module-independence-survey-20261026.md#c2-catalog-read)는 기존 actual lookup 수신·source별 runtime7을 확인했으며 statement factory·short aggregate는 후속이다. [조회 수명/Commit Drain 연결](../evidence/module-independence-survey-20261026.md#c2-read-operation-lifetime)은 source별 선택13을 검증했으며 동시 byte 합은 아직 미공급이다. [Catalog 후보 scratch 재사용](../evidence/module-independence-survey-20261026.md#c2-catalog-scratch)은 중복 local buffer를 제거했으나 전체 peak는 그대로이며 aggregate 여유 확보로 승격하지 않는다. [거래·Aging 생성 수명 분리](../evidence/module-independence-survey-20261026.md#c2-transaction-source-phases)는 source별12+7회 선택 PASS와 lookup42850→41552B 감소·C09 설명 정정을 보존하고 최종 독립 D1/D2를 한정 수용했다. aggregate admission은 여전히 미공급이다. [Pending 보유/stage 분리](../evidence/module-independence-survey-20261026.md#c2-pending-carrier)는 원 pin 이동·Drain 후 guard 재구성과 선택11개 PASS·실행 설명 정정을 보존하고 최종 독립 D1/D2를 한정 수용했다. [CatalogFull source 예약](../evidence/module-independence-survey-20261026.md#c2-short-source)은 원 isolation header의 고정 charge와 선택17개를 검증했고 독립 D1/D2를 한정 수용했다. [상주 Catalog class](../evidence/module-independence-survey-20261026.md#c2-resident-read)는 무 I/O 경로·두 reader의 합55976B와 선택9개 PASS·원 FAIL을 보존하며 독립 D1/D2를 한정 수용했다. [최종 source 반환 수명](../evidence/module-independence-survey-20261026.md#c2-source-return)의 선택7개를 검증하고 독립 D1/D2를 한정 수용했다. [Commit phase 관측](../evidence/module-independence-survey-20261026.md#c2-commit-phases)은 cfg(test)1 PASS·원 compiler FAIL을 보존하며 당시 source의 Full/Pending layout 충돌을 확인했다. [Pending image 수명 분리](../evidence/module-independence-survey-20261026.md#c2-pending-image)는 준비 자료568B와 관련12 PASS·원 compile FAIL을 보존한다. [source 진입 수명](../evidence/module-independence-survey-20261026.md#c2-source-entry)은 progress→source→refs와 source 실패 정리·선택5 PASS를 보존한다. [Aging/Root source 계산](../evidence/module-independence-survey-20261026.md#c2-aging-source)은 관련3 PASS·import-only compile과 Full37724B를 보존하며 Full/Pending 합69100B는 여전히 한도 초과다. [WAL wait phase 관측](../evidence/module-independence-survey-20261026.md#c2-wal-wait-source)은 cfg(test) 신규1과 반환 경계 보완1의 source별 PASS, Pending5320B/Full 합65300B를 보존하며 제품 charge는 유지한다. [Drained 실제 소비 경계](../evidence/module-independence-survey-20261026.md#c2-drained-handoff)는 원 Drain/guard 재구성을 분리하고 normal Drop 순서·memory 복구 및 관련10 PASS를 보존한다. [Catalog CallScope](../evidence/module-independence-survey-20261026.md#c2-call-scope)는 원 예약을 결과 소비까지 유지하고 selected query를 이동했으며 source별14+1+2·compiler4 PASS와 원 I/O fixture FAIL을 보존한다. 당시 Full38076B로 Pending 관측 합65652B였으며 [budget 행 borrow](../evidence/module-independence-survey-20261026.md#c2-borrowed-budget-rows)로 Full36972B·합64548B가 됐다. 같은 source의5+5 선택 PASS와 harness identity 원 FAIL을 보존하며 entry/tail·writer/progress의 전체 aggregate는 미공급이다. [progress Owner borrow 후보](../evidence/module-independence-survey-20261026.md#c2-borrowed-progress-rejected)는 원 identity를 바꿀 수 있는 반례로 기각·원복하고 후보14/compiler3 PASS를 별도 보존했다. [readonly replay source](../evidence/module-independence-survey-20261026.md#c2-readonly-replay-source)는 생산자 배열을 분리해 Full35895B와 source별6+계수 보완1 PASS를 확인했으나 전체 floor/phase 예약은 미완료다. [작은 Catalog 진입/정리](../evidence/module-independence-survey-20261026.md#c2-compact-call-boundary)는 실제 오류/consuming close를 공급하고 runtime25·compiler4 PASS와 Full35619B를 보존한다. 전체 bound floor·writer/progress phase 예약은 미완료다. [replay 작업 공간 대여](../evidence/module-independence-survey-20261026.md#c2-borrowed-replay-workspace)는 원 zero tail3328B를 actual observer에 빌려 Full33980B·선택9 PASS를 확인했고 원 compile FAIL/경고와 import-only build를 구별한다. 전체 entry/tail·writer phase는 미완료다. [split 고정 source 계산](../evidence/module-independence-survey-20261026.md#c2-split-source-charges)은 actual entry의 계산을 원 exclusive split으로 옮기고 실제3port·복구 caller와 ticket16B를 계수했다. 선택16 PASS·Full33972B/shared22400B이며 전체 entry/tail·writer phase는 미완료다. [예약 밖 호출 phase 관측](../evidence/module-independence-survey-20261026.md#c2-uncharged-call-phases)은 작은 source 실패 helper·선택4 PASS·원 test compile FAIL을 보존한다. 같은 원 core34입구의 compact floor15057B와 기존 wide tail은 cfg(test) 관측이며 제품 admission 미연결이다. [query 종료 경계](../evidence/module-independence-survey-20261026.md#c2-query-tail-boundaries)는 정상 소비 block·작은 오류 정리와 선택5 PASS, 정상710B/오류1394B 한 호출 관측을 보존하며 전체 floor는 미연결이다. [compact DPT](../evidence/module-independence-survey-20261026.md#c2-compact-dpt)는 원 private 배열3072B를 줄이고 helper660B를 actual source에 연결했다. r3 선택12·r2 원 표현/진단2 PASS와 기존 FAIL을 보존하며 shared19328B/Full33972B/Resident17588B·전체 floor 미공급이다. [LOAD claim borrow](../evidence/module-independence-survey-20261026.md#c2-borrowed-load-claims)는 원 conflict predicate·선택4 PASS와 compact floor14776B 관측을 보존하며 admission은 미연결이다. [예약 뒤 원 검산](../evidence/module-independence-survey-20261026.md#c2-admitted-validation)은 내부 입구 우선순위 D2를 한정 재개방하여 pool/snapshot 검산6958B를 원 Full/Resident 예약 안으로 옮겼다. 선택12 PASS·원 test-build FAIL을 보존하며 전체 floor·writer phase는 미공급이다. [statement Catalog 읽기](../evidence/module-independence-survey-20261026.md#c2-statement-reads)는 기존 Full/Resident Scope에 실제 statement를 연결하고 Found/Missing 자동 catalog bit를 공급한다. runtime10/compiler3 PASS·원 test-build FAIL을 보존하며 whole floor/writer는 미완료다. [apply 설치 권한](../evidence/module-independence-survey-20261026.md#c3-install-grant)은 Catalog3 actual producer와 legacy4 소비 bridge를 원 generic installer에 연결했다. source별 runtime3+7/compiler5 PASS·원 legacy fixture/test-build FAIL을 보존하며 독립 D1/D2 한정 수용이다. [Catalog terminal 소유](../evidence/module-independence-survey-20261026.md#c3-terminal)를 apply로 이전하고 실제 Busy와 관련 r3 runtime9/compiler4 PASS·r1/r2 FAIL을 보존했으며 독립 D1/D2 한정 수용이다. [Prepared 경계](../evidence/module-independence-survey-20261026.md#c3-prepared)는 실제 정의를 apply root로 이동하고 build2/compiler4 PASS·독립 D1/D2 한정 수용이다. [Root3 순수 codec](../evidence/module-independence-survey-20261026.md#row-root3-codec)은 신규4의 source별 PASS·원 FAIL을 보존했으며 독립 D1/D2 한정 수용이다. current Profile2를 유지한다. [Job3 cell·census](../evidence/module-independence-survey-20261026.md#row-job3-census)의 신규11 PASS를 보존하며 독립 D1/D2를 한정 수용했다. [Profile3·Row page 입구](../evidence/module-independence-survey-20261026.md#row-envelope-codecs)의 신규8 PASS를 보존하며 독립 D1/D2를 한정 수용했다. [Base4 raw layout](../evidence/module-independence-survey-20261026.md#row-base4-layout)는 별도 exact 입구의 r1 build2/runtime8 PASS를 보존하며 독립 D1/D2를 한정 수용했다. [Root3 Aging](../evidence/module-independence-survey-20261026.md#row-aging)은 별도 descriptor/후보의 r1 build2/runtime5 PASS를 보존하며 독립 D1/D2를 한정 수용했다. [Row 거래 ledger](../evidence/module-independence-survey-20261026.md#row-transaction-ledger)는 다중 root/statement의 pure 현재 잔여 검산과 source별9 selector PASS·원 fixture LSN 오류 FAIL을 보존하며 독립 D1/D2를 한정 수용했다. C3 전체는 미완료다. [Catalog Commit writer 창](../evidence/module-independence-survey-20261026.md#c2-writer-progress)은 terminal read gate와 stage/Pending/install/publish 고정 몫을 원 isolation ledger에 연결했고 r1 compiler3·runtime59 PASS·독립 D1/D2 한정 수용이다. 다른 writer·진입/반환 floor·Row progress는 미공급이다. 전체 C0·C1–C5 공급과 제품 인수 미완료 | 동결한 공급 단위의 구조 변경·관련 선택 검증·검토 |
+| M4 | IN_PROGRESS. C0 borrowed codec 선택6 PASS·[독립 수용](../evidence/module-independence-survey-20261026.md#c0-borrowed-codec), 생산자 타입 compiler4 자동 PASS·수명 거절1 독립 수동 수용·원 판정기 FAIL 보존([증거](../evidence/module-independence-survey-20261026.md#c0-producer-types)). [C1 실제 물리 WAL 분리](../evidence/module-independence-survey-20261026.md#c1-physical-wal)·컴파일3 PASS와 [원 owner/port 이전](../evidence/module-independence-survey-20261026.md#c1-owner-ports)·컴파일4/신규 메모리2 PASS에 이어 [control/isolation backing](../evidence/module-independence-survey-20261026.md#c1-isolation-backing)·컴파일3/변경·신규 runtime4 PASS·독립 한정 수용. [epoch backing 소유](../evidence/module-independence-survey-20261026.md#c1-epoch-backing)·compiler3/변경 runtime3 PASS·독립 D1/D2 한정 수용. [Catalog epoch 활성화](../evidence/module-independence-survey-20261026.md#c1-epoch-activation)는 fresh/최종 복구 seeding·CREATE/Commit을 구현하고 source별 선택 실행·원 FAIL·빈 Commit 범위 정정을 보존했다. [읽기 전용 거래/statement 수명](../evidence/module-independence-survey-20261026.md#c1-read-only-capsules)과 장기 credit을 추가하고 source별 compiler·선택 runtime7 결과를 보존했다. [C2 동기 Catalog 분리](../evidence/module-independence-survey-20261026.md#c2-catalog-read)는 기존 actual lookup 수신·source별 runtime7을 확인했으며 statement factory·short aggregate는 후속이다. [조회 수명/Commit Drain 연결](../evidence/module-independence-survey-20261026.md#c2-read-operation-lifetime)은 source별 선택13을 검증했으며 동시 byte 합은 아직 미공급이다. [Catalog 후보 scratch 재사용](../evidence/module-independence-survey-20261026.md#c2-catalog-scratch)은 중복 local buffer를 제거했으나 전체 peak는 그대로이며 aggregate 여유 확보로 승격하지 않는다. [거래·Aging 생성 수명 분리](../evidence/module-independence-survey-20261026.md#c2-transaction-source-phases)는 source별12+7회 선택 PASS와 lookup42850→41552B 감소·C09 설명 정정을 보존하고 최종 독립 D1/D2를 한정 수용했다. aggregate admission은 여전히 미공급이다. [Pending 보유/stage 분리](../evidence/module-independence-survey-20261026.md#c2-pending-carrier)는 원 pin 이동·Drain 후 guard 재구성과 선택11개 PASS·실행 설명 정정을 보존하고 최종 독립 D1/D2를 한정 수용했다. [CatalogFull source 예약](../evidence/module-independence-survey-20261026.md#c2-short-source)은 원 isolation header의 고정 charge와 선택17개를 검증했고 독립 D1/D2를 한정 수용했다. [상주 Catalog class](../evidence/module-independence-survey-20261026.md#c2-resident-read)는 무 I/O 경로·두 reader의 합55976B와 선택9개 PASS·원 FAIL을 보존하며 독립 D1/D2를 한정 수용했다. [최종 source 반환 수명](../evidence/module-independence-survey-20261026.md#c2-source-return)의 선택7개를 검증하고 독립 D1/D2를 한정 수용했다. [Commit phase 관측](../evidence/module-independence-survey-20261026.md#c2-commit-phases)은 cfg(test)1 PASS·원 compiler FAIL을 보존하며 당시 source의 Full/Pending layout 충돌을 확인했다. [Pending image 수명 분리](../evidence/module-independence-survey-20261026.md#c2-pending-image)는 준비 자료568B와 관련12 PASS·원 compile FAIL을 보존한다. [source 진입 수명](../evidence/module-independence-survey-20261026.md#c2-source-entry)은 progress→source→refs와 source 실패 정리·선택5 PASS를 보존한다. [Aging/Root source 계산](../evidence/module-independence-survey-20261026.md#c2-aging-source)은 관련3 PASS·import-only compile과 Full37724B를 보존하며 Full/Pending 합69100B는 여전히 한도 초과다. [WAL wait phase 관측](../evidence/module-independence-survey-20261026.md#c2-wal-wait-source)은 cfg(test) 신규1과 반환 경계 보완1의 source별 PASS, Pending5320B/Full 합65300B를 보존하며 제품 charge는 유지한다. [Drained 실제 소비 경계](../evidence/module-independence-survey-20261026.md#c2-drained-handoff)는 원 Drain/guard 재구성을 분리하고 normal Drop 순서·memory 복구 및 관련10 PASS를 보존한다. [Catalog CallScope](../evidence/module-independence-survey-20261026.md#c2-call-scope)는 원 예약을 결과 소비까지 유지하고 selected query를 이동했으며 source별14+1+2·compiler4 PASS와 원 I/O fixture FAIL을 보존한다. 당시 Full38076B로 Pending 관측 합65652B였으며 [budget 행 borrow](../evidence/module-independence-survey-20261026.md#c2-borrowed-budget-rows)로 Full36972B·합64548B가 됐다. 같은 source의5+5 선택 PASS와 harness identity 원 FAIL을 보존하며 entry/tail·writer/progress의 전체 aggregate는 미공급이다. [progress Owner borrow 후보](../evidence/module-independence-survey-20261026.md#c2-borrowed-progress-rejected)는 원 identity를 바꿀 수 있는 반례로 기각·원복하고 후보14/compiler3 PASS를 별도 보존했다. [readonly replay source](../evidence/module-independence-survey-20261026.md#c2-readonly-replay-source)는 생산자 배열을 분리해 Full35895B와 source별6+계수 보완1 PASS를 확인했으나 전체 floor/phase 예약은 미완료다. [작은 Catalog 진입/정리](../evidence/module-independence-survey-20261026.md#c2-compact-call-boundary)는 실제 오류/consuming close를 공급하고 runtime25·compiler4 PASS와 Full35619B를 보존한다. 전체 bound floor·writer/progress phase 예약은 미완료다. [replay 작업 공간 대여](../evidence/module-independence-survey-20261026.md#c2-borrowed-replay-workspace)는 원 zero tail3328B를 actual observer에 빌려 Full33980B·선택9 PASS를 확인했고 원 compile FAIL/경고와 import-only build를 구별한다. 전체 entry/tail·writer phase는 미완료다. [split 고정 source 계산](../evidence/module-independence-survey-20261026.md#c2-split-source-charges)은 actual entry의 계산을 원 exclusive split으로 옮기고 실제3port·복구 caller와 ticket16B를 계수했다. 선택16 PASS·Full33972B/shared22400B이며 전체 entry/tail·writer phase는 미완료다. [예약 밖 호출 phase 관측](../evidence/module-independence-survey-20261026.md#c2-uncharged-call-phases)은 작은 source 실패 helper·선택4 PASS·원 test compile FAIL을 보존한다. 같은 원 core34입구의 compact floor15057B와 기존 wide tail은 cfg(test) 관측이며 제품 admission 미연결이다. [query 종료 경계](../evidence/module-independence-survey-20261026.md#c2-query-tail-boundaries)는 정상 소비 block·작은 오류 정리와 선택5 PASS, 정상710B/오류1394B 한 호출 관측을 보존하며 전체 floor는 미연결이다. [compact DPT](../evidence/module-independence-survey-20261026.md#c2-compact-dpt)는 원 private 배열3072B를 줄이고 helper660B를 actual source에 연결했다. r3 선택12·r2 원 표현/진단2 PASS와 기존 FAIL을 보존하며 shared19328B/Full33972B/Resident17588B·전체 floor 미공급이다. [LOAD claim borrow](../evidence/module-independence-survey-20261026.md#c2-borrowed-load-claims)는 원 conflict predicate·선택4 PASS와 compact floor14776B 관측을 보존하며 admission은 미연결이다. [예약 뒤 원 검산](../evidence/module-independence-survey-20261026.md#c2-admitted-validation)은 내부 입구 우선순위 D2를 한정 재개방하여 pool/snapshot 검산6958B를 원 Full/Resident 예약 안으로 옮겼다. 선택12 PASS·원 test-build FAIL을 보존하며 전체 floor·writer phase는 미공급이다. [statement Catalog 읽기](../evidence/module-independence-survey-20261026.md#c2-statement-reads)는 기존 Full/Resident Scope에 실제 statement를 연결하고 Found/Missing 자동 catalog bit를 공급한다. runtime10/compiler3 PASS·원 test-build FAIL을 보존하며 whole floor/writer는 미완료다. [apply 설치 권한](../evidence/module-independence-survey-20261026.md#c3-install-grant)은 Catalog3 actual producer와 legacy4 소비 bridge를 원 generic installer에 연결했다. source별 runtime3+7/compiler5 PASS·원 legacy fixture/test-build FAIL을 보존하며 독립 D1/D2 한정 수용이다. [Catalog terminal 소유](../evidence/module-independence-survey-20261026.md#c3-terminal)를 apply로 이전하고 실제 Busy와 관련 r3 runtime9/compiler4 PASS·r1/r2 FAIL을 보존했으며 독립 D1/D2 한정 수용이다. [Prepared 경계](../evidence/module-independence-survey-20261026.md#c3-prepared)는 실제 정의를 apply root로 이동하고 build2/compiler4 PASS·독립 D1/D2 한정 수용이다. [Root3 순수 codec](../evidence/module-independence-survey-20261026.md#row-root3-codec)은 신규4의 source별 PASS·원 FAIL을 보존했으며 독립 D1/D2 한정 수용이다. current Profile2를 유지한다. [Job3 cell·census](../evidence/module-independence-survey-20261026.md#row-job3-census)의 신규11 PASS를 보존하며 독립 D1/D2를 한정 수용했다. [Profile3·Row page 입구](../evidence/module-independence-survey-20261026.md#row-envelope-codecs)의 신규8 PASS를 보존하며 독립 D1/D2를 한정 수용했다. [Base4 raw layout](../evidence/module-independence-survey-20261026.md#row-base4-layout)는 별도 exact 입구의 r1 build2/runtime8 PASS를 보존하며 독립 D1/D2를 한정 수용했다. [Root3 Aging](../evidence/module-independence-survey-20261026.md#row-aging)은 별도 descriptor/후보의 r1 build2/runtime5 PASS를 보존하며 독립 D1/D2를 한정 수용했다. [Row 거래 ledger](../evidence/module-independence-survey-20261026.md#row-transaction-ledger)는 다중 root/statement의 pure 현재 잔여 검산과 source별9 selector PASS·원 fixture LSN 오류 FAIL을 보존하며 독립 D1/D2를 한정 수용했다. C3 전체는 미완료다. [Catalog Commit writer 창](../evidence/module-independence-survey-20261026.md#c2-writer-progress)은 terminal read gate와 stage/Pending/install/publish 고정 몫을 원 isolation ledger에 연결했고 r1 compiler3·runtime59 PASS·독립 D1/D2 한정 수용이다. 다른 writer·진입/반환 floor·Row progress는 미공급이다. [C0 Row 소비 경계](../evidence/module-independence-survey-20261026.md#c0-row-boundary)는 wrapper·수명·cursor credit을 컴파일 공급하고 compiler r1 14·r2 4, runtime r1 2·r2 5 PASS와 독립 검토 필수1 반영을 기록했다. 본문은 Unsupported다. 전체 C0·C1–C5 공급과 제품 인수 미완료 | 동결한 공급 단위의 구조 변경·관련 선택 검증·검토 |
 | M5 | IN_PROGRESS. [A/B C0 제품 본문 착수](../evidence/module-independence-survey-20261026.md#consumer-c0-start): INSERT 검산/leaf 후보와 point/cursor 순수 본문을 같은 기준에서 병행하고 상대 source/fixture가 없는 첫 export에서 A10/B3 선택 PASS. actual 공급·단독/합류 제품 인수 NOT_RUN | C+A/C+B 실제 저장·조회·복구 수신, 각 단독/합류 인수·MI01–06 |
 
 최초 실행 위치는 `/home/et16/.codex/worktrees/module-independence/xadb`, 출발 commit은 `b7ce51d2b3ee62b5b8dbc0d9c852a17827d76bd9`다. 2026-10-27 재개는 깨끗한 main `0852f06`을 확인하고, 기존 작업 공간이 다른 채팅 소유이므로 같은 commit의 `/home/et16/.codex/worktrees/module-independence-finish/xadb`로 격리했다. 이전 작업 공간과 원 artifacts는 읽기만 하며 다른 세션을 중지하지 않았다. 이번 단계의 권한·소유·동시 작업·미확인 세션은 [조사 기록](../evidence/module-independence-survey-20261026.md)에 보존한다. 계획의 전체 목표는 M5 인수까지 유지하며 문서 정비만으로 완료하지 않는다.
@@ -424,7 +494,7 @@ Root3/Job3/Profile3·Row scope3·base4는 이름 변경의 부수 효과가 아�
 <a id="folder-reorganization"></a>
 ## 13. 분리 모듈의 폴더 재정리 후속 계획
 
-2026-10-29 · `XADB-MODULE-LAYOUT-001` · **D2 ACCEPTED / 후속 계획 문서 반영 완료 / 제품 이동은 [L1](../evidence/module-independence-survey-20261026.md#l1-allocation-move)·[L2](../evidence/module-independence-survey-20261026.md#l2-concurrency-move)·[L3](../evidence/module-independence-survey-20261026.md#l3-mixed-system-move) 적용, [L4](#l4-record)는 현재 배치 유지, [L5](#l5-classification)는 분류 완료·[L5-A](../evidence/module-independence-survey-20261026.md#l5a-allocation-move)·[L5-B](../evidence/module-independence-survey-20261026.md#l5b-install-move)·[L5-C](../evidence/module-independence-survey-20261026.md#l5c-status-move)·[L5-D](../evidence/module-independence-survey-20261026.md#l5d-recovery-move) 이동 완료, 시험 본문 NOT_RUN**
+2026-10-29 · `XADB-MODULE-LAYOUT-001` · **D2 ACCEPTED / 후속 계획 문서 반영 완료 / 제품 이동은 [L1](../evidence/module-independence-survey-20261026.md#l1-allocation-move)·[L2](../evidence/module-independence-survey-20261026.md#l2-concurrency-move)·[L3](../evidence/module-independence-survey-20261026.md#l3-mixed-system-move) 적용, [L4](#l4-record)는 현재 배치 유지, [L5](#l5-classification)는 분류 완료·[L5-A](../evidence/module-independence-survey-20261026.md#l5a-allocation-move)·[L5-B](../evidence/module-independence-survey-20261026.md#l5b-install-move)·[L5-C](../evidence/module-independence-survey-20261026.md#l5c-status-move)·[L5-D](../evidence/module-independence-survey-20261026.md#l5d-recovery-move) 이동 완료, [L6](#l6-wal-io-tests)의 `storage::wal_io` 시험·지원 자손5개 [이동 완료](../evidence/module-independence-survey-20261026.md#l6-wal-io-move), [R1–R3 논리 경계](#r123-logical-boundaries)는 R1 유지·R2 미사용 재노출 제거·R3 유지로 판정(독립 검토 ACCEPT·필수 수정0), 시험 본문 NOT_RUN**
 
 사용자는 파일 분리에 비해 폴더 정리가 부족한 부분을 먼저 조사하도록 요청했고, 참조 관계·상태 소유·API가 독립성의 핵심인지 의견을 확인했다. 이어 임시 계획을 저장하고 진행 중인 작업 종료 뒤 기존 문서에 반영하도록 지시했으며, 후속 “진행해 주세요” 요청에 따라 이 절을 작성한다. **이번 실행 범위는 후속 계획과 관련 문서의 정비다.** 제품 파일 이동·참조 변경의 구현은 아직 시작하지 않는다.
 
@@ -554,6 +624,8 @@ Root3/Job3/Profile3·Row scope3·base4는 이름 변경의 부수 효과가 아�
 
 `AR::operation`은 L1 밖의 운영 파일 26개 이상, `AR::budget`은 운영 파일10개가 `super` 사슬·crate 절대 경로·조상 import 별칭·재노출로 참조한다(위 소비자 표). `operation`의 일부 항목은 `doublewrite_install`→`bootstrap`→`wal_io` 재노출을 거쳐 `wal_io` 밖의 `plan4_recovery_base`까지 이어진다. 배치 정리는 이 참조를 바꾸지 않는다. 최소 API로 좁힐지는 위 이행 순서 4단계에서 실제 소비자를 기준으로 판단할 입력이다.
 
+**2026-10-29 정정([R1 판정](#r123-logical-boundaries)).** 위 “운영 파일 26개 이상”은 grep 하한이었다. rustc census로 확인한 L1 밖 운영 파일은 28개다. 내역은 `doublewrite_install` 자손 23개, 재노출 중계 3개(`wal_io.rs`·`bootstrap.rs`·`doublewrite_install.rs`), `wal_io` 밖 2개(`storage/plan4_recovery_base.rs`·`plan4_recovery_base/catalog/graph/ledger.rs`)다. `wal_io` 경계를 넘는 항목은 6개뿐이다. 이 문단 위의 기록은 당시 판단으로 보존한다.
+
 **독립 검토.** 이 세션이 띄운 별도 검토 subagent가 초안을 실제 source·정책·선례와 읽기 전용으로 대조해 **ACCEPT WITH REQUIRED FIXES**로 판정했다. 이동 대상8개, `#[path]` 해석, 줄 수, SHA-256, JSON 29/25개, 링크, 증거14개, 명령 형식은 일치했다. 필수 지적2건은 소비자 목록 누락과 `AR::tests`의 hook 제공 누락이다. 선택 지적7건은 상태 소유 표현, 영향 case, 검증 단계 정의, A의 명칭과 §4 처리, 파일 이름의 plan4, C2 stash, 파일 수 표현이다. 작성자가 각 지적을 source로 다시 확인한 뒤 반영했다. 같은 검토자의 반영본 재검토는 다른 수정을 모두 확인했지만, `operation` 소비자 목록에서 glob import를 거친 운영6·시험4개 파일의 누락을 필수 지적으로 남겼다. 작성자가 해당 줄을 확인해 10개 파일을 추가하고 목록을 하한으로 표기했다. 이 마지막 반영은 이동 실행 뒤의 [최종 검토](../evidence/module-independence-survey-20261026.md#l1-allocation-move)에서 확인됐다. 이 절의 검토 시점에는 제품 이동·빌드·시험을 실행하지 않았다.
 
 <a id="l2-move-table"></a>
@@ -669,6 +741,16 @@ L2 뒤 L3의 두 안을 제시했고 사용자는 “권장으로 진행”을 �
 | `MS::status_init_operation::mixed`(유지) | 보관 상태 없음. mixed init plan 준비·검산·materialize | `Kind`, `Plan`, `Expected`, `Prepared`, `prepare`, `validate`, `materialize` | `operation::mixed` 경로로 운영 12개 이상: `status_home_flush`, `status_init`, `status_init_operation`, `status_load`, `recovery_prefix`, `recovery_effect/physical`, `fixed_system_operation`, `plan4_status_init_operation`, `empty_transactions/{load,pressure}`, owner와 `history`. 시험 3개: `mixed_system_init_tests`, `status_init_tests`, `status_home_flush/authority_tests` | `pub(super) mod`, 항목 `pub(in super::super)` |
 | `MS::status_bootstrap_tests::undo::mixed_init`(유지) | 시험 | 시험 9 | — | private |
 
+**2026-10-29 정정([R2 판정](#r123-logical-boundaries)).** 위 owner 행의 “실제 소비자”는 이름 충돌에 따른 grep 오판을 포함한다. 확인 결과는 다음과 같다.
+
+- `storage/plan4_recovery_base/catalog/graph.rs`·`graph/{ledger,relations}.rs`의 일치는 같은 이름의 다른 enum variant `ReservedInventory::SystemPage`(`graph.rs:33` 선언)다. `plan4_retention/population.rs`의 일치도 이 variant다.
+- `dirty_allocation`·`recovery_prefix`·`status_init_operation`과 그 `fixed`·`mixed`, `allocation_reservation/operation`의 일치는 `AR::operation`의 `AllocationPopulation::MixedSystem` variant다.
+- `status_load`(현재 `operational_status/load.rs`)는 `MixedLoadInstall`을 owner의 `pub(super)` 재노출로 쓰며 `status_init.rs:58`을 거치지 않는다.
+- `storage/wal_io.rs`·`bootstrap`·`doublewrite_install`·`mutable_storage`·`status_init`의 일치는 재노출 줄 자체다.
+- 같은 행의 `mixed_system_init_tests`(현재 `mutable_storage/status_bootstrap_tests/undo/mixed_init.rs`)도 `AllocationPopulation::MixedSystem` variant만 쓴다(19행).
+
+rustc로 확인한 이름 경로 소비자는 owner 자신과 그 자손뿐이다. `status_init.rs:58` 재노출을 이름으로 쓰는 cargo target 코드는 없고, `mutable_storage.rs`에 주입하는 frozen compiler probe 5개만 그 경로를 쓴다. 표 자체는 당시 이동 계획의 기록으로 보존한다.
+
 #### 영향 case와 경로 참조
 
 | 대상 | 처리 |
@@ -688,6 +770,8 @@ L2 뒤 L3의 두 안을 제시했고 사용자는 “권장으로 진행”을 �
 #### L3 범위 밖 관찰
 
 owner 표면은 `status_init.rs`의 `pub(crate) use` 재노출을 거쳐 `wal_io` 밖의 `plan4_recovery_base` Catalog graph까지 쓰인다. init 두 파일은 형제를 가진 평면 부모 아래에 남는다. 배치 정리는 이 참조와 부모를 바꾸지 않으며, 둘 다 L5와 위 이행 순서 4단계의 입력이다.
+
+**2026-10-29 정정.** 첫 문장의 `plan4_recovery_base` Catalog graph 소비는 grep 오판이다(위 소유·제공·소비 표의 정정). 재노출 자체는 crate 전체에 열려 있었지만 실제 이름 경로 소비자는 없었고, [R2 판정](#r123-logical-boundaries)에서 이 재노출을 정리했다. init 두 파일은 L5 이동에서 각 선언 위치의 폴더(`status_init_operation/mixed.rs`, `mutable_storage/status_bootstrap_tests/undo/mixed_init.rs`)로 옮겼다.
 
 <a id="l4-record"></a>
 ### L4 배치 판정 기록
@@ -798,7 +882,189 @@ L2 뒤 L4의 두 안을 제시했고 사용자는 L3와 함께 권장안, 즉 �
 - **R2:** mixed owner 표면은 `status_init.rs`의 `pub(crate) use`로 `plan4_recovery_base` Catalog graph까지 쓰인다([L3 관찰](#l3-move-table)).
 - **R3:** 설치·할당·Status·복구의 진입이 모두 `bootstrap` → `doublewrite_install` → `mutable_storage` 한 초기화 사슬 아래에 있다. 이를 책임별 상위 폴더로 나누려면 논리 부모를 바꿔야 하므로, 채택 계약의 초기화 조상 유지와 함께 다시 설계해야 한다.
 
-**범위 밖 관찰.** `storage/` 직속의 `wal_durability_test_support.rs`·`wal_durability_tests.rs`·`wal_first_write_tests.rs`·`wal_io_test_support.rs`·`wal_io_tests.rs`는 `storage::wal_io`의 자손이다. 그러나 13절 L5 행의 파일군(`storage/wal_io/`) 밖에 있으므로 이번 분류에 넣지 않는다.
+**2026-10-29 판정.** 세 입력은 아래 [R1–R3 논리 경계 판정](#r123-logical-boundaries)에서 닫았다. R1은 현재 경로 유지, R2는 미사용 재노출 제거, R3는 초기화 사슬 유지다. 위 R1의 “26개 이상”과 R2의 Catalog graph 소비는 grep 기준 서술이며 rustc census로 정정했다. 입력 문구는 당시 기록으로 보존한다.
+
+**범위 밖 관찰.** `storage/` 직속의 `wal_durability_test_support.rs`·`wal_durability_tests.rs`·`wal_first_write_tests.rs`·`wal_io_test_support.rs`·`wal_io_tests.rs`는 `storage::wal_io`의 자손이다. 그러나 13절 L5 행의 파일군(`storage/wal_io/`) 밖에 있으므로 이번 분류에 넣지 않는다. 이 5개는 아래 [L6](#l6-wal-io-tests)에서 판정했다.
+
+<a id="l6-wal-io-tests"></a>
+### L6 `storage::wal_io` 진입의 storage 직속 시험 자손
+
+2026-10-29 · **판정: 진입 폴더로 물리 이동 / 실행 결과는 [증거](../evidence/module-independence-survey-20261026.md#l6-wal-io-move) / 시험 본문 NOT_RUN**
+
+사용자는 이 계획을 “이어서 완료까지” 진행하도록 지시했고, 앞선 단위에서 권장안이 있으면 묻지 않고 진행하도록 했다. 기준은 `85ceef3b35c5c2d0ef1a43056dcea0ba6a1443ea`(tree `504d3e9084e7888e06c7cc78c637c06716c221c9`)이며 작업 branch는 `claude/project-thread-h2j8oc`, checkout은 clean이다. 위 범위 밖 관찰의 5개만 다룬다. `storage/` 직속의 다른 시험 파일은 각자 다른 진입(`wal_frame`, `page_io` 등)의 자손이므로 이 단위에 넣지 않는다.
+
+**분류.** 진입 `storage/wal_io.rs`는 `storage/mod.rs`가 `#[path]` 없이 선언하며 이미 자손 폴더 `storage/wal_io/`를 가진다(배치 B). 5개는 모두 이 진입이 `cfg(test)`로 선언한 평면 자손이므로 L5 분류 기준 2를 그대로 적용해 진입 폴더로 옮긴다. 새 파일 이름은 논리 모듈 이름으로 한다. 진입·`#[path]` 해석은 `storage/wal_io.rs`의 폴더 `storage/` 기준이므로 새 문자열은 `wal_io/…`다.
+
+| 현재 파일(줄) | 목표 파일 | 논리 경로 | 시험 수 |
+| --- | --- | --- | --- |
+| `storage/wal_durability_test_support.rs`(99) | `storage/wal_io/durability_test_support.rs` | `storage::wal_io::durability_test_support` | 0 |
+| `storage/wal_durability_tests.rs`(404) | `storage/wal_io/durability_tests.rs` | `storage::wal_io::durability_tests` | 8 |
+| `storage/wal_first_write_tests.rs`(251) | `storage/wal_io/first_write_tests.rs` | `storage::wal_io::first_write_tests` | 14 |
+| `storage/wal_io_test_support.rs`(443) | `storage/wal_io/test_support.rs` | `storage::wal_io::test_support` | 0 |
+| `storage/wal_io_tests.rs`(1162) | `storage/wal_io/tests.rs` | `storage::wal_io::tests` | 10 |
+
+`wal_io_test_support.rs`의 위치 기준 `include_bytes!` 3개는 한 단계 깊어지므로 `../`를 하나 더한다. 같은 `crates/engine/tests/fixtures/dev3-genesis-{profile,epoch,writer}.bin`을 가리키며, 줄이 100자를 넘는 2개는 rustfmt의 줄바꿈을 따른다. 다른 4개 파일에는 `#[path]`·위치 기준 macro가 없다. 논리 경로·visibility·cfg·시험 selector(`scripts/test_check_dev3_leaf.py`의 `storage::wal_io::tests::`)는 그대로다.
+
+**경로 기록.** 현재 Markdown 링크 1개(`dev3-test-plan.md`), 현재 본문 표기 1개(`dev3-wal-io.md`), 관리 JSON 경로 문자열 7개를 갱신한다. 증거 JSON 3개(`dev4-supply-handoff-20261024.json`, `dev3-commit-continuation-20261025.json`, `dev3-runtime-core-20261024.json`)의 원 경로·SHA-256 기록과 leaf 보고서의 `wal_io_tests` 키 이름은 원 source의 증거이므로 바꾸지 않는다. 링크가 아니라 문서 검사 대상이 아니다.
+
+**검증 선택.** L5와 같다. `crates/` diff는 rename 5개, `#[path]` 5줄, `include_bytes!` 3줄뿐이어야 하고 이동만 한 4개는 기준 SHA-256과 같아야 한다. `cargo check -p xadb-engine --all-targets --all-features --locked`, 이동 전후 시험 목록 전체의 동일성, 변경 파일의 `rustfmt --check`를 확인하고 독립 리뷰를 받는다. 시험 본문은 본문이 같으므로 NOT_RUN이다.
+
+이동 뒤 `storage/` 직속 Rust 파일은 86→81개, `storage/wal_io/` 직속은 23→28개다. L5-D 때 0개였던 `wal_io/` 직속 `test` 이름 파일은 이제 5개이며 모두 진입 `wal_io` 자신의 시험·지원이다. 이 수는 탐색 밀도 관측일 뿐 독립성 판정이 아니다.
+
+<a id="r123-logical-boundaries"></a>
+### R1–R3 논리 경계 판정
+
+2026-10-29 · **판정: R1 현재 경로 유지 / R2 미사용 재노출 제거(재노출 줄만, 6개 파일) / R3 초기화 사슬 유지 / 실행 결과는 [증거](../evidence/module-independence-survey-20261026.md#r123-logical-boundaries) / 시험 본문 NOT_RUN / 독립 검토 ACCEPT·필수 수정0**
+
+L5가 남긴 [논리 경계 재설계 입력](#l5-classification) 셋을 각각 실제 소비자를 지정한 D2 단위로 조사했다. R1·R2를 한 작업, R3를 별도 작업으로 나누었고 통합 담당이 두 결과를 수용했다. 조사 기준은 `85ceef3b35c5c2d0ef1a43056dcea0ba6a1443ea`이고, 적용 기준은 작업 branch `claude/project-thread-h2j8oc`의 `76742f3c29f6a4f840a27c106440b3672a26c082`(L6 적용)다. 두 기준 사이의 제품 변경은 L6의 `wal_io.rs` `#[path]` 5줄과 이동한 시험 파일뿐이다. 판단 기준은 위 [판단 기준과 목표](#folder-reorganization)의 논리 의존 변경 기준이다. 필요한 최소 API와 원 소유·생성 권한을 확인하고, `use` 문자열 이동이나 새 facade만으로 독립성 향상을 주장하지 않는다.
+
+**소비자 census는 grep이 아니라 rustc로 확정했다.** 재노출을 한 층씩 임시로 지우고 `cargo check -p xadb-engine --all-targets --all-features --locked --keep-going`로 다시 검사해, 오류 위치와 새로 미사용이 된 재노출을 기록했다. 정의 파일의 최상위 항목에 임시 `#[deprecated]`를 붙여 all-targets와 `--lib`를 각각 검사하고, 그 차이로 production과 시험을 나누었다. R3는 진입 선언을 `wal_io`의 형제로 옮겨 보는 실험을 더했다. 임시 편집은 모두 되돌렸다. 방법·표·로그는 증거 절과 artifact에 있다.
+
+#### R1 — `AR::operation`: 현재 경로 유지
+
+**실제 소비.** L1 밖 운영 파일은 28개다. 이 수는 deprecation census가 표시한 top-level `pub` 항목의 이름·variant·field 사용을 센 것이며, method 호출만 하는 파일은 세지 않았다.
+
+- `doublewrite_install` 자손 23개가 내부 경로로 쓴다. `operation`은 `pub(super) mod`이고 대부분 항목이 `pub(in super::super)`이므로, rustc가 이 사용을 `doublewrite_install` 안으로 제한한다. 같은 소유 안의 사용이다.
+- 재노출 중계 3개(`wal_io.rs`·`bootstrap.rs`·`doublewrite_install.rs`)가 있다.
+- `wal_io` 밖 2개는 `storage/plan4_recovery_base.rs`와 `plan4_recovery_base/catalog/graph/ledger.rs`다.
+
+시험 전용은 `doublewrite_install` 자손 15개, `wal_io/plan4_genesis/tests.rs`(루트 `wal_io::` 경로로 시험 별칭 사용), `wal_io` 밖의 `storage/plan4_recovery_base_bridge_tests.rs`다.
+
+**경계를 넘는 항목.** 6개와 같은 타입의 시험 별칭 하나뿐이다.
+
+- `SemanticError`(별칭 `CatalogAllocationError`, 시험 별칭 `Plan4TestSemanticError`)
+- `validate_plan4_base_allocation`, `validate_plan4_system_base_allocation`, `validate_catalog_base_allocation`
+- `plan4_base_allocation_source_bytes`, `plan4_system_base_allocation_source_bytes`
+
+재노출 경로는 `doublewrite_install.rs:31–32·694–698` → `bootstrap.rs:42–43·1208–1211·1234–1236` → `wal_io.rs:99–102·744–748·772`이며 모두 `pub(in crate::storage)`다. 줄 번호는 `76742f3` 기준이다.
+
+**판정과 이유.**
+
+1. 넘는 항목에는 권한이 없다. 검산 함수는 호출자가 준 page byte·`Profile`·raw descriptor·scalar만 받아 `Result<(), SemanticError>`를 돌려주고, 나머지는 `usize` 상한과 `Copy` 오류 enum이다. 문서 주석도 INIT·WAL·예약 권한을 만들지 않는다고 적는다. 생성자, `PreparedAllocation`, reservation producer 등 다른 항목은 rustc가 `doublewrite_install` 밖으로 내보내지 않는다.
+2. 소비 관계는 이미 채택된 것이다. [Free Undo 계약](../contracts/dev3-plan4-free-undo.md)은 base가 `validate_plan4_system_base_allocation`을 소비하며 기존 algebra를 공유한다고 정했다. `plan4_recovery_base`는 storage의 private 모듈이고 `wal_io`의 복구 코드(`plan4_recovery`, `plan4_retention`, `plan4_apply`)만 쓴다. 제품 소비자가 아니라 `wal_io` 복구가 AR algebra를 되부르는 관계다.
+3. [채택 계약 §4.1](../contracts/dev3-module-boundaries.md#target-imports)의 방식, 곧 `disk_api`가 정의 모듈을 직접 재노출하는 방식은 공개 확대를 요구한다. `allocation_reservation`(private)과 `operation`(`pub(super)`)을 `pub(in crate::storage::wal_io)`로 열어야 하기 때문이다. 그러면 `pub(crate) mod retention`의 producer, 즉 `prepare_retention_reserve/cancel`, `PreparedRetentionAllocation::stage_required`, `materialize_retention_*`, `RetentionAllocationPlan.fence`가 `wal_io` 전체에 열린다.
+
+**비교 대안.**
+
+- **A′:** `disk_api`가 `doublewrite_install`의 재노출을 받아 6개를 옮기는 안이다. 공개 확대 없이 컴파일되고 warning도 0이었지만 채택하지 않았다.
+  - 경로 이름만 바뀌고 의존 방향과 변경 국소성은 같다.
+  - 같은 소비자가 쓰는 `plan4_genesis` 항목(`encode_plan4_catalog_genesis`, `plan4_catalog_genesis_source_bytes`, 시험 `Plan4GenesisCause`)은 루트에 남는다. `wal_io` 통과 지점이 둘로 나뉜다.
+  - 복구 내부 algebra를 C0 제품 선택 지점인 `disk_api`에 섞는다. `storage::disk`가 그 지점을 그대로 비춘다.
+  - `plan4_recovery_base.rs` 함수 본문 안의 경로 한정자를 바꾸고 rustfmt 줄바꿈도 생긴다.
+  - 참고용 patch는 증거 artifact에 보존했다.
+- **A0:** 루트 재노출이 `doublewrite_install`을 직접 가리키게 해 `bootstrap` 중계만 빼는 안이다. 표기 정리일 뿐이다.
+
+**남긴 항목.**
+
+- `wal_io` ⇄ `plan4_recovery_base` 순환
+- 시험 별칭 `Plan4TestSemanticError`의 3단 중계
+- 루트에 남는 `plan4_genesis` 항목
+
+**재검토 조건.**
+
+1. `wal_io` 밖, 또는 `doublewrite_install` 밖의 새 소비자가 `AR::operation` 항목을 요구한다.
+2. 넘는 항목이 fence·WAL·예약 같은 소유 상태나 권한을 갖거나 owner borrow를 받는다.
+3. `plan4_recovery_base`에 `wal_io` 밖 소비자가 생기거나 부모가 바뀐다.
+4. 공유 pure algebra(`validate_plan4_population`·`validate_reserved`·`SemanticError`·크기 상한)를 하위 모듈로 추출하는 D2를 연다. 함수 본문 이동이 필요하며, 이 D2가 순환을 없앤다.
+5. storage 형제가 쓰는 `wal_io` 루트 재노출을 `disk_api`로 일괄 이전하기로 결정한다. 이때 A′을 `plan4_genesis` 항목과 함께 적용한다.
+6. `operation`이나 `allocation_reservation`의 module visibility 변경이 제안된다. 이때는 `operation::retention` producer를 먼저 좁히거나 봉인한다.
+
+#### R2 — mixed owner 표면: 미사용 재노출 제거
+
+**입력 정정.** R2 입력과 [L3 소비자 표](#l3-move-table)가 든 `plan4_recovery_base` Catalog graph 소비는 grep 오판이다(L3 절의 정정 참고).
+
+**실제 소비.** 대상은 다음 15개 이름이다.
+
+`InitializedSystemObservation`, `MixedSystem`, `MixedSystemBinding`, `MixedSystemFlusher`, `MixedSystemReadGuard`, `MixedSystemReader`, `MixedSystemWriter`, `ReservedSystemPage`, `SystemLoadError`, `SystemLoadObservation`, `SystemPage`, `SystemPageKind`, `SystemResidencyCursor`, `SystemResidencyStep`, `SystemSlotStep`
+
+이 이름을 `wal_io.rs` → `bootstrap.rs` → `doublewrite_install.rs` → `mutable_storage.rs` 순서로 하나씩 빼며 모든 target을 다시 검사했다.
+
+- 매 단계 오류는 0이었다.
+- 마지막 단계에서 `status_init.rs:58`의 재노출이 production과 test 두 unit 모두에서 미사용으로 보고됐다.
+- 따라서 crate 안에 이 이름을 경로로 쓰는 코드는 없고, `wal_io` 밖 소비자도 없다.
+
+이름이나 field로 쓰는 곳은 owner 자신과 그 자손, 그리고 `MixedLoadInstall`을 owner의 `pub(super)` 재노출로 쓰는 `operational_status/load.rs`뿐이다. 경로를 쓰는 것은 frozen compiler probe 5개뿐이다. `dev3-mixed-system-owner/compiler`의 MOC00 positive·MOC01 core_escape·MOC05 old_actor·MOC07 guard_owner_reuse·MOC08 reservation_owner_reuse가 `mutable_storage.rs`에 주입된 자식 모듈에서 `super::status_init::{MixedSystem, SystemPage, SystemPageKind}`를 쓴다.
+
+**변경.** 재노출 줄만 바꿨다. 줄 번호는 `76742f3` 기준이다.
+
+| 파일:줄 | 변경 |
+| --- | --- |
+| `wal_io.rs:56–68`, `bootstrap.rs:68–80`, `doublewrite_install.rs:41–53`, `mutable_storage.rs:48–59` | 각 중계 블록에서 15개 이름을 삭제했다. 나머지 Status 26개는 그대로다 |
+| `status_init.rs:58–63` | `pub(crate) use status_flush::mixed::{15개}`를 probe가 쓰는 3개만 남긴 `pub(super) use status_flush::mixed::{MixedSystem, SystemPage, SystemPageKind}`로 좁혔다. `#[allow(unused_imports, reason = "frozen mixed-owner compiler probes name these from mutable_storage")]`를 붙였다 |
+| `mixed_system_owner.rs:22` | owner 재노출 `pub(crate) use load::{…}`에서 `SystemLoadObservation`을 뺐다. 유일한 소비자가 삭제한 `status_init` 중계였다. 남겨 두면 unused import warning이 새로 생긴다 |
+
+타입 정의·필드·method·생성자·seal·cfg·논리 모듈 경로·시험은 바꾸지 않았다. 변경 전에는 writer·예약·flusher actor(`MixedSystemWriter`·`ReservedSystemPage`·`MixedSystemFlusher`·`MixedSystemBinding`)를 포함한 owner 표면을 crate 어디서나 `crate::storage::wal_io::…`로 이름 붙일 수 있었다. 이제 이름으로 쓸 수 있는 범위는 정의 경로가 닿는 `status_init` 하위와, probe용 3개 이름에 한해 `mutable_storage` 하위다. 이것은 독립성 향상의 주장이 아니라 소비자 없는 통로의 제거다.
+
+**비교 대안.**
+
+- **유지:** 소비자 없는 crate 전체 통로는 [채택 계약 §4.1](../contracts/dev3-module-boundaries.md#target-imports)이 초기화 파일의 `pub use`를 신규 소비자 통로로 쓰지 않는다고 한 규칙과 맞지 않는다. [코딩 컨벤션 §4](../policies/coding-convention.md#section-4)의 최소 공개와도 맞지 않는다.
+- **`disk_api` 경유:** 옮길 소비자가 없으므로 공개만 넓어진다.
+- **`status_init` 재노출 전체 삭제:** frozen probe 5개의 import 해석이 실패한다.
+- **15개 모두 `pub(super)`+allow:** 12개 이름에 대해서는 allow 이유가 사실이 아니다.
+- **owner 22행에 allow:** 미사용 재노출을 가릴 뿐이다.
+
+**남긴 항목.**
+
+- probe 전용 3개 이름 재노출
+- 같은 5파일 중계를 지나는 나머지 Status·resident·empty-transaction 이름 26개. 이 단위의 범위 밖이며 같은 census로 판정할 수 있다.
+
+**재검토 조건.**
+
+1. owner 밖 실제 소비자가 owner 타입 이름을 요구한다. 새 D2에서 owner의 실제 경로로 가장 좁게 노출하고, 소비자가 `wal_io` 밖이면 `disk_api`로 노출한다.
+2. mixed owner probe fixture를 다시 동결한다.
+3. `status_init`이나 `status_flush`의 부모가 바뀐다.
+
+#### R3 — 초기화 사슬: 유지
+
+L4와 같이 단위를 열지 않고 재검토 조건을 기록한다. 조사 보고는 증거 artifact의 `r3/`에 있다.
+
+**판정과 이유.**
+
+1. **사슬은 폴더 모양이 아니라 원 상태의 privacy seal이다.** 책임 진입은 사슬 owner의 private 상태에 대한 inherent impl과 생성자다.
+   - `MutableStorageOwner`의 `binding` 필드와 `AVAILABLE/CLAIMED/BOUND/ABANDONED`(`mutable_storage.rs:79–82`)를 공개 bind 진입 6개와 CAS 4곳이 함께 쓴다.
+   - Drop 경로(`BindingClaim`·`BoundAllocation`·`Plan4Pages`·Status)가 fence와 ABANDONED를 직접 쓴다.
+   - `plan4_recovery`는 `BootstrapPlan::prepare_for_kind`, `InstallPlan` literal, private `EpochTransferSeal`을 가진 `SelectedEpochParts`, private `MutableStorageOwner::from_plan4_recovery`를 쓴다.
+2. **Rust로는 형제에서 같은 제한을 표현할 수 없다.** `pub(in …)`은 조상만 가리킬 수 있다(계약 §4.1). 진입 하나를 형제로 옮기면 공통 조상 `wal_io`까지 넓혀야 한다. 그러면 `wal()`, `binding`, `BootstrapPlan`·`InstallPlan` 생성자, `from_plan4_recovery`가 `physical`·`disk_api`를 포함한 모든 진입에 열린다. 계약이 금지하는 raw 생성자와 필드의 확대다.
+3. **실제 소비자가 없다.** 사슬 안의 경로를 이름으로 쓰는 `wal_io` 밖 파일은 0개다. 밖 23개 파일은 `wal_io::` 재노출을 쓰고, 새 소비자는 `disk_api`/`storage::disk`로 간다. 위 이행 순서 4단계가 단위를 여는 조건으로 둔 실제 소비자 지정이 없다.
+4. **frozen 입력의 비용이 크다.**
+   - fixture 88개 파일의 논리 경로 문자열 약 6,014개. 그중 54개 이상의 파일이 FROZEN 또는 NOT_RUN 계열 상태다.
+   - script 24개의 26개 문자열
+   - `mutable_storage.rs`를 anchor로 쓰는 probe script 4개
+
+**rustc 실험.** 진입 12개 각각의 `mod` 선언을 `wal_io` 아래 형제로 옮기고, 원 부모에는 `use`를 두었다. 하위 트리를 벗어나는 `super` 사슬을 `crate::storage::…`로 기계적으로 바꾼 뒤 오류 위치를 셌다.
+
+- 고유 오류 위치는 최소 1,427곳이다. struct private 오류 뒤에 숨는 field literal 오류가 있으므로 하한이다.
+- 순수 배치 변경으로 옮겨지는 진입은 하나도 없다.
+- 진입별 수치는 증거 절에 있다.
+
+**비교 대안.**
+
+- **책임별 형제 전체 또는 진입 하나의 부분 재부모화:** 소비자가 없는데도 위 공개 확대와 selector·probe 비용이 따른다. 복구 진입은 원 seal 계약과도 충돌한다.
+- **논리 부모는 `#[path]`로 두고 물리적으로만 책임 폴더를 만드는 안:** 코드에 없는 경계를 폴더로 암시한다. L3의 “논리 부모를 따르는 배치”, L5 기준 1의 “소유 변화 없는 상위 배치”와도 어긋난다.
+- **공개 확대·facade·공유 context:** 계약 §10이 거절한 방식이다.
+- **MS claim API를 제자리에서 추출하는 안:** 유한한 변경이지만 지금 필요한 소비자가 없다.
+
+**재검토 조건.**
+
+1. 같은 실험을 진입별로 다시 돌려 privacy·visibility 오류가 0(경로 문자열만 남음)인 진입이 나오면, 그 진입을 배치 전용 단위로 연다. C2/C3가 계약 §3의 “불필요한 내부 접근”을 없앤 뒤에야 기대할 수 있다.
+2. 실제 소비자가 7번째 bind 진입, 5번째 CAS, 새 `BootstrapPlanKind`를 요구한다. 이때는 재부모화가 아니라 MS 소유 claim API의 제자리 D2를 연다.
+3. M4/M5 뒤 등에 계약의 원 초기화 조상 유지(§4·§4.2와 §7의 C1 행)를 다시 연다.
+4. `wal_io` 밖 코드가 `disk_api`나 `wal_io::` 재노출 대신 사슬 안 경로를 이름으로 써야 한다(현재 0).
+5. frozen selector 입력을 은퇴시키거나 별도 결정으로 재기준한다(L4 재검토 조건 2와 같다).
+
+**인계.**
+
+- 바꿀 가치가 있는 조상 접근(`storage.core.plan`, `storage.binding`, `wal().completion`)은 C2/C3의 범위다.
+- R3 조사 시점에 네 단계 모두에서 재노출되던 이름 126개(R2의 15개 포함)는 계약 §3의 “단순 등록”이다. 소비자를 옮길 때 `disk_api`로 이전한다.
+
+**검증 선택.** R2만 제품 diff가 있다. 영향은 재노출 visibility와 이름 해석에 한정되므로 다음을 확인한다.
+
+- `cargo check -p xadb-engine --all-targets --all-features --locked`(warning 0)
+- lib 시험 목록(`--lib --list`) 전체의 byte 동일성. 통합 시험 target은 컴파일만 했고 목록은 만들지 않았다(바뀐 항목이 `pub(crate)`이므로 영향 없음)
+- 변경 파일의 `rustfmt --check`와 `git diff --check`
+- 경로를 쓰는 mixed owner probe 5개의 컴파일 동등 확인
+
+시험 본문은 바꾸지 않았으므로 NOT_RUN이다. R1·R3는 제품 diff가 없다. 독립 리뷰를 받은 뒤 그 결과를 증거 절에 기록한다.
 
 ### 완료 조건과 문서 정본
 

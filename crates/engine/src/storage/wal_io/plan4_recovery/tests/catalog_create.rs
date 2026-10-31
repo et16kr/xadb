@@ -24,10 +24,10 @@ use std::{
     sync::{Arc, Mutex},
 };
 
-const INPUT_SHA: &str = "d6306d7396ad70165a291a14208c35b7e6e8091f0a4c67e870ea9e96d34e0a34";
-const MANIFEST_SHA: &str = "87aa46dd81711cc5080097c674e6fb419e371680ea3e19faa5bafbe3e4847b23";
+const INPUT_SHA: &str = "f6e0dd554a91931cc8e048e775a666dacd777f0c1c3285abed6773ec15f21eeb";
+const MANIFEST_SHA: &str = "e648b0bc4fb8ccf5f258cec6d521128daef6e59f3f9a20825d19eb81d68555df";
 const PRIVATE_BYTES: usize = 425_984;
-const INPUT_ROOT: &str = "tests/fixtures/dev3-catalog-create/native";
+const INPUT_ROOT: &str = "tests/fixtures/dev3-catalog-create/native3";
 
 fn hex(raw: &[u8]) -> String {
     content_digest(raw)
@@ -80,15 +80,15 @@ impl Oracle {
             ("manifest.json", MANIFEST_SHA),
             (
                 "raw-index.tsv",
-                "19dc89b4fcfa06942dbe1568a83b45d33af97b6c33cbfd50d6f199242e9d84cd",
+                "5c649d47ac0b381fbf0e772498adf2fa6420daa2bb550af291fcc96965686fb2",
             ),
             (
                 "steps.tsv",
-                "1b4b8b5b1ae0ee11794f97f643f3605a8a66064a1d57e00094948fe1e5c62f66",
+                "780fe934e8d48ff054e9a436030ddc176e63d3483edad0f38345565307ffe205",
             ),
             (
                 "checkpoints.tsv",
-                "0d1abf8d70b01cbaeea218f3cdcb49194e1e17f0b65f362f7f83877b8d98551e",
+                "9501a6934c5c7c759b86250286e2b695a51622ba275e6263b8639612d45d2f5c",
             ),
         ] {
             assert_eq!(
@@ -625,7 +625,7 @@ fn produce<D: DirectoryPort>(directory: &D, worker: &Worker<'_>) {
     .into_mutable_storage();
     assert_eq!(
         hex(&bounded_read(&worker.root.join("d3-profile"), 4096)),
-        "b8aab8141cbc1807844468c353d62b759e5001d5c3f8f82e54c1f4efeadd3b24"
+        "f49d4bb26a5c0e1bd66dec9a2b0f77aa24e3fafadf54f27e5db9ab9a960e204e"
     );
     let core = PageConcurrency::new(storage.session_fence()).unwrap();
     let mut owner = core.try_owner(OwnerRole::Foreground).unwrap();

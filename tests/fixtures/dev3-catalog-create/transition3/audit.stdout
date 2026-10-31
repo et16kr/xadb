@@ -1,0 +1,1 @@
+{"status": "INPUT_AUDIT_PASS_NOT_PRODUCT_EXECUTION", "cases": 72, "raw_files": 324, "raw_bytes": 8857480, "root3_cells": 47, "job3_cells": 3058, "positive_frames_differ": 46, "native3_equal_frames": 14, "wall_seconds": 0.047, "auditor_sha256": "931967a5e3b23e499605de3932e6f2f131fe095321e46dd47efb458f8ec33b66"}

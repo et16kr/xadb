@@ -57,14 +57,11 @@ pub(crate) use bootstrap::{
 pub(crate) use bootstrap::{
     BeforeEffectError, BoundStatusBootstrap, BoundStatusWithFlush, EMPTY_TRANSACTION_BANK_BYTES,
     EmptyTransactionSnapshot, EmptyTransactions, InitAttemptError, InitializedStatusObservation,
-    InitializedSystemObservation, IntoEmptyTransactionsError, IntoFlushError,
-    IntoOperationalStatusError, MixedSystem, MixedSystemBinding, MixedSystemFlusher,
-    MixedSystemReadGuard, MixedSystemReader, MixedSystemWriter, OperationalStatus,
+    IntoEmptyTransactionsError, IntoFlushError, IntoOperationalStatusError, OperationalStatus,
     OperationalStatusReader, OperationalStatusWriter, ReadStatusSet, ReservedStatus,
-    ReservedSystemPage, ResidentReadAdmission, ResidentStatus, ResidentStatusBinding,
-    ResidentStatusReader, StatusBootstrapWriter, StatusFlushError, StatusFlusher, StatusInitError,
-    StatusReadGuard, StatusReader, SystemLoadError, SystemLoadObservation, SystemPage,
-    SystemPageKind, SystemResidencyCursor, SystemResidencyStep, SystemSlotStep,
+    ResidentReadAdmission, ResidentStatus, ResidentStatusBinding, ResidentStatusReader,
+    StatusBootstrapWriter, StatusFlushError, StatusFlusher, StatusInitError, StatusReadGuard,
+    StatusReader,
 };
 #[allow(unused_imports)] // Closed prefix observations await the next recovery barrier.
 pub(crate) use bootstrap::{
@@ -521,6 +518,10 @@ impl<'m, W: WriterNamespace> GenesisWalSession<'m, W> {
         Self::create_with_profile(writer, profile_id, true, slot, scratch)
     }
 
+    #[allow(
+        clippy::type_complexity,
+        reason = "one pair of control codec function pointers chosen per arm"
+    )]
     fn create_with_profile(
         mut writer: W,
         profile_id: u32,
@@ -558,10 +559,18 @@ impl<'m, W: WriterNamespace> GenesisWalSession<'m, W> {
         let (profile_bytes, rest) = scratch.split_at_mut(CONTROL_BYTES);
         let (epoch_bytes, rest) = rest.split_at_mut(CONTROL_BYTES);
         let (selector_bytes, readback) = rest.split_at_mut(CONTROL_BYTES);
-        let encode_profile = if catalog {
-            control::encode_catalog_profile
+        // The catalog arm is the current Profile3 plan4 owner; the other arm
+        // stays the DEV2 Profile1 owner. Each decodes with its own grammar.
+        let (encode_profile, decode_profile): (
+            fn(ProfileSpec, &mut [u8]) -> std::result::Result<&[u8], ControlError>,
+            fn(&[u8], Option<Namespace>) -> std::result::Result<Profile, ControlError>,
+        ) = if catalog {
+            (
+                control::row_profile::encode_profile,
+                control::row_profile::decode_profile,
+            )
         } else {
-            control::encode_profile
+            (control::encode_profile, control::decode_bootstrap_profile)
         };
         encode_profile(
             ProfileSpec {
@@ -572,7 +581,7 @@ impl<'m, W: WriterNamespace> GenesisWalSession<'m, W> {
             profile_bytes,
         )
         .map_err(|e| unchanged(Phase::Preflight, Cause::Control(e)))?;
-        let profile = control::decode_bootstrap_profile(profile_bytes, Some(namespace))
+        let profile = decode_profile(profile_bytes, Some(namespace))
             .map_err(|e| unchanged(Phase::Preflight, Cause::Control(e)))?;
         encode_epoch(profile, epoch_bytes)
             .map_err(|e| unchanged(Phase::Preflight, Cause::Control(e)))?;
@@ -625,7 +634,7 @@ impl<'m, W: WriterNamespace> GenesisWalSession<'m, W> {
             let (mut file, _) = open_installed(&mut writer, &profile_name, OpenMode::ReadOnly)?;
             read_exact_at(&mut file, readback, 0)
                 .map_err(|e| attempted(Phase::Readback, Cause::Io(e)))?;
-            let observed = control::decode_bootstrap_profile(readback, Some(namespace))
+            let observed = decode_profile(readback, Some(namespace))
                 .map_err(|e| attempted(Phase::Readback, Cause::Control(e)))?;
             if observed != profile {
                 return Err(attempted(Phase::Readback, Cause::IdentityMismatch));
@@ -719,19 +728,19 @@ impl Drop for IoFence<'_> {
 }
 
 #[cfg(test)]
-#[path = "wal_durability_test_support.rs"]
+#[path = "wal_io/durability_test_support.rs"]
 mod durability_test_support;
 #[cfg(test)]
-#[path = "wal_durability_tests.rs"]
+#[path = "wal_io/durability_tests.rs"]
 mod durability_tests;
 #[cfg(test)]
-#[path = "wal_first_write_tests.rs"]
+#[path = "wal_io/first_write_tests.rs"]
 mod first_write_tests;
 #[cfg(test)]
-#[path = "wal_io_test_support.rs"]
+#[path = "wal_io/test_support.rs"]
 mod test_support;
 #[cfg(test)]
-#[path = "wal_io_tests.rs"]
+#[path = "wal_io/tests.rs"]
 mod tests;
 
 pub(in crate::storage) use bootstrap::StatusLoadPermit;
@@ -769,4 +778,6 @@ pub(in crate::storage) use bootstrap::{
     VisibilityResult,
 };
 
-pub(in crate::storage) use bootstrap::{CatalogAllocationError, validate_catalog_base_allocation};
+pub(in crate::storage) use bootstrap::{
+    CatalogAllocationError, validate_catalog_base_allocation, validate_row_base_allocation,
+};

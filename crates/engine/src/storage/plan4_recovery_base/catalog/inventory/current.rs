@@ -1,6 +1,6 @@
 //! Canonical current XOI projection from borrowed original/projected rows. This
 //! codec neither authenticates the rows nor issues inventory or INIT authority.
-use super::{finish, item_slot, owner_slot};
+use super::{Mode, finish, item_slot, owner_slot};
 use crate::storage::{
     allocation_page::{self, AllocationEntry, ReservationOwner, SystemWorkRef},
     control::Profile,
@@ -8,7 +8,7 @@ use crate::storage::{
     page::{PageIdentity, PageRef},
     plan4_recovery_base::{Error, PAGE_BYTES, Result, first_file, one, put, put16},
     retention_obligation,
-    retention_page::catalog as queue,
+    retention_page::{catalog as queue, catalog3, row as row_queue},
     semantic_catalog,
     transaction_record::TxnRef,
 };
@@ -40,6 +40,7 @@ fn charge(total: &mut (u64, u64), rows: &[RemainingBudget; 5]) -> Result<()> {
 /// Returns current remaining WAL/control credit. Aging already owns each Job's
 /// cleanup debt, so Jobs are not charged a second time. Output is discardable
 /// on any error; generation/capture must come from the caller's actual source.
+#[allow(dead_code, reason = "historical Profile2 pure codec")]
 pub(in crate::storage) fn encode_current(
     profile: Profile,
     generation: u64,
@@ -47,6 +48,29 @@ pub(in crate::storage) fn encode_current(
     rows: &impl InventoryRows,
     output: &mut [u8; PAGE_BYTES],
 ) -> Result<(u64, u64)> {
+    encode(Mode::Catalog2, profile, generation, capture, rows, output)
+}
+
+/// The exact Profile3 entry: `rows` carries a Root3 page and Job3 cells.
+pub(in crate::storage) fn encode_row_current(
+    profile: Profile,
+    generation: u64,
+    capture: u64,
+    rows: &impl InventoryRows,
+    output: &mut [u8; PAGE_BYTES],
+) -> Result<(u64, u64)> {
+    encode(Mode::Row3, profile, generation, capture, rows, output)
+}
+
+fn encode(
+    mode: Mode,
+    profile: Profile,
+    generation: u64,
+    capture: u64,
+    rows: &impl InventoryRows,
+    output: &mut [u8; PAGE_BYTES],
+) -> Result<(u64, u64)> {
+    // The exact format gate stays in `finish`, as in the original order.
     output.fill(0);
     let mut future = (0, 0);
     let mut used = 0u32;
@@ -96,7 +120,14 @@ pub(in crate::storage) fn encode_current(
     for (is_aging, bytes) in [(false, rows.allocation()), (true, rows.aging())] {
         let Some(bytes) = bytes else { continue };
         let decoded = if is_aging {
-            retention_obligation::catalog::decode(bytes, profile, rows.root())?.descriptor()
+            match mode {
+                Mode::Catalog2 => {
+                    retention_obligation::catalog::decode(bytes, profile, rows.root())?.descriptor()
+                }
+                Mode::Row3 => {
+                    retention_obligation::row::decode(bytes, profile, rows.root())?.descriptor()
+                }
+            }
         } else {
             let owner = SystemWorkRef::decode(&bytes[24..72])?;
             obligation::decode_descriptor(
@@ -125,6 +156,31 @@ pub(in crate::storage) fn encode_current(
     }
     let mut count = 0;
     for ordinal in 0..64 {
+        if mode == Mode::Row3 {
+            let job = row_queue::decode_job(rows.job(ordinal)?, profile.spec().namespace)?;
+            if job.state() != row_queue::JobState::RootReserved {
+                continue;
+            }
+            if count != 0 {
+                return Err(Error::IdentityMismatch);
+            }
+            // A Row-scope RowReserve owns one UndoSlot item; a Catalog-scope
+            // CREATE its three items through the Catalog-scope Job3 view.
+            let Some(catalog) = catalog3::JobView::catalog(job) else {
+                row_undo_item(output, transactions, job)?;
+                count = 1;
+                continue;
+            };
+            let actor = catalog.source().ok_or(Error::IdentityMismatch)?;
+            let owner = reserving_owner(output, transactions, actor)?;
+            let mut items = [0; semantic_catalog::inventory::ITEMS_BYTES];
+            semantic_catalog::inventory::global_items(catalog, owner, &mut items)?;
+            for index in 0..3 {
+                item_slot(output, index)?.copy_from_slice(&items[index * 96..(index + 1) * 96]);
+            }
+            count = 3;
+            continue;
+        }
         let job = queue::decode_job(rows.job(ordinal)?, profile.spec().namespace)?;
         if job.state() != queue::JobState::RootReserved {
             continue;
@@ -203,16 +259,93 @@ pub(in crate::storage) fn encode_current(
     if allocation.is_some_and(|(_, _, _, items)| items != system_items) {
         return Err(Error::IdentityMismatch);
     }
-    finish(profile, generation, capture, owners, count, output)?;
+    finish(mode, profile, generation, capture, owners, count, output)?;
     Ok(future)
 }
 
-/// Typed nested codec closure. Caller-owned rows/adapter, output page and any
-/// retained current/projected views are accounted by the calling phase.
+/// Profile3 Row mode: the one ATT owner row of a reserving actor among the
+/// packed transactions.
+fn reserving_owner(
+    output: &mut [u8; PAGE_BYTES],
+    transactions: usize,
+    actor: TxnRef,
+) -> Result<u16> {
+    let mut owner = None;
+    for index in 0..transactions {
+        if TxnRef::decode(&owner_slot(output, index)?[8..56])? == actor
+            && owner.replace(index).is_some()
+        {
+            return Err(Error::IdentityMismatch);
+        }
+    }
+    Ok(owner.ok_or(Error::IdentityMismatch)? as u16)
+}
+
+/// Profile3 Row mode: a RowReserve's `UndoSlot(U)` item in the Forward row's
+/// category, owned by its actor's ATT row and born at the lease.
+fn row_undo_item(
+    output: &mut [u8; PAGE_BYTES],
+    transactions: usize,
+    job: row_queue::JobView<'_>,
+) -> Result<()> {
+    let actor = job.source().ok_or(Error::IdentityMismatch)?;
+    let owner = reserving_owner(output, transactions, actor)?;
+    let undo = job.undo().ok_or(Error::IdentityMismatch)?;
+    let item = item_slot(output, 0)?;
+    item.fill(0);
+    item[0] = 2;
+    item[1] = 2;
+    put16(item, 2, owner);
+    undo.encode(&mut item[8..48])?;
+    put(item, 64, 1);
+    put(item, 72, job.lease_lsn());
+    Ok(())
+}
+
+/// Typed nested codec closure of the historical Catalog2 mode. Caller-owned
+/// rows/adapter, output page and any retained current/projected views are
+/// accounted by the calling phase.
+#[allow(dead_code, reason = "historical Profile2 pure codec")]
 pub(in crate::storage) fn current_source_bytes() -> usize {
     use foundation::codec::ContentHasher;
     use std::mem::size_of;
-    let outer = semantic_catalog::inventory::ITEMS_BYTES
+    let outer = common_outer()
+        + 2 * size_of::<queue::JobView<'_>>()
+        + 2 * size_of::<Result<queue::JobView<'_>>>();
+    outer
+        + retention_obligation::catalog::source_bytes()
+            .max(queue::source_bytes())
+            .max(4 * size_of::<ContentHasher>() + 1536)
+}
+
+/// The current Profile3 Row mode closure: the same outer carriers with the
+/// Job3 decode, its Catalog-scope view and the RowReserve UndoSlot item in
+/// place of the version2 Job view, over the Row Aging decode and the
+/// Root3/Job3 codec (charged through the Catalog-scope wrapper).
+pub(in crate::storage) fn row_current_source_bytes() -> usize {
+    use crate::storage::undo_ref::UndoRef;
+    use foundation::codec::ContentHasher;
+    use std::mem::size_of;
+    let outer = common_outer()
+        + 2 * size_of::<row_queue::JobView<'_>>()
+        + 2 * size_of::<
+            std::result::Result<
+                row_queue::JobView<'_>,
+                crate::storage::retention_page::RetentionError,
+            >,
+        >()
+        + 2 * size_of::<Option<catalog3::JobView<'_>>>()
+        + 2 * size_of::<Option<UndoRef>>()
+        + 2 * size_of::<Result<u16>>();
+    outer
+        + retention_obligation::row::source_bytes()
+            .max(catalog3::source_bytes())
+            .max(4 * size_of::<ContentHasher>() + 1536)
+}
+
+fn common_outer() -> usize {
+    use std::mem::size_of;
+    semantic_catalog::inventory::ITEMS_BYTES
         + 2 * size_of::<obligation::DescriptorSpec>()
         + 2 * size_of::<std::result::Result<obligation::DescriptorSpec, obligation::ObligationError>>(
         )
@@ -227,13 +360,7 @@ pub(in crate::storage) fn current_source_bytes() -> usize {
                 allocation_page::AllocationError,
             >,
         >()
-        + 2 * size_of::<queue::JobView<'_>>()
-        + 2 * size_of::<Result<queue::JobView<'_>>>()
         + 8 * size_of::<Result<()>>()
         + 24 * size_of::<&[u8]>()
-        + 24 * size_of::<u64>();
-    outer
-        + retention_obligation::catalog::source_bytes()
-            .max(queue::source_bytes())
-            .max(4 * size_of::<ContentHasher>() + 1536)
+        + 24 * size_of::<u64>()
 }

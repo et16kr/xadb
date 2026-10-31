@@ -9,7 +9,10 @@ use crate::storage::{
     catalog_record::{self, CatalogDefinitionView, CatalogExpectation},
     control::Profile,
     page::{PAGE_BYTES, PageIdentity, PageKind, PageRef},
-    retention_page::catalog::{self as queue, JobState},
+    retention_page::{
+        catalog3::{self as queue, JobState},
+        row as job3,
+    },
     semantic_catalog::Operation,
     transaction_record::VersionStamp,
     tree_page::{self, EntryPayload, TreeExpectation},
@@ -198,9 +201,13 @@ impl BoundVisibility<'_, '_, '_> {
             .actor
             .ok_or_else(|| self.origin.fatal(VisibilityCause::Invariant))?;
         let mut mask = 0u32;
+        // Catalog selection skips every Row-scope cell (another actor's).
         for cell in ledger.jobs() {
-            let job = queue::decode_job(cell, profile.spec().namespace)
-                .map_err(|_| self.origin.fatal(VisibilityCause::Invariant))?;
+            let Some(job) = queue::decode_catalog_cell(cell, profile.spec().namespace)
+                .map_err(|_| self.origin.fatal(VisibilityCause::Invariant))?
+            else {
+                continue;
+            };
             if job.source() != Some(actor) || !job.state().is_root() {
                 continue;
             }
@@ -275,11 +282,13 @@ pub(super) fn seed(
     q: u64,
 ) -> Result<(), ()> {
     let namespace = profile.spec().namespace;
-    if profile.format() != 2 {
+    if profile.format() != 3 {
         return Err(());
     }
+    // Drained means every cell of either scope is Free: the Row codec counts
+    // Row-scope cells too.
     for cell in ledger.jobs() {
-        if queue::decode_job(cell, namespace).map_err(|_| ())?.state() != JobState::Free {
+        if job3::decode_job(cell, namespace).map_err(|_| ())?.state() != job3::JobState::Free {
             return Err(());
         }
     }
@@ -456,7 +465,7 @@ pub(super) fn source_bytes() -> usize {
         + 4 * size_of::<TreeExpectation>()
         + 32 * size_of::<u64>()
         + 32 * size_of::<&[u8]>()
-        + crate::storage::semantic_catalog::source_census()
+        + crate::storage::semantic_catalog::profile3_source_census()
             .catalog_image
             .max(queue::source_bytes())
 }
@@ -511,6 +520,36 @@ impl BoundVisibility<'_, '_, '_> {
             }
         }
         Ok(!catalog || u64_at(publication.epochs, 0) <= start)
+    }
+}
+
+/// A table's epoch slot as observed under publication. The slot number is an
+/// observation for the read mask, not an authority; Reserved belongs to an
+/// uncommitted CREATE and is never exposed as a CheckedTable.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub(in super::super) enum TableSlot {
+    Absent,
+    Reserved,
+    Published(u8),
+}
+impl BoundVisibility<'_, '_, '_> {
+    /// Only the CheckedTable issuer calls this. The publication guard ends on
+    /// return, before the caller takes the isolation leaf.
+    pub(in super::super) fn table_slot(&self, object: ObjectHandle) -> VisibilityResult<TableSlot> {
+        let publication = self.publication()?;
+        if !publication.epochs_active {
+            return Err(self.origin.fatal(VisibilityCause::Invariant));
+        }
+        let Some(slot) = find(publication.epochs, object) else {
+            return Ok(TableSlot::Absent);
+        };
+        let state = row(publication.epochs, slot)[0];
+        let slot = u8::try_from(slot).map_err(|_| self.origin.fatal(VisibilityCause::Invariant))?;
+        match state {
+            RESERVED => Ok(TableSlot::Reserved),
+            PUBLISHED => Ok(TableSlot::Published(slot)),
+            _ => Err(self.origin.fatal(VisibilityCause::Invariant)),
+        }
     }
 }
 

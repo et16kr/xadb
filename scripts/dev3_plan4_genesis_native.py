@@ -20,7 +20,9 @@ import dev3_plan4_genesis_cases as core
 SCHEMA = 'XADB_PLAN4_NATIVE_V1'
 PHASES = ('produce', 'select', 'reentry')
 SELECTOR = 'storage::recovery_select::plan4::native::worker_plan4_genesis'
-INPUT = Path('tests/fixtures/dev3-plan4-genesis')
+# The current plan4 namespace is Profile3 (U2-C4c); same ids, layout and census.
+INPUT = Path('tests/fixtures/module-row-format/genesis3-namespace')
+INDEX = 'index.tsv'
 PAGE, TOTAL, SECONDS = 16384, 22_069_248, 30.0
 DB_LIMIT, HISTORY_LIMIT, LOG_LIMIT = 24 << 20, 128 << 20, 8 << 20
 require, sha = core.require, core.sha
@@ -42,7 +44,7 @@ def digest(raw):
 def fixture(root):
     base = Path(root) / INPUT
     rows, inputs = {}, {}
-    lines = (base / 'raw-index.tsv').read_text().splitlines()
+    lines = (base / INDEX).read_text().splitlines()
     require(lines[0] == 'id\tpath\tbytes\tsha256', 'raw index header')
     for line in lines[1:]:
         key, relative, length, checksum = line.split('\t')
@@ -54,7 +56,7 @@ def fixture(root):
         rows[key], inputs[str(path)] = raw, checksum
     require(len(rows) == 42 and sum(map(len, rows.values())) == 274720, 'raw input census')
     inputs['manifest.json'] = sha(base / 'manifest.json')
-    inputs['raw-index.tsv'] = sha(base / 'raw-index.tsv')
+    inputs[INDEX] = sha(base / INDEX)
     return rows, inputs
 
 

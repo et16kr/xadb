@@ -1,0 +1,153 @@
+{
+  "schema": "xadb-module-row-read-driver-v1",
+  "source_kind": "C0_SEAM",
+  "base_commit": "31e4614189de4c2f6521529c0ec71e9d7d610555",
+  "scope": "B point/cursor driver over the C0 Row read boundary through private source/view traits. Runtime cases use a test-only literal source (independent RowLeaf/XRW1 cells, logical Status/Missing-before answers, literal target values) and a literal view/credit counter. No RowReadOperation, Plan4Target, pin, snapshot, CallerCredit, RowCopyObservation, MissingRowEvidence, ACK or READY is created; the live adapter is compile-checked only because the C0 bodies return Unsupported.",
+  "status": "FROZEN_INPUTS_NOT_EXECUTION_EVIDENCE",
+  "budget": {
+    "check_seconds": 900,
+    "build_seconds": 900,
+    "case_seconds": 30,
+    "total_seconds": 2400,
+    "output_bytes": 8388608
+  },
+  "compiler": [
+    {
+      "id": "CHECK",
+      "command": [
+        "cargo",
+        "check",
+        "-p",
+        "xadb-engine",
+        "--all-targets",
+        "--all-features",
+        "--locked"
+      ],
+      "env": {
+        "CARGO_TARGET_DIR": "<worktree>/target"
+      },
+      "pass": "exit 0 and 0 warnings; also the only compile evidence for driver/live.rs against the actual C0 types"
+    }
+  ],
+  "runtime": {
+    "command": [
+      "cargo",
+      "test",
+      "-p",
+      "xadb-engine",
+      "--lib",
+      "--all-features",
+      "--locked",
+      "<selector>",
+      "--",
+      "--exact",
+      "--test-threads=1"
+    ],
+    "rule": "each selector once; on failure keep the log, fix, rerun only failing/affected selectors and record both runs"
+  },
+  "runtime_tests": [
+    {
+      "selector": "storage::row::read::driver::tests::mcb00_d01_point_found_and_absent_key",
+      "contract_case": "MCB00-D01",
+      "oracle": "point Found after copy/release/finish (committed q5, committed exactly at q12), absent keys 1/15/35/41/MAX as checked Missing with page release; exact output bytes and call order"
+    },
+    {
+      "selector": "storage::row::read::driver::tests::mcb00_d02_point_status_and_missing_before_select_the_version",
+      "contract_case": "MCB00-D02",
+      "oracle": "transaction stamp needs Status (committed q8/q10, own Active visible; committed q11, foreign Active, own Aborted invisible); invisible -> Missing only with Missing-before; failed Missing-before is an error; committed-after-q without Undo is MissingUndo with no Missing-before call"
+    },
+    {
+      "selector": "storage::row::read::driver::tests::mcb00_d03_flush_required_passes_through_after_cleanup",
+      "contract_case": "MCB00-D03",
+      "oracle": "FlushRequired from page/Status/Missing-before returns the same target after candidate release and finish; cursor keeps only fully judged invisible rows examined, then retries the same visible row"
+    },
+    {
+      "selector": "storage::row::read::driver::tests::mcb00_d04_point_output_cancel_and_cleanup_never_publish",
+      "contract_case": "MCB00-D04",
+      "oracle": "required-1 OutputTooSmall without copy and exact length succeeds; cancel before call and before copy; failed release after copy not published; CallerMustResolve cleanup replaces an ordinary error and an earlier CallerMustResolve survives a failed cleanup"
+    },
+    {
+      "selector": "storage::row::read::driver::tests::mcb00_d05_cursor_next_returns_rows_in_order_then_end",
+      "contract_case": "MCB00-D05",
+      "oracle": "cursor skips invisible 10 with Missing-before, returns 20/30/40 in order with separate examined/returned keys, End after page release, End again without a page"
+    },
+    {
+      "selector": "storage::row::read::driver::tests::mcb00_d06_cursor_reseeks_by_full_row_id_after_a_gap",
+      "contract_case": "MCB00-D06",
+      "oracle": "reseek by full RowId on a shifted leaf with new lower rows, on a leaf without the last examined key, and a bounded [20,40) range ending before 40"
+    },
+    {
+      "selector": "storage::row::read::driver::tests::mcb00_d07_cursor_output_cancel_and_cleanup_keep_the_visible_row",
+      "contract_case": "MCB00-D07",
+      "oracle": "cursor OutputTooSmall/cancel (after invisible judgement and before copy)/failed release/failed finish keep last_examined at the invisible row and never skip or return the visible row; retry returns it"
+    },
+    {
+      "selector": "storage::row::read::driver::tests::mcb00_d08_statement_and_revision_precede_end_and_cancel",
+      "contract_case": "MCB00-D08",
+      "oracle": "revision change -> CursorInvalidated before page, End and cancellation; reopened cursor reads to End; ended statement refused before revision/End/page; keys unchanged"
+    },
+    {
+      "selector": "storage::row::read::driver::tests::mcb00_d09_close_returns_only_its_own_credit",
+      "contract_case": "MCB00-D09",
+      "oracle": "range checked before credit; Capacity before any charge; close returns only its own literal credit; Drop returns the other through the credit's Drop; new cursor takes a new credit; view untouched"
+    }
+  ],
+  "not_run": [
+    {
+      "selector": "storage::row::read::tests::mcb00_v01_literal_point_and_reseek_bounds",
+      "reason": "unchanged pure helpers; read.rs diff is the module doc and the driver registration only"
+    },
+    {
+      "selector": "storage::row::read::tests::mcb00_v02_literal_visibility_requires_status_and_missing_before",
+      "reason": "unchanged"
+    },
+    {
+      "selector": "storage::row::read::tests::mcb00_v03_invisible_output_retry_cancel_and_revision_progress",
+      "reason": "unchanged"
+    },
+    {
+      "id": "LIVE_RUNTIME",
+      "reason": "C0 RowReadOperation factory/phases return Unchanged Unsupported until C2 supplies the actual source"
+    },
+    {
+      "id": "CURSOR_BORROW_PROBE",
+      "reason": "compile-fail probe (RowCursor::open on a RowStatementView, then finish_statement -> expected E0505) is described for the integrator, not built here"
+    }
+  ],
+  "input_files": {
+    "crates/engine/src/storage/row/read.rs": {
+      "bytes": 8695,
+      "sha256": "cd27459483e9773250f81cae9ecc37238243371c172b022b2221cd5cdc1e6f5f"
+    },
+    "crates/engine/src/storage/row/read/driver.rs": {
+      "bytes": 12945,
+      "sha256": "fc98d3ed2185f53fc803f55275fc406616225f34cd81a43caaa283c7abc95e66"
+    },
+    "crates/engine/src/storage/row/read/driver/live.rs": {
+      "bytes": 6501,
+      "sha256": "009c2413f937379eab5bc6690b4a013ae0f283e11b91ecf0dc500f0104e6e064"
+    },
+    "crates/engine/src/storage/row/read/driver/tests.rs": {
+      "bytes": 41423,
+      "sha256": "9383e34e844436509b1b23177238eb81c10e7eb1d7c875cf96cd310057d5e79b"
+    },
+    "tests/fixtures/module-row-read/driver-cells.txt": {
+      "bytes": 3157,
+      "sha256": "7d69699cae24aeae466109cb7ab5cdb5a648b1688764ca5d01c66ffd446dbec0"
+    },
+    "tests/fixtures/module-row-read/make_driver_cells.py": {
+      "bytes": 2937,
+      "sha256": "2f3ad667fc636d7e7a2c5b5a899f13f41b6d5fb72557e11d1284350563884bb6"
+    }
+  },
+  "consumed_boundary": {
+    "crates/engine/src/storage/wal_io/plan4_apply/row/read.rs": {
+      "bytes": 6676,
+      "sha256": "50a727d0690b907677f18eb5bac3a998e73b75e7ca17c2bb1e1441cf5f35599f"
+    },
+    "crates/engine/src/storage/wal_io/plan4_apply/transaction.rs": {
+      "bytes": 35528,
+      "sha256": "62de8a5c2c3b47f5e7c05607a52a60e329d341ccd7e0fa581fc8b6416cc36b50"
+    }
+  }
+}

@@ -39,6 +39,8 @@ pub(in crate::storage) struct RetentionSourceCensus {
     pub(in crate::storage) history_rollback: usize,
     pub(in crate::storage) history_closure: usize,
     pub(in crate::storage) history_frame_return: usize,
+    /// The scope3 Row arm, exclusive with the Catalog/System arms.
+    pub(in crate::storage) history_row: usize,
     pub(in crate::storage) recovery_frame: usize,
     pub(in crate::storage) producer: usize,
     pub(in crate::storage) installation: usize,
@@ -233,7 +235,7 @@ pub(in crate::storage) fn source_census<W: WriterNamespace>() -> RetentionSource
     // Selection/replay, residency, producer and verification are consecutive.
     let catalog_recovery_cleanup = 3 * size_of::<Result<recovery::RetentionRecoveryStep>>()
         + 2 * size_of::<recovery::RetentionRecoveryStep>()
-        + 2 * size_of::<crate::storage::retention_page::catalog::JobView<'_>>()
+        + 2 * size_of::<crate::storage::retention_page::catalog3::JobView<'_>>()
         + 2 * size_of::<crate::storage::retention_page::JobSlotRef>()
         + 16 * size_of::<&()>()
         + 256
@@ -303,6 +305,7 @@ pub(in crate::storage) fn source_census<W: WriterNamespace>() -> RetentionSource
         history_rollback: history.rollback,
         history_closure: history.closure,
         history_frame_return: history.frame_return,
+        history_row: history.row,
         recovery_frame: history.frame,
         producer,
         installation,

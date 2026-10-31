@@ -155,6 +155,8 @@ fn recovery_source_native() {
     h.finish();
 }
 
+#[path = "tests/base_cause.rs"]
+mod base_cause;
 #[path = "tests/cases.rs"]
 mod cases;
 #[path = "tests/closure.rs"]
@@ -184,3 +186,6 @@ mod catalog_create;
 
 #[path = "tests/catalog_memory.rs"]
 mod catalog_memory;
+
+#[path = "tests/row_gate.rs"]
+mod row_gate;
