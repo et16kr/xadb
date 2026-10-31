@@ -712,14 +712,16 @@ fn catalog_commit_windows_fit_beside_admitted_readers() {
     inspect::<super::super::super::native::Writer>("NATIVE_TYPE");
 }
 
-/// REPRO (found on main `76b3627`, not fixed here): the contract admits one
-/// Full Catalog read beside a Catalog commit in Pending ("Pending and
-/// publication overlap one admitted Full read"). With the charges the product
-/// actually computes, the read is refused with Unchanged Capacity: S6 grew
-/// `shared` by 144 B (S2/S5 merges: memory 20184, native 20192), so
-/// `shared + pending + full` is 65588/65596 B > the 65536 B short-source loan.
-/// The same refusal fails MCW01, MT03, S3-R07 and the call_scope,
-/// source_entry and source_return reader cases.
+/// Regression (found on main `76b3627`): the contract admits one Full Catalog
+/// read beside a Catalog commit in Pending ("Pending and publication overlap
+/// one admitted Full read"). This reserves both with the charges the product
+/// actually computes. S6 had grown `shared` by 144 B (S2/S5 merges: memory
+/// 20184, native 20192) by keeping the whole Row admission (policy and two
+/// digests) in RestoredRetention, which `shared` counts twice; then
+/// `shared + pending + full` was 65588/65596 B > the 65536 B short-source
+/// loan and the read was refused with Unchanged Capacity, failing MCW01,
+/// MT03, S3-R07 and the call_scope, source_entry and source_return reader
+/// cases too. RestoredRetention now keeps only the policy.
 #[test]
 fn repro_full_read_beside_pending_commit_fits_actual_charges() {
     use crate::transaction::concurrency::OwnerRole;

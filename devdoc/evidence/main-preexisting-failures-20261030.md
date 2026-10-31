@@ -190,3 +190,64 @@ main `8d5e48b` test ELF(`7f456dcc…`)를 `perf record --call-graph=dwarf`(49Hz,
 | `crates/engine/src/storage/retention_page.rs` | `ee0df629d363239e0b6835e48c4ce1d6506331fd81d7d96f54be566a3a3bda01` |
 | `crates/engine/src/storage/retention_page_tests.rs` | `6944c3dec33ba347654e54d6963b0d12dfba6d3c3d506c47b15e4a3ede6d3355` |
 | `Cargo.toml` | `b87970a24dee0d397f49c3ec95f02b71814e415c5dda4be8ae057e83f31d17e1` |
+
+<a id="s6-shared-growth"></a>
+## 6. Catalog commit Pending 옆 Full 조회 거절: S6의 shared +144B
+
+2026-10-31 · branch `claude/project-thread-dpdk6i`(기준 main `76b3627`, S6 병합). 같은 날 main 잠재 버그 찾기(공유 폴더 `main-bug-hunt-20261031/README.md`)가 찾은 회귀다. 그 작업의 재현 시험 commit(`ca92ba8`)을 같은 내용으로 가져와(`2f74d7b`) 고쳤다. main에서도 실패하므로 사용자 규칙에 따라 PR은 main이 아니라 모듈 작업 branch `claude/project-thread-1jfdtk`로 연다.
+
+### 6.1 원인
+
+계약은 Catalog commit의 Pending·publication 구간이 admitted Full 조회 1개와 겹칠 수 있다고 정한다. 그 합 `shared + pending + full`이 65536B short source 안에 들어가야 한다. S6 `32de380`부터 이 합이 넘쳐 Pending writer 옆 Full 조회가 `RetentionError{Census, Capacity, Unchanged}`로 거절됐다.
+
+| 시점 | shared (memory / Linux 타입) | shared+pending+full | 결과 |
+| --- | ---: | ---: | --- |
+| S5 병합 `8d5e48b` | 20184 / 20192 | 65444 / 65452 | PASS |
+| S6 병합 `76b3627` | 20328 / 20336 | 65588 / 65596 | 거절 |
+| 이 수정 | 20200 / 20208 | 65460 / 65468 | PASS |
+
+`shared_bytes`는 live owner+session과 recovery runtime+recovered facade 중 큰 쪽에 core와 split port를 더한 값이다. S6가 RestoredRetention에 `row_admission: Option<RowRecoveryAdmission>`(policy 1B와 digest 32B 두 개, 정렬 뒤 72B)를 넣었다. RestoredRetention은 runtime의 `loans`(RecoveryBindLoans)와 `Plan4Recovered` 안 DiskSession의 `recovery_binding`(RecoveryRetentionBinding)에 한 번씩 들어 있다. 실행 중에는 대여분에서 binding으로 옮겨 가 하나뿐이지만 정적 source 계수에는 둘 다 잡힌다. 72B×2가 144B다. 독립 S6 검토는 두 자리를 RecoveryState의 `row_admission`과 RestoredRetention으로 보았으나, RecoveryState(`Plan4Recovery`)는 `shared` 식에 없다. 실제 두 자리는 위의 runtime 대여분과 binding이다.
+
+두 digest는 RestoredRetention을 만들 때(`physical.rs`) 원 entry policy·AnalysisSeal digest·실제 분석 SourceFacts digest와 대조된다. 그 뒤 binding의 `row_policy()`는 admission의 state_digest가 RestoredRetention의 state_digest와 같은지, source_facts_digest가 0이 아닌지만 봤다. 둘은 같은 private 값 안의 불변 복사본이라 이 검산은 실패할 수 없었다. 계속 보유할 이유가 없는 64B가 두 번 계수된 셈이다.
+
+### 6.2 수정
+
+- `plan4_recovery.rs`: RestoredRetention의 `row_admission`을 `row_policy: Option<RowRecoveryPolicy>`로 바꿨다. RecoveryState가 analysis와 RestoredRetention 사이에 보유하는 admission 전체와 `physical.rs`의 세 대조는 그대로다. 대조를 통과한 admission의 policy만 RestoredRetention에 넣는다.
+- `RecoveryRetentionBinding::row_policy()`: `Result<Option<_>, ()>`에서 `Option<_>`으로 바꿨다. 실패할 수 없던 Err 갈래와 `plan4_retention/recovery/catalog.rs`의 대응 갈래를 없앴다. legacy binding(None)의 Row cell은 그대로 Row decode 전 Unsupported다.
+- 계약: [S6 정정](../contracts/dev3-module-boundaries.md#row-recovery-s6-shared)에 이 변경과 "매 단계 digest 검산" 문구의 삭제를 적었다. cap·charge·wire는 바꾸지 않았다.
+- 시험: 재현 시험의 주석을 회귀 시험 설명으로 바꿨다. `s2w_c04_live_and_recovered_peaks_unchanged`의 고정값을 memory 64000/65368→64008/65384, Linux 타입 64008/65376→64016/65392로 바꿨다. S6의 policy 1B(정렬 8B)가 binding(live·recovered)과 runtime 대여분(recovered)에 더해진 값이다. 이 시험은 S6 뒤 64072/65512로 이미 실패하고 있었다.
+
+state_digest만 남기는 안(한 자리 40B, 합 +80B)은 Linux 타입 Pending+Full이 65532B로 여유 4B라 택하지 않았다. RestoredRetention의 읽히지 않는 `physical_topup`·`metadata_growth`를 빼서 증가를 0으로 만드는 안은 이 회귀와 무관한 변경이라 하지 않았다.
+
+### 6.3 실행
+
+`cargo test -p xadb-engine --lib --no-run --locked`로 build하고 각 selector를 `--exact --test-threads=1`, stack 32MiB로 1회 실행했다. identity 환경 변수(`XADB_*_SOURCE/ELF/INPUT_SHA256`)는 ELF hash로, `XADB_G6_VECTOR_INDEXES`는 §5.3의 값으로 주었다. 변경한 것은 RestoredRetention의 크기와 Row policy 조회이므로 그 크기를 세는 census 시험, 같은 원인으로 실패하던 시험, `row_policy()`를 거치는 S6 Row 복구 시험만 골랐다. 전체 workspace나 다른 시험은 실행하지 않았다. S6 native controller(`scripts/check_dev3_s6_native.py`)도 실행하지 않았다. 바뀐 코드는 platform과 무관하고 Linux 타입의 크기는 census 시험이 덮는다.
+
+| 선택 | 수정 전 | 수정 후 |
+| --- | --- | --- |
+| 재현 시험 `repro_full_read_beside_pending_commit_fits_actual_charges` | FAIL `source_tests.rs:775`, 65588/65596 | PASS, 65460/65468 |
+| `catalog_commit_windows_fit_beside_admitted_readers` | FAIL `source_tests.rs:708`, pending_full 65588 | PASS, pending_full 65460/65468 |
+| 같은 원인의 기존 실패 10개(MCW01, MT03, `catalog_read_operation_*` 2, `call_scope::*` 2, `source_entry::drain_waits_for_entry_before_source_charge`, `source_return::*` 2, S3-R07) | FAIL(main 버그 찾기 기록) | PASS 10/10, 각 0.4–1.2초 |
+| `s2w_c04_live_and_recovered_peaks_unchanged` | FAIL `census_tests.rs:231`, 64072/65512 | PASS, 64008/65384·64016/65392 |
+| 자원·census 시험 93개(버그 찾기의 `census-93.tsv` 목록) | main에서 8개 FAIL | 위 셋을 뺀 FAIL 5개가 main과 같은 자리·같은 원인 |
+| S6 Row 복구 memory 시험 `row_recovery::s6r_m01..m08` 14개 | – | PASS 14/14, 각 1.2–20.0초 |
+
+census 93개에서 남은 FAIL 5개는 main `76b3627`에서도 같은 panic 위치로 실패하며 이 변경과 무관하다. `xrb_*` 3개는 `XADB_XRB_INCLUDE` 선택 입력이 필요한 recovery base codec 시험이고, `g5_canonical_source_boundaries`(`plan4_pages/tests.rs:586`, case 3 `Retention(IdentityMismatch)`)와 `status_flush_rf`(`resource_tests.rs:277`)는 이전 main 검사부터 알려진 실패다. 첫 실행에서 identity 환경 변수가 빠져 실패한 `control_source_census`·`retention_census_inputs`·`retention_source_census`는 변수를 주고 다시 실행해 PASS했다.
+
+| identity | SHA-256 |
+| --- | --- |
+| 수정 전 test ELF(main `76b3627` + 재현 시험) | `ff9c5f428f70a52f310cbee773a9383aca9499c85306f35eeaa59b906132dbe8` |
+| 수정 후 test ELF(`s2w_c04` 고정값 갱신 전; 재현·기존 실패 11개·census 93개) | `1267a81dd50b8d4459975b18203d615df75956bbf686f6dd44a4a788290305e3` |
+| 최종 test ELF(`s2w_c04`·S6 Row 복구) | `543ebdb5e8938621c1fcd71abf4f7275627d1272e57ca5b7f6484eef58e86129` |
+
+두 수정 후 ELF의 차이는 `census_tests.rs`의 `s2w_c04` 고정값과 주석뿐이다. 제품 source는 같다.
+
+최종 source에서 `cargo fmt --all --check`와 `cargo clippy --workspace --all-targets --all-features --locked -- -D warnings`가 통과했다. 실행 로그는 작업 세션의 임시 공간에만 있고 위 값은 그 출력에서 옮겼다. ELF는 지웠다.
+
+| 파일 | SHA-256 |
+| --- | --- |
+| `crates/engine/src/storage/wal_io/plan4_recovery.rs` | `145d88332e824675c852a509bccecd11568c7a1565972df7d346f7f5d0659f4f` |
+| `crates/engine/src/storage/wal_io/plan4_recovery/physical.rs` | `57d35d8aec5700c3dc69c8d539483941bde83d912af146f59888ca13692e4629` |
+| `crates/engine/src/storage/wal_io/plan4_retention/recovery/catalog.rs` | `b981287b95c9a5ced00977495623b048e3aaaaad3cc8b1e510f4c6c9c0f5dee0` |
+| `crates/engine/src/storage/wal_io/plan4_apply/source_tests.rs` | `eff62e9925187a1e4d27c9c18f208bbe5959740bb5ea99fc5acf3d7cf93c8d38` |
+| `crates/engine/src/storage/wal_io/plan4_apply/row/census_tests.rs` | `edff998b1d869ff583147e118e6d8103c400db75944ba6cb1e34f1dd73f32dac` |
