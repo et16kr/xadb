@@ -1,6 +1,6 @@
 {
  "schema": "XADB_S7_EXECUTION_RECEIPTS_V1",
- "status": "S7 final selection r2: memory 36/36 PASS (24 S7 selectors + 12 S6 READY_BOUND reruns at the 30 s case bound), native 3 cases x 3 processes PASS. r1 (before the independent reviews) memory 24/24, native 9/9 PASS. M5 is not complete: MI03 is not met (see the contract #row-join-s7 and the plan M5 judgement).",
+ "status": "S7 final selection r2: memory 36/36 PASS (24 S7 selectors + 12 S6 READY_BOUND reruns at the 30 s case bound), native 3 cases x 3 processes PASS. r3 after the clippy cleanup cf5a909c: the 5 changed memory selectors 5/5 PASS. r1 (before the independent reviews) memory 24/24, native 9/9 PASS. M5 is not complete: MI03 is not met (see the contract #row-join-s7 and the plan M5 judgement).",
  "baseline_commit": "76b3627",
  "branch": "claude/project-thread-1jfdtk",
  "implementation_commits": [
@@ -12,13 +12,14 @@
   "fb0f560f",
   "570aac47",
   "b6766a9b",
-  "2f71db00"
+  "2f71db00",
+  "cf5a909c"
  ],
  "inventory_sha256": "a6125b3bc1d5b84075868daf33d2390a60b6c28d4f3099e03c780a8739923e9f",
  "source_specific": true,
  "artifacts": {
   "path": "/mnt/project-files/module-independence-20261029/artifacts/module-s7-20261031",
-  "manifest_sha256": "3f185c488b4a8a5413d2c7f50dffdcb259c56071440b1dc443f515dd04a1da61"
+  "manifest_sha256": "2351fd60f50b6eee9b67e02433981876790620a672c2361dad81db33170331f1"
  },
  "current_results": {
   "mci01_v01_v06_v09_v10_serializable_old_snapshot": {
@@ -46,15 +47,15 @@
    "result": "PASS"
   },
   "mci01_v05_writers_of_different_tables_both_commit": {
-   "batch": "m2",
-   "elf_sha256": "2d27f5e543a78d16ae7b394140be557e7d5f99a61418b09d876afba5c1e94955",
-   "seconds": 5.65,
+   "batch": "m3",
+   "elf_sha256": "d50b589b8e62c8ffa9b95abac6fb6d6501cf4d937dae7d14f68090be756450a1",
+   "seconds": 5.84,
    "result": "PASS"
   },
   "mci01_v08_failed_statement_reads_survive": {
-   "batch": "m2",
-   "elf_sha256": "2d27f5e543a78d16ae7b394140be557e7d5f99a61418b09d876afba5c1e94955",
-   "seconds": 6.15,
+   "batch": "m3",
+   "elf_sha256": "d50b589b8e62c8ffa9b95abac6fb6d6501cf4d937dae7d14f68090be756450a1",
+   "seconds": 5.99,
    "result": "PASS"
   },
   "mci01_v11_recovered_cleanup_keeps_logical_epochs": {
@@ -64,21 +65,21 @@
    "result": "PASS"
   },
   "mci03_v01_rollback_waits_for_the_captured_read": {
-   "batch": "m2",
-   "elf_sha256": "2d27f5e543a78d16ae7b394140be557e7d5f99a61418b09d876afba5c1e94955",
-   "seconds": 2.32,
+   "batch": "m3",
+   "elf_sha256": "d50b589b8e62c8ffa9b95abac6fb6d6501cf4d937dae7d14f68090be756450a1",
+   "seconds": 2.37,
    "result": "PASS"
   },
   "mci03_v02_preflight_waits_for_the_admitted_read": {
-   "batch": "m2",
-   "elf_sha256": "2d27f5e543a78d16ae7b394140be557e7d5f99a61418b09d876afba5c1e94955",
-   "seconds": 2.73,
+   "batch": "m3",
+   "elf_sha256": "d50b589b8e62c8ffa9b95abac6fb6d6501cf4d937dae7d14f68090be756450a1",
+   "seconds": 2.47,
    "result": "PASS"
   },
   "mci03_v03_old_snapshot_before_q_publication": {
-   "batch": "m2",
-   "elf_sha256": "2d27f5e543a78d16ae7b394140be557e7d5f99a61418b09d876afba5c1e94955",
-   "seconds": 1.72,
+   "batch": "m3",
+   "elf_sha256": "d50b589b8e62c8ffa9b95abac6fb6d6501cf4d937dae7d14f68090be756450a1",
+   "seconds": 1.92,
    "result": "PASS"
   },
   "mci03_v04_poststage_fault_fences_a_and_b": {
@@ -687,6 +688,56 @@
     "s6r_m06_statement_rollback_then_commit.log": "ec5ec9cced18c37c4a071e26073f66367288997914bd7eed67e217840168e663",
     "s6r_m07_partial_recovery_then_crash.log": "37f6adaf3ddb604b53fce65e6a309c30e7c875e868393dd8179dd3fc75deaa83",
     "s6r_m08_reject_initial_losers_inputs.log": "c3dcaedd26d48176cb9b5b7c34f6195df0c786aa0de3f110d971e72d93d711e4"
+   }
+  },
+  {
+   "batch": "m3",
+   "role": "final",
+   "source_manifest_sha256": "7f0d170bc26fbc18ad4012a9d2d491f0279b1a3e1e66204c355b857a462d1b8f",
+   "elf_sha256": "d50b589b8e62c8ffa9b95abac6fb6d6501cf4d937dae7d14f68090be756450a1",
+   "input_sha256": "a6125b3bc1d5b84075868daf33d2390a60b6c28d4f3099e03c780a8739923e9f",
+   "timeout_seconds": 240,
+   "execution_plan_sha256": "8ed107158a2076e8246ab9445433b08aad6f768ba05eee3a0810f4fc392d05a7",
+   "results_sha256": "7397130de18fb7b07b3f55a51cfccb2c5d42cdd976ea46f84c81316e399240c7",
+   "results": [
+    {
+     "selector": "mci01_v08_failed_statement_reads_survive",
+     "exit_code": 0,
+     "seconds": 5.99,
+     "result": "PASS"
+    },
+    {
+     "selector": "mci01_v05_writers_of_different_tables_both_commit",
+     "exit_code": 0,
+     "seconds": 5.84,
+     "result": "PASS"
+    },
+    {
+     "selector": "mci03_v01_rollback_waits_for_the_captured_read",
+     "exit_code": 0,
+     "seconds": 2.37,
+     "result": "PASS"
+    },
+    {
+     "selector": "mci03_v02_preflight_waits_for_the_admitted_read",
+     "exit_code": 0,
+     "seconds": 2.47,
+     "result": "PASS"
+    },
+    {
+     "selector": "mci03_v03_old_snapshot_before_q_publication",
+     "exit_code": 0,
+     "seconds": 1.92,
+     "result": "PASS"
+    }
+   ],
+   "not_run": [],
+   "log_sha256": {
+    "mci01_v05_writers_of_different_tables_both_commit.log": "447138ae2f0f7e871005585af6487116838ca3b0d5826dd387ac1adafd5edad9",
+    "mci01_v08_failed_statement_reads_survive.log": "e8ee8845471f27f8945b9dc23a87c46ec62a9b1c07134a5cfe2fca3a3aa2dc9c",
+    "mci03_v01_rollback_waits_for_the_captured_read.log": "c8275a604ea190381d0c1252bf6412ea2ba8c0f6fe63a2767e87c4e65f0386c4",
+    "mci03_v02_preflight_waits_for_the_admitted_read.log": "ff06fbe6a8efa35a00ac8fbebe7f32a90e68fc1b4affdc927bba42f9804e8519",
+    "mci03_v03_old_snapshot_before_q_publication.log": "0eb0fe054fcd37e5bb4989db744fca6f77f7e896eb4ddb4669758f5a77f59f5d"
    }
   }
  ],
@@ -1575,6 +1626,7 @@
  ],
  "notes": [
   "Each run keeps its own source manifest, ELF and input hash. r1 (m1, n1) ran the 570aac47 sources and inventory; r2 (m2, n2) ran the b6766a9b Rust and script sources. The r2 source manifests differ from b6766a9b only in devdoc/contracts/dev3-module-boundaries.md, which was being edited (committed as 2f71db00).",
+  "r3 (m3) ran the cf5a909c sources: three drop() calls on non-Drop values were removed from row_join.rs (clippy drop_non_drop, no behaviour change) and the 5 selectors whose functions changed were rerun. current_results takes those 5 from m3 and the other 31 from m2.",
   "timeout_seconds is the runner's outer kill switch. The case bound that decides PASS is in the test: case() 30 s and READY_BOUND 30 s, restored by b6766a9b. The S6 reruns in m2 took 4.59-17.06 s.",
   "n1 receipts carry wal_after_clr = SHA256(SHA256(WAL)) (review S7-R1). n2 carries wal_cut = SHA-256 of the WAL file and wal_cut_bytes; the controller checks both against its files.json and the effects.tsv sync order.",
   "Native db images are not preserved; each phase's files.json keeps their hashes. The ELF is deleted after its hash is recorded.",

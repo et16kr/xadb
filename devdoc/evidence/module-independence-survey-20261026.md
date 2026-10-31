@@ -5247,6 +5247,7 @@ native의 produce process는 memory writer의 실제 durable image를 native nam
 - inventory 동결 `570aac47`
 - 독립 리뷰 반영 `b6766a9b`
 - 계약 보정 `2f71db00`
+- clippy 정리 `cf5a909c`
 
 제품 source 변경은 cfg(test) hook 한 줄뿐이다. 공개 wire·format 번호·cap·charge·제품 API는 바꾸지 않았다. DEV3 기능(DROP producer, BOOT, 새 epoch)은 사용자 확인대로 하지 않았다.
 
@@ -5270,7 +5271,7 @@ native의 produce process는 memory writer의 실제 durable image를 native nam
 - S6 시간 한도 재실행 12개
 - native 3 case
 
-[source별 receipts](../../tests/fixtures/module-row-integration/execution-receipts.json)는 각 실행의 source manifest·ELF·input·plan·로그 hash를 보존한다. 원 plan·로그·리뷰 보고서는 `/mnt/project-files/module-independence-20261029/artifacts/module-s7-20261031/`에 있다(`manifest-all.sha256` 286개 파일). 이 manifest 파일의 SHA-256은 `3f185c488b4a8a5413d2c7f50dffdcb259c56071440b1dc443f515dd04a1da61`이다. ELF와 native namespace image는 hash를 기록한 뒤 보존하지 않는다. 각 phase의 `files.json`이 image hash를 갖는다. 무변경 하위 wrapper와 workspace 전체 시험은 실행하지 않았다. 각 선택 시험은 시험 하나를 단일 thread로 실행했다.
+[source별 receipts](../../tests/fixtures/module-row-integration/execution-receipts.json)는 각 실행의 source manifest·ELF·input·plan·로그 hash를 보존한다. 원 plan·로그·리뷰 보고서는 `/mnt/project-files/module-independence-20261029/artifacts/module-s7-20261031/`에 있다(`manifest-all.sha256` 295개 파일). 이 manifest 파일의 SHA-256은 `2351fd60f50b6eee9b67e02433981876790620a672c2361dad81db33170331f1`이다. ELF와 native namespace image는 hash를 기록한 뒤 보존하지 않는다. 각 phase의 `files.json`이 image hash를 갖는다. 무변경 하위 wrapper와 workspace 전체 시험은 실행하지 않았다. 각 선택 시험은 시험 하나를 단일 thread로 실행했다.
 
 | 실행 | 결과 |
 | --- | --- |
@@ -5281,8 +5282,10 @@ native의 produce process는 memory writer의 실제 durable image를 native nam
 | r1 n1 | native 9 process **PASS**. 다만 N03의 `wal_after_clr`가 SHA256(SHA256(WAL))였다(S7 리뷰 R1). controller는 이를 대조하지 않았다 |
 | r2 m2 (`b6766a9b`) | memory **36/36 PASS**. S7 24개, 그리고 S6 selector 12개를 30초 case 한도에서 실행했다(4.59–17.06초) |
 | r2 n2 | native 9 process **PASS**. controller가 cut witness와 effect 순서를 대조했다 |
+| pre-push r2 | `3ceeb855`의 workspace clippy가 `row_join.rs`의 `drop_non_drop` 3건으로 **FAIL**했다. Drop이 없는 값의 drop 호출을 지웠다(`cf5a909c`, 동작 변화 없음) |
+| r3 m3 (`cf5a909c`) | 바뀐 함수를 쓰는 memory selector 5개(MCI01-V05·V08, MCI03-V01·V02·V03) **5/5 PASS** |
 
-r2 memory의 source manifest는 `1627a7f5f551c2940c591cc2e4a836b03b7a36ae0a67f47a5ad29b70a58ef22b`, ELF는 `2d27f5e543a78d16ae7b394140be557e7d5f99a61418b09d876afba5c1e94955`이다. native receipt의 source manifest는 `7914ca4026efb3e7759b199cc5c9bba292d83bc8a035a2ca679743b3a1c4ed21`이고 ELF는 같다. 두 manifest는 `b6766a9b`의 Rust·script source와 같다. 계약 문서 `dev3-module-boundaries.md`만 실행 중 편집 상태였다(뒤에 `2f71db00`으로 commit). r1의 source는 `239704983c5c858c086edee6fe2bec5f650bf5c55cf9fcb34399574b8751284d`, ELF는 `b637db1885d790f2708d650fd50c748881106d1a269fea90c0503e1fbef9b0ed`이다. runner의 240초는 process를 끊는 바깥 한도다. PASS를 정하는 한도는 시험 안의 `case()` 30초와 `READY_BOUND` 30초다.
+r2 memory의 source manifest는 `1627a7f5f551c2940c591cc2e4a836b03b7a36ae0a67f47a5ad29b70a58ef22b`, ELF는 `2d27f5e543a78d16ae7b394140be557e7d5f99a61418b09d876afba5c1e94955`이다. native receipt의 source manifest는 `7914ca4026efb3e7759b199cc5c9bba292d83bc8a035a2ca679743b3a1c4ed21`이고 ELF는 같다. 두 manifest는 `b6766a9b`의 Rust·script source와 같다. 계약 문서 `dev3-module-boundaries.md`만 실행 중 편집 상태였다(뒤에 `2f71db00`으로 commit). r1의 source는 `239704983c5c858c086edee6fe2bec5f650bf5c55cf9fcb34399574b8751284d`, ELF는 `b637db1885d790f2708d650fd50c748881106d1a269fea90c0503e1fbef9b0ed`이다. r3의 source는 `7f0d170bc26fbc18ad4012a9d2d491f0279b1a3e1e66204c355b857a462d1b8f`, ELF는 `d50b589b8e62c8ffa9b95abac6fb6d6501cf4d937dae7d14f68090be756450a1`이다. receipt의 현재 결과는 이 5개를 r3에서, 나머지 31개를 r2에서 가져온다. native worker 경로는 바뀌지 않아 다시 실행하지 않았다. runner의 240초는 process를 끊는 바깥 한도다. PASS를 정하는 한도는 시험 안의 `case()` 30초와 `READY_BOUND` 30초다.
 
 ### 자원
 
@@ -5353,4 +5356,4 @@ r2 memory의 source manifest는 `1627a7f5f551c2940c591cc2e4a836b03b7a36ae0a67f47
 
 ### 되돌림
 
-되돌림은 `2f71db00`, `b6766a9b`, `570aac47`, `fb0f560f`, `5d0fa4e3`, `a8ea0fc8`, `e0108bc3`, `98af323b`, `0da85386`의 역순이다. 제품 경로는 cfg(test) hook 한 줄뿐이며 fixture는 매 시험에서 새로 만든다.
+되돌림은 `cf5a909c`, `2f71db00`, `b6766a9b`, `570aac47`, `fb0f560f`, `5d0fa4e3`, `a8ea0fc8`, `e0108bc3`, `98af323b`, `0da85386`의 역순이다. 제품 경로는 cfg(test) hook 한 줄뿐이며 fixture는 매 시험에서 새로 만든다.
