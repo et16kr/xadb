@@ -81,7 +81,7 @@
 | MI02 국소성 | 높음 | PR diff 파일 목록을 경로 소유 정본과 대조. rename은 `git diff -M` | 빌드 없음, 수 초 |
 | MI03 독립 인수 | 중간 | 단독 export 빌드는 자동. memory 시험은 CI가 실행, native는 로컬 결과를 "주장됨"으로 수령 | 선택 시험만큼 |
 | MI04 실제 합류 | 낮음~중간 | 정본에 적은 합류 사례 selector가 diff에 걸리면 결과를 요구 | 선택 시험만큼 |
-| MI05 증거 유효성 | 중간 | commit된 receipt(tree hash, selector, 결과, 로그 sha256)가 PR head와 맞는지 검사. 로그 원본은 Actions artifact나 공유 폴더 | 빌드 없음 |
+| MI05 증거 유효성 | 중간 | commit된 receipt(입력 identity, selector, 결과, 로그 sha256)의 입력 identity를 PR head에서 다시 계산해 비교. identity는 manifest가 정한 시험 입력 경로(제품·시험 source, fixture, Cargo 파일)의 파일별 hash이며 receipt·evidence 경로는 제외한다. 로그 원본은 Actions artifact나 공유 폴더 | 빌드 없음 |
 | MI06 독립 판정 | 낮음(신원 분리 전) | 지금은 리뷰 기록의 형식·대상 commit만 확인 가능. 신원을 분리하면 GitHub 필수 리뷰나 CI 안에서 도는 리뷰 job의 check로 강제 | 결정 필요 |
 | MI01 독립 착수 | 낮음 | 병렬 실험을 할 때만 수동 기록, 일반 PR은 기본 N/A | 없음 |
 
@@ -100,7 +100,8 @@
     - 경계 계약 4절의 텍스트 트리와 이 파일이 일치하는지는 기존 문서 검증에 넣어 정본이 둘이 되지 않게 한다.
 2. **빌드 없는 빠른 검사기를 만든다.** 예: `scripts/check_module_gate.py`.
     - 입력은 base..head diff와 base 쪽 manifest다.
-    - 미등록 파일, 상대 전용 경로 수정, 예외 목록 증가, receipt와 PR head의 tree 불일치를 차단한다.
+    - 미등록 파일, 상대 전용 경로 수정, 예외 목록 증가, receipt의 입력 identity와 PR head에서 다시 계산한 값의 불일치를 차단한다.
+    - receipt는 전체 tree hash를 기록하지 않는다. receipt를 commit하면 그 tree가 바뀌어 자기 자신과 맞출 수 없기 때문이다. 대신 receipt·evidence 경로를 뺀 시험 입력 경로만으로 identity를 계산한다.
     - 규칙 파일(manifest, 검사기, workflow)과 일반 파일을 함께 바꾼 PR을 차단한다. 규칙 변경은 단독 PR로만 올라와 사람의 눈에 띄게 된다.
     - 출력은 MI별 PASS/FAIL/N/A(근거)와 12절이 기록하라는 지표(계획 밖 상대 내부 변경 수 등)다.
 3. **컴파일 기반 경계 검사를 넣는다.** S8의 단독 export 도구(작업 branch `claude/project-thread-1jfdtk-s8`, 이 리뷰 시점 main 미반영)를 일반화해, 등록된 기능 모듈마다 "상대 제거 export"를 `cargo check --all-targets`한다. 시험 실행이 아니라 컴파일 확인이라 AGENTS.md의 시험 규칙과도 충돌하지 않는다.
