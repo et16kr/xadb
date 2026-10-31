@@ -8,9 +8,7 @@
 //! recovery (RejectInitialLosers) and B cursor read both ACKs' rows. Every
 //! expected value is fixed by the case's history before the run.
 use super::super::super::super::super::plan4_pages::native;
-use super::super::super::super::{Plan4RecoveryAcquireFailure, RowRecoveryPolicy};
 use super::*;
-use crate::storage::{disk::RecoveryAction, row::insert::driver::recovered::handle_recovered_clr};
 use std::{fs, path::Path};
 
 /// The value of the row each recovery process commits after READY.
@@ -302,136 +300,6 @@ fn produce<D: DirectoryPort>(id: &str, directory: &D, db: &Path) -> String {
     })
 }
 
-/// One recovery process over `directory`: C's recovery under `policy` to
-/// READY (A's handler for each RowClr), B's cursor over T, then, with
-/// `ack`, A's new row of `ack` and its Commit. Returns (progress steps,
-/// CLRs, B's rows, the new row and q).
-fn join_restart<D: DirectoryPort>(
-    directory: &D,
-    policy: RowRecoveryPolicy,
-    ack: Option<i64>,
-) -> (usize, usize, Vec<(u64, i64)>, Option<(u64, u64)>) {
-    let mut maintenance = boxed::<12_582_912>();
-    let mut dwb = boxed::<4_194_304>();
-    let mut slot = boxed::<1_048_576>();
-    let acquired = match Plan4Recovery::acquire(
-        directory,
-        Some(super::super::super::support::namespace()),
-        &mut maintenance,
-        &mut dwb,
-        &mut slot,
-    ) {
-        Ok(owner) => owner,
-        Err(Plan4RecoveryAcquireFailure::Acquired(_))
-        | Err(Plan4RecoveryAcquireFailure::Before { .. }) => panic!("acquire"),
-    };
-    let runtime = acquired.recover_with_rows(policy).ok().unwrap();
-    let core = PageConcurrency::new(runtime.session_fence()).unwrap();
-    let mut owner = core.try_owner(OwnerRole::Foreground).unwrap();
-    let mut flusher = core.try_owner(OwnerRole::DedicatedFlusher).unwrap();
-    let mut backing = vec![[0xa7; PAGE_BYTES]; 16];
-    let mut frames: Vec<_> = backing.iter_mut().map(DirtyFrame::new).collect();
-    let mut operation = boxed::<114_688>();
-    let mut closed = runtime
-        .bind(&owner, &core, &mut frames, &mut operation)
-        .unwrap();
-    let (mut steps, mut clrs, mut ready) = (0, 0, false);
-    for _ in 0..512 {
-        match closed.next_action(&mut owner, &mut flusher).unwrap() {
-            RecoveryAction::Ready => {
-                ready = true;
-                break;
-            }
-            RecoveryAction::Progress(progress) => {
-                assert!(!progress.ready);
-                steps += 1;
-            }
-            RecoveryAction::RowClr(task) => {
-                let actor = task.actor();
-                match handle_recovered_clr(task) {
-                    Ok(progress) => assert!(progress.progressed && !progress.ready),
-                    Err(_) => panic!("A's recovered CLR for {actor:?}"),
-                }
-                clrs += 1;
-            }
-        }
-    }
-    assert!(ready, "bounded Row recovery exhausted");
-    let (mut live, private) = match closed.into_live_with_private() {
-        Ok(value) => value,
-        Err(_) => panic!("original READY handoff"),
-    };
-    let row_status = live.recovery_test_expected_target(11).unwrap();
-    let first_jobs = crate::storage::retention_page::JobSlotRef::new(
-        page_ref(2, 1),
-        0,
-        foundation::identity::Generation::new(1).unwrap(),
-    )
-    .unwrap();
-    let mut cursor = Plan4ResidencyCursor::new();
-    for _ in 0..16 {
-        match live
-            .prepare_empty_targets(&owner, &row_status, first_jobs, &mut cursor)
-            .unwrap()
-        {
-            None => break,
-            Some(RetentionResidencyStep::FlushRequired { target, .. }) => {
-                drive_flush(&mut live, &mut flusher, Some(&target))
-            }
-            Some(_) => panic!("unexpected Begin preparation"),
-        }
-    }
-    prepare_catalog(&mut live, &owner, &mut flusher);
-    if ack.is_some() {
-        system_init(&mut live, &mut owner, &mut flusher, true);
-    }
-    let mut reader_private = boxed::<PRIVATE_BYTES>();
-    let reader_private = &mut *reader_private;
-    let owner = &mut owner;
-    let flusher = &mut flusher;
-    let rows;
-    let mut acked = None;
-    {
-        let (mut writer, reader, mut flush) = live.split();
-        let b = read_only!(writer, owner, IsolationLevel::Serializable, reader_private);
-        let view = writer.begin_statement(owner, &b).unwrap();
-        let table = issue_table!(reader, owner, view, reader_private, flush, flusher);
-        rows = scan!(reader, owner, reader_private, &view, &table, flush, flusher);
-        assert!(writer.finish_statement(owner, view).is_ok());
-        assert!(writer.finish_read_only(owner, b).is_ok());
-        if let Some(value) = ack {
-            let a = writer
-                .begin_row_transaction(
-                    owner,
-                    IsolationLevel::Serializable,
-                    &row_status,
-                    private,
-                    &mut flush,
-                )
-                .unwrap();
-            let s = writer.begin_statement(owner, &a).unwrap();
-            let table = issue_table!(reader, owner, s, reader_private, flush, flusher);
-            let new = a_insert!(
-                &mut writer,
-                owner,
-                flush,
-                flusher,
-                s,
-                &table,
-                private,
-                [value]
-            );
-            let q = a_commit!(&mut writer, owner, flush, flusher, a, private);
-            acked = Some((new[0].row().get(), q));
-        }
-        assert_eq!(reader.catalog_test_source_used(), 0);
-        owner.check_idle().unwrap();
-    }
-    assert!(!runtime.session_fence().is_fenced());
-    drop(live);
-    (steps, clrs, rows, acked)
-}
-
 /// The rows B must read after each phase, fixed by the case's history:
 /// (value) in RowId order; the new row's value is NEW.
 fn expected(id: &str, phase: &str) -> Vec<i64> {
@@ -486,8 +354,19 @@ fn s7j_native_worker() {
             "reenter" => (RowRecoveryPolicy::RejectInitialLosers, None),
             _ => panic!("phase {phase}"),
         };
-        let (steps, clrs, rows, acked) = join_restart(&directory, policy, ack);
-        println!("S7J_NATIVE {id} {phase} steps={steps} clrs={clrs} rows={rows:?} acked={acked:?}");
+        let joined = join_restart(&directory, policy, ack);
+        let Joined {
+            steps,
+            clrs,
+            ref rows,
+            acked,
+            ref ready,
+            ref after,
+        } = joined;
+        println!(
+            "S7J_NATIVE {id} {phase} steps={steps} clrs={clrs} rows={rows:?} acked={acked:?} \
+             ready={ready:?} after={after:?}"
+        );
         let values: Vec<i64> = rows.iter().map(|(_, value)| *value).collect();
         assert_eq!(values, expected(&id, &phase));
         assert!(rows.windows(2).all(|pair| pair[0].0 < pair[1].0));
@@ -500,8 +379,21 @@ fn s7j_native_worker() {
         if let Some((row, _)) = acked {
             assert!(rows.iter().all(|(previous, _)| *previous < row));
         }
+        // MCI01-V11 across processes: the READY Q is the history's last
+        // ACKed q (the controller also checks it against the previous
+        // receipt), whatever cleanup and CLRs ran before READY.
+        let q = match phase.as_str() {
+            // The produce ACK: A's Commit (N01, N02) or Y's (N03).
+            "recover" => 2,
+            // The recover process's ACK of NEW.
+            _ => 3,
+        };
+        check_epochs(&joined, q);
         summary = format!(
-            "result\tready\nsteps\t{steps}\nclrs\t{clrs}\nrows\t{rows:?}\n{}",
+            "result\tready\nsteps\t{steps}\nclrs\t{clrs}\nrows\t{rows:?}\nq_ready\t{}\n\
+             epochs_ready\t{:?}\nepochs_after\t{after:?}\n{}",
+            ready.0,
+            ready.1,
             acked.map_or(String::new(), |(row, q)| format!(
                 "ack_row\t{row}\nack_q\t{q}\n"
             ))

@@ -10,13 +10,15 @@
 //! consumes the statement view a cursor borrows, so a cursor cannot stay
 //! open across an A driver statement; that case applies the row through A's
 //! validate/produce and C's reserve/prepare/apply on the same view.
+use super::super::super::{Plan4RecoveryAcquireFailure, RowRecoveryPolicy};
 use super::row_forward::{VALUE, files};
 use super::row_preflight::{create_table, system_init};
 use super::*;
 use crate::storage::{
     disk::{
-        IsolationLevel, ReadStep, RetentionCause, RetentionError, RowMutationObservation,
-        RowOwnedError, RowPreflightStep, TableStep, TransactionFinishError, TransactionOptions,
+        IsolationLevel, ReadStep, RecoveryAction, RetentionCause, RetentionError,
+        RowMutationObservation, RowOwnedError, RowPreflightStep, TableStep, TransactionFinishError,
+        TransactionOptions,
     },
     row::{
         insert::{
@@ -27,6 +29,7 @@ use crate::storage::{
                     finish_statement_live, insert_live, rollback_step_live,
                     start_full_rollback_live, start_statement_rollback_live,
                 },
+                recovered::handle_recovered_clr,
             },
             produce_insert, validate_insert,
         },
@@ -1480,6 +1483,248 @@ fn mci03_v04_poststage_fault_fences_a_and_b() {
                 drop(next);
             }
         );
+    });
+}
+
+/// The Catalog epoch view of a session (`catalog_test_epochs`): active,
+/// the namespace epoch and each table's (state, object, last change q).
+type Epochs = (bool, u64, Vec<(u8, u64, u64)>);
+
+/// One restart's join result (`join_restart`).
+struct Joined {
+    /// C's Progress actions to READY.
+    steps: usize,
+    /// A's recovered CLRs to READY.
+    clrs: usize,
+    /// B's cursor rows (RowId, value) after READY.
+    rows: Vec<(u64, i64)>,
+    /// A's new row and its Commit q, when the restart ACKs one.
+    acked: Option<(u64, u64)>,
+    /// The published Q and the epochs at the READY handoff.
+    ready: (u64, Epochs),
+    /// The epochs after B's read and A's Commit (if any).
+    after: Epochs,
+}
+
+/// One recovery process over `directory`: C's recovery under `policy` to
+/// READY (A's handler for each RowClr), B's cursor over T, then, with
+/// `ack`, A's new row of `ack` and its Commit. The memory MCI01-V11 case
+/// and the native MCI02 worker share it.
+fn join_restart<D: DirectoryPort>(
+    directory: &D,
+    policy: RowRecoveryPolicy,
+    ack: Option<i64>,
+) -> Joined {
+    let mut maintenance = boxed::<12_582_912>();
+    let mut dwb = boxed::<4_194_304>();
+    let mut slot = boxed::<1_048_576>();
+    let acquired = match Plan4Recovery::acquire(
+        directory,
+        Some(super::super::support::namespace()),
+        &mut maintenance,
+        &mut dwb,
+        &mut slot,
+    ) {
+        Ok(owner) => owner,
+        Err(Plan4RecoveryAcquireFailure::Acquired(_))
+        | Err(Plan4RecoveryAcquireFailure::Before { .. }) => panic!("acquire"),
+    };
+    let runtime = acquired.recover_with_rows(policy).ok().unwrap();
+    let core = PageConcurrency::new(runtime.session_fence()).unwrap();
+    let mut owner = core.try_owner(OwnerRole::Foreground).unwrap();
+    let mut flusher = core.try_owner(OwnerRole::DedicatedFlusher).unwrap();
+    let mut backing = vec![[0xa7; PAGE_BYTES]; 16];
+    let mut frames: Vec<_> = backing.iter_mut().map(DirtyFrame::new).collect();
+    let mut operation = boxed::<114_688>();
+    let mut closed = runtime
+        .bind(&owner, &core, &mut frames, &mut operation)
+        .unwrap();
+    let (mut steps, mut clrs, mut ready) = (0, 0, false);
+    for _ in 0..512 {
+        match closed.next_action(&mut owner, &mut flusher).unwrap() {
+            RecoveryAction::Ready => {
+                ready = true;
+                break;
+            }
+            RecoveryAction::Progress(progress) => {
+                assert!(!progress.ready);
+                steps += 1;
+            }
+            RecoveryAction::RowClr(task) => {
+                let actor = task.actor();
+                match handle_recovered_clr(task) {
+                    Ok(progress) => assert!(progress.progressed && !progress.ready),
+                    Err(_) => panic!("A's recovered CLR for {actor:?}"),
+                }
+                clrs += 1;
+            }
+        }
+    }
+    assert!(ready, "bounded Row recovery exhausted");
+    let (mut live, private) = match closed.into_live_with_private() {
+        Ok(value) => value,
+        Err(_) => panic!("original READY handoff"),
+    };
+    let at_ready = (live.catalog_test_q(), live.catalog_test_epochs());
+    let row_status = live.recovery_test_expected_target(11).unwrap();
+    let first_jobs = crate::storage::retention_page::JobSlotRef::new(
+        page_ref(2, 1),
+        0,
+        foundation::identity::Generation::new(1).unwrap(),
+    )
+    .unwrap();
+    let mut cursor = Plan4ResidencyCursor::new();
+    for _ in 0..16 {
+        match live
+            .prepare_empty_targets(&owner, &row_status, first_jobs, &mut cursor)
+            .unwrap()
+        {
+            None => break,
+            Some(RetentionResidencyStep::FlushRequired { target, .. }) => {
+                drive_flush(&mut live, &mut flusher, Some(&target))
+            }
+            Some(_) => panic!("unexpected Begin preparation"),
+        }
+    }
+    prepare_catalog(&mut live, &owner, &mut flusher);
+    if ack.is_some() {
+        system_init(&mut live, &mut owner, &mut flusher, true);
+    }
+    let mut reader_private = boxed::<PRIVATE_BYTES>();
+    let reader_private = &mut *reader_private;
+    let owner = &mut owner;
+    let flusher = &mut flusher;
+    let rows;
+    let mut acked = None;
+    {
+        let (mut writer, reader, mut flush) = live.split();
+        let b = read_only!(writer, owner, IsolationLevel::Serializable, reader_private);
+        let view = writer.begin_statement(owner, &b).unwrap();
+        let table = issue_table!(reader, owner, view, reader_private, flush, flusher);
+        rows = scan!(reader, owner, reader_private, &view, &table, flush, flusher);
+        assert!(writer.finish_statement(owner, view).is_ok());
+        assert!(writer.finish_read_only(owner, b).is_ok());
+        if let Some(value) = ack {
+            let a = writer
+                .begin_row_transaction(
+                    owner,
+                    IsolationLevel::Serializable,
+                    &row_status,
+                    private,
+                    &mut flush,
+                )
+                .unwrap();
+            let s = writer.begin_statement(owner, &a).unwrap();
+            let table = issue_table!(reader, owner, s, reader_private, flush, flusher);
+            let new = a_insert!(
+                &mut writer,
+                owner,
+                flush,
+                flusher,
+                s,
+                &table,
+                private,
+                [value]
+            );
+            let q = a_commit!(&mut writer, owner, flush, flusher, a, private);
+            acked = Some((new[0].row().get(), q));
+        }
+        assert_eq!(reader.catalog_test_source_used(), 0);
+        owner.check_idle().unwrap();
+    }
+    let after = live.catalog_test_epochs();
+    assert!(!runtime.session_fence().is_fenced());
+    drop(live);
+    Joined {
+        steps,
+        clrs,
+        rows,
+        acked,
+        ready: at_ready,
+        after,
+    }
+}
+
+/// The logical-epoch oracle of a restart whose history's last ACKed Commit
+/// is `q` (MCI01-V11): READY's exclusive activation seeds the namespace
+/// epoch and T's epoch with the published Q (task-10
+/// `#module-row-isolation`), and that Q is still `q` after every physical
+/// cleanup the recovery ran (Prune, ReleaseRole, RootFree, TerminalFinish,
+/// and a loser's CLRs and AbortEnd): none of them publishes a q. A later Row
+/// Commit at `q'` moves only T's epoch (V10).
+fn check_epochs(joined: &Joined, q: u64) {
+    assert_eq!(joined.ready, (q, (true, q, vec![(2, 6, q)])));
+    let t = joined.acked.map_or(q, |(_, acked)| acked);
+    assert_eq!(joined.after, (true, q, vec![(2, 6, t)]));
+}
+
+/// MCI01-V11 (memory): the physical cleanup of a committed Row actor does
+/// not advance the logical epoch. A commits one row of T at q; the durable
+/// files are restarted under WithRowClr. Before READY the recovery runs the
+/// root's Prune, three ReleaseRole, RootFree and TerminalFinish (S6R-M01's
+/// trace; here only counted), each with its own WAL record. The READY Q and
+/// the seeded epochs are still q, B reads A's row, and A's next Commit at
+/// q + 1 moves only T's epoch. Live Row retirement under foreground readers
+/// is not supplied (boundaries `#row-recovery-s6`), so the recovery is the
+/// only physical Row cleanup there is to run.
+#[test]
+fn mci01_v11_recovered_cleanup_keeps_logical_epochs() {
+    case_within("MCI01-V11", Duration::from_secs(240), || {
+        let oracle = Oracle::new();
+        let (images, q, row) = with_fresh!(
+            oracle,
+            frames = 16,
+            |live, owner, flusher, status, undo, private, reader_private, core, fence, state| {
+                let _ = core;
+                let (row_status, _) =
+                    create_table(live, owner, flusher, status, undo, private, true);
+                let (q, row) = {
+                    let (mut writer, reader, mut flush) = live.split();
+                    let a = writer
+                        .begin_row_transaction(
+                            owner,
+                            IsolationLevel::Serializable,
+                            &row_status,
+                            private,
+                            &mut flush,
+                        )
+                        .unwrap();
+                    let s = writer.begin_statement(owner, &a).unwrap();
+                    let table = issue_table!(reader, owner, s, reader_private, flush, flusher);
+                    let rows = a_insert!(
+                        &mut writer,
+                        owner,
+                        flush,
+                        flusher,
+                        s,
+                        &table,
+                        private,
+                        [VALUE]
+                    );
+                    let q = a_commit!(&mut writer, owner, flush, flusher, a, private);
+                    (q, rows[0].row().get())
+                };
+                // The live session before the crash: T's epoch is the Commit q.
+                let before = live.catalog_test_epochs();
+                assert_eq!(before.2, vec![(2, 6, q)]);
+                assert!(!fence.is_fenced());
+                println!("MCI01_V11 committed q={q} row={row} epochs={before:?}");
+                (state.lock().unwrap().images(), q, row)
+            }
+        );
+        let directory = clone_directory(&images);
+        let joined = join_restart(&directory, RowRecoveryPolicy::WithRowClr, Some(VALUE + 10));
+        println!(
+            "MCI01_V11 steps={} clrs={} rows={:?} acked={:?} ready={:?} after={:?}",
+            joined.steps, joined.clrs, joined.rows, joined.acked, joined.ready, joined.after
+        );
+        assert_eq!(joined.clrs, 0);
+        assert!(joined.steps >= 6, "the committed cleanup ran before READY");
+        assert_eq!(joined.rows, vec![(row, VALUE)]);
+        let (new, acked) = joined.acked.unwrap();
+        assert!(new > row);
+        assert_eq!(acked, q + 1);
+        check_epochs(&joined, q);
     });
 }
 

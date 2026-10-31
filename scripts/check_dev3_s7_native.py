@@ -108,6 +108,9 @@ def main():
             else:
                 assert receipt['result'] == 'ready'
                 assert current != previous, 'the process wrote nothing'
+                # MCI01-V11 across processes: the READY Q is the previous
+                # process's last ACKed q, after every cleanup/CLR it ran.
+                assert receipt['q_ready'] == acks[-1], (receipt['q_ready'], acks)
                 if phase == 'recover':
                     acks.append(receipt['ack_q'])
             previous = current
