@@ -1,6 +1,6 @@
 {
  "schema": "XADB_S9_EXECUTION_RECEIPTS_V1",
- "status": "S9 final: C+A export 150/150 (a1, a62fc7c9), C+B export 53/53 plus addendum 1 (b1 a62fc7c9 for 34, b2 2cc5f154 for the 6 selectors of row_literal_two.rs and row_no_loser.rs, b3 660fd99e for row_literal 13 and MCB05-L06), full tree 16/16 (f1), native C+A S9A-N01..03 9 processes (na1, na2), C+B S9B-N01 and MCB05-N01..06 15 processes (nb1, nb2), S6 21 and S7 9 processes (n6, n7): all PASS. Limits (contract #row-mi03-s9, #row-m4-s9): C+B covers the S5 actual-C read range and MCB05-L01..L06, not the frozen MCB01-04 matrix; the publication gap case does not start a statement inside the window; no live Prune literal; K07 size confound; K12 original refused Wal(OrderMismatch) on an unpinned C frame; the C+A READY reader is C's decoder; WRITER-PROGRESS-001 Row floors fit with A's measured share, not A's declared 11520 B Write bound.",
+ "status": "S9 final: C+A export 150/150 (a1, a62fc7c9), C+B export 53/53 plus addendum 1 (b1 a62fc7c9 for 34, b2 2cc5f154 for the 6 selectors of row_literal_two.rs and row_no_loser.rs, b3 660fd99e for row_literal 13 and MCB05-L06), full tree 16/16 (f1), native C+A S9A-N01..03 9 processes (na1, na2), C+B S9B-N01 and MCB05-N01..06 15 processes (nb1, nb2), S6 21 and S7 9 processes (n6, n7): all PASS. Limits (contract #row-mi03-s9, #row-m4-s9): C+B covers the S5 actual-C read range and MCB05-L01..L06; the frozen consumers §9 MCA01-05 and MCB01-04 are NOT_RUN, so MI03 is PARTIAL; the publication gap case does not start a statement inside the window; no live Prune literal; K07 size confound; K12 original refused Wal(OrderMismatch) on an unpinned C frame; the C+A READY reader is C's decoder; WRITER-PROGRESS-001 Row floors fit with A's measured share, not A's declared 11520 B Write bound.",
  "baseline_commit": "3c046e98",
  "branch": "claude/project-thread-1jfdtk-s9",
  "final_commit": "a62fc7c9",
@@ -2100,7 +2100,7 @@
  "result_sources": {
   "C+A selection (150)": "a1 at a62fc7c9; the 2cc5f154 C+A export differs only in scripts/check_dev3_s9_native.py and the 660fd99e one further only in the addendum JSON; crates/ and the other fixtures are identical",
   "C+A native S9A-N01..03": "na2 at 2cc5f154 (controller changed); na1 at a62fc7c9 kept",
-  "C+B selection (53 + addendum 1)": "b3 at 660fd99e for row_literal (13) and MCB05-L06; b2 at 2cc5f154 for the 6 selectors of row_literal_two.rs and row_no_loser.rs (unchanged since); b1 at a62fc7c9 for the other 34 (their files are unchanged)",
+  "C+B selection (53 + addendum 1)": "b3 at 660fd99e for row_literal (13) and MCB05-L06; b2 at 2cc5f154 for the 6 selectors of row_literal_two.rs and row_no_loser.rs (unchanged since); b1 at a62fc7c9 for the other 34: some of their modules import Literal, effects, int_of, wal and page from row_literal.rs/row_literal_two.rs, which changed after b1, but those items did not; the code those selectors execute is unchanged",
   "C+B native S9B-N01, MCB05-N01..06": "nb2 at 2cc5f154; nb1 at a62fc7c9 kept",
   "full tree (16) and S6/S7 natives": "f1, n6, n7 at a62fc7c9; 2cc5f154 and 660fd99e changed only C+B test modules, the S9 controller and the addendum, none of which their selectors or workers use",
   "ELF identity across directories": "a debug ELF embeds its build path (77 occurrences), so the same crates built under s9/final2 hash differently from s9/final"
@@ -2215,7 +2215,7 @@
  "not_run": {
   "live Row retirement": "runtime Row physical cleanup (live Prune/RootFree entry, aging horizon) is Row MVCC cleanup, a DEV3 feature outside C0-C5; recorded N/A (DEV3) per the user rule that module-plan threads do no DEV3 feature work",
   "C+B concurrent read inside the Commit Pending window": "covered by C+A+B MCI03-V02 only; the publication gap (MCI03-V03 form) has the C+B case MCB05-L06",
-  "C+B frozen MCB01-04 matrix on actual C": "C+B runs the S5 actual-C range (9) and MCB05-L01..L06 on literal rows; the frozen matrix runs on the C0 double (MCB00-D01..D13) and the full tree",
+  "frozen consumers §9 MCA01-05 and MCB01-04": "NOT_RUN: no tree implements these variants by ID or maps them variant by variant (MCA 61 memory + 29 native, only MCA05-V31 has a same-ID test; MCB 38 memory + 1 native). C+B runs the S5 actual-C range (9) and MCB05-L01..L06 on literal rows instead. MCB00-D01..D13 are C0_ONLY and do not count (consumers §9.1). Found by the S9 re-check NR1",
   "live Prune literal": "no live Row Prune entry exists (live Row retirement, DEV3); C+B observes recovery Prune frames (L03)"
  }
 }
