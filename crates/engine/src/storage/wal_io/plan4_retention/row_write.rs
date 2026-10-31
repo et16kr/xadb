@@ -342,13 +342,13 @@ fn check_candidate(
 
 /// The issued identity a draft commitment folds.
 #[derive(Clone, Copy)]
-pub(super) struct DraftIssued {
-    pub(super) actor: TxnRef,
-    pub(super) root_job: JobSlotRef,
-    pub(super) row: RowId,
-    pub(super) undo: UndoRef,
-    pub(super) sequence: u64,
-    pub(super) mutation: u64,
+pub(in super::super::super) struct DraftIssued {
+    pub(in super::super::super) actor: TxnRef,
+    pub(in super::super::super) root_job: JobSlotRef,
+    pub(in super::super::super) row: RowId,
+    pub(in super::super::super) undo: UndoRef,
+    pub(in super::super::super) sequence: u64,
+    pub(in super::super::super) mutation: u64,
 }
 
 /// The values the draft commitment folds (`RowDraftCut::source`, kind 2), in
@@ -357,17 +357,17 @@ pub(super) struct DraftIssued {
 /// images in the private loan), so `prepare`, `apply` and `cancel`, which
 /// read the pool, recompute it with this same body through one helper
 /// (`draft_recompute`, S2-c and S2-d).
-pub(super) struct DraftSource<'x, P> {
-    pub(super) prefix: WalPrefix,
-    pub(super) targets: &'x [TargetRequest],
-    pub(super) stamps: &'x [FrameStamp],
-    pub(super) roles: RowRoleMap,
-    pub(super) issued: DraftIssued,
-    pub(super) transaction: &'x [u8; 1536],
-    pub(super) aging: Option<&'x [u8; 1536]>,
-    pub(super) jobs: &'x [[u8; JOB_BYTES]; JOB_COUNT],
-    pub(super) pages: P,
-    pub(super) control: ControlCut,
+pub(in super::super::super) struct DraftSource<'x, P> {
+    pub(in super::super::super) prefix: WalPrefix,
+    pub(in super::super::super) targets: &'x [TargetRequest],
+    pub(in super::super::super) stamps: &'x [FrameStamp],
+    pub(in super::super::super) roles: RowRoleMap,
+    pub(in super::super::super) issued: DraftIssued,
+    pub(in super::super::super) transaction: &'x [u8; 1536],
+    pub(in super::super::super) aging: Option<&'x [u8; 1536]>,
+    pub(in super::super::super) jobs: &'x [[u8; JOB_BYTES]; JOB_COUNT],
+    pub(in super::super::super) pages: P,
+    pub(in super::super::super) control: ControlCut,
 }
 impl<'x, P: Iterator<Item = &'x [u8; PAGE_BYTES]>> DraftSource<'x, P> {
     /// Kind 2 of the XRWC commitment: the prefix and T as kind 1 folds them;
@@ -375,7 +375,9 @@ impl<'x, P: Iterator<Item = &'x [u8; PAGE_BYTES]>> DraftSource<'x, P> {
     /// the UndoRef (40 B) and its sequence, the planned mutation; the actor
     /// descriptor, then a presence byte and the Aging descriptor; the 64 Jobs
     /// rows; the page digests of T; the `ControlCut` fields.
-    pub(super) fn commitment(self) -> std::result::Result<[u8; 32], RetentionCause> {
+    pub(in super::super::super) fn commitment(
+        self,
+    ) -> std::result::Result<[u8; 32], RetentionCause> {
         let mut hasher = ContentHasher::new();
         hasher.update(b"XRWC");
         hasher.update(&[1, 2]);

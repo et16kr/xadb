@@ -62,11 +62,11 @@
     {
       "id": "MBC00-P06",
       "path": "MBC00-P06.rs",
-      "sha256": "e5095a2876531522dd550a4d2cc6aa98fe3ea4eb48792d449f07d0ba3d6e8fcc",
-      "bytes": 4206,
+      "sha256": "032ad66e15e4e18c897f83daf7cdef195bc58d2e9164a8d07ba04576ceaf89ca",
+      "bytes": 4617,
       "expected_code": null,
       "primary_line": null,
-      "checks": "live statement then full rollback: start_row_rollback, next, CLR task producer lane, prepare, apply/reopen, FlushRequired, finish, then finish_aborted consumes the same transaction"
+      "checks": "live statement/full rollback with original MaintenancePort and dedicated flusher Owner; task reborrow, CLR preparation/application, explicit rollback-owned flush continuation and original finish_aborted capsule"
     },
     {
       "id": "MBC00-N01",

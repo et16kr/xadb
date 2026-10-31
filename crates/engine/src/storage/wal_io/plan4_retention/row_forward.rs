@@ -83,7 +83,7 @@ pub(super) struct ReservedEntry {
 /// the before images (refreshed by each recompute), the Catalog leaf copy,
 /// the XOI page and C's observer scratch. Neither the candidate nor A's
 /// scratch is touched.
-struct ForwardLanes<'l> {
+pub(super) struct ForwardLanes<'l> {
     frame: &'l mut [u8; 98_304],
     before: &'l mut [[u8; PAGE_BYTES]; 9],
     after: &'l mut [[u8; PAGE_BYTES]; 5],
@@ -93,7 +93,7 @@ struct ForwardLanes<'l> {
 }
 
 impl<'l> ForwardLanes<'l> {
-    fn split(private: &'l mut [u8; 425_984]) -> Self {
+    pub(super) fn split(private: &'l mut [u8; 425_984]) -> Self {
         let (frame, rest) = private.split_at_mut(RowLoanLayout::FRAME.end);
         let (before, rest) = rest.split_at_mut(range_len(RowLoanLayout::BEFORE));
         let (after, rest) = rest.split_at_mut(range_len(RowLoanLayout::AFTER));
@@ -139,9 +139,18 @@ fn page_role(role: RowPageRole) -> u8 {
 /// Returns the length and the declared output roles in A's physical order.
 /// Anything else is Unchanged InvalidInput: nothing was read yet.
 fn check_proposal(proposal: &RowProposal) -> Result<(usize, [u8; 5])> {
+    check_proposal_for(proposal, 0)
+}
+
+fn check_proposal_for(proposal: &RowProposal, operation: u8) -> Result<(usize, [u8; 5])> {
     let declared = proposal.after_roles.map(page_role);
     let named = declared.iter().fold(0u8, |mask, role| mask | (1 << role));
-    if proposal.operation != RowOperation::Forward
+    if proposal.operation
+        != if operation == 0 {
+            RowOperation::Forward
+        } else {
+            RowOperation::Clr
+        }
         || proposal.after_count != 5
         || named != 0x1f
         || !(1..=RowLoanLayout::FRAME.end).contains(&proposal.frame_len)
@@ -201,7 +210,11 @@ fn forward_observation(
     frame_bytes: usize,
 ) -> row_group::Observation {
     row_group::Observation {
-        operation: row_semantic::Operation::Forward,
+        operation: if header.kind == FrameKind::Clr {
+            row_semantic::Operation::Clr
+        } else {
+            row_semantic::Operation::Forward
+        },
         header,
         order,
         count: 5,
@@ -247,7 +260,7 @@ impl<'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
     pub(in super::super::super::super::super::super) fn row_producer_context(
         &self,
         owner: &mut Owner<'c, 's>,
-        statement: &RowStatementView<'_, '_, 'a, 'c, 's>,
+        statement: Option<&RowStatementView<'_, '_, 'a, 'c, 's>>,
         (table, draft, issued): (RowTableSource, &RowDraftCut, RowIssued),
         private: &[u8; 425_984],
     ) -> Result<RowProducerContext> {
@@ -351,14 +364,22 @@ impl<'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
         let previous_lsn = draft.complete_lsn;
         Ok(RowProducerContext {
             schema,
-            operation: RowOperation::Forward,
+            operation: if draft.operation == 0 {
+                RowOperation::Forward
+            } else {
+                RowOperation::Clr
+            },
             frame_expected: FrameExpectation {
                 stream,
                 previous_lsn,
             },
             header: WalFrameHeader {
                 stream,
-                kind: FrameKind::Update,
+                kind: if draft.operation == 0 {
+                    FrameKind::Update
+                } else {
+                    FrameKind::Clr
+                },
                 lsn: previous_lsn.checked_add(1).ok_or_else(invariant)?,
                 previous_lsn,
                 txn: Some(issued.actor.id()),
@@ -371,9 +392,9 @@ impl<'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
                 reference: issued.undo,
                 sequence: job.undo_sequence(),
             },
-            statement_sequence: Some(statement.row_sequence()?),
+            statement_sequence: statement.map(|s| s.row_sequence()).transpose()?,
             planned_mutation: draft.planned_mutation,
-            statement_mark: statement.row_mark()?,
+            statement_mark: statement.map(|s| s.row_mark()).transpose()?.flatten(),
             predecessor,
             root_job_ordinal: u8::try_from(ordinal).map_err(|_| invariant())?,
             terminal_job_ordinal: u8::try_from(terminal).map_err(|_| invariant())?,
@@ -381,9 +402,18 @@ impl<'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
             sources,
             after_order: changed.map(|(_, page)| page),
             after_count: 5,
-            input: RowProducerInput::Insert {
-                canonical_len: usize::from(draft.input_len),
-                canonical_digest: draft.input,
+            input: if draft.operation == 0 {
+                RowProducerInput::Insert {
+                    canonical_len: usize::from(draft.input_len),
+                    canonical_digest: draft.input,
+                }
+            } else {
+                RowProducerInput::Clr {
+                    current_row_len: usize::from(draft.input_len),
+                    current_projection: draft.input,
+                    rollback_target: statement.map(|s| s.row_mark()).transpose()?.flatten(),
+                    next: predecessor,
+                }
             },
         })
     }
@@ -416,7 +446,7 @@ impl<'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
     /// The census predecessor H of a Row root with Undo sequence `sequence`:
     /// the actor's RootRetained root with the largest smaller sequence, as
     /// the producer and the observer select it.
-    fn row_predecessor(&self, actor: TxnRef, sequence: u64) -> Result<Option<UndoLink>> {
+    pub(super) fn row_predecessor(&self, actor: TxnRef, sequence: u64) -> Result<Option<UndoLink>> {
         let storage = self.storage;
         let namespace = storage.profile().spec().namespace;
         let mut found: Option<UndoLink> = None;
@@ -468,6 +498,7 @@ impl<'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
         statement: &RowStatementView<'_, '_, 'a, 'c, 's>,
         table: RowTableSource,
         (draft, issued): (&RowDraftCut, RowIssued),
+        expected_operation: u8,
     ) -> Result<ReservedEntry> {
         let storage = self.storage;
         let invariant = || fatal(storage, RetentionPhase::Census, RetentionCause::Invariant);
@@ -479,7 +510,7 @@ impl<'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
             .ok_or_else(|| unchanged(RetentionPhase::Prepare, RetentionCause::WrongState))?;
         // The reservation was issued to this statement's actor by a Reserve;
         // anything else contradicts the wrapper's own proof.
-        if actor != issued.actor || draft.operation != 0 {
+        if actor != issued.actor || draft.operation != expected_operation {
             return Err(invariant());
         }
         let (_, status) = preparation.row_terminal(actor)?;
@@ -536,7 +567,7 @@ impl<'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
         let _unwind = storage.session_fence().unwind_guard();
         #[cfg(test)]
         let _step = TestStep::enter(TEST_PREPARE);
-        let entry = self.reserved_entry(owner, statement, table, (draft, issued))?;
+        let entry = self.reserved_entry(owner, statement, table, (draft, issued), 0)?;
         self.catalog_preparation().prepare_forward(
             owner,
             &entry,
@@ -561,7 +592,7 @@ impl<'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
         let _unwind = storage.session_fence().unwind_guard();
         #[cfg(test)]
         let _step = TestStep::enter(TEST_APPLY);
-        let entry = self.reserved_entry(owner, statement, table, (draft, issued))?;
+        let entry = self.reserved_entry(owner, statement, table, (draft, issued), 0)?;
         self.forward_group(owner, statement, &entry, (table, draft, cut), private)?;
         // The group is durable: the view's revision may not stay behind.
         statement
@@ -574,7 +605,7 @@ impl<'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
     /// `prepare_forward_apply`'s result, matched by reference so that the
     /// group is never moved into a second slot, and it is held through the
     /// install.
-    fn forward_group(
+    pub(super) fn forward_group(
         &mut self,
         owner: &mut Owner<'c, 's>,
         statement: &RowStatementView<'_, '_, 'a, 'c, 's>,
@@ -619,7 +650,7 @@ impl<'b, 'a, 's, 'c, 'p, 'd, 'm, 'w, W: WriterNamespace>
     /// `produced` and `own_output`). The one suspended level: `observation`, the
     /// observer's result, held through the identity, inventory and progress
     /// checks.
-    fn prepare_forward(
+    pub(super) fn prepare_forward(
         &self,
         owner: &mut Owner<'c, 's>,
         entry: &ReservedEntry,
@@ -629,7 +660,7 @@ impl<'b, 'a, 's, 'c, 'p, 'd, 'm, 'w, W: WriterNamespace>
         let storage = self.storage;
         let profile = storage.profile();
         let invariant = || fatal(storage, RetentionPhase::Census, RetentionCause::Invariant);
-        let (frame_len, declared) = check_proposal(proposal)?;
+        let (frame_len, declared) = check_proposal_for(proposal, draft.operation)?;
         let ForwardLanes {
             frame,
             before,
@@ -683,12 +714,30 @@ impl<'b, 'a, 's, 'c, 'p, 'd, 'm, 'w, W: WriterNamespace>
                 frame: expected,
                 // Replay's boundary: the observer takes no statement mark
                 // for a Forward.
-                change: row_group::Change::Forward {
-                    ordinal: entry.ordinal,
-                    statement: StatementBoundary {
-                        sequence: entry.statement,
-                        mark: None,
-                    },
+                change: if draft.operation == 0 {
+                    row_group::Change::Forward {
+                        ordinal: entry.ordinal,
+                        statement: StatementBoundary {
+                            sequence: entry.statement,
+                            mark: None,
+                        },
+                    }
+                } else {
+                    row_group::Change::Clr {
+                        ordinal: entry.ordinal,
+                        statement: match self.rollback_state(entry.issued.actor)? {
+                            crate::storage::transaction_record::TransactionState::Aborting(
+                                crate::storage::transaction_record::RollbackState::Statement {
+                                    target,
+                                    ..
+                                },
+                            ) => Some(StatementBoundary {
+                                sequence: entry.statement,
+                                mark: target,
+                            }),
+                            _ => None,
+                        },
+                    }
                 },
                 jobs: self.control.jobs(),
                 root: &before[at(ROOT)?],
@@ -780,7 +829,7 @@ impl<'b, 'a, 's, 'c, 'p, 'd, 'm, 'w, W: WriterNamespace>
             frame_len: u32::try_from(frame_len).map_err(|_| invariant())?,
             after_roles: pack_roles(&order),
             after_count: 5,
-            operation: 0,
+            operation: draft.operation,
         })
     }
 
@@ -790,7 +839,7 @@ impl<'b, 'a, 's, 'c, 'p, 'd, 'm, 'w, W: WriterNamespace>
     /// and XOI page with the observation rebuilt from the deep checks'
     /// scalars. A digest that differs contradicts `prepare`'s own checks of
     /// a loan only C wrote since (Fatal).
-    fn prepare_forward_apply<'i>(
+    pub(super) fn prepare_forward_apply<'i>(
         &self,
         owner: &mut Owner<'c, 's>,
         entry: &ReservedEntry,
@@ -826,7 +875,7 @@ impl<'b, 'a, 's, 'c, 'p, 'd, 'm, 'w, W: WriterNamespace>
             .and_then(|length| frame.get(..length))
             .ok_or_else(invariant)?;
         let frame_digest = content_digest(bytes);
-        if cut.operation != 0
+        if cut.operation != draft.operation
             || frame_digest != cut.frame
             || after_fold(
                 &order,
@@ -1033,7 +1082,7 @@ impl<'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
         private: &mut [u8; 425_984],
     ) -> Result<[u8; 32]> {
         let storage = self.storage;
-        let entry = self.reserved_entry(owner, statement, table, (draft, issued))?;
+        let entry = self.reserved_entry(owner, statement, table, (draft, issued), 0)?;
         let ForwardLanes { before, .. } = ForwardLanes::split(private);
         let mut requests = [target_from_source(storage, Plan4Page::CatalogLeaf)?.request; 9];
         let count = before_targets(storage.profile(), before, draft.roles, &mut requests)
@@ -1513,3 +1562,6 @@ pub(in super::super::super::super) fn row_forward_body<W: WriterNamespace>(
         apply,
     }
 }
+
+#[path = "row_clr.rs"]
+mod clr;

@@ -1,0 +1,41 @@
+{
+  "schema": "XADB_S4_TEST_INVENTORY_V1",
+  "status": "FROZEN_SELECTION_NOT_EXECUTION_EVIDENCE",
+  "baseline": "139a05f4",
+  "selectors": [
+    "s4_c01_memory_rollback_census",
+    "s4_c01_native_rollback_census",
+    "s4_r03_premature_finish_bad_proposal_and_actual_stage_retry",
+    "s4_r05_partial_clr_write_is_fatal",
+    "s4_r05_clr_sync_uncertainty_is_fatal",
+    "s4_r06_empty_statement_and_empty_full_abort",
+    "s4_r04_unfinished_drop_fences_without_more_io",
+    "s4_r02_full_abort_one_row",
+    "s4_r01_statement_suffix_then_commit",
+    "s4_v09_minus_one",
+    "s4_v09_exact",
+    "s4_v09_plus_one",
+    "s4_r07_flush_before_error_preserves_a_retryable_rollback",
+    "s4_r08_serializable_conflict_then_full_abort",
+    "s2e_e09_applied_then_rejected_row_is_rollback_required_up_to_the_s4_start",
+    "s4_r09_wrong_after_digest_is_unchanged_and_same_task_retries",
+    "s4_r10_full_abort_three_roots_from_two_statements",
+    "s4_r11_wrong_capsule_view_and_scope_are_unchanged"
+  ],
+  "native_selector": "s4_n01_native_worker",
+  "compiler": [
+    "MBC00-P06"
+  ],
+  "memory_case_seconds": 30,
+  "controller_timeout_seconds": 45,
+  "native_seconds_per_process": 180,
+  "source_specific": true,
+  "stop_on_first_failure": true,
+  "notes": [
+    "Only changed Row/transaction/driver paths are selected; no workspace test run.",
+    "Unfunded empty statement rollback is Unchanged; Reserve/Cancel-funded mark=head is exercised by V09.",
+    "S4-R07 injects one Before refusal at the wrapper-to-flusher call boundary, then uses the actual flusher.",
+    "Native restart preserves the pre-C4 Analysis/Unsupported gate; no READY claim.",
+    "R08 uses actual A commit conflict -> PendingRollback<T> -> full CLR driver -> finish_aborted_live; R10 covers three full-abort roots from two statements."
+  ]
+}

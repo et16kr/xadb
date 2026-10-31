@@ -788,7 +788,7 @@ impl<'r, 't, 'v, 'i, 'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
             .ok_or_else(|| fatal(storage, RetentionPhase::Prepare, RetentionCause::Invariant))?;
         let context = self.mutation.row_producer_context(
             self.owner,
-            self.statement,
+            Some(self.statement),
             (table, &self.draft, issued),
             private,
         )?;

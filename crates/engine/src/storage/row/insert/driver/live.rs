@@ -128,7 +128,8 @@ impl<'r, 't, 'v, 'i, 'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace> Rol
     where
         Self: 'x;
     /// FlushRequired's target is passed out unchanged with the rollback
-    /// still held (gaps G1 and G5).
+    /// still held. The live caller uses `flush_rollback_live` with C's original
+    /// disjoint flusher; an unfinished rollback still fences on Drop.
     fn next(&mut self) -> Result<RollbackNext<Self::Task<'_>, Plan4Target>, RetentionError> {
         Ok(match RowRollback::next(self)? {
             RollbackStep::Candidate(task) => RollbackNext::Candidate(task),
@@ -255,8 +256,15 @@ impl<'x, 't, 'v, 'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace> Boundar
         scope: RollbackScope,
         loan: &'i mut Loan,
     ) -> Result<Self::Rollback<'r, 'i>, RetentionError> {
-        self.port
-            .start_row_rollback(self.owner, transaction, statement, scope, loan)
+        self.port.start_row_rollback(
+            self.owner,
+            transaction,
+            statement,
+            scope,
+            loan,
+            self.flusher,
+            self.flush_owner,
+        )
     }
     fn finish_statement(
         &mut self,
@@ -625,4 +633,65 @@ pub(in crate::storage) fn commit_caller_source<W: WriterNamespace + 'static>() -
         + size_of::<Result<RowCommitObservation, DriveError<T>>>()
         + 2 * size_of::<Result<RowCommitObservation, TransactionFinishError<T>>>();
     (held, held)
+}
+
+/// Flush continuation using the original disjoint flusher held by C.
+pub(in crate::storage) fn flush_rollback_live<
+    'r,
+    't,
+    'v,
+    'i,
+    'b,
+    'a,
+    's,
+    'c,
+    'p,
+    'd,
+    'o,
+    'm,
+    'w,
+    W: WriterNamespace,
+>(
+    rollback: &mut LiveRollback<'r, 't, 'v, 'i, 'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W>,
+    target: &Plan4Target,
+) -> Result<(), RetentionError> {
+    rollback.rollback.flush(target)
+}
+
+/// Actual S4 caller holds the PendingRollback/view, original capsule, LiveCall
+/// and both Owners below the driver. Existing call-sites retain their own slack.
+#[cfg(test)]
+pub(in crate::storage) fn rollback_caller_source<W: WriterNamespace + 'static>()
+-> (usize, Vec<(&'static str, usize, usize)>, usize) {
+    use std::mem::size_of;
+    type T = RowTransaction<'static, 'static, 'static, 'static>;
+    type V = RowStatementView<'static, 'static, 'static, 'static, 'static>;
+    let caller = size_of::<T>()
+        + size_of::<PendingRollback<V>>().max(size_of::<PendingRollback<T>>())
+        + size_of::<
+            Live<
+                'static,
+                'static,
+                'static,
+                'static,
+                'static,
+                'static,
+                'static,
+                'static,
+                'static,
+                'static,
+                'static,
+                'static,
+                W,
+            >,
+        >()
+        + 2 * size_of::<Owner<'static, 'static>>()
+        + 4 * size_of::<&()>();
+    let sites = live_call_sites::<W>()
+        .into_iter()
+        .filter(|s| s.name.starts_with("rollback.") || s.name == "transaction.finish_aborted")
+        .map(|s| (s.name, s.bytes + caller, s.bytes + s.dead + caller))
+        .collect();
+    let (_, producer) = super::super::local_source_carrier_bytes();
+    (caller, sites, producer)
 }

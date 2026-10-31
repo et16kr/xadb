@@ -1247,3 +1247,6 @@ mod row_live;
 
 #[path = "catalog_memory/row_commit.rs"]
 mod row_commit;
+
+#[path = "catalog_memory/row_rollback.rs"]
+mod row_rollback;

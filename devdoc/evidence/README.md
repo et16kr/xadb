@@ -1,5 +1,7 @@
 # XADB 조사·실행 증거
 
+2026-10-31 [S4 live Row rollback](module-independence-survey-20261026.md#s4-row-rollback): main `139a05f4`의 별도 branch `codex/s4-row-rollback`에서 statement/full rollback·원 CLR/receipt·flusher/pin 인계를 구현했다. source별 선택20개·변경 compiler1개·native2process를 검증했으며 최종 독립 D1/D2 ACCEPT·필수 수정0을 확인했다. S5/C4/S6·전체 M4/M5는 미완료다.
+
 2026-10-31 [S3 Row Commit](module-independence-survey-20261026.md#s3-row-commit): 클라우드 별도 branch에서 실제 Commit·논리 table epoch·capsule 종료를 연결했다. source별 선택 실행·native 두 process를 확인하고 원 실패를 보존했다. 최종 독립 D1/D2 ACCEPT·필수 수정0이다. S4–S6·전체 M4/M5는 미완료다.
 
 2026-10-30 [main 기존 실패 디버깅](main-preexisting-failures-20261030.md): main `85ceef3`의 commit window native 초과는 시험 native adapter File이 trace 이름 129B를 값으로 들고 있어 생겼다. 이름을 Box로 옮겨 native pending_full 66280B → 65128B로 통과한다. F05·`support.rs:260`은 옛 Profile1·v1 scope에 묶인 시험이며 제품이 옛 빈 거래 producer를 거절하므로 oracle 정정만으로 풀리지 않는다. 사용자 결정에 따라 F05는 CR1에서 빼고 옛 시험은 이관 전 시험으로 남긴다.

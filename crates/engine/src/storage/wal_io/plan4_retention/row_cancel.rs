@@ -55,7 +55,7 @@ impl<'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
         let _unwind = storage.session_fence().unwind_guard();
         #[cfg(test)]
         let _step = TestStep::enter(TEST_CANCEL);
-        let entry = self.reserved_entry(owner, statement, table, (draft, issued))?;
+        let entry = self.reserved_entry(owner, statement, table, (draft, issued), 0)?;
         self.cancel_group(owner, &entry, draft, private)
     }
 
