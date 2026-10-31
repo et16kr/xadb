@@ -40,6 +40,10 @@ where
     gate: Option<TerminalReadGate<'c, 's>>,
     active: bool,
 }
+#[allow(
+    clippy::large_enum_variant,
+    reason = "the fixed caller census accounts for the inline task, without heap allocation"
+)]
 pub(crate) enum RollbackStep<'x, 'r, 't, 'v, 'i, 'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W>
 where
     W: WriterNamespace,
@@ -74,6 +78,10 @@ impl<'i> RowRollbackDone<'i> {
 impl<'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
     MutationPort<'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W>
 {
+    #[allow(
+        clippy::too_many_arguments,
+        reason = "the original mutation, capsule, private loan and disjoint flusher authority remain explicit"
+    )]
     pub(in crate::storage) fn start_row_rollback<'r, 't, 'v, 'i>(
         &'r mut self,
         owner: &'r mut Owner<'c, 's>,
@@ -138,13 +146,18 @@ impl<'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
             gate: Some(gate),
             active: false,
         };
+        #[cfg(test)]
+        crate::transaction::concurrency::catalog_test_support::hit(
+            rollback.mutation.pool.bound_core(),
+            crate::transaction::concurrency::catalog_test_support::Point::RowPreflightResident,
+        );
         rollback.warm()?;
         // All pre-effect checks precede the actual RollbackStart. The original
         // empty/full body is deliberately not used to authenticate a live mark.
         rollback
             .mutation
             .row_statement_head(actor, RetentionPhase::Prepare)?;
-        let visibility = rollback.mutation.visibility.ok_or_else(|| unsupported())?;
+        let visibility = rollback.mutation.visibility.ok_or_else(unsupported)?;
         let lease = visibility
             .reserve_references(rollback.owner)
             .map_err(vis_error)?;
@@ -183,7 +196,7 @@ impl<'r, 't, 'v, 'i, 'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
         super::super::fatal(self.mutation.storage, RetentionPhase::Install, cause)
     }
     fn check_admitted(&mut self) -> Result<()> {
-        if self.source.is_none() || self.gate.is_none() {
+        if self.source.is_none() || self.gate.is_none() || (self.active && self.refs.is_none()) {
             return Err(self.fatal(RetentionCause::Invariant));
         }
         self.flusher.control.check_catalog_pair_io::<W>(
@@ -254,6 +267,10 @@ impl<'r, 't, 'v, 'i, 'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
         self.release_refs().map_err(|e| self.fatal(e.cause))?;
         self.release_source().map_err(|e| self.fatal(e.cause))?;
         let result = (|| {
+            #[cfg(test)]
+            if TEST_FLUSH_REFUSAL.with(|flag| flag.replace(false)) {
+                return Err(unchanged(RetentionPhase::Prepare, RetentionCause::Busy));
+            }
             if self.flusher.phase() == RetentionFlushPhase::Ready {
                 self.flusher.try_flush(self.flush_owner, target)?;
             }
@@ -263,10 +280,9 @@ impl<'r, 't, 'v, 'i, 'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
             }
             Ok(())
         })();
-        let admission = self.admit().map_err(|e| self.fatal(e.cause));
-        merge(result, admission)?;
+        self.admit().map_err(|e| self.fatal(e.cause))?;
         if self.active {
-            let visibility = self.mutation.visibility.ok_or_else(|| unsupported())?;
+            let visibility = self.mutation.visibility.ok_or_else(unsupported)?;
             self.refs = Some(RollbackRefs {
                 current: None,
                 lease: visibility
@@ -274,7 +290,15 @@ impl<'r, 't, 'v, 'i, 'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
                     .map_err(vis_error)?,
             });
         }
-        Ok(())
+        result
+    }
+    #[cfg(test)]
+    pub(in crate::storage) fn test_flush_refusal(&self) {
+        TEST_FLUSH_REFUSAL.with(|flag| assert!(!flag.replace(true)));
+    }
+    #[cfg(test)]
+    pub(in crate::storage) fn test_root(&self) -> Plan4Target {
+        self.mutation.row_rollback_test_root()
     }
     fn warm(&mut self) -> Result<()> {
         loop {
@@ -540,3 +564,150 @@ impl<'x, 'r, 't, 'v, 'i, 'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
         self.task
     }
 }
+
+#[cfg(test)]
+mod census {
+    use super::*;
+    use std::mem::size_of;
+    type R<W> = RowRollback<
+        'static,
+        'static,
+        'static,
+        'static,
+        'static,
+        'static,
+        'static,
+        'static,
+        'static,
+        'static,
+        'static,
+        'static,
+        'static,
+        W,
+    >;
+    type T<W> = RowRollbackTask<
+        'static,
+        'static,
+        'static,
+        'static,
+        'static,
+        'static,
+        'static,
+        'static,
+        'static,
+        'static,
+        'static,
+        'static,
+        'static,
+        'static,
+        W,
+    >;
+    type P<W> = PreparedRollbackTask<
+        'static,
+        'static,
+        'static,
+        'static,
+        'static,
+        'static,
+        'static,
+        'static,
+        'static,
+        'static,
+        'static,
+        'static,
+        'static,
+        'static,
+        W,
+    >;
+    fn inspect<W: WriterNamespace + 'static>(label: &str) {
+        use super::super::super::{create_pair::catalog_live as c, resources, source};
+        let charge = row_write_charge::<W>();
+        let (caller, sites, producer) =
+            crate::storage::row::insert::driver::live::rollback_caller_source::<W>();
+        let shared = source::shared_bytes::<W>();
+        let existing = c::row_write_bodies::<W>();
+        let phases = super::super::write::row_write_phases::<W>();
+        let phase = |name| {
+            let p = phases.iter().find(|p| p.name == name).expect("phase");
+            p.body + p.carriers
+        };
+        let wrapper = 16 * size_of::<&()>()
+            + 2 * size_of::<Result<()>>()
+            + 2 * size_of::<TransactionState>()
+            + size_of::<RollbackState>();
+        let selection = c::row_preflight::rollback::source_bytes::<W>() + wrapper;
+        // Common four-target canonical preparation already includes exact typed
+        // arrays/producer/replay/ledger; add the new control selector's packet.
+        let control=c::row_commit_prepare_source_bytes::<W>().max(
+            existing.group_install+size_of::<super::super::super::create_pair::catalog_live::lifecycle::row::PreparedRowGroup<'_ ,'_ ,'_>>()
+                +size_of::<crate::storage::semantic_row::transition::Observation>()+2*size_of::<Result<()>>()
+        )
+            +c::lifecycle::row::rollback_preparation_packet_bytes::<W>()
+            +4*size_of::<TargetRequest>()+size_of::<Option<UndoRef>>()
+            +size_of::<Option<StatementBoundary>>()+size_of::<Operation>()
+            +2*size_of::<Result<crate::storage::semantic_row::transition::Observation>>()
+            +2*size_of::<Result<crate::storage::transaction_record::TransactionStatus>>()
+            +wrapper;
+        let pin = super::super::super::visibility::source_census().reference
+            + 2 * size_of::<Option<UndoPin<'_, '_, '_, '_>>>()
+            + 2 * size_of::<Result<Option<UndoPin<'_, '_, '_, '_>>>>()
+            + crate::storage::dirty_frame::target_set_call_bytes::<1>()
+            + size_of::<crate::storage::dirty_frame::ReadTargets<'_, '_, '_, '_, '_, '_, 1>>()
+            + 2 * size_of::<crate::storage::page::PageView<'_>>()
+            + 2 * size_of::<crate::storage::status_home::StatusHome>()
+            + crate::storage::transaction_record::status_codec_source_bytes()
+            + 1536
+            + wrapper;
+        let flush = shared+resources::source_census::<W>().flush+size_of::<R<W>>()
+            +2*size_of::<Result<()>>()+size_of::<Plan4Target>()+wrapper+caller
+            +size_of::<&()>() // StartedRollback progress pointer; R is counted above
+            +4*size_of::<&()>()+2*size_of::<Result<()>>()
+            +size_of::<std::result::Result<crate::storage::row::insert::driver::Stepped,crate::storage::row::insert::driver::RollbackStop<T<W>,Plan4Target>>>();
+        println!(
+            "S4_C01 writer={label} shared={shared} charge={charge} caller={caller} rollback={} task={} prepared={} selection={selection} control={control} pin={pin} flush={flush}",
+            size_of::<R<W>>(),
+            size_of::<T<W>>(),
+            size_of::<P<W>>()
+        );
+        for (name, share, frame) in sites {
+            let body = match name {
+                "rollback.start" | "rollback.finish" => control.max(selection).max(pin),
+                "rollback.next" => selection.max(pin),
+                "rollback.clr_lane" => phase("producer_lane") + wrapper,
+                "rollback.clr_prepare" => phase("prepare") + wrapper,
+                "rollback.clr_apply" => phase("apply").max(pin) + wrapper,
+                "rollback.clr" => producer,
+                "transaction.finish_aborted" => {
+                    super::super::super::transaction::row_commit::check_source_bytes()
+                }
+                _ => existing.check + wrapper,
+            };
+            println!(
+                "S4_C01 writer={label} site={name} share={share} frame_static={frame} body={body} total={} frame_total={}",
+                share + body,
+                frame + body
+            );
+            assert!(
+                frame + body <= charge,
+                "{label} {name}: {} > {charge}",
+                frame + body
+            );
+        }
+        assert!(shared + charge <= source::SHORT_BYTES as usize);
+        assert!(
+            flush <= source::SHORT_BYTES as usize,
+            "{label} flush {flush}"
+        );
+    }
+    #[test]
+    fn s4_c01_memory_rollback_census() {
+        inspect::<crate::storage::wal_io::plan4_test_support::Writer>("memory");
+    }
+    #[test]
+    fn s4_c01_native_rollback_census() {
+        inspect::<platform::namespace::LinuxWriterLease>("native");
+    }
+}
+
+#[cfg(test)]
+thread_local! {static TEST_FLUSH_REFUSAL:std::cell::Cell<bool>=const{std::cell::Cell::new(false)};}

@@ -1,0 +1,29 @@
+{
+  "after_sha256": {
+    "bank": "e09396dd03843250647b07db68ecb5eb27d43dbe2b33b0bd5984aef8010a80c3",
+    "jobs2": "7246693739ebab39530f156f15cb7d9d741b3ef371e8ed44275a7a34af73fac7",
+    "leaf13": "86870861f1449695f314f938012b94cef5d33ccde1dc10fbe881b14b8bb9375d",
+    "root1": "e701974e33427c618c9b6e6937c24ba8ac13ea5bb6f4d3e6d2ed27a8012988cf",
+    "status11": "2a31501b25927b991191e089cb4ecc06f8837e5a8dc0da0fdb1edff6578758c7",
+    "undo14": "bf067dc8b60f3bc67b5fd5ff11dc1a49c57e6b33de188d0d0b31ba3dca407524"
+  },
+  "case": "S4-R02",
+  "frames": {
+    "abort-end": {
+      "bytes": 56712,
+      "sha256": "6d83741e6afd832e93fa0ca76eba65054f0cce56b380f7721c8e57d8fef4eaf5"
+    },
+    "clr": {
+      "bytes": 91289,
+      "sha256": "caa18deac3fecd9b9c51d861c12b25aa4ca547f087a766cf2947ec3a19f9f4e0"
+    },
+    "rollback-start": {
+      "bytes": 3040,
+      "sha256": "b4af98e28211d0ef990d2e54767b9e046fed100197b91f01f29df9b9ba156d92"
+    }
+  },
+  "input_author_sha256": "cbab5fcf089099524ea31fa1da1b6673b617973623bc7c59b7334ef45064cd9f",
+  "lsn": 19,
+  "model_sha256": "076ea2f2767851bd8046becbba6b1d05a00a6cd7838a9c9e052b6b2e033beec4",
+  "q": 0
+}

@@ -1024,6 +1024,24 @@ impl<'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
         owner: &mut Owner<'c, 's>,
         mut transaction: RowTransaction<'v, 'a, 'c, 's>,
     ) -> std::result::Result<(), TransactionFinishError<RowTransaction<'v, 'a, 'c, 's>>> {
+        let precheck = (|| {
+            self.transaction_entry(owner)?;
+            self.transaction_origin_matches(&transaction)?;
+            if !transaction.row_scope() || transaction.phase.get() != Phase::Aborted {
+                return Err(unchanged(
+                    RetentionPhase::Finalize,
+                    RetentionCause::WrongState,
+                ));
+            }
+            Ok(())
+        })();
+        if let Err(error) = precheck {
+            return if error.effect == Effect::Unchanged {
+                Err(TransactionFinishError::Before { error, transaction })
+            } else {
+                Err(TransactionFinishError::Fatal(error))
+            };
+        }
         let result =
             self.transaction_check(
                 owner,

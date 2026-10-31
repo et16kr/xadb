@@ -644,27 +644,7 @@ impl<'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
                 ));
             }
         };
-        let descriptor = crate::storage::obligation::decode_descriptor(
-            self.control.row(slot)[..1536]
-                .try_into()
-                .expect("descriptor"),
-            crate::storage::allocation_page::ReservationOwner::Transaction(actor),
-            crate::storage::retention_obligation::profile_reference(self.storage.profile()),
-        )
-        .map_err(|_| {
-            fatal(
-                self.storage,
-                RetentionPhase::Census,
-                RetentionCause::Invariant,
-            )
-        })?;
-        let crate::storage::obligation::OwnerState::Transaction(tx) = descriptor.owner else {
-            return Err(fatal(
-                self.storage,
-                RetentionPhase::Census,
-                RetentionCause::Invariant,
-            ));
-        };
+        let head = self.row_rollback_state(actor)?.undo_head();
         let group = if operation == row_semantic::Operation::AbortEnd {
             let jobs = target_from_source(
                 self.storage,
@@ -686,7 +666,7 @@ impl<'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
                 private,
             )
         } else if operation == row_semantic::Operation::RollbackStart
-            && let Some(head) = tx.undo_head()
+            && let Some(head) = head
         {
             let undo = request(
                 PageIdentity {
@@ -1062,4 +1042,10 @@ impl<'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
             self.control.check_ledger(self.storage.profile(), prefix),
         )
     }
+}
+
+#[cfg(test)]
+pub(in super::super::super::super) fn rollback_preparation_packet_bytes<W: WriterNamespace>()
+-> usize {
+    std::mem::size_of::<CatalogPreparation<'_, '_, '_, '_, '_, '_, '_, '_, W>>()
 }

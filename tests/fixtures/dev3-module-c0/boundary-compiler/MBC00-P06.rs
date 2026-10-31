@@ -3,7 +3,7 @@
 //! own reborrow; a full rollback ends before finish_aborted consumes the same
 //! transaction.
 use crate::storage::disk::{
-    MutationPort, Plan4Target, RetentionError, RollbackScope, RollbackStep, RowOperation,
+    MutationPort, MaintenancePort, RetentionError, RollbackScope, RollbackStep, RowOperation,
     RowOwnedError, RowPageRole, RowProducerLane, RowProposal, RowStatementView, RowTransaction,
     TransactionFinishError,
 };
@@ -24,10 +24,11 @@ fn rollback<'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>(
     view: Option<&RowStatementView<'_, '_, 'a, 'c, 's>>,
     scope: RollbackScope,
     private: &mut [u8; 425_984],
-    flush: &mut dyn FnMut(Plan4Target),
+    maintenance: &mut MaintenancePort<'b,'s,'c,'p,'d,'m,'w,W>,
+    flush_owner: &mut Owner<'c,'s>,
 ) -> Result<u64, RetentionError> {
     let mut applied = 0;
-    let mut rollback = mutation.start_row_rollback(owner, transaction, view, scope, private)?;
+    let mut rollback = mutation.start_row_rollback(owner, transaction, view, scope, private, maintenance, flush_owner)?;
     loop {
         match rollback.next()? {
             RollbackStep::Candidate(mut task) => {
@@ -52,7 +53,7 @@ fn rollback<'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>(
                     Err(RowOwnedError::Fatal(error)) => return Err(error),
                 }
             }
-            RollbackStep::FlushRequired { target } => flush(target),
+            RollbackStep::FlushRequired { target } => rollback.flush(&target)?,
             RollbackStep::Complete => break,
         }
     }
@@ -75,7 +76,8 @@ fn flow<'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>(
     owner: &mut Owner<'c, 's>,
     transaction: RowTransaction<'_, 'a, 'c, 's>,
     private: &mut [u8; 425_984],
-    flush: &mut dyn FnMut(Plan4Target),
+    maintenance: &mut MaintenancePort<'b,'s,'c,'p,'d,'m,'w,W>,
+    flush_owner: &mut Owner<'c,'s>,
 ) -> Result<u64, RetentionError> {
     let view = mutation.begin_statement(owner, &transaction)?;
     let mut applied = rollback(
@@ -85,7 +87,8 @@ fn flow<'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>(
         Some(&view),
         RollbackScope::Statement,
         private,
-        flush,
+        maintenance,
+        flush_owner,
     )?;
     if mutation.finish_statement(owner, view).is_err() {
         return Ok(applied);
@@ -97,7 +100,8 @@ fn flow<'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>(
         None,
         RollbackScope::Transaction,
         private,
-        flush,
+        maintenance,
+        flush_owner,
     )?;
     match mutation.finish_aborted(owner, transaction) {
         Ok(()) => Ok(applied),

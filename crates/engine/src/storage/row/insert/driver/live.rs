@@ -656,3 +656,41 @@ pub(in crate::storage) fn flush_rollback_live<
 ) -> Result<(), RetentionError> {
     rollback.rollback.flush(target)
 }
+
+/// Actual S4 caller holds the PendingRollback/view, original capsule, LiveCall
+/// and both Owners below the driver. Existing call-sites retain their own slack.
+#[cfg(test)]
+pub(in crate::storage) fn rollback_caller_source<W: WriterNamespace + 'static>()
+-> (usize, Vec<(&'static str, usize, usize)>, usize) {
+    use std::mem::size_of;
+    type T = RowTransaction<'static, 'static, 'static, 'static>;
+    type V = RowStatementView<'static, 'static, 'static, 'static, 'static>;
+    let caller = size_of::<T>()
+        + size_of::<PendingRollback<V>>().max(size_of::<PendingRollback<T>>())
+        + size_of::<
+            Live<
+                'static,
+                'static,
+                'static,
+                'static,
+                'static,
+                'static,
+                'static,
+                'static,
+                'static,
+                'static,
+                'static,
+                'static,
+                W,
+            >,
+        >()
+        + 2 * size_of::<Owner<'static, 'static>>()
+        + 4 * size_of::<&()>();
+    let sites = live_call_sites::<W>()
+        .into_iter()
+        .filter(|s| s.name.starts_with("rollback.") || s.name == "transaction.finish_aborted")
+        .map(|s| (s.name, s.bytes + caller, s.bytes + s.dead + caller))
+        .collect();
+    let (_, producer) = super::super::local_source_carrier_bytes();
+    (caller, sites, producer)
+}

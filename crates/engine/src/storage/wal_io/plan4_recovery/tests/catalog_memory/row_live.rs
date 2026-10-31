@@ -769,10 +769,9 @@ fn s2w_r19_live_preflight_busy_ends_the_row_without_retry() {
 /// per RowReserve, and the fixture's one Free Undo, 14, is leased by the
 /// first row. With a row applied, the statement is RollbackRequired and the
 /// applied row's slot is kept. The statement
-/// rollback is the next step, and its start is C's Unchanged Unsupported (S4
-/// is out of scope): the pending statement stays as it was, with no fence.
-/// Dropping it hands it to C's fence, which is the only end this branch has
-/// for it.
+/// rollback is the next step. S4 extends this original S2-E09 boundary
+/// through the actual A CLR driver, StatementFinish and a healthy Commit.
+
 #[test]
 fn s2e_e09_applied_then_rejected_row_is_rollback_required_up_to_the_s4_start() {
     case("S2E-E09", || {
@@ -815,32 +814,44 @@ fn s2e_e09_applied_then_rejected_row_is_rollback_required_up_to_the_s4_start() {
                 assert_eq!(hex(forward), FORWARD_FRAME.1);
                 assert!(!hook::observe(core).read_gate_closed);
                 assert_eq!(reader.catalog_test_source_used(), used);
-                let effects = files(state);
-                let start = start_statement_rollback_live(&mut call, &row, &mut pending, private)
-                    .err()
-                    .unwrap();
-                println!("S2E_E09 rollback_start={start:?}");
-                assert_eq!(start.stage, Stage::RollbackStart);
-                let error = disk(&start);
-                assert_eq!(
-                    (error.phase, error.effect),
-                    (RetentionPhase::Prepare, Effect::Unchanged)
-                );
-                assert!(matches!(error.cause, RetentionCause::Unsupported));
-                assert!(!start.must_resolve);
-                assert_eq!(files(state), effects);
-                // The call is done with the writer. The Unchanged start left
-                // the RootJob as the first row's apply did: slot 0's RowId and
-                // UndoRef, RootRetained in statement 1.
+                {
+                    use crate::storage::row::insert::driver::{
+                        Stepped,
+                        live::{finish_rollback_live, rollback_step_live},
+                    };
+                    let mut rollback =
+                        match start_statement_rollback_live(&mut call, &row, &mut pending, private)
+                        {
+                            Ok(r) => r,
+                            Err(e) => panic!("start {e:?}"),
+                        };
+                    assert!(matches!(
+                        rollback_step_live(&mut rollback),
+                        Ok(Stepped::Compensated)
+                    ));
+                    assert!(matches!(
+                        rollback_step_live(&mut rollback),
+                        Ok(Stepped::Complete)
+                    ));
+                    match finish_rollback_live(rollback) {
+                        Ok(()) => {}
+                        Err(_) => panic!("finish rollback"),
+                    }
+                }
+                let view = match pending.rolled_back() {
+                    Ok(view) => view,
+                    Err(_) => panic!("pending completion"),
+                };
+                assert!(finish_statement_live(&mut call, view).is_ok());
                 let jobs = writer.catalog_test_jobs();
                 let job = job3::decode_job(&jobs[ROOT_JOB], namespace()).unwrap();
                 assert_eq!(job.row_id(), Some(observation.row()));
                 assert_eq!(job.undo(), Some(observation.undo()));
-                assert_eq!((job.state(), job.statement()), (JobState::RootRetained, 1));
+                assert_eq!(job.state(), JobState::RootReleasingCompensated);
+                assert_eq!(reader.catalog_test_source_used(), used);
                 assert!(!fence.is_fenced());
-                abandon(pending);
-                assert!(fence.is_fenced());
-                drop(row);
+                assert!(writer.commit_row(owner, row, private).is_ok());
+                assert!(!fence.is_fenced());
             }
         );
     });

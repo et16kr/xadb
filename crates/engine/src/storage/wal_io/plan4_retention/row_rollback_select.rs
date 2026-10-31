@@ -18,6 +18,10 @@ pub(in super::super::super::super) struct RollbackCandidate {
     pub(in super::super::super::super) issued: RowIssued,
     pub(in super::super::super::super) next: Option<UndoLink>,
 }
+#[allow(
+    clippy::large_enum_variant,
+    reason = "the fixed source census counts the inline candidate and its return slots"
+)]
 pub(in super::super::super::super) enum RollbackSelection {
     Candidate(RollbackCandidate),
     Flush(Plan4Target),
@@ -74,10 +78,9 @@ impl<'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
             if job.source() == Some(actor)
                 && job.undo() == Some(head)
                 && job.state() == job3::JobState::RootRetained
+                && selected.replace(ordinal).is_some()
             {
-                if selected.replace(ordinal).is_some() {
-                    return Err(bad());
-                }
+                return Err(bad());
             }
         }
         let ordinal = selected.ok_or_else(bad)?;
@@ -381,5 +384,80 @@ impl<'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
     ) -> Result<TargetRequest> {
         let (_, status) = self.catalog_preparation().row_terminal(actor)?;
         Ok(self.catalog_preparation().catalog_status_request(status))
+    }
+}
+
+/// Source inventories for this selector's actual lexical frames. Byte buffers
+/// are loans. The fixed typed read has ten targets including the Catalog leaf.
+#[cfg(test)]
+pub(in super::super::super::super) fn source_bytes<W: WriterNamespace>() -> usize {
+    use std::mem::size_of;
+    type Read<'a> = targets::CatalogRead<'a, 'a, 'a, 'a, 'a, 'a, 'a, 10>;
+    let r = size_of::<&()>();
+    let frame = 12 * r
+        + size_of::<WalPrefix>()
+        + size_of::<Result<(OwnerIdentity, WalPrefix)>>()
+        + size_of::<TransactionStatus>()
+        + 2 * size_of::<Result<TransactionStatus>>()
+        + size_of::<Option<usize>>()
+        + 4 * size_of::<usize>()
+        + size_of::<crate::api::Namespace>()
+        + 2 * size_of::<job3::JobView<'_>>()
+        + 2 * size_of::<Result<job3::JobView<'_>>>()
+        + size_of::<ObjectHandle>()
+        + size_of::<[PageRef; 2]>()
+        + size_of::<RowTableSource>()
+        + size_of::<TargetRequest>()
+        + size_of::<(usize, StatusSlotRef)>()
+        + size_of::<RowSources>()
+        + size_of::<RowTargets>()
+        + size_of::<PreflightLanes<'_>>()
+        + size_of::<Plan4ResidencyCursor>()
+        + size_of::<Option<UndoLink>>()
+        + size_of::<JobSlotRef>()
+        + size_of::<RowIssued>()
+        + size_of::<DraftIssued>()
+        + 2 * size_of::<Result<RollbackSelection>>()
+        + 2 * size_of::<Result<[u8; 32]>>();
+    let scope = size_of::<history::runtime::ReplayScope<'_, '_, '_, '_>>()
+        + size_of::<history::runtime::ReplayLoan<'_, '_, '_, '_>>()
+        + 2 * size_of::<Result<history::runtime::ReplayScope<'_, '_, '_, '_>>>()
+        + 2 * size_of::<Result<history::runtime::ReplayLoan<'_, '_, '_, '_>>>();
+    let read_frame = 14 * r
+        + size_of::<[TargetRequest; 10]>()
+        + size_of::<[Option<FrameStamp>; 9]>()
+        + size_of::<[FrameStamp; 9]>()
+        + 4 * size_of::<usize>()
+        + size_of::<DraftSource<'_, std::slice::Iter<'_, [u8; PAGE_BYTES]>>>()
+        + size_of::<ControlCut>()
+        + 2 * size_of::<Result<[u8; 32]>>()
+        + 4 * size_of::<Result<FrameStamp>>();
+    let callees = (super::super::super::super::read::catalog_source_bytes::<W>()
+        + 2 * size_of::<Result<[u8; 32]>>())
+    .max(2 * size_of::<ContentHasher>() + 1536 + 4 * size_of::<[u8; 32]>())
+    .max(
+        size_of::<allocation_page::AllocationPage<'_>>()
+            + 2 * size_of::<Result<allocation_page::AllocationPage<'_>>>(),
+    );
+    let read = read_frame + targets::call_bytes::<10>().max(size_of::<Read<'_>>() + callees);
+    let replay =
+        scope + (history::source_bytes::<W>().peak + 2 * size_of::<Result<()>>()).max(read);
+    let load = 8 * r
+        + size_of::<TargetRequest>()
+        + 2 * size_of::<Result<RetentionResidencyStep>>()
+        + 2 * size_of::<Result<Option<Plan4Target>>>()
+        + super::super::super::super::lookup_load::source_bytes::<W>();
+    frame
+        + replay.max(load).max(
+            crate::storage::obligation::descriptor_source_bytes()
+                + 2 * size_of::<crate::storage::obligation::DescriptorSpec>()
+                + job3::source_bytes(),
+        )
+}
+
+#[cfg(test)]
+impl<W: WriterNamespace> RetentionWriter<'_, '_, '_, '_, '_, '_, '_, '_, '_, W> {
+    pub(in super::super::super::super) fn row_rollback_test_root(&self) -> Plan4Target {
+        target_from_source(self.storage, Plan4Page::Root).expect("fixture root")
     }
 }
