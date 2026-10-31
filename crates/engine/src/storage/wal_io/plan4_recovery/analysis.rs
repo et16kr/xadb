@@ -2,8 +2,8 @@
 //! physical before-image to classify; it never seeds a semantic before state.
 use super::super::plan4_pages::{
     observe_recovery_frame, retention_replay_bank, retention_replay_cells, retention_replay_digest,
-    retention_replay_image, retention_replay_provenance, retention_replay_row_scope,
-    seed_recovery_replay,
+    retention_replay_image, retention_replay_losers, retention_replay_provenance,
+    retention_replay_row_scope, seed_recovery_replay,
 };
 use super::*;
 use crate::storage::{
@@ -703,16 +703,23 @@ impl<W: WriterNamespace> RecoveryState<'_, '_, '_, W> {
                 return Err(error(p, Plan4RecoveryCause::Unsupported));
             }
         }
-        // Interim Row gate (XADB-MODULE-ROW-BEGIN-001, the section 6.7 policy
-        // gate position): after Row frame replay and the source, home,
-        // Pending and remaining checks, before SourceFacts and the
-        // AnalysisSeal. Any non-Free Row Job or Row-recipe ATT row, a normally
-        // aborted Row TerminalReady included, is Analysis/Unsupported with
-        // nothing mutated; `failure` keeps the original owner and READY stays
-        // absent until C4 replaces this gate.
-        if retention_replay_row_scope(profile, replay)
-            .map_err(|e| error(p, Plan4RecoveryCause::Retention(e)))?
-        {
+        // The section 6.7 policy gate (boundaries `#row-recovery-s6`): after
+        // Row frame replay and the source, home, Pending and remaining
+        // checks, before SourceFacts and the AnalysisSeal. The legacy entry (no policy) keeps the former interim
+        // gate as its Row scope refusal: any non-Free Row Job or Row-recipe
+        // ATT row, a normally aborted Row TerminalReady included.
+        // RejectInitialLosers refuses any loser of either scope; WithRowClr
+        // refuses none. A refusal is Analysis/Unsupported with nothing
+        // mutated; `failure` keeps the original owner and READY stays absent.
+        let refused = match self.row_policy {
+            None => retention_replay_row_scope(profile, replay),
+            Some(super::RowRecoveryPolicy::RejectInitialLosers) => {
+                retention_replay_losers(profile, replay)
+            }
+            Some(super::RowRecoveryPolicy::WithRowClr) => Ok(false),
+        }
+        .map_err(|e| error(p, Plan4RecoveryCause::Retention(e)))?;
+        if refused {
             return Err(error(p, Plan4RecoveryCause::Unsupported));
         }
         let facts = if let Some(source) = &self.source {
@@ -730,6 +737,14 @@ impl<W: WriterNamespace> RecoveryState<'_, '_, '_, W> {
         };
         self.observation.source_lsn = previous;
         self.observation.source_end = offset;
+        if self.row_admission.is_some() {
+            return Err(error(p, Plan4RecoveryCause::Invariant));
+        }
+        self.row_admission = self.row_policy.map(|policy| super::RowRecoveryAdmission {
+            policy,
+            state_digest,
+            source_facts_digest: facts.digest(),
+        });
         self.source_facts = Some(facts);
         self.analysis = Some(AnalysisSeal {
             state_digest,

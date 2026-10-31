@@ -212,8 +212,8 @@ pub(crate) use read::{
 pub(in crate::storage) use recovery::{
     RetentionFrameObservation, RetentionRecoveryStep, RetentionReplayCursor,
     observe_recovery_frame, retention_replay_bank, retention_replay_cells, retention_replay_digest,
-    retention_replay_image, retention_replay_provenance, retention_replay_row_scope,
-    seed_recovery_replay,
+    retention_replay_image, retention_replay_losers, retention_replay_provenance,
+    retention_replay_row_scope, seed_recovery_replay,
 };
 #[cfg(test)]
 pub(in crate::storage) use recovery::{retention_ledger_check, retention_replay_closure};

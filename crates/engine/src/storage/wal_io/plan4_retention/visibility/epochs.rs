@@ -603,7 +603,17 @@ pub(in super::super) enum TableSlot {
     Reserved,
     Published(u8),
 }
+/// The table slot a recovered Row CLR names before READY: the closed facade
+/// has no epoch lane yet (boundaries `#row-recovery-s6`), so its table is
+/// authenticated by the Catalog proof and the producer, never by a slot.
+pub(in super::super) const RECOVERY_TABLE_SLOT: u8 = u8::MAX;
+
 impl BoundVisibility<'_, '_, '_> {
+    /// Whether the epoch lane is open: false only on the closed recovered
+    /// facade before READY.
+    pub(in super::super) fn epochs_active(&self) -> VisibilityResult<bool> {
+        Ok(self.publication()?.epochs_active)
+    }
     /// Only the CheckedTable issuer calls this. The publication guard ends on
     /// return, before the caller takes the isolation leaf.
     pub(in super::super) fn table_slot(&self, object: ObjectHandle) -> VisibilityResult<TableSlot> {

@@ -472,6 +472,12 @@ fn assert_state(live: &impl CatalogTestState, lsn: u64, claim: bool) {
     assert_eq!((actual_claim, pins), (claim, 0));
 }
 fn case(id: &str, run: impl FnOnce()) {
+    case_within(id, std::time::Duration::from_secs(30), run)
+}
+/// `case` with a bound fixed before the run. A recovered READY replays the
+/// whole history in every closed step's `validate_live`, so the S6 restart
+/// cases take their own frozen bound (boundaries `#row-recovery-s6`).
+fn case_within(id: &str, bound: std::time::Duration, run: impl FnOnce()) {
     let identity = [
         "XADB_CATALOG_SOURCE_SHA256",
         "XADB_CATALOG_ELF_SHA256",
@@ -488,7 +494,7 @@ fn case(id: &str, run: impl FnOnce()) {
     let started = std::time::Instant::now();
     match catch_unwind(AssertUnwindSafe(run)) {
         Ok(()) => {
-            assert!(started.elapsed() < std::time::Duration::from_secs(30));
+            assert!(started.elapsed() < bound);
             println!("CATALOG_MEMORY_PASS\t{id}");
         }
         Err(error) => {
@@ -1250,3 +1256,6 @@ mod row_commit;
 
 #[path = "catalog_memory/row_rollback.rs"]
 mod row_rollback;
+
+#[path = "catalog_memory/row_recovery.rs"]
+mod row_recovery;

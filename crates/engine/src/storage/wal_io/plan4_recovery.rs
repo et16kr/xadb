@@ -320,6 +320,43 @@ struct RestoredRetention {
     remaining_steps: u64,
     physical_topup: u64,
     metadata_growth: u64,
+    row_admission: Option<RowRecoveryAdmission>,
+}
+
+/// The requested Row recovery policy (boundaries `#row-recovery-s6`). A
+/// pure request value: only the analysis gate of the original owner issues
+/// the admission that lets recovered Row cleanup run.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub(crate) enum RowRecoveryPolicy {
+    /// C+A: every canonical Row state, losers included; Row CLR candidates
+    /// are handed to A's handler through `RecoveryAction::RowClr`.
+    WithRowClr,
+    /// C+B: the final canonical analysis must hold no loser (no Reserved
+    /// inventory or root, no Active/Aborting transaction).
+    RejectInitialLosers,
+}
+/// Issued by the original analysis only after the policy gate passed, then
+/// moved with the AnalysisSeal digest into RestoredRetention and the
+/// recovered binding. No constructor takes consumer-supplied counts.
+#[derive(Clone, Copy)]
+struct RowRecoveryAdmission {
+    policy: RowRecoveryPolicy,
+    state_digest: [u8; 32],
+    source_facts_digest: [u8; 32],
+}
+impl SourceFacts {
+    /// The canonical-order hash of every SourceFacts field (epoch,
+    /// header_digest, prefix_digest, lsn, end, adopted_local).
+    fn digest(&self) -> [u8; 32] {
+        let mut hasher = ContentHasher::new();
+        hasher.update(&self.epoch.to_le_bytes());
+        hasher.update(&self.header_digest);
+        hasher.update(&self.prefix_digest);
+        hasher.update(&self.lsn.to_le_bytes());
+        hasher.update(&self.end.to_le_bytes());
+        hasher.update(&self.adopted_local.to_le_bytes());
+        hasher.digest()
+    }
 }
 
 /// Issued only by the selected runtime after physical VERIFY, a durable new
@@ -456,6 +493,9 @@ struct RecoveryState<'a, 'm, 'w, W: WriterNamespace> {
     analysis: Option<AnalysisSeal>,
     restored: Option<RestoredRetention>,
     selected_epoch: Option<SelectedNewEpoch>,
+    /// None is the legacy entry, which refuses every Row scope.
+    row_policy: Option<RowRecoveryPolicy>,
+    row_admission: Option<RowRecoveryAdmission>,
 }
 
 #[allow(
@@ -557,6 +597,8 @@ impl<'a, 'm, 'w, W: WriterNamespace> Plan4Recovery<'a, 'm, 'w, W> {
             analysis: None,
             restored: None,
             selected_epoch: None,
+            row_policy: None,
+            row_admission: None,
         };
         let mut owner = Self {
             state,
@@ -593,9 +635,35 @@ impl<'a, 'm, 'w, W: WriterNamespace> Plan4Recovery<'a, 'm, 'w, W> {
         reason = "failure retains the exact inline recovery owner and its writer lease"
     )]
     pub(crate) fn recover(
-        mut self,
+        self,
     ) -> std::result::Result<Plan4RecoveryRuntime<'a, 'm, 'w, W>, Plan4RecoveryFailure<'a, 'm, 'w, W>>
     {
+        self.recover_with_policy(None)
+    }
+    /// The Row-aware entry (boundaries `#row-recovery-s6`): the same
+    /// recovery body, with the policy gate at the analysis position the
+    /// legacy entry uses for its Row scope refusal.
+    #[allow(
+        clippy::result_large_err,
+        reason = "failure retains the exact inline recovery owner and its writer lease"
+    )]
+    pub(crate) fn recover_with_rows(
+        self,
+        policy: RowRecoveryPolicy,
+    ) -> std::result::Result<Plan4RecoveryRuntime<'a, 'm, 'w, W>, Plan4RecoveryFailure<'a, 'm, 'w, W>>
+    {
+        self.recover_with_policy(Some(policy))
+    }
+    #[allow(
+        clippy::result_large_err,
+        reason = "failure retains the exact inline recovery owner and its writer lease"
+    )]
+    fn recover_with_policy(
+        mut self,
+        policy: Option<RowRecoveryPolicy>,
+    ) -> std::result::Result<Plan4RecoveryRuntime<'a, 'm, 'w, W>, Plan4RecoveryFailure<'a, 'm, 'w, W>>
+    {
+        self.state.row_policy = policy;
         let outcome = {
             let _unwind = self.fence.unwind_guard();
             self.state.recover_physical_and_open()
@@ -857,6 +925,23 @@ impl<'s, 'a> RecoveryRetentionBinding<'s, 'a> {
     }
     pub(in crate::storage) fn state_digest(&self) -> [u8; 32] {
         self.restored.state_digest
+    }
+    /// The admitted Row policy, re-checked against the restored analysis
+    /// digest the admission was issued with. A legacy binding has none; a
+    /// contradiction is Err (the caller's census invariant).
+    pub(in crate::storage) fn row_policy(
+        &self,
+    ) -> std::result::Result<Option<RowRecoveryPolicy>, ()> {
+        match self.restored.row_admission {
+            None => Ok(None),
+            Some(admission)
+                if admission.state_digest == self.restored.state_digest
+                    && admission.source_facts_digest != [0; 32] =>
+            {
+                Ok(Some(admission.policy))
+            }
+            Some(_) => Err(()),
+        }
     }
 }
 struct MaintenanceRemainder<'a> {
@@ -1185,10 +1270,20 @@ impl<'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
             RetentionRecoveryStep::CancelledReserved => {
                 self.phase = Plan4RecoveryPhase::Losers;
             }
+            RetentionRecoveryStep::RowClrRequired { .. } => {
+                // A's CLR has no handler on the legacy step; the recovered
+                // action (`next_action`) hands it to A.
+                return Err(runtime.bound_error(
+                    self.phase,
+                    Plan4RecoveryCause::Retention(super::plan4_pages::RetentionCause::Unsupported),
+                    Effect::Unchanged,
+                ));
+            }
             RetentionRecoveryStep::RollbackStarted { .. }
             | RetentionRecoveryStep::Aborted { .. }
             | RetentionRecoveryStep::Finished { .. }
-            | RetentionRecoveryStep::CatalogAdvanced { .. } => {
+            | RetentionRecoveryStep::CatalogAdvanced { .. }
+            | RetentionRecoveryStep::RowAdvanced { .. } => {
                 if self.phase == Plan4RecoveryPhase::CancelReservedFirst {
                     return Err(runtime.bound_error(
                         self.phase,

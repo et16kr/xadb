@@ -170,7 +170,7 @@ fn undo_allocated(
 /// The Job's table: its anchor/leaf images and the canonical Catalog schema
 /// from the fixed CatalogLeaf (page 8). The record must be the Job's live
 /// table handle with the Job's anchor; a retired table has no Row replay.
-fn table_source<'a>(
+pub(in super::super) fn table_source<'a>(
     arena: &'a [u8],
     profile: Profile,
     job: job3::JobView<'_>,
@@ -785,6 +785,70 @@ pub(in super::super) fn scope_present(
             .iter()
             .any(|row| row.peak == job3::ROW_PEAK)
         {
+            return Ok(true);
+        }
+    }
+    Ok(false)
+}
+
+/// The RejectInitialLosers census (boundaries `#row-recovery-s6`) over
+/// the final canonical replay: an allocator Reserved entry (any
+/// ReservedInventory), a RootReserved Job of either scope (the Row codec
+/// decodes both, as `scope_present` and `epochs::seed`) or an ATT
+/// transaction that is Active or Aborting. Committed and aborted retained
+/// cleanup is not a loser. Every decode failure is the canonical replay's
+/// own corruption.
+pub(in super::super) fn losers_present(
+    profile: Profile,
+    arena: &[u8],
+    cells: &[[u8; JOB_BYTES]; JOB_COUNT],
+    bank: &[u8],
+) -> ObservationResult<bool> {
+    let namespace = profile.spec().namespace;
+    let allocation = allocation_page::decode_allocation_page(
+        arena_page(arena, 0),
+        recovery::allocator_identity(profile)?,
+        namespace,
+    )
+    .map_err(RetentionCause::Allocation)?;
+    for index in 0..allocation_page::EXTENT_PAGES {
+        if matches!(
+            allocation
+                .entry(index)
+                .map_err(RetentionCause::Allocation)?,
+            AllocationEntry::Reserved { .. }
+        ) {
+            return Ok(true);
+        }
+    }
+    for cell in cells {
+        if job3::decode_job(cell, namespace)
+            .map_err(RetentionCause::Retention)?
+            .state()
+            == job3::JobState::RootReserved
+        {
+            return Ok(true);
+        }
+    }
+    for slot in 0..control::ATT_SLOTS {
+        let row = control::row(bank, slot);
+        let Some(raw) = raw_descriptor(row) else {
+            continue;
+        };
+        let actor = TxnRef::decode(&row[ACTOR]).map_err(RetentionCause::Page)?;
+        let descriptor = obligation::decode_descriptor(
+            raw,
+            ReservationOwner::Transaction(actor),
+            retention_obligation::profile_reference(profile),
+        )
+        .map_err(|_| invalid())?;
+        let obligation::OwnerState::Transaction(tx) = descriptor.owner else {
+            return Err(invalid());
+        };
+        if matches!(
+            tx.state(),
+            TransactionState::Active | TransactionState::Aborting(_)
+        ) {
             return Ok(true);
         }
     }

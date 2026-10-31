@@ -32,7 +32,7 @@ pub(super) use epochs::{
 
 #[cfg(test)]
 pub(super) use epochs::commit_retained_carrier as epoch_commit_retained_carrier;
-pub(super) use epochs::{CommitEpochs, TableSlot};
+pub(super) use epochs::{CommitEpochs, RECOVERY_TABLE_SLOT, TableSlot};
 
 #[path = "visibility/authority.rs"]
 mod authority;
@@ -373,6 +373,36 @@ impl<'a, 'c, 's> BoundVisibility<'a, 'c, 's> {
     pub(in crate::storage) fn check_retirement_released(&self) -> VisibilityResult<()> {
         let bytes = self.entry()?;
         if retirement_row(&bytes[..])[0] != 0 {
+            return Err(self.origin.fatal(VisibilityCause::Invariant));
+        }
+        Ok(())
+    }
+    /// The closed recovered Row cleanup (boundaries `#row-recovery-s6`):
+    /// before READY the epoch lane is inactive and no retirement marker,
+    /// snapshot or reference exists, so no reader can name the retired
+    /// target; a committed Prune's Q is already published. The recovered
+    /// Row Prune, RootFree and TerminalFinish install only while all hold.
+    pub(in crate::storage) fn check_closed_row_cleanup(
+        &self,
+        undo: Option<UndoRef>,
+        actor: Option<TxnRef>,
+        commit_q: Option<u64>,
+    ) -> VisibilityResult<()> {
+        let published = {
+            let publication = self.publication()?;
+            if publication.epochs_active {
+                return Err(unchanged(VisibilityCause::BindingMismatch));
+            }
+            publication.q
+        };
+        let bytes = self.entry()?;
+        let referenced = |target| pins::count(&bytes[..], target) != 0;
+        if retirement_row(&bytes[..])[0] != 0
+            || (0..SNAPSHOTS).any(|index| matches!(snapshot_row(&bytes[..], index)[0], 1 | 2))
+            || undo.is_some_and(|undo| referenced(authority::ReferenceTarget::Undo(undo)))
+            || actor.is_some_and(|actor| referenced(authority::ReferenceTarget::Transaction(actor)))
+            || commit_q.is_some_and(|q| q > published)
+        {
             return Err(self.origin.fatal(VisibilityCause::Invariant));
         }
         Ok(())
