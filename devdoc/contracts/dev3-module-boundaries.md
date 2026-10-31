@@ -1844,6 +1844,20 @@ impl<'l> RowProducerLane<'l> {
 
 ### 6.7 live rollback과 C/A recovery handler
 
+<a id="row-rollback-s4"></a>
+#### S4 구현 입력 — XADB-MODULE-ROW-ROLLBACK-001
+
+2026-10-31. 최신 main `139a05f4`에서 별도 branch `codex/s4-row-rollback`으로 진행한다. D1/D2 담당·통합은 `/root`, 독립 읽기 검토는 `/root/s4_review`다. §6.7의 live 부분을 공급하며 recovery action/READY(C4/S6), Row read(S5), 전체 M4/M5는 포함하지 않는다. wire·cap·charge·공개 API는 바꾸지 않는다.
+
+- 원 transaction/statement binding·scope·phase·slot/mark를 먼저 확인한다. statement rollback은 원 mark까지, full rollback은 None까지 actual retained head를 소비한다. full CLR의 statement/mutation은 소비하는 Job의 원 값이다.
+- terminal read gate와 고정 RowWrite source admission을 rollback의 checked 종료까지 보유한다. residency는 원 LOAD와 dirty-victim 반환을 사용한다. source-issued current/next pin은 원 두-reference lease에서 capture하고 next-before-current로 인계한다. 미완료 Drop은 I/O 없이 fence한다.
+- RollbackStart/StatementFinish/AbortEnd는 원 C producer·canonical replay·whole install을 사용한다. CLR은 A producer와 C observer·draft 재검산·원 stage/whole install을 사용한다. pre-stage Unchanged는 같은 task/prepared wrapper를 반환하며 stage 뒤 불확실성은 Fatal이다.
+- StatementFinish receipt 뒤 view를 FailedFinished로 만들어 읽기/쓰기 재사용을 금지하고 원 finish_statement에서 token/snapshot을 소비한다. AbortEnd receipt 뒤 Aborted로 만들고 finish_aborted가 원 capsule을 소비한다. 숫자 mark나 ATT 부재만으로 성공하지 않는다.
+- 선택 검증은 다중 statement suffix 보존/후속 Commit, 다중 root full abort·빈 경계, 잘못된 binding/state/후보·조기 finish, stage retry·I/O 실패·Drop, reference/charge 반환, 실제 A caller·CLR memory/native census와 native 재진입 gate다. 실행 전 source별 selector·예산을 고정하고 실패·NOT_RUN을 보존한다. 바뀐 공통 경로만 관련 기존 사례를 다시 선택한다.
+
+비교 대안은 rollback을 A에서 직접 설치하거나 원 statement를 재생성하는 것이다. 이는 원 권한·mark/receipt 수명을 끊으므로 채택하지 않는다. body/caller가 고정 charge를 넘거나 원 latch-issued pin/checked receipt를 만들 수 없으면 설계를 재검토하며 상한을 올려 합격시키지 않는다. 구현·시험·독립 최종 수용은 아직 미완료다.
+
+
 앞선 성공 statement 보존과 full abort는 실제 Row head chain으로 수행하며 [소비자 상태표](dev3-module-consumers.md#row-states)를 정본으로 삼는다. C는 원 actor/statement mark와 reserved obligations에서 RollbackStart를 적용하고 다음 currentU를 고른다. A는 C가 actual source에서 획득한 before/key/nextU 문맥으로 **CLR 후보**를 생산한다. 원 target/read pins와2-reference handoff, stage/whole install, head 인계, StatementFinish/AbortEnd는 C가 검산·소비한다.
 
 ```rust
