@@ -5147,3 +5147,14 @@ B는 candidate와 copy observation을 각각 한 개의 내부 Option slot으로
 독립 D2 읽기 리뷰는 이 변경의 정확성·cleanup·visibility에 한해 수용·필수 수정0이다. 전체 census 및 S5 완료 인증은 아니다. 이전 `s5-census2.log`의 page3160/status2873 진단은 수정 전 공식이며 인수 근거가 아니다. 후속 source에 맞지 않는 진단 함수는 제거했고 원 로그는 보존한다.
 
 `/workspace/s5-evidence/b2,r4,r5`에 동결 selector·plan·source manifest·결과를 보존했다. manifest `35ca224e311594827c28c4a0ed03e25317c43f523c708c99e4dd554862b26155`, ELF `36d7cda98752c48bd0110832b886010cafe3f66ad424f1be35d0e3a05263938a`에서 변경 B12 **12 PASS**, 실제 R02/R04의 cursor short-output→cancel→Row→End **1 PASS**, 신규 R06 다른 actor Active INSERT 및 commit 전후 동일 statement q 유지·새 statement 가시성 **1 PASS**다. R02/R04는14.43초, R06은14.42초였다. 전체 workspace 및 무변경 factory 시험은 실행하지 않았다. 이 실행 뒤 변경은 사용하지 않는 진단 함수 제거와 문서 기록뿐이다. 남은 census·비상주/실패 경계·native·compiler·최종 리뷰/PR 의무는 유지한다.
+
+### Candidate binding lifetime 보완
+
+독립 검토에서 visibility 재bind 시 reference generation이 초기화되므로 주소·generation만으로 재open ABA를 막는다고 주장할 수 없음을 확인했다. `RowCandidate<'b>`가 실제 ReferenceLease/ReadPort visibility borrow를 유지하도록 고쳤다. 원 page `capture`와 B associated type이 같은 lifetime을 반환·전달한다. `captured.is_some()`·lease identity/generation·capture sequence를 유지하고 중복 version/length 보관은 제거했다. `row_leaf_request`를 never-inline 함수로 분리해 anchor guard·root decode slot이 후속 leaf LOAD의 frame에 포함되지 않게 했다. 독립 D2 구현 검토는 이 범위 필수 수정0이며 전체 census 인증은 아니다.
+
+- r6/r7: 이 변경에 대응하는 actual R02/R04와 R06 각각 **1 PASS**. source manifest `1e587d6a9445531cc30b62abd2686efa162550d5b8d2b6de7c74839fe22de614`, ELF `516c68facccf860093e9bae8bb8e515fdbe381c826c129d9391574b20332fc5a`;14.40초/14.90초. 기존 B generic12는 동작이 바뀌지 않아 반복하지 않았다.
+- binding1: baseline/positive compile 성공, escape-negative는 의도한 lifetime 거절6개였으나 harness가 정확히1개를 요구해 **FAIL**. 원 결과를 보존한다.
+- binding2: 다른 page lifetime을 static으로 고정하여 원 visibility borrow `'b` 하나만 분리했다. baseline와 `RowCandidate<'b>` 반환 **PASS**, `RowCandidate<'static>` escape는 정확히1개 lifetime error로 거절되어 **PASS**. actual `RowSearchPage::capture` 반환을 검사한 compile-only probe이며 runtime 재open 시험이라고 주장하지 않는다. `/workspace/s5-evidence/binding2`에 source manifest·probe·진단·plan·결과를 보존했고 임시 export/target은 삭제했다.
+- 크기 진단 `sizes1`은 sizeof만 관측했으며 전체 source budget PASS가 아니다. 진단 함수는 기록 후 제거했다. B forward 반환과 driver 호출 결과를 각각 세어야 하며, cursor의 후속 publication/progress slot 및 유한 temporary 상계도 남은 census에 포함한다.
+
+S5는 여전히 PARTIAL이다. memory/native 전체 call-site census, 비상주/FlushRequired·오류 경계·InstallationPending, native 실제 실행과 최종 review/push/PR가 남았다.

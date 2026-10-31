@@ -45,7 +45,7 @@ impl CursorCredit for CallerCredit<'_, '_, '_, '_> {
     }
 }
 
-impl Observed for RowCandidate {
+impl Observed for RowCandidate<'_> {
     fn version(&self) -> RecordVersion {
         RowCandidate::version(self)
     }
@@ -64,11 +64,11 @@ impl Observed for RowCopyObservation {
 }
 
 impl<'b, 'a, 's, 'c, 'p, 'd> SearchPage for RowSearchPage<'_, 'b, 'a, 's, 'c, 'p, 'd> {
-    type Candidate = RowCandidate;
+    type Candidate = RowCandidate<'b>;
     fn leaf(&self) -> Result<TreePageView<'_>, RetentionError> {
         RowSearchPage::leaf(self)
     }
-    fn capture(self, at: usize) -> Result<RowCandidate, RetentionError> {
+    fn capture(self, at: usize) -> Result<RowCandidate<'b>, RetentionError> {
         RowSearchPage::capture(self, at)
     }
     fn release_checked(self) -> Result<(), RetentionError> {
@@ -88,7 +88,7 @@ impl<'b, 'a, 's, 'c, 'p, 'd, W: WriterNamespace> ReadSource
     for LiveSource<'_, '_, '_, '_, '_, '_, 'b, 'a, 's, 'c, 'p, 'd, '_, '_, W>
 {
     type Target = Plan4Target;
-    type Candidate = RowCandidate;
+    type Candidate = RowCandidate<'b>;
     type Missing = MissingRowEvidence;
     type Copied = RowCopyObservation;
     type Page<'g>
@@ -102,24 +102,24 @@ impl<'b, 'a, 's, 'c, 'p, 'd, W: WriterNamespace> ReadSource
     }
     fn status(
         &mut self,
-        candidate: &RowCandidate,
+        candidate: &RowCandidate<'b>,
     ) -> Result<Step<TransactionState, Plan4Target>, RetentionError> {
         self.operation.status(candidate, self.residency)
     }
     fn missing_before(
         &mut self,
-        candidate: &RowCandidate,
+        candidate: &RowCandidate<'b>,
     ) -> Result<Step<MissingRowEvidence, Plan4Target>, RetentionError> {
         self.operation.missing_before(candidate, self.residency)
     }
     fn copy_candidate(
         &mut self,
-        candidate: &RowCandidate,
+        candidate: &RowCandidate<'b>,
         output: &mut [u8],
     ) -> Result<RowCopyObservation, RetentionError> {
         self.operation.copy_candidate(candidate, output)
     }
-    fn release_candidate(&mut self, candidate: RowCandidate) -> Result<(), RetentionError> {
+    fn release_candidate(&mut self, candidate: RowCandidate<'b>) -> Result<(), RetentionError> {
         self.operation.release_candidate(candidate)
     }
     fn finish(self) -> Result<(), RetentionError> {

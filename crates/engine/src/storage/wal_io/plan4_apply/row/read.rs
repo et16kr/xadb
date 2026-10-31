@@ -23,8 +23,6 @@ use crate::transaction::concurrency::ReadOperationAdmission;
 struct CapturedRowRefs<'b, 'a, 'c, 's> {
     transaction: Option<TxnPin<'b, 'a, 'c, 's>>,
     undo: Option<UndoPin<'b, 'a, 'c, 's>>,
-    version: RecordVersion,
-    len: usize,
 }
 
 pub(crate) struct RowReadOperation<
@@ -75,14 +73,18 @@ pub(crate) struct RowSearchPage<'g, 'b, 'a, 's, 'c, 'p, 'd> {
 }
 
 /// Lease generation, capture sequence and the observed row; not Copy.
-pub(crate) struct RowCandidate {
+pub(crate) struct RowCandidate<'b> {
+    // Keep the original visibility binding borrowed even after operation
+    // finish. Rebinding its backing resets generations and must not permit
+    // an old observation to cross that open boundary.
+    binding: std::marker::PhantomData<&'b ()>,
     lease_identity: (usize, usize, u64),
     lease_generation: u64,
     capture_sequence: u64,
     version: RecordVersion,
     canonical_len: usize,
 }
-impl RowCandidate {
+impl RowCandidate<'_> {
     pub(in crate::storage) fn row(&self) -> RowId {
         self.version.row
     }
@@ -379,11 +381,11 @@ impl<'u, 'r, 't, 'v, 'i, 'b, 'a, 's, 'c, 'p, 'd, 'm, 'w, W: WriterNamespace>
         Ok(())
     }
     #[inline(never)]
-    fn load_leaf(
+    fn row_leaf_request(
         &mut self,
         table: &CheckedTable<'c, 's>,
-        residency: &mut Plan4ResidencyCursor,
-    ) -> Result<ReadStep<TargetRequest>> {
+        anchor_request: TargetRequest,
+    ) -> Result<TargetRequest> {
         let bad = || {
             fatal(
                 self.backend.storage,
@@ -396,18 +398,6 @@ impl<'u, 'r, 't, 'v, 'i, 'b, 'a, 's, 'c, 'p, 'd, 'm, 'w, W: WriterNamespace>
             .pool
             .target_request(0)
             .map_err(|e| frame(RetentionPhase::Source, e))?;
-        let anchor_request = TargetRequest {
-            identity: table.anchor,
-            kind: PageKind::TreeAnchor,
-            level: 0,
-        };
-        if let Some(target) =
-            self.backend
-                .lookup_resident(self.owner, anchor_request, residency, self.loader)?
-        {
-            self.stopped = true;
-            return Ok(ReadStep::FlushRequired { target });
-        }
         let anchor_guard = self
             .backend
             .pool
@@ -447,14 +437,34 @@ impl<'u, 'r, 't, 'v, 'i, 'b, 'a, 's, 'c, 'p, 'd, 'm, 'w, W: WriterNamespace>
         if root.tree != TreeKind::Row || root.level != 0 || root.revision != 1 {
             return Err(bad());
         }
-        let leaf = TargetRequest {
+        Ok(TargetRequest {
             identity: PageIdentity {
                 page: root.page,
                 ..table.anchor
             },
             kind: PageKind::RowLeaf,
             level: 0,
+        })
+    }
+    #[inline(never)]
+    fn load_leaf(
+        &mut self,
+        table: &CheckedTable<'c, 's>,
+        residency: &mut Plan4ResidencyCursor,
+    ) -> Result<ReadStep<TargetRequest>> {
+        let anchor_request = TargetRequest {
+            identity: table.anchor,
+            kind: PageKind::TreeAnchor,
+            level: 0,
         };
+        if let Some(target) =
+            self.backend
+                .lookup_resident(self.owner, anchor_request, residency, self.loader)?
+        {
+            self.stopped = true;
+            return Ok(ReadStep::FlushRequired { target });
+        }
+        let leaf = self.row_leaf_request(table, anchor_request)?;
         match self.backend.load_lookup_target(
             self.owner,
             leaf,
@@ -590,7 +600,7 @@ impl<'u, 'r, 't, 'v, 'i, 'b, 'a, 's, 'c, 'p, 'd, 'm, 'w, W: WriterNamespace>
     }
     pub(in crate::storage) fn status(
         &mut self,
-        candidate: &RowCandidate,
+        candidate: &RowCandidate<'b>,
         residency: &mut Plan4ResidencyCursor,
     ) -> Result<ReadStep<TransactionState>> {
         use crate::storage::transaction_record::{TransactionStatusCell, VersionStamp};
@@ -659,7 +669,7 @@ impl<'u, 'r, 't, 'v, 'i, 'b, 'a, 's, 'c, 'p, 'd, 'm, 'w, W: WriterNamespace>
     }
     pub(in crate::storage) fn missing_before(
         &mut self,
-        candidate: &RowCandidate,
+        candidate: &RowCandidate<'b>,
         residency: &mut Plan4ResidencyCursor,
     ) -> Result<ReadStep<MissingRowEvidence>> {
         use crate::storage::{
@@ -746,15 +756,12 @@ impl<'u, 'r, 't, 'v, 'i, 'b, 'a, 's, 'c, 'p, 'd, 'm, 'w, W: WriterNamespace>
         })();
         merge(result, guard.release_checked()).map(ReadStep::Ready)
     }
-    fn check_candidate(&self, candidate: &RowCandidate) -> Result<()> {
+    fn check_candidate(&self, candidate: &RowCandidate<'b>) -> Result<()> {
         if self.stopped
             || self.lease.as_ref().map(|l| l.row_identity()) != Some(candidate.lease_identity)
             || candidate.lease_generation != self.lease_generation
             || candidate.capture_sequence != self.capture_sequence
-            || !self
-                .captured
-                .as_ref()
-                .is_some_and(|r| r.version == candidate.version && r.len == candidate.canonical_len)
+            || self.captured.is_none()
         {
             return Err(unchanged(
                 RetentionPhase::Census,
@@ -766,7 +773,7 @@ impl<'u, 'r, 't, 'v, 'i, 'b, 'a, 's, 'c, 'p, 'd, 'm, 'w, W: WriterNamespace>
     /// The visible decision stays with B; this only copies the actual capture.
     pub(in crate::storage) fn copy_candidate(
         &mut self,
-        candidate: &RowCandidate,
+        candidate: &RowCandidate<'b>,
         output: &mut [u8],
     ) -> Result<RowCopyObservation> {
         self.check_candidate(candidate)?;
@@ -780,7 +787,10 @@ impl<'u, 'r, 't, 'v, 'i, 'b, 'a, 's, 'c, 'p, 'd, 'm, 'w, W: WriterNamespace>
             len: candidate.canonical_len,
         })
     }
-    pub(in crate::storage) fn release_candidate(&mut self, candidate: RowCandidate) -> Result<()> {
+    pub(in crate::storage) fn release_candidate(
+        &mut self,
+        candidate: RowCandidate<'b>,
+    ) -> Result<()> {
         // FlushRequired stops new source work but does not prevent cleanup.
         let stopped = self.stopped;
         self.stopped = false;
@@ -822,7 +832,7 @@ impl<'g, 'b, 'a, 's, 'c, 'p, 'd> RowSearchPage<'g, 'b, 'a, 's, 'c, 'p, 'd> {
         .map_err(|e| unchanged(RetentionPhase::Source, RetentionCause::Tree(e)))
     }
     /// Checks the slot chosen by B against the latched row before any pin.
-    pub(in crate::storage) fn capture(self, at: usize) -> Result<RowCandidate> {
+    pub(in crate::storage) fn capture(self, at: usize) -> Result<RowCandidate<'b>> {
         let result = (|| {
             if self.captured.is_some() {
                 return Err(unchanged(
@@ -861,11 +871,10 @@ impl<'g, 'b, 'a, 's, 'c, 'p, 'd> RowSearchPage<'g, 'b, 'a, 's, 'c, 'p, 'd> {
             *self.captured = Some(CapturedRowRefs {
                 transaction: refs.transaction,
                 undo: refs.undo,
-                version,
-                len,
             });
             *self.capture_sequence = sequence;
             Ok(RowCandidate {
+                binding: std::marker::PhantomData,
                 lease_identity: self.lease.row_identity(),
                 lease_generation: self.lease.row_generation(),
                 capture_sequence: sequence,
@@ -900,9 +909,10 @@ impl<W: WriterNamespace> ReadPort<'_, '_, '_, '_, '_, '_, '_, '_, W> {
 }
 
 #[cfg(test)]
-impl RowCandidate {
+impl RowCandidate<'_> {
     pub(in crate::storage) fn test_duplicate(&self) -> Self {
         Self {
+            binding: std::marker::PhantomData,
             lease_identity: self.lease_identity,
             lease_generation: self.lease_generation,
             capture_sequence: self.capture_sequence,
