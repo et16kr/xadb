@@ -24,12 +24,19 @@
 //!   - The overlap sum is printed only to show that it is not claimed.
 //!   - The (iii) line states the class facts and points to those tests; it
 //!     computes only the sums.
-//! - (iv) The gate-waiting entry floor + shared + two residents. The floor is
-//!   WRITER-PROGRESS-001's unsupplied obligation: it is printed
-//!   `NOT_SUPPLIED` and not counted as a PASS.
+//! - (iv) The gate-waiting entry floor + shared + two residents. S7
+//!   (boundaries `#row-join-s7`) supplies the floor of this writer: while
+//!   `preflight_row` waits in `close_reads_for_terminal`, the writer holds
+//!   no charge, only A's preflight call-site bound, the preflight wrapper's
+//!   own frame (`row_write_phases`' preflight carriers: its argument
+//!   references, the cut and the Ready wrapper slots) and the gate with its
+//!   close/wait closure (`commit_carrier_bytes`, which also counts the
+//!   admission carrier taken after the wait, so it is an upper bound).
+//!   Earlier it was WRITER-PROGRESS-001's unsupplied obligation and printed
+//!   `NOT_SUPPLIED`.
 //!
 //! The rollback and recovery-task parts of the same replacement are S4's
-//! and C4's.
+//! and C4's; S7 adds the rollback start's floor to S4's census.
 use super::write::{RowWritePhase, row_write_phases};
 use super::*;
 
@@ -150,14 +157,25 @@ fn v09_census<W: WriterNamespace>(writer: &str) {
         if overlap <= CAP { "yes" } else { "no" },
     );
     assert!(concurrent <= CAP);
+    let preflight = phases
+        .iter()
+        .find(|phase| phase.name == "preflight")
+        .unwrap();
+    let gate = super::super::source::commit_carrier_bytes();
+    let floor = preflight.bound + preflight.carriers + gate;
+    let waiting = floor + readers;
     println!(
-        "MBC40_V09 writer={writer} (iv) floor=NOT_SUPPLIED shared_plus_two_resident={readers} \
-         floor_plus_shared_plus_two_resident=NOT_SUPPLIED counted=no \
-         obligation=WRITER-PROGRESS-001"
+        "MBC40_V09 writer={writer} (iv) floor={floor} caller_bound={} wrapper={} gate={gate} \
+         shared_plus_two_resident={readers} floor_plus_shared_plus_two_resident={waiting} \
+         cap={CAP} cap_margin={} counted=yes",
+        preflight.bound,
+        preflight.carriers,
+        CAP as i64 - waiting as i64,
     );
+    assert!(waiting <= CAP);
     println!(
-        "MBC40_V09 writer={writer} counted=(i),(ii),(iii) not_counted=(iv) \
-         rollback_recovery=NOT_RUN(S4,C4)"
+        "MBC40_V09 writer={writer} counted=(i),(ii),(iii),(iv) \
+         rollback=S4_C01 recovery_task=exclusive_before_READY"
     );
 }
 

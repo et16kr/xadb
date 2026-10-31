@@ -669,6 +669,29 @@ mod census {
             size_of::<T<W>>(),
             size_of::<P<W>>()
         );
+        // MBC40-V09 (iv) for the rollback writer (S7, boundaries
+        // `#row-join-s7`): while `start_row_rollback` waits at the terminal
+        // read gate it holds no charge, only A's rollback.start call site
+        // (its frame-static share), the start's own argument references and
+        // Result<RowRollback> slots, and the gate with its close/wait closure
+        // (`commit_carrier_bytes`, which also counts the admission carrier
+        // taken after the wait: an upper bound). Two resident readers and
+        // shared are admitted beside it.
+        let start = sites
+            .iter()
+            .find(|(name, _, _)| *name == "rollback.start")
+            .expect("rollback.start site")
+            .2;
+        let gate = source::commit_carrier_bytes();
+        let floor = start + 9 * size_of::<&()>() + 2 * size_of::<Result<R<W>>>() + gate;
+        let [_, _, resident] = source::CatalogSourceCharges::new::<W>().observations();
+        let waiting = floor + shared + 2 * resident;
+        println!(
+            "S4_C01 writer={label} (iv) start_floor={floor} site={start} gate={gate} resident={resident} floor_plus_shared_plus_two_resident={waiting} cap={} cap_margin={}",
+            source::SHORT_BYTES,
+            source::SHORT_BYTES as i64 - waiting as i64
+        );
+        assert!(waiting <= source::SHORT_BYTES as usize);
         for (name, share, frame) in sites {
             let body = match name {
                 "rollback.start" | "rollback.finish" => control.max(selection).max(pin),

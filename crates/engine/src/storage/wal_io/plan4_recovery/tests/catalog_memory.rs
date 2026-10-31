@@ -1260,5 +1260,7 @@ mod row_rollback;
 #[path = "catalog_memory/row_recovery.rs"]
 mod row_recovery;
 
+#[path = "catalog_memory/catalog_progress_v09.rs"]
+mod catalog_progress_v09;
 #[path = "catalog_memory/row_join.rs"]
 mod row_join;
