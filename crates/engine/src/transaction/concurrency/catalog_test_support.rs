@@ -45,6 +45,9 @@ pub(crate) enum Point {
     /// The Row write preflight has made its sources resident, before its
     /// one replay (S2W-R20).
     RowPreflightResident,
+    /// A Row read operation holds its captured candidate (the Txn/Undo
+    /// pins), before C answers its Status (MCI03-V01/V02).
+    RowReadCaptured,
 }
 
 pub(crate) fn install(
