@@ -127,7 +127,7 @@ fn expected() -> String {
 
 /// Lowercase hex to bytes.
 fn unhex(text: &str) -> Vec<u8> {
-    assert!(text.len() % 2 == 0, "hex length");
+    assert!(text.len().is_multiple_of(2), "hex length");
     (0..text.len())
         .step_by(2)
         .map(|at| u8::from_str_radix(&text[at..at + 2], 16).unwrap())
