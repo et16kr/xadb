@@ -5233,3 +5233,124 @@ native의 produce process는 memory writer의 실제 durable image를 native nam
 ### 리뷰와 되돌림
 
 자체 diff 리뷰의 10개 지적을 분류했다. admission SourceFacts digest를 0이 아님만 확인하던 부분을 실제 digest 대조로 강화했다. legacy Row 거절 원인(Unsupported)을 decode 전으로 복원했다. 사용하지 않는 `Selected::row()`를 제거하고, 표지 충돌을 정적으로 검사한다. 시험이 없던 복구 AbortingStatement 경로에는 S6R-M04-S를 추가했다. flush 분기의 release 오류는 원 `failed`가 이미 fence하고 `bound_error`가 Unchanged가 아닌 효과를 fence하므로 바꾸지 않았다. 준비 본문 중복과 O(64²) head 탐색은 동작 변경 없는 정리 후보로 남긴다. 독립 D1/D2 reviewer는 실행하지 않았다. 되돌림은 `d965611`, `34af66a`, `192c900`, `32de380`, `7f45994`의 역순이다. 개발 fixture는 매 시험에서 새로 만든다.
+
+<a id="s7-row-join"></a>
+## S7 C5 합류와 M5 인수 판정 — 별도 branch와 source별 검증
+
+2026-10-31. 사용자 지시("모듈 분해를 끝까지 진행")에 따라 S6 PR #8·#9가 병합된 main `76b3627`에서 `claude/project-thread-1jfdtk`를 만들었다. [S7 계약](../contracts/dev3-module-boundaries.md#row-join-s7)(XADB-MODULE-ROW-JOIN-001)을 따른다. 단계별 commit은 다음과 같다.
+- MCI01 memory 사례와 `RowReadCaptured` 시험 hook `0da85386`
+- MCI03 barrier 사례 `98af323b`
+- native MCI02 worker·controller `e0108bc3`
+- S4 잔여 `a8ea0fc8`
+- MCI01-V11 `5d0fa4e3`
+- 계약 `fb0f560f`
+- inventory 동결 `570aac47`
+- 독립 리뷰 반영 `b6766a9b`
+- 계약 보정 `2f71db00`
+
+제품 source 변경은 cfg(test) hook 한 줄뿐이다. 공개 wire·format 번호·cap·charge·제품 API는 바꾸지 않았다. DEV3 기능(DROP producer, BOOT, 새 epoch)은 사용자 확인대로 하지 않았다.
+
+### 실제 공급
+
+- **C5 합류.** 새 제품 adapter 없이 A의 `row::insert::driver::live`와 B의 `row::read::driver::live`를 한 session에서 함께 부르는 시험 조립이다. memory 사례 11개는 다음을 다룬다.
+  - MCI01-V01·V04: Serializable·ReadCommitted snapshot
+  - MCI01-V02: own cursor 무효화
+  - MCI01-V03·V05: 두 writer
+  - MCI01-V08: 실패 statement 뒤 읽기 유지
+  - MCI01-V11: 복구 물리 정리와 논리 epoch
+  - MCI03-V01..V04: gate 대기, preflight 대기, Q 공개 전 old snapshot, poststage fault fence
+  native는 MCI02-N01..03의 3 case다. 각 case는 같은 ELF의 produce·recover·reenter 3 process다.
+- **S4 잔여.** MBC40-V09 (iv)의 첫 gate 대기 floor와 MBC10-V09 CatalogProgress writer 사례 3개(−1·같음·+1)다.
+
+### 선택 실행과 원 실패
+
+[동결 inventory](../../tests/fixtures/module-row-integration/test-inventory.json)(r2 SHA-256 `a6125b3bc1d5b84075868daf33d2390a60b6c28d4f3099e03c780a8739923e9f`)의 구성은 다음과 같다.
+- S7 선택 18개
+- 변경 공유 경로의 회귀 6개
+- S6 시간 한도 재실행 12개
+- native 3 case
+
+[source별 receipts](../../tests/fixtures/module-row-integration/execution-receipts.json)는 각 실행의 source manifest·ELF·input·plan·로그 hash를 보존한다. 원 plan·로그·리뷰 보고서는 `/mnt/project-files/module-independence-20261029/artifacts/module-s7-20261031/`에 있다(`manifest-all.sha256` 286개 파일). 이 manifest 파일의 SHA-256은 `3f185c488b4a8a5413d2c7f50dffdcb259c56071440b1dc443f515dd04a1da61`이다. ELF와 native namespace image는 hash를 기록한 뒤 보존하지 않는다. 각 phase의 `files.json`이 image hash를 갖는다. 무변경 하위 wrapper와 workspace 전체 시험은 실행하지 않았다. 각 선택 시험은 시험 하나를 단일 thread로 실행했다.
+
+| 실행 | 결과 |
+| --- | --- |
+| 개발 단독(census·cpv09·v11 로그) | (iv) census 2개, S4_C01 2개, CatalogProgress V09 3개, V11 PASS |
+| s7n-dev1 | N01 3 process PASS. N02 produce가 Preflight `Prepare/Capacity`로 FAIL했다. 두 번째 거래 전에 fixture가 준비한 추가 Status 초기화가 1개뿐이었다. 시험 입력을 2개로 고쳤고 제품 변경은 없다 |
+| s7n-dev2, s7n-dev3 | N02·N03 6 process, 공용 `join_restart` 뒤 9 process **PASS** |
+| r1 m1 (`570aac47`) | memory **24/24 PASS**. 독립 리뷰 전 실행 |
+| r1 n1 | native 9 process **PASS**. 다만 N03의 `wal_after_clr`가 SHA256(SHA256(WAL))였다(S7 리뷰 R1). controller는 이를 대조하지 않았다 |
+| r2 m2 (`b6766a9b`) | memory **36/36 PASS**. S7 24개, 그리고 S6 selector 12개를 30초 case 한도에서 실행했다(4.59–17.06초) |
+| r2 n2 | native 9 process **PASS**. controller가 cut witness와 effect 순서를 대조했다 |
+
+r2 memory의 source manifest는 `1627a7f5f551c2940c591cc2e4a836b03b7a36ae0a67f47a5ad29b70a58ef22b`, ELF는 `2d27f5e543a78d16ae7b394140be557e7d5f99a61418b09d876afba5c1e94955`이다. native receipt의 source manifest는 `7914ca4026efb3e7759b199cc5c9bba292d83bc8a035a2ca679743b3a1c4ed21`이고 ELF는 같다. 두 manifest는 `b6766a9b`의 Rust·script source와 같다. 계약 문서 `dev3-module-boundaries.md`만 실행 중 편집 상태였다(뒤에 `2f71db00`으로 commit). r1의 source는 `239704983c5c858c086edee6fe2bec5f650bf5c55cf9fcb34399574b8751284d`, ELF는 `b637db1885d790f2708d650fd50c748881106d1a269fea90c0503e1fbef9b0ed`이다. runner의 240초는 process를 끊는 바깥 한도다. PASS를 정하는 한도는 시험 안의 `case()` 30초와 `READY_BOUND` 30초다.
+
+### 자원
+
+- **MBC10-V09 CatalogProgress.** shared 20328B, `CatalogProgressCharge` 44304B, resident 17880B다. held loan은 905·904·903B다.
+  - −1은 `Census/Capacity/Unchanged`다. 파일·참조·pin이 그대로이고 loan 없이 재시도하면 R04에 이른다.
+  - 같음과 +1은 LifecyclePreparing에서 ledger가 `65536 − shared − over`이고 R04 oracle을 통과한다.
+  - 두 reader가 admitted된 동안 writer는 gate에서 기다리고 새 reader는 InstallationPending이다. 첫 반환 뒤 200ms 동안 준비에 이르지 않는다.
+- **MBC40-V09 (iv) 첫 gate 대기.**
+  - memory floor는 7834B(A 호출 지점 6144 + wrapper 560 + gate 1130)다. shared와 resident 2개를 더하면 63922B이고 여유는 1614B다.
+  - native는 63930B이고 여유는 1606B다.
+  - rollback start floor(S4_C01)는 6739B다. 합은 memory 62827B, native 62835B이고 여유는 2709B와 2701B다.
+  - census 출력은 `(iv)_first_gate_wait`·`rollback_reclose=NOT_SUPPLIED`·`commit_progress_gates=WRITER-PROGRESS-001`로 센 범위를 적는다.
+- **hook 영향.** S5R-C01의 `cursor.row_load`는 34524B ≤ 34570B로 S5 값과 같다. `RowReadCaptured` hook은 census를 바꾸지 않는다.
+- shared 20328B는 S6에서 144B 늘어난 값이다([S6 보정](../contracts/dev3-module-boundaries.md#row-recovery-s6)).
+
+### native 합류(r2)
+
+| case | produce | recover(WithRowClr) | reenter(RejectInitialLosers) |
+| --- | --- | --- | --- |
+| N01 | A 1행 Commit ACK q2, WAL 877399B | steps 20, CLR0, B가 1행을 읽음, READY Q2, 새 행 ACK q3 | steps 11, B가 2행을 읽음, READY Q3 |
+| N02 | 1행 뒤 실패 statement의 rollback, Commit ACK q2, WAL 1242673B | steps 25, CLR0, B가 1행을 읽음, READY Q2, 새 행 ACK q3 | steps 11, B가 2행을 읽음, READY Q3 |
+| N03 | A 3행, Y 1행 Commit q2, A의 Commit이 SerializationConflict, full rollback의 첫 CLR이 durable한 뒤 cut, WAL 1712747B | steps 38, A handler CLR2, B가 Y의 1행만 읽음, READY Q2, 새 행 ACK q3 | steps 11, B가 2행을 읽음, READY Q3 |
+
+- 모든 recover와 reenter process는 handles0·peak3·FD peak6이다.
+- recover의 READY epoch는 `(true, 2, [(2, 6, 2)])`이고 새 Commit 뒤 `(true, 2, [(2, 6, 3)])`이다.
+- controller는 다음을 확인한다.
+  - 세 PID가 다르다.
+  - READY Q가 이전 process의 마지막 ACK q와 같다.
+  - produce의 `wal_cut`·`wal_cut_bytes`가 자신의 files.json WAL hash·길이와 같다.
+  - N03의 CLR 전후 witness가 다르다.
+  - effects.tsv에서 마지막 write 뒤에 성공 sync가 있고, 그 뒤 연산은 lease 반환과 close뿐이다.
+- 전원 장애 인수는 아니다.
+
+### 독립 검토와 처리
+
+검토 보고서 원문은 artifacts의 `reviews/`에 있다. 두 검토 모두 읽기 전용이며 실행은 하지 않았다.
+
+**S6 D1/D2(`8d5e48b..76b3627`).** D1과 D2 모두 REQUIRED 보정을 조건으로 ACCEPT다.
+- R1: shared 144B는 `RowRecoveryAdmission`이 두 번 저장된 결과다. 사용자 규칙대로 별도 thread가 수정해 이 branch로 합친다. **아직 미해결이다.**
+- R2: 240초 사후 한도. 30초로 되돌리고 r2에서 다시 실행해 해결했다.
+- R3: MCB05-N01..06·MBC40-N01 과다 주장. 계약에 PARTIAL로 적어 해결했다.
+- C2(편차 3)와 N1·N4는 계약에 적었다. C1·C3·C4·N2·N3은 후속으로 적었다. C1은 제품 변경이므로 사용자 승인이 필요하다.
+
+**S7 D1/D2(`76b3627..fb0f560f`).**
+- R1: N03 witness의 이중 hash와 controller 미대조. `b6766a9b`에서 해결했다.
+- R2: 이 절 anchor 부재. 이 기록으로 해결했다.
+- C1: V11 oracle을 이력의 q2·Row Job cell0으로 고정했다.
+- C2: MCI03-V02의 재상주 범위를 MCA05-V31로 정정했다.
+- C3·C4: (iv) 범위를 첫 gate 대기와 여유를 통한 상계로 좁혔다.
+- C5: Drop 문언을 정정했다.
+- C6: V09 generation/origin stale, V14, V12·V13 인용을 계약에 적었다.
+- 판정은 D1 ACCEPT(R1 반영 조건), D2 ACCEPT(R2 반영 조건)다. 반영분은 작성자가 확인했고 독립 재확인은 아직 없다. S6 R1 합류 뒤 MI06을 다시 판정할 때 함께 확인한다.
+
+### M5 판정
+
+판정 기준은 [계획 §8](../plans/module-independence-plan.md#acceptance)의 MI01–MI06이며 실행 전에 동결된 문언 그대로 쓴다.
+
+| 기준 | 판정 | 근거 |
+| --- | --- | --- |
+| MI01 독립 착수 | PASS(한정) | 같은 C0 `ea783fe`에서 별도 담당이 제품 본문을 썼고 작성 구간이 실제로 겹쳤다([착수 기록](#consumer-c0-start)). 이후 C 공급 대기(S2–S6)는 공급 대기로 따로 적었다. S5의 B 실제 C 시험 입력은 A의 완성된 INSERT로 만들었다. 미완료 본문을 기다린 것은 아니지만 "각자의 시험 입력"은 C0 단계까지만 성립한다(MI03) |
+| MI02 국소성 | PASS | C0 기준 뒤 B 전용 경로 commit 8개, A 전용 경로 commit 39개다. 둘 다 건드린 commit은 두 본문을 처음 넣은 C0 통합 `278e5e8a` 하나다. S7은 A·B 전용 경로를 바꾸지 않았다 |
+| MI03 독립 인수 | **미충족** | C+A, C+B의 실제 C 단독 인수가 없다. B의 실제 C 인수는 A INSERT로 행을 만들었고, [소비자 §8.3](../contracts/dev3-module-consumers.md#independent-fixtures)의 C+B literal ingress는 구현되지 않았다. A의 실제 C 인수도 B source가 있는 전체 트리에서만 실행했다. C0 단독 export(A10/B3)만 PASS다 |
+| MI04 실제 합류 | 선택 범위 PASS, 미실행1 | 이 절의 memory 11개·native 3 case와 S4 잔여가 PASS다. MCI01-V09 origin stale은 NOT_RUN이고 generation stale·aging은 N/A다 |
+| MI05 보호와 추적 | PASS | 다른 담당 변경·원 결과 덮어쓰기는 없다. S6 원문은 보존하고 보정만 덧붙였다. 의미 충돌은 S6 shared 144B가 C2 Catalog Full read 경계를 깬 것이다. 계약 재개방은 S2-0 Row 쓰기 개정(MCI03-V01 Busy→gate 대기), S6 편차 1–3이다. 재작업은 S6 사후 시간 한도 되돌림과 MCI02 witness다. S7 branch에는 text 충돌이 없다 |
+| MI06 별도 판정 | 미충족(대기) | S6 R1이 별도 thread에서 수정 중이므로 미해결 필수 지적이 남아 있다. S6·S7 반영분의 독립 재확인도 아직 없다. SKIP·NOT_RUN·PARTIAL을 PASS로 바꾸지 않았다 |
+
+**M5는 완료가 아니다.** MI03은 C+B literal ingress(C4의 "독립 authored row corpus를 원 owner에 적용하는 제한 경로")와 A·B 단독 export에서의 실제 C 인수가 있어야 충족된다. 이 일을 별도 단계로 진행할지는 사용자 결정 대기다. MI06은 S6 R1 수정이 합류하고 그 반영을 확인하면 다시 판정한다.
+
+### 되돌림
+
+되돌림은 `2f71db00`, `b6766a9b`, `570aac47`, `fb0f560f`, `5d0fa4e3`, `a8ea0fc8`, `e0108bc3`, `98af323b`, `0da85386`의 역순이다. 제품 경로는 cfg(test) hook 한 줄뿐이며 fixture는 매 시험에서 새로 만든다.
