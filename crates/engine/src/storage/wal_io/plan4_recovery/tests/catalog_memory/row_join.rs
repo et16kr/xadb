@@ -1482,3 +1482,7 @@ fn mci03_v04_poststage_fault_fences_a_and_b() {
         );
     });
 }
+
+#[cfg(target_os = "linux")]
+#[path = "row_join/native.rs"]
+mod native;
