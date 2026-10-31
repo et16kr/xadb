@@ -1,0 +1,105 @@
+{
+  "schema": "XADB_S5_TEST_INVENTORY_V1",
+  "status": "SOURCE_SPECIFIC_EXECUTION_MAPPING",
+  "baseline": "2ed254ac",
+  "cases": [
+    {
+      "id": "S5R-R01",
+      "purpose": "admission resources and InstallationPending",
+      "receipt": "sizes2,r12",
+      "selector": "s5r_r01"
+    },
+    {
+      "id": "S5R-R02/R04",
+      "purpose": "empty/own row, capture, stale/current foreign, overflow, short copy, cursor cancellation",
+      "receipt": "r13 (R02 PASS; R05 FAIL preserved)",
+      "selector": "s5r_r02"
+    },
+    {
+      "id": "S5R-R03",
+      "purpose": "cold Row leaf dirty victim FlushRequired and same snapshot retry",
+      "receipt": "r11",
+      "selector": "s5r_r03_dirty"
+    },
+    {
+      "id": "S5R-R03-CATALOG",
+      "purpose": "cold Catalog anchor through actual loader, leaf8 resident; no read mutation",
+      "receipt": "r15",
+      "selector": "s5r_r03_cold"
+    },
+    {
+      "id": "S5R-R05/R07",
+      "purpose": "retirement refusal atomic pins and corrupt Undo fatal cause",
+      "receipt": "r14 (R05 PASS; cold fixture FAIL preserved)",
+      "selector": "s5r_r05"
+    },
+    {
+      "id": "S5R-R06",
+      "purpose": "other Active actor, old/new statement snapshot",
+      "receipt": "r8",
+      "selector": "s5r_r06"
+    },
+    {
+      "id": "S5R-R08",
+      "purpose": "bad Row tree source fences, output/file unchanged",
+      "receipt": "r10 (R08 PASS; R03 cleanup FAIL preserved)",
+      "selector": "s5r_r08"
+    },
+    {
+      "id": "S5R-C01/C02",
+      "purpose": "memory/actual instrumented native writer whole C/B census",
+      "receipt": "c1",
+      "selector": "s5r_c01,s5r_c02"
+    },
+    {
+      "id": "S5R-C03",
+      "purpose": "Full charge -1/exact/+1 and foreign Owner",
+      "receipt": "r12",
+      "selector": "s5r_c03"
+    },
+    {
+      "id": "MCB00-D01..D12",
+      "purpose": "changed B driver policies",
+      "receipt": "b2; b3 for later cursor changes",
+      "selector": "mcb00_d01..mcb00_d12"
+    },
+    {
+      "id": "MCB00-D13",
+      "purpose": "B memory/native caller inventory",
+      "receipt": "c1",
+      "selector": "mcb00_d13"
+    },
+    {
+      "id": "S5R-N01",
+      "purpose": "actual native committed row point/cursor no file changes, mutations409→409",
+      "receipt": "native2",
+      "selector": "s5r_n01_native_worker --ignored"
+    },
+    {
+      "id": "binding lifetime",
+      "purpose": "actual capture lifetime escape compile rejection",
+      "receipt": "binding2",
+      "selector": "compile-only source probe"
+    },
+    {
+      "id": "port borrow",
+      "purpose": "original port cannot move while operation retained",
+      "receipt": "port1",
+      "selector": "compile-only source probe"
+    }
+  ],
+  "limits": {
+    "memory_case_seconds": 30,
+    "controller_seconds": 120,
+    "full_source_bytes": 34570,
+    "maximum_joined_bytes": 34524,
+    "short_cap_bytes": 65536,
+    "caller_private_bytes": 425984
+  },
+  "notes": [
+    "Retirement is refusal-only registry fault injection, not actual retirement execution.",
+    "Native test is actual filesystem I/O; not S6 READY/restart acceptance.",
+    "No workspace or unchanged lower regression test execution.",
+    "Mixed failed runs are not reclassified as PASS."
+  ]
+}

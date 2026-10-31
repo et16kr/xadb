@@ -1,6 +1,6 @@
 # XADB 모듈 독립 개발 구조 전환 작업 계획
 
-2026-10-31 [S5 Row 읽기 중간 구현](../evidence/module-independence-survey-20261026.md#s5-row-read-checkpoint): main `2ed254ac`의 별도 branch에서 원 source capture·Status/Missing·copy와 B live 연결을 구현하고 변경 관련 선택 검증을 진행했다. 전체 census·native·확대 검증·최종 리뷰·PR은 미완료이며 S5 완료로 세지 않는다.
+2026-10-31 [S5 Row 읽기 구현·선택 검증](../evidence/module-independence-survey-20261026.md#s5-row-read-completion): 원 Row source와 B point/cursor 연결, 실제 native 읽기 및 전체 source census를 검증했다. 최종 증거 리뷰·pre-push gate·PR 등록을 마무리하며 S6 READY·전체 M4/M5·DEV3 최종 전수는 별도다.
 
 2026-10-31 [S4 live Row rollback](../evidence/module-independence-survey-20261026.md#s4-row-rollback): main `139a05f4`의 별도 branch `codex/s4-row-rollback`에서 statement/full rollback·원 CLR/receipt·flusher/pin 인계를 구현했다. source별 선택20개·변경 compiler1개·native2process를 검증했으며 최종 독립 D1/D2 ACCEPT·필수 수정0을 확인했다. S5/C4/S6·전체 M4/M5는 미완료다.
 

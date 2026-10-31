@@ -982,6 +982,15 @@ impl<W: WriterNamespace> ReadPort<'_, '_, '_, '_, '_, '_, '_, '_, W> {
                 + n::<Result<ReadStep<MissingRowEvidence>>>(),
         ]
     }
+    pub(in crate::storage) fn row_test_with_retiring_undo(
+        &self,
+        undo: UndoRef,
+        run: impl FnOnce(),
+    ) {
+        self.visibility
+            .expect("actual visibility binding")
+            .test_with_retiring_undo(undo, run);
+    }
     pub(in crate::storage) fn row_test_source_observations(&self) -> [usize; 5] {
         [
             self.source_charges.observations()[1],
@@ -1009,6 +1018,19 @@ impl RowCandidate<'_> {
 }
 #[cfg(test)]
 impl<W: WriterNamespace> RowReadOperation<'_, '_, '_, '_, '_, '_, '_, '_, '_, '_, '_, '_, '_, W> {
+    /// Test setup through the actual checked LOAD, with no authority fabrication.
+    pub(in crate::storage) fn test_load(
+        &mut self,
+        target: &Plan4Target,
+    ) -> Result<RetentionResidencyStep> {
+        self.backend.load_lookup_target(
+            self.owner,
+            target.request,
+            &mut Plan4ResidencyCursor::new(),
+            &[],
+            self.loader,
+        )
+    }
     pub(in crate::storage) fn test_set_sequence(&mut self, sequence: u64) {
         self.capture_sequence = sequence;
     }

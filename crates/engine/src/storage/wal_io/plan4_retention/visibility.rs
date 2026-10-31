@@ -552,6 +552,38 @@ impl BoundVisibility<'_, '_, '_> {
         }
         (published, horizon)
     }
+    /// Refusal-only fault injection into the original registry. This issues no
+    /// retirement authority and never rewinds the monotonic generation.
+    pub(super) fn test_with_retiring_undo(&self, undo: UndoRef, run: impl FnOnce()) {
+        let target = authority::ReferenceTarget::Undo(undo);
+        let generation = {
+            let mut bytes = self.entry().unwrap();
+            assert_eq!(retirement_row(&bytes[..])[0], 0);
+            assert_eq!(pins::count(&bytes[..], target), 0);
+            let generation = u64_at(&bytes[..], 8).checked_add(1).unwrap();
+            put_u64(&mut bytes[..], 8, generation);
+            let marker = retirement_mut(&mut bytes[..]);
+            marker.fill(0);
+            marker[0] = 1;
+            marker[1] = target.kind();
+            marker[2] = RetirementScope::UndoFree as u8;
+            put_u64(marker, 8, generation);
+            put_u64(marker, 16, u64::MAX);
+            target.encode(&mut marker[64..112]);
+            validate(&bytes).unwrap();
+            generation
+        };
+        let result = std::panic::catch_unwind(std::panic::AssertUnwindSafe(run));
+        {
+            let mut bytes = self.registry.lock().unwrap();
+            assert_eq!(u64_at(retirement_row(&bytes[..]), 8), generation);
+            retirement_mut(&mut bytes[..]).fill(0);
+            validate(&bytes).unwrap();
+        }
+        if let Err(payload) = result {
+            std::panic::resume_unwind(payload);
+        }
+    }
     /// Source reference pins and whether a retirement marker is published.
     pub(super) fn test_references(&self) -> ((usize, usize, usize), bool) {
         let bytes = self

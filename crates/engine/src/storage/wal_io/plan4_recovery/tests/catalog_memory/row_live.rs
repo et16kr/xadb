@@ -1025,17 +1025,25 @@ fn s5r_r02_empty_table_and_r04_actual_capture_copy() {
                     op.finish().unwrap();
                 }
                 {
-                    // Another original Owner has its own lease slot. A
-                    // source-issued candidate cannot cross that identity even
-                    // when both owners use the same statement and table.
+                    // Receiver has a current capture with the same sequence;
+                    // captured=None cannot mask the foreign identity check.
                     let mut other = core.try_owner(OwnerRole::Foreground).unwrap();
-                    let mut operation = reader
+                    let mut second = reader
                         .row_operation(&mut other, &view, reader_private)
                         .unwrap();
+                    let second_page = match second.page(&table, &mut residency).unwrap() {
+                        ReadStep::Ready(page) => page,
+                        _ => panic!("resident"),
+                    };
+                    let local = second_page.capture(0).unwrap();
                     let before = output;
-                    assert!(operation.copy_candidate(&stale, &mut output).is_err());
+                    assert!(second.copy_candidate(&stale, &mut output).is_err());
+                    assert!(second.status(&stale, &mut residency).is_err());
+                    assert!(second.release_candidate(stale.test_duplicate()).is_err());
                     assert_eq!(output, before);
-                    operation.finish().unwrap();
+                    second.copy_candidate(&local, &mut output).unwrap();
+                    second.release_candidate(local).unwrap();
+                    second.finish().unwrap();
                     other.check_idle().unwrap();
                 }
                 {
@@ -1656,6 +1664,243 @@ fn s5r_r01_pending_preflight_precedes_read_source_reservation() {
                 late.check_idle().unwrap();
                 assert!(!fence.is_fenced());
                 close_live!(writer, owner, flush, flusher, row, view, private);
+            }
+        );
+    });
+}
+
+#[test]
+fn s5r_r05_r07_retiring_capture_and_corrupt_undo() {
+    use crate::storage::{
+        dirty_frame::status_load_test_support,
+        disk::{ReadStep, TransactionOptions},
+        page::{PageKind, decode_page, encode_page},
+        row::{
+            insert::{produce_insert, validate_insert},
+            read::driver::{
+                RowReadError,
+                live::{LiveCall as ReadCall, read_point_live},
+            },
+        },
+    };
+    use foundation::runtime::Cancellation;
+    case("S5R-R05-R07", || {
+        let oracle = Oracle::new();
+        with_fresh!(
+            oracle,
+            frames = 12,
+            |live, owner, flusher, status, undo, private, reader_private, core, fence, state| {
+                let (row_status, _) =
+                    create_table(live, owner, flusher, status, undo, private, true);
+                row_statement!(live,owner,flusher,private,reader_private,row_status=>writer,reader,flush,row,view,table);
+                let _ = settle!(writer, owner, view, table, private, flush, flusher);
+                let mut preflight = match writer
+                    .preflight_row(owner, &view, &table, private, &mut flush)
+                    .unwrap()
+                {
+                    RowPreflightStep::Ready(p) => p,
+                    _ => panic!("resident"),
+                };
+                let input =
+                    validate_insert(&[ValueRef::Int64(7)], preflight.validation_lane().unwrap())
+                        .unwrap();
+                let mut reserved = preflight
+                    .reserve(input)
+                    .unwrap_or_else(|_| panic!("reserve"));
+                let proposal = produce_insert(reserved.producer_lane().unwrap()).unwrap();
+                let applied = reserved
+                    .prepare(proposal)
+                    .unwrap_or_else(|_| panic!("prepare"))
+                    .apply()
+                    .unwrap_or_else(|_| panic!("apply"));
+                let (observation, _) = applied.into_parts();
+
+                let mut residency = Plan4ResidencyCursor::new();
+                let mut op = reader.row_operation(owner, &view, reader_private).unwrap();
+                reader.row_test_with_retiring_undo(observation.undo(), || {
+                    let page = match op.page(&table, &mut residency).unwrap() {
+                        ReadStep::Ready(page) => page,
+                        _ => panic!("resident"),
+                    };
+                    let error = page.capture(0).err().unwrap();
+                    assert!(
+                        matches!(error, RetentionError {effect: Effect::Unchanged,
+                        cause: RetentionCause::Visibility(ref e), ..}
+                        if e.cause == crate::storage::wal_io::VisibilityCause::Busy),
+                        "{error:?}"
+                    );
+                    // The leaf has both Txn and Undo references; neither is
+                    // installed when the second target is retiring.
+                    assert_eq!(reader.catalog_test_references(), ((0, 0, 0), true));
+                    assert!(!fence.is_fenced());
+                });
+                let page = match op.page(&table, &mut residency).unwrap() {
+                    ReadStep::Ready(page) => page,
+                    _ => panic!("resident"),
+                };
+                let candidate = page.capture(0).unwrap();
+                assert_eq!(reader.catalog_test_references(), ((2, 0, 0), false));
+                op.release_candidate(candidate).unwrap();
+                op.finish().unwrap();
+                assert_eq!(reader.catalog_test_references(), ((0, 0, 0), false));
+                let pool = reader.catalog_test_pool();
+                let index = frames(pool, 12)
+                    .into_iter()
+                    .find(|(_, page, _)| *page == 14)
+                    .unwrap()
+                    .0;
+                let identity = pool.target_request(index).unwrap().identity;
+                status_load_test_support::edit_content(pool, index, |bytes| {
+                    let page = decode_page(bytes, identity, PageKind::Undo).unwrap();
+                    let header = page.header();
+                    let mut cells = (0..page.len())
+                        .map(|i| page.cell(i).unwrap().to_vec())
+                        .collect::<Vec<_>>();
+                    cells[observation.undo().slot() as usize][0] ^= 1;
+                    let refs = cells.iter().map(Vec::as_slice).collect::<Vec<_>>();
+                    encode_page(header, &refs, bytes).unwrap();
+                    decode_page(bytes, identity, PageKind::Undo).unwrap();
+                });
+                let mut other = core.try_owner(OwnerRole::Foreground).unwrap();
+                let transaction = writer
+                    .begin_transaction(
+                        &mut other,
+                        TransactionOptions {
+                            read_only: true,
+                            isolation: IsolationLevel::ReadCommitted,
+                        },
+                        reader_private,
+                    )
+                    .unwrap();
+                let other_view = writer.begin_statement(&mut other, &transaction).unwrap();
+                let before = files(state);
+                let mut output = [0xB9; 64];
+                let error = read_point_live(
+                    ReadCall {
+                        port: &reader,
+                        owner: &mut other,
+                        private: reader_private,
+                        residency: &mut residency,
+                    },
+                    &other_view,
+                    &table,
+                    observation.row(),
+                    &mut output,
+                    &Cancellation::default(),
+                )
+                .err()
+                .unwrap();
+                assert!(
+                    matches!(
+                        error,
+                        RowReadError::Source(RetentionError {
+                            phase: RetentionPhase::Census,
+                            effect: Effect::CallerMustResolve,
+                            cause: RetentionCause::Undo(_),
+                        })
+                    ),
+                    "{error:?}"
+                );
+                assert!(fence.is_fenced());
+                assert_eq!(output, [0xB9; 64]);
+                assert_eq!(files(state), before);
+                assert_eq!(writer.catalog_test_physical_pins(), 0);
+                assert_eq!(hook::observe(core).active_read_operations, 0);
+                drop(other_view);
+                drop(transaction);
+                drop(view);
+                drop(row);
+            }
+        );
+    });
+}
+
+#[test]
+fn s5r_r03_cold_catalog_anchor_loads_before_schema() {
+    use crate::storage::{
+        disk::ReadStep,
+        row::read::driver::{
+            PointRead,
+            live::{LiveCall as ReadCall, read_point_live},
+        },
+    };
+    use foundation::{identity::RowId, runtime::Cancellation};
+    case("S5R-R03-CATALOG", || {
+        let oracle = Oracle::new();
+        with_fresh!(
+            oracle,
+            frames = 12,
+            |live, owner, flusher, status, undo, private, reader_private, core, fence, state| {
+                let (row_status, _) =
+                    create_table(live, owner, flusher, status, undo, private, true);
+                let anchor_index = frames(live.catalog_test_pool(), 12)
+                    .into_iter()
+                    .find(|(_, p, _)| *p == 7)
+                    .unwrap()
+                    .0;
+                let anchor = live.row_test_resident_target(anchor_index).unwrap();
+                let jobs = (1..5)
+                    .map(|index| live.target(Plan4Page::Jobs { index }).unwrap())
+                    .find(|t| resident_index(live, t.identity().page.page_no).is_none())
+                    .unwrap();
+                row_statement!(live,owner,flusher,private,reader_private,row_status=>writer,reader,flush,row,view,table);
+                flush_target!(flush, flusher, anchor);
+                let pool = reader.catalog_test_pool();
+                let anchor_index = frames(pool, 12)
+                    .into_iter()
+                    .find(|(_, p, _)| *p == 7)
+                    .unwrap()
+                    .0;
+                let pinned: Vec<usize> = frames(pool, 12)
+                    .into_iter()
+                    .filter(|(index, _, dirty)| *index != anchor_index && !*dirty)
+                    .map(|(index, ..)| index)
+                    .collect();
+                let mut holder = core.try_owner(OwnerRole::Foreground).unwrap();
+                let mut op = reader.row_operation(owner, &view, reader_private).unwrap();
+                with_pins(pool, &mut holder, &pinned, || {
+                    assert!(matches!(
+                        op.test_load(&jobs).unwrap(),
+                        RetentionResidencyStep::Resident { loaded: true, .. }
+                    ));
+                });
+                op.finish().unwrap();
+                holder.check_idle().unwrap();
+                assert!(resident_index(&writer, 7).is_none());
+                assert!(resident_index(&writer, 8).is_some());
+                let before = files(state);
+                let mutations = state.lock().unwrap().mutations();
+                let q = view.q().unwrap();
+                let mut output = [0xCD; 32];
+                assert!(matches!(
+                    read_point_live(
+                        ReadCall {
+                            port: &reader,
+                            owner,
+                            private: reader_private,
+                            residency: &mut Plan4ResidencyCursor::new()
+                        },
+                        &view,
+                        &table,
+                        RowId::new(1).unwrap(),
+                        &mut output,
+                        &Cancellation::default()
+                    )
+                    .unwrap(),
+                    ReadStep::Ready(PointRead::Missing)
+                ));
+                assert!(resident_index(&writer, 7).is_some());
+                assert_eq!(view.q().unwrap(), q);
+                assert_eq!(files(state), before);
+                assert_eq!(state.lock().unwrap().mutations(), mutations);
+                assert_eq!(output, [0xCD; 32]);
+                assert_eq!(reader.catalog_test_source_used(), 0);
+                assert_eq!(reader.catalog_test_references(), ((0, 0, 0), false));
+                assert_eq!(writer.catalog_test_physical_pins(), 0);
+                assert_eq!(hook::observe(core).active_read_operations, 0);
+                let _ = settle!(writer, owner, view, table, private, flush, flusher);
+                close_live!(writer, owner, flush, flusher, row, view, private);
+                assert!(!fence.is_fenced());
             }
         );
     });

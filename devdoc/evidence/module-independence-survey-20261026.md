@@ -5171,3 +5171,17 @@ r9 R08은 fatal source accounting을0으로 기대한 잘못된 oracle로 FAIL�
 native1은 기존 DWB image16,711,680B/namespace15files를 테스트의8MiB/8files 한도가 거절하여 읽기 전 FAIL했다. worker의 독립 hash oracle을64KiB streaming, file16MiB/total32MiB/files16으로 정정했다. native2는 실제 native INSERT·commit q2 뒤 point Found/Missing·cursor Row/End, 정답13byte canonical, 읽기 전후 전체 namespace content hash 일치, mutation409→409, handle/fd 한도를 모두 통과했다. native2와 r12의 source `4db9e0b46f4d005113dba321d2da07d369ac2b901bd0af3f55be43bf0e8a481e`, ELF `b9dde234e6a59a0d967d1d4e9a8e49d028e8038e58674dfdce76cb7844640adf`, input `3d72aa664e984f4f36c41495012fb3f55797187d14deea238b4716b170ae84e1`이다. r12는 실제 source 한도±1/정확 경계·외부 Owner 거절(C03), 실제 preflight Ready 보유 중 InstallationPending 및 같은 snapshot 재시도(R01-PENDING), 다른 Owner의 stale candidate 거절을 추가한 R02/R04의3개 PASS다.
 
 S5는 아직 PARTIAL이다. retirement 원자 거절·손상 Undo 등 남은 오류 사례, 최종 inventory/독립 review, pre-push gate와 PR가 남았다. 무변경 하위/전체 시험과 S6 READY는 실행하지 않았다.
+
+
+<a id="s5-row-read-completion"></a>
+### S5 Row 읽기 최종 선택 검증
+
+2026-10-31. S5 구현과 선정 검증을 완료했다. [최종 inventory](../../tests/fixtures/dev3-module-c3/row-read/test-inventory.json)와 [source별 receipts](../../tests/fixtures/dev3-module-c3/row-read/execution-receipts.json)는 계약 ID·실제 selector·원 source/ELF/input·로그 hash·실패를 연결한다. 이는 서로 다른 source의 유효한 증거 집합이며 하나의 최종 ELF로 전체를 재실행했다고 주장하지 않는다. 변경 없는 B/하위·native·compiler 시험은 반복하지 않았다.
+
+- r13: foreign 수신 operation도 자체 current capture와 같은 sequence를 갖도록 보완한 R02/R04 PASS. 외부 후보의 copy/status/release를 거절한 뒤 자체 후보 copy/release는 성공한다. R05/R07은 retirement 검산을 통과했으나 손상 Undo의 phase를 Source로 기대하여 FAIL했다. 실제 read_missing의 Page/Undo/Invariant 분류인 Census로 테스트만 수정했고 fatal·원 Undo cause 조건은 유지했다.
+- r14: R05/R07 PASS. 실제 INSERT가 가진 Txn/U 중 Undo를 원 registry의 유효한 retiring marker로 거절하여 두 pin 모두 미등록·fence 없음, marker 제거 후 동일 operation의 capture2pins·release0을 확인한다. 이 refusal-only fault injection은 정상 retirement 실행/권한 공급 증거가 아니다. 실제 Undo cell grammar를 손상시키되 generic envelope/checksum을 유지하고, 다른 actor의 실제 B 읽기가 Missing 대신 Census/CallerMustResolve/Undo(Corrupt)를 반환하며 출력·파일 불변·physical pin/read progress 반환을 확인한다. source `7e960e8ec6f243d262c6fab10e2abd054649dc7af2e56605a969f1ad68f09894`, ELF `ad071f1daf73887da1d41f845fff0eeb3dd2a8c94a14f433ce7829ca339c69c9`.
+- r14의 cold Catalog 준비는 기존 with_pins의 최대9에11개를 넘겨 읽기 전 FAIL했다. dirty/allocator는 eviction 후보가 아니므로 나머지 clean frame만 pin하도록 fixture를 고쳤다. r15 cold Catalog PASS(9.79초): 정상 genesis Jobs target과 원 LOAD로 이미 발급한 CheckedTable의 anchor7만 교체, leaf8 상주·anchor7 비상주를 확인한 뒤 실제 B point가 anchor를 다시 LOAD하여 Missing을 반환한다. 읽기 구간의 파일·mutation·출력·snapshot 불변 및 source/ref/physical pin/progress 반환을 확인했다. source `fdf28edbb7e9934b5b8ab2a4b74435e0b49e85bbec28d8f9b76739688f6b1c94`, ELF `976f5511f8311b38c3272f5fee3ba9d2b4a6b7f3c0a327bd71f293fa25b5df7c`.
+
+이전 중간 checkpoint의 PARTIAL 및 잔여 목록은 당시 상태로 보존하며 이 최종 기록이 S5 상태를 갱신한다. 전체 census는34524≤34570B, native 실제 읽기는409→409mutations다. 원 wire·cap·charge·공개 API 변경0이며 일반 SQL 연결·S6 READY·전체 M4/M5·DEV3 최종 전수 인수는 별도 미완료다. D1/D2 독립 코드 검토는 필수 수정0·시험 영수증/문서 확인 조건부 수용이며 최종 증거 검토와 pre-push gate/PR 등록은 다음 기록으로 확정한다.
+
+최종 D1/D2 증거 리뷰는 **ACCEPT·남은 blocker0**이다. 독립 `/root/s5_review`가 receipts의 모든 artifact SHA-256 대조·불일치0, r13/r14 혼합 PASS/FAIL 보존, r15 manifest와 현재 crates 일치, c1/native2 이후 production 변경0을 확인했다. 원 판정은 `/workspace/s5-evidence/review-final.txt`에 보존한다. runtime target/ELF 약2.58GB는 hash/결과 기록 후 삭제했고 `/workspace/s5-evidence/final-runtime-cleanup.json`에 기록했다. 원 로그·실패·namespace fixture는 삭제하지 않았다. S5 구현·검증·독립 리뷰 완료이며 commit tip의 push gate와 PR 등록을 진행한다.
