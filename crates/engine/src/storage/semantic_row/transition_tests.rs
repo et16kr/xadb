@@ -3282,3 +3282,222 @@ fn s1g_reserve_adopted_not_producible() {
         );
     }
 }
+
+// ---- MCA04-V04..V08: C0 checked-add boundaries (S10) ------------------------
+
+/// `world`'s Root page with `edit` applied to its Root3 cell, encoded again
+/// through the production Root page encoder (the page digest follows), and
+/// the Aging descriptor bound to that page again.
+fn with_root_cell(world: &mut World, edit: impl FnOnce(&mut [u8; 512])) {
+    let mut cell = *row::decode_root_page(&world.root, namespace())
+        .unwrap()
+        .1
+        .bytes();
+    edit(&mut cell);
+    let mut page = [0xa5; PAGE_BYTES];
+    row::encode_root_page(&cell, namespace(), &mut page).unwrap();
+    world.root = page;
+    // The Aging descriptor's Root page and Root3 cell digests follow
+    // (retention_obligation/row.rs work_bytes at 384..480), then its own.
+    let aging = world.aging.as_mut().expect("Aging descriptor");
+    aging[384 + 32..384 + 64].copy_from_slice(&content_digest(&page));
+    aging[384 + 64..384 + 96].copy_from_slice(&content_digest(&cell));
+    let digest = content_digest(&aging[..1504]);
+    aging[1504..].copy_from_slice(&digest);
+}
+/// The Root3 Job census commitment over `world`'s bank, as `verify_census`
+/// recomputes it (retention_page/row/census.rs).
+fn job_digest(world: &World) -> [u8; 32] {
+    let mut hash = foundation::codec::ContentHasher::new();
+    for cell in &world.bank {
+        hash.update(cell);
+    }
+    hash.digest()
+}
+
+/// MCA04-V04..V08 (consumers §9): each issuer the next Reserve draws from is
+/// set to u64::MAX in an otherwise consistent stabilized input, and the C0
+/// producer refuses it with Exhausted before its first after or frame byte;
+/// the same input at MAX-1 is accepted and issues exactly MAX. The inputs are not built by issuing up to MAX in a fresh DB
+/// and confer no pin, storage, ACK or READY authority; actual non-reuse of
+/// issued IDs is checked by MCA04-V01..V03, MCA02 and MCA05.
+#[test]
+fn mca04_v04_v08_issuer_max_is_exhausted_before_output() {
+    let noh = Pages {
+        jobs: Some(0),
+        status: Some(9),
+        undo: Some(11),
+        table: true,
+        ..pages()
+    };
+    let value = canonical(10, Some(b"ten"));
+    let plan = ReservePlan {
+        terminal: 2,
+        container: page_ref(11, 2),
+        table: table(),
+        statement: 1,
+        canonical: &value,
+    };
+    // The unchanged base issues the next RowId, Undo sequence, mutation,
+    // slot generation and Job generation (h0, noh-cancel).
+    let base = noh_cancelled();
+    let mut after = loans(0);
+    let mut frame = vec![0; FRAME_BYTES];
+    let observation = produce(
+        &base.inputs(Change::Reserve(&plan), noh),
+        &mut after,
+        &mut frame,
+    )
+    .expect("base Reserve");
+    let issued = observation.issued.expect("issued");
+    let (_, root) = row::decode_root_page(&base.root, namespace()).unwrap();
+    assert_eq!(issued.row.get(), root.row_high() + 1);
+    assert_eq!(issued.sequence, root.undo_high() + 1);
+    println!(
+        "MCA04_BASE\trow={}\tsequence={}\tmutation={}\tslot_generation={}",
+        issued.row.get(),
+        issued.sequence,
+        issued.mutation,
+        issued.undo.generation().get()
+    );
+
+    type Edit = fn(&mut World, u64);
+    // Each edit sets one issuer's high-water to `high`; the probe reads what
+    // a produced Reserve issued from it.
+    type Probe = fn(&Observation, &[Page; 5]) -> u64;
+    let variants: [(&str, Edit, Probe); 5] = [
+        (
+            "MCA04-V04 Root row_high MAX",
+            |world, high| {
+                with_root_cell(world, |cell| {
+                    cell[432..440].copy_from_slice(&high.to_le_bytes())
+                })
+            },
+            |observation, _| observation.issued.unwrap().row.get(),
+        ),
+        (
+            "MCA04-V05 Root undo_high MAX",
+            |world, high| {
+                with_root_cell(world, |cell| {
+                    cell[392..400].copy_from_slice(&high.to_le_bytes())
+                })
+            },
+            |observation, _| observation.issued.unwrap().sequence,
+        ),
+        (
+            "MCA04-V06 descriptor last mutation MAX",
+            |world, high| {
+                let descriptor = world.transaction.as_mut().expect("descriptor");
+                descriptor[1344..1352].copy_from_slice(&high.to_le_bytes());
+                let digest = content_digest(&descriptor[..1504]);
+                descriptor[1504..].copy_from_slice(&digest);
+            },
+            |observation, _| observation.issued.unwrap().mutation,
+        ),
+        (
+            "MCA04-V07 Free Undo slot generation MAX",
+            |world, high| {
+                let (_, page) = world
+                    .undo
+                    .iter_mut()
+                    .find(|(number, _)| *number == 11)
+                    .expect("undo11");
+                crate::storage::undo_record::encode_free_undo_record(
+                    generation(high),
+                    &mut page[crate::storage::undo_record::INITIAL_UNDO_CELL],
+                )
+                .unwrap();
+                let digest = content_digest(&page[..DIGEST_OFFSET]);
+                page[DIGEST_OFFSET..].copy_from_slice(&digest);
+            },
+            |observation, _| observation.issued.unwrap().undo.generation().get(),
+        ),
+        (
+            "MCA04-V08 first Free RootJob generation MAX",
+            |world, high| {
+                let (_, root) = row::decode_root_page(&world.root, namespace()).unwrap();
+                let ordinal = (0..JOB_COUNT)
+                    .map(|offset| (root.cursor() as usize + offset) % JOB_COUNT)
+                    .find(|ordinal| {
+                        row::decode_job(&world.bank[*ordinal], namespace())
+                            .unwrap()
+                            .state()
+                            == row::JobState::Free
+                    })
+                    .expect("free Job");
+                row::free_job(generation(high), &mut world.bank[ordinal]);
+                // The Jobs page holding it and the Root census commitment follow.
+                let index = ordinal / 15;
+                let jobs = world.jobs[index].as_mut().expect("jobs page");
+                let lsn = u64_at(&jobs[..], 64);
+                let cells: Vec<[u8; JOB_BYTES]> = (0..if index == 4 { 4 } else { 15 })
+                    .map(|slot| world.bank[index * 15 + slot])
+                    .collect();
+                let refs: Vec<&[u8]> = cells.iter().map(|cell| &cell[..]).collect();
+                let mut page = [0xa5; PAGE_BYTES];
+                row::encode_jobs_page(namespace(), index as u8, lsn, &refs, &mut page).unwrap();
+                *jobs = page;
+                let digest = job_digest(world);
+                with_root_cell(world, |cell| cell[128..160].copy_from_slice(&digest));
+            },
+            |observation, after| {
+                let ordinal = observation.job_ordinal.expect("Reserve Job");
+                u64_at(cell(&after[JOB], ordinal % 15), 8)
+            },
+        ),
+    ];
+    for (label, edit, probe) in variants {
+        // One below the boundary is accepted and issues exactly MAX.
+        let mut world = noh_cancelled();
+        edit(&mut world, u64::MAX - 1);
+        let mut after = loans(0);
+        let mut frame = vec![0; FRAME_BYTES];
+        let observation = produce(
+            &world.inputs(Change::Reserve(&plan), noh),
+            &mut after,
+            &mut frame,
+        )
+        .unwrap_or_else(|error| panic!("{label} MAX-1: {error:?}"));
+        assert_eq!(probe(&observation, &after), u64::MAX, "{label} MAX-1");
+        let mut world = noh_cancelled();
+        edit(&mut world, u64::MAX);
+        refuses(
+            label,
+            &world.inputs(Change::Reserve(&plan), noh),
+            FRAME_BYTES,
+            Error::Exhausted,
+        );
+        // The borrowed producer refuses the same input before output too;
+        // its loan then holds only discardable prepared values
+        // (transition.rs produce_borrowed), so only its neighbours are kept.
+        let mut lane = new_lane();
+        let mut replayed = loans(0x5a);
+        let mut produced = vec![0x5a; FRAME_BYTES];
+        assert_eq!(
+            produce_borrowed(
+                &world.inputs(Change::Reserve(&plan), noh),
+                &mut replayed,
+                &mut produced,
+                lent(&mut lane)
+            )
+            .map(|_| ()),
+            Err(Error::Exhausted),
+            "{label} borrowed"
+        );
+        assert!(
+            lane[..32].iter().all(|byte| *byte == 0x97)
+                && lane[ROW_REPLAY_SCRATCH_BYTES + 32..]
+                    .iter()
+                    .all(|byte| *byte == 0x53),
+            "{label} loan neighbours"
+        );
+        assert!(
+            replayed.iter().flatten().all(|byte| *byte == 0x5a),
+            "{label} borrowed after"
+        );
+        assert!(
+            produced.iter().all(|byte| *byte == 0x5a),
+            "{label} borrowed frame"
+        );
+    }
+}

@@ -576,6 +576,14 @@ impl<'b, 'a, 's, 'c, 'p, 'd, 'm, 'w, W: WriterNamespace>
                     }
                 })?;
             group.mark_staged(self.control, requirement)?;
+            // The numerically first changed page of the group, when it is also
+            // the first this loop installs (consumers §9.4 MCA03-N05-RamOnly's
+            // cut is right after it, with no other page of the group installed).
+            #[cfg(test)]
+            let first_page = (0..N)
+                .filter(|at| group.after(*at).is_some())
+                .min_by_key(|at| requests[*at].identity.page.page_no)
+                .filter(|first| (0..N).find(|at| group.after(*at).is_some()) == Some(*first));
             for (at, dpt_entry) in dpt.iter_mut().enumerate() {
                 let Some(after) = group.after(at) else {
                     continue;
@@ -603,6 +611,13 @@ impl<'b, 'a, 's, 'c, 'p, 'd, 'm, 'w, W: WriterNamespace>
                 write
                     .install_dpt(dpt_entry.take().expect("preflight DPT"), &permit)
                     .map_err(|e| frame(RetentionPhase::Install, e))?;
+                #[cfg(test)]
+                if Some(at) == first_page {
+                    crate::transaction::concurrency::catalog_test_support::hit(
+                        self.pool.bound_core(),
+                        crate::transaction::concurrency::catalog_test_support::Point::ExistingInstalledFirstPage,
+                    );
+                }
             }
             group.apply_control(self.control, storage.profile(), requirement)?;
             self.history.installed(requirement)?;

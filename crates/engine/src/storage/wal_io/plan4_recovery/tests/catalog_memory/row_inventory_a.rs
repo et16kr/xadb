@@ -1304,3 +1304,7 @@ fn mca05_v30_leaf_maximum_then_the_split_is_refused() {
         );
     });
 }
+
+#[cfg(target_os = "linux")]
+#[path = "row_inventory_a/native.rs"]
+mod native;

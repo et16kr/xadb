@@ -38,6 +38,9 @@ pub(in crate::storage) struct Trace {
     catalog_home_cut: Option<CatalogHomeCut>,
     catalog_sync_after_error: Option<u64>,
     catalog_wal_write_end: u64,
+    row_cut: Option<RowCut>,
+    row_action: Option<(&'static str, RowCutMode)>,
+    last_group_op: Option<u16>,
 }
 impl Trace {
     fn event(&mut self, operation: &str, name: &str, offset: u64, length: usize, outcome: &str) {
@@ -51,12 +54,139 @@ impl Trace {
         self.output.flush().unwrap();
         self.events += 1;
         self.fd_peak = self.fd_peak.max(db_fds(&self.root));
+        if outcome != "ATTEMPT" {
+            self.row_cut_after(operation, name, outcome);
+        }
     }
     fn mutation(&mut self, operation: &str, name: &str, offset: u64, length: usize) {
         self.event(operation, name, offset, length, "ATTEMPT");
         self.mutations += 1;
         assert!(!self.readonly, "read-only phase attempted {operation}");
+        self.row_cut_before(operation, name);
     }
+    /// The S10 Row cut (`arm_row_cut`) before a mutation: `Before` stops the
+    /// process here, before the syscall; the injecting modes leave their
+    /// action for the call site.
+    fn row_cut_before(&mut self, operation: &str, name: &str) {
+        let Some(cut) = self.row_cut.as_ref() else {
+            return;
+        };
+        if cut.reached < cut.steps.len() || !cut.cut.matches(operation, name, None) {
+            return;
+        }
+        let (label, mode) = (cut.name, cut.mode);
+        match mode {
+            RowCutMode::Before => self.row_cut_stop(label, operation, name),
+            RowCutMode::After => {}
+            RowCutMode::FirstByte | RowCutMode::WriteError | RowCutMode::SyncError => {
+                self.row_cut = None;
+                self.row_action = Some((label, mode));
+            }
+        }
+    }
+    /// The S10 Row cut after a successful mutation: the next step, or the
+    /// `After` cut.
+    fn row_cut_after(&mut self, operation: &str, name: &str, outcome: &str) {
+        let group_op = if operation == "write" {
+            self.last_group_op.take()
+        } else {
+            None
+        };
+        let Some(cut) = self.row_cut.as_mut() else {
+            return;
+        };
+        let ok =
+            outcome.starts_with("OK") || outcome.starts_with("Ok(") || outcome.ends_with(":Ok(())");
+        if !ok {
+            return;
+        }
+        if cut.reached < cut.steps.len() {
+            if cut.steps[cut.reached].matches(operation, name, group_op) {
+                cut.reached += 1;
+            }
+            return;
+        }
+        if cut.mode == RowCutMode::After && cut.cut.matches(operation, name, group_op) {
+            let label = cut.name;
+            self.row_cut_stop(label, operation, name);
+        }
+    }
+    /// A reached S10 Row cut: one `cut` row in this trace, then an
+    /// immediate process abort (no unwinding, Drop, flush or further
+    /// syscall of the database namespace).
+    fn row_cut_stop(&mut self, label: &str, operation: &str, name: &str) -> ! {
+        let row = format!("{}\tcut\t{label}\t0\t0\t{operation}:{name}\n", self.events);
+        self.output.write_all(row.as_bytes()).unwrap();
+        self.output.sync_all().unwrap();
+        std::process::abort()
+    }
+}
+
+/// One step of an S10 Row cut: a mutation on a namespace name with the
+/// prefix; for a WAL write, optionally only a frame of one group op.
+#[derive(Clone, Copy, Debug)]
+pub(in crate::storage) struct RowStep {
+    pub(in crate::storage) operation: &'static str,
+    pub(in crate::storage) prefix: &'static str,
+    pub(in crate::storage) group_op: Option<u16>,
+}
+impl RowStep {
+    fn matches(&self, operation: &str, name: &str, group_op: Option<u16>) -> bool {
+        self.operation == operation
+            && name.starts_with(self.prefix)
+            && self.group_op.is_none_or(|op| group_op == Some(op))
+    }
+}
+/// What an S10 Row cut does at its event (consumers §9.4).
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub(in crate::storage) enum RowCutMode {
+    /// Abort before the syscall.
+    Before,
+    /// Abort after the syscall succeeded.
+    After,
+    /// Write only the first byte, then abort.
+    FirstByte,
+    /// Fail the write call with no byte written; the process continues.
+    WriteError,
+    /// Fail the sync call with no fsync; the process continues.
+    SyncError,
+}
+/// The one armed S10 Row cut of a native worker process.
+struct RowCut {
+    name: &'static str,
+    steps: Vec<RowStep>,
+    reached: usize,
+    cut: RowStep,
+    mode: RowCutMode,
+}
+/// Arms the S10 Row cut `name`: after `steps` completed in order, `mode` at
+/// the next `cut` event. One per process; recorded as an `arm` row.
+pub(in crate::storage) fn arm_row_cut(
+    trace: &Arc<Mutex<Trace>>,
+    name: &'static str,
+    steps: &[RowStep],
+    cut: RowStep,
+    mode: RowCutMode,
+) {
+    let mut trace = trace.lock().unwrap();
+    assert!(trace.row_cut.is_none() && trace.row_action.is_none());
+    trace.row_cut = Some(RowCut {
+        name,
+        steps: steps.to_vec(),
+        reached: 0,
+        cut,
+        mode,
+    });
+    trace.event("arm", name, steps.len() as u64, 0, &format!("{mode:?}"));
+}
+/// One `arm` row for an S10 cut armed outside this adapter (a C hook).
+pub(in crate::storage) fn note_arm(trace: &Arc<Mutex<Trace>>, name: &'static str) {
+    trace.lock().unwrap().event("arm", name, 0, 0, "HOOK");
+}
+/// A WAL frame's group op (bytes 166..168 of the XWF1 header), or None.
+fn group_op(bytes: &[u8]) -> Option<u16> {
+    (bytes.len() >= 192 && &bytes[..4] == b"XWF1")
+        .then(|| u16::from_le_bytes([bytes[166], bytes[167]]))
 }
 fn db_fds(root: &Path) -> usize {
     fs::read_dir("/proc/self/fd")
@@ -183,6 +313,33 @@ impl FileIo for File {
             .lock()
             .unwrap()
             .mutation("write", self.name.as_str(), offset, bytes.len());
+        let action = self.trace.lock().unwrap().row_action.take();
+        match action {
+            Some((label, RowCutMode::FirstByte)) => {
+                let result = self.inner.as_mut().unwrap().write_at(&bytes[..1], offset);
+                let mut trace = self.trace.lock().unwrap();
+                trace.event(
+                    "write",
+                    self.name.as_str(),
+                    offset,
+                    1,
+                    &format!("FIRST_BYTE:{result:?}"),
+                );
+                trace.row_cut_stop(label, "write", self.name.as_str());
+            }
+            Some((label, RowCutMode::WriteError)) => {
+                self.trace.lock().unwrap().event(
+                    "fault",
+                    self.name.as_str(),
+                    offset,
+                    bytes.len(),
+                    &format!("WRITE_ERROR:{label}"),
+                );
+                return Err(io::Error::other("S10 injected write error"));
+            }
+            Some((_, mode)) => panic!("Row cut {mode:?} armed on a write"),
+            None => {}
+        }
         let cut = {
             let mut trace = self.trace.lock().unwrap();
             if self.name.as_str() == "d3-data-0000000100000001"
@@ -271,6 +428,7 @@ impl FileIo for File {
             Ok(n) => format!("OK:{n}:{}", hash_hex(&bytes[..*n])),
             Err(e) => format!("ERR:{e:?}"),
         };
+        self.trace.lock().unwrap().last_group_op = group_op(bytes);
         self.trace.lock().unwrap().event(
             "write",
             self.name.as_str(),
@@ -285,6 +443,21 @@ impl FileIo for File {
             .lock()
             .unwrap()
             .mutation("sync", self.name.as_str(), 0, 0);
+        let action = self.trace.lock().unwrap().row_action.take();
+        match action {
+            Some((label, RowCutMode::SyncError)) => {
+                self.trace.lock().unwrap().event(
+                    "fault",
+                    self.name.as_str(),
+                    0,
+                    0,
+                    &format!("SYNC_ERROR:{label}"),
+                );
+                return Err(io::Error::other("S10 injected sync error"));
+            }
+            Some((_, mode)) => panic!("Row cut {mode:?} armed on a sync"),
+            None => {}
+        }
         let result = self.inner.as_mut().unwrap().sync_all();
         self.trace
             .lock()
@@ -549,7 +722,7 @@ fn worker_g5_clean() {
         assert_eq!(fs::read_dir(&root).unwrap().count(), 0);
         let trace_file = OpenOptions::new().create_new(true).write(true).open(output.join("effects.tsv")).unwrap();
         let entropy_file = OpenOptions::new().create_new(true).write(true).open(output.join("entropy.tsv")).unwrap();
-        let trace = Arc::new(Mutex::new(Trace { root: root.clone(), output: trace_file, entropy_output: entropy_file, readonly: false, handles: 0, peak: 0, fd_peak: 0, events: 0, mutations: 0, entropy: 0, log_bytes: 0, undo_home_cut: None, catalog_home_cut: None, catalog_sync_after_error: None, catalog_wal_write_end: 0 }));
+        let trace = Arc::new(Mutex::new(Trace { root: root.clone(), output: trace_file, entropy_output: entropy_file, readonly: false, handles: 0, peak: 0, fd_peak: 0, events: 0, mutations: 0, entropy: 0, log_bytes: 0, undo_home_cut: None, catalog_home_cut: None, catalog_sync_after_error: None, catalog_wal_write_end: 0, row_cut: None, row_action: None, last_group_op: None }));
         let directory = Directory { inner: Some(LinuxDirectory::open_existing(&root).unwrap()), trace: Arc::clone(&trace) };
         let writer = directory.acquire_writer().unwrap();
         drop(directory);
@@ -625,6 +798,9 @@ pub(in crate::storage) fn open_native(
         catalog_home_cut: None,
         catalog_sync_after_error: None,
         catalog_wal_write_end: 0,
+        row_cut: None,
+        row_action: None,
+        last_group_op: None,
     }));
     let directory = Directory {
         inner: Some(LinuxDirectory::open_existing(root).unwrap()),
