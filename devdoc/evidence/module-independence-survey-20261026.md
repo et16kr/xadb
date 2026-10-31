@@ -5299,7 +5299,7 @@ r2 memory의 source manifest는 `1627a7f5f551c2940c591cc2e4a836b03b7a36ae0a67f47
   - rollback start floor(S4_C01)는 6739B다. 합은 memory 62827B, native 62835B이고 여유는 2709B와 2701B다.
   - census 출력은 `(iv)_first_gate_wait`·`rollback_reclose=NOT_SUPPLIED`·`commit_progress_gates=WRITER-PROGRESS-001`로 센 범위를 적는다.
 - **hook 영향.** S5R-C01의 `cursor.row_load`는 34524B ≤ 34570B로 S5 값과 같다. `RowReadCaptured` hook은 census를 바꾸지 않는다.
-- shared 20328B는 S6에서 144B 늘어난 값이다([S6 보정](../contracts/dev3-module-boundaries.md#row-recovery-s6)).
+- shared 20328B는 S6에서 144B 늘어난 값이다([S6 보정](../contracts/dev3-module-boundaries.md#row-recovery-s6)). → S8 갱신: 위 값은 PR #10 전 build의 값이다. 수정 뒤 값은 [S8 자원](#s8-single-source)에 있다.
 
 ### native 합류(r2)
 
@@ -5324,7 +5324,7 @@ r2 memory의 source manifest는 `1627a7f5f551c2940c591cc2e4a836b03b7a36ae0a67f47
 검토 보고서 원문은 artifacts의 `reviews/`에 있다. 두 검토 모두 읽기 전용이며 실행은 하지 않았다.
 
 **S6 D1/D2(`8d5e48b..76b3627`).** D1과 D2 모두 REQUIRED 보정을 조건으로 ACCEPT다.
-- R1: shared 144B는 `RowRecoveryAdmission`을 담은 RestoredRetention이 runtime 대여분과 DiskSession recovery binding에서 두 번 세어진 결과다. 사용자 규칙대로 별도 thread가 수정해 이 branch로 합친다. 그 수정은 별도 branch에 push됐고 이 branch로의 PR은 아직 없다. **아직 미해결이다.**
+- R1: shared 144B는 `RowRecoveryAdmission`을 담은 RestoredRetention이 runtime 대여분과 DiskSession recovery binding에서 두 번 세어진 결과다. 사용자 규칙대로 별도 thread가 수정해 이 branch로 합친다. 그 수정은 별도 branch에 push됐고 이 branch로의 PR은 아직 없다. **아직 미해결이다.** → S8 갱신: PR #10(`f267b577`, 병합 `c427def8`)으로 해결됐고 독립 재확인을 마쳤다([S8](#s8-single-source)).
 - R2: 240초 사후 한도. 30초로 되돌리고 r2에서 다시 실행해 해결했다.
 - R3: MCB05-N01..06·MBC40-N01 과다 주장. 계약에 PARTIAL로 적어 해결했다.
 - C2(편차 3)와 N1·N4는 계약에 적었다. C1·C3·C4·N2·N3은 후속으로 적었다. C1은 제품 변경이므로 사용자 승인이 필요하다.
@@ -5337,7 +5337,7 @@ r2 memory의 source manifest는 `1627a7f5f551c2940c591cc2e4a836b03b7a36ae0a67f47
 - C3·C4: (iv) 범위를 첫 gate 대기와 여유를 통한 상계로 좁혔다.
 - C5: Drop 문언을 정정했다.
 - C6: V09 generation/origin stale, V14, V12·V13 인용을 계약에 적었다.
-- 판정은 D1 ACCEPT(R1 반영 조건), D2 ACCEPT(R2 반영 조건)다. 반영분은 작성자가 확인했고 독립 재확인은 아직 없다. S6 R1 합류 뒤 MI06을 다시 판정할 때 함께 확인한다.
+- 판정은 D1 ACCEPT(R1 반영 조건), D2 ACCEPT(R2 반영 조건)다. 반영분은 작성자가 확인했고 독립 재확인은 아직 없다. S6 R1 합류 뒤 MI06을 다시 판정할 때 함께 확인한다. → S8 갱신: 독립 재확인에서 미해결 필수 지적 0개다([S8](#s8-single-source)).
 
 ### M5 판정
 
@@ -5347,13 +5347,118 @@ r2 memory의 source manifest는 `1627a7f5f551c2940c591cc2e4a836b03b7a36ae0a67f47
 | --- | --- | --- |
 | MI01 독립 착수 | PASS(한정) | 같은 C0 `ea783fe`에서 별도 담당이 제품 본문을 썼고 작성 구간이 실제로 겹쳤다([착수 기록](#consumer-c0-start)). 이후 C 공급 대기(S2–S6)는 공급 대기로 따로 적었다. S5의 B 실제 C 시험 입력은 A의 완성된 INSERT로 만들었다. 미완료 본문을 기다린 것은 아니지만 "각자의 시험 입력"은 C0 단계까지만 성립한다(MI03) |
 | MI02 국소성 | PASS | C0 기준 뒤 B 전용 경로 commit 8개, A 전용 경로 commit 39개다. 둘 다 건드린 commit은 두 본문을 처음 넣은 C0 통합 `278e5e8a` 하나다. S7은 A·B 전용 경로를 바꾸지 않았다 |
-| MI03 독립 인수 | **미충족** | C+A, C+B의 실제 C 단독 인수가 없다. B의 실제 C 인수는 A INSERT로 행을 만들었고, [소비자 §8.3](../contracts/dev3-module-consumers.md#independent-fixtures)의 C+B literal ingress는 구현되지 않았다. A의 실제 C 인수도 B source가 있는 전체 트리에서만 실행했다. C0 단독 export(A10/B3)만 PASS다 |
+| MI03 독립 인수 | **미충족** | C+A, C+B의 실제 C 단독 인수가 없다. B의 실제 C 인수는 A INSERT로 행을 만들었고, [소비자 §8.3](../contracts/dev3-module-consumers.md#independent-fixtures)의 C+B literal ingress는 구현되지 않았다. A의 실제 C 인수도 B source가 있는 전체 트리에서만 실행했다. C0 단독 export(A10/B3)만 PASS다. → S8 갱신: PARTIAL(미충족)([S8](#s8-single-source)) |
 | MI04 실제 합류 | 선택 범위 PASS, 미실행1 | 이 절의 memory 11개·native 3 case와 S4 잔여가 PASS다. MCI01-V09 origin stale은 NOT_RUN이고 generation stale·aging은 N/A다 |
 | MI05 보호와 추적 | PASS | 다른 담당 변경·원 결과 덮어쓰기는 없다. S6 원문은 보존하고 보정만 덧붙였다. 의미 충돌은 S6 shared 144B가 C2 Catalog Full read 경계를 깬 것이다. 계약 재개방은 S2-0 Row 쓰기 개정(MCI03-V01 Busy→gate 대기), S6 편차 1–3이다. 재작업은 S6 사후 시간 한도 되돌림과 MCI02 witness다. S7 branch에는 text 충돌이 없다 |
-| MI06 별도 판정 | 미충족(대기) | S6 R1이 별도 thread에서 수정 중이므로 미해결 필수 지적이 남아 있다. S6·S7 반영분의 독립 재확인도 아직 없다. SKIP·NOT_RUN·PARTIAL을 PASS로 바꾸지 않았다 |
+| MI06 별도 판정 | 미충족(대기) | S6 R1이 별도 thread에서 수정 중이므로 미해결 필수 지적이 남아 있다. S6·S7 반영분의 독립 재확인도 아직 없다. SKIP·NOT_RUN·PARTIAL을 PASS로 바꾸지 않았다. → S8 갱신: PASS([S8](#s8-single-source)) |
 
-**M5는 완료가 아니다.** MI03은 C+B literal ingress(C4의 "독립 authored row corpus를 원 owner에 적용하는 제한 경로")와 A·B 단독 export에서의 실제 C 인수가 있어야 충족된다. 이 일을 별도 단계로 진행할지는 사용자 결정 대기다. MI06은 S6 R1 수정이 합류하고 그 반영을 확인하면 다시 판정한다.
+**M5는 완료가 아니다.** MI03은 C+B literal ingress(C4의 "독립 authored row corpus를 원 owner에 적용하는 제한 경로")와 A·B 단독 export에서의 실제 C 인수가 있어야 충족된다. 이 일을 별도 단계로 진행할지는 사용자 결정 대기다. MI06은 S6 R1 수정이 합류하고 그 반영을 확인하면 다시 판정한다. → S8 갱신: 사용자는 MI03을 S8로 이어 가기로 했다. S8 뒤 MI03은 PARTIAL(미충족), MI06은 PASS다([S8](#s8-single-source)).
 
 ### 되돌림
 
 되돌림은 `cf5a909c`, `2f71db00`, `b6766a9b`, `570aac47`, `fb0f560f`, `5d0fa4e3`, `a8ea0fc8`, `e0108bc3`, `98af323b`, `0da85386`의 역순이다. 제품 경로는 cfg(test) hook 한 줄뿐이며 fixture는 매 시험에서 새로 만든다.
+
+<a id="s8-single-source"></a>
+## S8 MI03 단독 source 인수 — C+A·C+B export와 C+B literal ingress
+
+2026-10-31. S7 PR #11 뒤 사용자가 고른 대로 MI03을 S8로 이어 갔다. S7 branch에 S6 shared 수정(PR #10)이 병합된 `c427def8`에서 별도 branch `claude/project-thread-1jfdtk-s8`를 만들었다. [S8 계약](../contracts/dev3-module-boundaries.md#row-single-source-s8)(XADB-MODULE-ROW-SINGLE-001)을 따른다. commit은 다음과 같다.
+- S5 B 읽기 시험 분리 `280a4de1`
+- C+B literal ingress MCB05-L01과 export 도구 `2f93a0bf`
+- A 호출 frame census 분리 `c4c257da`
+- RowRead census 분리와 export 선언 보강 `f8e96768`
+- known-bad K01–K12(K07 제외) `f838e865`
+- clippy 정리 `80c0f883`
+- 독립 검토 반영(K10 단일 변조, K08 강화, L01 after page 대조, expected.json provenance, 도구 설명) `14f7eaa2`
+
+제품 source는 바꾸지 않았다. 시험, fixture, script만 바뀌었다. DEV3 기능은 하지 않았다.
+
+**결론: MI03은 PARTIAL이며 미충족이다.** C+A와 C+B가 각각 상대 source 없이 compile·link되고, memory C+A의 A 경로 인수와 memory C+B의 literal ingress가 통과했다. C+A 복구, literal 행 위의 C+B MCB01–04, native P1–P3, MCB05-N01..06, K07은 미공급이거나 NOT_RUN이다([계약 한계](../contracts/dev3-module-boundaries.md#row-single-source-s8)). MI06은 S6·S7 필수 지적의 독립 재확인으로 충족됐다. M5는 MI03 때문에 여전히 완료가 아니다.
+
+### 실제 공급
+
+- **단독 export.** `scripts/module_single_source.py`가 commit의 `git archive`에서 상대 module의 제품 source·fixture·등록과 상대를 링크하는 시험 모듈을 지운다. 두 export 모두 `crates/` 아래 Rust source에 남은 참조가 0이다. 그 밖의 text file이 상대를 부르는 줄은 `other_text_references`에 적었다(C+A 8개 파일, C+B 12개 파일). 문서, receipts, build plan JSON, C+B의 compile-fail fixture `MBC00-P03.rs`·`MBC00-N11.rs`, N1 author와 그 `input-plan.json`이다.
+
+  | export(`14f7eaa2`) | 파일 수 | 지운 파일 | 지운 등록 | source manifest |
+  | --- | --- | --- | --- | --- |
+  | C+A | 7547 | 19 | 6 | `9bbc29a83cbf8ef9a7db9d71e1fdaed297445e187c5ad6544cd789d6aaa6cfb4` |
+  | C+B | 7437 | 129 | 16 | `79f177096a5439bf0efae64a48464900392dac9b4272e4ea7e6a2dd749a4607b` |
+
+  `80c0f883`의 export manifest는 C+A `94174e5f…`, C+B `0a8b90cb…`다. 두 export 모두 그 안에서 `cargo test -p xadb-engine --lib --no-run --locked`로 빌드된다. C+B에는 지운 census만 쓰던 cfg(test) import 경고 3개가 남는다.
+- **C+B literal ingress.** MCB05-L01과 known-bad 11개(K01–K06, K08–K12)다. K07은 NOT_RUN이다. literal과 K patch의 SHA는 [expected.json](../../tests/fixtures/dev3-module-c2/row-read/expected.json)(`755e0fcb…`)에 있다. author를 C+B export 안에서 `python3 -I`로 다시 실행하면 literal, known-bad, expected.json이 byte 단위로 같다(검토자 확인, `80c0f883` 기준).
+
+### 선택 실행
+
+[동결 inventory](../../tests/fixtures/module-row-integration/single-source-s8-inventory.json)와 [receipts](../../tests/fixtures/module-row-integration/single-source-s8-receipts.json)를 쓴다. 원 plan, 로그, export inventory, 리뷰 보고서는 `/mnt/project-files/module-independence-20261029/artifacts/module-s8-20261031/`에 있다. runner는 selector마다 정확히 시험 1개가 맞는지 확인하고 identity env를 그 실행의 source·ELF·input SHA로 둔다.
+
+| 실행 | 결과 |
+| --- | --- |
+| a1 (개발, `1c5e8a6a`의 C+A export) | 130개 중 129개 PASS. 실패 1개는 `s3_r07_pending_full_read_drain_flusher_and_old_q`로, main에도 있던 S6 shared +144B 회귀다 |
+| b0 (개발, C+B export 첫 빌드) | 빌드 FAIL. A의 scope3 literal을 `include_bytes!`로 읽는 C 시험 둘과, 지운 census 등록 위에 남은 doc comment 때문이다. 둘 다 선언 제거로 바꿨다 |
+| dev-k1 (개발, 전체 트리 `f838e865`) | row_literal 12/12 PASS |
+| pre-push 전 clippy | `row_literal.rs`의 `manual_is_multiple_of` 1건으로 FAIL. `80c0f883`에서 고쳤다 |
+| **a2** (C+A export, `80c0f883`) | **134/134 PASS**, 가장 긴 것 3.53초. a1의 `s3_r07`도 PR #10 뒤 PASS |
+| b1 (C+B export, `80c0f883`) | 32/32 PASS. 검토 반영 전이므로 b2로 대체했다 |
+| f1 (전체 트리, `80c0f883`) | 옮긴 `row_read_live::*` 9/9 PASS. f2로 대체했다 |
+| **b2** (C+B export, `14f7eaa2`) | **32/32 PASS**, 가장 긴 것 1.92초 |
+| **f2** (깨끗한 전체 트리, `14f7eaa2`) | **21/21 PASS**. `row_literal::*` 12개와 옮긴 `row_read_live::*` 9개다. 옮기기만 한 native worker `s5r_n01_native_worker`는 실행하지 않았다 |
+| `14f7eaa2` fmt·workspace clippy | PASS |
+
+a2는 `14f7eaa2`에도 유효하다. `14f7eaa2`는 C+A가 지우는 `row_literal.rs`와 fixture, 도구 설명만 바꿨으므로 C+A export의 `crates/` Rust source가 같다. `14f7eaa2` C+A export를 다시 빌드한 ELF도 a2의 ELF와 SHA-256이 같다.
+
+identity는 다음과 같다.
+- a2: source manifest `94174e5f30f49b15b8b44a07d7c67d7f7f77b234764b680f787ddfc447935813`, ELF `02b0a0b85bf39d821cf271614443cb73363ce24ff79b338214420fdffb2ed08e`
+- b2: source manifest `79f177096a5439bf0efae64a48464900392dac9b4272e4ea7e6a2dd749a4607b`, ELF `f0dee6cf19ba0b94738e88b553277f4ec3dafa81e462931f576c4fdc9034613e`
+- f2: source manifest `c4c02afa053c2c6954924b03794b12c0113b77ba03708eb5816c5031168e2e37`, ELF `ec8499f30320180e9621bbb691a511f8d783daa0cdd9a48743d4416ef31a0fb4`
+
+### known-bad 관측
+
+K 11개 모두 C의 prepare가 같은 ReservedRow로 Before를 돌려줬다(Prepare, Unchanged). WAL, 파일, T page 7개(bytes, stamp, dirty), fence는 바뀌지 않았고, 이어진 cancel은 S2 Cancel literal(40000B, `c2b02eaa…`)과 같았다. 기록한 cause는 다음과 같다. C의 값이며 정답으로 쓰지 않았다.
+- RowSemantic(Corrupt): K01, K04, K05, K06, K09, K10, K11
+- RowSemantic(IdentityMismatch): K02, K03
+- RowSemantic(Row(IdentityMismatch)): K08
+- RowSemantic(Unsupported): K12
+
+거절이 선언한 사실 때문이라는 귀속은 author의 구성에 기댄다. 검토자는 K마다 바뀐 frame offset을 field에 대응시켜 변경이 그 사실이 함축하는 field에 한정됨을 확인했다(K10은 아래 R1로 고친 뒤, K05는 아래 N2의 크기 교란이 남는다).
+
+### 자원(PR #10 뒤)
+
+S7의 (iv) 값은 S6 수정 전 build의 값이다. a2(PR #10이 들어간 `80c0f883`)의 census는 다음과 같다. shared는 memory 20200B, native 20208B다.
+- MBC40-V09 (iv) 첫 gate 대기: floor 7834B. 합은 memory 63794B(여유 1742B), native 63802B(여유 1734B)다.
+- S4_C01 rollback start floor 6739B: 합은 memory 62699B(여유 2837B), native 62707B(여유 2829B)다.
+- S7의 63922B·62827B보다 각각 128B 작다. shared가 S6 이전보다 16B 큰 상태다.
+
+### 독립 검토와 처리
+
+검토 보고서 원문은 artifacts의 `reviews/`에 있다. 두 검토 모두 읽기 전용이다.
+
+**S8 D1/D2(`c427def8..80c0f883`).** 조건부 ACCEPT다. export 도구, 시험 이동, literal, patch loader, K 11개 중 10개가 주장한 범위에서 맞다고 봤다.
+- R1(필수): K10이 단일 변조가 아니었다. InventoryDelta를 뺀 짧은 frame인데 거래 descriptor의 consumed WAL은 전체 길이로 남아 205545였다. `14f7eaa2`에서 짧은 frame 길이로 맞췄다(consumed 205337 = 114048 + 91289). 같은 commit에서 K08도 같은 TxnId의 slot generation이 아니라 TxnId local +1로 바꿔 다른 거래를 가리키게 했다. b2에서 둘 다 PASS다.
+- R2(필수): "MI03은 memory 단독 인수에서 충족"은 과다 주장이다. 계약, inventory, receipts, 이 기록을 PARTIAL·미충족으로 바꾸고 미공급 목록에 C+A 복구 전체와 C+B MCB01–04를 더했다. M5는 MI03을 충족으로 세지 않는다.
+- N1: 참조 검사의 범위를 도구 설명, 계약, inventory의 `reference_scan`에 적었다.
+- N2–N4: K05의 크기 교란, K12가 scope 필드만 본다는 점, K01·K04의 약한 형태를 계약에 적었다. 두 root 이력으로 K07과 함께 공급하는 것은 후속이다.
+- N5: L01이 apply 뒤 T page 1, 2, 11, 13, 14를 literal after image와 대조한다(`14f7eaa2`).
+- N6: K별 cause와 귀속의 한계를 위에 적었다.
+- N7: expected.json에 `schema`, `source_kind: C+B`, `provenance`(author, 고정 입력 SHA)를 더했다. C literal 디렉터리에는 `input-plan.json`이 없고 expected.json이 그 역할을 한다.
+- N8: S7 동결 inventory의 옛 selector 이름과 재실행 규칙을 계약에 적었다.
+- N9: C+A 복구를 B 대신 독립 page decoder로 확인하는 분리는 후속이다.
+
+**S6·S7 필수 지적의 독립 재확인(`c427def8`).** 읽기 전용 재확인자가 S6 R1·R2·R3과 S7 R1·R2를 코드, 계약, 보존 artifact와 대조했다. 미해결 필수 지적은 0개다.
+- S6 R1: PR #10(`f267b577`, 병합 `c427def8`)이 RestoredRetention에 `row_policy`만 남겨 두 counting site를 함께 고쳤다. 72B·136B 산술과 `s2w_c04` 고정값 이동(memory 64008/65384, native 64016/65392)이 맞고, restore 대조와 loser policy 검사는 그대로다.
+- S6 R2·R3, S7 R1·R2: 해결 상태를 확인했다.
+- 조건은 기록 갱신이었다. S7 기록의 "아직 미해결", "MI06 미충족(대기)"과 계약의 미래형 문장을 이 commit에서 갱신 표시했다.
+- 권고(필수 아님): native controller의 sync 검사를 WAL 파일로 거르는 것, S6 원문의 240초·20328B 문장에 정정 위치를 남기는 것, `repro_` 시험 이름과 `catalog_memory.rs`의 낡은 주석이다. 기록만 한다.
+
+### M5 판정 갱신
+
+[S7 판정](#s7-row-join)에서 바뀐 행만 적는다.
+
+| 기준 | 판정 | 근거 |
+| --- | --- | --- |
+| MI03 독립 인수 | **PARTIAL(미충족)** | 위 결론과 [계약 한계](../contracts/dev3-module-boundaries.md#row-single-source-s8) |
+| MI06 별도 판정 | PASS | S6·S7 필수 지적 미해결 0(독립 재확인). S8 검토의 필수 R1·R2는 반영했다. SKIP·NOT_RUN·PARTIAL을 PASS로 바꾸지 않았다 |
+
+MI01, MI02, MI04, MI05는 S7 판정 그대로다. S8은 A·B 전용 경로의 제품 source를 바꾸지 않았다(MI02). **M5는 완료가 아니다.** 남은 것은 MI03의 미공급 목록과 MI04의 MCI01-V09 origin stale(NOT_RUN)이다.
+
+### 되돌림
+
+되돌림은 이 기록을 더한 문서 commit, `14f7eaa2`, `80c0f883`, `f838e865`, `f8e96768`, `c4c257da`, `2f93a0bf`, `280a4de1`의 역순이다. 제품 경로는 바뀌지 않았다.
