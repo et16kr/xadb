@@ -45,7 +45,7 @@ impl CursorCredit for CallerCredit<'_, '_, '_, '_> {
     }
 }
 
-impl Observed for RowCandidate {
+impl Observed for RowCandidate<'_> {
     fn version(&self) -> RecordVersion {
         RowCandidate::version(self)
     }
@@ -64,11 +64,11 @@ impl Observed for RowCopyObservation {
 }
 
 impl<'b, 'a, 's, 'c, 'p, 'd> SearchPage for RowSearchPage<'_, 'b, 'a, 's, 'c, 'p, 'd> {
-    type Candidate = RowCandidate;
+    type Candidate = RowCandidate<'b>;
     fn leaf(&self) -> Result<TreePageView<'_>, RetentionError> {
         RowSearchPage::leaf(self)
     }
-    fn capture(self, at: usize) -> Result<RowCandidate, RetentionError> {
+    fn capture(self, at: usize) -> Result<RowCandidate<'b>, RetentionError> {
         RowSearchPage::capture(self, at)
     }
     fn release_checked(self) -> Result<(), RetentionError> {
@@ -84,25 +84,11 @@ struct LiveSource<'x, 'u, 'r, 't, 'v, 'i, 'b, 'a, 's, 'c, 'p, 'd, 'm, 'w, W: Wri
     residency: &'x mut Plan4ResidencyCursor,
 }
 
-fn source_step<T>(step: ReadStep<T>) -> Step<T, Plan4Target> {
-    match step {
-        ReadStep::Ready(value) => Step::Ready(value),
-        ReadStep::FlushRequired { target } => Step::Flush(target),
-    }
-}
-
-fn read_step<T>(step: Step<T, Plan4Target>) -> ReadStep<T> {
-    match step {
-        Step::Ready(value) => ReadStep::Ready(value),
-        Step::Flush(target) => ReadStep::FlushRequired { target },
-    }
-}
-
 impl<'b, 'a, 's, 'c, 'p, 'd, W: WriterNamespace> ReadSource
     for LiveSource<'_, '_, '_, '_, '_, '_, 'b, 'a, 's, 'c, 'p, 'd, '_, '_, W>
 {
     type Target = Plan4Target;
-    type Candidate = RowCandidate;
+    type Candidate = RowCandidate<'b>;
     type Missing = MissingRowEvidence;
     type Copied = RowCopyObservation;
     type Page<'g>
@@ -112,34 +98,28 @@ impl<'b, 'a, 's, 'c, 'p, 'd, W: WriterNamespace> ReadSource
     fn page(
         &mut self,
     ) -> Result<Step<RowSearchPage<'_, 'b, 'a, 's, 'c, 'p, 'd>, Plan4Target>, RetentionError> {
-        self.operation
-            .page(self.table, self.residency)
-            .map(source_step)
+        self.operation.page(self.table, self.residency)
     }
     fn status(
         &mut self,
-        candidate: &RowCandidate,
+        candidate: &RowCandidate<'b>,
     ) -> Result<Step<TransactionState, Plan4Target>, RetentionError> {
-        self.operation
-            .status(candidate, self.residency)
-            .map(source_step)
+        self.operation.status(candidate, self.residency)
     }
     fn missing_before(
         &mut self,
-        candidate: &RowCandidate,
+        candidate: &RowCandidate<'b>,
     ) -> Result<Step<MissingRowEvidence, Plan4Target>, RetentionError> {
-        self.operation
-            .missing_before(candidate, self.residency)
-            .map(source_step)
+        self.operation.missing_before(candidate, self.residency)
     }
     fn copy_candidate(
         &mut self,
-        candidate: &RowCandidate,
+        candidate: &RowCandidate<'b>,
         output: &mut [u8],
     ) -> Result<RowCopyObservation, RetentionError> {
         self.operation.copy_candidate(candidate, output)
     }
-    fn release_candidate(&mut self, candidate: RowCandidate) -> Result<(), RetentionError> {
+    fn release_candidate(&mut self, candidate: RowCandidate<'b>) -> Result<(), RetentionError> {
         self.operation.release_candidate(candidate)
     }
     fn finish(self) -> Result<(), RetentionError> {
@@ -149,15 +129,15 @@ impl<'b, 'a, 's, 'c, 'p, 'd, W: WriterNamespace> ReadSource
 
 /// The caller's original port, Owner, private loan and residency cursor for
 /// one call. The entry opens the operation from them; none is kept.
-struct LiveCall<'x, 'b, 'a, 's, 'c, 'p, 'd, 'm, 'w, W: WriterNamespace> {
-    port: &'x ReadPort<'b, 'a, 's, 'c, 'p, 'd, 'm, 'w, W>,
-    owner: &'x mut Owner<'c, 's>,
-    private: &'x mut [u8; 425_984],
-    residency: &'x mut Plan4ResidencyCursor,
+pub(in crate::storage) struct LiveCall<'x, 'b, 'a, 's, 'c, 'p, 'd, 'm, 'w, W: WriterNamespace> {
+    pub(in crate::storage) port: &'x ReadPort<'b, 'a, 's, 'c, 'p, 'd, 'm, 'w, W>,
+    pub(in crate::storage) owner: &'x mut Owner<'c, 's>,
+    pub(in crate::storage) private: &'x mut [u8; 425_984],
+    pub(in crate::storage) residency: &'x mut Plan4ResidencyCursor,
 }
 
 /// Live point read on an operation opened here on `view`.
-fn read_point_live<'a, 'c, 's, W: WriterNamespace>(
+pub(in crate::storage) fn read_point_live<'a, 'c, 's, W: WriterNamespace>(
     call: LiveCall<'_, '_, 'a, 's, 'c, '_, '_, '_, '_, W>,
     view: &RowStatementView<'_, '_, 'a, 'c, 's>,
     table: &CheckedTable<'c, 's>,
@@ -184,24 +164,29 @@ fn read_point_live<'a, 'c, 's, W: WriterNamespace>(
         output,
         cancel,
     )
-    .map(read_step)
 }
 
-type LiveCursor<'r, 't, 'v, 'a, 'c, 's> =
-    RowCursor<'r, RowStatementView<'t, 'v, 'a, 'c, 's>, CheckedTable<'c, 's>>;
+pub(in crate::storage) struct LiveCursor<'r, 't, 'v, 'a, 'c, 's> {
+    inner: RowCursor<'r, RowStatementView<'t, 'v, 'a, 'c, 's>, CheckedTable<'c, 's>>,
+}
+impl LiveCursor<'_, '_, '_, '_, '_, '_> {
+    pub(in crate::storage) fn close(self) -> Result<(), RetentionError> {
+        self.inner.close()
+    }
+}
 
-fn open_cursor_live<'r, 't, 'v, 'a, 'c, 's>(
+pub(in crate::storage) fn open_cursor_live<'r, 't, 'v, 'a, 'c, 's>(
     view: &'r RowStatementView<'t, 'v, 'a, 'c, 's>,
     table: &'r CheckedTable<'c, 's>,
     start: Option<RowId>,
     end: Option<RowId>,
 ) -> Result<LiveCursor<'r, 't, 'v, 'a, 'c, 's>, RowReadError> {
-    RowCursor::open(view, table, start, end)
+    RowCursor::open(view, table, start, end).map(|inner| LiveCursor { inner })
 }
 
 /// Live cursor step on an operation opened here on the cursor's own view,
 /// reading the table the cursor was opened on.
-fn next_live<'a, 'c, 's, W: WriterNamespace>(
+pub(in crate::storage) fn next_live<'a, 'c, 's, W: WriterNamespace>(
     cursor: &mut LiveCursor<'_, '_, '_, 'a, 'c, 's>,
     call: LiveCall<'_, '_, 'a, 's, 'c, '_, '_, '_, '_, W>,
     output: &mut [u8],
@@ -213,17 +198,107 @@ fn next_live<'a, 'c, 's, W: WriterNamespace>(
         private,
         residency,
     } = call;
-    cursor
-        .next(
-            move |view, table| {
-                Ok(LiveSource {
-                    operation: port.row_operation(owner, view, private)?,
-                    table,
-                    residency,
-                })
-            },
-            output,
-            cancel,
-        )
-        .map(read_step)
+    cursor.inner.next(
+        move |view, table| {
+            Ok(LiveSource {
+                operation: port.row_operation(owner, view, private)?,
+                table,
+                residency,
+            })
+        },
+        output,
+        cancel,
+    )
+}
+
+/// LOAD-path frame inventory before leaf-temporary bounds. This is a partial
+/// diagnostic, not the complete S5 source bound.
+#[cfg(test)]
+pub(in crate::storage) fn test_load_callers<W: WriterNamespace>() -> [usize; 6] {
+    use super::super::{SeekPosition, Visibility};
+    use super::{Scan, ViewSample};
+    use std::mem::size_of as n;
+    type E<T> = Result<T, RowReadError>;
+    type C<T> = Result<T, RetentionError>;
+    type X = E<Step<bool, Plan4Target>>;
+    type J = E<Step<Option<SeekPosition>, Plan4Target>>;
+    type U = E<Step<Visibility, Plan4Target>>;
+    type Z = E<Visibility>;
+    type GP = C<
+        Step<
+            RowSearchPage<'static, 'static, 'static, 'static, 'static, 'static, 'static>,
+            Plan4Target,
+        >,
+    >;
+    type GS = C<Step<TransactionState, Plan4Target>>;
+    type GM = C<Step<MissingRowEvidence, Plan4Target>>;
+    type N = E<Step<Scan, Plan4Target>>;
+    let r = n::<&()>();
+    let open = n::<C<LiveSource<'_, '_, '_, '_, '_, '_, '_, '_, '_, '_, '_, '_, '_, '_, W>>>()
+        - n::<RowReadOperation<'_, '_, '_, '_, '_, '_, '_, '_, '_, '_, '_, '_, '_, W>>();
+    // Entry arguments, constructed closure, and caller's final result slot.
+    let outer =
+        9 * r + n::<RowId>() + 5 * r + n::<E<Step<PointRead<RowCopyObservation>, Plan4Target>>>();
+    let point = 4 * r
+        + n::<RowId>()
+        + n::<E<ViewSample>>()
+        + open
+        + n::<Option<RowCopyObservation>>()
+        + 2 * n::<X>()
+        + n::<C<()>>();
+    let select =
+        5 * r + n::<Option<RowCandidate>>() + n::<J>() + n::<X>() + n::<E<&RowCandidate>>();
+    let capture = 2 * r + n::<GP>() + n::<E<Option<SeekPosition>>>();
+    let selecting = 6 * r + n::<E<()>>() + n::<U>() + n::<GM>() + n::<E<()>>();
+    let resolve = 3 * r + 2 * n::<Z>() + n::<GS>();
+    let page = outer + point + select + capture + r + n::<GP>();
+    let status = outer + point + select + selecting + resolve + 2 * r + n::<GS>();
+    let missing = outer + point + select + selecting + 2 * r + n::<GM>();
+    // next_live/next hold revision/check, scan/merge, and one copied slot;
+    // publish_next owns take/ok_or and finish progress checks after cleanup.
+    let next = 4 * r
+        + n::<u64>()
+        + n::<E<ViewSample>>()
+        + n::<Result<(), super::super::ReadError>>()
+        + open
+        + n::<Option<RowCopyObservation>>()
+        + 2 * n::<N>()
+        + n::<C<()>>();
+    let scan = 6 * r
+        + n::<Option<RowCandidate>>()
+        + n::<J>()
+        + n::<E<()>>()
+        + 2 * n::<X>()
+        + n::<E<&RowCandidate>>()
+        + n::<Result<(), super::super::ReadError>>();
+    let cursor_outer = 12 * r + n::<E<Step<CursorStep<RowCopyObservation>, Plan4Target>>>();
+    let delta = cursor_outer + next + scan + 2 * r - outer - point - select;
+    [
+        page,
+        status,
+        missing,
+        page + delta,
+        status + delta,
+        missing + delta,
+    ]
+}
+
+/// Whole non-LOAD caller envelope. Large extraction/codec carriers are only
+/// in never-inline callees; sum them conservatively for non-LOAD phases.
+#[cfg(test)]
+pub(in crate::storage) fn test_nonload_caller<W: WriterNamespace>() -> usize {
+    use std::mem::size_of as n;
+    *test_load_callers::<W>().iter().max().unwrap()
+        // Opening closure's return is distinct from read_point/next's open
+        // result (whose operation payload is already counted by the C join).
+        + n::<Result<LiveSource<'_,'_,'_,'_,'_,'_,'_,'_,'_,'_,'_,'_,'_,'_,W>,RetentionError>>()
+        + n::<TreePageView<'_>>()
+        + 2 * n::<Result<TreePageView<'_>, RetentionError>>()
+        + 2 * n::<Result<RowCandidate, RetentionError>>()
+        + 2 * n::<RecordVersion>()
+        + 2 * n::<Result<RowCopyObservation, RetentionError>>()
+        + 2 * n::<RowCopyObservation>()
+        + 8 * n::<Result<(), RowReadError>>()
+        + 32 * n::<&()>()
+        + 512
 }

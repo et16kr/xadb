@@ -2444,3 +2444,15 @@ Q01–Q08은 아래 설계로 독립 D2 검토를 수신해 채택했다. 앞선
 - 추가 view 참조/Status/tuple Result/helper carrier는 Full/Resident source 식에 계수한다. 기존65536B 한도와 source별 원 FAIL을 보존한다. 새 WAL/영속 형식/복구 상태는 만들지 않는다.
 
 일반 Row, 두 번째 쓰기 statement/일반 mark, CheckedTable, C4/C5, 전체 entry/return floor와 M4/M5는 미완료다. 이번 native-type census는 native 실행 증거가 아니다.
+
+
+<a id="row-read-s5"></a>
+### S5 Row 읽기 착수
+
+2026-10-31. main `2ed254ac`에서 별도 branch `codex/s5-row-read`로 이어간다. 사용자 지시는 S5까지 구현·검증·리뷰하고 PR을 등록하는 것이며, 이전 S2/S3/S4 한정 중단 지시를 이번 범위에서 대체한다. S5는 이 문서의 Row read 공급이며 DEV3 최종 전수 인수와 다르다. 담당·통합은 `/root`, 독립 D1/D2 검토는 `/root/s5_review`다. wire·cap·charge·공개 API는 유지한다.
+
+구현 순서는 원 RowRead admission과 reference capture, 원 table/anchor/leaf/allocator 검산, Status/Missing Undo·copy·cleanup, B live point/cursor 연결과 호출 지점별 census다. 원 statement/snapshot의 동일성을 검사하고 physical source 아래에서만 Txn/U를 발급한다. generation이 owner별로 같을 수 있으므로 candidate 검산은 lease generation·capture sequence 외에도 원 lease identity와 actual version/length를 대조한다. overflow는 pin/copy 전에 거절한다. 원 Full charge 안의 실제 memory/native 상계와 B caller 몫을 측정하며 초과하면 Q06 재검토한다.
+
+선택 검증은 S5R-R01..R08·C01..C03 및 MCB00-D13의 새 경로다. 빈 table·own/other actor·snapshot 경계·잘못된 Undo·stale/foreign candidate·retirement Busy·sequence overflow·OutputTooSmall·취소·FlushRequired 동일 snapshot 재시도·InstallationPending을 포함한다. 공유 경로가 바뀐 경우에만 관련 Catalog/visibility 회귀를 선택한다. 실행 전 입력·선택·source identity를 동결하고 실패를 보존한다. 이 착수 기록은 구현/실행 PASS가 아니다.
+
+S5 후속 D2 보완: `RowCandidate<'b>`는 원 visibility binding의 borrow lifetime을 가진다. page의 짧은 latch lifetime이나 operation의 mutable borrow에 묶지 않으므로 Status/Undo/copy 후속 호출은 가능하지만, candidate가 살아 있는 동안 원 binding을 해제·재bind할 수 없다. binding 주소만으로 재open을 구별하지 않는다. 현재 capture 검산은 원 lease identity/generation·단조 capture sequence·captured refs 존재 여부로 한다. 봉인된 candidate에 저장한 actual version/length를 operation에 중복 저장하지 않는다. source charge·공개 형식은 바꾸지 않는다.

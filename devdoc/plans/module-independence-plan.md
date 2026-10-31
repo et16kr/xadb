@@ -1,5 +1,7 @@
 # XADB 모듈 독립 개발 구조 전환 작업 계획
 
+2026-10-31 [S5 Row 읽기 구현·선택 검증](../evidence/module-independence-survey-20261026.md#s5-row-read-completion): 원 Row source와 B point/cursor 연결, 실제 native 읽기 및 전체 source census를 검증했다. 최종 증거 리뷰·pre-push gate·PR 등록을 마무리하며 S6 READY·전체 M4/M5·DEV3 최종 전수는 별도다.
+
 2026-10-31 [S4 live Row rollback](../evidence/module-independence-survey-20261026.md#s4-row-rollback): main `139a05f4`의 별도 branch `codex/s4-row-rollback`에서 statement/full rollback·원 CLR/receipt·flusher/pin 인계를 구현했다. source별 선택20개·변경 compiler1개·native2process를 검증했으며 최종 독립 D1/D2 ACCEPT·필수 수정0을 확인했다. S5/C4/S6·전체 M4/M5는 미완료다.
 
 2026-10-31 [S3 Row Commit](../contracts/dev3-module-boundaries.md#row-commit-s3): 병합 기준 `6ec2d343`에서 클라우드 별도 branch `codex/s3-row-commit`으로 착수했다. S3 한정 구현·source별 선택 검증과 최종 독립 D1/D2 ACCEPT·필수 수정0을 확인했다. 실제 Row Commit·native/current-build gate의 [source별 실행 증거](../evidence/module-independence-survey-20261026.md#s3-row-commit)에 원 실패·미실행과 후속 PASS를 보존했다. S4–S6·전체 M4/M5는 미완료다.

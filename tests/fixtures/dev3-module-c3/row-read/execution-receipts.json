@@ -1,0 +1,1382 @@
+{
+  "schema": "XADB_S5_SOURCE_RECEIPTS_V1",
+  "baseline": "2ed254ac",
+  "scope": "module-independence S5 Row read; not DEV3 final S5",
+  "runs": [
+    {
+      "artifact": "/workspace/s5-evidence/b1",
+      "plan": {
+        "filter": "row::read::driver::tests::mcb00_",
+        "source": "fcb15d2eadbf0ae455a7d15b31709675ef44eaaf38e5b6cc2740c0278a5483d5",
+        "elf": "c26464928dffd708ed2af1516cadc13e7858b244944d12841b92280a1620f2f6",
+        "input": "3d72aa664e984f4f36c41495012fb3f55797187d14deea238b4716b170ae84e1",
+        "timeout": 120
+      },
+      "original_result": {
+        "exit": 0
+      },
+      "case_results": [],
+      "libtest_summaries": [
+        "test result: ok. 12 passed; 0 failed; 0 ignored; 0 measured; 1828 filtered out; finished in 0.11s"
+      ],
+      "files": [
+        {
+          "name": "plan.json",
+          "sha256": "04a07d1ecf1c22e15bcd477df355a4de7e0dd05b153bbc96b97eda66aa1d01ba"
+        },
+        {
+          "name": "result.json",
+          "sha256": "bfdedf06596faa2042b0fedd9653ec1023d2e96ed56dc40b607985bc8438c1d5"
+        },
+        {
+          "name": "source.sha256",
+          "sha256": "fcb15d2eadbf0ae455a7d15b31709675ef44eaaf38e5b6cc2740c0278a5483d5"
+        },
+        {
+          "name": "tests.log",
+          "sha256": "42d452c148f31b16f1e8a8015e8bd65b96211951eb30b09cde7a39af9b1eaca7"
+        }
+      ]
+    },
+    {
+      "artifact": "/workspace/s5-evidence/b2",
+      "plan": {
+        "filter": "mcb00_d",
+        "source": "35ca224e311594827c28c4a0ed03e25317c43f523c708c99e4dd554862b26155",
+        "elf": "36d7cda98752c48bd0110832b886010cafe3f66ad424f1be35d0e3a05263938a",
+        "input": "3d72aa664e984f4f36c41495012fb3f55797187d14deea238b4716b170ae84e1",
+        "timeout": 120
+      },
+      "original_result": {
+        "exit": 0
+      },
+      "case_results": [],
+      "libtest_summaries": [
+        "test result: ok. 12 passed; 0 failed; 0 ignored; 0 measured; 1830 filtered out; finished in 0.12s"
+      ],
+      "files": [
+        {
+          "name": "plan.json",
+          "sha256": "296573ee1db775272cce1232f3b2052fa84fc27ed3396c5c9d209bc3b70fb732"
+        },
+        {
+          "name": "result.json",
+          "sha256": "bfdedf06596faa2042b0fedd9653ec1023d2e96ed56dc40b607985bc8438c1d5"
+        },
+        {
+          "name": "source.sha256",
+          "sha256": "35ca224e311594827c28c4a0ed03e25317c43f523c708c99e4dd554862b26155"
+        },
+        {
+          "name": "tests.log",
+          "sha256": "25bd25b2a32f1455ed3d8c0c49c7d7bcd156e79d7183a619d844dd774bf25f01"
+        }
+      ]
+    },
+    {
+      "artifact": "/workspace/s5-evidence/b3",
+      "plan": {
+        "filter": [
+          "mcb00_d05",
+          "mcb00_d06",
+          "mcb00_d07",
+          "mcb00_d08",
+          "mcb00_d09",
+          "mcb00_d10",
+          "mcb00_d11",
+          "mcb00_d12"
+        ],
+        "source": "7a9239b7a6187131fcf2b7c0d2afa8aecb4195bdd2c0b6b0bc7d6c1c5a2a7d6d",
+        "elf": "9c1d044bc98917117f06517cc53f18a341dd08395c0fb9c021cadc0bb6d82680",
+        "input": "3d72aa664e984f4f36c41495012fb3f55797187d14deea238b4716b170ae84e1",
+        "timeout": 120
+      },
+      "original_result": {
+        "exit": 0
+      },
+      "case_results": [],
+      "libtest_summaries": [
+        "test result: ok. 8 passed; 0 failed; 0 ignored; 0 measured; 1833 filtered out; finished in 0.07s"
+      ],
+      "files": [
+        {
+          "name": "plan.json",
+          "sha256": "2bec7cef34cae98d44219f31de90bbaf6082c6a8ab9538b734b3c616495ebf7b"
+        },
+        {
+          "name": "result.json",
+          "sha256": "bfdedf06596faa2042b0fedd9653ec1023d2e96ed56dc40b607985bc8438c1d5"
+        },
+        {
+          "name": "source.sha256",
+          "sha256": "7a9239b7a6187131fcf2b7c0d2afa8aecb4195bdd2c0b6b0bc7d6c1c5a2a7d6d"
+        },
+        {
+          "name": "tests.log",
+          "sha256": "479474772b6650f025269ed75dd46cd5ca176443779e342b16d0670fc4ba77f0"
+        }
+      ]
+    },
+    {
+      "artifact": "/workspace/s5-evidence/binding1",
+      "plan": {
+        "command": [
+          "/workspace/.xadb-env/cargo/bin/cargo",
+          "check",
+          "-p",
+          "xadb-engine",
+          "--lib",
+          "--locked",
+          "--offline",
+          "--message-format=json"
+        ],
+        "source": "1e587d6a9445531cc30b62abd2686efa162550d5b8d2b6de7c74839fe22de614",
+        "cases": [
+          "baseline",
+          "bound-positive",
+          "escape-negative"
+        ],
+        "case_timeout": 180,
+        "negative": "exactly one error: lifetime may not live long enough at page.capture(0), requiring binding lifetime to outlive static"
+      },
+      "original_result": [
+        {
+          "case": "baseline",
+          "exit": 0,
+          "pass": true,
+          "errors": 0
+        },
+        {
+          "case": "bound-positive",
+          "exit": 0,
+          "pass": true,
+          "errors": 0
+        },
+        {
+          "case": "escape-negative",
+          "exit": 101,
+          "pass": false,
+          "errors": 6
+        }
+      ],
+      "files": [
+        {
+          "name": "plan.json",
+          "sha256": "e1785305c4e58b2a862cc006d6829cb771d9e053a18e1dd9cfa749b0badb03d5"
+        },
+        {
+          "name": "result.json",
+          "sha256": "044e863d075a91377e57e3408c0e8cd8041ef70d70236510b2039d795dd6fb86"
+        },
+        {
+          "name": "source.sha256",
+          "sha256": "1e587d6a9445531cc30b62abd2686efa162550d5b8d2b6de7c74839fe22de614"
+        }
+      ]
+    },
+    {
+      "artifact": "/workspace/s5-evidence/binding2",
+      "plan": {
+        "command": [
+          "/workspace/.xadb-env/cargo/bin/cargo",
+          "check",
+          "-p",
+          "xadb-engine",
+          "--lib",
+          "--locked",
+          "--offline",
+          "--message-format=json"
+        ],
+        "source": "1e587d6a9445531cc30b62abd2686efa162550d5b8d2b6de7c74839fe22de614",
+        "cases": [
+          "baseline",
+          "bound-positive",
+          "escape-negative"
+        ],
+        "case_timeout": 180,
+        "negative": "exactly one error: lifetime may not live long enough at page.capture(0), requiring binding lifetime to outlive static"
+      },
+      "original_result": [
+        {
+          "case": "baseline",
+          "exit": 0,
+          "pass": true,
+          "errors": 0
+        },
+        {
+          "case": "bound-positive",
+          "exit": 0,
+          "pass": true,
+          "errors": 0
+        },
+        {
+          "case": "escape-negative",
+          "exit": 101,
+          "pass": true,
+          "errors": 1
+        }
+      ],
+      "files": [
+        {
+          "name": "plan.json",
+          "sha256": "e1785305c4e58b2a862cc006d6829cb771d9e053a18e1dd9cfa749b0badb03d5"
+        },
+        {
+          "name": "result.json",
+          "sha256": "ca78e294f552aa032ac22254375638c78c5ca90fe223ec8fa2165532c09cdcdf"
+        },
+        {
+          "name": "source.sha256",
+          "sha256": "1e587d6a9445531cc30b62abd2686efa162550d5b8d2b6de7c74839fe22de614"
+        }
+      ]
+    },
+    {
+      "artifact": "/workspace/s5-evidence/c1",
+      "plan": {
+        "filter": [
+          "s5r_c01_memory",
+          "s5r_c02_native",
+          "mcb00_d13"
+        ],
+        "source": "8f8ac9c845945eaabc95f83915fdfd2dcea322623f138489960e378943e67d8b",
+        "elf": "0339f9cbb85465bfff25640fb57189bde9f023c5b67c8b53cdfecdc5073ab564",
+        "input": "3d72aa664e984f4f36c41495012fb3f55797187d14deea238b4716b170ae84e1",
+        "timeout": 120
+      },
+      "original_result": {
+        "exit": 0
+      },
+      "case_results": [],
+      "libtest_summaries": [
+        "test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 1841 filtered out; finished in 0.00s"
+      ],
+      "files": [
+        {
+          "name": "plan.json",
+          "sha256": "9e1af6f374ad906ed5b01f301eae9d7f6e180174f70e0e7f68aa811f5ebc040a"
+        },
+        {
+          "name": "result.json",
+          "sha256": "bfdedf06596faa2042b0fedd9653ec1023d2e96ed56dc40b607985bc8438c1d5"
+        },
+        {
+          "name": "source.sha256",
+          "sha256": "8f8ac9c845945eaabc95f83915fdfd2dcea322623f138489960e378943e67d8b"
+        },
+        {
+          "name": "tests.log",
+          "sha256": "89acfeedd7990607b8ace69cf6242f1859ee3778c352fd17998af7107c574364"
+        }
+      ]
+    },
+    {
+      "artifact": "/workspace/s5-evidence/native1",
+      "plan": {
+        "command": [
+          "/workspace/xadb/target/debug/deps/engine-1e4c5f7676c3b262",
+          "s5r_n01_native_worker",
+          "--ignored",
+          "--nocapture",
+          "--test-threads=1"
+        ],
+        "source": "900e1a6e0b08afbbc149577fefefc96f27c6ad3cc3921c1b9289a2d789b1740b",
+        "elf": "ca9194e9b26136633e9ef992833abfd1e737d69857ca503b84995c1adf65ff3f",
+        "input": "3d72aa664e984f4f36c41495012fb3f55797187d14deea238b4716b170ae84e1",
+        "timeout": 120,
+        "oracle": "committed q2 row1 canonical literal13 bytes; point Found/Missing, cursor Row/End; database content hashes and instrumented mutation count unchanged across read-only transaction; handles0 peak<=3 fd_peak<=6"
+      },
+      "original_result": {
+        "exit": 101,
+        "status": "FAIL",
+        "namespace": [
+          {
+            "name": "DWB",
+            "bytes": 4096,
+            "sha256": "d486bfa3bbec8e2d27073bd8e1aa39a6bd43e1d7e9ddc09fc1c18a885ae776ad"
+          },
+          {
+            "name": "FILEMAP",
+            "bytes": 4096,
+            "sha256": "5938c6fac59aa7d816b2e8b358df8e15511e78c1f85934b1451fea92fc36dba0"
+          },
+          {
+            "name": "LOCK",
+            "bytes": 0,
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          {
+            "name": "WRITER",
+            "bytes": 4096,
+            "sha256": "82a9e17a80dcb5d9a06c343f90cc4c325deede22362d9c2e82ba8d04b2acd899"
+          },
+          {
+            "name": "d3-bootstrap",
+            "bytes": 4096,
+            "sha256": "e748c4c73df39f04bf9b82bd4219ad4317d7556f6a2f081254fcdf1a9ddd2883"
+          },
+          {
+            "name": "d3-data-0000000100000001",
+            "bytes": 1048576,
+            "sha256": "51089a061ddc825966580bfe86a7046aa482c68ec35439ad36b5640f3b541476"
+          },
+          {
+            "name": "d3-dwb-0",
+            "bytes": 16384,
+            "sha256": "9cc33556e5bf91bacd7f7604916172217988eaebc4d42ac0fb12dde08de9b912"
+          },
+          {
+            "name": "d3-dwb-1",
+            "bytes": 16384,
+            "sha256": "4fe7b59af6de3b665b67788cc2f99892ab827efae3a467342b3bb4e3bc8e5bfe"
+          },
+          {
+            "name": "d3-dwb-images",
+            "bytes": 16711680,
+            "sha256": "6c5e5b0f07ad132df7a8fbe84a1e6a18e99afdcb24d68409c1f98abc8f27f3c4"
+          },
+          {
+            "name": "d3-dwb-reserved",
+            "bytes": 8192,
+            "sha256": "9f1dcbc35c350d6027f98be0f5c8b43b42ca52b7604459c0c42be3aa88913d47"
+          },
+          {
+            "name": "d3-dwb-stage",
+            "bytes": 16384,
+            "sha256": "2f55b2245100ab1380a48bb9168c3276ace2d1aa7c4b1832cdc34856752ccf94"
+          },
+          {
+            "name": "d3-filemap-0",
+            "bytes": 2113536,
+            "sha256": "5c68a64618b99736aa8a0e10adece83318cc8996ef9039e0879dc0e5d0fb33d1"
+          },
+          {
+            "name": "d3-filemap-1",
+            "bytes": 2113536,
+            "sha256": "60840ebe89c25a45643458246c34e43315d67bca75118a904c9bdc80a018c199"
+          },
+          {
+            "name": "d3-profile",
+            "bytes": 4096,
+            "sha256": "f49d4bb26a5c0e1bd66dec9a2b0f77aa24e3fafadf54f27e5db9ab9a960e204e"
+          },
+          {
+            "name": "d3-wal-00000001",
+            "bytes": 877399,
+            "sha256": "c3629990f2b6640943378ae283471973496dcbd722d0755f0426f1eef450dbe7"
+          }
+        ]
+      },
+      "case_results": [
+        [
+          "FAIL",
+          "S5R-N01"
+        ]
+      ],
+      "libtest_summaries": [
+        "test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 1847 filtered out; finished in 11.90s"
+      ],
+      "files": [
+        {
+          "name": "plan.json",
+          "sha256": "be4dc5d8ef4673d733ef43282a9299c940a9891a0a5ce0123e22792eb2dbec68"
+        },
+        {
+          "name": "result.json",
+          "sha256": "3533cb12eafca75ab636f501dc41d168b0dcd8badde162deb23d0da0f3deefe7"
+        },
+        {
+          "name": "source.sha256",
+          "sha256": "900e1a6e0b08afbbc149577fefefc96f27c6ad3cc3921c1b9289a2d789b1740b"
+        },
+        {
+          "name": "tests.log",
+          "sha256": "dffc1702b5ab74537fbd2f880954d70823e6108590890f1ed87ab3379a7309fe"
+        }
+      ]
+    },
+    {
+      "artifact": "/workspace/s5-evidence/native2",
+      "plan": {
+        "command": [
+          "/workspace/xadb/target/debug/deps/engine-1e4c5f7676c3b262",
+          "s5r_n01_native_worker",
+          "--ignored",
+          "--nocapture",
+          "--test-threads=1"
+        ],
+        "source": "4db9e0b46f4d005113dba321d2da07d369ac2b901bd0af3f55be43bf0e8a481e",
+        "elf": "b9dde234e6a59a0d967d1d4e9a8e49d028e8038e58674dfdce76cb7844640adf",
+        "input": "3d72aa664e984f4f36c41495012fb3f55797187d14deea238b4716b170ae84e1",
+        "timeout": 120,
+        "oracle": "committed q2 row1 canonical literal13 bytes; point Found/Missing, cursor Row/End; database content hashes and instrumented mutation count unchanged across read-only transaction; handles0 peak<=3 fd_peak<=6"
+      },
+      "original_result": {
+        "exit": 0,
+        "status": "PASS",
+        "namespace": [
+          {
+            "name": "DWB",
+            "bytes": 4096,
+            "sha256": "d486bfa3bbec8e2d27073bd8e1aa39a6bd43e1d7e9ddc09fc1c18a885ae776ad"
+          },
+          {
+            "name": "FILEMAP",
+            "bytes": 4096,
+            "sha256": "5938c6fac59aa7d816b2e8b358df8e15511e78c1f85934b1451fea92fc36dba0"
+          },
+          {
+            "name": "LOCK",
+            "bytes": 0,
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          {
+            "name": "WRITER",
+            "bytes": 4096,
+            "sha256": "82a9e17a80dcb5d9a06c343f90cc4c325deede22362d9c2e82ba8d04b2acd899"
+          },
+          {
+            "name": "d3-bootstrap",
+            "bytes": 4096,
+            "sha256": "e748c4c73df39f04bf9b82bd4219ad4317d7556f6a2f081254fcdf1a9ddd2883"
+          },
+          {
+            "name": "d3-data-0000000100000001",
+            "bytes": 1048576,
+            "sha256": "51089a061ddc825966580bfe86a7046aa482c68ec35439ad36b5640f3b541476"
+          },
+          {
+            "name": "d3-dwb-0",
+            "bytes": 16384,
+            "sha256": "9cc33556e5bf91bacd7f7604916172217988eaebc4d42ac0fb12dde08de9b912"
+          },
+          {
+            "name": "d3-dwb-1",
+            "bytes": 16384,
+            "sha256": "4fe7b59af6de3b665b67788cc2f99892ab827efae3a467342b3bb4e3bc8e5bfe"
+          },
+          {
+            "name": "d3-dwb-images",
+            "bytes": 16711680,
+            "sha256": "6c5e5b0f07ad132df7a8fbe84a1e6a18e99afdcb24d68409c1f98abc8f27f3c4"
+          },
+          {
+            "name": "d3-dwb-reserved",
+            "bytes": 8192,
+            "sha256": "9f1dcbc35c350d6027f98be0f5c8b43b42ca52b7604459c0c42be3aa88913d47"
+          },
+          {
+            "name": "d3-dwb-stage",
+            "bytes": 16384,
+            "sha256": "2f55b2245100ab1380a48bb9168c3276ace2d1aa7c4b1832cdc34856752ccf94"
+          },
+          {
+            "name": "d3-filemap-0",
+            "bytes": 2113536,
+            "sha256": "5c68a64618b99736aa8a0e10adece83318cc8996ef9039e0879dc0e5d0fb33d1"
+          },
+          {
+            "name": "d3-filemap-1",
+            "bytes": 2113536,
+            "sha256": "60840ebe89c25a45643458246c34e43315d67bca75118a904c9bdc80a018c199"
+          },
+          {
+            "name": "d3-profile",
+            "bytes": 4096,
+            "sha256": "f49d4bb26a5c0e1bd66dec9a2b0f77aa24e3fafadf54f27e5db9ab9a960e204e"
+          },
+          {
+            "name": "d3-wal-00000001",
+            "bytes": 877399,
+            "sha256": "c3629990f2b6640943378ae283471973496dcbd722d0755f0426f1eef450dbe7"
+          }
+        ]
+      },
+      "case_results": [
+        [
+          "PASS",
+          "S5R-N01"
+        ]
+      ],
+      "libtest_summaries": [
+        "test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 1849 filtered out; finished in 14.91s"
+      ],
+      "files": [
+        {
+          "name": "plan.json",
+          "sha256": "df55a3b933980effdd734edeb81a3fd4ec244cf93021b0039f668ea83479ef6a"
+        },
+        {
+          "name": "result.json",
+          "sha256": "bd2b89a5c5a1eb580fe05ad07edf32e9e08f20e0e3384af29cae4e2e4b3d95ef"
+        },
+        {
+          "name": "source.sha256",
+          "sha256": "4db9e0b46f4d005113dba321d2da07d369ac2b901bd0af3f55be43bf0e8a481e"
+        },
+        {
+          "name": "tests.log",
+          "sha256": "28703717a49ab91189bf8b91f73e43fbdc29452d6091edb33fcb1b684a41de03"
+        }
+      ]
+    },
+    {
+      "artifact": "/workspace/s5-evidence/port1",
+      "plan": {
+        "command": [
+          "/workspace/.xadb-env/cargo/bin/cargo",
+          "check",
+          "-p",
+          "xadb-engine",
+          "--lib",
+          "--locked",
+          "--offline",
+          "--message-format=json"
+        ],
+        "source": "7a9239b7a6187131fcf2b7c0d2afa8aecb4195bdd2c0b6b0bc7d6c1c5a2a7d6d",
+        "cases": [
+          "baseline",
+          "bound-positive",
+          "escape-negative"
+        ],
+        "case_timeout": 180,
+        "negative": "exactly one E0505 at drop(port) while operation later finishes"
+      },
+      "original_result": [
+        {
+          "case": "baseline",
+          "exit": 0,
+          "pass": true,
+          "errors": 0
+        },
+        {
+          "case": "bound-positive",
+          "exit": 0,
+          "pass": true,
+          "errors": 0
+        },
+        {
+          "case": "escape-negative",
+          "exit": 101,
+          "pass": true,
+          "errors": 1
+        }
+      ],
+      "files": [
+        {
+          "name": "plan.json",
+          "sha256": "8616306642f215a10effb1e6acd2709d935ea5a337934312706e50bc7c014a57"
+        },
+        {
+          "name": "result.json",
+          "sha256": "9cb849b4a803d1c6d3de87c00e8372ea82185c98843b9ab311686e59a62eae77"
+        },
+        {
+          "name": "source.sha256",
+          "sha256": "7a9239b7a6187131fcf2b7c0d2afa8aecb4195bdd2c0b6b0bc7d6c1c5a2a7d6d"
+        }
+      ]
+    },
+    {
+      "artifact": "/workspace/s5-evidence/r1",
+      "plan": {
+        "filter": "::row_live::s5r_",
+        "source": "01111a75d444ead4fc1cc924512b41e1bc24f8c727e69d6ef534039b185e1bd4",
+        "elf": "15aad7a1c3bf6e7e1c9310f8218016cd4ddc40c66f63993ce885cd6d4f4465f4",
+        "input": "3d72aa664e984f4f36c41495012fb3f55797187d14deea238b4716b170ae84e1",
+        "timeout": 120
+      },
+      "case_results": [
+        [
+          "PASS",
+          "S5R-R01"
+        ],
+        [
+          "PASS",
+          "S5R-R02-R04"
+        ]
+      ],
+      "libtest_summaries": [
+        "test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 1838 filtered out; finished in 17.88s"
+      ],
+      "files": [
+        {
+          "name": "plan.json",
+          "sha256": "df4401b08694272f659788481532ffd954faa008b176ba3d5a754b3ed53d52f3"
+        },
+        {
+          "name": "source.sha256",
+          "sha256": "01111a75d444ead4fc1cc924512b41e1bc24f8c727e69d6ef534039b185e1bd4"
+        },
+        {
+          "name": "tests.log",
+          "sha256": "5dadf7bddfbf7d1a21cb4662aa7f8dfc0962c10fdef7241e09b02ffde7b3187b"
+        }
+      ]
+    },
+    {
+      "artifact": "/workspace/s5-evidence/r10",
+      "plan": {
+        "filter": [
+          "s5r_r03",
+          "s5r_r08"
+        ],
+        "source": "a0231b72bb9858cc5e79c9aa3bc4b0622e8a775291de64d31684103beb830682",
+        "elf": "699d909b2df9e553f1146f8bb3546dffa04b6351d97de47baabebddd8ac786a8",
+        "input": "3d72aa664e984f4f36c41495012fb3f55797187d14deea238b4716b170ae84e1",
+        "timeout": 120
+      },
+      "original_result": {
+        "exit": 101
+      },
+      "case_results": [
+        [
+          "FAIL",
+          "S5R-R03"
+        ],
+        [
+          "PASS",
+          "S5R-R08"
+        ]
+      ],
+      "libtest_summaries": [
+        "test result: FAILED. 1 passed; 1 failed; 0 ignored; 0 measured; 1845 filtered out; finished in 16.65s"
+      ],
+      "files": [
+        {
+          "name": "plan.json",
+          "sha256": "779cef006688ab836c84db691b9c1720277009f97cbed43b3c2c3a0f3df483e9"
+        },
+        {
+          "name": "result.json",
+          "sha256": "90e71c6b9ae5e48af5ac3171f8868c6928540cdd9ff455e95ed8b1fa3d40eef5"
+        },
+        {
+          "name": "source.sha256",
+          "sha256": "a0231b72bb9858cc5e79c9aa3bc4b0622e8a775291de64d31684103beb830682"
+        },
+        {
+          "name": "tests.log",
+          "sha256": "a5c7fae7ab5002da420390904998d5ab607b854b941da4d5e2333ab709ba97cb"
+        }
+      ]
+    },
+    {
+      "artifact": "/workspace/s5-evidence/r11",
+      "plan": {
+        "filter": [
+          "s5r_r03"
+        ],
+        "source": "900e1a6e0b08afbbc149577fefefc96f27c6ad3cc3921c1b9289a2d789b1740b",
+        "elf": "ca9194e9b26136633e9ef992833abfd1e737d69857ca503b84995c1adf65ff3f",
+        "input": "3d72aa664e984f4f36c41495012fb3f55797187d14deea238b4716b170ae84e1",
+        "timeout": 120
+      },
+      "original_result": {
+        "exit": 0
+      },
+      "case_results": [
+        [
+          "PASS",
+          "S5R-R03"
+        ]
+      ],
+      "libtest_summaries": [
+        "test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 1847 filtered out; finished in 13.30s"
+      ],
+      "files": [
+        {
+          "name": "plan.json",
+          "sha256": "711735d189c503745a26df2241122aa93bd5cbb4b1fdc688fd14b43e78a2539e"
+        },
+        {
+          "name": "result.json",
+          "sha256": "bfdedf06596faa2042b0fedd9653ec1023d2e96ed56dc40b607985bc8438c1d5"
+        },
+        {
+          "name": "source.sha256",
+          "sha256": "900e1a6e0b08afbbc149577fefefc96f27c6ad3cc3921c1b9289a2d789b1740b"
+        },
+        {
+          "name": "tests.log",
+          "sha256": "f6e35a4000536fd92474fc9a60d9b36228b8a433a8d35390880db1b9e6ba222e"
+        }
+      ]
+    },
+    {
+      "artifact": "/workspace/s5-evidence/r12",
+      "plan": {
+        "filter": [
+          "s5r_r02",
+          "s5r_c03",
+          "s5r_r01_pending"
+        ],
+        "source": "4db9e0b46f4d005113dba321d2da07d369ac2b901bd0af3f55be43bf0e8a481e",
+        "elf": "b9dde234e6a59a0d967d1d4e9a8e49d028e8038e58674dfdce76cb7844640adf",
+        "input": "3d72aa664e984f4f36c41495012fb3f55797187d14deea238b4716b170ae84e1",
+        "timeout": 120
+      },
+      "original_result": {
+        "exit": 0
+      },
+      "case_results": [
+        [
+          "PASS",
+          "S5R-C03"
+        ],
+        [
+          "PASS",
+          "S5R-R01-PENDING"
+        ],
+        [
+          "PASS",
+          "S5R-R02-R04"
+        ]
+      ],
+      "libtest_summaries": [
+        "test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 1847 filtered out; finished in 31.08s"
+      ],
+      "files": [
+        {
+          "name": "plan.json",
+          "sha256": "46daab09a29ce2043ad2731d72aad2de0c9b50bdd1a43969889a1492f945999a"
+        },
+        {
+          "name": "result.json",
+          "sha256": "bfdedf06596faa2042b0fedd9653ec1023d2e96ed56dc40b607985bc8438c1d5"
+        },
+        {
+          "name": "source.sha256",
+          "sha256": "4db9e0b46f4d005113dba321d2da07d369ac2b901bd0af3f55be43bf0e8a481e"
+        },
+        {
+          "name": "tests.log",
+          "sha256": "797f45a14387cd029b6e04337357b471a8f1e899b98785d9da2d71df2d752a54"
+        }
+      ]
+    },
+    {
+      "artifact": "/workspace/s5-evidence/r13",
+      "plan": {
+        "filter": [
+          "s5r_r02",
+          "s5r_r05"
+        ],
+        "source": "4e5effc0216efb90342e9bf8239aa360814101b88928f3f107219ce2b5b78ac5",
+        "elf": "9a625fdf04bf11aae4db37f2948457fb5a70426bdf0dda3b0b7868499a1bcfbe",
+        "input": "3d72aa664e984f4f36c41495012fb3f55797187d14deea238b4716b170ae84e1",
+        "timeout": 120
+      },
+      "original_result": {
+        "exit": 101
+      },
+      "case_results": [
+        [
+          "PASS",
+          "S5R-R02-R04"
+        ],
+        [
+          "FAIL",
+          "S5R-R05-R07"
+        ]
+      ],
+      "libtest_summaries": [
+        "test result: FAILED. 1 passed; 1 failed; 0 ignored; 0 measured; 1849 filtered out; finished in 23.17s"
+      ],
+      "files": [
+        {
+          "name": "plan.json",
+          "sha256": "437ae625fb73b1bbfd6df91b550c93d62b11089031269a2fecb85801b2ddfb6e"
+        },
+        {
+          "name": "result.json",
+          "sha256": "90e71c6b9ae5e48af5ac3171f8868c6928540cdd9ff455e95ed8b1fa3d40eef5"
+        },
+        {
+          "name": "source.sha256",
+          "sha256": "4e5effc0216efb90342e9bf8239aa360814101b88928f3f107219ce2b5b78ac5"
+        },
+        {
+          "name": "tests.log",
+          "sha256": "8122b6351722ed684c0a290ca452af4314a30642bd873f492c82328d2856a1b8"
+        }
+      ]
+    },
+    {
+      "artifact": "/workspace/s5-evidence/r14",
+      "plan": {
+        "filter": [
+          "s5r_r05",
+          "s5r_r03_cold"
+        ],
+        "source": "7e960e8ec6f243d262c6fab10e2abd054649dc7af2e56605a969f1ad68f09894",
+        "elf": "ad071f1daf73887da1d41f845fff0eeb3dd2a8c94a14f433ce7829ca339c69c9",
+        "input": "3d72aa664e984f4f36c41495012fb3f55797187d14deea238b4716b170ae84e1",
+        "timeout": 120
+      },
+      "original_result": {
+        "exit": 101
+      },
+      "case_results": [
+        [
+          "FAIL",
+          "S5R-R03-CATALOG"
+        ],
+        [
+          "PASS",
+          "S5R-R05-R07"
+        ]
+      ],
+      "libtest_summaries": [
+        "test result: FAILED. 1 passed; 1 failed; 0 ignored; 0 measured; 1850 filtered out; finished in 15.89s"
+      ],
+      "files": [
+        {
+          "name": "plan.json",
+          "sha256": "6554f93769d93199fb6022ef799e16e80a1d25907861eecf3acc0e5a71814619"
+        },
+        {
+          "name": "result.json",
+          "sha256": "90e71c6b9ae5e48af5ac3171f8868c6928540cdd9ff455e95ed8b1fa3d40eef5"
+        },
+        {
+          "name": "source.sha256",
+          "sha256": "7e960e8ec6f243d262c6fab10e2abd054649dc7af2e56605a969f1ad68f09894"
+        },
+        {
+          "name": "tests.log",
+          "sha256": "d92b2104a79790dda6edeab35efe9849305e5c182bd087fe1d4175aacf193a2b"
+        }
+      ]
+    },
+    {
+      "artifact": "/workspace/s5-evidence/r15",
+      "plan": {
+        "filter": [
+          "s5r_r03_cold"
+        ],
+        "source": "fdf28edbb7e9934b5b8ab2a4b74435e0b49e85bbec28d8f9b76739688f6b1c94",
+        "elf": "976f5511f8311b38c3272f5fee3ba9d2b4a6b7f3c0a327bd71f293fa25b5df7c",
+        "input": "3d72aa664e984f4f36c41495012fb3f55797187d14deea238b4716b170ae84e1",
+        "timeout": 120
+      },
+      "original_result": {
+        "exit": 0
+      },
+      "case_results": [
+        [
+          "PASS",
+          "S5R-R03-CATALOG"
+        ]
+      ],
+      "libtest_summaries": [
+        "test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 1851 filtered out; finished in 9.79s"
+      ],
+      "files": [
+        {
+          "name": "plan.json",
+          "sha256": "127df40e825369de4e1fe01e30d4c09a70317a90e6eafe74ba291af2b484bee7"
+        },
+        {
+          "name": "result.json",
+          "sha256": "bfdedf06596faa2042b0fedd9653ec1023d2e96ed56dc40b607985bc8438c1d5"
+        },
+        {
+          "name": "source.sha256",
+          "sha256": "fdf28edbb7e9934b5b8ab2a4b74435e0b49e85bbec28d8f9b76739688f6b1c94"
+        },
+        {
+          "name": "tests.log",
+          "sha256": "8b712e263a56809e379cbb8145d5e9ca6a7f213fdd95d282e0e3318e04952e6a"
+        }
+      ]
+    },
+    {
+      "artifact": "/workspace/s5-evidence/r2",
+      "plan": {
+        "filter": "::row_live::s5r_",
+        "source": "ed8e6f3a5428316a1683e0130778374f5f44e1e619aa63299060e3eb4e9aaeda",
+        "elf": "0bb1fb1546d7427f813bbacbf8e0110468b69889dd1ecaf19d063831ebe506a6",
+        "input": "3d72aa664e984f4f36c41495012fb3f55797187d14deea238b4716b170ae84e1",
+        "timeout": 120
+      },
+      "original_result": {
+        "exit": 0
+      },
+      "case_results": [
+        [
+          "PASS",
+          "S5R-R01"
+        ],
+        [
+          "PASS",
+          "S5R-R02-R04"
+        ]
+      ],
+      "libtest_summaries": [
+        "test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 1838 filtered out; finished in 19.95s"
+      ],
+      "files": [
+        {
+          "name": "plan.json",
+          "sha256": "4883ff35cbb886ea0433f0f99026ffbd085f18640d826e0b27fdc7378834fbed"
+        },
+        {
+          "name": "result.json",
+          "sha256": "bfdedf06596faa2042b0fedd9653ec1023d2e96ed56dc40b607985bc8438c1d5"
+        },
+        {
+          "name": "source.sha256",
+          "sha256": "ed8e6f3a5428316a1683e0130778374f5f44e1e619aa63299060e3eb4e9aaeda"
+        },
+        {
+          "name": "tests.log",
+          "sha256": "a12dd401c7e5fd27662964398e58047ee8465a3879e0477dc09a415b40a0912e"
+        }
+      ]
+    },
+    {
+      "artifact": "/workspace/s5-evidence/r3",
+      "plan": {
+        "filter": "::row_live::s5r_r02",
+        "source": "fcb15d2eadbf0ae455a7d15b31709675ef44eaaf38e5b6cc2740c0278a5483d5",
+        "elf": "c26464928dffd708ed2af1516cadc13e7858b244944d12841b92280a1620f2f6",
+        "input": "3d72aa664e984f4f36c41495012fb3f55797187d14deea238b4716b170ae84e1",
+        "timeout": 120
+      },
+      "original_result": {
+        "exit": 0
+      },
+      "case_results": [
+        [
+          "PASS",
+          "S5R-R02-R04"
+        ]
+      ],
+      "libtest_summaries": [
+        "test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 1839 filtered out; finished in 12.25s"
+      ],
+      "files": [
+        {
+          "name": "plan.json",
+          "sha256": "f61afbc412ef9f7b5dfaa21741a444a6a1932b1c4f1ab22925685723975253ab"
+        },
+        {
+          "name": "result.json",
+          "sha256": "bfdedf06596faa2042b0fedd9653ec1023d2e96ed56dc40b607985bc8438c1d5"
+        },
+        {
+          "name": "source.sha256",
+          "sha256": "fcb15d2eadbf0ae455a7d15b31709675ef44eaaf38e5b6cc2740c0278a5483d5"
+        },
+        {
+          "name": "tests.log",
+          "sha256": "afdecc8470d8ab0e3dbe9d8f67da9380e0c18f96d375b23f85c6a70306c51946"
+        }
+      ]
+    },
+    {
+      "artifact": "/workspace/s5-evidence/r4",
+      "plan": {
+        "filter": "s5r_r02",
+        "source": "35ca224e311594827c28c4a0ed03e25317c43f523c708c99e4dd554862b26155",
+        "elf": "36d7cda98752c48bd0110832b886010cafe3f66ad424f1be35d0e3a05263938a",
+        "input": "3d72aa664e984f4f36c41495012fb3f55797187d14deea238b4716b170ae84e1",
+        "timeout": 120
+      },
+      "original_result": {
+        "exit": 0
+      },
+      "case_results": [
+        [
+          "PASS",
+          "S5R-R02-R04"
+        ]
+      ],
+      "libtest_summaries": [
+        "test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 1841 filtered out; finished in 14.43s"
+      ],
+      "files": [
+        {
+          "name": "plan.json",
+          "sha256": "9275fd4770631e73652231091c12aa338f76be46d4716fe7a1177f25f35a9b3d"
+        },
+        {
+          "name": "result.json",
+          "sha256": "bfdedf06596faa2042b0fedd9653ec1023d2e96ed56dc40b607985bc8438c1d5"
+        },
+        {
+          "name": "source.sha256",
+          "sha256": "35ca224e311594827c28c4a0ed03e25317c43f523c708c99e4dd554862b26155"
+        },
+        {
+          "name": "tests.log",
+          "sha256": "6bfc3e6c7f793a2b3fac91d8b7cb4d5e8e1d267cba2ab1d072d851a75888de5e"
+        }
+      ]
+    },
+    {
+      "artifact": "/workspace/s5-evidence/r5",
+      "plan": {
+        "filter": "s5r_r06",
+        "source": "35ca224e311594827c28c4a0ed03e25317c43f523c708c99e4dd554862b26155",
+        "elf": "36d7cda98752c48bd0110832b886010cafe3f66ad424f1be35d0e3a05263938a",
+        "input": "3d72aa664e984f4f36c41495012fb3f55797187d14deea238b4716b170ae84e1",
+        "timeout": 120
+      },
+      "original_result": {
+        "exit": 0
+      },
+      "case_results": [
+        [
+          "PASS",
+          "S5R-R06"
+        ]
+      ],
+      "libtest_summaries": [
+        "test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 1841 filtered out; finished in 14.42s"
+      ],
+      "files": [
+        {
+          "name": "plan.json",
+          "sha256": "addacc86078305547e8c3cdaadbb4def373f687a452d4149d519e7a9629d0d01"
+        },
+        {
+          "name": "result.json",
+          "sha256": "bfdedf06596faa2042b0fedd9653ec1023d2e96ed56dc40b607985bc8438c1d5"
+        },
+        {
+          "name": "source.sha256",
+          "sha256": "35ca224e311594827c28c4a0ed03e25317c43f523c708c99e4dd554862b26155"
+        },
+        {
+          "name": "tests.log",
+          "sha256": "165f7b6a6b690366c23963219ceb59f3e18a3c789149e0852fc592b24f593947"
+        }
+      ]
+    },
+    {
+      "artifact": "/workspace/s5-evidence/r6",
+      "plan": {
+        "filter": "s5r_r02",
+        "source": "1e587d6a9445531cc30b62abd2686efa162550d5b8d2b6de7c74839fe22de614",
+        "elf": "516c68facccf860093e9bae8bb8e515fdbe381c826c129d9391574b20332fc5a",
+        "input": "3d72aa664e984f4f36c41495012fb3f55797187d14deea238b4716b170ae84e1",
+        "timeout": 120
+      },
+      "original_result": {
+        "exit": 0
+      },
+      "case_results": [
+        [
+          "PASS",
+          "S5R-R02-R04"
+        ]
+      ],
+      "libtest_summaries": [
+        "test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 1841 filtered out; finished in 14.40s"
+      ],
+      "files": [
+        {
+          "name": "plan.json",
+          "sha256": "8934c5a7aff35d39a107de82f017d7bc02c2541d5bec6a39c29962017eee579c"
+        },
+        {
+          "name": "result.json",
+          "sha256": "bfdedf06596faa2042b0fedd9653ec1023d2e96ed56dc40b607985bc8438c1d5"
+        },
+        {
+          "name": "source.sha256",
+          "sha256": "1e587d6a9445531cc30b62abd2686efa162550d5b8d2b6de7c74839fe22de614"
+        },
+        {
+          "name": "tests.log",
+          "sha256": "eaaa3b721db6bf4f0c5837056bd8eddd4b94bdb4527d0b96a5b38f17ac1bb1df"
+        }
+      ]
+    },
+    {
+      "artifact": "/workspace/s5-evidence/r7",
+      "plan": {
+        "filter": "s5r_r06",
+        "source": "1e587d6a9445531cc30b62abd2686efa162550d5b8d2b6de7c74839fe22de614",
+        "elf": "516c68facccf860093e9bae8bb8e515fdbe381c826c129d9391574b20332fc5a",
+        "input": "3d72aa664e984f4f36c41495012fb3f55797187d14deea238b4716b170ae84e1",
+        "timeout": 120
+      },
+      "original_result": {
+        "exit": 0
+      },
+      "case_results": [
+        [
+          "PASS",
+          "S5R-R06"
+        ]
+      ],
+      "libtest_summaries": [
+        "test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 1841 filtered out; finished in 14.90s"
+      ],
+      "files": [
+        {
+          "name": "plan.json",
+          "sha256": "31e4dd58b7f1c7fd87e598601613aa38bceef49eb75cc395ed3a8298f5645eca"
+        },
+        {
+          "name": "result.json",
+          "sha256": "bfdedf06596faa2042b0fedd9653ec1023d2e96ed56dc40b607985bc8438c1d5"
+        },
+        {
+          "name": "source.sha256",
+          "sha256": "1e587d6a9445531cc30b62abd2686efa162550d5b8d2b6de7c74839fe22de614"
+        },
+        {
+          "name": "tests.log",
+          "sha256": "42c6f0cdc066d62b0ce6315152a260482a3253dc7f85c420322839c8fc846a65"
+        }
+      ]
+    },
+    {
+      "artifact": "/workspace/s5-evidence/r8",
+      "plan": {
+        "filter": [
+          "s5r_r02",
+          "s5r_r06"
+        ],
+        "source": "7a9239b7a6187131fcf2b7c0d2afa8aecb4195bdd2c0b6b0bc7d6c1c5a2a7d6d",
+        "elf": "9c1d044bc98917117f06517cc53f18a341dd08395c0fb9c021cadc0bb6d82680",
+        "input": "3d72aa664e984f4f36c41495012fb3f55797187d14deea238b4716b170ae84e1",
+        "timeout": 120
+      },
+      "original_result": {
+        "exit": 0
+      },
+      "case_results": [
+        [
+          "PASS",
+          "S5R-R02-R04"
+        ],
+        [
+          "PASS",
+          "S5R-R06"
+        ]
+      ],
+      "libtest_summaries": [
+        "test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 1839 filtered out; finished in 28.11s"
+      ],
+      "files": [
+        {
+          "name": "plan.json",
+          "sha256": "5a63b31e2d3f7406e4d8f2fe9d057716bded584185c6b382339221409f1ef6e3"
+        },
+        {
+          "name": "result.json",
+          "sha256": "bfdedf06596faa2042b0fedd9653ec1023d2e96ed56dc40b607985bc8438c1d5"
+        },
+        {
+          "name": "source.sha256",
+          "sha256": "7a9239b7a6187131fcf2b7c0d2afa8aecb4195bdd2c0b6b0bc7d6c1c5a2a7d6d"
+        },
+        {
+          "name": "tests.log",
+          "sha256": "13a9f15cb1215d46a495194ae6353c89f022a96260a08d665283ac8624ad7d73"
+        }
+      ]
+    },
+    {
+      "artifact": "/workspace/s5-evidence/r9",
+      "plan": {
+        "filter": [
+          "s5r_r08"
+        ],
+        "source": "570eb558b6cc5e991213015c55a19805c01cc0f609b402106c4403f11cf0d577",
+        "elf": "afe3aa58faf3fec7a3b036cda9ac7fe569f97f0c62bf207c2e7b0d115d87ece8",
+        "input": "3d72aa664e984f4f36c41495012fb3f55797187d14deea238b4716b170ae84e1",
+        "timeout": 120
+      },
+      "original_result": {
+        "exit": 101
+      },
+      "case_results": [
+        [
+          "FAIL",
+          "S5R-R08"
+        ]
+      ],
+      "libtest_summaries": [
+        "test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 1845 filtered out; finished in 7.47s"
+      ],
+      "files": [
+        {
+          "name": "plan.json",
+          "sha256": "8ba86707cb52eca74e1845eccd46a3d4bd975853b7ef7e404a7c30cc2939efa9"
+        },
+        {
+          "name": "result.json",
+          "sha256": "90e71c6b9ae5e48af5ac3171f8868c6928540cdd9ff455e95ed8b1fa3d40eef5"
+        },
+        {
+          "name": "source.sha256",
+          "sha256": "570eb558b6cc5e991213015c55a19805c01cc0f609b402106c4403f11cf0d577"
+        },
+        {
+          "name": "tests.log",
+          "sha256": "136401cb2e15599b421edda0c76dd4ee62dd269f5896a78f9216c71975f1312c"
+        }
+      ]
+    },
+    {
+      "artifact": "/workspace/s5-evidence/sizes1",
+      "plan": {
+        "filter": "s5_b_inventory_sizes",
+        "source": "6286abe3bdec0340d761e59bbb53dee58c099220910b30d1fb2ab32af2675c57",
+        "elf": "404d1187966e244af67e58b7c004d74cb822f07869148bd7cf5babba2ded509d",
+        "input": "3d72aa664e984f4f36c41495012fb3f55797187d14deea238b4716b170ae84e1",
+        "timeout": 120
+      },
+      "original_result": {
+        "exit": 0
+      },
+      "case_results": [],
+      "libtest_summaries": [
+        "test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 1841 filtered out; finished in 0.00s"
+      ],
+      "files": [
+        {
+          "name": "plan.json",
+          "sha256": "56d2f63058feee46b5fd9d3bc5e5f2013d93933cee056477e84816b3882ab05e"
+        },
+        {
+          "name": "result.json",
+          "sha256": "bfdedf06596faa2042b0fedd9653ec1023d2e96ed56dc40b607985bc8438c1d5"
+        },
+        {
+          "name": "source.sha256",
+          "sha256": "6286abe3bdec0340d761e59bbb53dee58c099220910b30d1fb2ab32af2675c57"
+        },
+        {
+          "name": "tests.log",
+          "sha256": "d5e6183d8e8eba67570e7afadffbf2c583b6a1791f1ab4c559790718770d553c"
+        }
+      ]
+    },
+    {
+      "artifact": "/workspace/s5-evidence/sizes2",
+      "plan": {
+        "filter": "s5r_r01",
+        "source": "af92dd3502c7647e484faf50f6d4a989d66ac93f6b4ccf69a198a6e2fe8e09c6",
+        "elf": "9776cabb7cf0835b560d49a080402c749ba172cf3998ab19c26ee50e7e41dc50",
+        "input": "3d72aa664e984f4f36c41495012fb3f55797187d14deea238b4716b170ae84e1",
+        "timeout": 120
+      },
+      "original_result": {
+        "exit": 0
+      },
+      "case_results": [
+        [
+          "PASS",
+          "S5R-R01"
+        ]
+      ],
+      "libtest_summaries": [
+        "test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 1840 filtered out; finished in 8.44s"
+      ],
+      "files": [
+        {
+          "name": "plan.json",
+          "sha256": "cdc492d724c282b6139fb12a28df27486b13d613f4944b86637bf7e5fc167728"
+        },
+        {
+          "name": "result.json",
+          "sha256": "bfdedf06596faa2042b0fedd9653ec1023d2e96ed56dc40b607985bc8438c1d5"
+        },
+        {
+          "name": "source.sha256",
+          "sha256": "af92dd3502c7647e484faf50f6d4a989d66ac93f6b4ccf69a198a6e2fe8e09c6"
+        },
+        {
+          "name": "tests.log",
+          "sha256": "831f25d323b1d1d925376919eed94e82eef89a3261d9deb05f4a93c87f5010d4"
+        }
+      ]
+    },
+    {
+      "artifact": "/workspace/s5-evidence/sizes3",
+      "plan": {
+        "filter": "s5r_r01",
+        "source": "7a9239b7a6187131fcf2b7c0d2afa8aecb4195bdd2c0b6b0bc7d6c1c5a2a7d6d",
+        "elf": "9c1d044bc98917117f06517cc53f18a341dd08395c0fb9c021cadc0bb6d82680",
+        "input": "3d72aa664e984f4f36c41495012fb3f55797187d14deea238b4716b170ae84e1",
+        "timeout": 120
+      },
+      "original_result": {
+        "exit": 0
+      },
+      "case_results": [
+        [
+          "PASS",
+          "S5R-R01"
+        ]
+      ],
+      "libtest_summaries": [
+        "test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 1840 filtered out; finished in 8.02s"
+      ],
+      "files": [
+        {
+          "name": "plan.json",
+          "sha256": "4dd88f3d10c035c57b5f8e2c143514bdab6940a036ec02521a09b6d42fd7b831"
+        },
+        {
+          "name": "result.json",
+          "sha256": "bfdedf06596faa2042b0fedd9653ec1023d2e96ed56dc40b607985bc8438c1d5"
+        },
+        {
+          "name": "source.sha256",
+          "sha256": "7a9239b7a6187131fcf2b7c0d2afa8aecb4195bdd2c0b6b0bc7d6c1c5a2a7d6d"
+        },
+        {
+          "name": "tests.log",
+          "sha256": "8e40a3a71ae52e9f9e428d5bf020d6c9cf7ef841a1bbbc8608befb681d6d9d00"
+        }
+      ]
+    },
+    {
+      "artifact": "/workspace/s5-evidence/sizes4",
+      "plan": {
+        "filter": [
+          "s5r_c01_partial"
+        ],
+        "source": "31d0f19082bf814c642d0c3b84c3b4650ddf8fe66effdb4d631244588c8517b9",
+        "elf": "8311a26c79050bba8c77f8bfad45f678d82a126e5e87db0175a1a80337745ed4",
+        "input": "3d72aa664e984f4f36c41495012fb3f55797187d14deea238b4716b170ae84e1",
+        "timeout": 120
+      },
+      "original_result": {
+        "exit": 0
+      },
+      "case_results": [],
+      "libtest_summaries": [
+        "test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 1841 filtered out; finished in 0.00s"
+      ],
+      "files": [
+        {
+          "name": "plan.json",
+          "sha256": "66539e11862134448d8e0e09a1e7385417ebfa3026771826df6eb7cd2532f4b3"
+        },
+        {
+          "name": "result.json",
+          "sha256": "bfdedf06596faa2042b0fedd9653ec1023d2e96ed56dc40b607985bc8438c1d5"
+        },
+        {
+          "name": "source.sha256",
+          "sha256": "31d0f19082bf814c642d0c3b84c3b4650ddf8fe66effdb4d631244588c8517b9"
+        },
+        {
+          "name": "tests.log",
+          "sha256": "8d528dde95a7eacb23f86fa16f3c00a7fb71f27be3242c84f519cbebf7cb6c86"
+        }
+      ]
+    }
+  ],
+  "reuse": "Earlier source receipts retain original identity. Only changed paths/new cases rerun. Later test-only additions do not invalidate production census/native/binding receipts.",
+  "failures_preserved": true
+}

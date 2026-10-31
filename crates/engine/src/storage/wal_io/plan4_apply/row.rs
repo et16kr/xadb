@@ -10,14 +10,14 @@
 //! (S2-d). `MutationPort::commit_row` uses the original durable Commit barrier
 //! and checked capsule cleanup (S3). Live statement/full rollback consumes the
 //! original retained head chain and CLR/StatementFinish/AbortEnd receipts (S4).
-//! The Row read factory still returns effect-free `Unsupported` before a source
-//! guard, pin, admission, WAL or page effect (S5). A
+//! Row reads borrow the original source and capture references under its latch
+//! (S5; acceptance evidence is recorded separately). A
 //! `ReservedRow` dropped while its reservation is active fences the session
 //! (S2W-R23(2)); a driver that stops after a successful reserve without a
 //! Forward ends it with `cancel`, which discharges the reservation without
 //! the fence. No constructor accepts a raw TxnRef/UndoRef/RowId/q, and no
 //! value here is an install, terminal or READY receipt.
-#![allow(dead_code, reason = "actual Row read source is not supplied yet")]
+#![allow(dead_code, reason = "Row consumers precede product SQL integration")]
 
 use super::*;
 

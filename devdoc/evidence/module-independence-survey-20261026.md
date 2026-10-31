@@ -5111,3 +5111,77 @@ MBC10-V09의 rollback writer와 MBC40-V09 rollback task 부분을 공급했다. 
 별도 리뷰가 찾은 admission 없는 재진입, durable 뒤 Unchanged 반환, flusher Before 뒤 refs 부재, 종료 precheck 순서, ordinary install/shared/pin/종료 census 누락을 반영했다. 마지막 검토와 push gate 결과를 아래에 이어 기록한다. 되돌림은 최신 증거·시험 보완부터 `70b39457`, `f5272121`, `e05957aa`의 역순이다. 공개 형식·dependency를 바꾸지 않았으며 fresh development fixtures를 사용한다.
 
 최종 독립 읽기 리뷰는 **S4 한정 D1/D2 ACCEPT·필수 수정0**이다. 판정 원문 `artifacts/module-s4-20261031/review-final.md` SHA-256 `326daa53dbbf41a1deecd26350608abfd1c3acc8436b2f67d9a56673b7233967`, source별 receipts SHA-256 `6211145504e2f8673a379912e74c42025d1fdc6cbf8c148cba3d546e84ac34dc`를 보존한다. 리뷰어는 코드 수정·빌드·시험을 실행하지 않았다. pre-push gate는 최종 commit에서 별도로 실행하며 그 전 결과를 PASS로 기록하지 않는다.
+
+
+<a id="s5-row-read-checkpoint"></a>
+## 2026-10-31 S5 Row 읽기 중간 구현
+
+**IMPLEMENTED PARTIAL / S5 미완료 / PR 미등록.** 사용자 지시로 main `2ed254ac`에서 `codex/s5-row-read`를 만들고 [S5 착수](../contracts/dev3-module-boundaries.md#row-read-s5)를 `b93f18fb`에 기록했다. S3/S4는 이미 main에 병합되어 재구현하지 않았다. 담당 `/root`, 독립 구조 검토 `/root/s5_review`다.
+
+공급한 경로는 원 read progress→Full source 예약→reference lease, Catalog/schema·table slot/origin 검산, Catalog anchor 보호 적재와 index0 거절, Row allocator/anchor/leaf whole-set·LSN·root 검산, 실제 latch 아래 Txn/U capture, Status/Missing Undo, actual canonical copy와 checked cleanup이다. candidate는 visibility registry 주소·owner slot·lease generation·capture sequence·actual version/length를 함께 대조한다. caller의425984B loan은409600B LOAD와16384B copy로 나누며 copy 앞8192B는 Catalog record, 뒤8192B는 최대2048B canonical row다. RowRead는 기존 Full charge를 예약하며 port의 필드를 늘리지 않았다. source bytes는 progress ticket보다 먼저 반환한다.
+
+B는 point/visibility/cursor 결정을 유지한다. `capture_point`/`capture_next`와 C의 `check_table`/`load_catalog`/`capture_schema`/`load_leaf`/`issue_page`를 never-inline 단계로 분리했다. actual point 진입과 opaque live cursor 진입을 storage 내부에서 사용할 수 있게 연결했다. 일반 SQL 연결이나 S6 READY 복구 공급은 아니다.
+
+### 실행과 검토
+
+- 최초 compile의 helper 이름·PageKind 이름 오류와 첫 실행의 `XADB_CATALOG_SOURCE_SHA256` 누락을 보존했다. 실행 준비 실패를 기능 PASS로 세지 않는다. 로그는 클라우드 `/workspace/s5-check*.log`, `/workspace/s5-build*.log`, `/workspace/s5-r01.log`에 있다.
+- r1: 신규 `s5r_r01_read_admission_returns_original_resources`, `s5r_r02_empty_table_and_r04_actual_capture_copy` 2개 PASS. 원 source manifest hash `01111a75d444ead4fc1cc924512b41e1bc24f8c727e69d6ef534039b185e1bd4`, ELF `15aad7a1c3bf6e7e1c9310f8218016cd4ddc40c66f63993ce885cd6d4f4465f4`.
+- r2: Catalog anchor/index 검사 보완과 stale·sequence overflow·Status/Missing·short output 검증을 추가한 source에서 같은2개 PASS. manifest `ed8e6f3a5428316a1683e0130778374f5f44e1e619aa63299060e3eb4e9aaeda`, ELF `0bb1fb1546d7427f813bbacbf8e0110468b69889dd1ecaf19d063831ebe506a6`.
+- r3/b1: C/B phase 분리 뒤 변경 관련 actual R02 한 개와 B `mcb00_d01`–`mcb00_d12` 12개 PASS. 무변경 factory R01은 반복하지 않았다. manifest `fcb15d2eadbf0ae455a7d15b31709675ef44eaaf38e5b6cc2740c0278a5483d5`, ELF `c26464928dffd708ed2af1516cadc13e7858b244944d12841b92280a1620f2f6`. 원 입력은 row-write `expected.json` hash `3d72aa664e984f4f36c41495012fb3f55797187d14deea238b4716b170ae84e1`이다. 각 실행의 동결 selector·120초 한도·source hash manifest·원 출력은 `/workspace/s5-evidence/{r1,r2,r3,b1}`에 보존한다.
+- `cargo check -p xadb-engine --locked`와 시험 ELF의 compile을 통과했다. workspace 테스트나 무변경 S3/S4 시험은 실행하지 않았다. 마지막 후속은 private LiveSource 필드의 불필요한 visibility와 주석 정리뿐이며 동작을 바꾸지 않는다.
+- 독립 검토에서 Drop의 source/progress 순서, Catalog anchor 비상주/보호 적재, index0 검산3건을 반영했다. phase 분리 뒤 중간 구조 검토는 수용 가능·신규 필수 수정0이다. **이는 S5 최종 D1/D2 수용이 아니다.**
+
+### 재개할 작업
+
+1. S5R-C01..C03·MCB00-D13의 memory/native 전체 호출 지점 census를 구현·검증한다. r2의 실제 sizeof 관측은 Full34570B, lookup LOAD31084B, operation632B, page232B, candidate192B다. 이 다섯 숫자는 전체 상계 PASS가 아니다. operation을 한 번 세고 C/B의 caller frame·Result carrier·source helper peak를 더해야 한다. 이전 retention LOAD33364B를 lookup LOAD와 혼동하지 않는다. 필요하면 C/B 단계 분리를 추가하며 cap/charge를 조용히 올리지 않는다.
+2. 비상주 Catalog anchor/Row leaf·dirty victim FlushRequired 및 동일 snapshot 재시도, foreign origin/candidate·retirement Busy의 atomic pin, 잘못된 Undo, old/new snapshot·다른 actor, actual cursor/취소/출력 부족·재진입, InstallationPending 수신을 실제 C 경로로 검증한다. 기존 generic B12 PASS는 이 actual 인수를 대신하지 않는다.
+3. native 실제 경로와 native 타입 census, 영향받은 shared Catalog/visibility의 선택 회귀·compiler 경계를 완료한다. 새 오류는 원 실패를 보존하고 관련 diff만 재검증한다.
+4. source별 최종 inventory/receipt·계약·상태를 확정하고 독립 최종 D1/D2 검토를 받는다. commit 후 pre-push fmt/Clippy/문서 gate를 거쳐 push 및 PR 등록한다. S5 완료 전에는 완료·PR-ready로 표시하지 않는다.
+
+클라우드 재개 환경은 `/workspace/xadb`, branch `codex/s5-row-read`다. Rust1.95 도구는 `CARGO_HOME=/workspace/.xadb-env/cargo`, `RUSTUP_HOME=/workspace/.xadb-env/rustup`, PATH 앞 `/workspace/.xadb-env/cargo/bin`이다. 선택 실행 helper `/workspace/s5-run.py`는 실행마다 source manifest/ELF/input hash와 selector를 기록한다. 최종 도구/fixture로 확정한 것은 아니며 원 r1/r2 초안의 실행을 현재 commit 증거로 소급 바꾸지 않는다.
+
+### 후속 B 호출 단계 분리와 actual snapshot/cursor
+
+B는 candidate와 copy observation을 각각 한 개의 내부 Option slot으로 전달하고, page/seek·visibility·copy·release·publish 단계를 never-inline 함수로 분리했다. checked candidate/operation cleanup 뒤에만 결과를 공개한다. C `ReadStep<T, Target = Plan4Target>`와 B alias가 같은 반환 carrier를 사용하여 순수 adapter 변환을 제거했다. C의 production target 기본값·variant·layout은 유지한다. Catalog LOAD의 request 생성도 별도 함수로 분리했다.
+
+독립 D2 읽기 리뷰는 이 변경의 정확성·cleanup·visibility에 한해 수용·필수 수정0이다. 전체 census 및 S5 완료 인증은 아니다. 이전 `s5-census2.log`의 page3160/status2873 진단은 수정 전 공식이며 인수 근거가 아니다. 후속 source에 맞지 않는 진단 함수는 제거했고 원 로그는 보존한다.
+
+`/workspace/s5-evidence/b2,r4,r5`에 동결 selector·plan·source manifest·결과를 보존했다. manifest `35ca224e311594827c28c4a0ed03e25317c43f523c708c99e4dd554862b26155`, ELF `36d7cda98752c48bd0110832b886010cafe3f66ad424f1be35d0e3a05263938a`에서 변경 B12 **12 PASS**, 실제 R02/R04의 cursor short-output→cancel→Row→End **1 PASS**, 신규 R06 다른 actor Active INSERT 및 commit 전후 동일 statement q 유지·새 statement 가시성 **1 PASS**다. R02/R04는14.43초, R06은14.42초였다. 전체 workspace 및 무변경 factory 시험은 실행하지 않았다. 이 실행 뒤 변경은 사용하지 않는 진단 함수 제거와 문서 기록뿐이다. 남은 census·비상주/실패 경계·native·compiler·최종 리뷰/PR 의무는 유지한다.
+
+### Candidate binding lifetime 보완
+
+독립 검토에서 visibility 재bind 시 reference generation이 초기화되므로 주소·generation만으로 재open ABA를 막는다고 주장할 수 없음을 확인했다. `RowCandidate<'b>`가 실제 ReferenceLease/ReadPort visibility borrow를 유지하도록 고쳤다. 원 page `capture`와 B associated type이 같은 lifetime을 반환·전달한다. `captured.is_some()`·lease identity/generation·capture sequence를 유지하고 중복 version/length 보관은 제거했다. `row_leaf_request`를 never-inline 함수로 분리해 anchor guard·root decode slot이 후속 leaf LOAD의 frame에 포함되지 않게 했다. 독립 D2 구현 검토는 이 범위 필수 수정0이며 전체 census 인증은 아니다.
+
+- r6/r7: 이 변경에 대응하는 actual R02/R04와 R06 각각 **1 PASS**. source manifest `1e587d6a9445531cc30b62abd2686efa162550d5b8d2b6de7c74839fe22de614`, ELF `516c68facccf860093e9bae8bb8e515fdbe381c826c129d9391574b20332fc5a`;14.40초/14.90초. 기존 B generic12는 동작이 바뀌지 않아 반복하지 않았다.
+- binding1: baseline/positive compile 성공, escape-negative는 의도한 lifetime 거절6개였으나 harness가 정확히1개를 요구해 **FAIL**. 원 결과를 보존한다.
+- binding2: 다른 page lifetime을 static으로 고정하여 원 visibility borrow `'b` 하나만 분리했다. baseline와 `RowCandidate<'b>` 반환 **PASS**, `RowCandidate<'static>` escape는 정확히1개 lifetime error로 거절되어 **PASS**. actual `RowSearchPage::capture` 반환을 검사한 compile-only probe이며 runtime 재open 시험이라고 주장하지 않는다. `/workspace/s5-evidence/binding2`에 source manifest·probe·진단·plan·결과를 보존했고 임시 export/target은 삭제했다.
+- 크기 진단 `sizes1`은 sizeof만 관측했으며 전체 source budget PASS가 아니다. 진단 함수는 기록 후 제거했다. B forward 반환과 driver 호출 결과를 각각 세어야 하며, cursor의 후속 publication/progress slot 및 유한 temporary 상계도 남은 census에 포함한다.
+
+S5는 여전히 PARTIAL이다. memory/native 전체 call-site census, 비상주/FlushRequired·오류 경계·InstallationPending, native 실제 실행과 최종 review/push/PR가 남았다.
+
+
+### S5 전체 source census 및 native 읽기 checkpoint
+
+2026-10-31. `202b3b79` 뒤 원 ReadPort를 복사하지 않고 borrow하며 중복 candidate generation을 제거했다. C LOAD와 decode를 분리하고 B/C는 동일 ReadStep carrier를 사용한다. cap·charge·port 크기 증액 없이 전체 C/B caller inventory를 합친 최대는 cursor Row LOAD34524B/Full34570B(여유46B)다. memory와 실제 계측 native Writer 타입은 같은 상계이며 c1의 S5R-C01/C02·MCB00-D13 두 타입4개 PASS다. 이는 물리 stack/RSS 측정이 아니다. 독립 resource 리뷰 필수 수정0을 확인했으나 최종 S5 리뷰는 남았다.
+
+`/workspace/s5-evidence/`에 source manifest·ELF/input hash·plan·원 로그·결과를 보존한다. r8은 변경 B/C의 R02/R04·R06 2PASS, b3는 변경 cursor D05–12 8PASS다. binding2는 실제 visibility binding에서 candidate escape가 정확히 lifetime 오류1개로 거절되고 positive는 통과했다. port1은 operation 생존 중 원 ReadPort 이동이 E0505로 거절되고 positive는 통과했다. 선행 binding1의 복수 lifetime 진단에 대한 harness FAIL은 보존한다.
+
+r9 R08은 fatal source accounting을0으로 기대한 잘못된 oracle로 FAIL했다. 기존 Catalog와 source.release_checked 계약에 따라 fence 뒤 Full charge를 quarantine하는 oracle로 수정했고 r10 R08 PASS다. r10 R03의 read/FlushRequired/동일 snapshot 재시도 검산은 통과했으나 뒤 writer empty-abort가 읽기 중 정상 evict된 Status를 요구해 FAIL했다. cleanup 전에 기존 settle을 호출한 r11 R03 PASS(13.30초)다. 제품 용량·오류 의미를 완화하지 않았다.
+
+native1은 기존 DWB image16,711,680B/namespace15files를 테스트의8MiB/8files 한도가 거절하여 읽기 전 FAIL했다. worker의 독립 hash oracle을64KiB streaming, file16MiB/total32MiB/files16으로 정정했다. native2는 실제 native INSERT·commit q2 뒤 point Found/Missing·cursor Row/End, 정답13byte canonical, 읽기 전후 전체 namespace content hash 일치, mutation409→409, handle/fd 한도를 모두 통과했다. native2와 r12의 source `4db9e0b46f4d005113dba321d2da07d369ac2b901bd0af3f55be43bf0e8a481e`, ELF `b9dde234e6a59a0d967d1d4e9a8e49d028e8038e58674dfdce76cb7844640adf`, input `3d72aa664e984f4f36c41495012fb3f55797187d14deea238b4716b170ae84e1`이다. r12는 실제 source 한도±1/정확 경계·외부 Owner 거절(C03), 실제 preflight Ready 보유 중 InstallationPending 및 같은 snapshot 재시도(R01-PENDING), 다른 Owner의 stale candidate 거절을 추가한 R02/R04의3개 PASS다.
+
+S5는 아직 PARTIAL이다. retirement 원자 거절·손상 Undo 등 남은 오류 사례, 최종 inventory/독립 review, pre-push gate와 PR가 남았다. 무변경 하위/전체 시험과 S6 READY는 실행하지 않았다.
+
+
+<a id="s5-row-read-completion"></a>
+### S5 Row 읽기 최종 선택 검증
+
+2026-10-31. S5 구현과 선정 검증을 완료했다. [최종 inventory](../../tests/fixtures/dev3-module-c3/row-read/test-inventory.json)와 [source별 receipts](../../tests/fixtures/dev3-module-c3/row-read/execution-receipts.json)는 계약 ID·실제 selector·원 source/ELF/input·로그 hash·실패를 연결한다. 이는 서로 다른 source의 유효한 증거 집합이며 하나의 최종 ELF로 전체를 재실행했다고 주장하지 않는다. 변경 없는 B/하위·native·compiler 시험은 반복하지 않았다.
+
+- r13: foreign 수신 operation도 자체 current capture와 같은 sequence를 갖도록 보완한 R02/R04 PASS. 외부 후보의 copy/status/release를 거절한 뒤 자체 후보 copy/release는 성공한다. R05/R07은 retirement 검산을 통과했으나 손상 Undo의 phase를 Source로 기대하여 FAIL했다. 실제 read_missing의 Page/Undo/Invariant 분류인 Census로 테스트만 수정했고 fatal·원 Undo cause 조건은 유지했다.
+- r14: R05/R07 PASS. 실제 INSERT가 가진 Txn/U 중 Undo를 원 registry의 유효한 retiring marker로 거절하여 두 pin 모두 미등록·fence 없음, marker 제거 후 동일 operation의 capture2pins·release0을 확인한다. 이 refusal-only fault injection은 정상 retirement 실행/권한 공급 증거가 아니다. 실제 Undo cell grammar를 손상시키되 generic envelope/checksum을 유지하고, 다른 actor의 실제 B 읽기가 Missing 대신 Census/CallerMustResolve/Undo(Corrupt)를 반환하며 출력·파일 불변·physical pin/read progress 반환을 확인한다. source `7e960e8ec6f243d262c6fab10e2abd054649dc7af2e56605a969f1ad68f09894`, ELF `ad071f1daf73887da1d41f845fff0eeb3dd2a8c94a14f433ce7829ca339c69c9`.
+- r14의 cold Catalog 준비는 기존 with_pins의 최대9에11개를 넘겨 읽기 전 FAIL했다. dirty/allocator는 eviction 후보가 아니므로 나머지 clean frame만 pin하도록 fixture를 고쳤다. r15 cold Catalog PASS(9.79초): 정상 genesis Jobs target과 원 LOAD로 이미 발급한 CheckedTable의 anchor7만 교체, leaf8 상주·anchor7 비상주를 확인한 뒤 실제 B point가 anchor를 다시 LOAD하여 Missing을 반환한다. 읽기 구간의 파일·mutation·출력·snapshot 불변 및 source/ref/physical pin/progress 반환을 확인했다. source `fdf28edbb7e9934b5b8ab2a4b74435e0b49e85bbec28d8f9b76739688f6b1c94`, ELF `976f5511f8311b38c3272f5fee3ba9d2b4a6b7f3c0a327bd71f293fa25b5df7c`.
+
+이전 중간 checkpoint의 PARTIAL 및 잔여 목록은 당시 상태로 보존하며 이 최종 기록이 S5 상태를 갱신한다. 전체 census는34524≤34570B, native 실제 읽기는409→409mutations다. 원 wire·cap·charge·공개 API 변경0이며 일반 SQL 연결·S6 READY·전체 M4/M5·DEV3 최종 전수 인수는 별도 미완료다. D1/D2 독립 코드 검토는 필수 수정0·시험 영수증/문서 확인 조건부 수용이며 최종 증거 검토와 pre-push gate/PR 등록은 다음 기록으로 확정한다.
+
+최종 D1/D2 증거 리뷰는 **ACCEPT·남은 blocker0**이다. 독립 `/root/s5_review`가 receipts의 모든 artifact SHA-256 대조·불일치0, r13/r14 혼합 PASS/FAIL 보존, r15 manifest와 현재 crates 일치, c1/native2 이후 production 변경0을 확인했다. 원 판정은 `/workspace/s5-evidence/review-final.txt`에 보존한다. runtime target/ELF 약2.58GB는 hash/결과 기록 후 삭제했고 `/workspace/s5-evidence/final-runtime-cleanup.json`에 기록했다. 원 로그·실패·namespace fixture는 삭제하지 않았다. S5 구현·검증·독립 리뷰 완료이며 commit tip의 push gate와 PR 등록을 진행한다.

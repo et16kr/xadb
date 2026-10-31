@@ -108,7 +108,7 @@ impl<'b, 'a, 's, 'c, 'p, 'd, 'm, 'w, W: WriterNamespace>
         call.finish_result(result)
     }
 
-    pub(super) fn lookup_resident(
+    pub(in super::super) fn lookup_resident(
         &self,
         owner: &mut Owner<'c, 's>,
         request: TargetRequest,
@@ -123,7 +123,7 @@ impl<'b, 'a, 's, 'c, 'p, 'd, 'm, 'w, W: WriterNamespace>
 
     /// Resolve a location from the installed source while the actual TxnPin is
     /// held by lookup. This is a location observation, never an install permit.
-    pub(super) fn catalog_status_location(
+    pub(in super::super) fn catalog_status_location(
         &self,
         owner: &mut Owner<'c, 's>,
         reference: TxnRef,
@@ -142,7 +142,7 @@ impl<'b, 'a, 's, 'c, 'p, 'd, 'm, 'w, W: WriterNamespace>
             Ok(found)
         })
     }
-    pub(super) fn catalog_undo_location(
+    pub(in super::super) fn catalog_undo_location(
         &self,
         owner: &mut Owner<'c, 's>,
         reference: UndoRef,
@@ -255,22 +255,13 @@ pub(in super::super) fn source_bytes<W: WriterNamespace>() -> usize {
 pub(in super::super) fn resident_source_bytes<W: WriterNamespace>() -> usize {
     lookup_source_bytes::<W>(true)
 }
-fn lookup_source_bytes<W: WriterNamespace>(resident: bool) -> usize {
+/// The installed-cut Status/Undo location search shared with Row reads.
+pub(in super::super) fn reference_location_source_bytes<W: WriterNamespace>() -> usize {
     use crate::storage::{
         page::{PageHeader, PageView},
         transaction_record::TransactionStatus,
-        undo_record::{UndoRecord, UndoRecordView},
     };
     use std::mem::size_of;
-    let retained =
-        super::operation::held_source_bytes::<W>() + crate::storage::catalog::read::source_bytes();
-    let capture = super::catalog_source_bytes::<W>()
-        + visibility::source_census().reference
-        + size_of::<CatalogSource<'_, '_, '_>>()
-        + 2 * size_of::<Result<Option<&[u8]>>>()
-        + size_of::<usize>()
-        + 2 * size_of::<Result<super::operation::CatalogCandidate>>()
-        + 2 * size_of::<super::operation::CatalogCandidate>();
     // The installed cut, original checkout and result survive both phases.
     // replay_lookup_cut returns before allocator/status selection declares its
     // page views and found/request values. Runtime metadata calls release their
@@ -293,17 +284,35 @@ fn lookup_source_bytes<W: WriterNamespace>(resident: bool) -> usize {
         // allocation envelope, occupied Status decode and callback returns.
         + super::undo_read_source_bytes()
         + history::runtime::lookup_source_bytes();
+    location_held
+        + history::source_bytes::<W>()
+            .peak
+            .max(
+                history::runtime::lookup_source_bytes()
+                    + crate::storage::wal_io::DURABILITY_CALL_BYTES,
+            )
+            .max(location_select)
+}
+fn lookup_source_bytes<W: WriterNamespace>(resident: bool) -> usize {
+    use crate::storage::{
+        page::PageView,
+        transaction_record::TransactionStatus,
+        undo_record::{UndoRecord, UndoRecordView},
+    };
+    use std::mem::size_of;
+    let retained =
+        super::operation::held_source_bytes::<W>() + crate::storage::catalog::read::source_bytes();
+    let capture = super::catalog_source_bytes::<W>()
+        + visibility::source_census().reference
+        + size_of::<CatalogSource<'_, '_, '_>>()
+        + 2 * size_of::<Result<Option<&[u8]>>>()
+        + size_of::<usize>()
+        + 2 * size_of::<Result<super::operation::CatalogCandidate>>()
+        + 2 * size_of::<super::operation::CatalogCandidate>();
     let location = if resident {
         super::resident::source_bytes()
     } else {
-        location_held
-            + history::source_bytes::<W>()
-                .peak
-                .max(
-                    history::runtime::lookup_source_bytes()
-                        + crate::storage::wal_io::DURABILITY_CALL_BYTES,
-                )
-                .max(location_select)
+        reference_location_source_bytes::<W>()
     };
     let read_held = size_of::<super::RetentionReadGuard<'_, '_, '_, '_, '_, '_>>()
         + 3 * size_of::<UndoRecord<'_>>()

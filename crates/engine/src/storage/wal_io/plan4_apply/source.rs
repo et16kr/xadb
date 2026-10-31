@@ -12,6 +12,8 @@ const USED: std::ops::Range<usize> = 24..32;
 #[derive(Clone, Copy)]
 pub(super) enum OperationClass {
     CatalogFull,
+    /// Row lookup reserves the existing Full charge.
+    RowRead,
     CatalogResident,
     /// Terminal progress. Its charge changes only at the read-gate and Drain
     /// boundaries, never while an admitted reader could hold a loan.
@@ -288,7 +290,7 @@ impl<'b, 'a, 'c, 's> OperationSourceAdmission<'b, 'a, 'c, 's> {
         class: OperationClass,
     ) -> SourceResult<Self> {
         let charge = match class {
-            OperationClass::CatalogFull => charges.full,
+            OperationClass::CatalogFull | OperationClass::RowRead => charges.full,
             OperationClass::CatalogResident => charges.resident,
             // Only the dedicated writer entries, holding a read gate, admit a writer;
             // reserve_class rejects the zero charge as a fenced Invariant.
@@ -513,6 +515,7 @@ impl<'b, 'a, 'c, 's> OperationSourceAdmission<'b, 'a, 'c, 's> {
         let used = check(&state)?;
         match self.class {
             OperationClass::CatalogFull
+            | OperationClass::RowRead
             | OperationClass::CatalogResident
             | OperationClass::CommitProgress
             | OperationClass::CatalogProgress

@@ -157,7 +157,9 @@ fn committed(value: u64) -> Answer<TransactionState> {
 fn answer<T>(answer: Answer<T>) -> Result<Step<T, FlushTarget>, RetentionError> {
     match answer {
         Answer::Ready(value) => Ok(Step::Ready(value)),
-        Answer::Flush(target) => Ok(Step::Flush(FlushTarget(target))),
+        Answer::Flush(target) => Ok(Step::FlushRequired {
+            target: FlushTarget(target),
+        }),
         Answer::Fail(effect) => Err(source_error(effect)),
     }
 }
@@ -289,7 +291,7 @@ impl<'x> ReadSource for LiteralSource<'x> {
         self.note(Page);
         Ok(match answer(self.page_answer)? {
             Step::Ready(()) => Step::Ready(LiteralPage { source: self }),
-            Step::Flush(target) => Step::Flush(target),
+            Step::FlushRequired { target } => Step::FlushRequired { target },
         })
     }
     fn status(
@@ -537,7 +539,9 @@ fn end(result: NextResult) {
 
 fn flushed<T: Debug>(result: Result<Step<T, FlushTarget>, RowReadError>) -> u32 {
     match result {
-        Ok(Step::Flush(FlushTarget(target))) => target,
+        Ok(Step::FlushRequired {
+            target: FlushTarget(target),
+        }) => target,
         other => panic!("expected FlushRequired, got {other:?}"),
     }
 }
@@ -1549,4 +1553,27 @@ fn mcb00_d12_cleanup_failure_replaces_flush_and_scan_errors_keep_progress() {
     assert_eq!(log.take(), [Page, Leaf, Capture(30), Release(30), Finish]);
     assert_eq!(progress(&cursor), (Some(20), None));
     assert_eq!(output, [FILL; 16]);
+}
+
+/// MCB00-D13 reports the concrete B frames consumed by the S5 C join. The
+/// combined Full assertions live with the actual C memory/native census.
+#[test]
+fn mcb00_d13_memory_call_inventory() {
+    type W = crate::storage::wal_io::plan4_test_support::Writer;
+    println!(
+        "MCB00_D13 memory LOAD={:?} nonload={}",
+        live::test_load_callers::<W>(),
+        live::test_nonload_caller::<W>()
+    );
+}
+
+#[cfg(target_os = "linux")]
+#[test]
+fn mcb00_d13_native_call_inventory() {
+    type W = platform::namespace::LinuxWriterLease;
+    println!(
+        "MCB00_D13 LinuxWriterLease LOAD={:?} nonload={}",
+        live::test_load_callers::<W>(),
+        live::test_nonload_caller::<W>()
+    );
 }

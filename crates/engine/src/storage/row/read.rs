@@ -17,7 +17,7 @@ use crate::storage::{
 use foundation::identity::RowId;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
-enum ReadError {
+pub(in crate::storage) enum ReadError {
     InvalidRange,
     UnsupportedPage,
     Tree(TreeError),
@@ -262,7 +262,7 @@ impl CursorProgress {
     }
 }
 
-mod driver;
+pub(in crate::storage) mod driver;
 
 #[cfg(test)]
 mod tests;

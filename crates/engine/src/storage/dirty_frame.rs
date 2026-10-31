@@ -995,6 +995,20 @@ pub(crate) struct ReadTargets<'a, 'b, 'c, 's, 'p, 'd, const N: usize = MAX_TARGE
     pins: Option<PinSet<'b, 'c, 's, 'p, 'd, N>>,
 }
 impl<const N: usize> ReadTargets<'_, '_, '_, '_, '_, '_, N> {
+    /// Compare the held original source, without manufacturing an authority
+    /// from the decoded page's scalar identity.
+    pub(in crate::storage) fn confirms_origin(
+        &self,
+        core: &PageConcurrency<'_>,
+        binding: &AtomicU8,
+        fence: &SessionFence,
+    ) -> bool {
+        self.pins.as_ref().is_some_and(|pins| {
+            std::ptr::eq(pins.pool.bound_core(), core)
+                && pins.pool.uses_storage_origin(binding, fence)
+        })
+    }
+
     fn len(&self) -> usize {
         self.pins.as_ref().map_or(0, |pins| pins.len)
     }

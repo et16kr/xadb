@@ -98,7 +98,7 @@ impl<'c, 's, W: WriterNamespace> RetentionCatalogGuard<'_, '_, 'c, 's, '_, '_, '
         )
     }
 
-    pub(in super::super) fn value(&self, object: ObjectId) -> Result<Option<&[u8]>> {
+    pub(in super::super::super) fn value(&self, object: ObjectId) -> Result<Option<&[u8]>> {
         let bytes = self
             .read
             .bytes(2)
@@ -130,6 +130,34 @@ impl<'c, 's, W: WriterNamespace> RetentionCatalogGuard<'_, '_, 'c, 's, '_, '_, '
             ));
         };
         Ok(Some(value))
+    }
+
+    /// S5's initial Row profile accepts only tables with no index definition,
+    /// including retained retired definitions as in Row write preflight.
+    pub(in super::super::super) fn has_table_indexes(&self, object: ObjectId) -> Result<bool> {
+        let bytes = self
+            .read
+            .bytes(2)
+            .map_err(|e| frame(RetentionPhase::Census, e))?;
+        let namespace = self.storage.profile().spec().namespace;
+        let view = leaf_view(bytes, self.leaf, namespace)
+            .map_err(|cause| fatal(self.storage, RetentionPhase::Census, cause))?;
+        for at in 0..view.len() {
+            let entry = view.entry(at).map_err(|e| {
+                fatal(
+                    self.storage,
+                    RetentionPhase::Census,
+                    RetentionCause::Tree(e),
+                )
+            })?;
+            let record = record(entry, namespace)
+                .map_err(|cause| fatal(self.storage, RetentionPhase::Census, cause))?;
+            if matches!(record.definition(), crate::storage::catalog_record::CatalogDefinitionView::Index(index) if index.parent.object==object)
+            {
+                return Ok(true);
+            }
+        }
+        Ok(false)
     }
 
     /// Return the stored physical version, including retired/uncommitted cells.

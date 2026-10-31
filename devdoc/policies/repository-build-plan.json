@@ -9546,5 +9546,21 @@
     "evidence_ref": "module-independence-survey-20261026.md#s4-row-rollback",
     "receipt_manifest_sha256": "6211145504e2f8673a379912e74c42025d1fdc6cbf8c148cba3d546e84ac34dc",
     "review_sha256": "326daa53dbbf41a1deecd26350608abfd1c3acc8436b2f67d9a56673b7233967"
+  },
+  "dev3_module_s5_row_read": {
+    "status": "ACCEPTED",
+    "contract_ref": "dev3-module-boundaries.md#row-read-s5",
+    "evidence_ref": "module-independence-survey-20261026.md#s5-row-read-completion",
+    "baseline_commit": "2ed254ac",
+    "branch": "codex/s5-row-read",
+    "implemented_paths": [
+      "crates/engine/src/storage/wal_io/plan4_apply/row/read/census.rs",
+      "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_live/native.rs",
+      "tests/fixtures/dev3-module-c3/row-read/test-inventory.json",
+      "tests/fixtures/dev3-module-c3/row-read/execution-receipts.json"
+    ],
+    "source_roots_changed": false,
+    "remaining_supply": "Committed-tip pre-push gate and PR registration; S6 READY remains separate.",
+    "review": "Independent D1/D2 ACCEPT; required changes 0; source-specific receipts verified."
   }
 }

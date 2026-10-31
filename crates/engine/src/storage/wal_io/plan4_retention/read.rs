@@ -32,6 +32,8 @@ pub(super) use catalog::{
     CATALOG_READ_SOURCE_BYTES, catalog_source_bytes, leaf_view as catalog_leaf_view,
     record as catalog_leaf_record,
 };
+#[cfg(test)]
+pub(super) use lookup::reference_location_source_bytes;
 pub(super) use lookup::resident_source_bytes as resident_lookup_source_bytes;
 pub(super) use lookup::source_bytes as lookup_source_bytes;
 pub(crate) use operation::{
@@ -57,7 +59,7 @@ impl RetentionReadGuard<'_, '_, '_, '_, '_, '_> {
             .map_err(|e| frame(RetentionPhase::Census, e))
     }
 }
-fn membership<W: WriterNamespace>(
+pub(super) fn membership<W: WriterNamespace>(
     storage: &MutableStorageOwner<'_, '_, W>,
     allocator: TargetRequest,
     allocation_bytes: &[u8; PAGE_BYTES],
@@ -127,7 +129,7 @@ impl<'b, 'arena, 's, 'c, 'p, 'd, W: WriterNamespace>
         self.read_shaped(owner, target, UndoShape::InitialFree)
     }
     /// Catalog lookup reads the referenced Undo root of a live CREATE.
-    fn read_catalog_undo<'a>(
+    pub(super) fn read_catalog_undo<'a>(
         &self,
         owner: &'a mut Owner<'c, 's>,
         target: &Plan4Target,
