@@ -1,7 +1,7 @@
 {
   "schema_version": 2,
   "product": "XADB",
-  "date": "2026-10-31T19:27:52.268941+09:00",
+  "date": "2026-10-31T19:57:48.014423+09:00",
   "status": "PASS",
   "errors": [],
   "markdown_documents": [
@@ -1279,9 +1279,9 @@
     },
     {
       "file": "devdoc/evidence/main-preexisting-failures-20261030.md",
-      "links": 12,
+      "links": 14,
       "duplicate_ids": 0,
-      "sha256": "dbd0b0d706c20b847a54d6c374b9a73fa8bf53ca5586636f3372368469620ad5"
+      "sha256": "1f36a86dd2a1082bc5155f7e310812db9652f068334be431c0fd419ccbd05aa7"
     },
     {
       "file": "devdoc/evidence/module-independence-survey-20261026.md",
@@ -1555,9 +1555,9 @@
     },
     {
       "file": "devdoc/policies/repository-build-plan.md",
-      "links": 191,
+      "links": 193,
       "duplicate_ids": 0,
-      "sha256": "3c5310abcff8988b3d297d105e4668d25ae464daa801f804edb620bef2017e5d"
+      "sha256": "430c3921a0b444e14b547ada9bbc35d96542412632eb88d5d6a8f0f642a9b49d"
     },
     {
       "file": "devdoc/reference/README.md",

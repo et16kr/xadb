@@ -65,8 +65,14 @@ pub(super) fn get(bytes: &[u8], offset: usize) -> u64 {
 pub(super) fn put(bytes: &mut [u8], offset: usize, value: u64) {
     bytes[offset..offset + 8].copy_from_slice(&value.to_le_bytes());
 }
+/// Slice equality is one `memcmp` per block even in unoptimized test builds.
+/// The per-byte iterator it replaces made job census checks about a fifth of
+/// a debug recovery case.
 pub(super) fn zero(bytes: &[u8]) -> bool {
-    bytes.iter().all(|value| *value == 0)
+    static ZEROS: [u8; JOB_BYTES] = [0; JOB_BYTES];
+    bytes
+        .chunks(JOB_BYTES)
+        .all(|chunk| chunk == &ZEROS[..chunk.len()])
 }
 
 pub(crate) fn cleanup_rows(count: usize) -> Result<[RemainingBudget; 5]> {

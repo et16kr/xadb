@@ -142,3 +142,51 @@ pool −3368B는 진단 사본에서 잰 directory −512, DPT 행 배열5120→
 그보다 앞서 `plan4_retention/tests.rs`의 주석 한 단락만 다른 중간 source(test ELF `52be9605b4c35beeff9a91335ec288ba7c2de15fa267f0029d3b86fbb94b64a9`)에서도 네 selector가 같은 값으로 PASS했다. 최종 source에서 `cargo fmt --all --check`와 `cargo clippy --workspace --all-targets --all-features --locked -- -D warnings`가 통과했다.
 
 실행 로그와 진단 patch는 작업 세션의 임시 공간에만 있고 공유 폴더에는 두지 않았다. 위 값은 그 출력에서 옮긴 것이다.
+
+<a id="debug-hash-timeout"></a>
+## 5. MCC02 30초 case 한도 초과: debug build의 SHA-256과 byte 단위 zero 검사
+
+2026-10-31 · branch `claude/project-thread-fkdet1`(기준 S6 branch `claude/project-thread-a7onu7`의 `188c957`). `plan4_recovery::tests::catalog_memory::commit_call::commit_preparation_unwind_recovers_original_prefix`(MCC02)는 기능 단언을 모두 통과하고 `case`의 `started.elapsed() < 30s`에서만 실패했다. 클라우드 4-core debug ELF에서 S6 tip 43.6초/41.8초, main `8d5e48b` 41.6초가 보고됐고, 이 작업에서 S6 기준 ELF로 다시 재면 44.88초였다.
+
+### 5.1 원인
+
+main `8d5e48b` test ELF(`7f456dcc…`)를 `perf record --call-graph=dwarf`(49Hz, 2315 sample)로 잰 inclusive 비율이다.
+
+| 위치 | 비율 | 내용 |
+| --- | ---: | --- |
+| `sha2` SHA-256 전체 | 65.6% | opt-level 0이라 x86 SHA 내장 함수 하나하나가 함수 호출로 남는다 |
+| └ `row::LayoutView::digest` | 29.2% | `HistorySource::validate`·`seed_replay_slice`가 step마다 Row base 2MiB 전체를 다시 hash |
+| └ `page::decode_page` | 11.0% | page checksum |
+| └ `row::decode_layout` | 6.5% | Row base layout 검산 |
+| └ 시험 oracle `hex` | 0.65% | fixture pin 검산. 시험 쪽 비용은 무시할 만하다 |
+| `retention_page::zero` | 25.2% | `verify_selected_census`가 64 job을 `decode_job`하며 Free job의 1008B를 `iter().all`로 한 byte씩 검사 |
+
+두 항목이 시간의 약 90%다. 둘 다 release build에서는 문제가 되지 않는 크기의 작업이고, 같은 검증을 opt-level 0으로 돌릴 때만 30–100배 느려진다. 제품의 복구 의미나 반복 구조가 틀린 것이 아니고, 30초 한도가 비현실적인 것도 아니다. 원인은 시험 build에서 hash와 zero 검사가 지나치게 느린 데 있다.
+
+### 5.2 수정
+
+- `Cargo.toml`: `[profile.dev.package.sha2] opt-level = 3`. 외부 dependency `sha2`만 최적화한다. workspace crate·release profile·`Cargo.lock`은 그대로다. 결정과 재검토 조건은 [저장소 정책 §7](../policies/repository-build-plan.md#section-9)에 적었다.
+- `retention_page::zero`: `iter().all` 대신 1024B 0 block과의 slice 비교(`memcmp`)로 바꿨다. 의미는 같다. 새 `zero_checks_every_byte_of_blocks_and_tail`이 빈 입력과 길이 1·1023·1024·2055의 모든 byte 위치를 하나씩 바꿔 검사한다.
+
+30초 한도는 바꾸지 않았다. 한도를 올리는 것은 [개발 정책](../policies/development-policy.md)의 사후 완화 금지에 걸리고, Row base digest cache는 base 불변 기간이라는 새 불변식이 필요한 복잡화라 택하지 않았다.
+
+### 5.3 실행
+
+`cargo test -p xadb-engine --lib --no-run --locked`로 build하고 `--exact --test-threads=1`, stack 32MiB로 실행했다.
+
+| build | test ELF SHA-256 | MCC02 |
+| --- | --- | --- |
+| S6 `188c957` 기준 | `05bf2d6d1e57791cd60908574d23d6f6bd894f006c01200cc177110ceac8ee30` | FAIL `catalog_memory.rs:497`, 44.88초 |
+| + `sha2` opt-level 3 | `ef8f1f211b9edfa37122e0ddf35a1a5ed2376dd1499bea1a7329ce09ae2429b4` | PASS, 15.08초 |
+| + `zero` memcmp | `c83b6a1d82f92173823e647779eecac4654fbc06c4210864074367078bbe0438` | PASS, 4.76초 |
+| 최종(+ `zero` 시험) | `3530aac607b7bff4c7751ab677c01e8df4473e2163f52bdc42254d69ccc7fff1` | PASS ×3, 4.09/3.93/4.06초 |
+
+변경한 제품 함수는 `retention_page::zero` 하나이므로 최종 ELF에서 그 module의 `storage::retention_page::` 31개(ignored 3 포함, 새 시험 포함)를 실행했고 모두 PASS했다. 최종 source fingerprint는 `39928f98b3601b05510042b2763808b76cde6bff8983fe2ed571ed5120c382b3`, `XADB_G6_VECTOR_INDEXES`는 `p1-o00=ce3fd367007a6d798dbb6c2f18367a714d4f105611fb190fe57a1aa72d6d99a8`이다. MCC02의 fixture pin과 G6 vector index 검산이 고정 SHA-256 값과 맞으므로 최적화한 `sha2`의 결과도 확인된다. `cargo clippy -p xadb-engine --all-targets --all-features --locked -- -D warnings`가 통과했다.
+
+같은 원인으로 느린 다른 시험(S6의 240초 한도 복구 사례, 2026-10-29 main 검사에서 40–50초가 걸린 catalog_memory unwind/own-read 시험 등)도 빨라질 것으로 보이지만 이 작업에서는 실행하지 않았다. 로그·profile 요약·실행 script는 공유 폴더 `main-preexisting-debug-20261030/debug-hash-timeout/`에 있고, ELF와 perf 원자료는 지웠다.
+
+| 파일 | SHA-256 |
+| --- | --- |
+| `crates/engine/src/storage/retention_page.rs` | `ee0df629d363239e0b6835e48c4ce1d6506331fd81d7d96f54be566a3a3bda01` |
+| `crates/engine/src/storage/retention_page_tests.rs` | `6944c3dec33ba347654e54d6963b0d12dfba6d3c3d506c47b15e4a3ede6d3355` |
+| `Cargo.toml` | `b87970a24dee0d397f49c3ec95f02b71814e415c5dda4be8ae057e83f31d17e1` |

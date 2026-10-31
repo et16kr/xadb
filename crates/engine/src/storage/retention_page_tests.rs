@@ -788,3 +788,18 @@ fn retention_s5_job_reserved() {
     }
     h.finish();
 }
+/// `zero` compares fixed blocks, so every byte of every block and of a short
+/// tail must still decide the result.
+#[test]
+fn zero_checks_every_byte_of_blocks_and_tail() {
+    assert!(zero(&[]));
+    for len in [1, JOB_BYTES - 1, JOB_BYTES, 2 * JOB_BYTES + 7] {
+        let mut bytes = vec![0; len];
+        assert!(zero(&bytes), "len {len}");
+        for at in 0..len {
+            bytes[at] = 0x80;
+            assert!(!zero(&bytes), "len {len} byte {at}");
+            bytes[at] = 0;
+        }
+    }
+}
