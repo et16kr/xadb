@@ -75,11 +75,6 @@ impl<'a, 'c, 's> BoundVisibility<'a, 'c, 's> {
     }
 }
 impl<'v, 'a, 'c, 's> ReferenceLease<'v, 'a, 'c, 's> {
-    /// Observation for a candidate; this scalar alone grants no pin authority.
-    pub(in super::super) fn row_generation(&self) -> u64 {
-        self.generations[0]
-    }
-
     fn check(&self, bytes: &[u8], at: usize, expected: u8) -> VisibilityResult<()> {
         let row = reference_row(bytes, self.owner.index() * 2 + at);
         if !self.active
@@ -428,6 +423,18 @@ impl<'v, 'a, 'c, 's> ReferenceLease<'v, 'a, 'c, 's> {
             self.owner.index(),
             self.generations[0],
         )
+    }
+
+    pub(in super::super) fn row_source_failure(
+        &self,
+        cause: super::super::RetentionCause,
+    ) -> super::super::RetentionError {
+        self.visibility.origin.fence.fence();
+        super::super::RetentionError {
+            phase: super::super::RetentionPhase::Source,
+            effect: Effect::CallerMustResolve,
+            cause,
+        }
     }
 
     /// Only a held original RowLeaf can issue these pins. Decode and retirement

@@ -610,6 +610,18 @@ pub(crate) fn tree_source_bytes() -> usize {
     source::tree_codec()
 }
 
+/// Row read's typed record decoder, without replay-owned workspace.
+#[cfg(test)]
+pub(crate) fn row_read_codec_bytes() -> usize {
+    source::row_codec()
+}
+
+/// Row Missing-before's typed Undo decoder, without replay-owned workspace.
+#[cfg(test)]
+pub(crate) fn row_undo_read_codec_bytes() -> usize {
+    source::undo_row_codec()
+}
+
 #[cfg(test)]
 #[path = "transition_tests.rs"]
 mod tests;

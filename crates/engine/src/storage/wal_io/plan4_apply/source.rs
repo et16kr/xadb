@@ -42,7 +42,6 @@ pub(super) enum OperationClass {
 /// Fixed type-derived costs, computed once while DiskSession is exclusively
 /// borrowed for split. ReadPort owns these immutable values; callers cannot
 /// supply a byte count or recompute a recursive census before each admission.
-#[derive(Clone, Copy)]
 pub(super) struct CatalogSourceCharges {
     shared: usize,
     full: usize,

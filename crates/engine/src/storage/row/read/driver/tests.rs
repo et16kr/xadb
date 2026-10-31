@@ -1554,3 +1554,26 @@ fn mcb00_d12_cleanup_failure_replaces_flush_and_scan_errors_keep_progress() {
     assert_eq!(progress(&cursor), (Some(20), None));
     assert_eq!(output, [FILL; 16]);
 }
+
+/// MCB00-D13 reports the concrete B frames consumed by the S5 C join. The
+/// combined Full assertions live with the actual C memory/native census.
+#[test]
+fn mcb00_d13_memory_call_inventory() {
+    type W = crate::storage::wal_io::plan4_test_support::Writer;
+    println!(
+        "MCB00_D13 memory LOAD={:?} nonload={}",
+        live::test_load_callers::<W>(),
+        live::test_nonload_caller::<W>()
+    );
+}
+
+#[cfg(target_os = "linux")]
+#[test]
+fn mcb00_d13_native_call_inventory() {
+    type W = platform::namespace::LinuxWriterLease;
+    println!(
+        "MCB00_D13 LinuxWriterLease LOAD={:?} nonload={}",
+        live::test_load_callers::<W>(),
+        live::test_nonload_caller::<W>()
+    );
+}

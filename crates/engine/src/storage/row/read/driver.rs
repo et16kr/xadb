@@ -131,6 +131,7 @@ impl From<RetentionError> for RowReadError {
 
 /// C's precedence: a caller-must-resolve result survives, otherwise a failed
 /// checked cleanup replaces the result. Cleanup never relies on Drop alone.
+#[inline(never)]
 fn merge<T>(
     result: Result<T, RowReadError>,
     cleanup: Result<(), RetentionError>,
@@ -155,6 +156,7 @@ struct ViewSample {
 }
 
 impl ViewSample {
+    #[inline(never)]
     fn of<V: ReadView>(view: &V) -> Result<Self, RowReadError> {
         Ok(Self {
             q: view.q()?,
@@ -437,7 +439,20 @@ impl<'r, V: ReadView + 'r, T: 'r> RowCursor<'r, V, T> {
             cancel,
             &mut copied_slot,
         );
-        match merge(scanned, source.finish())? {
+        let scanned = merge(scanned, source.finish())?;
+        self.publish_next(scanned, copied_slot, revision)
+    }
+
+    // Publication and its large copied-value extraction happen only after
+    // the source has finished; none of these slots coexist with C LOAD.
+    #[inline(never)]
+    fn publish_next<O, F>(
+        &mut self,
+        scanned: Step<Scan, F>,
+        mut copied_slot: Option<O>,
+        revision: u64,
+    ) -> Result<Step<CursorStep<O>, F>, RowReadError> {
+        match scanned {
             Step::FlushRequired { target } => Ok(Step::FlushRequired { target }),
             Step::Ready(Scan::End) => {
                 self.progress.finish_end(revision)?;
@@ -494,6 +509,13 @@ impl<'r, V: ReadView + 'r, T: 'r> RowCursor<'r, V, T> {
     }
 
     #[inline(never)]
+    fn check_scan_advance(&self, row: RowId, revision: u64) -> Result<(), RowReadError> {
+        self.progress
+            .check_advance(row, revision)
+            .map_err(RowReadError::from)
+    }
+
+    #[inline(never)]
     fn scan<S: ReadSource>(
         &mut self,
         source: &mut S,
@@ -512,21 +534,18 @@ impl<'r, V: ReadView + 'r, T: 'r> RowCursor<'r, V, T> {
                     return Ok(Step::FlushRequired { target });
                 }
             };
-            let selected = self
-                .progress
-                .check_advance(at.row, revision)
-                .map_err(RowReadError::from)
-                .and_then(|()| {
-                    select_row(
-                        source,
-                        candidate.as_ref().ok_or(RowReadError::SourceMismatch)?,
-                        at,
-                        sample,
-                        output,
-                        cancel,
-                        copied_slot,
-                    )
-                });
+            let selected = match self.check_scan_advance(at.row, revision) {
+                Ok(()) => select_row(
+                    source,
+                    candidate.as_ref().ok_or(RowReadError::SourceMismatch)?,
+                    at,
+                    sample,
+                    output,
+                    cancel,
+                    copied_slot,
+                ),
+                Err(error) => Err(error),
+            };
             match release_selected(source, &mut candidate, selected)? {
                 Step::Ready(true) => {
                     return Ok(Step::Ready(Scan::Returned(at.row)));

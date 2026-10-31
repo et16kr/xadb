@@ -41,7 +41,7 @@ pub(crate) struct RowReadOperation<
     'w,
     W: WriterNamespace,
 > {
-    backend: ReadPort<'b, 'a, 's, 'c, 'p, 'd, 'm, 'w, W>,
+    backend: &'r ReadPort<'b, 'a, 's, 'c, 'p, 'd, 'm, 'w, W>,
     owner: &'u mut Owner<'c, 's>,
     statement: &'r RowStatementView<'t, 'v, 'a, 'c, 's>,
     loader: &'i mut [u8; 409_600],
@@ -50,7 +50,6 @@ pub(crate) struct RowReadOperation<
     // refs before their lease, then source bytes before reader progress.
     captured: Option<CapturedRowRefs<'b, 'a, 'c, 's>>,
     lease: Option<ReferenceLease<'b, 'a, 'c, 's>>,
-    lease_generation: u64,
     capture_sequence: u64,
     stopped: bool,
     schema_len: usize,
@@ -79,7 +78,6 @@ pub(crate) struct RowCandidate<'b> {
     // an old observation to cross that open boundary.
     binding: std::marker::PhantomData<&'b ()>,
     lease_identity: (usize, usize, u64),
-    lease_generation: u64,
     capture_sequence: u64,
     version: RecordVersion,
     canonical_len: usize,
@@ -145,7 +143,7 @@ impl<'b, 'a, 's, 'c, 'p, 'd, 'm, 'w, W: WriterNamespace>
     /// Reserve original reader progress and the Full source budget before
     /// touching the reference registry. The private loan remains caller-owned.
     pub(in crate::storage) fn row_operation<'u, 'r, 't, 'v, 'i>(
-        &self,
+        &'r self,
         owner: &'u mut Owner<'c, 's>,
         view: &'r RowStatementView<'t, 'v, 'a, 'c, 's>,
         private: &'i mut [u8; 425_984],
@@ -225,24 +223,15 @@ impl<'b, 'a, 's, 'c, 'p, 'd, 'm, 'w, W: WriterNamespace>
                 );
             }
         };
-        let lease_generation = lease.row_generation();
         let (loader, copy) = private.split_at_mut(409_600);
         Ok(RowReadOperation {
-            backend: ReadPort {
-                source_charges: self.source_charges,
-                storage: self.storage,
-                pool: self.pool,
-                history: self.history,
-                isolation: self.isolation,
-                visibility: self.visibility,
-            },
+            backend: self,
             owner,
             statement: view,
             loader: loader.try_into().expect("fixed loader partition"),
             copy: copy.try_into().expect("fixed copy partition"),
             captured: None,
             lease: Some(lease),
-            lease_generation,
             capture_sequence: 0,
             stopped: false,
             schema_len: 0,
@@ -262,8 +251,7 @@ impl<'u, 'r, 't, 'v, 'i, 'b, 'a, 's, 'c, 'p, 'd, 'm, 'w, W: WriterNamespace>
         table: &CheckedTable<'c, 's>,
         residency: &mut Plan4ResidencyCursor,
     ) -> Result<ReadStep<RowSearchPage<'g, 'b, 'a, 's, 'c, 'p, 'd>>> {
-        self.check_table(table)?;
-        if let ReadStep::FlushRequired { target } = self.load_catalog(residency)? {
+        if let ReadStep::FlushRequired { target } = self.load_catalog(table, residency)? {
             return Ok(ReadStep::FlushRequired { target });
         }
         self.capture_schema(table)?;
@@ -325,8 +313,17 @@ impl<'u, 'r, 't, 'v, 'i, 'b, 'a, 's, 'c, 'p, 'd, 'm, 'w, W: WriterNamespace>
         })
     }
     #[inline(never)]
-    fn load_catalog(&mut self, residency: &mut Plan4ResidencyCursor) -> Result<ReadStep<()>> {
-        let requests = [self.catalog_request(7)?, self.catalog_request(8)?];
+    fn catalog_requests(&self) -> Result<[TargetRequest; 2]> {
+        Ok([self.catalog_request(7)?, self.catalog_request(8)?])
+    }
+    #[inline(never)]
+    fn load_catalog(
+        &mut self,
+        table: &CheckedTable<'c, 's>,
+        residency: &mut Plan4ResidencyCursor,
+    ) -> Result<ReadStep<()>> {
+        self.check_table(table)?;
+        let requests = self.catalog_requests()?;
         for at in 0..requests.len() {
             if let RetentionResidencyStep::FlushRequired { target, .. } =
                 self.backend.load_lookup_target(
@@ -457,9 +454,9 @@ impl<'u, 'r, 't, 'v, 'i, 'b, 'a, 's, 'c, 'p, 'd, 'm, 'w, W: WriterNamespace>
             kind: PageKind::TreeAnchor,
             level: 0,
         };
-        if let Some(target) =
-            self.backend
-                .lookup_resident(self.owner, anchor_request, residency, self.loader)?
+        if let RetentionResidencyStep::FlushRequired { target, .. } = self
+            .backend
+            .load_lookup_target(self.owner, anchor_request, residency, &[], self.loader)?
         {
             self.stopped = true;
             return Ok(ReadStep::FlushRequired { target });
@@ -469,7 +466,7 @@ impl<'u, 'r, 't, 'v, 'i, 'b, 'a, 's, 'c, 'p, 'd, 'm, 'w, W: WriterNamespace>
             self.owner,
             leaf,
             residency,
-            &[anchor_request],
+            std::slice::from_ref(&anchor_request),
             self.loader,
         )? {
             RetentionResidencyStep::FlushRequired { target, .. } => {
@@ -598,12 +595,13 @@ impl<'u, 'r, 't, 'v, 'i, 'b, 'a, 's, 'c, 'p, 'd, 'm, 'w, W: WriterNamespace>
             table: table.table,
         }))
     }
+    #[inline(never)]
     pub(in crate::storage) fn status(
         &mut self,
         candidate: &RowCandidate<'b>,
         residency: &mut Plan4ResidencyCursor,
     ) -> Result<ReadStep<TransactionState>> {
-        use crate::storage::transaction_record::{TransactionStatusCell, VersionStamp};
+        use crate::storage::transaction_record::VersionStamp;
         self.check_candidate(candidate)?;
         let bad = || {
             fatal(
@@ -627,13 +625,30 @@ impl<'u, 'r, 't, 'v, 'i, 'b, 'a, 's, 'c, 'p, 'd, 'm, 'w, W: WriterNamespace>
         let (request, location) = self
             .backend
             .catalog_status_location(self.owner, reference)?;
-        if let Some(target) =
-            self.backend
-                .lookup_resident(self.owner, request, residency, self.loader)?
+        if let RetentionResidencyStep::FlushRequired { target, .. } = self
+            .backend
+            .load_lookup_target(self.owner, request, residency, &[], self.loader)?
         {
             self.stopped = true;
             return Ok(ReadStep::FlushRequired { target });
         }
+        self.read_status(request, location, reference)
+    }
+    #[inline(never)]
+    fn read_status(
+        &mut self,
+        request: TargetRequest,
+        location: crate::storage::transaction_record::StatusSlotRef,
+        reference: crate::storage::transaction_record::TxnRef,
+    ) -> Result<ReadStep<TransactionState>> {
+        use crate::storage::transaction_record::TransactionStatusCell;
+        let bad = || {
+            fatal(
+                self.backend.storage,
+                RetentionPhase::Census,
+                RetentionCause::Invariant,
+            )
+        };
         let guard = self.backend.read(self.owner, &Plan4Target { request })?;
         let result = (|| {
             let page = crate::storage::status_home::decode_status_home_page(
@@ -667,18 +682,12 @@ impl<'u, 'r, 't, 'v, 'i, 'b, 'a, 's, 'c, 'p, 'd, 'm, 'w, W: WriterNamespace>
         self.statement.check_catalog_read()?;
         Ok(ReadStep::Ready(state))
     }
+    #[inline(never)]
     pub(in crate::storage) fn missing_before(
         &mut self,
         candidate: &RowCandidate<'b>,
         residency: &mut Plan4ResidencyCursor,
     ) -> Result<ReadStep<MissingRowEvidence>> {
-        use crate::storage::{
-            transaction_record::VersionStamp,
-            undo_record::{
-                self, UndoBeforeKind, UndoPayload, UndoRecordExpectation, UndoTargetKind,
-                UndoTargetView,
-            },
-        };
         self.check_candidate(candidate)?;
         let bad = || {
             fatal(
@@ -699,13 +708,37 @@ impl<'u, 'r, 't, 'v, 'i, 'b, 'a, 's, 'c, 'p, 'd, 'm, 'w, W: WriterNamespace>
         }
         let table = self.table.ok_or_else(bad)?;
         let request = self.backend.catalog_undo_location(self.owner, reference)?;
-        if let Some(target) =
-            self.backend
-                .lookup_resident(self.owner, request, residency, self.loader)?
+        if let RetentionResidencyStep::FlushRequired { target, .. } = self
+            .backend
+            .load_lookup_target(self.owner, request, residency, &[], self.loader)?
         {
             self.stopped = true;
             return Ok(ReadStep::FlushRequired { target });
         }
+        self.read_missing(candidate, reference, table, request)
+    }
+    #[inline(never)]
+    fn read_missing(
+        &mut self,
+        candidate: &RowCandidate<'b>,
+        reference: crate::storage::undo_ref::UndoRef,
+        table: ObjectHandle,
+        request: TargetRequest,
+    ) -> Result<ReadStep<MissingRowEvidence>> {
+        use crate::storage::{
+            transaction_record::VersionStamp,
+            undo_record::{
+                self, UndoBeforeKind, UndoPayload, UndoRecordExpectation, UndoTargetKind,
+                UndoTargetView,
+            },
+        };
+        let bad = || {
+            fatal(
+                self.backend.storage,
+                RetentionPhase::Census,
+                RetentionCause::Invariant,
+            )
+        };
         let guard = self
             .backend
             .read_catalog_undo(self.owner, &Plan4Target { request })?;
@@ -759,7 +792,6 @@ impl<'u, 'r, 't, 'v, 'i, 'b, 'a, 's, 'c, 'p, 'd, 'm, 'w, W: WriterNamespace>
     fn check_candidate(&self, candidate: &RowCandidate<'b>) -> Result<()> {
         if self.stopped
             || self.lease.as_ref().map(|l| l.row_identity()) != Some(candidate.lease_identity)
-            || candidate.lease_generation != self.lease_generation
             || candidate.capture_sequence != self.capture_sequence
             || self.captured.is_none()
         {
@@ -829,7 +861,7 @@ impl<'g, 'b, 'a, 's, 'c, 'p, 'd> RowSearchPage<'g, 'b, 'a, 's, 'c, 'p, 'd> {
                 arity: 0,
             },
         )
-        .map_err(|e| unchanged(RetentionPhase::Source, RetentionCause::Tree(e)))
+        .map_err(|e| self.lease.row_source_failure(RetentionCause::Tree(e)))
     }
     /// Checks the slot chosen by B against the latched row before any pin.
     pub(in crate::storage) fn capture(self, at: usize) -> Result<RowCandidate<'b>> {
@@ -876,7 +908,6 @@ impl<'g, 'b, 'a, 's, 'c, 'p, 'd> RowSearchPage<'g, 'b, 'a, 's, 'c, 'p, 'd> {
             Ok(RowCandidate {
                 binding: std::marker::PhantomData,
                 lease_identity: self.lease.row_identity(),
-                lease_generation: self.lease.row_generation(),
                 capture_sequence: sequence,
                 version,
                 canonical_len: len,
@@ -895,6 +926,62 @@ impl<'g, 'b, 'a, 's, 'c, 'p, 'd> RowSearchPage<'g, 'b, 'a, 's, 'c, 'p, 'd> {
 impl<W: WriterNamespace> ReadPort<'_, '_, '_, '_, '_, '_, '_, '_, W> {
     /// Raw size observations, not an acceptance assertion or a replacement for
     /// the phase census. Loader and operation necessarily coexist at LOAD.
+    pub(in crate::storage) fn row_test_load_inventory() -> [usize; 11] {
+        use std::mem::size_of as n;
+        let r = n::<&()>();
+        let page = 3 * r
+            + n::<Result<()>>()
+            + n::<Result<ReadStep<()>>>()
+            + n::<Result<ReadStep<TargetRequest>>>()
+            + n::<Result<ReadStep<RowSearchPage<'_, '_, '_, '_, '_, '_, '_>>>>();
+        let catalog = 3 * r
+            + n::<Result<()>>()
+            + n::<Result<[TargetRequest; 2]>>()
+            + n::<std::ops::Range<usize>>()
+            + n::<usize>()
+            + n::<Result<RetentionResidencyStep>>();
+        let leaf = 3 * r
+            + n::<TargetRequest>()
+            + n::<Result<RetentionResidencyStep>>()
+            + n::<Result<TargetRequest>>()
+            + n::<Result<RetentionResidencyStep>>();
+        [
+            page,
+            catalog,
+            leaf,
+            n::<TargetRequest>(),
+            n::<Result<RetentionResidencyStep>>(),
+            n::<Result<[TargetRequest; 2]>>(),
+            n::<RowReadOperation<'_, '_, '_, '_, '_, '_, '_, '_, '_, '_, '_, '_, '_, W>>(),
+            super::super::lookup_load::source_bytes::<W>(),
+            super::super::source::CatalogSourceCharges::new::<W>().observations()[1],
+            // status: args/check/closure, stamp and pin comparison, location,
+            // LOAD and the C return carrier. Decode is a separate callee.
+            4 * r
+                + n::<Result<()>>()
+                + n::<crate::storage::transaction_record::VersionStamp>()
+                + 2 * n::<Option<&()>>()
+                + 2 * n::<Option<crate::storage::transaction_record::TxnRef>>()
+                + n::<
+                    Result<(
+                        TargetRequest,
+                        crate::storage::transaction_record::StatusSlotRef,
+                    )>,
+                >()
+                + n::<Result<RetentionResidencyStep>>()
+                + n::<Result<ReadStep<TransactionState>>>(),
+            // missing: original candidate/pins and table/request observations.
+            4 * r
+                + n::<Result<()>>()
+                + n::<Result<UndoRef>>()
+                + 2 * n::<Option<&()>>()
+                + 2 * n::<Option<UndoRef>>()
+                + n::<Result<ObjectHandle>>()
+                + n::<Result<TargetRequest>>()
+                + n::<Result<RetentionResidencyStep>>()
+                + n::<Result<ReadStep<MissingRowEvidence>>>(),
+        ]
+    }
     pub(in crate::storage) fn row_test_source_observations(&self) -> [usize; 5] {
         [
             self.source_charges.observations()[1],
@@ -914,7 +1001,6 @@ impl RowCandidate<'_> {
         Self {
             binding: std::marker::PhantomData,
             lease_identity: self.lease_identity,
-            lease_generation: self.lease_generation,
             capture_sequence: self.capture_sequence,
             version: self.version,
             canonical_len: self.canonical_len,
@@ -925,5 +1011,28 @@ impl RowCandidate<'_> {
 impl<W: WriterNamespace> RowReadOperation<'_, '_, '_, '_, '_, '_, '_, '_, '_, '_, '_, '_, '_, W> {
     pub(in crate::storage) fn test_set_sequence(&mut self, sequence: u64) {
         self.capture_sequence = sequence;
+    }
+}
+
+#[cfg(test)]
+#[path = "read/census.rs"]
+mod census;
+#[cfg(test)]
+impl<W: WriterNamespace> ReadPort<'_, '_, '_, '_, '_, '_, '_, '_, W> {
+    pub(in crate::storage) fn row_test_nonload_inventory() -> [usize; 7] {
+        census::nonload::<W>()
+    }
+}
+
+#[cfg(test)]
+impl<'s, 'c, W: WriterNamespace> Plan4Retention<'_, 's, 'c, '_, '_, '_, '_, '_, W> {
+    /// Fixture-only observation of an already resident original target. This
+    /// grants no install/load permission; normal eviction revalidates it.
+    pub(in crate::storage) fn row_test_resident_target(&self, index: usize) -> Result<Plan4Target> {
+        self.inner
+            .pool
+            .target_request(index)
+            .map(|request| Plan4Target { request })
+            .map_err(|e| frame(RetentionPhase::Source, e))
     }
 }

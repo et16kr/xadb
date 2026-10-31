@@ -210,3 +210,95 @@ pub(in crate::storage) fn next_live<'a, 'c, 's, W: WriterNamespace>(
         cancel,
     )
 }
+
+/// LOAD-path frame inventory before leaf-temporary bounds. This is a partial
+/// diagnostic, not the complete S5 source bound.
+#[cfg(test)]
+pub(in crate::storage) fn test_load_callers<W: WriterNamespace>() -> [usize; 6] {
+    use super::super::{SeekPosition, Visibility};
+    use super::{Scan, ViewSample};
+    use std::mem::size_of as n;
+    type E<T> = Result<T, RowReadError>;
+    type C<T> = Result<T, RetentionError>;
+    type X = E<Step<bool, Plan4Target>>;
+    type J = E<Step<Option<SeekPosition>, Plan4Target>>;
+    type U = E<Step<Visibility, Plan4Target>>;
+    type Z = E<Visibility>;
+    type GP = C<
+        Step<
+            RowSearchPage<'static, 'static, 'static, 'static, 'static, 'static, 'static>,
+            Plan4Target,
+        >,
+    >;
+    type GS = C<Step<TransactionState, Plan4Target>>;
+    type GM = C<Step<MissingRowEvidence, Plan4Target>>;
+    type N = E<Step<Scan, Plan4Target>>;
+    let r = n::<&()>();
+    let open = n::<C<LiveSource<'_, '_, '_, '_, '_, '_, '_, '_, '_, '_, '_, '_, '_, '_, W>>>()
+        - n::<RowReadOperation<'_, '_, '_, '_, '_, '_, '_, '_, '_, '_, '_, '_, '_, W>>();
+    // Entry arguments, constructed closure, and caller's final result slot.
+    let outer =
+        9 * r + n::<RowId>() + 5 * r + n::<E<Step<PointRead<RowCopyObservation>, Plan4Target>>>();
+    let point = 4 * r
+        + n::<RowId>()
+        + n::<E<ViewSample>>()
+        + open
+        + n::<Option<RowCopyObservation>>()
+        + 2 * n::<X>()
+        + n::<C<()>>();
+    let select =
+        5 * r + n::<Option<RowCandidate>>() + n::<J>() + n::<X>() + n::<E<&RowCandidate>>();
+    let capture = 2 * r + n::<GP>() + n::<E<Option<SeekPosition>>>();
+    let selecting = 6 * r + n::<E<()>>() + n::<U>() + n::<GM>() + n::<E<()>>();
+    let resolve = 3 * r + 2 * n::<Z>() + n::<GS>();
+    let page = outer + point + select + capture + r + n::<GP>();
+    let status = outer + point + select + selecting + resolve + 2 * r + n::<GS>();
+    let missing = outer + point + select + selecting + 2 * r + n::<GM>();
+    // next_live/next hold revision/check, scan/merge, and one copied slot;
+    // publish_next owns take/ok_or and finish progress checks after cleanup.
+    let next = 4 * r
+        + n::<u64>()
+        + n::<E<ViewSample>>()
+        + n::<Result<(), super::super::ReadError>>()
+        + open
+        + n::<Option<RowCopyObservation>>()
+        + 2 * n::<N>()
+        + n::<C<()>>();
+    let scan = 6 * r
+        + n::<Option<RowCandidate>>()
+        + n::<J>()
+        + n::<E<()>>()
+        + 2 * n::<X>()
+        + n::<E<&RowCandidate>>()
+        + n::<Result<(), super::super::ReadError>>();
+    let cursor_outer = 12 * r + n::<E<Step<CursorStep<RowCopyObservation>, Plan4Target>>>();
+    let delta = cursor_outer + next + scan + 2 * r - outer - point - select;
+    [
+        page,
+        status,
+        missing,
+        page + delta,
+        status + delta,
+        missing + delta,
+    ]
+}
+
+/// Whole non-LOAD caller envelope. Large extraction/codec carriers are only
+/// in never-inline callees; sum them conservatively for non-LOAD phases.
+#[cfg(test)]
+pub(in crate::storage) fn test_nonload_caller<W: WriterNamespace>() -> usize {
+    use std::mem::size_of as n;
+    *test_load_callers::<W>().iter().max().unwrap()
+        // Opening closure's return is distinct from read_point/next's open
+        // result (whose operation payload is already counted by the C join).
+        + n::<Result<LiveSource<'_,'_,'_,'_,'_,'_,'_,'_,'_,'_,'_,'_,'_,'_,W>,RetentionError>>()
+        + n::<TreePageView<'_>>()
+        + 2 * n::<Result<TreePageView<'_>, RetentionError>>()
+        + 2 * n::<Result<RowCandidate, RetentionError>>()
+        + 2 * n::<RecordVersion>()
+        + 2 * n::<Result<RowCopyObservation, RetentionError>>()
+        + 2 * n::<RowCopyObservation>()
+        + 8 * n::<Result<(), RowReadError>>()
+        + 32 * n::<&()>()
+        + 512
+}

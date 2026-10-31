@@ -5158,3 +5158,16 @@ B는 candidate와 copy observation을 각각 한 개의 내부 Option slot으로
 - 크기 진단 `sizes1`은 sizeof만 관측했으며 전체 source budget PASS가 아니다. 진단 함수는 기록 후 제거했다. B forward 반환과 driver 호출 결과를 각각 세어야 하며, cursor의 후속 publication/progress slot 및 유한 temporary 상계도 남은 census에 포함한다.
 
 S5는 여전히 PARTIAL이다. memory/native 전체 call-site census, 비상주/FlushRequired·오류 경계·InstallationPending, native 실제 실행과 최종 review/push/PR가 남았다.
+
+
+### S5 전체 source census 및 native 읽기 checkpoint
+
+2026-10-31. `202b3b79` 뒤 원 ReadPort를 복사하지 않고 borrow하며 중복 candidate generation을 제거했다. C LOAD와 decode를 분리하고 B/C는 동일 ReadStep carrier를 사용한다. cap·charge·port 크기 증액 없이 전체 C/B caller inventory를 합친 최대는 cursor Row LOAD34524B/Full34570B(여유46B)다. memory와 실제 계측 native Writer 타입은 같은 상계이며 c1의 S5R-C01/C02·MCB00-D13 두 타입4개 PASS다. 이는 물리 stack/RSS 측정이 아니다. 독립 resource 리뷰 필수 수정0을 확인했으나 최종 S5 리뷰는 남았다.
+
+`/workspace/s5-evidence/`에 source manifest·ELF/input hash·plan·원 로그·결과를 보존한다. r8은 변경 B/C의 R02/R04·R06 2PASS, b3는 변경 cursor D05–12 8PASS다. binding2는 실제 visibility binding에서 candidate escape가 정확히 lifetime 오류1개로 거절되고 positive는 통과했다. port1은 operation 생존 중 원 ReadPort 이동이 E0505로 거절되고 positive는 통과했다. 선행 binding1의 복수 lifetime 진단에 대한 harness FAIL은 보존한다.
+
+r9 R08은 fatal source accounting을0으로 기대한 잘못된 oracle로 FAIL했다. 기존 Catalog와 source.release_checked 계약에 따라 fence 뒤 Full charge를 quarantine하는 oracle로 수정했고 r10 R08 PASS다. r10 R03의 read/FlushRequired/동일 snapshot 재시도 검산은 통과했으나 뒤 writer empty-abort가 읽기 중 정상 evict된 Status를 요구해 FAIL했다. cleanup 전에 기존 settle을 호출한 r11 R03 PASS(13.30초)다. 제품 용량·오류 의미를 완화하지 않았다.
+
+native1은 기존 DWB image16,711,680B/namespace15files를 테스트의8MiB/8files 한도가 거절하여 읽기 전 FAIL했다. worker의 독립 hash oracle을64KiB streaming, file16MiB/total32MiB/files16으로 정정했다. native2는 실제 native INSERT·commit q2 뒤 point Found/Missing·cursor Row/End, 정답13byte canonical, 읽기 전후 전체 namespace content hash 일치, mutation409→409, handle/fd 한도를 모두 통과했다. native2와 r12의 source `4db9e0b46f4d005113dba321d2da07d369ac2b901bd0af3f55be43bf0e8a481e`, ELF `b9dde234e6a59a0d967d1d4e9a8e49d028e8038e58674dfdce76cb7844640adf`, input `3d72aa664e984f4f36c41495012fb3f55797187d14deea238b4716b170ae84e1`이다. r12는 실제 source 한도±1/정확 경계·외부 Owner 거절(C03), 실제 preflight Ready 보유 중 InstallationPending 및 같은 snapshot 재시도(R01-PENDING), 다른 Owner의 stale candidate 거절을 추가한 R02/R04의3개 PASS다.
+
+S5는 아직 PARTIAL이다. retirement 원자 거절·손상 Undo 등 남은 오류 사례, 최종 inventory/독립 review, pre-push gate와 PR가 남았다. 무변경 하위/전체 시험과 S6 READY는 실행하지 않았다.
