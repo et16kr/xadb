@@ -1305,6 +1305,190 @@ fn mca05_v30_leaf_maximum_then_the_split_is_refused() {
     });
 }
 
+/// One System INIT (Status or Undo) through the original exclusive owner,
+/// as `system_init`, but its slot preparation's refusal is returned (as its
+/// exact debug form: the population error type is private to C).
+fn try_init<'s, 'c, W: WriterNamespace>(
+    live: &mut Live<'_, 's, 'c, '_, '_, '_, '_, '_, W>,
+    owner: &mut Owner<'c, 's>,
+    flusher: &mut Owner<'c, 's>,
+    undo: bool,
+) -> std::result::Result<(), String> {
+    let mut cursor = Plan4ResidencyCursor::new();
+    for _ in 0..32 {
+        let step = if undo {
+            live.prepare_undo_slot(owner, &mut cursor)
+        } else {
+            live.prepare_status_slot(owner, &mut cursor)
+        }
+        .map_err(|error| format!("{error:?}"))?;
+        match step {
+            None => {
+                let reserved = if undo {
+                    live.reserve_undo(owner)
+                } else {
+                    live.reserve_status(owner)
+                }
+                .unwrap();
+                return match reserved.initialize() {
+                    Ok(_) => Ok(()),
+                    Err(RetentionReservationError::Before { error, .. })
+                    | Err(RetentionReservationError::Fatal(error)) => {
+                        panic!("actual INIT {error:?}")
+                    }
+                };
+            }
+            Some(RetentionResidencyStep::FlushRequired { target, .. }) => {
+                drive_flush(live, flusher, Some(&target))
+            }
+            Some(_) => panic!("unexpected System slot preparation"),
+        }
+    }
+    panic!("bounded System preparation exhausted");
+}
+
+/// The dynamic pages of the first extent a System INIT can still own after
+/// the fixture's table T (`create_table` without its Free Undo): measured
+/// once on this fixture, and each owned-page variant checks it again by
+/// INITs until the refusal at its end.
+const OWNED_LEFT: usize = 50;
+/// The slot preparation's refusal when no dynamic page is left.
+const NO_OWNED_PAGE: &str = "RetentionError { phase: Prepare, cause: Capacity, effect: Unchanged }";
+
+/// MCA05, the owned-page dimension (the third of the nine, V07..V09): the
+/// Row's Free Undo container is supplied by its preceding System INIT
+/// (resource bounds `#row-missing-module-budget`), which owns one dynamic
+/// page. Every other owned page is taken first by Status INITs (Free
+/// Status slots the Row never uses), leaving `left` = need -1, = and +1;
+/// T has no Free Undo of its own, so the INIT's container is the only one.
+/// - `left = 0` (V07, under): the INIT is refused Unchanged (Prepare,
+///   Capacity) and changes no file; the row's preflight then finds no Free
+///   Undo (Unchanged Capacity) and the empty transaction ends: no effect.
+/// - `left = 1` (V08, equal) and `left = 2` (V09, over): the INIT lands; a
+///   lands; the Null row's preflight finds the containers full, so the
+///   statement fails, its rollback compensates a and the full abort ends
+///   the transaction (TerminalReady, one compensated root).
+/// At the end exactly `left - 1` (V07: 0) more INITs land, then the next
+/// is refused: the variant consumed the one page its INIT owned.
+fn owned_pages(id: &str, left: usize) {
+    case(id, || {
+        let oracle = Oracle::new();
+        with_fresh!(
+            oracle,
+            frames = 64,
+            |live, owner, flusher, status, undo, private, reader_private, core, fence, state| {
+                let _ = core;
+                let (row_status, _) =
+                    create_table(live, owner, flusher, status, undo, private, false);
+                for _ in 0..OWNED_LEFT - left {
+                    try_init(live, owner, flusher, false).unwrap();
+                }
+                let before = files(state);
+                match try_init(live, owner, flusher, true) {
+                    Err(error) if left == 0 => {
+                        assert_eq!(error, NO_OWNED_PAGE);
+                        let after = files(state);
+                        assert!(after.0 == before.0 && after.1 == before.1, "INIT effect");
+                    }
+                    Ok(()) if left > 0 => {}
+                    other => panic!("left {left}: INIT {other:?}"),
+                }
+                {
+                    let (mut writer, reader, mut flush) = live.split();
+                    let tx = writer
+                        .begin_row_transaction(
+                            owner,
+                            IsolationLevel::Serializable,
+                            &row_status,
+                            private,
+                            &mut flush,
+                        )
+                        .unwrap();
+                    let s1 = writer.begin_statement(owner, &tx).unwrap();
+                    let actor = s1.own_actor().unwrap();
+                    let table = issue_table!(reader, owner, s1, reader_private, flush, flusher);
+                    if left == 0 {
+                        let before = files(state);
+                        let a = [ValueRef::Int64(A)];
+                        let input: [&[ValueRef<'_>]; 1] = [&a];
+                        let mut slots: [Option<RowMutationObservation>; 1] = [None];
+                        let mut call = LiveCall::new(&mut writer, owner, &mut flush, flusher);
+                        let s1 =
+                            match insert_live(&mut call, s1, &table, private, &input, &mut slots) {
+                                Err(DriveError {
+                                    failure,
+                                    after: After::Returned(view),
+                                }) => {
+                                    assert_eq!(failure.stage, Stage::Preflight);
+                                    assert!(no_free_undo(&failure), "{failure:?}");
+                                    view
+                                }
+                                Err(error) => panic!("{:?}", error.failure),
+                                Ok(n) => panic!("{n} rows inserted"),
+                            };
+                        assert!(finish_statement_live(&mut call, s1).is_ok());
+                        let after = files(state);
+                        assert!(after.0 == before.0 && after.1 == before.1, "first effect");
+                        assert!(
+                            writer
+                                .abort_empty_transaction(owner, tx, private, &mut flush)
+                                .is_ok()
+                        );
+                    } else {
+                        assert!(writer.finish_statement(owner, s1).is_ok());
+                        let a = failed_suffix!(
+                            writer,
+                            owner,
+                            flush,
+                            flusher,
+                            tx,
+                            &table,
+                            private,
+                            [A],
+                            true
+                        );
+                        assert_eq!(a[0].row().get(), 1);
+                        assert_eq!(full_abort!(writer, owner, flush, flusher, tx, private), 0);
+                        assert_eq!(
+                            census!(writer, actor).0,
+                            states(&[("TerminalReady", 1), ("RootReleasingCompensated", 1)])
+                        );
+                    }
+                    assert_leaf(&leaf_cells(reader.catalog_test_pool()), &[]);
+                }
+                let mut more = 0;
+                let refusal = loop {
+                    match try_init(live, owner, flusher, false) {
+                        Ok(()) => more += 1,
+                        Err(error) => break error,
+                    }
+                    assert!(more < left, "left {left}: an unexpected owned page");
+                };
+                assert_eq!(refusal, NO_OWNED_PAGE);
+                assert_eq!(more, left.saturating_sub(1));
+                println!("MCA05_OWNED\t{id}\tleft={left}\tafter={more}");
+                owner.check_idle().unwrap();
+                assert!(!fence.is_fenced());
+            }
+        );
+    });
+}
+
+#[test]
+fn mca05_v07_owned_pages_one_under() {
+    owned_pages("MCA05-V07", 0);
+}
+
+#[test]
+fn mca05_v08_owned_pages_equal() {
+    owned_pages("MCA05-V08", 1);
+}
+
+#[test]
+fn mca05_v09_owned_pages_one_over() {
+    owned_pages("MCA05-V09", 2);
+}
+
 #[cfg(target_os = "linux")]
 #[path = "row_inventory_a/native.rs"]
 mod native;

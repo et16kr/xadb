@@ -885,3 +885,30 @@ fn mca00_v06_produced_groups_pass_c_observers() {
             .unwrap_or_else(|error| panic!("{case:?} aging: {error:?}"));
     }
 }
+
+/// H's before count (Undo record incoming at record offset 80) set to
+/// `incoming` on the unchanged H page, resealed.
+fn h_incoming(fixture: &mut Fixture, incoming: u64) {
+    use crate::storage::{page::DIGEST_OFFSET, undo_record::INITIAL_UNDO_CELL};
+    let page = &mut fixture.before[7];
+    let at = INITIAL_UNDO_CELL.start + 80;
+    page[at..at + 8].copy_from_slice(&incoming.to_le_bytes());
+    let digest = foundation::codec::content_digest(&page[..DIGEST_OFFSET]);
+    page[DIGEST_OFFSET..].copy_from_slice(&digest);
+}
+
+/// MCA05-V29 (consumers §9): the Forward's net0 move of H (old head edge
+/// removed, new previous-transaction edge added) needs an actual removable
+/// before edge. H's literal before count is 2; at 1 the same Forward is
+/// still produced, and at 0 it is refused before the first output byte.
+#[test]
+fn mca05_v29_h_net0_with_before_count_zero_is_refused() {
+    let mut fixture = Fixture::new(Case::ForwardH);
+    h_incoming(&mut fixture, 1);
+    let mut frame = [0xa5; FRAME_BYTES];
+    let mut after = [[0xa5; PAGE_BYTES]; 5];
+    assert!(fixture.produce(&mut frame, &mut after).is_ok());
+    refuses(Case::ForwardH, InsertError::OrderMismatch, |f| {
+        h_incoming(f, 0)
+    });
+}
