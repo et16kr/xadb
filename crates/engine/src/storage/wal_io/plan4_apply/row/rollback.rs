@@ -705,7 +705,7 @@ mod census {
     }
     #[test]
     fn s4_c01_native_rollback_census() {
-        inspect::<platform::namespace::LinuxWriterLease>("native");
+        inspect::<super::super::super::super::native::Writer>("native-instrumented");
     }
 }
 

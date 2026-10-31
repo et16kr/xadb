@@ -5065,3 +5065,49 @@ source별 최종 대응은 신규 memory 기능18개·새 census1개·변경된 
 구현 checkpoint의 D1/D2 ACCEPT와 마지막 실제 WAL Capacity seam의 D2 ACCEPT·필수 수정0을 확인했다. 최종 문서/receipts까지 별도 agent가 읽기 대조하여 **S3 한정 D1/D2 ACCEPT·필수 수정0**으로 판정했다. 리뷰 중 코드 변경·빌드·시험 실행0이며 판정 원문은 `artifacts/module-s3-20261031/review-final.md`에 보존한다. S3 범위 밖의 S4 nonempty rollback·finish_aborted, S5 Row reads, C4/S6 Row winner READY recovery와 전체 M4/M5는 미완료다. `main` 병합·원격 push는 실행하지 않았으며 기존 `scripts/git-hooks` pre-push 설정을 보존한다.
 
 이번 build target `/tmp/xadb-s3-target`과 ELF를 제거했다(논리 파일 합계3,561,045,097B). 최종 ELF SHA-256 `d73b05b20fc50d15edc4047b1cce7d18dae65a63ebd1092d33b736c3660a0058` 및 source별 hash는 v11에 보존한다. 로그·결과·파일별 source manifest·독립 literal·native namespace는 남겼고 기존 증거는 삭제하지 않았다. 전체 artifact162파일 manifest `artifacts/module-s3-20261031/artifact-files.sha256`의 SHA-256은 `14c55399946475f53f8b9f86492532f09d46e2f5249d133b19bc075754f0547c`다. 실제 toolchain과 cleanup receipt도 그 manifest에 포함한다.
+
+<a id="s4-row-rollback"></a>
+## S4 live Row rollback — 별도 branch와 source별 검증
+
+2026-10-31. 사용자 지시에 따라 최신 main `139a05f4`에서 `codex/s4-row-rollback`을 만들었다. 계약 `e05957aa`, 구현 `f5272121`, 오류·V09·census와 native 준비 `70b39457`을 단계별로 commit했다. [S4 소유 계약](../contracts/dev3-module-boundaries.md#row-rollback-s4)을 따르며 작성·통합은 `/root`, 독립 읽기 리뷰는 `/root/s4_review`다. 선정 S4 구현·로컬 검증과 최종 독립 D1/D2 ACCEPT·필수 수정0을 확인했다. S5 Row read, C4/S6 recovery READY, 전체 M4/M5는 미완료다.
+
+### 실제 공급
+
+원 Row ATT/Status/Jobs head에서 source를 선택하고 canonical replay와 T 전체 typed read를 대조한다. statement rollback은 원 mark까지, full abort는 None까지 A의 CLR candidate를 C observer·XRWC 재검산·원 stage/whole install로 소비한다. full CLR은 소비하는 Job의 statement/mutation을 사용한다. 세 root·두 statement의 full abort와 suffix 보존 뒤 새 statement/Commit을 실제 호출로 검증했다. Undo/Row/mutation high-water와 소비한 credit을 되감지 않는다.
+
+RollbackStart/StatementFinish/AbortEnd는 기존 fixed4 C producer·whole installer를 사용한다. StatementFinish 이후 FailedFinished view는 읽기·쓰기 재사용을 거절하고 원 finish_statement에서 snapshot/token을 닫는다. AbortEnd 이후 Aborted capsule은 finish_aborted에서 원 slot/snapshot을 소비한다. Active만 받던 transaction match와 origin-only 검산을 분리해 실제 MustAbort/Aborted 종료를 허용하며 일반 Active entry는 그대로 검사한다.
+
+원 MaintenancePort와 전용 flusher Owner를 rollback이 disjoint borrow한다. task가 없는 flush continuation만 pin/lease·admission·gate를 checked 반환하고 원 flusher를 진행한 뒤 반드시 재admission한다. 실패한 재admission과 durable 효과 뒤 오류는 Fatal/fence다. flusher의 Unchanged 반환에서도 reference lease를 재구성하며 admission/refs 없는 활성 step은 허용하지 않는다. 원 두-reference lease에서 current는 RollbackStart 뒤 Status latch로, H는 CLR 뒤 Status latch로 발급하고 H capture 뒤 U를 반환한다. 미완료 Drop은 I/O 없이 fence한다.
+
+### 선택 실행과 원 실패
+
+[동결 inventory](../../tests/fixtures/dev3-module-c3/row-rollback/test-inventory.json), [source별 receipts](../../tests/fixtures/dev3-module-c3/row-rollback/execution-receipts.json)와 `artifacts/module-s4-20261031/`의 원 plan·로그·source manifest·ELF hash를 보존한다. 한 source에서 전체를 다시 실행한 것으로 표시하지 않는다. 무변경 하위 wrapper·workspace 테스트는 실행하지 않았다.
+
+| 실행 | 원 결과·후속 범위 |
+| --- | --- |
+| v1 | context 환경 변수 누락으로 제품 실행 전 harness FAIL. identity 공급을 고쳐 후속 실행 |
+| v2 | CLR·AbortEnd 뒤 finish_aborted에서 Active-only match 거절 FAIL. origin-only 검산과 종료 phase 검산을 분리 |
+| v3 | full abort, suffix rollback→새 statement→Commit, 변경 공통 C01·A D15 memory **4 PASS** |
+| v4/v5 | 새 census가 순차 CLR/pin callee를 합산해 47532>44304 FAIL. 부모 보유값은 유지하고 순차 callee를 max로 결합. 상한 증액 없음 |
+| v6 | memory/native census, 실제 physical stage Capacity→동일 prepared retry, CLR partial write·sync uncertainty Fatal, unfunded 빈 statement 거절·빈 full abort, Drop, 독립 literal 전체 byte, suffix/새 statement/Commit, reader2 반환의 −1/같음/+1, flusher Before 후 retry, 실제 conflict/full abort, 실제 A statement rollback: **15 PASS** |
+| v7 | 잘못된 CLR after digest→같은 task retry, 세 root/두 statement full abort, 잘못된 capsule/view/scope 무효과 거절, 실제 A commit conflict→PendingRollback→full rollback→finish_aborted: **4 PASS**. R08은 v6 뒤 소비자 연결을 바꾼 관련 재검증 |
+| v8 | native census 타입을 raw Linux writer에서 실제 계측 native worker의 Writer로 교정한 **1 PASS**. 원 v6 raw 값은 원 source에 유지하며 무변경 native runtime은 반복하지 않음 |
+| compiler1 | 잘못된 crate-root visibility anchor와 동시 format snapshot의 harness FAIL. API 검증 PASS로 세지 않음 |
+| compiler2 | 원 storage/mod.rs anchor, 복사 source manifest 변화0, 변경 MBC00-P06 **PASS**. runtime 실행 아님 |
+| native1 | 같은 ELF의 producer/restart 두 PID **PASS**, 아래 실제 I/O와 기존 재진입 gate 범위 |
+
+최종 selector는 source별 **20개**다(선정 S4 inventory18개와 변경 공통 C01/D15 2개). 원 실패·중단 뒤 NOT_RUN은 덮지 않는다. compiler와 native는 별도 분모다. R07은 wrapper→flusher 호출 경계의 cfg(test) Before seam 뒤 실제 flusher를 구동한 사례이며 native I/O 실패라고 주장하지 않는다. CLR의 실제 부분 쓰기와 sync AfterError는 별도 R05 두 사례다.
+
+### 자원·native 경계
+
+모든 값은 Rust source-value/반환 carrier의 상계이며 RSS/실측 stack이 아니다. short65536/private425984/capsule512, 고정 charge44304와 caller 한도를 바꾸지 않았다. shared는 memory20184·실제 계측 native20192, shared+charge는64488/64496B다. actual caller456B를 포함한 frame-static+body의 최대는 CLR apply41966B다. control37166, selector36044, pin9317B를 별도로 관측하며 ordinary fixed4 install과 visibility capture/release를 포함한다. CLR A producer phase28812B, held rollback/caller·StartedRollback·shared를 포함한 원 flusher54956/54964B도 한도 안이다. 미래 caller가 보유값을 늘리면 다시 계수한다.
+
+native1의 같은 ELF는 `c0c91c229828984aca420220b3c4ef663d5e5db1ac7bbb0b3bbfac94d90f13bd`, producer PID6501/restart PID6503다. actual AbortEnd complete/synced LSN19, WAL971728B, 독립3-frame suffix151041B의 SHA-256은 `696442033ee96188af8c65237f6a3ec3a30d9f911fe2ecbf622e4a1eb341ff69`이며 전체 byte가 일치했다. controller는19개 envelope의 순서·길이·header/frame hash와 변경15–19의 독립 hash를 검산했다. namespace 파일 hash/크기는 restart 뒤 같고 Analysis/Unsupported, CallerMustResolve/database Unchanged, mutation0이었다. handles0·peak3·FD peak6이며 실제 cloud filesystem 범위다. C4/S6 READY나 전원 장애 인수는 아니다.
+
+MBC10-V09의 rollback writer와 MBC40-V09 rollback task 부분을 공급했다. MBC40-V09 (iv) writer floor, CatalogProgress writer V09, C4 recovery-task V09, S5 실제 Row read/합류와 전체 M4/M5는 기존 미공급 의무로 남긴다. 원 source WAL과 이전 증거는 보존한다.
+
+### 리뷰·되돌림
+
+별도 리뷰가 찾은 admission 없는 재진입, durable 뒤 Unchanged 반환, flusher Before 뒤 refs 부재, 종료 precheck 순서, ordinary install/shared/pin/종료 census 누락을 반영했다. 마지막 검토와 push gate 결과를 아래에 이어 기록한다. 되돌림은 최신 증거·시험 보완부터 `70b39457`, `f5272121`, `e05957aa`의 역순이다. 공개 형식·dependency를 바꾸지 않았으며 fresh development fixtures를 사용한다.
+
+최종 독립 읽기 리뷰는 **S4 한정 D1/D2 ACCEPT·필수 수정0**이다. 판정 원문 `artifacts/module-s4-20261031/review-final.md` SHA-256 `326daa53dbbf41a1deecd26350608abfd1c3acc8436b2f67d9a56673b7233967`, source별 receipts SHA-256 `6211145504e2f8673a379912e74c42025d1fdc6cbf8c148cba3d546e84ac34dc`를 보존한다. 리뷰어는 코드 수정·빌드·시험을 실행하지 않았다. pre-push gate는 최종 commit에서 별도로 실행하며 그 전 결과를 PASS로 기록하지 않는다.

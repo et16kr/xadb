@@ -9525,7 +9525,7 @@
     "artifact_manifest_sha256": "14c55399946475f53f8b9f86492532f09d46e2f5249d133b19bc075754f0547c"
   },
   "dev3_module_s4_row_rollback": {
-    "status": "IN_PROGRESS",
+    "status": "LOCAL_VERIFIED_REVIEWED",
     "contract_ref": "dev3-module-boundaries.md#row-rollback-s4",
     "baseline_commit": "139a05f4",
     "branch": "codex/s4-row-rollback",
@@ -9533,11 +9533,18 @@
       "crates/engine/src/storage/wal_io/plan4_apply/row/rollback.rs",
       "crates/engine/src/storage/wal_io/plan4_retention/row_clr.rs",
       "crates/engine/src/storage/wal_io/plan4_retention/row_rollback_select.rs",
-      "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_rollback.rs"
+      "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_rollback.rs",
+      "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_rollback/native.rs",
+      "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_rollback/v09.rs",
+      "scripts/check_dev3_s4_native.py",
+      "tests/fixtures/dev3-module-c3/row-rollback"
     ],
     "scope": "Original live Row statement/full rollback, CLR observer/install, FailedFinished/Aborted capsule completion; disjoint original flusher and Status-latch reference handoff",
-    "validation": "v3: full abort, suffix rollback/new statement/Commit, changed A call-site census and common Row write memory census PASS; additional fault/native/resource review pending",
-    "remaining_supply": "S4 errors/native/explicit rollback body census and final review; C4/S6 recovery READY; S5 Row reads; full M4/M5",
-    "source_roots_changed": false
+    "validation": "source-specific20 selectors PASS (S4 inventory18 + changed common2); changed MBC00-P06 compiler PASS; same-ELF native2process PASS; original FAIL/NOT_RUN retained; final independent D1/D2 ACCEPT, required changes0",
+    "remaining_supply": "MBC40-V09 floor (iv); CatalogProgress V09; C4/S6 recovery READY and tasks; S5 Row reads; full M4/M5",
+    "source_roots_changed": false,
+    "evidence_ref": "module-independence-survey-20261026.md#s4-row-rollback",
+    "receipt_manifest_sha256": "6211145504e2f8673a379912e74c42025d1fdc6cbf8c148cba3d546e84ac34dc",
+    "review_sha256": "326daa53dbbf41a1deecd26350608abfd1c3acc8436b2f67d9a56673b7233967"
   }
 }

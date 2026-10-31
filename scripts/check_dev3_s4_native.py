@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Run only S4-N01: bounded actual Commit, then current Row recovery gate.
+"""Run only S4-N01: bounded actual AbortEnd, then current Row recovery gate.
 
 Both processes use one immutable test ELF. Frame envelopes are checked here
 with stdlib SHA-256; frames 15–19 use previously frozen independent literals.

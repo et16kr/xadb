@@ -17,7 +17,10 @@
     "s4_v09_plus_one",
     "s4_r07_flush_before_error_preserves_a_retryable_rollback",
     "s4_r08_serializable_conflict_then_full_abort",
-    "s2e_e09_applied_then_rejected_row_is_rollback_required_up_to_the_s4_start"
+    "s2e_e09_applied_then_rejected_row_is_rollback_required_up_to_the_s4_start",
+    "s4_r09_wrong_after_digest_is_unchanged_and_same_task_retries",
+    "s4_r10_full_abort_three_roots_from_two_statements",
+    "s4_r11_wrong_capsule_view_and_scope_are_unchanged"
   ],
   "native_selector": "s4_n01_native_worker",
   "compiler": [
@@ -32,6 +35,7 @@
     "Only changed Row/transaction/driver paths are selected; no workspace test run.",
     "Unfunded empty statement rollback is Unchanged; Reserve/Cancel-funded mark=head is exercised by V09.",
     "S4-R07 injects one Before refusal at the wrapper-to-flusher call boundary, then uses the actual flusher.",
-    "Native restart preserves the pre-C4 Analysis/Unsupported gate; no READY claim."
+    "Native restart preserves the pre-C4 Analysis/Unsupported gate; no READY claim.",
+    "R08 uses actual A commit conflict -> PendingRollback<T> -> full CLR driver -> finish_aborted_live; R10 covers three full-abort roots from two statements."
   ]
 }

@@ -851,7 +851,9 @@ pub(crate) enum RollbackStop<T, F> {
     /// `rollback_step` may be called on it again.
     Next(RetentionError),
     /// C needs this target flushed before its next candidate. The rollback
-    /// holds the session's only Owner borrow and offers no flush-through
+    /// holds the session's foreground Owner borrow. The live adapter exposes
+    /// `flush_rollback_live` through its disjoint original flusher; a generic
+    /// boundary must supply its own equivalent continuation. There is no generic flush-through
     /// call (G1), so the caller keeps both; nothing is dropped here.
     Flush(F),
     /// The same task after an unchanged refusal of its lane, A's CLR, its

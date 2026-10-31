@@ -1857,7 +1857,7 @@ impl<'l> RowProducerLane<'l> {
 - StatementFinish receipt 뒤 view를 FailedFinished로 만들어 읽기/쓰기 재사용을 금지하고 원 finish_statement에서 token/snapshot을 소비한다. AbortEnd receipt 뒤 Aborted로 만들고 finish_aborted가 원 capsule을 소비한다. 숫자 mark나 ATT 부재만으로 성공하지 않는다.
 - 선택 검증은 다중 statement suffix 보존/후속 Commit, 다중 root full abort·빈 경계, 잘못된 binding/state/후보·조기 finish, stage retry·I/O 실패·Drop, reference/charge 반환, 실제 A caller·CLR memory/native census와 native 재진입 gate다. 실행 전 source별 selector·예산을 고정하고 실패·NOT_RUN을 보존한다. 바뀐 공통 경로만 관련 기존 사례를 다시 선택한다.
 
-비교 대안은 rollback을 A에서 직접 설치하거나 원 statement를 재생성하는 것이다. 이는 원 권한·mark/receipt 수명을 끊으므로 채택하지 않는다. body/caller가 고정 charge를 넘거나 원 latch-issued pin/checked receipt를 만들 수 없으면 설계를 재검토하며 상한을 올려 합격시키지 않는다. 구현·시험·독립 최종 수용은 아직 미완료다.
+비교 대안은 rollback을 A에서 직접 설치하거나 원 statement를 재생성하는 것이다. 이는 원 권한·mark/receipt 수명을 끊으므로 채택하지 않는다. body/caller가 고정 charge를 넘거나 원 latch-issued pin/checked receipt를 만들 수 없으면 설계를 재검토하며 상한을 올려 합격시키지 않는다. 선정 구현·source별 선택 검증과 최종 독립 D1/D2 ACCEPT·필수 수정0을 확인했다. [S4 증거](../evidence/module-independence-survey-20261026.md#s4-row-rollback)를 따른다.
 
 
 앞선 성공 statement 보존과 full abort는 실제 Row head chain으로 수행하며 [소비자 상태표](dev3-module-consumers.md#row-states)를 정본으로 삼는다. C는 원 actor/statement mark와 reserved obligations에서 RollbackStart를 적용하고 다음 currentU를 고른다. A는 C가 actual source에서 획득한 before/key/nextU 문맥으로 **CLR 후보**를 생산한다. 원 target/read pins와2-reference handoff, stage/whole install, head 인계, StatementFinish/AbortEnd는 C가 검산·소비한다.
@@ -1870,9 +1870,15 @@ pub(crate) struct RowRollback<'r,'t,'v,'i,'b,'a,'s,'c,'p,'d,'o,'m,'w,W: WriterNa
     transaction: &'r RowTransaction<'v,'a,'c,'s>,
     statement: Option<&'r RowStatementView<'t,'v,'a,'c,'s>>,
     private: Option<&'i mut [u8;425_984]>,
-    selection: RollbackSelection<'c,'s>, // 원 origin/head/mark/next의 scalar cut
-    refs: Option<RollbackRefs<'b,'a,'c,'s>>, // 원 visibility의 source-issued currentU/nextU
-    source: OperationSourceAdmission<'b,'a,'c,'s>,
+    flusher: &'r mut MaintenancePort<'b,'s,'c,'p,'d,'m,'w,W>,
+    flush_owner: &'r mut Owner<'c,'s>,
+    actor: TxnRef,
+    boundary: Option<StatementBoundary>, // 원 view의 sequence/mark
+    scope: RollbackScope,
+    refs: Option<RollbackRefs<'b,'a,'c,'s>>, // currentU와 원 두-reference lease
+    source: Option<OperationSourceAdmission<'b,'a,'c,'s>>,
+    gate: Option<TerminalReadGate<'c,'s>>,
+    active: bool, // 미완료 Drop의 fence
 }
 impl<'b,'a,'s,'c,'p,'d,'o,'m,'w,W: WriterNamespace>
     MutationPort<'b,'a,'s,'c,'p,'d,'o,'m,'w,W>
@@ -1882,6 +1888,8 @@ impl<'b,'a,'s,'c,'p,'d,'o,'m,'w,W: WriterNamespace>
         transaction: &'r RowTransaction<'v,'a,'c,'s>,
         statement: Option<&'r RowStatementView<'t,'v,'a,'c,'s>>,
         scope: RollbackScope, private: &'i mut [u8;425_984],
+        flusher: &'r mut MaintenancePort<'b,'s,'c,'p,'d,'m,'w,W>,
+        flush_owner: &'r mut Owner<'c,'s>,
     ) -> Result<RowRollback<'r,'t,'v,'i,'b,'a,'s,'c,'p,'d,'o,'m,'w,W>, RetentionError>;
 }
 impl<'r,'t,'v,'i,'b,'a,'s,'c,'p,'d,'o,'m,'w,W: WriterNamespace>
@@ -1889,6 +1897,7 @@ impl<'r,'t,'v,'i,'b,'a,'s,'c,'p,'d,'o,'m,'w,W: WriterNamespace>
 {
     pub(in crate::storage) fn next<'x>(&'x mut self)
         -> Result<RollbackStep<'x,'r,'t,'v,'i,'b,'a,'s,'c,'p,'d,'o,'m,'w,W>, RetentionError>;
+    pub(in crate::storage) fn flush(&mut self, target: &Plan4Target) -> Result<(), RetentionError>;
     pub(in crate::storage) fn finish(self)
         -> Result<RowRollbackDone<'i>, RowOwnedError<Self>>;
 }
@@ -1899,7 +1908,7 @@ pub(crate) enum RollbackStep<'x,'r,'t,'v,'i,'b,'a,'s,'c,'p,'d,'o,'m,'w,W: Writer
 }
 pub(crate) struct RowRollbackTask<'x,'r,'t,'v,'i,'b,'a,'s,'c,'p,'d,'o,'m,'w,W: WriterNamespace> {
     rollback: &'x mut RowRollback<'r,'t,'v,'i,'b,'a,'s,'c,'p,'d,'o,'m,'w,W>,
-    draft: RowDraftCut,
+    candidate: RollbackCandidate, // draft + 원 table/RootJob/row/U와 next scalar
 }
 pub(crate) struct PreparedRollbackTask<'x,'r,'t,'v,'i,'b,'a,'s,'c,'p,'d,'o,'m,'w,W: WriterNamespace> {
     task: RowRollbackTask<'x,'r,'t,'v,'i,'b,'a,'s,'c,'p,'d,'o,'m,'w,W>,
@@ -1928,7 +1937,7 @@ pub(in crate::storage) fn produce_clr(lane: RowProducerLane<'_>)
     -> Result<RowProposal, RowError>; // A, same semantic CLR producer for live/recovery
 ```
 
-`RollbackRefs<'b,'a,'c,'s>`는 원 `ReferenceLease`와 source-issued currentU/nextU pins를 보유하는 private 타입이며 원 BoundVisibility의 `'b`를 사용한다. RowRollbackTask는 `&'x mut RowRollback`을 보유하는 짧은 wrapper다. `producer_lane(&mut self)`→`prepare(self,proposal)`→`apply(self)`는 §6.6과 같은 consuming 형태다. 반환 PreparedRollbackTask는 task 전체와 scalar cut만 보유하며 내부 loan을 자기참조하지 않는다. apply 성공은 actual head를 nextU로 옮겨 같은 RowRollback의 다음 재대여를 허용한다. `finish`는 원 mark/None 도달과 StatementFinish/AbortEnd의 actual receipt를 확인하고 private를 반환한다. 실패 statement는 view phase를 FailedFinished로 만들고 `finish_statement(view)`가 token/RC snapshot을 소비한다. full abort는 transaction phase를 Aborted로 만들고 `finish_aborted(transaction)`이 같은 slot/snapshot을 소비한다. 숫자 mark에 도달한 사실만으로 성공 종료하지 않는다.
+`RollbackRefs<'b,'a,'c,'s>`는 원 `ReferenceLease`와 source-issued currentU pin을 보유하는 private 타입이며 원 BoundVisibility의 `'b`를 사용한다. nextU pin은 CLR 뒤 Status latch를 읽는 인계 함수의 지역값으로 capture하고 currentU 반환 뒤 그 자리를 받는다. 두 pin의 동시 보유와 반환 carrier를 census에 센다. RowRollbackTask는 `&'x mut RowRollback`을 보유하는 짧은 wrapper다. `producer_lane(&mut self)`→`prepare(self,proposal)`→`apply(self)`는 §6.6과 같은 consuming 형태다. 반환 PreparedRollbackTask는 task 전체와 scalar cut만 보유하며 내부 loan을 자기참조하지 않는다. apply 성공은 actual head를 nextU로 옮겨 같은 RowRollback의 다음 재대여를 허용한다. `finish`는 원 mark/None 도달과 StatementFinish/AbortEnd의 actual receipt를 확인하고 private를 반환한다. 실패 statement는 view phase를 FailedFinished로 만들고 `finish_statement(view)`가 token/RC snapshot을 소비한다. full abort는 transaction phase를 Aborted로 만들고 `finish_aborted(transaction)`이 같은 slot/snapshot을 소비한다. 숫자 mark에 도달한 사실만으로 성공 종료하지 않는다.
 
 Recovery는 `Plan4Recovered`의 원 owner/selected epoch/control/private lane을 사용하며 과거 RowTransaction/statement를 재생성하지 않는다. C는 original `recovery_catalog_step`의 selection/effect 결합을 아래 closed action 경계로 나눈다. actual Catalog/공통 CancelReserved/AbortEnd/aging/final VERIFY/STABILIZE는 C가 진행하고 Row loser의 CLR 후보만 A handler에 넘긴다. C가 A module을 import하는 callback dispatch는 만들지 않는다. 제품 open의 작은 driver가 action을 dispatch한다.
 

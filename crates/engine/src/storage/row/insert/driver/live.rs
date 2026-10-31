@@ -128,7 +128,8 @@ impl<'r, 't, 'v, 'i, 'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace> Rol
     where
         Self: 'x;
     /// FlushRequired's target is passed out unchanged with the rollback
-    /// still held (gaps G1 and G5).
+    /// still held. The live caller uses `flush_rollback_live` with C's original
+    /// disjoint flusher; an unfinished rollback still fences on Drop.
     fn next(&mut self) -> Result<RollbackNext<Self::Task<'_>, Plan4Target>, RetentionError> {
         Ok(match RowRollback::next(self)? {
             RollbackStep::Candidate(task) => RollbackNext::Candidate(task),

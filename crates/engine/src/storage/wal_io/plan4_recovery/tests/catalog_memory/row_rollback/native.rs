@@ -1,4 +1,4 @@
-//! Same-ELF, separate-process native Commit and current restart gate.
+//! Same-ELF, separate-process native AbortEnd and current restart gate.
 use super::super::super::super::super::plan4_pages::native;
 use super::super::super::support::namespace;
 use super::super::row_forward::VALUE;

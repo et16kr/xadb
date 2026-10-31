@@ -1,0 +1,489 @@
+{
+  "schema": "XADB_S4_EXECUTION_RECEIPTS_V1",
+  "status": "LOCAL_VERIFIED_REVIEWED",
+  "baseline_commit": "139a05f4",
+  "implementation_commits": [
+    "f5272121",
+    "70b39457"
+  ],
+  "source_specific": true,
+  "current_unique_selectors": 20,
+  "current_results": {
+    "s4_r02_full_abort_one_row": {
+      "batch": "v6",
+      "elf_sha256": "fe2bcf5a42b6a9f5472d42b074f99009cc5fc013ce1b221ebfd7d80e3811294d",
+      "seconds": 10.349
+    },
+    "s4_r01_statement_suffix_then_commit": {
+      "batch": "v6",
+      "elf_sha256": "fe2bcf5a42b6a9f5472d42b074f99009cc5fc013ce1b221ebfd7d80e3811294d",
+      "seconds": 24.889
+    },
+    "mca00_d15_memory_call_site_shares_fit_the_caller_bounds": {
+      "batch": "v3",
+      "elf_sha256": "d2e54ebee5fd3157d809fe37a38ecb59f159038fe19a13da361d59fce1102873",
+      "seconds": 0.005
+    },
+    "s2w_c01_row_write_phase_census_memory": {
+      "batch": "v3",
+      "elf_sha256": "d2e54ebee5fd3157d809fe37a38ecb59f159038fe19a13da361d59fce1102873",
+      "seconds": 0.004
+    },
+    "s4_c01_memory_rollback_census": {
+      "batch": "v6",
+      "elf_sha256": "fe2bcf5a42b6a9f5472d42b074f99009cc5fc013ce1b221ebfd7d80e3811294d",
+      "seconds": 0.006
+    },
+    "s4_c01_native_rollback_census": {
+      "batch": "v8",
+      "elf_sha256": "1d32970f70581769b6720532becc85feb172d71f7672806fd4986907a6337656",
+      "seconds": 0.004
+    },
+    "s4_r03_premature_finish_bad_proposal_and_actual_stage_retry": {
+      "batch": "v6",
+      "elf_sha256": "fe2bcf5a42b6a9f5472d42b074f99009cc5fc013ce1b221ebfd7d80e3811294d",
+      "seconds": 10.416
+    },
+    "s4_r05_partial_clr_write_is_fatal": {
+      "batch": "v6",
+      "elf_sha256": "fe2bcf5a42b6a9f5472d42b074f99009cc5fc013ce1b221ebfd7d80e3811294d",
+      "seconds": 9.241
+    },
+    "s4_r05_clr_sync_uncertainty_is_fatal": {
+      "batch": "v6",
+      "elf_sha256": "fe2bcf5a42b6a9f5472d42b074f99009cc5fc013ce1b221ebfd7d80e3811294d",
+      "seconds": 9.087
+    },
+    "s4_r06_empty_statement_and_empty_full_abort": {
+      "batch": "v6",
+      "elf_sha256": "fe2bcf5a42b6a9f5472d42b074f99009cc5fc013ce1b221ebfd7d80e3811294d",
+      "seconds": 6.228
+    },
+    "s4_r04_unfinished_drop_fences_without_more_io": {
+      "batch": "v6",
+      "elf_sha256": "fe2bcf5a42b6a9f5472d42b074f99009cc5fc013ce1b221ebfd7d80e3811294d",
+      "seconds": 7.998
+    },
+    "s4_v09_minus_one": {
+      "batch": "v6",
+      "elf_sha256": "fe2bcf5a42b6a9f5472d42b074f99009cc5fc013ce1b221ebfd7d80e3811294d",
+      "seconds": 9.696
+    },
+    "s4_v09_exact": {
+      "batch": "v6",
+      "elf_sha256": "fe2bcf5a42b6a9f5472d42b074f99009cc5fc013ce1b221ebfd7d80e3811294d",
+      "seconds": 11.301
+    },
+    "s4_v09_plus_one": {
+      "batch": "v6",
+      "elf_sha256": "fe2bcf5a42b6a9f5472d42b074f99009cc5fc013ce1b221ebfd7d80e3811294d",
+      "seconds": 11.612
+    },
+    "s4_r07_flush_before_error_preserves_a_retryable_rollback": {
+      "batch": "v6",
+      "elf_sha256": "fe2bcf5a42b6a9f5472d42b074f99009cc5fc013ce1b221ebfd7d80e3811294d",
+      "seconds": 10.931
+    },
+    "s4_r08_serializable_conflict_then_full_abort": {
+      "batch": "v7",
+      "elf_sha256": "0c4bc72be7c56e5e35ca1e9115ba0746fc2e730078dc936a24efca0243b630d8",
+      "seconds": 18.156
+    },
+    "s2e_e09_applied_then_rejected_row_is_rollback_required_up_to_the_s4_start": {
+      "batch": "v6",
+      "elf_sha256": "fe2bcf5a42b6a9f5472d42b074f99009cc5fc013ce1b221ebfd7d80e3811294d",
+      "seconds": 11.994
+    },
+    "s4_r09_wrong_after_digest_is_unchanged_and_same_task_retries": {
+      "batch": "v7",
+      "elf_sha256": "0c4bc72be7c56e5e35ca1e9115ba0746fc2e730078dc936a24efca0243b630d8",
+      "seconds": 10.209
+    },
+    "s4_r10_full_abort_three_roots_from_two_statements": {
+      "batch": "v7",
+      "elf_sha256": "0c4bc72be7c56e5e35ca1e9115ba0746fc2e730078dc936a24efca0243b630d8",
+      "seconds": 21.042
+    },
+    "s4_r11_wrong_capsule_view_and_scope_are_unchanged": {
+      "batch": "v7",
+      "elf_sha256": "0c4bc72be7c56e5e35ca1e9115ba0746fc2e730078dc936a24efca0243b630d8",
+      "seconds": 15.888
+    }
+  },
+  "batches": [
+    {
+      "batch": "v1",
+      "head": "e05957aa521a10523840797991390586370c0f2c",
+      "elf_sha256": "9fd9b26640f9d332b61ead95dc9758ea2b568b31aa9f2095988407649b95dfd8",
+      "source_manifest_sha256": "061156af684ae092a176cdc9fb7c943603ae8a0b6ffede968c069c0051c872b9",
+      "execution_plan_sha256": "da3f884a60d3c407b59b6bacb232c8bfd33ffdb3b97076dd209cde6f1fa4585a",
+      "results": [
+        {
+          "selector": "s4_r02_full_abort_one_row",
+          "exit_code": 101,
+          "seconds": 0.004,
+          "result": "FAIL"
+        }
+      ],
+      "not_run": [
+        "s4_r01_statement_suffix_then_commit",
+        "mca00_d15_memory_call_site_shares_fit_the_caller_bounds",
+        "s2w_c01_row_write_phase_census_memory"
+      ]
+    },
+    {
+      "batch": "v2",
+      "head": "e05957aa521a10523840797991390586370c0f2c",
+      "elf_sha256": "9fd9b26640f9d332b61ead95dc9758ea2b568b31aa9f2095988407649b95dfd8",
+      "source_manifest_sha256": "061156af684ae092a176cdc9fb7c943603ae8a0b6ffede968c069c0051c872b9",
+      "execution_plan_sha256": "da3f884a60d3c407b59b6bacb232c8bfd33ffdb3b97076dd209cde6f1fa4585a",
+      "results": [
+        {
+          "selector": "s4_r02_full_abort_one_row",
+          "exit_code": 101,
+          "seconds": 10.281,
+          "result": "FAIL"
+        }
+      ],
+      "not_run": [
+        "s4_r01_statement_suffix_then_commit",
+        "mca00_d15_memory_call_site_shares_fit_the_caller_bounds",
+        "s2w_c01_row_write_phase_census_memory"
+      ]
+    },
+    {
+      "batch": "v3",
+      "head": "e05957aa521a10523840797991390586370c0f2c",
+      "elf_sha256": "d2e54ebee5fd3157d809fe37a38ecb59f159038fe19a13da361d59fce1102873",
+      "source_manifest_sha256": "707f6285dd670769bba529fd5499cf0d0aef07329797d9955b8680324aa045e1",
+      "execution_plan_sha256": "8afb8171d2ce65d3983926f1ed5deea933bba51a7eb858ced4d4edc8b6e72aff",
+      "results": [
+        {
+          "selector": "s4_r02_full_abort_one_row",
+          "exit_code": 0,
+          "seconds": 10.184,
+          "result": "PASS"
+        },
+        {
+          "selector": "s4_r01_statement_suffix_then_commit",
+          "exit_code": 0,
+          "seconds": 24.718,
+          "result": "PASS"
+        },
+        {
+          "selector": "mca00_d15_memory_call_site_shares_fit_the_caller_bounds",
+          "exit_code": 0,
+          "seconds": 0.005,
+          "result": "PASS"
+        },
+        {
+          "selector": "s2w_c01_row_write_phase_census_memory",
+          "exit_code": 0,
+          "seconds": 0.004,
+          "result": "PASS"
+        }
+      ],
+      "not_run": []
+    },
+    {
+      "batch": "v4",
+      "head": "f527212198a02cbae38ec2000e20f71aa1a935de",
+      "elf_sha256": "6618b260bbfa6e9d08bd24c298ada9ed97c1a5562d6c35ae6a2e0eb703e46cb0",
+      "source_manifest_sha256": "05c5a95b476b937b39e8fecd275d15bbb0b2d652e79f4e789462a30540dfdad1",
+      "execution_plan_sha256": "0cfa79ee0d7c6b294bbc8ba65fd18f87f1f3ec78dae8586ca869561987c1b83c",
+      "results": [
+        {
+          "selector": "s4_c01_memory_rollback_census",
+          "exit_code": 101,
+          "seconds": 0.009,
+          "result": "FAIL"
+        }
+      ],
+      "not_run": [
+        "s4_c01_native_rollback_census",
+        "s4_r03_premature_finish_bad_proposal_and_actual_stage_retry",
+        "s4_r05_partial_clr_write_is_fatal",
+        "s4_r05_clr_sync_uncertainty_is_fatal",
+        "s4_r06_empty_statement_and_empty_full_abort",
+        "s4_r04_unfinished_drop_fences_without_more_io",
+        "s4_r02_full_abort_one_row",
+        "s4_r01_statement_suffix_then_commit"
+      ]
+    },
+    {
+      "batch": "v5",
+      "head": "f527212198a02cbae38ec2000e20f71aa1a935de",
+      "elf_sha256": "728a9b1d4090cf7cfb4ab3c331c5aed552f45690c133a88b06ec8568264a6e07",
+      "source_manifest_sha256": "bdd7cdbcac53dab6a0c22cd6bd4ea193c283697a7a86bb583d45b1c281e3478f",
+      "execution_plan_sha256": "7cc3aa6375aaa38fed73d1c6d9287300d3c604d386fa031a9fc6595f4d48fd4f",
+      "results": [
+        {
+          "selector": "s4_c01_memory_rollback_census",
+          "exit_code": 101,
+          "seconds": 0.005,
+          "result": "FAIL"
+        }
+      ],
+      "not_run": [
+        "s4_c01_native_rollback_census",
+        "s4_r03_premature_finish_bad_proposal_and_actual_stage_retry",
+        "s4_r05_partial_clr_write_is_fatal",
+        "s4_r05_clr_sync_uncertainty_is_fatal",
+        "s4_r06_empty_statement_and_empty_full_abort",
+        "s4_r04_unfinished_drop_fences_without_more_io",
+        "s4_r02_full_abort_one_row",
+        "s4_r01_statement_suffix_then_commit",
+        "s4_v09_minus_one",
+        "s4_v09_exact",
+        "s4_v09_plus_one",
+        "s4_r07_flush_before_error_preserves_a_retryable_rollback",
+        "s4_r08_serializable_conflict_then_full_abort",
+        "s2e_e09_applied_then_rejected_row_is_rollback_required_up_to_the_s4_start"
+      ]
+    },
+    {
+      "batch": "v6",
+      "head": "f527212198a02cbae38ec2000e20f71aa1a935de",
+      "elf_sha256": "fe2bcf5a42b6a9f5472d42b074f99009cc5fc013ce1b221ebfd7d80e3811294d",
+      "source_manifest_sha256": "a2aa7672bfd6b0d493bc404d995080450fb9f5903ad4ad76232b9d691e74fdc5",
+      "execution_plan_sha256": "7f2d676d226adb85fe397abf6f69e96c36823345df9e4e9ed406dedd3aaf226b",
+      "results": [
+        {
+          "selector": "s4_c01_memory_rollback_census",
+          "exit_code": 0,
+          "seconds": 0.006,
+          "result": "PASS"
+        },
+        {
+          "selector": "s4_c01_native_rollback_census",
+          "exit_code": 0,
+          "seconds": 0.005,
+          "result": "PASS"
+        },
+        {
+          "selector": "s4_r03_premature_finish_bad_proposal_and_actual_stage_retry",
+          "exit_code": 0,
+          "seconds": 10.416,
+          "result": "PASS"
+        },
+        {
+          "selector": "s4_r05_partial_clr_write_is_fatal",
+          "exit_code": 0,
+          "seconds": 9.241,
+          "result": "PASS"
+        },
+        {
+          "selector": "s4_r05_clr_sync_uncertainty_is_fatal",
+          "exit_code": 0,
+          "seconds": 9.087,
+          "result": "PASS"
+        },
+        {
+          "selector": "s4_r06_empty_statement_and_empty_full_abort",
+          "exit_code": 0,
+          "seconds": 6.228,
+          "result": "PASS"
+        },
+        {
+          "selector": "s4_r04_unfinished_drop_fences_without_more_io",
+          "exit_code": 0,
+          "seconds": 7.998,
+          "result": "PASS"
+        },
+        {
+          "selector": "s4_r02_full_abort_one_row",
+          "exit_code": 0,
+          "seconds": 10.349,
+          "result": "PASS"
+        },
+        {
+          "selector": "s4_r01_statement_suffix_then_commit",
+          "exit_code": 0,
+          "seconds": 24.889,
+          "result": "PASS"
+        },
+        {
+          "selector": "s4_v09_minus_one",
+          "exit_code": 0,
+          "seconds": 9.696,
+          "result": "PASS"
+        },
+        {
+          "selector": "s4_v09_exact",
+          "exit_code": 0,
+          "seconds": 11.301,
+          "result": "PASS"
+        },
+        {
+          "selector": "s4_v09_plus_one",
+          "exit_code": 0,
+          "seconds": 11.612,
+          "result": "PASS"
+        },
+        {
+          "selector": "s4_r07_flush_before_error_preserves_a_retryable_rollback",
+          "exit_code": 0,
+          "seconds": 10.931,
+          "result": "PASS"
+        },
+        {
+          "selector": "s4_r08_serializable_conflict_then_full_abort",
+          "exit_code": 0,
+          "seconds": 18.082,
+          "result": "PASS"
+        },
+        {
+          "selector": "s2e_e09_applied_then_rejected_row_is_rollback_required_up_to_the_s4_start",
+          "exit_code": 0,
+          "seconds": 11.994,
+          "result": "PASS"
+        }
+      ],
+      "not_run": []
+    },
+    {
+      "batch": "v7",
+      "head": "70b394577bd37a20849c1af76325a66621e7f487",
+      "elf_sha256": "0c4bc72be7c56e5e35ca1e9115ba0746fc2e730078dc936a24efca0243b630d8",
+      "source_manifest_sha256": "a66e9b942e8c61fb1079ea83eb8fad9b50d37b499f4e83b5c6938a53e83c14c7",
+      "execution_plan_sha256": "c36ebaead5cf1589e59d7fe646d3eaf550b3cf62819ad94e12f2ef5623ea81fb",
+      "results": [
+        {
+          "selector": "s4_r09_wrong_after_digest_is_unchanged_and_same_task_retries",
+          "exit_code": 0,
+          "seconds": 10.209,
+          "result": "PASS"
+        },
+        {
+          "selector": "s4_r10_full_abort_three_roots_from_two_statements",
+          "exit_code": 0,
+          "seconds": 21.042,
+          "result": "PASS"
+        },
+        {
+          "selector": "s4_r11_wrong_capsule_view_and_scope_are_unchanged",
+          "exit_code": 0,
+          "seconds": 15.888,
+          "result": "PASS"
+        },
+        {
+          "selector": "s4_r08_serializable_conflict_then_full_abort",
+          "exit_code": 0,
+          "seconds": 18.156,
+          "result": "PASS"
+        }
+      ],
+      "not_run": []
+    },
+    {
+      "batch": "v8",
+      "head": "70b394577bd37a20849c1af76325a66621e7f487",
+      "elf_sha256": "1d32970f70581769b6720532becc85feb172d71f7672806fd4986907a6337656",
+      "source_manifest_sha256": "ef806a34ff4d6bb009b7385e0e5f5d61a0c4766fcf469ec7e4b05723fa98e627",
+      "execution_plan_sha256": "bdeee5ff25a1da3c16ae512aa47689e5ac7ddf646e47eaad373d40950e975507",
+      "results": [
+        {
+          "selector": "s4_c01_native_rollback_census",
+          "exit_code": 0,
+          "seconds": 0.004,
+          "result": "PASS"
+        }
+      ],
+      "not_run": []
+    }
+  ],
+  "native": {
+    "pids": [
+      "6501",
+      "6503"
+    ],
+    "result": "PASS",
+    "ready": false,
+    "execution_plan": {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_rollback::native::s4_n01_native_worker",
+      "phases": [
+        "produce",
+        "restart"
+      ],
+      "source": "f173a1f41315d9c6cc4f0af46b605bb3d996275438edd3c4aff32e6fe1910657",
+      "elf": "c0c91c229828984aca420220b3c4ef663d5e5db1ac7bbb0b3bbfac94d90f13bd",
+      "input": "696442033ee96188af8c65237f6a3ec3a30d9f911fe2ecbf622e4a1eb341ff69",
+      "per_process_seconds": 180,
+      "total_seconds": 360,
+      "log_bytes_cap": 16777216,
+      "rust_stack": 33554432,
+      "expected": "AbortEnd LSN19 q0; separate restart Analysis/Unsupported unchanged; READY0"
+    },
+    "results": [
+      {
+        "phase": "produce",
+        "exit": 0,
+        "seconds": 13.346600634999959
+      },
+      {
+        "phase": "restart",
+        "exit": 0,
+        "seconds": 1.467568053999912
+      }
+    ],
+    "producer_receipt": {
+      "phase": "produce",
+      "pid": "6501",
+      "source": "f173a1f41315d9c6cc4f0af46b605bb3d996275438edd3c4aff32e6fe1910657",
+      "elf": "c0c91c229828984aca420220b3c4ef663d5e5db1ac7bbb0b3bbfac94d90f13bd",
+      "handles": "0",
+      "peak": "3",
+      "fd_peak": "6",
+      "mutations": "413",
+      "log_bytes": "296328"
+    }
+  },
+  "compiler": [
+    {
+      "case": "MBC00-P06",
+      "exit": 101,
+      "seconds": 33.790969631999815,
+      "result": "FAIL",
+      "batch": "compiler1",
+      "plan": {
+        "case": "MBC00-P06",
+        "probe_sha256": "6a987a4ae723d68d27eff30b1ccec676943f340cda5c187a83e1b9f28c069359",
+        "seconds": 180,
+        "expected": "PASS",
+        "test_execution": false
+      }
+    },
+    {
+      "case": "MBC00-P06",
+      "exit": 0,
+      "seconds": 33.16193710000016,
+      "result": "PASS",
+      "batch": "compiler2",
+      "plan": {
+        "case": "MBC00-P06",
+        "probe_sha256": "032ad66e15e4e18c897f83daf7cdef195bc58d2e9164a8d07ba04576ceaf89ca",
+        "seconds": 180,
+        "expected": "PASS",
+        "test_execution": false
+      }
+    }
+  ],
+  "limitations": [
+    "Results are mapped to their original source/ELF; no single-source whole-suite repeat is claimed.",
+    "v1 missed context before product execution; v2 exposed Active-only capsule match at finish_aborted; v4/v5 overcounted sequential CLR/pin census bodies. All original failures and NOT_RUN remain.",
+    "compiler1 used the wrong visibility anchor and had a concurrent-format snapshot; compiler2 used storage/mod.rs and an unchanged copied source manifest.",
+    "S4-R07 is a scoped pre-flusher-call Before seam followed by the actual flusher, not a native I/O error claim.",
+    "Native validates actual AbortEnd at LSN19, independent 3-frame byte suffix and unchanged Analysis/Unsupported restart; C4/S6 READY and power loss remain out of scope.",
+    "MBC40-V09 writer floor (iv), CatalogProgress writer V09, C4 recovery tasks, S5 reads, full M4/M5 remain open.",
+    "v6 native census used the raw platform writer (shared20168); v8 changes that selector to the actual instrumented native worker writer (shared20192) and passes. The unchanged native runtime is not repeated."
+  ],
+  "review": {
+    "reviewer": "/root/s4_review",
+    "classification": "D1/D2",
+    "verdict": "ACCEPT_SCOPED_S4",
+    "required_changes": 0,
+    "artifact": "artifacts/module-s4-20261031/review-final.md",
+    "sha256": "326daa53dbbf41a1deecd26350608abfd1c3acc8436b2f67d9a56673b7233967",
+    "test_execution_by_reviewer": false
+  }
+}
