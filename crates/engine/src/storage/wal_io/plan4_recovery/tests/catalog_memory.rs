@@ -1296,3 +1296,6 @@ mod row_reopen_literal;
 
 #[path = "catalog_memory/row_read_census.rs"]
 mod row_read_census;
+
+#[path = "catalog_memory/row_corpus.rs"]
+mod row_corpus;
