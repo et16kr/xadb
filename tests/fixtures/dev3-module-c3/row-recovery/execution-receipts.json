@@ -1,0 +1,2006 @@
+{
+  "schema": "XADB_S6_EXECUTION_RECEIPTS_V1",
+  "status": "LOCAL_VERIFIED_SELF_REVIEWED",
+  "baseline_commit": "8d5e48b",
+  "branch": "claude/project-thread-a7onu7",
+  "implementation_commits": [
+    "7f45994",
+    "32de380",
+    "192c900",
+    "34af66a",
+    "d965611"
+  ],
+  "inventory_sha256": "32406b3c207d25595b1d3c7541fe8f59d394d952a87e8b81aeddad9f61d42718",
+  "source_specific": true,
+  "current_results": {
+    "s6r_m01_one_committed_row_with_row_clr": {
+      "batch": "m1",
+      "elf_sha256": "05bf2d6d1e57791cd60908574d23d6f6bd894f006c01200cc177110ceac8ee30",
+      "seconds": 50.56,
+      "result": "PASS"
+    },
+    "s6r_m01_one_committed_row_reject_initial_losers": {
+      "batch": "m1",
+      "elf_sha256": "05bf2d6d1e57791cd60908574d23d6f6bd894f006c01200cc177110ceac8ee30",
+      "seconds": 50.9,
+      "result": "PASS"
+    },
+    "s6r_m01_three_committed_rows_with_row_clr": {
+      "batch": "m1",
+      "elf_sha256": "05bf2d6d1e57791cd60908574d23d6f6bd894f006c01200cc177110ceac8ee30",
+      "seconds": 105.06,
+      "result": "PASS"
+    },
+    "s6r_m01_three_committed_rows_reject_initial_losers": {
+      "batch": "m1",
+      "elf_sha256": "05bf2d6d1e57791cd60908574d23d6f6bd894f006c01200cc177110ceac8ee30",
+      "seconds": 104.41,
+      "result": "PASS"
+    },
+    "s6r_m02_reserved_row_recovers_with_row_clr": {
+      "batch": "m1",
+      "elf_sha256": "05bf2d6d1e57791cd60908574d23d6f6bd894f006c01200cc177110ceac8ee30",
+      "seconds": 35.61,
+      "result": "PASS"
+    },
+    "s6r_m02_reserved_row_is_refused_without_row_clr": {
+      "batch": "m1",
+      "elf_sha256": "05bf2d6d1e57791cd60908574d23d6f6bd894f006c01200cc177110ceac8ee30",
+      "seconds": 7.71,
+      "result": "PASS"
+    },
+    "s6r_m03_active_chain_and_legacy_committed_are_refused": {
+      "batch": "m1",
+      "elf_sha256": "05bf2d6d1e57791cd60908574d23d6f6bd894f006c01200cc177110ceac8ee30",
+      "seconds": 23.37,
+      "result": "PASS"
+    },
+    "s6r_m04_active_chain_recovers_through_row_clr": {
+      "batch": "m1",
+      "elf_sha256": "05bf2d6d1e57791cd60908574d23d6f6bd894f006c01200cc177110ceac8ee30",
+      "seconds": 110.33,
+      "result": "PASS"
+    },
+    "s6r_m04_aborting_statement_recovers_as_full_rollback": {
+      "batch": "m1",
+      "elf_sha256": "05bf2d6d1e57791cd60908574d23d6f6bd894f006c01200cc177110ceac8ee30",
+      "seconds": 70.94,
+      "result": "PASS"
+    },
+    "s6r_m05_wrong_proposal_returns_the_same_task": {
+      "batch": "m1",
+      "elf_sha256": "05bf2d6d1e57791cd60908574d23d6f6bd894f006c01200cc177110ceac8ee30",
+      "seconds": 49.67,
+      "result": "PASS"
+    },
+    "s6r_m06_statement_rollback_then_commit": {
+      "batch": "m1",
+      "elf_sha256": "05bf2d6d1e57791cd60908574d23d6f6bd894f006c01200cc177110ceac8ee30",
+      "seconds": 130.06,
+      "result": "PASS"
+    },
+    "s6r_m06_full_abort": {
+      "batch": "m1",
+      "elf_sha256": "05bf2d6d1e57791cd60908574d23d6f6bd894f006c01200cc177110ceac8ee30",
+      "seconds": 92.66,
+      "result": "PASS"
+    },
+    "s6r_m07_partial_recovery_then_crash": {
+      "batch": "m1",
+      "elf_sha256": "05bf2d6d1e57791cd60908574d23d6f6bd894f006c01200cc177110ceac8ee30",
+      "seconds": 107.18,
+      "result": "PASS"
+    },
+    "s6r_m08_reject_initial_losers_inputs": {
+      "batch": "m1",
+      "elf_sha256": "05bf2d6d1e57791cd60908574d23d6f6bd894f006c01200cc177110ceac8ee30",
+      "seconds": 32.49,
+      "result": "PASS"
+    },
+    "s6r_c01_memory_recovery_row_census": {
+      "batch": "m1",
+      "elf_sha256": "05bf2d6d1e57791cd60908574d23d6f6bd894f006c01200cc177110ceac8ee30",
+      "seconds": 0.01,
+      "result": "PASS"
+    },
+    "s6r_c02_native_recovery_row_census": {
+      "batch": "m1",
+      "elf_sha256": "05bf2d6d1e57791cd60908574d23d6f6bd894f006c01200cc177110ceac8ee30",
+      "seconds": 0.01,
+      "result": "PASS"
+    },
+    "s6r_c03_recovered_facade_carriers": {
+      "batch": "m1",
+      "elf_sha256": "05bf2d6d1e57791cd60908574d23d6f6bd894f006c01200cc177110ceac8ee30",
+      "seconds": 0.01,
+      "result": "PASS"
+    },
+    "s2w_r24_root_cursor_is_found_late_and_stops_restart": {
+      "batch": "m1",
+      "elf_sha256": "05bf2d6d1e57791cd60908574d23d6f6bd894f006c01200cc177110ceac8ee30",
+      "seconds": 11.99,
+      "result": "PASS"
+    },
+    "mc04_reserved_drop_fence_fresh_recovery": {
+      "batch": "m1",
+      "elf_sha256": "05bf2d6d1e57791cd60908574d23d6f6bd894f006c01200cc177110ceac8ee30",
+      "seconds": 11.83,
+      "result": "PASS"
+    },
+    "mc03_issued_local_gap_recovers": {
+      "batch": "m1",
+      "elf_sha256": "05bf2d6d1e57791cd60908574d23d6f6bd894f006c01200cc177110ceac8ee30",
+      "seconds": 20.37,
+      "result": "PASS"
+    },
+    "commit_preparation_unwind_recovers_original_prefix": {
+      "batch": "m3",
+      "elf_sha256": "05bf2d6d1e57791cd60908574d23d6f6bd894f006c01200cc177110ceac8ee30",
+      "seconds": 41.82,
+      "result": "FAIL"
+    },
+    "catalog_mf14_clr_first_page_unwind": {
+      "batch": "m1",
+      "elf_sha256": "05bf2d6d1e57791cd60908574d23d6f6bd894f006c01200cc177110ceac8ee30",
+      "seconds": 20.64,
+      "result": "PASS"
+    },
+    "catalog_mt07_drain_content_guard_fence": {
+      "batch": "m1",
+      "elf_sha256": "05bf2d6d1e57791cd60908574d23d6f6bd894f006c01200cc177110ceac8ee30",
+      "seconds": 16.8,
+      "result": "PASS"
+    },
+    "s1b_row_state_stops_at_interim_analysis_gate": {
+      "batch": "m1",
+      "elf_sha256": "05bf2d6d1e57791cd60908574d23d6f6bd894f006c01200cc177110ceac8ee30",
+      "seconds": 2.66,
+      "result": "PASS"
+    },
+    "s1g_reserve_tail_stops_at_interim_gate": {
+      "batch": "m1",
+      "elf_sha256": "05bf2d6d1e57791cd60908574d23d6f6bd894f006c01200cc177110ceac8ee30",
+      "seconds": 8.86,
+      "result": "PASS"
+    },
+    "recovery_source_memory": {
+      "batch": "m3",
+      "elf_sha256": "05bf2d6d1e57791cd60908574d23d6f6bd894f006c01200cc177110ceac8ee30",
+      "seconds": 0.01,
+      "result": "PASS"
+    },
+    "recovery_source_native": {
+      "batch": "m3",
+      "elf_sha256": "05bf2d6d1e57791cd60908574d23d6f6bd894f006c01200cc177110ceac8ee30",
+      "seconds": 0.01,
+      "result": "PASS"
+    },
+    "s1b_row_arm_census_memory": {
+      "batch": "m1",
+      "elf_sha256": "05bf2d6d1e57791cd60908574d23d6f6bd894f006c01200cc177110ceac8ee30",
+      "seconds": 0.02,
+      "result": "PASS"
+    },
+    "s1b_row_arm_census_native": {
+      "batch": "m1",
+      "elf_sha256": "05bf2d6d1e57791cd60908574d23d6f6bd894f006c01200cc177110ceac8ee30",
+      "seconds": 0.01,
+      "result": "PASS"
+    },
+    "s4_c01_memory_rollback_census": {
+      "batch": "m1",
+      "elf_sha256": "05bf2d6d1e57791cd60908574d23d6f6bd894f006c01200cc177110ceac8ee30",
+      "seconds": 0.01,
+      "result": "PASS"
+    },
+    "s4_c01_native_rollback_census": {
+      "batch": "m1",
+      "elf_sha256": "05bf2d6d1e57791cd60908574d23d6f6bd894f006c01200cc177110ceac8ee30",
+      "seconds": 0.01,
+      "result": "PASS"
+    },
+    "s4_r01_statement_suffix_then_commit": {
+      "batch": "m1",
+      "elf_sha256": "05bf2d6d1e57791cd60908574d23d6f6bd894f006c01200cc177110ceac8ee30",
+      "seconds": 20.59,
+      "result": "PASS"
+    },
+    "s4_r02_full_abort_one_row": {
+      "batch": "m1",
+      "elf_sha256": "05bf2d6d1e57791cd60908574d23d6f6bd894f006c01200cc177110ceac8ee30",
+      "seconds": 8.41,
+      "result": "PASS"
+    },
+    "s4_r03_premature_finish_bad_proposal_and_actual_stage_retry": {
+      "batch": "m1",
+      "elf_sha256": "05bf2d6d1e57791cd60908574d23d6f6bd894f006c01200cc177110ceac8ee30",
+      "seconds": 8.44,
+      "result": "PASS"
+    },
+    "s4_r04_unfinished_drop_fences_without_more_io": {
+      "batch": "m1",
+      "elf_sha256": "05bf2d6d1e57791cd60908574d23d6f6bd894f006c01200cc177110ceac8ee30",
+      "seconds": 6.79,
+      "result": "PASS"
+    },
+    "s4_r05_partial_clr_write_is_fatal": {
+      "batch": "m1",
+      "elf_sha256": "05bf2d6d1e57791cd60908574d23d6f6bd894f006c01200cc177110ceac8ee30",
+      "seconds": 8.06,
+      "result": "PASS"
+    },
+    "s4_r05_clr_sync_uncertainty_is_fatal": {
+      "batch": "m1",
+      "elf_sha256": "05bf2d6d1e57791cd60908574d23d6f6bd894f006c01200cc177110ceac8ee30",
+      "seconds": 7.5,
+      "result": "PASS"
+    },
+    "s4_r06_empty_statement_and_empty_full_abort": {
+      "batch": "m1",
+      "elf_sha256": "05bf2d6d1e57791cd60908574d23d6f6bd894f006c01200cc177110ceac8ee30",
+      "seconds": 5.31,
+      "result": "PASS"
+    },
+    "s4_r07_flush_before_error_preserves_a_retryable_rollback": {
+      "batch": "m1",
+      "elf_sha256": "05bf2d6d1e57791cd60908574d23d6f6bd894f006c01200cc177110ceac8ee30",
+      "seconds": 9.2,
+      "result": "PASS"
+    },
+    "s4_r08_serializable_conflict_then_full_abort": {
+      "batch": "m1",
+      "elf_sha256": "05bf2d6d1e57791cd60908574d23d6f6bd894f006c01200cc177110ceac8ee30",
+      "seconds": 15.64,
+      "result": "PASS"
+    },
+    "s4_r09_wrong_after_digest_is_unchanged_and_same_task_retries": {
+      "batch": "m1",
+      "elf_sha256": "05bf2d6d1e57791cd60908574d23d6f6bd894f006c01200cc177110ceac8ee30",
+      "seconds": 8.47,
+      "result": "PASS"
+    },
+    "s4_r10_full_abort_three_roots_from_two_statements": {
+      "batch": "m1",
+      "elf_sha256": "05bf2d6d1e57791cd60908574d23d6f6bd894f006c01200cc177110ceac8ee30",
+      "seconds": 18.98,
+      "result": "PASS"
+    },
+    "s4_r11_wrong_capsule_view_and_scope_are_unchanged": {
+      "batch": "m1",
+      "elf_sha256": "05bf2d6d1e57791cd60908574d23d6f6bd894f006c01200cc177110ceac8ee30",
+      "seconds": 13.72,
+      "result": "PASS"
+    }
+  },
+  "final_memory": [
+    {
+      "batch": "m1",
+      "role": "final",
+      "source_manifest_sha256": "9b13aa871809fc0f7f2bcdd600ca939a58cad65734118a2119e00b48af26e104",
+      "elf_sha256": "05bf2d6d1e57791cd60908574d23d6f6bd894f006c01200cc177110ceac8ee30",
+      "input_sha256": "32406b3c207d25595b1d3c7541fe8f59d394d952a87e8b81aeddad9f61d42718",
+      "input_path": "/home/claude/xadb/tests/fixtures/dev3-module-c3/row-recovery/test-inventory.json",
+      "timeout_seconds": 300,
+      "execution_plan_sha256": "eb5b450255c559ab5e07d85f54a259ff200e79b7f565ff3eff948841cc280f6a",
+      "results_sha256": "0b87882389b79ad1bb3d79657bfa277503cc0960704bc8f14c9e68e7d940d032",
+      "results": [
+        {
+          "selector": "s6r_m01_one_committed_row_with_row_clr",
+          "exit_code": 0,
+          "seconds": 50.56,
+          "result": "PASS"
+        },
+        {
+          "selector": "s6r_m01_one_committed_row_reject_initial_losers",
+          "exit_code": 0,
+          "seconds": 50.9,
+          "result": "PASS"
+        },
+        {
+          "selector": "s6r_m01_three_committed_rows_with_row_clr",
+          "exit_code": 0,
+          "seconds": 105.06,
+          "result": "PASS"
+        },
+        {
+          "selector": "s6r_m01_three_committed_rows_reject_initial_losers",
+          "exit_code": 0,
+          "seconds": 104.41,
+          "result": "PASS"
+        },
+        {
+          "selector": "s6r_m02_reserved_row_recovers_with_row_clr",
+          "exit_code": 0,
+          "seconds": 35.61,
+          "result": "PASS"
+        },
+        {
+          "selector": "s6r_m02_reserved_row_is_refused_without_row_clr",
+          "exit_code": 0,
+          "seconds": 7.71,
+          "result": "PASS"
+        },
+        {
+          "selector": "s6r_m03_active_chain_and_legacy_committed_are_refused",
+          "exit_code": 0,
+          "seconds": 23.37,
+          "result": "PASS"
+        },
+        {
+          "selector": "s6r_m04_active_chain_recovers_through_row_clr",
+          "exit_code": 0,
+          "seconds": 110.33,
+          "result": "PASS"
+        },
+        {
+          "selector": "s6r_m04_aborting_statement_recovers_as_full_rollback",
+          "exit_code": 0,
+          "seconds": 70.94,
+          "result": "PASS"
+        },
+        {
+          "selector": "s6r_m05_wrong_proposal_returns_the_same_task",
+          "exit_code": 0,
+          "seconds": 49.67,
+          "result": "PASS"
+        },
+        {
+          "selector": "s6r_m06_statement_rollback_then_commit",
+          "exit_code": 0,
+          "seconds": 130.06,
+          "result": "PASS"
+        },
+        {
+          "selector": "s6r_m06_full_abort",
+          "exit_code": 0,
+          "seconds": 92.66,
+          "result": "PASS"
+        },
+        {
+          "selector": "s6r_m07_partial_recovery_then_crash",
+          "exit_code": 0,
+          "seconds": 107.18,
+          "result": "PASS"
+        },
+        {
+          "selector": "s6r_m08_reject_initial_losers_inputs",
+          "exit_code": 0,
+          "seconds": 32.49,
+          "result": "PASS"
+        },
+        {
+          "selector": "s6r_c01_memory_recovery_row_census",
+          "exit_code": 0,
+          "seconds": 0.01,
+          "result": "PASS"
+        },
+        {
+          "selector": "s6r_c02_native_recovery_row_census",
+          "exit_code": 0,
+          "seconds": 0.01,
+          "result": "PASS"
+        },
+        {
+          "selector": "s6r_c03_recovered_facade_carriers",
+          "exit_code": 0,
+          "seconds": 0.01,
+          "result": "PASS"
+        },
+        {
+          "selector": "s2w_r24_root_cursor_is_found_late_and_stops_restart",
+          "exit_code": 0,
+          "seconds": 11.99,
+          "result": "PASS"
+        },
+        {
+          "selector": "mc04_reserved_drop_fence_fresh_recovery",
+          "exit_code": 0,
+          "seconds": 11.83,
+          "result": "PASS"
+        },
+        {
+          "selector": "mc03_issued_local_gap_recovers",
+          "exit_code": 0,
+          "seconds": 20.37,
+          "result": "PASS"
+        },
+        {
+          "selector": "commit_preparation_unwind_recovers_original_prefix",
+          "exit_code": 101,
+          "seconds": 43.64,
+          "result": "FAIL"
+        },
+        {
+          "selector": "catalog_mf14_clr_first_page_unwind",
+          "exit_code": 0,
+          "seconds": 20.64,
+          "result": "PASS"
+        },
+        {
+          "selector": "catalog_mt07_drain_content_guard_fence",
+          "exit_code": 0,
+          "seconds": 16.8,
+          "result": "PASS"
+        },
+        {
+          "selector": "s1b_row_state_stops_at_interim_analysis_gate",
+          "exit_code": 0,
+          "seconds": 2.66,
+          "result": "PASS"
+        },
+        {
+          "selector": "s1g_reserve_tail_stops_at_interim_gate",
+          "exit_code": 0,
+          "seconds": 8.86,
+          "result": "PASS"
+        },
+        {
+          "selector": "recovery_source_memory",
+          "exit_code": 101,
+          "seconds": 0.17,
+          "result": "FAIL"
+        },
+        {
+          "selector": "recovery_source_native",
+          "exit_code": 101,
+          "seconds": 0.16,
+          "result": "FAIL"
+        },
+        {
+          "selector": "s1b_row_arm_census_memory",
+          "exit_code": 0,
+          "seconds": 0.02,
+          "result": "PASS"
+        },
+        {
+          "selector": "s1b_row_arm_census_native",
+          "exit_code": 0,
+          "seconds": 0.01,
+          "result": "PASS"
+        },
+        {
+          "selector": "s4_c01_memory_rollback_census",
+          "exit_code": 0,
+          "seconds": 0.01,
+          "result": "PASS"
+        },
+        {
+          "selector": "s4_c01_native_rollback_census",
+          "exit_code": 0,
+          "seconds": 0.01,
+          "result": "PASS"
+        },
+        {
+          "selector": "s4_r01_statement_suffix_then_commit",
+          "exit_code": 0,
+          "seconds": 20.59,
+          "result": "PASS"
+        },
+        {
+          "selector": "s4_r02_full_abort_one_row",
+          "exit_code": 0,
+          "seconds": 8.41,
+          "result": "PASS"
+        },
+        {
+          "selector": "s4_r03_premature_finish_bad_proposal_and_actual_stage_retry",
+          "exit_code": 0,
+          "seconds": 8.44,
+          "result": "PASS"
+        },
+        {
+          "selector": "s4_r04_unfinished_drop_fences_without_more_io",
+          "exit_code": 0,
+          "seconds": 6.79,
+          "result": "PASS"
+        },
+        {
+          "selector": "s4_r05_partial_clr_write_is_fatal",
+          "exit_code": 0,
+          "seconds": 8.06,
+          "result": "PASS"
+        },
+        {
+          "selector": "s4_r05_clr_sync_uncertainty_is_fatal",
+          "exit_code": 0,
+          "seconds": 7.5,
+          "result": "PASS"
+        },
+        {
+          "selector": "s4_r06_empty_statement_and_empty_full_abort",
+          "exit_code": 0,
+          "seconds": 5.31,
+          "result": "PASS"
+        },
+        {
+          "selector": "s4_r07_flush_before_error_preserves_a_retryable_rollback",
+          "exit_code": 0,
+          "seconds": 9.2,
+          "result": "PASS"
+        },
+        {
+          "selector": "s4_r08_serializable_conflict_then_full_abort",
+          "exit_code": 0,
+          "seconds": 15.64,
+          "result": "PASS"
+        },
+        {
+          "selector": "s4_r09_wrong_after_digest_is_unchanged_and_same_task_retries",
+          "exit_code": 0,
+          "seconds": 8.47,
+          "result": "PASS"
+        },
+        {
+          "selector": "s4_r10_full_abort_three_roots_from_two_statements",
+          "exit_code": 0,
+          "seconds": 18.98,
+          "result": "PASS"
+        },
+        {
+          "selector": "s4_r11_wrong_capsule_view_and_scope_are_unchanged",
+          "exit_code": 0,
+          "seconds": 13.72,
+          "result": "PASS"
+        }
+      ],
+      "not_run": [],
+      "log_sha256": {
+        "catalog_mf14_clr_first_page_unwind.log": "c55512261068e1858021e8718afd64ec64baa63fcbafd2c66f289ccac04f2c53",
+        "catalog_mt07_drain_content_guard_fence.log": "55cfff7fee4b2b37d9cf8da37798b9867986d42c00a170031fa19e8895aa1b9f",
+        "commit_preparation_unwind_recovers_original_prefix.log": "676352df97be5bb3129d28e64dcca92bf5b85c1f4e0e04533385d341991ccb42",
+        "mc03_issued_local_gap_recovers.log": "f623c99fbebc8976f51a844ebf9038b187870590e10e68882eb911cf308805a8",
+        "mc04_reserved_drop_fence_fresh_recovery.log": "e872c78ee70559b085ace20952170dddb025d29cb2bad3953c7616a4a9d7c6c1",
+        "recovery_source_memory.log": "4c2de35b903c575fb47234aa89a35063b91d299141388f6de20bf24dd5115593",
+        "recovery_source_native.log": "4a49a03f80ecb7a96c97b4939366bb123b6496b2a7565ed27215bd63acaa2f68",
+        "s1b_row_arm_census_memory.log": "40f975ee9912e2ef7788c19bb8cb7c2a1f5ee108a048b95fecea3b824d55fec3",
+        "s1b_row_arm_census_native.log": "97e9397ec4d9512bfa29b5c59b0da51370fa33ae616e0b591b3633a64c045280",
+        "s1b_row_state_stops_at_interim_analysis_gate.log": "0589d77346a3601d3f2cdbb821c06a9197cfc8c3198c2952a23eecf3c8885a04",
+        "s1g_reserve_tail_stops_at_interim_gate.log": "0c4cd43959f695ec18666e62f84e47dbde83422796626b2d9afb1076bd4e49ea",
+        "s2w_r24_root_cursor_is_found_late_and_stops_restart.log": "d3bd8d616828a33bfec523660a0162bbdbe180cd31a7a5e76660f81ca402d8df",
+        "s4_c01_memory_rollback_census.log": "9c29e6691c5fa3c6abd8774ae8e107f43eb10a8c609866a23e093db2511cdcb3",
+        "s4_c01_native_rollback_census.log": "179b90b3e9a002ae10a5357b831979d341e9a5e6df79829c9f9dc484de14037d",
+        "s4_r01_statement_suffix_then_commit.log": "c300c75b08ad310a8a69e94d01e3543bbb51952697ba86162fd5c0a1c970a078",
+        "s4_r02_full_abort_one_row.log": "8ce2006384f5e090a31a152f09f81c1dfcbb3845fecb75c2165f30718b6671ed",
+        "s4_r03_premature_finish_bad_proposal_and_actual_stage_retry.log": "8db7c787860973ff6e3d501fb84f4f7e2f31a2c4c3cd3af6545a4c0ebf4e3d6d",
+        "s4_r04_unfinished_drop_fences_without_more_io.log": "34470d485c5ab9a787c9d21996b74217371a52825446a40856b341d763fabb6e",
+        "s4_r05_clr_sync_uncertainty_is_fatal.log": "c6cfceffaf930a8757c68d1db474c7c9bdb3411b54d575fcc12ed0501315b5da",
+        "s4_r05_partial_clr_write_is_fatal.log": "3fa51087a9c947038ef5d2db396ff7273441539b162f0b3833cd4978a41c36c1",
+        "s4_r06_empty_statement_and_empty_full_abort.log": "930950bf5c27c0789f962b771d8522db3137349bffdbef6861ae30041c68a481",
+        "s4_r07_flush_before_error_preserves_a_retryable_rollback.log": "0000a2da1ab3121dcc80a3cccc9c02975d48c8cc3b8101020bfa9d1a503959d3",
+        "s4_r08_serializable_conflict_then_full_abort.log": "4cdbcacc93d7089e0f2581d04c7d5618c39e2118afec235282ef9e1f1a5befa8",
+        "s4_r09_wrong_after_digest_is_unchanged_and_same_task_retries.log": "1dbc758a6b325cb783c65daf1e52e9fe2176c3b6aa42b2cba3f0928bdda37a48",
+        "s4_r10_full_abort_three_roots_from_two_statements.log": "c118aad7b9115164f9ba83dd8829a9312c0fe9ef95a836ef2d909926b806e8c4",
+        "s4_r11_wrong_capsule_view_and_scope_are_unchanged.log": "411f458b167f47c5dda0e91a0a8ef4f8089026973ad7b0065e661cba50dc1373",
+        "s6r_c01_memory_recovery_row_census.log": "dcaed188ba1cc6db7c4e596dddfa370adb5acfea15be2b688659ce69e5aa8a60",
+        "s6r_c02_native_recovery_row_census.log": "84c8c65ceecd59354e286ed96a1965ae307840adb950d39136638fc054e16a14",
+        "s6r_c03_recovered_facade_carriers.log": "60dc160aab999cde15b4c9d1f39be66299dd8f983432c281a88f2faf05c738bc",
+        "s6r_m01_one_committed_row_reject_initial_losers.log": "d29f73fdae14e1cdfe192f16db3d6fb8a5eef072fd6de301a87889fc8327f93e",
+        "s6r_m01_one_committed_row_with_row_clr.log": "965fdffbb991c063ff6e2767409d6785087b2850922434730619ae7ff255c681",
+        "s6r_m01_three_committed_rows_reject_initial_losers.log": "488f589bd782210aa5b9e0f635e1867a6c62ac86061191e1ef4a3e5d306d6e84",
+        "s6r_m01_three_committed_rows_with_row_clr.log": "377973ab2128020449a6e358469bb06e8bb8cbf2e693888ee7c3eeaf2cb0f7b0",
+        "s6r_m02_reserved_row_is_refused_without_row_clr.log": "58aa8ea160005167d95f20185d39de031ba964a4c8a1fca5ee6fcbbe65ef3658",
+        "s6r_m02_reserved_row_recovers_with_row_clr.log": "332bae6664c145f308c95d8735d0c4585b2184460eef29e7441904467112a372",
+        "s6r_m03_active_chain_and_legacy_committed_are_refused.log": "95fc1ef2572fe0e2d12fb4f9fc858795bb89d261802d9fde553ab5cb7e1e1591",
+        "s6r_m04_aborting_statement_recovers_as_full_rollback.log": "950f3b9e0777506bd5941359780f42778e7067bc9d0b20769ddd7f069d12f460",
+        "s6r_m04_active_chain_recovers_through_row_clr.log": "9ad6342ba1e860e10dd2c0a0e78e094a9145d5923a4261ca780ddc91fa3db678",
+        "s6r_m05_wrong_proposal_returns_the_same_task.log": "7a71f5b530c5a32d89099f196757d65cc6d4eee07530bbef21e10a78f8829b80",
+        "s6r_m06_full_abort.log": "e64503f477a99530fe189cf1d24772bec8fe65d777e97841c87847361f921678",
+        "s6r_m06_statement_rollback_then_commit.log": "45809503f6f252ef782db3df6a40f20b7dd3996c50e387ca5a78b575717dfada",
+        "s6r_m07_partial_recovery_then_crash.log": "27cad1b1f0341354ea0065427de22985c80c59f31a7c8aaf68b453fc162f3179",
+        "s6r_m08_reject_initial_losers_inputs.log": "0974e8a4161e6447cc34423921f7f79398b7a8f8a0d17caeabddd3916521bf8e"
+      }
+    },
+    {
+      "batch": "m2",
+      "role": "final",
+      "source_manifest_sha256": "be98fc788dd774cdfd0c52493b6d9868d770800ef4417b9c44f032883b1f48ac",
+      "elf_sha256": "05bf2d6d1e57791cd60908574d23d6f6bd894f006c01200cc177110ceac8ee30",
+      "input_sha256": "32406b3c207d25595b1d3c7541fe8f59d394d952a87e8b81aeddad9f61d42718",
+      "input_path": "/home/claude/xadb/tests/fixtures/dev3-module-c3/row-recovery/test-inventory.json",
+      "timeout_seconds": 300,
+      "execution_plan_sha256": "75153a97555bfc9e8a704b5337be367d0ecdb0456ed8c2bc2172dfe48414dec8",
+      "results_sha256": "0be8301573c063e497567117708b435472e1ab72f4313c67aa2bac1e16614eff",
+      "results": [
+        {
+          "selector": "recovery_source_memory",
+          "exit_code": 0,
+          "seconds": 0.01,
+          "result": "PASS"
+        },
+        {
+          "selector": "recovery_source_native",
+          "exit_code": 0,
+          "seconds": 0.01,
+          "result": "PASS"
+        }
+      ],
+      "not_run": [],
+      "log_sha256": {
+        "recovery_source_memory.log": "3f04c0367ae13fb02958be0e40011a9714d6e1c95695a40a37a32457617be56b",
+        "recovery_source_native.log": "45b3c6759eb0b0e2ab6b798f2ae60628317d557a934cc2e6d993a310ad0dfdba"
+      }
+    },
+    {
+      "batch": "m3",
+      "role": "final",
+      "source_manifest_sha256": "9b13aa871809fc0f7f2bcdd600ca939a58cad65734118a2119e00b48af26e104",
+      "elf_sha256": "05bf2d6d1e57791cd60908574d23d6f6bd894f006c01200cc177110ceac8ee30",
+      "input_sha256": "32406b3c207d25595b1d3c7541fe8f59d394d952a87e8b81aeddad9f61d42718",
+      "input_path": "/home/claude/xadb/tests/fixtures/dev3-module-c3/row-recovery/test-inventory.json",
+      "timeout_seconds": 300,
+      "execution_plan_sha256": "a0d1526955e223728a84d7a7bc9e2869221bcd2e4f7e6835578f4e64ad42a3f7",
+      "results_sha256": "55adea00f6529d5d1c2bcb5a82e022a983d0c6b0a985c8bdf9effab72132ffee",
+      "results": [
+        {
+          "selector": "recovery_source_memory",
+          "exit_code": 0,
+          "seconds": 0.01,
+          "result": "PASS"
+        },
+        {
+          "selector": "recovery_source_native",
+          "exit_code": 0,
+          "seconds": 0.01,
+          "result": "PASS"
+        },
+        {
+          "selector": "commit_preparation_unwind_recovers_original_prefix",
+          "exit_code": 101,
+          "seconds": 41.82,
+          "result": "FAIL"
+        }
+      ],
+      "not_run": [],
+      "log_sha256": {
+        "commit_preparation_unwind_recovers_original_prefix.log": "a7d699aa9e0511e93e4e8a271128de35c45582202892f37bb3c1442f60da53cd",
+        "recovery_source_memory.log": "5b054ffa8711c6c0d454c64d087fb1bf20a24fead1574cda20dd10a2e0dbd39a",
+        "recovery_source_native.log": "801d1ce4ba61df3c8a9064ca0cbecde4c6582e6b33b6e16e25e9f4231ff1977e"
+      }
+    }
+  ],
+  "final_native": [
+    {
+      "batch": "n1",
+      "role": "final",
+      "selector": "s6r_native_worker",
+      "source_manifest_sha256": "9b13aa871809fc0f7f2bcdd600ca939a58cad65734118a2119e00b48af26e104",
+      "elf_sha256": "05bf2d6d1e57791cd60908574d23d6f6bd894f006c01200cc177110ceac8ee30",
+      "input_sha256": "32406b3c207d25595b1d3c7541fe8f59d394d952a87e8b81aeddad9f61d42718",
+      "per_process_seconds": 300,
+      "execution_plan_sha256": "6712ff466ceb45e0b758124e08ea2b2cc2dd13353ac86c868f8b006cbeae1cfd",
+      "results_sha256": "fd7d439c5b223f21f67086d2b6738aba03ff103ab8ee26b48b5ea74d23633532",
+      "results": [
+        {
+          "case": "MBC40-N01",
+          "phase": "produce",
+          "exit_code": 0,
+          "seconds": 7.26,
+          "result": "PASS"
+        },
+        {
+          "case": "MBC40-N01",
+          "phase": "recover",
+          "exit_code": 0,
+          "seconds": 40.62,
+          "result": "PASS"
+        },
+        {
+          "case": "MBC40-N01",
+          "phase": "reenter",
+          "exit_code": 0,
+          "seconds": 9.52,
+          "result": "PASS"
+        },
+        {
+          "case": "MBC40-N02",
+          "phase": "produce",
+          "exit_code": 0,
+          "seconds": 6.41,
+          "result": "PASS"
+        },
+        {
+          "case": "MBC40-N02",
+          "phase": "crash",
+          "exit_code": 0,
+          "seconds": 4.38,
+          "result": "PASS"
+        },
+        {
+          "case": "MBC40-N02",
+          "phase": "recover",
+          "exit_code": 0,
+          "seconds": 27.14,
+          "result": "PASS"
+        },
+        {
+          "case": "MBC40-N03",
+          "phase": "produce",
+          "exit_code": 0,
+          "seconds": 13.08,
+          "result": "PASS"
+        },
+        {
+          "case": "MBC40-N03",
+          "phase": "crash",
+          "exit_code": 0,
+          "seconds": 6.84,
+          "result": "PASS"
+        },
+        {
+          "case": "MBC40-N03",
+          "phase": "recover",
+          "exit_code": 0,
+          "seconds": 88.86,
+          "result": "PASS"
+        },
+        {
+          "case": "MCB05-N01",
+          "phase": "produce",
+          "exit_code": 0,
+          "seconds": 6.34,
+          "result": "PASS"
+        },
+        {
+          "case": "MCB05-N01",
+          "phase": "reject",
+          "exit_code": 0,
+          "seconds": 0.92,
+          "result": "PASS"
+        },
+        {
+          "case": "MCB05-N02",
+          "phase": "produce",
+          "exit_code": 0,
+          "seconds": 6.18,
+          "result": "PASS"
+        },
+        {
+          "case": "MCB05-N02",
+          "phase": "reject",
+          "exit_code": 0,
+          "seconds": 0.87,
+          "result": "PASS"
+        },
+        {
+          "case": "MCB05-N03",
+          "phase": "produce",
+          "exit_code": 0,
+          "seconds": 5.03,
+          "result": "PASS"
+        },
+        {
+          "case": "MCB05-N03",
+          "phase": "reject",
+          "exit_code": 0,
+          "seconds": 0.87,
+          "result": "PASS"
+        },
+        {
+          "case": "MCB05-N04",
+          "phase": "produce",
+          "exit_code": 0,
+          "seconds": 5.63,
+          "result": "PASS"
+        },
+        {
+          "case": "MCB05-N04",
+          "phase": "reject",
+          "exit_code": 0,
+          "seconds": 0.82,
+          "result": "PASS"
+        },
+        {
+          "case": "MCB05-N05",
+          "phase": "produce",
+          "exit_code": 0,
+          "seconds": 1.17,
+          "result": "PASS"
+        },
+        {
+          "case": "MCB05-N05",
+          "phase": "reject",
+          "exit_code": 0,
+          "seconds": 0.37,
+          "result": "PASS"
+        },
+        {
+          "case": "MCB05-N06",
+          "phase": "produce",
+          "exit_code": 0,
+          "seconds": 1.97,
+          "result": "PASS"
+        },
+        {
+          "case": "MCB05-N06",
+          "phase": "reject",
+          "exit_code": 0,
+          "seconds": 0.52,
+          "result": "PASS"
+        }
+      ],
+      "cases_complete": [
+        "MBC40-N01",
+        "MBC40-N02",
+        "MBC40-N03",
+        "MCB05-N01",
+        "MCB05-N02",
+        "MCB05-N03",
+        "MCB05-N04",
+        "MCB05-N05",
+        "MCB05-N06"
+      ],
+      "receipts": {
+        "MBC40-N01/produce": {
+          "pid": "25891",
+          "files": "15"
+        },
+        "MBC40-N01/recover": {
+          "pid": "25919",
+          "result": "ready",
+          "traces": "7",
+          "clrs": "0",
+          "reads": "[Some(7)]",
+          "mutations": "646",
+          "handles": "0",
+          "peak": "3",
+          "fd_peak": "6"
+        },
+        "MBC40-N01/reenter": {
+          "pid": "26113",
+          "result": "ready",
+          "traces": "2",
+          "clrs": "0",
+          "reads": "[Some(7)]",
+          "mutations": "250",
+          "handles": "0",
+          "peak": "3",
+          "fd_peak": "6"
+        },
+        "MBC40-N02/produce": {
+          "pid": "26144",
+          "files": "15"
+        },
+        "MBC40-N02/crash": {
+          "pid": "26146",
+          "result": "crashed",
+          "traces": "2",
+          "clrs": "0",
+          "reads": "[]",
+          "mutations": "368",
+          "handles": "0",
+          "peak": "3",
+          "fd_peak": "6"
+        },
+        "MBC40-N02/recover": {
+          "pid": "26148",
+          "result": "ready",
+          "traces": "3",
+          "clrs": "0",
+          "reads": "[None]",
+          "mutations": "328",
+          "handles": "0",
+          "peak": "3",
+          "fd_peak": "6"
+        },
+        "MBC40-N03/produce": {
+          "pid": "26294",
+          "files": "15"
+        },
+        "MBC40-N03/crash": {
+          "pid": "26352",
+          "result": "crashed",
+          "traces": "2",
+          "clrs": "1",
+          "reads": "[]",
+          "mutations": "432",
+          "handles": "0",
+          "peak": "3",
+          "fd_peak": "6"
+        },
+        "MBC40-N03/recover": {
+          "pid": "26415",
+          "result": "ready",
+          "traces": "17",
+          "clrs": "2",
+          "reads": "[None, None, None]",
+          "mutations": "571",
+          "handles": "0",
+          "peak": "3",
+          "fd_peak": "6"
+        },
+        "MCB05-N01/produce": {
+          "pid": "26714",
+          "files": "15"
+        },
+        "MCB05-N01/reject": {
+          "pid": "26716",
+          "result": "refused",
+          "mutations": "0",
+          "handles": "0",
+          "peak": "3",
+          "fd_peak": "6"
+        },
+        "MCB05-N02/produce": {
+          "pid": "26718",
+          "files": "15"
+        },
+        "MCB05-N02/reject": {
+          "pid": "26720",
+          "result": "refused",
+          "mutations": "0",
+          "handles": "0",
+          "peak": "3",
+          "fd_peak": "6"
+        },
+        "MCB05-N03/produce": {
+          "pid": "26722",
+          "files": "15"
+        },
+        "MCB05-N03/reject": {
+          "pid": "26727",
+          "result": "refused",
+          "mutations": "0",
+          "handles": "0",
+          "peak": "3",
+          "fd_peak": "6"
+        },
+        "MCB05-N04/produce": {
+          "pid": "26729",
+          "files": "15"
+        },
+        "MCB05-N04/reject": {
+          "pid": "26732",
+          "result": "refused",
+          "mutations": "0",
+          "handles": "0",
+          "peak": "3",
+          "fd_peak": "6"
+        },
+        "MCB05-N05/produce": {
+          "pid": "26734",
+          "files": "15"
+        },
+        "MCB05-N05/reject": {
+          "pid": "26736",
+          "result": "refused",
+          "mutations": "0",
+          "handles": "0",
+          "peak": "3",
+          "fd_peak": "6"
+        },
+        "MCB05-N06/produce": {
+          "pid": "26738",
+          "files": "15"
+        },
+        "MCB05-N06/reject": {
+          "pid": "26740",
+          "result": "refused",
+          "mutations": "0",
+          "handles": "0",
+          "peak": "3",
+          "fd_peak": "6"
+        }
+      }
+    }
+  ],
+  "final_compiler": [
+    {
+      "batch": "p1",
+      "role": "final",
+      "export_fingerprint": [
+        "7c0037ae84caa5473303816cb0b92845f96a3608338143ffe10810663307248a",
+        "d965611954a113e67f338c76e8c864ef609a311a"
+      ],
+      "results_sha256": "bea0256c5ab7520cd248e793a4f09926364cddb8905c211498f83955cdb1fc0b",
+      "results": [
+        {
+          "case": "baseline",
+          "probe_sha256": null,
+          "expected_code": null,
+          "primary_line": null,
+          "exit_code": 0,
+          "seconds": 27.61,
+          "diagnostics": 0,
+          "result": "PASS"
+        },
+        {
+          "case": "MBC00-P03",
+          "probe_sha256": "858ad71cf3f7f8f150b8c0f79253384b1fbbdc7767d6728513d05da4a24d6b68",
+          "expected_code": null,
+          "primary_line": null,
+          "exit_code": 0,
+          "seconds": 9.38,
+          "diagnostics": 0,
+          "result": "PASS"
+        },
+        {
+          "case": "MBC00-N11",
+          "probe_sha256": "e1fc697dec40e2eed2a24d8ddc46181abfa9159d7bc04bf99fd536ec2090ece6",
+          "expected_code": "E0382",
+          "primary_line": 7,
+          "exit_code": 101,
+          "seconds": 7.52,
+          "diagnostics": 1,
+          "result": "PASS"
+        },
+        {
+          "case": "MBC00-N11-held",
+          "probe_sha256": "7ab469c9fd3325f28b3b03493e54adaa901cc87bcba3548b0e98f2c96357a2d3",
+          "expected_code": "E0499",
+          "primary_line": 5,
+          "exit_code": 101,
+          "seconds": 7.39,
+          "diagnostics": 2,
+          "result": "PASS"
+        }
+      ]
+    }
+  ],
+  "main_baseline": [
+    {
+      "batch": "b1",
+      "role": "main-baseline 8d5e48b",
+      "source_manifest_sha256": "81a9d26e2648a6b5d54480fa8d7ab58925b3b2a4df0ec3d0a6446020522516e8",
+      "elf_sha256": "721104e648f51515a605e03b7befd8ce63461c04221d2aec078a2f21b1bf3a4f",
+      "input_sha256": "32406b3c207d25595b1d3c7541fe8f59d394d952a87e8b81aeddad9f61d42718",
+      "input_path": "/home/claude/xadb/tests/fixtures/dev3-module-c3/row-recovery/test-inventory.json",
+      "timeout_seconds": 300,
+      "execution_plan_sha256": "f7f38c423bf62cb569f1392c2a9c8efe79735fec61158dfca895ef6b121e4888",
+      "results_sha256": "50a471fef6b7f19486b4f92fcf5c5549304ba59cea8094d6fa29a32e5669c5e1",
+      "results": [
+        {
+          "selector": "commit_preparation_unwind_recovers_original_prefix",
+          "exit_code": 101,
+          "seconds": 41.6,
+          "result": "FAIL"
+        }
+      ],
+      "not_run": [],
+      "log_sha256": {
+        "commit_preparation_unwind_recovers_original_prefix.log": "468d26191fe1898dadbe64444607ce190c3f5c92b6e61817e62febe341f8fe83"
+      }
+    }
+  ],
+  "batch_notes": {
+    "m1": "final selection on the committed tip d965611 ELF; 40/43 PASS. recovery_source_{memory,native} stopped before the product at the missing XADB_PLAN4_RECOVERY_* identity (harness FAIL); commit_preparation_unwind_recovers_original_prefix exceeded its 30 s case bound (43.64 s) after the functional checks.",
+    "m2": "harness fix only (XADB_PLAN4_RECOVERY_* identity added); the source manifest differs from m1 only by an uncommitted contract text edit, same ELF; 2 PASS.",
+    "m3": "same committed source/ELF as m1: recovery_source_{memory,native} PASS; commit_preparation_unwind_recovers_original_prefix again FAIL at the 30 s bound (41.82 s).",
+    "b1": "main 8d5e48b ELF: the same unwind selector FAILs at the same 30 s bound (41.6 s), so it is pre-existing on this cloud machine and not an S6 regression; reported for a separate thread.",
+    "n1": "final native 9 cases / 21 processes on the m1 ELF; all PASS.",
+    "p1": "final compiler on a git-archive export of d965611: baseline, MBC00-P03, MBC00-N11 (E0382:7), MBC00-N11-held (E0499:5) all PASS."
+  },
+  "development_memory": [
+    {
+      "batch": "dev1",
+      "role": "development",
+      "source_manifest_sha256": "6a786f983a2e22f078b76ac56b27eafed8aab945571dc15d4a8e7c5fd13a43e8",
+      "elf_sha256": "3a55bfb183a64334c943e96193533cb0ce33bde555737fb3b5555624552fb278",
+      "input_sha256": "acb6963ad5830a79fef8c09b08ea490b1e2f1e657726e6094c272baae0b19e80",
+      "input_path": "tests/fixtures/dev3-module-c3/row-commit/expected.json",
+      "timeout_seconds": 180,
+      "execution_plan_sha256": "be383b33bcc7a97062c64b1646e06e07a9cffb4551494fe4b738ffa82abba319",
+      "results_sha256": "a3f100b8c50c58ddebdf460c2e20233a5550a8c0fbeebcf77c4b84d34260eaf7",
+      "results": [
+        {
+          "selector": "s6r_m01_committed_rows_recover_to_ready_under_both_policies",
+          "exit_code": 101,
+          "seconds": 49.05,
+          "result": "FAIL"
+        },
+        {
+          "selector": "s6r_m02_reserved_row_recovers_with_row_clr_and_is_refused_without",
+          "exit_code": 101,
+          "seconds": 11.93,
+          "result": "FAIL"
+        },
+        {
+          "selector": "s6r_m03_active_chain_is_refused_by_reject_initial_losers_and_legacy",
+          "exit_code": 0,
+          "seconds": 16.15,
+          "result": "PASS"
+        }
+      ],
+      "not_run": [],
+      "log_sha256": {
+        "s6r_m01_committed_rows_recover_to_ready_under_both_policies.log": "2db211786424ea968d6231c833ef47377b54eb29e6ee7358551ee79b37ca2752",
+        "s6r_m02_reserved_row_recovers_with_row_clr_and_is_refused_without.log": "5a0bc02acc4596e38bafe946c978122933037af489f329d74974bf65cade3f09",
+        "s6r_m03_active_chain_is_refused_by_reject_initial_losers_and_legacy.log": "2f8e3908e8bc32d134f9f155b8954e29dcced9df1886faf1cbc546f8aaeef429"
+      }
+    },
+    {
+      "batch": "dev2",
+      "role": "development",
+      "source_manifest_sha256": "5af5a5f107764591c98153ba7541466bac08644990f9767f87c7f8991948d3d7",
+      "elf_sha256": "8d5e49fecff46b1ccc86f996eaf4b25d93508b8286b53a61755cf479fd25ea34",
+      "input_sha256": "acb6963ad5830a79fef8c09b08ea490b1e2f1e657726e6094c272baae0b19e80",
+      "input_path": "tests/fixtures/dev3-module-c3/row-commit/expected.json",
+      "timeout_seconds": 180,
+      "execution_plan_sha256": "eddcc70e245398b040fb2b0db28a2c5b9a7f6d44a41ef001c554fc20c40243a1",
+      "results_sha256": "941498d5e82199b1ade85faddacdd1ac2c2f1e0affb341c2be16be6a76eac1c7",
+      "results": [
+        {
+          "selector": "s6r_m01_committed_rows_recover_to_ready_under_both_policies",
+          "exit_code": 101,
+          "seconds": 49.71,
+          "result": "FAIL"
+        },
+        {
+          "selector": "s6r_m02_reserved_row_recovers_with_row_clr_and_is_refused_without",
+          "exit_code": 101,
+          "seconds": 36.52,
+          "result": "FAIL"
+        }
+      ],
+      "not_run": [],
+      "log_sha256": {
+        "s6r_m01_committed_rows_recover_to_ready_under_both_policies.log": "ec9c4fa4065454ef0efbc1cecedd5508b28f7ec41037ba356c79127d624ebbf2",
+        "s6r_m02_reserved_row_recovers_with_row_clr_and_is_refused_without.log": "a41607c297f4b63c003f0132ae0cdac2f6edcf41545cc1312651ac06abbdf13d"
+      }
+    },
+    {
+      "batch": "dev3",
+      "role": "development",
+      "source_manifest_sha256": "e094ac0ae79b40ade6e859209f61f34c3046eab36e7f905d6b84747d45818bcd",
+      "elf_sha256": "2a77fafbd24684efd79a9a2fd688170772a109209882c9cbb5ed44d7b9746a38",
+      "input_sha256": "acb6963ad5830a79fef8c09b08ea490b1e2f1e657726e6094c272baae0b19e80",
+      "input_path": "tests/fixtures/dev3-module-c3/row-commit/expected.json",
+      "timeout_seconds": 180,
+      "execution_plan_sha256": "3ae511a88bb1564e83496798b4cc23b23e27b18bde318c38fc851cd6cb0aa9c7",
+      "results_sha256": "48dde74c4c27f3ee7e5b4b5e17dd012e0bb579d19de9dba703f8567f5b4d5e85",
+      "results": [
+        {
+          "selector": "s6r_m01_one_committed_row_with_row_clr",
+          "exit_code": 101,
+          "seconds": 47.46,
+          "result": "FAIL"
+        },
+        {
+          "selector": "s6r_m01_three_committed_rows_with_row_clr",
+          "exit_code": 101,
+          "seconds": 100.9,
+          "result": "FAIL"
+        },
+        {
+          "selector": "s6r_m02_reserved_row_recovers_with_row_clr",
+          "exit_code": 101,
+          "seconds": 34.02,
+          "result": "FAIL"
+        },
+        {
+          "selector": "s6r_m02_reserved_row_is_refused_without_row_clr",
+          "exit_code": 0,
+          "seconds": 7.49,
+          "result": "PASS"
+        }
+      ],
+      "not_run": [],
+      "log_sha256": {
+        "s6r_m01_one_committed_row_with_row_clr.log": "0604a19e2dba6a294f2e268828759737f10aae6b9317295ae809296e9315cdfc",
+        "s6r_m01_three_committed_rows_with_row_clr.log": "ea26b28acf84be7fd847b7e6d5b5347b76b50099184bf30d2753a829486ce217",
+        "s6r_m02_reserved_row_is_refused_without_row_clr.log": "5b84b41461791bc518e59238f041d8062bf7610062bc4a544ee2c28a9134a4e3",
+        "s6r_m02_reserved_row_recovers_with_row_clr.log": "b7e80f24615afb853afb0071c74ccb1c642de697a0f787d0c8acb84b6a90183d"
+      }
+    },
+    {
+      "batch": "dev4",
+      "role": "development",
+      "source_manifest_sha256": "d7e8828971a48432976d2f1362f04e429c400f1a21393488132316aa591f49b0",
+      "elf_sha256": "308a113e9b5fb6eb8fb589aef09d6267c53715d80501525af7cc2cf0c5d96850",
+      "input_sha256": "acb6963ad5830a79fef8c09b08ea490b1e2f1e657726e6094c272baae0b19e80",
+      "input_path": "tests/fixtures/dev3-module-c3/row-commit/expected.json",
+      "timeout_seconds": 180,
+      "execution_plan_sha256": "64251d7d3f2b376dd1326ba762406e18c7474e25c07a3d50454b4b0f8e63a550",
+      "results_sha256": "5d8e6f5c28aed52d3d62950a61612ac4d927e2da2461e6cd592d73aac14e5446",
+      "results": [
+        {
+          "selector": "s6r_m01_one_committed_row_with_row_clr",
+          "exit_code": 101,
+          "seconds": 47.81,
+          "result": "FAIL"
+        }
+      ],
+      "not_run": [],
+      "log_sha256": {
+        "s6r_m01_one_committed_row_with_row_clr.log": "f1b2d18251f688b0f65df68a01a3b788ceae28292a9eab9f9977577350824391"
+      }
+    },
+    {
+      "batch": "dev5",
+      "role": "development",
+      "source_manifest_sha256": "419c20f0ce8b4239b07a9a3d5d4729baf0760633cb11aabc3c9d661afe599344",
+      "elf_sha256": "daa8359c40b4da201946e98ed23158d9530e7b09c4e8327ca37f5021bd7b9755",
+      "input_sha256": "acb6963ad5830a79fef8c09b08ea490b1e2f1e657726e6094c272baae0b19e80",
+      "input_path": "tests/fixtures/dev3-module-c3/row-commit/expected.json",
+      "timeout_seconds": 180,
+      "execution_plan_sha256": "460941545014cbc68faa8c1a0f495afdea83bf2503fb6103df68b0e560340d78",
+      "results_sha256": "d11484ec87925d76b2ed4e408265da50b15e1f03552d2e6b5c5c156f2919784f",
+      "results": [
+        {
+          "selector": "s6r_m01_one_committed_row_with_row_clr",
+          "exit_code": 101,
+          "seconds": 49.53,
+          "result": "FAIL"
+        }
+      ],
+      "not_run": [],
+      "log_sha256": {
+        "s6r_m01_one_committed_row_with_row_clr.log": "f4609427c232acab750c09003d7af648f859466542c3621ef08766bf8e55f112"
+      }
+    },
+    {
+      "batch": "dev6",
+      "role": "development",
+      "source_manifest_sha256": "3d5467511ead2471f41f99ac03c16b70824996e4aeebf63da65b8c0d5f45da3e",
+      "elf_sha256": "0318122ac2801247da44f15eed4b76daf695f44ef591096783c00c473f6465d6",
+      "input_sha256": "acb6963ad5830a79fef8c09b08ea490b1e2f1e657726e6094c272baae0b19e80",
+      "input_path": "tests/fixtures/dev3-module-c3/row-commit/expected.json",
+      "timeout_seconds": 300,
+      "execution_plan_sha256": "b1ca1558d943348b36bf255ae244a3ed98072a01e32d6fb8e6410a84c629cbe0",
+      "results_sha256": "0577068d57e201f90954022d09bdd5cb481573393e155da9503b3a67c7b42611",
+      "results": [
+        {
+          "selector": "s6r_m01_one_committed_row_with_row_clr",
+          "exit_code": 101,
+          "seconds": 48.7,
+          "result": "FAIL"
+        },
+        {
+          "selector": "s6r_m01_one_committed_row_reject_initial_losers",
+          "exit_code": 101,
+          "seconds": 48.63,
+          "result": "FAIL"
+        },
+        {
+          "selector": "s6r_m01_three_committed_rows_with_row_clr",
+          "exit_code": 101,
+          "seconds": 103.41,
+          "result": "FAIL"
+        },
+        {
+          "selector": "s6r_m01_three_committed_rows_reject_initial_losers",
+          "exit_code": 101,
+          "seconds": 105.12,
+          "result": "FAIL"
+        },
+        {
+          "selector": "s6r_m02_reserved_row_recovers_with_row_clr",
+          "exit_code": 0,
+          "seconds": 35.13,
+          "result": "PASS"
+        },
+        {
+          "selector": "s6r_m02_reserved_row_is_refused_without_row_clr",
+          "exit_code": 0,
+          "seconds": 7.68,
+          "result": "PASS"
+        },
+        {
+          "selector": "s6r_m03_active_chain_and_legacy_committed_are_refused",
+          "exit_code": 0,
+          "seconds": 23.15,
+          "result": "PASS"
+        }
+      ],
+      "not_run": [],
+      "log_sha256": {
+        "s6r_m01_one_committed_row_reject_initial_losers.log": "3e9a0cdf57b214a0a3f4c1054ebc90b1028858fc777dbf70e1168278468f42c8",
+        "s6r_m01_one_committed_row_with_row_clr.log": "366089b3765df8b73be1927aa281447ea395de5645a4e06707e432075cb85a56",
+        "s6r_m01_three_committed_rows_reject_initial_losers.log": "c634e3fb61fe389a875fdf9df4bc840bf41b474f85c6b781df948a60a239645d",
+        "s6r_m01_three_committed_rows_with_row_clr.log": "059ba4b26536d13c8cde9fafcde417eef36fd5dfac8d916684c0e6d86f5a133a",
+        "s6r_m02_reserved_row_is_refused_without_row_clr.log": "683d99854b6a8126436f7046f7b0af40744fa8f7246df0d5d13706f47f0b15e3",
+        "s6r_m02_reserved_row_recovers_with_row_clr.log": "5ad5c040cd57533a1148eb8f644b4d5fb28f53d16616a9425508ae43b790a037",
+        "s6r_m03_active_chain_and_legacy_committed_are_refused.log": "0f20729ad0bf48e9cb5c49b1fb70d3b9e2b6947c59781a346405c3051efb7e71"
+      }
+    },
+    {
+      "batch": "dev7",
+      "role": "development",
+      "source_manifest_sha256": "8c69d8ceac4f4500f7a26049670a8c8e5394ed22c4b4a4aae07f58ae32c7a975",
+      "elf_sha256": "9cefbed6beb6a806858fe8e5686389eaac692ed7769302494230f696ad5547d3",
+      "input_sha256": "acb6963ad5830a79fef8c09b08ea490b1e2f1e657726e6094c272baae0b19e80",
+      "input_path": "tests/fixtures/dev3-module-c3/row-commit/expected.json",
+      "timeout_seconds": 300,
+      "execution_plan_sha256": "f065b720891b5e4c4072d8573cb6e9bae6d07bc883d72b5045bf47aa2313d3d7",
+      "results_sha256": "9fea475c8364d591af4ff29cf7a3d83e301a890e38e58a0d28cfd262b961b5a7",
+      "results": [
+        {
+          "selector": "s6r_m01_one_committed_row_with_row_clr",
+          "exit_code": 101,
+          "seconds": 48.99,
+          "result": "FAIL"
+        }
+      ],
+      "not_run": [],
+      "log_sha256": {
+        "s6r_m01_one_committed_row_with_row_clr.log": "2ab75a32f3f4e53b2f8440ca612ef591eda50fb7ce31e65511e28cef4a5db475"
+      }
+    },
+    {
+      "batch": "dev8",
+      "role": "development",
+      "source_manifest_sha256": "cfdb3942d5c109ff86b5160647917aa062d5d3936ee7699909a30cfeb4bc7e93",
+      "elf_sha256": "ca7506cba6edb5f426a93086b3a37b0a5b038484cad3ea7db1a7dda22528b9dd",
+      "input_sha256": "acb6963ad5830a79fef8c09b08ea490b1e2f1e657726e6094c272baae0b19e80",
+      "input_path": "tests/fixtures/dev3-module-c3/row-commit/expected.json",
+      "timeout_seconds": 300,
+      "execution_plan_sha256": "790c23d65c24b5cdeaaac3809c6912f742122b48217befe8ea8cfd91da9c12e8",
+      "results_sha256": "9522baa7c336e93bbbc7c1b8dee62c32977e41c7dbdd2acfd25887c59f0f23c9",
+      "results": [
+        {
+          "selector": "s6r_m01_one_committed_row_with_row_clr",
+          "exit_code": 0,
+          "seconds": 50.77,
+          "result": "PASS"
+        }
+      ],
+      "not_run": [],
+      "log_sha256": {
+        "s6r_m01_one_committed_row_with_row_clr.log": "37bcb983753530660e6cf9ed59731db90510211b8a29ece6a5d137ff63ca025b"
+      }
+    },
+    {
+      "batch": "c1",
+      "role": "development",
+      "source_manifest_sha256": "917012ae1313adbcb369fd7a9e8083f5b26bfb3083cde6a10ad8aefa493c8137",
+      "elf_sha256": "75ca6e7b96fca705309947ed89a0269378e3b90d50e886149da039ed6418197f",
+      "input_sha256": "acb6963ad5830a79fef8c09b08ea490b1e2f1e657726e6094c272baae0b19e80",
+      "input_path": "tests/fixtures/dev3-module-c3/row-commit/expected.json",
+      "timeout_seconds": 300,
+      "execution_plan_sha256": "0316031f5292f4dfe2fb23faae1b2335dd90f5d378fa25ed8ec486b7c2bdd6d7",
+      "results_sha256": "536c3c5a9b0a1e3fe413035604de4087a86b20f2a7fdd00fde6be411feb8c0a9",
+      "results": [
+        {
+          "selector": "s6r_m01_one_committed_row_with_row_clr",
+          "exit_code": 0,
+          "seconds": 51.46,
+          "result": "PASS"
+        },
+        {
+          "selector": "s6r_m01_one_committed_row_reject_initial_losers",
+          "exit_code": 0,
+          "seconds": 51.61,
+          "result": "PASS"
+        },
+        {
+          "selector": "s6r_m01_three_committed_rows_with_row_clr",
+          "exit_code": 0,
+          "seconds": 103.27,
+          "result": "PASS"
+        },
+        {
+          "selector": "s6r_m01_three_committed_rows_reject_initial_losers",
+          "exit_code": 0,
+          "seconds": 101.11,
+          "result": "PASS"
+        },
+        {
+          "selector": "s6r_m02_reserved_row_recovers_with_row_clr",
+          "exit_code": 0,
+          "seconds": 33.19,
+          "result": "PASS"
+        },
+        {
+          "selector": "s6r_m02_reserved_row_is_refused_without_row_clr",
+          "exit_code": 0,
+          "seconds": 7.69,
+          "result": "PASS"
+        },
+        {
+          "selector": "s6r_m03_active_chain_and_legacy_committed_are_refused",
+          "exit_code": 0,
+          "seconds": 22.73,
+          "result": "PASS"
+        }
+      ],
+      "not_run": [],
+      "log_sha256": {
+        "s6r_m01_one_committed_row_reject_initial_losers.log": "4e8d6e49f442c2333adb0380bda731b165a87f52abbdb3fa6fc66f5264bae64b",
+        "s6r_m01_one_committed_row_with_row_clr.log": "5b4d5d6fa7ff366aa9f5fd82b493a607688abca3d2b1ea58c8e3f84c7c73f0b1",
+        "s6r_m01_three_committed_rows_reject_initial_losers.log": "713474fcaa9ffef371d059393bb091c087c67af73911f9aceddbe9ff7f2d8bd2",
+        "s6r_m01_three_committed_rows_with_row_clr.log": "55583b81d71f612c4b60ba86217296fb1a4b5b3cec38745346d0864349ac3f32",
+        "s6r_m02_reserved_row_is_refused_without_row_clr.log": "df2efcc4e96da090c8182e70de5b970b96a52cdeb5975e079369449ecbb2f624",
+        "s6r_m02_reserved_row_recovers_with_row_clr.log": "9e299b46c920e1ecde38a725176a4e386654030072d5ee3da5e997a153c44af8",
+        "s6r_m03_active_chain_and_legacy_committed_are_refused.log": "8589cc2dd799b12680615c7872b981d9d0b0a7e4d75328871321421efadbc87b"
+      }
+    },
+    {
+      "batch": "d1",
+      "role": "development",
+      "source_manifest_sha256": "9f633febb67910d71742c7e0768a088a3510575ce2c6dc7a2d78b974dc5f9404",
+      "elf_sha256": "cd1a19dd610ad6a69708499d9b0f50e443e8af282ac40ed6e87a8de50b22aaef",
+      "input_sha256": "acb6963ad5830a79fef8c09b08ea490b1e2f1e657726e6094c272baae0b19e80",
+      "input_path": "tests/fixtures/dev3-module-c3/row-commit/expected.json",
+      "timeout_seconds": 300,
+      "execution_plan_sha256": "22441bb418c2ec255a4a7cc0e87ebb3222abfe3368c8a7f387948d1d4ca7f215",
+      "results_sha256": "3416f6539744ec7f0a491e18593f1dc019cd7da38e3188ef3b2c121c98a42810",
+      "results": [
+        {
+          "selector": "s6r_m04_active_chain_recovers_through_row_clr",
+          "exit_code": 0,
+          "seconds": 119.19,
+          "result": "PASS"
+        }
+      ],
+      "not_run": [],
+      "log_sha256": {
+        "s6r_m04_active_chain_recovers_through_row_clr.log": "1b395741bfa27d2a3c77b999b74d8bca63ed0e35dfb504179d5e88933dd78b35"
+      }
+    },
+    {
+      "batch": "d2",
+      "role": "development",
+      "source_manifest_sha256": "9f633febb67910d71742c7e0768a088a3510575ce2c6dc7a2d78b974dc5f9404",
+      "elf_sha256": "cd1a19dd610ad6a69708499d9b0f50e443e8af282ac40ed6e87a8de50b22aaef",
+      "input_sha256": "acb6963ad5830a79fef8c09b08ea490b1e2f1e657726e6094c272baae0b19e80",
+      "input_path": "tests/fixtures/dev3-module-c3/row-commit/expected.json",
+      "timeout_seconds": 300,
+      "execution_plan_sha256": "6886a76a17b51a9587388978c9c2074f10c3b3a8bcde703088486c21b14cdc82",
+      "results_sha256": "fd948702cc4fe65ba5f51e7d61d267ae160ff78344eccefe143251bc8decfd03",
+      "results": [
+        {
+          "selector": "s6r_m05_wrong_proposal_returns_the_same_task",
+          "exit_code": 0,
+          "seconds": 53.21,
+          "result": "PASS"
+        },
+        {
+          "selector": "s6r_m06_statement_rollback_then_commit",
+          "exit_code": 0,
+          "seconds": 132.93,
+          "result": "PASS"
+        },
+        {
+          "selector": "s6r_m06_full_abort",
+          "exit_code": 0,
+          "seconds": 89.37,
+          "result": "PASS"
+        },
+        {
+          "selector": "s6r_m07_partial_recovery_then_crash",
+          "exit_code": 101,
+          "seconds": 106.25,
+          "result": "FAIL"
+        }
+      ],
+      "not_run": [],
+      "log_sha256": {
+        "s6r_m05_wrong_proposal_returns_the_same_task.log": "ffc8f9205b7bee4248a2008db0f2a80cd2a40d86416f0005086e519b53c5f240",
+        "s6r_m06_full_abort.log": "f13b563abf05a088a1edf2853d90dec065804d8648a1fc908a30d3542b636861",
+        "s6r_m06_statement_rollback_then_commit.log": "1507be6be3c32bb01bc9fc7453d08ed80ee7f2dd01dea2f6c029b75ac9e5fbbc",
+        "s6r_m07_partial_recovery_then_crash.log": "4dcb94bee11bfd2a28bf3b40179a79d155dc711d5bcd29a06f9e8a041239beb2"
+      }
+    },
+    {
+      "batch": "e1",
+      "role": "development",
+      "source_manifest_sha256": "d2703af123bd7d274701cb95624b11a7f5d67c17dee1f244bc49fd6dcf39cff7",
+      "elf_sha256": "491100f377641f5093d068f9f852abac99b014fa3d6ddacd838654dbe61326f1",
+      "input_sha256": "acb6963ad5830a79fef8c09b08ea490b1e2f1e657726e6094c272baae0b19e80",
+      "input_path": "tests/fixtures/dev3-module-c3/row-commit/expected.json",
+      "timeout_seconds": 300,
+      "execution_plan_sha256": "6e53bf4978d7509ca01f40964b9b3fd4aa25f0b2231f09acffa71d8a1fb41fa0",
+      "results_sha256": "d9f530d48edbdbfddc91767187f625da0614fb8b0e596663fbe8733aa9f19802",
+      "results": [
+        {
+          "selector": "s6r_m07_partial_recovery_then_crash",
+          "exit_code": 101,
+          "seconds": 118.46,
+          "result": "FAIL"
+        },
+        {
+          "selector": "s6r_m08_reject_initial_losers_inputs",
+          "exit_code": 0,
+          "seconds": 30.51,
+          "result": "PASS"
+        }
+      ],
+      "not_run": [],
+      "log_sha256": {
+        "s6r_m07_partial_recovery_then_crash.log": "d6264f0f67abcce6cf5790bdf9bc4e1b2fe65319b2f1f5e22827103646c0171a",
+        "s6r_m08_reject_initial_losers_inputs.log": "5a91a787b62801f15eb93d9090365587b4c3859450f591a3c8baf3c017ef0d53"
+      }
+    },
+    {
+      "batch": "f1",
+      "role": "development",
+      "source_manifest_sha256": "9a93ccbe2c48247825d51331e99ecb5c6289e11517bd51d015c1cdbd5ff8299c",
+      "elf_sha256": "78b1a58709aa6c43528cf1467ff43c5bb8901653237901fd17c92591adc0be5a",
+      "input_sha256": "acb6963ad5830a79fef8c09b08ea490b1e2f1e657726e6094c272baae0b19e80",
+      "input_path": "tests/fixtures/dev3-module-c3/row-commit/expected.json",
+      "timeout_seconds": 300,
+      "execution_plan_sha256": "f58438c0efd6f6dba87f7fff0bd645edc805d507efb2c977d007867a25903ac4",
+      "results_sha256": "d11af7cc4cfc37e8ec83832e877f7cbc38ef2006bc941d98aa5db867d95f84db",
+      "results": [
+        {
+          "selector": "s6r_m07_partial_recovery_then_crash",
+          "exit_code": 0,
+          "seconds": 103.86,
+          "result": "PASS"
+        }
+      ],
+      "not_run": [],
+      "log_sha256": {
+        "s6r_m07_partial_recovery_then_crash.log": "829012de8cabcc2bf3d82e504a92f27268942122a26bcb2f1075d3bf23d453d2"
+      }
+    },
+    {
+      "batch": "g1",
+      "role": "development",
+      "source_manifest_sha256": "bf5541f2e745e6a5de19bb32a135e191069076fa6878c023d988de2f21451e34",
+      "elf_sha256": "6e44ff8eea8d04eb77000ec4235540598041491a85fada25ad50dd43107c9add",
+      "input_sha256": "acb6963ad5830a79fef8c09b08ea490b1e2f1e657726e6094c272baae0b19e80",
+      "input_path": "tests/fixtures/dev3-module-c3/row-commit/expected.json",
+      "timeout_seconds": 300,
+      "execution_plan_sha256": "a18148d656f15bc228b33895a42c89d7e5b45b0eda9b30fd260302fe26e4d814",
+      "results_sha256": "d46a09d2311c2f7bedfc07ae28e3705c4913440db1e30920db22bcc20f155db2",
+      "results": [
+        {
+          "selector": "s2w_r24_root_cursor_is_found_late_and_stops_restart",
+          "exit_code": 0,
+          "seconds": 11.0,
+          "result": "PASS"
+        }
+      ],
+      "not_run": [],
+      "log_sha256": {
+        "s2w_r24_root_cursor_is_found_late_and_stops_restart.log": "ddd228ee1516197cb0061b6b559d9ce9430bb4e0249f5352759e9817c0c23e4f"
+      }
+    },
+    {
+      "batch": "h1",
+      "role": "development",
+      "source_manifest_sha256": "1027ad3e40fe514ee2aeeeabbacf4c037d3f95f37581c80f1c46c26bbb21525d",
+      "elf_sha256": "d993569c8f00ec13d5515a3c09fea7ebaa08bf2118051d7702a276869f9948b1",
+      "input_sha256": "acb6963ad5830a79fef8c09b08ea490b1e2f1e657726e6094c272baae0b19e80",
+      "input_path": "/home/claude/xadb/tests/fixtures/dev3-module-c3/row-commit/expected.json",
+      "timeout_seconds": 300,
+      "execution_plan_sha256": "60b412f3c943972465411679779ae6c9d10c0ae36a3f0d5d7065097c7a6f50bd",
+      "results_sha256": "19266fced0d096451db5cc81295fac3e5cf3ccc00686ffe4405e86f4254513b4",
+      "results": [
+        {
+          "selector": "s6r_m04_aborting_statement_recovers_as_full_rollback",
+          "exit_code": 0,
+          "seconds": 74.34,
+          "result": "PASS"
+        },
+        {
+          "selector": "s6r_m03_active_chain_and_legacy_committed_are_refused",
+          "exit_code": 0,
+          "seconds": 24.1,
+          "result": "PASS"
+        },
+        {
+          "selector": "s6r_m02_reserved_row_is_refused_without_row_clr",
+          "exit_code": 0,
+          "seconds": 8.07,
+          "result": "PASS"
+        },
+        {
+          "selector": "s6r_m08_reject_initial_losers_inputs",
+          "exit_code": 0,
+          "seconds": 30.6,
+          "result": "PASS"
+        }
+      ],
+      "not_run": [],
+      "log_sha256": {
+        "s6r_m02_reserved_row_is_refused_without_row_clr.log": "33db66487337bb681a8c45a31b0005cc98fedfc27134858339e6ab4ba09be033",
+        "s6r_m03_active_chain_and_legacy_committed_are_refused.log": "0fda131d30102526006bb8fade59c57f599e4f2d910f243e05f959a737ae5f37",
+        "s6r_m04_aborting_statement_recovers_as_full_rollback.log": "ef2343f6686ebe1556da8ad162e8d60efd651cf6db1e04d0b28ad149f5edb6c6",
+        "s6r_m08_reject_initial_losers_inputs.log": "49bce69550172b8facce7766220b0649b68b40e4827fb64d32f1b267584c6dfc"
+      }
+    }
+  ],
+  "development_native": [
+    {
+      "batch": "n3",
+      "role": "development",
+      "selector": "s6r_native_worker",
+      "source_manifest_sha256": "bf5541f2e745e6a5de19bb32a135e191069076fa6878c023d988de2f21451e34",
+      "elf_sha256": "6e44ff8eea8d04eb77000ec4235540598041491a85fada25ad50dd43107c9add",
+      "input_sha256": "acb6963ad5830a79fef8c09b08ea490b1e2f1e657726e6094c272baae0b19e80",
+      "per_process_seconds": 300,
+      "execution_plan_sha256": "9419058220c87e081647de9a7dad303d68df471bfe2995051f0f9c3a56ae68b4",
+      "results_sha256": "e908d481c7fad518c8688272839c3b6e620b6ab07d63e8dd70db836734dbae95",
+      "results": [
+        {
+          "case": "MBC40-N01",
+          "phase": "produce",
+          "exit_code": 0,
+          "seconds": 7.31,
+          "result": "PASS"
+        },
+        {
+          "case": "MBC40-N01",
+          "phase": "recover",
+          "exit_code": 0,
+          "seconds": 41.74,
+          "result": "PASS"
+        },
+        {
+          "case": "MBC40-N01",
+          "phase": "reenter",
+          "exit_code": 0,
+          "seconds": 9.76,
+          "result": "PASS"
+        },
+        {
+          "case": "MBC40-N02",
+          "phase": "produce",
+          "exit_code": 0,
+          "seconds": 6.65,
+          "result": "PASS"
+        },
+        {
+          "case": "MBC40-N02",
+          "phase": "crash",
+          "exit_code": 0,
+          "seconds": 4.73,
+          "result": "PASS"
+        },
+        {
+          "case": "MBC40-N02",
+          "phase": "recover",
+          "exit_code": 0,
+          "seconds": 28.31,
+          "result": "PASS"
+        },
+        {
+          "case": "MBC40-N03",
+          "phase": "produce",
+          "exit_code": 0,
+          "seconds": 13.64,
+          "result": "PASS"
+        },
+        {
+          "case": "MBC40-N03",
+          "phase": "crash",
+          "exit_code": 0,
+          "seconds": 7.1,
+          "result": "PASS"
+        },
+        {
+          "case": "MBC40-N03",
+          "phase": "recover",
+          "exit_code": 0,
+          "seconds": 91.94,
+          "result": "PASS"
+        },
+        {
+          "case": "MCB05-N01",
+          "phase": "produce",
+          "exit_code": 0,
+          "seconds": 6.65,
+          "result": "PASS"
+        },
+        {
+          "case": "MCB05-N01",
+          "phase": "reject",
+          "exit_code": 0,
+          "seconds": 0.97,
+          "result": "PASS"
+        },
+        {
+          "case": "MCB05-N02",
+          "phase": "produce",
+          "exit_code": 0,
+          "seconds": 6.54,
+          "result": "PASS"
+        },
+        {
+          "case": "MCB05-N02",
+          "phase": "reject",
+          "exit_code": 0,
+          "seconds": 1.12,
+          "result": "PASS"
+        },
+        {
+          "case": "MCB05-N03",
+          "phase": "produce",
+          "exit_code": 0,
+          "seconds": 5.39,
+          "result": "PASS"
+        },
+        {
+          "case": "MCB05-N03",
+          "phase": "reject",
+          "exit_code": 0,
+          "seconds": 0.97,
+          "result": "PASS"
+        },
+        {
+          "case": "MCB05-N04",
+          "phase": "produce",
+          "exit_code": 0,
+          "seconds": 6.1,
+          "result": "PASS"
+        },
+        {
+          "case": "MCB05-N04",
+          "phase": "reject",
+          "exit_code": 0,
+          "seconds": 0.92,
+          "result": "PASS"
+        },
+        {
+          "case": "MCB05-N05",
+          "phase": "produce",
+          "exit_code": 0,
+          "seconds": 1.37,
+          "result": "PASS"
+        },
+        {
+          "case": "MCB05-N05",
+          "phase": "reject",
+          "exit_code": 0,
+          "seconds": 0.37,
+          "result": "PASS"
+        },
+        {
+          "case": "MCB05-N06",
+          "phase": "produce",
+          "exit_code": 0,
+          "seconds": 2.18,
+          "result": "PASS"
+        },
+        {
+          "case": "MCB05-N06",
+          "phase": "reject",
+          "exit_code": 0,
+          "seconds": 0.47,
+          "result": "PASS"
+        }
+      ],
+      "cases_complete": [
+        "MBC40-N01",
+        "MBC40-N02",
+        "MBC40-N03",
+        "MCB05-N01",
+        "MCB05-N02",
+        "MCB05-N03",
+        "MCB05-N04",
+        "MCB05-N05",
+        "MCB05-N06"
+      ],
+      "receipts": {
+        "MBC40-N01/produce": {
+          "pid": "20752",
+          "files": "15"
+        },
+        "MBC40-N01/recover": {
+          "pid": "20768",
+          "result": "ready",
+          "traces": "7",
+          "clrs": "0",
+          "reads": "[Some(7)]",
+          "mutations": "646",
+          "handles": "0",
+          "peak": "3",
+          "fd_peak": "6"
+        },
+        "MBC40-N01/reenter": {
+          "pid": "20924",
+          "result": "ready",
+          "traces": "2",
+          "clrs": "0",
+          "reads": "[Some(7)]",
+          "mutations": "250",
+          "handles": "0",
+          "peak": "3",
+          "fd_peak": "6"
+        },
+        "MBC40-N02/produce": {
+          "pid": "20952",
+          "files": "15"
+        },
+        "MBC40-N02/crash": {
+          "pid": "21015",
+          "result": "crashed",
+          "traces": "2",
+          "clrs": "0",
+          "reads": "[]",
+          "mutations": "368",
+          "handles": "0",
+          "peak": "3",
+          "fd_peak": "6"
+        },
+        "MBC40-N02/recover": {
+          "pid": "21053",
+          "result": "ready",
+          "traces": "3",
+          "clrs": "0",
+          "reads": "[None]",
+          "mutations": "328",
+          "handles": "0",
+          "peak": "3",
+          "fd_peak": "6"
+        },
+        "MBC40-N03/produce": {
+          "pid": "21186",
+          "files": "15"
+        },
+        "MBC40-N03/crash": {
+          "pid": "21242",
+          "result": "crashed",
+          "traces": "2",
+          "clrs": "1",
+          "reads": "[]",
+          "mutations": "432",
+          "handles": "0",
+          "peak": "3",
+          "fd_peak": "6"
+        },
+        "MBC40-N03/recover": {
+          "pid": "21244",
+          "result": "ready",
+          "traces": "17",
+          "clrs": "2",
+          "reads": "[None, None, None]",
+          "mutations": "571",
+          "handles": "0",
+          "peak": "3",
+          "fd_peak": "6"
+        },
+        "MCB05-N01/produce": {
+          "pid": "21573",
+          "files": "15"
+        },
+        "MCB05-N01/reject": {
+          "pid": "21575",
+          "result": "refused",
+          "mutations": "0",
+          "handles": "0",
+          "peak": "3",
+          "fd_peak": "6"
+        },
+        "MCB05-N02/produce": {
+          "pid": "21577",
+          "files": "15"
+        },
+        "MCB05-N02/reject": {
+          "pid": "21583",
+          "result": "refused",
+          "mutations": "0",
+          "handles": "0",
+          "peak": "3",
+          "fd_peak": "6"
+        },
+        "MCB05-N03/produce": {
+          "pid": "21611",
+          "files": "15"
+        },
+        "MCB05-N03/reject": {
+          "pid": "21640",
+          "result": "refused",
+          "mutations": "0",
+          "handles": "0",
+          "peak": "3",
+          "fd_peak": "6"
+        },
+        "MCB05-N04/produce": {
+          "pid": "21642",
+          "files": "15"
+        },
+        "MCB05-N04/reject": {
+          "pid": "21670",
+          "result": "refused",
+          "mutations": "0",
+          "handles": "0",
+          "peak": "3",
+          "fd_peak": "6"
+        },
+        "MCB05-N05/produce": {
+          "pid": "21672",
+          "files": "15"
+        },
+        "MCB05-N05/reject": {
+          "pid": "21674",
+          "result": "refused",
+          "mutations": "0",
+          "handles": "0",
+          "peak": "3",
+          "fd_peak": "6"
+        },
+        "MCB05-N06/produce": {
+          "pid": "21676",
+          "files": "15"
+        },
+        "MCB05-N06/reject": {
+          "pid": "21707",
+          "result": "refused",
+          "mutations": "0",
+          "handles": "0",
+          "peak": "3",
+          "fd_peak": "6"
+        }
+      }
+    }
+  ],
+  "development_compiler": [
+    {
+      "batch": "p1",
+      "role": "development",
+      "export_fingerprint": null,
+      "results_sha256": "de526c9f69fc1313f327b5a82f3efcab1a905fee76e0d7938d3dfab9fefa6f57",
+      "results": [
+        {
+          "case": "baseline",
+          "probe_sha256": null,
+          "expected_code": "none",
+          "primary_line": null,
+          "exit_code": 0,
+          "seconds": 48.11,
+          "diagnostics": 0,
+          "result": "PASS"
+        },
+        {
+          "case": "MBC00-P03",
+          "probe_sha256": "858ad71cf3f7f8f150b8c0f79253384b1fbbdc7767d6728513d05da4a24d6b68",
+          "expected_code": "none",
+          "primary_line": null,
+          "exit_code": 0,
+          "seconds": 10.22,
+          "diagnostics": 0,
+          "result": "PASS"
+        },
+        {
+          "case": "MBC00-N11",
+          "probe_sha256": "8c76ad9debae7356224c49643b18640463d852894b622f7bc0d7b61f1f6b3388",
+          "expected_code": "E0382",
+          "primary_line": 6,
+          "exit_code": 101,
+          "seconds": 7.18,
+          "diagnostics": 10,
+          "result": "FAIL"
+        },
+        {
+          "case": "MBC00-N11-held",
+          "probe_sha256": "801606c5b7e1e66c41a1c83bd911b10e85cdf2341bc17144c3508aed514f344b",
+          "expected_code": "E0499",
+          "primary_line": 4,
+          "exit_code": 101,
+          "seconds": 7.41,
+          "diagnostics": 11,
+          "result": "FAIL"
+        }
+      ]
+    },
+    {
+      "batch": "p2",
+      "role": "development",
+      "export_fingerprint": null,
+      "results_sha256": "be689cf11f71ed8702c83e9e7603ff7b266e25678c839ae9ff4f58857e803a2f",
+      "results": [
+        {
+          "case": "MBC00-N11",
+          "probe_sha256": "e1fc697dec40e2eed2a24d8ddc46181abfa9159d7bc04bf99fd536ec2090ece6",
+          "expected_code": "E0382",
+          "primary_line": 7,
+          "exit_code": 101,
+          "seconds": 7.17,
+          "diagnostics": 1,
+          "result": "PASS"
+        },
+        {
+          "case": "MBC00-N11-held",
+          "probe_sha256": "7ab469c9fd3325f28b3b03493e54adaa901cc87bcba3548b0e98f2c96357a2d3",
+          "expected_code": "E0499",
+          "primary_line": 5,
+          "exit_code": 101,
+          "seconds": 7.32,
+          "diagnostics": 2,
+          "result": "PASS"
+        }
+      ]
+    }
+  ],
+  "development_note": "Development runs used the earlier sources named by their own manifest/ELF hashes; FAIL results are preserved as they were and are not reclassified. Earlier native attempts n1/n2 failed before the 24-file snapshot bound and the RejectInitialLosers reenter phase; their directories were not kept as receipts, only their console lines are quoted in the evidence.",
+  "limitations": [
+    "Results map to their own source/ELF identity; earlier development runs are not re-labelled as final runs.",
+    "recovery_closure, recovery_lifecycle and recovery_binding are excluded: they fail before any recovery code at support.rs:260 on main and on every S2-S5 base.",
+    "commit_preparation_unwind_recovers_original_prefix stays FAIL (30 s case bound, also on main 8d5e48b); not an S6 functional regression.",
+    "Native produce writes the memory writer run images to the native namespace as the crash cut; restarts run on the native Writer/File. No power-loss claim.",
+    "Census values are Rust source-value/carrier upper bounds, not RSS or measured stack.",
+    "Reviewer was this session (self-review of the diff, ten findings triaged); no independent D1/D2 reviewer ran."
+  ]
+}

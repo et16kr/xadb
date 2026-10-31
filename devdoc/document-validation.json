@@ -1,15 +1,15 @@
 {
   "schema_version": 2,
   "product": "XADB",
-  "date": "2026-10-31T02:20:11.453779+09:00",
+  "date": "2026-10-31T19:27:52.268941+09:00",
   "status": "PASS",
   "errors": [],
   "markdown_documents": [
     {
       "file": "devdoc/README.md",
-      "links": 270,
+      "links": 273,
       "duplicate_ids": 0,
-      "sha256": "56b29bf582428d125066eccee67658d62e327c41e657039b0c90485b09d3a4d5"
+      "sha256": "5d46476cdd1d9a059652857297cee1474dfe4908170f300517f65d2450fa5dc4"
     },
     {
       "file": "devdoc/contracts/README.md",
@@ -157,9 +157,9 @@
     },
     {
       "file": "devdoc/contracts/dev3-module-boundaries.md",
-      "links": 259,
+      "links": 264,
       "duplicate_ids": 0,
-      "sha256": "75d81dc6a2745475fd9326ebfe2645f7e036717d3ecbca4438c5f1d5a50ee152"
+      "sha256": "e82c65abe60e48739bc7abef32cf2cbbf3f972ff8eb486c19d5ab3c1264f820a"
     },
     {
       "file": "devdoc/contracts/dev3-module-consumers.md",
@@ -583,9 +583,9 @@
     },
     {
       "file": "devdoc/evidence/README.md",
-      "links": 376,
+      "links": 378,
       "duplicate_ids": 0,
-      "sha256": "0641df0f6dd0c2be08382bc9f79db29d8172e7b243bec3adb6b71b2299c450a1"
+      "sha256": "8585f737d86c6227b1348cf6cef05c69fd2d3a572e979e137d9d32fb76661ee0"
     },
     {
       "file": "devdoc/evidence/comm-acceptance-resume-20261023.md",
@@ -1285,9 +1285,9 @@
     },
     {
       "file": "devdoc/evidence/module-independence-survey-20261026.md",
-      "links": 256,
+      "links": 268,
       "duplicate_ids": 0,
-      "sha256": "ca98f2ca44509efc1d0449d16ebd50f77554350c7c092f7f88cb4fcd5f9bb5f8"
+      "sha256": "18ee871925b68b313a03f023832dcbd84be8ffe66427e285aaf081fec7c7f2cd"
     },
     {
       "file": "devdoc/evidence/naming-cleanup-20261025.md",
@@ -1327,9 +1327,9 @@
     },
     {
       "file": "devdoc/implementation/README.md",
-      "links": 206,
+      "links": 208,
       "duplicate_ids": 0,
-      "sha256": "eae11c0944ecc8b69e6fd1836134d16b656657008b5cc6d6469a595655906f73"
+      "sha256": "4aae0758136d88ca76853b439dec0937663caf0878ed7d101be37125af19b053"
     },
     {
       "file": "devdoc/implementation/comm-implementation.md",
@@ -1495,9 +1495,9 @@
     },
     {
       "file": "devdoc/plans/module-independence-plan.md",
-      "links": 265,
+      "links": 270,
       "duplicate_ids": 0,
-      "sha256": "c5b2db9aa20f51f024969c97cf9582e943e068b62a8de894f53467e075389e05"
+      "sha256": "c00ad5a1e05bc021f170047a83cd167f9065fbc85596b042d7b9f9842b5f1e95"
     },
     {
       "file": "devdoc/plans/phase1-product-baseline.md",
