@@ -2560,7 +2560,7 @@ MCI02의 각 case는 같은 ELF의 세 process다.
   - RowWrite(`row_v09`)와 RowProgress(S1E-V09)를 더해 세 progress class가 같은 대체 oracle을 갖는다. PASS가 writer와 reader 2개의 겹친 admission을 증명하지는 않는다.
 
 **한계.**
-- MI03(단독 인수)은 실제 C 공급에서 충족되지 않았다. S5의 B 인수 시험은 A의 INSERT로 행을 만들었다. [소비자 §8.3](dev3-module-consumers.md#independent-fixtures)의 C+B literal ingress(MCB05-K01..12 포함)는 구현되지 않았다. A의 실제 C 인수도 B source가 있는 전체 트리에서만 실행됐다. C0 단독 export(A10/B3)는 PASS다.
+- MI03(단독 인수)은 실제 C 공급에서 충족되지 않았다. S5의 B 인수 시험은 A의 INSERT로 행을 만들었다. [소비자 §8.3](dev3-module-consumers.md#independent-fixtures)의 C+B literal ingress(MCB05-K01..12 포함)는 구현되지 않았다. 이는 [§7](#common-deliveries) C4 행의 "독립 authored row corpus를 원 owner에 적용하는 제한 경로"이며 S6에서 공급되지 않은 부분이다. A의 실제 C 인수도 B source가 있는 전체 트리에서만 실행됐다. C0 단독 export(A10/B3)는 PASS다.
 - live Row retirement, DROP·stale CheckedTable, 병렬 writer는 범위 밖이다.
 - MCI01-V11은 복구의 물리 정리만 다룬다.
 - main의 S6 `32de380`에서 shared가 144B 늘어 Pending Catalog commit 옆 Full read가 Census/Capacity로 거절되는 회귀가 별도로 보고됐다. 이 branch의 선택 시험 경로는 그 조합을 쓰지 않는다. 수정 담당은 사용자 결정 대기다.
