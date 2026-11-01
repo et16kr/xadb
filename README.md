@@ -1,5 +1,7 @@
 # XADB
 
+F2 공통 변경의 최소 계약 시험 선택을 구현·검증했고 독립 D1/D2 검토를 통과했다. [실행 범위와 증거](devdoc/evidence/module-independence-survey-20261026.md#f2-contract-selection)를 따른다.
+
 XADB는 **오픈소스 DBMS를 참고하여, AI가 이해하고 개발하기 좋은 DBMS를 AI agent로 만들 수 있는지 시험하는 저장소**입니다. 현재는 초기 개발 단계입니다.
 
 최종 목표는 Linux에서 Rust로 구현하는 디스크 기반 관계형 DBMS입니다. 폭넓은 기능과 기본 성능, 이해·수정·검증하기 좋은 구조를 함께 추구합니다. 전체 제품 인수는 미완료이며, 기능별 범위와 결과는 [현재 구현과 실행 상태](devdoc/implementation/README.md)에서 확인합니다.

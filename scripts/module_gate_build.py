@@ -48,59 +48,78 @@ def digest(path):
     return hashlib.sha256(Path(path).read_bytes()).hexdigest()
 
 
-def selector_result(name, source, plan, selector, logs, env, optional=False):
-    """Run one selector; every listed case passes or is `#[ignore]`d in source.
-    A required selector must list at least one case; an optional one (its
-    module's cfg is not known on the runner) may list none."""
+def source_claims(results, prefix):
+    """Only this source's earlier test lanes may supply reuse evidence."""
+    return [r for r in results if r['name'].startswith((f'{prefix}:', f'{prefix}?:'))
+            or r['name'] in (f'{prefix}-cases', f'{prefix}-optional-cases')]
+
+
+def selector_result(name, source, plan, selector, logs, env, optional=False, earlier=()):
+    """Discover first, then run only unclaimed exact names (never a broad rerun)."""
     log = logs / (re.sub(r'[^\w.-]+', '_', name) + '.log')
     filters = [selector] + [x for s in plan['skip'] for x in ('--skip', s)]
     code, out, _ = run(plan['test_command'] + ['--', *filters, '--list'], source, log, env)
-    listed = sum(1 for line in out.splitlines() if line.endswith(': test'))
-    if code:
-        return dict(name=name, status='ERROR', listed=listed, log=log.name,
-                    log_sha256=digest(log))
-    code, out, seconds = run(plan['test_command'] + ['--', *filters, *plan['test_args']],
-                             source, log, env)
-    totals = [tuple(map(int, m.groups()[1:])) for m in RESULT.finditer(out)]
-    passed = sum(t[0] for t in totals)
-    failed = sum(t[1] for t in totals)
-    ignored = sum(t[2] for t in totals)
-    ok = (code == 0 and (optional or passed >= 1) and failed == 0
-          and passed + ignored == listed)
-    return dict(name=name, status='PASS' if ok else 'FAIL', listed=listed, passed=passed,
-                failed=failed, ignored=ignored, seconds=round(seconds, 1), log=log.name,
-                log_sha256=digest(log), passed_names=sorted(set(PASSED.findall(out))))
+    names = [line[:-6] for line in out.splitlines() if line.endswith(': test')]
+    claimed = {n for r in earlier for n in r.get('listed_names', [])}
+    passed_before = {n for r in earlier for n in r.get('passed_names', [])}
+    ignored_before = {n for r in earlier for n in r.get('ignored_names', [])}
+    covered = sorted(set(names) & claimed)
+    remaining = sorted(set(names) - claimed)
+    passed_names = set(covered) & passed_before
+    ignored_names = set(covered) & ignored_before
+    seconds = 0.0
+    ok = code == 0 and len(names) == len(set(names))
+    if ok and remaining:
+        code, out, seconds = run(plan['test_command'] + ['--', '--exact', *remaining,
+                                                        *plan['test_args']], source, log, env)
+        passed_names.update(PASSED.findall(out))
+        ignored_names.update(re.findall(r'^test (\S+) \.\.\. ignored(?:,.*)?$', out, re.M))
+        totals = [tuple(map(int, m.groups()[1:])) for m in RESULT.finditer(out)]
+        ok = (code == 0 and bool(totals) and sum(t[1] for t in totals) == 0
+              and sum(t[0] + t[2] for t in totals) == len(remaining))
+    ok = (ok and (optional or bool(passed_names))
+          and passed_names | ignored_names == set(names)
+          and not passed_names & ignored_names)
+    return dict(name=name, status='PASS' if ok else 'FAIL', listed=len(names),
+                passed=len(passed_names), failed=0 if ok else 1, ignored=len(ignored_names),
+                seconds=round(seconds, 1), log=log.name, log_sha256=digest(log),
+                listed_names=sorted(names), passed_names=sorted(passed_names),
+                ignored_names=sorted(ignored_names), covered=covered)
 
 
-def passed_by_selectors(results, prefix):
-    """Cases a passing selector run of this source already ran and passed."""
-    return {n for r in results if r.get('status') == 'PASS'
-            and r['name'].startswith((f'{prefix}:', f'{prefix}?:'))
+def passed_by_source(results, prefix):
+    """Cases a passing earlier test lane of this source already ran and passed."""
+    return {n for r in source_claims(results, prefix) if r.get('status') == 'PASS'
             for n in r.get('passed_names', [])}
 
 
 def cases_result(name, source, plan, cases, logs, env, chunk=100, optional=False,
-                 covered=()):
+                 covered=(), unavailable=()):
     """Run the exact planned cases; every one must be listed once and pass.
     Optional cases (cfg not known on the runner) pass when every listed one
-    passes, whether or not it is listed. A case that a selector run of the
+    passes, whether or not it is listed. A case that an earlier test lane of the
     same source already passed (`covered`) is not run again; it counts as
     listed and passed and is named under `covered` for the control check."""
     log = logs / (re.sub(r'[^\w.-]+', '_', name) + '.log')
     done = sorted(c for c in cases if c in set(covered))
-    run_cases = [c for c in cases if c not in set(done)]
-    log.write_bytes(f'# {len(done)} case(s) already passed in a selector run\n'.encode())
+    run_cases = [c for c in cases if c not in set(done) | set(unavailable)]
+    log.write_bytes(f'# {len(done)} case(s) already passed in an earlier test lane\n'.encode())
     listed = passed = len(done)
     failed = ignored = 0
-    seconds, ok = 0.0, True
+    seconds, ok = 0.0, not (set(cases) & set(unavailable))
+    listed_names, passed_names = list(done), list(done)
     for start in range(0, len(run_cases), chunk):
         names = run_cases[start:start + chunk]
         code, out, _ = run(plan['test_command'] + ['--', '--exact', *names, '--list'],
                            source, log, env)
-        listed += sum(1 for line in out.splitlines() if line.endswith(': test'))
+        found = [line[:-6] for line in out.splitlines() if line.endswith(': test')]
+        listed_names += found
+        listed += len(found)
+        ok = ok and set(found) <= set(names) and len(found) == len(set(found))
         ok = ok and code == 0
         code, out, spent = run(plan['test_command'] + ['--', '--exact', *names,
                                                         *plan['test_args']], source, log, env)
+        passed_names += PASSED.findall(out)
         totals = [tuple(map(int, m.groups()[1:])) for m in RESULT.finditer(out)]
         passed += sum(t[0] for t in totals)
         failed += sum(t[1] for t in totals)
@@ -108,22 +127,29 @@ def cases_result(name, source, plan, cases, logs, env, chunk=100, optional=False
         seconds += spent
         ok = ok and code == 0
     ok = (ok and (listed <= len(cases) if optional else listed == len(cases))
-          and failed == 0 and passed == listed)
+          and failed == 0 and passed == listed
+          and len(set(listed_names)) == listed and len(set(passed_names)) == passed
+          and set(listed_names) == set(passed_names))
     return dict(name=name, status='PASS' if ok else 'FAIL', planned=len(cases), listed=listed,
                 passed=passed, failed=failed, ignored=ignored, seconds=round(seconds, 1),
-                log=log.name, log_sha256=digest(log), covered=done)
+                log=log.name, log_sha256=digest(log), covered=done,
+                listed_names=sorted(listed_names), passed_names=sorted(passed_names))
 
 
 def optional_results(prefix, source, plan, part, logs, env, earlier=()):
     """The selectors and cases whose cfg is not known on the runner."""
-    results = [selector_result(f'{prefix}?:{selector}', source, plan, selector, logs, env,
-                               optional=True)
-               for selector in part.get('optional_selectors', [])]
+    results = []
+    for selector in part.get('optional_selectors', []):
+        results.append(selector_result(f'{prefix}?:{selector}', source, plan, selector,
+                                       logs, env, optional=True,
+                                       earlier=source_claims(list(earlier) + results, prefix)))
     if part.get('optional_cases'):
-        covered = passed_by_selectors(list(earlier) + results, prefix)
+        previous = list(earlier) + results
+        covered = passed_by_source(previous, prefix)
+        claimed = {n for r in source_claims(previous, prefix) for n in r.get('listed_names', [])}
         results.append(cases_result(f'{prefix}-optional-cases', source, plan,
                                     part['optional_cases'], logs, env, optional=True,
-                                    covered=covered))
+                                    covered=covered, unavailable=claimed - covered))
     return results
 
 
@@ -216,11 +242,14 @@ def main():
                 ).encode()).hexdigest())
             for selector in plan['selectors']:
                 results.append(selector_result(f'head:{selector}', head_dir, plan, selector,
-                                               logs, run_env))
+                                               logs, run_env, earlier=source_claims(results, 'head')))
             if plan.get('cases'):
                 results.append(cases_result('head-cases', head_dir, plan, plan['cases'],
                                             logs, run_env,
-                                            covered=passed_by_selectors(results, 'head')))
+                                            covered=passed_by_source(results, 'head'),
+                                            unavailable={n for r in source_claims(results, 'head')
+                                                         for n in r.get('listed_names', [])}
+                                            - passed_by_source(results, 'head')))
             results += optional_results('head', head_dir, plan, plan, logs, run_env, results)
             shutil.rmtree(head_dir)
             for export in plan['exports']:
@@ -236,11 +265,15 @@ def main():
                         plan, out, env, inventory['source_manifest_sha256'])
                     for selector in export['selectors']:
                         results.append(selector_result(f'export-{side}:{selector}', out, plan,
-                                                       selector, logs, run_env))
+                                                       selector, logs, run_env,
+                                                       earlier=source_claims(results, f'export-{side}')))
                     if export.get('cases'):
                         results.append(cases_result(
                             f'export-{side}-cases', out, plan, export['cases'], logs, run_env,
-                            covered=passed_by_selectors(results, f'export-{side}')))
+                            covered=passed_by_source(results, f'export-{side}'),
+                            unavailable={n for r in source_claims(results, f'export-{side}')
+                                         for n in r.get('listed_names', [])}
+                            - passed_by_source(results, f'export-{side}')))
                     results += optional_results(f'export-{side}', out, plan, export, logs,
                                                 run_env, results)
                 except SystemExit as error:

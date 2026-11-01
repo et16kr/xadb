@@ -6030,3 +6030,20 @@ r1–r4는 개발 중 작업 트리에서 실행했고 별도 source hash를 고
 초기 설계 검토는 방향 수용·구현 검토 대기였다. 첫 구현 검토에서 fresh interpreter·정확한 ID 대조·source/runner 결속·신뢰 mapping 유지·무권한 도입을 확인했고, 실제 checker 결함 주입 증거와 bootstrap 문구 보완을 요구했다. 후속 정적 검토에서 unittest가 일반 TestCase의 async/generator 본문을 실행하지 않고 성공으로 셀 수 있는 결함을 지적했다. 정적 선언은 동기 함수만 허용하고 worker는 coroutine/generator/async-generator 함수를 거절하며, 동기 wrapper의 non-None 반환 경고도 실패로 처리하도록 수정했다. 최종 재검토는 ACCEPT·미해결 필수 지적 0이다. 신규 23개와 직접 영향 기존 4개, 총 27개 exact CI 선택을 확인했다. 통합 담당이 async/generator 수정과 실제 후보 checker 오류 주입 증거를 대조하고 수용했다. [독립 검토 원문](../../module-gate/evidence/f1-python/review.log)을 보존한다.
 
 F0 실패 처리, F2 공통 계약 시험 선택, 원격 ruleset/Actions 정책 변경과 PR merge는 범위 밖이다. 되돌림은 이 PR을 함께 revert하며 기존 원 증거·원격 보호를 보존한다.
+
+
+<a id="f2-contract-selection"></a>
+## 2026-11-01 F2 공통 변경과 최소 계약 사례 연결
+
+**상태: F2 구현·선택 검증·독립 D1/D2 ACCEPT, PR 제출 준비.** 기준선은 F0 완료 PR #26까지 병합된 `main` `d6ebed80`이며 작업 branch는 `codex/module-followup-f2`다. 요청 범위는 F2 구현·리뷰·시험·PR 작성이다. 작성·계약·통합 담당 `/root`, 별도 검토 `/root/f2_review`다. F3–F7과 제품 커널 변경은 포함하지 않는다.
+
+결정 `XADB-MODULE-GATE-005`의 비교·선택·재검토·되돌림 조건은 [build 계약](../policies/repository-build-plan.md#module-gate-contracts)에 둔다. D02는 실제 C `plan4_apply/row/write.rs` → A `driver/live.rs`의 prepare/apply/cancel 호출 → `catalog_memory/row_live.rs`의 S2W-R10·R11·R21 세 실패 효과 사례 대응으로 적용한다. C+A에서 B를 제거한 상태로 검증할 수 있고 C+B에서는 사례 파일이 제거된다. fixture와 oracle/harness 소스도 영향 입력이다. 이 PR은 대응과 제어만 바꾸므로 제품 사례는 **NOT_RUN**이다. 공통 구현을 바꾸지 않고 제품 테스트를 위한 형식적 수정도 하지 않았다.
+
+검증 범위는 새 F2 선택·manifest·runner·receipt 부정 사례와 변경된 이름 검증/중복 제거에 직접 해당하는 기존 4개 Python 사례다. F1의 격리 worker로 정확한 이름을 실행하며 실제 Rust 제품 대신 유한 libtest 모의 출력을 사용한다. 실제 저장소의 세 사례 이름·입력·C+A/C+B 제거 대응은 별도 정적 대조 시험이 확인한다. 예산은 Python 실행당 300초·임시 fixture 저장소이며 제품 build/export를 만들지 않는다. source별 원 로그와 실패를 보존한다.
+
+- r1: 전체 FAIL, 17개 중 16개 PASS·1개 assertion FAIL(F1의 해당 사례 상태는 INCOMPLETE). 기존 receipt 시험 fixture가 새 이름 증거를 제공하지 않아 정상 재사용도 거절했다. 원 [로그](../../module-gate/evidence/f2/r1/python-tests.log)와 [결과](../../module-gate/evidence/f2/r1/python-tests.json)를 보존하고 fixture의 실제 이름·개수 대응을 보완했다. skip·실패를 PASS로 바꾸지 않는다.
+- 독립 리뷰 R1: 필수 exact 실행 뒤 optional selector가 같은 사례를 다시 실행할 수 있는 경로를 발견했다. 같은 source의 앞선 selector·required/optional exact lane 전체에서 발견·통과 이름을 추적하도록 수정하고, required exact → optional selector → optional exact의 runner/receipt 반례를 추가했다.
+- r2: 수정된 runner·receipt와 원 실패 fixture에 해당하는 10개만 실행해 10/10 PASS. [로그](../../module-gate/evidence/f2/r2/python-tests.log)·[결과](../../module-gate/evidence/f2/r2/python-tests.json)·[실행 선택](../../module-gate/evidence/f2/r2/test-plan.json)을 보존한다. 이미 통과한 계약 선택·실제 등록 대조는 반복하지 않았다. 두 실행에서 검증한 서로 다른 사례는 총19개이며 source별 hash는 각 실행 폴더의 `source-sha256.json`이다. r2 뒤 runner의 설명·로그 문구를 실제 전체 lane 재사용에 맞췄고 실행 의미는 바꾸지 않았다.
+- 제품 시험·전체 workspace/lib 회귀는 NOT_RUN이며 push 훅의 Clippy는 시험 target 정적 검사다. 원격 F1은 이 PR에 선언된 정확한 19개 후보 Python 사례를 실행한다. 실제 CI 결과와 PR 상태는 PR에서 확인하며 로컬 결과를 원격 PASS로 쓰지 않는다.
+
+- 최종 독립 D1/D2: `/root/f2_review`가 `d6ebed80..24e9d53a`의 계약·diff·원 결과를 대조해 **ACCEPT·미해결 필수 0**을 확인했다. [검토 기록](../../module-gate/evidence/f2/review.log)과 [blob 결속 기록](../../module-gate/records/20261101-f2-contract-selection.json)을 보존한다. 작성·계약·통합 담당 `/root`가 R1 반영과 설명 보완을 확인했다. F2 제어 범위는 완료이며 원격 시행은 사람이 PR을 병합한 뒤다. 실제 push 훅·원격 CI 결과는 PR에 기록한다.

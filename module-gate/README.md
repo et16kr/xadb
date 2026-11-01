@@ -82,3 +82,5 @@ blobs of the head and that attested results match the head's inputs.
   The D2 reviewer must check relevance and sufficiency; matching a module name
   alone is not proof of semantic coverage. No whole-suite default, skips or zero
   tests count as PASS. Python-only changes do not run Rust product tests.
+
+F2의 `affected_contracts`는 [공통 계약 선택 규칙](../devdoc/policies/repository-build-plan.md#module-gate-contracts)을 따른다. 신뢰 manifest가 직접 변경 경로·입력에서 안정 사례 ID와 `head`/`export-a`/`export-b` 요청을 정한다. 일반 record `ci_selectors`는 계속 head 대상이다. export 실행이 필요하면 검토된 계약 등록의 `sources`를 사용하며, head가 그 등록을 지워도 현재 PR의 신뢰 의무를 면제하지 않는다. 사례 이름·입력 blob·source가 selection과 receipt에 결속된다.

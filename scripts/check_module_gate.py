@@ -737,6 +737,31 @@ class Manifest:
                     or not all(isinstance(m, str) and re.fullmatch(r'test_[A-Za-z0-9_]+', m)
                                for m in modules)):
                 raise GateError(f'{origin}: invalid python_tests entry {path!r}')
+        contracts = data.get('affected_contracts', [])
+        if not isinstance(contracts, list):
+            raise GateError(f'{origin}: affected_contracts must be a list')
+        ids = set()
+        destinations = {'head'} | {f"export-{e['side']}" for e in data['exports']}
+        for row in contracts:
+            if (not isinstance(row, dict) or not isinstance(row.get('id'), str)
+                    or not row['id'] or row['id'] in ids):
+                raise GateError(f'{origin}: invalid or duplicate contract ID')
+            ids.add(row['id'])
+            for key in ('paths', 'inputs', 'sources'):
+                values = row.get(key)
+                if (not isinstance(values, list) or not values
+                        or not all(isinstance(v, str) and v for v in values)
+                        or len(values) != len(set(values))):
+                    raise GateError(f'{origin}: {row["id"]}.{key}')
+            for path in row['paths'] + row['inputs'] + [row.get('test_file', '')]:
+                if (not path or path.startswith('/') or normalize(path) != path
+                        or '..' in path.split('/')):
+                    raise GateError(f'{origin}: {row["id"]} invalid input path')
+            if (not set(row['sources']) <= destinations
+                    or not isinstance(row.get('case'), str)
+                    or not SELECTOR.fullmatch(row['case']) or row['case'].endswith('::')
+                    or not row.get('contract') or not row.get('reason')):
+                raise GateError(f'{origin}: {row["id"]} invalid contract case/source')
         self.exceptions = data['exceptions']
         keys = set()
         for ex in self.exceptions:
@@ -980,7 +1005,7 @@ def manifest_changes(trusted, head):
         found.append(f'exception {i} changed' + (' (relaxation)' if wider else ''))
     found += [f'exception {i} removed' for i in old_ex if i not in new_ex]
     for key in ('crates', 'unscoped', 'policy_files', 'review_required', 'records',
-                'exports', 'attested', 'evidence', 'python_tests'):
+                'exports', 'attested', 'evidence', 'python_tests', 'affected_contracts'):
         if trusted.data.get(key) != head.data.get(key):
             tight = _narrowing(key, trusted.data.get(key), head.data.get(key))
             found.append(f'{key} changed' + ('' if tight else ' (relaxation)'))
@@ -1217,6 +1242,64 @@ def selection(manifest, touched, records, rust, cases=None, generated=None, opti
                         for e in manifest.data['exports']]}
 
 
+def contract_selection(manifest, analysis, paths):
+    """Direct, reviewed contract edges only; never walk transitive dependencies.
+
+    The trusted registry chooses exact cases and source destinations. Input
+    blobs and changed paths travel in the plan, so an old receipt cannot pay
+    for a new implementation, fixture, oracle or harness. Export applicability
+    uses the export tool's actual removal table, including C-owned test files.
+    """
+    import module_single_source
+    tree = analysis.tree
+    selected, errors = [], []
+    files = tree.files()
+    for row in manifest.data.get('affected_contracts', []):
+        patterns = row['paths'] + row['inputs'] + [row['test_file']]
+        matched = sorted(p for p in paths if any(glob_regex(g).match(p) for g in patterns))
+        if not matched:
+            continue
+        inputs = set()
+        for pattern in patterns:
+            found = {p for p in files if glob_regex(pattern).match(p)}
+            if not found:
+                errors.append(f'contract {row["id"]}: missing input {pattern}')
+            inputs |= found
+        cases, _, _, _ = changed_cases(manifest, analysis, {row['test_file']})
+        if row['case'] not in {c for group in cases.values() for c in group}:
+            errors.append(f'contract {row["id"]}: required case not found (or ignored/unknown cfg)')
+        for source in row['sources']:
+            if source != 'head':
+                spec = module_single_source.SIDES.get(source.removeprefix('export-'))
+                if spec is None:
+                    errors.append(f'contract {row["id"]}: unsupported source {source}')
+                    continue
+                removed = (spec['removed']
+                           + [f'{module_single_source.MEMORY}/{n}' + suffix
+                              for n in spec['tests'] for suffix in ('.rs', '')]
+                           + [entry[3] for entry in spec.get('tests_c', [])])
+                absent = sorted(p for p in inputs if any(
+                    p == r or p.startswith(r + '/') for r in removed))
+                if absent:
+                    errors.append(f'contract {row["id"]}: {source} removes input {absent[0]}')
+            selected.append(dict(id=row['id'], source=source, case=row['case'],
+                                 changed=matched, contract=row['contract'],
+                                 inputs={p: tree.blob(p) for p in sorted(inputs)}))
+    return selected, errors
+
+
+def apply_contract_selection(plan, contracts):
+    """Union into the ordinary exact-case lane; no second execution of a case."""
+    if not contracts:
+        return
+    plan['contracts'] = contracts
+    parts = {'head': plan, **{f"export-{e['side']}": e for e in plan['exports']}}
+    for row in contracts:
+        part = parts[row['source']]
+        part['cases'] = sorted(set(part['cases']) | {row['case']})
+        part['optional_cases'] = sorted(set(part.get('optional_cases', [])) - set(part['cases']))
+
+
 def coverage_findings(manifest, touched, records, plan, cases, generated=None,
                       unscoped=(), executor=None, tree=None):
     """Each touched module, and each changed Rust/test input that no module
@@ -1242,6 +1325,7 @@ def coverage_findings(manifest, touched, records, plan, cases, generated=None,
         return any(reviewed([path], reviews) and any(
             glob_regex(g).match(path) for g in item.get('paths', []) if isinstance(g, str))
             for item, reviews in na_items)
+    contract_paths = {p for row in plan.get('contracts', []) for p in row['changed']}
     record_sel = record_selectors(records)[1]
     by_selector = {manifest.target(('crate',) + tuple(x for x in sel.split('::') if x))
                    for sel in record_sel}
@@ -1249,12 +1333,12 @@ def coverage_findings(manifest, touched, records, plan, cases, generated=None,
     for mid in sorted(m for m in touched if m in manifest.modules):
         module = manifest.modules[mid]
         if (module.get('ci_selectors') or cases.get(mid) or generated.get(mid)
-                or mid in by_selector or mid in na):
+                or mid in by_selector or mid in na or touched[mid] <= contract_paths):
             continue
         errors.append(f'no CI evidence selected for {mid}: no module selector, no changed '
                       'case, no record ci_selector in it and no reviewed N/A')
     for path in sorted(unscoped):
-        if record_sel or na_path(path):
+        if record_sel or na_path(path) or path in contract_paths:
             continue
         errors.append(f'no CI evidence selected for unscoped input {path}: no record '
                       'ci_selector and no reviewed N/A naming it')
@@ -1714,7 +1798,12 @@ def judge(repo, base, head, policy=None, mode='merge', exports=True):
     obligations = review_coverage(head_tree, records, need)
     cases, generated, optional, executor = changed_cases(trusted, analysis,
                                                          {n for _s, _o, n in diff if n})
+    contract_cases, contract_errors = contract_selection(
+        trusted, analysis, {p for _s, o, n in diff for p in (o, n) if p})
+    errors += contract_errors
+    rust = rust or bool(contract_cases)
     plan = selection(trusted, touched, records, rust, cases, generated, optional)
+    apply_contract_selection(plan, contract_cases)
     python, python_errors = python_selection(trusted, head_tree, diff, records, policy_tree)
     if python is not None:
         plan['python'] = python
@@ -1787,6 +1876,8 @@ def verify_receipt(report, receipt, run, repository, checker_sha256):
                     or python_results.get('exit_code') != 0):
                 errors.append('Python tests missing, duplicate, skipped, failed or interrupted')
     results = {r.get('name'): r for r in receipt.get('results', []) if isinstance(r, dict)}
+    if len(results) != len(receipt.get('results', [])):
+        errors.append('build receipt has duplicate or invalid results')
     # (name, kind, planned): kind 'build'; 'selector' (at least one listed,
     # every listed passes or is ignored); 'cases' (every planned name listed
     # once and passing); 'optional-selector' / 'optional-cases' (the cfg is
@@ -1827,21 +1918,65 @@ def verify_receipt(report, receipt, run, repository, checker_sha256):
         elif ok:
             ok = listed <= planned and passed == listed
         if ok and kind in ('cases', 'optional-cases'):
-            # A case counted from a selector run (not run twice) must be a
-            # planned case that a passing selector run of this source passed.
+            listed_names = result.get('listed_names', [])
+            passed_names = result.get('passed_names', [])
+            if (not isinstance(listed_names, list) or not isinstance(passed_names, list)
+                    or not all(isinstance(n, str) for n in listed_names + passed_names)
+                    or len(listed_names) != listed or len(passed_names) != passed
+                    or len(set(listed_names)) != listed or len(set(passed_names)) != passed
+                    or set(listed_names) != set(passed_names)
+                    or not set(listed_names) <= set(names)):
+                errors.append(f'{name}: exact case names differ from the plan/results')
+                continue
+            # A reused case must have passed in an earlier test lane of
+            # this source; required exact cases precede optional selectors.
             covered = result.get('covered', [])
             prefix = name.rsplit('-optional-cases', 1)[0] if kind == 'optional-cases' \
                 else name.rsplit('-cases', 1)[0]
-            ran = {n for r in results.values() if r.get('status') == 'PASS'
-                   and str(r.get('name', '')).startswith((f'{prefix}:', f'{prefix}?:'))
+            preceding = {n for n, _k, _p in expected[:expected.index((name, kind, names))]}
+            ran = {n for key, r in results.items() if key in preceding
+                   and r.get('status') == 'PASS'
+                   and (key.startswith((f'{prefix}:', f'{prefix}?:'))
+                        or key in (f'{prefix}-cases', f'{prefix}-optional-cases'))
                    for n in (r.get('passed_names') or []) if isinstance(n, str)}
-            if not isinstance(covered, list) or not set(covered) <= set(names) & ran:
-                errors.append(f'{name}: cases counted from selector runs that did not pass '
+            if (not isinstance(covered, list) or not all(isinstance(n, str) for n in covered)
+                    or not set(covered) <= set(names) & ran):
+                errors.append(f'{name}: cases counted from earlier runs that did not pass '
                               'them')
                 continue
         if not ok:
             errors.append(f'{name}: listed {listed} passed {passed} failed '
                           f'{result.get("failed")} (every planned case must be listed and pass)')
+    # Name-level reuse is ordered and source-local. Replayed names must have
+    # passed (or been ignored for selectors) in an earlier row of this source.
+    seen, successes, ignores = {}, {}, {}
+    for name, kind, _names in expected:
+        row = results.get(name, {})
+        if kind == 'build' or ('listed_names' not in row and not want.get('contracts')):
+            continue
+        prefix = name.split(':', 1)[0].rstrip('?') if 'selector' in kind else (
+            name.removesuffix('-optional-cases').removesuffix('-cases'))
+        listed_names, passed_names = row.get('listed_names', []), row.get('passed_names', [])
+        ignored_names, covered = row.get('ignored_names', []), row.get('covered', [])
+        groups = (listed_names, passed_names, ignored_names, covered)
+        if not all(isinstance(g, list) and all(isinstance(n, str) for n in g)
+                   and len(g) == len(set(g)) for g in groups):
+            errors.append(f'{name}: invalid case name lists')
+            continue
+        listed_set, passed_set, ignored_set, reused = map(set, groups)
+        prior = seen.setdefault(prefix, set())
+        prior_passed = successes.setdefault(prefix, set())
+        prior_ignored = ignores.setdefault(prefix, set())
+        if (len(listed_names) != row.get('listed') or len(passed_names) != row.get('passed')
+                or listed_set != passed_set | ignored_set or passed_set & ignored_set
+                or reused != listed_set & prior
+                or not reused <= prior_passed | (prior_ignored if 'selector' in kind else set())
+                or not passed_set & reused <= prior_passed
+                or not ignored_set & reused <= prior_ignored):
+            errors.append(f'{name}: duplicate execution, wrong names or cross-source reuse')
+        prior.update(listed_set)
+        prior_passed.update(passed_set)
+        prior_ignored.update(ignored_set)
     extra = sorted(set(results) - {n for n, _k, _p in expected})
     if extra:
         errors.append(f'build receipt has undeclared results {extra}')

@@ -1,5 +1,8 @@
 # XADB 개발 문서
 
+F2 공통 변경의 최소 계약 사례 선택 구현·검증·독립 검토는 [실행 기록](evidence/module-independence-survey-20261026.md#f2-contract-selection)을 따른다. 제품 코드·fixture는 변경하지 않으며 무변경 제품 시험은 실행하지 않는다.
+
+
 F1 후보 Python gate 검증의 현재 진행·선택 시험·검토·PR 상태는 [실행 기록](evidence/module-independence-survey-20261026.md#f1-python-gate), 결과 계약은 [build 계획](policies/repository-build-plan.md#module-gate-python)을 따른다.
 
 2026-11-02 [모듈 분리 후 안정화·경계 개선 계획](plans/module-independence-followup-plan.md): PR #22 병합 기준의 정량 기준선과 F0–F7 후속 순서를 정리한다. PR #23 의견을 반영해 실패 분류와 CI 차단 해제, 작업별 선행 실패, 미검증 8개 후속 작업, 결정 D01–D03, 예외 EX01–EX09의 처리 기준을 명시한다. [F0 기존 증거 분류](evidence/main-preexisting-failures-20261030.md#f0-existing-evidence) 뒤 F0 전체 완료 지시에 따라 current-format 이관·선택78개 PASS를 확인했다. [F0 완료 증거](evidence/main-preexisting-failures-20261030.md#f0-completion)에 원 실패·과거 attribution 한계와 새 결과를 구분한다.
