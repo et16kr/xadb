@@ -1868,3 +1868,234 @@ fn mca05_v17_frame_one_victim_runs_the_flow() {
 fn mca05_v18_frame_two_victims_run_the_flow() {
     mca05_frame("MCA05-V18", 2);
 }
+
+/// MCA01-V12-S (consumers §9.1 `#index-negative-input`, the actual FileIo
+/// variant): T made by the actual C CREATE and Commit; the Row transaction's
+/// statement issues T's CheckedTable from the resident Catalog leaf 8. The
+/// clean leaf is then made non-resident by an ordinary residency exchange
+/// (its flush, then one checked LOAD of a non-resident genesis Jobs page with
+/// every other clean frame pinned, so the leaf is the only victim). The
+/// FileIo home bytes of page 8 then gain one independent Index cell (object
+/// 1000, parent T, Nonunique, columns [0]) in key order, resealed with the
+/// actual page identity, kind, level and LSN (valid digest and tree order).
+/// A's INSERT reaches C's preflight, whose LOAD of the Catalog leaf (the
+/// first queued source) reads the home page and finds it differs from the
+/// canonical replay image: Fatal (Load, Invariant), the fence, no install,
+/// no Reserve, the WAL and the data file byte-equal. The control runs the
+/// same exchange with the home bytes unchanged: the LOAD installs the leaf
+/// and the INSERT commits (q 2), so the refusal is the stored Index's.
+#[test]
+fn mca01_v12_s_stored_index_in_the_home_leaf_is_a_load_mismatch() {
+    mca01_v12_s("MCA01-V12-S", true);
+}
+
+/// MCA01-V12-S control (not an inventory ID): see above.
+#[test]
+fn mca01_v12_s_control_unchanged_home_leaf_loads() {
+    mca01_v12_s("MCA01-V12-S-CONTROL", false);
+}
+
+fn mca01_v12_s(id: &'static str, stored: bool) {
+    use super::row_preflight::{frames, with_pins};
+    use crate::storage::catalog_record::{
+        CatalogDefinition, CatalogExpectation, CatalogHeader, IndexDefinition, IndexMode,
+        encode_catalog_record,
+    };
+    use crate::storage::page::{PAGE_BYTES as BYTES, encode_page};
+    use crate::storage::transaction_record::{LogicalRowVersion, VersionStamp};
+    use crate::storage::tree_page::{self, TreeExpectation};
+    use foundation::identity::CommitSeq;
+    use foundation::identity::ObjectHandle;
+    case(id, || {
+        let oracle = Oracle::new();
+        with_fresh!(
+            oracle,
+            frames = 12,
+            |live, owner, flusher, status, undo, private, reader_private, core, fence, state| {
+                let (row_status, _) =
+                    create_table(live, owner, flusher, status, undo, private, true);
+                system_init(live, owner, flusher, true);
+                let catalog = live
+                    .row_test_resident_target(resident_index(live, 8).unwrap())
+                    .unwrap();
+                let spare = (1..5)
+                    .map(|index| live.target(Plan4Page::Jobs { index }).unwrap())
+                    .find(|t| resident_index(live, t.identity().page.page_no).is_none())
+                    .unwrap();
+                let (mut writer, reader, mut flush) = live.split();
+                let tx = writer
+                    .begin_row_transaction(
+                        owner,
+                        IsolationLevel::Serializable,
+                        &row_status,
+                        private,
+                        &mut flush,
+                    )
+                    .unwrap();
+                let s1 = writer.begin_statement(owner, &tx).unwrap();
+                let table = issue_table!(reader, owner, s1, reader_private, flush, flusher);
+                let handle = table.test_identity().0;
+                // The ordinary residency exchange: leaf 8 clean, every other
+                // clean frame pinned, one checked LOAD of the spare.
+                flush_target!(flush, flusher, catalog);
+                let pool = reader.catalog_test_pool();
+                let listed = frames(pool, 12);
+                assert_eq!(listed.len(), 11, "no empty frame: {listed:?}");
+                assert!(listed.iter().any(|(_, page, dirty)| *page == 8 && !dirty));
+                let others: Vec<usize> = listed
+                    .iter()
+                    .filter(|(_, page, dirty)| !*dirty && *page != 8)
+                    .map(|(index, ..)| *index)
+                    .collect();
+                let mut holder = core.try_owner(OwnerRole::Foreground).unwrap();
+                with_pins(pool, &mut holder, &others, || {
+                    let mut op = reader.row_operation(owner, &s1, reader_private).unwrap();
+                    let step = op.test_load(&spare).unwrap();
+                    assert!(
+                        matches!(step, RetentionResidencyStep::Resident { .. }),
+                        "{step:?}"
+                    );
+                    op.finish().unwrap();
+                });
+                holder.check_idle().unwrap();
+                assert!(probe::registered_index(pool, 8).is_none(), "leaf 8 evicted");
+                // The FileIo home bytes of page 8 gain the independent Index
+                // cell (the untrusted negative input).
+                let identity = catalog.identity();
+                let namespace = super::super::support::namespace();
+                let offset = 8 * BYTES;
+                let (cells_before, sealed) = {
+                    let io = state.lock().unwrap();
+                    let home = &io.files[HOME_NAME].bytes[offset..offset + BYTES];
+                    let page = decode_page(home, identity, PageKind::CatalogLeaf).unwrap();
+                    let header = page.header();
+                    let mut cells: Vec<Vec<u8>> = (0..page.len())
+                        .map(|i| page.cell(i).unwrap().to_vec())
+                        .collect();
+                    let index = ObjectId::new(1000).unwrap();
+                    let mut record = vec![0; 4096];
+                    let length = encode_catalog_record(
+                        CatalogExpectation {
+                            namespace,
+                            object: index,
+                        },
+                        CatalogHeader {
+                            identity: ObjectHandle {
+                                object: index,
+                                ..handle
+                            },
+                            retired: false,
+                            stamp: VersionStamp::Committed(CommitSeq::new(1).unwrap()),
+                            logical: LogicalRowVersion::new(
+                                crate::transaction::TxnId {
+                                    database: namespace.database,
+                                    timeline: 1,
+                                    writer_epoch: 1,
+                                    local: 1,
+                                },
+                                1,
+                            )
+                            .unwrap(),
+                            undo: None,
+                            anchor: identity.page,
+                        },
+                        CatalogDefinition::Index(IndexDefinition {
+                            parent: handle,
+                            name: "row_index",
+                            mode: IndexMode::Nonunique,
+                            columns: &[0],
+                        }),
+                        &mut record,
+                    )
+                    .unwrap();
+                    let key = index.get().to_be_bytes();
+                    let mut entry = vec![0; 4 + key.len() + length];
+                    let entry = tree_page::encode_leaf_cell(
+                        PageKind::CatalogLeaf,
+                        0,
+                        &key,
+                        &record[..length],
+                        &mut entry,
+                    )
+                    .unwrap();
+                    let before = cells.len();
+                    cells.push(entry.to_vec());
+                    let refs: Vec<&[u8]> = cells.iter().map(Vec::as_slice).collect();
+                    let mut sealed = vec![0u8; BYTES];
+                    encode_page(header, &refs, &mut sealed).unwrap();
+                    let view = tree_page::decode_tree_page(
+                        &sealed,
+                        TreeExpectation {
+                            identity,
+                            kind: PageKind::CatalogLeaf,
+                            level: 0,
+                            arity: 0,
+                        },
+                    )
+                    .unwrap();
+                    assert_eq!(view.len() + 1, cells.len(), "one more ordered entry");
+                    (before, sealed)
+                };
+                if stored {
+                    state
+                        .lock()
+                        .unwrap()
+                        .files
+                        .get_mut(HOME_NAME)
+                        .unwrap()
+                        .bytes[offset..offset + BYTES]
+                        .copy_from_slice(&sealed);
+                }
+                let before = files(state);
+                let a = [ValueRef::Int64(A)];
+                let input: [&[ValueRef<'_>]; 1] = [&a];
+                let mut slots: [Option<RowMutationObservation>; 1] = [None];
+                let mut call = LiveCall::new(&mut writer, owner, &mut flush, flusher);
+                if !stored {
+                    match insert_live(&mut call, s1, &table, private, &input, &mut slots) {
+                        Ok(1) => {}
+                        other => panic!("control {:?}", other.err().map(|e| e.failure)),
+                    }
+                    assert!(probe::registered_index(pool, 8).is_some(), "leaf 8 loaded");
+                    let mut call = LiveCall::new(&mut writer, owner, &mut flush, flusher);
+                    let q = match commit_live(&mut call, tx, private) {
+                        Ok(committed) => committed.q(),
+                        Err(error) => panic!("Commit refused {:?}", error.failure),
+                    };
+                    assert_eq!(q, 2);
+                    assert_leaf(&leaf_cells(pool), &int_rows(&[(1, A)]));
+                    assert!(!fence.is_fenced());
+                    println!("MCA01_V12_S control loaded leaf 8, RowId 1 q {q}");
+                } else {
+                    match insert_live(&mut call, s1, &table, private, &input, &mut slots) {
+                        Err(DriveError { failure, after }) => {
+                            println!("MCA01_V12_S refusal={failure:?}");
+                            assert_eq!(failure.stage, Stage::Preflight, "{failure:?}");
+                            let error = disk(&failure);
+                            assert_eq!(
+                                (error.phase, error.effect),
+                                (RetentionPhase::Load, Effect::CallerMustResolve),
+                                "{failure:?}"
+                            );
+                            assert!(
+                                matches!(error.cause, RetentionCause::Invariant),
+                                "{failure:?}"
+                            );
+                            assert!(failure.must_resolve);
+                            assert!(matches!(after, After::MustResolve(_)));
+                        }
+                        Ok(n) => panic!("{n} rows inserted over a stored Index"),
+                    }
+                    assert!(fence.is_fenced());
+                    assert!(slots[0].is_none(), "no RowId issued");
+                    let after = files(state);
+                    assert!(after.0 == before.0 && after.1 == before.1, "no effect");
+                    println!(
+                        "MCA01_V12_S leaf cells {cells_before}->{} fenced=true wal_equal=true",
+                        cells_before + 1
+                    );
+                }
+            }
+        );
+    });
+}
