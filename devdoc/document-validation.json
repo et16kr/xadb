@@ -1,15 +1,15 @@
 {
   "schema_version": 2,
   "product": "XADB",
-  "date": "2026-11-01T23:58:12.078828+09:00",
+  "date": "2026-11-02T01:30:25.607434+09:00",
   "status": "PASS",
   "errors": [],
   "markdown_documents": [
     {
       "file": "devdoc/README.md",
-      "links": 287,
+      "links": 278,
       "duplicate_ids": 0,
-      "sha256": "e45e739f81a4dc9625b04c49164a536a82d40ab78b8caaf926d211fe2aaee7d3"
+      "sha256": "b246b6f1088ae952357967c8c8b8736435d119ab24e4788667d0fb9300b5fed1"
     },
     {
       "file": "devdoc/contracts/README.md",
@@ -1375,9 +1375,9 @@
     },
     {
       "file": "devdoc/plans/README.md",
-      "links": 69,
+      "links": 62,
       "duplicate_ids": 0,
-      "sha256": "a1d37524e37571a44b3c168bd53c0ccb1a3f8e7b13f9923f8e172e4037db4edf"
+      "sha256": "28c127a982f18a6a2413b91b05cb98f94fa4e0631c5e3befe4785119d4c1c28f"
     },
     {
       "file": "devdoc/plans/bottom-up-development.md",
@@ -1501,9 +1501,9 @@
     },
     {
       "file": "devdoc/plans/module-independence-followup-plan.md",
-      "links": 30,
+      "links": 42,
       "duplicate_ids": 0,
-      "sha256": "d875b6e6b52981b4e1491f7ec95251f76eeac170ba6b4cc494e750e55971c8ca"
+      "sha256": "a5216f2c7266d8b5bdeb06d77c95783a51e7bab7cc33fe4d63b43bbd6c663679"
     },
     {
       "file": "devdoc/plans/module-independence-plan.md",
