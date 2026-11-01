@@ -4,7 +4,9 @@
 The build workflow copies this file, `check_module_gate.py` and
 `module_single_source.py` from the default branch and runs them on the pull
 request head. The plan comes from that trusted checker; the head's own copies
-of these files are never executed. The receipt is data for the control
+of these files are executed only by the separate F1 Python test worker when
+that input changed, after adoption. The adopting PR bootstraps candidate
+planner/runner code in the unprivileged build job as well. The receipt is data for the control
 workflow's final judgement (`check_module_gate.py final`), which recomputes
 the plan and rejects any mismatch, missing, skipped or partial result.
 """
@@ -24,6 +26,7 @@ HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE))
 import check_module_gate as gate  # noqa: E402  (the trusted copy next to this file)
 import module_single_source  # noqa: E402
+import module_gate_python  # noqa: E402
 
 RESULT = re.compile(r'test result: (\w+)\. (\d+) passed; (\d+) failed; (\d+) ignored; '
                     r'(\d+) measured; (\d+) filtered out')
@@ -175,9 +178,13 @@ def main():
     args.out.mkdir(parents=True, exist_ok=True)
     logs = args.out
     report = gate.judge(repo, args.base, args.head, args.policy, mode='push', exports=False)
+    if report['errors']:
+        raise gate.GateError('cannot execute an invalid gate plan: ' + '; '.join(report['errors']))
     plan = report['selection']
     receipt = {'schema': gate.RECEIPT_SCHEMA, 'workflow': args.workflow,
+               'bootstrap': os.environ.get('XADB_F1_BOOTSTRAP') == 'true',
                'head': report['head'], 'base': report['base'], 'policy': report['policy'],
+               'merge_base': report['merge_base'],
                'manifest_blob': report.get('manifest_blob'),
                'checker_blob': report.get('checker_blob'),
                'checker_sha256': digest(HERE / 'check_module_gate.py'),
@@ -189,6 +196,16 @@ def main():
     head_tree = gate.Tree(repo, report['head'])
     with tempfile.TemporaryDirectory(prefix='xadb-module-build-') as scratch:
         env['CARGO_TARGET_DIR'] = str(Path(scratch) / 'target')
+        if plan.get('python'):
+            receipt['runner_blobs'] = {
+                p: gate.git(repo, 'hash-object', '--stdin', data=(HERE / Path(p).name).read_bytes())
+                .decode().strip() for p in gate.PYTHON_RUNNERS}
+            if receipt['runner_blobs'] != plan['python']['runners']:
+                raise gate.GateError('executing Python runner differs from the planned revision')
+            python_dir = Path(scratch) / 'python-head'
+            extract(head_tree, python_dir)
+            receipt['python_results'] = module_gate_python.execute(python_dir, plan['python'], logs)
+            shutil.rmtree(python_dir)
         if plan['rust']:
             head_dir = Path(scratch) / 'head'
             extract(head_tree, head_dir)
@@ -232,6 +249,13 @@ def main():
                 shutil.rmtree(out, ignore_errors=True)
     (args.out / 'receipt.json').write_text(json.dumps(receipt, indent=1) + '\n')
     failed = [r['name'] for r in results if r.get('status') != 'PASS']
+    if receipt.get('python_results', {}).get('status', 'PASS') != 'PASS':
+        failed.append('python-tests')
+    # Also check our emitted data locally, including on the adopting PR whose
+    # old default-branch control does not yet know the F1 contract.
+    failed += gate.verify_receipt(report, receipt, {
+        'head_sha': report['head'], 'event': 'pull_request', 'path': args.workflow,
+        'head_repository': {'full_name': 'local'}}, 'local', receipt['checker_sha256'])
     print(json.dumps({'results': len(results), 'failed': failed}, indent=1))
     return 1 if failed else 0
 

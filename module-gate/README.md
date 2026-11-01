@@ -11,6 +11,7 @@ blobs of the head and that attested results match the head's inputs.
 {
   "schema": "XADB_MODULE_GATE_RECORD_V1",
   "change": "what the change does, one line",
+  "python_tests": ["test_module_gate_python.PythonPlanTests.test_python_change_selects_exact_tests_without_rust"],
   "ci_selectors": ["storage::wal_io::...::case_or_module::"],
   "na": [
     {"module": "codec", "reason": "why no test can show this change"},
@@ -73,3 +74,11 @@ blobs of the head and that attested results match the head's inputs.
 - `attested`: only selectors the manifest allows (natives that need more than
   30 GB of disk); everything else runs in CI. A change to CAT needs a
   `dev3_catalog_native.py` result at the head's inputs.
+
+- `python_tests` ([F1 contract](../devdoc/policies/repository-build-plan.md#module-gate-python)):
+  exact `test_module.Class.test_method` IDs from the changed input's allowed modules
+  in the trusted manifest. Declare only cases that directly exercise this diff.
+  A registered Python/tool/workflow change without a matching declaration fails.
+  The D2 reviewer must check relevance and sufficiency; matching a module name
+  alone is not proof of semantic coverage. No whole-suite default, skips or zero
+  tests count as PASS. Python-only changes do not run Rust product tests.
