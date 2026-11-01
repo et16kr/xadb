@@ -856,11 +856,19 @@ fn check_progress_room(
     root: &[u8; PAGE_BYTES],
     profile: crate::storage::control::Profile,
 ) -> Result<()> {
+    let cap = crate::storage::wal_io::WAL_FILE_CAP;
+    #[cfg(test)]
+    let cap = crate::storage::wal_io::durability_test_support::wal_admission_cap(
+        prefix.complete_offset,
+        frame_bytes as u64,
+        future_wal,
+        cap,
+    );
     if prefix
         .complete_offset
         .checked_add(frame_bytes as u64)
         .and_then(|value| value.checked_add(future_wal))
-        .is_none_or(|value| value > crate::storage::wal_io::WAL_FILE_CAP)
+        .is_none_or(|value| value > cap)
         || lsn.checked_add(future_steps).is_none()
     {
         return Err(unchanged(RetentionPhase::Prepare, RetentionCause::Capacity));

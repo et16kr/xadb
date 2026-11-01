@@ -121,62 +121,96 @@ impl Drop for StageCapacityOnce {
         STAGE_CAPACITY_ONCE.with(|state| state.set(0));
     }
 }
-// One thread's next physical stage sees only `share` bytes of the WAL file
-// left from its own start: its cap is min(WAL_FILE_CAP, start + share), and
-// the original `end > cap` comparison decides. The file's total cap is not
-// changed and no other stage is limited. It records the stage's (start,
-// length, refused) for the test (S11, MCA05-V01..V03).
-thread_local! {
-    static STAGE_SHARE_ONCE: std::cell::Cell<StageShare> =
-        const { std::cell::Cell::new(StageShare::Idle) };
+// One thread's WAL file has only `share` bytes left from `start` (the
+// fixture's WAL end) while the guard lives: C's Row WAL admission
+// (`check_progress_room`, the frame and every future step's WAL) and the
+// physical stage (`stage_verified`) compare with their original `>` against
+// min(WAL_FILE_CAP, start + share) instead of WAL_FILE_CAP. Armed without a
+// share it only observes. It records the first admission (offset, frame,
+// future WAL, refused by the WAL term), every admission and stage, and the
+// highest staged end (S11, MCA05-V01..V03, review R1).
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub(super) struct WalAdmission {
+    pub(super) offset: u64,
+    pub(super) frame: u64,
+    pub(super) future: u64,
+    pub(super) refused: bool,
 }
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
-enum StageShare {
-    Idle,
-    Armed(u64),
-    Taken {
-        start: u64,
-        length: u64,
-        refused: bool,
-    },
+pub(super) struct WalShareRecord {
+    pub(super) cap: Option<u64>,
+    pub(super) first: Option<WalAdmission>,
+    pub(super) admissions: u32,
+    pub(super) refused_admissions: u32,
+    pub(super) stages: u32,
+    pub(super) refused_stages: u32,
+    pub(super) staged_end: u64,
 }
-pub(super) struct StageShareOnce(std::marker::PhantomData<std::rc::Rc<()>>);
-pub(super) fn stage_share_once(share: u64) -> StageShareOnce {
-    STAGE_SHARE_ONCE.with(|state| {
-        assert_eq!(state.replace(StageShare::Armed(share)), StageShare::Idle);
+thread_local! {
+    static WAL_SHARE: std::cell::Cell<Option<WalShareRecord>> = const { std::cell::Cell::new(None) };
+}
+pub(super) struct WalShare(std::marker::PhantomData<std::rc::Rc<()>>);
+/// `None` observes only; `Some(cap)` is the absolute WAL end the file may reach.
+pub(super) fn wal_share(cap: Option<u64>) -> WalShare {
+    WAL_SHARE.with(|state| {
+        let empty = WalShareRecord {
+            cap,
+            first: None,
+            admissions: 0,
+            refused_admissions: 0,
+            stages: 0,
+            refused_stages: 0,
+            staged_end: 0,
+        };
+        assert_eq!(state.replace(Some(empty)), None);
     });
-    StageShareOnce(std::marker::PhantomData)
+    WalShare(std::marker::PhantomData)
 }
-impl StageShareOnce {
-    /// The limited stage's (start, frame length, refused), once taken.
-    pub(super) fn taken(&self) -> Option<(u64, u64, bool)> {
-        STAGE_SHARE_ONCE.with(|state| match state.get() {
-            StageShare::Taken {
-                start,
-                length,
-                refused,
-            } => Some((start, length, refused)),
-            _ => None,
-        })
+impl WalShare {
+    pub(super) fn record(&self) -> WalShareRecord {
+        WAL_SHARE.with(|state| state.get().expect("armed"))
     }
 }
-impl Drop for StageShareOnce {
+impl Drop for WalShare {
     fn drop(&mut self) {
-        STAGE_SHARE_ONCE.with(|state| state.set(StageShare::Idle));
+        WAL_SHARE.with(|state| state.set(None));
     }
 }
-pub(super) fn stage_share_cap(start: u64, end: u64, cap: u64) -> u64 {
-    STAGE_SHARE_ONCE.with(|state| match state.get() {
-        StageShare::Armed(share) => {
-            let limited = cap.min(start.saturating_add(share));
-            state.set(StageShare::Taken {
-                start,
-                length: end - start,
-                refused: end > limited,
+/// The cap `check_progress_room` compares `offset + frame + future` with.
+pub(super) fn wal_admission_cap(offset: u64, frame: u64, future: u64, cap: u64) -> u64 {
+    WAL_SHARE.with(|state| match state.get() {
+        None => cap,
+        Some(mut record) => {
+            let limited = record.cap.map_or(cap, |share| share.min(cap));
+            let refused = offset
+                .checked_add(frame)
+                .and_then(|value| value.checked_add(future))
+                .is_none_or(|value| value > limited);
+            record.admissions += 1;
+            record.refused_admissions += u32::from(refused);
+            record.first.get_or_insert(WalAdmission {
+                offset,
+                frame,
+                future,
+                refused,
             });
+            state.set(Some(record));
             limited
         }
-        _ => cap,
+    })
+}
+/// The cap `stage_verified` compares the staged frame's `end` with.
+pub(super) fn wal_stage_cap(end: u64, cap: u64) -> u64 {
+    WAL_SHARE.with(|state| match state.get() {
+        None => cap,
+        Some(mut record) => {
+            let limited = record.cap.map_or(cap, |share| share.min(cap));
+            record.stages += 1;
+            record.refused_stages += u32::from(end > limited);
+            record.staged_end = record.staged_end.max(end);
+            state.set(Some(record));
+            limited
+        }
     })
 }
 

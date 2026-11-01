@@ -141,7 +141,7 @@ impl<'m, W: WriterNamespace> WalRuntime<'m, W> {
             .map_err(|e| unchanged(Phase::Stage, e))?;
         let cap = WAL_FILE_CAP;
         #[cfg(test)]
-        let cap = durability_test_support::stage_share_cap(snapshot.complete_offset, end, cap);
+        let cap = durability_test_support::wal_stage_cap(end, cap);
         let capacity_exhausted = end > cap;
         #[cfg(test)]
         let capacity_exhausted =

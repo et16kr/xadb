@@ -5779,4 +5779,4 @@ native는 같은 ELF의 별도 process이며 전원 장애 인수는 아니다. 
 
 2026-11-01. 계약은 [S11 절](../contracts/dev3-module-boundaries.md#row-mi03-s11)이고 선택은 [S11 addendum](../../tests/fixtures/module-row-integration/single-source-s11-addendum.json)이다. 고정 export 최종 실행과 독립 검토는 아직 하지 않았다. 이 절은 그 결과로 채운다. 그때까지 MI03의 판정은 [S10](#s10-frozen-inventory) 그대로다.
 
-개발 실행(working tree, 증거 아님): 새 시험 8개(V12-P의 A·C 시험, MCA05-V01..V03, V29, V32, MCB03-V01, V08)와 바뀐 코드를 지나는 기존 시험(S3-R06, S4-R03, MCA01-V01·V09·V12-S와 대조, MCA05-V12, S10의 V29 fence 시험, MCB03-V01 반대 순서, MCB03-V02, `storage::row::insert::` 42개)이 통과했다. mutant 2개를 되돌리기 전에 실행했다. WAL 비교 `end >= cap`은 MCA05-V02에서, Index 판정을 지운 `table_only_profile`은 V12-P의 A 시험에서 실패했다.
+개발 실행(working tree, 증거 아님): 새 시험 7개(V12-P의 A 시험, MCA05-V01..V03, V29의 lane 시험, V32, MCB03-V01), 본문을 바꾼 시험 2개(V12-P의 C census 시험, MCB03-V08)와 바뀐 코드를 지나는 기존 시험(S3-R06, S4-R03, MCA01-V01·V09·V12-S와 대조, MCA05-V12, S10의 V29 fence 시험, MCB03-V01 반대 순서, MCB03-V02, `storage::row::insert::` 42개)이 통과했다. mutant 2개를 되돌리기 전에 실행했다. WAL 비교 `end >= cap`은 MCA05-V02에서, Index 판정을 지운 `table_only_profile`은 V12-P의 A 시험에서 실패했다.

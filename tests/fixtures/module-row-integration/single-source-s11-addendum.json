@@ -9,7 +9,7 @@
     "path": "tests/fixtures/module-row-integration/single-source-s10-addendum.json",
     "sha256": "e3e2e006cdba6b467677f4a3d32a8ec19d34b235bd44cee330969e2e910d8c86"
   },
-  "reason": "User decisions of 2026-11-01: \"남은 7개 더 시도\" (re-supply the S10 PARTIAL/NOT_RUN IDs through C test paths; MCA05-V32 joined after the S10 record re-check R11) and \"A 판정을 함수로 분리\" (A's table-only profile predicate moved into the pure function table_only_profile, behavior unchanged). The S10 inventory and addendum are unchanged; this addendum adds selectors and replaces one. A and C product files changed (A: the predicate extraction; C: cfg(test) injectors and two non-test rebindings with the same behavior), so every selector of both sides reruns at the same commit, with the S10 final2 native and regression bundles.",
+  "reason": "User decisions of 2026-11-01: \"남은 7개 더 시도\" (re-supply the S10 PARTIAL/NOT_RUN IDs through C test paths; MCA05-V32 joined after the S10 record re-check R11) and \"A 판정을 함수로 분리\" (A's table-only profile predicate moved into the pure function table_only_profile, behavior unchanged). The S10 inventory and addendum are unchanged; this addendum adds selectors and replaces one. A and C product files changed (A: the predicate extraction; C: cfg(test) injectors and three non-test rebindings with the same behavior, the WAL cap of check_progress_room and stage_verified and the producer lane's before images), so every selector of both sides reruns at the same commit, with the S10 final2 native and regression bundles. The independent review (s11-d1d2-independent-review) moved the WAL need to C's admission (R1), returned MCB03-V01 to PARTIAL (R2), recorded the MCB03-V08 limit (R3) and selected the cited S2W-R23(2) (R4).",
   "contract_ref": [
     "devdoc/contracts/dev3-module-boundaries.md#row-mi03-s11"
   ],
@@ -52,7 +52,11 @@
             "S2W-R10",
             "S2W-R03",
             "S2W-R23(2)"
-          ]
+          ],
+          "cited_selectors": {
+            "S2W-R23(2)": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_cancel::s2w_r23_control_byte_after_reserve_is_stale_cancel_then_drop_fences"
+          },
+          "note": "S2W-R15, R10 and R03 are the S10 inventory selectors (rerun with the frozen selection); S2W-R23(2) is added to the C+A selection (S11 review R4)"
         }
       },
       "removed": {
@@ -66,7 +70,7 @@
       "export": "--side b",
       "added": {
         "MCB03-V01": {
-          "status": "NEW",
+          "status": "PARTIAL (supporting evidence)",
           "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_corpus::mcb03_v01_retirement_after_capture_is_busy",
           "kept": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_corpus::mcb03_v01_capture_under_retirement_is_busy"
         },
@@ -90,17 +94,17 @@
     "MCA05-V01": {
       "s10": "PARTIAL",
       "now": "NEW",
-      "reason": "stage_share_once limits the next stage's remaining share to need-1 (need = the RowReserve frame, 57,336 B, read from the WAL file of the same fixture run unlimited); the original end > cap refuses Unchanged before any effect."
+      "reason": "C admits the RowReserve only with room for its frame and every future step's WAL (check_progress_room, before any effect), then stages it (stage_verified). The cfg(test) wal_share guard leaves the WAL file share = need-1 bytes from the fixture's WAL end for both comparisons, for the whole flow; need = the RowReserve's admission, frame 57,336 B (= the author's S2W-R08 RowReserve, read from the file) + future WAL 982,952 B = 1,040,288 B, measured unlimited on the same fixture. C refuses Unchanged (Prepare, Capacity) before any effect: one admission, refused, no stage (S11 review R1)."
     },
     "MCA05-V02": {
       "s10": "NOT_RUN",
       "now": "NEW",
-      "reason": "share = need: the RowReserve is staged at exactly the share; Forward, the failed statement, its rollback and the full abort run."
+      "reason": "share = need: Reserve, Forward, the failed statement, its rollback and the full abort run inside the share; 7 admissions and 7 stages, none refused; the WAL ends below start + share (S11 review R1)."
     },
     "MCA05-V03": {
       "s10": "NOT_RUN",
       "now": "NEW",
-      "reason": "share = need+1, the same flow."
+      "reason": "share = need+1, the same flow (S11 review R1)."
     },
     "MCA05-V29": {
       "s10": "PARTIAL",
@@ -114,13 +118,13 @@
     },
     "MCB03-V01": {
       "s10": "PARTIAL",
-      "now": "NEW",
-      "reason": "the frozen order: B1 paused after capture holds Txn and U pins; the registry's original begin_retirement of that U (test-built receipt, past the terminal read gate) answers Busy Unchanged; after B1 returns the same attempt is accepted. Limit: no live retirement reaches this point."
+      "now": "PARTIAL",
+      "reason": "the frozen order is still unreachable live. The new test observes the registry's pin census (Busy, Unchanged while B1 holds the capture pins; accepted after) through begin_retirement with a test-built VerifiedRetirement past the S2-0 terminal read gate; consumers §8/§8.4 forbid such an authority factory, so this is supporting evidence, not PASS (S11 review R2). The user chose on 2026-11-01 to record this limit and complete M5 (\"한계 기록하고 M5 완료\")."
     },
     "MCB03-V08": {
       "s10": "PARTIAL",
       "now": "NEW",
-      "reason": "B1's own Owner claims its references again at the capture through the original reserve_references: Busy Unchanged, no pin."
+      "reason": "B1's own Owner claims its references again at the capture through the original reserve_references: Busy Unchanged, no pin. Limit: the extra claim is C's cfg(test) capture probe on the reading Owner; B's API cannot issue it (S11 review R3)."
     }
   },
   "native": {

@@ -1,7 +1,7 @@
 {
   "schema_version": 2,
   "product": "XADB",
-  "date": "2026-11-01T11:00:35.582218+09:00",
+  "date": "2026-11-01T11:35:30.913206+09:00",
   "status": "PASS",
   "errors": [],
   "markdown_documents": [
@@ -157,9 +157,9 @@
     },
     {
       "file": "devdoc/contracts/dev3-module-boundaries.md",
-      "links": 330,
+      "links": 331,
       "duplicate_ids": 0,
-      "sha256": "4ed667c05d7aad740a5fb637f1d6e52325d09fe47c05cb2aa05724292ade3d62"
+      "sha256": "ae4a2d9cafbb32ab7bd3fe20e6db3d97c24ffc51352623026fe6334abcf2a9ef"
     },
     {
       "file": "devdoc/contracts/dev3-module-consumers.md",
@@ -1287,7 +1287,7 @@
       "file": "devdoc/evidence/module-independence-survey-20261026.md",
       "links": 322,
       "duplicate_ids": 0,
-      "sha256": "d17920de196edceb33507e1af0d71e22ea64127ffacc61a7669e4716ca11a36a"
+      "sha256": "d082248cb6f4ff76a697156809d17a7f035380f2cb21893570e81dc45eb33e44"
     },
     {
       "file": "devdoc/evidence/naming-cleanup-20261025.md",

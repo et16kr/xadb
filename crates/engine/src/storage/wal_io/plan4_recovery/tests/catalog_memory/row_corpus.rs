@@ -1769,7 +1769,9 @@ fn mcb03_v08_two_pins_then_extra_claim_refused() {
     gate("MCB03-V08", 8);
 }
 
-/// MCB03-V01 in the frozen order (S11; boundaries `#row-mi03-s11`): the S8
+/// MCB03-V01 in the frozen order, supporting evidence only (S11; boundaries
+/// `#row-mi03-s11`: PARTIAL, the receipt below is a test-built authority the
+/// consumers contract forbids as a PASS basis, review R2): the S8
 /// literal row (RowId 1, Active, no A) and B1's foreign ReadCommitted read
 /// of it, paused after its source capture (`Point::RowReadCaptured`) with
 /// the row's Txn and U pins held. A retirement of that U is then tried

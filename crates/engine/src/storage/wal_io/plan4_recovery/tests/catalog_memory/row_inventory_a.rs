@@ -1719,7 +1719,12 @@ fn mca05_v29_actual_lane_h_count_zero_is_refused_by_a() {
                 // RowReserve, then the driver's Cancel; no Forward frame.
                 let (first, reserve) = wal_frame_at(state, pre);
                 let (second, cancel) = wal_frame_at(state, pre + reserve as usize);
-                assert_eq!(first, UPDATE_FRAME);
+                assert_eq!((first, reserve), (UPDATE_FRAME, RESERVE_FRAME));
+                // The second is the Cancel: the author's Cancel of the same
+                // reservation (`tests/fixtures/dev3-module-c3/row-write/expected-cancel.json`,
+                // frame_bytes) is 40,000 B, its Forward 91,497 B (S11 review
+                // N2).
+                assert_eq!((second, cancel), (UPDATE_FRAME, 40_000), "the Cancel");
                 assert_eq!(
                     files(state).0,
                     pre + (reserve + cancel) as usize,
@@ -1790,12 +1795,22 @@ fn wal_frame_at(state: &State, at: usize) -> (u8, u64) {
 /// `wal_frame::FrameKind::Update`, the RowReserve's frame kind.
 const UPDATE_FRAME: u8 = 2;
 
+/// The RowReserve frame's length, read from the file (S2W-R08's author
+/// RowReserve of the same one-row Reserve over T, `tests/fixtures/dev3-module-c3/row-write`,
+/// has the same length).
+const RESERVE_FRAME: u64 = 57_336;
+
 /// The WAL need of the INSERT's first effect, measured on the same
-/// deterministic fixture with nothing limited: the RowReserve frame the file
-/// gains at the first row's INSERT (kind and length from the file bytes).
-fn reserve_need() -> u64 {
+/// deterministic fixture with nothing limited (S11 review R1): C admits the
+/// RowReserve only when the WAL file has room for its frame and for every
+/// future step its successor inventory owes (`check_progress_room`, the
+/// frame + future WAL). The observing guard records that first admission;
+/// the frame part is checked against the RowReserve the file gains (kind
+/// and length from the file bytes, and the author's length). Returns
+/// (need, frame).
+fn reserve_need() -> (u64, u64) {
     let oracle = Oracle::new();
-    let need: u64;
+    let need: (u64, u64);
     with_fresh!(
         oracle,
         frames = 16,
@@ -1805,22 +1820,30 @@ fn reserve_need() -> u64 {
                 => writer, reader, flush, tx, actor, table);
             let _ = (&reader, actor);
             let view = writer.begin_statement(owner, &tx).unwrap();
-            let pre = files(state).0;
+            let pre = files(state).0 as u64;
             let a = [ValueRef::Int64(A)];
             let input: [&[ValueRef<'_>]; 1] = [&a];
             let mut slots: [Option<RowMutationObservation>; 1] = [None];
+            let observe = crate::storage::wal_io::durability_test_support::wal_share(None);
             let mut call = LiveCall::new(&mut writer, owner, &mut flush, flusher);
             match insert_live(&mut call, view, &table, private, &input, &mut slots) {
                 Ok(1) => {}
                 other => panic!("probe {:?}", other.err().map(|e| e.failure)),
             }
-            let (kind, length) = wal_frame_at(state, pre);
+            let first = observe.record().first.expect("the RowReserve's admission");
+            drop(observe);
+            let (kind, length) = wal_frame_at(state, pre as usize);
             assert_eq!(kind, UPDATE_FRAME, "the first frame is the RowReserve");
-            // The author's RowReserve frame of the same one-row Reserve over
-            // T (S2W-R08, `tests/fixtures/dev3-module-c3/row-write`) has the
-            // same length.
-            assert_eq!(length, 57_336, "the author's RowReserve frame length");
-            need = length;
+            assert_eq!(
+                length, RESERVE_FRAME,
+                "the author's RowReserve frame length"
+            );
+            assert_eq!(
+                (first.offset, first.frame, first.refused),
+                (pre, length, false)
+            );
+            assert!(first.future > 0, "the Reserve owes its Forward");
+            need = (first.frame + first.future, first.frame);
             let mut call = LiveCall::new(&mut writer, owner, &mut flush, flusher);
             assert!(commit_live(&mut call, tx, private).is_ok());
             owner.check_idle().unwrap();
@@ -1830,21 +1853,25 @@ fn reserve_need() -> u64 {
     need
 }
 
-/// MCA05-V01..V03 (WAL; S11, superseding S10's forced-branch V01): C's WAL
-/// staging admission is `end > cap` with cap = WAL_FILE_CAP (`physical.rs`).
-/// The test limits the remaining share of the next stage only, from its own
-/// start, to the measured need (the RowReserve frame) −1, =, +1 through the
-/// cfg(test) `stage_share_once`; the file's total cap is not changed and
-/// every later stage has all of it. Under (−1) the RowReserve is refused
-/// Unchanged (Stage, Capacity) before any effect (WAL and files byte-equal,
-/// no RowId); the retry with nothing limited inserts RowId 1 and commits q 2.
-/// Equal and plus stage the RowReserve exactly at the share (the file holds
-/// a frame of the need's length at the limited stage's start), then run the
-/// Forward, the failed statement (one good row, then Null at Validate) and
-/// its statement rollback, then the full abort.
+/// MCA05-V01..V03 (WAL; S11, superseding S10's forced-branch V01, review R1):
+/// C admits WAL use in two places, both with `>` against WAL_FILE_CAP: the
+/// Row admission (`check_progress_room`: frame + every future step's WAL)
+/// before any effect, and the physical stage (`stage_verified`: the staged
+/// frame's end). The cfg(test) `wal_share` guard leaves the file only
+/// `share` = need −1, =, +1 bytes from the fixture's WAL end for the whole
+/// flow; both comparisons see min(WAL_FILE_CAP, start + share). The need is
+/// the RowReserve's admission (frame + future WAL) measured unlimited on the
+/// same fixture (`reserve_need`); the other eight dimensions are supplied as
+/// in the fixture. Under (−1) the RowReserve is refused Unchanged (Prepare,
+/// Capacity) before any effect: one admission, refused, no stage; WAL and
+/// files byte-equal, no RowId; the retry with nothing limited inserts RowId
+/// 1 and commits q 2. Equal and plus run the Reserve, the Forward, the failed
+/// statement (one good row, then Null at Validate) and its statement
+/// rollback, then the full abort inside the share: no admission or stage is
+/// refused and the file never passes start + share.
 fn wal_share(id: &'static str, delta: i64) {
     case(id, || {
-        let need = reserve_need();
+        let (need, frame) = reserve_need();
         let share = need.checked_add_signed(delta).unwrap();
         let oracle = Oracle::new();
         with_fresh!(
@@ -1856,39 +1883,53 @@ fn wal_share(id: &'static str, delta: i64) {
                     => writer, reader, flush, tx, actor, table);
                 let pre = files(state).0;
                 let before = files(state);
-                let limited =
-                    crate::storage::wal_io::durability_test_support::stage_share_once(share);
+                let cap = pre as u64 + share;
+                let limited = crate::storage::wal_io::durability_test_support::wal_share(Some(cap));
                 if delta < 0 {
                     let view = writer.begin_statement(owner, &tx).unwrap();
                     let a = [ValueRef::Int64(A)];
                     let input: [&[ValueRef<'_>]; 1] = [&a];
                     let mut slots: [Option<RowMutationObservation>; 1] = [None];
                     let mut call = LiveCall::new(&mut writer, owner, &mut flush, flusher);
-                    let view = match insert_live(
-                        &mut call, view, &table, private, &input, &mut slots,
-                    ) {
-                        Err(DriveError { failure, after }) => {
-                            println!("{id} refusal={failure:?}");
-                            assert_eq!(failure.stage, Stage::Reserve, "{failure:?}");
-                            let error = disk(&failure);
-                            assert_eq!(error.effect, Effect::Unchanged, "{failure:?}");
-                            assert!(
-                                matches!(&error.cause, RetentionCause::Wal(wal)
-                                        if wal.phase == crate::storage::wal_io::Phase::Stage
-                                        && matches!(wal.cause, crate::storage::wal_io::Cause::Capacity)
-                                        && wal.effect == Effect::Unchanged),
-                                "{failure:?}"
-                            );
-                            assert!(failure.cleanup.is_none() && !failure.must_resolve);
-                            match after {
-                                After::Returned(view) => view,
-                                _ => panic!("the statement is not Returned"),
+                    let view =
+                        match insert_live(&mut call, view, &table, private, &input, &mut slots) {
+                            Err(DriveError { failure, after }) => {
+                                println!("{id} refusal={failure:?}");
+                                assert_eq!(failure.stage, Stage::Reserve, "{failure:?}");
+                                let error = disk(&failure);
+                                assert_eq!(
+                                    (error.phase, error.effect),
+                                    (RetentionPhase::Prepare, Effect::Unchanged),
+                                    "{failure:?}"
+                                );
+                                assert!(
+                                    matches!(error.cause, RetentionCause::Capacity),
+                                    "{failure:?}"
+                                );
+                                assert!(failure.cleanup.is_none() && !failure.must_resolve);
+                                match after {
+                                    After::Returned(view) => view,
+                                    _ => panic!("the statement is not Returned"),
+                                }
                             }
-                        }
-                        Ok(n) => panic!("{n} rows inserted"),
-                    };
-                    assert_eq!(limited.taken(), Some((pre as u64, need, true)));
+                            Ok(n) => panic!("{n} rows inserted"),
+                        };
+                    let record = limited.record();
                     drop(limited);
+                    let first = record.first.expect("the RowReserve's admission");
+                    assert_eq!(
+                        (
+                            first.offset,
+                            first.frame,
+                            first.frame + first.future,
+                            first.refused
+                        ),
+                        (pre as u64, frame, need, true)
+                    );
+                    assert_eq!(
+                        (record.admissions, record.refused_admissions, record.stages),
+                        (1, 1, 0)
+                    );
                     assert!(slots[0].is_none());
                     assert_eq!(files(state), before, "first effect");
                     assert_leaf(&leaf_cells(reader.catalog_test_pool()), &[]);
@@ -1898,7 +1939,7 @@ fn wal_share(id: &'static str, delta: i64) {
                         other => panic!("retry {:?}", other.err().map(|e| e.failure)),
                     }
                     assert_eq!(slots[0].as_ref().unwrap().row().get(), 1, "no RowId issued");
-                    assert_eq!(wal_frame_at(state, pre), (UPDATE_FRAME, need));
+                    assert_eq!(wal_frame_at(state, pre), (UPDATE_FRAME, frame));
                     let mut call = LiveCall::new(&mut writer, owner, &mut flush, flusher);
                     let q = match commit_live(&mut call, tx, private) {
                         Ok(committed) => committed.q(),
@@ -1909,24 +1950,43 @@ fn wal_share(id: &'static str, delta: i64) {
                         &leaf_cells(reader.catalog_test_pool()),
                         &int_rows(&[(1, A)]),
                     );
+                    println!(
+                        "MCA05_WAL\t{id}\tneed={need}\tframe={frame}\tshare={share}\tstart={pre}\t{record:?}"
+                    );
                 } else {
                     let a = failed_suffix!(writer, owner, flush, flusher, tx, &table, private, [A]);
-                    assert_eq!(limited.taken(), Some((pre as u64, need, false)));
-                    drop(limited);
                     assert_eq!(a[0].row().get(), 1);
-                    assert_eq!(wal_frame_at(state, pre), (UPDATE_FRAME, need));
+                    assert_eq!(wal_frame_at(state, pre), (UPDATE_FRAME, frame));
                     assert_eq!(
                         census!(writer, actor).0,
                         states(&[("TerminalLeased", 1), ("RootReleasingCompensated", 1)])
                     );
                     assert_eq!(full_abort!(writer, owner, flush, flusher, tx, private), 0);
+                    let record = limited.record();
+                    drop(limited);
                     assert_eq!(
                         census!(writer, actor).0,
                         states(&[("TerminalReady", 1), ("RootReleasingCompensated", 1)])
                     );
                     assert_leaf(&leaf_cells(reader.catalog_test_pool()), &[]);
+                    let first = record.first.expect("the RowReserve's admission");
+                    assert_eq!(
+                        (
+                            first.offset,
+                            first.frame,
+                            first.frame + first.future,
+                            first.refused
+                        ),
+                        (pre as u64, frame, need, false)
+                    );
+                    assert_eq!((record.refused_admissions, record.refused_stages), (0, 0));
+                    assert!(record.admissions >= 2 && record.stages >= 2, "{record:?}");
+                    let end = files(state).0 as u64;
+                    assert!(record.staged_end <= cap && end <= cap, "{end} > {cap}");
+                    println!(
+                        "MCA05_WAL\t{id}\tneed={need}\tframe={frame}\tshare={share}\tstart={pre}\tend={end}\t{record:?}"
+                    );
                 }
-                println!("MCA05_WAL\t{id}\tneed={need}\tshare={share}\tstart={pre}");
                 owner.check_idle().unwrap();
                 assert!(!fence.is_fenced());
             }
