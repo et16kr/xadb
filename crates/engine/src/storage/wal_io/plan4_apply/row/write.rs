@@ -538,67 +538,6 @@ thread_local! {
     static TEST_ROW_PREFLIGHTS: std::cell::Cell<u64> = const { std::cell::Cell::new(0) };
 }
 
-/// The before images of A's Forward producer edited once (S11, MCA05-V29).
-#[cfg(test)]
-type TestBeforeEdit = Box<dyn FnOnce(&mut [[u8; PAGE_BYTES]; 9])>;
-
-// S11 (MCA05-V29): the next Forward producer lane on this thread lends A an
-// edited copy of the nine before images instead of the loan's. The loan, the
-// pool, the WAL and every check C makes before or after the lane are not
-// changed; only what A's producer reads is.
-#[cfg(test)]
-thread_local! {
-    static TEST_PRODUCER_BEFORE: std::cell::RefCell<Option<TestBeforeEdit>> =
-        const { std::cell::RefCell::new(None) };
-    static TEST_PRODUCER_BEFORE_HITS: std::cell::Cell<u8> = const { std::cell::Cell::new(0) };
-}
-
-/// Arms the next Forward producer lane on this thread (`producer_lane`) to
-/// lend A a copy of the before images that `edit` changed. Dropping the
-/// guard disarms it. `hits` counts the lanes it edited.
-#[cfg(test)]
-pub(in crate::storage) struct TestProducerBefore(std::marker::PhantomData<std::rc::Rc<()>>);
-#[cfg(test)]
-impl TestProducerBefore {
-    pub(in crate::storage) fn arm(edit: impl FnOnce(&mut [[u8; PAGE_BYTES]; 9]) + 'static) -> Self {
-        TEST_PRODUCER_BEFORE.with(|hook| {
-            assert!(hook.replace(Some(Box::new(edit))).is_none());
-        });
-        TEST_PRODUCER_BEFORE_HITS.with(|hits| hits.set(0));
-        Self(std::marker::PhantomData)
-    }
-    pub(in crate::storage) fn hits(&self) -> u8 {
-        TEST_PRODUCER_BEFORE_HITS.with(std::cell::Cell::get)
-    }
-}
-#[cfg(test)]
-impl Drop for TestProducerBefore {
-    fn drop(&mut self) {
-        TEST_PRODUCER_BEFORE.with(|hook| hook.replace(None));
-    }
-}
-
-/// The armed edit applied to a heap copy of `before` (leaked for the lane's
-/// borrow), or `before` itself. Never inlined, so the lane's own frame does
-/// not grow.
-#[cfg(test)]
-#[inline(never)]
-fn test_producer_before(before: &[[u8; PAGE_BYTES]; 9]) -> &[[u8; PAGE_BYTES]; 9] {
-    let Some(edit) = TEST_PRODUCER_BEFORE.with(|hook| hook.borrow_mut().take()) else {
-        return before;
-    };
-    let mut copy: Box<[[u8; PAGE_BYTES]; 9]> = vec![[0; PAGE_BYTES]; 9]
-        .into_boxed_slice()
-        .try_into()
-        .expect("nine pages");
-    for (to, from) in copy.iter_mut().zip(before) {
-        to.copy_from_slice(from);
-    }
-    edit(&mut copy);
-    TEST_PRODUCER_BEFORE_HITS.with(|hits| hits.set(hits.get() + 1));
-    Box::leak(copy)
-}
-
 #[cfg(test)]
 impl<W: WriterNamespace> ReservedRow<'_, '_, '_, '_, '_, '_, '_, '_, '_, '_, '_, '_, '_, W> {
     /// S2W-R06: the issued identity (actor, RootJob slot, RowId, UndoRef,
@@ -866,8 +805,6 @@ impl<'r, 't, 'v, 'i, 'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
             .0
             .try_into()
             .expect("nine before images");
-        #[cfg(test)]
-        let before = test_producer_before(before);
         Ok(RowProducerLane {
             context,
             control,

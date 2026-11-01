@@ -5777,6 +5777,8 @@ native는 같은 ELF의 별도 process이며 전원 장애 인수는 아니다. 
 <a id="s11-mi03-resupply"></a>
 ## S11 MI03 남은 8 ID의 공급과 M5 재판정
 
+이 절은 원 S11 source의 이력이다. PR #16 이후의 독립 WAL oracle와 주입 경계 재설계는 [리뷰 후속](module-mi03-limits-20261101.md#pr16-review-followup), [설계 재검토](module-mi03-limits-20261101.md#pr16-design-review)를 따른다.
+
 2026-11-01. S10 PR #15가 병합된 main `ee0a48c4`에서 별도 branch `claude/project-thread-1jfdtk-s11`을 만들었다. 계약은 [S11 절](../contracts/dev3-module-boundaries.md#row-mi03-s11)이고 선택은 [S11 addendum](../../tests/fixtures/module-row-integration/single-source-s11-addendum.json)(SHA-256 `2bc6c4c337912502ec5e7914e6b0d3092df171e8bfe2a45f07830b497d8583b2`), 실행 기록은 [S11 receipts](../../tests/fixtures/module-row-integration/single-source-s11-receipts.json)다. artifacts는 `/mnt/project-files/module-independence-20261029/artifacts/module-s11-20261101/`이고 `manifest-all.sha256`의 SHA-256은 `c5ed5fd081de157d3f0bf4161ca0594f84e09fb3e4cea67f74dbba61f12e7675`이다.
 - S10 기록 재확인 반영(R11 MCA05-V32 PARTIAL, R12 artifacts manifest) `15a21fc6`
 - 8 ID의 C cfg(test) 경로와 A 판정 함수 분리, 계약, addendum `a81f8975`

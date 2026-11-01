@@ -1626,8 +1626,8 @@ fn mca05_v29_actual_frame_count_zero_is_fenced_by_preflight() {
 /// is unchanged, and Commit publishes a alone (q 2) with no fence.
 #[test]
 fn mca05_v29_actual_lane_h_count_zero_is_refused_by_a() {
-    use super::super::super::super::plan4_pages::apply::TestProducerBefore;
     use crate::storage::page::encode_page;
+    use crate::storage::row::insert::TestProducerBefore;
     case("MCA05-V29", || {
         let oracle = Oracle::new();
         with_fresh!(
@@ -1798,60 +1798,29 @@ const UPDATE_FRAME: u8 = 2;
 /// The RowReserve frame's length, read from the file (S2W-R08's author
 /// RowReserve of the same one-row Reserve over T, `tests/fixtures/dev3-module-c3/row-write`,
 /// has the same length).
-const RESERVE_FRAME: u64 = 57_336;
+const RESERVE_FRAME: u64 = 3_776 + 4_320 + 208 + 3 * 16_344;
 
-/// The WAL need of the INSERT's first effect, measured on the same
-/// deterministic fixture with nothing limited (S11 review R1): C admits the
-/// RowReserve only when the WAL file has room for its frame and for every
-/// future step its successor inventory owes (`check_progress_room`, the
-/// frame + future WAL). The observing guard records that first admission;
-/// the frame part is checked against the RowReserve the file gains (kind
-/// and length from the file bytes, and the author's length). Returns
-/// (need, frame).
-fn reserve_need() -> (u64, u64) {
-    let oracle = Oracle::new();
-    let need: (u64, u64);
-    with_fresh!(
-        oracle,
-        frames = 16,
-        |live, owner, flusher, status, undo, private, reader_private, core, fence, state| {
-            let _ = core;
-            wal_fixture!(live, owner, flusher, status, undo, private, reader_private
-                => writer, reader, flush, tx, actor, table);
-            let _ = (&reader, actor);
-            let view = writer.begin_statement(owner, &tx).unwrap();
-            let pre = files(state).0 as u64;
-            let a = [ValueRef::Int64(A)];
-            let input: [&[ValueRef<'_>]; 1] = [&a];
-            let mut slots: [Option<RowMutationObservation>; 1] = [None];
-            let observe = crate::storage::wal_io::durability_test_support::wal_share(None);
-            let mut call = LiveCall::new(&mut writer, owner, &mut flush, flusher);
-            match insert_live(&mut call, view, &table, private, &input, &mut slots) {
-                Ok(1) => {}
-                other => panic!("probe {:?}", other.err().map(|e| e.failure)),
-            }
-            let first = observe.record().first.expect("the RowReserve's admission");
-            drop(observe);
-            let (kind, length) = wal_frame_at(state, pre as usize);
-            assert_eq!(kind, UPDATE_FRAME, "the first frame is the RowReserve");
-            assert_eq!(
-                length, RESERVE_FRAME,
-                "the author's RowReserve frame length"
-            );
-            assert_eq!(
-                (first.offset, first.frame, first.refused),
-                (pre, length, false)
-            );
-            assert!(first.future > 0, "the Reserve owes its Forward");
-            need = (first.frame + first.future, first.frame);
-            let mut call = LiveCall::new(&mut writer, owner, &mut flush, flusher);
-            assert!(commit_live(&mut call, tx, private).is_ok());
-            owner.check_idle().unwrap();
-            assert!(!fence.is_fenced());
-        }
-    );
-    need
-}
+// Independent WAL oracle for wal_fixture, from dev3-catalog-create.md
+// (T(i Int64): Catalog cell 254), dev3-module-consumers.md §6.6 and
+// dev3-resource-bounds.md (Row transaction and Aging debt). No production
+// budget function or observed admission supplies these expectations.
+// CREATE committed but has not cleaned its root/terminal; completed System
+// INITs owe nothing. The first Row has L=4+1+8=13, C=180+13=193, h=0.
+const CATALOG_CELL: u64 = 254;
+const ROW_CELL: u64 = 180 + 4 + 1 + 8;
+const CATALOG_CLEANUP_WAL: u64 = 89_496 + 2 * CATALOG_CELL + 4 * 55_528 + 55_112;
+const ROW_TRANSACTION_WAL: u64 = (91_304 + ROW_CELL) + (91_096 + ROW_CELL) + 56_712 + 3 * 3_040;
+const ROW_CLEANUP_WAL: u64 = 89_496 + 2 * ROW_CELL + 4 * 55_528 + 55_112;
+const RESERVE_FUTURE_WAL: u64 = CATALOG_CLEANUP_WAL + ROW_TRANSACTION_WAL + ROW_CLEANUP_WAL;
+const RESERVE_WAL_NEED: u64 = RESERVE_FRAME + RESERVE_FUTURE_WAL;
+const _: () = {
+    assert!(RESERVE_FRAME == 57_336);
+    assert!(CATALOG_CLEANUP_WAL == 367_228);
+    assert!(ROW_TRANSACTION_WAL == 248_618);
+    assert!(ROW_CLEANUP_WAL == 367_106);
+    assert!(RESERVE_FUTURE_WAL == 982_952);
+    assert!(RESERVE_WAL_NEED == 1_040_288);
+};
 
 /// MCA05-V01..V03 (WAL; S11, superseding S10's forced-branch V01, review R1):
 /// C admits WAL use in two places, both with `>` against WAL_FILE_CAP: the
@@ -1860,8 +1829,8 @@ fn reserve_need() -> (u64, u64) {
 /// frame's end). The cfg(test) `wal_share` guard leaves the file only
 /// `share` = need −1, =, +1 bytes from the fixture's WAL end for the whole
 /// flow; both comparisons see min(WAL_FILE_CAP, start + share). The need is
-/// the RowReserve's admission (frame + future WAL) measured unlimited on the
-/// same fixture (`reserve_need`); the other eight dimensions are supplied as
+/// the independent contract sum above (frame + future WAL), not a calibration
+/// against the implementation; the other eight dimensions are supplied as
 /// in the fixture. Under (−1) the RowReserve is refused Unchanged (Prepare,
 /// Capacity) before any effect: one admission, refused, no stage; WAL and
 /// files byte-equal, no RowId; the retry with nothing limited inserts RowId
@@ -1871,7 +1840,7 @@ fn reserve_need() -> (u64, u64) {
 /// refused and the file never passes start + share.
 fn wal_share(id: &'static str, delta: i64) {
     case(id, || {
-        let (need, frame) = reserve_need();
+        let (need, frame) = (RESERVE_WAL_NEED, RESERVE_FRAME);
         let share = need.checked_add_signed(delta).unwrap();
         let oracle = Oracle::new();
         with_fresh!(
@@ -1917,6 +1886,7 @@ fn wal_share(id: &'static str, delta: i64) {
                     let record = limited.record();
                     drop(limited);
                     let first = record.first.expect("the RowReserve's admission");
+                    assert_eq!(first.future, RESERVE_FUTURE_WAL, "independent future WAL");
                     assert_eq!(
                         (
                             first.offset,
@@ -1970,6 +1940,7 @@ fn wal_share(id: &'static str, delta: i64) {
                     );
                     assert_leaf(&leaf_cells(reader.catalog_test_pool()), &[]);
                     let first = record.first.expect("the RowReserve's admission");
+                    assert_eq!(first.future, RESERVE_FUTURE_WAL, "independent future WAL");
                     assert_eq!(
                         (
                             first.offset,

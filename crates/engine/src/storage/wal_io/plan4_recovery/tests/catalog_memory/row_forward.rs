@@ -377,9 +377,12 @@ fn gated(images: &Images) {
 /// observation is the Forward of the issued RowId and UndoRef; the table's
 /// write bit stays; the admission, the gate and the lease are returned with
 /// no fence, and the loan comes back once, the same loan. The statement then
-/// ends with no WAL.
+/// ends with no WAL. The PR #16 follow-up also supplies a call-scoped no-op
+/// before-image edit: issuing a lane does not consume it, and A's actual
+/// producer consumes it once while still matching the independent literal.
 #[test]
 fn s2w_r09_forward_lands_the_literal_and_retains_the_root() {
+    use crate::storage::row::insert::TestProducerBefore;
     case("S2W-R09", || {
         author_literal();
         let oracle = Oracle::new();
@@ -404,7 +407,14 @@ fn s2w_r09_forward_lands_the_literal_and_retains_the_root() {
                 assert_eq!((reserve.len(), hex(&reserve).as_str()), RESERVE_FRAME);
                 let (actor, root_job, row_id, undo_ref, _) = reserved.test_issued();
                 let revision = view.revision();
+                let edit = TestProducerBefore::arm(|_| {});
+                {
+                    let _lane = reserved.producer_lane().unwrap();
+                    assert_eq!(edit.hits(), 0, "lane issuance is not A consumption");
+                }
                 let proposal = produce!(reserved);
+                assert_eq!(edit.hits(), 1, "A consumed the no-op copy once");
+                drop(edit);
                 println!("S2W_R09 proposal={proposal:?}");
                 let (wal, _) = files(state);
                 let prepared = done!(reserved.prepare(proposal));
