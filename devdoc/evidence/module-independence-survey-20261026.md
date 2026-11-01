@@ -5880,7 +5880,7 @@ identity:
 <a id="s12-module-gate"></a>
 ## S12 모듈 경계 merge gate(계획 §12)
 
-2026-11-01. S11(PR #16·#17)이 병합된 main `f95eba15`에서 별도 branch `claude/project-thread-1jfdtk-s12`을 만들었다. 설계·판정 규칙·잔여 위험은 [build 계획 §11](../policies/repository-build-plan.md#module-gate)이 정본이고 이 절은 실행 증거다. artifacts는 `/mnt/project-files/module-independence-20261029/artifacts/module-s12-20261101/`이고 `manifest-all.sha256`의 SHA-256은 `9d184f395dbc70bd2347de6db399f22acbbb41b1662a549f784a21850636262e`이다.
+2026-11-01. S11(PR #16·#17)이 병합된 main `f95eba15`에서 별도 branch `claude/project-thread-1jfdtk-s12`을 만들었다. 설계·판정 규칙·잔여 위험은 [build 계획 §11](../policies/repository-build-plan.md#module-gate)이 정본이고 이 절은 실행 증거다. artifacts는 `/mnt/project-files/module-independence-20261029/artifacts/module-s12-20261101/`이고 `manifest-all.sha256`의 SHA-256은 `d0005bb95310883c8bd58e1cdb7303c96fb429f177033d9dbca1e7357b535dd1`이다.
 - 검사기·manifest·build runner·workflow·ruleset·push 훅과 그 시험 `d1871c1b`
 - PR 검토와 CI 대응: 채택 PR에서 build workflow가 receipt 없이 끝나게 한 수정 `f066cffd`, export가 바뀐 기능의 선택만 실행하게 한 수정 `4cbebb0d`, 소유자 검토 4건 반영 `3c4fbb02`, 검토 참고 반영 `199fc0f2`(아래 PR 검토와 CI)
 - 문서, 이 기록, [D2 검토 기록](../../module-gate/records/20261101-s12-module-gate.json)(이 절이 든 commit)
@@ -5900,9 +5900,9 @@ identity:
 | 범위 한정 확인 | `d8eb1547` | 조건부 수용 | RR1–RR6과 RR3c는 닫혔다. 같은 원리의 RC1(cfg를 모르는 모듈의 사례를 필수로 계획해 정상 PR이 실패)과 RC2(glob·모듈 전체 재노출을 따라가지 않음)가 필수였다 |
 | RC 확인 | `bff3423c` | 조건부 수용 | RC1과 harness 증거 변경은 닫혔다. RC2는 별칭·중간 재노출을 거친 모듈 재노출이 남았다 |
 | RC2 남은 변형 확인 | `8d46e80e` | 수용 | 별칭·중간 재노출을 거친 모듈도 D2 `common`이 되었고 실제 tree는 22개 그대로다. 새 필수 0. 참고: 서로 glob하는 모듈 사슬은 계산 시간이 길어질 수 있으나(잘못된 통과는 아님) 그런 사슬은 D2 `common` 파일로만 생긴다 |
-| 채택 PR build 건너뜀 | `f066cffd` | 조건부 수용 | 채택 뒤 잘못된 통과 없음(채택 뒤 receipt가 없으면 제어가 실패). 필수는 기록·증거 갱신. 참고: `refs/remotes/origin/<기본 branch>` 사용(같은 이름 tag), 시험 문구 |
+| 채택 PR build 건너뜀 | `f066cffd` | 조건부 수용 | 채택 뒤 잘못된 통과 없음(채택 뒤 Rust 변경에 receipt가 없으면 제어가 실패). 필수는 기록·증거 갱신. 참고: `refs/remotes/origin/<기본 branch>` 사용(같은 이름 tag), 시험 문구 |
 | PR 검토 반영 | `4cbebb0d`·`3c4fbb02` | 조건부 수용 | 네 수정 모두 잘못된 통과·fail-open 없음, 실제 tree의 새 공통 파일 8개는 모두 실제 product `impl`. 필수는 R1 문서·기록 갱신, R2 export 시험 범위 축소(공통 변경의 export는 build만)를 잔여 위험으로 기록하거나 좁히기. 참고: N/A blob 비교를 빼도 통과하는 시험 공백, 시험 전용 `impl` 제외, trait 제외 설명, 드문 self 타입 표기 |
-| 참고 반영과 문서 확인 | `199fc0f2`와 문서 commit | {FINAL_VERDICT} |
+| 참고 반영과 문서 확인 | `199fc0f2`·`7f61e097`(문서 초안) | 조건부 수용 | `199fc0f2`의 새 결함 없음(시험 전용 `impl` 6가지 확인, 두 subTest 의미 있음). R1·R2 닫힘. 필수 F1: 잔여 위험 문구가 공백을 줄여 말함(A·B 시험은 그 기능이 바뀔 때만 head와 export에서 돈다) — 이 문서 commit에서 고쳤다 |
 
 RR3c는 작성 담당이 반영 확인 중 찾았다. 모든 engine 파일을 바뀐 것으로 놓고 계획을 실제 lib 시험 목록과 대조하자 `#[cfg(target_os = "linux")]`가 붙은 시험 9개가 계획되지 않았다. cfg를 참·거짓·모름으로 평가하도록 고쳤고(§11 cfg 해석), 같은 평가로 `cfg(all(test, target_os = "linux"))` 모듈이 시험 전용으로 바뀌었다. R6(같은 이름의 상태)은 고치지 않고 §11 잔여 위험에 **차단되지 않음**으로 기록했다.
 
@@ -5917,6 +5917,7 @@ RR3c는 작성 담당이 반영 확인 중 찾았다. 모든 engine 파일을 �
 - 채택 전 build 건너뜀 시험 1개: `604c980e`의 workflow에서 실패
 - export 선택 시험 1개: `f066cffd`의 검사기에서 실패(B를 바꾸지 않았는데 C+B export가 B 선택을 계획)
 - 소유자 검토 시험 6개: `4cbebb0d`의 검사기·runner에서 실패 7·오류 1(subTest 포함)
+- 검토 참고 subTest 2개(시험 전용 `impl`, base blob을 나열한 검토의 N/A): 시험 전용 `impl`은 `3c4fbb02`의 검사기에서 실패하고, base blob subTest는 blob 비교를 뺀 검사기를 잡는다
 
 로그는 artifacts `checker/`에 있다.
 
@@ -5931,7 +5932,7 @@ RR3c는 작성 담당이 반영 확인 중 찾았다. 모든 engine 파일을 �
 - `d8eb1547` 위 `c011eb0e`(위 셋과 C의 `plan4_retention/read/scope.rs`(RR1), `row_gate.rs`(RR3c), `first_write_tests.rs`(RR3b), `plan4_genesis/tests.rs`(feature 모름)): 43개 중 41개 PASS, 24분. 실패 2개는 `plan4_genesis`의 identity 환경 누락이었다(위 harness 시험). 이중 선언 모듈의 사례(RR1)와 Linux 전용 사례(RR3c)는 모두 나열되고 통과했다.
 - `8d46e80e` 위 `46ffd3d6`(위 일곱 파일과 XRB `plan4_recovery_base_tests.rs`): 결과 43개 모두 PASS, 25분. 정확한 사례 33개(RR1·RR3c 사례와 identity를 받은 `plan4_genesis` 8개 포함)가 모두 나열·통과했다. feature 조건의 선택적 사례 2개는 이 build에 없어 나열 0으로 통과했다. XRB 파일의 executor 전용 사례 7개는 계획에서 빠지고 검토된 N/A 요구(PENDING)로 나왔다. 신뢰 계획과 대조한 `verify_receipt`의 오류는 0개다.
 
-**PR 검토와 CI.** PR #18을 올리자 build workflow(`module-build`)가 실패했다. `pull_request` workflow는 PR의 workflow 파일로 돌면서 기본 branch의 검사기를 복사하는데, 채택 PR에서는 `main`에 검사기가 없었다(`fatal: path 'scripts/check_module_gate.py' exists on disk, but not in 'origin/main'`). 기본 branch에 manifest가 없으면 build하지 않고 receipt 없이 끝나도록 고쳤다(`f066cffd`). 채택 뒤에는 이 분기가 쓰이지 않고, 제어 workflow는 receipt가 없으면 실패한다. PR의 자동 검토(Codex, P1)는 Rust 변경마다 C+A export가 A 선택 10개를, C+B export가 B 선택 9개를 늘 실행한다고 지적했다. A만 바꿔도 바뀌지 않은 B 시험을 다시 돌리므로 AGENTS.md의 변경 범위 규칙에 어긋난다. export는 Rust 변경마다 build하되, 남는 기능의 선택은 그 기능이 바뀌었을 때만 실행하도록 고쳤다(`4cbebb0d`). 마지막 모의 실행(`46ffd3d6`, A·CAT·JOIN·C 변경)의 계획에 적용하면 C+B export는 선택 9개에서 build만으로 줄고 C+A export는 A 선택 10개 그대로다. 위 모의 실행 결과는 고치기 전 계획으로 돌린 것이다.
+**PR 검토와 CI.** PR #18을 올리자 build workflow(`module-build`)가 실패했다. `pull_request` workflow는 PR의 workflow 파일로 돌면서 기본 branch의 검사기를 복사하는데, 채택 PR에서는 `main`에 검사기가 없었다(`fatal: path 'scripts/check_module_gate.py' exists on disk, but not in 'origin/main'`). 기본 branch에 manifest가 없으면 build하지 않고 receipt 없이 끝나도록 고쳤다(`f066cffd`). 채택 뒤에는 이 분기가 쓰이지 않고, Rust·시험 입력이 바뀐 PR에서 제어 workflow는 receipt가 없으면 실패한다. PR의 자동 검토(Codex, P1)는 Rust 변경마다 C+A export가 A 선택 10개를, C+B export가 B 선택 9개를 늘 실행한다고 지적했다. A만 바꿔도 바뀌지 않은 B 시험을 다시 돌리므로 AGENTS.md의 변경 범위 규칙에 어긋난다. export는 Rust 변경마다 build하되, 남는 기능의 선택은 그 기능이 바뀌었을 때만 실행하도록 고쳤다(`4cbebb0d`). 마지막 모의 실행(`46ffd3d6`, A·CAT·JOIN·C 변경)의 계획에 적용하면 C+B export는 선택 9개에서 build만으로 줄고 C+A export는 A 선택 10개 그대로다. 위 모의 실행 결과는 고치기 전 계획으로 돌린 것이다.
 
 저장소 소유자의 PR 검토(`604c980e` 기준)는 새 반례 4건을 냈고 모두 `3c4fbb02`에서 고쳤다. 각 반례는 회귀 시험으로 넣었다.
 - raw identifier: `crate::storage::r#semantic::X`를 금지 모듈이 아닌 허용된 상위 모듈로 판정했다. 주석·문자열을 지운 code에서 `r#`를 공백으로 바꿔 모든 경로·`use`·`mod`·정의가 같은 이름으로 읽게 했다.
@@ -5939,9 +5940,9 @@ RR3c는 작성 담당이 반영 확인 중 찾았다. 모든 engine 파일을 �
 - 공통 API의 별도 `impl`: 재노출된 타입에 다른 파일이 `pub` 메서드를 더해도 D1이었다. 재노출 타입의 고유 `impl`(`pub` 항목이 있을 때)과 trait `impl`(crate가 API 밖에 정의한 trait 제외)이 있는 파일도 D2 `common`이다. 실제 tree에서 22개가 30개가 되었고 소유자가 든 `plan4_apply/row/recovery.rs`가 포함된다. 기능 자신의 trait를 공통 타입에 구현한 A·B의 `driver/live.rs`는 제외된다.
 - 선택과 사례의 중복 실행: 선택이 이미 통과시킨 바뀐 사례를 같은 source에서 다시 실행했다. runner가 선택 실행의 통과 이름을 기록하고 그 사례를 다시 돌리지 않으며(`covered`), 제어가 그 이름이 계획되고 통과한 선택에서 나왔는지 확인한다.
 
-같은 commit에서 첫 수정 검토의 참고 지적대로 build workflow가 `refs/remotes/origin/<기본 branch>`를 쓰고 그 ref가 없으면 실패하게 했다(같은 이름의 tag가 가리지 못하게). 수정들은 위 표의 별도 D2 검토를 받았다. 두 번째 검토의 R2(공통 코드 변경의 export가 build만 하게 됨)는 소유자 검토가 무변경 export 시험 실행의 해결을 요구했고 AGENTS.md의 변경 범위 규칙과 같은 방향이므로 좁히지 않고 §11 잔여 위험("export의 시험 범위")에 기록했다. 참고 지적 중 시험 공백(base blob을 나열한 검토), 시험 전용 `impl` 제외, 설명 문구, 누락된 ref의 오류 메시지는 `199fc0f2`에서 반영했다. {SIM5}
+같은 commit에서 첫 수정 검토의 참고 지적대로 build workflow가 `refs/remotes/origin/<기본 branch>`를 쓰고 그 ref가 없으면 실패하게 했다(같은 이름의 tag가 가리지 못하게). 수정들은 위 표의 별도 D2 검토를 받았다. 두 번째 검토의 R2(공통 코드 변경의 export가 build만 하게 됨)와 최종 확인의 F1(그런 변경에서는 A·B 시험이 head에서도 돌지 않음)은 소유자 검토가 무변경 export 시험 실행의 해결을 요구했고 AGENTS.md의 변경 범위 규칙과 같은 방향이므로 좁히지 않고 §11 잔여 위험("export의 시험 범위")에 기록했다. 참고 지적 중 시험 공백(base blob을 나열한 검토), 시험 전용 `impl` 제외, 설명 문구, 누락된 ref의 오류 메시지는 `199fc0f2`에서 반영했다. 고친 runner를 실제 cargo로 다시 모의 실행했다. `199fc0f2` 위 `b681964c`(`46ffd3d6`의 여덟 파일과 A의 `catalog_memory/row_cancel.rs`)에서 결과 35개 모두 PASS, 명령 시간 합 19분이다. head의 정확한 사례 45개 중 24개(JOIN `row_join`과 A `row_cancel`의 사례)는 같은 head의 선택이 이미 통과시켜 다시 돌리지 않았고(`covered`) 21개만 `--exact`로 실행했다. C+A export는 A 선택 10개와 사례 12개(모두 `covered`), C+B export는 B를 바꾸지 않아 build만 했다. 신뢰 계획과 대조한 `verify_receipt`의 오류는 0개다. artifacts `runner/sim-b681964c/`.
 
-**원격 상태.** ruleset과 Actions event 정책은 적용되지 않았고 실제 거절도 확인하지 않았다. 원격 강제는 **미적용**이다. 같은 저장소 PR의 workflow가 같은 이름의 성공 상태를 쓰는 것은 막지 못한다. 막으려면 GitHub App check run이 필요하다. 사용자는 2026-11-01 결정 카드에서 App을 만들지 않고 한계로 기록하기로 정했다. 다음 순서는 §11의 적용 순서 1–5다. 결과는 이 절에 덧붙인다.
+**원격 상태.** ruleset과 Actions event 정책은 적용되지 않았고 실제 거절도 확인하지 않았다. 원격 강제는 **미적용**이다. 같은 저장소 PR의 workflow가 같은 이름의 성공 상태를 쓰는 것은 막지 못한다. 막으려면 GitHub App check run이 필요하다. 사용자는 2026-11-01 이 thread의 결정 카드("같은 이름의 가짜 성공 상태를 막을 GitHub App을 만들까요?")에서 "지금은 한계로 기록"을 골랐다. 다음 순서는 §11의 적용 순서 1–5다. 결과는 이 절에 덧붙인다.
 
 ### 되돌림
 
