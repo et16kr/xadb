@@ -1,8 +1,8 @@
 # XADB 모듈 분리 후 안정화·경계 개선 실행 계획
 
-2026-11-02 · **PR #23 의견 반영·독립 D2 재검토 ACCEPT / 아래 구현·진단·시험 NOT_RUN**
+2026-11-02 · **PR #23 계획 D2 ACCEPT / F0 기존 증거 분류 기록 추가 / 제품 수정·진단 실행·시험 NOT_RUN**
 
-모듈 분리 후속 개발을 위한 개선 순서와 완료 조건을 정한다. 각 단위에 현재 코드·계약의 근거와 비교할 대안을 연결한다. 현재 범위는 계획 문서이며 제품·검사기·시험·측정 작업은 시작하지 않았다. 이후 개발 재개 지시가 오면 해당 단위의 기존 위임과 D1/D2 절차 안에서 진행하며 일상 구현마다 재승인을 요구하지 않는다.
+모듈 분리 후속 개발을 위한 개선 순서와 완료 조건을 정한다. 각 단위에 현재 코드·계약의 근거와 비교할 대안을 연결한다. 계획에 따른 [F0 기존 증거 분류](../evidence/main-preexisting-failures-20261030.md#f0-existing-evidence)를 기록했다. 원 로그 미확보 항목은 미확인이고 원인 분류 전체 완료·CI 차단 해제가 아니다. 제품·검사기·시험·측정 작업은 시작하지 않았다. 이후 개발 재개 지시가 오면 해당 단위의 기존 위임과 D1/D2 절차 안에서 진행하며 일상 구현마다 재승인을 요구하지 않는다.
 
 [기존 분리 계획](module-independence-plan.md) · [소유 경계](../contracts/dev3-module-boundaries.md) · [소비자 계약](../contracts/dev3-module-consumers.md) · [모듈 gate](../policies/repository-build-plan.md#module-gate) · [개발 방침](../policies/development-policy.md#section-2)
 
@@ -65,6 +65,8 @@
 
 <a id="failures"></a>
 ## 4. F0 — 기존 실패와 미검증을 개발 가능한 상태로 정리
+
+**진행:** [F0 기존 증거 분류·인계](../evidence/main-preexisting-failures-20261030.md#f0-existing-evidence)에 26개 실패 자리·macro 선택 2개·resident 미검증 8개를 대응했다. 원 로그가 없어 7개 exact 이름·mixed 실패 43개 이름·실제 오류 값은 미확인이다. 기존 실패·보류·차단은 유지하며 수정·검증 완료로 세지 않는다.
 
 **입력:** [보정의 실패 표와 후속 요구](../evidence/module-independence-survey-20261026.md#s12-full-lib-calibration), [기존 실패 조사](../evidence/main-preexisting-failures-20261030.md), 당시 source와 확보 가능한 원 로그다. 먼저 보존 자료를 읽고 원인별로 묶는다. 같은 panic 위치만으로 같은 원인이라고 판정하지 않는다.
 

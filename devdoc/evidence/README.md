@@ -1,5 +1,7 @@
 # XADB 조사·실행 증거
 
+2026-11-01 UTC [F0 기존 증거 분류·인계](main-preexisting-failures-20261030.md#f0-existing-evidence): 보정의 실패 26개 자리·macro 선택 2개·resident 미검증 8개를 현재 계약·정적 경로·다음 조치에 대응했다. 원 로그 미확보로 일부 selector·원인은 미확인이고, 제품 수정·재시험·CI 차단 해제는 없다.
+
 2026-11-01 [MI03 남은 한계 8개](module-mi03-limits-20261101.md): S10이 PARTIAL·NOT_RUN으로 남긴 MI03 8 ID의 한계 내용, S11의 시도 방법, 해결 여부를 ID별로 정리했다. 7개는 PASS로 해결했고 MCB03-V01은 PARTIAL로 남아 사용자 결정으로 한계를 기록하고 M5를 완료로 판정했다. 실행과 판정은 [S11 증거](module-independence-survey-20261026.md#s11-mi03-resupply)다.
 
 2026-10-31 [S4 live Row rollback](module-independence-survey-20261026.md#s4-row-rollback): main `139a05f4`의 별도 branch `codex/s4-row-rollback`에서 statement/full rollback·원 CLR/receipt·flusher/pin 인계를 구현했다. source별 선택20개·변경 compiler1개·native2process를 검증했으며 최종 독립 D1/D2 ACCEPT·필수 수정0을 확인했다. S5/C4/S6·전체 M4/M5는 미완료다.
