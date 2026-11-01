@@ -123,7 +123,7 @@ fn produce<D: DirectoryPort>(
     reserve_only: bool,
     arm: impl FnOnce(),
 ) {
-    let oracle = Oracle::new();
+    let oracle = Oracle::current();
     let mut slot = boxed::<1_048_576>();
     let mut maintenance = boxed::<12_582_912>();
     let mut dwb = boxed::<4_194_304>();
@@ -196,7 +196,7 @@ fn continuation<D: DirectoryPort>(
     epoch: u32,
     cut: impl FnOnce(),
 ) {
-    let oracle = Oracle::new();
+    let oracle = Oracle::current();
     recovered!(directory, |runtime,
                            closed,
                            owner,
@@ -330,7 +330,7 @@ fn free_undo_reserved_recovery_uses_original_scope_cancel() {
     super::support::assert_closed(&state);
     let directory = super::support::clone_directory(&super::support::images(&state));
     let state = directory.state();
-    let oracle = Oracle::new();
+    let oracle = Oracle::current();
     recovered!(&directory, |runtime,
                             closed,
                             owner,
@@ -395,7 +395,7 @@ fn free_undo_three_process_worker() {
             native::arm_undo_home_cut(
                 &trace,
                 &marker,
-                content_digest(Oracle::new().native_page(11)),
+                content_digest(Oracle::current().native_page(11)),
             );
         }),
         "recover" => continuation(&directory, read, 2, || {

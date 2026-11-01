@@ -1,0 +1,8 @@
+{
+  "question": "The historical fifth Plan4Pages failure at the injected BeforePanic is not identified. g5_clean_lifecycle passed the bounded baseline. g5_bind_boundaries has a distinct profile-read BeforePanic path and has not run in this task. Execute that exact case once to distinguish a remaining current failure from the repaired load snapshot paths.",
+  "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::tests::g5_bind_boundaries",
+  "timeout_seconds": 120,
+  "attempts": 1,
+  "permission": "Full F0 completion includes bounded cause diagnosis; no whole-suite or completed-case repeat.",
+  "followup": "B08 requires executor-only static padding and was reached before B15. Preserve input FAIL, select only previously unrun B15 with XADB_PLAN4_INCLUDE=P4-G5-B15; source/ELF remain current2 (before formatting), one invocation, 120s."
+}

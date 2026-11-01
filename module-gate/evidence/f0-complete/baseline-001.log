@@ -1,0 +1,15 @@
+
+running 1 test
+test storage::wal_io::bootstrap::doublewrite_install::mutable_storage::status_init::status_flush::resident::tests::resident_status_completion_rejects_other_slot ... 
+thread 'storage::wal_io::bootstrap::doublewrite_install::mutable_storage::status_init::status_flush::resident::tests::resident_status_completion_rejects_other_slot' (2151) panicked at crates/engine/src/storage/dirty_frame/status_residency.rs:328:14:
+called `Result::unwrap()` on an `Err` value: DirtyError { cause: Fenced, effect: CallerMustResolve }
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+FAILED
+
+failures:
+
+failures:
+    storage::wal_io::bootstrap::doublewrite_install::mutable_storage::status_init::status_flush::resident::tests::resident_status_completion_rejects_other_slot
+
+test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 2005 filtered out; finished in 0.23s
+

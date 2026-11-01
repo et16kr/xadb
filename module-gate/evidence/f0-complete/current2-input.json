@@ -1,0 +1,14 @@
+{
+  "source": "c9e073c11396d0a774a083581396bce5309abe882f8ff267d782eb09e6fc84b0",
+  "elf": "77f4f15de1e95b948405e1add0a58940e8035deb1491cc4540e8851745399d41",
+  "selectors": [
+    "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::tests::lifecycle::retention_live_writer_boundaries",
+    "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::cases::recovery_lifecycle"
+  ],
+  "env": {
+    "RUST_MIN_STACK": "33554432",
+    "XADB_G6_VECTOR_INDEXES": "p1-o00=ce3fd367007a6d798dbb6c2f18367a714d4f105611fb190fe57a1aa72d6d99a8",
+    "XADB_G6RC_VECTOR_INDEXES": "p1=24fc3ed635ae36177021e696d1ac14e0f3396fa6b04e72fa5f329875b667e7f0"
+  },
+  "timeout": 120
+}

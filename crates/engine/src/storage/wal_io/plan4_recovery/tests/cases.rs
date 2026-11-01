@@ -156,23 +156,28 @@ pub(super) fn second_cycle<D: DirectoryPort>(directory: &D, read: impl Fn(&str) 
         let root = live.target(Plan4Page::Root).unwrap();
         let jobs = live.target(Plan4Page::Jobs { index: 0 }).unwrap();
         let mut offset = 4096 + 3040 + 56712 + 55112;
+        let mut private = boxed::<425_984>();
         for i in 0..4 {
             let observation = {
-                let (mut writer, _, _) = live.split();
                 match i {
-                    0 => writer.begin_empty(&mut owner, &status, job(3)),
-                    1 => writer.rollback_start(&mut owner, actor(2, 3)),
-                    2 => writer.abort_end_empty(&mut owner, actor(2, 3)),
-                    3 => writer.finish_empty_terminal(&mut owner, job(3)),
+                    0 => live.catalog_begin(&mut owner, &status, &mut private),
+                    1 => live.catalog_rollback_start(&mut owner, actor(2, 3), &mut private),
+                    2 => live.catalog_abort_end(&mut owner, actor(2, 3), &mut private),
+                    3 => live.catalog_retire(
+                        &mut owner,
+                        1,
+                        crate::storage::semantic_catalog::Operation::TerminalFinish,
+                        &mut private,
+                    ),
                     _ => unreachable!(),
                 }
                 .unwrap()
             };
             assert_eq!(
                 (
-                    observation.lsn.0,
-                    observation.issued_local,
-                    observation.adopted_local
+                    observation.header.lsn,
+                    live.catalog_test_locals().0,
+                    live.catalog_test_locals().1
                 ),
                 (8 + i as u64, 1, 1)
             );

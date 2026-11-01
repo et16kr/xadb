@@ -10,6 +10,13 @@ pub(super) fn get(raw: &[u8], at: usize, width: usize) -> u64 {
     u64::from_le_bytes(out)
 }
 fn exact(label: &str, actual: &[u8], expected: &[u8]) {
+    if let Some(at) = actual.iter().zip(expected).position(|(a, b)| a != b) {
+        eprintln!(
+            "{label} first differing bytes @{at}: {:?} / {:?}",
+            &actual[at..(at + 32).min(actual.len())],
+            &expected[at..(at + 32).min(expected.len())]
+        );
+    }
     assert!(
         actual == expected,
         "{label}: lengths {} / {}, first difference {:?}, SHA {} / {}",
@@ -145,7 +152,7 @@ pub(super) fn controls(
         (40, u64::from(epoch), 4),
         (88, lsn, 8),
         (96, 4096, 8),
-        (104, 1_048_576, 4),
+        (104, 2_097_152, 4),
         (112, 268_435_456, 8),
         (120, generation, 8),
         (160, u64::from(epoch - 1), 4),
@@ -200,7 +207,7 @@ pub(super) fn controls(
             (4, u64::from(epoch), 4),
             (8, generation, 8),
             (16, lsn, 8),
-            (24, 1_048_576, 4),
+            (24, 2_097_152, 4),
             (96, 4096, 8),
             (184, u64::from(epoch), 8),
         ] {
@@ -217,149 +224,231 @@ pub(super) fn controls(
     }
 }
 
-pub(super) fn first_base(original: &Images, stop: u64) -> Vec<u8> {
-    let (label, digest) = match stop {
-        1 => (
-            "reserved",
-            "51e8c85a58a668890868b0eec3e4f1e610761bd8e8871c8ec9c01e84ee0538a9",
-        ),
-        4 => (
-            "active",
-            "1d66e83db0dbcffa88cfdb9940ca9e942483bee654efc1e1b115767fb2806507",
-        ),
-        5 => (
-            "rollback",
-            "064d81eccf6f139973398b5cbe17f743293a2e89190db698150fcdb391b189c2",
-        ),
-        6 => (
-            "ready",
-            "caa762e7f9c2043c4f810aa04384631b7ad997c42a0d137b9203c4bdcd582438",
-        ),
-        7 => (
-            "finish",
-            "cb2ba8a9cf004201111e8353c97020602df2917a1f6dc77933bdac39910f4587",
-        ),
-        _ => panic!("unfrozen base {stop}"),
-    };
-    let path = std::path::PathBuf::from(env!("CARGO_MANIFEST_DIR")).join(format!(
-        "../../tests/fixtures/dev3-plan4-recovery-base/vectors/p1/raw/{label}.xrb"
-    ));
-    let mut expected = std::fs::read(path).unwrap();
-    assert_eq!(hex(&expected), digest);
+// Base4 is assembled from independently serialized input images/descriptors.
+// Only source identity, physical size and DWB counters come from the input DB.
+fn base(original: &Images, stop: u64, second: bool) -> Vec<u8> {
     let oracle = Oracle::new();
+    let cycle = second.then(|| SecondCycle::new(&oracle));
+    let source_epoch = if second { 2 } else { 1 };
+    let generation = source_epoch as u64;
+    let source = &original[&format!("d3-wal-{source_epoch:08x}")];
+    let profile = oracle.profile();
     let mut pages = (0..9)
         .map(|n| oracle.genesis(n).to_vec())
         .collect::<Vec<_>>();
     pages[0] = oracle.allocation(if stop == 1 { 0 } else { 2 }).1;
+    let mut descriptors: Vec<(usize, &[u8])> = Vec::new();
     if stop != 1 {
         let phase = match stop {
             4 => "begin",
             5 => "rollback",
             6 => "abort",
-            7 => "finish",
-            _ => unreachable!(),
+            7 | 11 => "finish",
+            _ => panic!("unfrozen base"),
         };
         let queue = if stop == 5 { "begin" } else { phase };
-        pages[1] = oracle.page(&format!("root-{queue}.page")).to_vec();
-        pages[2] = oracle.page(&format!("jobs-{queue}.page")).to_vec();
-        pages.push(oracle.page(&format!("status-{phase}.page")).to_vec());
+        if let Some(s) = &cycle {
+            pages[1] = s.roots[2].clone();
+            pages[2] = s.jobs[2].clone();
+            pages.push(s.statuses[3].clone());
+            descriptors.push((34, &s.aging[2]));
+        } else {
+            pages[1] = oracle.page(&format!("root-{queue}.page")).to_vec();
+            pages[2] = oracle.page(&format!("jobs-{queue}.page")).to_vec();
+            pages.push(oracle.page(&format!("status-{phase}.page")).to_vec());
+            if matches!(stop, 4 | 5) {
+                descriptors.push((
+                    0,
+                    oracle.raw(if stop == 4 {
+                        "tx-begin.descriptor"
+                    } else {
+                        "tx-rollback.descriptor"
+                    }),
+                ));
+            }
+            descriptors.push((
+                34,
+                oracle.raw(&format!(
+                    "aging-{}.descriptor",
+                    if stop == 5 { "begin" } else { phase }
+                )),
+            ));
+        }
     }
+    let (_, _, allocation) = oracle.allocation(if stop == 1 { 0 } else { 2 });
+    descriptors.push((32, &allocation));
+    descriptors.sort_by_key(|(slot, _)| *slot);
+    let root_at = get(&pages[1], 128, 2) as usize;
+    let root = &pages[1][root_at..root_at + 512];
+    let mut expected = vec![0; 2_097_152];
+    expected[..4].copy_from_slice(b"XRB1");
+    expected[16..32].copy_from_slice(&profile[16..32]);
+    expected[48..80].copy_from_slice(&content_digest(profile));
+    for (at, value, width) in [
+        (4, 4, 2),
+        (6, 1, 2),
+        (8, 2_097_152, 4),
+        (12, 4096, 4),
+        (32, 1, 8),
+        (40, 1, 8),
+        (80, 4, 8),
+        (88, generation, 8),
+        (96, stop, 8),
+        (104, generation - 1, 8),
+        (144, source_epoch as u64, 4),
+        (148, 1, 4),
+        (152, source.len() as u64, 8),
+        (192, u64::from(stop != 1), 8),
+        (208, 1, 8),
+        (224, u64::from(stop != 1), 8),
+        (240, 5, 8),
+        (248, stop, 8),
+        (256, u64::from(matches!(stop, 4 | 5)), 4),
+        (260, 1, 4),
+        (264, if stop == 1 { 0 } else { 512 }, 8),
+        (272, get(root, 104, 8), 8),
+        (280, get(root, 112, 8), 8),
+        (288, get(root, 64, 8), 8),
+        (296, get(root, 64, 8) - 1, 8),
+        (304, if stop == 1 { 0 } else { 2 }, 1),
+        (320, 1, 1),
+        (328, 1, 8),
+        (336, 4096, 4),
+        (448, 1, 8),
+        (1152, original.values().map(|b| b.len() as u64).sum(), 8),
+        (1184, source_epoch as u64, 4),
+    ] {
+        put(&mut expected, at, value, width);
+    }
+    if second {
+        expected[112..144].copy_from_slice(&content_digest(&original["d3-rebase-0"]));
+    }
+    expected[160..192].copy_from_slice(&content_digest(source));
+    expected[352..384].copy_from_slice(&content_digest(profile));
+    expected[384..448].copy_from_slice(&original["FILEMAP"][80..144]);
+    expected[464..496].copy_from_slice(&content_digest(&original["d3-bootstrap"]));
+    expected[1192..1224].copy_from_slice(&content_digest(&source[..4096]));
     let home = &original[HOME_NAME];
     let repairs = pages
         .iter()
         .enumerate()
         .filter(|(n, p)| p.as_slice() != &home[n * PAGE_BYTES..(n + 1) * PAGE_BYTES])
         .count() as u64;
-    let selector = &original["DWB"];
-    let dwb = &original[&format!("d3-dwb-{}", selector[81])];
+    let dwb = &original[&format!("d3-dwb-{}", original["DWB"][81])];
     let batch = get(dwb, 40, 8) + repairs;
     put(&mut expected, 496, batch, 8);
     put(&mut expected, 504, batch * 3 + 1, 8);
-    put(
-        &mut expected,
-        1152,
-        original.values().map(|b| b.len() as u64).sum(),
-        8,
-    );
-    expected[160..192].copy_from_slice(&content_digest(&original["d3-wal-00000001"]));
-    expected[1192..1224].copy_from_slice(&content_digest(&original["d3-wal-00000001"][..4096]));
-    seal(&mut expected);
-    expected
-}
-
-pub(super) fn second_base(original: &Images) -> Vec<u8> {
-    let path = std::path::PathBuf::from(env!("CARGO_MANIFEST_DIR"))
-        .join("../../tests/fixtures/dev3-plan4-recovery-base/vectors/p1/raw/finish.xrb");
-    let mut expected = std::fs::read(path).unwrap();
-    assert_eq!(
-        hex(&expected),
-        "cb2ba8a9cf004201111e8353c97020602df2917a1f6dc77933bdac39910f4587"
-    );
-    let cycle = SecondCycle::new(&Oracle::new());
-    let source = &original["d3-wal-00000002"];
-    for (at, value, width) in [
-        (88, 2, 8),
-        (96, 11, 8),
-        (104, 1, 8),
-        (144, 2, 4),
-        (152, source.len() as u64, 8),
-        (192, 1, 8),
-        (248, 11, 8),
-        (288, 8, 8),
-        (296, 7, 8),
-        (1184, 2, 4),
-    ] {
-        put(&mut expected, at, value, width);
+    let mut owners = Vec::new();
+    for (slot, descriptor) in &descriptors {
+        let at = 4096 + slot * 1536;
+        expected[at..at + 1536].copy_from_slice(descriptor);
+        if *slot == 32 && stop != 1 {
+            continue;
+        }
+        owners.extend_from_slice(&descriptor[16..72]);
+        for row in 0..5 {
+            let from = 640 + row * 128;
+            let to = 512 + row * 128;
+            expected[to] = (row + 1) as u8;
+            for offset in [8, 16, 24, 32, 40, 48, 56, 112] {
+                let value = get(&expected, to + offset, 8) + get(descriptor, from + offset, 8);
+                put(&mut expected, to + offset, value, 8);
+            }
+            for offset in [64, 72, 80, 88, 96, 104] {
+                let value = get(&expected, to + offset, 8).max(get(descriptor, from + offset, 8));
+                put(&mut expected, to + offset, value, 8);
+            }
+        }
     }
-    expected[112..144].copy_from_slice(&content_digest(&original["d3-rebase-0"]));
-    expected[160..192].copy_from_slice(&content_digest(source));
-    expected[1192..1224].copy_from_slice(&content_digest(&source[..4096]));
-    let selector = &original["DWB"];
-    let dwb = &original[&format!("d3-dwb-{}", selector[81])];
-    put(&mut expected, 496, get(dwb, 40, 8), 8);
-    put(&mut expected, 504, get(dwb, 32, 8), 8);
-    put(
-        &mut expected,
-        1152,
-        original.values().map(|b| b.len() as u64).sum(),
-        8,
-    );
-    expected[4096 + 34 * 1536..4096 + 35 * 1536].copy_from_slice(&cycle.aging[2]);
-    expected[81920..81920 + PAGE_BYTES].copy_from_slice(&cycle.roots[2]);
-    expected[98304..98304 + PAGE_BYTES].copy_from_slice(&cycle.jobs[2]);
-    let status = 180224 + 9 * 352;
-    expected[status + 8..status + 56].copy_from_slice(&cycle.statuses[3][24..72]);
-    expected[status + 64..status + 96].copy_from_slice(&content_digest(&cycle.statuses[3]));
-    expected[status + 128..status + 352].copy_from_slice(&cycle.statuses[3][16128..16352]);
-    for (n, image) in [
-        (1, &cycle.roots[2]),
-        (2, &cycle.jobs[2]),
-        (9, &cycle.statuses[3]),
-    ] {
-        let at = 202752 + n * 96;
+    for row in 0..5 {
+        expected[512 + row * 128] = (row + 1) as u8;
+    }
+    for (number, image) in pages.iter().enumerate() {
+        let at = 262144 + number * PAGE_BYTES;
+        expected[at..at + PAGE_BYTES].copy_from_slice(image);
+        let at = 65536 + number * 96;
+        expected[at..at + 3].copy_from_slice(&[1, image[6], 0]);
         expected[at + 8..at + 56].copy_from_slice(&image[24..72]);
         expected[at + 56..at + 88].copy_from_slice(&content_digest(image));
     }
-    // The sole active owner remains Aging1; only the inventory cut changes.
-    let inventory = 208896;
-    put(&mut expected, inventory + 40, 2, 8);
-    put(&mut expected, inventory + 48, 11, 8);
-    let root_len = get(&expected, inventory + 12, 4) as usize;
-    seal(&mut expected[inventory..inventory + root_len]);
-    for (i, (at, len)) in [
-        (4096, 55296),
-        (65536, 16384),
-        (81920, 98304),
-        (180224, 22528),
-        (202752, 6144),
-        (208896, 16384),
+    if stop != 1 {
+        let at = 73728 + 9 * 352;
+        let init = oracle.page("status-free.page");
+        expected[at..at + 5].copy_from_slice(&[1, 1, 9, 0, 1]);
+        expected[at + 8..at + 48].copy_from_slice(&init[24..64]);
+        put(&mut expected, at + 48, 2, 8);
+        put(&mut expected, at + 56, 1, 4);
+        expected[at + 64..at + 96].copy_from_slice(&content_digest(oracle.raw("status.wal")));
+        expected[at + 96..at + 128].copy_from_slice(&content_digest(init));
+        expected[at + 128..at + 176].copy_from_slice(&allocation[24..72]);
+        put(&mut expected, at + 176, 1, 8);
+    }
+    let mut inventory = vec![0; 160 + owners.len()];
+    inventory[..4].copy_from_slice(b"XOI1");
+    inventory[6..8].copy_from_slice(&[1, 2]);
+    inventory[16..32].copy_from_slice(&profile[16..32]);
+    let inventory_len = inventory.len() as u64;
+    for (at, value, width) in [
+        (4, 1, 2),
+        (8, 128, 2),
+        (10, 96, 2),
+        (12, inventory_len, 4),
+        (32, 1, 8),
+        (40, generation, 8),
+        (48, stop, 8),
+        (56, (owners.len() / 56) as u64, 2),
+    ] {
+        put(&mut inventory, at, value, width);
+    }
+    inventory[128..128 + owners.len()].copy_from_slice(&owners);
+    inventory[88..120].copy_from_slice(&content_digest(&[]));
+    if stop == 1 {
+        let mut chunk = vec![0; 256];
+        chunk[..128].copy_from_slice(&inventory[..128]);
+        chunk[6] = 2;
+        chunk[56..64].fill(0);
+        put(&mut chunk, 12, 256, 4);
+        put(&mut chunk, 64, 1, 8);
+        put(&mut chunk, 80, 1, 4);
+        chunk[88..120].copy_from_slice(&content_digest(&owners));
+        chunk[128] = 1;
+        chunk[129] = 3;
+        for (at, value) in [(136, 0x1_0000_0001), (144, 9), (152, 2), (192, 1), (200, 1)] {
+            put(&mut chunk, at, value, 8);
+        }
+        seal(&mut chunk);
+        put(&mut inventory, 64, 1, 4);
+        put(&mut inventory, 72, 1, 8);
+        put(&mut inventory, 80, 256, 8);
+        inventory[88..120].copy_from_slice(&content_digest(&chunk));
+        expected[98304 + 2176..98304 + 2176 + 256].copy_from_slice(&chunk);
+    }
+    seal(&mut inventory);
+    expected[98304..98304 + inventory.len()].copy_from_slice(&inventory);
+    for (i, (at, len, count, width)) in [
+        (4096, 55296, 36, 1536),
+        (65536, 6144, 64, 96),
+        (73728, 22528, 64, 352),
+        (98304, 16384, 1, 16384),
+        (262144, 1048576, 64, 16384),
     ]
     .into_iter()
     .enumerate()
     {
+        let directory = 1280 + i * 64;
+        put(&mut expected, directory, (i + 1) as u64, 2);
+        for (delta, value) in [(4, at), (8, len), (12, count), (16, width)] {
+            put(&mut expected, directory + delta, value as u64, 4);
+        }
         let digest = content_digest(&expected[at..at + len]);
-        expected[1280 + i * 64 + 32..1280 + (i + 1) * 64].copy_from_slice(&digest);
+        expected[directory + 32..directory + 64].copy_from_slice(&digest);
     }
     seal(&mut expected);
     expected
+}
+pub(super) fn first_base(original: &Images, stop: u64) -> Vec<u8> {
+    base(original, stop, false)
+}
+pub(super) fn second_base(original: &Images) -> Vec<u8> {
+    base(original, 11, true)
 }

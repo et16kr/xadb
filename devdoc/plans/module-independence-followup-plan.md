@@ -1,8 +1,8 @@
 # XADB 모듈 분리 후 안정화·경계 개선 실행 계획
 
-2026-11-02 · **계획 D2 ACCEPT / F0 기존 증거 분류 기록 / F1 구현·선택 검증 진행 / F0·F2–F7 제품 수정·진단 실행·시험 NOT_RUN**
+2026-11-02 · **계획 D2 ACCEPT / F0 수정·이관·선택 검증 완료 / F1 별도 구현·검증 기록 / F2–F7 NOT_RUN**
 
-모듈 분리 후속 개발을 위한 개선 순서와 완료 조건을 정한다. 각 단위에 현재 코드·계약의 근거와 비교할 대안을 연결한다. 계획 채택 때 제품·검사기·시험·측정은 시작하지 않았다. 후속 사용자 지시로 [F0 기존 증거 분류](../evidence/main-preexisting-failures-20261030.md#f0-existing-evidence)를 기록했다. 원 로그 미확보 항목은 미확인이고 원인 분류 전체 완료·CI 차단 해제가 아니다. F1은 별도로 구현·검증하며 [실행 기록](../evidence/module-independence-survey-20261026.md#f1-python-gate)에 현재 상태를 둔다. 이후 개발 재개 지시가 오면 해당 단위의 기존 위임과 D1/D2 절차 안에서 진행하며 일상 구현마다 재승인을 요구하지 않는다.
+모듈 분리 후속 개발을 위한 개선 순서와 완료 조건을 정한다. 각 단위에 현재 코드·계약의 근거와 비교할 대안을 연결한다. 계획 채택 때 제품·검사기·시험·측정은 시작하지 않았다. 후속 사용자 지시로 [F0 기존 증거 분류](../evidence/main-preexisting-failures-20261030.md#f0-existing-evidence)를 기록했고, 다시 F0 전체 완료 지시에 따라 [수정·이관·선택 검증](../evidence/main-preexisting-failures-20261030.md#f0-completion)을 마쳤다. 과거 원 로그 미확보의 attribution 한계는 보존하며 현재 선택78개의 PASS와 구분한다. F1은 별도로 구현·검증하며 [실행 기록](../evidence/module-independence-survey-20261026.md#f1-python-gate)에 현재 상태를 둔다. 이후 개발 재개 지시가 오면 해당 단위의 기존 위임과 D1/D2 절차 안에서 진행하며 일상 구현마다 재승인을 요구하지 않는다.
 
 [기존 분리 계획](module-independence-plan.md) · [소유 경계](../contracts/dev3-module-boundaries.md) · [소비자 계약](../contracts/dev3-module-consumers.md) · [모듈 gate](../policies/repository-build-plan.md#module-gate) · [개발 방침](../policies/development-policy.md#section-2)
 
@@ -66,7 +66,7 @@
 <a id="failures"></a>
 ## 4. F0 — 기존 실패와 미검증을 개발 가능한 상태로 정리
 
-**진행:** [F0 기존 증거 분류·인계](../evidence/main-preexisting-failures-20261030.md#f0-existing-evidence)에 26개 실패 자리·macro 선택 2개·resident 미검증 8개를 대응했다. 원 로그가 없어 7개 exact 이름·mixed 실패 43개 이름·실제 오류 값은 미확인이다. 기존 실패·보류·차단은 유지하며 수정·검증 완료로 세지 않는다.
+**진행:** [F0 완료 증거](../evidence/main-preexisting-failures-20261030.md#f0-completion)에 원인별 수정, D01 current-format 이관, 고유78 tests PASS와 원 FAIL/ABORT/NOT_STARTED 보존을 기록했다. 복구6함수의 세부45개와 resident cut8개를 모두 완료했다. 과거 원 로그의 미확인 이름을 소급 확정하지 않았으며 PR CI·main 병합은 별도다.
 
 **입력:** [보정의 실패 표와 후속 요구](../evidence/module-independence-survey-20261026.md#s12-full-lib-calibration), [기존 실패 조사](../evidence/main-preexisting-failures-20261030.md), 당시 source와 확보 가능한 원 로그다. 먼저 보존 자료를 읽고 원인별로 묶는다. 같은 panic 위치만으로 같은 원인이라고 판정하지 않는다.
 
@@ -74,7 +74,7 @@
 
 1. 미분류 19개와 두 macro 모듈 선택에서 제품 불변식·정리/Drop·자원 상한 문제가 있는지 우선 분류한다. resident abort와 뒤의 7개 미시작을 구별한다.
 2. `retention_live_lifecycle`의 알려진 Reserve 차이에 대해 후속 실행 경로까지 원인이 확인됐는지 대조한다. 알려진 첫 차이를 전체 시나리오의 원인으로 확대하지 않는다.
-3. format1 이관 전 6개는 2026-10-30의 보존 결정과 최신 보정 기록의 처리 재결정 요구를 함께 기록한다. 아래 D01이 정해질 때까지 원 시험을 보존하되, 그 파일을 바꾸는 CI 차단이 해결됐다고 표시하지 않는다. current-format 이관안은 새 fixture·독립 oracle·사례 대응표로 준비하며 기대값만 맞추거나 필수 시험을 일괄 제외하지 않는다.
+3. format1 이관 전 6개는 2026-10-30의 보존 결정과 최신 보정 기록의 처리 재결정 요구를 함께 기록한다. 후속 F0 전체 완료 지시에 따라 아래 D01의 current-format 이관을 적용했다. current-format 이관안은 새 fixture·독립 oracle·사례 대응표로 준비하며 기대값만 맞추거나 필수 시험을 일괄 제외하지 않는다.
 4. 제품 결함·시험 결함·환경 결함의 수정은 원인별 작은 diff로 분리한다. 수정 코드와 원 실패에 해당하는 선택 검증만 수행한다. 변경 없는 원인 조사에 새로운 실행이 꼭 필요하면 입력·관측 질문·유한 범위와 기존 정책 적용 여부를 먼저 정한다. 과거 PF04/COMM의 한정 예외를 일반화하지 않는다.
 
 5. resident `cut!` 8개는 후속 작업의 명시적 산출물로 둔다. allocator abort의 원인을 진단·수정하고 그 사례 및 뒤의 미시작 7개(`dpt_checked`, `dpt_owned`, `metadata`, `payload`, `publication`, `registry`, `stage`)에 도달·완료하는 선택 검증을 수행한다. 가능한 경우 8개를 개별 선택하고, 현재 macro selector가 더 넓으면 선택 기능부터 좁힌다. 이미 실행한 exact 23개와 ignored `s5!` 6개를 자동 재실행·활성화하지 않는다. 코드 수정 전 진단 실행이 필요하면 4항의 적용 근거와 범위를 먼저 정한다. 실행 결과는 당시 source에 붙이며 새 FAIL·abort도 그대로 기록한다.
@@ -88,14 +88,14 @@ F0는 **분류 완료**, **수정·검증 완료**, **사용자 처리 결정**,
 
 | ID·대상 | 준비할 대안·권고 | 결정 전 경계 |
 | --- | --- | --- |
-| D01 이관 전 6개 시험 | 권고는 원 증거를 보존한 current-format 이관과 독립 fixture/oracle 인수. 대안은 원 시험 보존과 해당 파일 작업 보류, 또는 근거·필수 coverage를 명시한 별도 처리안. 사용자에게 최신 보정 기록이 요구한 처리 재결정을 받음 | 기존 보존 결정을 따르고 해당 CI 차단을 유지. 이관·제외를 확정된 것으로 간주하지 않음 |
+| D01 이관 전 6개 시험 | 후속 “F0를 끝까지 진행” 지시에 따라 원 증거를 보존한 current-format 이관을 적용. 독립 fixture/base4 oracle·사례 대응표와 memory45개 PASS는 [F0 완료](../evidence/main-preexisting-failures-20261030.md#f0-completion) | 이관·선택 검증 완료. 과거 FAIL과 ignored native/static의 별도 범위 유지 |
 | D02 공통 C 변경을 직접 검증하는 A/B 사례 | 실제 C diff→호출 경로→계약→최소 사례를 제시해 변경 코드 시험 범위임을 확인. 이 범위로 해결 가능하면 기존 권한으로 진행. 사용자 규칙의 해석이 미정이거나 무변경 소비자 회귀까지 필요하면 필요한 범위만 사용자에게 확인 | 전이 의존 전체 재실행을 허용하지 않음. 미실행은 NOT_RUN으로 남기고 coverage 완료로 세지 않음 |
 | D03 WAL 진단·성능 측정 | F6-a의 입력·관측 질문·반복·시간/disk 예산·중단 조건을 구체화. 기존 지시로 허용된 범위면 재사용하고, 무변경 baseline 측정 등 적용 권한이 없으면 유한 측정 범위를 사용자에게 확인 | 정적 조사·계측 설계까지 진행. 미허용 측정을 시작하거나 PF04/COMM의 한정 지시를 전용하지 않음 |
 
 <a id="gate-tests"></a>
 ## 5. F1 — gate·runner 변경을 해당 PR에서 검증
 
-**진행:** F1 구현·선택 검증과 독립 리뷰는 [실행 기록](../evidence/module-independence-survey-20261026.md#f1-python-gate), 결과 계약과 도입 순서는 [build 계획](../policies/repository-build-plan.md#module-gate-python)을 따른다. F0·F2–F7은 이번 작업 범위 밖이다.
+**진행:** F1 구현·선택 검증과 독립 리뷰는 [실행 기록](../evidence/module-independence-survey-20261026.md#f1-python-gate), 결과 계약과 도입 순서는 [build 계획](../policies/repository-build-plan.md#module-gate-python)을 따른다. F0는 별도 후속 완료 기록을 따르며 F2–F7은 이 F1 작업 범위 밖이다.
 
 **착수 당시 근거:** [`RUST_INPUTS`와 `selection`](../../scripts/check_module_gate.py), [build runner](../../scripts/module_gate_build.py), [build workflow](../../.github/workflows/module-build.yml), [기존 시험](../../scripts/test_check_module_gate.py). Python만 바뀌면 Rust 선택은 비고, 신뢰 판정은 기본 branch의 코드를 사용하므로 head의 새 Python 동작을 자동 검증하지 않는다.
 
@@ -220,4 +220,4 @@ A/B/C·C0·S단계는 기존 인수·이력의 식별자로 유지한다. 새 �
 | 의견 반영 | 정량 기준선, 분류와 CI 차단 해제의 구분, 작업별 실패 파일, resident 미검증 8개 후속 작업, D01–D03 결정, EX01–EX09 처리 기준과 현재 색인을 보완. [정정 댓글](https://github.com/et16kr/xadb/pull/23#issuecomment-6560583019)에 따라 독립 평가 보고서로 확대하지 않고 실행 계획 범위를 유지 |
 | 수정 검토 | `/root/followup_plan_review`가 수정 계획·색인 3개 파일을 기존 정책·최신 증거·manifest와 대조하고 정량 기준선을 독립 재집계해 D2 ACCEPT, 필수 수정 0으로 판정했다. root README의 낡은 현재 안내도 갱신하라는 권고 1건을 반영했고, 평가 추가 권고 철회를 포함한 최종판 재확인에서 ACCEPT·필수 수정 0·추가 권고 0을 확인했다. 계약 대조·통합 담당 `/root`가 반영을 확인했으며 개별 후속 구현의 검토를 대신하지 않는다 |
 | 재검토 조건 | 기준선의 관련 코드·정책 변경, 신규 실제 소비자, 측정이 비용 가설을 지지하지 않음, 기존 실패 원인의 영향 확대 |
-| 현재 실행 | 문서·색인 보완. 계획 저장 시점의 F0–F7 구현·제품 시험·성능 측정은 NOT_RUN이었다. 후속 F0는 기존 증거 분류·인계를 기록했고 원 로그 미확보 항목은 미확인·차단 유지다. F1 구현·선택 검증은 위 실행 기록을 따르며, F0·F2–F7의 제품 수정·진단 실행·시험은 NOT_RUN이다. [문서 운영 기준](../policies/documentation-policy.md#push-gate)에 따라 push 직전에 문서 검사와 전송 commit의 필수 훅을 수행하고 실제 결과는 검사 산출물·PR에 기록. Clippy의 시험 target 컴파일은 제품 시험 실행으로 세지 않음 |
+| 현재 실행 | 문서·색인 보완. 계획 저장 시점의 F0–F7 구현·제품 시험·성능 측정은 NOT_RUN이었다. 후속 F0는 기존 증거 분류 뒤 current-format 이관과 선택 검증까지 마쳤으며 원 기록·역사적 attribution 한계는 보존한다. F1 구현·선택 검증은 위 실행 기록을 따르며, F2–F7의 제품 수정·진단 실행·시험은 NOT_RUN이다. [문서 운영 기준](../policies/documentation-policy.md#push-gate)에 따라 push 직전에 문서 검사와 전송 commit의 필수 훅을 수행하고 실제 결과는 검사 산출물·PR에 기록. Clippy의 시험 target 컴파일은 제품 시험 실행으로 세지 않음 |

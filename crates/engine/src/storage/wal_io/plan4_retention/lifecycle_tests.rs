@@ -46,11 +46,11 @@ struct Oracle {
 impl Oracle {
     fn new() -> Self {
         let root = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
-            .join("../../tests/fixtures/dev3-plan4-empty-retention/vectors/p1-o00");
+            .join("../../tests/fixtures/dev3-plan4-empty-retention/current3");
         let index = std::fs::read(root.join("raw-index.tsv")).unwrap();
         assert_eq!(
             hex(&index),
-            "ce3fd367007a6d798dbb6c2f18367a714d4f105611fb190fe57a1aa72d6d99a8"
+            "3b9e3ac52864e5d1e6c46071a16936c2a1a8cd44386691c96022494c65851740"
         );
         let mut files = BTreeMap::new();
         let mut total = 0;
@@ -60,15 +60,15 @@ impl Oracle {
             let path = fields[0];
             assert!(!path.starts_with('/') && !path.split('/').any(|s| s == ".."));
             let size = fields[1].parse::<usize>().unwrap();
-            assert!(size <= 56_712);
+            assert!(size <= 80_000);
             let bytes = std::fs::read(root.join(path)).unwrap();
             assert_eq!(bytes.len(), size);
             assert_eq!(hex(&bytes), fields[2]);
             total += size;
-            assert!(total <= 550_160);
+            assert!(total <= 1_028_952);
             assert!(files.insert(path.to_owned(), bytes).is_none());
         }
-        assert_eq!((files.len(), total), (34, 550_160));
+        assert_eq!((files.len(), total), (63, 1_028_952));
         Self { files }
     }
     fn raw(&self, name: &str) -> &[u8] {
@@ -272,11 +272,14 @@ macro_rules! fixture {
         let mut isolation = boxed::<4_160>();
         let mut control = boxed::<RETENTION_CONTROL_BYTES>();
         let mut replay = boxed::<RETENTION_REPLAY_BYTES>();
+        let mut visibility = boxed::<8_192>();
+        let mut epochs = boxed::<1_600>();
         let old = $storage.bind_plan4_pages(&$core, &mut frames, &mut operation).unwrap();
         let mut $bound = match old.into_empty_retention(&mut $owner, EmptyRetentionControlLoan { isolation: &mut isolation, control: &mut control, replay: &mut replay }) {
             Ok(v) => v,
             Err(IntoRetentionError::Before { error, .. }) | Err(IntoRetentionError::Fatal(error)) => panic!("activation: {error:?}"),
         };
+        $bound.enable_catalog_visibility(&mut $owner, VisibilityLoan { bytes: &mut visibility, epochs: &mut epochs }).unwrap();
         clear(&$state);
         $body
         drop($bound);
@@ -294,6 +297,7 @@ fn complete<'s, 'c>(
     state: &State,
     oracle: &Oracle,
 ) -> Plan4Target {
+    let mut private = boxed::<425_984>();
     let reserve = literals::population(oracle, oracle.genesis(0), 1, 1, 0, &[]);
     let initialized =
         literals::population(oracle, &reserve.allocator, 1, 1, 2, &reserve.descriptor);
@@ -349,20 +353,27 @@ fn complete<'s, 'c>(
     {
         let actor = crate::storage::retention_page::tests::actor(1, 2);
         let observation = {
-            let (mut w, _, _) = bound.split();
             match index {
-                0 => w.aging_start(owner),
-                1 => w.begin_empty(owner, &status, job(2)),
-                2 => w.rollback_start(owner, actor),
-                3 => w.abort_end_empty(owner, actor),
-                4 => w.finish_empty_terminal(owner, job(2)),
+                0 => bound.catalog_aging_start(owner, &mut private),
+                1 => bound.catalog_begin(owner, &status, &mut private),
+                2 => bound.catalog_rollback_start(owner, actor, &mut private),
+                3 => bound.catalog_abort_end(owner, actor, &mut private),
+                4 => bound.catalog_retire(
+                    owner,
+                    0,
+                    crate::storage::semantic_catalog::Operation::TerminalFinish,
+                    &mut private,
+                ),
                 _ => unreachable!(),
             }
             .unwrap()
         };
-        assert_eq!(observation.lsn.0, index as u64 + 3);
+        assert_eq!(observation.header.lsn, index as u64 + 3);
         assert_eq!(
-            (observation.issued_local, observation.adopted_local),
+            (
+                bound.control.ledger.issued_local,
+                bound.control.ledger.adopted_local
+            ),
             if index == 0 { (0, 0) } else { (1, 1) }
         );
         let bytes = wal(state);
@@ -412,10 +423,7 @@ fn complete<'s, 'c>(
                     .all(|b| *b == 0)
             );
             if index == 3 {
-                assert_eq!(
-                    &bound.inner.operation[416..1952],
-                    oracle.raw("tx-abort.descriptor")
-                );
+                assert_eq!(&private[416..1952], oracle.raw("tx-abort.descriptor"));
             }
         }
         owner.check_idle().unwrap();
@@ -800,26 +808,24 @@ fn retention_live_writer_boundaries() {
     for case in 1..=6 {
         h.case(&format!("P4-LIVE-W{case:02}"), || {
             fixture!(|bound, owner, core, _foreign, state, storage| {
+                let mut private = boxed::<425_984>();
                 if case <= 2 {
                     let status = init(&mut bound, &mut owner, &core);
                     prepare(&mut bound, &mut owner, &core, &status);
-                    {
-                        let (mut writer, _, _) = bound.split();
-                        writer.aging_start(&mut owner).unwrap();
-                    }
+                    bound.catalog_aging_start(&mut owner, &mut private).unwrap();
                     clear(&state);
                     let before = snapshots(&bound);
                     let error = {
-                        let (mut writer, _, _) = bound.split();
                         if case == 1 {
-                            rejected(writer.abort_end_empty(
+                            rejected(bound.catalog_abort_end(
                                 &mut owner,
                                 crate::storage::retention_page::tests::actor(99, 2),
+                                &mut private,
                             ))
                         } else {
                             let mut wrong = status;
                             wrong.request.identity.owner = ObjectId::new(3).unwrap();
-                            rejected(writer.begin_empty(&mut owner, &wrong, job(2)))
+                            rejected(bound.catalog_begin(&mut owner, &wrong, &mut private))
                         }
                     };
                     assert_eq!(error.effect, Effect::Unchanged);
@@ -830,23 +836,29 @@ fn retention_live_writer_boundaries() {
                     });
                     assert_eq!(snapshots(&bound), before);
                     assert_eq!(effects(&state).1, 0);
+                    // Current Begin checks Status membership before allocating
+                    // identity; a malformed target cannot burn a local ID.
                     assert_eq!(
                         (
                             bound.control.ledger.issued_local,
                             bound.control.ledger.adopted_local
                         ),
-                        if case == 1 { (0, 0) } else { (1, 0) }
+                        (0, 0)
                     );
                     if case == 2 {
                         let observation = {
-                            let (mut writer, _, _) = bound.split();
-                            writer.begin_empty(&mut owner, &status, job(2)).unwrap()
+                            bound
+                                .catalog_begin(&mut owner, &status, &mut private)
+                                .unwrap()
                         };
                         assert_eq!(
-                            (observation.issued_local, observation.adopted_local),
-                            (2, 2)
+                            (
+                                bound.control.ledger.issued_local,
+                                bound.control.ledger.adopted_local
+                            ),
+                            (1, 1)
                         );
-                        assert_eq!(observation.actor.unwrap().id().local, 2);
+                        assert_eq!(observation.actor.unwrap().id().local, 1);
                     }
                 } else {
                     let mut cursor = Plan4ResidencyCursor::new();
@@ -1009,7 +1021,8 @@ fn retention_live_flush_boundaries() {
             fixture!(|bound, owner, core, _foreign, state, storage| {
                 let status = init(&mut bound, &mut owner, &core);
                 prepare(&mut bound, &mut owner, &core, &status);
-                { let (mut writer, _, _) = bound.split(); writer.aging_start(&mut owner).unwrap(); }
+                let mut private = boxed::<425_984>();
+                bound.catalog_aging_start(&mut owner, &mut private).unwrap();
                 let root = bound.target(Plan4Page::Root).unwrap();
                 clear(&state);
                 if matches!(case, 1 | 3) {
@@ -1018,6 +1031,8 @@ fn retention_live_flush_boundaries() {
                     install_after_capture(&bound.inner.pool, arrive, release);
                     let root_index = (0..4).find(|&i| slots::slot(&bound.inner.pool, i).is_some_and(|s| s.0 == root.request)).unwrap();
                     let (mut writer, _, mut flusher) = bound.split();
+                    assert!(std::ptr::eq(writer.pool, flusher.pool));
+                    assert!(std::ptr::eq(writer.storage, flusher.storage));
                     let pool = writer.pool;
                     std::thread::scope(|scope| {
                         let core_ref = &core;
@@ -1033,8 +1048,8 @@ fn retention_live_flush_boundaries() {
                             install_after_install(pool, install_arrive, install_release);
                             let writing = scope.spawn(move || {
                                 let mut foreground = core_ref.try_owner(OwnerRole::Foreground).unwrap();
-                                let result = writer.begin_empty(&mut foreground, &status, job(2));
-                                assert!(result.is_ok(), "concurrent Begin failed: {result:?}");
+                                let result = writer.f0_capture_begin(&mut foreground, &status, &mut private);
+                                assert!(result.is_ok(), "concurrent Begin failed: {:?}", result.as_ref().err());
                                 result
                             });
                             waited.recv_timeout(Duration::from_secs(5)).unwrap();
@@ -1054,7 +1069,7 @@ fn retention_live_flush_boundaries() {
                                 other => panic!("fixed durable capture did not complete {other:?}"),
                             }
                             finish_wait.send(flush_probe::Resume::Continue).unwrap();
-                            assert_eq!(writing.join().unwrap().unwrap().lsn, PageLsn(4));
+                            assert_eq!(writing.join().unwrap().unwrap().header.lsn, 4);
                         } else {
                             let (held, held_ack) = mpsc::sync_channel(1);
                             let (unhold, hold_release) = mpsc::sync_channel(1);

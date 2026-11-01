@@ -1,0 +1,114 @@
+[
+  {
+    "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::tests::lifecycle::retention_live_lifecycle",
+    "rc": 0,
+    "seconds": 1.37,
+    "log": "current1-000.log",
+    "sha256": "b01525db4312582f4cfc314abea1941a5b3e745b7fb721b488bce2310fb9df6f"
+  },
+  {
+    "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::tests::lifecycle::retention_live_writer_boundaries",
+    "rc": 101,
+    "seconds": 0.47,
+    "log": "current1-001.log",
+    "sha256": "7f6bb8f9ee5fbb2151289924a5fd49c298acc4584477047e7939cc26f37b3c6e"
+  },
+  {
+    "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::tests::lifecycle::retention_live_flush_boundaries",
+    "rc": 0,
+    "seconds": 1.37,
+    "log": "current1-002.log",
+    "sha256": "24c076e208dad181edbce97d03cb3d943d7e127094525c9d3422e798e57cc08b"
+  },
+  {
+    "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::tests::lifecycle::retention_live_reader_boundaries",
+    "rc": 0,
+    "seconds": 0.82,
+    "log": "current1-003.log",
+    "sha256": "1411bc822041877a74a022e18d481beba5c4dd8cdb4e9bd22e0ec41c988760aa"
+  },
+  {
+    "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::tests::lifecycle::retention_live_latest_load",
+    "rc": 0,
+    "seconds": 1.22,
+    "log": "current1-004.log",
+    "sha256": "6adbac7ca725ec95a2a8a7f0a041ad339ba40dc4850b60ae36106214fa248f67"
+  },
+  {
+    "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::tests::lifecycle::retention_live_activation",
+    "rc": 0,
+    "seconds": 0.77,
+    "log": "current1-005.log",
+    "sha256": "8ccac4ec232606b55984ac97567d1ad67ab9c5a88a4c732036d0aab403632198"
+  },
+  {
+    "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::cases::recovery_lifecycle",
+    "rc": 101,
+    "seconds": 0.41,
+    "log": "current1-006.log",
+    "sha256": "89a3dd3bba562ea5911d0a40edc9c5e23dd88abc23316e8e697b826bd62af552"
+  },
+  {
+    "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::cases::recovery_binding",
+    "rc": 0,
+    "seconds": 1.77,
+    "log": "current1-007.log",
+    "sha256": "156570751966c94e567c62d5e1feb086588f1e7fbeedb9f4910ec331a17349ac"
+  },
+  {
+    "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::closure::recovery_closure",
+    "rc": 0,
+    "seconds": 2.57,
+    "log": "current1-008.log",
+    "sha256": "e7c5e1a549125355c72fb5508f03e8ba0bb55cd2fc3c5ce4aacf7f48ecad0191"
+  },
+  {
+    "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::faults::recovery_selection",
+    "rc": 0,
+    "seconds": 5.73,
+    "log": "current1-009.log",
+    "sha256": "9b87dafdd8b06e5e2f7b95a105011aaa7cff997c89401b7bc6f87c3eb3aa5310"
+  },
+  {
+    "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::physical::recovery_physical",
+    "rc": 0,
+    "seconds": 2.87,
+    "log": "current1-010.log",
+    "sha256": "343e5133c394a55dc465574687cae827913c0d00a1bedc3489186e0d7b8c5d3c"
+  },
+  {
+    "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::publication::recovery_publication",
+    "rc": 0,
+    "seconds": 3.27,
+    "log": "current1-011.log",
+    "sha256": "ed6e257ada29446a4c198b3a4d0ee8f3e5a7f92636f3c84e27fda8f8e1d00cc2"
+  },
+  {
+    "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::free_undo_tests::free_undo_original_owner_gap_cancel_reuse_flush_reload",
+    "rc": 0,
+    "seconds": 0.67,
+    "log": "current1-012.log",
+    "sha256": "7253786b74af0cdd7729f9ec9fd36306b9d1f340d3665ae53fb940c7e56103d9"
+  },
+  {
+    "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::free_undo_tests::free_undo_new_role_preflight_and_install_failure_boundaries",
+    "rc": 0,
+    "seconds": 1.42,
+    "log": "current1-013.log",
+    "sha256": "b5d68879e6596b9fdc7a0df39aeb438b5e9f9ef3bd3f77b388a24b9542d22ec3"
+  },
+  {
+    "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::free_undo_tests::free_undo_original_role_rejection_and_corruption_cleanup",
+    "rc": 0,
+    "seconds": 0.21,
+    "log": "current1-014.log",
+    "sha256": "2e5b09e76ca563ba5123cefb7e22297e6bd4b7fd35f1e0eceb432bf297f4e946"
+  },
+  {
+    "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::free_undo::free_undo_reserved_recovery_uses_original_scope_cancel",
+    "rc": 0,
+    "seconds": 0.52,
+    "log": "current1-015.log",
+    "sha256": "fed125947660b2a80892b7acaabbec0114d0c32e07ae5e1848897fa42fab93d0"
+  }
+]

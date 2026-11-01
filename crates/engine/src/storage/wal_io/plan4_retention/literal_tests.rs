@@ -102,16 +102,16 @@ fn descriptor(profile: &[u8], id: u64, birth: u64, terminal: u8, item: &[u8; 96]
     if !finished {
         for (at, value) in [
             (904, 1),
-            (912, 38_000),
+            (912, 38_208),
             (936, 1),
             (960, 2),
             (968, 114_688),
             (992, 1),
-            (1008, 70_768),
+            (1008, 70_976),
             (1280, 2),
             (1288, 114_688),
             (1312, 1),
-            (1328, 70_768),
+            (1328, 70_976),
             (1336, birth),
         ] {
             put(&mut out, at, value, 8);
@@ -166,7 +166,8 @@ pub(super) fn population(
     frame[128..160].copy_from_slice(&header_sha);
     let group = &mut frame[160..352];
     group[..4].copy_from_slice(b"XSG1");
-    put(group, 4, 1, 2);
+    put(group, 4, 2, 2);
+    put(group, 10, 1, 2);
     put(group, 6, opcode, 2);
     put(group, 8, 192, 2);
     put(group, 12, length as u64 - 192, 4);

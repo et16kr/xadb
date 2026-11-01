@@ -1316,7 +1316,14 @@ fn init_partial(kind: SystemPageKind, cut: usize) {
             let controller = scope.spawn(move || {
                 arrival.recv_timeout(Duration::from_secs(5)).unwrap();
                 assert!(!fence.is_fenced());
-                assert_eq!(init_probe::pin_state(pool).1, 2);
+                if cut == 0 {
+                    assert_eq!(init_probe::try_pin_state(pool).unwrap().1, 2);
+                } else {
+                    // The installer owns the unified registry at these cuts.
+                    let held = init_probe::try_pin_state(pool).unwrap_err();
+                    assert_eq!(held.cause, dirty_frame::Cause::Busy);
+                    assert_eq!(held.effect, Effect::Unchanged);
+                }
                 assert!(dirty_frame::test_support::content_busy(pool, 0));
                 assert!(dirty_frame::test_support::content_busy(pool, work as usize));
                 resume

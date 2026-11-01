@@ -1,0 +1,8 @@
+
+running 1 test
+test storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::row::census_tests::s2w_c04_live_and_recovered_peaks_unchanged ... S2W_C04 writer=memory live_peak=64016 recovered_peak=65392 shared=20208 split_ports=192
+S2W_C04 writer=native live_peak=64024 recovered_peak=65400 shared=20216 split_ports=192
+ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 2005 filtered out; finished in 0.00s
+

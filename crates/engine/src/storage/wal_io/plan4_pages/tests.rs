@@ -511,9 +511,7 @@ fn canonical_mutation(case: usize) -> (usize, Vec<u8>) {
         2 => raw::put64(&mut bytes, 10_208 + 96 + 16, 5),
         // Case 3 changes the Root cell's PageRef of Job page 4. The Root2 and
         // Root3 decoders check that reference identically and report
-        // IdentityMismatch; the Corrupt expected for it below is the Profile1
-        // v1 byte-compare value. That match already failed before the
-        // current-format switch (pre-existing, left to its owner).
+        // IdentityMismatch, rather than Profile1's byte-compare Corrupt.
         3 => raw::put64(&mut bytes, 15_840 + 256 + 4 * 24 + 8, 5),
         4 => {
             raw::put16(&mut bytes, 72, 3);
@@ -570,9 +568,15 @@ fn g5_canonical_source_boundaries() {
                     );
                     match (case, &e.cause) {
                         (
-                            3 | 4 | 7,
+                            4 | 7,
                             Plan4PageCause::Retention(
                                 crate::storage::retention_genesis::RetentionGenesisError::Corrupt,
+                            ),
+                        ) => {}
+                        (
+                            3,
+                            Plan4PageCause::Retention(
+                                crate::storage::retention_genesis::RetentionGenesisError::IdentityMismatch,
                             ),
                         ) => {}
                         (

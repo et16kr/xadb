@@ -1,0 +1,11 @@
+{
+  "reason": "Six previously unrun fatal snapshots directly exercise changed status_load_test_support::slot, child of mixed module; no already-passing case repeated.",
+  "selectors": [
+    "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::status_init::status_flush::mixed::tests::load_addendum::mixed_owner_load_home_zero_eof_fences_without_install",
+    "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::status_init::status_flush::mixed::tests::load_addendum::mixed_owner_load_home_partial_eof_fences_without_install",
+    "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::status_init::status_flush::mixed::tests::load_addendum::mixed_owner_load_rejects_sha_valid_later_undo_class",
+    "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::status_init::status_flush::mixed::tests::load_addendum::mixed_owner_load_rejects_sha_valid_later_undo_geometry",
+    "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::status_init::status_flush::mixed::tests::load_addendum::mixed_owner_load_rejects_sha_valid_terminal_descriptor_budget",
+    "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::status_init::status_flush::mixed::tests::load_addendum::mixed_owner_load_rejects_sha_valid_wrong_descriptor_predecessor"
+  ]
+}

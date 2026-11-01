@@ -362,3 +362,61 @@ census 93개에서 남은 FAIL 5개는 main `76b3627`에서도 같은 panic 위�
 제품·시험·fixture·manifest·gate·CI 정책 diff는 없다. 관련 제품 시험은 NOT_RUN이며 무변경 시험을 이번 결과로 재사용하여 PASS라고 쓰지 않는다. D01–D03은 기존 상태를 유지한다. F1은 Python-only 변경으로 별도 진행 가능하다. F3–F6는 실제 diff의 exact case·macro selector와 위 차단 파일을 대조해야 하며, 이 문서의 영향 표만으로 실행/인수를 허용하지 않는다. M5 한정 완료와 MI03 잔여도 그대로다.
 
 자기 검토는 원 보정의 26/14/2/8 집계, 소스의 logical module/첫 실패 위치, 계약 링크, 원 결정과 현재 처리의 구분, 제품 diff 부재를 대조하는 범위다. 문서 자동 검증·fmt·Clippy는 [push 훅](../policies/documentation-policy.md#push-gate)이 전송 commit 사본에서 수행하며 실제 결과는 PR에 기록한다. Clippy가 시험 target을 검사해도 제품 시험 실행이 아니다. 되돌림은 이 F0 문서 commit만 revert하면 되며 원 증거·fixture는 변경하지 않았다.
+
+<a id="f0-completion"></a>
+## 8. F0 수정·이관과 선택 검증 완료
+
+2026-11-01 UTC · **F0 대상 수정·선택 검증 완료 / 고유 78 tests PASS / 원 FAIL·ABORT·NOT_STARTED 보존**
+
+사용자의 후속 지시 “모듈 분류 후속 추가 계획에서 F0를 끝까지 진행 … 리뷰 테스트 하고 pr”에 따라 `main` `01fb227d7555c4ef90327382a027c1275737546d`에서 `codex/module-followup-f0-complete`를 만들었다. §7의 분류만 완료했던 상태를 이어서 처리했다. 작성·통합은 `/root`, 독립 D1/D2 검토는 `/root/f0_contract_review`다. 최종 검토의 실제 verdict와 head blob은 [gate 기록](../../module-gate/records/20261101-f0-complete.json), 원 실행과 source/ELF/input identity는 [완료 receipt](../../module-gate/evidence/f0-complete/completion.json)와 [artifact 해시](../../module-gate/evidence/f0-complete/artifact-sha256.json)에 둔다.
+
+### 결정·진단 경계
+
+D01은 위의 **F0 전체 완료 지시**를 current-format 이관 권고안의 실행 범위로 적용했다. 2026-10-30의 원 시험 보존 결정·그때의 미실행 기록은 수정하지 않았다. 옛 fixture와 과거 source는 보존하고 현재 선택 시험만 Profile3의 원 `catalog_*` producer와 독립 oracle로 이관했다. legacy producer의 format 거절, 생산 health/fence, cap 및 ignored 표시는 유지한다.
+
+새 실행이 필요한 미분류 원인은 [진단 계획](../../module-gate/evidence/f0-complete/diagnostic-plan.md)에 입력·관측 질문·횟수·120초/사례·총45분·disk20GiB 중단 조건을 먼저 정했다. baseline exact23은 **21 FAIL·1 PASS·1 SIGABRT**였다. 이 결과를 현재 수정 결과로 덮지 않았다. `g5_clean_lifecycle`은 baseline에서 PASS여서 수정 검증에 반복하지 않았다. 과거 원 로그가 없는 7개의 이름·실패 순서를 이번 결과로 소급 확정하지 않는다.
+
+추가로 Plan4 bind의 BeforePanic 위치를 구분하는 [유한 진단](../../module-gate/evidence/f0-complete/g5-bind-diagnostic-plan.json)을 했다. 첫 실행은 executor 전용 B08 padding 입력 누락으로 FAIL했으며 B01–07만 도달했다. 이어 미실행 B15만 선택해 의도된 panic을 catch하고 ABANDONED/fence·정리를 확인했다. B15 PASS를 B08 또는 bind 전체 PASS로 세지 않는다. 이 입력 실패는 제품 결함이나 F0의 새 차단으로 분류하지 않는다. 기존 executor 전용 구분은 유지한다.
+
+### 원인과 현재 처리
+
+§7의 E/M/U ID는 과거 증거의 추적 번호로 유지한다. 아래 selector 대응은 **새 source에서 실제 실행한 이름**이며, 미확보 과거 로그의 행 순서를 추정한 것이 아니다. 각 경로의 담당은 `/root`, 상태는 아래 범위의 수정·검증 완료다.
+
+| 추적 범위 | 확인한 원인과 적용 | 현재 선택 결과·영향 |
+| --- | --- | --- |
+| E01–03, E06–08, E10–11 / G1 | 의도적으로 fence한 뒤 test-only `slot()`이 생산 health 검사를 다시 호출해 snapshot 자체가 실패. quiescent 시험 관측에서 원 registry의 등록 사본만 읽도록 수정. poison 이후 관측도 가능하며 capability를 발급하지 않음 | resident의 `staged_key_rejects_other_slot`, `completion_rejects_other_slot`, `late_semantic_failure_releases_whole_read`; G5 identity/invariant/residency/load; live reader/latest의 오류·effect·frame/pin 보존 검증 PASS |
+| E04 / G2 | Root의 PageRef를 바꾼 case3은 현재 decoder에서 IdentityMismatch. 같은 byte의 다른 canonical 손상 case4/7은 Corrupt | `g5_canonical_source_boundaries` PASS. cause·fence·no-write·기존 frame 비교 유지 |
+| E05 / G3 | `BeforePanic`는 주입 위치이며 실패 원인 자체가 아님. 현재 G5 residency의 catch 뒤 snapshot 경로를 위 수정으로 완료. bind B15 별도 진단도 예상 unwind 후 정리 PASS | G5 현재 관련5개 함수 PASS. 과거 E05의 정확한 이름은 원 로그 미확보 상태 유지 |
+| E09, E12–14 / G4–6 | Profile1 digest·v1 group·구 예약량과 current Profile3 및 legacy empty 호출의 불일치 | live lifecycle·writer·flush·activation 모두 PASS. 6개 live 함수의 원 subcase 유지. 아래 이관 대응 참조 |
+| E15–16, E23 / G6 | Free Undo의 구 Profile reference·완료 descriptor·Reserve prefix 불일치. 복구 전 producer에서 막혔던 경로 | 별도 current Free Undo 입력과 실제 producer로 memory gap/cancel/reuse/flush/reload, 실패 경계, Reserved recovery Cancel PASS. 같은 fixture 변경의 role/corruption 사례1개도 PASS |
+| E17–22 / G7, D01 | old format1 producer와 base1MiB oracle가 current physical recovery/Profile3/base4에 맞지 않음 | 복구6함수, L01–06/B01–04/V01–04/S01–15/P01–06/E01–10 **45/45 PASS**. 2MiB base·CURRENT/WRITER/epoch·ledger·remaining·home/WAL 전체 비교 유지 |
+| E24 / G8 | `6469085f8511852b443c898a6ae2d0f30d1e052b`의 test-only catalog abort hook이 원 PageConcurrency에8B 추가. shared에서 한 번 계수됨 | `s2w_c04_live_and_recovered_peaks_unchanged` PASS. memory64016/65392, native 타입64024/65400. 생산 cap65536 유지, native I/O 실행 주장이 아님 |
+| E25 / G9 | Free generation2의 물리 nonmixed 재생은 nested Prefix→Semantic(StateMismatch)에서 거절. top-level Semantic만 기대하던 시험이 낡음 | `pending_and_healthy_corruption_boundaries` PASS. Redo/effect/no-home-write 및 정확한 nested cause 유지 |
+| E26 / G10 | 실제 flush authority296B. `a7af5abd8`와 [D3-EMPTY-TXN-003](../contracts/dev3-obligation-format.md#empty-transaction-flush)이 이미384B를 채택했으나 옛 표/시험256B가 남음 | 계약 표와 시험을 기존384B에 맞춤. `status_flush_rf` PASS. 새 상한 증액이 아님 |
+| M01 mixed43 | fatal 이후 등록 관측37+child6과 installer pause 안에서 registry를 다시 잠그던 controller가 원인. allocator 이후 pause는 installer가 registry를 가진 상태임 | 관련43 exact PASS. StageOwned에서는 pin count를 읽고, 나머지 cut에서는 실제 `try_pin_state`의 Busy/Unchanged를 확인한 뒤 resume. 원 unwind·정리·비대상 bytes 검증 유지 |
+| U01–08 resident cut8 | allocator cut controller의 blocking pin 관측이 installer와 교착.5초 resume timeout 뒤 중첩 unwind로 SIGABRT. 뒤7개는 원 source에서 NOT_STARTED | allocator/dpt_checked/dpt_owned/metadata/payload/publication/registry/stage를 개별 선택해 **8/8 PASS**. 원 ABORT·NOT_STARTED 기록은 그대로 남음 |
+
+### current-format 이관 대응
+
+[새 fixture](../../tests/fixtures/dev3-plan4-empty-retention/current3/README.md)는 hash-pinned Python serializers만 사용한다. 제품 encoder/decoder·실제 실행 결과를 기대값 공급자로 사용하지 않는다. lifecycle63파일1,028,952B와 Free Undo46파일1,296,304B의 index hash를 각 Rust 소비자가 검산한다. [재생성 출력](../../module-gate/evidence/f0-complete/fixture-reproduction.log)은 이미 생성된 bytes와의 동일성을 확인했으며 제품 PASS와 구분한다.
+
+- 첫 이력은 Reserve1/INIT2/AgingStart3/Begin4/Rollback5/Abort6/Finish7, 두 번째는 epoch2/local1의8–11이다. 기존 exact WAL·allocator·Root·Jobs·Status·ATT/Aging/System descriptor와 LSN 검사를 유지한다. base4의 section directory·exact page arena·certificate·XOI·remaining·seal을 독립 필드로 조립한다. INIT provenance는 원 INIT2 frame/image hash로 고정하며 다음 epoch의 현재 Status image로 대체하지 않는다.
+- `P4-LIVE-F01`은 실제 read gate와 progress source admission 아래 current prepare/apply를 호출하는 test-only helper를 사용한다. 원 pool/storage 동일성을 확인하고 write guard 반환 뒤 durable 대기 전에 정지한다. RAM에 L4가 채택되고 WAL File에는 L3까지만 있는 동안 L3 capture를 flush하여 L4 frame이 clean되지 않는 것을 확인한다. 공개 `catalog_begin`의 동시 호출 인수로 확대하지 않으며 그 API의 flusher 독점 차용은 그대로다.
+- `P4-LIVE-W02`의 잘못된 Status owner는 현재 `begin_identity`에서 **발급 전** 거절되므로 issued/adopted0/0→정상 Begin1/1이다. 발급 **후** 실패 gap은 기존 `mc03_issued_local_gap_recovers`의 별도 source별 PASS와 연결한다. [C3 복구 receipt](../../tests/fixtures/dev3-module-c3/row-recovery/execution-receipts.json)의 MC03(log SHA `f623c99fbebc8976f51a844ebf9038b187870590e10e68882eb911cf308805a8`)를 새 실행으로 표시하지 않는다.
+- 새 `P4-REC-L01/L06`은 Status generation3 재사용과 canonical cursor에 따른 Job1 최초 사용(generation2)을 검증한다. 옛 Job0→Job0 단축 이력과 동일하다고 주장하지 않는다. 물리 Job generation 재사용은 기존 Profile3 [CR1 N01 PASS](module-independence-survey-20261026.md#cr1-catalog-native-r2)의 Job1 Root2→Terminal3 및 [N01-L16 입력](../../tests/fixtures/dev3-catalog-create/native3/manifest.json)을 연결한다. 그 source fingerprint `4d5f06a629582c4ea226f7bed30c5bdf8157e3f57bbf0cf2fd2406d39d69a811`/ELF `81a4a0f8cf81e04006ad301d5729c8b63a6770f9628d0c3f1df15b1e4266f657`의 과거 PASS를 이번 native 실행으로 세지 않는다.
+- 복구 memory45개의 선택은 그대로이며 static2·ignored native3·resident ignored s5 6개는 자동 실행하지 않았다. Free Undo native용 current 입력도 생성했지만 ignored controller가 실행됐다는 뜻은 아니다. 전체 DEV3·native 인수나 F6 성능 결과로 확대하지 않는다.
+
+### 실행·리뷰·인계
+
+| 실행 | 결과 | 변경과의 관계 |
+| --- | --- | --- |
+| baseline | 21 FAIL /1 PASS /1 SIGABRT | 사전 동결한 미분류 원인의 bounded 진단. 원 결과 보존 |
+| r2 | 58/58 PASS | snapshot·installer cut·cause·census/authority 정정에 직접 해당하는 exact 사례 |
+| current1 | 14 PASS /2 FAIL | current fixture/producer·base4 이관16함수. W02 발급 순서와 복구 epoch/base 기대값 오류 보존 |
+| current2 | 2/2 PASS | 위2개를 계약/독립 리뷰에 맞춰 수정 후 해당 함수만 재실행 |
+| mixed-six | 6/6 PASS | 아직 실행하지 않았던 load_addendum의 fatal snapshot6개 |
+| 현재 합집합 | **78 고유 테스트 PASS** | r2의 live reader/latest2개는 이후 fixture 변경으로 current1에서 다시 검증. source별 원 receipt는 별도 유지 |
+
+독립 리뷰에서 second-cycle fixture의 Terminal1/CREATE root1 충돌, base4 Root cell offset·remaining 필드·Reserved chunk의 reserved bytes, W02 발급 시점을 지적해 반영했다. 리뷰와 실행에서 나온 FAIL은 보존한다. 마지막 `cargo fmt`는 형식 정리이며 그것만으로 통과한 제품 시험을 반복하지 않는다. 필수 fmt/Clippy/document 및 정적 module gate는 전송 commit의 pre-push hook에서 확인하고 결과는 PR과 gate artifact에 기록한다.
+
+현재 F0 대상의 known failure와 resident 미완료 경로는 변경 검증까지 끝냈다. 과거 원 로그 미확보는 역사적 attribution 한계로 보존하며 현재 PASS로 과거 실패를 없애지 않는다. F2–F7은 각각의 diff·계약·선택 의무를 적용해 진행할 수 있다. 이 기록은 main 병합, PR CI 또는 전체 lib PASS를 대신하지 않는다. 되돌림은 이 PR의 시험/helper/fixture·현황 정정을 revert하며 옛 fixture·과거 실행 결과는 그대로 남는다.

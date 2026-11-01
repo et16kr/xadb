@@ -1,0 +1,18 @@
+
+running 1 test
+test storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::row::census_tests::s2w_c04_live_and_recovered_peaks_unchanged ... S2W_C04 writer=memory live_peak=64016 recovered_peak=65392 shared=20208 split_ports=192
+
+thread 'storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::row::census_tests::s2w_c04_live_and_recovered_peaks_unchanged' (2181) panicked at crates/engine/src/storage/wal_io/plan4_apply/row/census_tests.rs:236:9:
+assertion `left == right` failed
+  left: (64016, 65392)
+ right: (64008, 65384)
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+FAILED
+
+failures:
+
+failures:
+    storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::row::census_tests::s2w_c04_live_and_recovered_peaks_unchanged
+
+test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 2005 filtered out; finished in 0.00s
+

@@ -1,0 +1,63 @@
+   Compiling xadb-engine v0.1.0 (/workspace/xadb/crates/engine)
+error[E0425]: cannot find function `wal_name` in this scope
+   --> crates/engine/src/storage/wal_io/plan4_recovery/tests/observations.rs:227:29
+    |
+227 |     let source = &original[&wal_name(source_epoch)];
+    |                             ^^^^^^^^ not found in this scope
+    |
+note: these functions exist but are inaccessible
+   --> crates/engine/src/storage/semantic_retention_tests.rs:35:1
+    |
+ 35 | fn wal_name(op: RetentionOperation) -> &'static str {
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ `crate::storage::semantic_retention::tests::wal_name`: not accessible
+    |
+   ::: crates/engine/src/storage/wal_io/plan4_recovery/tests/cases.rs:13:1
+    |
+ 13 | fn wal_name(epoch: u32) -> String {
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ `crate::storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::cases::wal_name`: not accessible
+help: consider importing this function
+    |
+  3 + use crate::durable::io::wal_name;
+    |
+
+error[E0599]: no method named `profile` found for struct `plan4_recovery::tests::literals::Oracle` in the current scope
+   --> crates/engine/src/storage/wal_io/plan4_recovery/tests/observations.rs:228:26
+    |
+228 |     let profile = oracle.profile();
+    |                          ^^^^^^^ method not found in `plan4_recovery::tests::literals::Oracle`
+    |
+   ::: crates/engine/src/storage/wal_io/plan4_recovery/tests/literals.rs:14:1
+    |
+ 14 | pub(super) struct Oracle {
+    | ------------------------ method `profile` not found for this struct
+    |
+    = help: items from traits can only be used if the trait is implemented and in scope
+note: `row_corpus::CorpusFiles` defines an item `profile`, perhaps you need to implement it
+   --> crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_corpus.rs:260:1
+    |
+260 | pub(super) trait CorpusFiles {
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+error[E0277]: `storage::semantic_catalog::transition::Observation` doesn't implement `Debug`
+    --> crates/engine/src/storage/wal_io/plan4_retention/lifecycle_tests.rs:1040:83
+     |
+1040 | ...                   assert!(result.is_ok(), "concurrent Begin failed: {result:?}");
+     |                                                                         ^^^^^^^^^^ `storage::semantic_catalog::transition::Observation` cannot be formatted using `{:?}` because it doesn't implement `Debug`
+     |
+     = help: the trait `Debug` is not implemented for `storage::semantic_catalog::transition::Observation`
+     = note: add `#[derive(Debug)]` to `storage::semantic_catalog::transition::Observation` or manually `impl Debug for storage::semantic_catalog::transition::Observation`
+help: the trait `Debug` is implemented for `std::result::Result<T, E>`
+    --> /rustc/59807616e1fa2540724bfbac14d7976d7e4a3860/library/core/src/result.rs:552:15
+     = note: required for `Result<Observation, RetentionError>` to implement `Debug`
+     = note: the full name for the type has been written to '/workspace/scratch/f0-target/debug/deps/engine-e4e141083d864921.long-type-4613275730862108058.txt'
+     = note: consider using `--verbose` to print the full type name to the console
+help: consider annotating `storage::semantic_catalog::transition::Observation` with `#[derive(Debug)]`
+    -->  crates/engine/src/storage/semantic_catalog/transition.rs:137:1
+     |
+ 137 + #[derive(Debug)]
+ 138 | pub(crate) struct Observation {
+     |
+
+Some errors have detailed explanations: E0277, E0425, E0599.
+For more information about an error, try `rustc --explain E0277`.
+error: could not compile `xadb-engine` (lib test) due to 3 previous errors

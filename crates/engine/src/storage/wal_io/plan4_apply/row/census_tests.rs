@@ -221,6 +221,8 @@ fn s2w_c03_row_lifecycle_unchanged_beside_the_row_write_layout() {
 /// one 8-byte-aligned byte that lives in both the recovered binding inside
 /// DiskSession (live +8 B) and the runtime loan (recovered +16 B). The
 /// earlier memory 64000/65368 and native 64008/65376 B were S2-S5's values.
+/// S10's cfg(test) catalog-abort hook (6469085f) adds 8 B to the original
+/// PageConcurrency counted once in shared_bytes; production is unchanged.
 #[test]
 fn s2w_c04_live_and_recovered_peaks_unchanged() {
     fn inspect<W: WriterNamespace>(writer: &str, live: usize, recovered: usize) {
@@ -235,8 +237,8 @@ fn s2w_c04_live_and_recovered_peaks_unchanged() {
         );
         assert_eq!((census.peak, recovery.peak), (live, recovered));
     }
-    inspect::<Memory>("memory", 64_008, 65_384);
-    inspect::<Native>("native", 64_016, 65_392);
+    inspect::<Memory>("memory", 64_016, 65_392);
+    inspect::<Native>("native", 64_024, 65_400);
 }
 
 /// S2W-C05: the eight private ranges are disjoint and contiguous and sum to

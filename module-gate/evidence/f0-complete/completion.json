@@ -1,0 +1,685 @@
+{
+  "schema": "XADB_F0_COMPLETION_V1",
+  "baseline_commit": "01fb227d7555c4ef90327382a027c1275737546d",
+  "policy": "Changed code and bounded diagnostics only; historical failures preserved; native/ignored cases not enabled. Final rustfmt is formatting only. Each run keeps its own source/ELF/input identity.",
+  "unique_selected_tests": 78,
+  "result": "PASS",
+  "recovery_subcases": [
+    "P4-REC-B01",
+    "P4-REC-B02",
+    "P4-REC-B03",
+    "P4-REC-B04",
+    "P4-REC-E01",
+    "P4-REC-E02",
+    "P4-REC-E03",
+    "P4-REC-E04",
+    "P4-REC-E05",
+    "P4-REC-E06",
+    "P4-REC-E07",
+    "P4-REC-E08",
+    "P4-REC-E09",
+    "P4-REC-E10",
+    "P4-REC-L01",
+    "P4-REC-L02",
+    "P4-REC-L03",
+    "P4-REC-L04",
+    "P4-REC-L05",
+    "P4-REC-L06",
+    "P4-REC-P01",
+    "P4-REC-P02",
+    "P4-REC-P03",
+    "P4-REC-P04",
+    "P4-REC-P05",
+    "P4-REC-P06",
+    "P4-REC-S01",
+    "P4-REC-S02",
+    "P4-REC-S03",
+    "P4-REC-S04",
+    "P4-REC-S05",
+    "P4-REC-S06",
+    "P4-REC-S07",
+    "P4-REC-S08",
+    "P4-REC-S09",
+    "P4-REC-S10",
+    "P4-REC-S11",
+    "P4-REC-S12",
+    "P4-REC-S13",
+    "P4-REC-S14",
+    "P4-REC-S15",
+    "P4-REC-V01",
+    "P4-REC-V02",
+    "P4-REC-V03",
+    "P4-REC-V04"
+  ],
+  "tests": [
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::free_undo_tests::free_undo_new_role_preflight_and_install_failure_boundaries",
+      "rc": 0,
+      "seconds": 1.42,
+      "log": "current1-013.log",
+      "sha256": "b5d68879e6596b9fdc7a0df39aeb438b5e9f9ef3bd3f77b388a24b9542d22ec3",
+      "run": "current1"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::free_undo_tests::free_undo_original_owner_gap_cancel_reuse_flush_reload",
+      "rc": 0,
+      "seconds": 0.67,
+      "log": "current1-012.log",
+      "sha256": "7253786b74af0cdd7729f9ec9fd36306b9d1f340d3665ae53fb940c7e56103d9",
+      "run": "current1"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::free_undo_tests::free_undo_original_role_rejection_and_corruption_cleanup",
+      "rc": 0,
+      "seconds": 0.21,
+      "log": "current1-014.log",
+      "sha256": "2e5b09e76ca563ba5123cefb7e22297e6bd4b7fd35f1e0eceb432bf297f4e946",
+      "run": "current1"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::row::census_tests::s2w_c04_live_and_recovered_peaks_unchanged",
+      "rc": 0,
+      "seconds": 0.01,
+      "log": "r2-009.log",
+      "sha256": "d94400262d8b4475c68a4608d0ca31c7c9487da95a9a01887f63e50338217659",
+      "run": "r2"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::tests::lifecycle::retention_live_activation",
+      "rc": 0,
+      "seconds": 0.77,
+      "log": "current1-005.log",
+      "sha256": "8ccac4ec232606b55984ac97567d1ad67ab9c5a88a4c732036d0aab403632198",
+      "run": "current1"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::tests::lifecycle::retention_live_flush_boundaries",
+      "rc": 0,
+      "seconds": 1.37,
+      "log": "current1-002.log",
+      "sha256": "24c076e208dad181edbce97d03cb3d943d7e127094525c9d3422e798e57cc08b",
+      "run": "current1"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::tests::lifecycle::retention_live_latest_load",
+      "rc": 0,
+      "seconds": 1.22,
+      "log": "current1-004.log",
+      "sha256": "6adbac7ca725ec95a2a8a7f0a041ad339ba40dc4850b60ae36106214fa248f67",
+      "run": "current1"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::tests::lifecycle::retention_live_lifecycle",
+      "rc": 0,
+      "seconds": 1.37,
+      "log": "current1-000.log",
+      "sha256": "b01525db4312582f4cfc314abea1941a5b3e745b7fb721b488bce2310fb9df6f",
+      "run": "current1"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::tests::lifecycle::retention_live_reader_boundaries",
+      "rc": 0,
+      "seconds": 0.82,
+      "log": "current1-003.log",
+      "sha256": "1411bc822041877a74a022e18d481beba5c4dd8cdb4e9bd22e0ec41c988760aa",
+      "run": "current1"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::tests::lifecycle::retention_live_writer_boundaries",
+      "rc": 0,
+      "seconds": 1.32,
+      "log": "current2-000.log",
+      "sha256": "104e7794073eb0f47b2b113048d020db1eacdb5f0a621ad0842cec403a7f56e9",
+      "run": "current2"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::tests::g5_canonical_source_boundaries",
+      "rc": 0,
+      "seconds": 1.42,
+      "log": "r2-003.log",
+      "sha256": "6901de351094eda9330a304e5ae70581c02430fdbc3e6f5c47a6216dd066f5db",
+      "run": "r2"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::tests::g5_clean_invariant_preflight",
+      "rc": 0,
+      "seconds": 2.02,
+      "log": "r2-004.log",
+      "sha256": "5ee2a642263e21df59829cbddab30825b0dee5e301871b874ac004d6213c1b9f",
+      "run": "r2"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::tests::g5_load_io_boundaries",
+      "rc": 0,
+      "seconds": 2.57,
+      "log": "r2-006.log",
+      "sha256": "abfa10862c99d1faf3bb91f06fb13b7c4a1be3a38336e6f167265f365dc242cb",
+      "run": "r2"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::tests::g5_residency_state_boundaries",
+      "rc": 0,
+      "seconds": 1.42,
+      "log": "r2-005.log",
+      "sha256": "5209aa72d1eb0d8461abebbf1982e2ac28d97c41f61c2bef791a55e5e757372a",
+      "run": "r2"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::tests::g5_target_identity_boundaries",
+      "rc": 0,
+      "seconds": 2.47,
+      "log": "r2-012.log",
+      "sha256": "c4fb10c0973209108b9ba8d9ce925c3b69ba538a0f16db86ec2a410f72bff916",
+      "run": "r2"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::cases::recovery_binding",
+      "rc": 0,
+      "seconds": 1.77,
+      "log": "current1-007.log",
+      "sha256": "156570751966c94e567c62d5e1feb086588f1e7fbeedb9f4910ec331a17349ac",
+      "run": "current1"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::cases::recovery_lifecycle",
+      "rc": 0,
+      "seconds": 5.23,
+      "log": "current2-001.log",
+      "sha256": "62dd8cb367c236398821e3ddb5c0a904daf8687143ca027fcda109f6fba34034",
+      "run": "current2"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::closure::recovery_closure",
+      "rc": 0,
+      "seconds": 2.57,
+      "log": "current1-008.log",
+      "sha256": "e7c5e1a549125355c72fb5508f03e8ba0bb55cd2fc3c5ce4aacf7f48ecad0191",
+      "run": "current1"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::faults::recovery_selection",
+      "rc": 0,
+      "seconds": 5.73,
+      "log": "current1-009.log",
+      "sha256": "9b87dafdd8b06e5e2f7b95a105011aaa7cff997c89401b7bc6f87c3eb3aa5310",
+      "run": "current1"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::free_undo::free_undo_reserved_recovery_uses_original_scope_cancel",
+      "rc": 0,
+      "seconds": 0.52,
+      "log": "current1-015.log",
+      "sha256": "fed125947660b2a80892b7acaabbec0114d0c32e07ae5e1848897fa42fab93d0",
+      "run": "current1"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::physical::recovery_physical",
+      "rc": 0,
+      "seconds": 2.87,
+      "log": "current1-010.log",
+      "sha256": "343e5133c394a55dc465574687cae827913c0d00a1bedc3489186e0d7b8c5d3c",
+      "run": "current1"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::publication::recovery_publication",
+      "rc": 0,
+      "seconds": 3.27,
+      "log": "current1-011.log",
+      "sha256": "ed6e257ada29446a4c198b3a4d0ee8f3e5a7f92636f3c84e27fda8f8e1d00cc2",
+      "run": "current1"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::recovery_prefix::effect::tests::pending_and_healthy_corruption_boundaries",
+      "rc": 0,
+      "seconds": 0.16,
+      "log": "r2-010.log",
+      "sha256": "1de5863ee91c6fd2524a202137e439afd07c8b061930529b9f6e188e00732f08",
+      "run": "r2"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::status_init::status_flush::mixed::tests::load_addendum::mixed_owner_load_home_partial_eof_fences_without_install",
+      "rc": 0,
+      "seconds": 0.26,
+      "log": "mixed-six-001.log",
+      "sha256": "4e0d41e8c84f26885d027e457d62736a1046fc42a1d83578fdeb77518368af15",
+      "run": "mixed-six"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::status_init::status_flush::mixed::tests::load_addendum::mixed_owner_load_home_zero_eof_fences_without_install",
+      "rc": 0,
+      "seconds": 0.26,
+      "log": "mixed-six-000.log",
+      "sha256": "0eddd2b19d096b0c299d63abccf3e926fa1527890cfa9846ab581a031c1c4593",
+      "run": "mixed-six"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::status_init::status_flush::mixed::tests::load_addendum::mixed_owner_load_rejects_sha_valid_later_undo_class",
+      "rc": 0,
+      "seconds": 0.26,
+      "log": "mixed-six-002.log",
+      "sha256": "99756b9d59b44d33d04203d0687aaa53600d5421c5581a33c58fdf9542a5ef13",
+      "run": "mixed-six"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::status_init::status_flush::mixed::tests::load_addendum::mixed_owner_load_rejects_sha_valid_later_undo_geometry",
+      "rc": 0,
+      "seconds": 0.26,
+      "log": "mixed-six-003.log",
+      "sha256": "b0aeaa66ce13bb6f4866c064bb9b7d6c5d15f6e4482e72aff50a0748b0031b0b",
+      "run": "mixed-six"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::status_init::status_flush::mixed::tests::load_addendum::mixed_owner_load_rejects_sha_valid_terminal_descriptor_budget",
+      "rc": 0,
+      "seconds": 0.26,
+      "log": "mixed-six-004.log",
+      "sha256": "2f44a83cf53249957323759e6ea80dd0cbfa729e09f836b6ad3d24f9849411c8",
+      "run": "mixed-six"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::status_init::status_flush::mixed::tests::load_addendum::mixed_owner_load_rejects_sha_valid_wrong_descriptor_predecessor",
+      "rc": 0,
+      "seconds": 0.26,
+      "log": "mixed-six-005.log",
+      "sha256": "bcc4f5782ca2c146772dd53e3e47edba99df4f6a056dcf2bff6134b425c5dc71",
+      "run": "mixed-six"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::status_init::status_flush::mixed::tests::mixed_owner_final_status_home_drift_fences_without_install",
+      "rc": 0,
+      "seconds": 0.21,
+      "log": "r2-027.log",
+      "sha256": "c7a70dead8c70ac1f28e9359c95f25db192152799f0f44be77dcf50c2719fd48",
+      "run": "r2"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::status_init::status_flush::mixed::tests::mixed_owner_final_undo_home_drift_fences_without_install",
+      "rc": 0,
+      "seconds": 0.21,
+      "log": "r2-028.log",
+      "sha256": "650656cebe6f06c9159aaf4e98af8bc43b05f88c42657fb8e6cecc737231adf7",
+      "run": "r2"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::status_init::status_flush::mixed::tests::mixed_owner_health_precedes_foreign_reserver",
+      "rc": 0,
+      "seconds": 0.21,
+      "log": "r2-024.log",
+      "sha256": "426b9ce005e8daa523bfa5fe392b076fbbd3b02d17dc700f3fc05c787f30565e",
+      "run": "r2"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::status_init::status_flush::mixed::tests::mixed_owner_load_chunk_bearing_undo_envelope_is_rejected",
+      "rc": 0,
+      "seconds": 0.26,
+      "log": "r2-026.log",
+      "sha256": "23ecd46db7ad40f67db0d667c051b4ba6e641fa5b0e58cb8feaa5c8c15d5f000",
+      "run": "r2"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::status_init::status_flush::mixed::tests::mixed_owner_load_home_invalid_count_fences",
+      "rc": 0,
+      "seconds": 0.26,
+      "log": "r2-018.log",
+      "sha256": "5cd8557c1f9ce26926b0ffcd0a58021c60d51d0f7473f296d51e8a9987388a52",
+      "run": "r2"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::status_init::status_flush::mixed::tests::mixed_owner_load_occupied_undo_root_is_rejected",
+      "rc": 0,
+      "seconds": 0.26,
+      "log": "r2-025.log",
+      "sha256": "23ae23ce8631121c7ce995543135e9bb1a6746f60f8446909476b867a0ebc1b0",
+      "run": "r2"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::status_init::status_flush::mixed::tests::mixed_owner_load_rehashed_old_status_lsn_is_not_original_init",
+      "rc": 0,
+      "seconds": 0.26,
+      "log": "r2-019.log",
+      "sha256": "a780772063957c2f77059f5becd4998d0236178b32442ed6dc3f79beeec85954",
+      "run": "r2"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::status_init::status_flush::mixed::tests::mixed_owner_load_rehashed_undo_c_image_cannot_replace_b",
+      "rc": 0,
+      "seconds": 0.26,
+      "log": "r2-022.log",
+      "sha256": "ff36e63c4e826e6bac36de5e593133928604f66c13aab626df245977c831fecc",
+      "run": "r2"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::status_init::status_flush::mixed::tests::mixed_owner_load_rehashed_undo_free_generation6_is_rejected",
+      "rc": 0,
+      "seconds": 0.26,
+      "log": "r2-020.log",
+      "sha256": "a3384ff7c5f0c98c1ffc43cfcba6c1380e289190798500b24529020704c4d001",
+      "run": "r2"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::status_init::status_flush::mixed::tests::mixed_owner_load_rehashed_undo_free_generation_max_is_rejected",
+      "rc": 0,
+      "seconds": 0.26,
+      "log": "r2-021.log",
+      "sha256": "e2c8572a4dbe67984ff0a6694dd423c2bd3027c9163da4a2025d06ef0473f573",
+      "run": "r2"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::status_init::status_flush::mixed::tests::mixed_owner_load_required_wal_eof_fences",
+      "rc": 0,
+      "seconds": 0.26,
+      "log": "r2-015.log",
+      "sha256": "070cf39415a780dc18c232a08ca17c5e77aa8a6d727c8568b9b9e7aa26585916",
+      "run": "r2"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::status_init::status_flush::mixed::tests::mixed_owner_load_required_wal_invalid_count_fences",
+      "rc": 0,
+      "seconds": 0.26,
+      "log": "r2-017.log",
+      "sha256": "b3b00826a289ebf24837f2d4699cf4e0592684ccd4bcefef3217e5ccaffed579",
+      "run": "r2"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::status_init::status_flush::mixed::tests::mixed_owner_load_required_wal_prefix_eof_fences",
+      "rc": 0,
+      "seconds": 0.26,
+      "log": "r2-016.log",
+      "sha256": "6c8e47b0cc42a382ac998c83b03f0891b5b4fe4543d1ed6ad5ebc775e35b01f3",
+      "run": "r2"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::status_init::status_flush::mixed::tests::mixed_owner_load_status_home_cannot_replace_undo",
+      "rc": 0,
+      "seconds": 0.26,
+      "log": "r2-023.log",
+      "sha256": "5ab34eb78d75e645099bae54609b4d37425bb68c9d4181154a2a690b5440bba9",
+      "run": "r2"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::status_init::status_flush::mixed::tests::mixed_owner_status_first_dwb_error_keeps_dirty_obligation",
+      "rc": 0,
+      "seconds": 0.26,
+      "log": "r2-013.log",
+      "sha256": "272477f5e7e4f03872c328f1aaef23a3d95e3df9a8c76e7afd9e2a0eca9c2227",
+      "run": "r2"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::status_init::status_flush::mixed::tests::mixed_owner_status_init_allocator_image_unwind",
+      "rc": 0,
+      "seconds": 0.21,
+      "log": "r2-030.log",
+      "sha256": "395b4db1314563904308136c2e1f17d79b0b8c64fd0ba0a13998b1e8d56a4d30",
+      "run": "r2"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::status_init::status_flush::mixed::tests::mixed_owner_status_init_dpt_guard_unwind",
+      "rc": 0,
+      "seconds": 0.21,
+      "log": "r2-035.log",
+      "sha256": "9cd843e63ffe1c9f3d52ddfb806ab9eceaa340fc92a5099d98e491cb58b8cc2e",
+      "run": "r2"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::status_init::status_flush::mixed::tests::mixed_owner_status_init_dpt_precheck_unwind",
+      "rc": 0,
+      "seconds": 0.21,
+      "log": "r2-036.log",
+      "sha256": "611959b6ab5e0bdb8bb324b058cbbdfc12f4f3a07fbbed984ed37f242ae8cc13",
+      "run": "r2"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::status_init::status_flush::mixed::tests::mixed_owner_status_init_metadata_unwind",
+      "rc": 0,
+      "seconds": 0.21,
+      "log": "r2-032.log",
+      "sha256": "b659c02cface8e2afc110ac5990296ebc33a9d3eb041732bcb0e85a47eed5b55",
+      "run": "r2"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::status_init::status_flush::mixed::tests::mixed_owner_status_init_partial_wal_keeps_published_obligation",
+      "rc": 0,
+      "seconds": 0.21,
+      "log": "r2-045.log",
+      "sha256": "7f29d66f0a64a0865009c0306861bb3d18b54f6d0c4200a35783418c2b893a9d",
+      "run": "r2"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::status_init::status_flush::mixed::tests::mixed_owner_status_init_payload_image_unwind",
+      "rc": 0,
+      "seconds": 0.21,
+      "log": "r2-031.log",
+      "sha256": "cc36861725c9b46519fcb495def79f201f44f9cd1284364f1508fa2e2c023e63",
+      "run": "r2"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::status_init::status_flush::mixed::tests::mixed_owner_status_init_publication_unwind",
+      "rc": 0,
+      "seconds": 0.21,
+      "log": "r2-034.log",
+      "sha256": "86cd2bfd771a824a0c3513596e15bd408517e4a51dce787ae61feb1da55c77d8",
+      "run": "r2"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::status_init::status_flush::mixed::tests::mixed_owner_status_init_registry_unwind",
+      "rc": 0,
+      "seconds": 0.21,
+      "log": "r2-033.log",
+      "sha256": "6b83bfbe7009163a3d7ba5661a348e843011a1731feb0f3670a058a8f71b73dc",
+      "run": "r2"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::status_init::status_flush::mixed::tests::mixed_owner_status_init_stage_owned_unwind",
+      "rc": 0,
+      "seconds": 0.21,
+      "log": "r2-029.log",
+      "sha256": "a63a87bac1689c266654357ada5a1b4bc689ac0f42520d9fad7e2319e84daa9d",
+      "run": "r2"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::status_init::status_flush::mixed::tests::mixed_owner_status_init_sync_error_keeps_published_obligation",
+      "rc": 0,
+      "seconds": 0.21,
+      "log": "r2-047.log",
+      "sha256": "9770b41b657d13e86203e8da4c397c086f937b57f13a25b25bc8579e9674b2b9",
+      "run": "r2"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::status_init::status_flush::mixed::tests::mixed_owner_undo_first_dwb_error_keeps_dirty_obligation",
+      "rc": 0,
+      "seconds": 0.21,
+      "log": "r2-014.log",
+      "sha256": "721d04dc57d793375c113c7726588e10c19cd847f9d4eaa3264a881fc204e465",
+      "run": "r2"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::status_init::status_flush::mixed::tests::mixed_owner_undo_init_allocator_image_unwind",
+      "rc": 0,
+      "seconds": 0.21,
+      "log": "r2-038.log",
+      "sha256": "879943f2d26eaa7ff4ffbd0aaaa41764e17bd1ee57286d9a3ea61bf0460eb073",
+      "run": "r2"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::status_init::status_flush::mixed::tests::mixed_owner_undo_init_dpt_guard_unwind",
+      "rc": 0,
+      "seconds": 0.21,
+      "log": "r2-043.log",
+      "sha256": "cd37fd184e9ab007a1b4c22b7a3621ba086e2b471e494806f89430b6395b24e2",
+      "run": "r2"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::status_init::status_flush::mixed::tests::mixed_owner_undo_init_dpt_precheck_unwind",
+      "rc": 0,
+      "seconds": 0.21,
+      "log": "r2-044.log",
+      "sha256": "88d7f2e285695c2af28607d16e34e3ee1b397b2a1da303f65322a2d19ed45c4c",
+      "run": "r2"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::status_init::status_flush::mixed::tests::mixed_owner_undo_init_metadata_unwind",
+      "rc": 0,
+      "seconds": 0.21,
+      "log": "r2-040.log",
+      "sha256": "d18e9703117b94be482fba9983994a38e0a52dff4866ad4212561e1ae471cd88",
+      "run": "r2"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::status_init::status_flush::mixed::tests::mixed_owner_undo_init_partial_wal_keeps_published_obligation",
+      "rc": 0,
+      "seconds": 0.21,
+      "log": "r2-046.log",
+      "sha256": "596a9efca886c93dd41b9143143dcb6c07f3449320bf370e7bf6ccc4405db155",
+      "run": "r2"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::status_init::status_flush::mixed::tests::mixed_owner_undo_init_payload_image_unwind",
+      "rc": 0,
+      "seconds": 0.21,
+      "log": "r2-039.log",
+      "sha256": "fa5e4723e0b349b5ad4f0fc6be58703ae2839da2f59500fb2760dae53b6ad2a7",
+      "run": "r2"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::status_init::status_flush::mixed::tests::mixed_owner_undo_init_publication_unwind",
+      "rc": 0,
+      "seconds": 0.21,
+      "log": "r2-042.log",
+      "sha256": "d82e0055fa00de1060565bb1f1c414d09f979e0adacc12d9b33f379e9c6b5232",
+      "run": "r2"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::status_init::status_flush::mixed::tests::mixed_owner_undo_init_registry_unwind",
+      "rc": 0,
+      "seconds": 0.26,
+      "log": "r2-041.log",
+      "sha256": "3d6fc55368b98a676caba1b8070f82ae249c6d7a8cddfc2420219203a2bcf129",
+      "run": "r2"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::status_init::status_flush::mixed::tests::mixed_owner_undo_init_stage_owned_unwind",
+      "rc": 0,
+      "seconds": 0.21,
+      "log": "r2-037.log",
+      "sha256": "577c024a5600dba7531a3169eaf2b55601e44ccd700efd9723b1c72cf03b8ec2",
+      "run": "r2"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::status_init::status_flush::mixed::tests::mixed_owner_undo_init_sync_error_keeps_published_obligation",
+      "rc": 0,
+      "seconds": 0.21,
+      "log": "r2-048.log",
+      "sha256": "d07864d062a7571a45afaeecc3173d3cd37c54430f1adb625ecd04571fa1f692",
+      "run": "r2"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::status_init::status_flush::mixed::tests::mixed_owner_undo_retired_fence_preserves_obligation",
+      "rc": 0,
+      "seconds": 0.31,
+      "log": "r2-049.log",
+      "sha256": "819092f6760b4d151aec332c7d3b796f9dccb829e9304bdad75146dd9a3ba7e3",
+      "run": "r2"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::status_init::status_flush::resident::tests::resident_status_completion_rejects_other_slot",
+      "rc": 0,
+      "seconds": 0.22,
+      "log": "r2-001.log",
+      "sha256": "f7411df8cfb9189fc7fe85317566dcfbfe009bfa8656bf930bd17e3a3c723514",
+      "run": "r2"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::status_init::status_flush::resident::tests::resident_status_cut_allocator",
+      "rc": 0,
+      "seconds": 0.21,
+      "log": "r2-053.log",
+      "sha256": "0cff08d4addd0849e0d2fa3ba4496168073b24cce06d45fe0a512e3b40dff22f",
+      "run": "r2"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::status_init::status_flush::resident::tests::resident_status_cut_dpt_checked",
+      "rc": 0,
+      "seconds": 0.22,
+      "log": "r2-052.log",
+      "sha256": "e5908cbd663f7ef4e152e2b74e6d5efe5ba95c627b5739669df1828e57725ee6",
+      "run": "r2"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::status_init::status_flush::resident::tests::resident_status_cut_dpt_owned",
+      "rc": 0,
+      "seconds": 0.21,
+      "log": "r2-051.log",
+      "sha256": "39bbb560fcdbeac1961f68e01bf075bf031229e9b0c7890800baa55a4fea6aaf",
+      "run": "r2"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::status_init::status_flush::resident::tests::resident_status_cut_metadata",
+      "rc": 0,
+      "seconds": 0.21,
+      "log": "r2-055.log",
+      "sha256": "9e92e35013f56fbf6e17c71c50f1594ab2393aef0c83bbba01bc9ff9d7200ac9",
+      "run": "r2"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::status_init::status_flush::resident::tests::resident_status_cut_payload",
+      "rc": 0,
+      "seconds": 0.21,
+      "log": "r2-054.log",
+      "sha256": "8246f65706d40f912483ba6ed045cbc76e4ad782bbd9f0ddd285bd96e04f7764",
+      "run": "r2"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::status_init::status_flush::resident::tests::resident_status_cut_publication",
+      "rc": 0,
+      "seconds": 0.21,
+      "log": "r2-057.log",
+      "sha256": "6dcebb4ba63cf2efcc69a4de674d5be8fbb316efcf13c9619c176cfafe09c88c",
+      "run": "r2"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::status_init::status_flush::resident::tests::resident_status_cut_registry",
+      "rc": 0,
+      "seconds": 0.21,
+      "log": "r2-056.log",
+      "sha256": "24e4b52105063ddfa095b683f89598fd40544b52611be95d85502457d0c4449d",
+      "run": "r2"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::status_init::status_flush::resident::tests::resident_status_cut_stage",
+      "rc": 0,
+      "seconds": 0.21,
+      "log": "r2-050.log",
+      "sha256": "08e2f0a7703a9fc9c60a176cc01deaa2b60e6ba6ae7e56a00110a130bd88fa85",
+      "run": "r2"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::status_init::status_flush::resident::tests::resident_status_late_semantic_failure_releases_whole_read",
+      "rc": 0,
+      "seconds": 0.21,
+      "log": "r2-002.log",
+      "sha256": "86891f532edf5a4f4f4084da606f0e8a17105dfaecdcf8ecf66c7534c683c2fb",
+      "run": "r2"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::status_init::status_flush::resident::tests::resident_status_staged_key_rejects_other_slot",
+      "rc": 0,
+      "seconds": 0.21,
+      "log": "r2-000.log",
+      "sha256": "53cbedf41c345ca9546ca320858b52da0bfca64d1315f7c8f72d1ad17f800bdd",
+      "run": "r2"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::status_init::status_flush::tests::status_flush_rf",
+      "rc": 0,
+      "seconds": 2.02,
+      "log": "r2-011.log",
+      "sha256": "55452b777c6f51c0beba9dcaf5d64892178c27a184c82c4b29742c0113c46e5b",
+      "run": "r2"
+    }
+  ],
+  "additional_diagnostics": {
+    "baseline": "23 exact diagnostics: 21 FAIL, 1 PASS, 1 SIGABRT (preserved)",
+    "bind-diagnostic": "Missing executor-only B08 padding input: FAIL, preserved; B01\u201307 reached PASS only",
+    "bind-panic-only": "Only previously unrun P4-G5-B15: PASS. Other B subcases are SKIP, not PASS."
+  }
+}

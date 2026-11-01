@@ -1,0 +1,144 @@
+
+running 1 test
+test storage::wal_io::bootstrap::doublewrite_install::mutable_storage::status_init::status_flush::resident::tests::resident_status_cut_allocator ... 
+thread 'storage::wal_io::bootstrap::doublewrite_install::mutable_storage::status_init::status_flush::resident::tests::resident_status_cut_allocator' (2195) panicked at crates/engine/src/storage/dirty_init.rs:1107:18:
+bounded INIT release: Timeout
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+thread 'storage::wal_io::bootstrap::doublewrite_install::mutable_storage::status_init::status_flush::resident::tests::resident_status_cut_allocator' (2195) panicked at crates/engine/src/storage/dirty_frame.rs:1554:18:
+bounded fence release: Timeout
+stack backtrace:
+   0:     0x55cd73a177ba - std[e28293b1aa0f68bd]::backtrace_rs::backtrace::libunwind::trace
+                               at /rustc/59807616e1fa2540724bfbac14d7976d7e4a3860/library/std/src/../../backtrace/src/backtrace/libunwind.rs:117:9
+   1:     0x55cd73a177ba - std[e28293b1aa0f68bd]::backtrace_rs::backtrace::trace_unsynchronized::<std[e28293b1aa0f68bd]::sys::backtrace::_print_fmt::{closure#1}>
+                               at /rustc/59807616e1fa2540724bfbac14d7976d7e4a3860/library/std/src/../../backtrace/src/backtrace/mod.rs:66:14
+   2:     0x55cd73a177ba - std[e28293b1aa0f68bd]::sys::backtrace::_print_fmt
+                               at /rustc/59807616e1fa2540724bfbac14d7976d7e4a3860/library/std/src/sys/backtrace.rs:74:9
+   3:     0x55cd73a177ba - <<std[e28293b1aa0f68bd]::sys::backtrace::BacktraceLock>::print::DisplayBacktrace as core[c1f1a4ba060b9bfa]::fmt::Display>::fmt
+                               at /rustc/59807616e1fa2540724bfbac14d7976d7e4a3860/library/std/src/sys/backtrace.rs:44:26
+   4:     0x55cd73a2d46a - <core[c1f1a4ba060b9bfa]::fmt::rt::Argument>::fmt
+                               at /rustc/59807616e1fa2540724bfbac14d7976d7e4a3860/library/core/src/fmt/rt.rs:152:76
+   5:     0x55cd73a2d46a - core[c1f1a4ba060b9bfa]::fmt::write
+   6:     0x55cd73a1cf42 - std[e28293b1aa0f68bd]::io::default_write_fmt::<std[e28293b1aa0f68bd]::sys::stdio::unix::Stderr>
+                               at /rustc/59807616e1fa2540724bfbac14d7976d7e4a3860/library/std/src/io/mod.rs:639:11
+   7:     0x55cd73a1cf42 - <std[e28293b1aa0f68bd]::sys::stdio::unix::Stderr as std[e28293b1aa0f68bd]::io::Write>::write_fmt
+                               at /rustc/59807616e1fa2540724bfbac14d7976d7e4a3860/library/std/src/io/mod.rs:1994:13
+   8:     0x55cd739f3e7f - <std[e28293b1aa0f68bd]::sys::backtrace::BacktraceLock>::print
+                               at /rustc/59807616e1fa2540724bfbac14d7976d7e4a3860/library/std/src/sys/backtrace.rs:47:9
+   9:     0x55cd739f3e7f - std[e28293b1aa0f68bd]::panicking::default_hook::{closure#0}
+                               at /rustc/59807616e1fa2540724bfbac14d7976d7e4a3860/library/std/src/panicking.rs:292:27
+  10:     0x55cd73a0ed11 - std[e28293b1aa0f68bd]::panicking::default_hook
+                               at /rustc/59807616e1fa2540724bfbac14d7976d7e4a3860/library/std/src/panicking.rs:319:9
+  11:     0x55cd73a0ef8b - std[e28293b1aa0f68bd]::panicking::panic_with_hook
+                               at /rustc/59807616e1fa2540724bfbac14d7976d7e4a3860/library/std/src/panicking.rs:825:13
+  12:     0x55cd739f3f38 - std[e28293b1aa0f68bd]::panicking::panic_handler::{closure#0}
+                               at /rustc/59807616e1fa2540724bfbac14d7976d7e4a3860/library/std/src/panicking.rs:698:13
+  13:     0x55cd739eb5e9 - std[e28293b1aa0f68bd]::sys::backtrace::__rust_end_short_backtrace::<std[e28293b1aa0f68bd]::panicking::panic_handler::{closure#0}, !>
+                               at /rustc/59807616e1fa2540724bfbac14d7976d7e4a3860/library/std/src/sys/backtrace.rs:182:18
+  14:     0x55cd739f4d0d - __rustc[b7974e8690430dd9]::rust_begin_unwind
+                               at /rustc/59807616e1fa2540724bfbac14d7976d7e4a3860/library/std/src/panicking.rs:689:5
+  15:     0x55cd73a2dd4c - core[c1f1a4ba060b9bfa]::panicking::panic_fmt
+                               at /rustc/59807616e1fa2540724bfbac14d7976d7e4a3860/library/core/src/panicking.rs:80:14
+  16:     0x55cd73a2dac2 - core[c1f1a4ba060b9bfa]::result::unwrap_failed
+                               at /rustc/59807616e1fa2540724bfbac14d7976d7e4a3860/library/core/src/result.rs:1867:5
+  17:     0x55cd7194a8eb - core::result::Result<T,E>::expect::h238e7691efc6d2f9
+                               at /rustc/59807616e1fa2540724bfbac14d7976d7e4a3860/library/core/src/result.rs:1185:23
+  18:     0x55cd721233cd - engine::storage::dirty_frame::test_support::fenced::h09a5618201409ca8
+                               at /workspace/xadb/crates/engine/src/storage/dirty_frame.rs:1554:18
+  19:     0x55cd720b39b3 - <engine::storage::dirty_frame::init::FencedInitRegistry as core::ops::drop::Drop>::drop::h75c819a1c1a1bddb
+                               at /workspace/xadb/crates/engine/src/storage/dirty_init.rs:881:13
+  20:     0x55cd72060423 - core::ptr::drop_in_place<engine::storage::dirty_frame::init::FencedInitRegistry>::h2c0751c49331b5a2
+                               at /rustc/59807616e1fa2540724bfbac14d7976d7e4a3860/library/core/src/ptr/mod.rs:805:1
+  21:     0x55cd7205eb7b - core::ptr::drop_in_place<engine::storage::dirty_frame::init::PreparedInitSet>::h93d1202a41fd06b2
+                               at /rustc/59807616e1fa2540724bfbac14d7976d7e4a3860/library/core/src/ptr/mod.rs:805:1
+  22:     0x55cd720e1093 - engine::storage::dirty_frame::init::PreparedInitSet::install::h7a671a2e14043773
+                               at /workspace/xadb/crates/engine/src/storage/dirty_init.rs:983:5
+  23:     0x55cd72d45993 - engine::storage::wal_io::bootstrap::doublewrite_install::mutable_storage::status_init::StatusBootstrapWriter<W>::initialize::{{closure}}::h774f323919763956
+                               at /workspace/xadb/crates/engine/src/storage/wal_io/status_init.rs:884:18
+  24:     0x55cd72d3b9bb - engine::storage::wal_io::bootstrap::doublewrite_install::mutable_storage::status_init::StatusBootstrapWriter<W>::initialize::hfb0c539297decfdc
+                               at /workspace/xadb/crates/engine/src/storage/wal_io/status_init.rs:812:25
+  25:     0x55cd72d21d1f - engine::storage::wal_io::bootstrap::doublewrite_install::mutable_storage::status_init::ReservedStatus<W>::initialize_fixed::hf10872d4c10d92c4
+                               at /workspace/xadb/crates/engine/src/storage/wal_io/status_init.rs:765:18
+  26:     0x55cd72d18bb6 - engine::storage::wal_io::bootstrap::doublewrite_install::mutable_storage::status_init::ReservedStatus<W>::initialize::h20058576afa05b13
+                               at /workspace/xadb/crates/engine/src/storage/wal_io/status_init.rs:754:14
+  27:     0x55cd72cb33ce - engine::storage::wal_io::bootstrap::doublewrite_install::mutable_storage::status_init::status_flush::resident::tests::init_cut::{{closure}}::{{closure}}::hbc8b7fcd8a5871ac
+                               at /workspace/xadb/crates/engine/src/storage/wal_io/resident_status/tests.rs:784:38
+  28:     0x55cd727328a3 - <core::panic::unwind_safe::AssertUnwindSafe<F> as core::ops::function::FnOnce<()>>::call_once::h4021795f521f9994
+                               at /rustc/59807616e1fa2540724bfbac14d7976d7e4a3860/library/core/src/panic/unwind_safe.rs:274:9
+  29:     0x55cd733d42cc - std::panicking::catch_unwind::do_call::h51a2d07ec9311440
+                               at /rustc/59807616e1fa2540724bfbac14d7976d7e4a3860/library/std/src/panicking.rs:581:40
+  30:     0x55cd718532cb - __rust_try
+  31:     0x55cd71841a42 - std::panicking::catch_unwind::hcd9023d985656970
+                               at /rustc/59807616e1fa2540724bfbac14d7976d7e4a3860/library/std/src/panicking.rs:544:19
+  32:     0x55cd71841a42 - std::panic::catch_unwind::h23d14a8fce9f3f26
+                               at /rustc/59807616e1fa2540724bfbac14d7976d7e4a3860/library/std/src/panic.rs:359:14
+  33:     0x55cd72cb2b3b - engine::storage::wal_io::bootstrap::doublewrite_install::mutable_storage::status_init::status_flush::resident::tests::init_cut::{{closure}}::h2cd330f3ef3a35b8
+                               at /workspace/xadb/crates/engine/src/storage/wal_io/resident_status/tests.rs:783:17
+  34:     0x55cd70b4ed64 - std::thread::scoped::scope::{{closure}}::hcffd87dded32b10b
+                               at /rustc/59807616e1fa2540724bfbac14d7976d7e4a3860/library/std/src/thread/scoped.rs:158:51
+  35:     0x55cd72730913 - <core::panic::unwind_safe::AssertUnwindSafe<F> as core::ops::function::FnOnce<()>>::call_once::h08f58b1488a99973
+                               at /rustc/59807616e1fa2540724bfbac14d7976d7e4a3860/library/core/src/panic/unwind_safe.rs:274:9
+  36:     0x55cd733d01bf - std::panicking::catch_unwind::do_call::h01dc29a74aaca8b0
+                               at /rustc/59807616e1fa2540724bfbac14d7976d7e4a3860/library/std/src/panicking.rs:581:40
+  37:     0x55cd70b4f52b - __rust_try
+  38:     0x55cd70b4a066 - std::panicking::catch_unwind::h88b60299ed19bc98
+                               at /rustc/59807616e1fa2540724bfbac14d7976d7e4a3860/library/std/src/panicking.rs:544:19
+  39:     0x55cd70b4a066 - std::panic::catch_unwind::h98e63a3ce8209c11
+                               at /rustc/59807616e1fa2540724bfbac14d7976d7e4a3860/library/std/src/panic.rs:359:14
+  40:     0x55cd70b4a066 - std::thread::scoped::scope::heaf6f88a934faeb2
+                               at /rustc/59807616e1fa2540724bfbac14d7976d7e4a3860/library/std/src/thread/scoped.rs:158:18
+  41:     0x55cd724f6971 - engine::storage::wal_io::bootstrap::doublewrite_install::mutable_storage::status_init::status_flush::resident::tests::init_cut::h6d133e7e9e435856
+                               at /workspace/xadb/crates/engine/src/storage/wal_io/resident_status/tests.rs:767:9
+  42:     0x55cd724cf9bb - engine::storage::wal_io::bootstrap::doublewrite_install::mutable_storage::status_init::status_flush::resident::tests::resident_status_cut_allocator::hf750edd05cf0117e
+                               at /workspace/xadb/crates/engine/src/storage/wal_io/resident_status/tests.rs:805:13
+  43:     0x55cd72ca5547 - engine::storage::wal_io::bootstrap::doublewrite_install::mutable_storage::status_init::status_flush::resident::tests::resident_status_cut_allocator::{{closure}}::h6ed22c5dba296ece
+                               at /workspace/xadb/crates/engine/src/storage/wal_io/resident_status/tests.rs:804:19
+  44:     0x55cd72008886 - core::ops::function::FnOnce::call_once::hc44a6a4193c36f00
+                               at /rustc/59807616e1fa2540724bfbac14d7976d7e4a3860/library/core/src/ops/function.rs:250:5
+  45:     0x55cd7396c14b - <fn() -> core[c1f1a4ba060b9bfa]::result::Result<(), alloc[fdfd2bd8633a6659]::string::String> as core[c1f1a4ba060b9bfa]::ops::function::FnOnce<()>>::call_once
+                               at /rustc/59807616e1fa2540724bfbac14d7976d7e4a3860/library/core/src/ops/function.rs:250:5
+  46:     0x55cd7396c14b - test[273d7611820c9051]::__rust_begin_short_backtrace::<core[c1f1a4ba060b9bfa]::result::Result<(), alloc[fdfd2bd8633a6659]::string::String>, fn() -> core[c1f1a4ba060b9bfa]::result::Result<(), alloc[fdfd2bd8633a6659]::string::String>>
+                               at /rustc/59807616e1fa2540724bfbac14d7976d7e4a3860/library/test/src/lib.rs:663:18
+  47:     0x55cd73978b3b - test[273d7611820c9051]::run_test_in_process::{closure#0}
+                               at /rustc/59807616e1fa2540724bfbac14d7976d7e4a3860/library/test/src/lib.rs:686:74
+  48:     0x55cd73978b3b - <core[c1f1a4ba060b9bfa]::panic::unwind_safe::AssertUnwindSafe<test[273d7611820c9051]::run_test_in_process::{closure#0}> as core[c1f1a4ba060b9bfa]::ops::function::FnOnce<()>>::call_once
+                               at /rustc/59807616e1fa2540724bfbac14d7976d7e4a3860/library/core/src/panic/unwind_safe.rs:274:9
+  49:     0x55cd73978b3b - std[e28293b1aa0f68bd]::panicking::catch_unwind::do_call::<core[c1f1a4ba060b9bfa]::panic::unwind_safe::AssertUnwindSafe<test[273d7611820c9051]::run_test_in_process::{closure#0}>, core[c1f1a4ba060b9bfa]::result::Result<(), alloc[fdfd2bd8633a6659]::string::String>>
+                               at /rustc/59807616e1fa2540724bfbac14d7976d7e4a3860/library/std/src/panicking.rs:581:40
+  50:     0x55cd73978b3b - std[e28293b1aa0f68bd]::panicking::catch_unwind::<core[c1f1a4ba060b9bfa]::result::Result<(), alloc[fdfd2bd8633a6659]::string::String>, core[c1f1a4ba060b9bfa]::panic::unwind_safe::AssertUnwindSafe<test[273d7611820c9051]::run_test_in_process::{closure#0}>>
+                               at /rustc/59807616e1fa2540724bfbac14d7976d7e4a3860/library/std/src/panicking.rs:544:19
+  51:     0x55cd73978b3b - std[e28293b1aa0f68bd]::panic::catch_unwind::<core[c1f1a4ba060b9bfa]::panic::unwind_safe::AssertUnwindSafe<test[273d7611820c9051]::run_test_in_process::{closure#0}>, core[c1f1a4ba060b9bfa]::result::Result<(), alloc[fdfd2bd8633a6659]::string::String>>
+                               at /rustc/59807616e1fa2540724bfbac14d7976d7e4a3860/library/std/src/panic.rs:359:14
+  52:     0x55cd73978b3b - test[273d7611820c9051]::run_test_in_process
+                               at /rustc/59807616e1fa2540724bfbac14d7976d7e4a3860/library/test/src/lib.rs:686:27
+  53:     0x55cd73978b3b - test[273d7611820c9051]::run_test::{closure#0}
+                               at /rustc/59807616e1fa2540724bfbac14d7976d7e4a3860/library/test/src/lib.rs:607:43
+  54:     0x55cd73974254 - test[273d7611820c9051]::run_test::{closure#1}
+                               at /rustc/59807616e1fa2540724bfbac14d7976d7e4a3860/library/test/src/lib.rs:637:41
+  55:     0x55cd73974254 - std[e28293b1aa0f68bd]::sys::backtrace::__rust_begin_short_backtrace::<test[273d7611820c9051]::run_test::{closure#1}, ()>
+                               at /rustc/59807616e1fa2540724bfbac14d7976d7e4a3860/library/std/src/sys/backtrace.rs:166:18
+  56:     0x55cd7397b742 - std[e28293b1aa0f68bd]::thread::lifecycle::spawn_unchecked::<test[273d7611820c9051]::run_test::{closure#1}, ()>::{closure#1}::{closure#0}
+                               at /rustc/59807616e1fa2540724bfbac14d7976d7e4a3860/library/std/src/thread/lifecycle.rs:91:13
+  57:     0x55cd7397b742 - <core[c1f1a4ba060b9bfa]::panic::unwind_safe::AssertUnwindSafe<std[e28293b1aa0f68bd]::thread::lifecycle::spawn_unchecked<test[273d7611820c9051]::run_test::{closure#1}, ()>::{closure#1}::{closure#0}> as core[c1f1a4ba060b9bfa]::ops::function::FnOnce<()>>::call_once
+                               at /rustc/59807616e1fa2540724bfbac14d7976d7e4a3860/library/core/src/panic/unwind_safe.rs:274:9
+  58:     0x55cd7397b742 - std[e28293b1aa0f68bd]::panicking::catch_unwind::do_call::<core[c1f1a4ba060b9bfa]::panic::unwind_safe::AssertUnwindSafe<std[e28293b1aa0f68bd]::thread::lifecycle::spawn_unchecked<test[273d7611820c9051]::run_test::{closure#1}, ()>::{closure#1}::{closure#0}>, ()>
+                               at /rustc/59807616e1fa2540724bfbac14d7976d7e4a3860/library/std/src/panicking.rs:581:40
+  59:     0x55cd7397b742 - std[e28293b1aa0f68bd]::panicking::catch_unwind::<(), core[c1f1a4ba060b9bfa]::panic::unwind_safe::AssertUnwindSafe<std[e28293b1aa0f68bd]::thread::lifecycle::spawn_unchecked<test[273d7611820c9051]::run_test::{closure#1}, ()>::{closure#1}::{closure#0}>>
+                               at /rustc/59807616e1fa2540724bfbac14d7976d7e4a3860/library/std/src/panicking.rs:544:19
+  60:     0x55cd7397b742 - std[e28293b1aa0f68bd]::panic::catch_unwind::<core[c1f1a4ba060b9bfa]::panic::unwind_safe::AssertUnwindSafe<std[e28293b1aa0f68bd]::thread::lifecycle::spawn_unchecked<test[273d7611820c9051]::run_test::{closure#1}, ()>::{closure#1}::{closure#0}>, ()>
+                               at /rustc/59807616e1fa2540724bfbac14d7976d7e4a3860/library/std/src/panic.rs:359:14
+  61:     0x55cd7397b742 - std[e28293b1aa0f68bd]::thread::lifecycle::spawn_unchecked::<test[273d7611820c9051]::run_test::{closure#1}, ()>::{closure#1}
+                               at /rustc/59807616e1fa2540724bfbac14d7976d7e4a3860/library/std/src/thread/lifecycle.rs:89:26
+  62:     0x55cd7397b742 - <std[e28293b1aa0f68bd]::thread::lifecycle::spawn_unchecked<test[273d7611820c9051]::run_test::{closure#1}, ()>::{closure#1} as core[c1f1a4ba060b9bfa]::ops::function::FnOnce<()>>::call_once::{shim:vtable#0}
+                               at /rustc/59807616e1fa2540724bfbac14d7976d7e4a3860/library/core/src/ops/function.rs:250:5
+  63:     0x55cd73a1681f - <alloc[fdfd2bd8633a6659]::boxed::Box<dyn core[c1f1a4ba060b9bfa]::ops::function::FnOnce<(), Output = ()> + core[c1f1a4ba060b9bfa]::marker::Send> as core[c1f1a4ba060b9bfa]::ops::function::FnOnce<()>>::call_once
+                               at /rustc/59807616e1fa2540724bfbac14d7976d7e4a3860/library/alloc/src/boxed.rs:2240:9
+  64:     0x55cd73a1681f - <std[e28293b1aa0f68bd]::sys::thread::unix::Thread>::new::thread_start
+                               at /rustc/59807616e1fa2540724bfbac14d7976d7e4a3860/library/std/src/sys/thread/unix.rs:118:17
+  65:     0x7f0751f0a8bb - <unknown>
+  66:     0x7f0751f88538 - <unknown>
+  67:                0x0 - <unknown>
+
+thread 'storage::wal_io::bootstrap::doublewrite_install::mutable_storage::status_init::status_flush::resident::tests::resident_status_cut_allocator' (2195) panicked at /rustc/59807616e1fa2540724bfbac14d7976d7e4a3860/library/core/src/panicking.rs:233:5:
+panic in a destructor during cleanup
+thread caused non-unwinding panic. aborting.

@@ -1,0 +1,429 @@
+   Compiling xadb-engine v0.1.0 (/workspace/xadb/crates/engine)
+error[E0597]: `visibility` does not live long enough
+   --> crates/engine/src/storage/wal_io/plan4_retention/lifecycle_tests.rs:282:79
+    |
+280 |           let mut visibility = boxed::<8_192>();
+    |               -------------- binding `visibility` declared here
+281 |           let mut epochs = boxed::<1_600>();
+282 |           $bound.enable_catalog_visibility(&mut $owner, VisibilityLoan { bytes: &mut visibility, epochs: &mut epochs }).unwrap();
+    |                                                                                 ^^^^^^^^^^^^^^^ borrowed value does not live long enough
+...
+290 |       }};
+    |       -
+    |       |
+    |       `visibility` dropped here while still borrowed
+    |       borrow might be used here, when `bound` is dropped and runs the destructor for type `plan4_pages::retention::DiskSession<'_, '_, '_, '_, '_, '_, '_, '_, plan4_genesis::tests::support::Writer>`
+...
+450 | /             fixture!(|bound, owner, core, _foreign, state, storage| {
+451 | |                 match case {
+452 | |                     1 => {
+453 | |                         let _ = complete(&mut bound, &mut owner, &core, &state, &oracle);
+...   |
+583 | |             });
+    | |______________- in this macro invocation
+    |
+    = note: values in a scope are dropped in the opposite order they are defined
+    = note: this error originates in the macro `fixture` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0597]: `epochs` does not live long enough
+   --> crates/engine/src/storage/wal_io/plan4_retention/lifecycle_tests.rs:282:104
+    |
+281 |           let mut epochs = boxed::<1_600>();
+    |               ---------- binding `epochs` declared here
+282 |           $bound.enable_catalog_visibility(&mut $owner, VisibilityLoan { bytes: &mut visibility, epochs: &mut epochs }).unwrap();
+    |                                                                                                          ^^^^^^^^^^^ borrowed value does not live long enough
+...
+290 |       }};
+    |       -
+    |       |
+    |       `epochs` dropped here while still borrowed
+    |       borrow might be used here, when `bound` is dropped and runs the destructor for type `plan4_pages::retention::DiskSession<'_, '_, '_, '_, '_, '_, '_, '_, plan4_genesis::tests::support::Writer>`
+...
+450 | /             fixture!(|bound, owner, core, _foreign, state, storage| {
+451 | |                 match case {
+452 | |                     1 => {
+453 | |                         let _ = complete(&mut bound, &mut owner, &core, &state, &oracle);
+...   |
+583 | |             });
+    | |______________- in this macro invocation
+    |
+    = note: values in a scope are dropped in the opposite order they are defined
+    = note: this error originates in the macro `fixture` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0597]: `visibility` does not live long enough
+   --> crates/engine/src/storage/wal_io/plan4_retention/lifecycle_tests.rs:282:79
+    |
+280 |           let mut visibility = boxed::<8_192>();
+    |               -------------- binding `visibility` declared here
+281 |           let mut epochs = boxed::<1_600>();
+282 |           $bound.enable_catalog_visibility(&mut $owner, VisibilityLoan { bytes: &mut visibility, epochs: &mut epochs }).unwrap();
+    |                                                                                 ^^^^^^^^^^^^^^^ borrowed value does not live long enough
+...
+290 |       }};
+    |       -
+    |       |
+    |       `visibility` dropped here while still borrowed
+    |       borrow might be used here, when `bound` is dropped and runs the destructor for type `plan4_pages::retention::DiskSession<'_, '_, '_, '_, '_, '_, '_, '_, plan4_genesis::tests::support::Writer>`
+...
+594 | /             fixture!(|bound, owner, core, foreign, state, storage| {
+595 | |                 let target = init(&mut bound, &mut owner, &core);
+596 | |                 let mut bad = target;
+597 | |                 if case == 1 {
+...   |
+667 | |             });
+    | |______________- in this macro invocation
+    |
+    = note: values in a scope are dropped in the opposite order they are defined
+    = note: this error originates in the macro `fixture` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0597]: `epochs` does not live long enough
+   --> crates/engine/src/storage/wal_io/plan4_retention/lifecycle_tests.rs:282:104
+    |
+281 |           let mut epochs = boxed::<1_600>();
+    |               ---------- binding `epochs` declared here
+282 |           $bound.enable_catalog_visibility(&mut $owner, VisibilityLoan { bytes: &mut visibility, epochs: &mut epochs }).unwrap();
+    |                                                                                                          ^^^^^^^^^^^ borrowed value does not live long enough
+...
+290 |       }};
+    |       -
+    |       |
+    |       `epochs` dropped here while still borrowed
+    |       borrow might be used here, when `bound` is dropped and runs the destructor for type `plan4_pages::retention::DiskSession<'_, '_, '_, '_, '_, '_, '_, '_, plan4_genesis::tests::support::Writer>`
+...
+594 | /             fixture!(|bound, owner, core, foreign, state, storage| {
+595 | |                 let target = init(&mut bound, &mut owner, &core);
+596 | |                 let mut bad = target;
+597 | |                 if case == 1 {
+...   |
+667 | |             });
+    | |______________- in this macro invocation
+    |
+    = note: values in a scope are dropped in the opposite order they are defined
+    = note: this error originates in the macro `fixture` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0597]: `visibility` does not live long enough
+   --> crates/engine/src/storage/wal_io/plan4_retention/lifecycle_tests.rs:282:79
+    |
+280 |           let mut visibility = boxed::<8_192>();
+    |               -------------- binding `visibility` declared here
+281 |           let mut epochs = boxed::<1_600>();
+282 |           $bound.enable_catalog_visibility(&mut $owner, VisibilityLoan { bytes: &mut visibility, epochs: &mut epochs }).unwrap();
+    |                                                                                 ^^^^^^^^^^^^^^^ borrowed value does not live long enough
+...
+290 |       }};
+    |       -
+    |       |
+    |       `visibility` dropped here while still borrowed
+    |       borrow might be used here, when `bound` is dropped and runs the destructor for type `plan4_pages::retention::DiskSession<'_, '_, '_, '_, '_, '_, '_, '_, plan4_genesis::tests::support::Writer>`
+...
+685 | /             fixture!(|bound, owner, core, _foreign, state, storage| {
+686 | |                 let target = bound.target(Plan4Page::CatalogLeaf).unwrap();
+687 | |                 let before = snapshots(&bound);
+688 | |                 clear(&state);
+...   |
+786 | |                 assert_eq!(effects(&state).1, 0);
+787 | |             });
+    | |______________- in this macro invocation
+    |
+    = note: values in a scope are dropped in the opposite order they are defined
+    = note: this error originates in the macro `fixture` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0597]: `epochs` does not live long enough
+   --> crates/engine/src/storage/wal_io/plan4_retention/lifecycle_tests.rs:282:104
+    |
+281 |           let mut epochs = boxed::<1_600>();
+    |               ---------- binding `epochs` declared here
+282 |           $bound.enable_catalog_visibility(&mut $owner, VisibilityLoan { bytes: &mut visibility, epochs: &mut epochs }).unwrap();
+    |                                                                                                          ^^^^^^^^^^^ borrowed value does not live long enough
+...
+290 |       }};
+    |       -
+    |       |
+    |       `epochs` dropped here while still borrowed
+    |       borrow might be used here, when `bound` is dropped and runs the destructor for type `plan4_pages::retention::DiskSession<'_, '_, '_, '_, '_, '_, '_, '_, plan4_genesis::tests::support::Writer>`
+...
+685 | /             fixture!(|bound, owner, core, _foreign, state, storage| {
+686 | |                 let target = bound.target(Plan4Page::CatalogLeaf).unwrap();
+687 | |                 let before = snapshots(&bound);
+688 | |                 clear(&state);
+...   |
+786 | |                 assert_eq!(effects(&state).1, 0);
+787 | |             });
+    | |______________- in this macro invocation
+    |
+    = note: values in a scope are dropped in the opposite order they are defined
+    = note: this error originates in the macro `fixture` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0597]: `visibility` does not live long enough
+   --> crates/engine/src/storage/wal_io/plan4_retention/lifecycle_tests.rs:282:79
+    |
+280 |           let mut visibility = boxed::<8_192>();
+    |               -------------- binding `visibility` declared here
+281 |           let mut epochs = boxed::<1_600>();
+282 |           $bound.enable_catalog_visibility(&mut $owner, VisibilityLoan { bytes: &mut visibility, epochs: &mut epochs }).unwrap();
+    |                                                                                 ^^^^^^^^^^^^^^^ borrowed value does not live long enough
+...
+290 |       }};
+    |       -
+    |       |
+    |       `visibility` dropped here while still borrowed
+    |       borrow might be used here, when `bound` is dropped and runs the destructor for type `plan4_pages::retention::DiskSession<'_, '_, '_, '_, '_, '_, '_, '_, plan4_genesis::tests::support::Writer>`
+...
+805 | /             fixture!(|bound, owner, core, _foreign, state, storage| {
+806 | |                 if case <= 2 {
+807 | |                     let status = init(&mut bound, &mut owner, &core);
+808 | |                     prepare(&mut bound, &mut owner, &core, &status);
+...   |
+917 | |             });
+    | |______________- in this macro invocation
+    |
+    = note: values in a scope are dropped in the opposite order they are defined
+    = note: this error originates in the macro `fixture` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0597]: `epochs` does not live long enough
+   --> crates/engine/src/storage/wal_io/plan4_retention/lifecycle_tests.rs:282:104
+    |
+281 |           let mut epochs = boxed::<1_600>();
+    |               ---------- binding `epochs` declared here
+282 |           $bound.enable_catalog_visibility(&mut $owner, VisibilityLoan { bytes: &mut visibility, epochs: &mut epochs }).unwrap();
+    |                                                                                                          ^^^^^^^^^^^ borrowed value does not live long enough
+...
+290 |       }};
+    |       -
+    |       |
+    |       `epochs` dropped here while still borrowed
+    |       borrow might be used here, when `bound` is dropped and runs the destructor for type `plan4_pages::retention::DiskSession<'_, '_, '_, '_, '_, '_, '_, '_, plan4_genesis::tests::support::Writer>`
+...
+805 | /             fixture!(|bound, owner, core, _foreign, state, storage| {
+806 | |                 if case <= 2 {
+807 | |                     let status = init(&mut bound, &mut owner, &core);
+808 | |                     prepare(&mut bound, &mut owner, &core, &status);
+...   |
+917 | |             });
+    | |______________- in this macro invocation
+    |
+    = note: values in a scope are dropped in the opposite order they are defined
+    = note: this error originates in the macro `fixture` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0597]: `visibility` does not live long enough
+    --> crates/engine/src/storage/wal_io/plan4_retention/lifecycle_tests.rs:282:79
+     |
+ 280 |           let mut visibility = boxed::<8_192>();
+     |               -------------- binding `visibility` declared here
+ 281 |           let mut epochs = boxed::<1_600>();
+ 282 |           $bound.enable_catalog_visibility(&mut $owner, VisibilityLoan { bytes: &mut visibility, epochs: &mut epochs }).unwrap();
+     |                                                                                 ^^^^^^^^^^^^^^^ borrowed value does not live long enough
+...
+ 290 |       }};
+     |       -
+     |       |
+     |       `visibility` dropped here while still borrowed
+     |       borrow might be used here, when `bound` is dropped and runs the destructor for type `plan4_pages::retention::DiskSession<'_, '_, '_, '_, '_, '_, '_, '_, plan4_genesis::tests::support::Writer>`
+...
+1012 | /             fixture!(|bound, owner, core, _foreign, state, storage| {
+1013 | |                 let status = init(&mut bound, &mut owner, &core);
+1014 | |                 prepare(&mut bound, &mut owner, &core, &status);
+1015 | |                 { let (mut writer, _, _) = bound.split(); writer.aging_start(&mut owner).unwrap(); }
+...    |
+1133 | |             });
+     | |______________- in this macro invocation
+     |
+     = note: values in a scope are dropped in the opposite order they are defined
+     = note: this error originates in the macro `fixture` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0597]: `epochs` does not live long enough
+    --> crates/engine/src/storage/wal_io/plan4_retention/lifecycle_tests.rs:282:104
+     |
+ 281 |           let mut epochs = boxed::<1_600>();
+     |               ---------- binding `epochs` declared here
+ 282 |           $bound.enable_catalog_visibility(&mut $owner, VisibilityLoan { bytes: &mut visibility, epochs: &mut epochs }).unwrap();
+     |                                                                                                          ^^^^^^^^^^^ borrowed value does not live long enough
+...
+ 290 |       }};
+     |       -
+     |       |
+     |       `epochs` dropped here while still borrowed
+     |       borrow might be used here, when `bound` is dropped and runs the destructor for type `plan4_pages::retention::DiskSession<'_, '_, '_, '_, '_, '_, '_, '_, plan4_genesis::tests::support::Writer>`
+...
+1012 | /             fixture!(|bound, owner, core, _foreign, state, storage| {
+1013 | |                 let status = init(&mut bound, &mut owner, &core);
+1014 | |                 prepare(&mut bound, &mut owner, &core, &status);
+1015 | |                 { let (mut writer, _, _) = bound.split(); writer.aging_start(&mut owner).unwrap(); }
+...    |
+1133 | |             });
+     | |______________- in this macro invocation
+     |
+     = note: values in a scope are dropped in the opposite order they are defined
+     = note: this error originates in the macro `fixture` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0597]: `visibility` does not live long enough
+   --> crates/engine/src/storage/wal_io/plan4_retention/lifecycle_tests.rs:282:79
+    |
+280 |           let mut visibility = boxed::<8_192>();
+    |               -------------- binding `visibility` declared here
+281 |           let mut epochs = boxed::<1_600>();
+282 |           $bound.enable_catalog_visibility(&mut $owner, VisibilityLoan { bytes: &mut visibility, epochs: &mut epochs }).unwrap();
+    |                                                                                 ^^^^^^^^^^^^^^^ borrowed value does not live long enough
+...
+290 |       }};
+    |       -
+    |       |
+    |       `visibility` dropped here while still borrowed
+    |       borrow might be used here, when `bound` is dropped and runs the destructor for type `plan4_pages::retention::DiskSession<'_, '_, '_, '_, '_, '_, '_, '_, plan4_genesis::tests::support::Writer>`
+    |
+   ::: crates/engine/src/storage/wal_io/plan4_retention/s5_tests.rs:13:17
+    |
+ 13 | /                 fixture!(|bound, owner, core, _foreign, state, storage| {
+ 14 | |                     let target = bound
+ 15 | |                         .target(if page == 8 {
+ 16 | |                             Plan4Page::CatalogLeaf
+...   |
+ 43 | |                     assert_eq!(effects(&state).1, 0);
+ 44 | |                 });
+    | |__________________- in this macro invocation
+    |
+    = note: values in a scope are dropped in the opposite order they are defined
+    = note: this error originates in the macro `fixture` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0597]: `epochs` does not live long enough
+   --> crates/engine/src/storage/wal_io/plan4_retention/lifecycle_tests.rs:282:104
+    |
+281 |           let mut epochs = boxed::<1_600>();
+    |               ---------- binding `epochs` declared here
+282 |           $bound.enable_catalog_visibility(&mut $owner, VisibilityLoan { bytes: &mut visibility, epochs: &mut epochs }).unwrap();
+    |                                                                                                          ^^^^^^^^^^^ borrowed value does not live long enough
+...
+290 |       }};
+    |       -
+    |       |
+    |       `epochs` dropped here while still borrowed
+    |       borrow might be used here, when `bound` is dropped and runs the destructor for type `plan4_pages::retention::DiskSession<'_, '_, '_, '_, '_, '_, '_, '_, plan4_genesis::tests::support::Writer>`
+    |
+   ::: crates/engine/src/storage/wal_io/plan4_retention/s5_tests.rs:13:17
+    |
+ 13 | /                 fixture!(|bound, owner, core, _foreign, state, storage| {
+ 14 | |                     let target = bound
+ 15 | |                         .target(if page == 8 {
+ 16 | |                             Plan4Page::CatalogLeaf
+...   |
+ 43 | |                     assert_eq!(effects(&state).1, 0);
+ 44 | |                 });
+    | |__________________- in this macro invocation
+    |
+    = note: values in a scope are dropped in the opposite order they are defined
+    = note: this error originates in the macro `fixture` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0597]: `visibility` does not live long enough
+   --> crates/engine/src/storage/wal_io/plan4_retention/lifecycle_tests.rs:282:79
+    |
+280 |           let mut visibility = boxed::<8_192>();
+    |               -------------- binding `visibility` declared here
+281 |           let mut epochs = boxed::<1_600>();
+282 |           $bound.enable_catalog_visibility(&mut $owner, VisibilityLoan { bytes: &mut visibility, epochs: &mut epochs }).unwrap();
+    |                                                                                 ^^^^^^^^^^^^^^^ borrowed value does not live long enough
+...
+290 |       }};
+    |       -
+    |       |
+    |       `visibility` dropped here while still borrowed
+    |       borrow might be used here, when `bound` is dropped and runs the destructor for type `plan4_pages::retention::DiskSession<'_, '_, '_, '_, '_, '_, '_, '_, plan4_genesis::tests::support::Writer>`
+    |
+   ::: crates/engine/src/storage/wal_io/plan4_retention/s5_tests.rs:60:17
+    |
+ 60 | /                 fixture!(|bound, owner, core, _foreign, state, storage| {
+ 61 | |                     let status = init(&mut bound, &mut owner, &core);
+ 62 | |                     prepare(&mut bound, &mut owner, &core, &status);
+...   |
+111 | |                     );
+112 | |                 });
+    | |__________________- in this macro invocation
+    |
+    = note: values in a scope are dropped in the opposite order they are defined
+    = note: this error originates in the macro `fixture` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0597]: `epochs` does not live long enough
+   --> crates/engine/src/storage/wal_io/plan4_retention/lifecycle_tests.rs:282:104
+    |
+281 |           let mut epochs = boxed::<1_600>();
+    |               ---------- binding `epochs` declared here
+282 |           $bound.enable_catalog_visibility(&mut $owner, VisibilityLoan { bytes: &mut visibility, epochs: &mut epochs }).unwrap();
+    |                                                                                                          ^^^^^^^^^^^ borrowed value does not live long enough
+...
+290 |       }};
+    |       -
+    |       |
+    |       `epochs` dropped here while still borrowed
+    |       borrow might be used here, when `bound` is dropped and runs the destructor for type `plan4_pages::retention::DiskSession<'_, '_, '_, '_, '_, '_, '_, '_, plan4_genesis::tests::support::Writer>`
+    |
+   ::: crates/engine/src/storage/wal_io/plan4_retention/s5_tests.rs:60:17
+    |
+ 60 | /                 fixture!(|bound, owner, core, _foreign, state, storage| {
+ 61 | |                     let status = init(&mut bound, &mut owner, &core);
+ 62 | |                     prepare(&mut bound, &mut owner, &core, &status);
+...   |
+111 | |                     );
+112 | |                 });
+    | |__________________- in this macro invocation
+    |
+    = note: values in a scope are dropped in the opposite order they are defined
+    = note: this error originates in the macro `fixture` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0597]: `visibility` does not live long enough
+   --> crates/engine/src/storage/wal_io/plan4_retention/lifecycle_tests.rs:282:79
+    |
+280 |           let mut visibility = boxed::<8_192>();
+    |               -------------- binding `visibility` declared here
+281 |           let mut epochs = boxed::<1_600>();
+282 |           $bound.enable_catalog_visibility(&mut $owner, VisibilityLoan { bytes: &mut visibility, epochs: &mut epochs }).unwrap();
+    |                                                                                 ^^^^^^^^^^^^^^^ borrowed value does not live long enough
+...
+290 |       }};
+    |       -
+    |       |
+    |       `visibility` dropped here while still borrowed
+    |       borrow might be used here, when `bound` is dropped and runs the destructor for type `plan4_pages::retention::DiskSession<'_, '_, '_, '_, '_, '_, '_, '_, plan4_genesis::tests::support::Writer>`
+    |
+   ::: crates/engine/src/storage/wal_io/plan4_retention/s5_tests.rs:129:17
+    |
+129 | /                 fixture!(|bound, owner, core, _foreign, state, storage| {
+130 | |                     if stage == 0 {
+131 | |                         let mut cursor = Plan4ResidencyCursor::new();
+132 | |                         assert!(
+...   |
+196 | |                     owner.check_idle().unwrap();
+197 | |                 });
+    | |__________________- in this macro invocation
+    |
+    = note: values in a scope are dropped in the opposite order they are defined
+    = note: this error originates in the macro `fixture` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0597]: `epochs` does not live long enough
+   --> crates/engine/src/storage/wal_io/plan4_retention/lifecycle_tests.rs:282:104
+    |
+281 |           let mut epochs = boxed::<1_600>();
+    |               ---------- binding `epochs` declared here
+282 |           $bound.enable_catalog_visibility(&mut $owner, VisibilityLoan { bytes: &mut visibility, epochs: &mut epochs }).unwrap();
+    |                                                                                                          ^^^^^^^^^^^ borrowed value does not live long enough
+...
+290 |       }};
+    |       -
+    |       |
+    |       `epochs` dropped here while still borrowed
+    |       borrow might be used here, when `bound` is dropped and runs the destructor for type `plan4_pages::retention::DiskSession<'_, '_, '_, '_, '_, '_, '_, '_, plan4_genesis::tests::support::Writer>`
+    |
+   ::: crates/engine/src/storage/wal_io/plan4_retention/s5_tests.rs:129:17
+    |
+129 | /                 fixture!(|bound, owner, core, _foreign, state, storage| {
+130 | |                     if stage == 0 {
+131 | |                         let mut cursor = Plan4ResidencyCursor::new();
+132 | |                         assert!(
+...   |
+196 | |                     owner.check_idle().unwrap();
+197 | |                 });
+    | |__________________- in this macro invocation
+    |
+    = note: values in a scope are dropped in the opposite order they are defined
+    = note: this error originates in the macro `fixture` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+For more information about this error, try `rustc --explain E0597`.
+error: could not compile `xadb-engine` (lib test) due to 16 previous errors

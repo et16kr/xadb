@@ -1,0 +1,8 @@
+
+running 1 test
+test storage::wal_io::bootstrap::doublewrite_install::mutable_storage::status_init::status_flush::mixed::tests::mixed_owner_load_status_home_cannot_replace_undo ... MIXED_OWNER_CASE_BEGIN	MO-LOAD-018
+MIXED_OWNER_CASE_PASS	MO-LOAD-018
+ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 2005 filtered out; finished in 0.21s
+

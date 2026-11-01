@@ -1,0 +1,23 @@
+   Compiling xadb-engine v0.1.0 (/workspace/xadb/crates/engine)
+error[E0277]: `storage::semantic_catalog::transition::Observation` doesn't implement `Debug`
+    --> crates/engine/src/storage/wal_io/plan4_retention/lifecycle_tests.rs:1040:83
+     |
+1040 | ...                   assert!(result.is_ok(), "concurrent Begin failed: {result:?}");
+     |                                                                         ^^^^^^^^^^ `storage::semantic_catalog::transition::Observation` cannot be formatted using `{:?}` because it doesn't implement `Debug`
+     |
+     = help: the trait `Debug` is not implemented for `storage::semantic_catalog::transition::Observation`
+     = note: add `#[derive(Debug)]` to `storage::semantic_catalog::transition::Observation` or manually `impl Debug for storage::semantic_catalog::transition::Observation`
+help: the trait `Debug` is implemented for `std::result::Result<T, E>`
+    --> /rustc/59807616e1fa2540724bfbac14d7976d7e4a3860/library/core/src/result.rs:552:15
+     = note: required for `Result<Observation, RetentionError>` to implement `Debug`
+     = note: the full name for the type has been written to '/workspace/scratch/f0-target/debug/deps/engine-e4e141083d864921.long-type-11672970826093684949.txt'
+     = note: consider using `--verbose` to print the full type name to the console
+help: consider annotating `storage::semantic_catalog::transition::Observation` with `#[derive(Debug)]`
+    -->  crates/engine/src/storage/semantic_catalog/transition.rs:137:1
+     |
+ 137 + #[derive(Debug)]
+ 138 | pub(crate) struct Observation {
+     |
+
+For more information about this error, try `rustc --explain E0277`.
+error: could not compile `xadb-engine` (lib test) due to 1 previous error

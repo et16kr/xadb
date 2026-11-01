@@ -232,6 +232,9 @@ pub(super) fn fresh<D: DirectoryPort>(directory: &D, stop: u64, read: impl Fn(&s
     let mut isolation = boxed::<4_160>();
     let mut control = boxed::<RETENTION_CONTROL_BYTES>();
     let mut replay = boxed::<RETENTION_REPLAY_BYTES>();
+    let mut private = boxed::<425_984>();
+    let mut visibility = boxed::<8_192>();
+    let mut epochs = boxed::<1_600>();
     let pages = storage
         .bind_plan4_pages(&core, &mut frames, &mut operation)
         .unwrap();
@@ -248,6 +251,14 @@ pub(super) fn fresh<D: DirectoryPort>(directory: &D, stop: u64, read: impl Fn(&s
             panic!("actual fresh activation: {error:?}")
         }
     };
+    live.enable_catalog_visibility(
+        &mut owner,
+        super::super::super::plan4_pages::VisibilityLoan {
+            bytes: &mut visibility,
+            epochs: &mut epochs,
+        },
+    )
+    .unwrap();
     let mut cursor = Plan4ResidencyCursor::new();
     assert!(
         live.prepare_status_slot(&owner, &mut cursor)
@@ -282,18 +293,22 @@ pub(super) fn fresh<D: DirectoryPort>(directory: &D, stop: u64, read: impl Fn(&s
     .enumerate()
     {
         let observation = {
-            let (mut writer, _, _) = live.split();
             match i {
-                0 => writer.aging_start(&mut owner),
-                1 => writer.begin_empty(&mut owner, &status, job(2)),
-                2 => writer.rollback_start(&mut owner, actor(1, 2)),
-                3 => writer.abort_end_empty(&mut owner, actor(1, 2)),
-                4 => writer.finish_empty_terminal(&mut owner, job(2)),
+                0 => live.catalog_aging_start(&mut owner, &mut private),
+                1 => live.catalog_begin(&mut owner, &status, &mut private),
+                2 => live.catalog_rollback_start(&mut owner, actor(1, 2), &mut private),
+                3 => live.catalog_abort_end(&mut owner, actor(1, 2), &mut private),
+                4 => live.catalog_retire(
+                    &mut owner,
+                    0,
+                    crate::storage::semantic_catalog::Operation::TerminalFinish,
+                    &mut private,
+                ),
                 _ => unreachable!(),
             }
             .unwrap()
         };
-        assert_eq!(observation.lsn.0, i as u64 + 3);
+        assert_eq!(observation.header.lsn, i as u64 + 3);
         let raw = oracle.raw(name);
         let actual = read(wal::WAL_NAME);
         assert_eq!(&actual[offset..], raw);

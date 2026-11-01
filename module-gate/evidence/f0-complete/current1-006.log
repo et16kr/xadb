@@ -1,0 +1,18 @@
+
+running 1 test
+test storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::cases::recovery_lifecycle ... P4_RECOVERY_CONTEXT	P4-REC-L01	2a0a455d8c8f7f1818645af66f56ca78808f236cfb3946229edf1ac2bfbd60c5	7612dc15aa041a7e37041b7950ccc86400fe148472ae575e12ba57addafb28e1	165176e5716811195d018632dc5f0d49d588b89d3039979daf5917dc4eef138f
+P4_RECOVERY_BEGIN	P4-REC-L01
+
+thread 'storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::cases::recovery_lifecycle' (4697) panicked at crates/engine/src/storage/wal_io/plan4_recovery/tests/observations.rs:13:5:
+new epoch: lengths 4096 / 4096, first difference Some(106), SHA bfbcf1afc8739def51d6a010ebc0e754e086697f5c4d7d6226f6b2a6772ef022 / 12dc4eb6ecb82f1ee6f499ea9b07620a6b982d8a6409bb5abb0a1e0bf1d0e0cc
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+P4_RECOVERY_FAIL	P4-REC-L01
+FAILED
+
+failures:
+
+failures:
+    storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::cases::recovery_lifecycle
+
+test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 2005 filtered out; finished in 0.39s
+
