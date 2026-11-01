@@ -1770,3 +1770,4 @@ fn mci01_v11_recovered_cleanup_keeps_logical_epochs() {
 #[cfg(target_os = "linux")]
 #[path = "row_join/native.rs"]
 mod native;
+// module gate remote check: comment-only Rust change, not for merge
