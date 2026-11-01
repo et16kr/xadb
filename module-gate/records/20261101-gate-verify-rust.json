@@ -1,0 +1,22 @@
+{
+ "schema": "XADB_MODULE_GATE_RECORD_V1",
+ "change": "gate remote check: comment-only JOIN change on a PR to gate-test/protected; never merged into main",
+ "ci_selectors": [],
+ "na": [],
+ "reviews": [
+  {
+   "id": "gate-verify-rust-d1",
+   "class": "D1",
+   "scopes": [],
+   "author": "Claude project thread claude/project-thread-1jfdtk-s12 (session_01Am8okH782ybhpLHXPuWnKJ)",
+   "reviewer": "separate AI review run gate-verify-rust-d1 (D1, commit 63b2a8ac)",
+   "verdict": "ACCEPT",
+   "required_open": 0,
+   "files": {
+    "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join.rs": "2dffb3ac0fe1424d54a371fa27b3fd7b05200770"
+   },
+   "log": "/mnt/project-files/module-independence-20261029/artifacts/module-s12-20261101/remote/d1-gate-verify-rust.md (sha256 d163a8bd8107905b378d45e40372fbeb05d79d8080f0dc87e2f0df9bb946b6a6)"
+  }
+ ],
+ "attested": []
+}
