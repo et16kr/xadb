@@ -1497,3 +1497,374 @@ fn mca05_v09_owned_pages_one_over() {
 #[cfg(target_os = "linux")]
 #[path = "row_inventory_a/native.rs"]
 mod native;
+
+/// One resident Undo page's single record: its before count (`incoming`,
+/// record offset 80) set to `incoming`, the page resealed in its frame (the
+/// page identity, LSN and digest stay valid). Returns the old count.
+fn set_incoming(
+    pool: &crate::storage::dirty_frame::SharedPool<'_, '_, '_, '_>,
+    number: u64,
+    incoming: u64,
+) -> u64 {
+    use crate::storage::{
+        dirty_frame::status_load_test_support, page::encode_page, undo_record::INITIAL_UNDO_CELL,
+    };
+    let index = probe::registered_index(pool, number).unwrap();
+    let identity = pool.target_request(index).unwrap().identity;
+    let mut old = 0;
+    status_load_test_support::edit_content(pool, index, |bytes| {
+        let page = decode_page(bytes, identity, PageKind::Undo).unwrap();
+        assert_eq!(page.len(), 1);
+        assert_eq!(page.cell_range(0), Some(INITIAL_UNDO_CELL));
+        let header = page.header();
+        let mut cell = page.cell(0).unwrap().to_vec();
+        old = u64::from_le_bytes(cell[80..88].try_into().unwrap());
+        cell[80..88].copy_from_slice(&incoming.to_le_bytes());
+        encode_page(header, &[&cell], bytes).unwrap();
+        decode_page(bytes, identity, PageKind::Undo).unwrap();
+    });
+    old
+}
+
+/// MCA05-V29 on the actual C supply (S10 review R5), PARTIAL: statement S1
+/// inserts a (RowId 1); a's Undo record U is then the predecessor H of the
+/// next row's Forward. U's before count is resealed to 0 in its frame only
+/// (no WAL record; the history's replay of U still has the count A left).
+/// The INSERT of b in S2 is then refused by C's preflight before A's
+/// producer runs: the Census copy of U contradicts the replay arena, a
+/// Fatal (Census, Invariant, CallerMustResolve) that fences the writer. No
+/// RowId is reserved, the WAL and files are byte-equal and b is absent. A
+/// live C state with H's count 0 that agrees with the history is not
+/// constructible (only C writes U's count, under WAL), so A's own refusal
+/// (OrderMismatch) stays the pure producer test
+/// (`row/insert/group_tests.rs`).
+#[test]
+fn mca05_v29_actual_frame_count_zero_is_fenced_by_preflight() {
+    case("MCA05-V29-ACTUAL", || {
+        let oracle = Oracle::new();
+        with_fresh!(
+            oracle,
+            frames = 16,
+            |live, owner, flusher, status, undo, private, reader_private, core, fence, state| {
+                let _ = core;
+                let (row_status, _) =
+                    create_table(live, owner, flusher, status, undo, private, true);
+                for _ in 0..2 {
+                    system_init(live, owner, flusher, true);
+                }
+                let (mut writer, reader, mut flush) = live.split();
+                let tx = writer
+                    .begin_row_transaction(
+                        owner,
+                        IsolationLevel::Serializable,
+                        &row_status,
+                        private,
+                        &mut flush,
+                    )
+                    .unwrap();
+                let s1 = writer.begin_statement(owner, &tx).unwrap();
+                let table = issue_table!(reader, owner, s1, reader_private, flush, flusher);
+                let a = [ValueRef::Int64(A)];
+                let input: [&[ValueRef<'_>]; 1] = [&a];
+                let mut slots: [Option<RowMutationObservation>; 1] = [None];
+                let mut call = LiveCall::new(&mut writer, owner, &mut flush, flusher);
+                assert!(matches!(
+                    insert_live(&mut call, s1, &table, private, &input, &mut slots),
+                    Ok(1)
+                ));
+                let u = slots[0].take().unwrap().undo();
+                let pool = reader.catalog_test_pool();
+                let old = set_incoming(pool, u.page().page_no, 0);
+                assert!(old >= 1, "a's U before count {old}");
+                let before = files(state);
+                assert_leaf(&leaf_cells(pool), &int_rows(&[(1, A)]));
+                let s2 = writer.begin_statement(owner, &tx).unwrap();
+                let b = [ValueRef::Int64(B)];
+                let input: [&[ValueRef<'_>]; 1] = [&b];
+                assert!(!fence.is_fenced());
+                let mut call = LiveCall::new(&mut writer, owner, &mut flush, flusher);
+                match insert_live(&mut call, s2, &table, private, &input, &mut slots) {
+                    Err(DriveError { failure, after }) => {
+                        println!("MCA05_V29_ACTUAL refusal={failure:?}");
+                        assert_eq!(failure.stage, Stage::Preflight, "{failure:?}");
+                        let error = disk(&failure);
+                        assert_eq!(
+                            (error.phase, error.effect),
+                            (RetentionPhase::Census, Effect::CallerMustResolve),
+                            "{failure:?}"
+                        );
+                        assert!(matches!(error.cause, RetentionCause::Invariant));
+                        assert!(failure.cleanup.is_none() && failure.must_resolve);
+                        assert!(matches!(after, After::MustResolve(_)));
+                    }
+                    Ok(n) => panic!("{n} rows inserted with H's before count 0"),
+                }
+                assert!(fence.is_fenced());
+                assert!(slots[0].is_none(), "no RowId reserved");
+                // The fenced pool refuses typed reads; the WAL and data
+                // files are byte-equal, so no RowReserve, Forward or leaf
+                // write of b exists.
+                let after = files(state);
+                assert!(after.0 == before.0 && after.1 == before.1, "no effect");
+                println!("MCA05_V29_ACTUAL old_incoming={old} fenced=true wal_equal=true");
+            }
+        );
+    });
+}
+
+/// MCA05-V01 (WAL, under; S10 review R6), PARTIAL: C's original WAL
+/// staging Capacity branch (`physical.rs`, `end > WAL_FILE_CAP`) taken once
+/// through its cfg(test) injector at the INSERT's first WAL stage, the
+/// RowReserve. The row is refused Unchanged before any effect (WAL and files
+/// byte-equal, no RowId issued); the retry inserts RowId 1 and commits q 2.
+/// The injector takes the branch without making the remaining WAL exactly
+/// one byte short; `equal` and `+1` (V02, V03) need a WAL filled to
+/// 256 MiB minus one RowReserve and stay NOT_RUN.
+#[test]
+fn mca05_v01_wal_stage_capacity_refuses_before_any_effect() {
+    case("MCA05-V01", || {
+        let oracle = Oracle::new();
+        with_fresh!(
+            oracle,
+            frames = 16,
+            |live, owner, flusher, status, undo, private, reader_private, core, fence, state| {
+                let _ = core;
+                let (row_status, _) =
+                    create_table(live, owner, flusher, status, undo, private, true);
+                let (mut writer, reader, mut flush) = live.split();
+                let tx = writer
+                    .begin_row_transaction(
+                        owner,
+                        IsolationLevel::Serializable,
+                        &row_status,
+                        private,
+                        &mut flush,
+                    )
+                    .unwrap();
+                let s1 = writer.begin_statement(owner, &tx).unwrap();
+                let table = issue_table!(reader, owner, s1, reader_private, flush, flusher);
+                let before = files(state);
+                let leaf = leaf_cells(reader.catalog_test_pool());
+                let a = [ValueRef::Int64(A)];
+                let input: [&[ValueRef<'_>]; 1] = [&a];
+                let mut slots: [Option<RowMutationObservation>; 1] = [None];
+                let once = crate::storage::wal_io::durability_test_support::stage_capacity_once();
+                let mut call = LiveCall::new(&mut writer, owner, &mut flush, flusher);
+                let s1 = match insert_live(&mut call, s1, &table, private, &input, &mut slots) {
+                    Err(DriveError { failure, after }) => {
+                        println!("MCA05_V01 refusal={failure:?}");
+                        assert_eq!(failure.stage, Stage::Reserve, "{failure:?}");
+                        let error = disk(&failure);
+                        assert_eq!(error.effect, Effect::Unchanged, "{failure:?}");
+                        assert!(
+                            matches!(&error.cause, RetentionCause::Wal(wal)
+                                if wal.phase == crate::storage::wal_io::Phase::Stage
+                                && matches!(wal.cause, crate::storage::wal_io::Cause::Capacity)
+                                && wal.effect == Effect::Unchanged),
+                            "{failure:?}"
+                        );
+                        assert!(failure.cleanup.is_none() && !failure.must_resolve);
+                        match after {
+                            After::Returned(view) => view,
+                            _ => panic!("the statement is not Returned"),
+                        }
+                    }
+                    Ok(n) => panic!("{n} rows inserted"),
+                };
+                assert_eq!(once.hits(), 1, "the original Capacity branch was taken");
+                drop(once);
+                assert!(slots[0].is_none());
+                let after = files(state);
+                assert!(after.0 == before.0 && after.1 == before.1, "first effect");
+                assert_eq!(leaf_cells(reader.catalog_test_pool()), leaf);
+                let mut call = LiveCall::new(&mut writer, owner, &mut flush, flusher);
+                match insert_live(&mut call, s1, &table, private, &input, &mut slots) {
+                    Ok(1) => {}
+                    other => panic!("retry {:?}", other.err().map(|e| e.failure)),
+                }
+                assert_eq!(slots[0].as_ref().unwrap().row().get(), 1, "no RowId issued");
+                let mut call = LiveCall::new(&mut writer, owner, &mut flush, flusher);
+                let q = match commit_live(&mut call, tx, private) {
+                    Ok(committed) => committed.q(),
+                    Err(error) => panic!("Commit refused {:?}", error.failure),
+                };
+                assert_eq!(q, 2);
+                assert_leaf(
+                    &leaf_cells(reader.catalog_test_pool()),
+                    &int_rows(&[(1, A)]),
+                );
+                owner.check_idle().unwrap();
+                assert!(!fence.is_fenced());
+            }
+        );
+    });
+}
+
+/// MCA05-V16..V18 (frame; S10 review R7): one fixed 12-frame pool (S2W-R19's
+/// fixture) whose Free Undo 14 is made non-resident before the split, so the
+/// INSERT's preflight must LOAD exactly one page (the frame need is 1; every
+/// other source stays resident). The pool's total is not changed: another
+/// owner pins every non-source frame but `victims` clean ones, holding the
+/// pins for the whole flow. Under (0 victims) the INSERT is refused at C's
+/// preflight Unchanged (Load, Frame Busy) before any effect (no RowId, WAL
+/// and files byte-equal, Free Undo 14 still non-resident); the retry with
+/// the pins released inserts RowId 1 and commits q 2. Equal (1) and plus (2)
+/// run Reserve, Forward, the failed statement (one good row, then Null at
+/// Validate) and its statement rollback, then the full abort, with the pins
+/// held throughout.
+fn mca05_frame(id: &'static str, victims: usize) {
+    use super::row_preflight::{SOURCES, evict, frames, with_pins};
+    case(id, || {
+        let oracle = Oracle::new();
+        with_fresh!(
+            oracle,
+            frames = 12,
+            |live, owner, flusher, status, undo, private, reader_private, core, fence, state| {
+                let (row_status, row_undo) =
+                    create_table(live, owner, flusher, status, undo, private, true);
+                let row_undo = row_undo.unwrap();
+                let free_undo = row_undo.identity().page.page_no;
+                assert!(!SOURCES.contains(&free_undo));
+                // The failed statement's Null row selects a second Free Undo
+                // container at its own preflight (before A validates it).
+                let second_undo = system_init(live, owner, flusher, true)
+                    .identity()
+                    .page
+                    .page_no;
+                evict(live, flusher, &row_undo);
+                let (mut writer, reader, mut flush) = live.split();
+                let tx = writer
+                    .begin_row_transaction(
+                        owner,
+                        IsolationLevel::Serializable,
+                        &row_status,
+                        private,
+                        &mut flush,
+                    )
+                    .unwrap();
+                let s1 = writer.begin_statement(owner, &tx).unwrap();
+                let table = issue_table!(reader, owner, s1, reader_private, flush, flusher);
+                assert!(writer.finish_statement(owner, s1).is_ok());
+                let pool = reader.catalog_test_pool();
+                let listed = frames(pool, 12);
+                assert!(probe::registered_index(pool, free_undo).is_none());
+                let others: Vec<(usize, u64, bool)> = listed
+                    .iter()
+                    .filter(|(_, page, _)| !SOURCES.contains(page))
+                    .copied()
+                    .collect();
+                let clean: Vec<usize> = others
+                    .iter()
+                    .filter(|(_, _, dirty)| !dirty)
+                    .map(|(index, ..)| *index)
+                    .collect();
+                assert!(clean.len() >= victims, "{listed:?}");
+                let free: Vec<usize> = clean.iter().take(victims).copied().collect();
+                let pinned: Vec<usize> = others
+                    .iter()
+                    .map(|(index, ..)| *index)
+                    .filter(|index| !free.contains(index))
+                    .collect();
+                println!(
+                    "{id} frames={listed:?} victims={victims} pinned={} free_undo={free_undo} second_undo={second_undo}",
+                    pinned.len()
+                );
+                let mut holder = core.try_owner(OwnerRole::Foreground).unwrap();
+                if victims == 0 {
+                    let before = files(state);
+                    let s2 = writer.begin_statement(owner, &tx).unwrap();
+                    let a = [ValueRef::Int64(A)];
+                    let input: [&[ValueRef<'_>]; 1] = [&a];
+                    let mut slots: [Option<RowMutationObservation>; 1] = [None];
+                    let s2 = with_pins(pool, &mut holder, &pinned, || {
+                        let mut call = LiveCall::new(&mut writer, owner, &mut flush, flusher);
+                        match insert_live(&mut call, s2, &table, private, &input, &mut slots) {
+                            Err(DriveError { failure, after }) => {
+                                println!("{id} refusal={failure:?}");
+                                assert_eq!(failure.stage, Stage::Preflight, "{failure:?}");
+                                let error = disk(&failure);
+                                assert_eq!(
+                                    (error.phase, error.effect),
+                                    (RetentionPhase::Load, Effect::Unchanged),
+                                    "{failure:?}"
+                                );
+                                assert!(
+                                    matches!(&error.cause, RetentionCause::Frame(frame)
+                                        if frame.cause == crate::storage::dirty_frame::Cause::Busy),
+                                    "{failure:?}"
+                                );
+                                assert!(failure.cleanup.is_none() && !failure.must_resolve);
+                                match after {
+                                    After::Returned(view) => view,
+                                    _ => panic!("the statement is not Returned"),
+                                }
+                            }
+                            Ok(n) => panic!("{n} rows inserted without a victim frame"),
+                        }
+                    });
+                    holder.check_idle().unwrap();
+                    assert!(slots[0].is_none(), "no RowId issued");
+                    let after = files(state);
+                    assert!(after.0 == before.0 && after.1 == before.1, "first effect");
+                    assert!(probe::registered_index(pool, free_undo).is_none());
+                    assert_leaf(&leaf_cells(pool), &[]);
+                    let mut call = LiveCall::new(&mut writer, owner, &mut flush, flusher);
+                    match insert_live(&mut call, s2, &table, private, &input, &mut slots) {
+                        Ok(1) => {}
+                        other => panic!("retry {:?}", other.err().map(|e| e.failure)),
+                    }
+                    assert_eq!(slots[0].as_ref().unwrap().row().get(), 1, "no RowId issued");
+                    let used = slots[0].as_ref().unwrap().undo().page().page_no;
+                    let mut call = LiveCall::new(&mut writer, owner, &mut flush, flusher);
+                    let q = match commit_live(&mut call, tx, private) {
+                        Ok(committed) => committed.q(),
+                        Err(error) => panic!("Commit refused {:?}", error.failure),
+                    };
+                    assert_eq!(q, 2);
+                    assert_leaf(&leaf_cells(pool), &int_rows(&[(1, A)]));
+                    println!("{id} under refused then retry RowId 1 undo {used} q {q}");
+                } else {
+                    let (a, clrs) = with_pins(pool, &mut holder, &pinned, || {
+                        let a =
+                            failed_suffix!(writer, owner, flush, flusher, tx, &table, private, [A]);
+                        let clrs = full_abort!(writer, owner, flush, flusher, tx, private);
+                        (a, clrs)
+                    });
+                    holder.check_idle().unwrap();
+                    assert_eq!(a[0].row().get(), 1);
+                    assert_eq!(
+                        a[0].undo().page().page_no,
+                        free_undo,
+                        "the LOADed Free Undo"
+                    );
+                    assert_eq!(clrs, 0, "the statement rollback compensated a");
+                    assert!(probe::registered_index(pool, free_undo).is_some());
+                    assert_leaf(&leaf_cells(pool), &[]);
+                    println!(
+                        "{id} victims={victims} flow Reserve-Forward-failed statement-full abort a=1 clrs={clrs}"
+                    );
+                }
+                owner.check_idle().unwrap();
+                assert!(!fence.is_fenced());
+            }
+        );
+    });
+}
+
+/// MCA05-V16 (frame, under): see `mca05_frame`.
+#[test]
+fn mca05_v16_frame_no_victim_is_refused_before_any_effect() {
+    mca05_frame("MCA05-V16", 0);
+}
+
+/// MCA05-V17 (frame, equal): see `mca05_frame`.
+#[test]
+fn mca05_v17_frame_one_victim_runs_the_flow() {
+    mca05_frame("MCA05-V17", 1);
+}
+
+/// MCA05-V18 (frame, plus): see `mca05_frame`.
+#[test]
+fn mca05_v18_frame_two_victims_run_the_flow() {
+    mca05_frame("MCA05-V18", 2);
+}
