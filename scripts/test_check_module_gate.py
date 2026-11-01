@@ -21,6 +21,7 @@ from pathlib import Path
 from unittest import mock
 
 import check_module_gate as gate
+import module_gate_build
 import module_single_source
 
 E = 'crates/engine/src/storage'
@@ -450,6 +451,27 @@ class FinalTests(GateFixture):
     def test_matching_receipt_is_accepted(self):
         report = self.report()
         self.assertEqual(self.verify(report), [])
+
+    def test_cases_counted_from_a_selector_must_have_passed_there(self):
+        report = self.report()
+        case = 'storage::row::insert::tests::newly_added'
+        report['selection'] = dict(report['selection'], cases=[case, 'storage::c::tests::z'])
+
+        def receipt(passed_names, covered):
+            out = self.receipt(report)
+            for r in out['results']:
+                if r['name'] == 'head:storage::row::insert::':
+                    r['passed_names'] = passed_names
+            out['results'].append(dict(name='head-cases', status='PASS', listed=2, passed=2,
+                                       failed=0, ignored=0, covered=covered))
+            return out
+        self.assertEqual(self.verify(report, receipt([case], [case])), [])
+        for passed_names, covered in (([], [case]), ([case, 'x::y'], [case, 'x::y']),
+                                      ([case], 'all')):
+            with self.subTest(covered=covered):
+                errors = self.verify(report, receipt(passed_names, covered))
+                self.assertTrue(any('selector runs that did not pass' in e for e in errors),
+                                errors)
 
     def test_exports_run_only_the_changed_feature(self):
         """An A change builds both exports but runs no B selector (AGENTS.md:
@@ -1005,6 +1027,150 @@ class ReReviewFindingTests(GateFixture):
         self.assertTrue(any('not awaited' in n for n in report['notes']))
 
 
+class OwnerReviewTests(GateFixture):
+    """The owner's review of PR #18 (604c980e): reproductions that passed."""
+
+    def test_raw_identifiers_are_the_same_names(self):
+        for spelled in ('crate::storage::r#c::Port', 'crate::r#storage::c::r#Port'):
+            with self.subTest(spelled=spelled):
+                self.git('reset', '-q', '--hard', self.base)
+                self.edit(f'{E}/codec.rs', 'pub(crate) struct',
+                          f'pub(crate) fn port() -> {spelled} {{ todo!() }}\npub(crate) struct')
+                report = self.judge(self.commit('codec reaches C, raw'), mode='push',
+                                    exports=False)
+                self.assertFinding(report, 'forbidden dependency codec->C (production)')
+        self.git('reset', '-q', '--hard', self.base)
+        self.edit(f'{E}/codec.rs', 'use crate::api::Namespace;',
+                  'use crate::storage::{r#c::Port as _P};\nuse crate::api::Namespace;')
+        report = self.judge(self.commit('codec use tree, raw'), mode='push', exports=False)
+        self.assertFinding(report, 'forbidden dependency codec->C (production)')
+
+    def test_na_needs_a_review_of_this_change(self):
+        self.edit(f'{E}/codec.rs', 'struct Page', 'struct Page /* changed */')
+        head = self.commit('codec change')
+        current = self.review(head, name='r1')
+        self.assertFinding(self.judge(current, exports=False),
+                           'no CI evidence selected for codec')
+        stale = {'schema': gate.RECORD_SCHEMA, 'change': 'old',
+                 'na': [{'module': 'codec', 'reason': 'old result copied'}],
+                 'reviews': [{'id': 'old', 'class': 'D1', 'scopes': [], 'author': '/root',
+                              'reviewer': '/root/review', 'verdict': 'ACCEPT',
+                              'required_open': 0, 'files': {'unrelated.rs': '0' * 40},
+                              'log': 'old.md'}]}
+        self.write('module-gate/records/old.json', json.dumps(stale))
+        report = self.judge(self.commit('copied N/A'), exports=False)
+        self.assertFinding(report, 'no CI evidence selected for codec')
+        # The same N/A inside the review of this change is accepted.
+        self.git('reset', '-q', '--hard', head)
+        report = self.judge(self.review(head, na=[{'module': 'codec', 'reason': 'comment only'}]),
+                            exports=False)
+        self.assertEqual(report['status'], 'PASS', report)
+
+    def test_path_na_needs_a_review_of_that_path(self):
+        self.write('tests/fixtures/other/x.json', '{}\n')
+        head = self.commit('unscoped fixture')
+        self.review(head, name='r1', paths=[])
+        stale = {'schema': gate.RECORD_SCHEMA, 'change': 'old',
+                 'na': [{'module': '-', 'paths': ['tests/fixtures/other/**'], 'reason': 'x'}],
+                 'reviews': [{'id': 'old', 'class': 'D1', 'scopes': [], 'author': '/root',
+                              'reviewer': '/root/review', 'verdict': 'ACCEPT',
+                              'required_open': 0, 'files': {'unrelated.rs': '0' * 40},
+                              'log': 'old.md'}]}
+        self.write('module-gate/records/old.json', json.dumps(stale))
+        report = self.judge(self.commit('copied path N/A'), exports=False)
+        self.assertFinding(report, 'no CI evidence selected for unscoped input '
+                                   'tests/fixtures/other/x.json')
+
+    def test_impl_of_a_reexported_type_in_another_file_is_common(self):
+        self.edit(f'{E}/mod.rs', 'pub(crate) mod c;', 'pub(crate) mod c;\nmod port_impl;')
+        self.write(f'{E}/port_impl.rs',
+                   'impl super::c::Port {\n    pub(crate) fn read(&self) -> u8 { 1 }\n}\n')
+        self.base = self.commit('impl elsewhere')
+        self.edit(f'{E}/port_impl.rs', '-> u8 { 1 }', '-> u16 { 1 }')
+        head = self.commit('common API signature change')
+        report = self.judge(self.review(head, ci_selectors=['storage::c::']), exports=False)
+        self.assertFinding(report, f'review missing: {E}/port_impl.rs needs D2 common')
+        # Through a `use` and a re-export, and as a trait impl.
+        for body in ('use crate::storage::disk::Port;\nimpl Port { pub fn read(&self) {} }\n',
+                     'impl Clone for super::disk::Port { fn clone(&self) -> Self { todo!() } }\n'):
+            with self.subTest(body=body):
+                self.write(f'{E}/port_impl.rs', body)
+                head = self.commit('another impl')
+                report = self.judge(self.review(head, ci_selectors=['storage::c::']),
+                                    exports=False)
+                self.assertFinding(report, f'review missing: {E}/port_impl.rs needs D2 common')
+        # A private inherent impl, an impl of another type and an impl of a
+        # trait the crate defines outside the common API stay D1 (at both
+        # the base and the head).
+        for body in ('impl super::c::Port { fn read(&self) {} }\n',
+                     'struct Other;\nimpl Other { pub fn read(&self) {} }\n',
+                     'trait Own { fn own(&self); }\n'
+                     'impl Own for super::c::Port { fn own(&self) {} }\n'):
+            with self.subTest(body=body):
+                self.write(f'{E}/port_impl.rs', body)
+                self.base = self.commit('not common at the base')
+                self.write(f'{E}/port_impl.rs', body + '// changed\n')
+                head = self.commit('not common')
+                report = self.judge(self.review(head, ci_selectors=['storage::c::']),
+                                    exports=False)
+                self.assertEqual(report['status'], 'PASS', report)
+
+
+FAKE_LIBTEST = r"""
+import json, sys
+names = ['storage::row::insert::tests::a', 'storage::row::insert::tests::newly_added',
+         'storage::c::tests::z']
+args = sys.argv[sys.argv.index('--') + 1:]
+exact, listing, filters, skip, k = '--exact' in args, '--list' in args, [], [], 0
+while k < len(args):
+    if args[k] == '--skip':
+        skip.append(args[k + 1]); k += 2; continue
+    if not args[k].startswith('--'):
+        filters.append(args[k])
+    k += 1
+chosen = [n for n in names if (not filters or any(n == f if exact else f in n for f in filters))
+          and not any(x in n for x in skip)]
+if listing:
+    print('\n'.join(f'{n}: test' for n in chosen))
+else:
+    with open(sys.argv[1], 'a') as log:
+        log.write(json.dumps(chosen) + '\n')
+    for n in chosen:
+        print(f'test {n} ... ok')
+    print(f'test result: ok. {len(chosen)} passed; 0 failed; 0 ignored; 0 measured; '
+          f'0 filtered out')
+"""
+
+
+class RunnerTests(unittest.TestCase):
+    """The build runner runs a case once even when a selector and the exact
+    case list both name it (owner review of PR #18)."""
+
+    def test_a_case_a_selector_passed_is_not_run_again(self):
+        with tempfile.TemporaryDirectory() as temp:
+            temp = Path(temp)
+            (temp / 'fake.py').write_text(FAKE_LIBTEST)
+            calls = temp / 'calls.jsonl'
+            plan = {'test_command': [os.sys.executable, str(temp / 'fake.py'), str(calls)],
+                    'skip': [], 'test_args': []}
+            logs = temp / 'logs'
+            logs.mkdir()
+            env = dict(os.environ)
+            results = [module_gate_build.selector_result(
+                'head:storage::row::insert::', temp, plan, 'storage::row::insert::', logs, env)]
+            self.assertEqual(results[0]['status'], 'PASS', results[0])
+            cases = ['storage::c::tests::z', 'storage::row::insert::tests::newly_added']
+            result = module_gate_build.cases_result(
+                'head-cases', temp, plan, cases, logs, env,
+                covered=module_gate_build.passed_by_selectors(results, 'head'))
+            self.assertEqual(result['status'], 'PASS', result)
+            self.assertEqual(result['covered'], ['storage::row::insert::tests::newly_added'])
+            self.assertEqual((result['listed'], result['passed']), (2, 2))
+            ran = [n for line in calls.read_text().splitlines() for n in json.loads(line)]
+            self.assertEqual(sorted(ran), ['storage::c::tests::z', 'storage::row::insert::tests::a',
+                                           'storage::row::insert::tests::newly_added'])
+
+
 class RedirectTests(unittest.TestCase):
     def test_token_is_not_sent_to_the_redirect_target(self):
         seen = {}
@@ -1074,18 +1240,19 @@ class RealManifest(unittest.TestCase):
             self.assertIn('github.event.repository.default_branch', line)
             self.assertIn("startsWith(github.event.pull_request.base.ref, 'gate-test/')", line)
 
-
     def test_build_workflow_skips_only_before_adoption(self):
         """The adopting PR has no planner on the default branch: the build half
         ends without a receipt, which the control workflow never accepts."""
         root = Path(gate.__file__).resolve().parent.parent
         workflow = (root / '.github/workflows/module-build.yml').read_text()
-        self.assertIn(f'git cat-file -e "origin/$DEFAULT_BRANCH:{gate.MANIFEST}"', workflow)
+        self.assertIn('ref="refs/remotes/origin/$DEFAULT_BRANCH"', workflow)
+        self.assertIn(f'git cat-file -e "$ref:{gate.MANIFEST}"', workflow)
+        self.assertNotIn('"origin/$DEFAULT_BRANCH', workflow)  # a tag could shadow it
         steps = workflow.split('      - ')[1:]
         copy = next(i for i, step in enumerate(steps) if step.startswith('name: Copy'))
         self.assertIn('XADB_ADOPTED=false', steps[copy])
         for step in steps[copy + 1:]:
-            guard = next(x for x in step.splitlines() if x.strip().startswith('if:'))
+            guard = next((x for x in step.splitlines() if x.strip().startswith('if:')), '')
             self.assertIn("env.XADB_ADOPTED == 'true'", guard, step.splitlines()[0])
 
 

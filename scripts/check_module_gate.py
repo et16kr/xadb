@@ -146,6 +146,11 @@ def changes(repo, old, new):
 # --------------------------------------------------------------------------
 
 RAW_STRING = re.compile(r'b?r(#*)"')
+# `r#name` is the identifier `name` (a keyword spelled as a name). It is
+# blanked to `  name` in the code text so every path, `use` tree, `mod` and
+# definition reads it as `name`; a raw string's `r#"` is not followed by a
+# letter and keeps its own handling above.
+RAW_IDENT = re.compile(r'(?<![\w$])r#(?=[A-Za-z_])')
 CHAR = re.compile(r"'(?:\\(?:x[0-9a-fA-F]{2}|u\{[0-9a-fA-F]{1,6}\}|.)|[^\\'\n])'")
 
 
@@ -205,7 +210,7 @@ def strip_rust(text):
                 i += 1  # a lifetime or a loop label
         else:
             i += 1
-    return ''.join(keep), ''.join(code)
+    return ''.join(keep), RAW_IDENT.sub('  ', ''.join(code))
 
 
 def match_brace(code, open_at):
@@ -1201,20 +1206,30 @@ def selection(manifest, touched, records, rust, cases=None, generated=None, opti
 
 
 def coverage_findings(manifest, touched, records, plan, cases, generated=None,
-                      unscoped=(), executor=None):
+                      unscoped=(), executor=None, tree=None):
     """Each touched module, and each changed Rust/test input that no module
     owns (fixtures under tests/, other crates), needs selected CI evidence
-    or a reviewed N/A."""
+    or a reviewed N/A. An `na` entry counts only when a valid review in the
+    same record covers every path it exempts at that path's head blob: the
+    N/A is part of the review of this change, not a copy from another one."""
     if not plan['rust']:
         return []
     generated = generated or {}
-    reviewed = {path for path, data in records
-                if valid_reviews([(path, data)])}
-    na_items = [item for path, data in records if path in reviewed
+    na_items = [(item, valid_reviews([(path, data)])) for path, data in records
                 for item in data.get('na', []) if isinstance(item, dict) and item.get('reason')]
-    na = {item.get('module') for item in na_items}
-    na_paths = [glob_regex(g) for item in na_items for g in item.get('paths', [])
-                if isinstance(g, str)]
+
+    def reviewed(paths, reviews):
+        return bool(paths) and all(
+            any(r['files'].get(p) == ((tree.blob(p) if tree else None) or 'deleted')
+                for r in reviews) for p in paths)
+
+    na = {mid for mid in touched for item, reviews in na_items
+          if item.get('module') == mid and reviewed(touched[mid], reviews)}
+
+    def na_path(path):
+        return any(reviewed([path], reviews) and any(
+            glob_regex(g).match(path) for g in item.get('paths', []) if isinstance(g, str))
+            for item, reviews in na_items)
     record_sel = record_selectors(records)[1]
     by_selector = {manifest.target(('crate',) + tuple(x for x in sel.split('::') if x))
                    for sel in record_sel}
@@ -1227,12 +1242,12 @@ def coverage_findings(manifest, touched, records, plan, cases, generated=None,
         errors.append(f'no CI evidence selected for {mid}: no module selector, no changed '
                       'case, no record ci_selector in it and no reviewed N/A')
     for path in sorted(unscoped):
-        if record_sel or any(r.match(path) for r in na_paths):
+        if record_sel or na_path(path):
             continue
         errors.append(f'no CI evidence selected for unscoped input {path}: no record '
                       'ci_selector and no reviewed N/A naming it')
     for path, names in sorted((executor or {}).items()):
-        if any(r.match(path) for r in na_paths):
+        if na_path(path):
             continue
         errors.append(f'{path} changes {len(names)} executor-only case(s) that CI does not run '
                       f'(evidence.executor_only, e.g. {sorted(names)[0]}): a reviewed N/A '
@@ -1281,13 +1296,14 @@ def file_items(crate, path):
     return cache[path]
 
 
-def definition_files(crate, index, names, module, name, stack=frozenset()):
+def definition_files(crate, index, names, module, name, stack=frozenset(), defs=None):
     """Files that define `module::name` or re-export it on the way: the
     item's own definition, found by following `use`/`pub use` (renames and
     globs included) through the modules that import it. A name that is a
     module (declared, renamed or re-exported) brings its whole subtree
     (`module_files`). Empty when the definition is not found (a macro, an
-    extern crate). `stack` breaks cycles."""
+    extern crate). `stack` breaks cycles. `defs` (a set) receives the
+    (module, name) of every definition reached."""
     key = ('item', module, name)
     if key in stack or len(stack) > 32:
         return set()
@@ -1295,8 +1311,10 @@ def definition_files(crate, index, names, module, name, stack=frozenset()):
     found = {path for path, chain in index.get(module, [])
              if (chain, name) in file_items(crate, path)[0]}
     if found:
+        if defs is not None:
+            defs.add((module, name))
         if module + (name,) in index:
-            found |= module_files(crate, index, names, module + (name,), stack)
+            found |= module_files(crate, index, names, module + (name,), stack, defs)
         return found
     for path, chain in index.get(module, []):
         for use_chain, segments, local, _public in file_items(crate, path)[1]:
@@ -1305,15 +1323,15 @@ def definition_files(crate, index, names, module, name, stack=frozenset()):
             if segments[-1] == '*':
                 target = resolve_path(crate, module, segments[:-1], names.get(module))
                 hits = definition_files(crate, index, names, target, name,
-                                        stack) if target else set()
+                                        stack, defs) if target else set()
             elif local == name:
                 target = resolve_path(crate, module, segments, names.get(module))
                 hits = set()
                 if target and len(target) > 1:
                     hits = definition_files(crate, index, names, target[:-1], target[-1],
-                                            stack)
+                                            stack, defs)
                 if target and target in index:
-                    hits |= module_files(crate, index, names, target, stack)
+                    hits |= module_files(crate, index, names, target, stack, defs)
             else:
                 continue
             if hits:
@@ -1321,7 +1339,7 @@ def definition_files(crate, index, names, module, name, stack=frozenset()):
     return found
 
 
-def module_files(crate, index, names, target, stack=frozenset()):
+def module_files(crate, index, names, target, stack=frozenset(), defs=None):
     """Files behind a module the common API re-exports whole (`pub use m;`,
     `pub use m as n;`, `pub use m::*;`, also through other re-exports):
     every file of its subtree, and what those files re-export (`pub use`),
@@ -1336,6 +1354,8 @@ def module_files(crate, index, names, target, stack=frozenset()):
             continue
         for path, chain in places:
             found.add(path)
+            if defs is not None:
+                defs.update((logical, n) for c, n in file_items(crate, path)[0] if c == chain)
             for use_chain, segments, _local, public in file_items(crate, path)[1]:
                 if use_chain != chain or not public:
                     continue
@@ -1343,9 +1363,10 @@ def module_files(crate, index, names, target, stack=frozenset()):
                 if not dest:
                     continue
                 if segments[-1] == '*' or dest in index:
-                    found |= module_files(crate, index, names, dest, stack)
+                    found |= module_files(crate, index, names, dest, stack, defs)
                 if segments[-1] != '*' and len(dest) > 1:
-                    found |= definition_files(crate, index, names, dest[:-1], dest[-1], stack)
+                    found |= definition_files(crate, index, names, dest[:-1], dest[-1], stack,
+                                              defs)
     return found
 
 
@@ -1356,11 +1377,12 @@ def common_sources(manifest, crate):
     logical module's file stands in for it."""
     index = module_index(crate)
     names = imported_names(crate)
-    out = {}
+    out, api = {}, {}
     for path, logicals in crate.logical.items():
         mid = manifest.owner(path)
         if mid not in manifest.modules or manifest.kind(mid) != 'common-api':
             continue
+        defs = set()
         rust = crate.rust(path)
         for m in PUB_USE.finditer(rust.code):
             try:
@@ -1374,11 +1396,12 @@ def common_sources(manifest, crate):
                     if not target:
                         continue
                     if segments[-1] == '*':
-                        files = module_files(crate, index, names, target)
+                        files = module_files(crate, index, names, target, defs=defs)
                     else:
-                        files = definition_files(crate, index, names, target[:-1], target[-1])
+                        files = definition_files(crate, index, names, target[:-1], target[-1],
+                                                 defs=defs)
                         if target in index:
-                            files |= module_files(crate, index, names, target)
+                            files |= module_files(crate, index, names, target, defs=defs)
                     if not files:
                         probe = target
                         while probe and probe not in index:
@@ -1386,7 +1409,127 @@ def common_sources(manifest, crate):
                         files = {p for p, _c in index.get(probe, [])}
                     for found in files - {path}:
                         out.setdefault(found, set()).add(mid)
+        for key in defs:
+            api.setdefault(key, set()).add(mid)
+    for found, mids in impl_sources(crate, index, names, api).items():
+        out.setdefault(found, set()).update(mids)
     return out
+
+
+IMPL = re.compile(r'(?<![\w$])impl(?![\w$])')
+SELF_TYPE = re.compile(r'(?:&\s*(?:\'\w+\s*)?(?:mut\s+)?)?(?:dyn\s+)?(\$?\w+(?:\s*::\s*\w+)*)')
+
+
+def impl_header(code, start):
+    """(trait text or None, self type segments, body open offset) of the
+    `impl` whose keyword ends at `start`; None when it cannot be read."""
+    depth, k, n = 0, start, len(code)
+    while k < n:
+        ch = code[k]
+        if ch == '<':
+            depth += 1
+        elif ch == '>' and code[k - 1] != '-':
+            depth -= 1
+        elif depth <= 0 and ch in '{;':
+            break
+        k += 1
+    if k >= n or code[k] != '{':
+        return None
+    header = code[start:k]
+    # Leading generics, then `Trait for Type` or `Type`, then `where`.
+    j, depth = 0, 0
+    text = header.lstrip()
+    if text.startswith('<'):
+        for j, ch in enumerate(text):
+            depth += (ch == '<') - (ch == '>' and text[j - 1] != '-')
+            if depth == 0:
+                break
+        text = text[j + 1:]
+    depth, cut, trait = 0, None, None
+    for j, ch in enumerate(text):
+        depth += (ch == '<') - (ch == '>' and text[j - 1] != '-')
+        if depth == 0 and re.match(r'(?<![\w$])where(?![\w$])', text[j:]) and (
+                j == 0 or not (text[j - 1].isalnum() or text[j - 1] == '_')):
+            cut = j
+            break
+        if depth == 0 and text.startswith('for', j) and (
+                j == 0 or not (text[j - 1].isalnum() or text[j - 1] == '_')) and (
+                j + 3 < len(text) and not (text[j + 3].isalnum() or text[j + 3] in '_<')):
+            trait, text = text[:j], text[j + 3:]
+            return finish_impl(trait, text, k)
+    return finish_impl(None, text[:cut] if cut is not None else text, k)
+
+
+def finish_impl(trait, text, body):
+    text = re.split(r'(?<![\w$])where(?![\w$])', text)[0].strip().lstrip('!')
+    m = SELF_TYPE.match(text)
+    if not m:
+        return None
+    segments = [x.strip() for x in m.group(1).split('::') if x.strip()]
+    return trait, segments, body
+
+
+def impl_sources(crate, index, names, api):
+    """Files outside the definitions whose `impl` blocks add to a type the
+    common API re-exports: an inherent `impl` with any `pub` item, or a trait
+    `impl` for it. Its signature is part of the common contract (review on
+    PR #18). The self type is resolved like any path in that module."""
+    wanted = {name for _m, name in api}
+    out, memo = {}, {}
+    for path, logicals in crate.logical.items():
+        if crate.test_only(path):
+            continue
+        rust = crate.rust(path)
+        for m in IMPL.finditer(rust.code):
+            parsed = impl_header(rust.code, m.end())
+            if not parsed:
+                continue
+            trait, segments, body = parsed
+            if not segments or segments[-1] not in wanted:
+                continue
+            trait_path = None
+            if trait is not None:
+                found = SELF_TYPE.match(trait.strip().lstrip('!?').strip())
+                trait_path = [x.strip() for x in found.group(1).split('::')
+                              if x.strip()] if found else []
+            if trait is None:
+                try:
+                    end = match_brace(rust.code, body)
+                except GateError:
+                    end = len(rust.code)
+                if not re.search(r'(?<![\w$])pub(?![\w$])', rust.code[body:end]):
+                    continue
+            chain = rust.enclosing(m.start())
+            for logical in logicals:
+                here = logical + chain
+                mids = {mid for key in reached_from(crate, index, names, here, segments, memo)
+                        for mid in api.get(key, ())}
+                if mids and trait_path:
+                    # A trait the crate defines outside the common API (a
+                    # feature's own trait) does not change the common
+                    # contract; std and external traits, and API traits, do.
+                    defined = reached_from(crate, index, names, here, trait_path, memo)
+                    if defined and not any(key in api for key in defined):
+                        mids = set()
+                if mids:
+                    out.setdefault(path, set()).update(mids)
+    return out
+
+
+def reached_from(crate, index, names, here, segments, memo):
+    """Definitions (module, name) that `segments` written in `here` names."""
+    if len(segments) == 1:
+        module, name = here, segments[0]
+    else:
+        target = resolve_path(crate, here, segments, names.get(here))
+        if not target or len(target) < 2:
+            return set()
+        module, name = target[:-1], target[-1]
+    if (module, name) not in memo:
+        reached = set()
+        definition_files(crate, index, names, module, name, defs=reached)
+        memo[(module, name)] = reached
+    return memo[(module, name)]
 
 
 def link_findings(manifest, tree):
@@ -1511,7 +1654,7 @@ def judge(repo, base, head, policy=None, mode='merge', exports=True):
     unscoped = {p for _s, o, n in diff for p in (o, n)
                 if p and RUST_INPUTS.match(p) and trusted.owner(p) == '-'}
     obligations += coverage_findings(trusted, touched, records, plan, cases, generated,
-                                     unscoped, executor)
+                                     unscoped, executor, head_tree)
     if rust:
         for mid, patterns in sorted(trusted.data['attested'].get('required_for', {}).items()):
             for pattern in patterns if mid in touched else []:
@@ -1568,13 +1711,14 @@ def verify_receipt(report, receipt, run, repository, checker_sha256):
         expected.append((f'{prefix}-build', 'build', None))
         expected += [(f'{prefix}:{s}', 'selector', None) for s in part['selectors']]
         if part.get('cases'):
-            expected.append((f'{prefix}-cases', 'cases', len(part['cases'])))
+            expected.append((f'{prefix}-cases', 'cases', part['cases']))
         expected += [(f'{prefix}?:{s}', 'optional-selector', None)
                      for s in part.get('optional_selectors', [])]
         if part.get('optional_cases'):
             expected.append((f'{prefix}-optional-cases', 'optional-cases',
-                             len(part['optional_cases'])))
-    for name, kind, planned in expected:
+                             part['optional_cases']))
+    for name, kind, names in expected:
+        planned = len(names) if names is not None else None
         result = results.get(name)
         if result is None:
             errors.append(f'build receipt lacks {name} (missing, cancelled or skipped)')
@@ -1596,6 +1740,19 @@ def verify_receipt(report, receipt, run, repository, checker_sha256):
             ok = passed + ignored == listed
         elif ok:
             ok = listed <= planned and passed == listed
+        if ok and kind in ('cases', 'optional-cases'):
+            # A case counted from a selector run (not run twice) must be a
+            # planned case that a passing selector run of this source passed.
+            covered = result.get('covered', [])
+            prefix = name.rsplit('-optional-cases', 1)[0] if kind == 'optional-cases' \
+                else name.rsplit('-cases', 1)[0]
+            ran = {n for r in results.values() if r.get('status') == 'PASS'
+                   and str(r.get('name', '')).startswith((f'{prefix}:', f'{prefix}?:'))
+                   for n in (r.get('passed_names') or []) if isinstance(n, str)}
+            if not isinstance(covered, list) or not set(covered) <= set(names) & ran:
+                errors.append(f'{name}: cases counted from selector runs that did not pass '
+                              'them')
+                continue
         if not ok:
             errors.append(f'{name}: listed {listed} passed {passed} failed '
                           f'{result.get("failed")} (every planned case must be listed and pass)')

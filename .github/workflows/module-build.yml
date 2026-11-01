@@ -29,10 +29,14 @@ jobs:
           DEFAULT_BRANCH: ${{ github.event.repository.default_branch }}
         run: |
           git fetch --no-tags origin "+refs/heads/$DEFAULT_BRANCH:refs/remotes/origin/$DEFAULT_BRANCH"
+          # The full ref: a tag named origin/<branch> must not stand in for it.
+          ref="refs/remotes/origin/$DEFAULT_BRANCH"
+          git rev-parse --verify -q "$ref^{commit}" > /dev/null
           # Before the gate is adopted (the adopting PR itself) there is no
           # planner to run. This success is not evidence: only the control
-          # workflow judges, and it treats a missing manifest as a failure.
-          if ! git cat-file -e "origin/$DEFAULT_BRANCH:devdoc/policies/module-gate.json" 2>/dev/null; then
+          # workflow judges, and once the gate is adopted a Rust change
+          # without a receipt fails there.
+          if ! git cat-file -e "$ref:devdoc/policies/module-gate.json" 2>/dev/null; then
             echo "::notice::module gate not adopted on $DEFAULT_BRANCH; nothing to build"
             echo "XADB_ADOPTED=false" >> "$GITHUB_ENV"
             exit 0
@@ -40,9 +44,9 @@ jobs:
           echo "XADB_ADOPTED=true" >> "$GITHUB_ENV"
           mkdir "$RUNNER_TEMP/gate"
           for f in check_module_gate.py module_single_source.py module_gate_build.py; do
-            git show "origin/$DEFAULT_BRANCH:scripts/$f" > "$RUNNER_TEMP/gate/$f"
+            git show "$ref:scripts/$f" > "$RUNNER_TEMP/gate/$f"
           done
-          echo "XADB_POLICY=$(git rev-parse "origin/$DEFAULT_BRANCH")" >> "$GITHUB_ENV"
+          echo "XADB_POLICY=$(git rev-parse "$ref^{commit}")" >> "$GITHUB_ENV"
       - name: Make room for three engine test builds
         if: env.XADB_ADOPTED == 'true'
         run: |

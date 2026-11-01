@@ -65,8 +65,11 @@ blobs of the head and that attested results match the head's inputs.
   the manifest's `evidence.executor_only` (they need inputs only their
   executor supplies, such as the XRB fixture selection) needs an `na` entry
   whose `paths` name the file and whose reason gives the executor's result.
-  Cases whose cfg is not known on the CI runner (a cargo feature) run when
-  they exist but never count as evidence.
+  An `na` entry counts only when a valid review in the same record lists
+  every path it exempts (the module's changed files, or the changed files its
+  `paths` match) at the head's blob: an N/A copied from another change's
+  record exempts nothing. Cases whose cfg is not known on the CI runner (a
+  cargo feature) run when they exist but never count as evidence.
 - `attested`: only selectors the manifest allows (natives that need more than
   30 GB of disk); everything else runs in CI. A change to CAT needs a
   `dev3_catalog_native.py` result at the head's inputs.

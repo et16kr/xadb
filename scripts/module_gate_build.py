@@ -27,6 +27,7 @@ import module_single_source  # noqa: E402
 
 RESULT = re.compile(r'test result: (\w+)\. (\d+) passed; (\d+) failed; (\d+) ignored; '
                     r'(\d+) measured; (\d+) filtered out')
+PASSED = re.compile(r'^test (\S+) \.\.\. ok$', re.M)
 
 
 def run(command, cwd, log, env):
@@ -65,18 +66,32 @@ def selector_result(name, source, plan, selector, logs, env, optional=False):
           and passed + ignored == listed)
     return dict(name=name, status='PASS' if ok else 'FAIL', listed=listed, passed=passed,
                 failed=failed, ignored=ignored, seconds=round(seconds, 1), log=log.name,
-                log_sha256=digest(log))
+                log_sha256=digest(log), passed_names=sorted(set(PASSED.findall(out))))
 
 
-def cases_result(name, source, plan, cases, logs, env, chunk=100, optional=False):
+def passed_by_selectors(results, prefix):
+    """Cases a passing selector run of this source already ran and passed."""
+    return {n for r in results if r.get('status') == 'PASS'
+            and r['name'].startswith((f'{prefix}:', f'{prefix}?:'))
+            for n in r.get('passed_names', [])}
+
+
+def cases_result(name, source, plan, cases, logs, env, chunk=100, optional=False,
+                 covered=()):
     """Run the exact planned cases; every one must be listed once and pass.
     Optional cases (cfg not known on the runner) pass when every listed one
-    passes, whether or not it is listed."""
+    passes, whether or not it is listed. A case that a selector run of the
+    same source already passed (`covered`) is not run again; it counts as
+    listed and passed and is named under `covered` for the control check."""
     log = logs / (re.sub(r'[^\w.-]+', '_', name) + '.log')
-    listed = passed = failed = ignored = 0
+    done = sorted(c for c in cases if c in set(covered))
+    run_cases = [c for c in cases if c not in set(done)]
+    log.write_bytes(f'# {len(done)} case(s) already passed in a selector run\n'.encode())
+    listed = passed = len(done)
+    failed = ignored = 0
     seconds, ok = 0.0, True
-    for start in range(0, len(cases), chunk):
-        names = cases[start:start + chunk]
+    for start in range(0, len(run_cases), chunk):
+        names = run_cases[start:start + chunk]
         code, out, _ = run(plan['test_command'] + ['--', '--exact', *names, '--list'],
                            source, log, env)
         listed += sum(1 for line in out.splitlines() if line.endswith(': test'))
@@ -93,17 +108,19 @@ def cases_result(name, source, plan, cases, logs, env, chunk=100, optional=False
           and failed == 0 and passed == listed)
     return dict(name=name, status='PASS' if ok else 'FAIL', planned=len(cases), listed=listed,
                 passed=passed, failed=failed, ignored=ignored, seconds=round(seconds, 1),
-                log=log.name, log_sha256=digest(log))
+                log=log.name, log_sha256=digest(log), covered=done)
 
 
-def optional_results(prefix, source, plan, part, logs, env):
+def optional_results(prefix, source, plan, part, logs, env, earlier=()):
     """The selectors and cases whose cfg is not known on the runner."""
     results = [selector_result(f'{prefix}?:{selector}', source, plan, selector, logs, env,
                                optional=True)
                for selector in part.get('optional_selectors', [])]
     if part.get('optional_cases'):
+        covered = passed_by_selectors(list(earlier) + results, prefix)
         results.append(cases_result(f'{prefix}-optional-cases', source, plan,
-                                    part['optional_cases'], logs, env, optional=True))
+                                    part['optional_cases'], logs, env, optional=True,
+                                    covered=covered))
     return results
 
 
@@ -185,8 +202,9 @@ def main():
                                                logs, run_env))
             if plan.get('cases'):
                 results.append(cases_result('head-cases', head_dir, plan, plan['cases'],
-                                            logs, run_env))
-            results += optional_results('head', head_dir, plan, plan, logs, run_env)
+                                            logs, run_env,
+                                            covered=passed_by_selectors(results, 'head')))
+            results += optional_results('head', head_dir, plan, plan, logs, run_env, results)
             shutil.rmtree(head_dir)
             for export in plan['exports']:
                 side = export['side']
@@ -203,10 +221,11 @@ def main():
                         results.append(selector_result(f'export-{side}:{selector}', out, plan,
                                                        selector, logs, run_env))
                     if export.get('cases'):
-                        results.append(cases_result(f'export-{side}-cases', out, plan,
-                                                    export['cases'], logs, run_env))
+                        results.append(cases_result(
+                            f'export-{side}-cases', out, plan, export['cases'], logs, run_env,
+                            covered=passed_by_selectors(results, f'export-{side}')))
                     results += optional_results(f'export-{side}', out, plan, export, logs,
-                                                run_env)
+                                                run_env, results)
                 except SystemExit as error:
                     results.append(dict(name=f'export-{side}-build', status='ERROR',
                                         error=str(error)))
