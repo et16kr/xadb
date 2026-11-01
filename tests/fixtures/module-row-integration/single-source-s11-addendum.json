@@ -1,0 +1,136 @@
+{
+  "schema": "XADB_S11_SINGLE_SOURCE_ADDENDUM_V1",
+  "status": "FROZEN_SELECTION_NOT_EXECUTION_EVIDENCE",
+  "frozen_inventory": {
+    "path": "tests/fixtures/module-row-integration/single-source-s10-inventory.json",
+    "sha256": "41fcb5b5d94ec54b06b1f9e601ac19976d92ae6b6a2c04f2c38ae581fd8ad862"
+  },
+  "s10_addendum": {
+    "path": "tests/fixtures/module-row-integration/single-source-s10-addendum.json",
+    "sha256": "e3e2e006cdba6b467677f4a3d32a8ec19d34b235bd44cee330969e2e910d8c86"
+  },
+  "reason": "User decisions of 2026-11-01: \"남은 7개 더 시도\" (re-supply the S10 PARTIAL/NOT_RUN IDs through C test paths; MCA05-V32 joined after the S10 record re-check R11) and \"A 판정을 함수로 분리\" (A's table-only profile predicate moved into the pure function table_only_profile, behavior unchanged). The S10 inventory and addendum are unchanged; this addendum adds selectors and replaces one. A and C product files changed (A: the predicate extraction; C: cfg(test) injectors and two non-test rebindings with the same behavior), so every selector of both sides reruns at the same commit, with the S10 final2 native and regression bundles.",
+  "contract_ref": [
+    "devdoc/contracts/dev3-module-boundaries.md#row-mi03-s11"
+  ],
+  "sides": {
+    "C+A": {
+      "export": "--side a",
+      "added": {
+        "MCA01-V12-P": {
+          "status": "NEW (C0)",
+          "selectors": [
+            "storage::row::insert::tests::mca01_v12_p_census_through_the_profile_predicate",
+            "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::create_pair::catalog_live::lifecycle::row::write::tests::mca01_v12_p::mca01_v12_p_pure_catalog_census_counts_a_valid_index"
+          ]
+        },
+        "MCA05-V01": {
+          "status": "NEW",
+          "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_inventory_a::mca05_v01_wal_share_one_under"
+        },
+        "MCA05-V02": {
+          "status": "NEW",
+          "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_inventory_a::mca05_v02_wal_share_equal"
+        },
+        "MCA05-V03": {
+          "status": "NEW",
+          "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_inventory_a::mca05_v03_wal_share_one_over"
+        },
+        "MCA05-V29": {
+          "status": "NEW",
+          "selectors": [
+            "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_inventory_a::mca05_v29_actual_lane_h_count_zero_is_refused_by_a",
+            "storage::row::insert::group_tests::mca05_v29_h_net0_with_before_count_zero_is_refused",
+            "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_inventory_a::mca05_v29_actual_frame_count_zero_is_fenced_by_preflight"
+          ]
+        },
+        "MCA05-V32": {
+          "status": "NEW",
+          "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_preflight::mca05_v32_dropped_preflight_returns_charge_gate_lease_and_loan",
+          "cited": [
+            "S2W-R15",
+            "S2W-R10",
+            "S2W-R03",
+            "S2W-R23(2)"
+          ]
+        }
+      },
+      "removed": {
+        "MCA05-V01": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_inventory_a::mca05_v01_wal_stage_capacity_refuses_before_any_effect"
+      },
+      "rerun_frozen": {
+        "row_inventory_a": "all C+A selectors of the S10 inventory and the S10 addendum, but the removed one"
+      }
+    },
+    "C+B": {
+      "export": "--side b",
+      "added": {
+        "MCB03-V01": {
+          "status": "NEW",
+          "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_corpus::mcb03_v01_retirement_after_capture_is_busy",
+          "kept": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_corpus::mcb03_v01_capture_under_retirement_is_busy"
+        },
+        "MCB03-V08": {
+          "status": "NEW",
+          "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_corpus::mcb03_v08_two_pins_then_extra_claim_refused",
+          "note": "the S10 selector; its body now also makes B1's own extra reference claim at the capture"
+        }
+      },
+      "rerun_frozen": {
+        "row_corpus": "all C+B selectors of the S10 inventory and the S10 addendum"
+      }
+    }
+  },
+  "reclassified": {
+    "MCA01-V12-P": {
+      "s10": "PARTIAL",
+      "now": "NEW (C0)",
+      "reason": "C's complete census output goes through A's own table_only_profile (the function schema applies to every context); an Index of T is Unsupported; a predicate that admits an Index fails the A test."
+    },
+    "MCA05-V01": {
+      "s10": "PARTIAL",
+      "now": "NEW",
+      "reason": "stage_share_once limits the next stage's remaining share to need-1 (need = the RowReserve frame, 57,336 B, read from the WAL file of the same fixture run unlimited); the original end > cap refuses Unchanged before any effect."
+    },
+    "MCA05-V02": {
+      "s10": "NOT_RUN",
+      "now": "NEW",
+      "reason": "share = need: the RowReserve is staged at exactly the share; Forward, the failed statement, its rollback and the full abort run."
+    },
+    "MCA05-V03": {
+      "s10": "NOT_RUN",
+      "now": "NEW",
+      "reason": "share = need+1, the same flow."
+    },
+    "MCA05-V29": {
+      "s10": "PARTIAL",
+      "now": "NEW",
+      "reason": "TestProducerBefore lends A's Forward producer a before-image copy whose H count is 0; A refuses OrderMismatch before output, the driver cancels through C, no Forward frame, q 2. Limit: the count-0 H exists only in the lane copy."
+    },
+    "MCA05-V32": {
+      "s10": "PARTIAL",
+      "now": "NEW",
+      "reason": "a Ready PreflightRow dropped without finish returns the charge, gate, lease and loan with no effect or fence; cancel and the active-reservation drop are cited."
+    },
+    "MCB03-V01": {
+      "s10": "PARTIAL",
+      "now": "NEW",
+      "reason": "the frozen order: B1 paused after capture holds Txn and U pins; the registry's original begin_retirement of that U (test-built receipt, past the terminal read gate) answers Busy Unchanged; after B1 returns the same attempt is accepted. Limit: no live retirement reaches this point."
+    },
+    "MCB03-V08": {
+      "s10": "PARTIAL",
+      "now": "NEW",
+      "reason": "B1's own Owner claims its references again at the capture through the original reserve_references: Busy Unchanged, no pin."
+    }
+  },
+  "native": {
+    "bundles": [
+      "s10a (29 cases)",
+      "S9A-N01..N03",
+      "MCB01-N01",
+      "S9B-N01",
+      "S7 MCI02-N01..N03 (full tree)"
+    ],
+    "note": "unchanged controllers; rerun because A and C product files changed"
+  }
+}

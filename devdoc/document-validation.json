@@ -1,15 +1,15 @@
 {
   "schema_version": 2,
   "product": "XADB",
-  "date": "2026-11-01T01:53:38.497395+09:00",
+  "date": "2026-11-01T11:00:35.582218+09:00",
   "status": "PASS",
   "errors": [],
   "markdown_documents": [
     {
       "file": "devdoc/README.md",
-      "links": 275,
+      "links": 279,
       "duplicate_ids": 0,
-      "sha256": "858f6a48a9afae9b7bcc9fe1c049109464384ac6e44829b1f18cc8f28c961475"
+      "sha256": "d6502dcc9e3ae88d46cfd0404af06d0072ef12d85a143b9f89f04e5820aaba52"
     },
     {
       "file": "devdoc/contracts/README.md",
@@ -157,9 +157,9 @@
     },
     {
       "file": "devdoc/contracts/dev3-module-boundaries.md",
-      "links": 291,
+      "links": 330,
       "duplicate_ids": 0,
-      "sha256": "79caecf13fb5f2f56897aa9d760ad08b258f2a6fcbec2efa88e1ec3313c84bba"
+      "sha256": "4ed667c05d7aad740a5fb637f1d6e52325d09fe47c05cb2aa05724292ade3d62"
     },
     {
       "file": "devdoc/contracts/dev3-module-consumers.md",
@@ -1285,9 +1285,9 @@
     },
     {
       "file": "devdoc/evidence/module-independence-survey-20261026.md",
-      "links": 289,
+      "links": 322,
       "duplicate_ids": 0,
-      "sha256": "10580529388ebc415a70ab665161dfe5c2b9193bde78f52ba99775d4efd47090"
+      "sha256": "d17920de196edceb33507e1af0d71e22ea64127ffacc61a7669e4716ca11a36a"
     },
     {
       "file": "devdoc/evidence/naming-cleanup-20261025.md",
@@ -1371,7 +1371,7 @@
       "file": "devdoc/plans/README.md",
       "links": 68,
       "duplicate_ids": 0,
-      "sha256": "355c75f28983d11367d80ecddd07e165d13e529a298e1e095946c0cf141f93f2"
+      "sha256": "dda23c45dcf01f9e19a240055205eb3b70b1118a5b9c3b1e3de7971ed69e196c"
     },
     {
       "file": "devdoc/plans/bottom-up-development.md",
@@ -1495,9 +1495,9 @@
     },
     {
       "file": "devdoc/plans/module-independence-plan.md",
-      "links": 277,
+      "links": 298,
       "duplicate_ids": 0,
-      "sha256": "b881c57c718bfa22bfb98a2056f71308c208bc609a019950f9485f04bd8f4cdc"
+      "sha256": "d8a557a260292f9663547f6d62ac3943dac6581c9e8ffe1a050d285a73f75d52"
     },
     {
       "file": "devdoc/plans/phase1-product-baseline.md",

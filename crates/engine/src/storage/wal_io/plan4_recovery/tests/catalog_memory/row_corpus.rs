@@ -1624,6 +1624,9 @@ fn gate(id: &str, variant: u8) {
                     hook::install(core, Point::RowReadCaptured, b1_in, b1_release);
                     let b1_private = &mut *b1_private;
                     let b1 = scope.spawn(move || {
+                        use super::super::super::super::plan4_pages::apply::{
+                            test_arm_capture_claim, test_capture_claim,
+                        };
                         let mut o = core.try_owner(OwnerRole::Foreground).unwrap();
                         let tx = read_only!(
                             cell.lock().unwrap(),
@@ -1633,12 +1636,17 @@ fn gate(id: &str, variant: u8) {
                         );
                         let view = cell.lock().unwrap().begin_statement(&mut o, &tx).unwrap();
                         let table = thread_table!(reader, &mut o, &view, b1_private);
+                        if variant == 8 {
+                            test_arm_capture_claim();
+                        }
                         let read = point_of!(reader, &mut o, b1_private, &view, &table, 1);
+                        let claim = test_capture_claim();
                         assert!(matches!(read, Ok(None)), "foreign Active: {read:?}");
                         let mut w = cell.lock().unwrap();
                         assert!(w.finish_statement(&mut o, view).is_ok());
                         assert!(w.finish_read_only(&mut o, tx).is_ok());
                         o.check_idle().unwrap();
+                        claim
                     });
                     b1_captured.recv_timeout(WAIT).unwrap();
                     let at_capture = hook::observe(core);
@@ -1686,7 +1694,7 @@ fn gate(id: &str, variant: u8) {
                         assert!(!hook::observe(core).read_gate_closed);
                     }
                     done_tx.send(()).unwrap();
-                    b1.join().unwrap();
+                    let claim = b1.join().unwrap();
                     let (at_wait, wal_len, pins_at_late, late) = b2.join().unwrap();
                     assert_eq!(wal_len, from, "no frame while B1 held its pins");
                     // The author's frames, in order, after B1 returned.
@@ -1700,11 +1708,25 @@ fn gate(id: &str, variant: u8) {
                         println!("MCB03_V02 pins={pins:?} at_wait={at_wait:?} clr=1");
                     }
                     if variant == 8 {
-                        // B1's capture installed both the Txn and the U pin;
-                        // the extra claim during the wait installed none.
+                        // B1's capture installed both the Txn and the U pin.
+                        // B1's own Owner then claimed its references again at
+                        // the capture: the original `reserve_references`
+                        // answered Busy (its two rows are in use), Unchanged,
+                        // and pinned nothing. B2's late read during the wait
+                        // installed none either.
                         assert_eq!(pins, ((2, 0, 0), false), "Txn and U pinned");
+                        assert_eq!(
+                            claim,
+                            Some(Err(crate::storage::wal_io::VisibilityError {
+                                cause: crate::storage::wal_io::VisibilityCause::Busy,
+                                effect: Effect::Unchanged,
+                            })),
+                            "the same Owner's extra claim"
+                        );
                         assert_eq!(pins_at_late, pins, "the refused claim pinned nothing");
-                        println!("MCB03_V08 pins={pins:?} late={late}");
+                        println!("MCB03_V08 pins={pins:?} own_claim={claim:?} late={late}");
+                    } else {
+                        assert_eq!(claim, None, "no claim armed");
                     }
                 });
                 assert_eq!(reader.catalog_test_source_used(), used);
@@ -1745,6 +1767,135 @@ fn mcb03_v02_clr_of_pinned_undo_waits_for_the_read() {
 #[test]
 fn mcb03_v08_two_pins_then_extra_claim_refused() {
     gate("MCB03-V08", 8);
+}
+
+/// MCB03-V01 in the frozen order (S11; boundaries `#row-mi03-s11`): the S8
+/// literal row (RowId 1, Active, no A) and B1's foreign ReadCommitted read
+/// of it, paused after its source capture (`Point::RowReadCaptured`) with
+/// the row's Txn and U pins held. A retirement of that U is then tried
+/// through the registry's original `begin_retirement` (C's cfg(test)
+/// `row_test_begin_undo_free`: the writer's actual version hold, a
+/// test-built UndoFree receipt, past the S2-0 terminal read gate that keeps
+/// every live retirement from this point): Busy, Unchanged, with no
+/// marker, no pin change, no WAL and no fence. B1 then returns its answer
+/// (foreign Active: none) and its pins; the same attempt is then accepted
+/// (and cancelled at once), so the pin census was the refusal. The
+/// transaction commits q 2 and row 1 is read.
+#[test]
+fn mcb03_v01_retirement_after_capture_is_busy() {
+    const WAIT: Duration = Duration::from_secs(10);
+    case("MCB03-V01", || {
+        let single = Single::load();
+        let oracle = Oracle::new();
+        with_fresh!(
+            oracle,
+            frames = 16,
+            |live, owner, flusher, status, undo, private, reader_private, core, fence, state| {
+                let (row_status, _) =
+                    create_table(live, owner, flusher, status, undo, private, true);
+                row_statement!(live, owner, flusher, private, reader_private, row_status
+                    => writer, reader, flush, tx, view, table);
+                let _ = settle!(writer, owner, view, table, private, flush, flusher);
+                let mut preflight = match writer
+                    .preflight_row(owner, &view, &table, private, &mut flush)
+                    .unwrap()
+                {
+                    RowPreflightStep::Ready(preflight) => preflight,
+                    RowPreflightStep::FlushRequired { .. } => panic!("settled sources"),
+                };
+                let plan = single.plan(preflight.validation_lane().unwrap());
+                let mut reserved = done!(preflight.reserve(plan));
+                let proposal = single.forward(reserved.producer_lane().unwrap());
+                let prepared = done!(reserved.prepare(proposal));
+                let applied = done!(prepared.apply());
+                let (observation, _) = applied.into_parts();
+                assert_eq!(observation.row().get(), 1);
+                let u = observation.undo();
+                let actor = view.own_actor().unwrap();
+                let idle = reader.catalog_test_references();
+                let mut b1_private = boxed::<PRIVATE_BYTES>();
+                let cell = Mutex::new(&mut writer);
+                let used = reader.catalog_test_source_used();
+                let from = wal(state).len();
+                let (busy, pins) = std::thread::scope(|scope| {
+                    let (cell, reader) = (&cell, &reader);
+                    let (b1_in, b1_captured) = sync_channel(1);
+                    let (b1_go, b1_release) = sync_channel(1);
+                    hook::install(core, Point::RowReadCaptured, b1_in, b1_release);
+                    let b1_private = &mut *b1_private;
+                    let b1 = scope.spawn(move || {
+                        let mut o = core.try_owner(OwnerRole::Foreground).unwrap();
+                        let tx = read_only!(
+                            cell.lock().unwrap(),
+                            &mut o,
+                            IsolationLevel::ReadCommitted,
+                            b1_private
+                        );
+                        let view = cell.lock().unwrap().begin_statement(&mut o, &tx).unwrap();
+                        let table = thread_table!(reader, &mut o, &view, b1_private);
+                        let read = point_of!(reader, &mut o, b1_private, &view, &table, 1);
+                        assert!(matches!(read, Ok(None)), "foreign Active: {read:?}");
+                        let mut w = cell.lock().unwrap();
+                        assert!(w.finish_statement(&mut o, view).is_ok());
+                        assert!(w.finish_read_only(&mut o, tx).is_ok());
+                        o.check_idle().unwrap();
+                    });
+                    b1_captured.recv_timeout(WAIT).unwrap();
+                    let pins = reader.catalog_test_references();
+                    assert_eq!(pins, ((2, 0, 0), false), "Txn and U pinned");
+                    let busy = reader.row_test_begin_undo_free(owner, u, actor);
+                    assert_eq!(
+                        reader.catalog_test_references(),
+                        pins,
+                        "no marker and no pin change"
+                    );
+                    assert_eq!(wal(state).len(), from, "no WAL");
+                    assert!(!fence.is_fenced());
+                    let at_capture = hook::observe(core);
+                    assert_eq!(at_capture.active_read_operations, 1);
+                    b1_go.send(Resume::Continue).unwrap();
+                    b1.join().unwrap();
+                    (busy, pins)
+                });
+                println!("MCB03_V01 pins={pins:?} retirement={busy:?}");
+                assert_eq!(
+                    busy,
+                    Err(crate::storage::wal_io::VisibilityError {
+                        cause: crate::storage::wal_io::VisibilityCause::Busy,
+                        effect: Effect::Unchanged,
+                    })
+                );
+                assert_eq!(reader.catalog_test_references(), idle, "B1's pins returned");
+                assert_eq!(
+                    reader.row_test_begin_undo_free(owner, u, actor),
+                    Ok(()),
+                    "with no pin the same attempt is accepted"
+                );
+                assert_eq!(reader.catalog_test_references(), idle, "cancelled at once");
+                assert_eq!(wal(state).len(), from, "no WAL");
+                assert_eq!(reader.catalog_test_source_used(), used);
+                assert!(writer.finish_statement(owner, view).is_ok());
+                let q = match writer.commit_row(owner, tx, private) {
+                    Ok(committed) => committed.q(),
+                    Err(_) => panic!("Commit after the refused retirement"),
+                };
+                assert_eq!(q, 2);
+                let mut b_owner = core.try_owner(OwnerRole::Foreground).unwrap();
+                let b = &mut b_owner;
+                let c = read_only!(writer, b, IsolationLevel::Serializable, reader_private);
+                let new = writer.begin_statement(b, &c).unwrap();
+                assert!(matches!(
+                    point_of!(&reader, b, reader_private, &new, &table, 1),
+                    Ok(Some(_))
+                ));
+                assert!(writer.finish_statement(b, new).is_ok());
+                assert!(writer.finish_read_only(b, c).is_ok());
+                b.check_idle().unwrap();
+                owner.check_idle().unwrap();
+                assert!(!fence.is_fenced());
+            }
+        );
+    });
 }
 
 /// C's refusal of a CheckedTable of another origin (the core identity

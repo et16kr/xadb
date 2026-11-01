@@ -121,6 +121,65 @@ impl Drop for StageCapacityOnce {
         STAGE_CAPACITY_ONCE.with(|state| state.set(0));
     }
 }
+// One thread's next physical stage sees only `share` bytes of the WAL file
+// left from its own start: its cap is min(WAL_FILE_CAP, start + share), and
+// the original `end > cap` comparison decides. The file's total cap is not
+// changed and no other stage is limited. It records the stage's (start,
+// length, refused) for the test (S11, MCA05-V01..V03).
+thread_local! {
+    static STAGE_SHARE_ONCE: std::cell::Cell<StageShare> =
+        const { std::cell::Cell::new(StageShare::Idle) };
+}
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+enum StageShare {
+    Idle,
+    Armed(u64),
+    Taken {
+        start: u64,
+        length: u64,
+        refused: bool,
+    },
+}
+pub(super) struct StageShareOnce(std::marker::PhantomData<std::rc::Rc<()>>);
+pub(super) fn stage_share_once(share: u64) -> StageShareOnce {
+    STAGE_SHARE_ONCE.with(|state| {
+        assert_eq!(state.replace(StageShare::Armed(share)), StageShare::Idle);
+    });
+    StageShareOnce(std::marker::PhantomData)
+}
+impl StageShareOnce {
+    /// The limited stage's (start, frame length, refused), once taken.
+    pub(super) fn taken(&self) -> Option<(u64, u64, bool)> {
+        STAGE_SHARE_ONCE.with(|state| match state.get() {
+            StageShare::Taken {
+                start,
+                length,
+                refused,
+            } => Some((start, length, refused)),
+            _ => None,
+        })
+    }
+}
+impl Drop for StageShareOnce {
+    fn drop(&mut self) {
+        STAGE_SHARE_ONCE.with(|state| state.set(StageShare::Idle));
+    }
+}
+pub(super) fn stage_share_cap(start: u64, end: u64, cap: u64) -> u64 {
+    STAGE_SHARE_ONCE.with(|state| match state.get() {
+        StageShare::Armed(share) => {
+            let limited = cap.min(start.saturating_add(share));
+            state.set(StageShare::Taken {
+                start,
+                length: end - start,
+                refused: end > limited,
+            });
+            limited
+        }
+        _ => cap,
+    })
+}
+
 pub(super) fn take_stage_capacity_once() -> bool {
     STAGE_CAPACITY_ONCE.with(|state| {
         if state.get() == 1 {

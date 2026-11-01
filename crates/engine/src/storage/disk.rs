@@ -30,6 +30,10 @@ pub(in crate::storage) use super::wal_io::disk_api::{
     EPOCH_BYTES, VISIBILITY_BYTES, VisibilityLoan,
 };
 
+#[cfg(test)]
+#[allow(unused_imports, reason = "used by the C+A selection only")]
+pub(in crate::storage) use super::wal_io::disk_api::{MCA01_V12_P_TABLE, mca01_v12_p_census};
+
 pub(in crate::storage) use super::wal_io::disk_api::InstallGrant;
 pub(in crate::storage) use super::wal_io::disk_api::Owner;
 

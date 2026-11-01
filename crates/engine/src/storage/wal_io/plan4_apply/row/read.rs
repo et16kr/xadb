@@ -604,6 +604,8 @@ impl<'u, 'r, 't, 'v, 'i, 'b, 'a, 's, 'c, 'p, 'd, 'm, 'w, W: WriterNamespace>
         use crate::storage::transaction_record::VersionStamp;
         self.check_candidate(candidate)?;
         #[cfg(test)]
+        test_capture_claim_probe(self.backend.visibility, self.owner);
+        #[cfg(test)]
         crate::transaction::concurrency::catalog_test_support::hit(
             self.backend.pool.bound_core(),
             crate::transaction::concurrency::catalog_test_support::Point::RowReadCaptured,
@@ -942,6 +944,25 @@ impl<'g, 'b, 'a, 's, 'c, 'p, 'd> RowSearchPage<'g, 'b, 'a, 's, 'c, 'p, 'd> {
 }
 
 #[cfg(test)]
+impl<'s, 'c, W: WriterNamespace> ReadPort<'_, '_, 's, 'c, '_, '_, '_, '_, W> {
+    /// S11 (MCB03-V01): the visibility registry's original
+    /// `begin_retirement` of `undo` under `owner`'s version hold, with a
+    /// test-built receipt and past the terminal read gate
+    /// (`BoundVisibility::test_begin_undo_free`); an accepted intent is
+    /// cancelled at once.
+    pub(in crate::storage) fn row_test_begin_undo_free(
+        &self,
+        owner: &mut Owner<'c, 's>,
+        undo: UndoRef,
+        actor: crate::storage::transaction_record::TxnRef,
+    ) -> std::result::Result<(), super::super::visibility::VisibilityError> {
+        self.visibility
+            .expect("actual visibility binding")
+            .test_begin_undo_free(owner, undo, actor)
+    }
+}
+
+#[cfg(test)]
 impl<W: WriterNamespace> ReadPort<'_, '_, '_, '_, '_, '_, '_, '_, W> {
     /// Raw size observations, not an acceptance assertion or a replacement for
     /// the phase census. Loader and operation necessarily coexist at LOAD.
@@ -1021,6 +1042,51 @@ impl<W: WriterNamespace> ReadPort<'_, '_, '_, '_, '_, '_, '_, '_, W> {
             std::mem::size_of::<RowCandidate>(),
         ]
     }
+}
+
+// S11 (MCB03-V08): one extra reference claim by the reading Owner itself,
+// made once at its capture (beside `Point::RowReadCaptured`, while the
+// operation holds its source pins), armed by the test on the reading
+// thread. It calls the original `reserve_references` and records its
+// answer; a lease it were granted is released at once.
+#[cfg(test)]
+thread_local! {
+    static TEST_CAPTURE_CLAIM: std::cell::Cell<(
+        bool,
+        Option<std::result::Result<(), super::super::visibility::VisibilityError>>,
+    )> = const { std::cell::Cell::new((false, None)) };
+}
+
+/// Arms the extra claim of the next Row read capture on this thread.
+#[cfg(test)]
+pub(in crate::storage) fn test_arm_capture_claim() {
+    TEST_CAPTURE_CLAIM.with(|state| {
+        assert_eq!(state.replace((true, None)), (false, None));
+    });
+}
+
+/// The armed claim's answer (Ok if a lease was granted and released), once.
+#[cfg(test)]
+pub(in crate::storage) fn test_capture_claim()
+-> Option<std::result::Result<(), super::super::visibility::VisibilityError>> {
+    TEST_CAPTURE_CLAIM.with(|state| state.replace((false, None)).1)
+}
+
+#[cfg(test)]
+fn test_capture_claim_probe<'a, 'c, 's>(
+    visibility: Option<&super::super::visibility::BoundVisibility<'a, 'c, 's>>,
+    owner: &Owner<'c, 's>,
+) {
+    TEST_CAPTURE_CLAIM.with(|state| {
+        if !state.get().0 {
+            return;
+        }
+        let answer = visibility
+            .expect("actual visibility binding")
+            .reserve_references(owner)
+            .and_then(|lease| lease.release_checked());
+        state.set((false, Some(answer)));
+    });
 }
 
 #[cfg(test)]
