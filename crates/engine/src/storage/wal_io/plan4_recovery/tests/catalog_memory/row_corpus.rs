@@ -2838,9 +2838,6 @@ fn mcb04_v13_wrong_undo_target_is_refused() {
 }
 
 #[test]
-#[ignore = "MCB04-V14 FAIL: C's Missing-before read returns (Census, Invariant, \
-            CallerMustResolve) and fences for a valid occupied before; the contract's \
-            Unsupported awaits the user's decision (boundaries #row-mi03-s10)"]
 fn mcb04_v14_occupied_before_is_out_of_scope() {
     damaged("MCB04-V14", 14);
 }

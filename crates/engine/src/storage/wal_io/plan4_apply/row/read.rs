@@ -783,8 +783,22 @@ impl<'u, 'r, 't, 'v, 'i, 'b, 'a, 's, 'c, 'p, 'd, 'm, 'w, W: WriterNamespace>
                 || matches!(candidate.version.stamp,VersionStamp::Transaction(actor) if actor.id()!=record.creator.id || actor.generation()!=record.creator.status_generation)
                 || record.mutation_sequence != candidate.version.logical.mutation_sequence()
                 || record.sequence == 0
-                || record.before_kind != UndoBeforeKind::Missing
-                || record.before_stamp.is_some()
+            {
+                return Err(bad());
+            }
+            // A valid occupied before (the codec accepted its stamp, logical
+            // version and payload) of the candidate's own record is outside
+            // this Missing-only scope: the typed Unsupported, Unchanged and
+            // unfenced (consumers F02 order, MCB04-V14). A RowValue inline
+            // before is checked without a schema, so its codec error stays
+            // the Fatal above; corruption is never lowered to Unsupported.
+            if record.before_kind != UndoBeforeKind::Missing {
+                return Err(unchanged(
+                    RetentionPhase::Census,
+                    RetentionCause::Unsupported,
+                ));
+            }
+            if record.before_stamp.is_some()
                 || record.before_logical.is_some()
                 || !matches!(record.payload, UndoPayload::None)
             {
