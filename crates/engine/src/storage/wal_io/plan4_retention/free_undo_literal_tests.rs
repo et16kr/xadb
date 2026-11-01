@@ -62,6 +62,32 @@ impl Oracle {
         Self { files }
     }
 
+    /// Current Profile3 live consumers. Historical pure v2/base2 inputs stay in new().
+    pub(in crate::storage) fn current() -> Self {
+        let root = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+            .join("../../tests/fixtures/dev3-plan4-empty-retention/current3/free-undo");
+        let index = std::fs::read(root.join("raw-index.tsv")).unwrap();
+        assert_eq!(
+            hex(&index),
+            "fabf897cf76a7aaccad13b9545ee1339623fa63d4d0db971678d4e46653cdba7"
+        );
+        let mut files = BTreeMap::new();
+        let mut total = 0;
+        for line in std::str::from_utf8(&index).unwrap().lines().skip(1) {
+            let fields: Vec<_> = line.split('\t').collect();
+            assert_eq!(fields.len(), 3);
+            assert!(!fields[0].starts_with('/') && !fields[0].split('/').any(|s| s == ".."));
+            let raw = std::fs::read(root.join(fields[0])).unwrap();
+            assert_eq!(raw.len(), fields[1].parse::<usize>().unwrap());
+            assert_eq!(hex(&raw), fields[2]);
+            total += raw.len();
+            assert!(total <= 1_296_304);
+            assert!(files.insert(fields[0].to_owned(), raw).is_none());
+        }
+        assert_eq!((files.len(), total), (46, 1_296_304));
+        Self { files }
+    }
+
     pub(in crate::storage) fn raw(&self, name: &str) -> &[u8] {
         self.files.get(name).expect("frozen literal key")
     }

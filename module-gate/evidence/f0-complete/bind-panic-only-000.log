@@ -1,0 +1,28 @@
+
+running 1 test
+test storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::tests::g5_bind_boundaries ... P4_SKIP	P4-G5-B01
+P4_SKIP	P4-G5-B02
+P4_SKIP	P4-G5-B03
+P4_SKIP	P4-G5-B04
+P4_SKIP	P4-G5-B05
+P4_SKIP	P4-G5-B06
+P4_SKIP	P4-G5-B07
+P4_SKIP	P4-G5-B08
+P4_SKIP	P4-G5-B09
+P4_SKIP	P4-G5-B10
+P4_SKIP	P4-G5-B11
+P4_SKIP	P4-G5-B12
+P4_SKIP	P4-G5-B13
+P4_SKIP	P4-G5-B14
+P4_CONTEXT	P4-G5-B15	c9e073c11396d0a774a083581396bce5309abe882f8ff267d782eb09e6fc84b0	77f4f15de1e95b948405e1add0a58940e8035deb1491cc4540e8851745399d41	498b3b7d4a6e7989f64f0d033156ca7e643d4eab20e9e54607da3555155778dd
+P4_BEGIN	P4-G5-B15
+
+thread 'storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::tests::g5_bind_boundaries' (5542) panicked at crates/engine/src/storage/wal_io/plan4_genesis/tests/support.rs:278:38:
+plan4 exact before panic
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+P4_PASS	P4-G5-B15
+P4_SKIP	P4-G5-B16
+ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 2005 filtered out; finished in 0.19s
+

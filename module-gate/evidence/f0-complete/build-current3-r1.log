@@ -1,0 +1,15 @@
+   Compiling xadb-engine v0.1.0 (/workspace/xadb/crates/engine)
+error[E0616]: field `control` of struct `plan4_pages::retention::DiskSession` is private
+   --> crates/engine/src/storage/wal_io/plan4_recovery/tests/cases.rs:174:26
+    |
+174 |                     live.control.ledger.issued_local,
+    |                          ^^^^^^^ private field
+
+error[E0616]: field `control` of struct `plan4_pages::retention::DiskSession` is private
+   --> crates/engine/src/storage/wal_io/plan4_recovery/tests/cases.rs:175:26
+    |
+175 |                     live.control.ledger.adopted_local
+    |                          ^^^^^^^ private field
+
+For more information about this error, try `rustc --explain E0616`.
+error: could not compile `xadb-engine` (lib test) due to 2 previous errors

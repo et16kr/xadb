@@ -1,0 +1,19 @@
+
+running 1 test
+test storage::wal_io::bootstrap::doublewrite_install::mutable_storage::status_init::status_flush::mixed::tests::mixed_owner_status_init_stage_owned_unwind ... MIXED_OWNER_CASE_BEGIN	MO-INIT-S-01
+
+thread 'storage::wal_io::bootstrap::doublewrite_install::mutable_storage::status_init::status_flush::mixed::tests::mixed_owner_status_init_stage_owned_unwind' (2192) panicked at crates/engine/src/storage/dirty_init.rs:1110:62:
+requested INIT unwind
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+thread 'storage::wal_io::bootstrap::doublewrite_install::mutable_storage::status_init::status_flush::mixed::tests::mixed_owner_status_init_stage_owned_unwind' (2192) panicked at crates/engine/src/storage/dirty_frame/status_residency.rs:328:14:
+called `Result::unwrap()` on an `Err` value: DirtyError { cause: Fenced, effect: CallerMustResolve }
+FAILED
+
+failures:
+
+failures:
+    storage::wal_io::bootstrap::doublewrite_install::mutable_storage::status_init::status_flush::mixed::tests::mixed_owner_status_init_stage_owned_unwind
+
+test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 2005 filtered out; finished in 0.20s
+

@@ -1,0 +1,546 @@
+{
+  "crates/engine/src/storage/dirty_frame/status_residency.rs": {
+    "blob": "b0e06e9ca99f66e9a360e2a8d6e482baa644eb34",
+    "sha256": "baa63850abad8fe749bdc7ef1eb5b2015e970365184772b06c46d1c158a8f7be"
+  },
+  "crates/engine/src/storage/wal_io/mixed_system_owner/tests.rs": {
+    "blob": "7b0f7327834a18bbc6a41139255c6a5d42bc937c",
+    "sha256": "f5ba985bbdde08f9f93f348ebdae71f02ca3150cd2209482b60bbfbc3fa49ddd"
+  },
+  "crates/engine/src/storage/wal_io/plan4_apply/row/census_tests.rs": {
+    "blob": "0e3ddf50e264d7a7199cbfc29c3a950f90fe7b90",
+    "sha256": "3dfaab09776c0bb646d5deab593dba8b90ce42faf10d6dc46ae2cf5d877d3ee6"
+  },
+  "crates/engine/src/storage/wal_io/plan4_pages/tests.rs": {
+    "blob": "b39cf05da2790ac8ab5bf9ca2fb9245e217a553f",
+    "sha256": "b4a4146c84201403267ef5ff87a890d8c5169552aa571ef08de66a92c68371b5"
+  },
+  "crates/engine/src/storage/wal_io/plan4_recovery/tests/cases.rs": {
+    "blob": "3acb236a91e351e6e63ea12089634981998fb99c",
+    "sha256": "b20e8465796e41b0b1970298b8189f5409aba64cf1d958e949c5808a2ed51305"
+  },
+  "crates/engine/src/storage/wal_io/plan4_recovery/tests/free_undo.rs": {
+    "blob": "6b67a5a09e47ac31b8a70d86cb8d682e3f866f09",
+    "sha256": "6b82e9d29a32d15dd281a5f1e8e24d79554b04580f23991b79e9af9d5fb5717f"
+  },
+  "crates/engine/src/storage/wal_io/plan4_recovery/tests/literals.rs": {
+    "blob": "771cd8a57eb0bd680b5888824bacb61beeac04b0",
+    "sha256": "b75ba3ecd1a296ed8505c6ad3062e18a8c8d3e35ea3d8ad43b9745146317b7a2"
+  },
+  "crates/engine/src/storage/wal_io/plan4_recovery/tests/observations.rs": {
+    "blob": "3d27f4ae02d66ff4f8b02cadb894672ede38d0fc",
+    "sha256": "07c230081148f0a5a4f774425cf95036d045126eb778aab69e42b9ff7449078c"
+  },
+  "crates/engine/src/storage/wal_io/plan4_recovery/tests/support.rs": {
+    "blob": "39d7b974eb439baa52e3d81fb3f7d657b359f8cc",
+    "sha256": "e824cbeba5d1fa0d603ba9faff495e585119296448b5bac52b6d3255c55a429b"
+  },
+  "crates/engine/src/storage/wal_io/plan4_retention/catalog_lifecycle.rs": {
+    "blob": "e458826ac0e6ed34f6c7ea3269d8c2583b7a81ba",
+    "sha256": "efbf965237b7c6e948931d29572c6da229792d4a9bc62278bfdd7b553403842b"
+  },
+  "crates/engine/src/storage/wal_io/plan4_retention/free_undo_literal_tests.rs": {
+    "blob": "993a295facf9b79b7eec5f59bc50db1a1cec0b25",
+    "sha256": "3021e80172fd32b06c637c0466a365c18e34c36a2669ee6ac5d5881b4086b056"
+  },
+  "crates/engine/src/storage/wal_io/plan4_retention/free_undo_tests.rs": {
+    "blob": "35354a04935cc13e086ea0959e272dd465454f92",
+    "sha256": "ef6c2332256ac6a383623f3b3a5c2bdf54b58a786300c0d934aef7b17d64df15"
+  },
+  "crates/engine/src/storage/wal_io/plan4_retention/lifecycle_tests.rs": {
+    "blob": "97b55b2703d70e6d478e1d743cd016e2f7f4dea2",
+    "sha256": "e0621fde300afc0d82e7c839eec60701e984f362a5d3e2732e55743aeb96b337"
+  },
+  "crates/engine/src/storage/wal_io/plan4_retention/literal_tests.rs": {
+    "blob": "23cc9fcb38db1ea2ba69944eede32c0c2e5d063a",
+    "sha256": "f44c07579cfe2a50509fb34dc272a8d753220e0086824a2ec7b356c056898732"
+  },
+  "crates/engine/src/storage/wal_io/recovery_effect/tests.rs": {
+    "blob": "958b58d38a39fbc49aab4ff62d1d368f4a8939b5",
+    "sha256": "4b54c1e61ad255fe129501ce46ed7d4a8be443d698422a1c5e72dfd38240b5e2"
+  },
+  "crates/engine/src/storage/wal_io/resident_status/tests.rs": {
+    "blob": "eec5df0fbc469a8b0abfb9d776e171f98fd7e790",
+    "sha256": "e90784b217baad8c816ebadf44c0b61521b38c4b0b04f474c1584d97bbcf34d0"
+  },
+  "crates/engine/src/storage/wal_io/status_home_flush/resource_tests.rs": {
+    "blob": "7e0805bebd99348ff4f2ed81aa4d9a775309c3df",
+    "sha256": "f5833668cad4a0a3cc68fa929363a0596f75f413744174079125a5a4d48e0627"
+  },
+  "devdoc/README.md": {
+    "blob": "49bd8844b0d30853fa40c55d64d3ddc2eb4664d6",
+    "sha256": "a1d33ef46db7c54c9f093e4ea5cf14bbf38371a27cb48f6c3237992155d32e44"
+  },
+  "devdoc/contracts/dev3-status-home-flush.md": {
+    "blob": "440c4cf08058f42ba930345789c3052c21087b1c",
+    "sha256": "ee3e49e6baa109be368af97aace181b663f395c1bbee0f8c8540ffc83299ee6b"
+  },
+  "devdoc/evidence/README.md": {
+    "blob": "44c91ddfe676b8ac773f0f2ad9c42b6449fe9c3b",
+    "sha256": "2137448211d2becbeda5d8632727067e8eb4031171f3df39226e1ba43510cb2f"
+  },
+  "devdoc/evidence/main-preexisting-failures-20261030.md": {
+    "blob": "d1dd5708757b21df09a259788fbf24d3cf09345a",
+    "sha256": "ad5e4d54131bcba3e926d014ab150e92bb1a676ccde4a057e31a1cff72eb3bb9"
+  },
+  "devdoc/plans/README.md": {
+    "blob": "6552850578228a51e8f82a4884a3f6fd514d0811",
+    "sha256": "813e23096bea8ec3ecab02104516f17c429f3c77838b6513173ee647625f0f0b"
+  },
+  "devdoc/plans/module-independence-followup-plan.md": {
+    "blob": "33639e28dc7899053045c2ba9625242459175dbe",
+    "sha256": "b3a1498217f83825da223cd22aaa1c8ea17fe0b8b6b5e2a65d8b7f7f68d38334"
+  },
+  "tests/fixtures/dev3-plan4-empty-retention/current3/README.md": {
+    "blob": "7acf3e15acdae18f3a6df836ba1d7acb313b3875",
+    "sha256": "3fb0d6f08ad6836aa2ee18061ff5ce44b48df0797cbb3808acf1007f7d97a7f2"
+  },
+  "tests/fixtures/dev3-plan4-empty-retention/current3/free-undo/memory/08.wal": {
+    "blob": "272d01acf704e8e53bff1254f1e454e8df971286",
+    "sha256": "e3df5e3b7229b03abd69770fb4f21232bd19ef0a7f69efe1b2b34ae944e0a899"
+  },
+  "tests/fixtures/dev3-plan4-empty-retention/current3/free-undo/memory/09.wal": {
+    "blob": "2960aa18d56e989c96362526f49a7799f8144c65",
+    "sha256": "15dadf46c1eea34fdbc6c9a6b61c58d6529149aceb82588b41ff731e738be953"
+  },
+  "tests/fixtures/dev3-plan4-empty-retention/current3/free-undo/memory/10.wal": {
+    "blob": "bbe667c5469875837b2161786e6b1869f60d8d49",
+    "sha256": "e904d69847de882e91dd7559eb13c060611e30f45f6f96e9de9867f35fcbf86a"
+  },
+  "tests/fixtures/dev3-plan4-empty-retention/current3/free-undo/memory/11.wal": {
+    "blob": "338aa9d066d47ec59ee21262289ae76d97a2975f",
+    "sha256": "b874cdb0bc27161bc6ec2ebccda47f221549023c5ba072881f3c40ca61f481de"
+  },
+  "tests/fixtures/dev3-plan4-empty-retention/current3/free-undo/memory/12.wal": {
+    "blob": "f8a34557a693b8f902d5eab319b49c1d9e46e486",
+    "sha256": "5935187b65f4973c166061a6d50b6928d3e5fbca9f644d1c1fd8dd506deb880a"
+  },
+  "tests/fixtures/dev3-plan4-empty-retention/current3/free-undo/memory/13.wal": {
+    "blob": "76a342924146fdafb7612dce64284b282849179f",
+    "sha256": "bf1bd83f0c60a8bd17595ae588b2d85ede48d306270bf3bc9a06f6f2da63797a"
+  },
+  "tests/fixtures/dev3-plan4-empty-retention/current3/free-undo/native-allocator-l10.page": {
+    "blob": "dbc681a37fdce00311993e694cbd4956fd0349bd",
+    "sha256": "7d4797bea50ea46c207026561eed4247ea6f9a306532c722a0afab6df0e3ca7f"
+  },
+  "tests/fixtures/dev3-plan4-empty-retention/current3/free-undo/native-allocator-l12.page": {
+    "blob": "5b2355bfe97b9186dffa8d3105c499c3695aac41",
+    "sha256": "3cec003a18bbfe533d381aef58db75379e74760814c1cd8e1bea14d34b2f8c80"
+  },
+  "tests/fixtures/dev3-plan4-empty-retention/current3/free-undo/native-allocator-l14.page": {
+    "blob": "1f80b548601f457ef7b0dca3d6564b2b82642fde",
+    "sha256": "1d395f2b131343fc117fed845776af53a056865ed5ae71b80d82ca3b226ba1a2"
+  },
+  "tests/fixtures/dev3-plan4-empty-retention/current3/free-undo/native-allocator-l2.page": {
+    "blob": "9b80ff521be4cb15a3a9a3b58c0fb3770fb6309c",
+    "sha256": "951b6ea8cb88cff432a71ef2cd684abbb0599239c1db3c64a1f2719a66ba09c9"
+  },
+  "tests/fixtures/dev3-plan4-empty-retention/current3/free-undo/native-allocator-l4.page": {
+    "blob": "f3aeee38afb98d58f860335916b38d0e9a91f866",
+    "sha256": "be97962bb43031c82d7422cf6b9ec4d35bfdde2d61a2cd7825f03873869b92f2"
+  },
+  "tests/fixtures/dev3-plan4-empty-retention/current3/free-undo/native-allocator-l6.page": {
+    "blob": "b9de213fe3aae38f4d64a951a35111f18208323c",
+    "sha256": "03a1fdbee26baa99e1e107568cf6eec74d423f03cfbb9c748f1aa01cc50669cf"
+  },
+  "tests/fixtures/dev3-plan4-empty-retention/current3/free-undo/native-allocator-l8.page": {
+    "blob": "05009b25884a5b4f4a34cf5f12465d11be8dd3f5",
+    "sha256": "173d5ffe4d532121dd7c48d0fbbf8601c5a88d5d3eda3ec43e552d53db567e7c"
+  },
+  "tests/fixtures/dev3-plan4-empty-retention/current3/free-undo/native-page10-init.page": {
+    "blob": "1619491c92521b09400c071e6e122dba1c5a5bad",
+    "sha256": "6e8b01638b83cab229c5650411d34ca6a284992dcb24c9f0cd545b96ee369d4f"
+  },
+  "tests/fixtures/dev3-plan4-empty-retention/current3/free-undo/native-page11-init.page": {
+    "blob": "afa6ed1806ff08be015fc8f9b595d1437d37685e",
+    "sha256": "140eef6d4648591313f7941010ed46777be86e0008e2d29edba28c94886fa37d"
+  },
+  "tests/fixtures/dev3-plan4-empty-retention/current3/free-undo/native-page12-init.page": {
+    "blob": "32ff923e32805039cdef85b94cec86c7030c5ea8",
+    "sha256": "1349812689c5908c0c456abe5bf9eae4317a4e831b68cf9bb90d5e3b88e34433"
+  },
+  "tests/fixtures/dev3-plan4-empty-retention/current3/free-undo/native-page13-init.page": {
+    "blob": "9fc9065ad2355b90673e1bea9a60d8132201e849",
+    "sha256": "4ab62e5cb0f655ed83250dad4651f07abe6f4cec7b6a02c524e5c68e6b33f1e6"
+  },
+  "tests/fixtures/dev3-plan4-empty-retention/current3/free-undo/native-page14-init.page": {
+    "blob": "16b14e3874ceb4190454ef1a45f57ae0b7b5a44b",
+    "sha256": "efe5f79862619a041cba1cfda9379eee677502fa36ec1b8f9d93c19f7e4d6266"
+  },
+  "tests/fixtures/dev3-plan4-empty-retention/current3/free-undo/native-page15-init.page": {
+    "blob": "e94e0623a2d1d2efc810682d3834e7a0d9af82d4",
+    "sha256": "5195474df0a8f8ecc9ed4c6ea8faf0e4b63f5525660675e3ab52c8ad8f39f05f"
+  },
+  "tests/fixtures/dev3-plan4-empty-retention/current3/free-undo/native-page9-init.page": {
+    "blob": "22cdf69fad63c03d647e77c0d90579bf6cacd45c",
+    "sha256": "adba494d6cfce831d5af1d9bb61e661166b85defccfca20c4bf43b8340ad69bc"
+  },
+  "tests/fixtures/dev3-plan4-empty-retention/current3/free-undo/native-wal-e1-suffix.bin": {
+    "blob": "1f2bbc5509e1411d1c050bcf4c45fa627c1cb79c",
+    "sha256": "9a3a6b7382f0d13495dc04c471096edeec3b52d1390d43de80914cc00bad78d9"
+  },
+  "tests/fixtures/dev3-plan4-empty-retention/current3/free-undo/native-wal-e2-suffix.bin": {
+    "blob": "c4b14ed997629ff92e202b38b5523a066bde7353",
+    "sha256": "8d5ad357bfcf20dc8fc7d296f01effcc767098ee28987424bad816b38d04d6e7"
+  },
+  "tests/fixtures/dev3-plan4-empty-retention/current3/free-undo/native-wal-e3-suffix.bin": {
+    "blob": "774626f22748ad35860b9fc1f4fc333621b23982",
+    "sha256": "88a16de22a0b7b1808bae0aea00ec3328ac3487873bc5c69fb36caccf379e6e6"
+  },
+  "tests/fixtures/dev3-plan4-empty-retention/current3/free-undo/pure/cancel-02.wal": {
+    "blob": "0d939f6ef05dbf1a32ab4fb56a505bd266ba1ff7",
+    "sha256": "dd9ae54c856633f75e561c84264886c78f99cbdd3b7e480efac0ed7e5e030d09"
+  },
+  "tests/fixtures/dev3-plan4-empty-retention/current3/free-undo/pure/undo-02.wal": {
+    "blob": "2c6991860df798d6260e73c8a5521297212d2c85",
+    "sha256": "331f0ebe1971c616b463d26542d6167d2f97df45ffb87fe940abae1d64750db6"
+  },
+  "tests/fixtures/dev3-plan4-empty-retention/current3/free-undo/raw-index.tsv": {
+    "blob": "7a9768ee0187876d8413c5947ad2f1f272edaaa1",
+    "sha256": "fabf897cf76a7aaccad13b9545ee1339623fa63d4d0db971678d4e46653cdba7"
+  },
+  "tests/fixtures/dev3-plan4-empty-retention/current3/free-undo/reference/P00.bin": {
+    "blob": "60bed95e3bf2d5760e2443a3c508e162899640f2",
+    "sha256": "077d06af8b37bec32a9472ed498d3fa884fbe5e8fd84c457f6ebfa96e9946cfd"
+  },
+  "tests/fixtures/dev3-plan4-empty-retention/current3/free-undo/reference/P01.bin": {
+    "blob": "7cb98fa0609c56bb39fee6df534dcbbebb607fa7",
+    "sha256": "3edcfdf6b13511c72edb87f03062aac3574188434808d2ec385dbeb0d1ac9b60"
+  },
+  "tests/fixtures/dev3-plan4-empty-retention/current3/free-undo/reference/P02.bin": {
+    "blob": "aab33e2cecc6148683436c93181257643f577ee2",
+    "sha256": "95e8ba5d8de669728840a43b783b586b98c95bf1032cba27a0c0790a6f655828"
+  },
+  "tests/fixtures/dev3-plan4-empty-retention/current3/free-undo/reference/P03.bin": {
+    "blob": "0fb2669a276d003b6395658fe3081b07758522e8",
+    "sha256": "790587403c49eb8aec97e33392134ef8533cc3b228957ef5e6a045944da2b98c"
+  },
+  "tests/fixtures/dev3-plan4-empty-retention/current3/free-undo/reference/P04.bin": {
+    "blob": "9f0c3395345a1aa87902745b8cb89822ba98c9bb",
+    "sha256": "83acb2fb7b855ec5f3987ab55e54640eaf00f23fd58a984e6494a4c6895fb11b"
+  },
+  "tests/fixtures/dev3-plan4-empty-retention/current3/free-undo/reference/P05.bin": {
+    "blob": "56536cffd95dc6156a52fc0dc2ba41a4e0362a3b",
+    "sha256": "32c6732241a7438f50f5e48bb2fcd5c8c0a7eb47e6857b3090764b138880d793"
+  },
+  "tests/fixtures/dev3-plan4-empty-retention/current3/free-undo/reference/P06.bin": {
+    "blob": "db11247b8dcbe1264aea265ef192eac4b6454cb9",
+    "sha256": "e2b80392d2ac5ae35d28029db519451017c7ecba38f65dbf29e3d92f12e33e20"
+  },
+  "tests/fixtures/dev3-plan4-empty-retention/current3/free-undo/reference/P07.bin": {
+    "blob": "26631c5de7af1ccd0f5ecd8c52d65c26f254ad61",
+    "sha256": "c666b6d1954d2b19faa83d5bdb381f4edd337af835a47713e31d1efa52bcee90"
+  },
+  "tests/fixtures/dev3-plan4-empty-retention/current3/free-undo/reference/P08.bin": {
+    "blob": "01d4fffae5ee90636e21792449a0ec7b5c6cbdb8",
+    "sha256": "646d2c91744594c80afc26e4919dffece69dd996e436a1390191a164c5a68567"
+  },
+  "tests/fixtures/dev3-plan4-empty-retention/current3/free-undo/reference/memory-03.wal": {
+    "blob": "46dda614992f12d19f2f5d903ae0b70a8fdeb7e6",
+    "sha256": "525afaa11cc8afd5be29d1c1293cc7a0dd99f2f02513bfb3f9544a74b5cee23c"
+  },
+  "tests/fixtures/dev3-plan4-empty-retention/current3/free-undo/reference/memory-04.wal": {
+    "blob": "b9722b907609f78e4470086ce415d2b3fff56f94",
+    "sha256": "56a630a001cc54a49ae583cd1fcbc09c95457bffccdeba897337485277e9eec6"
+  },
+  "tests/fixtures/dev3-plan4-empty-retention/current3/free-undo/reference/memory-05.wal": {
+    "blob": "46d54e865d9473c9e5982278c53c1ef1e8cfe25d",
+    "sha256": "73d78f7d62aad932789e7a5ad999ae480e19bfc07cd357918808dabb605f4708"
+  },
+  "tests/fixtures/dev3-plan4-empty-retention/current3/free-undo/reference/memory-06.wal": {
+    "blob": "544d5a5e114989f05a328bccb4d810f86fc3616a",
+    "sha256": "31dd90422bf784a6ad797839bd89deba5207c0505381f133126193bcc77114b6"
+  },
+  "tests/fixtures/dev3-plan4-empty-retention/current3/free-undo/reference/memory-07.wal": {
+    "blob": "8270fca249de50fe7a6bb1c8d022867be8cdfd66",
+    "sha256": "c4a881299c9759170e96dde1fa6c23e32a9d819ffc8bac78b3a1b8383c8b1640"
+  },
+  "tests/fixtures/dev3-plan4-empty-retention/current3/free-undo/reference/memory-aging-finish.descriptor": {
+    "blob": "315cc95333d992f599b3a77691c96717bd290125",
+    "sha256": "4ad53dfb989080719af067ad9c90cb8c5f5078266cd10892a2b049f6d43da3e8"
+  },
+  "tests/fixtures/dev3-plan4-empty-retention/current3/free-undo/reference/memory-jobs-finish.page": {
+    "blob": "3416b4f6459ba0ae9725a85199bc62ea68798fdc",
+    "sha256": "ea715d5d1c4e53394c0b2a2d7421881bddb356e15c019c5ac970fb58a9a88549"
+  },
+  "tests/fixtures/dev3-plan4-empty-retention/current3/free-undo/reference/memory-root-finish.page": {
+    "blob": "1d4cd860b589d53b222b12ef8398327692cc7054",
+    "sha256": "9b2e6bd12cc935ad6feb859abd423665f19d4f93a9db4e9f1447dadc07ed9180"
+  },
+  "tests/fixtures/dev3-plan4-empty-retention/current3/free-undo/reference/memory-status-finish.page": {
+    "blob": "d61d3b75cd39863038c290594c4726addbebfe04",
+    "sha256": "99aba4a66f7878d522b2eff9e1003544a04bbe34cd8fc5eee4eefa5ac3b2ba41"
+  },
+  "tests/fixtures/dev3-plan4-empty-retention/current3/free-undo/reference/profile.bin": {
+    "blob": "d79b2578c8155f5c6b38cfb5b28fc8fea847f3db",
+    "sha256": "f49d4bb26a5c0e1bd66dec9a2b0f77aa24e3fafadf54f27e5db9ab9a960e204e"
+  },
+  "tests/fixtures/dev3-plan4-empty-retention/current3/free-undo/reserved-cancel-l6.page": {
+    "blob": "e5786ada6bfc310f749cbab3e3c9ed7adcdc3a33",
+    "sha256": "0dc173487c2216771c1fbbd731c772c5ff062a99377be4243bcdc304cc585a04"
+  },
+  "tests/fixtures/dev3-plan4-empty-retention/current3/free-undo/reserved-cancel-l6.wal": {
+    "blob": "6fe99df0157bc425d66aff370f517093b5ac5cb6",
+    "sha256": "2cddd03d616fe0fa192d55233d679a8decebe92ea9c39a490643f0a7b6a8a296"
+  },
+  "tests/fixtures/dev3-plan4-empty-retention/current3/generate.py": {
+    "blob": "d07990c1df10252adb0533fe3f4ffd8c94834cb2",
+    "sha256": "d1ecc4e77b7013111920dc324b9880c19bf9bc802450cf968d9d1d5aa46c7900"
+  },
+  "tests/fixtures/dev3-plan4-empty-retention/current3/raw-index.tsv": {
+    "blob": "bd4298d36e049df27c379c90c549eefa8a8caf96",
+    "sha256": "3b9e3ac52864e5d1e6c46071a16936c2a1a8cd44386691c96022494c65851740"
+  },
+  "tests/fixtures/dev3-plan4-empty-retention/current3/raw/abort.wal": {
+    "blob": "544d5a5e114989f05a328bccb4d810f86fc3616a",
+    "sha256": "31dd90422bf784a6ad797839bd89deba5207c0505381f133126193bcc77114b6"
+  },
+  "tests/fixtures/dev3-plan4-empty-retention/current3/raw/aging-abort.descriptor": {
+    "blob": "5bb88b22afb0c54b4cbabd34e75e9afefcdd51e2",
+    "sha256": "3cf044152b6e2da471a9c8da1fed0f205f86d2c290cafeb4ae049c26df415b95"
+  },
+  "tests/fixtures/dev3-plan4-empty-retention/current3/raw/aging-begin.descriptor": {
+    "blob": "d0fa9e645c1983f0ccc10d49f12b76c72f6678f2",
+    "sha256": "54aeb5a2f982ea3ae3205288958ab3a9a1e308866ceaa09d8b0c483c0766bc74"
+  },
+  "tests/fixtures/dev3-plan4-empty-retention/current3/raw/aging-finish.descriptor": {
+    "blob": "315cc95333d992f599b3a77691c96717bd290125",
+    "sha256": "4ad53dfb989080719af067ad9c90cb8c5f5078266cd10892a2b049f6d43da3e8"
+  },
+  "tests/fixtures/dev3-plan4-empty-retention/current3/raw/aging-start.descriptor": {
+    "blob": "1977c75065c4d17e9fd0eaa5036ca496a293ae28",
+    "sha256": "9cfd5f0124e6e714626277aa9a488ec40b47fe6314bf00b3e6e2af8eabb28e42"
+  },
+  "tests/fixtures/dev3-plan4-empty-retention/current3/raw/aging-start.wal": {
+    "blob": "46dda614992f12d19f2f5d903ae0b70a8fdeb7e6",
+    "sha256": "525afaa11cc8afd5be29d1c1293cc7a0dd99f2f02513bfb3f9544a74b5cee23c"
+  },
+  "tests/fixtures/dev3-plan4-empty-retention/current3/raw/begin.wal": {
+    "blob": "b9722b907609f78e4470086ce415d2b3fff56f94",
+    "sha256": "56a630a001cc54a49ae583cd1fcbc09c95457bffccdeba897337485277e9eec6"
+  },
+  "tests/fixtures/dev3-plan4-empty-retention/current3/raw/cancel.descriptor": {
+    "blob": "25ff850fc8fda79fcbb681da88787e13d96570a4",
+    "sha256": "90bd69d483db361447a94e21f47c324cff62c17b72800012af8fe83ef2fa0c5f"
+  },
+  "tests/fixtures/dev3-plan4-empty-retention/current3/raw/cancel.page": {
+    "blob": "f6b0ae39319215016525b2645c109b8e4e94cafa",
+    "sha256": "035228b5efe7548a41876391cd3cc1637821779d46c1f1ec082df58b59538aae"
+  },
+  "tests/fixtures/dev3-plan4-empty-retention/current3/raw/cancel.wal": {
+    "blob": "0d939f6ef05dbf1a32ab4fb56a505bd266ba1ff7",
+    "sha256": "dd9ae54c856633f75e561c84264886c78f99cbdd3b7e480efac0ed7e5e030d09"
+  },
+  "tests/fixtures/dev3-plan4-empty-retention/current3/raw/finish.wal": {
+    "blob": "8270fca249de50fe7a6bb1c8d022867be8cdfd66",
+    "sha256": "c4a881299c9759170e96dde1fa6c23e32a9d819ffc8bac78b3a1b8383c8b1640"
+  },
+  "tests/fixtures/dev3-plan4-empty-retention/current3/raw/jobs-abort.page": {
+    "blob": "d4d218ee7b6af4374442a787d0f305056621bfab",
+    "sha256": "94f603ef29b449d49c9cb358e13b9039500174a65fcf63e6bd8bcf390a4ddeb7"
+  },
+  "tests/fixtures/dev3-plan4-empty-retention/current3/raw/jobs-begin.page": {
+    "blob": "86bcce06d31096dc39a57ec7740cb23c8081a367",
+    "sha256": "3afcdf8ee62d0f34a3481681c8362698a3b69e3e347dbe7802737c0b708a31dc"
+  },
+  "tests/fixtures/dev3-plan4-empty-retention/current3/raw/jobs-finish.page": {
+    "blob": "3416b4f6459ba0ae9725a85199bc62ea68798fdc",
+    "sha256": "ea715d5d1c4e53394c0b2a2d7421881bddb356e15c019c5ac970fb58a9a88549"
+  },
+  "tests/fixtures/dev3-plan4-empty-retention/current3/raw/reserve.descriptor": {
+    "blob": "55b05d5c1c176ab656ee5f4cc2b3ff251ac07421",
+    "sha256": "11476f982dac2c0616530ff0381bafcdc0648c44cb8ebeccf348d8174be72988"
+  },
+  "tests/fixtures/dev3-plan4-empty-retention/current3/raw/reserve.page": {
+    "blob": "5ae84cdcac11442f41910ce5de46d1655a014807",
+    "sha256": "8f00dd20b87cdf3a93a40d4c4d1ef86c1f86b1185c656a7d23fe391b076fb4ec"
+  },
+  "tests/fixtures/dev3-plan4-empty-retention/current3/raw/reserve.wal": {
+    "blob": "80da80852b11230979c7a0e725984e107ec464ec",
+    "sha256": "c335b22ca3f61bbbbd07e52bd41711b96447c242904c770f2f1715e42e425126"
+  },
+  "tests/fixtures/dev3-plan4-empty-retention/current3/raw/rollback.wal": {
+    "blob": "46d54e865d9473c9e5982278c53c1ef1e8cfe25d",
+    "sha256": "73d78f7d62aad932789e7a5ad999ae480e19bfc07cd357918808dabb605f4708"
+  },
+  "tests/fixtures/dev3-plan4-empty-retention/current3/raw/root-abort.page": {
+    "blob": "5e7ae9262d82b3763a5e845c76fd23ba5a342ac4",
+    "sha256": "820c753eee5342c820f78d1f14af4507a84686349387c780de7dce1f23872f3e"
+  },
+  "tests/fixtures/dev3-plan4-empty-retention/current3/raw/root-begin.page": {
+    "blob": "85653ef3272115b91e7234dc763248dfc46daa80",
+    "sha256": "c2e29b1a20d918d95b163ad5d4590e3384ea32a4da5aa96210dd3bc762fb704a"
+  },
+  "tests/fixtures/dev3-plan4-empty-retention/current3/raw/root-finish.page": {
+    "blob": "1d4cd860b589d53b222b12ef8398327692cc7054",
+    "sha256": "9b2e6bd12cc935ad6feb859abd423665f19d4f93a9db4e9f1447dadc07ed9180"
+  },
+  "tests/fixtures/dev3-plan4-empty-retention/current3/raw/root-start.page": {
+    "blob": "80a740bf00ceff80b39b0b7aa7ef2abff9ee5b89",
+    "sha256": "fff170aa38b24074423ade1be4859d323b2835653d6f9daea894d8fc87138fbd"
+  },
+  "tests/fixtures/dev3-plan4-empty-retention/current3/raw/second-abort.wal": {
+    "blob": "1917c4ebdf2c93286d2382e736829db710a27d61",
+    "sha256": "97211b15d9c893370e5ee6a8d5847b505f56366c37c4c9c37fd3e350674df498"
+  },
+  "tests/fixtures/dev3-plan4-empty-retention/current3/raw/second-aging-abort.descriptor": {
+    "blob": "d5cee82d533e18e46d49f439b76b9313637df29e",
+    "sha256": "a60d164977dcc9815b98607752c021a5058a637cd9f3190ea4ad081695b8533e"
+  },
+  "tests/fixtures/dev3-plan4-empty-retention/current3/raw/second-aging-begin.descriptor": {
+    "blob": "88b596039984a346cd54576cb7abcb9605457044",
+    "sha256": "bf4f36004092afa85d07f5846ba40239dca5c83e688dd5139b7e9a09e1aabd7b"
+  },
+  "tests/fixtures/dev3-plan4-empty-retention/current3/raw/second-aging-finish.descriptor": {
+    "blob": "dd76fce3088554566a1e3cfc9ff4dd49532554cc",
+    "sha256": "264555a32f26942b4fe26317f4681c1bb868ec49071f50a64001307df5845d1b"
+  },
+  "tests/fixtures/dev3-plan4-empty-retention/current3/raw/second-begin.wal": {
+    "blob": "e7cf9a127f348600062ae2a1694d5e48c523b5bd",
+    "sha256": "cbb657c8d1ea21d42980a2fe322bab7ff8729b63975dc8d2c35fedd6d4cf9a11"
+  },
+  "tests/fixtures/dev3-plan4-empty-retention/current3/raw/second-finish.wal": {
+    "blob": "212a922623873307048a9be045f381673580bc72",
+    "sha256": "5c417fffebf49171f88709e6814c4d3dd67eb3c1b9662e9d6a6f62cea36f70f8"
+  },
+  "tests/fixtures/dev3-plan4-empty-retention/current3/raw/second-jobs-abort.page": {
+    "blob": "b9aac3501b82a78a84d7c11ce6b7230c6fe24d78",
+    "sha256": "1783a272617d96f6b7794f7ae1c56b9e7459df8aa43cb12ed4ac024e373d3322"
+  },
+  "tests/fixtures/dev3-plan4-empty-retention/current3/raw/second-jobs-begin.page": {
+    "blob": "c331817854538812fd19fe5a129b4b126a4b1e4f",
+    "sha256": "aa64f4a7d74099398e81ada1b114cb266aff423d31a1d84403231949157ee2d6"
+  },
+  "tests/fixtures/dev3-plan4-empty-retention/current3/raw/second-jobs-finish.page": {
+    "blob": "8eb3f407f135a6ba334951778580741126bf1349",
+    "sha256": "324d1fc1d6d4f7a01220ad30a44ae716485fb843aac4130857a0844141a45d61"
+  },
+  "tests/fixtures/dev3-plan4-empty-retention/current3/raw/second-rollback.wal": {
+    "blob": "fd2d562b83ede936be720f7174034c779da0491f",
+    "sha256": "7bef04912a4b0562bbd44454134f8b0196e73efc1897470ae66fb85e09f1156c"
+  },
+  "tests/fixtures/dev3-plan4-empty-retention/current3/raw/second-root-abort.page": {
+    "blob": "740f4c0fac337eed3ae6d3a9fdf75ee59eac2786",
+    "sha256": "3f57512b42fb5a3f4dbcb6b4e73dee68b16c496f0d763bea1325b8ce9aa1a638"
+  },
+  "tests/fixtures/dev3-plan4-empty-retention/current3/raw/second-root-begin.page": {
+    "blob": "2f9e7ae235f05fca4ae3cf1376c8cbc44aa0bf00",
+    "sha256": "3c61e3e85751a4d7d269c1efacf0a99e4dc891ae46da72b778be54561f79baa7"
+  },
+  "tests/fixtures/dev3-plan4-empty-retention/current3/raw/second-root-finish.page": {
+    "blob": "d4703853329ab0f00b44839a7b9ce13ced54898e",
+    "sha256": "26aa150b13eef056a93fbd4188c6ffc6f93bdd4a629a3642cb84ee767fdcd657"
+  },
+  "tests/fixtures/dev3-plan4-empty-retention/current3/raw/second-status-abort.page": {
+    "blob": "5df388c10d4970eba1d64ffc54b905ab1165775e",
+    "sha256": "50c6ef09b113de0e5a8be12914f352c21cada2f6145b8532c60be9540ee6c6b7"
+  },
+  "tests/fixtures/dev3-plan4-empty-retention/current3/raw/second-status-begin.page": {
+    "blob": "2d61acba4952fe58b8269649a069b394a5a6587e",
+    "sha256": "4af0fc7bc58a8ed195aba4432d21819bc6eac7bd5b32109830a5fb655e3433c7"
+  },
+  "tests/fixtures/dev3-plan4-empty-retention/current3/raw/second-status-finish.page": {
+    "blob": "f6990a33db4115170af262d1c523de3e8d3c45c3",
+    "sha256": "294ebaf518ff1eac3c2eec7942e48bca74d697118f97ca4b6c3e043bc58b3588"
+  },
+  "tests/fixtures/dev3-plan4-empty-retention/current3/raw/second-status-rollback.page": {
+    "blob": "3c1af40e399b0e1d1b89e6aee02131884f7bf7f7",
+    "sha256": "0c951db6995eb8db0f6366c4b565672191359e85e50348e913f538cc370d75f5"
+  },
+  "tests/fixtures/dev3-plan4-empty-retention/current3/raw/second-tx-abort.descriptor": {
+    "blob": "02463bcf8768610fb9a7280f6d118e628f688eaa",
+    "sha256": "c3045df7e6d4493553ea440dddc4a2fc1cb21459578f757109492be68775655c"
+  },
+  "tests/fixtures/dev3-plan4-empty-retention/current3/raw/second-tx-begin.descriptor": {
+    "blob": "b182ebc7d38bdea676169fc820c4956683b3957a",
+    "sha256": "74e290e35e4c7f50b580ff38ac6da6573add74dc36c1a470cd5b47781df244ba"
+  },
+  "tests/fixtures/dev3-plan4-empty-retention/current3/raw/second-tx-rollback.descriptor": {
+    "blob": "21e97a4ba30995ce341bdce63be58e3fa01d9e9c",
+    "sha256": "b985faa164cbd576da1dbe1049f795c528c3594b135a180c68fc5eb5bff104a4"
+  },
+  "tests/fixtures/dev3-plan4-empty-retention/current3/raw/status-abort.page": {
+    "blob": "e881819419fceaf521f7fba6b7bd306a8fe45645",
+    "sha256": "67151d7d4c9ed04b4ea4c9c813884a35635cb0ca4d7e5e0e9b1a9fd5845ccf62"
+  },
+  "tests/fixtures/dev3-plan4-empty-retention/current3/raw/status-begin.page": {
+    "blob": "773c5de66bc05d0e887eda8e327df1f3f7d981bf",
+    "sha256": "1f259a3e1f1a4bd144e743e06941ad4d18503bcfe402129d1ca7261f5332ce25"
+  },
+  "tests/fixtures/dev3-plan4-empty-retention/current3/raw/status-finish.page": {
+    "blob": "d61d3b75cd39863038c290594c4726addbebfe04",
+    "sha256": "99aba4a66f7878d522b2eff9e1003544a04bbe34cd8fc5eee4eefa5ac3b2ba41"
+  },
+  "tests/fixtures/dev3-plan4-empty-retention/current3/raw/status-free.page": {
+    "blob": "22cdf69fad63c03d647e77c0d90579bf6cacd45c",
+    "sha256": "adba494d6cfce831d5af1d9bb61e661166b85defccfca20c4bf43b8340ad69bc"
+  },
+  "tests/fixtures/dev3-plan4-empty-retention/current3/raw/status-rollback.page": {
+    "blob": "1e6e11524679259b2dddc94271f9f478c2107556",
+    "sha256": "f01ea439ec739eef56c6cd4c70f15c3c84f1a272b10a45f2195fb6192459e3e2"
+  },
+  "tests/fixtures/dev3-plan4-empty-retention/current3/raw/status.descriptor": {
+    "blob": "eb5b31dccaeb12dc5f26b4d1f1f6f796b083edb6",
+    "sha256": "df22a6b358783e4f6518de48df9759083a35902b36f0c4bb26002a9250a055b3"
+  },
+  "tests/fixtures/dev3-plan4-empty-retention/current3/raw/status.page": {
+    "blob": "9b80ff521be4cb15a3a9a3b58c0fb3770fb6309c",
+    "sha256": "951b6ea8cb88cff432a71ef2cd684abbb0599239c1db3c64a1f2719a66ba09c9"
+  },
+  "tests/fixtures/dev3-plan4-empty-retention/current3/raw/status.wal": {
+    "blob": "3fbe7b8a34c422a818d9a95a0664b18fe1bc2d25",
+    "sha256": "99a1338f599bdf134d7404c652df4084392cf5016db2a26a1e7655fce3d7ca7c"
+  },
+  "tests/fixtures/dev3-plan4-empty-retention/current3/raw/tx-abort.descriptor": {
+    "blob": "b681589c86a652d809aa2abfbaf7a89f453f2d5b",
+    "sha256": "c10567a460afb224c689b54817d0c5d036aa5e08539bc7b01ab975935ea7ac3e"
+  },
+  "tests/fixtures/dev3-plan4-empty-retention/current3/raw/tx-begin.descriptor": {
+    "blob": "19792f357b2cfaebd052e1807e93da1a4fd4fa39",
+    "sha256": "c50662911ec45c622ae461f4ca54868c145810e355b9c6afe749316a71105592"
+  },
+  "tests/fixtures/dev3-plan4-empty-retention/current3/raw/tx-rollback.descriptor": {
+    "blob": "671bef0da6146f341595399f035951f8d9fa95d4",
+    "sha256": "5c219489523ac54e97bc36824dccce4738e41489b52e2f3604ff80b0f2311e4e"
+  },
+  "tests/fixtures/dev3-plan4-empty-retention/current3/references/P00.bin": {
+    "blob": "60bed95e3bf2d5760e2443a3c508e162899640f2",
+    "sha256": "077d06af8b37bec32a9472ed498d3fa884fbe5e8fd84c457f6ebfa96e9946cfd"
+  },
+  "tests/fixtures/dev3-plan4-empty-retention/current3/references/P01.bin": {
+    "blob": "7cb98fa0609c56bb39fee6df534dcbbebb607fa7",
+    "sha256": "3edcfdf6b13511c72edb87f03062aac3574188434808d2ec385dbeb0d1ac9b60"
+  },
+  "tests/fixtures/dev3-plan4-empty-retention/current3/references/P02.bin": {
+    "blob": "aab33e2cecc6148683436c93181257643f577ee2",
+    "sha256": "95e8ba5d8de669728840a43b783b586b98c95bf1032cba27a0c0790a6f655828"
+  },
+  "tests/fixtures/dev3-plan4-empty-retention/current3/references/P03.bin": {
+    "blob": "0fb2669a276d003b6395658fe3081b07758522e8",
+    "sha256": "790587403c49eb8aec97e33392134ef8533cc3b228957ef5e6a045944da2b98c"
+  },
+  "tests/fixtures/dev3-plan4-empty-retention/current3/references/P04.bin": {
+    "blob": "9f0c3395345a1aa87902745b8cb89822ba98c9bb",
+    "sha256": "83acb2fb7b855ec5f3987ab55e54640eaf00f23fd58a984e6494a4c6895fb11b"
+  },
+  "tests/fixtures/dev3-plan4-empty-retention/current3/references/P05.bin": {
+    "blob": "56536cffd95dc6156a52fc0dc2ba41a4e0362a3b",
+    "sha256": "32c6732241a7438f50f5e48bb2fcd5c8c0a7eb47e6857b3090764b138880d793"
+  },
+  "tests/fixtures/dev3-plan4-empty-retention/current3/references/P06.bin": {
+    "blob": "db11247b8dcbe1264aea265ef192eac4b6454cb9",
+    "sha256": "e2b80392d2ac5ae35d28029db519451017c7ecba38f65dbf29e3d92f12e33e20"
+  },
+  "tests/fixtures/dev3-plan4-empty-retention/current3/references/P07.bin": {
+    "blob": "26631c5de7af1ccd0f5ecd8c52d65c26f254ad61",
+    "sha256": "c666b6d1954d2b19faa83d5bdb381f4edd337af835a47713e31d1efa52bcee90"
+  },
+  "tests/fixtures/dev3-plan4-empty-retention/current3/references/P08.bin": {
+    "blob": "01d4fffae5ee90636e21792449a0ec7b5c6cbdb8",
+    "sha256": "646d2c91744594c80afc26e4919dffece69dd996e436a1390191a164c5a68567"
+  },
+  "tests/fixtures/dev3-plan4-empty-retention/current3/references/REF-P1-d3-profile.bin": {
+    "blob": "d79b2578c8155f5c6b38cfb5b28fc8fea847f3db",
+    "sha256": "f49d4bb26a5c0e1bd66dec9a2b0f77aa24e3fafadf54f27e5db9ab9a960e204e"
+  }
+}

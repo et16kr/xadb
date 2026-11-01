@@ -66,7 +66,7 @@ I/O 전 실패도 capture 뒤라면 원 claim/capture/authority를 보존하고 
 | consuming adapter | B=old Bound, F=new control, N=new Bound, E=Before/Fatal error, Q=Result. B+8192, B+4F+8192, max(B+E,E+Q)+8192, max(B+N,N+Q)+8192 각각≤65536을 associated const로 강제 |
 | generic deep | actual owner+StatusControl+F+4×File+WAL4096+I/O8192+outer capture/finalize8192≤65536 |
 | metadata | 기존 registry delta R, T=R+F+1024; hot=T+34×1024+8192+4096+8192≤65536; cold=T+max(5R+8192,3R+8F+8192)≤65536 |
-| 새 authority | Authority/Option≤256, Result≤1024, published request Result≤256. 생성 phase5888와 capture/finalize join8080은 각각 outer8192 이내 |
+| 새 authority | Authority/Option≤384([typed history 도입 때 채택한 상한](dev3-obligation-format.md#empty-transaction-flush)), Result≤1024, published request Result≤256. 초기 256은 history 도입 전 값이며 공통 component·metadata·whole 한도는 유지한다. 생성 phase5888와 capture/finalize join8080은 각각 outer8192 이내 |
 | inner I/O | Status codec3840, scaffolding768, EncodeOuter3072, ExecuteOuter4096. FILEMAP6384, encoding7680, execute6656 등 순차 phase 각각≤8192 |
 
 FILEMAP cursor/codec는 mapping policy 전에 끝나며 opened File은 Status home hash 전에 반환한다. Status envelope와 Free decode는 순차다. encode_prepared는 retained Prepared에 직접 설치하고 unit을 반환한다. execute는 decoder가 없는 phase에서 Retired source/Result forwarding8개를 보수 계상한다. typed Result/Option과 기존/신규 layout table은 별도 phase에서 검사한다. 기존 allocator shared layout 증분도 actual guard에 포함하며 원 측정값으로 .b를 통과 처리하지 않는다. actual layout/aggregate 경계와 독립 D1이 필요하고 실패 시 budget을 자동 증액하지 않는다.

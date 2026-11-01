@@ -1,5 +1,7 @@
 # XADB 조사·실행 증거
 
+2026-11-01 UTC [F0 수정·이관·선택 검증 완료](main-preexisting-failures-20261030.md#f0-completion): 현재 포맷의 독립 fixture/oracle, fatal snapshot·installer cut 관측, cause·예산 기대값을 정리했다. 고유78 tests PASS, 복구45 subcase·resident cut8 완료. 원 실패·abort·미시작과 새 실행의 source identity를 보존한다.
+
 2026-11-01 UTC [F0 기존 증거 분류·인계](main-preexisting-failures-20261030.md#f0-existing-evidence): 보정의 실패 26개 자리·macro 선택 2개·resident 미검증 8개를 현재 계약·정적 경로·다음 조치에 대응했다. 원 로그 미확보로 일부 selector·원인은 미확인이고, 제품 수정·재시험·CI 차단 해제는 없다.
 
 2026-11-01 [MI03 남은 한계 8개](module-mi03-limits-20261101.md): S10이 PARTIAL·NOT_RUN으로 남긴 MI03 8 ID의 한계 내용, S11의 시도 방법, 해결 여부를 ID별로 정리했다. 7개는 PASS로 해결했고 MCB03-V01은 PARTIAL로 남아 사용자 결정으로 한계를 기록하고 M5를 완료로 판정했다. 실행과 판정은 [S11 증거](module-independence-survey-20261026.md#s11-mi03-resupply)다.

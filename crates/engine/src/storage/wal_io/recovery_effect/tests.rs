@@ -618,7 +618,19 @@ fn pending_and_healthy_corruption_boundaries() {
             recovered_error(&d, |e| {
                 assert_eq!(e.error().phase, RecoveryPhase::Redo);
                 if n == 8 {
-                    assert!(matches!(e.error().cause, RecoveryCause::Semantic(_)));
+                    // Empty-transaction recovery checks its admitted Free/ATT
+                    // set through the prefix census, preserving its cause.
+                    assert!(
+                        matches!(
+                            e.error().cause,
+                            RecoveryCause::Prefix(RecoveryPrefixError {
+                                cause: super::super::Cause::Semantic(SemanticError::StateMismatch),
+                                ..
+                            })
+                        ),
+                        "unexpected empty-home rejection: {:?}",
+                        e.error()
+                    );
                 } else if n == 9 {
                     assert!(matches!(
                         e.error().cause,

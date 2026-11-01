@@ -771,8 +771,16 @@ fn init_cut(point: probe::InitPoint) {
                 assert!(ft::content_busy(pool, 0) && ft::content_busy(pool, 2));
                 assert!(!ft::content_busy(pool, 1));
                 assert!(core_ref.diagnostic_version_busy());
-                let pins = probe::pin_state(pool);
-                assert_eq!((pins.0[0], pins.0[1], pins.0[2], pins.1), (1, 0, 1, 2));
+                if point == probe::InitPoint::StageOwned {
+                    let pins = probe::try_pin_state(pool).unwrap();
+                    assert_eq!((pins.0[0], pins.0[1], pins.0[2], pins.1), (1, 0, 1, 2));
+                } else {
+                    // C6 holds the unified registry through install. A blocking
+                    // pin observation would deadlock the paused installer.
+                    let held = probe::try_pin_state(pool).unwrap_err();
+                    assert_eq!(held.cause, crate::storage::dirty_frame::Cause::Busy);
+                    assert_eq!(held.effect, Effect::Unchanged);
+                }
                 resume.send(ft::Resume::Panic).unwrap();
                 fence_arrival.recv_timeout(Duration::from_secs(5)).unwrap();
                 assert!(fence.is_fenced());

@@ -1,0 +1,93 @@
+
+running 1 test
+test storage::wal_io::bootstrap::doublewrite_install::mutable_storage::status_init::status_flush::tests::status_flush_rf ... STATUS_FLUSH_CASE_BEGIN	RF01
+RESOURCE_STATUS_FLUSH old_bound 16112 28672
+RESOURCE_STATUS_FLUSH flush_control 1552 4096
+RESOURCE_STATUS_FLUSH new_bound 17664 28672
+RESOURCE_STATUS_FLUSH before_error 16184 28672
+RESOURCE_STATUS_FLUSH adapter_result 17664 28672
+RESOURCE_STATUS_FLUSH adapter_preflight 24304 65536
+RESOURCE_STATUS_FLUSH adapter_construct 30512 65536
+RESOURCE_STATUS_FLUSH adapter_before 42040 65536
+RESOURCE_STATUS_FLUSH adapter_success 43520 65536
+RESOURCE_STATUS_FLUSH authority 296 256
+RESOURCE_STATUS_FLUSH flush_error 72 768
+RESOURCE_STATUS_FLUSH progress_result 408 1024
+RESOURCE_STATUS_FLUSH flusher_view 32 128
+RESOURCE_STATUS_FLUSH metadata_hot 64216 65536
+RESOURCE_STATUS_FLUSH metadata_cold 48832 65536
+RESOURCE_STATUS_FLUSH owner_deep 25272 65536
+RESOURCE_STATUS_FLUSH file 32 8192
+RESOURCE_STATUS_FLUSH workspace_used 164000 4194304
+RESOURCE_STATUS_FLUSH shared_Prepared 496 768
+RESOURCE_STATUS_FLUSH shared_PreparedResult 496 768
+RESOURCE_STATUS_FLUSH shared_IoObservation 208 256
+RESOURCE_STATUS_FLUSH shared_Selected3 192 192
+RESOURCE_STATUS_FLUSH shared_Selected3Result 192 256
+RESOURCE_STATUS_FLUSH shared_FrameStamp 96 112
+RESOURCE_STATUS_FLUSH shared_TargetRequest 64 80
+RESOURCE_STATUS_FLUSH shared_WalFrameLocation 88 96
+RESOURCE_STATUS_FLUSH shared_Profile 72 96
+RESOURCE_STATUS_FLUSH shared_FileMapRoot 184 192
+RESOURCE_STATUS_FLUSH shared_FileMapRootResult 184 192
+RESOURCE_STATUS_FLUSH shared_FileMapRootInner 184 192
+RESOURCE_STATUS_FLUSH shared_FileMapCursor 224 224
+RESOURCE_STATUS_FLUSH shared_FileMapChunk 112 112
+RESOURCE_STATUS_FLUSH shared_FileMapChunkResult 112 112
+RESOURCE_STATUS_FLUSH shared_FileMapChunkInner 112 112
+RESOURCE_STATUS_FLUSH shared_FileMapEntry 40 96
+RESOURCE_STATUS_FLUSH shared_ChunkLocation 64 80
+RESOURCE_STATUS_FLUSH shared_PageHeader 72 96
+RESOURCE_STATUS_FLUSH shared_PageView 96 128
+RESOURCE_STATUS_FLUSH shared_AllocationPage 144 192
+RESOURCE_STATUS_FLUSH shared_ControlView 80 96
+RESOURCE_STATUS_FLUSH shared_PendingImage 88 96
+RESOURCE_STATUS_FLUSH shared_ContentHasher 112 128
+RESOURCE_STATUS_FLUSH shared_FileName 129 160
+RESOURCE_STATUS_FLUSH shared_FileMetadata 24 32
+RESOURCE_STATUS_FLUSH shared_Cause 32 96
+RESOURCE_STATUS_FLUSH shared_UnitResult 32 96
+RESOURCE_STATUS_FLUSH shared_FlushIo 768 2048
+RESOURCE_STATUS_FLUSH shared_RetiredBatch 192 256
+RESOURCE_STATUS_FLUSH shared_FlushIoError 40 128
+RESOURCE_STATUS_FLUSH io_TargetClass 1 8
+RESOURCE_STATUS_FLUSH io_PolicyRef 16 16
+RESOURCE_STATUS_FLUSH io_MappedHome 64 160
+RESOURCE_STATUS_FLUSH io_FileMapEntryInner 40 96
+RESOURCE_STATUS_FLUSH io_FileMapEntryOption 40 96
+RESOURCE_STATUS_FLUSH io_ControlHeader 56 96
+RESOURCE_STATUS_FLUSH io_RetiredInner 192 256
+RESOURCE_STATUS_FLUSH io_RetiredResult 192 256
+RESOURCE_STATUS_FLUSH io_PageIdentity 56 80
+RESOURCE_STATUS_FLUSH io_PageViewResult 96 128
+RESOURCE_STATUS_FLUSH io_PageViewSemanticResult 96 128
+RESOURCE_STATUS_FLUSH io_StatusHome 184 256
+RESOURCE_STATUS_FLUSH io_StatusHomeResult 184 256
+RESOURCE_STATUS_FLUSH io_StatusCell 176 224
+RESOURCE_STATUS_FLUSH io_StatusCellResult 176 224
+RESOURCE_STATUS_FLUSH io_PageLsnResult 16 32
+RESOURCE_STATUS_FLUSH io_OptionRange 24 32
+RESOURCE_STATUS_FLUSH io_StatusHash 1984 2048
+RESOURCE_STATUS_FLUSH io_StatusCodec 3272 3840
+RESOURCE_STATUS_FLUSH io_IoScaffolding 448 768
+RESOURCE_STATUS_FLUSH io_EncodeOuter 2065 3072
+RESOURCE_STATUS_FLUSH io_ExecuteOuter 2777 4096
+RESOURCE_STATUS_FLUSH io_StatusImagePhase 3720 8192
+RESOURCE_STATUS_FLUSH io_SelectionPhase 6568 8192
+RESOURCE_STATUS_FLUSH io_FileMapPhase 6064 8192
+RESOURCE_STATUS_FLUSH io_StatusHomePhase 3776 8192
+RESOURCE_STATUS_FLUSH io_EncodePhase 6673 8192
+RESOURCE_STATUS_FLUSH io_ExecutePhase 5337 8192
+
+thread 'storage::wal_io::bootstrap::doublewrite_install::mutable_storage::status_init::status_flush::tests::status_flush_rf' (2185) panicked at crates/engine/src/storage/wal_io/status_home_flush/resource_tests.rs:277:9:
+resource caps exceeded; all observations emitted above
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+FAILED
+
+failures:
+
+failures:
+    storage::wal_io::bootstrap::doublewrite_install::mutable_storage::status_init::status_flush::tests::status_flush_rf
+
+test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 2005 filtered out; finished in 0.00s
+

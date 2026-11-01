@@ -324,8 +324,14 @@ pub(in crate::storage) mod test_support {
         pool: &SharedPool<'_, '_, '_, '_>,
         index: usize,
     ) -> Option<(TargetRequest, u64)> {
-        pool.resolve_registration(index)
-            .unwrap()
+        // Quiescent test observation, including after an intentional fence or
+        // installer unwind. A copied registration grants no pin or authority;
+        // production entry still uses resolve_registration's health checks.
+        pool.registry
+            .lock()
+            .unwrap_or_else(|error| error.into_inner())
+            .directory
+            .resolve(pool.frames, index)
             .map(|r| (r.request, r.generation))
     }
     pub(in crate::storage) fn corrupt_index(

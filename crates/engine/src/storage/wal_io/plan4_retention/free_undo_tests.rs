@@ -58,6 +58,8 @@ macro_rules! original {
         let mut isolation = boxed::<4_160>();
         let mut control = boxed::<RETENTION_CONTROL_BYTES>();
         let mut replay = boxed::<RETENTION_REPLAY_BYTES>();
+        let mut visibility = boxed::<8_192>();
+        let mut epochs = boxed::<1_600>();
         let old = $storage.bind_plan4_pages(&$core, &mut frames, &mut operation).unwrap();
         let mut $live = match old.into_empty_retention(&mut $owner, EmptyRetentionControlLoan { isolation: &mut isolation,
             control: &mut control, replay: &mut replay,
@@ -65,6 +67,7 @@ macro_rules! original {
             Ok(v) => v,
             Err(IntoRetentionError::Before { error, .. }) | Err(IntoRetentionError::Fatal(error)) => panic!("activation: {error:?}"),
         };
+        $live.enable_catalog_visibility(&mut $owner, VisibilityLoan { bytes: &mut visibility, epochs: &mut epochs }).unwrap();
         $body
         drop($live); drop($owner); drop($storage);
         let s = $state.lock().unwrap();
@@ -197,7 +200,7 @@ fn memory_terminal(live: &Live<'_, '_, '_, '_, '_, '_, '_, '_>, oracle: &FreeUnd
 
 #[test]
 fn free_undo_original_owner_gap_cancel_reuse_flush_reload() {
-    let oracle = FreeUndoOracle::new();
+    let oracle = FreeUndoOracle::current();
     original!(|live, owner, core, _foreign, state, storage| {
         let status = initialize(&mut live, &mut owner, &core, false, page(9, 2), 2);
         memory_terminal(&live, &oracle, 2);
@@ -216,18 +219,23 @@ fn free_undo_original_owner_gap_cancel_reuse_flush_reload() {
             }
         }
         let actor = crate::storage::retention_page::tests::actor(1, 2);
+        let mut private = boxed::<425_984>();
         for index in 0..5 {
-            let (mut writer, _, _) = live.split();
             let observed = match index {
-                0 => writer.aging_start(&mut owner),
-                1 => writer.begin_empty(&mut owner, &status, job()),
-                2 => writer.rollback_start(&mut owner, actor),
-                3 => writer.abort_end_empty(&mut owner, actor),
-                4 => writer.finish_empty_terminal(&mut owner, job()),
+                0 => live.catalog_aging_start(&mut owner, &mut private),
+                1 => live.catalog_begin(&mut owner, &status, &mut private),
+                2 => live.catalog_rollback_start(&mut owner, actor, &mut private),
+                3 => live.catalog_abort_end(&mut owner, actor, &mut private),
+                4 => live.catalog_retire(
+                    &mut owner,
+                    0,
+                    crate::storage::semantic_catalog::Operation::TerminalFinish,
+                    &mut private,
+                ),
                 _ => unreachable!(),
             }
             .unwrap();
-            assert_eq!(observed.lsn.0, 3 + index);
+            assert_eq!(observed.header.lsn, 3 + index);
         }
         for (number, name) in [(1, "root"), (2, "jobs"), (9, "status")] {
             assert_page(
@@ -533,7 +541,7 @@ fn free_undo_new_role_preflight_and_install_failure_boundaries() {
             .collect::<Vec<_>>()
             .join(",")
     );
-    let oracle = FreeUndoOracle::new();
+    let oracle = FreeUndoOracle::current();
     for case in 0..7 {
         if !selected.contains(&case) {
             println!("FREE_UNDO_FAILURE_SKIP {case}");

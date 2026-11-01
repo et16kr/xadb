@@ -1,0 +1,32 @@
+
+running 1 test
+test storage::wal_io::bootstrap::doublewrite_install::mutable_storage::recovery_prefix::effect::tests::pending_and_healthy_corruption_boundaries ... RECOVERY_EFFECTS_CASE_BEGIN	EH001
+RECOVERY_EFFECTS_CASE	EH001	PASS
+RECOVERY_EFFECTS_CASE_BEGIN	EH002
+RECOVERY_EFFECTS_CASE	EH002	PASS
+RECOVERY_EFFECTS_CASE_BEGIN	EH003
+RECOVERY_EFFECTS_CASE	EH003	PASS
+RECOVERY_EFFECTS_CASE_BEGIN	EH004
+RECOVERY_EFFECTS_CASE	EH004	PASS
+RECOVERY_EFFECTS_CASE_BEGIN	EH005
+RECOVERY_EFFECTS_CASE	EH005	PASS
+RECOVERY_EFFECTS_CASE_BEGIN	EH006
+RECOVERY_EFFECTS_CASE	EH006	PASS
+RECOVERY_EFFECTS_CASE_BEGIN	EH007
+RECOVERY_EFFECTS_CASE	EH007	PASS
+RECOVERY_EFFECTS_CASE_BEGIN	EH008
+RECOVERY_EFFECTS_CASE	EH008	PASS
+RECOVERY_EFFECTS_CASE_BEGIN	EH009
+
+thread 'storage::wal_io::bootstrap::doublewrite_install::mutable_storage::recovery_prefix::effect::tests::pending_and_healthy_corruption_boundaries' (2183) panicked at crates/engine/src/storage/wal_io/recovery_effect/tests.rs:621:21:
+assertion failed: matches!(e.error().cause, RecoveryCause::Semantic(_))
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+FAILED
+
+failures:
+
+failures:
+    storage::wal_io::bootstrap::doublewrite_install::mutable_storage::recovery_prefix::effect::tests::pending_and_healthy_corruption_boundaries
+
+test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 2005 filtered out; finished in 0.12s
+

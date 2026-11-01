@@ -1,0 +1,6 @@
+# F0 bounded diagnosis (before execution)
+Baseline 01fb227d; original 76ec2cf5 calibration evidence remains unchanged.
+Authorization: current explicit request to complete F0 includes F0 §4.4 cause diagnosis and §4.5 unverified cuts, not a whole-suite calibration.
+Question: for each previously failing path, distinguish stale fixture/observer/lock-order/size/cause errors from product defects. Original logs unavailable; these are NEW source-bound diagnostics, not recovered historical logs.
+Scope round 1: 19 unclassified exact cases statically mapped from the existing first-panic file/line inventories; retention lifecycle known initial-byte mismatch need not rerun yet. Three representative mixed paths (fenced snapshot, installer-held registry, stage unwind), allocator cut once in its own process. No successful resident 20 cases, ignored s5 cases, whole lib/workspace, native workers or product throughput runs.
+Bounds: each exact process 120s, total diagnostic round 45min, disk <20GiB; timeout/abort preserves log and stops that case, no retry on same input/source; no cap increases. Build once, logs and source/ELF/input hashes retained; remove task target after results. Later modified-code tests selected on actual diff; no repeat of unchanged passing cases.

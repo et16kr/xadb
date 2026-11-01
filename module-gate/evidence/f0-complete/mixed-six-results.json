@@ -1,0 +1,44 @@
+[
+  {
+    "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::status_init::status_flush::mixed::tests::load_addendum::mixed_owner_load_home_zero_eof_fences_without_install",
+    "rc": 0,
+    "seconds": 0.26,
+    "log": "mixed-six-000.log",
+    "sha256": "0eddd2b19d096b0c299d63abccf3e926fa1527890cfa9846ab581a031c1c4593"
+  },
+  {
+    "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::status_init::status_flush::mixed::tests::load_addendum::mixed_owner_load_home_partial_eof_fences_without_install",
+    "rc": 0,
+    "seconds": 0.26,
+    "log": "mixed-six-001.log",
+    "sha256": "4e0d41e8c84f26885d027e457d62736a1046fc42a1d83578fdeb77518368af15"
+  },
+  {
+    "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::status_init::status_flush::mixed::tests::load_addendum::mixed_owner_load_rejects_sha_valid_later_undo_class",
+    "rc": 0,
+    "seconds": 0.26,
+    "log": "mixed-six-002.log",
+    "sha256": "99756b9d59b44d33d04203d0687aaa53600d5421c5581a33c58fdf9542a5ef13"
+  },
+  {
+    "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::status_init::status_flush::mixed::tests::load_addendum::mixed_owner_load_rejects_sha_valid_later_undo_geometry",
+    "rc": 0,
+    "seconds": 0.26,
+    "log": "mixed-six-003.log",
+    "sha256": "b0aeaa66ce13bb6f4866c064bb9b7d6c5d15f6e4482e72aff50a0748b0031b0b"
+  },
+  {
+    "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::status_init::status_flush::mixed::tests::load_addendum::mixed_owner_load_rejects_sha_valid_terminal_descriptor_budget",
+    "rc": 0,
+    "seconds": 0.26,
+    "log": "mixed-six-004.log",
+    "sha256": "2f44a83cf53249957323759e6ea80dd0cbfa729e09f836b6ad3d24f9849411c8"
+  },
+  {
+    "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::status_init::status_flush::mixed::tests::load_addendum::mixed_owner_load_rejects_sha_valid_wrong_descriptor_predecessor",
+    "rc": 0,
+    "seconds": 0.26,
+    "log": "mixed-six-005.log",
+    "sha256": "bcc4f5782ca2c146772dd53e3e47edba99df4f6a056dcf2bff6134b425c5dc71"
+  }
+]

@@ -1,0 +1,163 @@
+[
+  {
+    "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::status_init::status_flush::resident::tests::resident_status_staged_key_rejects_other_slot",
+    "rc": 101,
+    "seconds": 0.26,
+    "log": "baseline-000.log",
+    "sha256": "26b2f67a9a5192d92766dbca8543a037791a6c59bfaec44f2b9134cf311f92f5"
+  },
+  {
+    "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::status_init::status_flush::resident::tests::resident_status_completion_rejects_other_slot",
+    "rc": 101,
+    "seconds": 0.26,
+    "log": "baseline-001.log",
+    "sha256": "0e91bb749e90d5bf2efef1a87c1dd59cbe8b46c6599edbb74ebbb3f407701101"
+  },
+  {
+    "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::status_init::status_flush::resident::tests::resident_status_late_semantic_failure_releases_whole_read",
+    "rc": 101,
+    "seconds": 0.21,
+    "log": "baseline-002.log",
+    "sha256": "5f4e9848e4933a3fd3423e86f5b8e103ccdedee5e4084e4c56111272b206c587"
+  },
+  {
+    "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::tests::g5_clean_lifecycle",
+    "rc": 0,
+    "seconds": 1.12,
+    "log": "baseline-003.log",
+    "sha256": "84eb7edc1219d0b3c6603a4b56197412ec2b44baba17b3728f4e9c1a429ac488"
+  },
+  {
+    "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::tests::g5_canonical_source_boundaries",
+    "rc": 101,
+    "seconds": 0.57,
+    "log": "baseline-004.log",
+    "sha256": "77e2823615a5ba734f74e9a68ca4d18d705643ff0f5cf4fcd50f04a0ea5e7306"
+  },
+  {
+    "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::tests::g5_clean_invariant_preflight",
+    "rc": 101,
+    "seconds": 0.36,
+    "log": "baseline-005.log",
+    "sha256": "943b64a88307f61f59378ae1234c79ea788e618b3cacb14b579476a124f60c83"
+  },
+  {
+    "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::tests::g5_residency_state_boundaries",
+    "rc": 101,
+    "seconds": 1.07,
+    "log": "baseline-006.log",
+    "sha256": "cc327cfe9c11dbd94377e166482dc8e9c2b9e51f9c16e8db352ab3331ceb6b7f"
+  },
+  {
+    "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::tests::g5_load_io_boundaries",
+    "rc": 101,
+    "seconds": 0.92,
+    "log": "baseline-007.log",
+    "sha256": "f69dd4b0e221a6dbb412d87532bfe8da70016d5d6391d93ca88f4a598fdf348b"
+  },
+  {
+    "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::tests::lifecycle::retention_live_reader_boundaries",
+    "rc": 101,
+    "seconds": 0.62,
+    "log": "baseline-008.log",
+    "sha256": "0788c8fb6b884fe2acb4eb7fdbf6c679018191476a791a4c0c24498fd0fbff11"
+  },
+  {
+    "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::tests::lifecycle::retention_live_latest_load",
+    "rc": 101,
+    "seconds": 0.42,
+    "log": "baseline-009.log",
+    "sha256": "dd83b802c822ac45bb05a200c308286f50697740cbbca5bbd45b382f60140142"
+  },
+  {
+    "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::tests::lifecycle::retention_live_writer_boundaries",
+    "rc": 101,
+    "seconds": 0.21,
+    "log": "baseline-010.log",
+    "sha256": "3b239137840059e70c68f11331d617241450b25ea40b46d77b6c4d1c7f95fb53"
+  },
+  {
+    "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::tests::lifecycle::retention_live_activation",
+    "rc": 101,
+    "seconds": 0.21,
+    "log": "baseline-011.log",
+    "sha256": "3a0feb8f8b85f9aa54b3340420f05da6affbdc3cc3a7ae450af76910a4cb9c05"
+  },
+  {
+    "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::tests::lifecycle::retention_live_flush_boundaries",
+    "rc": 101,
+    "seconds": 0.21,
+    "log": "baseline-012.log",
+    "sha256": "92cc7e8f416c95e6ece4ab8631e485960f8256728c5ac9db9712712781c367f7"
+  },
+  {
+    "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::free_undo_tests::free_undo_original_owner_gap_cancel_reuse_flush_reload",
+    "rc": 101,
+    "seconds": 0.21,
+    "log": "baseline-013.log",
+    "sha256": "aeeb8a1c3233169763dbb70a153afb24d3dc6e3b41b23961a2db9765a325574e"
+  },
+  {
+    "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::free_undo_tests::free_undo_new_role_preflight_and_install_failure_boundaries",
+    "rc": 101,
+    "seconds": 0.62,
+    "log": "baseline-014.log",
+    "sha256": "2b3fdf183d8183bb98e9eddc74c43570f48a1c0070a8965386f8aba4f9b19138"
+  },
+  {
+    "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::free_undo::free_undo_reserved_recovery_uses_original_scope_cancel",
+    "rc": 101,
+    "seconds": 0.26,
+    "log": "baseline-015.log",
+    "sha256": "290403e791f6f7b153a49bcf412842adff7d727d958f33416ffc19a611d3f38e"
+  },
+  {
+    "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::row::census_tests::s2w_c04_live_and_recovered_peaks_unchanged",
+    "rc": 101,
+    "seconds": 0.0,
+    "log": "baseline-016.log",
+    "sha256": "96743105e9060e1fd4ec1278198d151866c01efb36c7a9ae81397682d6a5f911"
+  },
+  {
+    "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::recovery_prefix::effect::tests::pending_and_healthy_corruption_boundaries",
+    "rc": 101,
+    "seconds": 0.16,
+    "log": "baseline-017.log",
+    "sha256": "3090bbc70758e8f8a1665ecdf6cabc96e2b5b1a296d3656ae005dc734d1170b7"
+  },
+  {
+    "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::status_init::status_flush::tests::status_flush_rf",
+    "rc": 101,
+    "seconds": 0.0,
+    "log": "baseline-018.log",
+    "sha256": "39354d50dd86572863be3f211c486c2f3c43087794ac2102eb962877dd8eb88a"
+  },
+  {
+    "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::status_init::status_flush::mixed::tests::mixed_owner_status_first_dwb_error_keeps_dirty_obligation",
+    "rc": 101,
+    "seconds": 0.26,
+    "log": "baseline-019.log",
+    "sha256": "917e2b5ec9a25b1f2d47288149293979f207a6da3aff3c24a670546cc3c80420"
+  },
+  {
+    "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::status_init::status_flush::mixed::tests::mixed_owner_status_init_allocator_image_unwind",
+    "rc": 101,
+    "seconds": 5.23,
+    "log": "baseline-020.log",
+    "sha256": "ec69009cdd49e813add7b26fbf00cc964881a413c371b6046de4a0e4d8e6c8c1"
+  },
+  {
+    "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::status_init::status_flush::mixed::tests::mixed_owner_status_init_stage_owned_unwind",
+    "rc": 101,
+    "seconds": 0.21,
+    "log": "baseline-021.log",
+    "sha256": "6671cbb6ea47f59b101c7cc1e4686cf0a71840b0e14cb43ba8c4327abec8c5ef"
+  },
+  {
+    "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::status_init::status_flush::resident::tests::resident_status_cut_allocator",
+    "rc": -6,
+    "seconds": 10.29,
+    "log": "baseline-022.log",
+    "sha256": "636b0d37cda59d5dece4b52757f0c6d1f822af839055708b48c2e68bbc3639a1"
+  }
+]

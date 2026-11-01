@@ -1,0 +1,16 @@
+[
+  {
+    "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::tests::lifecycle::retention_live_writer_boundaries",
+    "rc": 0,
+    "seconds": 1.32,
+    "log": "current2-000.log",
+    "sha256": "104e7794073eb0f47b2b113048d020db1eacdb5f0a621ad0842cec403a7f56e9"
+  },
+  {
+    "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::cases::recovery_lifecycle",
+    "rc": 0,
+    "seconds": 5.23,
+    "log": "current2-001.log",
+    "sha256": "62dd8cb367c236398821e3ddb5c0a904daf8687143ca027fcda109f6fba34034"
+  }
+]

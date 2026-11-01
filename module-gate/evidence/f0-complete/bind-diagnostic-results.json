@@ -1,0 +1,9 @@
+[
+  {
+    "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::tests::g5_bind_boundaries",
+    "rc": 101,
+    "seconds": 1.27,
+    "log": "bind-diagnostic-000.log",
+    "sha256": "14be10eb9f8a4b09ea4731269ed507d9c05ee89a637791905521dbced371f0c3"
+  }
+]

@@ -1,0 +1,28 @@
+
+running 1 test
+test storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::free_undo_tests::free_undo_new_role_preflight_and_install_failure_boundaries ... FREE_UNDO_FAILURE_SELECTED 0,1,2,3,4,5,6
+FREE_UNDO_FAILURE_BEGIN 0
+FREE_UNDO_FAILURE_PASS 0
+FREE_UNDO_FAILURE_BEGIN 1
+FREE_UNDO_FAILURE_PASS 1
+FREE_UNDO_FAILURE_BEGIN 2
+FREE_UNDO_FAILURE_PASS 2
+FREE_UNDO_FAILURE_BEGIN 3
+
+thread 'storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::free_undo_tests::free_undo_new_role_preflight_and_install_failure_boundaries' (4727) panicked at crates/engine/src/storage/dirty_init.rs:1110:62:
+requested INIT unwind
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+FREE_UNDO_FAILURE_PASS 3
+FREE_UNDO_FAILURE_BEGIN 4
+
+thread 'storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::free_undo_tests::free_undo_new_role_preflight_and_install_failure_boundaries' (4727) panicked at crates/engine/src/storage/dirty_init.rs:1110:62:
+requested INIT unwind
+FREE_UNDO_FAILURE_PASS 4
+FREE_UNDO_FAILURE_BEGIN 5
+FREE_UNDO_FAILURE_PASS 5
+FREE_UNDO_FAILURE_BEGIN 6
+FREE_UNDO_FAILURE_PASS 6
+ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 2005 filtered out; finished in 1.41s
+

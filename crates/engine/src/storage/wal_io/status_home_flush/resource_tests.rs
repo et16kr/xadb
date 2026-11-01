@@ -164,7 +164,9 @@ fn layout() -> Vec<(&'static str, usize, usize)> {
         ("adapter_construct", b + 4 * f + 8192, 65536),
         ("adapter_before", (b + e).max(e + q) + 8192, 65536),
         ("adapter_success", (b + n).max(n + q) + 8192, 65536),
-        ("authority", size_of::<StatusFlushAuthority<'_, '_>>(), 256),
+        // Typed history's adopted cap (dev3-obligation-format.md); the
+        // enclosing metadata and whole-source limits remain unchanged.
+        ("authority", size_of::<StatusFlushAuthority<'_, '_>>(), 384),
         ("flush_error", size_of::<StatusFlushError>(), 768),
         ("progress_result", size_of::<Result<FlushProgress>>(), 1024),
         (

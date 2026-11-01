@@ -1,0 +1,32 @@
+F0 final independent review
+Author: /root
+Reviewer: /root/f0_contract_review (separate read-only agent)
+D1: ACCEPT
+D2 common: ACCEPT
+required_open: 0
+
+Frozen review-input.json: SHA-256 3e5b074291e70611c7b1d1ea9cfe532144f77f3a1fa351e6ff8a6237b362e7ea
+All 136 listed files match their current Git blob and SHA-256.
+All 148 recorded execution artifacts (9,106,340 bytes, excluding the hash index itself) match artifact-sha256.json.
+All 78 unique completion selectors have actual one-test PASS logs, no internal SKIP. The recovery PASS ID set is exactly the declared 45 IDs.
+Run manifests and source fingerprints match. Baseline/current1 failures and the executor-input failure are preserved.
+Test-only snapshots and installer registry Busy observation preserve production health/fence; unwind cleanup and unaffected images remain asserted.
+Current independent fixtures/base4 projector, F01 original producer/source/gate cleanup, and explicit W02 gap/Job reuse mappings to historical evidence are accepted.
+Historical inputs, ignored boundaries and production caps remain unchanged.
+
+Findings addressed before final review:
+- Second-cycle fixture Terminal1 overlapped unused CREATE root1: set root2.
+- Base4 projector must read the Root cell, not the page header.
+- Remaining aggregation includes additive field56 and maximum field104.
+- Reserved XOI chunk bytes56..64 are reserved zero, not root owner_count.
+- W02 membership failure occurs before identity allocation in the current API.
+- Reviewer correction: XWE2 offset104 is profile.base_bytes (2MiB), not MAX_FRAME_BYTES.
+No product run, generator run or file edits were performed by the reviewer.
+
+Scope: F0 changes and selected evidence only; no retrospective attribution of unknown old log names, whole-lib/native acceptance, PR CI or merge claim.
+Pre-push gates remain the integrator's next step.
+
+Gate N/A follow-up (same independent reviewer): ACCEPT, required_open 0.
+- dirty_frame exemption is only for the absence of a module-local selector; its changed test-only helper is exercised by the C consumer selections above.
+- Keep the existing executor-only policy for g5_bind_boundaries. Preserve B08 input FAIL and B15-only PASS separately; cite the five G5 consumer PASS results. No full-bind or general test exemption.
+- Both exact changed file blobs must be covered by the same record's review files.

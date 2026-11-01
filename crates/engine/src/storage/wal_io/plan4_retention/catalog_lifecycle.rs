@@ -396,6 +396,81 @@ impl<'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
         merge(merge(result, returned), reopen(gate))
     }
 
+    // F0 common producer/capture race: the caller verifies both original bindings.
+    // Public catalog_begin still exclusively borrows its flusher.
+    #[cfg(test)]
+    pub(crate) fn f0_capture_begin(
+        &mut self,
+        owner: &mut Owner<'c, 's>,
+        status: &Plan4Target,
+        private: &mut [u8; PRIVATE_BYTES],
+    ) -> Result<Observation> {
+        let _unwind = self.storage.session_fence().unwind_guard();
+        // Only guardless health/origin checks precede source admission. The
+        // existing preparer retains the deep registry/control validation.
+        self.storage.health().map_err(|error| {
+            fatal(
+                self.storage,
+                RetentionPhase::Prepare,
+                RetentionCause::Storage(error),
+            )
+        })?;
+        self.pool
+            .check_retention_entry_health()
+            .map_err(|error| frame(RetentionPhase::Prepare, error))?;
+        if !self
+            .pool
+            .uses_storage_origin(&self.storage.binding, self.storage.session_fence())
+        {
+            return Err(fatal(
+                self.storage,
+                RetentionPhase::Prepare,
+                RetentionCause::BindingMismatch,
+            ));
+        }
+        let gate = owner
+            .close_reads_for_retirement(self.pool.bound_core())
+            .map_err(|error| RetentionError {
+                phase: RetentionPhase::Prepare,
+                cause: RetentionCause::Concurrency(error),
+                effect: error.effect,
+            })?;
+        let reopen = |gate: crate::transaction::concurrency::TerminalReadGate<'c, 's>| {
+            gate.reopen_checked().map_err(|error| RetentionError {
+                phase: RetentionPhase::Census,
+                cause: RetentionCause::Concurrency(error),
+                effect: error.effect,
+            })
+        };
+        let source = match source::OperationSourceAdmission::progress(
+            self.isolation,
+            &self.commit_charges,
+            &self.progress_charge,
+            &gate,
+            source::OperationClass::CatalogProgress,
+        ) {
+            Ok(source) => source,
+            Err(error) => return merge(Err(RetentionError::from(error)), reopen(gate)),
+        };
+        #[cfg(test)]
+        crate::transaction::concurrency::catalog_test_support::hit(
+            self.pool.bound_core(),
+            crate::transaction::concurrency::catalog_test_support::Point::LifecyclePreparing,
+        );
+        let result = (|| {
+            let prepared = self.prepare_catalog_begin(owner, status, private)?;
+            self.catalog_application()
+                .apply_existing_catalog(owner, prepared)
+        })();
+        #[cfg(test)]
+        crate::transaction::concurrency::catalog_test_support::hit(
+            self.pool.bound_core(),
+            crate::transaction::concurrency::catalog_test_support::Point::LifecycleCompleted,
+        );
+        let returned = source.finish_checked().map_err(RetentionError::from);
+        merge(merge(result, returned), reopen(gate))
+    }
+
     pub(super) fn catalog_application(
         &mut self,
     ) -> CatalogApplication<'_, 'a, 's, 'c, 'p, 'd, 'm, 'w, W> {
@@ -636,6 +711,8 @@ impl<'b, 'a, 's, 'c, 'p, 'd, 'm, 'w, W: WriterNamespace>
                 e
             }
         })?;
+        #[cfg(test)]
+        super::tests::after_install(self.pool);
         let durable = storage
             .wal()
             .wait_durable(&requirement)

@@ -1,0 +1,12 @@
+
+running 1 test
+test storage::wal_io::bootstrap::doublewrite_install::mutable_storage::status_init::status_flush::mixed::tests::mixed_owner_undo_init_dpt_precheck_unwind ... MIXED_OWNER_CASE_BEGIN	MO-INIT-U-08
+
+thread 'storage::wal_io::bootstrap::doublewrite_install::mutable_storage::status_init::status_flush::mixed::tests::mixed_owner_undo_init_dpt_precheck_unwind' (3204) panicked at crates/engine/src/storage/dirty_init.rs:1110:62:
+requested INIT unwind
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+MIXED_OWNER_CASE_PASS	MO-INIT-U-08
+ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 2005 filtered out; finished in 0.20s
+

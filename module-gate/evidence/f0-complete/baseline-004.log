@@ -1,0 +1,24 @@
+
+running 1 test
+test storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::tests::g5_canonical_source_boundaries ... P4_CONTEXT	P4-G5-M01	d61ed88d767c01238d80abdbb49a1813519ed749966688bb59f986759ada890a	d77e63822201209b611b9fad26362352135650b4c72f953c3897144e49fbdd2d	b91db9e30cec601fd262978a4dd58fb582688d87c392a3ee99b8f865359c2203
+P4_BEGIN	P4-G5-M01
+P4_PASS	P4-G5-M01
+P4_CONTEXT	P4-G5-M02	d61ed88d767c01238d80abdbb49a1813519ed749966688bb59f986759ada890a	d77e63822201209b611b9fad26362352135650b4c72f953c3897144e49fbdd2d	b91db9e30cec601fd262978a4dd58fb582688d87c392a3ee99b8f865359c2203
+P4_BEGIN	P4-G5-M02
+P4_PASS	P4-G5-M02
+P4_CONTEXT	P4-G5-M03	d61ed88d767c01238d80abdbb49a1813519ed749966688bb59f986759ada890a	d77e63822201209b611b9fad26362352135650b4c72f953c3897144e49fbdd2d	b91db9e30cec601fd262978a4dd58fb582688d87c392a3ee99b8f865359c2203
+P4_BEGIN	P4-G5-M03
+
+thread 'storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::tests::g5_canonical_source_boundaries' (2157) panicked at crates/engine/src/storage/wal_io/plan4_pages/tests.rs:586:30:
+unexpected canonical boundary 3: Retention(IdentityMismatch)
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+P4_FAIL	P4-G5-M03
+FAILED
+
+failures:
+
+failures:
+    storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::tests::g5_canonical_source_boundaries
+
+test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 2005 filtered out; finished in 0.52s
+

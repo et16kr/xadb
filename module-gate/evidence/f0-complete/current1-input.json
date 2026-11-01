@@ -1,0 +1,28 @@
+{
+  "source": "2a0a455d8c8f7f1818645af66f56ca78808f236cfb3946229edf1ac2bfbd60c5",
+  "elf": "7612dc15aa041a7e37041b7950ccc86400fe148472ae575e12ba57addafb28e1",
+  "selectors": [
+    "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::tests::lifecycle::retention_live_lifecycle",
+    "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::tests::lifecycle::retention_live_writer_boundaries",
+    "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::tests::lifecycle::retention_live_flush_boundaries",
+    "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::tests::lifecycle::retention_live_reader_boundaries",
+    "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::tests::lifecycle::retention_live_latest_load",
+    "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::tests::lifecycle::retention_live_activation",
+    "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::cases::recovery_lifecycle",
+    "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::cases::recovery_binding",
+    "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::closure::recovery_closure",
+    "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::faults::recovery_selection",
+    "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::physical::recovery_physical",
+    "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::publication::recovery_publication",
+    "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::free_undo_tests::free_undo_original_owner_gap_cancel_reuse_flush_reload",
+    "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::free_undo_tests::free_undo_new_role_preflight_and_install_failure_boundaries",
+    "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::free_undo_tests::free_undo_original_role_rejection_and_corruption_cleanup",
+    "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::free_undo::free_undo_reserved_recovery_uses_original_scope_cancel"
+  ],
+  "env": {
+    "RUST_MIN_STACK": "33554432",
+    "XADB_G6_VECTOR_INDEXES": "p1-o00=ce3fd367007a6d798dbb6c2f18367a714d4f105611fb190fe57a1aa72d6d99a8",
+    "XADB_G6RC_VECTOR_INDEXES": "p1=24fc3ed635ae36177021e696d1ac14e0f3396fa6b04e72fa5f329875b667e7f0"
+  },
+  "timeout": 120
+}
