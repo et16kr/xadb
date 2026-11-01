@@ -800,14 +800,15 @@ impl<'r, 't, 'v, 'i, 'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
         let (schema, rest) = rest.split_at_mut(range_len(RowLoanLayout::SCHEMA));
         let scratch = &mut rest[RowLoanLayout::A_SCRATCH.start - RowLoanLayout::XOI.start..];
         scratch.fill(0);
+        let before: &[[u8; PAGE_BYTES]; 9] = before
+            .as_chunks::<PAGE_BYTES>()
+            .0
+            .try_into()
+            .expect("nine before images");
         Ok(RowProducerLane {
             context,
             control,
-            before: before
-                .as_chunks::<PAGE_BYTES>()
-                .0
-                .try_into()
-                .expect("nine before images"),
+            before,
             schema: (&*schema).try_into().expect("schema copy page"),
             frame: frame.try_into().expect("frame range"),
             after: after

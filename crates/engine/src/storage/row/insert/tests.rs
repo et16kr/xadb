@@ -366,3 +366,32 @@ fn mca_leaf_v05_stale_lsn_wrong_owner_and_small_scratch_preserve_output() {
     );
     assert!(output.iter().all(|byte| *byte == 0xa5));
 }
+
+/// MCA01-V12-P (S11; consumers §8.4, boundaries `#row-mi03-s11`): C's
+/// complete Catalog census (`table_index_count`, the source of
+/// `RowPreflightContext::index_count`) over C's own fixture leaf, put
+/// through A's table-only profile predicate (`table_only_profile`, the one
+/// `schema` applies to every context). A valid Index (Nonunique, columns
+/// [0]) whose parent is T makes the profile Unsupported; the same leaf with
+/// the Index under another parent, or with no Index, passes. Every other
+/// input of the predicate is the supported profile (format 3, the inline
+/// capacity, a level-0 RowLeaf without arity), so the census output alone
+/// decides. A predicate that admits an Index fails here. C0 only: no
+/// context factory, grant, READY or indexed database (CREATE INDEX is
+/// DEV3); the stored-Index input of the actual flow is V12-S.
+#[test]
+fn mca01_v12_p_census_through_the_profile_predicate() {
+    use crate::storage::disk::{MCA01_V12_P_TABLE, mca01_v12_p_census};
+    let leaf = expected();
+    assert_eq!(table_only_profile(3, 0, INLINE_ROW_BYTES, &leaf), Ok(()));
+    for (parent, answer) in [
+        (Some(MCA01_V12_P_TABLE), Err(InsertError::Unsupported)),
+        (Some(MCA01_V12_P_TABLE + 2), Ok(())),
+        (None, Ok(())),
+    ] {
+        let count = mca01_v12_p_census(parent);
+        let profile = table_only_profile(3, count, INLINE_ROW_BYTES, &leaf);
+        println!("MCA01_V12_P parent={parent:?} index_count={count} profile={profile:?}");
+        assert_eq!(profile, answer, "Index parent {parent:?}, census {count}");
+    }
+}

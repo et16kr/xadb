@@ -628,6 +628,51 @@ impl BoundVisibility<'_, '_, '_> {
 }
 
 #[cfg(test)]
+impl<'c, 's> BoundVisibility<'_, 'c, 's> {
+    /// S11 (MCB03-V01): the original `begin_retirement` of `undo` (UndoFree
+    /// scope, no current pin) under `owner`'s actual version hold and the
+    /// horizon captured in it, while a reader may hold that Undo's pin. The
+    /// semantic Before that alone supplies a VerifiedRetirement is not run:
+    /// the receipt is built here, so the registry's own checks (retiring
+    /// marker, pin census, generation) decide. It bypasses the S2-0 terminal
+    /// read gate, which keeps every live retirement from this point. An
+    /// accepted intent is cancelled unstaged at once (marker cleared, the
+    /// generation kept); nothing is staged or written. Returns the answer of
+    /// `begin_retirement`, or the version hold's own refusal.
+    pub(super) fn test_begin_undo_free(
+        &self,
+        owner: &mut Owner<'c, 's>,
+        undo: UndoRef,
+        actor: TxnRef,
+    ) -> VisibilityResult<()> {
+        let version = owner.try_apply()?.try_version()?;
+        let answer = (|| {
+            let horizon = self.capture_horizon(&version)?;
+            let verified = VerifiedRetirement {
+                origin: self.origin,
+                version: version.visibility_identity(self.origin.core)?,
+                scope: RetirementScope::UndoFree,
+                target: authority::ReferenceTarget::Undo(undo),
+                actor,
+                committed_q: None,
+                group_digest: [0; 32],
+            };
+            match self.begin_retirement(&horizon, &version, verified, None) {
+                Ok(intent) => intent.cancel_unstaged().map(|current| {
+                    assert!(current.is_none());
+                }),
+                Err(reject) => {
+                    assert!(reject.current.is_none());
+                    Err(reject.error)
+                }
+            }
+        })();
+        let released = version.release_checked().map_err(VisibilityError::from);
+        answer.and(released)
+    }
+}
+
+#[cfg(test)]
 pub(super) use epochs::row_commit_source_bytes;
 
 #[cfg(test)]

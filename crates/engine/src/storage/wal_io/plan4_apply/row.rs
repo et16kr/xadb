@@ -33,6 +33,9 @@ mod write;
 pub(crate) use read::{
     MissingRowEvidence, RowCandidate, RowCopyObservation, RowReadOperation, RowSearchPage,
 };
+#[cfg(test)]
+#[allow(unused_imports, reason = "used by the C+B selection only")]
+pub(in crate::storage) use read::{test_arm_capture_claim, test_capture_claim};
 pub(crate) use recovery::{PreparedRecoveredClr, RecoveredClr, RecoveredClrStep};
 #[cfg(test)]
 pub(in crate::storage) use recovery::{recovered_clr_bytes, recovered_row_census};

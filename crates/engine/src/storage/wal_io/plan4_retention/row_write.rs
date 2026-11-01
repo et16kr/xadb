@@ -58,7 +58,7 @@ const MIN_CANONICAL: usize = 5;
 
 #[cfg(test)]
 #[path = "row_write_tests.rs"]
-mod tests;
+pub(in crate::storage) mod tests;
 
 #[path = "row_forward.rs"]
 pub(in super::super::super::super::super) mod forward;

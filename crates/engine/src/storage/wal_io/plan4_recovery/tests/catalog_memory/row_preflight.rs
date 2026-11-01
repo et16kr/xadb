@@ -438,6 +438,79 @@ fn s2w_r03_preflight_registers_reads_and_finish_returns_the_lease() {
     });
 }
 
+/// MCA05-V32 (S11, the drop half; boundaries `#row-mi03-s11`): a Ready
+/// PreflightRow dropped without `finish` returns what `finish` returns
+/// (S2W-R03): the RowWrite charge, then the gate, then the lease (its field
+/// order, no Drop impl), and the loan, with no WAL or file effect, no fence
+/// and the read registration kept. The flusher is Ready again and the next
+/// preflight of the same row on the same loan is Ready with the charge and
+/// the gate held again, then finishes. The cancel half (Cancel and finish
+/// return the reservation, admission, gate, lease and loan) is S2W-R15,
+/// R10 and R03; dropping an active reservation instead fences and keeps
+/// the charge (S2W-R23(2)).
+#[test]
+fn mca05_v32_dropped_preflight_returns_charge_gate_lease_and_loan() {
+    case("MCA05-V32", || {
+        let oracle = Oracle::new();
+        with_fresh!(
+            oracle,
+            frames = 12,
+            |live, owner, flusher, status, undo, private, reader_private, core, fence, state| {
+                let (row_status, _) =
+                    create_table(live, owner, flusher, status, undo, private, true);
+                row_statement!(live, owner, flusher, private, reader_private, row_status
+                    => writer, reader, flush, row, view, table);
+                let (_, slot, _) = table.test_identity();
+                let _ = settle!(writer, owner, view, table, private, flush, flusher);
+                view.test_clear_reads();
+                let charge = writer.catalog_test_retirement_charge() as u64;
+                let used = reader.catalog_test_source_used();
+                let before = effects!(writer, state);
+                let loan = private.as_ptr();
+                let RowPreflightStep::Ready(preflight) = writer
+                    .preflight_row(owner, &view, &table, private, &mut flush)
+                    .unwrap()
+                else {
+                    panic!("every source is resident after the settle");
+                };
+                let held = hook::observe(core);
+                assert!(held.read_gate_closed && !held.fenced);
+                assert_eq!(reader.catalog_test_source_used(), used + charge);
+                assert_eq!(reads!(view), (1, 1 << slot, 0));
+                drop(preflight);
+                let dropped = hook::observe(core);
+                println!(
+                    "MCA05_V32 held={held:?} dropped={dropped:?} charge={charge} \
+                     used_after={}",
+                    reader.catalog_test_source_used() - used
+                );
+                assert!(!dropped.read_gate_closed && !dropped.fenced);
+                assert_eq!(dropped.active_read_operations, 0);
+                assert_eq!(reader.catalog_test_source_used(), used);
+                assert_eq!(flush.phase(), RetentionFlushPhase::Ready);
+                assert_eq!(effects!(writer, state), before);
+                assert_eq!(reads!(view), (1, 1 << slot, 0));
+                assert_eq!(private.as_ptr(), loan);
+                assert!(!fence.is_fenced());
+                let RowPreflightStep::Ready(again) = writer
+                    .preflight_row(owner, &view, &table, private, &mut flush)
+                    .unwrap()
+                else {
+                    panic!("the same sources are still resident");
+                };
+                assert!(hook::observe(core).read_gate_closed);
+                assert_eq!(reader.catalog_test_source_used(), used + charge);
+                again.finish().unwrap();
+                assert!(!hook::observe(core).read_gate_closed);
+                assert_eq!(reader.catalog_test_source_used(), used);
+                assert_eq!(effects!(writer, state), before);
+                close_row!(writer, owner, row, view, private, flush);
+                assert!(!fence.is_fenced());
+            }
+        );
+    });
+}
+
 /// T of the fixture's row in rank order (S2W-R03): allocator, Root, Jobs 0,
 /// Status, table anchor, RowLeaf and the Free Undo.
 pub(super) const FIXTURE_T: [u64; 7] = [0, 1, 2, 11, 12, 13, 14];

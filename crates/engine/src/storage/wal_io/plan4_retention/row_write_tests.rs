@@ -86,9 +86,11 @@ fn s2b2_a6_check_candidate_leaf_shortage_is_capacity() {
 /// in all three. C0 only: no grant, no READY, no indexed database (CREATE
 /// INDEX is DEV3); A's refusal needs a `RowPreflightContext` that only C's
 /// preflight builds (consumers §8.4 forbids a context factory), so A's
-/// one-line predicate is not executed here. The leaf is built from the
-/// record and tree page codecs; the expected counts are this test's own.
-mod mca01_v12_p {
+/// predicate is not executed here: `census` hands the same census output to
+/// A's test (S11, `row/insert/tests.rs`), which puts it through A's own
+/// pure predicate. The leaf is built from the record and tree page codecs;
+/// the expected counts are this test's own.
+pub(in crate::storage) mod mca01_v12_p {
     use super::*;
     use crate::api::{Column, DataType, Namespace, TableSpec};
     use crate::storage::catalog_record::{
@@ -224,16 +226,28 @@ mod mca01_v12_p {
         page
     }
 
+    /// The complete census over this module's leaf with T's Table record
+    /// and, if `parent` is given, one valid Index (Nonunique, columns [0])
+    /// whose parent is that object (T is object 9): the count C hands to
+    /// `RowPreflightContext::index_count`. T's Table value must be found.
+    pub(in crate::storage) fn census(parent: Option<u64>) -> u16 {
+        let leaf = leaf(parent);
+        assert!(
+            table_value(&leaf, leaf_identity(), table(), namespace()).is_ok(),
+            "T's Table value with Index parent {parent:?}"
+        );
+        table_index_count(&leaf, leaf_identity(), table(), namespace())
+            .unwrap_or_else(|cause| panic!("census refused {cause:?}"))
+    }
+
+    /// T's object, the parent of the counted Index.
+    pub(in crate::storage) const TABLE_OBJECT: u64 = TABLE;
+
     #[test]
     fn mca01_v12_p_pure_catalog_census_counts_a_valid_index() {
+        assert_eq!(TABLE_OBJECT, table().handle.object.get());
         for (parent, expected) in [(Some(TABLE), 1), (Some(TABLE + 2), 0), (None, 0)] {
-            let leaf = leaf(parent);
-            assert!(
-                table_value(&leaf, leaf_identity(), table(), namespace()).is_ok(),
-                "T's Table value with Index parent {parent:?}"
-            );
-            let count = table_index_count(&leaf, leaf_identity(), table(), namespace())
-                .unwrap_or_else(|cause| panic!("census refused {cause:?}"));
+            let count = census(parent);
             assert_eq!(count, expected, "Index parent {parent:?}");
             println!(
                 "MCA01_V12_P parent={parent:?} index_count={count} a_refuses={}",

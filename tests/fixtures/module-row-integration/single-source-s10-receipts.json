@@ -6,6 +6,7 @@
  "final_commit": "9f5712e8",
  "inventory_sha256": "41fcb5b5d94ec54b06b1f9e601ac19976d92ae6b6a2c04f2c38ae581fd8ad862",
  "addendum_sha256": "e3e2e006cdba6b467677f4a3d32a8ec19d34b235bd44cee330969e2e910d8c86",
+ "addendum_note": "the addendum is the frozen selection and the run input identity; its status fields are not the judgement. MCA01-V12-P (addendum NEW (C0)) and MCA05-V32 (frozen CITED) are PARTIAL after the record re-checks R9 and R11; per_id below decides",
  "first_final": {
   "commit": "0119f48f",
   "note": "first final runs before the review (a1 36/36, b1 35/35, na1 29 cases, MCB04-V14 --ignored FAIL); kept in the artifacts as final/, superseded by these runs"
@@ -2301,8 +2302,8 @@
  "judgement": {
   "PASS (actual C)": 91,
   "PASS (C0 input)": 5,
-  "PARTIAL": 5,
-  "PASS (cited)": 6,
+  "PARTIAL": 6,
+  "PASS (cited)": 5,
   "NOT_RUN": 2,
   "N/A": 20
  },
@@ -2310,8 +2311,8 @@
   "C+A (MCA)": {
    "PASS (actual C)": 58,
    "PASS (C0 input)": 5,
-   "PARTIAL": 3,
-   "PASS (cited)": 4,
+   "PARTIAL": 4,
+   "PASS (cited)": 3,
    "NOT_RUN": 2,
    "N/A": 18
   },
@@ -2410,7 +2411,7 @@
   "MCA05-V29": "PARTIAL",
   "MCA05-V30": "PASS (actual C)",
   "MCA05-V31": "PASS (cited)",
-  "MCA05-V32": "PASS (cited)",
+  "MCA05-V32": "PARTIAL",
   "MCA05-V33": "N/A",
   "MCA05-V34": "N/A",
   "MCB01-N01": "PASS (actual C)",
@@ -2453,10 +2454,10 @@
   "MCB04-V13": "PASS (actual C)",
   "MCB04-V14": "PASS (actual C)"
  },
- "mi03": "PARTIAL (limits by design): every frozen ID is decided; MCA01-V12-P (census half only, re-check R9), MCA05-V01, MCA05-V29, MCB03-V01 and MCB03-V08 are PARTIAL and MCA05-V02/V03 NOT_RUN for the reasons in the addendum; N/A rows are scope decisions (DEV3 or no runtime admission), not PASS",
- "mi06": "pending: independent re-check of the S10 review fixes",
+ "mi03": "PARTIAL (limits by design): every frozen ID is decided; MCA01-V12-P (census half only, re-check R9), MCA05-V01, MCA05-V29, MCA05-V32 (cancel and finish cited, drop not run, re-check R11), MCB03-V01 and MCB03-V08 are PARTIAL and MCA05-V02/V03 NOT_RUN for the reasons in the addendum; N/A rows are scope decisions (DEV3 or no runtime admission), not PASS",
+ "mi06": "pending: R1-R10 resolved (s10-d1d2-independent-review, s10-fix-recheck, s10-record-recheck); the record fixes for R11 (MCA05-V32 PARTIAL) and R12 (this manifest) are confirmed by the S11 independent review",
  "artifacts": {
   "path": "/mnt/project-files/module-independence-20261029/artifacts/module-s10-20261031",
-  "manifest_sha256": null
+  "manifest_sha256": "d7dffdc0decab89e277abbf3e42fe2f3457f3ca835f1c2d6a6754ac8987ee5b2"
  }
 }

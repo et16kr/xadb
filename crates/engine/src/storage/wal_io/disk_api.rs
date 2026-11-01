@@ -26,6 +26,12 @@ pub(crate) use super::bootstrap::doublewrite_install::mutable_storage::plan4_pag
 #[allow(unused_imports)]
 pub(in crate::storage) use super::bootstrap::doublewrite_install::mutable_storage::plan4_pages::apply::{EPOCH_BYTES, VISIBILITY_BYTES, VisibilityLoan};
 
+#[cfg(test)]
+#[allow(unused_imports, reason = "used by the C+A selection only")]
+pub(in crate::storage) use super::bootstrap::doublewrite_install::mutable_storage::plan4_pages::apply::{
+    MCA01_V12_P_TABLE, mca01_v12_p_census,
+};
+
 #[allow(unused_imports)]
 pub(crate) use super::bootstrap::doublewrite_install::mutable_storage::plan4_pages::{
     Plan4ResidencyCursor, Plan4Target,

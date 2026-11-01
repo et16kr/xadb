@@ -121,13 +121,23 @@ pub(crate) use row::{
 #[allow(unused_imports)]
 pub(in crate::storage) use row::{PreparedRecoveredClr, RecoveredClr, RecoveredClrStep};
 #[cfg(test)]
-pub(in crate::storage) use row::{recovered_clr_bytes, recovered_row_census};
+#[allow(unused_imports, reason = "each side's selection uses some")]
+pub(in crate::storage) use row::{
+    recovered_clr_bytes, recovered_row_census, test_arm_capture_claim, test_capture_claim,
+};
 
 #[allow(unused_imports)]
 pub(crate) use transaction::catalog::CatalogCommit;
 
 #[path = "plan4_retention/create_pair.rs"]
 mod create_pair;
+// S11 (MCA01-V12-P): C's complete Catalog census over its fixture leaf, for
+// A's test of its own profile predicate.
+#[cfg(test)]
+#[allow(unused_imports, reason = "used by the C+A selection only")]
+pub(in crate::storage) use create_pair::catalog_live::lifecycle::row::write::tests::mca01_v12_p::{
+    TABLE_OBJECT as MCA01_V12_P_TABLE, census as mca01_v12_p_census,
+};
 #[path = "plan4_retention/visibility.rs"]
 mod visibility;
 pub(in crate::storage) use create_pair::CatalogRetirementRejected;

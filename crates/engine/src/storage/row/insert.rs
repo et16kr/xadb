@@ -7,7 +7,11 @@
     reason = "no product caller in S2: the driver's live mode and the producers are reached from tests only"
 )]
 
+#[cfg(test)]
+mod before_test;
 pub(in crate::storage) mod driver;
+#[cfg(test)]
+pub(in crate::storage) use before_test::TestProducerBefore;
 mod group;
 #[cfg(test)]
 mod group_tests;
@@ -140,16 +144,36 @@ fn schema<'a>(
     let CatalogDefinitionView::Table(table) = record.definition() else {
         return Err(InsertError::Unsupported);
     };
-    if context.profile().format() != 3
-        || context.index_count() != 0
-        || context.canonical_capacity() != INLINE_ROW_BYTES
-        || expected.kind != PageKind::RowLeaf
-        || expected.level != 0
-        || expected.arity != 0
+    table_only_profile(
+        context.profile().format(),
+        context.index_count(),
+        context.canonical_capacity(),
+        &expected,
+    )?;
+    Ok(table)
+}
+
+/// The table-only profile A writes (DIR03): format 3, no Index of the table
+/// in C's complete Catalog census (`RowPreflightContext::index_count`), the
+/// inline canonical capacity and a level-0 RowLeaf without arity. Anything
+/// else is Unsupported. It reads only these scalars, so C's census output
+/// goes through the same predicate in the MCA01-V12-P test (consumers §8.4).
+fn table_only_profile(
+    format: u16,
+    index_count: u16,
+    canonical_capacity: usize,
+    leaf: &crate::storage::tree_page::TreeExpectation,
+) -> Result<()> {
+    if format != 3
+        || index_count != 0
+        || canonical_capacity != INLINE_ROW_BYTES
+        || leaf.kind != PageKind::RowLeaf
+        || leaf.level != 0
+        || leaf.arity != 0
     {
         return Err(InsertError::Unsupported);
     }
-    Ok(table)
+    Ok(())
 }
 
 /// Validate all input and capacity before changing the candidate prefix.
@@ -294,6 +318,16 @@ fn propose(lane: RowProducerLane<'_>, operation: RowOperation) -> Result<RowProp
     if context.operation() != operation {
         return Err(InsertError::Unsupported);
     }
+    // Fault observations belong to this call, not to C's reservation/loan.
+    // RowProposal owns its metadata, so success and error both free the copy.
+    #[cfg(test)]
+    let test_before = if operation == RowOperation::Forward {
+        before_test::edited_copy(before)
+    } else {
+        None
+    };
+    #[cfg(test)]
+    let before = test_before.as_deref().unwrap_or(before);
     let change = match (operation, context.input()) {
         (
             RowOperation::Forward,
