@@ -1626,8 +1626,8 @@ fn mca05_v29_actual_frame_count_zero_is_fenced_by_preflight() {
 /// is unchanged, and Commit publishes a alone (q 2) with no fence.
 #[test]
 fn mca05_v29_actual_lane_h_count_zero_is_refused_by_a() {
-    use super::super::super::super::plan4_pages::apply::TestProducerBefore;
     use crate::storage::page::encode_page;
+    use crate::storage::row::insert::TestProducerBefore;
     case("MCA05-V29", || {
         let oracle = Oracle::new();
         with_fresh!(
@@ -1798,7 +1798,7 @@ const UPDATE_FRAME: u8 = 2;
 /// The RowReserve frame's length, read from the file (S2W-R08's author
 /// RowReserve of the same one-row Reserve over T, `tests/fixtures/dev3-module-c3/row-write`,
 /// has the same length).
-const RESERVE_FRAME: u64 = 57_336;
+const RESERVE_FRAME: u64 = 3_776 + 4_320 + 208 + 3 * 16_344;
 
 // Independent WAL oracle for wal_fixture, from dev3-catalog-create.md
 // (T(i Int64): Catalog cell 254), dev3-module-consumers.md §6.6 and
@@ -1814,6 +1814,7 @@ const ROW_CLEANUP_WAL: u64 = 89_496 + 2 * ROW_CELL + 4 * 55_528 + 55_112;
 const RESERVE_FUTURE_WAL: u64 = CATALOG_CLEANUP_WAL + ROW_TRANSACTION_WAL + ROW_CLEANUP_WAL;
 const RESERVE_WAL_NEED: u64 = RESERVE_FRAME + RESERVE_FUTURE_WAL;
 const _: () = {
+    assert!(RESERVE_FRAME == 57_336);
     assert!(CATALOG_CLEANUP_WAL == 367_228);
     assert!(ROW_TRANSACTION_WAL == 248_618);
     assert!(ROW_CLEANUP_WAL == 367_106);

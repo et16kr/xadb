@@ -7,7 +7,11 @@
     reason = "no product caller in S2: the driver's live mode and the producers are reached from tests only"
 )]
 
+#[cfg(test)]
+mod before_test;
 pub(in crate::storage) mod driver;
+#[cfg(test)]
+pub(in crate::storage) use before_test::TestProducerBefore;
 mod group;
 #[cfg(test)]
 mod group_tests;
@@ -314,6 +318,16 @@ fn propose(lane: RowProducerLane<'_>, operation: RowOperation) -> Result<RowProp
     if context.operation() != operation {
         return Err(InsertError::Unsupported);
     }
+    // Fault observations belong to this call, not to C's reservation/loan.
+    // RowProposal owns its metadata, so success and error both free the copy.
+    #[cfg(test)]
+    let test_before = if operation == RowOperation::Forward {
+        before_test::edited_copy(before)
+    } else {
+        None
+    };
+    #[cfg(test)]
+    let before = test_before.as_deref().unwrap_or(before);
     let change = match (operation, context.input()) {
         (
             RowOperation::Forward,

@@ -43,9 +43,6 @@ pub(crate) use rollback::{
     PreparedRollbackTask, RollbackScope, RollbackStep, RowRollback, RowRollbackDone,
     RowRollbackTask,
 };
-#[cfg(test)]
-#[allow(unused_imports, reason = "used by the C+A selection only")]
-pub(in crate::storage) use write::TestProducerBefore;
 pub(crate) use write::{
     PreflightRow, PreparedRow, ROW_PREFLIGHT_CALLER_BYTES, ROW_WRITE_CALLER_BYTES, ReservedRow,
     RowApplied, RowCancelled, RowPreflightStep, row_write_charge,

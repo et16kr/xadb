@@ -3061,7 +3061,7 @@ ID별 공급과 판정은 다음과 같다.
 
 2026-11-01. 사용자 요청에 따라 PR #16의 `da435fd6`을 기준으로 별도 PR에서 보강한다. 제품 wire·API·WAL admission·gate·인수 ID와 시간 한도는 그대로다. 선택·검증·독립 검토 기록은 [리뷰 후속 증거](../evidence/module-mi03-limits-20261101.md#pr16-review-followup)에 둔다.
 
-**WAL oracle.** MCA05-V01..V03의 몫은 제품이 계산한 값을 측정해 정하지 않는다. `wal_fixture`의 이력과 [Catalog WAL 계약](dev3-catalog-create.md), [Row shape](dev3-module-consumers.md#row-shape), [자원 계약](dev3-resource-bounds.md#row-missing-module-budget)에서 다음을 독립 계산한다. T(i Int64)의 Catalog cell은 254B다. 첫 Row의 canonical은 열 수4+tag1+Int64값8=13B, cell은 180+13=193B이고 이전 H가 없어 h=0이다.
+**WAL oracle.** MCA05-V01..V03의 몫은 제품이 계산한 값을 측정해 정하지 않는다. `wal_fixture`의 이력과 [Catalog WAL 계약](dev3-catalog-create.md#정확-wire와-credit), [Row shape](dev3-module-consumers.md#row-shape), [자원 계약](dev3-resource-bounds.md#row-missing-module-budget)에서 다음을 독립 계산한다. T(i Int64)의 Catalog cell은 254B다. 첫 Row의 canonical은 열 수4+tag1+Int64값8=13B, cell은 180+13=193B이고 이전 H가 없어 h=0이다.
 
 | 첫 RowReserve 뒤 남은 의무 | 계약식 | WAL bytes |
 | --- | --- | ---: |
@@ -3074,6 +3074,8 @@ ID별 공급과 판정은 다음과 같다.
 
 CREATE는 commit했지만 정리하지 않았으므로 그 cleanup을 남긴다. 완료된 System INIT는 추가 미래 debt를 남기지 않는다. Job별 cleanup을 Aging에 다시 더하지 않고 서로 다른 actor의 TerminalFinish는 각각 한 번 센다. 이 상수식은 production budget 함수·descriptor decoder를 호출하지 않는다. 관찰값은 정답과 비교할 대상으로만 쓰며, 모든 변형에서 `first.future`와 frame을 확인한다. 관측 기반 `reserve_need()`의 추가 무제한 실행은 제거한다. WAL 실제 frame의 종류·길이 증인, −1 효과0·재시도, =/+1의 rollback·abort 검증은 유지한다.
 
-**시험 사본 수명.** `ReservedRow`가 cfg(test)의 `Option<Box<[[u8; PAGE_BYTES]; 9]>>`로 주입 사본을 소유한다. producer lane은 예약의 수명 안에서 사본을 빌린다. 다음 lane 발급은 이전 사본을 대체하고, apply·cancel·drop은 남은 사본을 해제한다. guard 해제는 미소비 주입만 해제하므로 이미 빌린 lane을 무효화하지 않는다. `Box::leak`는 사용하지 않는다. cfg(test) carrier에 추가된 포인터도 기존 source census에 그대로 포함하며 한도·charge를 높이지 않는다. 제품 build에는 필드와 주입 경로가 없다.
+**시험 사본 수명과 경계.** 주입기는 A의 `row/insert/before_test.rs`에만 둔다. 실제 C lane을 `parts()`로 받고 operation을 확인한 뒤, A의 Forward producer가 지역 `Option<Box<[[u8; PAGE_BYTES]; 9]>>`로 변조 사본을 소유한다. 생성한 `RowProposal`은 참조가 없는 값이므로 성공·오류·unwind 모두 그 호출을 끝낼 때 사본이 해제된다. 단순 lane 발급과 CLR은 hook을 소비하지 않는다. C의 시험 API·예약 필드·주입용 re-export는 제거한다. `ReservedRow`/`PreparedRow` 크기는 원368/448B로 돌아가며 제품 build에는 주입기·호출 분기가 없다. 144KiB heap 사본과 지역 포인터는 시험 계측 비용이다. 기존 source census를 이 계측의 실제 stack/heap 사용량 측정으로 주장하지 않는다.
+
+이는 앞선 PR #17의 예약 소유 Box 방식을 대체한다. 원 loan 보존은 사용자의 변경 금지 지시가 아니다. S11 `a81f8975`가 택한 시험 구현이었다. 재평가에서는 원 bytes를 직접 바꾸면 다음 `producer_lane()`이 C context를 다시 계산할 때 오염된 bytes를 읽을 수 있고, 복원 guard·backup의 추가 책임이 생긴다는 점을 비교했다. A의 소비 지점만 바꾸는 쪽이 더 작은 소유 범위와 적은 결합을 가지므로 선택한다. leak·예약 소유·직접 변경·C accessor·A 소유의 비교와 8개 항목별 판단은 [설계 재검토](../evidence/module-mi03-limits-20261101.md#pr16-design-review)를 따른다.
 
 **미해결 retirement의 범위.** MCB03-V01은 PARTIAL 그대로다. 현 S2-0 통합 경로의 보장은 capture 중 읽기를 gate에서 기다리고 그 사이 WAL을 진행하지 않는 것(MCB03-V02)이다. registry의 pin 수 Busy는 별도 방어의 보조 증거이며, 시험이 직접 만든 권한으로 원 동결 순서를 충족했다고 주장하지 않는다. live Row retirement(DEV3) 공급과 정상 semantic Before의 권한 발급뿐 아니라, 실제 동시성 경로가 해당 pin 충돌 순서를 허용하는지까지 재검토해야 한다. 향후 통합 대기와 registry 거절로 요구를 분리하려면 명시적으로 계약을 개정한다. 이번 보강은 그 개정이나 MCB03-V01의 PASS 승격을 하지 않는다.

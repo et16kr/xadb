@@ -123,8 +123,7 @@ pub(in crate::storage) use row::{PreparedRecoveredClr, RecoveredClr, RecoveredCl
 #[cfg(test)]
 #[allow(unused_imports, reason = "each side's selection uses some")]
 pub(in crate::storage) use row::{
-    TestProducerBefore, recovered_clr_bytes, recovered_row_census, test_arm_capture_claim,
-    test_capture_claim,
+    recovered_clr_bytes, recovered_row_census, test_arm_capture_claim, test_capture_claim,
 };
 
 #[allow(unused_imports)]
