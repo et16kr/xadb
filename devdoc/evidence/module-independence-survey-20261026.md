@@ -5880,7 +5880,7 @@ identity:
 <a id="s12-module-gate"></a>
 ## S12 모듈 경계 merge gate(계획 §12)
 
-2026-11-01. S11(PR #16·#17)이 병합된 main `f95eba15`에서 별도 branch `claude/project-thread-1jfdtk-s12`을 만들었다. 설계·판정 규칙·잔여 위험은 [build 계획 §11](../policies/repository-build-plan.md#module-gate)이 정본이고 이 절은 실행 증거다. artifacts는 `/mnt/project-files/module-independence-20261029/artifacts/module-s12-20261101/`이고 `manifest-all.sha256`의 SHA-256은 `d59e578c97597ec0122289bb6ac2913236b4d0db6ebd7e3cdd8da8a135289fa8`이다(2026-11-01 `remote/`·`calibration-full/` 추가 뒤, 파일 512개. 그 전 PR #18 시점의 값은 `d0005bb95310883c8bd58e1cdb7303c96fb429f177033d9dbca1e7357b535dd1`이고 그때의 항목 483개는 바뀌지 않았다).
+2026-11-01. S11(PR #16·#17)이 병합된 main `f95eba15`에서 별도 branch `claude/project-thread-1jfdtk-s12`을 만들었다. 설계·판정 규칙·잔여 위험은 [build 계획 §11](../policies/repository-build-plan.md#module-gate)이 정본이고 이 절은 실행 증거다. artifacts는 `/mnt/project-files/module-independence-20261029/artifacts/module-s12-20261101/`이고 `manifest-all.sha256`의 SHA-256은 `b25b759b2dac1739ddb2459106b72ecea995050d3a87676794a3c6f05d6fd00c`이다(2026-11-01 `remote/`·`calibration-full/` 추가와 PR #22 검토 뒤의 resident 선택 범위 기록 추가 뒤, 파일 514개. PR #22 처음 판의 값은 `d59e578c97597ec0122289bb6ac2913236b4d0db6ebd7e3cdd8da8a135289fa8`(512개), 그 전 PR #18 시점의 값은 `d0005bb95310883c8bd58e1cdb7303c96fb429f177033d9dbca1e7357b535dd1`(483개)이고 그때의 항목은 바뀌지 않았다).
 - 검사기·manifest·build runner·workflow·ruleset·push 훅과 그 시험 `d1871c1b`
 - PR 검토와 CI 대응: 채택 PR에서 build workflow가 receipt 없이 끝나게 한 수정 `f066cffd`, export가 바뀐 기능의 선택만 실행하게 한 수정 `4cbebb0d`, 소유자 검토 4건 반영 `3c4fbb02`, 검토 참고 반영 `199fc0f2`(아래 PR 검토와 CI)
 - 문서, 이 기록, [D2 검토 기록](../../module-gate/records/20261101-s12-module-gate.json)(이 절이 든 commit)
@@ -5947,28 +5947,32 @@ RR3c는 작성 담당이 반영 확인 중 찾았다. 모든 engine 파일을 �
 <a id="s12-full-lib-calibration"></a>
 **전체 lib 보정(2026-11-01).** 사용자가 결정 카드에서 engine lib 시험 전체의 1회 실행을 허용했다(AGENTS.md의 전체 실행 금지에 대한 1회 예외). PR #18이 병합된 `main` `76ec2cf5`에서 engine 파일 541개를 모두 바뀐 것으로 놓은 신뢰 계획을 만들고, CI runner와 같은 명령·환경(manifest `evidence.env`, identity 환경, `--test-threads=1`, 사례 100개씩)으로 이 cloud 환경에서 실행했다. build 2분, 실행 약 30분이다. 스크립트·로그·결과는 artifacts `calibration-full/`에 있다.
 - 정확한 사례 1,514개 중 1,488개 통과, 26개 실패.
-- macro 생성 시험의 모듈 선택 7개 중 5개 통과. `status_init::status_flush::mixed::tests::`는 87개 중 43개가 실패했다(`DirtyError Fenced` 27, INIT 해제 `Timeout` 14, 요청된 INIT unwind 2). `status_init::status_flush::resident::tests::`는 `resident_status_cut_allocator`의 소멸자 panic으로 프로세스가 abort되어 37개 중 5개만 실행됐다.
+- macro 생성 시험의 모듈 선택 7개 중 5개 통과. `status_init::status_flush::mixed::tests::`는 87개 중 43개가 실패했다(`DirtyError Fenced` 27, INIT 해제 `Timeout` 14, 요청된 INIT unwind 2). `status_init::status_flush::resident::tests::`는 37개(정확한 이름 23개, `cut!` macro 생성 8개, `#[ignore]`인 `s5!` macro 생성 6개)다. 이 선택 실행은 여섯 번째 사례 `resident_status_cut_allocator`의 소멸자 panic으로 프로세스가 abort되어 앞의 5개만 결과가 났다(통과 4, 실패 1).
+- abort 뒤의 사례를 따로 확인했다(`resident-selector-coverage.json`). 정확한 이름 23개는 정확한 사례 실행에서 따로 돌았다(통과 20, 실패 3, 위 26개에 포함). `cut!` 생성 8개는 다른 실행에 없으므로 결과가 없다. `resident_status_cut_allocator`는 abort됐고, 나머지 7개(`resident_status_cut_{dpt_checked,dpt_owned,metadata,payload,publication,registry,stage}`)는 시작하지 않았다. 이 8개는 **미검증**이다. `resident_status/tests.rs`를 바꾸는 PR의 CI도 같은 선택을 돌리므로 `resident_status_cut_allocator`의 abort가 고쳐지기 전에는 7개가 실행되지 않는다. 다른 모듈 선택 6개와 정확한 사례 1,514개는 모두 끝까지 실행됐다.
 - feature 조건의 선택적 사례 2개는 이 build에 없어 나열 0이다.
 - executor 전용 13개는 계획에서 빠진다. 입력 없이 따로 실행하면 XRB 12개는 `missing XADB_XRB_INCLUDE`, `g5_bind_boundaries`는 `B08 requires source-bound static gate input: NotPresent`로 실패하고 1개는 ignore다. 제외가 맞다는 확인이다.
-- 환경값 누락(`missing XADB_*`) 실패는 executor 전용 밖에서 0개다. 새로 반영할 harness 시험이 없으므로 manifest는 바꾸지 않았다.
+- 실행된 사례에서 환경값 누락(`missing XADB_*`) 실패는 executor 전용 밖에서 0개다. 실행된 범위에서는 새로 반영할 harness 시험이 없으므로 manifest는 바꾸지 않았다. 시작하지 않은 `cut!` 사례 7개가 환경값을 요구하는지는 확인되지 않았다.
 - 실패 표본 10개(새로 드러난 실패 위치마다 하나 이상과 기존 `DirtyError Fenced` 실패 2개)를 한 프로세스에 하나씩 다시 실행해도 모두 같은 위치에서 실패했다(`isolated1.log`, `isolated2.log`). 실행 순서나 앞 시험의 상태 때문이 아니다.
 
-실패가 계획되는 파일은 C의 시험 파일 14개뿐이다(`failing-files.json`). A·B·CAT·JOIN의 `ci_selectors`에 든 실패는 없으므로 기능 PR은 이 실패로 막히지 않는다. 아래 파일을 바꾸는 PR은 실패가 고쳐질 때까지 CI가 실패한다. 경로는 `crates/engine/src/storage/wal_io/` 아래다.
+실패가 계획되는 파일은 C의 시험 파일 14개뿐이다(`failing-files.json`). A·B·CAT·JOIN의 `ci_selectors`에 든 실패는 없으므로 기능 PR은 이 실패로 막히지 않는다. 아래 파일을 바꾸는 PR은 실패가 고쳐질 때까지 CI가 실패한다. 파일 경로는 `crates/engine/src/storage/wal_io/` 아래이고, panic 위치의 `dirty_frame/`·`dirty_init.rs`는 `crates/engine/src/storage/` 아래다. panic 위치는 `head-cases.log`와 선택 log에서 사례마다 첫 panic이다.
 
-| 파일 | 실패 사례 | 실패 모듈 선택 |
-| --- | --- | --- |
-| `mixed_system_owner/tests.rs` | 0 | `status_flush::mixed::tests::` |
-| `resident_status/tests.rs` | 3 | `status_flush::resident::tests::` |
-| `plan4_pages/tests.rs` | 5 (`g5_*`) | - |
-| `plan4_retention/lifecycle_tests.rs` | 6 (`retention_live_*`) | - |
-| `plan4_retention/free_undo_tests.rs` | 2 | - |
-| `plan4_recovery/tests/cases.rs` | 2 | - |
-| `plan4_recovery/tests/{closure,faults,free_undo,physical,publication}.rs` | 각 1 | - |
-| `plan4_apply/row/census_tests.rs` | 1 (`s2w_c04_live_and_recovered_peaks_unchanged`) | - |
-| `recovery_effect/tests.rs` | 1 (`pending_and_healthy_corruption_boundaries`) | - |
-| `status_home_flush/tests.rs` | 1 (`status_flush_rf`) | - |
+| 파일 | 실패 사례 | 실패 모듈 선택 | panic 위치 | 기존 분류 |
+| --- | --- | --- | --- | --- |
+| `mixed_system_owner/tests.rs` | 0 | `status_flush::mixed::tests::` | 위 목록의 세 갈래 | 미분류 |
+| `resident_status/tests.rs` | 3 | `status_flush::resident::tests::`(abort, 8개 미검증) | 3개 `dirty_frame/status_residency.rs:328`, abort `dirty_init.rs:1107` | 미분류 |
+| `plan4_pages/tests.rs` | 5 (`g5_*`) | - | 3개 `status_residency.rs:328`, `tests.rs:586`, `plan4_genesis/tests/support.rs:278` | 미분류 |
+| `plan4_retention/lifecycle_tests.rs` | 6 (`retention_live_*`) | - | `:302`(`retention_live_lifecycle`), `:808`, `:962`, `:1012`, 2개 `status_residency.rs:328` | `retention_live_lifecycle`만 원인 기록(이관 전 시험과 같은 Reserve frame 차이), 나머지 미분류 |
+| `plan4_retention/free_undo_tests.rs` | 2 | - | `:192`, `:602` | 미분류 |
+| `plan4_recovery/tests/cases.rs` | 2 | - | `plan4_recovery/tests/support.rs:260` | 이관 전 시험 |
+| `plan4_recovery/tests/{closure,faults,physical,publication}.rs` | 각 1 | - | `plan4_recovery/tests/support.rs:260` | 이관 전 시험 |
+| `plan4_recovery/tests/free_undo.rs` | 1 | - | `free_undo.rs:180` | 미분류 |
+| `plan4_apply/row/census_tests.rs` | 1 (`s2w_c04_live_and_recovered_peaks_unchanged`) | - | `census_tests.rs:236` | 미분류 |
+| `recovery_effect/tests.rs` | 1 (`pending_and_healthy_corruption_boundaries`) | - | `recovery_effect/tests.rs:621` | 미분류 |
+| `status_home_flush/tests.rs` | 1 (`status_flush_rf`) | - | `status_home_flush/resource_tests.rs:277` | 미분류 |
 
 26개 중 21개는 2026-10-29·30 main 점검에서 이미 기록된 실패다([main 기존 실패](main-preexisting-failures-20261030.md)). 새로 드러난 것은 `s2w_c04_live_and_recovered_peaks_unchanged`, `pending_and_healthy_corruption_boundaries`, `resident_status_*` 3개와 두 모듈 선택이다. main에도 있는 실패이므로 사용자 규칙대로 이 작업에서 고치지 않고 별도 작업으로 넘긴다.
+
+**기존 분류와 후속 작업의 요구.** "이관 전 시험" 6개는 [main 기존 실패](main-preexisting-failures-20261030.md) §2.2의 분석대로 제품 결함이 아니다. 제품이 더는 만들지 않는 profile format1의 옛 N=0 producer에 기대는, 현재 형식으로 옮겨지지 않은 시험이다. 2026-10-30 사용자 결정(같은 문서 §2.3)으로 고치거나 끄지 않고 남겨 두었다. `retention_live_lifecycle`은 같은 문서에 같은 Reserve frame 차이로 실패한다고 기록됐지만 처리 결정은 없다. 나머지 19개와 두 모듈 선택은 원인이 분류되지 않았다. 8개가 같은 위치(`status_residency.rs:328`)에서 멈추지만 위치만으로 원인을 정하지 않는다. 후속 작업은 실패마다 현재 계약과 어긋난 시험 기대값인지, 제품 회귀인지, 실행 환경 문제인지를 근거와 함께 정하고 담당과 완료 조건(그 사례가 main에서 통과하거나 사용자가 처리 방식을 정함)을 붙인다. 한꺼번에 제품 결함으로 묶거나 일괄 제외하지 않는다. 이관 전 시험은 남겨 두는 동안 그 파일을 바꾸는 PR의 CI를 계속 실패시키므로 처리 방식을 사용자가 다시 정해야 한다. 위의 미검증 `cut!` 사례 8개도 그 작업에서 실행한다.
 
 <a id="s12-remote-rollout"></a>
 **원격 적용과 확인(2026-11-01).** §11 적용 순서대로 진행했다. 결과 기록은 artifacts `remote/results.md`에 있다.

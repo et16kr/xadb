@@ -1,7 +1,7 @@
 {
   "schema_version": 2,
   "product": "XADB",
-  "date": "2026-11-01T19:19:22.494949+09:00",
+  "date": "2026-11-01T23:42:24.893577+09:00",
   "status": "PASS",
   "errors": [],
   "markdown_documents": [
@@ -9,7 +9,7 @@
       "file": "devdoc/README.md",
       "links": 286,
       "duplicate_ids": 0,
-      "sha256": "4198359e85a754ce6a34393b0a3836bff14633263653335fcbb752790ecb134f"
+      "sha256": "16773cb31bc22ee7b9546639113853b61f33168023d2eba1b3754ca9b3680754"
     },
     {
       "file": "devdoc/contracts/README.md",
@@ -1285,9 +1285,9 @@
     },
     {
       "file": "devdoc/evidence/module-independence-survey-20261026.md",
-      "links": 340,
+      "links": 341,
       "duplicate_ids": 0,
-      "sha256": "15e06c5cf1b8c1c8b8df55274f0c0dfda20327b3007fc97c8e47e006ce3565ac"
+      "sha256": "1de6dabe4af4e0c73f8010dbf4c697564067ba455b3e7aac723258b2b1da34b6"
     },
     {
       "file": "devdoc/evidence/module-mi03-limits-20261101.md",
@@ -1503,7 +1503,7 @@
       "file": "devdoc/plans/module-independence-plan.md",
       "links": 307,
       "duplicate_ids": 0,
-      "sha256": "c9895615b939062602eb04e5c1c992dd157ac58d74cac8364947165be800cb0e"
+      "sha256": "358aa57223237e8ca9bf889ecf47371f3a489049a22428204cc42e9171411ad9"
     },
     {
       "file": "devdoc/plans/phase1-product-baseline.md",
@@ -1563,7 +1563,7 @@
       "file": "devdoc/policies/repository-build-plan.md",
       "links": 214,
       "duplicate_ids": 0,
-      "sha256": "e106a8843912f9fa433271142bf785b7187cce22ada4c12dfcfc316587ea3995"
+      "sha256": "1a71a6b1b3c59a4222700da27d99c94e6dd5439ef76f2718084223b66bf999d9"
     },
     {
       "file": "devdoc/reference/README.md",
