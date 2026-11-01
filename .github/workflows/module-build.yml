@@ -1,0 +1,78 @@
+# Unprivileged build/test half of the module gate (XADB-MODULE-GATE-003,
+# devdoc/policies/repository-build-plan.md#module-gate). It runs pull request
+# code with a read-only token and no secrets. The planner and runners are the
+# default branch's copies; the receipt is only data for the control workflow
+# (module-gate.yml), which recomputes the plan and rejects any mismatch.
+# No paths filter: a skipped workflow would leave the gate pending.
+name: Module build
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+permissions:
+  contents: read
+concurrency:
+  group: module-build-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+jobs:
+  build:
+    name: module-build
+    runs-on: ubuntu-24.04
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Copy the default branch's planner and runners
+        env:
+          DEFAULT_BRANCH: ${{ github.event.repository.default_branch }}
+        run: |
+          git fetch --no-tags origin "+refs/heads/$DEFAULT_BRANCH:refs/remotes/origin/$DEFAULT_BRANCH"
+          # The full ref: a tag named origin/<branch> must not stand in for it.
+          ref="refs/remotes/origin/$DEFAULT_BRANCH"
+          git rev-parse --verify -q "$ref^{commit}" > /dev/null || {
+            echo "::error::$ref is missing after the fetch"; exit 1; }
+          # Before the gate is adopted (the adopting PR itself) there is no
+          # planner to run. This success is not evidence: only the control
+          # workflow judges, and once the gate is adopted a Rust change
+          # without a receipt fails there.
+          if ! git cat-file -e "$ref:devdoc/policies/module-gate.json" 2>/dev/null; then
+            echo "::notice::module gate not adopted on $DEFAULT_BRANCH; nothing to build"
+            echo "XADB_ADOPTED=false" >> "$GITHUB_ENV"
+            exit 0
+          fi
+          echo "XADB_ADOPTED=true" >> "$GITHUB_ENV"
+          mkdir "$RUNNER_TEMP/gate"
+          for f in check_module_gate.py module_single_source.py module_gate_build.py; do
+            git show "$ref:scripts/$f" > "$RUNNER_TEMP/gate/$f"
+          done
+          echo "XADB_POLICY=$(git rev-parse "$ref^{commit}")" >> "$GITHUB_ENV"
+      - name: Make room for three engine test builds
+        if: env.XADB_ADOPTED == 'true'
+        run: |
+          sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc /opt/hostedtoolcache/CodeQL
+          df -h /
+      - name: Install the pinned toolchain
+        if: env.XADB_ADOPTED == 'true'
+        run: |
+          toolchain=$(sed -n 's/^channel = "\([^"]*\)"/\1/p' rust-toolchain.toml)
+          test -n "$toolchain"
+          rustup toolchain install "$toolchain" --profile minimal
+      - name: Build and run the planned selection
+        if: env.XADB_ADOPTED == 'true'
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: >-
+          python3 -B "$RUNNER_TEMP/gate/module_gate_build.py" --repo .
+          --base "$BASE_SHA" --head "$HEAD_SHA" --policy "$XADB_POLICY"
+          --workflow .github/workflows/module-build.yml --out "$RUNNER_TEMP/receipt"
+      - name: Keep the receipt and logs
+        if: always() && env.XADB_ADOPTED == 'true'
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: module-build-receipt
+          path: ${{ runner.temp }}/receipt
+          if-no-files-found: error
+          retention-days: 30

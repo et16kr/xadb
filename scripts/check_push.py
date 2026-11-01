@@ -10,7 +10,12 @@ from pathlib import Path
 
 def pushed_commits(repo, lines):
     """Resolve branch/annotated-tag tips; deletions require no snapshot check."""
-    commits = []
+    return [commit for commit, _ref in pushed_updates(repo, lines)]
+
+
+def pushed_updates(repo, lines):
+    """(commit, remote ref) of each pushed tip, each commit once."""
+    commits, seen = [], set()
     for line in lines:
         fields = line.split()
         if len(fields) != 4:
@@ -24,9 +29,55 @@ def pushed_commits(repo, lines):
         commit = subprocess.check_output(
             ['git', 'rev-parse', '--verify', local_oid + '^{commit}'],
             cwd=repo, text=True).strip()
-        if commit not in commits:
-            commits.append(commit)
+        if (commit, remote_ref) not in seen:
+            seen.add((commit, remote_ref))
+            commits.append((commit, remote_ref))
     return commits
+
+
+def remote_default(repo, remote):
+    """The fetched default branch of the push remote, if Git knows it."""
+    if not remote:
+        return None
+    for ref in (f'refs/remotes/{remote}/HEAD', f'refs/remotes/{remote}/main'):
+        found = subprocess.run(['git', 'rev-parse', '--verify', '-q', ref + '^{commit}'],
+                               cwd=repo, capture_output=True, text=True)
+        if found.returncode == 0:
+            return found.stdout.strip()
+    return None
+
+
+def check_module_gate(repo, remote, commit, remote_ref):
+    """XADB-MODULE-GATE-003 before transport, with the policy of the merge-base.
+
+    Boundary and registration findings block. Review/evidence obligations stay
+    PENDING except for a push to main, which the remote ruleset also rejects.
+    """
+    base = remote_default(repo, remote)
+    if base is None:
+        print('XADB pre-push: module gate skipped (no fetched default branch of the remote)',
+              flush=True)
+        return
+    found = subprocess.run(['git', 'merge-base', base, commit], cwd=repo,
+                           capture_output=True, text=True)
+    if found.returncode:
+        raise ValueError(f'{commit}: no merge-base with {base}; module gate cannot judge')
+    policy = found.stdout.strip()
+    with tempfile.TemporaryDirectory(prefix='xadb-module-gate-') as directory:
+        for name in ('check_module_gate.py', 'module_single_source.py'):
+            blob = subprocess.run(['git', 'show', f'{policy}:scripts/{name}'], cwd=repo,
+                                  capture_output=True)
+            if blob.returncode:
+                print(f'XADB pre-push: module gate not adopted at {policy}', flush=True)
+                return
+            (Path(directory) / name).write_bytes(blob.stdout)
+        mode = 'merge' if remote_ref == 'refs/heads/main' else 'push'
+        print(f'XADB pre-push: module gate {mode} {policy[:12]}..{commit[:12]}', flush=True)
+        result = subprocess.run([sys.executable, '-B', str(Path(directory) / 'check_module_gate.py'),
+                                 'check', '--repo', str(repo), '--base', base, '--head', commit,
+                                 '--policy', policy, '--mode', mode], cwd=repo)
+        if result.returncode:
+            raise ValueError(f'{commit}: module gate failed; push blocked')
 
 
 def check_commit(repo, commit):
@@ -65,8 +116,15 @@ def main():
     try:
         repo = Path(subprocess.check_output(
             ['git', 'rev-parse', '--show-toplevel'], text=True).strip())
-        for commit in pushed_commits(repo, sys.stdin):
-            check_commit(repo, commit)
+        remote = sys.argv[1] if len(sys.argv) > 1 else None
+        updates = pushed_updates(repo, sys.stdin)
+        checked = set()
+        for commit, remote_ref in updates:
+            check_module_gate(repo, remote, commit, remote_ref)
+        for commit, _remote_ref in updates:
+            if commit not in checked:
+                checked.add(commit)
+                check_commit(repo, commit)
     except (OSError, ValueError, subprocess.CalledProcessError) as error:
         print(f'XADB pre-push: {error}', file=sys.stderr)
         return 1

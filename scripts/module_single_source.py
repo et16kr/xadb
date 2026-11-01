@@ -84,10 +84,12 @@ def remove_registration(text, name):
     return pattern.sub('', text), found[0]
 
 
-def export(commit, out, side):
+def export(commit, out, side, repo=None):
     spec = SIDES[side]
-    repo = Path(subprocess.check_output(['git', 'rev-parse', '--show-toplevel'],
-                                        text=True).strip())
+    # `repo` lets the module gate export a fetched pull request head from a
+    # trusted checkout; the default (the current checkout) is unchanged.
+    repo = Path(repo) if repo else Path(subprocess.check_output(
+        ['git', 'rev-parse', '--show-toplevel'], text=True).strip())
     full = subprocess.check_output(['git', 'rev-parse', '--verify', commit + '^{commit}'],
                                    cwd=repo, text=True).strip()
     if out.exists():

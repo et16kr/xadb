@@ -1,4 +1,5 @@
 """Exercise the pre-push gate against disposable repositories and a local remote."""
+import json
 import os
 import shutil
 import subprocess
@@ -225,6 +226,60 @@ mod tests {
         self.assertIn('Clippy verification failed; push blocked', result.stderr)
         self.assertIn('--locked', result.stdout + result.stderr)
         self.assertEqual(self.remote_tip(), old)
+
+    def adopt_module_gate(self):
+        """Commit the gate with a two-feature manifest over the fixture crate."""
+        for name in ('check_module_gate.py', 'module_single_source.py'):
+            shutil.copy2(SCRIPTS / name, self.repo / 'scripts' / name)
+        manifest = {
+            'schema': 'XADB_MODULE_GATE_MANIFEST_V1', 'crates': [{'root': 'src/lib.rs'}],
+            'modules': [
+                {'id': 'A', 'kind': 'feature', 'files': ['src/a.rs'],
+                 'logical': ['crate::a'], 'allow': []},
+                {'id': 'B', 'kind': 'feature', 'files': ['src/b.rs'],
+                 'logical': ['crate::b'], 'allow': []},
+                {'id': 'C', 'kind': 'common', 'files': ['src/**'], 'logical': ['crate'],
+                 'deny': []}],
+            'unscoped': [{'files': ['**'], 'reason': 'fixture'}],
+            'policy_files': ['devdoc/policies/module-gate.json', 'scripts/**'],
+            'review_required': {'D1': ['src/**']}, 'records': 'module-gate/records/*.json',
+            'exceptions': [], 'exports': [],
+            'attested': {'allowed_selectors': [], 'input_roots': ['src']},
+            'evidence': {'build_workflow': 'x', 'artifact': 'x', 'head_command': ['cargo'],
+                         'test_command': ['cargo'], 'skip': []}}
+        (self.repo / 'devdoc/policies').mkdir(parents=True)
+        (self.repo / 'devdoc/policies/module-gate.json').write_text(json.dumps(manifest))
+        self.rust_source.write_text('pub mod a;\npub mod b;\n')
+        (self.repo / 'src/a.rs').write_text('pub fn a() -> u32 {\n    1\n}\n')
+        (self.repo / 'src/b.rs').write_text('pub fn b() -> u32 {\n    2\n}\n')
+        self.commit('adopt module gate')
+        self.git('push', 'origin', 'main')  # creates origin/main: the policy revision
+
+    def test_module_gate_blocks_a_forbidden_dependency_before_transport(self):
+        self.adopt_module_gate()
+        self.git('checkout', '-q', '-b', 'topic')
+        (self.repo / 'src/a.rs').write_text(
+            'pub fn a() -> u32 {\n    crate::b::b()\n}\n')
+        bad = self.commit('A calls B')
+        result = self.git('push', 'origin', 'topic', expected=1)
+        self.assertIn('forbidden dependency A->B (production)', result.stderr)
+        self.assertIn('module gate failed; push blocked', result.stderr)
+        refs = self.run_command(['git', '--git-dir', str(self.remote),
+                                 'for-each-ref', '--format=%(refname)'], self.repo)
+        self.assertNotIn('refs/heads/topic', refs.stdout)
+        (self.repo / 'src/a.rs').write_text('pub fn a() -> u32 {\n    3\n}\n')
+        fixed = self.commit('A alone')
+        result = self.git('push', 'origin', 'topic')
+        self.assertIn('module gate push', result.stdout + result.stderr)
+        self.assertIn('PENDING review missing: src/a.rs needs D1', result.stderr)
+        self.assertEqual(self.remote_tip('refs/heads/topic'), fixed)
+        self.assertNotEqual(bad, fixed)
+        # The same unreviewed change to main is judged as a merge and refused.
+        self.git('checkout', '-q', 'main')
+        self.git('merge', '-q', '--ff-only', 'topic')
+        result = self.git('push', 'origin', 'main', expected=1)
+        self.assertIn('module gate merge', result.stdout + result.stderr)
+        self.assertIn('module gate failed; push blocked', result.stderr)
 
 
 if __name__ == '__main__':
