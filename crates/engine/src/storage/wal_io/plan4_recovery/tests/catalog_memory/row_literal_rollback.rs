@@ -46,7 +46,7 @@ const AFTER: [(RowPageRole, u64, &str); 5] = [
 
 /// One case's pins: (case id, directory, the q after the case, its frames
 /// in LSN order, its files).
-struct Pins {
+pub(super) struct Pins {
     id: &'static str,
     dir: &'static str,
     q: u64,
@@ -54,7 +54,7 @@ struct Pins {
     files: &'static [(&'static str, usize, &'static str)],
 }
 
-const STATEMENT: Pins = Pins {
+pub(super) const STATEMENT: Pins = Pins {
     id: "MCB05-L04",
     dir: "statement",
     q: 2,
@@ -168,10 +168,10 @@ fn author() -> std::path::PathBuf {
 
 /// One case's literal files by name, each checked against its pin here and
 /// in expected.json.
-struct Rollback(BTreeMap<String, Vec<u8>>);
+pub(super) struct Rollback(BTreeMap<String, Vec<u8>>);
 
 impl Rollback {
-    fn load(pins: &Pins) -> Self {
+    pub(super) fn load(pins: &Pins) -> Self {
         let root = author();
         let expected = String::from_utf8(read(&root.join("expected.json"), 1 << 16)).unwrap();
         for fact in [
@@ -220,7 +220,7 @@ impl Rollback {
 
     /// The literal CLR frame and after images in the rollback task's
     /// producer lane, the images in C's declared physical order.
-    fn clr(&self, lane: RowProducerLane<'_>) -> RowProposal {
+    pub(super) fn clr(&self, lane: RowProducerLane<'_>) -> RowProposal {
         let (context, _control, _before, _schema, frame, after, _candidate, _scratch) =
             lane.parts();
         assert_eq!(context.operation(), RowOperation::Clr);
@@ -252,7 +252,12 @@ macro_rules! ok {
 
 /// The WAL bytes from `from` on, split into the case's next frames: each
 /// must equal the author's.
-fn frames_since(state: &State, from: usize, literal: &Rollback, names: &[&str]) -> usize {
+pub(super) fn frames_since(
+    state: &State,
+    from: usize,
+    literal: &Rollback,
+    names: &[&str],
+) -> usize {
     let wal = wal(state);
     let mut at = from;
     for name in names {

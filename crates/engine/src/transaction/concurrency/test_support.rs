@@ -32,6 +32,8 @@ pub(super) struct Hooks {
     fenced: Option<Pause>,
     before_cleanup: Option<Pause>,
     catalog: Option<(super::catalog_test_support::Point, Pause)>,
+    /// S10 native cut: abort the process at a later hit of the point.
+    catalog_abort: Option<(super::catalog_test_support::Point, u32)>,
 }
 
 pub(super) fn install_catalog_pause(
@@ -45,12 +47,32 @@ pub(super) fn install_catalog_pause(
     hooks.catalog = Some((point, Pause { arrived, release }));
 }
 
+/// S10 native cut (consumers §9.4): the process aborts at the hit of
+/// `point` after `skip` earlier hits, with no allocation, I/O or wait there.
+pub(super) fn install_catalog_abort(
+    core: &PageConcurrency<'_>,
+    point: super::catalog_test_support::Point,
+    skip: u32,
+) {
+    let mut hooks = core.hooks.lock().unwrap();
+    assert!(hooks.catalog_abort.is_none(), "Catalog abort already armed");
+    hooks.catalog_abort = Some((point, skip));
+}
+
 pub(super) fn hit_catalog_pause(
     core: &PageConcurrency<'_>,
     point: super::catalog_test_support::Point,
 ) {
     let pause = {
         let mut hooks = core.hooks.lock().unwrap();
+        if let Some((at, skip)) = hooks.catalog_abort.as_mut()
+            && *at == point
+        {
+            if *skip == 0 {
+                std::process::abort();
+            }
+            *skip -= 1;
+        }
         if hooks.catalog.as_ref().is_some_and(|(at, _)| *at == point) {
             hooks.catalog.take().map(|(_, pause)| pause)
         } else {

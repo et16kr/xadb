@@ -45,8 +45,8 @@ use std::{
 /// The literal directory, from the repository root.
 const AUTHOR: &str = "tests/fixtures/dev3-module-c2/row-read";
 /// The row the literal writes (expected.json `row`, `value`).
-const ROW: u64 = 1;
-const VALUE: i64 = 7;
+pub(super) const ROW: u64 = 1;
+pub(super) const VALUE: i64 = 7;
 /// The WAL complete LSN before the RowReserve (expected.json
 /// `reserve_lsn` − 1); the Forward is the one after the RowReserve.
 const PREVIOUS_LSN: u64 = 14;

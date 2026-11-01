@@ -48,6 +48,10 @@ pub(crate) enum Point {
     /// A Row read operation holds its captured candidate (the Txn/Undo
     /// pins), before C answers its Status (MCI03-V01/V02).
     RowReadCaptured,
+    /// An existing-group install has installed the numerically first changed
+    /// page of its group (page, metadata and DPT) and no other yet; nothing
+    /// of the group is written (consumers §9.4 MCA03-N05-RamOnly).
+    ExistingInstalledFirstPage,
 }
 
 pub(crate) fn install(
@@ -57,6 +61,12 @@ pub(crate) fn install(
     release: Receiver<Resume>,
 ) {
     test_support::install_catalog_pause(core, point, arrived, release);
+}
+
+/// S10 native cut: abort the process at the hit of `point` after `skip`
+/// earlier hits. Arm it only in a native worker process.
+pub(crate) fn arm_abort(core: &PageConcurrency<'_>, point: Point, skip: u32) {
+    test_support::install_catalog_abort(core, point, skip);
 }
 
 pub(crate) fn hit(core: &PageConcurrency<'_>, point: Point) {

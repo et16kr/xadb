@@ -75,3 +75,170 @@ fn s2b2_a6_check_candidate_leaf_shortage_is_capacity() {
         error.cause
     );
 }
+
+/// MCA01-V12-P (consumers §9.1, the variant's one C0 case): the pure
+/// complete Catalog census (`table_index_count`, the source of
+/// `RowPreflightContext::index_count`) over a Catalog leaf holding T's Table
+/// record and one valid Index definition whose parent is T counts that Index
+/// (1), so A's profile predicate (`index_count() != 0`, `row/insert.rs`)
+/// would refuse the table Unsupported. The same leaf with the Index under
+/// another parent, or with no Index, counts 0, and T's Table value is found
+/// in all three. C0 only: no grant, no READY, no indexed database (CREATE
+/// INDEX is DEV3); A's refusal needs a `RowPreflightContext` that only C's
+/// preflight builds (consumers §8.4 forbids a context factory), so A's
+/// one-line predicate is not executed here. The leaf is built from the
+/// record and tree page codecs; the expected counts are this test's own.
+mod mca01_v12_p {
+    use super::*;
+    use crate::api::{Column, DataType, Namespace, TableSpec};
+    use crate::storage::catalog_record::{
+        CatalogDefinition, CatalogExpectation, CatalogHeader, IndexDefinition, IndexMode,
+        encode_catalog_record,
+    };
+    use crate::storage::page::{PAGE_BYTES, PageHeader, PageKind, PageLsn};
+    use crate::storage::transaction_record::{LogicalRowVersion, VersionStamp};
+    use crate::storage::tree_page;
+    use crate::transaction::TxnId;
+    use foundation::identity::CommitSeq;
+
+    const TABLE: u64 = 9;
+    const INDEX: u64 = 10;
+
+    fn namespace() -> Namespace {
+        Namespace {
+            database: table().anchor.database,
+            timeline: 1,
+        }
+    }
+
+    fn leaf_identity() -> PageIdentity {
+        PageIdentity {
+            database: namespace().database,
+            page: PageRef {
+                file: FileId::new(0x1_0000_0001).expect("file"),
+                page_no: 8,
+                incarnation: Generation::new(1).expect("generation"),
+            },
+            owner: ObjectId::new(5).expect("owner"),
+            owner_generation: Generation::new(1).expect("generation"),
+        }
+    }
+
+    /// T's Table record (object 9, anchor = the source's anchor) and, if
+    /// `parent` is given, one Index record (object 10, Nonunique, columns
+    /// [0]) whose parent is that object.
+    fn leaf(parent: Option<u64>) -> [u8; PAGE_BYTES] {
+        let source = table();
+        let spec = TableSpec {
+            name: "row_table".into(),
+            columns: vec![
+                Column {
+                    name: "n".into(),
+                    data_type: DataType::Int64,
+                    nullable: false,
+                },
+                Column {
+                    name: "t".into(),
+                    data_type: DataType::Utf8,
+                    nullable: true,
+                },
+            ],
+        };
+        let header = |object: u64| CatalogHeader {
+            identity: ObjectHandle {
+                object: ObjectId::new(object).expect("object"),
+                ..source.handle
+            },
+            retired: false,
+            stamp: VersionStamp::Committed(CommitSeq::new(1).expect("seq")),
+            logical: LogicalRowVersion::new(
+                TxnId {
+                    database: namespace().database,
+                    timeline: 1,
+                    writer_epoch: 1,
+                    local: 1,
+                },
+                1,
+            )
+            .expect("logical"),
+            undo: None,
+            anchor: source.anchor.page,
+        };
+        let mut definitions = vec![(TABLE, CatalogDefinition::Table(&spec))];
+        if let Some(parent) = parent {
+            definitions.push((
+                INDEX,
+                CatalogDefinition::Index(IndexDefinition {
+                    parent: ObjectHandle {
+                        object: ObjectId::new(parent).expect("parent"),
+                        ..source.handle
+                    },
+                    name: "row_index",
+                    mode: IndexMode::Nonunique,
+                    columns: &[0],
+                }),
+            ));
+        }
+        let mut metadata = [0; 32];
+        let metadata = tree_page::encode_metadata(PageKind::CatalogLeaf, 0, None, &mut metadata)
+            .expect("metadata");
+        let mut cells = vec![metadata.to_vec()];
+        for (object, definition) in definitions {
+            let mut record = vec![0; 4096];
+            let length = encode_catalog_record(
+                CatalogExpectation {
+                    namespace: namespace(),
+                    object: ObjectId::new(object).expect("object"),
+                },
+                header(object),
+                definition,
+                &mut record,
+            )
+            .expect("record");
+            let key = object.to_be_bytes();
+            let mut entry = vec![0; 4 + key.len() + length];
+            let entry = tree_page::encode_leaf_cell(
+                PageKind::CatalogLeaf,
+                0,
+                &key,
+                &record[..length],
+                &mut entry,
+            )
+            .expect("cell");
+            cells.push(entry.to_vec());
+        }
+        let refs: Vec<&[u8]> = cells.iter().map(Vec::as_slice).collect();
+        let mut page = [0; PAGE_BYTES];
+        tree_page::encode_tree_page(
+            PageHeader {
+                identity: leaf_identity(),
+                kind: PageKind::CatalogLeaf,
+                level: 0,
+                lsn: PageLsn(1),
+            },
+            0,
+            &refs,
+            &mut page,
+        )
+        .expect("page");
+        page
+    }
+
+    #[test]
+    fn mca01_v12_p_pure_catalog_census_counts_a_valid_index() {
+        for (parent, expected) in [(Some(TABLE), 1), (Some(TABLE + 2), 0), (None, 0)] {
+            let leaf = leaf(parent);
+            assert!(
+                table_value(&leaf, leaf_identity(), table(), namespace()).is_ok(),
+                "T's Table value with Index parent {parent:?}"
+            );
+            let count = table_index_count(&leaf, leaf_identity(), table(), namespace())
+                .unwrap_or_else(|cause| panic!("census refused {cause:?}"));
+            assert_eq!(count, expected, "Index parent {parent:?}");
+            println!(
+                "MCA01_V12_P parent={parent:?} index_count={count} a_refuses={}",
+                count != 0
+            );
+        }
+    }
+}
