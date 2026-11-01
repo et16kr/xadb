@@ -108,7 +108,7 @@ S10이 끝났을 때 [소비자 §9](../contracts/dev3-module-consumers.md#accep
 
 | 항목 | 기록 |
 | --- | --- |
-| 결정 | XADB-MI03-S11-REVIEW-001 · D2 · 2026-11-01 · 구현·선택 검증 중 |
+| 결정 | XADB-MI03-S11-REVIEW-001 · D2 · 2026-11-01 · ACCEPTED · 구현·선택 검증·독립 재확인 완료 |
 | 담당·근거 | 구현·계약·통합 `/root`. 사용자가 PR #16 리뷰 내용을 수정해 그 branch를 대상으로 별도 PR을 만들도록 요청 |
 | 기준 | `da435fd6a3c9085320c297b8e8229ec5f38f28f4`, branch `codex/pr16-review-followup`, PR base `claude/project-thread-1jfdtk-s11` |
 | 문제 | WAL 경계 시험의 기대값이 제품 계산에서 나와 잘못된 계산을 따라갈 수 있음. before-image 주입이 매번 144 KiB를 leak함 |
@@ -121,4 +121,18 @@ WAL 식은 이전 committed Catalog 정리 367228 + 새 Row transaction 248618 +
 
 검증은 AGENTS.md의 변경 코드 범위로 제한한다. before-image 소유 변경에는 실제 V29 취소 경로와 RowWrite C01/C02/C06, A caller D15(memory/native)를 선택했다. WAL oracle에는 V01/V02/V03과 잘못된 필요량 mutant를 선택한다. 무변경 C+B·native 복구·전체 inventory를 반복하지 않는다. memory 한도30초를 유지한다.
 
-실행·독립 검토 최종 결과는 후속 기록에서 확정한다. MCB03-V01은 실제 retirement 구현 및 동시성 경로 검토가 남아 PARTIAL이며, 이번 PR로 해결했다고 판정하지 않는다.
+[후속 receipts](../../tests/fixtures/module-row-integration/single-source-s11-review-receipts.json)는 각 실행의 source/ELF/input SHA-256, 정확한 selector, 원 출력과 해시, source 재구성 방법을 보존한다. 구현 commit은 `eeed242ef8f89c2e95e5e673afe2d654474fdce9`이며 이후 증거 정리는 제품·시험 source를 바꾸지 않는다.
+
+| 선택 | 결과·의미 |
+| --- | --- |
+| 소유 사본 변경: V29, S2W-C01/C02/C06, A D15 memory/native | 6/6 PASS. V29 1.321초, census 각0.003–0.005초. WAL oracle 수정 전 실행이며 변경한 사본 코드의 hash는 최종 source와 같음 |
+| 기존 V02 + RowReserve 미래 WAL +1 mutant | 통과(2.500초). 잘못된 미래982953·필요1040289를 기대값이 따라가는 검증 공백을 재현 |
+| 보강 V02 + 동일 +1 mutant | 의도한 실패(exit101, 0.907초). 고정 필요1040288에서 Reserve/Capacity로 거절 |
+| 보강 V02 + 미래 WAL −1 mutant | 의도한 실패(exit101, 1.474초). 실제982951과 독립 기대982952 불일치를 검출 |
+| 오류 주입 제거, `eeed242e` C+A 단독 export의 V01/V02/V03 | 3/3 PASS, 각각1.105/1.502/1.486초. 원30초 한도 유지, B source/fixture 참조0 |
+
+정상 선택9개 PASS와 부정 입력 검출2개를 구분한다. 기존 oracle가 잘못된 구현을 통과시킨 원 결과도 보존한다. mutant가 final source에 남지 않았음을 원 파일 diff로 확인했고, 전체 트리 실행5묶음의1259개 source hash는 commit과 명시한 변경으로 모두 재구성됨을 확인했다. cfg(test) Box 포인터를 포함한 기존 C·caller 상계는 증액 없이 통과했다. 사본 해제는 Box의 원 예약 소유와 borrow 수명으로 보장하며 allocator의 해제 횟수를 계측한 시험이라고 주장하지 않는다.
+
+별도 검토자 `/root/pr16_independent_review`는 계약에서 WAL 식을 독립 도출하고 코드·6개 선택 결과·+1 반례를 읽기 전용 검토해 D1/D2 ACCEPT, 필수 수정0으로 판정했다. 검토자가 지적한 “세 owner” 표현은 하나의 Aging owner에 두 actor의 cleanup이 합산된다는 의미에 맞춰 “세 항목”으로 수정했다. 최종 재확인도 ACCEPT·필수 수정0이다. 검토자가 원 commit archive와 정확한 mutant 치환으로 전체 트리5묶음(각1259파일)과 C+A export(7698파일)의 source hash를 독립 재구성해 모두 일치함을 확인했다. 원 출력·선택 input의 해시와 정상3개·−1 반례를 대조했다. 재구성에 필요한 mutant의 공백·주석까지 receipts에 보존했다.
+
+MCB03-V01은 실제 retirement 구현 및 동시성 경로 검토가 남아 PARTIAL이며, 이번 PR로 해결했다고 판정하지 않는다.

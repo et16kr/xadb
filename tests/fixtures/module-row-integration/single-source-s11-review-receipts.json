@@ -1,0 +1,425 @@
+{
+  "schema": "XADB_S11_REVIEW_EXECUTION_RECEIPTS_V1",
+  "baseline_commit": "da435fd6a3c9085320c297b8e8229ec5f38f28f4",
+  "implementation_commit": "eeed242ef8f89c2e95e5e673afe2d654474fdce9",
+  "branch": "codex/pr16-review-followup",
+  "pr_base": "claude/project-thread-1jfdtk-s11",
+  "scope": "Changed-code selections only; original S10/S11 receipts and judgements unchanged. No full suite or native recovery rerun.",
+  "wal_oracle": {
+    "catalog_cleanup": 367228,
+    "row_transaction": 248618,
+    "row_cleanup": 367106,
+    "future": 982952,
+    "reserve_frame": 57336,
+    "need": 1040288
+  },
+  "build": [
+    "cargo",
+    "test",
+    "-p",
+    "xadb-engine",
+    "--lib",
+    "--locked",
+    "--no-run"
+  ],
+  "run": [
+    "<elf>",
+    "<exact test>",
+    "--exact",
+    "--nocapture",
+    "--test-threads=1"
+  ],
+  "environment": {
+    "RUST_MIN_STACK": "33554432",
+    "XADB_CATALOG_SOURCE_SHA256": "per-run source_sha256",
+    "XADB_CATALOG_ELF_SHA256": "per-run elf_sha256",
+    "XADB_CATALOG_INPUT_SHA256": "per-run input_sha256"
+  },
+  "timeout_seconds": 30,
+  "runs": {
+    "owned-copy": {
+      "source_sha256": "222dd25f53ad7fd94ad16ab48feaf213b6cda00ce86be15123e1534468911cab",
+      "elf_sha256": "92684469c09050a61b70cac5b5de21150bd4e94eb436398e71066759d30a3f09",
+      "input_sha256": "5f4deb29f22d623efd2b91c04f76becf7d4ec11d01c7b9035cdb62ed3b6fd14e",
+      "results": [
+        {
+          "test": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_inventory_a::mca05_v29_actual_lane_h_count_zero_is_refused_by_a",
+          "exit": 0,
+          "seconds": 1.321,
+          "log_sha256": "43dde4db61497b6cd61df217fb5d78a6bf101e71cd0ccad6c07382909c144cd7",
+          "output": "\nrunning 1 test\ntest storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_inventory_a::mca05_v29_actual_lane_h_count_zero_is_refused_by_a ... CATALOG_MEMORY_CONTEXT\tMCA05-V29\t222dd25f53ad7fd94ad16ab48feaf213b6cda00ce86be15123e1534468911cab\t92684469c09050a61b70cac5b5de21150bd4e94eb436398e71066759d30a3f09\t5f4deb29f22d623efd2b91c04f76becf7d4ec11d01c7b9035cdb62ed3b6fd14e\tf6e0dd554a91931cc8e048e775a666dacd777f0c1c3285abed6773ec15f21eeb\t4bf20c59207890d66b5b51d06d7778a478f1226e26ce38b7cc803856fbe12181\nCATALOG_MEMORY_BEGIN\tMCA05-V29\nMCA05_V29 refusal=Failure { stage: Produce, error: Insert(OrderMismatch), cleanup: None, must_resolve: false }\nMCA05_V29 old_incoming=2 frames=[2:57336,2:40000] q=2\nCATALOG_MEMORY_PASS\tMCA05-V29\nok\n\ntest result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 2005 filtered out; finished in 1.32s\n\n"
+        },
+        {
+          "test": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::row::census_tests::s2w_c01_row_write_phase_census_memory",
+          "exit": 0,
+          "seconds": 0.004,
+          "log_sha256": "6aaa0a128a176d176f5e74f5504bb61d181f0881dec19490d4b6f2ea2512c370",
+          "output": "\nrunning 1 test\ntest storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::row::census_tests::s2w_c01_row_write_phase_census_memory ... S2W_C01 writer=memory charge=44304 shared=20208 shared_plus_charge=64512 preflight_bound=6144 write_bound=11520 row_lifecycle=42089 catalog_live_peak=44304\nS2W_C01 terms shell=1146 lease_check=656 target_set=1528 check=26510 table_census=12438 load=32852 undo_select=13456 register=8121 commit=3528 select=10441 validate=31124 arena=7931 group_typed=27019 return_slot=2104 suspended_levels=1 group_reassemble=13897 group_install=19239 group_carriers=7328 lifecycle_check=42089\nS2W_C01 types gate=32 lease=8 step=152 preflight_row=152 reserved_row=376 prepared_row=456 producer_lane=1624 validation_lane=368 cuts=(56, 96, 80)\nS2W_C01 phase=preflight kind=actual body=36488 carriers=560 c_total=37048 bound=6144 total=43192 charge=44304 room_for_caller=7256 c_margin=1112 fits=yes\nS2W_C01 phase=validation_lane kind=actual body=14656 carriers=744 c_total=15400 bound=11520 total=26920 charge=44304 room_for_caller=28904 c_margin=17384 fits=yes\nS2W_C01 phase=reserve kind=actual body=30781 carriers=1224 c_total=32005 bound=11520 total=43525 charge=44304 room_for_caller=12299 c_margin=779 fits=yes\nS2W_C01 phase=producer_lane kind=actual body=23505 carriers=3256 c_total=26761 bound=11520 total=38281 charge=44304 room_for_caller=17543 c_margin=6023 fits=yes\nS2W_C01 phase=prepare kind=actual body=29470 carriers=1392 c_total=30862 bound=11520 total=42382 charge=44304 room_for_caller=13442 c_margin=1922 fits=yes\nS2W_C01 phase=apply kind=actual body=29830 carriers=1568 c_total=31398 bound=11520 total=42918 charge=44304 room_for_caller=12906 c_margin=1386 fits=yes\nS2W_C01 phase=cancel kind=actual body=29957 carriers=1272 c_total=31229 bound=11520 total=42749 charge=44304 room_for_caller=13075 c_margin=1555 fits=yes\nS2W_C01 phase=finish kind=estimate body=1146 carriers=512 c_total=1658 bound=11520 total=13178 charge=44304 room_for_caller=42646 c_margin=31126 fits=yes\nS2W_C01 caller_room preflight memory=7256 native=7256 both=7256 bound=6144 other memory=12299 native=12299 both=12299 bound=11520 overrun_before_caller=0\nok\n\ntest result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 2005 filtered out; finished in 0.00s\n\n"
+        },
+        {
+          "test": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::row::census_tests::s2w_c02_row_write_phase_census_native",
+          "exit": 0,
+          "seconds": 0.004,
+          "log_sha256": "d43db242dbd8eb825c5ec1580b7e3c4ab000fa8a24939f0773c0889e892b592c",
+          "output": "\nrunning 1 test\ntest storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::row::census_tests::s2w_c02_row_write_phase_census_native ... S2W_C02 writer=native charge=44304 shared=20216 shared_plus_charge=64520 preflight_bound=6144 write_bound=11520 row_lifecycle=42089 catalog_live_peak=44304\nS2W_C02 terms shell=1146 lease_check=656 target_set=1528 check=26510 table_census=12438 load=32852 undo_select=13456 register=8121 commit=3528 select=10441 validate=31124 arena=7931 group_typed=27019 return_slot=2104 suspended_levels=1 group_reassemble=13897 group_install=19239 group_carriers=7328 lifecycle_check=42089\nS2W_C02 types gate=32 lease=8 step=152 preflight_row=152 reserved_row=376 prepared_row=456 producer_lane=1624 validation_lane=368 cuts=(56, 96, 80)\nS2W_C02 phase=preflight kind=actual body=36488 carriers=560 c_total=37048 bound=6144 total=43192 charge=44304 room_for_caller=7256 c_margin=1112 fits=yes\nS2W_C02 phase=validation_lane kind=actual body=14656 carriers=744 c_total=15400 bound=11520 total=26920 charge=44304 room_for_caller=28904 c_margin=17384 fits=yes\nS2W_C02 phase=reserve kind=actual body=30781 carriers=1224 c_total=32005 bound=11520 total=43525 charge=44304 room_for_caller=12299 c_margin=779 fits=yes\nS2W_C02 phase=producer_lane kind=actual body=23505 carriers=3256 c_total=26761 bound=11520 total=38281 charge=44304 room_for_caller=17543 c_margin=6023 fits=yes\nS2W_C02 phase=prepare kind=actual body=29470 carriers=1392 c_total=30862 bound=11520 total=42382 charge=44304 room_for_caller=13442 c_margin=1922 fits=yes\nS2W_C02 phase=apply kind=actual body=29830 carriers=1568 c_total=31398 bound=11520 total=42918 charge=44304 room_for_caller=12906 c_margin=1386 fits=yes\nS2W_C02 phase=cancel kind=actual body=29957 carriers=1272 c_total=31229 bound=11520 total=42749 charge=44304 room_for_caller=13075 c_margin=1555 fits=yes\nS2W_C02 phase=finish kind=estimate body=1146 carriers=512 c_total=1658 bound=11520 total=13178 charge=44304 room_for_caller=42646 c_margin=31126 fits=yes\nS2W_C02 caller_room preflight memory=7256 native=7256 both=7256 bound=6144 other memory=12299 native=12299 both=12299 bound=11520 overrun_before_caller=0\nok\n\ntest result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 2005 filtered out; finished in 0.00s\n\n"
+        },
+        {
+          "test": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::row::census_tests::s2w_c06_row_write_c_margins_against_both_bounds",
+          "exit": 0,
+          "seconds": 0.005,
+          "log_sha256": "362c0075a9f3ec47bd02550ef6236c6376786c7a6370402a7b4b4b22afb13ccc",
+          "output": "\nrunning 1 test\ntest storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::row::census_tests::s2w_c06_row_write_c_margins_against_both_bounds ... S2W_C06 writer=memory charge=44304 preflight_bound=6144 write_bound=11520 levels_L=1 return_slot_r=2104 held_L_r=2104 group_typed_G=27019 group_typed_plus_L_r=29123 validate_V=31124 load=32852 arena=7931 validate_below_load=yes\nS2W_C06 writer=memory preflight_body actual=36488 estimate=35526 actual_minus_estimate=962 shell=1682 frame=3304 lease_check=656 check=25140 load=31492 select=8589 shape=7260 undo_scan=6644 finish_frame=1482 observe=30020 register=6641 finish=31502 carriers=560 c_total=37048 bound=6144 charge=44304 c_margin=1112\nS2W_C06 writer=memory reserve_body actual=30781 estimate=30269 actual_minus_estimate=512 shell=2066 frame=1024 entry=26164 held=2072 suspended_level=\"reserve_group.group: Result<PreparedRowGroup<ROW_WRITE_TARGETS>>\" levels=1 group=648 recompute=15922 sources=17203 produce=21755 prepare=24971 register=6785 install=19239 draft=11485 carriers=1224 c_total=32005 bound=11520 charge=44304 c_margin=779\nS2W_C06 writer=memory validation_lane_body actual=14656 estimate=5362 actual_minus_estimate=9294\nS2W_C06 writer=memory producer_lane_body actual=23505 estimate=7778 actual_minus_estimate=15727 lane_shell=4946 context=18559 control=208 carriers=3256 c_total=26761 bound=11520 charge=44304 c_margin=6023\nS2W_C06 writer=memory prepare_body actual=29470 estimate=30269 actual_minus_estimate=-799 shell=1762 arms=696 frame=1248 entry=26460 held=592 suspended_level=\"prepare_forward.observation: Result<Observation>\" levels=1 group=3537 recompute=10527 observe=21779 calls=21779 carriers=1392 c_total=30862 bound=11520 charge=44304 c_margin=1922\nS2W_C06 writer=memory apply_body actual=29830 estimate=29760 actual_minus_estimate=70 shell=2090 arms=696 frame=1280 entry=26460 held=2072 suspended_level=\"forward_group.group: Result<PreparedRowGroup<ROW_WRITE_TARGETS>>\" levels=1 group=544 recompute=10527 reassemble=13558 register=6785 install=19239 carriers=1568 c_total=31398 bound=11520 charge=44304 c_margin=1386\nS2W_C06 writer=memory cancel_body actual=29957 estimate=30269 actual_minus_estimate=-312 shell=1658 arms=696 frame=1128 entry=26460 held=2072 suspended_level=\"cancel_group.group: Result<PreparedRowGroup<ROW_WRITE_TARGETS>>\" levels=1 group=472 recompute=10527 sources=11584 produce=21755 prepare=24627 install=19239 carriers=1272 c_total=31229 bound=11520 charge=44304 c_margin=1555\nS2W_C06 writer=memory phase=preflight c_total=37048 bound=6144 c_margin=1112\nS2W_C06 writer=memory phase=validation_lane c_total=15400 bound=11520 c_margin=17384\nS2W_C06 writer=memory phase=reserve c_total=32005 bound=11520 c_margin=779\nS2W_C06 writer=memory phase=producer_lane c_total=26761 bound=11520 c_margin=6023\nS2W_C06 writer=memory phase=prepare c_total=30862 bound=11520 c_margin=1922\nS2W_C06 writer=memory phase=apply c_total=31398 bound=11520 c_margin=1386\nS2W_C06 writer=memory phase=cancel c_total=31229 bound=11520 c_margin=1555\nS2W_C06 writer=memory phase=finish c_total=1658 bound=11520 c_margin=31126\nS2W_C06 writer=native charge=44304 preflight_bound=6144 write_bound=11520 levels_L=1 return_slot_r=2104 held_L_r=2104 group_typed_G=27019 group_typed_plus_L_r=29123 validate_V=31124 load=32852 arena=7931 validate_below_load=yes\nS2W_C06 writer=native preflight_body actual=36488 estimate=35526 actual_minus_estimate=962 shell=1682 frame=3304 lease_check=656 check=25140 load=31492 select=8589 shape=7260 undo_scan=6644 finish_frame=1482 observe=30020 register=6641 finish=31502 carriers=560 c_total=37048 bound=6144 charge=44304 c_margin=1112\nS2W_C06 writer=native reserve_body actual=30781 estimate=30269 actual_minus_estimate=512 shell=2066 frame=1024 entry=26164 held=2072 suspended_level=\"reserve_group.group: Result<PreparedRowGroup<ROW_WRITE_TARGETS>>\" levels=1 group=648 recompute=15922 sources=17203 produce=21755 prepare=24971 register=6785 install=19239 draft=11485 carriers=1224 c_total=32005 bound=11520 charge=44304 c_margin=779\nS2W_C06 writer=native validation_lane_body actual=14656 estimate=5362 actual_minus_estimate=9294\nS2W_C06 writer=native producer_lane_body actual=23505 estimate=7778 actual_minus_estimate=15727 lane_shell=4946 context=18559 control=208 carriers=3256 c_total=26761 bound=11520 charge=44304 c_margin=6023\nS2W_C06 writer=native prepare_body actual=29470 estimate=30269 actual_minus_estimate=-799 shell=1762 arms=696 frame=1248 entry=26460 held=592 suspended_level=\"prepare_forward.observation: Result<Observation>\" levels=1 group=3537 recompute=10527 observe=21779 calls=21779 carriers=1392 c_total=30862 bound=11520 charge=44304 c_margin=1922\nS2W_C06 writer=native apply_body actual=29830 estimate=29760 actual_minus_estimate=70 shell=2090 arms=696 frame=1280 entry=26460 held=2072 suspended_level=\"forward_group.group: Result<PreparedRowGroup<ROW_WRITE_TARGETS>>\" levels=1 group=544 recompute=10527 reassemble=13558 register=6785 install=19239 carriers=1568 c_total=31398 bound=11520 charge=44304 c_margin=1386\nS2W_C06 writer=native cancel_body actual=29957 estimate=30269 actual_minus_estimate=-312 shell=1658 arms=696 frame=1128 entry=26460 held=2072 suspended_level=\"cancel_group.group: Result<PreparedRowGroup<ROW_WRITE_TARGETS>>\" levels=1 group=472 recompute=10527 sources=11584 produce=21755 prepare=24627 install=19239 carriers=1272 c_total=31229 bound=11520 charge=44304 c_margin=1555\nS2W_C06 writer=native phase=preflight c_total=37048 bound=6144 c_margin=1112\nS2W_C06 writer=native phase=validation_lane c_total=15400 bound=11520 c_margin=17384\nS2W_C06 writer=native phase=reserve c_total=32005 bound=11520 c_margin=779\nS2W_C06 writer=native phase=producer_lane c_total=26761 bound=11520 c_margin=6023\nS2W_C06 writer=native phase=prepare c_total=30862 bound=11520 c_margin=1922\nS2W_C06 writer=native phase=apply c_total=31398 bound=11520 c_margin=1386\nS2W_C06 writer=native phase=cancel c_total=31229 bound=11520 c_margin=1555\nS2W_C06 writer=native phase=finish c_total=1658 bound=11520 c_margin=31126\nok\n\ntest result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 2005 filtered out; finished in 0.00s\n\n"
+        }
+      ],
+      "selection": {
+        "label": "owned-copy",
+        "stack": 33554432,
+        "tests": [
+          "mca05_v29_actual_lane_h_count_zero_is_refused_by_a",
+          "s2w_c01_row_write_phase_census_memory",
+          "s2w_c02_row_write_phase_census_native",
+          "s2w_c06_row_write_c_margins_against_both_bounds"
+        ],
+        "timeout_seconds": 30
+      },
+      "source_recipe": {
+        "commit": "eeed242ef8f89c2e95e5e673afe2d654474fdce9",
+        "restore_file_from_baseline": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_inventory_a.rs"
+      },
+      "source_manifest_scope": "sha256(file) + two spaces + path + newline, in git ls-files crates Cargo.toml Cargo.lock rust-toolchain.toml order.",
+      "source_recipe_checked_against_all_1259_manifest_entries": true,
+      "changed_source_sha256": {
+        "crates/engine/src/storage/wal_io/plan4_apply/row/write.rs": "0165202c521515c4e038e8c04a5b66c09eac3559e776e98852e4d9b5690afc5c",
+        "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_inventory_a.rs": "23bcb0ee9295ff89ead4c08e6fe7e37e9252618a3650983523668e96f570625b",
+        "crates/engine/src/storage/wal_io/plan4_retention/row_write.rs": "13a15b7511917bab483756119e02c12a1767f2263e182aae6a7b3e2439051df0"
+      },
+      "interpretation": "PASS for selected changed-code scope."
+    },
+    "owned-copy-caller": {
+      "source_sha256": "222dd25f53ad7fd94ad16ab48feaf213b6cda00ce86be15123e1534468911cab",
+      "elf_sha256": "92684469c09050a61b70cac5b5de21150bd4e94eb436398e71066759d30a3f09",
+      "input_sha256": "e42f68e0b1521ddf42522f6ca7abbd9766de180f7431ef024702f3c4950effb0",
+      "results": [
+        {
+          "test": "storage::row::insert::driver::tests::mca00_d15_memory_call_site_shares_fit_the_caller_bounds",
+          "exit": 0,
+          "seconds": 0.005,
+          "log_sha256": "1d88795706dbf6024c85240f0edccb43a63ea9aa13103afe24d801fc820ef6d2",
+          "output": "\nrunning 1 test\ntest storage::row::insert::driver::tests::mca00_d15_memory_call_site_shares_fit_the_caller_bounds ... MCA00_D15 writer=memory charge=44304 preflight_bound=6144 write_bound=11520 a_validation=1112 a_producer=19260\nMCA00_D15 writer=memory types statement=168 preflight_row=152 reserved_row=376 prepared_row=456 validation_lane=368 producer_lane=1624 preflight_step=152 failure=160 retention_error=72 rollback=408 rollback_task=384\nMCA00_D15 writer=memory site=insert.check kind=Write share=2640 a_body=0 total=2640 bound=11520 margin=8880\nMCA00_D15 writer=memory site=insert.check frame_static=3355 dead=715 bound=11520 frame_static_margin=8165\nMCA00_D15 writer=memory site=insert.preflight kind=Preflight share=3264 a_body=0 total=3264 bound=6144 margin=2880\nMCA00_D15 writer=memory site=insert.preflight frame_static=4035 dead=771 bound=6144 frame_static_margin=2109\nMCA00_D15 writer=memory site=insert.try_flush kind=Write share=3328 a_body=0 total=3328 bound=11520 margin=8192\nMCA00_D15 writer=memory site=insert.try_flush frame_static=4420 dead=1092 bound=11520 frame_static_margin=7100\nMCA00_D15 writer=memory site=insert.continue_flush kind=Write share=3320 a_body=0 total=3320 bound=11520 margin=8200\nMCA00_D15 writer=memory site=insert.continue_flush frame_static=4412 dead=1092 bound=11520 frame_static_margin=7108\nMCA00_D15 writer=memory site=insert.validation_lane kind=Write share=4416 a_body=0 total=4416 bound=11520 margin=7104\nMCA00_D15 writer=memory site=insert.validation_lane frame_static=6139 dead=1723 bound=11520 frame_static_margin=5381\nMCA00_D15 writer=memory site=insert.validate kind=A share=4152 a_body=1112 total=5264 bound=44304 margin=39040\nMCA00_D15 writer=memory site=insert.validate frame_static=6939 dead=1675 bound=44304 frame_static_margin=37365\nMCA00_D15 writer=memory site=insert.reserve kind=Write share=4288 a_body=0 total=4288 bound=11520 margin=7232\nMCA00_D15 writer=memory site=insert.reserve frame_static=5699 dead=1411 bound=11520 frame_static_margin=5821\nMCA00_D15 writer=memory site=insert.finish_preflight kind=Write share=3952 a_body=0 total=3952 bound=11520 margin=7568\nMCA00_D15 writer=memory site=insert.finish_preflight frame_static=5467 dead=1515 bound=11520 frame_static_margin=6053\nMCA00_D15 writer=memory site=insert.producer_lane kind=Write share=6744 a_body=0 total=6744 bound=11520 margin=4776\nMCA00_D15 writer=memory site=insert.producer_lane frame_static=7875 dead=1131 bound=11520 frame_static_margin=3645\nMCA00_D15 writer=memory site=insert.forward kind=A share=5160 a_body=19260 total=24420 bound=44304 margin=19884\nMCA00_D15 writer=memory site=insert.forward frame_static=25527 dead=1107 bound=44304 frame_static_margin=18777\nMCA00_D15 writer=memory site=insert.prepare kind=Write share=4256 a_body=0 total=4256 bound=11520 margin=7264\nMCA00_D15 writer=memory site=insert.prepare frame_static=5819 dead=1563 bound=11520 frame_static_margin=5701\nMCA00_D15 writer=memory site=insert.apply kind=Write share=4456 a_body=0 total=4456 bound=11520 margin=7064\nMCA00_D15 writer=memory site=insert.apply frame_static=7115 dead=2659 bound=11520 frame_static_margin=4405\nMCA00_D15 writer=memory site=insert.reopen kind=Write share=4224 a_body=0 total=4224 bound=11520 margin=7296\nMCA00_D15 writer=memory site=insert.reopen frame_static=6963 dead=2739 bound=11520 frame_static_margin=4557\nMCA00_D15 writer=memory site=insert.cancel kind=Write share=4536 a_body=0 total=4536 bound=11520 margin=6984\nMCA00_D15 writer=memory site=insert.cancel frame_static=7483 dead=2947 bound=11520 frame_static_margin=4037\nMCA00_D15 writer=memory site=insert.finish_statement kind=Write share=3280 a_body=0 total=3280 bound=11520 margin=8240\nMCA00_D15 writer=memory site=insert.finish_statement frame_static=4483 dead=1203 bound=11520 frame_static_margin=7037\nMCA00_D15 writer=memory site=rollback.start kind=Write share=3273 a_body=0 total=3273 bound=11520 margin=8247\nMCA00_D15 writer=memory site=rollback.start frame_static=4265 dead=992 bound=11520 frame_static_margin=7255\nMCA00_D15 writer=memory site=rollback.next kind=Write share=4032 a_body=0 total=4032 bound=11520 margin=7488\nMCA00_D15 writer=memory site=rollback.next frame_static=4880 dead=848 bound=11520 frame_static_margin=6640\nMCA00_D15 writer=memory site=rollback.clr_lane kind=Write share=6944 a_body=0 total=6944 bound=11520 margin=4576\nMCA00_D15 writer=memory site=rollback.clr_lane frame_static=10704 dead=3760 bound=11520 frame_static_margin=816\nMCA00_D15 writer=memory site=rollback.clr kind=A share=5360 a_body=19260 total=24620 bound=44304 margin=19684\nMCA00_D15 writer=memory site=rollback.clr frame_static=28356 dead=3736 bound=44304 frame_static_margin=15948\nMCA00_D15 writer=memory site=rollback.clr_prepare kind=Write share=4640 a_body=0 total=4640 bound=11520 margin=6880\nMCA00_D15 writer=memory site=rollback.clr_prepare frame_static=9536 dead=4896 bound=11520 frame_static_margin=1984\nMCA00_D15 writer=memory site=rollback.clr_apply kind=Write share=4840 a_body=0 total=4840 bound=11520 margin=6680\nMCA00_D15 writer=memory site=rollback.clr_apply frame_static=9608 dead=4768 bound=11520 frame_static_margin=1912\nMCA00_D15 writer=memory site=rollback.clr_reopen kind=Write share=4608 a_body=0 total=4608 bound=11520 margin=6912\nMCA00_D15 writer=memory site=rollback.clr_reopen frame_static=9456 dead=4848 bound=11520 frame_static_margin=2064\nMCA00_D15 writer=memory site=rollback.finish kind=Write share=4304 a_body=0 total=4304 bound=11520 margin=7216\nMCA00_D15 writer=memory site=rollback.finish frame_static=4304 dead=0 bound=11520 frame_static_margin=7216\nMCA00_D15 writer=memory site=rollback.finish_statement kind=Write share=2928 a_body=0 total=2928 bound=11520 margin=8592\nMCA00_D15 writer=memory site=rollback.finish_statement frame_static=2928 dead=0 bound=11520 frame_static_margin=8592\nMCA00_D15 writer=memory site=transaction.commit kind=Write share=2960 a_body=0 total=2960 bound=11520 margin=8560\nMCA00_D15 writer=memory site=transaction.commit frame_static=2960 dead=0 bound=11520 frame_static_margin=8560\nMCA00_D15 writer=memory site=transaction.finish_aborted kind=Write share=2944 a_body=0 total=2944 bound=11520 margin=8576\nMCA00_D15 writer=memory site=transaction.finish_aborted frame_static=2944 dead=0 bound=11520 frame_static_margin=8576\nMCA00_D15 writer=memory caller=1296 rows=2 values=1 per_row=96\nMCA00_D15 writer=memory site=insert.check with_caller=3936 bound=11520 margin=7584 frame_static_with_caller=4651 frame_static_margin=6869\nMCA00_D15 writer=memory site=insert.preflight with_caller=4560 bound=6144 margin=1584 frame_static_with_caller=5331 frame_static_margin=813\nMCA00_D15 writer=memory site=insert.try_flush with_caller=4624 bound=11520 margin=6896 frame_static_with_caller=5716 frame_static_margin=5804\nMCA00_D15 writer=memory site=insert.continue_flush with_caller=4616 bound=11520 margin=6904 frame_static_with_caller=5708 frame_static_margin=5812\nMCA00_D15 writer=memory site=insert.validation_lane with_caller=5712 bound=11520 margin=5808 frame_static_with_caller=7435 frame_static_margin=4085\nMCA00_D15 writer=memory site=insert.validate with_caller=6560 bound=44304 margin=37744 frame_static_with_caller=8235 frame_static_margin=36069\nMCA00_D15 writer=memory site=insert.reserve with_caller=5584 bound=11520 margin=5936 frame_static_with_caller=6995 frame_static_margin=4525\nMCA00_D15 writer=memory site=insert.finish_preflight with_caller=5248 bound=11520 margin=6272 frame_static_with_caller=6763 frame_static_margin=4757\nMCA00_D15 writer=memory site=insert.producer_lane with_caller=8040 bound=11520 margin=3480 frame_static_with_caller=9171 frame_static_margin=2349\nMCA00_D15 writer=memory site=insert.forward with_caller=25716 bound=44304 margin=18588 frame_static_with_caller=26823 frame_static_margin=17481\nMCA00_D15 writer=memory site=insert.prepare with_caller=5552 bound=11520 margin=5968 frame_static_with_caller=7115 frame_static_margin=4405\nMCA00_D15 writer=memory site=insert.apply with_caller=5752 bound=11520 margin=5768 frame_static_with_caller=8411 frame_static_margin=3109\nMCA00_D15 writer=memory site=insert.reopen with_caller=5520 bound=11520 margin=6000 frame_static_with_caller=8259 frame_static_margin=3261\nMCA00_D15 writer=memory site=insert.cancel with_caller=5832 bound=11520 margin=5688 frame_static_with_caller=8779 frame_static_margin=2741\nMCA00_D15 writer=memory site=insert.finish_statement with_caller=4576 bound=11520 margin=6944 frame_static_with_caller=5779 frame_static_margin=5741\nok\n\ntest result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 2005 filtered out; finished in 0.00s\n\n"
+        },
+        {
+          "test": "storage::row::insert::driver::tests::mca00_d15_native_call_site_shares_fit_the_caller_bounds",
+          "exit": 0,
+          "seconds": 0.003,
+          "log_sha256": "f490fff55ad1772e3afa4b3fdeb8ffa2dec970885af82d1d84e60618d3a8576a",
+          "output": "\nrunning 1 test\ntest storage::row::insert::driver::tests::mca00_d15_native_call_site_shares_fit_the_caller_bounds ... MCA00_D15 writer=native charge=44304 preflight_bound=6144 write_bound=11520 a_validation=1112 a_producer=19260\nMCA00_D15 writer=native types statement=168 preflight_row=152 reserved_row=376 prepared_row=456 validation_lane=368 producer_lane=1624 preflight_step=152 failure=160 retention_error=72 rollback=408 rollback_task=384\nMCA00_D15 writer=native site=insert.check kind=Write share=2640 a_body=0 total=2640 bound=11520 margin=8880\nMCA00_D15 writer=native site=insert.check frame_static=3355 dead=715 bound=11520 frame_static_margin=8165\nMCA00_D15 writer=native site=insert.preflight kind=Preflight share=3264 a_body=0 total=3264 bound=6144 margin=2880\nMCA00_D15 writer=native site=insert.preflight frame_static=4035 dead=771 bound=6144 frame_static_margin=2109\nMCA00_D15 writer=native site=insert.try_flush kind=Write share=3328 a_body=0 total=3328 bound=11520 margin=8192\nMCA00_D15 writer=native site=insert.try_flush frame_static=4420 dead=1092 bound=11520 frame_static_margin=7100\nMCA00_D15 writer=native site=insert.continue_flush kind=Write share=3320 a_body=0 total=3320 bound=11520 margin=8200\nMCA00_D15 writer=native site=insert.continue_flush frame_static=4412 dead=1092 bound=11520 frame_static_margin=7108\nMCA00_D15 writer=native site=insert.validation_lane kind=Write share=4416 a_body=0 total=4416 bound=11520 margin=7104\nMCA00_D15 writer=native site=insert.validation_lane frame_static=6139 dead=1723 bound=11520 frame_static_margin=5381\nMCA00_D15 writer=native site=insert.validate kind=A share=4152 a_body=1112 total=5264 bound=44304 margin=39040\nMCA00_D15 writer=native site=insert.validate frame_static=6939 dead=1675 bound=44304 frame_static_margin=37365\nMCA00_D15 writer=native site=insert.reserve kind=Write share=4288 a_body=0 total=4288 bound=11520 margin=7232\nMCA00_D15 writer=native site=insert.reserve frame_static=5699 dead=1411 bound=11520 frame_static_margin=5821\nMCA00_D15 writer=native site=insert.finish_preflight kind=Write share=3952 a_body=0 total=3952 bound=11520 margin=7568\nMCA00_D15 writer=native site=insert.finish_preflight frame_static=5467 dead=1515 bound=11520 frame_static_margin=6053\nMCA00_D15 writer=native site=insert.producer_lane kind=Write share=6744 a_body=0 total=6744 bound=11520 margin=4776\nMCA00_D15 writer=native site=insert.producer_lane frame_static=7875 dead=1131 bound=11520 frame_static_margin=3645\nMCA00_D15 writer=native site=insert.forward kind=A share=5160 a_body=19260 total=24420 bound=44304 margin=19884\nMCA00_D15 writer=native site=insert.forward frame_static=25527 dead=1107 bound=44304 frame_static_margin=18777\nMCA00_D15 writer=native site=insert.prepare kind=Write share=4256 a_body=0 total=4256 bound=11520 margin=7264\nMCA00_D15 writer=native site=insert.prepare frame_static=5819 dead=1563 bound=11520 frame_static_margin=5701\nMCA00_D15 writer=native site=insert.apply kind=Write share=4456 a_body=0 total=4456 bound=11520 margin=7064\nMCA00_D15 writer=native site=insert.apply frame_static=7115 dead=2659 bound=11520 frame_static_margin=4405\nMCA00_D15 writer=native site=insert.reopen kind=Write share=4224 a_body=0 total=4224 bound=11520 margin=7296\nMCA00_D15 writer=native site=insert.reopen frame_static=6963 dead=2739 bound=11520 frame_static_margin=4557\nMCA00_D15 writer=native site=insert.cancel kind=Write share=4536 a_body=0 total=4536 bound=11520 margin=6984\nMCA00_D15 writer=native site=insert.cancel frame_static=7483 dead=2947 bound=11520 frame_static_margin=4037\nMCA00_D15 writer=native site=insert.finish_statement kind=Write share=3280 a_body=0 total=3280 bound=11520 margin=8240\nMCA00_D15 writer=native site=insert.finish_statement frame_static=4483 dead=1203 bound=11520 frame_static_margin=7037\nMCA00_D15 writer=native site=rollback.start kind=Write share=3273 a_body=0 total=3273 bound=11520 margin=8247\nMCA00_D15 writer=native site=rollback.start frame_static=4265 dead=992 bound=11520 frame_static_margin=7255\nMCA00_D15 writer=native site=rollback.next kind=Write share=4032 a_body=0 total=4032 bound=11520 margin=7488\nMCA00_D15 writer=native site=rollback.next frame_static=4880 dead=848 bound=11520 frame_static_margin=6640\nMCA00_D15 writer=native site=rollback.clr_lane kind=Write share=6944 a_body=0 total=6944 bound=11520 margin=4576\nMCA00_D15 writer=native site=rollback.clr_lane frame_static=10704 dead=3760 bound=11520 frame_static_margin=816\nMCA00_D15 writer=native site=rollback.clr kind=A share=5360 a_body=19260 total=24620 bound=44304 margin=19684\nMCA00_D15 writer=native site=rollback.clr frame_static=28356 dead=3736 bound=44304 frame_static_margin=15948\nMCA00_D15 writer=native site=rollback.clr_prepare kind=Write share=4640 a_body=0 total=4640 bound=11520 margin=6880\nMCA00_D15 writer=native site=rollback.clr_prepare frame_static=9536 dead=4896 bound=11520 frame_static_margin=1984\nMCA00_D15 writer=native site=rollback.clr_apply kind=Write share=4840 a_body=0 total=4840 bound=11520 margin=6680\nMCA00_D15 writer=native site=rollback.clr_apply frame_static=9608 dead=4768 bound=11520 frame_static_margin=1912\nMCA00_D15 writer=native site=rollback.clr_reopen kind=Write share=4608 a_body=0 total=4608 bound=11520 margin=6912\nMCA00_D15 writer=native site=rollback.clr_reopen frame_static=9456 dead=4848 bound=11520 frame_static_margin=2064\nMCA00_D15 writer=native site=rollback.finish kind=Write share=4304 a_body=0 total=4304 bound=11520 margin=7216\nMCA00_D15 writer=native site=rollback.finish frame_static=4304 dead=0 bound=11520 frame_static_margin=7216\nMCA00_D15 writer=native site=rollback.finish_statement kind=Write share=2928 a_body=0 total=2928 bound=11520 margin=8592\nMCA00_D15 writer=native site=rollback.finish_statement frame_static=2928 dead=0 bound=11520 frame_static_margin=8592\nMCA00_D15 writer=native site=transaction.commit kind=Write share=2960 a_body=0 total=2960 bound=11520 margin=8560\nMCA00_D15 writer=native site=transaction.commit frame_static=2960 dead=0 bound=11520 frame_static_margin=8560\nMCA00_D15 writer=native site=transaction.finish_aborted kind=Write share=2944 a_body=0 total=2944 bound=11520 margin=8576\nMCA00_D15 writer=native site=transaction.finish_aborted frame_static=2944 dead=0 bound=11520 frame_static_margin=8576\nMCA00_D15 writer=native caller=1296 rows=2 values=1 per_row=96\nMCA00_D15 writer=native site=insert.check with_caller=3936 bound=11520 margin=7584 frame_static_with_caller=4651 frame_static_margin=6869\nMCA00_D15 writer=native site=insert.preflight with_caller=4560 bound=6144 margin=1584 frame_static_with_caller=5331 frame_static_margin=813\nMCA00_D15 writer=native site=insert.try_flush with_caller=4624 bound=11520 margin=6896 frame_static_with_caller=5716 frame_static_margin=5804\nMCA00_D15 writer=native site=insert.continue_flush with_caller=4616 bound=11520 margin=6904 frame_static_with_caller=5708 frame_static_margin=5812\nMCA00_D15 writer=native site=insert.validation_lane with_caller=5712 bound=11520 margin=5808 frame_static_with_caller=7435 frame_static_margin=4085\nMCA00_D15 writer=native site=insert.validate with_caller=6560 bound=44304 margin=37744 frame_static_with_caller=8235 frame_static_margin=36069\nMCA00_D15 writer=native site=insert.reserve with_caller=5584 bound=11520 margin=5936 frame_static_with_caller=6995 frame_static_margin=4525\nMCA00_D15 writer=native site=insert.finish_preflight with_caller=5248 bound=11520 margin=6272 frame_static_with_caller=6763 frame_static_margin=4757\nMCA00_D15 writer=native site=insert.producer_lane with_caller=8040 bound=11520 margin=3480 frame_static_with_caller=9171 frame_static_margin=2349\nMCA00_D15 writer=native site=insert.forward with_caller=25716 bound=44304 margin=18588 frame_static_with_caller=26823 frame_static_margin=17481\nMCA00_D15 writer=native site=insert.prepare with_caller=5552 bound=11520 margin=5968 frame_static_with_caller=7115 frame_static_margin=4405\nMCA00_D15 writer=native site=insert.apply with_caller=5752 bound=11520 margin=5768 frame_static_with_caller=8411 frame_static_margin=3109\nMCA00_D15 writer=native site=insert.reopen with_caller=5520 bound=11520 margin=6000 frame_static_with_caller=8259 frame_static_margin=3261\nMCA00_D15 writer=native site=insert.cancel with_caller=5832 bound=11520 margin=5688 frame_static_with_caller=8779 frame_static_margin=2741\nMCA00_D15 writer=native site=insert.finish_statement with_caller=4576 bound=11520 margin=6944 frame_static_with_caller=5779 frame_static_margin=5741\nok\n\ntest result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 2005 filtered out; finished in 0.00s\n\n"
+        }
+      ],
+      "selection": {
+        "label": "owned-copy-caller",
+        "stack": 33554432,
+        "tests": [
+          "mca00_d15_memory_call_site_shares_fit_the_caller_bounds",
+          "mca00_d15_native_call_site_shares_fit_the_caller_bounds"
+        ],
+        "timeout_seconds": 30
+      },
+      "source_recipe": {
+        "commit": "eeed242ef8f89c2e95e5e673afe2d654474fdce9",
+        "restore_file_from_baseline": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_inventory_a.rs"
+      },
+      "source_manifest_scope": "sha256(file) + two spaces + path + newline, in git ls-files crates Cargo.toml Cargo.lock rust-toolchain.toml order.",
+      "source_recipe_checked_against_all_1259_manifest_entries": true,
+      "changed_source_sha256": {
+        "crates/engine/src/storage/wal_io/plan4_apply/row/write.rs": "0165202c521515c4e038e8c04a5b66c09eac3559e776e98852e4d9b5690afc5c",
+        "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_inventory_a.rs": "23bcb0ee9295ff89ead4c08e6fe7e37e9252618a3650983523668e96f570625b",
+        "crates/engine/src/storage/wal_io/plan4_retention/row_write.rs": "13a15b7511917bab483756119e02c12a1767f2263e182aae6a7b3e2439051df0"
+      },
+      "interpretation": "PASS for selected changed-code scope."
+    },
+    "old-oracle-mutant": {
+      "source_sha256": "aa07feb41757b58bdf2eb5bab9f9bdfc08db74d4c68f4a82fc728bc0d6930676",
+      "elf_sha256": "8820eaa3786016b0e55bf112129954a54a24510916bbb4e74e6c524752475452",
+      "input_sha256": "255eb8e225ffdab3fdb071c11dba366f46feeacb32034ffa54d357e57a4d5394",
+      "results": [
+        {
+          "test": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_inventory_a::mca05_v02_wal_share_equal",
+          "exit": 0,
+          "seconds": 2.5,
+          "log_sha256": "24abd3bea18ec325b4d01b3c71dcefa612a5e5e144bc3a2def7afb4af1369fab",
+          "output": "\nrunning 1 test\ntest storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_inventory_a::mca05_v02_wal_share_equal ... CATALOG_MEMORY_CONTEXT\tMCA05-V02\taa07feb41757b58bdf2eb5bab9f9bdfc08db74d4c68f4a82fc728bc0d6930676\t8820eaa3786016b0e55bf112129954a54a24510916bbb4e74e6c524752475452\t255eb8e225ffdab3fdb071c11dba366f46feeacb32034ffa54d357e57a4d5394\tf6e0dd554a91931cc8e048e775a666dacd777f0c1c3285abed6773ec15f21eeb\t4bf20c59207890d66b5b51d06d7778a478f1226e26ce38b7cc803856fbe12181\nCATALOG_MEMORY_BEGIN\tMCA05-V02\nMCA05_WAL\tMCA05-V02\tneed=1040289\tframe=57336\tshare=1040289\tstart=731262\tend=1037216\tWalShareRecord { cap: Some(1771551), first: Some(WalAdmission { offset: 731262, frame: 57336, future: 982953, refused: false }), admissions: 7, refused_admissions: 0, stages: 7, refused_stages: 0, staged_end: 1037216 }\nCATALOG_MEMORY_PASS\tMCA05-V02\nok\n\ntest result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 2005 filtered out; finished in 2.50s\n\n"
+        }
+      ],
+      "selection": {
+        "label": "old-oracle-mutant",
+        "stack": 33554432,
+        "tests": [
+          "mca05_v02_wal_share_equal"
+        ],
+        "timeout_seconds": 30
+      },
+      "source_recipe": {
+        "commit": "eeed242ef8f89c2e95e5e673afe2d654474fdce9",
+        "restore_file_from_baseline": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_inventory_a.rs",
+        "temporary_mutation": {
+          "path": "crates/engine/src/storage/wal_io/plan4_retention/row_write.rs",
+          "change": "RowReserve check_progress_room future argument -> (future.0 + 1, future.1)",
+          "in_final_commit": false,
+          "replace_exactly_once": {
+            "old": "            (observation.header.lsn, observation.frame_bytes),\n            future,",
+            "new": "            (observation.header.lsn, observation.frame_bytes),\n            (future.0 + 1, future.1), // temporary review mutant: wrong WAL need"
+          }
+        }
+      },
+      "source_manifest_scope": "sha256(file) + two spaces + path + newline, in git ls-files crates Cargo.toml Cargo.lock rust-toolchain.toml order.",
+      "source_recipe_checked_against_all_1259_manifest_entries": true,
+      "changed_source_sha256": {
+        "crates/engine/src/storage/wal_io/plan4_apply/row/write.rs": "0165202c521515c4e038e8c04a5b66c09eac3559e776e98852e4d9b5690afc5c",
+        "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_inventory_a.rs": "23bcb0ee9295ff89ead4c08e6fe7e37e9252618a3650983523668e96f570625b",
+        "crates/engine/src/storage/wal_io/plan4_retention/row_write.rs": "95226ceed84423bb2d26b21f7d7e03ab2f3c6ddff1f8de840770926306facc56"
+      },
+      "interpretation": "SURVIVED: old V02 incorrectly passes with inflated future=982953, need=1040289; reproduces oracle gap."
+    },
+    "fixed-oracle-mutant": {
+      "source_sha256": "9a4297d962aed7e0bc590e94d03fe0e874e06d985b736ab444d92d8e90903957",
+      "elf_sha256": "92700a8e27abb5482de9399e8b24b7881354dd6450b73d2ee4047febe6bc249d",
+      "input_sha256": "0834f1011b788c1dd0a208559dd61d90eeb44ba8236f82ecb981c5a072895fc6",
+      "results": [
+        {
+          "test": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_inventory_a::mca05_v02_wal_share_equal",
+          "exit": 101,
+          "seconds": 0.907,
+          "log_sha256": "b2ece21f7b70f5b1e1b2e432a9703846c2eb79d4e221cfc9eb7e15cf01703284",
+          "output": "\nrunning 1 test\ntest storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_inventory_a::mca05_v02_wal_share_equal ... CATALOG_MEMORY_CONTEXT\tMCA05-V02\t9a4297d962aed7e0bc590e94d03fe0e874e06d985b736ab444d92d8e90903957\t92700a8e27abb5482de9399e8b24b7881354dd6450b73d2ee4047febe6bc249d\t0834f1011b788c1dd0a208559dd61d90eeb44ba8236f82ecb981c5a072895fc6\tf6e0dd554a91931cc8e048e775a666dacd777f0c1c3285abed6773ec15f21eeb\t4bf20c59207890d66b5b51d06d7778a478f1226e26ce38b7cc803856fbe12181\nCATALOG_MEMORY_BEGIN\tMCA05-V02\nCATALOG_MEMORY_FAIL\tMCA05-V02\nFAILED\n\nfailures:\n\nfailures:\n    storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_inventory_a::mca05_v02_wal_share_equal\n\ntest result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 2005 filtered out; finished in 0.90s\n\n\nthread 'storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_inventory_a::mca05_v02_wal_share_equal' (3269) panicked at crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_inventory_a.rs:1926:29:\nassertion `left == right` failed: Failure { stage: Reserve, error: Disk(RetentionError { phase: Prepare, cause: Capacity, effect: Unchanged }), cleanup: None, must_resolve: false }\n  left: Reserve\n right: Validate\nnote: run with `RUST_BACKTRACE=1` environment variable to display a backtrace\n"
+        }
+      ],
+      "selection": {
+        "label": "fixed-oracle-mutant",
+        "stack": 33554432,
+        "tests": [
+          "mca05_v02_wal_share_equal"
+        ],
+        "timeout_seconds": 30
+      },
+      "source_recipe": {
+        "commit": "eeed242ef8f89c2e95e5e673afe2d654474fdce9",
+        "temporary_mutation": {
+          "path": "crates/engine/src/storage/wal_io/plan4_retention/row_write.rs",
+          "change": "RowReserve check_progress_room future argument -> (future.0 + 1, future.1)",
+          "in_final_commit": false,
+          "replace_exactly_once": {
+            "old": "            (observation.header.lsn, observation.frame_bytes),\n            future,",
+            "new": "            (observation.header.lsn, observation.frame_bytes),\n            (future.0 + 1, future.1), // temporary review mutant: wrong WAL need"
+          }
+        }
+      },
+      "source_manifest_scope": "sha256(file) + two spaces + path + newline, in git ls-files crates Cargo.toml Cargo.lock rust-toolchain.toml order.",
+      "source_recipe_checked_against_all_1259_manifest_entries": true,
+      "changed_source_sha256": {
+        "crates/engine/src/storage/wal_io/plan4_apply/row/write.rs": "0165202c521515c4e038e8c04a5b66c09eac3559e776e98852e4d9b5690afc5c",
+        "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_inventory_a.rs": "96f8ca5cf1d32ececbf6289ca4f6c83e061b0f614bde5a55cc9488d3b876b570",
+        "crates/engine/src/storage/wal_io/plan4_retention/row_write.rs": "95226ceed84423bb2d26b21f7d7e03ab2f3c6ddff1f8de840770926306facc56"
+      },
+      "interpretation": "KILLED: expected rejection of intentionally wrong implementation, not a normal test failure."
+    },
+    "fixed-oracle-under-mutant": {
+      "source_sha256": "a7f4d3bc8b3213584236c57865784f766280fa881433e443033d3d1d012047ad",
+      "elf_sha256": "670c9f14746295b5c939ca63848566467e35600ce67d55e48b48f75a114a7b7e",
+      "input_sha256": "c34a0ad2bab54a65ac4b45c2d692bfb95a599a1b23e1465b2bb9ed2c1b9d31b2",
+      "results": [
+        {
+          "test": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_inventory_a::mca05_v02_wal_share_equal",
+          "exit": 101,
+          "seconds": 1.474,
+          "log_sha256": "e2ec30f57b203832302bf6df4a2b8f3675551a125a264f501cccea9605b297ea",
+          "output": "\nrunning 1 test\ntest storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_inventory_a::mca05_v02_wal_share_equal ... CATALOG_MEMORY_CONTEXT\tMCA05-V02\ta7f4d3bc8b3213584236c57865784f766280fa881433e443033d3d1d012047ad\t670c9f14746295b5c939ca63848566467e35600ce67d55e48b48f75a114a7b7e\tc34a0ad2bab54a65ac4b45c2d692bfb95a599a1b23e1465b2bb9ed2c1b9d31b2\tf6e0dd554a91931cc8e048e775a666dacd777f0c1c3285abed6773ec15f21eeb\t4bf20c59207890d66b5b51d06d7778a478f1226e26ce38b7cc803856fbe12181\nCATALOG_MEMORY_BEGIN\tMCA05-V02\nCATALOG_MEMORY_FAIL\tMCA05-V02\nFAILED\n\nfailures:\n\nfailures:\n    storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_inventory_a::mca05_v02_wal_share_equal\n\ntest result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 2005 filtered out; finished in 1.47s\n\n\nthread 'storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_inventory_a::mca05_v02_wal_share_equal' (3677) panicked at crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_inventory_a.rs:1942:21:\nassertion `left == right` failed: independent future WAL\n  left: 982951\n right: 982952\nnote: run with `RUST_BACKTRACE=1` environment variable to display a backtrace\n"
+        }
+      ],
+      "selection": {
+        "label": "fixed-oracle-under-mutant",
+        "stack": 33554432,
+        "tests": [
+          "mca05_v02_wal_share_equal"
+        ],
+        "timeout_seconds": 30
+      },
+      "source_recipe": {
+        "commit": "eeed242ef8f89c2e95e5e673afe2d654474fdce9",
+        "temporary_mutation": {
+          "path": "crates/engine/src/storage/wal_io/plan4_retention/row_write.rs",
+          "change": "RowReserve check_progress_room future argument -> (future.0 - 1, future.1)",
+          "in_final_commit": false,
+          "replace_exactly_once": {
+            "old": "            (observation.header.lsn, observation.frame_bytes),\n            future,",
+            "new": "            (observation.header.lsn, observation.frame_bytes),\n            (future.0 - 1, future.1), // temporary review mutant: wrong WAL need"
+          }
+        }
+      },
+      "source_manifest_scope": "sha256(file) + two spaces + path + newline, in git ls-files crates Cargo.toml Cargo.lock rust-toolchain.toml order.",
+      "source_recipe_checked_against_all_1259_manifest_entries": true,
+      "changed_source_sha256": {
+        "crates/engine/src/storage/wal_io/plan4_apply/row/write.rs": "0165202c521515c4e038e8c04a5b66c09eac3559e776e98852e4d9b5690afc5c",
+        "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_inventory_a.rs": "96f8ca5cf1d32ececbf6289ca4f6c83e061b0f614bde5a55cc9488d3b876b570",
+        "crates/engine/src/storage/wal_io/plan4_retention/row_write.rs": "e0cb7bf63a8fb4f7607cac5683165d01f19d344db42f3c1054d4c043c1d8fb3a"
+      },
+      "interpretation": "KILLED: expected rejection of intentionally wrong implementation, not a normal test failure."
+    },
+    "ca-normal": {
+      "source_sha256": "3567a6b51206ed44880674b42a62dbb37b76011f912c3bcb3bb0150542b7e7c5",
+      "elf_sha256": "b3fc97275d9bca4b7f2d4cfffac2c957e18c1ec363718470f6dd015fbb9e0f33",
+      "input_sha256": "7230c6b7ad60bf094ee48b25559b43ba444d08b29ade67ba20c6d1c0760dfd08",
+      "results": [
+        {
+          "test": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_inventory_a::mca05_v01_wal_share_one_under",
+          "exit": 0,
+          "seconds": 1.105,
+          "log_sha256": "9529d34070abf754e381abf83ff48c485b349534da85f3d7e03889cc4753acc4",
+          "output": "\nrunning 1 test\ntest storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_inventory_a::mca05_v01_wal_share_one_under ... CATALOG_MEMORY_CONTEXT\tMCA05-V01\t3567a6b51206ed44880674b42a62dbb37b76011f912c3bcb3bb0150542b7e7c5\tb3fc97275d9bca4b7f2d4cfffac2c957e18c1ec363718470f6dd015fbb9e0f33\t7230c6b7ad60bf094ee48b25559b43ba444d08b29ade67ba20c6d1c0760dfd08\tf6e0dd554a91931cc8e048e775a666dacd777f0c1c3285abed6773ec15f21eeb\t4bf20c59207890d66b5b51d06d7778a478f1226e26ce38b7cc803856fbe12181\nCATALOG_MEMORY_BEGIN\tMCA05-V01\nMCA05-V01 refusal=Failure { stage: Reserve, error: Disk(RetentionError { phase: Prepare, cause: Capacity, effect: Unchanged }), cleanup: None, must_resolve: false }\nMCA05_WAL\tMCA05-V01\tneed=1040288\tframe=57336\tshare=1040287\tstart=731262\tWalShareRecord { cap: Some(1771549), first: Some(WalAdmission { offset: 731262, frame: 57336, future: 982952, refused: true }), admissions: 1, refused_admissions: 1, stages: 0, refused_stages: 0, staged_end: 0 }\nCATALOG_MEMORY_PASS\tMCA05-V01\nok\n\ntest result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 1888 filtered out; finished in 1.10s\n\n"
+        },
+        {
+          "test": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_inventory_a::mca05_v02_wal_share_equal",
+          "exit": 0,
+          "seconds": 1.502,
+          "log_sha256": "07c4c6f575851cafca0f1dee39c426422a9ddedf8f2d0f4f2b97f9a2f08ad457",
+          "output": "\nrunning 1 test\ntest storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_inventory_a::mca05_v02_wal_share_equal ... CATALOG_MEMORY_CONTEXT\tMCA05-V02\t3567a6b51206ed44880674b42a62dbb37b76011f912c3bcb3bb0150542b7e7c5\tb3fc97275d9bca4b7f2d4cfffac2c957e18c1ec363718470f6dd015fbb9e0f33\t7230c6b7ad60bf094ee48b25559b43ba444d08b29ade67ba20c6d1c0760dfd08\tf6e0dd554a91931cc8e048e775a666dacd777f0c1c3285abed6773ec15f21eeb\t4bf20c59207890d66b5b51d06d7778a478f1226e26ce38b7cc803856fbe12181\nCATALOG_MEMORY_BEGIN\tMCA05-V02\nMCA05_WAL\tMCA05-V02\tneed=1040288\tframe=57336\tshare=1040288\tstart=731262\tend=1037216\tWalShareRecord { cap: Some(1771550), first: Some(WalAdmission { offset: 731262, frame: 57336, future: 982952, refused: false }), admissions: 7, refused_admissions: 0, stages: 7, refused_stages: 0, staged_end: 1037216 }\nCATALOG_MEMORY_PASS\tMCA05-V02\nok\n\ntest result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 1888 filtered out; finished in 1.50s\n\n"
+        },
+        {
+          "test": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_inventory_a::mca05_v03_wal_share_one_over",
+          "exit": 0,
+          "seconds": 1.486,
+          "log_sha256": "0404722b6937b4f60c7bd73dad9c60f0fe548e97b3c4fe1311f7ab0308256ab4",
+          "output": "\nrunning 1 test\ntest storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_inventory_a::mca05_v03_wal_share_one_over ... CATALOG_MEMORY_CONTEXT\tMCA05-V03\t3567a6b51206ed44880674b42a62dbb37b76011f912c3bcb3bb0150542b7e7c5\tb3fc97275d9bca4b7f2d4cfffac2c957e18c1ec363718470f6dd015fbb9e0f33\t7230c6b7ad60bf094ee48b25559b43ba444d08b29ade67ba20c6d1c0760dfd08\tf6e0dd554a91931cc8e048e775a666dacd777f0c1c3285abed6773ec15f21eeb\t4bf20c59207890d66b5b51d06d7778a478f1226e26ce38b7cc803856fbe12181\nCATALOG_MEMORY_BEGIN\tMCA05-V03\nMCA05_WAL\tMCA05-V03\tneed=1040288\tframe=57336\tshare=1040289\tstart=731262\tend=1037216\tWalShareRecord { cap: Some(1771551), first: Some(WalAdmission { offset: 731262, frame: 57336, future: 982952, refused: false }), admissions: 7, refused_admissions: 0, stages: 7, refused_stages: 0, staged_end: 1037216 }\nCATALOG_MEMORY_PASS\tMCA05-V03\nok\n\ntest result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 1888 filtered out; finished in 1.48s\n\n"
+        }
+      ],
+      "selection": {
+        "label": "ca-normal",
+        "stack": 33554432,
+        "tests": [
+          "mca05_v01_wal_share_one_under",
+          "mca05_v02_wal_share_equal",
+          "mca05_v03_wal_share_one_over"
+        ],
+        "timeout_seconds": 30
+      },
+      "source_recipe": {
+        "commit": "eeed242ef8f89c2e95e5e673afe2d654474fdce9",
+        "export_command": "python3 scripts/module_single_source.py --side a --commit eeed242ef8f89c2e95e5e673afe2d654474fdce9 --out <export> --record <record>"
+      },
+      "source_manifest_scope": "All files in the committed C+A export, as emitted by module_single_source.py.",
+      "export": {
+        "schema": "XADB_S8_SINGLE_SOURCE_V1",
+        "side": "a",
+        "commit": "eeed242ef8f89c2e95e5e673afe2d654474fdce9",
+        "removed": [
+          "crates/engine/src/storage/row/read.rs",
+          "crates/engine/src/storage/row/read/driver.rs",
+          "crates/engine/src/storage/row/read/driver/live.rs",
+          "crates/engine/src/storage/row/read/driver/tests.rs",
+          "crates/engine/src/storage/row/read/tests.rs",
+          "tests/fixtures/module-row-read/c0-versions.txt",
+          "tests/fixtures/module-row-read/driver-cells.txt",
+          "tests/fixtures/module-row-read/driver-manifest-r2.json",
+          "tests/fixtures/module-row-read/driver-manifest.json",
+          "tests/fixtures/module-row-read/make_driver_cells.py",
+          "tests/fixtures/module-row-read/manifest.json",
+          "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_read_live.rs",
+          "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_read_live/native.rs",
+          "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_recovery_read.rs",
+          "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_recovery_read/native.rs",
+          "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join.rs",
+          "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/native.rs",
+          "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_literal.rs",
+          "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_literal_two.rs",
+          "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_read_literal.rs",
+          "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_reopen_literal.rs",
+          "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_reopen_literal/native.rs",
+          "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_no_loser.rs",
+          "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_no_loser/native.rs",
+          "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_literal_rollback.rs",
+          "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_read_census.rs",
+          "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_corpus.rs",
+          "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_corpus/native.rs"
+        ],
+        "patches": [
+          {
+            "file": "crates/engine/src/storage/row.rs",
+            "removed": "pub(crate) mod read;\n"
+          },
+          {
+            "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory.rs",
+            "removed": "#[path = \"catalog_memory/row_read_live.rs\"]\nmod row_read_live;\n"
+          },
+          {
+            "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory.rs",
+            "removed": "#[path = \"catalog_memory/row_recovery_read.rs\"]\nmod row_recovery_read;\n"
+          },
+          {
+            "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory.rs",
+            "removed": "#[path = \"catalog_memory/row_join.rs\"]\nmod row_join;\n"
+          },
+          {
+            "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory.rs",
+            "removed": "#[path = \"catalog_memory/row_literal.rs\"]\n#[macro_use]\nmod row_literal;\n"
+          },
+          {
+            "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory.rs",
+            "removed": "#[path = \"catalog_memory/row_literal_two.rs\"]\nmod row_literal_two;\n"
+          },
+          {
+            "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory.rs",
+            "removed": "#[path = \"catalog_memory/row_read_literal.rs\"]\nmod row_read_literal;\n"
+          },
+          {
+            "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory.rs",
+            "removed": "#[path = \"catalog_memory/row_reopen_literal.rs\"]\nmod row_reopen_literal;\n"
+          },
+          {
+            "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory.rs",
+            "removed": "#[path = \"catalog_memory/row_no_loser.rs\"]\nmod row_no_loser;\n"
+          },
+          {
+            "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory.rs",
+            "removed": "#[path = \"catalog_memory/row_literal_rollback.rs\"]\nmod row_literal_rollback;\n"
+          },
+          {
+            "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory.rs",
+            "removed": "#[path = \"catalog_memory/row_read_census.rs\"]\nmod row_read_census;\n"
+          },
+          {
+            "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory.rs",
+            "removed": "#[path = \"catalog_memory/row_corpus.rs\"]\nmod row_corpus;\n"
+          }
+        ],
+        "remaining_references": [],
+        "other_text_references": [
+          "devdoc/contracts/dev3-module-boundaries.md: 7",
+          "devdoc/contracts/dev3-module-consumers.md: 4",
+          "devdoc/evidence/module-independence-survey-20261026.md: 6",
+          "devdoc/policies/repository-build-plan.json: 6",
+          "scripts/module_single_source.py: 2",
+          "tests/fixtures/dev3-module-c3/row-read/execution-receipts.json: 1",
+          "tests/fixtures/module-row-insert/manifest.json: 1",
+          "tests/fixtures/module-row-integration/single-source-s8-inventory.json: 18",
+          "tests/fixtures/module-row-integration/single-source-s9-inventory.json: 17",
+          "tests/fixtures/module-row-integration/test-inventory.json: 2"
+        ],
+        "files": 7698,
+        "source_manifest_sha256": "3567a6b51206ed44880674b42a62dbb37b76011f912c3bcb3bb0150542b7e7c5"
+      },
+      "changed_source_sha256": {
+        "crates/engine/src/storage/wal_io/plan4_apply/row/write.rs": "0165202c521515c4e038e8c04a5b66c09eac3559e776e98852e4d9b5690afc5c",
+        "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_inventory_a.rs": "96f8ca5cf1d32ececbf6289ca4f6c83e061b0f614bde5a55cc9488d3b876b570",
+        "crates/engine/src/storage/wal_io/plan4_retention/row_write.rs": "13a15b7511917bab483756119e02c12a1767f2263e182aae6a7b3e2439051df0"
+      },
+      "interpretation": "PASS for selected changed-code scope."
+    }
+  },
+  "review": {
+    "reviewer": "/root/pr16_independent_review",
+    "mode": "Read-only separate AI execution, no reviewer test execution",
+    "core_verdict": "ACCEPT",
+    "required_findings": 0,
+    "independent_derivation": true,
+    "final_evidence_review": "ACCEPT; required findings 0. Reviewer independently reconstructed all five full-tree manifests (1259 files each) and the C+A export manifest (7698 files), verified embedded log/input hashes, normal results and both killed mutants; final source has no mutant."
+  }
+}
