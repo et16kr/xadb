@@ -1,0 +1,122 @@
+{
+ "schema": "XADB_S10_SINGLE_SOURCE_ADDENDUM_V1",
+ "status": "FROZEN_SELECTION_NOT_EXECUTION_EVIDENCE",
+ "frozen_inventory": {
+  "path": "tests/fixtures/module-row-integration/single-source-s10-inventory.json",
+  "sha256": "41fcb5b5d94ec54b06b1f9e601ac19976d92ae6b6a2c04f2c38ae581fd8ad862"
+ },
+ "reason": "S10 independent review (R1-R8) and the user decisions of 2026-11-01: MCB04-V14 C fix (read_missing returns Unchanged Unsupported for a valid occupied before), the consumers §9 inventory implemented except what needs DEV3, live Row retirement out of scope. The frozen inventory is unchanged; this addendum adds selectors, reclassifies IDs and records the native controller witness. Every S10 selector of both sides reruns at the same commit because a C product file changed.",
+ "contract_ref": [
+  "devdoc/contracts/dev3-module-boundaries.md#row-mi03-s10"
+ ],
+ "sides": {
+  "C+A": {
+   "export": "--side a",
+   "added": {
+    "MCA01-V12-P": {
+     "status": "NEW (C0)",
+     "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::create_pair::catalog_live::lifecycle::row::write::tests::mca01_v12_p::mca01_v12_p_pure_catalog_census_counts_a_valid_index"
+    },
+    "MCA01-V12-S": {
+     "status": "NEW",
+     "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_inventory_a::mca01_v12_s_stored_index_in_the_home_leaf_is_a_load_mismatch",
+     "control": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_inventory_a::mca01_v12_s_control_unchanged_home_leaf_loads"
+    },
+    "MCA05-V01": {
+     "status": "PARTIAL",
+     "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_inventory_a::mca05_v01_wal_stage_capacity_refuses_before_any_effect"
+    },
+    "MCA05-V16": {
+     "status": "NEW",
+     "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_inventory_a::mca05_v16_frame_no_victim_is_refused_before_any_effect"
+    },
+    "MCA05-V17": {
+     "status": "NEW",
+     "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_inventory_a::mca05_v17_frame_one_victim_runs_the_flow"
+    },
+    "MCA05-V18": {
+     "status": "NEW",
+     "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_inventory_a::mca05_v18_frame_two_victims_run_the_flow"
+    },
+    "MCA05-V29": {
+     "status": "PARTIAL",
+     "selectors": [
+      "storage::row::insert::group_tests::mca05_v29_h_net0_with_before_count_zero_is_refused",
+      "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_inventory_a::mca05_v29_actual_frame_count_zero_is_fenced_by_preflight"
+     ]
+    }
+   },
+   "rerun_frozen": {
+    "row_inventory_a": "all C+A selectors of the frozen inventory"
+   }
+  },
+  "C+B": {
+   "export": "--side b",
+   "added": {
+    "MCB04-V14": {
+     "status": "NEW",
+     "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_corpus::mcb04_v14_occupied_before_is_out_of_scope"
+    }
+   },
+   "rerun_frozen": {
+    "row_corpus": "all C+B selectors of the frozen inventory"
+   }
+  }
+ },
+ "reclassified": {
+  "MCA01-V12-P": {
+   "frozen": "NOT_RUN",
+   "now": "NEW (C0)",
+   "reason": "R8: the pure census table_index_count over an independently built Catalog leaf (codec input, own expected counts) counts a valid Index of T as 1 (another parent or none: 0). C0 only; A’s one-line predicate index_count() != 0 is not executed (no context factory, §8.4)."
+  },
+  "MCA01-V12-S": {
+   "frozen": "NOT_REACHED",
+   "now": "NEW",
+   "reason": "the clean Catalog leaf is evicted inside the split by an ordinary residency exchange (flush, then one checked LOAD of a non-resident genesis Jobs page with every other clean frame pinned); its FileIo home bytes gain one independent Index cell; A’s INSERT reaches C’s preflight LOAD of the leaf: Fatal(Load, Invariant), fence, WAL and files byte-equal. The control with unchanged bytes loads the leaf and commits q 2."
+  },
+  "MCA05-V01": {
+   "frozen": "N/A (WAL)",
+   "now": "PARTIAL",
+   "reason": "R6: C’s WAL staging Capacity branch (end > WAL_FILE_CAP) is a real pre-effect refusal; taken once through its cfg(test) injector at the INSERT’s RowReserve stage: Unchanged before any effect, retry RowId 1, Commit q 2. The injector takes the branch without making the remaining WAL exactly one frame short."
+  },
+  "MCA05-V02..V03 (WAL)": {
+   "frozen": "N/A (WAL)",
+   "now": "NOT_RUN",
+   "reason": "R6: equal and +1 need the WAL file filled to WAL_FILE_CAP (256 MiB) minus one RowReserve; the memory fixture cannot do that inside the 30 s case bound and no injector sets the remaining share exactly."
+  },
+  "MCA05-V16..V18 (frame)": {
+   "frozen": "NOT_RUN",
+   "now": "NEW",
+   "reason": "R7: one fixed 12-frame pool; the Free Undo 14 non-resident (frame need 1); another owner pins every non-source frame but 0/1/2 clean ones for the whole flow: 0 = (Load, Frame Busy) Unchanged before any effect, retry RowId 1 q 2; 1 and 2 = Reserve, Forward, failed statement and its rollback, full abort."
+  },
+  "MCA05-V29": {
+   "frozen": "NEW (A producer)",
+   "now": "PARTIAL",
+   "reason": "R5: the frozen row is memory on the actual C. On the actual C a frame-only H before count 0 is refused earlier by C’s preflight (its Census copy differs from the WAL replay arena: Fatal (Census, Invariant), fence, no effect); a C state with count 0 that agrees with the history is not constructible. A’s OrderMismatch stays the pure producer test."
+  },
+  "MCA05-V13..V15 (RootJob slot)": {
+   "frozen": "N/A",
+   "now": "N/A",
+   "reason": "N9 wording: 55 is the Root3 decode invariant; the runtime admission is first_free over 64 Job cells (BudgetMismatch). Reaching 54/55 non-free Jobs needs that many retained roots and active terminals, each with its own Undo container or Status page from the first extent’s 50 owned pages, so at most 51 exist before extent growth (DEV3)."
+  },
+  "MCB03-V01": {
+   "frozen": "NEW",
+   "now": "PARTIAL",
+   "reason": "R3: the test is the converse (a retiring marker, then B’s capture is Busy). The frozen order (B’s capture, then a retirement Busy in begin_retirement’s pin count) is not reachable live: the rollback CLR’s MissingClr retirement waits at the S2-0 terminal read gate while a B read is active (MCB03-V02), and UndoFree retirement is live Row retirement, out of scope by the user’s 2026-11-01 decision."
+  },
+  "MCB03-V08": {
+   "frozen": "NEW",
+   "now": "PARTIAL",
+   "reason": "R4: the two source pins are witnessed and the extra claim seen is the gate’s InstallationPending. The per-owner registry Busy (reserve_references, a third claim of the same owner) cannot be expressed through B: a read borrows &mut Owner for its whole operation, and another owner has its own two rows."
+  },
+  "MCB04-V14": {
+   "frozen": "FAIL",
+   "now": "NEW",
+   "reason": "the user chose the C fix (2026-11-01): read_missing returns (Census, Unsupported, Unchanged), no fence, for a valid occupied before of the candidate’s own record; identity mismatches and codec errors stay Fatal."
+  }
+ },
+ "native": {
+  "controller": "scripts/check_dev3_s10a_native.py",
+  "witness": "R1/R2/N7/N11/N14: per-case input-plan.json fault.preservation (mode, F op and length, partial_home page) and witness.json (D end/LSN/SHA-256, F offset/length/LSN/digest and bytes absent/first byte/present/synced, every successful WAL write checked against the trace digest, partial_home: exactly the flushed page has F’s LSN); after recovery the newest WAL is copied and its Row CLR and Cancel frames counted (Cancel 1 for N03-Durable, N04, N05-RamOnly); the per-case phase sum is at most 180 s."
+ }
+}

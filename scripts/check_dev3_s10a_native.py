@@ -25,6 +25,19 @@ reader (XWF1 header fields only, stdlib), never from XADB output. The
 controller runs from the full tree (source identity from git) or from a
 single-source export (`--root` with the export's `--manifest`, checked file
 by file), as check_dev3_s9_native.py does.
+
+Each case's `input-plan.json` holds its `fault.preservation` (consumers
+§9.4): the mode and the frame F the cut stops (op and length, this history's
+own frame sizes), and for a home-page cut the page whose flushed image is
+the partial home. After the produce phase the controller's witness
+(`witness.json`) records D (the synced WAL prefix before F: end, last
+frame LSN, SHA-256 of the bytes) and F (offset, length, LSN, digest, and
+whether its bytes are absent, one byte, present or synced) from the trace
+and the WAL file, checks every successful WAL write's bytes against the
+trace digest, and for a home cut reads every data page's LSN: exactly the
+flushed page carries F's LSN and no page is newer. After the recover phase
+(R12: its crash phase) it copies the newest WAL into the phase output and
+counts the Row CLR and Cancel frames of that epoch with its own reader.
 """
 import argparse
 import hashlib
@@ -40,6 +53,12 @@ SECONDS = 180
 VALUE, NEW = 7, 17
 # Scope3 (Row) group ops of the XWF1 header.
 BEGIN, FORWARD, ROLLBACK_START, CLR, COMMIT, ABORT_END, RESERVE = 1, 2, 3, 4, 6, 7, 11
+CANCEL = 12
+# This history's Row frame lengths (one Int64 row of T; XWF1 header length).
+# A case's `keep` may name another length: N02's F is A2's second Forward,
+# which also moves the head H (91625); N09-V03's is the CLR of A2's first row.
+FRAME_BYTES = {RESERVE: 57336, FORWARD: 91497, CLR: 91417, COMMIT: 56712}
+PAGE = 16384
 PRUNE, RELEASE_ROLE, ROOT_FREE, TERMINAL_FINISH = 20, 21, 22, 17
 MUTATIONS = {'create', 'write', 'sync', 'dirsync', 'publish', 'resize', 'remove'}
 N3 = ['produce', 'recover', 'reenter']
@@ -81,33 +100,42 @@ CASES = {
                       rows=[(1, 7), (2, 8)], clrs=0, ack_row=3),
     'MCA03-N02': dict(phases=N3, cut=('N02_ACTIVE_LEAF_HOME_SYNCED', 'sync:d3-data-'),
                       ends=[RESERVE, FORWARD], home_after_wal=True,
+                      keep=('Durable', FORWARD, 91625), home=13,
                       rows=[(1, 7)], clrs=2, ack_row=4),
     'MCA03-N03-RamOnly': dict(phases=N3, cut=('N03_RESERVE_RAM_ONLY', 'write:d3-wal-'),
-                              ends=[COMMIT, BEGIN], rows=[(1, 7)], clrs=0,
-                              ack_row=('>=', 2)),
+                              ends=[COMMIT, BEGIN], keep=('RamOnly', RESERVE),
+                              rows=[(1, 7)], clrs=0, ack_row=('>=', 2)),
     'MCA03-N03-Durable': dict(phases=N3, cut=('N03_RESERVE_DURABLE', 'sync:d3-wal-'),
-                              ends=[BEGIN, RESERVE], rows=[(1, 7)], clrs=0, ack_row=3),
+                              ends=[BEGIN, RESERVE], keep=('Durable', RESERVE),
+                              cancels=1, rows=[(1, 7)], clrs=0, ack_row=3),
     'MCA03-N04': dict(phases=N3, cut=('N04_FORWARD_FIRST_BYTE', 'write:d3-wal-'),
-                      ends=[BEGIN, RESERVE], tail=1, rows=[(1, 7)], clrs=0, ack_row=3),
+                      ends=[BEGIN, RESERVE], tail=1, keep=('FirstByte', FORWARD),
+                      cancels=1, rows=[(1, 7)], clrs=0, ack_row=3),
     'MCA03-N05-RamOnly': dict(phases=N3, hook='N05_FORWARD_FIRST_RAM_PAGE',
-                              ends=[BEGIN, RESERVE], rows=[(1, 7)], clrs=0, ack_row=3),
+                              ends=[BEGIN, RESERVE], keep=('Hook', FORWARD),
+                              cancels=1, rows=[(1, 7)], clrs=0, ack_row=3),
     'MCA03-N05-Durable': dict(phases=N3, cut=('N05_FIRST_FORWARD_HOME_SYNCED',
                                               'sync:d3-data-'),
                               ends=[RESERVE, FORWARD], home_after_wal=True,
+                              keep=('Durable', FORWARD), home=None,
                               rows=[(1, 7)], clrs=1, ack_row=3),
     'MCA03-N06': dict(phases=N3, worker_cut='COMMIT_UNKNOWN', fault='WRITE_ERROR',
-                      ends=[RESERVE, FORWARD], unknown=True, rows=[(1, 7)], clrs=1,
-                      ack_row=3),
+                      ends=[RESERVE, FORWARD], unknown=True, keep=('WriteError', COMMIT),
+                      rows=[(1, 7)], clrs=1, ack_row=3),
     'MCA03-N07': dict(phases=N3, worker_cut='COMMIT_UNKNOWN', fault='SYNC_ERROR',
-                      ends=[FORWARD, COMMIT], unknown=True, rows=[(1, 7), (2, 8)],
-                      clrs=0, ack_row=3),
+                      ends=[FORWARD, COMMIT], unknown=True, keep=('SyncError', COMMIT),
+                      rows=[(1, 7), (2, 8)], clrs=0, ack_row=3),
     'MCA03-N08': dict(phases=N3, hook='N08_COMMIT_BEFORE_PUBLISH', ends=[FORWARD, COMMIT],
-                      unknown=True, rows=[(1, 7), (2, 8)], clrs=0, ack_row=3),
+                      unknown=True, keep=('Durable', COMMIT), rows=[(1, 7), (2, 8)],
+                      clrs=0, ack_row=3),
     **{f'MCA03-N09-V0{k}-{mode}': dict(
         phases=N3,
         cut=('N09_CLR_RAM_ONLY' if mode == 'RamOnly' else 'N09_CLR_DURABLE',
              'write:d3-wal-' if mode == 'RamOnly' else 'sync:d3-wal-'),
         clr_frames=k - 1 if mode == 'RamOnly' else k,
+        # The k-th CLR compensates A2's (4-k)-th row; the first row's CLR
+        # has no predecessor head H to restore (91289).
+        keep=(mode, CLR, 91289 if k == 3 else 91417),
         rows=[(4, 10)], clrs=4 - k if mode == 'RamOnly' else 3 - k, ack_row=5)
        for k in (1, 2, 3) for mode in ('RamOnly', 'Durable')},
     **{f'MCA03-R{n:02}': dict(phases=R4 if n < 12 else ['produce', 'crash', 'reenter'],
@@ -221,7 +249,147 @@ def check_produce(case, spec, receipt, effects, db):
         # iff the WAL holds its complete frame.
         winner = ops[-1] == COMMIT and ops.count(COMMIT) == 2
         assert winner == (len(spec['rows']) == 2), (case, ops[-3:])
-    return dict(wal=wal_name, wal_bytes=len(wal), row_ops_tail=ops[-4:], tail=tail)
+    return dict(wal=wal_name, wal_bytes=len(wal), row_ops_tail=ops[-4:], tail=tail,
+                witness=witness(case, spec, effects, db, wal_name))
+
+
+def frame_at(wal, offset):
+    """(length, LSN, op, scope) of the XWF1 frame header at `offset`."""
+    assert wal[offset:offset + 4] == b'XWF1', offset
+    return (int.from_bytes(wal[offset + 12:offset + 16], 'little'),
+            int.from_bytes(wal[offset + 56:offset + 64], 'little'),
+            int.from_bytes(wal[offset + 166:offset + 168], 'little'),
+            int.from_bytes(wal[offset + 170:offset + 172], 'little'))
+
+
+def preservation(spec):
+    """The case's fault.preservation (consumers §9.4), from this file."""
+    mode, op, *length = spec.get('keep', ('None', None))
+    plan = dict(mode=mode)
+    if op is not None:
+        plan['F'] = dict(op=op, length=length[0] if length else FRAME_BYTES[op])
+    if 'home' in spec:
+        plan['partial_home'] = dict(page=spec['home'])
+    return plan
+
+
+def witness(case, spec, effects, db, wal_name):
+    """D, F and partial_home of the produce cut (consumers §9.4)."""
+    wal = (db / wal_name).read_bytes()
+    mode, op, *expected = spec.get('keep', ('None', None))
+    rows = [(i, row) for i, row in enumerate(effects) if row[2] == wal_name]
+    writes = [(i, row) for i, row in rows if row[1] == 'write']
+    synced = [i for i, row in rows if row[1] == 'sync' and row[5] == 'Ok(())']
+    # Every successful WAL write's bytes are the file's (trace digest).
+    for _, row in writes:
+        if row[5].startswith('OK:'):
+            offset, length = int(row[3]), int(row[4])
+            _, size, sha = row[5].split(':')
+            assert int(size) == length and offset + length <= len(wal), (case, row)
+            assert digest(wal[offset:offset + length]) == sha, (case, row)
+    attempts = [(i, row) for i, row in writes if row[5] == 'ATTEMPT']
+    f = None
+    if mode in ('RamOnly', 'FirstByte', 'WriteError', 'Durable', 'SyncError'):
+        at, row = attempts[-1]
+        offset, length = int(row[3]), int(row[4])
+        assert length == (expected[0] if expected else FRAME_BYTES[op]), (case, row)
+        f = dict(op=op, offset=offset, length=length, attempt_row=int(row[0]))
+        after = [r for i, r in rows if i > at]
+        if mode == 'RamOnly':
+            # The blocked write is F's, and the file ends where it starts.
+            assert effects[-1][1] == 'cut' and effects[at + 1:] == [effects[-1]], case
+            assert len(wal) == offset, (case, len(wal), offset)
+            f['bytes'] = 'absent'
+        elif mode == 'FirstByte':
+            assert after and after[0][5] == 'FIRST_BYTE:Ok(1)', (case, after[:1])
+            assert len(wal) == offset + 1 and wal[offset:offset + 1] == b'X', case
+            f['bytes'] = 'first byte'
+        elif mode == 'WriteError':
+            assert after and after[0][1] == 'fault' and int(after[0][3]) == offset \
+                and int(after[0][4]) == length, (case, after[:1])
+            assert len(wal) == offset, (case, len(wal), offset)
+            f['bytes'] = 'absent'
+        else:
+            # F complete: its header is the expected frame and its bytes are
+            # the trace's; Durable: an Ok sync of the WAL follows it.
+            assert after and after[0][5].startswith('OK:'), (case, after[:1])
+            frame_length, lsn, frame_op, scope = frame_at(wal, offset)
+            assert (frame_length, frame_op, scope) == (length, op, 3), (case, frame_op)
+            assert offset + length == len(wal), (case, offset, len(wal))
+            f.update(lsn=lsn, sha256=digest(wal[offset:offset + length]))
+            later = [i for i in synced if i > at]
+            if mode == 'Durable':
+                assert later, (case, 'no Ok sync after F')
+                f['bytes'] = 'synced'
+            else:
+                assert not later, (case, 'F synced')
+                faults = [r for i, r in rows if i > at and r[1] == 'fault']
+                assert len(faults) == 1 and faults[0][5].startswith('SYNC_ERROR'), case
+                f['bytes'] = 'present, sync failed'
+        d_end = offset
+        before = [i for i in synced if i < at]
+    else:
+        # Hook: the Forward's first RAM page, with no WAL write after the
+        # last Ok sync. None: a worker cut (after a synced ACK, or the R
+        # input whose last frames may be written but not yet synced).
+        assert synced, case
+        before = synced
+        d_end = None
+        if mode == 'Hook':
+            assert not [r for i, r in writes if i > synced[-1]], (case, 'a WAL write after D')
+            f = dict(op=op, bytes='never attempted')
+    # D: the complete prefix the last Ok sync before F covered.
+    assert before, (case, 'D unsynced')
+    covered = [int(r[3]) + int(r[4]) for i, r in writes
+               if i < before[-1] and r[5].startswith('OK:')]
+    assert covered, case
+    if d_end is None:
+        d_end = max(covered)
+        if mode == 'Hook':
+            assert d_end == len(wal), (case, d_end, len(wal))
+    assert max(covered) == d_end, (case, covered[-1:], d_end)
+    frames, tail = wal_frames(wal[:d_end])
+    assert tail == 0, (case, tail)
+    d = dict(end=d_end, lsn=frames[-1][2], frames=len(frames), sha256=digest(wal[:d_end]))
+    if mode == 'None':
+        written, rest = wal_frames(wal)
+        assert rest == 0, (case, rest)
+        d['written_after'] = [op for at, _, _, op, scope in written if at >= d_end and scope == 3]
+    out = dict(mode=mode, D=d, F=f)
+    if 'home' in spec:
+        assert f is not None and 'lsn' in f, case
+        homes = []
+        for data in sorted(db.glob('d3-data-*')):
+            raw = data.read_bytes()
+            for page in range(len(raw) // PAGE):
+                image = raw[page * PAGE:(page + 1) * PAGE]
+                if image[:4] != b'XDP1':
+                    continue
+                number = int.from_bytes(image[32:40], 'little')
+                assert number == page, (case, data.name, page, number)
+                homes.append((data.name, page, int.from_bytes(image[64:72], 'little')))
+        newest = [h for h in homes if h[2] >= f['lsn']]
+        assert len(newest) == 1 and newest[0][2] == f['lsn'], (case, newest)
+        if spec['home'] is not None:
+            assert newest[0][1] == spec['home'], (case, newest)
+        out['partial_home'] = dict(file=newest[0][0], page=newest[0][1], lsn=newest[0][2],
+                                   older=sorted({h[2] for h in homes} - {f['lsn']}))
+    return out
+
+
+def recovered_frames(case, spec, db, output):
+    """Copy the newest WAL after recovery and count its Row CLR and Cancel
+    frames (this epoch's), with this file's reader."""
+    wal_name = sorted(p.name for p in db.iterdir() if p.name.startswith('d3-wal-'))[-1]
+    raw = (db / wal_name).read_bytes()
+    (output / f'recovered-{wal_name}').write_bytes(raw)
+    frames, tail = wal_frames(raw)
+    assert tail == 0, (case, tail)
+    ops = [(op, scope) for _, _, _, op, scope in frames]
+    clrs, cancels = ops.count((CLR, 3)), ops.count((CANCEL, 3))
+    assert clrs == spec['clrs'], (case, 'CLR frames', clrs, spec['clrs'])
+    assert cancels == spec.get('cancels', 0), (case, 'Cancel frames', cancels)
+    return dict(wal=wal_name, sha256=digest(raw), clr_frames=clrs, cancel_frames=cancels)
 
 
 def check_barrier(case, effects, db):
@@ -310,7 +478,12 @@ def main():
         spec = CASES[case]
         db = out / case / 'db'
         db.mkdir(parents=True)
-        pids, acks, facts, previous = [], [], {}, None
+        (out / case / 'input-plan.json').write_text(json.dumps(
+            dict(case=case, fault=dict(preservation=preservation(spec)),
+                 expected=dict(rows=spec['rows'], clrs=spec['clrs'],
+                               cancels=spec.get('cancels', 0), ack_row=spec['ack_row'])),
+            indent=2) + '\n')
+        pids, acks, facts, previous, spent = [], [], {}, None, 0.0
         rows = list(spec['rows'])
         for phase in spec['phases']:
             output = out / case / phase
@@ -328,6 +501,7 @@ def main():
             except subprocess.TimeoutExpired:
                 code = 124
             seconds = time.monotonic() - start
+            spent += seconds
             results.append(dict(case=case, phase=phase, exit=code, seconds=round(seconds, 2)))
             (out / 'results.json').write_text(json.dumps(results, indent=2) + '\n')
             assert (output / 'test.log').stat().st_size <= plan['log_bytes_cap']
@@ -344,6 +518,8 @@ def main():
             (output / 'files.json').write_text(json.dumps(current, indent=2) + '\n')
             if phase == 'produce':
                 facts[phase] = check_produce(case, spec, receipt, effects, db)
+                (out / case / 'witness.json').write_text(
+                    json.dumps(facts[phase]['witness'], indent=2) + '\n')
                 if 'ack_q' in receipt:
                     acks.append(int(receipt['ack_q']))
                 if spec.get('unknown') and len(spec['rows']) == 2:
@@ -370,6 +546,8 @@ def main():
                 first = phase == 'recover' or (case == 'MCA03-R12' and phase == 'crash')
                 assert int(receipt['clrs']) == (spec['clrs'] if first else 0), \
                     (case, phase, receipt['clrs'])
+                if first:
+                    facts['recovered'] = recovered_frames(case, spec, db, output)
                 if 'ack_row' in receipt:
                     row, q = int(receipt['ack_row']), int(receipt['ack_q'])
                     assert q == acks[-1] + 1, (case, phase, q, acks)
@@ -397,7 +575,10 @@ def main():
                                               cleanup_ops=sorted(set(ops)))
             previous = current
         assert len(set(pids)) == len(spec['phases']), pids
-        complete[case] = dict(pids=pids, acks=acks, rows=rows, facts=facts, result='PASS')
+        # The frozen bound is per native case (consumers §9.4): all phases.
+        assert spent <= SECONDS, (case, spent)
+        complete[case] = dict(pids=pids, acks=acks, rows=rows, facts=facts,
+                              seconds=round(spent, 2), result='PASS')
         (out / 'complete.json').write_text(json.dumps(complete, indent=2) + '\n')
 
 
