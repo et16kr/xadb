@@ -101,11 +101,14 @@ fn inspect<W: WriterNamespace + 'static>(label: &str) {
         + crate::storage::transaction_record::status_codec_source_bytes()
         + 1536
         + wrapper;
-    let flush = shared+resources::source_census::<W>().flush+size_of::<R<W>>()
+    // The flush step without the flusher I/O body: A's caller, the
+    // rollback, the flush wrapper and the stopped step that names the target.
+    let step = size_of::<R<W>>()
         +2*size_of::<Result<()>>()+size_of::<Plan4Target>()+wrapper+caller
         +size_of::<&()>() // StartedRollback progress pointer; R is counted above
         +4*size_of::<&()>()+2*size_of::<Result<()>>()
         +size_of::<std::result::Result<crate::storage::row::insert::driver::Stepped,crate::storage::row::insert::driver::RollbackStop<T<W>,Plan4Target>>>();
+    let flush = shared + resources::source_census::<W>().flush + step;
     println!(
         "S4_C01 writer={label} shared={shared} charge={charge} caller={caller} rollback={} task={} prepared={} selection={selection} control={control} pin={pin} flush={flush}",
         size_of::<R<W>>(),
@@ -121,9 +124,8 @@ fn inspect<W: WriterNamespace + 'static>(label: &str) {
     // gate with its close/wait closure (`commit_carrier_bytes`, which
     // also counts the admission carrier taken after the wait). Small
     // live locals (the actor and the statement boundary) fit in that
-    // slack. Two resident readers and shared are admitted beside it. The
-    // re-close after each flush (`RowRollback::admit`) is not counted
-    // here and remains a WRITER-PROGRESS-001 obligation.
+    // slack. Two resident readers and shared are admitted beside it. S9
+    // counts the re-close after each flush below.
     let start = sites
         .iter()
         .find(|(name, _, _)| *name == "rollback.start")
@@ -139,6 +141,42 @@ fn inspect<W: WriterNamespace + 'static>(label: &str) {
         source::SHORT_BYTES as i64 - waiting as i64
     );
     assert!(waiting <= source::SHORT_BYTES as usize);
+    // WRITER-PROGRESS-001 (S9, boundaries `#row-m4-s9`): the re-close after
+    // each flush. `RowRollback::flush` returns the refs, the admission and
+    // the gate before the flusher I/O, runs it, then `admit` closes the gate
+    // again and waits with no charge held. The floor is the flush step above
+    // with the flusher I/O body, which has returned before the wait,
+    // replaced by the gate and its close/wait closure. Like the start floor
+    // it is an upper bound through slack (the admission carriers in `gate`
+    // are taken only after the wait).
+    let reclose = step + gate;
+    let rewaiting = reclose + shared + 2 * resident;
+    println!(
+        "S4_C01 writer={label} (iv) reclose_floor={reclose} step={step} gate={gate} resident={resident} floor_plus_shared_plus_two_resident={rewaiting} cap={} cap_margin={}",
+        source::SHORT_BYTES,
+        source::SHORT_BYTES as i64 - rewaiting as i64
+    );
+    assert!(rewaiting <= source::SHORT_BYTES as usize);
+    // The RowProgress gate waits under A's rollback end calls: the statement
+    // end after a statement rollback and `finish_aborted` after a full one.
+    // The rollback has finished; the floor is A's frame-static site share
+    // with the rollback caller and the check entry (S3_C01's reading).
+    let entry = super::super::super::transaction::row_commit::check_entry_bytes()
+        .max(super::super::super::transaction::catalog::check_entry_bytes());
+    for site in ["rollback.finish_statement", "transaction.finish_aborted"] {
+        let frame = sites
+            .iter()
+            .find(|(name, _, _)| *name == site)
+            .expect("rollback end site")
+            .2;
+        let floor = frame + entry;
+        let waiting = floor + shared + 2 * resident;
+        println!(
+            "S4_C01 writer={label} (iv) site={site} end_floor={floor} frame_static={frame} check_entry={entry} floor_plus_shared_plus_two_resident={waiting} cap_margin={}",
+            source::SHORT_BYTES as i64 - waiting as i64
+        );
+        assert!(waiting <= source::SHORT_BYTES as usize, "{label} {site}");
+    }
     for (name, share, frame) in sites {
         let body = match name {
             "rollback.start" | "rollback.finish" => control.max(selection).max(pin),

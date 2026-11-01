@@ -697,6 +697,10 @@ mod free_undo_tests;
 #[path = "plan4_retention/catalog_source_tests.rs"]
 mod catalog_source_tests;
 
+#[cfg(test)]
+#[path = "plan4_retention/writer_gate_census_tests.rs"]
+mod writer_gate_census_tests;
+
 use crate::{
     api::Namespace,
     storage::{

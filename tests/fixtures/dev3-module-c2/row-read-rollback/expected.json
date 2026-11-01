@@ -1,0 +1,150 @@
+{
+  "cases": {
+    "full": {
+      "case": "MCB05-L05",
+      "files": {
+        "abort-end.bin": {
+          "bytes": 56712,
+          "sha256": "6d83741e6afd832e93fa0ca76eba65054f0cce56b380f7721c8e57d8fef4eaf5"
+        },
+        "after-jobs.bin": {
+          "bytes": 16384,
+          "sha256": "7fcf9f27db4218bf0b17dc2e6c8421749bfab0cfec344c635b18d5151f3d7417"
+        },
+        "after-leaf.bin": {
+          "bytes": 16384,
+          "sha256": "86870861f1449695f314f938012b94cef5d33ccde1dc10fbe881b14b8bb9375d"
+        },
+        "after-root.bin": {
+          "bytes": 16384,
+          "sha256": "2319d1e3237bcf87bc42e859445eb90fec6ba07e6e9ca604c654419cb16d51a1"
+        },
+        "after-status.bin": {
+          "bytes": 16384,
+          "sha256": "c8bade9f1d0e99040e3956c4130b8f2dfea78cd2197a923b4db88d4df7780d13"
+        },
+        "after-undo.bin": {
+          "bytes": 16384,
+          "sha256": "bf067dc8b60f3bc67b5fd5ff11dc1a49c57e6b33de188d0d0b31ba3dca407524"
+        },
+        "clr.bin": {
+          "bytes": 91289,
+          "sha256": "caa18deac3fecd9b9c51d861c12b25aa4ca547f087a766cf2947ec3a19f9f4e0"
+        },
+        "rollback-start.bin": {
+          "bytes": 3040,
+          "sha256": "b4af98e28211d0ef990d2e54767b9e046fed100197b91f01f29df9b9ba156d92"
+        }
+      },
+      "frames": [
+        {
+          "bytes": 3040,
+          "lsn": 17,
+          "name": "rollback-start",
+          "sha256": "b4af98e28211d0ef990d2e54767b9e046fed100197b91f01f29df9b9ba156d92"
+        },
+        {
+          "bytes": 91289,
+          "lsn": 18,
+          "name": "clr",
+          "sha256": "caa18deac3fecd9b9c51d861c12b25aa4ca547f087a766cf2947ec3a19f9f4e0"
+        },
+        {
+          "bytes": 56712,
+          "lsn": 19,
+          "name": "abort-end",
+          "sha256": "6d83741e6afd832e93fa0ca76eba65054f0cce56b380f7721c8e57d8fef4eaf5"
+        }
+      ],
+      "q": 1
+    },
+    "statement": {
+      "case": "MCB05-L04",
+      "files": {
+        "after-jobs.bin": {
+          "bytes": 16384,
+          "sha256": "7fcf9f27db4218bf0b17dc2e6c8421749bfab0cfec344c635b18d5151f3d7417"
+        },
+        "after-leaf.bin": {
+          "bytes": 16384,
+          "sha256": "86870861f1449695f314f938012b94cef5d33ccde1dc10fbe881b14b8bb9375d"
+        },
+        "after-root.bin": {
+          "bytes": 16384,
+          "sha256": "2319d1e3237bcf87bc42e859445eb90fec6ba07e6e9ca604c654419cb16d51a1"
+        },
+        "after-status.bin": {
+          "bytes": 16384,
+          "sha256": "209211315623dbc5bffbfcaa7fc891583289800e4f9fda2c4c2aca369b98f52e"
+        },
+        "after-undo.bin": {
+          "bytes": 16384,
+          "sha256": "bf067dc8b60f3bc67b5fd5ff11dc1a49c57e6b33de188d0d0b31ba3dca407524"
+        },
+        "clr.bin": {
+          "bytes": 91289,
+          "sha256": "99d0d9fbd79b5153d8b65a952ed607db203a80605aafc961e33d9a458b4c56ef"
+        },
+        "commit.bin": {
+          "bytes": 56712,
+          "sha256": "caa9afda0d0c256ac86b18cd02f6549dad6c76b03666591f8f78e941cb9dccda"
+        },
+        "rollback-start.bin": {
+          "bytes": 3040,
+          "sha256": "879123a519126eb797da5ba7de9311713b0fde2bc9b76db9706f10bab0c3c3e1"
+        },
+        "statement-finish.bin": {
+          "bytes": 3040,
+          "sha256": "7d8f2a4ce14e9072db5f8a452de092744a3e7eea064797f5d7b3cfbf0c96cdde"
+        }
+      },
+      "frames": [
+        {
+          "bytes": 3040,
+          "lsn": 17,
+          "name": "rollback-start",
+          "sha256": "879123a519126eb797da5ba7de9311713b0fde2bc9b76db9706f10bab0c3c3e1"
+        },
+        {
+          "bytes": 91289,
+          "lsn": 18,
+          "name": "clr",
+          "sha256": "99d0d9fbd79b5153d8b65a952ed607db203a80605aafc961e33d9a458b4c56ef"
+        },
+        {
+          "bytes": 3040,
+          "lsn": 19,
+          "name": "statement-finish",
+          "sha256": "7d8f2a4ce14e9072db5f8a452de092744a3e7eea064797f5d7b3cfbf0c96cdde"
+        },
+        {
+          "bytes": 56712,
+          "lsn": 20,
+          "name": "commit",
+          "sha256": "caa9afda0d0c256ac86b18cd02f6549dad6c76b03666591f8f78e941cb9dccda"
+        }
+      ],
+      "q": 2
+    }
+  },
+  "pages": {
+    "after-jobs.bin": 2,
+    "after-leaf.bin": 13,
+    "after-root.bin": 1,
+    "after-status.bin": 11,
+    "after-undo.bin": 14
+  },
+  "previous_lsn": 16,
+  "provenance": {
+    "author": "dev3-module-c2/row-read-rollback/author.py (run as python3 -I author.py)",
+    "no_xadb_code": "no XADB encoder, decoder, A producer or B reader is run",
+    "pinned_inputs": {
+      "dev3-module-c3/row-write/forward.py": "cbab5fcf089099524ea31fa1da1b6673b617973623bc7c59b7334ef45064cd9f",
+      "module-row-format/transition/author.py": "076ea2f2767851bd8046becbba6b1d05a00a6cd7838a9c9e052b6b2e033beec4"
+    }
+  },
+  "row": 1,
+  "schema": "xadb-module-row-v1",
+  "source_kind": "C+B",
+  "value": 7
+}

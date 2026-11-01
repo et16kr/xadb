@@ -154,6 +154,48 @@ fn inspect<W: WriterNamespace + 'static>(kind: &str) {
     );
     assert!(shared + progress <= 65_536);
     assert!(size_of::<RowCommitImage>() + 512 <= size_of::<PreparedRowGroup>());
+    gate_waits::<W>(kind, a.1);
+}
+
+/// WRITER-PROGRESS-001 (S9, boundaries `#row-m4-s9`): the Row capsule's gate
+/// waits under A's Commit call and A's statement end. During each wait the
+/// writer holds no charge; shared and two resident readers are admitted
+/// beside it. Each floor is an upper bound through slack like S7's (iv):
+/// A's share at the call (`a.1` for `transaction.commit`, the S2-e caller's
+/// frame-static share at `insert.finish_statement`), then the carriers the
+/// class charge counts in every window (`commit_carrier_bytes` with the
+/// gate's close/wait closure, the inputs and the consuming caller for the
+/// Commit gate; the check entry for RowProgress). With A's Write bound
+/// (11520 B) instead of the actual share no RowProgress floor could fit:
+/// 11520 + shared + two residents alone exceeds the cap.
+fn gate_waits<W: WriterNamespace + 'static>(kind: &str, a: usize) {
+    let [shared, _, resident] = source::CatalogSourceCharges::new::<W>().observations();
+    let readers = shared + 2 * resident;
+    let gate = source::commit_carrier_bytes();
+    let entry =
+        transaction::row_commit::check_entry_bytes().max(transaction::catalog::check_entry_bytes());
+    let end = crate::storage::row::insert::driver::live::statement_end_caller_source::<W>();
+    let floors = [
+        (
+            "transaction.commit/commit_gate",
+            a + gate
+                + size_of::<crate::storage::transaction_record::TxnRef>()
+                + size_of::<&mut [u8; 425_984]>()
+                + transaction::row_commit::terminal_caller_bytes(),
+        ),
+        ("transaction.commit/row_progress_check", a + entry),
+        ("insert.finish_statement/row_progress_check", end + entry),
+    ];
+    for (site, floor) in floors {
+        let waiting = floor + readers;
+        println!(
+            "S3_C01_GATE {kind} site={site} floor={floor} a_commit={a} a_statement_end={end} \
+             check_entry={entry} gate={gate} shared_plus_two_resident={readers} \
+             floor_plus_shared_plus_two_resident={waiting} cap_margin={}",
+            65_536 - waiting as i64
+        );
+        assert!(waiting <= 65_536, "{kind} {site}: {waiting}");
+    }
     assert_eq!(
         size_of::<visibility::CommitEpochs>(),
         48,

@@ -1,0 +1,39 @@
+{
+ "schema": "XADB_S9_SINGLE_SOURCE_ADDENDUM_V1",
+ "status": "FROZEN_SELECTION_NOT_EXECUTION_EVIDENCE",
+ "frozen_inventory": {
+  "path": "tests/fixtures/module-row-integration/single-source-s9-inventory.json",
+  "sha256": "6d109018ff98f3d3f4ede0c322ee4d873a56ca8811d64440b8fbc0ed0fdee26e"
+ },
+ "reason": "S9 independent review R4: no C+B case covered the consumers §8.3 publication gap (MCB02-V08). MCB05-L06 is the C+B form of C+A+B MCI03-V03 on the S8 literal row. It lives in row_literal.rs, so the selection reruns that file's 13 frozen selectors at the same commit.",
+ "contract_ref": [
+  "devdoc/contracts/dev3-module-boundaries.md#row-mi03-s9"
+ ],
+ "sides": {
+  "C+B": {
+   "export": "--side b",
+   "added": {
+    "row_literal MCB05-L06": 1
+   },
+   "rerun_frozen": {
+    "row_literal": 13
+   },
+   "selectors": [
+    "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_literal::mcb05_k01_foreign_table_generation_is_before_then_cancel",
+    "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_literal::mcb05_k02_forged_row_id_is_before_then_cancel",
+    "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_literal::mcb05_k03_wrong_undo_generation_is_before_then_cancel",
+    "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_literal::mcb05_k04_planned_mutation_consumed_again_is_before_then_cancel",
+    "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_literal::mcb05_k05_predecessor_claimed_without_one_is_before_then_cancel",
+    "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_literal::mcb05_k06_undo_incoming_one_is_before_then_cancel",
+    "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_literal::mcb05_k08_row_stamp_not_the_actor_is_before_then_cancel",
+    "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_literal::mcb05_k09_redo_row_bytes_differ_from_native_is_before_then_cancel",
+    "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_literal::mcb05_k10_reserved_inventory_not_consumed_is_before_then_cancel",
+    "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_literal::mcb05_k11_full_abort_debt_decremented_is_before_then_cancel",
+    "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_literal::mcb05_k12_scope2_group_is_before_then_cancel",
+    "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_literal::mcb05_l01_literal_forward_is_read_by_b_after_c_commit",
+    "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_literal::mcb05_k12_actual_catalog_scope2_frame_is_before_then_cancel",
+    "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_literal::mcb05_l06_publication_gap_old_snapshot_reads_missing"
+   ]
+  }
+ }
+}

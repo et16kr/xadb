@@ -1261,8 +1261,16 @@ mod row_commit;
 #[path = "catalog_memory/row_rollback.rs"]
 mod row_rollback;
 
+#[path = "catalog_memory/row_reopen.rs"]
+#[macro_use]
+mod row_reopen;
 #[path = "catalog_memory/row_recovery.rs"]
 mod row_recovery;
+#[path = "catalog_memory/row_recovery_read.rs"]
+mod row_recovery_read;
+#[path = "catalog_memory/row_native_a.rs"]
+#[macro_use]
+mod row_native_a;
 
 #[path = "catalog_memory/catalog_progress_v09.rs"]
 mod catalog_progress_v09;
@@ -1270,7 +1278,21 @@ mod catalog_progress_v09;
 mod row_join;
 
 #[path = "catalog_memory/row_literal.rs"]
+#[macro_use]
 mod row_literal;
+
+#[path = "catalog_memory/row_literal_two.rs"]
+mod row_literal_two;
+
+#[path = "catalog_memory/row_read_literal.rs"]
+mod row_read_literal;
+
+#[path = "catalog_memory/row_literal_rollback.rs"]
+mod row_literal_rollback;
+#[path = "catalog_memory/row_no_loser.rs"]
+mod row_no_loser;
+#[path = "catalog_memory/row_reopen_literal.rs"]
+mod row_reopen_literal;
 
 #[path = "catalog_memory/row_read_census.rs"]
 mod row_read_census;

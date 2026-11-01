@@ -6,6 +6,9 @@
 //! recovery entry. Nothing here builds a recovery input or reads one back
 //! through a product decoder.
 use super::super::super::super::super::plan4_pages::native;
+use super::super::row_recovery::{
+    Drive, Ending, READY_BOUND, image, no_loser_input, refused_in, restart_in,
+};
 use super::*;
 use std::{fs, path::Path};
 
@@ -97,7 +100,9 @@ fn s6r_native_worker() {
                 summary = "result\trefused\n".into();
                 return;
             }
-            ("MBC40-N01", "recover") => restart_in(&directory, &files, with, Drive::Action, 1),
+            ("MBC40-N01", "recover") => {
+                restart_in(&directory, &files, with, Drive::Action, 1, &BRead)
+            }
             // The final re-entry over the files B's read left: its empty
             // aborted Row transaction is cleaned under C+B's policy.
             ("MBC40-N01", "reenter") => restart_in(
@@ -106,13 +111,25 @@ fn s6r_native_worker() {
                 Some(RowRecoveryPolicy::RejectInitialLosers),
                 Drive::Action,
                 1,
+                &BRead,
             ),
-            ("MBC40-N02", "crash") => {
-                restart_in(&directory, &files, with, Drive::CrashAfterCells(1), 0)
+            ("MBC40-N02", "crash") => restart_in(
+                &directory,
+                &files,
+                with,
+                Drive::CrashAfterCells(1),
+                0,
+                &BRead,
+            ),
+            ("MBC40-N02", "recover") => {
+                restart_in(&directory, &files, with, Drive::Action, 1, &BRead)
             }
-            ("MBC40-N02", "recover") => restart_in(&directory, &files, with, Drive::Action, 1),
-            ("MBC40-N03", "crash") => restart_in(&directory, &files, with, Drive::CrashAfter(1), 0),
-            ("MBC40-N03", "recover") => restart_in(&directory, &files, with, Drive::Action, 3),
+            ("MBC40-N03", "crash") => {
+                restart_in(&directory, &files, with, Drive::CrashAfter(1), 0, &BRead)
+            }
+            ("MBC40-N03", "recover") => {
+                restart_in(&directory, &files, with, Drive::Action, 3, &BRead)
+            }
             _ => panic!("phase {phase} of {id}"),
         };
         println!(

@@ -1,0 +1,204 @@
+{
+  "cancel2": {
+    "bytes": 40000,
+    "lsn": 20,
+    "sha256": "0774407fcd9d50bbcd9f888213d64334a4aab1778ffd049c0284864aa26c2f0b"
+  },
+  "case": "MCB05-L02",
+  "files": {
+    "after1-jobs.bin": {
+      "bytes": 16384,
+      "sha256": "7134573aef54d6d48c02ed692a2a3718e3813bae58e6829e6511aff362fd5232"
+    },
+    "after1-leaf.bin": {
+      "bytes": 16384,
+      "sha256": "4b0174c0b2cc17dccd19e59a0786a9c616af3693215a01d27d5d2bd086115e50"
+    },
+    "after1-root.bin": {
+      "bytes": 16384,
+      "sha256": "ea64fe3597f7b14a6ad2a50044232988d28c19fe4b0e30423f711e81af096da2"
+    },
+    "after1-status.bin": {
+      "bytes": 16384,
+      "sha256": "87269fd4f0e7310c8ff4156f02d5374b455b8f3877ca8b2aa501dece33a62f93"
+    },
+    "after1-undo.bin": {
+      "bytes": 16384,
+      "sha256": "029b3a7f628da543dae571d4a3306ad1d93d98f1086162bc2ef847f25f421f3c"
+    },
+    "after2-jobs.bin": {
+      "bytes": 16384,
+      "sha256": "22332593d722dabcb0e8a5ceea300a9b9b8c6e85e243597a1f4e4bf44243da07"
+    },
+    "after2-leaf.bin": {
+      "bytes": 16384,
+      "sha256": "48c3cf30feb2584e2c581dbe5392678dd6cfe5653ec6e22ef46edf419ebd3d39"
+    },
+    "after2-root.bin": {
+      "bytes": 16384,
+      "sha256": "be9126f0f799cb3cde5ad4c21c91138787bac77918560151258a0b9504b294e5"
+    },
+    "after2-status.bin": {
+      "bytes": 16384,
+      "sha256": "5296ae9abe9983033e2d0f469634f39b164aaf505257a2afe321beef18452038"
+    },
+    "after2-undo.bin": {
+      "bytes": 16384,
+      "sha256": "247ff79388d4e67e865447cf879c4dcfd441e56db498b721e96b2297e2810431"
+    },
+    "canonical1.bin": {
+      "bytes": 13,
+      "sha256": "fae2df78d78985674f9e83253255b062c3bbee012bc876f26e4342520ae04b38"
+    },
+    "canonical2.bin": {
+      "bytes": 13,
+      "sha256": "d8a84af06a90e26233dc44a33240eaac7c9dbeefb3d0ddc2a5effa13549110dd"
+    },
+    "forward1-frame.bin": {
+      "bytes": 91497,
+      "sha256": "c9e8c028cc5cf2c42aff78dc6f07eb8f62587192fa48caf6743df9009feba347"
+    },
+    "forward2-frame.bin": {
+      "bytes": 91625,
+      "sha256": "89cce26aeba4ca1c6fca0fab45e416625b2974a1c5c27396a6473dd0a21cbddc"
+    }
+  },
+  "forward_lsn": [
+    18,
+    20
+  ],
+  "known_bad": {
+    "K01": {
+      "files": {
+        "after2-undo.bin": {
+          "bytes": 16384,
+          "sha256": "b45251ea7caacbdfbd71c732284b834e5c5fed46bf1ec75616ee01171b8a42db"
+        },
+        "forward2-frame.bin": {
+          "bytes": 91625,
+          "sha256": "43ac2098f4cc8b741a91a3f191ba55bd68d06361bdb9bc913718fde0f07d40b1"
+        }
+      },
+      "patch": {
+        "bytes": 561,
+        "sha256": "01990fd08b1752d124c4f696df60a32f7dd0310db68f5a91e9c16e015843e9a3"
+      },
+      "what": "the U target's table generation 2; Job, record and projection keep T 1"
+    },
+    "K04": {
+      "files": {
+        "after2-jobs.bin": {
+          "bytes": 16384,
+          "sha256": "0819a5bbaf6c69a9b65f9768a1bd645abef1afd428d6925481e7b967328f8beb"
+        },
+        "after2-leaf.bin": {
+          "bytes": 16384,
+          "sha256": "ea3e7539bd0fe13d97554395c854be5238f417d8c27e049015c7e28cab7e4b43"
+        },
+        "after2-root.bin": {
+          "bytes": 16384,
+          "sha256": "5569cbd19f52b7a64a06f6b224da5e15f3768f59584bb656ac87d6604a75bb19"
+        },
+        "after2-undo.bin": {
+          "bytes": 16384,
+          "sha256": "cef8d2d163a81d063efe820407f467f6be045318fc5690f9285761a770857848"
+        },
+        "forward2-frame.bin": {
+          "bytes": 91625,
+          "sha256": "737c0226551d0665f42d8db15bfe550c09873f2573ecc039d9ced34bd642ca30"
+        }
+      },
+      "patch": {
+        "bytes": 2130,
+        "sha256": "8f47fbe5c58688cb716d7f9dbc81cc0ceca131df3b2b5c634e0203d0489df916"
+      },
+      "what": "the second Forward consumes the first root's mutation 1 again"
+    },
+    "K05": {
+      "files": {
+        "after2-undo.bin": {
+          "bytes": 16384,
+          "sha256": "0add21dd7479a9849fc4265ede24a6d1e52faa59001b89ebe459929002174517"
+        },
+        "forward2-frame.bin": {
+          "bytes": 91625,
+          "sha256": "ed06f73e672e494e44c48f1be4c698f837b77bbc30583341c364a86a2350a64f"
+        }
+      },
+      "patch": {
+        "bytes": 590,
+        "sha256": "25ec5eba08eca315e75e0014c454e11bfab718c5095e3cc6b0905ce27eaa2ddb"
+      },
+      "what": "a different H of the same size (the actual H generation + 1)"
+    },
+    "K07": {
+      "files": {
+        "forward2-frame.bin": {
+          "bytes": 91721,
+          "sha256": "f03fde605527a9e04063faaac8accc1a6231248a26518bf81a94f0d95ba4efcf"
+        }
+      },
+      "patch": {
+        "bytes": 224,
+        "sha256": "7dc776a6a77d58f1c7ad146d07ebfbb82f699584592869cc81d7c2c1d1f8fc96"
+      },
+      "what": "a CountChange of the actual H with before 0 and after 0 (net-0 move)"
+    }
+  },
+  "pages": {
+    "jobs": 2,
+    "leaf": 13,
+    "root": 1,
+    "status": 11,
+    "undo": [
+      14,
+      15
+    ]
+  },
+  "previous_lsn": 16,
+  "provenance": {
+    "author": "dev3-module-c2/row-read-two/author.py (run as python3 -I author.py)",
+    "no_xadb_code": "no XADB encoder, decoder, A producer or B reader is run",
+    "pinned_inputs": {
+      "dev3-module-c2/row-read-two/live/aging.bin": "a35e819253d8a82d64cfc087a24c68bae014cec2874fd7b6dfefb1f11cecd8af",
+      "dev3-module-c2/row-read-two/live/bank.bin": "90a616fc3dace26ea94ff705ec46e28d846292b54d7bbb3cb6a6d85b9ec07efe",
+      "dev3-module-c2/row-read-two/live/jobs2.bin": "20c699c3ecf493a253f8719c4d9db3392323d25d1e29bb6a7f612d691b08a3ea",
+      "dev3-module-c2/row-read-two/live/leaf13.bin": "30b625850232dac524dda502796d7e3b0c2679cfc55346cab807b1579b465396",
+      "dev3-module-c2/row-read-two/live/profile.bin": "f49d4bb26a5c0e1bd66dec9a2b0f77aa24e3fafadf54f27e5db9ab9a960e204e",
+      "dev3-module-c2/row-read-two/live/root1.bin": "1a036fc2744150d2219461abd250728fc9111cc5f758ee8025888743ab1533ae",
+      "dev3-module-c2/row-read-two/live/status11.bin": "dbdffac2932ae3f46ae046217f36ff7656d17a88f710652017092f21f9076860",
+      "dev3-module-c2/row-read-two/live/tx.bin": "3d1838767a9da54b61a3c86b46dfb8153c645c5504e2d44cb438237e9403fd51",
+      "dev3-module-c2/row-read-two/live/undo14.bin": "7fe328b11b1d505fa2f35c0297e5cfcc369143ea7e8272298d564fe751774eab",
+      "dev3-module-c2/row-read-two/live/undo15.bin": "d826cb72764ce486fcc4f9346b6ce6e93a7d967bc1e24d285dd6b4f80acac31d",
+      "dev3-module-c2/row-read/author.py": "eda4a8a043a6393efe734e978a5aa14f28d0ce5c3a4624b8e5bec068e9733fe7",
+      "dev3-module-c3/row-write/forward.py": "cbab5fcf089099524ea31fa1da1b6673b617973623bc7c59b7334ef45064cd9f",
+      "module-row-format/transition/author.py": "076ea2f2767851bd8046becbba6b1d05a00a6cd7838a9c9e052b6b2e033beec4"
+    }
+  },
+  "reserve": [
+    {
+      "bytes": 57336,
+      "lsn": 17,
+      "sha256": "adf9b6ac1da88b3186f92e224910fc9d1583758a49e6832be4ebedc2043d8589",
+      "undo": 14
+    },
+    {
+      "bytes": 57336,
+      "lsn": 19,
+      "sha256": "264da56f4f49c5198991da2f97a1a2d1df9889eaa2aca94144690218f82a2e9e",
+      "undo": 15
+    }
+  ],
+  "rows": [
+    [
+      1,
+      7
+    ],
+    [
+      2,
+      8
+    ]
+  ],
+  "schema": "xadb-module-row-v1",
+  "source_kind": "C+B"
+}

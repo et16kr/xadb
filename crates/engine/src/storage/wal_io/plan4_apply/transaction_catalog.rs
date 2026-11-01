@@ -778,6 +778,26 @@ pub(in super::super) fn check_source_bytes() -> usize {
         + 4 * size_of::<usize>()
 }
 
+/// The part of `check_source_bytes` live while `transaction_check` waits at
+/// the gate (WRITER-PROGRESS-001, S9 boundaries `#row-m4-s9`): the helper's
+/// reference and stage slot, the gate and admission carriers, the class,
+/// finish_statement's actor and kind, the closure captures, the Result slots
+/// and the check's own unwind guard. The scans, the Observation, the handles
+/// and the CatalogCommit values exist only after admission.
+#[cfg(test)]
+pub(in super::super) fn check_entry_bytes() -> usize {
+    use std::mem::size_of;
+    size_of::<&()>()
+        + size_of::<Result<ActorStage>>()
+        + source::commit_carrier_bytes()
+        + size_of::<source::OperationClass>()
+        + size_of::<(TxnRef, bool)>()
+        + 14 * size_of::<&()>()
+        + 2 * size_of::<Result<ActorStage>>()
+        + 2 * size_of::<Result<TxnRef>>()
+        + size_of::<crate::storage::session_fence::UnwindFence<'_>>()
+}
+
 #[cfg(test)]
 impl RowTransaction<'_, '_, '_, '_> {
     pub(in crate::storage) fn test_flip_catalog_mode(&self) {

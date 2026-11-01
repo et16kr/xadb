@@ -10,27 +10,28 @@
 //! consumes the statement view a cursor borrows, so a cursor cannot stay
 //! open across an A driver statement; that case applies the row through A's
 //! validate/produce and C's reserve/prepare/apply on the same view.
-use super::super::super::{Plan4RecoveryAcquireFailure, RowRecoveryPolicy};
+use super::super::super::RowRecoveryPolicy;
 use super::row_forward::{VALUE, files};
+use super::row_native_a::{
+    JoinRead, Joined, check_epochs, disk, join_restart_with, rollback_required,
+};
 use super::row_preflight::{create_table, system_init};
 use super::*;
 use crate::storage::{
     disk::{
-        IsolationLevel, ReadStep, RecoveryAction, RetentionCause, RetentionError,
+        IsolationLevel, ReadStep, RetentionCause, RetentionError, RetentionPhase,
         RowMutationObservation, RowOwnedError, RowPreflightStep, TableStep, TransactionFinishError,
         TransactionOptions,
     },
-    retention_page::row::{self as job3, JobScope, JobState},
     row::{
         insert::{
             driver::{
-                After, DriveError, DriverError, Failure, PendingRollback, Stepped,
+                After, DriveError, DriverError, Stepped,
                 live::{
                     LiveCall, commit_live, finish_aborted_live, finish_rollback_live,
                     finish_statement_live, insert_live, rollback_step_live,
                     start_full_rollback_live, start_statement_rollback_live,
                 },
-                recovered::handle_recovered_clr,
             },
             produce_insert, validate_insert,
         },
@@ -64,22 +65,6 @@ fn int_of(output: &[u8], len: usize) -> i64 {
     match row.value(0).unwrap() {
         ValueRef::Int64(value) => value,
         other => panic!("column value {other:?}"),
-    }
-}
-
-/// C's error inside a failed A driver call.
-fn disk(failure: &Failure) -> &RetentionError {
-    match &failure.error {
-        DriverError::Disk(error) => error,
-        DriverError::Insert(error) => panic!("A's {error:?}, not C's"),
-    }
-}
-
-/// A failed driver call's pending rollback.
-fn rollback_required<H>(after: After<H>) -> PendingRollback<H> {
-    match after {
-        After::RollbackRequired(pending) => pending,
-        _ => panic!("the call is not RollbackRequired"),
     }
 }
 
@@ -147,39 +132,6 @@ macro_rules! point {
                 None
             }
             ReadStep::FlushRequired { .. } => panic!("resident read sources"),
-        }
-    }};
-}
-
-/// One A driver statement inserting `values` (one row each): the rows'
-/// observations. The driver finishes the statement.
-macro_rules! a_insert {
-    ($writer:expr, $owner:expr, $flush:ident, $flusher:ident, $view:expr, $table:expr, $private:expr, $values:expr) => {{
-        let values: Vec<[ValueRef<'static>; 1]> = $values
-            .iter()
-            .map(|v: &i64| [ValueRef::Int64(*v)])
-            .collect();
-        let rows: Vec<&[ValueRef<'_>]> = values.iter().map(|v| &v[..]).collect();
-        let mut slots: Vec<Option<RowMutationObservation>> = rows.iter().map(|_| None).collect();
-        let mut call = LiveCall::new($writer, $owner, &mut $flush, $flusher);
-        match insert_live(&mut call, $view, $table, $private, &rows, &mut slots) {
-            Ok(n) => assert_eq!(n, rows.len()),
-            Err(error) => panic!("A's statement refused {:?}", error.failure),
-        }
-        slots
-            .into_iter()
-            .map(|slot| slot.unwrap())
-            .collect::<Vec<_>>()
-    }};
-}
-
-/// A's Commit through the driver, which must succeed: its q.
-macro_rules! a_commit {
-    ($writer:expr, $owner:expr, $flush:ident, $flusher:ident, $tx:expr, $private:expr) => {{
-        let mut call = LiveCall::new($writer, $owner, &mut $flush, $flusher);
-        match commit_live(&mut call, $tx, $private) {
-            Ok(committed) => committed.q(),
-            Err(error) => panic!("A's Commit refused {:?}", error.failure),
         }
     }};
 }
@@ -913,6 +865,233 @@ fn mci01_v05_writers_of_different_tables_both_commit() {
     failed_statement_reads("MCI01-V05", false);
 }
 
+/// B's refusal of a CheckedTable of another origin: C's core identity check
+/// (Census, Unchanged, BindingMismatch).
+fn origin_refused(error: &RowReadError) -> bool {
+    matches!(
+        error,
+        RowReadError::Source(RetentionError {
+            phase: RetentionPhase::Census,
+            cause: RetentionCause::BindingMismatch,
+            effect: Effect::Unchanged,
+            ..
+        })
+    )
+}
+
+/// MCI01-V09 (origin stale, boundaries `#row-mi03-s9`): session X and
+/// session Y are two opens of two namespaces with the same history (CREATE
+/// of T), alive at once. X's CheckedTable of T has the same scalars as Y's
+/// own (object, slot, anchor) and another origin (core, binding, fence).
+/// Given to Y's statement it is refused by C's core identity check on both
+/// paths: B's point read and cursor (Census, Unchanged, BindingMismatch) and
+/// A's driver statement, whose C preflight refuses it (Prepare, Unchanged,
+/// BindingMismatch) before any reservation, the view returned. No file of
+/// either namespace changes and neither session is fenced. Y's own table
+/// then takes A's row (q 2) and B reads it; X's table still reads in X.
+#[test]
+fn mci01_v09_origin_stale_checked_table_is_refused_by_a_and_b() {
+    case("MCI01-V09-ORIGIN", || {
+        let oracle_x = Oracle::new();
+        with_fresh!(
+            oracle_x,
+            frames = 16,
+            |live_x,
+             owner_x,
+             flusher_x,
+             status_x,
+             undo_x,
+             private_x,
+             reader_private_x,
+             core_x,
+             fence_x,
+             state_x| {
+                let (row_status_x, _) = create_table(
+                    live_x, owner_x, flusher_x, status_x, undo_x, private_x, true,
+                );
+                let (mut writer_x, reader_x, mut flush_x) = live_x.split();
+                let x = read_only!(
+                    writer_x,
+                    owner_x,
+                    IsolationLevel::Serializable,
+                    reader_private_x
+                );
+                let view_x = writer_x.begin_statement(owner_x, &x).unwrap();
+                let stale = issue_table!(
+                    reader_x,
+                    owner_x,
+                    view_x,
+                    reader_private_x,
+                    flush_x,
+                    flusher_x
+                );
+                let _ = row_status_x;
+                let files_x = state_x.lock().unwrap().images();
+                let oracle_y = Oracle::new();
+                with_fresh!(
+                    oracle_y,
+                    frames = 16,
+                    |live,
+                     owner,
+                     flusher,
+                     status,
+                     undo,
+                     private,
+                     reader_private,
+                     core,
+                     fence,
+                     state| {
+                        let (row_status, _) =
+                            create_table(live, owner, flusher, status, undo, private, true);
+                        let (mut writer, reader, mut flush) = live.split();
+                        let y = writer
+                            .begin_row_transaction(
+                                owner,
+                                IsolationLevel::Serializable,
+                                &row_status,
+                                private,
+                                &mut flush,
+                            )
+                            .unwrap();
+                        let view = writer.begin_statement(owner, &y).unwrap();
+                        let own = issue_table!(reader, owner, view, reader_private, flush, flusher);
+                        assert_eq!(stale.test_identity(), own.test_identity());
+                        assert!(own.test_same_origin(core, fence));
+                        assert!(!stale.test_same_origin(core, fence));
+                        assert!(stale.test_same_origin(core_x, fence_x));
+                        let before = state.lock().unwrap().images();
+                        let cancel = Cancellation::default();
+                        let mut output = [0xA5; 64];
+                        let point = read_point_live(
+                            ReadCall {
+                                port: &reader,
+                                owner,
+                                private: reader_private,
+                                residency: &mut Plan4ResidencyCursor::new(),
+                            },
+                            &view,
+                            &stale,
+                            RowId::new(1).unwrap(),
+                            &mut output,
+                            &cancel,
+                        );
+                        match point {
+                            Err(ref error) if origin_refused(error) => {}
+                            Err(error) => panic!("B's point {error:?}"),
+                            Ok(_) => panic!("B's point read X's table in Y"),
+                        }
+                        assert_eq!(output, [0xA5; 64], "no bytes published");
+                        let mut cursor = open_cursor_live(&view, &stale, None, None).unwrap();
+                        let next = next_live(
+                            &mut cursor,
+                            ReadCall {
+                                port: &reader,
+                                owner,
+                                private: reader_private,
+                                residency: &mut Plan4ResidencyCursor::new(),
+                            },
+                            &mut output,
+                            &cancel,
+                        );
+                        match next {
+                            Err(ref error) if origin_refused(error) => {}
+                            Err(error) => panic!("B's cursor {error:?}"),
+                            Ok(_) => panic!("B's cursor read X's table in Y"),
+                        }
+                        let _ = cursor.close();
+                        let row = [ValueRef::Int64(VALUE)];
+                        let input: [&[ValueRef<'_>]; 1] = [&row];
+                        let mut slots: [Option<RowMutationObservation>; 1] = [None];
+                        let view = {
+                            let mut call = LiveCall::new(&mut writer, owner, &mut flush, flusher);
+                            match insert_live(&mut call, view, &stale, private, &input, &mut slots)
+                            {
+                                Err(DriveError { failure, after }) => {
+                                    let error = disk(&failure);
+                                    println!("MCI01_V09_ORIGIN A {error:?}");
+                                    assert_eq!(
+                                        (error.phase, error.effect),
+                                        (RetentionPhase::Prepare, Effect::Unchanged)
+                                    );
+                                    assert!(matches!(error.cause, RetentionCause::BindingMismatch));
+                                    match after {
+                                        After::Returned(view) => view,
+                                        _ => panic!("the refused statement is not returned"),
+                                    }
+                                }
+                                Ok(n) => panic!("A inserted {n} rows through X's table"),
+                            }
+                        };
+                        assert!(slots[0].is_none());
+                        assert_eq!(
+                            state.lock().unwrap().images(),
+                            before,
+                            "no file of Y changed"
+                        );
+                        assert_eq!(
+                            state_x.lock().unwrap().images(),
+                            files_x,
+                            "no file of X changed"
+                        );
+                        assert!(!fence.is_fenced() && !fence_x.is_fenced());
+                        // Y's own table still serves A and B.
+                        let rows = a_insert!(
+                            &mut writer,
+                            owner,
+                            flush,
+                            flusher,
+                            view,
+                            &own,
+                            private,
+                            [VALUE]
+                        );
+                        assert_eq!(rows[0].row().get(), 1);
+                        let q = a_commit!(&mut writer, owner, flush, flusher, y, private);
+                        assert_eq!(q, 2);
+                        let b =
+                            read_only!(writer, owner, IsolationLevel::Serializable, reader_private);
+                        let fresh = writer.begin_statement(owner, &b).unwrap();
+                        let table =
+                            issue_table!(reader, owner, fresh, reader_private, flush, flusher);
+                        assert_eq!(
+                            scan!(
+                                reader,
+                                owner,
+                                reader_private,
+                                &fresh,
+                                &table,
+                                flush,
+                                flusher
+                            ),
+                            vec![(1, VALUE)]
+                        );
+                        assert!(writer.finish_statement(owner, fresh).is_ok());
+                        assert!(writer.finish_read_only(owner, b).is_ok());
+                        owner.check_idle().unwrap();
+                    }
+                );
+                // X's table is not stale in X.
+                assert_eq!(
+                    scan!(
+                        reader_x,
+                        owner_x,
+                        reader_private_x,
+                        &view_x,
+                        &stale,
+                        flush_x,
+                        flusher_x
+                    ),
+                    vec![]
+                );
+                assert!(writer_x.finish_statement(owner_x, view_x).is_ok());
+                assert!(writer_x.finish_read_only(owner_x, x).is_ok());
+                owner_x.check_idle().unwrap();
+                assert!(!fence_x.is_fenced());
+            }
+        );
+    });
+}
+
 /// T's CheckedTable issued on a thread's own `view`; the sources are
 /// resident in these cases (no flush is available off the main thread).
 macro_rules! thread_table {
@@ -1484,192 +1663,37 @@ fn mci03_v04_poststage_fault_fences_a_and_b() {
     });
 }
 
-/// The Catalog epoch view of a session (`catalog_test_epochs`): active,
-/// the namespace epoch and each table's (state, object, last change q).
-type Epochs = (bool, u64, Vec<(u8, u64, u64)>);
+/// B's cursor over T after READY (S7): a Serializable read-only
+/// transaction and one statement.
+struct BScan;
 
-/// One restart's join result (`join_restart`).
-struct Joined {
-    /// C's Progress actions to READY.
-    steps: usize,
-    /// A's recovered CLRs to READY.
-    clrs: usize,
-    /// B's cursor rows (RowId, value) after READY.
-    rows: Vec<(u64, i64)>,
-    /// A's new row and its Commit q, when the restart ACKs one.
-    acked: Option<(u64, u64)>,
-    /// The published Q and the epochs at the READY handoff.
-    ready: (u64, Epochs),
-    /// The Row Job cells left (not Free) at the READY handoff: every Row
-    /// root and terminal was cleaned before READY when this is 0.
-    row_cells: usize,
-    /// The epochs after B's read and A's Commit (if any).
-    after: Epochs,
+impl JoinRead for BScan {
+    fn scan<'s, 'c, W: WriterNamespace>(
+        &self,
+        live: &mut Live<'_, 's, 'c, '_, '_, '_, '_, '_, W>,
+        owner: &mut Owner<'c, 's>,
+        flusher: &mut Owner<'c, 's>,
+        reader_private: &mut [u8; PRIVATE_BYTES],
+        _: &Images,
+    ) -> Vec<(u64, i64)> {
+        let (mut writer, reader, mut flush) = live.split();
+        let b = read_only!(writer, owner, IsolationLevel::Serializable, reader_private);
+        let view = writer.begin_statement(owner, &b).unwrap();
+        let table = issue_table!(reader, owner, view, reader_private, flush, flusher);
+        let rows = scan!(reader, owner, reader_private, &view, &table, flush, flusher);
+        assert!(writer.finish_statement(owner, view).is_ok());
+        assert!(writer.finish_read_only(owner, b).is_ok());
+        rows
+    }
 }
 
-/// One recovery process over `directory`: C's recovery under `policy` to
-/// READY (A's handler for each RowClr), B's cursor over T, then, with
-/// `ack`, A's new row of `ack` and its Commit. The memory MCI01-V11 case
-/// and the native MCI02 worker share it.
+/// S7's restart: `join_restart_with` read by B's cursor.
 fn join_restart<D: DirectoryPort>(
     directory: &D,
     policy: RowRecoveryPolicy,
     ack: Option<i64>,
 ) -> Joined {
-    let mut maintenance = boxed::<12_582_912>();
-    let mut dwb = boxed::<4_194_304>();
-    let mut slot = boxed::<1_048_576>();
-    let acquired = match Plan4Recovery::acquire(
-        directory,
-        Some(super::super::support::namespace()),
-        &mut maintenance,
-        &mut dwb,
-        &mut slot,
-    ) {
-        Ok(owner) => owner,
-        Err(Plan4RecoveryAcquireFailure::Acquired(_))
-        | Err(Plan4RecoveryAcquireFailure::Before { .. }) => panic!("acquire"),
-    };
-    let runtime = acquired.recover_with_rows(policy).ok().unwrap();
-    let core = PageConcurrency::new(runtime.session_fence()).unwrap();
-    let mut owner = core.try_owner(OwnerRole::Foreground).unwrap();
-    let mut flusher = core.try_owner(OwnerRole::DedicatedFlusher).unwrap();
-    let mut backing = vec![[0xa7; PAGE_BYTES]; 16];
-    let mut frames: Vec<_> = backing.iter_mut().map(DirtyFrame::new).collect();
-    let mut operation = boxed::<114_688>();
-    let mut closed = runtime
-        .bind(&owner, &core, &mut frames, &mut operation)
-        .unwrap();
-    let (mut steps, mut clrs, mut ready) = (0, 0, false);
-    for _ in 0..512 {
-        match closed.next_action(&mut owner, &mut flusher).unwrap() {
-            RecoveryAction::Ready => {
-                ready = true;
-                break;
-            }
-            RecoveryAction::Progress(progress) => {
-                assert!(!progress.ready);
-                steps += 1;
-            }
-            RecoveryAction::RowClr(task) => {
-                let actor = task.actor();
-                match handle_recovered_clr(task) {
-                    Ok(progress) => assert!(progress.progressed && !progress.ready),
-                    Err(_) => panic!("A's recovered CLR for {actor:?}"),
-                }
-                clrs += 1;
-            }
-        }
-    }
-    assert!(ready, "bounded Row recovery exhausted");
-    let (mut live, private) = match closed.into_live_with_private() {
-        Ok(value) => value,
-        Err(_) => panic!("original READY handoff"),
-    };
-    let at_ready = (live.catalog_test_q(), live.catalog_test_epochs());
-    let row_cells = live
-        .catalog_test_jobs()
-        .iter()
-        .filter(|bytes| {
-            let job = job3::decode_job(&bytes[..], super::super::support::namespace()).unwrap();
-            job.scope() == Some(JobScope::Row) && job.state() != JobState::Free
-        })
-        .count();
-    let row_status = live.recovery_test_expected_target(11).unwrap();
-    let first_jobs = crate::storage::retention_page::JobSlotRef::new(
-        page_ref(2, 1),
-        0,
-        foundation::identity::Generation::new(1).unwrap(),
-    )
-    .unwrap();
-    let mut cursor = Plan4ResidencyCursor::new();
-    for _ in 0..16 {
-        match live
-            .prepare_empty_targets(&owner, &row_status, first_jobs, &mut cursor)
-            .unwrap()
-        {
-            None => break,
-            Some(RetentionResidencyStep::FlushRequired { target, .. }) => {
-                drive_flush(&mut live, &mut flusher, Some(&target))
-            }
-            Some(_) => panic!("unexpected Begin preparation"),
-        }
-    }
-    prepare_catalog(&mut live, &owner, &mut flusher);
-    if ack.is_some() {
-        system_init(&mut live, &mut owner, &mut flusher, true);
-    }
-    let mut reader_private = boxed::<PRIVATE_BYTES>();
-    let reader_private = &mut *reader_private;
-    let owner = &mut owner;
-    let flusher = &mut flusher;
-    let rows;
-    let mut acked = None;
-    {
-        let (mut writer, reader, mut flush) = live.split();
-        let b = read_only!(writer, owner, IsolationLevel::Serializable, reader_private);
-        let view = writer.begin_statement(owner, &b).unwrap();
-        let table = issue_table!(reader, owner, view, reader_private, flush, flusher);
-        rows = scan!(reader, owner, reader_private, &view, &table, flush, flusher);
-        assert!(writer.finish_statement(owner, view).is_ok());
-        assert!(writer.finish_read_only(owner, b).is_ok());
-        if let Some(value) = ack {
-            let a = writer
-                .begin_row_transaction(
-                    owner,
-                    IsolationLevel::Serializable,
-                    &row_status,
-                    private,
-                    &mut flush,
-                )
-                .unwrap();
-            let s = writer.begin_statement(owner, &a).unwrap();
-            let table = issue_table!(reader, owner, s, reader_private, flush, flusher);
-            let new = a_insert!(
-                &mut writer,
-                owner,
-                flush,
-                flusher,
-                s,
-                &table,
-                private,
-                [value]
-            );
-            let q = a_commit!(&mut writer, owner, flush, flusher, a, private);
-            acked = Some((new[0].row().get(), q));
-        }
-        assert_eq!(reader.catalog_test_source_used(), 0);
-        owner.check_idle().unwrap();
-    }
-    let after = live.catalog_test_epochs();
-    assert!(!runtime.session_fence().is_fenced());
-    drop(live);
-    Joined {
-        steps,
-        clrs,
-        rows,
-        acked,
-        ready: at_ready,
-        row_cells,
-        after,
-    }
-}
-
-/// The logical-epoch oracle of a restart whose history's last ACKed Commit
-/// is `q` (MCI01-V11): READY's exclusive activation seeds the namespace
-/// epoch and T's epoch with the published Q (task-10
-/// `#module-row-isolation`), and that Q is still `q` after every physical
-/// cleanup the recovery ran (Prune, ReleaseRole, RootFree, TerminalFinish,
-/// and a loser's CLRs and AbortEnd), all of which completed before READY
-/// (no Row Job cell is left). The epoch ledger is inactive during recovery,
-/// so V11 holds there by construction; what this checks is that no cleanup
-/// step published a q. A later Row Commit at `q'` moves only T's epoch
-/// (V10).
-fn check_epochs(joined: &Joined, q: u64) {
-    assert_eq!(joined.row_cells, 0, "Row cleanup finished before READY");
-    assert_eq!(joined.ready, (q, (true, q, vec![(2, 6, q)])));
-    let t = joined.acked.map_or(q, |(_, acked)| acked);
-    assert_eq!(joined.after, (true, q, vec![(2, 6, t)]));
+    join_restart_with(directory, policy, ack, &Images::new, &BScan)
 }
 
 /// MCI01-V11 (memory): the physical cleanup of a committed Row actor does

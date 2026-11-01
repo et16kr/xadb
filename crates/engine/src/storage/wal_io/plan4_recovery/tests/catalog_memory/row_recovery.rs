@@ -4,13 +4,15 @@
 //! original flush/VERIFY/STABILIZE handoff. Each image is the durable file
 //! set of an actual writer run; nothing here builds a recovery input. The
 //! Row cell trace after every progressed step is the selection order the
-//! boundaries fix, and READY is followed by B's read of the table under a
-//! new Row snapshot.
-use super::super::super::{Plan4RecoveryAcquireFailure, RowRecoveryPolicy};
-use super::super::faults::unchanged_error;
+//! boundaries fix. The READY files are then read with C's tree-page and
+//! row-record decoders (`leaf_values`), not B, so this module is part of the
+//! C+A single-source export (S9, `#row-mi03-s9`); `row_recovery_read` adds
+//! B's read under a new Row snapshot after the same restarts (C+A+B).
+use super::super::super::RowRecoveryPolicy;
 use super::super::support::namespace;
 use super::row_forward::VALUE;
 use super::row_preflight::{create_table, system_init};
+pub(super) use super::row_reopen::refused_in;
 use super::*;
 use crate::storage::{
     disk::{
@@ -125,10 +127,10 @@ macro_rules! rolled_back {
 /// found that after-the-fact relaxation against the development policy.
 /// The debug hash fix (sha2 at opt-level 3) removed that cost, so S7
 /// restores 30 s before its execution and reruns the cases under it.
-const READY_BOUND: Duration = Duration::from_secs(30);
+pub(super) const READY_BOUND: Duration = Duration::from_secs(30);
 
 /// The Row cells of the bank: (ordinal, state, release cursor).
-type Cells = Vec<(usize, JobState, u8)>;
+pub(super) type Cells = Vec<(usize, JobState, u8)>;
 
 fn row_cells(jobs: &[[u8; 1024]; 64]) -> Cells {
     jobs.iter()
@@ -143,7 +145,7 @@ fn row_cells(jobs: &[[u8; 1024]; 64]) -> Cells {
 
 /// How the actual writer run ends before the crash image is taken.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
-enum Ending {
+pub(super) enum Ending {
     /// `rows` applied rows and the Row Commit (S3).
     Committed,
     /// `rows - 1` applied rows, then one RowReserve only (S2-b2).
@@ -160,7 +162,7 @@ enum Ending {
 
 /// The durable file set after an actual Row run on table T: `rows` Free
 /// Undo pages are INIT first, so each row has its own U.
-fn image(rows: usize, ending: Ending) -> Images {
+pub(super) fn image(rows: usize, ending: Ending) -> Images {
     let oracle = Oracle::new();
     with_fresh!(
         oracle,
@@ -354,7 +356,7 @@ fn catalog_reserved_image() -> Images {
 
 /// The no-loser inputs of MCB05-N01..06 (consumers `#acceptance`), each the
 /// durable files of an actual writer run.
-fn no_loser_input(id: &str) -> Images {
+pub(super) fn no_loser_input(id: &str) -> Images {
     match id {
         "MCB05-N01" => image(1, Ending::Active),
         "MCB05-N02" => image(1, Ending::Reserved),
@@ -381,47 +383,9 @@ fn refused(images: &Images, policy: Option<RowRecoveryPolicy>) {
     );
 }
 
-/// `refused` over any directory port; the caller checks its files.
-fn refused_in<D: DirectoryPort>(directory: &D, policy: Option<RowRecoveryPolicy>) {
-    let mut maintenance = boxed::<12_582_912>();
-    let mut dwb = boxed::<4_194_304>();
-    let mut slot = boxed::<1_048_576>();
-    let owner = match Plan4Recovery::acquire(
-        directory,
-        Some(namespace()),
-        &mut maintenance,
-        &mut dwb,
-        &mut slot,
-    ) {
-        Ok(owner) => owner,
-        Err(Plan4RecoveryAcquireFailure::Acquired(_))
-        | Err(Plan4RecoveryAcquireFailure::Before { .. }) => panic!("acquire"),
-    };
-    let result = match policy {
-        None => owner.recover(),
-        Some(policy) => owner.recover_with_rows(policy),
-    };
-    let failed = match result {
-        Err(failed) => failed,
-        Ok(_) => panic!("{policy:?} admitted a refused Row image"),
-    };
-    assert_eq!(failed.error().effect, Effect::CallerMustResolve);
-    assert!(failed.error().lease_acquired);
-    unchanged_error(
-        failed.error(),
-        failed.observation(),
-        Plan4RecoveryPhase::Analysis,
-    );
-    assert!(matches!(
-        failed.error().cause,
-        Plan4RecoveryCause::Unsupported
-    ));
-    println!("S6R_REFUSED policy={policy:?} {:?}", failed.error());
-}
-
 /// How a restart drives the closed facade.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
-enum Drive {
+pub(super) enum Drive {
     /// The original `step`: no Row CLR handler.
     Step,
     /// `next_action`, each RowClr through A's `handle_recovered_clr`.
@@ -441,22 +405,33 @@ enum Drive {
 /// A's applied CLRs, the facade's observation at bind, the files at the
 /// READY handoff (or at the crash), and B's reads of RowId 1..=n (None:
 /// Missing).
-struct Restart {
-    trace: Vec<Cells>,
-    clrs: usize,
-    observation: Plan4RecoveryObservation,
-    images: Images,
-    reads: Vec<Option<i64>>,
+pub(super) struct Restart {
+    pub(super) trace: Vec<Cells>,
+    pub(super) clrs: usize,
+    pub(super) observation: Plan4RecoveryObservation,
+    pub(super) images: Images,
+    pub(super) reads: Vec<Option<i64>>,
 }
 
 /// One restart of `policy` (None: the legacy entry) over `images`, driven
-/// as `drive` to READY, then B reads RowId 1..=`reads` under a new Row
-/// snapshot (a crash drive reads nothing).
+/// as `drive` to READY, then the READY files' RowId 1..=`reads` are read by
+/// `leaf_values` (a crash drive reads nothing).
 fn restart(
     images: &Images,
     policy: Option<RowRecoveryPolicy>,
     drive: Drive,
     reads: u64,
+) -> Restart {
+    restart_with(images, policy, drive, reads, &PageRead)
+}
+
+/// `restart` whose READY read is `reader`.
+pub(super) fn restart_with<R: ReadyRead>(
+    images: &Images,
+    policy: Option<RowRecoveryPolicy>,
+    drive: Drive,
+    reads: u64,
+    reader: &R,
 ) -> Restart {
     let directory = clone_directory(images);
     let state = directory.state();
@@ -466,25 +441,133 @@ fn restart(
         policy,
         drive,
         reads,
+        reader,
     );
     assert_closed(&state);
     restarted
 }
 
+/// The read of RowId 1..=`reads` after READY, given the live session and the
+/// READY files. `PageRead` reads the files with C's decoders (C+A);
+/// `row_recovery_read::BRead` is B's point read under a new Row snapshot.
+pub(super) trait ReadyRead {
+    #[allow(clippy::too_many_arguments)]
+    fn read<'s, 'c, W: WriterNamespace>(
+        &self,
+        live: &mut Live<'_, 's, 'c, '_, '_, '_, '_, '_, W>,
+        owner: &mut Owner<'c, 's>,
+        flusher: &mut Owner<'c, 's>,
+        private: &mut [u8; super::super::super::CATALOG_PRIVATE_BYTES],
+        ready_files: &Images,
+        reads: u64,
+    ) -> Vec<Option<i64>>;
+}
+
+/// The READY read of this module: `leaf_values` over the READY files.
+pub(super) struct PageRead;
+
+impl ReadyRead for PageRead {
+    fn read<'s, 'c, W: WriterNamespace>(
+        &self,
+        _: &mut Live<'_, 's, 'c, '_, '_, '_, '_, '_, W>,
+        _: &mut Owner<'c, 's>,
+        _: &mut Owner<'c, 's>,
+        _: &mut [u8; super::super::super::CATALOG_PRIVATE_BYTES],
+        ready_files: &Images,
+        reads: u64,
+    ) -> Vec<Option<i64>> {
+        leaf_values(ready_files, reads)
+    }
+}
+
+/// The committed rows (RowId, value) of the READY files, in key order, read
+/// from the T RowLeaf (page 13) of the home file with C's tree-page and
+/// row-record decoders, not B. After READY the recovered cleanup is
+/// complete, so every cell must carry a Committed stamp and no Undo.
+pub(super) fn leaf_rows(images: &Images) -> Vec<(u64, i64)> {
+    use crate::storage::{
+        page::{PageIdentity, PageKind},
+        row_record::{RecordExpectation, RowPayload, decode_row_record},
+        transaction_record::VersionStamp,
+        tree_page::{EntryPayload, TreeExpectation, decode_tree_page},
+    };
+    use foundation::identity::{ObjectId, RowId};
+    let home = &images["d3-data-0000000100000001"];
+    let at = 13 * PAGE_BYTES;
+    let leaf = decode_tree_page(
+        &home[at..at + PAGE_BYTES],
+        TreeExpectation {
+            identity: PageIdentity {
+                database: namespace().database,
+                page: page_ref(13, 2),
+                owner: ObjectId::new(6).unwrap(),
+                owner_generation: Generation::new(1).unwrap(),
+            },
+            kind: PageKind::RowLeaf,
+            level: 0,
+            arity: 0,
+        },
+    )
+    .unwrap();
+    let columns = [crate::api::Column {
+        name: "i".into(),
+        data_type: crate::api::DataType::Int64,
+        nullable: false,
+    }];
+    (0..leaf.len())
+        .map(|index| {
+            let entry = leaf.entry(index).unwrap();
+            let row = u64::from_be_bytes(entry.key.try_into().unwrap());
+            let EntryPayload::Value(bytes) = entry.payload else {
+                panic!("RowLeaf entry {row} has a child");
+            };
+            let record = decode_row_record(
+                bytes,
+                RecordExpectation {
+                    namespace: namespace(),
+                    row: RowId::new(row).unwrap(),
+                },
+                &columns,
+            )
+            .unwrap();
+            let version = record.version();
+            assert!(
+                matches!(version.stamp, VersionStamp::Committed(_)) && version.undo.is_none(),
+                "row {row} after READY: {version:?}"
+            );
+            match record.payload() {
+                RowPayload::Inline(canonical) => match canonical.value(0).unwrap() {
+                    ValueRef::Int64(value) => (row, value),
+                    other => panic!("row {row}: {other:?}"),
+                },
+                other => panic!("row {row}: {other:?}"),
+            }
+        })
+        .collect()
+}
+
+/// RowId 1..=`reads` of `leaf_rows`: the value, or None when the key is
+/// absent.
+pub(super) fn leaf_values(images: &Images, reads: u64) -> Vec<Option<i64>> {
+    let rows = leaf_rows(images);
+    (1..=reads)
+        .map(|row| {
+            rows.iter()
+                .find(|(id, _)| *id == row)
+                .map(|(_, value)| *value)
+        })
+        .collect()
+}
+
 /// `restart` over any directory port; `files` takes its current files.
-fn restart_in<D: DirectoryPort>(
+pub(super) fn restart_in<D: DirectoryPort, R: ReadyRead>(
     directory: &D,
     files: &dyn Fn() -> Images,
     policy: Option<RowRecoveryPolicy>,
     drive: Drive,
     reads: u64,
+    reader: &R,
 ) -> Restart {
-    use crate::storage::disk::{Plan4ResidencyCursor, ReadStep};
-    use crate::storage::row::read::driver::{
-        PointRead,
-        live::{LiveCall as ReadCall, read_point_live},
-    };
-    use foundation::{identity::RowId, runtime::Cancellation};
     let started = std::time::Instant::now();
     let mut trace = Vec::new();
     let mut clrs = 0;
@@ -606,102 +689,8 @@ fn restart_in<D: DirectoryPort>(
         };
         assert!(row_cells(live.catalog_test_jobs()).is_empty());
         taken = files();
-        let row_status = live.recovery_test_expected_target(11).unwrap();
         let readied = started.elapsed();
-        // B's Row Begin takes its Root, first Jobs page and Status resident
-        // through the original empty-transaction preparation.
-        let first_jobs = crate::storage::retention_page::JobSlotRef::new(
-            page_ref(2, 1),
-            0,
-            foundation::identity::Generation::new(1).unwrap(),
-        )
-        .unwrap();
-        let mut cursor = Plan4ResidencyCursor::new();
-        for _ in 0..16 {
-            match live
-                .prepare_empty_targets(&owner, &row_status, first_jobs, &mut cursor)
-                .unwrap()
-            {
-                None => break,
-                Some(RetentionResidencyStep::FlushRequired { target, .. }) => {
-                    drive_flush(&mut live, &mut flusher, Some(&target))
-                }
-                Some(_) => panic!("unexpected Begin preparation"),
-            }
-        }
-        // B's table issue reads the Catalog anchor and leaf.
-        prepare_catalog(&mut live, &owner, &mut flusher);
-        let mut reader_private = boxed::<PRIVATE_BYTES>();
-        let reader_private = &mut *reader_private;
-        let owner = &mut owner;
-        let flusher = &mut flusher;
-        {
-            let (mut writer, reader, mut flush) = live.split();
-            let tx = writer
-                .begin_row_transaction(
-                    owner,
-                    IsolationLevel::Serializable,
-                    &row_status,
-                    private,
-                    &mut flush,
-                )
-                .unwrap();
-            let view = writer.begin_statement(owner, &tx).unwrap();
-            let table = issue_table!(reader, owner, view, reader_private, flush, flusher);
-            let mut residency = Plan4ResidencyCursor::new();
-            let cancel = Cancellation::default();
-            let mut output = [0xA5; 64];
-            for row in 1..=reads {
-                let read = loop {
-                    match read_point_live(
-                        ReadCall {
-                            port: &reader,
-                            owner,
-                            private: reader_private,
-                            residency: &mut residency,
-                        },
-                        &view,
-                        &table,
-                        RowId::new(row).unwrap(),
-                        &mut output,
-                        &cancel,
-                    )
-                    .unwrap()
-                    {
-                        ReadStep::Ready(read) => break read,
-                        ReadStep::FlushRequired { target } => {
-                            flush_target!(flush, flusher, target)
-                        }
-                    }
-                };
-                values.push(match read {
-                    PointRead::Found(copied) => {
-                        assert_eq!(copied.version().row.get(), row);
-                        let decoded = crate::storage::row_record::decode_canonical_row(
-                            &output[..copied.len()],
-                            &[crate::api::Column {
-                                name: "i".into(),
-                                data_type: crate::api::DataType::Int64,
-                                nullable: false,
-                            }],
-                        )
-                        .unwrap();
-                        match decoded.value(0).unwrap() {
-                            ValueRef::Int64(value) => Some(value),
-                            other => panic!("row {row}: {other:?}"),
-                        }
-                    }
-                    PointRead::Missing => None,
-                });
-            }
-            assert!(writer.finish_statement(owner, view).is_ok());
-            assert!(
-                writer
-                    .abort_empty_transaction(owner, tx, private, &mut flush)
-                    .is_ok()
-            );
-            owner.check_idle().unwrap();
-        }
+        values = reader.read(&mut live, &mut owner, &mut flusher, private, &taken, reads);
         assert!(!runtime.session_fence().is_fenced());
         drop(live);
         println!(
@@ -718,8 +707,8 @@ fn restart_in<D: DirectoryPort>(
     }
 }
 
-/// The original-step restart to READY of S6R-M01/M02: B reads `rows`
-/// committed rows of VALUE, or finds RowId 1 Missing when `rows` is 0.
+/// The original-step restart to READY of S6R-M01/M02: the page reader finds
+/// `rows` committed rows of VALUE, or RowId 1 absent when `rows` is 0.
 /// Returns the trace and the files at the READY handoff.
 fn recover_ready(
     images: &Images,
@@ -1169,7 +1158,3 @@ fn s6r_m08_reject_initial_losers_inputs() {
         }
     });
 }
-
-#[cfg(target_os = "linux")]
-#[path = "row_recovery/native.rs"]
-mod native;

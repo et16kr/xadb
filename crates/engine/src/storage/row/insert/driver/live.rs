@@ -635,6 +635,31 @@ pub(in crate::storage) fn commit_caller_source<W: WriterNamespace + 'static>() -
     (held, held)
 }
 
+/// The statement the S2-e callers of `insert_live` pass at most
+/// (`catalog_memory::row_live`): two rows of T's one value. The term covers
+/// these test callers only: a product caller (S3/S4, SQL) must rerun this
+/// census with its own term. At S2-e the preflight's frame-static margin
+/// with this term (813 B) is worth about eight more rows of one value (96 B
+/// each), and its per-call margin (1584 B) about sixteen. MCA00-D15 and the
+/// S9 gate-wait census below use it.
+#[cfg(test)]
+pub(in crate::storage) const CALLER_ROWS: usize = 2;
+#[cfg(test)]
+pub(in crate::storage) const CALLER_VALUES: usize = 1;
+
+/// S9 (WRITER-PROGRESS-001, boundaries `#row-m4-s9`): A's frame-static share
+/// at `insert.finish_statement`, where C's statement end waits at the gate,
+/// with the term of `insert_live`'s caller for the S2-e statement
+/// (`CALLER_ROWS` rows of `CALLER_VALUES` values, MCA00-D15's reading).
+#[cfg(test)]
+pub(in crate::storage) fn statement_end_caller_source<W: WriterNamespace + 'static>() -> usize {
+    let site = live_call_sites::<W>()
+        .into_iter()
+        .find(|site| site.name == "insert.finish_statement")
+        .expect("insert.finish_statement site");
+    site.bytes + site.dead + live_caller_bytes::<W>(CALLER_ROWS, CALLER_VALUES).0
+}
+
 /// Flush continuation using the original disjoint flusher held by C.
 pub(in crate::storage) fn flush_rollback_live<
     'r,
