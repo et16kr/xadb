@@ -1,5 +1,7 @@
 # XADB 조사·실행 증거
 
+2026-11-01 [MI03 남은 한계 8개](module-mi03-limits-20261101.md): S10이 PARTIAL·NOT_RUN으로 남긴 MI03 8 ID의 한계 내용, S11의 시도 방법, 해결 여부를 ID별로 정리했다. 7개는 PASS로 해결했고 MCB03-V01은 PARTIAL로 남아 사용자 결정으로 한계를 기록하고 M5를 완료로 판정했다. 실행과 판정은 [S11 증거](module-independence-survey-20261026.md#s11-mi03-resupply)다.
+
 2026-10-31 [S4 live Row rollback](module-independence-survey-20261026.md#s4-row-rollback): main `139a05f4`의 별도 branch `codex/s4-row-rollback`에서 statement/full rollback·원 CLR/receipt·flusher/pin 인계를 구현했다. source별 선택20개·변경 compiler1개·native2process를 검증했으며 최종 독립 D1/D2 ACCEPT·필수 수정0을 확인했다. S5/C4/S6·전체 M4/M5는 미완료다.
 
 2026-10-31 [S3 Row Commit](module-independence-survey-20261026.md#s3-row-commit): 클라우드 별도 branch에서 실제 Commit·논리 table epoch·capsule 종료를 연결했다. source별 선택 실행·native 두 process를 확인하고 원 실패를 보존했다. 최종 독립 D1/D2 ACCEPT·필수 수정0이다. S4–S6·전체 M4/M5는 미완료다.

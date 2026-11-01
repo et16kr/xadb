@@ -18,6 +18,11 @@
       "role": "evidence",
       "title": "main 기존 실패 디버깅: commit window native 초과와 F05 recovery oracle"
     },
+    "module-mi03-limits-20261101.md": {
+      "path": "evidence/module-mi03-limits-20261101.md",
+      "role": "evidence",
+      "title": "MI03 남은 한계 8개: 내용, 시도 방법, 해결 여부"
+    },
     "module-independence-survey-20261026.md": {
       "path": "evidence/module-independence-survey-20261026.md",
       "role": "evidence",

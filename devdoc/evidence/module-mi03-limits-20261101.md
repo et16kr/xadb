@@ -1,0 +1,102 @@
+# MI03 남은 한계 8개: 내용, 시도 방법, 해결 여부
+
+2026-11-01
+
+8개 가운데 7개를 해결했고(PASS), MCB03-V01 하나는 해결하지 못했다(PARTIAL). 사용자는 그 한계를 기록하고 M5를 완료로 판정하라고 골랐다.
+
+S10이 끝났을 때 [소비자 §9](../contracts/dev3-module-consumers.md#acceptance) 동결 inventory 129 ID 가운데 8 ID가 PASS가 아니었다. 결정 카드에는 7개로 올렸고, 그 뒤 기록 재확인 R11이 MCA05-V32를 PARTIAL로 낮춰 8개가 되었다. S11은 이 8개를 C의 시험 전용(cfg(test)) 경로로 다시 공급했다. 제품 동작은 바꾸지 않았다. A의 판정을 같은 동작의 함수로 뺀 것 하나는 사용자가 허락했다. 계약은 [S11 절](../contracts/dev3-module-boundaries.md#row-mi03-s11)이고 실행과 판정은 [S11 증거](module-independence-survey-20261026.md#s11-mi03-resupply)다.
+
+## 한눈에 보기
+
+| ID | S10 판정 | 한계 | S11 시도 | 해결 |
+| --- | --- | --- | --- | --- |
+| MCA01-V12-P | PARTIAL | A의 Index 거절 판정을 시험이 부를 수 없었다 | A 판정을 순수 함수로 빼고 C의 census 결과를 넣었다 | 해결 (PASS, C0 입력) |
+| MCA05-V01 | PARTIAL | WAL 몫을 정확히 1 모자라게 만들 수 없었다 | 흐름 전체의 WAL 몫을 C의 실제 admission까지 줄이는 guard | 해결 (PASS) |
+| MCA05-V02 | NOT_RUN | 256 MiB WAL을 거의 채워야 해 30초 안에 불가 | 같은 guard, 몫 = 필요 | 해결 (PASS) |
+| MCA05-V03 | NOT_RUN | V02와 같다 | 같은 guard, 몫 = 필요 + 1 | 해결 (PASS) |
+| MCA05-V29 | PARTIAL | count 0인 H를 실제 C 상태로 만들 수 없었다 | A에 빌려주는 before image 사본만 바꾸는 주입기 | 해결 (PASS, 한계 기록) |
+| MCA05-V32 | PARTIAL | 인용 시험이 cancel과 finish만 보고 drop은 안 봤다 | drop 경로의 새 시험, 인용 시험 재실행 | 해결 (PASS) |
+| MCB03-V01 | PARTIAL | 동결 순서에 live로 닿지 않는다 | 시험이 만든 receipt로 registry를 직접 부름 | **미해결 (PARTIAL)** |
+| MCB03-V08 | PARTIAL | 같은 owner의 셋째 claim을 B로 낼 수 없었다 | capture 지점의 C 시험 probe가 claim | 해결 (PASS, 한계 기록) |
+
+129 ID 전체는 PASS 108(실제 C 97, C0 입력 6, 인용 5), PARTIAL 1, N/A 20이다. S10은 PASS 101, PARTIAL 6, NOT_RUN 2, N/A 20이었다.
+
+## MCA01-V12-P — Index가 있는 table의 profile 거절
+
+해결했다(PASS, C0 입력). C의 census가 센 Index 수가 A의 실제 판정 함수를 지나 Unsupported가 된다.
+
+- **요구:** Catalog census가 table T의 Index를 세면 A의 profile 판정이 INSERT를 Unsupported로 거절해야 한다. 동결 문언은 "Index를 허용하는 mutant는 실패해야 한다"이다.
+- **S10 한계:** C의 census가 Index 수를 바르게 세는 것까지만 보였다. A의 한 줄 판정(`index_count != 0`)은 C의 preflight가 만든 context 안에서만 불리고, 계약 [§8.4](../contracts/dev3-module-consumers.md#index-negative-input)가 context factory를 금지한다. 그래서 그 판정을 지운 mutant도 통과했다.
+- **S11 시도:** 사용자 허락("A 판정을 함수로 분리")으로 A의 `schema` 판정을 같은 조건의 순수 함수 `table_only_profile`로 뺐다. C 시험의 census 결과(parent가 T인 Index 1개, 다른 parent 0, Index 없음 0)를 A 시험이 그 함수에 넣는다.
+- **결과:** parent가 T이면 Unsupported, 나머지는 Ok다. 판정에서 `index_count != 0`을 지운 mutant는 이 시험에서 실패했다.
+- **남은 한계:** `schema`가 그 함수에 실제 context 값을 넘긴다는 것은 코드를 읽어 확인했다. factory가 없으므로 실행으로 보이지는 않는다.
+
+## MCA05-V01, V02, V03 — WAL 몫 최소 필요 −1, =, +1
+
+셋 모두 해결했다(PASS). 최소 필요는 RowReserve의 admission 1,040,288 B이고, −1은 효과 전에 거절되고 =와 +1은 끝까지 성공한다.
+
+- **요구:** INSERT에 필요한 WAL 몫보다 1 적으면 효과 전에 거절하고, 같거나 1 많으면 끝까지 성공해야 한다.
+- **S10 한계:** C는 WAL 파일 cap 256 MiB에 대해서만 비교한다. 정확히 1 모자란 상태를 만들려면 파일을 거의 다 채워야 해서 30초 한도 안에서 불가능했다. V01은 거절 분기를 강제로 한 번 타게 해 PARTIAL, V02와 V03은 NOT_RUN이었다.
+- **S11 시도:** WAL 파일에 남은 몫을 시험 thread에서만 줄이는 guard를 두었다. 원래 비교식은 그대로다.
+    - 처음 공급(`a81f8975`)은 physical stage 한 곳만 줄이고 필요를 RowReserve frame 57,336 B로 잡았다.
+    - 독립 검토(R1)가 그것이 틀렸음을 찾았다. C는 stage 전에 Row WAL admission(`check_progress_room`)에서 frame과 앞으로 갚아야 할 모든 WAL을 합해 본다. 실제 필요는 57,336 + 982,952 = 1,040,288 B다. 57,336 B 몫이면 실제 C는 이미 거절하므로 V02와 V03의 기대가 틀렸다.
+    - 고친 guard(`25044995`)는 흐름 전체에서 admission과 stage를 함께 줄인다. 필요는 같은 fixture를 제한 없이 돌려 C의 admission 기록에서 잰다.
+- **결과:**
+    - −1: 효과 전 Unchanged (Prepare, Capacity)로 거절된다. 파일은 byte 동일이고 제한을 풀면 다시 성공한다.
+    - =, +1: Reserve, Forward, 실패 statement와 rollback, full abort가 모두 몫 안에서 끝난다. admission 7번, stage 7번 모두 거절이 없다.
+    - admission 비교를 `>=`로 바꾼 mutant는 V02에서 실패했다.
+- **남은 한계:** 256 MiB 파일을 실제로 채운 상태는 만들지 않는다. C의 다른 WAL cap 비교 다섯 곳은 줄이지 않지만, 임시 probe로 이 흐름이 거기에 닿지 않음을 확인했다.
+
+## MCA05-V29 — before count 0인 H를 A가 거절
+
+해결했다(PASS, 한계 기록). 실제 C 위에서 A가 출력 전에 거절하고 driver가 예약을 취소한다.
+
+- **요구:** H(다음 Forward가 옮길 Undo)의 before count가 0이면 A가 출력 전에 거절해야 한다(실제 C 위에서).
+- **S10 한계:** U의 count는 C만 WAL 아래에서 쓰므로, 이력과 맞으면서 count가 0인 C 상태는 만들 수 없다. frame만 바꾸면 C의 preflight가 먼저 fence한다. 그래서 A의 거절이 실제 C에서 나는 경로가 없었다.
+- **S11 시도:** C가 A의 producer에 빌려주는 before image 9장을 시험에서만 사본으로 바꾸고, 그 사본의 count를 0으로 고쳐 다시 seal했다. loan, pool, WAL과 C의 검산은 원본을 본다.
+- **결과:** A가 (Produce, OrderMismatch)로 출력 전에 거절하고 driver가 C로 예약을 Cancel한다. 새 frame은 RowReserve(57,336 B)와 Cancel(40,000 B, author literal과 같음)뿐이고 Forward는 없다. Commit이 q 2로 앞 행만 공개한다.
+- **남은 한계:** count 0인 H는 A가 읽는 사본에만 있다.
+
+## MCA05-V32 — API drop/cancel의 권한 반환
+
+해결했다(PASS). drop 절반은 새 시험이 보고, cancel 절반은 인용 시험을 같은 commit에서 다시 실행했다.
+
+- **요구:** preflight나 예약을 drop 또는 cancel하면 charge, gate, lease를 돌려줘야 한다.
+- **S10 한계:** 인용 시험(S2W-R15, R10, R03)은 cancel과 finish만 보고 drop은 실행하지 않았다(기록 재확인 R11).
+- **S11 시도:** Ready preflight를 finish 없이 drop하는 새 시험을 더했다. 활성 예약 drop의 fence는 S2W-R23(2)을 인용하고, 검토 R4에 따라 그 시험도 선택에 넣어 다시 실행했다.
+- **결과:** drop이 charge(44,304), gate, lease, loan을 돌려주고 효과와 fence가 없다. 다음 preflight가 같은 loan으로 다시 Ready가 되어 끝난다.
+
+## MCB03-V01 — B의 capture 뒤 retirement가 Busy
+
+해결하지 못했다(PARTIAL). 동결된 순서에 live로 닿는 경로가 없고, 시험용 권한 factory는 계약이 금지한다.
+
+- **요구:** B 읽기가 source capture로 Txn과 U의 pin을 쥔 뒤, 그 U의 retirement가 pin 수 때문에 Busy로 거절되어야 한다.
+- **S10 한계:** 이 순서에 live로 닿는 retirement가 없다. rollback CLR의 retirement는 S2-0 gate에서 B 읽기를 기다리고(MCB03-V02), UndoFree retirement는 live Row retirement라 사용자가 범위 밖으로 정했다. S10은 반대 순서만 보였다.
+- **S11 시도:** B1을 capture 뒤에서 멈추고, 시험이 직접 만든 `VerifiedRetirement`로 registry의 원 `begin_retirement`를 불렀다(gate를 거치지 않음).
+- **결과:** pin을 쥔 동안 Busy, Unchanged이고, B1이 pin을 돌려준 뒤 같은 시도는 받아들여진다. registry의 pin census가 거절한다는 것은 보였다.
+- **해결하지 못한 이유:** 독립 검토(R2)가 지적했다.
+    - `VerifiedRetirement`는 실제 semantic Before만 발급하는 권한 type이다. 소비자 계약 §8과 §8.4가 시험용 authority factory를 금지한다.
+    - S10도 같은 이유로 V12-P를 factory 없이 PARTIAL로 두었다.
+    - 은퇴시키는 U는 아직 Active인 거래의 것이라 실제 retirement는 이 모양이 될 수 없다.
+- **판정:** PARTIAL. 새 시험은 보조 증거로 남긴다. 2026-11-01 사용자는 "한계 기록하고 M5 완료"를 골랐다.
+- **해결하려면:** live Row retirement(DEV3)가 생겨 실제 semantic Before가 이 순서로 receipt를 낼 수 있어야 한다.
+
+## MCB03-V08 — source pin 2개 뒤 추가 claim Busy
+
+해결했다(PASS, 한계 기록). 추가 claim은 owner별 행 2개의 한도 때문에 Busy가 된다.
+
+- **요구:** 읽기가 source pin 2개를 잡은 뒤 같은 owner의 추가 reference claim은 Busy여야 한다.
+- **S10 한계:** B는 읽는 동안 `&mut Owner`를 빌리고 있어 같은 owner로 셋째 claim을 낼 수 없었다. gate가 닫힌 동안의 거절만 보였다.
+- **S11 시도:** capture 지점(`RowReadCaptured` 바로 앞)에서 C의 시험 probe가 읽는 Owner로 원 `reserve_references`를 한 번 더 부른다.
+- **결과:** owner의 행 2개가 쓰이고 있어 Busy, Unchanged이고 pin을 잡지 않는다.
+- **남은 한계:** 추가 claim은 C의 시험 probe가 낸다. B의 API로는 낼 수 없다. probe는 권한을 만들지 않고, 거절하는 것은 동결된 owner별 한도다.
+
+## 근거
+
+최종 실행은 commit `25044995`의 고정 export에서 모두 통과했다(C+A 50/50, C+B 37/37과 11/11, native 전부, 전체 트리 25/25). 독립 검토는 조건부 ACCEPT(필수 R1–R4), 반영 재확인은 ACCEPT다.
+
+- 계약: [S11 절](../contracts/dev3-module-boundaries.md#row-mi03-s11)
+- 선택: [S11 addendum](../../tests/fixtures/module-row-integration/single-source-s11-addendum.json)
+- 실행 기록: [S11 receipts](../../tests/fixtures/module-row-integration/single-source-s11-receipts.json)
+- 증거와 M5 재판정: [S11 증거](module-independence-survey-20261026.md#s11-mi03-resupply), [M5 재판정](module-independence-survey-20261026.md#s11-m5)
+- 검토 원문과 실행 artifacts: 공유 폴더 `module-independence-20261029/artifacts/module-s11-20261101/`

@@ -5790,7 +5790,7 @@ native는 같은 ELF의 별도 process이며 전원 장애 인수는 아니다. 
 
 **제품 변경.** 동작 변경은 없다. A `row/insert.rs`의 table-only profile 판정을 같은 조건의 순수 함수 `table_only_profile`로 뺐다(사용자 허락). C에서는 비교의 cap을 지역 변수로 적은 재결합 셋(`check_progress_room`, `stage_verified`, `producer_lane`의 before image)이 제품 build에서 같고, 나머지는 cfg(test) 코드다. 공개 wire, format, cap, charge, API, 결과·오류 의미는 그대로다.
 
-**결론.** 8 ID 가운데 7개가 PASS이고 MCB03-V01은 PARTIAL이다. 판정은 receipts의 `per_id`와 같다.
+**결론.** 8 ID 가운데 7개가 PASS이고 MCB03-V01은 PARTIAL이다. 판정은 receipts의 `per_id`와 같다. ID별 한계, 시도 방법, 해결 여부는 [MI03 남은 한계 8개](module-mi03-limits-20261101.md)에 따로 정리했다.
 
 | ID | S10 | S11 | 근거 |
 | --- | --- | --- | --- |

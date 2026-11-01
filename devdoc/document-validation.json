@@ -1,7 +1,7 @@
 {
   "schema_version": 2,
   "product": "XADB",
-  "date": "2026-11-01T12:08:15.615382+09:00",
+  "date": "2026-11-01T12:15:26.775082+09:00",
   "status": "PASS",
   "errors": [],
   "markdown_documents": [
@@ -583,9 +583,9 @@
     },
     {
       "file": "devdoc/evidence/README.md",
-      "links": 379,
+      "links": 381,
       "duplicate_ids": 0,
-      "sha256": "2cec94d631f5bfee31c06e27ff5f4fac23fa05e7013f6871e0bf359c7df3f21e"
+      "sha256": "7b8a5134be39f72d106ace00062cb96788870670b64cce92c9ab5f09ede0eb24"
     },
     {
       "file": "devdoc/evidence/comm-acceptance-resume-20261023.md",
@@ -1285,9 +1285,15 @@
     },
     {
       "file": "devdoc/evidence/module-independence-survey-20261026.md",
-      "links": 327,
+      "links": 328,
       "duplicate_ids": 0,
-      "sha256": "0b13a75d77cef35f2e6151b372759656aee2354b9502dfbb93aefa9711d1a7f2"
+      "sha256": "609daf2d68b428e74d99a187f673b4d77b889d203c72bbcd823072d40a964f55"
+    },
+    {
+      "file": "devdoc/evidence/module-mi03-limits-20261101.md",
+      "links": 9,
+      "duplicate_ids": 0,
+      "sha256": "894931ac6b57f64f7956a524d652086f7712fda651b9468d28b15de88b82bdef"
     },
     {
       "file": "devdoc/evidence/naming-cleanup-20261025.md",
