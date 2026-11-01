@@ -3072,7 +3072,7 @@ ID별 공급과 판정은 다음과 같다.
 | 현재 RowReserve | 3776+4320+208+3×16344 | 57336 |
 | admission 필요 | 현재 frame+미래 WAL | 1040288 |
 
-CREATE는 commit했지만 정리하지 않았으므로 그 cleanup을 남긴다. 완료된 System INIT는 추가 미래 debt를 남기지 않는다. Job별 cleanup을 Aging에 다시 더하지 않고 서로 다른 actor의 TerminalFinish는 각각 한 번 센다. 이 상수식은 production budget 함수·descriptor decoder를 호출하지 않는다. 관찰값은 정답과 비교할 대상으로만 쓰며, 모든 변형에서 `first.future`와 frame을 확인한다. 관측 기반 `reserve_need()`의 추가 무제한 실행은 제거한다. WAL 실제 frame의 종류·길이 증인, −1 효과0·재시도, =/+1의 rollback·abort 검증은 유지한다.
+CREATE는 commit했지만 정리하지 않았으므로 그 cleanup을 남긴다. 완료된 System INIT는 추가 미래 debt를 남기지 않는다. Job별 cleanup을 Aging에 다시 더하지 않고 서로 다른 actor의 TerminalFinish는 각각 한 번 센다. control 3×3040은 full-abort RollbackStart3040과 active mutating statement의 RollbackStart3040+StatementFinish3040이다([Row 남은 종료 의무](dev3-resource-bounds.md#wal남은-종료-의무)). 이 상수식은 production budget 함수·descriptor decoder를 호출하지 않는다. 관찰값은 정답과 비교할 대상으로만 쓰며, 모든 변형에서 `first.future`와 frame을 확인한다. 관측 기반 `reserve_need()`의 추가 무제한 실행은 제거한다. WAL 실제 frame의 종류·길이 증인, −1 효과0·재시도, =/+1의 rollback·abort 검증은 유지한다.
 
 **시험 사본 수명과 경계.** 주입기는 A의 `row/insert/before_test.rs`에만 둔다. 실제 C lane을 `parts()`로 받고 operation을 확인한 뒤, A의 Forward producer가 지역 `Option<Box<[[u8; PAGE_BYTES]; 9]>>`로 변조 사본을 소유한다. 생성한 `RowProposal`은 참조가 없는 값이므로 성공·오류·unwind 모두 그 호출을 끝낼 때 사본이 해제된다. 단순 lane 발급과 CLR은 hook을 소비하지 않는다. C의 시험 API·예약 필드·주입용 re-export는 제거한다. `ReservedRow`/`PreparedRow` 크기는 원368/448B로 돌아가며 제품 build에는 주입기·호출 분기가 없다. 144KiB heap 사본과 지역 포인터는 시험 계측 비용이다. 기존 source census를 이 계측의 실제 stack/heap 사용량 측정으로 주장하지 않는다.
 

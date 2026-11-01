@@ -145,7 +145,7 @@ MCB03-V01은 실제 retirement 구현 및 동시성 경로 검토가 남아 PART
 
 | 항목 | 결정 |
 | --- | --- |
-| ID·분류·일자·상태 | MI03-S11-REVIEW-002 · D2 · 2026-11-01 · 구현 완료, 선택 검증·독립 최종 검토 대기 |
+| ID·분류·일자·상태 | MI03-S11-REVIEW-002 · D2 · 2026-11-01 · ACCEPTED · 구현·선택 검증·독립 최종 검토 완료 |
 | 담당·위임 | 구현·계약·통합 담당 AI 실행 `/root`. 사용자 최초 요청은 더 좋은 설계의 판단이며, PR #16을 대상으로 별도 수정 PR 생성까지 요청함. 이후 기존 구현을 제약으로 삼은 해석을 명시적으로 정정 |
 | 대체 결정 | REVIEW-001의 예약 소유 Box. 독립 WAL oracle 결정은 유지 |
 | 범위 | A의 cfg(test) Forward before-image 주입과 C의 불필요한 시험 API 제거. 제품 wire/API/gate/charge, 동결 inventory·원 실행 판정은 유지 |
@@ -182,4 +182,7 @@ A의 `before_test`는 cfg(test) module이다. operation 검증 뒤 Forward만 on
 
 실제 code diff에 따라 V29(거절과 실제 Cancel), S2W-R09(정상 Forward와 독립 literal), C01/C02/C06 및 A D15 memory/native(필드 제거의 carrier/caller census)를 선택한다. R09는 hook을 켠 채 C lane만 발급할 때 hits0, 실제 A가 no-op 사본을 소비한 뒤 hits1을 확인하고 기존 전체 Forward literal 비교를 유지한다. 무변경 WAL 세 시험·mutant·C+B·native 복구·전체 inventory는 다시 실행하지 않는다. RESERVE_FRAME은 기존57336과 같은 계약식3776+4320+208+3×16344로 표현하고 const assert를 추가했다. 값은 V29와 R09에서도 독립 frame 증인과 대조한다.
 
-최종 실행·source identity·별도 검토 결과는 다음 기록에 보강한다. DP01의 별도 검토자는 구현 실행과 구별되는 AI 실행 `/root/pr16_independent_review`이며, 초기 설계 비교에서 C accessor보다 A가 주입기를 소유하는 경계가 낫다고 확인했다. 이는 구현·실행 결과의 최종 승인과 구분한다.
+구현 commit은 `acd566a6db634b9c115ac316c0d59624e6f292f7`이다. [재설계 receipts](../../tests/fixtures/module-row-integration/single-source-s11-design-receipts.json)에 source/ELF/input 해시,1260개 source의 재구성 방법,7개 원 출력,양쪽 export inventory를 보존한다. V29는1.308초, R09는0.902초, census5개는각0.004–0.006초로 **7/7 PASS**했다. C01/C02 원 출력은 ReservedRow368/PreparedRow448B를 확인한다. C+A/C+B export의 금지 source 참조는 각각0이다. 이 export 검사는 정적 검사이며 해당 export에서 컴파일·시험한 결과로 표시하지 않는다. 이전 WAL/mutant 시험은 원 source 결과를 그대로 인용한다. DP01의 별도 검토자는 구현 실행과 구별되는 AI 실행 `/root/pr16_independent_review`이며, 초기 설계 비교에서 C accessor보다 A가 주입기를 소유하는 경계가 낫다고 확인했다. 이는 구현·실행 결과의 최종 승인과 구분한다.
+
+
+**최종 독립 검토:** 별도 실행 `/root/pr16_independent_review`가 코드·계약과 실행 증거를 검토해 **ACCEPT, 필수 수정0**으로 판정했다. 구현 commit에서1260파일 source manifest를 독립 재구성했고 input·실제 ELF·7개 원 출력의 hash를 대조했다. C+A7700파일/C+B7593파일도 명시한 삭제·patch로 재구성해 manifest와 보존 export의 모든 파일이 일치함을 확인했다. 코드 검토 원문과 실행 증거 검토 보충 원문은 재설계 receipts의 `review`에 함께 보존한다. 원문의 실행 대기 상태는 뒤의 보충 검토로 종료한다. 로그·hash·receipts를 보존한 뒤 이 작업의 build target·임시 export·ELF를 삭제한다.
