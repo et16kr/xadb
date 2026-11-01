@@ -1,0 +1,11 @@
+test_actual_runner_bootstrap_uses_head_policy_without_old_requirement (test_module_gate_python.PythonBuildTests.test_actual_runner_bootstrap_uses_head_policy_without_old_requirement) ... ok
+test_actual_runner_executes_python_only_and_binds_result (test_module_gate_python.PythonBuildTests.test_actual_runner_executes_python_only_and_binds_result) ... ok
+test_actual_runner_failure_is_not_a_successful_receipt (test_module_gate_python.PythonBuildTests.test_actual_runner_failure_is_not_a_successful_receipt) ... ok
+test_actual_runner_rejects_missing_declaration_before_execution (test_module_gate_python.PythonBuildTests.test_actual_runner_rejects_missing_declaration_before_execution) ... ok
+test_broken_candidate_dependency_and_selection_fail_normal_and_bootstrap (test_module_gate_python.PythonBuildTests.test_broken_candidate_dependency_and_selection_fail_normal_and_bootstrap) ... ok
+test_unprivileged_bootstrap_and_trusted_control_stay_separate (test_module_gate_python.PythonWorkflowTests.test_unprivileged_bootstrap_and_trusted_control_stay_separate) ... ok
+
+----------------------------------------------------------------------
+Ran 6 tests in 4.463s
+
+OK

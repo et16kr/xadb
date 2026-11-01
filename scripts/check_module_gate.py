@@ -14,6 +14,7 @@ Subcommands:
          run of the same head (`module-build.yml`)
 """
 import argparse
+import ast
 import hashlib
 import io
 import json
@@ -42,6 +43,8 @@ RUST_INPUTS = re.compile(r'(?:.*\.rs|(?:.*/)?Cargo\.toml|Cargo\.lock|rust-toolch
                          r'|\.cargo/.*|crates/.*|tests/.*)\Z')
 # A libtest filter the runner passes after `--`: a module path, never a flag.
 SELECTOR = re.compile(r'[A-Za-z_][A-Za-z0-9_]*(?:::[A-Za-z0-9_]+)*(?:::)?\Z')
+PYTHON_TEST = re.compile(r'(test_[A-Za-z0-9_]+)\.([A-Za-z_][A-Za-z0-9_]*)\.(test_[A-Za-z0-9_]+)\Z')
+PYTHON_RUNNERS = ('scripts/module_gate_build.py', 'scripts/module_gate_python.py')
 
 
 class GateError(Exception):
@@ -725,6 +728,15 @@ class Manifest:
         self.review = {cls: [glob_regex(p) for p in pats]
                        for cls, pats in data['review_required'].items() if cls in CLASSES}
         self.records = glob_regex(data['records'])
+        python = data.get('python_tests', {})
+        if not isinstance(python, dict):
+            raise GateError(f'{origin}: python_tests must map paths to test modules')
+        for path, modules in python.items():
+            if (not isinstance(path, str) or normalize(path) != path or path.startswith('/')
+                    or not isinstance(modules, list) or not modules
+                    or not all(isinstance(m, str) and re.fullmatch(r'test_[A-Za-z0-9_]+', m)
+                               for m in modules)):
+                raise GateError(f'{origin}: invalid python_tests entry {path!r}')
         self.exceptions = data['exceptions']
         keys = set()
         for ex in self.exceptions:
@@ -968,7 +980,7 @@ def manifest_changes(trusted, head):
         found.append(f'exception {i} changed' + (' (relaxation)' if wider else ''))
     found += [f'exception {i} removed' for i in old_ex if i not in new_ex]
     for key in ('crates', 'unscoped', 'policy_files', 'review_required', 'records',
-                'exports', 'attested', 'evidence'):
+                'exports', 'attested', 'evidence', 'python_tests'):
         if trusted.data.get(key) != head.data.get(key):
             tight = _narrowing(key, trusted.data.get(key), head.data.get(key))
             found.append(f'{key} changed' + ('' if tight else ' (relaxation)'))
@@ -1559,6 +1571,54 @@ def attribute_findings(tree):
             and re.search(rb'export-(?:ignore|subst)', tree.read(p))]
 
 
+def python_selection(manifest, tree, diff, records, policy_tree):
+    """Read declarations as data. Never import PR Python in the control job.
+
+    An exact per-change selection avoids rerunning an entire unchanged suite.
+    The D2 reviewer checks that the selected cases exercise the changed paths;
+    the gate checks their names and coverage of each registered input.
+    """
+    mapping = manifest.data.get('python_tests', {})
+    changed = sorted({p for _s, old, new in diff for p in (old, new) if p in mapping})
+    if not changed:
+        return None, []
+    errors, tests = [], set()
+    allowed = {m for p in changed for m in mapping[p]}
+    for path, record in records:
+        selected = record.get('python_tests', [])
+        if not isinstance(selected, list) or not all(isinstance(n, str) for n in selected):
+            errors.append(f'{path}: python_tests must be exact unittest IDs')
+            continue
+        tests.update(selected)
+    for name in sorted(tests):
+        match = PYTHON_TEST.fullmatch(name)
+        if not match or match[1] not in allowed:
+            errors.append(f'Python test {name!r}: not an allowed exact unittest ID')
+            continue
+        module, cls, method = match.groups()
+        path = f'scripts/{module}.py'
+        try:
+            syntax = ast.parse(tree.text(path), filename=path)
+            found = [n for n in syntax.body if isinstance(n, ast.ClassDef) and n.name == cls]
+            methods = [n for c in found for n in c.body
+                       if isinstance(n, ast.FunctionDef)
+                       and n.name == method]
+            if len(found) != 1 or len(methods) != 1:
+                errors.append(f'Python test {name}: missing or ambiguous declaration')
+        except (GateError, SyntaxError) as error:
+            errors.append(f'Python test {name}: {error}')
+    for path in changed:
+        if not any(PYTHON_TEST.fullmatch(n) and n.split('.')[0] in mapping[path] for n in tests):
+            errors.append(f'{path}: no declared Python test for this changed input')
+    # Bind the whole head (including test inputs), the changed registered paths,
+    # and the trusted execution implementation. A moved default branch is safe
+    # only when the checker, manifest AND both runner blobs still match.
+    return dict(tests=sorted(tests), changed={p: tree.blob(p) or 'deleted' for p in changed},
+                source_tree=git(tree.repo, 'rev-parse', f'{tree.commit}^{{tree}}').decode().strip(),
+                runners={p: policy_tree.blob(p) for p in PYTHON_RUNNERS},
+                timeout_seconds=900), errors
+
+
 def judge(repo, base, head, policy=None, mode='merge', exports=True):
     """Judge merge-base(base, head)..head under the trusted manifest."""
     base_c, head_c = resolve(repo, base), resolve(repo, head)
@@ -1655,6 +1715,10 @@ def judge(repo, base, head, policy=None, mode='merge', exports=True):
     cases, generated, optional, executor = changed_cases(trusted, analysis,
                                                          {n for _s, _o, n in diff if n})
     plan = selection(trusted, touched, records, rust, cases, generated, optional)
+    python, python_errors = python_selection(trusted, head_tree, diff, records, policy_tree)
+    if python is not None:
+        plan['python'] = python
+    errors += python_errors
     unscoped = {p for _s, o, n in diff for p in (o, n)
                 if p and RUST_INPUTS.match(p) and trusted.owner(p) == '-'}
     obligations += coverage_findings(trusted, touched, records, plan, cases, generated,
@@ -1704,6 +1768,24 @@ def verify_receipt(report, receipt, run, repository, checker_sha256):
     want = report['selection']
     if receipt.get('selection') != want:
         errors.append('build receipt selection differs from the trusted plan')
+    if want.get('python'):
+        for key in ('base', 'merge_base'):
+            if receipt.get(key) != report.get(key):
+                errors.append(f'Python receipt {key} differs from the judged change')
+        if receipt.get('runner_blobs') != want['python']['runners']:
+            errors.append('Python receipt runner revision differs from the trusted plan')
+        python_results = receipt.get('python_results')
+        if not isinstance(python_results, dict):
+            errors.append('missing Python test results')
+        else:
+            planned = want['python']['tests']
+            rows = python_results.get('tests', [])
+            if (not isinstance(rows, list) or not all(isinstance(r, dict) for r in rows)
+                    or sorted(str(r.get('id')) for r in rows) != planned
+                    or not planned or any(r.get('status') != 'PASS' for r in rows)
+                    or python_results.get('status') != 'PASS'
+                    or python_results.get('exit_code') != 0):
+                errors.append('Python tests missing, duplicate, skipped, failed or interrupted')
     results = {r.get('name'): r for r in receipt.get('results', []) if isinstance(r, dict)}
     # (name, kind, planned): kind 'build'; 'selector' (at least one listed,
     # every listed passes or is ignored); 'cases' (every planned name listed
@@ -1794,8 +1876,8 @@ def api(url, token, raw=False, opener=None):
 
 def final(args, report, fetch=api, sleep=time.sleep):
     """Wait for the build run of the head, then accept it only as data."""
-    if not report['selection']['rust']:
-        report['notes'].append('no Rust/test input changed: the build run is N/A')
+    if not report['selection']['rust'] and not report['selection'].get('python'):
+        report['notes'].append('no Rust/test or registered Python input changed: build N/A')
         return []
     token = os.environ.get('GITHUB_TOKEN')
     if not token:

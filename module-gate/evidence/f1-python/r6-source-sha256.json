@@ -1,0 +1,12 @@
+{
+ ".github/workflows/module-build.yml": "11ce66eb930e17f579983a304d0b5d70ede6744b0b0c3381804676f37aa36f3f",
+ "devdoc/plans/module-independence-followup-plan.md": "394f21d663d37aebb1f21c7325bd800d8e4ff8477878a0599343bad15ff05265",
+ "devdoc/policies/module-gate.json": "4342c17a3107121dbc777e043aa663d73916b500802d23b29e83c19738510193",
+ "devdoc/policies/repository-build-plan.json": "f4cbb11b1254c6e042fc38676e5d9af896ec84ad8b0367db5d5acd301a19d9cc",
+ "devdoc/policies/repository-build-plan.md": "4572ce469c2ae1158494d13d085992227f54eb72918951e6d279d8f9f9a36bec",
+ "module-gate/README.md": "4922387093eef1c1d613d8cdbfbeaacca91b794f475aa304fb25e82ecb427811",
+ "scripts/check_module_gate.py": "c835600c78880d706baff24d066c67f715c7f90dc66c9179ab1dbd1fd6e8e9b2",
+ "scripts/module_gate_build.py": "2d1c90deeaa13a4a8ab180a2f677625017f5bdc134e8a242ffb7b7b856a9085d",
+ "scripts/module_gate_python.py": "eff1f178c01dc88e4827e3f1516c0dc154eaf10d3cae79c1ce56d7732fa2f421",
+ "scripts/test_module_gate_python.py": "be1e08c7227710211c230daf4f2202aea7ac716da4cac34dd19bd12a2b5a1b6a"
+}

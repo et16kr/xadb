@@ -1,0 +1,14 @@
+test_actual_runner_bootstrap_uses_head_policy_without_old_requirement (test_module_gate_python.PythonBuildTests.test_actual_runner_bootstrap_uses_head_policy_without_old_requirement) ... ok
+test_actual_runner_executes_python_only_and_binds_result (test_module_gate_python.PythonBuildTests.test_actual_runner_executes_python_only_and_binds_result) ... ok
+test_actual_runner_failure_is_not_a_successful_receipt (test_module_gate_python.PythonBuildTests.test_actual_runner_failure_is_not_a_successful_receipt) ... ok
+test_actual_runner_rejects_missing_declaration_before_execution (test_module_gate_python.PythonBuildTests.test_actual_runner_rejects_missing_declaration_before_execution) ... ok
+test_missing_selection_is_an_obligation_not_success (test_module_gate_python.PythonPlanTests.test_missing_selection_is_an_obligation_not_success) ... ok
+test_invalid_missing_and_broad_test_names_fail (test_module_gate_python.PythonPlanTests.test_invalid_missing_and_broad_test_names_fail) ... ok
+test_candidate_syntax_error_is_not_success (test_module_gate_python.PythonPlanTests.test_candidate_syntax_error_is_not_success) ... ok
+test_mapping_removal_does_not_waive_trusted_obligation (test_module_gate_python.PythonPlanTests.test_mapping_removal_does_not_waive_trusted_obligation) ... ok
+test_rename_keeps_old_path_obligation (test_module_gate_python.PythonPlanTests.test_rename_keeps_old_path_obligation) ... ok
+
+----------------------------------------------------------------------
+Ran 9 tests in 2.496s
+
+OK

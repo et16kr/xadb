@@ -1,0 +1,12 @@
+test_broken_candidate_dependency_and_selection_fail_normal_and_bootstrap (test_module_gate_python.PythonBuildTests.test_broken_candidate_dependency_and_selection_fail_normal_and_bootstrap) ... ok
+test_matching_receipt_is_accepted (test_check_module_gate.FinalTests.test_matching_receipt_is_accepted) ... ok
+test_stale_forged_skipped_and_partial_results_are_rejected (test_check_module_gate.FinalTests.test_stale_forged_skipped_and_partial_results_are_rejected) ... ok
+test_repository_manifest_matches_the_export_tool (test_check_module_gate.RealManifest.test_repository_manifest_matches_the_export_tool)
+The manifest's A/B test files are exactly the export tool's link lists. ... ok
+test_build_workflow_skips_only_before_adoption (test_check_module_gate.RealManifest.test_build_workflow_skips_only_before_adoption)
+The adopting PR has no planner on the default branch: the build half ... ok
+
+----------------------------------------------------------------------
+Ran 5 tests in 2.947s
+
+OK

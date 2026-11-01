@@ -5995,3 +5995,38 @@ RR3c는 작성 담당이 반영 확인 중 찾았다. 모든 engine 파일을 �
 ### 되돌림
 
 되돌림은 이 기록의 문서 commit, `199fc0f2`, `3c4fbb02`, `4cbebb0d`, `f066cffd`, `d1871c1b`의 역순이다. 제품·시험 동작 변경은 없다. 원격 설정은 2026-11-01 적용했다. 되돌리려면 사용자가 ruleset을 끄거나 지우고 Actions 정책을 지운 뒤 workflow 파일을 지운다. 원격 적용 확인 기록(이 절의 전체 lib 보정과 원격 적용과 확인)은 문서만 바꿨다.
+
+
+<a id="f1-python-gate"></a>
+## F1 — 후보 Python gate 검증
+
+2026-11-01 UTC · **구현·선택 로컬 검증 / 독립 D2 ACCEPT·필수 지적 0 / PR·원격 실행 대기**
+
+사용자가 F1 구현 뒤 리뷰·테스트·PR 제출까지 지시했다. 기준은 PR #23 병합 `8215c729`, branch는 `codex/f1-gate-python-tests`다. 작성·계약·통합은 `/root`, 독립 리뷰는 `/root/f1_review`다. 범위는 [build 계약](../policies/repository-build-plan.md#module-gate-python)의 checker·runner·무권한 workflow·manifest·선택 시험과 기록뿐이다. Rust 제품·fixture·F0는 바꾸지 않았다. 새 source root·crate·dependency도 없다.
+
+### 설계와 검증 범위
+
+변경별 exact unittest ID 선언, 신뢰 path→시험 module 대응, AST 이름 확인, 별도 isolated worker, head/tree/base/merge-base/변경 blob/시험 목록/runner blob 결속, Python-only receipt 확인을 추가했다. 전체 suite 자동 선택 대신 변경 기록의 사례만 고른다. 이 PR의 [선택 기록](../../module-gate/records/20261101-f1-python-gate.json)은 신규 F1 사례와 변경된 receipt/manifest/workflow 경로를 직접 확인하는 기존 4개 사례다. 기존 gate 전체 78개나 Rust 제품 시험을 실행하지 않는다.
+
+독립 리뷰가 요구한 실제 후보 checker의 의존 판정·시험 선택 오판을 각각 주입했다. 임시 Git 저장소에서 일반 모드(기본 branch 도구 복사)와 bootstrap(head 도구 복사)를 각각 실행하여 실패 exit와 실패 receipt를 확인한다. 기본 branch에 F1이 없을 때는 무권한 build만 후보 도구를 실행한다. 기존 특권 제어는 기존 계약을 유지하므로 채택 PR의 Module build 성공 확인을 사람이 병합 전에 해야 한다. 병합 뒤의 실제 강제 관측은 아직 하지 않았다.
+
+시험 예산은 신규/수정 Python 사례와 직접 영향 기존 사례, worker 900초·CI build 120분 상한이다. 임시 저장소/작은 입력만 쓰며 제품 데이터·native disk를 만들지 않는다. 불일치·skip·abort·timeout은 실패로 남기고 원 실패 로그를 덮어쓰지 않는다. pre-push의 fmt/Clippy/문서 검사는 별도 필수 gate이며 Clippy는 제품 시험 실행이 아니다.
+
+### 개발 중 선택 실행
+
+| 실행 | 실제 결과·범위 | 원 로그 |
+| --- | --- | --- |
+| r1 | 신규 16개 중 2개 시험 함수 실패(3개 subcase). 실제 결함은 중복 요청을 worker가 허용한 것. 두 시험 기대는 잘못됨: exact loader는 module load_tests를 호출하지 않고, 문자열 secrets. 검사는 주석까지 잡았음. 최종 PASS 증거가 아님 | [r1](../../module-gate/evidence/f1-python/python-r1.log) |
+| r2 | 중복 요청 거절과 실제 미실행 run override 반례, workflow 표현식 검사로 정정. 영향 2개 PASS | [r2](../../module-gate/evidence/f1-python/python-r2.log) |
+| r3 | 실행기 실제 연결 신규 4개, 선언 오류 차단 변경 5개 PASS | [r3](../../module-gate/evidence/f1-python/python-r3.log) |
+| r4 | 실제 checker 오류 주입 1개(4개 조합)와 receipt/manifest/workflow 영향 기존 4개 PASS | [r4](../../module-gate/evidence/f1-python/python-r4.log) |
+| r5 | 임시 저장소의 policy revision에서 실제 도구를 복사하도록 연결 시험을 강화. 영향 build 5개와 workflow 1개 PASS | [r5](../../module-gate/evidence/f1-python/python-r5.log), [source SHA-256](../../module-gate/evidence/f1-python/r5-source-sha256.json) |
+| r6 | 독립 리뷰가 찾은 async/generator 시험 본문 미실행 false-PASS를 차단. worker 영향 6개와 AST 거절 신규 1개 PASS | [r6](../../module-gate/evidence/f1-python/python-r6.log), [source SHA-256](../../module-gate/evidence/f1-python/r6-source-sha256.json) |
+
+r1–r4는 개발 중 작업 트리에서 실행했고 별도 source hash를 고정하지 않았다. 원 로그와 실패를 보존하되 최종 commit 검증으로 승격하지 않는다. r5/r6는 해당 source hash의 선택 증거다. 최종 PR head에 결속된 CI receipt와 pre-push 결과는 후속 기록으로 남긴다.
+
+### 독립 검토와 남은 확인
+
+초기 설계 검토는 방향 수용·구현 검토 대기였다. 첫 구현 검토에서 fresh interpreter·정확한 ID 대조·source/runner 결속·신뢰 mapping 유지·무권한 도입을 확인했고, 실제 checker 결함 주입 증거와 bootstrap 문구 보완을 요구했다. 후속 정적 검토에서 unittest가 일반 TestCase의 async/generator 본문을 실행하지 않고 성공으로 셀 수 있는 결함을 지적했다. 정적 선언은 동기 함수만 허용하고 worker는 coroutine/generator/async-generator 함수를 거절하며, 동기 wrapper의 non-None 반환 경고도 실패로 처리하도록 수정했다. 최종 재검토는 ACCEPT·미해결 필수 지적 0이다. 신규 23개와 직접 영향 기존 4개, 총 27개 exact CI 선택을 확인했다. 통합 담당이 async/generator 수정과 실제 후보 checker 오류 주입 증거를 대조하고 수용했다. [독립 검토 원문](../../module-gate/evidence/f1-python/review.log)을 보존한다.
+
+F0 실패 처리, F2 공통 계약 시험 선택, 원격 ruleset/Actions 정책 변경과 PR merge는 범위 밖이다. 되돌림은 이 PR을 함께 revert하며 기존 원 증거·원격 보호를 보존한다.

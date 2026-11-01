@@ -405,15 +405,31 @@ manifest를 바꾸는 PR은 그 자체가 D2 `policy` 검토 대상이다. 의�
 
 ### 제어와 실행의 분리
 
-제어 workflow는 `pull_request_target`으로 실행된다. 이 이벤트는 기본 branch의 workflow 파일과 checkout을 쓰므로 PR이 바꾼 workflow·검사기는 판정에 쓰이지 않는다. head와 base는 `git fetch`로 객체만 가져온다. 권한은 `contents`·`actions`·`pull-requests` 읽기와 `statuses` 쓰기뿐이다. build workflow는 `pull_request`로 PR 코드를 실행하되 계획·export·runner는 기본 branch의 사본을 쓴다. head는 Git 객체에서 꺼내고, export 도구는 `git archive`를 쓰므로 검사기가 `export-ignore`·`export-subst`를 쓰는 `.gitattributes`를 거절한다(PR이 build 입력을 바꾸지 못하게).
+제어 workflow는 `pull_request_target`으로 실행된다. 이 이벤트는 기본 branch의 workflow 파일과 checkout을 쓰므로 PR이 바꾼 workflow·검사기는 판정에 쓰이지 않는다. head와 base는 `git fetch`로 객체만 가져온다. 권한은 `contents`·`actions`·`pull-requests` 읽기와 `statuses` 쓰기뿐이다. build workflow는 `pull_request`로 PR 코드를 실행하되 계획·export·runner는 기본 branch의 사본을 쓴다. F1 최초 채택 PR의 무권한 bootstrap만 아래 예외를 따른다. head는 Git 객체에서 꺼내고, export 도구는 `git archive`를 쓰므로 검사기가 `export-ignore`·`export-subst`를 쓰는 `.gitattributes`를 거절한다(PR이 build 입력을 바꾸지 못하게).
 
-제어의 최종 판정은 build run의 head SHA·이벤트·workflow 경로·저장소, receipt의 검사기 SHA-256·manifest blob·검사기 blob·계획·사례 수를 확인한 뒤에만 수용한다. 두 workflow 사이에 기본 branch가 움직여도 manifest와 검사기 blob이 같으면 같은 계획이다. 같은 이름의 다른 workflow 성공, 이전 head의 결과, 취소·skip은 수용하지 않는다. 제어는 판정이 이미 실패하면 build run을 기다리지 않고, 아니면 최대 7,500초 기다린다(build 제한 120분, 제어 job 제한 140분). 대기 시간이 지난 뒤 끝난 build는 제어를 다시 깨우지 않으므로 제어 run을 수동으로 다시 실행한다. 같은 head를 다른 base로 연 두 PR은 최신 build run이 다른 base의 것일 수 있어 실패 쪽으로 판정된다. build workflow는 `edited`에 반응하지 않으므로 PR의 base를 바꾼 뒤에는 push나 닫고 다시 열기로 build를 새로 돌린다. artifact 내려받기는 다른 host로 redirect되므로 token은 첫 요청에만 싣고 redirect에는 싣지 않는다. 같은 저장소의 PR만 수용하며 fork PR은 항상 실패한다(이 저장소는 단일 계정이라 fork PR을 쓰지 않는다).
+제어의 최종 판정은 build run의 head SHA·이벤트·workflow 경로·저장소, receipt의 검사기 SHA-256·manifest blob·검사기 blob·계획·사례 수를 확인한 뒤에만 수용한다. 두 workflow 사이에 기본 branch가 움직여도 manifest와 검사기 blob 및 필요한 runner blob이 같아야 같은 계획으로 수용한다. F1 Python 결과는 base·merge-base도 일치해야 한다. 같은 이름의 다른 workflow 성공, 이전 head의 결과, 취소·skip은 수용하지 않는다. 제어는 판정이 이미 실패하면 build run을 기다리지 않고, 아니면 최대 7,500초 기다린다(build 제한 120분, 제어 job 제한 140분). 대기 시간이 지난 뒤 끝난 build는 제어를 다시 깨우지 않으므로 제어 run을 수동으로 다시 실행한다. 같은 head를 다른 base로 연 두 PR은 최신 build run이 다른 base의 것일 수 있어 실패 쪽으로 판정된다. build workflow는 `edited`에 반응하지 않으므로 PR의 base를 바꾼 뒤에는 push나 닫고 다시 열기로 build를 새로 돌린다. artifact 내려받기는 다른 host로 redirect되므로 token은 첫 요청에만 싣고 redirect에는 싣지 않는다. 같은 저장소의 PR만 수용하며 fork PR은 항상 실패한다(이 저장소는 단일 계정이라 fork PR을 쓰지 않는다).
 
 최종 상태는 job 결과가 아니라 제어 job이 head SHA에 쓰는 commit status다. GitHub는 `skipped`·`neutral` check를 통과로 보므로 이 방식을 택했다. 판정 실패·오류·중단 때도 `failure`를 쓴다. 단, 제어 run이 아예 돌지 않으면 그 SHA에 이전 상태가 남는다. 그래서 필수 context `xadb/module-gate`는 `main`과 시험 ref `gate-test/**` 대상 PR에서만 쓰고, 작업 branch 대상 PR(결정 ④)은 `xadb/module-gate-work`를 쓰며 검토·증거 의무를 PENDING으로 둔다. 작업 branch에서 이미 판정된 SHA를 그대로 `main` PR로 올려도 `main`용 상태는 새 제어 run만 쓴다. `main` 대상 판정이 끝난 SHA의 성공은 같은 base 계열에서만 생기며, ruleset의 최신 base 요구가 base 이동 뒤 재판정을 강제한다. `gate-test/**` 대상 확인 PR의 head는 같은 SHA로 `main` PR에 다시 쓰지 않는다.
 
 `workflow_run` 집계는 택하지 않았다. 상태를 build run의 head SHA에 붙일 수는 있지만, build가 끝난 뒤에만 실행되어 그 사이 PR head에 pending이 없고, PR base를 run 정보에서 다시 찾아야 한다. `pull_request_target`은 PR이 열리거나 갱신될 때 바로 pending을 쓰고 base ref·SHA를 이벤트에서 받는다.
 
 GitHub는 2026-12-02부터 공개 저장소의 `pull_request_target`을 기본 event 정책으로 차단한다. 저장소 설정의 Actions 정책에서 `module-gate.yml`에 대해 이 이벤트를 명시적으로 허용해야 한다. 허용하지 않으면 새 SHA에는 필수 상태가 생기지 않아 merge가 막힌다. 이미 `main` 대상 성공 상태가 붙은 SHA는 예외이므로 정책 변경 뒤에는 제어 run이 실제로 도는지 먼저 확인한다. 설정 위치는 Settings → Actions → **Policies**(workflow execution protections)다. Actions → General에는 없다. 사용자는 2026-11-01 대상(Targets)을 `.github/workflows/module-gate.yml` 하나로 두고 Restrict events에 `pull_request_target`만 남긴 정책을 만들었다. 대상을 저장소 전체로 두고 다른 이벤트를 지우면 `pull_request` build workflow 등이 멈춘다.
+
+<a id="module-gate-python"></a>
+### F1 — 후보 Python의 변경별 검증
+
+**XADB-MODULE-GATE-PYTHON-001 · D2 ACCEPT · 구현·선택 로컬 검증 / PR 원격 실행 대기.**
+기준은 PR #23 병합 `8215c729`다. [F1 계획](../plans/module-independence-followup-plan.md#gate-tests)의 후보 도구 검증 공백을 보완한다. 제품 Rust와 F0의 기존 실패는 바꾸지 않는다.
+
+- 신뢰 manifest의 `python_tests`는 checker·build runner·export·push helper·관련 시험·두 workflow와 manifest 경로를 허용 시험 모듈에 대응한다. 해당 경로가 추가·수정·삭제·rename되면 변경 기록의 `python_tests`에 **정확한 `test_module.Class.test_method` 목록**을 선언한다. suite 전체 자동 실행과 broad selector는 없다. 각 변경 입력에 대응하는 모듈의 사례가 하나 이상 있어야 하고 AST로 head에 실제 선언된 이름인지 확인한다. 선언 누락·잘못된 이름·syntax 오류는 push와 merge 양쪽에서 차단한다. 같은 이름은 중복 제거한다.
+- 이 대응은 최소한의 기계 검사다. 같은 모듈의 임의 시험 하나가 모든 변경을 검증한다는 뜻은 아니다. 독립 D2 리뷰가 실제 diff→선택 사례의 근거와 범위, 누락 여부를 확인한다. head의 mapping 축소로 현재 PR의 신뢰 mapping 의무를 없앨 수 없다. 새 도구/시험 모듈 등록은 D2로 mapping을 추가하고, 그 등록을 적용한 별도 후보 검증도 기록한다. 기본 branch 반영 뒤 후속 변경에 자동 적용된다.
+- [Python 실행기](../../scripts/module_gate_python.py)는 Git 객체에서 꺼낸 head에서 새 `python3 -I -B` 프로세스로 정확한 사례만 실행한다. 기본 branch checker가 들어 있는 `sys.modules`를 후보 시험과 공유하지 않는다. token·Python 주입 환경은 전달하지 않는다. build job은 `contents: read`, checkout `persist-credentials: false`이며 secret·쓰기 token을 공급하지 않는다. 제어 workflow는 후보 Python을 import/실행하지 않는다.
+- Python-only 변경은 Rust 제품 build/시험·export를 실행하지 않는다. push helper 시험이 선택되면 그 시험의 작은 Rust fixture용 고정 toolchain만 설치한다. docs-only 변경에는 Python 시험을 실행하지 않는다. 변경 구현을 직접 검증하지 않는 사례는 선택하지 않는다.
+- receipt는 head와 전체 source tree, base·merge-base, 변경 등록 경로의 head blob/삭제, 정확한 시험 목록, checker·manifest 및 실제 build runner/worker blob을 결속한다. 모든 정확한 사례가 한 번씩 성공하고 subprocess exit가 0이어야 한다. 누락·추가·중복·0개·skip·expectedFailure·unexpectedSuccess·import/syntax/runtime 오류·중단은 실패다. worker 한 번의 시간 상한은 900초이며 초과 시 자식 process group을 종료하고 TIMEOUT을 남긴다. 제어는 Python-only 변경도 build run과 receipt를 기다린다.
+
+**도입 순서.** 기본 branch에 F1 worker가 아직 없는 최초 채택 PR은 `pull_request`의 무권한 build job 안에서만 head의 planner/runner를 복사하고 head manifest로 계획한다. `bootstrap: true` receipt와 Actions notice로 구별하며, runner가 자신의 결과도 검산한다. 기존 `pull_request_target` 제어는 기존 계약대로만 판단하므로 **채택 PR에서는 실제 Module build 성공을 확인한 뒤 사람이 병합**해야 한다. 수동 리뷰로 실행을 대신하지 않는다. 병합 뒤부터 기본 branch의 도구만 계획·실행 driver로 사용하고 새 제어가 Python 결과를 강제한다. 이전 receipt는 checker/manifest/runner·head·계획 결속이 달라 새 요구를 충족하지 못한다. ruleset·Actions 이벤트 정책은 변경하지 않는다.
+
+**선택과 한계.** 전체 Python suite 자동 실행은 무변경 시험 반복 때문에 제외했고, 후보 코드를 privileged control에 import하는 안은 신뢰 경계를 깨므로 제외했다. 기존 receipt 악의적 변조·같은 이름 상태·검토자 문자열의 한계는 그대로다. 이 변경은 기능 회귀 검출이지 악의적 후보를 증명하는 attestation이 아니다. 작성·계약·통합 담당은 `/root`, 독립 검토는 `/root/f1_review`다. [실행·검토 증거](../evidence/module-independence-survey-20261026.md#f1-python-gate)를 따른다. 등록 범위 누락, 후보 대신 신뢰 모듈 실행, 잘못된 PASS, 도입 교착이 발견되면 재검토한다. 되돌림은 F1 PR의 변경을 함께 revert하며 기존 원격 보호를 해제하지 않는다.
 
 ### 원격 보호와 적용 순서
 

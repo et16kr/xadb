@@ -1,0 +1,8 @@
+{
+  ".github/workflows/module-build.yml": "11ce66eb930e17f579983a304d0b5d70ede6744b0b0c3381804676f37aa36f3f",
+  "devdoc/policies/module-gate.json": "4342c17a3107121dbc777e043aa663d73916b500802d23b29e83c19738510193",
+  "scripts/check_module_gate.py": "465f0bcdd28bb8472226f52f9b06f0387f539740376b7e00b0393dd7fed67442",
+  "scripts/module_gate_build.py": "883d2714379d55303307727f4c32e7ac37ee0d833f8f42ed0509a05ffa508aff",
+  "scripts/module_gate_python.py": "fa962b09dc5d01fbbcb7ee58f523ee703f3f5746dc2d527a8651ac9205d2622b",
+  "scripts/test_module_gate_python.py": "580052a38b9f97a2367615f5ed222fe58062273d1bf83fdd3c8b2f16de152c94"
+}

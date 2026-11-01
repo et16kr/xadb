@@ -1,7 +1,7 @@
 # Unprivileged build/test half of the module gate (XADB-MODULE-GATE-003,
 # devdoc/policies/repository-build-plan.md#module-gate). It runs pull request
-# code with a read-only token and no secrets. The planner and runners are the
-# default branch's copies; the receipt is only data for the control workflow
+# code with a read-only token and no secrets. After F1 adoption, the planner
+# and runners are the default branch's copies; receipts are data for control
 # (module-gate.yml), which recomputes the plan and rejects any mismatch.
 # No paths filter: a skipped workflow would leave the gate pending.
 name: Module build
@@ -44,17 +44,44 @@ jobs:
           fi
           echo "XADB_ADOPTED=true" >> "$GITHUB_ENV"
           mkdir "$RUNNER_TEMP/gate"
-          for f in check_module_gate.py module_single_source.py module_gate_build.py; do
+          echo "XADB_F1_BOOTSTRAP=false" >> "$GITHUB_ENV"
+          # F1 bootstrap runs only here, without credentials or write permissions.
+          # The old control still judges the adopting PR under its old contract.
+          # Human adoption requires this build to pass; after merge no head
+          # helper is used to plan or to run the worker driver.
+          if ! git cat-file -e "$ref:scripts/module_gate_python.py" 2>/dev/null; then
+            echo "::notice::F1 adoption: testing candidate tools in the unprivileged job"
+            echo "XADB_F1_BOOTSTRAP=true" >> "$GITHUB_ENV"
+            ref=$(git rev-parse HEAD)
+          fi
+          for f in check_module_gate.py module_single_source.py module_gate_build.py module_gate_python.py; do
             git show "$ref:scripts/$f" > "$RUNNER_TEMP/gate/$f"
           done
           echo "XADB_POLICY=$(git rev-parse "$ref^{commit}")" >> "$GITHUB_ENV"
-      - name: Make room for three engine test builds
+      - name: Plan the selection (candidate planner only during F1 adoption)
         if: env.XADB_ADOPTED == 'true'
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          python3 -B "$RUNNER_TEMP/gate/check_module_gate.py" plan --repo . \
+            --base "$BASE_SHA" --head "$HEAD_SHA" --policy "$XADB_POLICY" \
+            > "$RUNNER_TEMP/plan.json"
+          python3 - "$RUNNER_TEMP/plan.json" >> "$GITHUB_ENV" <<'PY'
+          import json, sys
+          plan = json.load(open(sys.argv[1]))
+          rust = plan['rust']
+          push = any(n.startswith('test_check_push.') for n in plan.get('python', {}).get('tests', []))
+          print('XADB_RUST=' + str(rust).lower())
+          print('XADB_TOOLCHAIN=' + str(rust or push).lower())
+          PY
+      - name: Make room for three engine test builds
+        if: env.XADB_ADOPTED == 'true' && env.XADB_RUST == 'true'
         run: |
           sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc /opt/hostedtoolcache/CodeQL
           df -h /
       - name: Install the pinned toolchain
-        if: env.XADB_ADOPTED == 'true'
+        if: env.XADB_ADOPTED == 'true' && env.XADB_TOOLCHAIN == 'true'
         run: |
           toolchain=$(sed -n 's/^channel = "\([^"]*\)"/\1/p' rust-toolchain.toml)
           test -n "$toolchain"
