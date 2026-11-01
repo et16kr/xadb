@@ -944,7 +944,7 @@ apply root의 private receipt·actual terminal 자손과 Busy 시험·manifest/c
 <a id="module-gate-contracts"></a>
 ### F2 공통 변경의 최소 계약 사례 — XADB-MODULE-GATE-005
 
-**D2 · 구현·검토 대상.** [후속 F2](../plans/module-independence-followup-plan.md#affected-tests)의 직접 영향만 신뢰 manifest의 `affected_contracts`에 등록한다. 작성·계약·통합 담당은 `/root`, 별도 검토자는 `/root/f2_review`다. 실제 결과와 최종 판정은 [실행 기록](../evidence/module-independence-survey-20261026.md#f2-contract-selection)을 따른다.
+**D2 ACCEPT · 구현·선택 검증·독립 검토 완료, PR 병합 후 시행.** [후속 F2](../plans/module-independence-followup-plan.md#affected-tests)의 직접 영향만 신뢰 manifest의 `affected_contracts`에 등록한다. 작성·계약·통합 담당은 `/root`, 별도 검토자는 `/root/f2_review`다. 실제 결과와 최종 판정은 [실행 기록](../evidence/module-independence-survey-20261026.md#f2-contract-selection)을 따른다.
 
 각 행은 안정 `id`, 공통 구현 `paths`, literal 사례의 `test_file`·정확한 libtest `case`, 입력·oracle·harness `inputs`, 실행 `sources`(`head`, `export-a`, `export-b`), `contract`·`reason`을 가진다. `paths`·`inputs`는 저장소 상대 glob이다. 변경된 이전/새 경로가 이 입력과 맞을 때만 의무를 만든다. 선택 계획에 실제 변경 경로와 현재 입력 blob을 결속하고, 해당 source의 기존 exact-case 목록에 합집합으로 넣는다. 삭제된 입력, 발견되지 않거나 ignored/unknown cfg인 필수 사례, export가 제거하는 입력은 오류다. A/B 소유뿐 아니라 C 소유지만 단독 export에서 제거되는 시험도 검사한다. 상대 기능이나 fixture를 다시 export에 넣지 않는다.
 

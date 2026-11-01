@@ -1,0 +1,22 @@
+F2 independent D1/D2 review
+Reviewer: /root/f2_review
+Range: d6ebed80..24e9d53a
+Verdict: ACCEPT; required_open: 0
+
+Direct C write.rs -> A live adapter -> three failure-effect contract cases and C+A
+applicability checked against source and the actual export removal table. Trusted
+registry obligations, input/case/source binding, missing/wrong names, duplicate
+execution and cross-source reuse rejection reviewed. Required exact -> optional
+selector duplication (R1) was corrected with all earlier same-source lanes and
+runner/receipt tests; r2 10/10 PASS. r1 assertion FAIL (worker INCOMPLETE) preserved.
+19 unique selected cases across source-bound runs; unchanged Rust product tests
+NOT_RUN. No test rerun by reviewer. Workflows/protection unchanged; adoption after
+human merge. Final runner docstring/log edits have no execution-semantic change.
+
+Reviewed blobs:
+scripts/check_module_gate.py 290316abc4874a8bb2421f2c8559dec380a80f11
+scripts/module_gate_build.py a79527a09e9ba64a3886c7bc86ea8c29932b7ea8
+scripts/test_check_module_gate.py 784342eebdf141333da339925556b247dc247fe9
+devdoc/policies/module-gate.json e846d6e66d9d4c9d3f8cb4d4e3e49076a07e07e8
+
+This review does not claim remote CI PASS or Rust product behavior validation.

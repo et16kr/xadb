@@ -22,5 +22,24 @@
   "test_check_module_gate.FinalTests.test_planned_cases_must_all_pass",
   "test_check_module_gate.RunnerTests.test_a_case_a_selector_passed_is_not_run_again"
  ],
- "reviews": []
+ "reviews": [
+  {
+   "id": "f2-contract-d2",
+   "class": "D2",
+   "scopes": [
+    "policy"
+   ],
+   "author": "/root",
+   "reviewer": "/root/f2_review",
+   "verdict": "ACCEPT",
+   "required_open": 0,
+   "files": {
+    "scripts/check_module_gate.py": "290316abc4874a8bb2421f2c8559dec380a80f11",
+    "scripts/module_gate_build.py": "a79527a09e9ba64a3886c7bc86ea8c29932b7ea8",
+    "scripts/test_check_module_gate.py": "784342eebdf141333da339925556b247dc247fe9",
+    "devdoc/policies/module-gate.json": "e846d6e66d9d4c9d3f8cb4d4e3e49076a07e07e8"
+   },
+   "log": "module-gate/evidence/f2/review.log (SHA-256 ca77713c1db61f7d90c60646d58fc06ff499b12bb74ee84efcb7092022a37ae8)"
+  }
+ ]
 }
