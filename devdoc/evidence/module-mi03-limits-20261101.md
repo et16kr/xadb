@@ -41,10 +41,12 @@ S10이 끝났을 때 [소비자 §9](../contracts/dev3-module-consumers.md#accep
     - 처음 공급(`a81f8975`)은 physical stage 한 곳만 줄이고 필요를 RowReserve frame 57,336 B로 잡았다.
     - 독립 검토(R1)가 그것이 틀렸음을 찾았다. C는 stage 전에 Row WAL admission(`check_progress_room`)에서 frame과 앞으로 갚아야 할 모든 WAL을 합해 본다. 실제 필요는 57,336 + 982,952 = 1,040,288 B다. 57,336 B 몫이면 실제 C는 이미 거절하므로 V02와 V03의 기대가 틀렸다.
     - 고친 guard(`25044995`)는 흐름 전체에서 admission과 stage를 함께 줄인다. 필요는 같은 fixture를 제한 없이 돌려 C의 admission 기록에서 잰다.
+    - PR #16 검토는 그 필요가 C 자신의 계산을 그대로 기준으로 쓴다고 지적했다. 계산이 틀리면 기대값도 같이 움직여 놓칠 수 있다. 그래서 시험이 계약 식과 fixture 입력만으로 미래 WAL을 따로 계산해 관측값과 비교한다(`38e57ac2`). Row 거래 248,618 B(CLR, Forward, terminal, full-abort, statement)와 Aging 734,334 B(새 Row root와 commit한 CREATE root의 cleanup, 두 actor의 TerminalFinish)를 더해 982,952 B이고, 필요 1,040,288 B도 고정값으로 확인한다.
 - **결과:**
     - −1: 효과 전 Unchanged (Prepare, Capacity)로 거절된다. 파일은 byte 동일이고 제한을 풀면 다시 성공한다.
     - =, +1: Reserve, Forward, 실패 statement와 rollback, full abort가 모두 몫 안에서 끝난다. admission 7번, stage 7번 모두 거절이 없다.
     - admission 비교를 `>=`로 바꾼 mutant는 V02에서 실패했다.
+    - C의 inventory encoder가 미래 WAL을 1 B 더 돌려주게 한 mutant는 새 기대값 비교에서 실패했다. 관측값만 쓰던 이전 시험은 같은 mutant에서 셋 모두 통과했다.
 - **남은 한계:** 256 MiB 파일을 실제로 채운 상태는 만들지 않는다. C의 다른 WAL cap 비교 다섯 곳은 줄이지 않지만, 임시 probe로 이 흐름이 거기에 닿지 않음을 확인했다.
 
 ## MCA05-V29 — before count 0인 H를 A가 거절
@@ -80,6 +82,10 @@ S10이 끝났을 때 [소비자 §9](../contracts/dev3-module-consumers.md#accep
     - 은퇴시키는 U는 아직 Active인 거래의 것이라 실제 retirement는 이 모양이 될 수 없다.
 - **판정:** PARTIAL. 새 시험은 보조 증거로 남긴다. 2026-11-01 사용자는 "한계 기록하고 M5 완료"를 골랐다.
 - **해결하려면:** live Row retirement(DEV3)가 생겨 실제 semantic Before가 이 순서로 receipt를 낼 수 있어야 한다.
+- **PR #16 검토의 방향(2026-11-01):** 검토도 PARTIAL에 동의했다. rollback 경로는 먼저 읽기 종료를 기다리므로 지금 설계에서는 그 지점에 닿지 않는다. 제안은 둘이다. 이 PR에서는 어느 쪽도 하지 않는다.
+    1. 계약 개정: 통합 시험의 "읽기 동안 대기, WAL 변화 없음"(MCB03-V02)과 registry 단위 시험의 "pin이 있으면 Busy"를 나누어 적는다. 동결 요구를 충족했다는 선언이 아니라 요구를 현재 동시성 설계에 맞추는 개정이므로 사용자가 정한다.
+    2. 원래 순서를 지원해야 한다면 live Row retirement와 정상 semantic Before의 권한 발급을 구현할 때 동시성 설계를 함께 다시 본다. retirement 기능만 더한다고 그 순서가 가능해진다고 단정할 수 없다.
+    - 시험을 PASS로 만들려고 gate를 우회하거나 권한 factory를 정식 경로로 넓히지 않는다.
 
 ## MCB03-V08 — source pin 2개 뒤 추가 claim Busy
 
@@ -93,7 +99,7 @@ S10이 끝났을 때 [소비자 §9](../contracts/dev3-module-consumers.md#accep
 
 ## 근거
 
-최종 실행은 commit `25044995`의 고정 export에서 모두 통과했다(C+A 50/50, C+B 37/37과 11/11, native 전부, 전체 트리 25/25). 독립 검토는 조건부 ACCEPT(필수 R1–R4), 반영 재확인은 ACCEPT다.
+최종 실행은 commit `25044995`의 고정 export에서 모두 통과했다(C+A 50/50, C+B 37/37과 11/11, native 전부, 전체 트리 25/25). 독립 검토는 조건부 ACCEPT(필수 R1–R4), 반영 재확인은 ACCEPT다. PR #16 검토 뒤 WAL 기대값 확인을 더한 `38e57ac2`의 C+A export에서 MCA05-V01..V03을 다시 실행했고 3/3 통과했다([PR #16 검토 반영](module-independence-survey-20261026.md#s11-pr16-review)).
 
 - 계약: [S11 절](../contracts/dev3-module-boundaries.md#row-mi03-s11)
 - 선택: [S11 addendum](../../tests/fixtures/module-row-integration/single-source-s11-addendum.json)
