@@ -1061,5 +1061,19 @@ class RealManifest(unittest.TestCase):
             self.assertIn("startsWith(github.event.pull_request.base.ref, 'gate-test/')", line)
 
 
+    def test_build_workflow_skips_only_before_adoption(self):
+        """The adopting PR has no planner on the default branch: the build half
+        ends without a receipt, which the control workflow never accepts."""
+        root = Path(gate.__file__).resolve().parent.parent
+        workflow = (root / '.github/workflows/module-build.yml').read_text()
+        self.assertIn(f'git cat-file -e "origin/$DEFAULT_BRANCH:{gate.MANIFEST}"', workflow)
+        steps = workflow.split('      - ')[1:]
+        copy = next(i for i, step in enumerate(steps) if step.startswith('name: Copy'))
+        self.assertIn('XADB_ADOPTED=false', steps[copy])
+        for step in steps[copy + 1:]:
+            guard = next(x for x in step.splitlines() if x.strip().startswith('if:'))
+            self.assertIn("env.XADB_ADOPTED == 'true'", guard, step.splitlines()[0])
+
+
 if __name__ == '__main__':
     unittest.main()
