@@ -1,6 +1,6 @@
 # 개발 계획
 
-- [모듈 분리 후 안정화·경계 개선 실행 계획](module-independence-followup-plan.md) — PR #22 병합 기준의 정량 기준선과 F0–F7 실행 순서. 기존 실패의 분류/CI 차단 해제, 미검증 8개, gate·계약 시험 선택, Catalog/C 경계, API·예산, 시험 소유, WAL 비용을 다룬다. [결정 D01–D03](module-independence-followup-plan.md#user-decisions)과 EX01–EX09 처리 기준을 포함한다. 계획 작성이며 구현·진단·시험은 NOT_RUN이다. 기존 M5의 한정 완료와 MI03 잔여는 유지한다.
+- [모듈 분리 후 안정화·경계 개선 실행 계획](module-independence-followup-plan.md) — PR #22 병합 기준의 정량 기준선과 F0–F7 실행 순서. 기존 실패의 분류/CI 차단 해제, 미검증 8개, gate·계약 시험 선택, Catalog/C 경계, API·예산, 시험 소유, WAL 비용을 다룬다. [결정 D01–D03](module-independence-followup-plan.md#user-decisions)과 EX01–EX09 처리 기준을 포함한다. [F0 기존 증거 분류](../evidence/main-preexisting-failures-20261030.md#f0-existing-evidence)를 기록했으며 원 로그 미확보 항목은 미확인·차단 유지다. F0의 제품 수정·진단 실행·제품 시험은 NOT_RUN이다. F1 구현·선택 검증은 [별도 실행 기록](../evidence/module-independence-survey-20261026.md#f1-python-gate)을 따른다. 기존 M5의 한정 완료와 MI03 잔여는 유지한다.
 
 - [모듈 폴더 재정리 후속 계획](module-independence-plan.md#folder-reorganization) — L1–L3·L5-A–D·L6 이동을 적용했고 L4는 현 배치 유지로 판정했다. [R1–R3](../evidence/module-independence-survey-20261026.md#r123-logical-boundaries)은 R1 유지·R2 미사용 재노출 제거·R3 유지다. 이후 [S11에서 M5를 한정 완료](../evidence/module-independence-survey-20261026.md#s11-m5)했다. 추가 소유·호출 방향 개선은 위 F3–F5를 따른다.
 

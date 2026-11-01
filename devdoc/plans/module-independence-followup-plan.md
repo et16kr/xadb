@@ -1,8 +1,8 @@
 # XADB 모듈 분리 후 안정화·경계 개선 실행 계획
 
-2026-11-02 · **계획 D2 ACCEPT / F1 구현·선택 검증 진행 / F0·F2–F7 구현·진단·시험 NOT_RUN**
+2026-11-02 · **계획 D2 ACCEPT / F0 기존 증거 분류 기록 / F1 구현·선택 검증 진행 / F0·F2–F7 제품 수정·진단 실행·시험 NOT_RUN**
 
-모듈 분리 후속 개발을 위한 개선 순서와 완료 조건을 정한다. 각 단위에 현재 코드·계약의 근거와 비교할 대안을 연결한다. 계획 채택 때 제품·검사기·시험·측정은 시작하지 않았다. 후속 사용자 지시로 F1만 구현·검증하며 [실행 기록](../evidence/module-independence-survey-20261026.md#f1-python-gate)에 현재 상태를 둔다. 이후 개발 재개 지시가 오면 해당 단위의 기존 위임과 D1/D2 절차 안에서 진행하며 일상 구현마다 재승인을 요구하지 않는다.
+모듈 분리 후속 개발을 위한 개선 순서와 완료 조건을 정한다. 각 단위에 현재 코드·계약의 근거와 비교할 대안을 연결한다. 계획 채택 때 제품·검사기·시험·측정은 시작하지 않았다. 후속 사용자 지시로 [F0 기존 증거 분류](../evidence/main-preexisting-failures-20261030.md#f0-existing-evidence)를 기록했다. 원 로그 미확보 항목은 미확인이고 원인 분류 전체 완료·CI 차단 해제가 아니다. F1은 별도로 구현·검증하며 [실행 기록](../evidence/module-independence-survey-20261026.md#f1-python-gate)에 현재 상태를 둔다. 이후 개발 재개 지시가 오면 해당 단위의 기존 위임과 D1/D2 절차 안에서 진행하며 일상 구현마다 재승인을 요구하지 않는다.
 
 [기존 분리 계획](module-independence-plan.md) · [소유 경계](../contracts/dev3-module-boundaries.md) · [소비자 계약](../contracts/dev3-module-consumers.md) · [모듈 gate](../policies/repository-build-plan.md#module-gate) · [개발 방침](../policies/development-policy.md#section-2)
 
@@ -65,6 +65,8 @@
 
 <a id="failures"></a>
 ## 4. F0 — 기존 실패와 미검증을 개발 가능한 상태로 정리
+
+**진행:** [F0 기존 증거 분류·인계](../evidence/main-preexisting-failures-20261030.md#f0-existing-evidence)에 26개 실패 자리·macro 선택 2개·resident 미검증 8개를 대응했다. 원 로그가 없어 7개 exact 이름·mixed 실패 43개 이름·실제 오류 값은 미확인이다. 기존 실패·보류·차단은 유지하며 수정·검증 완료로 세지 않는다.
 
 **입력:** [보정의 실패 표와 후속 요구](../evidence/module-independence-survey-20261026.md#s12-full-lib-calibration), [기존 실패 조사](../evidence/main-preexisting-failures-20261030.md), 당시 source와 확보 가능한 원 로그다. 먼저 보존 자료를 읽고 원인별로 묶는다. 같은 panic 위치만으로 같은 원인이라고 판정하지 않는다.
 
@@ -218,4 +220,4 @@ A/B/C·C0·S단계는 기존 인수·이력의 식별자로 유지한다. 새 �
 | 의견 반영 | 정량 기준선, 분류와 CI 차단 해제의 구분, 작업별 실패 파일, resident 미검증 8개 후속 작업, D01–D03 결정, EX01–EX09 처리 기준과 현재 색인을 보완. [정정 댓글](https://github.com/et16kr/xadb/pull/23#issuecomment-6560583019)에 따라 독립 평가 보고서로 확대하지 않고 실행 계획 범위를 유지 |
 | 수정 검토 | `/root/followup_plan_review`가 수정 계획·색인 3개 파일을 기존 정책·최신 증거·manifest와 대조하고 정량 기준선을 독립 재집계해 D2 ACCEPT, 필수 수정 0으로 판정했다. root README의 낡은 현재 안내도 갱신하라는 권고 1건을 반영했고, 평가 추가 권고 철회를 포함한 최종판 재확인에서 ACCEPT·필수 수정 0·추가 권고 0을 확인했다. 계약 대조·통합 담당 `/root`가 반영을 확인했으며 개별 후속 구현의 검토를 대신하지 않는다 |
 | 재검토 조건 | 기준선의 관련 코드·정책 변경, 신규 실제 소비자, 측정이 비용 가설을 지지하지 않음, 기존 실패 원인의 영향 확대 |
-| 현재 실행 | 문서·색인 보완. 계획 저장 시점의 F0–F7 구현·제품 시험·성능 측정은 NOT_RUN이었다. 후속 F1은 위 실행 기록을 따르며 다른 단위는 NOT_RUN이다. [문서 운영 기준](../policies/documentation-policy.md#push-gate)에 따라 push 직전에 문서 검사와 전송 commit의 필수 훅을 수행하고 실제 결과는 검사 산출물·PR에 기록. Clippy의 시험 target 컴파일은 제품 시험 실행으로 세지 않음 |
+| 현재 실행 | 문서·색인 보완. 계획 저장 시점의 F0–F7 구현·제품 시험·성능 측정은 NOT_RUN이었다. 후속 F0는 기존 증거 분류·인계를 기록했고 원 로그 미확보 항목은 미확인·차단 유지다. F1 구현·선택 검증은 위 실행 기록을 따르며, F0·F2–F7의 제품 수정·진단 실행·시험은 NOT_RUN이다. [문서 운영 기준](../policies/documentation-policy.md#push-gate)에 따라 push 직전에 문서 검사와 전송 commit의 필수 훅을 수행하고 실제 결과는 검사 산출물·PR에 기록. Clippy의 시험 target 컴파일은 제품 시험 실행으로 세지 않음 |

@@ -251,3 +251,114 @@ census 93개에서 남은 FAIL 5개는 main `76b3627`에서도 같은 panic 위�
 | `crates/engine/src/storage/wal_io/plan4_retention/recovery/catalog.rs` | `b981287b95c9a5ced00977495623b048e3aaaaad3cc8b1e510f4c6c9c0f5dee0` |
 | `crates/engine/src/storage/wal_io/plan4_apply/source_tests.rs` | `eff62e9925187a1e4d27c9c18f208bbe5959740bb5ea99fc5acf3d7cf93c8d38` |
 | `crates/engine/src/storage/wal_io/plan4_apply/row/census_tests.rs` | `edff998b1d869ff583147e118e6d8103c400db75944ba6cb1e34f1dd73f32dac` |
+
+<a id="f0-existing-evidence"></a>
+## 7. F0 기존 증거 분류와 후속 인계
+
+2026-11-01 UTC · **기존 증거·정적 경로 분류 / 원 로그 미확보 항목은 미확인 / 수정·제품 재시험·차단 해제 없음**
+
+[후속 계획 F0](../plans/module-independence-followup-plan.md#failures)의 기존 증거 분류 요청에 따른 후속 기록이다. 앞 절의 원 결과·사용자 결정·identity는 그대로 보존한다. 조사·문서 작성·자기 검토·인계 담당은 `/root`다. 제품·시험·oracle·정책을 바꾸지 않는 D0 기록이며 자기 검토를 독립 D1/D2 수용으로 기록하지 않는다. 원인별 수정의 구현자·독립 검토자는 해당 후속 작업 착수 때 배정한다.
+
+### 입력과 확인 한계
+
+- 조사 기준은 PR #23 병합 `8215c729`다. [S12 보정](module-independence-survey-20261026.md#s12-full-lib-calibration)의 실행 source `76ec2cf5`와 `crates/`, `scripts/`, `tests/`, `Cargo.toml`, `Cargo.lock`, `rust-toolchain.toml`을 Git diff로 대조했으며 차이가 없다. 여기서 읽은 소스는 보정 때와 같지만 새 실행 결과는 아니다.
+- 확보한 자료는 위 보정의 실패 표·집계, 이 문서 §2·§4·§6의 원 조사, 해당 source·fixture·계약이다. 최초 실패는 아래처럼 **확보한 기록에서 확인 가능한 최초 시점**을 뜻한다. 결함 도입 commit을 뜻하지 않는다.
+- 원 `calibration-full/head-cases.log`, 모듈 선택 log, `isolated1.log`, `isolated2.log`, `failing-files.json`, `resident-selector-coverage.json`은 현재 checkout·`/workspace/shared`·`/workspace/scratch`에 없고, 원 보관 경로 `/mnt/project-files/module-independence-20261029/artifacts/module-s12-20261101/`도 이 환경에 없다. 원 manifest의 문서상 SHA-256은 `b25b759b2dac1739ddb2459106b72ecea995050d3a87676794a3c6f05d6fd00c`이나 이번에 원 파일을 해시 검증한 것은 아니다.
+- 따라서 stdout/stderr의 실제 좌우 값, 첫 panic 앞의 사례 ID, backtrace·후속 panic 순서를 다시 검산하지 못했다. 원 보정의 10개 isolated 재현도 기존 기록 인용이며 이번 재실행이 아니다. 자료 부족을 제품 정상·환경 결함으로 판정하지 않는다.
+
+### 식별과 상태 읽는 법
+
+아래 `F0-E01`–`E26`은 26개 실패를 빠짐없이 인계하기 위한 **이번 추적 ID**다. 원 인수 ID를 대체하지 않는다. 정확한 이름이 없는 7개(E01–03, E05–08)는 파일·실패 위치별 미확인 자리이며 원 로그의 순서나 서로 다른 libtest 이름을 추정하지 않았다. 이 7개는 사례별 selector 결속이 아직 미완료다. `UNKNOWN` 자리를 실행 가능한 selector로 사용하지 않는다. 이름을 확인한 행도 첫 subcase·실제 오류 값은 원 로그가 있어야 확정한다.
+
+`M = storage::wal_io::bootstrap::doublewrite_install::mutable_storage::`로 두고 아래 접두어와 이름을 이어 붙이면 libtest selector가 된다. 물리 경로는 `crates/engine/src/storage/wal_io/` 기준이다. 이 대응은 `#[path]`·`mod` 선언을 읽은 정적 대응이며 `--list`를 새 실행하지 않았다.
+
+| 표기 | `M` 뒤에 붙일 시험 모듈 | 물리 파일 |
+| --- | --- | --- |
+| RS | `status_init::status_flush::resident::tests::` | `resident_status/tests.rs` |
+| PG | `plan4_pages::tests::` | `plan4_pages/tests.rs` |
+| LL | `plan4_pages::retention::tests::lifecycle::` | `plan4_retention/lifecycle_tests.rs` |
+| FU | `plan4_pages::retention::free_undo_tests::` | `plan4_retention/free_undo_tests.rs` |
+| RC | `plan4_recovery::tests::cases::` | `plan4_recovery/tests/cases.rs` |
+| RL/RF/RP/RU | `plan4_recovery::tests::{closure,faults,physical,publication}::` 각각 | `plan4_recovery/tests/{closure,faults,physical,publication}.rs` 각각 |
+| FR | `plan4_recovery::tests::free_undo::` | `plan4_recovery/tests/free_undo.rs` |
+| CS | `plan4_pages::retention::row::census_tests::` | `plan4_apply/row/census_tests.rs` |
+| RE | `recovery_prefix::effect::tests::` | `recovery_effect/tests.rs` |
+| SF | `status_init::status_flush::tests::` | `status_home_flush/tests.rs`(내부 `resource_tests.rs` 호출) |
+
+`A`는 보정이 인용한 2026-10-29·30 main 점검의 기존 실패(개별 최초 commit·log 미확인), `B`는 2026-11-01 `76ec2cf5` 보정에서 새로 드러난 실패다. **모든 E행의 보정 결과는 FAIL이고 현재 처리 상태는 보류·차단 유지**다. 분류의 확실성은 따로 적었다. 아래 G행은 각 사례가 참조하는 현재 계약·근거·다음 조치·완료 조건이다. 각 E행의 담당은 `/root`(분류·인계)이며 수정 담당 미배정을 이미 수행된 수정으로 세지 않는다.
+
+| 추적 ID | selector 접두어 + 사례 이름 | 최초 기록 | 첫 실패 위치(보정 기록) | 분류·근거/다음 조치 | 영향 작업 |
+| --- | --- | --- | --- | --- | --- |
+| F0-E01 | RS + UNKNOWN-1 | B | `dirty_frame/status_residency.rs:328` | G1: 관측 helper 실패, 사례명·선행 fence 원인 미확인 | resident 관련 C 변경 |
+| F0-E02 | RS + UNKNOWN-2 | B | 같은 위치 | G1: E01과 동일 원인이라는 판정 아님 | resident 관련 C 변경 |
+| F0-E03 | RS + UNKNOWN-3 | B | 같은 위치 | G1: E01과 동일 원인이라는 판정 아님 | resident 관련 C 변경 |
+| F0-E04 | PG + `g5_canonical_source_boundaries` | A | `plan4_pages/tests.rs:586` | G2: 오류 분류 기대 불일치, 제품/시험 귀속 미확인 | F5 |
+| F0-E05 | PG + UNKNOWN-1 | A | `plan4_genesis/tests/support.rs:278` | G3: 주입 panic 관측, 사례명·포착 실패 경로 미확인 | F5 |
+| F0-E06 | PG + UNKNOWN-2 | A | `dirty_frame/status_residency.rs:328` | G1: 관측 helper 실패, 사례명·선행 fence 원인 미확인 | F5 |
+| F0-E07 | PG + UNKNOWN-3 | A | 같은 위치 | G1: E06과 동일 원인이라는 판정 아님 | F5 |
+| F0-E08 | PG + UNKNOWN-4 | A | 같은 위치 | G1: E06과 동일 원인이라는 판정 아님 | F5 |
+| F0-E09 | LL + `retention_live_lifecycle` | A | `lifecycle_tests.rs:302` | G4: 알려진 Reserve 차이. 이후 시나리오 원인은 미검증 | F6 |
+| F0-E10 | LL + `retention_live_reader_boundaries` | A | `dirty_frame/status_residency.rs:328` | G1: 6개 시험 중 아래 네 위치를 제외한 두 사례의 정적 대응 | F6 |
+| F0-E11 | LL + `retention_live_latest_load` | A | 같은 위치 | G1: E10과 동일 원인이라는 판정 아님 | F6 |
+| F0-E12 | LL + `retention_live_writer_boundaries` | A | `lifecycle_tests.rs:808` | G5: 현재 format에 맞지 않는 legacy 호출을 정적으로 확인 | F6 |
+| F0-E13 | LL + `retention_live_activation` | A | `lifecycle_tests.rs:962` | G6: Job 이미지 비교 불일치, byte 원인 미확인 | F6 |
+| F0-E14 | LL + `retention_live_flush_boundaries` | A | `lifecycle_tests.rs:1012` | G5: 현재 format에 맞지 않는 legacy 호출을 정적으로 확인 | F6 |
+| F0-E15 | FU + `free_undo_original_owner_gap_cancel_reuse_flush_reload` | A | `free_undo_tests.rs:192` | G6: allocation descriptor 비교 불일치 | F6 |
+| F0-E16 | FU + `free_undo_new_role_preflight_and_install_failure_boundaries` | A | `free_undo_tests.rs:602` | G6: Cancel 전 Reserve WAL 비교 불일치 | F6 |
+| F0-E17 | RC + `recovery_lifecycle` | A | `plan4_recovery/tests/support.rs:260` | G7: 기존 조사상 format1 이관 전 시험 | F5·D01 |
+| F0-E18 | RC + `recovery_binding` | A | 같은 위치 | G7: 기존 조사상 format1 이관 전 시험 | F5·D01 |
+| F0-E19 | RL + `recovery_closure` | A | 같은 위치 | G7: §2.2의 후속 `aging_start` 거절 진단도 이 사례에 한정 | F5·D01 |
+| F0-E20 | RF + `recovery_selection` | A | 같은 위치 | G7: 기존 조사상 format1 이관 전 시험 | F5·D01 |
+| F0-E21 | RP + `recovery_physical` | A | 같은 위치 | G7: 기존 조사상 format1 이관 전 시험 | F5·D01 |
+| F0-E22 | RU + `recovery_publication` | A | 같은 위치 | G7: 기존 조사상 format1 이관 전 시험 | F5·D01 |
+| F0-E23 | FR + `free_undo_reserved_recovery_uses_original_scope_cancel` | A | `plan4_recovery/tests/free_undo.rs:180` | G6: 복구 진입 전 producer WAL prefix 비교 불일치 | F5 |
+| F0-E24 | CS + `s2w_c04_live_and_recovered_peaks_unchanged` | B | `census_tests.rs:236` | G8: live/recovered peak 고정값 불일치 | F4 |
+| F0-E25 | RE + `pending_and_healthy_corruption_boundaries` | B | `recovery_effect/tests.rs:621` | G9: 손상 거절 cause 기대 불일치 | recovery effect 관련 C 변경 |
+| F0-E26 | SF + `status_flush_rf` | A | `status_home_flush/resource_tests.rs:277` | G10: RF01 구성원 크기 상한 중 적어도 하나 초과 | status flush 관련 C 변경 |
+
+14개 파일은 RS 1 + PG 1 + LL 1 + FU 1 + RC 1 + RL/RF/RP/RU 4 + FR 1 + CS 1 + RE 1 + SF 1 + 아래 mixed 1이다. E행은 3+5+6+2+6+1+1+1+1=26이며, 같은 helper 위치는 3+3+2=8개다. 이 수는 원 보정과 일치하지만 미확인 이름을 확인한 것으로 세지 않는다.
+
+### 원인군별 정적 근거와 처리 조건
+
+| 분류 | 현재 계약·직접 확인한 근거 | 처리 결정·다음 조치 | 완료 조건 |
+| --- | --- | --- | --- |
+| G1 관측 helper / 원인 귀속 미확인 | [원 소유·fence](../contracts/dev3-module-boundaries.md), [INIT 실패 계약](../contracts/dev3-status-init.md). `status_residency.rs`의 test-only `slot()`은 `resolve_registration().unwrap()`을 호출한다. `dirty_frame.rs`의 `resolve_registration → entry_registry → health`는 fenced 세션을 거절한다. 즉 그 위치의 panic은 등록 관측 실패이며 원 데이터 손상 증거와 같지 않다. | 8개를 제품 결함 또는 helper 결함 하나로 합치지 않는다. 원 로그로 이름·첫 cause·fence 발생점을 결속한 뒤 각 caller가 의도적으로 fence한 후 snapshot을 요청했는지 확인한다. 시험 관측을 고치더라도 production health 검사를 우회하지 않는다. | 사례별 최초 원인 설명, 필요한 좁은 수정, 원 오류/정리/비대상 frame 보존을 검증한 선택 결과. snapshot만 성공한다고 제품 정상으로 판정하지 않음 |
+| G2 canonical 오류 의미 / 미확인 | [Plan4 clean owner](../contracts/dev3-plan4-clean-owner.md). `g5_canonical_source_boundaries`는 3/4/7에 `Retention(Corrupt)`를 기대한다. §6의 기존 기록은 case 3의 `Retention(IdentityMismatch)`를 보고했다. 둘 다 거절하므로 거절 여부와 cause 계약을 분리해야 한다. | 원 로그·case 3 입력과 decode 순서를 대조하고 현재 계약의 오류 의미를 확인. 기대값만 새 값으로 덮지 않는다. | 오류 원인·effect·fence·쓰기 없음·기존 frame 보존을 함께 확인한 관련 사례 |
+| G3 I/O 주입 / 미확인 | [Plan4 clean owner](../contracts/dev3-plan4-clean-owner.md). `plan4_genesis/tests/support.rs:278`은 `Action::BeforePanic`의 의도적 `panic!("plan4 exact before panic")`다. panic 위치만으로 product panic이라 할 수 없고, 예상 panic 출력만으로 최종 FAIL 원인도 정할 수 없다. | 원 사례명과 주입 event·catch/join·Drop 순서를 확보해 의도된 unwind가 왜 최종 실패가 되었는지 분리. | 해당 주입과 cleanup/무효과 경로의 원인 확인 및 선택 검증 |
+| G4 알려진 Reserve 차이 / 이후 미확인 | [Free Undo](../contracts/dev3-plan4-free-undo.md), [Retention live](../contracts/dev3-retention-live.md). §2.1–2.2는 v2 scope·Profile digest·예약량 차이를 기록했다. 현재 `complete()`는 여전히 reserve literal과 비교 후 INIT 길이 38000, 옛 empty 거래 순서를 기대한다. | E09는 첫 차이만 기존 판정으로 인용. §2.2의 `recovery_closure` 진단을 이 사례의 전체 실행 결과로 옮기지 않는다. current-format 입력·producer별 대응안을 준비하고 필요한 처리 결정을 적용한다. | 새 독립 fixture/oracle와 전체 해당 시나리오 대응, 실제 도달·완료. 첫 Reserve 비교 통과만으로 닫지 않음 |
+| G5 legacy producer 호출 / 정적 계약 불일치 | [Retention live](../contracts/dev3-retention-live.md)와 현재 `plan4_retention/live.rs:142–151`. current Profile3은 Row XOI cache가 있으므로 `format()!=1`에서 `WrongState/Prepare/Unchanged`로 거절한다. E12·E14는 그 `aging_start()`에 성공 `unwrap()`을 요구한다. | 시험 경로 이관 필요성을 정적으로 분류. 보정 실제 Err 값·뒤 subcase는 원 로그 미확인이다. G7의 6개 보존 결정 범위를 이 두 개에 자동 확대하지 않으며, 거절을 풀어 legacy producer를 current에 허용하지 않는다. | 현재 형식의 동등한 writer/flush 경계와 독립 기대값을 공급하고 선택 검증. 단순 Err 수용으로 본래 경계 coverage를 없애지 않음 |
+| G6 literal 비교 / byte 원인 미확인 | [Plan4 genesis](../contracts/dev3-plan4-genesis.md), [Free Undo](../contracts/dev3-plan4-free-undo.md), [복구 owner](../contracts/dev3-plan4-recovery-owner.md). 각각 genesis Job, memory descriptor, native Reserve frame, producer WAL prefix 비교다. E23은 복구 시작 전에 실패하므로 복구 알고리즘 실패로 단정하지 않는다. | 원 actual/expected bytes·offset·fixture identity를 먼저 확보. 공통 Profile 변경 가설은 있으나 같은 원인으로 판정하지 않는다. E16의 뒤 fault cut, E23의 recovery cancel은 도달 증거 없음으로 남긴다. | 사례별 byte 차이의 계약 설명, 독립 oracle·필요 수정과 뒤 경로의 선택 검증 |
+| G7 format1 이관 전 / 기존 판정 인용 | §2의 원 조사와 [복구 owner](../contracts/dev3-plan4-recovery-owner.md). 기존 기록상 제품 결함이 아닌 미이관 시험 6개다. 원 로그를 이번에 재검증한 것은 아니다. | 2026-10-30 결정은 F05를 CR1에서 빼고 옛 시험은 고치거나 끄지 않는 것. 최신 [D01](../plans/module-independence-followup-plan.md#user-decisions)은 그 파일을 바꾸는 CI 차단 때문에 처리 재결정을 요구한다. 원 보존 유지, 이관/제외는 미결정. | D01에 따른 current-format 이관 또는 동등 coverage를 갖춘 유효한 처리를 실제 적용·검증. 보존/보류 선택만으로 차단 해제하지 않음 |
+| G8 source census / 귀속 미확인 | [자원 계약](../contracts/dev3-resource-bounds.md), §6의 S6 수정 결과. 현재 기대값은 memory 64008/65384, native 64016/65392이며 §6의 당시 PASS와 같다. 보정의 현재 actual·실패한 writer 값은 미확보다. | 원 로그의 peak/shared/split_ports와 변경 이력을 대조해 의도된 증가·낡은 기대값·상한 회귀를 구분. 과거 S6 수정을 다시 해결책으로 제시하거나 기대값 증가로 상한을 완화하지 않는다. | 공존 phase·항목별 증가와 계약 상한 확인, 필요한 수정·정확한 census 선택 검증 |
+| G9 손상 오류 cause / 귀속 미확인 | [Recovery effects](../contracts/dev3-recovery-effects.md). `tests.rs:621`은 `n==8`인 유효 codec/Free generation2 입력의 `RecoveryCause::Semantic(_)` 기대다. 앞의 Redo phase 검사는 먼저 수행된다. 실제 다른 cause는 로그 미확보다. | 정적 위치로 입력 종류를 좁혔으나 오류 검출 순서 변경인지 제품 회귀인지는 보류. actual cause와 home-write 효과를 원 로그·코드로 대조. | 손상 거절·첫 cause/effect·home write 0의 계약을 만족하는 관련 선택 검증 |
+| G10 RF01 자원 상한 / 귀속 미확인 | [Status home flush 자원](../contracts/dev3-status-home-flush.md#resources). `run_rf()`는 `layout`, shared layout, I/O layout의 모든 actual/cap을 출력한 뒤 `within_caps`를 단언한다. 단일 위치만으로 초과 타입을 특정할 수 없다. | 원 `RESOURCE_STATUS_FLUSH` 행의 actual/cap을 확보해 타입·공존 자원·계약 상한을 분해. cap을 올리거나 §1의 과거 adapter 수정을 다시 적용하지 않는다. | 초과 항목별 원인·좁은 수정·해당 RF 선택 검증. 뒤 `fits`와 AdapterLayout도 도달 확인 |
+
+### Macro 선택 두 개와 resident 미검증 8개
+
+| 추적 ID·selector (`M` 뒤) | 원 결과·근거 | 분류·담당·다음 조치 | 완료 조건·차단 |
+| --- | --- | --- | --- |
+| F0-M01 `status_init::status_flush::mixed::tests::` | B, 87개 중 43 FAIL: Fenced 27·INIT release Timeout 14·requested INIT unwind 2. 개별 43개 이름/원 로그 미확보 | `/root` 인계. [혼합 owner 계약](../contracts/dev3-mixed-system-owner.md)의 failure/Drop 순서와 대조 필요. G1과 같은 snapshot helper 호출은 있으나 27개의 선행 fence 원인은 별개일 수 있다. `dirty_init.rs`의 pause는 5초 내 resume를 기다리며 Timeout과 요청된 unwind는 다른 분기다. controller의 앞선 assert·채널 단절·정리 순서를 확보하기 전 환경 지연 또는 제품 결함으로 단정하지 않음 | 43개 이름·첫 cause·현재 계약별 대응 후 원인별 좁은 수정/검증. `mixed_system_owner/tests.rs` 차단 유지 |
+| F0-M02 `status_init::status_flush::resident::tests::` | B, 37개 inventory 중 여섯 번째 allocator cut에서 abort. 앞 5개 결과는 PASS 4/FAIL 1. 별도 exact 23개는 PASS 20/FAIL 3(E01–03에 포함). cut 8개 미검증, s5 6개 ignored | `/root` 인계. `init_cut()`은 controller assert 후 Panic 전송, fence 관측 후 Continue 전송을 요구한다. 기록의 abort 위치 `dirty_init.rs:1107`은 resume timeout expect다. 최초 controller 실패·소멸자 두 번째 panic의 전체 순서는 미확인. exact FAIL을 다시 더하거나 cut abort를 FAIL 26개에 포함하지 않음 | allocator의 최초 원인·정리 원인을 분리하고 아래 8개 도달/완료. `resident_status/tests.rs` 차단 유지; exact 23·ignored s5 6 자동 재실행/활성화 금지 |
+
+다음 8행의 source·최초 기록은 모두 B(`76ec2cf5`, 2026-11-01)이고, selector는 **RS 접두어 + 아래 이름**이다. 현재 계약은 [INIT의 stage 이후 fence·guard 해제 순서](../contracts/dev3-status-init.md)와 원 `resident_status/tests.rs::init_cut`의 비대상 frame·pin 보존 단언이다. 처리 상태는 전부 미검증·차단 유지, 담당은 `/root`(분류·인계)다.
+
+| 추적 ID | 정확한 사례 이름 | 주입 지점 | 원 실행 상태 | 다음 조치·완료 조건 |
+| --- | --- | --- | --- | --- |
+| F0-U01 | `resident_status_cut_allocator` | `AllocatorImageInstalled` | ABORT, 정상 test 결과 없음 | 원 로그의 최초 panic/Drop 연쇄 확보 → 좁은 수정 → 같은 cut에서 unwind·fence·해제·비대상 보존 완료 |
+| F0-U02 | `resident_status_cut_dpt_checked` | `DptPrecheckedBeforePrepared` | NOT_STARTED | U01 처리 뒤 해당 cut 개별 선택으로 도달·정리 완료 |
+| F0-U03 | `resident_status_cut_dpt_owned` | `DptGuardOwnedBeforePrecheck` | NOT_STARTED | 같은 조건으로 해당 cut 도달·정리 완료 |
+| F0-U04 | `resident_status_cut_metadata` | `MetadataInstalled` | NOT_STARTED | 같은 조건으로 해당 cut 도달·정리 완료 |
+| F0-U05 | `resident_status_cut_payload` | `PayloadImageInstalled` | NOT_STARTED | 같은 조건으로 해당 cut 도달·정리 완료 |
+| F0-U06 | `resident_status_cut_publication` | `Published` | NOT_STARTED | 같은 조건으로 해당 cut 도달·정리 완료 |
+| F0-U07 | `resident_status_cut_registry` | `RegistryInstalled` | NOT_STARTED | 같은 조건으로 해당 cut 도달·정리 완료 |
+| F0-U08 | `resident_status_cut_stage` | `StageOwned` | NOT_STARTED | 같은 조건으로 해당 cut 도달·정리 완료 |
+
+8개는 macro가 생성하는 별개 `#[test] fn`이므로 원 libtest의 `--exact` 선택 대상이다. 현재 gate의 module selector와 구분하며, 선택 도구가 넓게 실행하면 먼저 좁힌다. 아직 실행하지 않아 환경 입력 충족·성공 여부는 확인하지 못했다. U02–08을 U01과 같은 원인의 실패로 분류하지 않는다.
+
+### 인계 판정과 검토 범위
+
+이번에는 26개 실패 자리·두 모듈 선택·미검증 8개를 원 기록 및 현재 계약의 조사 경로에 대응했다. **원인 분류 전체 완료는 아니다.** 특히 7개 exact 이름, mixed 실패 43개 이름, 원 오류 값·panic 순서는 원 로그를 확보해야 결속할 수 있다. 후속 첫 조치는 위 원 보관 자료 확보이며, 불가능하면 F0 §4.4에 따라 입력·관측 질문·시간/disk·중단 조건과 기존 지시 적용 범위를 정한 유한 진단안을 준비한다. 원본 부족을 이유로 전체 lib 보정을 반복하지 않는다.
+
+제품·시험·fixture·manifest·gate·CI 정책 diff는 없다. 관련 제품 시험은 NOT_RUN이며 무변경 시험을 이번 결과로 재사용하여 PASS라고 쓰지 않는다. D01–D03은 기존 상태를 유지한다. F1은 Python-only 변경으로 별도 진행 가능하다. F3–F6는 실제 diff의 exact case·macro selector와 위 차단 파일을 대조해야 하며, 이 문서의 영향 표만으로 실행/인수를 허용하지 않는다. M5 한정 완료와 MI03 잔여도 그대로다.
+
+자기 검토는 원 보정의 26/14/2/8 집계, 소스의 logical module/첫 실패 위치, 계약 링크, 원 결정과 현재 처리의 구분, 제품 diff 부재를 대조하는 범위다. 문서 자동 검증·fmt·Clippy는 [push 훅](../policies/documentation-policy.md#push-gate)이 전송 commit 사본에서 수행하며 실제 결과는 PR에 기록한다. Clippy가 시험 target을 검사해도 제품 시험 실행이 아니다. 되돌림은 이 F0 문서 commit만 revert하면 되며 원 증거·fixture는 변경하지 않았다.
