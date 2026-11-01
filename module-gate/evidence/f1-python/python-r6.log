@@ -1,0 +1,12 @@
+test_unexecuted_async_and_generator_bodies_cannot_pass (test_module_gate_python.PythonWorkerTests.test_unexecuted_async_and_generator_bodies_cannot_pass) ... ok
+test_worker_does_not_receive_tokens_or_python_injection (test_module_gate_python.PythonWorkerTests.test_worker_does_not_receive_tokens_or_python_injection) ... ok
+test_worker_imports_candidate_not_loaded_trusted_modules (test_module_gate_python.PythonWorkerTests.test_worker_imports_candidate_not_loaded_trusted_modules) ... ok
+test_worker_rejects_syntax_runtime_failure_skip_and_expected_failure (test_module_gate_python.PythonWorkerTests.test_worker_rejects_syntax_runtime_failure_skip_and_expected_failure) ... ok
+test_worker_rejects_zero_duplicate_missing_and_partial_execution (test_module_gate_python.PythonWorkerTests.test_worker_rejects_zero_duplicate_missing_and_partial_execution) ... ok
+test_worker_timeout_is_not_success (test_module_gate_python.PythonWorkerTests.test_worker_timeout_is_not_success) ... ok
+test_async_test_declaration_is_not_an_executable_sync_case (test_module_gate_python.PythonPlanTests.test_async_test_declaration_is_not_an_executable_sync_case) ... ok
+
+----------------------------------------------------------------------
+Ran 7 tests in 1.949s
+
+OK

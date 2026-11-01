@@ -1,0 +1,7 @@
+test_worker_rejects_zero_duplicate_missing_and_partial_execution (test_module_gate_python.PythonWorkerTests.test_worker_rejects_zero_duplicate_missing_and_partial_execution) ... ok
+test_unprivileged_bootstrap_and_trusted_control_stay_separate (test_module_gate_python.PythonWorkflowTests.test_unprivileged_bootstrap_and_trusted_control_stay_separate) ... ok
+
+----------------------------------------------------------------------
+Ran 2 tests in 0.344s
+
+OK
