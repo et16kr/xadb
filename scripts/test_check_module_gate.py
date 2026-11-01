@@ -1060,6 +1060,15 @@ class OwnerReviewTests(GateFixture):
         self.write('module-gate/records/old.json', json.dumps(stale))
         report = self.judge(self.commit('copied N/A'), exports=False)
         self.assertFinding(report, 'no CI evidence selected for codec')
+        # A review of the same record that lists the file at its base blob
+        # (an older state of the change) does not bind the N/A either.
+        self.git('reset', '-q', '--hard', head)
+        base_blob = self.git('rev-parse', f'{self.base}:{E}/codec.rs')
+        old = dict(stale, reviews=[dict(stale['reviews'][0],
+                                        files={f'{E}/codec.rs': base_blob})])
+        self.write('module-gate/records/old.json', json.dumps(old))
+        report = self.judge(self.commit('N/A reviewed at the base blob'), exports=False)
+        self.assertFinding(report, 'no CI evidence selected for codec')
         # The same N/A inside the review of this change is accepted.
         self.git('reset', '-q', '--hard', head)
         report = self.judge(self.review(head, na=[{'module': 'codec', 'reason': 'comment only'}]),
@@ -1105,7 +1114,9 @@ class OwnerReviewTests(GateFixture):
         for body in ('impl super::c::Port { fn read(&self) {} }\n',
                      'struct Other;\nimpl Other { pub fn read(&self) {} }\n',
                      'trait Own { fn own(&self); }\n'
-                     'impl Own for super::c::Port { fn own(&self) {} }\n'):
+                     'impl Own for super::c::Port { fn own(&self) {} }\n',
+                     '#[cfg(test)]\nmod tests {\n'
+                     '    impl super::super::c::Port { pub fn helper(&self) {} }\n}\n'):
             with self.subTest(body=body):
                 self.write(f'{E}/port_impl.rs', body)
                 self.base = self.commit('not common at the base')

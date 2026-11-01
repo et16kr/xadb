@@ -31,7 +31,8 @@ jobs:
           git fetch --no-tags origin "+refs/heads/$DEFAULT_BRANCH:refs/remotes/origin/$DEFAULT_BRANCH"
           # The full ref: a tag named origin/<branch> must not stand in for it.
           ref="refs/remotes/origin/$DEFAULT_BRANCH"
-          git rev-parse --verify -q "$ref^{commit}" > /dev/null
+          git rev-parse --verify -q "$ref^{commit}" > /dev/null || {
+            echo "::error::$ref is missing after the fetch"; exit 1; }
           # Before the gate is adopted (the adopting PR itself) there is no
           # planner to run. This success is not evidence: only the control
           # workflow judges, and once the gate is adopted a Rust change

@@ -1481,6 +1481,8 @@ def impl_sources(crate, index, names, api):
             continue
         rust = crate.rust(path)
         for m in IMPL.finditer(rust.code):
+            if rust.inline_test(m.start()):
+                continue  # a `#[cfg(test)]` item or module: not the product API
             parsed = impl_header(rust.code, m.end())
             if not parsed:
                 continue
@@ -1506,8 +1508,10 @@ def impl_sources(crate, index, names, api):
                         for mid in api.get(key, ())}
                 if mids and trait_path:
                     # A trait the crate defines outside the common API (a
-                    # feature's own trait) does not change the common
-                    # contract; std and external traits, and API traits, do.
+                    # feature's own trait, or one of a common module such as
+                    # codec that disk does not re-export) does not change the
+                    # common contract; std and external traits, and API
+                    # traits, do.
                     defined = reached_from(crate, index, names, here, trait_path, memo)
                     if defined and not any(key in api for key in defined):
                         mids = set()
@@ -1618,8 +1622,8 @@ def judge(repo, base, head, policy=None, mode='merge', exports=True):
         for path in touched[mid]:
             need[path] = ('D2', need.get(path, ('D1', set()))[1] | {'common'})
     for path in defining:
-        notes.append(f'{path} defines what {"/".join(sorted(sources[path]))} re-exports: '
-                     'D2 common review')
+        notes.append(f'{path} defines what {"/".join(sorted(sources[path]))} re-exports '
+                     '(or re-exports it on the way, or adds an impl to it): D2 common review')
         need[path] = ('D2', need.get(path, ('D1', set()))[1] | {'common'})
     relax = manifest_changes(trusted, head_manifest) if head_manifest else []
     if relax:
