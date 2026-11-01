@@ -451,6 +451,20 @@ class FinalTests(GateFixture):
         report = self.report()
         self.assertEqual(self.verify(report), [])
 
+    def test_exports_run_only_the_changed_feature(self):
+        """An A change builds both exports but runs no B selector (AGENTS.md:
+        unchanged code is not tested); the receipt needs only export-b-build."""
+        report = self.report()
+        exports = {e['side']: e for e in report['selection']['exports']}
+        self.assertEqual(exports['a']['selectors'], ['storage::row::insert::'])
+        self.assertEqual(exports['b']['selectors'], [])
+        self.assertEqual(exports['b']['cases'], [])
+        receipt = self.receipt(report)
+        self.assertIn('export-b-build', {r['name'] for r in receipt['results']})
+        self.assertEqual(self.verify(report, receipt), [])
+        receipt['results'] = [r for r in receipt['results'] if r['name'] != 'export-b-build']
+        self.assertTrue(any('lacks export-b-build' in e for e in self.verify(report, receipt)))
+
     def test_optional_results_may_list_nothing(self):  # RC1
         report = self.report()
         report['selection'] = dict(report['selection'], optional_cases=['c::x', 'c::y'],

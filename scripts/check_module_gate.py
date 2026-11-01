@@ -1164,7 +1164,9 @@ def record_selectors(records):
 
 def selection(manifest, touched, records, rust, cases=None, generated=None, optional=None):
     """CI work for a head: filters, exact changed cases, optional cases and
-    selectors (cfg not known on the runner), and export sides."""
+    selectors (cfg not known on the runner), and export sides. Every export is
+    built (compile independence); it runs the kept feature's own selectors only
+    when that feature changed (AGENTS.md: no tests for unchanged code)."""
     if not rust:
         return {'rust': False, 'selectors': [], 'cases': [], 'exports': []}
     cases, generated, optional = cases or {}, generated or {}, optional or {}
@@ -1191,7 +1193,8 @@ def selection(manifest, touched, records, rust, cases=None, generated=None, opti
             **split({c for names in optional.values() for c in names}),
             'exports': [{'side': e['side'], 'command': e['command'],
                          'selectors': sorted(set(manifest.modules[e['keeps']].get(
-                             'ci_selectors', [])) | generated.get(e['keeps'], set())),
+                             'ci_selectors', []) if e['keeps'] in touched else ())
+                             | generated.get(e['keeps'], set())),
                          'cases': sorted(cases.get(e['keeps'], ())),
                          **split(optional.get(e['keeps'], set()))}
                         for e in manifest.data['exports']]}
