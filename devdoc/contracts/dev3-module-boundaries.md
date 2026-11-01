@@ -2894,7 +2894,7 @@ V28..V34는 다음과 같다.
   - C의 ingress 쪽 거절은 S9의 K07(C+B, 크기 교란 있음)이 맡는다.
 - V30: NEW. 정규 길이 2048 행은 record(168+2048)와 entry slot 16B를 쓰므로 entry 용량/2232개가 한 statement에 들어간다. 다음 statement의 행은 A가 Validate에서 Capacity로 Reserve 전에 거절하고, Commit(q 2)은 그 행들만 공개한다.
 - V31: S2-0 개정의 dirty victim flush 재시도를 인용한다(`row_live::mca05_v31_*`).
-- V32: S2W-R15, R10, R03을 인용한다(API cancel·drop의 권한 반환). `PreflightRow`나 활성 `RowSlotReservation`을 drop해 돌려받는 경로(`plan4_apply/row/write.rs`)는 인용 시험이 실행하지 않는다(검토 N10).
+- V32: PARTIAL(기록 재확인 R11, 처음 판정 CITED). S2W-R15, R10, R03을 인용한다(API cancel과 finish의 권한 반환). 동결 문언의 "drop", 곧 `PreflightRow`나 활성 `RowSlotReservation`을 drop해 admission, gate, lease를 돌려받는 경로(`plan4_apply/row/write.rs`)는 인용 시험이 실행하지 않는다(검토 N10).
 - V33, V34: N/A. Row 경로에 FD·파일 ledger와 DWB slot admission이 없다. dirty target은 A에 FlushRequired로 돌아가고, A가 flusher(자기 DWB slot 하나)로 flush한 뒤 재시도한다(V31). Forward가 DWB slot을 기다리는 일은 없다.
 
 **MCA03 native(`row_inventory_a/native.rs`, `scripts/check_dev3_s10a_native.py`).** 각 case는 같은 ELF와 자기 namespace를 쓰며 phase마다 process가 다르다.

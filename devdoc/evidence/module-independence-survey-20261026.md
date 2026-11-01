@@ -5659,17 +5659,17 @@ shared는 memory 20200B, native 20208B, resident는 17880B다. 검산식은 `flo
 | --- | --- | --- | --- | --- |
 | PASS(실제 C) | 58 | 33 | 91 | C+A memory 29 ID, MCA03 native 28, MCA04-N01, C+B memory 32, MCB01-N01 |
 | PASS(C0 입력) | 5 | 0 | 5 | MCA04-V04..V08. 계약이 C0 음성 입력으로 정한 변형이며 한 selector다 |
-| PASS(인용) | 4 | 2 | 6 | MCA04-V01·V02, MCA05-V31·V32, MCB02-V06·V07. 인용 시험을 같은 export에서 다시 실행했다 |
-| PARTIAL | 3 | 2 | 5 | MCA01-V12-P(census 절반, A의 predicate 미실행), MCA05-V01(원 Capacity 분기를 주입기로), MCA05-V29(실제 C에서는 C preflight가 먼저 거절), MCB03-V01(동결 순서가 live로 닿지 않음), MCB03-V08(owner별 reference 한도를 B로 표현할 수 없음) |
+| PASS(인용) | 3 | 2 | 5 | MCA04-V01·V02, MCA05-V31, MCB02-V06·V07. 인용 시험을 같은 export에서 다시 실행했다 |
+| PARTIAL | 4 | 2 | 6 | MCA01-V12-P(census 절반, A의 predicate 미실행), MCA05-V01(원 Capacity 분기를 주입기로), MCA05-V29(실제 C에서는 C preflight가 먼저 거절), MCA05-V32(인용 시험은 cancel과 finish만, drop의 권한 반환은 미실행), MCB03-V01(동결 순서가 live로 닿지 않음), MCB03-V08(owner별 reference 한도를 B로 표현할 수 없음) |
 | NOT_RUN | 2 | 0 | 2 | MCA05-V02·V03. 256 MiB WAL을 RowReserve 하나만큼 덜 채워야 해 30초 memory 한도 안에서 만들 수 없다 |
 | N/A | 18 | 2 | 20 | MCA05의 protected·private·registry·files 12개, RootJob V13..V15(extent 확장 DEV3), V28·V33·V34(Row 경로에 그 runtime admission 없음), MCB04-V03·V04(DROP·ALTER, DEV3) |
 
-동결 때(`0119f48f`)의 판정은 PASS(실제 C) 88, PASS(C0 입력) 6, PASS(인용) 6, N/A 23, NOT_RUN 4, NOT_REACHED 1, FAIL 1이었다. 검토와 사용자 결정 뒤 바뀐 ID는 12개다.
+동결 때(`0119f48f`)의 판정은 PASS(실제 C) 88, PASS(C0 입력) 6, PASS(인용) 6, N/A 23, NOT_RUN 4, NOT_REACHED 1, FAIL 1이었다. 검토와 사용자 결정 뒤 바뀐 ID는 13개다.
 - 올라감: MCA01-V12-S(NOT_REACHED→PASS), MCA05-V16..V18(NOT_RUN→PASS), MCB04-V14(FAIL→PASS, C 수정)
 - 같은 칸 안에서 근거가 바뀜: MCA01-V12-P(NOT_RUN→PARTIAL), MCA05-V01(N/A→PARTIAL), MCA05-V02·V03(N/A→NOT_RUN)
-- 내려감: MCA05-V29(C0 입력→PARTIAL), MCB03-V01·V08(실제 C→PARTIAL)
+- 내려감: MCA05-V29(C0 입력→PARTIAL), MCA05-V32(인용→PARTIAL, 기록 재확인 R11), MCB03-V01·V08(실제 C→PARTIAL)
 
-MI03은 **PARTIAL**이다. PARTIAL 5개와 NOT_RUN 2개가 남는다. 남은 것은 모두 계약의 설계 한계(API로 닿지 않음, context factory 금지, 30초 한도)이며 이유를 ID마다 적었다. N/A는 범위 판단이라 PASS로 세지 않는다. 자세한 것은 [M5 재판정](#s10-m5)이다.
+MI03은 **PARTIAL**이다. PARTIAL 6개와 NOT_RUN 2개가 남는다. 남은 것은 모두 계약의 설계 한계(API로 닿지 않음, context factory 금지, 30초 한도)이며 이유를 ID마다 적었다. N/A는 범위 판단이라 PASS로 세지 않는다. 자세한 것은 [M5 재판정](#s10-m5)이다.
 
 ### 실제 공급
 
@@ -5692,7 +5692,7 @@ S9(`a62fc7c9`)보다 지운 파일이 양쪽 모두 2개 많다. C+A에서는 `r
 
 ### 선택 실행
 
-[동결 inventory](../../tests/fixtures/module-row-integration/single-source-s10-inventory.json)(SHA-256 `41fcb5b5d94ec54b06b1f9e601ac19976d92ae6b6a2c04f2c38ae581fd8ad862`), 검토 뒤 [addendum](../../tests/fixtures/module-row-integration/single-source-s10-addendum.json)(SHA-256 `e3e2e006cdba6b467677f4a3d32a8ec19d34b235bd44cee330969e2e910d8c86`), [receipts](../../tests/fixtures/module-row-integration/single-source-s10-receipts.json)를 쓴다. addendum은 동결 inventory의 SHA를 담고 selector를 더하며 ID를 재분류한다. 원 plan, 로그, export inventory, 리뷰 보고서는 `/mnt/project-files/module-independence-20261029/artifacts/module-s10-20261031/`에 있다(`INDEX.md`, `manifest-all.sha256`). native database image는 크기 때문에 복사하지 않았고 WAL, 복구 WAL 사본, receipt, trace, 증인, 로그는 보존했다. runner는 selector마다 정확히 시험 1개가 맞는지 확인하고 시험 하나를 단일 thread로 실행한다. native controller는 export root에서 그 export의 manifest로 source identity를 잡고 파일마다 hash를 대조한다.
+[동결 inventory](../../tests/fixtures/module-row-integration/single-source-s10-inventory.json)(SHA-256 `41fcb5b5d94ec54b06b1f9e601ac19976d92ae6b6a2c04f2c38ae581fd8ad862`), 검토 뒤 [addendum](../../tests/fixtures/module-row-integration/single-source-s10-addendum.json)(SHA-256 `e3e2e006cdba6b467677f4a3d32a8ec19d34b235bd44cee330969e2e910d8c86`), [receipts](../../tests/fixtures/module-row-integration/single-source-s10-receipts.json)를 쓴다. addendum은 동결 inventory의 SHA를 담고 selector를 더하며 ID를 재분류한다. 원 plan, 로그, export inventory, 리뷰 보고서는 `/mnt/project-files/module-independence-20261029/artifacts/module-s10-20261031/`에 있다(`INDEX.md`, `manifest-all.sha256`의 SHA-256 `d7dffdc0decab89e277abbf3e42fe2f3457f3ca835f1c2d6a6754ac8987ee5b2`). native database image는 크기 때문에 복사하지 않았고 WAL, 복구 WAL 사본, receipt, trace, 증인, 로그는 보존했다. runner는 selector마다 정확히 시험 1개가 맞는지 확인하고 시험 하나를 단일 thread로 실행한다. native controller는 export root에서 그 export의 manifest로 source identity를 잡고 파일마다 hash를 대조한다.
 
 | 실행 | 결과 |
 | --- | --- |
@@ -5725,9 +5725,9 @@ native에서 controller가 본 사실 몇 가지는 다음과 같다(`complete.j
 - R01..R10과 R12의 복구 CLR은 2, R11은 0이다(UNDO가 crash 전에 끝남). R01..R11은 4 PID, R12는 3 PID다. 모든 R case의 `D.written_after`가 비어 있다.
 - MCA04-N01의 행은 (1,7), (2,8), (3,17), (4,17)이고 again의 새 행 4는 직전 + 1이다(4 PID).
 
-receipts 생성기는 controller가 기록만 하던 두 사실을 따로 확인한다(재확인 N18·N19). worker cut(R01..R11, N01, MCA04-N01)의 `D.written_after`가 비어 있고, N05-RamOnly(hook)의 produce trace에서 마지막 Ok WAL sync 뒤 어느 파일에도 write가 없다.
+receipts 생성기는 controller가 기록만 하던 두 사실을 따로 확인한다(재확인 N18·N19). worker cut(R01..R12, N01, MCA04-N01)의 `D.written_after`가 비어 있고, N05-RamOnly(hook)의 produce trace에서 마지막 Ok WAL sync 뒤 어느 파일에도 write가 없다.
 
-native는 같은 ELF의 별도 process이며 전원 장애 인수는 아니다. runner의 240초와 controller의 process 한도는 바깥 한도다. PASS를 정하는 한도는 시험 안의 case 한도(memory 30초)와 controller의 case 합 180초다.
+native는 같은 ELF의 별도 process이며 전원 장애 인수는 아니다. runner의 240초와 controller의 process 한도는 바깥 한도다. PASS를 정하는 한도는 시험 안의 case 한도(memory 30초)와 controller의 한도다. s10a controller는 case의 phase 합을 180초로 묶고, 다른 controller(S9, s10, S7)는 process마다 180초로 묶는다. 이 실행의 case 합은 모두 180초보다 훨씬 작다(가장 긴 것 nb1 34.2초, na1 31.36초).
 
 ### 독립 검토와 처리
 
@@ -5749,6 +5749,11 @@ native는 같은 ELF의 별도 process이며 전원 장애 인수는 아니다. 
 - 최종 receipts가 끝나야 한다고 했다. 위 실행이 모두 PASS다.
 - NOTE: N17(F 길이는 관측 상수), N20(`confirms(F)` 미기록), N21(C 수정의 문구), N22(owned page 시험의 여유 약 2초), N23(V12-S의 load install 0 미검사)은 계약에 한계로 적었다. N18·N19는 receipts 생성기가 확인한다. N24는 이 기록이 `9f5712e8` 뒤 문서 commit을 적는 것으로 처리했다.
 
+**기록 수정의 독립 재확인(`9f5712e8..063ee7f6`, `s10-record-recheck.md`).** 조건부 ACCEPT다. R9·R10이 해결됐다고 확인했다. 129 ID의 `per_id`를 동결 분류와 대조했고, 아홉 실행(a1, b1, na1, na2, nb1, nb2, b2, f1, n7)의 plan, source manifest, ELF, input, `complete.json` hash가 receipts와 같으며 결과가 모두 PASS임을 다시 계산했다. native 사실 목록과 MI01–MI05의 근거도 artifacts와 맞았다. addendum을 고치지 않은 것도 받아들였다. 새 필수 지적과 처리는 다음과 같다. 둘 다 기록 수정이라 재실행은 없다.
+- R11: MCA05-V32의 인용 시험(S2W-R15, R10, R03)은 cancel과 finish만 실행하고 `PreflightRow`나 활성 `RowSlotReservation`의 drop 뒤 권한 반환은 실행하지 않는다. 계약은 이를 한계로 적었지만 receipts는 PASS(인용)로 셌다. PARTIAL로 바꿨다(인용 6→5, PARTIAL 5→6, PASS 102→101).
+- R12: 증거가 가리키는 `manifest-all.sha256`이 artifacts에 없었고 receipts의 `manifest_sha256`이 비어 있었다. receipts 사본과 이 보고서를 artifacts에 더하고 manifest를 만들어 그 SHA를 receipts에 넣었다.
+- NOTE: N1(addendum만 읽는 사람을 위한 표시)은 receipts의 `addendum_note`로, N2(180초 한도 문구)와 N3(N18 확인에 R12 포함)은 위 문단으로 반영했다. N4의 f1 worktree는 지웠다. N5는 조치가 없다.
+
 <a id="s10-m5"></a>
 ### M5 재판정
 
@@ -5758,12 +5763,12 @@ native는 같은 ELF의 별도 process이며 전원 장애 인수는 아니다. 
 | --- | --- | --- |
 | MI01 독립 착수 | PASS(한정) | [S9 판정](#s9-m5) 그대로다 |
 | MI02 국소성 | PASS(한정) | S10에서 A 전용 경로를 바꾼 것은 시험 파일 `row/insert/group_tests.rs`에 MCA05-V29 순수 시험 하나(+27줄)를 더한 것뿐이다. A·B의 제품 파일과 B의 `row/read` 아래는 바뀌지 않았다. C의 제품 수정(`plan4_apply/row/read.rs`)은 공통 경로이며 사용자가 고른 계약 oracle을 따른다. 두 전용 경로를 함께 바꾼 commit은 없다. 통합 쪽이 A 전용 경로 안의 시험 파일을 고친 것이므로 S9와 같은 이유로 한정이다 |
-| MI03 독립 인수 | **PARTIAL** | 동결 129 ID 모두에 판정이 있다. 상대 source가 없는 `9f5712e8`의 고정 export에서 C+A 44개와 native 29 case, C+B 36개와 native MCB01-N01이 독립 기대값으로 통과했다. PASS는 102 ID다(실제 C 91, C0 입력 5, 인용 6). 남은 것은 PARTIAL 5(MCA01-V12-P, MCA05-V01, MCA05-V29, MCB03-V01, MCB03-V08)와 NOT_RUN 2(MCA05-V02·V03)이고 모두 계약의 설계 한계다. N/A 20은 DEV3 기능이거나 C의 Row 경로에 그 runtime admission이 없는 차원이며 PASS로 세지 않는다. 근거는 [계약](../contracts/dev3-module-boundaries.md#row-mi03-s10)과 inventory·addendum에 ID별로 적었다. 이 한계를 둔 채 MI03을 받아들일지는 사용자가 정한다 |
+| MI03 독립 인수 | **PARTIAL** | 동결 129 ID 모두에 판정이 있다. 상대 source가 없는 `9f5712e8`의 고정 export에서 C+A 44개와 native 29 case, C+B 36개와 native MCB01-N01이 독립 기대값으로 통과했다. PASS는 101 ID다(실제 C 91, C0 입력 5, 인용 5). 남은 것은 PARTIAL 6(MCA01-V12-P, MCA05-V01, MCA05-V29, MCA05-V32, MCB03-V01, MCB03-V08)과 NOT_RUN 2(MCA05-V02·V03)이고 모두 계약의 설계 한계다. N/A 20은 DEV3 기능이거나 C의 Row 경로에 그 runtime admission이 없는 차원이며 PASS로 세지 않는다. 근거는 [계약](../contracts/dev3-module-boundaries.md#row-mi03-s10)과 inventory·addendum에 ID별로 적었다. 2026-11-01 사용자는 이 한계를 두고 M5를 닫는 대신 남은 항목을 더 공급하라고 골랐다(S11) |
 | MI04 실제 합류 | PASS(선택 범위), N/A 2 | [S9 판정](#s9-m5) 그대로다. S10은 합류 시험을 바꾸지 않았다. main은 S9 PR #14 병합(`7efb32c6`) 뒤 바뀌지 않았고 그 tree는 S10의 출발점 `25a8ef0c`와 같다. C의 `read_missing` 수정은 합류 시험이 쓰는 B 읽기의 Missing-before 경로에 닿는다. occupied before를 만드는 합류 시험은 없고, 유효한 Missing before의 경로는 바뀌지 않았다. 그 경로를 쓰는 기존 시험을 다시 실행했다. f1의 S5 `row_read_live` 9개, 합류 `row_join` 12개, 복구 뒤 B 읽기 `row_recovery_read` 4개, n7의 합류 native 3 case, b2의 `row_read_literal` 9개와 `row_read_census` 2개, b1의 MCB04-V12·V13(손상)이 모두 통과했다 |
 | MI05 보호와 추적 | PASS | 원 결과와 기록은 덮어쓰지 않았다. S9 inventory·receipts·기록과 S10 동결 inventory는 그대로 두고 addendum과 S10 receipts를 더했다. 첫 최종 실행(`0119f48f`)과 개발 실행 nd1–nd4는 artifacts에 보존했다. 다른 담당의 파일을 바꾼 것은 A의 시험 파일 `group_tests.rs`의 시험 추가 하나다(MI02). 계약 재개방은 MCB04-V14의 C oracle 불일치(사용자 결정으로 C 수정)와 검토가 연 PARTIAL·NOT_RUN 재분류다. 재작업은 검토 반영 `6d18f721`..`9f5712e8`과 재확인 반영(문서)이다. C 공급 대기는 없었다 |
-| MI06 별도 판정 | 대기 | S10 D1/D2 검토의 필수 R1–R8과 재확인의 R10은 반영했고 R9는 PARTIAL로 바꿨다. 재확인 반영(R9·R10과 최종 receipts)의 독립 확인을 기다린다. SKIP·NOT_RUN·PARTIAL을 PASS로 바꾸지 않았다 |
+| MI06 별도 판정 | 대기 | 세 독립 검토(`s10-d1d2-independent-review.md`, `s10-fix-recheck.md`, `s10-record-recheck.md`)의 필수 R1–R10은 해결됐다. 마지막 재확인의 R11(MCA05-V32 PARTIAL)과 R12(artifacts manifest)는 기록 수정이며 `ee0a48c4` 뒤 S11 branch의 첫 commit에서 반영했다. 그 반영의 독립 확인은 S11 검토가 함께 한다. SKIP·NOT_RUN·PARTIAL을 PASS로 바꾸지 않았다 |
 
-**M5는 아직 완료로 적지 않는다.** MI03의 PARTIAL 5와 NOT_RUN 2는 계약의 설계 한계라 이 범위에서 더 닫을 수 없다. 이 한계를 둔 MI03을 받아들여 M5를 완료(한정)로 볼지 사용자에게 결정 카드로 묻는다. [§12 강제](../plans/module-independence-plan.md#post-separation-gates)는 사용자 선택대로 M5 뒤에 착수한다.
+**M5는 완료가 아니다.** MI03의 PARTIAL 6과 NOT_RUN 2가 남는다. 2026-11-01 사용자에게 이 한계를 둔 M5 완료 여부를 결정 카드로 물었고, 사용자는 "남은 7개 더 시도"를 골랐다(그 뒤 기록 재확인 R11로 MCA05-V32가 더해져 8개). 남은 항목은 S11이 C의 cfg(test) 경로로 다시 공급한다. [§12 강제](../plans/module-independence-plan.md#post-separation-gates)는 사용자 선택대로 M5 뒤에 착수한다.
 
 ### 되돌림
 
