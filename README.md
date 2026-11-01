@@ -63,3 +63,5 @@ git config --local core.hooksPath scripts/git-hooks
 `git push`는 전송할 commit의 Rust 포맷·Clippy·문서 검사를 수행합니다. 기존 훅은 보존·연결하며 [push 검사 규칙](devdoc/policies/documentation-policy.md#push-gate)을 따릅니다.
 
 기존 개발 파일을 독립 저장소로 이관했으며 이전 Git 이력과 실행 결과는 승계하지 않습니다. [이관 기록](devdoc/history/project-migration.md)
+
+<!-- module gate remote check: docs-only PR, not for merge -->
