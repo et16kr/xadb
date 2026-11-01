@@ -413,7 +413,7 @@ manifest를 바꾸는 PR은 그 자체가 D2 `policy` 검토 대상이다. 의�
 
 `workflow_run` 집계는 택하지 않았다. 상태를 build run의 head SHA에 붙일 수는 있지만, build가 끝난 뒤에만 실행되어 그 사이 PR head에 pending이 없고, PR base를 run 정보에서 다시 찾아야 한다. `pull_request_target`은 PR이 열리거나 갱신될 때 바로 pending을 쓰고 base ref·SHA를 이벤트에서 받는다.
 
-GitHub는 2026-12-02부터 공개 저장소의 `pull_request_target`을 기본 event 정책으로 차단한다. 저장소 설정의 Actions 정책에서 `module-gate.yml`에 대해 이 이벤트를 명시적으로 허용해야 한다. 허용하지 않으면 새 SHA에는 필수 상태가 생기지 않아 merge가 막힌다. 이미 `main` 대상 성공 상태가 붙은 SHA는 예외이므로 정책 변경 뒤에는 제어 run이 실제로 도는지 먼저 확인한다.
+GitHub는 2026-12-02부터 공개 저장소의 `pull_request_target`을 기본 event 정책으로 차단한다. 저장소 설정의 Actions 정책에서 `module-gate.yml`에 대해 이 이벤트를 명시적으로 허용해야 한다. 허용하지 않으면 새 SHA에는 필수 상태가 생기지 않아 merge가 막힌다. 이미 `main` 대상 성공 상태가 붙은 SHA는 예외이므로 정책 변경 뒤에는 제어 run이 실제로 도는지 먼저 확인한다. 설정 위치는 Settings → Actions → **Policies**(workflow execution protections)다. Actions → General에는 없다. 사용자는 2026-11-01 대상(Targets)을 `.github/workflows/module-gate.yml` 하나로 두고 Restrict events에 `pull_request_target`만 남긴 정책을 만들었다. 대상을 저장소 전체로 두고 다른 이벤트를 지우면 `pull_request` build workflow 등이 멈춘다.
 
 ### 원격 보호와 적용 순서
 
@@ -422,6 +422,8 @@ GitHub는 2026-12-02부터 공개 저장소의 `pull_request_target`을 기본 e
 3. 사용자가 [ruleset](../../.github/rulesets/main-module-gate.json)을 저장소 설정의 Rules → Rulesets → Import로 적용하고 Actions 정책에서 `pull_request_target`을 허용한다. API·CLI 권한이 없어 작업 담당이 직접 설정하지 않는다.
 4. `gate-test/protected`로 실제 거절을 확인한다(제어 workflow가 이 ref를 `main`과 같이 판정한다): 직접 push 거절, 금지 의존·검토 누락 PR의 merge 차단, 정상 PR의 수락, build run과 artifact 내려받기 경로, 재실행(re-run)과 artifact 이름 충돌. 결과는 [모듈 증거 기록](../evidence/module-independence-survey-20261026.md#s12-module-gate)에 남긴다. `main`에는 거절 확인용 push를 하지 않는다.
 5. 확인 전까지 원격 강제는 **미적용**으로 기록한다. 로컬 훅만으로 완료를 주장하지 않는다.
+
+**적용 상태(2026-11-01).** 1–4를 마쳤고 원격 강제는 **적용**이다. 직접 push는 거절되고, 금지 의존·검토 누락 PR은 merge가 막히고, 문서 PR과 검토된 Rust PR은 merge 가능 상태가 됐다. 제어 run은 build run을 기다려 receipt artifact를 내려받았다. 재실행 결과와 시험 PR 번호는 [원격 적용과 확인](../evidence/module-independence-survey-20261026.md#s12-remote-rollout)에 있다. 이 적용은 아래 잔여 위험 안의 강제다. gate는 의존·소유·검토 범위·계획과 receipt의 대조를 강제하지만, 검토가 실제로 독립적이었는지(reviewer는 작성자가 쓴 문자열)와 실행 증거가 진짜인지(같은 이름의 상태, PR 코드의 receipt 변조)는 보장하지 않는다. 그래서 변경을 반영할지에 대한 최종 판단은 사람이 PR을 검토하고 merge하는 것으로 한다.
 
 ### 잔여 위험
 
@@ -434,9 +436,9 @@ GitHub는 2026-12-02부터 공개 저장소의 `pull_request_target`을 기본 e
 | 참조 해석 | 위의 정적 해석 한계. A↔B만 컴파일 export로, 나머지는 검토로 보완 |
 | attested 재실행 | CAT PR은 base를 따라갈 때마다 60GiB native를 다시 돌린다(입력 identity가 crate 전체) |
 | 로컬 훅 | 해제할 수 있다. 원격 강제의 증거가 아니다 |
-| harness 시험 | dev3 harness가 주는 환경값이 필요한 시험은 정적 조사와 대상 시험군 실행으로 찾은 것만 반영했다(identity 7개 시험군, G6·G6RC vector hash, executor 전용 13개). 목록에 없는 harness 시험이나 main에 이미 있는 실패 시험(예: `g5_*`, `retention_live_*`)이 든 파일을 바꾼 PR은 CI가 실패한다(fail-closed). harness 시험은 manifest D2로 env·`executor_only`를 고치고, main의 실패는 사용자 규칙대로 별도 작업에서 고친다. 전체 lib 시험 1회 보정 실행은 사용자 결정 대기다 |
+| harness 시험과 main의 기존 실패 | dev3 harness가 주는 환경값이 필요한 시험은 identity 7개 시험군, G6·G6RC vector hash, executor 전용 13개다. 2026-11-01 전체 lib 보정 실행(사용자 승인 1회, `main` `76ec2cf5`)에서, 실행된 사례 가운데 이 밖의 환경값 누락 실패는 0개였다. `status_flush::resident::tests::`의 `cut!` macro 사례 8개는 그 선택의 abort로 결과가 없어 미검증이다. 같은 실행에서 main에 이미 있는 실패가 정확한 사례 26개와 macro 생성 모듈 선택 2개(`status_flush::mixed::tests::` 43개 실패, `status_flush::resident::tests::`는 소멸자 panic으로 프로세스 abort)로 나왔고, 모두 C의 시험 파일 14개에서 계획된다. A·B·CAT·JOIN의 `ci_selectors`에 든 실패는 없다. 그 14개 파일을 바꾼 PR은 실패가 고쳐질 때까지 CI가 실패한다(fail-closed). 목록은 [증거 절](../evidence/module-independence-survey-20261026.md#s12-module-gate)에 있다. harness 시험이 새로 생기면 manifest D2로 env·`executor_only`를 고치고, main의 실패는 사용자 규칙대로 별도 작업에서 실패마다 원인(시험 기대값·제품 회귀·실행 환경)·담당·완료 조건을 정해 고친다. 이관 전 시험 6개는 사용자 결정으로 남겨 둔 것이라 처리 방식을 다시 정해야 한다 |
 | export의 시험 범위 | export는 Rust 변경마다 build하지만 남는 기능(A 또는 B)의 선택은 그 기능이 바뀐 때만 실행한다(PR #18 검토: AGENTS.md의 무변경 코드 시험 금지, 소유자 검토가 해결을 요구). A·B의 선택은 그 기능이 바뀔 때만 head와 export에서 돈다. C·REG·JOIN·CAT·공통 모듈만 바꾼 변경과, 함께 바뀐 변경에서 바뀌지 않은 기능은 A·B 시험이 어디에서도 기본으로 돌지 않는다(`4cbebb0d` 전에는 두 export에서 돌았다). 그런 변경이 A나 B를 깨뜨리면 바뀐 파일의 사례, 기록 `ci_selectors`(head에서만, 두 기능이 함께 있는 tree), 검토로만 잡히고, 상대 기능이 없을 때만 드러나는 실패는 요청할 방법이 없다. 공통 변경의 의미는 D1/D2 검토가 본다 |
-| 미시험 GitHub 동작 | 실제 artifact redirect, re-run, artifact 이름 충돌, 이벤트 정책 차단 뒤 동작은 원격 적용 뒤 시험 ref에서 확인한다 |
+| 미시험 GitHub 동작 | 2026-11-01 시험 ref에서 artifact 내려받기(redirect), build run 재실행, 재실행 뒤 artifact 목록(새 attempt의 receipt 하나만 남음)과 제어 run 재실행을 확인했다. 이벤트 정책이 `pull_request_target`을 막았을 때의 동작(새 SHA에 필수 상태가 생기지 않아 merge가 막힘)은 정책을 허용한 상태라 실제로 시험하지 않았다 |
 
 ### XADB-MODULE-GATE-003 결정 기록
 

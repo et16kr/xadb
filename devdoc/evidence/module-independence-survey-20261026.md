@@ -5880,7 +5880,7 @@ identity:
 <a id="s12-module-gate"></a>
 ## S12 모듈 경계 merge gate(계획 §12)
 
-2026-11-01. S11(PR #16·#17)이 병합된 main `f95eba15`에서 별도 branch `claude/project-thread-1jfdtk-s12`을 만들었다. 설계·판정 규칙·잔여 위험은 [build 계획 §11](../policies/repository-build-plan.md#module-gate)이 정본이고 이 절은 실행 증거다. artifacts는 `/mnt/project-files/module-independence-20261029/artifacts/module-s12-20261101/`이고 `manifest-all.sha256`의 SHA-256은 `d0005bb95310883c8bd58e1cdb7303c96fb429f177033d9dbca1e7357b535dd1`이다.
+2026-11-01. S11(PR #16·#17)이 병합된 main `f95eba15`에서 별도 branch `claude/project-thread-1jfdtk-s12`을 만들었다. 설계·판정 규칙·잔여 위험은 [build 계획 §11](../policies/repository-build-plan.md#module-gate)이 정본이고 이 절은 실행 증거다. artifacts는 `/mnt/project-files/module-independence-20261029/artifacts/module-s12-20261101/`이고 `manifest-all.sha256`의 SHA-256은 `b25b759b2dac1739ddb2459106b72ecea995050d3a87676794a3c6f05d6fd00c`이다(2026-11-01 `remote/`·`calibration-full/` 추가와 PR #22 검토 뒤의 resident 선택 범위 기록 추가 뒤, 파일 514개. PR #22 처음 판의 값은 `d59e578c97597ec0122289bb6ac2913236b4d0db6ebd7e3cdd8da8a135289fa8`(512개), 그 전 PR #18 시점의 값은 `d0005bb95310883c8bd58e1cdb7303c96fb429f177033d9dbca1e7357b535dd1`(483개)이고 그때의 항목은 바뀌지 않았다).
 - 검사기·manifest·build runner·workflow·ruleset·push 훅과 그 시험 `d1871c1b`
 - PR 검토와 CI 대응: 채택 PR에서 build workflow가 receipt 없이 끝나게 한 수정 `f066cffd`, export가 바뀐 기능의 선택만 실행하게 한 수정 `4cbebb0d`, 소유자 검토 4건 반영 `3c4fbb02`, 검토 참고 반영 `199fc0f2`(아래 PR 검토와 CI)
 - 문서, 이 기록, [D2 검토 기록](../../module-gate/records/20261101-s12-module-gate.json)(이 절이 든 commit)
@@ -5906,7 +5906,7 @@ identity:
 
 RR3c는 작성 담당이 반영 확인 중 찾았다. 모든 engine 파일을 바뀐 것으로 놓고 계획을 실제 lib 시험 목록과 대조하자 `#[cfg(target_os = "linux")]`가 붙은 시험 9개가 계획되지 않았다. cfg를 참·거짓·모름으로 평가하도록 고쳤고(§11 cfg 해석), 같은 평가로 `cfg(all(test, target_os = "linux"))` 모듈이 시험 전용으로 바뀌었다. R6(같은 이름의 상태)은 고치지 않고 §11 잔여 위험에 **차단되지 않음**으로 기록했다.
 
-**harness 시험.** 최종 검사기로 runner를 모의 실행하자 `plan4_genesis` 시험 8개가 `missing XADB_PLAN4_GENESIS_SOURCE_SHA256`로 실패했다. dev3 harness가 주는 환경값 없이는 돌 수 없는 lib 시험이 있다는 뜻이다. runner가 CATALOG·PLAN4_RECOVERY·PLAN4_GENESIS·PLAN4_LIVE·G6·G6RC·XRB 시험군의 source·ELF·입력 identity를 채우고, G6·G6RC의 고정 vector index hash(추적되는 `raw-index.tsv`의 SHA-256)를 manifest `evidence.env`에 두었다. XRB(선택 ID와 고정 fixture 디렉터리가 필요)와 `g5_bind_boundaries`(B08이 source에 묶인 padding 값을 요구)는 executor만 입력을 줄 수 있어 `evidence.executor_only`로 CI 계획에서 빼고, 그 파일을 바꾼 PR에는 executor 결과를 적은 검토된 `na`를 요구한다(13개). 대상 시험군을 runner 환경으로 실행한 결과(`428fb6b6`, artifacts `calibration/`): `plan4_genesis::tests` 8 통과·2 ignore, `retention_genesis::tests`, G6 `retention_page::tests`, G6RC `plan4_recovery_control::tests`, `retention::catalog_source_tests`가 통과했다. `plan4_pages::tests` 5개와 `retention::tests` 6개는 제품 panic(`DirtyError Fenced`, `IdentityMismatch`)으로 실패했고, 이는 main에 이미 있던 실패로 기록된 것과 같다. 그래서 그 시험이 든 파일을 바꾼 PR은 그 실패가 고쳐질 때까지 CI가 실패한다. 목록은 정적 조사와 이 대상 실행으로 찾은 것이며, 전체 lib 시험을 한 번 돌려 확인하는 보정은 사용자 결정 대기다(§11 잔여 위험).
+**harness 시험.** 최종 검사기로 runner를 모의 실행하자 `plan4_genesis` 시험 8개가 `missing XADB_PLAN4_GENESIS_SOURCE_SHA256`로 실패했다. dev3 harness가 주는 환경값 없이는 돌 수 없는 lib 시험이 있다는 뜻이다. runner가 CATALOG·PLAN4_RECOVERY·PLAN4_GENESIS·PLAN4_LIVE·G6·G6RC·XRB 시험군의 source·ELF·입력 identity를 채우고, G6·G6RC의 고정 vector index hash(추적되는 `raw-index.tsv`의 SHA-256)를 manifest `evidence.env`에 두었다. XRB(선택 ID와 고정 fixture 디렉터리가 필요)와 `g5_bind_boundaries`(B08이 source에 묶인 padding 값을 요구)는 executor만 입력을 줄 수 있어 `evidence.executor_only`로 CI 계획에서 빼고, 그 파일을 바꾼 PR에는 executor 결과를 적은 검토된 `na`를 요구한다(13개). 대상 시험군을 runner 환경으로 실행한 결과(`428fb6b6`, artifacts `calibration/`): `plan4_genesis::tests` 8 통과·2 ignore, `retention_genesis::tests`, G6 `retention_page::tests`, G6RC `plan4_recovery_control::tests`, `retention::catalog_source_tests`가 통과했다. `plan4_pages::tests` 5개와 `retention::tests` 6개는 제품 panic(`DirtyError Fenced`, `IdentityMismatch`)으로 실패했고, 이는 main에 이미 있던 실패로 기록된 것과 같다. 그래서 그 시험이 든 파일을 바꾼 PR은 그 실패가 고쳐질 때까지 CI가 실패한다. 목록은 정적 조사와 이 대상 실행으로 찾은 것이었고, `main` 반영 뒤 전체 lib 시험을 한 번 돌려 확인했다(아래 전체 lib 보정).
 
 **시험.** `199fc0f2`의 `scripts/`에서 `python3 -B -m unittest test_check_module_gate test_check_push`가 78개 모두 통과한다(모듈 gate 67, push 훅 11, `checker/unit-tests.log`; `d1871c1b`의 70개는 `checker/unit-tests-d1871c1b.log`). 지적마다 넣은 재현 시험은 그 지적 전 검사기에서 실패한다.
 - 1차 R1–R10 시험 16개: 검토 전 검사기에서 실패 18·오류 1(subTest 포함)
@@ -5942,8 +5942,56 @@ RR3c는 작성 담당이 반영 확인 중 찾았다. 모든 engine 파일을 �
 
 같은 commit에서 첫 수정 검토의 참고 지적대로 build workflow가 `refs/remotes/origin/<기본 branch>`를 쓰고 그 ref가 없으면 실패하게 했다(같은 이름의 tag가 가리지 못하게). 수정들은 위 표의 별도 D2 검토를 받았다. 두 번째 검토의 R2(공통 코드 변경의 export가 build만 하게 됨)와 최종 확인의 F1(그런 변경에서는 A·B 시험이 head에서도 돌지 않음)은 소유자 검토가 무변경 export 시험 실행의 해결을 요구했고 AGENTS.md의 변경 범위 규칙과 같은 방향이므로 좁히지 않고 §11 잔여 위험("export의 시험 범위")에 기록했다. 참고 지적 중 시험 공백(base blob을 나열한 검토), 시험 전용 `impl` 제외, 설명 문구, 누락된 ref의 오류 메시지는 `199fc0f2`에서 반영했다. 고친 runner를 실제 cargo로 다시 모의 실행했다. `199fc0f2` 위 `b681964c`(`46ffd3d6`의 여덟 파일과 A의 `catalog_memory/row_cancel.rs`)에서 결과 35개 모두 PASS, 명령 시간 합 19분이다. head의 정확한 사례 45개 중 24개(JOIN `row_join`과 A `row_cancel`의 사례)는 같은 head의 선택이 이미 통과시켜 다시 돌리지 않았고(`covered`) 21개만 `--exact`로 실행했다. C+A export는 A 선택 10개와 사례 12개(모두 `covered`), C+B export는 B를 바꾸지 않아 build만 했다. 신뢰 계획과 대조한 `verify_receipt`의 오류는 0개다. artifacts `runner/sim-b681964c/`.
 
-**원격 상태.** ruleset과 Actions event 정책은 적용되지 않았고 실제 거절도 확인하지 않았다. 원격 강제는 **미적용**이다. 같은 저장소 PR의 workflow가 같은 이름의 성공 상태를 쓰는 것은 막지 못한다. 막으려면 GitHub App check run이 필요하다. 사용자는 2026-11-01 이 thread의 결정 카드("같은 이름의 가짜 성공 상태를 막을 GitHub App을 만들까요?")에서 "지금은 한계로 기록"을 골랐다. 다음 순서는 §11의 적용 순서 1–5다. 결과는 이 절에 덧붙인다.
+**같은 이름의 상태.** 같은 저장소 PR의 workflow가 같은 이름의 성공 상태를 쓰는 것은 막지 못한다. 막으려면 GitHub App check run이 필요하다. 사용자는 2026-11-01 이 thread의 결정 카드("같은 이름의 가짜 성공 상태를 막을 GitHub App을 만들까요?")에서 "지금은 한계로 기록"을 골랐다.
+
+<a id="s12-full-lib-calibration"></a>
+**전체 lib 보정(2026-11-01).** 사용자가 결정 카드에서 engine lib 시험 전체의 1회 실행을 허용했다(AGENTS.md의 전체 실행 금지에 대한 1회 예외). PR #18이 병합된 `main` `76ec2cf5`에서 engine 파일 541개를 모두 바뀐 것으로 놓은 신뢰 계획을 만들고, CI runner와 같은 명령·환경(manifest `evidence.env`, identity 환경, `--test-threads=1`, 사례 100개씩)으로 이 cloud 환경에서 실행했다. build 2분, 실행 약 30분이다. 스크립트·로그·결과는 artifacts `calibration-full/`에 있다.
+- 정확한 사례 1,514개 중 1,488개 통과, 26개 실패.
+- macro 생성 시험의 모듈 선택 7개 중 5개 통과. `status_init::status_flush::mixed::tests::`는 87개 중 43개가 실패했다(`DirtyError Fenced` 27, INIT 해제 `Timeout` 14, 요청된 INIT unwind 2). `status_init::status_flush::resident::tests::`는 37개(정확한 이름 23개, `cut!` macro 생성 8개, `#[ignore]`인 `s5!` macro 생성 6개)다. 이 선택 실행은 여섯 번째 사례 `resident_status_cut_allocator`의 소멸자 panic으로 프로세스가 abort되어 앞의 5개만 결과가 났다(통과 4, 실패 1).
+- abort 뒤의 사례를 따로 확인했다(`resident-selector-coverage.json`). 정확한 이름 23개는 정확한 사례 실행에서 따로 돌았다(통과 20, 실패 3, 위 26개에 포함). `cut!` 생성 8개는 다른 실행에 없으므로 결과가 없다. `resident_status_cut_allocator`는 abort됐고, 나머지 7개(`resident_status_cut_{dpt_checked,dpt_owned,metadata,payload,publication,registry,stage}`)는 시작하지 않았다. 이 8개는 **미검증**이다. `resident_status/tests.rs`를 바꾸는 PR의 CI도 같은 선택을 돌리므로 `resident_status_cut_allocator`의 abort가 고쳐지기 전에는 7개가 실행되지 않는다. 다른 모듈 선택 6개와 정확한 사례 1,514개는 모두 끝까지 실행됐다.
+- feature 조건의 선택적 사례 2개는 이 build에 없어 나열 0이다.
+- executor 전용 13개는 계획에서 빠진다. 입력 없이 따로 실행하면 XRB 12개는 `missing XADB_XRB_INCLUDE`, `g5_bind_boundaries`는 `B08 requires source-bound static gate input: NotPresent`로 실패하고 1개는 ignore다. 제외가 맞다는 확인이다.
+- 실행된 사례에서 환경값 누락(`missing XADB_*`) 실패는 executor 전용 밖에서 0개다. 실행된 범위에서는 새로 반영할 harness 시험이 없으므로 manifest는 바꾸지 않았다. 시작하지 않은 `cut!` 사례 7개가 환경값을 요구하는지는 확인되지 않았다.
+- 실패 표본 10개(새로 드러난 실패 위치마다 하나 이상과 기존 `DirtyError Fenced` 실패 2개)를 한 프로세스에 하나씩 다시 실행해도 모두 같은 위치에서 실패했다(`isolated1.log`, `isolated2.log`). 실행 순서나 앞 시험의 상태 때문이 아니다.
+
+실패가 계획되는 파일은 C의 시험 파일 14개뿐이다(`failing-files.json`). A·B·CAT·JOIN의 `ci_selectors`에 든 실패는 없으므로 기능 PR은 이 실패로 막히지 않는다. 아래 파일을 바꾸는 PR은 실패가 고쳐질 때까지 CI가 실패한다. 파일 경로는 `crates/engine/src/storage/wal_io/` 아래이고, panic 위치의 `dirty_frame/`·`dirty_init.rs`는 `crates/engine/src/storage/` 아래다. panic 위치는 `head-cases.log`와 선택 log에서 사례마다 첫 panic이다.
+
+| 파일 | 실패 사례 | 실패 모듈 선택 | panic 위치 | 기존 분류 |
+| --- | --- | --- | --- | --- |
+| `mixed_system_owner/tests.rs` | 0 | `status_flush::mixed::tests::` | 위 목록의 세 갈래 | 미분류 |
+| `resident_status/tests.rs` | 3 | `status_flush::resident::tests::`(abort, 8개 미검증) | 3개 `dirty_frame/status_residency.rs:328`, abort `dirty_init.rs:1107` | 미분류 |
+| `plan4_pages/tests.rs` | 5 (`g5_*`) | - | 3개 `status_residency.rs:328`, `tests.rs:586`, `plan4_genesis/tests/support.rs:278` | 미분류 |
+| `plan4_retention/lifecycle_tests.rs` | 6 (`retention_live_*`) | - | `:302`(`retention_live_lifecycle`), `:808`, `:962`, `:1012`, 2개 `status_residency.rs:328` | `retention_live_lifecycle`만 원인 기록(이관 전 시험과 같은 Reserve frame 차이), 나머지 미분류 |
+| `plan4_retention/free_undo_tests.rs` | 2 | - | `:192`, `:602` | 미분류 |
+| `plan4_recovery/tests/cases.rs` | 2 | - | `plan4_recovery/tests/support.rs:260` | 이관 전 시험 |
+| `plan4_recovery/tests/{closure,faults,physical,publication}.rs` | 각 1 | - | `plan4_recovery/tests/support.rs:260` | 이관 전 시험 |
+| `plan4_recovery/tests/free_undo.rs` | 1 | - | `free_undo.rs:180` | 미분류 |
+| `plan4_apply/row/census_tests.rs` | 1 (`s2w_c04_live_and_recovered_peaks_unchanged`) | - | `census_tests.rs:236` | 미분류 |
+| `recovery_effect/tests.rs` | 1 (`pending_and_healthy_corruption_boundaries`) | - | `recovery_effect/tests.rs:621` | 미분류 |
+| `status_home_flush/tests.rs` | 1 (`status_flush_rf`) | - | `status_home_flush/resource_tests.rs:277` | 미분류 |
+
+26개 중 21개는 2026-10-29·30 main 점검에서 이미 기록된 실패다([main 기존 실패](main-preexisting-failures-20261030.md)). 새로 드러난 것은 `s2w_c04_live_and_recovered_peaks_unchanged`, `pending_and_healthy_corruption_boundaries`, `resident_status_*` 3개와 두 모듈 선택이다. main에도 있는 실패이므로 사용자 규칙대로 이 작업에서 고치지 않고 별도 작업으로 넘긴다.
+
+**기존 분류와 후속 작업의 요구.** "이관 전 시험" 6개는 [main 기존 실패](main-preexisting-failures-20261030.md) §2.2의 분석대로 제품 결함이 아니다. 제품이 더는 만들지 않는 profile format1의 옛 N=0 producer에 기대는, 현재 형식으로 옮겨지지 않은 시험이다. 2026-10-30 사용자 결정(같은 문서 §2.3)으로 고치거나 끄지 않고 남겨 두었다. `retention_live_lifecycle`은 같은 문서에 같은 Reserve frame 차이로 실패한다고 기록됐지만 처리 결정은 없다. 나머지 19개와 두 모듈 선택은 원인이 분류되지 않았다. 8개가 같은 위치(`status_residency.rs:328`)에서 멈추지만 위치만으로 원인을 정하지 않는다. 후속 작업은 실패마다 현재 계약과 어긋난 시험 기대값인지, 제품 회귀인지, 실행 환경 문제인지를 근거와 함께 정하고 담당과 완료 조건(그 사례가 main에서 통과하거나 사용자가 처리 방식을 정함)을 붙인다. 한꺼번에 제품 결함으로 묶거나 일괄 제외하지 않는다. 이관 전 시험은 남겨 두는 동안 그 파일을 바꾸는 PR의 CI를 계속 실패시키므로 처리 방식을 사용자가 다시 정해야 한다. 위의 미검증 `cut!` 사례 8개도 그 작업에서 실행한다.
+
+<a id="s12-remote-rollout"></a>
+**원격 적용과 확인(2026-11-01).** §11 적용 순서대로 진행했다. 결과 기록은 artifacts `remote/results.md`에 있다.
+1. 사용자가 PR #18을 병합했다(`main` `76ec2cf5`).
+2. ruleset 적용 전에 작업 담당이 `gate-test/protected`를 `76ec2cf5`에 만들었다.
+3. 사용자가 ruleset을 Import로 만들고(enforcement `active`), Settings → Actions → Policies에서 `module-gate.yml`만 대상으로 `pull_request_target`을 허용했다.
+4. `gate-test/protected`로 확인한 결과는 아래 표와 같다. 시험 PR은 모두 병합하지 않고 닫았다.
+
+| 확인 | 대상 | 결과 |
+| --- | --- | --- |
+| 직접 push 거절 | `c82dd42c` → `gate-test/protected` | 거절. `GH013: Repository rule violations`, "Changes must be made through a pull request", "Required status check "xadb/module-gate" is expected". ref는 `76ec2cf5` 그대로 |
+| 정상 PR 수락(Rust 없음) | PR #19 `e9a780b7`(`README.md` 주석) | 제어 run `41294888338`이 build를 기다리지 않고 success("PASS: 0 error(s)"). `mergeable_state` `clean` |
+| 금지 의존 PR 차단 | PR #21 `813c008c`(A `row/insert.rs`에 `use crate::storage::row::read`) | 제어 run `41294904079`이 failure("FAIL: 3 error(s)": 금지 의존 A→B, export A의 B 참조, D1 검토 누락; build를 기다리지 않음). `mergeable_state` `blocked`. 로컬 push 검사가 이 branch를 막으므로 사용자가 결정 카드에서 이 branch 하나만 예외로 허용했다 |
+| 검토 누락 PR 차단 | PR #20 `63b2a8ac`(JOIN `row_join.rs` 끝 주석) | 제어 run `41294897525`이 failure("FAIL: 1 error(s)": D1 검토 누락) |
+| 검토된 Rust PR 수락, build run과 artifact 경로 | PR #20 `c7040ac2`(별도 AI 실행의 D1 기록 추가) | build run `41295084874` attempt 1 success(약 10분, receipt artifact 7,980 B). 제어 run `41295083121`이 그 run을 기다려 receipt를 내려받고(서명된 저장소 URL로 redirect) success("PASS: 0 error(s)"). 앞 head의 build run `41294897490`은 build workflow의 concurrency로 취소됐다 |
+| 재실행과 artifact 이름 | 같은 build run attempt 2, 이어서 제어 run 재실행 | build run을 다시 실행하자(attempt 2, success) 그 run의 artifact 목록에는 새 receipt 하나(7,986 B, 10:15 생성)만 남고 attempt 1의 것은 빠졌다. 같은 이름의 artifact가 둘이 되는 충돌은 생기지 않았다. 이어서 제어 run을 다시 실행하자(attempt 2) success("PASS: 0 error(s)")를 다시 썼다. 제어 report의 `build_run.attempt` 값은 이 cloud 환경에서 artifact 저장소 host 접속이 막혀 직접 읽지 못했다 |
+
+이 결과로 원격 강제는 **적용**이다. 남는 한계는 §11 잔여 위험(같은 이름의 상태, 단일 계정 등)과 같다. 시험 branch `claude/gate-verify-*`는 이 cloud 환경의 git 연결이 branch 삭제를 거부해 남아 있다. `gate-test/protected`는 ruleset이 삭제를 막는다.
 
 ### 되돌림
 
-되돌림은 이 기록의 문서 commit, `199fc0f2`, `3c4fbb02`, `4cbebb0d`, `f066cffd`, `d1871c1b`의 역순이다. 제품·시험 동작 변경은 없다. 원격 설정은 적용되지 않았으므로 되돌릴 것이 없다. 적용한 뒤에는 ruleset을 끄고 workflow 파일을 지운다.
+되돌림은 이 기록의 문서 commit, `199fc0f2`, `3c4fbb02`, `4cbebb0d`, `f066cffd`, `d1871c1b`의 역순이다. 제품·시험 동작 변경은 없다. 원격 설정은 2026-11-01 적용했다. 되돌리려면 사용자가 ruleset을 끄거나 지우고 Actions 정책을 지운 뒤 workflow 파일을 지운다. 원격 적용 확인 기록(이 절의 전체 lib 보정과 원격 적용과 확인)은 문서만 바꿨다.
