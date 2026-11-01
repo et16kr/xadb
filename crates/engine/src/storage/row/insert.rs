@@ -435,3 +435,7 @@ pub(crate) fn local_source_carrier_bytes() -> (usize, usize) {
         + group::local_source_carrier_bytes();
     (validation, producer)
 }
+
+// module gate remote check: forbidden A -> B dependency, never to be merged
+#[allow(unused_imports)]
+use crate::storage::row::read as gate_probe_forbidden_b;
