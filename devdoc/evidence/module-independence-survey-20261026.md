@@ -5777,6 +5777,100 @@ native는 같은 ELF의 별도 process이며 전원 장애 인수는 아니다. 
 <a id="s11-mi03-resupply"></a>
 ## S11 MI03 남은 8 ID의 공급과 M5 재판정
 
-2026-11-01. 계약은 [S11 절](../contracts/dev3-module-boundaries.md#row-mi03-s11)이고 선택은 [S11 addendum](../../tests/fixtures/module-row-integration/single-source-s11-addendum.json)이다. 고정 export 최종 실행과 독립 검토는 아직 하지 않았다. 이 절은 그 결과로 채운다. 그때까지 MI03의 판정은 [S10](#s10-frozen-inventory) 그대로다.
+2026-11-01. S10 PR #15가 병합된 main `ee0a48c4`에서 별도 branch `claude/project-thread-1jfdtk-s11`을 만들었다. 계약은 [S11 절](../contracts/dev3-module-boundaries.md#row-mi03-s11)이고 선택은 [S11 addendum](../../tests/fixtures/module-row-integration/single-source-s11-addendum.json)(SHA-256 `2bc6c4c337912502ec5e7914e6b0d3092df171e8bfe2a45f07830b497d8583b2`), 실행 기록은 [S11 receipts](../../tests/fixtures/module-row-integration/single-source-s11-receipts.json)다. artifacts는 `/mnt/project-files/module-independence-20261029/artifacts/module-s11-20261101/`이고 `manifest-all.sha256`의 SHA-256은 `c5ed5fd081de157d3f0bf4161ca0594f84e09fb3e4cea67f74dbba61f12e7675`이다.
+- S10 기록 재확인 반영(R11 MCA05-V32 PARTIAL, R12 artifacts manifest) `15a21fc6`
+- 8 ID의 C cfg(test) 경로와 A 판정 함수 분리, 계약, addendum `a81f8975`
+- 독립 검토 R1–R4 반영 `25044995`(최종 실행 commit)
+- 그 뒤 재확인 문구 반영과 이 기록(문서, receipts)
 
-개발 실행(working tree, 증거 아님): 새 시험 7개(V12-P의 A 시험, MCA05-V01..V03, V29의 lane 시험, V32, MCB03-V01), 본문을 바꾼 시험 2개(V12-P의 C census 시험, MCB03-V08)와 바뀐 코드를 지나는 기존 시험(S3-R06, S4-R03, MCA01-V01·V09·V12-S와 대조, MCA05-V12, S10의 V29 fence 시험, MCB03-V01 반대 순서, MCB03-V02, `storage::row::insert::` 42개)이 통과했다. mutant 2개를 되돌리기 전에 실행했다. WAL 비교 `end >= cap`은 MCA05-V02에서, Index 판정을 지운 `table_only_profile`은 V12-P의 A 시험에서 실패했다.
+**사용자 결정(2026-11-01 결정 카드).**
+- "MI03 남은 한계 7개를 둔 채 M5를 완료로 볼까요?" → "남은 7개 더 시도". 기록 재확인 R11이 MCA05-V32를 더해 8개다.
+- "V12-P를 위해 A의 Index 거절 판정을 동작 그대로 함수로 빼도 될까요?" → "A 판정을 함수로 분리".
+- "MCB03-V01 하나가 PARTIAL로 남는데 M5를 완료로 볼까요?" → "한계 기록하고 M5 완료".
+
+**제품 변경.** 동작 변경은 없다. A `row/insert.rs`의 table-only profile 판정을 같은 조건의 순수 함수 `table_only_profile`로 뺐다(사용자 허락). C에서는 비교의 cap을 지역 변수로 적은 재결합 셋(`check_progress_room`, `stage_verified`, `producer_lane`의 before image)이 제품 build에서 같고, 나머지는 cfg(test) 코드다. 공개 wire, format, cap, charge, API, 결과·오류 의미는 그대로다.
+
+**결론.** 8 ID 가운데 7개가 PASS이고 MCB03-V01은 PARTIAL이다. 판정은 receipts의 `per_id`와 같다.
+
+| ID | S10 | S11 | 근거 |
+| --- | --- | --- | --- |
+| MCA01-V12-P | PARTIAL | PASS (C0 입력) | C의 complete census를 A의 `table_only_profile`에 넣는다. Index를 허용하는 mutant는 실패한다. `schema`의 호출은 읽어서 확인했다(factory 없음) |
+| MCA05-V01 | PARTIAL | PASS (실제 C) | 몫 = 필요 −1에서 RowReserve가 효과 전 (Prepare, Capacity, Unchanged) |
+| MCA05-V02 | NOT_RUN | PASS (실제 C) | 몫 = 필요에서 Reserve부터 full abort까지 몫 안에서 끝남 |
+| MCA05-V03 | NOT_RUN | PASS (실제 C) | 몫 = 필요 +1, 같은 흐름 |
+| MCA05-V29 | PARTIAL | PASS (실제 C), 한계 | A가 빌린 before image 사본의 H count 0을 (Produce, OrderMismatch)로 거절, driver가 Cancel, q 2. count 0은 사본에만 있다 |
+| MCA05-V32 | PARTIAL | PASS (실제 C) | drop 절반은 새 시험, cancel 절반은 인용(S2W-R15, R10, R03, R23(2), 모두 다시 실행) |
+| MCB03-V01 | PARTIAL | **PARTIAL** | 동결 순서는 live로 닿지 않는다. 시험이 만든 receipt로 registry의 pin census Busy를 보조 증거로 보았지만 §8·§8.4가 그 factory를 금지한다 |
+| MCB03-V08 | PARTIAL | PASS (실제 C), 한계 | capture 지점의 C 시험 probe가 읽는 Owner로 추가 claim, Busy. B의 API로는 낼 수 없다 |
+
+129 ID의 판정은 PASS 108(실제 C 97, C0 입력 6, 인용 5), PARTIAL 1, N/A 20이다. C+A(MCA 90)는 실제 C 63, C0 입력 6, 인용 3, N/A 18이고 C+B(MCB 39)는 실제 C 34, 인용 2, PARTIAL 1, N/A 2다. NOT_RUN은 없다. N/A는 범위 판단(DEV3 기능 또는 C의 Row 경로에 없는 runtime admission)이라 PASS로 세지 않는다.
+
+**WAL 차원(MCA05-V01..V03)의 필요.** 이 Row 흐름에서 C는 WAL을 두 곳에서 받아들인다. Row WAL admission(`check_progress_room`, frame과 미래 step의 WAL 합)과 physical stage(`stage_verified`, frame 끝)다. 같은 fixture를 제한 없이 돌린 RowReserve의 admission은 offset 731,262, frame 57,336 B(파일의 frame, author S2W-R08과 같음), 미래 WAL 982,952 B로 필요 1,040,288 B다. cfg(test) `wal_share` guard가 흐름 전체에서 두 비교의 cap을 fixture의 WAL 끝 + 몫으로 줄인다. −1은 admission 1번 거절, stage 0, 파일 byte 동일이다. =와 +1은 admission 7번과 stage 7번 모두 거절이 없고 WAL 끝은 1,037,216이다. a81f8975의 첫 공급은 stage만 줄이고 필요를 frame 57,336 B로 잡았는데, 실제 C는 그 몫에서 Prepare에서 이미 거절하므로 틀렸다(독립 검토 R1). C의 다른 WAL cap admission 다섯 곳에 임시 probe를 두었고 이 흐름은 어느 것에도 닿지 않았다(되돌림, artifacts `development/r1-probe/`).
+
+### 단독 export
+
+`scripts/module_single_source.py`로 `25044995`에서 만들었다. 두 export 모두 `crates/` 아래 Rust source에 남은 상대 참조가 0이고 build 경고가 0이다.
+
+| export(`25044995`) | 파일 수 | 지운 파일 | 지운 등록 | source manifest |
+| --- | --- | --- | --- | --- |
+| C+A | 7696 | 28 | 12 | `1c458d528a271a305fd28e7e1506a9f91e908d0aa63a029a3c3e6e67844d417c` |
+| C+B | 7590 | 134 | 19 | `29129551ffbda6e2caec2d42ec2fc03534bc76c3dc77a6dcb70c973998ce1354` |
+
+S10(`9f5712e8`)보다 파일이 양쪽 모두 2개 많다. 그 뒤에 생긴 S10 receipts와 S11 addendum이다. 지운 파일과 등록은 S10과 같다.
+
+### 선택 실행
+
+모두 `25044995`에서 같은 input(S11 addendum) `2bc6c4c3…`을 쓴다. memory case 한도 30초와 native 180초는 줄이지 않았다.
+
+| 실행 | 결과 |
+| --- | --- |
+| **a1** (C+A export) | **50/50 PASS**. S10 선택 44개에서 옛 MCA05-V01 selector를 빼고 S11 시험 6개(V12-P의 A 시험, V01..V03, V29 lane, V32)와 인용 S2W-R23(2)를 더했다. V12-P의 C census 시험과 V29의 두 기존 시험은 S10 선택에 있다. 가장 긴 것 28.03초(`mca05_v08_owned_pages_equal`, 한도 30초, S10 N22의 여유 약 2초 그대로). V01..V03은 2.52–3.08초 |
+| **b1** (C+B export) | **37/37 PASS**. S10 선택 36개와 MCB03-V01 보조 시험. 가장 긴 것 10.66초. MCB03-V01 새 시험 1.42초, 반대 순서 시험 5.44초, V08 1.92초, MCB04-V14 5.79초 |
+| **b2** (C+B export, B 읽기 회귀) | C의 `row/read.rs` `status()`에 cfg(test) probe가 생겨 literal 행 위의 S5 읽기 `row_read_literal` 9개와 S5 census `row_read_census` 2개를 다시 실행했다. **11/11 PASS** |
+| **na1** (C+A export native, s10a controller) | MCA03 28 case와 MCA04-N01, **29 case PASS**, 99 process(cut의 SIGABRT 41개, 나머지 exit 0). process당 가장 긴 것 24.36초, case 합 가장 긴 것 30.31초(N09-V01-RamOnly). 생성기가 D·F 증인 확인(N18·N19)을 다시 했다 |
+| **na2** (C+A export native, S9 controller) | S9A-N01..N03 회귀 **9 process PASS** |
+| **nb1** (C+B export native, s10 controller) | MCB01-N01 **2 process PASS**. reenter의 복구와 전체 읽기가 32.96초다(한도 180초) |
+| **nb2** (C+B export native, S9 controller) | S9B-N01 회귀 **3 process PASS** |
+| **f1** (깨끗한 전체 트리) | `25044995`의 git worktree에서 S5 `row_read_live` 9개, C5 합류 `row_join` 12개, 복구 뒤 B 읽기 `row_recovery_read` 4개, **25/25 PASS**, 가장 긴 것 24.66초. 선택은 native worker 진입점을 뺐다 |
+| **n7** (전체 트리 native, S7 controller) | C5 합류 native MCI02-N01..N03 **9 process PASS** |
+
+identity:
+- a1, na1, na2: source manifest `1c458d52…`, ELF `c4db842c0357c63b32e799973a45ed08ad3ba25c28696fc1006bfb7d3a7d76d6`
+- b1, b2, nb1, nb2: source manifest `29129551…`, ELF `a6c4bd7221d3ac57c834863e0d0679be07984a9d317d66be51c8053d62f20df6`
+- f1, n7: source manifest(git worktree의 추적 파일) `b81d0cad2ccf4e2f826ad87b0445c637f1fb74b99148645de3ee11c92ff30251`, ELF `886f44174291a0adc533555b958c00a4069378ad8a5d8da9c8a4a73b87608931`
+
+개발 실행(working tree, 증거 아님): 새 시험 7개(V12-P의 A 시험, MCA05-V01..V03, V29의 lane 시험, V32, MCB03-V01)와 본문을 바꾼 시험 2개(V12-P의 C census 시험, MCB03-V08), 바뀐 코드를 지나는 기존 시험(S3-R06, S4-R03, MCA01-V01·V09·V12-S와 대조, MCA05-V12, S10의 V29 fence 시험, MCB03-V01 반대 순서, MCB03-V02, `storage::row::insert::` 42개, S2W-R23(2))이 통과했다. mutant는 모두 되돌렸다. Index 판정을 지운 `table_only_profile`은 V12-P의 A 시험에서, admission 비교 `>=`는 MCA05-V02에서 실패했다. 첫 설계(stage만 제한)에서 stage 비교 `>=`가 V02에서 실패했지만 지금 설계에서는 stage가 결정하지 않으므로 해당하지 않는다(재확인 NN1).
+
+### 독립 검토와 처리
+
+두 검토 모두 작성자가 아닌 별도 AI 실행이며 읽기 전용이다. 원문은 artifacts의 `reviews/`에 있다.
+
+**S11 D1/D2(`a81f8975`, `s11-d1d2-independent-review.md`).** 조건부 ACCEPT다. 제품 코드는 동작이 같고 S10 기록 재확인의 R11·R12 반영(`15a21fc6`)이 맞다고 확인했다. 필수 지적과 처리는 다음과 같다.
+- R1: WAL 필요는 stage의 frame이 아니라 C admission의 frame + 미래 WAL(1,040,288 B)이고 V02·V03의 기대가 실제 C와 달랐다. 검토자의 prototype대로 흐름 전체에서 admission과 stage를 함께 줄이는 `wal_share`로 고쳤다(`25044995`).
+- R2: MCB03-V01은 시험이 만든 `VerifiedRetirement`와 gate 우회에 기대므로 소비자 §8·§8.4에 따라 PARTIAL이다. 고쳤고, 사용자에게 결정 카드로 물어 "한계 기록하고 M5 완료"를 받았다.
+- R3: MCB03-V08의 한계(추가 claim은 C의 cfg(test) probe)를 계약과 addendum에 적었다.
+- R4: MCA05-V32의 인용 S2W-R23(2)이 선택에 없었다. addendum과 C+A 선택에 더했다.
+- NOTE N1(V12-P 호출 지점), N3(주입기 설명), N4(시험 전용 비용), N5(V32 근거), N6(개발 실행 문구), N7(S10 지시 줄), N8(§8.4 link)은 계약과 이 기록에 반영했다. N2는 V29가 둘째 frame을 40,000 B Cancel로 assert하게 했다. N9(ELF 시각)는 최종 실행이 export에서 다시 build하므로 조치가 없다.
+
+**검토 반영의 독립 재확인(`25044995`, `s11-fix-recheck.md`).** ACCEPT다. R1–R4가 해결됐고 새 필수 지적은 없다. 측정값(1,040,288 B, admission 7, stage 7, WAL 끝 1,037,216)이 검토자의 prototype과 같다고 했고, R1의 coverage 주장(유일한 prefix 전진 지점이 제한된 stage를 지남, 다른 admission 다섯 곳 미도달, admission·stage 수 일치)을 받아들였다. receipts 생성기의 판정 합계(97, 6, 5, 1, 20)를 확인했다.
+- NN1: 개발 실행 문단의 mutant 문장을 고쳤다(위). NN2: 계약의 7·7을 관측값으로 적었다(시험은 거절 0과 각 2 이상을 assert). NN3: "두 곳"을 이 Row 흐름으로 한정하고 다른 admission 지점 이름을 적었다. NN4·NN5는 정보다.
+
+<a id="s11-m5"></a>
+### M5 재판정
+
+판정 기준은 [계획 §8](../plans/module-independence-plan.md#acceptance)의 MI01–MI06이며 실행 전에 동결된 문언 그대로 쓴다. [S10 판정](#s10-m5)에서 바뀐 행과 그 근거를 적는다.
+
+| 기준 | 판정 | 근거 |
+| --- | --- | --- |
+| MI01 독립 착수 | PASS(한정) | [S9 판정](#s9-m5) 그대로다 |
+| MI02 국소성 | PASS(한정) | S11에서 A 전용 경로를 바꾼 것은 제품 파일 `row/insert.rs`의 판정 함수 분리(동작 같음, 사용자 허락)와 시험 파일 `row/insert/tests.rs`의 V12-P 시험 하나다. B 전용 경로는 바뀌지 않았다. 나머지는 C 공통 경로의 cfg(test) 코드와 동작이 같은 재결합이다. 두 전용 경로를 함께 바꾼 commit은 없다. 통합 쪽이 A 전용 경로를 고친 것이므로 S9·S10과 같은 이유로 한정이다 |
+| MI03 독립 인수 | **PASS(한정)** | 동결 129 ID 모두에 판정이 있고 NOT_RUN이 없다. 상대 source가 없는 `25044995`의 고정 export에서 C+A 50개와 native 29 case, C+B 37개와 native MCB01-N01이 독립 기대값으로 통과했다. PASS는 108 ID다(실제 C 97, C0 입력 6, 인용 5). PARTIAL은 MCB03-V01 하나다. 동결 순서가 live로 닿지 않고(UndoFree retirement는 사용자가 범위 밖으로 정한 live Row retirement, MissingClr는 S2-0 gate 대기), 시험용 authority factory는 계약이 금지한다. 2026-11-01 사용자는 이 한계를 기록하고 M5를 완료로 판정하라고 골랐다. N/A 20은 범위 판단이며 PASS로 세지 않는다 |
+| MI04 실제 합류 | PASS(선택 범위), N/A 2 | [S9 판정](#s9-m5) 그대로다. S11은 합류 시험을 바꾸지 않았다. B 읽기가 지나는 C `status()`에 cfg(test) probe가 생겨 f1의 `row_read_live` 9개, `row_join` 12개, `row_recovery_read` 4개, n7의 합류 native 3 case, b2의 11개를 다시 실행했고 모두 통과했다 |
+| MI05 보호와 추적 | PASS | 원 결과와 기록은 덮어쓰지 않았다. S10 inventory·addendum·receipts는 그대로 두고 S11 addendum과 receipts를 더했다. 첫 공급의 WAL 설계(stage만 제한)가 틀렸다는 것과 그 mutant 기록, R1 coverage probe, 시험 build는 artifacts에 보존했다. 다른 담당의 파일을 바꾼 것은 사용자가 허락한 A 판정 함수 분리와 A 시험 하나다(MI02). 계약 재개방은 사용자가 고른 8 ID의 재공급이다. 재작업은 검토 반영 `25044995`와 재확인 문구 반영이다. C 공급 대기는 없었다 |
+| MI06 별도 판정 | PASS | S11 독립 검토(조건부 ACCEPT, 필수 R1–R4)와 그 반영의 재확인(ACCEPT, 새 필수 0)에서 미해결 필수 지적은 0이다. S11 검토가 S10의 남은 조건(R11·R12 반영)도 확인했다. SKIP·NOT_RUN·PARTIAL을 PASS로 바꾸지 않았다 |
+
+**M5는 완료다.** MI01–MI06이 위와 같고, 남은 MCB03-V01의 PARTIAL은 사용자 결정으로 한계로 기록했다. 다음은 사용자 선택대로 [§12 강제](../plans/module-independence-plan.md#post-separation-gates)다.
+
+### 되돌림
+
+되돌림은 이 기록의 문서 commit, `25044995`, `a81f8975`, `15a21fc6`의 역순이다. 제품 동작 변경은 없다. `a81f8975`의 A 판정 함수 분리를 되돌려도 동작은 같고 V12-P의 A 시험만 빌드되지 않는다. fixture는 매 시험에서 새로 만든다.
