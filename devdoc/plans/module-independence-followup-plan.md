@@ -1,6 +1,6 @@
 # XADB 모듈 분리 후 안정화·경계 개선 실행 계획
 
-2026-11-02 · **계획 D2 ACCEPT / F0 수정·이관·선택 검증 완료 / F1 별도 구현·검증 기록 / F2–F7 NOT_RUN**
+2026-11-02 · **계획 D2 ACCEPT / F0 수정·이관·선택 검증 완료 / F1 별도 구현·검증 기록 / F2 구현·선택 검증·독립 검토 진행 / F3–F7 NOT_RUN**
 
 모듈 분리 후속 개발을 위한 개선 순서와 완료 조건을 정한다. 각 단위에 현재 코드·계약의 근거와 비교할 대안을 연결한다. 계획 채택 때 제품·검사기·시험·측정은 시작하지 않았다. 후속 사용자 지시로 [F0 기존 증거 분류](../evidence/main-preexisting-failures-20261030.md#f0-existing-evidence)를 기록했고, 다시 F0 전체 완료 지시에 따라 [수정·이관·선택 검증](../evidence/main-preexisting-failures-20261030.md#f0-completion)을 마쳤다. 과거 원 로그 미확보의 attribution 한계는 보존하며 현재 선택78개의 PASS와 구분한다. F1은 별도로 구현·검증하며 [실행 기록](../evidence/module-independence-survey-20261026.md#f1-python-gate)에 현재 상태를 둔다. 이후 개발 재개 지시가 오면 해당 단위의 기존 위임과 D1/D2 절차 안에서 진행하며 일상 구현마다 재승인을 요구하지 않는다.
 
@@ -108,7 +108,9 @@ F0는 **분류 완료**, **수정·검증 완료**, **사용자 처리 결정**,
 <a id="affected-tests"></a>
 ## 6. F2 — 공통 변경과 최소 계약 사례 연결
 
-**현재 근거:** [선택기](../../scripts/check_module_gate.py)의 `changed_cases/selection/coverage_findings`와 [gate manifest](../policies/module-gate.json). 공통 C·codec·semantic 변경은 소비자 A/B의 시험을 자동 선택하지 않는다. record selector는 head에만 추가되므로 상대 기능 부재 조건에서만 드러나는 실패의 요청 경로도 제한된다.
+**진행:** [F2 실행 기록](../evidence/module-independence-survey-20261026.md#f2-contract-selection)과 [계약 선택 규칙](../policies/repository-build-plan.md#module-gate-contracts)을 따른다. ReservedRow 실패 효과 세 사례의 C+A 대응과 Python 제어 검증이며 이번 단위의 제품 코드·fixture 변경과 제품 시험은 없다.
+
+**착수 당시 근거:** [선택기](../../scripts/check_module_gate.py)의 `changed_cases/selection/coverage_findings`와 [gate manifest](../policies/module-gate.json). 공통 C·codec·semantic 변경은 소비자 A/B의 시험을 자동 선택하지 않는다. record selector는 head에만 추가되므로 상대 기능 부재 조건에서만 드러나는 실패의 요청 경로도 제한된다.
 
 **작업:** 첫 적용은 `ReservedRow`의 prepare/apply/cancel 실패 효과처럼 실제 공통 변경 하나로 제한한다. `변경 경로/의미 → 영향 계약 → 검증 사례 ID → head 또는 C+A/C+B → 기존 실행 재사용 가능 조건`을 등록한다. production 호출과 시험 파일 위치를 구별하고, 해당 사례의 입력·oracle·harness 변경도 영향 판정에 넣는다. 전체 전이 의존을 재귀적으로 시험하는 체계는 만들지 않는다.
 

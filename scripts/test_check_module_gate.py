@@ -461,16 +461,19 @@ class FinalTests(GateFixture):
             out = self.receipt(report)
             for r in out['results']:
                 if r['name'] == 'head:storage::row::insert::':
-                    r['passed_names'] = passed_names
+                    r.update(passed_names=passed_names, listed_names=passed_names,
+                             listed=len(passed_names), passed=len(passed_names))
             out['results'].append(dict(name='head-cases', status='PASS', listed=2, passed=2,
-                                       failed=0, ignored=0, covered=covered))
+                                       failed=0, ignored=0, covered=covered,
+                                       listed_names=[case, 'storage::c::tests::z'],
+                                       passed_names=[case, 'storage::c::tests::z']))
             return out
         self.assertEqual(self.verify(report, receipt([case], [case])), [])
         for passed_names, covered in (([], [case]), ([case, 'x::y'], [case, 'x::y']),
                                       ([case], 'all')):
             with self.subTest(covered=covered):
                 errors = self.verify(report, receipt(passed_names, covered))
-                self.assertTrue(any('selector runs that did not pass' in e for e in errors),
+                self.assertTrue(any('earlier runs that did not pass' in e for e in errors),
                                 errors)
 
     def test_exports_run_only_the_changed_feature(self):
@@ -494,7 +497,9 @@ class FinalTests(GateFixture):
 
         def receipt(cases, selector):
             out = self.receipt(report)
-            out['results'] += [dict(name='head-optional-cases', status='PASS', **cases),
+            out['results'] += [dict(name='head-optional-cases', status='PASS',
+                                   listed_names=['c::x', 'c::y'][:cases['listed']],
+                                   passed_names=['c::x', 'c::y'][:cases['passed']], **cases),
                                dict(name='head?:c::m::', status='PASS', **selector)]
             return out
         none = dict(listed=0, passed=0, failed=0, ignored=0)
@@ -606,7 +611,8 @@ class FinalTests(GateFixture):
                                                                'storage::row::insert::t::b'])
         receipt = self.receipt(report)
         receipt['results'].append(dict(name='head-cases', status='PASS', listed=2, passed=2,
-                                       failed=0))
+                                       failed=0, listed_names=report['selection']['cases'],
+                                       passed_names=report['selection']['cases']))
         self.assertEqual(self.verify(report, receipt), [])
         receipt['results'][-1].update(listed=1, passed=1)
         self.assertTrue(any('head-cases: listed 1' in e for e in self.verify(report, receipt)))
@@ -1173,7 +1179,7 @@ class RunnerTests(unittest.TestCase):
             cases = ['storage::c::tests::z', 'storage::row::insert::tests::newly_added']
             result = module_gate_build.cases_result(
                 'head-cases', temp, plan, cases, logs, env,
-                covered=module_gate_build.passed_by_selectors(results, 'head'))
+                covered=module_gate_build.passed_by_source(results, 'head'))
             self.assertEqual(result['status'], 'PASS', result)
             self.assertEqual(result['covered'], ['storage::row::insert::tests::newly_added'])
             self.assertEqual((result['listed'], result['passed']), (2, 2))
@@ -1265,6 +1271,258 @@ class RealManifest(unittest.TestCase):
         for step in steps[copy + 1:]:
             guard = next((x for x in step.splitlines() if x.strip().startswith('if:')), '')
             self.assertIn("env.XADB_ADOPTED == 'true'", guard, step.splitlines()[0])
+
+
+
+
+class F2ContractTests(GateFixture):
+    def setUp(self):
+        super().setUp()
+        self.case = 'storage::wal_io::plan4_recovery::tests::catalog_memory::row_a::contract'
+        self.write(f'{MEM}/row_a.rs', '#[test]\nfn contract() {}\n')
+        self.row = dict(id='F2-A', paths=[f'{E}/c.rs'], test_file=f'{MEM}/row_a.rs',
+                        inputs=['tests/fixtures/module-row-insert/**'], case=self.case,
+                        sources=['export-a'], contract='contract.md#ex', reason='direct C call')
+        self.set_manifest(lambda m: m.update(exports=EXPORTS, affected_contracts=[self.row]))
+        self.base = self.commit('contract registry')
+
+    def test_common_change_selects_minimal_export_case_and_covers_changed_path(self):
+        self.edit(f'{E}/c.rs', 'struct Port;', 'struct Port { x: u8 }')
+        report = self.judge(self.commit('common change'), mode='push', exports=False)
+        self.assertEqual(report['errors'], [])
+        plan = report['selection']
+        self.assertEqual(plan['cases'], [])
+        self.assertEqual(plan['selectors'], [])
+        self.assertEqual(plan['exports'][0]['cases'], [self.case])
+        self.assertEqual(plan['exports'][1]['cases'], [])
+        self.assertFalse(any('no CI evidence' in p for p in report['pending']))
+        self.assertEqual(plan['contracts'][0]['changed'], [f'{E}/c.rs'])
+
+    def test_input_and_harness_change_trigger_but_unrelated_change_does_not(self):
+        self.edit('README.md', 'fixture', 'other')
+        report = self.judge(self.commit('unrelated'), mode='push', exports=False)
+        self.assertFalse(report['selection']['rust'])
+        for path in ('tests/fixtures/module-row-insert/a.json', f'{MEM}/row_a.rs'):
+            self.write(path, (self.repo / path).read_text() + '\n')
+            report = self.judge(self.commit('input'), mode='push', exports=False)
+            self.assertEqual(len(report['selection']['contracts']), 1)
+            self.assertIn(path, report['selection']['contracts'][0]['inputs'])
+
+    def test_missing_ignored_unknown_and_wrong_case_are_rejected(self):
+        for body in ('', '#[test]\n#[ignore]\nfn contract() {}',
+                     '#[test]\n#[cfg(feature="x")]\nfn contract() {}',
+                     '#[test]\nfn other() {}'):
+            with self.subTest(body=body):
+                self.write(f'{MEM}/row_a.rs', body)
+                self.assertFinding(self.judge(self.commit('missing'), exports=False),
+                                   'required case not found')
+
+    def test_removed_c_owned_test_and_wrong_fixture_export_are_rejected(self):
+        for path in (f'{MEM}/row_a.rs', 'tests/fixtures/module-row-insert/a.json'):
+            tree = gate.Tree(str(self.repo), self.base)
+            analysis = gate.Analysis(tree, ['crates/engine/src/lib.rs'])
+            data = json.loads((self.repo / gate.MANIFEST).read_text())
+            data['affected_contracts'][0]['sources'] = ['export-b']
+            # Even a C-owned test may be physically removed by the export tool.
+            if path.endswith('.rs'):
+                data['modules'][0]['files'].remove(f'{MEM}/row_a.rs')
+                data['affected_contracts'][0]['inputs'] = [f'{E}/c.rs']
+            _, errors = gate.contract_selection(gate.Manifest(data, 'fixture'), analysis,
+                                                 {f'{E}/c.rs'})
+            self.assertTrue(any('export-b removes input' in e for e in errors), errors)
+
+    def test_missing_input_and_deleted_production_path_fail(self):
+        for path in ('tests/fixtures/module-row-insert/a.json', f'{E}/c.rs'):
+            self.git('rm', path)
+            report = self.judge(self.commit('delete'), exports=False)
+            self.assertFinding(report, 'missing input')
+
+    def test_duplicate_id_bad_source_and_nonexact_case_rejected(self):
+        data = json.loads((self.repo / gate.MANIFEST).read_text())
+        for change in ({'sources': ['export-z']}, {'case': 'storage::c::'},
+                       {'inputs': ['../elsewhere']}, {'paths': []}):
+            bad = copy.deepcopy(data)
+            bad['affected_contracts'][0].update(change)
+            with self.assertRaises(gate.GateError):
+                gate.Manifest(bad, 'fixture')
+        data['affected_contracts'] *= 2
+        with self.assertRaises(gate.GateError):
+            gate.Manifest(data, 'fixture')
+
+    def test_head_cannot_remove_trusted_obligation_and_duplicate_case_is_unioned(self):
+        self.set_manifest(lambda m: m.update(affected_contracts=[]))
+        self.edit(f'{E}/c.rs', 'struct Port;', 'struct Port { x: u8 }')
+        report = self.judge(self.commit('remove mapping'), mode='push', exports=False)
+        self.assertEqual(report['selection']['exports'][0]['cases'], [self.case])
+        plan = report['selection']
+        gate.apply_contract_selection(plan, [dict(plan['contracts'][0], id='second')])
+        self.assertEqual(plan['exports'][0]['cases'], [self.case])
+
+
+class F2RunnerTests(unittest.TestCase):
+    def run_fixture(self, action, body=FAKE_LIBTEST):
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            script, calls = root / 'fake.py', root / 'calls.jsonl'
+            script.write_text(body)
+            plan = dict(test_command=[os.sys.executable, str(script), str(calls)],
+                        skip=[], test_args=[])
+            action(root, calls, plan)
+
+    def test_overlapping_selectors_and_exact_cases_run_once_per_source(self):
+        def check(root, calls, plan):
+            results = []
+            for sel in ('storage::row::insert::', 'storage::'):
+                results.append(module_gate_build.selector_result(
+                    f'head:{sel}', root, plan, sel, root, os.environ,
+                    earlier=module_gate_build.source_claims(results, 'head')))
+            self.assertTrue(all(r['status'] == 'PASS' for r in results), results)
+            names = results[-1]['listed_names']
+            result = module_gate_build.cases_result('head-cases', root, plan, names, root,
+                os.environ, covered=module_gate_build.passed_by_source(results, 'head'))
+            self.assertEqual(result['status'], 'PASS')
+            ran = [n for line in calls.read_text().splitlines() for n in json.loads(line)]
+            self.assertEqual(sorted(ran), names)
+            self.assertEqual(module_gate_build.source_claims(results, 'export-a'), [])
+            other = module_gate_build.selector_result('export-a:storage::', root, plan,
+                'storage::', root, os.environ, earlier=module_gate_build.source_claims(results, 'export-a'))
+            self.assertEqual(other['covered'], [])
+            self.assertEqual(other['status'], 'PASS')
+        self.run_fixture(check)
+
+    def test_optional_lanes_reuse_required_exact_case_without_execution(self):
+        def check(root, calls, plan):
+            case = 'storage::c::tests::z'
+            first = module_gate_build.cases_result('head-cases', root, plan,
+                [case], root, os.environ)
+            part = dict(optional_selectors=['storage::c::'], optional_cases=[case])
+            later = module_gate_build.optional_results('head', root, plan, part, root,
+                                                       os.environ, earlier=[first])
+            self.assertTrue(all(r['status'] == 'PASS' for r in later), later)
+            self.assertEqual([r['covered'] for r in later], [[case], [case]])
+            self.assertEqual(len(calls.read_text().splitlines()), 1)
+        self.run_fixture(check)
+
+    def test_missing_required_or_wrong_exact_name_fails(self):
+        def check(root, calls, plan):
+            result = module_gate_build.cases_result('head-cases', root, plan,
+                ['missing::case'], root, os.environ)
+            self.assertEqual(result['status'], 'FAIL')
+            result = module_gate_build.selector_result('head:missing::', root, plan,
+                'missing::', root, os.environ)
+            self.assertEqual(result['status'], 'FAIL')
+        self.run_fixture(check)
+        # Equal aggregate counts from a different name must not pass.
+        def substituted(root, calls, plan):
+            result = module_gate_build.cases_result('head-cases', root, plan,
+                ['storage::c::tests::z'], root, os.environ)
+            self.assertEqual(result['status'], 'FAIL')
+        self.run_fixture(substituted, FAKE_LIBTEST.replace("f'{n}: test'", "f'wrong::{n}: test'"))
+
+    def test_failed_selector_case_is_not_retried_by_overlap_or_exact_lane(self):
+        def check(root, calls, plan):
+            first = module_gate_build.selector_result('head:storage::', root, plan,
+                'storage::', root, os.environ)
+            self.assertEqual(first['status'], 'FAIL')
+            second = module_gate_build.selector_result('head:storage::c::', root, plan,
+                'storage::c::', root, os.environ, earlier=[first])
+            self.assertEqual(second['status'], 'FAIL')
+            exact = module_gate_build.cases_result('head-cases', root, plan,
+                ['storage::c::tests::z'], root, os.environ, unavailable=first['listed_names'])
+            self.assertEqual(exact['status'], 'FAIL')
+            self.assertEqual(len(calls.read_text().splitlines()), 1)
+        self.run_fixture(check, FAKE_LIBTEST.replace(' ... ok', ' ... FAILED')
+                         .replace('{len(chosen)} passed; 0 failed', '0 passed; {len(chosen)} failed'))
+
+
+class F2ReceiptTests(GateFixture):
+    receipt = FinalTests.receipt
+    run_for = FinalTests.run_for
+    verify = FinalTests.verify
+
+    def fixture(self):
+        self.edit('README.md', 'fixture', 'changed')
+        report = self.judge(self.commit('head'), mode='push', exports=False)
+        case = 'storage::c::test'
+        report['selection'] = dict(rust=True, selectors=[], cases=[case], exports=[],
+                                   contracts=[dict(id='C', source='head', case=case)])
+        receipt = self.receipt(report)
+        receipt['results'].append(dict(name='head-cases', status='PASS', listed=1,
+            passed=1, failed=0, ignored=0, listed_names=[case], passed_names=[case], covered=[]))
+        return report, receipt
+
+    def test_missing_selection_result_wrong_names_and_duplicate_rows_fail(self):
+        report, receipt = self.fixture()
+        self.assertEqual(self.verify(report, receipt), [])
+        mutations = [lambda r: r['selection'].update(cases=[]),
+                     lambda r: r['results'].pop(),
+                     lambda r: r['results'][-1].update(listed_names=['other::case'],
+                                                       passed_names=['other::case']),
+                     lambda r: r['results'].append(r['results'][-1].copy()),
+                     lambda r: r['results'][-1].update(covered=['storage::c::test'])]
+        for mutate in mutations:
+            bad = copy.deepcopy(receipt)
+            mutate(bad)
+            self.assertTrue(self.verify(report, bad), bad)
+
+    def test_cross_source_reuse_and_duplicate_execution_fail(self):
+        report, receipt = self.fixture()
+        case = report['selection']['cases'][0]
+        report['selection']['selectors'] = ['storage::c::', 'storage::']
+        receipt['selection'] = copy.deepcopy(report['selection'])
+        one = dict(name='head:storage::c::', status='PASS', listed=1, passed=1, failed=0,
+                   ignored=0, listed_names=[case], passed_names=[case], covered=[])
+        two = dict(one, name='head:storage::', covered=[case])
+        receipt['results'][1:1] = [one, two]
+        receipt['results'][-1]['covered'] = [case]
+        self.assertEqual(self.verify(report, receipt), [])
+        two['covered'] = []
+        self.assertTrue(any('duplicate execution' in e for e in self.verify(report, receipt)))
+        two['covered'] = [case]
+        # An export's row cannot cover the head's case.
+        one['name'] = 'export-a:storage::c::'
+        self.assertTrue(self.verify(report, receipt))
+
+    def test_optional_lanes_may_reuse_an_earlier_required_exact_case(self):
+        report, receipt = self.fixture()
+        case = report['selection']['cases'][0]
+        report['selection'].update(optional_selectors=['storage::'], optional_cases=[case])
+        receipt['selection'] = copy.deepcopy(report['selection'])
+        row = receipt['results'][-1]
+        receipt['results'] += [dict(row, name='head?:storage::', covered=[case]),
+                               dict(row, name='head-optional-cases', covered=[case])]
+        self.assertEqual(self.verify(report, receipt), [])
+
+
+
+class F2RealRegistryTests(unittest.TestCase):
+    def test_reserved_row_real_paths_cases_inputs_and_exports_are_bound(self):
+        root = Path(__file__).resolve().parent.parent
+        data = json.loads((root / gate.MANIFEST).read_text())
+        manifest = gate.Manifest(data, 'candidate')
+        # F1 executes a clean Git-object export without .git. Read actual
+        # candidate files as test data; the production checker still uses Git.
+        paths = {str(p.relative_to(root)) for directory in ('crates', 'tests')
+                 for p in (root / directory).rglob('*') if p.is_file()}
+        tree = types.SimpleNamespace(
+            files=lambda: paths, exists=lambda p: p in paths,
+            text=lambda p: (root / p).read_text(),
+            read=lambda p: (root / p).read_bytes(),
+            blob=lambda p: hashlib.sha256((root / p).read_bytes()).hexdigest() if p in paths else None,
+            preload=lambda paths: None)
+        analysis = gate.Analysis(tree, [e['root'] for e in data['crates']])
+        path = f'{E}/wal_io/plan4_apply/row/write.rs'
+        selected, errors = gate.contract_selection(manifest, analysis, {path})
+        self.assertEqual(errors, [])
+        self.assertEqual(len(selected), 3)
+        self.assertEqual({r['source'] for r in selected}, {'export-a'})
+        self.assertEqual({r['id'] for r in selected}, {'S2W-R10-LIVE', 'S2W-R11-LIVE', 'S2W-R21-LIVE'})
+        self.assertTrue(all(r['inputs'][path] == tree.blob(path) for r in selected))
+        self.assertEqual(gate.contract_selection(manifest, analysis, {f'{E}/codec.rs'}), ([], []))
+        for row in data['affected_contracts']:
+            row['sources'] = ['export-b']
+        _, errors = gate.contract_selection(gate.Manifest(data, 'wrong export'), analysis, {path})
+        self.assertEqual(sum('removes input' in e for e in errors), 3)
 
 
 if __name__ == '__main__':

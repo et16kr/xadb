@@ -1,0 +1,6 @@
+{
+ "scripts/check_module_gate.py": "5469f5bb96c7443cf1a3f908575d19771cb9ba8eeabd432d4da9e4c921dbaa62",
+ "scripts/module_gate_build.py": "9d0d7e64370eb7af18b9b2246d6cd25b2b902bdfcdef99202a6646957ad1098f",
+ "scripts/test_check_module_gate.py": "fe593c89a5bdbb1a163309c8a6b9e338d653bab89777535b199872d0a7e4d8eb",
+ "devdoc/policies/module-gate.json": "a692b1747f958ef75cacb0ac4442b2ac3ed7c05d61ad725ef05b1faf7c7e600a"
+}

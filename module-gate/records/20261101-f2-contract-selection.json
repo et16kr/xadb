@@ -1,0 +1,26 @@
+{
+ "schema": "XADB_MODULE_GATE_RECORD_V1",
+ "change": "F2: map direct common implementation/input changes to minimal source-bound contract cases",
+ "python_tests": [
+  "test_check_module_gate.F2ContractTests.test_common_change_selects_minimal_export_case_and_covers_changed_path",
+  "test_check_module_gate.F2ContractTests.test_duplicate_id_bad_source_and_nonexact_case_rejected",
+  "test_check_module_gate.F2ContractTests.test_head_cannot_remove_trusted_obligation_and_duplicate_case_is_unioned",
+  "test_check_module_gate.F2ContractTests.test_input_and_harness_change_trigger_but_unrelated_change_does_not",
+  "test_check_module_gate.F2ContractTests.test_missing_ignored_unknown_and_wrong_case_are_rejected",
+  "test_check_module_gate.F2ContractTests.test_missing_input_and_deleted_production_path_fail",
+  "test_check_module_gate.F2ContractTests.test_removed_c_owned_test_and_wrong_fixture_export_are_rejected",
+  "test_check_module_gate.F2RealRegistryTests.test_reserved_row_real_paths_cases_inputs_and_exports_are_bound",
+  "test_check_module_gate.F2ReceiptTests.test_cross_source_reuse_and_duplicate_execution_fail",
+  "test_check_module_gate.F2ReceiptTests.test_missing_selection_result_wrong_names_and_duplicate_rows_fail",
+  "test_check_module_gate.F2ReceiptTests.test_optional_lanes_may_reuse_an_earlier_required_exact_case",
+  "test_check_module_gate.F2RunnerTests.test_failed_selector_case_is_not_retried_by_overlap_or_exact_lane",
+  "test_check_module_gate.F2RunnerTests.test_missing_required_or_wrong_exact_name_fails",
+  "test_check_module_gate.F2RunnerTests.test_optional_lanes_reuse_required_exact_case_without_execution",
+  "test_check_module_gate.F2RunnerTests.test_overlapping_selectors_and_exact_cases_run_once_per_source",
+  "test_check_module_gate.FinalTests.test_cases_counted_from_a_selector_must_have_passed_there",
+  "test_check_module_gate.FinalTests.test_optional_results_may_list_nothing",
+  "test_check_module_gate.FinalTests.test_planned_cases_must_all_pass",
+  "test_check_module_gate.RunnerTests.test_a_case_a_selector_passed_is_not_run_again"
+ ],
+ "reviews": []
+}

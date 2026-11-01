@@ -801,5 +801,79 @@
    "test_check_module_gate",
    "test_module_gate_python"
   ]
- }
+ },
+ "affected_contracts": [
+  {
+   "id": "S2W-R10-LIVE",
+   "paths": [
+    "crates/engine/src/storage/wal_io/plan4_apply/row/write.rs"
+   ],
+   "test_file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_live.rs",
+   "inputs": [
+    "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory.rs",
+    "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_forward.rs",
+    "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_cancel.rs",
+    "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_preflight.rs",
+    "crates/engine/src/storage/wal_io/plan4_recovery/tests/support.rs",
+    "tests/fixtures/dev3-catalog-create/native3/**",
+    "tests/fixtures/dev3-catalog-create/transition3/**",
+    "tests/fixtures/dev3-catalog-create/memory-gap3/**",
+    "tests/fixtures/dev3-module-c3/row-write/**"
+   ],
+   "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_live::s2w_r10_live_prepare_before_is_cancelled_by_the_driver",
+   "sources": [
+    "export-a"
+   ],
+   "contract": "contracts/dev3-module-consumers.md#acceptance",
+   "reason": "ReservedRow prepare/apply/cancel failure effects through the A live driver; C+A removes unrelated B."
+  },
+  {
+   "id": "S2W-R11-LIVE",
+   "paths": [
+    "crates/engine/src/storage/wal_io/plan4_apply/row/write.rs"
+   ],
+   "test_file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_live.rs",
+   "inputs": [
+    "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory.rs",
+    "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_forward.rs",
+    "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_cancel.rs",
+    "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_preflight.rs",
+    "crates/engine/src/storage/wal_io/plan4_recovery/tests/support.rs",
+    "tests/fixtures/dev3-catalog-create/native3/**",
+    "tests/fixtures/dev3-catalog-create/transition3/**",
+    "tests/fixtures/dev3-catalog-create/memory-gap3/**",
+    "tests/fixtures/dev3-module-c3/row-write/**"
+   ],
+   "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_live::s2w_r11_live_apply_before_is_reopened_and_cancelled",
+   "sources": [
+    "export-a"
+   ],
+   "contract": "contracts/dev3-module-consumers.md#acceptance",
+   "reason": "ReservedRow prepare/apply/cancel failure effects through the A live driver; C+A removes unrelated B."
+  },
+  {
+   "id": "S2W-R21-LIVE",
+   "paths": [
+    "crates/engine/src/storage/wal_io/plan4_apply/row/write.rs"
+   ],
+   "test_file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_live.rs",
+   "inputs": [
+    "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory.rs",
+    "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_forward.rs",
+    "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_cancel.rs",
+    "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_preflight.rs",
+    "crates/engine/src/storage/wal_io/plan4_recovery/tests/support.rs",
+    "tests/fixtures/dev3-catalog-create/native3/**",
+    "tests/fixtures/dev3-catalog-create/transition3/**",
+    "tests/fixtures/dev3-catalog-create/memory-gap3/**",
+    "tests/fixtures/dev3-module-c3/row-write/**"
+   ],
+   "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_live::s2w_r21_live_refused_cancel_is_fenced_and_must_resolve",
+   "sources": [
+    "export-a"
+   ],
+   "contract": "contracts/dev3-module-consumers.md#acceptance",
+   "reason": "ReservedRow prepare/apply/cancel failure effects through the A live driver; C+A removes unrelated B."
+  }
+ ]
 }

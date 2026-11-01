@@ -940,3 +940,16 @@ apply root의 private receipt·actual terminal 자손과 Busy 시험·manifest/c
 ### 모듈 개발의 main 통합 — 2026-10-28
 
 [통합 기록](../evidence/module-independence-survey-20261026.md#merge-main-20261028)에 따라 main의 공통 core 단일 계수·Commit4phase·복구 반환 수명·반환 Result 계수와 finish의 후속 C2/C3·Row 부분공급을 함께 보존한다. 소스 루트·crate 역할·의존 허용 범위는 그대로다. 사용자 지시에 따라 이후 개발은 main에서 진행하며, C2 미커밋 초안 stash는 병합과 별개로 보존한다. 전체 동시 admission·M4/M5 완료를 뜻하지 않는다.
+
+<a id="module-gate-contracts"></a>
+### F2 공통 변경의 최소 계약 사례 — XADB-MODULE-GATE-005
+
+**D2 · 구현·검토 대상.** [후속 F2](../plans/module-independence-followup-plan.md#affected-tests)의 직접 영향만 신뢰 manifest의 `affected_contracts`에 등록한다. 작성·계약·통합 담당은 `/root`, 별도 검토자는 `/root/f2_review`다. 실제 결과와 최종 판정은 [실행 기록](../evidence/module-independence-survey-20261026.md#f2-contract-selection)을 따른다.
+
+각 행은 안정 `id`, 공통 구현 `paths`, literal 사례의 `test_file`·정확한 libtest `case`, 입력·oracle·harness `inputs`, 실행 `sources`(`head`, `export-a`, `export-b`), `contract`·`reason`을 가진다. `paths`·`inputs`는 저장소 상대 glob이다. 변경된 이전/새 경로가 이 입력과 맞을 때만 의무를 만든다. 선택 계획에 실제 변경 경로와 현재 입력 blob을 결속하고, 해당 source의 기존 exact-case 목록에 합집합으로 넣는다. 삭제된 입력, 발견되지 않거나 ignored/unknown cfg인 필수 사례, export가 제거하는 입력은 오류다. A/B 소유뿐 아니라 C 소유지만 단독 export에서 제거되는 시험도 검사한다. 상대 기능이나 fixture를 다시 export에 넣지 않는다.
+
+첫 범위는 `plan4_apply/row/write.rs`의 ReservedRow prepare/apply/cancel 실패 효과다. A live adapter가 실제 C 메서드를 부르는 `row_live`의 S2W-R10-LIVE·S2W-R11-LIVE·S2W-R21-LIVE 세 사례를 C+A에서 요청한다. prepare Before 후 Cancel, apply Before 후 reopen/Cancel, Cancel 거절 뒤 fence·MustResolve를 각각 확인한다. 실제 libtest 이름과 입력은 manifest가 정본이다. C+B는 이 시험을 제거하므로 요청하지 않는다. 별도의 소비자 전체 회귀·재귀 전이 의존 선택은 하지 않는다. 파일 단위 대응이므로 같은 파일의 무관한 의미 변경까지 구분하는 자동 증명은 아니며, 새로운 경로·계약은 D2에서 등록 범위와 시험 필요성을 검토한다(D02).
+
+동일 실행 source의 겹치는 selector는 먼저 사례를 발견한 다음 아직 실행하지 않은 이름만 exact로 실행한다. 실패·ignored 사례도 다시 실행해 성공으로 바꾸지 않는다. exact lane은 같은 source의 앞선 시험 lane에서 통과한 결과만 재사용하며 실패·ignored로 필수 사례를 충족하지 않는다. 결과에는 실제 발견/통과/ignored 이름과 재사용 이름을 기록한다. receipt 검증은 누락·0개·중복 결과, 계획과 다른 이름, 같은 source 내 중복 실행, 다른 source에서 가져온 재사용을 거절한다. head와 C+A/C+B는 다른 source이며 과거 commit 결과를 자동 재사용하지 않는다. 같은 source의 같은 실행 안에서만 이 재사용을 허용한다.
+
+도입은 F1의 후보 Python 시험으로 검증하고 사람이 PR을 병합하면 기본 branch의 checker·manifest·runner가 함께 시행된다. workflow·원격 보호 설정은 바꾸지 않는다. 이 Python/manifest 변경만으로 무변경 제품 시험은 실행하지 않는다. 현 PR의 실제 C 경로에 대한 가상 diff는 선택기 시험 입력이며 제품 동작 PASS가 아니다. 전면 소비자 회귀 대신 유한 직접 대응을 선택했고, head-only selector 추가 방식은 상대 기능 부재 조건을 지정하지 못해 채택하지 않았다. 되돌림은 F2 PR 전체 revert이며 제품 wire/fixture bytes에는 영향이 없다. 실제 소비 경로·export 제거 규칙·입력·선택 누락 또는 중복 실행이 바뀌면 재검토한다.
