@@ -54,6 +54,7 @@
 
 - 현재 모듈 분리의 M4/M5 인수가 끝난 뒤 추가 개발을 시작할 때 [독립성 평가와 push·merge 강제 계획](devdoc/plans/module-independence-plan.md#post-separation-gates)을 작업 입력에 적용한다.
 - 이번 요청은 후속 계획 저장이다. 검사기·훅·원격 보호 설정은 시행 때 구현·검증하며 현재 분리 작업의 새 선행 조건으로 추가하지 않는다. 무변경 테스트 반복 금지·원 source별 증거 보존은 유지한다.
+- 2026-11-01 시행([모듈 gate](devdoc/policies/repository-build-plan.md#module-gate)): `main`에 직접 push하지 않고 PR로만 반영한다. merge는 사람이 누르며 AI 작업은 PR merge·ruleset/Actions 정책 변경을 하지 않는다. 검토 대상 경로를 바꾸는 PR은 [변경 기록](module-gate/README.md)을 함께 commit한다. 30GB 초과 disk가 필요한 native만 로컬 결과를 attested로 기록하고 나머지 선택 시험은 CI가 실행한다.
 
 ## Repository guidance
 
