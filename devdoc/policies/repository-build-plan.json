@@ -1066,8 +1066,8 @@
     "regression_command": "python3 -B -m unittest discover -s scripts -p test_check_module_gate.py",
     "remote_enforcement": "NOT_APPLIED until the ruleset and the pull_request_target event policy are set and rejection is verified on gate-test/**",
     "work_branch_status": "xadb/module-gate-work",
-    "same_name_status": "NOT_BLOCKED: a same-repository pull_request workflow can post the same context as the same Actions app; blocking needs a GitHub App check run whose key is in an environment limited to the default branch (user decision pending)",
-    "independent_review": "First D2 review REJECT (R1-R10); re-review CONDITIONAL ACCEPT (RR1-RR6); scoped checks CONDITIONAL ACCEPT (RC1, RC2) and ACCEPT at 8d46e80e; reproduction tests in scripts/test_check_module_gate.py fail on the checker before each fix",
+    "same_name_status": "NOT_BLOCKED: a same-repository pull_request workflow can post the same context as the same Actions app; blocking needs a GitHub App check run whose key is in an environment limited to the default branch; user decision 2026-11-01: no App, recorded as a limit",
+    "independent_review": "First D2 review REJECT (R1-R10); re-review CONDITIONAL ACCEPT (RR1-RR6); scoped checks CONDITIONAL ACCEPT (RC1, RC2) and ACCEPT at 8d46e80e; PR #18 fixes (build skip before adoption, export selectors only for the changed feature, owner review: raw identifiers, N/A binding, impl files of re-exported types, selector/case dedupe) CONDITIONAL ACCEPT with docs/record conditions; reproduction tests in scripts/test_check_module_gate.py fail on the checker before each fix",
     "harness_tests": "identity env for 7 harness families and G6/G6RC vector index pins come from evidence; evidence.executor_only cases are not run by CI and need a reviewed na naming the file; main's pre-existing failures fail CI for PRs that change their files"
   },
   "source_fingerprint_roots": [

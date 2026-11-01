@@ -49,8 +49,8 @@ blobs of the head and that attested results match the head's inputs.
   for the manifest, checker, workflows, export tool, build runner, push hook
   and the two module contracts; `D2` with `joint` when two features (A, B,
   Catalog) change together; `D2` with `common` when the disk API changes or a
-  file that defines what it re-exports changes (the gate lists those files in
-  its notes).
+  file that defines what it re-exports, re-exports it on the way, or adds an
+  `impl` to such a type changes (the gate lists those files in its notes).
 - `ci_selectors`: libtest filters the CI build runs on the head in addition to
   the touched modules' own selectors and the exact `#[test]` cases the changed
   files declare. Module paths only (`a::b::` or `a::b::case`); a leading `-`
