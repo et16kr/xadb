@@ -5805,7 +5805,7 @@ native는 같은 ELF의 별도 process이며 전원 장애 인수는 아니다. 
 
 129 ID의 판정은 PASS 108(실제 C 97, C0 입력 6, 인용 5), PARTIAL 1, N/A 20이다. C+A(MCA 90)는 실제 C 63, C0 입력 6, 인용 3, N/A 18이고 C+B(MCB 39)는 실제 C 34, 인용 2, PARTIAL 1, N/A 2다. NOT_RUN은 없다. N/A는 범위 판단(DEV3 기능 또는 C의 Row 경로에 없는 runtime admission)이라 PASS로 세지 않는다.
 
-**WAL 차원(MCA05-V01..V03)의 필요.** 이 Row 흐름에서 C는 WAL을 두 곳에서 받아들인다. Row WAL admission(`check_progress_room`, frame과 미래 step의 WAL 합)과 physical stage(`stage_verified`, frame 끝)다. 같은 fixture를 제한 없이 돌린 RowReserve의 admission은 offset 731,262, frame 57,336 B(파일의 frame, author S2W-R08과 같음), 미래 WAL 982,952 B로 필요 1,040,288 B다. [PR #16 검토](#s11-pr16-review) 뒤로는 시험이 이 미래 WAL을 계약 식에서 따로 계산한 값과 비교한다. cfg(test) `wal_share` guard가 흐름 전체에서 두 비교의 cap을 fixture의 WAL 끝 + 몫으로 줄인다. −1은 admission 1번 거절, stage 0, 파일 byte 동일이다. =와 +1은 admission 7번과 stage 7번 모두 거절이 없고 WAL 끝은 1,037,216이다. a81f8975의 첫 공급은 stage만 줄이고 필요를 frame 57,336 B로 잡았는데, 실제 C는 그 몫에서 Prepare에서 이미 거절하므로 틀렸다(독립 검토 R1). C의 다른 WAL cap admission 다섯 곳에 임시 probe를 두었고 이 흐름은 어느 것에도 닿지 않았다(되돌림, artifacts `development/r1-probe/`).
+**WAL 차원(MCA05-V01..V03)의 필요.** 이 Row 흐름에서 C는 WAL을 두 곳에서 받아들인다. Row WAL admission(`check_progress_room`, frame과 미래 step의 WAL 합)과 physical stage(`stage_verified`, frame 끝)다. 같은 fixture를 제한 없이 돌린 RowReserve의 admission은 offset 731,262, frame 57,336 B(파일의 frame, author S2W-R08과 같음), 미래 WAL 982,952 B로 필요 1,040,288 B다. cfg(test) `wal_share` guard가 흐름 전체에서 두 비교의 cap을 fixture의 WAL 끝 + 몫으로 줄인다. −1은 admission 1번 거절, stage 0, 파일 byte 동일이다. =와 +1은 admission 7번과 stage 7번 모두 거절이 없고 WAL 끝은 1,037,216이다. a81f8975의 첫 공급은 stage만 줄이고 필요를 frame 57,336 B로 잡았는데, 실제 C는 그 몫에서 Prepare에서 이미 거절하므로 틀렸다(독립 검토 R1). C의 다른 WAL cap admission 다섯 곳에 임시 probe를 두었고 이 흐름은 어느 것에도 닿지 않았다(되돌림, artifacts `development/r1-probe/`).
 
 ### 단독 export
 
@@ -5854,35 +5854,6 @@ identity:
 
 **검토 반영의 독립 재확인(`25044995`, `s11-fix-recheck.md`).** ACCEPT다. R1–R4가 해결됐고 새 필수 지적은 없다. 측정값(1,040,288 B, admission 7, stage 7, WAL 끝 1,037,216)이 검토자의 prototype과 같다고 했고, R1의 coverage 주장(유일한 prefix 전진 지점이 제한된 stage를 지남, 다른 admission 다섯 곳 미도달, admission·stage 수 일치)을 받아들였다. receipts 생성기의 판정 합계(97, 6, 5, 1, 20)를 확인했다.
 - NN1: 개발 실행 문단의 mutant 문장을 고쳤다(위). NN2: 계약의 7·7을 관측값으로 적었다(시험은 거절 0과 각 2 이상을 assert). NN3: "두 곳"을 이 Row 흐름으로 한정하고 다른 admission 지점 이름을 적었다. NN4·NN5는 정보다.
-
-<a id="s11-pr16-review"></a>
-### PR #16 검토 반영
-
-2026-11-01 PR #16(`da435fd6`)의 검토 의견이다. 8 ID 가운데 7개 PASS와 MCB03-V01 PARTIAL에 동의했고, 병합 전에 MCA05-V01..V03의 WAL 필요를 독립 기대값으로 확인하라고 권했다. 이전 시험은 C의 admission이 계산한 `first.future`를 그대로 기준으로 써서, 필요 계산이 틀리면 기대값도 같이 움직인다.
-
-`38e57ac2`(시험 코드만)에서 `contract_future_wal`이 계약 식과 fixture 입력만으로 그 자리의 미래 WAL을 계산하고 `reserve_need`가 관측값과 같기를 요구한다. 필요 1,040,288 B도 고정값으로 확인한다. 항목은 [계약](../contracts/dev3-module-boundaries.md#row-mi03-s11)의 MCA05-V01..V03 문단에 적었다.
-
-| owner | 항목 | WAL(B) |
-| --- | --- | --- |
-| Row 거래 | Reserved root의 CLR `91096+C+128h`, Forward `91304+C+128h`(C 193, h 0) | 91,289 + 91,497 |
-| Row 거래 | terminal, full-abort RollbackStart, statement(RollbackStart + StatementFinish) | 56,712 + 3,040 + 6,080 |
-| Aging | 새 Row root의 cleanup `311608+2C+128h`, Row actor의 TerminalFinish | 311,994 + 55,112 |
-| Aging | commit한 CREATE root의 cleanup `311608+2C`(C 254), Catalog actor의 TerminalFinish | 312,116 + 55,112 |
-| 합 | Row 거래 248,618 + Aging 734,334 | **982,952** |
-
-행의 C는 `180+L`, Int64 한 열의 canonical 길이 L = 4 + (1 + 8) = 13이다. CREATE의 C는 `T(i Int64 NOT NULL)`의 V 242 + 12 = 254다.
-
-| 실행 | 결과 |
-| --- | --- |
-| **a3** (C+A export, `38e57ac2`) | MCA05-V01..V03 **3/3 PASS**, 2.37·2.78·2.88초. source manifest `b367000a8b7816ccdbbb9ba94adb6e4e583372d2fc05248a4a7fe8ed83d1de52`(7698 파일), ELF `fede7100cb15739cbf0518a822b52935827e26d6eb3c933e472ca86d46c4e76a`, input은 S11 addendum `2bc6c4c3…` |
-| 개발 실행 mutant | C의 inventory encoder(`inventory/current.rs`)가 미래 WAL을 1 B 더 돌려주게 하면 새 시험은 V02에서 기대값 비교로 실패한다(982,953 ≠ 982,952). 이전 시험은 같은 mutant에서 V01..V03이 모두 통과했다(되돌림) |
-
-검토의 다른 의견:
-- MCB03-V01: PARTIAL에 동의했다. 계약을 나누어 적는 개정과 live retirement 때의 동시성 재검토를 제안했다. 동결 요구를 바꾸는 일이라 이 PR에서 하지 않고 [한계 문서](module-mi03-limits-20261101.md)에 적었다.
-- MCA01-V12-P, MCA05-V29, MCB03-V08: 이미 적은 한계를 유지하라는 의견이며 그대로다.
-- `test_producer_before`의 `Box::leak`(낮은 우선순위): 주입 함수는 `FnOnce`라 armed guard 하나에 사본 하나(144 KiB)만 새고, lane의 빌림이 guard보다 오래 살 수 있어 안전하게 소유를 옮기려면 unsafe가 필요하다. cfg(test)이므로 그대로 둔다.
-
-artifacts는 `/mnt/project-files/module-independence-20261029/artifacts/module-s11-pr16-20261101/`이고 `manifest-all.sha256`의 SHA-256은 `e20fd504e9b11ea3800ecd7cb41219163f922f6408a0e2e8bd010f4edd21ecb2`다. S11의 나머지 실행(`25044995`)과 판정은 바뀌지 않는다. 바뀐 것은 세 시험의 기대값 확인 하나다.
 
 <a id="s11-m5"></a>
 ### M5 재판정

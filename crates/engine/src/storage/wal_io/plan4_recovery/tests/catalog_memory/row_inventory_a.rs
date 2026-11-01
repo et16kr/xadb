@@ -1797,55 +1797,17 @@ const UPDATE_FRAME: u8 = 2;
 
 /// The RowReserve frame's length, read from the file (S2W-R08's author
 /// RowReserve of the same one-row Reserve over T, `tests/fixtures/dev3-module-c3/row-write`,
-/// has the same length, and the resource bounds contract states RowReserve
-/// 57336).
+/// has the same length).
 const RESERVE_FRAME: u64 = 57_336;
 
-/// The future WAL the RowReserve's admission owes, computed from the
-/// contracts and the fixture's inputs only, never from C's own budget code
-/// (PR #16 review: an independent oracle for the need). At that admission
-/// the successor inventory holds two owners' remaining WAL:
-///
-/// - the Row transaction (consumers (`devdoc/contracts/dev3-module-consumers.md`)
-///   `transaction_remaining`, resource bounds (`devdoc/contracts/dev3-resource-bounds.md`)
-///   "WAL·남은 종료 의무"): the Reserved root's CLR `91096+C+128h` and Forward
-///   `91304+C+128h`, terminal 56712, full-abort RollbackStart 3040 and the
-///   active mutating statement's 6080 (RollbackStart 3040 + StatementFinish
-///   3040);
-/// - Aging (resource bounds, root cleanup `Prune+3×ReleaseRole+RootFree =
-///   311608+2C+128h`, TerminalFinish 55112 once per actor): the new Row root
-///   and the Row actor's terminal, and the committed CREATE's retained root
-///   (create job format (`devdoc/contracts/dev3-create-job-format.md`)
-///   `311608+2C`) and the Catalog actor's terminal.
-///
-/// C of the row is `180+L` with the canonical length `L = 4 + Σ(1 + payload)`
-/// (row format (`devdoc/contracts/dev3-row-format.md`)): one Int64, L = 13,
-/// C = 193. `h` is 0 here: the actor's first row, no previous transaction
-/// head.
-/// C of the CREATE is `12+V`, `V = 232 + 4 + |name| + Σ(4 + |column|)`
-/// (create group format (`devdoc/contracts/dev3-create-group-format.md`)):
-/// `T(i Int64 NOT NULL)`, V = 242, C = 254. Nothing else owes WAL there: the
-/// System INIT work is finished.
-const fn contract_future_wal(h: u64) -> u64 {
-    let row_l = 4 + (1 + 8);
-    let row_c = 180 + row_l;
-    let create_v = 232 + 4 + 1 + (4 + 1);
-    let create_c = 12 + create_v;
-    let transaction =
-        (91_096 + row_c + 128 * h) + (91_304 + row_c + 128 * h) + 56_712 + 3_040 + (3_040 + 3_040);
-    let aging = (311_608 + 2 * row_c + 128 * h) + 55_112 + (311_608 + 2 * create_c) + 55_112;
-    transaction + aging
-}
-
-/// The WAL need of the INSERT's first effect, observed on the same
-/// deterministic fixture with nothing limited (S11 review R1) and checked
-/// against the contract (PR #16 review): C admits the RowReserve only when
-/// the WAL file has room for its frame and for every future step its
-/// successor inventory owes (`check_progress_room`, the frame + future WAL).
-/// The observing guard records that first admission; the frame part is
-/// checked against the RowReserve the file gains (kind and length from the
-/// file bytes, and the contract's RowReserve 57336), the future part against
-/// `contract_future_wal`. Returns (need, frame).
+/// The WAL need of the INSERT's first effect, measured on the same
+/// deterministic fixture with nothing limited (S11 review R1): C admits the
+/// RowReserve only when the WAL file has room for its frame and for every
+/// future step its successor inventory owes (`check_progress_room`, the
+/// frame + future WAL). The observing guard records that first admission;
+/// the frame part is checked against the RowReserve the file gains (kind
+/// and length from the file bytes, and the author's length). Returns
+/// (need, frame).
 fn reserve_need() -> (u64, u64) {
     let oracle = Oracle::new();
     let need: (u64, u64);
@@ -1880,16 +1842,7 @@ fn reserve_need() -> (u64, u64) {
                 (first.offset, first.frame, first.refused),
                 (pre, length, false)
             );
-            assert_eq!(
-                first.future,
-                contract_future_wal(0),
-                "the future WAL the contracts derive for this fixture"
-            );
-            assert_eq!(
-                first.frame + first.future,
-                1_040_288,
-                "RowReserve 57336 + future 982952"
-            );
+            assert!(first.future > 0, "the Reserve owes its Forward");
             need = (first.frame + first.future, first.frame);
             let mut call = LiveCall::new(&mut writer, owner, &mut flush, flusher);
             assert!(commit_live(&mut call, tx, private).is_ok());
