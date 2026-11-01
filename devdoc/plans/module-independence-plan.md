@@ -1,5 +1,7 @@
 # XADB 모듈 독립 개발 구조 전환 작업 계획
 
+2026-11-01 [S12 모듈 경계 merge gate](../evidence/module-independence-survey-20261026.md#s12-module-gate): S11이 병합된 main `f95eba15`의 별도 branch `claude/project-thread-1jfdtk-s12`에서 [§12 강제](#post-separation-gates)를 [build 계획 §11](../policies/repository-build-plan.md#module-gate) 설계대로 구현했다. git object만 읽는 검사기(소유·금지 간선·예외·공통 API 재노출·cfg 3값 평가·바뀐 시험 사례 계획), build runner, 두 workflow, `main` ruleset, push 훅 연동이다. 제품 코드와 fixture 변경은 없다. 독립 D2 검토는 REJECT에서 시작해 네 차례 확인 뒤 수용(새 필수 0)했고 검사기 시험 70개와 runner 모의 실행 43/43이 통과했다. harness 입력이 필요한 lib 시험 13개는 executor 전용으로 CI 계획에서 빼고 검토된 N/A를 요구한다. main에 이미 있던 실패(`plan4_pages::tests`, `retention::tests`)는 그 파일을 바꾸는 PR의 CI를 실패시킨다. 원격 ruleset·`pull_request_target` 허용은 사용자 설정 대기이고, 같은 이름의 가짜 성공 상태 차단은 GitHub App이 필요해 사용자 결정 대기다.
+
 2026-11-01 [S11 MI03 남은 8 ID와 M5 완료](../evidence/module-independence-survey-20261026.md#s11-mi03-resupply): S10 PR #15가 병합된 main `ee0a48c4`의 별도 branch `claude/project-thread-1jfdtk-s11`에서 S10이 PARTIAL·NOT_RUN으로 남긴 8 ID(MCA01-V12-P, MCA05-V01..V03·V29·V32, MCB03-V01·V08)를 C의 cfg(test) 경로로 다시 공급했다. 제품 동작 변경은 없다(사용자가 허락한 A 판정 함수 분리 하나). 독립 검토가 WAL 필요를 C의 실제 admission(frame + 미래 WAL, 1,040,288 B)으로 바로잡았다. `25044995`의 C+A export 50/50, C+B export 37/37과 11/11, native(C+A 29 case 99 process와 S9 회귀 9 process, C+B 2·3 process), 전체 트리 25/25와 S7 native 9 process가 통과했다. ID 판정은 PASS 108(실제 C 97, C0 입력 6, 인용 5), PARTIAL 1(MCB03-V01, 동결 순서가 live로 닿지 않고 시험용 authority factory는 금지), N/A 20이다. 사용자 결정대로 그 한계를 기록하고 [M5를 완료로 판정](../evidence/module-independence-survey-20261026.md#s11-m5)했다(MI03 PASS(한정), MI06 PASS). 다음은 [§12 강제](#post-separation-gates)다.
 
 2026-11-01 [S10 소비자 §9 동결 inventory와 M5 재판정](../evidence/module-independence-survey-20261026.md#s10-frozen-inventory): S9 head `25a8ef0c`의 별도 branch `claude/project-thread-1jfdtk-s10`에서 [소비자 §9](../contracts/dev3-module-consumers.md#acceptance)의 동결 129 ID(MCA01–05, MCB01–04)를 ID별로 공급하고 대응했다. 제품 변경은 사용자가 고른 C 수정 하나다(MCB04-V14, `read_missing`이 유효한 occupied before를 Unsupported로 거절). `9f5712e8`의 C+A export 44/44, C+B export 36/36, native(C+A 29 case 99 process와 S9 회귀 9 process, C+B 2·3 process)와 C 수정 경로 회귀(C+B 11/11, 전체 트리 25/25, S7 native 9 process)가 통과했다. ID 판정은 PASS 101(실제 C 91, C0 입력 5, 인용 5), PARTIAL 6, NOT_RUN 2, N/A 20이다(기록 재확인 R11로 MCA05-V32를 PARTIAL로 바꿈). MI03은 PARTIAL이고 M5는 미완료다. 사용자는 한계를 둔 채 닫지 않고 남은 항목을 더 공급하라고 골랐다(S11).
@@ -470,7 +472,7 @@ Root3/Job3/Profile3·Row scope3·base4는 이름 변경의 부수 효과가 아�
 <a id="post-separation-gates"></a>
 ## 12. 분리 완료 후 추가 개발의 독립성 평가와 push·merge 강제 계획
 
-2026-10-29 계획 저장 · 2026-11-01 수용안 통합 · **후속 계획 문서 반영·독립 D2 수용 / 자동 검사·원격 강제 구현 NOT_RUN**
+2026-10-29 계획 저장 · 2026-11-01 수용안 통합 · **후속 계획 문서 반영·독립 D2 수용 / 2026-11-01 S12 시행 설계 [XADB-MODULE-GATE-003](../policies/repository-build-plan.md#module-gate)과 검사기·로컬 훅·CI workflow 구현, 신규 시험 PASS / 원격 ruleset·event 정책 적용과 실제 거절 확인은 사용자 설정 대기 / 같은 이름의 가짜 성공 차단(아래 도입 순서 2)은 미충족: commit status로는 막을 수 없어 GitHub App check run이 필요하며 사용자 결정 대기**
 
 사용자는 모듈 독립성 평가를 push·merge 기준으로 강제하는 방안을 저장하고, 분리가 끝난 뒤 추가 개발을 시작할 때 적용하도록 지시했다. 여기서 분리 완료는 기존 M4 공급과 M5의 [MI01–06 인수](#acceptance)를 충족한 상태다. 다음 추가 개발의 작업 입력을 정할 때 이 절을 읽고 적용 범위·검사·증거를 배정한다. 이 후속 자동화를 현재 M4/M5 완료의 새 선행 조건으로 추가하거나, 이번 저장 요청으로 제품 개발·검사기 구현·원격 설정 변경을 시작하지 않는다.
 

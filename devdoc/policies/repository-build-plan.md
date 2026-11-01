@@ -155,7 +155,7 @@ worker 실행 관계는 controller의 engine import를 뜻하지 않는다. `xad
 
 제품·build·시험 경로는 역할별 허용 기준과 대조한다. 모든 간선을 한 그래프로 합쳐 시험이 제품을 사용하는 관계 자체를 제품 계층 순환으로 판단하지 않는다. 반대로 dev 의존이라는 이유로 하위 모듈의 시험에 SQL/server 기동을 무제한 허용하지 않는다. 모듈 계약을 직접 검증할 수 있는 범위를 먼저 확보하고, 여러 계층과 실제 OS 효과가 필요한 통합 시험을 별도로 유지한다. 시험 전용 필요를 표시하려고 제품 코드에 불필요한 import나 dependency를 넣지 않는다. reference의 독립 기대값 계산에 production 의미를 가져오지 않는 기존 제한도 유지한다.
 
-현재 자동 검사 범위는 4절에 기록한 DEV1 normal dependency 검사와 문서의 manifest 대조다. 위의 전체 target·feature·build·dev 경로 및 engine 내부 경계 자동 검사는 후속 구현이며 `NOT_RUN`이다. 구현한 capability부터 범위를 명시해 확장하고, 미확인 경로를 PASS로 기록하지 않는다. 전역 symbol index나 미래 단계 전체 검사기의 완성을 DEV2 K0의 새 선행 조건으로 만들지 않는다.
+현재 자동 검사 범위는 4절에 기록한 DEV1 normal dependency 검사와 문서의 manifest 대조, 그리고 2026-11-01부터 [11절 모듈 gate](#module-gate)의 engine 내부 모듈 의존 검사다. 위의 전체 target·feature·build·dev 경로와 engine 밖 package의 내부 경계 자동 검사는 후속 구현이며 `NOT_RUN`이다. 구현한 capability부터 범위를 명시해 확장하고, 미확인 경로를 PASS로 기록하지 않는다. 전역 symbol index나 미래 단계 전체 검사기의 완성을 DEV2 K0의 새 선행 조건으로 만들지 않는다.
 
 <a id="section-7"></a>
 
@@ -292,7 +292,7 @@ DEV1 검사는 DEV0 회귀와 production foundation/platform의 실제 연결을
 
 첫 사내 배포의 qualification 대상·release profile·panic·feature·패키지·증거 보관·보호 승격 방침은 [개발 운영 방침 DP06](development-policy.md)으로 채택했다. Ubuntu 24.04/x86_64/ext4를 최초 대상에 한정하며, 정확한 image/kernel/device identity·recipe와 실제 검증은 배포 작업에서 완성한다. 현재 Cargo profile·CI 설정이 이 계획으로 변경되거나 지원 qualification을 통과한 상태는 아니다.
 
-현재 `.github/workflows/dev0.yml`은 push/PR에서 `python3 scripts/check_dev1.py`를 실행하고 `artifacts/`를 보존하도록 작성되어 있다. 원격 실행·branch protection·보호 oracle 승격은 미검증이다. 후속 CI는 독립 package 검사, 현재 단계 통합, release/profile 조합, 문서 검증을 각각 증거로 남기며 해당 경로가 준비될 때 추가한다.
+현재 `.github/workflows/dev0.yml`은 Rust 관련 변경의 push/PR에서 포맷 검사만 실행한다([push gate](documentation-policy.md#push-gate)). 2026-11-01 [모듈 gate](#module-gate)의 `module-gate.yml`(제어)·`module-build.yml`(build/선택 시험)을 추가했으며, 원격 ruleset 적용과 실제 거절 확인 전에는 branch protection을 적용된 것으로 기록하지 않는다. 보호 oracle 승격은 미검증이다. 후속 CI는 독립 package 검사, 현재 단계 통합, release/profile 조합, 문서 검증을 각각 증거로 남기며 해당 경로가 준비될 때 추가한다.
 
 로컬 push 제약은 [DOC-002·DOC-003·DOC-004](documentation-policy.md#push-gate)의 `scripts/git-hooks/pre-push`와 `scripts/check_push.py`로 구현한다. 기존 `scripts` fingerprint/clean-export 루트 안에 배치한다. 실제 pushed ref tip commit의 임시 export에서 `cargo fmt --all --check`, Actions와 같은 workspace/target/feature 범위의 Clippy, 문서 검사를 순서대로 실행하며 편집·commit 검사를 추가하지 않는다. Clippy는 테스트 코드를 정적 검사하며 기능 시험은 실행하지 않는다. [관리 JSON](repository-build-plan.json)의 `pre_push_gate`가 같은 진입점을 색인한다. `scripts/test_check_push.py`는 임시 로컬 remote에 대한 훅 자체의 회귀다. 로컬 훅과 원격 CI/보호 설정은 별도다.
 
@@ -346,6 +346,110 @@ D3-DWB-INSTALL-001의 실제 trace·유한 모델과 Linux 파일 inventory 검�
 
 
 DEV3 페이지 예약·취소는 `wal_io/doublewrite_install`의 private child `allocation_reservation`과 전용 `allocation_operation`에서 구현한다. 실제 작성된 runtime 시험과 `tests/fixtures/dev3-allocation-reservation/`의 독립 byte·semantic·compiler 입력만 등록한다. native 실행기와 compiler runner는 아직 작성하지 않아 경로를 선등록하지 않는다. 기존 WAL stage의 공통 복사 helper를 실제 분리했으므로 그 네 관련 시험은 미실행 의무로 남긴다. 부분 실행과 사용자 요청에 따른 중단 지점은 [구현 기록](../implementation/dev3-implementation.md#allocation-reservation-partial)을 따른다. 새 dependency/source root는 없다.
+
+<a id="module-gate"></a>
+
+## 11. 모듈 경계·증거 merge gate
+
+2026-11-01 · `XADB-MODULE-GATE-003` · **D2 독립 검토: 1차 REJECT(R1–R10), 재검토 조건부 수용(RR1–RR6) 반영과 범위 한정 확인은 아래 결정 기록 / 검사기·훅·CI 구현과 신규 시험 PASS / 원격 ruleset·event 정책 적용과 실제 거절 확인은 사용자 설정 대기 / 같은 이름의 가짜 상태는 차단되지 않음**
+
+[모듈 독립 계획 12절](../plans/module-independence-plan.md#post-separation-gates)의 시행 설계다. M5 완료 뒤 사용자가 고른 권장안(2026-10-31)을 따른다. ① 사람이 GitHub에서 merge를 누르는 것이 반영 승인이다. ② `main`에 직접 push하지 않는다. ③ 30GB를 넘는 disk가 필요한 native만 로컬 결과를 attested로 받고 나머지는 CI에서 실행한다. ④ 작업 branch 대상 PR은 허용하고 `main` PR에서 합산 판정한다. ⑤ M5 뒤 구현한다.
+
+**목적과 위협 범위.** gate는 협력하는 작성 담당(사람·AI)의 실수로 금지 의존·미등록 경로·상대 기능 수정·검토 없는 규칙 완화·누락·오래된 증거가 `main`에 들어가는 것을 막고, 우회를 드러낸다. 모든 작업이 같은 GitHub 계정 `et16kr`로 실행되므로 그 자격증명을 가진 악의적 작성자를 막는 보안 경계는 아니다. 그런 작성자는 규칙 자체를 바꿀 수 있다. 이 한계는 아래 잔여 위험에 그대로 둔다.
+
+### 구성
+
+| 구성 | 경로 | 역할 |
+| --- | --- | --- |
+| 경계 manifest | [module-gate.json](module-gate.json) | 모듈·파일 소유·논리 Rust 경로·허용 의존·금지 항목 이름·legacy 예외(허용 경로·기준 source)·정책 파일·검토 요구·export 구성·attested 허용 범위·CI 선택. 의미는 [경계 계약 §4](../contracts/dev3-module-boundaries.md#target-imports)와 [소비자 §4](../contracts/dev3-module-consumers.md#division)가 정본이고 manifest는 검사 입력이다 |
+| 검사기 | [check_module_gate.py](../../scripts/check_module_gate.py) | Git 객체만 읽는다. head를 build·import·실행하지 않는다. `check`·`plan`·`files`·`final` |
+| build runner | [module_gate_build.py](../../scripts/module_gate_build.py) | 기본 branch의 사본으로 계획을 다시 계산하고 head(Git 객체에서 꺼냄)와 C+A·C+B export(export 도구의 `git archive`)를 build·선택 실행한 뒤 receipt를 쓴다 |
+| 로컬 훅 | [check_push.py](../../scripts/check_push.py) | push 대상 tip마다 remote 기본 branch와의 merge-base에 있는 검사기·manifest로 판정한다 |
+| 제어 workflow | [module-gate.yml](../../.github/workflows/module-gate.yml) | `pull_request_target`. 기본 branch의 workflow·검사기로 PR head를 데이터로 읽어 판정하고 build run을 검증한 뒤 head에 상태를 쓴다. `main`·`gate-test/**` 대상 PR은 `xadb/module-gate`(merge 판정), 작업 branch 대상 PR은 `xadb/module-gate-work`(의무 PENDING) |
+| build workflow | [module-build.yml](../../.github/workflows/module-build.yml) | `pull_request`. 읽기 전용 token·비밀 없음. PR 코드를 build·실행하는 유일한 곳. 제한 시간 120분 |
+| 원격 보호 | [ruleset](../../.github/rulesets/main-module-gate.json) | `main`과 시험 ref `gate-test/**`(제어 workflow가 `main`과 같이 판정): PR 필수, `xadb/module-gate`(GitHub Actions app 15368) 필수·최신 base 요구, force push·삭제 차단, 우회 목록 없음 |
+| 변경 기록 | [module-gate/records](../../module-gate/README.md) | PR마다 검토·CI 선택·N/A·attested 결과를 담는 JSON. 작성 형식은 그 README |
+
+### 판정 규칙
+
+변경 범위는 PR의 base와 head의 merge-base부터 head까지다. 정책(manifest·검사기)은 신뢰 revision에서 읽는다. CI 제어는 기본 branch의 checkout, 로컬 훅은 merge-base다. 신뢰 revision에 manifest가 없으면 `check`는 `NOT_ADOPTED`로 판정하지 않지만, gate를 채택한 기본 branch에서 도는 제어 workflow의 `final`은 이를 실패로 본다(manifest를 잃은 `main`이 모든 PR을 통과시키지 않게).
+
+| 규칙 | 차단 조건 | push 훅 | merge |
+| --- | --- | --- | --- |
+| 등록 | manifest의 모듈·unscoped 어디에도 없는 경로, crate 안의 module tree 밖 `.rs`, 해석할 수 없는 `mod`, crate source 아래의 symlink·submodule, `export-ignore`·`export-subst`를 쓰는 `.gitattributes` | 차단 | 차단 |
+| 소유 대조 | 파일 경로로 정한 소유 모듈과 그 파일이 선언된 논리 Rust 경로(`mod`·`#[path]`)의 모듈이 다름. 다른 모듈의 namespace에 파일을 끼워 그 모듈의 규칙을 받는 것을 막는다 | 차단 | 차단 |
+| 허용 의존 | 논리 경로로 해석한 `use` tree·`crate`/`super`/`self` 경로·하위 모듈 이름 경로와 상대 fixture token이 manifest의 방향을 어김. `use … as` 별칭, 모듈 import, glob import로 들어온 이름도 그 모듈 안에서 따라간다. 기능(A·B·CAT)은 다른 기능과 JOIN에 어떤 scope에서도 닿을 수 없고, 공통 모듈은 기능에 닿을 수 없다 | 차단 | 차단 |
+| 금지 항목·경로 | 모듈의 `deny_items` 이름이 그 모듈의 제품 코드에 나오거나, 제품 참조가 `deny_paths`의 논리 경로 아래로 해석됨. physical은 계약 §4대로 Catalog/Row operation·attempt·installed type을 수입하지 않으므로 `crate::storage::wal_io::bootstrap` 아래 전체를 금지하고 `CatalogCommitAttempt`·`CatalogCommitInstalled`는 이름으로도 금지한다(정의가 C에 있어 모듈 방향만으로는 표현되지 않음) | 차단 | 차단 |
+| legacy 예외 | 예외는 파일·대상 모듈·scope와 허용 논리 경로(`paths`) 안에서만 인정하고 기준 source(`baseline`)를 남긴다. 같은 파일이 같은 대상의 다른 항목을 새로 쓰면 위반이다. 쓰이지 않게 된 예외와 쓰이지 않게 된 허용 경로도 차단한다. 예외 추가·경로 확대는 완화로 표시되며 D2 `policy` 검토로만 들어온다 | 차단 | 차단 |
+| 계약 연결 | manifest 예외의 계약 문서·anchor와 source 파일이 head에 있어야 한다. 계획 12절이 요구한 계약 본문과 manifest의 연결 확인을 `verify_documents.py`가 아니라 이 검사기가 push 훅과 merge에서 한다 | 차단 | 차단 |
+| 단독 export | 신뢰 export 도구를 head에 적용했을 때 상대 기능 밖의 파일 삭제, 남길 기능의 파일 삭제, 등록 밖 patch, 남은 참조, 상대 파일 잔존 | 차단 | 차단 |
+| 검토 | 검토 대상 경로마다 head blob과 같은 blob을 나열한 ACCEPT·필수 지적 0 검토가 있어야 한다. 제품·시험·script는 D1, 정책 파일과 manifest는 D2 `policy`, 두 기능을 함께 바꾸면 D2 `joint`, disk API는 D2 `common`. disk API가 `pub use`로 재노출하는 항목의 정의 파일과, 그 정의까지 `use`·`pub use`(별칭·glob 포함)를 따라가는 재노출 사슬의 파일도 D2 `common`이다. 모듈 전체를 재노출하거나(`pub use m;`, 별칭이나 중간 재노출을 거친 것 포함) glob으로 재노출하면(`pub use m::*;`) 그 모듈 아래 모든 파일과 그 파일들의 `pub use`가 가리키는 정의까지 포함한다. 정의를 찾지 못하면(macro 등) 가장 가까운 논리 모듈의 파일로 대신한다. S12 head에서 C·engine의 22개 파일이 해당하며 보고서 notes에 나열된다(파일 단위라 그 파일의 무관한 수정도 D2가 된다). reviewer와 author가 같으면 무효다 | PENDING | 차단 |
+| attested | manifest가 허용한 대용량 native만, head 입력 identity와 같은 PASS·로그 hash·확인자. CAT을 바꾼 PR은 `dev3_catalog_native.py` 결과가 필수다 | 차단(필수 누락은 PENDING) | 차단 |
+| CI 증거 | Rust·시험 입력(`crates/`·`tests/` 아래 모든 파일, Cargo 파일, toolchain, `.cargo`)이 바뀌면 같은 head의 build run이 성공하고 receipt의 계획·검사기 blob·manifest blob·결과가 신뢰 계산과 같아야 한다. 바뀐 모듈마다 선택된 CI 증거가 있거나 검토된 기록의 `na`가 있어야 한다. 어느 모듈도 소유하지 않는 입력(A·B 밖의 `tests/fixtures/**`, 다른 crate, 루트 Cargo 파일)은 기록의 `ci_selectors`나 그 경로를 명시한 검토된 `na`가 있어야 한다 | 필수 누락은 PENDING | 차단 |
+| 검사기 오류 | 판정할 수 없는 manifest·Git·API 오류 | 차단 | 차단 |
+
+manifest를 바꾸는 PR은 그 자체가 D2 `policy` 검토 대상이다. 의존 판정은 head manifest로 하고, 신뢰 manifest로만 나오는 위반은 보고서에 남겨 검토자가 완화의 실제 효과를 확인하게 한다. 모듈 쌍·scope마다의 실효 허용 관계가 새로 열림(`allow`를 `deny`로 바꾸는 등 표기와 무관), 새 예외·예외의 source·대상 변경·test→production·경로 확대, 모듈 추가·삭제·종류·파일·논리 경로 변경, CI 선택(`ci_selectors`·`ci_also`)·`deny_items`·`deny_paths`·fixture token 축소, 정책 파일·검토 요구의 축소, unscoped 확대, attested 허용·필수의 완화, evidence의 skip 확대나 그 밖의 변경, crate·기록·export 설정 변경은 완화로 표시하고, 완화가 있으면 head 상태 설명에 `POLICY RELAXATION`을 넣어 merge하는 사람이 보게 한다. 정책 파일 목록의 workflow·검사기·export 도구·build runner·push 훅·두 경계 계약도 같은 D2 대상이다.
+
+**gate 고유 규칙.** 계약 §4는 기능 사이 금지와 disk 증명 type만 정한다. codec·values·semantic·physical·dirty_frame 사이의 방향(하위 계층만 사용, 공통 모듈의 기능 접근 금지)은 계약이 정의하지 않은 gate 고유 규칙이며 manifest가 정본이다. 계약으로 올리려면 별도 D2가 필요하다. 계약 76행은 codec과 효과 소유자 사이 의존 판정을 미뤘고, 이 gate도 그 판정을 대신하지 않는다.
+
+**참조 해석의 한계.** 정적 해석이다. 별칭·모듈 import·glob import는 그 모듈 안에서 한 단계(가져온 모듈의 하위 모듈과 그 모듈이 직접 가져온 이름)까지만 따라간다. glob이 다시 glob한 이름, type alias, `extern crate self as x`, `include!()`는 따라가지 않는다. macro 본문의 경로는 정의 위치로 센다(실제 해석은 호출 위치). 공통 API의 재노출 사슬은 32단계까지 따라간다. 다른 모듈이 재노출한 이름은 재노출한 모듈의 간선으로 판정한다. 컴파일로 보완되는 것은 단독 export가 A·B를 각각 지운 build뿐이어서 A↔B 간선만 그렇다. CAT·codec·semantic·physical·dirty_frame 규칙에는 컴파일 보완이 없고 독립 검토가 보완한다.
+
+**cfg 해석.** `#[cfg(...)]`는 참·거짓·모름의 세 값으로 평가한다. 제품 build에서는 `test`만 안다고 보아, `test`가 거짓일 때 거짓이 되는 항목(`cfg(test)`, `cfg(all(test, target_os = "linux"))` 등)과 그런 `mod`가 선언한 파일이 시험 전용이다. 시험 계획은 CI runner(ubuntu-24.04, x86_64)의 OS·arch 값으로 평가한다. Cargo feature와 `debug_assertions`는 PR이 기본 feature나 profile을 바꿀 수 있으므로 모름으로 둔다. 사례 자신이나 그것을 담은 모듈의 cfg가 모름이면 선택적 사례로 계획한다. 나열되면 실행해 통과해야 하고 나열되지 않아도 실패가 아니며, 증거로 세지 않는다.
+
+### 증거 등급과 선택
+
+- **CI(verified).** build workflow가 head를 `cargo test -p xadb-engine --locked --no-run`으로 build하고 다음을 `--lib`·`--skip _native_worker`·`--test-threads=1`·`RUST_MIN_STACK=33554432`로 실행한다. ① 바뀐 모듈의 `ci_selectors`와 그 모듈의 `ci_also`(A·B는 JOIN) 모듈의 선택. ② 변경 기록의 `ci_selectors`(모듈 경로 형식만, `-`로 시작하는 flag 불가). ③ 바뀐 crate 파일이 선언한 `#[test] fn` 사례의 정확한 이름(`--exact`). `#[ignore]`, runner에서 거짓인 cfg가 붙은 사례, runner에서 거짓인 cfg의 모듈(`#[cfg(not(test))]` 등)로만 닿는 이름은 뺀다. cfg 값을 모르는(feature 등) 사례는 선택적 사례다. `macro_rules!`가 만드는 `#[test]`처럼 이름을 읽을 수 없는 사례가 있는 파일은 그 논리 모듈 전체의 선택을 더한다. executor만 줄 수 있는 입력이 필요한 사례(`evidence.executor_only`)는 CI가 실행하지 않고, 그 파일을 바꾼 PR은 executor 결과를 적은 검토된 `na`(그 경로를 `paths`로 지정)가 있어야 한다. S12 head의 모든 engine 파일을 바뀐 것으로 놓고 계획하면 정확한 이름 1,514개, 모듈 선택 7개, 선택적 사례 2개, executor 전용 13개가 나오고, lib 시험 2,006개 중 그 밖에 남는 것은 `#[ignore]` 105개뿐이다. 계획한 이름 중 시험 binary에 없는 것은 0개다. C+A·C+B export도 만들어 같은 build와 남는 기능의 선택·바뀐 사례·모듈 선택을 실행한다. harness 시험이 요구하는 source·ELF·입력 identity 환경(catalog_memory의 CATALOG·PLAN4_RECOVERY, PLAN4_GENESIS·PLAN4_LIVE·G6·G6RC·XRB)은 runner가 head tree·시험 실행 파일·계획의 SHA-256으로 채운다. G6·G6RC 시험이 대조하는 고정 vector index hash는 manifest `evidence.env`에 둔다(fixture를 바꾸면 manifest도 D2로 바뀐다). 전수 실행은 하지 않는다(AGENTS.md의 변경 범위 규칙). 판정: 선택은 나열 ≥1·통과 ≥1·실패 0·나열 = 통과 + `#[ignore]`, 정확한 사례는 나열 = 통과 = 계획 수, 선택적 사례는 나열 ≤ 계획 수·통과 = 나열·실패 0이다.
+- **CAT 선택.** `storage::catalog::` 아래에는 시험이 없어 CAT 선택은 catalog_memory의 `own_catalog_read`·`statement_reads`·`read_boundary`·`resident_read`·`catalog_transactions` 모듈이다. 이 선택만으로 Catalog 변경의 증거가 충분하지 않으므로 CAT 변경은 attested native가 필수다.
+- **attested.** 30GB를 넘는 Catalog native(`dev3_catalog_native.py`의 selector)만 로컬 결과를 받는다. 기록에는 selector, 입력 identity(`Cargo.toml`·`Cargo.lock`·toolchain·`.cargo`·`crates`·`tests`·`scripts`의 경로·blob hash), PASS, 로그 위치·SHA-256, 확인자를 둔다. 입력이 바뀌면 오래된 결과로 거절한다. 실행 사실 자체는 gate가 확인하지 못하므로 attested로 남는다. 비용: ruleset이 최신 base를 요구하므로 CAT PR이 merge 전에 base를 따라가면 입력이 바뀌어 native를 다시 돌려야 한다. 이는 무변경 반복이 아니라 입력 변경에 따른 재실행이다.
+- **N/A.** Rust·시험 입력이 바뀌지 않은 PR은 build run을 요구하지 않고 보고서에 N/A 근거를 적는다. Rust 변경 중 선택할 시험이 없는 모듈은 검토된 기록의 `na` 항목(모듈·이유)으로만 비운다.
+
+### 제어와 실행의 분리
+
+제어 workflow는 `pull_request_target`으로 실행된다. 이 이벤트는 기본 branch의 workflow 파일과 checkout을 쓰므로 PR이 바꾼 workflow·검사기는 판정에 쓰이지 않는다. head와 base는 `git fetch`로 객체만 가져온다. 권한은 `contents`·`actions`·`pull-requests` 읽기와 `statuses` 쓰기뿐이다. build workflow는 `pull_request`로 PR 코드를 실행하되 계획·export·runner는 기본 branch의 사본을 쓴다. head는 Git 객체에서 꺼내고, export 도구는 `git archive`를 쓰므로 검사기가 `export-ignore`·`export-subst`를 쓰는 `.gitattributes`를 거절한다(PR이 build 입력을 바꾸지 못하게).
+
+제어의 최종 판정은 build run의 head SHA·이벤트·workflow 경로·저장소, receipt의 검사기 SHA-256·manifest blob·검사기 blob·계획·사례 수를 확인한 뒤에만 수용한다. 두 workflow 사이에 기본 branch가 움직여도 manifest와 검사기 blob이 같으면 같은 계획이다. 같은 이름의 다른 workflow 성공, 이전 head의 결과, 취소·skip은 수용하지 않는다. 제어는 판정이 이미 실패하면 build run을 기다리지 않고, 아니면 최대 7,500초 기다린다(build 제한 120분, 제어 job 제한 140분). 대기 시간이 지난 뒤 끝난 build는 제어를 다시 깨우지 않으므로 제어 run을 수동으로 다시 실행한다. 같은 head를 다른 base로 연 두 PR은 최신 build run이 다른 base의 것일 수 있어 실패 쪽으로 판정된다. build workflow는 `edited`에 반응하지 않으므로 PR의 base를 바꾼 뒤에는 push나 닫고 다시 열기로 build를 새로 돌린다. artifact 내려받기는 다른 host로 redirect되므로 token은 첫 요청에만 싣고 redirect에는 싣지 않는다. 같은 저장소의 PR만 수용하며 fork PR은 항상 실패한다(이 저장소는 단일 계정이라 fork PR을 쓰지 않는다).
+
+최종 상태는 job 결과가 아니라 제어 job이 head SHA에 쓰는 commit status다. GitHub는 `skipped`·`neutral` check를 통과로 보므로 이 방식을 택했다. 판정 실패·오류·중단 때도 `failure`를 쓴다. 단, 제어 run이 아예 돌지 않으면 그 SHA에 이전 상태가 남는다. 그래서 필수 context `xadb/module-gate`는 `main`과 시험 ref `gate-test/**` 대상 PR에서만 쓰고, 작업 branch 대상 PR(결정 ④)은 `xadb/module-gate-work`를 쓰며 검토·증거 의무를 PENDING으로 둔다. 작업 branch에서 이미 판정된 SHA를 그대로 `main` PR로 올려도 `main`용 상태는 새 제어 run만 쓴다. `main` 대상 판정이 끝난 SHA의 성공은 같은 base 계열에서만 생기며, ruleset의 최신 base 요구가 base 이동 뒤 재판정을 강제한다. `gate-test/**` 대상 확인 PR의 head는 같은 SHA로 `main` PR에 다시 쓰지 않는다.
+
+`workflow_run` 집계는 택하지 않았다. 상태를 build run의 head SHA에 붙일 수는 있지만, build가 끝난 뒤에만 실행되어 그 사이 PR head에 pending이 없고, PR base를 run 정보에서 다시 찾아야 한다. `pull_request_target`은 PR이 열리거나 갱신될 때 바로 pending을 쓰고 base ref·SHA를 이벤트에서 받는다.
+
+GitHub는 2026-12-02부터 공개 저장소의 `pull_request_target`을 기본 event 정책으로 차단한다. 저장소 설정의 Actions 정책에서 `module-gate.yml`에 대해 이 이벤트를 명시적으로 허용해야 한다. 허용하지 않으면 새 SHA에는 필수 상태가 생기지 않아 merge가 막힌다. 이미 `main` 대상 성공 상태가 붙은 SHA는 예외이므로 정책 변경 뒤에는 제어 run이 실제로 도는지 먼저 확인한다.
+
+### 원격 보호와 적용 순서
+
+1. 이 변경을 PR로 `main`에 반영한다(사람의 merge). 반영 전에는 `pull_request_target` workflow가 실행되지 않는다.
+2. ruleset을 적용하기 전에 시험 ref `gate-test/protected`를 `main`에서 만든다. ruleset은 `do_not_enforce_on_create: false`라 적용 뒤에는 상태 없는 commit으로 ref를 만들 수 없다. ref 생성은 사용자가 하거나 사용자가 허락한 작업 담당이 한다.
+3. 사용자가 [ruleset](../../.github/rulesets/main-module-gate.json)을 저장소 설정의 Rules → Rulesets → Import로 적용하고 Actions 정책에서 `pull_request_target`을 허용한다. API·CLI 권한이 없어 작업 담당이 직접 설정하지 않는다.
+4. `gate-test/protected`로 실제 거절을 확인한다(제어 workflow가 이 ref를 `main`과 같이 판정한다): 직접 push 거절, 금지 의존·검토 누락 PR의 merge 차단, 정상 PR의 수락, build run과 artifact 내려받기 경로, 재실행(re-run)과 artifact 이름 충돌. 결과는 [모듈 증거 기록](../evidence/module-independence-survey-20261026.md#s12-module-gate)에 남긴다. `main`에는 거절 확인용 push를 하지 않는다.
+5. 확인 전까지 원격 강제는 **미적용**으로 기록한다. 로컬 훅만으로 완료를 주장하지 않는다.
+
+### 잔여 위험
+
+| 위험 | 현재 처리 |
+| --- | --- |
+| 단일 계정 | 검토 기록의 reviewer·author는 작성자가 쓴 문자열이다. gate는 검토 범위(blob)와 형식만 확인한다. 별도 계정이나 GitHub App 발급은 미구현이다. 실제 승인은 사람의 merge이고, AI 작성 담당은 merge·ruleset 변경을 하지 않는다(AGENTS.md) |
+| 같은 이름의 상태 | **차단되지 않음.** 같은 저장소 PR의 `pull_request` workflow는 `statuses: write`를 요청해 gate가 `failure`를 쓴 뒤 `xadb/module-gate=success`를 쓸 수 있다. 같은 GitHub Actions app(15368)으로 쓰여 ruleset의 app 고정으로 구별되지 않고, context마다 마지막 상태가 이긴다. 새 workflow 파일은 D2 `policy` 위반으로 판정되지만 그 판정 자체가 덮어써질 수 있다. 막으려면 기본 branch로 제한한 environment에 key를 둔 GitHub App의 check run을 필수로 하고 ruleset이 그 app id를 고정해야 한다. App 생성은 사용자 결정 사항이다 |
+| 제어 run 미실행 | 이벤트 정책 차단·대기열 동안에는 새 상태가 없다. 새 SHA는 상태가 없어 막히고, 이미 판정된 SHA는 위 context 분리로 작업 branch 판정이 `main`을 통과시키지 않는다 |
+| PR 코드의 receipt 변조 | build job에서 PR의 build script·시험이 실행되므로 receipt를 바꿀 수 있다. 제품 코드의 D1 검토로 다룬다 |
+| 참조 해석 | 위의 정적 해석 한계. A↔B만 컴파일 export로, 나머지는 검토로 보완 |
+| attested 재실행 | CAT PR은 base를 따라갈 때마다 60GiB native를 다시 돌린다(입력 identity가 crate 전체) |
+| 로컬 훅 | 해제할 수 있다. 원격 강제의 증거가 아니다 |
+| harness 시험 | dev3 harness가 주는 환경값이 필요한 시험은 정적 조사와 대상 시험군 실행으로 찾은 것만 반영했다(identity 7개 시험군, G6·G6RC vector hash, executor 전용 13개). 목록에 없는 harness 시험이나 main에 이미 있는 실패 시험(예: `g5_*`, `retention_live_*`)이 든 파일을 바꾼 PR은 CI가 실패한다(fail-closed). harness 시험은 manifest D2로 env·`executor_only`를 고치고, main의 실패는 사용자 규칙대로 별도 작업에서 고친다. 전체 lib 시험 1회 보정 실행은 사용자 결정 대기다 |
+| 미시험 GitHub 동작 | 실제 artifact redirect, re-run, artifact 이름 충돌, 이벤트 정책 차단 뒤 동작은 원격 적용 뒤 시험 ref에서 확인한다 |
+
+### XADB-MODULE-GATE-003 결정 기록
+
+| 항목 | 기록 |
+| --- | --- |
+| 분류·상태·일자 | D2 · 2026-11-01. 1차 REJECT(R1–R10, 참고 N1–N12), 재검토 조건부 수용(RR1–RR6), 범위 한정 확인 조건부 수용(RC1·RC2)을 반영했다. 원격 적용·거절 확인은 사용자 설정 뒤 별도 기록 |
+| 권한·담당 | 사용자가 계획 전체의 완료와 12절 권장안을 지시(2026-10-31). 작성·통합 담당 `/root`(이 thread) |
+| 기준 source | S11(PR #16·#17)이 병합된 `main` `f95eba15` |
+| 선택 | Git 객체만 읽는 Python 검사기, 기능 allow·공통 deny의 모듈 manifest와 경로 단위 shrink-only 예외, 파일 소유와 논리 경로의 대조, blob 단위 검토 기록, 신뢰 제어(`pull_request_target`)와 무권한 build(`pull_request`)의 분리, base별 commit status 최종 집계, 우회 없는 ruleset |
+| 비교 대안 | Cargo crate 분리(같은 crate 내부 경계를 대신하지 못하고 대규모 이동이 필요), `use` 문자열 수 기준(계획이 금지), 경로 필터를 둔 required check(skip이 통과로 보고됨), build까지 제어 job에서 실행(PR 코드가 특권 실행에 섞임), `workflow_run` 집계(build 완료 전 pending이 없고 base를 다시 찾아야 함), 조직 required workflow(개인 저장소에서 사용 근거 없음), GitHub App check run(같은 이름 상태를 막지만 App 생성이 필요해 사용자 결정 대기) |
+| 실제 측정 | S12 head에서 engine 541 파일(시험 전용 266)의 module tree와 참조 19,223개를 해석했다. 금지 간선은 manifest 예외 9건이 허용한 경로(참조 15개와 fixture token) 외 0건, 쓰이지 않는 예외 경로 0건, 소유·논리 경로 불일치 0건, physical 금지 항목·경로 0건이다. catalog_memory 아래 A·B·JOIN 시험 파일 32개가 C의 namespace에 선언되어 있어(1차 검토 때 불일치 44건) 그 모듈 논리 경로 21개를 manifest에 넣었다 |
+| 독립 검토 | 1차: REJECT. R1 소유 대조 없음, R2 cfg(test) 범위 오판, R3 physical 규칙·별칭, R4 증거 없는 통과, R5 base 미결속 상태, R6 같은 이름 상태, R7 예외 확대, R8 공통 API 정의 파일, R9 token redirect, R10 문서 과장. 각 지적의 재현 사례를 [시험](../../scripts/test_check_module_gate.py)에 넣었고 검토 전 검사기에서는 모두 실패한다. R6은 위 잔여 위험으로 기록했다. 재검토(`689b6215`): 조건부 수용. 1차 실험 10개가 모두 FAIL로 바뀌었다. 필수는 RR1 이중 선언 모듈의 없는 사례 계획, RR2 재노출 사슬, RR3 unscoped 입력·macro 생성 시험, RR4 physical의 operation type 수입, RR5 `gate-test/**` 상태, RR6 문서다. 범위 한정 확인(`d8eb1547`): RR1–RR6과 작성 담당이 찾은 RR3c(Linux 전용 시험 미계획)는 닫혔고, 같은 원리의 RC1(cfg를 모르는 모듈의 사례를 필수로 계획)·RC2(glob·모듈 재노출 미추적)가 필수였다. 모두 회귀 시험과 함께 반영했고 각 시험은 반영 전 검사기에서 실패한다. RC 확인(`bff3423c`)에서 RC1과 harness 증거 변경이 닫혔고, RC2의 남은 변형(별칭·중간 재노출을 거친 모듈)을 고친 `8d46e80e`를 확인 실행이 새 필수 0으로 수용했다. 검토 원문은 [S12 증거](../evidence/module-independence-survey-20261026.md#s12-module-gate)의 artifacts에 있다. |
+| 검증 | [S12 증거](../evidence/module-independence-survey-20261026.md#s12-module-gate) |
+| 재검토 조건 | 예외 해제 조건 도달, 새 모듈·crate 추가, GitHub 이벤트·ruleset 동작 변경, 단일 계정 해소(별도 검토 계정·App), gate 오판 사례 |
 
 ## DEV3 첫 dirty stage 소비자
 

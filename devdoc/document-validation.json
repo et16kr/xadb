@@ -1,15 +1,15 @@
 {
   "schema_version": 2,
   "product": "XADB",
-  "date": "2026-11-01T12:15:26.775082+09:00",
+  "date": "2026-11-01T15:54:23.039726+09:00",
   "status": "PASS",
   "errors": [],
   "markdown_documents": [
     {
       "file": "devdoc/README.md",
-      "links": 282,
+      "links": 286,
       "duplicate_ids": 0,
-      "sha256": "7461fc82b03780ca107c700289ff0fd3234b897d48e06176ef44dd7b771aa8a8"
+      "sha256": "0ab2d6416e8f65606ad10ae5495e2fdd2aeb3e83c2ee3228d7c531afb80b1398"
     },
     {
       "file": "devdoc/contracts/README.md",
@@ -157,9 +157,9 @@
     },
     {
       "file": "devdoc/contracts/dev3-module-boundaries.md",
-      "links": 331,
+      "links": 338,
       "duplicate_ids": 0,
-      "sha256": "9a7d891f854f766bee226441c6cdab6af5ed94ed4cc583dd70e301dc17920e20"
+      "sha256": "a9c72d735b2fa870d5370ed1caa9d22ec4d0f1884a3e26bf740b9df6aa3e06a0"
     },
     {
       "file": "devdoc/contracts/dev3-module-consumers.md",
@@ -1285,15 +1285,15 @@
     },
     {
       "file": "devdoc/evidence/module-independence-survey-20261026.md",
-      "links": 328,
+      "links": 339,
       "duplicate_ids": 0,
-      "sha256": "609daf2d68b428e74d99a187f673b4d77b889d203c72bbcd823072d40a964f55"
+      "sha256": "e0127e09185675e188bc65be0dfadb7e4c4dcb2d2c9d34b068cea2fcbc8def24"
     },
     {
       "file": "devdoc/evidence/module-mi03-limits-20261101.md",
-      "links": 9,
+      "links": 15,
       "duplicate_ids": 0,
-      "sha256": "894931ac6b57f64f7956a524d652086f7712fda651b9468d28b15de88b82bdef"
+      "sha256": "3f16627a92d410a82f8ae43fa0eca694fc534087a8c2fee58e18bf3f22807e22"
     },
     {
       "file": "devdoc/evidence/naming-cleanup-20261025.md",
@@ -1501,9 +1501,9 @@
     },
     {
       "file": "devdoc/plans/module-independence-plan.md",
-      "links": 303,
+      "links": 307,
       "duplicate_ids": 0,
-      "sha256": "b869197d2252ef27b155c642541af31d1e4aad13b20fca171ea3acae2fc349b7"
+      "sha256": "762d09b2ddfcbe0fb078da9ea73c77ceb93025aae2915a63ba3e569c50377e4d"
     },
     {
       "file": "devdoc/plans/phase1-product-baseline.md",
@@ -1525,9 +1525,9 @@
     },
     {
       "file": "devdoc/policies/README.md",
-      "links": 15,
+      "links": 18,
       "duplicate_ids": 0,
-      "sha256": "e9ae07681000f1d727e057f67685eb0ea9ed7ccd0af30d62f8b05813e3f137d2"
+      "sha256": "63b597027d3b6b3950caeaaeffe5c509b54497d6914f83a5338d580519485f8d"
     },
     {
       "file": "devdoc/policies/ai-development-method.md",
@@ -1543,27 +1543,27 @@
     },
     {
       "file": "devdoc/policies/development-policy.md",
-      "links": 11,
+      "links": 12,
       "duplicate_ids": 0,
-      "sha256": "8dd6627f621685f1882b5e7112ab1b03f0e64190bf3e50ebb827c68bea9b1b86"
+      "sha256": "290121f420e1911b929128ef052fae011942b6ee65feabf374d37f1925888172"
     },
     {
       "file": "devdoc/policies/documentation-policy.md",
-      "links": 9,
+      "links": 10,
       "duplicate_ids": 0,
-      "sha256": "46cd09090953daa4dee9dde65a4e11d9b47509edf175a0ad610537074bbe1948"
+      "sha256": "40cff3725a4c8437c094eca55df86dcbe02daec2c1dd19cea34f63797a84706c"
     },
     {
       "file": "devdoc/policies/parallel-development-policy.md",
-      "links": 12,
+      "links": 13,
       "duplicate_ids": 0,
-      "sha256": "e96a56d755ca438a0eb05e7d862d4826d1c8c605c9758488f96cbf3df7bb9fd0"
+      "sha256": "f2708a5fdee00c8897e6c90bc1670063d66eb5d1ce6236c254fb98c0d6588f48"
     },
     {
       "file": "devdoc/policies/repository-build-plan.md",
-      "links": 193,
+      "links": 212,
       "duplicate_ids": 0,
-      "sha256": "430c3921a0b444e14b547ada9bbc35d96542412632eb88d5d6a8f0f642a9b49d"
+      "sha256": "7b3d52281ee1a7a899982d0ec57c35e07e1657b6e9e4fb60b7e7165b0c11f890"
     },
     {
       "file": "devdoc/reference/README.md",
@@ -1633,9 +1633,9 @@
     },
     {
       "file": "AGENTS.md",
-      "links": 8,
+      "links": 10,
       "duplicate_ids": 0,
-      "sha256": "b24685ab732a02ac8dcef88c00d234dfc3a1d4f410fa4ef3421e4b745c9f236b"
+      "sha256": "975cae9bb6aa1cbf565950172c8a170b17a5dd5df0152d6982cd2f007dc79240"
     }
   ],
   "scope": "Markdown/JSON/navigation, stage/task/case/package contracts and current source evidence identity; no product tests or historical measurements executed"

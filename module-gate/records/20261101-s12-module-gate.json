@@ -1,0 +1,34 @@
+{
+ "schema": "XADB_MODULE_GATE_RECORD_V1",
+ "change": "S12: adopt the module boundary merge gate (manifest, checker, build runner, workflows, ruleset, push hook); no product code or fixture changes",
+ "ci_selectors": [],
+ "na": [],
+ "reviews": [
+  {
+   "id": "s12-d2",
+   "class": "D2",
+   "scopes": [
+    "policy"
+   ],
+   "author": "Claude project thread claude/project-thread-1jfdtk-s12 (session_01Am8okH782ybhpLHXPuWnKJ)",
+   "reviewer": "separate AI review runs: s12-d2-review (REJECT R1-R10), s12-d2-rereview (CONDITIONAL ACCEPT RR1-RR6), s12-rr-check (CONDITIONAL ACCEPT RC1-RC2), s12-rc-check (CONDITIONAL ACCEPT, then RC2 residual at 8d46e80e: ACCEPT, no new required items)",
+   "verdict": "ACCEPT",
+   "required_open": 0,
+   "reviewed_head": "8d46e80e (same blobs as listed under files)",
+   "files": {
+    ".github/rulesets/main-module-gate.json": "36858ee5bb4ee51a0ae4fdbf7ac2b5a3a9d450d9",
+    ".github/workflows/module-build.yml": "4e10b3698dc649f90ec3b47b6a0ced2bb3f85dfb",
+    ".github/workflows/module-gate.yml": "0ec11ec3a8528ed13e9049ada371305542c7357c",
+    "devdoc/policies/module-gate.json": "97c5ac15c40394b6dd76accb3760aabadf1f53b3",
+    "scripts/check_module_gate.py": "0a04aeeebbf117fb5b6af352e1c4a59d4984680e",
+    "scripts/check_push.py": "a84feb1617a8443d40dc9d26b1c1aec6ef9dbd99",
+    "scripts/module_gate_build.py": "e8ca0298b8f2f2aa155057a0e528176270186c1c",
+    "scripts/module_single_source.py": "28b62a91060c3384b98306c21c410d628f6e193b",
+    "scripts/test_check_module_gate.py": "816dce5faa24b82e1545c8a3478568fb5354e241",
+    "scripts/test_check_push.py": "53ffa23e6a2009635b1bdf941e938b04c71c4165"
+   },
+   "log": "/mnt/project-files/module-independence-20261029/artifacts/module-s12-20261101/reviews/ (hashes in /mnt/project-files/module-independence-20261029/artifacts/module-s12-20261101/manifest-all.sha256)"
+  }
+ ],
+ "attested": []
+}

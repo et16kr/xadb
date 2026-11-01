@@ -5876,3 +5876,56 @@ identity:
 ### 되돌림
 
 되돌림은 이 기록의 문서 commit, `25044995`, `a81f8975`, `15a21fc6`의 역순이다. 제품 동작 변경은 없다. `a81f8975`의 A 판정 함수 분리를 되돌려도 동작은 같고 V12-P의 A 시험만 빌드되지 않는다. fixture는 매 시험에서 새로 만든다.
+
+<a id="s12-module-gate"></a>
+## S12 모듈 경계 merge gate(계획 §12)
+
+2026-11-01. S11(PR #16·#17)이 병합된 main `f95eba15`에서 별도 branch `claude/project-thread-1jfdtk-s12`을 만들었다. 설계·판정 규칙·잔여 위험은 [build 계획 §11](../policies/repository-build-plan.md#module-gate)이 정본이고 이 절은 실행 증거다. artifacts는 `/mnt/project-files/module-independence-20261029/artifacts/module-s12-20261101/`이고 `manifest-all.sha256`의 SHA-256은 `9d184f395dbc70bd2347de6db399f22acbbb41b1662a549f784a21850636262e`이다.
+- 검사기·manifest·build runner·workflow·ruleset·push 훅과 그 시험 `d1871c1b`
+- 문서, 이 기록, [D2 검토 기록](../../module-gate/records/20261101-s12-module-gate.json)(이 절이 든 commit)
+
+두 commit은 검토 중에 쌓인 작업 중 commit(main 갱신 전 base에서 만든 것 포함)을 합친 것이다. 아래 검토와 모의 실행이 가리키는 작업 중 commit(`689b6215`, `d8eb1547`, `428fb6b6`, `8d46e80e` 등)은 artifacts `history/s12-wip.bundle`(prerequisite `f95eba15`, `3227cf88`)에 있다. `d1871c1b`의 검사 대상 파일 10개는 마지막 검토 대상 `8d46e80e`와 blob이 같다.
+
+**사용자 결정.** 2026-10-31 §12 결정 카드에서 "권장안대로 진행"을 골랐다. ① 사람이 GitHub에서 merge를 누르는 것이 반영 승인이다. ② `main`에 직접 push하지 않는다. ③ 30GB를 넘는 disk가 필요한 native만 로컬 결과를 attested로 받고 나머지는 CI에서 실행한다. ④ 작업 branch 대상 PR은 허용하고 `main` PR에서 합산 판정한다. ⑤ M5 뒤 구현한다. 원격 설정(ruleset import, `pull_request_target` 허용)은 API 권한이 없어 사용자가 한다.
+
+**변경 범위.** 제품 코드(`crates/`)와 시험 fixture는 바뀌지 않았다. 새 파일은 [module-gate.json](../policies/module-gate.json), [check_module_gate.py](../../scripts/check_module_gate.py), [module_gate_build.py](../../scripts/module_gate_build.py), 두 workflow, [ruleset](../../.github/rulesets/main-module-gate.json), [기록 README](../../module-gate/README.md)와 시험이다. [check_push.py](../../scripts/check_push.py)는 push 대상 tip마다 remote 기본 branch와의 merge-base에 있는 검사기로 모듈 gate를 함께 돌린다. [module_single_source.py](../../scripts/module_single_source.py)의 `export`는 저장소 경로를 인자로 받을 수 있게 했다(기본값의 동작은 같다).
+
+**독립 검토.** 작성 담당(이 thread)과 다른 AI 실행이 D2로 검토했다. 검토 원문은 artifacts `reviews/`에 있다.
+
+| 회차 | 대상 | 판정 | 내용 |
+| --- | --- | --- | --- |
+| 1차 | `bf792c88`까지 | REJECT | R1 소유 대조 없음, R2 cfg(test) 범위 오판, R3 physical 규칙·별칭, R4 증거 없는 통과, R5 base 미결속 상태, R6 같은 이름 상태, R7 예외 확대, R8 공통 API 정의 파일, R9 token redirect, R10 문서 과장 |
+| 재검토 | `689b6215`(rebase 뒤 `dc03cfc2`와 같은 tree) | 조건부 수용 | 1차 실험 10개가 모두 FAIL로 바뀌었다. 남은 필수 RR1 이중 선언 모듈의 없는 사례 계획, RR2 재노출 사슬, RR3 unscoped 입력·macro 생성 시험, RR4 physical의 operation type 수입, RR5 `gate-test/**` 상태, RR6 문서. 조건: 회귀 시험과 함께 반영하고 별도 실행이 그 항목만 확인 |
+| 범위 한정 확인 | `d8eb1547` | 조건부 수용 | RR1–RR6과 RR3c는 닫혔다. 같은 원리의 RC1(cfg를 모르는 모듈의 사례를 필수로 계획해 정상 PR이 실패)과 RC2(glob·모듈 전체 재노출을 따라가지 않음)가 필수였다 |
+| RC 확인 | `bff3423c` | 조건부 수용 | RC1과 harness 증거 변경은 닫혔다. RC2는 별칭·중간 재노출을 거친 모듈 재노출이 남았다 |
+| RC2 남은 변형 확인 | `8d46e80e` | 수용 | 별칭·중간 재노출을 거친 모듈도 D2 `common`이 되었고 실제 tree는 22개 그대로다. 새 필수 0. 참고: 서로 glob하는 모듈 사슬은 계산 시간이 길어질 수 있으나(잘못된 통과는 아님) 그런 사슬은 D2 `common` 파일로만 생긴다 |
+
+RR3c는 작성 담당이 반영 확인 중 찾았다. 모든 engine 파일을 바뀐 것으로 놓고 계획을 실제 lib 시험 목록과 대조하자 `#[cfg(target_os = "linux")]`가 붙은 시험 9개가 계획되지 않았다. cfg를 참·거짓·모름으로 평가하도록 고쳤고(§11 cfg 해석), 같은 평가로 `cfg(all(test, target_os = "linux"))` 모듈이 시험 전용으로 바뀌었다. R6(같은 이름의 상태)은 고치지 않고 §11 잔여 위험에 **차단되지 않음**으로 기록했다.
+
+**harness 시험.** 최종 검사기로 runner를 모의 실행하자 `plan4_genesis` 시험 8개가 `missing XADB_PLAN4_GENESIS_SOURCE_SHA256`로 실패했다. dev3 harness가 주는 환경값 없이는 돌 수 없는 lib 시험이 있다는 뜻이다. runner가 CATALOG·PLAN4_RECOVERY·PLAN4_GENESIS·PLAN4_LIVE·G6·G6RC·XRB 시험군의 source·ELF·입력 identity를 채우고, G6·G6RC의 고정 vector index hash(추적되는 `raw-index.tsv`의 SHA-256)를 manifest `evidence.env`에 두었다. XRB(선택 ID와 고정 fixture 디렉터리가 필요)와 `g5_bind_boundaries`(B08이 source에 묶인 padding 값을 요구)는 executor만 입력을 줄 수 있어 `evidence.executor_only`로 CI 계획에서 빼고, 그 파일을 바꾼 PR에는 executor 결과를 적은 검토된 `na`를 요구한다(13개). 대상 시험군을 runner 환경으로 실행한 결과(`428fb6b6`, artifacts `calibration/`): `plan4_genesis::tests` 8 통과·2 ignore, `retention_genesis::tests`, G6 `retention_page::tests`, G6RC `plan4_recovery_control::tests`, `retention::catalog_source_tests`가 통과했다. `plan4_pages::tests` 5개와 `retention::tests` 6개는 제품 panic(`DirtyError Fenced`, `IdentityMismatch`)으로 실패했고, 이는 main에 이미 있던 실패로 기록된 것과 같다. 그래서 그 시험이 든 파일을 바꾼 PR은 그 실패가 고쳐질 때까지 CI가 실패한다. 목록은 정적 조사와 이 대상 실행으로 찾은 것이며, 전체 lib 시험을 한 번 돌려 확인하는 보정은 사용자 결정 대기다(§11 잔여 위험).
+
+**시험.** `d1871c1b`의 `scripts/`에서 `python3 -B -m unittest test_check_module_gate test_check_push`가 70개 모두 통과한다(모듈 gate 59, push 훅 11, `checker/unit-tests.log`). 지적마다 넣은 재현 시험은 그 지적 전 검사기에서 실패한다.
+- 1차 R1–R10 시험 16개: 검토 전 검사기에서 실패 18·오류 1(subTest 포함)
+- 재검토 RR 시험 8개: `dc03cfc2` 검사기에서 실패 12
+- RR3c 시험 2개: `4c36e4fa` 검사기에서 실패 2(Linux 시험 대신 Windows 전용 시험을 계획하고, Linux 시험 전용 모듈을 제품으로 판정)
+- RC1·RC2 시험 5개: `d8eb1547` 검사기에서 실패 5·오류 1(subTest 포함), RC2 남은 변형 2개: `bff3423c` 검사기에서 실패 2
+- executor 전용 시험 1개: 이 기능이 없던 검사기에서 실패
+
+로그는 artifacts `checker/`에 있다.
+
+**실제 tree 측정(`8d46e80e`).**
+- engine 541 파일(시험 전용 266)의 module tree와 참조 19,223개를 해석했다. 금지 간선은 manifest 예외 9건이 허용한 경로 외 0건, 쓰이지 않는 예외 경로 0건, 소유·논리 경로 불일치 0건, physical 금지 항목·경로 0건이다.
+- disk API 재노출의 정의 파일과 사슬 파일 22개가 D2 `common` 대상이다.
+- 모든 engine 파일을 바뀐 것으로 놓고 계획하면 정확한 이름 1,514개, 모듈 선택 7개(macro 생성 시험), 선택적 사례 2개(feature 조건), executor 전용 13개가 나온다. 이름 중 실제 목록에 없는 것은 0개다. lib 시험 2,006개 중 그 밖에 남는 것은 executor 전용 13개와 `#[ignore]` 105개뿐이다(`checker/planner-coverage/`).
+- `check --base origin/main --head HEAD --policy HEAD`의 오류는 이 기록이 없을 때의 D2 `policy` 검토 누락 10건뿐이다. 이 기록을 더한 문서 commit에서는 PASS(오류 0, 대기 0)다(`checker/final-check.json`). `main`에 manifest가 아직 없어 merge-base를 신뢰하는 기본 판정은 이 PR에서 NOT_ADOPTED다.
+
+**build runner 실행.** 제어 workflow는 `main` 반영 뒤에만 돌므로 runner를 workflow와 같은 명령으로 로컬에서 실행했다. 모의 변경은 파일 끝에 주석 한 줄을 더한 commit이다. 실행마다 receipt·로그·계획은 artifacts `runner/sim-<commit>/`, 모의 변경은 `runner/sim-<commit>.patch`에 있다.
+- `bf792c88` 위 `85ee2f7e`(A `row/insert/driver.rs`, CAT `catalog/read.rs`, JOIN `row_join.rs`): 결과 41개 모두 PASS, 25분.
+- `d8eb1547` 위 `c011eb0e`(위 셋과 C의 `plan4_retention/read/scope.rs`(RR1), `row_gate.rs`(RR3c), `first_write_tests.rs`(RR3b), `plan4_genesis/tests.rs`(feature 모름)): 43개 중 41개 PASS, 24분. 실패 2개는 `plan4_genesis`의 identity 환경 누락이었다(위 harness 시험). 이중 선언 모듈의 사례(RR1)와 Linux 전용 사례(RR3c)는 모두 나열되고 통과했다.
+- `8d46e80e` 위 `46ffd3d6`(위 일곱 파일과 XRB `plan4_recovery_base_tests.rs`): 결과 43개 모두 PASS, 25분. 정확한 사례 33개(RR1·RR3c 사례와 identity를 받은 `plan4_genesis` 8개 포함)가 모두 나열·통과했다. feature 조건의 선택적 사례 2개는 이 build에 없어 나열 0으로 통과했다. XRB 파일의 executor 전용 사례 7개는 계획에서 빠지고 검토된 N/A 요구(PENDING)로 나왔다. 신뢰 계획과 대조한 `verify_receipt`의 오류는 0개다.
+
+**원격 상태.** ruleset과 Actions event 정책은 적용되지 않았고 실제 거절도 확인하지 않았다. 원격 강제는 **미적용**이다. 같은 저장소 PR의 workflow가 같은 이름의 성공 상태를 쓰는 것은 막지 못한다. 막으려면 GitHub App check run이 필요하며 사용자 결정 대기다. 다음 순서는 §11의 적용 순서 1–5다. 결과는 이 절에 덧붙인다.
+
+### 되돌림
+
+되돌림은 이 기록의 문서 commit과 `d1871c1b`의 역순이다. 제품·시험 동작 변경은 없다. 원격 설정은 적용되지 않았으므로 되돌릴 것이 없다. 적용한 뒤에는 ruleset을 끄고 workflow 파일을 지운다.

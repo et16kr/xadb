@@ -703,6 +703,11 @@
       "role": "policies",
       "title": "XADB — 저장소 구성과 빌드 정책"
     },
+    "module-gate.json": {
+      "path": "policies/module-gate.json",
+      "role": "policies",
+      "title": "module-gate.json"
+    },
     "version-compatibility-policy.json": {
       "path": "policies/version-compatibility-policy.json",
       "role": "policies",
