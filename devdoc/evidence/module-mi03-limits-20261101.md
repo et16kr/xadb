@@ -2,6 +2,8 @@
 
 2026-11-01
 
+원 S11 실행은 `25044995` 기준이다. PR #16 리뷰의 후속 수정·선택 검증은 [아래 별도 기록](#pr16-review-followup)에 둔다. 원 receipts를 새 실행 결과로 덮어쓰지 않는다.
+
 8개 가운데 7개를 해결했고(PASS), MCB03-V01 하나는 해결하지 못했다(PARTIAL). 사용자는 그 한계를 기록하고 M5를 완료로 판정하라고 골랐다.
 
 S10이 끝났을 때 [소비자 §9](../contracts/dev3-module-consumers.md#acceptance) 동결 inventory 129 ID 가운데 8 ID가 PASS가 아니었다. 결정 카드에는 7개로 올렸고, 그 뒤 기록 재확인 R11이 MCA05-V32를 PARTIAL로 낮춰 8개가 되었다. S11은 이 8개를 C의 시험 전용(cfg(test)) 경로로 다시 공급했다. 제품 동작은 바꾸지 않았다. A의 판정을 같은 동작의 함수로 뺀 것 하나는 사용자가 허락했다. 계약은 [S11 절](../contracts/dev3-module-boundaries.md#row-mi03-s11)이고 실행과 판정은 [S11 증거](module-independence-survey-20261026.md#s11-mi03-resupply)다.
@@ -79,7 +81,7 @@ S10이 끝났을 때 [소비자 §9](../contracts/dev3-module-consumers.md#accep
     - S10도 같은 이유로 V12-P를 factory 없이 PARTIAL로 두었다.
     - 은퇴시키는 U는 아직 Active인 거래의 것이라 실제 retirement는 이 모양이 될 수 없다.
 - **판정:** PARTIAL. 새 시험은 보조 증거로 남긴다. 2026-11-01 사용자는 "한계 기록하고 M5 완료"를 골랐다.
-- **해결하려면:** live Row retirement(DEV3)가 생겨 실제 semantic Before가 이 순서로 receipt를 낼 수 있어야 한다.
+- **해결하려면:** live Row retirement(DEV3)가 생겨 실제 semantic Before가 이 순서로 receipt를 낼 수 있어야 한다. 이것만으로 충분하지는 않다. 현재 gate는 읽기 종료까지 기다리므로, 정상 동시성 경로가 해당 pin 충돌 순서를 허용하는지도 함께 검토해야 한다. [후속 계약](../contracts/dev3-module-boundaries.md#row-mi03-s11-review)은 통합 대기와 registry 방어의 증거를 구분하며 PARTIAL을 유지한다.
 
 ## MCB03-V08 — source pin 2개 뒤 추가 claim Busy
 
@@ -100,3 +102,23 @@ S10이 끝났을 때 [소비자 §9](../contracts/dev3-module-consumers.md#accep
 - 실행 기록: [S11 receipts](../../tests/fixtures/module-row-integration/single-source-s11-receipts.json)
 - 증거와 M5 재판정: [S11 증거](module-independence-survey-20261026.md#s11-mi03-resupply), [M5 재판정](module-independence-survey-20261026.md#s11-m5)
 - 검토 원문과 실행 artifacts: 공유 폴더 `module-independence-20261029/artifacts/module-s11-20261101/`
+
+<a id="pr16-review-followup"></a>
+## PR #16 리뷰 후속 수정
+
+| 항목 | 기록 |
+| --- | --- |
+| 결정 | XADB-MI03-S11-REVIEW-001 · D2 · 2026-11-01 · 구현·선택 검증 중 |
+| 담당·근거 | 구현·계약·통합 `/root`. 사용자가 PR #16 리뷰 내용을 수정해 그 branch를 대상으로 별도 PR을 만들도록 요청 |
+| 기준 | `da435fd6a3c9085320c297b8e8229ec5f38f28f4`, branch `codex/pr16-review-followup`, PR base `claude/project-thread-1jfdtk-s11` |
+| 문제 | WAL 경계 시험의 기대값이 제품 계산에서 나와 잘못된 계산을 따라갈 수 있음. before-image 주입이 매번 144 KiB를 leak함 |
+| 선택 | [후속 계약](../contracts/dev3-module-boundaries.md#row-mi03-s11-review)의 독립 WAL 식을 사용하고 `reserve_need()` calibration을 제거. cfg(test) 예약이 Box 사본을 소유하고 lane이 대여 |
+| 대안 | 관측값을 그대로 상수화하면 산출 독립성이 없음. 실제 256 MiB 채우기는 동일 admission 경계의 시험 비용만 증가. 전역 보관이나 leak은 수명 소유를 해결하지 못함. lane 자체가 Box를 소유하면 consuming `parts()`의 참조 반환 수명을 바꿔야 하므로 원 예약에 소유시킴 |
+| 범위 | MCA05-V01..03 oracle와 MCA05-V29의 시험 주입 수명. cfg(test) carrier의 추가 포인터도 census에 포함. 제품 의미·형식·API·gate·charge·동결 inventory·원 PASS/PARTIAL 판정은 유지 |
+| 재검토 | fixture 이력/row schema/계약 비용 변경, carrier 상계 초과, 주입 사본이 lane보다 먼저 해제되거나 예약 이후에도 남음, live Row retirement 공급 |
+
+WAL 식은 이전 committed Catalog 정리 367228 + 새 Row transaction 248618 + 새 Row 정리 367106 = 미래982952B이며 RowReserve57336B를 더해1040288B다. `/root/pr16_independent_review`가 계약·fixture에서 별도로 같은 식을 도출했다. 제품의 계산 결과나 descriptor decoder를 oracle로 쓰지 않는다.
+
+검증은 AGENTS.md의 변경 코드 범위로 제한한다. before-image 소유 변경에는 실제 V29 취소 경로와 RowWrite C01/C02/C06, A caller D15(memory/native)를 선택했다. WAL oracle에는 V01/V02/V03과 잘못된 필요량 mutant를 선택한다. 무변경 C+B·native 복구·전체 inventory를 반복하지 않는다. memory 한도30초를 유지한다.
+
+실행·독립 검토 최종 결과는 후속 기록에서 확정한다. MCB03-V01은 실제 retirement 구현 및 동시성 경로 검토가 남아 PARTIAL이며, 이번 PR로 해결했다고 판정하지 않는다.

@@ -276,6 +276,10 @@ pub(crate) struct ReservedRow<
     private: Option<&'i mut [u8; 425_984]>,
     reservation: RowSlotReservation<'c, 's>,
     draft: RowDraftCut,
+    // The reservation owns an injected before-image copy for the lane borrow.
+    // It is replaced at the next lane and freed on apply, cancel or drop.
+    #[cfg(test)]
+    test_before: Option<Box<[[u8; PAGE_BYTES]; 9]>>,
     source: OperationSourceAdmission<'b, 'a, 'c, 's>,
     gate: Option<TerminalReadGate<'c, 's>>,
     io: Option<RowIoLease<'r, 'c, 's, 'w>>,
@@ -578,15 +582,13 @@ impl Drop for TestProducerBefore {
     }
 }
 
-/// The armed edit applied to a heap copy of `before` (leaked for the lane's
-/// borrow), or `before` itself. Never inlined, so the lane's own frame does
-/// not grow.
+/// The armed edit applied to an owned heap copy of `before`, or no copy.
+/// The reservation retains ownership while its producer lane borrows it.
+/// Never inlined, so the lane's own frame does not grow.
 #[cfg(test)]
 #[inline(never)]
-fn test_producer_before(before: &[[u8; PAGE_BYTES]; 9]) -> &[[u8; PAGE_BYTES]; 9] {
-    let Some(edit) = TEST_PRODUCER_BEFORE.with(|hook| hook.borrow_mut().take()) else {
-        return before;
-    };
+fn test_producer_before(before: &[[u8; PAGE_BYTES]; 9]) -> Option<Box<[[u8; PAGE_BYTES]; 9]>> {
+    let edit = TEST_PRODUCER_BEFORE.with(|hook| hook.borrow_mut().take())?;
     let mut copy: Box<[[u8; PAGE_BYTES]; 9]> = vec![[0; PAGE_BYTES]; 9]
         .into_boxed_slice()
         .try_into()
@@ -596,7 +598,7 @@ fn test_producer_before(before: &[[u8; PAGE_BYTES]; 9]) -> &[[u8; PAGE_BYTES]; 9
     }
     edit(&mut copy);
     TEST_PRODUCER_BEFORE_HITS.with(|hits| hits.set(hits.get() + 1));
-    Box::leak(copy)
+    Some(copy)
 }
 
 #[cfg(test)]
@@ -787,6 +789,8 @@ impl<'r, 't, 'v, 'i, 'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
                     private,
                     reservation,
                     draft: reserved.draft,
+                    #[cfg(test)]
+                    test_before: None,
                     source,
                     gate,
                     io,
@@ -867,7 +871,10 @@ impl<'r, 't, 'v, 'i, 'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
             .try_into()
             .expect("nine before images");
         #[cfg(test)]
-        let before = test_producer_before(before);
+        let before = {
+            self.test_before = test_producer_before(before);
+            self.test_before.as_deref().unwrap_or(before)
+        };
         Ok(RowProducerLane {
             context,
             control,
