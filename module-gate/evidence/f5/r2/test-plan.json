@@ -1,0 +1,10 @@
+{
+ "tests": [
+  "test_check_module_gate.ExportTests.test_declared_exports_pass",
+  "test_check_module_gate.ExportTests.test_excessive_or_short_export_removal",
+  "test_check_module_gate.F5ExportTests.test_head_cannot_change_trusted_export_policy",
+  "test_check_module_gate.F5ExportTests.test_join_and_exception_registrations_are_derived_from_owners",
+  "test_check_module_gate.F5ExportTests.test_missing_duplicate_or_wrong_registration_is_rejected"
+ ],
+ "timeout_seconds": 300
+}

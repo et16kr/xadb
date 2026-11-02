@@ -2,8 +2,8 @@
 
 Each case builds a small crate laid out like the real engine (row/insert,
 row/read, disk, codec, C) with its own manifest, commits a base and a head,
-and judges the head with `check_module_gate.judge`. The export cases patch
-the export tool's side table to the fixture's paths in-process only.
+and judges the head with `check_module_gate.judge`. Export cases derive
+removals from the fixture's explicitly selected policy manifest.
 """
 import copy
 import hashlib
@@ -120,13 +120,6 @@ def exception(eid, source, target, scope, paths):
                 review_when='z')
 
 
-SIDES = {
-    'a': dict(module='read', removed=[f'{E}/row/read.rs', 'tests/fixtures/module-row-read'],
-              tests=['row_b'], forbidden=module_single_source.SIDES['a']['forbidden']),
-    'b': dict(module='insert', removed=[f'{E}/row/insert.rs', f'{E}/row/insert',
-                                       'tests/fixtures/module-row-insert'],
-              tests=['row_a'], forbidden=module_single_source.SIDES['b']['forbidden']),
-}
 EXPORTS = [{'side': 'a', 'keeps': 'A', 'removes': 'B', 'command': ['cargo', 'test', '--no-run']},
            {'side': 'b', 'keeps': 'B', 'removes': 'A', 'command': ['cargo', 'test', '--no-run']}]
 
@@ -145,11 +138,6 @@ class GateFixture(unittest.TestCase):
             self.write(path, text)
         self.write(gate.MANIFEST, json.dumps(manifest(), indent=1))
         self.base = self.commit('base')
-        sides = copy.deepcopy(module_single_source.SIDES)
-        module_single_source.SIDES.clear()
-        module_single_source.SIDES.update(SIDES)
-        self.addCleanup(lambda: (module_single_source.SIDES.clear(),
-                                 module_single_source.SIDES.update(sides)))
 
     def git(self, *args):
         return subprocess.run(['git', *args], cwd=self.repo, check=True, capture_output=True,
@@ -403,12 +391,22 @@ class ExportTests(GateFixture):
                                  f'{MEM}/row_b.rs']))
 
     def test_excessive_or_short_export_removal(self):
-        module_single_source.SIDES['a']['removed'].append(f'{E}/row/insert/tests.rs')
-        module_single_source.SIDES['b']['removed'].remove('tests/fixtures/module-row-insert')
+        original = module_single_source.source_spec
+
+        def bad_export(data, side):
+            spec = original(data, side)
+            if side == 'a':
+                spec['removed'].append(f'{E}/row/insert/tests.rs')
+            else:
+                spec['removed'].remove('tests/fixtures/module-row-insert')
+            return spec
         self.edit(f'{E}/c.rs', 'struct Port;', 'struct Port; // e')
-        report = self.judge(self.commit('C change'), mode='push')
+        head = self.commit('C change')
+        with mock.patch.object(module_single_source, 'source_spec', side_effect=bad_export):
+            report = self.judge(head, mode='push')
         self.assertFinding(report, f'export a removed {E}/row/insert/tests.rs of A')
         self.assertFinding(report, 'export b left A file tests/fixtures/module-row-insert/a.json')
+
 
 
 class FinalTests(GateFixture):
@@ -1236,12 +1234,12 @@ class RealManifest(unittest.TestCase):
             return {f[len(memory):-3] for f in modules[mid]['files']
                     if f.startswith(memory) and f.endswith('.rs')}
 
-        links_a = set(module_single_source.LINKS_A)
-        links_b = set(module_single_source.LINKS_B)
+        links_a = set(module_single_source.source_spec(data, 'b')['tests'])
+        links_b = set(module_single_source.source_spec(data, 'a')['tests'])
         self.assertEqual(names('A'), links_a - links_b)
         self.assertEqual(names('B'), links_b - links_a)
         self.assertEqual(names('JOIN'), links_a & links_b)
-        census = {c[3] for c in module_single_source.SIDES['b']['tests_c']}
+        census = {c[3] for c in module_single_source.source_spec(data, 'b')['tests_c']}
         self.assertEqual(census, {e['source'] for e in data['exceptions'] if e['target'] == 'A'})
         gate.Manifest(data, 'repository')
 
@@ -1280,7 +1278,7 @@ class F2ContractTests(GateFixture):
         super().setUp()
         self.case = 'storage::wal_io::plan4_recovery::tests::catalog_memory::row_a::contract'
         self.write(f'{MEM}/row_a.rs', '#[test]\nfn contract() {}\n')
-        self.row = dict(id='F2-A', paths=[f'{E}/c.rs'], test_file=f'{MEM}/row_a.rs',
+        self.row = dict(id='F2-A', owner='A', paths=[f'{E}/c.rs'], test_file=f'{MEM}/row_a.rs',
                         inputs=['tests/fixtures/module-row-insert/**'], case=self.case,
                         sources=['export-a'], contract='contract.md#ex', reason='direct C call')
         self.set_manifest(lambda m: m.update(exports=EXPORTS, affected_contracts=[self.row]))
@@ -1326,6 +1324,11 @@ class F2ContractTests(GateFixture):
             # Even a C-owned test may be physically removed by the export tool.
             if path.endswith('.rs'):
                 data['modules'][0]['files'].remove(f'{MEM}/row_a.rs')
+                data['affected_contracts'][0]['owner'] = 'C'
+                ex = exception('C-A', f'{MEM}/row_a.rs', 'A', 'test', ['crate::storage::row::insert'])
+                ex['export_registration'] = dict(file=f'{E}/wal_io/plan4_recovery/tests/catalog_memory.rs',
+                    path='catalog_memory/row_a.rs', module='row_a')
+                data['exceptions'].append(ex)
                 data['affected_contracts'][0]['inputs'] = [f'{E}/c.rs']
             _, errors = gate.contract_selection(gate.Manifest(data, 'fixture'), analysis,
                                                  {f'{E}/c.rs'})
@@ -1523,6 +1526,188 @@ class F2RealRegistryTests(unittest.TestCase):
             row['sources'] = ['export-b']
         _, errors = gate.contract_selection(gate.Manifest(data, 'wrong export'), analysis, {path})
         self.assertEqual(sum('removes input' in e for e in errors), 3)
+
+
+class F5ExportTests(GateFixture):
+    def setUp(self):
+        super().setUp()
+        self.set_manifest(lambda m: m.update(exports=EXPORTS))
+        self.base = self.commit('exports')
+
+    def export(self, head, side, data=None):
+        policy = data or module_single_source.policy_data(self.repo, self.base)
+        out = self.repo.parent / ('export-' + side)
+        inventory, _ = module_single_source.export(head, out, side, repo=self.repo, policy=policy)
+        self.addCleanup(lambda: __import__('shutil').rmtree(out, ignore_errors=True))
+        return inventory, out
+
+    def test_head_cannot_change_trusted_export_policy(self):
+        self.set_manifest(lambda m: m['modules'][1].update(files=[]))
+        head = self.commit('head deletes removal policy')
+        inventory, out = self.export(head, 'a')
+        self.assertIn(f'{E}/row/read.rs', inventory['removed'])
+        self.assertFalse((out / f'{MEM}/row_b.rs').exists())
+        self.assertTrue((out / f'{MEM}/row_a.rs').exists())
+
+    def test_join_and_exception_registrations_are_derived_from_owners(self):
+        data = module_single_source.policy_data(self.repo, self.base)
+        data['modules'].insert(0, dict(id='JOIN', kind='join', files=[f'{MEM}/row_join.rs'],
+            logical=[f'{MEM_PATH}::row_join'], deny=[]))
+        self.write(f'{MEM}/row_join.rs', 'use crate::storage::row::insert::insert;\n')
+        registry = f'{E}/wal_io/plan4_recovery/tests/catalog_memory.rs'
+        self.write(registry, (self.repo / registry).read_text()
+            + '#[path = "catalog_memory/row_join.rs"]\nmod row_join;\n')
+        self.write(f'{E}/census.rs', '#[test]\nfn size() {}\n')
+        self.write(f'{E}/c.rs', (self.repo / f'{E}/c.rs').read_text()
+            + '#[cfg(test)]\n#[path = "census.rs"]\nmod census;\n')
+        ex = exception('EX', f'{E}/census.rs', 'A', 'test', ['crate::storage::row::insert'])
+        ex['export_registration'] = dict(file=f'{E}/c.rs', path='census.rs', module='census')
+        data['exceptions'] = [ex]
+        head = self.commit('join and census')
+        for side in ('a', 'b'):
+            inventory, out = self.export(head, side, data)
+            self.assertIn(f'{MEM}/row_join.rs', inventory['removed'])
+            self.assertEqual((out / f'{E}/census.rs').exists(), side == 'a')
+            self.assertEqual('mod census;' in (out / f'{E}/c.rs').read_text(), side == 'a')
+
+    def test_missing_duplicate_or_wrong_registration_is_rejected(self):
+        registry = f'{E}/wal_io/plan4_recovery/tests/catalog_memory.rs'
+        original = (self.repo / registry).read_text()
+        for text in (original.replace('mod row_b;', 'mod wrong;'),
+                     original + '#[path = "catalog_memory/row_b.rs"]\nmod row_b;\n'):
+            self.write(registry, text)
+            with tempfile.TemporaryDirectory() as directory:
+                with self.assertRaisesRegex(SystemExit, 'registration of row_b'):
+                    module_single_source.export(self.commit('broken registration'),
+                        Path(directory) / 'out', 'a', repo=self.repo,
+                        policy=module_single_source.policy_data(self.repo, self.base))
+
+    def test_missing_or_invalid_metadata_fails_closed(self):
+        data = module_single_source.policy_data(self.repo, self.base)
+        ex = exception('EX', f'{E}/census.rs', 'A', 'test', ['crate::storage::row::insert'])
+        data['exceptions'] = [ex]
+        with self.assertRaises(gate.GateError):
+            gate.Manifest(data, 'missing registration')
+        for registration in (dict(file=f'{E}/c.rs', path='../census.rs', module='census'),
+                             dict(file=f'{E}/c.rs', path='different.rs', module='census'),
+                             dict(file=f'{E}/c.rs', path='census.rs', module='bad-name')):
+            ex['export_registration'] = registration
+            with self.assertRaises(gate.GateError):
+                gate.Manifest(data, 'bad registration')
+        ex['export_registration'] = dict(file=f'{E}/c.rs', path='census.rs', module='census')
+        data['exceptions'].append(dict(ex, id='second', source=f'{E}/other.rs'))
+        with self.assertRaises(gate.GateError):
+            gate.Manifest(data, 'duplicate registration')
+
+    def test_empty_owned_subtree_is_allowed_but_missing_literal_is_not(self):
+        inventory, _ = self.export(self.base, 'a')
+        self.assertIn(f'{E}/row/read.rs', inventory['removed'])
+        self.git('rm', f'{E}/row/read.rs')
+        with tempfile.TemporaryDirectory() as directory:
+            with self.assertRaisesRegex(SystemExit, 'declared path missing: .*row/read.rs'):
+                module_single_source.export(self.commit('missing literal'),
+                    Path(directory) / 'out', 'a', repo=self.repo,
+                    policy=module_single_source.policy_data(self.repo, self.base))
+
+    def test_actual_runner_uses_policy_revision_for_each_export(self):
+        # A head may change the declarative policy, but this build still owes
+        # the old policy's removal of B's fixture. No Rust process is invoked.
+        self.set_manifest(lambda m: m['modules'][1]['files'].remove(
+            'tests/fixtures/module-row-read/**'))
+        self.edit(f'{E}/c.rs', 'struct Port;', 'struct Port; // changed')
+        head = self.commit('candidate weakens fixture ownership')
+        output = self.repo.parent / 'receipt'
+        original = module_single_source.export
+        policies = []
+
+        def export(commit, out, side, repo=None, *, policy):
+            policies.append(policy)
+            result = original(commit, out, side, repo, policy=policy)
+            if side == 'a':
+                self.assertFalse((out / 'tests/fixtures/module-row-read').exists())
+            return result
+
+        argv = ['module_gate_build.py', '--repo', str(self.repo), '--base', self.base,
+                '--head', head, '--policy', self.base, '--workflow', '.github/workflows/module-build.yml',
+                '--out', str(output)]
+        with mock.patch.object(os.sys, 'argv', argv), \
+             mock.patch.object(module_single_source, 'export', side_effect=export), \
+             mock.patch.object(module_gate_build, 'build_result',
+                               side_effect=lambda name, *args: dict(name=name, status='PASS')), \
+             mock.patch.object(module_gate_build, 'identity',
+                               side_effect=lambda plan, source, env, sha: (env, {})):
+            self.assertEqual(module_gate_build.main(), 0)
+        self.assertEqual(len(policies), 2)
+        self.assertTrue(all(p == module_single_source.policy_data(self.repo, self.base)
+                            for p in policies))
+        receipt = json.loads((output / 'receipt.json').read_text())
+        self.assertEqual(receipt['policy'], self.base)
+
+    def test_unsupported_join_and_memory_patterns_fail_closed(self):
+        original = module_single_source.policy_data(self.repo, self.base)
+        for path in (f'{E}/other_join.rs', f'{MEM}/nested/join.rs', f'{MEM}/orphan/**'):
+            data = copy.deepcopy(original)
+            data['modules'].insert(0, dict(id='JOIN', kind='join', files=[path],
+                                          logical=[], deny=[]))
+            with self.assertRaisesRegex(gate.GateError, 'unsupported .*ownership pattern'):
+                gate.Manifest(data, 'unsupported layout')
+
+    def test_gate_rejects_exporter_leaving_a_join_unit(self):
+        data = module_single_source.policy_data(self.repo, self.base)
+        data['modules'].insert(0, dict(id='JOIN', kind='join', files=[f'{MEM}/row_join.rs'],
+            logical=[f'{MEM_PATH}::row_join'], deny=[]))
+        self.write(gate.MANIFEST, json.dumps(data))
+        self.write(f'{MEM}/row_join.rs', '// joint test helper\n')
+        registry = f'{E}/wal_io/plan4_recovery/tests/catalog_memory.rs'
+        self.write(registry, (self.repo / registry).read_text()
+            + '#[path = "catalog_memory/row_join.rs"]\nmod row_join;\n')
+        self.base = self.commit('joint owner')
+        self.edit(f'{E}/c.rs', 'struct Port;', 'struct Port; // changed')
+        head = self.commit('changed C')
+        original = module_single_source.export
+
+        def incomplete(commit, out, side, repo=None, *, policy):
+            incomplete_policy = copy.deepcopy(policy)
+            incomplete_policy['modules'][0]['files'] = []
+            return original(commit, out, side, repo, policy=incomplete_policy)
+
+        with mock.patch.object(module_single_source, 'export', side_effect=incomplete):
+            report = self.judge(head, mode='push')
+        self.assertFinding(report, f'left JOIN file {MEM}/row_join.rs')
+
+    def test_explicit_policy_is_required(self):
+        with self.assertRaises(TypeError):
+            module_single_source.export(self.base, self.repo.parent / 'out', 'a', repo=self.repo)
+
+    def test_contract_owner_must_match_test_file_owner(self):
+        data = module_single_source.policy_data(self.repo, self.base)
+        row = dict(id='C', owner='B', paths=[f'{E}/c.rs'], test_file=f'{MEM}/row_a.rs',
+                   inputs=[f'{MEM}/row_a.rs'], case='storage::test', sources=['head'],
+                   contract='contract.md#ex', reason='fixture')
+        data['affected_contracts'] = [row]
+        with self.assertRaises(gate.GateError):
+            gate.Manifest(data, 'wrong owner')
+        row['owner'] = 'A'
+        gate.Manifest(data, 'correct owner')
+
+
+class F5RealRegistryTests(unittest.TestCase):
+    def test_single_manifest_preserves_baseline_export_layout_and_f2_owners(self):
+        root = Path(__file__).resolve().parent.parent
+        data = json.loads((root / gate.MANIFEST).read_text())
+        baseline = json.loads((root / 'module-gate/evidence/f5/baseline-export-spec.json').read_text())
+        for side, expected in baseline['sides'].items():
+            spec = module_single_source.source_spec(data, side)
+            self.assertEqual(spec['module'], expected['module'])
+            for key in ('removed', 'tests', 'tests_c'):
+                self.assertEqual(sorted(map(str, json.loads(json.dumps(spec.get(key, []))))),
+                                 sorted(map(str, expected.get(key, []))))
+        manifest = gate.Manifest(data, 'candidate')
+        self.assertEqual({r['owner'] for r in data['affected_contracts']}, {'A'})
+        self.assertTrue(all(manifest.owner(r['test_file']) == r['owner']
+                            for r in data['affected_contracts']))
+        self.assertEqual({e['id'] for e in data['exceptions']},
+                         {f'EX{i:02}' for i in range(1, 10)})
 
 
 if __name__ == '__main__':

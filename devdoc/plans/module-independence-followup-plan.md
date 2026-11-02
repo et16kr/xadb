@@ -1,6 +1,6 @@
 # XADB 모듈 분리 후 안정화·경계 개선 실행 계획
 
-2026-11-02 · **계획 D2 ACCEPT / F0 수정·이관·선택 검증 완료 / F1 별도 구현·검증 기록 / F2 구현·선택 검증·독립 검토 완료 / F3–F7 NOT_RUN**
+2026-11-02 · **계획 D2 ACCEPT / F0 수정·이관·선택 검증 완료 / F1 별도 구현·검증 기록 / F2 구현·선택 검증·독립 검토 완료 / F5-a 구현·선택 검증·독립 검토 완료 / F3·F4·F5-b·F6 미완료 / F7 현재 안내 동반 정리**
 
 모듈 분리 후속 개발을 위한 개선 순서와 완료 조건을 정한다. 각 단위에 현재 코드·계약의 근거와 비교할 대안을 연결한다. 계획 채택 때 제품·검사기·시험·측정은 시작하지 않았다. 후속 사용자 지시로 [F0 기존 증거 분류](../evidence/main-preexisting-failures-20261030.md#f0-existing-evidence)를 기록했고, 다시 F0 전체 완료 지시에 따라 [수정·이관·선택 검증](../evidence/main-preexisting-failures-20261030.md#f0-completion)을 마쳤다. 과거 원 로그 미확보의 attribution 한계는 보존하며 현재 선택78개의 PASS와 구분한다. F1은 별도로 구현·검증하며 [실행 기록](../evidence/module-independence-survey-20261026.md#f1-python-gate)에 현재 상태를 둔다. 이후 개발 재개 지시가 오면 해당 단위의 기존 위임과 D1/D2 절차 안에서 진행하며 일상 구현마다 재승인을 요구하지 않는다.
 
@@ -121,6 +121,8 @@ F0는 **분류 완료**, **수정·검증 완료**, **사용자 처리 결정**,
 <a id="catalog"></a>
 ## 7. F3 — Catalog 호출 방향과 C 내부 소유
 
+**현재 실행 제약:** CAT 변경에는 head input identity에 결속된 `dev3_catalog_native.py` 증거가 필요하며 실행기의 고정 여유 공간은60GiB다. 이번 환경은 약30GiB로 부족해 제품 구현·native 실행은 NOT_RUN으로 유지했다. [환경 근거](../../module-gate/evidence/f5/f3-executor-limit.json)를 보존하며 인수 한도를 낮추지 않는다. F5-a는 F2만 선행으로 하므로 먼저 진행한다.
+
 **현재 근거:** [`catalog/read.rs`](../../crates/engine/src/storage/catalog/read.rs)는 disk API를 소비하지만 C에서도 Catalog 제품을 참조한다. manifest EX01–EX04의 대상은 다음 4개 파일이다. Catalog CREATE도 현재 `catalog/`의 별도 제품 본문으로 완성된 상태가 아니다.
 
 | 예외 | 현재 참조 | 해소 시 확인 |
@@ -164,7 +166,11 @@ A와 C는 각자 고정된 예산을 검증하고 조립 담당이 공존하는 
 <a id="test-ownership"></a>
 ## 9. F5 — 시험 소유와 안정 식별
 
-**현재 근거:** A/B의 실제 연결 시험이 C의 `plan4_recovery::tests::catalog_memory` 아래에 있고, [export 도구](../../scripts/module_single_source.py)는 별도 제거 목록을 갖는다. [`plan4_pages.rs`](../../crates/engine/src/storage/wal_io/plan4_pages.rs)는 selector 보존을 위해 같은 소스를 production `apply`·test `retention`으로 연다.
+**2026-11-02 단계적 시행:** [F5-a 기록](../evidence/module-independence-survey-20261026.md#f5-test-ownership)의 시험 소유/안정 ID·export 단일 등록을 먼저 구현한다. F2 세 사례의 owner 검증과 A/B/JOIN 및 EX05–EX09의 제거 정보 정본을 합치며 물리 시험·fixture는 이동하지 않는다. 전체 F5 완료가 아니다.
+
+F5-b는 scope3 fixture 공통 소유 이관과 EX08–EX09 해소다. 현재 신뢰 gate가 이전 A fixture 경로 삭제를 A 전체·JOIN 시험 선택으로 확대하는 [정적 선택 결과](../../module-gate/evidence/f5/fixture-move-selection.json)를 확인했다. 좁은 변경 시험 원칙을 지키기 위해 도구 채택 뒤 관련 사례만 선택할 수 있는 경로를 먼저 마련하고, bytes·독립 저작 provenance·원 hash를 보존한 실제 이동과 C+A/C+B 적용성을 확인한다. EX08–EX09는 담당 C/A, 현 예외 근거와 `review_when`을 유지한 **미해소**다. 복사본 생성이나 기존 증거의 경로 변경으로 대신하지 않는다.
+
+**F5-a 이전 기준선:** A/B의 실제 연결 시험이 C의 `plan4_recovery::tests::catalog_memory` 아래에 있고, [export 도구](../../scripts/module_single_source.py)는 별도 제거 목록을 갖고 있었다. F5-a는 제거 정보를 소유 manifest에서 유도하도록 바꾸며 물리 시험 배치는 유지한다. [`plan4_pages.rs`](../../crates/engine/src/storage/wal_io/plan4_pages.rs)는 selector 보존을 위해 같은 소스를 production `apply`·test `retention`으로 연다.
 
 먼저 F2에서 사용한 소수 사례에 안정 ID→현재 libtest 이름→소유/입력→export 적용성 대응을 만든다. 제품 계약 시험은 A/B 소유, 내부 권한 probe는 C 내부, 합류 시험은 JOIN으로 구별하되 이 단계에서 모두 물리 이동하지 않는다. manifest와 export 제거 정보는 한 곳에서 관리할 수 있도록 바꾸고 변경 자체의 부정 사례를 F1에 포함한다.
 
@@ -222,4 +228,4 @@ A/B/C·C0·S단계는 기존 인수·이력의 식별자로 유지한다. 새 �
 | 의견 반영 | 정량 기준선, 분류와 CI 차단 해제의 구분, 작업별 실패 파일, resident 미검증 8개 후속 작업, D01–D03 결정, EX01–EX09 처리 기준과 현재 색인을 보완. [정정 댓글](https://github.com/et16kr/xadb/pull/23#issuecomment-6560583019)에 따라 독립 평가 보고서로 확대하지 않고 실행 계획 범위를 유지 |
 | 수정 검토 | `/root/followup_plan_review`가 수정 계획·색인 3개 파일을 기존 정책·최신 증거·manifest와 대조하고 정량 기준선을 독립 재집계해 D2 ACCEPT, 필수 수정 0으로 판정했다. root README의 낡은 현재 안내도 갱신하라는 권고 1건을 반영했고, 평가 추가 권고 철회를 포함한 최종판 재확인에서 ACCEPT·필수 수정 0·추가 권고 0을 확인했다. 계약 대조·통합 담당 `/root`가 반영을 확인했으며 개별 후속 구현의 검토를 대신하지 않는다 |
 | 재검토 조건 | 기준선의 관련 코드·정책 변경, 신규 실제 소비자, 측정이 비용 가설을 지지하지 않음, 기존 실패 원인의 영향 확대 |
-| 현재 실행 | 문서·색인 보완. 계획 저장 시점의 F0–F7 구현·제품 시험·성능 측정은 NOT_RUN이었다. 후속 F0는 기존 증거 분류 뒤 current-format 이관과 선택 검증까지 마쳤으며 원 기록·역사적 attribution 한계는 보존한다. F1 구현·선택 검증은 위 실행 기록을 따르며, F2의 제어 구현·선택 검증·독립 검토는 [F2 기록](../evidence/module-independence-survey-20261026.md#f2-contract-selection)을 따르며 제품 시험은 NOT_RUN이다. F3–F7은 NOT_RUN이다. [문서 운영 기준](../policies/documentation-policy.md#push-gate)에 따라 push 직전에 문서 검사와 전송 commit의 필수 훅을 수행하고 실제 결과는 검사 산출물·PR에 기록. Clippy의 시험 target 컴파일은 제품 시험 실행으로 세지 않음 |
+| 현재 실행 | 문서·색인 보완. 계획 저장 시점의 F0–F7 구현·제품 시험·성능 측정은 NOT_RUN이었다. 후속 F0는 기존 증거 분류 뒤 current-format 이관과 선택 검증까지 마쳤으며 원 기록·역사적 attribution 한계는 보존한다. F1 구현·선택 검증은 위 실행 기록을 따르며, F2의 제어 구현·선택 검증·독립 검토는 [F2 기록](../evidence/module-independence-survey-20261026.md#f2-contract-selection)을 따르며 제품 시험은 NOT_RUN이다. F5-a 제어 구현·선택 검증은 [별도 기록](../evidence/module-independence-survey-20261026.md#f5-test-ownership)을 따른다. F3·F4·F5-b·F6은 미완료이며 F7 현재 진입 안내를 동반 정리했다. [문서 운영 기준](../policies/documentation-policy.md#push-gate)에 따라 push 직전에 문서 검사와 전송 commit의 필수 훅을 수행하고 실제 결과는 검사 산출물·PR에 기록. Clippy의 시험 target 컴파일은 제품 시험 실행으로 세지 않음 |

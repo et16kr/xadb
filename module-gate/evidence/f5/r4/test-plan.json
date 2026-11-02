@@ -1,0 +1,8 @@
+{
+ "tests": [
+  "test_check_module_gate.F5ExportTests.test_unsupported_join_and_memory_patterns_fail_closed",
+  "test_check_module_gate.F5ExportTests.test_gate_rejects_exporter_leaving_a_join_unit",
+  "test_check_module_gate.F5RealRegistryTests.test_single_manifest_preserves_baseline_export_layout_and_f2_owners"
+ ],
+ "timeout_seconds": 300
+}

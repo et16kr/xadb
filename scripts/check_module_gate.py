@@ -760,6 +760,8 @@ class Manifest:
             if (not set(row['sources']) <= destinations
                     or not isinstance(row.get('case'), str)
                     or not SELECTOR.fullmatch(row['case']) or row['case'].endswith('::')
+                    or row.get('owner') not in self.modules
+                    or self.owner(row['test_file']) != row.get('owner')
                     or not row.get('contract') or not row.get('reason')):
                 raise GateError(f'{origin}: {row["id"]} invalid contract case/source')
         self.exceptions = data['exceptions']
@@ -783,6 +785,12 @@ class Manifest:
                 raise GateError(f'{origin}: export {export.get("side")} names unknown modules')
             if not export['command'] or export['command'][0] != 'cargo':
                 raise GateError(f'{origin}: export {export.get("side")} command must be cargo')
+        import module_single_source
+        try:
+            for export in data['exports']:
+                module_single_source.source_spec(data, export['side'])
+        except (ValueError, KeyError, TypeError) as error:
+            raise GateError(f'{origin}: invalid single-source metadata: {error}') from error
         for key in ('allowed_selectors', 'input_roots'):
             if not isinstance(data['attested'][key], list):
                 raise GateError(f'{origin}: attested.{key}')
@@ -1028,7 +1036,8 @@ def export_findings(manifest, tree, crate, repo, scratch):
         side, keeps, removes = export['side'], export['keeps'], export['removes']
         out = Path(scratch) / f'export-{side}'
         try:
-            inventory, _files = module_single_source.export(tree.commit, out, side, repo=repo)
+            inventory, _files = module_single_source.export(tree.commit, out, side, repo=repo,
+                                                        policy=manifest.data)
         except SystemExit as error:
             errors.append(f'export {side}: {error}')
             continue
@@ -1054,6 +1063,8 @@ def export_findings(manifest, tree, crate, repo, scratch):
                               f'of {removes}')
         for line in inventory['remaining_references']:
             errors.append(f'export {side} still references {removes}: {line}')
+        for path in sorted(joins - removed):
+            errors.append(f'export {side} left JOIN file {path} in the export')
         for path in sorted(owned - removed):
             errors.append(f'export {side} left {removes} file {path} in the export')
     return errors, inventories
@@ -1270,7 +1281,8 @@ def contract_selection(manifest, analysis, paths):
             errors.append(f'contract {row["id"]}: required case not found (or ignored/unknown cfg)')
         for source in row['sources']:
             if source != 'head':
-                spec = module_single_source.SIDES.get(source.removeprefix('export-'))
+                spec = module_single_source.source_spec(
+                    manifest.data, source.removeprefix('export-'))
                 if spec is None:
                     errors.append(f'contract {row["id"]}: unsupported source {source}')
                     continue
@@ -1282,7 +1294,7 @@ def contract_selection(manifest, analysis, paths):
                     p == r or p.startswith(r + '/') for r in removed))
                 if absent:
                     errors.append(f'contract {row["id"]}: {source} removes input {absent[0]}')
-            selected.append(dict(id=row['id'], source=source, case=row['case'],
+            selected.append(dict(id=row['id'], owner=row['owner'], source=source, case=row['case'],
                                  changed=matched, contract=row['contract'],
                                  inputs={p: tree.blob(p) for p in sorted(inputs)}))
     return selected, errors

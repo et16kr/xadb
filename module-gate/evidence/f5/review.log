@@ -1,0 +1,38 @@
+F5-a independent D1/D2 review
+Reviewer: /root/f3_review
+Range: 0fde463c..0b58a80d plus final plan baseline wording and build-plan JSON index
+Verdict: ACCEPT; required_open: 0
+
+Scope: trusted manifest ownership/export registration, affected-contract owner
+validation, and related Python checks. F3/F4/F5-b/F6 remain incomplete; EX08/EX09
+and product/fixture bytes are unchanged. F7 is current-entry documentation only.
+
+Both findings are resolved: empty ownership globs are allowed while literal
+removals stay mandatory; unsupported JOIN layouts and leftover JOIN files fail
+closed. The actual build runner's explicit trusted-policy read and export calls
+were checked, with build/executable identity mocked in the narrow Python test.
+The baseline export oracle preserves the previous source layout.
+
+The 22 selected IDs are unique and sorted. Every case has preserved raw worker
+PASS evidence in its applicable r1-r4 source. r1 has 14/18 PASS plus two assertion
+FAIL and two ERROR (worker INCOMPLETE); r2 has 5/5 PASS on a superseded fixture;
+r3 has 10/10 PASS after the glob/literal correction; r4 has 3/3 worker PASS but
+outer executor FAIL because the manual plan IDs were unsorted. These original
+results are retained without upgrading r4 to an aggregate PASS. CI and push
+checks are separate results. Unchanged Rust product tests were NOT_RUN.
+The reviewer performed no edits or test execution.
+
+Reviewed code blobs:
+devdoc/policies/module-gate.json 7dd1805428ae08041f34ab3fd01a2e0963e08971
+scripts/check_module_gate.py 1484d4e1810176780b994d77676ba94b1ce21ee2
+scripts/module_gate_build.py ba2653cc253015444ef3a03ba64a8fafcd4df664
+scripts/module_single_source.py c6e22278b46f37c041b59c5661f15422c6652833
+scripts/test_check_module_gate.py 5eb5c09992cc56a00089957b03ad60dfe11be2f8
+
+Reviewed documentation blobs before this verdict was recorded:
+devdoc/plans/module-independence-followup-plan.md 5e4c3ff07c21a326f7c8f464cb8733044da70b66
+devdoc/policies/repository-build-plan.json 017e93dd288baf0fd7da1d2670d1b1ccae3a6760
+devdoc/policies/repository-build-plan.md e4c94df8d432ff07e09efd9ca4dbdc9b7f1623fb
+devdoc/evidence/module-independence-survey-20261026.md b44619c9de6a6ad8cd1bb9b447e7c192c652dc36
+
+This review does not claim remote CI PASS or Rust product behavior validation.

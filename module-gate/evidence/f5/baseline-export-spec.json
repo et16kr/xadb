@@ -1,0 +1,81 @@
+{
+ "commit": "0fde463c",
+ "sides": {
+  "a": {
+   "module": "read",
+   "removed": [
+    "crates/engine/src/storage/row/read.rs",
+    "crates/engine/src/storage/row/read",
+    "tests/fixtures/module-row-read"
+   ],
+   "tests": [
+    "row_read_live",
+    "row_recovery_read",
+    "row_join",
+    "row_literal",
+    "row_literal_two",
+    "row_read_literal",
+    "row_reopen_literal",
+    "row_no_loser",
+    "row_literal_rollback",
+    "row_read_census",
+    "row_corpus"
+   ]
+  },
+  "b": {
+   "module": "insert",
+   "removed": [
+    "crates/engine/src/storage/row/insert.rs",
+    "crates/engine/src/storage/row/insert",
+    "tests/fixtures/module-row-insert"
+   ],
+   "tests": [
+    "row_write",
+    "row_v09",
+    "row_forward",
+    "row_cancel",
+    "row_live",
+    "row_commit",
+    "row_rollback",
+    "row_recovery",
+    "row_recovery_read",
+    "row_read_live",
+    "row_native_a",
+    "row_join",
+    "row_inventory_a"
+   ],
+   "tests_c": [
+    [
+     "crates/engine/src/storage/wal_io/plan4_apply/row/rollback.rs",
+     "rollback_census_tests.rs",
+     "census",
+     "crates/engine/src/storage/wal_io/plan4_apply/row/rollback_census_tests.rs"
+    ],
+    [
+     "crates/engine/src/storage/wal_io/plan4_recovery/row_action.rs",
+     "row_action_census_tests.rs",
+     "census",
+     "crates/engine/src/storage/wal_io/plan4_recovery/row_action_census_tests.rs"
+    ],
+    [
+     "crates/engine/src/storage/wal_io/plan4_retention/catalog_commit.rs",
+     "catalog_commit/row_census.rs",
+     "row_census",
+     "crates/engine/src/storage/wal_io/plan4_retention/catalog_commit/row_census.rs"
+    ],
+    [
+     "crates/engine/src/storage/semantic_row/transition.rs",
+     "transition_tests.rs",
+     "tests",
+     "crates/engine/src/storage/semantic_row/transition_tests.rs"
+    ],
+    [
+     "crates/engine/src/storage/wal_io/plan4_retention/recovery.rs",
+     "recovery/row_tests.rs",
+     "row_tests",
+     "crates/engine/src/storage/wal_io/plan4_retention/recovery/row_tests.rs"
+    ]
+   ]
+  }
+ }
+}
