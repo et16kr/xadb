@@ -2175,10 +2175,11 @@ pub(in super::super) fn catalog_live_source_bytes<W: WriterNamespace>() -> Catal
     // The live Row retirement (reclamation `#live-row-retirement`): the same
     // shell and its own entry packet and RowRetireStep slots throughout;
     // first the residency LOAD steps, then, in `retire_resident`'s own
-    // never-inlined frame (the prepared group, its Result slot, the
-    // Observation copy and its Result, the install's group carrier), the
-    // recovered cleanup preparation at nine targets with its replay scope,
-    // then the existing-group install at four targets (ReleaseRole) or the
+    // never-inlined frame (`carrier_source_bytes`: the preparation's one
+    // Result slot, a borrow of the group in it, a refused preparation's
+    // error, the install's group argument), the recovered cleanup
+    // preparation at nine targets with its replay scope, then the
+    // existing-group install at four targets (ReleaseRole) or the
     // retirement install at nine targets.
     let wide = lifecycle::row::row_group_terms::<9>();
     let row_cleanup_prepare =

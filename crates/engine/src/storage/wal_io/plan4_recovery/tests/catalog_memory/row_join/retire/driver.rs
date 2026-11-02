@@ -109,11 +109,12 @@ fn lrc_j01_drain_after_commit_and_abort_frees_every_row_job() {
                             }
                             applied!(rollback.finish());
                         }
-                        let mut call = LiveCall::new(&mut writer, owner, &mut flush, flusher);
-                        if let Err(error) = finish_aborted_live(&mut call, tx) {
-                            panic!("A's finish_aborted refused {:?}", error.failure);
+                        {
+                            let mut call = LiveCall::new(&mut writer, owner, &mut flush, flusher);
+                            if let Err(error) = finish_aborted_live(&mut call, tx) {
+                                panic!("A's finish_aborted refused {:?}", error.failure);
+                            }
                         }
-                        drop(call);
                         assert_eq!(
                             drained!(&mut writer, owner, flush, flusher, private),
                             done(5, 0),

@@ -136,9 +136,12 @@ impl<'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
     /// when no root step is left, a TerminalReady Job whose actor has no
     /// root (TerminalFinish). A caller passes the ordinals whose step was
     /// just refused `Visibility(Busy)` (a Prune beside an older snapshot) in
-    /// `skip`, so one held actor does not hide the others; the list names
-    /// Job cells, so it is valid only until the next installed step (a
-    /// freed cell can be reused by another actor). Reads the control
+    /// `skip`, so one held actor does not hide the others. The list names
+    /// Job cells. It stays valid across installed steps while no Job is
+    /// allocated between the calls (no Begin or Row write on this writer):
+    /// a cleanup step only frees cells, and a skipped cell can be freed only
+    /// by its own step, which is not selected. After an allocation a listed
+    /// cell may hold another actor's Job. Reads the control
     /// Jobs only; the producer checks every precondition again under the
     /// canonical replay proof. Two TerminalReady Jobs of one actor or two
     /// head roots are an invariant breach (Fatal), as in recovery.

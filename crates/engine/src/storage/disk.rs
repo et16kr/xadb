@@ -40,6 +40,10 @@ pub(in crate::storage) use super::wal_io::disk_api::{MCA01_V12_P_TABLE, mca01_v1
 
 pub(in crate::storage) use super::wal_io::disk_api::InstallGrant;
 pub(in crate::storage) use super::wal_io::disk_api::Owner;
+#[allow(
+    unused_imports,
+    reason = "named only by A's cleanup drain; the C+B export has no A"
+)]
 pub(in crate::storage) use super::wal_io::disk_api::RowRetireStep;
 
 pub(crate) use super::wal_io::disk_api::{

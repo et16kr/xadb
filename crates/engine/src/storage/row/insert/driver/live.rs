@@ -534,9 +534,13 @@ pub(in crate::storage) fn finish_aborted_live<'v, 'a, 'c, 's, W: WriterNamespace
 /// `#live-row-cleanup-caller`): every cleanup group of the finished
 /// transactions C selects, up to the drain's bound, with residency victims
 /// flushed and Busy steps left for a later drain. The statement path calls
-/// it after `commit_live` or `finish_aborted_live` returned, outside their
-/// frames: inside them the drain would add to the Commit frame, which C's
-/// Commit windows bound at 3,024 B (`row_caller_budget::COMMIT`).
+/// it after `commit_live` or `finish_aborted_live` returned, and from a
+/// frame that does not hold them: the census is per frame, so a caller
+/// that calls both from one frame also holds the drain's result and
+/// arguments during the commit, whose A frame is at its fixed ceiling
+/// (`row_caller_budget::COMMIT`, 3,024 B). Such a caller calls the drain
+/// from a separate never-inlined frame or redoes the commit census with
+/// those slots. Its own term is the `caller` of `live_cleanup_sites`.
 #[allow(
     clippy::result_large_err,
     reason = "Failure keeps the stage and the error inline, without allocation"

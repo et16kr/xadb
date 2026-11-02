@@ -552,7 +552,11 @@ impl<'s> Boundary for LiteralCall<'s> {
         drop(state);
         factory(Retire(ordinal), fault)?;
         let mut state = self.state.borrow_mut();
-        state.cleanup.retain(|step| *step != (ordinal, operation));
+        let at = state
+            .cleanup
+            .iter()
+            .position(|step| *step == (ordinal, operation));
+        state.cleanup.remove(at.expect("checked above"));
         Ok(RetireNext::Retired)
     }
 }
@@ -2864,6 +2868,10 @@ fn cleaning(
     state
 }
 
+#[allow(
+    clippy::result_large_err,
+    reason = "the drain's own result, as A returns it"
+)]
 fn drain(state: &RefCell<State>) -> Result<Retired, RetireStop> {
     let mut loan = loan();
     retire_finished(&mut LiteralCall { state }, &mut loan)
@@ -2884,18 +2892,13 @@ const ONE_COMMIT: [(usize, Operation); 6] = [
 /// each `row_cleanup_next`, until C selects none.
 #[test]
 fn lrc_a01_drain_installs_every_selected_group() {
-    // The literal C removes a step once installed; a repeated (ordinal,
-    // operation) pair is installed once per entry.
-    let state = cleaning(&ONE_COMMIT[..1], &[], &[], &[]);
-    {
-        let mut state = state.borrow_mut();
-        state.cleanup.push((5, Operation::RootFree));
-        state.cleanup.push((2, Operation::TerminalFinish));
-    }
+    // One commit's cleanup in C's order. The literal C removes one entry
+    // per installed group, so the root's three ReleaseRole are three groups.
+    let state = cleaning(&ONE_COMMIT, &[], &[], &[]);
     assert_eq!(
         drain(&state).unwrap(),
         Retired {
-            groups: 3,
+            groups: 6,
             held: 0,
             complete: true
         }
@@ -2906,12 +2909,19 @@ fn lrc_a01_drain_installs_every_selected_group() {
             CleanupNext,
             Retire(3),
             CleanupNext,
-            Retire(5),
+            Retire(3),
+            CleanupNext,
+            Retire(3),
+            CleanupNext,
+            Retire(3),
+            CleanupNext,
+            Retire(3),
             CleanupNext,
             Retire(2),
             CleanupNext
         ]
     );
+    assert!(state.borrow().cleanup.is_empty());
     assert!(state.borrow().skips.iter().all(Vec::is_empty));
     settled(&state);
 
