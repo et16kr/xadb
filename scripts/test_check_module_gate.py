@@ -11,6 +11,7 @@ import http.server
 import io
 import json
 import os
+import re
 import subprocess
 import tempfile
 import threading
@@ -1700,18 +1701,67 @@ class F5RealRegistryTests(unittest.TestCase):
             spec = module_single_source.source_spec(data, side)
             self.assertEqual(spec['module'], expected['module'])
             for key in ('removed', 'tests', 'tests_c'):
-                # F4 closes the first three C-to-A census exceptions. Preserve
-                # the historical baseline receipt; only these removals retire.
+                # F4 closed the three C-to-A census exceptions and F5-b the two
+                # scope3 literal readers. Preserve the historical baseline
+                # receipt; only these five C-test removals retire.
                 if key == 'tests_c' and side == 'b':
-                    expected = dict(expected, tests_c=expected['tests_c'][3:])
+                    expected = dict(expected, tests_c=expected['tests_c'][5:])
                 self.assertEqual(sorted(map(str, json.loads(json.dumps(spec.get(key, []))))),
                                  sorted(map(str, expected.get(key, []))))
         manifest = gate.Manifest(data, 'candidate')
         self.assertEqual({r['owner'] for r in data['affected_contracts']}, {'A'})
         self.assertTrue(all(manifest.owner(r['test_file']) == r['owner']
                             for r in data['affected_contracts']))
-        self.assertEqual({e['id'] for e in data['exceptions']},
-                         {'EX08', 'EX09'})
+        self.assertEqual(data['exceptions'], [])
+
+
+class F5bScope3FixtureTests(unittest.TestCase):
+    """F5-b moved A's frozen MCA00-V06 scope3 literals to the C-side root."""
+
+    OLD = 'tests/fixtures/module-row-insert/scope3'
+    NEW = 'tests/fixtures/module-row-format/scope3'
+    READERS = ('crates/engine/src/storage/row/insert/group_tests.rs',
+               'crates/engine/src/storage/semantic_row/transition_tests.rs',
+               'crates/engine/src/storage/wal_io/plan4_retention/recovery/row_tests.rs')
+
+    def test_moved_literals_keep_frozen_bytes_and_survive_both_exports(self):
+        root = Path(__file__).resolve().parents[1]
+        data = json.loads((root / gate.MANIFEST).read_text())
+        manifest = gate.Manifest(data, 'F5-b scope3 fixture')
+        self.assertFalse((root / self.OLD).exists())
+        new = root / self.NEW
+        names = sorted(p.name for p in new.iterdir())
+        # The bytes are the frozen ones: A's original manifest and the two
+        # SHA-pinned C-side authors still name them by the old path.
+        frozen = json.loads((root / 'tests/fixtures/module-row-insert/manifest.json')
+                            .read_text())['input_files']
+        self.assertEqual({f'{self.OLD}/{n}' for n in names},
+                         {p for p in frozen if p.startswith(self.OLD + '/')})
+        pins = {}
+        for author in ('transition', 'reserve-replay'):
+            text = (root / f'tests/fixtures/module-row-format/{author}/author.py').read_text()
+            pins.update(re.findall(
+                r"'module-row-insert/scope3/([^']+)':\s*'([0-9a-f]{64})'", text))
+        self.assertTrue(pins and set(pins) <= set(names))
+        for name in names:
+            digest = hashlib.sha256((new / name).read_bytes()).hexdigest()
+            self.assertEqual(frozen[f'{self.OLD}/{name}']['sha256'], digest, name)
+            self.assertEqual(pins.get(name, digest), digest, name)
+            self.assertNotIn(manifest.owner(f'{self.NEW}/{name}'), ('A', 'B'))
+        readers = {path: manifest.owner(path) for path in self.READERS}
+        self.assertEqual(readers[self.READERS[0]], 'A')
+        self.assertFalse({'A', 'B'} & set(list(readers.values())[1:]))
+        for side in ('a', 'b'):
+            spec = module_single_source.source_spec(data, side)
+            removed = spec['removed'] + [entry[3] for entry in spec.get('tests_c', [])]
+            for path in (self.NEW, *self.READERS[1:]):
+                self.assertFalse(any(path == p or path.startswith(p + '/') for p in removed),
+                                 (side, path))
+        for path in self.READERS:
+            text = (root / path).read_text()
+            self.assertIn(f'"/../../{self.NEW}/"', text)
+            self.assertNotIn('module-row-insert', text)
+        self.assertEqual(data['exceptions'], [])
 
 
 class F4BudgetExportTests(unittest.TestCase):

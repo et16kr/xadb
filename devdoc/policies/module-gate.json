@@ -528,46 +528,7 @@
   ]
  },
  "records": "module-gate/records/*.json",
- "exceptions": [
-  {
-   "id": "EX08",
-   "source": "crates/engine/src/storage/semantic_row/transition_tests.rs",
-   "target": "A",
-   "scope": "test",
-   "contract": "contracts/dev3-module-boundaries.md#row-single-source-s8",
-   "reason": "C observer test replaying A scope3 literals (MCA00-V06) by fixture path.",
-   "owner": "C",
-   "review_when": "when the literals move to a C-owned fixture",
-   "paths": [
-    "fixture::module-row-insert"
-   ],
-   "baseline": "da435fd6a3c9085320c297b8e8229ec5f38f28f4",
-   "export_registration": {
-    "file": "crates/engine/src/storage/semantic_row/transition.rs",
-    "path": "transition_tests.rs",
-    "module": "tests"
-   }
-  },
-  {
-   "id": "EX09",
-   "source": "crates/engine/src/storage/wal_io/plan4_retention/recovery/row_tests.rs",
-   "target": "A",
-   "scope": "test",
-   "contract": "contracts/dev3-module-boundaries.md#row-single-source-s8",
-   "reason": "C replay test over A scope3 literals by fixture path.",
-   "owner": "C",
-   "review_when": "with EX08",
-   "paths": [
-    "fixture::module-row-insert"
-   ],
-   "baseline": "da435fd6a3c9085320c297b8e8229ec5f38f28f4",
-   "export_registration": {
-    "file": "crates/engine/src/storage/wal_io/plan4_retention/recovery.rs",
-    "path": "recovery/row_tests.rs",
-    "module": "row_tests"
-   }
-  }
- ],
+ "exceptions": [],
  "exports": [
   {
    "side": "a",

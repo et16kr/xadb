@@ -1,7 +1,7 @@
 //! S1-b: the scope3 Row arm of `apply_frame` (XADB-MODULE-ROW-BEGIN-001,
 //! "replay와 분석 gate") over the independent N1 transition literals
 //! (`module-row-format/transition`) and A's Forward/CLR literals
-//! (`module-row-insert/scope3`). Before arenas are the literal snapshots at
+//! (`module-row-format/scope3`). Before arenas are the literal snapshots at
 //! their own page numbers plus a Catalog leaf (page 8) encoded here for A's
 //! table. Expected afters are each frame's redo records applied to the before
 //! pages here, A's snapshot literals and the bank rule of the consumer
@@ -45,7 +45,7 @@ macro_rules! scope3 {
     ($name:literal) => {
         include_bytes!(concat!(
             env!("CARGO_MANIFEST_DIR"),
-            "/../../tests/fixtures/module-row-insert/scope3/",
+            "/../../tests/fixtures/module-row-format/scope3/",
             $name
         ))
     };

@@ -34,7 +34,7 @@ macro_rules! scope3 {
     ($name:literal) => {
         include_bytes!(concat!(
             env!("CARGO_MANIFEST_DIR"),
-            "/../../tests/fixtures/module-row-insert/scope3/",
+            "/../../tests/fixtures/module-row-format/scope3/",
             $name
         ))
     };
