@@ -1304,6 +1304,3 @@ mod row_corpus;
 
 #[path = "catalog_memory/row_inventory_a.rs"]
 mod row_inventory_a;
-
-#[path = "catalog_memory/row_retire.rs"]
-mod row_retire;

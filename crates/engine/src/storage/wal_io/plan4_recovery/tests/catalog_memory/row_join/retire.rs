@@ -4,12 +4,12 @@
 //! `row_cleanup_next` and `retire_row`. Expectations are state-machine facts
 //! (the cleanup order, freed Jobs, a reusable Status, Undo and Job, the
 //! snapshot horizon), not values read back from the same producer.
-use super::super::super::super::plan4_pages::{VisibilityCause, apply::RowRetireStep};
-use super::row_forward::files;
-use super::row_literal::int_of;
-use super::row_preflight::{create_table, system_init};
-use super::row_reopen::{AtReady, reopen};
-use super::*;
+use super::super::super::super::super::plan4_pages::{VisibilityCause, apply::RowRetireStep};
+use super::super::row_forward::files;
+use super::super::row_literal::int_of;
+use super::super::row_preflight::{create_table, system_init};
+use super::super::row_reopen::{AtReady, reopen};
+use super::super::*;
 use crate::storage::{
     disk::{
         IsolationLevel, ReadStep, RetentionCause, RetentionError, RollbackScope, RollbackStep,
@@ -162,7 +162,7 @@ fn row_jobs(jobs: &[[u8; 1024]; 64]) -> Vec<(usize, JobState, u8, u64)> {
     jobs.iter()
         .enumerate()
         .filter_map(|(ordinal, bytes)| {
-            let job = job3::decode_job(bytes, super::super::support::namespace()).unwrap();
+            let job = job3::decode_job(bytes, super::super::super::support::namespace()).unwrap();
             (job.scope() == Some(JobScope::Row)).then(|| {
                 (
                     ordinal,
@@ -181,7 +181,7 @@ fn assert_row_jobs_free(jobs: &[[u8; 1024]; 64]) {
         assert_eq!(state, JobState::Free, "Row Job {ordinal} still held");
     }
     for (ordinal, bytes) in jobs.iter().enumerate() {
-        let job = job3::decode_job(bytes, super::super::support::namespace()).unwrap();
+        let job = job3::decode_job(bytes, super::super::super::support::namespace()).unwrap();
         assert!(
             job.scope() != Some(JobScope::Row) || job.state() == JobState::Free,
             "Row Job {ordinal}"
@@ -306,7 +306,7 @@ fn lrr01_live_cleanup_reuses_jobs_status_and_undo_beyond_32_transactions() {
                 live: &mut Live<'_, 's, 'c, '_, '_, '_, '_, '_, W>,
                 _owner: &mut Owner<'c, 's>,
                 _flusher: &mut Owner<'c, 's>,
-                _private: &mut [u8; super::super::super::CATALOG_PRIVATE_BYTES],
+                _private: &mut [u8; super::super::super::super::CATALOG_PRIVATE_BYTES],
             ) -> Self::Out {
                 assert_row_jobs_free(live.catalog_test_jobs());
                 (
@@ -447,7 +447,8 @@ fn lrr03_running_actor_non_head_and_early_terminal_are_refused() {
                 let mut roots: Vec<(usize, u64)> = Vec::new();
                 let mut terminal = None;
                 for (ordinal, bytes) in writer.catalog_test_jobs().iter().enumerate() {
-                    let job = job3::decode_job(bytes, super::super::support::namespace()).unwrap();
+                    let job =
+                        job3::decode_job(bytes, super::super::super::support::namespace()).unwrap();
                     if job.source() != Some(actor) {
                         continue;
                     }
