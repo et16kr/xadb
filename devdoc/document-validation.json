@@ -1,11 +1,9 @@
 {
   "schema_version": 2,
   "product": "XADB",
-  "date": "2026-11-03T03:25:42.233919+09:00",
-  "status": "FAIL",
-  "errors": [
-    "/home/claude/xadb/devdoc/evidence/autocommit-insert-20261102.md: missing link ../../module-gate/records/20261102-autocommit-insert.json"
-  ],
+  "date": "2026-11-03T03:28:45.071840+09:00",
+  "status": "PASS",
+  "errors": [],
   "markdown_documents": [
     {
       "file": "devdoc/README.md",
@@ -593,7 +591,7 @@
       "file": "devdoc/evidence/autocommit-insert-20261102.md",
       "links": 4,
       "duplicate_ids": 0,
-      "sha256": "a7668388ff0b164375b890af7d67e1207561b586a84d5a29183e84e65fb97367"
+      "sha256": "e57d095aceafbe85addb5a0dab2e2b7a3a22a4e831edbfefae30d2d3f982b850"
     },
     {
       "file": "devdoc/evidence/comm-acceptance-resume-20261023.md",
