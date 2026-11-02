@@ -957,7 +957,7 @@ apply root의 private receipt·actual terminal 자손과 Busy 시험·manifest/c
 <a id="module-gate-test-ownership"></a>
 ### F5-a 시험 소유와 단독 export의 단일 등록 — XADB-MODULE-GATE-006
 
-**D2 · 구현·선택 검증, 독립 검토 진행.** F2의 안정 사례 ID에 `owner`를 명시하고 실제 `test_file` 소유자와 다르면 거절한다. 현재 세 사례는 A의 제품 계약 시험이며 물리 위치는 `catalog_memory/row_live.rs`로 유지한다. 입력·현재 libtest 이름·실행 source는 기존 `affected_contracts`가 정본이다. C 내부 권한 probe와 JOIN의 기존 소유도 유지한다.
+**D2 ACCEPT · 구현·선택 검증·독립 검토 완료.** F2의 안정 사례 ID에 `owner`를 명시하고 실제 `test_file` 소유자와 다르면 거절한다. 현재 세 사례는 A의 제품 계약 시험이며 물리 위치는 `catalog_memory/row_live.rs`로 유지한다. 입력·현재 libtest 이름·실행 source는 기존 `affected_contracts`가 정본이다. C 내부 권한 probe와 JOIN의 기존 소유도 유지한다.
 
 [단독 export 도구](../../scripts/module_single_source.py)의 별도 `LINKS_A`·`LINKS_B`·`SIDES` 제거 목록은 없앤다. A/B 제품과 fixture 경로는 manifest의 `modules[].files`, `catalog_memory` 시험 등록은 A/B/JOIN의 같은 소유 목록에서 유도한다. JOIN은 양쪽에서 제거한다. C 시험의 예외 제거는 해당 EX05–EX09에 붙은 `export_registration {file,path,module}`과 원 `source`를 사용한다. 존재하지 않는 소유 glob 하위 폴더는 비어 있을 수 있지만 literal 파일은 필수다. 현재 등록 그룹 밖 JOIN 경로·중첩/고아 시험 glob, 잘못된 등록 경로·중복 등록, 실제 누락/중복 module 등록은 실패한다. checker도 제거되지 않은 JOIN 파일을 거절한다. 일반적인 Rust 모듈 재배치 자동 탐색기로 확대하지 않는다.
 

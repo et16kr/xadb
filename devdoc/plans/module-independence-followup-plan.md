@@ -1,6 +1,6 @@
 # XADB 모듈 분리 후 안정화·경계 개선 실행 계획
 
-2026-11-02 · **계획 D2 ACCEPT / F0 수정·이관·선택 검증 완료 / F1 별도 구현·검증 기록 / F2 구현·선택 검증·독립 검토 완료 / F5-a 구현·선택 검증 / F3·F4·F5-b·F6 미완료 / F7 현재 안내 동반 정리**
+2026-11-02 · **계획 D2 ACCEPT / F0 수정·이관·선택 검증 완료 / F1 별도 구현·검증 기록 / F2 구현·선택 검증·독립 검토 완료 / F5-a 구현·선택 검증·독립 검토 완료 / F3·F4·F5-b·F6 미완료 / F7 현재 안내 동반 정리**
 
 모듈 분리 후속 개발을 위한 개선 순서와 완료 조건을 정한다. 각 단위에 현재 코드·계약의 근거와 비교할 대안을 연결한다. 계획 채택 때 제품·검사기·시험·측정은 시작하지 않았다. 후속 사용자 지시로 [F0 기존 증거 분류](../evidence/main-preexisting-failures-20261030.md#f0-existing-evidence)를 기록했고, 다시 F0 전체 완료 지시에 따라 [수정·이관·선택 검증](../evidence/main-preexisting-failures-20261030.md#f0-completion)을 마쳤다. 과거 원 로그 미확보의 attribution 한계는 보존하며 현재 선택78개의 PASS와 구분한다. F1은 별도로 구현·검증하며 [실행 기록](../evidence/module-independence-survey-20261026.md#f1-python-gate)에 현재 상태를 둔다. 이후 개발 재개 지시가 오면 해당 단위의 기존 위임과 D1/D2 절차 안에서 진행하며 일상 구현마다 재승인을 요구하지 않는다.
 
@@ -170,7 +170,7 @@ A와 C는 각자 고정된 예산을 검증하고 조립 담당이 공존하는 
 
 F5-b는 scope3 fixture 공통 소유 이관과 EX08–EX09 해소다. 현재 신뢰 gate가 이전 A fixture 경로 삭제를 A 전체·JOIN 시험 선택으로 확대하는 [정적 선택 결과](../../module-gate/evidence/f5/fixture-move-selection.json)를 확인했다. 좁은 변경 시험 원칙을 지키기 위해 도구 채택 뒤 관련 사례만 선택할 수 있는 경로를 먼저 마련하고, bytes·독립 저작 provenance·원 hash를 보존한 실제 이동과 C+A/C+B 적용성을 확인한다. EX08–EX09는 담당 C/A, 현 예외 근거와 `review_when`을 유지한 **미해소**다. 복사본 생성이나 기존 증거의 경로 변경으로 대신하지 않는다.
 
-**현재 근거:** A/B의 실제 연결 시험이 C의 `plan4_recovery::tests::catalog_memory` 아래에 있고, [export 도구](../../scripts/module_single_source.py)는 별도 제거 목록을 갖는다. [`plan4_pages.rs`](../../crates/engine/src/storage/wal_io/plan4_pages.rs)는 selector 보존을 위해 같은 소스를 production `apply`·test `retention`으로 연다.
+**F5-a 이전 기준선:** A/B의 실제 연결 시험이 C의 `plan4_recovery::tests::catalog_memory` 아래에 있고, [export 도구](../../scripts/module_single_source.py)는 별도 제거 목록을 갖고 있었다. F5-a는 제거 정보를 소유 manifest에서 유도하도록 바꾸며 물리 시험 배치는 유지한다. [`plan4_pages.rs`](../../crates/engine/src/storage/wal_io/plan4_pages.rs)는 selector 보존을 위해 같은 소스를 production `apply`·test `retention`으로 연다.
 
 먼저 F2에서 사용한 소수 사례에 안정 ID→현재 libtest 이름→소유/입력→export 적용성 대응을 만든다. 제품 계약 시험은 A/B 소유, 내부 권한 probe는 C 내부, 합류 시험은 JOIN으로 구별하되 이 단계에서 모두 물리 이동하지 않는다. manifest와 export 제거 정보는 한 곳에서 관리할 수 있도록 바꾸고 변경 자체의 부정 사례를 F1에 포함한다.
 

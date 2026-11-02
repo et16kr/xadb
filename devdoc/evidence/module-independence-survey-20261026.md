@@ -6051,7 +6051,7 @@ F0 실패 처리, F2 공통 계약 시험 선택, 원격 ruleset/Actions 정책 
 <a id="f5-test-ownership"></a>
 ## 2026-11-02 F5-a 시험 소유·단독 export 등록 통합
 
-**상태: F5-a 구현·선택 검증, 독립 검토 진행. 전체 F5는 미완료.** 사용자의 남은 후속 작업 진행 요청으로 F2 PR #27이 병합된 `main` `0fde463c`에서 `codex/module-followup-f5`를 만들었다. 작성·계약·통합 담당 `/root`, 독립 검토 `/root/f3_review`다.
+**상태: F5-a 구현·선택 검증·독립 D1/D2 ACCEPT, PR 제출 준비. 전체 F5는 미완료.** 사용자의 남은 후속 작업 진행 요청으로 F2 PR #27이 병합된 `main` `0fde463c`에서 `codex/module-followup-f5`를 만들었다. 작성·계약·통합 담당 `/root`, 독립 검토 `/root/f3_review`다.
 
 먼저 F3를 조사했으나 CAT 변경의 필수 native 실행기는 최소 여유 공간60GiB를 요구하고 현재 workspace에는 약30GiB만 있다. [관측](../../module-gate/evidence/f5/f3-executor-limit.json)을 남기고 제품 수정·시험은 시작하지 않았다. F2만 선행 조건인 F5로 전환했다. F5 전체 fixture 이동을 바로 수행하면 이전 경로가 A 소유이므로 신뢰 gate가 A 전체와 JOIN을 선택함을 [정적 입력 대조](../../module-gate/evidence/f5/fixture-move-selection.json)로 확인했다. 제품 시험을 실행한 결과가 아니다. 이 단위는 F5-a 도구·등록만 먼저 채택한다.
 
@@ -6065,3 +6065,5 @@ F0 실패 처리, F2 공통 계약 시험 선택, 원격 ruleset/Actions 정책 
 - r4:지원하지 않는 JOIN/중첩·고아 등록의 fail-closed 검증과 export의 JOIN 잔존 검출을 추가했다. worker3개 PASS. 수동 실행 계획의 ID 순서가 정렬되지 않아 F1 외부 집계는 FAIL이며 [별도 결과](../../module-gate/evidence/f5/r4/executor-result.json)로 보존했다. 이미 완료한 사례를 반복하지 않았고 CI record는 정렬된 정확 ID를 사용한다. 원격 검증은 별도 결과로 확인한다.
 
 EX08–EX09는 공통 semantic/recovery 시험이 A 명의 scope3 literal을 소비하는 상태로 남는다. 담당 C/A, 현재 근거·재검토 조건은 원 예외에 유지한다. F5-b는 관련37개(A13·C semantic16·C recovery8)를 좁게 선택할 수 있는 도입 경로와 bytes/provenance 대응을 먼저 정한 뒤 공통 소유 이관·C+B의 C24개 발견/실행을 검증한다. 이번 단위는 그 이동·예외 해소를 완료로 세지 않는다. F4·F6도 미착수이며 F7은 현재 진입 문서와 잔여 안내만 함께 갱신했다.
+
+최종 독립 D1/D2에서 `/root/f3_review`가 코드·계약·원 결과와 정렬된22개 CI 선택을 대조해 **ACCEPT·미해결 필수 0**을 확인했다. [검토 기록](../../module-gate/evidence/f5/review.log)과 [blob 결속 기록](../../module-gate/records/20261102-f5-test-ownership.json)을 보존한다. 작성·계약·통합 담당 `/root`가 지적 반영과 범위 구분을 확인했다. 실제 push 훅·원격 CI 결과는 PR에 기록하고, 시행은 사람이 병합한 뒤다.

@@ -1076,6 +1076,14 @@
       "tests": "scripts/test_module_gate_python.py",
       "selection": "record.python_tests: exact unittest IDs under trusted manifest.python_tests; no whole-suite default",
       "adoption": "unprivileged bootstrap on adopting PR; trusted control enforces after human merge"
+    },
+    "test_ownership": {
+      "normative_ref": "repository-build-plan.md#module-gate-test-ownership",
+      "decision": "XADB-MODULE-GATE-006",
+      "registry": "devdoc/policies/module-gate.json",
+      "exporter": "scripts/module_single_source.py",
+      "scope": "F5-a: affected-contract owner validation and exports derived from explicit trusted policy; fixture migration and EX08/EX09 resolution remain F5-b",
+      "adoption": "unprivileged candidate Python tests on adopting PR; trusted policy and tools take effect together after human merge"
     }
   },
   "source_fingerprint_roots": [
