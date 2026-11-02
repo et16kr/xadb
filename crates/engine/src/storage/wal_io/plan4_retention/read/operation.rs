@@ -24,6 +24,25 @@ pub(crate) enum ReadStep<T, Target = Plan4Target> {
     Ready(T),
     FlushRequired { target: Target },
 }
+/// Decoded observation only, never a CheckedTable or installation authority.
+#[allow(
+    clippy::large_enum_variant,
+    reason = "borrowed view is inline and source charged"
+)]
+pub(crate) enum CatalogReadStep<'a> {
+    Found(CatalogRecordView<'a>),
+    Missing,
+    FlushRequired { target: Plan4Target },
+}
+/// Next checked visibility step, based only on this operation's original
+/// snapshot and physical observations. No caller supplies a Status or actor.
+#[derive(Clone, Copy, PartialEq, Eq)]
+pub(crate) enum CatalogVisibility {
+    Found,
+    Missing,
+    NeedStatus,
+    NeedBefore,
+}
 /// A source observation, not a pin, grant or caller-constructible capability.
 pub(crate) struct CatalogCandidate {
     object: ObjectId,
@@ -64,6 +83,9 @@ pub(crate) struct CatalogReadOperation<
     lease: Option<ReferenceLease<'b, 'a, 'c, 's>>,
     captured: Option<CapturedCatalogRefs<'b, 'a, 'c, 's>>,
     selected: Option<(ObjectId, usize)>,
+    observed_status: Option<(TransactionState, bool)>,
+    before_validated: bool,
+    statement: Option<&'r RowStatementView<'r, 'r, 'a, 'c, 's>>,
 }
 fn visibility_error(error: visibility::VisibilityError) -> RetentionError {
     RetentionError {
@@ -90,6 +112,7 @@ impl<'u, 'r, 'v, 'j, 'i, 'b, 'a, 's, 'c, 'p, 'd, 'm, 'w, W: WriterNamespace>
         snapshot: &'r SnapshotGuard<'v, 'j, 'c, 's>,
         source: &'r OperationSourceAdmission<'b, 'a, 'c, 's>,
         private: &'i mut [u8; 425_984],
+        statement: Option<&'r RowStatementView<'r, 'r, 'a, 'c, 's>>,
     ) -> Result<Self> {
         let visibility = backend
             .visibility
@@ -108,6 +131,9 @@ impl<'u, 'r, 'v, 'j, 'i, 'b, 'a, 's, 'c, 'p, 'd, 'm, 'w, W: WriterNamespace>
             lease: Some(lease),
             captured: None,
             selected: None,
+            observed_status: None,
+            before_validated: false,
+            statement,
         })
     }
     fn invariant(&self) -> RetentionError {
@@ -148,6 +174,45 @@ impl<'u, 'r, 'v, 'j, 'i, 'b, 'a, 's, 'c, 'p, 'd, 'm, 'w, W: WriterNamespace>
         }
         Ok(())
     }
+    /// Single visibility predicate for product selection and checked issuance.
+    /// Status and Missing-before evidence must have been observed by this same
+    /// operation; capture alone can never authorize a table handle.
+    pub(in crate::storage) fn visibility(
+        &self,
+        candidate: &CatalogCandidate,
+    ) -> Result<CatalogVisibility> {
+        self.check_statement()?;
+        self.check(candidate)?;
+        let Some(header) = candidate.header else {
+            return Ok(CatalogVisibility::Missing);
+        };
+        let q = self.q()?;
+        let (visible, own) = match header.stamp {
+            VersionStamp::Committed(committed) => (committed.get() <= q, false),
+            VersionStamp::Transaction(_) => match self.observed_status {
+                None => return Ok(CatalogVisibility::NeedStatus),
+                Some((TransactionState::Committed(committed), own)) => (committed.get() <= q, own),
+                Some((_, own)) => (false, own),
+            },
+        };
+        if visible {
+            return Ok(if header.retired {
+                CatalogVisibility::Missing
+            } else {
+                CatalogVisibility::Found
+            });
+        }
+        if header.undo.is_none() && matches!(header.stamp, VersionStamp::Committed(_)) {
+            return Ok(CatalogVisibility::Missing);
+        }
+        Ok(if !self.before_validated {
+            CatalogVisibility::NeedBefore
+        } else if own {
+            CatalogVisibility::Found
+        } else {
+            CatalogVisibility::Missing
+        })
+    }
     pub(in crate::storage) fn q(&self) -> Result<u64> {
         health(self.backend.storage, self.backend.pool)?;
         let visibility = self.backend.visibility.ok_or_else(|| self.invariant())?;
@@ -162,11 +227,8 @@ impl<'u, 'r, 'v, 'j, 'i, 'b, 'a, 's, 'c, 'p, 'd, 'm, 'w, W: WriterNamespace>
     }
     /// The actual statement must name this operation's original snapshot and
     /// registries. No actor scalar grants own-write visibility.
-    pub(in crate::storage) fn check_statement(
-        &self,
-        statement: Option<&RowStatementView<'_, '_, 'a, 'c, 's>>,
-    ) -> Result<()> {
-        if let Some(statement) = statement {
+    pub(in crate::storage) fn check_statement(&self) -> Result<()> {
+        if let Some(statement) = self.statement {
             let snapshot =
                 statement.catalog_snapshot(self.backend.isolation, self.backend.visibility)?;
             // Compare addresses only; the two borrowed guard types have
@@ -253,9 +315,8 @@ impl<'u, 'r, 'v, 'j, 'i, 'b, 'a, 's, 'c, 'p, 'd, 'm, 'w, W: WriterNamespace>
         &mut self,
         candidate: &CatalogCandidate,
         cursor: &mut Plan4ResidencyCursor,
-        statement: Option<&RowStatementView<'_, '_, 'a, 'c, 's>>,
     ) -> Result<ReadStep<(TransactionState, bool)>> {
-        self.check_statement(statement)?;
+        self.check_statement()?;
         self.check(candidate)?;
         let Some(CatalogHeader {
             stamp: VersionStamp::Transaction(reference),
@@ -341,11 +402,12 @@ impl<'u, 'r, 'v, 'j, 'i, 'b, 'a, 's, 'c, 'p, 'd, 'm, 'w, W: WriterNamespace>
         let status = merge(state, guard.release_checked())?;
         // Release the physical guard before checking the original isolation
         // slot. Keep the complete Status, including head, through this check.
-        let own = match statement {
+        let own = match self.statement {
             Some(statement) => statement
                 .check_own_catalog(candidate.header.ok_or_else(|| self.invariant())?, status)?,
             None => false,
         };
+        self.observed_status = Some((status.state(), own));
         Ok(ReadStep::Ready((status.state(), own)))
     }
     pub(in crate::storage) fn missing_before(
@@ -474,31 +536,43 @@ impl<'u, 'r, 'v, 'j, 'i, 'b, 'a, 's, 'c, 'p, 'd, 'm, 'w, W: WriterNamespace>
             }
             Ok(ReadStep::Ready(MissingCatalogEvidence { _private: () }))
         })();
-        merge(missing, guard.release_checked())
+        let step = merge(missing, guard.release_checked())?;
+        self.before_validated = true;
+        Ok(step)
     }
-    fn close_refs(&mut self) -> Result<()> {
+    pub(super) fn close_refs(&mut self) -> Result<()> {
         let refs = self.captured.take().map_or(Ok(()), release_refs);
         let lease = self.lease.take().map_or(Ok(()), |lease| {
             lease.release_checked().map_err(visibility_error)
         });
         merge(refs, lease)
     }
+    pub(super) fn require_found(&self, candidate: &CatalogCandidate) -> Result<()> {
+        if self.visibility(candidate)? != CatalogVisibility::Found {
+            return Err(self.invariant());
+        }
+        Ok(())
+    }
+    pub(super) fn checked_record(
+        &self,
+        candidate: &CatalogCandidate,
+    ) -> Result<CatalogRecordView<'_>> {
+        self.check(candidate)?;
+        if candidate.len == 0 {
+            return Err(self.invariant());
+        }
+        self.record(candidate.object, candidate.len)
+    }
     pub(in crate::storage) fn finish_found(
         mut self,
         candidate: CatalogCandidate,
     ) -> Result<CatalogRecordView<'i>> {
-        let checked = self.check(&candidate).and_then(|()| {
-            if candidate.len == 0 {
-                Err(self.invariant())
-            } else {
-                Ok(())
-            }
-        });
+        let checked = self.require_found(&candidate);
         let cleanup = self.close_refs();
         merge(checked, cleanup)?;
         let namespace = self.backend.storage.profile().spec().namespace;
         let bytes = self.copy.take().ok_or_else(|| self.invariant())?;
-        catalog_record::decode_catalog_record(
+        let record = catalog_record::decode_catalog_record(
             &bytes[..candidate.len],
             CatalogExpectation {
                 namespace,
@@ -511,9 +585,33 @@ impl<'u, 'r, 'v, 'j, 'i, 'b, 'a, 's, 'c, 'p, 'd, 'm, 'w, W: WriterNamespace>
                 RetentionPhase::Census,
                 RetentionCause::Catalog(e),
             )
-        })
+        })?;
+        self.register_catalog_read()?;
+        Ok(record)
+    }
+    pub(super) fn register_catalog_read(&self) -> Result<()> {
+        if let Some(statement) = self.statement {
+            #[cfg(test)]
+            crate::transaction::concurrency::catalog_test_support::hit(
+                self.backend.pool.bound_core(),
+                crate::transaction::concurrency::catalog_test_support::Point::LookupBeforeCatalogRecord,
+            );
+            statement.check_catalog_read()?;
+            statement.record_catalog_read()?;
+        }
+        Ok(())
+    }
+    pub(super) fn backend(&self) -> &'r ReadPort<'b, 'a, 's, 'c, 'p, 'd, 'm, 'w, W> {
+        self.backend
+    }
+    pub(super) fn statement(&self) -> Result<&RowStatementView<'r, 'r, 'a, 'c, 's>> {
+        self.statement.ok_or_else(|| self.invariant())
     }
     pub(in crate::storage) fn finish_missing(mut self) -> Result<()> {
+        self.close_refs()?;
+        self.register_catalog_read()
+    }
+    pub(in crate::storage) fn finish_flush(mut self) -> Result<()> {
         self.close_refs()
     }
     pub(in crate::storage) fn finish_error(mut self, error: RetentionError) -> RetentionError {

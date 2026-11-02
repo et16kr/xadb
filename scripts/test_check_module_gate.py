@@ -1712,3 +1712,24 @@ class F5RealRegistryTests(unittest.TestCase):
 
 if __name__ == '__main__':
     unittest.main()
+
+
+class F3CatalogOwnershipTests(unittest.TestCase):
+    def test_checked_catalog_owner_has_no_product_exception_or_authority_edge(self):
+        root = Path(__file__).resolve().parents[1]
+        data = json.loads((root / gate.MANIFEST).read_text())
+        policy = gate.Manifest(data, "F3 repository policy")
+        base = 'crates/engine/src/storage/wal_io/plan4_retention/read/'
+        for leaf in ('scope', 'operation', 'statement'):
+            self.assertEqual(policy.owner(base + leaf + '.rs'), 'catalog_call')
+            for entry in ('apply', 'retention'):
+                logical = ('crate::storage::wal_io::bootstrap::doublewrite_install::'
+                           'mutable_storage::plan4_pages::' + entry + '::read::' + leaf)
+                self.assertEqual(policy.target(tuple(logical.split('::'))), 'catalog_call')
+        self.assertFalse({'EX01', 'EX02', 'EX03', 'EX04'} & {e['id'] for e in data['exceptions']})
+        for source in ('catalog_call', 'C'):
+            for target in ('CAT', 'A', 'B'):
+                self.assertFalse(gate.allowed(policy, source, target, False))
+        self.assertTrue(gate.allowed(policy, 'CAT', 'disk', False))
+        # A product may not bypass the canonical disk API for issuer internals.
+        self.assertFalse(gate.allowed(policy, 'CAT', 'catalog_call', False))

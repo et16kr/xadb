@@ -1,907 +1,869 @@
 {
- "schema": "XADB_MODULE_GATE_MANIFEST_V1",
- "decision": "XADB-MODULE-GATE-003",
- "policy": "policies/repository-build-plan.md#module-gate",
- "crates": [
-  {
-   "root": "crates/engine/src/lib.rs",
-   "package": "xadb-engine"
-  }
- ],
- "modules": [
-  {
-   "id": "A",
-   "kind": "feature",
-   "title": "Row INSERT product (C+A)",
-   "contract": "contracts/dev3-module-consumers.md#division",
-   "files": [
-    "crates/engine/src/storage/row/insert.rs",
-    "crates/engine/src/storage/row/insert/**",
-    "tests/fixtures/module-row-insert/**",
-    "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_write.rs",
-    "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_write/**",
-    "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_v09.rs",
-    "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_v09/**",
-    "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_forward.rs",
-    "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_forward/**",
-    "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_cancel.rs",
-    "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_cancel/**",
-    "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_live.rs",
-    "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_live/**",
-    "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_commit.rs",
-    "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_commit/**",
-    "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_rollback.rs",
-    "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_rollback/**",
-    "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_recovery.rs",
-    "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_recovery/**",
-    "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_native_a.rs",
-    "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_native_a/**",
-    "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_inventory_a.rs",
-    "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_inventory_a/**"
-   ],
-   "logical": [
-    "crate::storage::row::insert",
-    "crate::storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_write",
-    "crate::storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_v09",
-    "crate::storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_cancel",
-    "crate::storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_commit",
-    "crate::storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_forward",
-    "crate::storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_inventory_a",
-    "crate::storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_live",
-    "crate::storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_native_a",
-    "crate::storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_recovery",
-    "crate::storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_rollback"
-   ],
-   "fixture_tokens": [
-    "module-row-insert"
-   ],
-   "allow": [
-    "disk",
-    "codec",
-    "semantic",
-    "values"
-   ],
-   "allow_test": [
-    "*"
-   ],
-   "ci_selectors": [
-    "storage::row::insert::",
-    "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_write::",
-    "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_v09::",
-    "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_cancel::",
-    "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_commit::",
-    "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_forward::",
-    "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_inventory_a::",
-    "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_live::",
-    "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_recovery::",
-    "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_rollback::"
-   ],
-   "ci_also": [
-    "JOIN"
-   ]
+  "schema": "XADB_MODULE_GATE_MANIFEST_V1",
+  "decision": "XADB-MODULE-GATE-003",
+  "policy": "policies/repository-build-plan.md#module-gate",
+  "crates": [
+    {
+      "root": "crates/engine/src/lib.rs",
+      "package": "xadb-engine"
+    }
+  ],
+  "modules": [
+    {
+      "id": "A",
+      "kind": "feature",
+      "title": "Row INSERT product (C+A)",
+      "contract": "contracts/dev3-module-consumers.md#division",
+      "files": [
+        "crates/engine/src/storage/row/insert.rs",
+        "crates/engine/src/storage/row/insert/**",
+        "tests/fixtures/module-row-insert/**",
+        "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_write.rs",
+        "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_write/**",
+        "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_v09.rs",
+        "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_v09/**",
+        "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_forward.rs",
+        "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_forward/**",
+        "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_cancel.rs",
+        "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_cancel/**",
+        "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_live.rs",
+        "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_live/**",
+        "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_commit.rs",
+        "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_commit/**",
+        "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_rollback.rs",
+        "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_rollback/**",
+        "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_recovery.rs",
+        "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_recovery/**",
+        "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_native_a.rs",
+        "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_native_a/**",
+        "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_inventory_a.rs",
+        "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_inventory_a/**"
+      ],
+      "logical": [
+        "crate::storage::row::insert",
+        "crate::storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_write",
+        "crate::storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_v09",
+        "crate::storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_cancel",
+        "crate::storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_commit",
+        "crate::storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_forward",
+        "crate::storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_inventory_a",
+        "crate::storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_live",
+        "crate::storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_native_a",
+        "crate::storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_recovery",
+        "crate::storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_rollback"
+      ],
+      "fixture_tokens": [
+        "module-row-insert"
+      ],
+      "allow": [
+        "disk",
+        "codec",
+        "semantic",
+        "values"
+      ],
+      "allow_test": [
+        "*"
+      ],
+      "ci_selectors": [
+        "storage::row::insert::",
+        "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_write::",
+        "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_v09::",
+        "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_cancel::",
+        "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_commit::",
+        "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_forward::",
+        "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_inventory_a::",
+        "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_live::",
+        "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_recovery::",
+        "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_rollback::"
+      ],
+      "ci_also": [
+        "JOIN"
+      ]
+    },
+    {
+      "id": "B",
+      "kind": "feature",
+      "title": "Row read product (C+B)",
+      "contract": "contracts/dev3-module-consumers.md#division",
+      "files": [
+        "crates/engine/src/storage/row/read.rs",
+        "crates/engine/src/storage/row/read/**",
+        "tests/fixtures/module-row-read/**",
+        "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_literal.rs",
+        "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_literal/**",
+        "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_literal_two.rs",
+        "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_literal_two/**",
+        "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_read_literal.rs",
+        "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_read_literal/**",
+        "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_reopen_literal.rs",
+        "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_reopen_literal/**",
+        "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_no_loser.rs",
+        "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_no_loser/**",
+        "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_literal_rollback.rs",
+        "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_literal_rollback/**",
+        "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_read_census.rs",
+        "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_read_census/**",
+        "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_corpus.rs",
+        "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_corpus/**"
+      ],
+      "logical": [
+        "crate::storage::row::read",
+        "crate::storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_corpus",
+        "crate::storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_literal",
+        "crate::storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_literal_rollback",
+        "crate::storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_literal_two",
+        "crate::storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_no_loser",
+        "crate::storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_read_census",
+        "crate::storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_read_literal",
+        "crate::storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_reopen_literal"
+      ],
+      "fixture_tokens": [
+        "module-row-read"
+      ],
+      "allow": [
+        "disk",
+        "codec",
+        "semantic",
+        "values"
+      ],
+      "allow_test": [
+        "*"
+      ],
+      "ci_selectors": [
+        "storage::row::read::",
+        "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_corpus::",
+        "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_literal::",
+        "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_literal_rollback::",
+        "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_literal_two::",
+        "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_no_loser::",
+        "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_read_census::",
+        "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_read_literal::",
+        "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_reopen_literal::"
+      ],
+      "ci_also": [
+        "JOIN"
+      ]
+    },
+    {
+      "id": "CAT",
+      "kind": "feature",
+      "title": "Catalog product body",
+      "contract": "contracts/dev3-module-boundaries.md#target-imports",
+      "files": [
+        "crates/engine/src/storage/catalog/**"
+      ],
+      "logical": [
+        "crate::storage::catalog"
+      ],
+      "allow": [
+        "disk",
+        "codec",
+        "semantic",
+        "values"
+      ],
+      "allow_test": [
+        "*"
+      ],
+      "ci_selectors": [
+        "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::own_catalog_read::",
+        "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::statement_reads::",
+        "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::read_boundary::",
+        "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::resident_read::",
+        "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::catalog_transactions::"
+      ]
+    },
+    {
+      "id": "JOIN",
+      "kind": "join",
+      "title": "C+A+B join tests",
+      "contract": "contracts/dev3-module-consumers.md#division",
+      "files": [
+        "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_read_live.rs",
+        "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_read_live/**",
+        "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_recovery_read.rs",
+        "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_recovery_read/**",
+        "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join.rs",
+        "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/**"
+      ],
+      "allow": [
+        "*"
+      ],
+      "logical": [
+        "crate::storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_read_live",
+        "crate::storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_recovery_read",
+        "crate::storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join"
+      ],
+      "ci_selectors": [
+        "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_read_live::",
+        "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_recovery_read::",
+        "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::"
+      ]
+    },
+    {
+      "id": "REG",
+      "kind": "registration",
+      "title": "shared Row module registration",
+      "contract": "contracts/dev3-module-consumers.md#division",
+      "files": [
+        "crates/engine/src/storage/row.rs"
+      ],
+      "logical": [
+        "crate::storage::row"
+      ],
+      "deny": []
+    },
+    {
+      "id": "disk",
+      "kind": "common-api",
+      "title": "disk API re-export (consumer surface)",
+      "contract": "contracts/dev3-module-boundaries.md#target-imports",
+      "files": [
+        "crates/engine/src/storage/disk.rs",
+        "crates/engine/src/storage/wal_io/disk_api.rs"
+      ],
+      "logical": [
+        "crate::storage::disk",
+        "crate::storage::wal_io::disk_api"
+      ],
+      "deny": []
+    },
+    {
+      "id": "physical",
+      "kind": "common",
+      "title": "physical WAL without Catalog/Row semantics",
+      "contract": "contracts/dev3-module-boundaries.md#target-imports",
+      "files": [
+        "crates/engine/src/storage/wal_io/physical.rs"
+      ],
+      "logical": [
+        "crate::storage::wal_io::physical"
+      ],
+      "deny": [
+        "semantic",
+        "disk",
+        "dirty_frame"
+      ],
+      "deny_items": [
+        "CatalogCommitAttempt",
+        "CatalogCommitInstalled"
+      ],
+      "deny_paths": [
+        "crate::storage::wal_io::bootstrap"
+      ]
+    },
+    {
+      "id": "semantic",
+      "kind": "common",
+      "title": "pure Catalog/Row observers",
+      "contract": "contracts/dev3-module-boundaries.md#target-imports",
+      "files": [
+        "crates/engine/src/storage/semantic_row.rs",
+        "crates/engine/src/storage/semantic_row_tests.rs",
+        "crates/engine/src/storage/semantic_row/**",
+        "crates/engine/src/storage/semantic_catalog.rs",
+        "crates/engine/src/storage/semantic_catalog_tests.rs",
+        "crates/engine/src/storage/semantic_catalog/**"
+      ],
+      "logical": [
+        "crate::storage::semantic_row",
+        "crate::storage::semantic_catalog"
+      ],
+      "allow": [
+        "codec",
+        "values"
+      ],
+      "allow_test": [
+        "*"
+      ]
+    },
+    {
+      "id": "codec",
+      "kind": "common",
+      "title": "pure page/record representations without effects",
+      "contract": "contracts/dev3-module-consumers.md#division",
+      "files": [
+        "crates/engine/src/storage/page.rs",
+        "crates/engine/src/storage/page_tests.rs",
+        "crates/engine/src/storage/page/**",
+        "crates/engine/src/storage/row_record.rs",
+        "crates/engine/src/storage/row_record_tests.rs",
+        "crates/engine/src/storage/row_record/**",
+        "crates/engine/src/storage/transaction_record.rs",
+        "crates/engine/src/storage/transaction_record_tests.rs",
+        "crates/engine/src/storage/transaction_record/**",
+        "crates/engine/src/storage/tree_page.rs",
+        "crates/engine/src/storage/tree_page_tests.rs",
+        "crates/engine/src/storage/tree_page/**",
+        "crates/engine/src/storage/anchor.rs",
+        "crates/engine/src/storage/anchor_tests.rs",
+        "crates/engine/src/storage/anchor/**",
+        "crates/engine/src/storage/undo_record.rs",
+        "crates/engine/src/storage/undo_record_tests.rs",
+        "crates/engine/src/storage/undo_record/**",
+        "crates/engine/src/storage/undo_ref.rs",
+        "crates/engine/src/storage/undo_ref_tests.rs",
+        "crates/engine/src/storage/undo_ref/**",
+        "crates/engine/src/storage/status_home.rs",
+        "crates/engine/src/storage/status_home_tests.rs",
+        "crates/engine/src/storage/status_home/**",
+        "crates/engine/src/storage/obligation.rs",
+        "crates/engine/src/storage/obligation_tests.rs",
+        "crates/engine/src/storage/obligation/**",
+        "crates/engine/src/storage/retention_obligation.rs",
+        "crates/engine/src/storage/retention_obligation_tests.rs",
+        "crates/engine/src/storage/retention_obligation/**",
+        "crates/engine/src/storage/retention_page.rs",
+        "crates/engine/src/storage/retention_page_tests.rs",
+        "crates/engine/src/storage/retention_page/**",
+        "crates/engine/src/storage/overflow.rs",
+        "crates/engine/src/storage/overflow_tests.rs",
+        "crates/engine/src/storage/overflow/**",
+        "crates/engine/src/storage/wal_frame.rs",
+        "crates/engine/src/storage/wal_frame_tests.rs",
+        "crates/engine/src/storage/wal_frame/**",
+        "crates/engine/src/storage/catalog_record.rs",
+        "crates/engine/src/storage/catalog_record_tests.rs",
+        "crates/engine/src/storage/catalog_record/**",
+        "crates/engine/src/storage/key.rs",
+        "crates/engine/src/storage/key_tests.rs",
+        "crates/engine/src/storage/key/**",
+        "crates/engine/src/storage/allocation_page.rs",
+        "crates/engine/src/storage/allocation_page_tests.rs",
+        "crates/engine/src/storage/allocation_page/**",
+        "crates/engine/src/storage/control.rs",
+        "crates/engine/src/storage/control_tests.rs",
+        "crates/engine/src/storage/control/**",
+        "crates/engine/src/storage/retention_genesis.rs",
+        "crates/engine/src/storage/retention_genesis_tests.rs",
+        "crates/engine/src/storage/retention_genesis/**",
+        "crates/engine/src/storage/doublewrite_control.rs",
+        "crates/engine/src/storage/doublewrite_control_tests.rs",
+        "crates/engine/src/storage/doublewrite_control/**",
+        "crates/engine/src/storage/catalog_before.rs",
+        "crates/engine/src/storage/catalog_before_tests.rs",
+        "crates/engine/src/storage/undo_free_page_tests.rs",
+        "crates/engine/src/storage/wal_retention_prefix_tests.rs",
+        "crates/engine/src/storage/wal_semantic_prefix_tests.rs"
+      ],
+      "logical": [
+        "crate::storage::page",
+        "crate::storage::row_record",
+        "crate::storage::transaction_record",
+        "crate::storage::tree_page",
+        "crate::storage::anchor",
+        "crate::storage::undo_record",
+        "crate::storage::undo_ref",
+        "crate::storage::status_home",
+        "crate::storage::obligation",
+        "crate::storage::retention_obligation",
+        "crate::storage::retention_page",
+        "crate::storage::overflow",
+        "crate::storage::wal_frame",
+        "crate::storage::catalog_record",
+        "crate::storage::key",
+        "crate::storage::allocation_page",
+        "crate::storage::control",
+        "crate::storage::retention_genesis",
+        "crate::storage::doublewrite_control"
+      ],
+      "allow": [
+        "values"
+      ],
+      "allow_test": [
+        "*"
+      ]
+    },
+    {
+      "id": "dirty_frame",
+      "kind": "common",
+      "title": "single pool/pin/DPT/installer",
+      "contract": "contracts/dev3-module-boundaries.md#target-imports",
+      "files": [
+        "crates/engine/src/storage/dirty_frame.rs",
+        "crates/engine/src/storage/dirty_frame_tests.rs",
+        "crates/engine/src/storage/dirty_frame/**",
+        "crates/engine/src/storage/dirty_flush.rs",
+        "crates/engine/src/storage/dirty_init.rs",
+        "crates/engine/src/storage/dirty_init/**"
+      ],
+      "logical": [
+        "crate::storage::dirty_frame"
+      ],
+      "deny": []
+    },
+    {
+      "id": "values",
+      "kind": "common",
+      "title": "engine logical values and identities",
+      "contract": "contracts/dev3-module-consumers.md#division",
+      "files": [
+        "crates/engine/src/api.rs",
+        "crates/engine/src/error.rs"
+      ],
+      "logical": [
+        "crate::api",
+        "crate::Error",
+        "crate::error",
+        "crate::transaction::TxnId"
+      ],
+      "deny": []
+    },
+    {
+      "id": "catalog_call",
+      "kind": "common",
+      "title": "C Catalog call admission, checked read and table issuance",
+      "contract": "contracts/dev3-module-boundaries.md#catalog-call-owner",
+      "files": [
+        "crates/engine/src/storage/wal_io/plan4_retention/read/scope.rs",
+        "crates/engine/src/storage/wal_io/plan4_retention/read/operation.rs",
+        "crates/engine/src/storage/wal_io/plan4_retention/read/statement.rs"
+      ],
+      "logical": [
+        "crate::storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::apply::read::scope",
+        "crate::storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::apply::read::operation",
+        "crate::storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::apply::read::statement",
+        "crate::storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::read::scope",
+        "crate::storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::read::operation",
+        "crate::storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::read::statement"
+      ],
+      "deny": []
+    },
+    {
+      "id": "C",
+      "kind": "common",
+      "title": "remaining storage (C owner, legacy tree)",
+      "contract": "contracts/dev3-module-boundaries.md#target-imports",
+      "files": [
+        "crates/engine/src/storage/**"
+      ],
+      "logical": [
+        "crate::storage"
+      ],
+      "deny": []
+    },
+    {
+      "id": "engine",
+      "kind": "common",
+      "title": "remaining engine crate",
+      "contract": "contracts/dev3-module-boundaries.md#target-imports",
+      "files": [
+        "crates/engine/**"
+      ],
+      "logical": [
+        "crate"
+      ],
+      "deny": []
+    }
+  ],
+  "unscoped": [
+    {
+      "files": [
+        "crates/**"
+      ],
+      "reason": "Other packages have no adopted module boundary; Cargo package edges stay under repository-build-plan section 4."
+    },
+    {
+      "files": [
+        "tests/**"
+      ],
+      "reason": "Shared fixtures and cases outside the A/B fixture roots."
+    },
+    {
+      "files": [
+        "scripts/**"
+      ],
+      "reason": "Checkers, runners and oracles; the gate policy files among them are listed under policy_files."
+    },
+    {
+      "files": [
+        "devdoc/**",
+        "README.md",
+        "AGENTS.md"
+      ],
+      "reason": "Documents; checked by devdoc/verify_documents.py at push."
+    },
+    {
+      "files": [
+        ".github/**",
+        ".gitignore",
+        "Cargo.toml",
+        "Cargo.lock",
+        "rust-toolchain.toml",
+        ".cargo/**"
+      ],
+      "reason": "Build, toolchain and CI configuration."
+    },
+    {
+      "files": [
+        "module-gate/**"
+      ],
+      "reason": "Gate review/evidence records and their index."
+    }
+  ],
+  "policy_files": [
+    "devdoc/policies/module-gate.json",
+    "scripts/check_module_gate.py",
+    "scripts/test_check_module_gate.py",
+    "scripts/module_gate_build.py",
+    "scripts/module_gate_python.py",
+    "scripts/test_module_gate_python.py",
+    "scripts/module_single_source.py",
+    "scripts/check_push.py",
+    "scripts/test_check_push.py",
+    "scripts/git-hooks/**",
+    ".github/workflows/**",
+    ".github/rulesets/**",
+    "devdoc/contracts/dev3-module-boundaries.md",
+    "devdoc/contracts/dev3-module-consumers.md"
+  ],
+  "review_required": {
+    "D1": [
+      "crates/**",
+      "tests/**",
+      "scripts/**",
+      "Cargo.toml",
+      "Cargo.lock",
+      "rust-toolchain.toml",
+      ".cargo/**"
+    ]
   },
-  {
-   "id": "B",
-   "kind": "feature",
-   "title": "Row read product (C+B)",
-   "contract": "contracts/dev3-module-consumers.md#division",
-   "files": [
-    "crates/engine/src/storage/row/read.rs",
-    "crates/engine/src/storage/row/read/**",
-    "tests/fixtures/module-row-read/**",
-    "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_literal.rs",
-    "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_literal/**",
-    "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_literal_two.rs",
-    "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_literal_two/**",
-    "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_read_literal.rs",
-    "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_read_literal/**",
-    "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_reopen_literal.rs",
-    "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_reopen_literal/**",
-    "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_no_loser.rs",
-    "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_no_loser/**",
-    "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_literal_rollback.rs",
-    "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_literal_rollback/**",
-    "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_read_census.rs",
-    "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_read_census/**",
-    "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_corpus.rs",
-    "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_corpus/**"
-   ],
-   "logical": [
-    "crate::storage::row::read",
-    "crate::storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_corpus",
-    "crate::storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_literal",
-    "crate::storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_literal_rollback",
-    "crate::storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_literal_two",
-    "crate::storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_no_loser",
-    "crate::storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_read_census",
-    "crate::storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_read_literal",
-    "crate::storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_reopen_literal"
-   ],
-   "fixture_tokens": [
-    "module-row-read"
-   ],
-   "allow": [
-    "disk",
-    "codec",
-    "semantic",
-    "values"
-   ],
-   "allow_test": [
-    "*"
-   ],
-   "ci_selectors": [
-    "storage::row::read::",
-    "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_corpus::",
-    "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_literal::",
-    "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_literal_rollback::",
-    "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_literal_two::",
-    "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_no_loser::",
-    "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_read_census::",
-    "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_read_literal::",
-    "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_reopen_literal::"
-   ],
-   "ci_also": [
-    "JOIN"
-   ]
+  "records": "module-gate/records/*.json",
+  "exceptions": [
+    {
+      "id": "EX05",
+      "source": "crates/engine/src/storage/wal_io/plan4_apply/row/rollback_census_tests.rs",
+      "target": "A",
+      "scope": "test",
+      "contract": "contracts/dev3-module-boundaries.md#row-single-source-s8",
+      "reason": "C census test measuring A caller frames; removed with its registration in the C+B export (module_single_source tests_c).",
+      "owner": "C",
+      "review_when": "when the census no longer needs A frame sizes",
+      "paths": [
+        "crate::storage::row::insert::driver::live::rollback_caller_source",
+        "crate::storage::row::insert::driver::RollbackStop",
+        "crate::storage::row::insert::driver::Stepped"
+      ],
+      "baseline": "da435fd6a3c9085320c297b8e8229ec5f38f28f4",
+      "export_registration": {
+        "file": "crates/engine/src/storage/wal_io/plan4_apply/row/rollback.rs",
+        "path": "rollback_census_tests.rs",
+        "module": "census"
+      }
+    },
+    {
+      "id": "EX06",
+      "source": "crates/engine/src/storage/wal_io/plan4_recovery/row_action_census_tests.rs",
+      "target": "A",
+      "scope": "test",
+      "contract": "contracts/dev3-module-boundaries.md#row-single-source-s8",
+      "reason": "Same as EX05 (recovery handler frame census).",
+      "owner": "C",
+      "review_when": "with EX05",
+      "paths": [
+        "crate::storage::row::insert::driver::recovered::handler_source_bytes",
+        "crate::storage::row::insert::local_source_carrier_bytes"
+      ],
+      "baseline": "da435fd6a3c9085320c297b8e8229ec5f38f28f4",
+      "export_registration": {
+        "file": "crates/engine/src/storage/wal_io/plan4_recovery/row_action.rs",
+        "path": "row_action_census_tests.rs",
+        "module": "census"
+      }
+    },
+    {
+      "id": "EX07",
+      "source": "crates/engine/src/storage/wal_io/plan4_retention/catalog_commit/row_census.rs",
+      "target": "A",
+      "scope": "test",
+      "contract": "contracts/dev3-module-boundaries.md#row-single-source-s8",
+      "reason": "Same as EX05 (commit caller frame census).",
+      "owner": "C",
+      "review_when": "with EX05",
+      "paths": [
+        "crate::storage::row::insert::driver::live::commit_caller_source",
+        "crate::storage::row::insert::driver::live::statement_end_caller_source"
+      ],
+      "baseline": "da435fd6a3c9085320c297b8e8229ec5f38f28f4",
+      "export_registration": {
+        "file": "crates/engine/src/storage/wal_io/plan4_retention/catalog_commit.rs",
+        "path": "catalog_commit/row_census.rs",
+        "module": "row_census"
+      }
+    },
+    {
+      "id": "EX08",
+      "source": "crates/engine/src/storage/semantic_row/transition_tests.rs",
+      "target": "A",
+      "scope": "test",
+      "contract": "contracts/dev3-module-boundaries.md#row-single-source-s8",
+      "reason": "C observer test replaying A scope3 literals (MCA00-V06) by fixture path.",
+      "owner": "C",
+      "review_when": "when the literals move to a C-owned fixture",
+      "paths": [
+        "fixture::module-row-insert"
+      ],
+      "baseline": "da435fd6a3c9085320c297b8e8229ec5f38f28f4",
+      "export_registration": {
+        "file": "crates/engine/src/storage/semantic_row/transition.rs",
+        "path": "transition_tests.rs",
+        "module": "tests"
+      }
+    },
+    {
+      "id": "EX09",
+      "source": "crates/engine/src/storage/wal_io/plan4_retention/recovery/row_tests.rs",
+      "target": "A",
+      "scope": "test",
+      "contract": "contracts/dev3-module-boundaries.md#row-single-source-s8",
+      "reason": "C replay test over A scope3 literals by fixture path.",
+      "owner": "C",
+      "review_when": "with EX08",
+      "paths": [
+        "fixture::module-row-insert"
+      ],
+      "baseline": "da435fd6a3c9085320c297b8e8229ec5f38f28f4",
+      "export_registration": {
+        "file": "crates/engine/src/storage/wal_io/plan4_retention/recovery.rs",
+        "path": "recovery/row_tests.rs",
+        "module": "row_tests"
+      }
+    }
+  ],
+  "exports": [
+    {
+      "side": "a",
+      "keeps": "A",
+      "removes": "B",
+      "command": [
+        "cargo",
+        "test",
+        "-p",
+        "xadb-engine",
+        "--locked",
+        "--no-run"
+      ]
+    },
+    {
+      "side": "b",
+      "keeps": "B",
+      "removes": "A",
+      "command": [
+        "cargo",
+        "test",
+        "-p",
+        "xadb-engine",
+        "--locked",
+        "--no-run"
+      ]
+    }
+  ],
+  "attested": {
+    "reason": "User decision 2026-10-31: only natives needing more than 30 GB of disk may be attested from a local run; everything else runs in CI.",
+    "allowed_selectors": [
+      "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_create::*",
+      "script:scripts/dev3_catalog_native.py*"
+    ],
+    "input_roots": [
+      "Cargo.toml",
+      "Cargo.lock",
+      "rust-toolchain.toml",
+      ".cargo",
+      "crates",
+      "tests",
+      "scripts"
+    ],
+    "required_for": {
+      "CAT": [
+        "script:scripts/dev3_catalog_native.py*"
+      ]
+    }
   },
-  {
-   "id": "CAT",
-   "kind": "feature",
-   "title": "Catalog product body",
-   "contract": "contracts/dev3-module-boundaries.md#target-imports",
-   "files": [
-    "crates/engine/src/storage/catalog/**"
-   ],
-   "logical": [
-    "crate::storage::catalog"
-   ],
-   "allow": [
-    "disk",
-    "codec",
-    "semantic",
-    "values"
-   ],
-   "allow_test": [
-    "*"
-   ],
-   "ci_selectors": [
-    "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::own_catalog_read::",
-    "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::statement_reads::",
-    "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::read_boundary::",
-    "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::resident_read::",
-    "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::catalog_transactions::"
-   ]
+  "evidence": {
+    "build_workflow": ".github/workflows/module-build.yml",
+    "artifact": "module-build-receipt",
+    "head_command": [
+      "cargo",
+      "test",
+      "-p",
+      "xadb-engine",
+      "--locked",
+      "--no-run"
+    ],
+    "test_command": [
+      "cargo",
+      "test",
+      "-p",
+      "xadb-engine",
+      "--locked",
+      "--lib"
+    ],
+    "skip": [
+      "_native_worker"
+    ],
+    "test_args": [
+      "--test-threads=1"
+    ],
+    "env": {
+      "RUST_MIN_STACK": "33554432",
+      "XADB_G6_VECTOR_INDEXES": "p1-o00=ce3fd367007a6d798dbb6c2f18367a714d4f105611fb190fe57a1aa72d6d99a8",
+      "XADB_G6RC_VECTOR_INDEXES": "p1=24fc3ed635ae36177021e696d1ac14e0f3396fa6b04e72fa5f329875b667e7f0"
+    },
+    "identity_env": {
+      "source": [
+        "XADB_CATALOG_SOURCE_SHA256",
+        "XADB_PLAN4_RECOVERY_SOURCE_SHA256",
+        "XADB_PLAN4_GENESIS_SOURCE_SHA256",
+        "XADB_PLAN4_LIVE_SOURCE_SHA256",
+        "XADB_G6_SOURCE_SHA256",
+        "XADB_G6RC_SOURCE_SHA256",
+        "XADB_XRB_SOURCE_SHA256"
+      ],
+      "elf": [
+        "XADB_CATALOG_ELF_SHA256",
+        "XADB_PLAN4_RECOVERY_ELF_SHA256",
+        "XADB_PLAN4_GENESIS_ELF_SHA256",
+        "XADB_PLAN4_LIVE_ELF_SHA256",
+        "XADB_G6_ELF_SHA256",
+        "XADB_G6RC_ELF_SHA256",
+        "XADB_XRB_ELF_SHA256"
+      ],
+      "input": [
+        "XADB_CATALOG_INPUT_SHA256",
+        "XADB_PLAN4_RECOVERY_INPUT_SHA256",
+        "XADB_PLAN4_GENESIS_INPUT_SHA256",
+        "XADB_PLAN4_LIVE_INPUT_SHA256",
+        "XADB_G6_INPUT_SHA256",
+        "XADB_G6RC_INPUT_SHA256",
+        "XADB_XRB_INPUT_SHA256"
+      ]
+    },
+    "executor_only": [
+      {
+        "selector": "storage::plan4_recovery_base::tests::",
+        "reason": "XRB cases need XADB_XRB_INCLUDE, the frozen fixture directory XADB_XRB_FIXTURE_DIR and its index hash, which only their executor supplies"
+      },
+      {
+        "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::tests::g5_bind_boundaries",
+        "reason": "case P4-G5-B08 needs XADB_PLAN4_G5_CAPACITY_PADDING, the source-bound static gate input that scripts/dev3_plan4_clean_cases.py computes"
+      }
+    ]
   },
-  {
-   "id": "JOIN",
-   "kind": "join",
-   "title": "C+A+B join tests",
-   "contract": "contracts/dev3-module-consumers.md#division",
-   "files": [
-    "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_read_live.rs",
-    "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_read_live/**",
-    "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_recovery_read.rs",
-    "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_recovery_read/**",
-    "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join.rs",
-    "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/**"
-   ],
-   "allow": [
-    "*"
-   ],
-   "logical": [
-    "crate::storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_read_live",
-    "crate::storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_recovery_read",
-    "crate::storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join"
-   ],
-   "ci_selectors": [
-    "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_read_live::",
-    "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_recovery_read::",
-    "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::"
-   ]
+  "python_tests": {
+    "scripts/check_module_gate.py": [
+      "test_check_module_gate",
+      "test_module_gate_python"
+    ],
+    "scripts/module_gate_build.py": [
+      "test_check_module_gate",
+      "test_module_gate_python"
+    ],
+    "scripts/module_gate_python.py": [
+      "test_module_gate_python"
+    ],
+    "scripts/module_single_source.py": [
+      "test_check_module_gate"
+    ],
+    "scripts/check_push.py": [
+      "test_check_push"
+    ],
+    "scripts/git-hooks/pre-push": [
+      "test_check_push"
+    ],
+    "scripts/test_check_module_gate.py": [
+      "test_check_module_gate"
+    ],
+    "scripts/test_module_gate_python.py": [
+      "test_module_gate_python"
+    ],
+    "scripts/test_check_push.py": [
+      "test_check_push"
+    ],
+    ".github/workflows/module-build.yml": [
+      "test_module_gate_python"
+    ],
+    ".github/workflows/module-gate.yml": [
+      "test_module_gate_python"
+    ],
+    "devdoc/policies/module-gate.json": [
+      "test_check_module_gate",
+      "test_module_gate_python"
+    ]
   },
-  {
-   "id": "REG",
-   "kind": "registration",
-   "title": "shared Row module registration",
-   "contract": "contracts/dev3-module-consumers.md#division",
-   "files": [
-    "crates/engine/src/storage/row.rs"
-   ],
-   "logical": [
-    "crate::storage::row"
-   ],
-   "deny": []
-  },
-  {
-   "id": "disk",
-   "kind": "common-api",
-   "title": "disk API re-export (consumer surface)",
-   "contract": "contracts/dev3-module-boundaries.md#target-imports",
-   "files": [
-    "crates/engine/src/storage/disk.rs",
-    "crates/engine/src/storage/wal_io/disk_api.rs"
-   ],
-   "logical": [
-    "crate::storage::disk",
-    "crate::storage::wal_io::disk_api"
-   ],
-   "deny": []
-  },
-  {
-   "id": "physical",
-   "kind": "common",
-   "title": "physical WAL without Catalog/Row semantics",
-   "contract": "contracts/dev3-module-boundaries.md#target-imports",
-   "files": [
-    "crates/engine/src/storage/wal_io/physical.rs"
-   ],
-   "logical": [
-    "crate::storage::wal_io::physical"
-   ],
-   "deny": [
-    "semantic",
-    "disk",
-    "dirty_frame"
-   ],
-   "deny_items": [
-    "CatalogCommitAttempt",
-    "CatalogCommitInstalled"
-   ],
-   "deny_paths": [
-    "crate::storage::wal_io::bootstrap"
-   ]
-  },
-  {
-   "id": "semantic",
-   "kind": "common",
-   "title": "pure Catalog/Row observers",
-   "contract": "contracts/dev3-module-boundaries.md#target-imports",
-   "files": [
-    "crates/engine/src/storage/semantic_row.rs",
-    "crates/engine/src/storage/semantic_row_tests.rs",
-    "crates/engine/src/storage/semantic_row/**",
-    "crates/engine/src/storage/semantic_catalog.rs",
-    "crates/engine/src/storage/semantic_catalog_tests.rs",
-    "crates/engine/src/storage/semantic_catalog/**"
-   ],
-   "logical": [
-    "crate::storage::semantic_row",
-    "crate::storage::semantic_catalog"
-   ],
-   "allow": [
-    "codec",
-    "values"
-   ],
-   "allow_test": [
-    "*"
-   ]
-  },
-  {
-   "id": "codec",
-   "kind": "common",
-   "title": "pure page/record representations without effects",
-   "contract": "contracts/dev3-module-consumers.md#division",
-   "files": [
-    "crates/engine/src/storage/page.rs",
-    "crates/engine/src/storage/page_tests.rs",
-    "crates/engine/src/storage/page/**",
-    "crates/engine/src/storage/row_record.rs",
-    "crates/engine/src/storage/row_record_tests.rs",
-    "crates/engine/src/storage/row_record/**",
-    "crates/engine/src/storage/transaction_record.rs",
-    "crates/engine/src/storage/transaction_record_tests.rs",
-    "crates/engine/src/storage/transaction_record/**",
-    "crates/engine/src/storage/tree_page.rs",
-    "crates/engine/src/storage/tree_page_tests.rs",
-    "crates/engine/src/storage/tree_page/**",
-    "crates/engine/src/storage/anchor.rs",
-    "crates/engine/src/storage/anchor_tests.rs",
-    "crates/engine/src/storage/anchor/**",
-    "crates/engine/src/storage/undo_record.rs",
-    "crates/engine/src/storage/undo_record_tests.rs",
-    "crates/engine/src/storage/undo_record/**",
-    "crates/engine/src/storage/undo_ref.rs",
-    "crates/engine/src/storage/undo_ref_tests.rs",
-    "crates/engine/src/storage/undo_ref/**",
-    "crates/engine/src/storage/status_home.rs",
-    "crates/engine/src/storage/status_home_tests.rs",
-    "crates/engine/src/storage/status_home/**",
-    "crates/engine/src/storage/obligation.rs",
-    "crates/engine/src/storage/obligation_tests.rs",
-    "crates/engine/src/storage/obligation/**",
-    "crates/engine/src/storage/retention_obligation.rs",
-    "crates/engine/src/storage/retention_obligation_tests.rs",
-    "crates/engine/src/storage/retention_obligation/**",
-    "crates/engine/src/storage/retention_page.rs",
-    "crates/engine/src/storage/retention_page_tests.rs",
-    "crates/engine/src/storage/retention_page/**",
-    "crates/engine/src/storage/overflow.rs",
-    "crates/engine/src/storage/overflow_tests.rs",
-    "crates/engine/src/storage/overflow/**",
-    "crates/engine/src/storage/wal_frame.rs",
-    "crates/engine/src/storage/wal_frame_tests.rs",
-    "crates/engine/src/storage/wal_frame/**",
-    "crates/engine/src/storage/catalog_record.rs",
-    "crates/engine/src/storage/catalog_record_tests.rs",
-    "crates/engine/src/storage/catalog_record/**",
-    "crates/engine/src/storage/key.rs",
-    "crates/engine/src/storage/key_tests.rs",
-    "crates/engine/src/storage/key/**",
-    "crates/engine/src/storage/allocation_page.rs",
-    "crates/engine/src/storage/allocation_page_tests.rs",
-    "crates/engine/src/storage/allocation_page/**",
-    "crates/engine/src/storage/control.rs",
-    "crates/engine/src/storage/control_tests.rs",
-    "crates/engine/src/storage/control/**",
-    "crates/engine/src/storage/retention_genesis.rs",
-    "crates/engine/src/storage/retention_genesis_tests.rs",
-    "crates/engine/src/storage/retention_genesis/**",
-    "crates/engine/src/storage/doublewrite_control.rs",
-    "crates/engine/src/storage/doublewrite_control_tests.rs",
-    "crates/engine/src/storage/doublewrite_control/**",
-    "crates/engine/src/storage/catalog_before.rs",
-    "crates/engine/src/storage/catalog_before_tests.rs",
-    "crates/engine/src/storage/undo_free_page_tests.rs",
-    "crates/engine/src/storage/wal_retention_prefix_tests.rs",
-    "crates/engine/src/storage/wal_semantic_prefix_tests.rs"
-   ],
-   "logical": [
-    "crate::storage::page",
-    "crate::storage::row_record",
-    "crate::storage::transaction_record",
-    "crate::storage::tree_page",
-    "crate::storage::anchor",
-    "crate::storage::undo_record",
-    "crate::storage::undo_ref",
-    "crate::storage::status_home",
-    "crate::storage::obligation",
-    "crate::storage::retention_obligation",
-    "crate::storage::retention_page",
-    "crate::storage::overflow",
-    "crate::storage::wal_frame",
-    "crate::storage::catalog_record",
-    "crate::storage::key",
-    "crate::storage::allocation_page",
-    "crate::storage::control",
-    "crate::storage::retention_genesis",
-    "crate::storage::doublewrite_control"
-   ],
-   "allow": [
-    "values"
-   ],
-   "allow_test": [
-    "*"
-   ]
-  },
-  {
-   "id": "dirty_frame",
-   "kind": "common",
-   "title": "single pool/pin/DPT/installer",
-   "contract": "contracts/dev3-module-boundaries.md#target-imports",
-   "files": [
-    "crates/engine/src/storage/dirty_frame.rs",
-    "crates/engine/src/storage/dirty_frame_tests.rs",
-    "crates/engine/src/storage/dirty_frame/**",
-    "crates/engine/src/storage/dirty_flush.rs",
-    "crates/engine/src/storage/dirty_init.rs",
-    "crates/engine/src/storage/dirty_init/**"
-   ],
-   "logical": [
-    "crate::storage::dirty_frame"
-   ],
-   "deny": []
-  },
-  {
-   "id": "values",
-   "kind": "common",
-   "title": "engine logical values and identities",
-   "contract": "contracts/dev3-module-consumers.md#division",
-   "files": [
-    "crates/engine/src/api.rs",
-    "crates/engine/src/error.rs"
-   ],
-   "logical": [
-    "crate::api",
-    "crate::Error",
-    "crate::error",
-    "crate::transaction::TxnId"
-   ],
-   "deny": []
-  },
-  {
-   "id": "C",
-   "kind": "common",
-   "title": "remaining storage (C owner, legacy tree)",
-   "contract": "contracts/dev3-module-boundaries.md#target-imports",
-   "files": [
-    "crates/engine/src/storage/**"
-   ],
-   "logical": [
-    "crate::storage"
-   ],
-   "deny": []
-  },
-  {
-   "id": "engine",
-   "kind": "common",
-   "title": "remaining engine crate",
-   "contract": "contracts/dev3-module-boundaries.md#target-imports",
-   "files": [
-    "crates/engine/**"
-   ],
-   "logical": [
-    "crate"
-   ],
-   "deny": []
-  }
- ],
- "unscoped": [
-  {
-   "files": [
-    "crates/**"
-   ],
-   "reason": "Other packages have no adopted module boundary; Cargo package edges stay under repository-build-plan section 4."
-  },
-  {
-   "files": [
-    "tests/**"
-   ],
-   "reason": "Shared fixtures and cases outside the A/B fixture roots."
-  },
-  {
-   "files": [
-    "scripts/**"
-   ],
-   "reason": "Checkers, runners and oracles; the gate policy files among them are listed under policy_files."
-  },
-  {
-   "files": [
-    "devdoc/**",
-    "README.md",
-    "AGENTS.md"
-   ],
-   "reason": "Documents; checked by devdoc/verify_documents.py at push."
-  },
-  {
-   "files": [
-    ".github/**",
-    ".gitignore",
-    "Cargo.toml",
-    "Cargo.lock",
-    "rust-toolchain.toml",
-    ".cargo/**"
-   ],
-   "reason": "Build, toolchain and CI configuration."
-  },
-  {
-   "files": [
-    "module-gate/**"
-   ],
-   "reason": "Gate review/evidence records and their index."
-  }
- ],
- "policy_files": [
-  "devdoc/policies/module-gate.json",
-  "scripts/check_module_gate.py",
-  "scripts/test_check_module_gate.py",
-  "scripts/module_gate_build.py",
-  "scripts/module_gate_python.py",
-  "scripts/test_module_gate_python.py",
-  "scripts/module_single_source.py",
-  "scripts/check_push.py",
-  "scripts/test_check_push.py",
-  "scripts/git-hooks/**",
-  ".github/workflows/**",
-  ".github/rulesets/**",
-  "devdoc/contracts/dev3-module-boundaries.md",
-  "devdoc/contracts/dev3-module-consumers.md"
- ],
- "review_required": {
-  "D1": [
-   "crates/**",
-   "tests/**",
-   "scripts/**",
-   "Cargo.toml",
-   "Cargo.lock",
-   "rust-toolchain.toml",
-   ".cargo/**"
+  "affected_contracts": [
+    {
+      "id": "S2W-R10-LIVE",
+      "paths": [
+        "crates/engine/src/storage/wal_io/plan4_apply/row/write.rs"
+      ],
+      "test_file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_live.rs",
+      "inputs": [
+        "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory.rs",
+        "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_forward.rs",
+        "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_cancel.rs",
+        "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_preflight.rs",
+        "crates/engine/src/storage/wal_io/plan4_recovery/tests/support.rs",
+        "tests/fixtures/dev3-catalog-create/native3/**",
+        "tests/fixtures/dev3-catalog-create/transition3/**",
+        "tests/fixtures/dev3-catalog-create/memory-gap3/**",
+        "tests/fixtures/dev3-module-c3/row-write/**"
+      ],
+      "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_live::s2w_r10_live_prepare_before_is_cancelled_by_the_driver",
+      "sources": [
+        "export-a"
+      ],
+      "contract": "contracts/dev3-module-consumers.md#acceptance",
+      "reason": "ReservedRow prepare/apply/cancel failure effects through the A live driver; C+A removes unrelated B.",
+      "owner": "A"
+    },
+    {
+      "id": "S2W-R11-LIVE",
+      "paths": [
+        "crates/engine/src/storage/wal_io/plan4_apply/row/write.rs"
+      ],
+      "test_file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_live.rs",
+      "inputs": [
+        "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory.rs",
+        "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_forward.rs",
+        "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_cancel.rs",
+        "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_preflight.rs",
+        "crates/engine/src/storage/wal_io/plan4_recovery/tests/support.rs",
+        "tests/fixtures/dev3-catalog-create/native3/**",
+        "tests/fixtures/dev3-catalog-create/transition3/**",
+        "tests/fixtures/dev3-catalog-create/memory-gap3/**",
+        "tests/fixtures/dev3-module-c3/row-write/**"
+      ],
+      "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_live::s2w_r11_live_apply_before_is_reopened_and_cancelled",
+      "sources": [
+        "export-a"
+      ],
+      "contract": "contracts/dev3-module-consumers.md#acceptance",
+      "reason": "ReservedRow prepare/apply/cancel failure effects through the A live driver; C+A removes unrelated B.",
+      "owner": "A"
+    },
+    {
+      "id": "S2W-R21-LIVE",
+      "paths": [
+        "crates/engine/src/storage/wal_io/plan4_apply/row/write.rs"
+      ],
+      "test_file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_live.rs",
+      "inputs": [
+        "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory.rs",
+        "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_forward.rs",
+        "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_cancel.rs",
+        "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_preflight.rs",
+        "crates/engine/src/storage/wal_io/plan4_recovery/tests/support.rs",
+        "tests/fixtures/dev3-catalog-create/native3/**",
+        "tests/fixtures/dev3-catalog-create/transition3/**",
+        "tests/fixtures/dev3-catalog-create/memory-gap3/**",
+        "tests/fixtures/dev3-module-c3/row-write/**"
+      ],
+      "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_live::s2w_r21_live_refused_cancel_is_fenced_and_must_resolve",
+      "sources": [
+        "export-a"
+      ],
+      "contract": "contracts/dev3-module-consumers.md#acceptance",
+      "reason": "ReservedRow prepare/apply/cancel failure effects through the A live driver; C+A removes unrelated B.",
+      "owner": "A"
+    }
   ]
- },
- "records": "module-gate/records/*.json",
- "exceptions": [
-  {
-   "id": "EX01",
-   "source": "crates/engine/src/storage/wal_io/plan4_retention/read.rs",
-   "target": "CAT",
-   "scope": "production",
-   "contract": "contracts/dev3-module-boundaries.md#target-imports",
-   "reason": "The C lookup wrapper still delegates to the moved Catalog product body (section 4.2 current->target: lookup_catalog -> storage::catalog::read::lookup); the C1 port call direction is not supplied yet. The edge is a pub(crate) re-export, so under the re-exporter rule any module allowed to reach C can name CatalogLookupStep through plan4_retention::read without a finding of its own.",
-   "owner": "C",
-   "review_when": "when the Catalog read path consumes ReadPort instead of being called from plan4_retention::read",
-   "paths": [
-    "crate::storage::catalog::read::CatalogLookupStep"
-   ],
-   "baseline": "da435fd6a3c9085320c297b8e8229ec5f38f28f4"
-  },
-  {
-   "id": "EX02",
-   "source": "crates/engine/src/storage/wal_io/plan4_retention/read/lookup.rs",
-   "target": "CAT",
-   "scope": "production",
-   "contract": "contracts/dev3-module-boundaries.md#target-imports",
-   "reason": "Same delegation as EX01 (lookup, CatalogLookupStep, source_bytes).",
-   "owner": "C",
-   "review_when": "with EX01",
-   "paths": [
-    "crate::storage::catalog::read::CatalogLookupStep",
-    "crate::storage::catalog::read::lookup",
-    "crate::storage::catalog::read::source_bytes"
-   ],
-   "baseline": "da435fd6a3c9085320c297b8e8229ec5f38f28f4"
-  },
-  {
-   "id": "EX03",
-   "source": "crates/engine/src/storage/wal_io/plan4_retention/read/scope.rs",
-   "target": "CAT",
-   "scope": "production",
-   "contract": "contracts/dev3-module-boundaries.md#target-imports",
-   "reason": "Same delegation as EX01.",
-   "owner": "C",
-   "review_when": "with EX01",
-   "paths": [
-    "crate::storage::catalog::read::lookup"
-   ],
-   "baseline": "da435fd6a3c9085320c297b8e8229ec5f38f28f4"
-  },
-  {
-   "id": "EX04",
-   "source": "crates/engine/src/storage/wal_io/plan4_retention/read/statement.rs",
-   "target": "CAT",
-   "scope": "production",
-   "contract": "contracts/dev3-module-boundaries.md#target-imports",
-   "reason": "Same delegation as EX01.",
-   "owner": "C",
-   "review_when": "with EX01",
-   "paths": [
-    "crate::storage::catalog::read::lookup"
-   ],
-   "baseline": "da435fd6a3c9085320c297b8e8229ec5f38f28f4"
-  },
-  {
-   "id": "EX05",
-   "source": "crates/engine/src/storage/wal_io/plan4_apply/row/rollback_census_tests.rs",
-   "target": "A",
-   "scope": "test",
-   "contract": "contracts/dev3-module-boundaries.md#row-single-source-s8",
-   "reason": "C census test measuring A caller frames; removed with its registration in the C+B export (module_single_source tests_c).",
-   "owner": "C",
-   "review_when": "when the census no longer needs A frame sizes",
-   "paths": [
-    "crate::storage::row::insert::driver::live::rollback_caller_source",
-    "crate::storage::row::insert::driver::RollbackStop",
-    "crate::storage::row::insert::driver::Stepped"
-   ],
-   "baseline": "da435fd6a3c9085320c297b8e8229ec5f38f28f4",
-   "export_registration": {
-    "file": "crates/engine/src/storage/wal_io/plan4_apply/row/rollback.rs",
-    "path": "rollback_census_tests.rs",
-    "module": "census"
-   }
-  },
-  {
-   "id": "EX06",
-   "source": "crates/engine/src/storage/wal_io/plan4_recovery/row_action_census_tests.rs",
-   "target": "A",
-   "scope": "test",
-   "contract": "contracts/dev3-module-boundaries.md#row-single-source-s8",
-   "reason": "Same as EX05 (recovery handler frame census).",
-   "owner": "C",
-   "review_when": "with EX05",
-   "paths": [
-    "crate::storage::row::insert::driver::recovered::handler_source_bytes",
-    "crate::storage::row::insert::local_source_carrier_bytes"
-   ],
-   "baseline": "da435fd6a3c9085320c297b8e8229ec5f38f28f4",
-   "export_registration": {
-    "file": "crates/engine/src/storage/wal_io/plan4_recovery/row_action.rs",
-    "path": "row_action_census_tests.rs",
-    "module": "census"
-   }
-  },
-  {
-   "id": "EX07",
-   "source": "crates/engine/src/storage/wal_io/plan4_retention/catalog_commit/row_census.rs",
-   "target": "A",
-   "scope": "test",
-   "contract": "contracts/dev3-module-boundaries.md#row-single-source-s8",
-   "reason": "Same as EX05 (commit caller frame census).",
-   "owner": "C",
-   "review_when": "with EX05",
-   "paths": [
-    "crate::storage::row::insert::driver::live::commit_caller_source",
-    "crate::storage::row::insert::driver::live::statement_end_caller_source"
-   ],
-   "baseline": "da435fd6a3c9085320c297b8e8229ec5f38f28f4",
-   "export_registration": {
-    "file": "crates/engine/src/storage/wal_io/plan4_retention/catalog_commit.rs",
-    "path": "catalog_commit/row_census.rs",
-    "module": "row_census"
-   }
-  },
-  {
-   "id": "EX08",
-   "source": "crates/engine/src/storage/semantic_row/transition_tests.rs",
-   "target": "A",
-   "scope": "test",
-   "contract": "contracts/dev3-module-boundaries.md#row-single-source-s8",
-   "reason": "C observer test replaying A scope3 literals (MCA00-V06) by fixture path.",
-   "owner": "C",
-   "review_when": "when the literals move to a C-owned fixture",
-   "paths": [
-    "fixture::module-row-insert"
-   ],
-   "baseline": "da435fd6a3c9085320c297b8e8229ec5f38f28f4",
-   "export_registration": {
-    "file": "crates/engine/src/storage/semantic_row/transition.rs",
-    "path": "transition_tests.rs",
-    "module": "tests"
-   }
-  },
-  {
-   "id": "EX09",
-   "source": "crates/engine/src/storage/wal_io/plan4_retention/recovery/row_tests.rs",
-   "target": "A",
-   "scope": "test",
-   "contract": "contracts/dev3-module-boundaries.md#row-single-source-s8",
-   "reason": "C replay test over A scope3 literals by fixture path.",
-   "owner": "C",
-   "review_when": "with EX08",
-   "paths": [
-    "fixture::module-row-insert"
-   ],
-   "baseline": "da435fd6a3c9085320c297b8e8229ec5f38f28f4",
-   "export_registration": {
-    "file": "crates/engine/src/storage/wal_io/plan4_retention/recovery.rs",
-    "path": "recovery/row_tests.rs",
-    "module": "row_tests"
-   }
-  }
- ],
- "exports": [
-  {
-   "side": "a",
-   "keeps": "A",
-   "removes": "B",
-   "command": [
-    "cargo",
-    "test",
-    "-p",
-    "xadb-engine",
-    "--locked",
-    "--no-run"
-   ]
-  },
-  {
-   "side": "b",
-   "keeps": "B",
-   "removes": "A",
-   "command": [
-    "cargo",
-    "test",
-    "-p",
-    "xadb-engine",
-    "--locked",
-    "--no-run"
-   ]
-  }
- ],
- "attested": {
-  "reason": "User decision 2026-10-31: only natives needing more than 30 GB of disk may be attested from a local run; everything else runs in CI.",
-  "allowed_selectors": [
-   "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_create::*",
-   "script:scripts/dev3_catalog_native.py*"
-  ],
-  "input_roots": [
-   "Cargo.toml",
-   "Cargo.lock",
-   "rust-toolchain.toml",
-   ".cargo",
-   "crates",
-   "tests",
-   "scripts"
-  ],
-  "required_for": {
-   "CAT": [
-    "script:scripts/dev3_catalog_native.py*"
-   ]
-  }
- },
- "evidence": {
-  "build_workflow": ".github/workflows/module-build.yml",
-  "artifact": "module-build-receipt",
-  "head_command": [
-   "cargo",
-   "test",
-   "-p",
-   "xadb-engine",
-   "--locked",
-   "--no-run"
-  ],
-  "test_command": [
-   "cargo",
-   "test",
-   "-p",
-   "xadb-engine",
-   "--locked",
-   "--lib"
-  ],
-  "skip": [
-   "_native_worker"
-  ],
-  "test_args": [
-   "--test-threads=1"
-  ],
-  "env": {
-   "RUST_MIN_STACK": "33554432",
-   "XADB_G6_VECTOR_INDEXES": "p1-o00=ce3fd367007a6d798dbb6c2f18367a714d4f105611fb190fe57a1aa72d6d99a8",
-   "XADB_G6RC_VECTOR_INDEXES": "p1=24fc3ed635ae36177021e696d1ac14e0f3396fa6b04e72fa5f329875b667e7f0"
-  },
-  "identity_env": {
-   "source": [
-    "XADB_CATALOG_SOURCE_SHA256",
-    "XADB_PLAN4_RECOVERY_SOURCE_SHA256",
-    "XADB_PLAN4_GENESIS_SOURCE_SHA256",
-    "XADB_PLAN4_LIVE_SOURCE_SHA256",
-    "XADB_G6_SOURCE_SHA256",
-    "XADB_G6RC_SOURCE_SHA256",
-    "XADB_XRB_SOURCE_SHA256"
-   ],
-   "elf": [
-    "XADB_CATALOG_ELF_SHA256",
-    "XADB_PLAN4_RECOVERY_ELF_SHA256",
-    "XADB_PLAN4_GENESIS_ELF_SHA256",
-    "XADB_PLAN4_LIVE_ELF_SHA256",
-    "XADB_G6_ELF_SHA256",
-    "XADB_G6RC_ELF_SHA256",
-    "XADB_XRB_ELF_SHA256"
-   ],
-   "input": [
-    "XADB_CATALOG_INPUT_SHA256",
-    "XADB_PLAN4_RECOVERY_INPUT_SHA256",
-    "XADB_PLAN4_GENESIS_INPUT_SHA256",
-    "XADB_PLAN4_LIVE_INPUT_SHA256",
-    "XADB_G6_INPUT_SHA256",
-    "XADB_G6RC_INPUT_SHA256",
-    "XADB_XRB_INPUT_SHA256"
-   ]
-  },
-  "executor_only": [
-   {
-    "selector": "storage::plan4_recovery_base::tests::",
-    "reason": "XRB cases need XADB_XRB_INCLUDE, the frozen fixture directory XADB_XRB_FIXTURE_DIR and its index hash, which only their executor supplies"
-   },
-   {
-    "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::tests::g5_bind_boundaries",
-    "reason": "case P4-G5-B08 needs XADB_PLAN4_G5_CAPACITY_PADDING, the source-bound static gate input that scripts/dev3_plan4_clean_cases.py computes"
-   }
-  ]
- },
- "python_tests": {
-  "scripts/check_module_gate.py": [
-   "test_check_module_gate",
-   "test_module_gate_python"
-  ],
-  "scripts/module_gate_build.py": [
-   "test_check_module_gate",
-   "test_module_gate_python"
-  ],
-  "scripts/module_gate_python.py": [
-   "test_module_gate_python"
-  ],
-  "scripts/module_single_source.py": [
-   "test_check_module_gate"
-  ],
-  "scripts/check_push.py": [
-   "test_check_push"
-  ],
-  "scripts/git-hooks/pre-push": [
-   "test_check_push"
-  ],
-  "scripts/test_check_module_gate.py": [
-   "test_check_module_gate"
-  ],
-  "scripts/test_module_gate_python.py": [
-   "test_module_gate_python"
-  ],
-  "scripts/test_check_push.py": [
-   "test_check_push"
-  ],
-  ".github/workflows/module-build.yml": [
-   "test_module_gate_python"
-  ],
-  ".github/workflows/module-gate.yml": [
-   "test_module_gate_python"
-  ],
-  "devdoc/policies/module-gate.json": [
-   "test_check_module_gate",
-   "test_module_gate_python"
-  ]
- },
- "affected_contracts": [
-  {
-   "id": "S2W-R10-LIVE",
-   "paths": [
-    "crates/engine/src/storage/wal_io/plan4_apply/row/write.rs"
-   ],
-   "test_file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_live.rs",
-   "inputs": [
-    "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory.rs",
-    "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_forward.rs",
-    "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_cancel.rs",
-    "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_preflight.rs",
-    "crates/engine/src/storage/wal_io/plan4_recovery/tests/support.rs",
-    "tests/fixtures/dev3-catalog-create/native3/**",
-    "tests/fixtures/dev3-catalog-create/transition3/**",
-    "tests/fixtures/dev3-catalog-create/memory-gap3/**",
-    "tests/fixtures/dev3-module-c3/row-write/**"
-   ],
-   "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_live::s2w_r10_live_prepare_before_is_cancelled_by_the_driver",
-   "sources": [
-    "export-a"
-   ],
-   "contract": "contracts/dev3-module-consumers.md#acceptance",
-   "reason": "ReservedRow prepare/apply/cancel failure effects through the A live driver; C+A removes unrelated B.",
-   "owner": "A"
-  },
-  {
-   "id": "S2W-R11-LIVE",
-   "paths": [
-    "crates/engine/src/storage/wal_io/plan4_apply/row/write.rs"
-   ],
-   "test_file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_live.rs",
-   "inputs": [
-    "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory.rs",
-    "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_forward.rs",
-    "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_cancel.rs",
-    "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_preflight.rs",
-    "crates/engine/src/storage/wal_io/plan4_recovery/tests/support.rs",
-    "tests/fixtures/dev3-catalog-create/native3/**",
-    "tests/fixtures/dev3-catalog-create/transition3/**",
-    "tests/fixtures/dev3-catalog-create/memory-gap3/**",
-    "tests/fixtures/dev3-module-c3/row-write/**"
-   ],
-   "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_live::s2w_r11_live_apply_before_is_reopened_and_cancelled",
-   "sources": [
-    "export-a"
-   ],
-   "contract": "contracts/dev3-module-consumers.md#acceptance",
-   "reason": "ReservedRow prepare/apply/cancel failure effects through the A live driver; C+A removes unrelated B.",
-   "owner": "A"
-  },
-  {
-   "id": "S2W-R21-LIVE",
-   "paths": [
-    "crates/engine/src/storage/wal_io/plan4_apply/row/write.rs"
-   ],
-   "test_file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_live.rs",
-   "inputs": [
-    "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory.rs",
-    "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_forward.rs",
-    "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_cancel.rs",
-    "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_preflight.rs",
-    "crates/engine/src/storage/wal_io/plan4_recovery/tests/support.rs",
-    "tests/fixtures/dev3-catalog-create/native3/**",
-    "tests/fixtures/dev3-catalog-create/transition3/**",
-    "tests/fixtures/dev3-catalog-create/memory-gap3/**",
-    "tests/fixtures/dev3-module-c3/row-write/**"
-   ],
-   "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_live::s2w_r21_live_refused_cancel_is_fenced_and_must_resolve",
-   "sources": [
-    "export-a"
-   ],
-   "contract": "contracts/dev3-module-consumers.md#acceptance",
-   "reason": "ReservedRow prepare/apply/cancel failure effects through the A live driver; C+A removes unrelated B.",
-   "owner": "A"
-  }
- ]
 }

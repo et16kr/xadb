@@ -22,7 +22,6 @@ mod resident;
 mod scope;
 #[path = "read/statement.rs"]
 mod statement;
-pub(crate) use crate::storage::catalog::read::CatalogLookupStep;
 #[allow(
     unused_imports,
     reason = "typed guard name for the following catalog consumer"
@@ -37,7 +36,8 @@ pub(super) use lookup::reference_location_source_bytes;
 pub(super) use lookup::resident_source_bytes as resident_lookup_source_bytes;
 pub(super) use lookup::source_bytes as lookup_source_bytes;
 pub(crate) use operation::{
-    CatalogCandidate, CatalogReadOperation, MissingCatalogEvidence, ReadStep,
+    CatalogCandidate, CatalogReadOperation, CatalogReadStep, CatalogVisibility,
+    MissingCatalogEvidence, ReadStep,
 };
 pub(crate) use scope::{CatalogCallError, CatalogCallScope};
 pub(crate) use statement::CatalogStatementCall;
@@ -517,3 +517,24 @@ pub(super) fn catalog_call_source_observations<W: WriterNamespace>() -> [usize; 
         resident_lookup_source_bytes::<W>(),
     ]
 }
+
+/// Fixed lower-contract carrier envelopes. Catalog verifies its actual product
+/// types fit these bounds; C never calls product code to price an admission.
+pub(crate) const CATALOG_LOOKUP_STEP_BYTES: usize =
+    std::mem::size_of::<ReadStep<Option<crate::storage::catalog_record::CatalogRecordView<'_>>>>();
+pub(crate) const CATALOG_LOOKUP_RESULT_BYTES: usize = std::mem::size_of::<
+    Result<ReadStep<Option<crate::storage::catalog_record::CatalogRecordView<'_>>>>,
+>();
+pub(crate) const CATALOG_PRODUCT_SOURCE_BYTES: usize = {
+    use std::mem::size_of;
+    2 * size_of::<ReadStep<Option<CatalogCandidate>>>()
+        + 2 * size_of::<Result<ReadStep<Option<CatalogCandidate>>>>()
+        + size_of::<CatalogCandidate>()
+        + 2 * CATALOG_LOOKUP_RESULT_BYTES
+        + size_of::<Result<ReadStep<(crate::storage::transaction_record::TransactionState, bool)>>>(
+        )
+        + 2 * size_of::<Option<&super::transaction::RowStatementView<'_, '_, '_, '_, '_>>>()
+        + 2 * size_of::<bool>()
+        + 4 * size_of::<&()>()
+        + size_of::<(u64, crate::storage::catalog_record::CatalogHeader)>()
+};

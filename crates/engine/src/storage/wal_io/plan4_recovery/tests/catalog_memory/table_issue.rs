@@ -496,3 +496,84 @@ fn flush_required_carries_the_lookup_target_and_registers_nothing() {
         });
     });
 }
+
+#[test]
+fn capture_without_visibility_proof_cannot_issue_a_table() {
+    for bound in [false, true] {
+        case(
+            if bound {
+                "F3_BOUND_RAW"
+            } else {
+                "F3_UNBOUND_RAW"
+            },
+            || {
+                let oracle = Oracle::new();
+                with_fresh!(oracle, |live,
+                                     owner,
+                                     flusher,
+                                     status,
+                                     undo,
+                                     private,
+                                     reader_private,
+                                     core,
+                                     fence,
+                                     state| {
+                    let actor = create_forward(
+                        live, owner, flusher, status, undo, private, &oracle, state, 1,
+                    );
+                    let prepared = live.prepare_catalog_commit(owner, actor, private).unwrap();
+                    {
+                        let (mut writer, _, _) = live.split();
+                        writer.commit_catalog(owner, prepared).unwrap();
+                    }
+                    let (mut writer, reader, _) = live.split();
+                    let transaction = writer
+                        .begin_transaction(owner, read_only(), reader_private)
+                        .unwrap();
+                    let view = writer.begin_statement(owner, &transaction).unwrap();
+                    let error = if bound {
+                        let mut call = reader.catalog_statement_call(owner, &view).unwrap();
+                        let mut operation = call.operation(reader_private).unwrap();
+                        let candidate = operation
+                            .capture_catalog(ObjectId::new(6).unwrap())
+                            .unwrap();
+                        assert!(matches!(
+                            operation.visibility(&candidate).unwrap(),
+                            crate::storage::disk::CatalogVisibility::NeedStatus
+                        ));
+                        // The page carries a transaction stamp. Publication alone
+                        // must not replace this operation's Status/Undo evidence.
+                        let error = operation
+                            .finish_table(candidate)
+                            .err()
+                            .expect("capture is not a visibility proof");
+                        call.finish_error(error)
+                    } else {
+                        let snapshot = reader.catalog_snapshot(owner).unwrap();
+                        let mut call = reader.catalog_call(owner, &snapshot).unwrap();
+                        let mut operation = call.operation(reader_private).unwrap();
+                        let candidate = operation
+                            .capture_catalog(ObjectId::new(6).unwrap())
+                            .unwrap();
+                        let error = operation
+                            .finish_table(candidate)
+                            .err()
+                            .expect("a snapshot is not a statement issuer");
+                        let error = call.finish_error(error);
+                        drop(snapshot);
+                        error
+                    };
+                    assert!(matches!(error.cause, RetentionCause::Invariant));
+                    assert_eq!(error.effect, Effect::CallerMustResolve);
+                    assert_eq!(
+                        (view.test_catalog_reads(), view.test_table_masks()),
+                        (0, (0, 0))
+                    );
+                    assert_eq!(reader.catalog_test_references(), ((0, 0, 0), false));
+                    assert_eq!(observe(core).active_read_operations, 0);
+                    assert!(fence.is_fenced());
+                });
+            },
+        );
+    }
+}

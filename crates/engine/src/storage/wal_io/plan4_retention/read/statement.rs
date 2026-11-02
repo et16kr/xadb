@@ -77,35 +77,16 @@ impl<'b, 'a, 's, 'c, 'p, 'd, 'm, 'w, W: WriterNamespace>
         Ok(CatalogStatementCall { call, statement })
     }
 }
-impl<W: WriterNamespace> CatalogStatementCall<'_, '_, '_, '_, '_, '_, '_, '_, '_, '_, '_, '_, W> {
-    pub(in crate::storage) fn lookup<'call>(
+impl<'u, 'r, 't, 'v, 'b, 'a, 's, 'c, 'p, 'd, 'm, 'w, W: WriterNamespace>
+    CatalogStatementCall<'u, 'r, 't, 'v, 'b, 'a, 's, 'c, 'p, 'd, 'm, 'w, W>
+{
+    pub(in crate::storage) fn operation<'call>(
         &'call mut self,
-        object: ObjectId,
-        cursor: &mut Plan4ResidencyCursor,
         private: &'call mut [u8; 425_984],
-    ) -> Result<CatalogLookupStep<'call>> {
+    ) -> Result<CatalogReadOperation<'call, 'call, 'v, 'a, 'call, 'b, 'a, 's, 'c, 'p, 'd, 'm, 'w, W>>
+    {
         self.statement.check_catalog_read()?;
-        #[cfg(test)]
-        let core = self.call.test_record_core();
-        let step = crate::storage::catalog::read::lookup(
-            self.call.operation(private)?,
-            object,
-            cursor,
-            Some(self.statement),
-        )?;
-        if matches!(
-            &step,
-            CatalogLookupStep::Found(_) | CatalogLookupStep::Missing
-        ) {
-            #[cfg(test)]
-            crate::transaction::concurrency::catalog_test_support::hit(
-                core,
-                crate::transaction::concurrency::catalog_test_support::Point::LookupBeforeCatalogRecord,
-            );
-            self.statement.check_catalog_read()?;
-            self.statement.record_catalog_read()?;
-        }
-        Ok(step)
+        self.call.bound_operation(private, Some(self.statement))
     }
 
     pub(in crate::storage) fn finish_checked(self) -> std::result::Result<(), CatalogCallError> {
@@ -136,60 +117,33 @@ pub(in super::super) struct TableIssue {
 /// Owned result of finish_table's nested lookup. It borrows neither the call
 /// nor the private copy, so the issue helper starts only after lookup returned.
 enum TableLookup {
-    FlushRequired(Plan4Target),
-    Missing,
     Found(Result<CatalogHeader>),
 }
 
 impl<'s, 'c, W: WriterNamespace>
-    CatalogStatementCall<'_, '_, '_, '_, '_, '_, 's, 'c, '_, '_, '_, '_, W>
+    CatalogReadOperation<'_, '_, '_, '_, '_, '_, '_, 's, 'c, '_, '_, '_, '_, W>
 {
-    /// The only CheckedTable issuer: the limited supply of the §6.4
-    /// `finish_table` position until `catalog_operation` exists. `object` is a
-    /// lookup key only; issuance needs this call's actual Found Table, its
-    /// Published epoch slot and the registered catalog flag and table read bit.
-    /// The publication and isolation leaves are taken one after the other.
-    /// Lookup errors keep their original wide form, as in `finish_error`.
+    /// Only an actual candidate of this bound statement operation can issue a
+    /// table. No decoded header or caller-supplied identity is an issuer input.
     pub(in crate::storage) fn finish_table(
         mut self,
-        object: ObjectId,
-        cursor: &mut Plan4ResidencyCursor,
-        private: &mut [u8; 425_984],
+        candidate: CatalogCandidate,
     ) -> Result<TableStep<'c, 's>> {
-        // The nested lookup runs in this frame with the same survivors as
-        // `lookup` (held_source_bytes); its step becomes an owned value here.
-        if let Err(error) = self.statement.check_catalog_read() {
-            return Err(self.call.finish_error(error));
-        }
-        let found = match self.call.operation(private) {
-            Ok(operation) => match crate::storage::catalog::read::lookup(
-                operation,
-                object,
-                cursor,
-                Some(self.statement),
-            ) {
-                Ok(CatalogLookupStep::FlushRequired { target }) => {
-                    Ok(TableLookup::FlushRequired(target))
-                }
-                Ok(CatalogLookupStep::Missing) => Ok(TableLookup::Missing),
-                Ok(CatalogLookupStep::Found(record)) => {
-                    Ok(TableLookup::Found(table_header(record)))
-                }
-                Err(error) => Err(error),
-            },
-            Err(error) => Err(error),
-        };
-        let step = match found {
-            Ok(found) => self.issue_table(object, found),
-            Err(error) => Err(error),
-        };
-        match step {
-            Ok(step) => match self.call.finish_checked() {
-                Ok(()) => Ok(step),
-                Err(error) => Err(error.into()),
-            },
-            Err(error) => Err(self.call.finish_error(error)),
-        }
+        let found = self
+            .statement()
+            .and_then(|_| self.check_statement())
+            .and_then(|()| self.require_found(&candidate))
+            .and_then(|()| self.checked_record(&candidate).map(table_header));
+        let cleanup = self.close_refs();
+        let header = merge(found, cleanup)?;
+        self.issue_table(
+            candidate
+                .header()
+                .expect("checked nonempty candidate")
+                .identity
+                .object,
+            TableLookup::Found(header),
+        )
     }
 
     /// After lookup returned: every completed Found or Missing registers the
@@ -197,20 +151,13 @@ impl<'s, 'c, W: WriterNamespace>
     /// adds its read bit and is issued.
     fn issue_table(&self, object: ObjectId, found: TableLookup) -> Result<TableStep<'c, 's>> {
         let header = match found {
-            TableLookup::FlushRequired(target) => {
-                return Ok(TableStep::FlushRequired { target });
-            }
-            TableLookup::Missing => {
-                self.register_catalog_read()?;
-                return Ok(TableStep::Missing);
-            }
             TableLookup::Found(Err(refused)) => {
                 self.register_catalog_read()?;
                 return Err(refused);
             }
             TableLookup::Found(Ok(header)) => header,
         };
-        let backend = self.call.backend();
+        let backend = self.backend();
         let storage = backend.storage;
         let invariant = || fatal(storage, RetentionPhase::Census, RetentionCause::Invariant);
         // lookup selects a visible retired record as Missing, and its decoder
@@ -244,7 +191,7 @@ impl<'s, 'c, W: WriterNamespace>
             // Own uncommitted CREATE: Row needs an existing table entry.
             TableSlot::Reserved
                 if matches!(header.stamp, VersionStamp::Transaction(actor)
-                    if self.statement.own_actor() == Some(actor)) =>
+                    if self.statement()?.own_actor() == Some(actor)) =>
             {
                 self.register_catalog_read()?;
                 return Err(unchanged(
@@ -257,12 +204,12 @@ impl<'s, 'c, W: WriterNamespace>
         };
         #[cfg(test)]
         crate::transaction::concurrency::catalog_test_support::hit(
-            self.call.test_record_core(),
+            self.backend().pool.bound_core(),
             crate::transaction::concurrency::catalog_test_support::Point::LookupBeforeCatalogRecord,
         );
         // Isolation leaf only, after publication was released.
-        self.statement.check_catalog_read()?;
-        self.statement.record_table_read(slot)?;
+        self.statement()?.check_catalog_read()?;
+        self.statement()?.record_table_read(slot)?;
         Ok(TableStep::Table(CheckedTable::issue(
             TableIssue { _private: () },
             backend.pool.bound_core(),
@@ -272,17 +219,6 @@ impl<'s, 'c, W: WriterNamespace>
             slot,
             anchor,
         )))
-    }
-
-    /// The catalog flag of a completed lookup without a table read bit.
-    fn register_catalog_read(&self) -> Result<()> {
-        #[cfg(test)]
-        crate::transaction::concurrency::catalog_test_support::hit(
-            self.call.test_record_core(),
-            crate::transaction::concurrency::catalog_test_support::Point::LookupBeforeCatalogRecord,
-        );
-        self.statement.check_catalog_read()?;
-        self.statement.record_catalog_read()
     }
 }
 
@@ -316,7 +252,7 @@ pub(super) fn held_source_bytes() -> usize {
 /// leaf, then the issued step through the consuming close. These phases are
 /// serial; the isolation registration leaf and the close itself are the
 /// existing catalog_read and close terms. Each wide Result is named.
-fn table_source_bytes() -> usize {
+fn table_source_bytes<W: WriterNamespace>() -> usize {
     use super::super::visibility::{BoundVisibility, VisibilityResult};
     use crate::storage::{page::PageHeader, retention_genesis::RetentionGenesisError};
     use std::mem::size_of;
@@ -333,7 +269,9 @@ fn table_source_bytes() -> usize {
         + 2 * size_of::<VisibilityResult<TableSlot>>()
         + 2 * size_of::<Result<TableSlot>>()
         + 2 * size_of::<TableSlot>();
-    2 * size_of::<Result<TableLookup>>()
+    // The checked operation now remains alive through issuance/registration.
+    size_of::<CatalogReadOperation<'_, '_, '_, '_, '_, '_, '_, '_, '_, '_, '_, '_, '_, W>>()
+        + 2 * size_of::<Result<TableLookup>>()
         + 2 * size_of::<TableLookup>()
         + 2 * size_of::<CatalogHeader>()
         + size_of::<PageIdentity>()
@@ -353,12 +291,12 @@ pub(super) fn source_bytes<W: WriterNamespace>() -> usize {
     type Call<'a, W> = CatalogStatementCall<'a, 'a, 'a, 'a, 'a, 'a, 'a, 'a, 'a, 'a, 'a, 'a, W>;
     2 * size_of::<Call<'_, W>>()
         + 2 * size_of::<Result<Call<'_, W>>>()
-        + 2 * size_of::<Result<CatalogLookupStep<'_>>>()
-        + 2 * size_of::<CatalogLookupStep<'_>>()
+        + 2 * super::CATALOG_LOOKUP_RESULT_BYTES
+        + 2 * super::CATALOG_LOOKUP_STEP_BYTES
         + 8 * size_of::<&()>()
         + super::super::transaction::catalog_read_source_bytes()
         + scope::close_source_bytes()
-        + table_source_bytes()
+        + table_source_bytes::<W>()
 }
 
 #[cfg(test)]
@@ -425,7 +363,7 @@ mod tests {
     fn finish_table_carriers_leave_both_fixed_classes_unchanged() {
         use std::mem::size_of;
         fn check<W: WriterNamespace>(writer: &str) {
-            let table = table_source_bytes();
+            let table = table_source_bytes::<W>();
             let wrapper = source_bytes::<W>();
             let held = held_source_bytes();
             let full = lookup::source_bytes::<W>();
