@@ -861,3 +861,8 @@ mod revalidation;
 /// finish_aborted (reclamation `#live-row-cleanup-caller`).
 #[path = "retire/driver.rs"]
 mod driver;
+
+/// The autocommit INSERT executor over the actual C, with the caller's
+/// cleanup after it (boundaries `#autocommit-insert`).
+#[path = "retire/autocommit.rs"]
+mod autocommit;

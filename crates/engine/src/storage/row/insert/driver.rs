@@ -33,6 +33,7 @@ use crate::storage::{
 use foundation::error::Effect;
 use std::convert::Infallible;
 
+pub(in crate::storage) mod autocommit;
 #[cfg(test)]
 mod budget_tests;
 pub(in crate::storage) mod live;
@@ -215,6 +216,10 @@ trait Rollback: Sized {
     where
         Self: 'x;
     fn next(&mut self) -> Result<RollbackNext<Self::Task<'_>, Self::Target>, RetentionError>;
+    /// C's flush of a `next` FlushRequired target, through the flusher the
+    /// rollback holds, until that flusher is Ready (`RowRollback::flush`);
+    /// the autocommit executor's flush-through (`autocommit`).
+    fn flush(&mut self, target: &Self::Target) -> Result<(), RetentionError>;
     /// Needs the actual mark/None and the StatementFinish/AbortEnd receipt.
     fn finish(self) -> Result<(), RowOwnedError<Self>>;
 }
@@ -292,6 +297,14 @@ pub(crate) enum Stage {
     CleanupNext,
     /// C's `retire_row` of one live Row cleanup group.
     Retire,
+    /// C's Row Begin of an autocommit transaction (`autocommit`).
+    Begin,
+    /// The caller's issue of the statement's checked table (`autocommit`).
+    Table,
+    /// A rollback's flush of C's `next` FlushRequired target (`autocommit`).
+    RollbackFlush,
+    /// C's finish of a complete rollback (`autocommit`).
+    RollbackFinish,
 }
 
 /// A failed call's first error and, for a row, the one release after it.
@@ -430,6 +443,9 @@ impl<K: Rollback> Rollback for StartedRollback<'_, K> {
         Self: 'x;
     fn next(&mut self) -> Result<RollbackNext<Self::Task<'_>, K::Target>, RetentionError> {
         self.rollback.next()
+    }
+    fn flush(&mut self, target: &K::Target) -> Result<(), RetentionError> {
+        self.rollback.flush(target)
     }
     fn finish(self) -> Result<(), RowOwnedError<Self>> {
         let Self { rollback, progress } = self;
@@ -884,9 +900,10 @@ pub(crate) enum RollbackStop<T, F> {
     Next(RetentionError),
     /// C needs this target flushed before its next candidate. The rollback
     /// holds the session's foreground Owner borrow. The live adapter exposes
-    /// `flush_rollback_live` through its disjoint original flusher; a generic
-    /// boundary must supply its own equivalent continuation. There is no generic flush-through
-    /// call (G1), so the caller keeps both; nothing is dropped here.
+    /// `flush_rollback_live` through its disjoint original flusher, and the
+    /// rollback's own `Rollback::flush` is the same continuation (the
+    /// autocommit executor's). The step passes the target out and the caller
+    /// keeps both; nothing is dropped here.
     Flush(F),
     /// The same task after an unchanged refusal of its lane, A's CLR, its
     /// prepare, or its apply (then reopened): retry it with `retry_task`.

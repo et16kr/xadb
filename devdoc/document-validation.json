@@ -1,15 +1,15 @@
 {
   "schema_version": 2,
   "product": "XADB",
-  "date": "2026-11-02T01:30:25.607434+09:00",
+  "date": "2026-11-03T02:48:11.778900+09:00",
   "status": "PASS",
   "errors": [],
   "markdown_documents": [
     {
       "file": "devdoc/README.md",
-      "links": 278,
+      "links": 293,
       "duplicate_ids": 0,
-      "sha256": "b246b6f1088ae952357967c8c8b8736435d119ab24e4788667d0fb9300b5fed1"
+      "sha256": "5ee1c8a647774c8cc6269cdb3d619664a866f25649f8b37b5833ca4ec01ef114"
     },
     {
       "file": "devdoc/contracts/README.md",
@@ -157,15 +157,15 @@
     },
     {
       "file": "devdoc/contracts/dev3-module-boundaries.md",
-      "links": 338,
+      "links": 355,
       "duplicate_ids": 0,
-      "sha256": "a9c72d735b2fa870d5370ed1caa9d22ec4d0f1884a3e26bf740b9df6aa3e06a0"
+      "sha256": "f52477e175995e6c70ccda7c82c638be8a0b3d04ed7a2daef7d6e86e6bba32d4"
     },
     {
       "file": "devdoc/contracts/dev3-module-consumers.md",
-      "links": 90,
+      "links": 91,
       "duplicate_ids": 0,
-      "sha256": "39ab275ed573f7be46a7052c8f9c5dc16caf7e4177382d24da878c651bc567d1"
+      "sha256": "efdac48f64171dc0d1cb1f04c5c36ae52a98d334135a5557416597eb95bc9ab0"
     },
     {
       "file": "devdoc/contracts/dev3-obligation-format.md",
@@ -313,9 +313,9 @@
     },
     {
       "file": "devdoc/contracts/dev3-status-home-flush.md",
-      "links": 10,
+      "links": 11,
       "duplicate_ids": 0,
-      "sha256": "d1b2e9dafe77865dc930166416aa369d576d81b310978409e00612f522b21c44"
+      "sha256": "ee3e49e6baa109be368af97aace181b663f395c1bbee0f8c8540ffc83299ee6b"
     },
     {
       "file": "devdoc/contracts/dev3-status-home.md",
@@ -415,9 +415,9 @@
     },
     {
       "file": "devdoc/contracts/dev3-task-14-reclamation.md",
-      "links": 19,
+      "links": 33,
       "duplicate_ids": 0,
-      "sha256": "89af46b35200e72063ce436eaede1aa5a9b750ff985eaa197ca16481ec69035e"
+      "sha256": "9e5c448088a9d8c3a42a8eeaff3afc886363624ef9e26298d7b4690c6e15a81d"
     },
     {
       "file": "devdoc/contracts/dev3-task-15-backup-integrity.md",
@@ -583,9 +583,15 @@
     },
     {
       "file": "devdoc/evidence/README.md",
-      "links": 381,
+      "links": 400,
       "duplicate_ids": 0,
-      "sha256": "7b8a5134be39f72d106ace00062cb96788870670b64cce92c9ab5f09ede0eb24"
+      "sha256": "0c377c84f34fb6660ca298129728a11596bf18cbbdf2b275c6dfc4bc2c3fba57"
+    },
+    {
+      "file": "devdoc/evidence/autocommit-insert-20261102.md",
+      "links": 2,
+      "duplicate_ids": 0,
+      "sha256": "6ac3b186488bf72d4c7cb712e1ba595502d5bfeb12fa5ca0a59d5721169d5252"
     },
     {
       "file": "devdoc/evidence/comm-acceptance-resume-20261023.md",
@@ -1278,16 +1284,34 @@
       "sha256": "52d10a0d19d0fabdb994c700a7b8ad9ae868172d02dfcdb9ab87e1642639e097"
     },
     {
-      "file": "devdoc/evidence/main-preexisting-failures-20261030.md",
-      "links": 15,
+      "file": "devdoc/evidence/f6-wal-revalidation-survey-20261102.md",
+      "links": 30,
       "duplicate_ids": 0,
-      "sha256": "f8885e105f0bad5dce55a98b50e700b9527e591c5f38818350d0c0bdfba731ea"
+      "sha256": "c827a561c4eab45ee151442fff3cd499cfddc5852376966a152cea12d55fa9a4"
+    },
+    {
+      "file": "devdoc/evidence/live-row-cleanup-caller-20261102.md",
+      "links": 6,
+      "duplicate_ids": 0,
+      "sha256": "3aced0f51b565af500e7553f0a7602a20930de2c5c3e5b6de5a59491f88213b7"
+    },
+    {
+      "file": "devdoc/evidence/live-row-retirement-20261102.md",
+      "links": 5,
+      "duplicate_ids": 0,
+      "sha256": "292f896223082df9448ab5bc65e721163055dd3ac44e8c4c8a1730ff30c65af0"
+    },
+    {
+      "file": "devdoc/evidence/main-preexisting-failures-20261030.md",
+      "links": 46,
+      "duplicate_ids": 0,
+      "sha256": "ad5e4d54131bcba3e926d014ab150e92bb1a676ccde4a057e31a1cff72eb3bb9"
     },
     {
       "file": "devdoc/evidence/module-independence-survey-20261026.md",
-      "links": 341,
+      "links": 400,
       "duplicate_ids": 0,
-      "sha256": "1de6dabe4af4e0c73f8010dbf4c697564067ba455b3e7aac723258b2b1da34b6"
+      "sha256": "68ee3f2235155954d952fca8a61552a3333575a4dad60d7b571cbfce493b2f3c"
     },
     {
       "file": "devdoc/evidence/module-mi03-limits-20261101.md",
@@ -1333,9 +1357,9 @@
     },
     {
       "file": "devdoc/implementation/README.md",
-      "links": 208,
+      "links": 214,
       "duplicate_ids": 0,
-      "sha256": "4aae0758136d88ca76853b439dec0937663caf0878ed7d101be37125af19b053"
+      "sha256": "ffbb91c53ce00671bd2294e3676c8b6e38ddb2a71f1c504ed03d088d0a235049"
     },
     {
       "file": "devdoc/implementation/comm-implementation.md",
@@ -1375,9 +1399,9 @@
     },
     {
       "file": "devdoc/plans/README.md",
-      "links": 62,
+      "links": 75,
       "duplicate_ids": 0,
-      "sha256": "28c127a982f18a6a2413b91b05cb98f94fa4e0631c5e3befe4785119d4c1c28f"
+      "sha256": "25f2dab6cd52b00ef5e5a03f8d91ac94e12ada7feeb4d27094665f46eaf302bb"
     },
     {
       "file": "devdoc/plans/bottom-up-development.md",
@@ -1501,9 +1525,9 @@
     },
     {
       "file": "devdoc/plans/module-independence-followup-plan.md",
-      "links": 42,
+      "links": 73,
       "duplicate_ids": 0,
-      "sha256": "a5216f2c7266d8b5bdeb06d77c95783a51e7bab7cc33fe4d63b43bbd6c663679"
+      "sha256": "0a12f8b1679182975582e089f01c24bb328a2b8394a22ce0d6d4ca506f085e68"
     },
     {
       "file": "devdoc/plans/module-independence-plan.md",
@@ -1567,9 +1591,9 @@
     },
     {
       "file": "devdoc/policies/repository-build-plan.md",
-      "links": 214,
+      "links": 224,
       "duplicate_ids": 0,
-      "sha256": "1a71a6b1b3c59a4222700da27d99c94e6dd5439ef76f2718084223b66bf999d9"
+      "sha256": "4a2f6543af5234c3bccc60ad08079dd282563abec9def7b824cf997abf12b462"
     },
     {
       "file": "devdoc/reference/README.md",
@@ -1633,9 +1657,9 @@
     },
     {
       "file": "README.md",
-      "links": 16,
+      "links": 20,
       "duplicate_ids": 0,
-      "sha256": "e6a8f76254d9c8fb34523649fed18775a48039c9b6a5a8ce02c84d0528bd346b"
+      "sha256": "eec85139897f9028ca9837a3d51d1eb86e0e7c5b8be0f00e8ae57cff6609aaca"
     },
     {
       "file": "AGENTS.md",

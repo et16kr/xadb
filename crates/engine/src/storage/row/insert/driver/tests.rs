@@ -32,8 +32,8 @@ use crate::{
 use Call::{
     Apply, Cancel, Check, CleanupNext, Clr, ClrApply, ClrLane, ClrPrepare, ClrReopen, Commit,
     ContinueFlush, DropReserved, DropRollback, FinishAborted, FinishPreflight, FinishStatement,
-    Forward, Next, Prepare, Reopen, Reserve, Retire, RollbackFinish, RollbackStart, TryFlush,
-    Validate,
+    Forward, Next, Prepare, Reopen, Reserve, Retire, RollbackFinish, RollbackFlush, RollbackStart,
+    TryFlush, Validate,
 };
 use foundation::{identity::SchemaEpoch, namespace::WriterNamespace};
 use std::cell::RefCell;
@@ -117,6 +117,8 @@ enum Call {
     /// `row_cleanup_next`, and `retire_row` of a Job ordinal.
     CleanupNext,
     Retire(usize),
+    /// A held rollback's flush of the target its `next` named.
+    RollbackFlush(u64),
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -823,7 +825,10 @@ impl<'r, 'i> Rollback for LiteralRollback<'r, 'i> {
     fn next(&mut self) -> Result<RollbackNext<LiteralTask<'_, 'r, 'i>, u64>, RetentionError> {
         let mut state = self.state.borrow_mut();
         match state.note(Next) {
-            Some(Fault::Flush(target)) => return Ok(RollbackNext::Flush(target)),
+            Some(Fault::Flush(target)) => {
+                state.dirty = Some(target);
+                return Ok(RollbackNext::Flush(target));
+            }
             fault => factory(Next, fault)?,
         }
         if state.chain.len() <= self.target {
@@ -838,6 +843,29 @@ impl<'r, 'i> Rollback for LiteralRollback<'r, 'i> {
             cell: 180 + length,
             h,
         }))
+    }
+    /// Flushing the target `next` named cleans it; any other target is a
+    /// driver error.
+    fn flush(&mut self, target: &u64) -> Result<(), RetentionError> {
+        let mut state = self.state.borrow_mut();
+        let fault = state.note(RollbackFlush(*target));
+        if state.dirty != Some(*target) {
+            state
+                .violations
+                .push("rollback flush of a target C did not name");
+        }
+        drop(state);
+        factory(RollbackFlush(*target), fault)?;
+        // The flushed victim is clean: C's `next` does not ask for it again.
+        let mut state = self.state.borrow_mut();
+        state.dirty = None;
+        let asked = |(at, fault): &(Call, Fault)| {
+            *at == Next && matches!(fault, Fault::Flush(asked) if asked == target)
+        };
+        if let Some(at) = state.faults.iter().position(asked) {
+            state.faults.remove(at);
+        }
+        Ok(())
     }
     fn finish(self) -> Result<(), RowOwnedError<Self>> {
         let fault = self.state.borrow_mut().note(RollbackFinish);
@@ -2208,8 +2236,9 @@ fn mca00_d10_rollback_stops_hand_back_the_same_rollback_or_task() {
     settled(&state);
 
     // FlushRequired: C's target is carried out with the rollback still the
-    // caller's; nothing is dropped or called (G1: no flush-through while the
-    // rollback holds the Owner; G5: no defined continuation).
+    // caller's; the step drops and calls nothing (G5: no defined
+    // continuation inside the step). The caller flushes through the
+    // rollback's own `Rollback::flush` (LAC-A04).
     let state = self::state(&[], &[]);
     let mut view = after_failed_row(&state, &mut loan);
     state.borrow_mut().faults = vec![(Next, Fault::Flush(0x4d2))];
@@ -3109,4 +3138,410 @@ fn lrc_a05_drain_is_bounded() {
         [(CLEANUP_GROUPS, Operation::TerminalFinish)]
     );
     settled(&state);
+}
+
+// ---- The autocommit executor's steps (`autocommit`, LAC-A01..A10) ----
+
+use super::autocommit::{
+    Autocommit, abort_transaction, commit_answer, refused as step_refused, run_statement,
+    table_failed,
+};
+
+/// The transaction's end as `autocommit_insert_live` calls it after the
+/// statement: C's Commit and `commit_answer` after a finished statement,
+/// otherwise `abort_transaction`.
+fn end(
+    call: &mut LiteralCall<'_>,
+    transaction: LiteralTransaction,
+    loan: &mut Loan,
+    rows: Option<usize>,
+    out: &mut Autocommit<u64>,
+) {
+    match rows {
+        Some(rows) => {
+            let answer = call.commit(transaction, loan);
+            commit_answer(call, answer, loan, rows, out);
+        }
+        None => abort_transaction(call, transaction, loan, out),
+    }
+}
+
+/// One autocommit statement of `rows` over a fresh literal C transaction:
+/// `run_statement`, then the end (`end`), as `autocommit_insert_live`
+/// calls them after Begin and the table.
+fn autocommit(state: &RefCell<State>, rows: &[&[ValueRef<'_>]]) -> Autocommit<u64> {
+    let mut loan = loan();
+    let mut out = Autocommit::Idle;
+    let transaction = LiteralTransaction(1);
+    let mut slots: Vec<Option<LiteralApplied>> = rows.iter().map(|_| None).collect();
+    let mut call = LiteralCall { state };
+    let rows = run_statement(
+        &mut call,
+        &transaction,
+        statement(state),
+        &LiteralTable,
+        &mut loan,
+        rows,
+        &mut slots,
+        &mut out,
+    );
+    end(&mut call, transaction, &mut loan, rows, &mut out);
+    out
+}
+
+/// The Failure of an `Aborted` slot.
+fn aborted(out: Autocommit<u64>) -> Failure {
+    match out {
+        Autocommit::Aborted(failure) => failure,
+        other => panic!("expected Aborted, got {other:?}"),
+    }
+}
+
+/// The Failure of a `Fenced` slot.
+fn fenced(out: Autocommit<u64>) -> Failure {
+    match out {
+        Autocommit::Fenced(failure) => {
+            assert!(failure.must_resolve);
+            failure
+        }
+        other => panic!("expected Fenced, got {other:?}"),
+    }
+}
+
+/// The full rollback of a transaction whose rows `rows` (head last) are
+/// applied, and its `finish_aborted`.
+fn full_abort(rows: &[u64]) -> Vec<Call> {
+    let mut log = vec![RollbackStart(RollbackScope::Transaction)];
+    for row in rows.iter().rev() {
+        log.extend(compensated(*row));
+    }
+    log.extend([Next, RollbackFinish, FinishAborted]);
+    log
+}
+
+/// The rows of a statement that failed at row 2 (`BAD`) after row 7.
+fn failed_at_second_row() -> Vec<Call> {
+    calls(&[
+        &[Check],
+        &applied(7),
+        &[
+            Call::Preflight,
+            Call::ValidationLane,
+            Validate,
+            FinishPreflight,
+        ],
+    ])
+}
+
+/// LAC-A01: every row applied, the statement finished, C committed.
+#[test]
+fn lac_a01_committed_statement() {
+    let state = self::state(&[], &[]);
+    match autocommit(&state, &[&V1, &V2]) {
+        Autocommit::Committed { committed, rows } => assert_eq!((committed, rows), (42, 2)),
+        other => panic!("expected Committed, got {other:?}"),
+    }
+    assert_eq!(
+        take_log(&state),
+        calls(&[
+            &[Check],
+            &applied(7),
+            &applied(8),
+            &[FinishStatement, Commit]
+        ])
+    );
+    settled(&state);
+}
+
+/// LAC-A02: a row A rejects after an applied row: the statement is rolled
+/// back to its mark and finished, then the transaction is rolled back and
+/// ended. The slot keeps the first Failure.
+#[test]
+fn lac_a02_failed_row_rolls_back_the_statement_then_the_transaction() {
+    let state = self::state(&[], &[]);
+    let failure = aborted(autocommit(&state, &[&V1, &BAD]));
+    assert_eq!(failure.stage, Stage::Validate);
+    assert!(!failure.must_resolve && failure.cleanup.is_none());
+    assert_eq!(
+        take_log(&state),
+        calls(&[
+            &failed_at_second_row(),
+            &[RollbackStart(RollbackScope::Statement)],
+            &compensated(7),
+            &[Next, RollbackFinish, FinishStatement],
+            &full_abort(&[]),
+        ])
+    );
+    assert!(state.borrow().chain.is_empty());
+    settled(&state);
+}
+
+/// LAC-A03: a statement with no applied row (`Returned`) is finished with
+/// no statement rollback; the transaction is still rolled back and ended.
+#[test]
+fn lac_a03_returned_statement_is_finished_then_aborted() {
+    let state = self::state(&[], &[]);
+    let failure = aborted(autocommit(&state, &[&BAD]));
+    assert_eq!(failure.stage, Stage::Validate);
+    assert_eq!(
+        take_log(&state),
+        calls(&[
+            &[
+                Check,
+                Call::Preflight,
+                Call::ValidationLane,
+                Validate,
+                FinishPreflight
+            ],
+            &[FinishStatement],
+            &full_abort(&[]),
+        ])
+    );
+    settled(&state);
+}
+
+/// LAC-A04: a commit C answers `RollbackRequired` or refuses unchanged
+/// leaves the full rollback; a FlushRequired on its way is flushed through
+/// the rollback and the same rollback goes on.
+#[test]
+fn lac_a04_refused_commit_is_rolled_back_with_its_flush() {
+    let state = self::state(&[], &[(Commit, Fault::RollbackRequired)]);
+    let failure = aborted(autocommit(&state, &[&V1, &V2]));
+    assert_eq!(
+        (failure.stage, disk(&failure.error).1),
+        (Stage::Commit, Cause::SerializationConflict)
+    );
+    assert_eq!(
+        take_log(&state),
+        calls(&[
+            &[Check],
+            &applied(7),
+            &applied(8),
+            &[FinishStatement, Commit],
+            &full_abort(&[7, 8]),
+        ])
+    );
+    settled(&state);
+
+    let state = self::state(
+        &[],
+        &[
+            (Commit, Fault::Before(Cause::Busy)),
+            (Next, Fault::Flush(0x4d2)),
+        ],
+    );
+    let failure = aborted(autocommit(&state, &[&V1]));
+    assert_eq!(
+        (failure.stage, disk(&failure.error).1),
+        (Stage::Commit, Cause::Busy)
+    );
+    let mut abort = full_abort(&[7]);
+    abort.splice(1..1, [Next, RollbackFlush(0x4d2)]);
+    assert_eq!(
+        take_log(&state),
+        calls(&[&[Check], &applied(7), &[FinishStatement, Commit], &abort])
+    );
+    settled(&state);
+}
+
+/// LAC-A05: a Fatal commit is C's fence and nothing else is called; a
+/// Rejected one leaves nothing for A (C closed the handle).
+#[test]
+fn lac_a05_fatal_or_rejected_commit_calls_nothing_more() {
+    let state = self::state(&[], &[(Commit, Fault::Fatal)]);
+    assert_eq!(fenced(autocommit(&state, &[&V1])).stage, Stage::Commit);
+    assert_eq!(
+        take_log(&state),
+        calls(&[&[Check], &applied(7), &[FinishStatement, Commit]])
+    );
+
+    let state = self::state(&[], &[(Commit, Fault::Rejected)]);
+    let failure = aborted(autocommit(&state, &[&V1]));
+    assert_eq!(failure.stage, Stage::Commit);
+    assert_eq!(
+        take_log(&state),
+        calls(&[&[Check], &applied(7), &[FinishStatement, Commit]])
+    );
+}
+
+/// LAC-A06: a refusal on the way to the end has no retry: the handles go to
+/// C's fence. The slot keeps the first Failure, with the refusal as its
+/// cleanup.
+#[test]
+fn lac_a06_refused_end_step_is_fenced() {
+    // finish_aborted refused: the transaction is dropped after it.
+    let state = self::state(&[], &[(FinishAborted, Fault::Before(Cause::Busy))]);
+    let failure = fenced(autocommit(&state, &[&V1, &BAD]));
+    assert_eq!(failure.stage, Stage::Validate);
+    let (stage, error) = failure.cleanup.as_ref().expect("the refusal");
+    assert_eq!((*stage, disk(error).1), (Stage::FinishAborted, Cause::Busy));
+    assert_eq!(take_log(&state).last(), Some(&FinishAborted));
+
+    // A CLR apply C refuses in the statement rollback: the task is reopened,
+    // the rollback dropped into C's fence, and the transaction is not
+    // touched again.
+    let state = self::state(&[], &[(ClrApply(7), Fault::Before(Cause::Busy))]);
+    let failure = fenced(autocommit(&state, &[&V1, &BAD]));
+    assert_eq!(failure.stage, Stage::Validate);
+    assert_eq!(failure.cleanup.as_ref().map(|c| c.0), Some(Stage::ClrApply));
+    assert_eq!(
+        take_log(&state),
+        calls(&[
+            &failed_at_second_row(),
+            &[RollbackStart(RollbackScope::Statement)],
+            &compensated(7),
+            &[ClrReopen(7), DropRollback],
+        ])
+    );
+
+    // The rollback's flush refused: the rollback is dropped.
+    let state = self::state(
+        &[],
+        &[
+            (Commit, Fault::RollbackRequired),
+            (Next, Fault::Flush(9)),
+            (RollbackFlush(9), Fault::Before(Cause::Busy)),
+        ],
+    );
+    let failure = fenced(autocommit(&state, &[&V1]));
+    assert_eq!(failure.stage, Stage::Commit);
+    assert_eq!(
+        failure.cleanup.as_ref().map(|c| c.0),
+        Some(Stage::RollbackFlush)
+    );
+    assert_eq!(
+        take_log(&state),
+        calls(&[
+            &[Check],
+            &applied(7),
+            &[FinishStatement, Commit],
+            &[
+                RollbackStart(RollbackScope::Transaction),
+                Next,
+                RollbackFlush(9)
+            ],
+            &[DropRollback],
+        ])
+    );
+}
+
+/// LAC-A07: a table the caller could not issue is the statement's failure:
+/// the statement is finished and the transaction rolled back and ended. A
+/// CallerMustResolve refusal of the issue drops both into C's fence.
+#[test]
+fn lac_a07_table_not_issued_finishes_the_statement() {
+    let state = self::state(&[], &[]);
+    let mut loan = loan();
+    let mut out = Autocommit::Idle;
+    let transaction = LiteralTransaction(1);
+    let mut call = LiteralCall { state: &state };
+    table_failed(
+        &mut call,
+        &transaction,
+        statement(&state),
+        Ok(None),
+        &mut loan,
+        &mut out,
+    );
+    end(&mut call, transaction, &mut loan, None, &mut out);
+    let failure = aborted(out);
+    assert_eq!(
+        (failure.stage, insert(&failure.error)),
+        (Stage::Table, InsertError::InvalidInput)
+    );
+    assert_eq!(
+        take_log(&state),
+        calls(&[&[FinishStatement], &full_abort(&[])])
+    );
+    settled(&state);
+
+    let state = self::state(&[], &[]);
+    let mut out = Autocommit::Idle;
+    let transaction = LiteralTransaction(1);
+    let mut call = LiteralCall { state: &state };
+    table_failed(
+        &mut call,
+        &transaction,
+        statement(&state),
+        Err(fatal()),
+        &mut loan,
+        &mut out,
+    );
+    end(&mut call, transaction, &mut loan, None, &mut out);
+    assert_eq!(fenced(out).stage, Stage::Table);
+    assert!(take_log(&state).is_empty());
+}
+
+/// LAC-A09: C refused Begin: no transaction exists (`NotBegun`), or the
+/// refusal is C's (`Fenced`). A refused statement start leaves the
+/// transaction, which is rolled back (with no row) and ended.
+#[test]
+fn lac_a09_refused_begin_or_statement_start() {
+    let mut out = Autocommit::<u64>::Idle;
+    step_refused(
+        &mut out,
+        Stage::Begin,
+        refusal(Commit, Cause::Busy),
+        Autocommit::NotBegun,
+    );
+    match out {
+        Autocommit::NotBegun(failure) => assert_eq!(failure.stage, Stage::Begin),
+        other => panic!("expected NotBegun, got {other:?}"),
+    }
+    let mut out = Autocommit::<u64>::Idle;
+    step_refused(&mut out, Stage::Begin, fatal(), Autocommit::NotBegun);
+    assert_eq!(fenced(out).stage, Stage::Begin);
+
+    let state = self::state(&[], &[]);
+    let mut loan = loan();
+    let mut out = Autocommit::Idle;
+    step_refused(
+        &mut out,
+        Stage::Statement,
+        refusal(Check, Cause::Busy),
+        Autocommit::Aborted,
+    );
+    end(
+        &mut LiteralCall { state: &state },
+        LiteralTransaction(1),
+        &mut loan,
+        None,
+        &mut out,
+    );
+    assert_eq!(aborted(out).stage, Stage::Statement);
+    assert_eq!(take_log(&state), full_abort(&[]));
+    settled(&state);
+
+    // A CallerMustResolve refusal of the start: the transaction is dropped
+    // into C's fence and nothing is called.
+    let state = self::state(&[], &[]);
+    let mut out = Autocommit::Idle;
+    step_refused(&mut out, Stage::Statement, fatal(), Autocommit::Aborted);
+    end(
+        &mut LiteralCall { state: &state },
+        LiteralTransaction(1),
+        &mut loan,
+        None,
+        &mut out,
+    );
+    assert_eq!(fenced(out).stage, Stage::Statement);
+    assert!(take_log(&state).is_empty());
+}
+
+/// LAC-A10: a statement whose own finish C refused (`FinishPending`) is
+/// finished once more; a second refusal drops it into C's fence, and the
+/// transaction with it.
+#[test]
+fn lac_a10_finish_pending_statement_is_finished_once_more() {
+    let state = self::state(&[], &[(FinishStatement, Fault::Before(Cause::Busy))]);
+    let failure = fenced(autocommit(&state, &[&V1]));
+    assert_eq!(failure.stage, Stage::FinishStatement);
+    assert_eq!(
+        failure.cleanup.as_ref().map(|(stage, _)| *stage),
+        Some(Stage::FinishStatement)
+    );
+    assert_eq!(
+        take_log(&state),
+        calls(&[&[Check], &applied(7), &[FinishStatement, FinishStatement]])
+    );
 }
