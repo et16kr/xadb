@@ -2,7 +2,7 @@
 
 2026-11-02
 
-**상태: 정적 조사 완료 · 측정 계획 초안 · 측정 NOT_RUN.** 사용자는 2026-11-02 05:59 UTC 프로젝트 thread의 [D03](../plans/module-independence-followup-plan.md#user-decisions) 결정 카드에서 "정적 조사·측정 계획까지만"을 골랐다. 그래서 이 단위는 코드 읽기와 계획 작성만 한다. 측정, 계측 코드 추가, 제품 변경, 무변경 제품 시험은 하지 않았다. 아래 수치는 모두 코드·기존 기록에서 읽은 값이거나 그 값으로 계산한 분석 추정이며, 측정값은 하나도 없다. 측정은 [9절](#f6a-decisions)의 결정을 받은 뒤 별도 단위로 한다.
+**상태: 정적 조사 완료 · 측정 계획 초안 · 측정 NOT_RUN · 측정은 live Row retirement 공급 뒤로 보류(2026-11-02 사용자 결정).** 사용자는 2026-11-02 05:59 UTC 프로젝트 thread의 [D03](../plans/module-independence-followup-plan.md#user-decisions) 결정 카드에서 "정적 조사·측정 계획까지만"을 골랐다. 그래서 이 단위는 코드 읽기와 계획 작성만 한다. 측정, 계측 코드 추가, 제품 변경, 무변경 제품 시험은 하지 않았다. 아래 수치는 모두 코드·기존 기록에서 읽은 값이거나 그 값으로 계산한 분석 추정이며, 측정값은 하나도 없다. 측정은 [9절](#f6a-decisions)의 결정을 받은 뒤 별도 단위로 한다.
 
 기준 source는 PR #33 병합 뒤 main `d86bafb`다. 계획의 위치는 [후속 계획 §10](../plans/module-independence-followup-plan.md#wal-cost), 측정 원칙은 [DP07](../policies/development-policy.md#section-8)이다. 초안은 네 차례의 독립 검토 지적을 반영했고 마지막 검토는 ACCEPT(열린 필수 0)다([검토](#f6a-review)).
 
@@ -209,7 +209,7 @@ F6-b는 측정이 병목을 확인한 경우에만 연다. 여기서는 설계�
 <a id="f6a-decisions"></a>
 ## 9. 측정 전에 필요한 결정
 
-1. 측정 시기: 지금 측정할지, live Row retirement(DEV3)가 공급되어 일반 workload의 WAL이 길어질 수 있게 된 뒤로 미룰지. 지금도 Reserve→Cancel build로 긴 WAL을 만들어 잴 수는 있지만, commit·rollback만 하는 workload의 WAL은 Job cell 상한 때문에 몇 MiB 수준에 머문다(추정).
+1. 측정 시기: 지금 측정할지, live Row retirement(DEV3)가 공급되어 일반 workload의 WAL이 길어질 수 있게 된 뒤로 미룰지. 지금도 Reserve→Cancel build로 긴 WAL을 만들어 잴 수는 있지만, commit·rollback만 하는 workload의 WAL은 Job cell 상한 때문에 몇 MiB 수준에 머문다(추정). **2026-11-02 06:44 UTC 사용자 결정: live Row retirement 공급 뒤로 미룬다.** 2–6은 측정을 다시 열 때 정한다.
 2. 측정 승인과 범위: M0만, 또는 M0+M1.
 3. C(DEV3) 소유 파일 `history.rs`에 cfg(test) 계수기·timer를 넣는 것과 그 담당.
 4. M1 기계: 사용자 로컬 기계(시간 측정 안정성 때문에 권장) 또는 고정한 클라우드 환경.

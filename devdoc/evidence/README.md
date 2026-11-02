@@ -1,10 +1,10 @@
 # XADB 조사·실행 증거
 
-현재 후속 작업은 [F6-a WAL 재검증 비용 정적 조사·측정 계획](f6-wal-revalidation-survey-20261102.md)이다. F0–F5는 병합됐다(F5-b는 PR #33). 사용자 D03 결정에 따라 코드 읽기와 측정 계획만 작성했고 측정·제품 변경은 없다. 측정과 F6-b는 그 기록 9절의 결정 뒤 별도 단위다.
+현재 후속 작업은 [F6-a WAL 재검증 비용 정적 조사·측정 계획](f6-wal-revalidation-survey-20261102.md)이다. F0–F5는 병합됐다(F5-b는 PR #33). 사용자 D03 결정에 따라 코드 읽기와 측정 계획만 작성했고 측정·제품 변경은 없다. 사용자는 측정을 live Row retirement(DEV3) 공급 뒤로 미뤘고, 측정과 F6-b는 그때 별도 단위다.
 
 F2 공통 변경의 최소 계약 사례 선택 구현·검증·독립 검토는 [실행 기록](../evidence/module-independence-survey-20261026.md#f2-contract-selection)을 따른다. 제품 코드·fixture는 변경하지 않으며 무변경 제품 시험은 실행하지 않는다.
 
-2026-11-02 [F6-a WAL 재검증 비용](f6-wal-revalidation-survey-20261102.md): main `d86bafb`에서 WAL 전체 replay 경로를 정적으로 조사했다. `validate_live`·`replay_lookup_cut`·`prove_capture`가 부르는 전체 replay의 1회 비용은 WAL 약 3E 읽기·2E SHA-256·frame 전체 재적용이고, commit 한 행 거래는 적어도 3회 재검증한다. commit·rollback 거래와 그 행은 Job cell 64개를 하나씩 쥐고 실행 중에는 비우지 않아(live Row retirement 부재) 한 epoch의 한 행 거래는 32개 이하다. Forward 전 Cancel은 cell을 돌려주므로, 확인하지 않은 다른 한도가 없다면 Reserve→Cancel 순환으로 WAL을 cap 가까이까지 늘릴 수 있다. 측정 질문·입력(Reserve→Cancel build, 64 MiB까지)·환경·반복·예산·무효/중단 기준의 초안과 독립 검토 네 차례(최종 ACCEPT, 열린 필수 0)의 반영을 남겼다. 측정은 NOT_RUN이며 사용자 결정 뒤 별도 단위다.
+2026-11-02 [F6-a WAL 재검증 비용](f6-wal-revalidation-survey-20261102.md): main `d86bafb`에서 WAL 전체 replay 경로를 정적으로 조사했다. `validate_live`·`replay_lookup_cut`·`prove_capture`가 부르는 전체 replay의 1회 비용은 WAL 약 3E 읽기·2E SHA-256·frame 전체 재적용이고, commit 한 행 거래는 적어도 3회 재검증한다. commit·rollback 거래와 그 행은 Job cell 64개를 하나씩 쥐고 실행 중에는 비우지 않아(live Row retirement 부재) 한 epoch의 한 행 거래는 32개 이하다. Forward 전 Cancel은 cell을 돌려주므로, 확인하지 않은 다른 한도가 없다면 Reserve→Cancel 순환으로 WAL을 cap 가까이까지 늘릴 수 있다. 측정 질문·입력(Reserve→Cancel build, 64 MiB까지)·환경·반복·예산·무효/중단 기준의 초안과 독립 검토 네 차례(최종 ACCEPT, 열린 필수 0)의 반영을 남겼다. 측정은 NOT_RUN이며 사용자 결정으로 live Row retirement 공급 뒤로 보류됐다.
 
 
 2026-11-01 UTC [F0 수정·이관·선택 검증 완료](main-preexisting-failures-20261030.md#f0-completion): 현재 포맷의 독립 fixture/oracle, fatal snapshot·installer cut 관측, cause·예산 기대값을 정리했다. 고유78 tests PASS, 복구45 subcase·resident cut8 완료. 원 실패·abort·미시작과 새 실행의 source identity를 보존한다.
