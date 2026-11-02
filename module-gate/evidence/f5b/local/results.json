@@ -1,6 +1,6 @@
 {
  "schema": "XADB_F5B_LOCAL_RESULTS_V1",
- "note": "Local cloud runs before push. CI receipts of the PR are the acceptance evidence for head and C+A; C+B under the new policy cannot be requested from CI in this PR (trusted base policy still removes the two C files), so its result here is local evidence only.",
+ "note": "Local cloud runs before push. CI receipts of the PR are the acceptance evidence for head and C+A; C+B under the new policy cannot be requested from CI in this PR (trusted base policy still removes the two C files), so its result here is local evidence only. The local runs used every case of the three files (39); the gate record selects only the 36 cases that read a scope3 literal (independent review finding: three C semantic size-only source-bound cases read none).",
  "source": {
   "commit": "ef033f426bb1b468108ceb10516794484d29890f",
   "crates_tree": "b323021ab179cd3a75baf351c42becdfad54fb11",
@@ -56,7 +56,8 @@
    "passed": 39,
    "failed": 0,
    "ignored": 0,
-   "log": "head-run.log"
+   "log": "head-run.log",
+   "selection_note": "39 = all cases of the three changed files; CI record: 36"
   },
   {
    "source": "export-b (policy = head ef033f4)",
@@ -110,5 +111,5 @@
    "reason": "left to CI (A 13 cases are requested on head and export-a in the record); not repeated locally"
   }
  ],
- "provenance_rerun": "provenance-rerun.log (../provenance-rerun.sh OUT ef033f4)"
+ "provenance_rerun": "provenance-rerun.log (../provenance-rerun.sh OUT ef033f4); exits non-zero on any mismatch; includes the no-view failure of both authors"
 }

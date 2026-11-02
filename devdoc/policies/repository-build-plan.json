@@ -1082,7 +1082,7 @@
       "decision": "XADB-MODULE-GATE-006",
       "registry": "devdoc/policies/module-gate.json",
       "exporter": "scripts/module_single_source.py",
-      "scope": "F5-a: affected-contract owner validation and exports derived from explicit trusted policy; fixture migration and EX08/EX09 resolution remain F5-b",
+      "scope": "F5-a: affected-contract owner validation and exports derived from explicit trusted policy; F5-b (2026-11-02): scope3 literals moved bytes-unchanged to tests/fixtures/module-row-format/scope3/ and EX08/EX09 removed (dev3-module-boundaries.md#f5-scope3-fixture)",
       "adoption": "unprivileged candidate Python tests on adopting PR; trusted policy and tools take effect together after human merge"
     }
   },
@@ -8861,7 +8861,10 @@
     "validation": "r1 7 new MCA00-V06 selectors once PASS; independent review REQUIRED1 (refusals after output) and ADVISORY8; r2 4 new, 7 changed and 5 shared-function selectors once PASS; second review RESOLVED with 0 new REQUIRED; integrated tree cargo check 0 warnings; test builds 77.42 s and 78.29 s exceeded the 30 s case limit as cold builds",
     "remaining_supply": "actual C3 RowReserve/lane/context, owner stage/WAL/install/ACK/reopen/replay, carrier source-byte accounting, Allocator and propose branches, MCA01-05, MCI and MI01-06",
     "source_roots_changed": false,
-    "artifact_manifest_sha256": "f0f770234eed58881ba643cd3a409316e21729ccf314a5cd266195512fec72c6"
+    "artifact_manifest_sha256": "f0f770234eed58881ba643cd3a409316e21729ccf314a5cd266195512fec72c6",
+    "relocated_paths": {
+      "tests/fixtures/module-row-insert/scope3/": "2026-11-02 F5-b: moved bytes-unchanged (same git tree) to tests/fixtures/module-row-format/scope3/; map module-gate/evidence/f5b/scope3-move.json"
+    }
   },
   "dev3_module_b_row_read_driver": {
     "status": "LOCAL_VERIFIED_REVIEWED_C0_ONLY",

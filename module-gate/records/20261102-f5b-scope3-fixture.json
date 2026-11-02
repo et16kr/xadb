@@ -173,7 +173,7 @@
     "tests/fixtures/module-row-insert/scope3/ord-301-undo14.bin",
     "tests/fixtures/module-row-insert/scope3/profile3.bin"
    ],
-   "reason": "A's MCA00-V06 producer tests read every moved literal through the changed include path and compare A's produced Forward/CLR groups and refusals with them. Run on head and C+A: the moved C-side root is retained by the trusted C+A export while the old A path is gone.",
+   "reason": "The 13 A MCA00-V06/MCA05-V29 producer cases read the moved literals through the changed include path (snapshots as golden output and refusal inputs). Run on head and C+A: the trusted C+A export retains the moved C-side root while the old A path is gone.",
    "cases": [
     {
      "file": "crates/engine/src/storage/row/insert/group_tests.rs",
@@ -447,7 +447,7 @@
     "tests/fixtures/module-row-insert/scope3/ord-301-undo14.bin",
     "tests/fixtures/module-row-insert/scope3/profile3.bin"
    ],
-   "reason": "The N1/S1-a/S1-d/S1-g C semantic tests (formerly EX08) read the moved literals through the changed include path; every case of the file is selected because the file and its fixture root changed. Head only in this PR: the trusted base policy still removes this file from C+B, so the C+B result is local evidence (module-gate/evidence/f5b/local).",
+   "reason": "The 13 N1/S1-a/S1-d/S1-g C semantic cases (formerly EX08) that reach a scope3 literal (PROFILE, World snapshots or A's Forward/CLR literals) through the changed include path. The file's three size-only source-bound cases read no literal and are not selected. Head only: the trusted base policy still removes this file from C+B, so the C+B result is local evidence (module-gate/evidence/f5b/local).",
    "cases": [
     {
      "file": "crates/engine/src/storage/semantic_row/transition_tests.rs",
@@ -500,13 +500,6 @@
     },
     {
      "file": "crates/engine/src/storage/semantic_row/transition_tests.rs",
-     "case": "storage::semantic_row::transition::tests::n1_transition_source_bounds_cover_measured_frames",
-     "sources": [
-      "head"
-     ]
-    },
-    {
-     "file": "crates/engine/src/storage/semantic_row/transition_tests.rs",
      "case": "storage::semantic_row::transition::tests::s1a_borrowed_observer_accepts_n1_and_a_literals",
      "sources": [
       "head"
@@ -521,13 +514,6 @@
     },
     {
      "file": "crates/engine/src/storage/semantic_row/transition_tests.rs",
-     "case": "storage::semantic_row::transition::tests::s1a_borrowed_observer_source_bound_covers_measured_frames",
-     "sources": [
-      "head"
-     ]
-    },
-    {
-     "file": "crates/engine/src/storage/semantic_row/transition_tests.rs",
      "case": "storage::semantic_row::transition::tests::s1a_borrowed_tail_refused_dirty_and_restored_on_every_exit",
      "sources": [
       "head"
@@ -536,13 +522,6 @@
     {
      "file": "crates/engine/src/storage/semantic_row/transition_tests.rs",
      "case": "storage::semantic_row::transition::tests::s1d_borrowed_producer_matches_owned_groups",
-     "sources": [
-      "head"
-     ]
-    },
-    {
-     "file": "crates/engine/src/storage/semantic_row/transition_tests.rs",
-     "case": "storage::semantic_row::transition::tests::s1d_borrowed_producer_source_bound_covers_measured_frames",
      "sources": [
       "head"
      ]
@@ -729,7 +708,7 @@
     "tests/fixtures/module-row-insert/scope3/ord-301-undo14.bin",
     "tests/fixtures/module-row-insert/scope3/profile3.bin"
    ],
-   "reason": "The S1-b/S1-d/S1-g C replay tests (formerly EX09) read the moved literals through the changed include path; every case of the file is selected because the file and its fixture root changed. Head only in this PR: the trusted base policy still removes this file from C+B, so the C+B result is local evidence (module-gate/evidence/f5b/local).",
+   "reason": "All 10 S1-b/S1-d/S1-g C replay cases (formerly EX09) build their arenas from the moved literals through the changed include path. Head only: the trusted base policy still removes this file from C+B, so the C+B result is local evidence (module-gate/evidence/f5b/local).",
    "cases": [
     {
      "file": "crates/engine/src/storage/wal_io/plan4_retention/recovery/row_tests.rs",

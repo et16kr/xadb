@@ -6237,16 +6237,23 @@ SHA-256·git blob을 둔다.
 | 세 시험 파일의 사례 전체(A 13, C semantic 16, C recovery 10) | head `ef033f4` ELF `5515181…` | 39/39 PASS |
 | C+B export에서 두 C 파일의 발견·실행 | head policy로 만든 C+B export ELF `ac7ba65…` | 정확히 26개 발견, 26/26 PASS |
 | A 생성기 `write_scope3()`를 scratch 사본에서 재실행 | `ef033f4`의 tests/fixtures | 81개 byte 동일, RowLeaf literal 8개도 동일 |
-| N1·S1-g author를 원 경로 view로 재실행 | 같은 export | `blobs.bin`·`index.tsv`·`input-plan.json` 모두 byte 동일. view가 없으면 parent 부재로 실패 |
+| N1·S1-g author 재실행 | 같은 export | 원 경로 view 없이는 둘 다 `module-row-insert/scope3` parent 부재로 실패. view를 주면 `blobs.bin`·`index.tsv`·`input-plan.json` 모두 byte 동일 |
 | Python 선택 3개(manifest·export 등록·이동 provenance) | 작업 tree | PASS |
 
-로컬 실행 기록·ELF hash·export inventory는 [로컬 결과](../../module-gate/evidence/f5b/local/results.json)에 있다.
-C+B 결과는 로컬 증거일 뿐이다. 이 PR의 trusted policy(base `c0f9e25`)는 아직 EX08–EX09
-등록으로 두 C 파일을 C+B에서 제거하므로 CI는 head 39개와 C+A의 A 13개, Python 3개를
-실행한다. C+A의 C 시험은 이번 변경과 무관한 공유 경로라 반복하지 않았다. 병합 뒤에는
-trusted C+B export가 두 파일을 유지한다. 기존 source의 결과·FAIL은 고치지 않는다.
+로컬 실행은 독립 검토 전에 세 파일의 사례 전체로 했다. 검토는 C semantic의 크기 상한
+사례 3개(`*_source_bound(s)_cover_measured_frames`)가 literal을 읽지 않는다고 지적했다.
+그래서 gate 기록의 CI 선택은 literal에 닿는 사례로 줄였다. head 36개(A 13, C semantic 13,
+C recovery 10), C+A의 A 13개, Python 3개다. 위 로컬 39/39와 26/26은 실행한 그대로 둔다.
 
-한계: N1·S1-g author는 SHA 고정 때문에 원 경로 이름으로 parent를 찾는다. 재실행에는
-[재실행 script](../../module-gate/evidence/f5b/provenance-rerun.sh)처럼 원 경로 view를
-만들어야 한다. A 생성기는 자기 옆 `scope3/`에 쓰므로 tree 안에서 바로 실행하지 않는다.
-F6(WAL 재검증 비용)은 D03 측정 범위 결정 전이라 미착수다.
+로컬 실행 기록·ELF hash·export inventory는 [로컬 결과](../../module-gate/evidence/f5b/local/results.json)에 있다.
+C+B 결과는 attested가 아닌 로컬 증거다. CI의 export는 merge-base의 trusted policy를 쓰고,
+이 PR의 base `c0f9e25`는 아직 EX08–EX09 등록으로 두 C 파일을 C+B에서 제거한다. 병합 뒤
+Rust 변경 PR의 C+B build는 두 파일을 컴파일하지만, 어떤 변경이 이 사례를 C+B로 선택하기
+전까지 CI가 C+B에서 실행하지는 않는다. C+A에서는 두 C 파일이 원래 남아 있었고 CI의
+export-a build가 이를 컴파일한다. 코드가 head와 같아 C+A 실행은 요청하지 않았다.
+기존 source의 결과·FAIL은 고치지 않는다.
+
+한계는 [계약](../contracts/dev3-module-boundaries.md#f5-scope3-fixture)에 적었다. author
+재실행에는 [재실행 script](../../module-gate/evidence/f5b/provenance-rerun.sh)처럼 원 경로
+view가 필요하다. A 생성기는 scratch 사본에서만 실행한다. F6(WAL 재검증 비용)은 D03 측정
+범위 결정 전이라 미착수다.

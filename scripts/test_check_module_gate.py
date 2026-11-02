@@ -1751,12 +1751,15 @@ class F5bScope3FixtureTests(unittest.TestCase):
         readers = {path: manifest.owner(path) for path in self.READERS}
         self.assertEqual(readers[self.READERS[0]], 'A')
         self.assertFalse({'A', 'B'} & set(list(readers.values())[1:]))
-        for side in ('a', 'b'):
-            spec = module_single_source.source_spec(data, side)
-            removed = spec['removed'] + [entry[3] for entry in spec.get('tests_c', [])]
-            for path in (self.NEW, *self.READERS[1:]):
-                self.assertFalse(any(path == p or path.startswith(p + '/') for p in removed),
-                                 (side, path))
+        # The candidate (head) manifest keeps the moved literals and both C
+        # readers in each export. The trusted base policy of the adopting PR
+        # still removes the two readers from C+B until this manifest is merged.
+        moved = [f'{self.NEW}/{name}' for name in names]
+        for source in ('export-a', 'export-b'):
+            self.assertEqual(gate.export_absent_inputs(manifest, source,
+                                                       [*moved, *self.READERS[1:]]), [])
+        self.assertEqual(gate.export_absent_inputs(manifest, 'export-b', [self.READERS[0]]),
+                         [self.READERS[0]])
         for path in self.READERS:
             text = (root / path).read_text()
             self.assertIn(f'"/../../{self.NEW}/"', text)
