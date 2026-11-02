@@ -530,67 +530,6 @@
  "records": "module-gate/records/*.json",
  "exceptions": [
   {
-   "id": "EX05",
-   "source": "crates/engine/src/storage/wal_io/plan4_apply/row/rollback_census_tests.rs",
-   "target": "A",
-   "scope": "test",
-   "contract": "contracts/dev3-module-boundaries.md#row-single-source-s8",
-   "reason": "C census test measuring A caller frames; removed with its registration in the C+B export (module_single_source tests_c).",
-   "owner": "C",
-   "review_when": "when the census no longer needs A frame sizes",
-   "paths": [
-    "crate::storage::row::insert::driver::live::rollback_caller_source",
-    "crate::storage::row::insert::driver::RollbackStop",
-    "crate::storage::row::insert::driver::Stepped"
-   ],
-   "baseline": "da435fd6a3c9085320c297b8e8229ec5f38f28f4",
-   "export_registration": {
-    "file": "crates/engine/src/storage/wal_io/plan4_apply/row/rollback.rs",
-    "path": "rollback_census_tests.rs",
-    "module": "census"
-   }
-  },
-  {
-   "id": "EX06",
-   "source": "crates/engine/src/storage/wal_io/plan4_recovery/row_action_census_tests.rs",
-   "target": "A",
-   "scope": "test",
-   "contract": "contracts/dev3-module-boundaries.md#row-single-source-s8",
-   "reason": "Same as EX05 (recovery handler frame census).",
-   "owner": "C",
-   "review_when": "with EX05",
-   "paths": [
-    "crate::storage::row::insert::driver::recovered::handler_source_bytes",
-    "crate::storage::row::insert::local_source_carrier_bytes"
-   ],
-   "baseline": "da435fd6a3c9085320c297b8e8229ec5f38f28f4",
-   "export_registration": {
-    "file": "crates/engine/src/storage/wal_io/plan4_recovery/row_action.rs",
-    "path": "row_action_census_tests.rs",
-    "module": "census"
-   }
-  },
-  {
-   "id": "EX07",
-   "source": "crates/engine/src/storage/wal_io/plan4_retention/catalog_commit/row_census.rs",
-   "target": "A",
-   "scope": "test",
-   "contract": "contracts/dev3-module-boundaries.md#row-single-source-s8",
-   "reason": "Same as EX05 (commit caller frame census).",
-   "owner": "C",
-   "review_when": "with EX05",
-   "paths": [
-    "crate::storage::row::insert::driver::live::commit_caller_source",
-    "crate::storage::row::insert::driver::live::statement_end_caller_source"
-   ],
-   "baseline": "da435fd6a3c9085320c297b8e8229ec5f38f28f4",
-   "export_registration": {
-    "file": "crates/engine/src/storage/wal_io/plan4_retention/catalog_commit.rs",
-    "path": "catalog_commit/row_census.rs",
-    "module": "row_census"
-   }
-  },
-  {
    "id": "EX08",
    "source": "crates/engine/src/storage/semantic_row/transition_tests.rs",
    "target": "A",

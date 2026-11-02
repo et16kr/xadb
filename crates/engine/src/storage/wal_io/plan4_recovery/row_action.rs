@@ -281,3 +281,7 @@ pub(super) fn recovery_row_task_bytes<W: WriterNamespace + 'static>() -> (usize,
 #[cfg(test)]
 #[path = "row_action_census_tests.rs"]
 mod census;
+
+#[cfg(test)]
+#[path = "row_action_budget_tests.rs"]
+mod budget_census;

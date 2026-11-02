@@ -571,3 +571,7 @@ mod census;
 
 #[cfg(test)]
 thread_local! {static TEST_FLUSH_REFUSAL:std::cell::Cell<bool>=const{std::cell::Cell::new(false)};}
+
+#[cfg(test)]
+#[path = "rollback_budget_tests.rs"]
+mod budget_census;

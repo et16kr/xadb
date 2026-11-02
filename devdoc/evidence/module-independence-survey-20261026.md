@@ -6178,3 +6178,41 @@ OS stdout이 libtest 결과 행을 깨뜨릴 수 있다는 지적도 실행 전�
 `Module gate`가 같은 head의 source별 PASS/FAIL을 제공하며 실행 후 원 receipt·로그·hash를
 외부 artifacts에 보존하고 PR 본문에 연결한다. build target·임시 source/ELF는 기록 뒤 삭제한다.
 EX05–EX07, F5-b/EX08–09, F6 및 전체 F4는 별도 잔여다.
+
+
+<a id="f4-caller-budgets"></a>
+## F4 후속 — rollback/recovery/Commit caller 예산 분리 (2026-11-02)
+
+PR #31은 사람이 병합했고 재개 기준은 main `e582363c2b8a512e3dd4255c6ad9c45be33f736f`다.
+별도 `codex/module-followup-f4-budgets`에서 [계약](../contracts/dev3-module-boundaries.md#f4-caller-budgets)을 구현한다.
+main checkout과 보존 stash는 변경하지 않는다. 제품 실행 로직은 변경하지 않는다.
+
+C의 원 census 본문은 새 C-owned 파일로 옮기고 A helper/타입 참조를 고정 ceiling으로 대체한다.
+A는 원 helper의 full slack·caller·dead slot·producer·handler inventory로 자기 의무를 확인한다.
+EX05–EX07을 삭제하며 EX08–EX09는 유지한다. legacy selector는 trusted export 전환 호환용으로
+남고, C+B에서는 새 파일을 선택한다. F5의 원 baseline export receipt는 수정하지 않는다.
+
+실행 전 독립 설계 검토는 Commit 3,024 B와 양쪽 독립 검증을 조건부 수용했고,
+recovery 2,048 B 초안이 원 3,672 B보다 작다는 점과 CLR 8,192 B 초안이 frame-static
+원 몫보다 작다는 점을 지적했다. 시험 실행 전에 각각 4,096 B와 기존 Write 11,520 B로
+바로잡았다. 실패를 본 뒤 한도를 바꾼 것이 아니며 charge/cap은 그대로다.
+
+| 변경 | 선택한 시험 | source |
+| --- | --- | --- |
+| A의 새 ceiling 의무 | 새 memory/native caller budget 2개 | head, C+A |
+| C rollback의 fixed budget 합 | 새 F4 selector 2개 | head, C+B |
+| C recovery의 fixed budget 합 | 새 F4 selector 2개 | head, C+B |
+| C Commit의 fixed budget 합 | 새 F4 selector 1개(memory/native 포함) | head, C+B |
+| 예외 제거·export inventory 변화 | 변경 F5 registry 1개 + 새 F4 export 등록 1개 | CI candidate Python |
+
+Rust head 7개, C+A 2개, C+B 5개, Python 2개를 선택한다. 원 위임 selector는
+중복 본문 실행을 피하는 exact N/A로 독립 검토하고 all-target compile에서 확인한다. native 이름의 사례는 타입 크기
+inventory이며 DB/대용량 native harness 실행이 아니다. C03·기존 D15·제품·전체 workspace
+시험을 재실행하지 않는다. 로컬 `cargo check -p xadb-engine --tests --all-features --locked
+--offline` compile-only는 PASS이며 실행 test case는 0이다. 실제 push 훅에서 committed
+export fmt/Clippy/document gate를 검증한다. 기능 실행은 위 CI 선택으로 한정한다.
+
+source별 검증 receipt와 독립 검토 결과는 PR에 결속한다. 현재 이 기록의 시점에는 CI
+**NOT_RUN**이며 코드 채택이나 compile-only를 시험 PASS로 바꾸지 않는다. 원 실패·미검증
+기록과 PR #31의 source 결과는 그대로 보존한다. 외부 보존 디렉터리는
+`/home/et16/work/xadb/artifacts/module-followup-f4-budgets-20261102/`다.
