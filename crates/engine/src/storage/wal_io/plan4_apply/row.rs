@@ -29,6 +29,11 @@ mod recovery;
 mod rollback;
 #[path = "row/write.rs"]
 mod write;
+#[path = "row/write_operation.rs"]
+mod write_operation;
+pub(crate) use write_operation::{
+    RowPreflightOperation, RowPreparedOperation, RowReservedOperation,
+};
 
 pub(crate) use read::{
     MissingRowEvidence, RowCandidate, RowCopyObservation, RowReadOperation, RowSearchPage,
@@ -314,3 +319,7 @@ mod census_tests;
 #[cfg(test)]
 #[path = "row/v09_census_tests.rs"]
 mod v09_census_tests;
+
+#[cfg(test)]
+#[path = "row/write_operation_tests.rs"]
+mod write_operation_tests;

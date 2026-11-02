@@ -1,5 +1,7 @@
 # 현재 구현
 
+2026-11-02 [F4 Row 작업 API 첫 단위](../contracts/dev3-module-boundaries.md#f4-row-operation): C의 sealed 관련 상태를 A의 세 쓰기 adapter가 소비한다. 원 lifetime·오류·Drop을 보존하며 고정 예산 위에 bridge carrier를 별도 합성한다. [검증 범위와 CI 근거](../evidence/module-independence-survey-20261026.md#f4-row-operation)를 따른다. EX05–EX07과 전체 F4는 잔여다.
+
 2026-10-31 [S3 Row Commit](../contracts/dev3-module-boundaries.md#row-commit-s3): 병합 기준 `6ec2d343`에서 클라우드 별도 branch `codex/s3-row-commit`으로 착수했다. S3 한정 구현·source별 선택 검증과 최종 독립 D1/D2 ACCEPT·필수 수정0을 확인했다. 실제 Row Commit·native/current-build gate의 [source별 실행 증거](../evidence/module-independence-survey-20261026.md#s3-row-commit)에 원 실패·미실행과 후속 PASS를 보존했다. S4–S6·전체 M4/M5는 미완료다.
 
 2026-10-30 [S2-f V09 대체 oracle과 S2 마감](../evidence/module-independence-survey-20261026.md#s2f-closeout): Row 쓰기(S2)가 끝났다. 첫 Row INSERT의 쓰기 단계가 finish를 빼고 모두 실제 본문이며, S3 전에서 멈춘다.

@@ -6131,3 +6131,50 @@ F4의 실제 INSERT 소비자를 조사해 C의 associated-state 계약으로 A�
 독립 구현 검토에서 `exact_paths`가 `../bad.rs`를 판정하기 전에 `normalize()`의 예외를 발생시키는 결함을 찾았다. `..` segment를 먼저 거절하도록 수정했으며 malformed 경로 사례가 이를 검증하도록 선택했다. 시험을 실행해 얻은 실패가 아니라 정적 리뷰 지적이다. 최종 review와 선택 증거는 [module gate 기록](../../module-gate/README.md)에 보존한다. 되돌림은 본 선행 PR 전체 revert이며 기존 증거를 삭제하지 않는다.
 
 후속 정적 대조에서 macro token tree 내부의 고정 이름 `#[test]`도 기존 literal 탐색에 잡히는 것을 확인했다. 새 scoped mapping에서만 macro 정의·호출 입력의 offset을 제외하도록 보완했다. 기존 레거시/F2 탐색은 유지한다. 독립 검토는 `a8772885`와 후속 `a36d71a0`의 정확 blob에서 D2 ACCEPT·필수 수정0을 확인했다. [최종 리뷰](../../module-gate/evidence/scoped-tests/review.md)와 [record](../../module-gate/records/20261102-scoped-tests.json)를 함께 보존한다.
+
+
+<a id="f4-row-operation"></a>
+## 2026-11-02 F4 Row 쓰기 관련 상태 첫 단위
+
+기준은 사람이 병합한 PR #30의 main `5a904b09cee433d74440377acfcc41558fb73075`다.
+`codex/module-followup-f4`에서 [F4 계약](../contracts/dev3-module-boundaries.md#f4-row-operation)을 적용한다.
+A의 Preflight/Reserved/Prepared 구현 3곳에서 각각 반복하던 13개 lifetime과 W signature를
+C 소유 sealed trait의 blanket adapter로 바꿨다. 최초 `Boundary::Preflight` GAT와
+rollback/recovery/commit adapter는 그대로다. 실제 lifetime 관계나 권한을 합치지 않았으며
+새 dependency·allocation·dyn·unsafe·영속 형식·WAL 효과 변경이 없다. 타입 수·속도 개선률은 주장하지 않는다.
+
+D2 설계 검토는 원 owned error·Drop 및 고정 예산 보존 조건으로 수용했다. 첫 구현 검토가
+기존 `row_write_phases`의 새 reopen이 V09에서 panic하고 CLR 비용에도 잘못 섞임을 지적했다.
+시험 실행 전에 기존 8phase를 원 blob으로 복원하고 새 bridge 9phase만 별도 합성했다.
+따라서 무변경 V09·rollback/recovery census를 다시 실행하지 않는다. 상세 compiler 로그의
+OS stdout이 libtest 결과 행을 깨뜨릴 수 있다는 지적도 실행 전에 반영했다. CI receipt 폴더의
+별도 로그 파일로 보존하며 trusted runner·workflow·보호 정책을 변경하지 않는다.
+
+### 동결 선택과 의미
+
+정확한 이름·입력 blob·source는 [gate record](../../module-gate/records/20261102-f4-row-operation.json)가 정본이다.
+선택은 신규/수정 API 경로만 대상으로 한다.
+
+| source·사례 | 변경과 관계 |
+| --- | --- |
+| head A live 9개 | 성공 R09, flush 후 같은 행 V31, reserve stale R07/단계 거절 R11의 finish, prepare Before R10의 cancel, apply Before R11/stale R21의 reopen→cancel, missing target Fatal R21, cancel 거절 R21의 Drop fence |
+| head A D15 2개 | memory/native 타입의 실제 caller 몫이 기존 고정 6,144/11,520 B 안에 드는지 검산. native I/O 실행 아님 |
+| head 신규 C operation census 2개 | 실제 9phase carrier+body+A bound 합과 fixed charge/shared cap. 기존 C01–06/V09 전체 반복 아님 |
+| head 신규 compiler wrapper 1개 | 정상 control 1 + 재사용 거절 3 + 차용 거절 2. source/hash·toolchain·원 Cargo JSON/stderr·진단 code/primary 경로/행 보존 |
+| C+A export A live 3개 | prepare Before R10, apply Before R11, cancel 거절/fence R21만 별도 source의 실제 공통 계약 연결 검증 |
+
+총 head14개와 export-a3개다. compiler 내부6건은 위 wrapper1건에 포함한다. 각 source에서
+같은 사례는 한 번만 실행한다. export-b는 제품 시험을 선택하지 않는다. 원 owner/view 생성,
+하위 parser/codec/WAL/복구·전체 A/JOIN/DEV/workspace 시험은 이번 diff가 바꾸지 않아 실행하지 않는다.
+과거 FAIL·UNKNOWN은 해당 원 source 기록에 남으며 이번 선택 PASS로 소급 갱신하지 않는다.
+
+로컬 `compile-r1`은 protocol/re-export/A adapter 시점의 `cargo check -p xadb-engine --tests
+--all-features --locked --offline` PASS이며 test 실행은 0건이다. 이후 census/harness 변경은
+그 결과 범위에 넣지 않는다. 로그·source patch/hash는 외부 `artifacts/module-followup-f4-20261102/compile-r1`
+에 보존했다. 최종 committed export는 push 훅의 fmt/Clippy/문서 gate를 따르고 제품 선택은 CI가 실행한다.
+
+최종 독립 검토는 [D2 로그](../../module-gate/evidence/f4-row-operation/review.md)와 record의 blob/hash로
+결속한다. 본 문서의 선택표는 실행 결과를 선기입하지 않는다. 최종 PR의 `Module build` receipt와
+`Module gate`가 같은 head의 source별 PASS/FAIL을 제공하며 실행 후 원 receipt·로그·hash를
+외부 artifacts에 보존하고 PR 본문에 연결한다. build target·임시 source/ELF는 기록 뒤 삭제한다.
+EX05–EX07, F5-b/EX08–09, F6 및 전체 F4는 별도 잔여다.

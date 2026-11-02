@@ -141,7 +141,7 @@ C 내부는 실제 변경하는 책임 하나부터 `소유 상태, 허용 소�
 <a id="operation-api"></a>
 ## 8. F4 — 작업 API와 자원 회계의 변경 전파 줄이기
 
-**2026-11-02 착수 조사:** F3 병합 `aa87366d`에서 Row 쓰기 소비자를 조사했다. A 변경이 A·JOIN 전체 시험으로 확대되어 사용자 변경 범위 제한과 충돌하므로 [정확한 CI 선택 선행 작업](../policies/repository-build-plan.md#module-gate-scoped-tests)을 먼저 PR로 채택한다. associated-state 후보는 독립 조건부 검토만 했고 제품 수정·F4 인수는 미실행이다. EX05–07은 미해소다.
+**2026-11-02 첫 구현 단위:** [정확한 CI 선택 선행 작업](../policies/repository-build-plan.md#module-gate-scoped-tests)이 PR #30으로 병합된 `5a904b09`에서 Row 쓰기 관련 상태 계약을 구현한다. [계약](../contracts/dev3-module-boundaries.md#f4-row-operation)과 [실행 범위·리뷰 기록](../evidence/module-independence-survey-20261026.md#f4-row-operation)을 따른다. A의 세 adapter에서 반복하던 13개 lifetime 전달을 C의 sealed 상태 계약으로 모으고 기존 권한·오류·Drop을 유지한다. CI source별 결과가 인수 근거이며 이 단위만으로 전체 F4·EX05–07 해소를 선언하지 않는다.
 
 **현재 근거:** [`PreflightRow`](../../crates/engine/src/storage/wal_io/plan4_apply/row/write.rs)는 13개 lifetime과 namespace 타입을 노출하고 [`A live adapter`](../../crates/engine/src/storage/row/insert/driver/live.rs)가 이를 전달한다. C의 caller byte 예산과 일부 census 시험은 A 구현 크기를 알아야 한다.
 

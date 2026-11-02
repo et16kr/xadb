@@ -18,11 +18,12 @@ pub(crate) use super::bootstrap::doublewrite_install::mutable_storage::plan4_pag
     RetentionCause, RetentionError, RetentionFlushPhase, RetentionPhase, RollbackScope,
     RollbackStep, RowApplied, RowCancelled, RowCandidate, RowCommitObservation,
     RowControlObservation, RowCopyObservation, RowInputPlan, RowMutationObservation, RowOperation,
-    RowOwnedError, RowPageRole, RowPreflightContext, RowPreflightStep, RowProducerContext,
-    RowProducerInput, RowProducerLane, RowProposal, RowReadOperation, RowRollback, RowRollbackDone,
-    RowRollbackTask, RowSearchPage, RowSourceBinding, RowSourceRole, RowStatementView,
-    RowTransaction, RowValidationLane, StatementFinishError, TableStep, TransactionFinishError,
-    TransactionOptions, row_write_charge,
+    RowOwnedError, RowPageRole, RowPreflightContext, RowPreflightOperation, RowPreflightStep,
+    RowPreparedOperation, RowProducerContext, RowProducerInput, RowProducerLane, RowProposal,
+    RowReadOperation, RowReservedOperation, RowRollback, RowRollbackDone, RowRollbackTask,
+    RowSearchPage, RowSourceBinding, RowSourceRole, RowStatementView, RowTransaction,
+    RowValidationLane, StatementFinishError, TableStep, TransactionFinishError, TransactionOptions,
+    row_write_charge,
 };
 
 #[allow(unused_imports)]

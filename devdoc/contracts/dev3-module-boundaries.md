@@ -3107,3 +3107,47 @@ publication lock 종료 뒤 isolation lock을 잡는다.
 원 scope가 끝난 뒤 사용할 수 없다. wire·fixture·복구 알고리즘·CREATE 설치 권한은
 바꾸지 않는다. manifest는 실제 세 파일만 `catalog_call`로 소유하고 EX01–EX04를
 제거한다. 나머지 C·EX05–EX09는 유지한다. [실행·리뷰 근거](../evidence/module-independence-survey-20261026.md#f3-catalog-call)를 따른다.
+
+
+<a id="f4-row-operation"></a>
+## F4 첫 단위 — Row 쓰기 관련 상태 계약
+
+2026-11-02, [F4 계획](../plans/module-independence-followup-plan.md#operation-api)의
+preflight→reserve→prepare/apply/cancel 한 흐름에 C 소유 sealed 관련 상태 계약을 적용한다.
+[`write_operation.rs`](../../crates/engine/src/storage/wal_io/plan4_apply/row/write_operation.rs)의
+`RowPreflightOperation`, `RowReservedOperation`, `RowPreparedOperation`만 C의 원 wrapper를
+구현으로 갖는다. A의 세 live adapter는 이 trait와 관련 다음 상태를 소비한다.
+13개 내부 lifetime 관계는 C에 그대로 남고 원 `MutationPort`의 최초 발급 GAT는 유지한다.
+다른 owner/view 발급, 새 factory·heap·동적 dispatch·unsafe·효과·Drop을 추가하지 않는다.
+
+| 상태/전이 | 보존 계약 |
+| --- | --- |
+| preflight validation lane → reserve | lane은 `&mut self`에 결속. lane 사용 중 move 불가. Before는 같은 preflight를 돌려주고 finish가 원 source/gate/loan을 해제 |
+| reserved producer lane → prepare | 원 예약·loan·admission을 유지. Before는 같은 reservation을 반환 |
+| prepared apply → observation | 원 Forward 효과 뒤 observation만 A에 전달. Before는 prepared 상태를 그대로 반환 |
+| prepared reopen → reserved → cancel | reopen은 cut만 버리고 같은 예약을 반환. cancel은 원 Cancel·checked release를 수행. 활성 예약의 Drop fence 유지 |
+| finish/cancel/apply 성공 매핑 | 기존 A의 unit/observation 매핑을 C로 이동. Fatal과 오류 우선순위, 실패 반환의 상태 소유권은 변경하지 않음 |
+
+자원 예산은 preflight A 6,144 B, 나머지 A 11,520 B, RowWrite charge 44,304 B,
+shared+charge cap 65,536 B로 고정한다. A의 기존 call-site inventory를 줄이지 않는다.
+C의 기존 8개 wrapper phase도 유지하여 CLR/recovery/V09 계산에 새 비용을 섞지 않는다.
+새 `operation_phases`는 기존 inventory에 다음 bridge 몫을 더하고 reopen을 별도 합성한다.
+
+| bridge | 추가 carrier |
+| --- | --- |
+| validation/producer lane | mutable receiver 참조와 lane Result 각각 1개 |
+| reserve/prepare | 원 owned error와 다음 상태를 포함하는 Result 1개 |
+| apply/cancel | observation/unit과 원 owned error를 포함하는 Result 1개 |
+| finish | `Result<(), RetentionError>` 1개 |
+| reopen | Reserved 반환 1개. 원 moved Prepared와 두 반환 slot은 A inventory에 유지 |
+
+이동한 Self/input/proposal은 전달값과 동시에 별개 소유값으로 생기지 않는다. 기존 A의 map/반환
+slot도 보수적으로 유지한다. 새 memory/native census는 9개 합성 phase와 같은 고정 charge를
+검산하고 A D15는 실제 caller 몫을 검산한다. 이는 source-bound inventory이며 stack/RSS 측정이 아니다.
+
+새 compiler 검사는 정상 1개와 완료 후 재사용 3개(E0382), lane 차용 중 전이 2개(E0505)다.
+원 source를 복사한 전용 Cargo target에서 `cargo check --lib`만 수행하고 진단 code·primary
+probe 경로·행을 모두 일치시킨다. 각 compiler 180초, 전체 compiler 예산 420초로 제한한다.
+새 권한 발급이 없으므로 완료한 owner/view 시험은 반복하지 않는다. 실제 성공·Before·Fatal·cancel·
+Drop fence와 A 단독 source는 [선택·리뷰 기록](../evidence/module-independence-survey-20261026.md#f4-row-operation)을 따른다.
+EX05–EX07과 최초 GAT의 구체 수명은 후속 잔여이며 전체 F4 완료가 아니다.

@@ -115,8 +115,9 @@ pub(crate) use row::{
     CheckedTable, MissingRowEvidence, PreflightRow, PreparedRollbackTask, PreparedRow,
     ROW_PREFLIGHT_CALLER_BYTES, ROW_WRITE_CALLER_BYTES, ReservedRow, RollbackScope, RollbackStep,
     RowApplied, RowCancelled, RowCandidate, RowCommitObservation, RowCopyObservation,
-    RowMutationObservation, RowOwnedError, RowPreflightStep, RowReadOperation, RowRollback,
-    RowRollbackDone, RowRollbackTask, RowSearchPage, row_write_charge,
+    RowMutationObservation, RowOwnedError, RowPreflightOperation, RowPreflightStep,
+    RowPreparedOperation, RowReadOperation, RowReservedOperation, RowRollback, RowRollbackDone,
+    RowRollbackTask, RowSearchPage, row_write_charge,
 };
 #[allow(unused_imports)]
 pub(in crate::storage) use row::{PreparedRecoveredClr, RecoveredClr, RecoveredClrStep};

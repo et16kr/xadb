@@ -20,10 +20,11 @@ pub(crate) use super::wal_io::disk_api::{
     RetentionPhase, RollbackScope, RollbackStep, RowApplied, RowCancelled, RowCandidate,
     RowCommitObservation, RowControlObservation, RowCopyObservation, RowInputPlan,
     RowMutationObservation, RowOperation, RowOwnedError, RowPageRole, RowPreflightContext,
-    RowPreflightStep, RowProducerContext, RowProducerInput, RowProducerLane, RowProposal,
-    RowReadOperation, RowRollback, RowRollbackDone, RowRollbackTask, RowSearchPage,
-    RowSourceBinding, RowSourceRole, RowStatementView, RowTransaction, RowValidationLane,
-    StatementFinishError, TableStep, TransactionFinishError, TransactionOptions, row_write_charge,
+    RowPreflightOperation, RowPreflightStep, RowPreparedOperation, RowProducerContext,
+    RowProducerInput, RowProducerLane, RowProposal, RowReadOperation, RowReservedOperation,
+    RowRollback, RowRollbackDone, RowRollbackTask, RowSearchPage, RowSourceBinding, RowSourceRole,
+    RowStatementView, RowTransaction, RowValidationLane, StatementFinishError, TableStep,
+    TransactionFinishError, TransactionOptions, row_write_charge,
 };
 
 #[allow(unused_imports)]
