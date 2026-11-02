@@ -55,7 +55,7 @@ A의 몫(상한 4,096 B, caller term 472 B, memory·native type 같음):
 
 첫 구현은 `retire_group`이 flush 결과를 `map_err`와 `?`로 넘겨 flush 지점의 frame-static 몫이 4,275 B였다. 상한을 올리지 않고, 실패를 직접 돌려주게 바꿔 결과 slot 두 개를 없앴다.
 
-commit 입구 안에서 drain을 부르는 형태도 검토했다. A의 Commit frame은 C의 Commit window가 `row_caller_budget::COMMIT` 3,024 B로 묶고 A의 몫이 이미 그 값이라(A 여유 0 B, 2 B는 C의 stage 여유), drain의 slot을 더할 수 없다. 그래서 호출자가 `commit_live`·`finish_aborted_live`가 돌아온 뒤 같은 call로 `retire_finished_live`를 부른다. census는 frame 단위이므로, 한 함수에서 두 입구를 함께 부르는 제품 호출자는 drain을 inline되지 않는 별도 frame에서 부르거나, drain의 결과 slot(`Result<Retired, RetireStop>`)과 인자를 넣어 commit census를 다시 해야 한다. abort 입구는 `transaction.finish_aborted` 상한 6,144 B에 묶여 이 이유가 그대로 들지는 않지만, 두 경우를 같은 모양으로 두어 drain의 몫을 `LIVE_ROW_CLEANUP` 하나로만 본다.
+commit 입구 안에서 drain을 부르는 형태도 검토했다. A의 Commit frame은 C의 Commit window가 `row_caller_budget::COMMIT` 3,024 B로 묶고 A의 몫이 이미 그 값이라(A 여유 0 B, 2 B는 C의 stage 여유), drain의 slot을 더할 수 없다. 그래서 호출자가 `commit_live`·`finish_aborted_live`가 돌아온 뒤 같은 port·Owner로 `retire_finished_live`를 부른다. census는 frame 단위이므로, 한 함수에서 두 입구를 함께 부르는 제품 호출자는 drain을 inline되지 않는 별도 frame에서 부르거나, drain의 결과 slot(`Result<Retired, RetireStop>`)과 인자를 넣어 commit census를 다시 해야 한다. abort 입구는 `transaction.finish_aborted` 상한 6,144 B에 묶여 이 이유가 그대로 들지는 않지만, 두 경우를 같은 모양으로 두어 drain의 몫을 `LIVE_ROW_CLEANUP` 하나로만 본다.
 
 <a id="lrc-tests"></a>
 ## 4. 시험과 결과

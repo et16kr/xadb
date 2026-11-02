@@ -552,11 +552,15 @@ impl<'s> Boundary for LiteralCall<'s> {
         drop(state);
         factory(Retire(ordinal), fault)?;
         let mut state = self.state.borrow_mut();
+        // One entry per installed group; an unselected step is already a
+        // violation above.
         let at = state
             .cleanup
             .iter()
             .position(|step| *step == (ordinal, operation));
-        state.cleanup.remove(at.expect("checked above"));
+        if let Some(at) = at {
+            state.cleanup.remove(at);
+        }
         Ok(RetireNext::Retired)
     }
 }
