@@ -378,6 +378,34 @@ fn retirement_fixed_charge_fits_and_cannot_use_commit_transitions() {
     });
 }
 
+/// Live Row retirement (reclamation `#live-row-retirement`): its body (the
+/// recovered cleanup preparation at nine targets with its replay scope, the
+/// residency LOAD steps, and the existing-group or retirement install) under
+/// the shared shell fits the one fixed CatalogProgressCharge it reserves,
+/// RowWrite for Prune and RowProgress for the rest, for either writer. It is
+/// not folded into the charge or `peak`, so neither changes.
+#[test]
+fn live_row_retirement_fits_the_progress_charge() {
+    fn inspect<W: WriterNamespace>(kind: &str) {
+        let phases = create_pair::catalog_live::catalog_live_source_bytes::<W>();
+        let charge = CatalogProgressCharge::new::<W>();
+        println!(
+            "LIVE_ROW_RETIREMENT_{kind} row_retirement={} row_lifecycle={} retirement={} \
+             charge={} room={} peak={}",
+            phases.row_retirement,
+            phases.row_lifecycle,
+            phases.retirement,
+            charge.0,
+            charge.0 - phases.row_retirement,
+            phases.peak
+        );
+        assert!(phases.row_retirement <= charge.0);
+        assert!(shared_bytes::<W>() + charge.0 <= 65536);
+    }
+    inspect::<crate::storage::wal_io::plan4_test_support::Writer>("MEMORY");
+    inspect::<super::super::super::native::Writer>("NATIVE_TYPE");
+}
+
 /// ROW-BEGIN-001 "자원": RowProgress reserves the one fixed
 /// CatalogProgressCharge. The Row lifecycle term is checked as a constant to
 /// be no larger than the Catalog bodies, so the charge is unchanged by it;

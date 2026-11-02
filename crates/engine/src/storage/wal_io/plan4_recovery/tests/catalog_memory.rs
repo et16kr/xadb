@@ -760,7 +760,7 @@ fn query<'s, 'c, W: WriterNamespace>(
 // All resources belong to the original fresh owner. In particular, reader and
 // writer private loans are disjoint parts of the existing 12MiB reservation.
 macro_rules! with_fresh {
-    ($oracle:expr $(, observe_start = $observe_start:expr)? $(, frames = $frame_count:expr)?, |$live:ident, $owner:ident, $flusher:ident, $status:ident, $undo:ident,
+    ($oracle:expr $(, observe_start = $observe_start:expr)? $(, frames = $frame_count:expr)? $(, file_bytes = $file_bytes:expr)?, |$live:ident, $owner:ident, $flusher:ident, $status:ident, $undo:ident,
         $private:ident, $reader_private:ident, $core:ident, $fence:ident, $state:ident $(, $foreign:ident)?| $body:block) => {{
         let directory = port::Directory::fresh();
         let state = directory.state();
@@ -882,7 +882,8 @@ macro_rules! with_fresh {
         assert_closed(&state);
         {
             let state = state.lock().unwrap();
-            assert!(state.files.values().map(|file| file.length).sum::<u64>() <= 32 * 1_048_576);
+            let bound: u64 = 32 * 1_048_576 $(+ ($file_bytes - 32 * 1_048_576))?;
+            assert!(state.files.values().map(|file| file.length).sum::<u64>() <= bound);
         }
         result
     }};
@@ -1303,3 +1304,6 @@ mod row_corpus;
 
 #[path = "catalog_memory/row_inventory_a.rs"]
 mod row_inventory_a;
+
+#[path = "catalog_memory/row_retire.rs"]
+mod row_retire;

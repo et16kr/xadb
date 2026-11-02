@@ -240,6 +240,15 @@ impl<'v, 'm, 'c, 's, const N: usize> RetirementApply<'_, 'v, 'm, '_, '_, 'c, 's,
             .expect("owned retirement intent")
             .reject_catalog_stage(receipt)
     }
+    pub(in crate::storage) fn reject_row_stage(
+        &mut self,
+        receipt: crate::storage::wal_io::RowRetirementRejected<'_, '_, 'c, 's>,
+    ) -> VisibilityResult<()> {
+        self.intent
+            .as_mut()
+            .expect("owned retirement intent")
+            .reject_row_stage(receipt)
+    }
     pub(in crate::storage) fn bind_staged(
         &mut self,
         staged: StagedRetirement<'c, 's>,

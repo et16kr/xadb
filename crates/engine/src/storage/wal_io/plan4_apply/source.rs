@@ -150,6 +150,13 @@ impl CatalogProgressCharge {
             "RowProgress Row lifecycle body {} exceeds CatalogProgressCharge {charge}",
             bodies.row_lifecycle
         );
+        // The live Row retirement reserves the same charge under RowWrite
+        // (Prune) or RowProgress (the rest), checked the same way.
+        debug_assert!(
+            bodies.row_retirement <= charge,
+            "live Row retirement body {} exceeds CatalogProgressCharge {charge}",
+            bodies.row_retirement
+        );
         Self(charge)
     }
 }

@@ -23,6 +23,11 @@
       "role": "evidence",
       "title": "main 기존 실패 디버깅: commit window native 초과와 F05 recovery oracle"
     },
+    "live-row-retirement-20261102.md": {
+      "path": "evidence/live-row-retirement-20261102.md",
+      "role": "evidence",
+      "title": "live Row 정리: 구현·선택 검증·독립 검토"
+    },
     "f6-wal-revalidation-survey-20261102.md": {
       "path": "evidence/f6-wal-revalidation-survey-20261102.md",
       "role": "evidence",

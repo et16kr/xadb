@@ -1,6 +1,6 @@
 # XADB 조사·실행 증거
 
-현재 후속 작업은 [F7 disk API 현재 주석 정정](module-independence-survey-20261026.md#f7-current-comments)이다. F0–F5는 병합됐다. 직전 [F6-a WAL 재검증 비용 정적 조사·측정 계획](f6-wal-revalidation-survey-20261102.md)은 사용자 D03 결정에 따라 코드 읽기와 측정 계획만 작성했다. 사용자는 측정을 live Row retirement(DEV3) 공급 뒤로 미뤘고, 측정과 F6-b는 그때 별도 단위다. F7에서 고치지 않은 현재 주석 후보는 F7 기록에 남겼다.
+현재 작업은 [live Row 정리](live-row-retirement-20261102.md)다([계약](../contracts/dev3-task-14-reclamation.md#live-row-retirement), DEV3 3.14.1의 첫 Row profile 부분). 열린 session에서 끝난 Row 거래의 Prune·ReleaseRole·RootFree·TerminalFinish를 복구와 같은 frame으로 설치해, 한 session의 한 행 거래 32개 한도를 없앤다. PR 대기다. 직전 후속 작업 [F7 disk API 현재 주석 정정](module-independence-survey-20261026.md#f7-current-comments)은 PR #35로 병합됐다. F0–F5도 병합됐다. 그 앞 [F6-a WAL 재검증 비용 정적 조사·측정 계획](f6-wal-revalidation-survey-20261102.md)은 사용자 D03 결정에 따라 코드 읽기와 측정 계획만 작성했다. 사용자는 측정을 live Row retirement(DEV3) 공급 뒤로 미뤘고, 측정과 F6-b는 그때 별도 단위다. F7에서 고치지 않은 현재 주석 후보는 F7 기록에 남겼다.
 
 F2 공통 변경의 최소 계약 사례 선택 구현·검증·독립 검토는 [실행 기록](../evidence/module-independence-survey-20261026.md#f2-contract-selection)을 따른다. 제품 코드·fixture는 변경하지 않으며 무변경 제품 시험은 실행하지 않는다.
 

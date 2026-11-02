@@ -51,12 +51,12 @@ pub(in crate::storage) mod tests;
 
 #[cfg(not(test))]
 use apply as retention;
-pub(in crate::storage) use retention::CatalogRetirementRejected;
 #[allow(
     unused_imports,
     reason = "internal live owner export awaits recovered integration"
 )]
 pub(crate) use retention::Plan4Retention;
+pub(in crate::storage) use retention::{CatalogRetirementRejected, RowRetirementRejected};
 pub(in crate::storage) use retention::{
     EmptyRetentionControlLoan, RetentionCause, RetentionFlushAuthority, RetentionFlushStep,
     RetentionFrameObservation, RetentionInitAuthority, RetentionInitCommit, RetentionInitCompleted,
