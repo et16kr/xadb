@@ -193,7 +193,7 @@ EX08은 [`semantic_row/transition_tests.rs`](../../crates/engine/src/storage/sem
 
 **2026-11-02 F6-a 단위:** 사용자는 D03에서 "정적 조사·측정 계획까지만"을 골랐다. main `d86bafb`의 재검증 경로·1회 비용·거래당 호출 하한·잠금을 코드에서 읽고, 측정 질문·입력·관측·환경·반복·예산·무효/중단 기준의 초안을 [F6-a 기록](../evidence/f6-wal-revalidation-survey-20261102.md)에 남겼다. 지금 제품에서는 commit·rollback 거래와 그 행이 Job cell 64개를 하나씩 쥐고 실행 중에는 비우지 않아(live Row retirement 부재) 한 epoch의 한 행 거래가 32개 이하다. Forward 전 Cancel은 cell을 돌려주므로, 측정 계획은 Reserve→Cancel 순환으로 WAL을 64 MiB까지 늘린다. 측정·계측 코드·제품 변경은 없다. 사용자는 2026-11-02 측정 시기를 live Row retirement(DEV3) 공급 뒤로 미뤘고, 측정은 그때 그 기록 9절의 나머지 결정과 함께 별도 단위로 한다.
 
-**2026-11-02 F6 M0 단위:** live Row retirement가 PR #36으로 병합된 뒤, 사용자의 "이어서 해주세요"에 따라 [M0](../evidence/f6-wal-revalidation-survey-20261102.md#f6a-m0)를 했다. 범위는 결정 카드로 물었고 답을 기다리며 추천안(M0만, 클라우드)으로 진행했다. `history.rs`에 cfg(test) 계수기만 넣었다. 한 행 commit 거래는 전체 replay 4회, 그 live 정리는 6회이며, 정리까지 한 거래 하나가 30·E₀ + 8.7 MB를 읽는다. 시간(M1)과 병목 판단은 하지 않았다.
+**2026-11-02 F6 M0 단위:** live Row retirement가 PR #36으로 병합된 뒤, 사용자의 "이어서 해주세요"에 따라 [M0](../evidence/f6-wal-revalidation-survey-20261102.md#f6a-m0)를 했다. 범위는 결정 카드로 물었고 답을 기다리며 추천안(M0만, 클라우드)으로 진행했다. `history.rs`에 cfg(test) 계수기만 넣었다. pool frame 16(flush 없음)에서 한 행 commit 거래는 전체 replay 4회, 그 live 정리는 6회이며, 정리까지 한 거래 하나가 30·E₀ + 8.7 MB를 읽는다. 시간(M1)과 병목 판단은 하지 않았다.
 
 **F6-b 조건부 설계:** 병목이 확인된 경우에만 아래를 비교한다.
 

@@ -16,7 +16,7 @@
 
 이 넷은 가설이다. 처리량 회귀로 기록하지 않는다. 확인은 [7절](#f6a-plan)의 측정으로 한다.
 
-- **M0 결과(12절, 계수만).** H1·H2를 셌다. 한 행 commit 거래는 전체 replay를 4회(Begin, table 발급, preflight, Commit) 하고, 그 live 정리 6그룹이 1회씩 6회를 더한다. 한 번은 정확히 3E를 읽고 2E를 hash한다. 정리까지 한 거래 하나는 30·E₀ + 8.7 MB를 읽으며, WAL을 629,363 B 늘린다. L3(E 약 17 MB)에서는 516 MB다. 시간은 M1에서 잰다.
+- **M0 결과(12절, 계수만, pool frame 16·flush 없음·Int64 한 열 행).** H1·H2를 셌다. 한 행 commit 거래는 전체 replay를 4회(Begin, table 발급, preflight, Commit) 하고, 그 live 정리 6그룹이 1회씩 6회를 더한다. Begin과 preflight의 replay는 그때의 WAL 파일 끝까지 읽었다. 정리까지 한 거래 하나는 30·E₀ + 8.7 MB를 읽으며, WAL을 629,363 B 늘린다. L3(E 약 17 MB)에서는 516 MB다. 시간은 M1에서 잰다.
 
 <a id="f6a-paths"></a>
 ## 2. 정적 경로: 전체 replay를 부르는 곳
@@ -222,8 +222,8 @@ F6-b는 측정이 병목을 확인한 경우에만 연다. 여기서는 설계�
 ## 10. 한계
 
 - 12절 앞의 수치는 모두 정적 하한이나 분석 추정이다. 실제 호출 수와 frame 크기는 12절의 M0가 셌고, frame당 CPU 비용과 시간은 아직 재지 않았다.
-- 거래당 3회는 코드에서 조건 없이 도는 것만 센 하한이다. statement 종료 group이 모든 INSERT에 붙는지는 정적으로 확정하지 않았다.
-- Reserve→Cancel build도 상태를 완전히 고정하지는 못한다. UndoSlot generation·high-water와 build 거래의 Status가 바뀐다. 측정 거래가 남기는 Job·Status 점유도 수준마다 쌓인다.
+- 거래당 3회는 코드에서 조건 없이 도는 것만 센 하한이다. statement 종료 group이 모든 INSERT에 붙는지는 정적으로 확정하지 않았다. (12절 M0: 한 행 commit 거래는 4회였고, statement 종료는 replay도 frame도 없었다.)
+- Reserve→Cancel build도 상태를 완전히 고정하지는 못한다. UndoSlot generation·high-water와 build 거래의 Status가 바뀐다. 측정 거래가 남기는 Job·Status 점유도 수준마다 쌓인다. (12절 M0는 거래마다 live 정리를 해서 Job 점유가 쌓이지 않았다. 모든 수준에서 Free 62였다.)
 - Job cell 밖의 한도(UndoSlot generation, high-water, statement credit, Undo INIT의 owned page)가 먼저 닿는지는 확인하지 않았다. 닿으면 4절의 도달 범위와 L4가 낮아진다.
 - Catalog 쪽 거래로 한 epoch의 WAL을 늘리는 경우는 조사하지 않았다.
 - 측정 계획은 SQL 층이 아니라 저장소의 Row 쓰기 시험 경로를 쓴다. cold cache와 여러 writer의 동시 경쟁은 이 계획 밖이다.
@@ -250,7 +250,8 @@ F6-b는 측정이 병목을 확인한 경우에만 연다. 여기서는 설계�
 
 - **source.** main `8fa96c5`에 cfg(test) 계측과 시험만 더했다. 제품 줄은 바꾸지 않았다. 계측은 [`history.rs`](../../crates/engine/src/storage/wal_io/plan4_retention/history.rs)의 `revalidation` 모듈이다. 세 입구(`validate_live`, `replay_lookup_cut`, `prove_capture`)가 `replay_durable`을 부르기 직전에 자기 이름을 남긴다. `replay_durable`은 들어오자마자 그 이름을 가져가고(거절되거나 이름 없는 호출이 이전 이름을 물려받지 않게), WAL File을 잡고 header를 읽은 뒤 그 이름으로 한 번을 센다. 함께 세는 것은 E, E까지의 frame 수(LSN − anchor), 실제로 읽은 WAL byte(header, hash chunk마다, frame마다), chunk마다의 SHA-256 입력 byte, 재적용한 frame 수다. 빈 epoch에서 seed만 하는 입구 호출은 검사를 통과한 뒤 seed로 따로 센다. 시험은 [`plan4_pages::apply::test_revalidations`](../../crates/engine/src/storage/wal_io/plan4_apply.rs)로 thread의 누적값을 읽고, 단계 앞뒤의 차이를 기록한다.
 - **시험.** [`row_join/retire/revalidation.rs`](../../crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/revalidation.rs)의 `f6_m0_levels_to_l3`(`#[ignore]`, 명시 selector로 실행)과 CI가 도는 짧은 확인 `f6_m0_step_counts_match_the_contract_and_repeat`다. 짧은 확인은 warmup, L0 거래 하나, 2 MiB까지의 작은 build, 거래 하나를 두 번 돌려 줄이 같은지, 단계별 0회·1회 이상(S2W-R22, 4절)과 build 순환당 1회를 확인한다. 실행 명령과 run 기록은 [원 결과](f6-m0-20261102.json)에 있다.
-- **환경.** memory adapter, debug build, 클라우드 container(4 vCPU). run마다 새 디렉터리의 Genesis epoch에서 시작하고 다시 열지 않는다.
+- **환경.** memory adapter, debug build, 클라우드 container(4 vCPU, Intel Xeon 2.10GHz, rustc 1.95.0). run마다 새 디렉터리의 Genesis epoch에서 시작하고 다시 열지 않는다.
+- **run.** commit `b9f5603`에서 만든 시험 실행 파일(sha256 `62c9df6b…`, 계측 diff `git diff 8fa96c5 b9f5603 -- crates/`의 sha256 `02395dfd…`)로 2026-11-02 11:21–11:27 UTC에 두 run을 별도 process로 동시에 돌렸다(각 약 360초). 두 run의 결과 줄 20개가 모든 필드에서 같았다. 그 전에 검토 전 실행 파일로 한 시운전 1회도 warmup 줄의 시작 WAL 기록 오류(검토 1차 지적)를 빼고 같았다.
 - **입력.** 표 T(Int64 열 하나)를 만든 뒤 warmup 거래 하나를 하고 L0을 잰다. 수준마다 "BEGIN → INSERT 1행 → COMMIT"을 3번 하고, 거래마다 바로 그 live 정리(Prune, ReleaseRole×3, RootFree, TerminalFinish)를 끝까지 한다. 수준 L1 ≥ 1 MiB, L2 ≥ 4 MiB, L3 ≥ 16 MiB는 측정 거래가 시작할 때의 WAL 길이로 판단한다. 모자라면 그 앞에 build 거래(BEGIN → Reserve→Cancel 반복 → full rollback)를 하고 그 Terminal을 live TerminalFinish로 정리한다.
 
 **7절 계획과 다른 점.**
@@ -280,9 +281,9 @@ warmup과 L0–L3의 측정 거래 13개가 모두 같았다. flush는 한 번�
 | Prune, ReleaseRole×3, RootFree, TerminalFinish | 각 `validate_live` | 각 1, 합 6 |
 | **정리까지 합** | | **10** |
 
-4절의 정적 하한은 3회였다. 차이는 table 발급의 `replay_lookup_cut` 1회다(2절 표의 `read/lookup.rs` 행). reserve·prepare·apply가 replay하지 않는 것은 [S2W-R22](../contracts/dev3-module-boundaries.md#row-write-validate-once)와 같다. live 정리는 거래가 쓴 replay의 1.5배를 더 쓴다.
+4절의 정적 하한은 3회였다. 차이는 table 발급의 `replay_lookup_cut` 1회다. 계수기는 `replay_lookup_cut`의 호출 위치를 구분하지 않으므로, 이것이 2절 표의 `read/lookup.rs` 행이라는 것은 추정이다. reserve·prepare·apply가 replay하지 않는 것은 [S2W-R22](../contracts/dev3-module-boundaries.md#row-write-validate-once)와 같다. live 정리는 거래가 쓴 replay의 1.5배를 더 쓴다.
 
-build 거래는 Begin·statement·table 발급에서 2회(live 1, lookup 1), Reserve→Cancel 순환마다 preflight의 1회(101 순환에 101회, Reserve·Cancel은 0), full rollback(시작, 끝, `finish_aborted`)에서 2회, TerminalFinish에서 1회를 썼다.
+build 거래는 Begin·statement·table 발급 구간에서 2회(live 1, lookup 1), Reserve→Cancel 순환마다 1회(101 순환에 101회), statement 종료와 full rollback(시작, 끝, `finish_aborted`)을 묶은 구간에서 2회, TerminalFinish에서 1회를 썼다. 순환 안에서는 preflight만 replay한다는 것(Reserve·Cancel은 0)은 S2W-R22와 측정 거래의 단계별 값에서 온 추정이다. build의 순환은 한 구간으로 셌다.
 
 <a id="f6a-m0-q2"></a>
 ### 12.3 Q2: 재검증 한 번의 양
@@ -306,14 +307,14 @@ build 거래는 Begin·statement·table 발급에서 2회(live 1, lookup 1), Res
 
 - 한 행 commit 거래 262,257 B: Begin 56,712, RowReserve와 Forward 합 148,833, Commit 56,712 B. 4절이 fixture 행으로 잡은 RowReserve+Forward 148,842 B보다 9 B 작다. 행 모양이 달라서다.
 - 그 정리 367,106 B: Prune 89,882, ReleaseRole 55,528×3, RootFree 55,528, TerminalFinish 55,112 B. 정리가 거래 자체의 1.4배다.
-- L3 앞 build 거래는 WAL을 10,002,512 B 늘렸다(101 순환과 Begin·rollback·정리 frame 포함). 순환당 평균 약 99,000 B로, 4절 추정 97,336 B와 비슷하다.
+- build 순환은 정확히 97,336 B(4절의 RowReserve 57,336 + Cancel 40,000)씩 WAL을 늘렸다. 순환들의 replay E 합 1,195,060,684 B = 101 × 6,965,484 + 5,050 × 97,336이다. build 거래 전체는 Begin·rollback·정리 frame까지 10,002,512 B를 늘렸다.
 - 측정 끝 WAL 18,799,373 B, 파일 합 40,864,525 B다. Job cell은 시작과 모든 수준에서 Free 62, Row 0, 그 밖 2였다. 정리가 매번 Row Job을 비웠다.
 
 <a id="f6a-m0-meaning"></a>
 ### 12.5 무엇을 말하는가 (분석)
 
 - 정리까지 하는 한 행 거래의 비용은 E에 선형이다(읽기 30E). 한 epoch에서 이런 거래를 이어 하면 E가 거래마다 629,363 B씩 늘므로, n개의 누적 읽기는 약 30·629,363·n²/2 ≈ 9.4 MB·n²다. 예를 들어 빈 epoch 뒤 32개면 약 10 GB, 100개면 약 94 GB를 읽는다(추정; 앞의 표 생성분은 뺐다).
-- 정리를 commit마다 바로 하면, 정리 없는 거래와 비교해 거래당 replay가 2.5배(4 → 10), 거래당 WAL 증가가 2.4배(262,257 → 629,363 B)다. 누적 읽기의 n² 계수는 둘의 곱으로 약 6배가 된다. 정리를 모아 하더라도 그룹 수는 같으므로 replay 횟수는 줄지 않는다. 줄어드는 것은 정리를 미루는 동안의 E뿐이다. 그래서 자동 정리 호출자를 붙일 때 호출 시점만으로는 비용을 크게 바꾸지 못하고, 재검증 자체의 비용(F6-b)이 먼저 걸린다.
+- 정리를 commit마다 바로 하면, 정리 없는 거래와 비교해 거래당 replay가 2.5배(4 → 10), 거래당 WAL 증가가 2.4배(262,257 → 629,363 B)다. 누적 읽기의 n² 계수는 둘의 곱으로 약 6배가 된다. 지금 계약(정리 그룹마다 replay 1회)에서는 정리를 모아 해도 그룹 수가 같으므로 replay 횟수는 그대로다. 미루면 거래 쪽 replay의 E는 작아지지만, 미룬 정리 replay의 E는 그만큼 커지므로 n² 계수는 거의 같다(분석). 그래서 자동 정리 호출자의 호출 시점은 누적 재검증 양을 크게 바꾸지 못한다(분석). 그 양이 실제 시간으로 문제인지는 아래와 같이 아직 판단하지 않는다.
 - 이것이 병목인지는 아직 말하지 않는다. 시간(Q3·Q4)은 M1이 재고, 판단 기준(9절 6번)은 사용자가 정한다.
 
 <a id="f6a-m0-limits"></a>
