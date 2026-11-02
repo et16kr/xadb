@@ -1,6 +1,6 @@
 # XADB 개발 문서
 
-현재 후속 작업은 [F5-b scope3 fixture 이관](evidence/module-independence-survey-20261026.md#f5-scope3-fixture)이다. F4는 PR #31·#32로 병합됐다. A가 작성한 scope3 literal 81개를 bytes 그대로 C 쪽 `module-row-format/scope3/`로 옮기고 EX08–EX09를 제거해 manifest 예외가 남지 않는다. 현재 source의 시험 결과는 해당 PR의 CI receipt와 로컬 C+B 증거를 따른다. F6(WAL 재검증 비용)은 측정 범위 결정 D03 전이라 잔여다.
+현재 후속 작업은 [F6-a WAL 재검증 비용 정적 조사·측정 계획](evidence/f6-wal-revalidation-survey-20261102.md)이다. F0–F5는 병합됐다(F5-b는 PR #33). 사용자 D03 결정에 따라 코드 읽기와 측정 계획만 작성했고 측정·제품 변경은 없다. 사용자는 측정을 live Row retirement(DEV3) 공급 뒤로 미뤘고, 측정과 F6-b는 그때 별도 단위다. 직전 단위 [F5-b scope3 fixture 이관](evidence/module-independence-survey-20261026.md#f5-scope3-fixture)은 scope3 literal 81개를 bytes 그대로 C 쪽 `module-row-format/scope3/`로 옮기고 EX08–EX09를 제거해 manifest 예외가 남지 않는다.
 
 F2 공통 변경의 최소 계약 사례 선택 구현·검증·독립 검토는 [실행 기록](evidence/module-independence-survey-20261026.md#f2-contract-selection)을 따른다. 제품 코드·fixture는 변경하지 않으며 무변경 제품 시험은 실행하지 않는다.
 

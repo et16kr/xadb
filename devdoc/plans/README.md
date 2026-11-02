@@ -1,6 +1,6 @@
 # 개발 계획
 
-현재 후속 작업은 [F3 Catalog 호출 방향·C 소유 경계](../evidence/module-independence-survey-20261026.md#f3-catalog-call)다. F0–F2·F5-a는 병합됐고 F3 구현·선택 검증·독립 검토를 완료했다. F4·F5-b·F6은 남아 있으며 F5-b의 좁은 시험 선택 선행 조건은 유지한다.
+현재 후속 작업은 [F6-a WAL 재검증 비용 정적 조사·측정 계획](../evidence/f6-wal-revalidation-survey-20261102.md)이다. F0–F5는 병합됐다(F5-b는 PR #33). 사용자 D03 결정에 따라 코드 읽기와 측정 계획만 작성했고 측정·제품 변경은 없다. 사용자는 측정을 live Row retirement(DEV3) 공급 뒤로 미뤘고, 측정과 F6-b는 그때 별도 단위다.
 
 F2 공통 변경의 최소 계약 사례 선택 구현·검증·독립 검토는 [실행 기록](../evidence/module-independence-survey-20261026.md#f2-contract-selection)을 따른다. 제품 코드·fixture는 변경하지 않으며 무변경 제품 시험은 실행하지 않는다.
 
