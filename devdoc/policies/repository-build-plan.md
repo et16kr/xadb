@@ -418,7 +418,7 @@ GitHub는 2026-12-02부터 공개 저장소의 `pull_request_target`을 기본 e
 <a id="module-gate-scoped-tests"></a>
 ### 변경 경로별 정확한 Rust 사례 선택
 
-**XADB-MODULE-GATE-SCOPED-001 · D2 후보 · 구현 / 독립 검토·CI 대기.** F4 조사에서 A 파일 하나의 변경이 A·JOIN 전체 선택으로 확대됨을 확인했다. [F5-b 선행 조건](../plans/module-independence-followup-plan.md#test-ownership)에도 같은 문제가 있다. 제품 변경을 넣기 전에 Python-only PR로 이 선택 기능을 채택한다. 기본 branch에 병합된 뒤 후속 PR부터 적용되며, 채택 PR은 기존 신뢰 checker의 F1 Python lane으로 후보 코드를 검증한다.
+**XADB-MODULE-GATE-SCOPED-001 · D2 ACCEPT · 구현·독립 검토 완료 / CI 대기.** F4 조사에서 A 파일 하나의 변경이 A·JOIN 전체 선택으로 확대됨을 확인했다. [F5-b 선행 조건](../plans/module-independence-followup-plan.md#test-ownership)에도 같은 문제가 있다. 제품 변경을 넣기 전에 Python-only PR로 이 선택 기능을 채택한다. 기본 branch에 병합된 뒤 후속 PR부터 적용되며, 채택 PR은 기존 신뢰 checker의 F1 Python lane으로 후보 코드를 검증한다.
 
 신뢰 manifest의 `evidence.selection_mode = "changed-paths"`에서는 모듈의 `ci_selectors`·`ci_also`, 변경 시험 파일의 전체 사례와 macro 모듈을 자동 실행하지 않는다. 변경 기록의 `rust_tests`가 실제 변경 Rust/build/fixture 경로를 정확한 libtest 사례와 `head`·`export-a`·`export-b`에 대응한다. 사례마다 `head`가 필수이고 export는 필요한 곳만 명시한다. `paths`, `cases[].file`, 선택적 `cases[].inputs`는 glob 없는 정규화 경로다. `reason`은 변경과 시험의 관계를 설명한다. 같은 record의 독립 ACCEPT 리뷰가 변경 경로 및 시험·명시 입력의 현재 blob을 포함해야 한다. 삭제 경로는 `deleted`로 남긴다.
 

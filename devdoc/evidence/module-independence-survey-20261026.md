@@ -6120,7 +6120,7 @@ F3의 읽기 호출 방향·C 소유 pilot 인수는 완료다. 선택 Rust 고�
 <a id="scoped-test-selection"></a>
 ## 2026-11-02 — F4/F5-b 선행: 변경 경로별 정확한 CI 선택
 
-**구현·독립 검토 진행, 실행 결과는 PR의 F1 receipt가 정본.** 기준은 사람의 F3 PR #29 병합 `aa87366d299cb89515161cd46ced7faa1972fd1b`다. 원 checkout `/home/et16/work/xadb`는 clean main으로 fast-forward했고, 기존 managed worktree에 `codex/module-followup-scoped-tests`를 만들었다. 작성·계약·통합 `/root`, 독립 검토 `/root/f4_design_review`다. [정책](../policies/repository-build-plan.md#module-gate-scoped-tests)과 [선택 목록](../../module-gate/evidence/scoped-tests/selection.json)을 따른다.
+**구현·독립 D2 ACCEPT·필수 수정0. 실행 결과는 PR의 F1 receipt가 정본.** 기준은 사람의 F3 PR #29 병합 `aa87366d299cb89515161cd46ced7faa1972fd1b`다. 원 checkout `/home/et16/work/xadb`는 clean main으로 fast-forward했고, 기존 managed worktree에 `codex/module-followup-scoped-tests`를 만들었다. 작성·계약·통합 `/root`, 독립 검토 `/root/f4_design_review`다. [정책](../policies/repository-build-plan.md#module-gate-scoped-tests)과 [선택 목록](../../module-gate/evidence/scoped-tests/selection.json)을 따른다.
 
 F4의 실제 INSERT 소비자를 조사해 C의 associated-state 계약으로 A의 구체형 impl 세 곳에서 13개 lifetime 반복을 제거하는 안을 비교했다. 독립 검토는 좁은 전파 축소 방향을 조건부 수용했으나, 새 전달 frame의 자원 carrier를 실제 소유 슬롯별로 다시 계산할 의무를 남겼다. 제품 변경 전에 `selection()`이 touched A의 전체 선택과 JOIN, export-a 전체를 계획하며 record/계약은 추가만 가능한 사실을 확인했다. 사용자의 무변경 시험 반복 금지를 지키기 위해 F5-b에 이미 남아 있던 선택 선행 도구로 작업을 전환했다. **F4 제품 코드는 수정하지 않았고 EX05–07도 미해소다.**
 
@@ -6129,3 +6129,5 @@ F4의 실제 INSERT 소비자를 조사해 C의 associated-state 계약으로 A�
 검증은 신규 Python 13개와 변경 함수의 레거시 선택 2개·공통 export helper를 호출하는 F2 2개, 총 **정확 17개**를 CI에 배정한다. 이들은 임시 fixture Git 저장소와 합성 receipt를 사용하며 제품 Rust 시험을 실행하지 않는다. 로컬에서는 구문 해석·diff 검토만 했고 시험 PASS를 주장하지 않는다. 채택 PR CI는 기존 신뢰 checker/F1 runner가 후보 Python을 별도 worker에서 실행한다. 후보 mode는 이 PR의 신뢰 정책을 바꾸지 않으며 사람의 병합 뒤 후속 PR에 적용된다. 모든 FAIL/미실행은 source별 원 로그로 유지한다.
 
 독립 구현 검토에서 `exact_paths`가 `../bad.rs`를 판정하기 전에 `normalize()`의 예외를 발생시키는 결함을 찾았다. `..` segment를 먼저 거절하도록 수정했으며 malformed 경로 사례가 이를 검증하도록 선택했다. 시험을 실행해 얻은 실패가 아니라 정적 리뷰 지적이다. 최종 review와 선택 증거는 [module gate 기록](../../module-gate/README.md)에 보존한다. 되돌림은 본 선행 PR 전체 revert이며 기존 증거를 삭제하지 않는다.
+
+후속 정적 대조에서 macro token tree 내부의 고정 이름 `#[test]`도 기존 literal 탐색에 잡히는 것을 확인했다. 새 scoped mapping에서만 macro 정의·호출 입력의 offset을 제외하도록 보완했다. 기존 레거시/F2 탐색은 유지한다. 독립 검토는 `a8772885`와 후속 `a36d71a0`의 정확 blob에서 D2 ACCEPT·필수 수정0을 확인했다. [최종 리뷰](../../module-gate/evidence/scoped-tests/review.md)와 [record](../../module-gate/records/20261102-scoped-tests.json)를 함께 보존한다.

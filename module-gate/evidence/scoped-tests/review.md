@@ -21,3 +21,23 @@ found no other required code issue in that pass. No reviewer tests or edits ran.
 
 Final immutable-blob verdict and CI results are recorded separately; this design
 review alone is not execution evidence.
+
+## Immutable implementation verdict
+
+`a8772885c9d09f24bc194a8db54d1c0f7f696d1f`: D2 ACCEPT, required_open 0,
+including the three gate-required blobs and the policy/documentation diff.
+
+Before execution the author also found that the legacy literal scanner could name
+a test written inside a macro token tree. `a36d71a0dae8adb499e01a7bb19874653394b160`
+adds token-tree exclusion only for new scoped mappings; legacy/F2 discovery stays
+unchanged. The same selected negative now covers definition and brace/paren
+invocations. The reviewer inspected the updated checker/test blobs and returned
+**D2 ACCEPT, required_open 0**:
+
+- checker: `f23bdafff758f965392ce192bfca804d3ff31600`
+- tests: `7c6a62f0ed86bf4b8f5b39ce4d8a4b0f2b940289`
+- manifest (unchanged since first verdict): `6d53b7eac89d5dc810f724d6c4555931af727ea9`
+
+The exact 17 selected Python cases were judged relevant and sufficient for this
+diff. This is static review acceptance, not a test PASS. CI will execute them
+once on the submitted head, and its source-bound receipt retains the result.
