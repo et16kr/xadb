@@ -1,6 +1,6 @@
 # XADB
 
-현재 후속 작업은 [F5-a 시험 소유·export 단일 등록](devdoc/evidence/module-independence-survey-20261026.md#f5-test-ownership)이다. F0–F2는 병합됐고 F3·F4·F5-b·F6은 남아 있다. F3의 native 공간 조건과 F5-b의 좁은 시험 선택 선행 조건을 기록했다.
+현재 후속 작업은 [F7 disk API 현재 주석 정정](devdoc/evidence/module-independence-survey-20261026.md#f7-current-comments)이다. F0–F5는 병합됐다. [F6-a WAL 재검증 비용 정적 조사·측정 계획](devdoc/evidence/f6-wal-revalidation-survey-20261102.md)은 사용자 D03 결정에 따라 코드 읽기와 측정 계획만 작성했다. 사용자는 측정을 live Row retirement(DEV3) 공급 뒤로 미뤘고, 측정과 F6-b는 그때 별도 단위다. 후속 계획 전체 상태는 [devdoc 안내](devdoc/README.md)를 따른다.
 
 F2 공통 변경의 최소 계약 시험 선택을 구현·검증했고 독립 D1/D2 검토를 통과했다. [실행 범위와 증거](devdoc/evidence/module-independence-survey-20261026.md#f2-contract-selection)를 따른다.
 
