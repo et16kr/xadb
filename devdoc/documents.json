@@ -23,6 +23,11 @@
       "role": "evidence",
       "title": "main 기존 실패 디버깅: commit window native 초과와 F05 recovery oracle"
     },
+    "f6-wal-revalidation-survey-20261102.md": {
+      "path": "evidence/f6-wal-revalidation-survey-20261102.md",
+      "role": "evidence",
+      "title": "F6-a WAL 재검증 비용: 정적 조사와 측정 계획"
+    },
     "module-mi03-limits-20261101.md": {
       "path": "evidence/module-mi03-limits-20261101.md",
       "role": "evidence",

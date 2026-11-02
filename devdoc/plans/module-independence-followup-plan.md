@@ -1,6 +1,6 @@
 # XADB 모듈 분리 후 안정화·경계 개선 실행 계획
 
-2026-11-02 · **계획 D2 ACCEPT / F0 수정·이관·선택 검증 완료 / F1 별도 구현·검증 기록 / F2 구현·선택 검증·독립 검토 완료 / F5-a 구현·선택 검증·독립 검토 완료 / F3 구현·선택 검증·독립 검토 완료 / F4 PR #31·#32 병합 / F5-b 구현·로컬 선택 검증, PR 대기 / F6 미완료 / F7 현재 안내 동반 정리**
+2026-11-02 · **계획 D2 ACCEPT / F0 수정·이관·선택 검증 완료 / F1 별도 구현·검증 기록 / F2 구현·선택 검증·독립 검토 완료 / F5-a 구현·선택 검증·독립 검토 완료 / F3 구현·선택 검증·독립 검토 완료 / F4 PR #31·#32 병합 / F5-b PR #33 병합 / F6-a 정적 조사·측정 계획 작성(D03 사용자 결정, 측정 NOT_RUN) / F6 측정·F6-b 미완료 / F7 현재 안내 동반 정리**
 
 모듈 분리 후속 개발을 위한 개선 순서와 완료 조건을 정한다. 각 단위에 현재 코드·계약의 근거와 비교할 대안을 연결한다. 계획 채택 때 제품·검사기·시험·측정은 시작하지 않았다. 후속 사용자 지시로 [F0 기존 증거 분류](../evidence/main-preexisting-failures-20261030.md#f0-existing-evidence)를 기록했고, 다시 F0 전체 완료 지시에 따라 [수정·이관·선택 검증](../evidence/main-preexisting-failures-20261030.md#f0-completion)을 마쳤다. 과거 원 로그 미확보의 attribution 한계는 보존하며 현재 선택78개의 PASS와 구분한다. F1은 별도로 구현·검증하며 [실행 기록](../evidence/module-independence-survey-20261026.md#f1-python-gate)에 현재 상태를 둔다. 이후 개발 재개 지시가 오면 해당 단위의 기존 위임과 D1/D2 절차 안에서 진행하며 일상 구현마다 재승인을 요구하지 않는다.
 
@@ -90,7 +90,7 @@ F0는 **분류 완료**, **수정·검증 완료**, **사용자 처리 결정**,
 | --- | --- | --- |
 | D01 이관 전 6개 시험 | 후속 “F0를 끝까지 진행” 지시에 따라 원 증거를 보존한 current-format 이관을 적용. 독립 fixture/base4 oracle·사례 대응표와 memory45개 PASS는 [F0 완료](../evidence/main-preexisting-failures-20261030.md#f0-completion) | 이관·선택 검증 완료. 과거 FAIL과 ignored native/static의 별도 범위 유지 |
 | D02 공통 C 변경을 직접 검증하는 A/B 사례 | 실제 C diff→호출 경로→계약→최소 사례를 제시해 변경 코드 시험 범위임을 확인. 이 범위로 해결 가능하면 기존 권한으로 진행. 사용자 규칙의 해석이 미정이거나 무변경 소비자 회귀까지 필요하면 필요한 범위만 사용자에게 확인 | 전이 의존 전체 재실행을 허용하지 않음. 미실행은 NOT_RUN으로 남기고 coverage 완료로 세지 않음 |
-| D03 WAL 진단·성능 측정 | F6-a의 입력·관측 질문·반복·시간/disk 예산·중단 조건을 구체화. 기존 지시로 허용된 범위면 재사용하고, 무변경 baseline 측정 등 적용 권한이 없으면 유한 측정 범위를 사용자에게 확인 | 정적 조사·계측 설계까지 진행. 미허용 측정을 시작하거나 PF04/COMM의 한정 지시를 전용하지 않음 |
+| D03 WAL 진단·성능 측정 (2026-11-02 사용자 결정: 정적 조사·측정 계획까지만, [F6-a 기록](../evidence/f6-wal-revalidation-survey-20261102.md)) | F6-a의 입력·관측 질문·반복·시간/disk 예산·중단 조건을 구체화. 기존 지시로 허용된 범위면 재사용하고, 무변경 baseline 측정 등 적용 권한이 없으면 유한 측정 범위를 사용자에게 확인 | 정적 조사·계측 설계까지 진행. 미허용 측정을 시작하거나 PF04/COMM의 한정 지시를 전용하지 않음 |
 
 <a id="gate-tests"></a>
 ## 5. F1 — gate·runner 변경을 해당 PR에서 검증
@@ -191,6 +191,8 @@ EX08은 [`semantic_row/transition_tests.rs`](../../crates/engine/src/storage/sem
 
 **F6-a 조사·측정:** 같은 데이터/작업 의미에서 WAL 길이만 달리한 유한 입력을 구성한다. INSERT 지연, 읽은 WAL byte·재생 frame 수·hash byte, gate 대기/보유 시간, 읽기 지연을 관측한다. baseline/candidate source, I/O adapter와 장치, 캐시·checkpoint/base 조건, 반복 수, 시간·disk 예산, 결과 무효·중단 기준은 실행 전에 [DP07](../policies/development-policy.md#section-8)에 맞춰 동결한다. [D03](#user-decisions)으로 측정 권한·변경 시험 범위를 확인하고, 기존 PF04/COMM 조건을 임의 전용하지 않는다. 현재 계획에서는 임의 성능 합격 수치를 정하지 않는다.
 
+**2026-11-02 F6-a 단위:** 사용자는 D03에서 "정적 조사·측정 계획까지만"을 골랐다. main `d86bafb`의 재검증 경로·1회 비용·거래당 호출 하한·잠금을 코드에서 읽고, 측정 질문·입력·관측·환경·반복·예산·무효/중단 기준의 초안을 [F6-a 기록](../evidence/f6-wal-revalidation-survey-20261102.md)에 남겼다. 지금 제품에서는 commit·rollback 거래와 그 행이 Job cell 64개를 하나씩 쥐고 실행 중에는 비우지 않아(live Row retirement 부재) 한 epoch의 한 행 거래가 32개 이하다. Forward 전 Cancel은 cell을 돌려주므로, 측정 계획은 Reserve→Cancel 순환으로 WAL을 64 MiB까지 늘린다. 측정·계측 코드·제품 변경은 없으며, 측정은 그 기록 9절의 결정을 받은 뒤 별도 단위다.
+
 **F6-b 조건부 설계:** 병목이 확인된 경우에만 아래를 비교한다.
 
 1. 현 전체 검증 유지: 비용이 허용 범위면 가장 단순한 안으로 종료한다.
@@ -234,4 +236,4 @@ A/B/C·C0·S단계는 기존 인수·이력의 식별자로 유지한다. 새 �
 | 의견 반영 | 정량 기준선, 분류와 CI 차단 해제의 구분, 작업별 실패 파일, resident 미검증 8개 후속 작업, D01–D03 결정, EX01–EX09 처리 기준과 현재 색인을 보완. [정정 댓글](https://github.com/et16kr/xadb/pull/23#issuecomment-6560583019)에 따라 독립 평가 보고서로 확대하지 않고 실행 계획 범위를 유지 |
 | 수정 검토 | `/root/followup_plan_review`가 수정 계획·색인 3개 파일을 기존 정책·최신 증거·manifest와 대조하고 정량 기준선을 독립 재집계해 D2 ACCEPT, 필수 수정 0으로 판정했다. root README의 낡은 현재 안내도 갱신하라는 권고 1건을 반영했고, 평가 추가 권고 철회를 포함한 최종판 재확인에서 ACCEPT·필수 수정 0·추가 권고 0을 확인했다. 계약 대조·통합 담당 `/root`가 반영을 확인했으며 개별 후속 구현의 검토를 대신하지 않는다 |
 | 재검토 조건 | 기준선의 관련 코드·정책 변경, 신규 실제 소비자, 측정이 비용 가설을 지지하지 않음, 기존 실패 원인의 영향 확대 |
-| 현재 실행 | 문서·색인 보완. 계획 저장 시점의 F0–F7 구현·제품 시험·성능 측정은 NOT_RUN이었다. 후속 F0는 기존 증거 분류 뒤 current-format 이관과 선택 검증까지 마쳤으며 원 기록·역사적 attribution 한계는 보존한다. F1 구현·선택 검증은 위 실행 기록을 따르며, F2의 제어 구현·선택 검증·독립 검토는 [F2 기록](../evidence/module-independence-survey-20261026.md#f2-contract-selection)을 따르며 제품 시험은 NOT_RUN이다. F5-a 제어 구현·선택 검증은 [별도 기록](../evidence/module-independence-survey-20261026.md#f5-test-ownership)을 따른다. F3의 읽기 호출·소유 pilot은 [별도 기록](../evidence/module-independence-survey-20261026.md#f3-catalog-call)을 따른다. F4는 PR #31·#32로 병합됐고, F5-b는 [별도 기록](../evidence/module-independence-survey-20261026.md#f5-scope3-fixture)을 따르며 F6은 미완료다. F7 현재 진입 안내를 동반 정리했다. [문서 운영 기준](../policies/documentation-policy.md#push-gate)에 따라 push 직전에 문서 검사와 전송 commit의 필수 훅을 수행하고 실제 결과는 검사 산출물·PR에 기록. Clippy의 시험 target 컴파일은 제품 시험 실행으로 세지 않음 |
+| 현재 실행 | 문서·색인 보완. 계획 저장 시점의 F0–F7 구현·제품 시험·성능 측정은 NOT_RUN이었다. 후속 F0는 기존 증거 분류 뒤 current-format 이관과 선택 검증까지 마쳤으며 원 기록·역사적 attribution 한계는 보존한다. F1 구현·선택 검증은 위 실행 기록을 따르며, F2의 제어 구현·선택 검증·독립 검토는 [F2 기록](../evidence/module-independence-survey-20261026.md#f2-contract-selection)을 따르며 제품 시험은 NOT_RUN이다. F5-a 제어 구현·선택 검증은 [별도 기록](../evidence/module-independence-survey-20261026.md#f5-test-ownership)을 따른다. F3의 읽기 호출·소유 pilot은 [별도 기록](../evidence/module-independence-survey-20261026.md#f3-catalog-call)을 따른다. F4는 PR #31·#32로 병합됐고, F5-b는 PR #33으로 병합됐고 [별도 기록](../evidence/module-independence-survey-20261026.md#f5-scope3-fixture)을 따른다. F6-a 정적 조사·측정 계획은 [F6-a 기록](../evidence/f6-wal-revalidation-survey-20261102.md)이며 측정·F6-b는 미완료다. F7 현재 진입 안내를 동반 정리했다. [문서 운영 기준](../policies/documentation-policy.md#push-gate)에 따라 push 직전에 문서 검사와 전송 commit의 필수 훅을 수행하고 실제 결과는 검사 산출물·PR에 기록. Clippy의 시험 target 컴파일은 제품 시험 실행으로 세지 않음 |
