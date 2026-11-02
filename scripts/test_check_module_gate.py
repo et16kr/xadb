@@ -1731,5 +1731,58 @@ class F3CatalogOwnershipTests(unittest.TestCase):
         self.assertFalse(gate.allowed(policy, 'CAT', 'catalog_call', False))
 
 
+class F3NativeMonitorTests(unittest.TestCase):
+    """The F3 native attestation must survive publication without hiding bounds."""
+
+    def test_only_running_database_disappearance_is_transient(self):
+        import dev3_catalog_native as native
+        from unittest.mock import patch
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            db = root / 'database'
+            db.mkdir()
+            stage = db / 'stage'
+            stage.write_bytes(b'1234')
+            original = Path.lstat
+            def vanish(path, *args, **kwargs):
+                if path == stage:
+                    raise FileNotFoundError(path)
+                return original(path, *args, **kwargs)
+            with patch.object(Path, 'lstat', vanish):
+                self.assertEqual(native.size(root, transient=db), 0)
+                with self.assertRaises(FileNotFoundError):
+                    native.size(root)
+                with self.assertRaises(FileNotFoundError):
+                    native.size(root, transient=root / 'elsewhere')
+            # The published name is counted by both the live and strict scans.
+            stage.rename(db / 'published')
+            self.assertEqual(native.size(root, transient=db), 4)
+            self.assertEqual(native.size(root), 4)
+
+    def test_running_scan_preserves_symlink_database_and_artifact_limits(self):
+        import dev3_catalog_native as native
+        from unittest.mock import patch
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            output = root / 'N02'
+            db = output / 'database'
+            db.mkdir(parents=True)
+            file = db / 'file'
+            file.write_bytes(b'12345')
+            budget = {**native.BUDGET, 'database_bytes': 4, 'free_floor_bytes': 0}
+            with patch.object(native, 'BUDGET', budget):
+                for running in (False, True):
+                    with self.assertRaisesRegex(ValueError, 'live database bound'):
+                        native.enforce_bounds(output, root, running=running)
+            budget.update(database_bytes=6, artifact_bytes=4)
+            with patch.object(native, 'BUDGET', budget):
+                for running in (False, True):
+                    with self.assertRaisesRegex(ValueError, 'native aggregate bound'):
+                        native.enforce_bounds(output, root, running=running)
+            (db / 'link').symlink_to(file)
+            with self.assertRaisesRegex(ValueError, 'symlink'):
+                native.size(root, transient=db)
+
+
 if __name__ == '__main__':
     unittest.main()
