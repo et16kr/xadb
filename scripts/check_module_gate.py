@@ -800,6 +800,8 @@ class Manifest:
         for key in ('build_workflow', 'artifact', 'head_command', 'test_command', 'skip'):
             if key not in data['evidence']:
                 raise GateError(f'{origin}: evidence.{key}')
+        if data['evidence'].get('selection_mode', 'legacy') not in ('legacy', 'changed-paths'):
+            raise GateError(f'{origin}: evidence.selection_mode')
         for item in data['evidence'].get('executor_only', []):
             if not (isinstance(item, dict) and isinstance(item.get('selector'), str)
                     and SELECTOR.match(item['selector']) and item.get('reason')):
@@ -1222,20 +1224,23 @@ def selection(manifest, touched, records, rust, cases=None, generated=None, opti
     when that feature changed (AGENTS.md: no tests for unchanged code)."""
     if not rust:
         return {'rust': False, 'selectors': [], 'cases': [], 'exports': []}
-    cases, generated, optional = cases or {}, generated or {}, optional or {}
+    scoped = manifest.data['evidence'].get('selection_mode') == 'changed-paths'
+    cases, generated, optional = ({}, {}, {}) if scoped else (
+        cases or {}, generated or {}, optional or {})
 
     def split(names):
         return {'optional_cases': sorted(n for n in names if not n.endswith('::')),
                 'optional_selectors': sorted(n for n in names if n.endswith('::'))}
 
     selectors = {s for names in generated.values() for s in names}
-    for mid in touched:
+    for mid in (() if scoped else touched):
         if mid not in manifest.modules:
             continue
         selectors.update(manifest.modules[mid].get('ci_selectors', []))
         for also in manifest.modules[mid].get('ci_also', []):
             selectors.update(manifest.modules[also].get('ci_selectors', []))
-    selectors |= record_selectors(records)[1]
+    if not scoped:
+        selectors |= record_selectors(records)[1]
     evidence = manifest.data['evidence']
     return {'rust': True, 'head_command': evidence['head_command'],
             'test_command': evidence['test_command'], 'skip': evidence['skip'],
@@ -1246,11 +1251,145 @@ def selection(manifest, touched, records, rust, cases=None, generated=None, opti
             **split({c for names in optional.values() for c in names}),
             'exports': [{'side': e['side'], 'command': e['command'],
                          'selectors': sorted(set(manifest.modules[e['keeps']].get(
-                             'ci_selectors', []) if e['keeps'] in touched else ())
+                             'ci_selectors', []) if not scoped and e['keeps'] in touched else ())
                              | generated.get(e['keeps'], set())),
                          'cases': sorted(cases.get(e['keeps'], ())),
                          **split(optional.get(e['keeps'], set()))}
                         for e in manifest.data['exports']]}
+
+
+def export_absent_inputs(manifest, source, inputs):
+    """Use the export tool's actual removals, including C-owned test modules."""
+    import module_single_source
+    if source == 'head':
+        return []
+    spec = module_single_source.source_spec(manifest.data, source.removeprefix('export-'))
+    if spec is None:
+        raise GateError(f'unsupported source {source}')
+    removed = (spec['removed']
+               + [f'{module_single_source.MEMORY}/{n}' + suffix
+                  for n in spec['tests'] for suffix in ('.rs', '')]
+               + [entry[3] for entry in spec.get('tests_c', [])])
+    return sorted(p for p in inputs if any(p == r or p.startswith(r + '/') for r in removed))
+
+
+def exact_paths(value, empty=False):
+    """Normalized literal repository paths, never globs or an implicit scope."""
+    return (isinstance(value, list) and (empty or bool(value))
+            and all(isinstance(p, str) and p and not p.startswith('/')
+                    and '..' not in p.split('/') and normalize(p) == p
+                    and not any(c in p for c in '*?[]\\') for p in value)
+            and len(value) == len(set(value)))
+
+
+def scoped_test_selection(manifest, analysis, changed, records, contracts):
+    """Reviewed changed-path -> exact case/source edges, with no broad fallback.
+
+    Reviews in the declaring record cover the changed inputs AND the selected
+    test/fixture blobs. This proves identity, not semantic sufficiency: the
+    independent reviewer must check the reason and case coverage. Mandatory
+    trusted contracts are unioned separately and cannot be waived here.
+    """
+    tree = analysis.tree
+    selected, errors = [], []
+    destinations = {'head'} | {f"export-{e['side']}" for e in manifest.data['exports']}
+    covered = {p for row in contracts for p in row['changed']}
+
+    def reviewed(paths, reviews):
+        return all(any(r['files'].get(p) == (tree.blob(p) or 'deleted') for r in reviews)
+                   for p in paths)
+
+    for record, data in records:
+        if data.get('ci_selectors'):
+            errors.append(f'{record}: changed-paths requires rust_tests, not ci_selectors')
+        reviews = valid_reviews([(record, data)])
+        rows = data.get('rust_tests', [])
+        if not isinstance(rows, list):
+            errors.append(f'{record}: rust_tests must be a list')
+            rows = []
+        for index, row in enumerate(rows):
+            label = f'{record}: rust_tests[{index}]'
+            if (not isinstance(row, dict) or set(row) != {'paths', 'reason', 'cases'}
+                    or not exact_paths(row.get('paths'))
+                    or not isinstance(row.get('reason'), str) or not row['reason'].strip()
+                    or not isinstance(row.get('cases'), list) or not row['cases']):
+                errors.append(f'{label}: requires exact paths, reason and nonempty cases')
+                continue
+            paths = set(row['paths'])
+            if not paths <= changed:
+                errors.append(f'{label}: paths are not changed Rust inputs: {sorted(paths - changed)}')
+                continue
+            if not reviewed(paths, reviews):
+                errors.append(f'{label}: changed paths lack same-record review at head blobs')
+                continue
+            seen = set()
+            for case in row['cases']:
+                if (not isinstance(case, dict) or not {'file', 'case', 'sources'} <= set(case)
+                        or set(case) - {'file', 'case', 'sources', 'inputs'}
+                        or not exact_paths([case.get('file')])
+                        or not exact_paths(case.get('inputs', []), empty=True)
+                        or not isinstance(case.get('case'), str)
+                        or not SELECTOR.fullmatch(case['case']) or case['case'].endswith('::')
+                        or not isinstance(case.get('sources'), list) or not case['sources']
+                        or not all(isinstance(s, str) for s in case['sources'])
+                        or len(case['sources']) != len(set(case['sources']))
+                        or not set(case['sources']) <= destinations
+                        or 'head' not in case['sources']):
+                    errors.append(f'{label}: invalid exact case, inputs or sources (head required)')
+                    continue
+                key = (case['file'], case['case'])
+                if key in seen:
+                    errors.append(f'{label}: duplicate case {case["case"]}')
+                    continue
+                seen.add(key)
+                inputs = {case['file'], *case.get('inputs', [])}
+                if any(not tree.exists(p) for p in inputs):
+                    errors.append(f'{label}: missing case/fixture input')
+                    continue
+                if not reviewed(inputs, reviews):
+                    errors.append(f'{label}: case/fixture inputs lack same-record review at head blobs')
+                    continue
+                discovered, _, _, _ = changed_cases(manifest, analysis, {case['file']})
+                if case['case'] not in {c for names in discovered.values() for c in names}:
+                    errors.append(f'{label}: required case not found (or ignored/unknown cfg/executor-only)')
+                    continue
+                # Deleted rename sources remain identity evidence, not live export inputs.
+                inputs |= paths
+                live = {p for p in inputs if tree.exists(p)}
+                for source in case['sources']:
+                    absent = export_absent_inputs(manifest, source, live)
+                    if absent:
+                        errors.append(f'{label}: {source} removes input {absent[0]}')
+                        continue
+                    selected.append(dict(record=record, reason=row['reason'], source=source,
+                                         case=case['case'], changed=sorted(paths),
+                                         inputs={p: tree.blob(p) or 'deleted' for p in sorted(inputs)}))
+                covered |= paths
+        exemptions = data.get('na', [])
+        if not isinstance(exemptions, list):
+            errors.append(f'{record}: na must be a list of exact changed paths')
+            continue
+        for item in exemptions:
+            if (not isinstance(item, dict) or not exact_paths(item.get('paths'))
+                    or not isinstance(item.get('reason'), str) or not item['reason'].strip()
+                    or not set(item['paths']) <= changed):
+                errors.append(f'{record}: N/A requires exact changed paths and a reason')
+            elif not reviewed(item['paths'], reviews):
+                errors.append(f'{record}: N/A lacks same-record review at head blobs')
+            else:
+                covered.update(item['paths'])
+    for path in sorted(changed - covered):
+        errors.append(f'no scoped CI evidence for {path}: declare reviewed rust_tests or exact N/A')
+    return selected, errors
+
+
+def apply_scoped_selection(plan, rows):
+    """Reuse the existing source-specific exact-case runner and receipt lane."""
+    plan['scoped_tests'] = rows
+    parts = {'head': plan, **{f"export-{e['side']}": e for e in plan['exports']}}
+    for row in rows:
+        part = parts[row['source']]
+        part['cases'] = sorted(set(part['cases']) | {row['case']})
 
 
 def contract_selection(manifest, analysis, paths):
@@ -1261,7 +1400,6 @@ def contract_selection(manifest, analysis, paths):
     for a new implementation, fixture, oracle or harness. Export applicability
     uses the export tool's actual removal table, including C-owned test files.
     """
-    import module_single_source
     tree = analysis.tree
     selected, errors = [], []
     files = tree.files()
@@ -1280,20 +1418,9 @@ def contract_selection(manifest, analysis, paths):
         if row['case'] not in {c for group in cases.values() for c in group}:
             errors.append(f'contract {row["id"]}: required case not found (or ignored/unknown cfg)')
         for source in row['sources']:
-            if source != 'head':
-                spec = module_single_source.source_spec(
-                    manifest.data, source.removeprefix('export-'))
-                if spec is None:
-                    errors.append(f'contract {row["id"]}: unsupported source {source}')
-                    continue
-                removed = (spec['removed']
-                           + [f'{module_single_source.MEMORY}/{n}' + suffix
-                              for n in spec['tests'] for suffix in ('.rs', '')]
-                           + [entry[3] for entry in spec.get('tests_c', [])])
-                absent = sorted(p for p in inputs if any(
-                    p == r or p.startswith(r + '/') for r in removed))
-                if absent:
-                    errors.append(f'contract {row["id"]}: {source} removes input {absent[0]}')
+            absent = export_absent_inputs(manifest, source, inputs)
+            if absent:
+                errors.append(f'contract {row["id"]}: {source} removes input {absent[0]}')
             selected.append(dict(id=row['id'], owner=row['owner'], source=source, case=row['case'],
                                  changed=matched, contract=row['contract'],
                                  inputs={p: tree.blob(p) for p in sorted(inputs)}))
@@ -1816,14 +1943,24 @@ def judge(repo, base, head, policy=None, mode='merge', exports=True):
     rust = rust or bool(contract_cases)
     plan = selection(trusted, touched, records, rust, cases, generated, optional)
     apply_contract_selection(plan, contract_cases)
+    scoped = trusted.data['evidence'].get('selection_mode') == 'changed-paths'
+    if scoped:
+        changed_inputs = {p for _s, o, n in diff for p in (o, n) if p and RUST_INPUTS.match(p)}
+        scoped_cases, scoped_errors = scoped_test_selection(
+            trusted, analysis, changed_inputs, records, contract_cases)
+        errors += scoped_errors
+        apply_scoped_selection(plan, scoped_cases)
+    elif any('rust_tests' in data for _path, data in records):
+        errors.append('rust_tests requires an adopted changed-paths policy')
     python, python_errors = python_selection(trusted, head_tree, diff, records, policy_tree)
     if python is not None:
         plan['python'] = python
     errors += python_errors
     unscoped = {p for _s, o, n in diff for p in (o, n)
                 if p and RUST_INPUTS.match(p) and trusted.owner(p) == '-'}
-    obligations += coverage_findings(trusted, touched, records, plan, cases, generated,
-                                     unscoped, executor, head_tree)
+    if not scoped:
+        obligations += coverage_findings(trusted, touched, records, plan, cases, generated,
+                                         unscoped, executor, head_tree)
     if rust:
         for mid, patterns in sorted(trusted.data['attested'].get('required_for', {}).items()):
             for pattern in patterns if mid in touched else []:

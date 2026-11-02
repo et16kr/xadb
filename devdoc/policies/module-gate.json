@@ -746,7 +746,8 @@
     "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::tests::g5_bind_boundaries",
     "reason": "case P4-G5-B08 needs XADB_PLAN4_G5_CAPACITY_PADDING, the source-bound static gate input that scripts/dev3_plan4_clean_cases.py computes"
    }
-  ]
+  ],
+  "selection_mode": "changed-paths"
  },
  "python_tests": {
   "scripts/check_module_gate.py": [

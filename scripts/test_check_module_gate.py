@@ -1784,5 +1784,248 @@ class F3NativeMonitorTests(unittest.TestCase):
                 native.size(root, transient=db)
 
 
+class ScopedSelectionTests(GateFixture):
+    """Changed-path selection: fixture Git trees only, no Rust execution."""
+    source = f'{E}/row/insert.rs'
+    test_file = f'{E}/row/insert/tests.rs'
+    case = 'storage::row::insert::tests::changed'
+    common_file = f'{E}/c_tests.rs'
+    common_case = 'storage::c::tests::shared'
+
+    def setUp(self):
+        super().setUp()
+        self.write(self.test_file, '#[test]\nfn changed() {}\n#[test]\nfn unrelated() {}\n')
+        self.write(self.common_file, '#[test]\nfn shared() {}\n')
+        def adopt(data):
+            data['exports'] = EXPORTS
+            data['evidence']['selection_mode'] = 'changed-paths'
+            data['modules'][0]['ci_also'] = ['C']
+            next(m for m in data['modules'] if m['id'] == 'C')['ci_selectors'] = ['storage::c::']
+        self.set_manifest(adopt)
+        self.base = self.commit('adopt scoped policy')
+
+    def changed(self):
+        self.edit(self.source, 'fn insert(', 'fn changed_insert(')
+        return self.commit('change A implementation')
+
+    def row(self, paths=None, file=None, case=None, sources=None, inputs=None):
+        item = dict(file=file or self.test_file, case=case or self.case,
+                    sources=sources or ['head', 'export-a'])
+        if inputs is not None:
+            item['inputs'] = inputs
+        return dict(paths=paths or [self.source], reason='case exercises this changed path',
+                    cases=[item])
+
+    def record(self, head, rows=None, na=None, mutate=None):
+        rows = [self.row()] if rows is None else rows
+        files = gate.review_files(str(self.repo), self.base, head)
+        tree = gate.Tree(str(self.repo), head)
+        if isinstance(rows, list):
+            for row in rows:
+                if isinstance(row, dict) and isinstance(row.get('cases'), list):
+                    for case in row['cases']:
+                        if isinstance(case, dict):
+                            for path in [case.get('file'), *case.get('inputs', [])]:
+                                if isinstance(path, str) and tree.exists(path):
+                                    files[path] = tree.blob(path)
+        data = dict(schema=gate.RECORD_SCHEMA, rust_tests=rows, na=na or [], reviews=[dict(
+            id='scope', author='/root', reviewer='/root/reviewer', **{'class': 'D2'},
+            scopes=['policy', 'common'], verdict='ACCEPT', required_open=0,
+            files=files, log='review.md')])
+        if mutate:
+            mutate(data)
+        self.write('module-gate/records/scoped.json', json.dumps(data))
+        return self.commit('scoped record')
+
+    def plan(self, head, **kwargs):
+        return self.judge(head, mode='push', exports=False, **kwargs)
+
+    def test_exact_A_case_replaces_feature_join_and_export_defaults(self):
+        report = self.plan(self.record(self.changed()))
+        self.assertEqual(report['errors'], [])
+        self.assertEqual(report['pending'], [])
+        plan = report['selection']
+        self.assertEqual(plan['cases'], [self.case])
+        self.assertEqual(plan['selectors'], [])
+        self.assertEqual(plan['exports'][0]['cases'], [self.case])
+        self.assertEqual(plan['exports'][1]['cases'], [])
+        self.assertTrue(all(e['selectors'] == [] for e in plan['exports']))
+        row = plan['scoped_tests'][0]
+        self.assertEqual(row['changed'], [self.source])
+        self.assertEqual(row['inputs'][self.test_file],
+                         gate.Tree(str(self.repo), report['head']).blob(self.test_file))
+
+    def test_unmapped_path_blocks_before_runner_instead_of_broad_fallback(self):
+        head = self.changed()
+        report = self.plan(head)
+        self.assertFinding(report, 'no scoped CI evidence')
+        self.assertEqual(report['selection']['selectors'], [])
+        self.assertEqual(report['selection']['cases'], [])
+        args = types.SimpleNamespace(repo=self.repo, base=self.base, head=head, policy=None,
+                                     out=Path(self.temp.name) / 'receipt')
+        with mock.patch.object(module_gate_build.gate, 'judge', return_value=report), \
+                mock.patch.object(module_gate_build, 'build_result') as build, \
+                mock.patch.object(module_gate_build.argparse.ArgumentParser, 'parse_args', return_value=args):
+            with self.assertRaisesRegex(gate.GateError, 'invalid gate plan'):
+                module_gate_build.main()
+            build.assert_not_called()
+
+    def test_changed_test_file_does_not_rerun_unchanged_sibling(self):
+        self.edit(self.test_file, 'fn changed() {}', 'fn changed() { assert!(true); }')
+        head = self.commit('change one test')
+        report = self.plan(self.record(head, [self.row(paths=[self.test_file])]))
+        self.assertEqual(report['errors'], [])
+        self.assertEqual(report['selection']['cases'], [self.case])
+        self.assertNotIn('unrelated', json.dumps(report['selection']))
+
+    def test_reviews_bind_changed_paths_and_unchanged_case_inputs_in_same_record(self):
+        head = self.changed()
+        for path in (self.source, self.test_file):
+            for replacement in (None, '0' * 40):
+                def stale(data):
+                    data['reviews'][0]['files'][path] = replacement
+                report = self.plan(self.record(head, mutate=stale))
+                self.assertFinding(report, 'same-record review at head blobs')
+        valid = self.record(head)
+        self.git('mv', 'module-gate/records/scoped.json', 'module-gate/records/other.json')
+        data = json.loads((self.repo / 'module-gate/records/other.json').read_text())
+        data.pop('rust_tests')
+        self.write('module-gate/records/other.json', json.dumps(data))
+        self.write('module-gate/records/scoped.json', json.dumps(dict(
+            schema=gate.RECORD_SCHEMA, rust_tests=[self.row()])))
+        self.assertFinding(self.plan(self.commit('separate review')), 'same-record review')
+        self.assertTrue(valid)
+
+    def test_malformed_rows_paths_cases_and_sources_are_rejected(self):
+        head = self.changed()
+        variants = [None, {}, [None], [dict(self.row(), paths=[])],
+                    [dict(self.row(), paths=[self.source, self.source])],
+                    [dict(self.row(), paths=['../bad.rs'])],
+                    [dict(self.row(), paths=[f'{E}/row/**'])],
+                    [dict(self.row(), paths=[self.test_file])],
+                    [dict(self.row(), reason=' ')], [dict(self.row(), cases=[])]]
+        for field, value in [('case', 'storage::row::'), ('file', '../test.rs'),
+                             ('sources', []), ('sources', ['head', 'head']),
+                             ('sources', ['export-a']), ('sources', ['head', 'export-z']),
+                             ('inputs', ['tests/**'])]:
+            row = self.row()
+            row['cases'][0][field] = value
+            variants.append([row])
+        row = self.row()
+        row['cases'] *= 2
+        variants.append([row])
+        for rows in variants:
+            with self.subTest(rows=rows):
+                # None is a malformed explicit value, not record()'s default.
+                candidate = self.record(head, [], mutate=lambda d: d.update(rust_tests=rows))
+                self.assertEqual(self.plan(candidate)['status'], 'FAIL')
+
+    def test_unknown_ignored_cfg_macro_and_executor_cases_cannot_count(self):
+        head = self.changed()
+        for body in ('#[test]\nfn other() {}', '#[test]\n#[ignore]\nfn changed() {}',
+                     '#[test]\n#[cfg(feature="x")]\nfn changed() {}',
+                     'macro_rules! make { () => { #[test] fn changed() {} }; } make!();'):
+            self.write(self.test_file, body)
+            head = self.commit('non-discoverable case')
+            row = self.row(paths=[self.source, self.test_file])
+            self.assertFinding(self.plan(self.record(head, [row])), 'required case not found')
+        self.write(self.test_file, '#[test]\nfn changed() {}')
+        self.set_manifest(lambda d: d['evidence'].update(executor_only=[dict(
+            selector=self.case, reason='requires executor')]))
+        head = self.commit('executor policy fixture')
+        self.assertFinding(self.plan(self.record(head, [row]), policy=head), 'required case not found')
+
+    def test_export_rejects_removed_case_and_explicit_fixture_inputs(self):
+        head = self.changed()
+        self.assertFinding(self.plan(self.record(head, [self.row(sources=['head', 'export-b'])])),
+                           'export-b removes input')
+        fixture = 'tests/fixtures/module-row-read/b.json'
+        row = self.row(inputs=[fixture])
+        self.assertFinding(self.plan(self.record(head, [row])), 'export-a removes input')
+        row['cases'][0]['inputs'] = ['tests/fixtures/missing.json']
+        self.assertFinding(self.plan(self.record(head, [row])), 'missing case/fixture input')
+
+    def test_renamed_fixture_keeps_deleted_identity_and_runs_common_case_in_both_exports(self):
+        old, new = 'tests/fixtures/module-row-insert/a.json', 'tests/fixtures/common/a.json'
+        (self.repo / new).parent.mkdir(parents=True)
+        self.git('mv', old, new)
+        head = self.commit('move fixture')
+        row = self.row(paths=[old, new], file=self.common_file, case=self.common_case,
+                       sources=['head', 'export-a', 'export-b'], inputs=[new])
+        report = self.plan(self.record(head, [row]))
+        self.assertEqual(report['errors'], [])
+        self.assertTrue(all(e['cases'] == [self.common_case] for e in report['selection']['exports']))
+        self.assertEqual(report['selection']['scoped_tests'][0]['inputs'][old], 'deleted')
+
+    def test_na_requires_exact_changed_paths_and_current_same_record_review(self):
+        head = self.changed()
+        for item in (dict(module='A', reason='alias'), dict(paths=[f'{E}/row/**'], reason='alias'),
+                     dict(paths=[self.test_file], reason='alias'),
+                     dict(paths=[self.source], reason=' ')):
+            self.assertFinding(self.plan(self.record(head, [], [item])), 'N/A requires exact')
+        na = [dict(paths=[self.source], reason='registration only')]
+        report = self.plan(self.record(head, [], na))
+        self.assertEqual(report['errors'], [])
+        self.assertEqual(report['selection']['cases'], [])
+        stale = lambda d: d['reviews'][0]['files'].update({self.source: '0' * 40})
+        self.assertFinding(self.plan(self.record(head, [], na, stale)), 'N/A lacks same-record')
+
+    def test_nonempty_legacy_selectors_are_rejected_in_scoped_mode(self):
+        report = self.plan(self.record(self.changed(), mutate=lambda d: d.update(
+            ci_selectors=['storage::row::insert::'])))
+        self.assertFinding(report, 'not ci_selectors')
+        self.assertEqual(report['selection']['selectors'], [])
+
+    def test_legacy_policy_requires_separate_adoption_and_unknown_mode_fails(self):
+        self.set_manifest(lambda d: d['evidence'].pop('selection_mode'))
+        legacy = self.commit('legacy baseline')
+        self.set_manifest(lambda d: d['evidence'].update(selection_mode='changed-paths'))
+        head = self.changed()
+        report = self.plan(head, policy=legacy)
+        self.assertIn('storage::row::insert::', report['selection']['selectors'])
+        report = self.plan(self.record(head), policy=legacy)
+        self.assertFinding(report, 'requires an adopted changed-paths')
+        for value in ('typo', None, [], {}):
+            data = manifest()
+            data['evidence']['selection_mode'] = value
+            with self.assertRaisesRegex(gate.GateError, 'selection_mode'):
+                gate.Manifest(data, 'fixture')
+
+    def test_head_cannot_remove_adopted_mode_or_mandatory_contract_and_cases_deduplicate(self):
+        contract = dict(id='scope-contract', owner='A', paths=[self.source],
+                        test_file=self.test_file, inputs=[self.test_file], case=self.case,
+                        sources=['head', 'export-a'], contract='contract.md#ex', reason='mandatory')
+        self.set_manifest(lambda d: d.update(affected_contracts=[contract]))
+        self.base = self.commit('mandatory contract')
+        self.set_manifest(lambda d: (d['evidence'].pop('selection_mode'),
+                                     d.update(affected_contracts=[])))
+        head = self.changed()
+        report = self.plan(self.record(head))
+        self.assertEqual(report['errors'], [])
+        self.assertEqual(len(report['selection']['contracts']), 2)
+        self.assertEqual(report['selection']['cases'], [self.case])
+        self.assertEqual(report['selection']['selectors'], [])
+        # Exact N/A cannot erase a trusted required contract.
+        report = self.plan(self.record(head, [], [dict(paths=[self.source], reason='no extra test')]))
+        self.assertEqual(report['selection']['cases'], [self.case])
+        self.assertEqual(report['selection']['exports'][0]['cases'], [self.case])
+
+    def test_receipt_binds_scoped_provenance_and_exact_source_results(self):
+        report = self.plan(self.record(self.changed()))
+        receipt = FinalTests.receipt(self, report)
+        for prefix in ('head', 'export-a'):
+            receipt['results'].append(dict(name=f'{prefix}-cases', status='PASS', listed=1,
+                passed=1, failed=0, ignored=0, listed_names=[self.case], passed_names=[self.case]))
+        run = FinalTests.run_for(self, report)
+        verify = lambda r: gate.verify_receipt(report, r, run, 'o/r', 'c' * 64)
+        self.assertEqual(verify(receipt), [])
+        bad = copy.deepcopy(receipt)
+        bad['selection']['scoped_tests'][0]['inputs'][self.source] = '0' * 40
+        self.assertTrue(verify(bad))
+        bad = copy.deepcopy(receipt)
+        bad['results'] = [r for r in bad['results'] if r['name'] != 'export-a-cases']
+        self.assertTrue(any('export-a-cases' in e for e in verify(bad)))
+
+
 if __name__ == '__main__':
     unittest.main()

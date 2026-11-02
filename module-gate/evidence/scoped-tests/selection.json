@@ -1,0 +1,36 @@
+{
+ "base": "aa87366d299cb89515161cd46ced7faa1972fd1b",
+ "branch": "codex/module-followup-scoped-tests",
+ "scope": "Python-only prerequisite for F4 and F5-b; no product Rust or fixture change",
+ "execution": "CI F1 exact Python lane; no local duplicate execution",
+ "tests": [
+  "test_check_module_gate.ScopedSelectionTests.test_exact_A_case_replaces_feature_join_and_export_defaults",
+  "test_check_module_gate.ScopedSelectionTests.test_unmapped_path_blocks_before_runner_instead_of_broad_fallback",
+  "test_check_module_gate.ScopedSelectionTests.test_changed_test_file_does_not_rerun_unchanged_sibling",
+  "test_check_module_gate.ScopedSelectionTests.test_reviews_bind_changed_paths_and_unchanged_case_inputs_in_same_record",
+  "test_check_module_gate.ScopedSelectionTests.test_malformed_rows_paths_cases_and_sources_are_rejected",
+  "test_check_module_gate.ScopedSelectionTests.test_unknown_ignored_cfg_macro_and_executor_cases_cannot_count",
+  "test_check_module_gate.ScopedSelectionTests.test_export_rejects_removed_case_and_explicit_fixture_inputs",
+  "test_check_module_gate.ScopedSelectionTests.test_renamed_fixture_keeps_deleted_identity_and_runs_common_case_in_both_exports",
+  "test_check_module_gate.ScopedSelectionTests.test_na_requires_exact_changed_paths_and_current_same_record_review",
+  "test_check_module_gate.ScopedSelectionTests.test_nonempty_legacy_selectors_are_rejected_in_scoped_mode",
+  "test_check_module_gate.ScopedSelectionTests.test_legacy_policy_requires_separate_adoption_and_unknown_mode_fails",
+  "test_check_module_gate.ScopedSelectionTests.test_head_cannot_remove_adopted_mode_or_mandatory_contract_and_cases_deduplicate",
+  "test_check_module_gate.ScopedSelectionTests.test_receipt_binds_scoped_provenance_and_exact_source_results",
+  "test_check_module_gate.ModuleGateTests.test_normal_change_with_review_passes",
+  "test_check_module_gate.FinalTests.test_exports_run_only_the_changed_feature",
+  "test_check_module_gate.F2ContractTests.test_common_change_selects_minimal_export_case_and_covers_changed_path",
+  "test_check_module_gate.F2ContractTests.test_removed_c_owned_test_and_wrong_fixture_export_are_rejected"
+ ],
+ "relation": {
+  "new_13": "changed-path schema, per-path review, exact cases, fixture rename, export applicability, refusal before execution, trust/adoption and receipt provenance",
+  "legacy_2": "selection() legacy branch and kept-feature export behavior remain for historical policy",
+  "F2_2": "shared export_absent_inputs extraction and mandatory contract selection"
+ },
+ "budget": {
+  "ci_timeout_seconds": 900,
+  "rust_product_tests": 0,
+  "native_tests": 0
+ },
+ "stop": "any missing, skipped, interrupted or failing case remains FAIL; repair the concrete cause and select only affected cases for subsequent source evidence"
+}
