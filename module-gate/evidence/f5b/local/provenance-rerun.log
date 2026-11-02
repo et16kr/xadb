@@ -1,0 +1,12 @@
+commit ef033f426bb1b468108ceb10516794484d29890f; moved files: 81
+make_literals.py write_scope3(): 81 files byte-identical
+make_literals.py RowLeaf literals: 8 byte-identical
+transition/author.py without the old-path view: FileNotFoundError on module-row-insert/scope3
+reserve-replay/author.py without the old-path view: FileNotFoundError on module-row-insert/scope3
+transition/blobs.bin byte-identical
+transition/index.tsv byte-identical
+transition/input-plan.json byte-identical
+reserve-replay/blobs.bin byte-identical
+reserve-replay/index.tsv byte-identical
+reserve-replay/input-plan.json byte-identical
+PASS

@@ -2611,6 +2611,7 @@ DEV3 기능은 하지 않는다. 제품 source, 공개 wire, format 번호, cap,
 - C+B에서만, A를 링크하거나 A fixture를 읽는 C의 cfg(test) 모듈 다섯. 등록 블록(바로 위 doc comment 포함)과 파일을 함께 지운다.
   - A 호출 frame을 재는 census 셋: `plan4_apply/row/rollback_census_tests.rs`, `plan4_recovery/row_action_census_tests.rs`, `plan4_retention/catalog_commit/row_census.rs`
   - A의 MCA00-V06 scope3 literal을 읽는 N1·S1-b 시험 둘: `semantic_row/transition_tests.rs`, `plan4_retention/recovery/row_tests.rs`
+  - 2026-11-02 갱신: F4가 census 셋을, [F5-b](#f5-scope3-fixture)가 N1·S1-b 시험 둘의 A 참조를 없앴다. 현재 manifest의 C 시험 제거 등록은 없고, 이 목록은 S8 당시 기록이다.
 
 그 밖의 byte는 바꾸지 않는다. 지운 뒤 `crates/` 아래 Rust source에 `row::read`/`row::insert` 경로나 상대 fixture 경로가 남으면 실패한다(주석 줄은 제외).
 - 이 검사는 이름 정규식이고 범위는 `crates/**/*.rs`뿐이다. 결정적 검사는 export 빌드다. 두 export 모두 상대를 부르는 `cfg(feature)` 경로나 build script는 없다.
@@ -3193,3 +3194,52 @@ C+B export에서 제거한다. 따라서 원 test 이름은 C-only 위임 wrappe
 원 위임 wrapper는 exact N/A와 독립 검토·compile-only로 확인한다. A의 새 2개 사례는 head와 C+A에서
 실행한다. C03 facade와 기존 제품 시험은 무변경이므로 반복하지 않는다. EX08–EX09와
 F5-b/F6은 별도 잔여다. [실행 범위·결과](../evidence/module-independence-survey-20261026.md#f4-caller-budgets)를 따른다.
+
+<a id="f5-scope3-fixture"></a>
+## F5-b — scope3 literal의 C 쪽 fixture 이관
+
+2026-11-02, PR #32 병합 `c0f9e25` 다음 단위다. A가 MCA00-V06에서 독립 작성한
+scope3 Forward/CLR snapshot 81개를 `tests/fixtures/module-row-insert/scope3/`에서
+`tests/fixtures/module-row-format/scope3/`로 옮긴다. 파일 이름·bytes·디렉터리 git
+tree(`7a0e7dfa947d5811e9684edc2392ac42696faee5`)는 그대로다. 바뀐 Rust는 세 시험의
+`include_bytes!` 경로와 모듈 주석뿐이며 제품 코드·생성기·author·wire/format 변경은 없다.
+
+**소유 판단.** 이 snapshot은 두 쪽에서 쓴다. A에는 MCA00-V06 producer 인수의 정답
+literal이고(MCA05-V29 거절 입력 포함), C에서는 EX08의 N1 transition 시험과 EX09의
+S1-b/S1-g replay 시험이 공통 semantic observer·replay 계약을 검증하는 고정 parent다.
+내용은 A 구현의 산출이 아니라 공유 scope3 format의 독립 작성 bytes이므로, 공통 계약
+입력이 있는 C 쪽 root로 옮기고 A가 그 공유 입력을 읽게 한다. `module-row-format/`은
+[소비자 §8](dev3-module-consumers.md#independent-fixtures)이 정한 C 쪽 독립 literal
+root(N1·S1-g)이고, gate에서는 A/B fixture root 밖의 공유 `tests/**`다. 두 C 시험은 더
+이상 A fixture token을 쓰지 않으므로 EX08–EX09를 제거한다. 남은 manifest 예외는 없다.
+
+| 보존 대상 | 처리 |
+| --- | --- |
+| bytes | 81개 모두 git rename 100%. A manifest의 동결 `input_files` SHA-256과 두 author의 parent pin이 새 경로 bytes와 같음을 Python 시험이 확인한다 |
+| 작성 원천 | `module-row-insert/make_literals.py`의 `write_scope3()`와 A manifest의 `scope3`·`input_files` 절은 원 기록으로 그대로 둔다(생성기 SHA는 A manifest가 고정한다). 생성기는 자기 옆 `scope3/`에 쓰므로 재생성은 scratch 사본에서 하고 새 경로와 byte 비교한다 |
+| 고정 pin | N1 `transition/author.py`·S1-g `reserve-replay/author.py`와 각 `input-plan.json`은 원 경로 이름으로 parent SHA를 고정한다. N1 author 자신의 SHA는 다른 literal(`dev3-module-c2/row-read*`의 `expected.json`, c3 row-write/row-commit, S1-g author)이 고정하므로 수정할 수 없다. S1-g author는 다른 literal이 고정하지 않지만 작성 provenance를 보존하려고 그대로 둔다 |
+| 경로 대응 | [이동 기록](../../module-gate/evidence/f5b/scope3-move.json)에 원/새 경로·크기·SHA-256·git blob과 base/head tree를 둔다 |
+
+[소비자 §8](dev3-module-consumers.md#independent-fixtures)의 "증거에 hash와 경로가
+인용된 디렉터리는 이름을 바꾸지 않는다"에 대한 이 단위 한정의 D2 예외다. 원 증거·기록의
+경로 인용은 고치지 않고 위 대응 기록으로 연결한다. 한계는 다음과 같다.
+
+- 두 author를 다시 실행하려면 원 경로 이름의 view가 필요하다.
+- `make_literals.py`를 tree 안에서 실행하면 A 쪽에 `module-row-insert/scope3/` 중복본을 다시 만들고 A의 RowLeaf literal 8개도 다시 쓴다. scratch 사본에서만 실행한다.
+- A manifest는 81개 원 경로를 그대로 나열한다. 새 경로와의 대응은 이 절과 이동 기록이 보유한다.
+- provenance를 확인하는 Python 시험은 그 대응 입력(manifest·gate 시험 파일)이 바뀐 PR에서만 CI가 실행한다.
+
+scope3 literal을 바꿔야 하면 A 생성기를 다시 돌리지 않고 C 쪽 새 author와 D2 검토로
+진행한다.
+
+**export와 선택.** EX08–EX09의 `export_registration`이 사라져 C+B export가 두 C 시험
+파일을 유지한다. CI의 export는 merge-base의 trusted policy를 쓰는데, 이번 PR의 base
+`c0f9e25`는 아직 두 파일을 C+B에서 제거하므로 CI에서 C+B 실행을 요청할 수 없다.
+선택은 scope3 literal에 실제로 닿는 사례로 한정한다. A 13개는 head와 C+A, C semantic
+13개와 C recovery 10개는 head에서 실행한다. 크기 상한만 비교하고 literal을 읽지 않는
+C semantic 3개(`*_source_bound(s)_cover_measured_frames`)는 선택하지 않는다. C+B
+적용성은 head policy로 만든 export의 발견·실행을 로컬 증거로 남기며 attested 결과가
+아니다. 병합 뒤 Rust 변경 PR의 C+B export build는 두 파일을 컴파일하지만, 어떤 변경이
+이 사례를 C+B로 선택하기 전까지 CI가 C+B에서 실행하지는 않는다. 되돌림은 이 PR 전체 revert이며
+wire/semantic 영향은 없다.
+[실행 범위·결과](../evidence/module-independence-survey-20261026.md#f5-scope3-fixture)를 따른다.

@@ -1,0 +1,35 @@
+
+running 26 tests
+test storage::semantic_row::transition::tests::mca04_v04_v08_issuer_max_is_exhausted_before_output ... ok
+test storage::semantic_row::transition::tests::n1_empty_transactions_match_literals ... ok
+test storage::semantic_row::transition::tests::n1_full_rollback_cleanup_match_literals ... ok
+test storage::semantic_row::transition::tests::n1_observer_accepts_a_forward_clr_literals ... ok
+test storage::semantic_row::transition::tests::n1_observer_rejects_mutated_literals ... ok
+test storage::semantic_row::transition::tests::n1_producer_refusals_precede_output ... ok
+test storage::semantic_row::transition::tests::n1_statement_reserve_commit_prune_match_literals ... ok
+test storage::semantic_row::transition::tests::n1_transition_source_bounds_cover_measured_frames ... ok
+test storage::semantic_row::transition::tests::s1a_borrowed_observer_accepts_n1_and_a_literals ... ok
+test storage::semantic_row::transition::tests::s1a_borrowed_observer_rejects_mutated_literals ... ok
+test storage::semantic_row::transition::tests::s1a_borrowed_observer_source_bound_covers_measured_frames ... ok
+test storage::semantic_row::transition::tests::s1a_borrowed_tail_refused_dirty_and_restored_on_every_exit ... ok
+test storage::semantic_row::transition::tests::s1d_borrowed_producer_matches_owned_groups ... ok
+test storage::semantic_row::transition::tests::s1d_borrowed_producer_source_bound_covers_measured_frames ... ok
+test storage::semantic_row::transition::tests::s1g_reserve_adopted_equals_produced ... ok
+test storage::semantic_row::transition::tests::s1g_reserve_adopted_not_producible ... ok
+test storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::recovery::row_tests::s1b_record_is_byte_equal_live_and_replay ... ok
+test storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::recovery::row_tests::s1b_row_arm_refuses_mutations_without_effect ... ok
+test storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::recovery::row_tests::s1b_row_arm_replays_n1_and_a_literals ... ok
+test storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::recovery::row_tests::s1b_row_begin_shares_adopted_local ... ok
+test storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::recovery::row_tests::s1b_scope_routes_only_to_its_own_arm ... ok
+test storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::recovery::row_tests::s1d_record_guards_its_own_slot ... ok
+test storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::recovery::row_tests::s1g_closure_refuses_row_root_without_its_u_allocation ... ok
+test storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::recovery::row_tests::s1g_reserve_commitment_opens_at_forward ... ok
+test storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::recovery::row_tests::s1g_row_reserve_refuses_without_effect ... ok
+test storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::recovery::row_tests::s1g_row_reserve_replays_n1_literals ... ok
+
+test result: ok. 26 passed; 0 failed; 0 ignored; 0 measured; 1787 filtered out; finished in 4.34s
+
+
+real	0m4.357s
+user	0m4.258s
+sys	0m0.060s

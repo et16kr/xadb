@@ -1,7 +1,8 @@
 //! N1: C-owned scope3 Row group producers and the whole-group observer against
 //! independent `module-row-format/transition/author.py` literals and A's
-//! MCA00-V06 Forward/CLR literals. Literal observations confer no actual
-//! source, reservation, pin, staging, installation or recovery authority.
+//! MCA00-V06 Forward/CLR literals (`module-row-format/scope3`). Literal
+//! observations confer no actual source, reservation, pin, staging,
+//! installation or recovery authority.
 //! S1-a repeats every literal and variant observation through
 //! `observe_borrowed` over a lent replay tail.
 
@@ -48,7 +49,7 @@ macro_rules! scope3 {
     ($name:literal) => {
         include_bytes!(concat!(
             env!("CARGO_MANIFEST_DIR"),
-            "/../../tests/fixtures/module-row-insert/scope3/",
+            "/../../tests/fixtures/module-row-format/scope3/",
             $name
         ))
     };

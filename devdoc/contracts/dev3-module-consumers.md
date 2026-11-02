@@ -327,7 +327,7 @@ Missing Undo는 실제 `undo_record::validate_record`의 `before_kind=Missing/pa
 
 계획 경로는 A `tests/fixtures/dev3-row-insert/`, B `tests/fixtures/dev3-row-read/`, 합류 `tests/fixtures/dev3-module-row-integration/`이다. 실제 input/oracle가 생길 때만 등록한다. 각 디렉터리는 다음 `input-plan.json` schema를 별도로 보유하며 독립 writer가 typed oracle를 작성한다.
 
-2026-10-29 개정(S2-0, Q8): 위 계획 경로를 실제 이름으로 고친다. A는 `tests/fixtures/module-row-insert/`, B는 `tests/fixtures/module-row-read/`, 합류는 `tests/fixtures/module-row-integration/`(합류 단위에서 생성)이다. C 쪽 독립 literal은 S2가 `tests/fixtures/dev3-module-c3/row-write/`, S5가 `tests/fixtures/dev3-module-c2/row-read/`에 두며, N1과 S1-g literal은 `tests/fixtures/module-row-format/`에 있다. 증거에 hash와 경로가 이미 인용된 디렉터리는 이름을 바꾸지 않는다. 아래 schema는 각 디렉터리에 그대로 적용한다.
+2026-10-29 개정(S2-0, Q8): 위 계획 경로를 실제 이름으로 고친다. A는 `tests/fixtures/module-row-insert/`, B는 `tests/fixtures/module-row-read/`, 합류는 `tests/fixtures/module-row-integration/`(합류 단위에서 생성)이다. C 쪽 독립 literal은 S2가 `tests/fixtures/dev3-module-c3/row-write/`, S5가 `tests/fixtures/dev3-module-c2/row-read/`에 두며, N1과 S1-g literal은 `tests/fixtures/module-row-format/`에 있다. 증거에 hash와 경로가 이미 인용된 디렉터리는 이름을 바꾸지 않는다. 2026-11-02 F5-b는 이 원칙의 한정 예외로 A의 MCA00-V06 scope3 snapshot을 bytes 그대로 C 쪽 `module-row-format/scope3/`로 옮겼다. 원 경로와의 대응은 [이관 계약](dev3-module-boundaries.md#f5-scope3-fixture)을 따른다. 아래 schema는 각 디렉터리에 그대로 적용한다.
 
 | 필드 | exact 내용·한도 | 권한/정답 출처 |
 | --- | --- | --- |
