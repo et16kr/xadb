@@ -1,8 +1,8 @@
-# F6-a WAL 재검증 비용: 정적 조사와 측정 계획
+# F6-a WAL 재검증 비용: 정적 조사, 측정 계획, M0 결과
 
 2026-11-02
 
-**상태: 정적 조사 완료 · 측정 계획 초안 · 측정 NOT_RUN · 측정은 live Row retirement 공급 뒤로 보류(2026-11-02 사용자 결정).** 사용자는 2026-11-02 05:59 UTC 프로젝트 thread의 [D03](../plans/module-independence-followup-plan.md#user-decisions) 결정 카드에서 "정적 조사·측정 계획까지만"을 골랐다. 그래서 이 단위는 코드 읽기와 계획 작성만 한다. 측정, 계측 코드 추가, 제품 변경, 무변경 제품 시험은 하지 않았다. 아래 수치는 모두 코드·기존 기록에서 읽은 값이거나 그 값으로 계산한 분석 추정이며, 측정값은 하나도 없다. 측정은 [9절](#f6a-decisions)의 결정을 받은 뒤 별도 단위로 한다.
+**상태: 정적 조사 완료 · 측정 계획 초안 · M0(계수) 실행([12절](#f6a-m0)) · M1(시간) NOT_RUN.** 측정은 2026-11-02 사용자 결정으로 live Row retirement 공급 뒤로 보류됐고, 그 공급(PR #36) 뒤 M0를 했다. 이 문단 아래의 원래 상태 설명은 F6-a 단위 당시의 것이다. 사용자는 2026-11-02 05:59 UTC 프로젝트 thread의 [D03](../plans/module-independence-followup-plan.md#user-decisions) 결정 카드에서 "정적 조사·측정 계획까지만"을 골랐다. 그래서 이 단위는 코드 읽기와 계획 작성만 한다. 측정, 계측 코드 추가, 제품 변경, 무변경 제품 시험은 하지 않았다. 아래 수치는 모두 코드·기존 기록에서 읽은 값이거나 그 값으로 계산한 분석 추정이며, 측정값은 하나도 없다. 측정은 [9절](#f6a-decisions)의 결정을 받은 뒤 별도 단위로 한다.
 
 기준 source는 PR #33 병합 뒤 main `d86bafb`다. 계획의 위치는 [후속 계획 §10](../plans/module-independence-followup-plan.md#wal-cost), 측정 원칙은 [DP07](../policies/development-policy.md#section-8)이다. 초안은 네 차례의 독립 검토 지적을 반영했고 마지막 검토는 ACCEPT(열린 필수 0)다([검토](#f6a-review)).
 
@@ -15,6 +15,8 @@
 - **H4 재검증 동안 WAL File 잠금을 쥔다.** 다른 thread가 같은 storage의 WAL을 기록(`sync_claim`)하려 하면 그 시간만큼 기다린다. 다만 현재 계약은 병렬 writer를 범위 밖에 둔다.
 
 이 넷은 가설이다. 처리량 회귀로 기록하지 않는다. 확인은 [7절](#f6a-plan)의 측정으로 한다.
+
+- **M0 결과(12절, 계수만).** H1·H2를 셌다. 한 행 commit 거래는 전체 replay를 4회(Begin, table 발급, preflight, Commit) 하고, 그 live 정리 6그룹이 1회씩 6회를 더한다. 한 번은 정확히 3E를 읽고 2E를 hash한다. 정리까지 한 거래 하나는 30·E₀ + 8.7 MB를 읽으며, WAL을 629,363 B 늘린다. L3(E 약 17 MB)에서는 516 MB다. 시간은 M1에서 잰다.
 
 <a id="f6a-paths"></a>
 ## 2. 정적 경로: 전체 replay를 부르는 곳
@@ -210,16 +212,16 @@ F6-b는 측정이 병목을 확인한 경우에만 연다. 여기서는 설계�
 ## 9. 측정 전에 필요한 결정
 
 1. 측정 시기: 지금 측정할지, live Row retirement(DEV3)가 공급되어 일반 workload의 WAL이 길어질 수 있게 된 뒤로 미룰지. 지금도 Reserve→Cancel build로 긴 WAL을 만들어 잴 수는 있지만, commit·rollback만 하는 workload의 WAL은 Job cell 상한 때문에 몇 MiB 수준에 머문다(추정). **2026-11-02 06:44 UTC 사용자 결정: live Row retirement 공급 뒤로 미룬다.** 2–6은 측정을 다시 열 때 정한다.
-2. 측정 승인과 범위: M0만, 또는 M0+M1.
-3. C(DEV3) 소유 파일 `history.rs`에 cfg(test) 계수기·timer를 넣는 것과 그 담당.
+2. 측정 승인과 범위: M0만, 또는 M0+M1. **2026-11-02: 사용자가 "이어서 해주세요"라고 한 뒤, 이 thread가 결정 카드(M0만 지금 / M0 다음 M1 / 자동 정리 호출자 먼저)로 물었다. 답을 기다리는 동안 추천안 "M0만, 클라우드"로 진행했다([12절](#f6a-m0)).**
+3. C(DEV3) 소유 파일 `history.rs`에 cfg(test) 계수기·timer를 넣는 것과 그 담당. **M0는 이 thread가 cfg(test) 계수기만 넣었다(timer 없음). 위 카드의 추천안 설명에 포함했다.**
 4. M1 기계: 사용자 로컬 기계(시간 측정 안정성 때문에 권장) 또는 고정한 클라우드 환경.
-5. 수준 L0–L4(64 MiB까지, cap 근처 L5 제외)와 Reserve→Cancel build 방식, 7.7의 시간·disk 예산, 그리고 계획 §10의 "읽기 지연"을 동시 읽기 대신 순차 읽기로 재는 것.
+5. (M0는 L0–L3과 Reserve→Cancel build를 계획대로 쓰고, 다른 점은 12.1절에 적었다.) 수준 L0–L4(64 MiB까지, cap 근처 L5 제외)와 Reserve→Cancel build 방식, 7.7의 시간·disk 예산, 그리고 계획 §10의 "읽기 지연"을 동시 읽기 대신 순차 읽기로 재는 것.
 6. 병목 판단 기준. 제안: L3·L4에서 재검증 시간이 측정 거래 지연의 절반 이상이고, 거래 지연이 E에 거의 선형(회귀 R² ≥ 0.9)이면 "병목 확인"으로 본다. 합격 수치가 아니라 F6-b를 열지 정하는 기준이며, 사용자가 확정하기 전에는 쓰지 않는다.
 
 <a id="f6a-limits"></a>
 ## 10. 한계
 
-- 모든 수치는 정적 하한이나 분석 추정이다. 실제 호출 수, 나머지 frame 크기, frame당 CPU 비용, 시간은 재지 않았다.
+- 12절 앞의 수치는 모두 정적 하한이나 분석 추정이다. 실제 호출 수와 frame 크기는 12절의 M0가 셌고, frame당 CPU 비용과 시간은 아직 재지 않았다.
 - 거래당 3회는 코드에서 조건 없이 도는 것만 센 하한이다. statement 종료 group이 모든 INSERT에 붙는지는 정적으로 확정하지 않았다.
 - Reserve→Cancel build도 상태를 완전히 고정하지는 못한다. UndoSlot generation·high-water와 build 거래의 Status가 바뀐다. 측정 거래가 남기는 Job·Status 점유도 수준마다 쌓인다.
 - Job cell 밖의 한도(UndoSlot generation, high-water, statement credit, Undo INIT의 owned page)가 먼저 닿는지는 확인하지 않았다. 닿으면 4절의 도달 범위와 L4가 낮아진다.
@@ -237,3 +239,88 @@ F6-b는 측정이 병목을 확인한 경우에만 연다. 여기서는 설계�
 - 2차(재확인): ACCEPT WITH REQUIRED CHANGES(필수 1, 권고 5). 1차 필수 5건은 해결로 확인했다. 새 필수는 행마다 RootJob cell을 하나 더 쓰므로 한 행 거래 상한이 64가 아니라 32이고, 16 MiB 불가는 추정으로 써야 한다는 점이었다. 4·6·7.3·9·10절과 색인 요약을 고쳤다. 권고(6절 반올림, `live.rs`의 Profile1 전용, flush 함수 이름, 큰 행의 frame 크기)도 반영했다.
 - 3차: ACCEPT WITH REQUIRED CHANGES(필수 2). 2차 필수는 해결로 확인했다. 새 필수는 Forward 전 Cancel이 RootJob을 돌려주므로 Job cell이 WAL 증가를 막지 못한다는 점과, build 중 Capacity의 처리가 중단 기준과 어긋난다는 점이었다. H3·4·6·7.3·7.6–7.8·8·9·10절과 색인 요약을 고쳐 build를 Reserve→Cancel로 바꾸고 L3 16 MiB·L4 64 MiB를 되살렸다. 권고(warmup 뒤 L0)도 반영했다.
 - 4차: ACCEPT(열린 필수 0). 3차 필수 2건의 해결과 6절 build 표·7.3 cell 수를 다시 계산해 확인했다. 권고(cap 행을 2,757 순환으로, build 거래 Terminal의 정리 몫, 색인 요약의 단서, M0를 L3까지로 제한)를 반영했다.
+
+<a id="f6a-m0"></a>
+## 12. M0 결과: 재검증 횟수와 양 (2026-11-02)
+
+**상태: M0 실행 · 두 run의 계수 일치 · 합격 수치 없음 · M1(시간) NOT_RUN.** live Row 정리가 PR #36(main `8fa96c5`)으로 병합되어 9절 1번의 보류 조건이 풀렸다. 사용자가 "이어서 해주세요"라고 해서, 이 thread는 M0를 다음 단위로 골랐다. 2026-11-02 결정 카드로 범위(M0만, M0+M1, 자동 정리 호출자 먼저)를 물었고, 답을 기다리는 동안 추천안 "M0만, 클라우드"로 진행했다(9절 2·3·5번). 시간은 재지 않았다. 아래 값은 모두 계수기가 센 값이거나 그 값으로 계산한 것이다.
+
+<a id="f6a-m0-setup"></a>
+### 12.1 실행 조건
+
+- **source.** main `8fa96c5`에 cfg(test) 계측과 시험만 더했다. 제품 줄은 바꾸지 않았다. 계측은 [`history.rs`](../../crates/engine/src/storage/wal_io/plan4_retention/history.rs)의 `revalidation` 모듈이다. 세 입구(`validate_live`, `replay_lookup_cut`, `prove_capture`)가 `replay_durable`을 부르기 직전에 자기 이름을 남긴다. `replay_durable`은 들어오자마자 그 이름을 가져가고(거절되거나 이름 없는 호출이 이전 이름을 물려받지 않게), WAL File을 잡고 header를 읽은 뒤 그 이름으로 한 번을 센다. 함께 세는 것은 E, E까지의 frame 수(LSN − anchor), 실제로 읽은 WAL byte(header, hash chunk마다, frame마다), chunk마다의 SHA-256 입력 byte, 재적용한 frame 수다. 빈 epoch에서 seed만 하는 입구 호출은 검사를 통과한 뒤 seed로 따로 센다. 시험은 [`plan4_pages::apply::test_revalidations`](../../crates/engine/src/storage/wal_io/plan4_apply.rs)로 thread의 누적값을 읽고, 단계 앞뒤의 차이를 기록한다.
+- **시험.** [`row_join/retire/revalidation.rs`](../../crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/revalidation.rs)의 `f6_m0_levels_to_l3`(`#[ignore]`, 명시 selector로 실행)과 CI가 도는 짧은 확인 `f6_m0_step_counts_match_the_contract_and_repeat`다. 짧은 확인은 warmup, L0 거래 하나, 2 MiB까지의 작은 build, 거래 하나를 두 번 돌려 줄이 같은지, 단계별 0회·1회 이상(S2W-R22, 4절)과 build 순환당 1회를 확인한다. 실행 명령과 run 기록은 [원 결과](f6-m0-20261102.json)에 있다.
+- **환경.** memory adapter, debug build, 클라우드 container(4 vCPU). run마다 새 디렉터리의 Genesis epoch에서 시작하고 다시 열지 않는다.
+- **입력.** 표 T(Int64 열 하나)를 만든 뒤 warmup 거래 하나를 하고 L0을 잰다. 수준마다 "BEGIN → INSERT 1행 → COMMIT"을 3번 하고, 거래마다 바로 그 live 정리(Prune, ReleaseRole×3, RootFree, TerminalFinish)를 끝까지 한다. 수준 L1 ≥ 1 MiB, L2 ≥ 4 MiB, L3 ≥ 16 MiB는 측정 거래가 시작할 때의 WAL 길이로 판단한다. 모자라면 그 앞에 build 거래(BEGIN → Reserve→Cancel 반복 → full rollback)를 하고 그 Terminal을 live TerminalFinish로 정리한다.
+
+**7절 계획과 다른 점.**
+
+1. 측정 거래마다 live 정리 6그룹을 더해 그룹별로 셌다. 계획을 쓸 때는 live 정리가 없었다. 지금은 일반 workload의 거래가 정리까지 가야 Job cell을 돌려받는다.
+2. pool frame을 기본 9가 아니라 16으로 했다. 정리는 frame 11개 이상이 있어야 돈다([live Row 정리 기록](live-row-retirement-20261102.md)의 LRR-06). live Row 정리 시험과 같은 값이다.
+3. 시험 소유는 C가 아니라 JOIN(`row_join/**`)이다. A의 `validate_insert`·`produce_insert`와 C의 정리를 함께 쓰기 때문이다.
+4. L0이 계획 추정(0.25 MiB 안팎)보다 길다. 표를 만든 직후 WAL이 615,142 B, warmup 뒤 1,244,505 B다. 측정 거래 하나가 정리까지 629,363 B를 더하므로 L1과 L2는 측정 거래만으로 넘었다. 그래서 L1·L2는 build 없이 그 시점에서 쟀고, build는 L3 앞에서 한 번(101 순환)만 했다.
+5. 읽기 지연(Q5)과 시간(Q3·Q4)은 M1 항목이라 넣지 않았다. L4는 계획대로 M0에서 뺐다.
+6. 7.3절의 기록 중 Status 점유, UndoSlot generation·high-water, 측정 거래 시작 때의 상주 상태는 기록하지 않았다. Job cell 점유와 flush 수(`FlushRequired`가 난 단계 이름)만 기록했다. table 발급 안의 flush와 build의 Begin·rollback 단계 안의 flush는 그 단계에 함께 들어간다(입구별 `capture` 수로는 구분된다). 이번 run에서는 flush가 없었다.
+
+<a id="f6a-m0-q1"></a>
+### 12.2 Q1: 거래 하나가 하는 전체 replay
+
+warmup과 L0–L3의 측정 거래 13개가 모두 같았다. flush는 한 번도 없었다(frame 16에서 preflight·정리 모두 `FlushRequired`가 없었다). 그래서 "flush가 끼면 몇 번 더 하는가"는 이 조건에서 관측하지 못했다.
+
+| 단계 | 입구 | 전체 replay |
+| --- | --- | ---: |
+| Begin group | `validate_live` | 1 |
+| statement 시작 | — | 0 |
+| table 발급(`catalog_statement_call` → `finish_table`) | `replay_lookup_cut` | 1 |
+| 쓰기 preflight | `validate_live` | 1 |
+| validation lane, reserve, producer lane, prepare, apply | — | 0 |
+| statement 종료 | — | 0 |
+| Commit group | `validate_live` | 1 |
+| **거래 합** | | **4** |
+| Prune, ReleaseRole×3, RootFree, TerminalFinish | 각 `validate_live` | 각 1, 합 6 |
+| **정리까지 합** | | **10** |
+
+4절의 정적 하한은 3회였다. 차이는 table 발급의 `replay_lookup_cut` 1회다(2절 표의 `read/lookup.rs` 행). reserve·prepare·apply가 replay하지 않는 것은 [S2W-R22](../contracts/dev3-module-boundaries.md#row-write-validate-once)와 같다. live 정리는 거래가 쓴 replay의 1.5배를 더 쓴다.
+
+build 거래는 Begin·statement·table 발급에서 2회(live 1, lookup 1), Reserve→Cancel 순환마다 preflight의 1회(101 순환에 101회, Reserve·Cancel은 0), full rollback(시작, 끝, `finish_aborted`)에서 2회, TerminalFinish에서 1회를 썼다.
+
+<a id="f6a-m0-q2"></a>
+### 12.3 Q2: 재검증 한 번의 양
+
+모든 구간에서 읽기 = 3E, hash = 2E, 재적용 frame = E까지의 LSN 수였다. 다만 이 등식은 계수기가 3절이 말하는 자리에 붙었는지를 확인할 뿐이다. `reconstruct`가 끝 offset과 LSN을 스스로 검사하므로, 등식이 깨지는 replay는 제품이 먼저 거절한다. 그래서 독립 측정은 아니다. 스스로 실패할 수 있는 확인은 따로 있다. 모든 측정 거래에서 Begin과 쓰기 preflight의 replay가 읽은 E는 그 시점의 WAL 파일 길이와 같았다. 즉 한 번의 재검증이 WAL 전체를 처음부터 끝까지 다시 읽는다(H1).
+
+측정 거래 하나와 그 정리(replay 10회)의 양은 시작 WAL 길이 E₀에 대해 정확히 다음과 같았다. 거래 안의 10회가 E₀ 뒤 0, 56,712, 56,712, 205,545, 262,257, 352,139, 407,667, 463,195, 518,723, 574,251 B에서 일어났기 때문이다.
+
+- 읽기 = 30·E₀ + 8,691,603 B, hash = 20·E₀ + 5,794,402 B, 재적용 frame = 10·F₀ + 44(F₀는 E₀까지의 frame 수)
+- 정리를 빼면(거래의 4회) 읽기 = 12·E₀ + 956,907 B
+
+| 수준 | 첫 측정 거래의 E₀ | 거래+정리 읽기 | hash | frame 재적용 |
+| --- | ---: | ---: | ---: | ---: |
+| L0 | 1,244,505 B | 46.0 MB | 30.7 MB | 274 |
+| L1 | 3,132,594 B | 102.7 MB | 68.4 MB | 574 |
+| L2 | 5,020,683 B | 159.3 MB | 106.2 MB | 874 |
+| L3 | 16,911,284 B | 516.0 MB | 344.0 MB | 3,234 |
+
+<a id="f6a-m0-growth"></a>
+### 12.4 WAL 증가와 점유
+
+- 한 행 commit 거래 262,257 B: Begin 56,712, RowReserve와 Forward 합 148,833, Commit 56,712 B. 4절이 fixture 행으로 잡은 RowReserve+Forward 148,842 B보다 9 B 작다. 행 모양이 달라서다.
+- 그 정리 367,106 B: Prune 89,882, ReleaseRole 55,528×3, RootFree 55,528, TerminalFinish 55,112 B. 정리가 거래 자체의 1.4배다.
+- L3 앞 build 거래는 WAL을 10,002,512 B 늘렸다(101 순환과 Begin·rollback·정리 frame 포함). 순환당 평균 약 99,000 B로, 4절 추정 97,336 B와 비슷하다.
+- 측정 끝 WAL 18,799,373 B, 파일 합 40,864,525 B다. Job cell은 시작과 모든 수준에서 Free 62, Row 0, 그 밖 2였다. 정리가 매번 Row Job을 비웠다.
+
+<a id="f6a-m0-meaning"></a>
+### 12.5 무엇을 말하는가 (분석)
+
+- 정리까지 하는 한 행 거래의 비용은 E에 선형이다(읽기 30E). 한 epoch에서 이런 거래를 이어 하면 E가 거래마다 629,363 B씩 늘므로, n개의 누적 읽기는 약 30·629,363·n²/2 ≈ 9.4 MB·n²다. 예를 들어 빈 epoch 뒤 32개면 약 10 GB, 100개면 약 94 GB를 읽는다(추정; 앞의 표 생성분은 뺐다).
+- 정리를 commit마다 바로 하면, 정리 없는 거래와 비교해 거래당 replay가 2.5배(4 → 10), 거래당 WAL 증가가 2.4배(262,257 → 629,363 B)다. 누적 읽기의 n² 계수는 둘의 곱으로 약 6배가 된다. 정리를 모아 하더라도 그룹 수는 같으므로 replay 횟수는 줄지 않는다. 줄어드는 것은 정리를 미루는 동안의 E뿐이다. 그래서 자동 정리 호출자를 붙일 때 호출 시점만으로는 비용을 크게 바꾸지 못하고, 재검증 자체의 비용(F6-b)이 먼저 걸린다.
+- 이것이 병목인지는 아직 말하지 않는다. 시간(Q3·Q4)은 M1이 재고, 판단 기준(9절 6번)은 사용자가 정한다.
+
+<a id="f6a-m0-limits"></a>
+### 12.6 M0의 한계
+
+- 계수만 셌다. 시간, File mutex 보유, gate 보유, 읽기 지연은 M1이다.
+- 한 행 INSERT의 commit만 쟀다. 여러 행 거래, rollback으로 끝나는 측정 거래, UPDATE·DELETE, Catalog 거래는 재지 않았다.
+- frame 16에서는 flush가 없었다. frame이 적거나 page가 많은 workload의 flush·LOAD 추가분은 관측하지 못했다.
+- memory adapter라 실제 파일 I/O는 없다. 계수는 adapter와 무관하지만 시간은 다르다.
+- 두 run은 같은 실행 파일로 했다. 계수가 같다는 것은 결정성 확인이지 다른 기계·build에서의 재현은 아니다.

@@ -31,7 +31,12 @@
     "f6-wal-revalidation-survey-20261102.md": {
       "path": "evidence/f6-wal-revalidation-survey-20261102.md",
       "role": "evidence",
-      "title": "F6-a WAL 재검증 비용: 정적 조사와 측정 계획"
+      "title": "F6-a WAL 재검증 비용: 정적 조사, 측정 계획, M0 결과"
+    },
+    "f6-m0-20261102.json": {
+      "path": "evidence/f6-m0-20261102.json",
+      "role": "evidence",
+      "title": "F6 M0 WAL 재검증 계수: 두 run의 원 결과"
     },
     "module-mi03-limits-20261101.md": {
       "path": "evidence/module-mi03-limits-20261101.md",

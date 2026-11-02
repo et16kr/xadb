@@ -35,6 +35,142 @@ pub(super) mod row;
 #[path = "history/runtime.rs"]
 pub(super) mod runtime;
 
+/// F6 M0 (evidence `f6-wal-revalidation-survey-20261102.md` §7.4): what the
+/// full revalidations on this thread did, a test-only count beside the
+/// S2W-R22 scope count. Each of the three entries names itself just before
+/// it calls `replay_durable`, which takes the name on entry (so a refused or
+/// unnamed call cannot pass a stale name on) and, once it holds the WAL File
+/// and has read the header, counts one replay under that name with the
+/// durable end E it reads up to and the frames E holds. From then on it adds
+/// the WAL bytes actually read (the header, each hash chunk, every frame),
+/// the SHA-256 input chunk by chunk and each re-applied frame, so a replay
+/// that fails midway leaves less than 3E read. An entry call of an empty
+/// epoch only seeds, after its checks, and counts as a seed. Nothing here
+/// changes what the product reads or decides.
+#[cfg(test)]
+pub(super) mod revalidation {
+    use std::cell::Cell;
+
+    /// `replay_durable`'s entries (survey §2); `Unnamed` counts a call that
+    /// no entry named, which no product path makes.
+    #[derive(Clone, Copy, Debug, PartialEq, Eq)]
+    pub(super) enum Entry {
+        Live,
+        Lookup,
+        Capture,
+        Unnamed,
+    }
+
+    /// Counts on this thread so far, or over an interval (`since`).
+    #[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
+    pub(in crate::storage) struct Count {
+        /// Full replays by entry: `validate_live`, `replay_lookup_cut`,
+        /// `prove_capture`, unnamed.
+        pub(in crate::storage) replays: [u64; 4],
+        /// Entry calls of an empty epoch: the seed only, no replay.
+        pub(in crate::storage) seeds: u64,
+        /// Σ E over the replays.
+        pub(in crate::storage) ends: u64,
+        /// E of the latest replay (0 in an interval without one).
+        pub(in crate::storage) last_end: u64,
+        /// Σ (LSN at E − source anchor): the frames E holds.
+        pub(in crate::storage) lsns: u64,
+        /// WAL bytes read.
+        pub(in crate::storage) read: u64,
+        /// SHA-256 input bytes.
+        pub(in crate::storage) hashed: u64,
+        /// Frames re-applied.
+        pub(in crate::storage) frames: u64,
+    }
+    impl Count {
+        /// The counts after `before`.
+        pub(in crate::storage) fn since(self, before: Self) -> Self {
+            let mut replays = self.replays;
+            for (now, then) in replays.iter_mut().zip(before.replays) {
+                *now -= then;
+            }
+            Self {
+                replays,
+                seeds: self.seeds - before.seeds,
+                ends: self.ends - before.ends,
+                last_end: if self.total() > before.total() {
+                    self.last_end
+                } else {
+                    0
+                },
+                lsns: self.lsns - before.lsns,
+                read: self.read - before.read,
+                hashed: self.hashed - before.hashed,
+                frames: self.frames - before.frames,
+            }
+        }
+        /// Full replays of every entry.
+        pub(in crate::storage) fn total(self) -> u64 {
+            self.replays.iter().sum()
+        }
+    }
+
+    const ZERO: Count = Count {
+        replays: [0; 4],
+        seeds: 0,
+        ends: 0,
+        last_end: 0,
+        lsns: 0,
+        read: 0,
+        hashed: 0,
+        frames: 0,
+    };
+    thread_local! {
+        static ENTRY: Cell<Entry> = const { Cell::new(Entry::Unnamed) };
+        static COUNT: Cell<Count> = const { Cell::new(ZERO) };
+    }
+    fn add(change: impl FnOnce(&mut Count)) {
+        COUNT.with(|cell| {
+            let mut count = cell.get();
+            change(&mut count);
+            cell.set(count);
+        });
+    }
+    /// This thread's counts so far.
+    pub(in crate::storage) fn count() -> Count {
+        COUNT.with(Cell::get)
+    }
+    pub(super) fn enter(entry: Entry) {
+        ENTRY.with(|cell| cell.set(entry));
+    }
+    /// The entry that named the coming replay, leaving none named.
+    pub(super) fn take() -> Entry {
+        ENTRY.with(|cell| cell.replace(Entry::Unnamed))
+    }
+    pub(super) fn seed() {
+        ENTRY.with(|cell| cell.set(Entry::Unnamed));
+        add(|count| count.seeds += 1);
+    }
+    /// One replay of `entry` up to `end`, which holds `frames` frames.
+    pub(super) fn replay(entry: Entry, end: u64, frames: u64) {
+        add(|count| {
+            count.replays[entry as usize] += 1;
+            count.ends += end;
+            count.last_end = end;
+            count.lsns += frames;
+        });
+    }
+    pub(super) fn read(bytes: u64, hashed: bool) {
+        add(|count| {
+            count.read += bytes;
+            if hashed {
+                count.hashed += bytes;
+            }
+        });
+    }
+    pub(super) fn frame(bytes: u64) {
+        add(|count| {
+            count.read += bytes;
+            count.frames += 1;
+        });
+    }
+}
+
 pub(super) const ARENA_END: usize = 1_048_576;
 pub(super) const JOB_END: usize = 1_114_112;
 pub(super) const BANK_END: usize = 1_179_648;
@@ -316,6 +452,8 @@ fn hash_prefix<F: FileIo>(
         let count = (end - at).min(scratch.len() as u64) as usize;
         read_exact_at(file, &mut scratch[..count], at)?;
         hash.update(&scratch[..count]);
+        #[cfg(test)]
+        revalidation::read(count as u64, true);
         at += count as u64;
     }
     Ok(hash.digest())
@@ -382,6 +520,8 @@ pub(super) fn prove_capture<'c, 's, W: WriterNamespace>(
     if home_lsn.0 > capture.stamp().page_lsn.0 {
         return Err(invalid(storage));
     }
+    #[cfg(test)]
+    revalidation::enter(revalidation::Entry::Capture);
     let (source, matched, zero_init) = replay_durable(
         storage,
         source,
@@ -431,6 +571,8 @@ pub(super) fn validate_live<W: WriterNamespace>(
         {
             return Err(invalid(storage));
         }
+        #[cfg(test)]
+        revalidation::seed();
         verify_seed_epoch(storage, source, prefix, &mut replay[BANK_END..FRAME_END])?;
         recovery::seed_replay_slice(storage.profile(), source.base(), &mut replay[..WORK_END])
             .map_err(|e| fatal(storage, RetentionPhase::Source, e))?;
@@ -441,6 +583,8 @@ pub(super) fn validate_live<W: WriterNamespace>(
         {
             return Err(invalid(storage));
         }
+        #[cfg(test)]
+        revalidation::enter(revalidation::Entry::Live);
         replay_durable(storage, source, durable, &mut replay[..WORK_END], None)?;
     }
     let replay_bank = &replay[JOB_END..BANK_END];
@@ -515,6 +659,8 @@ pub(super) fn replay_lookup_cut<W: WriterNamespace>(
         .map_err(|e| fatal(storage, RetentionPhase::Source, e))?;
     match (cut.requirement(), durable) {
         (Some(requirement), Some(durable)) if durable.confirms(&requirement) => {
+            #[cfg(test)]
+            revalidation::enter(revalidation::Entry::Lookup);
             replay_durable(storage, source, durable, &mut replay[..WORK_END], None)?;
         }
         (None, None) => {
@@ -527,6 +673,8 @@ pub(super) fn replay_lookup_cut<W: WriterNamespace>(
             {
                 return Err(invalid(storage));
             }
+            #[cfg(test)]
+            revalidation::seed();
             verify_seed_epoch(storage, source, prefix, &mut replay[BANK_END..FRAME_END])?;
             recovery::seed_replay_slice(storage.profile(), source.base(), &mut replay[..WORK_END])
                 .map_err(|e| fatal(storage, RetentionPhase::Source, e))?;
@@ -642,6 +790,8 @@ fn replay_durable<W: WriterNamespace>(
     replay: &mut [u8],
     target: Option<(TargetRequest, &[u8; PAGE_BYTES], &[u8; PAGE_BYTES])>,
 ) -> Result<(SourceSeal, bool, bool)> {
+    #[cfg(test)]
+    let entry = revalidation::take();
     let exact = durable.observation().frame;
     let synchronized = durable.observation().prefix;
     if synchronized.synced_lsn < exact.lsn
@@ -664,6 +814,11 @@ fn replay_durable<W: WriterNamespace>(
         let header = &mut replay[FRAME_END - 4096..FRAME_END];
         read_exact_at(&mut *file, header, 0)
             .map_err(|e| fatal(storage, RetentionPhase::Source, RetentionCause::Io(e)))?;
+        #[cfg(test)]
+        {
+            revalidation::replay(entry, exact.end, exact.lsn - source.anchor());
+            revalidation::read(4096, false);
+        }
         let header_digest = source
             .header(storage.profile(), header)
             .map_err(|e| fatal(storage, RetentionPhase::Source, e))?;
@@ -745,6 +900,8 @@ fn reconstruct<W: WriterNamespace>(
         }
         read_exact_at(file, &mut raw[160..length], offset + 160)
             .map_err(|e| fatal(storage, RetentionPhase::Source, RetentionCause::Io(e)))?;
+        #[cfg(test)]
+        revalidation::frame(length as u64);
         let input = &raw[..length];
         let (arena, rest) = prior.split_at_mut(ARENA_END);
         let (jobs, bank) = rest.split_at_mut(65_536);
