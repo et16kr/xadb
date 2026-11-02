@@ -30,23 +30,25 @@
 <a id="lrr-tests"></a>
 ## 3. 선택 시험과 결과
 
-AGENTS.md 규칙대로 바뀐 코드의 시험만 돌렸다. debug build, `--test-threads=1`, `RUST_MIN_STACK=33554432`, catalog identity 환경값 셋을 주었다. LRR 사례의 libtest 경로 prefix는 `storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::`, census 사례는 `storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::source::tests::`이다.
+AGENTS.md 규칙대로 바뀐 코드의 시험만 돌렸다. 아래 결과는 Rust가 마지막으로 바뀐 commit `e21e39c`의 build에서 차례로 한 번씩 돌린 것이다. debug build, `--test-threads=1`, `RUST_MIN_STACK=33554432`, catalog identity 환경값 셋을 주었다. LRR 사례의 libtest 경로 prefix는 `storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::`, census 사례는 `storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::source::tests::`이다.
 
 | 사례 | 확인하는 것 | 결과 |
 | --- | --- | --- |
-| LRR-01 `lrr01_live_cleanup_reuses_jobs_status_and_undo_beyond_32_transactions` | 같은 Status에서 한 행 거래 33개를 차례로 commit하고, 각 거래 뒤 정리 순서가 Prune, ReleaseRole 3번, RootFree, TerminalFinish이며 Row Job이 모두 Free가 된다. 끝에 새 read-only statement가 33행을 값까지 읽고(Q 34), 파일을 다시 열면 같은 Q 34에서 READY이고 남은 Row Job이 없다 | LRR01_FINAL |
-| LRR-02 `lrr02_older_snapshot_keeps_prune_busy_until_it_ends` | commit 전에 잡은 statement snapshot이 살아 있는 동안 Prune은 `Visibility(Busy)`(Unchanged)이고 WAL·Job·fence가 바뀌지 않는다. 그 statement가 끝나면 정리 전체가 돌고, 새 statement가 행을 읽는다 | PASS (2.68 s) |
-| LRR-03 `lrr03_running_actor_non_head_and_early_terminal_are_refused` | 두 행을 넣고 아직 실행 중인 actor는 선택되지 않고, 그 root의 Prune, Terminal의 TerminalFinish, 정리가 아닌 Cancel·Commit의 직접 호출이 거절된다. commit 뒤에는 head가 아닌 root의 Prune, root가 남은 TerminalFinish, Prune 전 RootFree가 거절된다. 거절 7개 모두 Unchanged이고 WAL·Job·fence가 그대로다. 그 뒤 정리는 head Prune이 먼저이고 Prune 2, ReleaseRole 6, RootFree 2, TerminalFinish 1로 끝난다 | PASS (4.48 s) |
-| LRR-04 `lrr04_aborted_actor_is_cleaned_and_its_status_reused` | rollback된 actor는 ReleaseRole 3번, RootFree, TerminalFinish로 정리되고, 같은 Status로 다음 거래가 commit된다 | PASS (4.79 s) |
-| LRR-05 `lrr05_busy_prune_does_not_hide_another_finished_actor` | A가 오래된 statement snapshot 뒤에 commit해 A의 Prune이 Busy다. 두 번째 Status의 B(Job이 A 뒤)는 전부 rollback한다. 첫 단계는 A의 Prune이고 거절되며 WAL·Job이 그대로다. A의 ordinal을 skip하면 B의 정리 전체(ReleaseRole 3번, RootFree, TerminalFinish)가 돌고 그 밖에는 남는 것이 없다. A의 Prune은 여전히 Busy이고, snapshot이 끝나면 A의 정리가 돈다 | PASS (5.22 s) |
-| LRR-06 `lrr06_recovery_finishes_a_partial_live_cleanup` | live 정리를 Prune과 ReleaseRole 하나 뒤에 멈춘다(root cursor 1). 그 파일을 복구하면 나머지를 끝내고 Q 2에서 READY이며 Row Job이 남지 않는다 | PASS (4.61 s) |
+| LRR-01 `lrr01_live_cleanup_reuses_jobs_status_and_undo_beyond_32_transactions` | 같은 Status에서 한 행 거래 33개를 차례로 commit하고, 각 거래 뒤 정리 순서가 Prune, ReleaseRole 3번, RootFree, TerminalFinish이며 Row Job이 모두 Free가 된다. 끝에 새 read-only statement가 33행을 값까지 읽고(Q 34), 파일을 다시 열면 같은 Q 34에서 READY이고 남은 Row Job이 없다 | PASS (547.35 s) |
+| LRR-02 `lrr02_older_snapshot_keeps_prune_busy_until_it_ends` | commit 전에 잡은 statement snapshot이 살아 있는 동안 Prune은 `Visibility(Busy)`(Unchanged)이고 WAL·Job·fence가 바뀌지 않는다. 그 statement가 끝나면 정리 전체가 돌고, 새 statement가 행을 읽는다 | PASS (2.85 s) |
+| LRR-03 `lrr03_running_actor_non_head_and_early_terminal_are_refused` | 두 행을 넣고 아직 실행 중인 actor는 선택되지 않고, 그 root의 Prune, Terminal의 TerminalFinish, 정리가 아닌 Cancel·Commit의 직접 호출이 거절된다. commit 뒤에는 head가 아닌 root의 Prune, root가 남은 TerminalFinish, Prune 전 RootFree가 거절된다. 거절 7개 모두 Unchanged이고 WAL·Job·fence가 그대로다. 그 뒤 정리는 head Prune이 먼저이고 Prune 2, ReleaseRole 6, RootFree 2, TerminalFinish 1로 끝난다 | PASS (4.54 s) |
+| LRR-04 `lrr04_aborted_actor_is_cleaned_and_its_status_reused` | rollback된 actor는 ReleaseRole 3번, RootFree, TerminalFinish로 정리되고, 같은 Status로 다음 거래가 commit된다 | PASS (4.65 s) |
+| LRR-05 `lrr05_busy_prune_does_not_hide_another_finished_actor` | A가 오래된 statement snapshot 뒤에 commit해 A의 Prune이 Busy다. 두 번째 Status의 B(Job이 A 뒤)는 전부 rollback한다. 첫 단계는 A의 Prune이고 거절되며 WAL·Job이 그대로다. A의 ordinal을 skip하면 B의 정리 전체(ReleaseRole 3번, RootFree, TerminalFinish)가 돌고 그 밖에는 남는 것이 없다. A의 Prune은 여전히 Busy이고, snapshot이 끝나면 A의 정리가 돈다 | PASS (5.63 s) |
+| LRR-06 `lrr06_recovery_finishes_a_partial_live_cleanup` | live 정리를 Prune과 ReleaseRole 하나 뒤에 멈춘다(root cursor 1). 그 파일을 복구하면 나머지를 끝내고 Q 2에서 READY이며 Row Job이 남지 않는다 | PASS (4.21 s) |
 | `live_row_retirement_fits_the_progress_charge` | 본문 43,924 B ≤ charge 44,304 B(memory·native type 모두, 여유 380 B), shared+charge ≤ 65,536 | PASS |
 
-LRR-01의 비용(검토 반영 전 build). 한 그룹마다 WAL 전체를 다시 검증하므로 거래 수의 제곱으로 는다. 같은 build에서 round 0·8·16·24·32의 누적 시간은 1.2 s·45 s·152 s·311 s·522 s, 파일 합은 23.3 MB·28.3 MB·33.4 MB·38.4 MB·43.4 MB(round마다 약 0.63 MB)였다. 다시 열기는 4.7 s였다. 두 실행을 4 core container에서 동시에 돌렸고 일부 구간에 Clippy가 겹쳤으므로 시간은 참고값이다. frame 수 16과 64의 시간이 같아서 비용은 residency가 아니라 재검증에서 나온다. `with_fresh!`의 파일 합 상한 32 MiB와 사례 상한 30 s(기본)를 이 사례만 48 MiB, 1,200 s로 올렸다. 이것은 측정이 아니다. F6 측정은 별도 단위다.
+LRR-01의 비용. 한 그룹마다 WAL 전체를 다시 검증하므로 거래 수의 제곱으로 는다. 최종 build에서 round 0·8·16·24·32의 누적 시간은 1.5 s·45 s·148 s·314 s·537 s, 파일 합은 23.3 MB·28.3 MB·33.4 MB·38.4 MB·43.4 MB(round마다 약 0.63 MB)였고 다시 열기는 5.3 s였다. 4 core container에서 다른 build·시험과 일부 겹쳐 돌았으므로 시간은 참고값이다. 검토 반영 전 build에서 frame 수 16과 64로 같이 돌렸을 때 시간이 같았으므로 비용은 residency가 아니라 재검증에서 나온다. `with_fresh!`의 파일 합 상한 32 MiB와 사례 상한 30 s(기본)를 이 사례만 48 MiB, 1,200 s로 올렸다. 이것은 측정이 아니다. F6 측정은 별도 단위다.
 
 처음 실행에서 LRR-01은 33개 거래·정리·읽기를 통과한 뒤 시험 틀의 파일 합 상한(32 MiB)에서 실패했다. 제품 오류가 아니라 시험 틀의 상한이었다.
 
-그 밖에 `cargo fmt --all --check`와 `cargo clippy --workspace --all-targets --all-features --locked -- -D warnings`가 통과했다. Clippy의 `large_enum_variant`(RowRetireStep)는 다른 Row step enum과 같은 이유(inline, heap 없음)로 허용했다.
+공통 파일(`catalog_memory.rs`)이 바뀌어 gate가 [F2 필수 계약](../policies/repository-build-plan.md#module-gate-contracts)으로 고르는 S2W-R10/R11/R21-LIVE(`catalog_memory::row_live::s2w_r10_live_prepare_before_is_cancelled_by_the_driver`, `s2w_r11_live_apply_before_is_reopened_and_cancelled`, `s2w_r21_live_refused_cancel_is_fenced_and_must_resolve`)도 head에서 통과했다(각 1.2 s). CI는 이 셋을 C+A export에서도 돌린다. 로컬 `check_module_gate.py check --mode push`는 PASS(오류 0, 대기 0)다.
+
+그 밖에 `cargo fmt --all --check`와 `cargo clippy --workspace --all-targets --all-features --locked -- -D warnings`, C+A·C+B export의 `cargo check -p xadb-engine --lib --tests --all-features`(경고 0)가 통과했다. Clippy의 `large_enum_variant`(RowRetireStep)는 다른 Row step enum과 같은 이유(inline, heap 없음)로 허용했다.
 
 <a id="lrr-review"></a>
 ## 4. 독립 검토
