@@ -6220,7 +6220,7 @@ source별 검증 receipt와 독립 검토 결과는 PR에 결속한다. 현재 �
 <a id="f5-scope3-fixture"></a>
 ## F5-b — scope3 literal의 C 쪽 fixture 이관 (2026-11-02)
 
-**상태: 구현·로컬 선택 검증 완료, 독립 검토·CI는 PR에 결속.** PR #32가 병합된 main
+**상태: 구현·로컬 선택 검증과 독립 D1/D2 ACCEPT(필수 0) 완료, CI는 PR에 결속.** PR #32가 병합된 main
 `c0f9e25`에서 클라우드 별도 branch `claude/project-thread-y2rvpt`로 진행했다. 사용자의
 "후속 계획의 현재 상태를 파악하고 다음 작업 진행" 요청에 따라 F0–F5-a·F4가 병합된 것을
 확인하고, 남은 F5-b·F6 중 사용자 결정(D03)이 필요 없는 F5-b를 골랐다. 작성·통합 담당은
@@ -6245,7 +6245,7 @@ SHA-256·git blob을 둔다.
 그래서 gate 기록의 CI 선택은 literal에 닿는 사례로 줄였다. head 36개(A 13, C semantic 13,
 C recovery 10), C+A의 A 13개, Python 3개다. 위 로컬 39/39와 26/26은 실행한 그대로 둔다.
 
-로컬 실행 기록·ELF hash·export inventory는 [로컬 결과](../../module-gate/evidence/f5b/local/results.json)에 있다.
+[독립 검토 기록](../../module-gate/evidence/f5b/review.md)은 1차의 필수 2건·권고 7건과 반영 뒤 재확인 ACCEPT를 남긴다. 로컬 실행 기록·ELF hash·export inventory는 [로컬 결과](../../module-gate/evidence/f5b/local/results.json)에 있다.
 C+B 결과는 attested가 아닌 로컬 증거다. CI의 export는 merge-base의 trusted policy를 쓰고,
 이 PR의 base `c0f9e25`는 아직 EX08–EX09 등록으로 두 C 파일을 C+B에서 제거한다. 병합 뒤
 Rust 변경 PR의 C+B build는 두 파일을 컴파일하지만, 어떤 변경이 이 사례를 C+B로 선택하기
