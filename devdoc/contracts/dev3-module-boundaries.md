@@ -3151,3 +3151,45 @@ probe 경로·행을 모두 일치시킨다. 각 compiler 180초, 전체 compile
 새 권한 발급이 없으므로 완료한 owner/view 시험은 반복하지 않는다. 실제 성공·Before·Fatal·cancel·
 Drop fence와 A 단독 source는 [선택·리뷰 기록](../evidence/module-independence-survey-20261026.md#f4-row-operation)을 따른다.
 EX05–EX07과 최초 GAT의 구체 수명은 후속 잔여이며 전체 F4 완료가 아니다.
+
+
+<a id="f4-caller-budgets"></a>
+## F4 후속 — Row caller의 독립 예산 검증
+
+2026-11-02, PR #31 병합 `e582363c` 다음 단위다. EX05–EX07의 C census가
+A 구현의 `size_of` helper를 호출하던 결합을 C 소유
+[`row_caller_budget.rs`](../../crates/engine/src/storage/wal_io/row_caller_budget.rs)의
+고정 ceiling으로 대체한다. A는 자신의 원 inventory가 각 ceiling 이내임을 검산하고,
+C는 자기 본문·carrier와 ceiling의 합을 원 charge/cap에 대조한다. 따라서 A 실제 몫의
+변화가 ceiling 안에 있으면 C의 수식·시험 파일을 다시 수정할 필요가 없다.
+제품 코드·grant·layout·오류·I/O·Drop 변경은 없고 계약과 검증 모두 `cfg(test)`다.
+
+| A 의무 | 고정 ceiling(B) | 실행 전 선정 근거 |
+| --- | ---: | --- |
+| Commit frame | 3,024 | S3-v8 원 full slack 1,920 B를 포함한 frame. stage margin 2 B이므로 반올림하지 않음 |
+| statement end | 6,144 | 기존 preflight caller ceiling. S9의 2행×1값 caller term 5,779 B를 포함 |
+| rollback base caller | 512 | S4 원 caller 456 B를 포함하는 handle 규모 |
+| rollback step Result | 1,024 | task를 소유하는 `Result<Stepped, RollbackStop<...>>`를 별도 검산; 원 C step 수식의 다른 항은 유지 |
+| rollback start/next/finish/finish_statement/transaction.finish_aborted | 각 6,144 | 제어 경로의 기존 preflight 규모. 원 caller+per-call+dead slot 전체 frame을 A에서 대조 |
+| rollback CLR lane/producer/prepare/apply/reopen | 각 11,520 | 이미 채택한 A Write ceiling. frame-static 몫에 작은 임의 ceiling을 적용하지 않음 |
+| CLR producer | 19,456 | S4/S6 원 19,260 B inventory를 포함하는 19 KiB. 원 producer 항을 삭제하지 않음 |
+| recovery handler | 4,096 | S6 원 handler 3,672 B(5,496−1,824)를 포함. task/result/proposal/lane/512 slack 전체 유지 |
+
+A의 검증은 memory와 C의 native instrumented Writer에 같은 수식을 적용한다. rollback은
+10개 이름의 완전한 집합, 중복·누락·미등록 site, per-call ≤ frame ≤ ceiling을 확인한다.
+statement end의 입력 한계는 기존 2행·1값으로 명시한다. 다른 SQL caller로 일반화하지 않는다.
+C rollback은 10개 site를 명시적으로 분류하고 새 site는 자동 기본값으로 처리하지 않는다.
+recovery frame·flush·task layout, Commit 네 window·progress·gate wait, rollback
+start/reclose/end gate와 두 resident reader의 합을 그대로 검산한다. 원 charge 44,304 B,
+short cap 65,536 B와 Commit 각 window의 고정 charge는 확대하지 않는다.
+
+이 계약은 source-bound inventory이며 실제 stack/RSS 측정이 아니다. ceiling 초과는
+A 구현 축소 또는 양쪽의 새 계약 검토 사유다. 원 항·slack을 줄이거나 실패 뒤 cap을 올려
+통과시키지 않는다. 원 source의 PASS/FAIL과 이번 source 결과는 분리 보존한다.
+
+EX05–EX07을 제거하되 이번 PR의 trusted baseline은 여전히 원 census 파일 세 개를
+C+B export에서 제거한다. 따라서 원 test 이름은 C-only 위임 wrapper로 보존하고,
+새 C census 파일·selector를 별도 등록한다. head와 C+B에서 새 selector 5개로 같은 C 본문을 source별 한 번씩 검증한다.
+원 위임 wrapper는 exact N/A와 독립 검토·compile-only로 확인한다. A의 새 2개 사례는 head와 C+A에서
+실행한다. C03 facade와 기존 제품 시험은 무변경이므로 반복하지 않는다. EX08–EX09와
+F5-b/F6은 별도 잔여다. [실행 범위·결과](../evidence/module-independence-survey-20261026.md#f4-caller-budgets)를 따른다.

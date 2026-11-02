@@ -32,6 +32,9 @@ pub(crate) const WAL_NAME: &str = "d3-wal-00000001";
 const PROFILE_NAME: &str = "d3-profile";
 const STAGE_NAME: &str = "d3-writer-stage";
 
+#[cfg(test)]
+pub(in crate::storage) mod row_caller_budget;
+
 mod bootstrap;
 pub(in crate::storage) mod disk_api;
 mod physical;

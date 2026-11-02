@@ -1700,6 +1700,10 @@ class F5RealRegistryTests(unittest.TestCase):
             spec = module_single_source.source_spec(data, side)
             self.assertEqual(spec['module'], expected['module'])
             for key in ('removed', 'tests', 'tests_c'):
+                # F4 closes the first three C-to-A census exceptions. Preserve
+                # the historical baseline receipt; only these removals retire.
+                if key == 'tests_c' and side == 'b':
+                    expected = dict(expected, tests_c=expected['tests_c'][3:])
                 self.assertEqual(sorted(map(str, json.loads(json.dumps(spec.get(key, []))))),
                                  sorted(map(str, expected.get(key, []))))
         manifest = gate.Manifest(data, 'candidate')
@@ -1707,7 +1711,34 @@ class F5RealRegistryTests(unittest.TestCase):
         self.assertTrue(all(manifest.owner(r['test_file']) == r['owner']
                             for r in data['affected_contracts']))
         self.assertEqual({e['id'] for e in data['exceptions']},
-                         {f'EX{i:02}' for i in range(5, 10)})
+                         {'EX08', 'EX09'})
+
+
+class F4BudgetExportTests(unittest.TestCase):
+    def test_closed_census_exceptions_keep_c_budget_tests_in_both_exports(self):
+        root = Path(__file__).resolve().parents[1]
+        data = json.loads((root / gate.MANIFEST).read_text())
+        manifest = gate.Manifest(data, 'F4 caller budgets')
+        base = 'crates/engine/src/storage/wal_io/'
+        files = [base + path for path in (
+            'row_caller_budget.rs',
+            'plan4_apply/row/rollback_budget_tests.rs',
+            'plan4_recovery/row_action_budget_tests.rs',
+            'plan4_retention/catalog_commit/row_budget_tests.rs',
+        )]
+        historical = json.loads((root / 'module-gate/evidence/f5/baseline-export-spec.json').read_text())
+        for side in ('a', 'b'):
+            spec = module_single_source.source_spec(data, side)
+            # This adoption's trusted policy still removes the three old files.
+            # Their replacements must survive both old and new removal inventories.
+            for inventory in (spec, historical['sides'][side]):
+                removed = inventory.get('removed', []) + [r[3] for r in inventory.get('tests_c', [])]
+                for path in files:
+                    self.assertFalse(any(path == p or path.startswith(p + '/') for p in removed))
+        for path in files:
+            self.assertEqual(manifest.owner(path), 'C')
+            self.assertNotIn('crate::storage::row::insert', (root / path).read_text())
+        self.assertFalse({'EX05', 'EX06', 'EX07'} & {e['id'] for e in data['exceptions']})
 
 
 class F3CatalogOwnershipTests(unittest.TestCase):

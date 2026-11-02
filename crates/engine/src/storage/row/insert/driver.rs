@@ -32,6 +32,8 @@ use crate::storage::{
 use foundation::error::Effect;
 use std::convert::Infallible;
 
+#[cfg(test)]
+mod budget_tests;
 pub(in crate::storage) mod live;
 pub(in crate::storage) mod recovered;
 #[cfg(test)]

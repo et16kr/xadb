@@ -1,6 +1,6 @@
 # XADB 개발 문서
 
-현재 후속 작업은 [F4 Row 쓰기 작업 API 첫 단위](evidence/module-independence-survey-20261026.md#f4-row-operation)다. F0–F3·F5-a와 변경 경로별 정확한 CI 선택(PR #30)은 병합됐다. Row 관련 상태 계약을 구현하며 EX05–EX07·F5-b fixture 이동·F6은 잔여다. 첫 단위의 검증 결과는 해당 PR의 source별 CI receipt를 따른다.
+현재 후속 작업은 [F4 caller 예산 분리](evidence/module-independence-survey-20261026.md#f4-caller-budgets)다. PR #31의 Row 쓰기 관련 상태 계약 다음으로 A 자체 크기와 C 합계를 고정 예산으로 독립 검증하여 EX05–EX07을 제거한다. 현재 source의 시험 결과는 해당 PR의 CI receipt를 따른다. F5-b fixture 이동·EX08–EX09·F6은 잔여다.
 
 F2 공통 변경의 최소 계약 사례 선택 구현·검증·독립 검토는 [실행 기록](evidence/module-independence-survey-20261026.md#f2-contract-selection)을 따른다. 제품 코드·fixture는 변경하지 않으며 무변경 제품 시험은 실행하지 않는다.
 

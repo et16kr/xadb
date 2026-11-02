@@ -1086,3 +1086,7 @@ mod tests {
 #[cfg(test)]
 #[path = "catalog_commit/row_census.rs"]
 mod row_census;
+
+#[cfg(test)]
+#[path = "catalog_commit/row_budget_tests.rs"]
+mod row_budget;

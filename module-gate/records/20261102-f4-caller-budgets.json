@@ -1,0 +1,286 @@
+{
+ "schema": "XADB_MODULE_GATE_RECORD_V1",
+ "change": "F4 independent Row caller budgets: A verifies actual inventory, C verifies fixed-budget coexistence; remove EX05–EX07 with trusted export-compatible census selectors.",
+ "python_tests": [
+  "test_check_module_gate.F5RealRegistryTests.test_single_manifest_preserves_baseline_export_layout_and_f2_owners",
+  "test_check_module_gate.F4BudgetExportTests.test_closed_census_exceptions_keep_c_budget_tests_in_both_exports"
+ ],
+ "rust_tests": [
+  {
+   "paths": [
+    "crates/engine/src/storage/row/insert/driver.rs",
+    "crates/engine/src/storage/row/insert/driver/budget_tests.rs"
+   ],
+   "reason": "New A inventory obligations use the unchanged complete helper terms and reject missing/duplicate/unbudgeted rollback sites; memory and identical native instrumented Writer are checked in head and C+A.",
+   "cases": [
+    {
+     "file": "crates/engine/src/storage/row/insert/driver/budget_tests.rs",
+     "case": "storage::row::insert::driver::budget_tests::f4_a_caller_budgets_memory",
+     "sources": [
+      "head",
+      "export-a"
+     ],
+     "inputs": [
+      "crates/engine/src/storage/wal_io/row_caller_budget.rs",
+      "crates/engine/src/storage/row/insert/driver/live.rs",
+      "crates/engine/src/storage/row/insert/driver/recovered.rs",
+      "crates/engine/src/storage/row/insert.rs"
+     ]
+    },
+    {
+     "file": "crates/engine/src/storage/row/insert/driver/budget_tests.rs",
+     "case": "storage::row::insert::driver::budget_tests::f4_a_caller_budgets_native",
+     "sources": [
+      "head",
+      "export-a"
+     ],
+     "inputs": [
+      "crates/engine/src/storage/wal_io/row_caller_budget.rs",
+      "crates/engine/src/storage/row/insert/driver/live.rs",
+      "crates/engine/src/storage/row/insert/driver/recovered.rs",
+      "crates/engine/src/storage/row/insert.rs"
+     ]
+    }
+   ]
+  },
+  {
+   "paths": [
+    "crates/engine/src/storage/wal_io/plan4_apply/row/rollback.rs",
+    "crates/engine/src/storage/wal_io/plan4_apply/row/rollback_budget_tests.rs"
+   ],
+   "reason": "Changed C coexistence body retains every original C term and replaces A implementation reads by fixed ceilings. New head and C+B selectors execute this body once per source; legacy forwarding selectors are compile-checked and independently reviewed without duplicate execution.",
+   "cases": [
+    {
+     "file": "crates/engine/src/storage/wal_io/plan4_apply/row/rollback_budget_tests.rs",
+     "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::row::rollback::budget_census::f4_c_rollback_budget_memory",
+     "sources": [
+      "head",
+      "export-b"
+     ],
+     "inputs": [
+      "crates/engine/src/storage/wal_io/row_caller_budget.rs",
+      "crates/engine/src/storage/wal_io/plan4_apply/row/rollback.rs"
+     ]
+    },
+    {
+     "file": "crates/engine/src/storage/wal_io/plan4_apply/row/rollback_budget_tests.rs",
+     "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::row::rollback::budget_census::f4_c_rollback_budget_native",
+     "sources": [
+      "head",
+      "export-b"
+     ],
+     "inputs": [
+      "crates/engine/src/storage/wal_io/row_caller_budget.rs",
+      "crates/engine/src/storage/wal_io/plan4_apply/row/rollback.rs"
+     ]
+    }
+   ]
+  },
+  {
+   "paths": [
+    "crates/engine/src/storage/wal_io/plan4_recovery/row_action.rs",
+    "crates/engine/src/storage/wal_io/plan4_recovery/row_action_budget_tests.rs"
+   ],
+   "reason": "Changed C coexistence body retains every original C term and replaces A implementation reads by fixed ceilings. New head and C+B selectors execute this body once per source; legacy forwarding selectors are compile-checked and independently reviewed without duplicate execution.",
+   "cases": [
+    {
+     "file": "crates/engine/src/storage/wal_io/plan4_recovery/row_action_budget_tests.rs",
+     "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::row_action::budget_census::f4_c_recovery_budget_memory",
+     "sources": [
+      "head",
+      "export-b"
+     ],
+     "inputs": [
+      "crates/engine/src/storage/wal_io/row_caller_budget.rs",
+      "crates/engine/src/storage/wal_io/plan4_recovery/row_action.rs"
+     ]
+    },
+    {
+     "file": "crates/engine/src/storage/wal_io/plan4_recovery/row_action_budget_tests.rs",
+     "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::row_action::budget_census::f4_c_recovery_budget_native",
+     "sources": [
+      "head",
+      "export-b"
+     ],
+     "inputs": [
+      "crates/engine/src/storage/wal_io/row_caller_budget.rs",
+      "crates/engine/src/storage/wal_io/plan4_recovery/row_action.rs"
+     ]
+    }
+   ]
+  },
+  {
+   "paths": [
+    "crates/engine/src/storage/wal_io/plan4_retention/catalog_commit.rs",
+    "crates/engine/src/storage/wal_io/plan4_retention/catalog_commit/row_budget_tests.rs"
+   ],
+   "reason": "Changed C coexistence body retains every original C term and replaces A implementation reads by fixed ceilings. New head and C+B selectors execute this body once per source; legacy forwarding selectors are compile-checked and independently reviewed without duplicate execution.",
+   "cases": [
+    {
+     "file": "crates/engine/src/storage/wal_io/plan4_retention/catalog_commit/row_budget_tests.rs",
+     "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::create_pair::catalog_commit::row_budget::f4_c_commit_budget_memory_and_native",
+     "sources": [
+      "head",
+      "export-b"
+     ],
+     "inputs": [
+      "crates/engine/src/storage/wal_io/row_caller_budget.rs",
+      "crates/engine/src/storage/wal_io/plan4_retention/catalog_commit.rs"
+     ]
+    }
+   ]
+  },
+  {
+   "paths": [
+    "crates/engine/src/storage/wal_io.rs",
+    "crates/engine/src/storage/wal_io/row_caller_budget.rs"
+   ],
+   "reason": "New common cfg(test) budget module is validated by A actual<=ceiling and C ceiling+body<=original charge/cap in the head and both single-source exports. Product runtime logic is unchanged.",
+   "cases": [
+    {
+     "file": "crates/engine/src/storage/row/insert/driver/budget_tests.rs",
+     "case": "storage::row::insert::driver::budget_tests::f4_a_caller_budgets_memory",
+     "sources": [
+      "head",
+      "export-a"
+     ],
+     "inputs": [
+      "crates/engine/src/storage/wal_io/row_caller_budget.rs",
+      "crates/engine/src/storage/row/insert/driver/live.rs",
+      "crates/engine/src/storage/row/insert/driver/recovered.rs",
+      "crates/engine/src/storage/row/insert.rs"
+     ]
+    },
+    {
+     "file": "crates/engine/src/storage/row/insert/driver/budget_tests.rs",
+     "case": "storage::row::insert::driver::budget_tests::f4_a_caller_budgets_native",
+     "sources": [
+      "head",
+      "export-a"
+     ],
+     "inputs": [
+      "crates/engine/src/storage/wal_io/row_caller_budget.rs",
+      "crates/engine/src/storage/row/insert/driver/live.rs",
+      "crates/engine/src/storage/row/insert/driver/recovered.rs",
+      "crates/engine/src/storage/row/insert.rs"
+     ]
+    },
+    {
+     "file": "crates/engine/src/storage/wal_io/plan4_apply/row/rollback_budget_tests.rs",
+     "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::row::rollback::budget_census::f4_c_rollback_budget_memory",
+     "sources": [
+      "head",
+      "export-b"
+     ],
+     "inputs": [
+      "crates/engine/src/storage/wal_io/row_caller_budget.rs",
+      "crates/engine/src/storage/wal_io/plan4_apply/row/rollback.rs"
+     ]
+    },
+    {
+     "file": "crates/engine/src/storage/wal_io/plan4_apply/row/rollback_budget_tests.rs",
+     "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::row::rollback::budget_census::f4_c_rollback_budget_native",
+     "sources": [
+      "head",
+      "export-b"
+     ],
+     "inputs": [
+      "crates/engine/src/storage/wal_io/row_caller_budget.rs",
+      "crates/engine/src/storage/wal_io/plan4_apply/row/rollback.rs"
+     ]
+    },
+    {
+     "file": "crates/engine/src/storage/wal_io/plan4_recovery/row_action_budget_tests.rs",
+     "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::row_action::budget_census::f4_c_recovery_budget_memory",
+     "sources": [
+      "head",
+      "export-b"
+     ],
+     "inputs": [
+      "crates/engine/src/storage/wal_io/row_caller_budget.rs",
+      "crates/engine/src/storage/wal_io/plan4_recovery/row_action.rs"
+     ]
+    },
+    {
+     "file": "crates/engine/src/storage/wal_io/plan4_recovery/row_action_budget_tests.rs",
+     "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::row_action::budget_census::f4_c_recovery_budget_native",
+     "sources": [
+      "head",
+      "export-b"
+     ],
+     "inputs": [
+      "crates/engine/src/storage/wal_io/row_caller_budget.rs",
+      "crates/engine/src/storage/wal_io/plan4_recovery/row_action.rs"
+     ]
+    },
+    {
+     "file": "crates/engine/src/storage/wal_io/plan4_retention/catalog_commit/row_budget_tests.rs",
+     "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::create_pair::catalog_commit::row_budget::f4_c_commit_budget_memory_and_native",
+     "sources": [
+      "head",
+      "export-b"
+     ],
+     "inputs": [
+      "crates/engine/src/storage/wal_io/row_caller_budget.rs",
+      "crates/engine/src/storage/wal_io/plan4_retention/catalog_commit.rs"
+     ]
+    }
+   ]
+  }
+ ],
+ "reviews": [
+  {
+   "id": "f4-caller-budgets-d2",
+   "class": "D2",
+   "scopes": [
+    "common",
+    "policy"
+   ],
+   "author": "/root",
+   "reviewer": "/root/f4_design_review",
+   "verdict": "ACCEPT",
+   "required_open": 0,
+   "files": {
+    "crates/engine/src/storage/row/insert.rs": "1a85b03fcd7a3df3c07caea0dd4e8a395e61d94d",
+    "crates/engine/src/storage/row/insert/driver.rs": "8b880b20507d066e6beca0debf56353733a01899",
+    "crates/engine/src/storage/row/insert/driver/budget_tests.rs": "e0a38150de2012ae6d70bf598e3e01c90f30832e",
+    "crates/engine/src/storage/row/insert/driver/live.rs": "c790ce6ce729c6ed49b0f4bbc275cbaa8a958526",
+    "crates/engine/src/storage/row/insert/driver/recovered.rs": "252137d6b9b560f641d39d219f6bbc070e0cac76",
+    "crates/engine/src/storage/wal_io.rs": "62f5e767c7b9d5ac64935a66579bcb3db2cebb8d",
+    "crates/engine/src/storage/wal_io/plan4_apply/row/rollback.rs": "3647264c64de0ad98f208f2eb03f2f45ff03a2dd",
+    "crates/engine/src/storage/wal_io/plan4_apply/row/rollback_budget_tests.rs": "a0ce511e06ad3155eb4a1c0104825a1ef55cbc7d",
+    "crates/engine/src/storage/wal_io/plan4_apply/row/rollback_census_tests.rs": "4be043d6ec6f7f6e6b9c46f06a1b2729f03bbb64",
+    "crates/engine/src/storage/wal_io/plan4_recovery/row_action.rs": "cc08b197a1d6f2f16c8ca022faf79d33ccbdf786",
+    "crates/engine/src/storage/wal_io/plan4_recovery/row_action_budget_tests.rs": "c929816186dc0cc0426491bbcfa72cc68adb6bb5",
+    "crates/engine/src/storage/wal_io/plan4_recovery/row_action_census_tests.rs": "53aeab3bc4cefa62aebdb68b7f1f45dfef8e39ea",
+    "crates/engine/src/storage/wal_io/plan4_retention/catalog_commit.rs": "b547ec7ce3103297e6fde825d1b8b240f1c713bc",
+    "crates/engine/src/storage/wal_io/plan4_retention/catalog_commit/row_budget_tests.rs": "1375d10ac462e50e29c6ce6ff304a2d20efff1d7",
+    "crates/engine/src/storage/wal_io/plan4_retention/catalog_commit/row_census.rs": "04e88b490bab31f992dbe762c0f173041bdbfa45",
+    "crates/engine/src/storage/wal_io/row_caller_budget.rs": "7082b2e9bc0fc632b91c282f95f032e0fb70ab44",
+    "devdoc/README.md": "b411bc2fa16f7d6839ceeb9bc9e923612f49010f",
+    "devdoc/contracts/dev3-module-boundaries.md": "ee98512162ad8969f6b55909fc74e3f70c188f62",
+    "devdoc/evidence/module-independence-survey-20261026.md": "abad630c18cfb59180949e620ccfe46010310915",
+    "devdoc/implementation/README.md": "dd4577d40895515dc7f1932c489da832aeed577f",
+    "devdoc/plans/module-independence-followup-plan.md": "84fec832213781e383be8e5ad30ec827c50f3ef1",
+    "devdoc/policies/module-gate.json": "21ceadea8f4add092f0f25c7034d38f6617bd5ad",
+    "scripts/check_module_gate.py": "f23bdafff758f965392ce192bfca804d3ff31600",
+    "scripts/module_gate_build.py": "ba2653cc253015444ef3a03ba64a8fafcd4df664",
+    "scripts/module_gate_python.py": "5dfcc4ea9743aa35a391d3cb9fd7a01d5b334101",
+    "scripts/module_single_source.py": "c6e22278b46f37c041b59c5661f15422c6652833",
+    "scripts/test_check_module_gate.py": "f7fd976a4b57d0320700b6964b34caf692ab2bf4"
+   },
+   "log": "module-gate/evidence/f4-caller-budgets/review.md",
+   "log_sha256": "73580e8a140f5241d17bc5cd3f1effe81779c7a0fee66847e677f165e0c422b8"
+  }
+ ],
+ "na": [
+  {
+   "paths": [
+    "crates/engine/src/storage/wal_io/plan4_apply/row/rollback_census_tests.rs",
+    "crates/engine/src/storage/wal_io/plan4_recovery/row_action_census_tests.rs",
+    "crates/engine/src/storage/wal_io/plan4_retention/catalog_commit/row_census.rs"
+   ],
+   "reason": "Historical selectors now forward directly to the new C-only census body, which is executed by the new selectors on head and C+B. Independent review checks identical generic Writer/label forwarding; all-target Clippy compiles these wrappers. Running them again would duplicate the same unchanged body on head. Recovery C03 is untouched. Trusted baseline still removes these three files only in C+B."
+  }
+ ]
+}
