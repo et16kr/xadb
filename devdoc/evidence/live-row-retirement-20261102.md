@@ -2,7 +2,7 @@
 
 2026-11-02
 
-**상태: 구현·선택 검증 완료 · 독립 검토 반영 · PR 대기.** 계약은 [3.14 live Row 정리](../contracts/dev3-task-14-reclamation.md#live-row-retirement)다. 기준 source는 main `f1600a2`(PR #35 병합)이고, branch는 `claude/project-thread-9inq97`이다.
+**상태: 구현·선택 검증 완료 · 독립 검토 반영 · PR #36으로 병합(main `8fa96c5`).** 계약은 [3.14 live Row 정리](../contracts/dev3-task-14-reclamation.md#live-row-retirement)다. 기준 source는 main `f1600a2`(PR #35 병합)이고, branch는 `claude/project-thread-9inq97`이다.
 
 <a id="lrr-why"></a>
 ## 1. 왜 이 단위인가

@@ -183,6 +183,10 @@ mod control;
 mod flush;
 #[path = "plan4_retention/history.rs"]
 mod history;
+// F6 M0: this thread's full WAL revalidation count (history `revalidation`).
+#[cfg(test)]
+#[allow(unused_imports, reason = "used by the F6 M0 count cases only")]
+pub(in crate::storage) use history::revalidation::count as test_revalidations;
 #[path = "plan4_retention/live.rs"]
 mod live;
 #[path = "plan4_retention/load.rs"]

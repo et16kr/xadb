@@ -237,7 +237,7 @@ BEGIN WAL 회수와 actual free가 없는 표현 시험은 R14-13/실제 반환 
 <a id="live-row-retirement"></a>
 ## 첫 Row profile의 live 정리 (3.14.1 부분 공급, 2026-11-02)
 
-**XADB-DEV3-ROW-RETIRE-001 · 구현·선택 검증·독립 검토 두 차례(ACCEPT, 열린 필수 0) / PR 대기.** 기준은 main `f1600a2`다. 이 절은 3.14.1의 일부만 공급한다. 3.14.1 전체, 3.03.4의 실제 allocator 반환, 3.14.2의 압력·재사용 인수는 그대로 미완료다.
+**XADB-DEV3-ROW-RETIRE-001 · 구현·선택 검증·독립 검토 두 차례(ACCEPT, 열린 필수 0) / PR #36 병합(main `8fa96c5`).** 기준은 main `f1600a2`다. 이 절은 3.14.1의 일부만 공급한다. 3.14.1 전체, 3.03.4의 실제 allocator 반환, 3.14.2의 압력·재사용 인수는 그대로 미완료다.
 
 **문제.** 첫 Row profile의 INSERT 거래는 Terminal Job 하나와 넣은 행마다 Root Job 하나를 쥔다. 열린 session에서 이 Job을 비우는 경로가 없어 Job cell 64개로 한 행 거래 32개까지만 들어갔다. Status cell도 TerminalFinish 전에는 같은 home의 다음 Begin이 쓸 수 없었다. 정리 frame(Prune, ReleaseRole, RootFree, TerminalFinish)은 이미 복구의 `row_recovery_cleanup`이 닫힌 facade에서 썼지만 live 입구는 없었다([S9 기록](dev3-module-boundaries.md#row-m4-s9)).
 
@@ -254,6 +254,6 @@ BEGIN WAL 회수와 actual free가 없는 표현 시험은 R14-13/실제 반환 
 
 **자원.** live 정리 본문은 `CatalogProgressCharge` 44,304 B 안에 든다: memory·native 모두 43,924 B다. `CatalogProgressCharge::new`의 debug assertion과 시험 `live_row_retirement_fits_the_progress_charge`가 이름으로 확인한다. 이 값은 peak에 접지 않으므로 shared·charge·전체 peak는 바뀌지 않는다. 남는 380 B가 `retire_row`를 부르는 호출자의 몫 전부다. Row 쓰기처럼 호출자 몫(`ROW_WRITE_CALLER_BYTES`)을 따로 두지 않았으므로, 자동 호출을 붙이는 단위는 호출자 상한을 정하고 이 본문이나 charge를 다시 맞춰야 한다.
 
-**범위 밖.** 자동 호출(commit·rollback 뒤 정리를 부르는 background cleaner나 statement driver 연결)은 없다. 호출자가 `row_cleanup_next`·`retire_row`를 부른다. UPDATE·DELETE·index·overflow 정리(DEV3 bundle 4), allocator의 실제 page 반환(3.03.4), checkpoint·WAL 절단, 동시 writer, Catalog aging은 이 단위가 아니다. 한 그룹마다 WAL 전체 replay 검증을 하므로 그룹 수에 대해 비용이 이차로 는다([F6-a](../evidence/f6-wal-revalidation-survey-20261102.md)). F6 측정은 별도 단위다.
+**범위 밖.** 자동 호출(commit·rollback 뒤 정리를 부르는 background cleaner나 statement driver 연결)은 없다. 호출자가 `row_cleanup_next`·`retire_row`를 부른다. UPDATE·DELETE·index·overflow 정리(DEV3 bundle 4), allocator의 실제 page 반환(3.03.4), checkpoint·WAL 절단, 동시 writer, Catalog aging은 이 단위가 아니다. 한 그룹마다 WAL 전체 replay 검증을 하므로 그룹 수에 대해 비용이 이차로 는다([F6-a](../evidence/f6-wal-revalidation-survey-20261102.md)). [F6 M0](../evidence/f6-wal-revalidation-survey-20261102.md#f6a-m0)가 pool frame 16(flush 없음)에서 센 값으로, 한 행 commit 거래의 정리 6그룹은 각각 전체 replay 1회를 하고 WAL을 367,106 B 늘린다(거래 자체는 4회, 262,257 B).
 
 **인수 대응.** R14 사례의 PASS를 주장하지 않는다. LRR-02와 LRR-05는 R14-05의 일부(오래된 snapshot 옆 release 보류)를, LRR-01은 Job·Status·Undo 재사용을, LRR-06은 live 정리 중간 상태에서 복구가 나머지를 끝내는 것을 첫 Row profile에서만 보인다. 시험이 닿지 않는 분기(stage의 Unchanged 거절, 정리 residency의 `FlushRequired`, 닫힌 facade의 거절)와 시험·결과는 [증거](../evidence/live-row-retirement-20261102.md)에 있다.

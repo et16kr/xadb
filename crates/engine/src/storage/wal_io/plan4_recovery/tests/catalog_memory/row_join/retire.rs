@@ -851,3 +851,8 @@ fn lrr06_recovery_finishes_a_partial_live_cleanup() {
         println!("LRR_06 reopen ready_q={q} row_cells={cells} ROW_JOBS_FREE");
     });
 }
+
+/// F6 M0: the WAL revalidation counts of a one-row transaction and of its
+/// live cleanup (evidence `f6-wal-revalidation-survey-20261102.md` §7).
+#[path = "retire/revalidation.rs"]
+mod revalidation;

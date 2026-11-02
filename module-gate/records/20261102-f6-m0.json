@@ -1,0 +1,45 @@
+{
+ "schema": "XADB_MODULE_GATE_RECORD_V1",
+ "change": "F6 M0: test-only (cfg(test)) counters of every full WAL revalidation (replay_durable) by entry, with E, frames, WAL bytes read and SHA-256 input, and the JOIN count cases for a one-row commit transaction and its live cleanup step by step (CI case: contract facts, whole-WAL replay and determinism; ignored case: the L0-L3 measurement). No product behaviour change.",
+ "rust_tests": [
+  {
+   "paths": [
+    "crates/engine/src/storage/wal_io/plan4_apply.rs",
+    "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire.rs",
+    "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/revalidation.rs",
+    "crates/engine/src/storage/wal_io/plan4_retention/history.rs"
+   ],
+   "reason": "Every changed path is the test-only instrumentation or its cases: the counters and entry tags (history.rs, all under cfg(test)), their re-export to the tests (plan4_apply.rs, cfg(test)), the module mount (row_join/retire.rs) and the count cases (row_join/retire/revalidation.rs). The CI case runs the counted paths twice in fresh directories (warmup, an L0 transaction, a 2 MiB Reserve->Cancel build with full rollback and live TerminalFinish, one more transaction, each with its live cleanup): it checks that the two runs give the same lines, that validate/reserve/produce/prepare/apply replay nothing (S2W-R22), that Begin, the write preflight, Commit and every cleanup group replay at least once, that the Begin and preflight replays read up to the current WAL file length, and one replay per build cycle. The L0-L3 measurement case is #[ignore] (about 6 minutes) and was run twice for the evidence (devdoc/evidence/f6-m0-20261102.json). Head only: the paths are C and JOIN and add no product behaviour.",
+   "cases": [
+    {
+     "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/revalidation.rs",
+     "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::revalidation::f6_m0_step_counts_match_the_contract_and_repeat",
+     "sources": [
+      "head"
+     ]
+    }
+   ]
+  }
+ ],
+ "reviews": [
+  {
+   "id": "f6-m0-d2",
+   "class": "D2",
+   "scopes": [
+    "common"
+   ],
+   "author": "claude-thread-session/claude-project-thread-9inq97",
+   "reviewer": "claude-independent-review/f6-m0",
+   "verdict": "ACCEPT",
+   "required_open": 0,
+   "log": "module-gate/evidence/f6-m0/review.md",
+   "log_sha256": "38033bb17d33fa3b7b6c6f6f29c01cba82395ac09f0be31aeb6179f09e0270c8",
+   "files": {
+    "crates/engine/src/storage/wal_io/plan4_apply.rs": "d0156e440092627aeb949606caf0e86578e5f610",
+    "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire.rs": "f86dd1db9f10f9f8fdd2a21c9b11724e370ccfea",
+    "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/revalidation.rs": "298ccdb010fb43e506f69ff8489cb6aae93f64c1",
+    "crates/engine/src/storage/wal_io/plan4_retention/history.rs": "ad773a1df789772d86bd0133124cb04ffa93601b"
+   }
+  }
+ ]
+}
