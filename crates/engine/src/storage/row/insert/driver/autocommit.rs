@@ -138,6 +138,10 @@ pub(super) fn statement_ended<B: Boundary>(
 /// refusal. It returns the run's answer itself, so the caller's tail writes
 /// it, and is never inlined, so its Failure is not laid out under a C call.
 #[inline(never)]
+#[allow(
+    clippy::result_large_err,
+    reason = "Failure keeps the stage, the error and any refused cleanup inline, without allocation"
+)]
 pub(super) fn statement_refused<S, R>(error: RetentionError) -> Result<R, DriveError<S>> {
     Err(DriveError::new(
         Failure::new(Stage::Statement, error.into()),
@@ -154,6 +158,10 @@ pub(super) fn statement_refused<S, R>(error: RetentionError) -> Result<R, DriveE
 /// refusal. An issued table is never passed here; it would be dropped. As
 /// `statement_refused`, it returns the run's answer and is never inlined.
 #[inline(never)]
+#[allow(
+    clippy::result_large_err,
+    reason = "Failure keeps the stage, the error and any refused cleanup inline, without allocation"
+)]
 pub(super) fn table_not_issued<S, T, R>(
     statement: S,
     issued: Result<Option<T>, RetentionError>,

@@ -2,14 +2,14 @@
 
 2026-11-02
 
-**상태: 구현·선택 검증 완료 · 독립 검토 · PR 대기.** 계약은 [자동커밋 INSERT 실행기](../contracts/dev3-module-boundaries.md#autocommit-insert)다. 기준 source는 main `5f478d0`(PR #38 병합)이고, branch는 `claude/project-thread-9inq97`이다.
+**상태: 구현·선택 검증 완료 · 독립 검토 세 차례(ACCEPT) · PR 대기.** 계약은 [자동커밋 INSERT 실행기](../contracts/dev3-module-boundaries.md#autocommit-insert)다. 기준 source는 main `5f478d0`(PR #38 병합)이고, branch는 `claude/project-thread-9inq97`이다.
 
 <a id="aci-why"></a>
 ## 1. 왜 이 단위인가
 
 - [live 정리 호출자](live-row-cleanup-caller-20261102.md)까지 A statement driver에는 insert·commit·rollback·정리 단계가 따로 있었지만, 이것들을 Begin부터 거래 끝까지 이어 부르는 제품 실행기는 없었다. 시험만 단계를 하나씩 불렀다.
 - 실행기를 설계하다 보니 A의 Commit frame 몫이 상한 `COMMIT` 3,024 B에 정확히 닿아 있고, C Commit window의 여유도 2·11·146 B뿐이었다. 사용자에게 결정 카드로 물었고, 사용자는 "C 커밋 여유 확보 후 실행기"를 골랐다(카드: C commit 경로의 중복 slot을 줄이고 COMMIT 상한을 새 계약으로 올린 뒤 실행기를 만든다. 여유가 모자라면 조사 기록만 남긴다).
-- 실제로는 commit 쪽을 A에서 정리해 C Commit window와 COMMIT 상한을 바꾸지 않고 들어갔다(3절). 원 상한을 넘은 것은 rollback 쪽 셋이었고, 이것을 F4 규칙의 "양쪽의 새 계약"으로 다시 정했다. 상한 값은 census로 잰 뒤 정했다. C 쪽 여유가 남는다(최소 1,732 B).
+- 실제로는 commit 쪽을 A에서 정리해 C Commit window와 COMMIT 상한을 바꾸지 않고 들어갔다(3절). 원 상한을 넘은 것은 rollback 쪽 셋이었고, 이것을 F4 규칙의 "양쪽의 새 계약"으로 다시 정했다. 상한 값은 census로 잰 뒤 정했다. C 쪽 여유가 남는다(바뀐 상한에서 최소 1,732 B, 전체 최소는 바뀌지 않은 `rollback.finish`의 994 B).
 - 카드는 COMMIT 상한의 새 계약을 다뤘고 rollback 상한은 다루지 않았다. 그래서 rollback 상한 개정은 카드 밖의 정책 변경이며, 근거는 F4 규칙과 독립 D2 검토(6절)이고, PR에서 사용자의 확인을 받는다.
 
 <a id="aci-change"></a>
@@ -141,7 +141,11 @@ LAC-J01의 재시작은 C Progress 11단계로 READY에 닿는다(출력만, 정
 <a id="aci-review"></a>
 ## 6. 독립 검토
 
-(검토 뒤 채움)
+별도 agent run이 읽기만 하고(cargo 없이) 세 차례 검토했다(D2, 정책·공통 범위). 기록은 [검토 기록](../../module-gate/evidence/autocommit-insert/review.md)에 있다.
+
+- 1차(`7b9ed2b`): ACCEPT WITH REQUIRED CHANGES. 필수 3건은 (1) driver가 statement 검사의 CallerMustResolve를 `Returned`로 돌려줄 때 실행기가 fence된 session에 `finish_statement`를 부르던 것, (2) census가 가정한 별도 frame(`start_statement_rollback`·`start_full_rollback`·`rollback_step`)이 보장되지 않던 것, (3) 정책 문서의 기록이 부정확했던 것(카드는 COMMIT만 다뤘고 근거 없는 설계 추정치를 인용했다)이다. 권고 4건(A 쪽 축소를 고르지 않은 이유, 상한 없는 지점의 C 소유 잔여, 두 번째 finish가 성공하는 시험, 얇은 여유), NIT 3건(`debug_assert!`, 실행기 참조 6→5, drain·slot 문구)도 있었다. `44f684d`에서 모두 고쳤다(LAC-A11·A12 추가, 모든 몫 −8 B).
+- 2차(`44f684d`): ACCEPT WITH REQUIRED CHANGES. 1차 10건은 해결됐다. 새 필수 1건: "A 쪽에서 줄일 수 없다"는 주장이 `rollback.finish`에는 틀렸다. statement view(168 B)와 표(120 B)의 slot은 시작·발급을 `statement_live` 자신의 frame에서 해서 rollback 아래에 남았을 뿐이다. `4d7d31a`에서 행 적용을 하위 frame으로 옮겨 statement 경로를 328 B 줄였고, `rollback.finish`는 원 상한으로 돌아가고 나머지 셋의 상한도 낮아졌다(1,920·6,912·12,672 → 1,536·6,528·12,416 B).
+- 3차(`4d7d31a`): ACCEPT, 열린 필수 0. 하위 frame의 tail 호출, statement 시작 거절의 의미 보존, 셈(statement 448, 하위 352, rollback 아래 1,177 B), 반올림 규칙, C 합을 확인했다. D2 정책 변경은 받아들일 만하다고 판정했다: 세 상한 모두 어떤 A 배치로도 원 상한을 넘고, C의 charge·cap·식·slack은 그대로이며, 기록이 측정 뒤 정한 값임과 카드 밖임을 밝힌다. NIT 2건(지점 수 "일곱", README의 최소 여유 표현)과 미확인 1건(거래 handle 168 B > commit 여유 135 B)을 마지막 commit에서 문서에 반영했다.
 
 <a id="aci-limits"></a>
 ## 7. 남은 한계
@@ -158,4 +162,10 @@ LAC-J01의 재시작은 C Progress 11단계로 READY에 닿는다(출력만, 정
 <a id="aci-checks"></a>
 ## 8. 저장소 검사
 
-(검사 뒤 채움)
+시험과 export는 `4d7d31a`(최종 제품 배치)에서 했다(클라우드). 그 뒤 commit은 lint 속성(`clippy::result_large_err`의 이유 단 allow 세 개), 문서와 기록만 바꾼다.
+
+- 변경 코드 시험: `storage::row::insert::driver::`(LAC-A01..A12, LRC-A, `mca00_d15_*`, `f4_a_*`와 기존 driver 시험), `f4_c_rollback_budget_*`, `f4_c_commit_budget_memory_and_native`, `row_join::retire::autocommit::`(LAC-J01·J02), `row_join::retire::driver::`(LRC-J01·J02)를 한 번에 돌려 45개 통과(118.48 s, JOIN은 catalog 식별 환경변수와 `RUST_MIN_STACK` 32 MiB). census 출력은 4절 표와 같다.
+- `cargo clippy --workspace --all-targets --all-features --locked -- -D warnings`, `cargo fmt --all -- --check`: 최종 tree에서 통과. `4d7d31a`의 clippy는 새 함수 셋(`statement_refused`, `table_not_issued`, `start_statement_live`)의 `result_large_err`를 지적했고, driver와 같은 이유를 단 allow로 고쳤다.
+- 단독 export: `scripts/module_single_source.py`(정책 main `5f478d0`)로 만든 a(C+A)와 b(C+B)에서 `cargo check -p xadb-engine --lib --tests --all-features`가 경고 없이 통과. a에서 LAC-A01..A12, `f4_a_autocommit_budgets_*`, `f4_a_caller_budgets_*`, `mca00_d15_*` 17개 통과. b에는 A 파일과 JOIN 시험이 없다.
+- `devdoc/verify_documents.py`: 통과.
+- module gate: [`20261102-autocommit-insert.json`](../../module-gate/records/20261102-autocommit-insert.json), D2 `policy`·`common` 검토가 바뀐 Rust 파일 8개와 정책 문서를 최종 blob으로 덮는다. `check_module_gate.py check --mode push`: 통과.

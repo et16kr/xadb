@@ -3305,7 +3305,7 @@ native Writer에서 같고, 시험 `f4_a_autocommit_budgets_{memory,native}`가 
 | `rollback.next` | 6,361 | **6,528** (6,144에서) | 167 |
 | `rollback.clr_lane` | 12,185 | **12,416** (11,520에서) | 231 |
 | `rollback.finish` | 6,057 | 6,144 (그대로) | 87 |
-| 나머지 rollback 여섯 지점(최대 `clr_apply` 11,089) | — | 그대로 | 431 이상 |
+| 나머지 rollback 일곱 지점(최대 `clr_apply` 11,089) | — | 그대로 | 431 이상 |
 
 commit은 C의 Commit window를 바꾸지 않고 들어간다. C의 `commit_row`를 부르는 단계가
 자기 frame에 C의 답 하나만 쥐고, 실행기 상태는 호출자의 slot에 있기 때문이다. 원 slack과
@@ -3339,7 +3339,8 @@ A 쪽 축소. 첫 배치는 statement의 시작·표 발급·행 적용과 실�
 commit 여유가 135 B이고, commit 단계 두 frame(312 B)을 빼고 실행기 caller·실행기·거래 rollback
 frame만 남겨도 거래 경로가 rollback base caller 1,041 B(> 512), `rollback.clr_lane` 11,849 B
 (> 11,520)이며, `rollback.next`는 거래 경로(6,337 B)에서 넘는다(commit 단계 frame은 같은 이유로
-옮길 수 없다).
+옮길 수 없다. 거절된 commit의 거래 handle(168 B)을 실행기 frame으로 돌려받으면 commit 여유 135 B를
+넘는다).
 
 이 개정은 F4의 "양쪽의 새 계약 검토" 규칙과 독립 D2 검토에 근거한다. 사용자의 결정 카드는
 COMMIT 상한의 새 계약을 다뤘고 rollback 상한은 다루지 않았다. COMMIT은 올릴 필요가 없었고,

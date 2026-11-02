@@ -1,15 +1,17 @@
 {
   "schema_version": 2,
   "product": "XADB",
-  "date": "2026-11-03T03:18:04.081982+09:00",
-  "status": "PASS",
-  "errors": [],
+  "date": "2026-11-03T03:25:42.233919+09:00",
+  "status": "FAIL",
+  "errors": [
+    "/home/claude/xadb/devdoc/evidence/autocommit-insert-20261102.md: missing link ../../module-gate/records/20261102-autocommit-insert.json"
+  ],
   "markdown_documents": [
     {
       "file": "devdoc/README.md",
       "links": 293,
       "duplicate_ids": 0,
-      "sha256": "7e089b174187422b6139941876b2ea7786f82ff61df13d9596b85f78eaf9357b"
+      "sha256": "90a7e43b761972319de60a41c262d274ddb793be86d48356c528e24e5392d1d5"
     },
     {
       "file": "devdoc/contracts/README.md",
@@ -159,7 +161,7 @@
       "file": "devdoc/contracts/dev3-module-boundaries.md",
       "links": 355,
       "duplicate_ids": 0,
-      "sha256": "ca87006c743375f55eae5c286c6d2e6faff511677fbf9414ff7cc60dee91c625"
+      "sha256": "be072ddc3bb3d0654c94dd920e631428a876e16d931fb42da6dc7c96c60a4a96"
     },
     {
       "file": "devdoc/contracts/dev3-module-consumers.md",
@@ -585,13 +587,13 @@
       "file": "devdoc/evidence/README.md",
       "links": 400,
       "duplicate_ids": 0,
-      "sha256": "c273b185627cea41334654306c2d03b79acb620e27ec825d96c72a87ac0f047f"
+      "sha256": "64e34de0b0e59afc11ba45052453af6a9250226a5c527bd9771a7056abf30977"
     },
     {
       "file": "devdoc/evidence/autocommit-insert-20261102.md",
-      "links": 2,
+      "links": 4,
       "duplicate_ids": 0,
-      "sha256": "bfb9896de30b0af24be07ef8b80b3b0815caeabe07cc7e747aa7c6ff9d55d8cc"
+      "sha256": "a7668388ff0b164375b890af7d67e1207561b586a84d5a29183e84e65fb97367"
     },
     {
       "file": "devdoc/evidence/comm-acceptance-resume-20261023.md",
@@ -1401,7 +1403,7 @@
       "file": "devdoc/plans/README.md",
       "links": 75,
       "duplicate_ids": 0,
-      "sha256": "f13005639a1007b3deb83acff6a1cd91864af13db6013c9583e256457f1b7a32"
+      "sha256": "c43a27351dae8d8c090d854cfc085ea7e0f6246851e616947d83e1f75b8b39a1"
     },
     {
       "file": "devdoc/plans/bottom-up-development.md",

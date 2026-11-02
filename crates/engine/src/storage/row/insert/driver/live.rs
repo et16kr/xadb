@@ -661,6 +661,10 @@ fn statement_live<'b, 'a, 's, 'c, W: WriterNamespace, T: LiveTables<'a, 'c, 's, 
 /// the answer in the caller's slot). A refused start (`statement_refused`)
 /// or a table not issued (`table_not_issued`) is the run's failure.
 #[inline(never)]
+#[allow(
+    clippy::result_large_err,
+    reason = "Failure keeps the stage, the error and any refused cleanup inline, without allocation"
+)]
 fn start_statement_live<'t, 'b, 'a, 's, 'c, W: WriterNamespace, T: LiveTables<'a, 'c, 's, W>>(
     call: &mut Live<'_, 't, 'b, 'b, 'a, 's, 'c, '_, '_, '_, '_, '_, W>,
     transaction: &'t RowTransaction<'b, 'a, 'c, 's>,
