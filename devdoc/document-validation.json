@@ -1,7 +1,7 @@
 {
   "schema_version": 2,
   "product": "XADB",
-  "date": "2026-11-03T03:06:52.564807+09:00",
+  "date": "2026-11-03T03:18:04.081982+09:00",
   "status": "PASS",
   "errors": [],
   "markdown_documents": [
@@ -9,7 +9,7 @@
       "file": "devdoc/README.md",
       "links": 293,
       "duplicate_ids": 0,
-      "sha256": "15eeaa161747d94116dc7f1b0c9d38b4604b63fbffad7a288b111ed99db91854"
+      "sha256": "7e089b174187422b6139941876b2ea7786f82ff61df13d9596b85f78eaf9357b"
     },
     {
       "file": "devdoc/contracts/README.md",
@@ -159,7 +159,7 @@
       "file": "devdoc/contracts/dev3-module-boundaries.md",
       "links": 355,
       "duplicate_ids": 0,
-      "sha256": "b75eca476adc951ead33a593640037a009f1ec2cb94750bb5479e491f2e67f24"
+      "sha256": "ca87006c743375f55eae5c286c6d2e6faff511677fbf9414ff7cc60dee91c625"
     },
     {
       "file": "devdoc/contracts/dev3-module-consumers.md",
@@ -585,13 +585,13 @@
       "file": "devdoc/evidence/README.md",
       "links": 400,
       "duplicate_ids": 0,
-      "sha256": "2209907ecd8ab48ea157c9a4de5478aa48c55be6599c387982bf5d161d0e699e"
+      "sha256": "c273b185627cea41334654306c2d03b79acb620e27ec825d96c72a87ac0f047f"
     },
     {
       "file": "devdoc/evidence/autocommit-insert-20261102.md",
       "links": 2,
       "duplicate_ids": 0,
-      "sha256": "76ca8641878036f8f9e16b2395a9385cbbb3fc6c99c27206b30d293627f98cbe"
+      "sha256": "bfb9896de30b0af24be07ef8b80b3b0815caeabe07cc7e747aa7c6ff9d55d8cc"
     },
     {
       "file": "devdoc/evidence/comm-acceptance-resume-20261023.md",
@@ -1401,7 +1401,7 @@
       "file": "devdoc/plans/README.md",
       "links": 75,
       "duplicate_ids": 0,
-      "sha256": "990384ce5bb391181954b5ea6cb42f08b685042f6fea8cdba32be36e7f2dba22"
+      "sha256": "f13005639a1007b3deb83acff6a1cd91864af13db6013c9583e256457f1b7a32"
     },
     {
       "file": "devdoc/plans/bottom-up-development.md",

@@ -3150,8 +3150,8 @@ fn lrc_a05_drain_is_bounded() {
 // ---- The autocommit executor's steps (`autocommit`, LAC-A01..A12) ----
 
 use super::autocommit::{
-    Autocommit, abort_transaction, commit_answer, refused as step_refused, run_statement,
-    table_failed,
+    Autocommit, abort_transaction, commit_answer, refused as step_refused, statement_ended,
+    statement_refused, table_not_issued,
 };
 
 /// The transaction's end as `autocommit_insert_live` calls it after the
@@ -3174,25 +3174,34 @@ fn end(
 }
 
 /// One autocommit statement of `rows` over a fresh literal C transaction:
-/// `run_statement`, then the end (`end`), as `autocommit_insert_live`
-/// calls them after Begin and the table.
+/// the driver's statement, `statement_ended`, then the end (`end`), as
+/// `autocommit_insert_live` calls them after Begin and the table.
 fn autocommit(state: &RefCell<State>, rows: &[&[ValueRef<'_>]]) -> Autocommit<u64> {
     let mut loan = loan();
-    let mut out = Autocommit::Idle;
-    let transaction = LiteralTransaction(1);
     let mut slots: Vec<Option<LiteralApplied>> = rows.iter().map(|_| None).collect();
     let mut call = LiteralCall { state };
-    let rows = run_statement(
+    let ran = insert_statement(
         &mut call,
-        &transaction,
         statement(state),
         &LiteralTable,
         &mut loan,
         rows,
         &mut slots,
-        &mut out,
     );
-    end(&mut call, transaction, &mut loan, rows, &mut out);
+    ended(&mut call, ran, &mut loan)
+}
+
+/// The rest of an autocommit statement after its run (`ran`): its end
+/// (`statement_ended`), then the transaction's (`end`).
+fn ended<'s>(
+    call: &mut LiteralCall<'s>,
+    ran: Result<usize, DriveError<LiteralStatement<'s>>>,
+    loan: &mut Loan,
+) -> Autocommit<u64> {
+    let mut out = Autocommit::Idle;
+    let transaction = LiteralTransaction(1);
+    let rows = statement_ended(call, &transaction, ran, loan, &mut out);
+    end(call, transaction, loan, rows, &mut out);
     out
 }
 
@@ -3439,19 +3448,8 @@ fn lac_a06_refused_end_step_is_fenced() {
 fn lac_a07_table_not_issued_finishes_the_statement() {
     let state = self::state(&[], &[]);
     let mut loan = loan();
-    let mut out = Autocommit::Idle;
-    let transaction = LiteralTransaction(1);
-    let mut call = LiteralCall { state: &state };
-    table_failed(
-        &mut call,
-        &transaction,
-        statement(&state),
-        Ok(None),
-        &mut loan,
-        &mut out,
-    );
-    end(&mut call, transaction, &mut loan, None, &mut out);
-    let failure = aborted(out);
+    let ran = table_not_issued(statement(&state), Ok(None::<LiteralTable>));
+    let failure = aborted(ended(&mut LiteralCall { state: &state }, ran, &mut loan));
     assert_eq!(
         (failure.stage, insert(&failure.error)),
         (Stage::Table, InsertError::InvalidInput)
@@ -3463,19 +3461,9 @@ fn lac_a07_table_not_issued_finishes_the_statement() {
     settled(&state);
 
     let state = self::state(&[], &[]);
-    let mut out = Autocommit::Idle;
-    let transaction = LiteralTransaction(1);
-    let mut call = LiteralCall { state: &state };
-    table_failed(
-        &mut call,
-        &transaction,
-        statement(&state),
-        Err(fatal()),
-        &mut loan,
-        &mut out,
-    );
-    end(&mut call, transaction, &mut loan, None, &mut out);
-    assert_eq!(fenced(out).stage, Stage::Table);
+    let ran = table_not_issued(statement(&state), Err::<Option<LiteralTable>, _>(fatal()));
+    let failure = fenced(ended(&mut LiteralCall { state: &state }, ran, &mut loan));
+    assert_eq!(failure.stage, Stage::Table);
     assert!(take_log(&state).is_empty());
 }
 
@@ -3501,37 +3489,18 @@ fn lac_a09_refused_begin_or_statement_start() {
 
     let state = self::state(&[], &[]);
     let mut loan = loan();
-    let mut out = Autocommit::Idle;
-    step_refused(
-        &mut out,
-        Stage::Statement,
-        refusal(Check, Cause::Busy),
-        Autocommit::Aborted,
-    );
-    end(
-        &mut LiteralCall { state: &state },
-        LiteralTransaction(1),
-        &mut loan,
-        None,
-        &mut out,
-    );
-    assert_eq!(aborted(out).stage, Stage::Statement);
+    let ran = statement_refused(refusal(Check, Cause::Busy));
+    let failure = aborted(ended(&mut LiteralCall { state: &state }, ran, &mut loan));
+    assert_eq!(failure.stage, Stage::Statement);
     assert_eq!(take_log(&state), full_abort(&[]));
     settled(&state);
 
     // A CallerMustResolve refusal of the start: the transaction is dropped
     // into C's fence and nothing is called.
     let state = self::state(&[], &[]);
-    let mut out = Autocommit::Idle;
-    step_refused(&mut out, Stage::Statement, fatal(), Autocommit::Aborted);
-    end(
-        &mut LiteralCall { state: &state },
-        LiteralTransaction(1),
-        &mut loan,
-        None,
-        &mut out,
-    );
-    assert_eq!(fenced(out).stage, Stage::Statement);
+    let ran = statement_refused(fatal());
+    let failure = fenced(ended(&mut LiteralCall { state: &state }, ran, &mut loan));
+    assert_eq!(failure.stage, Stage::Statement);
     assert!(take_log(&state).is_empty());
 }
 

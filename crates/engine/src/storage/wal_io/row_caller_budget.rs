@@ -10,9 +10,9 @@ pub(in crate::storage) const STATEMENT_END: usize = 6144;
 /// 512 B until the autocommit executor (boundaries `#autocommit-insert`,
 /// a new two-sided F4 contract): its statement rollback holds the
 /// executor's caller, its frames and the failed statement below the
-/// rollback (1,705 B in both writers). C counts it only in the rollback
+/// rollback (1,377 B in both writers). C counts it only in the rollback
 /// flush step.
-pub(in crate::storage) const ROLLBACK_CALLER: usize = 1920;
+pub(in crate::storage) const ROLLBACK_CALLER: usize = 1536;
 pub(in crate::storage) const ROLLBACK_STEP_RESULT: usize = 1024;
 pub(in crate::storage) const CLR_PRODUCER: usize = 19_456;
 pub(in crate::storage) const RECOVERY_HANDLER: usize = 4096;
@@ -25,20 +25,20 @@ pub(in crate::storage) const LIVE_ROW_CLEANUP: usize = 4096;
 
 /// Each ceiling includes the caller plus the complete frame-static site share.
 /// All ten sites are mandatory; neither owner may silently skip a new site.
-/// `rollback.next` (6,144 B before), `rollback.clr_lane` (11,520 B) and
-/// `rollback.finish` (6,144 B) were set again by the autocommit executor's
-/// contract (boundaries `#autocommit-insert`): each is the executor's
-/// share on its statement rollback path (6,689, 12,513 and 6,385 B in both
-/// writers) plus at least 128 B, in 128 B steps; ROLLBACK_CALLER likewise.
+/// `rollback.next` (6,144 B before) and `rollback.clr_lane` (11,520 B) were
+/// set again by the autocommit executor's contract (boundaries
+/// `#autocommit-insert`): each is the executor's share on its statement
+/// rollback path (6,361 and 12,185 B in both writers) plus at least 128 B,
+/// in 128 B steps; ROLLBACK_CALLER likewise.
 pub(in crate::storage) const ROLLBACK_SITES: [(&str, usize); 10] = [
     ("rollback.start", 6144),
-    ("rollback.next", 6912),
-    ("rollback.clr_lane", 12_672),
+    ("rollback.next", 6528),
+    ("rollback.clr_lane", 12_416),
     ("rollback.clr", 11_520),
     ("rollback.clr_prepare", 11_520),
     ("rollback.clr_apply", 11_520),
     ("rollback.clr_reopen", 11_520),
-    ("rollback.finish", 6528),
+    ("rollback.finish", 6144),
     ("rollback.finish_statement", 6144),
     ("transaction.finish_aborted", 6144),
 ];

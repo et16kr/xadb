@@ -11,7 +11,8 @@ use super::{
     RetireStop, Retired, Rollback, RollbackNext, RollbackStop, RollbackTask, Stage,
     StartedRollback, StatementView, Stepped, ValidationLane,
     autocommit::{
-        Autocommit, abort_transaction, commit_answer, refused, run_statement, table_failed,
+        Autocommit, abort_transaction, commit_answer, refused, statement_ended, statement_refused,
+        table_not_issued,
     },
     call_sites, caller_bytes, carrier_bytes, finish_aborted, finish_rollback, finish_statement,
     insert_statement, map_commit_result, retire_finished, retry_task, rollback_step,
@@ -629,11 +630,12 @@ pub(in crate::storage) fn autocommit_insert_live<
     }
 }
 
-/// The autocommit statement: C's statement start, the caller's table and
-/// `run_statement`, over a call that reborrows the executor's for the
-/// statement view's borrow of the transaction. A refused start leaves the
-/// transaction to be ended (`refused`); a table not issued is the
-/// statement's failure (`table_failed`).
+/// The autocommit statement over a call that reborrows the executor's for
+/// the statement view's borrow of the transaction: the run
+/// (`start_statement_live`), then its end (`statement_ended`), which a
+/// failed statement's rollback is under. The run's answer is this frame's
+/// one slot; the run's own frame has returned before the end, so its slots
+/// (the view's and the table's) are not laid out under the rollback.
 #[inline(never)]
 fn statement_live<'b, 'a, 's, 'c, W: WriterNamespace, T: LiveTables<'a, 'c, 's, W>>(
     call: &mut Live<'_, '_, 'b, 'b, 'a, 's, 'c, '_, '_, '_, '_, '_, W>,
@@ -650,28 +652,30 @@ fn statement_live<'b, 'a, 's, 'c, W: WriterNamespace, T: LiveTables<'a, 'c, 's, 
         &mut *call.flusher,
         &mut *call.flush_owner,
     );
+    let ran = start_statement_live(&mut call, transaction, tables, private, rows, slots);
+    statement_ended(&mut call, transaction, ran, private, out)
+}
+
+/// The statement's run: C's statement start, the caller's table and the
+/// driver's statement (`insert_statement`, this frame's tail, so it writes
+/// the answer in the caller's slot). A refused start (`statement_refused`)
+/// or a table not issued (`table_not_issued`) is the run's failure.
+#[inline(never)]
+fn start_statement_live<'t, 'b, 'a, 's, 'c, W: WriterNamespace, T: LiveTables<'a, 'c, 's, W>>(
+    call: &mut Live<'_, 't, 'b, 'b, 'a, 's, 'c, '_, '_, '_, '_, '_, W>,
+    transaction: &'t RowTransaction<'b, 'a, 'c, 's>,
+    tables: &mut T,
+    private: &mut Loan,
+    rows: &[&[ValueRef<'_>]],
+    slots: &mut [Option<RowMutationObservation>],
+) -> Result<usize, DriveError<RowStatementView<'t, 'b, 'a, 'c, 's>>> {
     match call.port.begin_statement(call.owner, transaction) {
         Ok(statement) => match tables.issue(call.owner, &statement, call.flusher, call.flush_owner)
         {
-            Ok(Some(table)) => run_statement(
-                &mut call,
-                transaction,
-                statement,
-                &table,
-                private,
-                rows,
-                slots,
-                out,
-            ),
-            issued => {
-                table_failed(&mut call, transaction, statement, issued, private, out);
-                None
-            }
+            Ok(Some(table)) => insert_statement(call, statement, &table, private, rows, slots),
+            issued => table_not_issued(statement, issued),
         },
-        Err(error) => {
-            refused(out, Stage::Statement, error, Autocommit::Aborted);
-            None
-        }
+        Err(error) => statement_refused(error),
     }
 }
 
@@ -1036,23 +1040,24 @@ pub(in crate::storage) fn autocommit_sites<W: WriterNamespace + 'static>() -> Au
         + slots
         + size_of::<Result<T, RetentionError>>()
         + size_of::<Option<usize>>();
-    // statement_live: its arguments; the call it reborrows; the statement
-    // start's result, which holds the view; the issue's result, which holds
-    // the table (and, not a table, is passed on to table_failed by value).
-    let statement = 5 * r
+    // statement_live: its arguments, the call it reborrows and the run's
+    // answer, which holds a failed statement's After and Failure while the
+    // statement is ended (start_statement_live's tail writes it).
+    let statement =
+        5 * r + rows + slots + size_of::<L<W>>() + size_of::<Result<usize, DriveError<V>>>();
+    // start_statement_live: its arguments, the statement start's result,
+    // which holds the view, and the issue's result, which holds the table
+    // (or, not a table, is passed on by value). Its frame has returned
+    // before the statement is ended.
+    let start = 4 * r
         + rows
         + slots
-        + size_of::<L<W>>()
         + size_of::<Result<V, RetentionError>>()
         + size_of::<Result<Option<CheckedTable<'static, 'static>>, RetentionError>>();
-    // run_statement: its arguments (the view counts in statement_live) and
-    // insert_statement's result, which holds a failed statement's After
-    // and Failure while the statement is ended.
-    let run = 5 * r + rows + slots + size_of::<Result<usize, DriveError<V>>>();
-    // table_failed: its arguments, the Failure and the After it binds.
-    let table_failed = 4 * r + size_of::<Failure>() + size_of::<super::After<V>>();
-    // end_failed_statement: its arguments (After and Failure count in
-    // run_statement's result).
+    // statement_ended: its arguments (the answer counts in statement_live).
+    let ended = 4 * r;
+    // end_failed_statement: its arguments (After and Failure count in the
+    // run's answer).
     let end_failed = 4 * r;
     // finish_failed: its arguments and fence's argument (the driver's
     // finish_statement's result is the site's).
@@ -1077,8 +1082,11 @@ pub(in crate::storage) fn autocommit_sites<W: WriterNamespace + 'static>() -> Au
         3 * r + size_of::<usize>() + size_of::<Result<Obs, TransactionFinishError<T>>>();
     let commit_answer = 3 * r + size_of::<usize>();
 
-    let below_statement = caller + executor + statement;
-    let below_statement_rollback = below_statement + run + end_failed;
+    // Below the run's C calls (the statement start, the issue, every
+    // insert site) and below the failed statement's end.
+    let below_statement = caller + executor + statement + start;
+    let below_ended = caller + executor + statement + ended;
+    let below_statement_rollback = below_ended + end_failed;
     let below_full_rollback = caller + executor + commit_step + commit_answer;
     let k = size_of::<K<W>>();
     let started = size_of::<Result<K<W>, Failure>>();
@@ -1091,7 +1099,7 @@ pub(in crate::storage) fn autocommit_sites<W: WriterNamespace + 'static>() -> Au
             .expect("driver site")
     };
     for s in driver.iter().filter(|s| s.name.starts_with("insert.")) {
-        let term = below_statement + run;
+        let term = below_statement;
         sites.push((s.name, "statement", s.bytes + term, s.bytes + s.dead + term));
     }
     for (path, below, own) in [
@@ -1105,7 +1113,7 @@ pub(in crate::storage) fn autocommit_sites<W: WriterNamespace + 'static>() -> Au
                 // rollback frames.
                 "rollback.finish_statement" if path == "statement" => {
                     (below + 4 * r + own + finish_rolled_statement + finish_failed)
-                        .max(below_statement + run.max(table_failed) + end_failed + finish_failed)
+                        .max(below_ended + end_failed + finish_failed)
                 }
                 "rollback.finish_statement" => continue,
                 "rollback.start" => below + own - started,
@@ -1131,7 +1139,7 @@ pub(in crate::storage) fn autocommit_sites<W: WriterNamespace + 'static>() -> Au
     // Begin's result).
     let commit = slack + caller + executor + commit_step + 3 * r;
     let end = site("insert.finish_statement");
-    let statement_end = end.bytes + end.dead + below_statement + run;
+    let statement_end = end.bytes + end.dead + below_statement;
     // The cleanup after the executor returned: the executor's caller with
     // its slot for `retire_finished_live`'s result, the forward's return
     // and arguments (as `cleanup_caller_source`), and the sum of its drains.

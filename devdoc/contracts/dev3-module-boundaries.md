@@ -3177,8 +3177,8 @@ C는 자기 본문·carrier와 ceiling의 합을 원 charge/cap에 대조한다.
 | recovery handler | 4,096 | S6 원 handler 3,672 B(5,496−1,824)를 포함. task/result/proposal/lane/512 slack 전체 유지 |
 
 2026-11-02 [자동커밋 INSERT 실행기](#autocommit-insert)가 양쪽의 새 계약으로 rollback base
-caller를 1,920 B로, `rollback.next`·`rollback.clr_lane`·`rollback.finish`를 6,912·12,672·6,528 B로
-다시 정했다. 위 표는 원 선정 근거로 둔다. 현재 값은 `row_caller_budget.rs`다.
+caller를 1,536 B로, `rollback.next`·`rollback.clr_lane`을 6,528·12,416 B로 다시 정했다. 위 표는
+원 선정 근거로 둔다. 현재 값은 `row_caller_budget.rs`다.
 
 A의 검증은 memory와 C의 native instrumented Writer에 같은 수식을 적용한다. rollback은
 10개 이름의 완전한 집합, 중복·누락·미등록 site, per-call ≤ frame ≤ ceiling을 확인한다.
@@ -3260,7 +3260,10 @@ wire/semantic 영향은 없다.
 하나다. SQL·DEV4 연결은 없으며 지금 이 실행기를 부르는 것은 JOIN 시험뿐이다.
 
 **실행 순서.** 결과는 호출자가 가진 slot 하나(`Autocommit`)에 쓴다. 단계마다 inline되지
-않는 frame이므로 한 단계의 slot이 다른 단계의 C 호출 아래에 놓이지 않는다. 기존 driver의
+않는 frame이므로 한 단계의 slot이 다른 단계의 C 호출 아래에 놓이지 않는다. statement의
+시작·표 발급·행 적용은 하위 frame(`start_statement_live`)에서 하고, 그 답을 `statement_live`의
+slot 하나에 받은 뒤 그 frame이 돌아오고 나서 statement를 끝낸다(`statement_ended`). 그래서 실패한
+statement의 rollback 아래에는 statement view·표의 slot이 놓이지 않는다. 기존 driver의
 `start_statement_rollback`·`start_full_rollback`·`rollback_step`도 이 단위에서 inline되지
 않게 했다(셈이 그 slot을 자기 지점에서만 세기 때문이다. 동작은 같다).
 
@@ -3295,23 +3298,23 @@ native Writer에서 같고, 시험 `f4_a_autocommit_budgets_{memory,native}`가 
 | A 의무 | A 몫(B) | 상한(B) | 여유(B) |
 | --- | ---: | ---: | ---: |
 | Commit frame | 2,889 | 3,024 (그대로) | 135 |
-| statement end | 5,956 | 6,144 (그대로) | 188 |
-| insert 지점(preflight 5,508, 최대 producer lane 9,340) | — | 기존 preflight·Write 상한 그대로 | 636 이상 |
+| statement end | 5,948 | 6,144 (그대로) | 196 |
+| insert 지점(preflight 5,500, 최대 producer lane 9,332) | — | 기존 preflight·Write 상한 그대로 | 644 이상 |
 | 정리 drain 네 지점(최대 `try_flush` 3,979, caller 816) | — | `LIVE_ROW_CLEANUP` 4,096 (그대로) | 117 이상 |
-| rollback base caller | 1,705 | **1,920** (512에서) | 215 |
-| `rollback.next` | 6,689 | **6,912** (6,144에서) | 223 |
-| `rollback.clr_lane` | 12,513 | **12,672** (11,520에서) | 159 |
-| `rollback.finish` | 6,385 | **6,528** (6,144에서) | 143 |
-| 나머지 rollback 일곱 지점(최대 `clr_apply` 11,417) | — | 그대로 | 103 이상 |
+| rollback base caller | 1,377 | **1,536** (512에서) | 159 |
+| `rollback.next` | 6,361 | **6,528** (6,144에서) | 167 |
+| `rollback.clr_lane` | 12,185 | **12,416** (11,520에서) | 231 |
+| `rollback.finish` | 6,057 | 6,144 (그대로) | 87 |
+| 나머지 rollback 여섯 지점(최대 `clr_apply` 11,089) | — | 그대로 | 431 이상 |
 
 commit은 C의 Commit window를 바꾸지 않고 들어간다. C의 `commit_row`를 부르는 단계가
 자기 frame에 C의 답 하나만 쥐고, 실행기 상태는 호출자의 slot에 있기 때문이다. 원 slack과
-항은 그대로다. A의 여유가 100–230 B로 얇으므로, 이 경로의 type 크기가 늘어 어느 몫이
+항은 그대로다. A의 여유가 87–231 B로 얇으므로, 이 경로의 type 크기가 늘어 어느 몫이
 상한을 넘으면 이 계약을 다시 연다(상한을 그 자리에서 올리지 않는다).
 
 **rollback 상한 재계약(F4 표 개정).** rollback 아래에는 실행기의 caller와 그 frame이 놓인다.
-statement rollback은 실패한 statement의 frame도 그 아래에 쥔다. 그래서 rollback base caller와
-세 지점이 원 상한을 넘는다. 이 단위는 그 넷을 양쪽이 다시 검산하는 새 계약으로 다시 정한다.
+statement rollback은 실패한 statement의 답도 그 아래에 쥔다. 그래서 rollback base caller와
+두 지점이 원 상한을 넘는다. 이 단위는 그 셋을 양쪽이 다시 검산하는 새 계약으로 다시 정한다.
 새 값은 위 census가 잰 실행기의 statement 경로 몫에 128 B 이상을 더해 128 B 단위로 올린
 값이다(측정 뒤 정한 값이다). C의 고정 charge 44,304 B와 short cap 65,536 B, 원 항과
 slack은 바꾸지 않고, C는 바뀌지 않은 자기 census로 자기 본문과 새 상한의 합을 그대로
@@ -3319,31 +3322,30 @@ slack은 바꾸지 않고, C는 바뀌지 않은 자기 census로 자기 본문�
 
 | 상한 | C가 대조하는 합 | 원 여유 → 새 여유(B) |
 | --- | --- | ---: |
-| `ROLLBACK_CALLER` 1,920 | flush 단계(shared + flush + step) ≤ 65,536 | 9,932 → 8,524 (native) |
-| 같은 값 | flush 뒤 다시 닫기 floor + shared + resident 둘 ≤ 65,536 | 5,526 → 4,118 (native) |
-| `rollback.next` 6,912 | 선택 본문 36,044 + 상한 ≤ 44,304 | 2,116 → 1,348 |
-| `rollback.clr_lane` 12,672 | lane 본문 27,297 + 상한 ≤ 44,304 | 5,487 → 4,335 |
-| `rollback.finish` 6,528 | control 본문 37,166 + 상한 ≤ 44,304 | 994 → 610 |
+| `ROLLBACK_CALLER` 1,536 | flush 단계(shared + flush + step) ≤ 65,536 | 9,932 → 8,908 (native) |
+| 같은 값 | flush 뒤 다시 닫기 floor + shared + resident 둘 ≤ 65,536 | 5,526 → 4,502 (native) |
+| `rollback.next` 6,528 | 선택 본문 36,044 + 상한 ≤ 44,304 | 2,116 → 1,732 |
+| `rollback.clr_lane` 12,416 | lane 본문 27,297 + 상한 ≤ 44,304 | 5,487 → 4,591 |
 
-flush 두 줄은 native 값이고, memory Writer는 shared가 8 B 작아 8 B씩 더 남는다. 나머지 세
-줄은 두 Writer가 같다. 위 [F4 상한](#f4-caller-budgets) 표는 원 선정 근거로 남긴다.
+flush 두 줄은 native 값이고, memory Writer는 shared가 8 B 작아 8 B씩 더 남는다. 나머지 두
+줄은 두 Writer가 같다. `rollback.finish`(control 본문 37,166 + 6,144, 여유 994 B)는 그대로다.
+위 [F4 상한](#f4-caller-budgets) 표는 원 선정 근거로 남긴다.
 
-A 쪽 축소로 피할 수 없는 이유. 실행기 frame에 slot을 옮기면 그 slot이 commit 경로에도
-놓이는데(frame 단위 셈), commit 여유가 135 B뿐이다. statement view는 `statement_live`가
-다시 빌린 call의 수명에 묶여 그 frame 밖에서 끝낼 수 없다. commit 단계 두 frame(312 B)을
-빼고 실행기 caller·실행기·거래 rollback frame만 남겨도 rollback base caller는 1,041 B(> 512),
-`rollback.clr_lane`은 11,849 B(> 11,520)다. 그래서 이 둘은 어떤 A 배치로도 새 계약이
-필요하다. `rollback.next`는 거래 경로에서도 6,337 B로 원 상한을 넘고, 거래 경로의 commit 단계
-frame은 위 이유로 옮길 수 없다. `rollback.finish`는 statement 경로에서만 넘는다(6,385 B, 거래
-경로 6,033 B). statement 경로에서 rollback 아래 남는 statement 단계의 slot(statement view,
-표, 실패한 statement의 결과)은 각각 한 번만 세며 실행 중 쓰이므로, 원 상한까지 241 B를 줄일
-배치가 없다.
+A 쪽 축소. 첫 배치는 statement의 시작·표 발급·행 적용과 실패한 statement의 끝을 한 frame
+아래에서 해서, statement view(168 B)와 표(120 B)의 slot이 rollback 아래에 남았고 네 값(caller
+1,705, next 6,689, CLR lane 12,513, finish 6,385 B)이 원 상한을 넘었다. 독립 검토(2차)의 지적대로
+행 적용을 하위 frame으로 옮겨 statement 경로를 328 B 줄였고, `rollback.finish`는 원 상한 안에
+든다. 남은 셋은 어떤 A 배치로도 넘는다. 실행기 frame에 옮긴 slot은 commit 경로에도 놓이는데
+commit 여유가 135 B이고, commit 단계 두 frame(312 B)을 빼고 실행기 caller·실행기·거래 rollback
+frame만 남겨도 거래 경로가 rollback base caller 1,041 B(> 512), `rollback.clr_lane` 11,849 B
+(> 11,520)이며, `rollback.next`는 거래 경로(6,337 B)에서 넘는다(commit 단계 frame은 같은 이유로
+옮길 수 없다).
 
 이 개정은 F4의 "양쪽의 새 계약 검토" 규칙과 독립 D2 검토에 근거한다. 사용자의 결정 카드는
 COMMIT 상한의 새 계약을 다뤘고 rollback 상한은 다루지 않았다. COMMIT은 올릴 필요가 없었고,
 rollback 상한의 개정은 카드 밖이므로 PR에서 사용자의 확인을 받는다.
 
-**잔여.** begin·statement 시작·표 발급 지점(2,625·2,993·3,009 B)은 C census에 A 항이 없어
+**잔여.** begin·statement 시작·표 발급 지점(2,625·3,401·3,417 B)은 C census에 A 항이 없어
 상한이 없다. F4는 새 지점을 말없이 빼지 않는다고 정하므로, 이 셋은 C가 상한을 정할 잔여로
 남긴다(C 소유). SQL·DEV4 연결 전에 정한다. 그때까지 census는 값을 출력만 한다.
 

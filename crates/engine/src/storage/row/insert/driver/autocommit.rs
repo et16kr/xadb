@@ -3,12 +3,14 @@
 //! its own transaction, from the statement to the transaction's end.
 //!
 //! The live entry (`live::autocommit_insert_live`) begins the transaction,
-//! begins the statement, gets the table from its caller and calls C's
-//! Commit itself; the steps here run the statement (`run_statement`), end a
-//! failed statement (`end_failed_statement`: its rollback to the mark and
-//! its finish), read C's commit answer (`commit_answer`) and end an aborted
-//! transaction (`abort_transaction`: the full rollback and
-//! `finish_aborted`). The result goes to one caller-owned slot
+//! begins the statement, gets the table from its caller and runs the
+//! statement (`insert_statement`) in a sub-frame that returns before the
+//! statement is ended, and calls C's Commit itself; the steps here end the
+//! run (`statement_ended`, with `statement_refused` and `table_not_issued`
+//! for a statement that never ran its rows), end a failed statement
+//! (`end_failed_statement`: its rollback to the mark and its finish), read
+//! C's commit answer (`commit_answer`) and end an aborted transaction
+//! (`abort_transaction`: the full rollback and `finish_aborted`). The result goes to one caller-owned slot
 //! (`Autocommit`), so no step returns a Failure through a frame that sits
 //! below a later C call, and each step is its own never-inlined frame, so
 //! none of its slots is laid out below a C call of another step
@@ -105,26 +107,24 @@ pub(super) fn refused<C>(
     };
 }
 
-/// The statement of an autocommit transaction (`insert_statement`). Returns
-/// the row count when every row was applied and the statement finished;
-/// otherwise None, after the failed statement's end (`end_failed_statement`)
-/// wrote the slot (`Aborted`: the transaction is to be ended; `Fenced`).
+/// The end of the autocommit statement's run: `ran` is the driver's answer
+/// (`insert_statement`) or a statement that never ran its rows
+/// (`statement_refused`, `table_not_issued`). Returns the row count when
+/// every row was applied and the statement finished; otherwise None, after
+/// the failed statement's end (`end_failed_statement`) wrote the slot
+/// (`Aborted`: the transaction is to be ended; `Fenced`). `ran` is taken by
+/// value, so it stays in the caller's slot, and this frame is not laid out
+/// under the run's C calls: the caller's sub-frame that ran the statement
+/// has returned (`live::start_statement_live`).
 #[inline(never)]
-#[allow(
-    clippy::too_many_arguments,
-    reason = "the call, the statement's transaction, view, table and loan, the rows and their slots, and the result slot"
-)]
-pub(super) fn run_statement<B: Boundary>(
+pub(super) fn statement_ended<B: Boundary>(
     call: &mut B,
     transaction: &B::Transaction,
-    statement: B::Statement,
-    table: &B::Table,
+    ran: Result<usize, DriveError<B::Statement>>,
     loan: &mut Loan,
-    rows: &[&[ValueRef<'_>]],
-    slots: &mut [Option<B::Applied>],
     out: &mut Autocommit<B::Committed>,
 ) -> Option<usize> {
-    match insert_statement(call, statement, table, loan, rows, slots) {
+    match ran {
         Ok(rows) => Some(rows),
         Err(DriveError { failure, after }) => {
             end_failed_statement(call, transaction, after, failure, loan, out);
@@ -133,22 +133,31 @@ pub(super) fn run_statement<B: Boundary>(
     }
 }
 
+/// C refused the statement's start: no statement exists (`After::Closed`).
+/// The transaction is to be ended, or C's after a CallerMustResolve
+/// refusal. It returns the run's answer itself, so the caller's tail writes
+/// it, and is never inlined, so its Failure is not laid out under a C call.
+#[inline(never)]
+pub(super) fn statement_refused<S, R>(error: RetentionError) -> Result<R, DriveError<S>> {
+    Err(DriveError::new(
+        Failure::new(Stage::Statement, error.into()),
+        After::Closed,
+    ))
+}
+
 /// A statement whose table the caller did not issue: `issued` is the
 /// issue's answer that is not a table, C's refusal of the issue or None (no
 /// visible table answers the statement: `InvalidInput`). It is taken by
 /// value, so it stays in the caller's slot. It is the statement's failure,
-/// ended as any other (`end_failed_statement`): the statement has no row,
-/// so it is finished, or dropped into C's fence after a CallerMustResolve
-/// refusal. An issued table is never passed here; it would be dropped.
+/// ended as any other (`statement_ended`): the statement has no row, so it
+/// is finished, or dropped into C's fence after a CallerMustResolve
+/// refusal. An issued table is never passed here; it would be dropped. As
+/// `statement_refused`, it returns the run's answer and is never inlined.
 #[inline(never)]
-pub(super) fn table_failed<B: Boundary>(
-    call: &mut B,
-    transaction: &B::Transaction,
-    statement: B::Statement,
-    issued: Result<Option<B::Table>, RetentionError>,
-    loan: &mut Loan,
-    out: &mut Autocommit<B::Committed>,
-) {
+pub(super) fn table_not_issued<S, T, R>(
+    statement: S,
+    issued: Result<Option<T>, RetentionError>,
+) -> Result<R, DriveError<S>> {
     let failure = Failure::new(
         Stage::Table,
         match issued {
@@ -156,12 +165,7 @@ pub(super) fn table_failed<B: Boundary>(
             Ok(_) => InsertError::InvalidInput.into(),
         },
     );
-    let after = if failure.must_resolve {
-        After::MustResolve(Some(statement))
-    } else {
-        After::Returned(statement)
-    };
-    end_failed_statement(call, transaction, after, failure, loan, out);
+    Err(DriveError::kept(failure, statement, After::Returned))
 }
 
 /// The end of a failed statement, as its `After` says: a `Returned` or

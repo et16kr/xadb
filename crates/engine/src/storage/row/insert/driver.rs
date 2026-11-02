@@ -1378,7 +1378,8 @@ pub(super) const CALL_SITES: usize = 26;
 /// It relies on which frames are separate: `insert_row`, `end_statement`,
 /// `write_row` and its steps (`reserve_row`, `validate_row`, `forward_row`,
 /// `produce_row`, `prepare_row`, `apply_row`), `flush`, `finish_preflight`,
-/// `cancel`, `finish_statement` and `compensate` are never inlined, so none
+/// `cancel`, `finish_statement`, `compensate`, the two rollback starts and
+/// `rollback_step` are never inlined, so none
 /// of their slots is laid out in their caller's frame: none of `write_row`'s
 /// or `end_statement`'s is on the stack at the preflight and its flush, and
 /// at each C call of a row only the frames of the steps in progress are. A
