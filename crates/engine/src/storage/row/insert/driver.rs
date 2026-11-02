@@ -28,6 +28,7 @@ use crate::storage::{
         StatementFinishError, TransactionFinishError,
     },
     row_record::{MAX_ROW_COLUMNS, ValueRef},
+    semantic_row::Operation,
 };
 use foundation::error::Effect;
 use std::convert::Infallible;
@@ -106,6 +107,30 @@ trait Boundary {
     fn continue_flush(&mut self) -> Result<FlushStep, RetentionError>;
     /// The flusher's phase is Ready; preflight refuses any other with Busy.
     fn flush_ready(&self) -> bool;
+    /// C's next live Row cleanup step (Job ordinal, group) outside `skip`,
+    /// or None (`row_cleanup_next`).
+    fn cleanup_next(&self, skip: &[usize]) -> Result<Option<(usize, Operation)>, RetentionError>;
+    /// One live Row cleanup group (`retire_row`) with the statement Owner and
+    /// the call's flusher as its flush lease.
+    fn retire(
+        &mut self,
+        ordinal: usize,
+        operation: Operation,
+        loan: &mut Loan,
+    ) -> Result<RetireNext<Self::Target>, RetentionError>;
+}
+
+/// What C answered for one live Row cleanup group.
+#[derive(Debug)]
+enum RetireNext<F> {
+    /// The group is installed and durable.
+    Retired,
+    /// The residency of its target set needs this dirty victim flushed
+    /// first; nothing was prepared, staged or pinned.
+    Flush(F),
+    /// C refused it unchanged with `Visibility(Busy)`: a live reference pin
+    /// or an older snapshot still holds its target.
+    Held,
 }
 
 /// What one `continue_flush` did to the flusher's phase.
@@ -263,6 +288,10 @@ pub(crate) enum Stage {
     FinishStatement,
     Commit,
     FinishAborted,
+    /// C's `row_cleanup_next` in a live Row cleanup drain.
+    CleanupNext,
+    /// C's `retire_row` of one live Row cleanup group.
+    Retire,
 }
 
 /// A failed call's first error and, for a row, the one release after it.
@@ -1041,6 +1070,121 @@ fn finish_aborted<B: Boundary>(
     }
 }
 
+/// Most `Visibility(Busy)` steps one cleanup drain skips. A further held
+/// step ends the drain, since C would select it again.
+const CLEANUP_HELD: usize = 8;
+/// Most groups one cleanup drain installs. The rest waits for the next
+/// drain, so one drain does a bounded number of C calls also behind a
+/// backlog. A transaction of n inserted rows leaves 5n + 1 groups after its
+/// commit and 4n + 1 after its abort, so a commit of more than 12 rows takes
+/// more than one drain: the caller drains again while `complete` is false.
+const CLEANUP_GROUPS: usize = 64;
+
+/// What one live Row cleanup drain did (`retire_finished`).
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
+pub(crate) struct Retired {
+    /// Groups C installed.
+    pub(crate) groups: usize,
+    /// Steps C refused `Visibility(Busy)`, whose Job ordinals the drain
+    /// skipped. Each is left for a later drain.
+    pub(crate) held: usize,
+    /// C selected no further step outside the held ones. False when the
+    /// drain stopped at `CLEANUP_GROUPS` or at a held step past
+    /// `CLEANUP_HELD`.
+    pub(crate) complete: bool,
+}
+
+/// A live Row cleanup drain that C refused other than with Busy: the
+/// groups installed before, and the refusal. An unchanged refusal leaves
+/// the session as it was and a later drain may go on; a Fatal one is C's
+/// fence (`Failure::must_resolve`).
+#[derive(Debug)]
+pub(crate) struct RetireStop {
+    pub(crate) retired: Retired,
+    pub(crate) failure: Failure,
+}
+
+/// One group's end: held by Busy, or failed.
+#[derive(Debug)]
+enum GroupStop {
+    Held,
+    Failed(Failure),
+}
+
+/// Drains C's live Row cleanup (reclamation `#live-row-cleanup-caller`):
+/// asks C for the next step outside the held ones and installs it, until C
+/// selects none, up to `CLEANUP_GROUPS` groups. A residency victim is
+/// flushed with the call's flusher and the same group tried again, bounded
+/// as a preflight's flush is (`flush`). A `Visibility(Busy)` step (a Prune
+/// beside an older snapshot) is skipped by its Job ordinal, so one held
+/// actor does not hide another; the list stays valid for the whole drain
+/// under C's rule (`row_cleanup_next`): the drain holds the call, so no Job
+/// is allocated between its calls. Any other refusal ends the drain with
+/// what it installed; an unchanged one that C keeps selecting first blocks
+/// the later steps until its cause is gone.
+#[inline(never)]
+#[allow(
+    clippy::result_large_err,
+    reason = "Failure keeps the stage and the error inline, without allocation"
+)]
+fn retire_finished<B: Boundary>(call: &mut B, loan: &mut Loan) -> Result<Retired, RetireStop> {
+    let mut skip = [0; CLEANUP_HELD];
+    let mut retired = Retired::default();
+    while retired.groups < CLEANUP_GROUPS {
+        let (ordinal, operation) = match call.cleanup_next(&skip[..retired.held]) {
+            Ok(Some(step)) => step,
+            Ok(None) => {
+                retired.complete = true;
+                return Ok(retired);
+            }
+            Err(error) => {
+                return Err(RetireStop {
+                    retired,
+                    failure: Failure::new(Stage::CleanupNext, error.into()),
+                });
+            }
+        };
+        match retire_group(call, ordinal, operation, loan) {
+            Ok(()) => retired.groups += 1,
+            Err(GroupStop::Held) if retired.held < CLEANUP_HELD => {
+                skip[retired.held] = ordinal;
+                retired.held += 1;
+            }
+            Err(GroupStop::Held) => return Ok(retired),
+            Err(GroupStop::Failed(failure)) => return Err(RetireStop { retired, failure }),
+        }
+    }
+    Ok(retired)
+}
+
+/// One live Row cleanup group, with its residency victims flushed.
+#[inline(never)]
+#[allow(
+    clippy::result_large_err,
+    reason = "Failure keeps the stage and the error inline, without allocation"
+)]
+fn retire_group<B: Boundary>(
+    call: &mut B,
+    ordinal: usize,
+    operation: Operation,
+    loan: &mut Loan,
+) -> Result<(), GroupStop> {
+    loop {
+        match call.retire(ordinal, operation, loan) {
+            Ok(RetireNext::Retired) => return Ok(()),
+            Ok(RetireNext::Flush(target)) => {
+                if let Err(failure) = flush(call, &target) {
+                    return Err(GroupStop::Failed(failure));
+                }
+            }
+            Ok(RetireNext::Held) => return Err(GroupStop::Held),
+            Err(error) => {
+                return Err(GroupStop::Failed(Failure::new(Stage::Retire, error.into())));
+            }
+        }
+    }
+}
+
 /// Nonrecursive size_of inventory, in the repository's source-bound sense, of
 /// the driver's carriers at the deepest point of the INSERT path (A's
 /// Forward producer under `insert_statement` → `insert_row` → `write_row` →
@@ -1607,6 +1751,86 @@ const fn call_sites<B: Boundary + 'static>() -> [CallSite; CALL_SITES] {
             Bound::Write,
             finish_aborted,
             finish_aborted,
+        ),
+    ]
+}
+
+#[cfg(test)]
+const CLEANUP_SITES: usize = 4;
+
+/// A's share at each C call of the live Row cleanup drain (reclamation
+/// `#live-row-cleanup-caller`) as (site, per-call share, frame-static
+/// share), each compared with C's fixed `LIVE_ROW_CLEANUP` ceiling.
+/// `caller` is the term of the drain's entry and of that entry's caller
+/// (`live::cleanup_caller_source`). The conventions are `call_sites`': the
+/// standard slack once, a C call's result twice (the driver's slot and the
+/// forwarding frame's return), a forwarding frame's arguments, and for the
+/// frame-static share every own slot of each driver frame on the path. C's
+/// own return carrier (`Result<RowRetireStep>`) belongs to C's census.
+#[cfg(test)]
+const fn cleanup_sites<B: Boundary + 'static>(
+    caller: usize,
+) -> [(&'static str, usize, usize); CLEANUP_SITES] {
+    use std::mem::size_of;
+    type G<B> = <B as Boundary>::Target;
+    let r = size_of::<&()>();
+    let slack = 32 * r + 16 * size_of::<Result<(), RetentionError>>() + 512;
+    let base = slack + caller;
+    let step = size_of::<(usize, Operation)>();
+    let next = size_of::<Result<Option<(usize, Operation)>, RetentionError>>();
+    let retire = size_of::<Result<RetireNext<G<B>>, RetentionError>>();
+    let group = size_of::<Result<(), GroupStop>>();
+    // retire_finished: its arguments, the held ordinals and the count, live
+    // through the drain; also C's next answer, the step it binds and
+    // retire_group's result (a Failure moved out of it stays in its slot; a
+    // refused next's Failure is built in the drain's result, the caller's).
+    let drain_live = 2 * r + size_of::<[usize; CLEANUP_HELD]>() + size_of::<Retired>();
+    let drain_frame = drain_live + next + step + group;
+    // retire_group: its arguments; C's answer, the flush target it binds and
+    // flush's result (a refused group's Failure is built in its result).
+    let group_live = 2 * r + size_of::<usize>() + size_of::<Operation>();
+    let group_frame = group_live + retire + size_of::<G<B>>() + size_of::<Result<(), Failure>>();
+    // flush: as in `call_sites`.
+    let flush_frame = 2 * r
+        + size_of::<Result<(), RetentionError>>()
+        + size_of::<Result<(), Failure>>()
+        + size_of::<Result<FlushStep, RetentionError>>()
+        + size_of::<Result<FlushStep, Failure>>()
+        + size_of::<FlushStep>();
+    // The forwarding frames' arguments: `cleanup_next(&self, skip)`;
+    // `retire(&mut self, ordinal, operation, loan)`.
+    let next_arguments = r + size_of::<&[usize]>();
+    let retire_arguments = 2 * r + size_of::<usize>() + size_of::<Operation>();
+    // At a flush: the group's target and flush's arguments and result slot.
+    let flushing = base
+        + drain_live
+        + step
+        + group
+        + group_live
+        + size_of::<G<B>>()
+        + 2 * r
+        + size_of::<Result<(), Failure>>();
+    let in_flush = base + drain_frame + group_frame + flush_frame;
+    [
+        (
+            "cleanup.next",
+            base + drain_live + next_arguments + 2 * next,
+            base + drain_frame + next_arguments + next,
+        ),
+        (
+            "cleanup.retire",
+            base + drain_live + step + group + group_live + retire_arguments + 2 * retire,
+            base + drain_frame + group_frame + retire_arguments + retire,
+        ),
+        (
+            "cleanup.try_flush",
+            flushing + 2 * size_of::<Result<(), RetentionError>>() + 2 * r,
+            in_flush + size_of::<Result<(), RetentionError>>() + 2 * r,
+        ),
+        (
+            "cleanup.continue_flush",
+            flushing + 2 * size_of::<Result<FlushStep, RetentionError>>() + r,
+            in_flush + size_of::<Result<FlushStep, RetentionError>>() + r,
         ),
     ]
 }

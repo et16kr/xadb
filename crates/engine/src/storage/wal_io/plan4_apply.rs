@@ -342,6 +342,61 @@ pub(crate) struct RetentionError {
     pub(crate) cause: RetentionCause,
     pub(crate) effect: Effect,
 }
+impl RetentionError {
+    /// An unchanged `Visibility(Busy)` refusal: a live reference pin or an
+    /// older snapshot still holds the target. For a live Row cleanup group
+    /// (`retire_row`, reclamation `#live-row-retirement`) nothing was
+    /// staged and the step is left for a later call.
+    pub(crate) fn visibility_busy(&self) -> bool {
+        self.effect == Effect::Unchanged
+            && matches!(
+                &self.cause,
+                RetentionCause::Visibility(error)
+                    if matches!(error.cause, VisibilityCause::Busy)
+            )
+    }
+}
+
+#[cfg(test)]
+mod visibility_busy_tests {
+    use super::visibility::VisibilityError;
+    use super::{Effect, RetentionCause, RetentionError, RetentionPhase, VisibilityCause};
+    use crate::transaction::concurrency::{Cause, ConcurrencyError};
+
+    fn error(cause: RetentionCause, effect: Effect) -> RetentionError {
+        RetentionError {
+            phase: RetentionPhase::Prepare,
+            cause,
+            effect,
+        }
+    }
+
+    fn visibility(cause: VisibilityCause, effect: Effect) -> RetentionCause {
+        RetentionCause::Visibility(VisibilityError { cause, effect })
+    }
+
+    /// LRC-C01: only an unchanged `Visibility(Busy)` refusal is a held live
+    /// cleanup step; a Busy that must be resolved, another visibility cause
+    /// and a Busy of another kind are not.
+    #[test]
+    fn lrc_c01_only_unchanged_visibility_busy_is_held() {
+        use Effect::{CallerMustResolve, Unchanged};
+        let busy = visibility(VisibilityCause::Busy, Unchanged);
+        assert!(error(busy, Unchanged).visibility_busy());
+        let busy = visibility(VisibilityCause::Busy, Unchanged);
+        assert!(!error(busy, CallerMustResolve).visibility_busy());
+        let capacity = visibility(VisibilityCause::Capacity, Unchanged);
+        assert!(!error(capacity, Unchanged).visibility_busy());
+        let concurrency = visibility(VisibilityCause::Concurrency(Cause::Busy), Unchanged);
+        assert!(!error(concurrency, Unchanged).visibility_busy());
+        let concurrency = RetentionCause::Concurrency(ConcurrencyError {
+            cause: Cause::Busy,
+            effect: Unchanged,
+        });
+        assert!(!error(concurrency, Unchanged).visibility_busy());
+        assert!(!error(RetentionCause::Busy, Unchanged).visibility_busy());
+    }
+}
 type Result<T> = std::result::Result<T, RetentionError>;
 fn unchanged(phase: RetentionPhase, cause: RetentionCause) -> RetentionError {
     RetentionError {

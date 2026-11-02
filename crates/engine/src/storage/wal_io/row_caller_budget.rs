@@ -11,6 +11,12 @@ pub(in crate::storage) const ROLLBACK_CALLER: usize = 512;
 pub(in crate::storage) const ROLLBACK_STEP_RESULT: usize = 1024;
 pub(in crate::storage) const CLR_PRODUCER: usize = 19_456;
 pub(in crate::storage) const RECOVERY_HANDLER: usize = 4096;
+/// The live Row cleanup caller (reclamation `#live-row-cleanup-caller`): A's
+/// frame-static share, with its own caller's term, at each C call of its
+/// cleanup drain (`row_cleanup_next`, `retire_row` and the flush of a
+/// residency victim). C checks its live retirement body plus this ceiling
+/// against the one CatalogProgressCharge it reserves.
+pub(in crate::storage) const LIVE_ROW_CLEANUP: usize = 4096;
 
 /// Each ceiling includes the caller plus the complete frame-static site share.
 /// All ten sites are mandatory; neither owner may silently skip a new site.

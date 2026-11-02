@@ -39,6 +39,9 @@ pub(crate) use super::bootstrap::doublewrite_install::mutable_storage::plan4_pag
 };
 
 pub(in crate::storage) use super::bootstrap::doublewrite_install::mutable_storage::plan4_pages::apply::InstallGrant;
+// The live Row cleanup step `MutationPort::retire_row` returns (reclamation
+// `#live-row-retirement`), for A's cleanup drain.
+pub(in crate::storage) use super::bootstrap::doublewrite_install::mutable_storage::plan4_pages::apply::RowRetireStep;
 pub(in crate::storage) use crate::transaction::concurrency::Owner;
 pub(in crate::storage::wal_io) use super::bootstrap::doublewrite_install::mutable_storage::plan4_pages::apply::legacy::from_legacy as legacy_install;
 

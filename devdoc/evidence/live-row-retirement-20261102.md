@@ -74,7 +74,7 @@ LRR-01의 비용. 한 그룹마다 WAL 전체를 다시 검증하므로 거래 �
 <a id="lrr-limits"></a>
 ## 5. 남은 한계
 
-- 자동 호출이 없다. commit·rollback 뒤 호출자가 `row_cleanup_next`·`retire_row`를 불러야 한다. statement driver나 background cleaner 연결은 다음 단위이고, 그 호출자의 자원 몫은 지금 380 B뿐이다.
+- 자동 호출이 없다. commit·rollback 뒤 호출자가 `row_cleanup_next`·`retire_row`를 불러야 한다. statement driver나 background cleaner 연결은 다음 단위이고, 그 호출자의 자원 몫은 지금 380 B뿐이다. (다음 단위 [live 정리 호출자](live-row-cleanup-caller-20261102.md)가 본문을 39,564 B로 줄여 호출자 상한 4,096 B를 두고, A statement driver의 정리 단계 `retire_finished_live`를 공급했다.)
 - 첫 Row profile의 INSERT 거래만이다. UPDATE·DELETE·index·overflow 정리, allocator의 실제 page 반환(3.03.4), checkpoint·WAL 절단은 범위 밖이다.
 - 시험이 닿지 않는 분기: stage의 Unchanged 거절(`reject_row_stage`), 정리 residency의 `FlushRequired`, 닫힌 facade에서의 거절.
 - R14 인수 사례의 PASS를 주장하지 않는다.

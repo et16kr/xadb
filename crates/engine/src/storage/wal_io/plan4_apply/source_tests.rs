@@ -382,24 +382,27 @@ fn retirement_fixed_charge_fits_and_cannot_use_commit_transitions() {
 /// recovered cleanup preparation at nine targets with its replay scope, the
 /// residency LOAD steps, and the existing-group or retirement install) under
 /// the shared shell fits the one fixed CatalogProgressCharge it reserves,
-/// RowWrite for Prune and RowProgress for the rest, for either writer. It is
-/// not folded into the charge or `peak`, so neither changes.
+/// RowWrite for Prune and RowProgress for the rest, for either writer,
+/// beside the fixed ceiling of its caller (`LIVE_ROW_CLEANUP`, reclamation
+/// `#live-row-cleanup-caller`). It is not folded into the charge or `peak`,
+/// so neither changes.
 #[test]
 fn live_row_retirement_fits_the_progress_charge() {
     fn inspect<W: WriterNamespace>(kind: &str) {
+        use crate::storage::wal_io::row_caller_budget::LIVE_ROW_CLEANUP;
         let phases = create_pair::catalog_live::catalog_live_source_bytes::<W>();
         let charge = CatalogProgressCharge::new::<W>();
         println!(
             "LIVE_ROW_RETIREMENT_{kind} row_retirement={} row_lifecycle={} retirement={} \
-             charge={} room={} peak={}",
+             charge={} caller_ceiling={LIVE_ROW_CLEANUP} room={} peak={}",
             phases.row_retirement,
             phases.row_lifecycle,
             phases.retirement,
             charge.0,
-            charge.0 - phases.row_retirement,
+            charge.0 - phases.row_retirement - LIVE_ROW_CLEANUP,
             phases.peak
         );
-        assert!(phases.row_retirement <= charge.0);
+        assert!(phases.row_retirement + LIVE_ROW_CLEANUP <= charge.0);
         assert!(shared_bytes::<W>() + charge.0 <= 65536);
     }
     inspect::<crate::storage::wal_io::plan4_test_support::Writer>("MEMORY");

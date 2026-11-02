@@ -7,11 +7,11 @@
 //! the row after a flush; other preflight refusals end the attempt.
 use super::{
     Boundary, CALL_SITES, CallSite, DriveError, Failure, FlushStep, Loan, PendingRollback,
-    Preflight, PreflightNext, Prepared, PreparedTask, ProducerLane, Reserved, Rollback,
-    RollbackNext, RollbackStop, RollbackTask, StartedRollback, StatementView, Stepped,
-    ValidationLane, call_sites, caller_bytes, carrier_bytes, finish_aborted, finish_rollback,
-    finish_statement, insert_statement, map_commit_result, retry_task, rollback_step,
-    start_full_rollback, start_statement_rollback,
+    Preflight, PreflightNext, Prepared, PreparedTask, ProducerLane, Reserved, RetireNext,
+    RetireStop, Retired, Rollback, RollbackNext, RollbackStop, RollbackTask, StartedRollback,
+    StatementView, Stepped, ValidationLane, call_sites, caller_bytes, carrier_bytes,
+    finish_aborted, finish_rollback, finish_statement, insert_statement, map_commit_result,
+    retire_finished, retry_task, rollback_step, start_full_rollback, start_statement_rollback,
 };
 use crate::storage::{
     disk::{
@@ -19,11 +19,13 @@ use crate::storage::{
         PreparedRollbackTask, RetentionError, RetentionFlushPhase, RollbackScope, RollbackStep,
         RowCommitObservation, RowInputPlan, RowMutationObservation, RowOwnedError,
         RowPreflightOperation, RowPreflightStep, RowPreparedOperation, RowProducerLane,
-        RowProposal, RowReservedOperation, RowRollback, RowRollbackTask, RowStatementView,
-        RowTransaction, RowValidationLane, StatementFinishError, TransactionFinishError,
+        RowProposal, RowReservedOperation, RowRetireStep, RowRollback, RowRollbackTask,
+        RowStatementView, RowTransaction, RowValidationLane, StatementFinishError,
+        TransactionFinishError,
     },
     row::insert::{InsertError, produce_clr, produce_insert, validate_insert},
     row_record::ValueRef,
+    semantic_row::Operation,
 };
 use foundation::namespace::WriterNamespace;
 use std::{convert::Infallible, marker::PhantomData};
@@ -283,6 +285,27 @@ impl<'x, 't, 'v, 'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace> Boundar
     fn flush_ready(&self) -> bool {
         self.flusher.phase() == RetentionFlushPhase::Ready
     }
+    fn cleanup_next(&self, skip: &[usize]) -> Result<Option<(usize, Operation)>, RetentionError> {
+        self.port.row_cleanup_next(skip)
+    }
+    /// C's `Visibility(Busy)` refusal is the one held answer; every other
+    /// refusal is passed on as it is.
+    fn retire(
+        &mut self,
+        ordinal: usize,
+        operation: Operation,
+        loan: &mut Loan,
+    ) -> Result<RetireNext<Plan4Target>, RetentionError> {
+        match self
+            .port
+            .retire_row(self.owner, ordinal, operation, loan, self.flusher)
+        {
+            Ok(RowRetireStep::Retired(_)) => Ok(RetireNext::Retired),
+            Ok(RowRetireStep::FlushRequired(target)) => Ok(RetireNext::Flush(target)),
+            Err(error) if error.visibility_busy() => Ok(RetireNext::Held),
+            Err(error) => Err(error),
+        }
+    }
 }
 
 type Live<'x, 't, 'v, 'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W> =
@@ -507,6 +530,28 @@ pub(in crate::storage) fn finish_aborted_live<'v, 'a, 'c, 's, W: WriterNamespace
     finish_aborted(call, transaction)
 }
 
+/// The live Row cleanup drain (`retire_finished`, reclamation
+/// `#live-row-cleanup-caller`): every cleanup group of the finished
+/// transactions C selects, up to the drain's bound, with residency victims
+/// flushed and Busy steps left for a later drain. The statement path calls
+/// it after `commit_live` or `finish_aborted_live` returned, and from a
+/// frame that does not hold them: the census is per frame, so a caller
+/// that calls both from one frame also holds the drain's result and
+/// arguments during the commit, whose A frame is at its fixed ceiling
+/// (`row_caller_budget::COMMIT`, 3,024 B). Such a caller calls the drain
+/// from a separate never-inlined frame or redoes the commit census with
+/// those slots. Its own term is the `caller` of `live_cleanup_sites`.
+#[allow(
+    clippy::result_large_err,
+    reason = "Failure keeps the stage and the error inline, without allocation"
+)]
+pub(in crate::storage) fn retire_finished_live<W: WriterNamespace>(
+    call: &mut Live<'_, '_, '_, '_, '_, '_, '_, '_, '_, '_, '_, '_, W>,
+    private: &mut Loan,
+) -> Result<Retired, RetireStop> {
+    retire_finished(call, private)
+}
+
 /// `carrier_bytes` for the actual C0 types (INSERT path, CLR path).
 pub(super) const fn live_carrier_bytes<W: WriterNamespace + 'static>() -> (usize, usize) {
     carrier_bytes::<
@@ -612,6 +657,61 @@ pub(in crate::storage) fn commit_caller_source<W: WriterNamespace + 'static>() -
         + size_of::<Result<RowCommitObservation, DriveError<T>>>()
         + 2 * size_of::<Result<RowCommitObservation, TransactionFinishError<T>>>();
     (held, held)
+}
+
+/// The term of the live Row cleanup drain's entry and of its caller
+/// (reclamation `#live-row-cleanup-caller`), in `commit_caller_source`'s
+/// sense: the caller's LiveCall and two Owners, the loan reference, the
+/// caller's result slot and `retire_finished_live`'s forwarding return,
+/// and that frame's two arguments. The slack is `cleanup_sites`'.
+#[cfg(test)]
+pub(in crate::storage) fn cleanup_caller_source<W: WriterNamespace + 'static>() -> usize {
+    use std::mem::size_of;
+    let r = size_of::<&()>();
+    size_of::<
+        LiveCall<
+            'static,
+            'static,
+            'static,
+            'static,
+            'static,
+            'static,
+            'static,
+            'static,
+            'static,
+            'static,
+            'static,
+            'static,
+            W,
+        >,
+    >() + 2 * size_of::<Owner<'static, 'static>>()
+        + r
+        + 2 * size_of::<Result<Retired, RetireStop>>()
+        + 2 * r
+}
+
+/// `cleanup_sites` for the actual C0 types and `retire_finished_live`'s
+/// caller term.
+#[cfg(test)]
+pub(in crate::storage) fn live_cleanup_sites<W: WriterNamespace + 'static>()
+-> [(&'static str, usize, usize); super::CLEANUP_SITES] {
+    super::cleanup_sites::<
+        Live<
+            'static,
+            'static,
+            'static,
+            'static,
+            'static,
+            'static,
+            'static,
+            'static,
+            'static,
+            'static,
+            'static,
+            'static,
+            W,
+        >,
+    >(cleanup_caller_source::<W>())
 }
 
 /// The statement the S2-e callers of `insert_live` pass at most
