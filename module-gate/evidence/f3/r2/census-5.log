@@ -1,0 +1,7 @@
+
+running 1 test
+test storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::read::scope::tests::admitted_validation_is_inside_both_fixed_source_classes ... ADMITTED_VALIDATION validation=6958 pool_guard=3307 visibility_guard=2351 full=34682 resident=17992 whole_floor=NOT_CONNECTED
+ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 2007 filtered out; finished in 0.00s
+

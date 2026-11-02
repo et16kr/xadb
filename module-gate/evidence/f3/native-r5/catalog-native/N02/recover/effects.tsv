@@ -1,0 +1,810 @@
+0	acquire	LOCK	0	0	ATTEMPT
+1	acquire	LOCK	0	0	EXISTING
+2	list	namespace	0	22	Ok(15)
+3	open_meta	d3-profile	0	0	ATTEMPT
+4	open_meta	d3-profile	0	0	66312:21379382:4096
+5	retain_file	d3-profile	0	0	OK
+6	metadata	d3-profile	0	0	Ok(Some(FileMetadata { identity: FileIdentity { device: 66312, inode: 21379382 }, length: 4096 }))
+7	read	d3-profile	0	4096	ATTEMPT
+8	read	d3-profile	0	4096	OK:4096:f49d4bb26a5c0e1bd66dec9a2b0f77aa24e3fafadf54f27e5db9ab9a960e204e
+9	metadata	d3-profile	0	0	Ok(Some(FileMetadata { identity: FileIdentity { device: 66312, inode: 21379382 }, length: 4096 }))
+10	close	d3-profile	0	0	OK
+11	open_meta	FILEMAP	0	0	ATTEMPT
+12	open_meta	FILEMAP	0	0	66312:21379389:4096
+13	retain_file	FILEMAP	0	0	OK
+14	metadata	FILEMAP	0	0	Ok(Some(FileMetadata { identity: FileIdentity { device: 66312, inode: 21379389 }, length: 4096 }))
+15	read	FILEMAP	0	4096	ATTEMPT
+16	read	FILEMAP	0	4096	OK:4096:5938c6fac59aa7d816b2e8b358df8e15511e78c1f85934b1451fea92fc36dba0
+17	metadata	FILEMAP	0	0	Ok(Some(FileMetadata { identity: FileIdentity { device: 66312, inode: 21379389 }, length: 4096 }))
+18	close	FILEMAP	0	0	OK
+19	open_meta	d3-bootstrap	0	0	ATTEMPT
+20	open_meta	d3-bootstrap	0	0	66312:21379385:4096
+21	retain_file	d3-bootstrap	0	0	OK
+22	metadata	d3-bootstrap	0	0	Ok(Some(FileMetadata { identity: FileIdentity { device: 66312, inode: 21379385 }, length: 4096 }))
+23	read	d3-bootstrap	0	4096	ATTEMPT
+24	read	d3-bootstrap	0	4096	OK:4096:e748c4c73df39f04bf9b82bd4219ad4317d7556f6a2f081254fcdf1a9ddd2883
+25	metadata	d3-bootstrap	0	0	Ok(Some(FileMetadata { identity: FileIdentity { device: 66312, inode: 21379385 }, length: 4096 }))
+26	close	d3-bootstrap	0	0	OK
+27	open_meta	d3-profile	0	0	ATTEMPT
+28	open_meta	d3-profile	0	0	66312:21379382:4096
+29	retain_file	d3-profile	0	0	OK
+30	metadata	d3-profile	0	0	Ok(Some(FileMetadata { identity: FileIdentity { device: 66312, inode: 21379382 }, length: 4096 }))
+31	read	d3-profile	0	4096	ATTEMPT
+32	read	d3-profile	0	4096	OK:4096:f49d4bb26a5c0e1bd66dec9a2b0f77aa24e3fafadf54f27e5db9ab9a960e204e
+33	close	d3-profile	0	0	OK
+34	open_meta	FILEMAP	0	0	ATTEMPT
+35	open_meta	FILEMAP	0	0	66312:21379389:4096
+36	retain_file	FILEMAP	0	0	OK
+37	metadata	FILEMAP	0	0	Ok(Some(FileMetadata { identity: FileIdentity { device: 66312, inode: 21379389 }, length: 4096 }))
+38	read	FILEMAP	0	4096	ATTEMPT
+39	read	FILEMAP	0	4096	OK:4096:5938c6fac59aa7d816b2e8b358df8e15511e78c1f85934b1451fea92fc36dba0
+40	close	FILEMAP	0	0	OK
+41	open_meta	d3-filemap-0	0	0	ATTEMPT
+42	open_meta	d3-filemap-0	0	0	66312:21379387:2113536
+43	retain_file	d3-filemap-0	0	0	OK
+44	metadata	d3-filemap-0	0	0	Ok(Some(FileMetadata { identity: FileIdentity { device: 66312, inode: 21379387 }, length: 2113536 }))
+45	read	d3-filemap-0	0	320	ATTEMPT
+46	read	d3-filemap-0	0	320	OK:320:c8ddca13874f35180d5b80ddfe856837506e764e1326fdc2c11b3427effe78d8
+47	read	d3-filemap-0	16384	256	ATTEMPT
+48	read	d3-filemap-0	16384	256	OK:256:37746fe4d861925812f7f18134fe53a85e71371700d00fb4306051e2f18924b4
+49	read	d3-filemap-0	16384	256	ATTEMPT
+50	read	d3-filemap-0	16384	256	OK:256:37746fe4d861925812f7f18134fe53a85e71371700d00fb4306051e2f18924b4
+51	open_meta	d3-data-0000000100000001	0	0	ATTEMPT
+52	open_meta	d3-data-0000000100000001	0	0	66312:21379386:1048576
+53	retain_file	d3-data-0000000100000001	0	0	OK
+54	metadata	d3-data-0000000100000001	0	0	Ok(Some(FileMetadata { identity: FileIdentity { device: 66312, inode: 21379386 }, length: 1048576 }))
+55	metadata	d3-data-0000000100000001	0	0	Ok(Some(FileMetadata { identity: FileIdentity { device: 66312, inode: 21379386 }, length: 1048576 }))
+56	read	d3-data-0000000100000001	0	16384	ATTEMPT
+57	read	d3-data-0000000100000001	0	16384	OK:16384:077d06af8b37bec32a9472ed498d3fa884fbe5e8fd84c457f6ebfa96e9946cfd
+58	metadata	d3-data-0000000100000001	0	0	Ok(Some(FileMetadata { identity: FileIdentity { device: 66312, inode: 21379386 }, length: 1048576 }))
+59	close	d3-data-0000000100000001	0	0	OK
+60	close	d3-filemap-0	0	0	OK
+61	open_meta	DWB	0	0	ATTEMPT
+62	open_meta	DWB	0	0	66312:21379395:4096
+63	retain_file	DWB	0	0	OK
+64	metadata	DWB	0	0	Ok(Some(FileMetadata { identity: FileIdentity { device: 66312, inode: 21379395 }, length: 4096 }))
+65	read	DWB	0	4096	ATTEMPT
+66	read	DWB	0	4096	OK:4096:3cf30a12ec442b02dc57b40c22f525d7ffe89d553b14da6c4d3b7bc74c1ac57e
+67	metadata	DWB	0	0	Ok(Some(FileMetadata { identity: FileIdentity { device: 66312, inode: 21379395 }, length: 4096 }))
+68	close	DWB	0	0	OK
+69	open_meta	d3-dwb-0	0	0	ATTEMPT
+70	open_meta	d3-dwb-0	0	0	66312:21379392:16384
+71	retain_file	d3-dwb-0	0	0	OK
+72	metadata	d3-dwb-0	0	0	Ok(Some(FileMetadata { identity: FileIdentity { device: 66312, inode: 21379392 }, length: 16384 }))
+73	read	d3-dwb-0	0	16384	ATTEMPT
+74	read	d3-dwb-0	0	16384	OK:16384:9e42cf483f0c09f6937118f04f533461a08d022e30593e071baf44aec81ad3e4
+75	metadata	d3-dwb-0	0	0	Ok(Some(FileMetadata { identity: FileIdentity { device: 66312, inode: 21379392 }, length: 16384 }))
+76	close	d3-dwb-0	0	0	OK
+77	metadata	CURRENT	0	0	Ok(None)
+78	open_meta	d3-wal-00000001	0	0	ATTEMPT
+79	open_meta	d3-wal-00000001	0	0	66312:21379383:439822
+80	retain_file	d3-wal-00000001	0	0	OK
+81	metadata	d3-wal-00000001	0	0	Ok(Some(FileMetadata { identity: FileIdentity { device: 66312, inode: 21379383 }, length: 439822 }))
+82	read	d3-wal-00000001	0	4096	ATTEMPT
+83	read	d3-wal-00000001	0	4096	OK:4096:509eb692099cd3f1d7bf31ce2911a5e8858d2df207c49052737a66bde40e68ec
+84	open_meta	WRITER	0	0	ATTEMPT
+85	open_meta	WRITER	0	0	66312:21379384:4096
+86	retain_file	WRITER	0	0	OK
+87	metadata	WRITER	0	0	Ok(Some(FileMetadata { identity: FileIdentity { device: 66312, inode: 21379384 }, length: 4096 }))
+88	read	WRITER	0	4096	ATTEMPT
+89	read	WRITER	0	4096	OK:4096:82a9e17a80dcb5d9a06c343f90cc4c325deede22362d9c2e82ba8d04b2acd899
+90	metadata	WRITER	0	0	Ok(Some(FileMetadata { identity: FileIdentity { device: 66312, inode: 21379384 }, length: 4096 }))
+91	close	WRITER	0	0	OK
+92	list	namespace	0	22	Ok(15)
+93	list	namespace	0	22	Ok(15)
+94	open_meta	d3-profile	0	0	ATTEMPT
+95	open_meta	d3-profile	0	0	66312:21379382:4096
+96	retain_file	d3-profile	0	0	OK
+97	metadata	d3-profile	0	0	Ok(Some(FileMetadata { identity: FileIdentity { device: 66312, inode: 21379382 }, length: 4096 }))
+98	read	d3-profile	0	4096	ATTEMPT
+99	read	d3-profile	0	4096	OK:4096:f49d4bb26a5c0e1bd66dec9a2b0f77aa24e3fafadf54f27e5db9ab9a960e204e
+100	metadata	d3-profile	0	0	Ok(Some(FileMetadata { identity: FileIdentity { device: 66312, inode: 21379382 }, length: 4096 }))
+101	close	d3-profile	0	0	OK
+102	open_meta	d3-bootstrap	0	0	ATTEMPT
+103	open_meta	d3-bootstrap	0	0	66312:21379385:4096
+104	retain_file	d3-bootstrap	0	0	OK
+105	metadata	d3-bootstrap	0	0	Ok(Some(FileMetadata { identity: FileIdentity { device: 66312, inode: 21379385 }, length: 4096 }))
+106	read	d3-bootstrap	0	4096	ATTEMPT
+107	read	d3-bootstrap	0	4096	OK:4096:e748c4c73df39f04bf9b82bd4219ad4317d7556f6a2f081254fcdf1a9ddd2883
+108	metadata	d3-bootstrap	0	0	Ok(Some(FileMetadata { identity: FileIdentity { device: 66312, inode: 21379385 }, length: 4096 }))
+109	close	d3-bootstrap	0	0	OK
+110	open_meta	FILEMAP	0	0	ATTEMPT
+111	open_meta	FILEMAP	0	0	66312:21379389:4096
+112	retain_file	FILEMAP	0	0	OK
+113	metadata	FILEMAP	0	0	Ok(Some(FileMetadata { identity: FileIdentity { device: 66312, inode: 21379389 }, length: 4096 }))
+114	read	FILEMAP	0	4096	ATTEMPT
+115	read	FILEMAP	0	4096	OK:4096:5938c6fac59aa7d816b2e8b358df8e15511e78c1f85934b1451fea92fc36dba0
+116	metadata	FILEMAP	0	0	Ok(Some(FileMetadata { identity: FileIdentity { device: 66312, inode: 21379389 }, length: 4096 }))
+117	close	FILEMAP	0	0	OK
+118	open_meta	DWB	0	0	ATTEMPT
+119	open_meta	DWB	0	0	66312:21379395:4096
+120	retain_file	DWB	0	0	OK
+121	metadata	DWB	0	0	Ok(Some(FileMetadata { identity: FileIdentity { device: 66312, inode: 21379395 }, length: 4096 }))
+122	read	DWB	0	4096	ATTEMPT
+123	read	DWB	0	4096	OK:4096:3cf30a12ec442b02dc57b40c22f525d7ffe89d553b14da6c4d3b7bc74c1ac57e
+124	metadata	DWB	0	0	Ok(Some(FileMetadata { identity: FileIdentity { device: 66312, inode: 21379395 }, length: 4096 }))
+125	close	DWB	0	0	OK
+126	open_meta	d3-dwb-0	0	0	ATTEMPT
+127	open_meta	d3-dwb-0	0	0	66312:21379392:16384
+128	retain_file	d3-dwb-0	0	0	OK
+129	metadata	d3-dwb-0	0	0	Ok(Some(FileMetadata { identity: FileIdentity { device: 66312, inode: 21379392 }, length: 16384 }))
+130	read	d3-dwb-0	0	16384	ATTEMPT
+131	read	d3-dwb-0	0	16384	OK:16384:9e42cf483f0c09f6937118f04f533461a08d022e30593e071baf44aec81ad3e4
+132	metadata	d3-dwb-0	0	0	Ok(Some(FileMetadata { identity: FileIdentity { device: 66312, inode: 21379392 }, length: 16384 }))
+133	close	d3-dwb-0	0	0	OK
+134	open_meta	WRITER	0	0	ATTEMPT
+135	open_meta	WRITER	0	0	66312:21379384:4096
+136	retain_file	WRITER	0	0	OK
+137	metadata	WRITER	0	0	Ok(Some(FileMetadata { identity: FileIdentity { device: 66312, inode: 21379384 }, length: 4096 }))
+138	read	WRITER	0	4096	ATTEMPT
+139	read	WRITER	0	4096	OK:4096:82a9e17a80dcb5d9a06c343f90cc4c325deede22362d9c2e82ba8d04b2acd899
+140	metadata	WRITER	0	0	Ok(Some(FileMetadata { identity: FileIdentity { device: 66312, inode: 21379384 }, length: 4096 }))
+141	close	WRITER	0	0	OK
+142	open_meta	d3-profile	0	0	ATTEMPT
+143	open_meta	d3-profile	0	0	66312:21379382:4096
+144	retain_file	d3-profile	0	0	OK
+145	metadata	d3-profile	0	0	Ok(Some(FileMetadata { identity: FileIdentity { device: 66312, inode: 21379382 }, length: 4096 }))
+146	read	d3-profile	0	4096	ATTEMPT
+147	read	d3-profile	0	4096	OK:4096:f49d4bb26a5c0e1bd66dec9a2b0f77aa24e3fafadf54f27e5db9ab9a960e204e
+148	close	d3-profile	0	0	OK
+149	open_meta	FILEMAP	0	0	ATTEMPT
+150	open_meta	FILEMAP	0	0	66312:21379389:4096
+151	retain_file	FILEMAP	0	0	OK
+152	metadata	FILEMAP	0	0	Ok(Some(FileMetadata { identity: FileIdentity { device: 66312, inode: 21379389 }, length: 4096 }))
+153	read	FILEMAP	0	4096	ATTEMPT
+154	read	FILEMAP	0	4096	OK:4096:5938c6fac59aa7d816b2e8b358df8e15511e78c1f85934b1451fea92fc36dba0
+155	close	FILEMAP	0	0	OK
+156	open_meta	d3-filemap-0	0	0	ATTEMPT
+157	open_meta	d3-filemap-0	0	0	66312:21379387:2113536
+158	retain_file	d3-filemap-0	0	0	OK
+159	metadata	d3-filemap-0	0	0	Ok(Some(FileMetadata { identity: FileIdentity { device: 66312, inode: 21379387 }, length: 2113536 }))
+160	read	d3-filemap-0	0	320	ATTEMPT
+161	read	d3-filemap-0	0	320	OK:320:c8ddca13874f35180d5b80ddfe856837506e764e1326fdc2c11b3427effe78d8
+162	read	d3-filemap-0	16384	256	ATTEMPT
+163	read	d3-filemap-0	16384	256	OK:256:37746fe4d861925812f7f18134fe53a85e71371700d00fb4306051e2f18924b4
+164	read	d3-filemap-0	16384	256	ATTEMPT
+165	read	d3-filemap-0	16384	256	OK:256:37746fe4d861925812f7f18134fe53a85e71371700d00fb4306051e2f18924b4
+166	open_meta	d3-data-0000000100000001	0	0	ATTEMPT
+167	open_meta	d3-data-0000000100000001	0	0	66312:21379386:1048576
+168	retain_file	d3-data-0000000100000001	0	0	OK
+169	metadata	d3-data-0000000100000001	0	0	Ok(Some(FileMetadata { identity: FileIdentity { device: 66312, inode: 21379386 }, length: 1048576 }))
+170	metadata	d3-data-0000000100000001	0	0	Ok(Some(FileMetadata { identity: FileIdentity { device: 66312, inode: 21379386 }, length: 1048576 }))
+171	read	d3-data-0000000100000001	0	16384	ATTEMPT
+172	read	d3-data-0000000100000001	0	16384	OK:16384:077d06af8b37bec32a9472ed498d3fa884fbe5e8fd84c457f6ebfa96e9946cfd
+173	metadata	d3-data-0000000100000001	0	0	Ok(Some(FileMetadata { identity: FileIdentity { device: 66312, inode: 21379386 }, length: 1048576 }))
+174	close	d3-data-0000000100000001	0	0	OK
+175	close	d3-filemap-0	0	0	OK
+176	list	namespace	0	22	Ok(15)
+177	open_meta	d3-data-0000000100000001	0	0	ATTEMPT
+178	open_meta	d3-data-0000000100000001	0	0	66312:21379386:1048576
+179	retain_file	d3-data-0000000100000001	0	0	OK
+180	metadata	d3-data-0000000100000001	0	0	Ok(Some(FileMetadata { identity: FileIdentity { device: 66312, inode: 21379386 }, length: 1048576 }))
+181	read	d3-data-0000000100000001	0	1048576	ATTEMPT
+182	read	d3-data-0000000100000001	0	1048576	OK:1048576:51089a061ddc825966580bfe86a7046aa482c68ec35439ad36b5640f3b541476
+183	metadata	d3-data-0000000100000001	0	0	Ok(Some(FileMetadata { identity: FileIdentity { device: 66312, inode: 21379386 }, length: 1048576 }))
+184	close	d3-data-0000000100000001	0	0	OK
+185	read	d3-wal-00000001	0	4096	ATTEMPT
+186	read	d3-wal-00000001	0	4096	OK:4096:509eb692099cd3f1d7bf31ce2911a5e8858d2df207c49052737a66bde40e68ec
+187	read	d3-wal-00000001	4096	160	ATTEMPT
+188	read	d3-wal-00000001	4096	160	OK:160:04a5a8bc2857b5ef67cc715f98581ac651b6d7029e9188d39ae1e3532b11ce50
+189	read	d3-wal-00000001	4256	19512	ATTEMPT
+190	read	d3-wal-00000001	4256	19512	OK:19512:69a9bcced25a04204cb50298efbb5ae94cb516b4e425e9a0f3e7980b9aadf08f
+191	read	d3-wal-00000001	23768	160	ATTEMPT
+192	read	d3-wal-00000001	23768	160	OK:160:35ab3564294c4940f5b3d846fefd192c13edea0b93302f2bad9da8979049d92e
+193	read	d3-wal-00000001	23928	21040	ATTEMPT
+194	read	d3-wal-00000001	23928	21040	OK:21040:f7aa8e0060571fd0cec972506bddd52d86a46861349bce97f5417daab9398dfa
+195	read	d3-wal-00000001	44968	160	ATTEMPT
+196	read	d3-wal-00000001	44968	160	OK:160:5bf6f07b0f396ab83cc24adf6e137b8e468f6151ccbffd5175410548742429c4
+197	read	d3-wal-00000001	45128	37840	ATTEMPT
+198	read	d3-wal-00000001	45128	37840	OK:37840:cea6563a3773be11bff9e84d3a2647df5794b460483432a3b9c57d4a7760ef5a
+199	read	d3-wal-00000001	82968	160	ATTEMPT
+200	read	d3-wal-00000001	82968	160	OK:160:855ad6481181e6c004c7483f526e94b2596bf0da86c3ec27b7e39f7197b6a954
+201	read	d3-wal-00000001	83128	21040	ATTEMPT
+202	read	d3-wal-00000001	83128	21040	OK:21040:f7e2a55483610426e28fb709c8a8eb832e829b4f3a175fdfb353b97abd9cd3d1
+203	read	d3-wal-00000001	104168	160	ATTEMPT
+204	read	d3-wal-00000001	104168	160	OK:160:5e46005287c2c0a3c28bf5b6804a61f4aac3f906919d939839211ac24166fa2a
+205	read	d3-wal-00000001	104328	38048	ATTEMPT
+206	read	d3-wal-00000001	104328	38048	OK:38048:b78088eaa31ff1f165913ac281443851401ea8b6ade44c7fd8524c7e20280ec2
+207	read	d3-wal-00000001	142376	160	ATTEMPT
+208	read	d3-wal-00000001	142376	160	OK:160:797f3790c9fc497953abf475b186ece476dc3379aebc345e065751c9df9c5f8e
+209	read	d3-wal-00000001	142536	56552	ATTEMPT
+210	read	d3-wal-00000001	142536	56552	OK:56552:5e7a18ad2df1858440fdf1bfc0fee160024b65e459235ff7aad6c06c159916ca
+211	read	d3-wal-00000001	199088	160	ATTEMPT
+212	read	d3-wal-00000001	199088	160	OK:160:d0776a3b31a59a58fc28b5e8bafffbecdbc613f71971ae20e37e317ebcd6b185
+213	read	d3-wal-00000001	199248	86480	ATTEMPT
+214	read	d3-wal-00000001	199248	86480	OK:86480:bda5f674d40dba6cca756db74f7745954ac5f832e4789a70c921a2abb2ab9a07
+215	read	d3-wal-00000001	285728	160	ATTEMPT
+216	read	d3-wal-00000001	285728	160	OK:160:a565f6d5378d3ec07610fb45bff988790d40800b25ed4880b9ba8bdd14f52f93
+217	read	d3-wal-00000001	285888	153934	ATTEMPT
+218	read	d3-wal-00000001	285888	153934	OK:153934:217b144f8ab145c10e59227fceb3a1e641df7d476a06b2c7d3247e6519279403
+219	read	d3-wal-00000001	0	65536	ATTEMPT
+220	read	d3-wal-00000001	0	65536	OK:65536:da8094b927ed068e5926ebd8d50b3df49ac708c51aa05ce2e96c8b9cb7ece176
+221	read	d3-wal-00000001	65536	65536	ATTEMPT
+222	read	d3-wal-00000001	65536	65536	OK:65536:3c4e3e8681eda23074479c95b6da236c55f78817ea2b01f30fab80e2276d7e4f
+223	read	d3-wal-00000001	131072	65536	ATTEMPT
+224	read	d3-wal-00000001	131072	65536	OK:65536:1c0a0d202d411910a1aeabebbcedfc7b69305e5b4c1993de99ab000aa7bca237
+225	read	d3-wal-00000001	196608	65536	ATTEMPT
+226	read	d3-wal-00000001	196608	65536	OK:65536:7ceebd6fdb7a8fe7ad1fdefe9e34b0cd07e879244c843688f96d44ee4ff603f3
+227	read	d3-wal-00000001	262144	65536	ATTEMPT
+228	read	d3-wal-00000001	262144	65536	OK:65536:5c7a88aba46f6f7f667f1cb24e714088b26ac4182a3eb65000d183f3065841c0
+229	read	d3-wal-00000001	327680	65536	ATTEMPT
+230	read	d3-wal-00000001	327680	65536	OK:65536:8978e395623097e20e5d7809c75290bf1e1d0389d8f88f6bfce3a1401851942a
+231	read	d3-wal-00000001	393216	46606	ATTEMPT
+232	read	d3-wal-00000001	393216	46606	OK:46606:c97271f4f38ecdebba3b706e64b162cd25a09cd0f7e34584dc48f6c8f3448f62
+233	read	d3-wal-00000001	0	65536	ATTEMPT
+234	read	d3-wal-00000001	0	65536	OK:65536:da8094b927ed068e5926ebd8d50b3df49ac708c51aa05ce2e96c8b9cb7ece176
+235	read	d3-wal-00000001	65536	65536	ATTEMPT
+236	read	d3-wal-00000001	65536	65536	OK:65536:3c4e3e8681eda23074479c95b6da236c55f78817ea2b01f30fab80e2276d7e4f
+237	read	d3-wal-00000001	131072	65536	ATTEMPT
+238	read	d3-wal-00000001	131072	65536	OK:65536:1c0a0d202d411910a1aeabebbcedfc7b69305e5b4c1993de99ab000aa7bca237
+239	read	d3-wal-00000001	196608	65536	ATTEMPT
+240	read	d3-wal-00000001	196608	65536	OK:65536:7ceebd6fdb7a8fe7ad1fdefe9e34b0cd07e879244c843688f96d44ee4ff603f3
+241	read	d3-wal-00000001	262144	65536	ATTEMPT
+242	read	d3-wal-00000001	262144	65536	OK:65536:5c7a88aba46f6f7f667f1cb24e714088b26ac4182a3eb65000d183f3065841c0
+243	read	d3-wal-00000001	327680	65536	ATTEMPT
+244	read	d3-wal-00000001	327680	65536	OK:65536:8978e395623097e20e5d7809c75290bf1e1d0389d8f88f6bfce3a1401851942a
+245	read	d3-wal-00000001	393216	46606	ATTEMPT
+246	read	d3-wal-00000001	393216	46606	OK:46606:c97271f4f38ecdebba3b706e64b162cd25a09cd0f7e34584dc48f6c8f3448f62
+247	metadata	d3-wal-00000001	0	0	Ok(Some(FileMetadata { identity: FileIdentity { device: 66312, inode: 21379383 }, length: 439822 }))
+248	list	namespace	0	22	Ok(15)
+249	open_meta	d3-profile	0	0	ATTEMPT
+250	open_meta	d3-profile	0	0	66312:21379382:4096
+251	retain_file	d3-profile	0	0	OK
+252	metadata	d3-profile	0	0	Ok(Some(FileMetadata { identity: FileIdentity { device: 66312, inode: 21379382 }, length: 4096 }))
+253	read	d3-profile	0	4096	ATTEMPT
+254	read	d3-profile	0	4096	OK:4096:f49d4bb26a5c0e1bd66dec9a2b0f77aa24e3fafadf54f27e5db9ab9a960e204e
+255	metadata	d3-profile	0	0	Ok(Some(FileMetadata { identity: FileIdentity { device: 66312, inode: 21379382 }, length: 4096 }))
+256	close	d3-profile	0	0	OK
+257	open_meta	d3-bootstrap	0	0	ATTEMPT
+258	open_meta	d3-bootstrap	0	0	66312:21379385:4096
+259	retain_file	d3-bootstrap	0	0	OK
+260	metadata	d3-bootstrap	0	0	Ok(Some(FileMetadata { identity: FileIdentity { device: 66312, inode: 21379385 }, length: 4096 }))
+261	read	d3-bootstrap	0	4096	ATTEMPT
+262	read	d3-bootstrap	0	4096	OK:4096:e748c4c73df39f04bf9b82bd4219ad4317d7556f6a2f081254fcdf1a9ddd2883
+263	metadata	d3-bootstrap	0	0	Ok(Some(FileMetadata { identity: FileIdentity { device: 66312, inode: 21379385 }, length: 4096 }))
+264	close	d3-bootstrap	0	0	OK
+265	open_meta	FILEMAP	0	0	ATTEMPT
+266	open_meta	FILEMAP	0	0	66312:21379389:4096
+267	retain_file	FILEMAP	0	0	OK
+268	metadata	FILEMAP	0	0	Ok(Some(FileMetadata { identity: FileIdentity { device: 66312, inode: 21379389 }, length: 4096 }))
+269	read	FILEMAP	0	4096	ATTEMPT
+270	read	FILEMAP	0	4096	OK:4096:5938c6fac59aa7d816b2e8b358df8e15511e78c1f85934b1451fea92fc36dba0
+271	metadata	FILEMAP	0	0	Ok(Some(FileMetadata { identity: FileIdentity { device: 66312, inode: 21379389 }, length: 4096 }))
+272	close	FILEMAP	0	0	OK
+273	open_meta	DWB	0	0	ATTEMPT
+274	open_meta	DWB	0	0	66312:21379395:4096
+275	retain_file	DWB	0	0	OK
+276	metadata	DWB	0	0	Ok(Some(FileMetadata { identity: FileIdentity { device: 66312, inode: 21379395 }, length: 4096 }))
+277	read	DWB	0	4096	ATTEMPT
+278	read	DWB	0	4096	OK:4096:3cf30a12ec442b02dc57b40c22f525d7ffe89d553b14da6c4d3b7bc74c1ac57e
+279	metadata	DWB	0	0	Ok(Some(FileMetadata { identity: FileIdentity { device: 66312, inode: 21379395 }, length: 4096 }))
+280	close	DWB	0	0	OK
+281	open_meta	d3-dwb-0	0	0	ATTEMPT
+282	open_meta	d3-dwb-0	0	0	66312:21379392:16384
+283	retain_file	d3-dwb-0	0	0	OK
+284	metadata	d3-dwb-0	0	0	Ok(Some(FileMetadata { identity: FileIdentity { device: 66312, inode: 21379392 }, length: 16384 }))
+285	read	d3-dwb-0	0	16384	ATTEMPT
+286	read	d3-dwb-0	0	16384	OK:16384:9e42cf483f0c09f6937118f04f533461a08d022e30593e071baf44aec81ad3e4
+287	metadata	d3-dwb-0	0	0	Ok(Some(FileMetadata { identity: FileIdentity { device: 66312, inode: 21379392 }, length: 16384 }))
+288	close	d3-dwb-0	0	0	OK
+289	open_meta	WRITER	0	0	ATTEMPT
+290	open_meta	WRITER	0	0	66312:21379384:4096
+291	retain_file	WRITER	0	0	OK
+292	metadata	WRITER	0	0	Ok(Some(FileMetadata { identity: FileIdentity { device: 66312, inode: 21379384 }, length: 4096 }))
+293	read	WRITER	0	4096	ATTEMPT
+294	read	WRITER	0	4096	OK:4096:82a9e17a80dcb5d9a06c343f90cc4c325deede22362d9c2e82ba8d04b2acd899
+295	metadata	WRITER	0	0	Ok(Some(FileMetadata { identity: FileIdentity { device: 66312, inode: 21379384 }, length: 4096 }))
+296	close	WRITER	0	0	OK
+297	open_meta	d3-profile	0	0	ATTEMPT
+298	open_meta	d3-profile	0	0	66312:21379382:4096
+299	retain_file	d3-profile	0	0	OK
+300	metadata	d3-profile	0	0	Ok(Some(FileMetadata { identity: FileIdentity { device: 66312, inode: 21379382 }, length: 4096 }))
+301	read	d3-profile	0	4096	ATTEMPT
+302	read	d3-profile	0	4096	OK:4096:f49d4bb26a5c0e1bd66dec9a2b0f77aa24e3fafadf54f27e5db9ab9a960e204e
+303	close	d3-profile	0	0	OK
+304	open_meta	FILEMAP	0	0	ATTEMPT
+305	open_meta	FILEMAP	0	0	66312:21379389:4096
+306	retain_file	FILEMAP	0	0	OK
+307	metadata	FILEMAP	0	0	Ok(Some(FileMetadata { identity: FileIdentity { device: 66312, inode: 21379389 }, length: 4096 }))
+308	read	FILEMAP	0	4096	ATTEMPT
+309	read	FILEMAP	0	4096	OK:4096:5938c6fac59aa7d816b2e8b358df8e15511e78c1f85934b1451fea92fc36dba0
+310	close	FILEMAP	0	0	OK
+311	open_meta	d3-filemap-0	0	0	ATTEMPT
+312	open_meta	d3-filemap-0	0	0	66312:21379387:2113536
+313	retain_file	d3-filemap-0	0	0	OK
+314	metadata	d3-filemap-0	0	0	Ok(Some(FileMetadata { identity: FileIdentity { device: 66312, inode: 21379387 }, length: 2113536 }))
+315	read	d3-filemap-0	0	320	ATTEMPT
+316	read	d3-filemap-0	0	320	OK:320:c8ddca13874f35180d5b80ddfe856837506e764e1326fdc2c11b3427effe78d8
+317	read	d3-filemap-0	16384	256	ATTEMPT
+318	read	d3-filemap-0	16384	256	OK:256:37746fe4d861925812f7f18134fe53a85e71371700d00fb4306051e2f18924b4
+319	read	d3-filemap-0	16384	256	ATTEMPT
+320	read	d3-filemap-0	16384	256	OK:256:37746fe4d861925812f7f18134fe53a85e71371700d00fb4306051e2f18924b4
+321	open_meta	d3-data-0000000100000001	0	0	ATTEMPT
+322	open_meta	d3-data-0000000100000001	0	0	66312:21379386:1048576
+323	retain_file	d3-data-0000000100000001	0	0	OK
+324	metadata	d3-data-0000000100000001	0	0	Ok(Some(FileMetadata { identity: FileIdentity { device: 66312, inode: 21379386 }, length: 1048576 }))
+325	metadata	d3-data-0000000100000001	0	0	Ok(Some(FileMetadata { identity: FileIdentity { device: 66312, inode: 21379386 }, length: 1048576 }))
+326	read	d3-data-0000000100000001	0	16384	ATTEMPT
+327	read	d3-data-0000000100000001	0	16384	OK:16384:077d06af8b37bec32a9472ed498d3fa884fbe5e8fd84c457f6ebfa96e9946cfd
+328	metadata	d3-data-0000000100000001	0	0	Ok(Some(FileMetadata { identity: FileIdentity { device: 66312, inode: 21379386 }, length: 1048576 }))
+329	close	d3-data-0000000100000001	0	0	OK
+330	close	d3-filemap-0	0	0	OK
+331	list	namespace	0	22	Ok(15)
+332	open_meta	d3-dwb-images	0	0	ATTEMPT
+333	open_meta	d3-dwb-images	0	0	66312:21379391:16711680
+334	retain_file	d3-dwb-images	0	0	OK
+335	metadata	d3-dwb-images	0	0	Ok(Some(FileMetadata { identity: FileIdentity { device: 66312, inode: 21379391 }, length: 16711680 }))
+336	read	d3-dwb-images	0	16544	ATTEMPT
+337	read	d3-dwb-images	0	16544	OK:16544:28a9f3e91d95ea3ce7c160d04155d61eb53cb44ca55d4608704e89dbdd400b1e
+338	metadata	d3-dwb-images	0	0	Ok(Some(FileMetadata { identity: FileIdentity { device: 66312, inode: 21379391 }, length: 16711680 }))
+339	close	d3-dwb-images	0	0	OK
+340	sync	d3-wal-00000001	0	0	ATTEMPT
+341	sync	d3-wal-00000001	0	0	Ok(())
+342	dirsync	namespace	0	0	ATTEMPT
+343	dirsync	namespace	0	0	Ok(())
+344	metadata	d3-wal-00000001	0	0	Ok(Some(FileMetadata { identity: FileIdentity { device: 66312, inode: 21379383 }, length: 439822 }))
+345	read	d3-wal-00000001	0	65536	ATTEMPT
+346	read	d3-wal-00000001	0	65536	OK:65536:da8094b927ed068e5926ebd8d50b3df49ac708c51aa05ce2e96c8b9cb7ece176
+347	read	d3-wal-00000001	65536	65536	ATTEMPT
+348	read	d3-wal-00000001	65536	65536	OK:65536:3c4e3e8681eda23074479c95b6da236c55f78817ea2b01f30fab80e2276d7e4f
+349	read	d3-wal-00000001	131072	65536	ATTEMPT
+350	read	d3-wal-00000001	131072	65536	OK:65536:1c0a0d202d411910a1aeabebbcedfc7b69305e5b4c1993de99ab000aa7bca237
+351	read	d3-wal-00000001	196608	65536	ATTEMPT
+352	read	d3-wal-00000001	196608	65536	OK:65536:7ceebd6fdb7a8fe7ad1fdefe9e34b0cd07e879244c843688f96d44ee4ff603f3
+353	read	d3-wal-00000001	262144	65536	ATTEMPT
+354	read	d3-wal-00000001	262144	65536	OK:65536:5c7a88aba46f6f7f667f1cb24e714088b26ac4182a3eb65000d183f3065841c0
+355	read	d3-wal-00000001	327680	65536	ATTEMPT
+356	read	d3-wal-00000001	327680	65536	OK:65536:8978e395623097e20e5d7809c75290bf1e1d0389d8f88f6bfce3a1401851942a
+357	read	d3-wal-00000001	393216	46606	ATTEMPT
+358	read	d3-wal-00000001	393216	46606	OK:46606:c97271f4f38ecdebba3b706e64b162cd25a09cd0f7e34584dc48f6c8f3448f62
+359	open_meta	d3-dwb-images	0	0	ATTEMPT
+360	open_meta	d3-dwb-images	0	0	66312:21379391:16711680
+361	retain_file	d3-dwb-images	0	0	OK
+362	metadata	d3-dwb-images	0	0	Ok(Some(FileMetadata { identity: FileIdentity { device: 66312, inode: 21379391 }, length: 16711680 }))
+363	read	d3-dwb-images	0	16544	ATTEMPT
+364	read	d3-dwb-images	0	16544	OK:16544:28a9f3e91d95ea3ce7c160d04155d61eb53cb44ca55d4608704e89dbdd400b1e
+365	close	d3-dwb-images	0	0	OK
+366	open_meta	d3-data-0000000100000001	0	0	ATTEMPT
+367	open_meta	d3-data-0000000100000001	0	0	66312:21379386:1048576
+368	retain_file	d3-data-0000000100000001	0	0	OK
+369	metadata	d3-data-0000000100000001	0	0	Ok(Some(FileMetadata { identity: FileIdentity { device: 66312, inode: 21379386 }, length: 1048576 }))
+370	read	d3-data-0000000100000001	131072	16384	ATTEMPT
+371	read	d3-data-0000000100000001	131072	16384	OK:16384:646d2c91744594c80afc26e4919dffece69dd996e436a1390191a164c5a68567
+372	write	d3-data-0000000100000001	131072	16384	ATTEMPT
+373	write	d3-data-0000000100000001	131072	16384	OK:16384:ca16fa2a2869199554b3638706d8b2269c757ba4ef510c69667979dfddd4fcad
+374	sync	d3-data-0000000100000001	0	0	ATTEMPT
+375	sync	d3-data-0000000100000001	0	0	Ok(())
+376	read	d3-data-0000000100000001	131072	16384	ATTEMPT
+377	read	d3-data-0000000100000001	131072	16384	OK:16384:ca16fa2a2869199554b3638706d8b2269c757ba4ef510c69667979dfddd4fcad
+378	metadata	d3-data-0000000100000001	0	0	Ok(Some(FileMetadata { identity: FileIdentity { device: 66312, inode: 21379386 }, length: 1048576 }))
+379	close	d3-data-0000000100000001	0	0	OK
+380	open_meta	d3-dwb-stage	0	0	ATTEMPT
+381	open_meta	d3-dwb-stage	0	0	66312:21379390:16384
+382	retain_file	d3-dwb-stage	0	0	OK
+383	metadata	d3-dwb-stage	0	0	Ok(Some(FileMetadata { identity: FileIdentity { device: 66312, inode: 21379390 }, length: 16384 }))
+384	write	d3-dwb-stage	0	16384	ATTEMPT
+385	write	d3-dwb-stage	0	16384	OK:16384:0283b8882ae488e5a4d2efb23079a5cfe929f23c1ff666b91d620daecb700839
+386	sync	d3-dwb-stage	0	0	ATTEMPT
+387	sync	d3-dwb-stage	0	0	Ok(())
+388	metadata	d3-dwb-stage	0	0	Ok(Some(FileMetadata { identity: FileIdentity { device: 66312, inode: 21379390 }, length: 16384 }))
+389	close	d3-dwb-stage	0	0	OK
+390	open_meta	d3-dwb-1	0	0	ATTEMPT
+391	open_meta	d3-dwb-1	0	0	66312:21379393:16384
+392	retain_file	d3-dwb-1	0	0	OK
+393	metadata	d3-dwb-1	0	0	Ok(Some(FileMetadata { identity: FileIdentity { device: 66312, inode: 21379393 }, length: 16384 }))
+394	write	d3-dwb-1	0	16384	ATTEMPT
+395	write	d3-dwb-1	0	16384	OK:16384:0283b8882ae488e5a4d2efb23079a5cfe929f23c1ff666b91d620daecb700839
+396	sync	d3-dwb-1	0	0	ATTEMPT
+397	sync	d3-dwb-1	0	0	Ok(())
+398	metadata	d3-dwb-1	0	0	Ok(Some(FileMetadata { identity: FileIdentity { device: 66312, inode: 21379393 }, length: 16384 }))
+399	close	d3-dwb-1	0	0	OK
+400	metadata	d3-dwb-select-stage	0	0	Ok(None)
+401	create	d3-dwb-select-stage	0	0	ATTEMPT
+402	create	d3-dwb-select-stage	0	0	OK
+403	retain_file	d3-dwb-select-stage	0	0	OK
+404	close	d3-dwb-select-stage	0	0	OK
+405	open_meta	d3-dwb-select-stage	0	0	ATTEMPT
+406	open_meta	d3-dwb-select-stage	0	0	66312:21379420:0
+407	retain_file	d3-dwb-select-stage	0	0	OK
+408	metadata	d3-dwb-select-stage	0	0	Ok(Some(FileMetadata { identity: FileIdentity { device: 66312, inode: 21379420 }, length: 0 }))
+409	write	d3-dwb-select-stage	0	4096	ATTEMPT
+410	write	d3-dwb-select-stage	0	4096	OK:4096:a23d45569d40024b33b2462a0d454ca110e1b2208fd5e2aa1c32c5a1c8f2f84a
+411	sync	d3-dwb-select-stage	0	0	ATTEMPT
+412	sync	d3-dwb-select-stage	0	0	Ok(())
+413	metadata	d3-dwb-select-stage	0	0	Ok(Some(FileMetadata { identity: FileIdentity { device: 66312, inode: 21379420 }, length: 4096 }))
+414	close	d3-dwb-select-stage	0	0	OK
+415	open_meta	d3-dwb-select-stage	0	0	ATTEMPT
+416	open_meta	d3-dwb-select-stage	0	0	66312:21379420:4096
+417	retain_file	d3-dwb-select-stage	0	0	OK
+418	metadata	d3-dwb-select-stage	0	0	Ok(Some(FileMetadata { identity: FileIdentity { device: 66312, inode: 21379420 }, length: 4096 }))
+419	read	d3-dwb-select-stage	0	4096	ATTEMPT
+420	read	d3-dwb-select-stage	0	4096	OK:4096:a23d45569d40024b33b2462a0d454ca110e1b2208fd5e2aa1c32c5a1c8f2f84a
+421	metadata	d3-dwb-select-stage	0	0	Ok(Some(FileMetadata { identity: FileIdentity { device: 66312, inode: 21379420 }, length: 4096 }))
+422	close	d3-dwb-select-stage	0	0	OK
+423	publish	d3-dwb-select-stage	0	0	ATTEMPT
+424	publish	d3-dwb-select-stage	0	0	DWB:Ok(())
+425	dirsync	namespace	0	0	ATTEMPT
+426	dirsync	namespace	0	0	Ok(())
+427	open_meta	DWB	0	0	ATTEMPT
+428	open_meta	DWB	0	0	66312:21379420:4096
+429	retain_file	DWB	0	0	OK
+430	metadata	DWB	0	0	Ok(Some(FileMetadata { identity: FileIdentity { device: 66312, inode: 21379420 }, length: 4096 }))
+431	read	DWB	0	4096	ATTEMPT
+432	read	DWB	0	4096	OK:4096:a23d45569d40024b33b2462a0d454ca110e1b2208fd5e2aa1c32c5a1c8f2f84a
+433	metadata	DWB	0	0	Ok(Some(FileMetadata { identity: FileIdentity { device: 66312, inode: 21379420 }, length: 4096 }))
+434	close	DWB	0	0	OK
+435	metadata	d3-dwb-select-stage	0	0	Ok(None)
+436	open_meta	d3-dwb-stage	0	0	ATTEMPT
+437	open_meta	d3-dwb-stage	0	0	66312:21379390:16384
+438	retain_file	d3-dwb-stage	0	0	OK
+439	metadata	d3-dwb-stage	0	0	Ok(Some(FileMetadata { identity: FileIdentity { device: 66312, inode: 21379390 }, length: 16384 }))
+440	write	d3-dwb-stage	0	16384	ATTEMPT
+441	write	d3-dwb-stage	0	16384	OK:16384:89e941a9ccdfa9505fe47c0b8e084b872358c49158bffce5b3f6cc5071df89db
+442	sync	d3-dwb-stage	0	0	ATTEMPT
+443	sync	d3-dwb-stage	0	0	Ok(())
+444	metadata	d3-dwb-stage	0	0	Ok(Some(FileMetadata { identity: FileIdentity { device: 66312, inode: 21379390 }, length: 16384 }))
+445	close	d3-dwb-stage	0	0	OK
+446	open_meta	d3-dwb-0	0	0	ATTEMPT
+447	open_meta	d3-dwb-0	0	0	66312:21379392:16384
+448	retain_file	d3-dwb-0	0	0	OK
+449	metadata	d3-dwb-0	0	0	Ok(Some(FileMetadata { identity: FileIdentity { device: 66312, inode: 21379392 }, length: 16384 }))
+450	write	d3-dwb-0	0	16384	ATTEMPT
+451	write	d3-dwb-0	0	16384	OK:16384:89e941a9ccdfa9505fe47c0b8e084b872358c49158bffce5b3f6cc5071df89db
+452	sync	d3-dwb-0	0	0	ATTEMPT
+453	sync	d3-dwb-0	0	0	Ok(())
+454	metadata	d3-dwb-0	0	0	Ok(Some(FileMetadata { identity: FileIdentity { device: 66312, inode: 21379392 }, length: 16384 }))
+455	close	d3-dwb-0	0	0	OK
+456	metadata	d3-dwb-select-stage	0	0	Ok(None)
+457	create	d3-dwb-select-stage	0	0	ATTEMPT
+458	create	d3-dwb-select-stage	0	0	OK
+459	retain_file	d3-dwb-select-stage	0	0	OK
+460	close	d3-dwb-select-stage	0	0	OK
+461	open_meta	d3-dwb-select-stage	0	0	ATTEMPT
+462	open_meta	d3-dwb-select-stage	0	0	66312:21379395:0
+463	retain_file	d3-dwb-select-stage	0	0	OK
+464	metadata	d3-dwb-select-stage	0	0	Ok(Some(FileMetadata { identity: FileIdentity { device: 66312, inode: 21379395 }, length: 0 }))
+465	write	d3-dwb-select-stage	0	4096	ATTEMPT
+466	write	d3-dwb-select-stage	0	4096	OK:4096:b449e61a3f6614b605e5e86801dda8fc197e7207a9e646bf7bc6126075586cfe
+467	sync	d3-dwb-select-stage	0	0	ATTEMPT
+468	sync	d3-dwb-select-stage	0	0	Ok(())
+469	metadata	d3-dwb-select-stage	0	0	Ok(Some(FileMetadata { identity: FileIdentity { device: 66312, inode: 21379395 }, length: 4096 }))
+470	close	d3-dwb-select-stage	0	0	OK
+471	open_meta	d3-dwb-select-stage	0	0	ATTEMPT
+472	open_meta	d3-dwb-select-stage	0	0	66312:21379395:4096
+473	retain_file	d3-dwb-select-stage	0	0	OK
+474	metadata	d3-dwb-select-stage	0	0	Ok(Some(FileMetadata { identity: FileIdentity { device: 66312, inode: 21379395 }, length: 4096 }))
+475	read	d3-dwb-select-stage	0	4096	ATTEMPT
+476	read	d3-dwb-select-stage	0	4096	OK:4096:b449e61a3f6614b605e5e86801dda8fc197e7207a9e646bf7bc6126075586cfe
+477	metadata	d3-dwb-select-stage	0	0	Ok(Some(FileMetadata { identity: FileIdentity { device: 66312, inode: 21379395 }, length: 4096 }))
+478	close	d3-dwb-select-stage	0	0	OK
+479	publish	d3-dwb-select-stage	0	0	ATTEMPT
+480	publish	d3-dwb-select-stage	0	0	DWB:Ok(())
+481	dirsync	namespace	0	0	ATTEMPT
+482	dirsync	namespace	0	0	Ok(())
+483	open_meta	DWB	0	0	ATTEMPT
+484	open_meta	DWB	0	0	66312:21379395:4096
+485	retain_file	DWB	0	0	OK
+486	metadata	DWB	0	0	Ok(Some(FileMetadata { identity: FileIdentity { device: 66312, inode: 21379395 }, length: 4096 }))
+487	read	DWB	0	4096	ATTEMPT
+488	read	DWB	0	4096	OK:4096:b449e61a3f6614b605e5e86801dda8fc197e7207a9e646bf7bc6126075586cfe
+489	metadata	DWB	0	0	Ok(Some(FileMetadata { identity: FileIdentity { device: 66312, inode: 21379395 }, length: 4096 }))
+490	close	DWB	0	0	OK
+491	metadata	d3-dwb-select-stage	0	0	Ok(None)
+492	open_meta	d3-dwb-images	0	0	ATTEMPT
+493	open_meta	d3-dwb-images	0	0	66312:21379391:16711680
+494	retain_file	d3-dwb-images	0	0	OK
+495	metadata	d3-dwb-images	0	0	Ok(Some(FileMetadata { identity: FileIdentity { device: 66312, inode: 21379391 }, length: 16711680 }))
+496	write	d3-dwb-images	0	16544	ATTEMPT
+497	write	d3-dwb-images	0	16544	OK:16544:daf5ef1427ecc44ec0f7e947311b4848e7410f2698f505476dd5557d0ce7280b
+498	sync	d3-dwb-images	0	0	ATTEMPT
+499	sync	d3-dwb-images	0	0	Ok(())
+500	metadata	d3-dwb-images	0	0	Ok(Some(FileMetadata { identity: FileIdentity { device: 66312, inode: 21379391 }, length: 16711680 }))
+501	close	d3-dwb-images	0	0	OK
+502	open_meta	d3-dwb-stage	0	0	ATTEMPT
+503	open_meta	d3-dwb-stage	0	0	66312:21379390:16384
+504	retain_file	d3-dwb-stage	0	0	OK
+505	metadata	d3-dwb-stage	0	0	Ok(Some(FileMetadata { identity: FileIdentity { device: 66312, inode: 21379390 }, length: 16384 }))
+506	write	d3-dwb-stage	0	16384	ATTEMPT
+507	write	d3-dwb-stage	0	16384	OK:16384:a9927509568498664fa6831db0f713cf6d559b54db88299a0dda74568683f984
+508	sync	d3-dwb-stage	0	0	ATTEMPT
+509	sync	d3-dwb-stage	0	0	Ok(())
+510	metadata	d3-dwb-stage	0	0	Ok(Some(FileMetadata { identity: FileIdentity { device: 66312, inode: 21379390 }, length: 16384 }))
+511	close	d3-dwb-stage	0	0	OK
+512	open_meta	d3-dwb-1	0	0	ATTEMPT
+513	open_meta	d3-dwb-1	0	0	66312:21379393:16384
+514	retain_file	d3-dwb-1	0	0	OK
+515	metadata	d3-dwb-1	0	0	Ok(Some(FileMetadata { identity: FileIdentity { device: 66312, inode: 21379393 }, length: 16384 }))
+516	write	d3-dwb-1	0	16384	ATTEMPT
+517	write	d3-dwb-1	0	16384	OK:16384:a9927509568498664fa6831db0f713cf6d559b54db88299a0dda74568683f984
+518	sync	d3-dwb-1	0	0	ATTEMPT
+519	sync	d3-dwb-1	0	0	Ok(())
+520	metadata	d3-dwb-1	0	0	Ok(Some(FileMetadata { identity: FileIdentity { device: 66312, inode: 21379393 }, length: 16384 }))
+521	close	d3-dwb-1	0	0	OK
+522	metadata	d3-dwb-select-stage	0	0	Ok(None)
+523	create	d3-dwb-select-stage	0	0	ATTEMPT
+524	create	d3-dwb-select-stage	0	0	OK
+525	retain_file	d3-dwb-select-stage	0	0	OK
+526	close	d3-dwb-select-stage	0	0	OK
+527	open_meta	d3-dwb-select-stage	0	0	ATTEMPT
+528	open_meta	d3-dwb-select-stage	0	0	66312:21379420:0
+529	retain_file	d3-dwb-select-stage	0	0	OK
+530	metadata	d3-dwb-select-stage	0	0	Ok(Some(FileMetadata { identity: FileIdentity { device: 66312, inode: 21379420 }, length: 0 }))
+531	write	d3-dwb-select-stage	0	4096	ATTEMPT
+532	write	d3-dwb-select-stage	0	4096	OK:4096:6d867879f4d375bffe9329f62a58e2ca80e7a5dfc9d4781ac6171a6aa27b16dc
+533	sync	d3-dwb-select-stage	0	0	ATTEMPT
+534	sync	d3-dwb-select-stage	0	0	Ok(())
+535	metadata	d3-dwb-select-stage	0	0	Ok(Some(FileMetadata { identity: FileIdentity { device: 66312, inode: 21379420 }, length: 4096 }))
+536	close	d3-dwb-select-stage	0	0	OK
+537	open_meta	d3-dwb-select-stage	0	0	ATTEMPT
+538	open_meta	d3-dwb-select-stage	0	0	66312:21379420:4096
+539	retain_file	d3-dwb-select-stage	0	0	OK
+540	metadata	d3-dwb-select-stage	0	0	Ok(Some(FileMetadata { identity: FileIdentity { device: 66312, inode: 21379420 }, length: 4096 }))
+541	read	d3-dwb-select-stage	0	4096	ATTEMPT
+542	read	d3-dwb-select-stage	0	4096	OK:4096:6d867879f4d375bffe9329f62a58e2ca80e7a5dfc9d4781ac6171a6aa27b16dc
+543	metadata	d3-dwb-select-stage	0	0	Ok(Some(FileMetadata { identity: FileIdentity { device: 66312, inode: 21379420 }, length: 4096 }))
+544	close	d3-dwb-select-stage	0	0	OK
+545	publish	d3-dwb-select-stage	0	0	ATTEMPT
+546	publish	d3-dwb-select-stage	0	0	DWB:Ok(())
+547	dirsync	namespace	0	0	ATTEMPT
+548	dirsync	namespace	0	0	Ok(())
+549	open_meta	DWB	0	0	ATTEMPT
+550	open_meta	DWB	0	0	66312:21379420:4096
+551	retain_file	DWB	0	0	OK
+552	metadata	DWB	0	0	Ok(Some(FileMetadata { identity: FileIdentity { device: 66312, inode: 21379420 }, length: 4096 }))
+553	read	DWB	0	4096	ATTEMPT
+554	read	DWB	0	4096	OK:4096:6d867879f4d375bffe9329f62a58e2ca80e7a5dfc9d4781ac6171a6aa27b16dc
+555	metadata	DWB	0	0	Ok(Some(FileMetadata { identity: FileIdentity { device: 66312, inode: 21379420 }, length: 4096 }))
+556	close	DWB	0	0	OK
+557	metadata	d3-dwb-select-stage	0	0	Ok(None)
+558	open_meta	d3-data-0000000100000001	0	0	ATTEMPT
+559	open_meta	d3-data-0000000100000001	0	0	66312:21379386:1048576
+560	retain_file	d3-data-0000000100000001	0	0	OK
+561	metadata	d3-data-0000000100000001	0	0	Ok(Some(FileMetadata { identity: FileIdentity { device: 66312, inode: 21379386 }, length: 1048576 }))
+562	read	d3-data-0000000100000001	0	16384	ATTEMPT
+563	read	d3-data-0000000100000001	0	16384	OK:16384:077d06af8b37bec32a9472ed498d3fa884fbe5e8fd84c457f6ebfa96e9946cfd
+564	write	d3-data-0000000100000001	0	16384	ATTEMPT
+565	write	d3-data-0000000100000001	0	16384	OK:16384:8e3410c19c14c0428c8962a23a027dc6aa833834e21a304b4acdf34b41694296
+566	sync	d3-data-0000000100000001	0	0	ATTEMPT
+567	sync	d3-data-0000000100000001	0	0	Ok(())
+568	read	d3-data-0000000100000001	0	16384	ATTEMPT
+569	read	d3-data-0000000100000001	0	16384	OK:16384:8e3410c19c14c0428c8962a23a027dc6aa833834e21a304b4acdf34b41694296
+570	metadata	d3-data-0000000100000001	0	0	Ok(Some(FileMetadata { identity: FileIdentity { device: 66312, inode: 21379386 }, length: 1048576 }))
+571	close	d3-data-0000000100000001	0	0	OK
+572	open_meta	d3-dwb-stage	0	0	ATTEMPT
+573	open_meta	d3-dwb-stage	0	0	66312:21379390:16384
+574	retain_file	d3-dwb-stage	0	0	OK
+575	metadata	d3-dwb-stage	0	0	Ok(Some(FileMetadata { identity: FileIdentity { device: 66312, inode: 21379390 }, length: 16384 }))
+576	write	d3-dwb-stage	0	16384	ATTEMPT
+577	write	d3-dwb-stage	0	16384	OK:16384:e9a11ddd3b4b67ac021968037d7db055e2674e398118c7824945e486652d7c5e
+578	sync	d3-dwb-stage	0	0	ATTEMPT
+579	sync	d3-dwb-stage	0	0	Ok(())
+580	metadata	d3-dwb-stage	0	0	Ok(Some(FileMetadata { identity: FileIdentity { device: 66312, inode: 21379390 }, length: 16384 }))
+581	close	d3-dwb-stage	0	0	OK
+582	open_meta	d3-dwb-0	0	0	ATTEMPT
+583	open_meta	d3-dwb-0	0	0	66312:21379392:16384
+584	retain_file	d3-dwb-0	0	0	OK
+585	metadata	d3-dwb-0	0	0	Ok(Some(FileMetadata { identity: FileIdentity { device: 66312, inode: 21379392 }, length: 16384 }))
+586	write	d3-dwb-0	0	16384	ATTEMPT
+587	write	d3-dwb-0	0	16384	OK:16384:e9a11ddd3b4b67ac021968037d7db055e2674e398118c7824945e486652d7c5e
+588	sync	d3-dwb-0	0	0	ATTEMPT
+589	sync	d3-dwb-0	0	0	Ok(())
+590	metadata	d3-dwb-0	0	0	Ok(Some(FileMetadata { identity: FileIdentity { device: 66312, inode: 21379392 }, length: 16384 }))
+591	close	d3-dwb-0	0	0	OK
+592	metadata	d3-dwb-select-stage	0	0	Ok(None)
+593	create	d3-dwb-select-stage	0	0	ATTEMPT
+594	create	d3-dwb-select-stage	0	0	OK
+595	retain_file	d3-dwb-select-stage	0	0	OK
+596	close	d3-dwb-select-stage	0	0	OK
+597	open_meta	d3-dwb-select-stage	0	0	ATTEMPT
+598	open_meta	d3-dwb-select-stage	0	0	66312:21379395:0
+599	retain_file	d3-dwb-select-stage	0	0	OK
+600	metadata	d3-dwb-select-stage	0	0	Ok(Some(FileMetadata { identity: FileIdentity { device: 66312, inode: 21379395 }, length: 0 }))
+601	write	d3-dwb-select-stage	0	4096	ATTEMPT
+602	write	d3-dwb-select-stage	0	4096	OK:4096:998ded990eb2e7e801cd98683f64b2d1c087ab7702c15f85bf3235b80a8cfcf1
+603	sync	d3-dwb-select-stage	0	0	ATTEMPT
+604	sync	d3-dwb-select-stage	0	0	Ok(())
+605	metadata	d3-dwb-select-stage	0	0	Ok(Some(FileMetadata { identity: FileIdentity { device: 66312, inode: 21379395 }, length: 4096 }))
+606	close	d3-dwb-select-stage	0	0	OK
+607	open_meta	d3-dwb-select-stage	0	0	ATTEMPT
+608	open_meta	d3-dwb-select-stage	0	0	66312:21379395:4096
+609	retain_file	d3-dwb-select-stage	0	0	OK
+610	metadata	d3-dwb-select-stage	0	0	Ok(Some(FileMetadata { identity: FileIdentity { device: 66312, inode: 21379395 }, length: 4096 }))
+611	read	d3-dwb-select-stage	0	4096	ATTEMPT
+612	read	d3-dwb-select-stage	0	4096	OK:4096:998ded990eb2e7e801cd98683f64b2d1c087ab7702c15f85bf3235b80a8cfcf1
+613	metadata	d3-dwb-select-stage	0	0	Ok(Some(FileMetadata { identity: FileIdentity { device: 66312, inode: 21379395 }, length: 4096 }))
+614	close	d3-dwb-select-stage	0	0	OK
+615	publish	d3-dwb-select-stage	0	0	ATTEMPT
+616	publish	d3-dwb-select-stage	0	0	DWB:Ok(())
+617	dirsync	namespace	0	0	ATTEMPT
+618	dirsync	namespace	0	0	Ok(())
+619	open_meta	DWB	0	0	ATTEMPT
+620	open_meta	DWB	0	0	66312:21379395:4096
+621	retain_file	DWB	0	0	OK
+622	metadata	DWB	0	0	Ok(Some(FileMetadata { identity: FileIdentity { device: 66312, inode: 21379395 }, length: 4096 }))
+623	read	DWB	0	4096	ATTEMPT
+624	read	DWB	0	4096	OK:4096:998ded990eb2e7e801cd98683f64b2d1c087ab7702c15f85bf3235b80a8cfcf1
+625	metadata	DWB	0	0	Ok(Some(FileMetadata { identity: FileIdentity { device: 66312, inode: 21379395 }, length: 4096 }))
+626	close	DWB	0	0	OK
+627	metadata	d3-dwb-select-stage	0	0	Ok(None)
+628	open_meta	d3-dwb-stage	0	0	ATTEMPT
+629	open_meta	d3-dwb-stage	0	0	66312:21379390:16384
+630	retain_file	d3-dwb-stage	0	0	OK
+631	metadata	d3-dwb-stage	0	0	Ok(Some(FileMetadata { identity: FileIdentity { device: 66312, inode: 21379390 }, length: 16384 }))
+632	write	d3-dwb-stage	0	16384	ATTEMPT
+633	write	d3-dwb-stage	0	16384	OK:16384:04cbccc621e29c65c6f2bd2515149042fb089700471cd91054af7999d8cd22fb
+634	sync	d3-dwb-stage	0	0	ATTEMPT
+635	sync	d3-dwb-stage	0	0	Ok(())
+636	metadata	d3-dwb-stage	0	0	Ok(Some(FileMetadata { identity: FileIdentity { device: 66312, inode: 21379390 }, length: 16384 }))
+637	close	d3-dwb-stage	0	0	OK
+638	open_meta	d3-dwb-1	0	0	ATTEMPT
+639	open_meta	d3-dwb-1	0	0	66312:21379393:16384
+640	retain_file	d3-dwb-1	0	0	OK
+641	metadata	d3-dwb-1	0	0	Ok(Some(FileMetadata { identity: FileIdentity { device: 66312, inode: 21379393 }, length: 16384 }))
+642	write	d3-dwb-1	0	16384	ATTEMPT
+643	write	d3-dwb-1	0	16384	OK:16384:04cbccc621e29c65c6f2bd2515149042fb089700471cd91054af7999d8cd22fb
+644	sync	d3-dwb-1	0	0	ATTEMPT
+645	sync	d3-dwb-1	0	0	Ok(())
+646	metadata	d3-dwb-1	0	0	Ok(Some(FileMetadata { identity: FileIdentity { device: 66312, inode: 21379393 }, length: 16384 }))
+647	close	d3-dwb-1	0	0	OK
+648	metadata	d3-dwb-select-stage	0	0	Ok(None)
+649	create	d3-dwb-select-stage	0	0	ATTEMPT
+650	create	d3-dwb-select-stage	0	0	OK
+651	retain_file	d3-dwb-select-stage	0	0	OK
+652	close	d3-dwb-select-stage	0	0	OK
+653	open_meta	d3-dwb-select-stage	0	0	ATTEMPT
+654	open_meta	d3-dwb-select-stage	0	0	66312:21379420:0
+655	retain_file	d3-dwb-select-stage	0	0	OK
+656	metadata	d3-dwb-select-stage	0	0	Ok(Some(FileMetadata { identity: FileIdentity { device: 66312, inode: 21379420 }, length: 0 }))
+657	write	d3-dwb-select-stage	0	4096	ATTEMPT
+658	write	d3-dwb-select-stage	0	4096	OK:4096:d9493f0034f959629277798fc0cda9fbbe2c5bfde87ba92a92f2bcbb515d6390
+659	sync	d3-dwb-select-stage	0	0	ATTEMPT
+660	sync	d3-dwb-select-stage	0	0	Ok(())
+661	metadata	d3-dwb-select-stage	0	0	Ok(Some(FileMetadata { identity: FileIdentity { device: 66312, inode: 21379420 }, length: 4096 }))
+662	close	d3-dwb-select-stage	0	0	OK
+663	open_meta	d3-dwb-select-stage	0	0	ATTEMPT
+664	open_meta	d3-dwb-select-stage	0	0	66312:21379420:4096
+665	retain_file	d3-dwb-select-stage	0	0	OK
+666	metadata	d3-dwb-select-stage	0	0	Ok(Some(FileMetadata { identity: FileIdentity { device: 66312, inode: 21379420 }, length: 4096 }))
+667	read	d3-dwb-select-stage	0	4096	ATTEMPT
+668	read	d3-dwb-select-stage	0	4096	OK:4096:d9493f0034f959629277798fc0cda9fbbe2c5bfde87ba92a92f2bcbb515d6390
+669	metadata	d3-dwb-select-stage	0	0	Ok(Some(FileMetadata { identity: FileIdentity { device: 66312, inode: 21379420 }, length: 4096 }))
+670	close	d3-dwb-select-stage	0	0	OK
+671	publish	d3-dwb-select-stage	0	0	ATTEMPT
+672	publish	d3-dwb-select-stage	0	0	DWB:Ok(())
+673	dirsync	namespace	0	0	ATTEMPT
+674	dirsync	namespace	0	0	Ok(())
+675	open_meta	DWB	0	0	ATTEMPT
+676	open_meta	DWB	0	0	66312:21379420:4096
+677	retain_file	DWB	0	0	OK
+678	metadata	DWB	0	0	Ok(Some(FileMetadata { identity: FileIdentity { device: 66312, inode: 21379420 }, length: 4096 }))
+679	read	DWB	0	4096	ATTEMPT
+680	read	DWB	0	4096	OK:4096:d9493f0034f959629277798fc0cda9fbbe2c5bfde87ba92a92f2bcbb515d6390
+681	metadata	DWB	0	0	Ok(Some(FileMetadata { identity: FileIdentity { device: 66312, inode: 21379420 }, length: 4096 }))
+682	close	DWB	0	0	OK
+683	metadata	d3-dwb-select-stage	0	0	Ok(None)
+684	open_meta	d3-dwb-images	0	0	ATTEMPT
+685	open_meta	d3-dwb-images	0	0	66312:21379391:16711680
+686	retain_file	d3-dwb-images	0	0	OK
+687	metadata	d3-dwb-images	0	0	Ok(Some(FileMetadata { identity: FileIdentity { device: 66312, inode: 21379391 }, length: 16711680 }))
+688	write	d3-dwb-images	0	16544	ATTEMPT
+689	write	d3-dwb-images	0	16544	OK:16544:3717156a0d4e0cef9cf177b2e854f5287c4c14858a931e95d363443750edb6b2
+690	sync	d3-dwb-images	0	0	ATTEMPT
+691	sync	d3-dwb-images	0	0	Ok(())
+692	metadata	d3-dwb-images	0	0	Ok(Some(FileMetadata { identity: FileIdentity { device: 66312, inode: 21379391 }, length: 16711680 }))
+693	close	d3-dwb-images	0	0	OK
+694	open_meta	d3-dwb-stage	0	0	ATTEMPT
+695	open_meta	d3-dwb-stage	0	0	66312:21379390:16384
+696	retain_file	d3-dwb-stage	0	0	OK
+697	metadata	d3-dwb-stage	0	0	Ok(Some(FileMetadata { identity: FileIdentity { device: 66312, inode: 21379390 }, length: 16384 }))
+698	write	d3-dwb-stage	0	16384	ATTEMPT
+699	write	d3-dwb-stage	0	16384	OK:16384:4fd3df5e01a717c253fcc40ee4edb246e778fd3ce3e33379e9fecf36df3f12d5
+700	sync	d3-dwb-stage	0	0	ATTEMPT
+701	sync	d3-dwb-stage	0	0	Ok(())
+702	metadata	d3-dwb-stage	0	0	Ok(Some(FileMetadata { identity: FileIdentity { device: 66312, inode: 21379390 }, length: 16384 }))
+703	close	d3-dwb-stage	0	0	OK
+704	open_meta	d3-dwb-0	0	0	ATTEMPT
+705	open_meta	d3-dwb-0	0	0	66312:21379392:16384
+706	retain_file	d3-dwb-0	0	0	OK
+707	metadata	d3-dwb-0	0	0	Ok(Some(FileMetadata { identity: FileIdentity { device: 66312, inode: 21379392 }, length: 16384 }))
+708	write	d3-dwb-0	0	16384	ATTEMPT
+709	write	d3-dwb-0	0	16384	OK:16384:4fd3df5e01a717c253fcc40ee4edb246e778fd3ce3e33379e9fecf36df3f12d5
+710	sync	d3-dwb-0	0	0	ATTEMPT
+711	sync	d3-dwb-0	0	0	Ok(())
+712	metadata	d3-dwb-0	0	0	Ok(Some(FileMetadata { identity: FileIdentity { device: 66312, inode: 21379392 }, length: 16384 }))
+713	close	d3-dwb-0	0	0	OK
+714	metadata	d3-dwb-select-stage	0	0	Ok(None)
+715	create	d3-dwb-select-stage	0	0	ATTEMPT
+716	create	d3-dwb-select-stage	0	0	OK
+717	retain_file	d3-dwb-select-stage	0	0	OK
+718	close	d3-dwb-select-stage	0	0	OK
+719	open_meta	d3-dwb-select-stage	0	0	ATTEMPT
+720	open_meta	d3-dwb-select-stage	0	0	66312:21379395:0
+721	retain_file	d3-dwb-select-stage	0	0	OK
+722	metadata	d3-dwb-select-stage	0	0	Ok(Some(FileMetadata { identity: FileIdentity { device: 66312, inode: 21379395 }, length: 0 }))
+723	write	d3-dwb-select-stage	0	4096	ATTEMPT
+724	write	d3-dwb-select-stage	0	4096	OK:4096:54687beed4208764d76c40a9bee932da0ce6178ff84fe55c13c17c36898e5759
+725	sync	d3-dwb-select-stage	0	0	ATTEMPT
+726	sync	d3-dwb-select-stage	0	0	Ok(())
+727	metadata	d3-dwb-select-stage	0	0	Ok(Some(FileMetadata { identity: FileIdentity { device: 66312, inode: 21379395 }, length: 4096 }))
+728	close	d3-dwb-select-stage	0	0	OK
+729	open_meta	d3-dwb-select-stage	0	0	ATTEMPT
+730	open_meta	d3-dwb-select-stage	0	0	66312:21379395:4096
+731	retain_file	d3-dwb-select-stage	0	0	OK
+732	metadata	d3-dwb-select-stage	0	0	Ok(Some(FileMetadata { identity: FileIdentity { device: 66312, inode: 21379395 }, length: 4096 }))
+733	read	d3-dwb-select-stage	0	4096	ATTEMPT
+734	read	d3-dwb-select-stage	0	4096	OK:4096:54687beed4208764d76c40a9bee932da0ce6178ff84fe55c13c17c36898e5759
+735	metadata	d3-dwb-select-stage	0	0	Ok(Some(FileMetadata { identity: FileIdentity { device: 66312, inode: 21379395 }, length: 4096 }))
+736	close	d3-dwb-select-stage	0	0	OK
+737	publish	d3-dwb-select-stage	0	0	ATTEMPT
+738	publish	d3-dwb-select-stage	0	0	DWB:Ok(())
+739	dirsync	namespace	0	0	ATTEMPT
+740	dirsync	namespace	0	0	Ok(())
+741	open_meta	DWB	0	0	ATTEMPT
+742	open_meta	DWB	0	0	66312:21379395:4096
+743	retain_file	DWB	0	0	OK
+744	metadata	DWB	0	0	Ok(Some(FileMetadata { identity: FileIdentity { device: 66312, inode: 21379395 }, length: 4096 }))
+745	read	DWB	0	4096	ATTEMPT
+746	read	DWB	0	4096	OK:4096:54687beed4208764d76c40a9bee932da0ce6178ff84fe55c13c17c36898e5759
+747	metadata	DWB	0	0	Ok(Some(FileMetadata { identity: FileIdentity { device: 66312, inode: 21379395 }, length: 4096 }))
+748	close	DWB	0	0	OK
+749	metadata	d3-dwb-select-stage	0	0	Ok(None)
+750	open_meta	d3-data-0000000100000001	0	0	ATTEMPT
+751	open_meta	d3-data-0000000100000001	0	0	66312:21379386:1048576
+752	retain_file	d3-data-0000000100000001	0	0	OK
+753	metadata	d3-data-0000000100000001	0	0	Ok(Some(FileMetadata { identity: FileIdentity { device: 66312, inode: 21379386 }, length: 1048576 }))
+754	read	d3-data-0000000100000001	16384	16384	ATTEMPT
+755	read	d3-data-0000000100000001	16384	16384	OK:16384:3edcfdf6b13511c72edb87f03062aac3574188434808d2ec385dbeb0d1ac9b60
+756	write	d3-data-0000000100000001	16384	16384	ATTEMPT
+757	write	d3-data-0000000100000001	16384	16384	OK:16384:8b54724f76b7719cbc6b43b7be0bf113d3cc4ff260273f9de82865f0f502b826
+758	sync	d3-data-0000000100000001	0	0	ATTEMPT
+759	sync	d3-data-0000000100000001	0	0	Ok(())
+760	read	d3-data-0000000100000001	16384	16384	ATTEMPT
+761	read	d3-data-0000000100000001	16384	16384	OK:16384:8b54724f76b7719cbc6b43b7be0bf113d3cc4ff260273f9de82865f0f502b826
+762	metadata	d3-data-0000000100000001	0	0	Ok(Some(FileMetadata { identity: FileIdentity { device: 66312, inode: 21379386 }, length: 1048576 }))
+763	close	d3-data-0000000100000001	0	0	OK
+764	open_meta	d3-dwb-stage	0	0	ATTEMPT
+765	open_meta	d3-dwb-stage	0	0	66312:21379390:16384
+766	retain_file	d3-dwb-stage	0	0	OK
+767	metadata	d3-dwb-stage	0	0	Ok(Some(FileMetadata { identity: FileIdentity { device: 66312, inode: 21379390 }, length: 16384 }))
+768	write	d3-dwb-stage	0	16384	ATTEMPT
+769	write	d3-dwb-stage	0	16384	OK:16384:01cb7e0bd1ec9394f3236c1e449dcd863370d5cdb2f839e507eff2008dd6b0b1
+770	sync	d3-dwb-stage	0	0	ATTEMPT
+771	sync	d3-dwb-stage	0	0	Ok(())
+772	metadata	d3-dwb-stage	0	0	Ok(Some(FileMetadata { identity: FileIdentity { device: 66312, inode: 21379390 }, length: 16384 }))
+773	close	d3-dwb-stage	0	0	OK
+774	open_meta	d3-dwb-1	0	0	ATTEMPT
+775	open_meta	d3-dwb-1	0	0	66312:21379393:16384
+776	retain_file	d3-dwb-1	0	0	OK
+777	metadata	d3-dwb-1	0	0	Ok(Some(FileMetadata { identity: FileIdentity { device: 66312, inode: 21379393 }, length: 16384 }))
+778	write	d3-dwb-1	0	16384	ATTEMPT
+779	write	d3-dwb-1	0	16384	OK:16384:01cb7e0bd1ec9394f3236c1e449dcd863370d5cdb2f839e507eff2008dd6b0b1
+780	sync	d3-dwb-1	0	0	ATTEMPT
+781	sync	d3-dwb-1	0	0	Ok(())
+782	metadata	d3-dwb-1	0	0	Ok(Some(FileMetadata { identity: FileIdentity { device: 66312, inode: 21379393 }, length: 16384 }))
+783	close	d3-dwb-1	0	0	OK
+784	metadata	d3-dwb-select-stage	0	0	Ok(None)
+785	create	d3-dwb-select-stage	0	0	ATTEMPT
+786	create	d3-dwb-select-stage	0	0	OK
+787	retain_file	d3-dwb-select-stage	0	0	OK
+788	close	d3-dwb-select-stage	0	0	OK
+789	open_meta	d3-dwb-select-stage	0	0	ATTEMPT
+790	open_meta	d3-dwb-select-stage	0	0	66312:21379420:0
+791	retain_file	d3-dwb-select-stage	0	0	OK
+792	metadata	d3-dwb-select-stage	0	0	Ok(Some(FileMetadata { identity: FileIdentity { device: 66312, inode: 21379420 }, length: 0 }))
+793	write	d3-dwb-select-stage	0	4096	ATTEMPT
+794	write	d3-dwb-select-stage	0	4096	OK:4096:35172cec3cd615e2d17fd9df341d737203e903be018a249ebca7395b83506b66
+795	sync	d3-dwb-select-stage	0	0	ATTEMPT
+796	sync	d3-dwb-select-stage	0	0	Ok(())
+797	metadata	d3-dwb-select-stage	0	0	Ok(Some(FileMetadata { identity: FileIdentity { device: 66312, inode: 21379420 }, length: 4096 }))
+798	close	d3-dwb-select-stage	0	0	OK
+799	open_meta	d3-dwb-select-stage	0	0	ATTEMPT
+800	open_meta	d3-dwb-select-stage	0	0	66312:21379420:4096
+801	retain_file	d3-dwb-select-stage	0	0	OK
+802	metadata	d3-dwb-select-stage	0	0	Ok(Some(FileMetadata { identity: FileIdentity { device: 66312, inode: 21379420 }, length: 4096 }))
+803	read	d3-dwb-select-stage	0	4096	ATTEMPT
+804	read	d3-dwb-select-stage	0	4096	OK:4096:35172cec3cd615e2d17fd9df341d737203e903be018a249ebca7395b83506b66
+805	metadata	d3-dwb-select-stage	0	0	Ok(Some(FileMetadata { identity: FileIdentity { device: 66312, inode: 21379420 }, length: 4096 }))
+806	close	d3-dwb-select-stage	0	0	OK
+807	publish	d3-dwb-select-stage	0	0	ATTEMPT
+808	publish	d3-dwb-select-stage	0	0	DWB:Ok(())
+809	dirsync	namespace	0	0	ATTEMPT

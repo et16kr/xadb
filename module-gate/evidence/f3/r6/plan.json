@@ -1,0 +1,22 @@
+{
+  "reason": "N02 stopped while namespace publication coincided with size() is_file/stat sampling. Single-lstat live database transient handling changed controller; all three schedules call that live scanner.",
+  "python_tests": [
+    "test_check_module_gate.F3NativeMonitorTests.test_only_running_database_disappearance_is_transient",
+    "test_check_module_gate.F3NativeMonitorTests.test_running_scan_preserves_symlink_database_and_artifact_limits"
+  ],
+  "native_cases": [
+    "N01",
+    "N02",
+    "N03"
+  ],
+  "attempts_per_native_case": 1,
+  "timeout_seconds_per_case": 30,
+  "stop_on_first_failure": true,
+  "same_rust_elf_as_r5": true,
+  "no_repeat": [
+    "Rust44",
+    "compiler6",
+    "prior Python2"
+  ],
+  "prior_native": "native-r5 N01 PASS, N02 FAIL, N03 NOT_RUN preserved"
+}

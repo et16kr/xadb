@@ -1,0 +1,9 @@
+
+running 1 test
+test storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::table_issue::own_reserved_create_slot_is_unsupported_until_published ... CATALOG_MEMORY_CONTEXT	S1F_T03	67826fa28d38116145214aa332f4c596846e97570f7dbbf4cd124a4a1c6e93ca	78d4d072e9ca99df6d2a57cae94f5d485a155b16a638905bb8d68c87f5e7af93	f6e0dd554a91931cc8e048e775a666dacd777f0c1c3285abed6773ec15f21eeb	f6e0dd554a91931cc8e048e775a666dacd777f0c1c3285abed6773ec15f21eeb	4bf20c59207890d66b5b51d06d7778a478f1226e26ce38b7cc803856fbe12181
+CATALOG_MEMORY_BEGIN	S1F_T03
+CATALOG_MEMORY_PASS	S1F_T03
+ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 2007 filtered out; finished in 0.27s
+

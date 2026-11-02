@@ -1,0 +1,7 @@
+test_only_running_database_disappearance_is_transient (__main__.F3NativeMonitorTests.test_only_running_database_disappearance_is_transient) ... ok
+test_running_scan_preserves_symlink_database_and_artifact_limits (__main__.F3NativeMonitorTests.test_running_scan_preserves_symlink_database_and_artifact_limits) ... ok
+
+----------------------------------------------------------------------
+Ran 2 tests in 0.005s
+
+OK

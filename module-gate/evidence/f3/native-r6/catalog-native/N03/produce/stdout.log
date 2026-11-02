@@ -1,0 +1,3 @@
+
+running 1 test
+test storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_create::catalog_create_native_worker ... CATALOG_NATIVE_UNKNOWN	39796	RetentionError { phase: Durable, cause: Wal(WalIoError { phase: Sync, effect: CallerMustResolve, cause: Io(Error { code: IoWriteUnknown, context: "sync outcome unknown", io_kind: Some(Other) }) }), effect: CallerMustResolve }

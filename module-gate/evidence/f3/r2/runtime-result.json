@@ -1,0 +1,142 @@
+[
+  {
+    "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::catalog_transactions::actual_intervening_commit_conflicts_only_with_serializable_writer",
+    "exit": 101
+  },
+  {
+    "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::catalog_transactions::completed_catalog_capsules_recover_in_current_build",
+    "exit": 101
+  },
+  {
+    "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::catalog_transactions::completed_commit_postcheck_capacity_is_fatal_not_before",
+    "exit": 101
+  },
+  {
+    "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::catalog_transactions::corrupted_completion_mode_or_mark_fences_before_wal",
+    "exit": 101
+  },
+  {
+    "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::catalog_transactions::first_statement_and_empty_commit_limits_preserve_unmodified_capsule",
+    "exit": 101
+  },
+  {
+    "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::catalog_transactions::full_abort_retries_each_actual_completed_step_once",
+    "exit": 101
+  },
+  {
+    "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::catalog_transactions::registered_forward_finishes_and_consumes_commit_or_abort",
+    "exit": 101
+  },
+  {
+    "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::catalog_transactions::statement_and_commit_capacity_return_same_original_loans",
+    "exit": 101
+  },
+  {
+    "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::own_catalog_read::actual_own_status_head_and_terminal_contradictions_are_fatal",
+    "exit": 101
+  },
+  {
+    "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::own_catalog_read::original_own_create_and_other_snapshot_keep_distinct_visibility",
+    "exit": 101
+  },
+  {
+    "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::own_catalog_read::own_found_requires_actual_undo_target_and_creator",
+    "exit": 101
+  },
+  {
+    "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::own_catalog_read::unregistered_own_forward_and_corrupt_view_never_fall_back",
+    "exit": 101
+  },
+  {
+    "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::read_boundary::captured_undo_read_error_preserves_fatal_cause",
+    "exit": 101
+  },
+  {
+    "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::read_boundary::dirty_victim_returns_flush_then_retries_same_snapshot",
+    "exit": 101
+  },
+  {
+    "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::read_boundary::missing_leaf_and_foreign_owner_release_original_resources",
+    "exit": 101
+  },
+  {
+    "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::resident_read::nonresident_undo_returns_busy_before_full_retry",
+    "exit": 101
+  },
+  {
+    "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::resident_read::resident_corruption_remains_fatal_without_io",
+    "exit": 101
+  },
+  {
+    "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::resident_read::resident_snapshot_visibility_has_no_io",
+    "exit": 101
+  },
+  {
+    "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::resident_read::two_resident_operations_hold_separate_fixed_charges",
+    "exit": 101
+  },
+  {
+    "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::statement_reads::busy_and_io_error_do_not_register_a_catalog_observation",
+    "exit": 101
+  },
+  {
+    "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::statement_reads::completed_lookup_cannot_publish_when_registration_fails",
+    "exit": 101
+  },
+  {
+    "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::statement_reads::flush_required_records_only_the_completed_retry",
+    "exit": 101
+  },
+  {
+    "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::statement_reads::found_read_registers_before_consumption_and_foreign_owner_does_not",
+    "exit": 101
+  },
+  {
+    "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::statement_reads::missing_original_visibility_is_rejected_before_admission",
+    "exit": 101
+  },
+  {
+    "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::statement_reads::missing_read_survives_statement_drop_and_rejects_serializable_commit",
+    "exit": 101
+  },
+  {
+    "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::statement_reads::read_committed_keeps_one_statement_and_refreshes_the_next",
+    "exit": 101
+  },
+  {
+    "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::table_issue::capture_without_visibility_proof_cannot_issue_a_table",
+    "exit": 101
+  },
+  {
+    "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::table_issue::committed_table_issues_only_after_read_bit_and_catalog_flag",
+    "exit": 101
+  },
+  {
+    "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::table_issue::flush_required_carries_the_lookup_target_and_registers_nothing",
+    "exit": 101
+  },
+  {
+    "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::table_issue::missing_object_registers_only_the_catalog_flag",
+    "exit": 101
+  },
+  {
+    "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::table_issue::own_reserved_create_slot_is_unsupported_until_published",
+    "exit": 101
+  },
+  {
+    "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::call_scope::actual_resident_busy_is_upgraded_by_fatal_scope_cleanup",
+    "exit": 101
+  },
+  {
+    "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::call_scope::actual_undo_io_fatal_survives_scope_cleanup",
+    "exit": 101
+  },
+  {
+    "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::call_scope::found_view_consumption_keeps_source_and_progress",
+    "exit": 101
+  },
+  {
+    "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::call_scope::returned_missing_scope_blocks_original_drain",
+    "exit": 101
+  }
+]

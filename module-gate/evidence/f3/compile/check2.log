@@ -1,0 +1,64 @@
+    Checking xadb-engine v0.1.0 (/home/et16/.codex/worktrees/module-followup-f3/xadb/crates/engine)
+warning: enum `Selection` is never used
+  --> crates/engine/src/storage/catalog/read.rs:29:6
+   |
+29 | enum Selection {
+   |      ^^^^^^^^^
+   |
+   = note: `#[warn(dead_code)]` (part of `#[warn(unused)]`) on by default
+
+warning: function `select` is never used
+  --> crates/engine/src/storage/catalog/read.rs:35:4
+   |
+35 | fn select<W: WriterNamespace>(
+   |    ^^^^^^
+
+warning: function `lookup` is never used
+  --> crates/engine/src/storage/catalog/read.rs:85:4
+   |
+85 | fn lookup<'i, W: WriterNamespace>(
+   |    ^^^^^^
+
+warning: function `source_bytes` is never used
+   --> crates/engine/src/storage/catalog/read.rs:105:27
+    |
+105 | pub(in crate::storage) fn source_bytes() -> usize {
+    |                           ^^^^^^^^^^^^
+
+warning: method `lookup` is never used
+   --> crates/engine/src/storage/catalog/read.rs:119:31
+    |
+118 | impl<W: WriterNamespace> CatalogCallScope<'_, '_, '_, '_, '_, '_, '_, '_, '_, '_, '_, '_, W> {
+    | -------------------------------------------------------------------------------------------- method in this implementation
+119 |     pub(in crate::storage) fn lookup<'call>(
+    |                               ^^^^^^
+
+warning: method `lookup` is never used
+   --> crates/engine/src/storage/catalog/read.rs:129:31
+    |
+128 | impl<W: WriterNamespace> CatalogStatementCall<'_, '_, '_, '_, '_, '_, '_, '_, '_, '_, '_, '_, W> {
+    | ------------------------------------------------------------------------------------------------ method in this implementation
+129 |     pub(in crate::storage) fn lookup<'call>(
+    |                               ^^^^^^
+
+warning: method `finish_table` is never used
+   --> crates/engine/src/storage/catalog/read.rs:142:31
+    |
+138 | / impl<'s, 'c, W: WriterNamespace>
+139 | |     CatalogStatementCall<'_, '_, '_, '_, '_, '_, 's, 'c, '_, '_, '_, '_, W>
+    | |___________________________________________________________________________- method in this implementation
+...
+142 |       pub(in crate::storage) fn finish_table(
+    |                                 ^^^^^^^^^^^^
+
+warning: `xadb-engine` (lib) generated 7 warnings
+warning: function `source_bytes` is never used
+   --> crates/engine/src/storage/catalog/read.rs:105:27
+    |
+105 | pub(in crate::storage) fn source_bytes() -> usize {
+    |                           ^^^^^^^^^^^^
+    |
+    = note: `#[warn(dead_code)]` (part of `#[warn(unused)]`) on by default
+
+warning: `xadb-engine` (lib test) generated 1 warning
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 18.20s

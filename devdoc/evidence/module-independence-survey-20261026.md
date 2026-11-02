@@ -6067,3 +6067,52 @@ F0 실패 처리, F2 공통 계약 시험 선택, 원격 ruleset/Actions 정책 
 EX08–EX09는 공통 semantic/recovery 시험이 A 명의 scope3 literal을 소비하는 상태로 남는다. 담당 C/A, 현재 근거·재검토 조건은 원 예외에 유지한다. F5-b는 관련37개(A13·C semantic16·C recovery8)를 좁게 선택할 수 있는 도입 경로와 bytes/provenance 대응을 먼저 정한 뒤 공통 소유 이관·C+B의 C24개 발견/실행을 검증한다. 이번 단위는 그 이동·예외 해소를 완료로 세지 않는다. F4·F6도 미착수이며 F7은 현재 진입 문서와 잔여 안내만 함께 갱신했다.
 
 최종 독립 D1/D2에서 `/root/f3_review`가 코드·계약·원 결과와 정렬된22개 CI 선택을 대조해 **ACCEPT·미해결 필수 0**을 확인했다. [검토 기록](../../module-gate/evidence/f5/review.log)과 [blob 결속 기록](../../module-gate/records/20261102-f5-test-ownership.json)을 보존한다. 작성·계약·통합 담당 `/root`가 지적 반영과 범위 구분을 확인했다. 실제 push 훅·원격 CI 결과는 PR에 기록하고, 시행은 사람이 병합한 뒤다.
+
+
+<a id="f3-catalog-call"></a>
+## 2026-11-02 — F3 Catalog 호출 방향과 C 소유 pilot
+
+**F3 구현·선택 검증·독립 D1/D2 ACCEPT, PR 제출 단위.** 기준선 `main` `b8cd2c9d`(F5-a 병합)에서 `codex/module-followup-f3`로 진행했다. 작성 `/root`, 독립 검토 `/root/f3_design_review`. main checkout은 그대로 두고 별도 worktree에서 작업했다. C2 stash·F4·F5-b·F6은 재개하지 않았다. 계약은 [CATALOG-CALL-001](../contracts/dev3-module-boundaries.md#catalog-call-owner), 원 계획은 [F3](../plans/module-independence-followup-plan.md#catalog)이다.
+
+**소유·호출 전환.** C가 호출하던 CAT `lookup`을 CAT의 `CatalogCallScope::lookup`, `CatalogStatementCall::lookup/finish_table` 구현으로 옮겼다. 호출자 signature는 유지한다. C는 original scope/scratch에 묶인 checked operation을 빌려주며 원 statement는 scope가 자동 결속한다. CAT는 capture와 필요한 Status/Undo 순서를 선택하고 결과를 조립한다. 단일 visibility predicate와 실제 관측 proof, 원 Published slot 검산과 CheckedTable 발급은 C 안에 남는다. proof 없는 raw candidate로 발급하거나 statement를 None/foreign으로 바꾸는 입구는 없다. 모든 종료는 checked cleanup을 거치며 fatal 우선순위와 read-set 등록 순서를 보존한다.
+
+| 변경 경계 | 실제 변화 | 검증·한계 |
+| --- | --- | --- |
+| EX01–EX04 | C의 제품 결과 재노출·함수 호출·제품 크기 조회4개 제거 | 정적 참조와 manifest 소유 시험; EX05–EX09 유지 |
+| C `catalog_call` pilot | scope/operation/statement 세 파일의 물리·논리 소유 등록 | CAT는 canonical disk만 소비; C→기능 및 직접 CAT→내부 owner 경로 거절 |
+| source 예산 | 하위 carrier 고정값2042B; CAT 실제2042B 적합성 | operation 전체 크기와 table 발급 중 살아 있는 operation을 계수; 65536B cap 불변 |
+| 소비자 | 기존 호출 모양 유지, 공통 결과 alias·시험 import 갱신 | detached legacy는 cfg(test)만; 생산 scope/view 수명 compiler 반례 |
+| 변경 전파 | 제품 읽기1파일, C 구현·재노출10파일, 기존 시험 import2파일·table issue1파일과 소유 도구/문서 | 초기 전환 비용의 inventory다. 독립 비교 없이 개발 속도 향상률을 주장하지 않음 |
+
+**리뷰에서 수정한 반례.** 원 초안의 caller-supplied statement와 detached operation 수명, capture만으로 발급 가능한 경로를 제거했다. 이후 새 권한 반례에서 잘못된 호출 순서의 fatal fence가 정리를 막는 점을 발견하여 WrongState/Unchanged 거절로 고쳤다. r4 Pending 동시 읽기는 source Capacity로 실패했다. 전체 TransactionState를 private proof에 보관한 증가분을 원 불변 snapshot의 `(visible, own)` 결과로 축약했다. full Status는 physical release와 own/head 검산까지 그대로 유지하고 반환 carrier 비용도 보존한다. 독립 리뷰는 이 축약의 의미·자원 보존을 확인했다.
+
+**source별 실행.** [원 로그·계획·hash](../../module-gate/evidence/f3/)에 실패를 포함해 보존했다. 전체 workspace·하위 회귀 wrapper는 실행하지 않았다. r5는 새 proof 표현으로 실제 바뀐 경로만 재검증했으며 compiler/Python/다른 완료 사례를 반복하지 않았다.
+
+| source/실행 | 실제 결과 | 범위 |
+| --- | --- | --- |
+| 초기 컴파일 | r1 compile FAIL, 수정 후 production/test compile PASS | 이동 import·수명 오류 수정; 원 진단 보존 |
+| r2 census | 7 PASS | CAT 고정 carrier·scope·statement/table·whole bounds |
+| r2 runtime setup | 35 FAIL, 본문 진입 전 identity 환경 누락 | product PASS로 집계하지 않음 |
+| r3 | 26 PASS, 신규 발급 반례1 FAIL, 나머지 미실행 | WrongState 정리 수정 전 source |
+| r4 | 8 PASS, Pending drain1 FAIL | 미실행 및 수정된 반례 선택; 원 Capacity 실패 보존 |
+| r5 `58e53d70` | 33 PASS | 변경 sizeof census3, Pending overlap2, visibility26, 발급 반례1, 앞선 drain 실패1 |
+| compiler | 6 PASS | 정상 consume-before-close1, 조기 close·scratch 재사용·raw candidate·private issuer·생산 legacy 거절5 |
+| Python | F3 신규 소유·F5 변경 기대값2 PASS | 직접 script entry도 동작하도록 main guard 이동 |
+
+최종 census: Full34586B, Resident17896B, native recovered65400B, live64024B. Pending+Full memory65484B/native65492B ≤65536B다. 동시에 두 Resident를 보장한다고 주장하지 않는다. 제품 carrier envelope는 Selection/Result의 왕복, candidate, lookup 결과, Status 반환 및 이전에 사용하던 보수적인 지역 상태 여유를 남긴2042B다. C는 이 계약 상수만 사용하며 CAT 적합성 시험은 제품 타입을 실제 계수한다. 살아 있는 checked proof는 operation의 전체 size로 별도 부과한다.
+
+**native와 통합 제출.** native N01/N02/N03의 실행 전 독립 admission은 실제 source manifest·ELF·controller·고정 입력 및 원 한도에 결속한다. 결과와 후속 push/CI는 아래 기록에 추가한다. C+A/C+B export compile과 신뢰 manifest가 선택한 계약 사례는 PR CI에서 실행한다. PR은 사용자가 병합하며 main 직접 push·자동 merge·원격 보호 설정 변경은 하지 않는다.
+
+
+**native r5 중단과 실행기 수정.** 독립 admission 뒤 N01은4.990초 PASS, N02는0.726초에 `FileNotFoundError`로 중단됐고 N03은 실행하지 않았다([원 결과](../../module-gate/evidence/f3/native-r5/status.json)). worker stderr는 비었으며 effects의 마지막은 staging 파일의 실제 publish 성공 직후였다. 원 exception에는 traceback/filename이 없어 발생 line을 확정하지 않는다. 이는 실행기 `size()`의 `is_file → stat` 사이 rename 경합과 일치하며 새 결정론적 시험으로 disappearance를 재현했다.
+
+`26bb4151`은 단일 `lstat`로 크기·종류를 읽고, worker가 살아 있는 동안의 현재 database 하위에서만 사라진 이름을 허용한다. 다른 경로·로그·snapshot·spawn 전·reap 후와 oracle은 strict 그대로다. cap/floor/시간/반복 한도는 바꾸지 않았다. 새 Python2개가 경합/strict/다른 subtree/발행 후 크기/symlink/두 모드의 DB·artifact cap을 검증했다. 수정된 관측기를 통과하는 native N01/N02/N03만 각각1회 새 admission으로 선택했다([계획](../../module-gate/evidence/f3/r6/plan.json)). Rust·Cargo·fixture 변경0으로 같은 ELF를 쓰며 원 Rust44·compiler6·이전 Python2는 반복하지 않는다.
+
+실행 identity는 `source-sha256.json` 원문 SHA256이며 tracked Cargo/crates/tests/scripts/.cargo 7,326개 파일을 계수한다. `check_dev0.source_fingerprint`와 같은 알고리즘이라고 주장하지 않는다. 별도 commit/tree와 파일별 hash로 원 r5와 새 controller source의 차이2파일을 검산했다. native input corpus·controller·실제 ELF·admission의 별도 hash도 보존한다.
+
+
+**최종 native 결과.** [r6 aggregate](../../module-gate/evidence/f3/native-r6/result.json)는 N01 PASS4.952초(9→19→25,3PID), N02 PASS3.638초(8→10→16,3PID), N03 PASS2.836초(9→15,2PID)다. 실제 crash cut·Ack/Unknown·WAL/home/Base4·unlink·재진입과 파일/FD 한도를 원 oracle로 검산했다. 여유60GiB·총30초·worker29초·audit1초와 source/ELF 드리프트 검사를 모두 유지했다. 원 r5 N01 PASS/N02 FAIL/N03 NOT_RUN은 그대로다. 현재 코드에 귀속된 [gate record](../../module-gate/records/20261102-f3-catalog-call.json)에 native head input identity와 결과 hash를 결속했다.
+
+F3의 읽기 호출 방향·C 소유 pilot 인수는 완료다. 선택 Rust 고유44개(런타임35+census9), compiler6, 변경 Python4, 최종 native3이 각 관련 source에서 PASS다. 서로 다른 source의 원 결과를 새 실행처럼 재분류하지 않는다. build target·임시 export·ELF는 기록 후 정리하며 native DB/snapshot은 로컬 원본과 파일별 hash로 보존한다. push의 fmt/Clippy/문서·module gate와 PR CI 결과는 전송 로그 및 PR에서 확인한다.
+
+최종 독립 [리뷰](../../module-gate/evidence/f3/review.md)는18개 blob·record·native 원253개 artifact를 대조해 D1/D2(common,policy) ACCEPT·필수 수정0으로 수용했다. [정리 기록](../../module-gate/evidence/f3/cleanup.json)에 build/export/ELF 삭제와 native 원 DB/snapshot의 보존 위치를 남겼다.

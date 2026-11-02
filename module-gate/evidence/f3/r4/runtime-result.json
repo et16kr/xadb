@@ -1,0 +1,38 @@
+[
+  {
+    "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::table_issue::capture_without_visibility_proof_cannot_issue_a_table",
+    "exit": 0
+  },
+  {
+    "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::table_issue::committed_table_issues_only_after_read_bit_and_catalog_flag",
+    "exit": 0
+  },
+  {
+    "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::table_issue::flush_required_carries_the_lookup_target_and_registers_nothing",
+    "exit": 0
+  },
+  {
+    "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::table_issue::missing_object_registers_only_the_catalog_flag",
+    "exit": 0
+  },
+  {
+    "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::table_issue::own_reserved_create_slot_is_unsupported_until_published",
+    "exit": 0
+  },
+  {
+    "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::call_scope::actual_resident_busy_is_upgraded_by_fatal_scope_cleanup",
+    "exit": 0
+  },
+  {
+    "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::call_scope::actual_undo_io_fatal_survives_scope_cleanup",
+    "exit": 0
+  },
+  {
+    "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::call_scope::found_view_consumption_keeps_source_and_progress",
+    "exit": 0
+  },
+  {
+    "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::call_scope::returned_missing_scope_blocks_original_drain",
+    "exit": 101
+  }
+]

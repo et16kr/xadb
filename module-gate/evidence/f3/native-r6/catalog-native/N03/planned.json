@@ -1,0 +1,30 @@
+{
+  "admission_sha256": "4cf89993add09dec482a8a360c08a10468f7e5a5e6fd65c4d8b62c634ca76ad6",
+  "budget": {
+    "address_space_bytes": 1073741824,
+    "artifact_bytes": 1073741824,
+    "audit_seconds": 1,
+    "database_bytes": 33554432,
+    "fd_peak": 6,
+    "file_peak": 3,
+    "free_floor_bytes": 64424509440,
+    "output_bytes": 8388608,
+    "snapshot_bytes": 134217728,
+    "trace_bytes": 4194304,
+    "wall_seconds": 30,
+    "worker_seconds": 29
+  },
+  "case": "N03",
+  "schedule": [
+    [
+      9,
+      null,
+      "A_CREATE_UNKNOWN_AFTER_SYNC"
+    ],
+    [
+      15,
+      9,
+      null
+    ]
+  ]
+}

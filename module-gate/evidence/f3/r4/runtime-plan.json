@@ -1,0 +1,15 @@
+{
+  "reason": "CAT read orchestration and C visibility/statement registration/issuance changed; each selected case reaches those paths. Four scoped cleanup and lifetime cases selected separately. No A/B product suite or workspace regression.",
+  "cases": [
+    "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::table_issue::capture_without_visibility_proof_cannot_issue_a_table",
+    "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::table_issue::committed_table_issues_only_after_read_bit_and_catalog_flag",
+    "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::table_issue::flush_required_carries_the_lookup_target_and_registers_nothing",
+    "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::table_issue::missing_object_registers_only_the_catalog_flag",
+    "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::table_issue::own_reserved_create_slot_is_unsupported_until_published",
+    "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::call_scope::actual_resident_busy_is_upgraded_by_fatal_scope_cleanup",
+    "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::call_scope::actual_undo_io_fatal_survives_scope_cleanup",
+    "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::call_scope::found_view_consumption_keeps_source_and_progress",
+    "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::call_scope::returned_missing_scope_blocks_original_drain"
+  ],
+  "timeout_seconds_per_case": 60
+}

@@ -1,0 +1,3 @@
+
+running 1 test
+test storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_create::catalog_create_native_worker ... CATALOG_NATIVE_QUERY	6	1	true

@@ -1,0 +1,16 @@
+   Compiling typenum v1.20.1
+   Compiling cfg-if v1.0.5
+   Compiling cpufeatures v0.2.17
+   Compiling bitflags v2.13.2
+   Compiling libc v0.2.191
+   Compiling memoffset v0.9.1
+   Compiling generic-array v0.14.7
+   Compiling block-buffer v0.10.4
+   Compiling crypto-common v0.1.7
+   Compiling digest v0.10.7
+   Compiling sha2 v0.10.9
+   Compiling nix v0.30.1
+   Compiling xadb-foundation v0.1.0 (/home/et16/.codex/worktrees/module-followup-f3/xadb/crates/foundation)
+   Compiling xadb-platform v0.1.0 (/home/et16/.codex/worktrees/module-followup-f3/xadb/crates/platform)
+   Compiling xadb-engine v0.1.0 (/home/et16/.codex/worktrees/module-followup-f3/xadb/crates/engine)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 35.24s

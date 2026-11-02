@@ -3083,7 +3083,7 @@ CREATE는 commit했지만 정리하지 않았으므로 그 cleanup을 남긴다.
 <a id="catalog-call-owner"></a>
 ## F3 — Catalog 호출과 checked 읽기 소유 (2026-11-02)
 
-`XADB-MODULE-CATALOG-CALL-001` · D2 구현안. 기존 호출 모양은 유지하며,
+`XADB-MODULE-CATALOG-CALL-001` · 독립 D2 ACCEPT. 기존 호출 모양은 유지하며,
 `catalog/read.rs`가 `CatalogCallScope::lookup`, `CatalogStatementCall::lookup/finish_table`을
 구현한다. C에서 제품을 호출하거나 제품 결과 타입을 재노출하지 않는다.
 

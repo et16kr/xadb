@@ -1,0 +1,7 @@
+test_checked_catalog_owner_has_no_product_exception_or_authority_edge (__main__.F3CatalogOwnershipTests.test_checked_catalog_owner_has_no_product_exception_or_authority_edge) ... ok
+test_single_manifest_preserves_baseline_export_layout_and_f2_owners (__main__.F5RealRegistryTests.test_single_manifest_preserves_baseline_export_layout_and_f2_owners) ... ok
+
+----------------------------------------------------------------------
+Ran 2 tests in 0.006s
+
+OK

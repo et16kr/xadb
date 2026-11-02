@@ -1,0 +1,15 @@
+
+running 1 test
+test storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::statement_reads::read_committed_keeps_one_statement_and_refreshes_the_next ... 
+thread 'storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::statement_reads::read_committed_keeps_one_statement_and_refreshes_the_next' (25738) panicked at crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory.rs:488:59:
+missing XADB_CATALOG_SOURCE_SHA256
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+FAILED
+
+failures:
+
+failures:
+    storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::statement_reads::read_committed_keeps_one_statement_and_refreshes_the_next
+
+test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 2007 filtered out; finished in 0.00s
+

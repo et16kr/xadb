@@ -1,0 +1,30 @@
+[
+  {
+    "case": "storage::catalog::read::tests::product_carriers_fit_the_lower_fixed_budget",
+    "exit": 0
+  },
+  {
+    "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::read::statement::tests::own_catalog_observations_fit_full_resident_and_original_limits",
+    "exit": 0
+  },
+  {
+    "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::read::statement::tests::statement_validation_and_result_carriers_fit_fixed_classes",
+    "exit": 0
+  },
+  {
+    "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::read::statement::tests::finish_table_carriers_leave_both_fixed_classes_unchanged",
+    "exit": 0
+  },
+  {
+    "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::read::statement::tests::found_non_table_definition_is_unsupported_before_issue",
+    "exit": 0
+  },
+  {
+    "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::read::scope::tests::admitted_validation_is_inside_both_fixed_source_classes",
+    "exit": 0
+  },
+  {
+    "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::read::scope::tests::compact_call_counts_whole_return_and_consuming_pair",
+    "exit": 0
+  }
+]
