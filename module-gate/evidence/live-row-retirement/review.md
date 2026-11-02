@@ -51,4 +51,22 @@
 
 ## Round 2
 
-ROUND2
+Round 2 reviewed `dc9ffe6..c7c3bd2` (the round-1 fixes).
+
+### Round 2 (verbatim, abridged to the verdict and findings)
+
+**Verdict: ACCEPT. Open REQUIRED items: 0.** The fixes are correct and I found no new correctness problem; the remaining points are NITs.
+
+Fixes checked: `row_cleanup_next(skip)` only filters which ordinal is returned (the analysis still reads every Job, so skipping A's head never promotes a non-head root or finishes A's Terminal early; a caller loop that adds each Busy ordinal terminates). The head check rewrite is equivalent to the old fold and adds the equal-sequence Fatal matching `recovery_row_head`. `retire_resident` leaves behaviour unchanged and its carriers no longer overlap the residency. `verify_row_retirement` is correct for every scope (TerminalFinish's target set includes the JOB role; a Terminal Job decodes as Row scope). Both contradictions now fence. LRR-05 and LRR-06 are sound tests. The contract text matches the code. The reasons for not acting on round-1 items 4(a)/(b)/(c), 6, 7, 9 and 11 are acceptable.
+
+1. NIT, UNCONFIRMED: the closure frame's `Result<Observation>` (from `retire_resident`) and `Result<Option<Plan4Target>>` (from the residency) are each counted in one phase only; about 300 B and 70 B, inside the room. Fix: add both slots to `caller_source_bytes`.
+2. NIT: the duplicate-TerminalReady Fatal is only detected through `finished()` for actors with a root step; an actor with no roots and two TerminalReady Jobs gets a TerminalFinish instead. Fix: call `finished(actor)` in the TerminalFinish loop too.
+3. NIT: `skip` is keyed by Job ordinal only; a list kept after the cell is freed and reused hides the new actor's step. Fix: document its validity.
+4. NIT: `retire_row`'s doc comment still says every refusal before the stage is Unchanged.
+5. NIT: LRR-05's `ordinal > held` assumes the Job allocation order; optionally assert that only A's root and Terminal remain after B's cleanup.
+6. NIT: placeholders to fill in the evidence doc and this log.
+
+### Author's response to round 2
+
+All six applied: (1) both slots moved to `caller_source_bytes` (body 43,924 B, room 380 B); (2) `finished(actor)` also runs in the TerminalFinish loop; (3) the doc comment and contract say the list is valid only until the next installed step; (4) comment aligned; (5) the order assertion replaced by the held-Jobs check; (6) placeholders filled. No REQUIRED item is open.
+

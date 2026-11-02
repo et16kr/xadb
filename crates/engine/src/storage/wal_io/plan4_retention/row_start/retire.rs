@@ -136,7 +136,9 @@ impl<'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
     /// when no root step is left, a TerminalReady Job whose actor has no
     /// root (TerminalFinish). A caller passes the ordinals whose step was
     /// just refused `Visibility(Busy)` (a Prune beside an older snapshot) in
-    /// `skip`, so one held actor does not hide the others. Reads the control
+    /// `skip`, so one held actor does not hide the others; the list names
+    /// Job cells, so it is valid only until the next installed step (a
+    /// freed cell can be reused by another actor). Reads the control
     /// Jobs only; the producer checks every precondition again under the
     /// canonical replay proof. Two TerminalReady Jobs of one actor or two
     /// head roots are an invariant breach (Fatal), as in recovery.
@@ -239,6 +241,10 @@ impl<'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
                 continue;
             }
             let actor = job.source();
+            if let Some(actor) = actor {
+                // A second TerminalReady Job of the same actor is Fatal here too.
+                finished(actor)?;
+            }
             let mut rooted = false;
             for bytes in jobs {
                 let peer = decode(bytes)?;
@@ -258,7 +264,9 @@ impl<'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
     /// RowWrite for Prune's write target set, RowProgress for the
     /// four-target cleanup, as the recovered cleanup. The shell's terminal
     /// read gate stays closed from before the residency to after the durable
-    /// wait. Every refusal before the stage is Unchanged; a pin or an older
+    /// wait. A refusal before the stage is Unchanged unless it is an
+    /// invariant breach (an undecodable held page, contradicting control
+    /// Jobs, a producer contradiction), which is Fatal; a pin or an older
     /// snapshot on the retired target is `Visibility(Busy)`.
     pub(in crate::storage) fn retire_row(
         &mut self,
@@ -568,8 +576,10 @@ impl<'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
 
 /// The live Row retirement's own entry packet and result slots, live through
 /// every phase: the ordinal/operation and borrowed arguments and their
-/// closure captures, and the `Result<RowRetireStep>` of `retire_row`, of the
-/// shell and of its body.
+/// closure captures, the `Result<RowRetireStep>` of `retire_row`, of the
+/// shell and of its body, and the body frame's slots for the residency's
+/// `Result<Option<Plan4Target>>` and `retire_resident`'s
+/// `Result<Observation>`.
 pub(in super::super::super) fn caller_source_bytes() -> usize {
     use std::mem::size_of;
     2 * size_of::<usize>()
@@ -577,11 +587,14 @@ pub(in super::super::super) fn caller_source_bytes() -> usize {
         + size_of::<source::OperationClass>()
         + 8 * size_of::<&()>()
         + 3 * size_of::<Result<RowRetireStep>>()
+        + size_of::<Result<Option<Plan4Target>>>()
+        + size_of::<Result<row_group::Observation>>()
 }
 
 /// What `retire_resident` holds from the preparation's return to the end
-/// of the install: the prepared group, its Result slot, the Observation copy
-/// and its Result, the install's group argument and the frame's arguments.
+/// of the install: the prepared group, its Result slot, the Observation
+/// copy, the install's group argument and the frame's arguments (its own
+/// `Result<Observation>` slot is the caller's, in `caller_source_bytes`).
 /// The preparation's own arrays and return carriers are in the Row group
 /// terms.
 pub(in super::super::super) fn carrier_source_bytes() -> usize {
@@ -589,14 +602,14 @@ pub(in super::super::super) fn carrier_source_bytes() -> usize {
     size_of::<PreparedRowGroup<'_, '_, '_, ROW_WRITE_TARGETS>>()
         + 2 * size_of::<Result<PreparedRowGroup<'_, '_, '_, ROW_WRITE_TARGETS>>>()
         + size_of::<row_group::Observation>()
-        + size_of::<Result<row_group::Observation>>()
         + size_of::<ExistingGroup<'_, '_, '_, '_>>()
         + 2 * size_of::<usize>()
         + 4 * size_of::<&()>()
 }
 
 /// One residency pass: the selected request array and its Result, the
-/// cursor and one LOAD step's Result; the LOAD body itself is
+/// cursor and one LOAD step's Result (the pass's own Result slot is the
+/// caller's, in `caller_source_bytes`); the LOAD body itself is
 /// `lookup_load::source_bytes`, added by the caller.
 pub(in super::super::super) fn residency_source_bytes() -> usize {
     use std::mem::size_of;
@@ -606,7 +619,6 @@ pub(in super::super::super) fn residency_source_bytes() -> usize {
         + size_of::<job3::JobView<'_>>()
         + size_of::<Plan4ResidencyCursor>()
         + 2 * size_of::<Result<RetentionResidencyStep>>()
-        + size_of::<Result<Option<Plan4Target>>>()
         + 4 * size_of::<usize>()
         + 4 * size_of::<&()>()
 }

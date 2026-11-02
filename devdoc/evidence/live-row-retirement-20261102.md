@@ -40,7 +40,7 @@ AGENTS.md 규칙대로 바뀐 코드의 시험만 돌렸다. debug build, `--tes
 | LRR-04 `lrr04_aborted_actor_is_cleaned_and_its_status_reused` | rollback된 actor는 ReleaseRole 3번, RootFree, TerminalFinish로 정리되고, 같은 Status로 다음 거래가 commit된다 | PASS (4.79 s) |
 | LRR-05 `lrr05_busy_prune_does_not_hide_another_finished_actor` | A가 오래된 statement snapshot 뒤에 commit해 A의 Prune이 Busy다. 두 번째 Status의 B(Job이 A 뒤)는 전부 rollback한다. 첫 단계는 A의 Prune이고 거절되며 WAL·Job이 그대로다. A의 ordinal을 skip하면 B의 정리 전체(ReleaseRole 3번, RootFree, TerminalFinish)가 돌고 그 밖에는 남는 것이 없다. A의 Prune은 여전히 Busy이고, snapshot이 끝나면 A의 정리가 돈다 | PASS (5.22 s) |
 | LRR-06 `lrr06_recovery_finishes_a_partial_live_cleanup` | live 정리를 Prune과 ReleaseRole 하나 뒤에 멈춘다(root cursor 1). 그 파일을 복구하면 나머지를 끝내고 Q 2에서 READY이며 Row Job이 남지 않는다 | PASS (4.61 s) |
-| `live_row_retirement_fits_the_progress_charge` | 본문 43,852 B ≤ charge 44,304 B(memory·native type 모두, 여유 452 B), shared+charge ≤ 65,536 | PASS |
+| `live_row_retirement_fits_the_progress_charge` | 본문 43,924 B ≤ charge 44,304 B(memory·native type 모두, 여유 380 B), shared+charge ≤ 65,536 | PASS |
 
 LRR-01의 비용(검토 반영 전 build). 한 그룹마다 WAL 전체를 다시 검증하므로 거래 수의 제곱으로 는다. 같은 build에서 round 0·8·16·24·32의 누적 시간은 1.2 s·45 s·152 s·311 s·522 s, 파일 합은 23.3 MB·28.3 MB·33.4 MB·38.4 MB·43.4 MB(round마다 약 0.63 MB)였다. 다시 열기는 4.7 s였다. 두 실행을 4 core container에서 동시에 돌렸고 일부 구간에 Clippy가 겹쳤으므로 시간은 참고값이다. frame 수 16과 64의 시간이 같아서 비용은 residency가 아니라 재검증에서 나온다. `with_fresh!`의 파일 합 상한 32 MiB와 사례 상한 30 s(기본)를 이 사례만 48 MiB, 1,200 s로 올렸다. 이것은 측정이 아니다. F6 측정은 별도 단위다.
 
@@ -58,8 +58,8 @@ LRR-01의 비용(검토 반영 전 build). 한 그룹마다 WAL 전체를 다시
 | 지적 | 반영 |
 | --- | --- |
 | 1 Busy Prune 하나가 다른 actor의 정리를 가림 | `row_cleanup_next(skip)`. 거절된 ordinal을 건너뛴다. LRR-05가 확인한다 |
-| 2 residency 단계의 census 누락 가능성 | 준비·설치를 `#[inline(never)]` `retire_resident`로 분리해 residency 동안 prepared group이 없게 했다. 그 frame의 Result·인자를 census에 더해 43,516 → 43,852 B |
-| 3 호출자 몫이 거의 없음 | 계약에 남은 452 B가 호출자 몫 전부임과 자동 호출 단위의 의무를 적었다 |
+| 2 residency 단계의 census 누락 가능성 | 준비·설치를 `#[inline(never)]` `retire_resident`로 분리해 residency 동안 prepared group이 없게 했다. 그 frame의 인자를 census에 더해 43,516 → 43,852 B(2차 검토 뒤 43,924 B) |
+| 3 호출자 몫이 거의 없음 | 계약에 남은 몫(지금 380 B)이 호출자 몫 전부임과 자동 호출 단위의 의무를 적었다 |
 | 4(d)(e) 시험 공백 | LRR-05(두 actor, 하나 Busy), LRR-06(중간 상태 뒤 복구) 추가 |
 | 5 TerminalFinish actor를 잡은 page로 재확인하지 않음 | 모든 scope에서 잡은 Job의 scope·source를 확인한다 |
 | 8 모순 Job의 효과 | 한 actor의 TerminalReady 둘, 같은 sequence의 head root 둘을 Fatal로 |
@@ -67,12 +67,12 @@ LRR-01의 비용(검토 반영 전 build). 한 그룹마다 WAL 전체를 다시
 
 반영하지 않은 것: 4(a) stage Unchanged 분기와 4(c) 닫힌 facade 거절은 주입 지점이나 복구 중간 hook이 필요해 이 단위에서 시험하지 않았다. 4(b) `FlushRequired`는 LRR-06이 수를 출력하지만 11 frame 이상에서 0이고 10 frame 이하는 준비 단계가 먼저 실패해 닿지 않았다. 6(표지의 Undo target 재계산)은 intent의 target 비교가 이미 막고, 7(Job 상태 재검사)은 producer가 하므로 그대로 두었다. 9(`row_cleanup_requests`의 target 선택 중복)는 복구 경로의 `prepare_row_recovery`를 바꾸면 복구 시험까지 다시 골라야 해서 남겼다. 어긋나면 모든 호출이 Unchanged로 실패하므로 조용히 틀리지는 않는다. 11(LRR-01을 느린 단계로)은 gate가 `#[ignore]` 사례를 받지 않아 그대로 두었다.
 
-LRR_RECHECK
+2차 확인(head `c7c3bd2`)은 ACCEPT, 열린 필수 0이었다. 수정이 맞고 새 정확성 문제가 없다고 했고, NIT 6개를 남겼다. 반영한 것: closure frame의 두 반환 slot(`Result<Option<Plan4Target>>`, `Result<Observation>`)을 모든 단계에 세도록 `caller_source_bytes`로 옮겼다(43,924 B, 여유 380 B). TerminalFinish 선택에서도 한 actor의 TerminalReady 둘을 Fatal로 잡는다. `skip`이 다음 설치까지만 유효함을 문서에 적었다. `retire_row`의 주석을 Fatal 예외에 맞췄다. LRR-05는 Job 할당 순서를 가정하지 않고, B 정리 뒤 남은 Row Job이 A의 root와 Terminal 둘뿐임을 확인한다. 나머지 NIT는 자리표시(이 문서·검토 기록)였다.
 
 <a id="lrr-limits"></a>
 ## 5. 남은 한계
 
-- 자동 호출이 없다. commit·rollback 뒤 호출자가 `row_cleanup_next`·`retire_row`를 불러야 한다. statement driver나 background cleaner 연결은 다음 단위이고, 그 호출자의 자원 몫은 지금 452 B뿐이다.
+- 자동 호출이 없다. commit·rollback 뒤 호출자가 `row_cleanup_next`·`retire_row`를 불러야 한다. statement driver나 background cleaner 연결은 다음 단위이고, 그 호출자의 자원 몫은 지금 380 B뿐이다.
 - 첫 Row profile의 INSERT 거래만이다. UPDATE·DELETE·index·overflow 정리, allocator의 실제 page 반환(3.03.4), checkpoint·WAL 절단은 범위 밖이다.
 - 시험이 닿지 않는 분기: stage의 Unchanged 거절(`reject_row_stage`), 정리 residency의 `FlushRequired`, 닫힌 facade에서의 거절.
 - R14 인수 사례의 PASS를 주장하지 않는다.

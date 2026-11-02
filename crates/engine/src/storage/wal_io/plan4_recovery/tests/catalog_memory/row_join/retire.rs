@@ -743,7 +743,6 @@ fn lrr05_busy_prune_does_not_hide_another_finished_actor() {
                 let mut other = Vec::new();
                 while let Some((ordinal, operation)) = writer.row_cleanup_next(&[held]).unwrap() {
                     assert!(other.len() < 8, "bounded live cleanup");
-                    assert!(ordinal > held, "B's Jobs follow A's");
                     if let Err(error) =
                         retire_one!(writer, owner, private, flush, flusher, ordinal, operation)
                     {
@@ -753,6 +752,16 @@ fn lrr05_busy_prune_does_not_hide_another_finished_actor() {
                     other.push(operation);
                 }
                 assert_eq!(other, COMMITTED[1..]);
+                // Only A's root and A's Terminal are still held.
+                let mut left: Vec<_> = row_jobs(writer.catalog_test_jobs())
+                    .into_iter()
+                    .filter(|(_, state, _, _)| *state != JobState::Free)
+                    .map(|(ordinal, state, _, _)| (ordinal, state))
+                    .collect();
+                left.sort_by_key(|(_, state)| *state != JobState::RootRetained);
+                assert_eq!(left.len(), 2, "{left:?}");
+                assert_eq!(left[0], (held, JobState::RootRetained));
+                assert_eq!(left[1].1, JobState::TerminalReady);
                 assert_eq!(
                     writer.row_cleanup_next(&[]).unwrap(),
                     Some((held, RowCleanup::Prune))
