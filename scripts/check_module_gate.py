@@ -1155,7 +1155,28 @@ def attested_findings(manifest, tree, records):
     return errors, accepted, identity
 
 
-def changed_cases(manifest, analysis, paths):
+def macro_ranges(code):
+    """Token-tree inputs cannot establish a literal test's final name/scope."""
+    pattern = re.compile(r'\b(?:r#)?\w+\s*!\s*(?:\w+\s*)?([({\[])')
+    ranges = []
+    for match in pattern.finditer(code):
+        start, stack = match.start(1), []
+        for offset in range(start, len(code)):
+            char = code[offset]
+            if char in '({[':
+                stack.append(char)
+            elif char in ')}]':
+                if not stack or stack.pop() != {')': '(', '}': '{', ']': '['}[char]:
+                    raise GateError('unbalanced macro token tree')
+                if not stack:
+                    ranges.append((start, offset))
+                    break
+        else:
+            raise GateError('unbalanced macro token tree')
+    return ranges
+
+
+def changed_cases(manifest, analysis, paths, literal_only=False):
     """What each changed crate file's tests need, by owning module:
     ({module: exact libtest names}, {module: module-path selectors},
     {module: names and selectors that may be absent on the runner},
@@ -1182,6 +1203,7 @@ def changed_cases(manifest, analysis, paths):
                 continue
             owner = manifest.owner(path)
             rust = crate.rust(path)
+            macros = macro_ranges(rust.code) if literal_only else []
             for logical in crate.logical[path]:
                 if logical in crate.no_test:
                     continue
@@ -1193,7 +1215,9 @@ def changed_cases(manifest, analysis, paths):
                     else:
                         (optional if maybe else selectors).setdefault(owner, set()).add(
                             selector)
-                for _offset, chain, name, known in rust.tests:
+                for offset, chain, name, known in rust.tests:
+                    if any(start < offset < end for start, end in macros):
+                        continue
                     full = '::'.join((logical + chain)[1:] + (name,))
                     if any(word in full for word in skip):
                         continue
@@ -1349,7 +1373,8 @@ def scoped_test_selection(manifest, analysis, changed, records, contracts):
                 if not reviewed(inputs, reviews):
                     errors.append(f'{label}: case/fixture inputs lack same-record review at head blobs')
                     continue
-                discovered, _, _, _ = changed_cases(manifest, analysis, {case['file']})
+                discovered, _, _, _ = changed_cases(
+                    manifest, analysis, {case['file']}, literal_only=True)
                 if case['case'] not in {c for names in discovered.values() for c in names}:
                     errors.append(f'{label}: required case not found (or ignored/unknown cfg/executor-only)')
                     continue

@@ -1924,7 +1924,9 @@ class ScopedSelectionTests(GateFixture):
         head = self.changed()
         for body in ('#[test]\nfn other() {}', '#[test]\n#[ignore]\nfn changed() {}',
                      '#[test]\n#[cfg(feature="x")]\nfn changed() {}',
-                     'macro_rules! make { () => { #[test] fn changed() {} }; } make!();'):
+                     'macro_rules! make { () => { #[test] fn changed() {} }; } make!();',
+                     'make! { #[test] fn changed() {} }',
+                     'make! (#[test] fn changed() {});'):
             self.write(self.test_file, body)
             head = self.commit('non-discoverable case')
             row = self.row(paths=[self.source, self.test_file])
