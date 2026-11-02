@@ -3079,3 +3079,31 @@ CREATE는 commit했지만 정리하지 않았으므로 그 cleanup을 남긴다.
 이는 앞선 PR #17의 예약 소유 Box 방식을 대체한다. 원 loan 보존은 사용자의 변경 금지 지시가 아니다. S11 `a81f8975`가 택한 시험 구현이었다. 재평가에서는 원 bytes를 직접 바꾸면 다음 `producer_lane()`이 C context를 다시 계산할 때 오염된 bytes를 읽을 수 있고, 복원 guard·backup의 추가 책임이 생긴다는 점을 비교했다. A의 소비 지점만 바꾸는 쪽이 더 작은 소유 범위와 적은 결합을 가지므로 선택한다. leak·예약 소유·직접 변경·C accessor·A 소유의 비교와 8개 항목별 판단은 [설계 재검토](../evidence/module-mi03-limits-20261101.md#pr16-design-review)를 따른다.
 
 **미해결 retirement의 범위.** MCB03-V01은 PARTIAL 그대로다. 현 S2-0 통합 경로의 보장은 capture 중 읽기를 gate에서 기다리고 그 사이 WAL을 진행하지 않는 것(MCB03-V02)이다. registry의 pin 수 Busy는 별도 방어의 보조 증거이며, 시험이 직접 만든 권한으로 원 동결 순서를 충족했다고 주장하지 않는다. live Row retirement(DEV3) 공급과 정상 semantic Before의 권한 발급뿐 아니라, 실제 동시성 경로가 해당 pin 충돌 순서를 허용하는지까지 재검토해야 한다. 향후 통합 대기와 registry 거절로 요구를 분리하려면 명시적으로 계약을 개정한다. 이번 보강은 그 개정이나 MCB03-V01의 PASS 승격을 하지 않는다.
+
+<a id="catalog-call-owner"></a>
+## F3 — Catalog 호출과 checked 읽기 소유 (2026-11-02)
+
+`XADB-MODULE-CATALOG-CALL-001` · 독립 D2 ACCEPT. 기존 호출 모양은 유지하며,
+`catalog/read.rs`가 `CatalogCallScope::lookup`, `CatalogStatementCall::lookup/finish_table`을
+구현한다. C에서 제품을 호출하거나 제품 결과 타입을 재노출하지 않는다.
+
+| 소유 | 실제 책임·소비 경계 | 생성·효과·수명 |
+| --- | --- | --- |
+| CAT `catalog/read.rs` | capture → 필요한 Status/Undo → 결과 조립의 유한 순서. `NeedStatus → NeedBefore → Found/Missing`, 또는 실제 FlushRequired | canonical `disk`만 소비. 원 `lookup/finish_table` caller signature 유지 |
+| C `catalog_call`: `read/scope.rs` | 원 Owner·snapshot·source/progress admission 및 checked 종료 | private begin. `operation`은 private scratch와 반환 view를 동일 scope borrow에 묶음. source → progress 종료·원 fatal 우선순위 유지 |
+| C `catalog_call`: `read/operation.rs` | 원 source capture·reference lease·Status/Undo 관측 및 유일 visibility predicate | statement scope가 원 statement를 자동 결속. caller가 `None`·다른 statement를 공급하지 못함. 실제 checked release까지 성공한 Status/Undo만 private proof에 기록 |
+| C `catalog_call`: `read/statement.rs` | statement scope 생성·원 publication slot 검산·read-set·CheckedTable 단일 발급 | `finish_table(candidate)`는 같은 operation의 실제 Found proof와 bound statement를 요구. raw header/ObjectId/view 발급 입구 없음. `TableIssue` private 생성 유지 |
+| C 결과·예산 계약 | `CatalogReadStep`은 권한 없는 decoded view/Missing/Flush carrier. CAT의 `CatalogLookupStep`은 이 하위 타입의 alias | C의 고정 carrier/source 예산은 하위 타입만 계수. CAT 실제 Selection/Result 크기 시험으로 적합성을 확인. 원 65536B 한도 불변 |
+
+이 절은 §4.2의 C→CAT 위임, ROW-BEGIN-001의 operation 미공급 설명과
+`CheckedTable` 발급 위치 설명을 대체한다. CAT가 후보만 전달해 가시성을 건너뛸 수
+없도록 `finish_found`와 `finish_table`은 같은 private proof 판정을 사용한다.
+가시성 알고리즘을 두 계층에 복제하지 않는다. Found/Missing의 catalog 등록,
+Published Table의 table bit, non-Table/own Reserved 거절과 Flush의 미등록을 유지한다.
+publication lock 종료 뒤 isolation lock을 잡는다.
+
+기존 detached `lookup_catalog/lookup_catalog_resident`와 `legacy_operation`은 시험
+호환 경로로만 남겨 `cfg(test)`로 제한한다. 생산 operation·복사 view·nested name은
+원 scope가 끝난 뒤 사용할 수 없다. wire·fixture·복구 알고리즘·CREATE 설치 권한은
+바꾸지 않는다. manifest는 실제 세 파일만 `catalog_call`로 소유하고 EX01–EX04를
+제거한다. 나머지 C·EX05–EX09는 유지한다. [실행·리뷰 근거](../evidence/module-independence-survey-20261026.md#f3-catalog-call)를 따른다.

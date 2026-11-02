@@ -1,0 +1,51 @@
+{
+  "admission_sha256": "24890b3d15b3e6098976cc28f4dee2dfdd0df646d051f92ef0d9867d0dd8a05c",
+  "case": "N02",
+  "controller": "2f06562afc44272a007de2b7cdd52d55e16d08f5438c1e18b342c192342b7451",
+  "elf": "4dccbe39b6bc0189f88444dd7a62b8b1a32170d9c6d9205530f583f0a22ba24c",
+  "error": "FileNotFoundError(2, 'No such file or directory')",
+  "free_bytes_after": 141655703552,
+  "input": "f6e0dd554a91931cc8e048e775a666dacd777f0c1c3285abed6773ec15f21eeb",
+  "seconds": 0.7264664540000467,
+  "source": "ccec937f2ec1ad2ab12789a7ca1c0db8991ae1b82819a5cdd66c93472fdac705",
+  "status": "FAIL",
+  "workers": [
+    {
+      "command": [
+        "/home/et16/.codex/worktrees/module-followup-f3/native-r5/xadb-engine-tests",
+        "--exact",
+        "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_create::catalog_create_native_worker",
+        "--ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "cut": "A_CREATE_BEFORE_CATALOG_HOME",
+      "cut_resources": {
+        "fd_peak": 6,
+        "handles": 2,
+        "peak": 3
+      },
+      "exit_code": -9,
+      "externally_killed": true,
+      "lsn": 8,
+      "phase": "produce",
+      "pid": 36070
+    },
+    {
+      "aborted_and_reaped": true,
+      "command": [
+        "/home/et16/.codex/worktrees/module-followup-f3/native-r5/xadb-engine-tests",
+        "--exact",
+        "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_create::catalog_create_native_worker",
+        "--ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "cut": "A_CREATE_AFTER_CLR_DURABLE",
+      "exit_code": -9,
+      "lsn": 10,
+      "phase": "recover",
+      "pid": 36072
+    }
+  ]
+}

@@ -1,0 +1,20 @@
+{
+  "deleted": [
+    "/home/et16/.codex/worktrees/module-followup-f3/native-r5/source",
+    "/home/et16/.codex/worktrees/module-followup-f3/native-r5/xadb-engine-tests",
+    "/home/et16/.codex/worktrees/module-followup-f3/native-controller-r6/run/source",
+    "/home/et16/.codex/worktrees/module-followup-f3/native-controller-r6/run/xadb-engine-tests",
+    "/tmp/xadb-f3-target"
+  ],
+  "retained_native_artifacts": [
+    {
+      "original": "/home/et16/.codex/worktrees/module-followup-f3/native-r5",
+      "retained": "/home/et16/work/xadb/artifacts/module-followup-f3-20261102/native-r5"
+    },
+    {
+      "original": "/home/et16/.codex/worktrees/module-followup-f3/native-controller-r6/run",
+      "retained": "/home/et16/work/xadb/artifacts/module-followup-f3-20261102/native-r6"
+    }
+  ],
+  "reason": "User instruction: preserve logs/results/source manifests and native snapshots; remove this run build target, temporary source exports and ELF."
+}

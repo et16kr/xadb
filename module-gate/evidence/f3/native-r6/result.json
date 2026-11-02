@@ -1,0 +1,33 @@
+{
+  "status": "PASS",
+  "cases": [
+    {
+      "case": "N01",
+      "status": "PASS",
+      "seconds": 4.9517999300001065,
+      "log": "module-gate/evidence/f3/native-r6/catalog-native/N01/result.json",
+      "log_sha256": "e0a6607c2b0804b7b834152a5899112a017ffbc38c08fdb2ee8bd494f9162640"
+    },
+    {
+      "case": "N02",
+      "status": "PASS",
+      "seconds": 3.637581374000092,
+      "log": "module-gate/evidence/f3/native-r6/catalog-native/N02/result.json",
+      "log_sha256": "877c4cd1574ecfa755d97b325a4de14160b99ae823fcdc25ccac38c4e06ce978"
+    },
+    {
+      "case": "N03",
+      "status": "PASS",
+      "seconds": 2.836289525999973,
+      "log": "module-gate/evidence/f3/native-r6/catalog-native/N03/result.json",
+      "log_sha256": "828b6fbc30040ac6874ec878a52fb282f76318c1449e79f50474382e2a790ee8"
+    }
+  ],
+  "source_commit": "26bb4151",
+  "source_identity_scheme": "sha256 of r6/source-sha256.json bytes",
+  "source": "66dff4fb63365a95770a21888d2510118580676e312874891c15b79d28ae9a99",
+  "elf": "4dccbe39b6bc0189f88444dd7a62b8b1a32170d9c6d9205530f583f0a22ba24c",
+  "input_identity": "cba5e8f976185e061c3275bd3fbf67dc9255bb2698936b33d205c795044da537",
+  "repetitions": "one attempt per case for changed controller; original r5 PASS/FAIL/NOT_RUN preserved",
+  "snapshots_retained": "/home/et16/.codex/worktrees/module-followup-f3/native-controller-r6/run/catalog-native"
+}

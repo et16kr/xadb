@@ -1,0 +1,70 @@
+{
+ "schema": "XADB_MODULE_GATE_RECORD_V1",
+ "change": "F3: Catalog consumes checked C read operations; original statement authority, view lifetime and fixed budgets stay in C. Remove EX01–EX04; repair native publication sampling race.",
+ "python_tests": [
+  "test_check_module_gate.F3CatalogOwnershipTests.test_checked_catalog_owner_has_no_product_exception_or_authority_edge",
+  "test_check_module_gate.F5RealRegistryTests.test_single_manifest_preserves_baseline_export_layout_and_f2_owners",
+  "test_check_module_gate.F3NativeMonitorTests.test_only_running_database_disappearance_is_transient",
+  "test_check_module_gate.F3NativeMonitorTests.test_running_scan_preserves_symlink_database_and_artifact_limits"
+ ],
+ "ci_selectors": [
+  "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::source::tests::catalog_commit_windows_fit_beside_admitted_readers",
+  "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::source::tests::repro_full_read_beside_pending_commit_fits_actual_charges",
+  "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::call_scope::actual_resident_busy_is_upgraded_by_fatal_scope_cleanup",
+  "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::call_scope::actual_undo_io_fatal_survives_scope_cleanup",
+  "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::call_scope::found_view_consumption_keeps_source_and_progress",
+  "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::call_scope::returned_missing_scope_blocks_original_drain"
+ ],
+ "na": [
+  {
+   "module": "disk",
+   "reason": "disk.rs changes re-exports only: the lower common CatalogReadStep/visibility/carrier contract replaces CAT-owned names. No new implementation in disk.rs; changed CAT/C lookup and issuer cases plus C+A/C+B compilation validate consumers."
+  }
+ ],
+ "reviews": [
+  {
+   "id": "f3-catalog-call-d2",
+   "class": "D2",
+   "scopes": [
+    "common",
+    "policy"
+   ],
+   "author": "/root",
+   "reviewer": "/root/f3_design_review",
+   "verdict": "ACCEPT",
+   "required_open": 0,
+   "files": {
+    "crates/engine/src/storage/catalog/read.rs": "e8ceb94023b45e80fd52b439b29dff8897354a5b",
+    "crates/engine/src/storage/disk.rs": "e3469ab9726d35fa5894a54931fbaa9577a12806",
+    "crates/engine/src/storage/wal_io/disk_api.rs": "d047123a67f81dc17130cceae81faedb3f10c119",
+    "crates/engine/src/storage/wal_io/plan4_apply.rs": "de609a158be50047d6732f6eeeb51f7c64b3de9a",
+    "crates/engine/src/storage/wal_io/plan4_apply/row.rs": "80369d4b4a36ff6ec73aafb6016dd57a1026c9a2",
+    "crates/engine/src/storage/wal_io/plan4_pages.rs": "155ef3b22c64c4cc270b44d54d15e6f9cfe8a424",
+    "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_create.rs": "901a724f15756b6758fcd5c77ec47e23d9556cec",
+    "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory.rs": "a8b55d9ecaba53e637d7761edd4a6d80a30baf56",
+    "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/table_issue.rs": "6f8ea654c3895dbea720c2c31933c838448388f4",
+    "crates/engine/src/storage/wal_io/plan4_retention/read.rs": "b2c0a5aa58569eed17000d59ab87cc85ccca7ccf",
+    "crates/engine/src/storage/wal_io/plan4_retention/read/lookup.rs": "b8c71f431eee4b21e8c297fb6f573ac5d42dbc63",
+    "crates/engine/src/storage/wal_io/plan4_retention/read/operation.rs": "af7922e59c71529a4dd5a6bc422fa2be8e142d45",
+    "crates/engine/src/storage/wal_io/plan4_retention/read/scope.rs": "2c079536174332608de0edcf1132874fcf551b64",
+    "crates/engine/src/storage/wal_io/plan4_retention/read/statement.rs": "2832f0e802b81a839a51945d72a740ab0880d932",
+    "devdoc/contracts/dev3-module-boundaries.md": "42618696e99755568b410d94611b0dc67e838501",
+    "devdoc/policies/module-gate.json": "e32b0f95cab50fc2669dda6d77fc378ac22183a6",
+    "scripts/test_check_module_gate.py": "1fbf89bdc2274d1169fbc6e7fae49e00dc1c7839",
+    "scripts/dev3_catalog_native.py": "9909d07702150f592c706c51f8ca7edad31b9948"
+   },
+   "log": "module-gate/evidence/f3/review.md",
+   "log_sha256": "a5eb021e737994cd3f33f2eb571a8b31af9115b682b6ea107dbcc8756590b0e1"
+  }
+ ],
+ "attested": [
+  {
+   "selector": "script:scripts/dev3_catalog_native.py N01 N02 N03",
+   "input_identity": "cba5e8f976185e061c3275bd3fbf67dc9255bb2698936b33d205c795044da537",
+   "result": "PASS",
+   "log": "module-gate/evidence/f3/native-r6/result.json",
+   "log_sha256": "45f49511aa39cc430ff75a302bfb2cd8f434fd44f663a571d650e2e74e330250",
+   "reviewed_by": "/root/f3_design_review"
+  }
+ ]
+}

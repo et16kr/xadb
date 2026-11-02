@@ -1,0 +1,8 @@
+{
+  "N01": "PASS",
+  "N02": "FAIL: FileNotFoundError in controller sampling; size TOCTOU consistent with publication trace, exact error site unavailable",
+  "N03": "NOT_RUN: stop after N02 failure",
+  "source_identity_scheme": "sha256 of r5/source-sha256.json bytes; not check_dev0.source_fingerprint",
+  "source_commit": "58e53d70",
+  "snapshots_retained": "/home/et16/.codex/worktrees/module-followup-f3/native-r5/catalog-native"
+}

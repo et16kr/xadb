@@ -1,0 +1,19 @@
+{
+  "crates/engine/src/storage/catalog/read.rs": "e8ceb94023b45e80fd52b439b29dff8897354a5b",
+  "crates/engine/src/storage/disk.rs": "e3469ab9726d35fa5894a54931fbaa9577a12806",
+  "crates/engine/src/storage/wal_io/disk_api.rs": "d047123a67f81dc17130cceae81faedb3f10c119",
+  "crates/engine/src/storage/wal_io/plan4_apply.rs": "de609a158be50047d6732f6eeeb51f7c64b3de9a",
+  "crates/engine/src/storage/wal_io/plan4_apply/row.rs": "80369d4b4a36ff6ec73aafb6016dd57a1026c9a2",
+  "crates/engine/src/storage/wal_io/plan4_pages.rs": "155ef3b22c64c4cc270b44d54d15e6f9cfe8a424",
+  "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_create.rs": "901a724f15756b6758fcd5c77ec47e23d9556cec",
+  "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory.rs": "a8b55d9ecaba53e637d7761edd4a6d80a30baf56",
+  "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/table_issue.rs": "6f8ea654c3895dbea720c2c31933c838448388f4",
+  "crates/engine/src/storage/wal_io/plan4_retention/read.rs": "b2c0a5aa58569eed17000d59ab87cc85ccca7ccf",
+  "crates/engine/src/storage/wal_io/plan4_retention/read/lookup.rs": "b8c71f431eee4b21e8c297fb6f573ac5d42dbc63",
+  "crates/engine/src/storage/wal_io/plan4_retention/read/operation.rs": "af7922e59c71529a4dd5a6bc422fa2be8e142d45",
+  "crates/engine/src/storage/wal_io/plan4_retention/read/scope.rs": "2c079536174332608de0edcf1132874fcf551b64",
+  "crates/engine/src/storage/wal_io/plan4_retention/read/statement.rs": "2832f0e802b81a839a51945d72a740ab0880d932",
+  "devdoc/contracts/dev3-module-boundaries.md": "42618696e99755568b410d94611b0dc67e838501",
+  "devdoc/policies/module-gate.json": "e32b0f95cab50fc2669dda6d77fc378ac22183a6",
+  "scripts/test_check_module_gate.py": "3e95ed3a0a8ee3560ea289740e98fb0981350008"
+}

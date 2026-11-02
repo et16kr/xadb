@@ -1,0 +1,10 @@
+
+running 1 test
+test storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::source::tests::catalog_commit_windows_fit_beside_admitted_readers ... COMMIT_PENDING_PARTS_MEMORY parent_wait_drain=[2288, 6624, 6124] physical_pending=7442 physical_drain=9890 bridge=7120 wait=5408 measured_wait=3272 drain_call=5604 pin_release=3855
+COMMIT_WINDOWS_MEMORY shared=20208 stage=39038 pending=10690 install=24620 publish=5228 raw=33082/8912/22842/3450 carriers=5956 full=34586 resident=17896 stage_total=59246 install_total=44828 pending_full=65484 publish_full=60022 pending_two_resident=66690
+COMMIT_PENDING_PARTS_NATIVE_TYPE parent_wait_drain=[2288, 6624, 6124] physical_pending=7442 physical_drain=9890 bridge=7120 wait=5408 measured_wait=3272 drain_call=5604 pin_release=3855
+COMMIT_WINDOWS_NATIVE_TYPE shared=20216 stage=39038 pending=10690 install=24620 publish=5228 raw=33082/8912/22842/3450 carriers=5956 full=34586 resident=17896 stage_total=59254 install_total=44836 pending_full=65492 publish_full=60030 pending_two_resident=66698
+ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 2007 filtered out; finished in 0.00s
+

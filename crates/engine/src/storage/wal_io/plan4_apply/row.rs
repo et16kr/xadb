@@ -68,7 +68,7 @@ pub(crate) struct CheckedTable<'c, 's> {
 }
 impl<'c, 's> CheckedTable<'c, 's> {
     /// The sole constructor. Its witness has a field private to the statement
-    /// call, so only `CatalogStatementCall::finish_table` reaches this, after
+    /// call, so only the bound `CatalogReadOperation::finish_table` reaches this, after
     /// its own actual Found Table, Published epoch slot and registered read bit.
     pub(super) fn issue(
         _witness: super::read::TableIssue,

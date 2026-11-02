@@ -1,0 +1,20 @@
+
+running 1 test
+test storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::table_issue::capture_without_visibility_proof_cannot_issue_a_table ... CATALOG_MEMORY_CONTEXT	F3_UNBOUND_RAW	ea98c47480109ff262ca58e9ebef5fef2b44c3bf52dcd6f1514babb51d842c17	b3e666cc9a2f64367490bdaf8a021071f6338083ed41b3195d82eed882fc5774	f6e0dd554a91931cc8e048e775a666dacd777f0c1c3285abed6773ec15f21eeb	f6e0dd554a91931cc8e048e775a666dacd777f0c1c3285abed6773ec15f21eeb	4bf20c59207890d66b5b51d06d7778a478f1226e26ce38b7cc803856fbe12181
+CATALOG_MEMORY_BEGIN	F3_UNBOUND_RAW
+
+thread 'storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::table_issue::capture_without_visibility_proof_cannot_issue_a_table' (26716) panicked at crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/table_issue.rs:572:21:
+assertion `left == right` failed
+  left: ((2, 0, 0), false)
+ right: ((0, 0, 0), false)
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+CATALOG_MEMORY_FAIL	F3_UNBOUND_RAW
+FAILED
+
+failures:
+
+failures:
+    storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::table_issue::capture_without_visibility_proof_cannot_issue_a_table
+
+test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 2007 filtered out; finished in 0.18s
+

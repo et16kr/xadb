@@ -1,6 +1,7 @@
 //! The original Owner's finite Catalog call, including borrowed result use.
 //! This is an accounting/progress lifetime, never a snapshot or page authority.
 use super::super::source::{OperationClass, OperationSourceAdmission, SourceFailure};
+use super::super::transaction::RowStatementView;
 use super::super::visibility::{self, SnapshotGuard};
 use super::*;
 use crate::storage::wal_io::bootstrap::doublewrite_install::mutable_storage::HealthFailure;
@@ -244,29 +245,19 @@ impl<'u, 'r, 'v, 'j, 'b, 'a, 's, 'c, 'p, 'd, 'm, 'w, W: WriterNamespace>
         }
     }
 
-    #[cfg_attr(
-        not(test),
-        allow(
-            dead_code,
-            reason = "selected actual Catalog caller precedes SQL integration"
-        )
-    )]
-    /// Result views (including copied views and nested strings) borrow this
-    /// scope. A later lookup or consuming finish requires their last use.
-    pub(in crate::storage) fn lookup<'call>(
+    /// A checked lookup loan. Returned views cannot outlive this scope borrow.
+    pub(in crate::storage) fn operation<'call>(
         &'call mut self,
-        object: ObjectId,
-        cursor: &mut Plan4ResidencyCursor,
         private: &'call mut [u8; 425_984],
-    ) -> Result<CatalogLookupStep<'call>> {
-        crate::storage::catalog::read::lookup(self.operation(private)?, object, cursor, None)
+    ) -> Result<CatalogReadOperation<'call, 'call, 'v, 'j, 'call, 'b, 'a, 's, 'c, 'p, 'd, 'm, 'w, W>>
+    {
+        self.bound_operation(private, None)
     }
 
-    /// Only the legacy synchronous wrapper may detach the ordinary result's
-    /// borrow from this scope. Its post-return caller use has no scope guarantee.
-    pub(super) fn operation<'call, 'i>(
+    pub(super) fn bound_operation<'call, 'i>(
         &'call mut self,
         private: &'i mut [u8; 425_984],
+        statement: Option<&'call RowStatementView<'call, 'call, 'a, 'c, 's>>,
     ) -> Result<CatalogReadOperation<'call, 'call, 'v, 'j, 'i, 'b, 'a, 's, 'c, 'p, 'd, 'm, 'w, W>>
     {
         CatalogReadOperation::begin(
@@ -275,7 +266,19 @@ impl<'u, 'r, 'v, 'j, 'b, 'a, 's, 'c, 'p, 'd, 'm, 'w, W: WriterNamespace>
             self.snapshot,
             &self.source,
             private,
+            statement,
         )
+    }
+
+    /// Test-only compatibility entry. Ordinary copied results from the old
+    /// synchronous fixture API have no post-return admission guarantee.
+    #[cfg(test)]
+    pub(in crate::storage) fn legacy_operation<'call, 'i>(
+        &'call mut self,
+        private: &'i mut [u8; 425_984],
+    ) -> Result<CatalogReadOperation<'call, 'call, 'v, 'j, 'i, 'b, 'a, 's, 'c, 'p, 'd, 'm, 'w, W>>
+    {
+        self.bound_operation(private, None)
     }
 
     /// Complete a normal error path without losing a fatal cleanup error.
@@ -297,7 +300,8 @@ impl<'u, 'r, 'v, 'j, 'b, 'a, 's, 'c, 'p, 'd, 'm, 'w, W: WriterNamespace>
         }
     }
 
-    pub(super) fn finish_result<T>(self, result: Result<T>) -> Result<T> {
+    #[cfg(test)]
+    pub(in crate::storage) fn finish_result<T>(self, result: Result<T>) -> Result<T> {
         merge(result, self.finish_checked().map_err(Into::into))
     }
 
@@ -404,7 +408,7 @@ pub(super) fn legacy_boundary_source_bytes<W: WriterNamespace>() -> usize {
     let conversion = 2 * size_of::<CatalogCallError>()
         + 2 * size_of::<RetentionError>()
         + 2 * size_of::<Result<()>>()
-        + 2 * size_of::<Result<CatalogLookupStep<'_>>>()
+        + 2 * super::CATALOG_LOOKUP_RESULT_BYTES
         + 8 * size_of::<&()>();
     conversion + entry_source_bytes::<W>().max(close_source_bytes())
 }
@@ -420,8 +424,8 @@ pub(super) fn consumer_source_bytes<W: WriterNamespace>() -> usize {
     };
     use std::mem::size_of;
     held_source_bytes::<W>()
-        + 3 * size_of::<CatalogLookupStep<'_>>()
-        + 2 * size_of::<Result<CatalogLookupStep<'_>>>()
+        + 3 * super::CATALOG_LOOKUP_STEP_BYTES
+        + 2 * super::CATALOG_LOOKUP_RESULT_BYTES
         + 3 * size_of::<CatalogRecordView<'_>>()
         + 2 * size_of::<CatalogHeader>()
         + 2 * size_of::<CatalogDefinitionView<'_>>()
@@ -621,7 +625,7 @@ mod tests {
         // removed with the normal branch. Preserve complete return/extraction
         // and the extracted original error beside the finishing call.
         let error = loop_values
-            + 2 * size_of::<Result<CatalogLookupStep<'_>>>()
+            + 2 * super::CATALOG_LOOKUP_RESULT_BYTES
             + size_of::<RetentionError>()
             + finish_error;
         let old_broad = consumer_source_bytes::<port::Writer>()
@@ -631,7 +635,7 @@ mod tests {
             "QUERY_TAIL normal={normal} error={error} finish_error={finish_error} conversion={conversion} retained_error={} avoided_result_unit={} lookup_result={} target_option={} previous_broad={old_broad} floor=NOT_CONNECTED",
             size_of::<RetentionError>(),
             size_of::<Result<()>>(),
-            size_of::<Result<CatalogLookupStep<'_>>>(),
+            super::CATALOG_LOOKUP_RESULT_BYTES,
             size_of::<Option<Plan4Target>>()
         );
         assert!(error > normal);

@@ -2,15 +2,16 @@
 //! observations only; no pure test, decoder or expected image creates authority.
 use super::super::super::plan4_pages::apply::CatalogTestState;
 use super::super::super::plan4_pages::{
-    CatalogLookupStep, EmptyRetentionControlLoan, IntoRetentionError, Plan4Page,
-    Plan4ResidencyCursor, Plan4Target, RETENTION_CONTROL_BYTES, RETENTION_REPLAY_BYTES,
-    RetentionFlushStep, RetentionReservationError, RetentionResidencyStep, VisibilityLoan,
+    EmptyRetentionControlLoan, IntoRetentionError, Plan4Page, Plan4ResidencyCursor, Plan4Target,
+    RETENTION_CONTROL_BYTES, RETENTION_REPLAY_BYTES, RetentionFlushStep, RetentionReservationError,
+    RetentionResidencyStep, VisibilityLoan,
 };
 use super::support::{
     Images, Live, State, actual_runtime, assert_closed, boxed, clone_directory, drive_flush,
     page_ref,
 };
 use super::*;
+use crate::storage::disk::CatalogReadStep as CatalogLookupStep;
 use crate::{
     api::{Column, DataType, TableSpec},
     storage::{

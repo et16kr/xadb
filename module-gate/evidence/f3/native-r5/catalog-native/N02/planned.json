@@ -1,0 +1,35 @@
+{
+  "admission_sha256": "24890b3d15b3e6098976cc28f4dee2dfdd0df646d051f92ef0d9867d0dd8a05c",
+  "budget": {
+    "address_space_bytes": 1073741824,
+    "artifact_bytes": 1073741824,
+    "audit_seconds": 1,
+    "database_bytes": 33554432,
+    "fd_peak": 6,
+    "file_peak": 3,
+    "free_floor_bytes": 64424509440,
+    "output_bytes": 8388608,
+    "snapshot_bytes": 134217728,
+    "trace_bytes": 4194304,
+    "wall_seconds": 30,
+    "worker_seconds": 29
+  },
+  "case": "N02",
+  "schedule": [
+    [
+      8,
+      null,
+      "A_CREATE_BEFORE_CATALOG_HOME"
+    ],
+    [
+      10,
+      8,
+      "A_CREATE_AFTER_CLR_DURABLE"
+    ],
+    [
+      16,
+      10,
+      null
+    ]
+  ]
+}

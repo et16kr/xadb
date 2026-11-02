@@ -1,0 +1,9 @@
+
+running 1 test
+test storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::catalog_transactions::actual_intervening_commit_conflicts_only_with_serializable_writer ... CATALOG_MEMORY_CONTEXT	CT04	ea98c47480109ff262ca58e9ebef5fef2b44c3bf52dcd6f1514babb51d842c17	b3e666cc9a2f64367490bdaf8a021071f6338083ed41b3195d82eed882fc5774	f6e0dd554a91931cc8e048e775a666dacd777f0c1c3285abed6773ec15f21eeb	f6e0dd554a91931cc8e048e775a666dacd777f0c1c3285abed6773ec15f21eeb	4bf20c59207890d66b5b51d06d7778a478f1226e26ce38b7cc803856fbe12181
+CATALOG_MEMORY_BEGIN	CT04
+CATALOG_MEMORY_PASS	CT04
+ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 2007 filtered out; finished in 0.87s
+

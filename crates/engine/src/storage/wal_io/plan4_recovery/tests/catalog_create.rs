@@ -1,12 +1,13 @@
 //! Same-ELF native CREATE consumers. Independent bytes are read-only oracles;
 //! no completed test, product encoder, or synthetic authority supplies setup.
 use super::super::super::plan4_pages::{
-    CatalogLookupStep, EmptyRetentionControlLoan, IntoRetentionError, Plan4Page,
-    Plan4ResidencyCursor, Plan4Target, RETENTION_CONTROL_BYTES, RETENTION_REPLAY_BYTES,
-    RetentionFlushStep, RetentionReservationError, RetentionResidencyStep, VisibilityLoan, native,
+    EmptyRetentionControlLoan, IntoRetentionError, Plan4Page, Plan4ResidencyCursor, Plan4Target,
+    RETENTION_CONTROL_BYTES, RETENTION_REPLAY_BYTES, RetentionFlushStep, RetentionReservationError,
+    RetentionResidencyStep, VisibilityLoan, native,
 };
 use super::support::{Live, actor, actual_runtime, boxed, drive_flush, page_ref};
 use super::*;
+use crate::storage::disk::CatalogReadStep as CatalogLookupStep;
 use crate::{
     api::{Column, DataType, TableSpec},
     storage::{

@@ -1,0 +1,11 @@
+
+running 1 test
+test storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::catalog_transactions::completed_catalog_capsules_recover_in_current_build ... CATALOG_MEMORY_CONTEXT	CT07	ea98c47480109ff262ca58e9ebef5fef2b44c3bf52dcd6f1514babb51d842c17	b3e666cc9a2f64367490bdaf8a021071f6338083ed41b3195d82eed882fc5774	f6e0dd554a91931cc8e048e775a666dacd777f0c1c3285abed6773ec15f21eeb	f6e0dd554a91931cc8e048e775a666dacd777f0c1c3285abed6773ec15f21eeb	4bf20c59207890d66b5b51d06d7778a478f1226e26ce38b7cc803856fbe12181
+CATALOG_MEMORY_BEGIN	CT07
+CATALOG_CAPSULE_CURRENT_BUILD capture=9 cleanup=[10, 11, 12, 13, 14, 15] aborted=false old_capsules=0
+CATALOG_CAPSULE_CURRENT_BUILD capture=11 cleanup=[12, 13, 14, 15, 16] aborted=true old_capsules=0
+CATALOG_MEMORY_PASS	CT07
+ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 2007 filtered out; finished in 1.45s
+

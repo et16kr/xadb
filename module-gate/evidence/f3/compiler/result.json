@@ -1,0 +1,55 @@
+[
+  {
+    "case": "consume-before-close",
+    "expected": null,
+    "exit": 0,
+    "codes": [],
+    "status": "PASS"
+  },
+  {
+    "case": "close-before-copy-use",
+    "expected": "E0505",
+    "exit": 101,
+    "codes": [
+      "E0505"
+    ],
+    "status": "PASS"
+  },
+  {
+    "case": "operation-reborrow-before-copy-use",
+    "expected": "E0499",
+    "exit": 101,
+    "codes": [
+      "E0499",
+      "E0499"
+    ],
+    "status": "PASS"
+  },
+  {
+    "case": "raw-candidate",
+    "expected": "E0451",
+    "exit": 101,
+    "codes": [
+      "E0451"
+    ],
+    "status": "PASS"
+  },
+  {
+    "case": "raw-table-issuer",
+    "expected": "E0624",
+    "exit": 101,
+    "codes": [
+      "E0624"
+    ],
+    "status": "PASS"
+  },
+  {
+    "case": "production-legacy-unavailable",
+    "expected": "E0599",
+    "exit": 101,
+    "codes": [
+      "E0599"
+    ],
+    "status": "PASS"
+  }
+]

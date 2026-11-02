@@ -1,6 +1,6 @@
 # XADB 개발 문서
 
-현재 후속 작업은 [F5-a 시험 소유·export 단일 등록](evidence/module-independence-survey-20261026.md#f5-test-ownership)이다. F0–F2는 병합됐고 F3·F4·F5-b·F6은 남아 있다. F3의 native 공간 조건과 F5-b의 좁은 시험 선택 선행 조건을 기록했다.
+현재 후속 작업은 [F3 Catalog 호출 방향·C 소유 경계](evidence/module-independence-survey-20261026.md#f3-catalog-call)다. F0–F2·F5-a는 병합됐고 F3 구현·선택 검증·독립 검토를 완료했다. F4·F5-b·F6은 남아 있으며 F5-b의 좁은 시험 선택 선행 조건은 유지한다.
 
 F2 공통 변경의 최소 계약 사례 선택 구현·검증·독립 검토는 [실행 기록](evidence/module-independence-survey-20261026.md#f2-contract-selection)을 따른다. 제품 코드·fixture는 변경하지 않으며 무변경 제품 시험은 실행하지 않는다.
 

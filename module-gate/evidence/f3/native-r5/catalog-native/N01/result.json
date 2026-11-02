@@ -1,0 +1,83 @@
+{
+  "admission_sha256": "24890b3d15b3e6098976cc28f4dee2dfdd0df646d051f92ef0d9867d0dd8a05c",
+  "case": "N01",
+  "controller": "2f06562afc44272a007de2b7cdd52d55e16d08f5438c1e18b342c192342b7451",
+  "elf": "4dccbe39b6bc0189f88444dd7a62b8b1a32170d9c6d9205530f583f0a22ba24c",
+  "free_bytes_after": 141701070848,
+  "input": "f6e0dd554a91931cc8e048e775a666dacd777f0c1c3285abed6773ec15f21eeb",
+  "seconds": 4.989890767000134,
+  "source": "ccec937f2ec1ad2ab12789a7ca1c0db8991ae1b82819a5cdd66c93472fdac705",
+  "status": "PASS",
+  "workers": [
+    {
+      "command": [
+        "/home/et16/.codex/worktrees/module-followup-f3/native-r5/xadb-engine-tests",
+        "--exact",
+        "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_create::catalog_create_native_worker",
+        "--ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "cut": "A_CREATE_ACK_T",
+      "cut_resources": {
+        "fd_peak": 6,
+        "handles": 1,
+        "peak": 3
+      },
+      "exit_code": -9,
+      "externally_killed": true,
+      "lsn": 9,
+      "phase": "produce",
+      "pid": 36061
+    },
+    {
+      "base": {
+        "base_sha256": "fc296d64ff3d2b4b594ee0e6a0c49fad3d9bb19e2b16e6acb35d71edd6ea1943",
+        "capture": 9,
+        "current_sha256": "29f6537be08e8ce59a9201ae910fa826645c4b4f19c07635bad312db665376e4",
+        "epoch": 2
+      },
+      "command": [
+        "/home/et16/.codex/worktrees/module-followup-f3/native-r5/xadb-engine-tests",
+        "--exact",
+        "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_create::catalog_create_native_worker",
+        "--ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "cut": "A_CREATE_ACK_U",
+      "cut_resources": {
+        "fd_peak": 6,
+        "handles": 1,
+        "peak": 3
+      },
+      "exit_code": -9,
+      "externally_killed": true,
+      "lsn": 19,
+      "phase": "recover",
+      "pid": 36063
+    },
+    {
+      "base": {
+        "base_sha256": "7bbdb7269e53636faf608e655cab2fb021f78a06cca532f71fe37e6d95bda49c",
+        "capture": 19,
+        "current_sha256": "d386ea33dd064de93c7fde55498d0e50d798937721cf3c8389959f6dc95611e2",
+        "epoch": 3
+      },
+      "command": [
+        "/home/et16/.codex/worktrees/module-followup-f3/native-r5/xadb-engine-tests",
+        "--exact",
+        "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_create::catalog_create_native_worker",
+        "--ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "cut": null,
+      "exit_code": 0,
+      "externally_killed": false,
+      "lsn": 25,
+      "phase": "reentry",
+      "pid": 36065
+    }
+  ]
+}

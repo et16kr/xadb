@@ -1,0 +1,76 @@
+{
+  "binary_sha256": "4dccbe39b6bc0189f88444dd7a62b8b1a32170d9c6d9205530f583f0a22ba24c",
+  "budget": {
+    "address_space_bytes": 1073741824,
+    "artifact_bytes": 1073741824,
+    "audit_seconds": 1,
+    "database_bytes": 33554432,
+    "fd_peak": 6,
+    "file_peak": 3,
+    "free_floor_bytes": 64424509440,
+    "output_bytes": 8388608,
+    "snapshot_bytes": 134217728,
+    "trace_bytes": 4194304,
+    "wall_seconds": 30,
+    "worker_seconds": 29
+  },
+  "cases": [
+    "N01",
+    "N02",
+    "N03"
+  ],
+  "commit": "58e53d707cf006c9d2b1c6906cc4cd4d7f0c0047",
+  "controller_sha256": "2f06562afc44272a007de2b7cdd52d55e16d08f5438c1e18b342c192342b7451",
+  "evidence": {
+    "catalog-source-admission/build.log": "fd77008373a18cc968e7ff785c5bb9e23860131eb291430012d206dfc09fd6f1",
+    "catalog-source-admission/case-00.log": "540b2cb06ed56fd2aa4144b47378def209c7ddfe99bcc282028a4a77dfa2b0c9",
+    "catalog-source-admission/case-01.log": "3903f23bfa061d17b52ceb5ed46e9364fc99b8510ae68da65c90047ee2b91bef",
+    "catalog-source-admission/case-02.log": "de6346f47d1d4cb506d1efc86230e105c09d4d8e42ddb15f3dea07f01036dfa9",
+    "catalog-source-admission/case-03.log": "579ad6b56e2fa9d9d4bcb13bd7774fc8e7342c8e117f052a70584c76151f5420",
+    "catalog-source-admission/case-04.log": "d160a204ae3219a883151fcc03be599014b31389e91f09b5262ad66477fc7c5b",
+    "catalog-source-admission/identity.json": "fc50c7fd4131df73b8fe0b18f9cf5e684969b72c03503d4e78ada8a6227e14e0",
+    "catalog-source-admission/plan.json": "24c999b54b6d0c22d4350b211afeebf84f24462280298f669d20bab3372f43e8",
+    "catalog-source-admission/result.json": "695485a9e19c38e4a00f7703ca2465e65f3e34aebdd8b931e2da5e3a02ccf2c2",
+    "catalog-source-admission/selected-result.json": "b0fc03b5a9428af5f8dcb1c447914acc85e1077fbffa57caac80328d41926d3d",
+    "catalog-source-admission/source-sha256.json": "ccec937f2ec1ad2ab12789a7ca1c0db8991ae1b82819a5cdd66c93472fdac705"
+  },
+  "execution_scope": "N01, N02 and N03 each once using this same ELF and original native3 corpus; unchanged controller budgets; failures and partial outputs retained.",
+  "independent": true,
+  "independent_checks": {
+    "exact_export_inventory_and_file_sha256": true,
+    "host_free_bytes": 141805088768,
+    "original_native_corpus_blobs": 221,
+    "original_native_corpus_bytes": 5794810,
+    "original_native_corpus_checkpoints": 16,
+    "original_native_corpus_rows": 56,
+    "original_r5_evidence_bytes_match": true,
+    "per_phase_reserve_bytes": 188743680,
+    "prior_native_attempts": [],
+    "r5_selected_results_pass": 33,
+    "runtime_executions_by_reviewer": 0,
+    "source_census_and_pending_overlap_logs_pass": 5,
+    "source_hash_map_matches_export_manifest": true
+  },
+  "input_sha256": "f6e0dd554a91931cc8e048e775a666dacd777f0c1c3285abed6773ec15f21eeb",
+  "reviewed_at_utc": "2026-11-02T01:04:42.524831+00:00",
+  "reviewer": "/root/f3_design_review",
+  "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_create::catalog_create_native_worker",
+  "source_fingerprint": "ccec937f2ec1ad2ab12789a7ca1c0db8991ae1b82819a5cdd66c93472fdac705",
+  "source_identity": {
+    "algorithm": "SHA256 of exact catalog-source-admission/source-sha256.json bytes; not check_dev0.source_fingerprint",
+    "bytes": 233213125,
+    "commit_blob_match": true,
+    "excluded_auxiliary_root": ".github",
+    "file_count": 7326,
+    "roots": [
+      "Cargo.toml",
+      "Cargo.lock",
+      "rust-toolchain.toml",
+      "crates",
+      "tests",
+      "scripts"
+    ]
+  },
+  "source_manifest_sha256": "eb7b19c4d839368a23b976df98accaa4bc98f3b0b739fdde2ae2c2db1feb05ba",
+  "status": "ACCEPTED"
+}

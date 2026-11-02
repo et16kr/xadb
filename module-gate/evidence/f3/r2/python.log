@@ -1,0 +1,6 @@
+test_checked_catalog_owner_has_no_product_exception_or_authority_edge (test_check_module_gate.F3CatalogOwnershipTests.test_checked_catalog_owner_has_no_product_exception_or_authority_edge) ... ok
+
+----------------------------------------------------------------------
+Ran 1 test in 0.005s
+
+OK

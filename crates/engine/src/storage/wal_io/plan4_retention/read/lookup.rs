@@ -11,7 +11,6 @@ use crate::storage::{
     undo_ref::UndoRef,
 };
 
-use crate::storage::catalog::read::CatalogLookupStep;
 fn visibility_error(error: visibility::VisibilityError) -> RetentionError {
     RetentionError {
         phase: RetentionPhase::Census,
@@ -72,40 +71,6 @@ impl<'b, 'a, 's, 'c, 'p, 'd, 'm, 'w, W: WriterNamespace>
             snapshot,
             super::super::source::OperationClass::CatalogResident,
         )
-    }
-
-    /// Legacy synchronous result lifetime. Post-return use of its ordinary
-    /// copied data is outside the new scoped caller-consumption guarantee.
-    pub(in crate::storage) fn lookup_catalog<'q>(
-        &self,
-        owner: &mut Owner<'c, 's>,
-        snapshot: &SnapshotGuard<'_, '_, 'c, 's>,
-        object: ObjectId,
-        cursor: &mut Plan4ResidencyCursor,
-        private: &'q mut [u8; 425_984],
-    ) -> Result<CatalogLookupStep<'q>> {
-        let mut call = self.catalog_call(owner, snapshot)?;
-        let result = call.operation(private).and_then(|operation| {
-            crate::storage::catalog::read::lookup(operation, object, cursor, None)
-        });
-        call.finish_result(result)
-    }
-
-    /// Legacy resident entry; Busy permits retry with the same snapshot after
-    /// cleanup. The scoped equivalent retains admission through result use.
-    pub(in crate::storage) fn lookup_catalog_resident<'q>(
-        &self,
-        owner: &mut Owner<'c, 's>,
-        snapshot: &SnapshotGuard<'_, '_, 'c, 's>,
-        object: ObjectId,
-        cursor: &mut Plan4ResidencyCursor,
-        private: &'q mut [u8; 425_984],
-    ) -> Result<CatalogLookupStep<'q>> {
-        let mut call = self.catalog_resident_call(owner, snapshot)?;
-        let result = call.operation(private).and_then(|operation| {
-            crate::storage::catalog::read::lookup(operation, object, cursor, None)
-        });
-        call.finish_result(result)
     }
 
     pub(in super::super) fn lookup_resident(
@@ -300,8 +265,7 @@ fn lookup_source_bytes<W: WriterNamespace>(resident: bool) -> usize {
         undo_record::{UndoRecord, UndoRecordView},
     };
     use std::mem::size_of;
-    let retained =
-        super::operation::held_source_bytes::<W>() + crate::storage::catalog::read::source_bytes();
+    let retained = super::operation::held_source_bytes::<W>() + super::CATALOG_PRODUCT_SOURCE_BYTES;
     let capture = super::catalog_source_bytes::<W>()
         + visibility::source_census().reference
         + size_of::<CatalogSource<'_, '_, '_>>()

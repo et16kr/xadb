@@ -1,0 +1,8 @@
+
+running 1 test
+test storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::source::tests::repro_full_read_beside_pending_commit_fits_actual_charges ... REPRO_PENDING_FULL_MEMORY shared=20208 pending=10690 full=34586 sum=65484 cap=65536
+REPRO_PENDING_FULL_NATIVE_TYPE shared=20216 pending=10690 full=34586 sum=65492 cap=65536
+ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 2007 filtered out; finished in 0.00s
+

@@ -1,0 +1,15 @@
+
+running 1 test
+test storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::table_issue::flush_required_carries_the_lookup_target_and_registers_nothing ... 
+thread 'storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::table_issue::flush_required_carries_the_lookup_target_and_registers_nothing' (25745) panicked at crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory.rs:488:59:
+missing XADB_CATALOG_SOURCE_SHA256
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+FAILED
+
+failures:
+
+failures:
+    storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::table_issue::flush_required_carries_the_lookup_target_and_registers_nothing
+
+test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 2007 filtered out; finished in 0.00s
+

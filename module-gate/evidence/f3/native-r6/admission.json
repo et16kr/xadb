@@ -1,0 +1,128 @@
+{
+  "binary_sha256": "4dccbe39b6bc0189f88444dd7a62b8b1a32170d9c6d9205530f583f0a22ba24c",
+  "budget": {
+    "address_space_bytes": 1073741824,
+    "artifact_bytes": 1073741824,
+    "audit_seconds": 1,
+    "database_bytes": 33554432,
+    "fd_peak": 6,
+    "file_peak": 3,
+    "free_floor_bytes": 64424509440,
+    "output_bytes": 8388608,
+    "snapshot_bytes": 134217728,
+    "trace_bytes": 4194304,
+    "wall_seconds": 30,
+    "worker_seconds": 29
+  },
+  "cases": [
+    "N01",
+    "N02",
+    "N03"
+  ],
+  "commit": "26bb41511e2fee53b92514f7fdb396f6aab61cbb",
+  "controller_sha256": "f697828781df43bafa7bcf4ea47e19b83946b89ce53017ac04f98c99cf664160",
+  "evidence": {
+    "catalog-source-admission/python.log": "86fc1e1d1ab59b7d0e1ff6e8c3ca98d6adbd641f9bbf01a45702c724c874bb53",
+    "catalog-source-admission/r5/build.log": "fd77008373a18cc968e7ff785c5bb9e23860131eb291430012d206dfc09fd6f1",
+    "catalog-source-admission/r5/case-00.log": "540b2cb06ed56fd2aa4144b47378def209c7ddfe99bcc282028a4a77dfa2b0c9",
+    "catalog-source-admission/r5/case-01.log": "3903f23bfa061d17b52ceb5ed46e9364fc99b8510ae68da65c90047ee2b91bef",
+    "catalog-source-admission/r5/case-02.log": "de6346f47d1d4cb506d1efc86230e105c09d4d8e42ddb15f3dea07f01036dfa9",
+    "catalog-source-admission/r5/case-03.log": "579ad6b56e2fa9d9d4bcb13bd7774fc8e7342c8e117f052a70584c76151f5420",
+    "catalog-source-admission/r5/case-04.log": "d160a204ae3219a883151fcc03be599014b31389e91f09b5262ad66477fc7c5b",
+    "catalog-source-admission/r5/case-05.log": "f3fe8bdf682514df29c0a32c52ac853f538c47e566742eb7a3254fb0d3a91ba5",
+    "catalog-source-admission/r5/case-06.log": "01a3b8406976f03d2ac846d8fbc13a4f213bc36c085dc233220b319f7bb7b29b",
+    "catalog-source-admission/r5/case-07.log": "0b5af0cbc58cd880bf40dbbfa20da2286d74ee45e809000640bff9cfd895409e",
+    "catalog-source-admission/r5/case-08.log": "882f12d47714b8bf29d4fca1c1556d34d6a5351c0f12d25faeca185e88940670",
+    "catalog-source-admission/r5/case-09.log": "e4a2743a6463645b9108d566b6e5e237c88d8d5a0e9d7cb30408dda87927a3c2",
+    "catalog-source-admission/r5/case-10.log": "9fc8bebcb037517730dd9df8d50e4767b2cd7c394bdd3463e7dcad8b3671ec5d",
+    "catalog-source-admission/r5/case-11.log": "5a5489b79d7d71db30c41bcec7d1d56a6425d3abb8e4a7036be703ddc31e54ab",
+    "catalog-source-admission/r5/case-12.log": "c9906b51b6598e9f7eafd0f3f5d59bc5918468592b5ac1c78cc28e2f4cf217d0",
+    "catalog-source-admission/r5/case-13.log": "1dfb6e1ec62734e2c0f25d5d441d517002921868830d13d299e7f7a58501a2c4",
+    "catalog-source-admission/r5/case-14.log": "5548d3067fc479969c6d63eccda2903aff33dea10461e805917114711ec42351",
+    "catalog-source-admission/r5/case-15.log": "87c98efd84f7eb8801a896d50f7a142a7fefc331c7eafab94145fcc79c0e84dc",
+    "catalog-source-admission/r5/case-16.log": "d04a49c64f378d2edaf092e0846832e0fe2eccf58a6280ef666b3e7fd28e9814",
+    "catalog-source-admission/r5/case-17.log": "ecd42650dfa8e363b46508b624e6435fe6cf618d0954b6ba1d66cd8a47207561",
+    "catalog-source-admission/r5/case-18.log": "979194e69c7476d50dbfe8d8b93c551edaf969920e0afaaee927fe8bcaa62675",
+    "catalog-source-admission/r5/case-19.log": "f39bbec464d356f25b1dd6f8f69c527e9859e7934beef19a4b4176863dd95647",
+    "catalog-source-admission/r5/case-20.log": "9c3e7a4ddb34c455c092292d1209a2141e8773aea05f68811a5d8583b9b43aea",
+    "catalog-source-admission/r5/case-21.log": "e151177695139912d0c5027e139090433290e4425812c247f9fa8501eda875fd",
+    "catalog-source-admission/r5/case-22.log": "80a51a80e1aa82d23ce22d94cf93be2cb1dbb221272b4869699c87eef2019271",
+    "catalog-source-admission/r5/case-23.log": "502639620c68a6c55a6bc51f11f79e114ec89b16eed9a405661b992a6a30f604",
+    "catalog-source-admission/r5/case-24.log": "baea2033aaf904419f23bfcb870c162ab8c3d8322f731eae191e03b69710461b",
+    "catalog-source-admission/r5/case-25.log": "4f1af086b4d756f21e42bc1acd1764686eb79722e89a27cf0f0a10518a1be8a1",
+    "catalog-source-admission/r5/case-26.log": "626f40e762d37b2f8fac8ebbe4f712bc263281290b97aa76d1605a684be5eb8b",
+    "catalog-source-admission/r5/case-27.log": "e2bb7c4ec586587e0443c280899ef4c8b2e5923b14adecea097909ff821bb425",
+    "catalog-source-admission/r5/case-28.log": "aef7168ce632522d41514c079005742613e36c87226b0629b4bc7a5398c3cf27",
+    "catalog-source-admission/r5/case-29.log": "d6a409619dc6f1bc45eeb824e84682069051dd2b1d023b9889d92d02f5ec6972",
+    "catalog-source-admission/r5/case-30.log": "39f4243823ab28501c3d16c73f503ea4d5ed60ac09cb4ced572f91265986bc06",
+    "catalog-source-admission/r5/case-31.log": "9296fa6282821395ba1d9125427537142668e1110a1e02dda2a8a02b42bd89f6",
+    "catalog-source-admission/r5/case-32.log": "e959a5c1b47ca6ab50ac0ab5e6c488a1c6f3c7935cd023c21e57047b80afedcb",
+    "catalog-source-admission/r5/identity.json": "fc50c7fd4131df73b8fe0b18f9cf5e684969b72c03503d4e78ada8a6227e14e0",
+    "catalog-source-admission/r5/plan.json": "24c999b54b6d0c22d4350b211afeebf84f24462280298f669d20bab3372f43e8",
+    "catalog-source-admission/r5/result.json": "b0fc03b5a9428af5f8dcb1c447914acc85e1077fbffa57caac80328d41926d3d",
+    "catalog-source-admission/r5/runner.py": "eb6a05e4f8126179a0b1c67691ee6dc74f6c239c6e1432de96ddd450990c71bd",
+    "catalog-source-admission/r5/source-sha256.json": "ccec937f2ec1ad2ab12789a7ca1c0db8991ae1b82819a5cdd66c93472fdac705",
+    "catalog-source-admission/result.json": "b19743ab7e27e7f127ac0a4e518445c8f7da970d34287b89642b4592b431fdde",
+    "catalog-source-admission/source-sha256.json": "66dff4fb63365a95770a21888d2510118580676e312874891c15b79d28ae9a99"
+  },
+  "execution_scope": "N01, N02 and N03 each once using the unchanged Rust ELF and native3 corpus. New controller modifies live database sampling in all cases. Original budgets, strict post-reap audits and previous controller results are preserved; failures and partial outputs retained.",
+  "independent": true,
+  "independent_checks": {
+    "changed_since_r5": [
+      "scripts/dev3_catalog_native.py",
+      "scripts/test_check_module_gate.py"
+    ],
+    "exact_export_inventory_and_file_sha256": true,
+    "host_free_bytes": 141095649280,
+    "new_controller_python_tests_pass": 2,
+    "original_native_corpus_blobs": 221,
+    "original_native_corpus_bytes": 5794810,
+    "original_native_corpus_checkpoints": 16,
+    "original_native_corpus_rows": 56,
+    "original_r5_evidence_bytes_match": true,
+    "per_phase_reserve_bytes": 188743680,
+    "preserved_prior_controller_results": {
+      "N01": {
+        "path": "/home/et16/.codex/worktrees/module-followup-f3/native-r5/catalog-native/N01/result.json",
+        "sha256": "0d42a0c2e147978ab309e2d9084cb7e14bda08196e1c968dbc56bbe63042ee61",
+        "status": "PASS"
+      },
+      "N02": {
+        "path": "/home/et16/.codex/worktrees/module-followup-f3/native-r5/catalog-native/N02/result.json",
+        "sha256": "09f341d55b6a8dfa05e687d6946f2157cac63ed41127ace5eedbbb7a84785a7c",
+        "status": "FAIL"
+      },
+      "N03": {
+        "status": "NOT_RUN"
+      }
+    },
+    "prior_attempts_for_this_controller_revision": [],
+    "r5_selected_results_pass": 33,
+    "runtime_executions_by_reviewer": 0,
+    "same_rust_cargo_fixture_inputs_and_elf": true,
+    "source_hash_map_matches_export_manifest": true
+  },
+  "input_sha256": "f6e0dd554a91931cc8e048e775a666dacd777f0c1c3285abed6773ec15f21eeb",
+  "reviewed_at_utc": "2026-11-02T01:08:57.159035+00:00",
+  "reviewer": "/root/f3_design_review",
+  "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_create::catalog_create_native_worker",
+  "source_fingerprint": "66dff4fb63365a95770a21888d2510118580676e312874891c15b79d28ae9a99",
+  "source_identity": {
+    "algorithm": "SHA256 of exact catalog-source-admission/source-sha256.json bytes; not check_dev0.source_fingerprint",
+    "bytes": 233216324,
+    "commit_blob_match": true,
+    "excluded_auxiliary_root": ".github",
+    "file_count": 7326,
+    "roots": [
+      "Cargo.toml",
+      "Cargo.lock",
+      "rust-toolchain.toml",
+      ".cargo",
+      "crates",
+      "tests",
+      "scripts"
+    ]
+  },
+  "source_manifest_sha256": "cabf65e530fe229976109311dbdedc7fb2f0d633038437bcb3b757870aaaae9b",
+  "status": "ACCEPTED"
+}

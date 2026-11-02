@@ -1,0 +1,11 @@
+{
+  "case": "N01",
+  "cut": "A_CREATE_ACK_T",
+  "elf_sha256": "4dccbe39b6bc0189f88444dd7a62b8b1a32170d9c6d9205530f583f0a22ba24c",
+  "input_sha256": "f6e0dd554a91931cc8e048e775a666dacd777f0c1c3285abed6773ec15f21eeb",
+  "kind": "AckObserved",
+  "lsn": 9,
+  "phase": "produce",
+  "pid": "39776",
+  "source_sha256": "66dff4fb63365a95770a21888d2510118580676e312874891c15b79d28ae9a99"
+}

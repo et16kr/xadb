@@ -1,0 +1,12 @@
+{
+  "scope": "new checked operation loan and private authority only; compiler probes, no product test execution",
+  "base_read_sha256": "bca860fb340d19e714e6d672fc90204450f316d6f53ea9b0c0cfc8ec8bdcbbe6",
+  "cases": {
+    "consume-before-close": null,
+    "close-before-copy-use": "E0505",
+    "operation-reborrow-before-copy-use": "E0499",
+    "raw-candidate": "E0451",
+    "raw-table-issuer": "E0624",
+    "production-legacy-unavailable": "E0599"
+  }
+}

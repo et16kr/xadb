@@ -1,0 +1,9 @@
+
+running 1 test
+test storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::resident_read::two_resident_operations_hold_separate_fixed_charges ... CATALOG_MEMORY_CONTEXT	C2_RESIDENT03	ccec937f2ec1ad2ab12789a7ca1c0db8991ae1b82819a5cdd66c93472fdac705	4dccbe39b6bc0189f88444dd7a62b8b1a32170d9c6d9205530f583f0a22ba24c	f6e0dd554a91931cc8e048e775a666dacd777f0c1c3285abed6773ec15f21eeb	f6e0dd554a91931cc8e048e775a666dacd777f0c1c3285abed6773ec15f21eeb	4bf20c59207890d66b5b51d06d7778a478f1226e26ce38b7cc803856fbe12181
+CATALOG_MEMORY_BEGIN	C2_RESIDENT03
+CATALOG_MEMORY_PASS	C2_RESIDENT03
+ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 2007 filtered out; finished in 0.13s
+

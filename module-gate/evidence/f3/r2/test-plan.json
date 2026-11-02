@@ -1,0 +1,14 @@
+{
+  "reason": "F3 changed operation, statement and scope carriers; fixed envelope and new lower product contract",
+  "cases": [
+    "storage::catalog::read::tests::product_carriers_fit_the_lower_fixed_budget",
+    "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::read::statement::tests::own_catalog_observations_fit_full_resident_and_original_limits",
+    "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::read::statement::tests::statement_validation_and_result_carriers_fit_fixed_classes",
+    "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::read::statement::tests::finish_table_carriers_leave_both_fixed_classes_unchanged",
+    "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::read::statement::tests::found_non_table_definition_is_unsupported_before_issue",
+    "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::read::scope::tests::admitted_validation_is_inside_both_fixed_source_classes",
+    "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::read::scope::tests::compact_call_counts_whole_return_and_consuming_pair"
+  ],
+  "binary_sha256": "b3e666cc9a2f64367490bdaf8a021071f6338083ed41b3195d82eed882fc5774",
+  "timeout_seconds_per_case": 60
+}

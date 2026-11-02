@@ -409,6 +409,26 @@
    "deny": []
   },
   {
+   "id": "catalog_call",
+   "kind": "common",
+   "title": "C Catalog call admission, checked read and table issuance",
+   "contract": "contracts/dev3-module-boundaries.md#catalog-call-owner",
+   "files": [
+    "crates/engine/src/storage/wal_io/plan4_retention/read/scope.rs",
+    "crates/engine/src/storage/wal_io/plan4_retention/read/operation.rs",
+    "crates/engine/src/storage/wal_io/plan4_retention/read/statement.rs"
+   ],
+   "logical": [
+    "crate::storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::apply::read::scope",
+    "crate::storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::apply::read::operation",
+    "crate::storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::apply::read::statement",
+    "crate::storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::read::scope",
+    "crate::storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::read::operation",
+    "crate::storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::read::statement"
+   ],
+   "deny": []
+  },
+  {
    "id": "C",
    "kind": "common",
    "title": "remaining storage (C owner, legacy tree)",
@@ -509,64 +529,6 @@
  },
  "records": "module-gate/records/*.json",
  "exceptions": [
-  {
-   "id": "EX01",
-   "source": "crates/engine/src/storage/wal_io/plan4_retention/read.rs",
-   "target": "CAT",
-   "scope": "production",
-   "contract": "contracts/dev3-module-boundaries.md#target-imports",
-   "reason": "The C lookup wrapper still delegates to the moved Catalog product body (section 4.2 current->target: lookup_catalog -> storage::catalog::read::lookup); the C1 port call direction is not supplied yet. The edge is a pub(crate) re-export, so under the re-exporter rule any module allowed to reach C can name CatalogLookupStep through plan4_retention::read without a finding of its own.",
-   "owner": "C",
-   "review_when": "when the Catalog read path consumes ReadPort instead of being called from plan4_retention::read",
-   "paths": [
-    "crate::storage::catalog::read::CatalogLookupStep"
-   ],
-   "baseline": "da435fd6a3c9085320c297b8e8229ec5f38f28f4"
-  },
-  {
-   "id": "EX02",
-   "source": "crates/engine/src/storage/wal_io/plan4_retention/read/lookup.rs",
-   "target": "CAT",
-   "scope": "production",
-   "contract": "contracts/dev3-module-boundaries.md#target-imports",
-   "reason": "Same delegation as EX01 (lookup, CatalogLookupStep, source_bytes).",
-   "owner": "C",
-   "review_when": "with EX01",
-   "paths": [
-    "crate::storage::catalog::read::CatalogLookupStep",
-    "crate::storage::catalog::read::lookup",
-    "crate::storage::catalog::read::source_bytes"
-   ],
-   "baseline": "da435fd6a3c9085320c297b8e8229ec5f38f28f4"
-  },
-  {
-   "id": "EX03",
-   "source": "crates/engine/src/storage/wal_io/plan4_retention/read/scope.rs",
-   "target": "CAT",
-   "scope": "production",
-   "contract": "contracts/dev3-module-boundaries.md#target-imports",
-   "reason": "Same delegation as EX01.",
-   "owner": "C",
-   "review_when": "with EX01",
-   "paths": [
-    "crate::storage::catalog::read::lookup"
-   ],
-   "baseline": "da435fd6a3c9085320c297b8e8229ec5f38f28f4"
-  },
-  {
-   "id": "EX04",
-   "source": "crates/engine/src/storage/wal_io/plan4_retention/read/statement.rs",
-   "target": "CAT",
-   "scope": "production",
-   "contract": "contracts/dev3-module-boundaries.md#target-imports",
-   "reason": "Same delegation as EX01.",
-   "owner": "C",
-   "review_when": "with EX01",
-   "paths": [
-    "crate::storage::catalog::read::lookup"
-   ],
-   "baseline": "da435fd6a3c9085320c297b8e8229ec5f38f28f4"
-  },
   {
    "id": "EX05",
    "source": "crates/engine/src/storage/wal_io/plan4_apply/row/rollback_census_tests.rs",

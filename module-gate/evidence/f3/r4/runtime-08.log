@@ -1,0 +1,24 @@
+
+running 1 test
+test storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::call_scope::returned_missing_scope_blocks_original_drain ... CATALOG_MEMORY_CONTEXT	C2_SCOPE02	67826fa28d38116145214aa332f4c596846e97570f7dbbf4cd124a4a1c6e93ca	78d4d072e9ca99df6d2a57cae94f5d485a155b16a638905bb8d68c87f5e7af93	f6e0dd554a91931cc8e048e775a666dacd777f0c1c3285abed6773ec15f21eeb	f6e0dd554a91931cc8e048e775a666dacd777f0c1c3285abed6773ec15f21eeb	4bf20c59207890d66b5b51d06d7778a478f1226e26ce38b7cc803856fbe12181
+CATALOG_MEMORY_BEGIN	C2_SCOPE02
+
+thread '<unnamed>' (29505) panicked at crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/call_scope.rs:347:90:
+called `Result::unwrap()` on an `Err` value: CatalogCallError(Source(SourceFailure { cause: Capacity, effect: Unchanged }))
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+thread '<unnamed>' (29506) panicked at crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/call_scope.rs:384:52:
+called `Result::unwrap()` on an `Err` value: Disconnected
+
+thread 'storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::call_scope::returned_missing_scope_blocks_original_drain' (29504) panicked at crates/engine/src/transaction/concurrency/test_support.rs:87:14:
+bounded Catalog release: Disconnected
+CATALOG_MEMORY_FAIL	C2_SCOPE02
+FAILED
+
+failures:
+
+failures:
+    storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::call_scope::returned_missing_scope_blocks_original_drain
+
+test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 2007 filtered out; finished in 0.19s
+

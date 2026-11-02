@@ -1,0 +1,7 @@
+
+running 1 test
+test storage::catalog::read::tests::product_carriers_fit_the_lower_fixed_budget ... CATALOG_PRODUCT_SOURCE actual=2042 bound=2042 step=328 result=328
+ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 2007 filtered out; finished in 0.00s
+

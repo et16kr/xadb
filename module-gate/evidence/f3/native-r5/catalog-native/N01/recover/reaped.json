@@ -1,0 +1,27 @@
+{
+  "base": {
+    "base_sha256": "fc296d64ff3d2b4b594ee0e6a0c49fad3d9bb19e2b16e6acb35d71edd6ea1943",
+    "capture": 9,
+    "current_sha256": "29f6537be08e8ce59a9201ae910fa826645c4b4f19c07635bad312db665376e4",
+    "epoch": 2
+  },
+  "command": [
+    "/home/et16/.codex/worktrees/module-followup-f3/native-r5/xadb-engine-tests",
+    "--exact",
+    "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_create::catalog_create_native_worker",
+    "--ignored",
+    "--nocapture",
+    "--test-threads=1"
+  ],
+  "cut": "A_CREATE_ACK_U",
+  "cut_resources": {
+    "fd_peak": 6,
+    "handles": 1,
+    "peak": 3
+  },
+  "exit_code": -9,
+  "externally_killed": true,
+  "lsn": 19,
+  "phase": "recover",
+  "pid": 36063
+}

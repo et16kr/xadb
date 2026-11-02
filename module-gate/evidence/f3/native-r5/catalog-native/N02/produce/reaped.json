@@ -1,0 +1,21 @@
+{
+  "command": [
+    "/home/et16/.codex/worktrees/module-followup-f3/native-r5/xadb-engine-tests",
+    "--exact",
+    "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_create::catalog_create_native_worker",
+    "--ignored",
+    "--nocapture",
+    "--test-threads=1"
+  ],
+  "cut": "A_CREATE_BEFORE_CATALOG_HOME",
+  "cut_resources": {
+    "fd_peak": 6,
+    "handles": 2,
+    "peak": 3
+  },
+  "exit_code": -9,
+  "externally_killed": true,
+  "lsn": 8,
+  "phase": "produce",
+  "pid": 36070
+}

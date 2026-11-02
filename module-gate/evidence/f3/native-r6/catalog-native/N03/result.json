@@ -1,0 +1,56 @@
+{
+  "admission_sha256": "4cf89993add09dec482a8a360c08a10468f7e5a5e6fd65c4d8b62c634ca76ad6",
+  "case": "N03",
+  "controller": "f697828781df43bafa7bcf4ea47e19b83946b89ce53017ac04f98c99cf664160",
+  "elf": "4dccbe39b6bc0189f88444dd7a62b8b1a32170d9c6d9205530f583f0a22ba24c",
+  "free_bytes_after": 140810657792,
+  "input": "f6e0dd554a91931cc8e048e775a666dacd777f0c1c3285abed6773ec15f21eeb",
+  "seconds": 2.836289525999973,
+  "source": "66dff4fb63365a95770a21888d2510118580676e312874891c15b79d28ae9a99",
+  "status": "PASS",
+  "workers": [
+    {
+      "command": [
+        "/home/et16/.codex/worktrees/module-followup-f3/native-controller-r6/run/xadb-engine-tests",
+        "--exact",
+        "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_create::catalog_create_native_worker",
+        "--ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "cut": "A_CREATE_UNKNOWN_AFTER_SYNC",
+      "cut_resources": {
+        "fd_peak": 6,
+        "handles": 1,
+        "peak": 3
+      },
+      "exit_code": -9,
+      "externally_killed": true,
+      "lsn": 9,
+      "phase": "produce",
+      "pid": 39796
+    },
+    {
+      "base": {
+        "base_sha256": "fc296d64ff3d2b4b594ee0e6a0c49fad3d9bb19e2b16e6acb35d71edd6ea1943",
+        "capture": 9,
+        "current_sha256": "29f6537be08e8ce59a9201ae910fa826645c4b4f19c07635bad312db665376e4",
+        "epoch": 2
+      },
+      "command": [
+        "/home/et16/.codex/worktrees/module-followup-f3/native-controller-r6/run/xadb-engine-tests",
+        "--exact",
+        "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_create::catalog_create_native_worker",
+        "--ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "cut": null,
+      "exit_code": 0,
+      "externally_killed": false,
+      "lsn": 15,
+      "phase": "recover",
+      "pid": 39798
+    }
+  ]
+}

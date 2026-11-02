@@ -13,6 +13,7 @@ from pathlib import Path
 import resource
 import shutil
 import signal
+import stat
 import subprocess
 import time
 
@@ -55,12 +56,21 @@ def number(raw, at, width=8):
     return int.from_bytes(raw[at:at + width], 'little')
 
 
-def size(root):
+def size(root, *, transient=None):
     total = 0
     for path in root.rglob('*'):
-        require(not path.is_symlink(), 'symlink in owned run')
-        if path.is_file():
-            total += path.stat().st_size
+        try:
+            metadata = path.lstat()
+        except FileNotFoundError:
+            # A running worker publishes/unlinks names in its live database.
+            # Only that subtree may disappear between enumeration and lstat;
+            # immutable logs/snapshots and every post-reap audit stay strict.
+            if transient is not None and path.is_relative_to(transient):
+                continue
+            raise
+        require(not stat.S_ISLNK(metadata.st_mode), 'symlink in owned run')
+        if stat.S_ISREG(metadata.st_mode):
+            total += metadata.st_size
     return total
 
 
@@ -381,14 +391,15 @@ def verify_source(source, manifest):
         require(path.stat().st_size == spec['bytes'] and sha(path) == spec['sha256'], 'source member drift')
 
 
-def enforce_bounds(output, aggregate, reserve=0):
+def enforce_bounds(output, aggregate, reserve=0, *, running=False):
     logs = [p for name in ('stdout.log', 'stderr.log') for p in output.glob('*/' + name)]
     require(sum(p.stat().st_size for p in logs) <= BUDGET['output_bytes'], 'cumulative output bound')
     require(all(p.stat().st_size <= BUDGET['trace_bytes'] for p in output.glob('*/effects.tsv')), 'per-phase trace bound')
-    require(size(output / 'database') <= BUDGET['database_bytes'], 'live database bound')
+    transient = output / 'database' if running else None
+    require(size(output / 'database', transient=transient) <= BUDGET['database_bytes'], 'live database bound')
     snapshots = sum(size(p) for p in output.glob('*/database-snapshot'))
     require(snapshots <= BUDGET['snapshot_bytes'], 'retained snapshots bound')
-    require(size(aggregate) + reserve <= BUDGET['artifact_bytes'], 'native aggregate bound')
+    require(size(aggregate, transient=transient) + reserve <= BUDGET['artifact_bytes'], 'native aggregate bound')
     require(shutil.disk_usage(output).free >= BUDGET['free_floor_bytes'] + reserve, 'free disk floor')
     return snapshots
 
@@ -486,7 +497,7 @@ def run(revision, admission_path, aggregate, case):
                 marker = phase_dir / 'cut-reached.tsv'
                 while active.poll() is None:
                     require(time.monotonic() < deadline, 'worker chain timeout')
-                    enforce_bounds(output, aggregate)
+                    enforce_bounds(output, aggregate, running=True)
                     if marker.exists() and not killed:
                         require(cut is not None, 'unexpected normal-phase marker')
                         text = marker.read_text()
