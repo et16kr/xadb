@@ -57,10 +57,10 @@ fn held<'t, const T: usize, const N: usize>(
 impl<'a, 'c, 's> BoundVisibility<'a, 'c, 's> {
     /// The verified semantic Before of a retiring live Row group: every held
     /// original target still carries its prepared stamp under the same
-    /// version hold, and the scope/target come from the held Job (and, for
-    /// Prune, the held Status's committed Q). Prune names the head U
-    /// (`MissingPrune`, its Q), RootFree U (`UndoFree`), TerminalFinish the
-    /// actor (`TerminalFree`).
+    /// version hold, the held Job names the group's actor, and the target
+    /// comes from that Job (and, for Prune, the held Status's committed Q).
+    /// Prune names the head U (`MissingPrune`, its Q), RootFree U
+    /// (`UndoFree`), TerminalFinish the actor (`TerminalFree`).
     pub(in super::super) fn verify_row_retirement<const T: usize, const N: usize>(
         &self,
         prepared: &PreparedRowGroup<'_, 'c, 's, T>,
@@ -97,22 +97,25 @@ impl<'a, 'c, 's> BoundVisibility<'a, 'c, 's> {
         let observation = prepared.retirement_observation();
         let scope = scope(observation.operation).ok_or_else(bad)?;
         let actor = observation.actor.ok_or_else(bad)?;
+        // Every scope reads its actor (and RootFree/Prune their U) back
+        // from the held Job: the Terminal Job for TerminalFinish, the root
+        // Job otherwise.
+        let ordinal = observation.job_ordinal.ok_or_else(bad)?;
+        let namespace = crate::api::Namespace {
+            database: actor.id().database,
+            timeline: actor.id().timeline,
+        };
+        let (_, bytes) = held(prepared, targets, row_group::JOB as u8)?;
+        let page =
+            job3::decode_jobs_page(bytes, namespace, (ordinal / 15) as u8).map_err(|_| bad())?;
+        let job = job3::decode_job(page.cell(ordinal % 15).ok_or_else(bad)?, namespace)
+            .map_err(|_| bad())?;
+        if job.scope() != Some(JobScope::Row) || job.source() != Some(actor) {
+            return Err(bad());
+        }
         let (target, committed_q) = if scope == RetirementScope::TerminalFree {
             (ReferenceTarget::Transaction(actor), None)
         } else {
-            let ordinal = observation.job_ordinal.ok_or_else(bad)?;
-            let namespace = crate::api::Namespace {
-                database: actor.id().database,
-                timeline: actor.id().timeline,
-            };
-            let (_, bytes) = held(prepared, targets, row_group::JOB as u8)?;
-            let page = job3::decode_jobs_page(bytes, namespace, (ordinal / 15) as u8)
-                .map_err(|_| bad())?;
-            let job = job3::decode_job(page.cell(ordinal % 15).ok_or_else(bad)?, namespace)
-                .map_err(|_| bad())?;
-            if job.scope() != Some(JobScope::Row) || job.source() != Some(actor) {
-                return Err(bad());
-            }
             let undo = ReferenceTarget::Undo(job.undo().ok_or_else(bad)?);
             if scope == RetirementScope::MissingPrune {
                 let (at, bytes) = held(prepared, targets, row_group::STATUS as u8)?;

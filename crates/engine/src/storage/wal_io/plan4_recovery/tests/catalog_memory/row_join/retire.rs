@@ -93,31 +93,49 @@ macro_rules! put_row {
     }};
 }
 
+std::thread_local! {
+    /// The `FlushRequired` steps `retire_row` returned on this test thread.
+    static RETIRE_FLUSHES: std::cell::Cell<usize> = const { std::cell::Cell::new(0) };
+}
+
+/// One `retire_row` of the selected step with its residency victims
+/// flushed: the call's final result.
+macro_rules! retire_one {
+    ($writer:ident, $owner:ident, $private:ident, $flush:ident, $flusher:ident, $ordinal:expr, $operation:expr) => {{
+        let mut flushed = 0;
+        loop {
+            match $writer.retire_row($owner, $ordinal, $operation, $private, &mut $flush) {
+                Ok(RowRetireStep::FlushRequired(target)) => {
+                    flushed += 1;
+                    assert!(flushed < 16, "bounded cleanup residency");
+                    RETIRE_FLUSHES.with(|count| count.set(count.get() + 1));
+                    flush_target!($flush, $flusher, target);
+                }
+                Ok(RowRetireStep::Retired(observation)) => {
+                    assert_eq!(
+                        (observation.operation, observation.job_ordinal),
+                        ($operation, Some($ordinal))
+                    );
+                    break Ok(observation);
+                }
+                Err(error) => break Err(error),
+            }
+        }
+    }};
+}
+
 /// Every live Row cleanup step `row_cleanup_next` selects, each through
 /// `retire_row` with its residency victims flushed, until none is left.
 /// Returns the operations in order.
 macro_rules! retire_all {
     ($writer:ident, $owner:ident, $private:ident, $flush:ident, $flusher:ident) => {{
         let mut done = Vec::new();
-        while let Some((ordinal, operation)) = $writer.row_cleanup_next().unwrap() {
+        while let Some((ordinal, operation)) = $writer.row_cleanup_next(&[]).unwrap() {
             assert!(done.len() < 64, "bounded live cleanup");
-            let mut flushed = 0;
-            loop {
-                match $writer.retire_row($owner, ordinal, operation, $private, &mut $flush) {
-                    Ok(RowRetireStep::Retired(observation)) => {
-                        assert_eq!(
-                            (observation.operation, observation.job_ordinal),
-                            (operation, Some(ordinal))
-                        );
-                        break;
-                    }
-                    Ok(RowRetireStep::FlushRequired(target)) => {
-                        flushed += 1;
-                        assert!(flushed < 16, "bounded cleanup residency");
-                        flush_target!($flush, $flusher, target);
-                    }
-                    Err(error) => panic!("live {operation:?} of Job {ordinal}: {error:?}"),
-                }
+            if let Err(error) = retire_one!(
+                $writer, $owner, $private, $flush, $flusher, ordinal, operation
+            ) {
+                panic!("live {operation:?} of Job {ordinal}: {error:?}");
             }
             $owner.check_idle().unwrap();
             done.push(operation);
@@ -186,6 +204,27 @@ fn assert_row_jobs_free(jobs: &[[u8; 1024]; 64]) {
             job.scope() != Some(JobScope::Row) || job.state() == JobState::Free,
             "Row Job {ordinal}"
         );
+    }
+}
+
+/// C's recovery of the files reached READY: every Row Job is Free (the
+/// recovered cleanup finished what the live cleanup left). Returns Q and the
+/// count of Row-scope Job cells.
+struct Ready;
+impl AtReady for Ready {
+    type Out = (u64, usize);
+    fn at_ready<'s, 'c, W: WriterNamespace>(
+        &mut self,
+        live: &mut Live<'_, 's, 'c, '_, '_, '_, '_, '_, W>,
+        _owner: &mut Owner<'c, 's>,
+        _flusher: &mut Owner<'c, 's>,
+        _private: &mut [u8; super::super::super::super::CATALOG_PRIVATE_BYTES],
+    ) -> Self::Out {
+        assert_row_jobs_free(live.catalog_test_jobs());
+        (
+            live.catalog_test_q(),
+            row_jobs(live.catalog_test_jobs()).len(),
+        )
     }
 }
 
@@ -298,23 +337,6 @@ fn lrr01_live_cleanup_reuses_jobs_status_and_undo_beyond_32_transactions() {
                 state.lock().unwrap().images()
             }
         );
-        struct Ready;
-        impl AtReady for Ready {
-            type Out = (u64, usize);
-            fn at_ready<'s, 'c, W: WriterNamespace>(
-                &mut self,
-                live: &mut Live<'_, 's, 'c, '_, '_, '_, '_, '_, W>,
-                _owner: &mut Owner<'c, 's>,
-                _flusher: &mut Owner<'c, 's>,
-                _private: &mut [u8; super::super::super::super::CATALOG_PRIVATE_BYTES],
-            ) -> Self::Out {
-                assert_row_jobs_free(live.catalog_test_jobs());
-                (
-                    live.catalog_test_q(),
-                    row_jobs(live.catalog_test_jobs()).len(),
-                )
-            }
-        }
         let directory = clone_directory(&images);
         let reopened = std::time::Instant::now();
         let (q, cells) = reopen(&directory, &mut Ready);
@@ -370,7 +392,7 @@ fn lrr02_older_snapshot_keeps_prune_busy_until_it_ends() {
                 let old = writer.begin_statement(b, &read).unwrap();
                 let q = committed!(writer.commit_row(owner, tx, private)).q();
                 assert!(old.q().unwrap() < q);
-                let (ordinal, operation) = writer.row_cleanup_next().unwrap().unwrap();
+                let (ordinal, operation) = writer.row_cleanup_next(&[]).unwrap().unwrap();
                 assert_eq!(operation, RowCleanup::Prune);
                 let jobs = writer.catalog_test_jobs().to_vec();
                 let (wal, _) = files(state);
@@ -481,14 +503,14 @@ fn lrr03_running_actor_non_head_and_early_terminal_are_refused() {
                     }};
                 }
                 // Running: nothing to select, and the producer refuses.
-                assert_eq!(writer.row_cleanup_next().unwrap(), None);
+                assert_eq!(writer.row_cleanup_next(&[]).unwrap(), None);
                 refused!(head, RowCleanup::Prune);
                 refused!(terminal, RowCleanup::TerminalFinish);
                 refused!(head, RowCleanup::Cancel);
                 refused!(head, RowCleanup::Commit);
                 assert!(committed!(writer.commit_row(owner, tx, private)).q() == 2);
                 assert_eq!(
-                    writer.row_cleanup_next().unwrap(),
+                    writer.row_cleanup_next(&[]).unwrap(),
                     Some((head, RowCleanup::Prune))
                 );
                 refused!(behind, RowCleanup::Prune);
@@ -611,5 +633,212 @@ fn lrr04_aborted_actor_is_cleaned_and_its_status_reused() {
                 );
             }
         );
+    });
+}
+
+/// LRR-05: a Busy Prune does not hide another finished actor. A commits
+/// after an older statement snapshot, so its head Prune is Busy; B (on a
+/// second Status, its Jobs after A's) then rolls back fully. The first step
+/// is A's Prune and it is refused; with A's ordinal skipped the selection
+/// reaches B, whose whole cleanup runs (ReleaseRole ×3, RootFree,
+/// TerminalFinish) while A's Prune stays Busy, and nothing else is left.
+/// After the snapshot ends A's cleanup runs.
+#[test]
+fn lrr05_busy_prune_does_not_hide_another_finished_actor() {
+    case("LRR-05", || {
+        let oracle = Oracle::new();
+        with_fresh!(
+            oracle,
+            frames = 16,
+            |live, owner, flusher, status, undo, private, reader_private, core, fence, state| {
+                let (row_status, _) =
+                    create_table(live, owner, flusher, status, undo, private, true);
+                let second = system_init(live, owner, flusher, false);
+                system_init(live, owner, flusher, true);
+                let (mut writer, reader, mut flush) = live.split();
+                let mut b_owner = core.try_owner(OwnerRole::Foreground).unwrap();
+                let b = &mut b_owner;
+                let a = writer
+                    .begin_row_transaction(
+                        owner,
+                        IsolationLevel::Serializable,
+                        &row_status,
+                        private,
+                        &mut flush,
+                    )
+                    .unwrap();
+                let view = writer.begin_statement(owner, &a).unwrap();
+                let table = issue_table!(reader, owner, view, reader_private, flush, flusher);
+                put_row!(writer, owner, view, table, private, flush, flusher, 7);
+                assert!(writer.finish_statement(owner, view).is_ok());
+                let read = writer
+                    .begin_transaction(
+                        b,
+                        TransactionOptions {
+                            read_only: true,
+                            isolation: IsolationLevel::ReadCommitted,
+                        },
+                        reader_private,
+                    )
+                    .unwrap();
+                let old = writer.begin_statement(b, &read).unwrap();
+                assert_eq!(committed!(writer.commit_row(owner, a, private)).q(), 2);
+                let tx = writer
+                    .begin_row_transaction(
+                        owner,
+                        IsolationLevel::Serializable,
+                        &second,
+                        private,
+                        &mut flush,
+                    )
+                    .unwrap();
+                let view = writer.begin_statement(owner, &tx).unwrap();
+                let table = issue_table!(reader, owner, view, reader_private, flush, flusher);
+                put_row!(writer, owner, view, table, private, flush, flusher, 8);
+                assert!(writer.finish_statement(owner, view).is_ok());
+                {
+                    let mut rollback = writer
+                        .start_row_rollback(
+                            owner,
+                            &tx,
+                            None,
+                            RollbackScope::Transaction,
+                            private,
+                            &mut flush,
+                            flusher,
+                        )
+                        .unwrap();
+                    loop {
+                        let target = match rollback.next().unwrap() {
+                            RollbackStep::Candidate(mut task) => {
+                                let proposal = produce_clr(task.producer_lane().unwrap()).unwrap();
+                                let prepared = applied!(task.prepare(proposal));
+                                assert_eq!(
+                                    applied!(prepared.apply()).operation(),
+                                    RowOperation::Clr
+                                );
+                                None
+                            }
+                            RollbackStep::FlushRequired { target } => Some(target),
+                            RollbackStep::Complete => break,
+                        };
+                        if let Some(target) = target {
+                            rollback.flush(&target).unwrap();
+                        }
+                    }
+                    applied!(rollback.finish());
+                }
+                assert!(writer.finish_aborted(owner, tx).is_ok());
+                let (held, operation) = writer.row_cleanup_next(&[]).unwrap().unwrap();
+                assert_eq!(operation, RowCleanup::Prune);
+                let jobs = writer.catalog_test_jobs().to_vec();
+                let (wal, _) = files(state);
+                match retire_one!(writer, owner, private, flush, flusher, held, operation) {
+                    Err(error) => assert!(busy(&error), "{error:?}"),
+                    Ok(observation) => panic!("Prune beside an older snapshot: {observation:?}"),
+                }
+                assert_eq!(files(state).0, wal, "a refused retirement stages nothing");
+                assert_eq!(writer.catalog_test_jobs().to_vec(), jobs);
+                owner.check_idle().unwrap();
+                let mut other = Vec::new();
+                while let Some((ordinal, operation)) = writer.row_cleanup_next(&[held]).unwrap() {
+                    assert!(other.len() < 8, "bounded live cleanup");
+                    assert!(ordinal > held, "B's Jobs follow A's");
+                    if let Err(error) =
+                        retire_one!(writer, owner, private, flush, flusher, ordinal, operation)
+                    {
+                        panic!("live {operation:?} of Job {ordinal}: {error:?}");
+                    }
+                    owner.check_idle().unwrap();
+                    other.push(operation);
+                }
+                assert_eq!(other, COMMITTED[1..]);
+                assert_eq!(
+                    writer.row_cleanup_next(&[]).unwrap(),
+                    Some((held, RowCleanup::Prune))
+                );
+                match retire_one!(writer, owner, private, flush, flusher, held, operation) {
+                    Err(error) => assert!(busy(&error), "{error:?}"),
+                    Ok(observation) => panic!("Prune beside an older snapshot: {observation:?}"),
+                }
+                assert!(writer.finish_statement(b, old).is_ok());
+                assert!(writer.finish_read_only(b, read).is_ok());
+                assert_eq!(
+                    retire_all!(writer, owner, private, flush, flusher),
+                    COMMITTED
+                );
+                assert_row_jobs_free(writer.catalog_test_jobs());
+                assert!(!fence.is_fenced());
+                println!("LRR_05 busy_prune_skipped other_cleanup={other:?} then={COMMITTED:?}");
+            }
+        );
+    });
+}
+
+/// LRR-06: the live cleanup stops after Prune and one ReleaseRole (each
+/// durable). C's recovery of those files finishes the remaining
+/// ReleaseRole ×2, RootFree and TerminalFinish and reaches READY at the same
+/// Q with no Row Job held. The count of `FlushRequired` steps is printed:
+/// the setup needs more than ten frames, and from eleven up the cleanup's
+/// residency has not needed a victim, so that branch stays unexercised.
+#[test]
+fn lrr06_recovery_finishes_a_partial_live_cleanup() {
+    case("LRR-06", || {
+        let oracle = Oracle::new();
+        RETIRE_FLUSHES.with(|count| count.set(0));
+        let images = with_fresh!(
+            oracle,
+            frames = 12,
+            |live, owner, flusher, status, undo, private, reader_private, core, fence, state| {
+                let _ = core;
+                let (row_status, _) =
+                    create_table(live, owner, flusher, status, undo, private, true);
+                let (mut writer, reader, mut flush) = live.split();
+                let tx = writer
+                    .begin_row_transaction(
+                        owner,
+                        IsolationLevel::Serializable,
+                        &row_status,
+                        private,
+                        &mut flush,
+                    )
+                    .unwrap();
+                let view = writer.begin_statement(owner, &tx).unwrap();
+                let table = issue_table!(reader, owner, view, reader_private, flush, flusher);
+                put_row!(writer, owner, view, table, private, flush, flusher, 7);
+                assert!(writer.finish_statement(owner, view).is_ok());
+                assert_eq!(committed!(writer.commit_row(owner, tx, private)).q(), 2);
+                let mut done = Vec::new();
+                for _ in 0..2 {
+                    let (ordinal, operation) = writer.row_cleanup_next(&[]).unwrap().unwrap();
+                    if let Err(error) =
+                        retire_one!(writer, owner, private, flush, flusher, ordinal, operation)
+                    {
+                        panic!("live {operation:?} of Job {ordinal}: {error:?}");
+                    }
+                    done.push(operation);
+                }
+                assert_eq!(done, COMMITTED[..2]);
+                let cursors: Vec<_> = row_jobs(writer.catalog_test_jobs())
+                    .into_iter()
+                    .filter(|(_, state, _, _)| *state != JobState::Free)
+                    .map(|(_, state, cursor, _)| (state, cursor))
+                    .collect();
+                assert!(
+                    cursors.contains(&(JobState::RootReleasingCommitted, 1)),
+                    "{cursors:?}"
+                );
+                assert!(!fence.is_fenced());
+                println!(
+                    "LRR_06 live={done:?} held={cursors:?} flushes={}",
+                    RETIRE_FLUSHES.with(|count| count.get())
+                );
+                state.lock().unwrap().images()
+            }
+        );
+        let directory = clone_directory(&images);
+        let (q, cells) = reopen(&directory, &mut Ready);
+        assert_eq!(q, 2);
+        println!("LRR_06 reopen ready_q={q} row_cells={cells} ROW_JOBS_FREE");
     });
 }

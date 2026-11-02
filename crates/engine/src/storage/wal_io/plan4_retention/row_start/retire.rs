@@ -128,15 +128,21 @@ fn visibility_error(error: visibility::VisibilityError) -> RetentionError {
 impl<'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
     RetentionWriter<'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W>
 {
-    /// The next live Row cleanup step, or None. Only a finished actor (its
-    /// Terminal Job TerminalReady) is selected, in the recovered selection's
-    /// order: the head RootRetained root of a committed actor (Prune), a
-    /// releasing root (ReleaseRole until its cursor is 3, then RootFree),
-    /// and last a TerminalReady Job whose actor has no root left
-    /// (TerminalFinish). Reads the control Jobs only; the producer checks
-    /// every precondition again under the canonical replay proof.
+    /// The next live Row cleanup step outside `skip`, or None. Only a
+    /// finished actor (its Terminal Job TerminalReady) is selected, first
+    /// match by Job ordinal, with the recovered selection's per-root order:
+    /// the head RootRetained root of a committed actor (Prune), a releasing
+    /// root (ReleaseRole until its cursor is 3, then RootFree), and only
+    /// when no root step is left, a TerminalReady Job whose actor has no
+    /// root (TerminalFinish). A caller passes the ordinals whose step was
+    /// just refused `Visibility(Busy)` (a Prune beside an older snapshot) in
+    /// `skip`, so one held actor does not hide the others. Reads the control
+    /// Jobs only; the producer checks every precondition again under the
+    /// canonical replay proof. Two TerminalReady Jobs of one actor or two
+    /// head roots are an invariant breach (Fatal), as in recovery.
     pub(in crate::storage) fn row_cleanup_next(
         &self,
+        skip: &[usize],
     ) -> Result<Option<(usize, row_semantic::Operation)>> {
         let storage = self.storage;
         let namespace = storage.profile().spec().namespace;
@@ -160,12 +166,19 @@ impl<'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
                     && job.state() == job3::JobState::TerminalReady
                     && found.replace(job.outcome()).is_some()
                 {
-                    return Err(unchanged(RetentionPhase::Census, RetentionCause::Invariant));
+                    return Err(fatal(
+                        storage,
+                        RetentionPhase::Census,
+                        RetentionCause::Invariant,
+                    ));
                 }
             }
             Ok(found)
         };
         for (ordinal, bytes) in jobs.iter().enumerate() {
+            if skip.contains(&ordinal) {
+                continue;
+            }
             let job = decode(bytes)?;
             if job.scope() != Some(JobScope::Row) {
                 continue;
@@ -178,15 +191,25 @@ impl<'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
                     if finished(actor)? != Some(1) {
                         continue;
                     }
-                    let head = jobs.iter().try_fold(true, |head, bytes| {
+                    let mut head = true;
+                    for (at, bytes) in jobs.iter().enumerate() {
                         let peer = decode(bytes)?;
-                        Ok::<_, RetentionError>(
-                            head && !(peer.scope() == Some(JobScope::Row)
-                                && peer.source() == Some(actor)
-                                && peer.state() == job3::JobState::RootRetained
-                                && peer.undo_sequence() > job.undo_sequence()),
-                        )
-                    })?;
+                        if at == ordinal
+                            || peer.scope() != Some(JobScope::Row)
+                            || peer.source() != Some(actor)
+                            || peer.state() != job3::JobState::RootRetained
+                        {
+                            continue;
+                        }
+                        if peer.undo_sequence() == job.undo_sequence() {
+                            return Err(fatal(
+                                storage,
+                                RetentionPhase::Census,
+                                RetentionCause::Invariant,
+                            ));
+                        }
+                        head &= peer.undo_sequence() < job.undo_sequence();
+                    }
                     if !head {
                         continue;
                     }
@@ -208,6 +231,9 @@ impl<'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
             return Ok(Some((ordinal, operation)));
         }
         for (ordinal, bytes) in jobs.iter().enumerate() {
+            if skip.contains(&ordinal) {
+                continue;
+            }
             let job = decode(bytes)?;
             if job.scope() != Some(JobScope::Row) || job.state() != job3::JobState::TerminalReady {
                 continue;
@@ -259,19 +285,35 @@ impl<'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
             if let Some(target) = writer.row_cleanup_resident(owner, ordinal, operation, private)? {
                 return Ok(RowRetireStep::FlushRequired(target));
             }
-            let prepared = writer
-                .catalog_preparation()
-                .prepare_row_recovery(owner, ordinal, operation, private)?;
-            let observation = prepared.payload.observation;
-            if prepared.release_role() {
-                writer
-                    .catalog_application()
-                    .apply_existing(owner, ExistingGroup::RowRelease(&prepared))?;
-            } else {
-                writer.apply_row_retirement(owner, &prepared)?;
-            }
-            Ok(RowRetireStep::Retired(observation))
+            writer
+                .retire_resident(owner, ordinal, operation, private)
+                .map(RowRetireStep::Retired)
         })
+    }
+
+    /// The preparation and install of one resident live Row cleanup group,
+    /// in its own frame: the prepared group and its carriers do not exist
+    /// during the residency, so the census counts them only beside the
+    /// preparation and the install.
+    #[inline(never)]
+    fn retire_resident(
+        &mut self,
+        owner: &mut Owner<'c, 's>,
+        ordinal: usize,
+        operation: row_semantic::Operation,
+        private: &mut [u8; PRIVATE_BYTES],
+    ) -> Result<row_group::Observation> {
+        let prepared = self
+            .catalog_preparation()
+            .prepare_row_recovery(owner, ordinal, operation, private)?;
+        let observation = prepared.payload.observation;
+        if prepared.release_role() {
+            self.catalog_application()
+                .apply_existing(owner, ExistingGroup::RowRelease(&prepared))?;
+        } else {
+            self.apply_row_retirement(owner, &prepared)?;
+        }
+        Ok(observation)
     }
 
     /// The open session: only the live facade has an active epoch lane. The
@@ -537,17 +579,20 @@ pub(in super::super::super) fn caller_source_bytes() -> usize {
         + 3 * size_of::<Result<RowRetireStep>>()
 }
 
-/// What the shell's body holds from the preparation's return to the end of
-/// the install: the prepared group, its Result slot, the Observation copy
-/// and the install's group argument. The preparation's own arrays and
-/// return carriers are in the Row group terms.
+/// What `retire_resident` holds from the preparation's return to the end
+/// of the install: the prepared group, its Result slot, the Observation copy
+/// and its Result, the install's group argument and the frame's arguments.
+/// The preparation's own arrays and return carriers are in the Row group
+/// terms.
 pub(in super::super::super) fn carrier_source_bytes() -> usize {
     use std::mem::size_of;
     size_of::<PreparedRowGroup<'_, '_, '_, ROW_WRITE_TARGETS>>()
         + 2 * size_of::<Result<PreparedRowGroup<'_, '_, '_, ROW_WRITE_TARGETS>>>()
         + size_of::<row_group::Observation>()
+        + size_of::<Result<row_group::Observation>>()
         + size_of::<ExistingGroup<'_, '_, '_, '_>>()
-        + size_of::<&()>()
+        + 2 * size_of::<usize>()
+        + 4 * size_of::<&()>()
 }
 
 /// One residency pass: the selected request array and its Result, the

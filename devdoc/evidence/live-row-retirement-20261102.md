@@ -15,14 +15,14 @@
 
 | 경로 | 변경 |
 | --- | --- |
-| `plan4_retention/row_start/retire.rs`(새 파일) | `row_cleanup_next`(다음 정리 단계 선택), `retire_row`(한 그룹), target 집합 residency, retirement 설치 `apply_row_retirement_n`, 봉인 receipt 셋, 자원 census 함수 |
+| `plan4_retention/row_start/retire.rs`(새 파일) | `row_cleanup_next(skip)`(다음 정리 단계 선택), `retire_row`(한 그룹)와 준비·설치 frame `retire_resident`, target 집합 residency, retirement 설치 `apply_row_retirement_n`, 봉인 receipt 셋, 자원 census 함수 |
 | `plan4_retention/visibility/row_retirement.rs`(새 파일) | 잡은 Job·Status에서 scope·target을 읽는 `verify_row_retirement`, 표지 검사, stage·apply receipt, stage 거절 때 표지 되돌림 |
 | `plan4_retention/row_start/recovery.rs` | `prepare_row_recovery`를 live에서도 부르게 열고, 한 그룹의 target 요청을 주는 `row_cleanup_requests` 추가 |
 | `plan4_retention/catalog_lifecycle.rs` | `ExistingGroup::RowRelease`(live ReleaseRole) |
 | `plan4_retention/catalog_live.rs`, `plan4_apply/source.rs` | live 정리 본문 `row_retirement`의 계산과 `CatalogProgressCharge` 안 확인 |
 | `dirty_frame/retirement.rs` | `reject_row_stage` |
 | `wal_io.rs` 등 재노출 6개 파일, `plan4_apply.rs` | `RowRetirementRejected`·`RowRetireStep` 재노출(crate 안) |
-| 시험 `catalog_memory/row_retire.rs`(새 파일), `catalog_memory.rs` | LRR-01–04. `with_fresh!`에 선택 인자 `file_bytes`(기본 32 MiB 그대로) |
+| 시험 `catalog_memory/row_join/retire.rs`(새 파일), `row_join.rs`, `catalog_memory.rs` | LRR-01–06. A의 INSERT와 B의 읽기를 함께 쓰므로 C+A+B 합류(JOIN) 시험 아래에 두었다(C 시험은 A·B를 쓸 수 없다). `with_fresh!`에 선택 인자 `file_bytes`(기본 32 MiB 그대로) |
 | `plan4_apply/source_tests.rs` | census 시험 하나 |
 
 제품 동작 변경은 새 입구뿐이다. 기존 입구(commit, rollback, 복구 정리)는 바뀌지 않았고 새 입구를 부르지 않는다.
@@ -30,17 +30,19 @@
 <a id="lrr-tests"></a>
 ## 3. 선택 시험과 결과
 
-AGENTS.md 규칙대로 바뀐 코드의 시험만 돌렸다. debug build, `--test-threads=1`, `RUST_MIN_STACK=33554432`, catalog identity 환경값 셋을 주었다.
+AGENTS.md 규칙대로 바뀐 코드의 시험만 돌렸다. debug build, `--test-threads=1`, `RUST_MIN_STACK=33554432`, catalog identity 환경값 셋을 주었다. LRR 사례의 libtest 경로 prefix는 `storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::`, census 사례는 `storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::source::tests::`이다.
 
 | 사례 | 확인하는 것 | 결과 |
 | --- | --- | --- |
-| LRR-01 `lrr01_live_cleanup_reuses_jobs_status_and_undo_beyond_32_transactions` | 같은 Status에서 한 행 거래 33개를 차례로 commit하고, 각 거래 뒤 정리 순서가 Prune, ReleaseRole 3번, RootFree, TerminalFinish이며 Row Job이 모두 Free가 된다. 끝에 새 read-only statement가 33행을 값까지 읽고(Q 34), 파일을 다시 열면 같은 Q 34에서 READY이고 남은 Row Job이 없다 | LRR01_RESULT |
-| LRR-02 `lrr02_older_snapshot_keeps_prune_busy_until_it_ends` | commit 전에 잡은 statement snapshot이 살아 있는 동안 Prune은 `Visibility(Busy)`(Unchanged)이고 WAL·Job·fence가 바뀌지 않는다. 그 statement가 끝나면 정리 전체가 돌고, 새 statement가 행을 읽는다 | PASS (2.85 s) |
-| LRR-03 `lrr03_running_actor_non_head_and_early_terminal_are_refused` | 두 행을 넣고 아직 실행 중인 actor는 선택되지 않고, 그 root의 Prune, Terminal의 TerminalFinish, 정리가 아닌 Cancel·Commit의 직접 호출이 거절된다. commit 뒤에는 head가 아닌 root의 Prune, root가 남은 TerminalFinish, Prune 전 RootFree가 거절된다. 거절 7개 모두 Unchanged이고 WAL·Job·fence가 그대로다. 그 뒤 정리는 head Prune이 먼저이고 Prune 2, ReleaseRole 6, RootFree 2, TerminalFinish 1로 끝난다 | PASS (4.86 s) |
-| LRR-04 `lrr04_aborted_actor_is_cleaned_and_its_status_reused` | rollback된 actor는 ReleaseRole 3번, RootFree, TerminalFinish로 정리되고, 같은 Status로 다음 거래가 commit된다 | PASS (4.57 s) |
-| `live_row_retirement_fits_the_progress_charge` | 본문 43,516 B ≤ charge 44,304 B(memory·native type 모두, 여유 788 B), shared+charge ≤ 65,536 | PASS |
+| LRR-01 `lrr01_live_cleanup_reuses_jobs_status_and_undo_beyond_32_transactions` | 같은 Status에서 한 행 거래 33개를 차례로 commit하고, 각 거래 뒤 정리 순서가 Prune, ReleaseRole 3번, RootFree, TerminalFinish이며 Row Job이 모두 Free가 된다. 끝에 새 read-only statement가 33행을 값까지 읽고(Q 34), 파일을 다시 열면 같은 Q 34에서 READY이고 남은 Row Job이 없다 | LRR01_FINAL |
+| LRR-02 `lrr02_older_snapshot_keeps_prune_busy_until_it_ends` | commit 전에 잡은 statement snapshot이 살아 있는 동안 Prune은 `Visibility(Busy)`(Unchanged)이고 WAL·Job·fence가 바뀌지 않는다. 그 statement가 끝나면 정리 전체가 돌고, 새 statement가 행을 읽는다 | PASS (2.68 s) |
+| LRR-03 `lrr03_running_actor_non_head_and_early_terminal_are_refused` | 두 행을 넣고 아직 실행 중인 actor는 선택되지 않고, 그 root의 Prune, Terminal의 TerminalFinish, 정리가 아닌 Cancel·Commit의 직접 호출이 거절된다. commit 뒤에는 head가 아닌 root의 Prune, root가 남은 TerminalFinish, Prune 전 RootFree가 거절된다. 거절 7개 모두 Unchanged이고 WAL·Job·fence가 그대로다. 그 뒤 정리는 head Prune이 먼저이고 Prune 2, ReleaseRole 6, RootFree 2, TerminalFinish 1로 끝난다 | PASS (4.48 s) |
+| LRR-04 `lrr04_aborted_actor_is_cleaned_and_its_status_reused` | rollback된 actor는 ReleaseRole 3번, RootFree, TerminalFinish로 정리되고, 같은 Status로 다음 거래가 commit된다 | PASS (4.79 s) |
+| LRR-05 `lrr05_busy_prune_does_not_hide_another_finished_actor` | A가 오래된 statement snapshot 뒤에 commit해 A의 Prune이 Busy다. 두 번째 Status의 B(Job이 A 뒤)는 전부 rollback한다. 첫 단계는 A의 Prune이고 거절되며 WAL·Job이 그대로다. A의 ordinal을 skip하면 B의 정리 전체(ReleaseRole 3번, RootFree, TerminalFinish)가 돌고 그 밖에는 남는 것이 없다. A의 Prune은 여전히 Busy이고, snapshot이 끝나면 A의 정리가 돈다 | PASS (5.22 s) |
+| LRR-06 `lrr06_recovery_finishes_a_partial_live_cleanup` | live 정리를 Prune과 ReleaseRole 하나 뒤에 멈춘다(root cursor 1). 그 파일을 복구하면 나머지를 끝내고 Q 2에서 READY이며 Row Job이 남지 않는다 | PASS (4.61 s) |
+| `live_row_retirement_fits_the_progress_charge` | 본문 43,852 B ≤ charge 44,304 B(memory·native type 모두, 여유 452 B), shared+charge ≤ 65,536 | PASS |
 
-LRR-01의 비용. 한 그룹마다 WAL 전체를 다시 검증하므로 거래 수의 제곱으로 는다. 같은 build에서 round 0·8·16의 누적 시간은 1.2 s·45 s·151 s, 파일 합은 23.3 MB·28.3 MB·33.4 MB(round마다 약 0.63 MB)였다. LRR01_COST frame 수 16과 64의 시간이 같아서 비용은 residency가 아니라 재검증에서 나온다. `with_fresh!`의 파일 합 상한 32 MiB와 사례 상한 30 s(기본)를 이 사례만 48 MiB, 1,200 s로 올렸다. 이것은 측정이 아니다. F6 측정은 별도 단위다.
+LRR-01의 비용(검토 반영 전 build). 한 그룹마다 WAL 전체를 다시 검증하므로 거래 수의 제곱으로 는다. 같은 build에서 round 0·8·16·24·32의 누적 시간은 1.2 s·45 s·152 s·311 s·522 s, 파일 합은 23.3 MB·28.3 MB·33.4 MB·38.4 MB·43.4 MB(round마다 약 0.63 MB)였다. 다시 열기는 4.7 s였다. 두 실행을 4 core container에서 동시에 돌렸고 일부 구간에 Clippy가 겹쳤으므로 시간은 참고값이다. frame 수 16과 64의 시간이 같아서 비용은 residency가 아니라 재검증에서 나온다. `with_fresh!`의 파일 합 상한 32 MiB와 사례 상한 30 s(기본)를 이 사례만 48 MiB, 1,200 s로 올렸다. 이것은 측정이 아니다. F6 측정은 별도 단위다.
 
 처음 실행에서 LRR-01은 33개 거래·정리·읽기를 통과한 뒤 시험 틀의 파일 합 상한(32 MiB)에서 실패했다. 제품 오류가 아니라 시험 틀의 상한이었다.
 
@@ -49,12 +51,29 @@ LRR-01의 비용. 한 그룹마다 WAL 전체를 다시 검증하므로 거래 �
 <a id="lrr-review"></a>
 ## 4. 독립 검토
 
-LRR_REVIEW
+작성은 이 thread의 Claude session(`claude-thread-session/claude-project-thread-9inq97`), 검토는 별도로 띄운 검토 agent(`claude-independent-review/live-row-retirement`)다. 검토자는 코드를 읽기만 했고 cargo를 돌리지 않았다. 원문은 [검토 기록](../../module-gate/evidence/live-row-retirement/review.md)에 있다.
+
+1차 판정은 ACCEPT(필수 0)였고 권고 4개와 NIT 7개가 나왔다. 반영한 것:
+
+| 지적 | 반영 |
+| --- | --- |
+| 1 Busy Prune 하나가 다른 actor의 정리를 가림 | `row_cleanup_next(skip)`. 거절된 ordinal을 건너뛴다. LRR-05가 확인한다 |
+| 2 residency 단계의 census 누락 가능성 | 준비·설치를 `#[inline(never)]` `retire_resident`로 분리해 residency 동안 prepared group이 없게 했다. 그 frame의 Result·인자를 census에 더해 43,516 → 43,852 B |
+| 3 호출자 몫이 거의 없음 | 계약에 남은 452 B가 호출자 몫 전부임과 자동 호출 단위의 의무를 적었다 |
+| 4(d)(e) 시험 공백 | LRR-05(두 actor, 하나 Busy), LRR-06(중간 상태 뒤 복구) 추가 |
+| 5 TerminalFinish actor를 잡은 page로 재확인하지 않음 | 모든 scope에서 잡은 Job의 scope·source를 확인한다 |
+| 8 모순 Job의 효과 | 한 actor의 TerminalReady 둘, 같은 sequence의 head root 둘을 Fatal로 |
+| 10 계약 문구 | 선택 순서(ordinal 순 첫 후보), capture Busy 범위, Fatal 예외를 고쳤다 |
+
+반영하지 않은 것: 4(a) stage Unchanged 분기와 4(c) 닫힌 facade 거절은 주입 지점이나 복구 중간 hook이 필요해 이 단위에서 시험하지 않았다. 4(b) `FlushRequired`는 LRR-06이 수를 출력하지만 11 frame 이상에서 0이고 10 frame 이하는 준비 단계가 먼저 실패해 닿지 않았다. 6(표지의 Undo target 재계산)은 intent의 target 비교가 이미 막고, 7(Job 상태 재검사)은 producer가 하므로 그대로 두었다. 9(`row_cleanup_requests`의 target 선택 중복)는 복구 경로의 `prepare_row_recovery`를 바꾸면 복구 시험까지 다시 골라야 해서 남겼다. 어긋나면 모든 호출이 Unchanged로 실패하므로 조용히 틀리지는 않는다. 11(LRR-01을 느린 단계로)은 gate가 `#[ignore]` 사례를 받지 않아 그대로 두었다.
+
+LRR_RECHECK
 
 <a id="lrr-limits"></a>
 ## 5. 남은 한계
 
-- 자동 호출이 없다. commit·rollback 뒤 호출자가 `row_cleanup_next`·`retire_row`를 불러야 한다. statement driver나 background cleaner 연결은 다음 단위다.
+- 자동 호출이 없다. commit·rollback 뒤 호출자가 `row_cleanup_next`·`retire_row`를 불러야 한다. statement driver나 background cleaner 연결은 다음 단위이고, 그 호출자의 자원 몫은 지금 452 B뿐이다.
 - 첫 Row profile의 INSERT 거래만이다. UPDATE·DELETE·index·overflow 정리, allocator의 실제 page 반환(3.03.4), checkpoint·WAL 절단은 범위 밖이다.
+- 시험이 닿지 않는 분기: stage의 Unchanged 거절(`reject_row_stage`), 정리 residency의 `FlushRequired`, 닫힌 facade에서의 거절.
 - R14 인수 사례의 PASS를 주장하지 않는다.
 - Codex가 로컬 main checkout에서 DEV3를 진행 중이므로, 병합 전에 겹치는 변경이 있는지 확인이 필요하다.
