@@ -1707,11 +1707,7 @@ class F5RealRegistryTests(unittest.TestCase):
         self.assertTrue(all(manifest.owner(r['test_file']) == r['owner']
                             for r in data['affected_contracts']))
         self.assertEqual({e['id'] for e in data['exceptions']},
-                         {f'EX{i:02}' for i in range(1, 10)})
-
-
-if __name__ == '__main__':
-    unittest.main()
+                         {f'EX{i:02}' for i in range(5, 10)})
 
 
 class F3CatalogOwnershipTests(unittest.TestCase):
@@ -1733,3 +1729,7 @@ class F3CatalogOwnershipTests(unittest.TestCase):
         self.assertTrue(gate.allowed(policy, 'CAT', 'disk', False))
         # A product may not bypass the canonical disk API for issuer internals.
         self.assertFalse(gate.allowed(policy, 'CAT', 'catalog_call', False))
+
+
+if __name__ == '__main__':
+    unittest.main()

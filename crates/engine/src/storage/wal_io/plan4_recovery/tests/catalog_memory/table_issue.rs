@@ -563,15 +563,15 @@ fn capture_without_visibility_proof_cannot_issue_a_table() {
                         drop(snapshot);
                         error
                     };
-                    assert!(matches!(error.cause, RetentionCause::Invariant));
-                    assert_eq!(error.effect, Effect::CallerMustResolve);
+                    assert!(matches!(error.cause, RetentionCause::WrongState));
+                    assert_eq!(error.effect, Effect::Unchanged);
                     assert_eq!(
                         (view.test_catalog_reads(), view.test_table_masks()),
                         (0, (0, 0))
                     );
                     assert_eq!(reader.catalog_test_references(), ((0, 0, 0), false));
                     assert_eq!(observe(core).active_read_operations, 0);
-                    assert!(fence.is_fenced());
+                    assert!(!fence.is_fenced());
                 });
             },
         );

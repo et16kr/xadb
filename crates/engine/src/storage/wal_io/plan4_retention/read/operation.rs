@@ -549,7 +549,10 @@ impl<'u, 'r, 'v, 'j, 'i, 'b, 'a, 's, 'c, 'p, 'd, 'm, 'w, W: WriterNamespace>
     }
     pub(super) fn require_found(&self, candidate: &CatalogCandidate) -> Result<()> {
         if self.visibility(candidate)? != CatalogVisibility::Found {
-            return Err(self.invariant());
+            return Err(unchanged(
+                RetentionPhase::Census,
+                RetentionCause::WrongState,
+            ));
         }
         Ok(())
     }
@@ -605,7 +608,8 @@ impl<'u, 'r, 'v, 'j, 'i, 'b, 'a, 's, 'c, 'p, 'd, 'm, 'w, W: WriterNamespace>
         self.backend
     }
     pub(super) fn statement(&self) -> Result<&RowStatementView<'r, 'r, 'a, 'c, 's>> {
-        self.statement.ok_or_else(|| self.invariant())
+        self.statement
+            .ok_or_else(|| unchanged(RetentionPhase::Census, RetentionCause::WrongState))
     }
     pub(in crate::storage) fn finish_missing(mut self) -> Result<()> {
         self.close_refs()?;
