@@ -1,27 +1,10 @@
-//! Thin forwarding of the driver traits to the actual C0 Row write types.
-//! Nothing here constructs a C value: every wrapper, lane, observation,
-//! target and error comes from the original MutationPort, Owner, statement
-//! view and transaction capsule. A writable capsule exists
-//! (`MutationPort::begin_catalog_transaction`), `begin_statement` accepts its
-//! empty actor, the Catalog statement call issues a `CheckedTable`
-//! (`finish_table`) and `MutationPort::preflight_row` runs the actual
-//! preflight. Which later Row write bodies are actual is stated by the C0
-//! boundary (`plan4_apply/row.rs`). `PreflightRow::reserve` (S2-b2), the
-//! Forward `ReservedRow::producer_lane`, `ReservedRow::prepare` and
-//! `PreparedRow::apply` (S2-c) and `ReservedRow::cancel` (S2-d) are actual: a
-//! call that reaches reserve writes a durable RowReserve, and the
-//! `ReservedRow` it returns fences the session when it is dropped while its
-//! reservation is active. A call that ends the reservation with a durable
-//! Forward apply or a Cancel discharges it and ends without the fence; a call
-//! that stops after a successful reserve without either ends fenced (the
-//! Drop). `commit_live` reaches the original durable Row Commit and capsule
-//! cleanup (S3). A body not supplied yet (the Row read source and rollback
-//! adapters) returns Unchanged `Unsupported` before any effect of its own.
-//! `insert_live` has no product caller in S2: S2-e runs the live driver from
-//! C's tests (`catalog_memory/row_live.rs`), which closes gap G2. A preflight
-//! refusal, Busy included (a LOAD claim held by another owner, a moved WAL
-//! prefix), ends the row holding nothing and is not retried; only a
-//! `FlushRequired` is flushed and the row tried again.
+//! A's product driver consumes C's sealed Row operation states and borrowed
+//! lanes. Associated next states retain the original owner, statement, loan,
+//! admission and Drop obligation; A neither constructs nor erases them.
+//! Reserve creates the durable obligation; successful apply or cancel ends
+//! it, while dropping an active reservation fences the session. Commit and
+//! rollback use their existing live C adapters. Only FlushRequired retries
+//! the row after a flush; other preflight refusals end the attempt.
 use super::{
     Boundary, CALL_SITES, CallSite, DriveError, Failure, FlushStep, Loan, PendingRollback,
     Preflight, PreflightNext, Prepared, PreparedTask, ProducerLane, Reserved, Rollback,
@@ -33,11 +16,11 @@ use super::{
 use crate::storage::{
     disk::{
         CheckedTable, MaintenancePort, MutationPort, Owner, Plan4Target, PreflightRow,
-        PreparedRollbackTask, PreparedRow, ReservedRow, RetentionError, RetentionFlushPhase,
-        RollbackScope, RollbackStep, RowCommitObservation, RowInputPlan, RowMutationObservation,
-        RowOwnedError, RowPreflightStep, RowProducerLane, RowProposal, RowRollback,
-        RowRollbackTask, RowStatementView, RowTransaction, RowValidationLane, StatementFinishError,
-        TransactionFinishError,
+        PreparedRollbackTask, RetentionError, RetentionFlushPhase, RollbackScope, RollbackStep,
+        RowCommitObservation, RowInputPlan, RowMutationObservation, RowOwnedError,
+        RowPreflightOperation, RowPreflightStep, RowPreparedOperation, RowProducerLane,
+        RowProposal, RowReservedOperation, RowRollback, RowRollbackTask, RowStatementView,
+        RowTransaction, RowValidationLane, StatementFinishError, TransactionFinishError,
     },
     row::insert::{InsertError, produce_clr, produce_insert, validate_insert},
     row_record::ValueRef,
@@ -66,56 +49,52 @@ impl ProducerLane for RowProducerLane<'_> {
     }
 }
 
-impl<'r, 't, 'v, 'i, 'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace> Preflight
-    for PreflightRow<'r, 't, 'v, 'i, 'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W>
-{
+// C owns the associated state family. A no longer repeats its borrow graph at
+// each transition; the same sealed wrappers implement the driver's private API.
+impl<P: RowPreflightOperation> Preflight for P {
     type Applied = RowMutationObservation;
     type Lane<'l>
         = RowValidationLane<'l>
     where
         Self: 'l;
-    type Reserved = ReservedRow<'r, 't, 'v, 'i, 'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W>;
+    type Reserved = P::Reserved;
     fn validation_lane(&mut self) -> Result<RowValidationLane<'_>, RetentionError> {
-        PreflightRow::validation_lane(self)
+        RowPreflightOperation::validation_lane(self)
     }
     fn reserve(self, input: RowInputPlan) -> Result<Self::Reserved, RowOwnedError<Self>> {
-        PreflightRow::reserve(self, input)
+        RowPreflightOperation::reserve(self, input)
     }
     fn finish(self) -> Result<(), RetentionError> {
-        PreflightRow::finish(self).map(|_| ())
+        RowPreflightOperation::finish(self)
     }
 }
 
-impl<'r, 't, 'v, 'i, 'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace> Reserved
-    for ReservedRow<'r, 't, 'v, 'i, 'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W>
-{
+impl<R: RowReservedOperation> Reserved for R {
     type Applied = RowMutationObservation;
     type Lane<'l>
         = RowProducerLane<'l>
     where
         Self: 'l;
-    type Prepared = PreparedRow<'r, 't, 'v, 'i, 'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W>;
+    type Prepared = R::Prepared;
     fn producer_lane(&mut self) -> Result<RowProducerLane<'_>, RetentionError> {
-        ReservedRow::producer_lane(self)
+        RowReservedOperation::producer_lane(self)
     }
     fn prepare(self, proposal: RowProposal) -> Result<Self::Prepared, RowOwnedError<Self>> {
-        ReservedRow::prepare(self, proposal)
+        RowReservedOperation::prepare(self, proposal)
     }
     fn cancel(self) -> Result<(), RowOwnedError<Self>> {
-        ReservedRow::cancel(self).map(|_| ())
+        RowReservedOperation::cancel(self)
     }
 }
 
-impl<'r, 't, 'v, 'i, 'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace> Prepared
-    for PreparedRow<'r, 't, 'v, 'i, 'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W>
-{
-    type Reserved = ReservedRow<'r, 't, 'v, 'i, 'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W>;
+impl<P: RowPreparedOperation> Prepared for P {
+    type Reserved = P::Reserved;
     type Applied = RowMutationObservation;
     fn apply(self) -> Result<RowMutationObservation, RowOwnedError<Self>> {
-        PreparedRow::apply(self).map(|applied| applied.into_parts().0)
+        RowPreparedOperation::apply(self)
     }
     fn reopen(self) -> Self::Reserved {
-        PreparedRow::reopen(self)
+        RowPreparedOperation::reopen(self)
     }
 }
 

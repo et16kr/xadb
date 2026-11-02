@@ -1,6 +1,6 @@
 # XADB 개발 문서
 
-현재 후속 작업은 [변경 경로별 정확한 CI 선택](evidence/module-independence-survey-20261026.md#scoped-test-selection)이다. F0–F3·F5-a는 병합됐고 F4 조사에서 넓은 자동 시험 선택을 확인해 선행 도구 PR을 진행한다. F4 제품 API·F5-b fixture 이동·F6은 미완료다.
+현재 후속 작업은 [F4 Row 쓰기 작업 API 첫 단위](evidence/module-independence-survey-20261026.md#f4-row-operation)다. F0–F3·F5-a와 변경 경로별 정확한 CI 선택(PR #30)은 병합됐다. Row 관련 상태 계약을 구현하며 EX05–EX07·F5-b fixture 이동·F6은 잔여다. 첫 단위의 검증 결과는 해당 PR의 source별 CI receipt를 따른다.
 
 F2 공통 변경의 최소 계약 사례 선택 구현·검증·독립 검토는 [실행 기록](evidence/module-independence-survey-20261026.md#f2-contract-selection)을 따른다. 제품 코드·fixture는 변경하지 않으며 무변경 제품 시험은 실행하지 않는다.
 
