@@ -1,0 +1,119 @@
+{
+ "schema": "XADB_MODULE_GATE_RECORD_V1",
+ "change": "DEV3 3.14.1 (first Row profile): live Row retirement. row_cleanup_next/retire_row install a finished Row actor's Prune, ReleaseRole, RootFree and TerminalFinish while the session is open, with the recovered cleanup's producer and frames, through the original retirement protocol (ReleaseRole as an existing group); census 43,924 of 44,304 B; tests LRR-01..06 under the C+A+B join tests.",
+ "rust_tests": [
+  {
+   "paths": [
+    "crates/engine/src/storage/dirty_frame/retirement.rs",
+    "crates/engine/src/storage/wal_io.rs",
+    "crates/engine/src/storage/wal_io/bootstrap.rs",
+    "crates/engine/src/storage/wal_io/doublewrite_install.rs",
+    "crates/engine/src/storage/wal_io/mutable_storage.rs",
+    "crates/engine/src/storage/wal_io/plan4_apply.rs",
+    "crates/engine/src/storage/wal_io/plan4_apply/source.rs",
+    "crates/engine/src/storage/wal_io/plan4_apply/source_tests.rs",
+    "crates/engine/src/storage/wal_io/plan4_pages.rs",
+    "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory.rs",
+    "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join.rs",
+    "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire.rs",
+    "crates/engine/src/storage/wal_io/plan4_retention/catalog_lifecycle.rs",
+    "crates/engine/src/storage/wal_io/plan4_retention/catalog_live.rs",
+    "crates/engine/src/storage/wal_io/plan4_retention/create_pair.rs",
+    "crates/engine/src/storage/wal_io/plan4_retention/row_start.rs",
+    "crates/engine/src/storage/wal_io/plan4_retention/row_start/recovery.rs",
+    "crates/engine/src/storage/wal_io/plan4_retention/row_start/retire.rs",
+    "crates/engine/src/storage/wal_io/plan4_retention/visibility.rs",
+    "crates/engine/src/storage/wal_io/plan4_retention/visibility/row_retirement.rs"
+   ],
+   "reason": "Every changed path is on the live Row retirement path or its census: the selection and entry (retire.rs), the verified Before and receipts (row_retirement.rs, visibility.rs, dirty_frame/retirement.rs), the RowRelease group (catalog_lifecycle.rs), the shared recovered preparation and target requests (row_start.rs, row_start/recovery.rs), the crate re-export chain (wal_io.rs .. create_pair.rs), the body census (catalog_live.rs, plan4_apply/source.rs) and the tests (row_join.rs, row_join/retire.rs, catalog_memory.rs with_fresh file_bytes, source_tests.rs). LRR-01..06 drive every entry through A's INSERT and B's read: 33 commits on one Status with full cleanup and reopen, Prune Busy beside an older snapshot, refusals, an aborted actor, a Busy actor skipped for another, and recovery after a partial live cleanup; the census case checks the body against CatalogProgressCharge, whose debug assertion also runs in every LRR session. Head only: the paths are C and JOIN, and both exports compile (cargo check lib+tests, all features, no warning).",
+   "cases": [
+    {
+     "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire.rs",
+     "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::lrr01_live_cleanup_reuses_jobs_status_and_undo_beyond_32_transactions",
+     "sources": [
+      "head"
+     ]
+    },
+    {
+     "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire.rs",
+     "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::lrr02_older_snapshot_keeps_prune_busy_until_it_ends",
+     "sources": [
+      "head"
+     ]
+    },
+    {
+     "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire.rs",
+     "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::lrr03_running_actor_non_head_and_early_terminal_are_refused",
+     "sources": [
+      "head"
+     ]
+    },
+    {
+     "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire.rs",
+     "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::lrr04_aborted_actor_is_cleaned_and_its_status_reused",
+     "sources": [
+      "head"
+     ]
+    },
+    {
+     "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire.rs",
+     "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::lrr05_busy_prune_does_not_hide_another_finished_actor",
+     "sources": [
+      "head"
+     ]
+    },
+    {
+     "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire.rs",
+     "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::lrr06_recovery_finishes_a_partial_live_cleanup",
+     "sources": [
+      "head"
+     ]
+    },
+    {
+     "file": "crates/engine/src/storage/wal_io/plan4_apply/source_tests.rs",
+     "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::source::tests::live_row_retirement_fits_the_progress_charge",
+     "sources": [
+      "head"
+     ]
+    }
+   ]
+  }
+ ],
+ "reviews": [
+  {
+   "id": "live-row-retirement-d2",
+   "class": "D2",
+   "scopes": [
+    "common"
+   ],
+   "author": "claude-thread-session/claude-project-thread-9inq97",
+   "reviewer": "claude-independent-review/live-row-retirement",
+   "verdict": "ACCEPT",
+   "required_open": 0,
+   "log": "module-gate/evidence/live-row-retirement/review.md",
+   "log_sha256": "128afc8036123742f4589e1ca8764b5a53e655ae67c255bbf1e639147cfa1a44",
+   "files": {
+    "crates/engine/src/storage/dirty_frame/retirement.rs": "bbd10b6a0823745d3bf9b8e71aedae0ac2e92c99",
+    "crates/engine/src/storage/wal_io.rs": "038cc65f7e1c4ea51846ca8640db14974e87a98e",
+    "crates/engine/src/storage/wal_io/bootstrap.rs": "78cc18563519a81b3ab5858684886c1cd6448c4d",
+    "crates/engine/src/storage/wal_io/doublewrite_install.rs": "2a9d382ac7f7b0cde86a11cbf9c42da4aabf27fa",
+    "crates/engine/src/storage/wal_io/mutable_storage.rs": "1df64f7aeb6b348c92042a4d106bab48e979485a",
+    "crates/engine/src/storage/wal_io/plan4_apply.rs": "885e0189176339bae757e6726ca93989ca3137e9",
+    "crates/engine/src/storage/wal_io/plan4_apply/source.rs": "d7b7150ec0dc198f1a5b5d702c356b38778320d0",
+    "crates/engine/src/storage/wal_io/plan4_apply/source_tests.rs": "3f05d7d6de93ca4b915a7cd48bc599f2f7d24730",
+    "crates/engine/src/storage/wal_io/plan4_pages.rs": "82b1b2515113494042ffa7c5db10e8da99bd2cb4",
+    "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory.rs": "bc49a9a5e463e591af268a80d44bb8c2b70f96e7",
+    "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join.rs": "cd96e7185de7a73ff5f720cc7e46b264db8f657f",
+    "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire.rs": "5a2d89dff0e49856d1aca4b1e7d88e1051f69a84",
+    "crates/engine/src/storage/wal_io/plan4_retention/catalog_lifecycle.rs": "5538f16795a4a4739307ee7f500541db8997057e",
+    "crates/engine/src/storage/wal_io/plan4_retention/catalog_live.rs": "800969484eaf3658dc76c120270b783d32a2eeb1",
+    "crates/engine/src/storage/wal_io/plan4_retention/create_pair.rs": "bb8acdc849449de0855f8e006c8f05f916bdb31c",
+    "crates/engine/src/storage/wal_io/plan4_retention/row_start.rs": "e272a6b93796be4af538a75c4e0a2ed185a17df0",
+    "crates/engine/src/storage/wal_io/plan4_retention/row_start/recovery.rs": "34753b6b321641ec15468bafef2a8886e57427ee",
+    "crates/engine/src/storage/wal_io/plan4_retention/row_start/retire.rs": "c2b9d8be6724f193d95ffdbac3d2cce3a656d827",
+    "crates/engine/src/storage/wal_io/plan4_retention/visibility.rs": "5a487506eb5880aee5ccf0a0cfd8a0369df052d9",
+    "crates/engine/src/storage/wal_io/plan4_retention/visibility/row_retirement.rs": "7baaeee25c0ae0726906eb7a5c8d37743001badc"
+   }
+  }
+ ]
+}
