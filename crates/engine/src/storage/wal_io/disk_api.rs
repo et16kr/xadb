@@ -1,10 +1,8 @@
 //! One selection point for the disk consumer boundary. Raw owners and private
-//! factories are not exported. The original session/ports and C0 producer data types are supplied here.
+//! factories are not exported. The session/ports, Catalog and Row operation types,
+//! commit states and C0 producer data types are selected here; consumers outside
+//! `wal_io` import them through `storage::disk`.
 
-#[allow(
-    unused_imports,
-    reason = "C0 boundary awaits the separately owned Row consumers"
-)]
 pub(crate) use super::bootstrap::doublewrite_install::mutable_storage::plan4_pages::apply::{
     CATALOG_LOOKUP_RESULT_BYTES, CATALOG_LOOKUP_STEP_BYTES, CATALOG_PRODUCT_SOURCE_BYTES,
     CallerCredit, CatalogCallError, CatalogCallScope, CatalogCancelled, CatalogCandidate,

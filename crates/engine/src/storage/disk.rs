@@ -1,10 +1,12 @@
 //! Canonical internal API for consumers of the disk engine.
-//! Currently exposes C0 producer observations/loans and untrusted candidates;
-//! the original session/ports are supplied; Row reservation/install supply is pending.
+//! Supplies the session and ports, the Catalog read/create/commit calls, the Row
+//! preflight, reservation, prepare/install, rollback and recovery operations,
+//! commit states, C0 producer observations/loans and untrusted candidates.
 
 #[allow(
     unused_imports,
-    reason = "C0 boundary awaits the separately owned Row consumers"
+    reason = "full consumer surface; some items are named only by tests or by one \
+              Row module, or reach consumers as unnamed return values"
 )]
 pub(crate) use super::wal_io::disk_api::{
     CATALOG_LOOKUP_RESULT_BYTES, CATALOG_LOOKUP_STEP_BYTES, CATALOG_PRODUCT_SOURCE_BYTES,

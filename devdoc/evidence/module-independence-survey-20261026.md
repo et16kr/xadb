@@ -6257,3 +6257,58 @@ export-a build가 이를 컴파일한다. 코드가 head와 같아 C+A 실행은
 재실행에는 [재실행 script](../../module-gate/evidence/f5b/provenance-rerun.sh)처럼 원 경로
 view가 필요하다. A 생성기는 scratch 사본에서만 실행한다. F6(WAL 재검증 비용)은 D03 측정
 범위 결정 전이라 미착수다.
+
+<a id="f7-current-comments"></a>
+## F7 — disk API 현재 주석 정정 (2026-11-02)
+
+**상태: 주석·lint 속성 정정과 컴파일 확인, 독립 D2 `common` ACCEPT(필수 0)는 [검토 기록](../../module-gate/evidence/f7/review.md)을 따름.**
+PR #34가 병합된 main `ce46ca9`에서 클라우드 별도 branch `claude/project-thread-y2rvpt`로
+진행했다. 사용자가 병합 뒤 이어서 할 일을 물었고, F6 측정이 live Row retirement 공급 뒤로
+보류된 상태에서 [계획 §11](../plans/module-independence-followup-plan.md#documents)이 직접 예로 든
+[`disk.rs`](../../crates/engine/src/storage/disk.rs)의 공급 pending 설명을 고쳤다. 작성·통합 담당은
+Claude thread session이다.
+
+`disk.rs` 머리 주석은 “Row reservation/install supply is pending”이었으나, A의 live driver가
+이미 `RowPreflightOperation::reserve`·`RowReservedOperation::prepare`·`RowPreparedOperation::apply`와
+rollback·recovery task를 이 경로로 소비한다. 머리 주석을 실제로 내보내는 범위(session·ports,
+Catalog read/create/commit 호출, Row preflight·reservation·prepare/install·rollback·recovery,
+commit 상태, C0 producer 관찰·loan, 신뢰하지 않는 후보)로 고쳤다. `disk_api.rs` 머리 주석도
+같은 범위와 “`wal_io` 밖 소비자는 `storage::disk`로 받는다”로 맞췄다. `wal_io` 내부의
+`legacy_install` 직접 호출 4곳은 C 내부라 이 문장에 포함하지 않는다. 같은 내용의
+[`plan4_apply.rs`](../../crates/engine/src/storage/wal_io/plan4_apply.rs) 머리 주석(“actual
+source/reservation/install adapters are pending”)도 `row` 하위가 preflight·reservation·
+prepare/install·rollback·recovery를 공급한다고 고쳤다. 저장소 첫 [`README.md`](../../README.md)의
+현재 작업 줄은 F5-a에 멈춰 있어 다른 세 안내와 같게 맞췄다.
+
+두 파일의 `unused_imports` 허용 사유 “C0 boundary awaits the separately owned Row consumers”도
+현재와 다르다. 허용을 잠시 지우고 확인한 결과는 다음과 같다.
+
+| 확인 (main `ce46ca9` + 이 diff) | 결과 |
+| --- | --- |
+| `cargo check -p xadb-engine --lib` | `disk.rs` 첫 re-export에서 29개 미사용 경고. `disk_api.rs`는 경고 없음 |
+| `cargo check -p xadb-engine --lib --tests` | 시험 build에서도 15개 미사용(Catalog create/commit 결과, `RowApplied`·`RowCancelled`·`RowRollbackDone` 등 반환값으로만 닿는 이름) |
+| 위 두 확인의 `disk_api.rs` | 경고 없음. `disk.rs`가 첫 묶음 84개 이름을 모두 다시 내보내므로 모든 항목이 사용됨 |
+
+그래서 `disk.rs`의 허용은 유지하고 사유를 “전체 소비 표면이며 일부는 시험이나 한 Row 모듈만
+이름을 쓰거나 이름 없이 반환값으로 닿는다”로 고쳤다. `disk_api.rs`에서는 사유가 틀린 첫 묶음의
+허용만 지웠다. 다른 `#[allow(unused_imports)]`와 re-export 목록·가시성은 바꾸지 않았다. 주석과
+허용을 뺀 base·head token은 같고, 생성 코드와 동작도 같다.
+
+gate의 changed-path 선택은 세 `.rs` 파일에 Rust 사례를 고르지 않고 head와 C+A·C+B를
+`--no-run`으로만 컴파일한다. [gate 기록](../../module-gate/records/20261102-f7-current-comments.json)은
+세 경로를 정확한 N/A로 두고 D2 `common` 검토로 묶는다. 실행할 사례가 없어 제품 시험은 NOT_RUN이다.
+로컬 확인은 engine의 `cargo clippy --all-targets --all-features -D warnings`, head policy로 만든 두
+export의 `cargo check -p xadb-engine --lib --tests --all-features`(경고 0)와 push 훅이다. 결과는 PR에
+남긴다.
+
+남은 현재 주석 후보: 검토에서 같은 종류로 보이는 곳이 더 나왔으나 disk API 경계 밖이라 이 단위에서
+고치지 않았다. [`semantic_row.rs`](../../crates/engine/src/storage/semantic_row.rs)의
+`decode_layout` 허용 사유 “scope3 live/replay consumers are pending”(A의 `row/insert/group/frame.rs`가
+이미 사용, C+B export에서는 A가 빠져 허용 자체는 필요할 수 있음),
+[`retention_page/row.rs`](../../crates/engine/src/storage/retention_page/row.rs)의 “awaits the closed
+current-profile owner” 사유 세 곳(DEV3 owner 상태 확인 필요), `disk_api.rs`의 다른 허용
+세 곳(사유 없는 두 곳과 `disk.rs`가 늘 다시 내보내 사유 “used by the C+A selection only”가 맞지 않는
+cfg(test) 한 곳. 검토자가 head 사본의 lib·lib 시험 build에서 셋을 지워도 경고 0을 확인했고 export는
+확인하지 않음)이다. 각각 해당 파일을 바꾸는 단위나 별도 정리 단위에서 확인한다.
+
+F6 측정과 F6-b는 사용자 결정에 따라 live Row retirement(DEV3) 공급 뒤의 별도 단위다.

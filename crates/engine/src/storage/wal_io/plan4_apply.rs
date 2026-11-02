@@ -1,7 +1,8 @@
 //! The original plan4 disk session and its restricted borrowed ports.
 //! Existing control/history/flush helpers remain private descendants during
 //! migration. Row producer data types carry observations and untrusted
-//! candidates; their actual source/reservation/install adapters are pending.
+//! candidates; the `row` child supplies the Row preflight, reservation,
+//! prepare/install, rollback and recovery operations that consume them.
 
 pub(crate) use super::super::plan4_recovery::{
     Plan4Recovered, Plan4RecoveryError, Plan4RecoveryProgress, PreparedRecoveryRow, RecoveryAction,

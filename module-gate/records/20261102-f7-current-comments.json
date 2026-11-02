@@ -1,0 +1,40 @@
+{
+ "schema": "XADB_MODULE_GATE_RECORD_V1",
+ "change": "F7: correct the disk API header comments (disk.rs, disk_api.rs, plan4_apply.rs) and the stale unused_imports reasons to the supplied surface; drop the redundant first disk_api.rs allow. Comments and lint attributes only; generated code unchanged.",
+ "na": [
+  {
+   "paths": [
+    "crates/engine/src/storage/disk.rs",
+    "crates/engine/src/storage/wal_io/disk_api.rs",
+    "crates/engine/src/storage/wal_io/plan4_apply.rs"
+   ],
+   "reason": "Only module doc comments, one allow reason and one redundant allow attribute change; with comments and allows stripped, base and head are token-identical. No case exercises a comment. The plan selects no case and no contract and compiles head, export-a and export-b with --no-run; local all-target Clippy with -D warnings and both exports' cargo check (lib, lib tests, all features) report no warning."
+  }
+ ],
+ "reviews": [
+  {
+   "id": "f7-current-comments-d2",
+   "class": "D2",
+   "scopes": [
+    "common"
+   ],
+   "author": "claude-thread-session/claude-project-thread-y2rvpt",
+   "reviewer": "claude-independent-review/f7-current-comments",
+   "verdict": "ACCEPT",
+   "required_open": 0,
+   "log": "module-gate/evidence/f7/review.md",
+   "log_sha256": "deb506c49f6e60eedbb95dd187ec655fd56d53b8a8ef1bcf26a0bd11387fe85a",
+   "files": {
+    "README.md": "f9061ffb403cbf4a0f69aada581ece01c51ced7f",
+    "crates/engine/src/storage/disk.rs": "34b86f792bf422d12fd3492969f5524ebbbfaac3",
+    "crates/engine/src/storage/wal_io/disk_api.rs": "8b53d2f4ab10ba27b87fedf6577df2b074423b85",
+    "crates/engine/src/storage/wal_io/plan4_apply.rs": "296b66f93f3ae383c78aeb6605aeb749a3549175",
+    "devdoc/README.md": "2933fa95b4f1801d944cee75407e7ad6f0ba3a48",
+    "devdoc/evidence/README.md": "dcf4e04c6a1f530bce93647886ba6178d3b1d63a",
+    "devdoc/evidence/module-independence-survey-20261026.md": "d47ec7e0dd568c06ebd97508dd8dec64621bfcf6",
+    "devdoc/plans/README.md": "73f7f5c861ee6ac4067b56616d9ea28c8de0de27",
+    "devdoc/plans/module-independence-followup-plan.md": "16b463541ce3c192fa976346cf491c7f55b3c4af"
+   }
+  }
+ ]
+}
