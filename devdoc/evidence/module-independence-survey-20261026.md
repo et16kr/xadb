@@ -6216,3 +6216,37 @@ source별 검증 receipt와 독립 검토 결과는 PR에 결속한다. 현재 �
 **NOT_RUN**이며 코드 채택이나 compile-only를 시험 PASS로 바꾸지 않는다. 원 실패·미검증
 기록과 PR #31의 source 결과는 그대로 보존한다. 외부 보존 디렉터리는
 `/home/et16/work/xadb/artifacts/module-followup-f4-budgets-20261102/`다.
+
+<a id="f5-scope3-fixture"></a>
+## F5-b — scope3 literal의 C 쪽 fixture 이관 (2026-11-02)
+
+**상태: 구현·로컬 선택 검증 완료, 독립 검토·CI는 PR에 결속.** PR #32가 병합된 main
+`c0f9e25`에서 클라우드 별도 branch `claude/project-thread-y2rvpt`로 진행했다. 사용자의
+"후속 계획의 현재 상태를 파악하고 다음 작업 진행" 요청에 따라 F0–F5-a·F4가 병합된 것을
+확인하고, 남은 F5-b·F6 중 사용자 결정(D03)이 필요 없는 F5-b를 골랐다. 작성·통합 담당은
+Claude thread session이다. [계약](../contracts/dev3-module-boundaries.md#f5-scope3-fixture)을 따른다.
+
+변경은 scope3 literal 81개의 git rename(디렉터리 tree `7a0e7dfa…` 동일), 세 시험의
+`include_bytes!` 경로·모듈 주석, manifest의 EX08–EX09 삭제, Python 시험 하나 추가와
+기존 하나의 기대값 갱신이다. 제품 코드·생성기·author·A manifest는 바꾸지 않았다.
+[이동 기록](../../module-gate/evidence/f5b/scope3-move.json)에 파일별 원/새 경로·크기·
+SHA-256·git blob을 둔다.
+
+| 확인 | source | 결과 |
+| --- | --- | --- |
+| 세 시험 파일의 사례 전체(A 13, C semantic 16, C recovery 10) | head `ef033f4` ELF `5515181…` | 39/39 PASS |
+| C+B export에서 두 C 파일의 발견·실행 | head policy로 만든 C+B export ELF `ac7ba65…` | 정확히 26개 발견, 26/26 PASS |
+| A 생성기 `write_scope3()`를 scratch 사본에서 재실행 | `ef033f4`의 tests/fixtures | 81개 byte 동일, RowLeaf literal 8개도 동일 |
+| N1·S1-g author를 원 경로 view로 재실행 | 같은 export | `blobs.bin`·`index.tsv`·`input-plan.json` 모두 byte 동일. view가 없으면 parent 부재로 실패 |
+| Python 선택 3개(manifest·export 등록·이동 provenance) | 작업 tree | PASS |
+
+로컬 실행 기록·ELF hash·export inventory는 [로컬 결과](../../module-gate/evidence/f5b/local/results.json)에 있다.
+C+B 결과는 로컬 증거일 뿐이다. 이 PR의 trusted policy(base `c0f9e25`)는 아직 EX08–EX09
+등록으로 두 C 파일을 C+B에서 제거하므로 CI는 head 39개와 C+A의 A 13개, Python 3개를
+실행한다. C+A의 C 시험은 이번 변경과 무관한 공유 경로라 반복하지 않았다. 병합 뒤에는
+trusted C+B export가 두 파일을 유지한다. 기존 source의 결과·FAIL은 고치지 않는다.
+
+한계: N1·S1-g author는 SHA 고정 때문에 원 경로 이름으로 parent를 찾는다. 재실행에는
+[재실행 script](../../module-gate/evidence/f5b/provenance-rerun.sh)처럼 원 경로 view를
+만들어야 한다. A 생성기는 자기 옆 `scope3/`에 쓰므로 tree 안에서 바로 실행하지 않는다.
+F6(WAL 재검증 비용)은 D03 측정 범위 결정 전이라 미착수다.

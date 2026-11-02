@@ -3193,3 +3193,41 @@ C+B export에서 제거한다. 따라서 원 test 이름은 C-only 위임 wrappe
 원 위임 wrapper는 exact N/A와 독립 검토·compile-only로 확인한다. A의 새 2개 사례는 head와 C+A에서
 실행한다. C03 facade와 기존 제품 시험은 무변경이므로 반복하지 않는다. EX08–EX09와
 F5-b/F6은 별도 잔여다. [실행 범위·결과](../evidence/module-independence-survey-20261026.md#f4-caller-budgets)를 따른다.
+
+<a id="f5-scope3-fixture"></a>
+## F5-b — scope3 literal의 C 쪽 fixture 이관
+
+2026-11-02, PR #32 병합 `c0f9e25` 다음 단위다. A가 MCA00-V06에서 독립 작성한
+scope3 Forward/CLR snapshot 81개를 `tests/fixtures/module-row-insert/scope3/`에서
+`tests/fixtures/module-row-format/scope3/`로 옮긴다. 파일 이름·bytes·디렉터리 git
+tree(`7a0e7dfa947d5811e9684edc2392ac42696faee5`)는 그대로다. 바뀐 Rust는 세 시험의
+`include_bytes!` 경로와 모듈 주석뿐이며 제품 코드·생성기·author·wire/format 변경은 없다.
+
+**소유 판단.** EX08의 N1 transition 시험과 EX09의 S1-b/S1-g replay 시험은 공통
+semantic observer·replay 계약을 검증하고, scope3 snapshot은 그 고정 입력이다. A 고유
+인수 입력이 아니므로 C 쪽으로 옮긴다. `module-row-format/`은
+[소비자 §8](dev3-module-consumers.md#independent-fixtures)이 정한 C 쪽 독립 literal
+root(N1·S1-g)이고, gate에서는 A/B fixture root 밖의 공유 `tests/**`다. A의 MCA00-V06
+producer 시험 13개는 같은 bytes를 새 경로에서 읽는다. 두 C 시험은 더 이상 A fixture
+token을 쓰지 않으므로 EX08–EX09를 제거한다. 남은 manifest 예외는 없다.
+
+| 보존 대상 | 처리 |
+| --- | --- |
+| bytes | 81개 모두 git rename 100%. A manifest의 동결 `input_files` SHA-256과 두 author의 parent pin이 새 경로 bytes와 같음을 Python 시험이 확인한다 |
+| 작성 원천 | `module-row-insert/make_literals.py`의 `write_scope3()`와 A manifest의 `scope3` 절은 원 기록으로 그대로 둔다. 생성기는 자기 옆 `scope3/`에 쓰므로 재생성은 scratch 사본에서 하고 새 경로와 byte 비교한다 |
+| 고정 pin | N1 `transition/author.py`·S1-g `reserve-replay/author.py`와 각 `input-plan.json`은 원 경로 이름으로 parent SHA를 고정한다. author 자신의 SHA가 다른 literal(`dev3-module-c2/row-read*`의 `expected.json`, S1-g author)에 고정되어 있어 수정하지 않는다 |
+| 경로 대응 | [이동 기록](../../module-gate/evidence/f5b/scope3-move.json)에 원/새 경로·크기·SHA-256·git blob과 base/head tree를 둔다 |
+
+[소비자 §8](dev3-module-consumers.md#independent-fixtures)의 "증거에 hash와 경로가
+인용된 디렉터리는 이름을 바꾸지 않는다"에 대한 이 단위 한정의 D2 예외다. 원 증거·기록의
+경로 인용은 고치지 않고 위 대응 기록으로 연결한다. 두 author를 다시 실행하려면 원 경로
+이름의 view가 필요하다(한계). scope3 literal을 바꿔야 하면 A 생성기를 다시 돌리지 않고
+C 쪽 새 author와 D2 검토로 진행한다.
+
+**export와 선택.** EX08–EX09의 `export_registration`이 사라져 C+B export가 두 C 시험
+파일을 유지한다. 이번 PR의 trusted policy(base `c0f9e25`)는 아직 두 파일을 C+B에서
+제거하므로 CI에서 C+B 실행을 요청할 수 없다. C 시험 26개(N1 16, replay 10)는 head에서
+실행하고, C+B 적용성은 head policy로 만든 export의 발견·실행을 로컬 증거로 남긴다.
+A 시험 13개는 head와 C+A에서 실행한다. 병합 뒤 trusted policy에서는 두 파일이 C+B에
+남는다. 되돌림은 이 PR 전체 revert이며 wire/semantic 영향은 없다.
+[실행 범위·결과](../evidence/module-independence-survey-20261026.md#f5-scope3-fixture)를 따른다.

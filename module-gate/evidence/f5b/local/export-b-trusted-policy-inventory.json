@@ -1,0 +1,173 @@
+{
+ "schema": "XADB_S8_SINGLE_SOURCE_V1",
+ "side": "b",
+ "commit": "ef033f426bb1b468108ceb10516794484d29890f",
+ "removed": [
+  "crates/engine/src/storage/row/insert.rs",
+  "crates/engine/src/storage/row/insert/before_test.rs",
+  "crates/engine/src/storage/row/insert/driver.rs",
+  "crates/engine/src/storage/row/insert/driver/budget_tests.rs",
+  "crates/engine/src/storage/row/insert/driver/live.rs",
+  "crates/engine/src/storage/row/insert/driver/recovered.rs",
+  "crates/engine/src/storage/row/insert/driver/tests.rs",
+  "crates/engine/src/storage/row/insert/group.rs",
+  "crates/engine/src/storage/row/insert/group/frame.rs",
+  "crates/engine/src/storage/row/insert/group/images.rs",
+  "crates/engine/src/storage/row/insert/group_tests.rs",
+  "crates/engine/src/storage/row/insert/leaf.rs",
+  "crates/engine/src/storage/row/insert/tests.rs",
+  "tests/fixtures/module-row-insert/bad-row-before.bin",
+  "tests/fixtures/module-row-insert/driver-literals.txt",
+  "tests/fixtures/module-row-insert/driver-manifest-r1.txt",
+  "tests/fixtures/module-row-insert/driver-manifest-r2.txt",
+  "tests/fixtures/module-row-insert/driver-manifest-r3.json",
+  "tests/fixtures/module-row-insert/driver-manifest-r4.json",
+  "tests/fixtures/module-row-insert/empty-before.bin",
+  "tests/fixtures/module-row-insert/make_driver_literals.py",
+  "tests/fixtures/module-row-insert/make_literals.py",
+  "tests/fixtures/module-row-insert/manifest.json",
+  "tests/fixtures/module-row-insert/row7-after.bin",
+  "tests/fixtures/module-row-insert/row7.bin",
+  "tests/fixtures/module-row-insert/rows3-7-9-after.bin",
+  "tests/fixtures/module-row-insert/rows3-9-before.bin",
+  "tests/fixtures/module-row-insert/rows84-before.bin",
+  "tests/fixtures/module-row-insert/rows85-after.bin",
+  "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_cancel.rs",
+  "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_commit.rs",
+  "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_commit/native.rs",
+  "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_forward.rs",
+  "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_inventory_a.rs",
+  "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_inventory_a/native.rs",
+  "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join.rs",
+  "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/native.rs",
+  "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_live.rs",
+  "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_native_a.rs",
+  "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_native_a/native.rs",
+  "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_read_live.rs",
+  "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_read_live/native.rs",
+  "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_recovery.rs",
+  "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_recovery_read.rs",
+  "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_recovery_read/native.rs",
+  "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_rollback.rs",
+  "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_rollback/native.rs",
+  "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_rollback/v09.rs",
+  "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_v09.rs",
+  "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_write.rs",
+  "crates/engine/src/storage/semantic_row/transition_tests.rs",
+  "crates/engine/src/storage/wal_io/plan4_retention/recovery/row_tests.rs"
+ ],
+ "patches": [
+  {
+   "file": "crates/engine/src/storage/row.rs",
+   "removed": "pub(crate) mod insert;\n"
+  },
+  {
+   "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory.rs",
+   "removed": "#[path = \"catalog_memory/row_cancel.rs\"]\nmod row_cancel;\n"
+  },
+  {
+   "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory.rs",
+   "removed": "#[path = \"catalog_memory/row_commit.rs\"]\nmod row_commit;\n"
+  },
+  {
+   "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory.rs",
+   "removed": "#[path = \"catalog_memory/row_forward.rs\"]\nmod row_forward;\n"
+  },
+  {
+   "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory.rs",
+   "removed": "#[path = \"catalog_memory/row_inventory_a.rs\"]\nmod row_inventory_a;\n"
+  },
+  {
+   "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory.rs",
+   "removed": "#[path = \"catalog_memory/row_join.rs\"]\nmod row_join;\n"
+  },
+  {
+   "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory.rs",
+   "removed": "#[path = \"catalog_memory/row_live.rs\"]\n#[macro_use]\nmod row_live;\n"
+  },
+  {
+   "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory.rs",
+   "removed": "#[path = \"catalog_memory/row_native_a.rs\"]\n#[macro_use]\nmod row_native_a;\n"
+  },
+  {
+   "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory.rs",
+   "removed": "#[path = \"catalog_memory/row_read_live.rs\"]\nmod row_read_live;\n"
+  },
+  {
+   "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory.rs",
+   "removed": "#[path = \"catalog_memory/row_recovery.rs\"]\nmod row_recovery;\n"
+  },
+  {
+   "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory.rs",
+   "removed": "#[path = \"catalog_memory/row_recovery_read.rs\"]\nmod row_recovery_read;\n"
+  },
+  {
+   "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory.rs",
+   "removed": "#[path = \"catalog_memory/row_rollback.rs\"]\nmod row_rollback;\n"
+  },
+  {
+   "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory.rs",
+   "removed": "#[path = \"catalog_memory/row_v09.rs\"]\nmod row_v09;\n"
+  },
+  {
+   "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory.rs",
+   "removed": "#[path = \"catalog_memory/row_write.rs\"]\nmod row_write;\n"
+  },
+  {
+   "file": "crates/engine/src/storage/semantic_row/transition.rs",
+   "removed": "#[cfg(test)]\n#[path = \"transition_tests.rs\"]\nmod tests;\n"
+  },
+  {
+   "file": "crates/engine/src/storage/wal_io/plan4_retention/recovery.rs",
+   "removed": "#[cfg(test)]\n#[path = \"recovery/row_tests.rs\"]\nmod row_tests;\n"
+  }
+ ],
+ "remaining_references": [],
+ "other_text_references": [
+  "devdoc/contracts/dev3-module-boundaries.md: 12",
+  "devdoc/contracts/dev3-module-consumers.md: 5",
+  "devdoc/evidence/module-independence-survey-20261026.md: 9",
+  "devdoc/plans/module-independence-followup-plan.md: 1",
+  "devdoc/policies/module-gate.json: 4",
+  "devdoc/policies/repository-build-plan.json: 19",
+  "module-gate/evidence/f0-complete/baseline-manifest.json: 97",
+  "module-gate/evidence/f0-complete/bind-diagnostic-manifest.json: 97",
+  "module-gate/evidence/f0-complete/bind-panic-only-manifest.json: 97",
+  "module-gate/evidence/f0-complete/current1-manifest.json: 97",
+  "module-gate/evidence/f0-complete/current2-manifest.json: 97",
+  "module-gate/evidence/f0-complete/mixed-six-manifest.json: 97",
+  "module-gate/evidence/f0-complete/r2-manifest.json: 97",
+  "module-gate/evidence/f3/native-r5/source-files.json: 97",
+  "module-gate/evidence/f3/native-r6/source-files.json: 97",
+  "module-gate/evidence/f3/r2/source-sha256.json: 97",
+  "module-gate/evidence/f3/r4/source-sha256.json: 97",
+  "module-gate/evidence/f3/r5/source-sha256.json: 97",
+  "module-gate/evidence/f3/r6/source-sha256.json: 97",
+  "module-gate/evidence/f5/baseline-export-spec.json: 1",
+  "module-gate/evidence/f5/fixture-move-selection.json: 2",
+  "module-gate/evidence/f5/r1/python-tests.log: 2",
+  "module-gate/records/20261102-f4-caller-budgets.json: 4",
+  "module-gate/records/20261102-f4-row-operation.json: 2",
+  "scripts/test_check_module_gate.py: 49",
+  "tests/fixtures/dev3-module-c0/boundary-compiler/MBC00-N11.rs: 1",
+  "tests/fixtures/dev3-module-c0/boundary-compiler/MBC00-P03.rs: 1",
+  "tests/fixtures/dev3-module-c3/row-commit/execution-receipts.json: 5",
+  "tests/fixtures/module-row-format/reserve-replay/author.py: 2",
+  "tests/fixtures/module-row-format/reserve-replay/input-plan.json: 1",
+  "tests/fixtures/module-row-format/transition/author.py: 62",
+  "tests/fixtures/module-row-format/transition/input-plan.json: 61",
+  "tests/fixtures/module-row-integration/single-source-s10-addendum.json: 1",
+  "tests/fixtures/module-row-integration/single-source-s10-inventory.json: 2",
+  "tests/fixtures/module-row-integration/single-source-s10-receipts.json: 1",
+  "tests/fixtures/module-row-integration/single-source-s11-addendum.json: 2",
+  "tests/fixtures/module-row-integration/single-source-s11-design-receipts.json: 102",
+  "tests/fixtures/module-row-integration/single-source-s11-receipts.json: 1",
+  "tests/fixtures/module-row-integration/single-source-s11-review-receipts.json: 5",
+  "tests/fixtures/module-row-integration/single-source-s8-inventory.json: 41",
+  "tests/fixtures/module-row-integration/single-source-s8-receipts.json: 1",
+  "tests/fixtures/module-row-integration/single-source-s9-inventory.json: 40",
+  "tests/fixtures/module-row-integration/single-source-s9-receipts.json: 3"
+ ],
+ "files": 8294,
+ "source_manifest_sha256": "90445a3ebe5999db1c55e87e659c4333f17806ba0f2265b273a82ba025f4d0d0"
+}

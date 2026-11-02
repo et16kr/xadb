@@ -1,6 +1,6 @@
 # XADB 개발 문서
 
-현재 후속 작업은 [F4 caller 예산 분리](evidence/module-independence-survey-20261026.md#f4-caller-budgets)다. PR #31의 Row 쓰기 관련 상태 계약 다음으로 A 자체 크기와 C 합계를 고정 예산으로 독립 검증하여 EX05–EX07을 제거한다. 현재 source의 시험 결과는 해당 PR의 CI receipt를 따른다. F5-b fixture 이동·EX08–EX09·F6은 잔여다.
+현재 후속 작업은 [F5-b scope3 fixture 이관](evidence/module-independence-survey-20261026.md#f5-scope3-fixture)이다. F4는 PR #31·#32로 병합됐다. A가 작성한 scope3 literal 81개를 bytes 그대로 C 쪽 `module-row-format/scope3/`로 옮기고 EX08–EX09를 제거해 manifest 예외가 남지 않는다. 현재 source의 시험 결과는 해당 PR의 CI receipt와 로컬 C+B 증거를 따른다. F6(WAL 재검증 비용)은 측정 범위 결정 D03 전이라 잔여다.
 
 F2 공통 변경의 최소 계약 사례 선택 구현·검증·독립 검토는 [실행 기록](evidence/module-independence-survey-20261026.md#f2-contract-selection)을 따른다. 제품 코드·fixture는 변경하지 않으며 무변경 제품 시험은 실행하지 않는다.
 

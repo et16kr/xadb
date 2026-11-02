@@ -1,0 +1,808 @@
+{
+ "schema": "XADB_MODULE_GATE_RECORD_V1",
+ "change": "F5-b: move the frozen MCA00-V06 scope3 literals (81 files, same bytes and git tree) from the A fixture root to the C-side module-row-format root, repoint the A producer test and the two C readers, and remove EX08–EX09.",
+ "python_tests": [
+  "test_check_module_gate.F5RealRegistryTests.test_single_manifest_preserves_baseline_export_layout_and_f2_owners",
+  "test_check_module_gate.F5bScope3FixtureTests.test_moved_literals_keep_frozen_bytes_and_survive_both_exports",
+  "test_check_module_gate.RealManifest.test_repository_manifest_matches_the_export_tool"
+ ],
+ "rust_tests": [
+  {
+   "paths": [
+    "crates/engine/src/storage/row/insert/group_tests.rs",
+    "tests/fixtures/module-row-format/scope3/anchor-lsn0.bin",
+    "tests/fixtures/module-row-format/scope3/anchor.bin",
+    "tests/fixtures/module-row-format/scope3/h-500-aging.bin",
+    "tests/fixtures/module-row-format/scope3/h-500-bank.bin",
+    "tests/fixtures/module-row-format/scope3/h-500-jobs2.bin",
+    "tests/fixtures/module-row-format/scope3/h-500-jobs3.bin",
+    "tests/fixtures/module-row-format/scope3/h-500-leaf.bin",
+    "tests/fixtures/module-row-format/scope3/h-500-root.bin",
+    "tests/fixtures/module-row-format/scope3/h-500-status.bin",
+    "tests/fixtures/module-row-format/scope3/h-500-tx.bin",
+    "tests/fixtures/module-row-format/scope3/h-500-undo10.bin",
+    "tests/fixtures/module-row-format/scope3/h-500-undo11.bin",
+    "tests/fixtures/module-row-format/scope3/h-501-aging.bin",
+    "tests/fixtures/module-row-format/scope3/h-501-bank.bin",
+    "tests/fixtures/module-row-format/scope3/h-501-forward.wal",
+    "tests/fixtures/module-row-format/scope3/h-501-jobs2.bin",
+    "tests/fixtures/module-row-format/scope3/h-501-jobs3.bin",
+    "tests/fixtures/module-row-format/scope3/h-501-leaf.bin",
+    "tests/fixtures/module-row-format/scope3/h-501-root.bin",
+    "tests/fixtures/module-row-format/scope3/h-501-status.bin",
+    "tests/fixtures/module-row-format/scope3/h-501-tx.bin",
+    "tests/fixtures/module-row-format/scope3/h-501-undo11.bin",
+    "tests/fixtures/module-row-format/scope3/h-502-status.bin",
+    "tests/fixtures/module-row-format/scope3/h-502-tx.bin",
+    "tests/fixtures/module-row-format/scope3/h-503-aging.bin",
+    "tests/fixtures/module-row-format/scope3/h-503-bank.bin",
+    "tests/fixtures/module-row-format/scope3/h-503-clr.wal",
+    "tests/fixtures/module-row-format/scope3/h-503-jobs3.bin",
+    "tests/fixtures/module-row-format/scope3/h-503-leaf.bin",
+    "tests/fixtures/module-row-format/scope3/h-503-root.bin",
+    "tests/fixtures/module-row-format/scope3/h-503-status.bin",
+    "tests/fixtures/module-row-format/scope3/h-503-tx.bin",
+    "tests/fixtures/module-row-format/scope3/h-503-undo11.bin",
+    "tests/fixtures/module-row-format/scope3/noh-300-aging.bin",
+    "tests/fixtures/module-row-format/scope3/noh-300-bank.bin",
+    "tests/fixtures/module-row-format/scope3/noh-300-jobs2.bin",
+    "tests/fixtures/module-row-format/scope3/noh-300-leaf-dup7.bin",
+    "tests/fixtures/module-row-format/scope3/noh-300-leaf-full.bin",
+    "tests/fixtures/module-row-format/scope3/noh-300-leaf.bin",
+    "tests/fixtures/module-row-format/scope3/noh-300-root.bin",
+    "tests/fixtures/module-row-format/scope3/noh-300-status.bin",
+    "tests/fixtures/module-row-format/scope3/noh-300-tx.bin",
+    "tests/fixtures/module-row-format/scope3/noh-300-undo11.bin",
+    "tests/fixtures/module-row-format/scope3/noh-301-aging.bin",
+    "tests/fixtures/module-row-format/scope3/noh-301-bank.bin",
+    "tests/fixtures/module-row-format/scope3/noh-301-forward.wal",
+    "tests/fixtures/module-row-format/scope3/noh-301-jobs2.bin",
+    "tests/fixtures/module-row-format/scope3/noh-301-leaf.bin",
+    "tests/fixtures/module-row-format/scope3/noh-301-root.bin",
+    "tests/fixtures/module-row-format/scope3/noh-301-status.bin",
+    "tests/fixtures/module-row-format/scope3/noh-301-tx.bin",
+    "tests/fixtures/module-row-format/scope3/noh-301-undo11.bin",
+    "tests/fixtures/module-row-format/scope3/noh-302-status.bin",
+    "tests/fixtures/module-row-format/scope3/noh-302-tx.bin",
+    "tests/fixtures/module-row-format/scope3/noh-303-aging.bin",
+    "tests/fixtures/module-row-format/scope3/noh-303-bank.bin",
+    "tests/fixtures/module-row-format/scope3/noh-303-clr.wal",
+    "tests/fixtures/module-row-format/scope3/noh-303-jobs2.bin",
+    "tests/fixtures/module-row-format/scope3/noh-303-leaf.bin",
+    "tests/fixtures/module-row-format/scope3/noh-303-root.bin",
+    "tests/fixtures/module-row-format/scope3/noh-303-status.bin",
+    "tests/fixtures/module-row-format/scope3/noh-303-tx.bin",
+    "tests/fixtures/module-row-format/scope3/noh-303-undo11.bin",
+    "tests/fixtures/module-row-format/scope3/ord-300-aging.bin",
+    "tests/fixtures/module-row-format/scope3/ord-300-bank.bin",
+    "tests/fixtures/module-row-format/scope3/ord-300-jobs2.bin",
+    "tests/fixtures/module-row-format/scope3/ord-300-leaf.bin",
+    "tests/fixtures/module-row-format/scope3/ord-300-root.bin",
+    "tests/fixtures/module-row-format/scope3/ord-300-status.bin",
+    "tests/fixtures/module-row-format/scope3/ord-300-tx.bin",
+    "tests/fixtures/module-row-format/scope3/ord-300-undo14.bin",
+    "tests/fixtures/module-row-format/scope3/ord-301-aging.bin",
+    "tests/fixtures/module-row-format/scope3/ord-301-bank.bin",
+    "tests/fixtures/module-row-format/scope3/ord-301-forward.wal",
+    "tests/fixtures/module-row-format/scope3/ord-301-jobs2.bin",
+    "tests/fixtures/module-row-format/scope3/ord-301-leaf.bin",
+    "tests/fixtures/module-row-format/scope3/ord-301-root.bin",
+    "tests/fixtures/module-row-format/scope3/ord-301-status.bin",
+    "tests/fixtures/module-row-format/scope3/ord-301-tx.bin",
+    "tests/fixtures/module-row-format/scope3/ord-301-undo14.bin",
+    "tests/fixtures/module-row-format/scope3/profile3.bin",
+    "tests/fixtures/module-row-insert/scope3/anchor-lsn0.bin",
+    "tests/fixtures/module-row-insert/scope3/anchor.bin",
+    "tests/fixtures/module-row-insert/scope3/h-500-aging.bin",
+    "tests/fixtures/module-row-insert/scope3/h-500-bank.bin",
+    "tests/fixtures/module-row-insert/scope3/h-500-jobs2.bin",
+    "tests/fixtures/module-row-insert/scope3/h-500-jobs3.bin",
+    "tests/fixtures/module-row-insert/scope3/h-500-leaf.bin",
+    "tests/fixtures/module-row-insert/scope3/h-500-root.bin",
+    "tests/fixtures/module-row-insert/scope3/h-500-status.bin",
+    "tests/fixtures/module-row-insert/scope3/h-500-tx.bin",
+    "tests/fixtures/module-row-insert/scope3/h-500-undo10.bin",
+    "tests/fixtures/module-row-insert/scope3/h-500-undo11.bin",
+    "tests/fixtures/module-row-insert/scope3/h-501-aging.bin",
+    "tests/fixtures/module-row-insert/scope3/h-501-bank.bin",
+    "tests/fixtures/module-row-insert/scope3/h-501-forward.wal",
+    "tests/fixtures/module-row-insert/scope3/h-501-jobs2.bin",
+    "tests/fixtures/module-row-insert/scope3/h-501-jobs3.bin",
+    "tests/fixtures/module-row-insert/scope3/h-501-leaf.bin",
+    "tests/fixtures/module-row-insert/scope3/h-501-root.bin",
+    "tests/fixtures/module-row-insert/scope3/h-501-status.bin",
+    "tests/fixtures/module-row-insert/scope3/h-501-tx.bin",
+    "tests/fixtures/module-row-insert/scope3/h-501-undo11.bin",
+    "tests/fixtures/module-row-insert/scope3/h-502-status.bin",
+    "tests/fixtures/module-row-insert/scope3/h-502-tx.bin",
+    "tests/fixtures/module-row-insert/scope3/h-503-aging.bin",
+    "tests/fixtures/module-row-insert/scope3/h-503-bank.bin",
+    "tests/fixtures/module-row-insert/scope3/h-503-clr.wal",
+    "tests/fixtures/module-row-insert/scope3/h-503-jobs3.bin",
+    "tests/fixtures/module-row-insert/scope3/h-503-leaf.bin",
+    "tests/fixtures/module-row-insert/scope3/h-503-root.bin",
+    "tests/fixtures/module-row-insert/scope3/h-503-status.bin",
+    "tests/fixtures/module-row-insert/scope3/h-503-tx.bin",
+    "tests/fixtures/module-row-insert/scope3/h-503-undo11.bin",
+    "tests/fixtures/module-row-insert/scope3/noh-300-aging.bin",
+    "tests/fixtures/module-row-insert/scope3/noh-300-bank.bin",
+    "tests/fixtures/module-row-insert/scope3/noh-300-jobs2.bin",
+    "tests/fixtures/module-row-insert/scope3/noh-300-leaf-dup7.bin",
+    "tests/fixtures/module-row-insert/scope3/noh-300-leaf-full.bin",
+    "tests/fixtures/module-row-insert/scope3/noh-300-leaf.bin",
+    "tests/fixtures/module-row-insert/scope3/noh-300-root.bin",
+    "tests/fixtures/module-row-insert/scope3/noh-300-status.bin",
+    "tests/fixtures/module-row-insert/scope3/noh-300-tx.bin",
+    "tests/fixtures/module-row-insert/scope3/noh-300-undo11.bin",
+    "tests/fixtures/module-row-insert/scope3/noh-301-aging.bin",
+    "tests/fixtures/module-row-insert/scope3/noh-301-bank.bin",
+    "tests/fixtures/module-row-insert/scope3/noh-301-forward.wal",
+    "tests/fixtures/module-row-insert/scope3/noh-301-jobs2.bin",
+    "tests/fixtures/module-row-insert/scope3/noh-301-leaf.bin",
+    "tests/fixtures/module-row-insert/scope3/noh-301-root.bin",
+    "tests/fixtures/module-row-insert/scope3/noh-301-status.bin",
+    "tests/fixtures/module-row-insert/scope3/noh-301-tx.bin",
+    "tests/fixtures/module-row-insert/scope3/noh-301-undo11.bin",
+    "tests/fixtures/module-row-insert/scope3/noh-302-status.bin",
+    "tests/fixtures/module-row-insert/scope3/noh-302-tx.bin",
+    "tests/fixtures/module-row-insert/scope3/noh-303-aging.bin",
+    "tests/fixtures/module-row-insert/scope3/noh-303-bank.bin",
+    "tests/fixtures/module-row-insert/scope3/noh-303-clr.wal",
+    "tests/fixtures/module-row-insert/scope3/noh-303-jobs2.bin",
+    "tests/fixtures/module-row-insert/scope3/noh-303-leaf.bin",
+    "tests/fixtures/module-row-insert/scope3/noh-303-root.bin",
+    "tests/fixtures/module-row-insert/scope3/noh-303-status.bin",
+    "tests/fixtures/module-row-insert/scope3/noh-303-tx.bin",
+    "tests/fixtures/module-row-insert/scope3/noh-303-undo11.bin",
+    "tests/fixtures/module-row-insert/scope3/ord-300-aging.bin",
+    "tests/fixtures/module-row-insert/scope3/ord-300-bank.bin",
+    "tests/fixtures/module-row-insert/scope3/ord-300-jobs2.bin",
+    "tests/fixtures/module-row-insert/scope3/ord-300-leaf.bin",
+    "tests/fixtures/module-row-insert/scope3/ord-300-root.bin",
+    "tests/fixtures/module-row-insert/scope3/ord-300-status.bin",
+    "tests/fixtures/module-row-insert/scope3/ord-300-tx.bin",
+    "tests/fixtures/module-row-insert/scope3/ord-300-undo14.bin",
+    "tests/fixtures/module-row-insert/scope3/ord-301-aging.bin",
+    "tests/fixtures/module-row-insert/scope3/ord-301-bank.bin",
+    "tests/fixtures/module-row-insert/scope3/ord-301-forward.wal",
+    "tests/fixtures/module-row-insert/scope3/ord-301-jobs2.bin",
+    "tests/fixtures/module-row-insert/scope3/ord-301-leaf.bin",
+    "tests/fixtures/module-row-insert/scope3/ord-301-root.bin",
+    "tests/fixtures/module-row-insert/scope3/ord-301-status.bin",
+    "tests/fixtures/module-row-insert/scope3/ord-301-tx.bin",
+    "tests/fixtures/module-row-insert/scope3/ord-301-undo14.bin",
+    "tests/fixtures/module-row-insert/scope3/profile3.bin"
+   ],
+   "reason": "A's MCA00-V06 producer tests read every moved literal through the changed include path and compare A's produced Forward/CLR groups and refusals with them. Run on head and C+A: the moved C-side root is retained by the trusted C+A export while the old A path is gone.",
+   "cases": [
+    {
+     "file": "crates/engine/src/storage/row/insert/group_tests.rs",
+     "case": "storage::row::insert::group_tests::mca00_v06_aging_after_census_refusals_precede_output",
+     "sources": [
+      "head",
+      "export-a"
+     ]
+    },
+    {
+     "file": "crates/engine/src/storage/row/insert/group_tests.rs",
+     "case": "storage::row::insert::group_tests::mca00_v06_clr_refusals_precede_output",
+     "sources": [
+      "head",
+      "export-a"
+     ]
+    },
+    {
+     "file": "crates/engine/src/storage/row/insert/group_tests.rs",
+     "case": "storage::row::insert::group_tests::mca00_v06_clr_with_h_matches_literals",
+     "sources": [
+      "head",
+      "export-a"
+     ]
+    },
+    {
+     "file": "crates/engine/src/storage/row/insert/group_tests.rs",
+     "case": "storage::row::insert::group_tests::mca00_v06_clr_without_h_matches_literals",
+     "sources": [
+      "head",
+      "export-a"
+     ]
+    },
+    {
+     "file": "crates/engine/src/storage/row/insert/group_tests.rs",
+     "case": "storage::row::insert::group_tests::mca00_v06_descriptor_refusals_precede_output",
+     "sources": [
+      "head",
+      "export-a"
+     ]
+    },
+    {
+     "file": "crates/engine/src/storage/row/insert/group_tests.rs",
+     "case": "storage::row::insert::group_tests::mca00_v06_forward_physical_order_differs_from_roles",
+     "sources": [
+      "head",
+      "export-a"
+     ]
+    },
+    {
+     "file": "crates/engine/src/storage/row/insert/group_tests.rs",
+     "case": "storage::row::insert::group_tests::mca00_v06_forward_refusals_precede_output",
+     "sources": [
+      "head",
+      "export-a"
+     ]
+    },
+    {
+     "file": "crates/engine/src/storage/row/insert/group_tests.rs",
+     "case": "storage::row::insert::group_tests::mca00_v06_forward_with_h_matches_literals",
+     "sources": [
+      "head",
+      "export-a"
+     ]
+    },
+    {
+     "file": "crates/engine/src/storage/row/insert/group_tests.rs",
+     "case": "storage::row::insert::group_tests::mca00_v06_forward_without_h_matches_literals",
+     "sources": [
+      "head",
+      "export-a"
+     ]
+    },
+    {
+     "file": "crates/engine/src/storage/row/insert/group_tests.rs",
+     "case": "storage::row::insert::group_tests::mca00_v06_header_and_zero_lsn_refusals_precede_output",
+     "sources": [
+      "head",
+      "export-a"
+     ]
+    },
+    {
+     "file": "crates/engine/src/storage/row/insert/group_tests.rs",
+     "case": "storage::row::insert::group_tests::mca00_v06_leaf_refusals_precede_output",
+     "sources": [
+      "head",
+      "export-a"
+     ]
+    },
+    {
+     "file": "crates/engine/src/storage/row/insert/group_tests.rs",
+     "case": "storage::row::insert::group_tests::mca00_v06_produced_groups_pass_c_observers",
+     "sources": [
+      "head",
+      "export-a"
+     ]
+    },
+    {
+     "file": "crates/engine/src/storage/row/insert/group_tests.rs",
+     "case": "storage::row::insert::group_tests::mca05_v29_h_net0_with_before_count_zero_is_refused",
+     "sources": [
+      "head",
+      "export-a"
+     ]
+    }
+   ]
+  },
+  {
+   "paths": [
+    "crates/engine/src/storage/semantic_row/transition_tests.rs",
+    "tests/fixtures/module-row-format/scope3/anchor-lsn0.bin",
+    "tests/fixtures/module-row-format/scope3/anchor.bin",
+    "tests/fixtures/module-row-format/scope3/h-500-aging.bin",
+    "tests/fixtures/module-row-format/scope3/h-500-bank.bin",
+    "tests/fixtures/module-row-format/scope3/h-500-jobs2.bin",
+    "tests/fixtures/module-row-format/scope3/h-500-jobs3.bin",
+    "tests/fixtures/module-row-format/scope3/h-500-leaf.bin",
+    "tests/fixtures/module-row-format/scope3/h-500-root.bin",
+    "tests/fixtures/module-row-format/scope3/h-500-status.bin",
+    "tests/fixtures/module-row-format/scope3/h-500-tx.bin",
+    "tests/fixtures/module-row-format/scope3/h-500-undo10.bin",
+    "tests/fixtures/module-row-format/scope3/h-500-undo11.bin",
+    "tests/fixtures/module-row-format/scope3/h-501-aging.bin",
+    "tests/fixtures/module-row-format/scope3/h-501-bank.bin",
+    "tests/fixtures/module-row-format/scope3/h-501-forward.wal",
+    "tests/fixtures/module-row-format/scope3/h-501-jobs2.bin",
+    "tests/fixtures/module-row-format/scope3/h-501-jobs3.bin",
+    "tests/fixtures/module-row-format/scope3/h-501-leaf.bin",
+    "tests/fixtures/module-row-format/scope3/h-501-root.bin",
+    "tests/fixtures/module-row-format/scope3/h-501-status.bin",
+    "tests/fixtures/module-row-format/scope3/h-501-tx.bin",
+    "tests/fixtures/module-row-format/scope3/h-501-undo11.bin",
+    "tests/fixtures/module-row-format/scope3/h-502-status.bin",
+    "tests/fixtures/module-row-format/scope3/h-502-tx.bin",
+    "tests/fixtures/module-row-format/scope3/h-503-aging.bin",
+    "tests/fixtures/module-row-format/scope3/h-503-bank.bin",
+    "tests/fixtures/module-row-format/scope3/h-503-clr.wal",
+    "tests/fixtures/module-row-format/scope3/h-503-jobs3.bin",
+    "tests/fixtures/module-row-format/scope3/h-503-leaf.bin",
+    "tests/fixtures/module-row-format/scope3/h-503-root.bin",
+    "tests/fixtures/module-row-format/scope3/h-503-status.bin",
+    "tests/fixtures/module-row-format/scope3/h-503-tx.bin",
+    "tests/fixtures/module-row-format/scope3/h-503-undo11.bin",
+    "tests/fixtures/module-row-format/scope3/noh-300-aging.bin",
+    "tests/fixtures/module-row-format/scope3/noh-300-bank.bin",
+    "tests/fixtures/module-row-format/scope3/noh-300-jobs2.bin",
+    "tests/fixtures/module-row-format/scope3/noh-300-leaf-dup7.bin",
+    "tests/fixtures/module-row-format/scope3/noh-300-leaf-full.bin",
+    "tests/fixtures/module-row-format/scope3/noh-300-leaf.bin",
+    "tests/fixtures/module-row-format/scope3/noh-300-root.bin",
+    "tests/fixtures/module-row-format/scope3/noh-300-status.bin",
+    "tests/fixtures/module-row-format/scope3/noh-300-tx.bin",
+    "tests/fixtures/module-row-format/scope3/noh-300-undo11.bin",
+    "tests/fixtures/module-row-format/scope3/noh-301-aging.bin",
+    "tests/fixtures/module-row-format/scope3/noh-301-bank.bin",
+    "tests/fixtures/module-row-format/scope3/noh-301-forward.wal",
+    "tests/fixtures/module-row-format/scope3/noh-301-jobs2.bin",
+    "tests/fixtures/module-row-format/scope3/noh-301-leaf.bin",
+    "tests/fixtures/module-row-format/scope3/noh-301-root.bin",
+    "tests/fixtures/module-row-format/scope3/noh-301-status.bin",
+    "tests/fixtures/module-row-format/scope3/noh-301-tx.bin",
+    "tests/fixtures/module-row-format/scope3/noh-301-undo11.bin",
+    "tests/fixtures/module-row-format/scope3/noh-302-status.bin",
+    "tests/fixtures/module-row-format/scope3/noh-302-tx.bin",
+    "tests/fixtures/module-row-format/scope3/noh-303-aging.bin",
+    "tests/fixtures/module-row-format/scope3/noh-303-bank.bin",
+    "tests/fixtures/module-row-format/scope3/noh-303-clr.wal",
+    "tests/fixtures/module-row-format/scope3/noh-303-jobs2.bin",
+    "tests/fixtures/module-row-format/scope3/noh-303-leaf.bin",
+    "tests/fixtures/module-row-format/scope3/noh-303-root.bin",
+    "tests/fixtures/module-row-format/scope3/noh-303-status.bin",
+    "tests/fixtures/module-row-format/scope3/noh-303-tx.bin",
+    "tests/fixtures/module-row-format/scope3/noh-303-undo11.bin",
+    "tests/fixtures/module-row-format/scope3/ord-300-aging.bin",
+    "tests/fixtures/module-row-format/scope3/ord-300-bank.bin",
+    "tests/fixtures/module-row-format/scope3/ord-300-jobs2.bin",
+    "tests/fixtures/module-row-format/scope3/ord-300-leaf.bin",
+    "tests/fixtures/module-row-format/scope3/ord-300-root.bin",
+    "tests/fixtures/module-row-format/scope3/ord-300-status.bin",
+    "tests/fixtures/module-row-format/scope3/ord-300-tx.bin",
+    "tests/fixtures/module-row-format/scope3/ord-300-undo14.bin",
+    "tests/fixtures/module-row-format/scope3/ord-301-aging.bin",
+    "tests/fixtures/module-row-format/scope3/ord-301-bank.bin",
+    "tests/fixtures/module-row-format/scope3/ord-301-forward.wal",
+    "tests/fixtures/module-row-format/scope3/ord-301-jobs2.bin",
+    "tests/fixtures/module-row-format/scope3/ord-301-leaf.bin",
+    "tests/fixtures/module-row-format/scope3/ord-301-root.bin",
+    "tests/fixtures/module-row-format/scope3/ord-301-status.bin",
+    "tests/fixtures/module-row-format/scope3/ord-301-tx.bin",
+    "tests/fixtures/module-row-format/scope3/ord-301-undo14.bin",
+    "tests/fixtures/module-row-format/scope3/profile3.bin",
+    "tests/fixtures/module-row-insert/scope3/anchor-lsn0.bin",
+    "tests/fixtures/module-row-insert/scope3/anchor.bin",
+    "tests/fixtures/module-row-insert/scope3/h-500-aging.bin",
+    "tests/fixtures/module-row-insert/scope3/h-500-bank.bin",
+    "tests/fixtures/module-row-insert/scope3/h-500-jobs2.bin",
+    "tests/fixtures/module-row-insert/scope3/h-500-jobs3.bin",
+    "tests/fixtures/module-row-insert/scope3/h-500-leaf.bin",
+    "tests/fixtures/module-row-insert/scope3/h-500-root.bin",
+    "tests/fixtures/module-row-insert/scope3/h-500-status.bin",
+    "tests/fixtures/module-row-insert/scope3/h-500-tx.bin",
+    "tests/fixtures/module-row-insert/scope3/h-500-undo10.bin",
+    "tests/fixtures/module-row-insert/scope3/h-500-undo11.bin",
+    "tests/fixtures/module-row-insert/scope3/h-501-aging.bin",
+    "tests/fixtures/module-row-insert/scope3/h-501-bank.bin",
+    "tests/fixtures/module-row-insert/scope3/h-501-forward.wal",
+    "tests/fixtures/module-row-insert/scope3/h-501-jobs2.bin",
+    "tests/fixtures/module-row-insert/scope3/h-501-jobs3.bin",
+    "tests/fixtures/module-row-insert/scope3/h-501-leaf.bin",
+    "tests/fixtures/module-row-insert/scope3/h-501-root.bin",
+    "tests/fixtures/module-row-insert/scope3/h-501-status.bin",
+    "tests/fixtures/module-row-insert/scope3/h-501-tx.bin",
+    "tests/fixtures/module-row-insert/scope3/h-501-undo11.bin",
+    "tests/fixtures/module-row-insert/scope3/h-502-status.bin",
+    "tests/fixtures/module-row-insert/scope3/h-502-tx.bin",
+    "tests/fixtures/module-row-insert/scope3/h-503-aging.bin",
+    "tests/fixtures/module-row-insert/scope3/h-503-bank.bin",
+    "tests/fixtures/module-row-insert/scope3/h-503-clr.wal",
+    "tests/fixtures/module-row-insert/scope3/h-503-jobs3.bin",
+    "tests/fixtures/module-row-insert/scope3/h-503-leaf.bin",
+    "tests/fixtures/module-row-insert/scope3/h-503-root.bin",
+    "tests/fixtures/module-row-insert/scope3/h-503-status.bin",
+    "tests/fixtures/module-row-insert/scope3/h-503-tx.bin",
+    "tests/fixtures/module-row-insert/scope3/h-503-undo11.bin",
+    "tests/fixtures/module-row-insert/scope3/noh-300-aging.bin",
+    "tests/fixtures/module-row-insert/scope3/noh-300-bank.bin",
+    "tests/fixtures/module-row-insert/scope3/noh-300-jobs2.bin",
+    "tests/fixtures/module-row-insert/scope3/noh-300-leaf-dup7.bin",
+    "tests/fixtures/module-row-insert/scope3/noh-300-leaf-full.bin",
+    "tests/fixtures/module-row-insert/scope3/noh-300-leaf.bin",
+    "tests/fixtures/module-row-insert/scope3/noh-300-root.bin",
+    "tests/fixtures/module-row-insert/scope3/noh-300-status.bin",
+    "tests/fixtures/module-row-insert/scope3/noh-300-tx.bin",
+    "tests/fixtures/module-row-insert/scope3/noh-300-undo11.bin",
+    "tests/fixtures/module-row-insert/scope3/noh-301-aging.bin",
+    "tests/fixtures/module-row-insert/scope3/noh-301-bank.bin",
+    "tests/fixtures/module-row-insert/scope3/noh-301-forward.wal",
+    "tests/fixtures/module-row-insert/scope3/noh-301-jobs2.bin",
+    "tests/fixtures/module-row-insert/scope3/noh-301-leaf.bin",
+    "tests/fixtures/module-row-insert/scope3/noh-301-root.bin",
+    "tests/fixtures/module-row-insert/scope3/noh-301-status.bin",
+    "tests/fixtures/module-row-insert/scope3/noh-301-tx.bin",
+    "tests/fixtures/module-row-insert/scope3/noh-301-undo11.bin",
+    "tests/fixtures/module-row-insert/scope3/noh-302-status.bin",
+    "tests/fixtures/module-row-insert/scope3/noh-302-tx.bin",
+    "tests/fixtures/module-row-insert/scope3/noh-303-aging.bin",
+    "tests/fixtures/module-row-insert/scope3/noh-303-bank.bin",
+    "tests/fixtures/module-row-insert/scope3/noh-303-clr.wal",
+    "tests/fixtures/module-row-insert/scope3/noh-303-jobs2.bin",
+    "tests/fixtures/module-row-insert/scope3/noh-303-leaf.bin",
+    "tests/fixtures/module-row-insert/scope3/noh-303-root.bin",
+    "tests/fixtures/module-row-insert/scope3/noh-303-status.bin",
+    "tests/fixtures/module-row-insert/scope3/noh-303-tx.bin",
+    "tests/fixtures/module-row-insert/scope3/noh-303-undo11.bin",
+    "tests/fixtures/module-row-insert/scope3/ord-300-aging.bin",
+    "tests/fixtures/module-row-insert/scope3/ord-300-bank.bin",
+    "tests/fixtures/module-row-insert/scope3/ord-300-jobs2.bin",
+    "tests/fixtures/module-row-insert/scope3/ord-300-leaf.bin",
+    "tests/fixtures/module-row-insert/scope3/ord-300-root.bin",
+    "tests/fixtures/module-row-insert/scope3/ord-300-status.bin",
+    "tests/fixtures/module-row-insert/scope3/ord-300-tx.bin",
+    "tests/fixtures/module-row-insert/scope3/ord-300-undo14.bin",
+    "tests/fixtures/module-row-insert/scope3/ord-301-aging.bin",
+    "tests/fixtures/module-row-insert/scope3/ord-301-bank.bin",
+    "tests/fixtures/module-row-insert/scope3/ord-301-forward.wal",
+    "tests/fixtures/module-row-insert/scope3/ord-301-jobs2.bin",
+    "tests/fixtures/module-row-insert/scope3/ord-301-leaf.bin",
+    "tests/fixtures/module-row-insert/scope3/ord-301-root.bin",
+    "tests/fixtures/module-row-insert/scope3/ord-301-status.bin",
+    "tests/fixtures/module-row-insert/scope3/ord-301-tx.bin",
+    "tests/fixtures/module-row-insert/scope3/ord-301-undo14.bin",
+    "tests/fixtures/module-row-insert/scope3/profile3.bin"
+   ],
+   "reason": "The N1/S1-a/S1-d/S1-g C semantic tests (formerly EX08) read the moved literals through the changed include path; every case of the file is selected because the file and its fixture root changed. Head only in this PR: the trusted base policy still removes this file from C+B, so the C+B result is local evidence (module-gate/evidence/f5b/local).",
+   "cases": [
+    {
+     "file": "crates/engine/src/storage/semantic_row/transition_tests.rs",
+     "case": "storage::semantic_row::transition::tests::mca04_v04_v08_issuer_max_is_exhausted_before_output",
+     "sources": [
+      "head"
+     ]
+    },
+    {
+     "file": "crates/engine/src/storage/semantic_row/transition_tests.rs",
+     "case": "storage::semantic_row::transition::tests::n1_empty_transactions_match_literals",
+     "sources": [
+      "head"
+     ]
+    },
+    {
+     "file": "crates/engine/src/storage/semantic_row/transition_tests.rs",
+     "case": "storage::semantic_row::transition::tests::n1_full_rollback_cleanup_match_literals",
+     "sources": [
+      "head"
+     ]
+    },
+    {
+     "file": "crates/engine/src/storage/semantic_row/transition_tests.rs",
+     "case": "storage::semantic_row::transition::tests::n1_observer_accepts_a_forward_clr_literals",
+     "sources": [
+      "head"
+     ]
+    },
+    {
+     "file": "crates/engine/src/storage/semantic_row/transition_tests.rs",
+     "case": "storage::semantic_row::transition::tests::n1_observer_rejects_mutated_literals",
+     "sources": [
+      "head"
+     ]
+    },
+    {
+     "file": "crates/engine/src/storage/semantic_row/transition_tests.rs",
+     "case": "storage::semantic_row::transition::tests::n1_producer_refusals_precede_output",
+     "sources": [
+      "head"
+     ]
+    },
+    {
+     "file": "crates/engine/src/storage/semantic_row/transition_tests.rs",
+     "case": "storage::semantic_row::transition::tests::n1_statement_reserve_commit_prune_match_literals",
+     "sources": [
+      "head"
+     ]
+    },
+    {
+     "file": "crates/engine/src/storage/semantic_row/transition_tests.rs",
+     "case": "storage::semantic_row::transition::tests::n1_transition_source_bounds_cover_measured_frames",
+     "sources": [
+      "head"
+     ]
+    },
+    {
+     "file": "crates/engine/src/storage/semantic_row/transition_tests.rs",
+     "case": "storage::semantic_row::transition::tests::s1a_borrowed_observer_accepts_n1_and_a_literals",
+     "sources": [
+      "head"
+     ]
+    },
+    {
+     "file": "crates/engine/src/storage/semantic_row/transition_tests.rs",
+     "case": "storage::semantic_row::transition::tests::s1a_borrowed_observer_rejects_mutated_literals",
+     "sources": [
+      "head"
+     ]
+    },
+    {
+     "file": "crates/engine/src/storage/semantic_row/transition_tests.rs",
+     "case": "storage::semantic_row::transition::tests::s1a_borrowed_observer_source_bound_covers_measured_frames",
+     "sources": [
+      "head"
+     ]
+    },
+    {
+     "file": "crates/engine/src/storage/semantic_row/transition_tests.rs",
+     "case": "storage::semantic_row::transition::tests::s1a_borrowed_tail_refused_dirty_and_restored_on_every_exit",
+     "sources": [
+      "head"
+     ]
+    },
+    {
+     "file": "crates/engine/src/storage/semantic_row/transition_tests.rs",
+     "case": "storage::semantic_row::transition::tests::s1d_borrowed_producer_matches_owned_groups",
+     "sources": [
+      "head"
+     ]
+    },
+    {
+     "file": "crates/engine/src/storage/semantic_row/transition_tests.rs",
+     "case": "storage::semantic_row::transition::tests::s1d_borrowed_producer_source_bound_covers_measured_frames",
+     "sources": [
+      "head"
+     ]
+    },
+    {
+     "file": "crates/engine/src/storage/semantic_row/transition_tests.rs",
+     "case": "storage::semantic_row::transition::tests::s1g_reserve_adopted_equals_produced",
+     "sources": [
+      "head"
+     ]
+    },
+    {
+     "file": "crates/engine/src/storage/semantic_row/transition_tests.rs",
+     "case": "storage::semantic_row::transition::tests::s1g_reserve_adopted_not_producible",
+     "sources": [
+      "head"
+     ]
+    }
+   ]
+  },
+  {
+   "paths": [
+    "crates/engine/src/storage/wal_io/plan4_retention/recovery/row_tests.rs",
+    "tests/fixtures/module-row-format/scope3/anchor-lsn0.bin",
+    "tests/fixtures/module-row-format/scope3/anchor.bin",
+    "tests/fixtures/module-row-format/scope3/h-500-aging.bin",
+    "tests/fixtures/module-row-format/scope3/h-500-bank.bin",
+    "tests/fixtures/module-row-format/scope3/h-500-jobs2.bin",
+    "tests/fixtures/module-row-format/scope3/h-500-jobs3.bin",
+    "tests/fixtures/module-row-format/scope3/h-500-leaf.bin",
+    "tests/fixtures/module-row-format/scope3/h-500-root.bin",
+    "tests/fixtures/module-row-format/scope3/h-500-status.bin",
+    "tests/fixtures/module-row-format/scope3/h-500-tx.bin",
+    "tests/fixtures/module-row-format/scope3/h-500-undo10.bin",
+    "tests/fixtures/module-row-format/scope3/h-500-undo11.bin",
+    "tests/fixtures/module-row-format/scope3/h-501-aging.bin",
+    "tests/fixtures/module-row-format/scope3/h-501-bank.bin",
+    "tests/fixtures/module-row-format/scope3/h-501-forward.wal",
+    "tests/fixtures/module-row-format/scope3/h-501-jobs2.bin",
+    "tests/fixtures/module-row-format/scope3/h-501-jobs3.bin",
+    "tests/fixtures/module-row-format/scope3/h-501-leaf.bin",
+    "tests/fixtures/module-row-format/scope3/h-501-root.bin",
+    "tests/fixtures/module-row-format/scope3/h-501-status.bin",
+    "tests/fixtures/module-row-format/scope3/h-501-tx.bin",
+    "tests/fixtures/module-row-format/scope3/h-501-undo11.bin",
+    "tests/fixtures/module-row-format/scope3/h-502-status.bin",
+    "tests/fixtures/module-row-format/scope3/h-502-tx.bin",
+    "tests/fixtures/module-row-format/scope3/h-503-aging.bin",
+    "tests/fixtures/module-row-format/scope3/h-503-bank.bin",
+    "tests/fixtures/module-row-format/scope3/h-503-clr.wal",
+    "tests/fixtures/module-row-format/scope3/h-503-jobs3.bin",
+    "tests/fixtures/module-row-format/scope3/h-503-leaf.bin",
+    "tests/fixtures/module-row-format/scope3/h-503-root.bin",
+    "tests/fixtures/module-row-format/scope3/h-503-status.bin",
+    "tests/fixtures/module-row-format/scope3/h-503-tx.bin",
+    "tests/fixtures/module-row-format/scope3/h-503-undo11.bin",
+    "tests/fixtures/module-row-format/scope3/noh-300-aging.bin",
+    "tests/fixtures/module-row-format/scope3/noh-300-bank.bin",
+    "tests/fixtures/module-row-format/scope3/noh-300-jobs2.bin",
+    "tests/fixtures/module-row-format/scope3/noh-300-leaf-dup7.bin",
+    "tests/fixtures/module-row-format/scope3/noh-300-leaf-full.bin",
+    "tests/fixtures/module-row-format/scope3/noh-300-leaf.bin",
+    "tests/fixtures/module-row-format/scope3/noh-300-root.bin",
+    "tests/fixtures/module-row-format/scope3/noh-300-status.bin",
+    "tests/fixtures/module-row-format/scope3/noh-300-tx.bin",
+    "tests/fixtures/module-row-format/scope3/noh-300-undo11.bin",
+    "tests/fixtures/module-row-format/scope3/noh-301-aging.bin",
+    "tests/fixtures/module-row-format/scope3/noh-301-bank.bin",
+    "tests/fixtures/module-row-format/scope3/noh-301-forward.wal",
+    "tests/fixtures/module-row-format/scope3/noh-301-jobs2.bin",
+    "tests/fixtures/module-row-format/scope3/noh-301-leaf.bin",
+    "tests/fixtures/module-row-format/scope3/noh-301-root.bin",
+    "tests/fixtures/module-row-format/scope3/noh-301-status.bin",
+    "tests/fixtures/module-row-format/scope3/noh-301-tx.bin",
+    "tests/fixtures/module-row-format/scope3/noh-301-undo11.bin",
+    "tests/fixtures/module-row-format/scope3/noh-302-status.bin",
+    "tests/fixtures/module-row-format/scope3/noh-302-tx.bin",
+    "tests/fixtures/module-row-format/scope3/noh-303-aging.bin",
+    "tests/fixtures/module-row-format/scope3/noh-303-bank.bin",
+    "tests/fixtures/module-row-format/scope3/noh-303-clr.wal",
+    "tests/fixtures/module-row-format/scope3/noh-303-jobs2.bin",
+    "tests/fixtures/module-row-format/scope3/noh-303-leaf.bin",
+    "tests/fixtures/module-row-format/scope3/noh-303-root.bin",
+    "tests/fixtures/module-row-format/scope3/noh-303-status.bin",
+    "tests/fixtures/module-row-format/scope3/noh-303-tx.bin",
+    "tests/fixtures/module-row-format/scope3/noh-303-undo11.bin",
+    "tests/fixtures/module-row-format/scope3/ord-300-aging.bin",
+    "tests/fixtures/module-row-format/scope3/ord-300-bank.bin",
+    "tests/fixtures/module-row-format/scope3/ord-300-jobs2.bin",
+    "tests/fixtures/module-row-format/scope3/ord-300-leaf.bin",
+    "tests/fixtures/module-row-format/scope3/ord-300-root.bin",
+    "tests/fixtures/module-row-format/scope3/ord-300-status.bin",
+    "tests/fixtures/module-row-format/scope3/ord-300-tx.bin",
+    "tests/fixtures/module-row-format/scope3/ord-300-undo14.bin",
+    "tests/fixtures/module-row-format/scope3/ord-301-aging.bin",
+    "tests/fixtures/module-row-format/scope3/ord-301-bank.bin",
+    "tests/fixtures/module-row-format/scope3/ord-301-forward.wal",
+    "tests/fixtures/module-row-format/scope3/ord-301-jobs2.bin",
+    "tests/fixtures/module-row-format/scope3/ord-301-leaf.bin",
+    "tests/fixtures/module-row-format/scope3/ord-301-root.bin",
+    "tests/fixtures/module-row-format/scope3/ord-301-status.bin",
+    "tests/fixtures/module-row-format/scope3/ord-301-tx.bin",
+    "tests/fixtures/module-row-format/scope3/ord-301-undo14.bin",
+    "tests/fixtures/module-row-format/scope3/profile3.bin",
+    "tests/fixtures/module-row-insert/scope3/anchor-lsn0.bin",
+    "tests/fixtures/module-row-insert/scope3/anchor.bin",
+    "tests/fixtures/module-row-insert/scope3/h-500-aging.bin",
+    "tests/fixtures/module-row-insert/scope3/h-500-bank.bin",
+    "tests/fixtures/module-row-insert/scope3/h-500-jobs2.bin",
+    "tests/fixtures/module-row-insert/scope3/h-500-jobs3.bin",
+    "tests/fixtures/module-row-insert/scope3/h-500-leaf.bin",
+    "tests/fixtures/module-row-insert/scope3/h-500-root.bin",
+    "tests/fixtures/module-row-insert/scope3/h-500-status.bin",
+    "tests/fixtures/module-row-insert/scope3/h-500-tx.bin",
+    "tests/fixtures/module-row-insert/scope3/h-500-undo10.bin",
+    "tests/fixtures/module-row-insert/scope3/h-500-undo11.bin",
+    "tests/fixtures/module-row-insert/scope3/h-501-aging.bin",
+    "tests/fixtures/module-row-insert/scope3/h-501-bank.bin",
+    "tests/fixtures/module-row-insert/scope3/h-501-forward.wal",
+    "tests/fixtures/module-row-insert/scope3/h-501-jobs2.bin",
+    "tests/fixtures/module-row-insert/scope3/h-501-jobs3.bin",
+    "tests/fixtures/module-row-insert/scope3/h-501-leaf.bin",
+    "tests/fixtures/module-row-insert/scope3/h-501-root.bin",
+    "tests/fixtures/module-row-insert/scope3/h-501-status.bin",
+    "tests/fixtures/module-row-insert/scope3/h-501-tx.bin",
+    "tests/fixtures/module-row-insert/scope3/h-501-undo11.bin",
+    "tests/fixtures/module-row-insert/scope3/h-502-status.bin",
+    "tests/fixtures/module-row-insert/scope3/h-502-tx.bin",
+    "tests/fixtures/module-row-insert/scope3/h-503-aging.bin",
+    "tests/fixtures/module-row-insert/scope3/h-503-bank.bin",
+    "tests/fixtures/module-row-insert/scope3/h-503-clr.wal",
+    "tests/fixtures/module-row-insert/scope3/h-503-jobs3.bin",
+    "tests/fixtures/module-row-insert/scope3/h-503-leaf.bin",
+    "tests/fixtures/module-row-insert/scope3/h-503-root.bin",
+    "tests/fixtures/module-row-insert/scope3/h-503-status.bin",
+    "tests/fixtures/module-row-insert/scope3/h-503-tx.bin",
+    "tests/fixtures/module-row-insert/scope3/h-503-undo11.bin",
+    "tests/fixtures/module-row-insert/scope3/noh-300-aging.bin",
+    "tests/fixtures/module-row-insert/scope3/noh-300-bank.bin",
+    "tests/fixtures/module-row-insert/scope3/noh-300-jobs2.bin",
+    "tests/fixtures/module-row-insert/scope3/noh-300-leaf-dup7.bin",
+    "tests/fixtures/module-row-insert/scope3/noh-300-leaf-full.bin",
+    "tests/fixtures/module-row-insert/scope3/noh-300-leaf.bin",
+    "tests/fixtures/module-row-insert/scope3/noh-300-root.bin",
+    "tests/fixtures/module-row-insert/scope3/noh-300-status.bin",
+    "tests/fixtures/module-row-insert/scope3/noh-300-tx.bin",
+    "tests/fixtures/module-row-insert/scope3/noh-300-undo11.bin",
+    "tests/fixtures/module-row-insert/scope3/noh-301-aging.bin",
+    "tests/fixtures/module-row-insert/scope3/noh-301-bank.bin",
+    "tests/fixtures/module-row-insert/scope3/noh-301-forward.wal",
+    "tests/fixtures/module-row-insert/scope3/noh-301-jobs2.bin",
+    "tests/fixtures/module-row-insert/scope3/noh-301-leaf.bin",
+    "tests/fixtures/module-row-insert/scope3/noh-301-root.bin",
+    "tests/fixtures/module-row-insert/scope3/noh-301-status.bin",
+    "tests/fixtures/module-row-insert/scope3/noh-301-tx.bin",
+    "tests/fixtures/module-row-insert/scope3/noh-301-undo11.bin",
+    "tests/fixtures/module-row-insert/scope3/noh-302-status.bin",
+    "tests/fixtures/module-row-insert/scope3/noh-302-tx.bin",
+    "tests/fixtures/module-row-insert/scope3/noh-303-aging.bin",
+    "tests/fixtures/module-row-insert/scope3/noh-303-bank.bin",
+    "tests/fixtures/module-row-insert/scope3/noh-303-clr.wal",
+    "tests/fixtures/module-row-insert/scope3/noh-303-jobs2.bin",
+    "tests/fixtures/module-row-insert/scope3/noh-303-leaf.bin",
+    "tests/fixtures/module-row-insert/scope3/noh-303-root.bin",
+    "tests/fixtures/module-row-insert/scope3/noh-303-status.bin",
+    "tests/fixtures/module-row-insert/scope3/noh-303-tx.bin",
+    "tests/fixtures/module-row-insert/scope3/noh-303-undo11.bin",
+    "tests/fixtures/module-row-insert/scope3/ord-300-aging.bin",
+    "tests/fixtures/module-row-insert/scope3/ord-300-bank.bin",
+    "tests/fixtures/module-row-insert/scope3/ord-300-jobs2.bin",
+    "tests/fixtures/module-row-insert/scope3/ord-300-leaf.bin",
+    "tests/fixtures/module-row-insert/scope3/ord-300-root.bin",
+    "tests/fixtures/module-row-insert/scope3/ord-300-status.bin",
+    "tests/fixtures/module-row-insert/scope3/ord-300-tx.bin",
+    "tests/fixtures/module-row-insert/scope3/ord-300-undo14.bin",
+    "tests/fixtures/module-row-insert/scope3/ord-301-aging.bin",
+    "tests/fixtures/module-row-insert/scope3/ord-301-bank.bin",
+    "tests/fixtures/module-row-insert/scope3/ord-301-forward.wal",
+    "tests/fixtures/module-row-insert/scope3/ord-301-jobs2.bin",
+    "tests/fixtures/module-row-insert/scope3/ord-301-leaf.bin",
+    "tests/fixtures/module-row-insert/scope3/ord-301-root.bin",
+    "tests/fixtures/module-row-insert/scope3/ord-301-status.bin",
+    "tests/fixtures/module-row-insert/scope3/ord-301-tx.bin",
+    "tests/fixtures/module-row-insert/scope3/ord-301-undo14.bin",
+    "tests/fixtures/module-row-insert/scope3/profile3.bin"
+   ],
+   "reason": "The S1-b/S1-d/S1-g C replay tests (formerly EX09) read the moved literals through the changed include path; every case of the file is selected because the file and its fixture root changed. Head only in this PR: the trusted base policy still removes this file from C+B, so the C+B result is local evidence (module-gate/evidence/f5b/local).",
+   "cases": [
+    {
+     "file": "crates/engine/src/storage/wal_io/plan4_retention/recovery/row_tests.rs",
+     "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::recovery::row_tests::s1b_record_is_byte_equal_live_and_replay",
+     "sources": [
+      "head"
+     ]
+    },
+    {
+     "file": "crates/engine/src/storage/wal_io/plan4_retention/recovery/row_tests.rs",
+     "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::recovery::row_tests::s1b_row_arm_refuses_mutations_without_effect",
+     "sources": [
+      "head"
+     ]
+    },
+    {
+     "file": "crates/engine/src/storage/wal_io/plan4_retention/recovery/row_tests.rs",
+     "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::recovery::row_tests::s1b_row_arm_replays_n1_and_a_literals",
+     "sources": [
+      "head"
+     ]
+    },
+    {
+     "file": "crates/engine/src/storage/wal_io/plan4_retention/recovery/row_tests.rs",
+     "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::recovery::row_tests::s1b_row_begin_shares_adopted_local",
+     "sources": [
+      "head"
+     ]
+    },
+    {
+     "file": "crates/engine/src/storage/wal_io/plan4_retention/recovery/row_tests.rs",
+     "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::recovery::row_tests::s1b_scope_routes_only_to_its_own_arm",
+     "sources": [
+      "head"
+     ]
+    },
+    {
+     "file": "crates/engine/src/storage/wal_io/plan4_retention/recovery/row_tests.rs",
+     "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::recovery::row_tests::s1d_record_guards_its_own_slot",
+     "sources": [
+      "head"
+     ]
+    },
+    {
+     "file": "crates/engine/src/storage/wal_io/plan4_retention/recovery/row_tests.rs",
+     "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::recovery::row_tests::s1g_closure_refuses_row_root_without_its_u_allocation",
+     "sources": [
+      "head"
+     ]
+    },
+    {
+     "file": "crates/engine/src/storage/wal_io/plan4_retention/recovery/row_tests.rs",
+     "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::recovery::row_tests::s1g_reserve_commitment_opens_at_forward",
+     "sources": [
+      "head"
+     ]
+    },
+    {
+     "file": "crates/engine/src/storage/wal_io/plan4_retention/recovery/row_tests.rs",
+     "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::recovery::row_tests::s1g_row_reserve_refuses_without_effect",
+     "sources": [
+      "head"
+     ]
+    },
+    {
+     "file": "crates/engine/src/storage/wal_io/plan4_retention/recovery/row_tests.rs",
+     "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::recovery::row_tests::s1g_row_reserve_replays_n1_literals",
+     "sources": [
+      "head"
+     ]
+    }
+   ]
+  }
+ ],
+ "reviews": []
+}

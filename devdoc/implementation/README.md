@@ -1,5 +1,7 @@
 # 현재 구현
 
+2026-11-02 [F5-b scope3 fixture 이관](../contracts/dev3-module-boundaries.md#f5-scope3-fixture): A의 MCA00-V06 scope3 literal 81개를 bytes 그대로 C 쪽 `module-row-format/scope3/`로 옮겨 C의 N1·replay 시험이 A fixture를 읽지 않는다. EX08–EX09를 제거해 manifest 예외가 없다. [실행 상태](../evidence/module-independence-survey-20261026.md#f5-scope3-fixture)를 따르며 F6은 잔여다.
+
 2026-11-02 [F4 caller 예산 분리](../contracts/dev3-module-boundaries.md#f4-caller-budgets): A actual ≤ fixed ceiling과 C body+ceiling ≤ 원 charge/cap을 따로 검증한다. EX05–EX07 제거와 trusted export 전환 선택의 [실행 상태](../evidence/module-independence-survey-20261026.md#f4-caller-budgets)를 따른다. 제품 로직은 바꾸지 않으며 F5-b/F6은 잔여다.
 
 2026-11-02 [F4 Row 작업 API 첫 단위](../contracts/dev3-module-boundaries.md#f4-row-operation): C의 sealed 관련 상태를 A의 세 쓰기 adapter가 소비한다. 원 lifetime·오류·Drop을 보존하며 고정 예산 위에 bridge carrier를 별도 합성한다. [검증 범위와 CI 근거](../evidence/module-independence-survey-20261026.md#f4-row-operation)를 따른다. EX05–EX07과 전체 F4는 잔여다.
