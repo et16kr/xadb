@@ -62,8 +62,10 @@ impl<'b, 'a, 's, 'c, 'p, 'd, 'm, 'w, W: WriterNamespace>
     /// two read proofs); ReleaseRole/RootFree take Allocation, Root, RootJob
     /// page and U; TerminalFinish Allocation, Root, Terminal page and Status;
     /// committed Prune the five changed pages, Allocation and the proofs
-    /// TableAnchor, CatalogLeaf and, when H exists, H's Undo.
-    fn prepare_row_recovery<'i>(
+    /// TableAnchor, CatalogLeaf and, when H exists, H's Undo. The live Row
+    /// retirement (`retire`) prepares the same groups after the residency of
+    /// `row_cleanup_requests`.
+    pub(super) fn prepare_row_recovery<'i>(
         &self,
         owner: &mut Owner<'c, 's>,
         ordinal: usize,
@@ -92,6 +94,52 @@ impl<'b, 'a, 's, 'c, 'p, 'd, 'm, 'w, W: WriterNamespace>
             }
             (row_semantic::Operation::Prune, Some(h)) => {
                 self.prepare_row_recovery_n::<9>(owner, ordinal, operation, Some(h), private)
+            }
+            _ => Err(unchanged(
+                RetentionPhase::Prepare,
+                RetentionCause::Unsupported,
+            )),
+        }
+    }
+
+    /// The whole target set `prepare_row_recovery` selects for a Prune,
+    /// ReleaseRole, RootFree or TerminalFinish of Job `ordinal`, in selection
+    /// order, and its length: the live residency set before the preparation.
+    pub(super) fn row_cleanup_requests(
+        &self,
+        ordinal: usize,
+        operation: row_semantic::Operation,
+    ) -> Result<([TargetRequest; ROW_WRITE_TARGETS], usize)> {
+        fn requests<const N: usize>(
+            (_, selected): RecoverySelection<N>,
+        ) -> ([TargetRequest; ROW_WRITE_TARGETS], usize) {
+            let mut requests = [selected[0].0; ROW_WRITE_TARGETS];
+            for (at, (request, _)) in selected.into_iter().enumerate() {
+                requests[at] = request;
+            }
+            (requests, N)
+        }
+        let invalid = || unchanged(RetentionPhase::Prepare, RetentionCause::Invariant);
+        match operation {
+            row_semantic::Operation::ReleaseRole
+            | row_semantic::Operation::RootFree
+            | row_semantic::Operation::TerminalFinish => Ok(requests(
+                self.row_recovery_selection::<4>(ordinal, operation, None)?,
+            )),
+            row_semantic::Operation::Prune => {
+                let namespace = self.storage.profile().spec().namespace;
+                match recovery_predecessor(self.control.jobs(), namespace, ordinal)
+                    .map_err(|_| invalid())?
+                {
+                    None => Ok(requests(
+                        self.row_recovery_selection::<8>(ordinal, operation, None)?,
+                    )),
+                    Some(h) => Ok(requests(self.row_recovery_selection::<9>(
+                        ordinal,
+                        operation,
+                        Some(h),
+                    )?)),
+                }
             }
             _ => Err(unchanged(
                 RetentionPhase::Prepare,

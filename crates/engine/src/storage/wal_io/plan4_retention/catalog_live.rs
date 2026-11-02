@@ -1688,6 +1688,12 @@ pub(in super::super) struct CatalogLiveSource {
     pub(in super::super) lifecycle: usize,
     /// Row Begin/RollbackStart/AbortEnd under RowProgress (ROW-BEGIN-001).
     pub(in super::super) row_lifecycle: usize,
+    /// The live Row retirement (Prune under RowWrite, ReleaseRole, RootFree
+    /// and TerminalFinish under RowProgress), reclamation
+    /// `#live-row-retirement`. Like `row_lifecycle` it is checked against
+    /// CatalogProgressCharge by name, and unlike it it is not folded into
+    /// `peak`, so no existing charge or census changes.
+    pub(in super::super) row_retirement: usize,
     pub(in super::super) retirement: usize,
     pub(in super::super) peak: usize,
 }
@@ -2166,6 +2172,35 @@ pub(in super::super) fn catalog_live_source_bytes<W: WriterNamespace>() -> Catal
         + lifecycle::entry_carrier_bytes::<W>()
         + row.carriers
         + transaction::writable::row_lifecycle_caller_bytes();
+    // The live Row retirement (reclamation `#live-row-retirement`): the same
+    // shell and its own entry packet and RowRetireStep slots throughout;
+    // first the residency LOAD steps, then, in `retire_resident`'s own
+    // never-inlined frame (the prepared group, its Result slot, the
+    // Observation copy and its Result, the install's group carrier), the
+    // recovered cleanup preparation at nine targets with its replay scope,
+    // then the existing-group install at four targets (ReleaseRole) or the
+    // retirement install at nine targets.
+    let wide = lifecycle::row::row_group_terms::<9>();
+    let row_cleanup_prepare =
+        (scalar + wide.outer + scope_carriers + history_peak.max(wide.produce))
+            .max(scalar + wide.outer + wide.inventory)
+            .max(scalar + wide.outer + wide.assembled)
+            .max(ledger);
+    let row_cleanup_residency = scalar
+        + lifecycle::row::retire::residency_source_bytes()
+        + super::super::lookup_load::source_bytes::<W>();
+    let row_cleanup_install = lifecycle::application_carrier_bytes::<W>()
+        + scalar
+        + lifecycle::row::retire::install_source_bytes(wide.control, physical);
+    let row_retirement = row_cleanup_residency.max(
+        row_cleanup_prepare
+            .max(row_install)
+            .max(row_cleanup_install)
+            + lifecycle::row::retire::carrier_source_bytes(),
+    ) + lifecycle::row::retire::caller_source_bytes()
+        + source::commit_carrier_bytes()
+        + 2 * size_of::<crate::storage::session_fence::UnwindFence<'_>>()
+        + lifecycle::entry_carrier_bytes::<W>();
     let retirement = ((retirement::prepare_caller_source_bytes() + prepare)
         .max(retirement::selection_source_bytes())
         + source::retirement_prepare_carrier_bytes())
@@ -2186,6 +2221,7 @@ pub(in super::super) fn catalog_live_source_bytes<W: WriterNamespace>() -> Catal
         start_status,
         lifecycle,
         row_lifecycle,
+        row_retirement,
         retirement,
         peak: prepare
             .max(plan)

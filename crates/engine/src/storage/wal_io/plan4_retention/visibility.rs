@@ -42,6 +42,8 @@ mod catalog_retirement;
 mod pins;
 #[path = "visibility/retirement.rs"]
 mod retirement;
+#[path = "visibility/row_retirement.rs"]
+mod row_retirement;
 #[path = "visibility/snapshot.rs"]
 mod snapshot;
 #[path = "visibility/source.rs"]

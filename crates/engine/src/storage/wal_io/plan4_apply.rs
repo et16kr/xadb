@@ -142,13 +142,15 @@ pub(in crate::storage) use create_pair::catalog_live::lifecycle::row::write::tes
 };
 #[path = "plan4_retention/visibility.rs"]
 mod visibility;
-pub(in crate::storage) use create_pair::CatalogRetirementRejected;
 use create_pair::catalog_live::CatalogPayload;
+#[allow(unused_imports, reason = "named by the live Row retirement tests")]
+pub(in crate::storage) use create_pair::catalog_live::lifecycle::row::retire::RowRetireStep;
 #[allow(unused_imports)]
 pub(crate) use create_pair::catalog_live::{
     ReservedCatalogCreate,
     shared_create::{CatalogCancelled, CatalogCreateError, CatalogCreated},
 };
+pub(in crate::storage) use create_pair::{CatalogRetirementRejected, RowRetirementRejected};
 
 /// No Clone/Copy and no raw constructor. This borrows immutable private
 /// operation bytes, not replay/control/page guards or a second storage owner.

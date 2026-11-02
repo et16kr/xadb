@@ -30,7 +30,6 @@ pub(crate) use allocation_reservation::{
 pub(in crate::storage::wal_io) mod mutable_storage;
 #[cfg(test)]
 pub(in crate::storage) use allocation_reservation::operation::SemanticError as Plan4TestSemanticError;
-pub(in crate::storage) use mutable_storage::CatalogRetirementRejected;
 #[cfg(test)]
 pub(in crate::storage) use mutable_storage::Cause as Plan4TestMutableCause;
 pub(in crate::storage) use mutable_storage::Plan4LoadPermit;
@@ -48,6 +47,7 @@ pub(crate) use mutable_storage::{
     StatusBootstrapWriter, StatusFlushError, StatusFlusher, StatusInitError, StatusReadGuard,
     StatusReader,
 };
+pub(in crate::storage) use mutable_storage::{CatalogRetirementRejected, RowRetirementRejected};
 pub(crate) use mutable_storage::{
     ClosedRecovery, RecoveryAcquireError, RecoveryCause, RecoveryError, RecoveryFailure,
     RecoveryInspection, RecoveryPhase, RecoveryPrefix, RecoveryPrefixCause, RecoveryPrefixError,

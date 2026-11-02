@@ -38,7 +38,6 @@ pub(in crate::storage) mod row_caller_budget;
 mod bootstrap;
 pub(in crate::storage) mod disk_api;
 mod physical;
-pub(in crate::storage) use bootstrap::CatalogRetirementRejected;
 pub(in crate::storage) use bootstrap::Plan4LoadPermit;
 #[cfg(test)]
 pub(in crate::storage) use bootstrap::plan4_test_mutate_page;
@@ -66,6 +65,7 @@ pub(crate) use bootstrap::{
     StatusBootstrapWriter, StatusFlushError, StatusFlusher, StatusInitError, StatusReadGuard,
     StatusReader,
 };
+pub(in crate::storage) use bootstrap::{CatalogRetirementRejected, RowRetirementRejected};
 #[allow(unused_imports)] // Closed prefix observations await the next recovery barrier.
 pub(crate) use bootstrap::{
     ClosedRecovery, RecoveryAcquireError, RecoveryCause, RecoveryError, RecoveryFailure,

@@ -233,3 +233,27 @@ BEGIN WAL 회수와 actual free가 없는 표현 시험은 R14-13/실제 반환 
 보존 Undo bytes U는 `U(t)=U(0)+∫(생성률−확인된 반환률)dt`다. reader/horizon 때문에 반환이0이고 초당 λ회 변경·회당 실제 retained u bytes이면 남은 예산 M의 소진 시간은 `M/(λu)`다. M=512MiB, λ=1000/s에서 u=1KiB/16KiB이면524.288초/32.768초다. 고정 비율의 예시이며 실제 workload 예측이 아니다.
 
 실행 전 owner별 horizon/pin/queue/claim 지연과 charged/reserved 잔량을 기록한다. pressure에서는 새 foreground admission을 제한하면서 이미 admission한 rollback·flush·release가 사용할 예약을 보존한다. 긴 reader를 임의로 무효화하거나 아직 eligible하지 않은 Undo를 지우지 않는다. reader 종료 후 eligibility→edge cut→retirement→확인된 반환→새 generation 재사용을 각각 관측하고, 불명 삭제는 charge 반환으로 세지 않는다. 새 기능의 작은 pressure/재사용 case와 S5의 장기 reader·부하 조합을 분리한다.
+
+<a id="live-row-retirement"></a>
+## 첫 Row profile의 live 정리 (3.14.1 부분 공급, 2026-11-02)
+
+**XADB-DEV3-ROW-RETIRE-001 · 구현·선택 검증·독립 검토 두 차례(ACCEPT, 열린 필수 0) / PR 대기.** 기준은 main `f1600a2`다. 이 절은 3.14.1의 일부만 공급한다. 3.14.1 전체, 3.03.4의 실제 allocator 반환, 3.14.2의 압력·재사용 인수는 그대로 미완료다.
+
+**문제.** 첫 Row profile의 INSERT 거래는 Terminal Job 하나와 넣은 행마다 Root Job 하나를 쥔다. 열린 session에서 이 Job을 비우는 경로가 없어 Job cell 64개로 한 행 거래 32개까지만 들어갔다. Status cell도 TerminalFinish 전에는 같은 home의 다음 Begin이 쓸 수 없었다. 정리 frame(Prune, ReleaseRole, RootFree, TerminalFinish)은 이미 복구의 `row_recovery_cleanup`이 닫힌 facade에서 썼지만 live 입구는 없었다([S9 기록](dev3-module-boundaries.md#row-m4-s9)).
+
+**공급.** 새 WAL 형식·frame·opcode·page 형식은 없다. 복구 정리와 같은 준비(`prepare_row_recovery`: 같은 producer, 같은 target 집합, canonical replay 증명, arena 입력)로 같은 scope3 그룹을 열린 session에서 설치한다.
+
+| 입구 | 하는 일 |
+| --- | --- |
+| `RetentionWriter::row_cleanup_next(skip)` | 다음 정리 한 단계(Job ordinal, 연산) 또는 None. control Job만 읽는다. 끝난 actor(그 Terminal Job이 TerminalReady)만 고르고, Job ordinal 순서의 첫 후보를 준다. root 단계가 먼저다: commit된 actor의 가장 새(undo sequence가 가장 큰) RootRetained root는 Prune, Releasing root는 cursor 3까지 ReleaseRole, cursor 3이면 RootFree다. root 단계가 하나도 없을 때만, root가 남지 않은 actor의 TerminalReady Job에 TerminalFinish를 준다. 그래서 root가 여럿인 actor에서는 Prune과 ReleaseRole이 섞여 나올 수 있다. 실행 중인 actor는 고르지 않는다. `skip`의 ordinal은 건너뛴다. 호출자는 `Visibility(Busy)`로 거절된 단계(오래된 snapshot 옆의 Prune)의 ordinal을 넘겨, 붙잡힌 actor 하나가 다른 actor의 정리를 가리지 않게 한다. 목록은 Job cell을 가리키므로 다음 단계가 설치될 때까지만 유효하다(비워진 cell은 다른 actor가 다시 쓸 수 있다). 한 actor의 TerminalReady Job 둘, 같은 undo sequence의 head root 둘은 복구와 같이 Fatal이다 |
+| `RetentionWriter::retire_row` / `Plan4Retention::row_retire` | 한 그룹을 gate/progress shell(`progress_lifecycle`) 안에서 실행한다. Prune은 RowWrite, 나머지는 RowProgress 등급이다. 먼저 live facade(epoch lane 활성)를 확인하고, target 집합 전체를 LOAD한다. dirty victim이 필요하면 아무것도 준비·stage·pin하지 않고 `FlushRequired(target)`를 돌려준다. Allocation page(pool의 고정 frame 0)는 보호만 하고 LOAD하지 않는다. 준비와 설치는 inline되지 않는 별도 frame(`retire_resident`)에서 한다 |
+
+**retirement 보호.** 참조 target을 은퇴시키는 그룹(Prune: head U `MissingPrune`과 그 Q, RootFree: U `UndoFree`, TerminalFinish: actor `TerminalFree`)은 기존 retirement protocol로만 설치한다. 잡은 원 target 집합이 version hold 아래 Q와 snapshot horizon을 잡는다. `verify_row_retirement`는 모든 원 target의 stamp가 준비 때와 같은지, 잡은 Job(TerminalFinish는 Terminal Job, 나머지는 root Job)이 그룹의 actor를 가리키는지 확인하고, target을 그 Job에서(Prune은 잡은 Status의 `Committed(q)`까지) 다시 읽는다. `begin_retirement`는 살아 있는 참조 pin이나 Prune의 Q보다 오래된 snapshot이 있으면 `Visibility(Busy)`(Unchanged)로 거절하고, 아니면 retiring 표지를 게시한다. 표지가 있는 동안 은퇴하는 target의 새 capture는 Busy이고, shell 안에서는 terminal read gate가 닫혀 새 읽기가 들어오지 않는다. stage·apply receipt(`RowRetirementStaged`·`RowRetirementApplied`·`RowRetirementRejected`)는 `apply_row_retirement_n`만 만들고, 표지를 이 그룹의 frame digest에 묶는다. stage가 Unchanged로 거절되면 표지를 intent 상태로 되돌리고 취소한다. ReleaseRole은 아무것도 은퇴시키지 않으므로 기존 그룹 본문(`ExistingGroup::RowRelease`)으로 설치한다. 그 U는 이미 Prune(commit)이나 CLR(abort)로 reader가 닿지 않는다. 어떤 그룹도 epoch나 Q를 게시하지 않는다.
+
+**효과.** stage 전 거절은 Unchanged다(WAL·Job·page·fence 변화 없음). 예외는 invariant 위반이다: 잡은 page의 decode 실패, control Job의 모순, producer의 모순 검사는 Fatal이다. stage 뒤 실패는 다른 그룹과 같이 Fatal(session fence)이다.
+
+**자원.** live 정리 본문은 `CatalogProgressCharge` 44,304 B 안에 든다: memory·native 모두 43,924 B다. `CatalogProgressCharge::new`의 debug assertion과 시험 `live_row_retirement_fits_the_progress_charge`가 이름으로 확인한다. 이 값은 peak에 접지 않으므로 shared·charge·전체 peak는 바뀌지 않는다. 남는 380 B가 `retire_row`를 부르는 호출자의 몫 전부다. Row 쓰기처럼 호출자 몫(`ROW_WRITE_CALLER_BYTES`)을 따로 두지 않았으므로, 자동 호출을 붙이는 단위는 호출자 상한을 정하고 이 본문이나 charge를 다시 맞춰야 한다.
+
+**범위 밖.** 자동 호출(commit·rollback 뒤 정리를 부르는 background cleaner나 statement driver 연결)은 없다. 호출자가 `row_cleanup_next`·`retire_row`를 부른다. UPDATE·DELETE·index·overflow 정리(DEV3 bundle 4), allocator의 실제 page 반환(3.03.4), checkpoint·WAL 절단, 동시 writer, Catalog aging은 이 단위가 아니다. 한 그룹마다 WAL 전체 replay 검증을 하므로 그룹 수에 대해 비용이 이차로 는다([F6-a](../evidence/f6-wal-revalidation-survey-20261102.md)). F6 측정은 별도 단위다.
+
+**인수 대응.** R14 사례의 PASS를 주장하지 않는다. LRR-02와 LRR-05는 R14-05의 일부(오래된 snapshot 옆 release 보류)를, LRR-01은 Job·Status·Undo 재사용을, LRR-06은 live 정리 중간 상태에서 복구가 나머지를 끝내는 것을 첫 Row profile에서만 보인다. 시험이 닿지 않는 분기(stage의 Unchanged 거절, 정리 residency의 `FlushRequired`, 닫힌 facade의 거절)와 시험·결과는 [증거](../evidence/live-row-retirement-20261102.md)에 있다.

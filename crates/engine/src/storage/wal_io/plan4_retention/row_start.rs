@@ -32,6 +32,8 @@ const ROW_TARGETS: usize = 4;
 
 #[path = "row_start/commit.rs"]
 mod commit;
+#[path = "row_start/retire.rs"]
+pub(in super::super::super::super) mod retire;
 #[path = "row_start/recovery.rs"]
 mod row_recovery;
 #[cfg(test)]
