@@ -151,6 +151,9 @@ enum Fault {
     },
     RollbackRequired,
     Rejected,
+    /// `Before(cause)` at the first such call only; the call after it
+    /// succeeds (`State::note` removes the entry).
+    BeforeOnce(Cause),
 }
 
 /// The C0 wrappers' phases: Prepare for the Row write/rollback steps,
@@ -263,10 +266,14 @@ struct State {
 impl State {
     fn note(&mut self, call: Call) -> Option<Fault> {
         self.log.push(call);
-        self.faults
-            .iter()
-            .find(|(at, _)| *at == call)
-            .map(|(_, fault)| *fault)
+        let at = self.faults.iter().position(|(at, _)| *at == call)?;
+        match self.faults[at].1 {
+            Fault::BeforeOnce(cause) => {
+                self.faults.remove(at);
+                Some(Fault::Before(cause))
+            }
+            fault => Some(fault),
+        }
     }
 }
 
@@ -3140,7 +3147,7 @@ fn lrc_a05_drain_is_bounded() {
     settled(&state);
 }
 
-// ---- The autocommit executor's steps (`autocommit`, LAC-A01..A10) ----
+// ---- The autocommit executor's steps (`autocommit`, LAC-A01..A12) ----
 
 use super::autocommit::{
     Autocommit, abort_transaction, commit_answer, refused as step_refused, run_statement,
@@ -3544,4 +3551,38 @@ fn lac_a10_finish_pending_statement_is_finished_once_more() {
         take_log(&state),
         calls(&[&[Check], &applied(7), &[FinishStatement, FinishStatement]])
     );
+}
+
+/// LAC-A11: a statement whose own check C answered CallerMustResolve (the
+/// driver hands it back `Returned`) calls C no more: the statement and the
+/// transaction are dropped into C's fence.
+#[test]
+fn lac_a11_must_resolve_statement_calls_nothing_more() {
+    let state = self::state(&[], &[(Check, Fault::Fatal)]);
+    let failure = fenced(autocommit(&state, &[&V1]));
+    assert_eq!(failure.stage, Stage::Statement);
+    assert!(failure.must_resolve && failure.cleanup.is_none());
+    assert_eq!(take_log(&state), [Check]);
+}
+
+/// LAC-A12: a `FinishPending` statement whose second finish C accepts: the
+/// slot keeps the first Failure as `Aborted`, and the transaction's full
+/// rollback compensates the statement's applied row.
+#[test]
+fn lac_a12_finish_pending_statement_finished_then_aborted() {
+    let state = self::state(&[], &[(FinishStatement, Fault::BeforeOnce(Cause::Busy))]);
+    let failure = aborted(autocommit(&state, &[&V1]));
+    assert_eq!(failure.stage, Stage::FinishStatement);
+    assert!(!failure.must_resolve && failure.cleanup.is_none());
+    assert_eq!(
+        take_log(&state),
+        calls(&[
+            &[Check],
+            &applied(7),
+            &[FinishStatement, FinishStatement],
+            &full_abort(&[7]),
+        ])
+    );
+    assert!(state.borrow().chain.is_empty());
+    settled(&state);
 }

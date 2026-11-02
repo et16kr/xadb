@@ -20,9 +20,12 @@
 //! and the slot says `Fenced`. Only C's FlushRequired is continued, as the
 //! preflight's is (`flush`, `Rollback::flush`). The cleanup of the ended
 //! transaction is the caller's next step (`retire_finished`), after the
-//! executor returned: a transaction of n rows leaves 5n + 1 groups after
-//! its commit and 4n + 1 after its abort, so more than 12 rows take a
-//! second drain (`Retired::complete`).
+//! executor returned `Committed` or `Aborted` (after `NotBegun` there is
+//! no transaction; after `Fenced` the rest is C's recovery): a transaction
+//! of n rows leaves 5n + 1 groups after its commit and 4n + 1 after its
+//! abort, so a commit of more than 12 rows, or an abort of more than 15,
+//! takes a second drain (`Retired::complete`). After `Aborted`, `slots`
+//! still names the rows applied before the failure; they were rolled back.
 use super::*;
 
 /// What one autocommit statement did; the executor writes it once its
@@ -166,7 +169,10 @@ pub(super) fn table_failed<B: Boundary>(
 /// `RollbackRequired` one is rolled back to its mark and then finished
 /// (`roll_back_statement`); a `Closed` one has nothing left; a
 /// `MustResolve` one is C's. The slot becomes `Aborted` with the
-/// statement's Failure, or `Fenced`.
+/// statement's Failure, or `Fenced`. A Failure C must resolve calls C no
+/// more, whatever `After` holds: the driver hands a statement whose own
+/// check C answered CallerMustResolve back as `Returned`, and it is dropped
+/// into C's fence here, as the transaction is after it.
 #[inline(never)]
 pub(super) fn end_failed_statement<B: Boundary>(
     call: &mut B,
@@ -176,11 +182,12 @@ pub(super) fn end_failed_statement<B: Boundary>(
     loan: &mut Loan,
     out: &mut Autocommit<B::Committed>,
 ) {
-    *out = if failure.must_resolve {
-        Autocommit::Fenced(failure)
-    } else {
-        Autocommit::Aborted(failure)
-    };
+    if failure.must_resolve {
+        *out = Autocommit::Fenced(failure);
+        drop(after);
+        return;
+    }
+    *out = Autocommit::Aborted(failure);
     match after {
         After::Returned(statement) | After::FinishPending(statement) => {
             finish_failed(call, statement, out);
@@ -323,6 +330,7 @@ pub(super) fn abort_transaction<B: Boundary>(
     out: &mut Autocommit<B::Committed>,
 ) {
     if !matches!(out, Autocommit::Aborted(_)) {
+        debug_assert!(matches!(out, Autocommit::Fenced(_)));
         drop(transaction);
         return;
     }

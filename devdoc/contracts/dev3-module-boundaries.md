@@ -3260,7 +3260,9 @@ wire/semantic 영향은 없다.
 하나다. SQL·DEV4 연결은 없으며 지금 이 실행기를 부르는 것은 JOIN 시험뿐이다.
 
 **실행 순서.** 결과는 호출자가 가진 slot 하나(`Autocommit`)에 쓴다. 단계마다 inline되지
-않는 frame이므로 한 단계의 slot이 다른 단계의 C 호출 아래에 놓이지 않는다.
+않는 frame이므로 한 단계의 slot이 다른 단계의 C 호출 아래에 놓이지 않는다. 기존 driver의
+`start_statement_rollback`·`start_full_rollback`·`rollback_step`도 이 단위에서 inline되지
+않게 했다(셈이 그 slot을 자기 지점에서만 세기 때문이다. 동작은 같다).
 
 | 단계 | 다음 | 거절 |
 | --- | --- | --- |
@@ -3271,14 +3273,18 @@ wire/semantic 영향은 없다.
 | C `commit_row` | `Committed { committed, rows }` | Before·`RollbackRequired`면 거래 rollback 뒤 `Aborted`, Rejected면 `Aborted`(C가 handle을 닫았다), Fatal이면 `Fenced` |
 | 거래 rollback | `start_full_rollback` → 단계 반복 → `finish_rollback` → `finish_aborted` | 아래 |
 
-rollback 단계 중 C의 `FlushRequired`만 이어 간다. 새 `Rollback::flush`가 call의 flusher로
-target을 flush하고 Ready까지 계속한다(preflight의 flush와 같다). 그 밖의 거절(Unchanged
-포함)과 statement·거래 끝의 거절은 다시 시도하지 않는다. 실행기에는 대기 정책이 없으므로
-handle을 C의 fence와 recovery 의무에 넘기고 `Fenced`로 적는다. 첫 실패는 그대로 두고 뒤
-거절은 `Failure::cleanup`에 둔다. 거래가 끝난 뒤의 정리는 실행기가 돌아온 뒤 호출자가 같은
-call로 부르는 [`retire_finished_live`](dev3-task-14-reclamation.md#live-row-cleanup-caller)다.
-n행 거래는 commit 뒤 5n+1그룹, abort 뒤 4n+1그룹을 남기므로 12행을 넘는 commit은 drain을
-한 번 더 부른다.
+C가 해소해야 하는 Failure(Fatal·CallerMustResolve) 뒤에는 C를 더 부르지 않는다. driver가
+statement 자신의 검사에서 CallerMustResolve를 받은 statement를 `Returned`로 돌려주어도,
+실행기는 그것을 끝내지 않고 statement와 거래를 C의 fence에 넘긴다. rollback 단계 중 C의
+`FlushRequired`만 이어 간다. 새 `Rollback::flush`가 call의 flusher로 target을 flush하고
+Ready까지 계속한다(preflight의 flush와 같다). 그 밖의 거절(Unchanged 포함)과 statement·거래
+끝의 거절은 다시 시도하지 않는다. 실행기에는 대기 정책이 없으므로 handle을 C의 fence와
+recovery 의무에 넘기고 `Fenced`로 적는다. 첫 실패는 그대로 두고 뒤 거절은
+`Failure::cleanup`에 둔다. `Committed`·`Aborted` 뒤의 정리는 실행기가 돌아온 뒤 호출자가
+같은 call로 부르는 [`retire_finished_live`](dev3-task-14-reclamation.md#live-row-cleanup-caller)다.
+n행 거래는 commit 뒤 5n+1그룹, abort 뒤 4n+1그룹을 남기므로 commit은 12행, abort는 15행을
+넘으면 drain을 한 번 더 부른다. `Aborted` 뒤에도 `slots`는 실패 전에 적용한 행을 가리키며,
+그 행은 되돌려졌다.
 
 **자원.** 셈은 [F4 상한](#f4-caller-budgets)과 같다(source-bound inventory, stack 측정이
 아님, 표준 slack 1,920 B 한 번, C 호출 결과 두 번, 경로 위 never-inlined frame의 모든 slot).
@@ -3286,29 +3292,30 @@ caller term 408 B는 호출자의 LiveCall, Owner 둘, `Autocommit` slot, `Plan4
 12개다(행과 slot 배열은 호출자의 stack 밖). census `live::autocommit_sites`는 memory와
 native Writer에서 같고, 시험 `f4_a_autocommit_budgets_{memory,native}`가 아래를 확인한다.
 
-| A 의무 | A 몫(B) | 상한(B) |
-| --- | ---: | ---: |
-| Commit frame | 2,897 | 3,024 (그대로) |
-| statement end | 5,964 | 6,144 (그대로) |
-| insert 지점(preflight 5,516, 최대 producer lane 9,348) | — | 기존 preflight·Write 상한 그대로 |
-| 정리 drain 네 지점(최대 `try_flush` 3,979, caller 816) | — | `LIVE_ROW_CLEANUP` 4,096 (그대로) |
-| rollback base caller | 1,713 | **1,920** (512에서) |
-| `rollback.next` | 6,697 | **6,912** (6,144에서) |
-| `rollback.clr_lane` | 12,521 | **12,672** (11,520에서) |
-| `rollback.finish` | 6,393 | **6,528** (6,144에서) |
-| 나머지 rollback 일곱 지점(최대 `clr_apply` 11,425) | — | 그대로 |
+| A 의무 | A 몫(B) | 상한(B) | 여유(B) |
+| --- | ---: | ---: | ---: |
+| Commit frame | 2,889 | 3,024 (그대로) | 135 |
+| statement end | 5,956 | 6,144 (그대로) | 188 |
+| insert 지점(preflight 5,508, 최대 producer lane 9,340) | — | 기존 preflight·Write 상한 그대로 | 636 이상 |
+| 정리 drain 네 지점(최대 `try_flush` 3,979, caller 816) | — | `LIVE_ROW_CLEANUP` 4,096 (그대로) | 117 이상 |
+| rollback base caller | 1,705 | **1,920** (512에서) | 215 |
+| `rollback.next` | 6,689 | **6,912** (6,144에서) | 223 |
+| `rollback.clr_lane` | 12,513 | **12,672** (11,520에서) | 159 |
+| `rollback.finish` | 6,385 | **6,528** (6,144에서) | 143 |
+| 나머지 rollback 일곱 지점(최대 `clr_apply` 11,417) | — | 그대로 | 103 이상 |
 
 commit은 C의 Commit window를 바꾸지 않고 들어간다. C의 `commit_row`를 부르는 단계가
-자기 frame에 TFE 결과 하나만 쥐고, 실행기 상태는 호출자의 slot에 있기 때문이다. 원 slack과
-항은 그대로다. begin·statement 시작·표 발급의 몫(2,633·3,001·3,017 B)은 C census에 A 항이
-없어 대조하지 않고 출력만 한다.
+자기 frame에 C의 답 하나만 쥐고, 실행기 상태는 호출자의 slot에 있기 때문이다. 원 slack과
+항은 그대로다. A의 여유가 100–230 B로 얇으므로, 이 경로의 type 크기가 늘어 어느 몫이
+상한을 넘으면 이 계약을 다시 연다(상한을 그 자리에서 올리지 않는다).
 
-**rollback 상한 재계약(F4 표 개정).** statement rollback은 실행기의 caller와 그 frame,
-실패한 statement의 frame을 그 아래에 쥔다. 그래서 rollback base caller와 그 경로의 세 지점이
-원 상한을 넘는다. 이 단위는 그 넷을 양쪽이 다시 검산하는 새 계약으로 다시 정한다. 새 값은
-실행기의 statement 경로 몫에 128 B 이상을 더해 128 B 단위로 올린 값이다. C의 고정 charge
-44,304 B와 short cap 65,536 B, 원 항과 slack은 바꾸지 않고, C는 자기 본문과 새 상한의 합을
-그대로 대조한다(`f4_c_rollback_budget_{memory,native}`).
+**rollback 상한 재계약(F4 표 개정).** rollback 아래에는 실행기의 caller와 그 frame이 놓인다.
+statement rollback은 실패한 statement의 frame도 그 아래에 쥔다. 그래서 rollback base caller와
+세 지점이 원 상한을 넘는다. 이 단위는 그 넷을 양쪽이 다시 검산하는 새 계약으로 다시 정한다.
+새 값은 위 census가 잰 실행기의 statement 경로 몫에 128 B 이상을 더해 128 B 단위로 올린
+값이다(측정 뒤 정한 값이다). C의 고정 charge 44,304 B와 short cap 65,536 B, 원 항과
+slack은 바꾸지 않고, C는 바뀌지 않은 자기 census로 자기 본문과 새 상한의 합을 그대로
+대조한다(`f4_c_rollback_budget_{memory,native}`).
 
 | 상한 | C가 대조하는 합 | 원 여유 → 새 여유(B) |
 | --- | --- | ---: |
@@ -3319,21 +3326,36 @@ commit은 C의 Commit window를 바꾸지 않고 들어간다. C의 `commit_row`
 | `rollback.finish` 6,528 | control 본문 37,166 + 상한 ≤ 44,304 | 994 → 610 |
 
 flush 두 줄은 native 값이고, memory Writer는 shared가 8 B 작아 8 B씩 더 남는다. 나머지 세
-줄은 두 Writer가 같다. 위 [F4 상한](#f4-caller-budgets) 표는 원 선정 근거로 남긴다. 이
-개정은 실패한 시험을 통과시키려고 C의 cap이나 charge를 올린 것이 아니다. rollback 쪽이 원
-상한을 넘는다는 것은 설계 단계의 추정(statement rollback의 caller 약 600 B > 512 B)에서 먼저
-확인했고, 사용자가 고른 "새 계약으로" 길을 따라 양쪽 대조와 D2 검토를 거친다. 카드가 말한
-COMMIT 상한은 올릴 필요가 없었다.
+줄은 두 Writer가 같다. 위 [F4 상한](#f4-caller-budgets) 표는 원 선정 근거로 남긴다.
 
-**시험.** A 단위 LAC-A01..A07·A09·A10(literal stand-in: 성공, statement 실패와 mark까지의
+A 쪽 축소로 피할 수 없는 이유. 실행기 frame에 slot을 옮기면 그 slot이 commit 경로에도
+놓이는데(frame 단위 셈), commit 여유가 135 B뿐이다. statement view는 `statement_live`가
+다시 빌린 call의 수명에 묶여 그 frame 밖에서 끝낼 수 없다. commit 단계 두 frame(312 B)을
+빼고 실행기 caller·실행기·거래 rollback frame만 남겨도 rollback base caller는 1,041 B(> 512),
+`rollback.clr_lane`은 11,849 B(> 11,520)다. 그래서 이 둘은 어떤 A 배치로도 새 계약이
+필요하다. `rollback.next`는 거래 경로에서도 6,337 B로 원 상한을 넘고, 거래 경로의 commit 단계
+frame은 위 이유로 옮길 수 없다. `rollback.finish`는 statement 경로에서만 넘는다(6,385 B, 거래
+경로 6,033 B). statement 경로에서 rollback 아래 남는 statement 단계의 slot(statement view,
+표, 실패한 statement의 결과)은 각각 한 번만 세며 실행 중 쓰이므로, 원 상한까지 241 B를 줄일
+배치가 없다.
+
+이 개정은 F4의 "양쪽의 새 계약 검토" 규칙과 독립 D2 검토에 근거한다. 사용자의 결정 카드는
+COMMIT 상한의 새 계약을 다뤘고 rollback 상한은 다루지 않았다. COMMIT은 올릴 필요가 없었고,
+rollback 상한의 개정은 카드 밖이므로 PR에서 사용자의 확인을 받는다.
+
+**잔여.** begin·statement 시작·표 발급 지점(2,625·2,993·3,009 B)은 C census에 A 항이 없어
+상한이 없다. F4는 새 지점을 말없이 빼지 않는다고 정하므로, 이 셋은 C가 상한을 정할 잔여로
+남긴다(C 소유). SQL·DEV4 연결 전에 정한다. 그때까지 census는 값을 출력만 한다.
+
+**시험.** A 단위 LAC-A01..A07·A09..A12(literal stand-in: 성공, statement 실패와 mark까지의
 rollback, commit 거절, 표 미발급, Begin·statement 시작 거절, rollback 도중 거절의 fence,
-`FinishPending` 재시도), JOIN LAC-J01(13행 거래 commit, drain 두 번 64·2그룹 뒤 Row Job 전부
-Free, 새 statement가 13행을 읽음, 재시작 복구가 같은 13행을 냄)과 LAC-J02(NULL 거절 후
-Aborted와 5그룹 drain, 없는 표의 `InvalidInput` 후 Aborted와 1그룹, 다음 commit은 6그룹이고
-rollback된 행은 보이지 않음), 위 census 시험. 결과와 한계는
-[증거](../evidence/autocommit-insert-20261102.md)에 있다.
+`FinishPending`의 재시도 실패와 성공, statement 검사의 CallerMustResolve), JOIN LAC-J01(13행
+거래 commit, drain 두 번 64·2그룹 뒤 Row Job 전부 Free, 새 statement가 13행을 읽음, 재시작
+복구가 같은 13행을 냄)과 LAC-J02(NULL 거절 후 Aborted와 5그룹 drain, 없는 표의
+`InvalidInput` 후 Aborted와 1그룹, 다음 commit은 6그룹이고 rollback된 행은 보이지 않음),
+위 census 시험. 결과와 한계는 [증거](../evidence/autocommit-insert-20261102.md)에 있다.
 
 **범위 밖.** SQL·DEV4 engine 연결, 명시 거래(BEGIN … COMMIT)와 여러 statement, UPDATE·DELETE,
-대기·재시도 정책(지금은 거절이 곧 fence다), background cleaner는 이 단위가 아니다. begin·
-statement 시작·표 발급 지점은 C에 A 항이 없어 상한이 없다. 행마다 Free Undo page를 하나씩
-쓰는 첫 Row profile의 제약(첫 profile의 preflight가 후보가 없으면 Capacity)은 그대로다.
+대기·재시도 정책(지금은 거절이 곧 fence다), background cleaner는 이 단위가 아니다. 행마다
+Free Undo page를 하나씩 쓰는 첫 Row profile의 제약(후보가 없으면 preflight가 Capacity)은
+그대로다.

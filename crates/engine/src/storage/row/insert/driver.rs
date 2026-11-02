@@ -843,6 +843,7 @@ fn finish_statement<B: Boundary>(
 /// refusal starts nothing, so the statement stays `RollbackRequired` and the
 /// start may be retried; a started rollback is never started again (the
 /// pending refuses a second start without calling C).
+#[inline(never)]
 #[allow(
     clippy::result_large_err,
     reason = "Failure keeps the stage, the error and any refused cleanup inline, without allocation"
@@ -863,6 +864,7 @@ fn start_statement_rollback<'r, 'i, B: Boundary>(
 
 /// Starts the full rollback of every remaining row, the only step after a
 /// commit C answered `RollbackRequired`. Refusals are as for a statement.
+#[inline(never)]
 #[allow(
     clippy::result_large_err,
     reason = "Failure keeps the stage, the error and any refused cleanup inline, without allocation"
@@ -919,7 +921,10 @@ pub(crate) enum RollbackStop<T, F> {
 
 /// C's next candidate and, for a candidate, A's CLR through prepare and
 /// apply. The caller owns the rollback and loops; a stopped step hands back
-/// what C returned, borrowing the caller's rollback.
+/// what C returned, borrowing the caller's rollback. Never inlined, like the
+/// two starts above: the census counts their own slots at their own sites
+/// only, never under a caller's later C call.
+#[inline(never)]
 fn rollback_step<'x, K: Rollback>(
     rollback: &'x mut K,
 ) -> Result<Stepped, RollbackStop<K::Task<'x>, K::Target>> {

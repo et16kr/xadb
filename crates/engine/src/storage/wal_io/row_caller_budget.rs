@@ -10,7 +10,7 @@ pub(in crate::storage) const STATEMENT_END: usize = 6144;
 /// 512 B until the autocommit executor (boundaries `#autocommit-insert`,
 /// a new two-sided F4 contract): its statement rollback holds the
 /// executor's caller, its frames and the failed statement below the
-/// rollback (1,713 B in both writers). C counts it only in the rollback
+/// rollback (1,705 B in both writers). C counts it only in the rollback
 /// flush step.
 pub(in crate::storage) const ROLLBACK_CALLER: usize = 1920;
 pub(in crate::storage) const ROLLBACK_STEP_RESULT: usize = 1024;
@@ -28,7 +28,7 @@ pub(in crate::storage) const LIVE_ROW_CLEANUP: usize = 4096;
 /// `rollback.next` (6,144 B before), `rollback.clr_lane` (11,520 B) and
 /// `rollback.finish` (6,144 B) were set again by the autocommit executor's
 /// contract (boundaries `#autocommit-insert`): each is the executor's
-/// share on its statement rollback path (6,697, 12,521 and 6,393 B in both
+/// share on its statement rollback path (6,689, 12,513 and 6,385 B in both
 /// writers) plus at least 128 B, in 128 B steps; ROLLBACK_CALLER likewise.
 pub(in crate::storage) const ROLLBACK_SITES: [(&str, usize); 10] = [
     ("rollback.start", 6144),

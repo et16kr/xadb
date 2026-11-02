@@ -1027,9 +1027,10 @@ pub(in crate::storage) fn autocommit_sites<W: WriterNamespace + 'static>() -> Au
         + size_of::<Autocommit<Obs>>()
         + size_of::<Plan4Target>()
         + AUTOCOMMIT_CALLER_REFS * r;
-    // autocommit_insert_live: its arguments, Begin's result, which holds
-    // the transaction, and statement_live's result.
-    let executor = 6 * r
+    // autocommit_insert_live: its arguments (five references, the
+    // isolation and the two slices), Begin's result, which holds the
+    // transaction, and statement_live's result.
+    let executor = 5 * r
         + size_of::<IsolationLevel>()
         + rows
         + slots
