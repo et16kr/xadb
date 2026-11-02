@@ -1,0 +1,275 @@
+{
+ "schema": "XADB_MODULE_GATE_RECORD_V1",
+ "change": "DEV3 3.14.1 (first Row profile): live Row cleanup caller. C's retire_resident holds the prepared cleanup group in one slot (body 43,924 -> 39,564 B) and a fixed caller ceiling LIVE_ROW_CLEANUP 4,096 B is checked by both sides; A's statement driver gets a cleanup drain (retire_finished_live) for after commit/abort: Busy steps skipped by Job ordinal, residency victims flushed and the group retried, bounded at 8 held and 64 groups; tests LRC-A01..05, LRC-C01, LRC-J01/J02. Called only by tests.",
+ "rust_tests": [
+  {
+   "paths": [
+    "crates/engine/src/storage/row/insert/driver.rs",
+    "crates/engine/src/storage/row/insert/driver/budget_tests.rs",
+    "crates/engine/src/storage/row/insert/driver/live.rs",
+    "crates/engine/src/storage/row/insert/driver/tests.rs"
+   ],
+   "reason": "A's cleanup drain: the Boundary methods, retire_finished/retire_group with their bounds, Busy skip, flush retry and stops (LRC-A01..05 over the literal stand-in, head and C+A), the live adapter retire_finished_live over the actual C supply (LRC-J01/J02), and the cleanup census sites checked against LIVE_ROW_CLEANUP (f4_a_caller_budgets, head and C+A).",
+   "cases": [
+    {
+     "file": "crates/engine/src/storage/row/insert/driver/tests.rs",
+     "case": "storage::row::insert::driver::tests::lrc_a01_drain_installs_every_selected_group",
+     "sources": [
+      "head",
+      "export-a"
+     ]
+    },
+    {
+     "file": "crates/engine/src/storage/row/insert/driver/tests.rs",
+     "case": "storage::row::insert::driver::tests::lrc_a02_held_step_is_skipped_and_left",
+     "sources": [
+      "head",
+      "export-a"
+     ]
+    },
+    {
+     "file": "crates/engine/src/storage/row/insert/driver/tests.rs",
+     "case": "storage::row::insert::driver::tests::lrc_a03_residency_victim_is_flushed_then_the_group_retried",
+     "sources": [
+      "head",
+      "export-a"
+     ]
+    },
+    {
+     "file": "crates/engine/src/storage/row/insert/driver/tests.rs",
+     "case": "storage::row::insert::driver::tests::lrc_a04_other_refusals_end_the_drain",
+     "sources": [
+      "head",
+      "export-a"
+     ]
+    },
+    {
+     "file": "crates/engine/src/storage/row/insert/driver/tests.rs",
+     "case": "storage::row::insert::driver::tests::lrc_a05_drain_is_bounded",
+     "sources": [
+      "head",
+      "export-a"
+     ]
+    },
+    {
+     "file": "crates/engine/src/storage/row/insert/driver/budget_tests.rs",
+     "case": "storage::row::insert::driver::budget_tests::f4_a_caller_budgets_memory",
+     "sources": [
+      "head",
+      "export-a"
+     ]
+    },
+    {
+     "file": "crates/engine/src/storage/row/insert/driver/budget_tests.rs",
+     "case": "storage::row::insert::driver::budget_tests::f4_a_caller_budgets_native",
+     "sources": [
+      "head",
+      "export-a"
+     ]
+    },
+    {
+     "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/driver.rs",
+     "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::driver::lrc_j01_drain_after_commit_and_abort_frees_every_row_job",
+     "sources": [
+      "head"
+     ]
+    },
+    {
+     "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/driver.rs",
+     "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::driver::lrc_j02_drain_leaves_a_held_prune_for_a_later_drain",
+     "sources": [
+      "head"
+     ]
+    }
+   ]
+  },
+  {
+   "paths": [
+    "crates/engine/src/storage/wal_io/plan4_retention/row_start/retire.rs",
+    "crates/engine/src/storage/wal_io/plan4_retention/catalog_live.rs",
+    "crates/engine/src/storage/wal_io/plan4_apply/source_tests.rs",
+    "crates/engine/src/storage/wal_io/row_caller_budget.rs"
+   ],
+   "reason": "C's live retirement body: retire_resident now holds the preparation in one Result slot (same calls, order, errors and effects), its carrier census and comment, and the fixed caller ceiling. The census case checks body + LIVE_ROW_CLEANUP <= CatalogProgressCharge (memory and native type); A's budget cases check A's share against the same ceiling; LRR-01..06 drive retire_resident through every group kind, Busy, refusals, an aborted actor and recovery after a partial live cleanup; LRC-J01/J02 drive it through A's drain.",
+   "cases": [
+    {
+     "file": "crates/engine/src/storage/wal_io/plan4_apply/source_tests.rs",
+     "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::source::tests::live_row_retirement_fits_the_progress_charge",
+     "sources": [
+      "head"
+     ]
+    },
+    {
+     "file": "crates/engine/src/storage/row/insert/driver/budget_tests.rs",
+     "case": "storage::row::insert::driver::budget_tests::f4_a_caller_budgets_memory",
+     "sources": [
+      "head",
+      "export-a"
+     ]
+    },
+    {
+     "file": "crates/engine/src/storage/row/insert/driver/budget_tests.rs",
+     "case": "storage::row::insert::driver::budget_tests::f4_a_caller_budgets_native",
+     "sources": [
+      "head",
+      "export-a"
+     ]
+    },
+    {
+     "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire.rs",
+     "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::lrr01_live_cleanup_reuses_jobs_status_and_undo_beyond_32_transactions",
+     "sources": [
+      "head"
+     ]
+    },
+    {
+     "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire.rs",
+     "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::lrr02_older_snapshot_keeps_prune_busy_until_it_ends",
+     "sources": [
+      "head"
+     ]
+    },
+    {
+     "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire.rs",
+     "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::lrr03_running_actor_non_head_and_early_terminal_are_refused",
+     "sources": [
+      "head"
+     ]
+    },
+    {
+     "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire.rs",
+     "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::lrr04_aborted_actor_is_cleaned_and_its_status_reused",
+     "sources": [
+      "head"
+     ]
+    },
+    {
+     "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire.rs",
+     "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::lrr05_busy_prune_does_not_hide_another_finished_actor",
+     "sources": [
+      "head"
+     ]
+    },
+    {
+     "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire.rs",
+     "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::lrr06_recovery_finishes_a_partial_live_cleanup",
+     "sources": [
+      "head"
+     ]
+    },
+    {
+     "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/driver.rs",
+     "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::driver::lrc_j01_drain_after_commit_and_abort_frees_every_row_job",
+     "sources": [
+      "head"
+     ]
+    },
+    {
+     "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/driver.rs",
+     "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::driver::lrc_j02_drain_leaves_a_held_prune_for_a_later_drain",
+     "sources": [
+      "head"
+     ]
+    }
+   ]
+  },
+  {
+   "paths": [
+    "crates/engine/src/storage/wal_io/plan4_apply.rs"
+   ],
+   "reason": "RetentionError::visibility_busy (new) and its test module: LRC-C01 checks the classification directly; LRC-J02 reaches the true case through A's drain on the actual C (a Prune beside an older snapshot).",
+   "cases": [
+    {
+     "file": "crates/engine/src/storage/wal_io/plan4_apply.rs",
+     "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::visibility_busy_tests::lrc_c01_only_unchanged_visibility_busy_is_held",
+     "sources": [
+      "head"
+     ]
+    },
+    {
+     "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/driver.rs",
+     "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::driver::lrc_j02_drain_leaves_a_held_prune_for_a_later_drain",
+     "sources": [
+      "head"
+     ]
+    }
+   ]
+  },
+  {
+   "paths": [
+    "crates/engine/src/storage/disk.rs",
+    "crates/engine/src/storage/wal_io/disk_api.rs"
+   ],
+   "reason": "Re-export of RowRetireStep through the disk API (with a reasoned allow for the C+B export, which has no A). A's live adapter names it; LRC-J01/J02 run that adapter over the actual C, and both exports compile with no warning.",
+   "cases": [
+    {
+     "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/driver.rs",
+     "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::driver::lrc_j01_drain_after_commit_and_abort_frees_every_row_job",
+     "sources": [
+      "head"
+     ]
+    },
+    {
+     "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/driver.rs",
+     "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::driver::lrc_j02_drain_leaves_a_held_prune_for_a_later_drain",
+     "sources": [
+      "head"
+     ]
+    }
+   ]
+  },
+  {
+   "paths": [
+    "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire.rs",
+    "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/driver.rs"
+   ],
+   "reason": "JOIN tests of A's drain over the actual C (retire.rs only adds the driver module): LRC-J01 commit, abort and commit on one Status with every Row Job freed, LRC-J02 a held Prune left unchanged and installed after the snapshot ends.",
+   "cases": [
+    {
+     "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/driver.rs",
+     "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::driver::lrc_j01_drain_after_commit_and_abort_frees_every_row_job",
+     "sources": [
+      "head"
+     ]
+    },
+    {
+     "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/driver.rs",
+     "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::driver::lrc_j02_drain_leaves_a_held_prune_for_a_later_drain",
+     "sources": [
+      "head"
+     ]
+    }
+   ]
+  }
+ ],
+ "reviews": [
+  {
+   "id": "live-row-cleanup-caller-d2",
+   "class": "D2",
+   "scopes": [
+    "common"
+   ],
+   "author": "claude-thread-session/claude-project-thread-9inq97",
+   "reviewer": "claude-independent-review/live-row-cleanup-caller",
+   "verdict": "ACCEPT",
+   "required_open": 0,
+   "log": "module-gate/evidence/live-row-cleanup-caller/review.md",
+   "log_sha256": "07f8ed0bc5ad47989d31ec0b8d931b822040d3445c2f7bc83a8637bc595dc5be",
+   "files": {
+    "crates/engine/src/storage/disk.rs": "83ffed6acb3fe519dbc5cb6c66c7aaf56c5fc36b",
+    "crates/engine/src/storage/row/insert/driver.rs": "65aa702c3b5355f006b1657f039aecdb92802a86",
+    "crates/engine/src/storage/row/insert/driver/budget_tests.rs": "34952f4e40d3fa95c299752afa7af2930f5363b5",
+    "crates/engine/src/storage/row/insert/driver/live.rs": "d704be7e0812b7a66a0a0d27bbf1852fc428d90c",
+    "crates/engine/src/storage/row/insert/driver/tests.rs": "3a775a4e52711ddc9e14900c5213478b788c18ae",
+    "crates/engine/src/storage/wal_io/disk_api.rs": "cf9ee6fcdf0b2607356fb3341537a24cd72ba8be",
+    "crates/engine/src/storage/wal_io/plan4_apply.rs": "9098c439baf003e7142de8c0ca769a2e166d5560",
+    "crates/engine/src/storage/wal_io/plan4_apply/source_tests.rs": "04843dfaab3b15becaaa192031c5d099bf56f169",
+    "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire.rs": "22fd73ccf8c1d199b0769ef88575a5dc163b2687",
+    "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/driver.rs": "72cb004037b710eaf94461270944da2e3d7c6d06",
+    "crates/engine/src/storage/wal_io/plan4_retention/catalog_live.rs": "32ea045223e26ace2e6772785c8150081d15911d",
+    "crates/engine/src/storage/wal_io/plan4_retention/row_start/retire.rs": "83158598888495a220dec305e295fc74e3c14801",
+    "crates/engine/src/storage/wal_io/row_caller_budget.rs": "cad35addf4deebe939ec30d170097a0557b2f807"
+   }
+  }
+ ]
+}

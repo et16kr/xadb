@@ -261,7 +261,7 @@ BEGIN WAL 회수와 actual free가 없는 표현 시험은 R14-13/실제 반환 
 <a id="live-row-cleanup-caller"></a>
 ## live 정리 호출자: A statement driver의 정리 drain (2026-11-02)
 
-**XADB-DEV3-ROW-RETIRE-002 · 구현·선택 검증·독립 검토 두 차례 / PR 대기.** 기준은 main `372b22e`(PR #37 병합)다. [live 정리](#live-row-retirement)의 두 C 입구를 부르는 A statement driver의 정리 drain 입구와, 그 drain이 쓰는 자원 몫을 공급한다. 지금 이 입구를 부르는 것은 시험뿐이다. 새 WAL 형식·frame·opcode·page 형식·오류 종류는 없다. 3.14.1의 다른 부분, 3.03.4, 3.14.2는 그대로 미완료다.
+**XADB-DEV3-ROW-RETIRE-002 · 구현·선택 검증·독립 검토 두 차례(ACCEPT, 열린 필수 0) / PR 대기.** 기준은 main `372b22e`(PR #37 병합)다. [live 정리](#live-row-retirement)의 두 C 입구를 부르는 A statement driver의 정리 drain 입구와, 그 drain이 쓰는 자원 몫을 공급한다. 지금 이 입구를 부르는 것은 시험뿐이다. 새 WAL 형식·frame·opcode·page 형식·오류 종류는 없다. 3.14.1의 다른 부분, 3.03.4, 3.14.2는 그대로 미완료다.
 
 **문제.** live 정리 본문 43,924 B가 charge 44,304 B를 거의 다 써서 호출자 몫이 380 B뿐이었다. 어떤 driver 호출도 이 몫에 들지 않았다. 호출자는 `row_cleanup_next`·`retire_row`를 직접 부르고 Busy와 `FlushRequired`를 스스로 처리해야 했다.
 

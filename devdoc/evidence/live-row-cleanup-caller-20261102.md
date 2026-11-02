@@ -82,7 +82,11 @@ clippy(`-D warnings`, 모든 target)와 fmt, 두 single-source export(a, b)의 `
 <a id="lrc-review"></a>
 ## 5. 독립 검토
 
-진행 중이다. 결과와 반영은 [검토 기록](../../module-gate/evidence/live-row-cleanup-caller/review.md)에 적는다.
+별도 agent run이 읽기만 하고(cargo 없이) 두 차례 검토했다. 기록은 [검토 기록](../../module-gate/evidence/live-row-cleanup-caller/review.md)에 있다.
+
+- 1차(`a1d962a`): ACCEPT WITH REQUIRED CHANGES. 필수 4건은 `call_sites` 문서가 떨어져 나간 것, commit 밖에서 부르는 이유가 frame 단위 census를 빠뜨린 것, "한 commit의 정리는 6그룹"이 한 행에만 맞는 것(5n+1, abort 4n+1), 기록·검사 미완이었다. 권고 5건(C의 skip 규칙 문구, "자동" 표현, stand-in이 같은 쌍을 한꺼번에 지우던 것, `visibility_busy` 시험, 실제 C 위의 flush)과 NIT 3건이 있었다. 모두 `d565c60`에서 고치거나 문서에 적었다(flush는 6절의 한계).
+- 2차(`d565c60`): ACCEPT, 열린 필수 0. 1차 12건이 모두 해결됐고, `a1d962a` 이후 제품 코드는 주석·시험 코드·lint 속성만 바뀌어 LRR-01 결과가 그대로 유효하다고 확인했다. NIT 2건(stand-in의 `expect`, "같은 call로" 문구)은 `5712388`에서 고쳤다.
+- 확인한 것: `retire_resident`의 호출·순서·오류·효과가 같다, C·A census 셈이 맞다, Busy만 붙잡는다, skip 목록을 drain 내내 쓰는 것이 안전하다(건너뛴 cell은 그 자신의 단계로만 비워지고 정리는 cell을 할당하지 않는다), 금지 import가 없다.
 
 <a id="lrc-limits"></a>
 ## 6. 남은 한계
@@ -99,4 +103,10 @@ clippy(`-D warnings`, 모든 target)와 fmt, 두 single-source export(a, b)의 `
 <a id="lrc-checks"></a>
 ## 7. 저장소 검사
 
-진행 중이다.
+모두 최종 code commit `5712388`에서 했다(클라우드).
+
+- 변경 코드 시험: `storage::row::insert::driver::`, `row_join::retire::driver::`, `visibility_busy_tests::`, census 사례를 한 번에 돌려 29개 통과. census 출력은 3절 표와 같다(본문 39,564 B, 여유 644 B, A 네 지점, caller 472 B, memory·native type 같음). LRR-01..06은 `a1d962a`에서 통과했고 그 뒤 C 제품 코드는 주석만 바뀌었다.
+- `cargo clippy --workspace --all-targets --all-features --locked -- -D warnings`, `cargo fmt --all -- --check`: 통과. 첫 clippy가 시험 helper의 `result_large_err`와 J01의 `drop`을 지적해 고쳤다.
+- 단독 export: `scripts/module_single_source.py`(정책 main `372b22e`)로 만든 a(C+A)와 b(C+B)에서 `cargo check --lib --tests --all-features`가 경고 없이 통과. 처음에는 b에서 `disk.rs`의 `RowRetireStep` 재수출이 쓰이지 않아 경고가 났고, 이유를 단 `allow(unused_imports)`로 고쳤다.
+- `devdoc/verify_documents.py`: 통과.
+- module gate: [`20261102-live-row-cleanup-caller.json`](../../module-gate/records/20261102-live-row-cleanup-caller.json), D2 `common` 검토가 바뀐 Rust 파일 13개를 최종 blob으로 덮는다. `check_module_gate.py check --mode push`: 통과.
