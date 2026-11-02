@@ -12,10 +12,15 @@ blobs of the head and that attested results match the head's inputs.
   "schema": "XADB_MODULE_GATE_RECORD_V1",
   "change": "what the change does, one line",
   "python_tests": ["test_module_gate_python.PythonPlanTests.test_python_change_selects_exact_tests_without_rust"],
-  "ci_selectors": ["storage::wal_io::...::case_or_module::"],
+  "rust_tests": [{
+    "paths": ["crates/engine/src/storage/row/insert/driver/live.rs"],
+    "reason": "the selected case exercises the changed live adapter",
+    "cases": [{"file": "path/to/test.rs", "case": "storage::row::exact_case",
+               "sources": ["head", "export-a"], "inputs": ["tests/fixture.json"]}]
+  }],
   "na": [
-    {"module": "codec", "reason": "why no test can show this change"},
-    {"module": "-", "paths": ["tests/fixtures/dev3-x/**"], "reason": "read by no lib test"}
+    {"paths": ["crates/engine/src/storage/codec.rs"], "reason": "why no test can show this change"},
+    {"paths": ["tests/fixtures/dev3-x/input.json"], "reason": "read by no lib test"}
   ],
   "reviews": [
     {
@@ -52,12 +57,12 @@ blobs of the head and that attested results match the head's inputs.
   Catalog) change together; `D2` with `common` when the disk API changes or a
   file that defines what it re-exports, re-exports it on the way, or adds an
   `impl` to such a type changes (the gate lists those files in its notes).
-- `ci_selectors`: libtest filters the CI build runs on the head in addition to
+- Legacy `ci_selectors` (only while the trusted policy has no `changed-paths` mode): libtest filters the CI build runs on the head in addition to
   the touched modules' own selectors and the exact `#[test]` cases the changed
   files declare. Module paths only (`a::b::` or `a::b::case`); a leading `-`
   is rejected. Every listed case must pass or be `#[ignore]`; a selector that
   matches nothing fails.
-- `na`: a touched module with no selector of its own (the common modules, C,
+- Legacy `na` (before `changed-paths` adoption): a touched module with no selector of its own (the common modules, C,
   engine) needs CI evidence: a changed case, a `ci_selectors` entry inside it,
   or an `na` entry with a reason in a record whose review is valid. A changed
   Rust or test input that no module owns (fixtures outside A/B under `tests/`,
@@ -86,3 +91,14 @@ blobs of the head and that attested results match the head's inputs.
 F2의 `affected_contracts`는 [공통 계약 선택 규칙](../devdoc/policies/repository-build-plan.md#module-gate-contracts)을 따른다. 신뢰 manifest가 직접 변경 경로·입력에서 안정 사례 ID와 `head`/`export-a`/`export-b` 요청을 정한다. 일반 record `ci_selectors`는 계속 head 대상이다. export 실행이 필요하면 검토된 계약 등록의 `sources`를 사용하며, head가 그 등록을 지워도 현재 PR의 신뢰 의무를 면제하지 않는다. 사례 이름·입력 blob·source가 selection과 receipt에 결속된다.
 
 F5-a부터 `affected_contracts[].owner`는 `test_file`의 등록 소유자와 같아야 한다. 단독 export의 제거·등록 정보도 같은 manifest에서 유도한다([계약](../devdoc/policies/repository-build-plan.md#module-gate-test-ownership)). 수동 실행은 `python3 scripts/module_single_source.py --commit <head> --policy <trusted-policy> --side a --out <export> --record <evidence>`처럼 정책 revision을 명시한다. 과거 결과는 해당 시점 helper/policy로 재현한다.
+
+With trusted `evidence.selection_mode = "changed-paths"`, use `rust_tests` instead of
+`ci_selectors`. Every changed Rust/build/fixture path needs an explicit mapping,
+a mandatory F2 contract, or exact-path N/A. No automatic module/changed-file suite
+runs. Each mapping needs a reason, exact discoverable cases, `head` plus the
+necessary export sources, and same-record independent reviews of the changed
+paths **and the selected test/explicit fixture blobs**. Add unchanged test/input
+blobs to `reviews[].files` as well; `files` above only prints changed paths.
+Deleted paths use `deleted`; globs and module-only N/A are invalid. Missing or
+stale coverage blocks before execution. Existing F2 cases cannot be suppressed.
+See the [scope and adoption contract](../devdoc/policies/repository-build-plan.md#module-gate-scoped-tests).

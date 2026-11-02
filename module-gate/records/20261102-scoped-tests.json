@@ -1,0 +1,43 @@
+{
+ "schema": "XADB_MODULE_GATE_RECORD_V1",
+ "change": "Use reviewed exact changed-path Rust cases instead of feature/JOIN/changed-file suite expansion; Python-only adoption prerequisite for F4 and F5-b.",
+ "python_tests": [
+  "test_check_module_gate.ScopedSelectionTests.test_exact_A_case_replaces_feature_join_and_export_defaults",
+  "test_check_module_gate.ScopedSelectionTests.test_unmapped_path_blocks_before_runner_instead_of_broad_fallback",
+  "test_check_module_gate.ScopedSelectionTests.test_changed_test_file_does_not_rerun_unchanged_sibling",
+  "test_check_module_gate.ScopedSelectionTests.test_reviews_bind_changed_paths_and_unchanged_case_inputs_in_same_record",
+  "test_check_module_gate.ScopedSelectionTests.test_malformed_rows_paths_cases_and_sources_are_rejected",
+  "test_check_module_gate.ScopedSelectionTests.test_unknown_ignored_cfg_macro_and_executor_cases_cannot_count",
+  "test_check_module_gate.ScopedSelectionTests.test_export_rejects_removed_case_and_explicit_fixture_inputs",
+  "test_check_module_gate.ScopedSelectionTests.test_renamed_fixture_keeps_deleted_identity_and_runs_common_case_in_both_exports",
+  "test_check_module_gate.ScopedSelectionTests.test_na_requires_exact_changed_paths_and_current_same_record_review",
+  "test_check_module_gate.ScopedSelectionTests.test_nonempty_legacy_selectors_are_rejected_in_scoped_mode",
+  "test_check_module_gate.ScopedSelectionTests.test_legacy_policy_requires_separate_adoption_and_unknown_mode_fails",
+  "test_check_module_gate.ScopedSelectionTests.test_head_cannot_remove_adopted_mode_or_mandatory_contract_and_cases_deduplicate",
+  "test_check_module_gate.ScopedSelectionTests.test_receipt_binds_scoped_provenance_and_exact_source_results",
+  "test_check_module_gate.ModuleGateTests.test_normal_change_with_review_passes",
+  "test_check_module_gate.FinalTests.test_exports_run_only_the_changed_feature",
+  "test_check_module_gate.F2ContractTests.test_common_change_selects_minimal_export_case_and_covers_changed_path",
+  "test_check_module_gate.F2ContractTests.test_removed_c_owned_test_and_wrong_fixture_export_are_rejected"
+ ],
+ "reviews": [
+  {
+   "id": "scoped-tests-d2",
+   "class": "D2",
+   "scopes": [
+    "policy"
+   ],
+   "author": "/root",
+   "reviewer": "/root/f4_design_review",
+   "verdict": "ACCEPT",
+   "required_open": 0,
+   "files": {
+    "devdoc/policies/module-gate.json": "6d53b7eac89d5dc810f724d6c4555931af727ea9",
+    "scripts/check_module_gate.py": "f23bdafff758f965392ce192bfca804d3ff31600",
+    "scripts/test_check_module_gate.py": "7c6a62f0ed86bf4b8f5b39ce4d8a4b0f2b940289"
+   },
+   "log": "module-gate/evidence/scoped-tests/review.md",
+   "log_sha256": "59eb06fb70c4cbee1e9647cc3937d2e431a79f39d03027793fb9b07704c9b7b6"
+  }
+ ]
+}

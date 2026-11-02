@@ -141,6 +141,8 @@ C 내부는 실제 변경하는 책임 하나부터 `소유 상태, 허용 소�
 <a id="operation-api"></a>
 ## 8. F4 — 작업 API와 자원 회계의 변경 전파 줄이기
 
+**2026-11-02 착수 조사:** F3 병합 `aa87366d`에서 Row 쓰기 소비자를 조사했다. A 변경이 A·JOIN 전체 시험으로 확대되어 사용자 변경 범위 제한과 충돌하므로 [정확한 CI 선택 선행 작업](../policies/repository-build-plan.md#module-gate-scoped-tests)을 먼저 PR로 채택한다. associated-state 후보는 독립 조건부 검토만 했고 제품 수정·F4 인수는 미실행이다. EX05–07은 미해소다.
+
 **현재 근거:** [`PreflightRow`](../../crates/engine/src/storage/wal_io/plan4_apply/row/write.rs)는 13개 lifetime과 namespace 타입을 노출하고 [`A live adapter`](../../crates/engine/src/storage/row/insert/driver/live.rs)가 이를 전달한다. C의 caller byte 예산과 일부 census 시험은 A 구현 크기를 알아야 한다.
 
 첫 후보는 Row preflight→reserve→prepare/apply/cancel 한 흐름이다. 다음 대안을 원 권한과 자원 회계 위에서 비교한다.
@@ -168,7 +170,7 @@ A와 C는 각자 고정된 예산을 검증하고 조립 담당이 공존하는 
 
 **2026-11-02 단계적 시행:** [F5-a 기록](../evidence/module-independence-survey-20261026.md#f5-test-ownership)의 시험 소유/안정 ID·export 단일 등록을 먼저 구현한다. F2 세 사례의 owner 검증과 A/B/JOIN 및 EX05–EX09의 제거 정보 정본을 합치며 물리 시험·fixture는 이동하지 않는다. 전체 F5 완료가 아니다.
 
-F5-b는 scope3 fixture 공통 소유 이관과 EX08–EX09 해소다. 현재 신뢰 gate가 이전 A fixture 경로 삭제를 A 전체·JOIN 시험 선택으로 확대하는 [정적 선택 결과](../../module-gate/evidence/f5/fixture-move-selection.json)를 확인했다. 좁은 변경 시험 원칙을 지키기 위해 도구 채택 뒤 관련 사례만 선택할 수 있는 경로를 먼저 마련하고, bytes·독립 저작 provenance·원 hash를 보존한 실제 이동과 C+A/C+B 적용성을 확인한다. EX08–EX09는 담당 C/A, 현 예외 근거와 `review_when`을 유지한 **미해소**다. 복사본 생성이나 기존 증거의 경로 변경으로 대신하지 않는다.
+F5-b는 scope3 fixture 공통 소유 이관과 EX08–EX09 해소다. 현재 신뢰 gate가 이전 A fixture 경로 삭제를 A 전체·JOIN 시험 선택으로 확대하는 [정적 선택 결과](../../module-gate/evidence/f5/fixture-move-selection.json)를 확인했다. 좁은 변경 시험 원칙을 지키기 위한 [경로별 선택 도구](../policies/repository-build-plan.md#module-gate-scoped-tests)를 별도 PR로 먼저 채택한 뒤, bytes·독립 저작 provenance·원 hash를 보존한 실제 이동과 C+A/C+B 적용성을 확인한다. EX08–EX09는 담당 C/A, 현 예외 근거와 `review_when`을 유지한 **미해소**다. 복사본 생성이나 기존 증거의 경로 변경으로 대신하지 않는다.
 
 **F5-a 이전 기준선:** A/B의 실제 연결 시험이 C의 `plan4_recovery::tests::catalog_memory` 아래에 있고, [export 도구](../../scripts/module_single_source.py)는 별도 제거 목록을 갖고 있었다. F5-a는 제거 정보를 소유 manifest에서 유도하도록 바꾸며 물리 시험 배치는 유지한다. [`plan4_pages.rs`](../../crates/engine/src/storage/wal_io/plan4_pages.rs)는 selector 보존을 위해 같은 소스를 production `apply`·test `retention`으로 연다.
 
