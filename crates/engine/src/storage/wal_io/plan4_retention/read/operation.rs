@@ -83,7 +83,10 @@ pub(crate) struct CatalogReadOperation<
     lease: Option<ReferenceLease<'b, 'a, 'c, 's>>,
     captured: Option<CapturedCatalogRefs<'b, 'a, 'c, 's>>,
     selected: Option<(ObjectId, usize)>,
-    observed_status: Option<(TransactionState, bool)>,
+    // Only the checked visibility decision survives Status release. The
+    // original snapshot is immutable; retaining the complete abort state here
+    // would needlessly occupy the finite Pending/read overlap.
+    observed_status: Option<(bool, bool)>,
     before_validated: bool,
     statement: Option<&'r RowStatementView<'r, 'r, 'a, 'c, 's>>,
 }
@@ -191,8 +194,7 @@ impl<'u, 'r, 'v, 'j, 'i, 'b, 'a, 's, 'c, 'p, 'd, 'm, 'w, W: WriterNamespace>
             VersionStamp::Committed(committed) => (committed.get() <= q, false),
             VersionStamp::Transaction(_) => match self.observed_status {
                 None => return Ok(CatalogVisibility::NeedStatus),
-                Some((TransactionState::Committed(committed), own)) => (committed.get() <= q, own),
-                Some((_, own)) => (false, own),
+                Some(decision) => decision,
             },
         };
         if visible {
@@ -407,7 +409,13 @@ impl<'u, 'r, 'v, 'j, 'i, 'b, 'a, 's, 'c, 'p, 'd, 'm, 'w, W: WriterNamespace>
                 .check_own_catalog(candidate.header.ok_or_else(|| self.invariant())?, status)?,
             None => false,
         };
-        self.observed_status = Some((status.state(), own));
+        let visible = match status.state() {
+            TransactionState::Committed(committed) => committed.get() <= self.snapshot.q(),
+            TransactionState::Active
+            | TransactionState::Aborting(_)
+            | TransactionState::Aborted => false,
+        };
+        self.observed_status = Some((visible, own));
         Ok(ReadStep::Ready((status.state(), own)))
     }
     pub(in crate::storage) fn missing_before(
