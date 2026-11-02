@@ -1,0 +1,29 @@
+{
+ "schema": "XADB_MODULE_GATE_RECORD_V1",
+ "change": "F5-a: one trusted manifest for test ownership and single-source exports; fixture migration deferred",
+ "python_tests": [
+  "test_check_module_gate.ExportTests.test_declared_exports_pass",
+  "test_check_module_gate.ExportTests.test_excessive_or_short_export_removal",
+  "test_check_module_gate.F2ContractTests.test_common_change_selects_minimal_export_case_and_covers_changed_path",
+  "test_check_module_gate.F2ContractTests.test_duplicate_id_bad_source_and_nonexact_case_rejected",
+  "test_check_module_gate.F2ContractTests.test_head_cannot_remove_trusted_obligation_and_duplicate_case_is_unioned",
+  "test_check_module_gate.F2ContractTests.test_input_and_harness_change_trigger_but_unrelated_change_does_not",
+  "test_check_module_gate.F2ContractTests.test_missing_ignored_unknown_and_wrong_case_are_rejected",
+  "test_check_module_gate.F2ContractTests.test_missing_input_and_deleted_production_path_fail",
+  "test_check_module_gate.F2ContractTests.test_removed_c_owned_test_and_wrong_fixture_export_are_rejected",
+  "test_check_module_gate.F2RealRegistryTests.test_reserved_row_real_paths_cases_inputs_and_exports_are_bound",
+  "test_check_module_gate.F5ExportTests.test_actual_runner_uses_policy_revision_for_each_export",
+  "test_check_module_gate.F5ExportTests.test_contract_owner_must_match_test_file_owner",
+  "test_check_module_gate.F5ExportTests.test_empty_owned_subtree_is_allowed_but_missing_literal_is_not",
+  "test_check_module_gate.F5ExportTests.test_explicit_policy_is_required",
+  "test_check_module_gate.F5ExportTests.test_gate_rejects_exporter_leaving_a_join_unit",
+  "test_check_module_gate.F5ExportTests.test_head_cannot_change_trusted_export_policy",
+  "test_check_module_gate.F5ExportTests.test_join_and_exception_registrations_are_derived_from_owners",
+  "test_check_module_gate.F5ExportTests.test_missing_duplicate_or_wrong_registration_is_rejected",
+  "test_check_module_gate.F5ExportTests.test_missing_or_invalid_metadata_fails_closed",
+  "test_check_module_gate.F5ExportTests.test_unsupported_join_and_memory_patterns_fail_closed",
+  "test_check_module_gate.F5RealRegistryTests.test_single_manifest_preserves_baseline_export_layout_and_f2_owners",
+  "test_check_module_gate.RealManifest.test_repository_manifest_matches_the_export_tool"
+ ],
+ "reviews": []
+}

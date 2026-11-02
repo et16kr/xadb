@@ -1,0 +1,7 @@
+{
+ "scripts/check_module_gate.py": "063d33fa5a3e320954dc66866b8042a6edea9f6cf1aeb4ca69715f1f9d7688d1",
+ "scripts/module_single_source.py": "ec795ee43e1ce4bf117d830afb1d55f50c4b5a852563ac8dada21b62d8db3501",
+ "scripts/module_gate_build.py": "5f0d10273655c98f21e1aacb781fc91502501b110aafb265196af5f7f8c0c584",
+ "scripts/test_check_module_gate.py": "2e6e5a7e66bde4859f363be83ea975ef0eb0dfbcf86511b75332389de5564056",
+ "devdoc/policies/module-gate.json": "82cddc2b4b1dbf2e2298a28c8c2352885e60d6672b434f15fa8be2ae10a0585b"
+}

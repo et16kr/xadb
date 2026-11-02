@@ -1,0 +1,7 @@
+{
+ "observed_utc": "2026-11-02T00:04:39.154002+00:00",
+ "workspace_free_bytes": 31296716800,
+ "native_required_free_bytes": 64424509440,
+ "contract": "scripts/dev3_catalog_native.py BUDGET.free_floor_bytes",
+ "status": "NOT_RUN"
+}

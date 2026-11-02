@@ -953,3 +953,14 @@ apply root의 private receipt·actual terminal 자손과 Busy 시험·manifest/c
 동일 실행 source의 겹치는 selector는 먼저 사례를 발견한 다음 아직 실행하지 않은 이름만 exact로 실행한다. 실패·ignored 사례도 다시 실행해 성공으로 바꾸지 않는다. exact lane은 같은 source의 앞선 시험 lane에서 통과한 결과만 재사용하며 실패·ignored로 필수 사례를 충족하지 않는다. 결과에는 실제 발견/통과/ignored 이름과 재사용 이름을 기록한다. receipt 검증은 누락·0개·중복 결과, 계획과 다른 이름, 같은 source 내 중복 실행, 다른 source에서 가져온 재사용을 거절한다. head와 C+A/C+B는 다른 source이며 과거 commit 결과를 자동 재사용하지 않는다. 같은 source의 같은 실행 안에서만 이 재사용을 허용한다.
 
 도입은 F1의 후보 Python 시험으로 검증하고 사람이 PR을 병합하면 기본 branch의 checker·manifest·runner가 함께 시행된다. workflow·원격 보호 설정은 바꾸지 않는다. 이 Python/manifest 변경만으로 무변경 제품 시험은 실행하지 않는다. 현 PR의 실제 C 경로에 대한 가상 diff는 선택기 시험 입력이며 제품 동작 PASS가 아니다. 전면 소비자 회귀 대신 유한 직접 대응을 선택했고, head-only selector 추가 방식은 상대 기능 부재 조건을 지정하지 못해 채택하지 않았다. 되돌림은 F2 PR 전체 revert이며 제품 wire/fixture bytes에는 영향이 없다. 실제 소비 경로·export 제거 규칙·입력·선택 누락 또는 중복 실행이 바뀌면 재검토한다.
+
+<a id="module-gate-test-ownership"></a>
+### F5-a 시험 소유와 단독 export의 단일 등록 — XADB-MODULE-GATE-006
+
+**D2 · 구현·선택 검증, 독립 검토 진행.** F2의 안정 사례 ID에 `owner`를 명시하고 실제 `test_file` 소유자와 다르면 거절한다. 현재 세 사례는 A의 제품 계약 시험이며 물리 위치는 `catalog_memory/row_live.rs`로 유지한다. 입력·현재 libtest 이름·실행 source는 기존 `affected_contracts`가 정본이다. C 내부 권한 probe와 JOIN의 기존 소유도 유지한다.
+
+[단독 export 도구](../../scripts/module_single_source.py)의 별도 `LINKS_A`·`LINKS_B`·`SIDES` 제거 목록은 없앤다. A/B 제품과 fixture 경로는 manifest의 `modules[].files`, `catalog_memory` 시험 등록은 A/B/JOIN의 같은 소유 목록에서 유도한다. JOIN은 양쪽에서 제거한다. C 시험의 예외 제거는 해당 EX05–EX09에 붙은 `export_registration {file,path,module}`과 원 `source`를 사용한다. 존재하지 않는 소유 glob 하위 폴더는 비어 있을 수 있지만 literal 파일은 필수다. 현재 등록 그룹 밖 JOIN 경로·중첩/고아 시험 glob, 잘못된 등록 경로·중복 등록, 실제 누락/중복 module 등록은 실패한다. checker도 제거되지 않은 JOIN 파일을 거절한다. 일반적인 Rust 모듈 재배치 자동 탐색기로 확대하지 않는다.
+
+신뢰 checker는 자기 manifest 데이터, 신뢰 build runner는 판정의 `policy` revision에서 읽은 데이터를 export에 명시적으로 넘긴다. 후보 head의 manifest를 암묵적으로 읽는 fallback은 없다. 수동 CLI도 `--policy <신뢰 commit/ref>`를 요구한다. 예전 policy snapshot은 당시 helper로 재현한다. 새 helper는 `owner`와 `export_registration`이 있는 새 policy와 함께 사용하며, 과거 명령·증거 identity는 고치지 않는다. 도입 PR은 F1으로 후보 도구를 시험하고 사람이 병합한 뒤 정책·도구가 함께 시행된다. workflow·ruleset은 변경하지 않는다.
+
+작성·계약·통합 담당 `/root`, 독립 검토 `/root/f3_review`(F3 선행 조건 확인 뒤 F5-a 검토로 전환)다. 별도 중복 목록을 계속 유지하는 대안은 소유와 제거 정보 불일치를 남기고, 후보 manifest를 기본으로 실행하는 대안은 신뢰 경계를 깨므로 제외했다. 되돌림은 F5-a PR 전체 revert다. 등록 그룹 확장, 소유/제거 불일치, 역사적 재현 요구 또는 새 fixture 이관 때 재검토한다. [실행 기록과 남은 단계](../evidence/module-independence-survey-20261026.md#f5-test-ownership)를 따른다.

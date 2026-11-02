@@ -1,0 +1,19 @@
+test_declared_exports_pass (test_check_module_gate.ExportTests.test_declared_exports_pass) ... ok
+test_excessive_or_short_export_removal (test_check_module_gate.ExportTests.test_excessive_or_short_export_removal) ... ok
+test_actual_runner_uses_policy_revision_for_each_export (test_check_module_gate.F5ExportTests.test_actual_runner_uses_policy_revision_for_each_export) ... ok
+test_contract_owner_must_match_test_file_owner (test_check_module_gate.F5ExportTests.test_contract_owner_must_match_test_file_owner) ... ok
+test_empty_owned_subtree_is_allowed_but_missing_literal_is_not (test_check_module_gate.F5ExportTests.test_empty_owned_subtree_is_allowed_but_missing_literal_is_not) ... ok
+test_explicit_policy_is_required (test_check_module_gate.F5ExportTests.test_explicit_policy_is_required) ... ok
+test_head_cannot_change_trusted_export_policy (test_check_module_gate.F5ExportTests.test_head_cannot_change_trusted_export_policy) ... ok
+test_join_and_exception_registrations_are_derived_from_owners (test_check_module_gate.F5ExportTests.test_join_and_exception_registrations_are_derived_from_owners) ... ok
+test_missing_duplicate_or_wrong_registration_is_rejected (test_check_module_gate.F5ExportTests.test_missing_duplicate_or_wrong_registration_is_rejected) ... ok
+test_missing_or_invalid_metadata_fails_closed (test_check_module_gate.F5ExportTests.test_missing_or_invalid_metadata_fails_closed) ... ok
+
+----------------------------------------------------------------------
+Ran 10 tests in 0.684s
+
+OK
+{
+ "results": 3,
+ "failed": []
+}

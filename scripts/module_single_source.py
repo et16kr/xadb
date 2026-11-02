@@ -22,51 +22,85 @@ import shutil
 import subprocess
 import tarfile
 import tempfile
-from pathlib import Path
+from pathlib import Path, PurePosixPath
 
 ENGINE = 'crates/engine/src/storage'
 MEMORY = f'{ENGINE}/wal_io/plan4_recovery/tests/catalog_memory'
 REGISTRY = f'{ENGINE}/wal_io/plan4_recovery/tests/catalog_memory.rs'
 
-# Test modules of catalog_memory that link A, B or both (registration name).
-LINKS_A = ['row_write', 'row_v09', 'row_forward', 'row_cancel', 'row_live', 'row_commit',
-           'row_rollback', 'row_recovery', 'row_recovery_read', 'row_read_live', 'row_native_a',
-           'row_join', 'row_inventory_a']
-LINKS_B = ['row_read_live', 'row_recovery_read', 'row_join', 'row_literal', 'row_literal_two',
-           'row_read_literal', 'row_reopen_literal', 'row_no_loser',
-           'row_literal_rollback', 'row_read_census', 'row_corpus']
+MANIFEST = 'devdoc/policies/module-gate.json'
 
-SIDES = {
-    # C+A: B removed.
-    'a': dict(module='read', removed=[f'{ENGINE}/row/read.rs', f'{ENGINE}/row/read',
-                                      'tests/fixtures/module-row-read'],
-              tests=LINKS_B,
-              forbidden=re.compile(r'row::read\b|row::read::|module-row-read')),
-    # C+B: A removed.
-    'b': dict(module='insert', removed=[f'{ENGINE}/row/insert.rs', f'{ENGINE}/row/insert',
-                                       'tests/fixtures/module-row-insert'],
-              tests=LINKS_A,
-              forbidden=re.compile(r'row::insert\b|row::insert::|module-row-insert'),
-              tests_c=[
-                  # C census tests that measure A's caller frames.
-                  (f'{ENGINE}/wal_io/plan4_apply/row/rollback.rs', 'rollback_census_tests.rs',
-                   'census', f'{ENGINE}/wal_io/plan4_apply/row/rollback_census_tests.rs'),
-                  (f'{ENGINE}/wal_io/plan4_recovery/row_action.rs', 'row_action_census_tests.rs',
-                   'census', f'{ENGINE}/wal_io/plan4_recovery/row_action_census_tests.rs'),
-                  (f'{ENGINE}/wal_io/plan4_retention/catalog_commit.rs',
-                   'catalog_commit/row_census.rs', 'row_census',
-                   f'{ENGINE}/wal_io/plan4_retention/catalog_commit/row_census.rs'),
-                  # C observer and replay tests over A's MCA00-V06 scope3 literals.
-                  (f'{ENGINE}/semantic_row/transition.rs', 'transition_tests.rs', 'tests',
-                   f'{ENGINE}/semantic_row/transition_tests.rs'),
-                  (f'{ENGINE}/wal_io/plan4_retention/recovery.rs', 'recovery/row_tests.rs',
-                   'row_tests', f'{ENGINE}/wal_io/plan4_retention/recovery/row_tests.rs'),
-              ]),
-}
-# Each `tests_c` entry: (registering file, its `#[path]`, module name, the
-# test file). These are C's own cfg(test) modules that link the removed side's
-# code or fixtures; the registration (with any doc comment directly above it)
-# and the file are removed together.
+
+def source_spec(data, side):
+    """Derive physical removals from one reviewed ownership manifest.
+
+    catalog_memory is the existing bounded registration group. Product roots
+    come from the removed owner's files; JOIN units are removed from both
+    exports. C-only exceptions carry their exact registration beside the edge.
+    No candidate manifest is loaded implicitly by the trusted gate/runner.
+    """
+    exports = [e for e in data['exports'] if e['side'] == side]
+    if len(exports) != 1:
+        raise ValueError(f'export {side}: missing or duplicate side')
+    export = exports[0]
+    modules = {m['id']: m for m in data['modules']}
+    removed = modules[export['removes']]
+    module = removed['logical'][0].split('::')[-1]
+    if not re.fullmatch(r'[a-z_][a-z0-9_]*', module):
+        raise ValueError('invalid product registration')
+    roots, optional_roots, tests, tests_c = [], set(), set(), []
+    for owner in modules.values():
+        if owner['id'] != removed['id'] and owner['kind'] != 'join':
+            continue
+        for pattern in owner['files']:
+            if pattern.startswith(MEMORY + '/'):
+                relative = pattern[len(MEMORY) + 1:]
+                if relative.endswith('.rs') and '/' not in relative:
+                    tests.add(relative[:-3])
+                elif (relative.endswith('/**') and '/' not in relative[:-3]
+                      and f'{MEMORY}/{relative[:-3]}.rs' in owner['files']):
+                    pass  # The registered module's optional child directory.
+                else:
+                    raise ValueError(f'unsupported test ownership pattern: {pattern}')
+            elif owner['id'] == removed['id']:
+                roots.append(pattern.removesuffix('/**'))
+                if pattern.endswith('/**'):
+                    optional_roots.add(pattern[:-3])
+            else:
+                raise ValueError(f'unsupported JOIN ownership pattern: {pattern}')
+    for ex in data['exceptions']:
+        if ex['target'] != removed['id']:
+            continue
+        entry = ex.get('export_registration')
+        if ex['scope'] != 'test' or not entry:
+            raise ValueError(f'{ex["id"]}: missing test export registration')
+        tests_c.append((entry['file'], entry['path'], entry['module'], ex['source']))
+    if not roots:
+        raise ValueError('missing product roots')
+    if any(not re.fullmatch(r'[A-Za-z_][A-Za-z0-9_]*', name) for name in tests):
+        raise ValueError('invalid test registration name')
+    registrations = set()
+    for file, attr, name, source in tests_c:
+        if (not re.fullmatch(r'[A-Za-z_][A-Za-z0-9_]*', name)
+                or str(PurePosixPath(file).parent / attr) != source
+                or (file, name) in registrations):
+            raise ValueError('invalid or duplicate exception registration')
+        registrations.add((file, name))
+    paths = roots + [x for entry in tests_c for x in (entry[0], entry[1], entry[3])]
+    if (len(roots) != len(set(roots)) or any(
+            not p or p.startswith('/') or '..' in p.split('/')
+            or any(c in p for c in '*?\\') for p in paths)):
+        raise ValueError('invalid export removal/registration path')
+    tokens = [rf'row::{re.escape(module)}\b'] + [re.escape(t) for t in removed.get('fixture_tokens', [])]
+    return dict(module=module, removed=roots, optional_roots=optional_roots,
+                tests=sorted(tests), tests_c=tests_c,
+                forbidden=re.compile('|'.join(tokens)))
+
+
+def policy_data(repo, revision):
+    """Read the explicitly selected policy as Git data, including for the CLI."""
+    return json.loads(subprocess.check_output(
+        ['git', 'show', f'{revision}:{MANIFEST}'], cwd=repo, text=True))
 
 
 def sha(data):
@@ -84,8 +118,8 @@ def remove_registration(text, name):
     return pattern.sub('', text), found[0]
 
 
-def export(commit, out, side, repo=None):
-    spec = SIDES[side]
+def export(commit, out, side, repo=None, *, policy):
+    spec = source_spec(policy, side)
     # `repo` lets the module gate export a fetched pull request head from a
     # trusted checkout; the default (the current checkout) is unchanged.
     repo = Path(repo) if repo else Path(subprocess.check_output(
@@ -110,7 +144,7 @@ def export(commit, out, side, repo=None):
         elif path.is_file():
             removed.append(rel)
             path.unlink()
-        else:
+        elif rel not in spec['optional_roots']:
             raise SystemExit(f'declared path missing: {rel}')
     row = out / f'{ENGINE}/row.rs'
     text = row.read_text()
@@ -179,13 +213,15 @@ def export(commit, out, side, repo=None):
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument('--side', choices=sorted(SIDES), required=True)
+    parser.add_argument('--side', choices=('a', 'b'), required=True)
+    parser.add_argument('--policy', required=True, help='trusted policy commit/ref')
     parser.add_argument('--commit', default='HEAD')
     parser.add_argument('--out', type=Path, required=True)
     parser.add_argument('--record', type=Path, required=True,
                         help='directory for inventory.json and source-files.sha256')
     args = parser.parse_args()
-    inventory, manifest = export(args.commit, args.out, args.side)
+    inventory, manifest = export(args.commit, args.out, args.side,
+                                 policy=policy_data(Path.cwd(), args.policy))
     args.record.mkdir(parents=True, exist_ok=True)
     (args.record / 'source-files.sha256').write_text(manifest)
     (args.record / 'inventory.json').write_text(json.dumps(inventory, indent=1) + '\n')

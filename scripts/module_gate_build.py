@@ -256,8 +256,9 @@ def main():
                 side = export['side']
                 out = Path(scratch) / f'export-{side}'
                 try:
-                    inventory, _ = module_single_source.export(report['head'], out, side,
-                                                               repo=repo)
+                    inventory, _ = module_single_source.export(
+                        report['head'], out, side, repo=repo,
+                        policy=module_single_source.policy_data(repo, report['policy']))
                     receipt[f'export_{side}'] = inventory['source_manifest_sha256']
                     results.append(build_result(f'export-{side}-build', out, export['command'],
                                                 logs, env))

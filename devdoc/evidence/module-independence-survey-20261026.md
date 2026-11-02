@@ -6047,3 +6047,21 @@ F0 실패 처리, F2 공통 계약 시험 선택, 원격 ruleset/Actions 정책 
 - 제품 시험·전체 workspace/lib 회귀는 NOT_RUN이며 push 훅의 Clippy는 시험 target 정적 검사다. 원격 F1은 이 PR에 선언된 정확한 19개 후보 Python 사례를 실행한다. 실제 CI 결과와 PR 상태는 PR에서 확인하며 로컬 결과를 원격 PASS로 쓰지 않는다.
 
 - 최종 독립 D1/D2: `/root/f2_review`가 `d6ebed80..24e9d53a`의 계약·diff·원 결과를 대조해 **ACCEPT·미해결 필수 0**을 확인했다. [검토 기록](../../module-gate/evidence/f2/review.log)과 [blob 결속 기록](../../module-gate/records/20261101-f2-contract-selection.json)을 보존한다. 작성·계약·통합 담당 `/root`가 R1 반영과 설명 보완을 확인했다. F2 제어 범위는 완료이며 원격 시행은 사람이 PR을 병합한 뒤다. 실제 push 훅·원격 CI 결과는 PR에 기록한다.
+
+<a id="f5-test-ownership"></a>
+## 2026-11-02 F5-a 시험 소유·단독 export 등록 통합
+
+**상태: F5-a 구현·선택 검증, 독립 검토 진행. 전체 F5는 미완료.** 사용자의 남은 후속 작업 진행 요청으로 F2 PR #27이 병합된 `main` `0fde463c`에서 `codex/module-followup-f5`를 만들었다. 작성·계약·통합 담당 `/root`, 독립 검토 `/root/f3_review`다.
+
+먼저 F3를 조사했으나 CAT 변경의 필수 native 실행기는 최소 여유 공간60GiB를 요구하고 현재 workspace에는 약30GiB만 있다. [관측](../../module-gate/evidence/f5/f3-executor-limit.json)을 남기고 제품 수정·시험은 시작하지 않았다. F2만 선행 조건인 F5로 전환했다. F5 전체 fixture 이동을 바로 수행하면 이전 경로가 A 소유이므로 신뢰 gate가 A 전체와 JOIN을 선택함을 [정적 입력 대조](../../module-gate/evidence/f5/fixture-move-selection.json)로 확인했다. 제품 시험을 실행한 결과가 아니다. 이 단위는 F5-a 도구·등록만 먼저 채택한다.
+
+[결정 XADB-MODULE-GATE-006](../policies/repository-build-plan.md#module-gate-test-ownership)의 범위는 안정 사례 owner 검증과 단독 export의 단일 manifest다. 기존 A/B/JOIN 시험 배치·이름·source별 결과, EX01–EX09, 제품·fixture bytes는 그대로다. 별도 제거 상수 대신 소유 목록과 예외 등록에서 유도하고, 신뢰 policy를 명시적으로 전달한다. [기준선 제거 정보](../../module-gate/evidence/f5/baseline-export-spec.json)는 당시 helper의 데이터에서 추출한 비교 oracle이며 현재 제어 정본이 아니다.
+
+선택 시험은 변경된 exporter/checker/runner와 직접 연결되는 F2·export 부정 사례다. F1 격리 Python worker로 실행하고 실제 Rust build는 하지 않는다. runner 연결 시험은 실제 judge·Git policy read·export를 실행하되 build와 executable identity만 모의 처리한다. 실행당 상한300초·임시 fixture 저장소이며 임시 export는 종료 때 삭제한다. 로그·결과·source SHA-256은 [실행 폴더](../../module-gate/evidence/f5/)에 보존한다.
+
+- r1:18개 중14 PASS,2 assertion FAIL·2 ERROR(F1 해당 행 INCOMPLETE). 기존 fixture의 비어 있는 B 소유 glob을 필수 물리 폴더로 처리해 실패했다. 원 실패를 보존했다.
+- r2:fixture에서 비어 있는 glob을 제거한 후보의 관련5개 PASS. 독립 리뷰는 단순 fixture 수정으로 의미를 확정하지 말고 소유 glob과 필수 literal을 구별하도록 요구했다. r2를 최종 의미의 증거로 확대하지 않는다.
+- r3:원 glob을 복구하고 비어 있는 glob 하위 폴더는 허용하되 literal 파일은 필수로 유지했다. 실제 runner의 신뢰 정책 전달·JOIN/C 등록 제거와 거절 사례10개 PASS.
+- r4:지원하지 않는 JOIN/중첩·고아 등록의 fail-closed 검증과 export의 JOIN 잔존 검출을 추가했다. worker3개 PASS. 수동 실행 계획의 ID 순서가 정렬되지 않아 F1 외부 집계는 FAIL이며 [별도 결과](../../module-gate/evidence/f5/r4/executor-result.json)로 보존했다. 이미 완료한 사례를 반복하지 않았고 CI record는 정렬된 정확 ID를 사용한다. 원격 검증은 별도 결과로 확인한다.
+
+EX08–EX09는 공통 semantic/recovery 시험이 A 명의 scope3 literal을 소비하는 상태로 남는다. 담당 C/A, 현재 근거·재검토 조건은 원 예외에 유지한다. F5-b는 관련37개(A13·C semantic16·C recovery8)를 좁게 선택할 수 있는 도입 경로와 bytes/provenance 대응을 먼저 정한 뒤 공통 소유 이관·C+B의 C24개 발견/실행을 검증한다. 이번 단위는 그 이동·예외 해소를 완료로 세지 않는다. F4·F6도 미착수이며 F7은 현재 진입 문서와 잔여 안내만 함께 갱신했다.

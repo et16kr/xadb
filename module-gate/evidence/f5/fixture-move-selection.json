@@ -1,0 +1,124 @@
+{
+ "source": "0fde463c",
+ "purpose": "static selection for a representative old scope3 path deletion; NO TEST EXECUTION",
+ "selection": {
+  "rust": true,
+  "head_command": [
+   "cargo",
+   "test",
+   "-p",
+   "xadb-engine",
+   "--locked",
+   "--no-run"
+  ],
+  "test_command": [
+   "cargo",
+   "test",
+   "-p",
+   "xadb-engine",
+   "--locked",
+   "--lib"
+  ],
+  "skip": [
+   "_native_worker"
+  ],
+  "test_args": [
+   "--test-threads=1"
+  ],
+  "env": {
+   "RUST_MIN_STACK": "33554432",
+   "XADB_G6_VECTOR_INDEXES": "p1-o00=ce3fd367007a6d798dbb6c2f18367a714d4f105611fb190fe57a1aa72d6d99a8",
+   "XADB_G6RC_VECTOR_INDEXES": "p1=24fc3ed635ae36177021e696d1ac14e0f3396fa6b04e72fa5f329875b667e7f0"
+  },
+  "identity_env": {
+   "source": [
+    "XADB_CATALOG_SOURCE_SHA256",
+    "XADB_PLAN4_RECOVERY_SOURCE_SHA256",
+    "XADB_PLAN4_GENESIS_SOURCE_SHA256",
+    "XADB_PLAN4_LIVE_SOURCE_SHA256",
+    "XADB_G6_SOURCE_SHA256",
+    "XADB_G6RC_SOURCE_SHA256",
+    "XADB_XRB_SOURCE_SHA256"
+   ],
+   "elf": [
+    "XADB_CATALOG_ELF_SHA256",
+    "XADB_PLAN4_RECOVERY_ELF_SHA256",
+    "XADB_PLAN4_GENESIS_ELF_SHA256",
+    "XADB_PLAN4_LIVE_ELF_SHA256",
+    "XADB_G6_ELF_SHA256",
+    "XADB_G6RC_ELF_SHA256",
+    "XADB_XRB_ELF_SHA256"
+   ],
+   "input": [
+    "XADB_CATALOG_INPUT_SHA256",
+    "XADB_PLAN4_RECOVERY_INPUT_SHA256",
+    "XADB_PLAN4_GENESIS_INPUT_SHA256",
+    "XADB_PLAN4_LIVE_INPUT_SHA256",
+    "XADB_G6_INPUT_SHA256",
+    "XADB_G6RC_INPUT_SHA256",
+    "XADB_XRB_INPUT_SHA256"
+   ]
+  },
+  "selectors": [
+   "storage::row::insert::",
+   "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_cancel::",
+   "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_commit::",
+   "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_forward::",
+   "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_inventory_a::",
+   "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::",
+   "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_live::",
+   "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_read_live::",
+   "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_recovery::",
+   "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_recovery_read::",
+   "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_rollback::",
+   "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_v09::",
+   "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_write::"
+  ],
+  "cases": [],
+  "optional_cases": [],
+  "optional_selectors": [],
+  "exports": [
+   {
+    "side": "a",
+    "command": [
+     "cargo",
+     "test",
+     "-p",
+     "xadb-engine",
+     "--locked",
+     "--no-run"
+    ],
+    "selectors": [
+     "storage::row::insert::",
+     "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_cancel::",
+     "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_commit::",
+     "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_forward::",
+     "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_inventory_a::",
+     "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_live::",
+     "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_recovery::",
+     "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_rollback::",
+     "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_v09::",
+     "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_write::"
+    ],
+    "cases": [],
+    "optional_cases": [],
+    "optional_selectors": []
+   },
+   {
+    "side": "b",
+    "command": [
+     "cargo",
+     "test",
+     "-p",
+     "xadb-engine",
+     "--locked",
+     "--no-run"
+    ],
+    "selectors": [],
+    "cases": [],
+    "optional_cases": [],
+    "optional_selectors": []
+   }
+  ]
+ }
+}

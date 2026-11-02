@@ -1,0 +1,73 @@
+test_declared_exports_pass (test_check_module_gate.ExportTests.test_declared_exports_pass) ... FAIL
+test_excessive_or_short_export_removal (test_check_module_gate.ExportTests.test_excessive_or_short_export_removal) ... FAIL
+test_common_change_selects_minimal_export_case_and_covers_changed_path (test_check_module_gate.F2ContractTests.test_common_change_selects_minimal_export_case_and_covers_changed_path) ... ok
+test_duplicate_id_bad_source_and_nonexact_case_rejected (test_check_module_gate.F2ContractTests.test_duplicate_id_bad_source_and_nonexact_case_rejected) ... ok
+test_head_cannot_remove_trusted_obligation_and_duplicate_case_is_unioned (test_check_module_gate.F2ContractTests.test_head_cannot_remove_trusted_obligation_and_duplicate_case_is_unioned) ... ok
+test_input_and_harness_change_trigger_but_unrelated_change_does_not (test_check_module_gate.F2ContractTests.test_input_and_harness_change_trigger_but_unrelated_change_does_not) ... ok
+test_missing_ignored_unknown_and_wrong_case_are_rejected (test_check_module_gate.F2ContractTests.test_missing_ignored_unknown_and_wrong_case_are_rejected) ... ok
+test_missing_input_and_deleted_production_path_fail (test_check_module_gate.F2ContractTests.test_missing_input_and_deleted_production_path_fail) ... ok
+test_removed_c_owned_test_and_wrong_fixture_export_are_rejected (test_check_module_gate.F2ContractTests.test_removed_c_owned_test_and_wrong_fixture_export_are_rejected) ... ok
+test_reserved_row_real_paths_cases_inputs_and_exports_are_bound (test_check_module_gate.F2RealRegistryTests.test_reserved_row_real_paths_cases_inputs_and_exports_are_bound) ... ok
+test_contract_owner_must_match_test_file_owner (test_check_module_gate.F5ExportTests.test_contract_owner_must_match_test_file_owner) ... ok
+test_explicit_policy_is_required (test_check_module_gate.F5ExportTests.test_explicit_policy_is_required) ... ok
+test_head_cannot_change_trusted_export_policy (test_check_module_gate.F5ExportTests.test_head_cannot_change_trusted_export_policy) ... ERROR
+test_join_and_exception_registrations_are_derived_from_owners (test_check_module_gate.F5ExportTests.test_join_and_exception_registrations_are_derived_from_owners) ... ERROR
+test_missing_duplicate_or_wrong_registration_is_rejected (test_check_module_gate.F5ExportTests.test_missing_duplicate_or_wrong_registration_is_rejected) ... ok
+test_missing_or_invalid_metadata_fails_closed (test_check_module_gate.F5ExportTests.test_missing_or_invalid_metadata_fails_closed) ... ok
+test_single_manifest_preserves_baseline_export_layout_and_f2_owners (test_check_module_gate.F5RealRegistryTests.test_single_manifest_preserves_baseline_export_layout_and_f2_owners) ... ok
+test_repository_manifest_matches_the_export_tool (test_check_module_gate.RealManifest.test_repository_manifest_matches_the_export_tool)
+The manifest's A/B test files are exactly the export tool's link lists. ... ok
+
+======================================================================
+ERROR: test_head_cannot_change_trusted_export_policy (test_check_module_gate.F5ExportTests.test_head_cannot_change_trusted_export_policy)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/xadb/scripts/test_check_module_gate.py", line 1547, in test_head_cannot_change_trusted_export_policy
+    inventory, out = self.export(head, 'a')
+                     ^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/xadb/scripts/test_check_module_gate.py", line 1540, in export
+    inventory, _ = module_single_source.export(head, out, side, repo=self.repo, policy=policy)
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/xadb/scripts/module_single_source.py", line 138, in export
+    raise SystemExit(f'declared path missing: {rel}')
+SystemExit: declared path missing: crates/engine/src/storage/row/read
+
+======================================================================
+ERROR: test_join_and_exception_registrations_are_derived_from_owners (test_check_module_gate.F5ExportTests.test_join_and_exception_registrations_are_derived_from_owners)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/xadb/scripts/test_check_module_gate.py", line 1568, in test_join_and_exception_registrations_are_derived_from_owners
+    inventory, out = self.export(head, side, data)
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/xadb/scripts/test_check_module_gate.py", line 1540, in export
+    inventory, _ = module_single_source.export(head, out, side, repo=self.repo, policy=policy)
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/xadb/scripts/module_single_source.py", line 138, in export
+    raise SystemExit(f'declared path missing: {rel}')
+SystemExit: declared path missing: crates/engine/src/storage/row/read
+
+======================================================================
+FAIL: test_declared_exports_pass (test_check_module_gate.ExportTests.test_declared_exports_pass)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/xadb/scripts/test_check_module_gate.py", line 387, in test_declared_exports_pass
+    self.assertEqual(report['status'], 'PASS', report)
+AssertionError: 'FAIL' != 'PASS'
+- FAIL
++ PASS
+ : {'schema': 'XADB_MODULE_GATE_REPORT_V1', 'mode': 'push', 'base': '5660b3f3bb3237e4f511d06aff6bf01300bdc594', 'head': '422c7e48412a094c7c358bdb4509ff283e65500c', 'merge_base': '5660b3f3bb3237e4f511d06aff6bf01300bdc594', 'policy': '5660b3f3bb3237e4f511d06aff6bf01300bdc594', 'manifest_blob': 'c950a4d54c96ff0cb8d745430b303131db898209', 'checker_blob': None, 'errors': ['export a: declared path missing: crates/engine/src/storage/row/read'], 'pending': ['review missing: crates/engine/src/storage/c.rs needs D2 common at blob 0f930ed7f347', 'no CI evidence selected for C: no module selector, no changed case, no record ci_selector in it and no reviewed N/A'], 'notes': ['crates/engine/src/storage/c.rs defines what disk re-exports (or re-exports it on the way, or adds an impl to it): D2 common review'], 'exports': {'b': {'removed': ['crates/engine/src/storage/row/insert.rs', 'crates/engine/src/storage/row/insert/tests.rs', 'tests/fixtures/module-row-insert/a.json', 'crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_a.rs'], 'files': 20, 'source_manifest_sha256': '20e0df0d4525014bdb9fdc68fb1baa3aedff6822ca2cf2c9a672b3712fc0bcc1'}}, 'attested': [], 'input_identity': '413832306a82c67129696cb2f01279327b03a11a726cf148ba67a903a44dff5b', 'touched': {'C': ['crates/engine/src/storage/c.rs']}, 'review_needed': {'crates/engine/src/storage/c.rs': {'class': 'D2', 'scopes': ['common']}}, 'records': [], 'selection': {'rust': True, 'head_command': ['cargo', 'test', '--no-run'], 'test_command': ['cargo', 'test', '--lib'], 'skip': ['_native_worker'], 'test_args': [], 'env': {}, 'identity_env': {}, 'selectors': [], 'cases': [], 'optional_cases': [], 'optional_selectors': [], 'exports': [{'side': 'a', 'command': ['cargo', 'test', '--no-run'], 'selectors': [], 'cases': [], 'optional_cases': [], 'optional_selectors': []}, {'side': 'b', 'command': ['cargo', 'test', '--no-run'], 'selectors': [], 'cases': [], 'optional_cases': [], 'optional_selectors': []}]}, 'status': 'FAIL', 'summary': 'FAIL: 1 error(s), 2 pending'}
+
+======================================================================
+FAIL: test_excessive_or_short_export_removal (test_check_module_gate.ExportTests.test_excessive_or_short_export_removal)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/xadb/scripts/test_check_module_gate.py", line 407, in test_excessive_or_short_export_removal
+    self.assertFinding(report, f'export a removed {E}/row/insert/tests.rs of A')
+  File "/workspace/xadb/scripts/test_check_module_gate.py", line 186, in assertFinding
+    self.assertTrue(any(text in e for e in report['errors']),
+AssertionError: False is not true : 'export a removed crates/engine/src/storage/row/insert/tests.rs of A' not in ['export a: declared path missing: crates/engine/src/storage/row/read', 'export b left A file tests/fixtures/module-row-insert/a.json in the export']
+
+----------------------------------------------------------------------
+Ran 18 tests in 17.019s
+
+FAILED (failures=2, errors=2)
