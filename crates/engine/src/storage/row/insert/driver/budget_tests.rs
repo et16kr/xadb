@@ -73,6 +73,30 @@ fn inspect<W: WriterNamespace + 'static>(label: &str) {
         );
     }
     assert_eq!(observed, expected, "missing or extra A rollback site");
+    // The live Row cleanup drain (reclamation `#live-row-cleanup-caller`):
+    // every C call of the drain under its largest entry.
+    writeln!(
+        output,
+        "cleanup_caller={} ceiling={}",
+        live::cleanup_caller_source::<W>(),
+        budget::LIVE_ROW_CLEANUP
+    )
+    .unwrap();
+    let mut cleanup = BTreeSet::new();
+    for (name, share, frame) in live::live_cleanup_sites::<W>() {
+        assert!(cleanup.insert(name), "duplicate cleanup site: {name}");
+        writeln!(
+            output,
+            "cleanup_site={name} share={share} frame={frame} bound={}",
+            budget::LIVE_ROW_CLEANUP
+        )
+        .unwrap();
+        assert!(
+            share <= frame && frame <= budget::LIVE_ROW_CLEANUP,
+            "{label} {name}: {share}/{frame} exceeds {}",
+            budget::LIVE_ROW_CLEANUP
+        );
+    }
     budget::record(&format!("a-{label}"), &output);
 }
 

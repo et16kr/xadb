@@ -302,7 +302,11 @@ impl<'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
     /// The preparation and install of one resident live Row cleanup group,
     /// in its own frame: the prepared group and its carriers do not exist
     /// during the residency, so the census counts them only beside the
-    /// preparation and the install.
+    /// preparation and the install. The preparation writes the group into
+    /// the one `Result` slot below and the install borrows it there, so the
+    /// frame holds no `?` branch value and no moved copy of the group
+    /// (`carrier_source_bytes`); the Observation is copied straight into
+    /// the return slot.
     #[inline(never)]
     fn retire_resident(
         &mut self,
@@ -311,17 +315,20 @@ impl<'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
         operation: row_semantic::Operation,
         private: &mut [u8; PRIVATE_BYTES],
     ) -> Result<row_group::Observation> {
-        let prepared = self
+        let result = self
             .catalog_preparation()
-            .prepare_row_recovery(owner, ordinal, operation, private)?;
-        let observation = prepared.payload.observation;
+            .prepare_row_recovery(owner, ordinal, operation, private);
+        let prepared = match result {
+            Ok(ref prepared) => prepared,
+            Err(error) => return Err(error),
+        };
         if prepared.release_role() {
             self.catalog_application()
-                .apply_existing(owner, ExistingGroup::RowRelease(&prepared))?;
+                .apply_existing(owner, ExistingGroup::RowRelease(prepared))?;
         } else {
-            self.apply_row_retirement(owner, &prepared)?;
+            self.apply_row_retirement(owner, prepared)?;
         }
-        Ok(observation)
+        Ok(prepared.payload.observation)
     }
 
     /// The open session: only the live facade has an active epoch lane. The
@@ -591,17 +598,20 @@ pub(in super::super::super) fn caller_source_bytes() -> usize {
         + size_of::<Result<row_group::Observation>>()
 }
 
-/// What `retire_resident` holds from the preparation's return to the end
-/// of the install: the prepared group, its Result slot, the Observation
-/// copy, the install's group argument and the frame's arguments (its own
-/// `Result<Observation>` slot is the caller's, in `caller_source_bytes`).
+/// What `retire_resident` holds from the preparation's call to the end of
+/// the install: the one Result slot the preparation writes the prepared
+/// group into (the install borrows it there: no `?` branch value and no
+/// moved copy of the group exist), the borrow, the error moved out of a
+/// refused preparation, the install's group argument and the frame's
+/// arguments. Its own `Result<Observation>` slot is the caller's, in
+/// `caller_source_bytes`, and the Observation is copied straight into it.
 /// The preparation's own arrays and return carriers are in the Row group
 /// terms.
 pub(in super::super::super) fn carrier_source_bytes() -> usize {
     use std::mem::size_of;
-    size_of::<PreparedRowGroup<'_, '_, '_, ROW_WRITE_TARGETS>>()
-        + 2 * size_of::<Result<PreparedRowGroup<'_, '_, '_, ROW_WRITE_TARGETS>>>()
-        + size_of::<row_group::Observation>()
+    size_of::<Result<PreparedRowGroup<'_, '_, '_, ROW_WRITE_TARGETS>>>()
+        + size_of::<&PreparedRowGroup<'_, '_, '_, ROW_WRITE_TARGETS>>()
+        + size_of::<RetentionError>()
         + size_of::<ExistingGroup<'_, '_, '_, '_>>()
         + 2 * size_of::<usize>()
         + 4 * size_of::<&()>()

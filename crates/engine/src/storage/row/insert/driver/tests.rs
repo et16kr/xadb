@@ -30,9 +30,10 @@ use crate::{
     },
 };
 use Call::{
-    Apply, Cancel, Check, Clr, ClrApply, ClrLane, ClrPrepare, ClrReopen, Commit, ContinueFlush,
-    DropReserved, DropRollback, FinishAborted, FinishPreflight, FinishStatement, Forward, Next,
-    Prepare, Reopen, Reserve, RollbackFinish, RollbackStart, TryFlush, Validate,
+    Apply, Cancel, Check, CleanupNext, Clr, ClrApply, ClrLane, ClrPrepare, ClrReopen, Commit,
+    ContinueFlush, DropReserved, DropRollback, FinishAborted, FinishPreflight, FinishStatement,
+    Forward, Next, Prepare, Reopen, Reserve, Retire, RollbackFinish, RollbackStart, TryFlush,
+    Validate,
 };
 use foundation::{identity::SchemaEpoch, namespace::WriterNamespace};
 use std::cell::RefCell;
@@ -113,6 +114,9 @@ enum Call {
     /// The dedicated flusher's `try_flush` of a target, and its continues.
     TryFlush(u64),
     ContinueFlush,
+    /// `row_cleanup_next`, and `retire_row` of a Job ordinal.
+    CleanupNext,
+    Retire(usize),
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -242,6 +246,16 @@ struct State {
     waiting: u8,
     /// `continue_flush` calls left that make no progress.
     stalls: u8,
+    /// Live Row cleanup steps C would select, in selection order; an
+    /// installed step leaves the list.
+    cleanup: Vec<(usize, Operation)>,
+    /// Job ordinals whose group C refuses `Visibility(Busy)`.
+    held: Vec<usize>,
+    /// Residency victims, as (Job ordinal, target): that group answers
+    /// FlushRequired once per entry, in order.
+    retire_flushes: Vec<(usize, u64)>,
+    /// The `skip` list of each `row_cleanup_next`.
+    skips: Vec<Vec<usize>>,
 }
 
 impl State {
@@ -285,6 +299,10 @@ fn state(chain: &[(u64, usize)], faults: &[(Call, Fault)]) -> RefCell<State> {
         dirty: None,
         waiting: 0,
         stalls: 0,
+        cleanup: Vec::new(),
+        held: Vec::new(),
+        retire_flushes: Vec::new(),
+        skips: Vec::new(),
     })
 }
 
@@ -488,6 +506,54 @@ impl<'s> Boundary for LiteralCall<'s> {
     }
     fn flush_ready(&self) -> bool {
         self.state.borrow().waiting == 0
+    }
+    /// The first scripted step outside `skip`; `skip` may name only held
+    /// ordinals.
+    fn cleanup_next(&self, skip: &[usize]) -> Result<Option<(usize, Operation)>, RetentionError> {
+        let mut state = self.state.borrow_mut();
+        let fault = state.note(CleanupNext);
+        state.skips.push(skip.to_vec());
+        if skip.iter().any(|ordinal| !state.held.contains(ordinal)) {
+            state.violations.push("skip names a step C did not hold");
+        }
+        let next = state
+            .cleanup
+            .iter()
+            .copied()
+            .find(|(ordinal, _)| !skip.contains(ordinal));
+        drop(state);
+        factory(CleanupNext, fault)?;
+        Ok(next)
+    }
+    /// Installs the selected step unless a flush, a hold or a refusal is
+    /// scripted for it.
+    fn retire(
+        &mut self,
+        ordinal: usize,
+        operation: Operation,
+        _loan: &mut Loan,
+    ) -> Result<RetireNext<u64>, RetentionError> {
+        let mut state = self.state.borrow_mut();
+        let fault = state.note(Retire(ordinal));
+        if !state.cleanup.contains(&(ordinal, operation)) {
+            state.violations.push("retire of a step C did not select");
+        }
+        if state.waiting > 0 {
+            state.violations.push("retire with a flusher not Ready");
+        }
+        if let Some(at) = state.retire_flushes.iter().position(|(o, _)| *o == ordinal) {
+            let (_, target) = state.retire_flushes.remove(at);
+            state.dirty = Some(target);
+            return Ok(RetireNext::Flush(target));
+        }
+        if state.held.contains(&ordinal) {
+            return Ok(RetireNext::Held);
+        }
+        drop(state);
+        factory(Retire(ordinal), fault)?;
+        let mut state = self.state.borrow_mut();
+        state.cleanup.retain(|step| *step != (ordinal, operation));
+        Ok(RetireNext::Retired)
     }
 }
 
@@ -2778,4 +2844,255 @@ fn mca00_d14_a_rollback_required_handle_is_released_only_by_its_finished_rollbac
             &[ClrReopen(5), DropRollback],
         ])
     );
+}
+
+/// Literal C state with the given live Row cleanup steps (selection order),
+/// held ordinals and residency victims.
+fn cleaning(
+    steps: &[(usize, Operation)],
+    held: &[usize],
+    flushes: &[(usize, u64)],
+    faults: &[(Call, Fault)],
+) -> RefCell<State> {
+    let state = state(&[], faults);
+    {
+        let mut state = state.borrow_mut();
+        state.cleanup = steps.to_vec();
+        state.held = held.to_vec();
+        state.retire_flushes = flushes.to_vec();
+    }
+    state
+}
+
+fn drain(state: &RefCell<State>) -> Result<Retired, RetireStop> {
+    let mut loan = loan();
+    retire_finished(&mut LiteralCall { state }, &mut loan)
+}
+
+/// One committed transaction's cleanup: the head Prune, three ReleaseRole,
+/// RootFree and TerminalFinish, as C selects them.
+const ONE_COMMIT: [(usize, Operation); 6] = [
+    (3, Operation::Prune),
+    (3, Operation::ReleaseRole),
+    (3, Operation::ReleaseRole),
+    (3, Operation::ReleaseRole),
+    (3, Operation::RootFree),
+    (2, Operation::TerminalFinish),
+];
+
+/// LRC-A01: the drain installs every step C selects, one `retire` after
+/// each `row_cleanup_next`, until C selects none.
+#[test]
+fn lrc_a01_drain_installs_every_selected_group() {
+    // The literal C removes a step once installed; a repeated (ordinal,
+    // operation) pair is installed once per entry.
+    let state = cleaning(&ONE_COMMIT[..1], &[], &[], &[]);
+    {
+        let mut state = state.borrow_mut();
+        state.cleanup.push((5, Operation::RootFree));
+        state.cleanup.push((2, Operation::TerminalFinish));
+    }
+    assert_eq!(
+        drain(&state).unwrap(),
+        Retired {
+            groups: 3,
+            held: 0,
+            complete: true
+        }
+    );
+    assert_eq!(
+        take_log(&state),
+        [
+            CleanupNext,
+            Retire(3),
+            CleanupNext,
+            Retire(5),
+            CleanupNext,
+            Retire(2),
+            CleanupNext
+        ]
+    );
+    assert!(state.borrow().skips.iter().all(Vec::is_empty));
+    settled(&state);
+
+    // Nothing to clean: one `row_cleanup_next`, nothing installed.
+    let state = cleaning(&[], &[], &[], &[]);
+    assert_eq!(
+        drain(&state).unwrap(),
+        Retired {
+            groups: 0,
+            held: 0,
+            complete: true
+        }
+    );
+    assert_eq!(take_log(&state), [CleanupNext]);
+    settled(&state);
+}
+
+/// LRC-A02: a `Visibility(Busy)` step is skipped by its Job ordinal for the
+/// rest of the drain, so a held actor does not hide another; it stays for
+/// a later drain.
+#[test]
+fn lrc_a02_held_step_is_skipped_and_left() {
+    let state = cleaning(
+        &[(3, Operation::Prune), (6, Operation::RootFree)],
+        &[3],
+        &[],
+        &[],
+    );
+    assert_eq!(
+        drain(&state).unwrap(),
+        Retired {
+            groups: 1,
+            held: 1,
+            complete: true
+        }
+    );
+    assert_eq!(
+        take_log(&state),
+        [CleanupNext, Retire(3), CleanupNext, Retire(6), CleanupNext]
+    );
+    assert_eq!(state.borrow().skips, [vec![], vec![3], vec![3]]);
+    assert_eq!(state.borrow().cleanup, [(3, Operation::Prune)]);
+    settled(&state);
+}
+
+/// LRC-A03: a residency victim is flushed with the call's flusher, the
+/// flush continued until Ready, and the same group tried again.
+#[test]
+fn lrc_a03_residency_victim_is_flushed_then_the_group_retried() {
+    let state = cleaning(
+        &ONE_COMMIT[4..],
+        &[],
+        &[(3, 77), (3, 78)],
+        &[(TryFlush(78), Fault::Steps(2))],
+    );
+    assert_eq!(
+        drain(&state).unwrap(),
+        Retired {
+            groups: 2,
+            held: 0,
+            complete: true
+        }
+    );
+    assert_eq!(
+        take_log(&state),
+        [
+            CleanupNext,
+            Retire(3),
+            TryFlush(77),
+            Retire(3),
+            TryFlush(78),
+            ContinueFlush,
+            ContinueFlush,
+            Retire(3),
+            CleanupNext,
+            Retire(2),
+            CleanupNext
+        ]
+    );
+    settled(&state);
+}
+
+/// LRC-A04: any other refusal ends the drain with the groups installed
+/// before it; an unchanged one is not must-resolve, a Fatal one is. A
+/// refused flush ends it the same way.
+#[test]
+fn lrc_a04_other_refusals_end_the_drain() {
+    let state = cleaning(
+        &ONE_COMMIT[4..],
+        &[],
+        &[],
+        &[(Retire(2), Fault::Before(Cause::Capacity))],
+    );
+    let stop = drain(&state).unwrap_err();
+    assert_eq!(
+        stop.retired,
+        Retired {
+            groups: 1,
+            held: 0,
+            complete: false
+        }
+    );
+    assert_eq!(stop.failure.stage, Stage::Retire);
+    assert_eq!(
+        disk(&stop.failure.error),
+        (RetentionPhase::Prepare, Cause::Capacity, Effect::Unchanged)
+    );
+    assert!(!stop.failure.must_resolve);
+    assert_eq!(
+        take_log(&state),
+        [CleanupNext, Retire(3), CleanupNext, Retire(2)]
+    );
+    settled(&state);
+
+    let state = cleaning(&ONE_COMMIT[4..], &[], &[], &[(Retire(3), Fault::Fatal)]);
+    let stop = drain(&state).unwrap_err();
+    assert_eq!(stop.retired, Retired::default());
+    assert_eq!(stop.failure.stage, Stage::Retire);
+    assert!(stop.failure.must_resolve);
+    assert_eq!(take_log(&state), [CleanupNext, Retire(3)]);
+
+    let state = cleaning(&ONE_COMMIT[4..], &[], &[], &[(CleanupNext, Fault::Fatal)]);
+    let stop = drain(&state).unwrap_err();
+    assert_eq!(stop.failure.stage, Stage::CleanupNext);
+    assert!(stop.failure.must_resolve);
+    assert_eq!(take_log(&state), [CleanupNext]);
+
+    let state = cleaning(
+        &ONE_COMMIT[4..],
+        &[],
+        &[(3, 77)],
+        &[(TryFlush(77), Fault::Before(Cause::Busy))],
+    );
+    let stop = drain(&state).unwrap_err();
+    assert_eq!(stop.retired, Retired::default());
+    assert_eq!(stop.failure.stage, Stage::Flush);
+    assert!(!stop.failure.must_resolve);
+    assert_eq!(take_log(&state), [CleanupNext, Retire(3), TryFlush(77)]);
+}
+
+/// LRC-A05: a drain is bounded: past `CLEANUP_HELD` held steps, and at
+/// `CLEANUP_GROUPS` installed groups, it ends with the rest left and
+/// `complete` false, without another C call.
+#[test]
+fn lrc_a05_drain_is_bounded() {
+    let steps: Vec<_> = (0..=CLEANUP_HELD)
+        .map(|ordinal| (ordinal, Operation::Prune))
+        .collect();
+    let held: Vec<_> = (0..=CLEANUP_HELD).collect();
+    let state = cleaning(&steps, &held, &[], &[]);
+    assert_eq!(
+        drain(&state).unwrap(),
+        Retired {
+            groups: 0,
+            held: CLEANUP_HELD,
+            complete: false
+        }
+    );
+    let log = take_log(&state);
+    assert_eq!(log.len(), 2 * (CLEANUP_HELD + 1));
+    assert_eq!(log.last(), Some(&Retire(CLEANUP_HELD)));
+    settled(&state);
+
+    let steps: Vec<_> = (0..=CLEANUP_GROUPS)
+        .map(|ordinal| (ordinal, Operation::TerminalFinish))
+        .collect();
+    let state = cleaning(&steps, &[], &[], &[]);
+    assert_eq!(
+        drain(&state).unwrap(),
+        Retired {
+            groups: CLEANUP_GROUPS,
+            held: 0,
+            complete: false
+        }
+    );
+    let log = take_log(&state);
+    assert_eq!(log.len(), 2 * CLEANUP_GROUPS);
+    assert_eq!(log.last(), Some(&Retire(CLEANUP_GROUPS - 1)));
+    assert_eq!(
+        state.borrow().cleanup,
+        [(CLEANUP_GROUPS, Operation::TerminalFinish)]
+    );
+    settled(&state);
 }

@@ -342,6 +342,20 @@ pub(crate) struct RetentionError {
     pub(crate) cause: RetentionCause,
     pub(crate) effect: Effect,
 }
+impl RetentionError {
+    /// An unchanged `Visibility(Busy)` refusal: a live reference pin or an
+    /// older snapshot still holds the target. For a live Row cleanup group
+    /// (`retire_row`, reclamation `#live-row-retirement`) nothing was
+    /// staged and the step is left for a later call.
+    pub(crate) fn visibility_busy(&self) -> bool {
+        self.effect == Effect::Unchanged
+            && matches!(
+                &self.cause,
+                RetentionCause::Visibility(error)
+                    if matches!(error.cause, VisibilityCause::Busy)
+            )
+    }
+}
 type Result<T> = std::result::Result<T, RetentionError>;
 fn unchanged(phase: RetentionPhase, cause: RetentionCause) -> RetentionError {
     RetentionError {

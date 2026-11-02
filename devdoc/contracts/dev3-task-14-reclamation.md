@@ -252,8 +252,39 @@ BEGIN WAL 회수와 actual free가 없는 표현 시험은 R14-13/실제 반환 
 
 **효과.** stage 전 거절은 Unchanged다(WAL·Job·page·fence 변화 없음). 예외는 invariant 위반이다: 잡은 page의 decode 실패, control Job의 모순, producer의 모순 검사는 Fatal이다. stage 뒤 실패는 다른 그룹과 같이 Fatal(session fence)이다.
 
-**자원.** live 정리 본문은 `CatalogProgressCharge` 44,304 B 안에 든다: memory·native 모두 43,924 B다. `CatalogProgressCharge::new`의 debug assertion과 시험 `live_row_retirement_fits_the_progress_charge`가 이름으로 확인한다. 이 값은 peak에 접지 않으므로 shared·charge·전체 peak는 바뀌지 않는다. 남는 380 B가 `retire_row`를 부르는 호출자의 몫 전부다. Row 쓰기처럼 호출자 몫(`ROW_WRITE_CALLER_BYTES`)을 따로 두지 않았으므로, 자동 호출을 붙이는 단위는 호출자 상한을 정하고 이 본문이나 charge를 다시 맞춰야 한다.
+**자원.** live 정리 본문은 `CatalogProgressCharge` 44,304 B 안에 든다: memory·native 모두 43,924 B다. `CatalogProgressCharge::new`의 debug assertion과 시험 `live_row_retirement_fits_the_progress_charge`가 이름으로 확인한다. 이 값은 peak에 접지 않으므로 shared·charge·전체 peak는 바뀌지 않는다. 남는 380 B가 `retire_row`를 부르는 호출자의 몫 전부다. Row 쓰기처럼 호출자 몫(`ROW_WRITE_CALLER_BYTES`)을 따로 두지 않았으므로, 자동 호출을 붙이는 단위는 호출자 상한을 정하고 이 본문이나 charge를 다시 맞춰야 한다. (다음 단위 [live 정리 호출자](#live-row-cleanup-caller)가 본문을 39,564 B로 줄이고 호출자 상한 4,096 B를 두었다.)
 
-**범위 밖.** 자동 호출(commit·rollback 뒤 정리를 부르는 background cleaner나 statement driver 연결)은 없다. 호출자가 `row_cleanup_next`·`retire_row`를 부른다. UPDATE·DELETE·index·overflow 정리(DEV3 bundle 4), allocator의 실제 page 반환(3.03.4), checkpoint·WAL 절단, 동시 writer, Catalog aging은 이 단위가 아니다. 한 그룹마다 WAL 전체 replay 검증을 하므로 그룹 수에 대해 비용이 이차로 는다([F6-a](../evidence/f6-wal-revalidation-survey-20261102.md)). [F6 M0](../evidence/f6-wal-revalidation-survey-20261102.md#f6a-m0)가 pool frame 16(flush 없음)에서 센 값으로, 한 행 commit 거래의 정리 6그룹은 각각 전체 replay 1회를 하고 WAL을 367,106 B 늘린다(거래 자체는 4회, 262,257 B).
+**범위 밖.** 자동 호출(commit·rollback 뒤 정리를 부르는 background cleaner나 statement driver 연결)은 없다. 호출자가 `row_cleanup_next`·`retire_row`를 부른다. (A statement driver의 정리 단계는 [다음 단위](#live-row-cleanup-caller)가 공급했다.) UPDATE·DELETE·index·overflow 정리(DEV3 bundle 4), allocator의 실제 page 반환(3.03.4), checkpoint·WAL 절단, 동시 writer, Catalog aging은 이 단위가 아니다. 한 그룹마다 WAL 전체 replay 검증을 하므로 그룹 수에 대해 비용이 이차로 는다([F6-a](../evidence/f6-wal-revalidation-survey-20261102.md)). [F6 M0](../evidence/f6-wal-revalidation-survey-20261102.md#f6a-m0)가 pool frame 16(flush 없음)에서 센 값으로, 한 행 commit 거래의 정리 6그룹은 각각 전체 replay 1회를 하고 WAL을 367,106 B 늘린다(거래 자체는 4회, 262,257 B).
 
 **인수 대응.** R14 사례의 PASS를 주장하지 않는다. LRR-02와 LRR-05는 R14-05의 일부(오래된 snapshot 옆 release 보류)를, LRR-01은 Job·Status·Undo 재사용을, LRR-06은 live 정리 중간 상태에서 복구가 나머지를 끝내는 것을 첫 Row profile에서만 보인다. 시험이 닿지 않는 분기(stage의 Unchanged 거절, 정리 residency의 `FlushRequired`, 닫힌 facade의 거절)와 시험·결과는 [증거](../evidence/live-row-retirement-20261102.md)에 있다.
+
+<a id="live-row-cleanup-caller"></a>
+## live 정리 호출자: A statement driver의 정리 drain (2026-11-02)
+
+**XADB-DEV3-ROW-RETIRE-002 · 구현·선택 검증·독립 검토 / PR 대기.** 기준은 main `372b22e`(PR #37 병합)다. [live 정리](#live-row-retirement)의 두 C 입구를 A의 statement driver가 부르는 정리 단계와, 그 단계가 쓰는 자원 몫을 공급한다. 새 WAL 형식·frame·opcode·page 형식·오류 종류는 없다. 3.14.1의 다른 부분, 3.03.4, 3.14.2는 그대로 미완료다.
+
+**문제.** live 정리 본문 43,924 B가 charge 44,304 B를 거의 다 써서 호출자 몫이 380 B뿐이었다. 어떤 driver 호출도 이 몫에 들지 않았다. 호출자는 `row_cleanup_next`·`retire_row`를 직접 부르고 Busy와 `FlushRequired`를 스스로 처리해야 했다.
+
+**C 본문 축소.** `retire_resident`는 준비 결과를 `?`로 꺼냈다. 그래서 2,072 B짜리 준비 그룹이 그 frame에 세 벌(호출 결과, `?`의 분기 값, 묶은 값) 있었고, census(`carrier_source_bytes`)도 그렇게 셌다. 이제 준비는 결과 slot 하나에 쓰고, 설치는 그 자리의 그룹을 빌려 쓴다. Observation도 따로 복사하지 않고 반환 slot에 바로 쓴다. 호출 순서·검사·오류·효과는 같다. census는 바뀐 코드를 따른다: 본문은 memory·native 모두 39,564 B다(4,360 B 감소). 준비 경로(36,620 B, 그 아래 shell·입구 항 2,944 B)가 여전히 residency 경로(35,844 B)보다 크다. charge·shared·peak는 그대로다.
+
+**호출자 상한.** C 소유 [`row_caller_budget.rs`](../../crates/engine/src/storage/wal_io/row_caller_budget.rs)에 `LIVE_ROW_CLEANUP` 4,096 B를 둔다. [F4 상한](dev3-module-boundaries.md#f4-caller-budgets)과 같은 규칙이다. A는 자기 몫이 이 상한 이내인지 검산하고, C는 본문과 상한의 합이 charge 이내인지 검산한다(시험 `live_row_retirement_fits_the_progress_charge`, 여유 644 B). 상한을 넘으면 A 구현을 줄이거나 양쪽 계약을 다시 검토한다. 실패한 뒤 상한이나 charge를 올려 통과시키지 않는다. 이 값은 source-bound inventory이며 stack 측정이 아니다. 상한은 F4 모듈이 `cfg(test)`라서 `CatalogProgressCharge::new`의 debug assertion은 본문만 본다.
+
+**A의 정리 단계.** `retire_finished_live(call, loan)`(generic `retire_finished`)은 C가 고르는 단계를 차례로 설치한다.
+
+| C의 답 | A의 동작 |
+| --- | --- |
+| 다음 단계 (Job ordinal, 그룹) | `retire_row`로 설치하고 다시 묻는다 |
+| `FlushRequired(target)` | call의 flusher와 전용 flusher Owner로 target을 flush하고 Ready까지 계속한 뒤 같은 그룹을 다시 시도한다. preflight의 flush와 같은 이유로 반복이 끝난다(배타 port 아래에서 다른 writer가 victim을 다시 더럽히지 않는다) |
+| `Visibility(Busy)` (`RetentionError::visibility_busy`) | 그 ordinal을 `skip`에 넣고 계속한다. 한 drain에 8개까지이고, 9번째 Busy는 drain을 끝낸다 |
+| 다른 거절 | drain을 끝내고 `RetireStop { retired, failure }`를 돌려준다. Unchanged면 session은 그대로이고 다음 drain이 이어 간다. Fatal이면 C의 fence다(`failure.must_resolve`) |
+| None | `Retired { groups, held, complete: true }` |
+
+한 drain은 64그룹까지 설치하고 나머지는 다음 drain에 남긴다(`complete: false`). 한 commit의 정리는 6그룹이므로, 이 상한은 쌓인 정리가 있을 때만 닿는다. C는 `skip` 목록이 다음 설치까지만 유효하다고 적었다. 비워진 cell을 다른 actor의 Begin이 다시 쓸 수 있기 때문이다. drain은 call(배타 `MutationPort`)을 쥐고 있어 그 사이 Begin이 없으므로 drain이 끝날 때까지 목록을 유지한다. 그래야 붙잡힌 Prune을 설치마다 다시 시도하지 않는다(시도마다 준비의 전체 replay가 든다).
+
+**호출 위치.** 호출자는 `commit_live`나 `finish_aborted_live`가 돌아온 뒤 같은 call로 이 단계를 부른다. commit·abort 입구 안에서 부르지 않는다. 그 안에서는 drain의 slot이 A의 Commit frame에 더해지는데, C의 Commit window가 그 frame을 3,024 B(`row_caller_budget::COMMIT`, 지금 여유 2 B)로 묶기 때문이다. 그래서 commit·abort 입구와 그 census는 바뀌지 않는다. 제품 statement 실행기(SQL 연결)는 아직 없다. 그 실행기가 commit·abort 직후 이 단계를 부르고, 자기 caller term으로 아래 census를 다시 한다. background cleaner는 없다.
+
+**자원 (A).** A의 네 C 호출 지점의 몫은 per-call / frame-static으로 `cleanup.next` 2,664 / 2,840 B, `cleanup.retire` 2,868 / 3,164 B, `cleanup.try_flush` 3,098 / 3,635 B, `cleanup.continue_flush` 3,090 / 3,627 B다(memory·native type 같음, 상한 4,096 B). 셈법은 `call_sites`와 같다(표준 slack 한 번, C 호출 결과 두 번, 경로 위 driver frame의 모든 slot). caller term(472 B)은 `commit_caller_source`처럼 caller의 LiveCall과 Owner 둘, loan 참조, 결과 slot만 센다. `row_cleanup_next`의 본문(control Job을 그 자리에서 decode)은 live 정리 단위와 같이 charge 밖이며 따로 세지 않는다.
+
+**시험.** A 단위 LRC-A01..05(literal stand-in: 순서, Busy 건너뛰기, flush 뒤 재시도, 다른 거절과 Fatal, 두 상한), JOIN LRC-J01(한 Status에서 commit → abort → commit, 각 drain 뒤 Row Job 전부 Free, 6·5·6그룹, 남은 것 없는 drain은 0)과 LRC-J02(오래된 snapshot이 Prune을 잡는 동안 drain은 held 1로 끝나고 WAL·Job을 바꾸지 않음, snapshot이 끝난 뒤 6그룹), 두 census 시험. 결과는 [증거](../evidence/live-row-cleanup-caller-20261102.md)에 있다.
+
+**범위 밖.** 제품 statement 실행기의 실제 호출, background cleaner, 정리 비용(그룹마다 전체 WAL replay 1회, [F6 M0](../evidence/f6-wal-revalidation-survey-20261102.md#f6a-m0)), UPDATE·DELETE·index·overflow 정리, allocator의 실제 page 반환은 이 단위가 아니다. R14 사례의 PASS를 주장하지 않는다.

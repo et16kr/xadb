@@ -40,6 +40,7 @@ pub(in crate::storage) use super::wal_io::disk_api::{MCA01_V12_P_TABLE, mca01_v1
 
 pub(in crate::storage) use super::wal_io::disk_api::InstallGrant;
 pub(in crate::storage) use super::wal_io::disk_api::Owner;
+pub(in crate::storage) use super::wal_io::disk_api::RowRetireStep;
 
 pub(crate) use super::wal_io::disk_api::{
     DurableCommit, InstalledCommit, StagedCommit, UnstagedCommit,

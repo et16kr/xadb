@@ -856,3 +856,8 @@ fn lrr06_recovery_finishes_a_partial_live_cleanup() {
 /// live cleanup (evidence `f6-wal-revalidation-survey-20261102.md` §7).
 #[path = "retire/revalidation.rs"]
 mod revalidation;
+
+/// The live Row cleanup caller: A's cleanup drain after A's Commit or
+/// finish_aborted (reclamation `#live-row-cleanup-caller`).
+#[path = "retire/driver.rs"]
+mod driver;
