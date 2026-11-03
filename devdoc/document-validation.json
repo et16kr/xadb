@@ -1,7 +1,7 @@
 {
   "schema_version": 2,
   "product": "XADB",
-  "date": "2026-11-04T01:34:08.126485+09:00",
+  "date": "2026-11-04T02:11:05.268246+09:00",
   "status": "PASS",
   "errors": [],
   "markdown_documents": [
@@ -9,7 +9,7 @@
       "file": "devdoc/README.md",
       "links": 301,
       "duplicate_ids": 0,
-      "sha256": "76fae462d4404ff95d0776d9a5a07d116ae71f8bf900c7f77abb6f49cf8e6351"
+      "sha256": "855bf7d64b0ec3a4c447f941e8b546f501750d9de61a49eeaadee6526a19a32a"
     },
     {
       "file": "devdoc/contracts/README.md",
@@ -289,9 +289,9 @@
     },
     {
       "file": "devdoc/contracts/dev3-row-delete.md",
-      "links": 29,
+      "links": 30,
       "duplicate_ids": 0,
-      "sha256": "9f420b2f67ba4364d276faebd1bf5a24ef565fb02eb7765d2a2231d33ba84dcf"
+      "sha256": "158ada963c91339d0f7faffc22cef243b112ac7443d31e000394f404a1cab743"
     },
     {
       "file": "devdoc/contracts/dev3-row-format.md",
@@ -1455,7 +1455,7 @@
       "file": "devdoc/plans/dev3-schedule-baseline.md",
       "links": 106,
       "duplicate_ids": 0,
-      "sha256": "f46976836eab6281ee205461bd734bde466a73418abb1c6f86faa9ce38b72282"
+      "sha256": "07a8e41976acee8183e7b814953e031b5a34ce7eb2404799c194487fcf94ba53"
     },
     {
       "file": "devdoc/plans/dev3-test-plan.md",

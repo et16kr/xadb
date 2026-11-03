@@ -83,6 +83,50 @@ impl Cut {
             Cut::Compensated => (3, 0, vec![100, 101, 102]),
         }
     }
+
+    /// The Row Jobs C's restart takes into its base4 at the cut (§9), in
+    /// state order: A's DELETE root and Terminal, and for N05/N06 Y's
+    /// committed INSERT root and Terminal, which nothing drained.
+    fn bound(self) -> Vec<JobState> {
+        let mut states = match self {
+            Cut::Committed => vec![JobState::RootRetained, JobState::TerminalReady],
+            Cut::Pruned => vec![JobState::RootReleasingCommitted, JobState::TerminalReady],
+            Cut::Reserved => vec![JobState::RootReserved, JobState::TerminalLeased],
+            Cut::Forwarded => vec![JobState::RootRetained, JobState::TerminalLeased],
+            Cut::RollbackStarted => vec![
+                JobState::RootRetained,
+                JobState::TerminalLeased,
+                JobState::RootRetained,
+                JobState::TerminalReady,
+            ],
+            Cut::Compensated => vec![
+                JobState::RootReleasingCompensated,
+                JobState::TerminalLeased,
+                JobState::RootRetained,
+                JobState::TerminalReady,
+            ],
+        };
+        states.sort_by_key(|state| format!("{state:?}"));
+        states
+    }
+}
+
+/// The Row Jobs C's restart of `images` took into its base4 (the cell trace
+/// at bind, before any action), in state order.
+fn bound_states(images: &Images) -> Vec<JobState> {
+    let restarted = restart_with(
+        images,
+        Some(RowRecoveryPolicy::WithRowClr),
+        Drive::Action,
+        0,
+        &PageRead,
+    );
+    let mut states: Vec<_> = restarted.trace[0]
+        .iter()
+        .map(|(_, state, _)| *state)
+        .collect();
+    states.sort_by_key(|state| format!("{state:?}"));
+    states
 }
 
 /// The controller's frozen inventory, its only oracle: it must state this
@@ -95,6 +139,7 @@ const INVENTORY: &str = include_str!(
 /// RowIds 1 and 2 of rows 100 and 101, and A's new row `NEW`).
 fn inventory_states(id: &str, cut: Cut) {
     assert!(INVENTORY.contains(&format!("\"new_value\": {NEW},")));
+    assert_eq!(INVENTORY.matches(&format!("\"{id}\"")).count(), 1, "{id}");
     let start = INVENTORY
         .find(&format!("\"{id}\": {{"))
         .unwrap_or_else(|| panic!("{id} in the inventory"));
@@ -438,6 +483,9 @@ fn memory_twin(id: &str) {
         assert!(produced.contains("\nrows\t1,2\n"), "{produced}");
         let mut images = state.lock().unwrap().images();
         drop(directory);
+        // Where the cut is: the Jobs C's restart binds (N01 before and N02
+        // after the DeletePrune differ only here and in the WAL).
+        assert_eq!(bound_states(&images), cut.bound(), "{id} at the cut");
         let mut receipts = vec![produced];
         for phase in ["recover", "reenter"] {
             let directory = clone_directory(&images);

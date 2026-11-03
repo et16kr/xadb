@@ -28,7 +28,7 @@
     },
     "RDL-N04": {
       "cut": "after DeleteForward: the explicit transaction's DELETE statement of 100, the transaction Active",
-      "last_step": "the DeleteForward group and the statement's end",
+      "last_step": "the DELETE statement: RowReserve and DeleteForward (its end writes no group)",
       "produce": {"result": "crashed", "q": 2, "rows": [1, 2]},
       "recover": {"q_ready": 2, "clrs": 1, "values": [100, 101], "ack_q": 3},
       "reenter": {"q_ready": 3, "clrs": 0, "values": [100, 101, 17]}

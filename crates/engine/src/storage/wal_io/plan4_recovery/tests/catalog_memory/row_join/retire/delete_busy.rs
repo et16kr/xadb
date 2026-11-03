@@ -1,8 +1,8 @@
 //! RDL-J11 (dev3-row-delete.md#classification, #implementation-3): C's
 //! judgement of rows another transaction holds, over the actual supply.
-//! Each transaction begins on its own Row Status (a second and a third
-//! Status as in RDL-N05), so a transaction begins while another is Active
-//! or before another's cleanup. Expectations are §5's table rows, never
+//! Each transaction begins on its own Row Status (the test initializes a
+//! second and a third, as RDL-N05 does a second), so a transaction begins
+//! while another is Active or before another's cleanup. Expectations are §5's table rows, never
 //! values read back from the same producer.
 use super::*;
 use crate::storage::row::insert::driver::live::begin_transaction_live;
@@ -52,8 +52,9 @@ macro_rules! refused {
 ///   SerializationConflict (A's tombstones, committed at q 4 > Z's
 ///   snapshot 3); Z rolls back.
 ///
-/// The drain cleans A's two delete roots (5 + 5 groups), its Terminal, and
-/// Y's and Z's Terminals (one group each); a new statement reads only 101.
+/// The drain cleans A's two delete roots (5 + 5 groups), A's Terminal and
+/// Z's Terminal (one group each; Y's TerminalFinish ran in the steps
+/// above): 12 groups. A new statement reads only 101.
 /// C's restart reaches READY at q 4 with no CLR and reads only 101.
 #[test]
 fn rdl_j11_rows_another_transaction_holds_are_busy_until_its_cleanup() {
