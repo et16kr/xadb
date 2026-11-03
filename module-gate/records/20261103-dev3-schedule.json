@@ -1,6 +1,6 @@
 {
   "schema": "XADB_MODULE_GATE_RECORD_V1",
-  "change": "DEV3 schedule V1: 86 estimated days (supply units x 2 days, re-weighted before merge from the 58-day draft), 28 earned, 32.56%; fixed duration weights and evidence-based cumulative credit, forecast separate from acceptance. Documentation only.",
+  "change": "DEV3 schedule V1: 86 estimated days (supply units x 2 days, re-weighted before merge from the 58-day draft), 29.5 earned per schedule item, 34.30%; fixed duration weights and evidence-based cumulative credit per schedule item, forecast separate from acceptance. Documentation only.",
   "reviews": [
     {
       "id": "dev3-schedule-d2",
