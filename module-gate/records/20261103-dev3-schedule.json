@@ -1,0 +1,26 @@
+{
+  "schema": "XADB_MODULE_GATE_RECORD_V1",
+  "change": "DEV3 schedule V1: 58 estimated days, 23 earned, 39.66%; fixed duration weights and evidence-based cumulative credit, forecast separate from acceptance. Documentation only.",
+  "reviews": [
+    {
+      "id": "dev3-schedule-d2",
+      "class": "D2",
+      "scopes": [
+        "policy"
+      ],
+      "author": "/root",
+      "reviewer": "/root/schedule_review",
+      "verdict": "ACCEPT",
+      "required_open": 0,
+      "files": {
+        "devdoc/README.md": "473d1982a6827ad007bb6ca476a2614c5e5a8feb",
+        "devdoc/documents.json": "4119fe4238a0c9f7e6de2c1f6c16b27edaa432c1",
+        "devdoc/plans/README.md": "1a5f8e65ecbef50aa763ba11d451d49c2b34f5fb",
+        "devdoc/plans/dev3-ai-throughput-improvement.md": "4f0ef96289c92666b239c068522f255c4e533345",
+        "devdoc/plans/dev3-implementation-plan.md": "f5e9ca41257ed631d303b86e573f1147537738d4",
+        "devdoc/plans/dev3-schedule-baseline.md": "dd1c27fef94b9bacee370c48633478436a45116d"
+      },
+      "log": "module-gate/evidence/dev3-schedule/review.md (sha256 54df073de4e68956ea7323fa171b5b1462ba131c7518dcab1c510a956e93de59)"
+    }
+  ]
+}
