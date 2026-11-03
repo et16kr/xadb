@@ -531,8 +531,9 @@ impl<'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
     RetentionWriter<'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W>
 {
     /// The closed recovered facade check of a retiring Row cleanup
-    /// (Prune: its U and the actor's committed Q; RootFree: its U;
-    /// TerminalFinish: its actor). Cancel and ReleaseRole retire nothing.
+    /// (Prune and DeletePrune: its U and the actor's committed Q; RootFree:
+    /// its U; TerminalFinish: its actor). Cancel and ReleaseRole retire
+    /// nothing.
     fn check_closed_row_cleanup(
         &self,
         ordinal: usize,
@@ -549,7 +550,7 @@ impl<'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
             row_semantic::Operation::Cancel | row_semantic::Operation::ReleaseRole => {
                 return Ok(());
             }
-            row_semantic::Operation::Prune => {
+            row_semantic::Operation::Prune | row_semantic::Operation::DeletePrune => {
                 let source = job.source().ok_or_else(invalid)?;
                 let mut q = None;
                 for bytes in self.control.jobs() {
@@ -581,11 +582,12 @@ impl<'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
             })
     }
 
-    /// One recovered Row cleanup group (Cancel, Prune, ReleaseRole, RootFree,
-    /// TerminalFinish) inside the one gate/progress shell: RowWrite for the
-    /// Cancel and Prune write target sets, RowProgress for the four-target
-    /// lifecycle cleanup. The closed facade check runs before the
-    /// preparation and again just before the install.
+    /// One recovered Row cleanup group (Cancel, Prune, DeletePrune,
+    /// ReleaseRole, RootFree, TerminalFinish) inside the one gate/progress
+    /// shell: RowWrite for the Cancel, Prune and DeletePrune write target
+    /// sets, RowProgress for the four-target lifecycle cleanup. The closed
+    /// facade check runs before the preparation and again just before the
+    /// install.
     pub(in super::super::super::super::super) fn row_recovery_cleanup(
         &mut self,
         owner: &mut Owner<'c, 's>,
@@ -595,9 +597,9 @@ impl<'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
         flusher: &mut RetentionFlusher<'_, 's, 'c, 'p, 'd, 'm, 'w, W>,
     ) -> Result<row_group::Observation> {
         let class = match operation {
-            row_semantic::Operation::Cancel | row_semantic::Operation::Prune => {
-                source::OperationClass::RowWrite
-            }
+            row_semantic::Operation::Cancel
+            | row_semantic::Operation::Prune
+            | row_semantic::Operation::DeletePrune => source::OperationClass::RowWrite,
             _ => source::OperationClass::RowProgress,
         };
         self.progress_lifecycle(owner, class, flusher, |writer, owner| {

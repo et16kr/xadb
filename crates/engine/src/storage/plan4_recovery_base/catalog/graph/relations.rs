@@ -389,11 +389,20 @@ fn payloads<'a, G: Seam<'a>>(graph: &G, begins: u64) -> Result<()> {
                 }
             }
             PageKind::Undo => {
-                if page.len() != 1 || page.cell_range(0) != Some(undo_record::INITIAL_UNDO_CELL) {
+                // One record ending where INITIAL_UNDO_CELL ends. Only a Live
+                // record may carry an inline value after it: a DELETE root's U
+                // (dev3-row-delete.md#recovery), which its owner checks.
+                if page.len() != 1
+                    || page
+                        .cell_range(0)
+                        .is_none_or(|range| range.end != undo_record::INITIAL_UNDO_CELL.end)
+                {
                     return Err(Error::Unsupported);
                 }
                 let raw = page.cell(0).ok_or(Error::Corrupt)?;
-                if raw.len() != undo_record::UNDO_RECORD_BYTES {
+                if raw.len() < undo_record::UNDO_RECORD_BYTES
+                    || (raw.len() != undo_record::UNDO_RECORD_BYTES && raw[6] != 1)
+                {
                     return Err(Error::Unsupported);
                 }
                 let generation = Generation::new(get(raw, 8)).map_err(|_| Error::Corrupt)?;
