@@ -122,6 +122,8 @@ Live는 cursor0/chunks-released0/release-next zero이고 Released edge를 허용
 
 Releasing은 incoming0이며 새 edge의 target이 될 수 없다. root의 생성 identity·sequence·target·before logical·body는 처리 중에도 유지한다. cursor는 M01과 같은 고정 순서를 사용한다.
 
+2026-11-03 개정([Row DELETE 첫 경로 §3.2](dev3-row-delete.md#delete-undo), D2 ACCEPTED, 구현은 2단계): scope3 Row 첫 profile의 delete U는 Live→Releasing 전이에서 RowValue body를 버리고 payload None인 Releasing으로 간다. codec은 Releasing RowValue에 Inline과 None을 모두 받으며 Live RowValue의 None은 계속 거절한다. 다른 Releasing RowValue와 U09–U12 vector는 바뀌지 않는다. 같은 개정에서 payload 검증 진입을 둘로 나눈다. (a) encode·decode·lookup의 `columns: &[Column]`을 `RowSchemaInput`으로 받는 스키마 진입이 canonical까지 검증하며 before 값을 내줄 수 있는 유일한 진입이다. (b) metadata 진입은 header와 payload 길이만 검증하고 payload 접근자 없는 metadata 타입을 돌려주며 스키마 완료를 주장하지 않는다. 다른 table일 수 있는 previous root의 net0 증명과 Releasing U의 해제 material만 (b)를 쓴다.
+
 | cursor | previous-version | previous-transaction | before stamp |
 | --- | --- | --- | --- |
 | 0 | Never/Linked/Cut | Never/Linked/Cut | 기존 유효 값 |

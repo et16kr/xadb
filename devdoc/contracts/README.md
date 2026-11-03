@@ -1,6 +1,7 @@
 # 기능 계약
 
 - [DEV3 모듈 독립 개발의 소유·소비 경계](dev3-module-boundaries.md) · [두 제품 소비자](dev3-module-consumers.md) — M2 D2 ACCEPTED. 제한 port·공통 공급, 첫 INSERT와 snapshot point-read/cursor의 명세·독립 fixture 설계 채택; C0 borrowed codec 부분공급·공통 공급 전체와 제품 인수 미완료. [Missing Row 참조 이동](dev3-visibility-retirement.md#row-missing-traversal) · [statement/cursor F02](dev3-task-06-tree-rows.md#module-statement-cursor) · [자원 배정](dev3-resource-bounds.md#row-missing-module-budget).
+- [DEV3 Row DELETE 첫 경로](dev3-row-delete.md) — 2026-11-03 설계 동결, D2 ACCEPTED(3회차). committed·Prune된 행 하나의 tombstone 삭제, 새 opcode 8·9·23, Job3 효과 byte, delete U와 Undo 검증 두 진입, leaf 복원 공간 예약; 제품·시험 NOT_RUN.
 
 - [DEV3 첫 Catalog CREATE](dev3-catalog-create.md) — 원 owner의 실제 CREATE·Commit·복구 결합 D2 채택; 제품 효과·인수 미완료. [Root v2](dev3-create-root-format.md) · [Job v2](dev3-create-job-format.md) · [group scope2](dev3-create-group-format.md) · [base v3](dev3-create-recovery-base.md) · [visibility·회수](dev3-visibility-retirement.md).
 

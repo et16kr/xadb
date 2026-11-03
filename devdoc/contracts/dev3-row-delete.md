@@ -1,0 +1,328 @@
+# DEV3 Row DELETE 첫 경로 — 형식·전이 설계
+
+2026-11-03 · `D3-ROW-DELETE-001` · **설계 동결 / D2 ACCEPTED(3회차) / 제품·시험 NOT_RUN**
+
+[첫 Row profile](dev3-module-consumers.md#profile) · [RowMissingRoot 전이](dev3-module-consumers.md#row-states) · [WAL shape](dev3-module-consumers.md#row-shape) · [API 흐름](dev3-module-consumers.md#api-flow) · [Row 참조 이동](dev3-visibility-retirement.md#row-missing-traversal) · [Row 격리](dev3-task-10-concurrency.md#module-row-isolation) · [자원 정본](dev3-resource-bounds.md#row-missing-module-budget) · [Undo 형식](dev3-undo-format.md) · [live Row 정리](dev3-task-14-reclamation.md#live-row-retirement) · [명시 거래 실행기](dev3-module-boundaries.md#explicit-transaction) · [행 owner](dev3-task-06-tree-rows.md#algorithms)
+
+명시 거래 실행기(PR #40, main `c7a6425`) 다음 단위로 사용자가 결정 카드에서 "Row DELETE 첫 경로"를 골랐다. 카드 문구는 "DELETE의 WAL·undo·CLR 형식을 새로 정하고, C 적용·복구와 A 실행기, 실제 C 위 시험까지 만듭니다. 형식 변경입니다."이다. 이 문서는 그 형식과 전이를 코드보다 먼저 정한다. 지금의 Row scope3는 모두 Missing before(INSERT)만 다루므로 DELETE는 "occupied before"의 새 전이 묶음이 필요하다. 아래 결정은 독립 D2 검토 3회차에서 ACCEPT됐다. 구현과 시험은 2단계부터이며 이 문서는 제품 PASS가 아니다.
+
+<a id="scope"></a>
+## 1. 범위와 제한
+
+첫 경로는 **RowId 하나로 고른 행 하나를 지운다.** 결과는 지운 행 수 0 또는 1이다.
+
+| 포함 | 제외(첫 효과 전 거절하거나 다루지 않음) |
+| --- | --- |
+| committed이고 이미 Prune된 행(`Committed(q)`, undo None, inline)의 삭제 | 같은 거래가 넣은 행의 삭제(Unsupported) |
+| 자동커밋과 명시 거래의 DELETE 문장, statement rollback·full rollback의 복원 | Prune 전 행, 또는 RowId를 아직 root Job이 쥔 행의 삭제(Busy, §5) |
+| commit 뒤 live 정리의 DeletePrune·ReleaseRole·RootFree | UPDATE, 술어·범위 DELETE, 여러 행 DELETE 문장 |
+| 재시작 replay, 복구 loser의 DeleteClr, 복구 cleanup의 DeletePrune, base4 census | overflow 행, index가 있는 table, level≠0 leaf, split·merge |
+| B 읽기의 tombstone 판정(own·committed·미정 거래) | 일반 wait-for·row lock map, SQL/DEV4 연결 |
+
+제한의 이유: 대상이 `Committed(q)`이고 undo가 None이면 새 U의 before는 TxnRef가 없는 stamp와 previous-version Never만 가진다. 그래서 읽기는 지금의 Missing 경로와 같은 pin 둘(TxnPin+UndoPin)로 끝나고, [Row 참조 이동](dev3-visibility-retirement.md#row-missing-traversal)이 배제한 일반 occupied before의 3pin이 생기지 않는다. 미정 행을 거절하면 같은 행의 쓰기 충돌도 첫 효과 전에 거절된다.
+
+단계(§13): **1단계** 이 문서와 독립 검토. **2단계** 제품 경로 전체(C 형식·관찰자·census, A 생산자·실행기·loser, B 읽기)와 메모리 시험. **3단계** native fault cut과 남은 시험. 처음에는 B 읽기와 복구를 3단계로 나누려 했으나, 그러면 2단계 build가 자기 읽기·복구가 손상으로 보는 영속 상태(tombstone, delete U)를 쓰게 된다(D2 1회차 지적). 그래서 한 build 안에서 쓰는 상태는 모두 읽고 복구할 수 있게 2단계에 모은다.
+
+<a id="missing-only-inventory"></a>
+## 2. 지금의 Missing 전용 가정
+
+| 영역 | 지금 | DELETE가 바꾸는 것 |
+| --- | --- | --- |
+| opcode | Forward2·Clr4·Prune20은 INSERT shape(`5024+C`, `5024+2C`) | 새 opcode 3개(§3.4). 기존 셋은 그대로 |
+| wire native 크기 | kind1(leaf)은 양쪽 `shape.cell`, kind3(U)은 양쪽 432 | opcode별 크기 규칙(§3.4) |
+| Job3 | kind3 RowMissingRoot. `[284,288)` zero, Releasing은 `[280,320)` zero | `@284` 효과 byte(§3.3) |
+| Undo codec | RowValue payload는 Inline만, Releasing도 body 유지. payload는 `&[Column]`로 검증 | Releasing RowValue는 None도 허용. 스키마 입력·header 검증 진입(§3.2) |
+| U 관찰 | `material(job,…)`이 Missing U를 Job에서 만든다. 현재 U와 H 모두 `INITIAL_UNDO_CELL` | 효과1 U는 `432+L` 셀, before는 leaf 옛 행이나 U image에서(§3.2, §4.4) |
+| RowLeaf | 모든 행 Inline. Forward=Insert, CLR=Remove, Prune=Replace(재stamp) | tombstone 행. DeleteForward·DeleteClr=Replace, DeletePrune=Remove |
+| leaf 공간 | INSERT Reserve가 새 cell만 확인. edit scratch `ROW_EDIT_CELLS` 87은 entry≥189 B 전제 | 미결 delete의 복원 공간 예약(§4.3) |
+| RowId | 모든 non-Free root Job 사이 유일(census.rs `verify_pair`, ledger) | 그대로 지킨다. 대상 RowId를 root가 쥐면 Busy(§5) |
+| B 읽기 | capture는 Inline만, `read_missing`은 occupied before를 Unsupported | tombstone capture, RowValue before 읽기(§7) |
+| 회수 | Prune(`MissingPrune`)·RootFree(`UndoFree`)·TerminalFinish(`TerminalFree`)가 retiring | DeletePrune도 retiring(`ValuePrune`, §8) |
+| 복구 | loser CLR=Remove, cleanup=Prune, base4는 Missing U·Inline 행만 | DeleteClr·DeletePrune, base4가 tombstone·delete U·효과 byte 수용(§9) |
+| 비용 | ledger Forward `91304+C+128h`, CLR `91096+C+128h`, cleanup `311608+2C+128h` | delete 식(§3.5) |
+
+<a id="format"></a>
+## 3. 형식
+
+L은 canonical inline 길이(5..2048), C는 **지우는 옛 행의 tree cell** `180+L`(185..2228), h는 previous transaction H 존재 여부다.
+
+<a id="tombstone"></a>
+### 3.1 tombstone 행
+
+[행 형식](dev3-row-format.md)의 기존 tombstone을 그대로 쓴다. XRW1 flags bit0 deleted, bit1 undo, payload tag 0, body 0이며 record 168 B, tree cell 180 B, slot 포함 entry 184 B다. 새 형식이 아니다. delete의 tombstone은 `stamp=Transaction(T)`, `logical=(T.id, planned_mutation)`, `undo=U`, deleted다. **`Committed` stamp의 tombstone은 leaf에 생기지 않는다.** DeletePrune이 tombstone을 Remove하기 때문이다(§4.1). 그래서 leaf에서 Committed tombstone이나 undo None tombstone을 만나면 손상이다.
+
+tombstone 180 B는 `MIN_CELL` 185보다 작다. `Operation::shape`의 cell 인자는 옛 행 C이며 tombstone 크기는 shape 식 안의 상수 180이다.
+
+<a id="delete-undo"></a>
+### 3.2 delete U와 Undo codec
+
+| 상태 | 필드 | 크기 |
+| --- | --- | --- |
+| Live | target Row(table/gen/RowId), before `RowValue`, before_stamp `Committed(q_old)`, before_logical 옛 logical, payload Inline 옛 canonical, edges `[txn Linked(H) 또는 Never, version Never]`, incoming 2, cursor 0 | `432+L` |
+| Releasing cursor0..2 | before kind·stamp·logical 유지, **payload None**, incoming 0, txn Cut 또는 Never(cursor 2부터 Released), version Never(cursor 1부터 Released) | 432 |
+| Releasing cursor3 | 위와 같고 before_stamp None(기존 codec 규칙) | 432 |
+
+Live delete U는 slot0 하나의 셀 `[16352−(432+L), 16352)`에 둔다. Releasing U는 432 B로 돌아가 지금처럼 `INITIAL_UNDO_CELL`이므로 ReleaseRole·RootFree의 셀과 shape는 바뀌지 않는다. U의 before_stamp가 `Committed`라 `UndoBeforeStamp` edge가 없고, 대상 행의 undo가 None이라 previous-version은 Never다. 따라서 edge·count multiset은 INSERT와 같다(§4.2).
+
+codec 변경은 둘이다.
+
+1. **Releasing RowValue의 payload None 허용(추가).** 지금 `validate_record`는 Releasing RowValue Inline을 받고(U09–U12 golden이 그 예), None은 받지 않는다. Inline은 그대로 받고 None을 `releasing`일 때만 더 받는다. Live RowValue의 None은 계속 거절한다. [Undo 형식](dev3-undo-format.md)의 "Releasing에서도 body를 유지한다"는 이 profile의 delete U에 한해 개정한다. scope3 Row의 delete U는 Live→Releasing 전이(DeleteClr·DeletePrune)에서 body를 버린다. 다른 Releasing RowValue의 형식과 U09–U12는 바뀌지 않는다.
+2. **payload 검증의 두 진입.** 지금 codec은 payload를 `&[Column]`(소유 String)으로 검증하고 A·C·base4는 Missing U만 다뤄 `&[]`를 넘긴다. [Undo 형식](dev3-undo-format.md)은 row before를 공급된 스키마로 `decode_canonical_row` 검증하고 opaque bytes를 before 값으로 승인하지 않는다고 정한다. 이 규칙을 지키며 두 진입을 둔다.
+   - (a) **스키마 진입.** encode·decode·lookup의 `columns: &[Column]`을 `RowSchemaInput`으로 바꾼 진입이다. canonical까지 검증하고 `UndoRecordView`(before 값 포함)를 돌려준다. **before 값을 내줄 수 있는 것은 (a)뿐이다.** DeleteForward의 U 생산·관찰, DeleteClr 복원, DeletePrune의 before U, B `value_before`, loser handler, base4 census가 쓴다. 스키마는 각 경로의 실제 table source(`TableSource.schema`, read operation과 base4의 Catalog schema)에서 온다.
+   - (b) **metadata 진입.** header와 길이(Live RowValue는 5..2048이고 셀 `432+L`, Releasing RowValue는 None)만 검증하고 metadata 전용 타입(`UndoRecordMetadata`를 넓힌 것: 상태, before kind, stamp 종류, logical 유무, payload 길이, edges)을 돌려준다. payload 접근자나 `live_before`가 없고 스키마 완료를 주장하지 않는다. 다른 table일 수 있는 H의 증명(C transition, C undo 관찰, A producer, §4.4)과 Releasing U의 ReleaseRole·RootFree material이 쓴다. Releasing delete U는 payload가 None이라 (b)와 (a)의 검증 범위가 같다.
+   payload의 canonical 정당성은 DeleteForward가 쓸 때 (a)로 확인했고, 값을 쓰는 모든 곳이 다시 (a)로 확인한다. Undo 형식의 개정 문단이 두 진입을 함께 적는다.
+
+<a id="job-effect"></a>
+### 3.3 Job3 효과 byte
+
+kind3(Row) root Job의 `@284`를 효과 byte로 쓴다. 0은 INSERT, 1은 DELETE이고 `[285,288)`은 zero다. Reserved·Retained·Releasing 모두 이 byte를 유지하고 Free·Terminal에서는 0이다. Releasing의 zero 규칙은 `[280,284)`와 `[285,320)`로 바뀐다. Releasing에서도 효과를 남겨 ReleaseRole·RootFree 관찰이 U의 before kind(Missing/RowValue)를 Job으로 교차 검산한다. RowId `@320`은 지금처럼 Releasing에서도 남는다.
+
+| 효과 1의 필드 | 값 |
+| --- | --- |
+| `@280` cell_bytes | 옛 행 cell C(185..2228). Releasing에서는 0 |
+| `@288` projection | 계획한 tombstone record의 projection(`Transaction(T)`, `(T.id, mutation)`, undo U, deleted). Releasing에서는 0 |
+| `@320` RowId | 지우는 대상 RowId. 발급하지 않는다 |
+| budget row3 | `steps 5`, `wal 311608+C+128h`(§3.5) |
+
+`JobView`에 `effect()`를 더하고 비용 식을 `forward_wal()`, `clr_wal()`, `cleanup()`로 Job 한 곳에 모은다. ledger와 A producer는 이 식을 부른다. `has_previous_transaction`은 효과 1에서 `budget@400 == 311736+C`이다. INSERT 식과 숫자가 우연히 같아도 효과 byte가 식을 고르므로 구분된다.
+
+별도 Job kind 4는 쓰지 않는다. `bytes[7] != 3` 검사와 Terminal scope 유도, census 경로가 모두 새 kind를 알아야 하지만 peak recipe(ROW_PEAK)는 같기 때문이다(§14).
+
+<a id="delete-shape"></a>
+### 3.4 opcode와 shape
+
+| opcode | outer | 변경 native(합) | E/K/I, redo | frame bytes | 최대(C2228,h1) |
+| --- | --- | --- | --- | --- | ---: |
+| `DeleteForward = 8` | XHG Update, handoff | Root1152·Job2176·Status576·U `128+432+(432+L)`·Leaf `128+C+180`, 합 `5024+2C` | `(3+h)/2/1`, 5P | `91304+2C+128h` | 95888 |
+| `DeleteClr = 9` | XHG Clr, handoff | U `128+(432+L)+432`·Leaf `128+180+C`, 합 `5024+2C` | `(3+h)/2/0`, 5P | `91096+2C+128h` | 95680 |
+| `DeletePrune = 23` | XSG System | U `128+(432+L)+432`·Leaf `128+180+0`, 합 `5024+C` | `(3+h)/2/0`, 5P | `89496+C+128h` | 91852 |
+
+세 공통 native(Root·Job·Status)는 INSERT와 같다. RowReserve(11)·Cancel(12)·ReleaseRole(21)·RootFree(22)의 shape도 그대로다. delete Reserve는 Root의 `row_high`를 올리지 않고 `undo_high+1`·`last_mutation+1`과 Free U의 다음 generation만 발급한다. native mask는 기존 Forward/Clr/Prune과 같다. 가장 큰 Row frame은 INSERT Prune 94080에서 DeleteForward 95888로 바뀌며 `FRAME_BYTES` 98304 안이다.
+
+**native record 크기.** `validate_native_shape`는 지금 kind3을 양쪽 432, kind1을 양쪽 `shape.cell`로 고정한다. 새 opcode의 before/after body 크기는 다음과 같다(L=C−180).
+
+| opcode | kind1 leaf | kind3 U |
+| --- | --- | --- |
+| DeleteForward | C / 180 | 432 / 432+L |
+| DeleteClr | 180 / C | 432+L / 432 |
+| DeletePrune | 180 / 없음 | 432+L / 432 |
+
+wire decode는 opcode별로 C를 유도한다. DeleteForward·DeleteClr은 `(native−5024)/2`가 정수이고 185..2228이어야 하며, DeletePrune은 `native−5024`다. 홀수나 범위 밖은 Corrupt다. 기존 opcode의 decode는 바뀌지 않는다. 2단계는 [scope3 wire 기록](dev3-module-consumers.md#row-scope3-wire)의 존재 규칙(INSERT absent→present 등)에 새 opcode의 행을 더한다. 옛 binary는 8·9·23을 Unsupported로, 효과 byte가 있는 Job을 Corrupt로 거절한다. [버전 정책](../policies/version-compatibility-policy.json)의 개발 형식 규칙(호환 기준선 없음)에 맞다.
+
+<a id="delete-costs"></a>
+### 3.5 비용식
+
+| 항 | INSERT | DELETE |
+| --- | --- | --- |
+| ledger Forward(Reserved root) | `91304+C+128h` | `91304+2C+128h` |
+| ledger CLR(비terminal의 Reserved·Retained root) | `91096+C+128h` | `91096+2C+128h` |
+| cleanup(Job budget) | `Prune+4×55528 = 311608+2C+128h` | `DeletePrune+4×55528 = 311608+C+128h` |
+| CLR 뒤 남는 cleanup | `4×55528 = 222112` | 같음 |
+
+delete cleanup의 최대는 313964 B로 기존 root당 최대 316192 안이다. ledger의 Forward·CLR 최대는 95888·95680으로 INSERT 최대(93660·93452)보다 크다. 2단계가 효과별로 바꿀 INSERT 식의 자리는 A [`row/insert/group.rs`](../../crates/engine/src/storage/row/insert/group.rs)의 `FORWARD_FIXED`·`CLR_FIXED`와 그 사용처, `semantic_row/ledger.rs`의 CLR·Forward 행, `transition/prepare.rs`의 Reserve `set_budget`, `retention_page/row/job.rs`의 `cleanup`·`has_previous_transaction`이다. 최대에서 유도한 설명은 [`RowLoanLayout::FRAME` 주석](../../crates/engine/src/storage/wal_io/plan4_apply.rs), [소비자 계약의 cleanup 최대](dev3-module-consumers.md#row-shape)와 `candidate_template`의 "group≤94080B" literal fixture 상계, scope3 wire 기록의 "최대 Prune94080B", [Row 쓰기 개정](dev3-module-boundaries.md#row-write-budget)과 [자원 정본](dev3-resource-bounds.md#row-missing-module-budget)의 94080·93660/tail 4644 설명이다. fixture 상계는 95888 DeleteForward fixture가 넘으므로 반드시 고친다. FRAME 구간 98304와 XOI 배치는 바뀌지 않는다(tail은 `98304−95888 = 2416` < 16384라 XOI는 계속 frame tail에 두지 않는다).
+
+<a id="scratch"></a>
+### 3.6 private loan과 scratch
+
+frame·before9·after5·XOI·A scratch 구간은 그대로다. 바뀌는 것은 C scratch의 U 버퍼다. 지금 `ROW_REPLAY_SCRATCH_BYTES`는 9076 B이고 replay WORK_END tail 상한 `2×16384−64×352 = 10240`에 대해 여유가 1164 B다. Live delete U는 최대 2480 B라 U 버퍼를 2048 B 늘리면 상한을 넘는다. 기존 `record_scratch`(descriptor 앞부분, `MAX_RECORD` 2216 B)도 2480 B보다 작다. 2단계는 **상한을 올리지 않는다.** U header 432 B만 scratch U 버퍼에 만들고 payload L은 after page image(after5 구간)에 바로 쓴다. 복원 cell(DeleteClr)은 기존 `MAX_CELL` cell 버퍼에 만든다.
+
+<a id="transitions"></a>
+## 4. 전이
+
+<a id="delete-states"></a>
+### 4.1 상태 전이
+
+| 전이 | Status·head | Row Job·U·leaf |
+| --- | --- | --- |
+| Reserve(delete) | Active/headH 그대로 | Free→RootReserved 효과1, C=옛 cell, RowId=대상, projection=계획 tombstone. U Free(g_new), inventory1. row_high 불변. after bank에서 대상 RowId를 쥔 다른 root Job이 없어야 한다(census) |
+| Cancel | 그대로 | Reserved→Free. 기존 Cancel과 같음 |
+| DeleteForward | headH→U, incoming+1 | Reserved→Retained. U Free→Live(§3.2). leaf `Replace(옛 행→tombstone)`. 옛 행은 `Committed(q_old)`·undo None·Inline·cell C여야 한다 |
+| DeleteClr | AbortingStatement/Full의 head=next=U→H | Retained→ReleasingCompensated(c0). U Live→Releasing(payload 제거). leaf `Replace(tombstone→복원 행)`. 복원 행은 `Committed(q_old)`, 옛 logical, undo None, U의 payload이며 cell C |
+| Commit·AbortEnd·StatementFinish·RollbackStart | 기존과 같음 | 효과와 무관 |
+| DeletePrune | Committed(q), q≤Horizon, 대상 U가 현재 head | Retained→ReleasingCommitted(q,c0). U Live→Releasing(payload 제거). leaf `Remove(tombstone)` |
+| ReleaseRole·RootFree | 기존과 같음 | 효과 byte 유지·교차 검산 외 같음 |
+
+DeletePrune이 tombstone을 지울 수 있는 이유: `begin_retirement`가 q≤published·q≤horizon을 요구하므로 살아 있는 모든 snapshot과 뒤의 snapshot이 그 행을 지워진 것으로 본다. 키가 없는 것과 같은 답이다. RowId는 `row_high`로 재사용되지 않으므로 tombstone이 신규성을 지킬 필요도 없다. [행 owner](dev3-task-06-tree-rows.md#algorithms)의 "snapshot에 필요한 tombstone을 지우지 않는다"는 이 조건으로 지킨다.
+
+<a id="delete-edges"></a>
+### 4.2 edge·count
+
+DeleteForward·DeleteClr·DeletePrune의 edge·count multiset은 INSERT의 Forward·CLR·Prune과 같다. tombstone은 RowUndo(→U)와 RowStamp(→T)를 갖고, 복원 행과 지워진 키는 둘 다 없다. U incoming은 0→2→0, T incoming은 tombstone 수만큼이다. H의 net0 multiset은 그대로이고, H가 효과1 root일 때의 증명은 §4.4다.
+
+<a id="leaf-reservation"></a>
+### 4.3 leaf 공간 예약
+
+DeleteClr은 split 없이 `C−180` B를 되찾아야 한다. 그 사이 다른 거래의 INSERT가 그 공간을 쓰면 복원할 수 없다. tree page의 split 판정은 `entry_bytes > TREE_ENTRY_CAPACITY`의 합산식이므로 다음 불변식을 둔다.
+
+> 각 RowLeaf에서 `TREE_ENTRY_CAPACITY − entry_bytes ≥ D`. 여기서 D는 같은 table의 **Retained** 효과1 root 전체(모든 actor)의 `Σ(C_j−180)`이다.
+
+- INSERT Reserve(C preflight·`reserve_leaf`)는 새 cell을 넣은 뒤에도 불변식이 성립하는지 본다. 아니면 첫 효과 전 Capacity다.
+- INSERT Forward 관찰도 같은 식을 검산한다. Reserve→Forward는 한 gate 보유 안에서 이어지므로 여기서 어긋나면 Capacity가 아니라 손상이다.
+- DeleteForward는 여유와 D를 같은 양(`C−180`)만큼 늘리고, DeleteClr은 같은 양만큼 줄인다. DeletePrune은 D를 `C−180` 줄이고 tombstone entry 184 B를 비운다. INSERT CLR은 여유만 늘린다. 그래서 rollback·복구의 어떤 순서에서도 불변식이 유지된다.
+- Reserved 상태의 delete는 아직 공간을 비우지 않았으므로 D에 넣지 않는다. 그 Forward가 비우는 양이 곧 복원 의무이고, Reserve→Forward/Cancel은 한 gate 보유 안에서 일어나기 때문이다.
+- commit했지만 아직 Prune되지 않은 delete도 D에 남는다. 보수적이며 live 정리가 commit 직후 줄인다.
+
+이 불변식은 leaf edit scratch 상계의 전제이기도 하다. `ROW_EDIT_CELLS` 87은 entry≥189 B를 전제로 한다(`16188/189+2`). tombstone entry는 184 B라 예약이 없으면 87개가 들어간다(87×184=16008). 모든 tombstone은 Retained 효과1 root의 것이므로 불변식 아래에서는 tombstone 하나가 적어도 `184+(C−180) ≥ 189` B를 차지한다. 관찰자와 base4는 scratch 상계에 기대기 **전에** 이 불변식을 검산한다.
+
+<a id="previous-proof"></a>
+### 4.4 previous root H의 증명
+
+Forward·CLR·Prune(INSERT와 DELETE 모두)은 같은 actor의 바로 앞 Retained root H의 U를 net0 proof로 읽는다. 지금은 H의 Job에서 Missing U를 다시 만들고 셀이 `INITIAL_UNDO_CELL`이기를 요구한다. 이것을 효과에 따라 나눈다.
+
+- 효과0 H: 지금과 같다.
+- 효과1 H: 셀이 `[16352−(432+L_H), 16352)`(`L_H = H.cell_bytes−180`)이고, §3.2의 metadata 진입(b)으로 Job에서 오는 필드(creator, sequence, mutation, target RowId, edges, incoming 2, Live)와 before kind RowValue, before_stamp `Committed(_)`, before_logical 존재, payload 길이 `L_H`를 본다. q_old·옛 logical·payload 값은 Job에 없으므로 비교하지 않는다.
+
+H는 다른 table의 root일 수 있고 그 스키마는 9 target에 없다. H의 U는 바뀌지 않는 net0 proof page이고 INSERT의 H 증명도 지금 metadata만 본다(Missing은 payload가 없어서 그것으로 완전했다). 그래서 진입 (b)로 충분하며 스키마가 필요 없다. 이 규칙은 C undo 관찰(`proof_page`), C transition의 `live_material`, A producer의 H 증명에 같이 들어간다. base4는 모든 table 스키마를 이미 가지므로 H의 U도 (a)로 본다(§9). 같은 거래에서 DELETE를 두 번 하거나 DELETE 뒤 INSERT를 하면 이 경로를 지난다(RDL-C·J).
+
+<a id="classification"></a>
+## 5. 대상 판정과 오류
+
+C의 `preflight_delete`가 대상 행을 statement snapshot S로 판정한다. 다른 거래 T'의 상태는 Job bank에서 T'의 terminal Job(Leased, 또는 Ready의 outcome·commit_q)으로 보며 Status page를 따로 읽지 않는다. Commit·AbortEnd가 Job과 Status를 한 group에서 바꾸고 C의 ledger가 둘을 교차 검산하므로 이 판정은 Status와 같다. AbortEnd는 Retained root가 0일 때만 일어나므로 aborted T'의 `Transaction(T')` 행은 남아 있을 수 없고, C는 그것을 손상으로 본다. B는 Status로 판정하는 INSERT 규칙을 그대로 따라 Aborting·Aborted를 "before를 읽는다"로 보낸다(§7). 두 규칙은 같은 상태 공간에서 충돌하지 않는다.
+
+| leaf의 대상 | 결과 |
+| --- | --- |
+| 키 없음 | 0행 |
+| `Committed(q)`·undo None·Inline, q>S | 0행(S에 없던 행). Serializable은 commit의 table epoch 검증이 잡는다 |
+| `Committed(q)`·undo None·Inline, q≤S, 대상 RowId를 쥔 root Job 없음 | 삭제 진행 |
+| `Committed(q)`·undo None·Inline, q≤S, 대상 RowId를 쥔 root Job 있음(모든 actor·상태, own 포함) | Busy |
+| `Transaction(own)` tombstone | 0행(이미 지움) |
+| `Transaction(own)` Inline(own INSERT) | Unsupported |
+| `Transaction(T')` tombstone, T' terminal Leased(Active·Aborting) | Busy |
+| `Transaction(T')` tombstone, T' committed q'≤S | 0행 |
+| `Transaction(T')` tombstone, T' committed q'>S | Serializable: SerializationConflict, ReadCommitted: 0행 |
+| `Transaction(T')` Inline(INSERT), T' Leased 또는 committed q'>S | 0행(S에 안 보임) |
+| `Transaction(T')` Inline, T' committed q'≤S | Busy(Prune 전 행) |
+| Overflow payload | Unsupported |
+| Committed tombstone, Committed 행의 undo Some, T'의 terminal이 없거나 aborted인 `Transaction(T')` 행 | 손상(Fatal) |
+
+**RowId를 쥔 root Job.** census는 모든 non-Free root Job 사이에서 RowId가 유일하기를 요구한다(Releasing 포함). 그래서 삭제를 진행하기 전에 Job bank에서 대상 RowId를 쥔 root를 찾고 있으면 Busy로 거절한다. 두 가지 흔한 경우가 있다. 하나는 T0가 INSERT하고 commit해 Prune까지 됐지만 ReleaseRole·RootFree가 아직 끝나지 않은 행이다. live 정리가 끝나면 풀린다. 다른 하나는 같은 거래가 그 행을 지운 statement를 되돌린 경우다. compensated root는 거래가 끝날 때까지 남으므로 그 거래 안에서 같은 행을 다시 지우면 Busy다. census를 "Releasing root 하나와 live root 하나"까지 풀어 주는 방법은 첫 경로에서 쓰지 않는다(§14).
+
+SerializationConflict는 효과 없는 statement 오류다. 명시 거래는 이어 갈 수 있지만 같은 table을 이미 읽었으므로 commit 검증에서 다시 충돌한다. q_old>S인 경우에도 Conflict를 내는 것은 보수적이며 commit 검증과 같은 결론이다. 0행은 효과 없는 성공 statement이고 table read bit는 결과를 돌려주기 전에 등록한다. 자동커밋 0행은 root 없는 Commit으로 끝난다(C의 Commit은 `reserved==0`만 요구한다).
+
+오류 우선순위는 [API 흐름](dev3-module-consumers.md#api-flow)의 순서를 따른다. 입구 origin/open/statement와 fence → RowId 0 등 인자(InvalidInput, I/O 전) → statement credit 선예약 → table·schema·index·leaf level(Unsupported) → 위 판정 → Reserve admission(queue·inventory·F05의 Capacity; leaf 예약의 Capacity는 INSERT에만 있다. delete는 공간을 비운다) → 효과 재검사. 관측한 손상을 Busy·0행으로 낮추지 않는다.
+
+<a id="api"></a>
+## 6. API 흐름
+
+INSERT의 consuming 경계를 그대로 따른다. 새 C 진입은 `preflight_delete(table, row)`와 그 결과의 `reserve_delete()`이며 `ReservedRow`·`producer_lane`·`prepare`·`apply`·`Cancel`과 statement/commit/rollback 메서드는 공유한다. `Change`에는 `ReserveDelete(&DeletePlan)`, `DeleteForward`, `DeleteClr`, `DeletePrune` 변형을 더하고, replay의 `ReserveAdopted`는 Job after에서 C·projection과 함께 효과·RowId를 채택한 뒤 나머지를 다시 계산해 비교한다. `Change` 96 B·`Inputs` 448 B 단언은 유지한다.
+
+A는 tombstone cell(DeleteForward)과 복원 cell(DeleteClr)을 만든다. 복원 cell은 lane의 U before image에서 table 스키마로 만든다(§3.2 진입 a). C 관찰자가 각각 Job projection과 U를 독립 검산한다. A의 DELETE 본문은 module A 경로(`storage/row/insert/` 아래)에 둔다. 새 디렉터리는 gate 정책 파일 변경이 필요하기 때문이다. A 진입점은 `autocommit_delete_live`와 `transaction_delete_live`이며 자동커밋·명시 거래 실행기의 단계와 slot을 그대로 쓴다. 효과 전 거절과 실패 statement는 INSERT 실행기와 같은 경로로 끝낸다. 결과는 `Deleted(0|1)`이다.
+
+<a id="read"></a>
+## 7. B 읽기
+
+`Committed` tombstone은 없으므로 B가 보는 tombstone은 항상 `Transaction(T)`이고 undo U를 가진다. C의 capture는 Inline 행과 함께 이 tombstone을 받아 TxnPin(T)와 UndoPin(U)을 발급한다(지금과 같은 두 pin).
+
+| 판정 | 결과 |
+| --- | --- |
+| T가 own | 없음 |
+| T committed, q_T≤S | 없음 |
+| 그 밖(T Active·Aborting·Aborted, 또는 q_T>S) | C의 새 `value_before`로 U의 RowValue before를 읽는다. `q_old≤S`면 옛 값, 아니면 없음 |
+
+`value_before`는 지금 `missing_before`와 같은 load·latch 순서로 U를 읽고, read operation의 Catalog 스키마로 payload를 검증해(§3.2 진입 a) 옛 canonical을 operation 복사 버퍼에 넣은 뒤 `q_old`를 돌려준다. tombstone은 RowValue U만, Inline `Transaction(T)` 행은 Missing U만 가진다. 다른 조합은 손상이다.
+
+**reader와 writer의 배제.** Row 쓰기(preflight에서 Reserve·Forward/Cancel까지, rollback, live 정리)는 모두 terminal read gate를 닫고 이미 들어온 read operation을 기다린다. B read operation은 `row_operation`부터 `finish`까지 admission을 쥐어 capture·status·`value_before`를 덮는다. 그래서 capture와 `value_before` 사이에 DeleteClr·DeletePrune·RootFree가 끼어들 수 없다. `value_before`가 Releasing U를 보면 지금 `read_missing`처럼 손상(Fatal)이다. 별도의 재capture 경로는 두지 않는다. 시험은 기존 MCB03-V02처럼 읽기 중 DeleteClr이 gate에서 기다리는 경우로 확인한다.
+
+<a id="retirement"></a>
+## 8. 회수와 가시성
+
+DeletePrune은 retiring group이다. `visibility/authority.rs`의 `RetirementScope`에 `ValuePrune`을 더하고 `MissingPrune`과 같은 규칙(q≤published·q≤horizon, U에 다른 pin 0)을 쓴다. Prune이 U payload를 버리므로 그 payload를 읽을 snapshot(S<q)이 없어야 한다. 조건이 안 되면 Busy이고 live 정리는 기존 `skip`으로 다음 root로 넘어간다. 정리 순서는 기존대로 actor의 현재 head부터다.
+
+DeleteClr은 INSERT CLR처럼 retiring group이 아니다. reader는 §7의 gate로 배제되고, U payload를 필요로 하는 snapshot은 복원된 행(`Committed(q_old)`)에서 같은 답을 얻는다. ReleaseRole·RootFree·TerminalFinish는 그대로다.
+
+<a id="recovery"></a>
+## 9. 복구
+
+- replay: C의 `observe_borrowed`가 DeleteForward·DeleteClr·DeletePrune을 관찰하고, Reserve 관찰은 효과 1을 받는다.
+- loser: A의 Row loser handler가 효과 1인 Retained root마다 DeleteClr을 만든다. U는 Live라 payload가 있다. 스키마는 recovery의 table source에서 받는다.
+- winner cleanup: C의 `prepare_row_recovery`가 효과 1 root에 DeletePrune을 고른다. 복구 중에는 snapshot이 없으므로 horizon 조건이 항상 성립한다.
+- base4 census: leaf의 `Transaction` tombstone, Live·Releasing delete U, 효과 byte와 그 cleanup 식, §4.3 불변식을 받는다. base4는 Catalog를 모두 걸으며 table 스키마(`CatalogDefinitionView::Table`)를 이미 가지므로 Live delete U는 진입 (a)로 canonical까지 본다. loser의 payload가 여기서 걸러지지 않으면 뒤에 A의 `produce_clr`가 "재시도할 거절"로 돌려주게 되어 손상 판정이 늦어지기 때문이다. Releasing delete U는 어느 진입이든 같다. Committed tombstone과 불변식 위반은 손상이다. RowId 유일성은 지금 그대로다.
+
+base4의 지금 `rows()`·`undo()`는 Missing 전용이라 효과1 Job의 상태마다 반대 규칙을 요구한다. 2단계는 효과1에 다음 규칙을 더한다(RowReserve는 따로 된 group이므로 Reserve와 DeleteForward 사이의 crash, statement DeleteClr 뒤의 crash가 실제로 생긴다).
+
+| 효과1 Job 상태 | 키 | 행과 U |
+| --- | --- | --- |
+| Reserved | 있음 | `Committed`, undo None, Inline, cell = `job.cell_bytes`, logical은 actor의 것이 아님. U는 `INITIAL_UNDO_CELL`의 Free |
+| Retained | 있음 | tombstone: `Transaction(actor)`, logical (actor, mutation), undo = `job.undo`, cell 180, projection = Job. U는 `[16352−(432+L),16352)`의 Live(`L = cell_bytes−180`), RowValue, before_stamp `Committed(_)` |
+| ReleasingCompensated | 있음 | `Committed`, undo None, Inline. logical = U before_logical(모든 cursor), stamp = U before_stamp(cursor<3일 때만; cursor3은 codec이 before_stamp를 지운다) |
+| ReleasingCommitted | 없음 | — |
+
+역방향 scan 규칙: actor가 stamp한 tombstone 하나는 정확히 하나의 Retained 효과1 Job과 짝을 이룬다. Inline `Transaction(actor)` 행은 지금처럼 효과0 Job과 짝을 이룬다.
+
+<a id="resources"></a>
+## 10. 자원·F4·F05
+
+- 새 target이나 pin은 없다. Row target 9개, private before9/after5, registry의 snapshot68·reference66과 두 pin이 그대로다.
+- A의 DELETE 경로는 기존 F4 상한 안에 들어야 한다. [row_caller_budget.rs](../../crates/engine/src/storage/wal_io/row_caller_budget.rs)의 BEGIN 2,816·STATEMENT_START 3,584·STATEMENT_END 6,144·COMMIT 3,024·ROLLBACK_CALLER 1,536·ROLLBACK_STEP_RESULT 1,024·CLR_PRODUCER 19,456·RECOVERY_HANDLER 4,096·LIVE_ROW_CLEANUP 4,096, ROLLBACK_SITES(rollback.start·next·clr_lane·clr·clr_prepare·clr_apply·clr_reopen·finish·finish_statement, transaction.finish_aborted), 그리고 insert site 상한(`ROW_PREFLIGHT_CALLER_BYTES`, `ROW_WRITE_CALLER_BYTES`, forward의 `charge−producer`)을 delete site에도 같게 적용한다. 넘으면 원 항·여유를 깎거나 상한을 올리지 않고, A 축소 또는 사용자가 확인하는 양쪽 새 계약으로 간다.
+- C의 새 관찰·생산 본문은 기존 Row write census(`writable::source_bytes`, 본문 44,304 B charge)에 넣어 검산한다. C 여유가 모자라면 같은 규칙으로 멈추고 묻는다.
+- B 읽기 쪽: `value_before`는 B operation 안의 새 C 읽기 관찰(U load, 스키마 검증, 복사)이다. [`plan4_apply/row/read.rs`](../../crates/engine/src/storage/wal_io/plan4_apply/row/read.rs)의 C inventory(`missing` 항)에 `value_before` 항을 더하고, 기존 읽기 census S5R-C01/C02의 `full` 상계(undo_load·undo_location 단계)를 같게 통과해야 한다. B census 시험을 하나 더한다.
+
+<a id="files"></a>
+## 11. 변경 파일 inventory
+
+| 모듈 | 파일 | 변경 |
+| --- | --- | --- |
+| semantic | `semantic_row/operation.rs`, `wire.rs` | opcode 8·9·23, shape, native 크기 규칙, decode |
+| semantic | `semantic_row/transition.rs`, `transition/{prepare,cells,graph,frame,source}.rs` | Change 변형, delete Reserve·Forward·Clr·Prune 준비, U 셀 범위, 효과1 H, leaf 예약 |
+| semantic | `semantic_row/{undo,leaf,jobs,ledger,status,core}.rs` | delete U material·H proof, tombstone leaf 관찰, 효과 byte 전이, 비용식 |
+| codec·C | `undo_record.rs`, `retention_page/row/job.rs` | Releasing RowValue None, 스키마 진입 (a)·metadata 진입 (b), 효과 byte·식 |
+| C | `plan4_retention/{row_preflight,row_write,row_forward,row_clr,row_rollback_select}.rs` | preflight_delete, RowId Busy, 예약, 판정 |
+| C | `plan4_retention/row_start/{retire,recovery}.rs`, `visibility/{authority,row_retirement,retirement,pins}.rs` | DeletePrune 선택, `ValuePrune`, tombstone capture |
+| C | `plan4_apply/row/{read,write,recovery,rollback}.rs`, `plan4_recovery/row_action.rs`, `plan4_retention/history/row.rs` | value_before, replay·recovery 연결 |
+| C | `plan4_recovery_base/row/{actor,graph}.rs` | base4 census |
+| A | `row/insert/{group,leaf}.rs`, `row/insert/driver/*` | delete 생산자·H 증명·실행기·loser(경로는 module A) |
+| B | `row/read/**` | tombstone 판정 |
+| 문서 | `dev3-undo-format.md`, `dev3-module-consumers.md`(scope3 wire 기록·`candidate_template`), `dev3-module-boundaries.md`(Row 쓰기 개정), `dev3-resource-bounds.md` | §3.2 개정 표시, 새 opcode 행, 최대 frame 설명·fixture 상계 |
+
+<a id="tests"></a>
+## 12. 시험 inventory
+
+| ID | 단계 | 내용 |
+| --- | --- | --- |
+| RDL-F01..09 | 2 | literal: opcode decode·shape·frame(C 경계 185/2228, h 0/1), native 크기 규칙, 홀수·범위 밖 native 거절, 효과 byte 수용·거절(2, 잘못된 상태, `[285,288)`≠0), 효과별 cleanup·`has_previous`, codec Releasing RowValue None 수용·Live None 거절·U09–U12 그대로, metadata 진입 (b), ledger 행 |
+| RDL-C01..12 | 2 | C 관찰: delete Reserve(row_high 불변, RowId 채택), DeleteForward·DeleteClr·DeletePrune 수용과 mutant(cell 크기, projection, payload, 옛 행 미Prune, 다른 RowId, split 필요), 효과1 H proof, leaf 예약으로 INSERT Capacity와 Forward 손상, RowId를 쥔 root(Releasing INSERT root, own compensated root)의 Busy |
+| RDL-A01..08 | 2 | A 실행기: 1행·0행(키 없음, own tombstone, 안 보이는 행), Busy, Unsupported(own INSERT), SerializationConflict, 명시 거래 statement 실패 뒤 계속, F4 census |
+| RDL-J01..08 | 2 | 실제 C 위: 삭제→commit→정리→읽기 없음, 삭제→rollback→옛 값, 명시 거래 삭제 둘·statement rollback, 삭제 뒤 INSERT(효과1 H)와 leaf 예약, 정리 전 RowId Busy, commit 뒤 재시작 replay |
+| RDL-B01..10 | 2 | B: own tombstone, committed q≤S, 진행 중 거래의 옛 값, q_old>S, 읽기 중 DeleteClr의 gate 대기, Releasing U Fatal, Committed tombstone Fatal, Missing U의 tombstone·RowValue U의 Inline `Transaction` 행 Fatal, `value_before` 읽기 census |
+| RDL-R01..10 | 2 | 복구(메모리): loser DeleteClr, winner DeletePrune, 효과1 Reserved·Retained·ReleasingCompensated·ReleasingCommitted의 base4 수용, Committed tombstone·불변식 위반·짝 없는 tombstone·비canonical delete U 거절 |
+| RDL-N01.. | 3 | native fault cut: DeleteForward·DeleteClr·DeletePrune 앞뒤의 crash |
+
+<a id="stages"></a>
+## 13. 단계와 PR
+
+| 단계 | 내용 | 끝 조건 |
+| --- | --- | --- |
+| 1 | 이 문서, 독립 D2 검토 | 검토 ACCEPT, 사용자 병합 |
+| 2 | §3–§9 제품 경로 전체, RDL-F·C·A·J·B·R | 변경 시험만 실행, gate record, 독립 검토, PR |
+| 3 | native fault cut, 남은 시험 | 같음 |
+
+2단계가 한 PR로 너무 크면 C 형식·관찰자와 A·B를 나누되, **영속 tombstone·delete U를 쓰는 제품 진입점은 그것을 읽고 복구하는 B·base4·loser와 같은 PR에 둔다.**
+
+<a id="rejected"></a>
+## 14. 기각한 대안
+
+- **물리 삭제(Remove)를 DeleteForward로**: commit 전 다른 snapshot이 행을 잃는다. MVCC를 깨므로 기각.
+- **기존 opcode 2·4·20 재사용**: native 식이 C와 2C로 달라 wire decode가 C를 유도할 수 없다.
+- **Releasing에서 payload 유지**: ReleaseRole·RootFree의 U native가 L에 따라 커져 고정 55528 식이 깨지고, cleanup이 Releasing Job에 C를 남겨야 한다.
+- **DeleteClr을 retiring group으로**: reader는 이미 gate로 배제되므로 얻는 것이 없고 rollback 경로에 새 거절만 생긴다.
+- **DeletePrune을 재stamp로(`Committed` tombstone 유지)**: 180 B tombstone이 leaf에 쌓이고 B에 Committed tombstone 판정이 더 생긴다. horizon 조건 아래 Remove와 답이 같다.
+- **Job kind 4**: §3.3.
+- **RowId census를 Releasing root 하나 + live root 하나로 완화**: 정리 전 행과 같은 거래의 재삭제를 허용하지만 census·ledger 계약을 바꾼다. 첫 경로는 Busy로 둔다.
+- **미Prune 행·own INSERT 행 삭제**: U의 before가 Transaction stamp나 previous-version을 가져 3pin과 version chain이 필요하다. 첫 경로 밖이다.
+
+<a id="open"></a>
+## 15. 2단계가 확인할 것
+
+1. Live U payload를 after page image에 바로 쓰는 생산·관찰(§3.6).
+2. 효과별 비용식 자리와 최대 frame 설명의 갱신(§3.5).
+3. A DELETE 경로의 F4 census와 C 본문 census(§10).
+4. leaf 예약 불변식을 INSERT Reserve·Forward와 base4가 같은 식으로 검산하는지(§4.3).
+5. 효과1 H의 metadata 증명을 세 곳(C undo 관찰, C transition, A producer)이 같은 규칙으로 쓰고, base4는 (a)로 보는지(§4.4, §9).
+6. base4 효과1 상태 규칙과 역방향 scan(§9).
+
+## 작성 기록
+
+- 2026-11-03 r1 초안. main `c7a6425`의 source를 읽고 썼다(operation.rs, job.rs, undo_record.rs, undo.rs, transition/prepare.rs, ledger.rs, read.rs, retirement.rs, tree_page/edit.rs, row_record.rs).
+- 2026-11-03 D2 1회차 **REJECT**(독립 검토). 산술(shape·frame·ledger·cleanup·scratch)은 모두 맞다고 확인됐다. 지적과 r2 반영: (1) blocker — RowId는 모든 root Job 사이에서 유일해야 하는데 정리 전 INSERT root·own compensated root가 쥔 행의 삭제가 census를 깬다 → §5 Busy 행, §4.1. (2) 효과1 H의 증명이 Missing·`INITIAL_UNDO_CELL`만 알고 codec이 스키마 없이 RowValue를 못 본다 → §4.4, §3.2 진입 둘. (3) Releasing RowValue Inline은 지금 허용되고 U09–U12가 그 예다 → codec 변경을 추가형으로, Undo 형식 개정 표시. (4) Row 쓰기가 read gate로 reader를 배제하므로 stale capture는 일어나지 않는다 → §7·§8에서 제거, Releasing U는 Fatal. (5) 2단계가 자기 읽기·복구가 거절하는 상태를 쓴다 → B·loser·base4를 2단계로(§1, §13). 그 밖에 native 크기 규칙(§3.4), F4 목록(§10), 식 자리(§3.5), scratch 87 전제(§4.3), §4.3 문구, §7 불가능 상태, 작은 정정들을 반영했다.
+- 2026-11-03 D2 2회차 **CONDITIONAL ACCEPT**(같은 검토자). r2가 1회차 지적을 바르게 고쳤음을 확인했다. 남은 것은 문서 보강이며 r3에 반영했다: (1) Undo 형식이 스키마 검증을 요구하므로 두 진입을 형식 개정에 적고, metadata 진입은 before 값을 내주지 않는 타입으로(§3.2). (2) base4는 스키마를 가지므로 (a), DeletePrune의 before U도 (a)(§3.2, §9). (3) base4의 효과1 상태별 규칙과 역방향 scan(§9). (4) `value_before` 읽기 census(§10). (5) 최대 frame에서 유도한 자리 추가(§3.5, §11). (6) Aborted 판정의 C·B 차이 설명(§5). (7) leaf 예약 Capacity는 INSERT 전용(§5). (8) RDL-B 보강(§12).
+- 2026-11-03 D2 3회차 **ACCEPT**(같은 검토자). 문구 nit 넷(metadata 진입의 길이 표현, 옛 이름 "header 진입", ReleasingCompensated의 logical은 모든 cursor, RDL-R 번호 범위)을 반영했다.
