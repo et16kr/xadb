@@ -346,10 +346,48 @@ impl<'a> Graph<'a> {
             },
             RowSchemaInput::Catalog(table.schema),
         )?;
-        if !matches!(decoded.payload(), RowPayload::Inline(_)) {
-            return Err(Error::Unsupported);
+        // A DELETE tombstone is always `Transaction(T)` with its U
+        // (dev3-row-delete.md#recovery); a committed one is corruption.
+        match decoded.payload() {
+            RowPayload::Inline(_) => {}
+            RowPayload::Deleted
+                if matches!(decoded.version().stamp, VersionStamp::Transaction(_))
+                    && decoded.version().undo.is_some() => {}
+            RowPayload::Deleted => return Err(Error::Identity),
+            RowPayload::Overflow(_) => return Err(Error::Unsupported),
         }
         Ok(decoded.version())
+    }
+    /// The leaf reservation (dev3-row-delete.md#leaf-reservation): each
+    /// RowLeaf keeps `TREE_ENTRY_CAPACITY - entry_bytes >= D`, D the sum of
+    /// `C-180` over its table's Retained DELETE roots of every actor.
+    fn leaf_reservation(&self, index: usize, table: &Table<'a>) -> Result<()> {
+        let object = self.record_at(index)?.1.header().identity;
+        let mut used = 0usize;
+        for at in 0..table.leaf.len() {
+            let EntryPayload::Value(value) = table.leaf.entry(at)?.payload else {
+                return Err(Error::Unsupported);
+            };
+            // The 12-byte cell head, the record and its 4-byte slot.
+            used += value.len() + 16;
+        }
+        let mut reserved = 0usize;
+        for ordinal in 0..JOB_COUNT {
+            let job = self.job(ordinal)?;
+            if job.row_scope()
+                && job.state() == JobState::RootRetained
+                && job.effect() == row::RowEffect::Delete
+                && job.object() == Some(object)
+            {
+                reserved += (job.cell_bytes() as usize)
+                    .checked_sub(180)
+                    .ok_or(Error::Identity)?;
+            }
+        }
+        if used + reserved > crate::storage::tree_page::TREE_ENTRY_CAPACITY {
+            return Err(Error::Corrupt);
+        }
+        Ok(())
     }
     /// Visit every actual row of every table, in Catalog/key order.
     fn each_row(
@@ -480,7 +518,8 @@ impl<'a> Graph<'a> {
                     return Err(Error::Identity);
                 }
             }
-            self.table(index)?;
+            let table = self.table(index)?;
+            self.leaf_reservation(index, &table)?;
         }
         let mut rows = 0;
         self.each_row(|table, at, version| {

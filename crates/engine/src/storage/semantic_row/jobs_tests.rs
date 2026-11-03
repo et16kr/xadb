@@ -64,6 +64,7 @@ fn plan(c: u32, h: bool) -> ReservePlan {
         cell_bytes: c,
         projection: [0x44; 32],
         predecessor: h,
+        effect: row::RowEffect::Insert,
     }
 }
 fn free(g: u64) -> [u8; 1024] {
@@ -721,11 +722,14 @@ fn jobs_cell_size_and_predecessor_match_same_frame() {
     }
 }
 
-/// Stage 2a boundary (dev3-row-delete.md#job-effect): until the DELETE
-/// observers exist, the Job observer refuses a valid DELETE root (effect 1,
-/// delete cleanup budget) before any INSERT-root step and as a Reserve after.
+/// RDL-J (dev3-row-delete.md#job-effect): the Job observer binds a root's
+/// effect byte to the opcode. A DELETE root under INSERT's Forward, CLR or
+/// Prune is refused; Cancel, ReleaseRole and RootFree observe a DELETE root
+/// like an INSERT root and keep its effect byte; a Reserve's after effect
+/// must be the plan's. The DELETE opcodes themselves are observed over the
+/// independent history D (transition_delete_tests.rs cross-check).
 #[test]
-fn rdl_f_insert_job_observer_refuses_delete_roots() {
+fn rdl_j_job_observer_binds_effect_to_opcode() {
     fn delete(b: &mut [u8], namespace: crate::api::Namespace) {
         let job = row::decode_job(b, namespace).unwrap();
         let (cell, h) = (job.cell_bytes(), job.has_previous_transaction());
@@ -740,27 +744,43 @@ fn rdl_f_insert_job_observer_refuses_delete_roots() {
             row::RowEffect::Delete
         );
     }
-    for name in [
-        "forward",
-        "cancel",
-        "clr",
-        "clr-h",
-        "prune",
-        "prune-h",
-        "release-committed-0",
-        "release-compensated-2",
-        "rootfree-committed",
-    ] {
+    for name in ["forward", "clr", "clr-h", "prune", "prune-h"] {
         let mut c = case(name);
         let namespace = c.context.profile.spec().namespace;
         assert!(c.observe().is_ok(), "{name}");
         let mut b = c.jobs[c.ordinal];
         delete(&mut b, namespace);
         c.original(c.ordinal, b);
-        assert_eq!(c.observe(), Err(Error::Unsupported), "{name}");
+        assert_eq!(c.observe(), Err(Error::IdentityMismatch), "{name}");
+    }
+    for name in [
+        "cancel",
+        "release-committed-0",
+        "release-compensated-2",
+        "rootfree-committed",
+    ] {
+        let mut c = case(name);
+        let namespace = c.context.profile.spec().namespace;
+        let mut b = c.jobs[c.ordinal];
+        delete(&mut b, namespace);
+        c.original(c.ordinal, b);
+        let releasing = row::decode_job(c.selected(1), namespace)
+            .unwrap()
+            .state()
+            .is_releasing();
+        if releasing {
+            c.edit_after(|b| b[284] = 1);
+        }
+        assert!(c.observe().is_ok(), "{name}");
+        if releasing {
+            c.edit_after(|b| b[284] = 0);
+            assert_eq!(c.observe(), Err(Error::IdentityMismatch), "{name} effect");
+        }
     }
     let mut c = case("reserve");
     let namespace = c.context.profile.spec().namespace;
     c.edit_after(|b| delete(b, namespace));
-    assert_eq!(c.observe(), Err(Error::Unsupported));
+    assert_eq!(c.observe(), Err(Error::IdentityMismatch), "reserve effect");
+    c.reserve.as_mut().unwrap().effect = row::RowEffect::Delete;
+    assert!(c.observe().is_ok(), "delete reserve");
 }

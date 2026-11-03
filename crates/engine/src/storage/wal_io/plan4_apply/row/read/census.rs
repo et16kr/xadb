@@ -4,10 +4,12 @@
 use super::super::super::{read as physical, source, transaction, visibility};
 use super::*;
 use crate::storage::{
-    catalog_record::{CatalogHeader, CatalogRecordView, TableDefinitionView},
+    catalog_record::{
+        CatalogDefinitionView, CatalogHeader, CatalogRecordView, TableDefinitionView,
+    },
     dirty_frame,
     page::{PageHeader, PageView},
-    row_record::{CanonicalRowView, RowPayload, RowRecordView},
+    row_record::{CanonicalRowView, RowPayload, RowRecordView, RowSchemaInput},
     semantic_catalog,
     semantic_row::transition,
     status_home::{StatusHome, StatusHomePage},
@@ -121,13 +123,24 @@ pub(super) fn nonload<W: WriterNamespace>() -> [usize; 7] {
         + 2 * n::<UndoRecord<'_>>()
         + 4 * n::<Result<UndoRecordView<'_>>>()
         + 2 * n::<Result<MissingRowEvidence>>()
+        // value_before's schema view, its before carriers and the copied
+        // version (dev3-row-delete.md#read).
+        + n::<CatalogRecordView<'_>>()
+        + n::<CatalogDefinitionView<'_>>()
+        + n::<RowSchemaInput<'_>>()
+        + 2 * n::<Result<ReadStep<RowValueBefore>>>()
+        + n::<RowValueBefore>()
+        + n::<RecordVersion>()
         + 4 * n::<Result<()>>()
         + physical::catalog_reference_read_source_bytes()
             .max(transition::row_undo_read_codec_bytes())
+            .max(transition::row_read_codec_bytes())
+            .max(semantic_catalog::catalog_read_codec_bytes())
             .max(semantic_catalog::status_read_codec_bytes())
             .max(semantic_catalog::page_read_codec_bytes())
             .max(dirty_frame::target_set_call_bytes::<3>())
             .max(control);
+    // copy_candidate and copy_before are the same shape.
     let copy = 4 * r
         + n::<&mut [u8]>()
         + n::<Result<()>>()

@@ -1,10 +1,10 @@
 {
   "schema": "XADB_ROW_BASE4_CLOSURE_V2",
   "baseline": "49a7578",
-  "revision": "w1",
+  "revision": "d1",
   "previous_revision": {
-    "revision": "r5",
-    "sha256": "875d4ed7aec45019fa4315b621c82871b0ef9d5ca724a319f084173555de9853"
+    "revision": "w1",
+    "sha256": "64f2ada83ab937b0f49b0fdb7ef77946f288e2d9018199b1b5ccb6fbe2234e4e"
   },
   "previous_commits": [
     "55d63ad",
@@ -23,7 +23,7 @@
     "288df8f"
   ],
   "status": "FROZEN_INPUTS_NOT_EXECUTION_EVIDENCE",
-  "scope": "Pure uncalled Profile3/base4 current-state closure over immutable bytes. r2 accepts System allocation states (Finished INIT, Prepared page reservation) through validate_row_base_allocation, checks Catalog-scope Job3 relations, provenance, ledger rows and XOI inventory through the shared Catalog base seam (r2..r5 failed closed with CatalogUnwired when a Catalog-scope semantic residual was needed; w1 wires the exact Profile3 Catalog ledger through catalog3::JobView instead). r3 admits a row in a Transaction-stamped table only under a committed (TerminalReady outcome 1) creator whose Catalog root is Retained, bounds committed row writers by the header source, and accepts one Row-scope Reserved root per base with exactly one UndoSlot(U) item. r4 orders every committed row after its table creator (row q > the record Committed q, or the creator Ready Terminal q while unpruned) and reports a RowReserve beside another reservation as Unsupported. r5 also orders a committed Row actor still on its Ready Terminal after its table creator (Ready q > creator q) for every Transaction-stamped row and every ReleasingCompensated Row root. Profile3 Row XOI mode reproduces the inventory page. No INIT/WAL history, source selection, replay or Profile2 behaviour change.",
+  "scope": "Pure uncalled Profile3/base4 current-state closure over immutable bytes. r2 accepts System allocation states (Finished INIT, Prepared page reservation) through validate_row_base_allocation, checks Catalog-scope Job3 relations, provenance, ledger rows and XOI inventory through the shared Catalog base seam (r2..r5 failed closed with CatalogUnwired when a Catalog-scope semantic residual was needed; w1 wires the exact Profile3 Catalog ledger through catalog3::JobView instead). r3 admits a row in a Transaction-stamped table only under a committed (TerminalReady outcome 1) creator whose Catalog root is Retained, bounds committed row writers by the header source, and accepts one Row-scope Reserved root per base with exactly one UndoSlot(U) item. r4 orders every committed row after its table creator (row q > the record Committed q, or the creator Ready Terminal q while unpruned) and reports a RowReserve beside another reservation as Unsupported. r5 also orders a committed Row actor still on its Ready Terminal after its table creator (Ready q > creator q) for every Transaction-stamped row and every ReleasingCompensated Row root. Profile3 Row XOI mode reproduces the inventory page. d1 (dev3-row-delete.md#api: a DELETE Reserve issues an UndoSequence and no RowId) relaxes the issuer relation to Objects + RowIds <= undo_high: issuer-undo-high (one UndoSequence above) is now accepted as a finished DELETE Reserve and the new issuer-undo-low (one below) is refused (Undo queue Queue(OrderMismatch) first; the issuer relation alone Base(OrderMismatch)); no parent literal changes. No INIT/WAL history, source selection, replay or Profile2 behaviour change.",
   "budget": {
     "total_seconds": 1200,
     "compiler_seconds": 600,
@@ -65,7 +65,7 @@
     {
       "selector": "storage::plan4_recovery_base::row::graph::tests::base4_closure_relation_variants",
       "expected": "PASS",
-      "reason": "36 relation variants each pass decode_layout and are rejected by the closure with the listed error (r3 added committed-writer-bound, create-uncommitted-row, create-uncommitted-committed-row, row-reserved-no-item, row-reserved-two-items, row-reserved-item-kind, row-reserved-twice and changed reserved-row-root; r4 adds committed-row-before-create, committed-row-before-pruned-create (Order) and row-reserved-mixed (Unsupported); r5 adds ready-writer-before-pruned-create, ready-writer-before-create and compensated-writer-before-create (Order); w1 adds d-residual-clr, d-residual-peak (Base(CatalogSemantic(BudgetMismatch))) and d-committed-head (Base(CatalogSemantic(IdentityMismatch))))."
+      "reason": "36 relation variants each pass decode_layout and are rejected by the closure with the listed error (r3 added committed-writer-bound, create-uncommitted-row, create-uncommitted-committed-row, row-reserved-no-item, row-reserved-two-items, row-reserved-item-kind, row-reserved-twice and changed reserved-row-root; r4 adds committed-row-before-create, committed-row-before-pruned-create (Order) and row-reserved-mixed (Unsupported); r5 adds ready-writer-before-pruned-create, ready-writer-before-create and compensated-writer-before-create (Order); w1 adds d-residual-clr, d-residual-peak (Base(CatalogSemantic(BudgetMismatch))) and d-committed-head (Base(CatalogSemantic(IdentityMismatch))); d1 replaces issuer-undo-high by issuer-undo-low (Queue(OrderMismatch) first; validate_relations alone Base(OrderMismatch)) and asserts issuer-undo-high is accepted)."
     },
     {
       "selector": "storage::plan4_recovery_base::row::graph::tests::base4_closure_orders_ready_row_writer_after_creator",
@@ -176,7 +176,13 @@
       "name": "issuer-undo-high",
       "parent": "live",
       "sha256": "f834d2c21f45181f5bd66b3df8957714fecfc0a51750769a1a44540e23003c7b",
-      "expected": "Base(OrderMismatch)"
+      "expected": "Accepted (finished DELETE Reserve UndoSequence)"
+    },
+    {
+      "name": "issuer-undo-low",
+      "parent": "live",
+      "sha256": "c36bc3cebe5626eace20445c7ec0df20a0e17a69ff385bb745a5bc33f31063b6",
+      "expected": "Queue(RetentionError::OrderMismatch); validate_relations alone Base(OrderMismatch)"
     },
     {
       "name": "row-high-global",
@@ -441,8 +447,8 @@
   ],
   "inputs": {
     "author.py": {
-      "bytes": 38448,
-      "sha256": "19842b1dc177b4dd23eb4d436fe01aa98ecac69f3d97a0fc129f8a6ed6769099"
+      "bytes": 38496,
+      "sha256": "d93c89ceb80b10ca7723b163e85ebe63f28d3518e9dc1a0b4fbca7173eddb3bc"
     },
     "genesis.xrb": {
       "bytes": 2097152,
@@ -457,16 +463,16 @@
       "sha256": "5a446fbf0fab629b7bfc10b5040e0a54b77ea6e2a993ca58db70482f3f5c94d9"
     },
     "variants.bin": {
-      "bytes": 108173,
-      "sha256": "9a3a127435d053f7b4f250f10befb8815f211d67a72c4c981ca4fc6c44abef89"
+      "bytes": 108555,
+      "sha256": "4cb06bcb8548f45075be8bde033eff3eca9e9b58e3beb1e124b49399b939fd88"
     },
     "envelopes.bin": {
       "bytes": 20480,
       "sha256": "7f9331527ec54a7c7e3e332b1ccafd9395d539d265c3d4793468a0ff47e06653"
     },
     "index.json": {
-      "bytes": 8777,
-      "sha256": "41f87266ffa53869557be8602f66363fd4a3895ca5eb2ae61ad0ddb630778e05"
+      "bytes": 8931,
+      "sha256": "e484d6985d9d97f056c0ca349e77ef8fed65a3197a95af3d0175c8f7468f8615"
     }
   },
   "parents": {

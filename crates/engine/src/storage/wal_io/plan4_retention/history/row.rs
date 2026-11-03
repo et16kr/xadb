@@ -237,6 +237,23 @@ pub(in super::super) fn table_source<'a>(
     })
 }
 
+/// A CLR's statement boundary from its actor's Status home: a statement
+/// rollback's mark, None for a full rollback.
+fn clr_statement(home: StatusHome, sequence: u64) -> Option<StatementBoundary> {
+    match home.core() {
+        TransactionStatusCell::Occupied(status) => match status.state() {
+            TransactionState::Aborting(RollbackState::Statement { target, .. }) => {
+                Some(StatementBoundary {
+                    sequence,
+                    mark: target,
+                })
+            }
+            _ => None,
+        },
+        TransactionStatusCell::Free(_) => None,
+    }
+}
+
 /// The scope3 arm of `recovery::apply_frame`: Profile3 XHG/XSG version2
 /// flags3 only (`semantic_row::decode_layout`). Logical arguments come from
 /// the canonical arena/bank; the candidate selects among them and is then
@@ -273,7 +290,7 @@ pub(in super::super) fn apply(
         let ordinal = match op {
             Operation::AgingStart => None,
             Operation::Begin | Operation::Reserve => Some(first_free(arena, jobs, profile)?),
-            Operation::Forward | Operation::Cancel => Some(actor_job(
+            Operation::Forward | Operation::DeleteForward | Operation::Cancel => Some(actor_job(
                 jobs,
                 profile,
                 actor.ok_or_else(invalid)?,
@@ -285,14 +302,11 @@ pub(in super::super) fn apply(
             | Operation::AbortEnd => Some(terminal(actor)?),
             Operation::Clr
             | Operation::Prune
+            | Operation::DeleteClr
+            | Operation::DeletePrune
             | Operation::ReleaseRole
             | Operation::RootFree
             | Operation::TerminalFinish => Some(native_before(view, jobs)?),
-            // The DELETE first path (dev3-row-delete.md) has a wire format but
-            // no observer yet; its replay arm arrives with the observer.
-            Operation::DeleteForward | Operation::DeleteClr | Operation::DeletePrune => {
-                return Err(sem(semantic::Error::Unsupported));
-            }
         };
         // Reserve: the actor's TerminalLeased Job (its Status) and the
         // adopted Job after, a Row RootReserved cell of the same actor whose
@@ -308,17 +322,14 @@ pub(in super::super) fn apply(
                     profile.spec().namespace,
                 )
                 .map_err(RetentionCause::Retention)?;
+                // An INSERT or a DELETE root (dev3-row-delete.md#job-effect):
+                // `ReserveAdopted` adopts the effect and the RowId of a DELETE
+                // root from this after and recomputes every other byte.
                 if cell.scope() != Some(JobScope::Row)
                     || cell.state() != job3::JobState::RootReserved
                     || cell.source() != actor
                 {
                     return Err(invalid());
-                }
-                // A delete Reserve (dev3-row-delete.md#job-effect) is replayed
-                // with opcodes 8/9/23 and base4's effect-1 rules (stage 2b-2);
-                // until then replay never installs a DELETE root.
-                if cell.effect() != job3::RowEffect::Insert {
-                    return Err(sem(semantic::Error::Unsupported));
                 }
                 Some(cell)
             }
@@ -342,7 +353,7 @@ pub(in super::super) fn apply(
             _ => Some(selected.and_then(|j| j.status()).ok_or_else(invalid)?),
         };
         let home = match op {
-            Operation::Clr | Operation::RollbackStart => {
+            Operation::Clr | Operation::DeleteClr | Operation::RollbackStart => {
                 Some(status_home(arena, profile, location.ok_or_else(invalid)?)?)
             }
             _ => None,
@@ -381,17 +392,17 @@ pub(in super::super) fn apply(
             },
             Operation::Clr => Change::Clr {
                 ordinal: ordinal_of()?,
-                statement: match home.ok_or_else(invalid)?.core() {
-                    TransactionStatusCell::Occupied(status) => match status.state() {
-                        TransactionState::Aborting(RollbackState::Statement { target, .. }) => {
-                            Some(StatementBoundary {
-                                sequence: core.statement(),
-                                mark: target,
-                            })
-                        }
-                        _ => None,
-                    },
-                    TransactionStatusCell::Free(_) => None,
+                statement: clr_statement(home.ok_or_else(invalid)?, core.statement()),
+            },
+            Operation::DeleteClr => Change::DeleteClr {
+                ordinal: ordinal_of()?,
+                statement: clr_statement(home.ok_or_else(invalid)?, core.statement()),
+            },
+            Operation::DeleteForward => Change::DeleteForward {
+                ordinal: ordinal_of()?,
+                statement: StatementBoundary {
+                    sequence: core.statement(),
+                    mark: None,
                 },
             },
             Operation::StatementFinish => Change::StatementFinish {
@@ -410,6 +421,9 @@ pub(in super::super) fn apply(
             Operation::Prune => Change::Prune {
                 ordinal: ordinal_of()?,
             },
+            Operation::DeletePrune => Change::DeletePrune {
+                ordinal: ordinal_of()?,
+            },
             Operation::ReleaseRole => Change::ReleaseRole {
                 ordinal: ordinal_of()?,
             },
@@ -419,15 +433,15 @@ pub(in super::super) fn apply(
             Operation::TerminalFinish => Change::TerminalFinish {
                 ordinal: ordinal_of()?,
             },
-            Operation::DeleteForward | Operation::DeleteClr | Operation::DeletePrune => {
-                unreachable!("refused at ordinal selection above")
-            }
         };
         let undo = match op {
             Operation::Cancel
             | Operation::Forward
             | Operation::Clr
             | Operation::Prune
+            | Operation::DeleteForward
+            | Operation::DeleteClr
+            | Operation::DeletePrune
             | Operation::ReleaseRole
             | Operation::RootFree => {
                 Some(selected.and_then(|j| j.undo()).ok_or_else(invalid)?.page())
@@ -436,7 +450,16 @@ pub(in super::super) fn apply(
             Operation::Reserve => Some(reserved.and_then(|j| j.undo()).ok_or_else(invalid)?.page()),
             _ => None,
         };
-        let row = matches!(op, Operation::Forward | Operation::Clr | Operation::Prune);
+        // The groups that change the RowLeaf (an INSERT's or a DELETE's).
+        let row = matches!(
+            op,
+            Operation::Forward
+                | Operation::Clr
+                | Operation::Prune
+                | Operation::DeleteForward
+                | Operation::DeleteClr
+                | Operation::DeletePrune
+        );
         let previous = if row {
             core.next().map(|u| u.page())
         } else {

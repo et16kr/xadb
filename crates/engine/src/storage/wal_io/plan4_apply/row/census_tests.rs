@@ -345,7 +345,7 @@ fn s2w_c06_row_write_c_margins_against_both_bounds() {
         println!(
             "S2W_C06 writer={writer} preflight_body actual={} estimate={} actual_minus_estimate={} \
              shell={} frame={} lease_check={} check={} load={} select={} shape={} \
-             undo_scan={} finish_frame={} observe={} register={} finish={} \
+             undo_scan={} delete={} finish_frame={} observe={} register={} finish={} \
              carriers={carriers} c_total={} bound={ROW_PREFLIGHT_CALLER_BYTES} charge={charge} \
              c_margin={margin}",
             body.body,
@@ -359,6 +359,7 @@ fn s2w_c06_row_write_c_margins_against_both_bounds() {
             body.select,
             body.shape,
             body.undo_scan,
+            body.delete,
             body.finish_frame,
             body.observe,
             body.register,

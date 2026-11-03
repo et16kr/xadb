@@ -329,7 +329,12 @@ impl<'s, 'c, W: WriterNamespace> Plan4Retention<'_, 's, 'c, '_, '_, '_, '_, '_, 
                             behind_head = true;
                             continue;
                         }
-                        RowOperation::Prune
+                        // A committed DELETE root's tombstone goes by
+                        // DeletePrune (dev3-row-delete.md#recovery).
+                        match self.recovery_row_job(ordinal)?.effect() {
+                            job3::RowEffect::Insert => RowOperation::Prune,
+                            job3::RowEffect::Delete => RowOperation::DeletePrune,
+                        }
                     }
                     job3::JobState::RootReleasingCommitted
                     | job3::JobState::RootReleasingCompensated => {
@@ -532,16 +537,19 @@ impl<'s, 'c, W: WriterNamespace> Plan4Retention<'_, 's, 'c, '_, '_, '_, '_, '_, 
                 };
                 let job = self.recovery_row_job(ordinal)?;
                 push(2 + ordinal / 15)?;
-                if matches!(
-                    operation,
-                    RowOperation::Cancel | RowOperation::Prune | RowOperation::TerminalFinish
-                ) {
+                let prune = matches!(operation, RowOperation::Prune | RowOperation::DeletePrune);
+                if prune
+                    || matches!(
+                        operation,
+                        RowOperation::Cancel | RowOperation::TerminalFinish
+                    )
+                {
                     push(job.status().ok_or_else(bad)?.page().page_no as usize)?;
                 }
                 if operation != RowOperation::TerminalFinish {
                     push(job.undo().ok_or_else(bad)?.page().page_no as usize)?;
                 }
-                if operation == RowOperation::Prune {
+                if prune {
                     let pair = job.pair().ok_or_else(bad)?;
                     push(pair[1].page_no as usize)?;
                     push(pair[0].page_no as usize)?;

@@ -84,6 +84,12 @@
    "sha256": "f834d2c21f45181f5bd66b3df8957714fecfc0a51750769a1a44540e23003c7b"
   },
   {
+   "name": "issuer-undo-low",
+   "parent": "live",
+   "runs": 9,
+   "sha256": "c36bc3cebe5626eace20445c7ec0df20a0e17a69ff385bb745a5bc33f31063b6"
+  },
+  {
    "name": "row-high-global",
    "parent": "live",
    "runs": 14,

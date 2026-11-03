@@ -656,6 +656,15 @@ impl<'t, 'v, 'a, 'c, 's> RowStatementView<'t, 'v, 'a, 'c, 's> {
         Ok(self.mark)
     }
 
+    /// The statement snapshot a DELETE preflight classifies its target under
+    /// (dev3-row-delete.md#classification): its q, and whether the
+    /// transaction is Serializable (the mode byte 0 and a transaction-wide
+    /// snapshot) rather than ReadCommitted (a statement snapshot).
+    pub(super) fn row_delete_snapshot(&self) -> Result<(u64, bool)> {
+        let q = self.q()?;
+        Ok((q, self.rc_snapshot.is_none()))
+    }
+
     /// A durable Forward of this statement (S2-c): the view's revision moves
     /// by one, so a B cursor of the same statement sees its own mutation
     /// (MCB04-V06/V11). RAM only; only C changes it.

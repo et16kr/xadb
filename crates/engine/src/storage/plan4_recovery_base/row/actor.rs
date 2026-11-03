@@ -14,7 +14,7 @@ use crate::storage::{
     row_record::{self, RecordExpectation, RowPayload, RowSchemaInput},
     semantic_row,
     status_home::{self, StatusHome},
-    transaction_record::{TransactionStatusCell, TxnRef, VersionStamp},
+    transaction_record::{LogicalRowVersion, TransactionStatusCell, TxnRef, VersionStamp},
     tree_page::{self, EntryPayload, TreeExpectation, TreePageView},
     undo_record::{
         self, UndoBeforeKind, UndoEdge, UndoLink, UndoPayload, UndoRecordExpectation,
@@ -58,6 +58,14 @@ from_error!(undo_record::UndoError, Undo);
 from_error!(catalog_record::CatalogError, Catalog);
 from_error!(tree_page::TreeError, Tree);
 from_error!(row_record::RowError, Row);
+
+/// A DELETE root's tombstone cell (dev3-row-delete.md#formats).
+const TOMBSTONE_CELL: usize = 180;
+
+/// The before of an effect-1 (DELETE) root's U (dev3-row-delete.md
+/// #recovery): the replaced row's stamp (gone at release cursor 3) and
+/// logical version. INSERT roots have none.
+type DeleteBefore = Option<(Option<VersionStamp>, LogicalRowVersion)>;
 
 /// Counts for this actor only. No reservation, selected source or READY proof.
 #[derive(Debug, PartialEq, Eq)]
@@ -119,14 +127,59 @@ impl<'a, 'j> Graph<'a, 'j> {
         }
         Ok(previous)
     }
-    fn undo(&self, job: JobView<'_>) -> Result<()> {
+    /// The Catalog schema of the table a root names.
+    fn schema(
+        &self,
+        object: foundation::identity::ObjectHandle,
+    ) -> Result<crate::storage::catalog_record::TableDefinitionView<'a>> {
+        let catalog = self.catalog()?;
+        let position = catalog.lower_bound(&object.object.get().to_be_bytes())?;
+        if !position.equal {
+            return Err(Error::Identity);
+        }
+        let EntryPayload::Value(value) = catalog.entry(position.index)?.payload else {
+            return Err(Error::Identity);
+        };
+        let record = catalog_record::decode_catalog_record(
+            value,
+            CatalogExpectation {
+                namespace: self.layout.expected.profile.spec().namespace,
+                object: object.object,
+            },
+        )?;
+        let CatalogDefinitionView::Table(schema) = record.definition() else {
+            return Err(Error::Unsupported);
+        };
+        if record.header().identity != object {
+            return Err(Error::Identity);
+        }
+        Ok(schema)
+    }
+    /// One root's U. An INSERT root's is the Missing material in
+    /// `INITIAL_UNDO_CELL`. A DELETE root's (dev3-row-delete.md#recovery) is
+    /// Live RowValue with the replaced row's `Committed` stamp, logical and
+    /// value in `[16352-(432+L), 16352)` (`L = C-180`) while Retained, read
+    /// through entry (a) with the table schema, and Releasing without the
+    /// value in `INITIAL_UNDO_CELL` after its CLR or Prune.
+    fn undo(&self, job: JobView<'_>) -> Result<DeleteBefore> {
+        let delete = job.effect() == row::RowEffect::Delete;
         let reference = job.undo().ok_or(Error::Identity)?;
         let (bytes, header) = self.page(reference.page(), PageKind::Undo, 3)?;
         let page = page::decode_page(bytes, header.identity, PageKind::Undo)?;
-        if reference.slot() != 0
-            || page.len() != 1
-            || page.cell_range(0) != Some(undo_record::INITIAL_UNDO_CELL)
-        {
+        let live_value = if delete && job.state() == JobState::RootRetained {
+            Some(
+                (job.cell_bytes() as usize)
+                    .checked_sub(TOMBSTONE_CELL)
+                    .ok_or(Error::Identity)?,
+            )
+        } else {
+            None
+        };
+        let range = live_value.map_or(undo_record::INITIAL_UNDO_CELL, |value| {
+            let end = undo_record::INITIAL_UNDO_CELL.end;
+            end.saturating_sub(undo_record::UNDO_RECORD_BYTES + value)..end
+        });
+        if reference.slot() != 0 || page.len() != 1 || page.cell_range(0) != Some(range) {
             return Err(Error::Identity);
         }
         let raw = page.cell(0).ok_or(Error::Identity)?;
@@ -135,47 +188,80 @@ impl<'a, 'j> Graph<'a, 'j> {
             if header.lsn.0 != job.lease_lsn() {
                 return Err(Error::Order);
             }
-            return Ok(());
+            return Ok(None);
         }
         let object = job.object().ok_or(Error::Identity)?;
-        let decoded = undo_record::decode_undo_record(
-            raw,
-            UndoRecordExpectation {
-                namespace: self.layout.expected.profile.spec().namespace,
-                reference,
-                target: UndoTargetView {
-                    kind: UndoTargetKind::Row,
-                    owner: object.object,
-                    generation: object.generation,
-                    entity: job.row_id().ok_or(Error::Identity)?.get(),
-                    arity: 0,
-                    key: &[],
-                },
+        let expected = UndoRecordExpectation {
+            namespace: self.layout.expected.profile.spec().namespace,
+            reference,
+            target: UndoTargetView {
+                kind: UndoTargetKind::Row,
+                owner: object.object,
+                generation: object.generation,
+                entity: job.row_id().ok_or(Error::Identity)?.get(),
+                arity: 0,
+                key: &[],
             },
-            &[],
-        )?;
+        };
+        let decoded = if delete {
+            let schema = self.schema(object)?;
+            undo_record::decode_undo_record(raw, expected, &RowSchemaInput::Catalog(schema))?
+        } else {
+            undo_record::decode_undo_record(raw, expected, &[])?
+        };
         let metadata = decoded.metadata()?;
+        // before kind and payload kind; an INSERT's before stamp and
+        // logical bytes are zero.
+        let kinds = match (delete, live_value) {
+            (false, _) => [0, 0],
+            (true, Some(_)) => [2, 1],
+            (true, None) => [2, 0],
+        };
         if metadata.creator.id != self.actor.id()
             || metadata.creator.status_generation != self.actor.generation()
             || metadata.sequence != job.undo_sequence()
             || metadata.mutation_sequence != job.mutation()
-            || raw.len() != undo_record::UNDO_RECORD_BYTES
-            || raw[324..326] != [0, 0]
-            || raw[216..320].iter().any(|&b| b != 0)
+            || raw.len() != undo_record::UNDO_RECORD_BYTES + live_value.unwrap_or(0)
+            || raw[324..326] != kinds
+            || (!delete && raw[216..320].iter().any(|&b| b != 0))
             || header.lsn.0 < job.last_step()
         {
             return Err(Error::Identity);
         }
+        // The codec has validated the record; its before stamp (zero once
+        // release cursor 3 drops it) and logical are read from their bytes.
+        let before = if delete {
+            let stamp = if raw[216..272].iter().all(|&b| b == 0) {
+                None
+            } else {
+                Some(VersionStamp::decode(&raw[216..272]).map_err(|_| Error::Identity)?)
+            };
+            let logical = LogicalRowVersion::decode(&raw[272..320]).map_err(|_| Error::Identity)?;
+            let stamp_kept = job.state() == JobState::RootRetained || job.release_cursor() < 3;
+            if stamp_kept != matches!(stamp, Some(VersionStamp::Committed(_)))
+                || (!stamp_kept && stamp.is_some())
+            {
+                return Err(Error::Identity);
+            }
+            Some((stamp, logical))
+        } else {
+            None
+        };
         if job.state() == JobState::RootRetained {
             if decoded.state() != UndoRecordState::Live || metadata.incoming != 2 {
                 return Err(Error::Identity);
             }
             let record = decoded.live_before()?;
             let previous = self.predecessor(job)?;
-            if record.before_kind != UndoBeforeKind::Missing
-                || record.before_stamp.is_some()
-                || record.before_logical.is_some()
-                || record.payload != UndoPayload::None
+            let before_matches = if delete {
+                matches!(record.payload, UndoPayload::Inline(value) if Some(value.len()) == live_value)
+            } else {
+                record.before_kind == UndoBeforeKind::Missing
+                    && record.before_stamp.is_none()
+                    && record.before_logical.is_none()
+                    && record.payload == UndoPayload::None
+            };
+            if !before_matches
                 || record.edges
                     != [
                         previous.map_or(UndoEdge::Never, UndoEdge::Linked),
@@ -208,7 +294,7 @@ impl<'a, 'j> Graph<'a, 'j> {
                 return Err(Error::Order);
             }
         }
-        Ok(())
+        Ok(before)
     }
 
     fn catalog(&self) -> Result<TreePageView<'a>> {
@@ -278,10 +364,16 @@ impl<'a, 'j> Graph<'a, 'j> {
                 }
                 let row = job.row_id().ok_or(Error::Identity)?;
                 let position = leaf.lower_bound(&row.get().to_be_bytes())?;
-                if matches!(
-                    job.state(),
-                    JobState::RootReserved | JobState::RootReleasingCompensated
-                ) {
+                let delete = job.effect() == row::RowEffect::Delete;
+                // An INSERT root's key exists while Retained or after its
+                // Prune; a DELETE root's until its Prune
+                // (dev3-row-delete.md#recovery).
+                let present = match job.state() {
+                    JobState::RootReserved | JobState::RootReleasingCompensated => delete,
+                    JobState::RootReleasingCommitted => !delete,
+                    _ => true,
+                };
+                if !present {
                     if position.equal {
                         return Err(Error::Identity);
                     }
@@ -299,6 +391,10 @@ impl<'a, 'j> Graph<'a, 'j> {
                     RowSchemaInput::Catalog(schema),
                 )?;
                 let version = row.version();
+                if delete {
+                    self.delete_row(job, bytes, row.payload(), version)?;
+                    continue;
+                }
                 if !matches!(row.payload(), RowPayload::Inline(_))
                     || version.logical.transaction() != self.actor.id()
                     || version.logical.mutation_sequence() != job.mutation()
@@ -340,9 +436,18 @@ impl<'a, 'j> Graph<'a, 'j> {
                     RecordExpectation { namespace, row },
                     RowSchemaInput::Catalog(schema),
                 )?;
-                if !matches!(decoded.payload(), RowPayload::Inline(_)) {
-                    return Err(Error::Unsupported);
-                }
+                // A tombstone is always `Transaction(T)` with its U.
+                let tombstone = match decoded.payload() {
+                    RowPayload::Inline(_) => false,
+                    RowPayload::Deleted
+                        if matches!(decoded.version().stamp, VersionStamp::Transaction(_))
+                            && decoded.version().undo.is_some() =>
+                    {
+                        true
+                    }
+                    RowPayload::Deleted => return Err(Error::Identity),
+                    RowPayload::Overflow(_) => return Err(Error::Unsupported),
+                };
                 let version = decoded.version();
                 if version.logical.transaction() != self.actor.id() {
                     continue;
@@ -369,12 +474,20 @@ impl<'a, 'j> Graph<'a, 'j> {
                         if actor != self.actor {
                             return Err(Error::Identity);
                         }
+                        // An Inline row pairs with one Retained INSERT root,
+                        // a tombstone with one Retained DELETE root.
+                        let effect = if tombstone {
+                            row::RowEffect::Delete
+                        } else {
+                            row::RowEffect::Insert
+                        };
                         let mut matches = 0;
                         for ordinal in 0..JOB_COUNT {
                             let job = self.job(ordinal)?;
                             matches += usize::from(
                                 job.source() == Some(self.actor)
                                     && job.state() == JobState::RootRetained
+                                    && job.effect() == effect
                                     && job.row_id() == Some(row)
                                     && job.object() == Some(h.identity)
                                     && job.undo() == version.undo,
@@ -385,6 +498,7 @@ impl<'a, 'j> Graph<'a, 'j> {
                         }
                         transaction_rows += 1;
                     }
+                    VersionStamp::Committed(_) if tombstone => return Err(Error::Identity),
                     VersionStamp::Committed(q) => {
                         let TransactionStatusCell::Occupied(status) = self.home.core() else {
                             return Err(Error::Identity);
@@ -429,6 +543,61 @@ impl<'a, 'j> Graph<'a, 'j> {
             }
         }
         Ok(transaction_rows)
+    }
+
+    /// The present row of one DELETE root (dev3-row-delete.md#recovery):
+    /// Reserved, the replaced committed Inline row of cell C; Retained, the
+    /// actor's tombstone of cell 180 the Job projection sealed; compensated,
+    /// the restored committed Inline row with U's before logical (and stamp
+    /// before release cursor 3).
+    fn delete_row(
+        &self,
+        job: JobView<'_>,
+        bytes: &[u8],
+        payload: RowPayload<'_>,
+        version: row_record::RecordVersion,
+    ) -> Result<()> {
+        let inline = matches!(payload, RowPayload::Inline(_));
+        let committed = matches!(version.stamp, VersionStamp::Committed(_));
+        let cell_c = bytes.len() + 12 == job.cell_bytes() as usize;
+        match job.state() {
+            JobState::RootReserved => {
+                if !inline
+                    || !committed
+                    || version.undo.is_some()
+                    || !cell_c
+                    || version.logical.transaction() == self.actor.id()
+                {
+                    return Err(Error::Identity);
+                }
+            }
+            JobState::RootRetained => {
+                if inline
+                    || version.stamp != VersionStamp::Transaction(self.actor)
+                    || version.logical.transaction() != self.actor.id()
+                    || version.logical.mutation_sequence() != job.mutation()
+                    || version.undo != job.undo()
+                    || bytes.len() + 12 != TOMBSTONE_CELL
+                    || projection(job, bytes)? != *job.projection_digest()
+                {
+                    return Err(Error::Identity);
+                }
+            }
+            JobState::RootReleasingCompensated => {
+                // A Releasing Job keeps no cell length (`cell_bytes` 0).
+                let (stamp, logical) = self.undo(job)?.ok_or(Error::Identity)?;
+                if !inline
+                    || !committed
+                    || version.undo.is_some()
+                    || version.logical != logical
+                    || stamp.is_some_and(|stamp| stamp != version.stamp)
+                {
+                    return Err(Error::Identity);
+                }
+            }
+            _ => return Err(Error::Identity),
+        }
+        Ok(())
     }
 
     fn unique_row(
@@ -506,7 +675,13 @@ impl<'a, 'j> Graph<'a, 'j> {
                 certificate.header.identity,
                 PageKind::Undo,
             )?;
-            if page.len() != 1 || page.cell_range(0) != Some(undo_record::INITIAL_UNDO_CELL) {
+            // A DELETE root's Live U is longer and ends at the same byte; its
+            // root's `undo` checks its exact range.
+            if page.len() != 1
+                || page
+                    .cell_range(0)
+                    .is_none_or(|range| range.end != undo_record::INITIAL_UNDO_CELL.end)
+            {
                 return Err(Error::Unsupported);
             }
             let raw = page.cell(0).ok_or(Error::Identity)?;
@@ -604,11 +779,6 @@ pub(in crate::storage) fn observe(
     let mut terminal = None;
     for ordinal in 0..JOB_COUNT {
         let job = row::decode_job(jobs.cell(ordinal), namespace)?;
-        // Base4 knows only INSERT roots (Missing U, Inline row); a DELETE root
-        // (dev3-row-delete.md#job-effect) needs the effect-1 rules of #recovery.
-        if job.effect() != row::RowEffect::Insert {
-            return Err(Error::Unsupported);
-        }
         if job.source() == Some(actor)
             && job.state().is_terminal()
             && (terminal.replace(job).is_some() || job.scope() != Some(JobScope::Row))

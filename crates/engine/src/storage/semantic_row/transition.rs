@@ -130,10 +130,6 @@ pub(crate) enum Change<'a> {
     /// RowReserve through `ReserveAdopted`.
     Reserve(&'a ReservePlan<'a>),
     /// The live delete RowReserve producer (dev3-row-delete.md#api).
-    #[cfg_attr(
-        not(test),
-        allow(dead_code, reason = "A's DELETE executor (stage 2b-2) constructs it")
-    )]
     ReserveDelete(&'a DeletePlan),
     /// Replay-only RowReserve (contract row-reserve-replay): the three
     /// selectors the original owner chose, bound and checked by the Row
@@ -179,28 +175,16 @@ pub(crate) enum Change<'a> {
         ordinal: usize,
     },
     /// Observe only; A produces DeleteForward.
-    #[cfg_attr(
-        not(test),
-        allow(dead_code, reason = "A's DELETE executor (stage 2b-2) constructs it")
-    )]
     DeleteForward {
         ordinal: usize,
         statement: StatementBoundary,
     },
     /// Observe only; A produces DeleteClr.
-    #[cfg_attr(
-        not(test),
-        allow(dead_code, reason = "A's DELETE executor (stage 2b-2) constructs it")
-    )]
     DeleteClr {
         ordinal: usize,
         statement: Option<StatementBoundary>,
     },
-    /// C produces DeletePrune, the live cleanup of a committed delete root.
-    #[cfg_attr(
-        not(test),
-        allow(dead_code, reason = "A's DELETE executor (stage 2b-2) constructs it")
-    )]
+    /// C produces DeletePrune, the cleanup of a committed delete root.
     DeletePrune {
         ordinal: usize,
     },
@@ -380,6 +364,29 @@ pub(crate) fn produce_borrowed(
     refuse_unproduced(inputs)?;
     scratch.fill(0);
     produce_with(inputs, after, frame, scratch)
+}
+
+/// The XRP1 projection of one Row presence (consumers.md row logical
+/// projection), as a Job and the core commit to it: the delete RowReserve's
+/// draft seals the old row's with it (dev3-row-delete.md#api).
+pub(crate) fn row_projection(
+    table: ObjectHandle,
+    row: RowId,
+    value: Option<&[u8]>,
+) -> Result<[u8; 32]> {
+    cells::projection(table, row, value)
+}
+
+/// D of the leaf reservation (dev3-row-delete.md#leaf-reservation) over a
+/// Jobs bank: the `C-180` bytes every Retained delete root of `table` must
+/// be able to restore. The live INSERT RowReserve refuses a candidate that
+/// would leave less (Capacity), before the producer's own check.
+pub(crate) fn leaf_reservation(
+    jobs: &[[u8; JOB_BYTES]; JOB_COUNT],
+    namespace: crate::api::Namespace,
+    table: ObjectHandle,
+) -> Result<usize> {
+    cells::delete_reservation(jobs, namespace, table)
 }
 
 /// The RootJob a live RowReserve leases: the first Free Job from the stable
@@ -674,6 +681,38 @@ pub(crate) fn tree_source_bytes() -> usize {
     source::tree_codec()
 }
 
+/// Counted bound of `row_projection` (the XRP1 prefix, the target copies and
+/// the hasher), a delete RowReserve draft's input.
+pub(crate) fn projection_source_bytes() -> usize {
+    source::projection()
+}
+
+/// Counted bound of `leaf_reservation`: its arguments and sum beside one Job3
+/// decode at a time.
+pub(crate) fn leaf_reservation_source_bytes() -> usize {
+    use crate::storage::retention_page::row as job3;
+    use std::mem::size_of;
+    size_of::<(
+        &[[u8; JOB_BYTES]; JOB_COUNT],
+        crate::api::Namespace,
+        ObjectHandle,
+    )>() + 2 * size_of::<Result<usize>>()
+        + 2 * size_of::<usize>()
+        + size_of::<std::slice::Iter<'_, [u8; JOB_BYTES]>>()
+        + size_of::<job3::JobView<'_>>()
+        + 2 * size_of::<
+            std::result::Result<job3::JobView<'_>, crate::storage::retention_page::RetentionError>,
+        >()
+        + job3::source_bytes()
+}
+
+/// Counted bound of a typed Row record decode or encode
+/// (`decode_row_record_with_schema`), a DELETE preflight's classification of
+/// its target (dev3-row-delete.md#classification).
+pub(crate) fn row_record_source_bytes() -> usize {
+    source::row_codec()
+}
+
 /// Row read's typed record decoder, without replay-owned workspace.
 #[cfg(test)]
 pub(crate) fn row_read_codec_bytes() -> usize {
@@ -688,4 +727,4 @@ pub(crate) fn row_undo_read_codec_bytes() -> usize {
 
 #[cfg(test)]
 #[path = "transition_tests.rs"]
-mod tests;
+pub(crate) mod tests;

@@ -389,11 +389,20 @@ fn payloads<'a, G: Seam<'a>>(graph: &G, begins: u64) -> Result<()> {
                 }
             }
             PageKind::Undo => {
-                if page.len() != 1 || page.cell_range(0) != Some(undo_record::INITIAL_UNDO_CELL) {
+                // One record ending where INITIAL_UNDO_CELL ends. Only a Live
+                // record may carry an inline value after it: a DELETE root's U
+                // (dev3-row-delete.md#recovery), which its owner checks.
+                if page.len() != 1
+                    || page
+                        .cell_range(0)
+                        .is_none_or(|range| range.end != undo_record::INITIAL_UNDO_CELL.end)
+                {
                     return Err(Error::Unsupported);
                 }
                 let raw = page.cell(0).ok_or(Error::Corrupt)?;
-                if raw.len() != undo_record::UNDO_RECORD_BYTES {
+                if raw.len() < undo_record::UNDO_RECORD_BYTES
+                    || (raw.len() != undo_record::UNDO_RECORD_BYTES && raw[6] != 1)
+                {
                     return Err(Error::Unsupported);
                 }
                 let generation = Generation::new(get(raw, 8)).map_err(|_| Error::Corrupt)?;
@@ -449,12 +458,17 @@ pub(in crate::storage::plan4_recovery_base) fn validate<'a, G: Seam<'a>>(
     graph: &G,
 ) -> Result<ReservedInventory> {
     // Current grammar issues one Object (CREATE) or RowId (INSERT) and one
-    // UndoSequence per Reserve, including canceled attempts; Root2 has no Row
-    // issuer, so base3 reads row_high as zero. This is a necessary arithmetic
-    // constraint; only original capture provenance proves the actual history.
+    // UndoSequence per Reserve, including canceled attempts; a DELETE
+    // Reserve issues an UndoSequence and no RowId (dev3-row-delete.md#api),
+    // so the UndoSequences beyond the Objects and RowIds are DELETE Reserves.
+    // Root2 has no Row issuer, so base3 reads row_high as zero. This is a
+    // necessary arithmetic constraint; only original capture provenance
+    // proves the actual history.
     let creates = graph.object_high() - 5; // Root codec checked >= 5.
     let begins = graph.issued().checked_sub(graph.undo_high());
-    if creates.checked_add(graph.row_high()) != Some(graph.undo_high())
+    if creates
+        .checked_add(graph.row_high())
+        .is_none_or(|issued| issued > graph.undo_high())
         || graph.canceled() > graph.undo_high()
         || begins.is_none_or(|count| graph.commit_c() > count)
     {

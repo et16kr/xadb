@@ -32,6 +32,7 @@ fn origin<'c, 's, const T: usize>(prepared: &PreparedRowGroup<'_, 'c, 's, T>) ->
 fn scope(operation: Operation) -> Option<RetirementScope> {
     match operation {
         Operation::Prune => Some(RetirementScope::MissingPrune),
+        Operation::DeletePrune => Some(RetirementScope::ValuePrune),
         Operation::RootFree => Some(RetirementScope::UndoFree),
         Operation::TerminalFinish => Some(RetirementScope::TerminalFree),
         _ => None,
@@ -59,8 +60,9 @@ impl<'a, 'c, 's> BoundVisibility<'a, 'c, 's> {
     /// original target still carries its prepared stamp under the same
     /// version hold, the held Job names the group's actor, and the target
     /// comes from that Job (and, for Prune, the held Status's committed Q).
-    /// Prune names the head U (`MissingPrune`, its Q), RootFree U
-    /// (`UndoFree`), TerminalFinish the actor (`TerminalFree`).
+    /// Prune names the head U (`MissingPrune`, its Q), DeletePrune the head
+    /// U (`ValuePrune`, its Q), RootFree U (`UndoFree`), TerminalFinish the
+    /// actor (`TerminalFree`).
     pub(in super::super) fn verify_row_retirement<const T: usize, const N: usize>(
         &self,
         prepared: &PreparedRowGroup<'_, 'c, 's, T>,
@@ -117,7 +119,10 @@ impl<'a, 'c, 's> BoundVisibility<'a, 'c, 's> {
             (ReferenceTarget::Transaction(actor), None)
         } else {
             let undo = ReferenceTarget::Undo(job.undo().ok_or_else(bad)?);
-            if scope == RetirementScope::MissingPrune {
+            if matches!(
+                scope,
+                RetirementScope::MissingPrune | RetirementScope::ValuePrune
+            ) {
                 let (at, bytes) = held(prepared, targets, row_group::STATUS as u8)?;
                 let page = decode_page(
                     bytes,

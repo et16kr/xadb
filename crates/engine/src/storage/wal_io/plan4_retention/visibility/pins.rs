@@ -499,11 +499,16 @@ impl<'v, 'a, 'c, 's> ReferenceLease<'v, 'a, 'c, 's> {
                 schema,
             )
             .map_err(|_| bad())?;
-            if !matches!(record.payload(),RowPayload::Inline(value) if (5..=2048).contains(&value.as_bytes().len()))
-            {
-                return Err(bad());
-            }
             let version = record.version();
+            // An Inline row, or a DELETE tombstone, which is always
+            // `Transaction(T)` with its U (dev3-row-delete.md#read).
+            match record.payload() {
+                RowPayload::Inline(value) if (5..=2048).contains(&value.as_bytes().len()) => {}
+                RowPayload::Deleted
+                    if matches!(version.stamp, VersionStamp::Transaction(_))
+                        && version.undo.is_some() => {}
+                _ => return Err(bad()),
+            }
             let source = CatalogSource {
                 origin: self.visibility.origin,
                 transaction: match version.stamp {

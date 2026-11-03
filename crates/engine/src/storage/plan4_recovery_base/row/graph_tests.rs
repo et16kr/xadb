@@ -406,9 +406,7 @@ fn base4_closure_relation_variants() {
                 CatalogAllocationError::StateMismatch,
             )),
             "aging-header-budget" => B(BaseError::BudgetMismatch),
-            "issuer-undo-high" | "free-undo-generation" | "create-undo-lsn" => {
-                B(BaseError::OrderMismatch)
-            }
+            "free-undo-generation" | "create-undo-lsn" => B(BaseError::OrderMismatch),
             "row-high-global"
             | "committed-q-collision"
             | "committed-writer-bound"
@@ -444,8 +442,12 @@ fn base4_closure_relation_variants() {
             "reserved-row-root" => {
                 RowBaseError::Actor(actor::Error::Ledger(Ledger::IdentityMismatch))
             }
-            // The Row root is ordered after an uncommitted creator's table.
-            "create-uncommitted-row" => RowBaseError::Queue(RetentionError::OrderMismatch),
+            // The Row root is ordered after an uncommitted creator's table;
+            // fewer UndoSequences than Objects plus RowIds issued (the Undo
+            // queue fails first; the issuer relation below).
+            "create-uncommitted-row" | "issuer-undo-low" => {
+                RowBaseError::Queue(RetentionError::OrderMismatch)
+            }
             "row-reserved-twice" => RowBaseError::Queue(RetentionError::IdentityMismatch),
             // A RowReserve beside a System page reservation: no joint item order.
             "row-reserved-mixed" => RowBaseError::Unsupported,
@@ -461,6 +463,17 @@ fn base4_closure_relation_variants() {
         );
     }
     assert_eq!(seen, 36);
+    // A DELETE Reserve issues an UndoSequence and no RowId
+    // (dev3-row-delete.md#api), so one UndoSequence beyond the Objects and
+    // RowIds is a finished DELETE Reserve's, not an issuer mismatch.
+    let bytes = state("issuer-undo-high");
+    decode(&*bytes, expected(), &mut scratch).unwrap();
+    let bytes = state("issuer-undo-low");
+    let graph = Graph::new(decode_layout(&*bytes, expected()).unwrap()).unwrap();
+    assert_eq!(
+        seam::validate_relations(&graph),
+        Err(BaseError::OrderMismatch)
+    );
 }
 
 #[test]

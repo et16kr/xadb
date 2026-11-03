@@ -158,7 +158,14 @@ pub(super) fn join_restart_with<D: DirectoryPort, R: JoinRead>(
         Err(Plan4RecoveryAcquireFailure::Acquired(_))
         | Err(Plan4RecoveryAcquireFailure::Before { .. }) => panic!("acquire"),
     };
-    let runtime = acquired.recover_with_rows(policy).ok().unwrap();
+    let runtime = match acquired.recover_with_rows(policy) {
+        Ok(runtime) => runtime,
+        Err(failure) => panic!(
+            "recovery: {:?} {:?}",
+            failure.error(),
+            failure.observation()
+        ),
+    };
     let core = PageConcurrency::new(runtime.session_fence()).unwrap();
     let mut owner = core.try_owner(OwnerRole::Foreground).unwrap();
     let mut flusher = core.try_owner(OwnerRole::DedicatedFlusher).unwrap();

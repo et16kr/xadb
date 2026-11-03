@@ -28,6 +28,10 @@ pub(crate) struct ReservePlan {
     pub(crate) cell_bytes: u32,
     pub(crate) projection: [u8; 32],
     pub(crate) predecessor: bool,
+    /// The root's effect (dev3-row-delete.md#job-effect): an INSERT root, or a
+    /// DELETE root whose `cell_bytes` is the old row's cell and whose
+    /// projection is the planned tombstone's.
+    pub(crate) effect: row::RowEffect,
 }
 #[derive(Clone, Copy)]
 pub(crate) struct JobImages<'a> {
@@ -69,7 +73,10 @@ impl JobObservation {
 /// the first free ordinal, issue high-water numbers, prove Root commitment,
 /// physical Status/U/Row, descriptor residuals, ownership, admission or replay.
 pub(crate) fn observe(layout: LayoutView<'_>, input: Inputs<'_>) -> Result<JobObservation> {
-    let op = layout.operation();
+    let delete = layout.operation() != layout.operation().role();
+    // A DELETE root's Forward/Clr/Prune follow the INSERT role's Job rules;
+    // the root's effect byte must name the operation's effect.
+    let op = layout.operation().role();
     if matches!(
         op,
         Operation::RollbackStart | Operation::StatementFinish | Operation::AgingStart
@@ -82,17 +89,11 @@ pub(crate) fn observe(layout: LayoutView<'_>, input: Inputs<'_>) -> Result<JobOb
     let namespace = input.context.profile.spec().namespace;
     let before = row::decode_job(before_page.cell(slot).ok_or(Error::Corrupt)?, namespace)?;
     let after = row::decode_job(after_page.cell(slot).ok_or(Error::Corrupt)?, namespace)?;
-    // Every opcode this observer knows is an INSERT-root step; a DELETE root
-    // (dev3-row-delete.md#job-effect) is refused until its own rules exist.
-    // This local observer's caller is the N1 cross-check; the product rules
-    // refuse the same root in `transition::prepare`'s Job decode.
-    if before.effect() != row::RowEffect::Insert || after.effect() != row::RowEffect::Insert {
-        return Err(Error::Unsupported);
-    }
     if matches!(op, Operation::Forward | Operation::Clr | Operation::Prune) {
         require(
             before.cell_bytes() as usize == layout.shape().cell
-                && before.has_previous_transaction() == Some(layout.shape().predecessor),
+                && before.has_previous_transaction() == Some(layout.shape().predecessor)
+                && (before.effect() == row::RowEffect::Delete) == delete,
         )?;
     }
     census(layout, input)?;
@@ -137,7 +138,8 @@ pub(crate) fn observe(layout: LayoutView<'_>, input: Inputs<'_>) -> Result<JobOb
                     && after.row_id() == Some(plan.row)
                     && after.cell_bytes() == plan.cell_bytes
                     && after.projection_digest() == &plan.projection
-                    && after.has_previous_transaction() == Some(plan.predecessor),
+                    && after.has_previous_transaction() == Some(plan.predecessor)
+                    && after.effect() == plan.effect,
             )?;
         }
         Operation::Forward => {
@@ -185,7 +187,8 @@ pub(crate) fn observe(layout: LayoutView<'_>, input: Inputs<'_>) -> Result<JobOb
                     && after.release_cursor() == 0
                     && after.commit_q() == input.commit.map_or(0, CommitSeq::get),
             )?;
-            // RowId320..328 and sender digest are retained through reclamation.
+            // RowId320..328, the effect byte @284 and the sender digest are
+            // retained through reclamation.
             unchanged(
                 before,
                 after,
@@ -194,7 +197,8 @@ pub(crate) fn observe(layout: LayoutView<'_>, input: Inputs<'_>) -> Result<JobOb
                     (200, 248),
                     (264, 272),
                     (272, 280),
-                    (280, 320),
+                    (280, 284),
+                    (285, 320),
                     (376, 1024),
                 ],
             )?;
@@ -283,7 +287,7 @@ fn context(layout: LayoutView<'_>, input: Inputs<'_>) -> Result<()> {
     if layout.operation().handoff() {
         require(layout.owner(0) == Some(ReservationOwner::Transaction(c.actor)))?;
     }
-    let op = layout.operation();
+    let op = layout.operation().role();
     if input.reserve.is_some() != (op == Operation::Reserve)
         || input.sender.is_some()
             != matches!(
@@ -298,7 +302,7 @@ fn context(layout: LayoutView<'_>, input: Inputs<'_>) -> Result<()> {
 }
 fn census(layout: LayoutView<'_>, input: Inputs<'_>) -> Result<()> {
     let c = input.context;
-    let op = layout.operation();
+    let op = layout.operation().role();
     let namespace = c.profile.spec().namespace;
     let mut terminal = None;
     let mut roots = 0;

@@ -159,11 +159,12 @@ fn executor(label: &str, kind: &str, refs: usize, census: live::ExecutorCensus, 
     let mut seen = BTreeSet::new();
     for (name, path, share, frame) in &census.sites {
         assert!(share <= frame, "{label} {name}/{path}: {share} > {frame}");
-        let bound = if name.starts_with("insert.") {
+        let statement = name.starts_with("insert.") || name.starts_with("delete.");
+        let bound = if statement {
             match *name {
-                "insert.preflight" => ROW_PREFLIGHT_CALLER_BYTES,
+                "insert.preflight" | "delete.preflight" => ROW_PREFLIGHT_CALLER_BYTES,
                 "insert.validate" => continue,
-                "insert.forward" => charge - producer,
+                "insert.forward" | "delete.forward" => charge - producer,
                 _ => ROW_WRITE_CALLER_BYTES,
             }
         } else {
@@ -173,7 +174,7 @@ fn executor(label: &str, kind: &str, refs: usize, census: live::ExecutorCensus, 
                 .unwrap_or_else(|| panic!("unbudgeted {kind} site: {name}"))
                 .1
         };
-        if !name.starts_with("insert.") {
+        if !statement {
             seen.insert(*name);
         }
         check(&format!("{name}@{path}"), *frame, bound, &mut output);
@@ -196,46 +197,82 @@ fn executor(label: &str, kind: &str, refs: usize, census: live::ExecutorCensus, 
     assert!(over.is_empty(), "{label} {kind}: {over:?}");
 }
 
-fn autocommit<W: WriterNamespace + 'static>(label: &str) {
+fn autocommit<W: WriterNamespace + 'static>(label: &str, kind: live::Kind) {
+    let census = live::autocommit_sites::<W>(kind);
+    let statement = census
+        .sites
+        .iter()
+        .filter(|(name, ..)| name.starts_with(kind.sites()))
+        .count();
+    assert_eq!(statement, if kind == live::Kind::Insert { 15 } else { 13 });
+    let name = match kind {
+        live::Kind::Insert => "autocommit",
+        live::Kind::Delete => "autocommit-delete",
+    };
     executor(
         label,
-        "autocommit",
+        name,
         live::AUTOCOMMIT_CALLER_REFS,
-        live::autocommit_sites::<W>(),
+        census,
         crate::storage::disk::row_write_charge::<W>(),
     );
 }
 
 #[test]
 fn f4_a_autocommit_budgets_memory() {
-    autocommit::<crate::storage::wal_io::plan4_test_support::Writer>("memory");
+    autocommit::<crate::storage::wal_io::plan4_test_support::Writer>("memory", live::Kind::Insert);
 }
 #[test]
 fn f4_a_autocommit_budgets_native() {
-    autocommit::<budget::NativeWriter>("native");
+    autocommit::<budget::NativeWriter>("native", live::Kind::Insert);
 }
 
-fn explicit<W: WriterNamespace + 'static>(label: &str) {
+/// RDL-A08 (dev3-row-delete.md#resources): the autocommit and explicit
+/// DELETE entries under the same fixed ceilings as the INSERT ones, at
+/// every `delete.*` site and every rollback, commit, Begin, statement start
+/// and cleanup site under them.
+#[test]
+fn rdl_a08_autocommit_delete_budgets_memory() {
+    autocommit::<crate::storage::wal_io::plan4_test_support::Writer>("memory", live::Kind::Delete);
+}
+#[test]
+fn rdl_a08_autocommit_delete_budgets_native() {
+    autocommit::<budget::NativeWriter>("native", live::Kind::Delete);
+}
+
+fn explicit<W: WriterNamespace + 'static>(label: &str, kind: live::Kind) {
     // Off the caller's stack by the census; on it, this is added to the
     // caller's term (boundaries `#explicit-transaction`).
     println!(
         "writer={label} explicit holder_on_stack={}",
         live::explicit_holder_bytes()
     );
+    let name = match kind {
+        live::Kind::Insert => "explicit",
+        live::Kind::Delete => "explicit-delete",
+    };
     executor(
         label,
-        "explicit",
+        name,
         live::EXPLICIT_CALLER_REFS,
-        live::explicit_sites::<W>(),
+        live::explicit_sites::<W>(kind),
         crate::storage::disk::row_write_charge::<W>(),
     );
 }
 
 #[test]
 fn f4_a_explicit_budgets_memory() {
-    explicit::<crate::storage::wal_io::plan4_test_support::Writer>("memory");
+    explicit::<crate::storage::wal_io::plan4_test_support::Writer>("memory", live::Kind::Insert);
 }
 #[test]
 fn f4_a_explicit_budgets_native() {
-    explicit::<budget::NativeWriter>("native");
+    explicit::<budget::NativeWriter>("native", live::Kind::Insert);
+}
+#[test]
+fn rdl_a08_explicit_delete_budgets_memory() {
+    explicit::<crate::storage::wal_io::plan4_test_support::Writer>("memory", live::Kind::Delete);
+}
+#[test]
+fn rdl_a08_explicit_delete_budgets_native() {
+    explicit::<budget::NativeWriter>("native", live::Kind::Delete);
 }

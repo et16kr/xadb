@@ -5,7 +5,8 @@
 //! inputs `observe` checked.
 
 use super::{
-    Change, GroupInput, InsertError, Observed, Result, debt, encode_material, leaf, require,
+    Change, GroupInput, InsertError, Observed, Result, UNDO_BYTES, before_of, debt,
+    encode_undo_after, is_delete, leaf, require, undo_after_len,
 };
 use crate::storage::{
     disk::RowPageRole,
@@ -21,7 +22,7 @@ use crate::storage::{
     transaction_record::{
         RollbackState, TransactionState, TransactionStatus, TransactionStatusCell,
     },
-    undo_record::UNDO_RECORD_BYTES,
+    undo_record,
 };
 use foundation::codec::content_digest;
 
@@ -31,7 +32,8 @@ fn put(bytes: &mut [u8], at: usize, value: u64) {
 
 /// RootJob after, written into `cell` (an A scratch region, M2): Forward
 /// adopts it (Retained), CLR starts its compensated release at cursor0.
-/// Unchanged fields keep the reserve-sealed bytes.
+/// Unchanged fields keep the reserve-sealed bytes; Releasing keeps the
+/// effect byte @284 (dev3-row-delete.md#job-effect), zero for INSERT.
 pub(super) fn job(observed: &Observed<'_>, cell: &mut [u8; JOB_BYTES]) -> Result<()> {
     let lsn = observed.header.lsn;
     cell.copy_from_slice(observed.job.bytes());
@@ -42,7 +44,8 @@ pub(super) fn job(observed: &Observed<'_>, cell: &mut [u8; JOB_BYTES]) -> Result
     } else {
         cell[6] = 4;
         cell[200..248].fill(0);
-        cell[280..320].fill(0);
+        cell[280..284].fill(0);
+        cell[285..320].fill(0);
         put(cell, 272, lsn);
         let wal = 4 * RELEASE_BYTES;
         let mut rows = [RemainingBudget::default(); 5];
@@ -111,7 +114,8 @@ pub(super) struct Prepared<'s> {
     pub(super) status: StatusHome,
     /// Root after cell, encoded into `page`.
     pub(super) root: &'s mut [u8; ROOT_BYTES],
-    pub(super) undo: &'s mut [u8; UNDO_RECORD_BYTES],
+    /// U after record; its first `undo_after_len` bytes are the cell.
+    pub(super) undo: &'s mut [u8; UNDO_BYTES],
     pub(super) descriptors: &'s mut [u8; DESCRIPTORS_BYTES],
     /// Status after cell that `pages` encodes.
     pub(super) status_cell: &'s mut [u8; STATUS_HOME_BYTES],
@@ -128,10 +132,14 @@ pub(super) struct Prepared<'s> {
 /// the Aging after census (`aging::next`: high-waters, terminal and pair
 /// relations of the changed Job) are all checked here, before the write pass
 /// writes any output byte; the Aging before was checked by `observe`.
-pub(super) fn prepare(observed: &Observed<'_>, prepared: &mut Prepared<'_>) -> Result<()> {
+pub(super) fn prepare(
+    observed: &Observed<'_>,
+    input: &GroupInput<'_>,
+    prepared: &mut Prepared<'_>,
+) -> Result<()> {
     root(observed, prepared.job, prepared.root, prepared.aggregate)?;
     row::encode_root_page(prepared.root, observed.namespace, prepared.page)?;
-    encode_material(observed, observed.forward, prepared.undo)?;
+    encode_undo_after(observed, &input.schema, &mut prepared.undo[..])?;
     let (transaction, aging_after) = prepared.descriptors.split_at_mut(1536);
     descriptor(observed, prepared.status, transaction)?;
     #[cfg(test)]
@@ -230,7 +238,11 @@ pub(super) fn pages(
                 )?;
             }
             RowPageRole::Undo => {
-                page::encode_page(header(observed, index), &[&prepared.undo[..]], output)?;
+                page::encode_page(
+                    header(observed, index),
+                    &[&prepared.undo[..undo_after_len(observed)]],
+                    output,
+                )?;
             }
             RowPageRole::RowLeaf => {
                 let lsn = PageLsn(lsn);
@@ -253,6 +265,64 @@ pub(super) fn pages(
                             },
                             scratch,
                             output,
+                        )?;
+                    }
+                    Change::DeleteForward { .. } => {
+                        leaf::replace(
+                            namespace,
+                            observed.leaf,
+                            input.schema,
+                            page.before,
+                            super::current_version(
+                                observed.actor,
+                                observed.row,
+                                observed.job,
+                                observed.undo.reference,
+                            )?,
+                            None,
+                            lsn,
+                            scratch,
+                            Some(output),
+                        )?;
+                    }
+                    // DeleteClr restores the row U's Live before holds
+                    // (dev3-row-delete.md#delete-states).
+                    Change::Clr { .. } if is_delete(observed.job) => {
+                        let undo = page::decode_page(
+                            before_of(observed, RowPageRole::Undo),
+                            observed.pages[role_index(observed, RowPageRole::Undo)].identity,
+                            page::PageKind::Undo,
+                        )?;
+                        let live = undo_record::decode_undo_record(
+                            undo.cell(0).ok_or(InsertError::IdentityMismatch)?,
+                            undo_record::UndoRecordExpectation {
+                                namespace,
+                                reference: observed.undo.reference,
+                                target: super::row_target(observed.table, observed.row),
+                            },
+                            &input.schema,
+                        )?
+                        .live_before()?;
+                        let (Some(stamp), Some(logical), undo_record::UndoPayload::Inline(value)) =
+                            (live.before_stamp, live.before_logical, live.payload)
+                        else {
+                            return Err(InsertError::IdentityMismatch);
+                        };
+                        leaf::replace(
+                            namespace,
+                            observed.leaf,
+                            input.schema,
+                            page.before,
+                            crate::storage::row_record::RecordVersion {
+                                row: observed.row,
+                                stamp,
+                                logical,
+                                undo: None,
+                            },
+                            Some(value),
+                            lsn,
+                            scratch,
+                            Some(output),
                         )?;
                     }
                     Change::Clr { .. } => leaf::remove(
@@ -319,10 +389,9 @@ fn descriptor(observed: &Observed<'_>, status: StatusHome, output: &mut [u8]) ->
         };
         spec.remaining[1] = RemainingBudget::default();
     } else {
-        // `produce` refused any root that is not an INSERT root.
         let clr = debt(
             row::row_clr_wal(
-                row::RowEffect::Insert,
+                observed.job.effect(),
                 observed.cell as u32,
                 observed.predecessor.is_some(),
             ),

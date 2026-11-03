@@ -32,19 +32,17 @@
 use super::super::super::super::super::row::{RowDraftCut, RowPreflightCut, RowRoleMap};
 use super::super::super::row_preflight::{
     FreeUndo, PreflightSource, RowTableSource, fold_identity, fold_prefix, fold_stamp, free_slot0,
-    table_index_count, table_value,
+    table_definition, table_index_count, table_value,
 };
 use super::*;
 use crate::storage::{
-    catalog_record::{
-        self, CatalogDefinitionView, CatalogError, CatalogExpectation, TableDefinitionView,
-    },
+    catalog_record::{CatalogError, CatalogExpectation, TableDefinitionView},
     control::Profile,
     dirty_frame,
     overflow::INLINE_ROW_BYTES,
     retention_page::JobSlotRef,
     row_record::{ROW_HEADER_BYTES, RowSchemaInput},
-    tree_page::TreeExpectation,
+    tree_page::{self, TreeExpectation},
     undo_ref::UndoRef,
 };
 use foundation::{codec::ContentHasher, identity::RowId};
@@ -245,29 +243,6 @@ fn before_targets(
     Ok(count)
 }
 
-/// The issued Table's definition in the Catalog leaf copy (`table_value`
-/// and its record decode), for the producer's schema.
-fn table_definition<'x>(
-    schema: &'x [u8; PAGE_BYTES],
-    identity: PageIdentity,
-    table: RowTableSource,
-    namespace: crate::api::Namespace,
-) -> std::result::Result<TableDefinitionView<'x>, RetentionCause> {
-    let value = table_value(schema, identity, table, namespace)?;
-    let record = catalog_record::decode_catalog_record(
-        value,
-        CatalogExpectation {
-            namespace,
-            object: table.handle.object,
-        },
-    )
-    .map_err(RetentionCause::Catalog)?;
-    match record.definition() {
-        CatalogDefinitionView::Table(definition) => Ok(definition),
-        CatalogDefinitionView::Index(_) => Err(RetentionCause::Invariant),
-    }
-}
-
 /// The group role of each position of T, from the role map (one nibble per
 /// `RowSourceRole`, in its order): the producer's output role for Root,
 /// RootJob, Status, Undo and RowLeaf, the allocator's proof role, and the
@@ -317,12 +292,13 @@ fn row_write_roles(map: u64, count: usize) -> Option<[u8; ROW_WRITE_TARGETS]> {
 /// issued table's SchemaEpoch, a length the producer accepts and the SHA-256
 /// of the candidate range, else InvalidInput; then the RowLeaf free bytes of
 /// the cut by A's own rule (four cell-header bytes, eight key bytes, the row
-/// header and a slot), else Capacity. Both are Before.
+/// header and a slot) less the leaf reservation `reserved` (D,
+/// dev3-row-delete.md#leaf-reservation), else Capacity. Both are Before.
 fn check_candidate(
     input: &RowInputPlan,
     candidate: &[u8; PAGE_BYTES],
     table: RowTableSource,
-    cut: &RowPreflightCut,
+    (cut, reserved): (&RowPreflightCut, usize),
 ) -> Result<()> {
     let length = input.encoded_len;
     if input.schema_epoch != table.handle.schema_epoch
@@ -334,10 +310,51 @@ fn check_candidate(
             RetentionCause::RowSemantic(row_semantic::Error::InvalidInput),
         ));
     }
-    if length + ROW_HEADER_BYTES + 16 > usize::from(cut.leaf_free) {
+    if length + ROW_HEADER_BYTES + 16 + reserved > usize::from(cut.leaf_free) {
         return Err(unchanged(RetentionPhase::Prepare, RetentionCause::Capacity));
     }
     Ok(())
+}
+
+/// A DELETE draft's input (dev3-row-delete.md#api): the target row's cell C
+/// and the XRP1 projection of its record in the RowLeaf image, which A's
+/// DeleteForward producer checks against the row it replaces. The delete
+/// Reserve proved the row committed, pruned and inline, so any other answer
+/// contradicts the installed group.
+fn delete_input(
+    leaf: &[u8; PAGE_BYTES],
+    target: TargetRequest,
+    table: ObjectHandle,
+    row: RowId,
+) -> std::result::Result<(usize, [u8; 32]), RetentionCause> {
+    let view = tree_page::decode_tree_page(
+        leaf,
+        TreeExpectation {
+            identity: target.identity,
+            kind: PageKind::RowLeaf,
+            level: 0,
+            arity: 0,
+        },
+    )
+    .map_err(RetentionCause::Tree)?;
+    let position = view
+        .lower_bound(&row.get().to_be_bytes())
+        .map_err(RetentionCause::Tree)?;
+    if !position.equal {
+        return Err(RetentionCause::Invariant);
+    }
+    let tree_page::EntryPayload::Value(value) = view
+        .entry(position.index)
+        .map_err(RetentionCause::Tree)?
+        .payload
+    else {
+        return Err(RetentionCause::Invariant);
+    };
+    let projection =
+        row_group::row_projection(table, row, Some(value)).map_err(RetentionCause::RowSemantic)?;
+    // The cell: its 12-byte head (four header bytes, the eight-byte key)
+    // and the record.
+    Ok((value.len() + 12, projection))
 }
 
 /// The issued identity a draft commitment folds.
@@ -565,7 +582,8 @@ impl<'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
     RetentionWriter<'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W>
 {
     /// The RowReserve body (module doc). `cut` is the PreflightRow's; `input`
-    /// is A's untrusted plan. An Unchanged error is a Before: nothing was
+    /// is A's untrusted plan of an INSERT, None for the cut's DELETE target
+    /// (dev3-row-delete.md#api). An Unchanged error is a Before: nothing was
     /// staged, and only the conservative write bit may be registered. Any
     /// other error is Fatal and the fence stays. The entry checks, the group
     /// and the draft are three calls one after another, so the group's
@@ -575,7 +593,7 @@ impl<'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
         &mut self,
         owner: &mut Owner<'c, 's>,
         statement: &RowStatementView<'_, '_, 'a, 'c, 's>,
-        (table, cut, input): (RowTableSource, &RowPreflightCut, &RowInputPlan),
+        (table, cut, input): (RowTableSource, &RowPreflightCut, Option<&RowInputPlan>),
         private: &mut [u8; 425_984],
     ) -> Result<RowReserved> {
         let storage = self.storage;
@@ -585,7 +603,7 @@ impl<'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
         let entry = self.reserve_entry(owner, statement, table, cut)?;
         let installed =
             self.reserve_group(owner, statement, &entry, (table, cut, input), private)?;
-        self.reserve_draft(owner, &entry, (cut, input), installed, private)
+        self.reserve_draft(owner, &entry, (table, cut, input), installed, private)
     }
 
     /// Steps 2 to 5 of the module doc: the group preparation, the table
@@ -598,7 +616,7 @@ impl<'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
         owner: &mut Owner<'c, 's>,
         statement: &RowStatementView<'_, '_, 'a, 'c, 's>,
         entry: &ReserveEntry,
-        (table, cut, input): (RowTableSource, &RowPreflightCut, &RowInputPlan),
+        (table, cut, input): (RowTableSource, &RowPreflightCut, Option<&RowInputPlan>),
         private: &mut [u8; 425_984],
     ) -> Result<ReserveInstalled> {
         let ReserveLanes {
@@ -688,13 +706,16 @@ impl<'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
 
     /// After the install: one typed read of T copies each pool page into the
     /// before range (the next step's before images) and folds the draft
-    /// commitment over those pages and the control. Every failure here is
-    /// Fatal(Install): the group is durable (refusal table, S2-0b).
+    /// commitment over those pages and the control. The draft input is the
+    /// INSERT plan's canonical digest and length, or for a DELETE the old
+    /// row's cell C and record projection in the refreshed RowLeaf image
+    /// (`delete_input`), which the Reserve did not change. Every failure here
+    /// is Fatal(Install): the group is durable (refusal table, S2-0b).
     fn reserve_draft(
         &self,
         owner: &mut Owner<'c, 's>,
         entry: &ReserveEntry,
-        (cut, input): (&RowPreflightCut, &RowInputPlan),
+        (table, cut, input): (RowTableSource, &RowPreflightCut, Option<&RowInputPlan>),
         installed: ReserveInstalled,
         private: &mut [u8; 425_984],
     ) -> Result<RowReserved> {
@@ -752,6 +773,18 @@ impl<'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
             9 => self.draft_fold::<9>(owner, (prefix, entry.slot), &targets, (cut, issued), before),
             _ => Err(installed_fatal(RetentionCause::Invariant)),
         }?;
+        let (length, digest) = match (input, cut.delete) {
+            (Some(input), None) => (input.encoded_len, input.digest),
+            // The delete Reserve issued the cut's target (C's own output).
+            (None, Some(row)) if row == issued.row => {
+                let leaf_at = role_position(cut.roles, RowSourceRole::RowLeaf)
+                    .filter(|at| *at < count)
+                    .ok_or_else(|| installed_fatal(RetentionCause::Invariant))?;
+                delete_input(&before[leaf_at], targets[leaf_at], table.handle, row)
+                    .map_err(installed_fatal)?
+            }
+            _ => return Err(installed_fatal(RetentionCause::Invariant)),
+        };
         Ok(RowReserved {
             actor: entry.actor,
             root_job,
@@ -760,11 +793,11 @@ impl<'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
             lsn,
             draft: RowDraftCut {
                 source,
-                input: input.digest,
+                input: digest,
                 complete_lsn: prefix.complete_lsn,
                 planned_mutation: issued.mutation,
                 roles: cut.roles,
-                input_len: u16::try_from(input.encoded_len)
+                input_len: u16::try_from(length)
                     .map_err(|_| installed_fatal(RetentionCause::Invariant))?,
                 operation: 0,
             },
@@ -924,7 +957,7 @@ impl<'b, 'a, 's, 'c, 'p, 'd, 'm, 'w, W: WriterNamespace>
         &self,
         owner: &mut Owner<'c, 's>,
         entry: &ReserveEntry,
-        (table, cut, input): (RowTableSource, &RowPreflightCut, &RowInputPlan),
+        (table, cut, input): (RowTableSource, &RowPreflightCut, Option<&RowInputPlan>),
         (before, candidate, schema): (
             &'i [[u8; PAGE_BYTES]; 9],
             &'i [u8; PAGE_BYTES],
@@ -971,18 +1004,37 @@ impl<'b, 'a, 's, 'c, 'p, 'd, 'm, 'w, W: WriterNamespace>
             let anchor = role_position(cut.roles, RowSourceRole::TableAnchor)
                 .filter(|at| *at < count)
                 .ok_or_else(invariant)?;
-            let plan = row_group::ReservePlan {
-                terminal: entry.terminal,
-                container: requests[undo].identity.page,
-                table: table.handle,
-                statement: entry.sequence,
-                canonical: &candidate[..input.encoded_len],
+            let insert;
+            let delete;
+            let change = match (input, cut.delete) {
+                (Some(input), None) => {
+                    insert = row_group::ReservePlan {
+                        terminal: entry.terminal,
+                        container: requests[undo].identity.page,
+                        table: table.handle,
+                        statement: entry.sequence,
+                        canonical: &candidate[..input.encoded_len],
+                    };
+                    row_group::Change::Reserve(&insert)
+                }
+                // The target preflight classified (dev3-row-delete.md#api).
+                (None, Some(row)) => {
+                    delete = row_group::DeletePlan {
+                        terminal: entry.terminal,
+                        container: requests[undo].identity.page,
+                        table: table.handle,
+                        statement: entry.sequence,
+                        row,
+                    };
+                    row_group::Change::ReserveDelete(&delete)
+                }
+                _ => return Err(invariant()),
             };
             let aging = self.control.row(control::AGING_SLOT);
             let inputs = row_group::Inputs {
                 profile,
                 frame: expected,
-                change: row_group::Change::Reserve(&plan),
+                change,
                 jobs: self.control.jobs(),
                 root: &before[at(ROOT)?],
                 jobs_page: Some(&before[at(JOB)?]),
@@ -1087,14 +1139,14 @@ impl<'b, 'a, 's, 'c, 'p, 'd, 'm, 'w, W: WriterNamespace>
 
     /// Steps 2 and 3 of the module doc, before the producer: T in before
     /// order into `requests` and its group roles, the commitment recompute
-    /// (T's stamps into `stamps`), A's candidate (S2W-R04) and the table
-    /// definition from the Catalog leaf copy, whose record value the
+    /// (T's stamps into `stamps`), an INSERT's candidate (S2W-R04) and the
+    /// table definition from the Catalog leaf copy, whose record value the
     /// recompute just proved equal to the pool's.
     fn reserve_sources<'x>(
         &self,
         owner: &mut Owner<'c, 's>,
         entry: &ReserveEntry,
-        (table, cut, input): (RowTableSource, &RowPreflightCut, &RowInputPlan),
+        (table, cut, input): (RowTableSource, &RowPreflightCut, Option<&RowInputPlan>),
         (before, candidate, schema): (
             &[[u8; PAGE_BYTES]; 9],
             &[u8; PAGE_BYTES],
@@ -1118,7 +1170,23 @@ impl<'b, 'a, 's, 'c, 'p, 'd, 'm, 'w, W: WriterNamespace>
             9 => self.reserve_recompute::<10>(owner, entry.prefix, targets, (cut, table), stamps),
             _ => Err(invariant()),
         }?;
-        check_candidate(input, candidate, table, cut)?;
+        // An INSERT's candidate, with the leaf reservation D of the Jobs the
+        // recompute just proved; a DELETE has none and frees space.
+        if let Some(input) = input {
+            let reserved = row_group::leaf_reservation(
+                self.control.jobs(),
+                profile.spec().namespace,
+                table.handle,
+            )
+            .map_err(|error| {
+                fatal(
+                    storage,
+                    RetentionPhase::Census,
+                    RetentionCause::RowSemantic(error),
+                )
+            })?;
+            check_candidate(input, candidate, table, (cut, reserved))?;
+        }
         let catalog = target_from_source(storage, Plan4Page::CatalogLeaf)?.request;
         let definition =
             table_definition(schema, catalog.identity, table, profile.spec().namespace)
@@ -1421,10 +1489,19 @@ pub(in super::super::super) fn row_reserve_body<W: WriterNamespace>(
         + size_of::<TableDefinitionView<'_>>()
         + size_of::<Cause<TableDefinitionView<'_>>>()
         + size_of::<ReserveSources<'_>>()
+        // An INSERT's leaf reservation D beside its candidate check.
+        + size_of::<usize>()
+        + 2 * size_of::<std::result::Result<usize, row_semantic::Error>>()
         + 4 * size_of::<RetentionError>()
         // Receiver, arguments, storage, the closure capture and T's slice.
         + 14 * reference;
-    let sources = sources_frame + targets.max(roles).max(recompute).max(candidate).max(schema);
+    let sources = sources_frame
+        + targets
+            .max(roles)
+            .max(recompute)
+            .max(row_group::leaf_reservation_source_bytes())
+            .max(candidate)
+            .max(schema);
     // The produce callee's Result is the produce term's
     // (`produce_borrowed_source_bytes`); the inventory call's Result is the
     // inventory term's.
@@ -1437,7 +1514,10 @@ pub(in super::super::super) fn row_reserve_body<W: WriterNamespace>(
         + size_of::<ReserveSources<'_>>()
         + size_of::<Result<ReserveSources<'_>>>()
         + size_of::<FrameExpectation>()
+        // The INSERT or the DELETE plan and the change naming it.
         + size_of::<row_group::ReservePlan<'_>>()
+        + size_of::<row_group::DeletePlan>()
+        + size_of::<row_group::Change<'_>>()
         + size_of::<row_group::Observation>()
         + size_of::<Option<&[u8]>>()
         + size_of::<(u64, u64)>()
@@ -1487,11 +1567,26 @@ pub(in super::super::super) fn row_reserve_body<W: WriterNamespace>(
         + 2 * size_of::<Cause<usize>>()
         + size_of::<DraftIssued>()
         + 2 * size_of::<Result<[u8; 32]>>()
+        // The draft input: the INSERT plan's or the DELETE's `delete_input`.
+        + size_of::<(usize, [u8; 32])>()
+        + 2 * size_of::<Cause<(usize, [u8; 32])>>()
+        + size_of::<Option<usize>>()
         + size_of::<RowReserved>()
         + 6 * size_of::<usize>()
         + 4 * size_of::<RetentionError>()
         + 10 * reference;
-    let draft = draft_frame + job3::source_bytes().max(targets).max(draft_fold);
+    // `delete_input`: the tree view and position beside the RowLeaf search,
+    // then the projection.
+    let delete_input = size_of::<tree_page::TreePageView<'_>>()
+        + size_of::<tree_page::SearchPosition>()
+        + 2 * size_of::<std::result::Result<[u8; 32], row_semantic::Error>>()
+        + 6 * reference
+        + row_group::tree_source_bytes().max(row_group::projection_source_bytes());
+    let draft = draft_frame
+        + job3::source_bytes()
+            .max(targets)
+            .max(draft_fold)
+            .max(delete_input);
     let body = shell
         + frame
         + entry

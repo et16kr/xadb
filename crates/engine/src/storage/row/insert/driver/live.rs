@@ -14,7 +14,7 @@ use super::{
         Autocommit, abort_transaction, commit_answer, refused, statement_ended, statement_refused,
         table_not_issued,
     },
-    call_sites, caller_bytes, carrier_bytes,
+    call_sites, caller_bytes, carrier_bytes, delete_statement,
     explicit::Explicit,
     finish_aborted, finish_rollback, finish_statement, insert_statement, map_commit_result,
     retire_finished, retry_task, rollback_step, start_full_rollback, start_statement_rollback,
@@ -23,17 +23,17 @@ use crate::storage::{
     disk::{
         CheckedTable, IsolationLevel, MaintenancePort, MutationPort, Owner, Plan4Target,
         PreflightRow, PreparedRollbackTask, RetentionError, RetentionFlushPhase, RollbackScope,
-        RollbackStep, RowCommitObservation, RowInputPlan, RowMutationObservation, RowOwnedError,
-        RowPreflightOperation, RowPreflightStep, RowPreparedOperation, RowProducerLane,
-        RowProposal, RowReservedOperation, RowRetireStep, RowRollback, RowRollbackTask,
-        RowStatementView, RowTransaction, RowValidationLane, StatementFinishError,
+        RollbackStep, RowCommitObservation, RowDeleteStep, RowInputPlan, RowMutationObservation,
+        RowOwnedError, RowPreflightOperation, RowPreflightStep, RowPreparedOperation,
+        RowProducerLane, RowProposal, RowReservedOperation, RowRetireStep, RowRollback,
+        RowRollbackTask, RowStatementView, RowTransaction, RowValidationLane, StatementFinishError,
         TransactionFinishError,
     },
     row::insert::{InsertError, produce_clr, produce_insert, validate_insert},
     row_record::ValueRef,
     semantic_row::Operation,
 };
-use foundation::namespace::WriterNamespace;
+use foundation::{identity::RowId, namespace::WriterNamespace};
 use std::{convert::Infallible, marker::PhantomData};
 
 impl StatementView for RowStatementView<'_, '_, '_, '_, '_> {
@@ -71,6 +71,9 @@ impl<P: RowPreflightOperation> Preflight for P {
     }
     fn reserve(self, input: RowInputPlan) -> Result<Self::Reserved, RowOwnedError<Self>> {
         RowPreflightOperation::reserve(self, input)
+    }
+    fn reserve_delete(self) -> Result<Self::Reserved, RowOwnedError<Self>> {
+        RowPreflightOperation::reserve_delete(self)
     }
     fn finish(self) -> Result<(), RetentionError> {
         RowPreflightOperation::finish(self)
@@ -238,6 +241,28 @@ impl<'x, 't, 'v, 'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace> Boundar
             {
                 RowPreflightStep::Ready(preflight) => PreflightNext::Ready(preflight),
                 RowPreflightStep::FlushRequired { target } => PreflightNext::Flush(target),
+            },
+        )
+    }
+    fn preflight_delete<'r, 'i>(
+        &'r mut self,
+        statement: &'r Self::Statement,
+        table: &'r CheckedTable<'c, 's>,
+        row: RowId,
+        loan: &'i mut Loan,
+    ) -> Result<PreflightNext<Self::Preflight<'r, 'i>, Plan4Target>, RetentionError> {
+        Ok(
+            match self.port.preflight_delete(
+                self.owner,
+                statement,
+                table,
+                row,
+                loan,
+                self.flusher,
+            )? {
+                RowDeleteStep::Ready(preflight) => PreflightNext::Ready(preflight),
+                RowDeleteStep::FlushRequired { target } => PreflightNext::Flush(target),
+                RowDeleteStep::NoRow => PreflightNext::NoRow,
             },
         )
     }
@@ -622,12 +647,100 @@ pub(in crate::storage) fn autocommit_insert_live<
         .begin_row_transaction(call.owner, isolation, status, private, call.flusher)
     {
         Ok(transaction) => {
-            match statement_live(call, &transaction, tables, private, rows, slots, out) {
+            match statement_live(call, &transaction, tables, private, (rows, slots), out) {
                 Some(rows) => commit_live_step(call, transaction, private, rows, out),
                 None => abort_transaction(call, transaction, private, out),
             }
         }
         Err(error) => refused(out, Stage::Begin, error, Autocommit::NotBegun),
+    }
+}
+
+/// The autocommit DELETE executor (dev3-row-delete.md#api): one DELETE of
+/// `row` in its own transaction, with `autocommit_insert_live`'s steps and
+/// slot. The statement is `delete_statement`; `Committed`'s count is the
+/// rows deleted, 0 or 1, and `slot` holds the deleted row's observation
+/// when it is 1. A target that is no row under the statement snapshot
+/// commits the transaction with no root (C's Commit needs only no
+/// outstanding reservation). Its share at each C call is
+/// `autocommit_sites(Kind::Delete)`'.
+#[inline(never)]
+#[allow(
+    clippy::too_many_arguments,
+    reason = "the call, Begin's status and isolation, the table source, the loan, the target row and its slot, and the result slot"
+)]
+pub(in crate::storage) fn autocommit_delete_live<
+    'b,
+    'a,
+    's,
+    'c,
+    W: WriterNamespace,
+    T: LiveTables<'a, 'c, 's, W>,
+>(
+    call: &mut Live<'_, '_, 'b, 'b, 'a, 's, 'c, '_, '_, '_, '_, '_, W>,
+    status: &Plan4Target,
+    isolation: IsolationLevel,
+    tables: &mut T,
+    private: &mut Loan,
+    row: RowId,
+    slot: &mut Option<RowMutationObservation>,
+    out: &mut Autocommit<RowCommitObservation>,
+) {
+    match call
+        .port
+        .begin_row_transaction(call.owner, isolation, status, private, call.flusher)
+    {
+        Ok(transaction) => {
+            match statement_live(call, &transaction, tables, private, (row, slot), out) {
+                Some(rows) => commit_live_step(call, transaction, private, rows, out),
+                None => abort_transaction(call, transaction, private, out),
+            }
+        }
+        Err(error) => refused(out, Stage::Begin, error, Autocommit::NotBegun),
+    }
+}
+
+/// A statement's rows as the executor's statement frames pass them on to
+/// the driver: an INSERT's rows and their slots (`insert_statement`), or a
+/// DELETE's target row and its slot (`delete_statement`). `run` is a
+/// forward, the tail of `start_statement_live`.
+trait StatementRows {
+    #[allow(
+        clippy::result_large_err,
+        reason = "the unchanged or rollback-required statement view is returned inline"
+    )]
+    fn run<'t, 'b, 'a, 's, 'c, W: WriterNamespace>(
+        self,
+        call: &mut Live<'_, 't, 'b, 'b, 'a, 's, 'c, '_, '_, '_, '_, '_, W>,
+        statement: RowStatementView<'t, 'b, 'a, 'c, 's>,
+        table: &CheckedTable<'c, 's>,
+        private: &mut Loan,
+    ) -> Result<usize, DriveError<RowStatementView<'t, 'b, 'a, 'c, 's>>>;
+}
+
+impl StatementRows for (&[&[ValueRef<'_>]], &mut [Option<RowMutationObservation>]) {
+    fn run<'t, 'b, 'a, 's, 'c, W: WriterNamespace>(
+        self,
+        call: &mut Live<'_, 't, 'b, 'b, 'a, 's, 'c, '_, '_, '_, '_, '_, W>,
+        statement: RowStatementView<'t, 'b, 'a, 'c, 's>,
+        table: &CheckedTable<'c, 's>,
+        private: &mut Loan,
+    ) -> Result<usize, DriveError<RowStatementView<'t, 'b, 'a, 'c, 's>>> {
+        let (rows, slots) = self;
+        insert_statement(call, statement, table, private, rows, slots)
+    }
+}
+
+impl StatementRows for (RowId, &mut Option<RowMutationObservation>) {
+    fn run<'t, 'b, 'a, 's, 'c, W: WriterNamespace>(
+        self,
+        call: &mut Live<'_, 't, 'b, 'b, 'a, 's, 'c, '_, '_, '_, '_, '_, W>,
+        statement: RowStatementView<'t, 'b, 'a, 'c, 's>,
+        table: &CheckedTable<'c, 's>,
+        private: &mut Loan,
+    ) -> Result<usize, DriveError<RowStatementView<'t, 'b, 'a, 'c, 's>>> {
+        let (row, slot) = self;
+        delete_statement(call, statement, table, private, row, slot)
     }
 }
 
@@ -638,13 +751,20 @@ pub(in crate::storage) fn autocommit_insert_live<
 /// one slot; the run's own frame has returned before the end, so its slots
 /// (the view's and the table's) are not laid out under the rollback.
 #[inline(never)]
-fn statement_live<'b, 'a, 's, 'c, W: WriterNamespace, T: LiveTables<'a, 'c, 's, W>>(
+fn statement_live<
+    'b,
+    'a,
+    's,
+    'c,
+    W: WriterNamespace,
+    T: LiveTables<'a, 'c, 's, W>,
+    R: StatementRows,
+>(
     call: &mut Live<'_, '_, 'b, 'b, 'a, 's, 'c, '_, '_, '_, '_, '_, W>,
     transaction: &RowTransaction<'b, 'a, 'c, 's>,
     tables: &mut T,
     private: &mut Loan,
-    rows: &[&[ValueRef<'_>]],
-    slots: &mut [Option<RowMutationObservation>],
+    rows: R,
     out: &mut Autocommit<RowCommitObservation>,
 ) -> Option<usize> {
     let mut call = LiveCall::new(
@@ -653,31 +773,40 @@ fn statement_live<'b, 'a, 's, 'c, W: WriterNamespace, T: LiveTables<'a, 'c, 's, 
         &mut *call.flusher,
         &mut *call.flush_owner,
     );
-    let ran = start_statement_live(&mut call, transaction, tables, private, rows, slots);
+    let ran = start_statement_live(&mut call, transaction, tables, private, rows);
     statement_ended(&mut call, transaction, ran, private, out)
 }
 
 /// The statement's run: C's statement start, the caller's table and the
-/// driver's statement (`insert_statement`, this frame's tail, so it writes
-/// the answer in the caller's slot). A refused start (`statement_refused`)
+/// driver's statement (`insert_statement` or `delete_statement` through
+/// `StatementRows::run`, this frame's tail, so it writes the answer in the
+/// caller's slot). A refused start (`statement_refused`)
 /// or a table not issued (`table_not_issued`) is the run's failure.
 #[inline(never)]
 #[allow(
     clippy::result_large_err,
     reason = "Failure keeps the stage, the error and any refused cleanup inline, without allocation"
 )]
-fn start_statement_live<'t, 'b, 'a, 's, 'c, W: WriterNamespace, T: LiveTables<'a, 'c, 's, W>>(
+fn start_statement_live<
+    't,
+    'b,
+    'a,
+    's,
+    'c,
+    W: WriterNamespace,
+    T: LiveTables<'a, 'c, 's, W>,
+    R: StatementRows,
+>(
     call: &mut Live<'_, 't, 'b, 'b, 'a, 's, 'c, '_, '_, '_, '_, '_, W>,
     transaction: &'t RowTransaction<'b, 'a, 'c, 's>,
     tables: &mut T,
     private: &mut Loan,
-    rows: &[&[ValueRef<'_>]],
-    slots: &mut [Option<RowMutationObservation>],
+    rows: R,
 ) -> Result<usize, DriveError<RowStatementView<'t, 'b, 'a, 'c, 's>>> {
     match call.port.begin_statement(call.owner, transaction) {
         Ok(statement) => match tables.issue(call.owner, &statement, call.flusher, call.flush_owner)
         {
-            Ok(Some(table)) => insert_statement(call, statement, &table, private, rows, slots),
+            Ok(Some(table)) => rows.run(call, statement, &table, private),
             issued => table_not_issued(statement, issued),
         },
         Err(error) => statement_refused(error),
@@ -778,7 +907,53 @@ pub(in crate::storage) fn transaction_insert_live<
         &mut *call.flusher,
         &mut *call.flush_owner,
     );
-    let ran = start_statement_live(&mut call, transaction, tables, private, rows, slots);
+    let ran = start_statement_live(&mut call, transaction, tables, private, (rows, slots));
+    match statement_ended(&mut call, transaction, ran, private, out) {
+        Some(rows) => *out = Explicit::Done { rows },
+        None if matches!(out, Explicit::Fenced(_)) => *holder = None,
+        None => {}
+    }
+}
+
+/// One DELETE statement of `row` in the explicit transaction in `holder`
+/// (dev3-row-delete.md#api), with `transaction_insert_live`'s steps and
+/// slot: `Done`'s count is the rows deleted, 0 or 1, and `slot` holds the
+/// deleted row's observation when it is 1. A refused DELETE (Busy,
+/// Unsupported, SerializationConflict, a refused Reserve) leaves nothing of
+/// the statement, which is finished: the slot says `Failed` and the
+/// transaction goes on. Its share at each C call is
+/// `explicit_sites(Kind::Delete)`'.
+#[inline(never)]
+#[allow(
+    clippy::too_many_arguments,
+    reason = "the call, the transaction's holder, the table source, the loan, the target row and its slot, and the result slot"
+)]
+pub(in crate::storage) fn transaction_delete_live<
+    'b,
+    'a,
+    's,
+    'c,
+    W: WriterNamespace,
+    T: LiveTables<'a, 'c, 's, W>,
+>(
+    call: &mut Live<'_, '_, 'b, 'b, 'a, 's, 'c, '_, '_, '_, '_, '_, W>,
+    holder: &mut Option<RowTransaction<'b, 'a, 'c, 's>>,
+    tables: &mut T,
+    private: &mut Loan,
+    row: RowId,
+    slot: &mut Option<RowMutationObservation>,
+    out: &mut Explicit<RowCommitObservation>,
+) {
+    let Some(transaction) = holder.as_ref() else {
+        return no_transaction(Stage::Statement, out);
+    };
+    let mut call = LiveCall::new(
+        &mut *call.port,
+        &mut *call.owner,
+        &mut *call.flusher,
+        &mut *call.flush_owner,
+    );
+    let ran = start_statement_live(&mut call, transaction, tables, private, (row, slot));
     match statement_ended(&mut call, transaction, ran, private, out) {
         Some(rows) => *out = Explicit::Done { rows },
         None if matches!(out, Explicit::Fenced(_)) => *holder = None,
@@ -1098,14 +1273,15 @@ pub(in crate::storage) struct ExecutorCensus {
     pub(in crate::storage) caller: usize,
     /// The frame-static share at C's `commit_row`.
     pub(in crate::storage) commit: usize,
-    /// The frame-static share at `insert.finish_statement`.
+    /// The frame-static share at `insert.finish_statement`
+    /// (`delete.finish_statement`).
     pub(in crate::storage) statement_end: usize,
     /// A's term below the rollback at C's flush of a rollback target
     /// (`RowRollback::flush`): what C's flush step counts as its caller.
     pub(in crate::storage) rollback_caller: usize,
     /// (driver site, path, per-call share, frame-static share) at each
-    /// `insert.*` site and at each rollback site on the statement rollback
-    /// path and on the full rollback path.
+    /// `insert.*` (`delete.*`) site and at each rollback site on the
+    /// statement rollback path and on the full rollback path.
     pub(in crate::storage) sites: Vec<(&'static str, &'static str, usize, usize)>,
     /// The term of the cleanup's caller (the executor's caller after the
     /// transaction ended, calling `retire_finished_live` while a drain is
@@ -1120,6 +1296,45 @@ pub(in crate::storage) struct ExecutorCensus {
     /// for the record: C's CatalogFull charge has no A term
     /// (`dev3-module-boundaries.md#begin-statement-ceilings`).
     pub(in crate::storage) unbounded: [(&'static str, usize); 1],
+}
+
+/// The statement an executor runs, as its census counts it
+/// (`autocommit_sites`, `explicit_sites`): the driver sites under it and
+/// the bytes of the rows argument its statement frames pass on
+/// (`StatementRows`).
+#[cfg(test)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub(in crate::storage) enum Kind {
+    /// `autocommit_insert_live`, `transaction_insert_live`: the rows and
+    /// their slots, under the `insert.*` sites.
+    Insert,
+    /// `autocommit_delete_live`, `transaction_delete_live`: the target row
+    /// and its slot, under the `delete.*` sites.
+    Delete,
+}
+
+#[cfg(test)]
+impl Kind {
+    /// The driver sites' prefix.
+    pub(in crate::storage) fn sites(self) -> &'static str {
+        match self {
+            Self::Insert => "insert.",
+            Self::Delete => "delete.",
+        }
+    }
+
+    /// The rows argument: an INSERT's two slices, a DELETE's RowId and the
+    /// reference to its slot.
+    fn rows(self) -> usize {
+        use std::mem::size_of;
+        match self {
+            Self::Insert => size_of::<(
+                &'static [&'static [ValueRef<'static>]],
+                &'static mut [Option<RowMutationObservation>],
+            )>(),
+            Self::Delete => size_of::<(RowId, &'static mut Option<RowMutationObservation>)>(),
+        }
+    }
 }
 
 #[cfg(test)]
@@ -1147,6 +1362,8 @@ type CensusView = RowStatementView<'static, 'static, 'static, 'static, 'static>;
 /// and the ending steps' own frames, which `executor_sites` counts.
 #[cfg(test)]
 struct PathTerms {
+    /// The statement the executor runs.
+    kind: Kind,
     /// The caller's term.
     caller: usize,
     /// The frames between the caller and the statement's frame (the
@@ -1191,14 +1408,12 @@ fn executor_sites<W: WriterNamespace + 'static>(path: PathTerms) -> ExecutorCens
     type J<W> = <L<W> as Boundary>::Rollback<'static, 'static>;
     type K<W> = StartedRollback<'static, J<W>>;
     type Sd = (Stage, super::DriverError);
-    type Rows = &'static [&'static [ValueRef<'static>]];
-    type Slots = &'static mut [Option<RowMutationObservation>];
     type Retire = Result<Retired, RetireStop>;
     let r = size_of::<&()>();
     let slack = 32 * r + 16 * size_of::<Result<(), RetentionError>>() + 512;
     let sd = size_of::<Result<(), Sd>>();
-    let (rows, slots) = (size_of::<Rows>(), size_of::<Slots>());
     let PathTerms {
+        kind,
         caller,
         executor,
         statement,
@@ -1209,10 +1424,10 @@ fn executor_sites<W: WriterNamespace + 'static>(path: PathTerms) -> ExecutorCens
     // start_statement_live: its arguments, the statement start's result,
     // which holds the view, and the issue's result, which holds the table
     // (or, not a table, is passed on by value). Its frame has returned
-    // before the statement is ended.
+    // before the statement is ended. `StatementRows::run`, its tail, is a
+    // forward of these arguments.
     let start = 4 * r
-        + rows
-        + slots
+        + kind.rows()
         + size_of::<Result<V, RetentionError>>()
         + size_of::<Result<Option<CheckedTable<'static, 'static>>, RetentionError>>();
     // statement_ended: its arguments (the answer counts in the statement's
@@ -1255,7 +1470,7 @@ fn executor_sites<W: WriterNamespace + 'static>(path: PathTerms) -> ExecutorCens
             .find(|site| site.name == name)
             .expect("driver site")
     };
-    for s in driver.iter().filter(|s| s.name.starts_with("insert.")) {
+    for s in driver.iter().filter(|s| s.name.starts_with(kind.sites())) {
         let term = below_statement;
         sites.push((s.name, "statement", s.bytes + term, s.bytes + s.dead + term));
     }
@@ -1295,7 +1510,10 @@ fn executor_sites<W: WriterNamespace + 'static>(path: PathTerms) -> ExecutorCens
     // C's commit_row: its three references (the transaction counts in the
     // caller's or the executor's slot).
     let commit = slack + caller + commit + 3 * r;
-    let end = site("insert.finish_statement");
+    let end = site(match kind {
+        Kind::Insert => "insert.finish_statement",
+        Kind::Delete => "delete.finish_statement",
+    });
     let statement_end = end.bytes + end.dead + below_statement;
     // The cleanup after the transaction ended: the caller with its slot for
     // `retire_finished_live`'s result, the forward's return and arguments
@@ -1323,18 +1541,18 @@ fn executor_sites<W: WriterNamespace + 'static>(path: PathTerms) -> ExecutorCens
 }
 
 /// The autocommit executor's share at every C call under
-/// `autocommit_insert_live` (`executor_sites`).
+/// `autocommit_insert_live` or `autocommit_delete_live` (`executor_sites`).
 #[cfg(test)]
-pub(in crate::storage) fn autocommit_sites<W: WriterNamespace + 'static>() -> ExecutorCensus {
+pub(in crate::storage) fn autocommit_sites<W: WriterNamespace + 'static>(
+    kind: Kind,
+) -> ExecutorCensus {
     use std::mem::size_of;
     type L<W> = CensusLive<W>;
     type T = CensusTransaction;
     type V = CensusView;
     type Obs = RowCommitObservation;
-    type Rows = &'static [&'static [ValueRef<'static>]];
-    type Slots = &'static mut [Option<RowMutationObservation>];
     let r = size_of::<&()>();
-    let (rows, slots) = (size_of::<Rows>(), size_of::<Slots>());
+    let rows = kind.rows();
 
     // The caller: the call, the Owners the call refers to, the result
     // slot, the status target and its references.
@@ -1343,26 +1561,25 @@ pub(in crate::storage) fn autocommit_sites<W: WriterNamespace + 'static>() -> Ex
         + size_of::<Autocommit<Obs>>()
         + size_of::<Plan4Target>()
         + AUTOCOMMIT_CALLER_REFS * r;
-    // autocommit_insert_live: its arguments (five references, the
-    // isolation and the two slices), Begin's result, which holds the
-    // transaction, and statement_live's result.
+    // autocommit_insert_live (autocommit_delete_live): its arguments (five
+    // references, the isolation and the rows), Begin's result, which holds
+    // the transaction, and statement_live's result.
     let executor = 5 * r
         + size_of::<IsolationLevel>()
         + rows
-        + slots
         + size_of::<Result<T, RetentionError>>()
         + size_of::<Option<usize>>();
     // statement_live: its arguments, the call it reborrows and the run's
     // answer, which holds a failed statement's After and Failure while the
     // statement is ended (start_statement_live's tail writes it).
-    let statement =
-        5 * r + rows + slots + size_of::<L<W>>() + size_of::<Result<usize, DriveError<V>>>();
+    let statement = 5 * r + rows + size_of::<L<W>>() + size_of::<Result<usize, DriveError<V>>>();
     // commit_live_step: its arguments and C's answer; commit_answer: its
     // arguments (the answer counts in commit_live_step).
     let commit_step =
         3 * r + size_of::<usize>() + size_of::<Result<Obs, TransactionFinishError<T>>>();
     let commit_answer = 3 * r + size_of::<usize>();
     executor_sites::<W>(PathTerms {
+        kind,
         caller,
         executor,
         statement,
@@ -1388,16 +1605,16 @@ pub(in crate::storage) fn explicit_holder_bytes() -> usize {
 /// reference to it. A caller that keeps the holder on this stack adds
 /// `size_of::<Option<RowTransaction>>()` to its term and redoes the census.
 #[cfg(test)]
-pub(in crate::storage) fn explicit_sites<W: WriterNamespace + 'static>() -> ExecutorCensus {
+pub(in crate::storage) fn explicit_sites<W: WriterNamespace + 'static>(
+    kind: Kind,
+) -> ExecutorCensus {
     use std::mem::size_of;
     type L<W> = CensusLive<W>;
     type T = CensusTransaction;
     type V = CensusView;
     type Obs = RowCommitObservation;
-    type Rows = &'static [&'static [ValueRef<'static>]];
-    type Slots = &'static mut [Option<RowMutationObservation>];
     let r = size_of::<&()>();
-    let (rows, slots) = (size_of::<Rows>(), size_of::<Slots>());
+    let rows = kind.rows();
 
     // The caller: the call, the Owners the call refers to, the result
     // slot, the status target and its references (one is the holder's).
@@ -1410,12 +1627,11 @@ pub(in crate::storage) fn explicit_sites<W: WriterNamespace + 'static>() -> Exec
     // isolation) and C's answer, which holds the transaction until it is
     // moved into the holder.
     let begin = 5 * r + size_of::<IsolationLevel>() + size_of::<Result<T, RetentionError>>();
-    // transaction_insert_live: its arguments, the transaction's reference,
-    // the call it reborrows, the run's answer (as statement_live's) and the
-    // end's answer.
+    // transaction_insert_live (transaction_delete_live): its arguments, the
+    // transaction's reference, the call it reborrows, the run's answer (as
+    // statement_live's) and the end's answer.
     let statement = 6 * r
         + rows
-        + slots
         + size_of::<L<W>>()
         + size_of::<Result<usize, DriveError<V>>>()
         + size_of::<Option<usize>>();
@@ -1431,6 +1647,7 @@ pub(in crate::storage) fn explicit_sites<W: WriterNamespace + 'static>() -> Exec
     // of the holder (moved into abort_transaction, it stays in its slot).
     let rollback = 4 * r + size_of::<Option<T>>();
     executor_sites::<W>(PathTerms {
+        kind,
         caller,
         executor: 0,
         statement,
