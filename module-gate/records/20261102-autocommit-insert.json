@@ -1,0 +1,257 @@
+{
+ "schema": "XADB_MODULE_GATE_RECORD_V1",
+ "change": "DEV3 Row: autocommit INSERT executor in A's statement driver (autocommit_insert_live: Row Begin, statement start, the caller's table, insert_statement in a never-inlined sub-frame, C's Commit; a failed statement is rolled back to its mark and finished after the sub-frame returned, then the full rollback and finish_aborted; refusals on the way to the end are fenced, only FlushRequired is continued through Rollback::flush). The commit fits COMMIT 3,024 B (2,889 B) with no C change. A new two-sided F4 contract re-sets ROLLBACK_CALLER 512->1,536, rollback.next 6,144->6,528 and rollback.clr_lane 11,520->12,416 B (C charge 44,304 and cap 65,536 unchanged; C census code unchanged); this is outside the user's decision card (COMMIT) and is flagged for the user in the PR. Tests LAC-A01..A12 (no A08), LAC-J01/J02. Called only by tests.",
+ "rust_tests": [
+  {
+   "paths": [
+    "crates/engine/src/storage/row/insert/driver.rs",
+    "crates/engine/src/storage/row/insert/driver/autocommit.rs",
+    "crates/engine/src/storage/row/insert/driver/budget_tests.rs",
+    "crates/engine/src/storage/row/insert/driver/live.rs",
+    "crates/engine/src/storage/row/insert/driver/tests.rs"
+   ],
+   "reason": "A's autocommit executor and its steps: the outcome slot, the statement end (rollback to the mark, finish, must-resolve fence), the commit answer, the full rollback with Rollback::flush, statement_refused/table_not_issued, the never-inlined rollback starts and step (LAC-A01..A12 over the literal stand-in, head and C+A); the live executor and its sub-frame over the actual C (LAC-J01/J02); the executor census checked against the F4 ceilings and the existing A call-site bounds (f4_a_autocommit_budgets, f4_a_caller_budgets, mca00_d15, head and C+A).",
+   "cases": [
+    {
+     "file": "crates/engine/src/storage/row/insert/driver/tests.rs",
+     "case": "storage::row::insert::driver::tests::lac_a01_committed_statement",
+     "sources": [
+      "head",
+      "export-a"
+     ]
+    },
+    {
+     "file": "crates/engine/src/storage/row/insert/driver/tests.rs",
+     "case": "storage::row::insert::driver::tests::lac_a02_failed_row_rolls_back_the_statement_then_the_transaction",
+     "sources": [
+      "head",
+      "export-a"
+     ]
+    },
+    {
+     "file": "crates/engine/src/storage/row/insert/driver/tests.rs",
+     "case": "storage::row::insert::driver::tests::lac_a03_returned_statement_is_finished_then_aborted",
+     "sources": [
+      "head",
+      "export-a"
+     ]
+    },
+    {
+     "file": "crates/engine/src/storage/row/insert/driver/tests.rs",
+     "case": "storage::row::insert::driver::tests::lac_a04_refused_commit_is_rolled_back_with_its_flush",
+     "sources": [
+      "head",
+      "export-a"
+     ]
+    },
+    {
+     "file": "crates/engine/src/storage/row/insert/driver/tests.rs",
+     "case": "storage::row::insert::driver::tests::lac_a05_fatal_or_rejected_commit_calls_nothing_more",
+     "sources": [
+      "head",
+      "export-a"
+     ]
+    },
+    {
+     "file": "crates/engine/src/storage/row/insert/driver/tests.rs",
+     "case": "storage::row::insert::driver::tests::lac_a06_refused_end_step_is_fenced",
+     "sources": [
+      "head",
+      "export-a"
+     ]
+    },
+    {
+     "file": "crates/engine/src/storage/row/insert/driver/tests.rs",
+     "case": "storage::row::insert::driver::tests::lac_a07_table_not_issued_finishes_the_statement",
+     "sources": [
+      "head",
+      "export-a"
+     ]
+    },
+    {
+     "file": "crates/engine/src/storage/row/insert/driver/tests.rs",
+     "case": "storage::row::insert::driver::tests::lac_a09_refused_begin_or_statement_start",
+     "sources": [
+      "head",
+      "export-a"
+     ]
+    },
+    {
+     "file": "crates/engine/src/storage/row/insert/driver/tests.rs",
+     "case": "storage::row::insert::driver::tests::lac_a10_finish_pending_statement_is_finished_once_more",
+     "sources": [
+      "head",
+      "export-a"
+     ]
+    },
+    {
+     "file": "crates/engine/src/storage/row/insert/driver/tests.rs",
+     "case": "storage::row::insert::driver::tests::lac_a11_must_resolve_statement_calls_nothing_more",
+     "sources": [
+      "head",
+      "export-a"
+     ]
+    },
+    {
+     "file": "crates/engine/src/storage/row/insert/driver/tests.rs",
+     "case": "storage::row::insert::driver::tests::lac_a12_finish_pending_statement_finished_then_aborted",
+     "sources": [
+      "head",
+      "export-a"
+     ]
+    },
+    {
+     "file": "crates/engine/src/storage/row/insert/driver/budget_tests.rs",
+     "case": "storage::row::insert::driver::budget_tests::f4_a_autocommit_budgets_memory",
+     "sources": [
+      "head",
+      "export-a"
+     ]
+    },
+    {
+     "file": "crates/engine/src/storage/row/insert/driver/budget_tests.rs",
+     "case": "storage::row::insert::driver::budget_tests::f4_a_autocommit_budgets_native",
+     "sources": [
+      "head",
+      "export-a"
+     ]
+    },
+    {
+     "file": "crates/engine/src/storage/row/insert/driver/budget_tests.rs",
+     "case": "storage::row::insert::driver::budget_tests::f4_a_caller_budgets_memory",
+     "sources": [
+      "head",
+      "export-a"
+     ]
+    },
+    {
+     "file": "crates/engine/src/storage/row/insert/driver/budget_tests.rs",
+     "case": "storage::row::insert::driver::budget_tests::f4_a_caller_budgets_native",
+     "sources": [
+      "head",
+      "export-a"
+     ]
+    },
+    {
+     "file": "crates/engine/src/storage/row/insert/driver/tests.rs",
+     "case": "storage::row::insert::driver::tests::mca00_d15_memory_call_site_shares_fit_the_caller_bounds",
+     "sources": [
+      "head",
+      "export-a"
+     ]
+    },
+    {
+     "file": "crates/engine/src/storage/row/insert/driver/tests.rs",
+     "case": "storage::row::insert::driver::tests::mca00_d15_native_call_site_shares_fit_the_caller_bounds",
+     "sources": [
+      "head",
+      "export-a"
+     ]
+    },
+    {
+     "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/autocommit.rs",
+     "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::autocommit::lac_j01_autocommit_of_thirteen_rows_commits_and_two_drains_clean_it",
+     "sources": [
+      "head"
+     ]
+    },
+    {
+     "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/autocommit.rs",
+     "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::autocommit::lac_j02_refused_row_and_missing_table_abort_then_a_commit",
+     "sources": [
+      "head"
+     ]
+    }
+   ]
+  },
+  {
+   "paths": [
+    "crates/engine/src/storage/wal_io/row_caller_budget.rs"
+   ],
+   "reason": "C-owned cfg(test) ceilings re-set by the new two-sided contract (ROLLBACK_CALLER, rollback.next, rollback.clr_lane; rollback.finish back to its original). C's unchanged rollback census (rollback_budget_tests.rs, read in the review at its head blob) re-checks its sums with the new values (head); A checks its executor shares against them (head and C+A). COMMIT and STATEMENT_END are unchanged, so the commit census is not selected.",
+   "cases": [
+    {
+     "file": "crates/engine/src/storage/wal_io/plan4_apply/row/rollback_budget_tests.rs",
+     "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::row::rollback::budget_census::f4_c_rollback_budget_memory",
+     "sources": [
+      "head"
+     ]
+    },
+    {
+     "file": "crates/engine/src/storage/wal_io/plan4_apply/row/rollback_budget_tests.rs",
+     "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::row::rollback::budget_census::f4_c_rollback_budget_native",
+     "sources": [
+      "head"
+     ]
+    },
+    {
+     "file": "crates/engine/src/storage/row/insert/driver/budget_tests.rs",
+     "case": "storage::row::insert::driver::budget_tests::f4_a_autocommit_budgets_memory",
+     "sources": [
+      "head",
+      "export-a"
+     ]
+    },
+    {
+     "file": "crates/engine/src/storage/row/insert/driver/budget_tests.rs",
+     "case": "storage::row::insert::driver::budget_tests::f4_a_autocommit_budgets_native",
+     "sources": [
+      "head",
+      "export-a"
+     ]
+    }
+   ]
+  },
+  {
+   "paths": [
+    "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire.rs",
+    "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/autocommit.rs"
+   ],
+   "reason": "JOIN tests of A's executor over the actual C (retire.rs only adds the module): LAC-J01 a 13-row commit, two drains and a matching restart; LAC-J02 a refused row and a missing table abort and are cleaned, then a commit.",
+   "cases": [
+    {
+     "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/autocommit.rs",
+     "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::autocommit::lac_j01_autocommit_of_thirteen_rows_commits_and_two_drains_clean_it",
+     "sources": [
+      "head"
+     ]
+    },
+    {
+     "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/autocommit.rs",
+     "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::autocommit::lac_j02_refused_row_and_missing_table_abort_then_a_commit",
+     "sources": [
+      "head"
+     ]
+    }
+   ]
+  }
+ ],
+ "reviews": [
+  {
+   "id": "autocommit-insert-d2",
+   "class": "D2",
+   "scopes": [
+    "common",
+    "policy"
+   ],
+   "author": "claude-thread-session/claude-project-thread-9inq97",
+   "reviewer": "claude-independent-review/autocommit-insert",
+   "verdict": "ACCEPT",
+   "required_open": 0,
+   "log": "module-gate/evidence/autocommit-insert/review.md",
+   "log_sha256": "8788c8432a7d6f96280d3db50278592ad07756738381354ff2c351cb9ac5dee4",
+   "files": {
+    "crates/engine/src/storage/row/insert/driver.rs": "718d954f4317d74c45eff27d4e4adf9da64d32be",
+    "crates/engine/src/storage/row/insert/driver/autocommit.rs": "e2b542e7c6428f1d8ed21f5aded42af7e67eac62",
+    "crates/engine/src/storage/row/insert/driver/budget_tests.rs": "e8655522717ad5e0ad4d6cfffede47bf1271aa25",
+    "crates/engine/src/storage/row/insert/driver/live.rs": "7d91be25b59e89f136ce12748f0fb9b458a03ec3",
+    "crates/engine/src/storage/row/insert/driver/tests.rs": "b0d769377f54ed576e4c39fe252ef46e2e01442b",
+    "crates/engine/src/storage/wal_io/plan4_apply/row/rollback_budget_tests.rs": "a0ce511e06ad3155eb4a1c0104825a1ef55cbc7d",
+    "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire.rs": "8819dde2c1622ccba05eee5f842a8b06a17759ad",
+    "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/autocommit.rs": "292033590ab31729122143e139e0dd1b69ff8239",
+    "crates/engine/src/storage/wal_io/row_caller_budget.rs": "28222973c71494b638baf5f45a6fd753db855bf8",
+    "devdoc/contracts/dev3-module-boundaries.md": "ac08da30a1d299adaeb1682cfabc87fadcefddd6"
+   }
+  }
+ ]
+}

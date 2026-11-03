@@ -33,6 +33,7 @@ use crate::storage::{
 use foundation::error::Effect;
 use std::convert::Infallible;
 
+pub(in crate::storage) mod autocommit;
 #[cfg(test)]
 mod budget_tests;
 pub(in crate::storage) mod live;
@@ -215,6 +216,10 @@ trait Rollback: Sized {
     where
         Self: 'x;
     fn next(&mut self) -> Result<RollbackNext<Self::Task<'_>, Self::Target>, RetentionError>;
+    /// C's flush of a `next` FlushRequired target, through the flusher the
+    /// rollback holds, until that flusher is Ready (`RowRollback::flush`);
+    /// the autocommit executor's flush-through (`autocommit`).
+    fn flush(&mut self, target: &Self::Target) -> Result<(), RetentionError>;
     /// Needs the actual mark/None and the StatementFinish/AbortEnd receipt.
     fn finish(self) -> Result<(), RowOwnedError<Self>>;
 }
@@ -292,6 +297,14 @@ pub(crate) enum Stage {
     CleanupNext,
     /// C's `retire_row` of one live Row cleanup group.
     Retire,
+    /// C's Row Begin of an autocommit transaction (`autocommit`).
+    Begin,
+    /// The caller's issue of the statement's checked table (`autocommit`).
+    Table,
+    /// A rollback's flush of C's `next` FlushRequired target (`autocommit`).
+    RollbackFlush,
+    /// C's finish of a complete rollback (`autocommit`).
+    RollbackFinish,
 }
 
 /// A failed call's first error and, for a row, the one release after it.
@@ -430,6 +443,9 @@ impl<K: Rollback> Rollback for StartedRollback<'_, K> {
         Self: 'x;
     fn next(&mut self) -> Result<RollbackNext<Self::Task<'_>, K::Target>, RetentionError> {
         self.rollback.next()
+    }
+    fn flush(&mut self, target: &K::Target) -> Result<(), RetentionError> {
+        self.rollback.flush(target)
     }
     fn finish(self) -> Result<(), RowOwnedError<Self>> {
         let Self { rollback, progress } = self;
@@ -827,6 +843,7 @@ fn finish_statement<B: Boundary>(
 /// refusal starts nothing, so the statement stays `RollbackRequired` and the
 /// start may be retried; a started rollback is never started again (the
 /// pending refuses a second start without calling C).
+#[inline(never)]
 #[allow(
     clippy::result_large_err,
     reason = "Failure keeps the stage, the error and any refused cleanup inline, without allocation"
@@ -847,6 +864,7 @@ fn start_statement_rollback<'r, 'i, B: Boundary>(
 
 /// Starts the full rollback of every remaining row, the only step after a
 /// commit C answered `RollbackRequired`. Refusals are as for a statement.
+#[inline(never)]
 #[allow(
     clippy::result_large_err,
     reason = "Failure keeps the stage, the error and any refused cleanup inline, without allocation"
@@ -884,9 +902,10 @@ pub(crate) enum RollbackStop<T, F> {
     Next(RetentionError),
     /// C needs this target flushed before its next candidate. The rollback
     /// holds the session's foreground Owner borrow. The live adapter exposes
-    /// `flush_rollback_live` through its disjoint original flusher; a generic
-    /// boundary must supply its own equivalent continuation. There is no generic flush-through
-    /// call (G1), so the caller keeps both; nothing is dropped here.
+    /// `flush_rollback_live` through its disjoint original flusher, and the
+    /// rollback's own `Rollback::flush` is the same continuation (the
+    /// autocommit executor's). The step passes the target out and the caller
+    /// keeps both; nothing is dropped here.
     Flush(F),
     /// The same task after an unchanged refusal of its lane, A's CLR, its
     /// prepare, or its apply (then reopened): retry it with `retry_task`.
@@ -902,7 +921,10 @@ pub(crate) enum RollbackStop<T, F> {
 
 /// C's next candidate and, for a candidate, A's CLR through prepare and
 /// apply. The caller owns the rollback and loops; a stopped step hands back
-/// what C returned, borrowing the caller's rollback.
+/// what C returned, borrowing the caller's rollback. Never inlined, like the
+/// two starts above: the census counts their own slots at their own sites
+/// only, never under a caller's later C call.
+#[inline(never)]
 fn rollback_step<'x, K: Rollback>(
     rollback: &'x mut K,
 ) -> Result<Stepped, RollbackStop<K::Task<'x>, K::Target>> {
@@ -1356,7 +1378,8 @@ pub(super) const CALL_SITES: usize = 26;
 /// It relies on which frames are separate: `insert_row`, `end_statement`,
 /// `write_row` and its steps (`reserve_row`, `validate_row`, `forward_row`,
 /// `produce_row`, `prepare_row`, `apply_row`), `flush`, `finish_preflight`,
-/// `cancel`, `finish_statement` and `compensate` are never inlined, so none
+/// `cancel`, `finish_statement`, `compensate`, the two rollback starts and
+/// `rollback_step` are never inlined, so none
 /// of their slots is laid out in their caller's frame: none of `write_row`'s
 /// or `end_statement`'s is on the stack at the preflight and its flush, and
 /// at each C call of a row only the frames of the steps in progress are. A

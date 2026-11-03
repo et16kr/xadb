@@ -7,7 +7,12 @@ pub(in crate::storage) use super::bootstrap::doublewrite_install::mutable_storag
 
 pub(in crate::storage) const COMMIT: usize = 3024;
 pub(in crate::storage) const STATEMENT_END: usize = 6144;
-pub(in crate::storage) const ROLLBACK_CALLER: usize = 512;
+/// 512 B until the autocommit executor (boundaries `#autocommit-insert`,
+/// a new two-sided F4 contract): its statement rollback holds the
+/// executor's caller, its frames and the failed statement below the
+/// rollback (1,377 B in both writers). C counts it only in the rollback
+/// flush step.
+pub(in crate::storage) const ROLLBACK_CALLER: usize = 1536;
 pub(in crate::storage) const ROLLBACK_STEP_RESULT: usize = 1024;
 pub(in crate::storage) const CLR_PRODUCER: usize = 19_456;
 pub(in crate::storage) const RECOVERY_HANDLER: usize = 4096;
@@ -20,10 +25,15 @@ pub(in crate::storage) const LIVE_ROW_CLEANUP: usize = 4096;
 
 /// Each ceiling includes the caller plus the complete frame-static site share.
 /// All ten sites are mandatory; neither owner may silently skip a new site.
+/// `rollback.next` (6,144 B before) and `rollback.clr_lane` (11,520 B) were
+/// set again by the autocommit executor's contract (boundaries
+/// `#autocommit-insert`): each is the executor's share on its statement
+/// rollback path (6,361 and 12,185 B in both writers) plus at least 128 B,
+/// in 128 B steps; ROLLBACK_CALLER likewise.
 pub(in crate::storage) const ROLLBACK_SITES: [(&str, usize); 10] = [
     ("rollback.start", 6144),
-    ("rollback.next", 6144),
-    ("rollback.clr_lane", 11_520),
+    ("rollback.next", 6528),
+    ("rollback.clr_lane", 12_416),
     ("rollback.clr", 11_520),
     ("rollback.clr_prepare", 11_520),
     ("rollback.clr_apply", 11_520),

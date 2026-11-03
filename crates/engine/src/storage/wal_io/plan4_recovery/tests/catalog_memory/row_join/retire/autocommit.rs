@@ -1,0 +1,380 @@
+//! The autocommit INSERT executor (boundaries `#autocommit-insert`): A's
+//! `autocommit_insert_live` over the actual C supply, from Begin to the
+//! transaction's end, then the caller's cleanup (`retire_finished_live`,
+//! again while a drain is not complete). Expectations are state-machine
+//! facts (the outcome, the groups each drain installed, freed Jobs, the
+//! rows a new statement and a restart read), never values read back from
+//! the same producer.
+use super::super::super::super::super::RowRecoveryPolicy;
+use super::super::join_restart;
+use super::*;
+use crate::storage::{
+    disk::{
+        CheckedTable, MaintenancePort, ReadPort, RowCommitObservation, RowMutationObservation,
+        RowStatementView,
+    },
+    row::insert::{
+        InsertError,
+        driver::{
+            DriverError, Failure, Retired, Stage,
+            autocommit::Autocommit,
+            live::{LiveCall, LiveTables, autocommit_insert_live, retire_finished_live},
+        },
+    },
+};
+
+/// The caller's table source: B's statement call over the statement view
+/// and `finish_table` of `object`, each FlushRequired flushed through the
+/// executor's flusher and retried (as `issue_table!`).
+struct Tables<'r, 'q, 'b, 'a, 's, 'c, 'p, 'd, 'm, 'w, W: WriterNamespace> {
+    reader: &'r ReadPort<'b, 'a, 's, 'c, 'p, 'd, 'm, 'w, W>,
+    private: &'q mut [u8; 425_984],
+    object: u64,
+}
+
+impl<'a, 'c, 's, W: WriterNamespace> LiveTables<'a, 'c, 's, W>
+    for Tables<'_, '_, '_, 'a, 's, 'c, '_, '_, '_, '_, W>
+{
+    fn issue(
+        &mut self,
+        owner: &mut Owner<'c, 's>,
+        statement: &RowStatementView<'_, '_, 'a, 'c, 's>,
+        flusher: &mut MaintenancePort<'_, 's, 'c, '_, '_, '_, '_, W>,
+        flush_owner: &mut Owner<'c, 's>,
+    ) -> std::result::Result<Option<CheckedTable<'c, 's>>, RetentionError> {
+        for _ in 0..8 {
+            let call = self.reader.catalog_statement_call(owner, statement)?;
+            let target = match call.finish_table(
+                ObjectId::new(self.object).unwrap(),
+                &mut Plan4ResidencyCursor::new(),
+                self.private,
+            )? {
+                TableStep::Table(table) => return Ok(Some(table)),
+                TableStep::Missing => return Ok(None),
+                TableStep::FlushRequired { target } => target,
+            };
+            let mut step = flusher.try_flush(flush_owner, &target)?;
+            for _ in 0..8 {
+                if matches!(
+                    step,
+                    RetentionFlushStep::Complete { .. } | RetentionFlushStep::NoDirty
+                ) {
+                    break;
+                }
+                step = flusher.continue_flush(flush_owner)?;
+            }
+        }
+        panic!("bounded table issue")
+    }
+}
+
+/// One autocommit INSERT of `values` into `object` on `status` through A's
+/// executor: its outcome and the rows' slots.
+macro_rules! autocommit {
+    ($writer:expr, $owner:expr, $flush:ident, $flusher:ident, $reader:expr, $reader_private:expr, $status:expr, $private:expr, $object:expr, $values:expr) => {{
+        let values: Vec<[ValueRef<'static>; 1]> = $values;
+        let rows: Vec<&[ValueRef<'_>]> = values.iter().map(|v| &v[..]).collect();
+        let mut slots: Vec<Option<RowMutationObservation>> = rows.iter().map(|_| None).collect();
+        let mut tables = Tables {
+            reader: &$reader,
+            private: $reader_private,
+            object: $object,
+        };
+        let mut out = Autocommit::Idle;
+        let mut call = LiveCall::new($writer, $owner, &mut $flush, $flusher);
+        autocommit_insert_live(
+            &mut call,
+            $status,
+            IsolationLevel::Serializable,
+            &mut tables,
+            $private,
+            &rows,
+            &mut slots,
+            &mut out,
+        );
+        (out, slots)
+    }};
+}
+
+/// The caller's cleanup: A's drain again while it is not complete; the
+/// groups each drain installed.
+macro_rules! drains {
+    ($writer:expr, $owner:expr, $flush:ident, $flusher:ident, $private:expr) => {{
+        let mut call = LiveCall::new($writer, $owner, &mut $flush, $flusher);
+        let mut drains = Vec::new();
+        for _ in 0..4 {
+            match retire_finished_live(&mut call, $private) {
+                Ok(retired) => {
+                    drains.push(retired);
+                    if retired.complete {
+                        break;
+                    }
+                }
+                Err(stop) => panic!("A's cleanup drain stopped {stop:?}"),
+            }
+        }
+        drains
+    }};
+}
+
+fn drain(groups: usize, complete: bool) -> Retired {
+    Retired {
+        groups,
+        held: 0,
+        complete,
+    }
+}
+
+fn committed(out: Autocommit<RowCommitObservation>) -> (u64, usize) {
+    match out {
+        Autocommit::Committed { committed, rows } => (committed.q(), rows),
+        other => panic!("expected Committed, got {other:?}"),
+    }
+}
+
+fn aborted(out: Autocommit<RowCommitObservation>) -> Failure {
+    match out {
+        Autocommit::Aborted(failure) => {
+            assert!(!failure.must_resolve && failure.cleanup.is_none());
+            failure
+        }
+        other => panic!("expected Aborted, got {other:?}"),
+    }
+}
+
+fn ints(values: &[i64]) -> Vec<[ValueRef<'static>; 1]> {
+    values.iter().map(|v| [ValueRef::Int64(*v)]).collect()
+}
+
+/// LAC-J01: one autocommit INSERT of 13 rows through A's executor commits
+/// at q 2 with every row applied (the first Row profile writes each row
+/// under its own Free Undo page, so the setup adds twelve). Its cleanup is 5 × 13 + 1 = 66 groups, so
+/// the caller's first drain stops at its 64-group bound (not complete) and
+/// a second installs the other two. No Row Job is left, a new statement
+/// reads the 13 rows, and C's recovery of the files reaches READY at q 2
+/// with no CLR (no loser), no Row Job left and B's cursor reading the same
+/// rows.
+#[test]
+fn lac_j01_autocommit_of_thirteen_rows_commits_and_two_drains_clean_it() {
+    case_within("LAC-J01", std::time::Duration::from_secs(600), || {
+        let oracle = Oracle::new();
+        let (images, expected) = with_fresh!(
+            oracle,
+            frames = 28,
+            |live, owner, flusher, status, undo, private, reader_private, core, fence, state| {
+                let (row_status, _) =
+                    create_table(live, owner, flusher, status, undo, private, true);
+                // Each row is written under its own Free Undo page.
+                for _ in 1..13 {
+                    system_init(live, owner, flusher, true);
+                }
+                let (mut writer, reader, mut flush) = live.split();
+                let values: Vec<i64> = (100..113).collect();
+                let (out, slots) = autocommit!(
+                    &mut writer,
+                    owner,
+                    flush,
+                    flusher,
+                    reader,
+                    reader_private,
+                    &row_status,
+                    private,
+                    6,
+                    ints(&values)
+                );
+                assert_eq!(committed(out), (2, 13));
+                let rows: Vec<_> = slots
+                    .into_iter()
+                    .zip(&values)
+                    .map(|(slot, value)| (slot.expect("applied row").row(), *value))
+                    .collect();
+                assert_eq!(
+                    drains!(&mut writer, owner, flush, flusher, private),
+                    [drain(64, false), drain(2, true)]
+                );
+                assert_row_jobs_free(writer.catalog_test_jobs());
+                assert!(!fence.is_fenced());
+                let mut b_owner = core.try_owner(OwnerRole::Foreground).unwrap();
+                let b = &mut b_owner;
+                let read = writer
+                    .begin_transaction(
+                        b,
+                        TransactionOptions {
+                            read_only: true,
+                            isolation: IsolationLevel::ReadCommitted,
+                        },
+                        reader_private,
+                    )
+                    .unwrap();
+                let view = writer.begin_statement(b, &read).unwrap();
+                assert_eq!(view.q().unwrap(), 2);
+                let table = issue_table!(reader, b, view, reader_private, flush, flusher);
+                for (row, value) in &rows {
+                    assert_eq!(
+                        point_at!(reader, b, reader_private, &view, &table, *row),
+                        Some(*value)
+                    );
+                }
+                assert!(writer.finish_statement(b, view).is_ok());
+                assert!(writer.finish_read_only(b, read).is_ok());
+                assert!(!fence.is_fenced());
+                let expected: Vec<(u64, i64)> = rows
+                    .iter()
+                    .map(|(row, value)| (row.get(), *value))
+                    .collect();
+                (state.lock().unwrap().images(), expected)
+            }
+        );
+        let joined = join_restart(
+            &clone_directory(&images),
+            RowRecoveryPolicy::RejectInitialLosers,
+            None,
+        );
+        assert_eq!((joined.ready.0, joined.clrs, joined.row_cells), (2, 0, 0));
+        let mut read = joined.rows.clone();
+        read.sort_unstable();
+        let mut expected = expected;
+        expected.sort_unstable();
+        assert_eq!(read, expected);
+        println!(
+            "LAC_J01 q=2 rows=13 drains=64,2 restart_steps={} restart_rows={}",
+            joined.steps,
+            joined.rows.len()
+        );
+    });
+}
+
+/// LAC-J02: on one Row Status, (1) a statement whose second row A refuses
+/// (NULL in a NOT NULL column) after the first applied: the executor rolls
+/// the statement back to its mark, finishes it, rolls the transaction back
+/// and ends it (`Aborted`, A's Failure); (2) a statement whose table does
+/// not exist: the caller's source issues none, the statement is finished
+/// with no row and the transaction ended (`Aborted`, Table InvalidInput);
+/// (3) a statement of one row that commits at q 2. After each, the caller's
+/// one drain is complete with the abort's 4n + 1 groups (5 for the row
+/// written and compensated, 1 for none) or the commit's 5n + 1 (6), and no
+/// Row Job is left. A new statement reads the committed row and not the
+/// rolled back one.
+#[test]
+fn lac_j02_refused_row_and_missing_table_abort_then_a_commit() {
+    case_within("LAC-J02", std::time::Duration::from_secs(300), || {
+        let oracle = Oracle::new();
+        with_fresh!(
+            oracle,
+            frames = 28,
+            |live, owner, flusher, status, undo, private, reader_private, core, fence, state| {
+                let _ = state;
+                let (row_status, _) =
+                    create_table(live, owner, flusher, status, undo, private, true);
+                // The refused second row's preflight selects a second Free
+                // Undo page before A's validation refuses it.
+                system_init(live, owner, flusher, true);
+                let (mut writer, reader, mut flush) = live.split();
+
+                let (out, slots) = autocommit!(
+                    &mut writer,
+                    owner,
+                    flush,
+                    flusher,
+                    reader,
+                    reader_private,
+                    &row_status,
+                    private,
+                    6,
+                    vec![[ValueRef::Int64(7)], [ValueRef::Null]]
+                );
+                let failure = aborted(out);
+                assert!(
+                    matches!(failure.error, DriverError::Insert(_)),
+                    "{failure:?}"
+                );
+                let rolled_back = slots[0].as_ref().expect("the first row applied").row();
+                assert!(slots[1].is_none());
+                assert_eq!(
+                    drains!(&mut writer, owner, flush, flusher, private),
+                    [drain(5, true)]
+                );
+                assert_row_jobs_free(writer.catalog_test_jobs());
+                assert!(!fence.is_fenced());
+
+                let (out, slots) = autocommit!(
+                    &mut writer,
+                    owner,
+                    flush,
+                    flusher,
+                    reader,
+                    reader_private,
+                    &row_status,
+                    private,
+                    99,
+                    ints(&[8])
+                );
+                let failure = aborted(out);
+                assert_eq!(failure.stage, Stage::Table);
+                assert!(
+                    matches!(
+                        failure.error,
+                        DriverError::Insert(InsertError::InvalidInput)
+                    ),
+                    "{failure:?}"
+                );
+                assert!(slots[0].is_none());
+                assert_eq!(
+                    drains!(&mut writer, owner, flush, flusher, private),
+                    [drain(1, true)]
+                );
+                assert_row_jobs_free(writer.catalog_test_jobs());
+                assert!(!fence.is_fenced());
+
+                let (out, slots) = autocommit!(
+                    &mut writer,
+                    owner,
+                    flush,
+                    flusher,
+                    reader,
+                    reader_private,
+                    &row_status,
+                    private,
+                    6,
+                    ints(&[9])
+                );
+                assert_eq!(committed(out), (2, 1));
+                let row = slots[0].as_ref().expect("applied row").row();
+                assert_eq!(
+                    drains!(&mut writer, owner, flush, flusher, private),
+                    [drain(6, true)]
+                );
+                assert_row_jobs_free(writer.catalog_test_jobs());
+
+                let mut b_owner = core.try_owner(OwnerRole::Foreground).unwrap();
+                let b = &mut b_owner;
+                let read = writer
+                    .begin_transaction(
+                        b,
+                        TransactionOptions {
+                            read_only: true,
+                            isolation: IsolationLevel::ReadCommitted,
+                        },
+                        reader_private,
+                    )
+                    .unwrap();
+                let view = writer.begin_statement(b, &read).unwrap();
+                let table = issue_table!(reader, b, view, reader_private, flush, flusher);
+                assert_eq!(
+                    point_at!(reader, b, reader_private, &view, &table, row),
+                    Some(9)
+                );
+                assert_eq!(
+                    point_at!(reader, b, reader_private, &view, &table, rolled_back),
+                    None
+                );
+                assert!(writer.finish_statement(b, view).is_ok());
+                assert!(writer.finish_read_only(b, read).is_ok());
+                assert!(!fence.is_fenced());
+                println!(
+                    "LAC_J02 aborted_drains=5,1 committed_drain=6 q=2 rolled_back={rolled_back:?}"
+                );
+            }
+        );
+    });
+}

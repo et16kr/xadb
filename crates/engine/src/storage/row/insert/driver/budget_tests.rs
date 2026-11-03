@@ -108,3 +108,94 @@ fn f4_a_caller_budgets_memory() {
 fn f4_a_caller_budgets_native() {
     inspect::<budget::NativeWriter>("native");
 }
+
+/// The autocommit executor (`dev3-module-boundaries.md#autocommit-insert`):
+/// its share at every C call under `autocommit_insert_live`, with its
+/// caller's term, against the same fixed ceilings (`live::autocommit_sites`).
+fn autocommit<W: WriterNamespace + 'static>(label: &str) {
+    use crate::storage::{disk::ROW_PREFLIGHT_CALLER_BYTES, disk::ROW_WRITE_CALLER_BYTES};
+    let mut output = String::new();
+    let census = live::autocommit_sites::<W>();
+    let charge = crate::storage::disk::row_write_charge::<W>();
+    let (_, producer) = super::super::local_source_carrier_bytes();
+    writeln!(
+        output,
+        "writer={label} autocommit caller={} refs={} drain_caller={}",
+        census.caller,
+        live::AUTOCOMMIT_CALLER_REFS,
+        census.drain_caller
+    )
+    .unwrap();
+    let mut over = Vec::new();
+    let mut check = |name: &str, actual: usize, bound: usize, output: &mut String| {
+        writeln!(
+            output,
+            "autocommit item={name} actual={actual} bound={bound} margin={}",
+            bound as i64 - actual as i64
+        )
+        .unwrap();
+        if actual > bound {
+            over.push(format!("{name} {actual}>{bound}"));
+        }
+    };
+    check("commit", census.commit, budget::COMMIT, &mut output);
+    check(
+        "statement_end",
+        census.statement_end,
+        budget::STATEMENT_END,
+        &mut output,
+    );
+    check(
+        "rollback_caller",
+        census.rollback_caller,
+        budget::ROLLBACK_CALLER,
+        &mut output,
+    );
+    let mut seen = BTreeSet::new();
+    for (name, path, share, frame) in &census.sites {
+        assert!(share <= frame, "{label} {name}/{path}: {share} > {frame}");
+        let bound = if name.starts_with("insert.") {
+            match *name {
+                "insert.preflight" => ROW_PREFLIGHT_CALLER_BYTES,
+                "insert.validate" => continue,
+                "insert.forward" => charge - producer,
+                _ => ROW_WRITE_CALLER_BYTES,
+            }
+        } else {
+            budget::ROLLBACK_SITES
+                .iter()
+                .find(|(site, _)| site == name)
+                .unwrap_or_else(|| panic!("unbudgeted autocommit site: {name}"))
+                .1
+        };
+        if !name.starts_with("insert.") {
+            seen.insert(*name);
+        }
+        check(&format!("{name}@{path}"), *frame, bound, &mut output);
+    }
+    let expected: BTreeSet<_> = budget::ROLLBACK_SITES.iter().map(|(n, _)| *n).collect();
+    assert_eq!(seen, expected, "missing or extra autocommit rollback site");
+    for (name, share, frame) in census.cleanup {
+        assert!(share <= frame);
+        check(
+            &format!("drain.{name}"),
+            frame,
+            budget::LIVE_ROW_CLEANUP,
+            &mut output,
+        );
+    }
+    for (name, share) in census.unbounded {
+        writeln!(output, "autocommit unbounded={name} share={share}").unwrap();
+    }
+    budget::record(&format!("a-autocommit-{label}"), &output);
+    assert!(over.is_empty(), "{label}: {over:?}");
+}
+
+#[test]
+fn f4_a_autocommit_budgets_memory() {
+    autocommit::<crate::storage::wal_io::plan4_test_support::Writer>("memory");
+}
+#[test]
+fn f4_a_autocommit_budgets_native() {
+    autocommit::<budget::NativeWriter>("native");
+}
