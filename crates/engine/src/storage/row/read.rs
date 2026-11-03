@@ -127,6 +127,11 @@ enum Visibility {
     Current,
     ReadStatus,
     ReadMissingBefore,
+    /// A tombstone whose DELETE the statement sees: no row.
+    Deleted,
+    /// A tombstone whose DELETE the statement does not see: U's RowValue
+    /// before decides with its `q_old`.
+    ReadValueBefore,
 }
 
 /// `snapshot_q` and `own_actor` are observations from the eventual original
@@ -170,6 +175,37 @@ fn visible(
         // A missing retained version is corruption, never ordinary absence.
         Err(ReadError::MissingUndo)
     }
+}
+
+/// A DELETE tombstone (dev3-row-delete.md#read) is always `Transaction(T)`
+/// with its U. Own T, or T committed with q_T <= S, reads no row; otherwise
+/// (T Active, Aborting or Aborted, or q_T > S) U's RowValue before decides.
+fn tombstone(
+    snapshot_q: u64,
+    own_actor: Option<TxnRef>,
+    version: RecordVersion,
+    status: Option<TransactionState>,
+) -> Result<Visibility, ReadError> {
+    let VersionStamp::Transaction(reference) = version.stamp else {
+        return Err(ReadError::InvalidVersion);
+    };
+    if reference.id() != version.logical.transaction() {
+        return Err(ReadError::InvalidVersion);
+    }
+    if version.undo.is_none() {
+        return Err(ReadError::MissingUndo);
+    }
+    let deleted = match status {
+        None => return Ok(Visibility::ReadStatus),
+        Some(TransactionState::Active) => own_actor == Some(reference),
+        Some(TransactionState::Committed(q)) => q.get() <= snapshot_q,
+        Some(TransactionState::Aborting(_) | TransactionState::Aborted) => false,
+    };
+    Ok(if deleted {
+        Visibility::Deleted
+    } else {
+        Visibility::ReadValueBefore
+    })
 }
 
 fn check_output(required: usize, available: usize) -> Result<(), ReadError> {

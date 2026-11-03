@@ -81,6 +81,7 @@ pub(crate) struct RowCandidate<'b> {
     capture_sequence: u64,
     version: RecordVersion,
     canonical_len: usize,
+    deleted: bool,
 }
 impl RowCandidate<'_> {
     pub(in crate::storage) fn row(&self) -> RowId {
@@ -88,6 +89,35 @@ impl RowCandidate<'_> {
     }
     pub(in crate::storage) fn version(&self) -> RecordVersion {
         self.version
+    }
+    pub(in crate::storage) fn canonical_len(&self) -> usize {
+        self.canonical_len
+    }
+    /// A DELETE tombstone (no canonical value; `canonical_len` is 0).
+    pub(in crate::storage) fn deleted(&self) -> bool {
+        self.deleted
+    }
+}
+
+/// The tombstone's U RowValue before (dev3-row-delete.md#read): the
+/// committed row it replaced (`q_old`, its logical version, no undo), whose
+/// canonical value is now in the operation's copy buffer. B decides with
+/// `q_old`; only then may it copy.
+pub(crate) struct RowValueBefore<'b> {
+    binding: std::marker::PhantomData<&'b ()>,
+    lease_identity: (usize, usize, u64),
+    capture_sequence: u64,
+    row: RowId,
+    q_old: foundation::identity::CommitSeq,
+    logical: crate::storage::transaction_record::LogicalRowVersion,
+    canonical_len: usize,
+}
+impl RowValueBefore<'_> {
+    pub(in crate::storage) fn row(&self) -> RowId {
+        self.row
+    }
+    pub(in crate::storage) fn q_old(&self) -> u64 {
+        self.q_old.get()
     }
     pub(in crate::storage) fn canonical_len(&self) -> usize {
         self.canonical_len
@@ -696,6 +726,12 @@ impl<'u, 'r, 't, 'v, 'i, 'b, 'a, 's, 'c, 'p, 'd, 'm, 'w, W: WriterNamespace>
         residency: &mut Plan4ResidencyCursor,
     ) -> Result<ReadStep<MissingRowEvidence>> {
         self.check_candidate(candidate)?;
+        if candidate.deleted {
+            return Err(unchanged(
+                RetentionPhase::Census,
+                RetentionCause::WrongState,
+            ));
+        }
         let bad = || {
             fatal(
                 self.backend.storage,
@@ -810,6 +846,175 @@ impl<'u, 'r, 't, 'v, 'i, 'b, 'a, 's, 'c, 'p, 'd, 'm, 'w, W: WriterNamespace>
         })();
         merge(result, guard.release_checked()).map(ReadStep::Ready)
     }
+    /// The tombstone's U RowValue before (dev3-row-delete.md#read): the same
+    /// LOCATION/LOAD order as `missing_before`, then the record through
+    /// entry (a) with the operation's Catalog schema. The old canonical is
+    /// put in the operation's copy buffer; B judges `q_old` and only then
+    /// calls `copy_before`. A Releasing U is corruption (Fatal).
+    #[inline(never)]
+    pub(in crate::storage) fn value_before(
+        &mut self,
+        candidate: &RowCandidate<'b>,
+        residency: &mut Plan4ResidencyCursor,
+    ) -> Result<ReadStep<RowValueBefore<'b>>> {
+        self.check_candidate(candidate)?;
+        if !candidate.deleted {
+            return Err(unchanged(
+                RetentionPhase::Census,
+                RetentionCause::WrongState,
+            ));
+        }
+        let bad = || {
+            fatal(
+                self.backend.storage,
+                RetentionPhase::Census,
+                RetentionCause::Invariant,
+            )
+        };
+        let reference = candidate.version.undo.ok_or_else(bad)?;
+        if self
+            .captured
+            .as_ref()
+            .and_then(|r| r.undo.as_ref())
+            .map(|p| p.reference())
+            != Some(reference)
+        {
+            return Err(bad());
+        }
+        let table = self.table.ok_or_else(bad)?;
+        let request = self.backend.catalog_undo_location(self.owner, reference)?;
+        if let RetentionResidencyStep::FlushRequired { target, .. } = self
+            .backend
+            .load_lookup_target(self.owner, request, residency, &[], self.loader)?
+        {
+            self.stopped = true;
+            return Ok(ReadStep::FlushRequired { target });
+        }
+        self.read_value_before(candidate, reference, table, request)
+    }
+    #[inline(never)]
+    fn read_value_before(
+        &mut self,
+        candidate: &RowCandidate<'b>,
+        reference: crate::storage::undo_ref::UndoRef,
+        table: ObjectHandle,
+        request: TargetRequest,
+    ) -> Result<ReadStep<RowValueBefore<'b>>> {
+        use crate::storage::{
+            row_record::RowSchemaInput,
+            transaction_record::VersionStamp,
+            undo_record::{
+                self, UndoBeforeKind, UndoPayload, UndoRecordExpectation, UndoTargetKind,
+                UndoTargetView,
+            },
+        };
+        let storage = self.backend.storage;
+        let bad = || fatal(storage, RetentionPhase::Census, RetentionCause::Invariant);
+        let (schema, copy) = self.copy.split_at_mut(8192);
+        let record = catalog_record::decode_catalog_record(
+            &schema[..self.schema_len],
+            CatalogExpectation {
+                namespace: storage.profile().spec().namespace,
+                object: table.object,
+            },
+        )
+        .map_err(|e| unchanged(RetentionPhase::Census, RetentionCause::Catalog(e)))?;
+        let CatalogDefinitionView::Table(schema) = record.definition() else {
+            return Err(unchanged(RetentionPhase::Census, RetentionCause::Invariant));
+        };
+        let guard = self
+            .backend
+            .read_catalog_undo(self.owner, &Plan4Target { request })?;
+        let result = (|| {
+            let page =
+                crate::storage::page::decode_page(guard.bytes()?, request.identity, PageKind::Undo)
+                    .map_err(|e| fatal(storage, RetentionPhase::Census, RetentionCause::Page(e)))?;
+            let cell = page.cell(usize::from(reference.slot())).ok_or_else(bad)?;
+            let expected = UndoRecordExpectation {
+                namespace: storage.profile().spec().namespace,
+                reference,
+                target: UndoTargetView {
+                    kind: UndoTargetKind::Row,
+                    owner: table.object,
+                    generation: table.generation,
+                    entity: candidate.version.row.get(),
+                    arity: 0,
+                    key: &[],
+                },
+            };
+            let record =
+                undo_record::decode_undo_record(cell, expected, &RowSchemaInput::Catalog(schema))
+                    .and_then(|view| view.live_before())
+                    .map_err(|e| fatal(storage, RetentionPhase::Census, RetentionCause::Undo(e)))?;
+            if record.creator.id != candidate.version.logical.transaction()
+                || matches!(candidate.version.stamp,VersionStamp::Transaction(actor) if actor.id()!=record.creator.id || actor.generation()!=record.creator.status_generation)
+                || record.mutation_sequence != candidate.version.logical.mutation_sequence()
+                || record.sequence == 0
+            {
+                return Err(bad());
+            }
+            // A tombstone has only a RowValue U whose before is the committed
+            // Inline row it replaced; any other combination is corruption.
+            let (
+                UndoBeforeKind::RowValue,
+                Some(VersionStamp::Committed(q_old)),
+                Some(logical),
+                UndoPayload::Inline(value),
+            ) = (
+                record.before_kind,
+                record.before_stamp,
+                record.before_logical,
+                record.payload,
+            )
+            else {
+                return Err(bad());
+            };
+            copy[..value.len()].copy_from_slice(value);
+            Ok(RowValueBefore {
+                binding: std::marker::PhantomData,
+                lease_identity: candidate.lease_identity,
+                capture_sequence: candidate.capture_sequence,
+                row: candidate.version.row,
+                q_old,
+                logical,
+                canonical_len: value.len(),
+            })
+        })();
+        merge(result, guard.release_checked()).map(ReadStep::Ready)
+    }
+    /// Copies the old value `value_before` put in the copy buffer; B has
+    /// judged it visible.
+    pub(in crate::storage) fn copy_before(
+        &mut self,
+        before: &RowValueBefore<'b>,
+        output: &mut [u8],
+    ) -> Result<RowCopyObservation> {
+        if self.stopped
+            || self.lease.as_ref().map(|l| l.row_identity()) != Some(before.lease_identity)
+            || before.capture_sequence != self.capture_sequence
+            || self.captured.is_none()
+        {
+            return Err(unchanged(
+                RetentionPhase::Census,
+                RetentionCause::WrongState,
+            ));
+        }
+        self.statement.check_catalog_read()?;
+        if output.len() < before.canonical_len {
+            return Err(unchanged(RetentionPhase::Census, RetentionCause::Capacity));
+        }
+        output[..before.canonical_len]
+            .copy_from_slice(&self.copy[8192..8192 + before.canonical_len]);
+        Ok(RowCopyObservation {
+            version: RecordVersion {
+                row: before.row,
+                stamp: crate::storage::transaction_record::VersionStamp::Committed(before.q_old),
+                logical: before.logical,
+                undo: None,
+            },
+            len: before.canonical_len,
+        })
+    }
     fn check_candidate(&self, candidate: &RowCandidate<'b>) -> Result<()> {
         if self.stopped
             || self.lease.as_ref().map(|l| l.row_identity()) != Some(candidate.lease_identity)
@@ -830,6 +1035,12 @@ impl<'u, 'r, 't, 'v, 'i, 'b, 'a, 's, 'c, 'p, 'd, 'm, 'w, W: WriterNamespace>
         output: &mut [u8],
     ) -> Result<RowCopyObservation> {
         self.check_candidate(candidate)?;
+        if candidate.deleted {
+            return Err(unchanged(
+                RetentionPhase::Census,
+                RetentionCause::WrongState,
+            ));
+        }
         if output.len() < candidate.canonical_len {
             return Err(unchanged(RetentionPhase::Census, RetentionCause::Capacity));
         }
@@ -916,11 +1127,15 @@ impl<'g, 'b, 'a, 's, 'c, 'p, 'd> RowSearchPage<'g, 'b, 'a, 's, 'c, 'p, 'd> {
                 crate::storage::row_record::RowSchemaInput::Catalog(schema),
             )?;
             let version = record.version();
-            let crate::storage::row_record::RowPayload::Inline(value) = record.payload() else {
-                unreachable!("capture validated Inline");
+            // capture validated an Inline row or a tombstone.
+            let (len, deleted) = match record.payload() {
+                crate::storage::row_record::RowPayload::Inline(value) => {
+                    let len = value.as_bytes().len();
+                    copy[..len].copy_from_slice(value.as_bytes());
+                    (len, false)
+                }
+                _ => (0, true),
             };
-            let len = value.as_bytes().len();
-            copy[..len].copy_from_slice(value.as_bytes());
             *self.captured = Some(CapturedRowRefs {
                 transaction: refs.transaction,
                 undo: refs.undo,
@@ -932,6 +1147,7 @@ impl<'g, 'b, 'a, 's, 'c, 'p, 'd> RowSearchPage<'g, 'b, 'a, 's, 'c, 'p, 'd> {
                 capture_sequence: sequence,
                 version,
                 canonical_len: len,
+                deleted,
             })
         })();
         merge(result, self.release_checked())
@@ -966,7 +1182,7 @@ impl<'s, 'c, W: WriterNamespace> ReadPort<'_, '_, 's, 'c, '_, '_, '_, '_, W> {
 impl<W: WriterNamespace> ReadPort<'_, '_, '_, '_, '_, '_, '_, '_, W> {
     /// Raw size observations, not an acceptance assertion or a replacement for
     /// the phase census. Loader and operation necessarily coexist at LOAD.
-    pub(in crate::storage) fn row_test_load_inventory() -> [usize; 11] {
+    pub(in crate::storage) fn row_test_load_inventory() -> [usize; 12] {
         use std::mem::size_of as n;
         let r = n::<&()>();
         let page = 3 * r
@@ -1020,6 +1236,17 @@ impl<W: WriterNamespace> ReadPort<'_, '_, '_, '_, '_, '_, '_, '_, W> {
                 + n::<Result<TargetRequest>>()
                 + n::<Result<RetentionResidencyStep>>()
                 + n::<Result<ReadStep<MissingRowEvidence>>>(),
+            // value_before (dev3-row-delete.md#read): the same candidate/pins
+            // and table/request observations with the before carrier.
+            4 * r
+                + n::<Result<()>>()
+                + n::<Result<UndoRef>>()
+                + 2 * n::<Option<&()>>()
+                + 2 * n::<Option<UndoRef>>()
+                + n::<Result<ObjectHandle>>()
+                + n::<Result<TargetRequest>>()
+                + n::<Result<RetentionResidencyStep>>()
+                + n::<Result<ReadStep<RowValueBefore>>>(),
         ]
     }
     pub(in crate::storage) fn row_test_with_retiring_undo(
@@ -1098,6 +1325,7 @@ impl RowCandidate<'_> {
             capture_sequence: self.capture_sequence,
             version: self.version,
             canonical_len: self.canonical_len,
+            deleted: self.deleted,
         }
     }
 }

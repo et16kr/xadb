@@ -328,3 +328,105 @@ fn rdl_j02_explicit_delete_rolls_back_then_commits() {
         println!("RDL_J02 q=3 drains=5,6 restart_steps={}", joined.steps);
     });
 }
+
+/// RDL-J03 (dev3-row-delete.md#read): reads of a tombstone before its
+/// cleanup over the actual C supply. While the deleting transaction is
+/// Active, a new statement's capture takes the tombstone and C's
+/// `value_before` reads U's RowValue before: the old value (q_old 2 <= S).
+/// After the Commit at q 3 and before the drain, a new statement sees T
+/// committed at q 3 <= S: no row, with no U read. The drain then installs
+/// DeletePrune (5 + 1 groups) and the read is the same.
+#[test]
+fn rdl_j03_reads_before_cleanup_see_the_old_value_then_no_row() {
+    case_within("RDL-J03", std::time::Duration::from_secs(300), || {
+        let oracle = Oracle::new();
+        with_fresh!(
+            oracle,
+            frames = 28,
+            |live, owner, flusher, status, undo, private, reader_private, core, fence, state| {
+                let _ = state;
+                let (row_status, _) =
+                    create_table(live, owner, flusher, status, undo, private, true);
+                for _ in 1..3 {
+                    system_init(live, owner, flusher, true);
+                }
+                let (mut writer, reader, mut flush) = live.split();
+                let (out, slots) = autocommit!(
+                    &mut writer,
+                    owner,
+                    flush,
+                    flusher,
+                    reader,
+                    reader_private,
+                    &row_status,
+                    private,
+                    6,
+                    ints(&[100, 101])
+                );
+                assert_eq!(committed(out), (2, 2));
+                let rows = applied(slots, &[100, 101]);
+                assert_eq!(
+                    drains!(&mut writer, owner, flush, flusher, private),
+                    [drain(11, true)]
+                );
+                let ids = [rows[0].0, rows[1].0];
+
+                let mut holder = None;
+                begun(begin!(
+                    &mut writer,
+                    owner,
+                    flush,
+                    flusher,
+                    &row_status,
+                    private,
+                    &mut holder
+                ));
+                let (out, slot) = delete_statement!(
+                    &mut writer,
+                    owner,
+                    flush,
+                    flusher,
+                    reader,
+                    reader_private,
+                    &mut holder,
+                    private,
+                    6,
+                    ids[0]
+                );
+                assert_eq!(done(out), 1);
+                assert_eq!(slot.expect("deleted row").row(), ids[0]);
+                assert_eq!(
+                    read_rows!(writer, reader, core, reader_private, flush, flusher, ids),
+                    [Some(100), Some(101)]
+                );
+                assert_eq!(
+                    explicit_committed(commit!(
+                        &mut writer,
+                        owner,
+                        flush,
+                        flusher,
+                        &mut holder,
+                        private,
+                        1
+                    )),
+                    (3, 1)
+                );
+                assert_eq!(
+                    read_rows!(writer, reader, core, reader_private, flush, flusher, ids),
+                    [None, Some(101)]
+                );
+                assert_eq!(
+                    drains!(&mut writer, owner, flush, flusher, private),
+                    [drain(6, true)]
+                );
+                assert_row_jobs_free(writer.catalog_test_jobs());
+                assert_eq!(
+                    read_rows!(writer, reader, core, reader_private, flush, flusher, ids),
+                    [None, Some(101)]
+                );
+                assert!(!fence.is_fenced());
+                println!("RDL_J03 active=old committed=none drains=6");
+            }
+        );
+    });
+}

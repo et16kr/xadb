@@ -29,7 +29,7 @@ fn row_read_census<W: WriterNamespace>(kind: &str) {
     let load = c[7];
     let full = c[8];
     let mut phases = Vec::new();
-    for (name, offset) in [("point", 0), ("cursor", 3)] {
+    for (name, offset) in [("point", 0), ("cursor", 4)] {
         phases.push((
             format!("{name}.catalog_load"),
             operation + load + c[0] + c[1] + b[offset] + load_temporaries,
@@ -47,6 +47,10 @@ fn row_read_census<W: WriterNamespace>(kind: &str) {
             operation + load + c[10] + b[offset + 2] + load_temporaries,
         ));
         phases.push((
+            format!("{name}.value_before_load"),
+            operation + load + c[11] + b[offset + 3] + load_temporaries,
+        ));
+        phases.push((
             format!("{name}.status_location"),
             operation + leaf[3] + c[9] + b[offset + 1] + load_temporaries,
         ));
@@ -54,8 +58,12 @@ fn row_read_census<W: WriterNamespace>(kind: &str) {
             format!("{name}.undo_location"),
             operation + leaf[3] + c[10] + b[offset + 2] + load_temporaries,
         ));
+        phases.push((
+            format!("{name}.value_before_location"),
+            operation + leaf[3] + c[11] + b[offset + 3] + load_temporaries,
+        ));
     }
-    let parent = c[0].max(c[9]).max(c[10]);
+    let parent = c[0].max(c[9]).max(c[10]).max(c[11]);
     for (at, name) in [
         (0, "admission"),
         (1, "prepare_pages"),

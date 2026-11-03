@@ -37,6 +37,7 @@ pub(crate) use write_operation::{
 
 pub(crate) use read::{
     MissingRowEvidence, RowCandidate, RowCopyObservation, RowReadOperation, RowSearchPage,
+    RowValueBefore,
 };
 #[cfg(test)]
 #[allow(unused_imports, reason = "used by the C+B selection only")]

@@ -118,7 +118,7 @@ pub(crate) use row::{
     RowApplied, RowCancelled, RowCandidate, RowCommitObservation, RowCopyObservation,
     RowDeleteStep, RowMutationObservation, RowOwnedError, RowPreflightOperation, RowPreflightStep,
     RowPreparedOperation, RowReadOperation, RowReservedOperation, RowRollback, RowRollbackDone,
-    RowRollbackTask, RowSearchPage, row_write_charge,
+    RowRollbackTask, RowSearchPage, RowValueBefore, row_write_charge,
 };
 #[allow(unused_imports)]
 pub(in crate::storage) use row::{PreparedRecoveredClr, RecoveredClr, RecoveredClrStep};

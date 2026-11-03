@@ -20,8 +20,8 @@ pub(crate) use super::bootstrap::doublewrite_install::mutable_storage::plan4_pag
     RowPreflightStep, RowPreparedOperation, RowProducerContext, RowProducerInput, RowProducerLane,
     RowProposal, RowReadOperation, RowReservedOperation, RowRollback, RowRollbackDone,
     RowRollbackTask, RowSearchPage, RowSourceBinding, RowSourceRole, RowStatementView,
-    RowTransaction, RowValidationLane, StatementFinishError, TableStep, TransactionFinishError,
-    TransactionOptions, row_write_charge,
+    RowTransaction, RowValidationLane, RowValueBefore, StatementFinishError, TableStep,
+    TransactionFinishError, TransactionOptions, row_write_charge,
 };
 
 #[allow(unused_imports)]

@@ -25,8 +25,8 @@ pub(crate) use super::wal_io::disk_api::{
     RowPreflightOperation, RowPreflightStep, RowPreparedOperation, RowProducerContext,
     RowProducerInput, RowProducerLane, RowProposal, RowReadOperation, RowReservedOperation,
     RowRollback, RowRollbackDone, RowRollbackTask, RowSearchPage, RowSourceBinding, RowSourceRole,
-    RowStatementView, RowTransaction, RowValidationLane, StatementFinishError, TableStep,
-    TransactionFinishError, TransactionOptions, row_write_charge,
+    RowStatementView, RowTransaction, RowValidationLane, RowValueBefore, StatementFinishError,
+    TableStep, TransactionFinishError, TransactionOptions, row_write_charge,
 };
 
 #[allow(unused_imports)]

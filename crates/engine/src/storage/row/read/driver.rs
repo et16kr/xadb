@@ -12,12 +12,12 @@
 //! `dev3-task-06-tree-rows.md`.
 use super::{
     CursorProgress, ReadError, RowRange, SeekPosition, Visibility, check_output, seek_point,
-    visible,
+    tombstone, visible,
 };
 use crate::storage::{
     disk::RetentionError,
     row_record::RecordVersion,
-    transaction_record::{TransactionState, TxnRef},
+    transaction_record::{TransactionState, TxnRef, VersionStamp},
     tree_page::TreePageView,
 };
 use foundation::{error::Effect, identity::RowId, runtime::Cancellation};
@@ -44,6 +44,18 @@ trait CursorCredit {
 trait Observed {
     fn version(&self) -> RecordVersion;
     fn canonical_len(&self) -> usize;
+    /// A captured DELETE tombstone (no canonical value).
+    fn deleted(&self) -> bool {
+        false
+    }
+}
+
+/// C's observation of a tombstone's U before: the committed row it
+/// replaced, by row, `q_old` and canonical length.
+trait BeforeObserved {
+    fn row(&self) -> RowId;
+    fn q_old(&self) -> u64;
+    fn canonical_len(&self) -> usize;
 }
 
 /// One short source operation. Each phase reborrows the source; candidates
@@ -52,6 +64,7 @@ trait ReadSource {
     type Target;
     type Candidate: Observed;
     type Missing;
+    type Before: BeforeObserved;
     type Copied: Observed;
     type Page<'g>: SearchPage<Candidate = Self::Candidate>
     where
@@ -65,9 +78,19 @@ trait ReadSource {
         &mut self,
         candidate: &Self::Candidate,
     ) -> Result<Step<Self::Missing, Self::Target>, RetentionError>;
+    /// A tombstone's U RowValue before (dev3-row-delete.md#read).
+    fn value_before(
+        &mut self,
+        candidate: &Self::Candidate,
+    ) -> Result<Step<Self::Before, Self::Target>, RetentionError>;
     fn copy_candidate(
         &mut self,
         candidate: &Self::Candidate,
+        output: &mut [u8],
+    ) -> Result<Self::Copied, RetentionError>;
+    fn copy_before(
+        &mut self,
+        before: &Self::Before,
         output: &mut [u8],
     ) -> Result<Self::Copied, RetentionError>;
     fn release_candidate(&mut self, candidate: Self::Candidate) -> Result<(), RetentionError>;
@@ -172,7 +195,12 @@ fn decide<C: Observed>(
     sample: &ViewSample,
     status: Option<TransactionState>,
 ) -> Result<Visibility, RowReadError> {
-    visible(sample.q, sample.own_actor, candidate.version(), status).map_err(Into::into)
+    if candidate.deleted() {
+        tombstone(sample.q, sample.own_actor, candidate.version(), status)
+    } else {
+        visible(sample.q, sample.own_actor, candidate.version(), status)
+    }
+    .map_err(Into::into)
 }
 #[inline(never)]
 fn check_selected<C: Observed>(candidate: &C, at: SeekPosition) -> Result<(), RowReadError> {
@@ -244,10 +272,65 @@ fn select_row<S: ReadSource>(
                 Step::FlushRequired { target } => Step::FlushRequired { target },
             });
         }
+        Step::Ready(Visibility::Deleted) => return Ok(Step::Ready(false)),
+        Step::Ready(Visibility::ReadValueBefore) => {
+            return select_before(source, candidate, sample.q, output, cancel, copied_slot);
+        }
         Step::Ready(Visibility::ReadStatus) => return Err(ReadError::UnexpectedStatus.into()),
     }
     copy_selected(source, candidate, output, cancel, copied_slot)?;
     Ok(Step::Ready(true))
+}
+/// A tombstone whose DELETE the statement does not see: C reads U's
+/// RowValue before into its copy buffer, B judges `q_old` and only then
+/// copies the old value.
+#[inline(never)]
+fn select_before<S: ReadSource>(
+    source: &mut S,
+    candidate: &S::Candidate,
+    snapshot_q: u64,
+    output: &mut [u8],
+    cancel: &Cancellation,
+    copied_slot: &mut Option<S::Copied>,
+) -> Result<Step<bool, S::Target>, RowReadError> {
+    let before = match source.value_before(candidate)? {
+        Step::Ready(before) => before,
+        Step::FlushRequired { target } => return Ok(Step::FlushRequired { target }),
+    };
+    if before.row() != candidate.version().row {
+        return Err(RowReadError::SourceMismatch);
+    }
+    if before.q_old() > snapshot_q {
+        return Ok(Step::Ready(false));
+    }
+    copy_before(source, &before, output, cancel, copied_slot)?;
+    Ok(Step::Ready(true))
+}
+/// The old value's copy is outside the U LOAD frame; its observation must be
+/// the committed version of the same row at `q_old` with no undo.
+#[inline(never)]
+fn copy_before<S: ReadSource>(
+    source: &mut S,
+    before: &S::Before,
+    output: &mut [u8],
+    cancel: &Cancellation,
+    copied_slot: &mut Option<S::Copied>,
+) -> Result<(), RowReadError> {
+    check_output(before.canonical_len(), output.len())?;
+    if cancelled(cancel) {
+        return Err(ReadError::Cancelled.into());
+    }
+    let copied = source.copy_before(before, output)?;
+    let version = copied.version();
+    if version.row != before.row()
+        || !matches!(version.stamp, VersionStamp::Committed(q) if q.get() == before.q_old())
+        || version.undo.is_some()
+        || copied.canonical_len() != before.canonical_len()
+    {
+        return Err(RowReadError::SourceMismatch);
+    }
+    *copied_slot = Some(copied);
+    Ok(())
 }
 
 /// Point read over one operation that `open` creates on this same view and
