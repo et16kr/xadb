@@ -1,15 +1,25 @@
 //! Actual Row leaf effects connected to the same-frame Undo/Status observation.
 //! Borrows original schema/Job/pages; creates no candidate or live authority.
-use super::{Error, LayoutView, Operation, Result, u32_at, undo};
+//! A DELETE root's U before (stamp, old logical and value) is read here
+//! through entry (a) with the table schema (dev3-row-delete.md#delete-undo);
+//! `undo.rs` sees the rest of that U through entry (b).
+use super::{Error, LayoutView, Operation, Result, operation::TOMBSTONE_CELL, u32_at, undo};
 use crate::storage::{
     anchor::{self, TreeKind},
     catalog_record::{self, CatalogDefinitionView, CatalogExpectation, TableDefinitionView},
     page::{self, FileId, PAGE_BYTES, PageIdentity, PageKind, PageRef, PageView},
-    retention_page::row::{self, JobCells},
-    row_record::{self, RecordExpectation, RowPayload, RowRecordView, RowSchemaInput},
-    transaction_record::VersionStamp,
+    retention_page::{
+        JOB_COUNT,
+        row::{self, JobCells, JobState, JobView, RowEffect},
+    },
+    row_record::{
+        self, RecordExpectation, RecordVersion, RowPayload, RowRecordView, RowSchemaInput,
+    },
+    transaction_record::{LogicalRowVersion, VersionStamp},
     tree_page::{self, EntryPayload, TreeExpectation, TreePageView},
-    undo_record::{self, UndoTargetKind, UndoTargetView},
+    undo_record::{
+        self, UNDO_RECORD_BYTES, UndoCell, UndoEdge, UndoPayload, UndoTargetKind, UndoTargetView,
+    },
     wal_frame,
 };
 use foundation::{
@@ -71,15 +81,23 @@ impl LeafObservation {
 }
 
 /// Checks Forward/CLR/Prune's exact local Row change, schema, every actual row,
-/// unchanged neighbors and native/redo bindings. Undo/Status are checked against
-/// this same frame. Original Catalog selection/index census, stable epoch,
-/// after Job/descriptors/global census, source admission and live/recovery
-/// authority remain the caller's obligations. No allocation/I/O/page production.
+/// unchanged neighbors and native/redo bindings, and DeleteForward/DeleteClr/
+/// DeletePrune's tombstone, old or restored row and U before
+/// (dev3-row-delete.md#delete-states). Undo/Status are checked against this
+/// same frame, and the leaf reservation against the original Job bank
+/// (#leaf-reservation). Original Catalog selection/index census, stable
+/// epoch, after Job/descriptors/global census, source admission and
+/// live/recovery authority remain the caller's obligations. No
+/// allocation/I/O/page production.
 pub(crate) fn observe(layout: LayoutView<'_>, input: Inputs<'_>) -> Result<LeafObservation> {
     let op = layout.operation();
-    if !matches!(op, Operation::Forward | Operation::Clr | Operation::Prune) {
+    let role = op.role();
+    if !matches!(role, Operation::Forward | Operation::Clr | Operation::Prune) {
         return Err(Error::Unsupported);
     }
+    let delete = op != role;
+    // Only INSERT's Forward carries a sealed value; a DELETE's old value is
+    // the row it replaces.
     require(input.sealed.is_some() == (op == Operation::Forward))?;
     let undo = undo::observe(
         layout,
@@ -149,16 +167,45 @@ pub(crate) fn observe(layout: LayoutView<'_>, input: Inputs<'_>) -> Result<LeafO
     let after = tree_page::decode_tree_page(input.leaf.after, expected)?;
     valid_before_lsn(before.header().lsn.0, layout)?;
     require(after.header().lsn.0 == layout.header().lsn)?;
-    if op != Operation::Forward {
+    if role != Operation::Forward {
         require(before.header().lsn.0 >= job.last_step())?;
     }
-    validate_rows(&before, schema, namespace)?;
-    validate_rows(&after, schema, namespace)?;
+    let used = (
+        validate_rows(&before, schema, namespace)?,
+        validate_rows(&after, schema, namespace)?,
+    );
+    // The leaf reservation holds before the group and after it, where the
+    // selected root's D changes by DELETE's `C-180` (#leaf-reservation).
+    let reserved = reservation(input.jobs, namespace, table.handle)?;
+    if used.0 + reserved > tree_page::TREE_ENTRY_CAPACITY {
+        return Err(Error::Corrupt);
+    }
+    let restored = || {
+        (job.cell_bytes() as usize)
+            .checked_sub(TOMBSTONE_CELL)
+            .ok_or(Error::IdentityMismatch)
+    };
+    let reserved = match op {
+        Operation::DeleteForward => reserved + restored()?,
+        Operation::DeleteClr | Operation::DeletePrune => {
+            reserved.checked_sub(restored()?).ok_or(Error::Corrupt)?
+        }
+        _ => reserved,
+    };
+    if used.1 + reserved > tree_page::TREE_ENTRY_CAPACITY {
+        return Err(Error::OrderMismatch);
+    }
     let row = job.row_id().ok_or(Error::IdentityMismatch)?;
     let key = row.get().to_be_bytes();
     let bpos = before.lower_bound(&key)?;
     let apos = after.lower_bound(&key)?;
-    let present = (op != Operation::Forward, op != Operation::Clr);
+    // DELETE replaces the row with its tombstone and back, and DeletePrune
+    // removes the tombstone.
+    let present = if delete {
+        (true, role != Operation::Prune)
+    } else {
+        (role != Operation::Forward, role != Operation::Clr)
+    };
     require((bpos.equal, apos.equal) == present && bpos.index == apos.index)?;
     require(before.len() - usize::from(bpos.equal) == after.len() - usize::from(apos.equal))?;
     require(before_page.cell(0) == after_page.cell(0))?;
@@ -184,40 +231,46 @@ pub(crate) fn observe(layout: LayoutView<'_>, input: Inputs<'_>) -> Result<LeafO
     } else {
         None
     };
-    let original = if op == Operation::Forward { a } else { b }.ok_or(Error::IdentityMismatch)?;
+    // The actor's record: INSERT's inline row, or DELETE's tombstone.
+    let original = if role == Operation::Forward { a } else { b }.ok_or(Error::IdentityMismatch)?;
     let record = row_record::decode_row_record_with_schema(
         original,
         RecordExpectation { namespace, row },
         RowSchemaInput::Catalog(schema),
     )?;
-    let version = record.version();
+    // The Job holds the planned tombstone's projection, or INSERT's cell C
+    // and row projection (#job-effect).
     require(
-        version.stamp == VersionStamp::Transaction(input.context.actor)
-            && version.logical.transaction() == input.context.actor.id()
-            && version.logical.mutation_sequence() == job.mutation()
-            && version.undo == Some(undo.reference()),
-    )?;
-    require(
-        original.len() + 12 == job.cell_bytes() as usize
+        record.version()
+            == (RecordVersion {
+                row,
+                stamp: VersionStamp::Transaction(input.context.actor),
+                logical: LogicalRowVersion::new(input.context.actor.id(), job.mutation())?,
+                undo: Some(undo.reference()),
+            })
+            && original.len() + 12
+                == if delete {
+                    TOMBSTONE_CELL
+                } else {
+                    job.cell_bytes() as usize
+                }
             && projection(table.handle, row, Some(original))? == *job.projection_digest(),
     )?;
-    let canonical = inline(record)?;
-    if let Some(sealed) = input.sealed {
-        require(sealed.length == canonical.len() && sealed.digest == content_digest(canonical))?;
-    }
-    if op == Operation::Prune {
-        let new = row_record::decode_row_record_with_schema(
-            a.ok_or(Error::Corrupt)?,
-            RecordExpectation { namespace, row },
-            RowSchemaInput::Catalog(schema),
+    let expected = RecordExpectation { namespace, row };
+    let schema = RowSchemaInput::Catalog(schema);
+    if delete {
+        require(record.payload() == RowPayload::Deleted)?;
+        delete_rows(
+            role,
+            input,
+            job,
+            undo,
+            expected,
+            schema,
+            if role == Operation::Forward { b } else { a },
         )?;
-        let q = input.status.commit.ok_or(Error::InvalidInput)?;
-        require(
-            new.version().stamp == VersionStamp::Committed(q)
-                && new.version().logical == version.logical
-                && new.version().undo.is_none()
-                && inline(new)? == canonical,
-        )?;
+    } else {
+        insert_rows(op, input, record, a, expected, schema)?;
     }
     require(
         layout.core().before_digest() == Some(&projection(table.handle, row, b)?)
@@ -238,6 +291,114 @@ pub(crate) fn observe(layout: LayoutView<'_>, input: Inputs<'_>) -> Result<LeafO
         undo,
     })
 }
+/// INSERT's inline row: its sealed value at Forward, and at Prune the same
+/// value restamped `Committed(q)`.
+fn insert_rows(
+    op: Operation,
+    input: Inputs<'_>,
+    record: RowRecordView<'_>,
+    a: Option<&[u8]>,
+    expected: RecordExpectation,
+    schema: RowSchemaInput<'_>,
+) -> Result<()> {
+    let version = record.version();
+    let canonical = inline(record)?;
+    if let Some(sealed) = input.sealed {
+        require(sealed.length == canonical.len() && sealed.digest == content_digest(canonical))?;
+    }
+    if op == Operation::Prune {
+        let new =
+            row_record::decode_row_record_with_schema(a.ok_or(Error::Corrupt)?, expected, schema)?;
+        let q = input.status.commit.ok_or(Error::InvalidInput)?;
+        require(
+            new.version().stamp == VersionStamp::Committed(q)
+                && new.version().logical == version.logical
+                && new.version().undo.is_none()
+                && inline(new)? == canonical,
+        )?;
+    }
+    Ok(())
+}
+/// DELETE (dev3-row-delete.md#delete-states, #delete-undo). U's Live record
+/// (after DeleteForward, before DeleteClr/DeletePrune), read through entry
+/// (a) with the table schema, is the Job's with a RowValue before:
+/// `Committed(q_old)`, the old logical and the inline old value of `C-180`
+/// bytes. `committed` (DeleteForward's old row, DeleteClr's restored row) is
+/// that before's row of cell C: `Committed(q_old)`, the old logical, undo
+/// None and the same value. DeleteClr and DeletePrune leave U Releasing
+/// with the before's stamp and logical and without its value.
+fn delete_rows(
+    role: Operation,
+    input: Inputs<'_>,
+    job: JobView<'_>,
+    undo: undo::UndoObservation,
+    expected: RecordExpectation,
+    schema: RowSchemaInput<'_>,
+    committed: Option<&[u8]>,
+) -> Result<()> {
+    let context = input.context;
+    let expectation = undo::expectation(job, context)?;
+    let live = undo::record_cell(
+        context,
+        undo.reference(),
+        if role == Operation::Forward {
+            input.undo.after
+        } else {
+            input.undo.before
+        },
+    )?;
+    let live = undo_record::decode_undo_record(live, expectation, &schema)?.live_before()?;
+    let (Some(stamp @ VersionStamp::Committed(_)), Some(logical), UndoPayload::Inline(value)) =
+        (live.before_stamp, live.before_logical, live.payload)
+    else {
+        return Err(Error::IdentityMismatch);
+    };
+    let edge = undo.predecessor().map_or(UndoEdge::Never, UndoEdge::Linked);
+    require(
+        live == undo::delete_record(job, edge, 2, stamp, logical, live.payload)
+            && value.len() + TOMBSTONE_CELL == job.cell_bytes() as usize,
+    )?;
+    if role != Operation::Prune {
+        let bytes = committed.ok_or(Error::IdentityMismatch)?;
+        let record = row_record::decode_row_record_with_schema(bytes, expected, schema)?;
+        require(
+            record.version()
+                == (RecordVersion {
+                    row: expected.row,
+                    stamp,
+                    logical,
+                    undo: None,
+                })
+                && inline(record)? == value
+                && bytes.len() + 12 == job.cell_bytes() as usize,
+        )?;
+    }
+    if role != Operation::Forward {
+        let cut = if undo.predecessor().is_some() {
+            UndoEdge::Cut
+        } else {
+            UndoEdge::Never
+        };
+        let mut released = [0; UNDO_RECORD_BYTES];
+        let length = undo_record::encode_undo_record(
+            UndoCell::Releasing(undo::delete_record(
+                job,
+                cut,
+                0,
+                stamp,
+                logical,
+                UndoPayload::None,
+            )),
+            expectation,
+            &schema,
+            &mut released,
+        )?;
+        require(
+            undo::record_cell(context, undo.reference(), input.undo.after)? == &released[..length],
+        )?;
+    }
+    Ok(())
+}
 fn value<'a>(leaf: &TreePageView<'a>, at: usize) -> Result<&'a [u8]> {
     match leaf.entry(at)?.payload {
         EntryPayload::Value(bytes) => Ok(bytes),
@@ -252,23 +413,60 @@ fn inline(row: RowRecordView<'_>) -> Result<&[u8]> {
         _ => Err(Error::Unsupported),
     }
 }
+/// Types every row: inline, or a DELETE's tombstone (`Transaction` stamp
+/// with its U, dev3-row-delete.md#tombstone); a `Committed` or undo-less
+/// tombstone is corrupt. Returns the rows' entry bytes (12-byte cell head,
+/// record and 4-byte slot), the leaf reservation's measure.
 fn validate_rows(
     leaf: &TreePageView<'_>,
     schema: TableDefinitionView<'_>,
     namespace: crate::api::Namespace,
-) -> Result<()> {
+) -> Result<usize> {
+    let mut used = 0;
     for at in 0..leaf.len() {
         let entry = leaf.entry(at)?;
         let key: [u8; 8] = entry.key.try_into().map_err(|_| Error::Corrupt)?;
         let row = RowId::new(u64::from_be_bytes(key)).map_err(|_| Error::Corrupt)?;
+        let bytes = value(leaf, at)?;
         let decoded = row_record::decode_row_record_with_schema(
-            value(leaf, at)?,
+            bytes,
             RecordExpectation { namespace, row },
             RowSchemaInput::Catalog(schema),
         )?;
-        inline(decoded)?;
+        if decoded.payload() == RowPayload::Deleted {
+            let version = decoded.version();
+            if !matches!(version.stamp, VersionStamp::Transaction(_)) || version.undo.is_none() {
+                return Err(Error::Corrupt);
+            }
+        } else {
+            inline(decoded)?;
+        }
+        used += bytes.len() + 16;
     }
-    Ok(())
+    Ok(used)
+}
+/// D of the leaf reservation (dev3-row-delete.md#leaf-reservation): `C-180`
+/// for every Retained DELETE root of `table` in the original bank.
+fn reservation(
+    jobs: JobCells<'_>,
+    namespace: crate::api::Namespace,
+    table: ObjectHandle,
+) -> Result<usize> {
+    let mut reserved = 0usize;
+    for ordinal in 0..JOB_COUNT {
+        let job = row::decode_job(jobs.cell(ordinal), namespace)?;
+        if job.state() == JobState::RootRetained
+            && job.effect() == RowEffect::Delete
+            && job.object().is_some_and(|object| {
+                object.object == table.object && object.generation == table.generation
+            })
+        {
+            reserved += (job.cell_bytes() as usize)
+                .checked_sub(TOMBSTONE_CELL)
+                .ok_or(Error::Corrupt)?;
+        }
+    }
+    Ok(reserved)
 }
 fn projection(handle: ObjectHandle, row: RowId, value: Option<&[u8]>) -> Result<[u8; 32]> {
     let mut prefix = [0; 48];

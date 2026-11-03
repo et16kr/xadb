@@ -18,12 +18,18 @@ use crate::{
         page::{self, FileId, PAGE_BYTES, PageHeader, PageIdentity, PageKind, PageRef},
         retention_page::row::{self, JobState},
         row_record::RowSchemaInput,
-        semantic_row::transition::tests::delete::{ABefore, a_actor, a_befores},
+        semantic_row::{
+            Error as RowError,
+            transition::tests::{
+                RowAfters,
+                delete::{ABefore, a_actor, a_befores, a_group_over, padded_leaf},
+            },
+        },
         status_home::StatusHome,
         transaction_record::{
             LogicalRowVersion, RollbackState, TransactionState, TransactionStatusCell, VersionStamp,
         },
-        tree_page::TreeExpectation,
+        tree_page::{TREE_ENTRY_CAPACITY, TreeExpectation},
         undo_record::{self, UndoCell, UndoLink, UndoRecordExpectation},
         wal_frame::{FrameExpectation, FrameKind, WalFrameHeader, WalStreamIdentity},
     },
@@ -519,9 +525,10 @@ fn rdl_a_delete_groups_match_literals() {
 /// lane's input disagrees with the RootJob or the pages: the effect binds
 /// the change (an INSERT value on a delete root, a sealed old row on an
 /// INSERT root: Unsupported), the sealed old row binds the RowLeaf (another
-/// projection or cell C: IdentityMismatch), and DeleteClr restores only the
-/// committed RowValue its Live U holds (a U whose before value is not the
-/// Job's: IdentityMismatch or a codec refusal).
+/// projection or cell C: IdentityMismatch), the change binds the RootJob's
+/// RowId (another committed row: IdentityMismatch), and DeleteClr restores
+/// only the committed RowValue its Live U holds (a U whose before value is
+/// not the Job's: IdentityMismatch or a codec refusal).
 #[test]
 fn rdl_a_delete_producer_refuses_before_output() {
     let states = a_befores();
@@ -573,6 +580,24 @@ fn rdl_a_delete_producer_refuses_before_output() {
             Change::DeleteForward {
                 cell_bytes: case.sealed.0 + 1,
                 projection: case.sealed.1,
+            },
+        ),
+        InsertError::IdentityMismatch
+    );
+
+    // Another RowId than the RootJob's: row 9, committed and pruned in the
+    // same leaf, with its own sealed cell and projection.
+    let mut other = Case::new(state);
+    other.row = RowId::new(9).unwrap();
+    let old = bytes_of(&state.leaf, row_cell(&state.leaf, 9));
+    assert_eq!(
+        refused(
+            "another RowId",
+            &other,
+            state,
+            Change::DeleteForward {
+                cell_bytes: old.len(),
+                projection: group::projection(table(), other.row, Some(&old[12..])).unwrap(),
             },
         ),
         InsertError::IdentityMismatch
@@ -637,4 +662,78 @@ fn rdl_a_delete_producer_refuses_before_output() {
         ),
         InsertError::IdentityMismatch
     );
+}
+
+/// RDL-C/RDL-A (dev3-row-delete.md#leaf-reservation): three of A's history
+/// D groups produced over their before RowLeaf padded with committed rows,
+/// each at the reservation's edge, where C's whole-group observer and
+/// leaf.rs (with status.rs, undo.rs and jobs.rs over the same leaf when C
+/// accepts) give the same answer.
+/// - The INSERT Forward over the effect-1 H (D-531, D = 19 from T2's
+///   Retained delete root of row 2). At exactly entries + cell + D =
+///   capacity, both accept A's frame. One byte fuller, A still writes it (the
+///   cell fits without a split; Reserve proved the fit under the same gate)
+///   and both refuse it as OrderMismatch, the split check the reservation
+///   extends.
+/// - The DeleteForward of row 9 (D-526, D = 19) and its DeleteClr (D-528,
+///   D = 19 + 14 with row 9's own root). At exactly entries + D = capacity
+///   before the group, both accept A's frame: the group moves entries and D
+///   by the same C - 180, so the after leaf is at capacity too. One byte
+///   fuller, A still writes the group (A checks only that its cell fits) and
+///   both refuse the before leaf as Corrupt.
+#[test]
+fn rdl_a_groups_at_the_leaf_reservation_boundary() {
+    let states = a_befores();
+    // The new row's entry: its record (168 + L), cell head 12 and slot 4.
+    let entry = 168 + insert_canonical().len() + 16;
+    for (group, d, entry, refusal) in [
+        ("D-531", 199 - 180, entry, RowError::OrderMismatch),
+        ("D-526", 199 - 180, 0, RowError::Corrupt),
+        ("D-528", (199 - 180) + (194 - 180), 0, RowError::Corrupt),
+    ] {
+        let state = states.iter().find(|state| state.name == group).unwrap();
+        let reserved: usize = state
+            .bank
+            .iter()
+            .filter_map(|cell| row::decode_job(cell, namespace()).ok())
+            .filter(|job| {
+                job.state() == JobState::RootRetained && job.effect() == row::RowEffect::Delete
+            })
+            .map(|job| job.cell_bytes() as usize - 180)
+            .sum();
+        assert_eq!(reserved, d, "{group} D");
+        for (free, expected) in [
+            (entry + reserved, Ok(())),
+            (entry + reserved - 1, Err(refusal)),
+        ] {
+            let padded = padded_leaf(&state.leaf, free);
+            let mut case = Case::new(state);
+            case.before[case.sources[5].unwrap().index] = *padded;
+            let (result, frame, after) = produce(&case, state, case.change(state));
+            let produced = result.unwrap_or_else(|error| panic!("{group} free {free}: {error:?}"));
+            let role = |role: RowPageRole| {
+                let at = produced.roles.iter().position(|r| *r == role).unwrap();
+                &after[at]
+            };
+            let afters = RowAfters {
+                undo: role(RowPageRole::Undo),
+                status: role(RowPageRole::Status),
+                leaf: role(RowPageRole::RowLeaf),
+            };
+            assert_eq!(
+                a_group_over(group, &padded, &frame[..produced.frame_len], afters),
+                (expected, expected),
+                "{group} free {free}"
+            );
+            println!(
+                "RDL_A_LEAF_BOUNDARY\t{group}\t{}={}\t{expected:?}",
+                if entry == 0 {
+                    "entries+D"
+                } else {
+                    "entries+cell+D"
+                },
+                TREE_ENTRY_CAPACITY - free + entry + reserved
+            );
+        }
+    }
 }

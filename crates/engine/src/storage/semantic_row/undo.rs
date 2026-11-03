@@ -1,5 +1,9 @@
 //! Scope3 actual Undo observations, borrowing the original Job bank and pages.
 //! No Row production, allocator/inventory grant, pin/horizon or WAL authority.
+//! A DELETE root's U (dev3-row-delete.md#delete-undo) is seen here through
+//! entry (b) only: its header, every field the Job holds and its lengths. Its
+//! before stamp, old logical and value are not in the Job; `leaf.rs` checks
+//! them through entry (a) against the RowLeaf it observes.
 use super::{Error, LayoutView, Operation, Result, status, u32_at};
 use crate::storage::{
     allocation_page::ReservationOwner,
@@ -7,12 +11,14 @@ use crate::storage::{
     page::{self, FileId, PAGE_BYTES, PageIdentity, PageKind, PageRef, PageView},
     retention_page::{
         JOB_COUNT,
-        row::{self, JobCells, JobScope, JobState, JobView},
+        row::{self, JobCells, JobScope, JobState, JobView, RowEffect},
     },
-    transaction_record::{StatusSlotRef, TxnRef},
+    transaction_record::{LogicalRowVersion, StatusSlotRef, TxnRef, VersionStamp},
     undo_record::{
-        self, UndoBeforeKind, UndoCell, UndoCreator, UndoEdge, UndoLink, UndoPayload, UndoRecord,
-        UndoRecordExpectation, UndoRecordState, UndoRelease, UndoTargetKind, UndoTargetView,
+        self, UNDO_RECORD_BYTES, UndoBeforeKind, UndoCell, UndoCreator, UndoEdge, UndoLink,
+        UndoPayload, UndoPayloadForm, UndoRecord, UndoRecordExpectation, UndoRecordMetadata,
+        UndoRecordOutline, UndoRecordState, UndoRelease, UndoStampKind, UndoTargetKind,
+        UndoTargetView,
     },
     undo_ref::UndoRef,
     wal_frame,
@@ -100,8 +106,11 @@ pub(crate) fn observe(
 ) -> Result<UndoObservation> {
     validate_context(layout, context)?;
     let op = layout.operation();
+    // DeleteForward/DeleteClr/DeletePrune take their INSERT role's steps on
+    // a delete root's U (dev3-row-delete.md#delete-states).
+    let role = op.role();
     if !matches!(
-        op,
+        role,
         Operation::Reserve
             | Operation::Forward
             | Operation::Clr
@@ -129,9 +138,16 @@ pub(crate) fn observe(
             )
         }
         UndoSource::Existing { .. } => {
-            require(op != Operation::Reserve)?;
+            require(role != Operation::Reserve)?;
             validate_job(selected, context)?;
-            require(match op {
+            // A DELETE opcode names a delete root, an INSERT opcode an INSERT
+            // root; the release steps serve both.
+            if matches!(role, Operation::Forward | Operation::Clr | Operation::Prune)
+                && (op != role) != (selected.effect() == RowEffect::Delete)
+            {
+                return Err(Error::IdentityMismatch);
+            }
+            require(match role {
                 Operation::Forward => selected.state() == JobState::RootReserved,
                 Operation::Clr | Operation::Prune => selected.state() == JobState::RootRetained,
                 Operation::ReleaseRole => {
@@ -154,8 +170,10 @@ pub(crate) fn observe(
     let core = layout.core();
     if core.current() != Some(reference)
         || core.sequence() != sequence
-        || matches!(op, Operation::Reserve | Operation::Forward | Operation::Clr)
-            && (core.statement() != statement || core.mutation() != mutation)
+        || matches!(
+            role,
+            Operation::Reserve | Operation::Forward | Operation::Clr
+        ) && (core.statement() != statement || core.mutation() != mutation)
     {
         return Err(Error::IdentityMismatch);
     }
@@ -183,7 +201,7 @@ pub(crate) fn observe(
         });
     }
     require(before.header().lsn.0 >= selected.last_step())?;
-    let active_edge = matches!(op, Operation::Forward | Operation::Clr | Operation::Prune);
+    let active_edge = matches!(role, Operation::Forward | Operation::Clr | Operation::Prune);
     let predecessor = if active_edge {
         let previous = predecessor(jobs, selected, context)?;
         if core.next() != previous.and_then(|job| job.undo())
@@ -206,16 +224,13 @@ pub(crate) fn observe(
             require(page.header().lsn.0 >= previous.last_step())?;
             let earlier = predecessor(jobs, previous, context)?.map(link);
             require(previous.has_previous_transaction() == Some(earlier.is_some()))?;
-            validate_material(
+            // H is INSERT's exact Missing material, or a delete root's Live U
+            // through entry (b) (dev3-row-delete.md#previous-proof).
+            validate_live(
                 page.cell(0).ok_or(Error::Corrupt)?,
                 previous,
                 context,
-                UndoCell::Live(material(
-                    previous,
-                    earlier.map_or(UndoEdge::Never, UndoEdge::Linked),
-                    2,
-                    0,
-                )),
+                earlier.map_or(UndoEdge::Never, UndoEdge::Linked),
             )?;
         }
         let proof = status_proof.ok_or(Error::InvalidInput)?;
@@ -237,49 +252,26 @@ pub(crate) fn observe(
     };
     let old = before.cell(0).ok_or(Error::Corrupt)?;
     let new = after.cell(0).ok_or(Error::Corrupt)?;
-    let (old_state, new_state) = match op {
+    let edge = predecessor.map_or(UndoEdge::Never, UndoEdge::Linked);
+    let (old_state, new_state) = match role {
         Operation::Forward => {
             require(before.header().lsn.0 == selected.lease_lsn())?;
             undo_record::decode_free_undo_record(old, reference.generation())?;
-            validate_material(
-                new,
-                selected,
-                context,
-                UndoCell::Live(material(
-                    selected,
-                    predecessor.map_or(UndoEdge::Never, UndoEdge::Linked),
-                    2,
-                    0,
-                )),
-            )?;
+            validate_live(new, selected, context, edge)?;
             (UndoRecordState::Free, UndoRecordState::Live)
         }
         Operation::Clr | Operation::Prune => {
-            validate_material(
-                old,
-                selected,
-                context,
-                UndoCell::Live(material(
-                    selected,
-                    predecessor.map_or(UndoEdge::Never, UndoEdge::Linked),
-                    2,
-                    0,
-                )),
-            )?;
-            validate_material(
+            validate_live(old, selected, context, edge)?;
+            validate_releasing(
                 new,
                 selected,
                 context,
-                UndoCell::Releasing(material(
-                    selected,
-                    if predecessor.is_some() {
-                        UndoEdge::Cut
-                    } else {
-                        UndoEdge::Never
-                    },
-                    0,
-                    0,
-                )),
+                if predecessor.is_some() {
+                    UndoEdge::Cut
+                } else {
+                    UndoEdge::Never
+                },
+                0,
             )?;
             (UndoRecordState::Live, UndoRecordState::Releasing)
         }
@@ -291,30 +283,21 @@ pub(crate) fn observe(
                 (2 | 3, 3) => UndoEdge::Released,
                 _ => return Err(Error::OrderMismatch),
             };
-            validate_material(
-                old,
-                selected,
-                context,
-                UndoCell::Releasing(material(selected, transaction, 0, cursor)),
-            )?;
-            if op == Operation::RootFree {
+            validate_releasing(old, selected, context, transaction, cursor)?;
+            if role == Operation::RootFree {
                 undo_record::decode_free_undo_record(new, reference.generation())?;
                 (UndoRecordState::Releasing, UndoRecordState::Free)
             } else {
-                validate_material(
+                validate_releasing(
                     new,
                     selected,
                     context,
-                    UndoCell::Releasing(material(
-                        selected,
-                        if cursor + 1 >= 2 {
-                            UndoEdge::Released
-                        } else {
-                            transaction
-                        },
-                        0,
-                        cursor + 1,
-                    )),
+                    if cursor + 1 >= 2 {
+                        UndoEdge::Released
+                    } else {
+                        transaction
+                    },
+                    cursor + 1,
                 )?;
                 (UndoRecordState::Releasing, UndoRecordState::Releasing)
             }
@@ -461,6 +444,146 @@ fn validate_material(
     }
     Ok(())
 }
+/// The Live U of a Retained root with transaction edge `transaction` and its
+/// two incoming: INSERT's exact Missing material, or a delete root's U
+/// through entry (b).
+fn validate_live(
+    bytes: &[u8],
+    job: JobView<'_>,
+    context: UndoContext,
+    transaction: UndoEdge,
+) -> Result<()> {
+    match job.effect() {
+        RowEffect::Insert => validate_material(
+            bytes,
+            job,
+            context,
+            UndoCell::Live(material(job, transaction, 2, 0)),
+        ),
+        RowEffect::Delete => validate_outline(bytes, job, context, true, transaction, 0),
+    }
+}
+/// A Releasing U at release `cursor`: INSERT's exact material, or a delete
+/// root's U through entry (b).
+fn validate_releasing(
+    bytes: &[u8],
+    job: JobView<'_>,
+    context: UndoContext,
+    transaction: UndoEdge,
+    cursor: u8,
+) -> Result<()> {
+    match job.effect() {
+        RowEffect::Insert => validate_material(
+            bytes,
+            job,
+            context,
+            UndoCell::Releasing(material(job, transaction, 0, cursor)),
+        ),
+        RowEffect::Delete => validate_outline(bytes, job, context, false, transaction, cursor),
+    }
+}
+/// A delete root's U through entry (b) (dev3-row-delete.md#delete-undo):
+/// the Job's material fields, a RowValue before with a Committed stamp until
+/// cursor 3 and an old logical, and while Live the old value's inline length
+/// `C-180` in a `432+L` cell; Releasing has no body (432 B).
+fn validate_outline(
+    bytes: &[u8],
+    job: JobView<'_>,
+    context: UndoContext,
+    live: bool,
+    transaction: UndoEdge,
+    cursor: u8,
+) -> Result<()> {
+    let expected = material(job, transaction, if live { 2 } else { 0 }, cursor);
+    let payload_bytes = if live {
+        (job.cell_bytes() as usize)
+            .checked_sub(180)
+            .filter(|length| (5..=2048).contains(length))
+            .ok_or(Error::IdentityMismatch)?
+    } else {
+        0
+    };
+    require(bytes.len() == UNDO_RECORD_BYTES + payload_bytes)?;
+    let outline = undo_record::decode_undo_record_metadata(
+        bytes,
+        UndoRecordExpectation {
+            namespace: context.profile.spec().namespace,
+            reference: job.undo().ok_or(Error::IdentityMismatch)?,
+            target: expected.target,
+        },
+    )?;
+    if outline
+        != (UndoRecordOutline {
+            state: if live {
+                UndoRecordState::Live
+            } else {
+                UndoRecordState::Releasing
+            },
+            metadata: UndoRecordMetadata {
+                creator: expected.creator,
+                sequence: expected.sequence,
+                mutation_sequence: expected.mutation_sequence,
+                incoming: expected.incoming,
+                target: expected.target,
+            },
+            edges: expected.edges,
+            before_kind: UndoBeforeKind::RowValue,
+            before_stamp: (cursor < 3).then_some(UndoStampKind::Committed),
+            before_logical: true,
+            payload_form: if live {
+                UndoPayloadForm::Inline
+            } else {
+                UndoPayloadForm::None
+            },
+            payload_bytes,
+            release: expected.release,
+        })
+    {
+        return Err(Error::IdentityMismatch);
+    }
+    Ok(())
+}
+/// A delete root's U record with its RowValue before (`stamp`, `logical`
+/// and `payload`: the old value while Live, none once Releasing), for
+/// `leaf.rs`'s entry (a) comparison.
+pub(super) fn delete_record<'a>(
+    job: JobView<'_>,
+    transaction: UndoEdge,
+    incoming: u64,
+    stamp: VersionStamp,
+    logical: LogicalRowVersion,
+    payload: UndoPayload<'a>,
+) -> UndoRecord<'a> {
+    UndoRecord {
+        before_kind: UndoBeforeKind::RowValue,
+        before_stamp: Some(stamp),
+        before_logical: Some(logical),
+        payload,
+        ..material(job, transaction, incoming, 0)
+    }
+}
+/// The Undo expectation of a Row root's U: its reference and Row target.
+pub(super) fn expectation(
+    job: JobView<'_>,
+    context: UndoContext,
+) -> Result<UndoRecordExpectation<'static>> {
+    Ok(UndoRecordExpectation {
+        namespace: context.profile.spec().namespace,
+        reference: job.undo().ok_or(Error::IdentityMismatch)?,
+        target: material(job, UndoEdge::Never, 2, 0).target,
+    })
+}
+/// The one record cell of a Row root's Undo page image, which `observe`
+/// has already checked for this frame.
+pub(super) fn record_cell(
+    context: UndoContext,
+    reference: UndoRef,
+    bytes: &[u8; PAGE_BYTES],
+) -> Result<&[u8]> {
+    page::decode_page(bytes, identity(context, reference), PageKind::Undo)?
+        .cell(0)
+        .ok_or(Error::Corrupt)
+}
 fn identity(context: UndoContext, reference: UndoRef) -> PageIdentity {
     PageIdentity {
         database: context.profile.spec().namespace.database,
@@ -479,7 +602,7 @@ fn proof_page<'a>(
     let page = page::decode_page(bytes, identity(context, reference), PageKind::Undo)?;
     if page.len() != 1
         || page.header().level != 0
-        || page.cell_range(0) != Some(undo_record::INITIAL_UNDO_CELL)
+        || !slot0_cell(&page)
         || page.header().lsn.0 == 0
         || page.header().lsn.0 > layout.header().previous_lsn
         || page.header().lsn.0 >= layout.header().lsn
@@ -487,6 +610,14 @@ fn proof_page<'a>(
         return Err(Error::OrderMismatch);
     }
     Ok(page)
+}
+/// The one slot's cell ends where the initial cell ends: the 432 B record,
+/// or a Live delete U's `432+L` (dev3-row-delete.md#delete-undo). Its exact
+/// length is the record check's.
+fn slot0_cell(page: &PageView<'_>) -> bool {
+    page.cell_range(0).is_some_and(|range| {
+        range.end == undo_record::INITIAL_UNDO_CELL.end && range.len() >= UNDO_RECORD_BYTES
+    })
 }
 fn bind_undo<'a>(
     layout: LayoutView<'_>,
@@ -504,7 +635,7 @@ fn bind_undo<'a>(
         after.len() == 1
             && after.header().level == 0
             && after.header().lsn.0 == layout.header().lsn
-            && after.cell_range(0) == Some(undo_record::INITIAL_UNDO_CELL),
+            && slot0_cell(&after),
     )?;
     for (page, slot, offset, bytes) in [
         (
