@@ -45,9 +45,12 @@ impl<'a, 'c, 's> BoundVisibility<'a, 'c, 's> {
                 verified.committed_q,
                 current.as_ref(),
             ) {
-                (RetirementScope::MissingPrune, ReferenceTarget::Undo(_), Some(q), None)
-                    if q != 0 =>
-                {
+                (
+                    RetirementScope::MissingPrune | RetirementScope::ValuePrune,
+                    ReferenceTarget::Undo(_),
+                    Some(q),
+                    None,
+                ) if q != 0 => {
                     if q > horizon.published || q > horizon.horizon {
                         return Err(unchanged(VisibilityCause::Busy));
                     }

@@ -184,11 +184,7 @@ pub(crate) enum Change<'a> {
         ordinal: usize,
         statement: Option<StatementBoundary>,
     },
-    /// C produces DeletePrune, the live cleanup of a committed delete root.
-    #[cfg_attr(
-        not(test),
-        allow(dead_code, reason = "A's DELETE executor (stage 2b-2) constructs it")
-    )]
+    /// C produces DeletePrune, the cleanup of a committed delete root.
     DeletePrune {
         ordinal: usize,
     },

@@ -1,12 +1,14 @@
 //! Live Row retirement (DEV3 3.14.1 for the first Row profile, reclamation
-//! `#live-row-retirement`): C's Row Prune, ReleaseRole, RootFree and
-//! TerminalFinish of a finished Row transaction while the session is open.
+//! `#live-row-retirement`): C's Row Prune (DeletePrune for a DELETE root,
+//! dev3-row-delete.md#retirement), ReleaseRole, RootFree and TerminalFinish
+//! of a finished Row transaction while the session is open.
 //!
 //! Each call is one scope3 group of the recovered cleanup's preparation
 //! (`prepare_row_recovery`: the same producer, whole target set, canonical
 //! replay proof and arena inputs) inside the one gate/progress shell, after
 //! the residency of that whole target set. A group that retires a reference
-//! target (Prune: the head U, `MissingPrune`; RootFree: U, `UndoFree`;
+//! target (Prune: the head U, `MissingPrune`; DeletePrune: the head U,
+//! `ValuePrune`; RootFree: U, `UndoFree`;
 //! TerminalFinish: the actor, `TerminalFree`) installs only through the
 //! original retirement protocol: the held target set captures Q and the
 //! snapshot horizon under its version hold, `begin_retirement` refuses a live
@@ -131,7 +133,8 @@ impl<'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
     /// The next live Row cleanup step outside `skip`, or None. Only a
     /// finished actor (its Terminal Job TerminalReady) is selected, first
     /// match by Job ordinal, with the recovered selection's per-root order:
-    /// the head RootRetained root of a committed actor (Prune), a releasing
+    /// the head RootRetained root of a committed actor (Prune, or DeletePrune
+    /// for a DELETE root by its Job effect), a releasing
     /// root (ReleaseRole until its cursor is 3, then RootFree), and only
     /// when no root step is left, a TerminalReady Job whose actor has no
     /// root (TerminalFinish). A caller passes the ordinals whose step was
@@ -218,7 +221,10 @@ impl<'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
                     if !head {
                         continue;
                     }
-                    row_semantic::Operation::Prune
+                    match job.effect() {
+                        job3::RowEffect::Insert => row_semantic::Operation::Prune,
+                        job3::RowEffect::Delete => row_semantic::Operation::DeletePrune,
+                    }
                 }
                 job3::JobState::RootReleasingCommitted
                 | job3::JobState::RootReleasingCompensated => {
@@ -262,9 +268,9 @@ impl<'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
         Ok(None)
     }
 
-    /// One live Row cleanup group (Prune, ReleaseRole, RootFree or
-    /// TerminalFinish of Job `ordinal`) inside the one gate/progress shell:
-    /// RowWrite for Prune's write target set, RowProgress for the
+    /// One live Row cleanup group (Prune, DeletePrune, ReleaseRole, RootFree
+    /// or TerminalFinish of Job `ordinal`) inside the one gate/progress
+    /// shell: RowWrite for a Prune's write target set, RowProgress for the
     /// four-target cleanup, as the recovered cleanup. The shell's terminal
     /// read gate stays closed from before the residency to after the durable
     /// wait. A refusal before the stage is Unchanged unless it is an
@@ -280,7 +286,9 @@ impl<'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
         flusher: &mut RetentionFlusher<'_, 's, 'c, 'p, 'd, 'm, 'w, W>,
     ) -> Result<RowRetireStep> {
         let class = match operation {
-            row_semantic::Operation::Prune => source::OperationClass::RowWrite,
+            row_semantic::Operation::Prune | row_semantic::Operation::DeletePrune => {
+                source::OperationClass::RowWrite
+            }
             row_semantic::Operation::ReleaseRole
             | row_semantic::Operation::RootFree
             | row_semantic::Operation::TerminalFinish => source::OperationClass::RowProgress,

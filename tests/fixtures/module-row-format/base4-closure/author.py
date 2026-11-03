@@ -655,6 +655,7 @@ def main():
     variants.append(('aging-header-budget', 'aging', reheader(b)))
     for name, change in [
         ('issuer-undo-high', dict(undo_high=5)),
+        ('issuer-undo-low', dict(undo_high=3)),
         ('row-high-global', dict(f_row=4)),
         ('committed-q-collision', dict(f_q=1)),
         ('catalog-row-mixing', dict(f_local=1)),

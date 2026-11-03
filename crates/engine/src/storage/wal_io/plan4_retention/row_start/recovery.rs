@@ -22,11 +22,22 @@ impl<'i, 'c, 's, const T: usize> PreparedRowGroup<'i, 'c, 's, T> {
             self.payload.observation.operation,
             row_semantic::Operation::Cancel
                 | row_semantic::Operation::Prune
+                | row_semantic::Operation::DeletePrune
                 | row_semantic::Operation::ReleaseRole
                 | row_semantic::Operation::RootFree
                 | row_semantic::Operation::TerminalFinish
         )
     }
+}
+
+/// A committed root's Prune: an INSERT root's, or a DELETE root's
+/// DeletePrune (dev3-row-delete.md#retirement). Both take the same target
+/// set, table source and H proof.
+fn prune(operation: row_semantic::Operation) -> bool {
+    matches!(
+        operation,
+        row_semantic::Operation::Prune | row_semantic::Operation::DeletePrune
+    )
 }
 
 /// The predecessor H of a Row root: the same actor's RootRetained root with
@@ -61,8 +72,9 @@ impl<'b, 'a, 's, 'c, 'p, 'd, 'm, 'w, W: WriterNamespace>
     /// Cancel takes Allocation, Root, RootJob page, Status and U (the latter
     /// two read proofs); ReleaseRole/RootFree take Allocation, Root, RootJob
     /// page and U; TerminalFinish Allocation, Root, Terminal page and Status;
-    /// committed Prune the five changed pages, Allocation and the proofs
-    /// TableAnchor, CatalogLeaf and, when H exists, H's Undo. The live Row
+    /// committed Prune (DeletePrune) the five changed pages, Allocation and
+    /// the proofs TableAnchor, CatalogLeaf and, when H exists, H's Undo. The
+    /// live Row
     /// retirement (`retire`) prepares the same groups after the residency of
     /// `row_cleanup_requests`.
     pub(super) fn prepare_row_recovery<'i>(
@@ -74,7 +86,7 @@ impl<'b, 'a, 's, 'c, 'p, 'd, 'm, 'w, W: WriterNamespace>
     ) -> Result<PreparedRowGroup<'i, 'c, 's, ROW_WRITE_TARGETS>> {
         let invalid = || unchanged(RetentionPhase::Prepare, RetentionCause::Invariant);
         let namespace = self.storage.profile().spec().namespace;
-        let previous = if operation == row_semantic::Operation::Prune {
+        let previous = if prune(operation) {
             recovery_predecessor(self.control.jobs(), namespace, ordinal).map_err(|_| invalid())?
         } else {
             None
@@ -89,10 +101,10 @@ impl<'b, 'a, 's, 'c, 'p, 'd, 'm, 'w, W: WriterNamespace>
                 | row_semantic::Operation::TerminalFinish,
                 _,
             ) => self.prepare_row_recovery_n::<4>(owner, ordinal, operation, None, private),
-            (row_semantic::Operation::Prune, None) => {
+            (row_semantic::Operation::Prune | row_semantic::Operation::DeletePrune, None) => {
                 self.prepare_row_recovery_n::<8>(owner, ordinal, operation, None, private)
             }
-            (row_semantic::Operation::Prune, Some(h)) => {
+            (row_semantic::Operation::Prune | row_semantic::Operation::DeletePrune, Some(h)) => {
                 self.prepare_row_recovery_n::<9>(owner, ordinal, operation, Some(h), private)
             }
             _ => Err(unchanged(
@@ -103,7 +115,8 @@ impl<'b, 'a, 's, 'c, 'p, 'd, 'm, 'w, W: WriterNamespace>
     }
 
     /// The whole target set `prepare_row_recovery` selects for a Prune,
-    /// ReleaseRole, RootFree or TerminalFinish of Job `ordinal`, in selection
+    /// DeletePrune, ReleaseRole, RootFree or TerminalFinish of Job `ordinal`,
+    /// in selection
     /// order, and its length: the live residency set before the preparation.
     pub(super) fn row_cleanup_requests(
         &self,
@@ -126,7 +139,7 @@ impl<'b, 'a, 's, 'c, 'p, 'd, 'm, 'w, W: WriterNamespace>
             | row_semantic::Operation::TerminalFinish => Ok(requests(
                 self.row_recovery_selection::<4>(ordinal, operation, None)?,
             )),
-            row_semantic::Operation::Prune => {
+            row_semantic::Operation::Prune | row_semantic::Operation::DeletePrune => {
                 let namespace = self.storage.profile().spec().namespace;
                 match recovery_predecessor(self.control.jobs(), namespace, ordinal)
                     .map_err(|_| invalid())?
@@ -226,7 +239,9 @@ impl<'b, 'a, 's, 'c, 'p, 'd, 'm, 'w, W: WriterNamespace>
                     (status()?, STATUS),
                 ]);
             }
-            row_semantic::Operation::Prune if N == 8 + usize::from(previous.is_some()) => {
+            row_semantic::Operation::Prune | row_semantic::Operation::DeletePrune
+                if N == 8 + usize::from(previous.is_some()) =>
+            {
                 let handle = job.object().ok_or_else(invalid)?;
                 let pair = job.pair().ok_or_else(invalid)?;
                 let table = |page, kind| {
@@ -293,6 +308,7 @@ impl<'b, 'a, 's, 'c, 'p, 'd, 'm, 'w, W: WriterNamespace>
         let change = match operation {
             row_semantic::Operation::Cancel => row_group::Change::Cancel { ordinal },
             row_semantic::Operation::Prune => row_group::Change::Prune { ordinal },
+            row_semantic::Operation::DeletePrune => row_group::Change::DeletePrune { ordinal },
             row_semantic::Operation::ReleaseRole => row_group::Change::ReleaseRole { ordinal },
             row_semantic::Operation::RootFree => row_group::Change::RootFree { ordinal },
             row_semantic::Operation::TerminalFinish => {
@@ -356,7 +372,7 @@ impl<'b, 'a, 's, 'c, 'p, 'd, 'm, 'w, W: WriterNamespace>
                     let job =
                         job3::decode_job(&self.control.jobs()[ordinal], profile.spec().namespace)
                             .map_err(queue_error)?;
-                    let table = if operation == row_semantic::Operation::Prune {
+                    let table = if prune(operation) {
                         Some(
                             history::row::table_source(arena, profile, job)
                                 .map_err(|cause| unchanged(RetentionPhase::Prepare, cause))?,
