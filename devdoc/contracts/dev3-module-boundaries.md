@@ -3178,7 +3178,9 @@ C는 자기 본문·carrier와 ceiling의 합을 원 charge/cap에 대조한다.
 
 2026-11-02 [자동커밋 INSERT 실행기](#autocommit-insert)가 양쪽의 새 계약으로 rollback base
 caller를 1,536 B로, `rollback.next`·`rollback.clr_lane`을 6,528·12,416 B로 다시 정했다. 위 표는
-원 선정 근거로 둔다. 현재 값은 `row_caller_budget.rs`다.
+원 선정 근거로 둔다. 현재 값은 `row_caller_budget.rs`다. 2026-11-03
+[Begin·statement 시작 상한](#begin-statement-ceilings)이 `BEGIN` 2,816 B와 `STATEMENT_START`
+3,584 B를 더했다.
 
 A의 검증은 memory와 C의 native instrumented Writer에 같은 수식을 적용한다. rollback은
 10개 이름의 완전한 집합, 중복·누락·미등록 site, per-call ≤ frame ≤ ceiling을 확인한다.
@@ -3349,6 +3351,8 @@ rollback 상한의 개정은 카드 밖이므로 PR에서 사용자의 확인을
 **잔여.** begin·statement 시작·표 발급 지점(2,625·3,401·3,417 B)은 C census에 A 항이 없어
 상한이 없다. F4는 새 지점을 말없이 빼지 않는다고 정하므로, 이 셋은 C가 상한을 정할 잔여로
 남긴다(C 소유). SQL·DEV4 연결 전에 정한다. 그때까지 census는 값을 출력만 한다.
+2026-11-03 [다음 단위](#begin-statement-ceilings)가 begin과 statement 시작에 상한을 두었다.
+표 발급은 C의 Full 창에 자리가 없어 C 잔여로 남는다.
 
 **시험.** A 단위 LAC-A01..A07·A09..A12(literal stand-in: 성공, statement 실패와 mark까지의
 rollback, commit 거절, 표 미발급, Begin·statement 시작 거절, rollback 도중 거절의 fence,
@@ -3361,4 +3365,138 @@ rollback, commit 거절, 표 미발급, Begin·statement 시작 거절, rollback
 **범위 밖.** SQL·DEV4 engine 연결, 명시 거래(BEGIN … COMMIT)와 여러 statement, UPDATE·DELETE,
 대기·재시도 정책(지금은 거절이 곧 fence다), background cleaner는 이 단위가 아니다. 행마다
 Free Undo page를 하나씩 쓰는 첫 Row profile의 제약(후보가 없으면 preflight가 Capacity)은
-그대로다.
+그대로다. 명시 거래와 여러 statement는 [다음 단위](#explicit-transaction)가 같은 단계로
+공급했다.
+
+<a id="explicit-transaction"></a>
+## 명시 거래 실행기
+
+2026-11-03, PR #39 병합 `65d473e` 다음 단위다. 사용자는 결정 카드에서 "명시 거래 + 상한
+잔여 닫기"를 골랐다(BEGIN 뒤 INSERT 여러 문장, 실패한 문장만 되돌리고 COMMIT 또는
+ROLLBACK하는 실행기와 Begin·문장 시작·표 발급의 C 상한, 형식 변경 없음). 이 절은 실행기를,
+[다음 절](#begin-statement-ceilings)은 상한을 다룬다. 새 WAL 형식·frame·opcode·page 형식·오류
+종류·C 입구는 없다. SQL·DEV4 연결은 없으며 지금 이 진입점을 부르는 것은 JOIN 시험뿐이다.
+
+**진입점.** `row/insert/driver/live.rs`의 inline되지 않는 네 진입점이
+[자동커밋 실행기](#autocommit-insert)의 단계(`driver/autocommit.rs`)를 결과 slot
+`Explicit`(`driver/explicit.rs`)로 실행한다. 단계는 slot 형에 대해 일반화했다(trait `Ending`·
+`Committing`). 자동커밋 실행기의 동작과 census 값은 같다. 거래는 호출자의 holder
+(`&mut Option<RowTransaction>`)에 있다. 진입점은 holder를 빌리고, 거래를 끝내는 진입점은
+거래를 꺼낸다.
+
+| 진입점 | 하는 일 | 결과 |
+| --- | --- | --- |
+| `begin_transaction_live` | holder가 비어 있을 때 C `begin_row_transaction`, 거래를 holder에 넣음 | `Begun`. Unchanged 거절은 `NoTransaction`, 그 밖은 `Fenced` |
+| `transaction_insert_live` | holder의 거래를 빌려 statement 하나(자동커밋의 `statement_live`와 같은 하위 frame 배치) | `Done { rows }`. 실패한 statement는 mark까지 rollback하고 finish한 뒤 `Failed`(거래는 계속, 앞 statement는 그대로). C가 해소할 Failure면 `Fenced`(holder를 비움) |
+| `commit_transaction_live` | holder에서 거래를 꺼내 C `commit_row` | `Committed { committed, rows }`. 거절은 자동커밋과 같이 `Aborted` 또는 `Fenced` |
+| `rollback_transaction_live` | holder에서 거래를 꺼내 전체 rollback 뒤 `finish_aborted` | `RolledBack`. 도중의 거절은 `Fenced` |
+
+holder가 기대와 다르면(begin에서 차 있거나, 나머지에서 비어 있으면) C를 부르지 않고
+`NoTransaction`(`OrderMismatch`)이다. `Fenced` 뒤 호출자는 C의 복구 전까지 진입점을 다시
+부르지 않는다(빈 holder의 Begin은 C를 부르고, C가 fence로 거절한다). commit의 `rows`는 호출자가 센 서 있는 행 수다. 끝난
+거래의 정리는 자동커밋과 같이 호출자의 `retire_finished_live`다. c행을 commit하고 statement
+rollback으로 r행을 되돌린 거래는 5c+4r+1그룹, 전체 rollback은 적용한 행 n에 4n+1그룹을 남긴다.
+
+**자원.** 셈은 자동커밋과 같다(`live::explicit_sites`, 공통 loop `executor_sites`). 호출자 항
+408 B는 LiveCall, Owner 둘, `Explicit` slot, `Plan4Target`, 참조 12개(하나는 holder)다. holder는
+이 stack 밖(세션의 저장소)에 있다고 둔다. holder를 stack에 두는 호출자는
+`Option<RowTransaction>`(168 B)을 자기 항에 더하고 census를 다시 한다. 그러면 정리 drain의
+여유 117 B를 넘으므로 그 배치는 새 계약이 필요하다. 실행기 frame이 없으므로 모든 몫이
+자동커밋보다 작거나 같다. 시험 `f4_a_explicit_budgets_{memory,native}`가 아래를 확인한다
+(memory·native 같음).
+
+| A 의무 | A 몫(B) | 상한(B) | 여유(B) |
+| --- | ---: | ---: | ---: |
+| Commit frame | 2,808 | 3,024 | 216 |
+| statement end | 5,715 | 6,144 | 429 |
+| rollback base caller | 1,272 | 1,536 | 264 |
+| `rollback.next`(거래 경로) | 6,256 | 6,528 | 272 |
+| `rollback.clr_lane`(거래 경로) | 12,080 | 12,416 | 336 |
+| `rollback.finish`(거래 경로) | 5,952 | 6,144 | 192 |
+| 나머지 rollback 지점(두 경로) | — | 그대로 | 320 이상 |
+| insert 지점(preflight 5,267, 최대 producer lane 9,099) | — | 그대로 | 877 이상 |
+| 정리 drain 네 지점(최대 `try_flush` 3,979) | — | 4,096 | 117 |
+| Begin | 2,577 | 2,816 (새) | 239 |
+| statement 시작 | 3,176 | 3,584 (새) | 408 |
+
+상한은 바꾸지 않았다(Begin·statement 시작은 다음 절의 새 상한). 첫 배치는 호출자가 거래의
+`Result`와 statement·거래 끝의 답을 따로 쥐었고(752 B), `rollback.finish`(statement 경로)
+6,160 B와 drain `try_flush` 4,323 B가 상한을 넘었다. 상한을 올리지 않고 slot 하나와 stack 밖
+holder로 바꿨다.
+
+**시험.** A 단위 LXT-A01..A07(literal stand-in: 두 statement 뒤 commit, 실패한 statement를 자기
+mark까지 되돌린 뒤 다음 statement와 commit, 호출자 rollback, commit 거절, statement 검사 Fatal과
+CLR 적용 Busy의 fence, 시작 거절과 표 미발급 뒤 commit과 rollback 거절의 fence, slot 읽기),
+JOIN LXT-J01..J05(실제 C에서 두 statement와 commit·16그룹 정리·재시작 복구, 두 statement 사이의
+실패한 statement 뒤 commit·15그룹 정리·재시작 복구, 호출자 rollback의 9그룹 정리 뒤 새 거래의
+commit, holder 순서 위반의 `OrderMismatch`와 없는 표), LXT-J05(C가 거절한 Begin은 holder를
+비워 두고, C가 해소할 statement 시작 거절은 거래를 fence에 넘기고 holder를 비움), 위 census
+시험. 결과는
+[증거](../evidence/explicit-transaction-20261103.md)에 있다.
+
+<a id="begin-statement-ceilings"></a>
+## Begin·statement 시작 상한과 표 발급 잔여
+
+같은 단위(2026-11-03). [자동커밋 실행기](#autocommit-insert)의 잔여 셋(C census에 A 항이 없어
+상한이 없던 Begin·statement 시작·표 발급) 가운데 둘에 F4 상한을 새로 둔다. 셋째는 C의 Full
+창에 자리가 없어 이 단위에서 닫지 못하고 근거를 기록한다. `row_caller_budget.rs`에 두 상수가
+생기고(`cfg(test)`), C 제품 코드는 Row lifecycle의 frame 배치 하나가 바뀐다(동작 같음). 원
+charge 44,304 B, short cap 65,536 B, 원 slack과 다른 항은 그대로다.
+
+| 상한 | 값(B) | A 몫(자동커밋/명시, B) | C가 대조하는 합 | C 여유(B) |
+| --- | ---: | ---: | --- | ---: |
+| `BEGIN` | 2,816 | 2,625 / 2,577 | Row lifecycle 본문 40,881 + 2,816 ≤ CatalogProgressCharge 44,304 | 607 |
+| 같은 값 | | | retained 18,640 + split port 192 + Row writer 본문 23,027 + 2,816 ≤ 세션 peak 64,016 | 19,341 |
+| `STATEMENT_START` | 3,584 | 3,409 / 3,176 | retained 18,640 + split port 192 + Row writer 본문 23,027 + 3,584 ≤ 세션 peak 64,016 | 18,573 |
+
+상한 값은 두 실행기 중 큰 몫에 128 B 이상을 더하고 128 B 단위로 올린 값이다(측정 뒤 정한
+값). native는 retained 18,648 B, peak 64,024 B로 여유가 같다. C 시험
+`f4_c_begin_statement_budget`이 세 합을 확인하고, A 시험이 몫을 확인한다.
+
+**Begin.** Row Begin은 admission 없이 진입·capsule 예약을 하고, RowProgress로
+CatalogProgressCharge를 예약해 그 안에서 Row lifecycle 본문을 실행한 뒤, 다시 admission 없이
+binding을 한다. C는 본문 ≤ charge만
+보았고(ROW-BEGIN-001) 그 아래 A frame의 항이 없었다. 원 본문 42,089 B에 A 몫을 더하면 charge를
+362 B(명시)·410 B(자동커밋) 넘었다. 상한 2,816 B를 두려면 본문이 601 B 이상 줄어야 했다.
+admission 밖의 두 부분은 statement 시작과 같은 세션 창에 대조한다(아래).
+
+C 축소: Row lifecycle의 세 동작(Begin, 빈 actor의 RollbackStart, AbortEnd)은 각자의 adapter가
+공통 준비(`prepare_existing_row`)를 부르고 그 `Result<PreparedRowGroup>`(1,264 B)를 shell에
+전달했다. census는 이 전달을 포함해 Prepared carrier 셋(공통 준비, adapter, match 출력)을 셌고,
+adapter의 진입 packet 항(`caller` 728 B)을 준비·설치 옆에 더했다. 이제 adapter는 inline되지 않는
+frame으로 자기 검사·선택·(Begin의) identity 발급까지만 하고 입력 묶음 `RowLifecycleInput`(Change,
+Status slot, 원 target 셋 또는 넷. 392 B)을 돌려준다. 공통 준비는 shell이 직접 부른다. 순서·
+인자·오류·효과는 같다(Begin이 identity를 발급한 뒤 거절되면 issued-local gap이 남는 것도 같다).
+census는 shell의 carrier를 `row_lifecycle_carriers`(입력 둘: 동작의 결과와 첫 match 출력,
+Prepared 둘: 공통 준비의 결과와 둘째 match 출력, 기존 Observation·동작·ExistingGroup)로 센다
+(−480 B). adapter frame은 준비 전에 돌아오므로 진입 packet 항은 준비·설치 옆이 아니라 동작 자신의
+단계(start selection) 옆에 더한다(−728 B, 그 단계는 11,169 B로 준비 33,724 B보다 작다). 본문은
+40,881 B다(memory·native 같음). Row write 추정이 쓰는 일반 carrier 항(Prepared 셋)은
+그대로이므로 RowWrite census는 바뀌지 않는다. S2W-C03의 기대값은 40,881 B로 바꿨다. 위
+2026-10-29·10-30 개정의 "Row lifecycle 계수는 그대로 둔다"는 그 개정 범위(RowWrite census)의
+결정으로 읽는다.
+
+**statement 시작.** Row `begin_statement`는 short admission을 하지 않는다(statement view의 512 B
+CallerCredit은 long pool이다). 그 본문(Row statement head의 ledger·descriptor·Job 검산 포함)은
+C의 세션 census가 단일 operation 창(`active`)의 후보로 세는 Row writer 본문
+`writable::source_bytes()`(23,027 B) 안에 있고, `source_census().peak`가 그 창을 retained
+source·split port와 함께 담는다. 그래서 C는 그 본문과 상한의 합을 retained·split port 옆에서
+peak에 대조한다. peak는 바뀌지 않는다. Begin의 admission 밖 부분(진입·capsule 예약, binding)도
+같은 본문 안에 있어 같은 합을 `BEGIN`으로 대조한다. statement 시작과 표 발급의 A 몫은 C 호출의
+receiver를 참조로 센다(Begin·Commit과 같다). 자동커밋 단위의 기록(3,401·3,417 B)은 receiver를 빼고
+세어 8 B 작다.
+
+**표 발급(잔여, C 소유).** 호출자의 표 발급은 Catalog statement call(CatalogFull)이다. 그
+charge는 lookup 본문과 같은 34,586 B여서 A frame이 들어갈 자리가 없다. charge에 A 항을 넣으면,
+Full read가 Pending Catalog Commit 옆에서 들어갈 여유(short cap − shared − Pending 창 − Full)가
+memory 52 B, native 44 B뿐이라 어느 A 몫(3,192·3,425 B, slack 1,920 B만으로도)이든 넘는다.
+그러면 Pending 옆의 Full read가 Capacity로 거절된다(S6의 shared +144 B 회귀와 같은 모양).
+닫으려면 C의 shared·Pending 창·Full 본문 중 하나를 그만큼 줄이거나 Full class의 계약을 다시
+정해야 한다. SQL 연결 전에 정할 C 잔여로 남기고, census는 값을 출력만 한다
+(`f4_c_begin_statement_budget`이 위 여유를 출력한다). 사용자의 결정 카드는 세 지점 모두의 C
+상한을 말했으므로, 이 단위는 카드보다 좁게 공급했다. PR에서 사용자의 확인을 받는다.
+
+**시험.** C `f4_c_begin_statement_budget`(memory·native-type), S2W-C03(40,881 B), A
+`f4_a_{autocommit,explicit}_budgets_{memory,native}`의 Begin·statement 시작 항목, Row
+lifecycle 세 동작을 지나는 기존 시험(catalog_memory의 row_transactions, row_statements,
+row_commit, row_live, row_preflight, write_transactions)과 LAC·LXT JOIN.

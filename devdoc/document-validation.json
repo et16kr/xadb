@@ -1,15 +1,17 @@
 {
   "schema_version": 2,
   "product": "XADB",
-  "date": "2026-11-03T03:28:45.071840+09:00",
-  "status": "PASS",
-  "errors": [],
+  "date": "2026-11-03T10:54:43.062216+09:00",
+  "status": "FAIL",
+  "errors": [
+    "/home/claude/xadb/devdoc/evidence/explicit-transaction-20261103.md: missing link ../../module-gate/records/20261103-explicit-transaction.json"
+  ],
   "markdown_documents": [
     {
       "file": "devdoc/README.md",
-      "links": 293,
+      "links": 296,
       "duplicate_ids": 0,
-      "sha256": "90a7e43b761972319de60a41c262d274ddb793be86d48356c528e24e5392d1d5"
+      "sha256": "e4de642dc274d3633cefd5c55c56d844f016b3387791c88135ca4bdf0a2c40a8"
     },
     {
       "file": "devdoc/contracts/README.md",
@@ -157,9 +159,9 @@
     },
     {
       "file": "devdoc/contracts/dev3-module-boundaries.md",
-      "links": 355,
+      "links": 362,
       "duplicate_ids": 0,
-      "sha256": "be072ddc3bb3d0654c94dd920e631428a876e16d931fb42da6dc7c96c60a4a96"
+      "sha256": "fbaa81286251b0e13026ac6f6795e72cfb72fa243d3c33f42ddc9ed5e5e1ebb1"
     },
     {
       "file": "devdoc/contracts/dev3-module-consumers.md",
@@ -583,15 +585,15 @@
     },
     {
       "file": "devdoc/evidence/README.md",
-      "links": 400,
+      "links": 404,
       "duplicate_ids": 0,
-      "sha256": "64e34de0b0e59afc11ba45052453af6a9250226a5c527bd9771a7056abf30977"
+      "sha256": "da0cc4bf0bae4762951c8e531686928a4f55a7f6cb45a963573b5d6545b9971f"
     },
     {
       "file": "devdoc/evidence/autocommit-insert-20261102.md",
-      "links": 4,
+      "links": 5,
       "duplicate_ids": 0,
-      "sha256": "e57d095aceafbe85addb5a0dab2e2b7a3a22a4e831edbfefae30d2d3f982b850"
+      "sha256": "4c0a0627ed05fda5664994480e20adbcd4fc7d92b86923051f17f27583f39da0"
     },
     {
       "file": "devdoc/evidence/comm-acceptance-resume-20261023.md",
@@ -1284,6 +1286,12 @@
       "sha256": "52d10a0d19d0fabdb994c700a7b8ad9ae868172d02dfcdb9ab87e1642639e097"
     },
     {
+      "file": "devdoc/evidence/explicit-transaction-20261103.md",
+      "links": 5,
+      "duplicate_ids": 0,
+      "sha256": "ee277439844962ce4a340b44de477539d75345dfc9e4a505cddefbdc47828188"
+    },
+    {
       "file": "devdoc/evidence/f6-wal-revalidation-survey-20261102.md",
       "links": 30,
       "duplicate_ids": 0,
@@ -1399,9 +1407,9 @@
     },
     {
       "file": "devdoc/plans/README.md",
-      "links": 75,
+      "links": 78,
       "duplicate_ids": 0,
-      "sha256": "c43a27351dae8d8c090d854cfc085ea7e0f6246851e616947d83e1f75b8b39a1"
+      "sha256": "2a215005c46adbb1ad93bc47cec9405651285a5cc150cb8dbac0b715dda2e85c"
     },
     {
       "file": "devdoc/plans/bottom-up-development.md",

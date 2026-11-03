@@ -14,7 +14,8 @@ use crate::storage::retention_page::row::{self as job3, JobScope, JobState};
 use crate::transaction::concurrency::catalog_test_support::{self as hook, Point, Resume};
 use std::sync::mpsc::sync_channel;
 
-const ATT_ACTOR: std::ops::Range<usize> = 1576..1624;
+/// The ATT actor field of the live control bank (also LXT-J05).
+pub(super) const ATT_ACTOR: std::ops::Range<usize> = 1576..1624;
 
 fn namespace_of(actor: TxnRef) -> crate::api::Namespace {
     crate::api::Namespace {

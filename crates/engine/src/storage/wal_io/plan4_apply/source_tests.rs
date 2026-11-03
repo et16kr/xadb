@@ -412,14 +412,14 @@ fn live_row_retirement_fits_the_progress_charge() {
 /// F4 Begin and statement start ceilings (boundaries
 /// `#begin-statement-ceilings`), C's side. Row Begin runs its Row lifecycle
 /// body under the one CatalogProgressCharge it reserves (RowProgress), with
-/// A's frames below it: body + `BEGIN` fits the charge. Begin's entry,
-/// capsule reservation and binding run before that admission, and a Row
-/// `begin_statement` takes no short admission at all (its Row statement
-/// head included); both run in the session's single-operation window, whose
-/// largest Row writer body is `writable::source_bytes()` and which
-/// `source_census().peak` holds beside the retained source and the split
-/// ports: that body + `BEGIN` and + `STATEMENT_START` fit there without
-/// raising the peak. The caller's table issue (a Catalog statement call,
+/// A's frames below it: body + `BEGIN` fits the charge. Begin's entry and
+/// capsule reservation run before that admission and its binding after it,
+/// both unadmitted, and a Row `begin_statement` takes no short admission at
+/// all (its Row statement head included); these run in the session's
+/// single-operation window, whose largest Row writer body is
+/// `writable::source_bytes()` and which `source_census().peak` holds beside
+/// the retained source and the split ports: that body + `BEGIN` and +
+/// `STATEMENT_START` fit there without raising the peak. The caller's table issue (a Catalog statement call,
 /// CatalogFull) has no ceiling: its charge is its body, and a Full read
 /// beside a Pending Catalog Commit leaves less room under the short cap than
 /// any A share, so the line only records it.

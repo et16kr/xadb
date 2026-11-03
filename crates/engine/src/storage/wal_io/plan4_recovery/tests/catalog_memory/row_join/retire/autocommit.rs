@@ -1092,7 +1092,9 @@ fn lxt_j05_refused_begin_and_fenced_statement_leave_the_holder_empty() {
                     &mut holder
                 ));
                 // The ATT actor field of the live control bank (R1D-A5N).
-                writer.row_test_flip_control(1576 + 40);
+                writer.row_test_flip_control(
+                    super::super::super::row_transactions::ATT_ACTOR.start + 40,
+                );
                 let (out, slots) = statement!(
                     &mut writer,
                     owner,
@@ -1107,7 +1109,8 @@ fn lxt_j05_refused_begin_and_fenced_statement_leave_the_holder_empty() {
                 );
                 match out {
                     Explicit::Fenced(failure) => assert!(
-                        failure.must_resolve
+                        failure.stage == Stage::Statement
+                            && failure.must_resolve
                             && failure.cleanup.is_none()
                             && matches!(
                                 &failure.error,

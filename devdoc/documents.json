@@ -43,6 +43,11 @@
       "role": "evidence",
       "title": "자동커밋 INSERT 실행기와 rollback 상한 재계약"
     },
+    "explicit-transaction-20261103.md": {
+      "path": "evidence/explicit-transaction-20261103.md",
+      "role": "evidence",
+      "title": "명시 거래 실행기와 Begin·statement 시작 상한"
+    },
     "f6-m0-20261102.json": {
       "path": "evidence/f6-m0-20261102.json",
       "role": "evidence",
