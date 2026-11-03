@@ -733,7 +733,7 @@
         "crates/engine/src/storage/row/insert/driver/budget_tests.rs",
         "crates/engine/src/storage/wal_io/plan4_apply/row/write_operation.rs"
       ],
-      "reason": "A's UPDATE executor (dev3-row-update.md#api): autocommit_update_live and transaction_update_live reuse the DELETE executor's steps and slot; update_row runs the preflight (flush retry, NoRow 0 rows), then rewrite_row checks the new value with validate_insert (over 2048 B Unsupported), calls reserve_update (new RowPreflightOperation method) and follows INSERT's Forward production, prepare and apply, each in a never-inlined frame. The driver census grows from 39 to 54 sites (15 update.*) within the unchanged F4 ceilings (RUP-A08, update.preflight margin 671/904 B). The executor's 1 row/0 rows/Busy/Unsupported/SerializationConflict/statement failure paths run over the actual C in RUP-J; the INSERT/DELETE driver cases are unchanged.",
+      "reason": "A's UPDATE executor (dev3-row-update.md#api): autocommit_update_live and transaction_update_live reuse the DELETE executor's steps and slot; update_row runs the preflight (flush retry, NoRow 0 rows), then rewrite_row checks the new value with validate_insert (over 2048 B Unsupported), calls reserve_update (new RowPreflightOperation method) and follows INSERT's Forward production, prepare and apply, each in a never-inlined frame. The driver census grows from 39 to 54 sites (15 update.*) within the unchanged F4 ceilings (RUP-A08, update.preflight margin 671/904 B). The executor's 1 row/0 rows/Busy/Unsupported/SerializationConflict/statement failure paths run over the actual C in RUP-J; RUP-J08 pins that the new value is checked after C's row judgement (validation lane only on a Ready preflight; section 5 amended): a wrong-type or long value is 0 rows on a missing key, Busy/SerializationConflict on another transaction's row, Unsupported on the own row. The INSERT/DELETE driver cases are unchanged.",
       "cases": [
         {
           "file": "crates/engine/src/storage/row/insert/driver/budget_tests.rs",
@@ -951,6 +951,13 @@
           "sources": [
             "head"
           ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/update_busy.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::autocommit::update::busy::rup_j08_the_new_value_is_checked_after_the_row_judgement",
+          "sources": [
+            "head"
+          ]
         }
       ]
     },
@@ -964,7 +971,7 @@
         "crates/engine/src/storage/wal_io/plan4_retention/row_delete_tests.rs",
         "crates/engine/src/storage/wal_io/plan4_retention/row_write_tests.rs"
       ],
-      "reason": "C's UPDATE preflight and reserve (dev3-row-update.md#classification, #api): RowPreflightCut carries target and effect, and reserve/reserve_delete/reserve_update take only their own effect (Before InvalidInput otherwise). row_class splits another transaction's Inline row by the one root holding its RowId (holder_effect); any field of the holder bundle out of place, or 0/2 holders, is corrupt; own Inline rows are Unsupported, own tombstones 0 rows. reserve_update builds the update RowReserve with the planned row; Capacity is the growth beside D. RUP-C class table and holder mutants, the update Capacity case and the unchanged DELETE class cases; RUP-J over the actual C; census S2W-C01/C06 (preflight C margin 704 B, reserve 499 B), MBC40-V09 and F4 operation census.",
+      "reason": "C's UPDATE preflight and reserve (dev3-row-update.md#classification, #api): RowPreflightCut carries target and effect, and reserve/reserve_delete/reserve_update take only their own effect (Before InvalidInput otherwise). row_class splits another transaction's Inline row by the one root holding its RowId (holder_effect); any field of the holder bundle out of place, or 0/2 holders, is corrupt; own Inline rows are Unsupported, own tombstones 0 rows. reserve_update builds the update RowReserve with the planned row; Capacity is the growth beside D. RUP-C class table and holder mutants, the update Capacity case and the unchanged DELETE class cases; RUP-J over the actual C; census S2W-C01/C06 (preflight C margin 704 B, reserve 499 B), MBC40-V09 and F4 operation census. rup_c_each_reserve_takes_only_its_own_effect calls the other effects' reserves on an actual UPDATE and DELETE preflight: Before InvalidInput, the same preflight back, no file or Job changed, not fenced.",
       "cases": [
         {
           "file": "crates/engine/src/storage/wal_io/plan4_retention/row_update_tests.rs",
@@ -1093,8 +1100,22 @@
           ]
         },
         {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/update.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::autocommit::update::rup_c_each_reserve_takes_only_its_own_effect",
+          "sources": [
+            "head"
+          ]
+        },
+        {
           "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/update_busy.rs",
           "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::autocommit::update::busy::rup_j06_rows_another_transaction_updates_are_busy_until_its_cleanup",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/update_busy.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::autocommit::update::busy::rup_j08_the_new_value_is_checked_after_the_row_judgement",
           "sources": [
             "head"
           ]
@@ -1425,7 +1446,7 @@
         "crates/engine/src/storage/plan4_recovery_base/row/graph.rs",
         "crates/engine/src/storage/plan4_recovery_base/row/graph_tests.rs"
       ],
-      "reason": "Base4 takes UPDATE roots (dev3-row-update.md#recovery): the actor checks each effect-2 state (Reserved: the old committed row, cell C, U Free; Retained: own Transaction(T) new row, cell C', projection, undo; ReleasingCompensated: the row restored from U's logical/stamp; ReleasingCommitted: own row restamped Committed(q)), graph's D is max(0,C-C'), and the backward scan pairs an Inline row with an effect 0/2 root and a tombstone with an effect-1 root. rup_r_base4_update_root_needs_its_old_row replaces the stage-2 refusal guard; RUP-R05..R07 accept each state and refuse restamped, unpaired, non-C' cell, non-canonical U and widened-D images; RDL-R02 now also refuses an Inline row under an effect-1 root.",
+      "reason": "Base4 takes UPDATE roots (dev3-row-update.md#recovery): the actor checks each effect-2 state (Reserved: the old committed row, cell C, U Free; Retained: own Transaction(T) new row, cell C', projection, undo; ReleasingCompensated: the row restored from U's logical/stamp; ReleasingCommitted: own row restamped Committed(q)), graph's D is max(0,C-C'), and the backward scan pairs an Inline row with an effect 0/2 root and a tombstone with an effect-1 root. rup_r_base4_update_root_needs_its_old_row replaces the stage-2 refusal guard; RUP-R05..R07 accept each state and refuse restamped, unpaired, non-C' cell, non-canonical U and widened-D images over the Retained base, a non-C cell and the actor's own logical over the Reserved base, and a foreign logical and a q other than commit_q over the ReleasingCommitted base; RDL-R02 now also refuses an Inline row under an effect-1 root.",
       "cases": [
         {
           "file": "crates/engine/src/storage/plan4_recovery_base/row/graph_tests.rs",
@@ -1484,6 +1505,13 @@
           ]
         },
         {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/update_base.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::autocommit::update::base::rup_r06_base4_refuses_broken_reserved_and_pruned_update_rows",
+          "sources": [
+            "head"
+          ]
+        },
+        {
           "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/delete_base.rs",
           "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::autocommit::delete::base::rdl_r01_base4_takes_each_delete_state",
           "sources": [
@@ -1521,7 +1549,7 @@
         "crates/engine/src/storage/row/read/driver/tests.rs",
         "crates/engine/src/storage/row/read/driver/update_tests.rs"
       ],
-      "reason": "B reads an updated row (dev3-row-update.md#read): C's missing_before judges U's outline by the section-7 table and reports a value before (MissingRowEvidence.value with its capture number); value_before takes only a tombstone candidate or an Inline candidate reported in the same capture (Unchanged WrongState otherwise) and copies the old value to copy[10240..12288), so copy_candidate still yields the new value. B's driver goes to select_before when MissingObserved::value_before() is true. RUP-B01..B05 (literal C0 source), RUP-B06/B07 and RUP-J05 over the actual C, the DELETE read cases and read census (cursor value_before load 34,468 <= 34,586 B).",
+      "reason": "B reads an updated row (dev3-row-update.md#read): C's missing_before judges U's outline by the section-7 table and reports a value before (MissingRowEvidence.value with its capture number); value_before takes only a tombstone candidate or an Inline candidate reported in the same capture (Unchanged WrongState otherwise) and copies the old value to copy[10240..12288), so copy_candidate still yields the new value. B's driver goes to select_before when MissingObserved::value_before() is true. RUP-B01..B05 (literal C0 source), RUP-B06/B07 (every outline row: Releasing and creator stamp Fatal at read.rs, no logical and a 4 B Inline value made as bytes and refused by the codec, RowDeleted and Chunks Unsupported) and RUP-J05 over the actual C, the DELETE read cases and read census (cursor value_before load 34,468 <= 34,586 B).",
       "cases": [
         {
           "file": "crates/engine/src/storage/row/read/driver/update_tests.rs",
@@ -1762,6 +1790,13 @@
           ]
         },
         {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/update.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::autocommit::update::rup_c_each_reserve_takes_only_its_own_effect",
+          "sources": [
+            "head"
+          ]
+        },
+        {
           "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/update_busy.rs",
           "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::autocommit::update::busy::rup_j06_rows_another_transaction_updates_are_busy_until_its_cleanup",
           "sources": [
@@ -1771,6 +1806,13 @@
         {
           "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/update_busy.rs",
           "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::autocommit::update::busy::rup_j07_long_new_value_is_refused_before_any_effect",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/update_busy.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::autocommit::update::busy::rup_j08_the_new_value_is_checked_after_the_row_judgement",
           "sources": [
             "head"
           ]
@@ -1813,6 +1855,13 @@
         {
           "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/update_base.rs",
           "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::autocommit::update::base::rup_r07_base4_takes_the_cursor_three_compensated_update_by_its_logical",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/update_base.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::autocommit::update::base::rup_r06_base4_refuses_broken_reserved_and_pruned_update_rows",
           "sources": [
             "head"
           ]

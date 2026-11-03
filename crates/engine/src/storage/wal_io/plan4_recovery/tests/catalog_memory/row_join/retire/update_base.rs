@@ -6,7 +6,7 @@
 //! accepted census is a state-machine fact.
 use super::super::super::super::super::row_recovery::{Drive, PageRead, restart_with};
 use super::super::delete::base::{
-    ARENA, FLAGS, LOGICAL, MUTATION, ROW_RECORD, STAMP, UNDO, census, committed_stamp, find,
+    ARENA, BASE, FLAGS, LOGICAL, MUTATION, ROW_RECORD, STAMP, UNDO, census, committed_stamp, find,
     leaf_cell, page_cells, rebased, record, renumbered, rewrite,
 };
 use super::*;
@@ -279,4 +279,106 @@ fn rup_r07_base4_takes_the_cursor_three_compensated_update_by_its_logical() {
             println!("RUP_R07 cursor={cursor} logical={logical:?} stamp={stamp:?}");
         }
     });
+}
+
+/// RUP-R06 (the other effect-2 states): refusals over the shrinking
+/// UPDATE's Reserved base (the old committed Int64 row at RowId 1, cell
+/// C = 193, U Free) and the ReleasingCommitted
+/// base (the recovered UpdatePrune's restamped new row, U Releasing), each
+/// one edit of the RowLeaf.
+/// - Reserved, the row's cell not C: the old row's version over the
+///   shrinking UPDATE's NULL body (cell 185, C = 193; actor, Identity).
+/// - Reserved, the row the actor's own: the old row's logical made the
+///   actor's (the active base's new row's logical; actor, Identity).
+/// - ReleasingCommitted, the row not the actor's own: its logical named
+///   by the kept row's writer (actor, Identity).
+/// - ReleasingCommitted, the row stamped with another q than the Job's
+///   commit q (`Committed(2)`; actor, Identity).
+#[test]
+fn rup_r06_base4_refuses_broken_reserved_and_pruned_update_rows() {
+    case_within(
+        "RUP-R06-states",
+        std::time::Duration::from_secs(600),
+        || {
+            let leaf = |bytes: &[u8; BASE]| {
+                let n = find(bytes, 1, |_| true);
+                let cells =
+                    page_cells(&bytes[ARENA + n * PAGE_BYTES..ARENA + (n + 1) * PAGE_BYTES]);
+                assert_eq!(cells.len(), 3, "metadata, the updated row, the kept row");
+                (
+                    n,
+                    cells[0].clone(),
+                    record(&cells[1]).to_vec(),
+                    record(&cells[2]).to_vec(),
+                )
+            };
+            let (active, _) = rebased(&crash_images_of(Crash::Active, true).0);
+            let (_, _, null_row, _) = leaf(&active);
+            assert_eq!(null_row.len(), NULL_RECORD);
+
+            let (bytes, expected) = rebased(&crash_images_of(Crash::Reserved, true).0);
+            let (n, metadata, old, kept) = leaf(&bytes);
+            assert_eq!(
+                (old.len(), old[FLAGS]),
+                (ROW_RECORD, 0),
+                "the old committed row"
+            );
+            let edited = |row: Vec<u8>| {
+                let mut copy = bytes.clone();
+                rewrite(
+                    &mut copy,
+                    n,
+                    &[metadata.clone(), leaf_cell(1, &row), leaf_cell(2, &kept)],
+                );
+                census(&copy, expected)
+            };
+            assert!(edited(old.clone()).is_ok());
+            let mut short = null_row.clone();
+            short[FLAGS] = old[FLAGS];
+            for field in [STAMP, LOGICAL, UNDO] {
+                short[field.clone()].copy_from_slice(&old[field]);
+            }
+            let cell = edited(short);
+            let mut own = old.clone();
+            own[LOGICAL].copy_from_slice(&null_row[LOGICAL]);
+            let mine = edited(own);
+            println!("RUP_R06 reserved cell={cell:?} own={mine:?}");
+            assert_eq!(cell, Err(RowBaseError::Actor(ActorError::Identity)));
+            assert_eq!(mine, Err(RowBaseError::Actor(ActorError::Identity)));
+
+            let committed = crash_images(Crash::Committed).0;
+            let pruned = restart_with(
+                &committed,
+                Some(RowRecoveryPolicy::WithRowClr),
+                Drive::CrashAfterCells(1),
+                0,
+                &PageRead,
+            );
+            let (bytes, expected) = rebased(&pruned.images);
+            let (n, metadata, new, kept) = leaf(&bytes);
+            let edited = |row: Vec<u8>| {
+                let mut copy = bytes.clone();
+                rewrite(
+                    &mut copy,
+                    n,
+                    &[metadata.clone(), leaf_cell(1, &row), leaf_cell(2, &kept)],
+                );
+                census(&copy, expected)
+            };
+            assert!(edited(new.clone()).is_ok());
+            // The kept row's writer (the INSERT transaction) names the logical;
+            // a row of another transaction is outside the actor's reverse scan,
+            // so only the committed state's own-row check sees it.
+            let mut relogged = new.clone();
+            relogged[LOGICAL.start..LOGICAL.start + 40]
+                .copy_from_slice(&kept[LOGICAL.start..LOGICAL.start + 40]);
+            let foreign = edited(relogged);
+            let mut restamped = new.clone();
+            restamped[STAMP].copy_from_slice(&committed_stamp(2));
+            let q = edited(restamped);
+            println!("RUP_R06 pruned foreign={foreign:?} q={q:?}");
+            assert_eq!(foreign, Err(RowBaseError::Actor(ActorError::Identity)));
+            assert_eq!(q, Err(RowBaseError::Actor(ActorError::Identity)));
+        },
+    );
 }

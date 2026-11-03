@@ -4,7 +4,7 @@
 //! own Row Status (as RDL-J11). Expectations are §5's table rows, never
 //! values read back from the same producer.
 use super::*;
-use crate::storage::row::insert::driver::live::begin_transaction_live;
+use crate::storage::{row::insert::driver::live::begin_transaction_live, row_record::RowError};
 
 /// A's Begin on `status` with `isolation` into `holder`.
 macro_rules! begin_at {
@@ -415,16 +415,8 @@ fn rup_j07_long_new_value_is_refused_before_any_effect() {
             frames = 28,
             |live, owner, flusher, status, undo, private, reader_private, core, fence, state| {
                 let _ = (core, state);
-                let spec = TableSpec {
-                    name: "T".to_owned(),
-                    columns: vec![Column {
-                        name: "x".to_owned(),
-                        data_type: DataType::Binary,
-                        nullable: false,
-                    }],
-                };
                 let (row_status, _) =
-                    create_table_with(live, owner, flusher, status, undo, private, true, &spec);
+                    create_table_with(live, owner, flusher, status, undo, private, true, &binary());
                 for _ in 1..3 {
                     system_init(live, owner, flusher, true);
                 }
@@ -539,6 +531,288 @@ fn rup_j07_long_new_value_is_refused_before_any_effect() {
                 assert_row_jobs_free(writer.catalog_test_jobs());
                 assert!(!fence.is_fenced());
                 println!("RUP_J07 autocommit=Aborted(Validate) explicit=Failed,1 q=3");
+            }
+        );
+    });
+}
+
+/// A one-column Binary T, so a value can be of the wrong type (an Int64)
+/// or longer than the inline bound (`LONG`).
+fn binary() -> TableSpec {
+    TableSpec {
+        name: "T".to_owned(),
+        columns: vec![Column {
+            name: "x".to_owned(),
+            data_type: DataType::Binary,
+            nullable: false,
+        }],
+    }
+}
+
+/// A statement refused at A's check of the new value over C's validation
+/// lane: `bad` is the cause, nothing changed and the transaction goes on.
+fn invalid(out: Explicit<RowCommitObservation>, bad: fn(&DriverError) -> bool) {
+    let failure = statement_failed(out);
+    assert_eq!(failure.stage, Stage::Validate);
+    assert!(bad(&failure.error), "{failure:?}");
+}
+
+fn mismatch(error: &DriverError) -> bool {
+    matches!(
+        error,
+        DriverError::Insert(InsertError::Row(RowError::SchemaMismatch))
+    )
+}
+
+fn too_long(error: &DriverError) -> bool {
+    matches!(error, DriverError::Insert(InsertError::Unsupported))
+}
+
+/// RUP-J08 (RUP-A01..A04, #classification "새 값 검사", §17): A checks the
+/// new value over C's validation lane, which only a Ready preflight opens
+/// (as an INSERT's value follows its preflight), so C's judgement of the
+/// target row comes first. `WRONG` (an Int64 for the Binary column) and
+/// `LONG` (canonical row over 2048 B):
+/// - Autocommit UPDATEs of a RowId with no key commit 0 rows (q 3, q 4).
+/// - A (ReadCommitted) updates row 1 to a 16 B value; its own UPDATE row
+///   with `WRONG` is Unsupported at the preflight.
+/// - Y (ReadCommitted, a second Status): A's row with either value is Busy,
+///   a RowId with no key is 0 rows, and the committed row 2 is refused at
+///   validation (SchemaMismatch, Unsupported). No Job changes.
+/// - Z (Serializable, a third Status) begins at q 4; A commits at q 5; Z's
+///   UPDATEs of A's row with either value are SerializationConflict.
+///
+/// Y and Z roll back; the drain cleans A's root and the three Terminals.
+#[test]
+fn rup_j08_the_new_value_is_checked_after_the_row_judgement() {
+    case_within("RUP-J08", std::time::Duration::from_secs(300), || {
+        let oracle = Oracle::new();
+        with_fresh!(
+            oracle,
+            frames = 28,
+            |live, owner, flusher, status, undo, private, reader_private, core, fence, state| {
+                let _ = (core, state);
+                let (a_status, _) =
+                    create_table_with(live, owner, flusher, status, undo, private, true, &binary());
+                let y_status = system_init(live, owner, flusher, false);
+                let z_status = system_init(live, owner, flusher, false);
+                for _ in 0..4 {
+                    system_init(live, owner, flusher, true);
+                }
+                let (mut writer, reader, mut flush) = live.split();
+                let (out, slots) = autocommit!(
+                    &mut writer,
+                    owner,
+                    flush,
+                    flusher,
+                    reader,
+                    reader_private,
+                    &a_status,
+                    private,
+                    6,
+                    vec![[ValueRef::Binary(&[1])], [ValueRef::Binary(&[2])]]
+                );
+                assert_eq!(committed(out), (2, 2));
+                let ids = [
+                    slots[0].as_ref().expect("applied row").row(),
+                    slots[1].as_ref().expect("applied row").row(),
+                ];
+                assert_eq!(
+                    drains!(&mut writer, owner, flush, flusher, private),
+                    [drain(11, true)]
+                );
+                const WRONG: [ValueRef<'static>; 1] = [ValueRef::Int64(5)];
+                let no_key = RowId::new(999).unwrap();
+                for (q, value) in [(3, WRONG), (4, [ValueRef::Binary(&LONG)])] {
+                    let (out, slot) = update!(
+                        &mut writer,
+                        owner,
+                        flush,
+                        flusher,
+                        reader,
+                        reader_private,
+                        &a_status,
+                        private,
+                        6,
+                        no_key,
+                        value
+                    );
+                    assert_eq!(committed(out), (q, 0));
+                    assert!(slot.is_none());
+                    assert_eq!(
+                        drains!(&mut writer, owner, flush, flusher, private),
+                        [drain(1, true)]
+                    );
+                }
+
+                let (mut a, mut y, mut z) = (None, None, None);
+                begin_at!(
+                    &mut writer,
+                    owner,
+                    flush,
+                    flusher,
+                    &a_status,
+                    IsolationLevel::ReadCommitted,
+                    private,
+                    &mut a
+                );
+                let (out, slot) = update_statement!(
+                    &mut writer,
+                    owner,
+                    flush,
+                    flusher,
+                    reader,
+                    reader_private,
+                    &mut a,
+                    private,
+                    6,
+                    ids[0],
+                    [ValueRef::Binary(&[9; 16])]
+                );
+                assert_eq!(done(out), 1);
+                assert_eq!(slot.expect("updated row").row(), ids[0]);
+                // A's own UPDATE row.
+                let (out, slot) = update_statement!(
+                    &mut writer,
+                    owner,
+                    flush,
+                    flusher,
+                    reader,
+                    reader_private,
+                    &mut a,
+                    private,
+                    6,
+                    ids[0],
+                    WRONG
+                );
+                refused!(out, slot, Stage::Preflight, RetentionCause::Unsupported);
+
+                begin_at!(
+                    &mut writer,
+                    owner,
+                    flush,
+                    flusher,
+                    &y_status,
+                    IsolationLevel::ReadCommitted,
+                    private,
+                    &mut y
+                );
+                let jobs = writer.catalog_test_jobs().to_vec();
+                for value in [WRONG, [ValueRef::Binary(&LONG)]] {
+                    // A's UPDATE row, A Leased.
+                    let (out, slot) = update_statement!(
+                        &mut writer,
+                        owner,
+                        flush,
+                        flusher,
+                        reader,
+                        reader_private,
+                        &mut y,
+                        private,
+                        6,
+                        ids[0],
+                        value
+                    );
+                    refused!(out, slot, Stage::Preflight, RetentionCause::Busy);
+                    let (out, slot) = update_statement!(
+                        &mut writer,
+                        owner,
+                        flush,
+                        flusher,
+                        reader,
+                        reader_private,
+                        &mut y,
+                        private,
+                        6,
+                        no_key,
+                        value
+                    );
+                    assert_eq!(done(out), 0);
+                    assert!(slot.is_none());
+                }
+                // The committed row 2: the judgement is Proceed, so the value
+                // is checked.
+                for (value, bad) in [
+                    (WRONG, mismatch as fn(&DriverError) -> bool),
+                    ([ValueRef::Binary(&LONG)], too_long),
+                ] {
+                    let (out, slot) = update_statement!(
+                        &mut writer,
+                        owner,
+                        flush,
+                        flusher,
+                        reader,
+                        reader_private,
+                        &mut y,
+                        private,
+                        6,
+                        ids[1],
+                        value
+                    );
+                    invalid(out, bad);
+                    assert!(slot.is_none());
+                }
+                assert_eq!(writer.catalog_test_jobs().to_vec(), jobs);
+
+                begin_at!(
+                    &mut writer,
+                    owner,
+                    flush,
+                    flusher,
+                    &z_status,
+                    IsolationLevel::Serializable,
+                    private,
+                    &mut z
+                );
+                assert_eq!(
+                    explicit_committed(commit!(
+                        &mut writer,
+                        owner,
+                        flush,
+                        flusher,
+                        &mut a,
+                        private,
+                        1
+                    )),
+                    (5, 1)
+                );
+                // A's UPDATE row, committed at q 5 after Z's snapshot 4.
+                for value in [WRONG, [ValueRef::Binary(&LONG)]] {
+                    let (out, slot) = update_statement!(
+                        &mut writer,
+                        owner,
+                        flush,
+                        flusher,
+                        reader,
+                        reader_private,
+                        &mut z,
+                        private,
+                        6,
+                        ids[0],
+                        value
+                    );
+                    refused!(
+                        out,
+                        slot,
+                        Stage::Preflight,
+                        RetentionCause::SerializationConflict
+                    );
+                }
+                for holder in [&mut y, &mut z] {
+                    let out = rollback!(&mut writer, owner, flush, flusher, holder, private);
+                    assert!(
+                        matches!(out, Explicit::RolledBack),
+                        "expected RolledBack, got {out:?}"
+                    );
+                }
+                assert!(a.is_none() && y.is_none() && z.is_none());
+                assert_eq!(
+                    drains!(&mut writer, owner, flush, flusher, private),
+                    [drain(8, true)]
+                );
+                assert_row_jobs_free(writer.catalog_test_jobs());
+                assert!(!fence.is_fenced());
+                println!("RUP_J08 no_key=0,0 busy=2 invalid=2 conflict=2 q=5");
             }
         );
     });

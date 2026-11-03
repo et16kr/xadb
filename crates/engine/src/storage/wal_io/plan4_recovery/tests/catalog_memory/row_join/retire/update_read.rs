@@ -8,8 +8,10 @@
 //!   (100); a Releasing U (as UpdateClr and UpdatePrune leave it) and a
 //!   RowValue before stamped by its creator's `Transaction` are Fatal at
 //!   `missing_before`'s outline table (Census, Invariant), the system
-//!   fenced and no output written; a RowDeleted before is the typed
-//!   Unsupported, Unchanged and not fenced.
+//!   fenced and no output written; a RowDeleted or a chunked RowValue
+//!   before is the typed Unsupported, Unchanged and not fenced. The codec
+//!   rows (a RowValue before with no logical, an Inline value of 4 B) are
+//!   made as bytes: entry (b) refuses them (Census, Undo Corrupt), fenced.
 //! - B07, C's read steps called directly: `value_before` on the Inline
 //!   candidate before `missing_before` reported its value is Unchanged
 //!   WrongState; after the report it reads the old value into its own
@@ -23,11 +25,14 @@ use super::*;
 use crate::storage::{
     dirty_frame::status_load_test_support,
     disk::RetentionPhase,
+    page::PageRef,
     page::{PageKind, decode_page},
     row::read::driver::{RowReadError, live::read_point_live},
     row_record::RowSchemaInput,
     transaction_record::{LogicalRowVersion, TransactionState, TxnRef, VersionStamp},
-    undo_record::{self, UndoBeforeKind, UndoCell, UndoEdge, UndoPayload},
+    undo_record::{
+        self, UndoBeforeKind, UndoCell, UndoEdge, UndoError, UndoPayload, UndoPayloadHead,
+    },
 };
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -40,6 +45,13 @@ enum Edit {
     CreatorStampU,
     /// A RowDeleted before (which UPDATE never writes).
     DeletedU,
+    /// A valid RowValue before whose value is chunked (2100 B on another
+    /// page), which the first UPDATE never writes.
+    ChunksU,
+    /// Codec rows (#read "codec"), made as bytes: the RowValue before with
+    /// its logical cleared, and with an Inline value of 4 B (below 5).
+    NoLogicalU,
+    ShortInlineU,
 }
 
 /// The Live update U of `reference` (row `row`) rewritten per `edit` on
@@ -98,9 +110,41 @@ fn edit_u(
                 payload: UndoPayload::None,
                 ..live
             }),
+            Edit::ChunksU => UndoCell::Live(undo_record::UndoRecord {
+                payload: UndoPayload::Chunks(
+                    UndoPayloadHead::new(
+                        PageRef {
+                            page_no: reference.page().page_no + 1000,
+                            ..reference.page()
+                        },
+                        2100,
+                        [7; 32],
+                    )
+                    .unwrap(),
+                ),
+                ..live
+            }),
+            Edit::NoLogicalU | Edit::ShortInlineU => UndoCell::Live(live),
         };
         let mut out = vec![0; PAGE_BYTES];
-        let length = undo_record::encode_undo_record(cell, expected, &schema, &mut out).unwrap();
+        let mut length =
+            undo_record::encode_undo_record(cell, expected, &schema, &mut out).unwrap();
+        // The undo record header (`encode_record_header`): the before
+        // logical at [272, 320), the payload length at [320, 324), the key
+        // length at [90, 92); the Inline value follows the key.
+        match edit {
+            Edit::NoLogicalU => out[272..320].fill(0),
+            Edit::ShortInlineU => {
+                let key_end = 432 + usize::from(u16::from_le_bytes([out[90], out[91]]));
+                assert_eq!(
+                    u32::from_le_bytes(out[320..324].try_into().unwrap()) as usize,
+                    length - key_end
+                );
+                out[320..324].copy_from_slice(&4_u32.to_le_bytes());
+                length = key_end + 4;
+            }
+            _ => {}
+        }
         replace_undo(bytes, identity, slot, &out[..length]);
     });
 }
@@ -275,21 +319,43 @@ fn rup_b07_broken_update_states_are_never_a_row() {
             assert!(fenced && untouched, "{edit:?}: fenced, no output");
             println!("RUP_B07\t{edit:?}\t{:?}\t{:?}", error.phase, error.cause);
         }
-        let (result, fenced, untouched) = edited_read(Edit::DeletedU);
-        let error = result.expect_err("a RowDeleted before is Unsupported");
-        let RowReadError::Source(error) = &error else {
-            panic!("DeletedU: {error:?}");
-        };
-        assert_eq!(
-            (error.effect, error.phase),
-            (Effect::Unchanged, RetentionPhase::Census)
-        );
-        assert!(
-            matches!(error.cause, RetentionCause::Unsupported),
-            "{error:?}"
-        );
-        assert!(!fenced && untouched, "DeletedU: not fenced, no output");
-        println!("RUP_B07\tDeletedU\t{:?}\t{:?}", error.phase, error.cause);
+        // Codec rows: entry (b) refuses the bytes before any outline.
+        for edit in [Edit::NoLogicalU, Edit::ShortInlineU] {
+            let (result, fenced, untouched) = edited_read(edit);
+            let error = result.expect_err("a U the codec refuses is never a row");
+            let RowReadError::Source(error) = &error else {
+                panic!("{edit:?}: {error:?}");
+            };
+            assert_eq!(
+                (error.effect, error.phase),
+                (Effect::CallerMustResolve, RetentionPhase::Census),
+                "{edit:?}"
+            );
+            assert!(
+                matches!(error.cause, RetentionCause::Undo(UndoError::Corrupt)),
+                "{edit:?}: {error:?}"
+            );
+            assert!(fenced && untouched, "{edit:?}: fenced, no output");
+            println!("RUP_B07\t{edit:?}\t{:?}\t{:?}", error.phase, error.cause);
+        }
+        for edit in [Edit::DeletedU, Edit::ChunksU] {
+            let (result, fenced, untouched) = edited_read(edit);
+            let error = result.expect_err("a RowDeleted or chunked before is Unsupported");
+            let RowReadError::Source(error) = &error else {
+                panic!("{edit:?}: {error:?}");
+            };
+            assert_eq!(
+                (error.effect, error.phase),
+                (Effect::Unchanged, RetentionPhase::Census),
+                "{edit:?}"
+            );
+            assert!(
+                matches!(error.cause, RetentionCause::Unsupported),
+                "{edit:?}: {error:?}"
+            );
+            assert!(!fenced && untouched, "{edit:?}: not fenced, no output");
+            println!("RUP_B07\t{edit:?}\t{:?}\t{:?}", error.phase, error.cause);
+        }
     });
 }
 

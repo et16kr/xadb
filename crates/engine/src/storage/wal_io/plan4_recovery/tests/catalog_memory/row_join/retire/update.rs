@@ -1094,6 +1094,124 @@ fn crash_images_of(crash: Crash, shrink: bool) -> (Images, Vec<(u64, i64)>) {
     )
 }
 
+/// The refusal of a reserve given another effect's preflight
+/// (`reserve_target`): Before, Unchanged at Prepare, InvalidInput.
+fn mispaired<P>(result: std::result::Result<impl Sized, RowOwnedError<P>>) -> P {
+    match result {
+        Err(RowOwnedError::Before { error, owned }) => {
+            assert!(
+                error.effect == Effect::Unchanged
+                    && error.phase == crate::storage::disk::RetentionPhase::Prepare
+                    && matches!(
+                        error.cause,
+                        RetentionCause::RowSemantic(
+                            crate::storage::semantic_row::Error::InvalidInput
+                        )
+                    ),
+                "{error:?}"
+            );
+            owned
+        }
+        Err(RowOwnedError::Fatal(error)) => panic!("expected Before, got Fatal {error:?}"),
+        Ok(_) => panic!("a reserve of another effect was taken"),
+    }
+}
+
+/// RUP-C (#api "A↔C 경계"): `reserve`, `reserve_delete` and
+/// `reserve_update` each take only their own effect's preflight. Over the
+/// actual C, one explicit transaction's statement takes an UPDATE
+/// preflight of row 100, then a DELETE preflight of row 101. On each the
+/// other two reserves are Before (Unchanged, Prepare, InvalidInput) with
+/// the same preflight returned: no file changed, the system not fenced.
+/// Each preflight is then finished and no Job has changed.
+#[test]
+fn rup_c_each_reserve_takes_only_its_own_effect() {
+    case_within("RUP-C-pairing", std::time::Duration::from_secs(300), || {
+        let oracle = Oracle::new();
+        with_fresh!(
+            oracle,
+            frames = 28,
+            |live, owner, flusher, status, undo, private, reader_private, core, fence, state| {
+                let _ = core;
+                let (row_status, _) =
+                    create_table(live, owner, flusher, status, undo, private, true);
+                for _ in 0..2 {
+                    system_init(live, owner, flusher, true);
+                }
+                let (mut writer, reader, mut flush) = live.split();
+                let (out, slots) = autocommit!(
+                    &mut writer,
+                    owner,
+                    flush,
+                    flusher,
+                    reader,
+                    reader_private,
+                    &row_status,
+                    private,
+                    6,
+                    ints(&[100, 101])
+                );
+                assert_eq!(committed(out), (2, 2));
+                let rows = applied(slots, &[100, 101]);
+                assert_eq!(
+                    drains!(&mut writer, owner, flush, flusher, private),
+                    [drain(11, true)]
+                );
+                let tx = writer
+                    .begin_row_transaction(
+                        owner,
+                        IsolationLevel::Serializable,
+                        &row_status,
+                        private,
+                        &mut flush,
+                    )
+                    .unwrap();
+                let view = writer.begin_statement(owner, &tx).unwrap();
+                let table = issue_table!(reader, owner, view, reader_private, flush, flusher);
+
+                let jobs = writer.catalog_test_jobs().to_vec();
+                let update = match writer
+                    .preflight_update(owner, &view, &table, rows[0].0, private, &mut flush)
+                    .unwrap()
+                {
+                    RowDeleteStep::Ready(preflight) => preflight,
+                    RowDeleteStep::FlushRequired { .. } => panic!("every source is resident"),
+                    RowDeleteStep::NoRow => panic!("a committed row"),
+                };
+                let images = state.lock().unwrap().images();
+                let mut update = mispaired(update.reserve_delete());
+                let plan = validate_insert(&int(200), update.validation_lane().unwrap()).unwrap();
+                let update = mispaired(update.reserve(plan));
+                assert!(state.lock().unwrap().images() == images);
+                assert!(!fence.is_fenced());
+                let private = update.finish().unwrap();
+                assert_eq!(writer.catalog_test_jobs().to_vec(), jobs);
+
+                let mut delete = match writer
+                    .preflight_delete(owner, &view, &table, rows[1].0, private, &mut flush)
+                    .unwrap()
+                {
+                    RowDeleteStep::Ready(preflight) => preflight,
+                    RowDeleteStep::FlushRequired { .. } => panic!("every source is resident"),
+                    RowDeleteStep::NoRow => panic!("a committed row"),
+                };
+                let images = state.lock().unwrap().images();
+                let plan = validate_insert(&int(7), delete.validation_lane().unwrap()).unwrap();
+                let mut delete = mispaired(delete.reserve(plan));
+                let plan = validate_insert(&int(7), delete.validation_lane().unwrap()).unwrap();
+                let delete = mispaired(delete.reserve_update(plan));
+                assert!(state.lock().unwrap().images() == images);
+                assert!(!fence.is_fenced());
+                delete.finish().unwrap();
+                assert_eq!(writer.catalog_test_jobs().to_vec(), jobs);
+                println!("RUP_C pairing update=2 delete=2 refused");
+                drop(view);
+                drop(tx);
+            }
+        );
+    });
+}
+
 /// RUP-R01..R04 over the actual files (dev3-row-update.md#recovery): C's
 /// restart takes each effect-2 crash state into its base4 and reaches
 /// READY with the rows the state machine says.

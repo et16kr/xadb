@@ -20,11 +20,11 @@
 //! B09's second half, the delete's RowValue U under an Inline
 //! `Transaction` row (the tombstone re-encoded as a row of the same
 //! version), is the state an UPDATE writes (dev3-row-update.md#read,
-//! #compatibility 6): B takes the Missing-before path, C's
+//! #open item 6): B takes the Missing-before path, C's
 //! `read_missing` reports the committed Inline value before, and the
 //! foreign statement reads 100. B cannot tell it from an UPDATE's row;
 //! that a DELETE root (effect 1) holds an Inline row is damage only C's
-//! restart sees (base4's actor walk, RUP-R in `update_base.rs`).
+//! restart sees (base4's actor walk, RDL-R02 in `delete_base.rs`).
 //!
 //! `read_missing`'s typed Unsupported (MCB04-V14) is only for a valid
 //! RowDeleted or chunked RowValue before, which DELETE and UPDATE never
