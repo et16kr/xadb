@@ -178,6 +178,11 @@
       "role": "evidence",
       "title": "XADB 전체 방향성 점검 — README 취지 대비"
     },
+    "dev3-oracle-direction-review-20261103.md": {
+      "path": "evidence/dev3-oracle-direction-review-20261103.md",
+      "role": "evidence",
+      "title": "DEV3 설계 방향 리뷰 — Oracle 목표 기준"
+    },
     "dev2-pf04-io-cause-20261025.md": {
       "path": "evidence/dev2-pf04-io-cause-20261025.md",
       "role": "evidence",
