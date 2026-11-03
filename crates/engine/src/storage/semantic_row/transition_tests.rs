@@ -1932,7 +1932,7 @@ fn n1_producer_refusals_precede_output() {
 /// decoding is omitted: RowLeaf pages and Row Undo targets never reach it.
 /// These sums check the counted `source` terms; they are not stack samples.
 #[path = "transition_delete_tests.rs"]
-mod delete;
+pub(crate) mod delete;
 
 mod measured {
     use super::super::source::returned;

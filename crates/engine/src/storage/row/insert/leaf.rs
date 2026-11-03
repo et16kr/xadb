@@ -68,8 +68,15 @@ pub(super) fn inspect<'a>(
             RecordExpectation { namespace, row },
             schema,
         )?;
-        if !matches!(record.payload(), RowPayload::Inline(_)) {
-            return Err(InsertError::Unsupported);
+        // An inline row, or a DELETE's tombstone: the deleting actor's
+        // stamp and U (dev3-row-delete.md#tombstone).
+        let version = record.version();
+        match record.payload() {
+            RowPayload::Inline(_) => {}
+            RowPayload::Deleted
+                if matches!(version.stamp, VersionStamp::Transaction(_))
+                    && version.undo.is_some() => {}
+            _ => return Err(InsertError::Unsupported),
         }
         free_bytes = free_bytes
             .checked_sub(value.len() + 16)
@@ -240,6 +247,125 @@ pub(super) fn remove(
     Ok(())
 }
 
+/// One row a DELETE group reads (dev3-row-delete.md#delete-states): the
+/// committed, pruned row DeleteForward replaces, or the actor's tombstone
+/// DeleteClr replaces. `cell` is (slot, offset, length); `value` is the
+/// inline canonical value, none for a tombstone.
+pub(super) struct Existing<'a> {
+    pub(super) record: &'a [u8],
+    pub(super) cell: (u16, u16, u16),
+    pub(super) version: RecordVersion,
+    pub(super) value: Option<&'a [u8]>,
+}
+
+pub(super) fn existing<'a>(
+    namespace: Namespace,
+    expected: TreeExpectation,
+    schema: RowSchemaInput<'_>,
+    bytes: &'a [u8; PAGE_BYTES],
+    row: RowId,
+) -> Result<Existing<'a>> {
+    let source = inspect(namespace, expected, schema, bytes)?;
+    let position = source.view.lower_bound(&row.get().to_be_bytes())?;
+    if !position.equal {
+        return Err(InsertError::IdentityMismatch);
+    }
+    let EntryPayload::Value(record) = source.view.entry(position.index)?.payload else {
+        return Err(InsertError::Unsupported);
+    };
+    let view = row_record::decode_row_record_with_schema(
+        record,
+        RecordExpectation { namespace, row },
+        schema,
+    )?;
+    let value = match view.payload() {
+        RowPayload::Inline(value) => Some(value.as_bytes()),
+        RowPayload::Deleted => None,
+        RowPayload::Overflow(_) => return Err(InsertError::Unsupported),
+    };
+    let slot = position.index + 1;
+    let range = page::decode_page(bytes, expected.identity, expected.kind)?
+        .cell_range(slot)
+        .ok_or(InsertError::IdentityMismatch)?;
+    Ok(Existing {
+        record,
+        cell: (slot as u16, range.start as u16, range.len() as u16),
+        version: view.version(),
+        value,
+    })
+}
+
+/// Replace the row `version.row` by `version` with the inline `value`, or by
+/// a tombstone when `value` is none: DeleteForward's and DeleteClr's RowLeaf
+/// after (dev3-row-delete.md#delete-states). On success
+/// `scratch[..record_bytes]` holds the new record. A replacement that needs a
+/// split is Capacity; the leaf reservation keeps DeleteClr's room
+/// (#leaf-reservation), so the owner treats it as corrupt. Errors preserve
+/// `output`; `None` runs the same checks without a page.
+#[allow(clippy::too_many_arguments, reason = "one RowLeaf edit")]
+pub(super) fn replace(
+    namespace: Namespace,
+    expected: TreeExpectation,
+    schema: RowSchemaInput<'_>,
+    before: &[u8; PAGE_BYTES],
+    version: RecordVersion,
+    value: Option<&[u8]>,
+    lsn: PageLsn,
+    scratch: &mut [u8],
+    output: Option<&mut [u8; PAGE_BYTES]>,
+) -> Result<LeafBytes> {
+    let source = inspect(namespace, expected, schema, before)?;
+    if lsn.0 <= source.view.header().lsn.0 {
+        return Err(InsertError::IdentityMismatch);
+    }
+    let payload = match value {
+        Some(value) => {
+            if value.len() > INLINE_ROW_BYTES {
+                return Err(InsertError::Unsupported);
+            }
+            RowPayload::Inline(row_record::decode_canonical_row_with_schema(value, schema)?)
+        }
+        None => RowPayload::Deleted,
+    };
+    if scratch.len() < LEAF_SCRATCH_BYTES {
+        return Err(InsertError::Capacity);
+    }
+    let (record_space, cell_space) = scratch.split_at_mut(MAX_RECORD_BYTES);
+    let record_bytes = row_record::encode_row_record_with_schema(
+        RecordExpectation {
+            namespace,
+            row: version.row,
+        },
+        schema,
+        version,
+        payload,
+        record_space,
+    )?;
+    let key = version.row.get().to_be_bytes();
+    let cell = tree_page::encode_leaf_cell(
+        expected.kind,
+        0,
+        &key,
+        &record_space[..record_bytes],
+        cell_space,
+    )?;
+    let mut cells: [&[u8]; ROW_EDIT_CELLS] = [&[]; ROW_EDIT_CELLS];
+    let plan = source
+        .view
+        .prepare_leaf_edit(LeafEdit::Replace(cell), &mut cells)?;
+    if plan.needs_split() {
+        return Err(InsertError::Capacity);
+    }
+    if let Some(output) = output {
+        plan.encode(lsn, output)?;
+    }
+    Ok(LeafBytes {
+        key,
+        record_bytes,
+        cell_bytes: cell.len(),
+    })
+}
+
 pub(super) fn local_source_carrier_bytes() -> usize {
     use std::mem::size_of;
     size_of::<LeafInput<'_>>()
@@ -251,7 +377,9 @@ pub(super) fn local_source_carrier_bytes() -> usize {
         + size_of::<row_record::CanonicalRowView<'_>>()
         + size_of::<row_record::RowRecordView<'_>>()
         + size_of::<Result<LeafBytes>>()
-        + size_of::<Result<Current<'_>>>()
+        // INSERT's CLR reads `Current`, a DELETE group `Existing`; one
+        // group never holds both.
+        + size_of::<Result<Current<'_>>>().max(size_of::<Result<Existing<'_>>>())
         + 2 * size_of::<LeafBytes>()
         + 2 * size_of::<RecordExpectation>()
         + 2 * size_of::<RecordVersion>()

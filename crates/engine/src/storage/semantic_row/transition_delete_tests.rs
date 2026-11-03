@@ -217,6 +217,7 @@ fn history_d_with(rejects: bool, mut probe: impl FnMut(&str, &World)) -> usize {
     let plan = delete_plan(2, 11, 2);
     adopted_delete(&world, "D-523", &plan, reserve_pages(11));
     world.produce("D-523", Change::ReserveDelete(&plan), reserve_pages(11));
+    probe("D-523", &world);
     world.observe(
         "D-524",
         blob("D-524"),
@@ -233,6 +234,7 @@ fn history_d_with(rejects: bool, mut probe: impl FnMut(&str, &World)) -> usize {
     adopted_delete(&world, "D-525", &plan, reserve_pages(10));
     let reserved = world.produce("D-525", Change::ReserveDelete(&plan), reserve_pages(10));
     assert_eq!(reserved.job_ordinal, Some(19));
+    probe("D-525", &world);
     world.observe(
         "D-526",
         blob("D-526"),
@@ -256,6 +258,7 @@ fn history_d_with(rejects: bool, mut probe: impl FnMut(&str, &World)) -> usize {
             ..pages()
         },
     );
+    probe("D-527", &world);
     world.observe(
         "D-528",
         blob("D-528"),
@@ -332,6 +335,7 @@ fn history_d_with(rejects: bool, mut probe: impl FnMut(&str, &World)) -> usize {
     adopted_delete(&world, "D-532", &plan, reserve_pages(16));
     let reserved = world.produce("D-532", Change::ReserveDelete(&plan), reserve_pages(16));
     assert_eq!(reserved.job_ordinal, Some(21));
+    probe("D-532", &world);
     world.observe(
         "D-533",
         blob("D-533"),
@@ -402,6 +406,73 @@ fn history_d_with(rejects: bool, mut probe: impl FnMut(&str, &World)) -> usize {
         world.produce(names[3], Change::RootFree { ordinal }, undo);
     }
     world.rejects.map_or(0, Cell::into_inner)
+}
+
+/// A's five history D groups and the group after which their before state
+/// stands: DeleteForward (h0, effect-1 H, effect-0 H), DeleteClr and the
+/// INSERT Forward over an effect-1 H.
+const A_GROUPS: [(&str, &str); 5] = [
+    ("D-524", "D-523"),
+    ("D-526", "D-525"),
+    ("D-528", "D-527"),
+    ("D-531", "D-530"),
+    ("D-533", "D-532"),
+];
+
+/// The stabilized state before one of A's history D groups, for A's
+/// producer tests (RDL-A): every page and descriptor a producer lane lends,
+/// and the literal A must reproduce. Test-only bookkeeping, no authority.
+pub(crate) struct ABefore {
+    pub(crate) name: &'static str,
+    pub(crate) previous_lsn: u64,
+    pub(crate) root: Box<Page>,
+    /// Jobs page 1, which holds every Job of T2.
+    pub(crate) jobs: Box<Page>,
+    pub(crate) bank: Box<[[u8; JOB_BYTES]; JOB_COUNT]>,
+    /// T2's Status page 20.
+    pub(crate) status: Box<Page>,
+    pub(crate) undo: Vec<(u64, Box<Page>)>,
+    pub(crate) leaf: Box<Page>,
+    pub(crate) transaction: Box<Descriptor>,
+    pub(crate) aging: Box<Descriptor>,
+    pub(crate) frame: &'static [u8],
+}
+
+/// T2's actor and Status location in history D.
+pub(crate) fn a_actor() -> (TxnRef, StatusSlotRef) {
+    (actor(6, 2), slot(20, 2))
+}
+
+/// The before states of A's history D groups, in history order.
+pub(crate) fn a_befores() -> Vec<ABefore> {
+    let mut out = Vec::new();
+    history_d_with(false, |name, world| {
+        let Some((group, _)) = A_GROUPS.iter().find(|(_, before)| *before == name) else {
+            return;
+        };
+        out.push(ABefore {
+            name: group,
+            previous_lsn: world.lsn,
+            root: Box::new(world.root),
+            jobs: Box::new(world.jobs[1].expect("Jobs page 1")),
+            bank: Box::new(world.bank),
+            status: Box::new(*World::find(&world.status, 20)),
+            undo: world
+                .undo
+                .iter()
+                .map(|(page_no, page)| (*page_no, Box::new(*page)))
+                .collect(),
+            leaf: Box::new(world.leaf.expect("RowLeaf")),
+            transaction: Box::new(world.transaction.expect("Tx descriptor")),
+            aging: Box::new(world.aging.expect("Aging descriptor")),
+            frame: blob(group),
+        });
+    });
+    assert_eq!(
+        out.iter().map(|before| before.name).collect::<Vec<_>>(),
+        A_GROUPS.map(|(group, _)| group)
+    );
+    out
 }
 
 #[test]

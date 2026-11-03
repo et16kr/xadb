@@ -688,4 +688,4 @@ pub(crate) fn row_undo_read_codec_bytes() -> usize {
 
 #[cfg(test)]
 #[path = "transition_tests.rs"]
-mod tests;
+pub(crate) mod tests;
