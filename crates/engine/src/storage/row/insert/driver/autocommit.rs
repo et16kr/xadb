@@ -64,16 +64,75 @@ impl Failure {
     }
 }
 
+/// The caller-owned slot the ending steps below write: `Autocommit` here,
+/// and an explicit transaction's statement and end slots (module
+/// `explicit`). Each step reads and writes only through these, so the steps
+/// are the same for every slot.
+pub(super) trait Ending: Sized {
+    /// The first failure of a statement that the steps still end (roll back
+    /// to its mark and finish).
+    fn statement_failed(failure: Failure) -> Self;
+    /// The first failure of a transaction that the steps still end (roll
+    /// back and end): C's refusal of its Commit.
+    fn failed(failure: Failure) -> Self;
+    /// A failure that left the handles to C's fence.
+    fn fenced(failure: Failure) -> Self;
+    /// The transaction is still to be rolled back and ended
+    /// (`abort_transaction`); otherwise the slot is `fenced`.
+    fn ending(&self) -> bool;
+    /// The slot says the handles went to C's fence.
+    fn is_fenced(&self) -> bool;
+    /// The first failure the slot holds, taken out; the caller writes the
+    /// slot next.
+    fn take_first(&mut self) -> Option<Failure>;
+}
+
+/// A slot that also takes C's Commit of the transaction.
+pub(super) trait Committing<C>: Ending {
+    fn committed(committed: C, rows: usize) -> Self;
+}
+
+/// The autocommit transaction is ended after its statement, so a failed
+/// statement is the transaction's failure too.
+impl<C> Ending for Autocommit<C> {
+    fn statement_failed(failure: Failure) -> Self {
+        Self::Aborted(failure)
+    }
+    fn failed(failure: Failure) -> Self {
+        Self::Aborted(failure)
+    }
+    fn fenced(failure: Failure) -> Self {
+        Self::Fenced(failure)
+    }
+    fn ending(&self) -> bool {
+        matches!(self, Self::Aborted(_))
+    }
+    fn is_fenced(&self) -> bool {
+        matches!(self, Self::Fenced(_))
+    }
+    fn take_first(&mut self) -> Option<Failure> {
+        match std::mem::replace(self, Self::Idle) {
+            Self::NotBegun(failure) | Self::Aborted(failure) | Self::Fenced(failure) => {
+                Some(failure)
+            }
+            Self::Idle | Self::Committed { .. } => None,
+        }
+    }
+}
+
+impl<C> Committing<C> for Autocommit<C> {
+    fn committed(committed: C, rows: usize) -> Self {
+        Self::Committed { committed, rows }
+    }
+}
+
 /// The slot after a refusal that left a handle with no next step. Never
 /// inlined, so its own slots are not laid out under any C call.
 #[inline(never)]
-fn fence<C>(out: &mut Autocommit<C>, refusal: (Stage, DriverError)) {
-    let first = std::mem::replace(out, Autocommit::Idle);
-    *out = Autocommit::Fenced(match first {
-        Autocommit::NotBegun(failure)
-        | Autocommit::Aborted(failure)
-        | Autocommit::Fenced(failure) => failure.fenced(refusal),
-        Autocommit::Idle | Autocommit::Committed { .. } => {
+fn fence<O: Ending>(out: &mut O, refusal: (Stage, DriverError)) {
+    *out = O::fenced(match out.take_first() {
+        Some(failure) => failure.fenced(refusal),
+        None => {
             let (stage, error) = refusal;
             Failure {
                 must_resolve: true,
@@ -93,15 +152,15 @@ fn refusal<H>(stop: DriveError<H>) -> (Stage, DriverError) {
 /// `Aborted` for a later step). Never inlined, so its Failure is not laid
 /// out under any C call.
 #[inline(never)]
-pub(super) fn refused<C>(
-    out: &mut Autocommit<C>,
+pub(super) fn refused<O: Ending>(
+    out: &mut O,
     stage: Stage,
     error: RetentionError,
-    unchanged: fn(Failure) -> Autocommit<C>,
+    unchanged: fn(Failure) -> O,
 ) {
     let failure = Failure::new(stage, error.into());
     *out = if failure.must_resolve {
-        Autocommit::Fenced(failure)
+        O::fenced(failure)
     } else {
         unchanged(failure)
     };
@@ -117,12 +176,12 @@ pub(super) fn refused<C>(
 /// under the run's C calls: the caller's sub-frame that ran the statement
 /// has returned (`live::start_statement_live`).
 #[inline(never)]
-pub(super) fn statement_ended<B: Boundary>(
+pub(super) fn statement_ended<B: Boundary, O: Ending>(
     call: &mut B,
     transaction: &B::Transaction,
     ran: Result<usize, DriveError<B::Statement>>,
     loan: &mut Loan,
-    out: &mut Autocommit<B::Committed>,
+    out: &mut O,
 ) -> Option<usize> {
     match ran {
         Ok(rows) => Some(rows),
@@ -186,20 +245,20 @@ pub(super) fn table_not_issued<S, T, R>(
 /// check C answered CallerMustResolve back as `Returned`, and it is dropped
 /// into C's fence here, as the transaction is after it.
 #[inline(never)]
-pub(super) fn end_failed_statement<B: Boundary>(
+pub(super) fn end_failed_statement<B: Boundary, O: Ending>(
     call: &mut B,
     transaction: &B::Transaction,
     after: After<B::Statement>,
     failure: Failure,
     loan: &mut Loan,
-    out: &mut Autocommit<B::Committed>,
+    out: &mut O,
 ) {
     if failure.must_resolve {
-        *out = Autocommit::Fenced(failure);
+        *out = O::fenced(failure);
         drop(after);
         return;
     }
-    *out = Autocommit::Aborted(failure);
+    *out = O::statement_failed(failure);
     match after {
         After::Returned(statement) | After::FinishPending(statement) => {
             finish_failed(call, statement, out);
@@ -214,11 +273,7 @@ pub(super) fn end_failed_statement<B: Boundary>(
 /// C's finish of a failed statement (`finish_statement`); a refusal drops
 /// the statement into C's fence.
 #[inline(never)]
-fn finish_failed<B: Boundary>(
-    call: &mut B,
-    statement: B::Statement,
-    out: &mut Autocommit<B::Committed>,
-) {
+fn finish_failed<B: Boundary, O: Ending>(call: &mut B, statement: B::Statement, out: &mut O) {
     if let Err(stop) = finish_statement(call, statement) {
         fence(out, refusal(stop));
     }
@@ -229,12 +284,12 @@ fn finish_failed<B: Boundary>(
 /// The rollback stays in this frame's slot; `roll` steps it by reference,
 /// so `roll`'s frame is not laid out under C's finish.
 #[inline(never)]
-fn roll_back_statement<B: Boundary>(
+fn roll_back_statement<B: Boundary, O: Ending>(
     call: &mut B,
     transaction: &B::Transaction,
     mut pending: PendingRollback<B::Statement>,
     loan: &mut Loan,
-    out: &mut Autocommit<B::Committed>,
+    out: &mut O,
 ) {
     let rolled = match start_statement_rollback(call, transaction, &mut pending, loan) {
         Ok(mut rollback) => match roll(&mut rollback) {
@@ -251,10 +306,10 @@ fn roll_back_statement<B: Boundary>(
 
 /// The finish of a statement whose rollback finished.
 #[inline(never)]
-fn finish_rolled_statement<B: Boundary>(
+fn finish_rolled_statement<B: Boundary, O: Ending>(
     call: &mut B,
     pending: PendingRollback<B::Statement>,
-    out: &mut Autocommit<B::Committed>,
+    out: &mut O,
 ) {
     match pending.rolled_back() {
         Ok(statement) => finish_failed(call, statement, out),
@@ -303,27 +358,27 @@ fn finish_roll<K: Rollback>(rollback: K) -> Result<(), (Stage, DriverError)> {
 /// the transaction to the full rollback (`abort_transaction`); a
 /// `Rejected` one leaves nothing (C closed the handle); a Fatal one is C's.
 #[inline(never)]
-pub(super) fn commit_answer<B: Boundary>(
+pub(super) fn commit_answer<B: Boundary, O: Committing<B::Committed>>(
     call: &mut B,
     answer: Result<B::Committed, TransactionFinishError<B::Transaction>>,
     loan: &mut Loan,
     rows: usize,
-    out: &mut Autocommit<B::Committed>,
+    out: &mut O,
 ) {
     match answer {
-        Ok(committed) => *out = Autocommit::Committed { committed, rows },
+        Ok(committed) => *out = O::committed(committed, rows),
         Err(
             TransactionFinishError::Before { error, transaction }
             | TransactionFinishError::RollbackRequired { error, transaction },
         ) => {
-            refused(out, Stage::Commit, error, Autocommit::Aborted);
+            refused(out, Stage::Commit, error, O::failed);
             abort_transaction(call, transaction, loan, out);
         }
         Err(TransactionFinishError::Rejected(error)) => {
-            refused(out, Stage::Commit, error, Autocommit::Aborted);
+            refused(out, Stage::Commit, error, O::failed);
         }
         Err(TransactionFinishError::Fatal(error)) => {
-            *out = Autocommit::Fenced(Failure::fatal(Stage::Commit, error));
+            *out = O::fenced(Failure::fatal(Stage::Commit, error));
         }
     }
 }
@@ -335,14 +390,14 @@ pub(super) fn commit_answer<B: Boundary>(
 /// transaction is dropped into C's fence. The slot stays `Aborted`, or
 /// becomes `Fenced`.
 #[inline(never)]
-pub(super) fn abort_transaction<B: Boundary>(
+pub(super) fn abort_transaction<B: Boundary, O: Ending>(
     call: &mut B,
     transaction: B::Transaction,
     loan: &mut Loan,
-    out: &mut Autocommit<B::Committed>,
+    out: &mut O,
 ) {
-    if !matches!(out, Autocommit::Aborted(_)) {
-        debug_assert!(matches!(out, Autocommit::Fenced(_)));
+    if !out.ending() {
+        debug_assert!(out.is_fenced());
         drop(transaction);
         return;
     }
@@ -366,10 +421,10 @@ pub(super) fn abort_transaction<B: Boundary>(
 /// `finish_aborted` of a transaction whose full rollback finished; a
 /// refusal drops the transaction into C's fence.
 #[inline(never)]
-fn finish_rolled_transaction<B: Boundary>(
+fn finish_rolled_transaction<B: Boundary, O: Ending>(
     call: &mut B,
     pending: PendingRollback<B::Transaction>,
-    out: &mut Autocommit<B::Committed>,
+    out: &mut O,
 ) {
     let ended = match pending.rolled_back() {
         Ok(transaction) => finish_aborted(call, transaction).map_err(refusal),

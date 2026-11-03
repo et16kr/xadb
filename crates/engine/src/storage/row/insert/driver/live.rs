@@ -14,9 +14,10 @@ use super::{
         Autocommit, abort_transaction, commit_answer, refused, statement_ended, statement_refused,
         table_not_issued,
     },
-    call_sites, caller_bytes, carrier_bytes, finish_aborted, finish_rollback, finish_statement,
-    insert_statement, map_commit_result, retire_finished, retry_task, rollback_step,
-    start_full_rollback, start_statement_rollback,
+    call_sites, caller_bytes, carrier_bytes,
+    explicit::Explicit,
+    finish_aborted, finish_rollback, finish_statement, insert_statement, map_commit_result,
+    retire_finished, retry_task, rollback_step, start_full_rollback, start_statement_rollback,
 };
 use crate::storage::{
     disk::{
@@ -698,6 +699,133 @@ fn commit_live_step<'b, 'a, 's, 'c, W: WriterNamespace>(
     commit_answer(call, answer, private, rows, out);
 }
 
+/// C's Row Begin of an explicit transaction
+/// (`dev3-module-boundaries.md#explicit-transaction`) on `status`, into the
+/// caller's empty `holder`: the caller passes the holder to each of its
+/// statements (`transaction_insert_live`) and to its end
+/// (`commit_transaction_live`, `rollback_transaction_live`). The slot says
+/// `Begun`, or C's refusal: `NoTransaction` (unchanged, `Stage::Begin`) or
+/// `Fenced`. A holder that already holds a transaction is left as it is
+/// (`NoTransaction`, `OrderMismatch`, no C call). Never inlined: its share
+/// at Begin is `explicit_sites`'.
+#[inline(never)]
+pub(in crate::storage) fn begin_transaction_live<'b, 'a, 's, 'c, W: WriterNamespace>(
+    call: &mut Live<'_, '_, 'b, 'b, 'a, 's, 'c, '_, '_, '_, '_, '_, W>,
+    status: &Plan4Target,
+    isolation: IsolationLevel,
+    private: &mut Loan,
+    holder: &mut Option<RowTransaction<'b, 'a, 'c, 's>>,
+    out: &mut Explicit<RowCommitObservation>,
+) {
+    if holder.is_some() {
+        return no_transaction(Stage::Begin, out);
+    }
+    match call
+        .port
+        .begin_row_transaction(call.owner, isolation, status, private, call.flusher)
+    {
+        Ok(transaction) => {
+            *holder = Some(transaction);
+            *out = Explicit::Begun;
+        }
+        Err(error) => refused(out, Stage::Begin, error, Explicit::NoTransaction),
+    }
+}
+
+/// The slot after an entry found the holder not as it needs it (empty, or
+/// full for Begin): no C call was made.
+#[inline(never)]
+fn no_transaction(stage: Stage, out: &mut Explicit<RowCommitObservation>) {
+    *out = Explicit::NoTransaction(Failure::new(stage, InsertError::OrderMismatch.into()));
+}
+
+/// One INSERT statement of the explicit transaction in `holder`: C's
+/// statement start, the caller's table and the driver's statement, run in
+/// the autocommit executor's sub-frame (`start_statement_live`), then its
+/// end (`statement_ended`): a failed statement is rolled back to its mark
+/// and finished. The slot says `Done`, or `Failed` with the transaction
+/// going on, or `Fenced`, and then the transaction was dropped into C's
+/// fence (the holder is empty). `slots` names the rows applied; after
+/// `Failed` they were rolled back. As the executor's statement frame, the
+/// call is reborrowed for the statement view's borrow of the transaction.
+#[inline(never)]
+#[allow(
+    clippy::too_many_arguments,
+    reason = "the call, the transaction's holder, the table source, the loan, the rows and their slots, and the result slot"
+)]
+pub(in crate::storage) fn transaction_insert_live<
+    'b,
+    'a,
+    's,
+    'c,
+    W: WriterNamespace,
+    T: LiveTables<'a, 'c, 's, W>,
+>(
+    call: &mut Live<'_, '_, 'b, 'b, 'a, 's, 'c, '_, '_, '_, '_, '_, W>,
+    holder: &mut Option<RowTransaction<'b, 'a, 'c, 's>>,
+    tables: &mut T,
+    private: &mut Loan,
+    rows: &[&[ValueRef<'_>]],
+    slots: &mut [Option<RowMutationObservation>],
+    out: &mut Explicit<RowCommitObservation>,
+) {
+    let Some(transaction) = holder.as_ref() else {
+        return no_transaction(Stage::Statement, out);
+    };
+    let mut call = LiveCall::new(
+        &mut *call.port,
+        &mut *call.owner,
+        &mut *call.flusher,
+        &mut *call.flush_owner,
+    );
+    let ran = start_statement_live(&mut call, transaction, tables, private, rows, slots);
+    match statement_ended(&mut call, transaction, ran, private, out) {
+        Some(rows) => *out = Explicit::Done { rows },
+        None if matches!(out, Explicit::Fenced(_)) => *holder = None,
+        None => {}
+    }
+}
+
+/// C's Commit of the explicit transaction in `holder`, whose statements
+/// left `rows` rows standing (the caller's count, written back with the
+/// commit). The transaction is taken out of the holder. A Commit C refuses
+/// unchanged or answers `RollbackRequired` is followed by the full rollback
+/// and `finish_aborted` (`Aborted`); see `commit_answer`. As the executor's
+/// Commit step (`commit_live_step`), C's answer has this frame's one slot
+/// and is read in the next frame.
+#[inline(never)]
+pub(in crate::storage) fn commit_transaction_live<'b, 'a, 's, 'c, W: WriterNamespace>(
+    call: &mut Live<'_, '_, 'b, 'b, 'a, 's, 'c, '_, '_, '_, '_, '_, W>,
+    holder: &mut Option<RowTransaction<'b, 'a, 'c, 's>>,
+    private: &mut Loan,
+    rows: usize,
+    out: &mut Explicit<RowCommitObservation>,
+) {
+    let Some(transaction) = holder.take() else {
+        return no_transaction(Stage::Commit, out);
+    };
+    let answer = call.port.commit_row(call.owner, transaction, private);
+    commit_answer(call, answer, private, rows, out);
+}
+
+/// The caller's rollback of the explicit transaction in `holder`: it is
+/// taken out of the holder, rolled back and ended (`abort_transaction`:
+/// the full rollback and `finish_aborted`); the slot says `RolledBack`, or
+/// `Fenced` after a refusal on the way.
+#[inline(never)]
+pub(in crate::storage) fn rollback_transaction_live<'b, 'a, 's, 'c, W: WriterNamespace>(
+    call: &mut Live<'_, '_, 'b, 'b, 'a, 's, 'c, '_, '_, '_, '_, '_, W>,
+    holder: &mut Option<RowTransaction<'b, 'a, 'c, 's>>,
+    private: &mut Loan,
+    out: &mut Explicit<RowCommitObservation>,
+) {
+    let Some(transaction) = holder.take() else {
+        return no_transaction(Stage::FinishAborted, out);
+    };
+    *out = Explicit::RolledBack;
+    abort_transaction(call, transaction, private, out);
+}
+
 /// `carrier_bytes` for the actual C0 types (INSERT path, CLR path).
 pub(super) const fn live_carrier_bytes<W: WriterNamespace + 'static>() -> (usize, usize) {
     carrier_bytes::<
@@ -955,9 +1083,17 @@ pub(in crate::storage) fn rollback_caller_source<W: WriterNamespace + 'static>()
 #[cfg(test)]
 pub(in crate::storage) const AUTOCOMMIT_CALLER_REFS: usize = 12;
 
-/// The autocommit executor's share at each C call (`autocommit_sites`).
+/// The references and slice headers the census lets an explicit
+/// transaction's caller hold besides its call, Owners, slots and status
+/// target, as `AUTOCOMMIT_CALLER_REFS`. A caller that holds more redoes
+/// `explicit_sites` with its own term.
 #[cfg(test)]
-pub(in crate::storage) struct AutocommitCensus {
+pub(in crate::storage) const EXPLICIT_CALLER_REFS: usize = 12;
+
+/// An executor's share at each C call (`autocommit_sites`,
+/// `explicit_sites`).
+#[cfg(test)]
+pub(in crate::storage) struct ExecutorCensus {
     /// What the executor's caller holds by value below it.
     pub(in crate::storage) caller: usize,
     /// The frame-static share at C's `commit_row`.
@@ -972,7 +1108,7 @@ pub(in crate::storage) struct AutocommitCensus {
     /// path and on the full rollback path.
     pub(in crate::storage) sites: Vec<(&'static str, &'static str, usize, usize)>,
     /// The term of the cleanup's caller (the executor's caller after the
-    /// executor returned, calling `retire_finished_live` while a drain is
+    /// transaction ended, calling `retire_finished_live` while a drain is
     /// not complete) and the cleanup sites with it.
     pub(in crate::storage) drain_caller: usize,
     pub(in crate::storage) cleanup: [(&'static str, usize, usize); super::CLEANUP_SITES],
@@ -981,44 +1117,74 @@ pub(in crate::storage) struct AutocommitCensus {
     pub(in crate::storage) unbounded: [(&'static str, usize); 3],
 }
 
-/// The autocommit executor's share (`dev3-module-boundaries.md
-/// #autocommit-insert`) at every C call under `autocommit_insert_live`, in
-/// `call_sites`' size_of inventory sense and with its conventions: the
-/// driver's share at each site (`live_call_sites`, slack included) plus the
-/// frames of the executor's steps below the driver and the caller's term in
-/// place of the term of the driver's test callers. A step's frame counts its
-/// reference and slice arguments, its bindings and its slot for each call's
-/// result; a value it takes by value counts once, where it is; a value a
-/// match arm moves out of a result stays in that result's slot. Every step
-/// is never inlined, so only the steps on the path to a call are counted,
-/// each with all its own slots (frame-static). Slots the driver's share
-/// already counts at a site are not counted again: the four references of
-/// the rollback's holder (`held`), the started rollback where the site
-/// counts it, the rollback step's result, and the result of the driver's
-/// `finish_statement` and `finish_aborted` in their callers.
 #[cfg(test)]
-pub(in crate::storage) fn autocommit_sites<W: WriterNamespace + 'static>() -> AutocommitCensus {
+type CensusLive<W> = Live<
+    'static,
+    'static,
+    'static,
+    'static,
+    'static,
+    'static,
+    'static,
+    'static,
+    'static,
+    'static,
+    'static,
+    'static,
+    W,
+>;
+#[cfg(test)]
+type CensusTransaction = RowTransaction<'static, 'static, 'static, 'static>;
+#[cfg(test)]
+type CensusView = RowStatementView<'static, 'static, 'static, 'static, 'static>;
+
+/// What lies below the C calls of one executor path, besides the driver's
+/// and the ending steps' own frames, which `executor_sites` counts.
+#[cfg(test)]
+struct PathTerms {
+    /// The caller's term.
+    caller: usize,
+    /// The frames between the caller and the statement's frame (the
+    /// autocommit executor's; none for an explicit transaction).
+    executor: usize,
+    /// The statement's frame: its arguments, the reborrowed call and the
+    /// run's answer.
+    statement: usize,
+    /// The frames between the caller and the full rollback's first ending
+    /// step (`abort_transaction`), the larger of its entries.
+    full_rollback: usize,
+    /// The frames between the caller and C's `commit_row`, besides its
+    /// three references.
+    commit: usize,
+    /// The frames between the caller and C's Row Begin, besides its five
+    /// arguments.
+    begin: usize,
+}
+
+/// The executor's share (`dev3-module-boundaries.md#autocommit-insert`) at
+/// every C call under the autocommit executor or an explicit transaction's
+/// entries, in `call_sites`' size_of inventory sense and with its
+/// conventions: the driver's share at each site (`live_call_sites`, slack
+/// included) plus the frames of the executor's steps below the driver and
+/// the caller's term in place of the term of the driver's test callers. A
+/// step's frame counts its reference and slice arguments, its bindings and
+/// its slot for each call's result; a value it takes by value counts once,
+/// where it is; a value a match arm moves out of a result stays in that
+/// result's slot. Every step is never inlined, so only the steps on the
+/// path to a call are counted, each with all its own slots (frame-static).
+/// Slots the driver's share already counts at a site are not counted again:
+/// the four references of the rollback's holder (`held`), the started
+/// rollback where the site counts it, the rollback step's result, and the
+/// result of the driver's `finish_statement` and `finish_aborted` in their
+/// callers.
+#[cfg(test)]
+fn executor_sites<W: WriterNamespace + 'static>(path: PathTerms) -> ExecutorCensus {
     use std::mem::size_of;
-    type L<W> = Live<
-        'static,
-        'static,
-        'static,
-        'static,
-        'static,
-        'static,
-        'static,
-        'static,
-        'static,
-        'static,
-        'static,
-        'static,
-        W,
-    >;
-    type T = RowTransaction<'static, 'static, 'static, 'static>;
-    type V = RowStatementView<'static, 'static, 'static, 'static, 'static>;
+    type L<W> = CensusLive<W>;
+    type T = CensusTransaction;
+    type V = CensusView;
     type J<W> = <L<W> as Boundary>::Rollback<'static, 'static>;
     type K<W> = StartedRollback<'static, J<W>>;
-    type Obs = RowCommitObservation;
     type Sd = (Stage, super::DriverError);
     type Rows = &'static [&'static [ValueRef<'static>]];
     type Slots = &'static mut [Option<RowMutationObservation>];
@@ -1027,28 +1193,14 @@ pub(in crate::storage) fn autocommit_sites<W: WriterNamespace + 'static>() -> Au
     let slack = 32 * r + 16 * size_of::<Result<(), RetentionError>>() + 512;
     let sd = size_of::<Result<(), Sd>>();
     let (rows, slots) = (size_of::<Rows>(), size_of::<Slots>());
-
-    // The caller: the call, the Owners the call refers to, the result
-    // slot, the status target and its references.
-    let caller = size_of::<L<W>>()
-        + 2 * size_of::<Owner<'static, 'static>>()
-        + size_of::<Autocommit<Obs>>()
-        + size_of::<Plan4Target>()
-        + AUTOCOMMIT_CALLER_REFS * r;
-    // autocommit_insert_live: its arguments (five references, the
-    // isolation and the two slices), Begin's result, which holds the
-    // transaction, and statement_live's result.
-    let executor = 5 * r
-        + size_of::<IsolationLevel>()
-        + rows
-        + slots
-        + size_of::<Result<T, RetentionError>>()
-        + size_of::<Option<usize>>();
-    // statement_live: its arguments, the call it reborrows and the run's
-    // answer, which holds a failed statement's After and Failure while the
-    // statement is ended (start_statement_live's tail writes it).
-    let statement =
-        5 * r + rows + slots + size_of::<L<W>>() + size_of::<Result<usize, DriveError<V>>>();
+    let PathTerms {
+        caller,
+        executor,
+        statement,
+        full_rollback,
+        commit,
+        begin,
+    } = path;
     // start_statement_live: its arguments, the statement start's result,
     // which holds the view, and the issue's result, which holds the table
     // (or, not a table, is passed on by value). Its frame has returned
@@ -1058,7 +1210,8 @@ pub(in crate::storage) fn autocommit_sites<W: WriterNamespace + 'static>() -> Au
         + slots
         + size_of::<Result<V, RetentionError>>()
         + size_of::<Result<Option<CheckedTable<'static, 'static>>, RetentionError>>();
-    // statement_ended: its arguments (the answer counts in statement_live).
+    // statement_ended: its arguments (the answer counts in the statement's
+    // frame).
     let ended = 4 * r;
     // end_failed_statement: its arguments (After and Failure count in the
     // run's answer).
@@ -1080,18 +1233,13 @@ pub(in crate::storage) fn autocommit_sites<W: WriterNamespace + 'static>() -> Au
     let finish_rolled_statement =
         2 * r + size_of::<Result<V, PendingRollback<V>>>() + size_of::<Sd>();
     let finish_rolled_transaction = 2 * r + size_of::<Result<T, PendingRollback<T>>>() + sd;
-    // commit_live_step: its arguments and C's answer; commit_answer: its
-    // arguments (the answer counts in commit_live_step).
-    let commit_step =
-        3 * r + size_of::<usize>() + size_of::<Result<Obs, TransactionFinishError<T>>>();
-    let commit_answer = 3 * r + size_of::<usize>();
 
     // Below the run's C calls (the statement start, the issue, every
     // insert site) and below the failed statement's end.
     let below_statement = caller + executor + statement + start;
     let below_ended = caller + executor + statement + ended;
     let below_statement_rollback = below_ended + end_failed;
-    let below_full_rollback = caller + executor + commit_step + commit_answer;
+    let below_full_rollback = caller + full_rollback;
     let k = size_of::<K<W>>();
     let started = size_of::<Result<K<W>, Failure>>();
     let mut sites = Vec::new();
@@ -1139,24 +1287,24 @@ pub(in crate::storage) fn autocommit_sites<W: WriterNamespace + 'static>() -> Au
     // the flush's results itself; A's term is what lies below the rollback.
     let rollback_caller = (below_statement_rollback + 4 * r + rolled - k + r)
         .max(below_full_rollback + 4 * r + abort - k + r);
-    // C's commit_row: its three references (the transaction counts in
-    // Begin's result).
-    let commit = slack + caller + executor + commit_step + 3 * r;
+    // C's commit_row: its three references (the transaction counts in the
+    // caller's or the executor's slot).
+    let commit = slack + caller + commit + 3 * r;
     let end = site("insert.finish_statement");
     let statement_end = end.bytes + end.dead + below_statement;
-    // The cleanup after the executor returned: the executor's caller with
-    // its slot for `retire_finished_live`'s result, the forward's return
-    // and arguments (as `cleanup_caller_source`), and the sum of its drains.
+    // The cleanup after the transaction ended: the caller with its slot for
+    // `retire_finished_live`'s result, the forward's return and arguments
+    // (as `cleanup_caller_source`), and the sum of its drains.
     let drain_caller = caller + 2 * size_of::<Retire>() + 2 * r + size_of::<Retired>();
     let cleanup = super::cleanup_sites::<L<W>>(drain_caller);
     // Begin: C's five arguments; the statement start: its two; the issue:
     // the source's four (the source's own frame is the caller's).
     let unbounded = [
-        ("begin_row_transaction", slack + caller + executor + 5 * r),
+        ("begin_row_transaction", slack + caller + begin + 5 * r),
         ("begin_statement", slack + below_statement + 2 * r),
         ("table_issue", slack + below_statement + 4 * r),
     ];
-    AutocommitCensus {
+    ExecutorCensus {
         caller,
         commit,
         statement_end,
@@ -1166,4 +1314,114 @@ pub(in crate::storage) fn autocommit_sites<W: WriterNamespace + 'static>() -> Au
         cleanup,
         unbounded,
     }
+}
+
+/// The autocommit executor's share at every C call under
+/// `autocommit_insert_live` (`executor_sites`).
+#[cfg(test)]
+pub(in crate::storage) fn autocommit_sites<W: WriterNamespace + 'static>() -> ExecutorCensus {
+    use std::mem::size_of;
+    type L<W> = CensusLive<W>;
+    type T = CensusTransaction;
+    type V = CensusView;
+    type Obs = RowCommitObservation;
+    type Rows = &'static [&'static [ValueRef<'static>]];
+    type Slots = &'static mut [Option<RowMutationObservation>];
+    let r = size_of::<&()>();
+    let (rows, slots) = (size_of::<Rows>(), size_of::<Slots>());
+
+    // The caller: the call, the Owners the call refers to, the result
+    // slot, the status target and its references.
+    let caller = size_of::<L<W>>()
+        + 2 * size_of::<Owner<'static, 'static>>()
+        + size_of::<Autocommit<Obs>>()
+        + size_of::<Plan4Target>()
+        + AUTOCOMMIT_CALLER_REFS * r;
+    // autocommit_insert_live: its arguments (five references, the
+    // isolation and the two slices), Begin's result, which holds the
+    // transaction, and statement_live's result.
+    let executor = 5 * r
+        + size_of::<IsolationLevel>()
+        + rows
+        + slots
+        + size_of::<Result<T, RetentionError>>()
+        + size_of::<Option<usize>>();
+    // statement_live: its arguments, the call it reborrows and the run's
+    // answer, which holds a failed statement's After and Failure while the
+    // statement is ended (start_statement_live's tail writes it).
+    let statement =
+        5 * r + rows + slots + size_of::<L<W>>() + size_of::<Result<usize, DriveError<V>>>();
+    // commit_live_step: its arguments and C's answer; commit_answer: its
+    // arguments (the answer counts in commit_live_step).
+    let commit_step =
+        3 * r + size_of::<usize>() + size_of::<Result<Obs, TransactionFinishError<T>>>();
+    let commit_answer = 3 * r + size_of::<usize>();
+    executor_sites::<W>(PathTerms {
+        caller,
+        executor,
+        statement,
+        full_rollback: executor + commit_step + commit_answer,
+        commit: executor + commit_step,
+        begin: executor,
+    })
+}
+
+/// An explicit transaction's share at every C call under its entries
+/// (`dev3-module-boundaries.md#explicit-transaction`, `executor_sites`).
+/// There is no executor frame: each entry is the frame below the caller.
+/// The caller's holder of the transaction is off this stack (in its
+/// session's storage, as the rows and slots are): the caller holds a
+/// reference to it. A caller that keeps the holder on this stack adds
+/// `size_of::<Option<RowTransaction>>()` to its term and redoes the census.
+#[cfg(test)]
+pub(in crate::storage) fn explicit_sites<W: WriterNamespace + 'static>() -> ExecutorCensus {
+    use std::mem::size_of;
+    type L<W> = CensusLive<W>;
+    type T = CensusTransaction;
+    type V = CensusView;
+    type Obs = RowCommitObservation;
+    type Rows = &'static [&'static [ValueRef<'static>]];
+    type Slots = &'static mut [Option<RowMutationObservation>];
+    let r = size_of::<&()>();
+    let (rows, slots) = (size_of::<Rows>(), size_of::<Slots>());
+
+    // The caller: the call, the Owners the call refers to, the result
+    // slot, the status target and its references (one is the holder's).
+    let caller = size_of::<L<W>>()
+        + 2 * size_of::<Owner<'static, 'static>>()
+        + size_of::<Explicit<Obs>>()
+        + size_of::<Plan4Target>()
+        + EXPLICIT_CALLER_REFS * r;
+    // begin_transaction_live: its arguments (five references and the
+    // isolation) and C's answer, which holds the transaction until it is
+    // moved into the holder.
+    let begin = 5 * r + size_of::<IsolationLevel>() + size_of::<Result<T, RetentionError>>();
+    // transaction_insert_live: its arguments, the transaction's reference,
+    // the call it reborrows, the run's answer (as statement_live's) and the
+    // end's answer.
+    let statement = 6 * r
+        + rows
+        + slots
+        + size_of::<L<W>>()
+        + size_of::<Result<usize, DriveError<V>>>()
+        + size_of::<Option<usize>>();
+    // commit_transaction_live: its arguments, the transaction taken out of
+    // the holder (moved into C's call, it stays in its slot) and C's answer;
+    // commit_answer: its arguments (the answer counts in the commit's frame).
+    let commit = 4 * r
+        + size_of::<usize>()
+        + size_of::<Option<T>>()
+        + size_of::<Result<Obs, TransactionFinishError<T>>>();
+    let commit_answer = 3 * r + size_of::<usize>();
+    // rollback_transaction_live: its arguments and the transaction taken out
+    // of the holder (moved into abort_transaction, it stays in its slot).
+    let rollback = 4 * r + size_of::<Option<T>>();
+    executor_sites::<W>(PathTerms {
+        caller,
+        executor: 0,
+        statement,
+        full_rollback: (commit + commit_answer).max(rollback),
+        commit,
+        begin,
+    })
 }

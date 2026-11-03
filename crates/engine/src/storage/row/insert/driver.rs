@@ -36,6 +36,7 @@ use std::convert::Infallible;
 pub(in crate::storage) mod autocommit;
 #[cfg(test)]
 mod budget_tests;
+pub(in crate::storage) mod explicit;
 pub(in crate::storage) mod live;
 pub(in crate::storage) mod recovered;
 #[cfg(test)]

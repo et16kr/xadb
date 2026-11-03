@@ -3555,3 +3555,392 @@ fn lac_a12_finish_pending_statement_finished_then_aborted() {
     assert!(state.borrow().chain.is_empty());
     settled(&state);
 }
+
+// ---- An explicit transaction's slot (`explicit`, LXT-A01..A07) ----
+
+use super::explicit::Explicit;
+
+/// One statement of `rows` in the literal transaction, as
+/// `transaction_insert_live` runs it after the statement start and the
+/// table: the driver's statement, `statement_ended`, then `Done`.
+fn explicit_statement(
+    call: &mut LiteralCall<'_>,
+    transaction: &LiteralTransaction,
+    rows: &[&[ValueRef<'_>]],
+    loan: &mut Loan,
+) -> Explicit<u64> {
+    let mut out = Explicit::Idle;
+    let mut slots: Vec<Option<LiteralApplied>> = rows.iter().map(|_| None).collect();
+    let ran = insert_statement(
+        call,
+        statement(call.state),
+        &LiteralTable,
+        loan,
+        rows,
+        &mut slots,
+    );
+    if let Some(rows) = statement_ended(call, transaction, ran, loan, &mut out) {
+        out = Explicit::Done { rows };
+    }
+    out
+}
+
+/// C's Commit of the literal transaction and `commit_answer`, as
+/// `commit_transaction_live` calls them.
+fn explicit_commit(
+    call: &mut LiteralCall<'_>,
+    transaction: LiteralTransaction,
+    loan: &mut Loan,
+    rows: usize,
+) -> Explicit<u64> {
+    let mut out = Explicit::Idle;
+    let answer = call.commit(transaction, loan);
+    commit_answer(call, answer, loan, rows, &mut out);
+    out
+}
+
+/// The caller's rollback of the literal transaction, as
+/// `rollback_transaction_live` runs it.
+fn explicit_rollback(
+    call: &mut LiteralCall<'_>,
+    transaction: LiteralTransaction,
+    loan: &mut Loan,
+) -> Explicit<u64> {
+    let mut out = Explicit::RolledBack;
+    abort_transaction(call, transaction, loan, &mut out);
+    out
+}
+
+fn explicit_done(out: Explicit<u64>) -> usize {
+    match out {
+        Explicit::Done { rows } => rows,
+        other => panic!("expected Done, got {other:?}"),
+    }
+}
+
+fn explicit_failed(out: Explicit<u64>) -> Failure {
+    match out {
+        Explicit::Failed(failure) => {
+            assert!(!failure.must_resolve);
+            failure
+        }
+        other => panic!("expected Failed, got {other:?}"),
+    }
+}
+
+fn explicit_fenced(out: Explicit<u64>) -> Failure {
+    match out {
+        Explicit::Fenced(failure) => {
+            assert!(failure.must_resolve);
+            failure
+        }
+        other => panic!("expected Fenced, got {other:?}"),
+    }
+}
+
+/// LXT-A01: two statements that apply every row, then the Commit with the
+/// caller's count: each statement is finished on its own and C commits.
+#[test]
+fn lxt_a01_two_statements_then_commit() {
+    let state = self::state(&[], &[]);
+    let mut loan = loan();
+    let mut call = LiteralCall { state: &state };
+    let transaction = LiteralTransaction(1);
+    assert_eq!(
+        explicit_done(explicit_statement(
+            &mut call,
+            &transaction,
+            &[&V1, &V2],
+            &mut loan
+        )),
+        2
+    );
+    assert_eq!(
+        explicit_done(explicit_statement(
+            &mut call,
+            &transaction,
+            &[&V1],
+            &mut loan
+        )),
+        1
+    );
+    match explicit_commit(&mut call, transaction, &mut loan, 3) {
+        Explicit::Committed { committed, rows } => assert_eq!((committed, rows), (42, 3)),
+        other => panic!("expected Committed, got {other:?}"),
+    }
+    assert_eq!(
+        take_log(&state),
+        calls(&[
+            &[Check],
+            &applied(7),
+            &applied(8),
+            &[FinishStatement, Check],
+            &applied(9),
+            &[FinishStatement, Commit],
+        ])
+    );
+    assert_eq!(
+        state.borrow().chain.iter().map(|c| c.0).collect::<Vec<_>>(),
+        [7, 8, 9]
+    );
+    settled(&state);
+}
+
+/// LXT-A02: a statement that fails after an applied row is rolled back to
+/// its own mark (the earlier statement's row stays) and finished; the
+/// transaction is not touched, the next statement runs, and the Commit
+/// commits the rows that stand.
+#[test]
+fn lxt_a02_failed_statement_keeps_the_earlier_one() {
+    let state = self::state(&[], &[]);
+    let mut loan = loan();
+    let mut call = LiteralCall { state: &state };
+    let transaction = LiteralTransaction(1);
+    assert_eq!(
+        explicit_done(explicit_statement(
+            &mut call,
+            &transaction,
+            &[&V1],
+            &mut loan
+        )),
+        1
+    );
+    let failure = explicit_failed(explicit_statement(
+        &mut call,
+        &transaction,
+        &[&V2, &BAD],
+        &mut loan,
+    ));
+    assert_eq!(failure.stage, Stage::Validate);
+    assert!(failure.cleanup.is_none());
+    assert_eq!(
+        state.borrow().chain.iter().map(|c| c.0).collect::<Vec<_>>(),
+        [7]
+    );
+    assert_eq!(
+        explicit_done(explicit_statement(
+            &mut call,
+            &transaction,
+            &[&V1],
+            &mut loan
+        )),
+        1
+    );
+    let tail = state.borrow().chain.last().unwrap().0;
+    assert!(matches!(
+        explicit_commit(&mut call, transaction, &mut loan, 2),
+        Explicit::Committed { rows: 2, .. }
+    ));
+    assert_eq!(
+        take_log(&state),
+        calls(&[
+            &[Check],
+            &applied(7),
+            &[FinishStatement, Check],
+            &applied(8),
+            &[
+                Call::Preflight,
+                Call::ValidationLane,
+                Validate,
+                FinishPreflight
+            ],
+            &[RollbackStart(RollbackScope::Statement)],
+            &compensated(8),
+            &[Next, RollbackFinish, FinishStatement, Check],
+            &applied(tail),
+            &[FinishStatement, Commit],
+        ])
+    );
+    assert_eq!(
+        state.borrow().chain.iter().map(|c| c.0).collect::<Vec<_>>(),
+        [7, tail]
+    );
+    settled(&state);
+}
+
+/// LXT-A03: the caller's rollback after two statements: the full rollback
+/// compensates every row of the transaction, head first, and
+/// `finish_aborted` ends it (`RolledBack`).
+#[test]
+fn lxt_a03_caller_rollback_compensates_every_statement() {
+    let state = self::state(&[], &[]);
+    let mut loan = loan();
+    let mut call = LiteralCall { state: &state };
+    let transaction = LiteralTransaction(1);
+    explicit_done(explicit_statement(
+        &mut call,
+        &transaction,
+        &[&V1],
+        &mut loan,
+    ));
+    explicit_done(explicit_statement(
+        &mut call,
+        &transaction,
+        &[&V2],
+        &mut loan,
+    ));
+    take_log(&state);
+    let out = explicit_rollback(&mut call, transaction, &mut loan);
+    assert!(matches!(out, Explicit::RolledBack), "{out:?}");
+    assert_eq!(take_log(&state), full_abort(&[7, 8]));
+    assert!(state.borrow().chain.is_empty());
+    settled(&state);
+}
+
+/// LXT-A04: a Commit C answers `RollbackRequired` after a failed statement:
+/// the full rollback compensates only the rows that stand (the failed
+/// statement's were compensated at its own end), and the slot keeps the
+/// Commit's Failure (`Aborted`).
+#[test]
+fn lxt_a04_refused_commit_rolls_back_the_rows_that_stand() {
+    let state = self::state(&[], &[(Commit, Fault::RollbackRequired)]);
+    let mut loan = loan();
+    let mut call = LiteralCall { state: &state };
+    let transaction = LiteralTransaction(1);
+    explicit_done(explicit_statement(
+        &mut call,
+        &transaction,
+        &[&V1],
+        &mut loan,
+    ));
+    explicit_failed(explicit_statement(
+        &mut call,
+        &transaction,
+        &[&V2, &BAD],
+        &mut loan,
+    ));
+    take_log(&state);
+    match explicit_commit(&mut call, transaction, &mut loan, 1) {
+        Explicit::Aborted(failure) => assert_eq!(
+            (failure.stage, disk(&failure.error).1),
+            (Stage::Commit, Cause::SerializationConflict)
+        ),
+        other => panic!("expected Aborted, got {other:?}"),
+    }
+    assert_eq!(take_log(&state), calls(&[&[Commit], &full_abort(&[7])]));
+    assert!(state.borrow().chain.is_empty());
+    settled(&state);
+}
+
+/// LXT-A05: a statement C must resolve calls C no more (`Fenced`; the live
+/// entry then drops the transaction): its own check answered
+/// CallerMustResolve, or a step of its rollback was refused (the slot keeps
+/// the first Failure, with the refusal as its cleanup).
+#[test]
+fn lxt_a05_fenced_statement_calls_nothing_more() {
+    let state = self::state(&[], &[(Check, Fault::Fatal)]);
+    let mut loan = loan();
+    let mut call = LiteralCall { state: &state };
+    let failure = explicit_fenced(explicit_statement(
+        &mut call,
+        &LiteralTransaction(1),
+        &[&V1],
+        &mut loan,
+    ));
+    assert_eq!(failure.stage, Stage::Statement);
+    assert_eq!(take_log(&state), [Check]);
+
+    let state = self::state(&[], &[(ClrApply(7), Fault::Before(Cause::Busy))]);
+    let mut call = LiteralCall { state: &state };
+    let failure = explicit_fenced(explicit_statement(
+        &mut call,
+        &LiteralTransaction(1),
+        &[&V1, &BAD],
+        &mut loan,
+    ));
+    assert_eq!(failure.stage, Stage::Validate);
+    assert_eq!(failure.cleanup.as_ref().map(|c| c.0), Some(Stage::ClrApply));
+    assert_eq!(
+        take_log(&state),
+        calls(&[
+            &failed_at_second_row(),
+            &[RollbackStart(RollbackScope::Statement)],
+            &compensated(7),
+            &[ClrReopen(7), DropRollback],
+        ])
+    );
+}
+
+/// LXT-A06: the statement start refused unchanged or the table not issued
+/// is the statement's failure with no row: nothing is rolled back, the
+/// statement (if any) is finished, and the transaction goes on to its
+/// Commit. A refusal of the caller's rollback has no first Failure: the
+/// slot is `Fenced` with the refusal itself.
+#[test]
+fn lxt_a06_no_row_failures_and_a_refused_rollback() {
+    let state = self::state(&[], &[]);
+    let mut loan = loan();
+    let mut call = LiteralCall { state: &state };
+    let transaction = LiteralTransaction(1);
+    let mut out = Explicit::Idle;
+    let ran = statement_refused(refusal(Check, Cause::Busy));
+    assert!(statement_ended(&mut call, &transaction, ran, &mut loan, &mut out).is_none());
+    assert_eq!(explicit_failed(out).stage, Stage::Statement);
+    let mut out = Explicit::Idle;
+    let ran = table_not_issued(statement(&state), Ok(None::<LiteralTable>));
+    assert!(statement_ended(&mut call, &transaction, ran, &mut loan, &mut out).is_none());
+    let failure = explicit_failed(out);
+    assert_eq!(
+        (failure.stage, insert(&failure.error)),
+        (Stage::Table, InsertError::InvalidInput)
+    );
+    assert!(matches!(
+        explicit_commit(&mut call, transaction, &mut loan, 0),
+        Explicit::Committed { rows: 0, .. }
+    ));
+    assert_eq!(take_log(&state), [FinishStatement, Commit]);
+    settled(&state);
+
+    let state = self::state(&[], &[(FinishAborted, Fault::Before(Cause::Busy))]);
+    let mut call = LiteralCall { state: &state };
+    let failure = explicit_fenced(explicit_rollback(
+        &mut call,
+        LiteralTransaction(1),
+        &mut loan,
+    ));
+    assert_eq!(
+        (failure.stage, disk(&failure.error).1),
+        (Stage::FinishAborted, Cause::Busy)
+    );
+    assert!(failure.cleanup.is_none());
+    assert_eq!(take_log(&state), full_abort(&[]));
+}
+
+/// LXT-A07: the slot's reading by the steps: a statement's failure is
+/// `Failed` and a Commit's is `Aborted`; only `Aborted` and `RolledBack`
+/// end the transaction; every Failure is taken once.
+#[test]
+fn lxt_a07_slot_reading() {
+    use super::autocommit::Ending;
+    let failure = || Failure::new(Stage::Validate, InsertError::InvalidInput.into());
+    assert!(matches!(
+        Explicit::<u64>::statement_failed(failure()),
+        Explicit::Failed(_)
+    ));
+    assert!(matches!(
+        Explicit::<u64>::failed(failure()),
+        Explicit::Aborted(_)
+    ));
+    for (mut slot, ending, first) in [
+        (Explicit::<u64>::Idle, false, false),
+        (Explicit::Begun, false, false),
+        (Explicit::NoTransaction(failure()), false, true),
+        (Explicit::Done { rows: 1 }, false, false),
+        (Explicit::Failed(failure()), false, true),
+        (
+            Explicit::Committed {
+                committed: 42,
+                rows: 1,
+            },
+            false,
+            false,
+        ),
+        (Explicit::RolledBack, true, false),
+        (Explicit::Aborted(failure()), true, true),
+        (Explicit::Fenced(failure()), false, true),
+    ] {
+        assert_eq!(slot.ending(), ending, "{slot:?}");
+        assert_eq!(slot.take_first().is_some(), first);
+        assert!(slot.take_first().is_none() && matches!(slot, Explicit::Idle));
+    }
+}
