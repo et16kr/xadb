@@ -873,65 +873,128 @@ pub(crate) fn encode_undo_record(
     if output.len() < length {
         return Err(UndoError::NoSpace);
     }
-    let mut header = [0; UNDO_RECORD_BYTES];
-    header[..4].copy_from_slice(b"XUR1");
-    put16(&mut header, 4, 1);
-    put64(&mut header, 8, expected.reference.generation().get());
-    let (key, inline) = match cell {
+    let (record, state) = match cell {
         UndoCell::Free(generation) => return encode_free_undo_record(generation, output),
-        UndoCell::Live(record) | UndoCell::Releasing(record) => {
-            header[6] = if matches!(cell, UndoCell::Live(_)) {
-                1
-            } else {
-                2
-            };
-            put64(&mut header, 16, record.sequence);
-            encode_txn_id(record.creator.id, &mut header[24..64])?;
-            put64(&mut header, 64, record.creator.status_generation.get());
-            put64(&mut header, 72, record.mutation_sequence);
-            put64(&mut header, 80, record.incoming);
-            record.target.write_core(&mut header[88..120]);
-            for (index, edge) in record.edges.into_iter().enumerate() {
-                header[326 + index] = edge.tag();
-                if let UndoEdge::Linked(link) = edge {
-                    let at = 120 + index * 48;
-                    link.reference.encode(&mut header[at..at + 40])?;
-                    put64(&mut header, at + 40, link.sequence);
-                }
-            }
-            if let Some(stamp) = record.before_stamp {
-                stamp.encode(&mut header[216..272])?;
-            }
-            if let Some(logical) = record.before_logical {
-                logical.encode(&mut header[272..320])?;
-            }
-            header[324] = record.before_kind as u8;
-            let inline = match record.payload {
-                UndoPayload::None => &[][..],
-                UndoPayload::Inline(bytes) => {
-                    header[325] = 1;
-                    put32(&mut header, 320, bytes.len());
-                    bytes
-                }
-                UndoPayload::Chunks(head) => {
-                    header[325] = 2;
-                    put32(&mut header, 320, head.total);
-                    head.encode(&mut header[336..400])?;
-                    &[][..]
-                }
-            };
-            header[328] = record.release.cursor;
-            put16(&mut header, 332, record.release.chunks_released);
-            if let Some(next) = record.release.next {
-                next.encode(&mut header[400..424])?;
-            }
-            (record.target.key, inline)
-        }
+        UndoCell::Live(record) => (record, 1),
+        UndoCell::Releasing(record) => (record, 2),
     };
+    let mut header = [0; UNDO_RECORD_BYTES];
+    let inline = encode_record_header(&record, state, expected, &mut header)?;
+    let key = record.target.key;
     output[..432].copy_from_slice(&header);
     output[432..432 + key.len()].copy_from_slice(key);
     output[432 + key.len()..length].copy_from_slice(inline);
     Ok(length)
+}
+
+/// `encode_undo_record` split after the fixed 432-byte header, for a one-slot
+/// cell whose inline before value the caller places right after it
+/// (dev3-row-delete.md#scratch). The whole record is validated exactly as
+/// `encode_undo_record` validates it, `head` receives only the header, and
+/// the result is the full encoded length. The target key must be empty, so
+/// the value starts at byte 432. Every error leaves `head` unchanged.
+pub(crate) fn encode_undo_record_head(
+    cell: UndoCell<'_>,
+    expected: UndoRecordExpectation<'_>,
+    schema: impl BeforeSchema,
+    head: &mut [u8; UNDO_RECORD_BYTES],
+) -> Result<usize, UndoError> {
+    let length = undo_record_encoded_len(cell, expected, schema)?;
+    let (record, state) = match cell {
+        UndoCell::Free(_) => return Err(UndoError::InvalidInput),
+        UndoCell::Live(record) => (record, 1),
+        UndoCell::Releasing(record) => (record, 2),
+    };
+    if !record.target.key.is_empty() {
+        return Err(UndoError::InvalidInput);
+    }
+    let mut header = [0; UNDO_RECORD_BYTES];
+    encode_record_header(&record, state, expected, &mut header)?;
+    head.copy_from_slice(&header);
+    Ok(length)
+}
+
+/// One release step of a Releasing record without a body, cursor c to c+1
+/// (c < 3), by `validate_record`'s cursor rule: the version edge becomes
+/// Released at cursor 1, the transaction edge at 2, and the before stamp is
+/// dropped at 3. Every other field, a RowValue before's stamp and logical
+/// included, is carried from `input` without being handed to the caller
+/// (dev3-row-delete.md#delete-undo), and the step is encoded into `output`.
+/// A Live record, cursor 3 or a record with a body is a state mismatch.
+pub(crate) fn encode_release_step(
+    input: &[u8],
+    expected: UndoRecordExpectation<'_>,
+    output: &mut [u8],
+) -> Result<usize, UndoError> {
+    let UndoCell::Releasing(mut record) = decode_undo_record(input, expected, MetadataOnly)?.cell
+    else {
+        return Err(UndoError::StateMismatch);
+    };
+    if record.payload != UndoPayload::None || record.release.cursor >= 3 {
+        return Err(UndoError::StateMismatch);
+    }
+    record.release.cursor += 1;
+    match record.release.cursor {
+        1 => record.edges[1] = UndoEdge::Released,
+        2 => record.edges[0] = UndoEdge::Released,
+        _ => record.before_stamp = None,
+    }
+    encode_undo_record(UndoCell::Releasing(record), expected, MetadataOnly, output)
+}
+
+/// The header of an occupied record (`state` 1 Live, 2 Releasing) and the
+/// inline value that follows its target key.
+fn encode_record_header<'a>(
+    record: &UndoRecord<'a>,
+    state: u8,
+    expected: UndoRecordExpectation<'_>,
+    header: &mut [u8; UNDO_RECORD_BYTES],
+) -> Result<&'a [u8], UndoError> {
+    header[..4].copy_from_slice(b"XUR1");
+    put16(header, 4, 1);
+    header[6] = state;
+    put64(header, 8, expected.reference.generation().get());
+    put64(header, 16, record.sequence);
+    encode_txn_id(record.creator.id, &mut header[24..64])?;
+    put64(header, 64, record.creator.status_generation.get());
+    put64(header, 72, record.mutation_sequence);
+    put64(header, 80, record.incoming);
+    record.target.write_core(&mut header[88..120]);
+    for (index, edge) in record.edges.into_iter().enumerate() {
+        header[326 + index] = edge.tag();
+        if let UndoEdge::Linked(link) = edge {
+            let at = 120 + index * 48;
+            link.reference.encode(&mut header[at..at + 40])?;
+            put64(header, at + 40, link.sequence);
+        }
+    }
+    if let Some(stamp) = record.before_stamp {
+        stamp.encode(&mut header[216..272])?;
+    }
+    if let Some(logical) = record.before_logical {
+        logical.encode(&mut header[272..320])?;
+    }
+    header[324] = record.before_kind as u8;
+    let inline = match record.payload {
+        UndoPayload::None => &[][..],
+        UndoPayload::Inline(bytes) => {
+            header[325] = 1;
+            put32(header, 320, bytes.len());
+            bytes
+        }
+        UndoPayload::Chunks(head) => {
+            header[325] = 2;
+            put32(header, 320, head.total);
+            head.encode(&mut header[336..400])?;
+            &[][..]
+        }
+    };
+    header[328] = record.release.cursor;
+    put16(header, 332, record.release.chunks_released);
+    if let Some(next) = record.release.next {
+        next.encode(&mut header[400..424])?;
+    }
+    Ok(inline)
 }
 
 /// Entry (b): an occupied record's header and lengths without a schema

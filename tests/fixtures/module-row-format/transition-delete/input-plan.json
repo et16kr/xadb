@@ -1,0 +1,97 @@
+{
+  "scope": "scope3 Row DELETE groups (dev3-row-delete.md) after the N1 history H",
+  "oracle": "independent byte packing and SHA-256 only; A and N1 literals re-encoded before use",
+  "parents": {
+    "module-row-format/scope3/h-500-aging.bin": "cdae28875cc0f13764e22ba76f2707e0c3c3f71593c8b8b7a30b0e0d702787c6",
+    "module-row-format/scope3/h-500-bank.bin": "52b8ba5f93ef087ff60606bd0656840152074923550cc86e860b952235556c81",
+    "module-row-format/scope3/h-500-jobs2.bin": "dbd19662a93dff63885fa09016faedfc406b01a1ed01217506c67ed0f03fc628",
+    "module-row-format/scope3/h-500-jobs3.bin": "37a290fb7e7fc6b4e18ed4e1a5ec74af344f3b8721e6c910fde480265c03c109",
+    "module-row-format/scope3/h-500-leaf.bin": "53aba09198d8a858f3a963c248db4aaa68777b01e4cb9e9d3a8d086b534bf0ac",
+    "module-row-format/scope3/h-500-root.bin": "3e30315fdcbc65be40699fc3fcc99392e9bcb29a5971710c7029191888415495",
+    "module-row-format/scope3/h-500-status.bin": "37faf4cf4b6b016d3ea5e636a5b4a27cb4d8fc2b74e05128338fa2c350d58a8e",
+    "module-row-format/scope3/h-500-tx.bin": "c276fe136719aa7773a342ff4c56582401b176607b696ce2af439676f1385ee5",
+    "module-row-format/scope3/h-500-undo10.bin": "6ab2d3a2dc9dbae486d5a0895fb9a1f92ba0716f579bc9513c3b20ce12a1ee7e",
+    "module-row-format/scope3/h-500-undo11.bin": "07f6d0cbd44e58526b472a9a3388c293e8897a8eaceeb3f8a89596644c8083db",
+    "module-row-format/scope3/h-501-aging.bin": "9f79cc68e1023f8f13bfec376f0699beeff5ea51b15ed5aef59e2b97a31c6d6c",
+    "module-row-format/scope3/h-501-bank.bin": "b2840f4683037fc2eba5403bd2a46c2b51ba8428ec254d324fdfa55079b2bede",
+    "module-row-format/scope3/h-501-forward.wal": "43848ceb656e03e6cc0cc01cdf1c69bdac7f88d6de932942795b815aa64a650b",
+    "module-row-format/scope3/h-501-jobs2.bin": "dbd19662a93dff63885fa09016faedfc406b01a1ed01217506c67ed0f03fc628",
+    "module-row-format/scope3/h-501-jobs3.bin": "828e458a0fcd3887e866e6d5b21613d38a538597cca9156399d354c96878aec4",
+    "module-row-format/scope3/h-501-leaf.bin": "b451ed8bcaa6ce84fa62876beac248dba93aedbedc690a70e5fc6bed5ffd116b",
+    "module-row-format/scope3/h-501-root.bin": "d9256e603318df318d3d5f7073bb82ce866d9f1627b88ba3bb73206207b41ef2",
+    "module-row-format/scope3/h-501-status.bin": "ee58aedd6182d6f2f9d4e2b6846305899997be3742c4a8a48111729721afc1c6",
+    "module-row-format/scope3/h-501-tx.bin": "b57724b0f0e51bb515391aa08065a1f322a4f370a1000307a72a8091081055c6",
+    "module-row-format/scope3/h-501-undo11.bin": "fbdae72a06d0e76155f4181e4be763360fe935edb187bc2ab74f3a71fd2a2bd1",
+    "module-row-format/scope3/h-502-status.bin": "a60413c2ea6cf04175db3bc536018111e3982ec8f05b801770f3cf75a9fa308e",
+    "module-row-format/scope3/h-502-tx.bin": "157e6dd1c041536a4b8ba2521f1fbf774824b9873c1725674cc40273d46f1473",
+    "module-row-format/scope3/h-503-aging.bin": "ab3e33882bf994a75897cbe61aeb0087905cbfa98b703ffbf358bf866bc8246b",
+    "module-row-format/scope3/h-503-bank.bin": "7deffdb41582c1e7d1f2d5513c4d8c8b0402d461c74d706b5b40c6c97fb64cc6",
+    "module-row-format/scope3/h-503-clr.wal": "96238da38c9b0ba4a236808c13a278513fd7eb9cf901418c4c21cc099bf66367",
+    "module-row-format/scope3/h-503-jobs3.bin": "0c289bd95d11cdb0e73483e8090410475b15e7285dc09d5bcb4029ce3bc893ce",
+    "module-row-format/scope3/h-503-leaf.bin": "439a518e203b674475caf65bf2de1b42b1243d5235930edb82dc3b8dd177c568",
+    "module-row-format/scope3/h-503-root.bin": "07d501fa7f4c0c30b842d67ff2f9d478154fd29a1fb18eed1d287f336aeef1be",
+    "module-row-format/scope3/h-503-status.bin": "875c8ff8e78e5e915d8344b3139bca47e9b95af5604687cd32a3c4dfdce4423b",
+    "module-row-format/scope3/h-503-tx.bin": "eac0effed85df8b28acecd181b839aad2d75f0bcda071c261122a69544e2e229",
+    "module-row-format/scope3/h-503-undo11.bin": "1e2706f2120d9fbe4fcbb75ce99fd315db3475d145db0a1965b8c7fc77f19d6d",
+    "module-row-format/scope3/profile3.bin": "8335423a65c2870d4c3d115ef5011e3c82d2fc2b4341e7e10d5b7321ec5a3934",
+    "module-row-format/transition/blobs.bin": "96f88af3b8973f97d4bedcb315c47aaa65fffb27027cafefbad37a876e6ded6c",
+    "module-row-format/transition/index.tsv": "9d57952d6afecb04b2b03f1fa3eddd7348c2c8739fb841d9e22ac14a6f189f29"
+  },
+  "rejects": [
+    {
+      "name": "R-D-521-effect",
+      "base": "D-521",
+      "mutation": "native-9@284"
+    },
+    {
+      "name": "R-D-524-undo",
+      "base": "D-524",
+      "mutation": "native-3@440"
+    },
+    {
+      "name": "R-D-524-leaf",
+      "base": "D-524",
+      "mutation": "native-1@124"
+    },
+    {
+      "name": "R-D-526-item",
+      "base": "D-526",
+      "mutation": "item-lsn"
+    },
+    {
+      "name": "R-D-528-restore",
+      "base": "D-528",
+      "mutation": "native-1@182"
+    },
+    {
+      "name": "R-D-528-count",
+      "base": "D-528",
+      "mutation": "count-after"
+    },
+    {
+      "name": "R-D-531-edge",
+      "base": "D-531",
+      "mutation": "edge-sequence"
+    },
+    {
+      "name": "R-D-533-descriptor",
+      "base": "D-533",
+      "mutation": "descriptor-0@608"
+    },
+    {
+      "name": "R-D-535-digest",
+      "base": "D-535",
+      "mutation": "core-digest"
+    },
+    {
+      "name": "R-D-537-undo",
+      "base": "D-537",
+      "mutation": "native-3@224"
+    },
+    {
+      "name": "R-D-538-stamp",
+      "base": "D-538",
+      "mutation": "native-3@224"
+    }
+  ]
+}

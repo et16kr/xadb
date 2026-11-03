@@ -320,6 +320,23 @@ base4의 지금 `rows()`·`undo()`는 Missing 전용이라 효과1 Job의 상태
 5. 효과1 H의 metadata 증명을 세 곳(C undo 관찰, C transition, A producer)이 같은 규칙으로 쓰고, base4는 (a)로 보는지(§4.4, §9).
 6. base4 효과1 상태 규칙과 역방향 scan(§9).
 
+<a id="implementation-2b1"></a>
+## 16. 2-b-1 구현 기록
+
+2단계를 둘로 나눴다. **2-b-1**은 C의 whole-group 전이층이다. **2-b-2**는 A 생산자·실행기·loser, scope3 per-native 관찰자(`semantic_row/{undo,leaf,jobs}.rs`), B tombstone 읽기, `ValuePrune`, replay·base4 복구다. 2-b-1에는 DELETE를 쓰는 제품 진입점이 없다. `Change::ReserveDelete`·`DeleteForward`·`DeleteClr`·`DeletePrune`은 시험만 만든다. 그래서 §13의 "쓰는 PR이 읽기·복구도 갖는다" 조건이 지켜진다.
+
+- **전이(§4.1).** delete Reserve는 INSERT Reserve의 단계를 그대로 밟는다. row_high는 올리지 않고, 계획 tombstone의 projection을 Job에 넣는다. 대상은 `Committed`·undo None·Inline이어야 한다. DeleteForward·DeleteClr는 A의 group이라 C 생산자는 Unsupported로 거절하고, 관찰자만 둘을 받는다. DeletePrune은 C가 만든다.
+- **U(§3.2, §3.6).** Live delete U의 432 B header는 scratch U 버퍼에서 `encode_undo_record_head`로 만든다. 값 L은 leaf before image에서 빌려 after page에 바로 쓴다. 상한 9076 B는 그대로다. DeleteClr·DeletePrune은 U를 진입 (a)와 table 스키마로 읽는다. ReleaseRole은 `encode_release_step`으로 cursor를 하나 올리며 before stamp·logical을 caller에 넘기지 않는다.
+- **효과1 H(§4.4).** `check_outline`은 H의 셀을 진입 (b)로 보고, Job에서 오는 필드를 대조한다.
+- **leaf 예약(§4.3).** D는 각 leaf 단계(INSERT Reserve·Forward·CLR·Prune, delete Reserve·DeleteForward·DeleteClr·DeletePrune)가 원래 bank에서 먼저 계산한다. `typed_leaf`가 `entries+D ≤ 16188`을 검산하고, 어기면 Corrupt다. INSERT Reserve와 Forward는 새 cell을 넣은 뒤에도 이 식을 요구하고, 어기면 OrderMismatch다. Capacity 분류는 2-b-2의 C preflight가 한다.
+- **RowId 유일성(§5).** 대상 RowId를 다른 root가 쥐면 after bank census가 `Queue(IdentityMismatch)`로 거절한다. Busy 분류는 2-b-2 preflight가 한다.
+- **replay(§6).** `ReserveAdopted`는 후보 Job의 효과 byte와 RowId를 채택하고 나머지를 다시 계산한다.
+- **census(§10).** delete 항은 11,269 B다. callee 최대는 ledger 11,811 B 그대로이고 prepare 지역은 +8 B다. 복구 Row 갈래 S1B는 25,731 B로 상한 25,743 B 안이다. RowWrite reserve C 여유는 771 B, row_lifecycle은 40,881 B 그대로이며, live/recovered peak는 64,016/65,392 B(memory), 64,024/65,400 B(native)로 바뀌지 않았다.
+- **시험.**
+  - 독립 저자 [`module-row-format/transition-delete/author.py`](../../tests/fixtures/module-row-format/transition-delete/author.py)는 N1 이력 H를 다시 돌린다. H의 모든 frame은 N1 literal과 바이트가 같아야 한다. 그다음 이력 D 30 group과 변형 11개를 만든다.
+  - `transition_delete_tests.rs`(RDL-C)는 C가 만든 25 group을 literal과 바이트 단위로 비교하고, A 몫 5 group(DeleteForward ×3·DeleteClr·효과1 H 위 INSERT Forward)을 관찰하고, 변형 11개를 Corrupt로 거절하는지 본다. 그 밖에 borrowed 관찰자·생산자 쌍, `ReserveAdopted`, RowId 중복, leaf 예약 경계도 시험한다.
+  - scope3 per-native 관찰자 대조(N1 cross-check)는 효과1 actor의 group에서 건너뛰고 2-b-2에서 켠다.
+
 ## 작성 기록
 
 - 2026-11-03 r1 초안. main `c7a6425`의 source를 읽고 썼다(operation.rs, job.rs, undo_record.rs, undo.rs, transition/prepare.rs, ledger.rs, read.rs, retirement.rs, tree_page/edit.rs, row_record.rs).

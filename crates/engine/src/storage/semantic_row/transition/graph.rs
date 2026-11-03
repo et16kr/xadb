@@ -94,7 +94,7 @@ pub(super) struct Indices {
 }
 
 /// Forward adds RowUndo/RowStamp/TxnHead(H→U)/U.prevTxn(→H); CLR and Prune
-/// remove them (TxnHead U→H). U counts 0↔2 and T counts incoming±1. H is
+/// remove them (TxnHead U→H); DELETE's by their role. U counts 0↔2 and T counts incoming±1. H is
 /// net0 and gets no CountChange; its home proof is checked by the caller.
 pub(super) fn references(
     operation: Operation,
@@ -105,7 +105,9 @@ pub(super) fn references(
     indices: Indices,
     aux: &mut Aux<'_>,
 ) -> Result<()> {
-    let adding = match operation {
+    // DELETE's three operations have INSERT's edge/count multiset
+    // (dev3-row-delete.md#delete-edges).
+    let adding = match operation.role() {
         Operation::Forward => true,
         Operation::Clr | Operation::Prune => false,
         _ => return Err(Error::InvalidInput),
@@ -169,9 +171,10 @@ pub(super) fn references(
     Ok(())
 }
 
-/// Reserve absent→item, Forward item→absent Consume, Cancel item→absent Release.
+/// Reserve absent→item, Forward (and DeleteForward) item→absent Consume,
+/// Cancel item→absent Release.
 pub(super) fn inventory(operation: Operation, item: &[u8; 96], aux: &mut Aux<'_>) -> Result<()> {
-    let action = match operation {
+    let action = match operation.role() {
         Operation::Reserve => 1,
         Operation::Forward => 2,
         Operation::Cancel => 3,

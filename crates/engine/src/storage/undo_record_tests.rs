@@ -1724,6 +1724,150 @@ fn rdl_f07_delete_undo_live_then_releasing_cursors() {
     }
 }
 
+/// RDL-C (dev3-row-delete.md#scratch, #delete-undo): the C producer's two
+/// U helpers. `encode_undo_record_head` writes exactly the first 432 bytes of
+/// `encode_undo_record`'s image of the delete U and returns its full length,
+/// for the column and the table-schema entries alike; it refuses a Free cell,
+/// a target key and every record the full encoder refuses, leaving `head`
+/// untouched. `encode_release_step` walks the delete U from Releasing cursor
+/// 0 to 3, each step byte-equal to the full encoder's image of that cursor,
+/// and refuses cursor 3, a Live record and a Releasing record with a body.
+#[test]
+fn rdl_c_undo_head_split_and_release_steps() {
+    let f = Fixtures::new();
+    let e = f.expect(3);
+    let schema = inline_schema();
+    let table = RowSchemaInput::Columns(&schema);
+    let logical = LogicalRowVersion::new(
+        TxnId {
+            writer_epoch: 17,
+            local: 23,
+            ..id()
+        },
+        24,
+    )
+    .unwrap();
+    let sentinel = [0xa5u8; UNDO_RECORD_BYTES];
+    for previous in [UndoEdge::Never, link()] {
+        let live = UndoRecord {
+            creator: UndoCreator {
+                id: id(),
+                status_generation: g(20),
+            },
+            sequence: 100,
+            mutation_sequence: 21,
+            incoming: 2,
+            target: target(UndoTargetKind::Row),
+            edges: [previous, UndoEdge::Never],
+            before_kind: UndoBeforeKind::RowValue,
+            before_stamp: Some(VersionStamp::Committed(CommitSeq::new(22).unwrap())),
+            before_logical: Some(logical),
+            payload: UndoPayload::Inline(&f.inline),
+            release: UndoRelease {
+                cursor: 0,
+                chunks_released: 0,
+                next: None,
+            },
+        };
+        let full = encode_record(UndoCell::Live(live), e, &schema);
+        assert_eq!(full.len(), UNDO_RECORD_BYTES + f.inline.len());
+        let mut head = sentinel;
+        assert_eq!(
+            encode_undo_record_head(UndoCell::Live(live), e, &schema[..], &mut head),
+            Ok(full.len())
+        );
+        assert_eq!(&head[..], &full[..UNDO_RECORD_BYTES]);
+        let mut by_table = sentinel;
+        assert_eq!(
+            encode_undo_record_head(UndoCell::Live(live), e, &table, &mut by_table),
+            Ok(full.len())
+        );
+        assert_eq!(by_table, head);
+
+        // Refusals: the full encoder's error, or InvalidInput for the shapes
+        // the split does not take; `head` keeps its bytes.
+        let mut scratch = vec![0u8; 4096];
+        let wrong_schema = encode_undo_record(UndoCell::Live(live), e, &[][..], &mut scratch);
+        assert!(wrong_schema.is_err());
+        let mut wrong_logical = live;
+        wrong_logical.before_logical = None;
+        let missing_logical =
+            encode_undo_record(UndoCell::Live(wrong_logical), e, &schema[..], &mut scratch);
+        assert!(missing_logical.is_err());
+        let mut index = live;
+        index.target = target(UndoTargetKind::Index);
+        index.before_kind = UndoBeforeKind::IndexAbsent;
+        index.payload = UndoPayload::None;
+        let index_e = expected(UndoTargetKind::Index);
+        assert!(encode_undo_record(UndoCell::Live(index), index_e, &[][..], &mut scratch).is_ok());
+        // A Free cell of the slot's own generation encodes, but has no header.
+        assert!(encode_undo_record(UndoCell::Free(g(6)), e, &[][..], &mut scratch).is_ok());
+        for (cell, expectation, columns, error) in [
+            (UndoCell::Live(live), e, &[][..], wrong_schema.unwrap_err()),
+            (
+                UndoCell::Live(wrong_logical),
+                e,
+                &schema[..],
+                missing_logical.unwrap_err(),
+            ),
+            (UndoCell::Free(g(6)), e, &[][..], UndoError::InvalidInput),
+            (
+                UndoCell::Live(index),
+                index_e,
+                &[][..],
+                UndoError::InvalidInput,
+            ),
+        ] {
+            let mut untouched = sentinel;
+            assert_eq!(
+                encode_undo_record_head(cell, expectation, columns, &mut untouched),
+                Err(error)
+            );
+            assert_eq!(untouched, sentinel);
+        }
+
+        // The release steps of the delete U, cursor 0 to 3.
+        let mut releasing = live;
+        releasing.incoming = 0;
+        releasing.payload = UndoPayload::None;
+        if previous != UndoEdge::Never {
+            releasing.edges[0] = UndoEdge::Cut;
+        }
+        let mut current = encode_record(UndoCell::Releasing(releasing), e, &[]);
+        for cursor in 1..=3u8 {
+            let mut want = releasing;
+            want.release.cursor = cursor;
+            want.edges[1] = UndoEdge::Released;
+            if cursor >= 2 {
+                want.edges[0] = UndoEdge::Released;
+            }
+            if cursor == 3 {
+                want.before_stamp = None;
+            }
+            let mut out = [0u8; UNDO_RECORD_BYTES];
+            assert_eq!(
+                encode_release_step(&current, e, &mut out),
+                Ok(UNDO_RECORD_BYTES)
+            );
+            assert_eq!(
+                out.to_vec(),
+                encode_record(UndoCell::Releasing(want), e, &[])
+            );
+            current = out.to_vec();
+        }
+        let mut out = [0u8; UNDO_RECORD_BYTES];
+        let mut bodied = releasing;
+        bodied.payload = UndoPayload::Inline(&f.inline);
+        let bodied = encode_record(UndoCell::Releasing(bodied), e, &schema);
+        for refused in [&current, &full, &bodied] {
+            assert_eq!(
+                encode_release_step(refused, e, &mut out),
+                Err(UndoError::StateMismatch)
+            );
+        }
+    }
+}
+
 /// RDL-F08 (dev3-row-delete.md#delete-undo): entry (b) proves an occupied
 /// record's header and lengths without a schema and never yields a before
 /// value; entry (a) checks a RowValue before with the table's actual schema
